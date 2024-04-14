@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 	"strings"
+	"strconv"
 	"os/exec"
 	"io/ioutil"
 	"encoding/binary"
@@ -59,6 +60,7 @@ type far2l_Cell struct {
 }
 
 var g_far2l_log string
+var g_far2l_snapshot string
 var g_far2l_sock string
 var g_far2l_bin string
 var g_socket *net.UnixConn
@@ -73,12 +75,34 @@ var g_rctrl bool
 var g_lalt bool
 var g_ralt bool
 var g_shift bool
+var g_recv_timeout uint32 = 30
 
 func stringFromBytes(buf []byte) string {
 	last := 0
 	for ; last < len(buf) && buf[last] != 0; last++ {
 	}
 	return string(buf[0:last])
+}
+
+
+func far2l_ReadSocket(expected_n int, extra_timeout uint32) {
+	err := g_socket.SetReadDeadline(time.Now().Add(time.Duration(g_recv_timeout + extra_timeout) * time.Second))
+    if err != nil {
+        panic(err)
+	}
+	n, addr, err := g_socket.ReadFromUnix(g_buf[:])
+    if err != nil || n != expected_n {
+		if g_addr == nil {
+			if net_err, ok := err.(net.Error); ok && net_err.Timeout() {
+				panic("First communication timed out, make sure application built with testing support or increase timeout by -t argument")
+			}
+		}
+        panic(err)
+    }
+	if g_addr == nil || *g_addr != *addr {
+		g_addr = addr
+		log.Printf("Peer: %v", g_addr)
+	}
 }
 
 func far2l_Close() {
@@ -101,7 +125,7 @@ func far2l_Start(args []string) far2l_Status {
 	var err error
     g_app, err = termtest.New(opts)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	g_far2l_running = true
 	return far2l_RecvStatus()
@@ -117,12 +141,7 @@ func far2l_ReqRecvStatus() far2l_Status {
 }
 
 func far2l_RecvStatus() far2l_Status {
-	n, addr, err := g_socket.ReadFromUnix(g_buf[:])
-    if err != nil || n != 2068 {
-        panic(err)
-    }
-	g_addr = addr
-
+	far2l_ReadSocket(2068, 0)
 	g_status.Title = stringFromBytes(g_buf[20:])
 	g_status.CurH = g_buf[2]
 	g_status.CurV = g_buf[3] != 0
@@ -171,10 +190,7 @@ func far2l_ReqRecvExpectStrings(str_vec []string, x uint32, y uint32, w uint32, 
 	if err != nil || n != 24 + 2048 {
 		panic(err)
 	}
-	n, err = g_socket.Read(g_buf[:])
-    if err != nil || n != 12 {
-        panic(err)
-    }
+	far2l_ReadSocket(12, tmout / 1000)
 	out := far2l_FoundString {
 		I: binary.LittleEndian.Uint32(g_buf[0:]),
 		X: binary.LittleEndian.Uint32(g_buf[4:]),
@@ -205,10 +221,7 @@ func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
 	if err != nil || n != 12 {
 		panic(err)
 	}
-	n, err = g_socket.Read(g_buf[:])
-    if err != nil || n != 2056 {
-        panic(err)
-    }
+	far2l_ReadSocket(2056, 0)
 	return far2l_CellRaw {
 		Text: stringFromBytes(g_buf[8:]),
 		Attributes: binary.LittleEndian.Uint64(g_buf[0:]),
@@ -342,7 +355,7 @@ func log_Info(message string) {
 }
 
 func log_Fatal(message string) {
-	log.Fatal(message)
+	panic(message)
 }
 
 func tty_Write(s string) {
@@ -547,16 +560,27 @@ func setVMFunction(name string, value interface{}) {
 func main() {
 	var err error
 	if len(os.Args) < 4 {
-		log.Fatal("Usage: far2l-smoke /path/to/far2l /path/to/results/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
+		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/results/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
 	}
-	g_far2l_sock, err = filepath.Abs(filepath.Join(os.Args[2], "far2l.sock"))
-    if err != nil {
-        log.Fatal(err)
-    }
-	g_far2l_log, err = filepath.Abs(filepath.Join(os.Args[2], "far2l.log"))
-    if err != nil {
-        log.Fatal(err)
-    }
+	arg_ofs:= 1
+	for ;arg_ofs < len(os.Args); arg_ofs++ {
+		if os.Args[arg_ofs] == "-t" && arg_ofs + 1 < len(os.Args) {
+			arg_ofs++
+			v, err := strconv.Atoi(os.Args[arg_ofs])
+			if err != nil || v < 0 { panic("timeout must be positive integer value") }
+			g_recv_timeout = uint32(v)
+		} else {
+			break
+		}
+	}
+
+	g_far2l_sock, err = filepath.Abs(filepath.Join(os.Args[arg_ofs + 1], "far2l.sock"))
+	if err != nil { log.Fatal(err) }
+	g_far2l_log, err = filepath.Abs(filepath.Join(os.Args[arg_ofs + 1], "far2l.log"))
+	if err != nil { log.Fatal(err) }
+	g_far2l_snapshot, err = filepath.Abs(filepath.Join(os.Args[arg_ofs + 1], "snapshot.log"))
+	if err != nil { log.Fatal(err) }
+
 	os.Remove(g_far2l_sock)
 	defer os.Remove(g_far2l_sock)
 
@@ -567,19 +591,30 @@ func main() {
 
 	initVM()
 
-	g_far2l_bin, err = filepath.Abs(os.Args[1])
+	g_far2l_bin, err = filepath.Abs(os.Args[arg_ofs])
     if err != nil {
         log.Fatal(err)
     }
 
-	for i := 3; i < len(os.Args); i++ {
+	for i := arg_ofs + 2; i < len(os.Args); i++ {
 		fmt.Println("---> Running test:", os.Args[i])
 		runTest(os.Args[i])
 	}
 }
 
+func saveSnapshotOnExit() {
+	if g_app != nil {
+		f, err := os.Create(g_far2l_snapshot)
+		if err == nil {
+			f.WriteString(g_app.Snapshot())
+		}
+	}
+}
+
 func runTest(file string) {
 	defer far2l_Close()
+	defer saveSnapshotOnExit()
+
 	g_lctrl = false
 	g_rctrl = false
 	g_lalt = false

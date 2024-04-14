@@ -223,6 +223,9 @@ size_t TestController::ClientDispatchSendKey(size_t len)
 	ir.Event.KeyEvent.wVirtualScanCode = _buf.req_send_key.scan_code;
 	ir.Event.KeyEvent.uChar.UnicodeChar = _buf.req_send_key.chr;
 	ir.Event.KeyEvent.dwControlKeyState = _buf.req_send_key.controls;
+	if (ir.Event.KeyEvent.wVirtualScanCode == 0 && ir.Event.KeyEvent.wVirtualKeyCode != 0) {
+		ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(ir.Event.KeyEvent.wVirtualKeyCode, MAPVK_VK_TO_VSC);
+	}
 	g_winport_con_in->Enqueue(&ir, 1);
 	return 0;
 }

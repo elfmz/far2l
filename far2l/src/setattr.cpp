@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "headers.hpp"
 
-#include <algorithm>	// for std::sort()
+#include <set>			// for std::set
 #include <pwd.h>		// for getpwent()
 #include <grp.h>		// for getgrent()
 
@@ -667,27 +667,15 @@ static void ApplyFSFileFlags(DialogItemEx *AttrDlg, const FARString &strSelName,
 }
 
 class ListPwGrEnt {
+	std::set<FARString> Set; // sorts and prevents duplicates
 	std::vector<FarListItem> Items;
 	FarList List;
-	void Append(const wchar_t *s) {
-		for(const FarListItem& item : Items) // skip adding duplicates
-			if ( !wcscmp(item.Text, s) )
-				return;
-		Items.emplace_back();
-		Items.back().Flags = 0;
-		Items.back().Text = wcsdup(s);
-	}
+	void Append(const wchar_t *s) { Set.emplace(s); }
+	void Append(const char *s) { Set.emplace(s); }
 public:
 	ListPwGrEnt(bool bGroups, int SelCount);
-	~ListPwGrEnt() {
-		for (auto& item : Items)
-			free((void*)item.Text);
-	}
 	FarList *GetFarList() {
 		return &List;
-	}
-	static bool Cmp(const FarListItem& a, const FarListItem& b) {
-		return 0 > StrCmp(a.Text, b.Text);
 	}
 };
 
@@ -701,7 +689,7 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 		struct passwd *pw;
 		setpwent();
 		while ((pw = getpwent()) != NULL) {
-			Append(FARString(pw->pw_name).CPtr());
+			Append(pw->pw_name);
 		}
 		endpwent();
 	}
@@ -709,13 +697,16 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 		struct group *gr;
 		setgrent();
 		while ((gr = getgrent()) != NULL) {
-			Append(FARString(gr->gr_name).CPtr());
+			Append(gr->gr_name);
 		}
 		endgrent();
 	}
 
-	if( Items.size() > 1 )
-		std::sort(Items.begin()+(SelCount<2 ? 0:1), Items.end(), Cmp);
+	for (const auto &Str: Set) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = Str.CPtr();
+	}
 
 	List.ItemsNumber = Items.size();
 	List.Items = Items.data();

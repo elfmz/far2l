@@ -201,4 +201,31 @@ Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on
 ---------------------------------------------------------
 
 `TypeText("someText to Type")`  
-Simulates typing of specified text char-by-char according
+Simulates char-by-char typing of specified text.
+
+---------------------------------------------------------
+
+`WorkDir()`  
+Returns path to tests working directory - where temporary files and logs are resided
+
+---------------------------------------------------------
+
+`Chmod(name string, mode FileMode) error`  
+`Chown(name string, uid, gid int) error`  
+`Chtimes(name string, atime time.Time, mtime time.Time) error`  
+`Mkdir(name string, perm FileMode) error`  
+`MkdirAll(path string, perm FileMode) error`  
+`MkdirTemp(dir, pattern string) (string, error)`  
+`Remove(name string) error`  
+`RemoveAll(name string) error`  
+`Rename(oldpath, newpath string) error`  
+`ReadFile(name string) ([]byte, error)`  
+`WriteFile(name string, data []byte, perm FileMode) error`  
+`ReadDir(name string) ([]DirEntry, error)`  
+`Truncate(name string, size int64) error`  
+`Symlink(oldname, newname string) error`  
+`Readlink(name string) (string, error)`  
+This functions are directly exposed from go os so you can find their description right there: https://pkg.go.dev/os
+
+`MkdirsAll(pathes []string, perm os.FileMode) error`  
+This like MkdirAll but creates multiple directories trees at once

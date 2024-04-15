@@ -19,7 +19,7 @@ jobs:
             options: "-DPYTHON=yes"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Dependencies
       run: sudo apt-get update ; sudo apt-get -y install $(cat dependencies${{ matrix.dependencies }}.txt)
@@ -51,7 +51,7 @@ jobs:
       run: tree
 
     - name: Packing Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: far2l-release${{ matrix.dependencies }}
         path: ${{github.workspace}}/build/install

@@ -30,7 +30,7 @@ class TestController : protected Threaded
 	void ClientLoop(const std::string &ipc_client);
 	size_t ClientDispatchStatus();
 	size_t ClientDispatchReadCell(size_t len);
-	size_t ClientDispatchWaitString(size_t len);
+	size_t ClientDispatchWaitString(size_t len, bool need_presence);
 	size_t ClientDispatchSendKey(size_t len);
 
 public:

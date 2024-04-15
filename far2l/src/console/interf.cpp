@@ -488,9 +488,9 @@ void InitRecodeOutTable()
 	//_SVS(SysLogDump("Oem2Unicode",0,(LPBYTE)Oem2Unicode,sizeof(Oem2Unicode),nullptr));
 }
 
-void Text(int X, int Y, int Color, const WCHAR *Str, size_t Length)
+void Text64(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length)
 {
-	CurColor = FarColorToReal(Color);
+	CurColor = Color;
 	CurX = X;
 	CurY = Y;
 	Text(Str, Length);
@@ -713,6 +713,7 @@ void vmprintf(const wchar_t *fmt, ...)
 void SetColor(DWORD64 Color, bool ApplyToConsole)
 {
 	CurColor = FarColorToReal(Color & 0xffff);
+
 	if (Color & 0xffffff0000000000) {
 		CurColor|= BACKGROUND_TRUECOLOR;
 		CurColor|= (Color & 0xffffff0000000000);
@@ -721,6 +722,22 @@ void SetColor(DWORD64 Color, bool ApplyToConsole)
 		CurColor|= FOREGROUND_TRUECOLOR;
 		CurColor|= (Color & 0x000000ffffff0000);
 	}
+	if (ApplyToConsole) {
+		Console.SetTextAttributes(CurColor);
+	}
+}
+
+void SetColor64(DWORD64 Color, bool ApplyToConsole)
+{
+	CurColor = Color;
+/**
+	if (Color & 0xffffff0000000000) {
+		CurColor |= BACKGROUND_TRUECOLOR;
+	}
+	if (Color & 0x000000ffffff0000) {
+		CurColor |= FOREGROUND_TRUECOLOR;
+	}
+**/
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);
 	}

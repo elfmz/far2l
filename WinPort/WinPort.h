@@ -21,6 +21,10 @@ extern "C" {
 	void WinPortHelp();
 	const wchar_t *WinPortBackend();
 
+	// true means far2l runs under smoke testing and code must
+	// not skip events from input queue that sometimes used to make UX smoother
+	BOOL WinPortTesting();
+
 	///console API
 	WINPORT_DECL(ForkConsole,HANDLE,());
 	WINPORT_DECL(JoinConsole,VOID,(HANDLE hConsole));

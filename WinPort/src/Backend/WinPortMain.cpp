@@ -41,6 +41,7 @@
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
 const wchar_t *g_winport_backend = L"";
+static BOOL g_winport_testing = FALSE;
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
 	bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty,
@@ -48,6 +49,11 @@ bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
 	int(*AppMain)(int argc, char **argv), int *result);
 
 extern "C" void WinPortInitRegistry();
+
+extern "C" BOOL WinPortTesting()
+{
+	return g_winport_testing;
+}
 
 class FScope
 {
@@ -245,9 +251,6 @@ extern "C" void WinPortHelp()
 	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
     printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
     printf("     (for example: export FAR2L_ARGS=\"--tty --nodetect --ee\" and then simple far2l to force start only TTY backend)\n");
-#ifdef TESTING
-	printf("\t--test=/UNIX/socket/path - activate built-in smoke tests facilities\n");
-#endif
 }
 
 struct ArgOptions
@@ -258,7 +261,6 @@ struct ArgOptions
 	bool x11 = false;
 	bool wayland = false;
 	std::string ext_clipboard;
-	std::string test_id;
 	unsigned int esc_expiration = 0;
 	std::vector<char *> filtered_argv;
 
@@ -301,9 +303,6 @@ struct ArgOptions
 			}
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
-
-		} else if (strstr(a, "--test=") == a) {
-			test_id = a + 7;
 
 		} else if (strstr(a, "--ee") == a) {
 			esc_expiration = (a[4] == '=') ? atoi(&a[5]) : 100;
@@ -404,13 +403,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	}
 	argc = (int)arg_opts.filtered_argv.size();
 
-#ifndef TESTING
-	if (!arg_opts.test_id.empty()) {
-		fprintf(stderr, "Testing facilities not enabled, rebuild with -DTESTING=YES to use --test= argument\n");
-		return -1;
-	}
-#endif
-
 	FDScope std_in(dup(0));
 	FDScope std_out(dup(1));
 
@@ -456,10 +448,25 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 //	g_winport_con_out->WriteString(L"Hello", 5);
 #ifdef TESTING
 	std::unique_ptr<TestController> test_ctl;
-	if (!arg_opts.test_id.empty()) {
-		test_ctl.reset(new TestController(arg_opts.test_id));
-	}
 #endif
+
+	const char *test_ctl_id = getenv("FAR2L_TESTCTL");
+	if (test_ctl_id && *test_ctl_id) {
+#ifdef TESTING
+		// derive console output size from terminal now to avoid smoketest race condition on getting terminal size
+		struct winsize w{};
+		int r = ioctl(1, TIOCGWINSZ, &w);
+		if (r == 0 && w.ws_col > 80 && w.ws_row > 25) {
+			winport_con_out->SetSize(w.ws_col, w.ws_row);
+		}
+		test_ctl.reset(new TestController(test_ctl_id));
+		g_winport_testing = TRUE;
+		unsetenv("FAR2L_TESTCTL");
+#else
+		fprintf(stderr, "Testing facilities not enabled, rebuild with -DTESTING=YES to use FAR2L_TESTCTL environment variable\n");
+		return -1;
+#endif
+	}
 
 	int result = -1;
 	if (!arg_opts.tty) {

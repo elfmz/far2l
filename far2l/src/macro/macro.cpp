@@ -4085,7 +4085,6 @@ begin:
 	// Mantis#0000581: Добавить возможность прервать выполнение макроса
 	{
 		INPUT_RECORD rec;
-
 		if (PeekInputRecord(&rec) && rec.EventType == KEY_EVENT
 				&& rec.Event.KeyEvent.wVirtualKeyCode == VK_CANCEL) {
 			GetInputRecord(&rec, true);		// удаляем из очереди эту "клавишу"...

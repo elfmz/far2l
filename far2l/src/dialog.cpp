@@ -448,6 +448,7 @@ void Dialog::Init(FARWINDOWPROC DlgProc,	// Диалоговая процеду�
 Dialog::~Dialog()
 {
 	_tran(SysLog(L"[%p] Dialog::~Dialog()", this));
+
 	DeleteDialogObjects();
 
 	Hide();
@@ -460,9 +461,13 @@ Dialog::~Dialog()
 		delete Item[i];
 
 	free(Item);
-	INPUT_RECORD rec;
-	PeekInputRecord(&rec);
 	delete OldTitle;
+
+	if (!WinPortTesting()) {
+		INPUT_RECORD rec;
+		PeekInputRecord(&rec);
+	}
+
 	_DIALOG(CleverSysLog CL(L"Destroy Dialog"));
 }
 

@@ -243,5 +243,8 @@ Supporting extended far2l keyboard shortcuts and clipboard access
 ## Notes on porting and FAR Plugin API changes
  * See [HACKING.md](HACKING.md)
 
+## Testing
+ * See [testing/README.md](testing/README.md)
+
 ## Known issues:
 * Only valid translations are English, Russian, Ukrainian and Belarussian (interface only), all other languages require deep correction.

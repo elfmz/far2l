@@ -65,7 +65,8 @@ void TestController::ClientLoop(const std::string &ipc_client)
 				break;
 
 			case TEST_CMD_WAIT_STRING:
-				len = ClientDispatchWaitString(len);
+			case TEST_CMD_WAIT_NO_STRING:
+				len = ClientDispatchWaitString(len, _buf.cmd == TEST_CMD_WAIT_STRING);
 				break;
 
 			case TEST_CMD_SEND_KEY:
@@ -129,28 +130,44 @@ size_t TestController::ClientDispatchReadCell(size_t len)
 	return sizeof(_buf.rep_read_cell);
 }
 
-size_t TestController::ClientDispatchWaitString(size_t len)
+size_t TestController::ClientDispatchWaitString(size_t len, bool need_presence)
 {
 	if (len < sizeof(TestRequestWaitString)) {
 		throw std::runtime_error(StrPrintf("len=%lu < sizeof(TestRequestWaitString)", (unsigned long)len));
 	}
 	std::vector<CHAR_INFO> data(size_t(_buf.req_wait_str.width) * _buf.req_wait_str.height);
+	bool present = false;
 	if (!data.empty()) {
+		const COORD data_size{
+			CheckedCast<SHORT>(_buf.req_wait_str.width),
+			CheckedCast<SHORT>(_buf.req_wait_str.height)
+		};
+		const COORD data_pos{0, 0};
+		const SMALL_RECT screen_rect {
+			CheckedCast<SHORT>(_buf.req_wait_str.left),
+			CheckedCast<SHORT>(_buf.req_wait_str.top),
+			CheckedCast<SHORT>(_buf.req_wait_str.left + _buf.req_wait_str.width - 1),
+			CheckedCast<SHORT>(_buf.req_wait_str.top + _buf.req_wait_str.height - 1)
+		};
 		std::vector<std::wstring> str_match_vec;
-		//_buf.req_wait_str.str[ARRAYSIZE(_buf.req_wait_str.str) - 1] = 0;
 		for (uint32_t ofs = 0; ofs < ARRAYSIZE(_buf.req_wait_str.str) && _buf.req_wait_str.str[ofs];) {
 			const size_t l = strnlen(&_buf.req_wait_str.str[ofs], ARRAYSIZE(_buf.req_wait_str.str) - ofs);
 			str_match_vec.emplace_back();
 			MB2Wide(&_buf.req_wait_str.str[ofs], l, str_match_vec.back());
 			ofs+= l + 1;
 		}
+		uint32_t msec_remain = _buf.req_wait_str.timeout;
+		const auto height = _buf.req_wait_str.height;
+		const auto width  = _buf.req_wait_str.width;
+
+		// dont use _buf.req_wait_str after this point
 
 		std::wstring str;
 		std::vector<uint32_t> ofs;
 		unsigned int change_id = 0;
-		uint32_t msec_remain = _buf.req_wait_str.timeout;
 		clock_t cl_begin = GetProcessUptimeMSec();
 		do {
+			present = false;
 			change_id = g_winport_con_out->WaitForChange(change_id, msec_remain);
 			if (msec_remain != (uint32_t)-1) {
 				const clock_t cl_now = GetProcessUptimeMSec();
@@ -164,24 +181,14 @@ size_t TestController::ClientDispatchWaitString(size_t len)
 					msec_remain-= msec_passed;
 				}
 			}
-			COORD data_size{
-				CheckedCast<SHORT>(_buf.req_wait_str.width),
-				CheckedCast<SHORT>(_buf.req_wait_str.height)
-			};
-			COORD data_pos{0, 0};
-			SMALL_RECT screen_rect{
-				CheckedCast<SHORT>(_buf.req_wait_str.left),
-				CheckedCast<SHORT>(_buf.req_wait_str.top),
-				CheckedCast<SHORT>(_buf.req_wait_str.left + _buf.req_wait_str.width - 1),
-				CheckedCast<SHORT>(_buf.req_wait_str.top + _buf.req_wait_str.height - 1)
-			};
 			memset(data.data(), 0, data.size() * sizeof(CHAR_INFO));
-			g_winport_con_out->Read(data.data(), data_size, data_pos, screen_rect);
-			for (uint32_t y = 0; y < _buf.req_wait_str.height; ++y) {
+			auto tmp_screen_rect = screen_rect;
+			g_winport_con_out->Read(data.data(), data_size, data_pos, tmp_screen_rect);
+			for (uint32_t y = 0; y < height && !present; ++y) {
 				str.clear();
 				ofs.clear();
-				for (uint32_t x = 0; x < _buf.req_wait_str.width; ++x) {
-					const auto &ci = data[y * uint32_t(_buf.req_wait_str.width) + x];
+				for (uint32_t x = 0; x < width; ++x) {
+					const auto &ci = data[y * uint32_t(width) + x];
 					if (CI_USING_COMPOSITE_CHAR(ci)) {
 						str+= WINPORT(CompositeCharLookup)(ci.Char.UnicodeChar);
 					} else if (ci.Char.UnicodeChar) {
@@ -191,22 +198,24 @@ size_t TestController::ClientDispatchWaitString(size_t len)
 						ofs.emplace_back(x);
 					}
 				}
-				for (size_t i = 0; i < str_match_vec.size(); ++i) {
+				for (size_t i = 0; i < str_match_vec.size() && !present; ++i) {
 					const size_t pos = str.find(str_match_vec[i].c_str());
 					if (pos != std::wstring::npos) {
 						ASSERT(pos < ofs.size());
 						_buf.rep_wait_str.i = (uint32_t)i;
-						_buf.rep_wait_str.x = _buf.req_wait_str.left + ofs[pos];
-						_buf.rep_wait_str.y = _buf.req_wait_str.top + y;
-						return sizeof(_buf.rep_wait_str);
+						_buf.rep_wait_str.x = screen_rect.Left + ofs[pos];
+						_buf.rep_wait_str.y = screen_rect.Top + y;
+						present = true;
 					}
 				}
 			}
-		} while (msec_remain);
+		} while (msec_remain && present != need_presence);
 	}
-	_buf.rep_wait_str.i = -1;
-	_buf.rep_wait_str.x = -1;
-	_buf.rep_wait_str.y = -1;
+	if (!present) {
+		_buf.rep_wait_str.i = -1;
+		_buf.rep_wait_str.x = -1;
+		_buf.rep_wait_str.y = -1;
+	}
 	return sizeof(_buf.rep_wait_str);
 }
 

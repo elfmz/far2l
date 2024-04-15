@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-setcolor.hpp
+pick_color256.hpp
 
 Установка фаровских цветов
 */
@@ -35,4 +35,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-void SetColors();
+bool GetColorDialogForFileFilter(uint64_t *color, uint64_t *mask);
+bool GetColorDialog16(uint16_t *color, bool bCentered = true);

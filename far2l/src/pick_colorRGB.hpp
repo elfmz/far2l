@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-setcolor.hpp
+pick_colorRGB.hpp
 
 Установка фаровских цветов
 */
@@ -35,4 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
-void SetColors();
+#define TEMP_COLORSRGB_SIZE (20 * sizeof(uint32_t))
+extern uint32_t g_tempcolorsRGB[20];
+
+bool GetPickColorDialogRGB(uint32_t *color, bool bCentered = true);

@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-setcolor.hpp
+pick_color_common.hpp
 
 Установка фаровских цветов
 */
@@ -33,6 +33,24 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <WinCompat.h>
+typedef struct rgbcolor_s
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	uint8_t a;
+} rgbcolor_t;
 
-void SetColors();
+typedef struct hsvcolor_s
+{
+	uint8_t h;
+	uint8_t s;
+	uint8_t v;
+	uint8_t a;
+} hsvcolor_t;
+
+#define RGB_2_BGR(c) (c & 0x00ff00) | (((c >> 16) & 0xff) | ((c & 0xff) << 16))
+#define ATTR_RGBBACK_NEGF(rgb) (((uint64_t)rgb << 40) + ((uint64_t)((~rgb) & 0xFFFFFF) << 16) + 7 + BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)
+
+rgbcolor_t HSV_2_RGB(hsvcolor_t hsv);
+hsvcolor_t RGB_2_HSV(rgbcolor_t rgb);

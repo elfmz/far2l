@@ -85,7 +85,7 @@ void GetRealCursorPos(SHORT &X, SHORT &Y);
 void ScrollScreen(int Count);
 
 void Text(int X, int Y, int Color, const WCHAR *Str);
-void Text(int X, int Y, int Color, const WCHAR *Str, size_t Length);
+void Text64(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length);
 void Text(const WCHAR *Str, size_t Length = (size_t)-1);
 void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);
@@ -101,6 +101,7 @@ void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, int Color);
 void MakeShadow(int X1, int Y1, int X2, int Y2);
 void ChangeBlockColor(int X1, int Y1, int X2, int Y2, int Color);
 void SetColor(DWORD64 Color, bool ApplyToConsole = false);
+void SetColor64(DWORD64 Color, bool ApplyToConsole = false);
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb, bool used);
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb);
 void FarTrueColorFromAttributes(FarTrueColorForeAndBack &TFB, DWORD64 Attrs);

@@ -1,7 +1,22 @@
-To run tests run far2l-smoke-run.sh specifying path to far2l which was built by cmake configured with -DTESTING=Yes  
+## How to run tests
+To run tests execute ./far2l-smoke-run.sh with argument - path to far2l which was built by cmake configured with -DTESTING=Yes  
 Example: `./far2l-smoke-run.sh ../../far2l.build/install/far2l`  
-Note: if provided far2l built without testing support this will just stuck.. for now.  
-Actual tests written in JS and located under test directory. They can use following predefined functions to perform actions:
+Note: if provided far2l built without testing support this will stuck for a while a fail then.
+
+## How to write tests
+Actual tests written in JS and located under tests directory. They can use predefined functions described below to perform some actions.  
+Add your test as .js file with numbered name prefix, that number defines execution order as tests executed in alphabetical order.  
+In general test must:
+ * optionally do some preparations, like create some files needed for tests if any etc
+ * start far2l using `StartApp()` function. Its recommended to start far2l with unique profile derived from WorkDir() using -u parameter.
+ * wait for far2l startup by checking output of left panel title and help (as on clean profile it always shows help on start)
+ * perform some interactive actions with far2l by sending key presses and checking presence of some expected strings
+ * validate results if need
+ * send close command to far2l, e.g. by pressing F10 using TypeFKey(10) and wait its shutdown by ExpectAppExit
+
+Note that by default many functions that performs validations, like ExpectString, ExpectAppExit etc aborts execution in case of unexpected results. This can be changed by BeCalm() function (see below) if need. But typically its behavior you exactly want.
+
+## Functions list goes below
 
 ---------------------------------------------------------
 

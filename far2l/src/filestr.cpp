@@ -736,11 +736,11 @@ static bool GetFileFormatByHeuristics(File &file, UINT &nCodePage)
 		nCodePage = CP_UTF16BE;
 		return true;
 	}
-    if (Val32LE > Val16BE && Val32LE >= Val16LE && Val32LE > Val32BE) {
+	if (Val32LE > Val16BE && Val32LE >= Val16LE && Val32LE > Val32BE) {
 		nCodePage = CP_UTF32LE;
 		return true;
 	}
-    if (Val32BE >= Val16BE && Val32BE > Val16LE && Val32BE > Val32LE) {
+	if (Val32BE >= Val16BE && Val32BE > Val16LE && Val32BE > Val32LE) {
 		nCodePage = CP_UTF32BE;
 		return true;
 	}

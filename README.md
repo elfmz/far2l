@@ -241,7 +241,7 @@ Supporting extended far2l keyboard shortcuts and clipboard access
  * Community wiki & tips (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
 
 ## Notes on porting and FAR Plugin API changes
- * See HACKING.md
+ * See [HACKING.md](HACKING.md)
 
 ## Known issues:
 * Only valid translations are English, Russian, Ukrainian and Belarussian (interface only), all other languages require deep correction.

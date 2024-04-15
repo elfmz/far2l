@@ -8,6 +8,7 @@ enum TestCommand
 	TEST_CMD_STATUS = 1,
 	TEST_CMD_READ_CELL,
 	TEST_CMD_WAIT_STRING,
+	TEST_CMD_WAIT_NO_STRING,
 	TEST_CMD_SEND_KEY,
 };
 
@@ -62,6 +63,5 @@ struct TestRequestSendKey
 	uint32_t key_code;
 	uint32_t scan_code;
 	uint8_t  pressed;
+	uint8_t  reserved[3];
 };
-
-

@@ -690,10 +690,11 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 
 	if (ProcessPluginEvent(FE_CLOSE, nullptr))
 		return -1;
-
 	ScrBuf.Flush();
-	INPUT_RECORD rec;
-	PeekInputRecord(&rec);
+	if (!WinPortTesting()) {
+		INPUT_RECORD rec;
+		PeekInputRecord(&rec);
+	}
 
 	if (!mitem)
 		return -1;	//???

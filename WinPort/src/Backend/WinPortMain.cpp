@@ -455,7 +455,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 #ifdef TESTING
 		// derive console output size from terminal now to avoid smoketest race condition on getting terminal size
 		struct winsize w{};
-		int r = ioctl(1, TIOCGWINSZ, &w);
+		int r = ioctl(std_out, TIOCGWINSZ, &w);
 		if (r == 0 && w.ws_col > 80 && w.ws_row > 25) {
 			winport_con_out->SetSize(w.ws_col, w.ws_row);
 		}

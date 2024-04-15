@@ -5,24 +5,25 @@ Actual tests written in JS and located under test directory. They can use follow
 
 ---------------------------------------------------------
 
-`StartApp(["arg1", "arg2" ...])`
-
+`StartApp(["arg1", "arg2" ...])`  
 Starts far2l with given arguments, note that some arguments are implicitly inserted - path to far2l as very first argument and --test=  
 Returns status of started far2l as structure of following fields:
- * Width uint32
- * Height uint32
- * Title string
+ * Title string      - application title
+ * Width uint32      - application TUI columns
+ * Height uint32     - application TUI lines
+ * CurX uint32       - X cursor position (column index)
+ * CurY uint32       - Y cursor position (line index)
+ * CurH uint8        - cursor height from 0 to 100
+ * CurV bool         - true if cursor is visible
 
 ---------------------------------------------------------
 
-`AppStatus()`
-
+`AppStatus()`  
 Returns actual status of far2l as structure described above.
 
 ---------------------------------------------------------
 
-`ReadCellRaw(x, y)`
-
+`ReadCellRaw(x, y)`  
 Reads screen cell at specified coordinates.  
 Returns structure which has following fields:
  * Text string           - string representing contained character
@@ -30,8 +31,7 @@ Returns structure which has following fields:
 
 ---------------------------------------------------------
 
-`ReadCell(x, y)`
-
+`ReadCell(x, y)`  
 Reads screen cell at specified coordinates.  
 Returns more 'decomposed' (comparing to Raw version) structure wich has following fields:
  * Text string           - string representing contained character
@@ -55,15 +55,27 @@ Returns more 'decomposed' (comparing to Raw version) structure wich has followin
 
 ---------------------------------------------------------
 
-`BoundedLines(left, top, width, height, " \t")`
-
+`BoundedLines(left, top, width, height, " \t")`  
 Returns array of lines bounded by specified rectangle.  
 Optionally trims edges of each line from trim_chars characters if its not empty.
 
 ---------------------------------------------------------
 
-`SurroundedLines(x, y, "║═│─", " \t")`
+`BoundedLine(left, top, width, " \t")`  
+Returns single line bounded by specified rectangle on unity height.  
+Optionally trims edges of line from trim_chars characters if its not empty.
 
+---------------------------------------------------------
+
+`CheckBoundedLineOrDie("expected string", left, top, width, " \t")`  
+Check that single line at specified rectangle matches to specified value.  
+Optionally trims edges of line from trim_chars characters if its not empty.  
+If string doesnt match - aborts execution.
+
+---------------------------------------------------------
+
+
+`SurroundedLines(x, y, "║═│─", " \t")`  
 Returns array of lines bounded by any of specified in boundary_chars characters.  
 x, y represends coordinates of any cell inside of required area  
 Optionally trims edges of each line from trim_chars characters if its not empty.
@@ -71,8 +83,7 @@ Optionally trims edges of each line from trim_chars characters if its not empty.
 ---------------------------------------------------------
 
 `CheckCellChar(x, y, "abcdef...")`  
-`CheckCellCharOrDie(x, y, "abcdef...")`
-
+`CheckCellCharOrDie(x, y, "abcdef...")`  
 Checks if cell under specified coordinates contains any of characters contained in specified string.  
 Returns matched character. But if no character matched then:
  * CheckCellChar returns empty string
@@ -82,8 +93,7 @@ Returns matched character. But if no character matched then:
 ---------------------------------------------------------
 
 `ExpectStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
-`ExpectStringsOrDie(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`
-
+`ExpectStringsOrDie(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
 Waits given amount of milliseconds for any of given strings will appear in provided rectangular area.  
 Returns result as structure of following fields, that defines index of found string and its coordinates:
  * I uint32
@@ -97,16 +107,14 @@ In case no string found before timeout reached:
 ---------------------------------------------------------
 
 `ExpectString("string", x, y, w, h, timeout_ms)`  
-`ExpectStringOrDie("string", x, y, w, h, timeout_ms)`
-
+`ExpectStringOrDie("string", x, y, w, h, timeout_ms)`  
 Simplified version of ExpectStrings that waits for one string only.  
 Returns same as ExpectStrings.
 
 ---------------------------------------------------------
 
 `ExpectAppExit(code, timeout_ms)`  
-`ExpectAppExitOrDie(code, timeout_ms)`
-
+`ExpectAppExitOrDie(code, timeout_ms)`  
 Expects that far2l will exit with specified exit code withing given milliseconds of timeout.  
 Returns empty string if everything happen as expected, otherwise:
  * ExpectAppExit returns string with problem description
@@ -114,40 +122,34 @@ Returns empty string if everything happen as expected, otherwise:
 
 ---------------------------------------------------------
 
-`LogInfo("string")`
-
+`LogInfo("string")`  
 Writes given string to test output.
 
 ---------------------------------------------------------
 
-`LogFatal("string")`
-
+`LogFatal("string")`  
 Writes given string to test output and aborts tests.
 
 ---------------------------------------------------------
 
-`TTYWrite("string")`
-
+`TTYWrite("string")`  
 Writes given string to stdin of pseudoterminal where tested far2l is running.
 
 ---------------------------------------------------------
 
-`TTYCtrlC()`
-
+`TTYCtrlC()`  
 Generates Ctrl+C for pseudoterminal where tested far2l is running.
 
 ---------------------------------------------------------
 
 `RunCmd(["prog", "arg1", "arg2" ...])`  
-`RunCmdOrDie(["prog", "arg1", "arg2" ...])`
-
+`RunCmdOrDie(["prog", "arg1", "arg2" ...])`  
 Runs given command, returns empty string if start succeeded and command returned zero code, otherwise returns error description or aborts if its RunCmdOrDie.  
 Note that command is run NOT in pseudoterminal where tested far2l is running.
 
 ---------------------------------------------------------
 
-`Sleep(msec)`
-
+`Sleep(msec)`  
 Pauses execution for specified amount of milliseconds
 
 ---------------------------------------------------------
@@ -156,8 +158,7 @@ Pauses execution for specified amount of milliseconds
 `ToggleLCtrl(pressed bool)`  
 `ToggleRCtrl(pressed bool)`  
 `ToggleLAlt(pressed bool)`  
-`ToggleRAlt(pressed bool)`
-
+`ToggleRAlt(pressed bool)`  
 Simulate changing state of specific named control key. Changed state affects all following keypresses.
 
 ---------------------------------------------------------
@@ -174,8 +175,7 @@ Simulate changing state of specific named control key. Changed state affects all
 `TypeRight()`  
 `TypeDown()`  
 `TypeIns()`  
-`TypeDel()`
-
+`TypeDel()`  
 Simulate typing of specific named key
 
 ---------------------------------------------------------
@@ -185,24 +185,47 @@ Simulate typing of specific named key
 `TypeMul()`  
 `TypeDiv()`  
 `TypeSeparator()`  
-`TypeDecimal()`
-
+`TypeDecimal()`  
 Simulate typing of specific named NumPad key
 
 ---------------------------------------------------------
 
-`TypeDigit(n)`
-
+`TypeDigit(n)`  
 Simulates typing of specified NumPad digit, where n=0 means 0, n=1 means 1 and so on
 
 ---------------------------------------------------------
 
-`TypeFKey(n)`
-
+`TypeFKey(n)`  
 Simulates typing of specified F-key, where n=1 means F1, n=2 means F2 and so on
 
 ---------------------------------------------------------
 
-`TypeText("someText to Type")`
+`TypeText("someText to Type")`  
+Simulates char-by-char typing of specified text.
 
-Simulates typing of specified text char-by-char according
+---------------------------------------------------------
+
+`WorkDir()`  
+Returns path to tests working directory - where temporary files and logs are resided
+
+---------------------------------------------------------
+
+`Chmod(name string, mode FileMode) error`  
+`Chown(name string, uid, gid int) error`  
+`Chtimes(name string, atime time.Time, mtime time.Time) error`  
+`Mkdir(name string, perm FileMode) error`  
+`MkdirAll(path string, perm FileMode) error`  
+`MkdirTemp(dir, pattern string) (string, error)`  
+`Remove(name string) error`  
+`RemoveAll(name string) error`  
+`Rename(oldpath, newpath string) error`  
+`ReadFile(name string) ([]byte, error)`  
+`WriteFile(name string, data []byte, perm FileMode) error`  
+`ReadDir(name string) ([]DirEntry, error)`  
+`Truncate(name string, size int64) error`  
+`Symlink(oldname, newname string) error`  
+`Readlink(name string) (string, error)`  
+This functions are directly exposed from go os so you can find their description right there: https://pkg.go.dev/os
+
+`MkdirsAll(pathes []string, perm os.FileMode) error`  
+This like MkdirAll but creates multiple directories trees at once

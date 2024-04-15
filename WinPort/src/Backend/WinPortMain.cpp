@@ -43,7 +43,7 @@ IConsoleInput *g_winport_con_in = nullptr;
 const wchar_t *g_winport_backend = L"";
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
-	bool ext_clipboard, bool norgb, const char *nodetect, bool far2l_tty,
+	bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty,
 	unsigned int esc_expiration, int notify_pipe, int argc, char **argv,
 	int(*AppMain)(int argc, char **argv), int *result);
 
@@ -252,7 +252,7 @@ extern "C" void WinPortHelp()
 
 struct ArgOptions
 {
-	const char *nodetect = "";
+	DWORD nodetect = NODETECT_NONE;
 	bool tty = false, far2l_tty = false, notty = false, norgb = false;
 	bool mortal = false;
 	bool x11 = false;
@@ -288,11 +288,17 @@ struct ArgOptions
 			norgb = true;
 
 		} else if (strcmp(a, "--nodetect") == 0) {
-			nodetect = "fx";
+			nodetect = NODETECT_F | NODETECT_X;
 
 		} else if (strstr(a, "--nodetect=") == a) {
-			nodetect = a + 11;
-
+			if(strstr(a+11,"xi")) {
+				nodetect = NODETECT_XI;
+			} else if (strchr(a+11,'x')) {
+				nodetect = NODETECT_X;
+			}
+			if(strchr(a+11,'f')) {
+				nodetect |= NODETECT_F;
+			}
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
 
@@ -416,7 +422,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	std::unique_ptr<TTYRawMode> tty_raw_mode;
 	if (!arg_opts.notty) {
 		tty_raw_mode.reset(new TTYRawMode(std_in, std_out));;
-		if (!strchr(arg_opts.nodetect, 'f')) {
+		if ((arg_opts.nodetect & NODETECT_F) == 0) {
 	//		tty_raw_mode.reset(new TTYRawMode(std_out));
 			if (tty_raw_mode->Applied() || IsFar2lFISHTerminal()) {
 				arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);

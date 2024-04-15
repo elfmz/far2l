@@ -18,4 +18,6 @@ if [ ! -f ./far2l-smoke ] || [ ./far2l-smoke -ot ./far2l-smoke.go ]; then
 	go build
 	echo PREPARE: done
 fi
-./far2l-smoke "$APP" /tmp/far2l-smoke/output tests/*.js 
+rm -rf workdir
+mkdir -p workdir
+./far2l-smoke "$APP" workdir tests/*.js

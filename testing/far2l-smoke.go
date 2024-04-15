@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 	"strings"
+	"strconv"
 	"os/exec"
 	"io/ioutil"
 	"encoding/binary"
@@ -17,9 +18,13 @@ import (
 )
 
 type far2l_Status struct {
+	Title string
 	Width uint32
 	Height uint32
-	Title string
+	CurX uint32
+	CurY uint32
+	CurH uint8
+	CurV bool
 }
 
 type far2l_FoundString struct {
@@ -55,6 +60,7 @@ type far2l_Cell struct {
 }
 
 var g_far2l_log string
+var g_far2l_snapshot string
 var g_far2l_sock string
 var g_far2l_bin string
 var g_socket *net.UnixConn
@@ -63,18 +69,48 @@ var g_buf [4096]byte
 var g_app *termtest.ConsoleProcess
 var g_vm *goja.Runtime
 var g_status far2l_Status
-var g_far2l_running bool
+var g_far2l_running bool = false
 var g_lctrl bool
 var g_rctrl bool
 var g_lalt bool
 var g_ralt bool
 var g_shift bool
+var g_recv_timeout uint32 = 30
+var g_workdir string
 
 func stringFromBytes(buf []byte) string {
 	last := 0
 	for ; last < len(buf) && buf[last] != 0; last++ {
 	}
 	return string(buf[0:last])
+}
+
+
+func far2l_ReadSocket(expected_n int, extra_timeout uint32) {
+	err := g_socket.SetReadDeadline(time.Now().Add(time.Duration(g_recv_timeout + extra_timeout) * time.Second))
+    if err != nil {
+        panic(err)
+	}
+	n, addr, err := g_socket.ReadFromUnix(g_buf[:])
+    if err != nil || n != expected_n {
+		if g_addr == nil {
+			if net_err, ok := err.(net.Error); ok && net_err.Timeout() {
+				panic("First communication timed out, make sure application built with testing support or increase timeout by -t argument")
+			}
+		}
+        panic(err)
+    }
+	if g_addr == nil || *g_addr != *addr {
+		g_addr = addr
+		log.Printf("Peer: %v", g_addr)
+	}
+}
+
+func far2l_Close() {
+	if g_far2l_running {
+		g_far2l_running = false
+		g_app.Close()
+	}
 }
 
 func far2l_Start(args []string) far2l_Status {
@@ -90,17 +126,10 @@ func far2l_Start(args []string) far2l_Status {
 	var err error
     g_app, err = termtest.New(opts)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	g_far2l_running = true
 	return far2l_RecvStatus()
-}
-
-func far2l_Close() {
-	if g_far2l_running {
-		g_far2l_running = false
-		g_app.Close()
-	}
 }
 
 func far2l_ReqRecvStatus() far2l_Status {
@@ -113,16 +142,14 @@ func far2l_ReqRecvStatus() far2l_Status {
 }
 
 func far2l_RecvStatus() far2l_Status {
-	n, addr, err := g_socket.ReadFromUnix(g_buf[:])
-    if err != nil || n != 2068 {
-        panic(err)
-    }
-	g_addr = addr
-
+	far2l_ReadSocket(2068, 0)
+	g_status.Title = stringFromBytes(g_buf[20:])
+	g_status.CurH = g_buf[2]
+	g_status.CurV = g_buf[3] != 0
+	g_status.CurX = binary.LittleEndian.Uint32(g_buf[4:])
+	g_status.CurY = binary.LittleEndian.Uint32(g_buf[8:])
 	g_status.Width = binary.LittleEndian.Uint32(g_buf[12:])
 	g_status.Height = binary.LittleEndian.Uint32(g_buf[16:])
-	g_status.Title = stringFromBytes(g_buf[20:])
-//	fmt.Println("addr:", g_addr, "width:", g_status.Width, "height:", g_status.Height, "title:", g_status.Title)
 	return g_status
 }
 
@@ -164,10 +191,7 @@ func far2l_ReqRecvExpectStrings(str_vec []string, x uint32, y uint32, w uint32, 
 	if err != nil || n != 24 + 2048 {
 		panic(err)
 	}
-	n, err = g_socket.Read(g_buf[:])
-    if err != nil || n != 12 {
-        panic(err)
-    }
+	far2l_ReadSocket(12, tmout / 1000)
 	out := far2l_FoundString {
 		I: binary.LittleEndian.Uint32(g_buf[0:]),
 		X: binary.LittleEndian.Uint32(g_buf[4:]),
@@ -198,10 +222,7 @@ func far2l_ReqRecvReadCellRaw(x uint32, y uint32) far2l_CellRaw {
 	if err != nil || n != 12 {
 		panic(err)
 	}
-	n, err = g_socket.Read(g_buf[:])
-    if err != nil || n != 2056 {
-        panic(err)
-    }
+	far2l_ReadSocket(2056, 0)
 	return far2l_CellRaw {
 		Text: stringFromBytes(g_buf[8:]),
 		Attributes: binary.LittleEndian.Uint64(g_buf[0:]),
@@ -230,6 +251,19 @@ func far2l_ReqRecvReadCell(x uint32, y uint32) far2l_Cell {
 		Underscore:   (raw_cell.Attributes & 0x8000) != 0,
 		Strikeout:    (raw_cell.Attributes & 0x2000) != 0,
 	}
+}
+
+func far2l_CheckBoundedLineOrDie(expected string, left uint32, top uint32, width uint32, trim_chars string) string {
+	line:= far2l_BoundedLine(left, top, width, trim_chars)
+	if line != expected {
+		panic(fmt.Sprintf("Line at [%d +%d : %d] not expected: '%v'", left, width, top, line))
+	}
+	return line
+}
+
+func far2l_BoundedLine(left uint32, top uint32, width uint32, trim_chars string) string {
+	lines:= far2l_BoundedLines(left, top, width, 1, trim_chars)
+	return lines[0]
 }
 
 func far2l_BoundedLines(left uint32, top uint32, width uint32, height uint32, trim_chars string) []string {
@@ -322,7 +356,7 @@ func log_Info(message string) {
 }
 
 func log_Fatal(message string) {
-	log.Fatal(message)
+	panic(message)
 }
 
 func tty_Write(s string) {
@@ -447,6 +481,22 @@ func aux_Sleep(msec uint32) {
 	time.Sleep(time.Duration(msec) * time.Millisecond)
 }
 
+func aux_WorkDir() string {
+	return g_workdir
+}
+
+func aux_MkdirsAll(pathes []string, perm os.FileMode) error {
+	var out error = nil
+	for _, path := range pathes {
+		err:= os.MkdirAll(path, perm)
+		if err != nil {
+			log.Printf("MkdirsAll: error %v creating %v", err, path)
+			out = err
+		}
+	}
+	return out
+}
+
 func initVM() {
 	/* initialize */
 	fmt.Println("Initializing JS VM...")
@@ -462,7 +512,10 @@ func initVM() {
 	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
 	setVMFunction("CheckCellChar", far2l_CheckCellChar)
 	setVMFunction("CheckCellCharOrDie", far2l_CheckCellCharOrDie)
+	
 	setVMFunction("BoundedLines", far2l_BoundedLines)
+	setVMFunction("BoundedLine", far2l_BoundedLine)
+	setVMFunction("CheckBoundedLineOrDie", far2l_CheckBoundedLineOrDie)
 	setVMFunction("SurroundedLines", far2l_SurroundedLines)
 
 	setVMFunction("ExpectStrings", far2l_ReqRecvExpectStrings)
@@ -512,6 +565,25 @@ func initVM() {
 	setVMFunction("RunCmd", aux_RunCmd)
 	setVMFunction("RunCmdOrDie", aux_RunCmdOrDie)
 	setVMFunction("Sleep", aux_Sleep)
+
+	setVMFunction("Chmod", os.Chmod)
+	setVMFunction("Chown", os.Chown)
+	setVMFunction("Chtimes", os.Chtimes)
+	setVMFunction("Mkdir", os.Mkdir)
+	setVMFunction("MkdirAll", os.MkdirAll)
+	setVMFunction("MkdirTemp", os.MkdirTemp)
+	setVMFunction("Remove", os.Remove)
+	setVMFunction("RemoveAll", os.RemoveAll)
+	setVMFunction("Rename", os.Rename)
+	setVMFunction("ReadFile", os.ReadFile)
+	setVMFunction("WriteFile", os.WriteFile)
+	setVMFunction("Truncate", os.Truncate)
+	setVMFunction("ReadDir", os.ReadDir)
+	setVMFunction("Symlink", os.Symlink)
+	setVMFunction("Readlink", os.Readlink)
+
+	setVMFunction("WorkDir", aux_WorkDir)
+	setVMFunction("MkdirsAll", aux_MkdirsAll)
 }
 
 func setVMFunction(name string, value interface{}) {
@@ -523,17 +595,29 @@ func setVMFunction(name string, value interface{}) {
 
 func main() {
 	var err error
-	if len(os.Args) < 4 {
-		log.Fatal("Usage: far2l-smoke /path/to/far2l /path/to/results/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
+	arg_ofs:= 1
+	for ;arg_ofs < len(os.Args); arg_ofs++ {
+		if os.Args[arg_ofs] == "-t" && arg_ofs + 1 < len(os.Args) {
+			arg_ofs++
+			v, err := strconv.Atoi(os.Args[arg_ofs])
+			if err != nil || v < 0 { panic("timeout must be positive integer value") }
+			g_recv_timeout = uint32(v)
+		} else {
+			break
+		}
 	}
-	g_far2l_sock, err = filepath.Abs(filepath.Join(os.Args[2], "far2l.sock"))
-    if err != nil {
-        log.Fatal(err)
-    }
-	g_far2l_log, err = filepath.Abs(filepath.Join(os.Args[2], "far2l.log"))
-    if err != nil {
-        log.Fatal(err)
-    }
+
+	if len(os.Args) < arg_ofs + 3 {
+		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/work/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
+	}
+
+	g_workdir, err = filepath.Abs(os.Args[arg_ofs + 1])
+	if err != nil { log.Fatal(err) }
+
+	g_far2l_sock = filepath.Join(g_workdir, "far2l.sock")
+	g_far2l_log = filepath.Join(g_workdir, "far2l.log")
+	g_far2l_snapshot = filepath.Join(g_workdir, "snapshot.log")
+
 	os.Remove(g_far2l_sock)
 	defer os.Remove(g_far2l_sock)
 
@@ -544,19 +628,30 @@ func main() {
 
 	initVM()
 
-	g_far2l_bin, err = filepath.Abs(os.Args[1])
+	g_far2l_bin, err = filepath.Abs(os.Args[arg_ofs])
     if err != nil {
         log.Fatal(err)
     }
 
-	for i := 3; i < len(os.Args); i++ {
+	for i := arg_ofs + 2; i < len(os.Args); i++ {
 		fmt.Println("---> Running test:", os.Args[i])
 		runTest(os.Args[i])
 	}
 }
 
+func saveSnapshotOnExit() {
+	if g_app != nil {
+		f, err := os.Create(g_far2l_snapshot)
+		if err == nil {
+			f.WriteString(g_app.Snapshot())
+		}
+	}
+}
+
 func runTest(file string) {
 	defer far2l_Close()
+	defer saveSnapshotOnExit()
+
 	g_lctrl = false
 	g_rctrl = false
 	g_lalt = false

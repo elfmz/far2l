@@ -954,7 +954,30 @@ static bool PickColor256DialogInner(uint32_t *color, bool bCentered)
 	}
 
 	Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), PickColorRGBDlgProc, (LONG_PTR)&colorState);
-	Dlg.SetPosition(-1, -1, 74, 27);
+
+	int dialog_sizex = 74;
+	int dialog_sizey = 27;
+	int dialog_posx = 0;
+	int dialog_posy = 0;
+
+	if (ScrX <= dialog_sizex)
+		dialog_posx = 0;
+	else
+		dialog_posx = (ScrX - dialog_sizex) >> 1;
+
+	if (ScrY <= dialog_sizey)
+		dialog_posy = 0;
+	else
+		dialog_posy = (ScrY - dialog_sizey) >> 1;
+
+	if (!bCentered) {
+		if (dialog_posy > 7 )
+			dialog_posy -= 7;
+		else
+			dialog_posy = 0;
+	}
+
+	Dlg.SetPosition(dialog_posx, dialog_posy, dialog_posx + dialog_sizex - 1, dialog_posy + dialog_sizey - 1);
 
 	Dlg.Process();
 	int ExitCode = Dlg.GetExitCode();

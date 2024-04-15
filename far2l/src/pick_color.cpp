@@ -491,7 +491,7 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 		if (Msg == DN_BTNCLICK) {
 			uint32_t index256 = color;
 
-			if (!GetPickColorDialog256(&index256))
+			if (!GetPickColorDialog256(&index256, false))
 				break;
 
 			if (index256 < 16) {
@@ -510,7 +510,7 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 		if (Msg == DN_BTNCLICK) {
 			uint32_t newrgb = (uint32_t)color;
 
-			if (!GetPickColorDialogRGB(&newrgb))
+			if (!GetPickColorDialogRGB(&newrgb, false))
 				break;
 
 			color = newrgb;
@@ -839,7 +839,17 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool
 	}
 
 	Dialog Dlg(ColorDlg, ARRAYSIZE(ColorDlg), GetColorDlgProc, (LONG_PTR)&colorState);
-	Dlg.SetPosition(-1, -1, 50 + extrasize, 20);
+
+	int dialogsizex = 50 + extrasize;
+	int dialogsizey = 20;
+
+//	if (dialogsizey > ScrY
+ ///ScrX
+
+	if (bCentered)
+		Dlg.SetPosition(-1, -1, dialogsizex, dialogsizey);
+	else
+		Dlg.SetPosition(37, 2, 37 + dialogsizex - 1, 2 + dialogsizey - 1);
 
 	for (size_t i = ID_ST_FG_COLORS_RECT; i <= ID_ST_FRGB_PREFIX; i++)
 		Dlg.SetAutomation(ID_ST_CHECKBOX_FOREGROUND, i, DIF_HIDDEN, DIF_NONE, DIF_NONE, DIF_HIDDEN);

@@ -434,7 +434,7 @@ void GetColor(int PaletteIndex)
 	ChangeMacroMode chgMacroMode(MACRO_MENU);
 	uint16_t NewColor = Palette[PaletteIndex - COL_FIRSTPALETTECOLOR];
 
-	if (GetColorDialog16(&NewColor)) {
+	if (GetColorDialog16(&NewColor, false)) {
 		Palette[PaletteIndex - COL_FIRSTPALETTECOLOR] = static_cast<uint16_t>(NewColor);
 		ScrBuf.Lock();	// отменяем всякую прорисовку
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

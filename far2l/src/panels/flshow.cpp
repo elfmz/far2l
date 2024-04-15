@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "filelist.hpp"
 #include "colors.hpp"
+#include "palette.hpp"
 #include "lang.hpp"
 #include "filefilter.hpp"
 #include "cmdline.hpp"
@@ -401,7 +402,7 @@ void FileList::ShowFileList(int Fast)
 
 DWORD64 FileList::GetShowColor(int Position, int ColorType)
 {
-	DWORD64 ColorAttr = COL_PANELTEXT;
+	DWORD64 ColorAttr = FarColorToReal(COL_PANELTEXT);
 	const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
 
 	if (Position >= 0 && Position < ListData.Count()) {
@@ -417,15 +418,16 @@ DWORD64 FileList::GetShowColor(int Position, int ColorType)
 		ColorAttr = ListData[Position]->ColorsPtr->Color[ColorType][Pos];
 
 		if (!ColorAttr || !Opt.Highlight)
-			ColorAttr = FarColor[Pos];
+			ColorAttr = FarColorToReal(FarColor[Pos]);
 	}
 
+//	return (4 << 4) + 15;
 	return ColorAttr;
 }
 
 void FileList::SetShowColor(int Position, int ColorType)
 {
-	SetColor(GetShowColor(Position, ColorType));
+	SetColor64(GetShowColor(Position, ColorType));
 }
 
 void FileList::ShowSelectedSize()
@@ -944,7 +946,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 								Text(ListData[ListPos]->Selected ? L"\x221A " : L"  ");
 								Width-= 2;
 							}
-
+#if 1
 							{ // Draw mark str
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
 								if ( Opt.Highlight && Width > 2 && hl->MarkLen ) {
@@ -956,13 +958,13 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 									Width -= ng;
 
 									if (!ShowStatus)
-										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKCHAR);
+										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKSTR);
 
 									Text(hl->Mark, outlen);
-									SetColor(OldColor);
+									SetColor64(OldColor);
 								}
 							}
-
+#endif
 							const wchar_t *NamePtr = ListData[ListPos]->strName;
 							const wchar_t *NameCopy = NamePtr;
 

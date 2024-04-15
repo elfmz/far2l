@@ -231,10 +231,10 @@ void TTYBackend::ReaderThread()
 			}
 
 		} else {
-            if ((_nodetect & NODETECT_X)==0) {
+			if ((_nodetect & NODETECT_X)==0) {
 
 				// disable xi on Wayland as it not work there anyway and also causes delays
-                _ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
+				_ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {

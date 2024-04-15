@@ -58,6 +58,9 @@ src/RefreshFrameManager.cpp
 src/scantree.cpp
 src/setattr.cpp
 src/setcolor.cpp
+src/pick_color.cpp
+src/pick_color256.cpp
+src/pick_colorRGB.cpp
 src/stddlg.cpp
 src/synchro.cpp
 src/syslog.cpp

@@ -351,7 +351,8 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 			}
 
 			Dlg.SetDialogMode(DMODE_MSGINTERNAL);
-			FlushInputBuffer();
+			if (!WinPortTesting())
+				FlushInputBuffer();
 
 			if (Flags & MSG_KILLSAVESCREEN)
 				SendDlgMessage((HANDLE)&Dlg, DM_KILLSAVESCREEN, 0, 0);

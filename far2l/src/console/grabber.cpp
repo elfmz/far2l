@@ -468,7 +468,8 @@ bool Grabber::Run()
 		s_in_grabber = true;
 		try {
 			WaitInMainLoop = FALSE;
-			FlushInputBuffer();
+			if (!WinPortTesting())
+				FlushInputBuffer();
 			Grabber().Process();
 			out = true;
 

@@ -363,15 +363,22 @@ void set_color_s::draw_sample_vbuff(void)
 		size_t defcolorlen = wcslen(Msg::SetColorDefaultColor);
 		const uint64_t attr = 15;
 
+		if (blackonblacklen > 33)
+			blackonblacklen = 33;
+		if (defcolorlen > 33)
+			defcolorlen = 33;
+
 		for (size_t g = 0; g < 4 * 33  ; g++) {
 			samplevbuff[g].Char.UnicodeChar = 32;
 			samplevbuff[g].Attributes = attr;
 		}
-		for (size_t g = 0; g < std::min(33ul, blackonblacklen) ; g++) {
+
+		for (size_t g = 0; g < blackonblacklen; g++) {
 			samplevbuff[g].Char.UnicodeChar = Msg::SetColorBlackOnBlack[g];
 			samplevbuff[g].Attributes = attr;
 		}
-		for (size_t g = 0; g < std::min(33ul, defcolorlen) ; g++) {
+
+		for (size_t g = 0; g < defcolorlen; g++) {
 			samplevbuff[g + 33].Char.UnicodeChar = Msg::SetColorDefaultColor[g];
 			samplevbuff[g + 33].Attributes = attr;
 		}

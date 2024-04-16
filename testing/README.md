@@ -1,7 +1,7 @@
 ## How to run tests
 To run tests execute ./far2l-smoke-run.sh with argument - path to far2l which was built by cmake configured with -DTESTING=Yes  
 Example: `./far2l-smoke-run.sh ../../far2l.build/install/far2l`  
-Note: if provided far2l built without testing support this will stuck for a while a fail then.
+Note: if provided far2l is built without testing support this will stuck for a while and fail then.
 
 ## How to write tests
 Actual tests written in JS and located under tests directory. They can use predefined functions described below to perform some actions.  
@@ -22,7 +22,7 @@ Note that by default many functions that perform validations, like `ExpectString
 ---------------------------------------------------------
 
 `BePanic()`  
-In case of logical problem in subsequent functions - abort exectution.  
+In case of logical problem in subsequent functions - abort tests execution.  
 This is default mode.
 
 `BeCalm()`  
@@ -134,13 +134,13 @@ Returns result as structure of following fields, that defines index of found str
 
 `ExpectNoString("string", x, y, w, h, timeout_ms)`  
 `ExpectNoStrings(["string 1", "string 2" ...], x, y, w, h, timeout_ms)`  
-'Inverted' versions of ExpectString/ExpectStrings that wait for when string will NO NOT appear in provided rectangular area
+'Inverted' versions of ExpectString/ExpectStrings that wait until string(s) will NO NOT appear in provided rectangular area
 
 ---------------------------------------------------------
 
 `ExpectAppExit(code, timeout_ms) string`  
-Expects that far2l will exit with specified exit code withing given milliseconds of timeout.  
-Aborts execution if app not exited due given timeout or exited with wrong code (unless in calm mode).
+Expects that far2l will exit with specified exit code within given milliseconds of timeout.  
+Aborts execution if app not exited during timeout or exited with wrong code (unless in calm mode).
 
 ---------------------------------------------------------
 
@@ -237,7 +237,7 @@ Return true if something exists under specified path
 ---------------------------------------------------------
 
 `CountExisting(pathes []string) int`  
-Return count of existing files from specified pathes list list
+Return count of existing files from specified pathes list
 
 ---------------------------------------------------------
 

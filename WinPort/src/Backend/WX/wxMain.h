@@ -128,6 +128,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void OnConsoleChangeFontSync(wxCommandEvent& event);
 	void OnConsoleSaveWindowStateSync(wxCommandEvent& event);
 	void OnConsoleExitSync( wxCommandEvent& event );
+	void OnConsoleSetCursorBlinkTimeSync(wxCommandEvent& event);
 	void OnIdle( wxIdleEvent& event );
 	void OnKeyDown( wxKeyEvent& event );
 	void OnKeyUp( wxKeyEvent& event );

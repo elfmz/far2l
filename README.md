@@ -22,7 +22,33 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * 7z ANSI-C Decoder
 * utf-cpp by ww898
 
-## Contributing, Hacking
+
+## Installing, Running
+#### Debian/Ubuntu binaries
+
+```sh
+apt-get install far2l
+```
+
+#### OSX/MacOS binaries
+
+You can install prebuilt package for x86_64 platform via Homebrew Cask, by command:
+```sh
+brew install --cask far2l
+```
+
+You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
+
+#### Docker
+
+You can use containers to try `far2l` without installing anything.
+```sh
+docker build . -l far2l
+docker run -it far2l
+```
+
+
+## Building, Contributing, Hacking
 #### Required dependencies
 
 * libwxgtk3.0-gtk3-dev (or libwxgtk3.2-dev in newer distributions, or libwxgtk3.0-dev in older ones, optional - needed for GUI backend, not needed with -DUSEWX=no)
@@ -48,13 +74,8 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
-On Debian unstable/sid:
-
-`apt-get install far2l`
-
 A simple sid back port should be as easy as (build your own binary deb from the official source deb package):
-
-```
+```sh
 # you will find the latest dsc link at http://packages.debian.org/sid/far2l
 dget http://deb.debian.org/debian/pool/main/f/far2l/far2l_2.5.0~beta+git20230223+ds-2.dsc
 dpkg-source -x *.dsc
@@ -66,12 +87,16 @@ debuild
 In older distributions: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
 
 #### Clone and Build
- * Clone current master `git clone https://github.com/elfmz/far2l`
+ * Clone current master
+```sh
+git clone https://github.com/elfmz/far2l
+cd far2l
+```
  * Checkout some stable release tag (master considered unstable): `git checkout v_2.#.#`
  * Prepare build directory:
-``` sh
-mkdir -p far2l/_build
-cd far2l/_build
+```sh
+mkdir -p _build
+cd _build
 ```
 
  * Build:
@@ -107,14 +132,10 @@ To control how RAR archives will be handled in multiarc:
 
 There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
 
-#### OSX/MacOS install
+#### OSX/MacOS build
 
- * You can install prebuilt package for x86_64 platform via Homebrew Cask, by command:
- ```sh
- brew install --cask far2l
- ```
- * You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
- * But if you need custom/recent build, you can proceed to build steps below: using brew or MacPorts.
+To make custom/recent build use brew or MacPorts.
+
  * Supported compiler: `AppleClang 8.0.0.x` or newer. Check your version, and install/update Xcode if necessary.
  ```sh
  clang++ -v

@@ -278,6 +278,7 @@ wxDEFINE_EVENT(WX_CONSOLE_ADHOC_QEDIT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SET_TWEAKS, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_CHANGE_FONT, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_SAVE_WIN_STATE, wxCommandEvent);
+wxDEFINE_EVENT(WX_CONSOLE_SET_CURSOR_BLINK_TIME, wxCommandEvent);
 wxDEFINE_EVENT(WX_CONSOLE_EXIT, wxCommandEvent);
 
 
@@ -546,6 +547,7 @@ wxBEGIN_EVENT_TABLE(WinPortPanel, wxPanel)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_ADHOC_QEDIT, WinPortPanel::OnConsoleAdhocQuickEditSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_TWEAKS, WinPortPanel::OnConsoleSetTweaksSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_CHANGE_FONT, WinPortPanel::OnConsoleChangeFontSync)
+	EVT_COMMAND(wxID_ANY, WX_CONSOLE_SET_CURSOR_BLINK_TIME, WinPortPanel::OnConsoleSetCursorBlinkTimeSync)
 	EVT_COMMAND(wxID_ANY, WX_CONSOLE_EXIT, WinPortPanel::OnConsoleExitSync)
 
 	EVT_IDLE(WinPortPanel::OnIdle)
@@ -1732,8 +1734,10 @@ void WinPortPanel::OnConsoleExit()
 		wxQueueEvent(this, event);
 }
 
-void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
+void WinPortPanel::OnConsoleSetCursorBlinkTimeSync( wxCommandEvent& event )
 {
+	EventWithDWORD64 *e = (EventWithDWORD64 *)&event;
+	DWORD interval = e->cookie;
 	if (interval < 100 )
 		g_TIMER_PERIOD = 100;
 	else if (interval > 500 )
@@ -1745,6 +1749,13 @@ void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
 
 	_periodic_timer->Stop();
 	_periodic_timer->Start(g_TIMER_PERIOD);
+}
+
+void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
+{
+	EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(interval, WX_CONSOLE_SET_CURSOR_BLINK_TIME);
+	if (event)
+		wxQueueEvent(this, event);
 }
 
 void WinPortPanel::CheckPutText2CLip()

@@ -1,3 +1,7 @@
+cmake
+g++
+pkg-config
+
 libwxgtk3.0-gtk3-dev
 libx11-dev
 libxi-dev

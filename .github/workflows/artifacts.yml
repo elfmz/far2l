@@ -25,39 +25,34 @@ jobs:
       run: sudo apt-get update ; sudo apt-get -y install $(cat dependencies${{ matrix.dependencies }}.txt)
 
     - name: Create Build Environment
-      # Some projects don't allow in-source building, so create a separate build directory
-      # We'll use this as our working directory for all subsequent commands
-      run: cmake -E make_directory ${{github.workspace}}/build
+      # Create a separate build directory as working directory for all subsequent commands
+      run: mkdir -p _build
 
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
       shell: bash
-      working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE ${{ matrix.options }}
+      # -S and -B options specify source and build directories
+      run: cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE ${{ matrix.options }}
 
     - name: Build
-      working-directory: ${{github.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE
+      run: |
+        cmake --build _build --config $BUILD_TYPE
 
     - name: File Tree
-      working-directory: ${{github.workspace}}/build
       shell: bash
-      run: tree
+      run: tree _build
 
     - name: Packing Artifact
       uses: actions/upload-artifact@v4
       with:
         name: far2l-release${{ matrix.dependencies }}
-        path: ${{github.workspace}}/build/install
+        path: _build/install
 
     - name: Test
-      working-directory: ${{github.workspace}}/build
+      working-directory: _build
       shell: bash
       # Execute tests defined by the CMake configuration.  
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail

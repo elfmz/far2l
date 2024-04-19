@@ -3765,6 +3765,17 @@ upd:"Always copy target &file"
 "Копіювати як &файл"
 "Капіяваць як &файл"
 
+LinkCopyMoveExplainText
+" (умно && как файл: всегда каталоги медленно, пофайлово)"
+" (smartly && target: always process dirs slowly by each file)"
+upd:" (smartly && target: always process dirs slowly by each file)"
+upd:" (smartly && target: always process dirs slowly by each file)"
+upd:" (smartly && target: always process dirs slowly by each file)"
+upd:" (smartly && target: always process dirs slowly by each file)"
+upd:" (smartly && target: always process dirs slowly by each file)"
+upd:" (розумно && як файл: завжди каталоги повільно, пофайлово)"
+upd:" (разумна && як файл: заўсёды каталогі павольна, пафайлава)"
+
 CopySparseFiles
 "Создавать &разреженные файлы"
 "Produce &sparse files"

@@ -69,12 +69,12 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   return out;
 }
 
-SString *PathToFullS(const wchar_t *path, bool unc)
+UnicodeString *PathToFullS(const wchar_t *path, bool unc)
 {
-  SString *spath=nullptr;
+  UnicodeString *spath=nullptr;
   wchar_t *t=PathToFull(path,unc);
   if (t){
-    spath=new StringBuffer(t);
+    spath=new UnicodeString(t);
   }
   delete[] t;
   return spath;

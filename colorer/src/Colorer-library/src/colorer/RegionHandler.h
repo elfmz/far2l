@@ -1,8 +1,8 @@
 #ifndef _COLORER_REGIONHANDLER_H_
 #define _COLORER_REGIONHANDLER_H_
 
-#include <colorer/Region.h>
-#include <colorer/Scheme.h>
+#include "colorer/Region.h"
+#include "colorer/Scheme.h"
 
 /** Handles parse information, passed from TextParser.
     TextParser class generates calls of this class methods
@@ -17,7 +17,7 @@
 */
 class RegionHandler
 {
-public:
+ public:
   /** Start of text parsing.
       Called only once, when TextParser starts
       parsing of the specified block of text.
@@ -25,14 +25,14 @@ public:
       endParsing call.
       @param lno Start line number
   */
-  virtual void startParsing(size_t lno) {}
+  virtual void startParsing(size_t /*lno*/) {}
 
   /** End of text parsing.
       Called only once, when TextParser stops
       parsing of the specified block of text.
       @param lno End line number
   */
-  virtual void endParsing(size_t lno) {}
+  virtual void endParsing(size_t /*lno*/) {}
 
   /** Clear line event.
       Called once for each parsed text line, when TextParser starts to parse
@@ -41,10 +41,10 @@ public:
       structure of this line before adding new one.
       @param lno Line number
   */
-  virtual void clearLine(size_t lno, String* line) {}
+  virtual void clearLine(size_t /*lno*/, UnicodeString* /*line*/) {}
 
   /** Informs handler about lexical region in line.
-      This is a basic method, wich transfer information from
+      This is a basic method, which transfer information from
       parser to application. Positions of different passed regions
       can be overlapped.
       @param lno Current line number
@@ -52,7 +52,7 @@ public:
       @param ex End X position of region in line
       @param region Region information
   */
-  virtual void addRegion(size_t lno, String* line, int sx, int ex, const Region* region) = 0;
+  virtual void addRegion(size_t lno, UnicodeString* line, int sx, int ex, const Region* region) = 0;
 
   /** Informs handler about entering into specified scheme.
       Parameter <code>region</code> is used to specify
@@ -65,13 +65,13 @@ public:
       @param region Scheme Region information (background)
       @param scheme Additional Scheme information
   */
-  virtual void enterScheme(size_t lno, String* line, int sx, int ex, const Region* region, const Scheme* scheme) = 0;
+  virtual void enterScheme(size_t lno, UnicodeString* line, int sx, int ex, const Region* region, const Scheme* scheme) = 0;
 
-  /** Informs handler about leaveing specified scheme.
+  /** Informs handler about leaving specified scheme.
       Parameter <code>region</code> is used to specify
       scheme background region information.
       If text parse process ends, but current schemes stack is not balanced
-      (this can happends because of bad balanced structure of source text,
+      (this can happens because of bad balanced structure of source text,
       or partial text parse) this method is <b>not</b> called for unbalanced
       levels.
       @param lno Current line number
@@ -80,13 +80,16 @@ public:
       @param region Scheme Region information (background)
       @param scheme Additional Scheme information
   */
-  virtual void leaveScheme(size_t lno, String* line, int sx, int ex, const Region* region, const Scheme* scheme) = 0;
+  virtual void leaveScheme(size_t lno, UnicodeString* line, int sx, int ex, const Region* region, const Scheme* scheme) = 0;
 
-protected:
-  RegionHandler() {}
-  virtual ~RegionHandler() {}
+  virtual ~RegionHandler() = default;
+  RegionHandler(RegionHandler&&) = delete;
+  RegionHandler(const RegionHandler&) = delete;
+  RegionHandler& operator=(const RegionHandler&) = delete;
+  RegionHandler& operator=(RegionHandler&&) = delete;
+
+ protected:
+  RegionHandler() = default;
 };
 
 #endif
-
-

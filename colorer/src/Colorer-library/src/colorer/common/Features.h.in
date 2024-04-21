@@ -1,0 +1,21 @@
+#ifndef COLORER_FEATURES_H
+#define COLORER_FEATURES_H
+
+#cmakedefine COLORER_USE_DEEPTRACE
+
+/**
+  If defined, JAR InputSource is implemented.
+*/
+#cmakedefine COLORER_FEATURE_ZIPINPUTSOURCE
+
+/**
+  If defined, dummy logger is used.
+*/
+#cmakedefine COLORER_FEATURE_DUMMYLOGGER
+
+/**
+  If defined, ICU strings is used.
+*/
+#cmakedefine COLORER_FEATURE_ICU
+
+#endif // COLORER_FEATURES_H

@@ -1,11 +1,11 @@
 #ifndef _COLORER_LINEREGION_H_
 #define _COLORER_LINEREGION_H_
 
-#include <colorer/handlers/RegionDefine.h>
-#include <colorer/handlers/StyledRegion.h>
-#include <colorer/handlers/TextRegion.h>
-#include <colorer/Region.h>
-#include <colorer/Scheme.h>
+#include "colorer/Scheme.h"
+#include "colorer/handlers/RegionDefine.h"
+#include "colorer/handlers/StyledRegion.h"
+#include "colorer/handlers/TextRegion.h"
+#include "colorer/Region.h"
 
 /** Defines region position properties.
     These properties are created dynamically during text parsing
@@ -15,25 +15,32 @@
 */
 class LineRegion
 {
-public:
+ public:
   /** Reference to HRC region, which identifies type of this range */
   const Region* region;
+
   /** Reference to RegionDefine class (it's subclass).
       This reference can contain concrete information about region
       extended properties.
       Can be null, if no region mapping were defined.
   */
   RegionDefine* rdef;
+
   /** Start and End position of region in line */
-  int start, end;
+  int start;
+  int end;
+
   /** Reference to region's HRC scheme */
   const Scheme* scheme;
+
   /** Previous and next links to ranged region in this line.
       First region of each line contains reference to it's last
       region in prev field.
       If @c next field is null, this is a last region in line.
   */
-  LineRegion* next, *prev;
+  LineRegion *next;
+  LineRegion *prev;
+
   /** Special meaning marker. Generally this is used to inform
       application about paired regions, which are invisible during
       ordinary text drawing.
@@ -43,57 +50,27 @@ public:
   /** Transforms this region's reference into styled region define
       and returns new pointer.
   */
-  const StyledRegion* styled()
-  {
-    return StyledRegion::cast(rdef);
-  }
+  const StyledRegion* styled();
+
   /** Transforms this region's reference into text region define
       and returns new pointer.
   */
-  const TextRegion* texted()
-  {
-    return TextRegion::cast(rdef);
-  }
+  const TextRegion* texted();
+
   /** Copy operator */
-  LineRegion& operator=(const LineRegion& lr)
-  {
-    start = lr.start;
-    end   = lr.end;
-    scheme = lr.scheme;
-    region = lr.region;
-    special = lr.special;
-    rdef = nullptr;
-    if (lr.rdef != nullptr) {
-      rdef = lr.rdef->clone();
-    }
-    return *this;
-  }
+  LineRegion& operator=(const LineRegion& lr);
+
   /** Clears all fields */
-  LineRegion()
-  {
-    next = prev = nullptr;
-    start = end = 0;
-    scheme = nullptr;
-    region = nullptr;
-    rdef = nullptr;
-    special = false;
-  }
+  LineRegion();
+
   /** Copy constructor.
       Do not copies next and prev pointers.
   */
-  LineRegion(const LineRegion& lr)
-  {
-    //_next = lr._next;
-    //_prev = lr._prev;
-    operator=(lr);
-  }
-  ~LineRegion()
-  {
-    delete rdef;
-  }
+  LineRegion(const LineRegion& lr);
+
+  ~LineRegion();
+
+  void assigment(const LineRegion& lr);
 };
 
 #endif
-
-
-

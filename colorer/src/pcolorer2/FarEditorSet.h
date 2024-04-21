@@ -12,12 +12,10 @@
 #if 0
 #include<common/Logging.h>
 #endif // if 0
-#include<colorer/unicode/Encodings.h>
 
 #include "pcolorer.h"
 #include "tools.h"
 #include "FarEditor.h"
-#include "FarHrcSettings.h"
 #include "ChooseTypeMenu.h"
 
 //registry keys
@@ -48,10 +46,10 @@ extern const bool cChangeBgEditor;
 extern const wchar_t cUserHrdPathDefault[];
 extern const wchar_t cUserHrcPathDefault[];
 
-extern const SString DConsole;
-extern const SString DRgb;
-extern const SString Ddefault;
-extern const SString DAutodetect;
+extern const UnicodeString DConsole;
+extern const UnicodeString DRgb;
+extern const UnicodeString Ddefault;
+extern const UnicodeString DAutodetect;
 
 enum
 { IDX_BOX, IDX_ENABLED, IDX_CROSS, IDX_PAIRS, IDX_SYNTAX, IDX_OLDOUTLINE,IDX_CHANGE_BG,
@@ -84,7 +82,7 @@ public:
   /** Shows plugin's configuration dialog */
   void configure(bool fromEditor);
   /** Views current file with internal viewer */
-  void viewFile(const String &path);
+  void viewFile(const UnicodeString &path);
 
   /** Dispatch editor event in the opened editor */
   int  editorEvent(int Event, void *Param);
@@ -92,9 +90,9 @@ public:
   int  editorInput(const INPUT_RECORD *ir);
 
   /** Get the description of HRD, or parameter name if description=null */
-  const String *getHRDescription(const String &name, SString _hrdClass);
+  const UnicodeString *getHRDescription(const UnicodeString &name, UnicodeString _hrdClass);
   /** Shows dialog with HRD scheme selection */
-  const String *chooseHRDName(const String *current, SString _hrdClass );
+  const UnicodeString *chooseHRDName(const UnicodeString *current, UnicodeString _hrdClass );
 
   /** Reads all registry settings into variables */
   void ReadSettings();
@@ -103,19 +101,19 @@ public:
   */
   enum HRC_MODE {HRCM_CONSOLE, HRCM_RGB, HRCM_BOTH};
   bool TestLoadBase(const wchar_t *catalogPath, const wchar_t *userHrdPath, const wchar_t *userHrcPath, const int full, const HRC_MODE hrc_mode);
-  SString *GetCatalogPath() {return sCatalogPath;}
-  SString *GetUserHrdPath() {return sUserHrdPath;}
+  UnicodeString *GetCatalogPath() {return sCatalogPath;}
+  UnicodeString *GetUserHrdPath() {return sUserHrdPath;}
   bool GetPluginStatus() {return rEnabled;}
 
   bool SetBgEditor();
   /**
     Stub method, because Colorer API changed.
   */
-  void LoadUserHrd(const String *filename, ParserFactory *pf);
-  void LoadUserHrc(const String *filename, ParserFactory *pf);
+  void LoadUserHrd(const UnicodeString *filename, ParserFactory *pf);
+  void LoadUserHrc(const UnicodeString *filename, ParserFactory *pf);
 
-  SString *sTempHrdName;
-  SString *sTempHrdNameTm;
+  UnicodeString *sTempHrdName;
+  UnicodeString *sTempHrdNameTm;
 
   /** Shows hrc configuration dialog */
   void configureHrc();
@@ -126,6 +124,7 @@ public:
   int menuid;
 
   bool checkConsoleAnnotationAvailable();
+  void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value);
 private:
 #if 0
   /** Returns current global error handler. */
@@ -167,27 +166,27 @@ private:
   bool consoleAnnotationAvailable;
 
   int getCountFileTypeAndGroup();
-  FileTypeImpl* getFileTypeByIndex(int idx);
+  FileType* getFileTypeByIndex(int idx);
   void FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType);
-  String* getCurrentFileName();
+  UnicodeString* getCurrentFileName();
 
   // FarList for dialog objects
   FarList *buildHrcList();
-  FarList *buildParamsList(FileTypeImpl *type);
+  FarList *buildParamsList(FileType *type);
   // filetype "default"
-  FileTypeImpl *defaultType;
+  FileType *defaultType;
   //change combobox type
   void ChangeParamValueListType(HANDLE hDlg, bool dropdownlist);
   //set list of values to combobox
-  void setCrossValueListToCombobox(FileTypeImpl *type,HANDLE hDlg);
-  void setCrossPosValueListToCombobox(FileTypeImpl *type,HANDLE hDlg);
-  void setYNListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, SString param);
-  void setTFListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, SString param);
-  void setCustomListValueToCombobox(FileTypeImpl *type,HANDLE hDlg, SString param);
+  void setCrossValueListToCombobox(FileType *type,HANDLE hDlg);
+  void setCrossPosValueListToCombobox(FileType *type,HANDLE hDlg);
+  void setYNListValueToCombobox(FileType *type,HANDLE hDlg, UnicodeString param);
+  void setTFListValueToCombobox(FileType *type,HANDLE hDlg, UnicodeString param);
+  void setCustomListValueToCombobox(FileType *type,HANDLE hDlg, UnicodeString param);
 
-  FileTypeImpl *getCurrentTypeInDialog(HANDLE hDlg);
+  FileType *getCurrentTypeInDialog(HANDLE hDlg);
 
-  const String *getParamDefValue(FileTypeImpl *type, SString param);
+  const UnicodeString *getParamDefValue(FileType *type, UnicodeString param);
 
   void SaveChangedValueParam(HANDLE hDlg);
 
@@ -196,12 +195,11 @@ private:
 #endif // if 0
   std::unordered_map<intptr_t, FarEditor*> farEditorInstances;
   ParserFactory *parserFactory;
-  RegionMapper *regionMapper;
-  HRCParser *hrcParser;
+  std::unique_ptr<StyledHRDMapper> regionMapper;
 
   /**current value*/
-  SString hrdClass;
-  SString hrdName;
+  UnicodeString hrdClass;
+  UnicodeString hrdName;
 
   /** registry settings */
   bool rEnabled; // status plugin
@@ -211,16 +209,16 @@ private:
   bool oldOutline;
   bool TrueModOn;
   bool ChangeBgEditor;
-  SString *sHrdName;
-  SString *sHrdNameTm;
-  SString *sCatalogPath;
-  SString *sUserHrdPath;
-  SString *sUserHrcPath;
+  UnicodeString *sHrdName;
+  UnicodeString *sHrdNameTm;
+  UnicodeString *sCatalogPath;
+  UnicodeString *sUserHrdPath;
+  UnicodeString *sUserHrcPath;
   
   /** UNC path */
-  SString *sCatalogPathExp;
-  SString *sUserHrdPathExp;
-  SString *sUserHrcPathExp;
+  UnicodeString *sCatalogPathExp;
+  UnicodeString *sUserHrdPathExp;
+  UnicodeString *sUserHrcPathExp;
 
   int viewFirst; // 0 - init;  1 - first run view; 2 - first run editor
   std::string settingsIni;

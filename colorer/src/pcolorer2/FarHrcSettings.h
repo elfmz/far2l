@@ -37,8 +37,8 @@ public:
 private:
   void UpdatePrototype(xercesc::DOMElement* elem, bool userValue);
 
-  ParserFactory *parserFactory;
   FarEditorSet* farEditorSet;
+  ParserFactory *parserFactory;
   std::string profileIni;
 
 };

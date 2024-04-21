@@ -141,7 +141,7 @@ void FarEditorSet::openMenu()
 
     FarEditor *editor = getCurrentEditor();
     if (!editor){
-      throw Exception(UnicodeString("Can't find current editor in array."));
+      throw Exception("Can't find current editor in array.");
     }
     int res = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE,
                         GetMsg(mName), nullptr, L"menu", nullptr, nullptr,
@@ -212,7 +212,7 @@ void FarEditorSet::viewFile(const UnicodeString &path)
   if (viewFirst==0) viewFirst=1;
   try{
     if (!rEnabled){
-      throw Exception(UnicodeString("Colorer is disabled"));
+      throw Exception("Colorer is disabled");
     }
 
     // Creates store of text lines
@@ -394,7 +394,11 @@ void FarEditorSet::chooseType()
 
     if (i>=0){
       if (BreakCode==0){
-        if (i!=0 && !menu.IsFavorite(i)) menu.MoveToFavorites(i);
+        if (i!=0 && !menu.IsFavorite(i)) {
+          auto f = menu.GetFileType(i);
+          menu.MoveToFavorites(i);
+          addParamAndValue(f, DFavorite, DTrue);
+        }
         else menu.SetSelected(i);
       }
       else
@@ -688,9 +692,9 @@ void FarEditorSet::configure(bool fromEditor)
       delete sUserHrcPath;
       sHrdName = sTempHrdName;
       sHrdNameTm = sTempHrdNameTm;
-      sCatalogPath = new UnicodeString(UnicodeString(fdi[IDX_CATALOG_EDIT].PtrData));
-      sUserHrdPath = new UnicodeString(UnicodeString(fdi[IDX_USERHRD_EDIT].PtrData));
-      sUserHrcPath = new UnicodeString(UnicodeString(fdi[IDX_USERHRC_EDIT].PtrData));
+      sCatalogPath = new UnicodeString(fdi[IDX_CATALOG_EDIT].PtrData);
+      sUserHrdPath = new UnicodeString(fdi[IDX_USERHRD_EDIT].PtrData);
+      sUserHrcPath = new UnicodeString(fdi[IDX_USERHRC_EDIT].PtrData);
 
       // if the plugin has been enable, and we will disable
       if (rEnabled && !fdi[IDX_ENABLED].Param.Selected){
@@ -967,7 +971,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
         UnicodeString tname;
 
         tname.append(type->getGroup());
-        tname.append(UnicodeString(": "));
+        tname.append(": ");
 
         tname.append(type->getDescription());
         marr[1] = tname.getWChars();
@@ -1041,14 +1045,14 @@ void FarEditorSet::ReloadBase()
 LOG(DEBUG) << "Parse catalog: " << sCatalogPathExp->getChars();
 #endif // if 0
     parserFactory->loadCatalog(sCatalogPathExp);
-    HrcLibrary& hrcParser = parserFactory->getHrcLibrary();
+    HrcLibrary& hrcLibrary = parserFactory->getHrcLibrary();
+    UnicodeString dsd("default");
+    defaultType = hrcLibrary.getFileType(dsd);
     LoadUserHrd(sUserHrdPathExp, parserFactory);
     LoadUserHrc(sUserHrcPathExp, parserFactory);
     FarHrcSettings p(this, parserFactory);
     p.readProfile();
     p.readUserProfile();
-    UnicodeString dsd("default");
-    defaultType= (FileType*)hrcParser.getFileType(&dsd);
 
     try{
       regionMapper = parserFactory->createStyledMapper(&hrdClass, &hrdName);
@@ -1266,18 +1270,18 @@ void FarEditorSet::ReadSettings()
   sUserHrcPath = nullptr;
   sUserHrcPathExp = nullptr;
 
-  sHrdName = new UnicodeString(UnicodeString(hrdName.c_str()));
-  sHrdNameTm = new UnicodeString(UnicodeString(hrdNameTm.c_str()));
-  sCatalogPath = new UnicodeString(UnicodeString(catalogPath.c_str()));
+  sHrdName = new UnicodeString(hrdName.c_str());
+  sHrdNameTm = new UnicodeString(hrdNameTm.c_str());
+  sCatalogPath = new UnicodeString(catalogPath.c_str());
   sCatalogPathExp = PathToFullS(catalogPath.c_str(),false);
   if (!sCatalogPathExp || !sCatalogPathExp->length()){
     delete sCatalogPathExp;
     sCatalogPathExp = GetConfigPath(UnicodeString(FarCatalogXml));
   }
 
-  sUserHrdPath = new UnicodeString(UnicodeString(userHrdPath.c_str()));
+  sUserHrdPath = new UnicodeString(userHrdPath.c_str());
   sUserHrdPathExp = PathToFullS(userHrdPath.c_str(),false);
-  sUserHrcPath = new UnicodeString(UnicodeString(userHrcPath.c_str()));
+  sUserHrcPath = new UnicodeString(userHrcPath.c_str());
   sUserHrcPathExp = PathToFullS(userHrcPath.c_str(),false);
 
   // two '!' disable "Compiler Warning (level 3) C4800" and slightly faster code
@@ -1424,7 +1428,7 @@ const UnicodeString *FarEditorSet::getParamDefValue(FileType *type, UnicodeStrin
   ASSERT_MSG(value != nullptr, "no value for '%ls'", param.getWChars());
   UnicodeString *p=new UnicodeString("<default-");
   p->append(*value);
-  p->append(UnicodeString(">"));
+  p->append(">");
   return p;
 }
 
@@ -1455,7 +1459,7 @@ FarList *FarEditorSet::buildHrcList()
     const wchar_t *groupChars = nullptr;
     UnicodeString tmp;
 
-    tmp.append(UnicodeString(group.getWChars()));
+    tmp.append(group);
     groupChars = tmp.getWChars();
 
     hrcList[i].Text = new wchar_t[256];

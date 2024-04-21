@@ -113,7 +113,6 @@ void ChooseTypeMenu::MoveToFavorites(size_t index)
   size_t k=AddFavorite(f);
   SetSelected(k);
   HideEmptyGroup();
-  f->setParamValue(DFavorite,&DTrue);
 }
 
 int ChooseTypeMenu::AddFavorite(const FileType* fType)
@@ -139,7 +138,6 @@ void ChooseTypeMenu::DelFromFavorites(size_t index)
   AddItemInGroup(f);
   if (Item[index].Flags&MIF_SEPARATOR)  SetSelected(GetNext(index));
   else  SetSelected(index);
-  delete f->getParamUserValue(DFavorite);
   f->setParamValue(DFavorite,&DFalse);
 }
 

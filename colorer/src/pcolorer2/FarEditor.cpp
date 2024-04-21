@@ -140,7 +140,7 @@ void FarEditor::reloadTypeSettings()
   FileType *def = hrcParser.getFileType(&ds);
 
   if (def == nullptr){
-    throw Exception(UnicodeString("No 'default' file type found"));
+    throw Exception("No 'default' file type found");
   }
 
   int backparse = def->getParamValueInt(DBackparse, 2000);
@@ -474,7 +474,7 @@ void FarEditor::locateFunction()
         OutlineItem *item = structOutliner->getItem(idx);
 
         if (item->token->indexOfIgnoreCase(UnicodeString(funcname)) != -1){
-          if (item->lno == ei.CurLine){
+          if (item->lno == (size_t) ei.CurLine){
             item_last = item;
           }
           else{
@@ -583,7 +583,7 @@ int FarEditor::editorEvent(int event, void *param)
   cursorRegion = nullptr;
 
   if (rdBackground == nullptr){
-    throw Exception(UnicodeString("HRD Background region 'def:Text' not found"));
+    throw Exception("HRD Background region 'def:Text' not found");
   }
 
   for (int lno = ei.TopScreenLine; lno < ei.TopScreenLine + WindowSizeY; lno++){
@@ -944,7 +944,7 @@ void FarEditor::showOutliner(Outliner *outliner)
         // set position on nearest top function
         menu[menu_size].Text = menuItem;
 
-        if (ei.CurLine >= item->lno){
+        if ((size_t) ei.CurLine >= item->lno){
           selectedItem = menu_size;
         }
 

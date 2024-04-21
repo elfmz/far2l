@@ -164,7 +164,7 @@ private:
   String *ret_str;
 #endif // if 0
   UnicodeString *ret_str;
-  int ret_strNumber;
+  size_t ret_strNumber;
 
   int newfore, newback;
   const StyledRegion *rdBackground;

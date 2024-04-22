@@ -177,13 +177,13 @@ UnicodeString* ChooseTypeMenu::GenerateName(const FileType* fType)
 {
   const UnicodeString *v;
   v=fType->getParamValue(DHotkey);
-  UnicodeString *s=new UnicodeString;
+  auto* s=new UnicodeString;
   if (v && v->length()){
-    s->append(UnicodeString("&")).append(*v);
+    s->append("&").append(*v);
   }else{
-    s->append(UnicodeString(" "));
+    s->append(" ");
   }
-  s->append(UnicodeString(" ")).append(fType->getDescription());
+  s->append(" ").append(fType->getDescription());
 
   return s;
 }

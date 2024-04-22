@@ -1456,18 +1456,12 @@ FarList *FarEditorSet::buildHrcList()
 
     group = type->getGroup();
 
-    const wchar_t *groupChars = nullptr;
-    UnicodeString tmp;
-
-    tmp.append(group);
-    groupChars = tmp.getWChars();
-
     hrcList[i].Text = new wchar_t[256];
-    swprintf((wchar_t*)hrcList[i].Text, 255, L"%ls: %ls", groupChars,
+    swprintf((wchar_t*)hrcList[i].Text, 255, L"%ls: %ls", group.getWChars(),
              type->getDescription().getWChars());
-  };
+  }
 
-  hrcList[0].Flags=LIF_SELECTED;
+  hrcList[1].Flags=LIF_SELECTED;
   FarList *ListItems = new FarList;
   ListItems->Items=hrcList;
   ListItems->ItemsNumber=num;

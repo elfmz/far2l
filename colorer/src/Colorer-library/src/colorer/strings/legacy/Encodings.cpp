@@ -4,7 +4,7 @@
 #include <colorer/strings/legacy/x_encodings.h>
 #include <cstring>
 
-#ifdef __unix__
+#ifndef WIN32
 #define STRCMP strcasecmp
 #else
 #define STRCMP _stricmp
@@ -52,7 +52,7 @@ int Encodings::getEncodingIndex(const char* enc)
 {
   if (!enc) return -1;
   for (auto & arr_idxEncoding : arr_idxEncodings)
-    if (!STRCMP(arr_idxEncoding.name, enc)) {
+    if (!strcasecmp(arr_idxEncoding.name, enc)) {
       return arr_idxEncoding.pos;
     }
   return -1;

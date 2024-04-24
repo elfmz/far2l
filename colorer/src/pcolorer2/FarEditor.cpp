@@ -113,7 +113,7 @@ UnicodeString *FarEditor::getLine(size_t lno)
   }
 
   delete ret_str;
-  ret_str = new UnicodeString(es.StringText, 0, len);
+  ret_str = new UnicodeString((char*)es.StringText, len*sizeof(wchar_t), Encodings::ENC_UTF32);
   return ret_str;
 }
 

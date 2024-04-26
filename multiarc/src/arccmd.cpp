@@ -3,6 +3,7 @@
 #include "marclng.hpp"
 #include <farkeys.h>
 #include <fcntl.h>
+#include "utils.h"
 
 ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const char *FormatString,
 		const char *ArcName, const char *ArcDir, const char *Password, const char *AllFilesMask,
@@ -26,19 +27,30 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 	bool arc_modify =
 			(CommandType != CMD_EXTRACT && CommandType != CMD_EXTRACTWITHOUTPATH && CommandType != CMD_TEST);
 
-	if (ArcDir && *ArcDir && sudo_client_is_required_for(ArcDir, false) == 1) {
-		NeedSudo = true;
-	} else if (RealArcDir && *RealArcDir && sudo_client_is_required_for(RealArcDir, false) == 1) {
-		NeedSudo = true;
-	} else if (ArcName && *ArcName && sudo_client_is_required_for(ArcName, arc_modify) == 1) {
-		NeedSudo = true;
-	} else if (CommandType == CMD_EXTRACT || CommandType == CMD_EXTRACTWITHOUTPATH
-			|| CommandType == CMD_TEST) {
-		if (sudo_client_is_required_for(".", true) == 1)
+	if (arc_modify) {
+		if (ArcName && *ArcName) {
+			auto ArcPath=ExtractFilePath(std::string(ArcName));
+			if ((sudo_client_is_required_for(ArcName, true) == 1) ||		// no write perms to archive itself?
+				(sudo_client_is_required_for(ArcPath.c_str(), true)==1)) {	// no write perms to archive dir?
+				NeedSudo = true;
+			}
+		}
+		if(!NeedSudo && (CommandType==CMD_ADD || CommandType==CMD_ADDRECURSE)) {	// adding files to the archive,
+			for(int i=0; i<ItemsNumber; ++i) {						// check if we have read access to all of them
+				if(sudo_client_is_required_for(PanelItem[i].FindData.cFileName,false)==1) {
+					NeedSudo = true;
+					break;
+				}
+
+			}
+		}
+	} else {
+		if ((CommandType == CMD_EXTRACT || CommandType == CMD_EXTRACTWITHOUTPATH)	// extraction from the archive,
+			&& (sudo_client_is_required_for(".", true) == 1)) {		// check if we have write access to dest dir
 			NeedSudo = true;
-	} else if (sudo_client_is_required_for(".", false) == 1) {
-		NeedSudo = true;
+		}
 	}
+
 
 	// char QPassword[NM+5],QTempPath[NM+5];
 	ArcCommand::PanelItem = PanelItem;

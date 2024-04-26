@@ -24,11 +24,14 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 
 ## Installing, Running
-#### Debian/Ubuntu binaries
+#### Debian/Ubuntu 23.10+ binaries
 
 ```sh
 apt-get install far2l
 ```
+
+Under Ubuntu Desktop 23.10 and 24.04 run as
+`far2l --nodetect=xi --ee`
 
 #### OSX/MacOS binaries
 
@@ -73,13 +76,6 @@ docker run -it far2l
 ``` sh
 apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
-
-On Debian unstable/sid, Ubuntu 23.10+:
-
-`apt-get install far2l`
-
-Under Ubuntu Desktop 23.10 and 24.04 run as
-`far2l --nodetect=xi --ee`
 
 A simple sid back port should be as easy as (build your own binary deb from the official source deb package):
 ```sh

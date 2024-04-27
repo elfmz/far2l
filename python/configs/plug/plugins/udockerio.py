@@ -115,6 +115,7 @@ class Docker(object):
 
     def list(self):
         lines = self.run("container", "ps", "-a")
+        print(lines)
         devices = []
         if len(lines) > 0 and lines[0].split()[0] == b"CONTAINER":
             line = lines[0].decode()
@@ -127,7 +128,7 @@ class Docker(object):
             cnames = line.find("NAMES", cports)
             for line in lines[1:]:
                 line = line.decode()
-                info = (line[cid:cimage].strip(), line[cnames:].strip())
+                info = (line[cid:cimage].strip(), line[cnames:].strip(), line[cstatus:cports].strip().split()[0] == 'Up')
                 devices.append(info)
         return devices
 

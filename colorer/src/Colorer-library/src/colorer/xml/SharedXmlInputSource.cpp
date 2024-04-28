@@ -24,8 +24,9 @@ SharedXmlInputSource::SharedXmlInputSource(uXmlInputSource source)
   ref_count = 1;
   input_source = std::move(source);
   auto pStream = input_source->makeStream();
+  // don`t use dynamic_cast, see https://github.com/colorer/Colorer-library/issues/32
   std::unique_ptr<xercesc::BinFileInputStream> bfis(
-      dynamic_cast<xercesc::BinFileInputStream*>(pStream));
+      static_cast<xercesc::BinFileInputStream*>(pStream));
   if (bfis == nullptr) {
     throw InputSourceException("can`t read " + input_source->getPath());
   }
@@ -36,7 +37,7 @@ SharedXmlInputSource::SharedXmlInputSource(uXmlInputSource source)
 
 SharedXmlInputSource::~SharedXmlInputSource()
 {
-  //не нужно удалять объект, удаляемый из массива. мы и так уже в деструкторе
+  // не нужно удалять объект, удаляемый из массива. мы и так уже в деструкторе
   isHash->erase(input_source->getPath());
   if (isHash->empty()) {
     delete isHash;

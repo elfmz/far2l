@@ -37,44 +37,44 @@ void TextHRDMapper::loadRegionMappings(XmlInputSource& is)
     if (curel->getNodeType() == xercesc::DOMNode::ELEMENT_NODE &&
         xercesc::XMLString::equals(curel->getNodeName(), hrdTagAssign))
     {
-      if (auto* subelem = dynamic_cast<xercesc::DOMElement*>(curel)) {
-        const XMLCh* xname = subelem->getAttribute(hrdAssignAttrName);
-        if (UStr::isEmpty(xname)) {
-          continue;
-        }
-
-        UnicodeString name(xname);
-        auto tp = regionDefines.find(name);
-        if (tp != regionDefines.end()) {
-          logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name,
-                       is.getPath());
-          regionDefines.erase(tp);
-        }
-        std::shared_ptr<const UnicodeString> stext;
-        std::shared_ptr<const UnicodeString> etext;
-        std::shared_ptr<const UnicodeString> sback;
-        std::shared_ptr<const UnicodeString> eback;
-        const XMLCh* sval;
-        sval = subelem->getAttribute(hrdAssignAttrSText);
-        if (!UStr::isEmpty(sval)) {
-          stext = std::make_unique<UnicodeString>(sval);
-        }
-        sval = subelem->getAttribute(hrdAssignAttrEText);
-        if (!UStr::isEmpty(sval)) {
-          etext = std::make_unique<UnicodeString>(sval);
-        }
-        sval = subelem->getAttribute(hrdAssignAttrSBack);
-        if (!UStr::isEmpty(sval)) {
-          sback = std::make_unique<UnicodeString>(sval);
-        }
-        sval = subelem->getAttribute(hrdAssignAttrEBack);
-        if (!UStr::isEmpty(sval)) {
-          eback = std::make_unique<UnicodeString>(sval);
-        }
-
-        auto rdef = std::make_unique<TextRegion>(stext, etext, sback, eback);
-        regionDefines.emplace(name, std::move(rdef));
+      // don`t use dynamic_cast, see https://github.com/colorer/Colorer-library/issues/32
+      auto* subelem = static_cast<xercesc::DOMElement*>(curel);
+      const XMLCh* xname = subelem->getAttribute(hrdAssignAttrName);
+      if (UStr::isEmpty(xname)) {
+        continue;
       }
+
+      UnicodeString name(xname);
+      auto tp = regionDefines.find(name);
+      if (tp != regionDefines.end()) {
+        logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name,
+                     is.getPath());
+        regionDefines.erase(tp);
+      }
+      std::shared_ptr<const UnicodeString> stext;
+      std::shared_ptr<const UnicodeString> etext;
+      std::shared_ptr<const UnicodeString> sback;
+      std::shared_ptr<const UnicodeString> eback;
+      const XMLCh* sval;
+      sval = subelem->getAttribute(hrdAssignAttrSText);
+      if (!UStr::isEmpty(sval)) {
+        stext = std::make_unique<UnicodeString>(sval);
+      }
+      sval = subelem->getAttribute(hrdAssignAttrEText);
+      if (!UStr::isEmpty(sval)) {
+        etext = std::make_unique<UnicodeString>(sval);
+      }
+      sval = subelem->getAttribute(hrdAssignAttrSBack);
+      if (!UStr::isEmpty(sval)) {
+        sback = std::make_unique<UnicodeString>(sval);
+      }
+      sval = subelem->getAttribute(hrdAssignAttrEBack);
+      if (!UStr::isEmpty(sval)) {
+        eback = std::make_unique<UnicodeString>(sval);
+      }
+
+      auto rdef = std::make_unique<TextRegion>(stext, etext, sback, eback);
+      regionDefines.emplace(name, std::move(rdef));
     }
   }
 }

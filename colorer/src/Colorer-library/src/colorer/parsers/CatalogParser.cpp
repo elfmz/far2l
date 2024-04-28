@@ -41,17 +41,17 @@ void CatalogParser::parse(const UnicodeString* path)
 void CatalogParser::parseCatalogBlock(const xercesc::DOMNode* elem)
 {
   for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling()) {
+       node = node->getNextSibling())
+  {
     if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = dynamic_cast<xercesc::DOMElement*>(node);
-      if (subelem) {
-        if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrcSets)) {
-          parseHrcSetsBlock(subelem);
-          continue;
-        }
-        if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrdSets)) {
-          parseHrdSetsBlock(node);
-        }
+      // don`t use dynamic_cast, see https://github.com/colorer/Colorer-library/issues/32
+      auto* subelem = static_cast<xercesc::DOMElement*>(node);
+      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrcSets)) {
+        parseHrcSetsBlock(subelem);
+        continue;
+      }
+      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrdSets)) {
+        parseHrdSetsBlock(node);
       }
       continue;
     }
@@ -69,10 +69,11 @@ void CatalogParser::parseHrcSetsBlock(const xercesc::DOMNode* elem)
 void CatalogParser::addHrcSetsLocation(const xercesc::DOMNode* elem)
 {
   for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling()) {
+       node = node->getNextSibling())
+  {
     if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = dynamic_cast<xercesc::DOMElement*>(node);
-      if (subelem && xercesc::XMLString::equals(subelem->getNodeName(), catTagLocation)) {
+      auto* subelem = static_cast<xercesc::DOMElement*>(node);
+      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagLocation)) {
         auto attr_value = subelem->getAttribute(catLocationAttrLink);
         if (!UStr::isEmpty(attr_value)) {
           hrc_locations.emplace_back(UnicodeString(attr_value));
@@ -93,10 +94,11 @@ void CatalogParser::addHrcSetsLocation(const xercesc::DOMNode* elem)
 void CatalogParser::parseHrdSetsBlock(const xercesc::DOMNode* elem)
 {
   for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling()) {
+       node = node->getNextSibling())
+  {
     if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = dynamic_cast<xercesc::DOMElement*>(node);
-      if (subelem && xercesc::XMLString::equals(subelem->getNodeName(), catTagHrd)) {
+      auto* subelem = static_cast<xercesc::DOMElement*>(node);
+      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrd)) {
         auto hrd = parseHRDSetsChild(subelem);
         if (hrd) {
           hrd_nodes.push_back(std::move(hrd));
@@ -127,20 +129,19 @@ std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const xercesc::DOMElem
   hrd_node->hrd_description = UnicodeString(xhrd_desc);
 
   for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling()) {
+       node = node->getNextSibling())
+  {
     if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
       if (xercesc::XMLString::equals(node->getNodeName(), catTagLocation)) {
-        auto* subelem = dynamic_cast<xercesc::DOMElement*>(node);
-        if (subelem) {
-          auto attr_value = subelem->getAttribute(catLocationAttrLink);
-          if (!UStr::isEmpty(attr_value)) {
-            hrd_node->hrd_location.emplace_back(UnicodeString(attr_value));
-            logger->debug("add hrd location '{0}' for {1}:{2}", hrd_node->hrd_location.back(),
-                          hrd_node->hrd_class, hrd_node->hrd_name);
-          }
-          else {
-            logger->warn("found hrd with empty location. skip it location.");
-          }
+        auto* subelem = static_cast<xercesc::DOMElement*>(node);
+        auto attr_value = subelem->getAttribute(catLocationAttrLink);
+        if (!UStr::isEmpty(attr_value)) {
+          hrd_node->hrd_location.emplace_back(UnicodeString(attr_value));
+          logger->debug("add hrd location '{0}' for {1}:{2}", hrd_node->hrd_location.back(),
+                        hrd_node->hrd_class, hrd_node->hrd_name);
+        }
+        else {
+          logger->warn("found hrd with empty location. skip it location.");
         }
       }
     }

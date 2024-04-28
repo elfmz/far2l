@@ -1,7 +1,7 @@
 #include "colorer/editor/BaseEditor.h"
 #include "colorer/parsers/TextParserImpl.h"
 
-#define IDLE_PARSE(time) (100 + (time) *4)
+#define IDLE_PARSE(time) (100 + (time) * 4)
 
 const int CHOOSE_STR = 4;
 const int CHOOSE_LEN = 200 * CHOOSE_STR;
@@ -226,8 +226,8 @@ PairMatch* BaseEditor::getPairMatch(int lineNo, int linePos)
   }
   LineRegion* pair = nullptr;
   for (LineRegion* l1 = lrStart; l1; l1 = l1->next) {
-    if ((l1->region->hasParent(def_PairStart) || l1->region->hasParent(def_PairEnd)) &&
-        linePos >= l1->start && linePos <= l1->end)
+    if (l1->region && linePos >= l1->start && linePos <= l1->end &&
+        (l1->region->hasParent(def_PairStart) || l1->region->hasParent(def_PairEnd)))
     {
       pair = l1;
     }

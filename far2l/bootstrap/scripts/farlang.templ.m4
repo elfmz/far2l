@@ -14026,15 +14026,15 @@ MenuInterface
 "Налады знешняга в&ыгляду"
 
 MenuLanguages
-"&Языки"
+"&Языки (Languages)"
 "Lan&guages"
-"Nastavení &Jazyka"
-"Sprac&hen"
+"Nastavení &Jazyka (Languages)"
+"Sprac&hen (Languages)"
 "N&yelvek (Languages)"
-"&Język"
-"&Idiomas"
-"&Мови"
-"&Мовы"
+"&Język (Languages)"
+"&Idiomas (Languages)"
+"&Мови (Languages)"
+"&Мовы (Languages)"
 
 MenuInput
 "Параметры &ввода"
@@ -18165,15 +18165,15 @@ MainMenuFAR
 MainMenuREG
 l:
 l:// <...menu (Registry)>
-"Реестр"
-"Registry"
-"Registry"
-"Reg."
-"Registry"
-"Rejestr"
-"Registro"
-"Реєстр"
-"Рэестр"
+"Профиль"
+"Profile"
+"Profil"
+"Profil"
+"Profil"
+"Profil"
+"Perfil"
+"Профіль"
+"Профіль"
 
 LocalMenuTitle
 "Местное меню"

@@ -24,11 +24,14 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 
 ## Installing, Running
-#### Debian/Ubuntu binaries
+#### Debian/Ubuntu 23.10+ binaries
 
 ```sh
 apt-get install far2l
 ```
+
+Under Ubuntu Desktop 23.10 run as
+`far2l --nodetect=xi --ee`
 
 #### OSX/MacOS binaries
 

@@ -52,7 +52,7 @@ int Encodings::getEncodingIndex(const char* enc)
 {
   if (!enc) return -1;
   for (auto & arr_idxEncoding : arr_idxEncodings)
-    if (!strcasecmp(arr_idxEncoding.name, enc)) {
+    if (!STRCMP(arr_idxEncoding.name, enc)) {
       return arr_idxEncoding.pos;
     }
   return -1;

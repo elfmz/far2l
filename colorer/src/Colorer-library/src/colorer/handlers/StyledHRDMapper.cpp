@@ -38,43 +38,43 @@ void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
     if (curel->getNodeType() == xercesc::DOMNode::ELEMENT_NODE &&
         xercesc::XMLString::equals(curel->getNodeName(), hrdTagAssign))
     {
-      if (auto* subelem = dynamic_cast<xercesc::DOMElement*>(curel)) {
-        const XMLCh* xname = subelem->getAttribute(hrdAssignAttrName);
-        if (UStr::isEmpty(xname)) {
-          continue;
-        }
-
-        UnicodeString name(xname);
-        auto rd_new = regionDefines.find(name);
-        if (rd_new != regionDefines.end()) {
-          logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name,
-                       is.getPath());
-          regionDefines.erase(rd_new);
-        }
-
-        unsigned int fore = 0;
-        bool bfore = false;
-        const XMLCh* sval = subelem->getAttribute(hrdAssignAttrFore);
-        if (!UStr::isEmpty(sval)) {
-          bfore = UStr::HexToUInt(UnicodeString(sval), &fore);
-        }
-
-        unsigned int back = 0;
-        bool bback = false;
-        sval = subelem->getAttribute(hrdAssignAttrBack);
-        if (!UStr::isEmpty(sval)) {
-          bback = UStr::HexToUInt(UnicodeString(sval), &back);
-        }
-
-        unsigned int style = 0;
-        sval = subelem->getAttribute(hrdAssignAttrStyle);
-        if (!UStr::isEmpty(sval)) {
-          UStr::HexToUInt(UnicodeString(sval), &style);
-        }
-
-        auto rdef = std::make_unique<StyledRegion>(bfore, bback, fore, back, style);
-        regionDefines.emplace(name, std::move(rdef));
+      // don`t use dynamic_cast, see https://github.com/colorer/Colorer-library/issues/32
+      auto* subelem = static_cast<xercesc::DOMElement*>(curel);
+      const XMLCh* xname = subelem->getAttribute(hrdAssignAttrName);
+      if (UStr::isEmpty(xname)) {
+        continue;
       }
+
+      UnicodeString name(xname);
+      auto rd_new = regionDefines.find(name);
+      if (rd_new != regionDefines.end()) {
+        logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name,
+                     is.getPath());
+        regionDefines.erase(rd_new);
+      }
+
+      unsigned int fore = 0;
+      bool bfore = false;
+      const XMLCh* sval = subelem->getAttribute(hrdAssignAttrFore);
+      if (!UStr::isEmpty(sval)) {
+        bfore = UStr::HexToUInt(UnicodeString(sval), &fore);
+      }
+
+      unsigned int back = 0;
+      bool bback = false;
+      sval = subelem->getAttribute(hrdAssignAttrBack);
+      if (!UStr::isEmpty(sval)) {
+        bback = UStr::HexToUInt(UnicodeString(sval), &back);
+      }
+
+      unsigned int style = 0;
+      sval = subelem->getAttribute(hrdAssignAttrStyle);
+      if (!UStr::isEmpty(sval)) {
+        UStr::HexToUInt(UnicodeString(sval), &style);
+      }
+
+      auto rdef = std::make_unique<StyledRegion>(bfore, bback, fore, back, style);
+      regionDefines.emplace(name, std::move(rdef));
     }
   }
 }

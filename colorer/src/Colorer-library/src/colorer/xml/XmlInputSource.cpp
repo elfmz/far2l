@@ -1,168 +1,71 @@
-#include <colorer/xml/XmlInputSource.h>
-#include <colorer/xml/LocalFileXmlInputSource.h>
-#if COLORER_FEATURE_JARINPUTSOURCE
-# include <colorer/xml/ZipXmlInputSource.h>
+#include "colorer/xml/XmlInputSource.h"
+#include "colorer/Exception.h"
+#include "colorer/xml/LocalFileXmlInputSource.h"
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+#include "colorer/xml/ZipXmlInputSource.h"
 #endif
-#include <colorer/Exception.h>
-#include <xercesc/util/XMLString.hpp>
-#if defined(__unix__) || defined(__APPLE__)
-#include <dirent.h>
-#include <sys/stat.h>
-#endif
-#ifdef _WIN32
-#include <io.h>
-#include <windows.h>
-#endif
+#include <filesystem>
+#include "colorer/utils/Environment.h"
 
-uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, XmlInputSource* base)
+uXmlInputSource XmlInputSource::newInstance(const UnicodeString* path, const UnicodeString* base)
 {
-  if (xercesc::XMLString::startsWith(path, kJar)) {
-#if COLORER_FEATURE_JARINPUTSOURCE
-    return std::unique_ptr<ZipXmlInputSource>(new ZipXmlInputSource(path, base));
-#else
-    throw InputSourceException(CString("ZipXmlInputSource not supported"));
-#endif
-  }
-  if (base) {
-    return base->createRelative(path);
-  }
-  return std::unique_ptr<LocalFileXmlInputSource>(new LocalFileXmlInputSource(path, nullptr));
+  return newInstance(UStr::to_xmlch(path).get(), UStr::to_xmlch(base).get());
 }
 
 uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, const XMLCh* base)
 {
   if (!path || (*path == '\0')) {
-    throw InputSourceException(CString("XmlInputSource::newInstance: path is nullptr"));
+    throw InputSourceException("XmlInputSource::newInstance: path is empty");
   }
-  if (xercesc::XMLString::startsWith(path, kJar) || (base != nullptr && xercesc::XMLString::startsWith(base, kJar))) {
-#if COLORER_FEATURE_JARINPUTSOURCE
-    return std::unique_ptr<ZipXmlInputSource>(new ZipXmlInputSource(path, base));
+  if (xercesc::XMLString::startsWith(path, kJar) ||
+      (base != nullptr && xercesc::XMLString::startsWith(base, kJar)))
+  {
+#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
+    return std::make_unique<ZipXmlInputSource>(path, base);
 #else
-    throw InputSourceException(CString("ZipXmlInputSource not supported"));
+    throw InputSourceException("ZipXmlInputSource not supported");
 #endif
   }
-  return std::unique_ptr<LocalFileXmlInputSource>(new LocalFileXmlInputSource(path, base));
+  return std::make_unique<LocalFileXmlInputSource>(path, base);
 }
 
-UString XmlInputSource::getAbsolutePath(const String* basePath, const String* relPath)
+std::filesystem::path XmlInputSource::getClearFilePath(const UnicodeString* basePath,
+                                                       const UnicodeString* relPath)
 {
-  int root_pos = basePath->lastIndexOf('/');
-  int root_pos2 = basePath->lastIndexOf('\\');
-  if (root_pos2 > root_pos) {
-    root_pos = root_pos2;
+  std::filesystem::path fs_basepath;
+  if (basePath && !basePath->isEmpty()) {
+    auto clear_basepath = Environment::normalizeFsPath(basePath);
+    fs_basepath = std::filesystem::path(clear_basepath).parent_path();
   }
-  if (root_pos == -1) {
-    root_pos = 0;
-  } else {
-    root_pos++;
+  auto clear_relpath = Environment::normalizeFsPath(relPath);
+
+  std::filesystem::path full_path;
+  if (fs_basepath.empty()) {
+    full_path = clear_relpath;
   }
-  std::unique_ptr<SString> newPath(new SString());
-  newPath->append(CString(basePath, 0, root_pos)).append(relPath);
-  return std::move(newPath);
+  else {
+    full_path = fs_basepath / clear_relpath;
+  }
+
+  full_path = full_path.lexically_normal();
+
+  return full_path;
 }
 
-XMLCh* XmlInputSource::ExpandEnvironment(const XMLCh* path)
+bool XmlInputSource::isUriFile(const UnicodeString& path, const UnicodeString* base)
 {
-#ifdef _WIN32
-  size_t i = ExpandEnvironmentStringsW(path, nullptr, 0);
-  XMLCh* temp = new XMLCh[i];
-  ExpandEnvironmentStringsW(path, temp, static_cast<DWORD>(i));
-  return temp;
-#else
-  //TODO реализовать под nix
-  XMLSize_t i = xercesc::XMLString::stringLen(path);
-  XMLCh* temp = new XMLCh[i];
-  xercesc::XMLString::copyString(temp, path);
-  return temp;
-#endif
-}
-
-bool XmlInputSource::isRelative(const String* path)
-{
-  if (path->indexOf(':') != String::npos && path->indexOf(':') < 10) return false;
-  if (path->indexOf('/') == 0 || path->indexOf('\\') == 0) return false;
+  if ((path.startsWith(kJar)) || (base && base->startsWith(kJar))) {
+    return false;
+  }
   return true;
 }
 
-UString XmlInputSource::getClearPath(const String* basePath, const String* relPath)
+uXmlInputSource XmlInputSource::createRelative(const XMLCh* relPath)
 {
-  UString clear_path(new SString(relPath));
-  if (relPath->indexOf(CString("%")) != String::npos) {
-    XMLCh* e_path = ExpandEnvironment(clear_path.get()->getW2Chars());
-    clear_path.reset(new SString(CString(e_path)));
-    delete[] e_path;
-  }
-  if (isRelative(clear_path.get())) {
-    clear_path = getAbsolutePath(basePath, clear_path.get());
-    if (clear_path->startsWith(CString("file://"))) {
-      clear_path.reset(new SString(clear_path.get(), 7, -1));
-    }
-  }
-  return clear_path;
+  return newInstance(relPath, this->getInputSource()->getSystemId());
 }
 
-bool XmlInputSource::isDirectory(const String* path)
+UnicodeString& XmlInputSource::getPath() const
 {
-  bool is_dir = false;
-#ifdef _WIN32
-  // stat on win_xp and vc2015 have bug.
-  DWORD dwAttrs = GetFileAttributesW(path->getWChars());
-  if (dwAttrs == INVALID_FILE_ATTRIBUTES) {
-    throw Exception(SString("Can't get info for file/path: ") + path);
-  }
-  else if (dwAttrs & FILE_ATTRIBUTE_DIRECTORY) {
-    is_dir = true;
-  }
-#else
-
-  struct stat st;
-  int ret = stat(path->getChars(), &st);
-
-  if (ret == -1) {
-    throw Exception(SString("Can't get info for file/path: ") + path);
-  }
-  else if ((st.st_mode & S_IFDIR)) {
-    is_dir = true;
-  }
-#endif
-
-  return is_dir;
+  return *source_path;
 }
-
-#ifdef _WIN32
-void XmlInputSource::getFileFromDir(const String* relPath, std::vector<SString> &files)
-{
-  WIN32_FIND_DATAW ffd;
-  HANDLE dir = FindFirstFileW((SString(relPath) + "\\*.*").getWChars(), &ffd);
-  if (dir != INVALID_HANDLE_VALUE) {
-    while (true) {
-      if (!(ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-        files.push_back(SString(relPath) + "\\" + SString(ffd.cFileName));
-      }
-      if (FindNextFileW(dir, &ffd) == FALSE) {
-        break;
-      }
-    }
-    FindClose(dir);
-  }
-}
-#endif
-
-#if defined(__unix__) || defined(__APPLE__)
-void XmlInputSource::getFileFromDir(const String* relPath, std::vector<SString> &files)
-{
-  DIR* dir = opendir(relPath->getChars());
-  if (dir != nullptr) {
-    dirent* dire;
-    while ((dire = readdir(dir)) != nullptr) {
-      struct stat st;
-      stat((SString(relPath) + "/" + dire->d_name).getChars(), &st);
-      if (!(st.st_mode & S_IFDIR)) {
-        files.push_back(SString(relPath) + "/" + dire->d_name);
-      }
-    }
-    closedir(dir);
-  }
-}
-#endif
-

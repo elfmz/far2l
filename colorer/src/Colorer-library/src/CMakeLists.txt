@@ -1,23 +1,21 @@
-project(colorer_lib)
-
 #====================================================
-# colorer
+# colorer source
 #====================================================
 set(SRC_COLORER
     colorer/Common.h
     colorer/Exception.h
     colorer/FileType.h
-    colorer/HRCParser.h
+    colorer/HrcLibrary.h
     colorer/LineSource.h
+    colorer/ParserFactory.h
     colorer/Region.h
     colorer/RegionHandler.h
     colorer/Scheme.h
     colorer/TextParser.h
-    colorer/version.h
-    colorer/common/Colorer.cpp
-    colorer/common/Colorer.h
+    colorer/base/BaseNames.h
+    colorer/base/XmlTagDefs.h
     colorer/common/Exception.cpp
-    colorer/common/Features.h
+    colorer/common/Logger.h
     colorer/cregexp/cregexp.cpp
     colorer/cregexp/cregexp.h
     colorer/editor/BaseEditor.cpp
@@ -27,20 +25,22 @@ set(SRC_COLORER
     colorer/editor/Outliner.cpp
     colorer/editor/Outliner.h
     colorer/editor/PairMatch.h
+    colorer/handlers/LineRegion.cpp
     colorer/handlers/LineRegion.h
     colorer/handlers/LineRegionsCompactSupport.cpp
     colorer/handlers/LineRegionsCompactSupport.h
     colorer/handlers/LineRegionsSupport.cpp
     colorer/handlers/LineRegionsSupport.h
     colorer/handlers/RegionDefine.h
+    colorer/handlers/RegionMapper.cpp
     colorer/handlers/RegionMapper.h
-    colorer/handlers/RegionMapperImpl.cpp
-    colorer/handlers/RegionMapperImpl.h
     colorer/handlers/StyledHRDMapper.cpp
     colorer/handlers/StyledHRDMapper.h
+    colorer/handlers/StyledRegion.cpp
     colorer/handlers/StyledRegion.h
     colorer/handlers/TextHRDMapper.cpp
     colorer/handlers/TextHRDMapper.h
+    colorer/handlers/TextRegion.cpp
     colorer/handlers/TextRegion.h
     colorer/io/FileInputSource.cpp
     colorer/io/FileInputSource.h
@@ -48,56 +48,39 @@ set(SRC_COLORER
     colorer/io/FileWriter.h
     colorer/io/InputSource.cpp
     colorer/io/InputSource.h
-    colorer/io/SharedInputSource.cpp
-    colorer/io/SharedInputSource.h
     colorer/io/StreamWriter.cpp
     colorer/io/StreamWriter.h
     colorer/io/Writer.cpp
     colorer/io/Writer.h
     colorer/parsers/CatalogParser.cpp
     colorer/parsers/CatalogParser.h
+    colorer/parsers/FileType.cpp
+    colorer/parsers/FileTypeChooser.cpp
     colorer/parsers/FileTypeChooser.h
     colorer/parsers/FileTypeImpl.cpp
     colorer/parsers/FileTypeImpl.h
-    colorer/parsers/HRCParserImpl.cpp
-    colorer/parsers/HRCParserImpl.h
-    colorer/parsers/HRDNode.h
+    colorer/parsers/HrcLibrary.cpp
+    colorer/parsers/HrcLibraryImpl.cpp
+    colorer/parsers/HrcLibraryImpl.h
+    colorer/parsers/HrdNode.h
     colorer/parsers/KeywordList.cpp
     colorer/parsers/KeywordList.h
     colorer/parsers/ParserFactory.cpp
-    colorer/parsers/ParserFactory.h
-    colorer/parsers/ParserFactoryException.h
+    colorer/parsers/ParserFactoryImpl.cpp
+    colorer/parsers/ParserFactoryImpl.h
     colorer/parsers/SchemeImpl.h
     colorer/parsers/SchemeNode.cpp
     colorer/parsers/SchemeNode.h
+    colorer/parsers/TextParser.cpp
     colorer/parsers/TextParserHelpers.cpp
     colorer/parsers/TextParserHelpers.h
     colorer/parsers/TextParserImpl.cpp
     colorer/parsers/TextParserImpl.h
     colorer/parsers/VirtualEntry.h
-    colorer/unicode/BitArray.cpp
-    colorer/unicode/BitArray.h
-    colorer/unicode/CString.cpp
-    colorer/unicode/CString.h
-    colorer/unicode/Character.cpp
-    colorer/unicode/Character.h
-    colorer/unicode/CharacterClass.cpp
-    colorer/unicode/CharacterClass.h
-    colorer/unicode/DString.h
-    colorer/unicode/Encodings.cpp
-    colorer/unicode/Encodings.h
-    colorer/unicode/SString.cpp
-    colorer/unicode/SString.h
-    colorer/unicode/String.cpp
-    colorer/unicode/String.h
-    colorer/unicode/UnicodeTools.cpp
-    colorer/unicode/UnicodeTools.h
-    colorer/unicode/x_charcategory.h
-    colorer/unicode/x_charcategory2.h
-    colorer/unicode/x_charcategory_names.h
-    colorer/unicode/x_defines.h
-    colorer/unicode/x_encodings.h
-    colorer/unicode/x_tables.h
+    colorer/utils/Environment.cpp
+    colorer/utils/Environment.h
+    colorer/version.h
+    colorer/viewer/ParsedLineWriter.cpp
     colorer/viewer/ParsedLineWriter.h
     colorer/viewer/TextConsoleViewer.cpp
     colorer/viewer/TextConsoleViewer.h
@@ -109,133 +92,173 @@ set(SRC_COLORER
     colorer/xml/LocalFileXmlInputSource.h
     colorer/xml/SharedXmlInputSource.cpp
     colorer/xml/SharedXmlInputSource.h
-    colorer/xml/XStr.cpp
-    colorer/xml/XStr.h
     colorer/xml/XmlInputSource.cpp
     colorer/xml/XmlInputSource.h
     colorer/xml/XmlParserErrorHandler.cpp
     colorer/xml/XmlParserErrorHandler.h
-    colorer/xml/XmlTagDefs.h
-    )
+)
 
-# Disabled by DCOLORER_FEATURE_JARINPUTSOURCE=FALSE
-#    colorer/xml/ZipXmlInputSource.cpp
-#    colorer/xml/ZipXmlInputSource.h
-#    colorer/io/JARInputSource.cpp
-#    colorer/io/JARInputSource.h
-#    colorer/io/MemoryFile.cpp
-#    colorer/io/MemoryFile.h
+if(COLORER_USE_ZIPINPUTSOURCE)
+  set(COLORER_FEATURE_ZIPINPUTSOURCE 1)
+  set(SRC_COLORER_ZIP
+      colorer/xml/MemoryFile.cpp
+      colorer/xml/MemoryFile.h
+      colorer/xml/ZipXmlInputSource.cpp
+      colorer/xml/ZipXmlInputSource.h
+  )
+endif()
 
-# Disabled by COLORER_FEATURE_HTTPINPUTSOURCE=FALSE
-#    colorer/io/HTTPInputSource.cpp
-#    colorer/io/HTTPInputSource.h
+if(COLORER_USE_ICU_STRINGS)
+  set(SRC_COLORER_STRINGS
+      colorer/strings/icu/common_icu.h
+      colorer/strings/icu/strings.h
+      colorer/strings/icu/Character.cpp
+      colorer/strings/icu/Character.h
+      colorer/strings/icu/Encodings.cpp
+      colorer/strings/icu/Encodings.h
+      colorer/strings/icu/UnicodeStringContainer.h
+      colorer/strings/icu/UnicodeTools.cpp
+      colorer/strings/icu/UnicodeTools.h
+      colorer/strings/icu/UStr.cpp
+      colorer/strings/icu/UStr.h
+  )
+  set(SRC_COLORER_SPDLOG
+      colorer/strings/icu/UnicodeLogger.h
+  )
+  set(COLORER_FEATURE_ICU 1)
+
+else()
+  set(SRC_COLORER_STRINGS
+      colorer/strings/legacy/common_legacy.h
+      colorer/strings/legacy/strings.h
+      colorer/strings/legacy/BitArray.cpp
+      colorer/strings/legacy/BitArray.h
+      colorer/strings/legacy/Character.cpp
+      colorer/strings/legacy/Character.h
+      colorer/strings/legacy/CharacterClass.cpp
+      colorer/strings/legacy/CharacterClass.h
+      colorer/strings/legacy/CommonString.h
+      colorer/strings/legacy/CString.cpp
+      colorer/strings/legacy/CString.h
+      colorer/strings/legacy/Encodings.cpp
+      colorer/strings/legacy/Encodings.h
+      colorer/strings/legacy/UnicodeString.cpp
+      colorer/strings/legacy/UnicodeString.h
+      colorer/strings/legacy/UnicodeStringContainer.h
+      colorer/strings/legacy/UnicodeTools.cpp
+      colorer/strings/legacy/UnicodeTools.h
+      colorer/strings/legacy/UStr.cpp
+      colorer/strings/legacy/UStr.h
+      colorer/strings/legacy/x_charcategory.h
+      colorer/strings/legacy/x_charcategory2.h
+      colorer/strings/legacy/x_charcategory_names.h
+      colorer/strings/legacy/x_defines.h
+      colorer/strings/legacy/x_encodings.h
+      colorer/strings/legacy/x_tables.h
+      colorer/strings/legacy/StringExceptions.h
+  )
+  set(SRC_COLORER_SPDLOG
+      colorer/strings/legacy/UnicodeLogger.h
+  )
+endif()
+
+if(COLORER_USE_DUMMY_LOGGER)
+  set(SRC_COLORER_SPDLOG  )
+  set(COLORER_FEATURE_DUMMYLOGGER 1)
+endif()
+#====================================================
+# Generate headers
+#====================================================
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/colorer/common/Features.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/colorer/common/Features.h
+)
 
 #====================================================
 # common flags
 #====================================================
-set(COLORER_DEF -DNOGDI -DCOLORER_FEATURE_HTTPINPUTSOURCE=FALSE -DCOLORER_FEATURE_JARINPUTSOURCE=FALSE)
-if (MSVC)
-    set(COLORER_DEF ${COLORER_DEF} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
-endif ()
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  # default for gcc
+  # CMAKE_CXX_FLAGS=
+  # CMAKE_CXX_FLAGS_DEBUG= -g
+  # CMAKE_CXX_FLAGS_RELEASE= -O3 -DNDEBUG
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-    # defaut for gcc
-    # CMAKE_CXX_FLAGS=
-    # CMAKE_CXX_FLAGS_DEBUG= -g
-    # CMAKE_CXX_FLAGS_RELEASE= -O3 -DNDEBUG
+  # set only new flags
+  set(FLAGS_CXX_DEFAULT -fpermissive -Wall -Wextra -Wpedantic -Wsign-promo -Wnon-virtual-dtor)
+  set(FLAGS_CXX_RELEASE -Werror)
+  set(FLAGS_CXX_DEBUG)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
-    # set only new flags
-    set(FLAGS_CXX_DEFAULT -fpermissive -Wall)
-    set(FLAGS_CXX_RELEASE)
-    set(FLAGS_CXX_DEBUG)
-elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # defaut for msvc
-    # CMAKE_C_FLAGS= /DWIN32 /D_WINDOWS
-    # CMAKE_C_FLAGS_DEBUG= /MDd /Zi /Ob0 /Od /RTC1
-    # CMAKE_C_FLAGS_RELEASE= /MD /O2 /Ob2 /DNDEBUG
+  # default for msvc
+  # CMAKE_CXX_FLAGS= /DWIN32 /D_WINDOWS /GR /EHsc
+  # CMAKE_CXX_FLAGS_DEBUG= /MDd /Zi /Ob0 /Od /RTC1
+  # CMAKE_CXX_FLAGS_RELEASE= /MD /O2 /Ob2 /DNDEBUG
 
-    # CMAKE_CXX_FLAGS= /DWIN32 /D_WINDOWS /GR /EHsc
-    # CMAKE_CXX_FLAGS_DEBUG= /MDd /Zi /Ob0 /Od /RTC1
-    # CMAKE_CXX_FLAGS_RELEASE= /MD /O2 /Ob2 /DNDEBUG
+  # remove /W3 flag from CMAKE_CXX_FLAGS
+  string(REGEX REPLACE "/W[3|4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-    set(FLAGS_C_DEFAULT /Zi)
-    set(FLAGS_C_RELEASE /W3)
-    set(FLAGS_C_DEBUG /W4)
-    set(FLAGS_CXX_DEFAULT /Zi)
-    set(FLAGS_CXX_RELEASE /W3)
-    set(FLAGS_CXX_DEBUG /W4)
+  set(FLAGS_CXX_DEFAULT)
+  set(FLAGS_CXX_RELEASE /W3 /WX)
+  set(FLAGS_CXX_DEBUG /W4)
+endif()
 
-endif ()
+set(MAIN_FLAGS_CXX_DEBUG ${FLAGS_CXX_DEBUG} ${FLAGS_CXX_DEFAULT})
+set(MAIN_FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} ${FLAGS_CXX_DEFAULT})
 
 #====================================================
 # build
 #====================================================
-
-add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_MALLOC})
-
-FIND_PACKAGE(XercesC REQUIRED)
-
-target_include_directories(colorer_lib
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${XERCESC_INCLUDE_DIR}
+add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_COLORER_STRINGS} ${SRC_COLORER_ZIP} ${SRC_COLORER_SPDLOG})
+add_library(colorer::colorer ALIAS colorer_lib)
+target_include_directories(colorer_lib PUBLIC
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
-target_compile_definitions(colorer_lib PRIVATE
-    ${COLORER_DEF}
-    ${SPDLOG_DEFINES}
-    __unix__
+set_target_properties(colorer_lib PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
 )
-
-if(USESPDLOG)
-    target_include_directories(colorer_lib PUBLIC ${SPDLOG_INCLUDE_DIR})
-endif()
 
 target_link_libraries(colorer_lib
-    PUBLIC ${XERCESC_LIBRARIES}
-    ${THREAD_LIBS}
+    PUBLIC XercesC::XercesC
 )
 
-#set_target_properties(colorer_lib PROPERTIES
-#    CXX_STANDARD 17
-#    CXX_STANDARD_REQUIRED YES
-#    CXX_EXTENSIONS NO
-#    )
+if(NOT COLORER_USE_DUMMY_LOGGER)
+  target_link_libraries(colorer_lib
+      PUBLIC spdlog::spdlog
+  )
+endif()
 
-# set options for target
-set(MAIN_FLAGS_CXX_DEBUG ${FLAGS_CXX_DEBUG} ${FLAGS_CXX_DEFAULT})
-set(MAIN_FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} ${FLAGS_CXX_DEFAULT})
-set(MAIN_FLAGS_C_DEBUG ${FLAGS_C_DEBUG} ${FLAGS_C_DEFAULT})
-set(MAIN_FLAGS_C_RELEASE ${FLAGS_C_RELEASE} ${FLAGS_C_DEFAULT})
+if(COLORER_USE_ICU_STRINGS)
+  target_link_libraries(colorer_lib
+      PUBLIC ICU::uc ICU::data
+  )
+endif()
 
-if (${CMAKE_BUILD_TYPE} MATCHES Debug)
-    target_compile_options(colorer_lib
-        PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_DEBUG}>
-        PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_DEBUG}>
-        )
-else ()
-    target_compile_options(colorer_lib
-        PUBLIC $<$<COMPILE_LANGUAGE:C>:${MAIN_FLAGS_C_RELEASE}>
-        PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_RELEASE}>
-        )
-endif ()
+if(COLORER_USE_ZIPINPUTSOURCE)
+  if(COLORER_USE_VCPKG)
+    target_link_libraries(colorer_lib PUBLIC unofficial::minizip::minizip)
+  else()
+    target_link_libraries(colorer_lib PUBLIC minizip::minizip)
+  endif()
+endif()
+
+if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
+  target_link_libraries(colorer_lib PUBLIC stdc++fs)
+endif()
+
+if(${CMAKE_BUILD_TYPE} MATCHES Debug)
+  target_compile_options(colorer_lib PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_DEBUG}>)
+else()
+  target_compile_options(colorer_lib PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${MAIN_FLAGS_CXX_RELEASE}>)
+endif()
 
 set_target_properties(colorer_lib PROPERTIES
     OUTPUT_NAME "colorer"
     VERSION ${COLORER_VERSION}
     SOVERSION ${COLORER_VERSION_MAJOR}
     DEBUG_POSTFIX "d"
-    )
-#====================================================
-# test
-#====================================================
-
-# static analyze
-if (COLORER_PVS_STUDIO_CHECK)
-    pvs_studio_add_target(TARGET ${PROJECT_NAME}.analyze ALL
-        ANALYZE ${PROJECT_NAME}
-        MODE GA 64 OP CS
-        CFG_TEXT "exclude-path=*/external/*"
-        OUTPUT FORMAT errorfile
-        LOG ${PROJECT_NAME}.err)
-endif ()
-
+)

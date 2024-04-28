@@ -1,7 +1,4 @@
-#include <colorer/handlers/LineRegionsCompactSupport.h>
-
-LineRegionsCompactSupport::LineRegionsCompactSupport() {}
-LineRegionsCompactSupport::~LineRegionsCompactSupport() {}
+#include "colorer/handlers/LineRegionsCompactSupport.h"
 
 void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
 {
@@ -52,7 +49,7 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
       break;
     }
     // insert between or before special
-    if (ln->start < ladd->start && (ln->next->start > ladd->start || ln->next->special)) {
+    if (ln->start < ladd->start && (ln->next && (ln->next->start > ladd->start || ln->next->special))) {
       ladd->next = ln->next;
       ladd->prev = ln;
       ln->next->prev = ladd;
@@ -64,7 +61,7 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
   if (ladd != lstart && ladd->prev && (ladd->prev->end > ladd->start || ladd->prev->end == -1)) {
     // our region breaks previous region into two parts
     if ((ladd->prev->end > ladd->end || ladd->prev->end == -1) && ladd->end != -1) {
-      LineRegion* ln1 = new LineRegion(*ladd->prev);
+      auto* ln1 = new LineRegion(*ladd->prev);
       ln1->prev = ladd;
       ln1->next = ladd->next;
       if (ladd->next) {
@@ -99,8 +96,7 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
     if (lnext->special) {
       continue;
     }
-    if ((lnext->end == -1 || lnext->end > ladd->end) && ladd->end != -1
-        && lnext->start < ladd->end) {
+    if ((lnext->end == -1 || lnext->end > ladd->end) && ladd->end != -1 && lnext->start < ladd->end) {
       lnext->start = ladd->end;
     }
     // make region zero-width, if it is hided by our new region
@@ -118,6 +114,3 @@ void LineRegionsCompactSupport::addLineRegion(size_t lno, LineRegion* ladd)
   }
   lineRegions.at(getLineIndex(lno)) = lstart;
 }
-
-
-

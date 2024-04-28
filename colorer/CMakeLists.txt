@@ -16,17 +16,16 @@ set(SOURCES
     src/pcolorer2/FarHrcSettings.h
     src/pcolorer2/pcolorer.h
     src/pcolorer2/resource.h
-    src/pcolorer2/StringBuffer.h
     src/pcolorer2/tools.h
     src/pcolorer2/ChooseTypeMenu.cpp
     src/pcolorer2/FarEditor.cpp
     src/pcolorer2/FarEditorSet.cpp
     src/pcolorer2/FarHrcSettings.cpp
     src/pcolorer2/pcolorer.cpp
-    src/pcolorer2/StringBuffer.cpp
     src/pcolorer2/tools.cpp
 )
 
+set(COLORER_USE_ICU_STRINGS OFF)
 
 if (USESPDLOG)
     FIND_PACKAGE(Spdlog REQUIRED)
@@ -50,6 +49,9 @@ if (USESPDLOG)
     else()
         message("SPDLOG: using without forced SPDLOG_FMT_EXTERNAL cuz ${SPDLOG_INCLUDE_DIR}/spdlog/fmt/bundled exists")
     endif()
+    set(COLORER_USE_DUMMY_LOGGER OFF)
+else()
+    set(COLORER_USE_DUMMY_LOGGER ON)
 endif()
 
 
@@ -119,3 +121,8 @@ add_custom_command(TARGET colorer POST_BUILD
 
 add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
 
+set_target_properties(colorer PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)

@@ -15,6 +15,7 @@
 #include<farcolor.h>
 #include<farkeys.h>
 #include"ConsoleAnnotation.h"
+#include "colorer/strings/legacy/UnicodeString.h"
 
 #include<wctype.h>
 #include<wchar.h>
@@ -22,12 +23,11 @@
 #if 0
 #include <g3log/logworker.hpp>
 #endif
-// new colorer don't have class StringBuffer
-#include "StringBuffer.h"
+
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
-extern StringBuffer *PluginPath;
+extern UnicodeString *PluginPath;
 #if 0
 extern std::unique_ptr<g3::LogWorker> logworker;
 #endif
@@ -51,7 +51,7 @@ enum
   mKeyAssignDialogTitle, mKeyAssignTextTitle
 };
 
-StringBuffer *GetConfigPath(const SString &sub);
+UnicodeString *GetConfigPath(const UnicodeString &sub);
 
 #endif
 

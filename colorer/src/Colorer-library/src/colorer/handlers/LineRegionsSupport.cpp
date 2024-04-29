@@ -1,4 +1,4 @@
-#include <colorer/handlers/LineRegionsSupport.h>
+#include "colorer/handlers/LineRegionsSupport.h"
 
 LineRegionsSupport::LineRegionsSupport()
 {
@@ -6,12 +6,13 @@ LineRegionsSupport::LineRegionsSupport()
   firstLineNo = 0;
   regionMapper = nullptr;
   special = nullptr;
+  flowBackground = nullptr;
 }
 
 LineRegionsSupport::~LineRegionsSupport()
 {
   clear();
-  for (size_t i = 1; i < schemeStack.size();i++){
+  for (size_t i = 1; i < schemeStack.size(); i++) {
     delete schemeStack[i];
   }
   schemeStack.clear();
@@ -30,9 +31,9 @@ size_t LineRegionsSupport::size()
 
 void LineRegionsSupport::clear()
 {
-  for (size_t idx = 0; idx < lineRegions.size(); idx++) {
-    LineRegion* ln = lineRegions.at(idx);
-    lineRegions.at(idx) = nullptr;
+  for (auto& lineRegion : lineRegions) {
+    LineRegion* ln = lineRegion;
+    lineRegion = nullptr;
     while (ln != nullptr) {
       LineRegion* lnn = ln->next;
       delete ln;
@@ -69,9 +70,9 @@ void LineRegionsSupport::setBackground(const RegionDefine* back)
   background.rdef = const_cast<RegionDefine*>(back);
 }
 
-void LineRegionsSupport::setSpecialRegion(const Region* special)
+void LineRegionsSupport::setSpecialRegion(const Region* _special)
 {
-  this->special = special;
+  special = _special;
 }
 
 void LineRegionsSupport::setRegionMapper(const RegionMapper* rs)
@@ -88,7 +89,7 @@ bool LineRegionsSupport::checkLine(size_t lno) const
   return true;
 }
 
-void LineRegionsSupport::startParsing(size_t lno)
+void LineRegionsSupport::startParsing(size_t /*lno*/)
 {
   for (size_t i = 1; i < schemeStack.size(); i++) {
     delete schemeStack[i];
@@ -97,7 +98,7 @@ void LineRegionsSupport::startParsing(size_t lno)
   schemeStack.push_back(&background);
 }
 
-void LineRegionsSupport::clearLine(size_t lno, String* line)
+void LineRegionsSupport::clearLine(size_t lno, UnicodeString* /*line*/)
 {
   if (!checkLine(lno)) {
     return;
@@ -109,7 +110,7 @@ void LineRegionsSupport::clearLine(size_t lno, String* line)
     delete ln;
     ln = lnn;
   }
-  LineRegion* lfirst = new LineRegion(*schemeStack.back());
+  auto* lfirst = new LineRegion(*schemeStack.back());
   lfirst->start = 0;
   lfirst->end = -1;
   lfirst->next = nullptr;
@@ -118,15 +119,15 @@ void LineRegionsSupport::clearLine(size_t lno, String* line)
   flowBackground = lfirst;
 }
 
-void LineRegionsSupport::addRegion(size_t lno, String* line, int sx, int ex, const Region* region)
+void LineRegionsSupport::addRegion(size_t line_no, UnicodeString* /*line*/, int start_idx, int end_idx, const Region* region)
 {
   // ignoring out of cached interval lines
-  if (!checkLine(lno)) {
+  if (!checkLine(line_no)) {
     return;
   }
-  LineRegion* lnew = new LineRegion();
-  lnew->start = sx;
-  lnew->end = ex;
+  auto* lnew = new LineRegion();
+  lnew->start = start_idx;
+  lnew->end = end_idx;
   lnew->region = region;
   lnew->scheme = schemeStack.back()->scheme;
   if (region->hasParent(special)) {
@@ -142,15 +143,15 @@ void LineRegionsSupport::addRegion(size_t lno, String* line, int sx, int ex, con
       lnew->rdef->assignParent(schemeStack.back()->rdef);
     }
   }
-  addLineRegion(lno, lnew);
+  addLineRegion(line_no, lnew);
 }
 
-void LineRegionsSupport::enterScheme(size_t lno, String* line, int sx, int ex, const Region* region, const Scheme* scheme)
+void LineRegionsSupport::enterScheme(size_t line_no, UnicodeString* /*line*/, int start_idx, int /*end_idx*/, const Region* region, const Scheme* scheme)
 {
-  LineRegion* lr = new LineRegion();
+  auto* lr = new LineRegion();
   lr->region = region;
   lr->scheme = scheme;
-  lr->start = sx;
+  lr->start = start_idx;
   lr->end = -1;
   if (regionMapper != nullptr) {
     const RegionDefine* rd = regionMapper->getRegionDefine(region);
@@ -164,50 +165,48 @@ void LineRegionsSupport::enterScheme(size_t lno, String* line, int sx, int ex, c
   }
   schemeStack.push_back(lr);
   // ignoring out of cached interval lines
-  if (!checkLine(lno)) {
+  if (!checkLine(line_no)) {
     return;
   }
   // we must skip transparent regions
   if (lr->region != nullptr) {
-    LineRegion* lr_add = new LineRegion(*lr);
+    auto* lr_add = new LineRegion(*lr);
     flowBackground->end = lr_add->start;
     flowBackground = lr_add;
-    addLineRegion(lno, lr_add);
+    addLineRegion(line_no, lr_add);
   }
 }
 
-void LineRegionsSupport::leaveScheme(size_t lno, String* line, int sx, int ex, const Region* region, const Scheme* scheme)
+void LineRegionsSupport::leaveScheme(size_t line_no, UnicodeString* /*line*/, int /*start_idx*/, int end_idx, const Region* /*region*/, const Scheme* /*scheme*/)
 {
   const Region* scheme_region = schemeStack.back()->region;
   delete schemeStack.back();
   schemeStack.pop_back();
   // ignoring out of cached interval lines
-  if (!checkLine(lno)) {
+  if (!checkLine(line_no)) {
     return;
   }
   // we have to skip transparent regions
   if (scheme_region != nullptr) {
-    LineRegion* lr = new LineRegion(*schemeStack.back());
-    lr->start = ex;
+    auto* lr = new LineRegion(*schemeStack.back());
+    lr->start = end_idx;
     lr->end = -1;
     flowBackground->end = lr->start;
     flowBackground = lr;
-    addLineRegion(lno, lr);
+    addLineRegion(line_no, lr);
   }
 }
 
-void LineRegionsSupport::addLineRegion(size_t lno, LineRegion* lr)
+void LineRegionsSupport::addLineRegion(size_t line_no, LineRegion* lr)
 {
-  LineRegion* lstart = getLineRegions(lno);
+  LineRegion* lstart = getLineRegions(line_no);
   lr->next = nullptr;
   lr->prev = lr;
   if (lstart == nullptr) {
-    lineRegions.at(getLineIndex(lno)) = lr;
+    lineRegions.at(getLineIndex(line_no)) = lr;
   } else {
     lr->prev = lstart->prev;
     lr->prev->next = lr;
     lstart->prev = lr;
   }
 }
-
-

@@ -1,7 +1,7 @@
 #ifndef _COLORER_TEXTPARSERPELPERS_H_
 #define _COLORER_TEXTPARSERPELPERS_H_
 
-#include <colorer/parsers/HRCParserImpl.h>
+#include "colorer/parsers/HrcLibraryImpl.h"
 
 #if !defined COLORERMODE || defined NAMED_MATCHES_IN_HASH
 #error need (COLORERMODE & !NAMED_MATCHES_IN_HASH) in cregexp
@@ -19,14 +19,18 @@
 */
 class VTList
 {
-  VirtualEntryVector* vlist;
-  VTList* prev, *next, *last, *shadowlast;
-  int nodesnum;
-public:
-  VTList();
+  VirtualEntryVector* vlist = nullptr;
+  VTList* prev = nullptr;
+  VTList* next = nullptr;
+  VTList* last = this;
+  VTList* shadowlast = nullptr;
+  int nodesnum = 0;
+
+ public:
+  VTList() = default;
   ~VTList();
   void deltree();
-  bool push(SchemeNode* node);
+  bool push(SchemeNodeInherit* node);
   bool pop();
   SchemeImpl* pushvirt(SchemeImpl* scheme);
   void popvirt();
@@ -45,33 +49,39 @@ public:
  */
 class ParseCache
 {
-public:
+ public:
   /** Start and end lines of this scheme match */
-  int sline, eline;
+  int sline = 0;
+  int eline = 0;
   /** Scheme, matched for this cache entry */
-  SchemeImpl* scheme;
+  SchemeImpl* scheme = nullptr;
   /** Particular parent block object, caused this scheme to
-    * be instantiated.
-    */
-  const SchemeNode* clender;
+   * be instantiated.
+   */
+  const SchemeNodeBlock* clender = nullptr;
+
   /**
    * Scheme virtualization cache entry
    */
-  VirtualEntryVector** vcache;
+  VirtualEntryVector** vcache = nullptr;
+
   /**
-   * RE Match object for start RE of the enwrapped &lt;block> object
+   * RE Match object for start RE of the enwrapped <block> object
    */
-  SMatches matchstart;
+  SMatches matchstart = {};
   /**
    * Copy of the line with parent's start RE.
    */
-  SString* backLine;
+  UnicodeString* backLine = nullptr;
 
   /**
    * Tree structure references in parse cache
    */
-  ParseCache* children, *next, *prev, *parent;
-  ParseCache();
+  ParseCache* children = nullptr;
+  ParseCache* next = nullptr;
+  ParseCache* prev = nullptr;
+  ParseCache* parent = nullptr;
+  ParseCache() = default;
   ~ParseCache();
   /**
    * Searched a cache position for the specified line number.
@@ -83,5 +93,3 @@ public:
 };
 
 #endif
-
-

@@ -1,27 +1,27 @@
 #include <vector>
 #include"FarEditor.h"
 
-const SString DShowCross("show-cross");
-const SString DNone("none");
-const SString DVertical("vertical");
-const SString DHorizontal("horizontal");
-const SString DBoth("both");
-const SString DCrossZorder("cross-zorder");
-const SString DBottom("bottom");
-const SString DTop("top");
-const SString DYes("yes");
-const SString DNo("no");
-const SString DTrue("true");
-const SString DFalse("false");
-const SString DBackparse("backparse");
-const SString DMaxLen("maxlinelength");
-const SString DDefFore("default-fore");
-const SString DDefBack("default-back");
-const SString DFullback("fullback");
-const SString DHotkey("hotkey");
-const SString DFavorite("favorite");
-const SString DFirstLines("firstlines");
-const SString DFirstLineBytes("firstlinebytes");
+const UnicodeString DShowCross("show-cross");
+const UnicodeString DNone("none");
+const UnicodeString DVertical("vertical");
+const UnicodeString DHorizontal("horizontal");
+const UnicodeString DBoth("both");
+const UnicodeString DCrossZorder("cross-zorder");
+const UnicodeString DBottom("bottom");
+const UnicodeString DTop("top");
+const UnicodeString DYes("yes");
+const UnicodeString DNo("no");
+const UnicodeString DTrue("true");
+const UnicodeString DFalse("false");
+const UnicodeString DBackparse("backparse");
+const UnicodeString DMaxLen("maxlinelength");
+const UnicodeString DDefFore("default-fore");
+const UnicodeString DDefBack("default-back");
+const UnicodeString DFullback("fullback");
+const UnicodeString DHotkey("hotkey");
+const UnicodeString DFavorite("favorite");
+const UnicodeString DFirstLines("firstlines");
+const UnicodeString DFirstLineBytes("firstlinebytes");
 
 FarEditor::FarEditor(PluginStartupInfo *inf, ParserFactory *pf):
   info(inf),
@@ -56,10 +56,10 @@ FarEditor::FarEditor(PluginStartupInfo *inf, ParserFactory *pf):
   errorOutliner(nullptr)
 {
   info->EditorControl(ECTL_GETINFO, &ei);
-  SString dso("def:Outlined");
-  SString dse("def:Error");
-  const Region *def_Outlined = parserFactory->getHRCParser()->getRegion(&dso);
-  const Region *def_Error = parserFactory->getHRCParser()->getRegion(&dse);
+  UnicodeString dso("def:Outlined");
+  UnicodeString dse("def:Error");
+  const Region *def_Outlined = parserFactory->getHrcLibrary().getRegion(&dso);
+  const Region *def_Error = parserFactory->getHrcLibrary().getRegion(&dse);
   structOutliner = new Outliner(baseEditor, def_Outlined);
   errorOutliner = new Outliner(baseEditor, def_Error);
 }
@@ -91,7 +91,7 @@ void FarEditor::endJob(size_t lno)
 #if 0
 String *FarEditor::getLine(int lno)
 #endif // if 0
-SString *FarEditor::getLine(size_t lno)
+UnicodeString *FarEditor::getLine(size_t lno)
 {
   if (ret_strNumber == lno && ret_str != nullptr){
     return ret_str;
@@ -113,11 +113,11 @@ SString *FarEditor::getLine(size_t lno)
   }
 
   delete ret_str;
-  ret_str = new StringBuffer(es.StringText, 0, len);
+  ret_str = new UnicodeString((char*)es.StringText, len*sizeof(wchar_t), Encodings::ENC_UTF32);
   return ret_str;
 }
 
-void FarEditor::chooseFileType(String *fname)
+void FarEditor::chooseFileType(UnicodeString *fname)
 {
   FileType *ftype = baseEditor->chooseFileType(fname);
   setFileType(ftype);
@@ -135,19 +135,19 @@ void FarEditor::setFileType(FileType *ftype)
 void FarEditor::reloadTypeSettings()
 {
   FileType *ftype = baseEditor->getFileType();
-  HRCParser *hrcParser = parserFactory->getHRCParser();
-  SString ds("default") ;
-  FileType *def = hrcParser->getFileType(&ds);
+  auto& hrcParser = parserFactory->getHrcLibrary();
+  UnicodeString ds("default") ;
+  FileType *def = hrcParser.getFileType(&ds);
 
   if (def == nullptr){
-    throw Exception(SString("No 'default' file type found"));
+    throw Exception("No 'default' file type found");
   }
 
   int backparse = def->getParamValueInt(DBackparse, 2000);
   maxLineLength = def->getParamValueInt(DMaxLen, 0);
   newfore = def->getParamValueInt(DDefFore, -1);
   newback = def->getParamValueInt(DDefBack, -1);
-  const String *value;
+  const UnicodeString *value;
   value = def->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)){
@@ -432,7 +432,7 @@ void FarEditor::locateFunction()
 {
   // extract word
   enterHandler();
-  String &curLine = *getLine(ei.CurLine);
+  UnicodeString &curLine = *getLine(ei.CurLine);
   int cpos = ei.CurPos;
   int sword = cpos;
   int eword = cpos;
@@ -455,7 +455,7 @@ void FarEditor::locateFunction()
         sword--;
       }
 
-      SString funcname(curLine, sword+1, eword-sword-1);
+      UnicodeString funcname(curLine, sword+1, eword-sword-1);
 #if 0
       CLR_INFO("FC", "Letter %s", funcname.getChars());
 #endif // if 0
@@ -473,8 +473,8 @@ void FarEditor::locateFunction()
       for (int idx = 0; idx < items_num; idx++){
         OutlineItem *item = structOutliner->getItem(idx);
 
-        if (item->token->indexOfIgnoreCase(SString(funcname)) != -1){
-          if (item->lno == ei.CurLine){
+        if (item->token->indexOfIgnoreCase(UnicodeString(funcname)) != -1){
+          if (item->lno == (size_t) ei.CurLine){
             item_last = item;
           }
           else{
@@ -583,7 +583,7 @@ int FarEditor::editorEvent(int event, void *param)
   cursorRegion = nullptr;
 
   if (rdBackground == nullptr){
-    throw Exception(SString("HRD Background region 'def:Text' not found"));
+    throw Exception("HRD Background region 'def:Text' not found");
   }
 
   for (int lno = ei.TopScreenLine; lno < ei.TopScreenLine + WindowSizeY; lno++){
@@ -892,7 +892,7 @@ void FarEditor::showOutliner(Outliner *outliner)
     for (i = 0; i < items_num; i++){
       OutlineItem *item = outliner->getItem(i);
 
-      if (item->token->indexOfIgnoreCase(StringBuffer(filter)) != -1){
+      if (item->token->indexOfIgnoreCase(UnicodeString(filter)) != -1){
         int treeLevel = Outliner::manageTree(treeStack, item->level);
 
         if (maxLevel < treeLevel){
@@ -913,9 +913,9 @@ void FarEditor::showOutliner(Outliner *outliner)
             menuItem[si++] = ' ';
           };
 
-          const String *region = item->region->getName();
+          auto region = item->region->getName();
 
-          wchar cls = Character::toLowerCase((*region)[region->indexOf(':')+1]);
+          wchar cls = Character::toLowerCase(region[region.indexOf(':')+1]);
 
           si += swprintf(menuItem+si, 255-si, L"%lc ", cls);
 
@@ -929,7 +929,7 @@ void FarEditor::showOutliner(Outliner *outliner)
           menuItem[si+labelLength] = 0;
         }
         else{
-          String *line = getLine(item->lno);
+          UnicodeString *line = getLine(item->lno);
           int labelLength = line->length();
 
           if (labelLength > 110){
@@ -944,7 +944,7 @@ void FarEditor::showOutliner(Outliner *outliner)
         // set position on nearest top function
         menu[menu_size].Text = menuItem;
 
-        if (ei.CurLine >= item->lno){
+        if ((size_t) ei.CurLine >= item->lno){
           selectedItem = menu_size;
         }
 
@@ -970,7 +970,7 @@ void FarEditor::showOutliner(Outliner *outliner)
 
     while (code != 0 && menu_size > 1 && same && plen < FILTER_SIZE){
       plen = aflen + 1;
-      int auto_ptr  = StringBuffer(menu[0].Text).indexOfIgnoreCase(StringBuffer(autofilter));
+      int auto_ptr  = UnicodeString(menu[0].Text).indexOfIgnoreCase(UnicodeString(autofilter));
 
       if (int(wcslen(menu[0].Text)-auto_ptr) < plen){
         break;
@@ -980,7 +980,7 @@ void FarEditor::showOutliner(Outliner *outliner)
       prefix[plen] = 0;
 
       for (int j = 1 ; j < menu_size ; j++){
-        if (StringBuffer(menu[j].Text).indexOfIgnoreCase(StringBuffer(prefix)) == -1){
+        if (UnicodeString(menu[j].Text).indexOfIgnoreCase(UnicodeString(prefix)) == -1){
           same = false;
           break;
         }
@@ -1252,10 +1252,10 @@ color FarEditor::convert(const StyledRegion *rd)
       col.bk = rd->back;
     }
 
-    if (rd == nullptr || !rd->bfore)
+    if (rd == nullptr || !rd->fore)
       col.fg = fore;
 
-    if (rd == nullptr || !rd->bback)
+    if (rd == nullptr || !rd->back)
       col.bk = back;
 
     if (rd != nullptr)
@@ -1269,10 +1269,10 @@ color FarEditor::convert(const StyledRegion *rd)
       col.cbk = rd->back;
     }
 
-    if (rd == nullptr || !rd->bfore)
+    if (rd == nullptr || !rd->fore)
       col.cfg = fore;
 
-    if (rd == nullptr || !rd->bback)
+    if (rd == nullptr || !rd->back)
       col.cbk = back;
 
     return col;

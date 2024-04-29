@@ -7,8 +7,6 @@
 #if 0
 #include<common/Logging.h>
 #endif // if 0
-#include <colorer/unicode/SString.h>
-#include <colorer/unicode/Character.h>
 
 #include"pcolorer.h"
 
@@ -29,27 +27,27 @@ struct color{
   color() {concolor=0; fg = 0; bk = 0; style = 0; }
 };
 
-extern const SString DShowCross;
-extern const SString DNone;
-extern const SString DVertical;
-extern const SString DHorizontal;
-extern const SString DBoth;
-extern const SString DCrossZorder;
-extern const SString DBottom;
-extern const SString DTop;
-extern const SString DYes;
-extern const SString DNo;
-extern const SString DTrue;
-extern const SString DFalse;
-extern const SString DBackparse;
-extern const SString DMaxLen;
-extern const SString DDefFore;
-extern const SString DDefBack;
-extern const SString DFullback;
-extern const SString DHotkey;
-extern const SString DFavorite;
-extern const SString DFirstLines;
-extern const SString DFirstLineBytes;
+extern const UnicodeString DShowCross;
+extern const UnicodeString DNone;
+extern const UnicodeString DVertical;
+extern const UnicodeString DHorizontal;
+extern const UnicodeString DBoth;
+extern const UnicodeString DCrossZorder;
+extern const UnicodeString DBottom;
+extern const UnicodeString DTop;
+extern const UnicodeString DYes;
+extern const UnicodeString DNo;
+extern const UnicodeString DTrue;
+extern const UnicodeString DFalse;
+extern const UnicodeString DBackparse;
+extern const UnicodeString DMaxLen;
+extern const UnicodeString DDefFore;
+extern const UnicodeString DDefBack;
+extern const UnicodeString DFullback;
+extern const UnicodeString DHotkey;
+extern const UnicodeString DFavorite;
+extern const UnicodeString DFirstLines;
+extern const UnicodeString DFirstLineBytes;
 
 /** FAR Editor internal plugin structures.
     Implements text parsing and different
@@ -73,7 +71,7 @@ public:
 #if 0
   String *getLine(int lno);
 #endif // if 0
-  SString *getLine(size_t lno);
+  UnicodeString *getLine(size_t lno);
 
   /** Changes current assigned file type.
   */
@@ -84,7 +82,7 @@ public:
 
   /** Selects file type with it's extension and first lines
   */
-  void chooseFileType(String *fname);
+  void chooseFileType(UnicodeString *fname);
 
 
   /** Installs specified RegionMapper implementation.
@@ -165,8 +163,8 @@ private:
 #if 0
   String *ret_str;
 #endif // if 0
-  SString *ret_str;
-  int ret_strNumber;
+  UnicodeString *ret_str;
+  size_t ret_strNumber;
 
   int newfore, newback;
   const StyledRegion *rdBackground;

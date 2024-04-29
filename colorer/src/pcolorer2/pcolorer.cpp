@@ -23,7 +23,7 @@ XERCES_CPP_NAMESPACE_USE
 FarEditorSet *editorSet = nullptr;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
-StringBuffer *PluginPath = nullptr;
+UnicodeString *PluginPath = nullptr;
 #if 0
 std::unique_ptr<g3::LogWorker> logworker;
 #endif // #if 0
@@ -69,10 +69,10 @@ class StrX
 
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
-      SString module(path, 0);
+      UnicodeString module(path);
       int pos = module.lastIndexOf('/');
       pos = module.lastIndexOf('/',pos);
-      PluginPath=new StringBuffer(SString(module, 0, pos));
+      PluginPath=new UnicodeString(UnicodeString(module, 0, pos));
 #ifdef USESPDLOG
       logger = spdlog::stderr_logger_mt("far2l-colorer");
 #else
@@ -80,10 +80,10 @@ SHAREDSYMBOL void PluginModuleOpen(const char *path)
 #endif
 }
 
-StringBuffer *GetConfigPath(const SString &sub)
+UnicodeString *GetConfigPath(const UnicodeString &sub)
 {
   struct stat s;
-  StringBuffer *path=new StringBuffer(PluginPath);
+  UnicodeString *path=new UnicodeString(*PluginPath);
   path->append(sub);
   if (stat(path->getChars(), &s) == -1) {
           std::wstring str(path->getWChars());
@@ -173,7 +173,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
         if (!editorSet){
           editorSet = new FarEditorSet();
         }
-        editorSet->viewFile(StringBuffer(nfile));
+        editorSet->viewFile(UnicodeString(nfile));
       }
 
       delete[] nfile;

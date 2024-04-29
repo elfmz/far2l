@@ -1917,9 +1917,11 @@ a nevét (ami majd a menüben jelenik meg) és a végrehajtandó parancs sorát.
     Almenü szerkesztésénél csak a gyorsbillentyűt és a nevet kell megadni.
 
     A helyi felhasználói menü az adott mappában egy #FarMenu.Ini# nevű fájlba
-mentődik. A főmenüt a FAR alaphelyzetben a regisztrációs adatbázisba menti, de
-fájlba is menthető. Ha helyi menüt készítettünk a FAR mappájában, a FAR ezt
-fogja használni a registrybe mentett főmenü helyett.
+mentődik.
+    A FAR a főmenüt a profilkönyvtárba menti az #~~/.config/far2l/settings/user_menu.ini# fájlba
+(a formátum eltér a FarMenu.ini-től).
+Ha helyi menüt készítettünk a FAR mappájában, a FAR ezt
+fogja használni a profil főmenü helyett.
 
     A #Shift-F10# azonnal bezárja a felhasználói menü ablakát, akár főmenü,
 akár almenü volt megnyitva benne.

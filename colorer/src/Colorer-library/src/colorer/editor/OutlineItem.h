@@ -2,7 +2,7 @@
 #define _COLORER_OUTLINEITEM_H_
 
 #include <memory>
-#include <colorer/Region.h>
+#include "colorer/Region.h"
 
 /**
  * Item in outliner's list.
@@ -20,7 +20,7 @@ public:
   /** Level of enclosure */
   int level;
   /** Item text */
-  std::unique_ptr<SString> token;
+  std::unique_ptr<UnicodeString> token;
   /** This item's region */
   const Region* region;
 
@@ -30,17 +30,16 @@ public:
   }
 
   /** Initializing constructor */
-  OutlineItem(size_t lno_, int pos_, int level_, String* token_, const Region* region_):
+  OutlineItem(size_t lno_, int pos_, int level_, UnicodeString* token_, const Region* region_):
     lno(lno_), pos(pos_), level(level_), token(nullptr), region(region_)
   {
     if (token_ != nullptr) {
-      token.reset(new SString(token_));
+      token = std::make_unique<UnicodeString>(*token_);
     }
   }
 
   ~OutlineItem()
-  {
-  }
+  = default;
 };
 
 #endif

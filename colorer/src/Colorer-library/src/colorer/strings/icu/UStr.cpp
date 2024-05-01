@@ -268,3 +268,10 @@ int8_t UStr::caseCompare(const UnicodeString& str1, const UnicodeString& str2)
 {
   return str1.caseCompare(str2, U_FOLD_CASE_DEFAULT);
 }
+
+int32_t UStr::indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& str2, int32_t pos)
+{
+  auto tmp_str1=str1;
+  auto tmp_str2=str2;
+  return tmp_str1.toUpper().indexOf(tmp_str2.toUpper(),pos);
+}

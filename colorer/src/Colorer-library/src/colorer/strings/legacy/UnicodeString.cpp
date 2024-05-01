@@ -456,3 +456,8 @@ UnicodeString::UnicodeString(const char* string, int32_t l, int enc)
   CString ds((byte*)string, l, enc);
   construct(&ds, 0, ds.length());
 }
+
+bool UnicodeString::operator<(const UnicodeString& text) const
+{
+  return compare(text) == -1;
+}

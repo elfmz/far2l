@@ -930,7 +930,7 @@ bool CRegExp::lowParse(SRegInfo* re, SRegInfo* prev, int toParse)
               continue;
             }
             if (ignoreCase) {
-              if (!UStr::caseCompare(UnicodeString(pattern, toParse, wlen),*re->un.word)==0) {
+              if (UStr::caseCompare(UnicodeString(pattern, toParse, wlen),*re->un.word)!=0) {
                 check_stack(false, &re, &prev, &toParse, &leftenter, &action);
                 continue;
               }

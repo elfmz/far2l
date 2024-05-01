@@ -61,7 +61,8 @@ int TextParser::Impl::parse(int from, int num, TextParseMode mode)
   if (mode == TextParseMode::TPM_CACHE_READ || mode == TextParseMode::TPM_CACHE_UPDATE) {
     parent = cache->searchLine(from, &forward);
     if (parent != nullptr) {
-      CTRACE(logger->trace("[TPCache] searchLine() parent:{0},{1}-{2}", *parent->scheme->getName(), parent->sline, parent->eline));
+      CTRACE(logger->trace("[TPCache] searchLine() parent:{0},{1}-{2}", *parent->scheme->getName(),
+                           parent->sline, parent->eline));
     }
   }
   CTRACE(logger->trace("[TextParserImpl] parse: cache filled"));
@@ -75,7 +76,8 @@ int TextParser::Impl::parse(int from, int num, TextParseMode mode)
         delete parent->children;
         parent->children = nullptr;
       }
-    } else {
+    }
+    else {
       if (updateCache) {
         delete forward->next;
         forward->next = nullptr;
@@ -90,7 +92,8 @@ int TextParser::Impl::parse(int from, int num, TextParseMode mode)
       parent->clender->end->setBackTrace(parent->backLine, &parent->matchstart);
       colorize(parent->clender->end.get(), parent->clender->lowContentPriority);
       vtlist->clear();
-    } else {
+    }
+    else {
       colorize(nullptr, false);
     }
 
@@ -146,9 +149,7 @@ void TextParser::Impl::leaveScheme(int lno, int sx, int ex, const Region* region
 void TextParser::Impl::enterScheme(int lno, const SMatches* match,
                                    const SchemeNodeBlock* schemeNode)
 {
-  if (schemeNode->innerRegion) {
-    enterScheme(lno, match->e[0], match->e[0], schemeNode->region);
-  } else {
+  if (!schemeNode->innerRegion) {
     enterScheme(lno, match->s[0], match->e[0], schemeNode->region);
   }
 
@@ -158,6 +159,10 @@ void TextParser::Impl::enterScheme(int lno, const SMatches* match,
   for (int i = 0; i < match->cnMatch; i++) {
     addRegion(lno, match->ns[i], match->ne[i], schemeNode->regionsn[i]);
   }
+
+  if (schemeNode->innerRegion) {
+    enterScheme(lno, match->e[0], match->e[0], schemeNode->region);
+  }
 }
 
 void TextParser::Impl::leaveScheme(int /*lno*/, const SMatches* match,
@@ -165,8 +170,6 @@ void TextParser::Impl::leaveScheme(int /*lno*/, const SMatches* match,
 {
   if (schemeNode->innerRegion) {
     leaveScheme(current_parse_line, match->s[0], match->s[0], schemeNode->region);
-  } else {
-    leaveScheme(current_parse_line, match->s[0], match->e[0], schemeNode->region);
   }
 
   for (int i = 0; i < match->cMatch; i++) {
@@ -174,6 +177,10 @@ void TextParser::Impl::leaveScheme(int /*lno*/, const SMatches* match,
   }
   for (int i = 0; i < match->cnMatch; i++) {
     addRegion(current_parse_line, match->ns[i], match->ne[i], schemeNode->regionen[i]);
+  }
+
+  if (!schemeNode->innerRegion) {
+    leaveScheme(current_parse_line, match->s[0], match->e[0], schemeNode->region);
   }
 }
 
@@ -187,7 +194,8 @@ void TextParser::Impl::fillInvisibleSchemes(ParseCache* ch)
   enterScheme(current_parse_line, 0, 0, ch->clender->region);
 }
 
-int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int lowlen, int /*hilen*/)
+int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int lowlen,
+                               int /*hilen*/)
 {
   if (node->kwList->count == 0 || node->kwList->minKeywordLength + gx > lowlen) {
     return MATCH_NOTHING;
@@ -209,8 +217,10 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
     int8_t compare_result;
     if (node->kwList->matchCase) {
       compare_result = node->kwList->kwList[pos].keyword->compare(UnicodeString(*str, gx, kwlen));
-    } else {
-      compare_result = UStr::caseCompare( *node->kwList->kwList[pos].keyword,UnicodeString(*str, gx, kwlen));
+    }
+    else {
+      compare_result =
+          UStr::caseCompare(*node->kwList->kwList[pos].keyword, UnicodeString(*str, gx, kwlen));
     }
 
     if (compare_result == 0 && right - left == 1) {
@@ -224,7 +234,8 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
           {
             badbound = true;
           }
-        } else {
+        }
+        else {
           // custom check for word bound
           if ((gx > 0 && !node->worddiv->contains((*str)[gx - 1])) ||
               (gx + kwlen < lowlen && !node->worddiv->contains((*str)[gx + kwlen])))
@@ -234,7 +245,8 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
         }
       }
       if (!badbound) {
-        CTRACE(logger->trace("[TextParserImpl] KW matched. gx={0}, region={1}", gx, *node->kwList->kwList[pos].region->getName()));
+        CTRACE(logger->trace("[TextParserImpl] KW matched. gx={0}, region={1}", gx,
+                             *node->kwList->kwList[pos].region->getName()));
         addRegion(current_parse_line, gx, gx + kwlen, node->kwList->kwList[pos].region);
         gx += kwlen;
         return MATCH_RE;
@@ -271,7 +283,8 @@ int TextParser::Impl::searchIN(SchemeNodeInherit* node, int no, int lowLen, int 
   SchemeImpl* ssubst = vtlist->pushvirt(node->scheme);
   if (!ssubst) {
     // не нашли замену
-    // помещаем текущий inherit в список для будущих замен. True - если поместили, не было ограничений
+    // помещаем текущий inherit в список для будущих замен. True - если поместили, не было
+    // ограничений
     bool b = vtlist->push(node);
     // парсим текст по имплементации текущего inherit
     re_result = searchMatch(node->scheme, no, lowLen, hiLen);
@@ -445,9 +458,12 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
   if (!cscheme) {
     return MATCH_NOTHING;
   }
+#if COLORER_USE_DEEPTRACE
   int idx = 0;
+#endif
   for (auto const& schemeNode : cscheme->nodes) {
-    CTRACE(logger->trace("[TextParserImpl] searchMatch: processing node:{0}/{1}, type:{2}", idx + 1, cscheme->nodes.size(),
+    CTRACE(logger->trace("[TextParserImpl] searchMatch: processing node:{0}/{1}, type:{2}", idx + 1,
+                         cscheme->nodes.size(),
                          SchemeNode::schemeNodeTypeNames[static_cast<int>(schemeNode->type)]));
     switch (schemeNode->type) {
       case SchemeNode::SchemeNodeType::SNT_INHERIT: {
@@ -480,7 +496,9 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
         break;
       }
     }
+#if COLORER_USE_DEEPTRACE
     idx++;
+#endif
   }
   return MATCH_NOTHING;
 }
@@ -503,7 +521,8 @@ bool TextParser::Impl::colorize(CRegExp* root_end_re, bool lowContentPriority)
       clearLine = current_parse_line;
       str = lineSource->getLine(current_parse_line);
       if (str == nullptr) {
-        throw Exception("null String passed into the parser: " + UStr::to_unistr(current_parse_line));
+        throw Exception("null String passed into the parser: " +
+                        UStr::to_unistr(current_parse_line));
       }
       regionHandler->clearLine(current_parse_line, str);
     }

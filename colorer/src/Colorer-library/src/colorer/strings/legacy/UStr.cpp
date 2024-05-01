@@ -37,6 +37,11 @@ std::wstring UStr::to_stdwstr(const UnicodeString* str)
   return out_string;
 }
 
+std::wstring UStr::to_stdwstr(const UnicodeString& str)
+{
+  return to_stdwstr(&str);
+}
+
 std::filesystem::path UStr::to_filepath(const uUnicodeString& str)
 {
   std::filesystem::path result;
@@ -81,4 +86,9 @@ bool UStr::HexToUInt(const UnicodeString& str_hex, unsigned int* result)
     logger->error("Can`t convert {0} to int. {1}", str_hex, e.what());
     return false;
   }
+}
+
+int32_t UStr::indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& str2, int32_t pos)
+{
+  return str1.indexOfIgnoreCase(str2, pos);
 }

@@ -78,6 +78,8 @@ class UnicodeString
   */
   int8_t caseCompare(const UnicodeString& str) const;
 
+  bool operator<(const UnicodeString & text) const;
+
   wchar operator[](int32_t i) const;
   /** String length in unicode characters */
   int32_t length() const;

@@ -15,6 +15,7 @@ class UStr
   [[nodiscard]] static std::string to_stdstr(const UnicodeString* str);
   [[nodiscard]] static std::string to_stdstr(const uUnicodeString& str);
   [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString* str);
+  [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString& str);
   [[nodiscard]] static std::unique_ptr<XMLCh[]> to_xmlch(const UnicodeString* str);
   [[nodiscard]] static std::filesystem::path to_filepath(const uUnicodeString& str);
   inline static bool isEmpty(const XMLCh* string) { return *string == '\0'; }
@@ -23,6 +24,7 @@ class UStr
 
   static int8_t caseCompare(const UnicodeString& str1, const UnicodeString& str2);
   static bool HexToUInt(const UnicodeString& str_hex, unsigned int* result);
+  static int32_t indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& str2, int32_t pos = 0);
 };
 
 #endif  // COLORER_USTR_H

@@ -2388,10 +2388,6 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 	bool dot2Present = !StrCmp(strSetDir, L"..");
 	fprintf(stderr, "NewDir=%ls strCurDir=%ls dot2Present=%u\n", NewDir, strCurDir.CPtr(), dot2Present);
 
-	if (PanelMode != PLUGIN_PANEL) {
-		PrepareDiskPath(strSetDir);
-	}
-
 	if (!dot2Present && StrCmp(strSetDir, L"."))
 		UpperFolderTopFile = CurTopFile;
 
@@ -2576,8 +2572,14 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 						break;
 				}
 			} else {
-				r = Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, (dot2Present ? L".." : strSetDir),
-						Msg::Ignore, Msg::HRetry);
+				FARString msg_dir;
+				if (PanelMode != PLUGIN_PANEL) {
+					MixToFullPath(strSetDir,msg_dir,strOrigCurDir);
+				} else {
+					msg_dir=strSetDir;
+				}
+				r = Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, (dot2Present ? L".." : msg_dir),
+							Msg::Ignore, Msg::HRetry);
 			}
 
 			if (r == 1)

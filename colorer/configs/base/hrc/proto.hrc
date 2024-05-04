@@ -278,7 +278,9 @@
     </prototype>
     <prototype name="smarty" group="inet" description="Smarty PHP Templates">
         <location link="inet/smarty.hrc" />
-        <filename weight="10">/\.smarty$/</filename>
+        <filename>/\.smarty$/</filename>
+        <filename>/\.tpl$/</filename>
+        <firstline>/^\s*[{&lt;]/x</firstline>
     </prototype>
     <prototype name="ss" group="inet" description="SilverStripe">
         <location link="inet/ss.hrc" />
@@ -948,6 +950,7 @@
     <prototype name="turboProlog" group="rare" description="Turbo Prolog">
         <location link="rare/tprolog.hrc" />
         <filename>/\.tpl$/i</filename>
+        <firstline>/^\s*(domains|predicates|goal)\s*/ix</firstline>
     </prototype>
     <prototype name="verilog" group="rare" description="Verilog HDL">
         <location link="rare/verilog.hrc" />

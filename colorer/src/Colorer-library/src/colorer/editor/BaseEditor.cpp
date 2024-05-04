@@ -250,10 +250,8 @@ void BaseEditor::releasePairMatch(PairMatch* pm)
   delete pm;
 }
 
-PairMatch* BaseEditor::searchLocalPair(int lineNo, int pos)
-{
+PairMatch* BaseEditor::searchPair(int lineNo, int pos, int start_line, int end_line){
   int lno;
-  int end_line = getLastVisibleLine();
   PairMatch* pm = getPairMatch(lineNo, pos);
   if (pm == nullptr) {
     return nullptr;
@@ -265,34 +263,32 @@ PairMatch* BaseEditor::searchLocalPair(int lineNo, int pos)
   LineRegion* slr = getLineRegions(lno);
   while (true) {
     if (pm->pairBalance > 0) {
-      pair = pair->next;
-      while (pair == nullptr) {
-        lno++;
-        if (lno > end_line) {
-          break;
+      do {
+        pair = pair->next;
+        while (pair == nullptr) {
+          lno++;
+          if (lno > end_line) {
+            return pm;
+          }
+          pair = getLineRegions(lno);
         }
-        pair = getLineRegions(lno);
-      }
-      if (lno > end_line) {
-        break;
-      }
+      } while (!pair->region);
     }
     else {
-      if (pair->prev == slr->prev) {  // first region
-        lno--;
-        if (lno < wStart) {
-          break;
+      do {
+        if (pair->prev == slr->prev) {  // first region
+          do {
+            lno--;
+            if (lno < start_line) {
+              return pm;
+            }
+            slr = getLineRegions(lno);
+            pair = slr;
+          } while (pair == nullptr);
         }
-        slr = getLineRegions(lno);
-        pair = slr;
-      }
-      if (lno < wStart) {
-        break;
-      }
-      pair = pair->prev;
+        pair = pair->prev;
+      } while (pair->region == nullptr);
     }
-    if (!pair)
-      throw Exception("pair is null");
     if (pair->region->hasParent(def_PairStart)) {
       pm->pairBalance++;
     }
@@ -300,74 +296,23 @@ PairMatch* BaseEditor::searchLocalPair(int lineNo, int pos)
       pm->pairBalance--;
     }
     if (pm->pairBalance == 0) {
+      pm->eline = lno;
+      pm->setEnd(pair);
       break;
     }
-  }
-  if (pm->pairBalance == 0) {
-    pm->eline = lno;
-    pm->setEnd(pair);
   }
   return pm;
 }
 
+PairMatch* BaseEditor::searchLocalPair(int lineNo, int pos)
+{
+  int end_line = getLastVisibleLine();
+  return searchPair(lineNo, pos, wStart, end_line);
+}
+
 PairMatch* BaseEditor::searchGlobalPair(int lineNo, int pos)
 {
-  int lno;
-  int end_line = lineCount;
-  PairMatch* pm = getPairMatch(lineNo, pos);
-  if (pm == nullptr) {
-    return nullptr;
-  }
-
-  lno = pm->sline;
-
-  LineRegion* pair = pm->getStartRef();
-  LineRegion* slr = getLineRegions(lno);
-  while (true) {
-    if (pm->pairBalance > 0) {
-      pair = pair->next;
-      while (pair == nullptr) {
-        lno++;
-        if (lno > end_line) {
-          break;
-        }
-        pair = getLineRegions(lno);
-      }
-      if (lno > end_line) {
-        break;
-      }
-    }
-    else {
-      if (pair->prev == slr->prev) {  // first region
-        lno--;
-        if (lno < 0) {
-          break;
-        }
-        slr = getLineRegions(lno);
-        pair = slr;
-      }
-      if (lno < 0) {
-        break;
-      }
-      pair = pair->prev;
-    }
-    if (!pair)
-      throw Exception("pair is null");
-    if (pair->region->hasParent(def_PairStart)) {
-      pm->pairBalance++;
-    }
-    if (pair->region->hasParent(def_PairEnd)) {
-      pm->pairBalance--;
-    }
-    if (pm->pairBalance == 0) {
-      break;
-    }
-  }
-  if (pm->pairBalance == 0) {
-    pm->eline = lno;
-    pm->setEnd(pair);
-  }
-  return pm;
+  return searchPair(lineNo, pos, 0, lineCount);
 }
 
 LineRegion* BaseEditor::getLineRegions(int lno)

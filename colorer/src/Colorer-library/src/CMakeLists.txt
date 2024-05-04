@@ -163,7 +163,7 @@ else()
 endif()
 
 if(COLORER_USE_DUMMY_LOGGER)
-  set(SRC_COLORER_SPDLOG  )
+  set(SRC_COLORER_SPDLOG)
   set(COLORER_FEATURE_DUMMYLOGGER 1)
 endif()
 #====================================================
@@ -177,7 +177,7 @@ configure_file(
 #====================================================
 # common flags
 #====================================================
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # default for gcc
   # CMAKE_CXX_FLAGS=
   # CMAKE_CXX_FLAGS_DEBUG= -g
@@ -185,7 +185,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 
   # set only new flags
   set(FLAGS_CXX_DEFAULT -fpermissive -Wall -Wextra -Wpedantic -Wsign-promo -Wnon-virtual-dtor)
-  set(FLAGS_CXX_RELEASE -Werror)
+
+  if (COLORER_BUILD_HARD_WARNINGS)
+    set(FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} -Werror)
+  endif()
+
   set(FLAGS_CXX_DEBUG)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
@@ -198,7 +202,12 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   string(REGEX REPLACE "/W[3|4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
   set(FLAGS_CXX_DEFAULT)
-  set(FLAGS_CXX_RELEASE /W3 /WX)
+  set(FLAGS_CXX_RELEASE /W3)
+
+  if (COLORER_BUILD_HARD_WARNINGS)
+    set(FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} /WX)
+  endif()
+
   set(FLAGS_CXX_DEBUG /W4)
 endif()
 
@@ -225,6 +234,13 @@ set_target_properties(colorer_lib PROPERTIES
 target_link_libraries(colorer_lib
     PUBLIC XercesC::XercesC
 )
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_link_libraries(colorer_lib
+      PUBLIC stdc++
+      PUBLIC m
+  )
+endif()
 
 if(NOT COLORER_USE_DUMMY_LOGGER)
   target_link_libraries(colorer_lib

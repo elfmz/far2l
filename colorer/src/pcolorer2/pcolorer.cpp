@@ -1,10 +1,7 @@
-#include <iostream>
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/util/XMLString.hpp>
-#include"pcolorer.h"
-#include"tools.h"
-#include"FarEditorSet.h"
+#include "pcolorer.h"
 #include <utils.h>
+#include "FarEditorSet.h"
+#include "tools.h"
 
 #ifdef USESPDLOG
 #include <spdlog/spdlog.h>
@@ -15,51 +12,12 @@ std::shared_ptr<spdlog::logger> logger;
 std::shared_ptr<DummyLogger> logger;
 #endif
 
-XERCES_CPP_NAMESPACE_USE
 
 FarEditorSet *editorSet = nullptr;
+bool inEventProcess = false;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
 UnicodeString *PluginPath = nullptr;
-
-// ---------------------------------------------------------------------------
-// This is a simple class that lets us do easy (though not terribly efficient)
-// trancoding of XMLCh data to local code page for display.
-// ---------------------------------------------------------------------------
-class StrX
-{
-  public:
-    // -----------------------------------------------------------------------
-    // Constructors and Destructor
-    // -----------------------------------------------------------------------
-    StrX(const XMLCh* const origin): fLocalForm(nullptr)
-    {
-      // Call the private transcoding method
-      if (origin) fLocalForm = XMLString::transcode(origin);
-    }
-
-    ~StrX()
-    {
-      if (fLocalForm) XMLString::release(&fLocalForm);
-    }
-
-    // -----------------------------------------------------------------------
-    // Getter methods
-    // -----------------------------------------------------------------------
-    const char* operator()() const
-    {
-      return fLocalForm;
-    }
-
-  private:
-    // -----------------------------------------------------------------------
-    // Private data members
-    //
-    //  fLocalForm
-    //      This is the local code page form of the string.
-    // -----------------------------------------------------------------------
-    char* fLocalForm;
-};
 
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
@@ -90,7 +48,6 @@ UnicodeString *GetConfigPath(const UnicodeString &sub)
 }
 
 
-//todo:
 /**
   Returns message from FAR current language.
 */
@@ -107,8 +64,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
   Info = *fei;
   FSF = *fei->FSF;
   Info.FSF = &FSF;
-  XMLPlatformUtils::Initialize();
-};
+}
 
 /**
   Plugin strings in FAR interface.
@@ -125,18 +81,15 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
   nInfo->PluginConfigStrings = &PluginMenuStrings;
   nInfo->PluginMenuStrings = &PluginMenuStrings;
   nInfo->CommandPrefix = L"clr";
-};
+}
 
 /**
   On FAR exit. Destroys all internal structures.
 */
 SHAREDSYMBOL void WINAPI ExitFARW()
 {
-  if (editorSet){
-    delete editorSet;
-  }
-  XMLPlatformUtils::Terminate();
-};
+  delete editorSet;
+}
 
 /**
   Open plugin configuration of actions dialog.
@@ -163,7 +116,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
     }
 
   return INVALID_HANDLE_VALUE;
-};
+}
 
 /**
   Configures plugin.
@@ -178,7 +131,7 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 	}
   editorSet->configure(false);
   return 1;
-};
+}
 
 /**
   Processes FAR editor events and
@@ -186,15 +139,37 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 */
 SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
 {
-  if (!editorSet){
+  if (inEventProcess) {
+    return 0;
+  }
+
+  inEventProcess = true;
+
+  if (!editorSet) {
     editorSet = new FarEditorSet();
   }
-  return editorSet->editorEvent(Event, Param);
-};
+
+  int result = editorSet->editorEvent(Event, Param);
+
+  inEventProcess = false;
+  return result;
+}
 
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
 {
-  return editorSet->editorInput(ir);
+  if (inEventProcess) {
+    return 0;
+  }
+
+  inEventProcess = true;
+  if (!editorSet) {
+    editorSet = new FarEditorSet();
+  }
+
+  int result = editorSet->editorInput(ir);
+
+  inEventProcess = false;
+  return result;
 }
 
 /* ***** BEGIN LICENSE BLOCK *****

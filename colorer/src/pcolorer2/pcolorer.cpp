@@ -80,7 +80,6 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
   PluginMenuStrings = (wchar_t*)GetMsg(mName);
   nInfo->PluginConfigStrings = &PluginMenuStrings;
   nInfo->PluginMenuStrings = &PluginMenuStrings;
-  nInfo->CommandPrefix = L"clr";
 }
 
 /**
@@ -99,21 +98,6 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
   if (OpenFrom == OPEN_EDITOR){
     editorSet->openMenu();
   }
-  else
-    if (OpenFrom == OPEN_COMMANDLINE){
-      //file name, which we received
-      wchar_t *file = (wchar_t*)Item;
-
-      wchar_t *nfile = PathToFull(file,true);
-      if (nfile){
-        if (!editorSet){
-          editorSet = new FarEditorSet();
-        }
-        editorSet->viewFile(UnicodeString(nfile));
-      }
-
-      delete[] nfile;
-    }
 
   return INVALID_HANDLE_VALUE;
 }

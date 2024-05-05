@@ -189,50 +189,6 @@ void FarEditorSet::openMenu()
   };
 }
 
-
-void FarEditorSet::viewFile(const UnicodeString &path)
-{
-  if (viewFirst==0) viewFirst=1;
-  try{
-    if (!rEnabled){
-      throw Exception("Colorer is disabled");
-    }
-
-    // Creates store of text lines
-    TextLinesStore textLinesStore;
-    textLinesStore.loadFile(&path, true);
-    // Base editor to make primary parse
-    BaseEditor baseEditor(parserFactory, &textLinesStore);
-    std::unique_ptr<StyledHRDMapper> regionMap;
-    try{
-      regionMap=parserFactory->createStyledMapper(&DConsole, sHrdName);
-    }
-    catch (ParserFactoryException &e){
-      logger->error("{0}", e.what());
-      regionMap = parserFactory->createStyledMapper(&DConsole, nullptr);
-    };
-    baseEditor.setRegionMapper(regionMap.get());
-    baseEditor.chooseFileType(&path);
-    // initial event
-    baseEditor.lineCountEvent(textLinesStore.getLineCount());
-    // computing background color
-    int background = 0x1F;
-    const StyledRegion *rd = StyledRegion::cast(regionMap->getRegionDefine(UnicodeString("def:Text")));
-
-    if (rd && rd->fore && rd->back){
-      background = rd->fore + (rd->back<<4);
-    }
-
-    // File viewing in console window
-    TextConsoleViewer viewer(&baseEditor, &textLinesStore, background);
-    viewer.view();
-  }
-  catch (Exception &e){
-    auto error_mes = UnicodeString(e.what());
-    showExceptionMessage(&error_mes);
-  };
-}
-
 int FarEditorSet::getCountFileTypeAndGroup()
 {
   int num = 0;

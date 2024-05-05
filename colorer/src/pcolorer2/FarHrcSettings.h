@@ -24,7 +24,7 @@ public:
   FarHrcSettings(FarEditorSet *_farEditorSet, ParserFactory *_parserFactory);
   void readXML(UnicodeString* file);
   void readProfile();
-  void readUserProfile();
+  void readUserProfile(const FileType* def_filetype = nullptr);
   void writeUserProfile();
   void loadUserHrc(const UnicodeString* filename);
   void loadUserHrd(const UnicodeString* filename);

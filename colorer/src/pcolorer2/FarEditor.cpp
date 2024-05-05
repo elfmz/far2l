@@ -67,19 +67,10 @@ FarEditor::FarEditor(PluginStartupInfo *inf, ParserFactory *pf):
 FarEditor::~FarEditor()
 {
   delete cursorRegion;
-  cursorRegion = nullptr;
-
   delete structOutliner;
-  structOutliner = nullptr;
-
   delete errorOutliner;
-  errorOutliner = nullptr;
-
   delete baseEditor;
-  baseEditor = nullptr;
-
   delete ret_str;
-  ret_str = nullptr;
 }
 
 void FarEditor::endJob(size_t lno)
@@ -1372,17 +1363,6 @@ void FarEditor::cleanEditor()
   col.concolor = (int)info->AdvControl(info->ModuleNumber,ACTL_GETCOLOR,(void *)COL_EDITORTEXT);
   enterHandler();
   for (int i=0; i<ei.TotalLines; i++){
-/*    EditorGetString egs;
-    egs.StringNumber=i;
-    info->EditorControl(ECTL_GETSTRING,&egs);
-
-    if (ei.LeftPos + ei.WindowSizeX>egs.StringLength){
-      addFARColor(i,0,ei.LeftPos + ei.WindowSizeX,col);
-    }
-    else{
-      addFARColor(i,0,egs.StringLength,col);
-    }
-*/
     addFARColor(i,0,0,col);
   }
 }

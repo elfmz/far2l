@@ -74,8 +74,6 @@ public:
   void openMenu();
   /** Shows plugin's configuration dialog */
   void configure(bool fromEditor);
-  /** Views current file with internal viewer */
-  void viewFile(const UnicodeString &path);
 
   /** Dispatch editor event in the opened editor */
   int  editorEvent(int Event, void *Param);

@@ -1284,14 +1284,6 @@ bool FarEditor::backDefault(color col)
 void FarEditor::addFARColor(int lno, int s, int e, color col)
 {
   if (TrueMod){
-/*
-    AnnotationInfo ai;
-    ai.fg_color = ((col.fg>>16)&0xFF) + (col.fg&0x00FF00) + ((col.fg&0xFF)<<16);
-    ai.bk_color = ((col.bk>>16)&0xFF) + (col.bk&0x00FF00) + ((col.bk&0xFF)<<16);
-    ai.bk_valid = ai.fg_valid = 1;
-    ai.style = col.style;
-    addAnnotation(lno, s, e, ai);
-*/
     EditorTrueColor ec{};
     ec.Base.StringNumber = lno;
     ec.Base.StartPos = s;
@@ -1328,26 +1320,14 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
       }
     }
 
-#if 0
-    CLR_TRACE("FarEditor", "line:%d, %d-%d, color:%x", lno, s, e, col);
-#endif // if 0
     info->EditorControl(ECTL_ADDTRUECOLOR, &ec);
-#if 0
-    CLR_TRACE("FarEditor", "line %d: %d-%d: color=%x", lno, s, e, col);
-#endif // if 0
   }else{
-    EditorColor ec;
+    EditorColor ec{};
     ec.StringNumber = lno;
     ec.StartPos = s;
     ec.EndPos = e-1;
     ec.Color = col.concolor;
-#if 0
-    CLR_TRACE("FarEditor", "line:%d, %d-%d, color:%x", lno, s, e, col);
-#endif // if 0
     info->EditorControl(ECTL_ADDCOLOR, &ec);
-#if 0
-    CLR_TRACE("FarEditor", "line %d: %d-%d: color=%x", lno, s, e, col);
-#endif // if 0
   }
 
 }
@@ -1360,10 +1340,9 @@ const wchar_t *FarEditor::GetMsg(int msg)
 void FarEditor::cleanEditor()
 {
   color col;
-  col.concolor = (int)info->AdvControl(info->ModuleNumber,ACTL_GETCOLOR,(void *)COL_EDITORTEXT);
   enterHandler();
   for (int i=0; i<ei.TotalLines; i++){
-    addFARColor(i,0,0,col);
+    addFARColor(i, -1, 0, col);
   }
 }
 

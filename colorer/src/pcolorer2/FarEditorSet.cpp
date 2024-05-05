@@ -830,9 +830,9 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
     parserFactoryLocal->loadCatalog(tpath);
     delete tpath;
     HrcLibrary& hrcParserLocal = parserFactoryLocal->getHrcLibrary();
-    LoadUserHrd(userHrdPathS, parserFactoryLocal);
-    LoadUserHrc(userHrcPathS, parserFactoryLocal);
     FarHrcSettings p(this, parserFactoryLocal);
+    p.loadUserHrd(userHrdPathS);
+    p.loadUserHrc(userHrcPathS);
     p.readProfile();
     p.readUserProfile();
 
@@ -926,9 +926,9 @@ void FarEditorSet::ReloadBase()
     HrcLibrary& hrcLibrary = parserFactory->getHrcLibrary();
     UnicodeString dsd("default");
     defaultType = hrcLibrary.getFileType(dsd);
-    LoadUserHrd(sUserHrdPathExp, parserFactory);
-    LoadUserHrc(sUserHrcPathExp, parserFactory);
     FarHrcSettings p(this, parserFactory);
+    p.loadUserHrd(sUserHrdPathExp);
+    p.loadUserHrc(sUserHrcPathExp);
     p.readProfile();
     p.readUserProfile();
 
@@ -1193,57 +1193,6 @@ bool FarEditorSet::SetBgEditor()
     return !!Info.AdvControl(Info.ModuleNumber,ACTL_SETARRAYCOLOR,&fsc);
   }
   return false;
-}
-
-void FarEditorSet::LoadUserHrd(const UnicodeString *filename, ParserFactory *pf)
-{
-  (void)filename;
-  (void)pf;
-// В текущем API Colorer метод ParserFactory::parseHRDSetsChild() изменил
-// назначение; весь разбор HDR сосредоточен в приватной части CatalogParser.
-#if 0
-  if (filename && filename->length()){
-    DocumentBuilder docbuilder;
-    Document *xmlDocument;
-    InputSource *dfis = InputSource::newInstance(filename);
-    xmlDocument = docbuilder.parse(dfis);
-    Node *types = xmlDocument->getDocumentElement();
-
-    if (*types->getNodeName() != "hrd-sets"){
-      docbuilder.free(xmlDocument);
-      throw Exception(UnicodeString("main '<hrd-sets>' block not found"));
-    }
-    for (Node *elem = types->getFirstChild(); elem; elem = elem->getNextSibling()){
-      if (elem->getNodeType() == Node::ELEMENT_NODE && *elem->getNodeName() == "hrd"){
-        pf->parseHRDSetsChild(elem);
-      }
-    };
-    docbuilder.free(xmlDocument);
-  }
-#endif // if 0
-}
-
-void FarEditorSet::LoadUserHrc(const UnicodeString *filename, ParserFactory *pf)
-{
-  if (filename && filename->length()){
-    auto& hr = pf->getHrcLibrary();
-#if 0
-    InputSource *dfis = InputSource::newInstance(filename, NULL);
-#endif // if 0
-    uXmlInputSource dfis = XmlInputSource::newInstance(filename->getW2Chars(),
-                                                       static_cast<const XMLCh*>(nullptr));
-    try{
-      hr.loadSource(dfis.get());
-#if 0
-      delete dfis;
-#endif // if 0
-    }catch(Exception &e){
-#if 0
-      delete dfis;
-#endif // if 0
-      throw Exception(e);
-    }
-  }
 }
 
 const UnicodeString *FarEditorSet::getParamDefValue(FileType *type, UnicodeString param)

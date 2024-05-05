@@ -1,20 +1,13 @@
 #ifndef _FARHRCSETTINGS_H_
 #define _FARHRCSETTINGS_H_
 
-#include <colorer/parsers/FileTypeImpl.h>
-#include <colorer/HrcLibrary.h>
 #include <colorer/ParserFactory.h>
-#include <xercesc/parsers/XercesDOMParser.hpp>
-
-#include "pcolorer.h"
+#include <xercesc/dom/DOM.hpp>
 #include "FarEditorSet.h"
 #include <string>
 
-#define MAX_KEY_LENGTH 255
-#define MAX_VALUE_NAME 50 // in msdn 16383 , but we have enough 50
-
-extern const char* FarCatalogXml;
-extern const char* FarProfileXml;
+const char FarCatalogXml[] = "/base/catalog.xml";
+const char FarProfileXml[] = "/plug/hrcsettings.xml";
 
 class FarHrcSettingsException : public Exception{
 public:
@@ -29,13 +22,15 @@ class FarHrcSettings
   friend class FileTypeImpl;
 public:
   FarHrcSettings(FarEditorSet *_farEditorSet, ParserFactory *_parserFactory);
-  void readXML(UnicodeString *file, bool userValue);
+  void readXML(UnicodeString* file);
   void readProfile();
   void readUserProfile();
   void writeUserProfile();
+  void loadUserHrc(const UnicodeString* filename);
+  void loadUserHrd(const UnicodeString* filename);
 
 private:
-  void UpdatePrototype(xercesc::DOMElement* elem, bool userValue);
+  void UpdatePrototype(xercesc::DOMElement* elem);
 
   FarEditorSet* farEditorSet;
   ParserFactory *parserFactory;

@@ -20,17 +20,12 @@
 #include<wctype.h>
 #include<wchar.h>
 #include<windows.h>
-#if 0
-#include <g3log/logworker.hpp>
-#endif
+
 
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
 extern UnicodeString *PluginPath;
-#if 0
-extern std::unique_ptr<g3::LogWorker> logworker;
-#endif
 
 /** FAR .lng file identifiers. */
 enum

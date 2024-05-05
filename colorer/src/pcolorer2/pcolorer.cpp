@@ -1,6 +1,3 @@
-#if 0
-#include <g3log/g3log.hpp>
-#endif // #if 0
 #include <iostream>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
@@ -24,9 +21,6 @@ FarEditorSet *editorSet = nullptr;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
 UnicodeString *PluginPath = nullptr;
-#if 0
-std::unique_ptr<g3::LogWorker> logworker;
-#endif // #if 0
 
 // ---------------------------------------------------------------------------
 // This is a simple class that lets us do easy (though not terribly efficient)
@@ -113,14 +107,6 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
   Info = *fei;
   FSF = *fei->FSF;
   Info.FSF = &FSF;
-#if 0
-  logworker = g3::LogWorker::createLogWorker();
-  g3::initializeLogging(logworker.get());
-#ifndef NDEBUG
-  g3::only_change_at_initialization::setLogLevel(DEBUG, false);
-  g3::only_change_at_initialization::setLogLevel(INFO, false);
-#endif
-#endif // #if 0
   XMLPlatformUtils::Initialize();
 };
 
@@ -150,9 +136,6 @@ SHAREDSYMBOL void WINAPI ExitFARW()
     delete editorSet;
   }
   XMLPlatformUtils::Terminate();
-#if 0
-  g3::internal::shutDownLogging();
-#endif // #if 0
 };
 
 /**

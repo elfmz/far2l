@@ -2,9 +2,7 @@
 #include <sys/stat.h>
 #include <KeyFileHelper.h>
 #include <utils.h>
-#if 0
-#include <g3log/g3log.hpp>
-#endif
+
 #include"FarEditorSet.h"
 
 #include "FarHrcSettings.h"
@@ -184,24 +182,10 @@ void FarEditorSet::openMenu()
     };
   }
   catch (Exception &e){
-    const size_t count_lines = 4;
-    const wchar_t* exceptionMessage[count_lines];
-    exceptionMessage[0] = GetMsg(mName);
-    exceptionMessage[1] = GetMsg(mCantLoad);
-    exceptionMessage[3] = GetMsg(mDie);
+    logger->error("{0}", e.what());
     UnicodeString msg("openMenu: ");
-    msg += e.what();
-    exceptionMessage[2] = msg.getWChars();
-#if 0
-    exceptionMessage[2] = (msg+e.getMessage()).getWChars();
-
-    // new colorer don't have a public error handlers
-    if (getErrorHandler()){
-      getErrorHandler()->error(*e.getMessage());
-    }
-#endif // if 0
-
-    Info.Message(Info.ModuleNumber, FMSG_WARNING, L"exception", &exceptionMessage[0], count_lines, 1);
+    msg.append(e.what());
+    showExceptionMessage(&msg);
     disableColorer();
   };
 }
@@ -225,11 +209,7 @@ void FarEditorSet::viewFile(const UnicodeString &path)
       regionMap=parserFactory->createStyledMapper(&DConsole, sHrdName);
     }
     catch (ParserFactoryException &e){
-#if 0
-      if (getErrorHandler() != NULL){
-        getErrorHandler()->error(*e.getMessage());
-      }
-#endif // if 0
+      logger->error("{0}", e.what());
       regionMap = parserFactory->createStyledMapper(&DConsole, nullptr);
     };
     baseEditor.setRegionMapper(regionMap.get());
@@ -249,17 +229,8 @@ void FarEditorSet::viewFile(const UnicodeString &path)
     viewer.view();
   }
   catch (Exception &e){
-    const size_t count_lines = 4;
-    const wchar_t* exceptionMessage[count_lines];
-    exceptionMessage[0] = GetMsg(mName);
-    exceptionMessage[1] = GetMsg(mCantOpenFile);
-    exceptionMessage[3] = GetMsg(mDie);
-#if 0
-    exceptionMessage[2] = e.getMessage()->getWChars();
-#endif // if 0
-    UnicodeString msg(e.what());
-    exceptionMessage[2] = msg.getWChars();
-    Info.Message(Info.ModuleNumber, FMSG_WARNING, L"exception", &exceptionMessage[0], count_lines, 1);
+    auto error_mes = UnicodeString(e.what());
+    showExceptionMessage(&error_mes);
   };
 }
 
@@ -467,9 +438,6 @@ const UnicodeString *FarEditorSet::getHRDescription(const UnicodeString &name, U
 {
   const UnicodeString *descr = nullptr;
   if (parserFactory){
-#if 0
-    descr = parserFactory->getHRDescription(_hrdClass, name);
-#endif // if 0
     const HrdNode& node = parserFactory->getHrdNode(_hrdClass, name);
     descr = &node.hrd_description;
   }
@@ -490,32 +458,21 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
     switch (Param1){
   case IDX_HRD_SELECT:
     {
-      // зачем было запрещать конструирование DString из константного объекта???
-#if 0
-      UnicodeString *tempSS = new UnicodeString(fes->chooseHRDName(fes->sTempHrdName, DConsole));
-#endif // if 0
-      UnicodeString *tempSS = new UnicodeString(*fes->chooseHRDName(fes->sTempHrdName, UnicodeString("console")));
+      UnicodeString *tempSS = new UnicodeString(*fes->chooseHRDName(fes->sTempHrdName, DConsole));
       delete fes->sTempHrdName;
       fes->sTempHrdName=tempSS;
-#if 0
+
       const UnicodeString *descr=fes->getHRDescription(*fes->sTempHrdName,DConsole);
-#endif // if 0
-      const UnicodeString *descr=fes->getHRDescription(*fes->sTempHrdName,UnicodeString("console"));
       Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,IDX_HRD_SELECT,(LONG_PTR)descr->getWChars());
       return true;
     }
   case IDX_HRD_SELECT_TM:
     {
-#if 0
-      UnicodeString *tempSS = new UnicodeString(fes->chooseHRDName(fes->sTempHrdNameTm, DRgb));
-#endif // if 0
-      UnicodeString *tempSS = new UnicodeString(*fes->chooseHRDName(fes->sTempHrdNameTm, UnicodeString("rgb")));
+      UnicodeString *tempSS = new UnicodeString(*fes->chooseHRDName(fes->sTempHrdNameTm, DRgb));
       delete fes->sTempHrdNameTm;
       fes->sTempHrdNameTm=tempSS;
-#if 0
+
       const UnicodeString *descr=fes->getHRDescription(*fes->sTempHrdNameTm,DRgb);
-#endif // if 0
-      const UnicodeString *descr=fes->getHRDescription(*fes->sTempHrdNameTm,UnicodeString("rgb"));
       Info.SendDlgMessage(hDlg,DM_SETTEXTPTR,IDX_HRD_SELECT_TM,(LONG_PTR)descr->getWChars());
       return true;
     }
@@ -615,19 +572,13 @@ void FarEditorSet::configure(bool fromEditor)
 
     const UnicodeString *descr = nullptr;
     sTempHrdName =new UnicodeString(*sHrdName);
-#if 0
-    descr=getHRDescription(*sTempHrdName,DConsole);
-#endif // if 0
-    descr=getHRDescription(*sTempHrdName,UnicodeString("console"));
 
+    descr=getHRDescription(*sTempHrdName,DConsole);
     fdi[IDX_HRD_SELECT].PtrData = (wchar_t*)descr->getWChars();
 
     const UnicodeString *descr2 = nullptr;
     sTempHrdNameTm = new UnicodeString(*sHrdNameTm);
-#if 0
     descr2=getHRDescription(*sTempHrdNameTm,DRgb);
-#endif // if 0
-    descr2=getHRDescription(*sTempHrdNameTm,UnicodeString("rgb"));
 
     fdi[IDX_HRD_TM].PtrData = GetMsg(mHRDNameTrueMod);
     fdi[IDX_HRD_SELECT_TM].PtrData = (wchar_t*)descr2->getWChars();
@@ -729,26 +680,13 @@ void FarEditorSet::configure(bool fromEditor)
 
   }
   catch (Exception &e){
-    const size_t count_lines = 4;
-    const wchar_t* exceptionMessage[count_lines];
-    exceptionMessage[0] = GetMsg(mName);
-    exceptionMessage[1] = GetMsg(mCantLoad);
-    exceptionMessage[2] = nullptr;
-    exceptionMessage[3] = GetMsg(mDie);
+    logger->error("{0}", e.what());
+
     UnicodeString msg("configure: ");
-    msg += e.what();
-    exceptionMessage[2] = msg.getWChars();
-#if 0
-    exceptionMessage[2] = (msg+e.getMessage()).getWChars();
-
-    if (getErrorHandler() != NULL){
-      getErrorHandler()->error(*e.getMessage());
-    }
-#endif
-
-    Info.Message(Info.ModuleNumber, FMSG_WARNING, L"exception", &exceptionMessage[0], count_lines, 1);
+    msg.append(UnicodeString(e.what()));
+    showExceptionMessage(&msg);
     disableColorer();
-  };
+  }
 }
 
 const UnicodeString *FarEditorSet::chooseHRDName(const UnicodeString *current, UnicodeString _hrdClass )
@@ -757,15 +695,6 @@ const UnicodeString *FarEditorSet::chooseHRDName(const UnicodeString *current, U
     return current;
   }
 
-#if 0
-  for (int i = 0; i < count; i++){
-    const UnicodeString *name = parserFactory->enumerateHRDInstances(_hrdClass, i);
-    const UnicodeString *descr = parserFactory->getHRDescription(_hrdClass, *name);
-
-    if (descr == NULL){
-      descr = name;
-    }
-#endif
   std::vector<const HrdNode*> nodes = parserFactory->enumHrdInstances(_hrdClass);
   std::vector<const UnicodeString*> names;
   FarMenuItem *menuElements = new FarMenuItem[nodes.size()];
@@ -798,9 +727,6 @@ const UnicodeString *FarEditorSet::chooseHRDName(const UnicodeString *current, U
     return current;
   }
 
-#if 0
-  return parserFactory->enumerateHRDInstances(_hrdClass, result);
-#endif // if 0
   return &(parserFactory->getHrdNode(_hrdClass, *names[result]).hrd_name);
 }
 
@@ -855,12 +781,6 @@ int FarEditorSet::editorEvent(int Event, void *Param)
       }
     case EE_CLOSE:
       {
-#if 0
-        UnicodeString ss(*((int*)Param));
-        editor = farEditorInstances.get(&ss);
-        farEditorInstances.remove(&ss);
-        delete editor;
-#endif // if 0
         auto it = farEditorInstances.find(*((int*)Param));
         if (it != farEditorInstances.end())
         {
@@ -872,26 +792,13 @@ int FarEditorSet::editorEvent(int Event, void *Param)
     }
   }
   catch (Exception &e){
-    const size_t count_lines = 4;
-    const wchar_t* exceptionMessage[count_lines];
-    exceptionMessage[0] = GetMsg(mName);
-    exceptionMessage[1] = GetMsg(mCantLoad);
-    exceptionMessage[2] = nullptr;
-    exceptionMessage[3] = GetMsg(mDie);
+    logger->error("{0}", e.what());
+
     UnicodeString msg("editorEvent: ");
-    msg += e.what();
-    exceptionMessage[2] = msg.getWChars();
-#if 0
-    exceptionMessage[2] = (msg+e.getMessage()).getWChars();
-
-    if (getErrorHandler()){
-      getErrorHandler()->error(*e.getMessage());
-    }
-#endif // if 0
-
-    Info.Message(Info.ModuleNumber, FMSG_WARNING, L"exception", &exceptionMessage[0], count_lines, 1);
+    msg.append(UnicodeString(e.what()));
+    showExceptionMessage(&msg);
     disableColorer();
-  };
+  }
 
   return 0;
 }
@@ -935,13 +842,9 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
       }
       catch (ParserFactoryException &e)
       {
-#if 0
-        if ((parserFactoryLocal != NULL)&&(parserFactoryLocal->getErrorHandler()!=NULL)){
-          parserFactoryLocal->getErrorHandler()->error(*e.getMessage());
-        }
-#endif // if 0
+        logger->error("{0}", e.what());
         regionMapperLocal = parserFactoryLocal->createStyledMapper(&DConsole, nullptr);
-      };
+      }
       regionMapperLocal = nullptr;
     }
 
@@ -951,13 +854,9 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
       }
       catch (ParserFactoryException &e)
       {
-#if 0
-        if ((parserFactoryLocal != NULL)&&(parserFactoryLocal->getErrorHandler()!=NULL)){
-          parserFactoryLocal->getErrorHandler()->error(*e.getMessage());
-        }
-#endif // if 0
+        logger->error("{0}", e.what());
         regionMapperLocal = parserFactoryLocal->createStyledMapper(&DRgb, nullptr);
-      };
+      }
     }
     Info.RestoreScreen(scr);
     if (full){
@@ -983,23 +882,12 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
     }
   }
   catch (Exception &e){
-    const wchar_t *errload[5] = { GetMsg(mName), GetMsg(mCantLoad), 0, GetMsg(mFatal), GetMsg(mDie) };
-
-#if 0
-    errload[2] = e.getMessage()->getWChars();
-
-    if ((parserFactoryLocal != NULL)&&(parserFactoryLocal->getErrorHandler()!=NULL)){
-      parserFactoryLocal->getErrorHandler()->error(*e.getMessage());
-    }
-#endif // if 0
-
-    UnicodeString msg(e.what());
-    errload[2] = msg.getWChars();
-
-    Info.Message(Info.ModuleNumber, FMSG_WARNING, nullptr, &errload[0], 5, 1);
+    logger->error("{0}", e.what());
+    auto error_mes = UnicodeString(e.what());
+    showExceptionMessage(&error_mes);
     Info.RestoreScreen(scr);
     res = false;
-  };
+  }
 
   delete parserFactoryLocal;
 
@@ -1024,26 +912,16 @@ void FarEditorSet::ReloadBase()
 
   consoleAnnotationAvailable=checkConsoleAnnotationAvailable() && TrueModOn;
   if (consoleAnnotationAvailable){
-    // зачем было запрещать DString присваивание константному rvalue???
-#if 0
     hrdClass = DRgb;
-#endif // if 0
-    hrdClass = UnicodeString("rgb");
     hrdName = *sHrdNameTm;
   }
   else{
-#if 0
     hrdClass = DConsole;
-#endif // if 0
-    hrdClass = UnicodeString("console");
     hrdName = *sHrdName;
   }
 
   try{
     parserFactory = new ParserFactory();
-#if 0
-LOG(DEBUG) << "Parse catalog: " << sCatalogPathExp->getChars();
-#endif // if 0
     parserFactory->loadCatalog(sCatalogPathExp);
     HrcLibrary& hrcLibrary = parserFactory->getHrcLibrary();
     UnicodeString dsd("default");
@@ -1058,48 +936,21 @@ LOG(DEBUG) << "Parse catalog: " << sCatalogPathExp->getChars();
       regionMapper = parserFactory->createStyledMapper(&hrdClass, &hrdName);
     }
     catch (ParserFactoryException &e){
-#if 0
-      if (getErrorHandler() != NULL){
-        getErrorHandler()->error(*e.getMessage());
-      }
-#endif // if 0
+      logger->error("{0}", e.what());
       regionMapper = parserFactory->createStyledMapper(&hrdClass, nullptr);
     };
     //устанавливаем фон редактора при каждой перезагрузке схем.
     SetBgEditor();
   }
   catch (Exception &e){
-    const wchar_t *errload[5] = { GetMsg(mName), GetMsg(mCantLoad), 0, GetMsg(mFatal), GetMsg(mDie) };
-
-#if 0
-    errload[2] = e.getMessage()->getWChars();
-
-    if (getErrorHandler() != NULL){
-      getErrorHandler()->error(*e.getMessage());
-    }
-#endif // if 0
-    UnicodeString msg(e.what());
-    errload[2] = msg.getWChars();
-
-    Info.Message(Info.ModuleNumber, FMSG_WARNING, nullptr, &errload[0], 5, 1);
-
+    logger->error("{0}", e.what());
+    auto error_mes = UnicodeString(e.what());
+    showExceptionMessage(&error_mes);
     disableColorer();
-  };
+  }
 
   Info.RestoreScreen(scr);
 }
-
-
-#if 0
-ErrorHandler *FarEditorSet::getErrorHandler()
-{
-  if (parserFactory == NULL){
-    return NULL;
-  }
-
-  return parserFactory->getErrorHandler();
-}
-#endif // if 0
 
 FarEditor *FarEditorSet::addCurrentEditor()
 {
@@ -1112,10 +963,6 @@ FarEditor *FarEditorSet::addCurrentEditor()
   Info.EditorControl(ECTL_GETINFO, &ei);
 
   FarEditor *editor = new FarEditor(&Info, parserFactory);
-#if 0
-  UnicodeString ss(ei.EditorID);
-  farEditorInstances.put(&ss, editor);
-#endif // if 0
   farEditorInstances.emplace(ei.EditorID, editor);
   UnicodeString *s=getCurrentFileName();
   editor->chooseFileType(s);
@@ -1146,23 +993,20 @@ UnicodeString* FarEditorSet::getCurrentFileName()
   UnicodeString fnpath(FileName);
   int slash_idx = fnpath.lastIndexOf('/');
 
-  UnicodeString* s=new UnicodeString(fnpath, slash_idx+1);
-  delete [] FileName;
+  UnicodeString* s=new UnicodeString(fnpath, slash_idx + 1);
+  delete[] FileName;
   return s;
 }
 
-FarEditor *FarEditorSet::getCurrentEditor()
+FarEditor* FarEditorSet::getCurrentEditor()
 {
-  EditorInfo ei;
+  EditorInfo ei {};
   Info.EditorControl(ECTL_GETINFO, &ei);
-#if 0
-  UnicodeString ss(ei.EditorID);
-  FarEditor *editor = farEditorInstances.get(&ss);
-
-  return editor;
-#endif // if 0
-  auto it = farEditorInstances.find(ei.EditorID);
-  return (it != farEditorInstances.end()) ? it->second : nullptr;
+  auto if_editor = farEditorInstances.find(ei.EditorID);
+  if (if_editor != farEditorInstances.end()) {
+    return if_editor->second;
+  }
+  return nullptr;
 }
 
 const wchar_t *FarEditorSet::GetMsg(int msg)
@@ -1190,9 +1034,6 @@ void FarEditorSet::disableColorer()
 
 void FarEditorSet::ApplySettingsToEditors()
 {
-#if 0
-  for (FarEditor *fe = farEditorInstances.enumerate(); fe != NULL; fe = farEditorInstances.next()){
-#endif // if 0
   for (auto fe = farEditorInstances.begin(); fe != farEditorInstances.end(); ++fe){
     fe->second->setTrueMod(consoleAnnotationAvailable);
     fe->second->setDrawCross(drawCross);
@@ -1204,20 +1045,8 @@ void FarEditorSet::ApplySettingsToEditors()
 
 void FarEditorSet::dropCurrentEditor(bool clean)
 {
-  EditorInfo ei;
+  EditorInfo ei{};
   Info.EditorControl(ECTL_GETINFO, &ei);
-#if 0
-  UnicodeString ss(ei.EditorID);
-  FarEditor *editor = farEditorInstances.get(&ss);
-  if (editor){
-    if (clean){
-      editor->cleanEditor();
-    }
-	UnicodeString ss(ei.EditorID);
-    farEditorInstances.remove(&ss);
-    delete editor;
-  }
-#endif // if 0
   auto it = farEditorInstances.find(ei.EditorID);
   if (it != farEditorInstances.end()) {
     if (clean) {
@@ -1225,8 +1054,8 @@ void FarEditorSet::dropCurrentEditor(bool clean)
     }
     delete it->second;
     farEditorInstances.erase(it);
+    Info.EditorControl(ECTL_REDRAW, nullptr);
   }
-  Info.EditorControl(ECTL_REDRAW, nullptr);
 }
 
 void FarEditorSet::dropAllEditors(bool clean)
@@ -1235,12 +1064,9 @@ void FarEditorSet::dropAllEditors(bool clean)
     //мы не имеем доступа к другим редакторам, кроме текущего
     dropCurrentEditor(clean);
   }
-#if 0
-  for (FarEditor *fe = farEditorInstances.enumerate(); fe != NULL; fe = farEditorInstances.next()){
-#endif // if 0
   for (auto fe = farEditorInstances.begin(); fe != farEditorInstances.end(); ++fe){
     delete fe->second;
-  };
+  }
 
   farEditorInstances.clear();
 }
@@ -1479,17 +1305,11 @@ FarList *FarEditorSet::buildParamsList(FileType *type)
   int count=0;
   std::vector<UnicodeString> params = defaultType->enumParams();
   for (const auto& paramname: params){
-#if 0
-    fparam[count++].Text=(wchar_t*)paramname.getWChars();
-#endif // if 0
     fparam[count++].Text = wcsdup(paramname.getWChars());
   }
   params = type->enumParams();
   for (const auto& paramname: params){
     if (defaultType->getParamValue(paramname)==nullptr){
-#if 0
-      fparam[count++].Text=(wchar_t*)paramname.getWChars();
-#endif // if 0
       fparam[count++].Text = wcsdup(paramname.getWChars());
     }
   }
@@ -1870,13 +1690,21 @@ void FarEditorSet::configureHrc()
   Info.DialogFree(hDlg);
 }
 
-void FarEditorSet::addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value)
+void FarEditorSet::addParamAndValue(FileType* filetype, const UnicodeString& name,
+                                    const UnicodeString& value)
 {
   if (filetype->getParamValue(name) == nullptr) {
     auto default_value = defaultType->getParamValue(name);
     filetype->addParam(name, *default_value);
   }
   filetype->setParamValue(name, &value);
+}
+
+void FarEditorSet::showExceptionMessage(const UnicodeString* message)
+{
+  auto str_mes = UStr::to_stdwstr(message);
+  const wchar_t* exceptionMessage[3] = {GetMsg(mName), str_mes.c_str(), GetMsg(mDie)};
+  Info.Message(Info.ModuleNumber, FMSG_WARNING, L"exception", &exceptionMessage[0], std::size(exceptionMessage), 1);
 }
 
 /* ***** BEGIN LICENSE BLOCK *****

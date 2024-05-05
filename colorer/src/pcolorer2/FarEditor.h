@@ -4,10 +4,6 @@
 #include<colorer/editor/BaseEditor.h>
 #include<colorer/handlers/StyledRegion.h>
 #include<colorer/editor/Outliner.h>
-#if 0
-#include<common/Logging.h>
-#endif // if 0
-
 #include"pcolorer.h"
 
 struct color{
@@ -68,9 +64,6 @@ public:
   Returns line number "lno" from FAR interface. Line is only valid until next call of this function,
   it also should not be disposed, this function takes care of this.
   */
-#if 0
-  String *getLine(int lno);
-#endif // if 0
   UnicodeString *getLine(size_t lno);
 
   /** Changes current assigned file type.
@@ -160,9 +153,6 @@ private:
 
   int prevLinePosition, blockTopPosition;
 
-#if 0
-  String *ret_str;
-#endif // if 0
   UnicodeString *ret_str;
   size_t ret_strNumber;
 

@@ -2,16 +2,9 @@
 #define _FAREDITORSET_H_
 
 #include <unordered_map>
-#if 0
-// new colorer don't have a public error handlers
-#include<colorer/handlers/FileErrorHandler.h>
-#endif // if 0
 #include<colorer/handlers/LineRegionsSupport.h>
 #include<colorer/handlers/StyledHRDMapper.h>
 #include<colorer/viewer/TextConsoleViewer.h>
-#if 0
-#include<common/Logging.h>
-#endif // if 0
 
 #include "pcolorer.h"
 #include "tools.h"
@@ -126,10 +119,7 @@ public:
   bool checkConsoleAnnotationAvailable();
   void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value);
 private:
-#if 0
-  /** Returns current global error handler. */
-  ErrorHandler *getErrorHandler();
-#endif // if 0
+
   /** add current active editor and return him. */
   FarEditor *addCurrentEditor();
   /** Returns currently active editor. */
@@ -145,7 +135,7 @@ private:
   /** Shows dialog of file type selection */
   void chooseType();
   /** FAR localized messages */
-  const wchar_t *GetMsg(int msg);
+  static const wchar_t *GetMsg(int msg);
   /** Applies the current settings for editors*/
   void ApplySettingsToEditors();
   /** writes the default settings in the registry*/
@@ -165,6 +155,7 @@ private:
   bool checkFarTrueMod();
   bool consoleAnnotationAvailable;
 
+  static void showExceptionMessage(const UnicodeString* message);
   int getCountFileTypeAndGroup();
   FileType* getFileTypeByIndex(int idx);
   void FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType);
@@ -190,9 +181,6 @@ private:
 
   void SaveChangedValueParam(HANDLE hDlg);
 
-#if 0
-  Hashtable<FarEditor*> farEditorInstances;
-#endif // if 0
   std::unordered_map<intptr_t, FarEditor*> farEditorInstances;
   ParserFactory *parserFactory;
   std::unique_ptr<StyledHRDMapper> regionMapper;

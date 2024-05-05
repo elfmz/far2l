@@ -88,9 +88,6 @@ void FarEditor::endJob(size_t lno)
   ret_str = nullptr;
 }
 
-#if 0
-String *FarEditor::getLine(int lno)
-#endif // if 0
 UnicodeString *FarEditor::getLine(size_t lno)
 {
   if (ret_strNumber == lno && ret_str != nullptr){
@@ -456,9 +453,7 @@ void FarEditor::locateFunction()
       }
 
       UnicodeString funcname(curLine, sword+1, eword-sword-1);
-#if 0
-      CLR_INFO("FC", "Letter %s", funcname.getChars());
-#endif // if 0
+      logger->debug("FC] Letter {0}", funcname);
       baseEditor->validate(-1, false);
       EditorSetPosition esp;
       OutlineItem *item_found = nullptr;

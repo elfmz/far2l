@@ -1026,11 +1026,7 @@ void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 	}
 
 	if (!event.wVirtualKeyCode) {
-		if (event.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) {
-			event.wVirtualKeyCode = WChar2WinVKeyCode(event.uChar.UnicodeChar);
-		} else {
-			event.wVirtualKeyCode = VK_UNASSIGNED;
-		}
+		event.wVirtualKeyCode = WChar2WinVKeyCode(event.uChar.UnicodeChar);
 	}
 	if (!event.uChar.UnicodeChar && IsEnhancedKey(event.wVirtualKeyCode)) {
 		event.dwControlKeyState|= ENHANCED_KEY;

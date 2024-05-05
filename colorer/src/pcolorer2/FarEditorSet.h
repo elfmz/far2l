@@ -173,7 +173,7 @@ private:
   void SaveChangedValueParam(HANDLE hDlg);
 
   std::unordered_map<intptr_t, FarEditor*> farEditorInstances;
-  ParserFactory *parserFactory;
+  std::unique_ptr<ParserFactory> parserFactory;
   std::unique_ptr<StyledHRDMapper> regionMapper;
 
   /**current value*/
@@ -195,9 +195,9 @@ private:
   UnicodeString *sUserHrcPath;
   
   /** UNC path */
-  UnicodeString *sCatalogPathExp;
-  UnicodeString *sUserHrdPathExp;
-  UnicodeString *sUserHrcPathExp;
+  std::unique_ptr<UnicodeString> sCatalogPathExp;
+  std::unique_ptr<UnicodeString> sUserHrdPathExp;
+  std::unique_ptr<UnicodeString> sUserHrcPathExp;
 
   int viewFirst; // 0 - init;  1 - first run view; 2 - first run editor
   std::string settingsIni;

@@ -70,9 +70,6 @@ FarEditorSet::FarEditorSet():
   sCatalogPath(nullptr),
   sUserHrdPath(nullptr),
   sUserHrcPath(nullptr),
-  sCatalogPathExp(nullptr),
-  sUserHrdPathExp(nullptr),
-  sUserHrcPathExp(nullptr),
   viewFirst(0)
 {
   settingsIni = InMyConfig("plugins/colorer/config.ini");
@@ -90,12 +87,8 @@ FarEditorSet::~FarEditorSet()
   delete sHrdName;
   delete sHrdNameTm;
   delete sCatalogPath;
-  delete sCatalogPathExp;
   delete sUserHrdPath;
-  delete sUserHrdPathExp;
   delete sUserHrcPath;
-  delete sUserHrcPathExp;
-  delete parserFactory;
 }
 
 
@@ -384,7 +377,7 @@ void FarEditorSet::chooseType()
     }else break;
   }
 
-  FarHrcSettings p(this, parserFactory);
+  FarHrcSettings p(this, parserFactory.get());
   p.writeUserProfile();
 }
 
@@ -752,7 +745,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
   HANDLE scr = Info.SaveScreen(0, 0, -1, -1);
   Info.Message(Info.ModuleNumber, 0, nullptr, &marr[0], 2, 0);
 
-  ParserFactory *parserFactoryLocal = nullptr;
+  std::unique_ptr<ParserFactory> parserFactoryLocal;
   std::unique_ptr<StyledHRDMapper> regionMapperLocal;
 
   UnicodeString *catalogPathS = PathToFullS(catalogPath,false);
@@ -768,12 +761,12 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
   }
 
   try{
-    parserFactoryLocal = new ParserFactory();
+    parserFactoryLocal = std::make_unique<ParserFactory>();
     parserFactoryLocal->loadCatalog(tpath);
     delete tpath;
     HrcLibrary& hrcLibraryLocal = parserFactoryLocal->getHrcLibrary();
     auto def_type = hrcLibraryLocal.getFileType("default");
-    FarHrcSettings p(this, parserFactoryLocal);
+    FarHrcSettings p(this, parserFactoryLocal.get());
     p.loadUserHrd(userHrdPathS);
     p.loadUserHrc(userHrcPathS);
     p.readProfile();
@@ -832,8 +825,6 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
     res = false;
   }
 
-  delete parserFactoryLocal;
-
   return res;
 }
 
@@ -849,8 +840,6 @@ void FarEditorSet::ReloadBase()
   Info.Message(Info.ModuleNumber, 0, nullptr, &marr[0], 2, 0);
 
   dropAllEditors(true);
-  delete parserFactory;
-  parserFactory = nullptr;
   regionMapper = nullptr;
 
   consoleAnnotationAvailable=checkConsoleAnnotationAvailable() && TrueModOn;
@@ -864,13 +853,13 @@ void FarEditorSet::ReloadBase()
   }
 
   try{
-    parserFactory = new ParserFactory();
-    parserFactory->loadCatalog(sCatalogPathExp);
+    parserFactory = std::make_unique<ParserFactory>();
+    parserFactory->loadCatalog(sCatalogPathExp.get());
     HrcLibrary& hrcLibrary = parserFactory->getHrcLibrary();
     defaultType = hrcLibrary.getFileType("default");
-    FarHrcSettings p(this, parserFactory);
-    p.loadUserHrd(sUserHrdPathExp);
-    p.loadUserHrc(sUserHrcPathExp);
+    FarHrcSettings p(this, parserFactory.get());
+    p.loadUserHrd(sUserHrdPathExp.get());
+    p.loadUserHrc(sUserHrcPathExp.get());
     p.readProfile();
     p.readUserProfile();
 
@@ -904,7 +893,7 @@ FarEditor *FarEditorSet::addCurrentEditor()
   EditorInfo ei;
   Info.EditorControl(ECTL_GETINFO, &ei);
 
-  FarEditor *editor = new FarEditor(&Info, parserFactory);
+  FarEditor *editor = new FarEditor(&Info, parserFactory.get());
   farEditorInstances.emplace(ei.EditorID, editor);
   UnicodeString *s=getCurrentFileName();
   editor->chooseFileType(s);
@@ -969,9 +958,8 @@ void FarEditorSet::disableColorer()
   { KeyFileHelper(settingsIni).SetInt(cSectionName, cRegEnabled, rEnabled); }
   dropCurrentEditor(true);
 
-  delete parserFactory;
-  parserFactory = nullptr;
-  regionMapper = nullptr;
+  regionMapper.reset();
+  parserFactory.reset();
 }
 
 void FarEditorSet::ApplySettingsToEditors()
@@ -1025,32 +1013,25 @@ void FarEditorSet::ReadSettings()
   delete sHrdName;
   delete sHrdNameTm;
   delete sCatalogPath;
-  delete sCatalogPathExp;
   delete sUserHrdPath;
-  delete sUserHrdPathExp;
   delete sUserHrcPath;
-  delete sUserHrcPathExp;
   sHrdName = nullptr;
   sCatalogPath = nullptr;
-  sCatalogPathExp = nullptr;
   sUserHrdPath = nullptr;
-  sUserHrdPathExp = nullptr;
   sUserHrcPath = nullptr;
-  sUserHrcPathExp = nullptr;
 
   sHrdName = new UnicodeString(hrdName.c_str());
   sHrdNameTm = new UnicodeString(hrdNameTm.c_str());
   sCatalogPath = new UnicodeString(catalogPath.c_str());
-  sCatalogPathExp = PathToFullS(catalogPath.c_str(),false);
+  sCatalogPathExp.reset(PathToFullS(catalogPath.c_str(),false));
   if (!sCatalogPathExp || !sCatalogPathExp->length()){
-    delete sCatalogPathExp;
-    sCatalogPathExp = GetConfigPath(UnicodeString(FarCatalogXml));
+    sCatalogPathExp.reset(GetConfigPath(UnicodeString(FarCatalogXml)));
   }
 
   sUserHrdPath = new UnicodeString(userHrdPath.c_str());
-  sUserHrdPathExp = PathToFullS(userHrdPath.c_str(),false);
+  sUserHrdPathExp.reset(PathToFullS(userHrdPath.c_str(),false));
   sUserHrcPath = new UnicodeString(userHrcPath.c_str());
-  sUserHrcPathExp = PathToFullS(userHrcPath.c_str(),false);
+  sUserHrcPathExp.reset(PathToFullS(userHrcPath.c_str(),false));
 
   // two '!' disable "Compiler Warning (level 3) C4800" and slightly faster code
   rEnabled = !!kfh.GetInt(cRegEnabled, cEnabledDefault);
@@ -1471,7 +1452,7 @@ void  FarEditorSet::OnChangeParam(HANDLE hDlg, int idx)
 void FarEditorSet::OnSaveHrcParams(HANDLE hDlg)
 {
    SaveChangedValueParam(hDlg);
-   FarHrcSettings p(this, parserFactory);
+   FarHrcSettings p(this, parserFactory.get());
    p.writeUserProfile();
 }
 

@@ -110,7 +110,7 @@ public:
   int menuid;
 
   bool checkConsoleAnnotationAvailable();
-  void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value);
+  void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value, const FileType* def_filetype = nullptr);
 private:
 
   /** add current active editor and return him. */
@@ -156,7 +156,7 @@ private:
   FarList *buildHrcList();
   FarList *buildParamsList(FileType *type);
   // filetype "default"
-  FileType *defaultType;
+  FileType *defaultType = nullptr;
   //change combobox type
   void ChangeParamValueListType(HANDLE hDlg, bool dropdownlist);
   //set list of values to combobox

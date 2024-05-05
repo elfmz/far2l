@@ -137,7 +137,7 @@ void FarHrcSettings::UpdatePrototype(xercesc::DOMElement* elem)
   }
 }
 
-void FarHrcSettings::readUserProfile()
+void FarHrcSettings::readUserProfile(const FileType* def_filetype)
 {
   KeyFileReadHelper kfh(profileIni);
   const auto &sections = kfh.EnumSections();
@@ -159,7 +159,7 @@ void FarHrcSettings::readUserProfile()
       UnicodeString ssn(n.c_str());
       const auto &v = Values->GetString(n, L"");
       UnicodeString ssv(v.c_str());
-      farEditorSet->addParamAndValue(type, ssn, ssv);
+      farEditorSet->addParamAndValue(type, ssn, ssv, def_filetype);
     }
   }
 }

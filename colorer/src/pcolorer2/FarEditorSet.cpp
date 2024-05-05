@@ -54,7 +54,6 @@ FarEditorSet::FarEditorSet():
   sTempHrdNameTm(nullptr),
   dialogFirstFocus(false),
   menuid(-1),
-  defaultType(nullptr),
   parserFactory(nullptr),
   regionMapper(nullptr),
   hrdClass(""),
@@ -772,12 +771,13 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
     parserFactoryLocal = new ParserFactory();
     parserFactoryLocal->loadCatalog(tpath);
     delete tpath;
-    HrcLibrary& hrcParserLocal = parserFactoryLocal->getHrcLibrary();
+    HrcLibrary& hrcLibraryLocal = parserFactoryLocal->getHrcLibrary();
+    auto def_type = hrcLibraryLocal.getFileType("default");
     FarHrcSettings p(this, parserFactoryLocal);
     p.loadUserHrd(userHrdPathS);
     p.loadUserHrc(userHrcPathS);
     p.readProfile();
-    p.readUserProfile();
+    p.readUserProfile(def_type);
 
     if (hrc_mode == HRCM_CONSOLE || hrc_mode == HRCM_BOTH) {
       try{
@@ -804,7 +804,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t *catalogPath, const wchar_t *userH
     Info.RestoreScreen(scr);
     if (full){
       for (int idx = 0;; idx++){
-        FileType *type = hrcParserLocal.enumerateFileTypes(idx);
+        FileType *type = hrcLibraryLocal.enumerateFileTypes(idx);
 
         if (type == nullptr){
           break;
@@ -867,8 +867,7 @@ void FarEditorSet::ReloadBase()
     parserFactory = new ParserFactory();
     parserFactory->loadCatalog(sCatalogPathExp);
     HrcLibrary& hrcLibrary = parserFactory->getHrcLibrary();
-    UnicodeString dsd("default");
-    defaultType = hrcLibrary.getFileType(dsd);
+    defaultType = hrcLibrary.getFileType("default");
     FarHrcSettings p(this, parserFactory);
     p.loadUserHrd(sUserHrdPathExp);
     p.loadUserHrc(sUserHrcPathExp);
@@ -1565,10 +1564,16 @@ void FarEditorSet::configureHrc()
 }
 
 void FarEditorSet::addParamAndValue(FileType* filetype, const UnicodeString& name,
-                                    const UnicodeString& value)
+                                    const UnicodeString& value, const FileType* def_filetype)
 {
   if (filetype->getParamValue(name) == nullptr) {
-    auto default_value = defaultType->getParamValue(name);
+    const UnicodeString* default_value;
+    if (def_filetype) {
+      default_value = def_filetype->getParamValue(name);
+    }
+    else {
+      default_value = defaultType->getParamValue(name);
+    }
     filetype->addParam(name, *default_value);
   }
   filetype->setParamValue(name, &value);

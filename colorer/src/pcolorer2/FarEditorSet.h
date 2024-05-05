@@ -99,11 +99,6 @@ public:
   bool GetPluginStatus() {return rEnabled;}
 
   bool SetBgEditor();
-  /**
-    Stub method, because Colorer API changed.
-  */
-  void LoadUserHrd(const UnicodeString *filename, ParserFactory *pf);
-  void LoadUserHrc(const UnicodeString *filename, ParserFactory *pf);
 
   UnicodeString *sTempHrdName;
   UnicodeString *sTempHrdNameTm;

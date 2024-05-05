@@ -1,14 +1,52 @@
 #include "FarHrcSettings.h"
 #include <utils.h>
 #include <KeyFileHelper.h>
+#include <colorer/base/XmlTagDefs.h>
 #include <colorer/xml/XmlParserErrorHandler.h>
-#include <xercesc/dom/DOM.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
+#include "colorer/parsers/CatalogParser.h"
 
-const char* FarCatalogXml = "/base/catalog.xml";
-const char* FarProfileXml = "/plug/hrcsettings.xml";
+void FarHrcSettings::loadUserHrc(const UnicodeString* filename)
+{
+  if (filename && !filename->isEmpty()) {
+    parserFactory->loadHrcPath(*filename);
+  }
+}
 
-XERCES_CPP_NAMESPACE_USE
+void FarHrcSettings::loadUserHrd(const UnicodeString* filename)
+{
+  if (!filename || filename->isEmpty()) {
+    return;
+  }
+
+  xercesc::XercesDOMParser xml_parser;
+  XmlParserErrorHandler err_handler;
+  xml_parser.setErrorHandler(&err_handler);
+  xml_parser.setLoadExternalDTD(false);
+  xml_parser.setSkipDTDValidation(true);
+  uXmlInputSource config = XmlInputSource::newInstance(filename);
+  xml_parser.parse(*config->getInputSource());
+  if (err_handler.getSawErrors()) {
+    throw ParserFactoryException(UnicodeString("Error reading ").append(*filename));
+  }
+  xercesc::DOMDocument* catalog = xml_parser.getDocument();
+  xercesc::DOMElement* elem = catalog->getDocumentElement();
+  const XMLCh* tagHrdSets = catTagHrdSets;
+  const XMLCh* tagHrd = catTagHrd;
+  if (elem == nullptr || !xercesc::XMLString::equals(elem->getNodeName(), tagHrdSets)) {
+    throw Exception("main '<hrd-sets>' block not found");
+  }
+  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr; node = node->getNextSibling()) {
+    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
+      auto* subelem = static_cast<xercesc::DOMElement*>(node);
+      if (xercesc::XMLString::equals(subelem->getNodeName(), tagHrd)) {
+        auto hrd = CatalogParser::parseHRDSetsChild(subelem);
+        if (hrd)
+          parserFactory->addHrd(std::move(hrd));
+      }
+    }
+  }
+}
 
 FarHrcSettings::FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory *_parserFactory)
   :
@@ -20,74 +58,63 @@ FarHrcSettings::FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory *_pars
 
 void FarHrcSettings::readProfile()
 {
-  UnicodeString *path = GetConfigPath(UnicodeString(FarProfileXml));
-  readXML(path, false);
+  UnicodeString *path = GetConfigPath(FarProfileXml);
+  readXML(path);
   delete path;
 }
 
-//
-// Method is borrowed from FarColorer.
-//
-void FarHrcSettings::readXML(UnicodeString *file, bool userValue)
+void FarHrcSettings::readXML(UnicodeString* file)
 {
-  XercesDOMParser xml_parser;
+  xercesc::XercesDOMParser xml_parser;
   XmlParserErrorHandler error_handler;
   xml_parser.setErrorHandler(&error_handler);
   xml_parser.setLoadExternalDTD(false);
   xml_parser.setSkipDTDValidation(true);
-  uXmlInputSource config = XmlInputSource::newInstance(file->getW2Chars(),
-                                                       static_cast<XMLCh*>(nullptr));
+  xml_parser.setDisableDefaultEntityResolution(true);
+  uXmlInputSource config = XmlInputSource::newInstance(file);
   xml_parser.parse(*(config->getInputSource()));
   if (error_handler.getSawErrors()) {
     throw ParserFactoryException("Error reading hrcsettings.xml.");
   }
-  DOMDocument* catalog = xml_parser.getDocument();
-  DOMElement* elem = catalog->getDocumentElement();
+  xercesc::DOMDocument* catalog = xml_parser.getDocument();
+  xercesc::DOMElement* elem = catalog->getDocumentElement();
 
-  const XMLCh* tagPrototype = (const XMLCh*)u"prototype";
-  const XMLCh* tagHrcSettings = (const XMLCh*)u"hrc-settings";
+  const XMLCh* tagPrototype = hrcTagPrototype;
+  const XMLCh* tagHrcSettings = (const XMLCh*)u"hrc-settings\0";
 
-  if (elem == nullptr || !XMLString::equals(elem->getNodeName(), tagHrcSettings)) {
+  if (elem == nullptr || !xercesc::XMLString::equals(elem->getNodeName(), tagHrcSettings)) {
     throw FarHrcSettingsException("main '<hrc-settings>' block not found");
   }
-  for (DOMNode* node = elem->getFirstChild(); node != nullptr; node = node->getNextSibling()) {
-    if (node->getNodeType() == DOMNode::ELEMENT_NODE) {
-      DOMElement* subelem = static_cast<DOMElement*>(node);
-      if (XMLString::equals(subelem->getNodeName(), tagPrototype)) {
-        UpdatePrototype(subelem, userValue);
+  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr; node = node->getNextSibling()) {
+    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
+      xercesc::DOMElement* subelem = static_cast<xercesc::DOMElement*>(node);
+      if (xercesc::XMLString::equals(subelem->getNodeName(), tagPrototype)) {
+        UpdatePrototype(subelem);
       }
     }
   }
 }
 
-//
-// Method is borrowed from FarColorer.
-//
-void FarHrcSettings::UpdatePrototype(DOMElement* elem, bool userValue)
+void FarHrcSettings::UpdatePrototype(xercesc::DOMElement* elem)
 {
-  const XMLCh* tagProtoAttrParamName = (const XMLCh*)u"name";
-  const XMLCh* tagParam = (const XMLCh*)u"param";
-  const XMLCh* tagParamAttrParamName = (const XMLCh*)u"name";
-  const XMLCh* tagParamAttrParamValue = (const XMLCh*)u"value";
-  const XMLCh* tagParamAttrParamDescription = (const XMLCh*)u"description";
-  const XMLCh* typeName = elem->getAttribute(tagProtoAttrParamName);
-  if (!XMLString::stringLen(typeName)) {
+  auto typeName = elem->getAttribute(hrcPrototypeAttrName);
+  if (typeName == nullptr) {
     return;
   }
-  auto& hrcParser = parserFactory->getHrcLibrary();
-  UnicodeString typenamed(typeName);
-  FileType* type = hrcParser.getFileType(&typenamed);
+  auto& hrcLibrary = parserFactory->getHrcLibrary();
+  UnicodeString typenamed = UnicodeString(typeName);
+  auto* type = hrcLibrary.getFileType(&typenamed);
   if (type == nullptr) {
     return;
   }
 
-  for (DOMNode* node = elem->getFirstChild(); node != nullptr; node = node->getNextSibling()) {
-    if (node->getNodeType() == DOMNode::ELEMENT_NODE) {
-      DOMElement* subelem = static_cast<DOMElement*>(node);
-      if (XMLString::equals(subelem->getNodeName(), tagParam)) {
-        auto name = subelem->getAttribute(tagParamAttrParamName);
-        auto value = subelem->getAttribute(tagParamAttrParamValue);
-        auto descr = subelem->getAttribute(tagParamAttrParamDescription);
+  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr; node = node->getNextSibling()) {
+    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
+      auto* subelem = static_cast<xercesc::DOMElement*>(node);
+      if (xercesc::XMLString::equals(subelem->getNodeName(), hrcTagParam)) {
+        auto name = subelem->getAttribute(hrcParamAttrName);
+        auto value = subelem->getAttribute(hrcParamAttrValue);
+        auto descr = subelem->getAttribute(hrcParamAttrDescription);
 
         if (UStr::isEmpty(name)) {
           continue;

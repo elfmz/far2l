@@ -15,7 +15,6 @@ set(SOURCES
     src/pcolorer2/FarEditorSet.h
     src/pcolorer2/FarHrcSettings.h
     src/pcolorer2/pcolorer.h
-    src/pcolorer2/resource.h
     src/pcolorer2/tools.h
     src/pcolorer2/ChooseTypeMenu.cpp
     src/pcolorer2/FarEditor.cpp

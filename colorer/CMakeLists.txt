@@ -10,7 +10,6 @@ message(STATUS "Build Colorer: ${COLORER_VERSION}")
 
 set(SOURCES
     src/pcolorer2/ChooseTypeMenu.h
-    src/pcolorer2/ConsoleAnnotation.h
     src/pcolorer2/FarEditor.h
     src/pcolorer2/FarEditorSet.h
     src/pcolorer2/FarHrcSettings.h

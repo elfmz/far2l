@@ -2,7 +2,6 @@
 #include <sys/stat.h>
 #include <KeyFileHelper.h>
 #include <utils.h>
-
 #include"FarEditorSet.h"
 
 #include "FarHrcSettings.h"
@@ -593,19 +592,7 @@ void FarEditorSet::configure(bool fromEditor)
     if (!checkConsoleAnnotationAvailable() && fromEditor){
       fdi[IDX_HRD_SELECT_TM].Flags = DIF_DISABLE;
       fdi[IDX_TRUEMOD].Flags = DIF_DISABLE;
-      if (!checkFarTrueMod()){
-        if (!checkConEmu()){
-          fdi[IDX_TMMESSAGE].PtrData = GetMsg(mNoFarTMConEmu);
-        }
-        else{
-          fdi[IDX_TMMESSAGE].PtrData = GetMsg(mNoFarTM);
-        }
-      }
-      else{
-        if (!checkConEmu()){
-          fdi[IDX_TMMESSAGE].PtrData = GetMsg(mNoConEmu);
-        }
-      }
+      fdi[IDX_TMMESSAGE].PtrData = GetMsg(mNoFarTM);
     }
     /*
     * Dialog activation
@@ -1154,27 +1141,9 @@ void FarEditorSet::SaveSettings()
   kfh.SetString(cSectionName, cRegUserHrcPath, sUserHrcPath->getWChars());
 }
 
-bool FarEditorSet::checkConEmu()
-{
-	return false;/*
-  bool conemu;
-  wchar_t shareName[255];
-  swprintf(shareName, AnnotationShareName, sizeof(AnnotationInfo), GetConsoleWindow());
-
-  HANDLE hSharedMem = OpenFileMapping( FILE_MAP_ALL_ACCESS, FALSE, shareName);
-  conemu = (hSharedMem != 0) ? 1 : 0;
-  CloseHandle(hSharedMem);
-  return conemu;*/
-}
-
-bool FarEditorSet::checkFarTrueMod()
-{
-  return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
-}
-
 bool FarEditorSet::checkConsoleAnnotationAvailable()
 {
-  return checkFarTrueMod();
+  return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
 }
 
 bool FarEditorSet::SetBgEditor()

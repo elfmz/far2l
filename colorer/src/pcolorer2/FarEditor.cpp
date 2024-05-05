@@ -1329,10 +1329,10 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
       if (ec.Base.Color == 0 || ec.TrueColor.Back.R > 0x80 || ec.TrueColor.Back.G > 0x80 || ec.TrueColor.Back.B > 0x80) {
         ec.Base.Color = BACKGROUND_INTENSITY;
       }
-      if (col.style & AI_STYLE_UNDERLINE) {
+      if (col.style & StyledRegion::RD_UNDERLINE) {
         ec.Base.Color|= COMMON_LVB_UNDERSCORE;
       }
-      if (col.style & AI_STYLE_STRIKEOUT) {
+      if (col.style & StyledRegion::RD_STRIKEOUT) {
         ec.Base.Color|= COMMON_LVB_STRIKEOUT;
       }
     }
@@ -1359,17 +1359,6 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
 #endif // if 0
   }
 
-}
-
-void FarEditor::addAnnotation(int lno, int s, int e, AnnotationInfo &ai)
-{
-  /*EditorAnnotation ea;
-
-  ea.StringNumber = lno;
-  ea.StartPos = s;
-  ea.EndPos = e-1;
-  memcpy(ea.annotation_raw, ai.raw, sizeof(ai.raw));
-  info->EditorControl(ECTL_ADDANNOTATION, &ea);*/
 }
 
 const wchar_t *FarEditor::GetMsg(int msg)

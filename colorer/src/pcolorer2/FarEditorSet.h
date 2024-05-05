@@ -145,9 +145,7 @@ private:
   void disableColorer();
   /** Enables plugin processing*/
   void enableColorer(bool fromEditor);
-  
-  bool checkConEmu();
-  bool checkFarTrueMod();
+
   bool consoleAnnotationAvailable;
 
   static void showExceptionMessage(const UnicodeString* message);

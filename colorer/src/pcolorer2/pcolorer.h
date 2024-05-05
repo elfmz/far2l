@@ -1,27 +1,10 @@
 #ifndef _PCOLORER_H_
 #define _PCOLORER_H_
 
-/**
-  Visual Leak Detector http://sites.google.com/site/dmoulding/vld .
-  Optional 
-*/
-#ifdef _DEBUG
-#ifndef _WIN64
-//#include<vld.h>
-#endif
-#endif
-
 #include<farplug-wide.h>
 #include<farcolor.h>
 #include<farkeys.h>
-#include"ConsoleAnnotation.h"
 #include "colorer/strings/legacy/UnicodeString.h"
-
-#include<wctype.h>
-#include<wchar.h>
-#include<windows.h>
-
-
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
@@ -41,7 +24,7 @@ enum
   mGotcha, mChoose,
   mReloading, mCantLoad, mCantOpenFile, mDie, mTry,
   mFatal, mSelectHRD, mChangeBackgroundEditor, mTrueModSetting,
-  mNoFarTM, mNoConEmu, mNoFarTMConEmu, mUserHrdFile, mUserHrcFile, mUserHrcSetting,
+  mNoFarTM, mUserHrdFile, mUserHrcFile, mUserHrcSetting,
   mUserHrcSettingDialog, mListSyntax, mParamList,mParamValue, mAutoDetect, mFavorites,
   mKeyAssignDialogTitle, mKeyAssignTextTitle
 };

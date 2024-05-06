@@ -14,7 +14,7 @@ class SudoAskpassScreen
 	{
 		// deliver WINDOW_BUFFER_SIZE_EVENT after screen restored
 		// to ensure proper repaints of far2l's controls
-		INPUT_RECORD ir;
+		INPUT_RECORD ir{};
 
 		FinalScreenUpdater()
 		{
@@ -27,6 +27,7 @@ class SudoAskpassScreen
 
 		~FinalScreenUpdater()
 		{
+			ir.Event.WindowBufferSizeEvent.bDamaged = TRUE;
 			g_winport_con_in->Enqueue(&ir, 1);
 		}
 	} _fsu;

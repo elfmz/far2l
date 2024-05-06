@@ -19,8 +19,6 @@ enum LanguageID
 	MUMaskOverride,
 	MRememberDirectory,
 	MConnPoolExpiration,
-	MConnectUsingProxy,
-	MEditTSocksConfig,
 
 	MRememberChoice,
 	MOperationFailed,
@@ -48,6 +46,7 @@ enum LanguageID
 	MDisplayName,
 	MExtraOptions,
 	MProtocolOptions,
+	MProxyOptions,
 	MSave,
 	MConnect,
 	MSaveConnect,
@@ -305,5 +304,11 @@ enum LanguageID
 
 	MSHELLOptionsTitle,
 	MSHELLWay,
-	MSHELLWaySettings
+	MSHELLWaySettings,
+
+	MProxySettingsTitle,
+	MProxySettingsDisabled,
+	MProxySettingsKind,
+	MProxySettingsEdit,
+
 };

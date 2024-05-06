@@ -17,8 +17,6 @@
 "Copy attributes that override &umask"
 "Remember working &directory in site settings"
 "Connections pool e&xpiration (seconds):"
-"Connect using &proxy (requires tsocks library)"
-"Edit &tsocks configuration file"
 
 "Re&member my choice for current operation"
 "Operation failed"
@@ -47,6 +45,7 @@
 "&Display name       :"
 "E&xtra options"
 "Pro&tocol options"
+"Prox&y options"
 "&Save"
 "C&onnect"
 "Save/C&onnect"
@@ -303,3 +302,8 @@
 "SHELL Protocol Options"
 "&Way to access shell"
 "Shell access way settings"
+
+"Proxy settings"
+"Not using proxifier"
+"&Proxifier kind to use:"
+"&Edit proxifier configuration"

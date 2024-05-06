@@ -1939,6 +1939,9 @@ int FarEditorSynched(const wchar_t *FileName, const wchar_t *Title, int X1, int 
 #endif
 				ExitCode = Editor.IsFileChanged() ? XC_MODIFIED : XC_NOT_MODIFIED;
 			}
+
+			// workaround for non-repained background of (if) pending modal dialogs
+			GenerateWINDOW_BUFFER_SIZE_EVENT(-1, -1, true);
 		}
 	}
 

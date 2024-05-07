@@ -290,6 +290,14 @@ void InputSettings()
 */
 void InterfaceSettings()
 {
+	int DateFormatIndex = GetDateFormat(); //Opt.DateFormat
+	FARString strDateSeparator; //Opt.strDateSeparator
+	FARString strTimeSeparator; //Opt.strTimeSeparator
+	FARString strDecimalSeparator; //Opt.strDecimalSeparator
+	strDateSeparator += GetDateSeparator();
+	strTimeSeparator += GetTimeSeparator();
+	strDecimalSeparator += GetDecimalSeparator();
+
 	for (;;) {
 		DialogBuilder Builder(Msg::ConfigInterfaceTitle, L"InterfSettings");
 
@@ -308,6 +316,53 @@ void InterfaceSettings()
 		Builder.AddCheckbox(Msg::ConfigCopyTimeRule, &Opt.CMOpt.CopyTimeRule);
 		Builder.AddCheckbox(Msg::ConfigDeleteTotal, &Opt.DelOpt.DelShowTotal);
 		Builder.AddCheckbox(Msg::ConfigPgUpChangeDisk, &Opt.PgUpChangeDisk);
+
+		Builder.AddSeparator(Msg::ConfigDateFormat);
+
+		/*DialogBuilderListItem CAListItems[] = {
+				{Msg::ConfigDateFormatMDY, 0},
+				{Msg::ConfigDateFormatDMY, 1},
+				{Msg::ConfigDateFormatYMD, 2},
+		};
+		DialogItemEx *DateFormatComboBox = Builder.AddComboBox((int *)&DateFormatIndex, 10,
+				CAListItems, ARRAYSIZE(CAListItems),
+				DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
+		DialogItemEx *DateFormatText = Builder.AddTextAfter(DateFormatComboBox, Msg::ConfigDateFormat);
+		DateFormatText->Indent(1);
+		*/
+		static FarLangMsg DateFormatOptions[] = {Msg::ConfigDateFormatMDY, Msg::ConfigDateFormatDMY,
+				Msg::ConfigDateFormatYMD};
+		Builder.AddRadioButtonsHorz(&DateFormatIndex, ARRAYSIZE(DateFormatOptions), DateFormatOptions);
+
+		Builder.StartColumns();
+		DialogItemEx *DateSeparatorEdit = Builder.AddEditField(&strDateSeparator, 1);
+		DateSeparatorEdit->Type = DI_FIXEDIT;
+		DateSeparatorEdit->Flags |= DIF_MASKEDIT;
+		DateSeparatorEdit->strMask = L"X";
+		Builder.AddTextAfter(DateSeparatorEdit, Msg::ConfigDateSeparator);
+
+		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTimeSeparator, 1);
+		TimeSeparatorEdit->Type = DI_FIXEDIT;
+		TimeSeparatorEdit->Flags |= DIF_MASKEDIT;
+		TimeSeparatorEdit->strMask = L"X";
+		Builder.AddTextAfter(TimeSeparatorEdit, Msg::ConfigTimeSeparator);
+
+		DialogItemEx *DecimalSeparatorEdit = Builder.AddEditField(&strDecimalSeparator, 1);
+		DecimalSeparatorEdit->Type = DI_FIXEDIT;
+		DecimalSeparatorEdit->Flags |= DIF_MASKEDIT;
+		DecimalSeparatorEdit->strMask = L"X";
+		Builder.AddTextAfter(DecimalSeparatorEdit, Msg::ConfigDecimalSeparator);
+        
+		Builder.ColumnBreak();
+		int DateTimeDefaultID = -1;
+		Builder.AddButton(Msg::ConfigDateTimeDefault, DateTimeDefaultID);
+		int DateTimeFromSystemID = -1;
+		DialogItemEx *DateTimeFromSystem = Builder.AddButton(Msg::ConfigDateTimeFromSystem, DateTimeFromSystemID);
+		DateTimeFromSystem->Flags = DIF_DISABLE;
+		Builder.AddEmptyLine();
+		Builder.EndColumns();
+
+		Builder.AddSeparator();
 
 		const DWORD supported_tweaks = ApplyConsoleTweaks();
 		if (supported_tweaks & TWEAK_STATUS_SUPPORT_BLINK_RATE) {
@@ -353,23 +408,37 @@ void InterfaceSettings()
 			if (Opt.CMOpt.CopyTimeRule)
 				Opt.CMOpt.CopyTimeRule = 3;
 
+			Opt.DateFormat = DateFormatIndex;
+			Opt.strDateSeparator = strDateSeparator;
+			Opt.strTimeSeparator = strTimeSeparator;
+			Opt.strDecimalSeparator = strDecimalSeparator;
+			ConvertDate_ResetInit();
+
 			SetFarConsoleMode();
 			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 			CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
 			CtrlObject->Cp()->SetScreenPosition();
 			// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
 			CtrlObject->Cp()->Redraw();
+
 			ApplyConsoleTweaks();
+			WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
 			break;
 		}
 
-		if (ChangeFontID == -1 || clicked_id != ChangeFontID)
+		if (ChangeFontID != -1 && clicked_id == ChangeFontID)
+			WINPORT(ConsoleChangeFont)();
+		else if (clicked_id == DateTimeDefaultID) {
+			DateFormatIndex = GetDateFormatDefault();
+			strDateSeparator = GetDateSeparatorDefault();
+			strTimeSeparator = GetTimeSeparatorDefault();
+			strDecimalSeparator = GetDecimalSeparatorDefault();
+		}
+		else if (clicked_id == DateTimeFromSystemID)
+			;
+		else
 			break;
-
-		WINPORT(ConsoleChangeFont)();
 	}
-
-	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
 }
 
 void AutoCompleteSettings()

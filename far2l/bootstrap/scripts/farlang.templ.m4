@@ -2407,6 +2407,105 @@ ConfigPgUpChangeDisk
 "Використовувати Ctrl-PgUp для в&ибору диска"
 "Ужываць Ctrl-PgUp для в&ыбору дыска"
 
+ConfigDateFormat
+" Формат &даты "
+" &Date format "
+upd:" &Date format "
+upd:" &Date format "
+upd:" &Date format "
+upd:" &Date format "
+upd:" &Date format "
+upd:" &Date format "
+upd:" &Date format "
+
+ConfigDateFormatMDY
+"ММ-ДД-ГГГГ"
+"MM-DD-YYYY"
+upd:"MM-DD-RRRRR"
+upd:"MM-TT-JJJJJ"
+upd:"HH-NN-ÉÉÉÉÉ"
+upd:"MM-DD-RRRRR"
+"MM-DD-AAAAA"
+"ММ-ДД-РРРРР"
+"ММ-ДД-ГГГГГ"
+
+ConfigDateFormatDMY
+"ДД-ММ-ГГГГ"
+"DD-MM-YYYY"
+upd:"DD-MM-RRRRR"
+upd:"TT-MM-JJJJJ"
+upd:"NN-HH-ÉÉÉÉÉ"
+upd:"DD-MM-RRRRR"
+"DD-MM-AAAAA"
+"ДД-ММ-РРРРР"
+"ДД-ММ-ГГГГГ"
+
+ConfigDateFormatYMD
+"ГГГГ-ММ-ДД"
+"YYYY-MM-DD"
+upd:"RRRRR-MM-DD"
+upd:"JJJJJ-MM-TT"
+upd:"ÉÉÉÉÉ-HH-NN"
+upd:"RRRRR-MM-DD"
+"AAAAA-MM-DD"
+"ГГГГГ-ММ-ДД"
+"ГГГГГ-ММ-ДД"
+
+ConfigDateSeparator
+"Разделитель даты"
+"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+
+ConfigTimeSeparator
+"Разделитель времени"
+"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+
+ConfigDecimalSeparator
+"Десятичный разделитель"
+"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+
+ConfigDateTimeDefault
+"Сброс по &умолчанию"
+"&Reset to default"
+upd:"&Reset to default"
+upd:"*Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+
+ConfigDateTimeFromSystem
+"Из системной локали"
+"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+
 ConfigWindowTitle
 "Заголовок окна FAR:"
 "FAR window title:"

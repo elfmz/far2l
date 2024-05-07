@@ -130,8 +130,8 @@ static void SetDefaultHighlighting()
 			//           Mask                NormalColor
 			//                        IncludeAttributes
 			//                     IgnoreMask       CursorColor
-	{L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT, 0x00, 0x90 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0x002190, 1},
-	{L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 1},
+//	{L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT, 0x00, 0x90 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0x002190, 1},
+//	{L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 1},
 	{L"*", 1, FILE_ATTRIBUTE_BROKEN, 0x00, 0x10 | F_LIGHTRED, 0xFFFFFFFD0F, 0x30 | F_LIGHTRED, 0xFFFFFFFD0F, 0xFF0000, 0},
 	{L"*", 1, FILE_ATTRIBUTE_HIDDEN, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF0000, 0},
 	{L"*", 1, FILE_ATTRIBUTE_SYSTEM, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF263C, 1},
@@ -158,7 +158,7 @@ static void SetDefaultHighlighting()
 	{L"*", 1, FILE_ATTRIBUTE_DEVICE_BLOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
 	{L"*", 1, FILE_ATTRIBUTE_DEVICE_FIFO, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
 	{L"*", 1, FILE_ATTRIBUTE_DEVICE_SOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
-	{L"*.*", 0, 0x00, 0x00, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF0000, 0}, // Чтобы не раскрашивало на NTFS все файлы в зеленый
+//	{L"*.*", 0, 0x00, 0x00, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF0000, 0}, // Чтобы не раскрашивало на NTFS все файлы в зеленый
 	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE, 0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0}
 
 	};
@@ -380,7 +380,7 @@ static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 		// Для пометки возьмем цвета файла включая прозрачность.
 		if (!(hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] & 0xFF)) {
 
-			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = (Palette[FarColor[i] - COL_FIRSTPALETTECOLOR] & 0xFF );
+			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
 		}
 
 		// Если у метки black on black, то возьмем ей цвета и маску от имени
@@ -396,7 +396,7 @@ static void ApplyStartColors(HighlightDataColor *hl)
 {
 	// Начинаем с цветов "по умолчанию" и далее их раскрашиваем
 	for (int i = 0; i < 4; i++) {
-		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = (Palette[FarColor[i] - COL_FIRSTPALETTECOLOR] & 0xFF );
+		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
 		hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i] |= 0xFFFFFFFFFFFFFFFF;
 		hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Color[HIGHLIGHTCOLORTYPE_FILE][i];
 		hl->Mask[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i];

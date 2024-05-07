@@ -31,12 +31,12 @@ protected:
 
 struct PlainViewerPrinter : ViewerPrinter
 {
-	PlainViewerPrinter(int color);
+	PlainViewerPrinter(uint64_t color);
 	virtual ~PlainViewerPrinter();
 
 	virtual int Length(const wchar_t *str, int limit = -1);
 	virtual void Print(int skip_len, int print_len, const wchar_t *str);
 
 private:
-	int _color;
+	uint64_t _color;
 };

@@ -397,7 +397,7 @@ void Editor::ShowEditor(int CurLineOnly)
 				CurPtr->FastShow();
 				CurPtr = CurPtr->m_next;
 			} else {
-				SetScreen(X1, Y, XX2, Y, L' ', COL_EDITORTEXT);		// Пустые строки после конца текста
+				SetScreen(X1, Y, XX2, Y, L' ', FarColorToReal(COL_EDITORTEXT));		// Пустые строки после конца текста
 			}
 	}
 
@@ -421,7 +421,7 @@ void Editor::ShowEditor(int CurLineOnly)
 						BlockX2 = XX2;
 
 					if (BlockX1 <= XX2 && BlockX2 >= X1)
-						ChangeBlockColor(BlockX1, Y, BlockX2, Y, COL_EDITORSELECTEDTEXT);
+						ChangeBlockColor(BlockX1, Y, BlockX2, Y, FarColorToReal(COL_EDITORSELECTEDTEXT));
 				}
 
 				CurPtr = CurPtr->m_next;
@@ -6297,7 +6297,7 @@ Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 			pEdit->SetBinaryString(lpwszStr, nLength);
 
 		pEdit->SetCurPos(0);
-		pEdit->SetObjectColor(COL_EDITORTEXT, COL_EDITORSELECTEDTEXT);
+		pEdit->SetObjectColor(FarColorToReal(COL_EDITORTEXT), FarColorToReal(COL_EDITORSELECTEDTEXT));
 		pEdit->SetEditorMode(TRUE);
 		pEdit->SetWordDiv(EdOpt.strWordDiv);
 		pEdit->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
@@ -6543,7 +6543,7 @@ void Editor::GetCursorType(bool &Visible, DWORD &Size)
 	CurLine->GetCursorType(Visible, Size);	//???
 }
 
-void Editor::SetObjectColor(int Color, int SelColor, int ColorUnChanged)
+void Editor::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
 	for (Edit *CurPtr = TopList; CurPtr; CurPtr = CurPtr->m_next)	//???
 		CurPtr->SetObjectColor(Color, SelColor, ColorUnChanged);
@@ -6552,7 +6552,7 @@ void Editor::SetObjectColor(int Color, int SelColor, int ColorUnChanged)
 void Editor::DrawScrollbar()
 {
 	if (EdOpt.ShowScrollBar) {
-		SetColor(COL_EDITORSCROLLBAR);
+		SetFarColor(COL_EDITORSCROLLBAR);
 		XX2 = X2
 				- (ScrollBarEx(X2, Y1, Y2 - Y1 + 1, NumLine - CalcDistance(TopScreen, CurLine, -1),
 							NumLastLine)

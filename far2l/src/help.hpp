@@ -131,7 +131,7 @@ private:
 
 	FARString strCtrlColorChar;		// CtrlColorChar - опция! для спецсимвола-
 	//   символа - для атрибутов
-	int CurColor;						// CurColor - текущий цвет отрисовки
+	uint64_t CurColor;						// CurColor - текущий цвет отрисовки
 	int CtrlTabSize;					// CtrlTabSize - опция! размер табуляции
 
 	FARString strCurPluginContents;		// помним PluginContents (для отображения в заголовке)

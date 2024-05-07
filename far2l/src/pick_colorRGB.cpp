@@ -560,7 +560,9 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 
 	case DN_CTLCOLORDLGITEM:
 		if (Param1 == ID_PCRGB_PREFIX_RGB) {
-			return FarColorToReal(COL_DIALOGEDIT);
+			uint64_t *ItemColor = (uint64_t *)Param2;
+			ItemColor[0] = FarColorToReal(COL_DIALOGEDIT);
+			return 1;
 		}
 	break;
 

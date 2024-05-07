@@ -21,7 +21,8 @@
 | Password:              [PSWDEDIT                         ] |
 | Directory:             [TEXTEDIT                         ] |
 |------------------------------------------------------------|
-|     [ Extra settings ]  [  Protocol settings ]             |
+|   [Extra settings]  [Protocol settings] [Proxy settings]   |
+|------------------------------------------------------------|
 |  [     Save     ]  [    Connect   ]     [  Cancel      ]   |
  =============================================================
    6              21 24             39    45             60
@@ -40,6 +41,7 @@ static int DefaultPortForProtocol(const char *protocol)
 }
 
 void ConfigureExtraSiteSettings(std::string &options);
+void ConfigureProxySettings(std::string &options);
 
 SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_location, const std::string &display_name)
 	: _sites_cfg_location(sites_cfg_location), _initial_display_name(display_name), _display_name(display_name)
@@ -119,6 +121,10 @@ SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_
 	_di.NextLine();
 	_i_extra_options = _di.AddAtLine(DI_BUTTON, 10,50, DIF_CENTERGROUP, MExtraOptions);
 	_i_protocol_options = _di.AddAtLine(DI_BUTTON, 10,50, DIF_CENTERGROUP, MProtocolOptions);
+	_i_proxy_options = _di.AddAtLine(DI_BUTTON, 10,50, DIF_CENTERGROUP, MProxyOptions);
+
+	_di.NextLine();
+	_di.AddAtLine(DI_TEXT, 4,63, DIF_BOXCOLOR | DIF_SEPARATOR);
 
 	_di.NextLine();
 	_i_save = _di.AddAtLine(DI_BUTTON, 61,21, DIF_CENTERGROUP, MSave);
@@ -284,6 +290,11 @@ LONG_PTR SiteConnectionEditor::DlgProc(int msg, int param1, LONG_PTR param2)
 			if (param1 == _i_extra_options) {
 				ProtocolOptionsScope pos(*this);
 				ConfigureExtraSiteSettings(pos);
+				return TRUE;
+			}
+			if (param1 == _i_proxy_options) {
+				ProtocolOptionsScope pos(*this);
+				ConfigureProxySettings(pos);
 				return TRUE;
 			}
 

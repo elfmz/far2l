@@ -1,0 +1,8 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/_build",
+    "cmake.configureOnOpen": true,
+    "cmake.cmakePath": "cmake",
+    "cmake.configureArgs": [
+        "-DUSEWX=yes"
+    ]
+}

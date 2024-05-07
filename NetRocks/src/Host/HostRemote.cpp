@@ -257,7 +257,17 @@ void HostRemote::ReInitialize()
 
 	fprintf(stderr, "NetRocks: starting broker '%s' '%s' '%s' in '%s'\n",
 		broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, work_path.c_str());
-	const bool use_tsocks = G.GetGlobalConfigBool("UseProxy", false);
+
+	UnlinkScope prxf_cfg;
+	std::string prxf = sc_options.GetString("Proxifier");
+	if (!prxf.empty()) {
+		prxf_cfg = InMyTemp(StrPrintf("NetRocks/proxy/run_%u.cfg", getpid()).c_str());
+		const std::string &cfg_content = sc_options.GetString(std::string("Proxifier_").append(prxf).c_str());
+		if (!WriteWholeFile(prxf_cfg.c_str(), cfg_content)) {
+			fprintf(stderr, "NetRocks: error %d creating proxifier config '%s'\n", errno, prxf_cfg.c_str());
+			prxf.clear();
+		}
+	}
 
 	pid_t pid = fork();
 	if (pid == 0) {
@@ -271,13 +281,18 @@ void HostRemote::ReInitialize()
 				}
 			}
 		}
-		if (use_tsocks) {
+		if (prxf == "tsocks") {
 			setenv("LD_PRELOAD", "libtsocks.so", 1);
-			setenv("TSOCKS_CONFFILE", G.tsocks_config.c_str(), 1);
+			setenv("TSOCKS_CONFFILE", prxf_cfg.c_str(), 1);
 		}
 		if (fork() == 0) {
-			execl(broker_pathname.c_str(),
-				broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, keep_alive_arg, NULL);
+			if (prxf == "proxychains") {
+				execlp("proxychains", "proxychains", "-f", prxf_cfg.c_str(),
+					broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, keep_alive_arg, NULL);
+			} else {
+				execl(broker_pathname.c_str(),
+					broker_pathname.c_str(), ipc_fd.broker_arg_r, ipc_fd.broker_arg_w, keep_alive_arg, NULL);
+			}
 			_exit(-1);
 			exit(-2);
 		}

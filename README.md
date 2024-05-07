@@ -24,7 +24,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 
 
 ## Installing, Running
-#### Debian/Ubuntu 23.10+ binaries
+#### Debian/Ubuntu 23.10+ binaries (with TTY X/Xi backends only)
 
 ```sh
 apt-get install far2l
@@ -49,6 +49,8 @@ You can use containers to try `far2l` without installing anything.
 docker build . -l far2l
 docker run -it far2l
 ```
+
+See also [Community packages & binaries](#community_bins)
 
 
 ## Building, Contributing, Hacking
@@ -236,7 +238,7 @@ nix-shell -I nixpkgs=https://github.com/<fork>/nixpkgs/archive/<revision-or-bran
 nix-shell -I nixpkgs=/path/to/nixpkgs -p far2l --command far2l
 ```
 
-To advance the package to a new Far2l revision, edit the `fetchFromGitHub` set attributes `rev` (revision hash) and `sha256` (revision content hash). **Important!** If you leave the old content hash, the old cached content for that hash might be used without attempting to download the new revision. If you're not expecting the build to break, the easiest would be to make a fork, push the change, and build straight from github. 
+To advance the package to a new Far2l revision, edit the `fetchFromGitHub` set attributes `rev` (revision hash) and `sha256` (revision content hash). **Important!** If you leave the old content hash, the old cached content for that hash might be used without attempting to download the new revision. If you're not expecting the build to break, the easiest would be to make a fork, push the change, and build straight from github.
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
@@ -244,17 +246,20 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * **QtCreator**: select "Open Project" and point QtCreator to the CMakeLists.txt in far2l root directory
  * **CLion**: the same as **QtCreator**.
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
+ * **Visual Studio Code** (required _CMake Tools extension_): open far2l root directory (by default building in subdirectory `_build`; you can change in `.vscode/settings.json`)
 
 ### Terminals and SSH clients
 Supporting extended far2l keyboard shortcuts and clipboard access
 
- * kovidgoyal's kitty (Linux, macOS, *BSD): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
- * Wez's Terminal Emulator (Linux, FreeBSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
- * iTerm2 (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
- * Windows Terminal (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support)
- * Fork of Putty (Windows SSH client) with added far2l TTY extensions support (fluent keypresses, clipboard sharing etc): https://github.com/ivanshatsky/putty4far2l/releases
- * Kitty (another fork of Putty) also have far2l TTY extensions support: https://github.com/cyd01/KiTTY
- * putty-nd, one more putty fork with extensions support: https://sourceforge.net/p/putty-nd/
+ * **kovidgoyal's kitty** (Linux, macOS, *BSD): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
+ * **Wez's Terminal Emulator** (Linux, FreeBSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
+ * **iTerm2** (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
+ * **Windows Terminal** (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
+
+ * _Original Putty_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
+   * **putty4far2l** (Windows ssh-client): https://github.com/ivanshatsky/putty4far2l/releases & https://github.com/unxed/putty4far2l (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
+   * **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
+   * **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
 
 ### Useful 3rd-party extras
 
@@ -262,7 +267,23 @@ Supporting extended far2l keyboard shortcuts and clipboard access
  * Turbo Vision, TUI framework supporting far2l terminal extensions: https://github.com/magiblot/tvision
  * turbo, text editor supporting far2l terminal extensions: https://github.com/magiblot/turbo
  * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
- * Community wiki & tips (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
+
+ * **Community wiki & tips** (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
+
+<a name="community_bins"></a>
+### Community packages & binaries
+
+ _They are mainteined by enthusiasts and may be not exact with master: sometimes has extra plugins, sometimes has tweak, etc._
+
+ * **Portable** (_with TTY X/Xi backend_) | **AppImage** (_with wx-GUI and some extra plugins_): https://github.com/spvkgn/far2l-portable/releases
+ * **Ubuntu** and **Mint** from PPA with fresh far2l: https://launchpad.net/~far2l-team/+archive/ubuntu/ppa
+ * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
+ * **OpenSUSE**, **Fedora**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/
+ * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
+ * **Termux**: https://github.com/spvkgn/far2l-termux
+ * **Flatpak**: https://github.com/spvkgn/far2l-flatpak (access only to part of real filesystem via sandbox)
+
+ See also in https://github.com/elfmz/far2l/issues/647
 
 ## Notes on porting and FAR Plugin API changes
  * See [HACKING.md](HACKING.md)

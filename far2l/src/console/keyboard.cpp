@@ -914,15 +914,14 @@ DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bo
 	if (EnableShowTime)
 		ShowTime(1);
 
-	bool SizeChanged = false;
 	/*& 17.05.2001 OT Изменился размер консоли, генерим клавишу*/
-	if (rec->EventType == WINDOW_BUFFER_SIZE_EVENT || SizeChanged) {
+	if (rec->EventType == WINDOW_BUFFER_SIZE_EVENT) {
 		int PScrX = ScrX;
 		int PScrY = ScrY;
 		//// // _SVS(SysLog(1,"GetInputRecord(WINDOW_BUFFER_SIZE_EVENT)"));
 		WINPORT(Sleep)(10);
 		GetVideoMode(CurSize);
-		if (PScrX + 1 == CurSize.X && PScrY + 1 == CurSize.Y) {
+		if (!rec->Event.WindowBufferSizeEvent.bDamaged && (PScrX + 1 == CurSize.X && PScrY + 1 == CurSize.Y)) {
 			return KEY_NONE;
 		} else {
 			PrevScrX = PScrX;

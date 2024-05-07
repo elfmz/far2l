@@ -20,6 +20,7 @@ src/UI/DialogUtils.cpp
 src/UI/Settings/ConfigurePlugin.cpp
 src/UI/Settings/SiteConnectionEditor.cpp
 src/UI/Settings/ExtraSiteSettings.cpp
+src/UI/Settings/ProxySettings.cpp
 src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
 src/UI/Settings/ConfigureProtocolFTP.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp

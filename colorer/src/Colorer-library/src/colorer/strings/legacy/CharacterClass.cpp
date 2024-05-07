@@ -214,17 +214,17 @@ void CharacterClass::clearChar(wchar c)
 
 void CharacterClass::addRange(wchar s, wchar e)
 {
-  for (int ti = (s >> 8) & 0xFF; ti <= ((e >> 8) & 0xFF); ti++) {
+  for (int ti = (int)(s >> 8) & 0xFF; ti <= (int)((e >> 8) & 0xFF); ti++) {
     if (!infoIndex[ti]) infoIndex[ti] = new BitArray();
-    infoIndex[ti]->addRange((ti == s >> 8) ? s & 0xFF : 0, (ti == e >> 8) ? e & 0xFF : 0xFF);
+    infoIndex[ti]->addRange((ti == (int)(s >> 8)) ? s & 0xFF : 0, (ti == (int)(e >> 8)) ? e & 0xFF : 0xFF);
   }
 }
 
 void CharacterClass::clearRange(wchar s, wchar e)
 {
-  for (int ti = (s >> 8) & 0xFF; ti <= ((e >> 8) & 0xFF); ti++) {
+  for (int ti = (s >> 8) & 0xFF; ti <= (int)((e >> 8) & 0xFF); ti++) {
     if (!infoIndex[ti]) infoIndex[ti] = new BitArray();
-    infoIndex[ti]->clearRange(ti == s >> 8 ? s & 0xFF : 0, ti == e >> 8 ? e & 0xFF : 0xFF);
+    infoIndex[ti]->clearRange(ti == (int)(s >> 8) ? s & 0xFF : 0, ti == (int)(e >> 8) ? e & 0xFF : 0xFF);
   }
 }
 

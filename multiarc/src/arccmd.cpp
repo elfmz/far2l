@@ -45,8 +45,9 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 			}
 		}
 	} else {
-		if ((CommandType == CMD_EXTRACT || CommandType == CMD_EXTRACTWITHOUTPATH)	// extraction from the archive,
-			&& (sudo_client_is_required_for(".", true) == 1)) {		// check if we have write access to dest dir
+		if((sudo_client_is_required_for(ArcName, false) == 1)							// do we have read access to the archive?
+			|| ((CommandType == CMD_EXTRACT || CommandType == CMD_EXTRACTWITHOUTPATH)	// extraction from the archive,
+				&& (sudo_client_is_required_for(".", true) == 1))) {		// check if we have write access to dest dir
 			NeedSudo = true;
 		}
 	}

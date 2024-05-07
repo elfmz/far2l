@@ -318,7 +318,6 @@ extern "C" {
 		return TRUE;
 	}
 
-
 	static PHANDLER_ROUTINE gHandlerRoutine = NULL;
 
 	WINPORT_DECL(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ))

@@ -1,7 +1,7 @@
 #ifndef _COLORER_TEXTVIEWER_H_
 #define _COLORER_TEXTVIEWER_H_
 
-#ifdef _WIN32
+#ifdef WIN32
 #include<windows.h>
 #endif
 
@@ -17,10 +17,9 @@ class TextConsoleViewer{
 private:
   TextLinesStore *textLinesStore;
   BaseEditor *baseEditor;
-  int encoding;
-  int background;
+  unsigned short background;
 public:
-  TextConsoleViewer(BaseEditor *be, TextLinesStore *ts, int background, int encoding);
+ TextConsoleViewer(BaseEditor* be, TextLinesStore* ts, unsigned short background);
   ~TextConsoleViewer();
 
   void view();

@@ -1,7 +1,7 @@
 #ifndef _COLORER_LINESOURCE_H_
 #define _COLORER_LINESOURCE_H_
 
-#include <colorer/Common.h>
+#include "colorer/Common.h"
 
 /**
  * Interface for editor line information requests.
@@ -19,14 +19,14 @@ public:
    * @param lno Line number, which will be used as
    * initial position of all subsequend parsing.
    */
-  virtual void startJob(size_t lno) {}
+  virtual void startJob(size_t /*lno*/) {}
 
   /**
    * Called by parser, when it has finished text parsing.
    * Could be used to cleanup objects, allocated by last
    * #getLine() call.
    */
-  virtual void endJob(size_t lno) {}
+  virtual void endJob(size_t /*lno*/) {}
 
   /**
    * Returns line of text with specified number.
@@ -38,10 +38,15 @@ public:
    * @param lno Requested line number
    * @return Unicode string, enwrapped into String class.
    */
-  virtual SString* getLine(size_t lno) = 0;
+  virtual UnicodeString* getLine(size_t /*lno*/) = 0;
+
+  virtual ~LineSource() = default;
+  LineSource(LineSource&&) = delete;
+  LineSource(const LineSource&) = delete;
+  LineSource& operator=(const LineSource&) = delete;
+  LineSource& operator=(LineSource&&) = delete;
 protected:
-  LineSource() {}
-  virtual ~LineSource() {}
+  LineSource() = default;
 };
 
 #endif

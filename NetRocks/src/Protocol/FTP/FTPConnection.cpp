@@ -395,8 +395,8 @@ FTPConnection::FTPConnection(bool implicit_encryption, const std::string &host, 
 		throw ProtocolError("Encrypted FTP requires OpenSSL support");
 	}
 
-	unsigned int banner_code = RecvResponceFromTransport(str);
-	FTPThrowIfBadResponce(str, banner_code, 200, 299);
+	unsigned int banner_code = RecvResponseFromTransport(str);
+	FTPThrowIfBadResponse(str, banner_code, 200, 299);
 #endif
 
 }

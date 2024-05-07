@@ -8,6 +8,10 @@
 	#include <posix/sys/select.h>
 #endif
 
+#if defined(__DragonFly__)
+#include <sys/select.h>
+#endif
+
 static std::string FormatIPCError(const char *msg, unsigned int code)
 {
 	std::string s = msg;

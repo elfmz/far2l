@@ -595,6 +595,7 @@ int FileList::ConvertName(FARString &strDest, const wchar_t *SrcName, int MaxLen
 		strDest.Copy(SrcName, NameLength);
 		if (DotPos > 0 && NameLength > 0 && SrcName[NameLength - 1] == L' ') {
 			strDest.Append(L'.');
+			DotPos--;
 		}
 		if (DotPos > NameLength) {
 			strDest.Append(L' ', DotPos - NameLength);

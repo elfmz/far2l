@@ -88,22 +88,56 @@ static bool LIBARCH_CommandReadWanteds(const char *cmd, LibArchOpenRead &arc,
 
 			case 't':
 			default:
-				extract_path = "/dev/null";
+				extract_path.clear();
 		}
 
-		archive_entry_set_pathname(entry, extract_path.c_str() );
-		int r = archive_read_extract(arc.Get(), entry, ARCHIVE_EXTRACT_TIME); // ARCHIVE_EXTRACT_PERM???
+		int r = ARCHIVE_OK;
+		if (extract_path.empty()) {
+			// don't use 'extraction' to /dev/null as libarchive 'recreates' it when running under root (#2182)
+			const __LA_INT64_T size = (archive_entry_filetype(entry) == AE_IFREG) ? archive_entry_size(entry) : 0;
+			for (__LA_INT64_T offset = 0, zeroreads = 0; offset < size;) {
+				const void *buf = nullptr;
+				size_t size_cur = 0;
+				__LA_INT64_T offset_cur = offset;
+				r = LibArchCall(archive_read_data_block, arc.Get(), &buf, &size_cur, &offset_cur);
+				if (r != ARCHIVE_OK  && r != ARCHIVE_WARN) {
+					break;
+				}
+				if (size_cur == 0) {
+					// sometimes libarchive returns zero length blocks, but next time it return non-zero
+					// not sure how to handle that right, so roughly giving it 1000 attempts..
+					if (zeroreads > 1000) {
+						r = ARCHIVE_RETRY;
+						break;
+					}
+					++zeroreads;
+				} else {
+					zeroreads = 0;
+				}
+				offset+= size_cur;
+			}
+
+		} else {
+			archive_entry_set_pathname(entry, extract_path.c_str() );
+			r = archive_read_extract(arc.Get(), entry, ARCHIVE_EXTRACT_TIME); // ARCHIVE_EXTRACT_PERM???
+		}
 		if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
 			fprintf(stderr, "Error %d (%s): '%s' -> '%s'\n",
 				r, archive_error_string(arc.Get()),
 				src_path.c_str(), extract_path.c_str());
 			out = false;
 
+		} else if (extract_path.empty()) {
+			fprintf(stderr, "Tested: '%s'\n", src_path.c_str());
+			if (wanteds.size() == 1 && wanteds[0] == parts && archive_entry_filetype(entry) != AE_IFDIR) {
+				break;
+			}
+
 		} else {
 			fprintf(stderr, "Extracted: '%s' -> '%s'\n",
 				src_path.c_str(), extract_path.c_str());
 
-		    struct stat s;
+			struct stat s;
 			if (wanteds.size() == 1 && wanteds[0] == parts
 			  && stat(extract_path.c_str(), &s) == 0 && !S_ISDIR(s.st_mode)) {
 				break; // nothing to search more here

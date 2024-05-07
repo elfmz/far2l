@@ -52,7 +52,7 @@ int PluginClass::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber,
 	GetCommandFormat(CMD_DELETE, Command, sizeof(Command));
 	GetCommandFormat(CMD_ALLFILESMASK, AllFilesMask, sizeof(AllFilesMask));
 	int IgnoreErrors = (CurArcInfo.Flags & AF_IGNOREERRORS);
-	ArcCommand ArcCmd(PanelItem, ItemsNumber, Command, ArcName, CurDir, "", AllFilesMask, IgnoreErrors, 0, 0,
+	ArcCommand ArcCmd(PanelItem, ItemsNumber, Command, ArcName, CurDir, "", AllFilesMask, IgnoreErrors, CMD_DELETE, 0,
 			CurDir, ItemsInfo.Codepage);
 	if (!IgnoreErrors && ArcCmd.GetExecCode() != 0)
 		return FALSE;
@@ -168,7 +168,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 			}
 
 	ArcCommand ArcCmd(PanelItem, ItemsNumber, Command, ArcName, CurDir, Password, AllFilesMask, IgnoreErrors,
-			CommandType == CMD_COMMENT || CommandType == CMD_COMMENTFILES ? 2 : 0, 0, CurDir,
+			CommandType, 0, CurDir,
 			ItemsInfo.Codepage);
 	return IgnoreErrors || ArcCmd.GetExecCode() == 0;
 }

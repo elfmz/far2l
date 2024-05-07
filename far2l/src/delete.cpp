@@ -723,8 +723,10 @@ static DeletionResult RemoveToRecycleBin(const wchar_t *Name)
 	std::string name_arg = FullName.GetMB();
 	std::string err_file_arg = err_file.GetMB();
 
+
 	unsigned int flags = EF_HIDEOUT;
-	if (sudo_client_is_required_for(name_arg.c_str(), true))
+	if (sudo_client_is_required_for(ExtractFilePath(name_arg).c_str(), true)
+		|| (apiPathIsDir(FullName) && sudo_client_is_required_for(name_arg.c_str(), true)))
 		flags|= EF_SUDO;
 
 	QuoteCmdArgIfNeed(name_arg);

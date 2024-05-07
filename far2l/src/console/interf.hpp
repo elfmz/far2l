@@ -68,7 +68,7 @@ void ChangeConsoleMode(int Mode);
 void FlushInputBuffer();
 void ToggleVideoMode();
 void GetVideoMode(COORD &Size);
-void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx = -1, int Sy = -1);
+void GenerateWINDOW_BUFFER_SIZE_EVENT(int Sx = -1, int Sy = -1, bool Damaged = false);
 void SaveConsoleWindowRect();
 void RestoreConsoleWindowRect();
 

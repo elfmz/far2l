@@ -1,138 +1,188 @@
-#include <colorer/parsers/FileTypeImpl.h>
-#include <colorer/unicode/UnicodeTools.h>
+#include "colorer/parsers/FileTypeImpl.h"
 
-FileTypeImpl::FileTypeImpl(HRCParserImpl* hrcParser): name(nullptr), group(nullptr), description(nullptr)
+FileType::Impl::Impl(UnicodeString name, UnicodeString group, UnicodeString description)
+    : name(std::move(name)), group(std::move(group)), description(std::move(description))
 {
-  this->hrcParser = hrcParser;
-  protoLoaded = type_loaded = loadDone = load_broken = input_source_loading = false;
-  isPackage = false;
-  baseScheme = nullptr;
-  inputSource = nullptr;
 }
 
-FileTypeImpl::~FileTypeImpl(){
-  chooserVector.clear();
-  paramsHash.clear();
-
-  importVector.clear();
+const UnicodeString& FileType::Impl::getName() const
+{
+  return name;
 }
 
-Scheme* FileTypeImpl::getBaseScheme() {
-  if (!type_loaded) hrcParser->loadFileType(this);
+const UnicodeString& FileType::Impl::getGroup() const
+{
+  return group;
+}
+
+const UnicodeString& FileType::Impl::getDescription() const
+{
+  return description;
+}
+
+void FileType::Impl::setName(const UnicodeString* param_name)
+{
+  name = *param_name;
+}
+
+void FileType::Impl::setGroup(const UnicodeString* group_name)
+{
+  group = *group_name;
+}
+
+void FileType::Impl::setDescription(const UnicodeString* description_)
+{
+  description = *description_;
+}
+
+Scheme* FileType::Impl::getBaseScheme() const
+{
   return baseScheme;
 }
 
-std::vector<SString> FileTypeImpl::enumParams() const {
-  std::vector<SString> r;
+std::vector<UnicodeString> FileType::Impl::enumParams() const
+{
+  std::vector<UnicodeString> r;
   r.reserve(paramsHash.size());
-  for (const auto & p : paramsHash)
-  {
-	  r.push_back(p.first);
+  for (const auto& p : paramsHash) {
+    r.push_back(p.first);
   }
   return r;
 }
 
-const String* FileTypeImpl::getParamDescription(const String &name) const{
-  auto tp = paramsHash.find(name);
-  if (tp != paramsHash.end()) return tp->second->description.get();
-  return nullptr;
-}
-
-const String *FileTypeImpl::getParamValue(const String &name) const{
-  auto tp = paramsHash.find(name);
-  if (tp != paramsHash.end()){
-    if(tp->second->user_value) return tp->second->user_value.get();
-    return tp->second->default_value.get();
+const UnicodeString* FileType::Impl::getParamDescription(const UnicodeString& param_name) const
+{
+  auto tp = paramsHash.find(param_name);
+  if (tp != paramsHash.end() && tp->second.description.has_value()) {
+    return &tp->second.description.value();
   }
   return nullptr;
 }
 
-int FileTypeImpl::getParamValueInt(const String &name, int def) const{
+const UnicodeString* FileType::Impl::getParamValue(const UnicodeString& param_name) const
+{
+  auto tp = paramsHash.find(param_name);
+  if (tp != paramsHash.end()) {
+    if (tp->second.user_value && tp->second.user_value.has_value()) {
+      return &tp->second.user_value.value();
+    }
+    return &tp->second.value;
+  }
+  return nullptr;
+}
+
+int FileType::Impl::getParamValueInt(const UnicodeString& param_name, int def) const
+{
   int val = def;
-  UnicodeTools::getNumber(getParamValue(name), &val);
+  auto param_value = getParamValue(param_name);
+  if (param_value && param_value->length() > 0) {
+    auto param_str = UStr::to_stdstr(param_value);
+    try {
+      val = std::stoi(param_str, nullptr);
+    } catch (std::exception&) {
+      logger->error("Error parse param {0} with value {1} to integer number", param_name,
+                    param_str);
+    }
+  }
   return val;
 }
 
-const String* FileTypeImpl::getParamDefaultValue(const String &name) const{
-  auto tp = paramsHash.find(name);
-  if (tp !=paramsHash.end()) {
-    return tp->second->default_value.get();
+const UnicodeString* FileType::Impl::getParamDefaultValue(const UnicodeString& param_name) const
+{
+  auto tp = paramsHash.find(param_name);
+  if (tp != paramsHash.end()) {
+    return &tp->second.value;
   }
   return nullptr;
 }
 
-const String* FileTypeImpl::getParamUserValue(const String &name) const{
-  auto tp = paramsHash.find(name);
-  if (tp !=paramsHash.end()) {
-    return tp->second->user_value.get();
+const UnicodeString* FileType::Impl::getParamUserValue(const UnicodeString& param_name) const
+{
+  auto tp = paramsHash.find(param_name);
+  if (tp != paramsHash.end() && tp->second.user_value.has_value()) {
+    return &tp->second.user_value.value();
   }
   return nullptr;
 }
 
-TypeParameter* FileTypeImpl::addParam(const String *name){
-  const auto &ir = paramsHash.emplace(name, std::unique_ptr<TypeParameter>());
-  if (ir.second) {
-    ir.first->second.reset(new TypeParameter);
-    ir.first->second->name.reset(new SString(name));
-  }
-  return ir.first->second.get();
+TypeParameter& FileType::Impl::addParam(const UnicodeString& param_name, const UnicodeString& value)
+{
+  auto [it, status] = paramsHash.emplace(param_name, TypeParameter(param_name, value));
+  return it->second;
 }
 
-void FileTypeImpl::setParamValue(const String &name, const String *value){
-  auto tp = paramsHash.find(name);
+void FileType::Impl::setParamValue(const UnicodeString& param_name, const UnicodeString* value)
+{
+  auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
     if (value) {
-      tp->second->user_value.reset(new SString(value));
+      tp->second.user_value.emplace(*value);
     }
-    else{
-      tp->second->user_value.reset();
+    else {
+      tp->second.user_value.reset();
     }
   }
-}
-
-void FileTypeImpl::setParamDefaultValue(const String &name, const String *value){
-  auto tp = paramsHash.find(name);
-  if (tp != paramsHash.end()) {
-    tp->second->default_value.reset(new SString(value));
+  else {
+    throw FileTypeException("Don`t set value " + *value + " for parameter \"" + param_name +
+                            "\". Parameter not exists.");
   }
 }
 
-void FileTypeImpl::setParamUserValue(const String &name, const String *value){
-  setParamValue(name,value);
-}
-
-void FileTypeImpl::setParamDescription(const String &name, const String *value){
-  auto tp = paramsHash.find(name);
+void FileType::Impl::setParamDefaultValue(const UnicodeString& param_name,
+                                          const UnicodeString* value)
+{
+  auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
-    tp->second->description.reset(new SString(value));
+    if (value) {
+      tp->second.value = *value;
+    }
+    else {
+      throw FileTypeException("Don`t set null value for parameter \"" + param_name + "\"");
+    }
+  }
+  else {
+    throw FileTypeException("Don`t set value " + *value + " for parameter \"" + param_name +
+                            "\". Parameter not exists.");
   }
 }
 
-void FileTypeImpl::removeParamValue(const String &name){
-  paramsHash.erase(name);
+void FileType::Impl::setParamUserValue(const UnicodeString& param_name, const UnicodeString* value)
+{
+  setParamValue(param_name, value);
 }
 
-size_t FileTypeImpl::getParamCount() const{
+void FileType::Impl::setParamDescription(const UnicodeString& param_name,
+                                         const UnicodeString* t_description)
+{
+  auto tp = paramsHash.find(param_name);
+  if (tp != paramsHash.end()) {
+    tp->second.description.emplace(*t_description);
+  }
+  else {
+    throw FileTypeException("Don`t set value " + *t_description +
+                            " for description of parameter \"" + param_name +
+                            "\". Parameter not exists.");
+  }
+}
+
+size_t FileType::Impl::getParamCount() const
+{
   return paramsHash.size();
 }
 
-size_t FileTypeImpl::getParamUserValueCount() const{
-  size_t count=0;
-  for (const auto & it : paramsHash){
-    if (it.second->user_value) count++;
-  }
-  return count;
-}
-
-double FileTypeImpl::getPriority(const String *fileName, const String *fileContent) const{
-  SMatches match;
-  double cur_prior = 0;
-  for(const auto &ftc : chooserVector){
-    if (fileName != nullptr && ftc->isFileName() && ftc->getRE()->parse(fileName, &match))
-      cur_prior += ftc->getPriority();
-    if (fileContent != nullptr && ftc->isFileContent() && ftc->getRE()->parse(fileContent, &match))
-      cur_prior += ftc->getPriority();
+double FileType::Impl::getPriority(const UnicodeString* fileName,
+                                   const UnicodeString* fileContent) const
+{
+  SMatches match {};
+  double cur_prior {0};
+  for (auto const& ftc : chooserVector) {
+    if (ftc.isFileName() && fileName != nullptr && ftc.getRE()->parse(fileName, &match)) {
+      cur_prior += ftc.getPriority();
+    }
+    else if (ftc.isFileContent() && fileContent != nullptr &&
+             ftc.getRE()->parse(fileContent, &match)) {
+      cur_prior += ftc.getPriority();
+    }
   }
   return cur_prior;
 }
-

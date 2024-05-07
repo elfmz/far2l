@@ -116,10 +116,8 @@ void ControlObject::Init()
 	Cp()->LeftPanel->Update(0);
 	Cp()->RightPanel->Update(0);
 
-	if (Opt.AutoSaveSetup) {
-		Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
-		Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
-	}
+	Cp()->LeftPanel->GoToFile(Opt.strLeftCurFile);
+	Cp()->RightPanel->GoToFile(Opt.strRightCurFile);
 
 	FARString strStartCurDir;
 	Cp()->ActivePanel->GetCurDir(strStartCurDir);

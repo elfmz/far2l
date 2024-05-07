@@ -1,14 +1,14 @@
-#ifndef _COLORER_HRCPARSERPELPERS_H_
-#define _COLORER_HRCPARSERPELPERS_H_
+#ifndef COLORER_HRCPARSERPELPERS_H
+#define COLORER_HRCPARSERPELPERS_H
 
+#include <memory>
 #include <vector>
-#include <colorer/cregexp/cregexp.h>
-#include <colorer/Scheme.h>
-#include <colorer/parsers/SchemeNode.h>
+#include "colorer/Scheme.h"
+#include "colorer/TextParser.h"
+#include "colorer/cregexp/cregexp.h"
+#include "colorer/parsers/SchemeNode.h"
 
-
-class FileTypeImpl;
-
+class FileType;
 
 /** Scheme storage implementation.
     Manages the vector of SchemeNode's.
@@ -16,39 +16,29 @@ class FileTypeImpl;
 */
 class SchemeImpl : public Scheme
 {
-  friend class HRCParserImpl;
-  friend class TextParserImpl;
-public:
-  const String* getName() const
+  friend class HrcLibrary;
+  friend class TextParser;
+
+ public:
+  [[nodiscard]] const UnicodeString* getName() const override
   {
     return schemeName.get();
   }
 
-  FileType* getFileType() const
+  [[nodiscard]] FileType* getFileType() const override
   {
-    return (FileType*)fileType;
+    return fileType;
   }
 
+ protected:
+  uUnicodeString schemeName;
+  std::vector<std::unique_ptr<SchemeNode>> nodes;
+  FileType* fileType = nullptr;
 
-protected:
-  UString schemeName;
-  std::vector<SchemeNode*> nodes;
-  FileTypeImpl* fileType;
-
-  SchemeImpl(const String* sn)
+  explicit SchemeImpl(const UnicodeString* sn)
   {
-    schemeName.reset(new SString(sn));
-    fileType = nullptr;
-  }
-
-  ~SchemeImpl()
-  {
-    for (auto it : nodes) {
-      delete it;
-    }
+    schemeName = std::make_unique<UnicodeString>(*sn);
   }
 };
 
-#endif
-
-
+#endif  // COLORER_HRCPARSERPELPERS_H

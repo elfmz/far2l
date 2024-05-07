@@ -1,17 +1,12 @@
-#ifndef _COLORER_BASE_ENTITY_RESOLVER_H_
-#define _COLORER_BASE_ENTITY_RESOLVER_H_
+#ifndef COLORER_BASE_ENTITY_RESOLVER_H
+#define COLORER_BASE_ENTITY_RESOLVER_H
 
 #include <xercesc/util/XMLEntityResolver.hpp>
-#include <colorer/xml/XmlInputSource.h>
 
 class BaseEntityResolver : public xercesc::XMLEntityResolver
 {
-public:
-    BaseEntityResolver(){};
-    ~BaseEntityResolver() {};
-    xercesc::InputSource* resolveEntity(xercesc::XMLResourceIdentifier* resourceIdentifier);
+ public:
+  xercesc::InputSource* resolveEntity(xercesc::XMLResourceIdentifier* resourceIdentifier) override;
 };
 
-#endif
-
-
+#endif  // COLORER_BASE_ENTITY_RESOLVER_H

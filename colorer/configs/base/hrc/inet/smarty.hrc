@@ -280,11 +280,11 @@
 		</scheme>
 
 		<scheme name="Insertion">
-			<inherit scheme="smartyEscape" />
+			<!--<inherit scheme="smartyEscape" />-->
 			<inherit scheme="smartyComment" />
 			<inherit scheme="smartyPhpInsertion"/>
 
-			<block start="/(\{)/" end="/(\})/" 
+			<block start="/(\{)\M[^\s]/" end="/(\})/" 
 				priority="low" content-priority="low"
 				scheme="smartyScript" region="Insertion" 
 				region00="OpenTag" region10="OpenTag" 

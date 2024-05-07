@@ -236,7 +236,7 @@ for clipboard need turn on OSC 52)
         - #settings/config.ini# - general config
         - #settings/colors.ini# - ~files highlighting and sort groups~@Highlight@
         - #settings/key_macros.ini# - ~keyboard macro commands~@KeyMacro@
-        - #settings/user_menu.ini# - ~user menu~@UserMenu@ (the format is different from windows versions FarMenu.ini)
+        - #settings/user_menu.ini# - main ~user menu~@UserMenu@ (the format is different from local user FarMenu.ini)
         - #settings/associations.ini# - ~file associations~@FileAssoc@
         - #settings/bookmarks.ini# - ~bookmarks~@Bookmarks@ to fast access to frequently used directories by RCtrl-0...9 or Ctrl-Alt-0...9
         - #favorites# - additional items in ~location menu~@DriveDlg@ by Alt-F1/F2
@@ -2223,7 +2223,7 @@ the main menu and the user menu by pressing #Shift-F2#. Also you may call the
 user menu of the parent folder by pressing #BS#.
 
     You may add command separators to the user menu. To do this, you should add
-a new menu command and define "#--#" as "hot key". To delete a menu separator,you
+a new menu command and define "#--#" as "hot key". To delete a menu separator, you
 must switch to file mode with #Ctrl-F4# key.
 
     To execute a user menu command, select it with cursor keys and press #Enter#.
@@ -2244,10 +2244,11 @@ sequence to execute when this item will be selected.
     When you edit or create a submenu, you should enter the hot key and the
 item title only.
 
-    Local user menus are stored in the text files #FarMenu.Ini#. The main menu,
-by default, is stored in the registry, but it is possible to store it in a
-file. If you create a local menu in the FAR2L folder, it will be used instead of
-the main menu saved in the registry.
+    Local user menus are stored in the text files #FarMenu.Ini#.
+    The main menu is stored in profile in #~~/.config/far2l/settings/user_menu.ini#
+(the format is different from FarMenu.ini).
+If you create a local menu in the FAR2L folder, it will be used instead of
+the main menu saved in the profile.
 
     To close the menu even if submenus are open use #Shift-F10#.
 

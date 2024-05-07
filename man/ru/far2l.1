@@ -1,13 +1,13 @@
 .\" -*- mode: troff; coding: UTF-8 -*-
 .\"TOPICS "Topics:"
-.TH FAR2L 1 "25-12-22" "FAR2L Version 2.4.1" "Linux fork of FAR Manager v2"
+.TH FAR2L 1 "28-04-24" "FAR2L Version 2.6.1" "Linux fork of FAR Manager v2"
 .\"SKIP_SECTION"
 .SH "НАИМЕНОВАНИЕ"
  far2l \- Файловый менеджер, работающая в текстовом режиме программа, со встроенным терминалом и другими полезными функциями.
 .\"SKIP_SECTION"
 .SH "СИНТАКСИС"
 .B far2l
-[\fI\,ОПЦИИ\/\fR] [\fB\-cd \fI\,АПУТЬ\/\fR \fB \-cd \fI\,ППУТЬ\/\fR]]
+[\fI\,ОПЦИИ\/\fR] [\fB\-cd \fI\,АПУТЬ\/\fR \fB\-cd \fI\,ППУТЬ\/\fR]]
 .\"NODE "DESCRIPTION"
 .SH "ОПИСАНИЕ"
 .B far2l
@@ -51,20 +51,28 @@
 \fB\-v\fR \- \fI\,КОМАНДА\/\fR
 Выполнить указанную \fI\,КОМАНДУ\/\fR и открыть просмотрщик для её вывода.
 .TP
-\fB\-e\fR[\fI\,СТРОКА\/\fR[:\fI\,ПОЗИЦИЯ\/\fR]] \fI\,ФАЙЛ\/\fR
-Указанный \fI\,ФАЙЛ\/\fR открыть в редакторе. Дополнительно можно указать \fI\,СТРОКУ\/\fR и \fI\,ПОЗИЦИЮ\/\fR в строке, устанавливаемые после запуска редактора.
+\fB\-e\fR[\fI\,СТРОКА\/\fR[:\fI\,ПОЗИЦИЯ\/\fR]] [\fI\,ФАЙЛ\/\fR]
+Указанный \fI\,ФАЙЛ\/\fR (или новый пустой файл) открыть в редакторе.
+Дополнительно можно указать \fI\,СТРОКУ\/\fR и \fI\,ПОЗИЦИЮ\/\fR в строке, устанавливаемые после запуска редактора.
 .TP
-\fB\-e\fR[\fI\,СТРОКА\/\fR[:\fI\,ПОЗИЦИЯ\/\fR]] \fI\,КОМАНДА\/\fR
-Выполнить указанную \fI\,КОМАНДУ\/\fR и открыть просмотрщик для её вывода. Дополнительно можно указать \fI\,СТРОКУ\/\fR и \fI\,ПОЗИЦИЮ\/\fR в строке, устанавливаемые после запуска редактора.
+\fB\-e\fR[\fI\,СТРОКА\/\fR[:\fI\,ПОЗИЦИЯ\/\fR]] \- \fI\,КОМАНДА\/\fR
+Выполнить указанную \fI\,КОМАНДУ\/\fR и открыть просмотрщик для её вывода.
+Дополнительно можно указать \fI\,СТРОКУ\/\fR и \fI\,ПОЗИЦИЮ\/\fR в строке, устанавливаемые после запуска редактора.
+.TP
+\fB\-set:\fI\,PARAMETER\/\fR=\fI\,VALUE\/\fR
+Изменение значения конфигурационного параметра. См. far:config
+.EX
+Пример: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false
+.EE
 .\"NODE "BACKEND OPTIONS"
 .\"DONT_SPLIT"
-.SH "СПЕЦИФИЧНЫЕ ПАРАМЕТРЫ ТЕРМИНАЛА"
+.SH "ПАРАМЕТРЫ РЕЖИМОВ ИНТЕРФЕЙСА (BACKEND-SPECIFIC OPTIONS)"
 .TP
 \fB\-\-tty\fP
 Запускать far2l сразу в режиме TTY вместо автоматического определения возможности работы в режиме GUI. 
 .TP
 \fB\-\-notty\fP
-Не использовать терминальный режиме при невозможности использовать GUI режим.
+Не использовать терминальный режим при невозможности использовать GUI режим.
 .TP
 \fB\-\-norgb\fP
 Не использовать полноцветную (24-битную) палитру цветов
@@ -79,11 +87,31 @@
 \fB\-\-immortal\fP
 Перейти в фоновый режим при получении сигнала SIGHUP (по умолчанию, если не в Linux TTY).
 .TP
+\fB\-\-x11\fP
+force GUI backend to run on X11
+.TP
+\fB\-\-wayland\fP
+force GUI backend to run on Wayland
+.TP
 \fB\-\-ee\fP, \fB\-\-ee\fP=\fI\,N\/\fR
 Срок действия ESC \fI\,N\/\fR мсек (100 по умолчанию), чтобы избежать необходимости двойного нажатия ESC (действительно только в режиме TTY без расширений FAR2L).
 .TP
 \fB\-\-primary-selection\fP
 Использовать PRIMARY selection вместо CLIPBOARD X11 selection. Этот аргумент применим только для far2l, который работает в режиме WX.
+.TP
+\fB\-\-maximize\fP
+force maximize window upon launch (only for GUI backend)
+.TP
+\fB\-\-nomaximize\fP
+dont maximize window upon launch even if its has saved maximized state (only for GUI backend)
+.TP
+\fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
+use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout
+.P
+Параметры режимой интерфейса также могут быть установлены через переменную окружения \fB\,FAR2L_ARGS\/\fR
+.EX
+(например: #export FAR2L_ARGS="--tty --nodetect --ee"# и затем просто far2l для принудительного запуска только режима TTY).
+.EE
 .\"NODE "FULL HELP"
 .SH "ПОЛНАЯ СПРАВКА"
 Исторически сложилось, что far2l имеет собственную контекстную справочную систему, доступ к которой можно получить по нажатию клавиши F1 в соответствующем разделе интерфейса.

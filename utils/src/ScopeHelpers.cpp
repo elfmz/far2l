@@ -25,6 +25,23 @@ FDScope::~FDScope()
 	CheckedClose();
 }
 
+//////////
+
+UnlinkScope::UnlinkScope()
+{
+}
+
+UnlinkScope::UnlinkScope(const std::string &path)
+	: _path(path)
+{
+}
+
+UnlinkScope &UnlinkScope::operator = (const std::string &path)
+{
+	_path = path;
+	return *this;
+}
+
 UnlinkScope::~UnlinkScope()
 {
 	if (!_path.empty()) {

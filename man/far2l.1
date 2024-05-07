@@ -1,13 +1,13 @@
 .\" -*- mode: troff; coding: UTF-8 -*-
 .\"TOPICS "Topics:"
-.TH FAR2L 1 "25-12-22" "FAR2L Version 2.4.1" "Linux fork of FAR Manager v2"
+.TH FAR2L 1 "28-04-24" "FAR2L Version 2.6.1" "Linux fork of FAR Manager v2"
 .\"SKIP_SECTION"
 .SH "NAME"
 far2l \- Oldschool file manager, with built\-in terminal and other usefulness\'es.
 .\"SKIP_SECTION"
 .SH "SYNOPSIS"
 .B far2l
-[\fI\,OPTION\/\fR] [\fB\-cd \fI\,APATH\/\fR \fB \-cd \fI\,PPATH\/\fR]]
+[\fI\,OPTION\/\fR] [\fB\-cd \fI\,APATH\/\fR \fB\-cd \fI\,PPATH\/\fR]]
 .\"NODE "DESCRIPTION"
 .SH "DESCRIPTION"
 .B far2l
@@ -46,7 +46,7 @@ Do not load macros.
 Do not execute auto run macros.
 .TP
 \fB\-u\fR \fI\,IDENTITY\/\fR OR \fI\,/PATH/NAME\/\fR
-      Allows to specify separate settings \fI\,IDENTITY\/\fR or FS location.
+Allows to specify separate settings \fI\,IDENTITY\/\fR or FS location.
 .TP
 \fB\-v\fR \fI\,FILENAME\/\fR
 View the specified file.
@@ -54,11 +54,17 @@ View the specified file.
 \fB\-v\fR \- \fI\,COMMAND LINE\/\fR
  Executes given \fI\,COMMAND LINE\/\fR and opens viewer with its output.
 .TP
-\fB\-e\fR[\fI\,LINE\/\fR[:\fI\,POS\/\fR]] \fI\,FILENAME\/\fR
- Edit the specified file with optional cursor position specification.
+\fB\-e\fR[\fI\,LINE\/\fR[:\fI\,POS\/\fR]] [\fI\,FILENAME\/\fR]
+ Edit the specified file with optional cursor position specification or empty new file.
 .TP
-\fB\-e\fR[\fI\,LINE\/\fR[:\fI\,POS\/\fR]] \fI\,COMMAND LINE\/\fR
+\fB\-e\fR[\fI\,LINE\/\fR[:\fI\,POS\/\fR]] \- \fI\,COMMAND LINE\/\fR
 Executes given command line and opens editor with its output.
+.TP
+\fB\-set:\fI\,PARAMETER\/\fR=\fI\,VALUE\/\fR
+Override the configuration parameter, see far:config for details.
+.EX
+Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false
+.EE
 .\"NODE "BACKEND OPTIONS"
 .\"DONT_SPLIT"
 .SH "BACKEND-SPECIFIC OPTIONS"
@@ -81,11 +87,31 @@ terminate instead of going to background on getting SIGHUP (default if in Linux 
 \fB\-\-immortal\fP
 go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)
 .TP
+\fB\-\-x11\fP
+force GUI backend to run on X11
+.TP
+\fB\-\-wayland\fP
+force GUI backend to run on Wayland
+.TP
 \fB\-\-ee\fP, \fB\-\-ee\fP=\fI\,N\/\fR
 ESC expiration in \fI\,N\/\fR msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)
 .TP
 \fB\-\-primary-selection\fP
 use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)
+.TP
+\fB\-\-maximize\fP
+force maximize window upon launch (only for GUI backend)
+.TP
+\fB\-\-nomaximize\fP
+dont maximize window upon launch even if its has saved maximized state (only for GUI backend)
+.TP
+\fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
+use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout
+.P
+Backend-specific options also can be set via the \fB\,FAR2L_ARGS\/\fR environment variable
+.EX
+(for example: export FAR2L_ARGS="--tty --nodetect --ee" and then simple far2l to force start only TTY backend).
+.EE
 .\"NODE "FULL HELP"
 .SH "FULL HELP"
 far2l historically has its own contextual help system that can be found via pressing F1 key wherever in its TUI.

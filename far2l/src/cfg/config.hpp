@@ -616,6 +616,11 @@ struct Options
 	bool IsUserAdmin;
 	FARString strWindowTitle;
 
+	int DateFormat;
+	FARString strDateSeparator;
+	FARString strTimeSeparator;
+	FARString strDecimalSeparator;
+
 	bool IsFirstStart;
 
 	std::vector<std::wstring> CmdLineStrings;

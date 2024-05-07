@@ -57,9 +57,11 @@ DWORD ConvertYearToFull(DWORD ShortYear)
 
 int GetDateFormat()
 {
-	int Result = 1;
+	//int Result = 1;
 	//	GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_IDATE|LOCALE_RETURN_NUMBER,reinterpret_cast<LPWSTR>(&Result),sizeof(Result)/sizeof(WCHAR));
-	return Result;
+	//return Result;
+	int Result = Opt.DateFormat;
+	return (Result >= 0 && Result <=2) ? Result : GetDateFormatDefault();
 }
 
 wchar_t GetDateSeparator()
@@ -67,7 +69,8 @@ wchar_t GetDateSeparator()
 	//	wchar_t Info[100];
 	//	GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SDATE,Info,ARRAYSIZE(Info));
 	//	return *Info;
-	return L'/';
+	//return L'/';
+	return Opt.strDateSeparator.IsEmpty() ? GetDateSeparatorDefault() : Opt.strDateSeparator.At(0);
 }
 
 wchar_t GetTimeSeparator()
@@ -75,7 +78,8 @@ wchar_t GetTimeSeparator()
 	//	wchar_t Info[100];
 	//	GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_STIME,Info,ARRAYSIZE(Info));
 	//	return *Info;
-	return L':';
+	//return L':';
+	return Opt.strTimeSeparator.IsEmpty() ? GetTimeSeparatorDefault() : Opt.strTimeSeparator.At(0);
 }
 
 void PrepareStrFTime()
@@ -636,12 +640,19 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 	}
 }
 
+static bool Init = false;
+
+void ConvertDate_ResetInit()
+{
+	Init = false;
+}
+
 void ConvertDate(const FILETIME &ft, FARString &strDateText, FARString &strTimeText, int TimeLength,
 		int Brief, int TextMonth, int FullYear, int DynInit)
 {
 	static int WDateFormat;
 	static wchar_t WDateSeparator, WTimeSeparator, WDecimalSeparator;
-	static bool Init = false;
+	//static bool Init = false;
 	static SYSTEMTIME lt;
 	int DateFormat;
 	wchar_t DateSeparator, TimeSeparator, DecimalSeparator;

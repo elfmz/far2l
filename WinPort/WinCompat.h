@@ -420,6 +420,7 @@ typedef struct _CHAR_INFO {
 
 typedef struct _WINDOW_BUFFER_SIZE_RECORD {
     COORD dwSize;
+    BOOL bDamaged; // TRUE if screen area was damaged even in frames not affected by actual size change
 } WINDOW_BUFFER_SIZE_RECORD, *PWINDOW_BUFFER_SIZE_RECORD;
 
 typedef struct _MENU_EVENT_RECORD {

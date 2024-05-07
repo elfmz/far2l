@@ -1,33 +1,23 @@
-#ifndef _COLORER_COMMON_H_
-#define _COLORER_COMMON_H_
+#ifndef COLORER_COMMON_H
+#define COLORER_COMMON_H
 
-/// system dependent byte
-typedef unsigned char byte;
+#include "colorer/common/Features.h"
 
-#include <memory>
-#ifdef USESPDLOG
-#include <spdlog/spdlog.h>
-#endif
-#include <colorer/common/Features.h>
-#include <colorer/unicode/String.h>
-#include <colorer/unicode/SString.h>
-#include <colorer/unicode/CString.h>
-
-typedef std::unique_ptr<String> UString;
-typedef std::unique_ptr<SString> USString;
-
-#ifdef USESPDLOG
-extern std::shared_ptr<spdlog::logger> logger;
+#ifdef COLORER_FEATURE_ICU
+#include "colorer/strings/icu/strings.h"
 #else
-class DummyLogger {
-public:
-  template<typename... Args> void debug(Args... args) {}
-  template<typename... Args> void error(Args... args) {}
-  template<typename... Args> void warn (Args... args) {}
-  template<typename... Args> void trace(Args... args) {}
-};
-extern std::shared_ptr<DummyLogger> logger;
+#include "colorer/strings/legacy/strings.h"
 #endif
 
+/*
+ Logging
+*/
+#include "colorer/common/Logger.h"
+
+#ifdef COLORER_USE_DEEPTRACE
+#define CTRACE(info) info
+#else
+#define CTRACE(info)
 #endif
 
+#endif  // COLORER_COMMON_H

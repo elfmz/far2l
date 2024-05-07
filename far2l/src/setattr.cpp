@@ -60,6 +60,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "execute.hpp"
 #include "FSFileFlags.h"
 
+#include "interf.hpp" // for BoxSymbols
+
 struct FSFileFlagsSafe : FSFileFlags
 {
 	FSFileFlagsSafe(const FARString &path, DWORD attrs)
@@ -75,32 +77,42 @@ enum SETATTRDLG
 	SA_SEPARATOR1,
 	SA_TXTBTN_INFO,
 	SA_EDIT_INFO,
+	SA_SEPARATOR_OWNERSHIP,
 	SA_TEXT_OWNER,
 	SA_COMBO_OWNER,
 	SA_TEXT_GROUP,
 	SA_COMBO_GROUP,
 
-	SA_SEPARATOR2,
+	SA_SEPARATOR_MODE,
+	SA_SEPARATOR_MODE_V1,
+	SA_SEPARATOR_MODE_V2,
+	SA_TEXT_MODE_USER,
+	SA_CHECKBOX_USER_READ,
+	SA_CHECKBOX_USER_WRITE,
+	SA_CHECKBOX_USER_EXECUTE,
+	SA_TEXT_MODE_GROUP,
+	SA_CHECKBOX_GROUP_READ,
+	SA_CHECKBOX_GROUP_WRITE,
+	SA_CHECKBOX_GROUP_EXECUTE,
+	SA_TEXT_MODE_OTHER,
+	SA_CHECKBOX_OTHER_READ,
+	SA_CHECKBOX_OTHER_WRITE,
+	SA_CHECKBOX_OTHER_EXECUTE,
+	SA_CHECKBOX_SUID,
+	SA_CHECKBOX_SGID,
+	SA_CHECKBOX_STICKY,
+
+	SA_TEXT_MODE_OCTAL,
+	SA_FIXEDIT_MODE_OCTAL,
+	SA_BUTTON_MODE_ORIGINAL,
+
+	SA_SEPARATOR_ATTRIBUTES,
 	SA_CHECKBOX_IMMUTABLE,
 	SA_CHECKBOX_APPEND,
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	SA_CHECKBOX_HIDDEN,
 #endif
-	SA_CHECKBOX_SUID,
-	SA_CHECKBOX_SGID,
-	SA_CHECKBOX_STICKY,
-	SA_TEXT_MODE_USER,
-	SA_TEXT_MODE_GROUP,
-	SA_TEXT_MODE_OTHER,
-	SA_CHECKBOX_USER_READ,
-	SA_CHECKBOX_USER_WRITE,
-	SA_CHECKBOX_USER_EXECUTE,
-	SA_CHECKBOX_GROUP_READ,
-	SA_CHECKBOX_GROUP_WRITE,
-	SA_CHECKBOX_GROUP_EXECUTE,
-	SA_CHECKBOX_OTHER_READ,
-	SA_CHECKBOX_OTHER_WRITE,
-	SA_CHECKBOX_OTHER_EXECUTE,
+
 	SA_SEPARATOR3,
 	SA_TEXT_TITLEDATE,
 	SA_TEXT_LAST_ACCESS,
@@ -145,13 +157,16 @@ static const struct MODEPAIR
 	(S_IXOTH | S_IWOTH | S_IROTH | S_IXGRP | S_IWGRP | S_IRGRP | S_IXUSR | S_IWUSR | S_IRUSR | S_ISUID         \
 			| S_ISGID | S_ISVTX)
 
-static const int PreserveOriginalIDs[] = {SA_CHECKBOX_IMMUTABLE, SA_CHECKBOX_APPEND,
+static const int PreserveOriginalIDs[] = {
+		SA_CHECKBOX_USER_READ, SA_CHECKBOX_USER_WRITE, SA_CHECKBOX_USER_EXECUTE,
+		SA_CHECKBOX_GROUP_READ, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_EXECUTE,
+		SA_CHECKBOX_OTHER_READ, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_EXECUTE,
+		SA_CHECKBOX_SUID, SA_CHECKBOX_SGID, SA_CHECKBOX_STICKY,
+		SA_CHECKBOX_IMMUTABLE, SA_CHECKBOX_APPEND,
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 		SA_CHECKBOX_HIDDEN,
 #endif
-		SA_CHECKBOX_SUID, SA_CHECKBOX_SGID, SA_CHECKBOX_STICKY, SA_CHECKBOX_USER_READ, SA_CHECKBOX_USER_WRITE,
-		SA_CHECKBOX_USER_EXECUTE, SA_CHECKBOX_GROUP_READ, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_EXECUTE,
-		SA_CHECKBOX_OTHER_READ, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_EXECUTE};
+};
 
 enum DIALOGMODE
 {
@@ -170,9 +185,11 @@ struct SetAttrDlgParam
 	FARString strGroup;
 	bool OwnerChanged = false, GroupChanged = false;
 	// значения CheckBox`ов на момент старта диалога
-	int OriginalCBAttr[ARRAYSIZE(PreserveOriginalIDs)];
-	int OriginalCBAttr2[ARRAYSIZE(PreserveOriginalIDs)];
-	DWORD OriginalCBFlag[ARRAYSIZE(PreserveOriginalIDs)];
+	int OriginalCBAttr[ARRAYSIZE(PreserveOriginalIDs)]; // values at dialog start and any user change for restore by subfolders checkbox
+	int OriginalCBAttr0[ARRAYSIZE(PreserveOriginalIDs)]; // values at dialog start
+	int OriginalCBAttr2[ARRAYSIZE(PreserveOriginalIDs)]; // -1 = original, other = was change
+	DWORD OriginalCBFlag[ARRAYSIZE(PreserveOriginalIDs)]; // checkbox flags at dialog start
+	bool _b_mode_check_or_edit_process = false;
 	FARCHECKEDSTATE OSubfoldersState;
 	bool OAccessTime, OModifyTime, OStatusChangeTime;
 	unsigned char SymLinkInfoCycle = 0;
@@ -229,6 +246,84 @@ static std::wstring BriefInfo(const FARString &strSelName)
 	return out;
 }
 
+static char SetAttrGetBitCharFromModeCheckBoxes(HANDLE hDlg, int _i1, int _i2, int _i3)
+{
+	int i1, i2, i3;
+
+	i1 = (int)SendDlgMessage(hDlg, DM_GETCHECK, _i1, 0);
+	i2 = (int)SendDlgMessage(hDlg, DM_GETCHECK, _i2, 0);
+	i3 = (int)SendDlgMessage(hDlg, DM_GETCHECK, _i3, 0);
+	if (i1 == BSTATE_3STATE || i2 == BSTATE_3STATE || i3 == BSTATE_3STATE)
+		return '-';
+	else {
+		int i = (i1 == BSTATE_CHECKED ? 1 : 0) + (i2 == BSTATE_CHECKED ? 2 : 0) + (i3 == BSTATE_CHECKED ? 4 : 0);
+		char buffer[3] = {0};
+		snprintf(buffer, 2, "%o", i);
+		return buffer[0];
+	}
+}
+
+static void SetAttrCalcBitsCharFromModeCheckBoxes(HANDLE hDlg)
+{
+	wchar_t str_octal[5] = {0};
+	str_octal[0] = SetAttrGetBitCharFromModeCheckBoxes(hDlg, SA_CHECKBOX_STICKY, SA_CHECKBOX_SGID, SA_CHECKBOX_SUID);
+	str_octal[1] = SetAttrGetBitCharFromModeCheckBoxes(hDlg, SA_CHECKBOX_USER_EXECUTE,  SA_CHECKBOX_USER_WRITE,  SA_CHECKBOX_USER_READ);
+	str_octal[2] = SetAttrGetBitCharFromModeCheckBoxes(hDlg, SA_CHECKBOX_GROUP_EXECUTE, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_READ);
+	str_octal[3] = SetAttrGetBitCharFromModeCheckBoxes(hDlg, SA_CHECKBOX_OTHER_EXECUTE, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_READ);
+
+	SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_FIXEDIT_MODE_OCTAL, (LONG_PTR)str_octal);
+}
+
+void SetAttrGetModeCheckBoxesFromChar(HANDLE hDlg, wchar_t c, int _i1, int _i2, int _i3)
+{
+	switch(c) {
+		case L'0':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			break;
+		case L'1':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			break;
+		case L'2':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			break;
+		case L'3':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			break;
+		case L'4':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			break;
+		case L'5':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			break;
+		case L'6':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			break;
+		case L'7':
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			break;
+		default:
+			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_3STATE);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_3STATE);
+			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_3STATE);
+			break;
+	}
+}
 
 LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
@@ -250,12 +345,18 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				if (OrigIdx != -1) {
 					DlgParam->OriginalCBAttr[OrigIdx] = static_cast<int>(Param2);
 					DlgParam->OriginalCBAttr2[OrigIdx] = 0;
+					if( !DlgParam->_b_mode_check_or_edit_process) {
+						DlgParam->_b_mode_check_or_edit_process = true;
+						SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
+						DlgParam->_b_mode_check_or_edit_process = false;
+					}
 				}
 				int FocusPos = static_cast<int>(SendDlgMessage(hDlg, DM_GETFOCUS, 0, 0));
 				FARCHECKEDSTATE SubfoldersState = static_cast<FARCHECKEDSTATE>(
 						SendDlgMessage(hDlg, DM_GETCHECK, SA_CHECKBOX_SUBFOLDERS, 0));
 
 				{
+					DlgParam->_b_mode_check_or_edit_process = true;
 					// если снимаем атрибуты для SubFolders
 					// этот кусок всегда работает если есть хотя бы одна папка
 					// иначе SA_CHECKBOX_SUBFOLDERS недоступен и всегда снят.
@@ -353,6 +454,8 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 
 						DlgParam->OSubfoldersState = SubfoldersState;
 					}
+					SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
+					DlgParam->_b_mode_check_or_edit_process = false;
 				}
 
 				return TRUE;
@@ -383,6 +486,20 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				}
 				SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_INFO, reinterpret_cast<LONG_PTR>(strText.CPtr()));
 				return TRUE;
+
+			// Set Original for Modes and Attributes
+			} else if (Param1 == SA_BUTTON_MODE_ORIGINAL) {
+				DlgParam->_b_mode_check_or_edit_process = true;
+				for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
+					DlgParam->OriginalCBAttr2[i] = -1;
+					SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i],
+							((DlgParam->OriginalCBFlag[i] & DIF_3STATE) ? TRUE : FALSE));
+					SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+							DlgParam->OriginalCBAttr0[i]);
+				}
+				SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
+				DlgParam->_b_mode_check_or_edit_process = false;
+				SendDlgMessage(hDlg, DM_SETFOCUS, SA_FIXEDIT_MODE_OCTAL, 0);
 
 			// Set Original? / Set All? / Clear All?
 			} else if (Param1 == SA_BUTTON_ORIGINAL) {
@@ -435,6 +552,23 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		} break;
 		case DN_EDITCHANGE: {
 			switch (Param1) {
+				case SA_FIXEDIT_MODE_OCTAL:
+					if (!DlgParam->_b_mode_check_or_edit_process) {
+						DlgParam->_b_mode_check_or_edit_process = true;
+						std::wstring str_octal;
+						int length = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, SA_FIXEDIT_MODE_OCTAL, 0);
+						str_octal.resize(length+1);
+						LONG_PTR rv = SendDlgMessage(hDlg, DM_GETTEXTPTR, SA_FIXEDIT_MODE_OCTAL, (LONG_PTR)&str_octal[0]);
+						if (rv>0) {
+							length = str_octal.length();
+							SetAttrGetModeCheckBoxesFromChar(hDlg, length<1 ? ' ' : str_octal[0], SA_CHECKBOX_STICKY, SA_CHECKBOX_SGID, SA_CHECKBOX_SUID);
+							SetAttrGetModeCheckBoxesFromChar(hDlg, length<2 ? ' ' : str_octal[1], SA_CHECKBOX_USER_EXECUTE,  SA_CHECKBOX_USER_WRITE,  SA_CHECKBOX_USER_READ);
+							SetAttrGetModeCheckBoxesFromChar(hDlg, length<3 ? ' ' : str_octal[2], SA_CHECKBOX_GROUP_EXECUTE, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_READ);
+							SetAttrGetModeCheckBoxesFromChar(hDlg, length<4 ? ' ' : str_octal[3], SA_CHECKBOX_OTHER_EXECUTE, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_READ);
+						}
+						DlgParam->_b_mode_check_or_edit_process = false;
+					}
+					break;
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 				case SA_FIXEDIT_LAST_ACCESS_TIME:
 					DlgParam->OAccessTime = true;
@@ -729,7 +863,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 	const short ColX1Of3 = 5;
 	const short ColX2Of3 = ColX1Of3 + (DlgX - 3) / 3;
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	const short ColX3Of3 = ColX2Of3 + (DlgX - 3) / 3;
+#endif
+	static const wchar_t VerticalLine[] = {BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1], 0};
 
 	DialogDataEx AttrDlgData[] = {
 		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0, Msg::SetAttrTitle},
@@ -738,36 +875,45 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_FOCUS, Msg::SetAttrBriefInfo}, // if symlink in will Button & need first focus here
 		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY, L""}, // not readonly only if symlink
-		{DI_TEXT,      5,                   6,               17,               6,               {}, 0, Msg::SetAttrOwner},
+		{DI_TEXT,      3,                   6,               0,                6,               {}, DIF_SEPARATOR, Msg::SetAttrOwnerTitle},
+		{DI_TEXT,      5,                   7,               17,               7,               {}, 0, Msg::SetAttrOwner},
 		//{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
-		{DI_COMBOBOX,  18,                  6,               short(DlgX-6),    6,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
-		{DI_TEXT,      5,                   7,               17,               7,               {}, 0, Msg::SetAttrGroup},
-		//{DI_EDIT,      18,                  7,               short(DlgX - 6),  7,               {}, 0, L""},
 		{DI_COMBOBOX,  18,                  7,               short(DlgX-6),    7,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+		{DI_TEXT,      5,                   8,               17,               8,               {}, 0, Msg::SetAttrGroup},
+		//{DI_EDIT,      18,                  7,               short(DlgX - 6),  7,               {}, 0, L""},
+		{DI_COMBOBOX,  18,                  8,               short(DlgX-6),    8,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 
-		{DI_TEXT,      3,                   8,               0,                8,               {}, DIF_SEPARATOR, L""},
-		{DI_CHECKBOX,  ColX1Of3,            9,               0,                9,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,  ColX2Of3,            9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrAppend},
+		{DI_TEXT,      3,                   9,               0,                9,               {}, DIF_SEPARATOR, Msg::SetAttrModeTitle},
+		{DI_VTEXT,     39,                  10,              39,               12,              {}, DIF_BOXCOLOR, VerticalLine},
+		{DI_VTEXT,     51,                  10,              51,               12,              {}, DIF_BOXCOLOR, VerticalLine},
+
+		{DI_TEXT,      5,                   10,              18,               10,              {}, 0, Msg::SetAttrAccessUser},
+		{DI_CHECKBOX,  19,                  10,              23,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
+		{DI_CHECKBOX,  26,                  10,              30,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
+		{DI_CHECKBOX,  33,                  10,              37,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
+		{DI_TEXT,      5,                   11,              18,               11,              {}, 0, Msg::SetAttrAccessGroup},
+		{DI_CHECKBOX,  19,                  11,              23,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
+		{DI_CHECKBOX,  26,                  11,              30,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
+		{DI_CHECKBOX,  33,                  11,              37,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
+		{DI_TEXT,      5,                   12,              18,               12,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_CHECKBOX,  19,                  12,              23,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_CHECKBOX,  26,                  12,              30,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_CHECKBOX,  33,                  12,              37,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
+
+		{DI_CHECKBOX,  40,                  10,              52,               10,              {}, DIF_3STATE, Msg::SetAttrSUID},
+		{DI_CHECKBOX,  40,                  11,              52,               11,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,  40,                  12,              52,               12,              {}, DIF_3STATE, Msg::SetAttrSticky},
+
+		{DI_TEXT,      52,                  10,              62,               10,              {}, 0, L"O&ctal: SUGO"},
+		{DI_FIXEDIT,   59,                  11,              62,               11,              {(DWORD_PTR)L"####"}, DIF_MASKEDIT, L""},
+		{DI_BUTTON,    52,                  12,              62,               12,              {}, DIF_BTNNOCLOSE, Msg::SetAttrModeOriginal},
+
+		{DI_TEXT,      3,                   13,              0,                13,               {}, DIF_SEPARATOR, Msg::SetAttrAttributesTitle},
+		{DI_CHECKBOX,  ColX1Of3,            14,              0,                14,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_CHECKBOX,  ColX2Of3,            14,              0,                14,               {}, DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,  ColX3Of3,            9,               0,                9,               {}, DIF_3STATE, Msg::SetAttrHidden},
+		{DI_CHECKBOX,  ColX3Of3,            14,              0,                14,               {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
-
-		{DI_CHECKBOX,  ColX1Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,  ColX2Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,  ColX3Of3,            10,              0,                10,              {}, DIF_3STATE, Msg::SetAttrSticky},
-
-		{DI_TEXT,      ColX1Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessUser},
-		{DI_TEXT,      ColX2Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessGroup},
-		{DI_TEXT,      ColX3Of3,            11,              0,                11,              {}, 0, Msg::SetAttrAccessOther},
-		{DI_CHECKBOX,  ColX1Of3,            12,              0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
-		{DI_CHECKBOX,  ColX1Of3,            13,              0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
-		{DI_CHECKBOX,  ColX1Of3,            14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
-		{DI_CHECKBOX,  ColX2Of3,            12,          0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
-		{DI_CHECKBOX,  ColX2Of3,            13,          0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
-		{DI_CHECKBOX,  ColX2Of3,            14,          0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
-		{DI_CHECKBOX,  ColX3Of3,            12,          0,                12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
-		{DI_CHECKBOX,  ColX3Of3,            13,          0,                13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
-		{DI_CHECKBOX,  ColX3Of3,            14,          0,                14,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
 
 		{DI_TEXT,      3,                   15,              0,                15,              {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      short(DlgX - 29),    16,              0,                16,              {}, 0, L""},
@@ -1123,9 +1269,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		// запомним состояние переключателей.
 		for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
-			DlgParam.OriginalCBAttr[i] = AttrDlg[i].Selected;
+			DlgParam.OriginalCBAttr[i] = DlgParam.OriginalCBAttr0[i] =AttrDlg[PreserveOriginalIDs[i]].Selected;
 			DlgParam.OriginalCBAttr2[i] = -1;
-			DlgParam.OriginalCBFlag[i] = AttrDlg[i].Flags;
+			DlgParam.OriginalCBFlag[i] = AttrDlg[PreserveOriginalIDs[i]].Flags;
 		}
 
 		DlgParam.strOwner = AttrDlg[SA_COMBO_OWNER].strData;
@@ -1147,6 +1293,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		}*/
 
 		Dlg.SetPosition(-1, -1, DlgX, DlgY);
+		SetAttrCalcBitsCharFromModeCheckBoxes(&Dlg);	// set octal
 		Dlg.Process();
 
 		switch (Dlg.GetExitCode()) {

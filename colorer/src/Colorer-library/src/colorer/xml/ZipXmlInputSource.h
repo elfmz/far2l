@@ -1,54 +1,51 @@
 #ifndef _COLORER_ZIPINPUTSOURCE_H_
 #define _COLORER_ZIPINPUTSOURCE_H_
 
-#include <colorer/unicode/String.h>
-#include <colorer/xml/XmlInputSource.h>
+#include "colorer/xml/SharedXmlInputSource.h"
+#include "colorer/xml/XmlInputSource.h"
 #include <xercesc/util/BinFileInputStream.hpp>
-#include <colorer/xml/SharedXmlInputSource.h>
 
 class ZipXmlInputSource : public XmlInputSource
 {
-public:
+ public:
   ZipXmlInputSource(const XMLCh* path, const XMLCh* base);
-  ZipXmlInputSource(const XMLCh* path, XmlInputSource* base);
-  ~ZipXmlInputSource();
-  xercesc::BinInputStream* makeStream() const override;
-  uXmlInputSource createRelative(const XMLCh* relPath) const override;
-  xercesc::InputSource* getInputSource() override;
-private:
+  ~ZipXmlInputSource() override;
+  [[nodiscard]] xercesc::BinInputStream* makeStream() const override;
+  xercesc::InputSource* getInputSource() const override;
+
+  static uUnicodeString getAbsolutePath(const UnicodeString* basePath, const UnicodeString* relPath);
+
+  ZipXmlInputSource(ZipXmlInputSource const&) = delete;
+  ZipXmlInputSource& operator=(ZipXmlInputSource const&) = delete;
+  ZipXmlInputSource(ZipXmlInputSource&&) = delete;
+  ZipXmlInputSource& operator=(ZipXmlInputSource&&) = delete;
+
+ private:
   void create(const XMLCh* path, const XMLCh* base);
-  UString in_jar_location;
-  SharedXmlInputSource* jar_input_source;
-
-  ZipXmlInputSource(ZipXmlInputSource const &) = delete;
-  ZipXmlInputSource &operator=(ZipXmlInputSource const &) = delete;
-  ZipXmlInputSource(ZipXmlInputSource &&) = delete;
-  ZipXmlInputSource &operator=(ZipXmlInputSource &&) = delete;
+  uUnicodeString in_jar_location;
+  SharedXmlInputSource* jar_input_source = nullptr;
 };
-
 
 class UnZip : public xercesc::BinInputStream
 {
-public:
-  UnZip(const XMLByte* src, XMLSize_t size, const String* path);
-  ~UnZip();
+ public:
+  UnZip(const XMLByte* src, XMLSize_t size, const UnicodeString* path);
+  ~UnZip() override;
 
-  XMLFilePos curPos() const override;
-  XMLSize_t readBytes(XMLByte* const toFill, const XMLSize_t maxToRead) override;
-  const XMLCh* getContentType() const override;
+  [[nodiscard]] XMLFilePos curPos() const override;
+  XMLSize_t readBytes(XMLByte* toFill, XMLSize_t maxToRead) override;
+  [[nodiscard]] const XMLCh* getContentType() const override;
 
-private:
+  UnZip(UnZip const&) = delete;
+  UnZip& operator=(UnZip const&) = delete;
+  UnZip(UnZip&&) = delete;
+  UnZip& operator=(UnZip&&) = delete;
 
+ private:
   XMLSize_t mPos;
   XMLSize_t mBoundary;
   std::unique_ptr<byte[]> stream;
   int len;
-
-  UnZip(UnZip const &) = delete;
-  UnZip &operator=(UnZip const &) = delete;
-  UnZip(UnZip &&) = delete;
-  UnZip &operator=(UnZip &&) = delete;
 };
 
-#endif //_COLORER_ZIPINPUTSOURCE_H_
-
+#endif  //_COLORER_ZIPINPUTSOURCE_H_

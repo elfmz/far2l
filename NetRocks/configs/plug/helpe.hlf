@@ -69,7 +69,6 @@ $^#Configuration menu#
  #Smart symlinks copying# if (by default) enabled then NetRocks will translate symlinks paths to refer file that copied in same copy operation, or, if symlinks refer file that is not being copied - then such symlink will be converted to plain file. If disabled then NetRocks will just copy symlinks as is, without any efforts to ensure their validity in the new location.
  #Copy attributes that override umask# enable this options if want to have copied files modes to be exactly same as on source files, even in target system umask prevents some mode bits from being set.
  #Connections pool expiration# when exiting from some remote FS navigation NetRocks will keep actual connection active for specified amount of time and if same server connection will be established before expiration - it will use preserved connection instead of establishing new.
- #Connect using proxy# enable this option to enable protocol-invariant proxy server tunneling. This options uses tsocks library and thus can be enabled only if it installed. Also you will need to edit its configuration file to adjust it to your needs.
  
  ~Contents~@Contents@
 
@@ -83,6 +82,7 @@ $^#Site connection editor#
  This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like #hostname and port# to connect to, #login mode# and #username and password# if needed.
 Also by clicking on #Extra options# button you can modify some ~extra site settings~@ExtraSiteSettings@.
 Also by clicking on #Protocol options# button you can modify some protocol-specific settings.
+Also by clicking on #Proxy options# button you can modify generic ~proxy settings~@ProxySettings@.
  ~SFTP:// and SCP:// protocols specific options~@ProtocolOptionsSFTPSCP@
  ~SHELL:// protocols specific options~@ProtocolOptionsSHELL@
  ~FTP:// and FTPS:// protocols specific options~@ProtocolOptionsFTP@
@@ -228,6 +228,20 @@ $^#DAV://  and DAVS:// protocol specific options#
  This dialog allows you to modify "dav://" and "davs://" protocol specific settings: enable connect via HTTP/HTTPS proxy with optional proxy authentication.
 
  ~Contents~@Contents@
+
+@ProxySettings
+$^#NetRocks plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2019 elfmz#
+$^#Contents
+$^#Proxy settings dialog#
+
+ This dialog allows you to specify generic proxy settings for connection. Currently such generic support is implemented by using of external 'proxifier' tool. Two such tools are supported: #proxychains# and #tsocks#. So in order to use this option
+you have to install any of them (however proxychains is recommended) and edit its configuration in this dialog. This configuration will be used only with chosen connection and stored in site connection settings.
+
+ ~Contents~@Contents@
+
+
 
 @Contact
 $^#NetRocks plugin#

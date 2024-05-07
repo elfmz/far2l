@@ -2,11 +2,12 @@
 #define _FARHRCSETTINGS_H_
 
 #include <colorer/parsers/FileTypeImpl.h>
-#include <colorer/HRCParser.h>
-#include <colorer/parsers/ParserFactory.h>
-#include <colorer/unicode/SString.h>
+#include <colorer/HrcLibrary.h>
+#include <colorer/ParserFactory.h>
+#include <xercesc/parsers/XercesDOMParser.hpp>
 
 #include "pcolorer.h"
+#include "FarEditorSet.h"
 #include <string>
 
 #define MAX_KEY_LENGTH 255
@@ -17,18 +18,18 @@ extern const char* FarProfileXml;
 
 class FarHrcSettingsException : public Exception{
 public:
-  FarHrcSettingsException(){};
-  FarHrcSettingsException(const String& msg){
-    what_str.append(SString("FarHrcSettingsException: ")).append(msg);
-  };
+  explicit FarHrcSettingsException(const UnicodeString& msg) noexcept
+  : Exception("[FarHrcSettingsException] " + msg)
+  {
+  }
 };
 
 class FarHrcSettings
 {
   friend class FileTypeImpl;
 public:
-  FarHrcSettings(ParserFactory *_parserFactory);
-  void readXML(String *file, bool userValue);
+  FarHrcSettings(FarEditorSet *_farEditorSet, ParserFactory *_parserFactory);
+  void readXML(UnicodeString *file, bool userValue);
   void readProfile();
   void readUserProfile();
   void writeUserProfile();
@@ -36,6 +37,7 @@ public:
 private:
   void UpdatePrototype(xercesc::DOMElement* elem, bool userValue);
 
+  FarEditorSet* farEditorSet;
   ParserFactory *parserFactory;
   std::string profileIni;
 

@@ -260,7 +260,7 @@ public:
 		ScrBuf.Flush();
 		WINPORT(GetConsoleMode)(NULL, &_saved_mode);
 		WINPORT(SetConsoleMode) (NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
-			| ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE | WINDOW_BUFFER_SIZE_EVENT);	// ENABLE_QUICK_EDIT_MODE
+			| ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE | ENABLE_ECHO_INPUT);	// ENABLE_QUICK_EDIT_MODE
 		if (cmd_str) {
 			const std::wstring &ws = MB2Wide(cmd_str);
 			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &_dw, NULL);

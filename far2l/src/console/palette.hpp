@@ -37,9 +37,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SIZE_ARRAY_PALETTE 147
 
-extern unsigned char DefaultPalette[SIZE_ARRAY_PALETTE];
-extern unsigned char Palette[SIZE_ARRAY_PALETTE];
-extern unsigned char BlackPalette[SIZE_ARRAY_PALETTE];
+extern uint8_t DefaultPalette8bit[SIZE_ARRAY_PALETTE];
+extern uint8_t Palette8bit[SIZE_ARRAY_PALETTE];
+extern uint8_t BlackPalette8bit[SIZE_ARRAY_PALETTE];
 
-BYTE FarColorToReal(int FarColor);
+extern uint64_t Palette[SIZE_ARRAY_PALETTE];
+
+inline uint64_t FarColorToReal(int FarColor)
+{
+	return FarColor < SIZE_ARRAY_PALETTE ? Palette[FarColor] : 4 * 16 + 15;
+}
+
 void ConvertCurrentPalette();

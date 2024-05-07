@@ -147,6 +147,7 @@ void ComplexOperationProgress::OnIdle()
 		bool path, file, all, count, errors;
 	} changed = {};
 	bool paused;
+	uint64_t Colors[4];
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
 		if (_last_path != _state.path) {
@@ -204,15 +205,25 @@ void ComplexOperationProgress::OnIdle()
 		TextToDialogControl(_i_errstats_separator, sz);
 		if (!_errstats_colored) {
 			_errstats_colored = true;
-			DWORD color_flags = 0;
-			SendDlgMessage(DM_GETCOLOR, _i_errstats_separator, (LONG_PTR)&color_flags);
-			color_flags&= ~(FOREGROUND_GREEN | FOREGROUND_BLUE);
-			color_flags|= DIF_SETCOLOR | FOREGROUND_RED;
-			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, color_flags);
+
+			SendDlgMessage(DM_GETDEFAULTCOLOR, _i_errstats_separator, (LONG_PTR)Colors);
+			Colors[0] &= ~(0x000000FFFF000000 | FOREGROUND_GREEN | FOREGROUND_BLUE);
+			Colors[0] |= (0x0000000000FF0000 | FOREGROUND_RED);
+			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, (LONG_PTR)Colors);
+
+//			DWORD color_flags = 0;
+//			SendDlgMessage(DM_GETCOLOR, _i_errstats_separator, (LONG_PTR)&color_flags);
+//			color_flags&= ~(FOREGROUND_GREEN | FOREGROUND_BLUE);
+//			color_flags|= DIF_SETCOLOR | FOREGROUND_RED;
+//			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, color_flags);
 		}
 	} else if (_errstats_colored) {
 		_errstats_colored = false;
-		SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
+
+		Colors[0] = 0;
+		SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, (LONG_PTR)Colors);
+
+//		SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
 	}
 
 	const bool has_any_auto_action = _wea_state->HasAnyAutoAction();

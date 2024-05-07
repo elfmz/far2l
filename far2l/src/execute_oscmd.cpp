@@ -102,7 +102,7 @@ bool CommandLine::ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow,
 
 	if (ecl[0] == "reset") {
 		if (ecl.size() == 1) {
-			ClearScreen(COL_COMMANDLINEUSERSCREEN);
+			ClearScreen(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 			SaveBackground();
 			VTLog::Reset(NULL);
 		}

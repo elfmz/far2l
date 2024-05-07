@@ -418,7 +418,7 @@ public:
 	void SetCurPos(int NewCol, int NewRow = -1);
 	void SetCursorType(bool Visible, DWORD Size);
 	void GetCursorType(bool &Visible, DWORD &Size);
-	void SetObjectColor(int Color, int SelColor, int ColorUnChanged);
+	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
 };
 

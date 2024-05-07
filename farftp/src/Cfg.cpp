@@ -384,8 +384,14 @@ static LONG_PTR WINAPI CDLG_WndProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			break;
 		case DN_CTLCOLORDLGITEM:
 
-			if (Param1 >= cdlgTEXT && Param1 < cdlgTEXT + 3)
-				return FAR_COLOR(ColorFore, ColorBk);
+			if (Param1 >= cdlgTEXT && Param1 < cdlgTEXT + 3) {
+
+				uint64_t *ItemColor = reinterpret_cast<uint64_t *>(Param2);
+				uint64_t color = ColorBk * 16 + ColorFore;
+				ItemColor[0] = color;
+				return 1;
+//				return FAR_COLOR(ColorFore, ColorBk);
+			}
 
 			break;
 	}

@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "scrobj.hpp"
 #include "colors.hpp"
+#include "palette.hpp"
 #include "bitflags.hpp"
 #include "FilesSuggestor.hpp"
 #include <memory>
@@ -147,9 +148,9 @@ private:
 
 	std::vector<ColorItem> ColorList;
 
-	int Color;
-	int SelColor;
-	int ColorUnChanged;		// 28.07.2000 SVS - для диалога
+	uint64_t Color;
+	uint64_t SelColor;
+	uint64_t ColorUnChanged;		// 28.07.2000 SVS - для диалога
 
 	int LeftPos;
 	int CurPos;
@@ -219,7 +220,7 @@ public:
 	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	// ! Функция установки текущих Color,SelColor и ColorUnChanged!
-	void SetObjectColor(int Color, int SelColor = 0xf, int ColorUnChanged = COL_DIALOGEDITUNCHANGED);
+	void SetObjectColor(uint64_t Color, uint64_t SelColor = 0xf, uint64_t ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED));
 	// + Функция получения текущих Color,SelColor
 	long GetObjectColor() { return MAKELONG(Color, SelColor); }
 	int GetObjectColorUnChanged() { return ColorUnChanged; }

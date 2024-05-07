@@ -53,6 +53,8 @@ void SimpleOperationProgress::Show()
 
 LONG_PTR SimpleOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 {
+	uint64_t Colors[4];
+
 	//fprintf(stderr, "%x %x\n", msg, param1);
 	if (msg == DN_ENTERIDLE) {
 		bool count_complete_changed = false, errors_changed = false;
@@ -81,15 +83,26 @@ LONG_PTR SimpleOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 			TextToDialogControl(_i_errstats_separator, sz);
 			if (!_errstats_colored) {
 				_errstats_colored = true;
-				DWORD color_flags = 0;
-				SendDlgMessage(DM_GETCOLOR, _i_errstats_separator, (LONG_PTR)&color_flags);
-				color_flags&= ~(FOREGROUND_GREEN | FOREGROUND_BLUE);
-				color_flags|= DIF_SETCOLOR | FOREGROUND_RED;
-				SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, color_flags);
+
+				SendDlgMessage(DM_GETDEFAULTCOLOR, _i_errstats_separator, (LONG_PTR)Colors);
+				Colors[0] &= ~(0x000000FFFF000000 | FOREGROUND_GREEN | FOREGROUND_BLUE);
+				Colors[0] |= (0x0000000000FF0000 | FOREGROUND_RED);
+				SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, (LONG_PTR)Colors);
+
+//				DWORD color_flags = 0;
+//				SendDlgMessage(DM_GETCOLOR, _i_errstats_separator, (LONG_PTR)&color_flags);
+//				color_flags&= ~(FOREGROUND_GREEN | FOREGROUND_BLUE);
+//				color_flags|= DIF_SETCOLOR | FOREGROUND_RED;
+//				SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, color_flags);
+
 			}
 		} else if (_errstats_colored) {
 			_errstats_colored = false;
-			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
+
+			Colors[0] = 0;
+			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, (LONG_PTR)Colors);
+
+//			SendDlgMessage(DM_SETCOLOR, _i_errstats_separator, 0);
 		}
 
 

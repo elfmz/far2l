@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "colors.hpp"
 
-unsigned char DefaultPalette[SIZE_ARRAY_PALETTE] = {
+uint8_t DefaultPalette8bit[SIZE_ARRAY_PALETTE] = {
 		F_WHITE | B_CYAN,			// COL_MENUTEXT,
 		F_WHITE | B_BLACK,			// COL_MENUSELECTEDTEXT,
 		F_YELLOW | B_CYAN,			// COL_MENUHIGHLIGHT,
@@ -214,7 +214,7 @@ unsigned char DefaultPalette[SIZE_ARRAY_PALETTE] = {
 		F_YELLOW | B_LIGHTGRAY,			// COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
 };
 
-unsigned char BlackPalette[SIZE_ARRAY_PALETTE] = {
+uint8_t BlackPalette8bit[SIZE_ARRAY_PALETTE] = {
 		F_BLACK | B_LIGHTGRAY,		// COL_MENUTEXT,
 		F_LIGHTGRAY | B_BLACK,		// COL_MENUSELECTEDTEXT,
 		F_WHITE | B_LIGHTGRAY,		// COL_MENUHIGHLIGHT,
@@ -392,14 +392,8 @@ unsigned char BlackPalette[SIZE_ARRAY_PALETTE] = {
 		F_WHITE | B_BLACK,				// COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
 };
 
-unsigned char Palette[SIZE_ARRAY_PALETTE];
-
-BYTE FarColorToReal(int FarColor)
-{
-	return (FarColor < COL_FIRSTPALETTECOLOR)
-			? FarColor
-			: Palette[(FarColor - COL_FIRSTPALETTECOLOR) % SIZE_ARRAY_PALETTE];
-}
+uint8_t Palette8bit[SIZE_ARRAY_PALETTE];
+uint64_t Palette[SIZE_ARRAY_PALETTE];
 
 /*
   1.65            - 0x52

@@ -457,10 +457,12 @@ LONG_PTR WINAPI color_panel_s::ColorPanelUserProc(HANDLE hDlg, int Msg, int Para
 	switch(Param1) {
 	case ID_CP_RGB_PREFIX: {
 		if (Msg == DN_CTLCOLORDLGITEM) {
+			uint64_t *ItemColor = (uint64_t *)Param2;
 			if (bRGB)
-				return FarColorToReal(COL_DIALOGEDIT);
+				ItemColor[0] = FarColorToReal(COL_DIALOGEDIT);
 			else
-				return FarColorToReal(COL_DIALOGEDITDISABLED);
+				ItemColor[0] = FarColorToReal(COL_DIALOGEDITDISABLED);
+			return 1;
 		}
 	}
 	break;
@@ -895,9 +897,19 @@ bool GetColorDialogForFileFilter(uint64_t *color, uint64_t *mask)
 	return GetColorDialogInner(color, mask, true, true, true);
 }
 
+bool GetColorDialog(uint64_t *color, bool bCentered)
+{
+	if (!color) 
+		return false;
+
+//	return GetColorDialogInner(color, NULL, true, false, bCentered);
+	return GetColorDialogInner(color, NULL, true, true, bCentered);
+}
+
 bool GetColorDialog16(uint16_t *color, bool bCentered)
 {
-	if (!color) return false;
+	if (!color)
+		return false;
 
 	uint64_t color64 = *color;
 	bool out = GetColorDialogInner(&color64, NULL, false, false, bCentered);

@@ -273,12 +273,12 @@ void TreeList::DisplayTree(int Fast)
 		strCurDir = ListData[CurFile]->strName;		// BUGBUG
 
 	if (!Fast) {
-		Box(X1, Y1, X2, Y2, COL_PANELBOX, DOUBLE_BOX);
+		Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
 		DrawSeparator(Y2 - 2 - (ModalMode));
 		GetTitle(strTitle);
 
 		if (!strTitle.IsEmpty()) {
-			SetColor((Focus || ModalMode) ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
+			SetFarColor((Focus || ModalMode) ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 			GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, Y1);
 			Text(strTitle);
 		}
@@ -286,7 +286,7 @@ void TreeList::DisplayTree(int Fast)
 
 	for (int I = Y1 + 1, J = CurTopFile; I < Y2 - 2 - (ModalMode); I++, J++) {
 		GotoXY(X1 + 1, I);
-		SetColor(COL_PANELTEXT);
+		SetFarColor(COL_PANELTEXT);
 		Text(L" ");
 
 		if (J < TreeCount && Flags.Check(FTREELIST_TREEISPREPARED)) {
@@ -310,7 +310,7 @@ void TreeList::DisplayTree(int Fast)
 			}
 		}
 
-		SetColor(COL_PANELTEXT);
+		SetFarColor(COL_PANELTEXT);
 
 		if (WhereX() < X2) {
 			FS << fmt::Cells() << fmt::Expand(X2 - WhereX()) << L"";
@@ -318,12 +318,12 @@ void TreeList::DisplayTree(int Fast)
 	}
 
 	if (Opt.ShowPanelScrollbar) {
-		SetColor(COL_PANELSCROLLBAR);
+		SetFarColor(COL_PANELSCROLLBAR);
 		ScrollBarEx(X2, Y1 + 1, Y2 - Y1 - 3, CurTopFile, TreeCount);
 	}
 
-	SetColor(COL_PANELTEXT);
-	SetScreen(X1 + 1, Y2 - (ModalMode ? 2 : 1), X2 - 1, Y2 - 1, L' ', COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
+	SetScreen(X1 + 1, Y2 - (ModalMode ? 2 : 1), X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
 
 	if (TreeCount > 0) {
 		GotoXY(X1 + 1, Y2 - 1);
@@ -346,14 +346,14 @@ void TreeList::DisplayTreeName(const wchar_t *Name, int Pos)
 		GotoXY(WhereX() - 1, WhereY());
 
 		if (Focus || ModalMode) {
-			SetColor((Pos == WorkDir) ? COL_PANELSELECTEDCURSOR : COL_PANELCURSOR);
+			SetFarColor((Pos == WorkDir) ? COL_PANELSELECTEDCURSOR : COL_PANELCURSOR);
 			FS << L" " << fmt::Cells() << fmt::Truncate(X2 - WhereX() - 3) << Name << L" ";
 		} else {
-			SetColor((Pos == WorkDir) ? COL_PANELSELECTEDTEXT : COL_PANELTEXT);
+			SetFarColor((Pos == WorkDir) ? COL_PANELSELECTEDTEXT : COL_PANELTEXT);
 			FS << L"[" << fmt::Cells() << fmt::Truncate(X2 - WhereX() - 3) << Name << L"]";
 		}
 	} else {
-		SetColor((Pos == WorkDir) ? COL_PANELSELECTEDTEXT : COL_PANELTEXT);
+		SetFarColor((Pos == WorkDir) ? COL_PANELSELECTEDTEXT : COL_PANELTEXT);
 		FS << fmt::Cells() << fmt::Truncate(X2 - WhereX() - 1) << Name;
 	}
 }

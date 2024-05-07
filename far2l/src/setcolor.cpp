@@ -329,14 +329,21 @@ void SetColors()
 			if ((GroupsCode = GroupsMenu.Modal::GetExitCode()) < 0)
 				break;
 
+			// Set default 8 bit colors
 			if (GroupsCode == 12) {
-				//                   было sizeof(Palette)
-				memcpy(Palette, DefaultPalette, SIZE_ARRAY_PALETTE);
+				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+					Palette[i] = DefaultPalette8bit[i];
+				}
+
 				break;
 			}
 
+			// Set black & white 8 bit colors
 			if (GroupsCode == 13) {
-				memcpy(Palette, BlackPalette, SIZE_ARRAY_PALETTE);
+				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+					Palette[i] = BlackPalette8bit[i];
+				}
+
 				break;
 			}
 
@@ -432,10 +439,12 @@ static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int Ty
 void GetColor(int PaletteIndex)
 {
 	ChangeMacroMode chgMacroMode(MACRO_MENU);
-	uint16_t NewColor = Palette[PaletteIndex - COL_FIRSTPALETTECOLOR];
+	uint64_t NewColor = Palette[PaletteIndex];
 
-	if (GetColorDialog16(&NewColor, false)) {
-		Palette[PaletteIndex - COL_FIRSTPALETTECOLOR] = static_cast<uint16_t>(NewColor);
+	if (GetColorDialog(&NewColor, false)) {
+		Palette[PaletteIndex] = NewColor;
+		Palette8bit[PaletteIndex] = static_cast<uint8_t>(NewColor);
+
 		ScrBuf.Lock();	// отменяем всякую прорисовку
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->LeftPanel->Redraw();

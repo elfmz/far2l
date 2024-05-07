@@ -345,7 +345,7 @@ namespace oldfar
 		DWORD  Flags;
 		DWORD  Reserved;
 		int    ColorCount;
-		LPBYTE Colors;
+		uint64_t *Colors;
 	};
 
 	struct FarDialogItem

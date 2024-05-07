@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "infolist.hpp"
 #include "macroopcode.hpp"
 #include "colors.hpp"
+#include "palette.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
 #include "ctrlobj.hpp"
@@ -114,9 +115,9 @@ void InfoList::DisplayObject()
 	FARString strDiskNumber;
 	CloseFile();
 
-	Box(X1, Y1, X2, Y2, COL_PANELBOX, DOUBLE_BOX);
-	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', COL_PANELTEXT);
-	SetColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
+	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
+	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
+	SetFarColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 	GetTitle(strTitle);
 
 	if (!strTitle.IsEmpty()) {
@@ -124,7 +125,7 @@ void InfoList::DisplayObject()
 		Text(strTitle);
 	}
 
-	SetColor(COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
 
 	int CurY = Y1 + 1;
 
@@ -142,9 +143,9 @@ void InfoList::DisplayObject()
 
 	/* #2 - disk info */
 
-	SetColor(COL_PANELBOX);
+	SetFarColor(COL_PANELBOX);
 	DrawSeparator(CurY);
-	SetColor(COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
 
 	AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 	AnotherPanel->GetCurDir(strCurDir);
@@ -196,9 +197,9 @@ void InfoList::DisplayObject()
 
 	/* #4 - memory info */
 
-	SetColor(COL_PANELBOX);
+	SetFarColor(COL_PANELBOX);
 	DrawSeparator(CurY);
-	SetColor(COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
 	strTitle = Msg::InfoMemory;
 	TruncStr(strTitle, X2 - X1 - 3);
 	GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, CurY++);
@@ -467,7 +468,7 @@ void InfoList::PrintInfo(const wchar_t *str)
 
 	if (NewX > X1 && NewX > WhereX()) {
 		GotoXY(NewX, WhereY());
-		SetColor(COL_PANELINFOTEXT);
+		SetFarColor(COL_PANELINFOTEXT);
 		FS << strStr << L" ";
 		SetColor(SaveColor);
 	}
@@ -535,7 +536,7 @@ void InfoList::ShowDirDescription(int YPos)
 	}
 
 	CloseFile();
-	SetColor(COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
 	GotoXY(X1 + 2, YPos + 1);
 	PrintText(Msg::InfoDizAbsent);
 }
@@ -561,11 +562,11 @@ void InfoList::ShowPluginDescription()
 
 		const InfoPanelLine *InfoLine = &Info.InfoLines[I];
 		GotoXY(X1, Y);
-		SetColor(COL_PANELBOX);
+		SetFarColor(COL_PANELBOX);
 		Text(VertcalLine);
-		SetColor(COL_PANELTEXT);
+		SetFarColor(COL_PANELTEXT);
 		FS << fmt::Cells() << fmt::Expand(X2 - X1 - 1) << L"";
-		SetColor(COL_PANELBOX);
+		SetFarColor(COL_PANELBOX);
 		Text(VertcalLine);
 		GotoXY(X1 + 2, Y);
 
@@ -645,7 +646,7 @@ int InfoList::OpenDizFile(const wchar_t *DizFile, int YPos)
 	strTitle.Append(L" ").Append(PointToName(strDizFileName)).Append(L" ");
 	TruncStr(strTitle, X2 - X1 - 3);
 	GotoXY(X1 + (X2 - X1 - (int)strTitle.GetLength()) / 2, YPos);
-	SetColor(COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
 	PrintText(strTitle);
 	return TRUE;
 }

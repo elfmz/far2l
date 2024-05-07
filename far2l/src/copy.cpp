@@ -199,7 +199,7 @@ class CopyProgress
 	bool Move, Total, Time;
 	bool BgInit, ScanBgInit;
 	bool IsCancelled;
-	int Color;
+	uint64_t Color;
 	int Percents;
 	DWORD LastWriteTime;
 	FARString strSrc, strDst, strFiles, strTime;
@@ -2912,8 +2912,11 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 		} break;
 		case DN_CTLCOLORDLGITEM: {
 			if (Param1 == WDLG_FILENAME) {
-				int Color = FarColorToReal(COL_WARNDIALOGTEXT) & 0xFF;
-				return ((Param2 & 0xFF00FF00) | (Color << 16) | Color);
+				uint64_t *ItemColor = reinterpret_cast<uint64_t *>(Param2);
+				uint64_t color = FarColorToReal(COL_WARNDIALOGTEXT);
+				ItemColor[0] = color;
+				ItemColor[2] = color;
+				return 1;
 			}
 		} break;
 		case DN_BTNCLICK: {

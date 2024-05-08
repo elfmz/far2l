@@ -424,7 +424,7 @@ class DialogBuilderBase
 			}
 		}
 
-		// Добавляет горизонтльную группу радиокнопок.
+		// Добавляет горизонтальную группу радиокнопок.
 		void AddRadioButtonsHorz(int *Value, int OptionCount, FarLangMsg MessageIDs[])
 		{
 			T *PrevItem = nullptr;

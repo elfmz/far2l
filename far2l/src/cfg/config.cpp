@@ -181,6 +181,7 @@ void SystemSettings()
 	AddHistorySettings(Builder, Msg::ConfigSaveFoldersHistory, &Opt.SaveFoldersHistory,
 			&Opt.FoldersHistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveViewHistory, &Opt.SaveViewHistory, &Opt.ViewHistoryCount);
+	Builder.AddCheckbox(Msg::ConfigAutoHighlightHistory, &Opt.AutoHighlightHistory);
 
 	Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
 	Builder.AddOKCancel();

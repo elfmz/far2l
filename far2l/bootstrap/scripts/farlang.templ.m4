@@ -1865,6 +1865,17 @@ ConfigSaveViewHistory
 "Зберігати історію п&ерегляду та редагування"
 "Захоўваць гісторыю п&раглядаў і зменаў"
 
+ConfigAutoHighlightHistory
+"Автоподсветка в списках истории"
+"Autohighlight in history"
+upd:"Autohighlight in history"
+upd:"Autohighlight in history"
+upd:"Autohighlight in history"
+upd:"Autohighlight in history"
+upd:"Autohighlight in history"
+upd:"Autohighlight in history"
+upd:"Autohighlight in history"
+
 ConfigRegisteredTypes
 "Использовать стандартные &типы файлов"
 "Use Windows &registered types"

@@ -294,9 +294,9 @@ void InterfaceSettings()
 	FARString strDateSeparator; //Opt.strDateSeparator
 	FARString strTimeSeparator; //Opt.strTimeSeparator
 	FARString strDecimalSeparator; //Opt.strDecimalSeparator
-	strDateSeparator += GetDateSeparator();
-	strTimeSeparator += GetTimeSeparator();
-	strDecimalSeparator += GetDecimalSeparator();
+	strDateSeparator = GetDateSeparator();
+	strTimeSeparator = GetTimeSeparator();
+	strDecimalSeparator = GetDecimalSeparator();
 
 	for (;;) {
 		DialogBuilder Builder(Msg::ConfigInterfaceTitle, L"InterfSettings");
@@ -335,19 +335,19 @@ void InterfaceSettings()
 		Builder.AddRadioButtonsHorz(&DateFormatIndex, ARRAYSIZE(DateFormatOptions), DateFormatOptions);
 
 		Builder.StartColumns();
-		DialogItemEx *DateSeparatorEdit = Builder.AddEditField(&strDateSeparator, 1);
+		DialogItemEx *DateSeparatorEdit = Builder.AddEditField(&strDateSeparator, 0);
 		DateSeparatorEdit->Type = DI_FIXEDIT;
 		DateSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DateSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(DateSeparatorEdit, Msg::ConfigDateSeparator);
 
-		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTimeSeparator, 1);
+		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTimeSeparator, 0);
 		TimeSeparatorEdit->Type = DI_FIXEDIT;
 		TimeSeparatorEdit->Flags |= DIF_MASKEDIT;
 		TimeSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(TimeSeparatorEdit, Msg::ConfigTimeSeparator);
 
-		DialogItemEx *DecimalSeparatorEdit = Builder.AddEditField(&strDecimalSeparator, 1);
+		DialogItemEx *DecimalSeparatorEdit = Builder.AddEditField(&strDecimalSeparator, 0);
 		DecimalSeparatorEdit->Type = DI_FIXEDIT;
 		DecimalSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DecimalSeparatorEdit->strMask = L"X";
@@ -356,10 +356,11 @@ void InterfaceSettings()
 		Builder.ColumnBreak();
 		int DateTimeDefaultID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeDefault, DateTimeDefaultID);
+		int DateTimeCurrentID = -1;
+		Builder.AddButton(Msg::ConfigDateTimeCurrent, DateTimeCurrentID);
 		int DateTimeFromSystemID = -1;
 		DialogItemEx *DateTimeFromSystem = Builder.AddButton(Msg::ConfigDateTimeFromSystem, DateTimeFromSystemID);
 		DateTimeFromSystem->Flags = DIF_DISABLE;
-		Builder.AddEmptyLine();
 		Builder.EndColumns();
 
 		Builder.AddSeparator();
@@ -433,6 +434,12 @@ void InterfaceSettings()
 			strDateSeparator = GetDateSeparatorDefault();
 			strTimeSeparator = GetTimeSeparatorDefault();
 			strDecimalSeparator = GetDecimalSeparatorDefault();
+		}
+		else if (clicked_id == DateTimeCurrentID) {
+			DateFormatIndex = GetDateFormat();
+			strDateSeparator = GetDateSeparator();
+			strTimeSeparator = GetTimeSeparator();
+			strDecimalSeparator = GetDecimalSeparator();
 		}
 		else if (clicked_id == DateTimeFromSystemID)
 			;

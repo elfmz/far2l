@@ -35,7 +35,7 @@
 
 "Всего типов: %d"
 "Выберите синтаксис"
-"Outliner [%s]"
+"Outliner [%ls]"
 "Ничего не найдено"
 "Ок"
 "[Ctrl]Enter, Tab, Ctrl-Cursor, [0-9a-z;:-_]"

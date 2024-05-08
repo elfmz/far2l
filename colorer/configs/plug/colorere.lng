@@ -35,7 +35,7 @@
 
 "Total %d types"
 "Select syntax"
-"Outliner [%s]"
+"Outliner [%ls]"
 "Nothing found"
 "Gotcha"
 "[Ctrl]Enter, Tab, Ctrl-Cursor, [0-9a-z;:-_]"

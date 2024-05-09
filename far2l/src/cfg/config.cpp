@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include <algorithm>
+#include <langinfo.h> // for nl_langinfo
 #include "config.hpp"
 #include "lang.hpp"
 #include "language.hpp"
@@ -359,8 +360,7 @@ void InterfaceSettings()
 		int DateTimeCurrentID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeCurrent, DateTimeCurrentID);
 		int DateTimeFromSystemID = -1;
-		DialogItemEx *DateTimeFromSystem = Builder.AddButton(Msg::ConfigDateTimeFromSystem, DateTimeFromSystemID);
-		DateTimeFromSystem->Flags = DIF_DISABLE;
+		Builder.AddButton(Msg::ConfigDateTimeFromSystem, DateTimeFromSystemID);
 		Builder.EndColumns();
 
 		Builder.AddSeparator();
@@ -429,20 +429,98 @@ void InterfaceSettings()
 
 		if (ChangeFontID != -1 && clicked_id == ChangeFontID)
 			WINPORT(ConsoleChangeFont)();
+
 		else if (clicked_id == DateTimeDefaultID) {
 			DateFormatIndex = GetDateFormatDefault();
 			strDateSeparator = GetDateSeparatorDefault();
 			strTimeSeparator = GetTimeSeparatorDefault();
 			strDecimalSeparator = GetDecimalSeparatorDefault();
 		}
+
 		else if (clicked_id == DateTimeCurrentID) {
 			DateFormatIndex = GetDateFormat();
 			strDateSeparator = GetDateSeparator();
 			strTimeSeparator = GetTimeSeparator();
 			strDecimalSeparator = GetDecimalSeparator();
 		}
-		else if (clicked_id == DateTimeFromSystemID)
-			;
+
+		else if (clicked_id == DateTimeFromSystemID) {
+			// parcing part of available https://help.gnome.org/users/gthumb/stable/gthumb-date-formats.html.en
+			std::string::size_type
+					pos_date_2 = std::string::npos,
+					pos_day, pos_month, pos_year,
+					pos_time_2 = std::string::npos;
+			size_t length_decimal;
+			std::string format_date = nl_langinfo(D_FMT);
+			std::string format_time = nl_langinfo(T_FMT);
+			std::string format_decimal = nl_langinfo(DECIMAL_POINT);
+			if (format_date=="%D") { // %D Equivalent to %m/%d/%y
+				DateFormatIndex = 0;
+				strTimeSeparator = "/";
+				pos_date_2 = 0; // for not error in message
+			}
+			else if (format_date.length() >= 8) {
+				pos_day   = format_date.find("%d");
+				pos_month = format_date.find("%m");
+				pos_year  = format_date.find("%Y");
+				if (pos_year == std::string::npos)
+					pos_year = format_date.find("%y");
+				if (pos_day == std::string::npos)
+					pos_day = format_date.find("%e");
+				if (pos_day != std::string::npos && pos_month != std::string::npos && pos_year != std::string::npos) {
+					if (pos_day < pos_month && pos_month < pos_year) // day-month-year
+					{ DateFormatIndex = 1; pos_date_2 = pos_month; }
+					else if (pos_year < pos_month && pos_month < pos_day) // year-month-day
+					{ DateFormatIndex = 2; pos_date_2 = pos_month; }
+					else if (pos_month < pos_day  && pos_month < pos_year) // month-day-year
+					{ DateFormatIndex = 0; pos_date_2 = pos_day; }
+				}
+			}
+			if (pos_date_2 != std::string::npos)
+				strDateSeparator = format_date[pos_date_2-1];
+
+			if (format_time=="%T") { // %T The time in 24-hour notation (%H:%M:%S).
+				strTimeSeparator = ":";
+				pos_time_2 = 0; // for not error in message
+			}
+			else {
+				pos_day = format_time.find("%");
+				if (pos_day != std::string::npos) {
+					pos_time_2 = format_time.find("%",pos_day+2);
+					if (pos_time_2 != std::string::npos)
+						strTimeSeparator = format_time[pos_time_2-1];
+				}
+			}
+
+			length_decimal = format_decimal.length();
+			if (length_decimal > 0)
+				strDecimalSeparator = format_decimal[0];
+
+			ExMessager em;
+			em.Add(L"From system locale");
+			em.AddFormat(L"  Date from locale: \"%s\"", format_date.c_str());
+			em.AddFormat(L"    Date order:        %s (order %d)",
+				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
+				DateFormatIndex);
+			em.AddFormat(L"    Date separator:    %s (\'%ls\')",
+				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
+				strDateSeparator.CPtr());
+			em.AddFormat(L"  Time from locale: \"%s\"", format_time.c_str());
+			em.AddFormat(L"    Time separator:    %s (\'%ls\')",
+				(pos_time_2 != std::string::npos) ? "imported" : "did not changed",
+				 strTimeSeparator.CPtr());
+			em.AddFormat(L"  DecimalSeparator from locale: \"%s\"", format_decimal.c_str());
+			em.AddFormat(L"    Decimal separator: %s (\'%ls\')",
+				length_decimal>0 ? "imported" : "did not changed",
+				strDecimalSeparator.CPtr());
+			em.Add(Msg::Ok);
+			em.Show(MSG_LEFTALIGN |
+					( (pos_date_2 == std::string::npos
+						|| pos_time_2 == std::string::npos
+						|| length_decimal<=0 )
+					? MSG_WARNING : 0),
+				1);
+		}
 		else
 			break;
 	}

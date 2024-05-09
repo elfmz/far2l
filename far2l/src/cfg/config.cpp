@@ -453,7 +453,7 @@ void InterfaceSettings()
 			size_t length_decimal;
 			std::string format_date = nl_langinfo(D_FMT);
 			std::string format_time = nl_langinfo(T_FMT);
-			std::string format_decimal = nl_langinfo(DECIMAL_POINT);
+			std::string format_decimal = nl_langinfo(RADIXCHAR/*DECIMAL_POINT*/);
 			if (format_date=="%D") { // %D Equivalent to %m/%d/%y
 				DateFormatIndex = 0;
 				strTimeSeparator = "/";
@@ -486,7 +486,7 @@ void InterfaceSettings()
 			else {
 				pos_day = format_time.find("%");
 				if (pos_day != std::string::npos) {
-					pos_time_2 = format_time.find("%",pos_day+2);
+					pos_time_2 = format_time.find("%", pos_day+2);
 					if (pos_time_2 != std::string::npos)
 						strTimeSeparator = format_time[pos_time_2-1];
 				}
@@ -498,19 +498,19 @@ void InterfaceSettings()
 
 			ExMessager em;
 			em.Add(L"From system locale");
-			em.AddFormat(L"  Date from locale: \"%s\"", format_date.c_str());
-			em.AddFormat(L"    Date order:        %s (order %d)",
+			em.AddFormat(L"Date format from locale:      \"%s\"", format_date.c_str());
+			em.AddFormat(L"  Date order:        %s (order %d)",
 				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
 				DateFormatIndex);
-			em.AddFormat(L"    Date separator:    %s (\'%ls\')",
+			em.AddFormat(L"  Date separator:    %s (\'%ls\')",
 				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
 				strDateSeparator.CPtr());
-			em.AddFormat(L"  Time from locale: \"%s\"", format_time.c_str());
-			em.AddFormat(L"    Time separator:    %s (\'%ls\')",
+			em.AddFormat(L"Time format from locale:      \"%s\"", format_time.c_str());
+			em.AddFormat(L"  Time separator:    %s (\'%ls\')",
 				(pos_time_2 != std::string::npos) ? "imported" : "did not changed",
 				 strTimeSeparator.CPtr());
-			em.AddFormat(L"  DecimalSeparator from locale: \"%s\"", format_decimal.c_str());
-			em.AddFormat(L"    Decimal separator: %s (\'%ls\')",
+			em.AddFormat(L"DecimalSeparator from locale: \"%s\"", format_decimal.c_str());
+			em.AddFormat(L"  Decimal separator: %s (\'%ls\')",
 				length_decimal>0 ? "imported" : "did not changed",
 				strDecimalSeparator.CPtr());
 			em.Add(Msg::Ok);

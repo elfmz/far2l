@@ -226,6 +226,7 @@ enum FarDialogItemFlags
 	DIF_SEPARATOR2            = 0x00020000UL,
 	DIF_EDITOR                = 0x00020000UL,
 	DIF_LISTNOAMPERSAND       = 0x00020000UL,
+	DIF_HORIZONTALLAYOUT      = 0x00040000UL, //enable horizontal navigation for checkbox and radiobutton
 	DIF_LISTNOBOX             = 0x00040000UL,
 	DIF_HISTORY               = 0x00040000UL,
 	DIF_BTNNOCLOSE            = 0x00040000UL,

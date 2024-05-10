@@ -849,8 +849,6 @@ void FarEditor::showOutliner(Outliner *outliner)
   };
   int keys_size = sizeof(breakKeys)/sizeof(int)-1;
 
-  //we need this?
-  //int outputEnc = Encodings::getEncodingIndex("cp866");
   wchar_t prefix[FILTER_SIZE+1];
   wchar_t autofilter[FILTER_SIZE+1];
   wchar_t filter[FILTER_SIZE+1];

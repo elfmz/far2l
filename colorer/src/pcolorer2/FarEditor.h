@@ -1,26 +1,35 @@
 #ifndef _FAREDITOR_H_
 #define _FAREDITOR_H_
 
-#include<colorer/editor/BaseEditor.h>
-#include<colorer/handlers/StyledRegion.h>
-#include<colorer/editor/Outliner.h>
-#include"pcolorer.h"
+#include <colorer/editor/BaseEditor.h>
+#include <colorer/editor/Outliner.h>
+#include <colorer/handlers/StyledRegion.h>
+#include "pcolorer.h"
 
-struct color{
-  union{
-    struct{
+struct color
+{
+  union {
+    struct
+    {
       unsigned int cfg : 4;
       unsigned int cbk : 4;
     };
     int concolor : 32;
-    struct{
-      unsigned int fg :24;
-      unsigned int bk :24;
+    struct
+    {
+      unsigned int fg : 24;
+      unsigned int bk : 24;
       int style;
     };
   };
-  //color(): concolor(0), fg(0), bk(0), style(0) {}
-  color() {concolor=0; fg = 0; bk = 0; style = 0; }
+  // color(): concolor(0), fg(0), bk(0), style(0) {}
+  color()
+  {
+    concolor = 0;
+    fg = 0;
+    bk = 0;
+    style = 0;
+  }
 };
 
 extern const UnicodeString DShowCross;
@@ -52,10 +61,10 @@ extern const UnicodeString DFirstLineBytes;
 */
 class FarEditor : public LineSource
 {
-public:
+ public:
   /** Creates FAR editor instance.
-  */
-  FarEditor(PluginStartupInfo *inf, ParserFactory *pf);
+   */
+  FarEditor(PluginStartupInfo* inf, ParserFactory* pf);
   /** Drops this editor */
   ~FarEditor();
 
@@ -64,29 +73,28 @@ public:
   Returns line number "lno" from FAR interface. Line is only valid until next call of this function,
   it also should not be disposed, this function takes care of this.
   */
-  UnicodeString *getLine(size_t lno);
+  UnicodeString* getLine(size_t lno);
 
   /** Changes current assigned file type.
-  */
-  void setFileType(FileType *ftype);
+   */
+  void setFileType(FileType* ftype);
   /** Returns currently selected file type.
-  */
-  FileType *getFileType();
+   */
+  FileType* getFileType();
 
   /** Selects file type with it's extension and first lines
-  */
-  void chooseFileType(UnicodeString *fname);
-
+   */
+  void chooseFileType(UnicodeString* fname);
 
   /** Installs specified RegionMapper implementation.
   This class serves to request mapping of regions into
   real colors.
   */
-  void setRegionMapper(RegionMapper *rs);
+  void setRegionMapper(RegionMapper* rs);
 
   /**
-  * Change editor properties. These overwrites default HRC settings
-  */
+   * Change editor properties. These overwrites default HRC settings
+   */
   void setDrawCross(int _drawCross);
   void setDrawPairs(bool drawPairs);
   void setDrawSyntax(bool drawSyntax);
@@ -94,50 +102,50 @@ public:
   void setTrueMod(bool _TrueMod);
 
   /** Editor action: pair matching.
-  */
+   */
   void matchPair();
   /** Editor action: pair selection.
-  */
+   */
   void selectPair();
   /** Editor action: pair selection with current block.
-  */
+   */
   void selectBlock();
   /** Editor action: Selection of current region under cursor.
-  */
+   */
   void selectRegion();
   /** Editor action: Lists fuctional region.
-  */
+   */
   void listFunctions();
   /** Editor action: Lists syntax errors in text.
-  */
+   */
   void listErrors();
   /**
-  * Locates a function under cursor and tries to jump to it using outliner information
-  */
+   * Locates a function under cursor and tries to jump to it using outliner information
+   */
   void locateFunction();
 
   /** Invalidates current syntax highlighting
-  */
+   */
   void updateHighlighting();
 
   /** Handle passed FAR editor event */
-  int editorEvent(int event, void *param);
+  int editorEvent(int event, void* param);
   /** Dispatch editor input event */
-  int editorInput(const INPUT_RECORD *ir);
+  int editorInput(const INPUT_RECORD* ir);
 
   void cleanEditor();
 
-private:
+ private:
   EditorInfo ei;
-  PluginStartupInfo *info;
+  PluginStartupInfo* info;
 
-  ParserFactory *parserFactory;
-  BaseEditor *baseEditor;
+  ParserFactory* parserFactory;
+  BaseEditor* baseEditor;
 
-  int  maxLineLength;
+  int maxLineLength;
   bool fullBackground;
 
-  int drawCross;//0 - off,  1 - always, 2 - if included in the scheme
+  int drawCross;  // 0 - off,  1 - always, 2 - if included in the scheme
   bool showVerticalCross, showHorizontalCross;
   int crossZOrder;
   color horzCrossColor, vertCrossColor;
@@ -153,25 +161,25 @@ private:
 
   int prevLinePosition, blockTopPosition;
 
-  UnicodeString *ret_str;
+  UnicodeString* ret_str;
   size_t ret_strNumber;
 
   int newfore, newback;
-  const StyledRegion *rdBackground;
-  LineRegion *cursorRegion;
+  const StyledRegion* rdBackground;
+  LineRegion* cursorRegion;
 
   int visibleLevel;
-  Outliner *structOutliner;
-  Outliner *errorOutliner;
+  Outliner* structOutliner;
+  Outliner* errorOutliner;
 
   void reloadTypeSettings();
   void enterHandler();
-  color convert(const StyledRegion *rd);
+  color convert(const StyledRegion* rd);
   bool foreDefault(color col);
   bool backDefault(color col);
-  void showOutliner(Outliner *outliner);
+  void showOutliner(Outliner* outliner);
   void addFARColor(int lno, int s, int e, color col);
-  const wchar_t *GetMsg(int msg);
+  const wchar_t* GetMsg(int msg);
 };
 #endif
 

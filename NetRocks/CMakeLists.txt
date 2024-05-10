@@ -84,6 +84,9 @@ add_executable (NetRocks-SHELL
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
 
 target_link_libraries(NetRocks-FILE utils)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_link_libraries(NetRocks-FILE stdc++ m)
+endif()
 target_include_directories(NetRocks-FILE PRIVATE src)
 set_target_properties(NetRocks-FILE
     PROPERTIES
@@ -93,6 +96,9 @@ set_target_properties(NetRocks-FILE
 target_compile_options(NetRocks-FILE PUBLIC -DNETROCKS_PROTOCOL)
 
 target_link_libraries(NetRocks-SHELL utils)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_link_libraries(NetRocks-SHELL stdc++ m)
+endif()
 target_include_directories(NetRocks-SHELL PRIVATE src)
 set_target_properties(NetRocks-SHELL
     PROPERTIES
@@ -118,6 +124,9 @@ if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
         src/Protocol/ShellParseUtils.cpp
     )
     target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_link_libraries(NetRocks-SFTP stdc++ m)
+    endif()
     target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
     set_target_properties(NetRocks-SFTP
         PROPERTIES
@@ -134,6 +143,9 @@ if (LIBSMBCLIENT_FOUND AND ((NOT DEFINED NR_SMB) OR NR_SMB))
         src/Protocol/SMB/NMBEnum.cpp
     )
     target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_link_libraries(NetRocks-SMB stdc++ m)
+    endif()
     target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
     set_target_properties(NetRocks-SMB
         PROPERTIES
@@ -149,6 +161,9 @@ if (LIBNFS_FOUND AND ((NOT DEFINED NR_NFS) OR NR_NFS))
         src/Protocol/NFS/ProtocolNFS.cpp
     )
     target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_link_libraries(NetRocks-NFS stdc++ m)
+    endif()
     target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
     set_target_properties(NetRocks-NFS
         PROPERTIES
@@ -165,6 +180,9 @@ if (LIBNEON_FOUND AND ((NOT DEFINED NR_WEBDAV) OR NR_WEBDAV))
         src/Protocol/WebDAV/ProtocolWebDAV.cpp
     )
     target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        target_link_libraries(NetRocks-WebDAV stdc++ m)
+    endif()
     target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
     set_target_properties(NetRocks-WebDAV
         PROPERTIES
@@ -173,26 +191,29 @@ if (LIBNEON_FOUND AND ((NOT DEFINED NR_WEBDAV) OR NR_WEBDAV))
         SUFFIX ".broker")
 endif ()
 
-    add_executable (NetRocks-FTP
-        ${PROTOCOL_SOURCES}
-        src/Protocol/FTP/ProtocolFTP.cpp
-        src/Protocol/FTP/FTPConnection.cpp
-        src/Protocol/FTP/FTPParseMLST.cpp
-        src/Protocol/FTP/FTPParseLIST.cpp
-        src/Protocol/DirectoryEnumCache.cpp
-    )
-    target_link_libraries(NetRocks-FTP utils)
-    target_include_directories(NetRocks-FTP PRIVATE src)
+add_executable (NetRocks-FTP
+    ${PROTOCOL_SOURCES}
+    src/Protocol/FTP/ProtocolFTP.cpp
+    src/Protocol/FTP/FTPConnection.cpp
+    src/Protocol/FTP/FTPParseMLST.cpp
+    src/Protocol/FTP/FTPParseLIST.cpp
+    src/Protocol/DirectoryEnumCache.cpp
+)
+target_link_libraries(NetRocks-FTP utils)
+target_include_directories(NetRocks-FTP PRIVATE src)
 if (OPENSSL_FOUND AND ((NOT DEFINED NR_OPENSSL) OR NR_OPENSSL))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OPENSSL")
     target_link_libraries(NetRocks-FTP ${OPENSSL_LIBRARIES})
     target_include_directories(NetRocks-FTP PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
-    set_target_properties(NetRocks-FTP
-        PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
-        PREFIX ""
-        SUFFIX ".broker")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_link_libraries(NetRocks-FTP stdc++ m)
+endif()
+set_target_properties(NetRocks-FTP
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+    PREFIX ""
+    SUFFIX ".broker")
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FAR_HAS_NAMELESS_UNIONS")

@@ -253,21 +253,26 @@ set_target_properties(far2l
     PROPERTIES
     ENABLE_EXPORTS TRUE)
 
+# common libraries
+target_link_libraries(far2l
+    PRIVATE ${WINPORT}
+    PRIVATE ${UCHARDET_LIBRARIES})
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
     target_link_libraries(far2l
-    PRIVATE ${WINPORT}
-    PRIVATE c
-    PRIVATE ${UCHARDET_LIBRARIES})
+        PRIVATE c)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Haiku")
     target_link_libraries(far2l
-        PRIVATE ${WINPORT}
-        PRIVATE gnu
-        PRIVATE ${UCHARDET_LIBRARIES})
+        PRIVATE gnu)
 else()
     target_link_libraries(far2l
-    PRIVATE ${WINPORT}
-        PRIVATE dl
-        PRIVATE ${UCHARDET_LIBRARIES})
+        PRIVATE dl)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_link_libraries(far2l
+        PRIVATE stdc++
+        PRIVATE m)
 endif()
 
 add_custom_command(TARGET far2l POST_BUILD

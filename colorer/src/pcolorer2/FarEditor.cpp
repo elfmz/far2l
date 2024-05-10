@@ -23,66 +23,29 @@ const UnicodeString DFavorite("favorite");
 const UnicodeString DFirstLines("firstlines");
 const UnicodeString DFirstLineBytes("firstlinebytes");
 
-FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf)
-    : info(inf),
-      parserFactory(pf),
-      baseEditor(new BaseEditor(parserFactory, this)),
-      maxLineLength(0),
-      fullBackground(true),
-      drawCross(2),
-      showVerticalCross(false),
-      showHorizontalCross(false),
-      crossZOrder(0),
-      horzCrossColor(color()),  // 0x0E
-      vertCrossColor(color()),  // 0x0E
-      drawPairs(true),
-      drawSyntax(true),
-      oldOutline(false),
-      TrueMod(true),
-      WindowSizeX(0),
-      WindowSizeY(0),
-      inRedraw(false),
-      idleCount(0),
-      prevLinePosition(0),
-      blockTopPosition(-1),
-      ret_str(nullptr),
-      ret_strNumber(-1),
-      newfore(-1),
-      newback(-1),
-      rdBackground(nullptr),
-      cursorRegion(nullptr),
-      visibleLevel(100),
-      structOutliner(nullptr),
-      errorOutliner(nullptr)
+FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf) : info(inf), parserFactory(pf)
 {
   info->EditorControl(ECTL_GETINFO, &ei);
   UnicodeString dso("def:Outlined");
   UnicodeString dse("def:Error");
+  baseEditor = std::make_unique<BaseEditor>(parserFactory, this);
   const Region* def_Outlined = parserFactory->getHrcLibrary().getRegion(&dso);
   const Region* def_Error = parserFactory->getHrcLibrary().getRegion(&dse);
-  structOutliner = new Outliner(baseEditor, def_Outlined);
-  errorOutliner = new Outliner(baseEditor, def_Error);
+  structOutliner = std::make_unique<Outliner>(baseEditor.get(), def_Outlined);
+  errorOutliner = std::make_unique<Outliner>(baseEditor.get(), def_Error);
 }
 
-FarEditor::~FarEditor()
-{
-  delete cursorRegion;
-  delete structOutliner;
-  delete errorOutliner;
-  delete baseEditor;
-  delete ret_str;
-}
+FarEditor::~FarEditor() {}
 
 void FarEditor::endJob(size_t lno)
 {
-  delete ret_str;
-  ret_str = nullptr;
+  ret_str.reset();
 }
 
 UnicodeString* FarEditor::getLine(size_t lno)
 {
   if (ret_strNumber == lno && ret_str != nullptr) {
-    return ret_str;
+    return ret_str.get();
   }
 
   EditorGetString es;
@@ -100,12 +63,12 @@ UnicodeString* FarEditor::getLine(size_t lno)
     len = maxLineLength;
   }
 
-  delete ret_str;
-  ret_str = new UnicodeString((char*) es.StringText, len * sizeof(wchar_t), Encodings::ENC_UTF32);
-  return ret_str;
+  ret_str = std::make_unique<UnicodeString>((char*) es.StringText, len * sizeof(wchar_t),
+                                            Encodings::ENC_UTF32);
+  return ret_str.get();
 }
 
-void FarEditor::chooseFileType(UnicodeString* fname)
+void FarEditor::chooseFileType(const UnicodeString* fname)
 {
   FileType* ftype = baseEditor->chooseFileType(fname);
   setFileType(ftype);
@@ -215,7 +178,7 @@ void FarEditor::reloadTypeSettings()
   baseEditor->setBackParse(backparse);
 }
 
-FileType* FarEditor::getFileType()
+FileType* FarEditor::getFileType() const
 {
   return baseEditor->getFileType();
 }
@@ -408,13 +371,13 @@ void FarEditor::selectRegion()
 void FarEditor::listFunctions()
 {
   baseEditor->validate(-1, false);
-  showOutliner(structOutliner);
+  showOutliner(structOutliner.get());
 }
 
 void FarEditor::listErrors()
 {
   baseEditor->validate(-1, false);
-  showOutliner(errorOutliner);
+  showOutliner(errorOutliner.get());
 }
 
 void FarEditor::locateFunction()
@@ -564,8 +527,7 @@ int FarEditor::editorEvent(int event, void* param)
   ecp.StringNumber = -1;
   ecp.SrcPos = ei.CurPos;
   info->EditorControl(ECTL_REALTOTAB, &ecp);
-  delete cursorRegion;
-  cursorRegion = nullptr;
+  cursorRegion.reset();
 
   if (rdBackground == nullptr) {
     throw Exception("HRD Background region 'def:Text' not found");
@@ -660,8 +622,7 @@ int FarEditor::editorEvent(int event, void* param)
           addFARColor(lno, l1->start, lend, col);
 
           if (lno == ei.CurLine && (l1->start <= ei.CurPos) && (ei.CurPos <= lend)) {
-            delete cursorRegion;
-            cursorRegion = new LineRegion(*l1);
+            cursorRegion = std::make_unique<LineRegion>(*l1);
           };
 
           // column

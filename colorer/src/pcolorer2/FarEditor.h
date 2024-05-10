@@ -66,25 +66,25 @@ class FarEditor : public LineSource
    */
   FarEditor(PluginStartupInfo* inf, ParserFactory* pf);
   /** Drops this editor */
-  ~FarEditor();
+  ~FarEditor() override;
 
-  void endJob(size_t lno);
+  void endJob(size_t lno) override;
   /**
   Returns line number "lno" from FAR interface. Line is only valid until next call of this function,
   it also should not be disposed, this function takes care of this.
   */
-  UnicodeString* getLine(size_t lno);
+  UnicodeString* getLine(size_t lno) override;
 
   /** Changes current assigned file type.
    */
   void setFileType(FileType* ftype);
   /** Returns currently selected file type.
    */
-  FileType* getFileType();
+  [[nodiscard]] FileType* getFileType() const;
 
   /** Selects file type with it's extension and first lines
    */
-  void chooseFileType(UnicodeString* fname);
+  void chooseFileType(const UnicodeString* fname);
 
   /** Installs specified RegionMapper implementation.
   This class serves to request mapping of regions into
@@ -99,7 +99,7 @@ class FarEditor : public LineSource
   void setDrawPairs(bool drawPairs);
   void setDrawSyntax(bool drawSyntax);
   void setOutlineStyle(bool oldStyle);
-  void setTrueMod(bool _TrueMod);
+  void setTrueMod(bool TrueMod_);
 
   /** Editor action: pair matching.
    */
@@ -113,7 +113,7 @@ class FarEditor : public LineSource
   /** Editor action: Selection of current region under cursor.
    */
   void selectRegion();
-  /** Editor action: Lists fuctional region.
+  /** Editor action: Lists functional region.
    */
   void listFunctions();
   /** Editor action: Lists syntax errors in text.
@@ -140,37 +140,45 @@ class FarEditor : public LineSource
   PluginStartupInfo* info;
 
   ParserFactory* parserFactory;
-  BaseEditor* baseEditor;
+  std::unique_ptr<BaseEditor> baseEditor;
 
-  int maxLineLength;
-  bool fullBackground;
+  int maxLineLength = 0;
+  bool fullBackground = true;
 
-  int drawCross;  // 0 - off,  1 - always, 2 - if included in the scheme
-  bool showVerticalCross, showHorizontalCross;
-  int crossZOrder;
-  color horzCrossColor, vertCrossColor;
+  int drawCross = 2;  // 0 - off,  1 - always, 2 - if included in the scheme
+  bool showVerticalCross = false;
+  bool showHorizontalCross = false;
+  int crossZOrder = 0;
+  color horzCrossColor {};
+  color vertCrossColor {};
 
-  bool drawPairs, drawSyntax;
-  bool oldOutline;
-  bool TrueMod;
+  bool drawPairs = true;
+  ;
+  bool drawSyntax = true;
+  ;
+  bool oldOutline = false;
+  bool TrueMod = true;
+  ;
 
-  int WindowSizeX;
-  int WindowSizeY;
-  bool inRedraw;
-  int idleCount;
+  int WindowSizeX = 0;
+  int WindowSizeY = 0;
+  bool inRedraw = false;
+  int idleCount = 0;
 
-  int prevLinePosition, blockTopPosition;
+  int prevLinePosition = 0;
+  int blockTopPosition = -1;
 
-  UnicodeString* ret_str;
-  size_t ret_strNumber;
+  std::unique_ptr<UnicodeString> ret_str;
+  size_t ret_strNumber = -1;
 
-  int newfore, newback;
-  const StyledRegion* rdBackground;
-  LineRegion* cursorRegion;
+  int newfore = -1;
+  int newback = -1;
+  const StyledRegion* rdBackground = nullptr;
+  std::unique_ptr<LineRegion> cursorRegion;
 
-  int visibleLevel;
-  Outliner* structOutliner;
-  Outliner* errorOutliner;
+  int visibleLevel = 100;
+  std::unique_ptr<Outliner> structOutliner;
+  std::unique_ptr<Outliner> errorOutliner;
 
   void reloadTypeSettings();
   void enterHandler();

@@ -60,8 +60,7 @@ int GetDateFormat()
 	//int Result = 1;
 	//	GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_IDATE|LOCALE_RETURN_NUMBER,reinterpret_cast<LPWSTR>(&Result),sizeof(Result)/sizeof(WCHAR));
 	//return Result;
-	int Result = Opt.DateFormat;
-	return (Result >= 0 && Result <=2) ? Result : GetDateFormatDefault();
+	return (Opt.DateFormat >= 0 && Opt.DateFormat <= 2) ? Opt.DateFormat : GetDateFormatDefault();
 }
 
 wchar_t GetDateSeparator()
@@ -640,7 +639,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 	}
 }
 
-static bool Init = false;
+static bool Init = false; // for ConvertDate()
 
 void ConvertDate_ResetInit()
 {

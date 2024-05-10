@@ -2733,7 +2733,7 @@ int Dialog::ProcessKey(FarKey Key)
 				((DlgEdit *)(Item[FocusPos]->ObjPtr))->ProcessKey(Key);
 				return TRUE;
 			} else {
-				return Do_ProcessMoveToCtrlHorizontal(Key == KEY_RIGHT || Key == KEY_NUMPAD6);
+				return MoveToCtrlHorizontal(Key == KEY_RIGHT || Key == KEY_NUMPAD6);
 			}
 		}
 		case KEY_UP:
@@ -2743,13 +2743,7 @@ int Dialog::ProcessKey(FarKey Key)
 			if (Item[FocusPos]->Type == DI_USERCONTROL)		// для user-типа вываливаем
 				return TRUE;
 
-			if ((Item[FocusPos]->Type == DI_CHECKBOX || Item[FocusPos]->Type == DI_RADIOBUTTON)
-					&& (Item[FocusPos]->Flags & DIF_HORIZONTALLAYOUT)
-			) {
-				return Do_ProcessMoveToCtrlVertical(Key == KEY_UP || Key == KEY_NUMPAD8);
-			} else {
-				return Do_ProcessNextCtrl(Key == KEY_UP || Key == KEY_NUMPAD8);
-			}
+			return MoveToCtrlVertical(Key == KEY_UP || Key == KEY_NUMPAD8);
 		}
 		// $ 27.04.2001 VVM - Обработка колеса мышки
 		case KEY_MSWHEEL_UP:
@@ -3596,7 +3590,7 @@ int Dialog::Do_ProcessNextCtrl(int Up, BOOL IsRedraw)
 	return TRUE;
 }
 
-int Dialog::Do_ProcessMoveToCtrlHorizontal(int right)
+int Dialog::MoveToCtrlHorizontal(int right)
 {
 	int MinDist = 1000, MinPos = 0;
 
@@ -3633,7 +3627,7 @@ int Dialog::Do_ProcessMoveToCtrlHorizontal(int right)
 	return TRUE;
 }
 
-int Dialog::Do_ProcessMoveToCtrlVertical(int up)
+int Dialog::MoveToCtrlVertical(int up)
 {
 	int MinDist = 1000, MinPos = 0;
 

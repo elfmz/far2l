@@ -4,62 +4,60 @@
 #include "tools.h"
 
 #ifdef USESPDLOG
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/spdlog.h>
 
 std::shared_ptr<spdlog::logger> logger;
 #else
 std::shared_ptr<DummyLogger> logger;
 #endif
 
-
-FarEditorSet *editorSet = nullptr;
+FarEditorSet* editorSet = nullptr;
 bool inEventProcess = false;
 PluginStartupInfo Info;
 FarStandardFunctions FSF;
-UnicodeString *PluginPath = nullptr;
+UnicodeString* PluginPath = nullptr;
 
-SHAREDSYMBOL void PluginModuleOpen(const char *path)
+SHAREDSYMBOL void PluginModuleOpen(const char* path)
 {
-      UnicodeString module(path);
-      int pos = module.lastIndexOf('/');
-      pos = module.lastIndexOf('/',pos);
-      PluginPath=new UnicodeString(UnicodeString(module, 0, pos));
+  UnicodeString module(path);
+  int pos = module.lastIndexOf('/');
+  pos = module.lastIndexOf('/', pos);
+  PluginPath = new UnicodeString(UnicodeString(module, 0, pos));
 #ifdef USESPDLOG
-      logger = spdlog::stderr_logger_mt("far2l-colorer");
+  logger = spdlog::stderr_logger_mt("far2l-colorer");
 #else
-      logger = std::make_shared<DummyLogger>();
+  logger = std::make_shared<DummyLogger>();
 #endif
 }
 
-UnicodeString *GetConfigPath(const UnicodeString &sub)
+UnicodeString* GetConfigPath(const UnicodeString& sub)
 {
   struct stat s;
-  UnicodeString *path=new UnicodeString(*PluginPath);
+  UnicodeString* path = new UnicodeString(*PluginPath);
   path->append(sub);
   if (stat(path->getChars(), &s) == -1) {
-          std::wstring str(path->getWChars());
-          if (TranslateInstallPath_Lib2Share(str) ) {
-            path->setLength(0);
-            path->append(str.c_str());
-          }
+    std::wstring str(path->getWChars());
+    if (TranslateInstallPath_Lib2Share(str)) {
+      path->setLength(0);
+      path->append(str.c_str());
+    }
   }
   return path;
 }
 
-
 /**
   Returns message from FAR current language.
 */
-const wchar_t *GetMsg(int msg)
+const wchar_t* GetMsg(int msg)
 {
-  return(Info.GetMsg(Info.ModuleNumber, msg));
+  return (Info.GetMsg(Info.ModuleNumber, msg));
 };
 
 /**
   Plugin initialization and creation of editor set support class.
 */
-SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
+SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo* fei)
 {
   Info = *fei;
   FSF = *fei->FSF;
@@ -69,7 +67,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *fei)
 /**
   Plugin strings in FAR interface.
 */
-SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
+SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo* nInfo)
 {
   static wchar_t* PluginMenuStrings;
   memset(nInfo, 0, sizeof(*nInfo));
@@ -77,7 +75,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *nInfo)
   nInfo->StructSize = sizeof(*nInfo);
   nInfo->PluginConfigStringsNumber = 1;
   nInfo->PluginMenuStringsNumber = 1;
-  PluginMenuStrings = (wchar_t*)GetMsg(mName);
+  PluginMenuStrings = (wchar_t*) GetMsg(mName);
   nInfo->PluginConfigStrings = &PluginMenuStrings;
   nInfo->PluginMenuStrings = &PluginMenuStrings;
 }
@@ -95,7 +93,7 @@ SHAREDSYMBOL void WINAPI ExitFARW()
 */
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-  if (OpenFrom == OPEN_EDITOR){
+  if (OpenFrom == OPEN_EDITOR) {
     editorSet->openMenu();
   }
 
@@ -107,12 +105,13 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 */
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 {
-  if (!editorSet){
+  if (!editorSet) {
     editorSet = new FarEditorSet();
-  }else{
-  // ReadSettings need for plugin off mode
-		editorSet->ReadSettings();
-	}
+  }
+  else {
+    // ReadSettings need for plugin off mode
+    editorSet->ReadSettings();
+  }
   editorSet->configure(false);
   return 1;
 }
@@ -121,7 +120,7 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
   Processes FAR editor events and
   makes text colorizing here.
 */
-SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
+SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void* Param)
 {
   if (inEventProcess) {
     return 0;
@@ -139,7 +138,7 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
   return result;
 }
 
-SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
+SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD* ir)
 {
   if (inEventProcess) {
     return 0;

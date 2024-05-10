@@ -1,10 +1,10 @@
 #include "tools.h"
-#include <string>
 #include <utils.h>
+#include <string>
 
-wchar_t *rtrim(wchar_t* str)
+wchar_t* rtrim(wchar_t* str)
 {
-  wchar_t *ptr = str;
+  wchar_t* ptr = str;
   str += wcslen(str);
 
   while (iswspace(*(--str))) *str = 0;
@@ -12,23 +12,24 @@ wchar_t *rtrim(wchar_t* str)
   return ptr;
 }
 
-wchar_t *ltrim(wchar_t* str)
+wchar_t* ltrim(wchar_t* str)
 {
-  while (iswspace(*(str++)));
+  while (iswspace(*(str++)))
+    ;
 
   return str - 1;
 }
 
-wchar_t *trim(wchar_t* str)
+wchar_t* trim(wchar_t* str)
 {
   return ltrim(rtrim(str));
 }
 
 /**
-  Function converts a path in the UNC path. 
-  Source path can be framed by quotes, be a relative, or contain environment variables 
+  Function converts a path in the UNC path.
+  Source path can be framed by quotes, be a relative, or contain environment variables
 */
-wchar_t *PathToFull(const wchar_t *path, bool unc)
+wchar_t* PathToFull(const wchar_t* path, bool unc)
 {
   std::wstring new_path(path);
   if (new_path.empty()) {
@@ -36,10 +37,10 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   }
   // we remove quotes, if they are present, focusing on the first character
   // if he quote it away and the first and last character.
-  // If the first character quote, but the latter does not - well, it's not our 
+  // If the first character quote, but the latter does not - well, it's not our
   // problem, and so and so error
   if (new_path.size() > 1 && new_path.front() == L'"' && new_path.back() == '"') {
-	new_path = new_path.substr(1, new_path.size() - 2);
+    new_path = new_path.substr(1, new_path.size() - 2);
   }
 
   // replace the environment variables to their values
@@ -52,14 +53,14 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   size_t unconverted_len = new_path.size();
   size_t p = FSF.ConvertPath(CPM_FULL, &new_path[0], nullptr, 0);
   if (p > unconverted_len) {
-	new_path.resize(p);
-	std::fill(new_path.begin() + unconverted_len, new_path.end(), 0);
+    new_path.resize(p);
+    std::fill(new_path.begin() + unconverted_len, new_path.end(), 0);
   }
   p = FSF.ConvertPath(CPM_FULL, &new_path[0], &new_path[0], static_cast<int>(new_path.size()));
   ASSERT(p <= new_path.size());
-  //new_path.resize(p);
+  // new_path.resize(p);
 
-  wchar_t *out = new wchar_t[p];
+  wchar_t* out = new wchar_t[p];
   wmemcpy(out, &new_path[0], p);
 
   if (unc) {
@@ -69,12 +70,12 @@ wchar_t *PathToFull(const wchar_t *path, bool unc)
   return out;
 }
 
-UnicodeString *PathToFullS(const wchar_t *path, bool unc)
+UnicodeString* PathToFullS(const wchar_t* path, bool unc)
 {
-  UnicodeString *spath=nullptr;
-  wchar_t *t=PathToFull(path,unc);
-  if (t){
-    spath=new UnicodeString(t);
+  UnicodeString* spath = nullptr;
+  wchar_t* t = PathToFull(path, unc);
+  if (t) {
+    spath = new UnicodeString(t);
   }
   delete[] t;
   return spath;

@@ -8,28 +8,66 @@
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
-extern UnicodeString *PluginPath;
+extern UnicodeString* PluginPath;
 
 /** FAR .lng file identifiers. */
-enum
-{
-  mName, mSetup, mTurnOff, mTrueMod,
-  mCross, mPairs, mSyntax, mOldOutline,
-  mOk, mReloadAll, mCancel,
-  mCatalogFile, mHRDName, mHRDNameTrueMod,
-  mListTypes, mMatchPair, mSelectBlock, mSelectPair,
-  mListFunctions, mFindErrors, mSelectRegion, mRegionInfo,
-  mLocateFunction, mUpdateHighlight, mReloadBase, mConfigure,
-  mTotalTypes, mSelectSyntax, mOutliner, mNothingFound,
-  mGotcha, mChoose,
-  mReloading, mCantLoad, mCantOpenFile, mDie, mTry,
-  mFatal, mSelectHRD, mChangeBackgroundEditor, mTrueModSetting,
-  mNoFarTM, mUserHrdFile, mUserHrcFile, mUserHrcSetting,
-  mUserHrcSettingDialog, mListSyntax, mParamList,mParamValue, mAutoDetect, mFavorites,
-  mKeyAssignDialogTitle, mKeyAssignTextTitle
+enum {
+  mName,
+  mSetup,
+  mTurnOff,
+  mTrueMod,
+  mCross,
+  mPairs,
+  mSyntax,
+  mOldOutline,
+  mOk,
+  mReloadAll,
+  mCancel,
+  mCatalogFile,
+  mHRDName,
+  mHRDNameTrueMod,
+  mListTypes,
+  mMatchPair,
+  mSelectBlock,
+  mSelectPair,
+  mListFunctions,
+  mFindErrors,
+  mSelectRegion,
+  mRegionInfo,
+  mLocateFunction,
+  mUpdateHighlight,
+  mReloadBase,
+  mConfigure,
+  mTotalTypes,
+  mSelectSyntax,
+  mOutliner,
+  mNothingFound,
+  mGotcha,
+  mChoose,
+  mReloading,
+  mCantLoad,
+  mCantOpenFile,
+  mDie,
+  mTry,
+  mFatal,
+  mSelectHRD,
+  mChangeBackgroundEditor,
+  mTrueModSetting,
+  mNoFarTM,
+  mUserHrdFile,
+  mUserHrcFile,
+  mUserHrcSetting,
+  mUserHrcSettingDialog,
+  mListSyntax,
+  mParamList,
+  mParamValue,
+  mAutoDetect,
+  mFavorites,
+  mKeyAssignDialogTitle,
+  mKeyAssignTextTitle
 };
 
-UnicodeString *GetConfigPath(const UnicodeString &sub);
+UnicodeString* GetConfigPath(const UnicodeString& sub);
 
 #endif
 

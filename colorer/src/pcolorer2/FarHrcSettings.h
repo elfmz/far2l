@@ -2,17 +2,18 @@
 #define _FARHRCSETTINGS_H_
 
 #include <colorer/ParserFactory.h>
+#include <string>
 #include <xercesc/dom/DOM.hpp>
 #include "FarEditorSet.h"
-#include <string>
 
 const char FarCatalogXml[] = "/base/catalog.xml";
 const char FarProfileXml[] = "/plug/hrcsettings.xml";
 
-class FarHrcSettingsException : public Exception{
-public:
+class FarHrcSettingsException : public Exception
+{
+ public:
   explicit FarHrcSettingsException(const UnicodeString& msg) noexcept
-  : Exception("[FarHrcSettingsException] " + msg)
+      : Exception("[FarHrcSettingsException] " + msg)
   {
   }
 };
@@ -20,8 +21,9 @@ public:
 class FarHrcSettings
 {
   friend class FileTypeImpl;
-public:
-  FarHrcSettings(FarEditorSet *_farEditorSet, ParserFactory *_parserFactory);
+
+ public:
+  FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _parserFactory);
   void readXML(UnicodeString* file);
   void readProfile();
   void readUserProfile(const FileType* def_filetype = nullptr);
@@ -29,14 +31,12 @@ public:
   void loadUserHrc(const UnicodeString* filename);
   void loadUserHrd(const UnicodeString* filename);
 
-private:
+ private:
   void UpdatePrototype(xercesc::DOMElement* elem);
 
   FarEditorSet* farEditorSet;
-  ParserFactory *parserFactory;
+  ParserFactory* parserFactory;
   std::string profileIni;
-
 };
-
 
 #endif

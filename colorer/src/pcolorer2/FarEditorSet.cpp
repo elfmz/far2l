@@ -231,6 +231,10 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType)
   FileType *type = nullptr;
   auto& hrcParser = parserFactory->getHrcLibrary();
 
+  if (!CurFileType) {
+    Menu->SetSelected(1);
+  }
+
   for (int idx = 0;; idx++){
     type = hrcParser.enumerateFileTypes(idx);
 
@@ -239,7 +243,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu *Menu, FileType *CurFileType)
     }
 
     if (group.compare(type->getGroup()) != 0){
-      Menu->AddGroup(type->getGroup().getWChars());
+      Menu->AddGroup(UStr::to_stdwstr(type->getGroup()).c_str());
       group = type->getGroup();
     };
 
@@ -294,87 +298,89 @@ LONG_PTR WINAPI KeyDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 void FarEditorSet::chooseType()
 {
-  FarEditor *fe = getCurrentEditor();
-  if (!fe){
+  FarEditor* fe = getCurrentEditor();
+  if (!fe) {
     return;
   }
 
-  ChooseTypeMenu menu(GetMsg(mAutoDetect),GetMsg(mFavorites));
-  FillTypeMenu(&menu,fe->getFileType());
+  ChooseTypeMenu menu(GetMsg(mAutoDetect), GetMsg(mFavorites));
+  FillTypeMenu(&menu, fe->getFileType());
 
   wchar_t bottom[20];
   swprintf(bottom, 20, GetMsg(mTotalTypes), parserFactory->getHrcLibrary().getFileTypesCount());
-  int BreakKeys[4]={VK_INSERT,VK_DELETE,VK_F4,0};
-  int BreakCode,i;
-  while (1) {
+  int BreakKeys[4] = {VK_INSERT, VK_DELETE, VK_F4, 0};
+  int BreakCode, i;
+  while (true) {
     i = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT | FMENU_USEEXT,
-      GetMsg(mSelectSyntax), bottom, L"filetypechoose", BreakKeys,&BreakCode, (const struct FarMenuItem *)menu.getItems(), menu.getItemsCount());
+                  GetMsg(mSelectSyntax), bottom, L"filetypechoose", BreakKeys, &BreakCode,
+                  (const struct FarMenuItem*) menu.getItems(), menu.getItemsCount());
 
-    if (i>=0){
-      if (BreakCode==0){
-        if (i!=0 && !menu.IsFavorite(i)) {
+    if (i >= 0) {
+      if (BreakCode == 0) {
+        if (i != 0 && !menu.IsFavorite(i)) {
           auto f = menu.GetFileType(i);
           menu.MoveToFavorites(i);
           addParamAndValue(f, DFavorite, DTrue);
         }
-        else menu.SetSelected(i);
-      }
-      else
-      if (BreakCode==1){
-        if (i!=0 && menu.IsFavorite(i)) menu.DelFromFavorites(i);
-        else menu.SetSelected(i);
-      }
-      else
-        if (BreakCode==2){
-          if (i==0)  {
-            menu.SetSelected(i);
-            continue;
-          }
-
-          const int KeyAssignDlgDataCount = 3;
-          FarDialogItem KeyAssignDlgData[KeyAssignDlgDataCount]=
-          { 
-            {DI_DOUBLEBOX,3,1,30,4,0,{},0,0,GetMsg(mKeyAssignDialogTitle),0},
-            {DI_TEXT,-1,2,0,2,0,{},0,0,GetMsg(mKeyAssignTextTitle),0},
-            {DI_EDIT,5,3,28,3,0,{},0,0,L"",0},
-          };
-
-          const UnicodeString *v;
-          v=((FileType*)menu.GetFileType(i))->getParamValue(DHotkey);
-          if (v && v->length())
-          {
-            KeyAssignDlgData[2].PtrData = v->getWChars();
-          }
-
-          HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 34, 6, L"keyassign", KeyAssignDlgData, KeyAssignDlgDataCount, 0, 0, KeyDialogProc, (LONG_PTR)this);
-          int res = Info.DialogRun(hDlg);
-
-          if (res!=-1) 
-          {
-            KeyAssignDlgData[2].PtrData =
-              trim((wchar_t*)Info.SendDlgMessage(hDlg,DM_GETCONSTTEXTPTR,2,0));
-            auto ftype = menu.GetFileType(i);
-            auto param_name = UnicodeString(DHotkey);
-            auto hotkey = UnicodeString(KeyAssignDlgData[2].PtrData);
-            addParamAndValue(ftype, param_name, hotkey);
-            menu.RefreshItemCaption(i);
-
-          }
+        else {
           menu.SetSelected(i);
-          Info.DialogFree(hDlg);
         }
+      }
+      else if (BreakCode == 1) {
+        if (i != 0 && menu.IsFavorite(i))
+          menu.DelFromFavorites(i);
         else
-        {
-          if (i==0){
-            UnicodeString *s=getCurrentFileName();
+          menu.SetSelected(i);
+      }
+      else if (BreakCode == 2) {
+        if (i == 0) {
+          menu.SetSelected(i);
+          continue;
+        }
+
+        const int KeyAssignDlgDataCount = 3;
+        FarDialogItem KeyAssignDlgData[KeyAssignDlgDataCount] = {
+            {DI_DOUBLEBOX,  3, 1, 30, 4, 0, {}, 0, 0, GetMsg(mKeyAssignDialogTitle), 0},
+            {     DI_TEXT, -1, 2,  0, 2, 0, {}, 0, 0,   GetMsg(mKeyAssignTextTitle), 0},
+            {     DI_EDIT,  5, 3, 28, 3, 0, {}, 0, 0,                           L"", 0},
+        };
+
+        const UnicodeString* v;
+        v = ((FileType*) menu.GetFileType(i))->getParamValue(DHotkey);
+        if (v && v->length()) {
+          KeyAssignDlgData[2].PtrData = v->getWChars();
+        }
+
+        HANDLE hDlg =
+            Info.DialogInit(Info.ModuleNumber, -1, -1, 34, 6, L"keyassign", KeyAssignDlgData,
+                            KeyAssignDlgDataCount, 0, 0, KeyDialogProc, (LONG_PTR) this);
+        int res = Info.DialogRun(hDlg);
+
+        if (res != -1) {
+          KeyAssignDlgData[2].PtrData =
+              trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, 2, 0));
+          auto ftype = menu.GetFileType(i);
+          auto param_name = UnicodeString(DHotkey);
+          auto hotkey = UnicodeString(KeyAssignDlgData[2].PtrData);
+          addParamAndValue(ftype, param_name, hotkey);
+          menu.RefreshItemCaption(i);
+        }
+        menu.SetSelected(i);
+        Info.DialogFree(hDlg);
+      }
+      else {
+        if (i == 0) {
+          UnicodeString* s = getCurrentFileName();
           fe->chooseFileType(s);
           delete s;
           break;
-        } 
+        }
         fe->setFileType(menu.GetFileType(i));
         break;
-      } 
-    }else break;
+      }
+    }
+    else
+      break;
   }
 
   FarHrcSettings p(this, parserFactory.get());

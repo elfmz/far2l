@@ -57,6 +57,11 @@ DWORD ConvertYearToFull(DWORD ShortYear)
 
 int GetDateFormat()
 {
+	// 0 = month-day-year
+	// 1 = day-month-year
+	// 2 = year-month-day
+	// other = 2
+
 	//int Result = 1;
 	//	GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_IDATE|LOCALE_RETURN_NUMBER,reinterpret_cast<LPWSTR>(&Result),sizeof(Result)/sizeof(WCHAR));
 	//return Result;

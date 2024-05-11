@@ -162,6 +162,11 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecInterface, "ExclusiveWinLeft", &Opt.ExclusiveWinLeft, 0},
 	{true,  NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
 
+	{true,  NSecInterface, "DateFormat", &Opt.DateFormat, GetDateFormatDefault()},
+	{true,  NSecInterface, "DateSeparator", &Opt.strDateSeparator, GetDateSeparatorDefaultStr()},
+	{true,  NSecInterface, "TimeSeparator", &Opt.strTimeSeparator, GetTimeSeparatorDefaultStr()},
+	{true,  NSecInterface, "DecimalSeparator", &Opt.strDecimalSeparator, GetDecimalSeparatorDefaultStr()},
+
 	{true,  NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
 	{true,  NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1},
 

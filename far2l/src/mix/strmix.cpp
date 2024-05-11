@@ -1175,7 +1175,8 @@ wchar_t GetDecimalSeparator()
 	// wchar_t Separator[4];
 	// GetLocaleInfo(LOCALE_USER_DEFAULT,LOCALE_SDECIMAL,Separator,ARRAYSIZE(Separator));
 	// return *Separator;
-	return L'.';
+	//return L'.';
+	return Opt.strDecimalSeparator.IsEmpty() ? GetDecimalSeparatorDefault() : Opt.strDecimalSeparator.At(0);
 }
 
 FARString

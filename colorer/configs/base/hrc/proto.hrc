@@ -280,7 +280,7 @@
         <location link="inet/smarty.hrc" />
         <filename>/\.smarty$/</filename>
         <filename>/\.tpl$/</filename>
-        <firstline>/^\s*[{&lt;]/x</firstline>
+        <firstline>/^\s*[\{&lt;]/x</firstline>
     </prototype>
     <prototype name="ss" group="inet" description="SilverStripe">
         <location link="inet/ss.hrc" />
@@ -911,16 +911,17 @@
         <location link="rare/picasm.hrc" />
         <filename>/\.(asm|pic)$/i</filename>
     </prototype>
-    <prototype name="pl1" group="rare" description="PL1">
+    <prototype name="pl1" group="rare" description="PL/I">
         <location link="rare/pl1.hrc" />
         <filename>/\.pl[1i]$/i</filename>
+        <firstline weight='2'>/^\*PROCESS/i</firstline>
     </prototype>
     <prototype name="rexx" group="rare" description="Rexx">
         <location link="rare/rexx.hrc" />
         <filename>/\.(rex|cmd)$/i</filename>
         <firstline>/(REM)\/\*/i</firstline>
         <firstline>/^# regina/i</firstline>
-        <firstline weight='2'>/^\/\*\s*REXX\s*\*\//i</firstline>
+        <firstline weight='3'>/^\/\*\s*REXX.+\*\//i</firstline>
     </prototype>
     <prototype name="jcl" group="rare" description="JCL">
         <location link="rare/jcl.hrc" />

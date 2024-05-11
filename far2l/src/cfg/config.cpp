@@ -459,14 +459,101 @@ void InterfaceSettings()
 				strTimeSeparator = "/";
 				pos_date_2 = 0; // for not error in message
 			}
+			if (format_date=="%F") { // %F Equivalent to %Y-%m-%d
+				DateFormatIndex = 2;
+				strTimeSeparator = "-";
+				pos_date_2 = 0; // for not error in message
+			}
 			else if (format_date.length() >= 8) {
-				pos_day   = format_date.find("%d");
-				pos_month = format_date.find("%m");
 				pos_year  = format_date.find("%Y");
-				if (pos_year == std::string::npos)
+				if (pos_year == std::string::npos) {
 					pos_year = format_date.find("%y");
-				if (pos_day == std::string::npos)
+					if (pos_year == std::string::npos) {
+						pos_year = format_date.find("%G");
+						if (pos_year == std::string::npos) {
+							pos_year = format_date.find("%g");
+							if (pos_year == std::string::npos) {
+								pos_year = format_date.find("%EY");
+								if (pos_year == std::string::npos) {
+									pos_year = format_date.find("%Ey");
+									if (pos_year == std::string::npos) {
+										pos_year = format_date.find("%EG");
+										if (pos_year == std::string::npos) {
+											pos_year = format_date.find("%Eg");
+											if (pos_year == std::string::npos) {
+												pos_year = format_date.find("%OY");
+												if (pos_year == std::string::npos) {
+													pos_year = format_date.find("%Oy");
+													if (pos_year == std::string::npos) {
+														pos_year = format_date.find("%OG");
+														if (pos_year == std::string::npos) {
+															pos_year = format_date.find("%Og");
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				pos_day   = format_date.find("%d");
+				if (pos_day == std::string::npos) {
 					pos_day = format_date.find("%e");
+					if (pos_day == std::string::npos) {
+						pos_day = format_date.find("%Ed");
+						if (pos_day == std::string::npos) {
+							pos_day = format_date.find("%Od");
+							if (pos_day == std::string::npos) {
+								pos_day = format_date.find("%Ee");
+								if (pos_day == std::string::npos) {
+									pos_day = format_date.find("%Oe");
+								}
+							}
+						}
+					}
+				}
+
+				pos_month = format_date.find("%m");
+				if (pos_month == std::string::npos) {
+					pos_month = format_date.find("%B");
+					if (pos_month == std::string::npos) {
+						pos_month = format_date.find("%b");
+						if (pos_month == std::string::npos) {
+							pos_month = format_date.find("%h");
+
+							if (pos_month == std::string::npos) {
+								pos_month = format_date.find("%Em");
+								if (pos_month == std::string::npos) {
+									pos_month = format_date.find("%EB");
+									if (pos_month == std::string::npos) {
+										pos_month = format_date.find("%Eb");
+										if (pos_month == std::string::npos) {
+											pos_month = format_date.find("%Eh");
+
+											if (pos_month == std::string::npos) {
+												pos_month = format_date.find("%Om");
+												if (pos_month == std::string::npos) {
+													pos_month = format_date.find("%OB");
+													if (pos_month == std::string::npos) {
+														pos_month = format_date.find("%Ob");
+														if (pos_month == std::string::npos) {
+															pos_month = format_date.find("%Oh");
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
 				if (pos_day != std::string::npos && pos_month != std::string::npos && pos_year != std::string::npos) {
 					if (pos_day < pos_month && pos_month < pos_year) // day-month-year
 					{ DateFormatIndex = 1; pos_date_2 = pos_month; }

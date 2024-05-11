@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="powershell">
 <annotation><documentation><![CDATA[
 
-powershell.hrc by Roman Kuzmin, aka nightroman, 2022-02-05
+powershell.hrc by Roman Kuzmin, aka nightroman, 2024-04-18
 visual.hrd is recommended as optimized for powershell.hrc
 
 Regex syntax in strings after regex operators, [regex], and <#regex#>
@@ -100,11 +100,11 @@ SQL syntax in here-strings after <#sql#>
 </scheme>
 
 <entity name="numexp" value="(?:[Ee][\-+]?\d+)"/>
-<entity name="numsuf" value="(?:[DdLl]?(?:[KkMmGgTtPp][Bb])?)"/>
+<entity name="numsuf" value="(?:(?:Y|UY|S|US|L|U|UL|N|D)?(?:KB|MB|GB|TB|PB)?)"/>
 <entity name="real" value="(?{NumberFloat}\B\.?~1\.\d+%numexp;?%numsuf;\b|\b\d+(?:\.\.?!\d*(?:%numexp;?%numsuf;\b|\B)|%numexp;%numsuf;\b))"/>
 <entity name="int" value="\b(?:(?{NumberDec}\d+%numsuf;)|(?{NumberHex}0[Xx][\dA-Fa-f]+%numsuf;))\b"/>
 <scheme name="number">
-    <regexp match="/%real;|%int;/"/>
+    <regexp match="/%real;|%int;/i"/>
 </scheme>
 
 <scheme name="attribute-argument">
@@ -293,7 +293,6 @@ SQL syntax in here-strings after <#sql#>
 <keywords ignorecase="yes" region="Cmdlet" worddiv="[^\w-]">
 <!--Microsoft.PowerShell.Core-->
 <word name="Add-History"/>
-<word name="Add-PSSnapin"/>
 <word name="Clear-History"/>
 <word name="Connect-PSSession"/>
 <word name="Debug-Job"/>
@@ -306,7 +305,6 @@ SQL syntax in here-strings after <#sql#>
 <word name="Enter-PSSession"/>
 <word name="Exit-PSHostProcess"/>
 <word name="Exit-PSSession"/>
-<word name="Export-Console"/>
 <word name="Export-ModuleMember"/>
 <word name="ForEach-Object"/>
 <word name="Get-Command"/>
@@ -318,7 +316,6 @@ SQL syntax in here-strings after <#sql#>
 <word name="Get-PSSession"/>
 <word name="Get-PSSessionCapability"/>
 <word name="Get-PSSessionConfiguration"/>
-<word name="Get-PSSnapin"/>
 <word name="Import-Module"/>
 <word name="Invoke-Command"/>
 <word name="Invoke-History"/>
@@ -339,15 +336,12 @@ SQL syntax in here-strings after <#sql#>
 <word name="Remove-Job"/>
 <word name="Remove-Module"/>
 <word name="Remove-PSSession"/>
-<word name="Remove-PSSnapin"/>
-<word name="Resume-Job"/>
 <word name="Save-Help"/>
 <word name="Set-PSDebug"/>
 <word name="Set-PSSessionConfiguration"/>
 <word name="Set-StrictMode"/>
 <word name="Start-Job"/>
 <word name="Stop-Job"/>
-<word name="Suspend-Job"/>
 <word name="Test-ModuleManifest"/>
 <word name="Test-PSSessionConfigurationFile"/>
 <word name="Unregister-PSSessionConfiguration"/>
@@ -358,36 +352,25 @@ SQL syntax in here-strings after <#sql#>
 <word name="Compress-Archive"/>
 <word name="Expand-Archive"/>
 <!--Microsoft.PowerShell.Diagnostics-->
-<word name="Export-Counter"/>
 <word name="Get-Counter"/>
 <word name="Get-WinEvent"/>
-<word name="Import-Counter"/>
 <word name="New-WinEvent"/>
 <!--Microsoft.PowerShell.Host-->
 <word name="Start-Transcript"/>
 <word name="Stop-Transcript"/>
 <!--Microsoft.PowerShell.Management-->
-<word name="Add-Computer"/>
 <word name="Add-Content"/>
-<word name="Checkpoint-Computer"/>
 <word name="Clear-Content"/>
-<word name="Clear-EventLog"/>
 <word name="Clear-Item"/>
 <word name="Clear-ItemProperty"/>
 <word name="Clear-RecycleBin"/>
-<word name="Complete-Transaction"/>
 <word name="Convert-Path"/>
 <word name="Copy-Item"/>
 <word name="Copy-ItemProperty"/>
 <word name="Debug-Process"/>
-<word name="Disable-ComputerRestore"/>
-<word name="Enable-ComputerRestore"/>
 <word name="Get-ChildItem"/>
 <word name="Get-Clipboard"/>
-<word name="Get-ComputerRestorePoint"/>
 <word name="Get-Content"/>
-<word name="Get-ControlPanelItem"/>
-<word name="Get-EventLog"/>
 <word name="Get-HotFix"/>
 <word name="Get-Item"/>
 <word name="Get-ItemProperty"/>
@@ -397,37 +380,25 @@ SQL syntax in here-strings after <#sql#>
 <word name="Get-PSDrive"/>
 <word name="Get-PSProvider"/>
 <word name="Get-Service"/>
-<word name="Get-Transaction"/>
-<word name="Get-WmiObject"/>
 <word name="Invoke-Item"/>
-<word name="Invoke-WmiMethod"/>
 <word name="Join-Path"/>
-<word name="Limit-EventLog"/>
 <word name="Move-Item"/>
 <word name="Move-ItemProperty"/>
-<word name="New-EventLog"/>
 <word name="New-Item"/>
 <word name="New-ItemProperty"/>
 <word name="New-PSDrive"/>
 <word name="New-Service"/>
-<word name="New-WebServiceProxy"/>
 <word name="Pop-Location"/>
 <word name="Push-Location"/>
-<word name="Register-WmiEvent"/>
-<word name="Remove-Computer"/>
-<word name="Remove-EventLog"/>
 <word name="Remove-Item"/>
 <word name="Remove-ItemProperty"/>
 <word name="Remove-PSDrive"/>
-<word name="Remove-WmiObject"/>
 <word name="Rename-Computer"/>
 <word name="Rename-Item"/>
 <word name="Rename-ItemProperty"/>
-<word name="Reset-ComputerMachinePassword"/>
 <word name="Resolve-Path"/>
 <word name="Restart-Computer"/>
 <word name="Restart-Service"/>
-<word name="Restore-Computer"/>
 <word name="Resume-Service"/>
 <word name="Set-Clipboard"/>
 <word name="Set-Content"/>
@@ -435,24 +406,16 @@ SQL syntax in here-strings after <#sql#>
 <word name="Set-ItemProperty"/>
 <word name="Set-Location"/>
 <word name="Set-Service"/>
-<word name="Set-WmiInstance"/>
-<word name="Show-ControlPanelItem"/>
-<word name="Show-EventLog"/>
 <word name="Split-Path"/>
 <word name="Start-Process"/>
 <word name="Start-Service"/>
-<word name="Start-Transaction"/>
 <word name="Stop-Computer"/>
 <word name="Stop-Process"/>
 <word name="Stop-Service"/>
 <word name="Suspend-Service"/>
-<word name="Test-ComputerSecureChannel"/>
 <word name="Test-Connection"/>
 <word name="Test-Path"/>
-<word name="Undo-Transaction"/>
-<word name="Use-Transaction"/>
 <word name="Wait-Process"/>
-<word name="Write-EventLog"/>
 <!--Microsoft.PowerShell.ODataUtils-->
 <word name="Export-ODataEndpointProxy"/>
 <!--Microsoft.PowerShell.Security-->
@@ -482,9 +445,7 @@ SQL syntax in here-strings after <#sql#>
 <word name="Compare-Object"/>
 <word name="ConvertFrom-Csv"/>
 <word name="ConvertFrom-Json"/>
-<word name="ConvertFrom-String"/>
 <word name="ConvertFrom-StringData"/>
-<word name="Convert-String"/>
 <word name="ConvertTo-Csv"/>
 <word name="ConvertTo-Html"/>
 <word name="ConvertTo-Json"/>
@@ -645,6 +606,11 @@ SQL syntax in here-strings after <#sql#>
         <symb name="*"/>
         <symb name="/"/>
         <symb name="%"/>
+        <symb name="??="/>
+        <symb name="??"/>
+        <symb name="?"/>
+        <symb name="::"/>
+        <symb name=":"/>
     </keywords>
 </scheme>
 

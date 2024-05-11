@@ -445,10 +445,12 @@ void InterfaceSettings()
 		}
 
 		else if (clicked_id == DateTimeFromSystemID) {
-			// parcing part of available https://help.gnome.org/users/gthumb/stable/gthumb-date-formats.html.en
+			// parcing part of possible https://help.gnome.org/users/gthumb/stable/gthumb-date-formats.html
 			std::string::size_type
 					pos_date_2 = std::string::npos,
-					pos_day, pos_month, pos_year,
+					pos_day = std::string::npos,
+					pos_month = std::string::npos,
+					pos_year = std::string::npos,
 					pos_time_2 = std::string::npos;
 			size_t length_decimal;
 			std::string format_date = nl_langinfo(D_FMT);
@@ -465,95 +467,26 @@ void InterfaceSettings()
 				pos_date_2 = 0; // for not error in message
 			}
 			else if (format_date.length() >= 8) {
-				pos_year  = format_date.find("%Y");
-				if (pos_year == std::string::npos) {
-					pos_year = format_date.find("%y");
-					if (pos_year == std::string::npos) {
-						pos_year = format_date.find("%G");
-						if (pos_year == std::string::npos) {
-							pos_year = format_date.find("%g");
-							if (pos_year == std::string::npos) {
-								pos_year = format_date.find("%EY");
-								if (pos_year == std::string::npos) {
-									pos_year = format_date.find("%Ey");
-									if (pos_year == std::string::npos) {
-										pos_year = format_date.find("%EG");
-										if (pos_year == std::string::npos) {
-											pos_year = format_date.find("%Eg");
-											if (pos_year == std::string::npos) {
-												pos_year = format_date.find("%OY");
-												if (pos_year == std::string::npos) {
-													pos_year = format_date.find("%Oy");
-													if (pos_year == std::string::npos) {
-														pos_year = format_date.find("%OG");
-														if (pos_year == std::string::npos) {
-															pos_year = format_date.find("%Og");
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
+				std::vector<const char*> codes_day = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
+				for (const auto &code : codes_day) {
+					pos_day = format_date.find(code);
+					if (pos_day != std::string::npos)
+						break;
 				}
-
-				pos_day   = format_date.find("%d");
-				if (pos_day == std::string::npos) {
-					pos_day = format_date.find("%e");
-					if (pos_day == std::string::npos) {
-						pos_day = format_date.find("%Ed");
-						if (pos_day == std::string::npos) {
-							pos_day = format_date.find("%Od");
-							if (pos_day == std::string::npos) {
-								pos_day = format_date.find("%Ee");
-								if (pos_day == std::string::npos) {
-									pos_day = format_date.find("%Oe");
-								}
-							}
-						}
-					}
+				std::vector<const char*> codes_month = {
+					"%m", "%B", "%b", "%h", "%Em", "%EB", "%Eb", "%Eh", "%Om", "%OB", "%Ob", "%Oh" };
+				for (const auto &code : codes_month) {
+					pos_month = format_date.find(code);
+					if (pos_month != std::string::npos)
+						break;
 				}
-
-				pos_month = format_date.find("%m");
-				if (pos_month == std::string::npos) {
-					pos_month = format_date.find("%B");
-					if (pos_month == std::string::npos) {
-						pos_month = format_date.find("%b");
-						if (pos_month == std::string::npos) {
-							pos_month = format_date.find("%h");
-
-							if (pos_month == std::string::npos) {
-								pos_month = format_date.find("%Em");
-								if (pos_month == std::string::npos) {
-									pos_month = format_date.find("%EB");
-									if (pos_month == std::string::npos) {
-										pos_month = format_date.find("%Eb");
-										if (pos_month == std::string::npos) {
-											pos_month = format_date.find("%Eh");
-
-											if (pos_month == std::string::npos) {
-												pos_month = format_date.find("%Om");
-												if (pos_month == std::string::npos) {
-													pos_month = format_date.find("%OB");
-													if (pos_month == std::string::npos) {
-														pos_month = format_date.find("%Ob");
-														if (pos_month == std::string::npos) {
-															pos_month = format_date.find("%Oh");
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
+				std::vector<const char*> codes_year = {
+					"%Y", "%y", "%G", "%g", "%EY", "%Ey", "%EG", "%Eg", "%OY", "%Oy", "%OG", "%Og" };
+				for (const auto &code : codes_year) {
+					pos_year = format_date.find(code);
+					if (pos_year != std::string::npos)
+						break;
 				}
-
 				if (pos_day != std::string::npos && pos_month != std::string::npos && pos_year != std::string::npos) {
 					if (pos_day < pos_month && pos_month < pos_year) // day-month-year
 					{ DateFormatIndex = 1; pos_date_2 = pos_month; }

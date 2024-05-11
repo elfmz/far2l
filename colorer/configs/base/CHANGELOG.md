@@ -1,6 +1,6 @@
 # Changelog for Colorer base
 
-## [Unreleased]
+## [1.2.0.46]
 
 ### Fixed
 - [calcset] update hrc for latest file structure.
@@ -13,6 +13,11 @@
     * a lot of syntax errors are highlighted
     * fixed bunch of bugs, especially in raw literals
 - [csharp] recognise functions with nullable results
+- [shell-posix] Comments are not recognized in case statement
+- [shell-posix] Commands are not recognized correctly after escaped new-line
+- [shell-bash] Redirection symbols < and > inside "magic backticks" block break background highlighting till the end of the file
+- [smarty] fixed the work of smarty templates
+- [markdown] amend emphasis with underscores
 
 ### Changed
 - Simplified catalog.xml.
@@ -43,6 +48,18 @@
 - [asm] add directives
 - [c] add unix standard functions, const and others
 - [cpp] add some c++11 types
+- [csharp] add new number suffixes u, uy, etc.
+- [csharp] add new operators ?:, ??, etc.
+- [csharp] retire obsolete cmdlets
+- [cobol] many changes
+- [cobolfr] many changes
+- [jcl] many changes
+- [pl1] many changes
+- [cmake] updated for cmake version 3.29.2; add gen script for cmake
+- [smarty] add tpl extension and first line pattern
+- [prolog] add first line pattern
+- [shell-posix] add functions to outlined list
+- [shell-bash] add functions to outlined list
 
 ## [1.2.0] - 2021-09-12
 

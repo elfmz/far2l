@@ -156,13 +156,13 @@
 
     <!-- functions: <funcname> () ... -->
     <block start="/(%funcname;)\s*(=)?~1(\(\s*\))\s*/" end="/\M%cmdbreak;/" scheme="script"
-        region01="FunctionName" region03="Symbol"/>
+        region00="def:Outlined" region01="FunctionName" region03="Symbol"/>
     <!-- functions: function <funcname> [()] ... -->
     <block start="/\b(function)\s+(%funcname;)(\s+\(\s*\))?/" end="/\M%cmdbreak;/" scheme="script"
-        region01="CommandReserved" region02="FunctionName" region03="Symbol"/>
+        region00="def:Outlined" region01="CommandReserved" region02="FunctionName" region03="Symbol"/>
     <!-- anything else that starts with the keyword 'function' is an error -->
     <block start="/\b(function)\b\s*(?{Error}.*?)\M(%cmdbreak;)/" end="/\M%cmdbreak;/" scheme="def:empty"
-        region01="CommandReserved"/>
+        region00="def:Outlined" region01="CommandReserved"/>
 
     <inherit scheme="shell-posix:script_control">
         <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
@@ -514,6 +514,7 @@
         <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
         <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
         <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
+        <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
     </inherit>
 </scheme>
 

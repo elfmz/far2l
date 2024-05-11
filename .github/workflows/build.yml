@@ -48,7 +48,7 @@ jobs:
           - compiler: clang
             version: 10
             c: /usr/bin/clang-10
-            cxx: /usr/bin/clang-10
+            cxx: /usr/bin/clang++-10
 
     name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
 
@@ -99,7 +99,7 @@ jobs:
           - compiler: clang
             version: 15
             c: /usr/bin/clang-15
-            cxx: /usr/bin/clang-15
+            cxx: /usr/bin/clang++-15
 
     name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
 

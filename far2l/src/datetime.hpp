@@ -40,6 +40,11 @@ DWORD ConvertYearToFull(DWORD ShortYear);
 int GetDateFormat();
 wchar_t GetDateSeparator();
 wchar_t GetTimeSeparator();
+inline int GetDateFormatDefault() { return 1; };
+inline const wchar_t GetDateSeparatorDefault() { return L'-'; };
+inline const wchar_t GetTimeSeparatorDefault() { return L':'; };
+inline const wchar_t* GetDateSeparatorDefaultStr() { return L"-"; };
+inline const wchar_t* GetTimeSeparatorDefaultStr() { return L":"; };
 
 int64_t FileTimeDifference(const FILETIME *a, const FILETIME *b);
 uint64_t FileTimeToUI64(const FILETIME *ft);
@@ -49,6 +54,7 @@ void StrToDateTime(const wchar_t *CDate, const wchar_t *CTime, FILETIME &ft, int
 		int DateSeparator, int TimeSeparator, bool bRelative = false);
 void ConvertDate(const FILETIME &ft, FARString &strDateText, FARString &strTimeText, int TimeLength,
 		int Brief = FALSE, int TextMonth = FALSE, int FullYear = 0, int DynInit = FALSE);
+void ConvertDate_ResetInit();
 void ConvertRelativeDate(const FILETIME &ft, FARString &strDaysText, FARString &strTimeText);
 
 void PrepareStrFTime();

@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="markdown">
 <annotation><documentation><![CDATA[
 
-markdown.hrc by Roman Kuzmin, aka NightRoman, 2020-01-20
+markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
 
 * Inline HTML should be valid XML.
 * Opened spans are always colored.
@@ -131,7 +131,7 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2020-01-20
   start="/(?{start}\*)[^\s*]?=/" end="/[^\s*]?#1(?{end}\*)|%PEnd;/"/>
 
   <block scheme="PStrongSpan" region="EmText"
-  start="/(?:^|\s?#1)(?{start}_)[^\s_]?=/" end="/[^\s_]?#1(?{end}_)(?:$|\s?=)|%PEnd;/"/>
+  start="/(?:^|\s?#1)(?{start}_)[^\s_]?=/" end="/[^\s_]?#1(?{end}_)(?:$|\W?=)|%PEnd;/"/>
 
   <inherit scheme="Base"/>
 </scheme>

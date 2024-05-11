@@ -9,7 +9,7 @@
 <hrc version="take5"
 	xmlns="http://colorer.sf.net/2003/hrc"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
 	<annotation>
 		<documentation>
@@ -106,8 +106,19 @@
 			<inherit scheme="Expressions" />
 		</scheme>
 
+		<scheme name="Block">
+			<block start="/(?:block)?#5(\()/" end="/(\))/" scheme="Keywords_block"
+				 region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd" inner-region="yes"/>
+			<inherit scheme="Expressions" />
+		</scheme>
+
+		<scheme name="Foreach">
+			<block start="/(?:foreach)?#7(\()/" end="/(\))/" scheme="Keywords_foreach"
+				 region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd" inner-region="yes"/>
+			<inherit scheme="Expressions" />
+		</scheme>
+
 		<scheme name="Command">
-			<inherit scheme="FunctionArguments" />
 			<inherit scheme="CompositeExpression" />
 		</scheme>
 
@@ -118,6 +129,9 @@
 		</scheme>
 
 		<scheme name="Variables">
+			<block start="/(\$(?:CACHE)?\{)/" end="/(\})/" scheme="CompositeExpression"
+				region="def:String" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
+
 			<block start="/(\$(?:ENV)?\{)/" end="/(\})/" scheme="CompositeExpression"
 				region="def:String" region00="def:Symbol" region01="def:PairStart" region10="def:Symbol" region11="def:PairEnd"/>
 
@@ -135,7 +149,6 @@
 			<inherit scheme="Comments" />
 			<inherit scheme="Strings" />
 			<inherit scheme="Variables" />
-			<inherit scheme="CMakeKeywords" />
 		</scheme>
 
 		<scheme name="Expressions">
@@ -156,8 +169,11 @@
 			<block start="/\b(while)\b\M%Args;/i" end="/\b(endwhile)\b%ArgsMatch0;/i" scheme="While"
 				region00="def:Symbol" region01="def:PairStart"
 				region10="def:Symbol" region11="def:PairEnd"/>
+			<block start="/\b(block)\b\M%Args;/i" end="/\b(endblock)\b%ArgsMatch0;/i" scheme="Block"
+				region00="def:Symbol" region01="def:PairStart"
+				region10="def:Symbol" region11="def:PairEnd"/>
 
-			<block start="/\b(foreach)\b\M%Args;/i" end="/\b(endforeach)\b%ArgsMatch1;/i" scheme="Expressions"
+			<block start="/\b(foreach)\b\M%Args;/i" end="/\b(endforeach)\b%ArgsMatch1;/i" scheme="Foreach"
 				region00="def:Symbol" region01="def:PairStart"
 				region10="def:Symbol" region11="def:PairEnd"/>
 			<block start="/\b(function)\b\M%Args;/i" end="/\b(endfunction)\b%ArgsMatch1;/i" scheme="Expressions"

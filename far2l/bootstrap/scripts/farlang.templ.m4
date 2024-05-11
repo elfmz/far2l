@@ -2418,6 +2418,116 @@ ConfigPgUpChangeDisk
 "Використовувати Ctrl-PgUp для в&ибору диска"
 "Ужываць Ctrl-PgUp для в&ыбору дыска"
 
+ConfigDateFormat
+" Формат &даты и времени "
+" &Datetime format "
+upd:" &Datetime format "
+upd:" &Datetime format "
+upd:" &Datetime format "
+upd:" &Datetime format "
+upd:" &Datetime format "
+upd:" &Datetime format "
+upd:" &Datetime format "
+
+ConfigDateFormatMDY
+"ММ-ДД-ГГГГ"
+"MM-DD-YYYY"
+upd:"MM-DD-RRRR"
+upd:"MM-TT-JJJJ"
+upd:"HH-NN-ÉÉÉÉ"
+upd:"MM-DD-RRRR"
+"MM-DD-AAAA"
+"ММ-ДД-РРРР"
+"ММ-ДД-ГГГГ"
+
+ConfigDateFormatDMY
+"ДД-ММ-ГГГГ"
+"DD-MM-YYYY"
+upd:"DD-MM-RRRR"
+upd:"TT-MM-JJJJ"
+upd:"NN-HH-ÉÉÉÉ"
+upd:"DD-MM-RRRR"
+"DD-MM-AAAA"
+"ДД-ММ-РРРР"
+"ДД-ММ-ГГГГ"
+
+ConfigDateFormatYMD
+"ГГГГ-ММ-ДД"
+"YYYY-MM-DD"
+upd:"RRRR-MM-DD"
+upd:"JJJJ-MM-TT"
+upd:"ÉÉÉÉ-HH-NN"
+upd:"RRRR-MM-DD"
+"AAAA-MM-DD"
+"ГГГГ-ММ-ДД"
+"ГГГГ-ММ-ДД"
+
+ConfigDateSeparator
+"Разделитель даты"
+"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+upd:"Date separator"
+
+ConfigTimeSeparator
+"Разделитель времени"
+"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+upd:"Time separator"
+
+ConfigDecimalSeparator
+"Десятичный разделитель"
+"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+upd:"Decimal separator"
+
+ConfigDateTimeDefault
+"Сброс по &умолчанию"
+"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+upd:"&Reset to default"
+
+ConfigDateTimeCurrent
+"Сброс к т&екущему"
+"R&eset to current"
+upd:"R&eset to current"
+upd:"R&eset to current"
+upd:"R&eset to current"
+upd:"R&eset to current"
+upd:"R&eset to current"
+upd:"R&eset to current"
+upd:"R&eset to current"
+
+ConfigDateTimeFromSystem
+"Из системной локали"
+"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+upd:"From system locale"
+
 ConfigWindowTitle
 "Заголовок окна FAR:"
 "FAR window title:"

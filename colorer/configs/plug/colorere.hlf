@@ -96,14 +96,6 @@ Values of the form <default-znach.> shows that the parameter is "znach." It is s
 in the system (non-user) settings of the scheme or scheme is taken from default.
     Save all the changes occurs after clicking "OK" button.
 
-@cmdline
-$# Command line support
-    You can use the plugin from FAR's command line with prefix 'clr:'
-to view files with syntax highlighting in FarColorer's internal viewer.
-To view file you have to specify file name after the 'clr:' prefix
-in FAR's command line. This function is equal to #colorer.exe# program
-features, but doesn't load HRC database each time, so it works faster.
-
 @add
 $# Outliner
     Here you can see a list of all functions or syntax errors found.

@@ -1,0 +1,172 @@
+name: check build
+
+on:
+  # allow manually running worflow, useful for testing branches
+  workflow_dispatch:
+  # run on push in master
+  push:
+    branches:
+        - master
+    paths-ignore:
+      - '.vscode/**'
+      - '.cirrus.yml'
+      - '.clang-format'
+      - '.clang-format.json'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.travis.yml'
+      - 'Brewfile'
+      - 'CODESTYLE.md'
+      - 'dependencies-minimal.txt'
+      - 'dependencies.txt'
+      - 'Dockerfile'
+      - 'HACKING.md'
+      - 'LICENSE.txt'
+      - 'README.md'
+  # run on pull request to master
+  pull_request:
+    branches:
+      - master
+  
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  ubuntu-low-compiler:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ gcc, clang ]
+        include:
+          - compiler: gcc
+            version: 9
+            c: /usr/bin/gcc-9
+            cxx: /usr/bin/g++-9
+          - compiler: clang
+            version: 10
+            c: /usr/bin/clang-10
+            cxx: /usr/bin/clang++-10
+
+    name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+  
+      - name: Install dependencies
+        run: >
+         sudo apt-get update;
+         sudo apt-get -y install
+         libuchardet-dev libxerces-c-dev libwxgtk3.0-gtk3-dev
+         libx11-dev libxi-dev
+         libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
+         libarchive-dev libpcre3-dev
+  
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: > 
+         cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+         -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+  
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
+  
+  ubuntu-high-compiler:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ gcc, clang ]
+        include:
+          - compiler: gcc
+            version: 13
+            c: /usr/bin/gcc-13
+            cxx: /usr/bin/g++-13
+          - compiler: clang
+            version: 15
+            c: /usr/bin/clang-15
+            cxx: /usr/bin/clang++-15
+
+    name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+  
+      - name: Install dependencies
+        run: >
+          sudo apt-get update;
+          sudo apt-get -y install
+          libuchardet-dev libxerces-c-dev libwxgtk3.0-gtk3-dev
+          libx11-dev libxi-dev
+          libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
+          libarchive-dev libpcre3-dev
+  
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+  
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: > 
+         cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+         -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+  
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
+
+  macos14-arm64-clang15:
+    runs-on: macos-14
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+  
+      - name: Install dependencies
+        run: >
+          brew install
+          uchardet xerces-c wxwidgets
+          libx11 libxi
+          openssl samba libnfs neon libssh
+          libarchive pcre
+
+      - name: Relink 'keg-only' packages
+        run: brew link libarchive --force
+  
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+  
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE  -DPYTHON=yes
+  
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(sysctl -n hw.logicalcpu)

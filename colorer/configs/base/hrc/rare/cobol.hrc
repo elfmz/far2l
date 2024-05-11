@@ -9,24 +9,20 @@
          <documentation>
            COBOL Syntax description
 
-           Cobol FIXED FORMAT reference source line has 80 columns:
-            1- 6: Sequence number area [.]
-               7: Indicator area [dD\*\-\/ ]
-            8-11: Area A [.]
-           12-72: Area B [.]
-           73-80: Identificaton area [.] (ignored by compiler)
+           COBOL Fixed Format reference source line has 80 columns:
+            1- 6: Sequence number area
+               7: Indicator area [dD*-/ ]
+            8-11: Area A
+           12-72: Area B
+           73-80: Identificaton area (ignored by compiler)
 
            Known bugs:
-           1. Embedded EXEC area should color only columns 8-72.
-           2. Unended string or parentheses content should not
-              interfere behind column 72.
-           3. END-EXEC is not recognized if it ends at column 72
-              and column 73 is not period nor empty.
+           1. Embedded EXEC (typically SQL) is colored only as COBOL.
+           2. Identification area is not always correctly colored
+              inside parentheses block and EXEC block.
+           3. Keyword is not recognized if it ends at column 72
+              and column 73 is not a word divider.
          </documentation>
-         <contributors><![CDATA[
-           Alexey Matiushkin <matiushkin@hotmail.com>
-           Pavel Pleva
-         ]]></contributors>
       </annotation>
 
       <region name="Debug"     parent="def:Debug"/>
@@ -37,7 +33,8 @@
       <region name="Period"    parent="def:SymbolStrong"/>
       <region name="Keyword"   parent="def:Keyword"/>
       <region name="Ident"     parent="def:Identifier"/>
-      <region name="Directive" parent="def:Directive"/>
+      <region name="Section"   parent="def:VarStrong"/>
+      <region name="Directive" parent="def:ParameterStrong"/>
       <region name="Exec"      parent="def:StringEdge"/>
       <region name="Number"    parent="def:Number"/>
       <region name="String"    parent="def:String"/>
@@ -49,57 +46,73 @@
       <entity name="worddiv" value="[\W-[\-]]"/> <!-- minus can be part of identifier -->
 
       <scheme name="cobol">
-         <!-- Comment out Identification area -->
-         <block start="/^/" end="/.{7,72}\m(.*)$/" scheme="cobolcore" region11="Comment"/>
+         <!-- Compiler options -->
+         <block start="/^\M(\ *(PROCESS|(\*)?CBL|CONTROL))/" end="/$/" scheme="cobolopt" region11="Comment"/>
+         <!-- Librarian includes -->
+         <regexp match="/^(.{6})?(\ *)(-INC)\ +([\w\$\#\@\xA7]{1,8})\ *(\.)(.*)/" region1="SeqNum" region3="Keyword" region4="Ident" region5="Period" region6="Comment"/>
+         <!-- Comment entries -->
+         <block start="/^(.{6})\ +(REMARKS|AUTHOR|DATE-COMPILED|DATE-WRITTEN|INSTALLATION|SECURITY)(\.)?/i" end="/^\M(.{6}\ \ {4})?!/"
+                scheme="def:empty" region="Comment" region01="SeqNum" region02="Keyword" region03="Period" inner-region="yes"/>
+         <!-- Rules valid from column 1 -->
+         <inherit scheme="cobol1"/>
+         <!-- Sequence number area and Identification area + Rules valid from column 7 -->
+         <block start="/^(.{0,6})\M/" end="/.{0,66}(.*)\m$/"
+                scheme="cobolcore" region00="SeqNum" region11="Comment" inner-region="yes"/>
       </scheme>
 
-      <scheme name="exec">
-         <!-- Sequence number area and Identification area -->
-         <regexp match="/^(.{0,6})\M.{0,66}(.*)$/" region1="SeqNum" region2="Comment"/>
-         <!-- EXEC statement usually contains embedded SQL -->
-         <inherit scheme="sql:sql"/>
+      <scheme name="cobolopt">
+         <regexp match="/^(.{0,72})(.*)$/i" region1="Directive" region2="Comment"/>
       </scheme>
 
-      <scheme name="cobolcore">
-         <!-- Librarian and Panvalet includes -->
-         <regexp match="/^(?:(.{6})?\ *(-INC)|(.{6})\ (\+\+INCLUDE))\ +([\w\$\#\@\xA7]{1,8})\ *(\.)?(.*)$/" region1="SeqNum" region2="Keyword" region3="SeqNum" region4="Keyword" region5="Ident" region6="Period" region7="Comment"/>
+      <scheme name="cobol1">
          <!-- Debug lines -->
          <regexp match="/^(.{6})(D.{0,65})(.*)$/i" region1="SeqNum" region2="Debug" region3="Comment"/>
          <!-- Comment lines -->
-         <regexp match="/^(.{6})([\*\/])(.*)$/" region1="SeqNum" region2="Indicator" region3="Comment"/>
+         <regexp match="/^(.{6})([*/])(.*)$/" region1="SeqNum" region2="Indicator" region3="Comment"/>
          <!-- Something wrong in Indicator area -->
-         <regexp match="/^(.{6})([^\ \-].{0,65})(.*)$/" region1="SeqNum" region2="Error" region3="Comment"/>
-         <!-- Continuation lines error - http://publib.boulder.ibm.com/infocenter/pdthelp/v1r1/index.jsp?topic=%2Fcom.ibm.entcobol.doc_3.4%2Frlfmtcon.htm -->
-         <regexp match="/^(.{6})(\-(?:\ {0,3}[\x22\'])?=.{1,65})(.*)$/" region1="SeqNum" region2="Error" region3="Comment"/>
-         <!-- Special comments -->
-         <block start="/^(.{6})\ +(REMARKS|AUTHOR|DATE\-COMPILED|DATE\-WRITTEN|INSTALLATION|SECURITY)(\.)?/i" end="/^\M(.{6}\ \ {4})?!/"
-                scheme="def:empty" region="Comment" region01="SeqNum" region02="Keyword" region03="Period" inner-region="yes"/>
-         <!-- Sections and Divisions -->
-         <regexp match="/^(.{6})\ +([\w\-]+)\ +(SECTION|DIVISION)[\ \.]?=/i" region1="SeqNum" region2="Directive" region3="Directive"/>
+         <regexp match="/^(.{6})([^ \-].{0,65})(.*)$/" region1="SeqNum" region2="Error" region3="Comment"/>
+         <!-- Continuation lines error - https://www.ibm.com/docs/en/cobol-zos/6.1?topic=b-continuation-lines -->
+         <regexp match="/^(.{6})(-)((\ {4})?!)(.{0,65})(.*)$/" region1="SeqNum" region2="Indicator" region5="Error" region6="Comment"/>
          <!-- Continuation lines indicator -->
-         <regexp match="/^\M.{6}(\-)/" region1="Indicator"/>
-         <!-- Paired brackets -->
-         <block start="/(?{start}\()/" end="/(?{end}\))/" scheme="cobolcore" region00="Symbol" region10="Symbol" inner-region="yes"/>
-         <!-- Numeric literals with fixed point (the \M fixes Identification area) -->
-         <regexp match="/\M[\ :\(]?#1([+\-])?(\d*\.?\d+)([\ :\)\.]?=|$)/i" region1="Symbol" region2="Number"/>
+         <regexp match="/^\M.{6}(-)/" region1="Indicator"/>
+         <!-- Sequence number area and Identification area -->
+         <regexp match="/^\M(.{0,6}).{0,66}(.*)$/" region1="SeqNum" region2="Comment"/>
+      </scheme>
+      <scheme name="cobolcore">
+         <!-- Compiler options -->
+         <regexp match="/~\ *(PROCESS|(\*)?CBL|CONTROL).*$/i" region0="Directive"/>
+         <!-- Panvalet includes -->
+         <regexp match="/~\ (\+\+INCLUDE)\ +([\w\$\#\@\xA7]{1,8})\ *(\.)?(.*)/" region1="Keyword" region2="Ident" region3="Period" region4="Comment"/>
+         <!-- Compiler directives -->
+         <regexp match="/~\ +(&gt;&gt;(CALLINT(ERFACE)?|INLINE|DEFINE|EVALUATE|WHEN|END-EVALUATE|IF|ELSE|END-IF).+)/" region0="Directive"/>
+         <!-- Sections and Divisions -->
+         <regexp match="/~\ +([\w\-]+)\ +(SECTION|DIVISION)([ .]?=|$)/i" region1="Section" region2="Section"/>
+         <!-- Inline comments -->
+         <regexp match="/\*&gt;.*$/" region0="Comment"/>
+         <!-- Numeric literals with fixed point -->
+         <regexp match="/[ :(]?#1([+\-])?(\d*\.?\d+)([ :).]?=|$)/i" region1="Symbol" region2="Number"/>
          <!-- ... character string in PIC clause is not a number even though it might look so -->
-         <regexp match="/\ (PIC|PICTURE)(\ +IS)?\ +([09]+)([\ \.]?=|$)/i" region1="Keyword" region2="Keyword" region3="Ident"/>
+         <regexp match="/\ (PIC|PICTURE)(\ +IS)?\ +([09]+)([ .]?=|$)/i" region1="Keyword" region2="Keyword" region3="Ident"/>
          <!-- Numeric literals with floating point -->
-         <regexp match="/[\ :\(]?#1([+\-])?(\d+\.\d+E[+\-]?\d\d?)([\ :\)\.]?=|$)/i" region1="Symbol" region2="Number"/>
+         <regexp match="/[ :(]?#1([+\-])?(\d+\.\d+E[+\-]?\d\d?)([ :).]?=|$)/i" region1="Symbol" region2="Number"/>
          <!-- Alphanumeric literals -->
-         <block start="/(?{start}(\x22|\'))/" end="/(?{end}\Y1|$)/" scheme="def:empty" region="String"/>
+         <block start="/(?{start}([&quot;&apos;]))/" end="/(?{end}\Y1|$)/" scheme="def:empty" region="String"/>
+         <!-- Paired brackets -->
+         <block start="/(?{start}\()/" end="/(?{end}\))/"
+                scheme="cobolcore" region00="Symbol" region10="Symbol"/>
          <!-- EXEC statements -->
-         <block start="/\ ?#1(?{start}EXEC|EXECUTE)(\ ?=|$)/i" end="/\ ?#1(?{end}END-EXEC)([\ \.]?=|$)/i"
-                scheme="exec" region00="Exec" region10="Exec"/>
-         <!-- Sequence number area -->
-         <regexp match="/^.{0,6}/" region0="SeqNum"/>
+         <block start="/\b(?{start}EXEC|EXECUTE)\b/i" end="/\b(?{end}END-EXEC)\b/i"
+                scheme="cobolcore" region00="Exec" region10="Exec"/>
+         <!-- Rules valid from column 1 -->
+         <inherit scheme="cobol1"/>
+         <!-- Symbols, Keywords and Reserved words are shared with 'cobolfr' -->
+         <inherit scheme="keywords"/>
+      </scheme>
 
-         <!-- Symbols -->
+      <scheme name="keywords">
          <keywords region="Symbol" worddiv="%worddiv;">
-            <word name="-"/>
-         </keywords>
-         <keywords region="Symbol">
             <symb name="+"/>
+            <word name="-"/> <!-- apply worddiv -->
             <symb name="*"/>
             <symb name="/"/>
             <symb name="="/>
@@ -113,11 +126,9 @@
             <symb name="&gt;"/>
          </keywords>
 
-         <!-- Keywords and Reserved words -->
          <keywords ignorecase="yes" region="Keyword" worddiv="%worddiv;">
             <word name="ACCEPT"/>
             <word name="ACCESS"/>
-            <word name="ACOS"/>
             <word name="ADD"/>
             <word name="ADDRESS"/>
             <word name="ADVANCING"/>
@@ -133,28 +144,31 @@
             <word name="ALTER"/>
             <word name="ALTERNATE"/>
             <word name="AND"/>
-            <word name="ANNUITY"/>
             <word name="ANY"/>
             <word name="APPLY"/>
             <word name="ARE"/>
             <word name="AREA"/>
             <word name="AREAS"/>
             <word name="ASCENDING"/>
-            <word name="ASIN"/>
             <word name="ASSIGN"/>
             <word name="AT"/>
-            <word name="ATAN"/>
+            <word name="ATTRIBUTE"/>
             <word name="ATTRIBUTES"/>
             <word name="AUTHOR"/>
             <word name="BASIS"/>
             <word name="BEFORE"/>
             <word name="BEGINNING"/>
             <word name="BINARY"/>
-            <word name="BIT"/>
             <word name="BLANK"/>
+            <word name="BLOB"/>
+            <word name="BLOB-FILE"/>
+            <word name="BLOB-LOCATOR"/>
             <word name="BLOCK"/>
+            <word name="BOOL"/>
+            <word name="BOOLEAN"/>
             <word name="BOTTOM"/>
             <word name="BY"/>
+            <word name="BYTE-LENGTH"/>
             <word name="CALL"/>
             <word name="CANCEL"/>
             <word name="CBL"/>
@@ -169,8 +183,8 @@
             <word name="CLOCK-UNITS"/>
             <word name="CLOSE"/>
             <word name="COBOL"/>
-            <word name="CODE-SET"/>
             <word name="CODE"/>
+            <word name="CODE-SET"/>
             <word name="COLLATING"/>
             <word name="COLUMN"/>
             <word name="COM-REG"/>
@@ -200,21 +214,14 @@
             <word name="COPY"/>
             <word name="CORR"/>
             <word name="CORRESPONDING"/>
-            <word name="COS"/>
             <word name="COUNT"/>
             <word name="CURRENCY"/>
-            <word name="CURRENT-DATE"/>
             <word name="DATA"/>
             <word name="DATE"/>
             <word name="DATE-COMPILED"/>
-            <word name="DATE-OF-INTEGER"/>
-            <word name="DATE-TO-YYYYMMDD"/>
             <word name="DATE-WRITTEN"/>
-            <word name="DATEVAL"/>
             <word name="DAY"/>
-            <word name="DAY-OF-INTEGER"/>
             <word name="DAY-OF-WEEK"/>
-            <word name="DAY-TO-YYYYDDD"/>
             <word name="DBCS"/>
             <word name="DE"/>
             <word name="DEBUG-CONTENTS"/>
@@ -237,7 +244,6 @@
             <word name="DISABLE"/>
             <word name="DISPLAY"/>
             <word name="DISPLAY-1"/>
-            <word name="DISPLAY-OF"/>
             <word name="DIVIDE"/>
             <word name="DIVISION"/>
             <word name="DOWN"/>
@@ -247,6 +253,7 @@
             <word name="EGI"/>
             <word name="EJECT"/>
             <word name="ELSE"/>
+            <word name="ELEMENT"/>
             <word name="EMI"/>
             <word name="ENABLE"/>
             <word name="ENCODING"/>
@@ -260,6 +267,7 @@
             <word name="END-EXEC"/>
             <word name="END-IF"/>
             <word name="END-INVOKE"/>
+            <word name="END-JSON"/>
             <word name="END-MULTIPLY"/>
             <word name="END-OF-PAGE"/>
             <word name="END-PERFORM"/>
@@ -291,7 +299,6 @@
             <word name="EXIT"/>
             <word name="EXTEND"/>
             <word name="EXTERNAL"/>
-            <word name="FACTORIAL"/>
             <word name="FACTORY"/>
             <word name="FALSE"/>
             <word name="FD"/>
@@ -302,9 +309,9 @@
             <word name="FIRST"/>
             <word name="FOOTING"/>
             <word name="FOR"/>
-            <word name="FORMAT"/>
             <word name="FROM"/>
             <word name="FUNCTION"/>
+            <word name="FUNCTION-ID"/>
             <word name="FUNCTION-POINTER"/>
             <word name="GENERATE"/>
             <word name="GIVING"/>
@@ -335,15 +342,15 @@
             <word name="INSERT"/>
             <word name="INSPECT"/>
             <word name="INSTALLATION"/>
-            <word name="INTEGER"/>
-            <word name="INTEGER-OF-DATE"/>
-            <word name="INTEGER-OF-DAY"/>
-            <word name="INTEGER-PART"/>
             <word name="INTO"/>
             <word name="INVALID"/>
             <word name="INVOKE"/>
             <word name="IS"/>
+            <word name="JAVA"/>
             <word name="JNIENVPTR"/>
+            <word name="JSON"/>
+            <word name="JSON-CODE"/>
+            <word name="JSON-STATUS"/>
             <word name="JUST"/>
             <word name="JUSTIFIED"/>
             <word name="KANJI"/>
@@ -364,46 +371,35 @@
             <word name="LINKAGE"/>
             <word name="LOCAL-STORAGE"/>
             <word name="LOCK"/>
-            <word name="LOG"/>
-            <word name="LOG10"/>
             <word name="LOW-VALUE"/>
             <word name="LOW-VALUES"/>
-            <word name="LOWER-CASE"/>
-            <word name="MAX"/>
-            <word name="MEAN"/>
-            <word name="MEDIAN"/>
             <word name="MEMORY"/>
             <word name="MERGE"/>
             <word name="MESSAGE"/>
             <word name="METHOD"/>
             <word name="METHOD-ID"/>
-            <word name="MIDRANGE"/>
-            <word name="MIN"/>
-            <word name="MOD"/>
             <word name="MODE"/>
             <word name="MODULES"/>
             <word name="MORE-LABELS"/>
             <word name="MOVE"/>
             <word name="MULTIPLE"/>
             <word name="MULTIPLY"/>
+            <word name="NAME"/>
             <word name="NAMESPACE"/>
             <word name="NAMESPACE-PREFIX"/>
             <word name="NATIONAL"/>
             <word name="NATIONAL-EDITED"/>
-            <word name="NATIONAL-OF"/>
             <word name="NATIVE"/>
             <word name="NEGATIVE"/>
-            <word name="NEW"/>
             <word name="NEXT"/>
             <word name="NO"/>
+            <word name="NONNUMERIC"/>
             <word name="NOT"/>
             <word name="NULL"/>
             <word name="NULLS"/>
             <word name="NUMBER"/>
             <word name="NUMERIC"/>
             <word name="NUMERIC-EDITED"/>
-            <word name="NUMVAL-C"/>
-            <word name="NUMVAL"/>
             <word name="OBJECT"/>
             <word name="OBJECT-COMPUTER"/>
             <word name="OCCURS"/>
@@ -414,9 +410,6 @@
             <word name="OPEN"/>
             <word name="OPTIONAL"/>
             <word name="OR"/>
-            <word name="ORD-MAX"/>
-            <word name="ORD-MIN"/>
-            <word name="ORD"/>
             <word name="ORDER"/>
             <word name="ORGANIZATION"/>
             <word name="OTHER"/>
@@ -436,9 +429,9 @@
             <word name="PICTURE"/>
             <word name="PLUS"/>
             <word name="POINTER"/>
+            <word name="POINTER-32"/>
             <word name="POSITION"/>
             <word name="POSITIVE"/>
-            <word name="PRESENT-VALUE"/>
             <word name="PRINTING"/>
             <word name="PROCEDURE"/>
             <word name="PROCEDURE-POINTER"/>
@@ -452,7 +445,6 @@
             <word name="QUOTE"/>
             <word name="QUOTES"/>
             <word name="RANDOM"/>
-            <word name="RANGE"/>
             <word name="RD"/>
             <word name="READ"/>
             <word name="READY"/>
@@ -468,7 +460,6 @@
             <word name="RELATIVE"/>
             <word name="RELEASE"/>
             <word name="RELOAD"/>
-            <word name="REM"/>
             <word name="REMAINDER"/>
             <word name="REMOVAL"/>
             <word name="RENAMES"/>
@@ -484,7 +475,6 @@
             <word name="RETURN"/>
             <word name="RETURN-CODE"/>
             <word name="RETURNING"/>
-            <word name="REVERSE"/>
             <word name="REVERSED"/>
             <word name="REWIND"/>
             <word name="REWRITE"/>
@@ -512,9 +502,7 @@
             <word name="SHIFT-IN"/>
             <word name="SHIFT-OUT"/>
             <word name="SIGN"/>
-            <word name="SIN"/>
             <word name="SIZE"/>
-            <word name="SKIP"/>
             <word name="SKIP1"/>
             <word name="SKIP2"/>
             <word name="SKIP3"/>
@@ -532,11 +520,10 @@
             <word name="SPACES"/>
             <word name="SPECIAL-NAMES"/>
             <word name="SQL"/>
-            <word name="SQRT"/>
+            <word name="SQLIMS"/>
             <word name="STANDARD"/>
             <word name="STANDARD-1"/>
             <word name="STANDARD-2"/>
-            <word name="STANDARD-DEVIATION"/>
             <word name="START"/>
             <word name="STATUS"/>
             <word name="STOP"/>
@@ -548,14 +535,12 @@
             <word name="SUM"/>
             <word name="SUPER"/>
             <word name="SUPPRESS"/>
-            <word name="SYMBOL"/>
             <word name="SYMBOLIC"/>
             <word name="SYNC"/>
             <word name="SYNCHRONIZED"/>
             <word name="TABLE"/>
             <word name="TALLY"/>
             <word name="TALLYING"/>
-            <word name="TAN"/>
             <word name="TAPE"/>
             <word name="TERMINAL"/>
             <word name="TERMINATE"/>
@@ -574,21 +559,20 @@
             <word name="TRAILING"/>
             <word name="TRUE"/>
             <word name="TYPE"/>
-            <word name="UNDATE"/>
             <word name="UNIT"/>
             <word name="UNSTRING"/>
             <word name="UNTIL"/>
             <word name="UP"/>
             <word name="UPON"/>
-            <word name="UPPER-CASE"/>
             <word name="USAGE"/>
             <word name="USE"/>
             <word name="USING"/>
+            <word name="UTF-8"/>
             <word name="VALIDATING"/>
             <word name="VALUE"/>
             <word name="VALUES"/>
-            <word name="VARIANCE"/>
             <word name="VARYING"/>
+            <word name="VOLATILE"/>
             <word name="WHEN"/>
             <word name="WHEN-COMPILED"/>
             <word name="WITH"/>
@@ -600,15 +584,14 @@
             <word name="XML-CODE"/>
             <word name="XML-DECLARATION"/>
             <word name="XML-EVENT"/>
-            <word name="XML-NAMESPACE-PREFIX"/>
+            <word name="XML-INFORMATION"/>
             <word name="XML-NAMESPACE"/>
-            <word name="XML-NNAMESPACE-PREFIX"/>
+            <word name="XML-NAMESPACE-PREFIX"/>
             <word name="XML-NNAMESPACE"/>
+            <word name="XML-NNAMESPACE-PREFIX"/>
             <word name="XML-NTEXT"/>
             <word name="XML-SCHEMA"/>
             <word name="XML-TEXT"/>
-            <word name="YEAR-TO-YYYY"/>
-            <word name="YEARWINDOW"/>
             <word name="YYYYDDD"/>
             <word name="YYYYMMDD"/>
             <word name="ZERO"/>

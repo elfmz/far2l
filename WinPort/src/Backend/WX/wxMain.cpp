@@ -1199,7 +1199,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-		|| (dwMods & (RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
+		|| (dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
 		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
 	{

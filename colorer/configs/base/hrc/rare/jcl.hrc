@@ -22,6 +22,8 @@
 
       <entity name="char" value="A-Z\$\#\@\xA7"/> <!-- alphabetic + national -->
       <entity name="name" value="(?:[%char;][%char;0-9]*)"/>
+      <entity name="break" value="(?:\ +|$)"/>
+      <entity name="nospc" value="(?:\'.*\'|\S)+"/><!-- space allowed in quotes -->
 
       <scheme name="jcl">
          <!-- Null statement (end of job) -->
@@ -38,12 +40,13 @@
          <regexp match="/^[^\/].*$/" region0="def:CommentDoc"/>
          <!-- JCL statement, format: //[name] operation [parameters [comment]] -->
          <block start="/^\/\//"
-                end="/(?:%name;?\ +(?:COMMAND|DD|EXEC|INCLUDE|JCLLIB|PROC|SET|XMIT)\ +\S+ |
-                         %name;?\ +IF\ +\S+\ +THEN(?:\ +|$)                               |
-                         %name;?\ +(?:ELSE|ENDIF|ENDCNTL|PROC|PEND)(?:\ +|$)              |
-                         %name; \ +(?:CNTL|JOB|OUTPUT)\ +\S+                              |
-                         %name; \ +(?:CNTL|DD|JOB)(?:\ +|$)                               |
-                                \ +\S+                                                     )\m(.*)$/x"
+                end="/(?:%name;?\ +(?:COMMAND|DD|EXEC|EXPORT|INCLUDE|JCLLIB|PROC|SET|XMIT)\ +%nospc;
+                       | %name;?\ +IF\ +%nospc;\ +THEN%break;
+                       | %name;?\ +(?:ELSE|ENDIF|ENDCNTL|PROC|PEND)%break;
+                       | %name; \ +(?:CNTL|JOB|OUTPUT)\ +%nospc;
+                       | %name; \ +(?:CNTL|DD|JOB)%break;
+                       |        \ +%nospc;
+                      )\m(.*)$/x"
                 scheme="jclline" region00="Symbol" region11="Comment"/>
       </scheme>
 
@@ -51,11 +54,15 @@
          <!-- Paired brackets -->
          <block start="/(?{start}\()/" end="/((?{end}\))|(?{Error}^\/\/\S?=))/"
                 scheme="jclline" region00="Symbol" region10="Symbol" inner-region="yes"/>
-         <!-- Strings -->
+         <!-- String -->
          <block start="/(?{start}\')/" end="/((?{end}\')|(?{Error}^\/\/))/"
                 scheme="def:empty" region="def:String"/>
-         <!-- Numbers -->
+         <!-- Number -->
          <regexp match="/\b\d+(K|M|G)?\b/" region0="def:Number"/>
+         <!-- Temporary dataset -->
+         <regexp match="/(&amp;&amp;)%name;(\(%name;+\))?/" region1="Symbol"/>
+         <!-- Variable -->
+         <regexp match="/&amp;%name;(\.|\b)/" region0="def:VarStrong"/>
          <!-- Symbols -->
          <keywords region="Symbol">
             <symb name="("/>
@@ -68,51 +75,36 @@
             <symb name="&amp;"/>
          </keywords>
          <!-- Statements -->
-         <keywords region="Statement" worddiv="[\ ]">
-	    <word name="COMMAND"/>
-	    <word name="CNTL"/>
+         <keywords region="Statement" worddiv="[ ]">
+            <word name="COMMAND"/>
+            <word name="CNTL"/>
             <word name="DD"/>
-	    <word name="ENDCNTL"/>
+            <word name="ENDCNTL"/>
             <word name="EXEC"/>
-	    <word name="IF"/>
-	    <word name="ELSE"/>
-	    <word name="THEN"/>
-	    <word name="ENDIF"/>
-	    <word name="INCLUDE"/>
-	    <word name="JCLLIB"/>
+            <word name="EXPORT"/>
+            <word name="IF"/>
+            <word name="ELSE"/>
+            <word name="THEN"/>
+            <word name="ENDIF"/>
+            <word name="INCLUDE"/>
+            <word name="JCLLIB"/>
             <word name="JOB"/>
             <word name="OUTPUT"/>
-	    <word name="PEND"/>
-	    <word name="PROC"/>
-	    <word name="SET"/>
-	    <word name="XMIT"/>
-         </keywords>
-         <!-- Special DD statements -->
-         <keywords region="def:Text" worddiv="[\ \/]"> <!-- TODO: Keyword ?? -->
-            <word name="JOBLIB"/>
-            <word name="STEPLIB"/>
-            <word name="SYSABEND"/>
-            <word name="SYSMDUMP"/>
-            <word name="SYSUDUMP"/>
-            <word name="SYSCHK"/>
-            <word name="SYSCKEOV"/>
-            <word name="SYSIN"/>
-            <!-- ...and some very often used -->
-            <word name="SYSOUT"/>
-            <word name="SYSPRINT"/>
-            <word name="SYSTSPRT"/>
-            <word name="CEEDUMP"/>
+            <word name="PEND"/>
+            <word name="PROC"/>
+            <word name="SET"/>
+            <word name="XMIT"/>
          </keywords>
          <!-- Parameters -->
-         <keywords region="Keyword" worddiv="[\ ,=\(\)]">
+         <keywords region="Keyword" worddiv="[ ,=()]">
             <!-- DD statement -->
-	    <word name="ACCODE"/>
-	    <word name="AMP"/>
+            <word name="ACCODE"/>
+            <word name="AMP"/>
             <word name="AVGREC"/>
-	    <word name="BLKSIZE"/>
-	    <word name="BLKSZLIM"/>
-	    <word name="BURST"/>
-	    <word name="CCSID"/>
+            <word name="BLKSIZE"/>
+            <word name="BLKSZLIM"/>
+            <word name="BURST"/>
+            <word name="CCSID"/>
             <word name="CHARS"/>
             <word name="CHKPT"/>
             <word name="CNTL"/>
@@ -170,31 +162,31 @@
             <word name="VOLUME"/><word name="VOL"/>
             <!-- EXEC statement -->
             <word name="ACCT"/>
-	    <word name="ADDRSPC"/>
-	    <word name="CCSID"/>
-	    <word name="COND"/>
-	    <word name="DYNAMNBR"/>
+            <word name="ADDRSPC"/>
+            <word name="CCSID"/>
+            <word name="COND"/>
+            <word name="DYNAMNBR"/>
             <word name="MEMLIMIT"/>
-	    <word name="PARM"/>
- 	    <word name="PERFORM"/>
+            <word name="PARM"/>
+            <word name="PERFORM"/>
             <word name="PGM"/>
             <word name="PROC"/>
-	    <word name="RD"/>
+            <word name="RD"/>
             <word name="REGION"/>
             <word name="RLSTMOUT"/>
-	    <word name="TIME"/>
+            <word name="TIME"/>
             <!-- INCLUDE statement -->
-	    <word name="MEMBER"/>
+            <word name="MEMBER"/>
             <!-- JCLLIB statement -->
             <word name="ORDER"/>
             <!-- JOB statement -->
             <word name="ADDRSPC"/>
             <word name="BYTES"/>
-	    <word name="CARDS"/>
-	    <word name="CCSID"/>
+            <word name="CARDS"/>
+            <word name="CCSID"/>
             <word name="CLASS"/>
             <word name="COND"/>
-	    <word name="GROUP"/>
+            <word name="GROUP"/>
             <word name="JESLOG"/>
             <word name="LINES"/>
             <word name="MEMLIMIT"/>
@@ -207,49 +199,49 @@
             <word name="PRTY"/>
             <word name="RD"/>
             <word name="REGION"/>
-	    <word name="RESTART"/>
-	    <word name="SECLABEL"/>
-	    <word name="SCHENV"/>
+            <word name="RESTART"/>
+            <word name="SECLABEL"/>
+            <word name="SCHENV"/>
             <word name="TYPRUN"/>
-	    <word name="USER"/>
+            <word name="USER"/>
             <!-- OUTPUT JCL statement -->
-	    <word name="ADDRESS"/>
-	    <word name="AFPSTATS"/>
-	    <word name="BUILDING"/>
-	    <word name="BURST"/>
-	    <word name="CHARS"/>
-	    <word name="CKPTLINE"/>
-	    <word name="CKPTPAGE"/>
-	    <word name="CKPTSEC"/>
-	    <word name="CLASS"/>
-	    <word name="COLORMAP"/>
-	    <word name="COMPACT"/>
-	    <word name="COMSETUP"/>
-	    <word name="CONTROL"/>
-	    <word name="DATACK"/>
-	    <word name="DEFAULT"/>
-	    <word name="DEPT"/>
-	    <word name="DEST"/>
-	    <word name="DPAGELBL"/>
-	    <word name="DUPLEX"/>
-	    <word name="FCB"/>
-	    <word name="FLASH"/>
-	    <word name="FORMDEF"/>
-	    <word name="FORMLEN"/>
-	    <word name="FORMS"/>
- 	    <word name="FSSDATA"/>
-	    <word name="GROUPID"/>
-	    <word name="INDEX"/>
+            <word name="ADDRESS"/>
+            <word name="AFPSTATS"/>
+            <word name="BUILDING"/>
+            <word name="BURST"/>
+            <word name="CHARS"/>
+            <word name="CKPTLINE"/>
+            <word name="CKPTPAGE"/>
+            <word name="CKPTSEC"/>
+            <word name="CLASS"/>
+            <word name="COLORMAP"/>
+            <word name="COMPACT"/>
+            <word name="COMSETUP"/>
+            <word name="CONTROL"/>
+            <word name="DATACK"/>
+            <word name="DEFAULT"/>
+            <word name="DEPT"/>
+            <word name="DEST"/>
+            <word name="DPAGELBL"/>
+            <word name="DUPLEX"/>
+            <word name="FCB"/>
+            <word name="FLASH"/>
+            <word name="FORMDEF"/>
+            <word name="FORMLEN"/>
+            <word name="FORMS"/>
+            <word name="FSSDATA"/>
+            <word name="GROUPID"/>
+            <word name="INDEX"/>
             <word name="INTRAY"/>
-	    <word name="JESDS"/>
-	    <word name="LINDEX"/>
-	    <word name="LINECT"/>
-	    <word name="MAILBCC"/>
-	    <word name="MAILCC"/>
+            <word name="JESDS"/>
+            <word name="LINDEX"/>
+            <word name="LINECT"/>
+            <word name="MAILBCC"/>
+            <word name="MAILCC"/>
             <word name="MAILFROM"/>
             <word name="MAILTO"/>
             <word name="MAILFILE"/>
-	    <word name="MODIFY"/>
+            <word name="MODIFY"/>
             <word name="NAME"/>
             <word name="NOTIFY"/>
             <word name="OFTSETXB"/>
@@ -292,7 +284,7 @@
             <word name="SUBCHARS"/>
          </keywords>
          <!-- Selected subparameters of Statement:Parameter -->
-         <keywords region="Keyword" worddiv="[\ ,=\(\)]">
+         <keywords region="Keyword" worddiv="[ ,=()]">
             <!-- DD:DISP -->
             <word name="NEW"/>
             <word name="OLD"/>
@@ -340,17 +332,17 @@
             <word name="PRIVATE"/>
             <word name="RETAIN"/>
             <!-- EXEC:COND  -->
- 	    <word name="EVEN"/>
- 	    <word name="ONLY"/>
+            <word name="EVEN"/>
+            <word name="ONLY"/>
          </keywords>
          <!-- Operators in COND parameter of EXEC or JOB statement -->
-         <keywords region="def:VarStrong" worddiv="[,\)]">
- 	    <word name="GT"/>
- 	    <word name="GE"/>
- 	    <word name="EQ"/>
- 	    <word name="LT"/>
- 	    <word name="LE"/>
- 	    <word name="NE"/>
+         <keywords region="def:VarStrong" worddiv="[,)]">
+            <word name="GT"/>
+            <word name="GE"/>
+            <word name="EQ"/>
+            <word name="LT"/>
+            <word name="LE"/>
+            <word name="NE"/>
          </keywords>
       </scheme>
    </type>

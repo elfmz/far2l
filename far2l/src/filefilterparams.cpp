@@ -737,6 +737,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 												COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE | COMMON_LVB_REVERSE_VIDEO));
 
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_HER_MARKINHERIT, BSTATE_CHECKED);
+				SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 				break;
 			} else if (Param1 == ID_FF_DATERELATIVE) {
 				FilterDlgRelativeDateItemsUpdate(hDlg, true);

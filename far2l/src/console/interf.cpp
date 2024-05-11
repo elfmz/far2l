@@ -719,7 +719,7 @@ void MakeShadow(int X1, int Y1, int X2, int Y2)
 	if (Y2 > ScrY)
 		Y2 = ScrY;
 
-	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xF8);
+	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xFFFFFFFFFFFFFFF8);
 }
 
 void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color)

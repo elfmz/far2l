@@ -2743,7 +2743,13 @@ int Dialog::ProcessKey(FarKey Key)
 			if (Item[FocusPos]->Type == DI_USERCONTROL)		// для user-типа вываливаем
 				return TRUE;
 
-			return MoveToCtrlVertical(Key == KEY_UP || Key == KEY_NUMPAD8);
+			// special vertical processing only for edit fields or check/radio buttons
+			if (FarIsEdit(Item[FocusPos]->Type)
+					|| Item[FocusPos]->Type == DI_CHECKBOX || Item[FocusPos]->Type == DI_RADIOBUTTON)
+				return MoveToCtrlVertical(Key == KEY_UP || Key == KEY_NUMPAD8);
+
+			return Do_ProcessNextCtrl(
+					Key == KEY_LEFT || Key == KEY_UP || Key == KEY_NUMPAD4 || Key == KEY_NUMPAD8);
 		}
 		// $ 27.04.2001 VVM - Обработка колеса мышки
 		case KEY_MSWHEEL_UP:
@@ -3648,7 +3654,7 @@ int Dialog::MoveToCtrlVertical(int up)
 		}
 	}
 
-	if (MinDist < 1000) {
+	if (MinDist < 3/*1000*/) { // only nearest 2 lines up/down by this special method
 		ChangeFocus2(MinPos);
 
 		if (Item[MinPos]->Flags & DIF_MOVESELECT) {

@@ -189,6 +189,11 @@ struct DialogItemEx
 		X2 = Other.X2;
 		Y1 = Other.Y1;
 		Y2 = Other.Y2;
+		customItemColor[0] = Other.customItemColor[0];
+		customItemColor[1] = Other.customItemColor[1];
+		customItemColor[2] = Other.customItemColor[2];
+		customItemColor[3] = Other.customItemColor[3];
+
 		Focus = Other.Focus;
 		Reserved = Other.Reserved;
 		Flags = Other.Flags;

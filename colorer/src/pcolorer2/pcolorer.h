@@ -1,57 +1,73 @@
 #ifndef _PCOLORER_H_
 #define _PCOLORER_H_
 
-/**
-  Visual Leak Detector http://sites.google.com/site/dmoulding/vld .
-  Optional 
-*/
-#ifdef _DEBUG
-#ifndef _WIN64
-//#include<vld.h>
-#endif
-#endif
-
-#include<farplug-wide.h>
-#include<farcolor.h>
-#include<farkeys.h>
-#include"ConsoleAnnotation.h"
+#include <farplug-wide.h>
+#include <farcolor.h>
+#include <farkeys.h>
 #include "colorer/strings/legacy/UnicodeString.h"
-
-#include<wctype.h>
-#include<wchar.h>
-#include<windows.h>
-#if 0
-#include <g3log/logworker.hpp>
-#endif
-
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
-extern UnicodeString *PluginPath;
-#if 0
-extern std::unique_ptr<g3::LogWorker> logworker;
-#endif
+extern UnicodeString* PluginPath;
 
 /** FAR .lng file identifiers. */
-enum
-{
-  mName, mSetup, mTurnOff, mTrueMod,
-  mCross, mPairs, mSyntax, mOldOutline,
-  mOk, mReloadAll, mCancel,
-  mCatalogFile, mHRDName, mHRDNameTrueMod,
-  mListTypes, mMatchPair, mSelectBlock, mSelectPair,
-  mListFunctions, mFindErrors, mSelectRegion, mRegionInfo,
-  mLocateFunction, mUpdateHighlight, mReloadBase, mConfigure,
-  mTotalTypes, mSelectSyntax, mOutliner, mNothingFound,
-  mGotcha, mChoose,
-  mReloading, mCantLoad, mCantOpenFile, mDie, mTry,
-  mFatal, mSelectHRD, mChangeBackgroundEditor, mTrueModSetting,
-  mNoFarTM, mNoConEmu, mNoFarTMConEmu, mUserHrdFile, mUserHrcFile, mUserHrcSetting,
-  mUserHrcSettingDialog, mListSyntax, mParamList,mParamValue, mAutoDetect, mFavorites,
-  mKeyAssignDialogTitle, mKeyAssignTextTitle
+enum {
+  mName,
+  mSetup,
+  mTurnOff,
+  mTrueMod,
+  mCross,
+  mPairs,
+  mSyntax,
+  mOldOutline,
+  mOk,
+  mReloadAll,
+  mCancel,
+  mCatalogFile,
+  mHRDName,
+  mHRDNameTrueMod,
+  mListTypes,
+  mMatchPair,
+  mSelectBlock,
+  mSelectPair,
+  mListFunctions,
+  mFindErrors,
+  mSelectRegion,
+  mRegionInfo,
+  mLocateFunction,
+  mUpdateHighlight,
+  mReloadBase,
+  mConfigure,
+  mTotalTypes,
+  mSelectSyntax,
+  mOutliner,
+  mNothingFound,
+  mGotcha,
+  mChoose,
+  mReloading,
+  mCantLoad,
+  mCantOpenFile,
+  mDie,
+  mTry,
+  mFatal,
+  mSelectHRD,
+  mChangeBackgroundEditor,
+  mTrueModSetting,
+  mNoFarTM,
+  mUserHrdFile,
+  mUserHrcFile,
+  mUserHrcSetting,
+  mUserHrcSettingDialog,
+  mListSyntax,
+  mParamList,
+  mParamValue,
+  mAutoDetect,
+  mFavorites,
+  mKeyAssignDialogTitle,
+  mKeyAssignTextTitle
 };
 
-UnicodeString *GetConfigPath(const UnicodeString &sub);
+UnicodeString* GetConfigPath(const UnicodeString& sub);
 
 #endif
 

@@ -461,6 +461,7 @@ struct Options
 	int SavePluginFoldersHistory;
 	int FoldersHistoryCount;
 	int DialogsHistoryCount;
+	int AutoHighlightHistory;
 
 	BYTE HistoryShowTimes[8];
 
@@ -615,6 +616,11 @@ struct Options
 
 	bool IsUserAdmin;
 	FARString strWindowTitle;
+
+	int DateFormat;
+	FARString strDateSeparator;
+	FARString strTimeSeparator;
+	FARString strDecimalSeparator;
 
 	bool IsFirstStart;
 

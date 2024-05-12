@@ -80,6 +80,34 @@ enum DIALOG_MODES
 	DialogItemEx Item[ARRAYSIZE(Data)];                                                                        \
 	DataToItemEx(Data, Item, ARRAYSIZE(Data));
 
+/**
+ * check if dialog element can be focused
+*/
+#define ITEM_IS_FOCUSABLE(Item)                                                                                \
+	( !((Item)->Flags & (DIF_NOFOCUS | DIF_DISABLE | DIF_HIDDEN))                                              \
+	&& (FarIsEdit((Item)->Type)                                                                                \
+		|| (Item)->Type == DI_CHECKBOX                                                                         \
+		|| (Item)->Type == DI_RADIOBUTTON                                                                      \
+		|| (Item)->Type == DI_BUTTON                                                                           \
+	)                                                                                                          \
+)
+
+/**
+ * check if dialog item is vertical separator
+*/
+#define ITEM_IS_VERTICAL_SEPARATOR(Item)                                                                       \
+	( (Item)->Type == DI_SINGLEBOX || (Item)->Type == DI_DOUBLEBOX ||                                          \
+		((Item)->Type == DI_TEXT && ((Item)->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2 | DIF_SEPARATORUSER)))    \
+)
+
+/**
+ * check if dialog item is horizontal separator
+*/
+#define ITEM_IS_HORIZONTAL_SEPARATOR(Item)                                                                     \
+	( (Item)->Type == DI_SINGLEBOX || (Item)->Type == DI_DOUBLEBOX ||                                          \
+		((Item)->Type == DI_VTEXT && ((Item)->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2 | DIF_SEPARATORUSER)))   \
+)
+
 // Структура, описывающая автоматизацию для DIF_AUTOMATION
 // на первом этапе - примитивная - выставление флагов у элементов для CheckBox
 struct DialogItemAutomation

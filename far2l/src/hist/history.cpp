@@ -378,7 +378,8 @@ int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &s
 	HistoryMenu.SetHelp(HelpTopic ? HelpTopic : L"HistoryCmd");	
 
 	HistoryMenu.SetPosition(-1, -1, 0, 0);
-	HistoryMenu.AssignHighlights(TRUE);
+	if (Opt.AutoHighlightHistory)
+		HistoryMenu.AssignHighlights(TRUE);
 	return ProcessMenu(strStr, Title, HistoryMenu, Height, Type, nullptr);
 }
 

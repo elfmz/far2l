@@ -114,6 +114,7 @@
 
 <scheme name="script">
     <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
     <inherit scheme="comments"/>
     <inherit scheme="operators"/>
     <block start="/!\s*/" end="/\M%cmdbreak;/" scheme="script_control" region00="CommandReserved"/>
@@ -147,7 +148,7 @@
 
     <!-- functions -->
     <block start="/\b(%word;)\s*(\(\s*\))\s*/" end="//" scheme="script"
-        region01="FunctionName" region02="Symbol"/>
+        region00="def:Outlined" region01="FunctionName" region02="Symbol"/>
 
     <!-- if ... fi -->
     <block start="/\M\b(if)\b/" end="/\b(fi)\b/" scheme="if"
@@ -423,11 +424,15 @@
     <block start="/(^|(\s|%wrdbreak;)?#1)\#/" end="/$/" scheme="def:Comment" region="Comment"/>
 </scheme>
 
-<scheme name="escapes">
+<scheme name="escape_newline">
     <!-- spaces between backslash and EOL are usually unexpected -->
     <block start="/\\\s+$/" end="/$/" scheme="def:empty" region="Error"/>
     <!-- escape new line -->
     <block start="/\\$/" end="/^/" scheme="def:empty"/>
+</scheme>
+
+<scheme name="escapes">
+    <inherit scheme="escape_newline"/>
     <!-- ignore other escaped char -->
     <regexp match="/\\./"/>
 </scheme>
@@ -529,13 +534,18 @@
         region="Error" region11="SymbolStrong"/>
 </scheme>
 
+<scheme name="case_pattern">
+    <inherit scheme="comments"/>
+    <inherit scheme="parameter_expansion"/>
+</scheme>
+
 <scheme name="case">
     <!-- case ... in -->
     <block start="/(case)\m/" end="/\s+(\Min)\s*/" scheme="script_words"
         region01="CommandReserved" region11="CommandReserved"/>
     <!-- each pattern -->
     <block start="/(in|;;)(\s*esac)?!\m/" end="/\M(\)(\s*|$)|esac)/"
-        scheme="parameter_expansion" region="String"/>
+        scheme="case_pattern" region="String"/>
     <!-- each body -->
     <block start="/((\)))(\s*|$)/" end="/\M((;;|esac))/" scheme="script"
         region01="PairStart"    region12="PairEnd"

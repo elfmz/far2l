@@ -355,6 +355,16 @@ private:
 
 	int Do_ProcessTab(int Next);
 	int Do_ProcessNextCtrl(int Next, BOOL IsRedraw = TRUE);
+
+	/**
+	 * move focus to right or left dialog item.
+	*/
+	int MoveToCtrlHorizontal(int right);
+	/**
+	 * move focus to up or down dialog item.
+	*/
+	int MoveToCtrlVertical(int up);
+
 	int Do_ProcessFirstCtrl();
 	int Do_ProcessSpace();
 	void SetComboBoxPos(DialogItemEx *Item = nullptr);

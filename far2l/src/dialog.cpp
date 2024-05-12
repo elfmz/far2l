@@ -345,6 +345,11 @@ void DataToItemEx(const DialogDataEx *Data, DialogItemEx *Item, int Count)
 		Item[i].X2 = Data[i].X2;
 		Item[i].Y2 = Data[i].Y2;
 
+		Item[i].customItemColor[0] = 0;
+		Item[i].customItemColor[1] = 0;
+		Item[i].customItemColor[2] = 0;
+		Item[i].customItemColor[3] = 0;
+
 		if (Item[i].X2 < Item[i].X1)
 			Item[i].X2 = Item[i].X1;
 
@@ -1790,10 +1795,12 @@ void Dialog::ShowDialog(unsigned ID)
 
 		if (!DialogMode.Check(DMODE_NODRAWPANEL)) {
 
+			uint64_t Color[4];
+
 			//FIXME:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
-			uint64_t Color = FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ? COL_WARNDIALOGTEXT:COL_DIALOGTEXT);
-			DlgProc((HANDLE)this, DN_CTLCOLORDIALOG, 0, (LONG_PTR)&Color);
-			SetScreen(X1, Y1, X2, Y2, L' ', Color);
+			Color[0] = FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ? COL_WARNDIALOGTEXT:COL_DIALOGTEXT);
+			DlgProc((HANDLE)this, DN_CTLCOLORDIALOG, 0, (LONG_PTR)Color);
+			SetScreen(X1, Y1, X2, Y2, L' ', Color[0]);
 		}
 
 		ID = 0;

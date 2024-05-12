@@ -332,40 +332,74 @@ void InterfaceSettings()
 		DialogItemEx *DateFormatText = Builder.AddTextAfter(DateFormatComboBox, Msg::ConfigDateFormat);
 		DateFormatText->Indent(1);
 		*/
+
+
 		static FarLangMsg DateFormatOptions[] = {Msg::ConfigDateFormatMDY, Msg::ConfigDateFormatDMY,
 				Msg::ConfigDateFormatYMD};
 		Builder.AddRadioButtonsHorz(&DateFormatIndex, ARRAYSIZE(DateFormatOptions), DateFormatOptions);
 
-		Builder.StartColumns();
+
+//		Builder.StartColumns();
 		DialogItemEx *DateSeparatorEdit = Builder.AddEditField(&strDateSeparator, 0);
 		DateSeparatorEdit->Type = DI_FIXEDIT;
 		DateSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DateSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(DateSeparatorEdit, Msg::ConfigDateSeparator);
 
-		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTimeSeparator, 0);
-		TimeSeparatorEdit->Type = DI_FIXEDIT;
-		TimeSeparatorEdit->Flags |= DIF_MASKEDIT;
-		TimeSeparatorEdit->strMask = L"X";
-		Builder.AddTextAfter(TimeSeparatorEdit, Msg::ConfigTimeSeparator);
+		DialogItemEx *DateSeparatorEdit2 = Builder.AddEditField(&strDateSeparator, 0);
+		DateSeparatorEdit2->Type = DI_FIXEDIT;
+		DateSeparatorEdit2->Flags |= DIF_MASKEDIT;
+		DateSeparatorEdit2->strMask = L"X";
+		Builder.AddTextAfter(DateSeparatorEdit2, Msg::ConfigDateSeparator);
+
+//		DialogItemEx *DateSeparatorEdit3 = Builder.AddEditField(&strDateSeparator, 0);
+//		DateSeparatorEdit3->Type = DI_FIXEDIT;
+//		DateSeparatorEdit3->Flags |= DIF_MASKEDIT;
+//		DateSeparatorEdit3->strMask = L"X";
+//		Builder.AddTextAfter(DateSeparatorEdit3, Msg::ConfigDateSeparator);
+
+
+///		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTimeSeparator, 0);
+//		FARString strTest = L"OPA";
+
+//		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTest, 0);
+//		TimeSeparatorEdit->Type = DI_FIXEDIT;
+//		TimeSeparatorEdit->Flags |= DIF_MASKEDIT;
+//		TimeSeparatorEdit->strMask = L"X";
+///		Builder.AddTextAfter(TimeSeparatorEdit, Msg::ConfigTimeSeparator);
+//		Builder.AddTextAfter(TimeSeparatorEdit, Msg::Ok);
+
+//		DialogItemEx *TimeSeparatorEdit = Builder.AddEditField(&strTimeSeparator, 0);
+//		TimeSeparatorEdit->Type = DI_FIXEDIT;
+//		TimeSeparatorEdit->Flags |= DIF_MASKEDIT;
+//		TimeSeparatorEdit->strMask = L"X";
+//		Builder.AddTextAfter(TimeSeparatorEdit, Msg::ConfigTimeSeparator);
+
+#if 0
 
 		DialogItemEx *DecimalSeparatorEdit = Builder.AddEditField(&strDecimalSeparator, 0);
 		DecimalSeparatorEdit->Type = DI_FIXEDIT;
 		DecimalSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DecimalSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(DecimalSeparatorEdit, Msg::ConfigDecimalSeparator);
+#endif
         
-		Builder.ColumnBreak();
+//		Builder.ColumnBreak();
 		int DateTimeDefaultID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeDefault, DateTimeDefaultID);
+
 		int DateTimeCurrentID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeCurrent, DateTimeCurrentID);
 		int DateTimeFromSystemID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeFromSystem, DateTimeFromSystemID);
-		Builder.EndColumns();
+//		Builder.EndColumns();
 
 		Builder.AddSeparator();
 
+#if 0
+
+
+#endif
 		const DWORD supported_tweaks = ApplyConsoleTweaks();
 		if (supported_tweaks & TWEAK_STATUS_SUPPORT_BLINK_RATE) {
 
@@ -398,6 +432,7 @@ void InterfaceSettings()
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);
 
+
 		// OKButton->Flags = DIF_CENTERGROUP;
 		// OKButton->DefaultButton = TRUE;
 		// OKButton->Y1 = OKButton->Y2 = NextY++;
@@ -406,6 +441,7 @@ void InterfaceSettings()
 		Builder.AddOKCancel();
 
 		int clicked_id = -1;
+
 		if (Builder.ShowDialog(&clicked_id)) {
 			if (Opt.CMOpt.CopyTimeRule)
 				Opt.CMOpt.CopyTimeRule = 3;
@@ -428,9 +464,10 @@ void InterfaceSettings()
 			break;
 		}
 
+#if 0
+
 		if (ChangeFontID != -1 && clicked_id == ChangeFontID)
 			WINPORT(ConsoleChangeFont)();
-
 		else if (clicked_id == DateTimeDefaultID) {
 			DateFormatIndex = GetDateFormatDefault();
 			strDateSeparator = GetDateSeparatorDefault();
@@ -438,12 +475,14 @@ void InterfaceSettings()
 			strDecimalSeparator = GetDecimalSeparatorDefault();
 		}
 
+
 		else if (clicked_id == DateTimeCurrentID) {
 			DateFormatIndex = GetDateFormat();
 			strDateSeparator = GetDateSeparator();
 			strTimeSeparator = GetTimeSeparator();
 			strDecimalSeparator = GetDecimalSeparator();
 		}
+
 
 		else if (clicked_id == DateTimeFromSystemID) {
 			// parcing part of possible https://help.gnome.org/users/gthumb/stable/gthumb-date-formats.html
@@ -542,8 +581,10 @@ void InterfaceSettings()
 					? MSG_WARNING : 0),
 				1);
 		}
+#endif
 		else
 			break;
+
 	}
 }
 

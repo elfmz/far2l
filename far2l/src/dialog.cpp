@@ -3628,7 +3628,7 @@ int Dialog::MoveToCtrlHorizontal(int right)
 	}
 
 	//MinDist still equal to RealWidth,
-	//it means this line inside block of items has no focusable controls
+	//it means current line inside block of items has no focusable controls
 	//fallback to Do_ProcessNextCtrl
 	if (MinDist < RealWidth) {
 		ChangeFocus2(MinPos);
@@ -3683,10 +3683,10 @@ int Dialog::MoveToCtrlVertical(int up)
 		}
 	}
 
-	//MinDist still equal to RealHeight,
-	//it means this column inside block of items has no focusable controls
+	//current column inside block of items has no focusable controls
+	//gap more than one line considered as "native" block separator
 	//fallback to Do_ProcessNextCtrl
-	if (MinDist < RealHeight) {
+	if (MinDist < 3) {
 		ChangeFocus2(MinPos);
 
 		if (Item[MinPos]->Flags & DIF_MOVESELECT) {

@@ -3592,17 +3592,33 @@ int Dialog::Do_ProcessNextCtrl(int Up, BOOL IsRedraw)
 
 int Dialog::MoveToCtrlHorizontal(int right)
 {
-	int MinDist = 1000, MinPos = 0;
+	int MinDist     = RealWidth,
+		LeftBorder  = 0,
+		RightBorder = RealWidth,
+		Dist        = 0,
+		MinPos      = 0;
 
 	for (unsigned int I = 0; I < ItemCount; I++) {
-		if (I != FocusPos && (!(Item[I]->Flags & (DIF_NOFOCUS | DIF_DISABLE | DIF_HIDDEN)))
-				&& (FarIsEdit(Item[I]->Type) || Item[I]->Type == DI_CHECKBOX
-						|| Item[I]->Type == DI_RADIOBUTTON)
-				 && Item[I]->Y1 == Item[FocusPos]->Y1)
-		{
-			int Dist = Item[I]->X1 - Item[FocusPos]->X1;
+		//first, let's find nearest borders
+		if (ITEM_IS_HORIZONTAL_SEPARATOR(Item[I])) {
+			if (Item[I]->X1 < Item[FocusPos]->X1){
+				if (LeftBorder < Item[I]->X1) {
+					LeftBorder = Item[I]->X1;
+				}
+			} else if (Item[I]->X1 > Item[FocusPos]->X1) {
+				if (RightBorder > Item[I]->X1) {
+					RightBorder = Item[I]->X1;
+				}
+			}
+		}
 
-			if ((!right && Dist < 0) || (right && Dist > 0)) {
+		//find nearest item _inside_ nearest borders
+		if (I != FocusPos && ITEM_IS_FOCUSABLE(Item[I]) && Item[I]->Y1 == Item[FocusPos]->Y1) {
+			Dist = Item[I]->X1 - Item[FocusPos]->X1;
+
+			if ((!right && Dist < 0 &&(Item[I]->X1 > LeftBorder))
+				|| (right && Dist > 0 &&(Item[I]->X1 < RightBorder))
+			) {
 				if (abs(Dist) < MinDist) {
 					MinDist = abs(Dist);
 					MinPos = I;
@@ -3611,7 +3627,10 @@ int Dialog::MoveToCtrlHorizontal(int right)
 		}
 	}
 
-	if (MinDist < 1000) {
+	//MinDist still equal to RealWidth,
+	//it means this line inside block of items has no focusable controls
+	//fallback to Do_ProcessNextCtrl
+	if (MinDist < RealWidth) {
 		ChangeFocus2(MinPos);
 
 		if (Item[MinPos]->Flags & DIF_MOVESELECT) {
@@ -3629,17 +3648,33 @@ int Dialog::MoveToCtrlHorizontal(int right)
 
 int Dialog::MoveToCtrlVertical(int up)
 {
-	int MinDist = 1000, MinPos = 0;
+	int MinDist      = RealHeight,
+		UpperBorder  = 0,
+		BottomBorder = RealHeight,
+		Dist         = 0,
+		MinPos       = 0;
 
 	for (unsigned int I = 0; I < ItemCount; I++) {
-		if (I != FocusPos && (!(Item[I]->Flags & (DIF_NOFOCUS | DIF_DISABLE | DIF_HIDDEN)))
-				&& (FarIsEdit(Item[I]->Type) || Item[I]->Type == DI_CHECKBOX
-						|| Item[I]->Type == DI_RADIOBUTTON)
-				 && Item[I]->X1 == Item[FocusPos]->X1)
-		{
-			int Dist = Item[I]->Y1 - Item[FocusPos]->Y1;
+		//first, let's find nearest borders
+		if (ITEM_IS_VERTICAL_SEPARATOR(Item[I])) {
+			if (Item[I]->Y1 < Item[FocusPos]->Y1){
+				if (UpperBorder < Item[I]->Y1) {
+					UpperBorder = Item[I]->Y1;
+				}
+			} else if (Item[I]->Y1 > Item[FocusPos]->Y1) {
+				if (BottomBorder > Item[I]->Y1) {
+					BottomBorder = Item[I]->Y1;
+				}
+			}
+		}
 
-			if ((up && Dist < 0) || (!up && Dist > 0)) {
+		//find nearest item _inside_ nearest borders
+		if (I != FocusPos && ITEM_IS_FOCUSABLE(Item[I]) && Item[I]->X1 == Item[FocusPos]->X1) {
+			Dist = Item[I]->Y1 - Item[FocusPos]->Y1;
+
+			if ((up && Dist < 0 && (Item[I]->Y1 > UpperBorder))
+				|| (!up && Dist > 0 && (Item[I]->Y1 < BottomBorder))
+			) {
 				if (abs(Dist) < MinDist) {
 					MinDist = abs(Dist);
 					MinPos = I;
@@ -3648,7 +3683,10 @@ int Dialog::MoveToCtrlVertical(int up)
 		}
 	}
 
-	if (MinDist < 1000) {
+	//MinDist still equal to RealHeight,
+	//it means this column inside block of items has no focusable controls
+	//fallback to Do_ProcessNextCtrl
+	if (MinDist < RealHeight) {
 		ChangeFocus2(MinPos);
 
 		if (Item[MinPos]->Flags & DIF_MOVESELECT) {

@@ -93,27 +93,6 @@ enum DLGITEMINTERNALFLAGS
 const wchar_t *fmtSavedDialogHistory = L"SavedDialogHistory/";
 
 //////////////////////////////////////////////////////////////////////////
-/*
-	Функция, определяющая - "Может ли элемент диалога иметь фокус ввода"
-*/
-static inline bool CanGetFocus(int Type)
-{
-	switch (Type) {
-		case DI_EDIT:
-		case DI_FIXEDIT:
-		case DI_PSWEDIT:
-		case DI_COMBOBOX:
-		case DI_BUTTON:
-		case DI_CHECKBOX:
-		case DI_RADIOBUTTON:
-		case DI_LISTBOX:
-		case DI_MEMOEDIT:
-		case DI_USERCONTROL:
-			return true;
-		default:
-			return false;
-	}
-}
 
 bool IsKeyHighlighted(const wchar_t *Str, FarKey Key, int Translate, int AmpPos)
 {
@@ -698,8 +677,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 	}
 
 	// если FocusPos в пределах и элемент задисаблен, то ищем сначала
-	if (FocusPos != (unsigned)-1 && FocusPos < ItemCount
-			&& (Item[FocusPos]->Flags & (DIF_DISABLE | DIF_NOFOCUS | DIF_HIDDEN)))
+	if (FocusPos != (unsigned)-1 && FocusPos < ItemCount && ITEM_IS_FOCUSABLE(Item[FocusPos]))
 		FocusPos = (unsigned)-1;	// будем искать сначала!
 
 	// предварительный цикл по поводу кнопок
@@ -724,8 +702,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			}
 		}
 		// предварительный поик фокуса
-		if (FocusPos == (unsigned)-1 && CanGetFocus(Type) && CurItem->Focus
-				&& !(ItemFlags & (DIF_DISABLE | DIF_NOFOCUS | DIF_HIDDEN)))
+		if (FocusPos == (unsigned)-1 && ITEM_IS_FOCUSABLE(CurItem))
 			FocusPos = I;		// запомним первый фокусный элемент
 
 		CurItem->Focus = 0;		// сбросим для всех, чтобы не оказалось,
@@ -755,7 +732,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 		{
 			CurItem = Item[I];
 
-			if (CanGetFocus(CurItem->Type) && !(CurItem->Flags & (DIF_DISABLE | DIF_NOFOCUS | DIF_HIDDEN))) {
+			if (ITEM_IS_FOCUSABLE(CurItem)) {
 				FocusPos = I;
 				break;
 			}
@@ -3553,7 +3530,7 @@ int Dialog::Do_ProcessFirstCtrl()
 		return TRUE;
 	} else {
 		for (unsigned I = 0; I < ItemCount; I++)
-			if (CanGetFocus(Item[I]->Type)) {
+			if (ITEM_IS_FOCUSABLE(Item[I])) {
 				ChangeFocus2(I);
 				ShowDialog();
 				break;
@@ -3785,7 +3762,6 @@ int Dialog::Do_ProcessSpace()
 unsigned Dialog::ChangeFocus(unsigned CurFocusPos, int Step, int SkipGroup)
 {
 	CriticalSectionLock Lock(CS);
-	int Type;
 	unsigned OrigFocusPos = CurFocusPos;
 	//	int FucusPosNeed=-1;
 	// В функцию обработки диалога здесь передаем сообщение,
@@ -3797,28 +3773,28 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos, int Step, int SkipGroup)
 	//	else
 	{
 		for (;;) {
-			CurFocusPos+= Step;
+			CurFocusPos += Step;
 
-			if ((int)CurFocusPos < 0)
+			if ((int)CurFocusPos < 0) {
 				CurFocusPos = ItemCount - 1;
+			}
 
-			if (CurFocusPos >= ItemCount)
+			if (CurFocusPos >= ItemCount) {
 				CurFocusPos = 0;
+			}
 
-			Type = Item[CurFocusPos]->Type;
-
-			if (!(Item[CurFocusPos]->Flags & (DIF_NOFOCUS | DIF_DISABLE | DIF_HIDDEN))) {
-				if (Type == DI_LISTBOX || Type == DI_BUTTON || Type == DI_CHECKBOX || FarIsEdit(Type)
-						|| Type == DI_USERCONTROL)
+			if (ITEM_IS_FOCUSABLE(Item[CurFocusPos])) {
+				if (Item[CurFocusPos]->Type == DI_RADIOBUTTON && (SkipGroup || !Item[CurFocusPos]->Selected)) {
+					continue;
+				} else {
 					break;
-
-				if (Type == DI_RADIOBUTTON && (!SkipGroup || Item[CurFocusPos]->Selected))
-					break;
+				}
 			}
 
 			// убираем зацикливание с последующим подвисанием :-)
-			if (OrigFocusPos == CurFocusPos)
+			if (OrigFocusPos == CurFocusPos) {
 				break;
+			}
 		}
 	}
 	//	Dialog::FocusPos=FocusPos;
@@ -3841,7 +3817,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 	CriticalSectionLock Lock(CS);
 	int FocusPosNeed = -1;
 
-	if (!(Item[SetFocusPos]->Flags & (DIF_NOFOCUS | DIF_DISABLE | DIF_HIDDEN))) {
+	if (ITEM_IS_FOCUSABLE(Item[SetFocusPos])) {
 		if (DialogMode.Check(DMODE_INITOBJECTS)) {
 			FocusPosNeed = (int)DlgProc((HANDLE)this, DN_KILLFOCUS, FocusPos, 0);
 
@@ -3849,7 +3825,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 				return;
 		}
 
-		if (FocusPosNeed != -1 && CanGetFocus(Item[FocusPosNeed]->Type))
+		if (FocusPosNeed != -1 && ITEM_IS_FOCUSABLE(Item[FocusPosNeed]))
 			SetFocusPos = FocusPosNeed;
 
 		Item[FocusPos]->Focus = 0;
@@ -3957,131 +3933,119 @@ int Dialog::SelectFromComboBox(DialogItemEx *CurItem,
 		VMenu *ComboBox)		// список строк
 {
 	CriticalSectionLock Lock(CS);
-	// char *Str;
 	FARString strStr;
-	int EditX1, EditY1, EditX2, EditY2;
 	int I, Dest, OriginalPos;
 	unsigned CurFocusPos = FocusPos;
-	// if((Str=(char*)malloc(MaxLen)) )
-	{
-		EditLine->GetPosition(EditX1, EditY1, EditX2, EditY2);
 
-		if (EditX2 - EditX1 < 20)
-			EditX2 = EditX1 + 20;
+	SetDropDownOpened(TRUE);	// Установим флаг "открытия" комбобокса.
+	SetComboBoxPos(CurItem);
+	// Перед отрисовкой спросим об изменении цветовых атрибутов
+	BYTE RealColors[VMENU_COLOR_COUNT];
+	FarListColors ListColors = {0};
+	ListColors.ColorCount = VMENU_COLOR_COUNT;
+	ListColors.Colors = RealColors;
+	ComboBox->SetColors(nullptr);
+	ComboBox->GetColors(&ListColors);
 
-		SetDropDownOpened(TRUE);	// Установим флаг "открытия" комбобокса.
-		SetComboBoxPos(CurItem);
-		// Перед отрисовкой спросим об изменении цветовых атрибутов
-		BYTE RealColors[VMENU_COLOR_COUNT];
-		FarListColors ListColors = {0};
-		ListColors.ColorCount = VMENU_COLOR_COUNT;
-		ListColors.Colors = RealColors;
-		ComboBox->SetColors(nullptr);
-		ComboBox->GetColors(&ListColors);
+	if (DlgProc((HANDLE)this, DN_CTLCOLORDLGLIST, CurItem->ID, (LONG_PTR)&ListColors))
+		ComboBox->SetColors(&ListColors);
 
-		if (DlgProc((HANDLE)this, DN_CTLCOLORDLGLIST, CurItem->ID, (LONG_PTR)&ListColors))
-			ComboBox->SetColors(&ListColors);
+	// Выставим то, что есть в строке ввода!
+	// if(EditLine->GetDropDownBox()) //???
+	EditLine->GetString(strStr);
 
-		// Выставим то, что есть в строке ввода!
-		// if(EditLine->GetDropDownBox()) //???
-		EditLine->GetString(strStr);
+	if (CurItem->Flags & (DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND))
+		HiText2Str(strStr, strStr);
 
-		if (CurItem->Flags & (DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND))
-			HiText2Str(strStr, strStr);
+	ComboBox->SetSelectPos(ComboBox->FindItem(0, strStr, LIFIND_EXACTMATCH), 1);
+	ComboBox->Show();
+	OriginalPos = Dest = ComboBox->GetSelectPos();
+	CurItem->IFlags.Set(DLGIIF_COMBOBOXNOREDRAWEDIT);
 
-		ComboBox->SetSelectPos(ComboBox->FindItem(0, strStr, LIFIND_EXACTMATCH), 1);
-		ComboBox->Show();
-		OriginalPos = Dest = ComboBox->GetSelectPos();
-		CurItem->IFlags.Set(DLGIIF_COMBOBOXNOREDRAWEDIT);
+	while (!ComboBox->Done()) {
+		if (!GetDropDownOpened()) {
+			ComboBox->ProcessKey(KEY_ESC);
+			continue;
+		}
 
-		while (!ComboBox->Done()) {
-			if (!GetDropDownOpened()) {
-				ComboBox->ProcessKey(KEY_ESC);
+		INPUT_RECORD ReadRec;
+		FarKey Key = ComboBox->ReadInput(&ReadRec);
+
+		if (CurItem->IFlags.Check(DLGIIF_COMBOBOXEVENTKEY) && ReadRec.EventType == KEY_EVENT) {
+			if (DlgProc((HANDLE)this, DN_KEY, FocusPos, Key))
 				continue;
-			}
+		} else if (CurItem->IFlags.Check(DLGIIF_COMBOBOXEVENTMOUSE) && ReadRec.EventType == MOUSE_EVENT)
+			if (!DlgProc((HANDLE)this, DN_MOUSEEVENT, 0, (LONG_PTR)&ReadRec.Event.MouseEvent))
+				continue;
 
-			INPUT_RECORD ReadRec;
-			FarKey Key = ComboBox->ReadInput(&ReadRec);
+		// здесь можно добавить что-то свое, например,
+		I = ComboBox->GetSelectPos();
 
-			if (CurItem->IFlags.Check(DLGIIF_COMBOBOXEVENTKEY) && ReadRec.EventType == KEY_EVENT) {
-				if (DlgProc((HANDLE)this, DN_KEY, FocusPos, Key))
-					continue;
-			} else if (CurItem->IFlags.Check(DLGIIF_COMBOBOXEVENTMOUSE) && ReadRec.EventType == MOUSE_EVENT)
-				if (!DlgProc((HANDLE)this, DN_MOUSEEVENT, 0, (LONG_PTR)&ReadRec.Event.MouseEvent))
-					continue;
+		if (Key == KEY_TAB)		// Tab в списке - аналог Enter
+		{
+			ComboBox->ProcessKey(KEY_ENTER);
+			continue;	//??
+		}
 
-			// здесь можно добавить что-то свое, например,
-			I = ComboBox->GetSelectPos();
-
-			if (Key == KEY_TAB)		// Tab в списке - аналог Enter
-			{
-				ComboBox->ProcessKey(KEY_ENTER);
-				continue;	//??
-			}
-
-			if (I != Dest) {
-				if (!DlgProc((HANDLE)this, DN_LISTCHANGE, CurFocusPos, I))
-					ComboBox->SetSelectPos(Dest, Dest < I ? -1 : 1);	//????
-				else
-					Dest = I;
+		if (I != Dest) {
+			if (!DlgProc((HANDLE)this, DN_LISTCHANGE, CurFocusPos, I))
+				ComboBox->SetSelectPos(Dest, Dest < I ? -1 : 1);	//????
+			else
+				Dest = I;
 
 #if 0
 
-				// во время навигации по DropDown листу - отобразим ЭТО дело в
-				// связанной строке
-				// ВНИМАНИЕ!!!
-				// Очень медленная реакция!
-				if (EditLine->GetDropDownBox())
-				{
-					MenuItem *CurCBItem=ComboBox->GetItemPtr();
-					EditLine->SetString(CurCBItem->Name);
-					EditLine->Show();
-					//EditLine->FastShow();
-				}
-
-#endif
+			// во время навигации по DropDown листу - отобразим ЭТО дело в
+			// связанной строке
+			// ВНИМАНИЕ!!!
+			// Очень медленная реакция!
+			if (EditLine->GetDropDownBox())
+			{
+				MenuItem *CurCBItem=ComboBox->GetItemPtr();
+				EditLine->SetString(CurCBItem->Name);
+				EditLine->Show();
+				//EditLine->FastShow();
 			}
 
-			// обработку multiselect ComboBox
-			// ...
-			ComboBox->ProcessInput();
+#endif
 		}
 
-		CurItem->IFlags.Clear(DLGIIF_COMBOBOXNOREDRAWEDIT);
-		ComboBox->ClearDone();
-		ComboBox->Hide();
-
-		if (GetDropDownOpened())	// Закрылся не программным путём?
-			Dest = ComboBox->Modal::GetExitCode();
-		else
-			Dest = -1;
-
-		if (Dest == -1)
-			ComboBox->SetSelectPos(OriginalPos, 0);		//????
-
-		SetDropDownOpened(FALSE);						// Установим флаг "закрытия" комбобокса.
-
-		if (Dest < 0) {
-			Redraw();
-			// free(Str);
-			return KEY_ESC;
-		}
-
-		// ComboBox->GetUserData(Str,MaxLen,Dest);
-		MenuItemEx *ItemPtr = ComboBox->GetItemPtr(Dest);
-
-		if (CurItem->Flags & (DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND)) {
-			HiText2Str(strStr, ItemPtr->strName);
-			EditLine->SetString(strStr);
-		} else
-			EditLine->SetString(ItemPtr->strName);
-
-		EditLine->SetLeftPos(0);
-		Redraw();
-		// free(Str);
-		return KEY_ENTER;
+		// обработку multiselect ComboBox
+		// ...
+		ComboBox->ProcessInput();
 	}
-	// return KEY_ESC;
+
+	CurItem->IFlags.Clear(DLGIIF_COMBOBOXNOREDRAWEDIT);
+	ComboBox->ClearDone();
+	ComboBox->Hide();
+
+	if (GetDropDownOpened())	// Закрылся не программным путём?
+		Dest = ComboBox->Modal::GetExitCode();
+	else
+		Dest = -1;
+
+	if (Dest == -1)
+		ComboBox->SetSelectPos(OriginalPos, 0);		//????
+
+	SetDropDownOpened(FALSE);						// Установим флаг "закрытия" комбобокса.
+
+	if (Dest < 0) {
+		Redraw();
+		return KEY_ESC;
+	}
+
+	// ComboBox->GetUserData(Str,MaxLen,Dest);
+	MenuItemEx *ItemPtr = ComboBox->GetItemPtr(Dest);
+
+	if (CurItem->Flags & (DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND)) {
+		HiText2Str(strStr, ItemPtr->strName);
+		EditLine->SetString(strStr);
+	} else
+		EditLine->SetString(ItemPtr->strName);
+
+	EditLine->SetLeftPos(0);
+	Redraw();
+	return KEY_ENTER;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -5547,7 +5511,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		}
 		/*****************************************************************/
 		case DM_SETFOCUS: {
-			if (!CanGetFocus(Type))
+			if (!ITEM_IS_FOCUSABLE(CurItem))
 				return FALSE;
 
 			if (Dlg->FocusPos == (unsigned)Param1)	// уже и так установлено все!

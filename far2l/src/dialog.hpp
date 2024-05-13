@@ -89,6 +89,8 @@ enum DIALOG_MODES
 		|| (Item)->Type == DI_CHECKBOX                                                                         \
 		|| (Item)->Type == DI_RADIOBUTTON                                                                      \
 		|| (Item)->Type == DI_BUTTON                                                                           \
+		|| (Item)->Type == DI_LISTBOX                                                                          \
+		|| (Item)->Type == DI_USERCONTROL                                                                      \
 	)                                                                                                          \
 )
 

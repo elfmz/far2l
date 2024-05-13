@@ -96,7 +96,7 @@ const wchar_t *fmtSavedDialogHistory = L"SavedDialogHistory/";
 /**
  * check if dialog element can be focused
 */
-static inline bool IsItemFocusable(DialogItemEx *&item)
+static inline bool IsItemFocusable(const struct DialogItemEx* item)
 {
 	switch (item->Type)
 	{
@@ -119,7 +119,7 @@ static inline bool IsItemFocusable(DialogItemEx *&item)
 /**
  * check if dialog item is horizontal separator.
 */
-static inline bool IsItemHorizontalSeparator(DialogItemEx *&item)
+static inline bool IsItemHorizontalSeparator(const struct DialogItemEx* item)
 {
 	return (item->Type == DI_SINGLEBOX || item->Type == DI_DOUBLEBOX ||
 		(item->Type == DI_TEXT && (item->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2 | DIF_SEPARATORUSER))));
@@ -128,7 +128,7 @@ static inline bool IsItemHorizontalSeparator(DialogItemEx *&item)
 /**
  * check if dialog item is vertical separator.
 */
-static inline bool IsItemVerticalSeparator(DialogItemEx *&item)
+static inline bool IsItemVerticalSeparator(const struct DialogItemEx* item)
 {
 	return (item->Type == DI_SINGLEBOX || item->Type == DI_DOUBLEBOX ||
 		(item->Type == DI_VTEXT && (item->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2 | DIF_SEPARATORUSER))));

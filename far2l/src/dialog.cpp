@@ -96,7 +96,7 @@ const wchar_t *fmtSavedDialogHistory = L"SavedDialogHistory/";
 /**
  * check if dialog element can be focused
 */
-static inline bool ItemIsFocusable(DialogItemEx *&item)
+static inline bool IsItemFocusable(DialogItemEx *&item)
 {
 	switch (item->Type)
 	{
@@ -119,7 +119,7 @@ static inline bool ItemIsFocusable(DialogItemEx *&item)
 /**
  * check if dialog item is horizontal separator.
 */
-static inline bool ItemIsHorizontalSeparator(DialogItemEx *&item)
+static inline bool IsItemHorizontalSeparator(DialogItemEx *&item)
 {
 	return (item->Type == DI_SINGLEBOX || item->Type == DI_DOUBLEBOX ||
 		(item->Type == DI_TEXT && (item->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2 | DIF_SEPARATORUSER))));
@@ -128,7 +128,7 @@ static inline bool ItemIsHorizontalSeparator(DialogItemEx *&item)
 /**
  * check if dialog item is vertical separator.
 */
-static inline bool ItemIsVerticalSeparator(DialogItemEx *&item)
+static inline bool IsItemVerticalSeparator(DialogItemEx *&item)
 {
 	return (item->Type == DI_SINGLEBOX || item->Type == DI_DOUBLEBOX ||
 		(item->Type == DI_VTEXT && (item->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2 | DIF_SEPARATORUSER))));
@@ -717,7 +717,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 	}
 
 	// если FocusPos в пределах и элемент задисаблен, то ищем сначала
-	if (FocusPos != (unsigned)-1 && FocusPos < ItemCount && ItemIsFocusable(Item[FocusPos]))
+	if (FocusPos != (unsigned)-1 && FocusPos < ItemCount && IsItemFocusable(Item[FocusPos]))
 		FocusPos = (unsigned)-1;	// будем искать сначала!
 
 	// предварительный цикл по поводу кнопок
@@ -742,7 +742,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			}
 		}
 		// предварительный поик фокуса
-		if (FocusPos == (unsigned)-1 && ItemIsFocusable(CurItem))
+		if (FocusPos == (unsigned)-1 && IsItemFocusable(CurItem))
 			FocusPos = I;		// запомним первый фокусный элемент
 
 		CurItem->Focus = 0;		// сбросим для всех, чтобы не оказалось,
@@ -772,7 +772,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 		{
 			CurItem = Item[I];
 
-			if (ItemIsFocusable(CurItem)) {
+			if (IsItemFocusable(CurItem)) {
 				FocusPos = I;
 				break;
 			}
@@ -3570,7 +3570,7 @@ int Dialog::Do_ProcessFirstCtrl()
 		return TRUE;
 	} else {
 		for (unsigned I = 0; I < ItemCount; I++)
-			if (ItemIsFocusable(Item[I])) {
+			if (IsItemFocusable(Item[I])) {
 				ChangeFocus2(I);
 				ShowDialog();
 				break;
@@ -3617,7 +3617,7 @@ int Dialog::MoveToCtrlHorizontal(int right)
 
 	for (unsigned int I = 0; I < ItemCount; I++) {
 		//first, let's find nearest borders
-		if (ItemIsHorizontalSeparator(Item[I])) {
+		if (IsItemHorizontalSeparator(Item[I])) {
 			if (Item[I]->X1 < Item[FocusPos]->X1){
 				if (LeftBorder < Item[I]->X1) {
 					LeftBorder = Item[I]->X1;
@@ -3630,7 +3630,7 @@ int Dialog::MoveToCtrlHorizontal(int right)
 		}
 
 		//find nearest item _inside_ nearest borders
-		if (I != FocusPos && ItemIsFocusable(Item[I]) && Item[I]->Y1 == Item[FocusPos]->Y1) {
+		if (I != FocusPos && IsItemFocusable(Item[I]) && Item[I]->Y1 == Item[FocusPos]->Y1) {
 			Dist = Item[I]->X1 - Item[FocusPos]->X1;
 
 			if ((!right && Dist < 0 &&(Item[I]->X1 > LeftBorder))
@@ -3673,7 +3673,7 @@ int Dialog::MoveToCtrlVertical(int up)
 
 	for (unsigned int I = 0; I < ItemCount; I++) {
 		//first, let's find nearest borders
-		if (ItemIsVerticalSeparator(Item[I])) {
+		if (IsItemVerticalSeparator(Item[I])) {
 			if (Item[I]->Y1 < Item[FocusPos]->Y1){
 				if (UpperBorder < Item[I]->Y1) {
 					UpperBorder = Item[I]->Y1;
@@ -3686,7 +3686,7 @@ int Dialog::MoveToCtrlVertical(int up)
 		}
 
 		//find nearest item _inside_ nearest borders
-		if (I != FocusPos && ItemIsFocusable(Item[I]) && Item[I]->X1 == Item[FocusPos]->X1) {
+		if (I != FocusPos && IsItemFocusable(Item[I]) && Item[I]->X1 == Item[FocusPos]->X1) {
 			Dist = Item[I]->Y1 - Item[FocusPos]->Y1;
 
 			if ((up && Dist < 0 && (Item[I]->Y1 > UpperBorder))
@@ -3823,7 +3823,7 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos, int Step, int SkipGroup)
 				CurFocusPos = 0;
 			}
 
-			if (ItemIsFocusable(Item[CurFocusPos])) {
+			if (IsItemFocusable(Item[CurFocusPos])) {
 				if (Item[CurFocusPos]->Type == DI_RADIOBUTTON && (SkipGroup || !Item[CurFocusPos]->Selected)) {
 					continue;
 				} else {
@@ -3857,7 +3857,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 	CriticalSectionLock Lock(CS);
 	int FocusPosNeed = -1;
 
-	if (ItemIsFocusable(Item[SetFocusPos])) {
+	if (IsItemFocusable(Item[SetFocusPos])) {
 		if (DialogMode.Check(DMODE_INITOBJECTS)) {
 			FocusPosNeed = (int)DlgProc((HANDLE)this, DN_KILLFOCUS, FocusPos, 0);
 
@@ -3865,7 +3865,7 @@ void Dialog::ChangeFocus2(unsigned SetFocusPos)
 				return;
 		}
 
-		if (FocusPosNeed != -1 && ItemIsFocusable(Item[FocusPosNeed]))
+		if (FocusPosNeed != -1 && IsItemFocusable(Item[FocusPosNeed]))
 			SetFocusPos = FocusPosNeed;
 
 		Item[FocusPos]->Focus = 0;
@@ -5551,7 +5551,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		}
 		/*****************************************************************/
 		case DM_SETFOCUS: {
-			if (!ItemIsFocusable(CurItem))
+			if (!IsItemFocusable(CurItem))
 				return FALSE;
 
 			if (Dlg->FocusPos == (unsigned)Param1)	// уже и так установлено все!

@@ -130,6 +130,8 @@ enum SETATTRDLG
 	SA_SEPARATOR4,
 	SA_CHECKBOX_SUBFOLDERS,
 	SA_SEPARATOR5,
+	SC_SYMLINK_PROPERTIES_EXPLAIN_TEXT_1,
+	SC_SYMLINK_PROPERTIES_EXPLAIN_TEXT_2,
 	SA_BUTTON_SET,
 	SA_BUTTON_CANCEL
 };
@@ -932,6 +934,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      3,                   21,              0,                21,              {}, DIF_SEPARATOR | DIF_HIDDEN, L""},
 		{DI_CHECKBOX,  5,                   22,              0,                22,              {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSubfolders},
 		{DI_TEXT,      3,                   short(DlgY - 4), 0,                short(DlgY - 4), {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSymlinkExplain1},
+		{DI_TEXT,      5,                   short(DlgY - 2), 0,                short(DlgY - 2), {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSymlinkExplain2},
 		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetAttrSet},
 		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_CENTERGROUP,  Msg::Cancel}
 	};
@@ -1034,6 +1038,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				AttrDlg[SA_EDIT_INFO].strData = DlgParam.SymLink;
 				AttrDlg[SA_EDIT_INFO].Flags &= ~DIF_READONLY; // not readonly only if symlink
 
+				Link2FileCount=1; // only for show symlink explain text
 			}
 			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_CHAR)
 				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevChar;
@@ -1272,6 +1277,18 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			DlgParam.OriginalCBAttr[i] = DlgParam.OriginalCBAttr0[i] =AttrDlg[PreserveOriginalIDs[i]].Selected;
 			DlgParam.OriginalCBAttr2[i] = -1;
 			DlgParam.OriginalCBFlag[i] = AttrDlg[PreserveOriginalIDs[i]].Flags;
+		}
+
+		// explain text about symlinks properties
+		if (FolderPresent || Link2FileCount>0 || Link2DirCount>0) {
+			AttrDlg[SC_SYMLINK_PROPERTIES_EXPLAIN_TEXT_1].Flags&= ~DIF_HIDDEN;
+			AttrDlg[SC_SYMLINK_PROPERTIES_EXPLAIN_TEXT_2].Flags&= ~DIF_HIDDEN;
+			AttrDlg[SA_DOUBLEBOX].Y2+= 2;
+			for (int i = SC_SYMLINK_PROPERTIES_EXPLAIN_TEXT_2+1; i <= SA_BUTTON_CANCEL; i++) {
+				AttrDlg[i].Y1+= 2;
+				AttrDlg[i].Y2+= 2;
+			}
+			DlgY+= 2;
 		}
 
 		DlgParam.strOwner = AttrDlg[SA_COMBO_OWNER].strData;

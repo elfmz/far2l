@@ -23,8 +23,10 @@ set(SOURCES
     src/pcolorer2/tools.cpp
 )
 
+# set options for colorer-library
 set(COLORER_USE_ICU_STRINGS OFF)
 set(COLORER_BUILD_HARD_WARNINGS OFF)
+set(COLORER_BUILD_OLD_COMPILERS ON)
 
 if (USESPDLOG)
     FIND_PACKAGE(Spdlog REQUIRED)

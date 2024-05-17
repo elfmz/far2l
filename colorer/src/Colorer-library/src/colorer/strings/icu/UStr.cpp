@@ -1,7 +1,5 @@
 #include "colorer/strings/icu/UStr.h"
-#include "colorer/common/Logger.h"
 #include "colorer/strings/icu/UnicodeTools.h"
-#include "colorer/strings/icu/UnicodeLogger.h"
 
 UnicodeString UStr::to_unistr(const int number)
 {
@@ -33,17 +31,6 @@ std::string UStr::to_stdstr(const UnicodeString* str)
 std::string UStr::to_stdstr(const uUnicodeString& str)
 {
   return to_stdstr(str.get());
-}
-
-std::filesystem::path UStr::to_filepath(const uUnicodeString& str)
-{
-  std::filesystem::path result;
-#ifdef _WINDOWS
-  result = to_stdwstr(str);
-#else
-  result = to_stdstr(str);
-#endif
-  return result;
 }
 
 #ifdef _WINDOWS
@@ -80,8 +67,7 @@ std::string UStr::to_stdstr(const XMLCh* str)
   return _string;
 }
 
-std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, int pos,
-                                                      int* retPos, bool ignore_case)
+std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, int pos, int* retPos, bool ignore_case)
 {
   if (ccs[pos] != '[') {
     return nullptr;
@@ -222,8 +208,7 @@ std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, 
       prev_char = BAD_WCHAR;
       continue;
     }
-    if (ccs[pos] == '-' && prev_char != BAD_WCHAR && pos + 1 < ccs.length() && ccs[pos + 1] != ']')
-    {
+    if (ccs[pos] == '-' && prev_char != BAD_WCHAR && pos + 1 < ccs.length() && ccs[pos + 1] != ']') {
       int retEnd;
       UChar nextc = UnicodeTools::getEscapedChar(ccs, pos + 1, retEnd);
       if (nextc == BAD_WCHAR) {
@@ -271,7 +256,7 @@ int8_t UStr::caseCompare(const UnicodeString& str1, const UnicodeString& str2)
 
 int32_t UStr::indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& str2, int32_t pos)
 {
-  auto tmp_str1=str1;
-  auto tmp_str2=str2;
-  return tmp_str1.toUpper().indexOf(tmp_str2.toUpper(),pos);
+  auto tmp_str1 = str1;
+  auto tmp_str2 = str2;
+  return tmp_str1.toUpper().indexOf(tmp_str2.toUpper(), pos);
 }

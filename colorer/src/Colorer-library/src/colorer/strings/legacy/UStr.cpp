@@ -42,17 +42,6 @@ std::wstring UStr::to_stdwstr(const UnicodeString& str)
   return to_stdwstr(&str);
 }
 
-std::filesystem::path UStr::to_filepath(const uUnicodeString& str)
-{
-  std::filesystem::path result;
-#ifdef _WINDOWS
-  result = to_stdwstr(str.get());
-#else
-  result = to_stdstr(str.get());
-#endif
-  return result;
-}
-
 std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, int pos,
                                                       int* retPos, bool ignore_case)
 {

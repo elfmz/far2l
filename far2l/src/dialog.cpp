@@ -717,7 +717,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 	}
 
 	// если FocusPos в пределах и элемент задисаблен, то ищем сначала
-	if (FocusPos != (unsigned)-1 && FocusPos < ItemCount && IsItemFocusable(Item[FocusPos]))
+	if (FocusPos != (unsigned)-1 && FocusPos < ItemCount && !IsItemFocusable(Item[FocusPos]))
 		FocusPos = (unsigned)-1;	// будем искать сначала!
 
 	// предварительный цикл по поводу кнопок

@@ -1,0 +1,179 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [staging]
+
+jobs:
+  build-portable:
+    name: build ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          # arch: [x86_64, x86, aarch64, armhf, armv7, ppc64le, s390x]
+          arch: [x86_64]
+          os: [ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ matrix.arch }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.arch }}-
+
+      - name: Setup Alpine Linux for ${{ matrix.arch }}
+        uses: jirutka/setup-alpine@v1
+        with:
+          branch: v3.18
+          arch: ${{ matrix.arch }}
+          packages: >
+            bash build-base ccache cmake coreutils findutils gawk git grep libarchive-dev libnfs-dev libssh-dev
+            libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar
+            uchardet-dev wget xerces-c-dev xz
+          shell-name: alpine.sh
+
+      - name: Add extra build-deps to chroot
+        shell: alpine.sh --root {0}
+        run: |
+          apk add --no-progress makeself --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+          apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+
+      - name: Build far2l inside chroot
+        env:
+          ARCH: ${{ matrix.arch }}
+          GH_NAME: ${{ github.repository_owner }}_${{ github.ref_name }}
+          STANDALONE: true
+        shell: alpine.sh {0}
+        run: |
+          export VERSION=$(cat packaging/version)
+          export PKG_NAME=far2l_${VERSION}-${GH_NAME}-${ARCH}
+          bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: far2l-${{ matrix.arch }}
+          path: |
+            ./**/far2l*.tar*
+          if-no-files-found: error
+
+  build-AppImage:
+    name: build AppImage
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - name: Add build dependencies
+        env:
+          PACKAGES: >
+            ccache cmake desktop-file-utils file g++ libarchive-dev libfuse2 libneon27-dev libnfs-dev libpcre3-dev
+            libsmbclient-dev libssh-dev libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch
+            patchelf python3-minimal python3-wheel quilt wget
+        run: |
+            sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ matrix.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-
+
+      - name: Build far2l
+        env:
+          GH_NAME: ${{ github.repository_owner }}_${{ github.ref_name }}
+        run: |
+          bash -x ${GITHUB_WORKSPACE}/.github/workflows/portable/build_far2l.sh
+
+      - name: Build AppImage
+        run: |
+          export ARCH=$(uname -m)
+          export APPIMAGE_VERSION=$(cat packaging/version)
+          export APPIMAGE_APT_ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
+          export APPIMAGE_APT_DISTRO=$(awk -F= '/^VERSION_CODENAME=/ {print $2}' /etc/os-release)
+          export APPIMAGE_ARCH=$ARCH
+          export PYTHON3_VERSION=$(py3versions -vd)
+
+          # appimagetool with Squashfs zstd compression support
+          wget --no-check-certificate -O appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage
+          chmod +x appimagetool
+          # static runtime
+          wget --no-check-certificate -O runtime https://github.com/probonopd/static-tools/releases/download/2023/runtime-fuse2-$ARCH
+
+          python -m venv _venv && source _venv/bin/activate
+          pip install git+https://github.com/AppImageCrafters/appimage-builder.git
+          appimage-builder --skip-appimage --recipe .github/workflows/appimage/AppImageBuilder.yml
+          APPIMAGE_EXTRACT_AND_RUN=1 VERSION=$APPIMAGE_VERSION ./appimagetool -v --runtime-file runtime AppDir
+
+      - name: Put AppImage into tar
+        env:
+          GH_NAME: ${{ github.repository_owner }}_${{ github.ref_name }}
+        run: |
+          VERSION=$(cat packaging/version)
+          PKG_NAME=far2l_${VERSION}-${GH_NAME}-$(uname -m)
+          mv far2l*.AppImage $PKG_NAME.AppImage
+          tar cvf ${PKG_NAME/_${VERSION}-${GH_NAME}}.AppImage.tar far2l*.AppImage
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: far2l-AppImage-${{ matrix.os }}
+          path: |
+            ./**/far2l*.tar*
+          if-no-files-found: error
+
+  release:
+    name: Upload release assets
+    needs: [build-portable, build-AppImage]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Get commit date
+        env:
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "DATE=$(gh api repos/$REPO/commits/$SHA --jq '.commit.committer.date' | date -f - +%Y%m%d%H%M)" >> $GITHUB_ENV
+
+      - name: Upload release assets
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prerelease: false
+          tag_name: ${{ github.ref_name }}-release
+          name: ${{ env.DATE }}
+          body: |
+            ## Download and run
+            ### Self-extractable tar-archive
+            * with TTY X/Xi backend
+            ```
+            wget -qO- https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}-release/far2l-x86_64.run.tar | tar -xv -C /tmp && /tmp/far2l_*.run
+            ```
+            ### AppImage
+            * with wx-GUI
+            ```
+            wget -qO- https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}-release/far2l-x86_64.AppImage.tar | tar -xv -C /tmp && /tmp/far2l_*.AppImage
+            ```
+          files: |
+            ./**/far2l*.run.tar
+            ./**/far2l*.AppImage.tar
+
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        continue-on-error: true

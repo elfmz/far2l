@@ -1,0 +1,155 @@
+version: 1
+
+script:
+  # https://github.com/AppImageCrafters/appimage-builder/issues/271
+  - which mksquashfs || apt install -y --no-install-recommends squashfs-tools
+
+AppDir:
+  app_info:
+    id: io.github.elfmz.far2l
+    name: far2l
+    icon: far2l
+    version: "{{APPIMAGE_VERSION}}"
+    exec: usr/bin/far2l
+    exec_args: $@
+
+  apt:
+    arch: "{{APPIMAGE_APT_ARCH}}"
+    allow_unauthenticated: true
+    sources:
+      - sourceline: 'deb [arch={{APPIMAGE_APT_ARCH}}] http://archive.ubuntu.com/ubuntu/ {{APPIMAGE_APT_DISTRO}} main restricted universe multiverse'
+      - sourceline: 'deb [arch={{APPIMAGE_APT_ARCH}}] http://archive.ubuntu.com/ubuntu/ {{APPIMAGE_APT_DISTRO}}-updates main restricted universe multiverse'
+      - sourceline: 'deb [arch={{APPIMAGE_APT_ARCH}}] http://security.ubuntu.com/ubuntu/ {{APPIMAGE_APT_DISTRO}}-security main restricted universe multiverse'
+    include:
+      - bash
+      - dash
+      - libarchive13
+      - libneon27
+      - libnfs13
+      - libpcre3
+      - librsvg2-common
+      - libsmbclient
+      - libuchardet0
+      - libwayland-client0
+      - libwayland-cursor0
+      - libwayland-egl1
+      - libwxgtk3.0-gtk3-0v5
+      - libxerces-c3.2
+    exclude:
+      - adwaita-icon-theme
+      - hicolor-icon-theme
+      - humanity-icon-theme
+      - dbus-user-session
+      - dconf-gsettings-backend
+      - dconf-service
+      - glib-networking
+      - gsettings-desktop-schemas
+      - libatk1.0-data
+      - libavahi-client3
+      - libavahi-common-data
+      - libavahi-common3
+      - libcolord2
+      - libcryptsetup12
+      - libcups2
+      - libdb5.3
+      - libdconf1
+      - libdevmapper1.02.1
+      - libexpat1
+      - libfontconfig1
+      - libfreetype6
+      - libfribidi0
+      - libgdk-pixbuf2.0-common
+      - libgmp10
+      - libgpg-error0
+      - libharfbuzz0b
+      - libip4tc2
+      - libjson-c4
+      - libjson-glib-1.0-0
+      - libjson-glib-1.0-common
+      - libkmod2
+      - liblcms2-2
+      - libldap-common
+      - liblmdb0
+      - libmpdec2
+      - libncursesw6
+      - libnotify4
+      - libpam-systemd
+      - libpam0g
+      - libpopt0
+      - libproxy1v5
+      - libreadline8
+      - librest-0.7-0
+      - libsasl2-modules-db
+      - libseccomp2
+      - libsm6
+      - libsoup2.4-1
+      - libthai0
+      - libtinfo6
+      - libudev1
+      - libuuid1
+      - libpython{{PYTHON3_VERSION}}
+      - libpython{{PYTHON3_VERSION}}-minimal
+      - libpython{{PYTHON3_VERSION}}-stdlib
+      - libpython3-stdlib
+      - libxcomposite1
+      - libxcursor1
+      - libxdamage1
+      - libxext6
+      - libxfixes3
+      - libxi6
+      - libxinerama1
+      - libxkbcommon0
+      - libxrandr2
+      - libxrender1
+      - mime-support
+      - python3
+      - python{{PYTHON3_VERSION}}
+      - python{{PYTHON3_VERSION}}-minimal
+      - python3-ldb
+      - python3-minimal
+      - python3-talloc
+      - readline-common
+      - systemd
+      - systemd-timesyncd
+      - tzdata
+      - xkb-data
+
+  files:
+    exclude:
+      - etc/python3*
+      - usr/lib/*-linux-gnu/ldb
+      - usr/lib/*-linux-gnu/libwx_baseu_net*
+      - usr/lib/*-linux-gnu/libwx_baseu_xml
+      - usr/lib/*-linux-gnu/libwx_gtk3u_adv*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_aui*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_gl*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_html*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_propgrid*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_qa*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_ribbon*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_richtext*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_stc*
+      - usr/lib/*-linux-gnu/libwx_gtk3u_xrc*
+      - usr/lib/python3
+      - usr/lib/sasl2
+      - usr/lib/valgrind
+      - usr/sbin
+      - usr/share/bug
+      - usr/share/doc*
+      - usr/share/lintian
+      - usr/share/man
+      - usr/share/pixmaps
+      - usr/share/python3
+      - usr/share/themes
+
+  runtime:
+    env:
+      NO_AT_BRIDGE: 1
+      PATH: $APPDIR/usr/bin:$PATH
+      XDG_DATA_DIRS: $APPDIR/share:$XDG_DATA_DIRS
+      XDG_DATA_HOME: $APPDIR/share:$XDG_DATA_HOME
+    path_mappings:
+      - /bin/bash:$APPDIR/bin/bash
+      - /bin/sh:$APPDIR/bin/sh
+      - /usr/share/glib-2.0/schemas/:$APPDIR/usr/share/glib-2.0/schemas/
+      - /usr/share/icons/:$APPDIR/usr/share/icons/

@@ -742,7 +742,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 			}
 		}
 		// предварительный поик фокуса
-		if (FocusPos == (unsigned)-1 && IsItemFocusable(CurItem))
+		if (FocusPos == (unsigned)-1 && IsItemFocusable(CurItem) && CurItem->Focus)
 			FocusPos = I;		// запомним первый фокусный элемент
 
 		CurItem->Focus = 0;		// сбросим для всех, чтобы не оказалось,

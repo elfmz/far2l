@@ -1,11 +1,20 @@
 #include "colorer/utils/Environment.h"
-#include <filesystem>
 #ifdef WIN32
 #include <windows.h>
 #include <cwchar>
 #else
 #include <regex>
 #endif
+
+fs::path Environment::to_filepath(const UnicodeString* str)
+{
+#ifdef _WINDOWS
+  fs::path result = UStr::to_stdwstr(str);
+#else
+  fs::path result = UStr::to_stdstr(str);
+#endif
+  return result;
+}
 
 uUnicodeString Environment::getOSVariable(const UnicodeString& name)
 {
@@ -73,13 +82,62 @@ uUnicodeString Environment::normalizePath(const UnicodeString* path)
   return std::make_unique<UnicodeString>(normalizeFsPath(path).c_str());
 }
 
-std::filesystem::path Environment::normalizeFsPath(const UnicodeString* path)
+fs::path Environment::normalizeFsPath(const UnicodeString* path)
 {
   auto expanded_string = Environment::expandEnvironment(path);
-  auto fpath = std::filesystem::path(UStr::to_filepath(expanded_string));
+  auto fpath = fs::path(Environment::to_filepath(expanded_string.get()));
   fpath = fpath.lexically_normal();
-  if (std::filesystem::is_symlink(fpath)) {
-    fpath = std::filesystem::read_symlink(fpath);
+  if (fs::is_symlink(fpath)) {
+    fpath = fs::read_symlink(fpath);
   }
   return fpath;
+}
+
+fs::path Environment::getClearFilePath(const UnicodeString* basePath, const UnicodeString* relPath)
+{
+  fs::path fs_basepath;
+  if (basePath && !basePath->isEmpty()) {
+    auto clear_basepath = normalizeFsPath(basePath);
+    fs_basepath = fs::path(clear_basepath).parent_path();
+  }
+  auto clear_relpath = normalizeFsPath(relPath);
+
+  fs::path full_path;
+  if (fs_basepath.empty()) {
+    full_path = clear_relpath;
+  }
+  else {
+    full_path = fs_basepath / clear_relpath;
+  }
+
+  full_path = full_path.lexically_normal();
+
+  return full_path;
+}
+
+std::vector<UnicodeString> Environment::getFilesFromPath(const UnicodeString* basePath, const UnicodeString* relPath,
+                                                         const UnicodeString& extension)
+{
+  std::vector<UnicodeString> result;
+  auto ext = Environment::to_filepath(&extension);
+  auto clear_path = Environment::getClearFilePath(basePath, relPath);
+  if (fs::is_directory(clear_path)) {
+    for (auto& p : fs::directory_iterator(clear_path)) {
+      if (fs::is_regular_file(p) && p.path().extension() == ext) {
+        result.emplace_back(p.path().c_str());
+      }
+    }
+  }
+  else {
+    result.emplace_back(clear_path.c_str());
+  }
+
+  return result;
+}
+
+bool Environment::isRegularFile(const UnicodeString* basePath, const UnicodeString* relPath, UnicodeString& fullPath)
+{
+  auto clear_path = Environment::getClearFilePath(basePath, relPath);
+  fullPath = clear_path.u16string().c_str();
+  return fs::is_regular_file(clear_path);
 }

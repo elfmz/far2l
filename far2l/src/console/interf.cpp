@@ -309,9 +309,9 @@ void ShowTime(int ShowAlways)
 
 	if (CurFrame) {
 		int ModType = CurFrame->GetType();
-		SetColor(ModType == MODALTYPE_VIEWER
+		SetColor(FarColorToReal(ModType == MODALTYPE_VIEWER
 						? COL_VIEWERCLOCK
-						: (ModType == MODALTYPE_EDITOR ? COL_EDITORCLOCK : COL_CLOCK));
+						: (ModType == MODALTYPE_EDITOR ? COL_EDITORCLOCK : COL_CLOCK)));
 		Text(strClockText);
 		// ScrBuf.Flush();
 	}
@@ -489,7 +489,7 @@ void InitRecodeOutTable()
 	//_SVS(SysLogDump("Oem2Unicode",0,(LPBYTE)Oem2Unicode,sizeof(Oem2Unicode),nullptr));
 }
 
-void Text64(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length)
+void Text(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length)
 {
 	CurColor = Color;
 	CurX = X;
@@ -497,9 +497,9 @@ void Text64(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length)
 	Text(Str, Length);
 }
 
-void Text(int X, int Y, int Color, const WCHAR *Str)
+void Text(int X, int Y, uint64_t Color, const WCHAR *Str)
 {
-	CurColor = FarColorToReal(Color);
+	CurColor = Color;
 	CurX = X;
 	CurY = Y;
 	Text(Str);
@@ -547,6 +547,54 @@ void Text(const WCHAR *Str, size_t Length)
 	CurX+= nCells;
 }
 
+void TextEx(const WCHAR *Str, size_t Length)
+{
+	if (Length == (size_t)-1)
+		Length = StrLength(Str);
+
+	if (Length == 0)
+		return;
+
+	CHAR_INFO StackBuffer[StackBufferSize];
+	PCHAR_INFO HeapBuffer = nullptr;
+	PCHAR_INFO BufPtr = StackBuffer;
+
+	if (Length * 2 >= StackBufferSize) {
+		HeapBuffer = new CHAR_INFO[Length * 2 + 1];
+		BufPtr = HeapBuffer;
+	}
+
+	int nCells = 0;
+	std::wstring wstr;
+	for (size_t i = 0; i < Length; ++nCells) {
+
+		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
+
+		if (nG > 1) {
+			wstr.assign(&Str[i], nG);
+			CI_SET_COMPOSITE(BufPtr[nCells], wstr.c_str());
+			CI_SET_ATTR(BufPtr[nCells], CurColor);
+		} else {
+			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
+			CI_SET_ATTR(BufPtr[nCells], CurColor & (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE)) );
+		}
+
+//		CI_SET_ATTR(BufPtr[nCells], CurColor);
+
+		if (IsCharFullWidth(Str[i])) {
+			++nCells;
+			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
+		}
+		i+= nG;
+	}
+
+	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
+	if (HeapBuffer) {
+		delete[] HeapBuffer;
+	}
+	CurX+= nCells;
+}
+
 void Text(FarLangMsg MsgId)
 {
 	Text(MsgId.CPtr());
@@ -571,10 +619,10 @@ void VText(const WCHAR *Str)
 	}
 }
 
-void HiText(const wchar_t *Str, DWORD64 HiColor, int isVertText)
+void HiText(const wchar_t *Str, uint64_t HiColor, int isVertText)
 {
 	FARString strTextStr;
-	DWORD64 SaveColor;
+	uint64_t SaveColor;
 	size_t pos;
 	strTextStr = Str;
 
@@ -640,7 +688,7 @@ void HiText(const wchar_t *Str, DWORD64 HiColor, int isVertText)
 	}
 }
 
-void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, int Color)
+void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, uint64_t Color)
 {
 	if (X1 < 0)
 		X1 = 0;
@@ -654,7 +702,7 @@ void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, int Color)
 	if (Y2 > ScrY)
 		Y2 = ScrY;
 
-	ScrBuf.FillRect(X1, Y1, X2, Y2, Ch, FarColorToReal(Color));
+	ScrBuf.FillRect(X1, Y1, X2, Y2, Ch, Color);
 }
 
 void MakeShadow(int X1, int Y1, int X2, int Y2)
@@ -671,10 +719,10 @@ void MakeShadow(int X1, int Y1, int X2, int Y2)
 	if (Y2 > ScrY)
 		Y2 = ScrY;
 
-	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xF8);
+	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xFFFFFFFFFFFFFFF8);
 }
 
-void ChangeBlockColor(int X1, int Y1, int X2, int Y2, int Color)
+void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color)
 {
 	if (X1 < 0)
 		X1 = 0;
@@ -688,7 +736,7 @@ void ChangeBlockColor(int X1, int Y1, int X2, int Y2, int Color)
 	if (Y2 > ScrY)
 		Y2 = ScrY;
 
-	ScrBuf.ApplyColor(X1, Y1, X2, Y2, FarColorToReal(Color));
+	ScrBuf.ApplyColor(X1, Y1, X2, Y2, Color);
 }
 
 void mprintf(const wchar_t *fmt, ...)
@@ -711,34 +759,28 @@ void vmprintf(const wchar_t *fmt, ...)
 	va_end(argptr);
 }
 
-void SetColor(DWORD64 Color, bool ApplyToConsole)
+void SetColor(uint64_t Color, bool ApplyToConsole)
 {
-	CurColor = FarColorToReal(Color & 0xffff);
+	CurColor = Color;
 
-	if (Color & 0xffffff0000000000) {
-		CurColor|= BACKGROUND_TRUECOLOR;
-		CurColor|= (Color & 0xffffff0000000000);
-	}
-	if (Color & 0x000000ffffff0000) {
-		CurColor|= FOREGROUND_TRUECOLOR;
-		CurColor|= (Color & 0x000000ffffff0000);
-	}
+//	if (Color & 0xffffff0000000000) {
+//		CurColor|= BACKGROUND_TRUECOLOR;
+//		CurColor|= (Color & 0xffffff0000000000);
+//	}
+//	if (Color & 0x000000ffffff0000) {
+//		CurColor|= FOREGROUND_TRUECOLOR;
+//		CurColor|= (Color & 0x000000ffffff0000);
+//	}
+
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);
 	}
 }
 
-void SetColor64(DWORD64 Color, bool ApplyToConsole)
+void SetFarColor(uint16_t Color, bool ApplyToConsole)
 {
-	CurColor = Color;
-/**
-	if (Color & 0xffffff0000000000) {
-		CurColor |= BACKGROUND_TRUECOLOR;
-	}
-	if (Color & 0x000000ffffff0000) {
-		CurColor |= FOREGROUND_TRUECOLOR;
-	}
-**/
+	CurColor = FarColorToReal(Color);
+
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);
 	}
@@ -790,20 +832,7 @@ void ComposeAndSetColor(WORD BaseColor, const FarTrueColorForeAndBack *TrueColor
 	}
 }
 
-void SetRealColor(DWORD64 wAttributes, bool ApplyToConsole)
-{
-	CurColor = wAttributes;
-	if (ApplyToConsole) {
-		Console.SetTextAttributes(CurColor);
-	}
-}
-
-DWORD64 GetRealColor()
-{
-	return CurColor;
-}
-
-void ClearScreen(int Color)
+void ClearScreen(uint64_t Color)
 {
 	Color = FarColorToReal(Color);
 	ScrBuf.FillRect(0, 0, ScrX, ScrY, L' ', Color);
@@ -812,7 +841,7 @@ void ClearScreen(int Color)
 	Console.SetTextAttributes(Color);
 }
 
-DWORD64 GetColor()
+uint64_t GetColor()
 {
 	return (CurColor);
 }
@@ -855,12 +884,13 @@ void BoxText(const wchar_t *Str, int IsVert)
 /*
 	Отрисовка прямоугольника.
 */
-void Box(int x1, int y1, int x2, int y2, int Color, int Type)
+void Box(int x1, int y1, int x2, int y2, uint64_t Color, int Type)
 {
 	if (x1 >= x2 || y1 >= y2)
 		return;
 
-	SetColor(Color);
+//	SetColor(Color);
+	CurColor = Color;
 	Type = (Type == DOUBLE_BOX || Type == SHORT_DOUBLE_BOX);
 
 	WCHAR StackBuffer[StackBufferSize];

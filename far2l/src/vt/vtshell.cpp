@@ -157,7 +157,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		// to avoid shell history pollution by far2l's intermediate script execution commands
 		const std::string &hc_override = VTSanitizeHistcontrol();
 
-		const BYTE col = FarColorToReal(COL_COMMANDLINEUSERSCREEN);
+		const BYTE col = static_cast<BYTE>(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 		char colorfgbg[32];
 		sprintf(colorfgbg, "%u;%u",
 			AnsiEsc::ConsoleColorToAnsi(col & 0xf),
@@ -1013,8 +1013,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		FARString msg(m);
 		msg.Insert(0, L'\n');
 		msg.Append(L'\n');
-		const DWORD64 saved_color = GetColor();
-		SetColor(COL_HELPTOPIC, true);
+		const uint64_t saved_color = GetColor();
+		SetFarColor(COL_HELPTOPIC, true);
 		DWORD dw;
 		WINPORT(WriteConsole)(NULL, msg.CPtr(), msg.GetLength(), &dw, NULL );
 		SetColor(saved_color, true);

@@ -127,7 +127,7 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 	Flags.Set(FEDITLINE_EDITBEYONDEND);
 	Color = F_LIGHTGRAY | B_BLACK;
 	SelColor = F_WHITE | B_BLACK;
-	ColorUnChanged = COL_DIALOGEDITUNCHANGED;
+	ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
 	EndType = EOL_NONE;
 	TabSize = Opt.EdOpt.TabSize;
 	TabExpandMode = EXPAND_NOTABS;
@@ -1507,7 +1507,7 @@ int Edit::InsertKey(FarKey Key)
 	return TRUE;
 }
 
-void Edit::SetObjectColor(int Color, int SelColor, int ColorUnChanged)
+void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
 	this->Color = Color;
 	this->SelColor = SelColor;
@@ -2392,9 +2392,9 @@ void Edit::ApplyColor()
 
 		// Раскрашиваем элемент, если есть что раскрашивать
 		if (Length > 0) {
-			ScrBuf.ApplyColor(Start, Y1, Start + Length - 1, Y1, Attr,
+			ScrBuf.ApplyColor(Start, Y1, Start + Length - 1, Y1, Attr, SelColor );
 					// Не раскрашиваем выделение
-					SelColor >= COL_FIRSTPALETTECOLOR ? Palette[SelColor - COL_FIRSTPALETTECOLOR] : SelColor);
+//					SelColor >= COL_FIRSTPALETTECOLOR ? Palette[SelColor - COL_FIRSTPALETTECOLOR] : SelColor);
 		}
 	}
 }

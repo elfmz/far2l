@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keyboard.hpp"
 #include "lang.hpp"
 #include "colors.hpp"
+#include "palette.hpp"
 #include "keys.hpp"
 #include "help.hpp"
 #include "dialog.hpp"
@@ -492,9 +493,9 @@ void Viewer::ShowPage(int nMode)
 
 	if (!ViewFile.Opened()) {
 		if (!FHP->GetPathName().IsEmpty() && ((nMode == SHOW_RELOAD) || (nMode == SHOW_HEX))) {
-			SetScreen(X1, Y1, X2, Y2, L' ', COL_VIEWERTEXT);
+			SetScreen(X1, Y1, X2, Y2, L' ', FarColorToReal(COL_VIEWERTEXT));
 			GotoXY(X1, Y1);
-			SetColor(COL_WARNDIALOGTEXT);
+			SetFarColor(COL_WARNDIALOGTEXT);
 			FS << fmt::Cells() << fmt::Truncate(XX2 - X1 + 1) << Msg::ViewerCannotOpenFile;
 			ShowStatus();
 		}
@@ -552,7 +553,7 @@ void Viewer::ShowPage(int nMode)
 		if (VM.Processed)
 			printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
 		else
-			printer.reset(new PlainViewerPrinter(COL_VIEWERTEXT));
+			printer.reset(new PlainViewerPrinter(FarColorToReal(COL_VIEWERTEXT)));
 		if (IsUnicodeOrUtfCodePage(VM.CodePage))
 			printer->EnableBOMSkip();
 
@@ -597,13 +598,13 @@ void Viewer::ShowPage(int nMode)
 
 			if (StrLen > LeftPos + Width && ViOpt.ShowArrows) {
 				GotoXY(XX2, Y);
-				SetColor(COL_VIEWERARROWS);
+				SetFarColor(COL_VIEWERARROWS);
 				BoxText(0xbb);
 			}
 
 			if (LeftPos > 0 && ViOpt.ShowArrows && !Strings[I].IsEmpty()) {
 				GotoXY(X1, Y);
-				SetColor(COL_VIEWERARROWS);
+				SetFarColor(COL_VIEWERARROWS);
 				BoxText(0xab);
 			}
 		}
@@ -633,7 +634,7 @@ void Viewer::ShowHex()
 		bSelStartFound = false;
 		bSelEndFound = false;
 		//		SelSize=0;
-		SetColor(COL_VIEWERTEXT);
+		SetFarColor(COL_VIEWERTEXT);
 		GotoXY(X1, Y);
 
 		if (EndFile) {
@@ -807,7 +808,7 @@ void Viewer::ShowHex()
 		}
 
 		if (bSelStartFound && bSelEndFound) {
-			SetColor(COL_VIEWERSELECTEDTEXT);
+			SetFarColor(COL_VIEWERSELECTEDTEXT);
 			GotoXY((int)((int64_t)X1 + SelStart - HexLeftPos), Y);
 			FS << fmt::Cells() << fmt::Truncate(SelEnd - SelStart + 1)
 				<< OutStr + static_cast<size_t>(SelStart);
@@ -825,9 +826,9 @@ void Viewer::DrawScrollbar()
 {
 	if (ViOpt.ShowScrollbar) {
 		if (m_bQuickView)
-			SetColor(COL_PANELSCROLLBAR);
+			SetFarColor(COL_PANELSCROLLBAR);
 		else
-			SetColor(COL_VIEWERSCROLLBAR);
+			SetFarColor(COL_VIEWERSCROLLBAR);
 
 		if (!VM.Hex) {
 			ScrollBar(X2 + (m_bQuickView ? 1 : 0), Y1, Y2 - Y1 + 1,

@@ -120,9 +120,9 @@ void CommandLine::DisplayObject()
 	GetPrompt(strTruncDir);
 	TruncPathStr(strTruncDir, (X2 - X1) / 2);
 	GotoXY(X1, Y1);
-	SetColor(COL_COMMANDLINEPREFIX);
+	SetFarColor(COL_COMMANDLINEPREFIX);
 	Text(strTruncDir);
-	CmdStr.SetObjectColor(COL_COMMANDLINE, COL_COMMANDLINESELECTED);
+	CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
 	CmdStr.SetPosition(X1 + (int)strTruncDir.CellsCount(), Y1, X2, Y2);
 
 	CmdStr.Show();
@@ -134,7 +134,7 @@ void CommandLine::DrawComboBoxMark(wchar_t MarkChar)
 {
 	wchar_t MarkWz[2] = {MarkChar, 0};
 	GotoXY(X2 + 1, Y1);
-	SetColor(COL_COMMANDLINEPREFIX);
+	SetFarColor(COL_COMMANDLINEPREFIX);
 	Text(MarkWz);
 }
 
@@ -268,7 +268,7 @@ int CommandLine::ProcessKey(FarKey Key)
 	if (Key == KEY_F8) {
 		if (!Opt.Confirm.ClearVT || Message(MSG_WARNING, 2,
 				Msg::ClearTerminalTitle, Msg::ClearTerminalQuestion, Msg::Ok, Msg::Cancel) == 0) {
-			ClearScreen(COL_COMMANDLINEUSERSCREEN);
+			ClearScreen(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 			SaveBackground();
 			VTLog::Reset(NULL);
 			ShowBackground();

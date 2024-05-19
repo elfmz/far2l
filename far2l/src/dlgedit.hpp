@@ -118,7 +118,7 @@ public:
 	void SetDelRemovesBlocks(int NewMode);
 	int GetDelRemovesBlocks();
 
-	void SetObjectColor(int Color, int SelColor = 0xf, int ColorUnChanged = COL_DIALOGEDITUNCHANGED);
+	void SetObjectColor(uint64_t Color, uint64_t SelColor = 0xf, uint64_t ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED));
 	long GetObjectColor();
 	int GetObjectColorUnChanged();
 

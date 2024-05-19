@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hmenu.hpp"
 #include "colors.hpp"
+#include "palette.hpp"
 #include "keys.hpp"
 #include "dialog.hpp"
 #include "vmenu.hpp"
@@ -58,7 +59,7 @@ HMenu::HMenu(HMenuData *Item, int ItemCount)
 
 void HMenu::DisplayObject()
 {
-	SetScreen(X1, Y1, X2, Y2, L' ', COL_HMENUTEXT);
+	SetScreen(X1, Y1, X2, Y2, L' ', FarColorToReal(COL_HMENUTEXT));
 	SetCursorType(0, 10);
 	ShowMenu();
 }
@@ -72,14 +73,14 @@ void HMenu::ShowMenu()
 		ItemX[i] = WhereX();
 
 		if (Item[i].Selected)
-			SetColor(COL_HMENUSELECTEDTEXT);
+			SetFarColor(COL_HMENUSELECTEDTEXT);
 		else
-			SetColor(COL_HMENUTEXT);
+			SetFarColor(COL_HMENUTEXT);
 
 		strTmpStr = L"  ";
 		strTmpStr+= Item[i].Name;
 		strTmpStr+= L"  ";
-		HiText(strTmpStr, Item[i].Selected ? COL_HMENUSELECTEDHIGHLIGHT : COL_HMENUHIGHLIGHT);
+		HiText(strTmpStr, Item[i].Selected ? FarColorToReal(COL_HMENUSELECTEDHIGHLIGHT) : FarColorToReal(COL_HMENUHIGHLIGHT));
 	}
 
 	ItemX[ItemCount] = WhereX();

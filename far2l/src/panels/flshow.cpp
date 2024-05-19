@@ -936,7 +936,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 					SetShowColor(ListPos);
 				}
 
-				uint64_t color = GetShowColor(ListPos, HIGHLIGHTCOLORTYPE_FILE);
+				//uint64_t color = GetShowColor(ListPos, HIGHLIGHTCOLORTYPE_FILE);
 
 				if (!ShowStatus)
 					SetShowColor(ListPos);

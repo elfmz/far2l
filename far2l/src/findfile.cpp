@@ -1035,7 +1035,8 @@ static bool ScanFileByMapping(const char *Name)
 		for (UINT LastPercents = 0;;) {
 			const bool FirstFragment = (FilePos == 0);
 			const bool LastFragment = (FilePos + off_t(smm.Length()) >= FileSize);
-			if (findPattern->FindMatch(View, Length, FirstFragment, LastFragment).first != (size_t)-1) {
+			if (findPattern->FindMatch(View, LastFragment ? Length-(FilePos + off_t(smm.Length())-FileSize) : Length,
+									   FirstFragment, LastFragment).first != (size_t)-1) {
 				return true;
 			}
 			if (LastFragment) {

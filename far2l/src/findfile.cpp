@@ -1672,9 +1672,19 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 								{
 									FileHolderPtr TFH;
 									if (FindItem.ArcIndex != LIST_INDEX_NONE) {
-										TFH = std::make_shared<FindDlg_TempFileHolder>(strSearchFileName,
-												FindItem.ArcIndex, FindItem.FindData);
+										ARCLIST ArcItem;
+										itd.GetArcListItem(FindItem.ArcIndex, ArcItem);
+										if (!(ArcItem.Flags & OPIF_REALNAMES)) { // check bug https://github.com/elfmz/far2l/issues/2223
+											//fprintf(stderr, "=== findfile: FindItem.ArcIndex != LIST_INDEX_NONE && !(ArcItem.Flags & OPIF_REALNAMES) => FindDlg_TempFileHolder\n");
+											TFH = std::make_shared<FindDlg_TempFileHolder>(strSearchFileName,
+													FindItem.ArcIndex, FindItem.FindData);
+										}
+										else {
+											//fprintf(stderr, "=== findfile: FindItem.ArcIndex != LIST_INDEX_NONE && (ArcItem.Flags & OPIF_REALNAMES) => FileHolder\n");
+											TFH = std::make_shared<FileHolder>(strSearchFileName);
+										}
 									} else {
+										//fprintf(stderr, "=== findfile: FindItem.ArcIndex == LIST_INDEX_NONE => FileHolder\n");
 										TFH = std::make_shared<FileHolder>(strSearchFileName);
 									}
 									FileEditor ShellEditor(TFH, CP_AUTODETECT, 0);

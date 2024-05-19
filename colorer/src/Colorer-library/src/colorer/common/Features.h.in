@@ -18,4 +18,9 @@
 */
 #cmakedefine COLORER_FEATURE_ICU
 
+/**
+  If defined, own standard library implementation is used.
+*/
+#cmakedefine COLORER_FEATURE_OLD_COMPILERS
+
 #endif // COLORER_FEATURES_H

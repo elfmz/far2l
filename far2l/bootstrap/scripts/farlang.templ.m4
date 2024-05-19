@@ -16459,6 +16459,28 @@ upd:"Last status change time"
 "Час зміни статусу"
 "Час змены статута"
 
+SetAttrSymlinkExplain1
+"Для символьных ссылок время, владение, права,..."
+"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+
+SetAttrSymlinkExplain2
+"  показаны и будут изменены для оригинального объекта"
+"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+
 SetColorPanel
 l:
 "&Панель"

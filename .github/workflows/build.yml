@@ -6,7 +6,7 @@ on:
   # run on push in master
   push:
     branches:
-        - master
+      - master
     paths-ignore:
       - '.vscode/**'
       - '.cirrus.yml'

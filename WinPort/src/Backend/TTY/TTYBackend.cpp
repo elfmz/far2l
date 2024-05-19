@@ -783,20 +783,17 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 	}
 
 	bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
-
 	{
 		std::lock_guard<std::mutex> lock(_palette_mtx);
 		std::swap(override_default_palette, _override_default_palette);
 	}
 
 	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_ae.palette = true;
-			_async_cond.notify_all();
-			while (_ae.palette) {
-				_async_cond.wait(lock);
-			}
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_ae.palette = true;
+		_async_cond.notify_all();
+		while (_ae.palette) {
+			_async_cond.wait(lock);
 		}
 	}
 
@@ -834,6 +831,32 @@ void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *Colo
 	while (_ae.palette) {
 		_async_cond.wait(lock);
 	}
+}
+
+void TTYBackend::OnConsoleGetBasePalette(void *pbuff)
+{
+	memcpy(pbuff, &g_winport_palette, BASE_PALETTE_SIZE * sizeof(DWORD) * 2);
+
+	return;
+}
+
+bool TTYBackend::OnConsoleSetBasePalette(void *pbuff)
+{
+	if (!pbuff) return false;
+
+	{
+		std::unique_lock<std::mutex> lock(_palette_mtx);
+		memcpy(&_palette, pbuff, BASE_PALETTE_SIZE * sizeof(DWORD) * 2);
+	}
+
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_ae.palette = true;
+	_async_cond.notify_all();
+	while (_ae.palette) {
+		_async_cond.wait(lock);
+	}
+
+	return true;
 }
 
 void TTYBackend::OnConsoleChangeFont()

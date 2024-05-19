@@ -659,15 +659,16 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				if (MaskHM)
 					ColorM = (ColorM & (~MaskHM)) | (ColorHM & MaskHM);
 
-				Text64(x, y, ColorB, VerticalLine0, 1);
+				Text(x, y, ColorB, VerticalLine0, 1);
 				x++;
-				Text64(x, y, ColorM, hl->Mark, mcl);
+				Text(x, y, ColorM, hl->Mark, mcl);
 				x += ng;
-				Text64(x, y, ColorF, Msg::HighlightExample1, filenameexamplelen);
+				Text(x, y, ColorF, Msg::HighlightExample1, filenameexamplelen);
 				x += filenameexamplelen;
-				Text64(x, y, ColorF, wstrSpaces, freespace-ng);
+				ColorF &= (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE));
+				Text(x, y, ColorF, wstrSpaces, freespace-ng);
 				x += (freespace - ng);
-				Text64(x, y, ColorB, VerticalLine1, 1);
+				Text(x, y, ColorB, VerticalLine1, 1);
 			}
 
 			return 0;
@@ -736,6 +737,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 												COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE | COMMON_LVB_REVERSE_VIDEO));
 
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_HER_MARKINHERIT, BSTATE_CHECKED);
+				SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 				break;
 			} else if (Param1 == ID_FF_DATERELATIVE) {
 				FilterDlgRelativeDateItemsUpdate(hDlg, true);

@@ -412,6 +412,16 @@ extern "C" {
 		return ChooseConOut(hConsoleOutput)->GetColorPalette();
 	}
 
+	WINPORT_DECL(GetConsoleBasePalette,VOID,(HANDLE hConsoleOutput, VOID *p))
+	{
+		return ChooseConOut(hConsoleOutput)->GetBasePalette(p);
+	}
+
+	WINPORT_DECL(SetConsoleBasePalette,BOOL,(HANDLE hConsoleOutput, VOID *p))
+	{
+		return ChooseConOut(hConsoleOutput)->SetBasePalette(p);
+	}
+
 	WINPORT_DECL(OverrideConsoleColor, VOID, (HANDLE hConsoleOutput, DWORD Index, DWORD *ColorFG, DWORD *ColorBK))
 	{
 		return ChooseConOut(hConsoleOutput)->OverrideColor(Index, ColorFG, ColorBK);

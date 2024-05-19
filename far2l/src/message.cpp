@@ -69,8 +69,11 @@ LONG_PTR WINAPI MsgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			SendDlgMessage(hDlg, DM_GETDLGITEMSHORT, Param1, (LONG_PTR)&di);
 
 			if (di.Type == DI_EDIT) {
-				int Color = FarColorToReal(IsWarningStyle ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT) & 0xFF;
-				return ((Param2 & 0xFF00FF00) | (Color << 16) | Color);
+				uint64_t *ItemColor = reinterpret_cast<uint64_t *>(Param2);
+				uint64_t color = FarColorToReal(IsWarningStyle ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT);
+				ItemColor[0] = color;
+				ItemColor[2] = color;
+				return 1;
 			}
 		} break;
 		case DN_KEY: {
@@ -370,14 +373,14 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 	SetCursorType(0, 0);
 
 	if (!(Flags & MSG_KEEPBACKGROUND)) {
-		SetScreen(X1, Y1, X2, Y2, L' ', (Flags & MSG_WARNING) ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT);
+		SetScreen(X1, Y1, X2, Y2, L' ', FarColorToReal((Flags & MSG_WARNING) ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT));
 		MakeShadow(X1 + 2, Y2 + 1, X2 + 2, Y2 + 1);
 		MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1);
-		Box(X1 + 3, Y1 + 1, X2 - 3, Y2 - 1, (Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGBOX,
+		Box(X1 + 3, Y1 + 1, X2 - 3, Y2 - 1, FarColorToReal((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGBOX),
 				DOUBLE_BOX);
 	}
 
-	SetColor((Flags & MSG_WARNING) ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT);
+	SetFarColor((Flags & MSG_WARNING) ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT);
 
 	if (Title && *Title) {
 		FARString strTempTitle = Title;
@@ -398,7 +401,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 			int Length = X2 - X1 - 5;
 
 			if (Length > 1) {
-				SetColor((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGBOX);
+				SetFarColor((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGBOX);
 				GotoXY(X1 + 3, Y1 + I + 2);
 				DrawLine(Length, (Chr == 2 ? 3 : 1));
 				CPtrStr++;
@@ -409,7 +412,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 					Text(CPtrStr);
 				}
 
-				SetColor((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGTEXT);
+				SetFarColor((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGTEXT);
 			}
 
 			continue;

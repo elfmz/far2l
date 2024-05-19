@@ -776,6 +776,17 @@ BYTE ConsoleOutput::GetColorPalette()
 	return _backend ? _backend->OnConsoleGetColorPalette() : 4;
 }
 
+VOID ConsoleOutput::GetBasePalette(VOID *p)
+{
+	if (_backend)
+		_backend->OnConsoleGetBasePalette(p);
+}
+
+bool ConsoleOutput::SetBasePalette(VOID *p)
+{
+	return (_backend && _backend->OnConsoleSetBasePalette(p));
+}
+
 void ConsoleOutput::OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 {
 	if (_backend)

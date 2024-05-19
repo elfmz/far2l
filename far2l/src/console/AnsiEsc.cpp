@@ -306,14 +306,14 @@ const wchar_t *Parser::Parse(const wchar_t *str)
 
 Printer::Printer(WORD wAttributes)
 	:
-	_initial_attr(GetRealColor())
+	_initial_attr(GetColor())
 {
 	_font_state.FromConsoleAttributes(wAttributes);
 }
 
 Printer::~Printer()
 {
-	SetRealColor(_initial_attr);
+	SetColor(_initial_attr);
 }
 
 int Printer::Length(const wchar_t *str, int limit)
@@ -348,9 +348,9 @@ int Printer::Length(const wchar_t *str, int limit)
 void Printer::EnforceStateColor()
 {
 	if (_selection)
-		SetColor(COL_VIEWERSELECTEDTEXT);
+		SetFarColor(COL_VIEWERSELECTEDTEXT);
 	else
-		SetRealColor(_font_state.ToConsoleAttributes());
+		SetColor(_font_state.ToConsoleAttributes());
 }
 
 void Printer::Print(int skip_len, int print_len, const wchar_t *str)

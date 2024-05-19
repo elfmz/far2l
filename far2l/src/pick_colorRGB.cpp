@@ -323,7 +323,7 @@ void pick_colorRGB_s::draw_sample_vbuff(void)
 {
 	for (size_t i = 0; i < 32; i++) {
 		samplevbuff[i].Char.UnicodeChar = 32;
-		samplevbuff[i].Attributes = ATTR_RGBBACK_NEGF(rgb);
+		samplevbuff[i].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 	}
 }
 
@@ -362,7 +362,7 @@ void pick_colorRGB_s::draw_tempcolors_vbuff(void)
 	CHAR_INFO *const vbuff = tempcolorsvbuff;
 
 	for (size_t g = 0; g < 20; g++) {
-		const uint64_t attr = ATTR_RGBBACK_NEGF(g_tempcolorsRGB[g]);
+		const uint64_t attr = ATTR_RGBBACK_NEGF2(g_tempcolorsRGB[g]);
 
 		vbuff[g * 2 + 0].Char.UnicodeChar = 32;
 		vbuff[g * 2 + 1].Char.UnicodeChar = 32;
@@ -387,7 +387,7 @@ void pick_colorRGB_s::draw_controls_vbuff(void)
 	for (size_t i = 0; i < 64; i++) {
 		CHAR_INFO *const vbuff = control1vbuff;
 		rgbt = HSV_2_RGB(hsv);
-		vbuff[i].Attributes = ATTR_RGBBACK_NEGF(rgb);
+		vbuff[i].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 		vbuff[i].Char.UnicodeChar = 32;
 		(mode & 1) ? hsv.h += 4 : hsv.s += 4;
 	}
@@ -400,7 +400,7 @@ void pick_colorRGB_s::draw_controls_vbuff(void)
 	for (size_t i = 0; i < 64; i++) {
 		CHAR_INFO *const vbuff = control2vbuff;
 		rgbt = HSV_2_RGB(hsv);
-		vbuff[i].Attributes = ATTR_RGBBACK_NEGF(rgb);
+		vbuff[i].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 		vbuff[i].Char.UnicodeChar = 32;
 		hsv.v += 4;
 	}
@@ -419,7 +419,7 @@ void pick_colorRGB_s::draw_table_vbuff(void)
 
 	if (bTableColorPreview) {
 		for (size_t i = 0; i < 768; i++) {
-			vbuff[i].Attributes = ATTR_RGBBACK_NEGF(this->rgb);
+			vbuff[i].Attributes = ATTR_RGBBACK_NEGF2(this->rgb);
 			vbuff[i].Char.UnicodeChar = 32;
 		}
 		if (mode == 2)
@@ -437,7 +437,7 @@ void pick_colorRGB_s::draw_table_vbuff(void)
 			for (size_t x = 0; x < 16; x++) {
 				hsv.h = x << 4;
 				rgbt = HSV_2_RGB(hsv);
-				const uint64_t attr = ATTR_RGBBACK_NEGF(rgb);
+				const uint64_t attr = ATTR_RGBBACK_NEGF2(rgb);
 				for (size_t x2 = 0; x2 < 4; x2++)
 					for (size_t y2 = 0; y2 < 2; y2++) {
 						vbuff[y * 64 * 2 + y2 * 64 + x * 4 + x2].Attributes = attr;
@@ -456,7 +456,7 @@ void pick_colorRGB_s::draw_table_vbuff(void)
 		(!mode) ? hsv.h = 0 : hsv.s = 0;
 		for (size_t x = 0; x < 64; x++) {
 			rgbt = HSV_2_RGB(hsv);
-			vbuff[y * 64 + x].Attributes = ATTR_RGBBACK_NEGF(rgb);
+			vbuff[y * 64 + x].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 			vbuff[y * 64 + x].Char.UnicodeChar = 32;
 			(!mode) ? hsv.h += 4 : hsv.s += 4;
 		}
@@ -560,7 +560,9 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 
 	case DN_CTLCOLORDLGITEM:
 		if (Param1 == ID_PCRGB_PREFIX_RGB) {
-			return FarColorToReal(COL_DIALOGEDIT);
+			uint64_t *ItemColor = (uint64_t *)Param2;
+			ItemColor[0] = FarColorToReal(COL_DIALOGEDIT);
+			return 1;
 		}
 	break;
 

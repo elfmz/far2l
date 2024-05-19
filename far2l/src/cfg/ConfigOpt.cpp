@@ -121,7 +121,8 @@ static constexpr const char *NSecVMenu = "VMenu";
 static FARString strKeyNameConsoleDetachKey;
 
 const ConfigOpt g_cfg_opts[] {
-	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, Palette, DefaultPalette},
+	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, (BYTE *)Palette8bit, (BYTE *)DefaultPalette8bit},
+	{true,  NSecColors, "CurrentPaletteRGB", SIZE_ARRAY_PALETTE * 8, (BYTE *)Palette, nullptr},
 	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, g_tempcolors256},
 	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, (BYTE *)g_tempcolorsRGB},
 
@@ -558,6 +559,7 @@ static void SanitizeXlat()
 
 static void SanitizePalette()
 {
+#if 0
 	// Уточняем алгоритм "взятия" палитры.
 	for (
 		size_t I = COL_PRIVATEPOSITION_FOR_DIF165ABOVE - COL_FIRSTPALETTECOLOR + 1;
@@ -577,6 +579,16 @@ static void SanitizePalette()
 					есть другие палитры...
 			*/
 		}
+	}
+#endif
+}
+
+static void MergePalette()
+{
+	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+
+		Palette[i] &= 0xFFFFFFFFFFFFFF00;
+		Palette[i] |= Palette8bit[i];
 	}
 }
 
@@ -667,7 +679,8 @@ void ConfigOptLoad()
 		Opt.PluginMaxReadData = 0x20000;
 
 	Opt.HelpTabSize = 8; // пока жестко пропишем...
-	SanitizePalette();
+//	SanitizePalette();
+	MergePalette();
 
 	Opt.ViOpt.ViewerIsWrap&= 1;
 	Opt.ViOpt.ViewerWrap&= 1;

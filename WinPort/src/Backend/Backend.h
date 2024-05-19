@@ -38,6 +38,8 @@ public:
 	virtual bool OnConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;
 	virtual bool OnConsoleSetFKeyTitles(const char **titles) = 0;
 	virtual BYTE OnConsoleGetColorPalette() = 0;
+	virtual void OnConsoleGetBasePalette(void *pbuff) = 0;
+	virtual bool OnConsoleSetBasePalette(void *pbuff) = 0;
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
 };
@@ -205,6 +207,8 @@ public:
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode) = 0;
 	virtual bool SetFKeyTitles(const CHAR **titles) = 0;
 	virtual BYTE GetColorPalette() = 0;
+	virtual void GetBasePalette(void *p) = 0;
+	virtual bool SetBasePalette(void *p) = 0;
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void RepaintsDeferStart() = 0;
 	virtual void RepaintsDeferFinish() = 0;

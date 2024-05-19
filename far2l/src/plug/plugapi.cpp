@@ -319,7 +319,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				DWORD Flags;
 				int StartIndex;
 				int ColorItem;
-				LPBYTE Colors;
+				//LPBYTE Colors;
+				uint64_t *Colors;
 			};
 		*/
 		case ACTL_SETARRAYCOLOR: {
@@ -328,7 +329,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 				if (Pal->Colors && Pal->StartIndex >= 0
 						&& Pal->StartIndex + Pal->ColorCount <= SIZE_ARRAY_PALETTE) {
-					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount);
+					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(uint64_t));
 
 					if (Pal->Flags & FCLR_REDRAW) {
 						ScrBuf.Lock();					// отменяем всякую прорисовку
@@ -1971,7 +1972,7 @@ static bool FarTextSynched(int X, int Y, int Color, const wchar_t *Str)
 		ScrBuf.Flush();
 		ScrBuf.SetLockCount(PrevLockCount);
 	} else {
-		Text(X, Y, Color, Str);
+		Text(X, Y, FarColorToReal(Color), Str);
 	}
 	return true;
 }

@@ -89,7 +89,7 @@ ControlObject::ControlObject()
 void ControlObject::Init()
 {
 	TreeList::ClearCache(0);
-	SetColor(COL_COMMANDLINEUSERSCREEN);
+	SetFarColor(COL_COMMANDLINEUSERSCREEN);
 	GotoXY(0, ScrY - 3);
 	ShowStartupBanner();
 	GotoXY(0, ScrY - 2);
@@ -201,7 +201,7 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 	}
 
 	COORD Size{}, CursorPosition{};
-	WORD SavedAttr{};
+	uint64_t SavedAttr{};
 	Console.GetSize(Size);
 	Console.GetCursorPosition(CursorPosition);
 	Console.GetTextAttributes(SavedAttr);
@@ -245,14 +245,14 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		const auto SavedColor = GetColor();
 		for (size_t i = 0; i < Lines.size(); ++i) {
 			if (i >= ConsoleHintsIndex) {
-				SetColor(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);		// COL_HELPBOXTITLE
+				SetFarColor(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);		// COL_HELPBOXTITLE
 			}
 			if (!Lines[i].IsEmpty()) {
 				GotoXY(0, ScrY - (Lines.size() - i + 2));
 				Text(Lines[i]);
 			}
 		}
-		SetRealColor(SavedColor);
+		SetColor(SavedColor);
 	}
 }
 

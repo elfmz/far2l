@@ -150,13 +150,13 @@ void KeyBar::RefreshObject(bool Render)
 		}
 
 		if (Render && WhereX() + LabelWidth < X2) {
-			SetColor(COL_KEYBARNUM);
+			SetFarColor(COL_KEYBARNUM);
 			FS << i + 1;
-			SetColor(COL_KEYBARTEXT);
+			SetFarColor(COL_KEYBARTEXT);
 			FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(LabelWidth) << Label;
 
 			if (i < KEY_COUNT - 1) {
-				SetColor(COL_KEYBARBACKGROUND);
+				SetFarColor(COL_KEYBARBACKGROUND);
 				Text(L" ");
 			}
 		}
@@ -166,7 +166,7 @@ void KeyBar::RefreshObject(bool Render)
 		int Width = X2 - WhereX() + 1;
 
 		if (Width > 0) {
-			SetColor(COL_KEYBARTEXT);
+			SetFarColor(COL_KEYBARTEXT);
 			FS << fmt::Cells() << fmt::Expand(Width) << L"";
 		}
 	}

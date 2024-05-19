@@ -3442,16 +3442,18 @@ INT_PTR WINAPI FarAdvControlA(INT_PTR ModuleNumber, int Command, void *Param)
 			return ret;
 		}
 		case oldfar::ACTL_SETARRAYCOLOR: {
-			if (!Param)
-				return FALSE;
+			return FALSE;
 
-			oldfar::FarSetColors *scA = (oldfar::FarSetColors *)Param;
-			FarSetColors sc = {0, scA->StartIndex, scA->ColorCount, scA->Colors};
+//			if (!Param)
+//				return FALSE;
 
-			if (scA->Flags & oldfar::FCLR_REDRAW)
-				sc.Flags|= FCLR_REDRAW;
+//			oldfar::FarSetColors *scA = (oldfar::FarSetColors *)Param;
+//			FarSetColors sc = {0, scA->StartIndex, scA->ColorCount, scA->Colors};
 
-			return FarAdvControl(ModuleNumber, ACTL_SETARRAYCOLOR, &sc);
+//			if (scA->Flags & oldfar::FCLR_REDRAW)
+//				sc.Flags|= FCLR_REDRAW;
+
+//			return FarAdvControl(ModuleNumber, ACTL_SETARRAYCOLOR, &sc);
 		}
 		case oldfar::ACTL_GETWCHARMODE:
 			return TRUE;

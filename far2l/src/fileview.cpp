@@ -522,14 +522,14 @@ void FileViewer::ShowStatus()
 	strStatus.Format(L"%-*ls %5ls %13llu %7.7ls %-4lld %ls%3d%%", NameLength, strName.CPtr(), str_codepage.CPtr(),
 			View.FileSize, Msg::ViewerStatusCol.CPtr(), View.LeftPos, Opt.ViewerEditorClock ? L"" : L" ",
 			(View.LastPage ? 100 : ToPercent64(View.FilePos, View.FileSize)));
-	SetColor(COL_VIEWERSTATUS);
+	SetFarColor(COL_VIEWERSTATUS);
 	GotoXY(X1, Y1);
 	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(View.Width + (View.ViOpt.ShowScrollbar ? 1 : 0))
 		<< strStatus;
 
 	if (Opt.ViewerEditorClock && IsFullScreen()) {
 		if (X2 > 5) {
-			Text(X2 - 5, Y1, COL_VIEWERTEXT, L" ");
+			Text(X2 - 5, Y1, FarColorToReal(COL_VIEWERTEXT), L" ");
 		}
 		ShowTime(FALSE);
 	}

@@ -1111,7 +1111,7 @@ bool FarEditorSet::SetBgEditor()
 {
   if (rEnabled && ChangeBgEditor && !consoleAnnotationAvailable) {
     FarSetColors fsc;
-    unsigned char c;
+    uint64_t c;
 
     const StyledRegion* def_text =
         StyledRegion::cast(regionMapper->getRegionDefine(UnicodeString("def:Text")));

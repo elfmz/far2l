@@ -170,9 +170,9 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 		clock_t cl_start = clock();
 		ChangePriority ChPriority(ChangePriority::NORMAL);
 		ControlObject CtrlObj;
-		WORD InitAttributes = 0;
+		uint64_t InitAttributes = 0;
 		Console.GetTextAttributes(InitAttributes);
-		SetColor(COL_COMMANDLINEUSERSCREEN, true);
+		SetFarColor(COL_COMMANDLINEUSERSCREEN, true);
 
 		if (Opt.OnlyEditorViewerUsed != Options::NOT_ONLY_EDITOR_VIEWER) {
 			Panel *DummyPanel = new Panel;
@@ -323,7 +323,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 		}
 
 		// очистим за собой!
-		SetScreen(0, 0, ScrX, ScrY, L' ', COL_COMMANDLINEUSERSCREEN);
+		SetScreen(0, 0, ScrX, ScrY, L' ', FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 		Console.SetTextAttributes(InitAttributes);
 		ScrBuf.ResetShadow();
 		ScrBuf.Flush();

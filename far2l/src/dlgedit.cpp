@@ -438,7 +438,7 @@ int DlgEdit::GetDelRemovesBlocks()
 		return lineEdit->GetDelRemovesBlocks();
 }
 
-void DlgEdit::SetObjectColor(int Color, int SelColor, int ColorUnChanged)
+void DlgEdit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
 #if defined(PROJECT_DI_MEMOEDIT)
 

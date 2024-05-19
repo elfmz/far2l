@@ -2234,7 +2234,7 @@ void FileEditor::ShowStatus()
 	if (m_editor->Locked() || !TitleBarVisible)
 		return;
 
-	SetColor(COL_EDITORSTATUS);
+	SetFarColor(COL_EDITORSTATUS);
 	GotoXY(X1, Y1);		//??
 	FARString strLineStr;
 	FARString strLocalTitle;
@@ -2310,7 +2310,7 @@ void FileEditor::ShowStatus()
 
 	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		if (X2 > 5) {
-			Text(X2 - 5, Y1, COL_EDITORTEXT, L" ");
+			Text(X2 - 5, Y1, FarColorToReal(COL_EDITORTEXT), L" ");
 		}
 		ShowTime(FALSE);
 	}

@@ -1,7 +1,6 @@
 #ifndef COLORER_XMLINPUTSOURCE_H
 #define COLORER_XMLINPUTSOURCE_H
 
-#include <filesystem>
 #include <xercesc/sax/InputSource.hpp>
 #include "colorer/Common.h"
 
@@ -37,9 +36,6 @@ class XmlInputSource : public xercesc::InputSource
   [[nodiscard]] virtual xercesc::InputSource* getInputSource() const = 0;
 
   ~XmlInputSource() override = default;
-
-  static std::filesystem::path getClearFilePath(const UnicodeString* basePath,
-                                                const UnicodeString* relPath);
 
   static bool isUriFile(const UnicodeString& path, const UnicodeString* base = nullptr);
 

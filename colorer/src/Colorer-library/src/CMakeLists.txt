@@ -166,6 +166,12 @@ if(COLORER_USE_DUMMY_LOGGER)
   set(SRC_COLORER_SPDLOG)
   set(COLORER_FEATURE_DUMMYLOGGER 1)
 endif()
+
+if(COLORER_BUILD_OLD_COMPILERS)
+  set(SRC_COLORER_PLATFORM colorer/platform/filesystem.hpp)
+  set(COLORER_FEATURE_OLD_COMPILERS 1)
+endif()
+
 #====================================================
 # Generate headers
 #====================================================
@@ -217,7 +223,7 @@ set(MAIN_FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} ${FLAGS_CXX_DEFAULT})
 #====================================================
 # build
 #====================================================
-add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_COLORER_STRINGS} ${SRC_COLORER_ZIP} ${SRC_COLORER_SPDLOG})
+add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_COLORER_STRINGS} ${SRC_COLORER_ZIP} ${SRC_COLORER_SPDLOG} ${SRC_COLORER_PLATFORM})
 add_library(colorer::colorer ALIAS colorer_lib)
 target_include_directories(colorer_lib PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"

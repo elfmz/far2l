@@ -2,6 +2,7 @@
 #define COLORER_COMMON_ICU_H
 
 #include <unicode/uniset.h>
+#include <memory>
 
 using UnicodeString = icu::UnicodeString;
 using uUnicodeString = std::unique_ptr<UnicodeString>;

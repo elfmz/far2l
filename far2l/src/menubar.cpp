@@ -48,6 +48,6 @@ void MenuBar::DisplayObject()
 	FARString strFullMsg;
 	strFullMsg.Format(L"%-*.*ls", Length, Length, strMsg.CPtr());
 	GotoXY(X1, Y1);
-	SetColor(COL_HMENUTEXT);
+	SetFarColor(COL_HMENUTEXT);
 	Text(strFullMsg);
 }

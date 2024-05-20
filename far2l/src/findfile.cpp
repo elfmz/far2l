@@ -1035,7 +1035,9 @@ static bool ScanFileByMapping(const char *Name)
 		for (UINT LastPercents = 0;;) {
 			const bool FirstFragment = (FilePos == 0);
 			const bool LastFragment = (FilePos + off_t(smm.Length()) >= FileSize);
-			if (findPattern->FindMatch(View, Length, FirstFragment, LastFragment).first != (size_t)-1) {
+			const size_t AnalyzeLength = LastFragment
+				? Length - (FilePos + off_t(smm.Length()) - FileSize) : Length;
+			if (findPattern->FindMatch(View, AnalyzeLength, FirstFragment, LastFragment).first != (size_t)-1) {
 				return true;
 			}
 			if (LastFragment) {
@@ -1672,9 +1674,19 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 								{
 									FileHolderPtr TFH;
 									if (FindItem.ArcIndex != LIST_INDEX_NONE) {
-										TFH = std::make_shared<FindDlg_TempFileHolder>(strSearchFileName,
-												FindItem.ArcIndex, FindItem.FindData);
+										ARCLIST ArcItem;
+										itd.GetArcListItem(FindItem.ArcIndex, ArcItem);
+										if (!(ArcItem.Flags & OPIF_REALNAMES)) { // check bug https://github.com/elfmz/far2l/issues/2223
+											//fprintf(stderr, "=== findfile: FindItem.ArcIndex != LIST_INDEX_NONE && !(ArcItem.Flags & OPIF_REALNAMES) => FindDlg_TempFileHolder\n");
+											TFH = std::make_shared<FindDlg_TempFileHolder>(strSearchFileName,
+													FindItem.ArcIndex, FindItem.FindData);
+										}
+										else {
+											//fprintf(stderr, "=== findfile: FindItem.ArcIndex != LIST_INDEX_NONE && (ArcItem.Flags & OPIF_REALNAMES) => FileHolder\n");
+											TFH = std::make_shared<FileHolder>(strSearchFileName);
+										}
 									} else {
+										//fprintf(stderr, "=== findfile: FindItem.ArcIndex == LIST_INDEX_NONE => FileHolder\n");
 										TFH = std::make_shared<FileHolder>(strSearchFileName);
 									}
 									FileEditor ShellEditor(TFH, CP_AUTODETECT, 0);

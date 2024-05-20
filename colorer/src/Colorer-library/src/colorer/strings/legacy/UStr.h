@@ -1,7 +1,7 @@
 #ifndef COLORER_USTR_H
 #define COLORER_USTR_H
 
-#include <filesystem>
+#include <string>
 #include <xercesc/util/XMLString.hpp>
 #include "colorer/Common.h"
 #include "colorer/strings/legacy/CharacterClass.h"
@@ -17,7 +17,6 @@ class UStr
   [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString* str);
   [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString& str);
   [[nodiscard]] static std::unique_ptr<XMLCh[]> to_xmlch(const UnicodeString* str);
-  [[nodiscard]] static std::filesystem::path to_filepath(const uUnicodeString& str);
   inline static bool isEmpty(const XMLCh* string) { return *string == '\0'; }
 
   static std::unique_ptr<CharacterClass> createCharClass(const UnicodeString& ccs, int pos, int* retPos, bool ignore_case);

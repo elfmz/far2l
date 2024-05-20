@@ -1814,6 +1814,27 @@ static void ConsoleOverrideColorInMain(DWORD Index, DWORD *ColorFG, DWORD *Color
 	g_wx_palette.background[Index] = bk;
 }
 
+static void ConsoleOverrideBasePaletteInMain(void *pbuff)
+{
+	memcpy(&g_wx_palette, pbuff, BASE_PALETTE_SIZE * sizeof(WinPortRGB) * 2);
+}
+
+void WinPortPanel::OnConsoleGetBasePalette(void *pbuff)
+{
+	memcpy(pbuff, &g_wx_palette, BASE_PALETTE_SIZE * sizeof(WinPortRGB) * 2);
+}
+
+bool WinPortPanel::OnConsoleSetBasePalette(void *pbuff)
+{
+	if (!pbuff)
+		return false;
+
+	auto fn = std::bind(&ConsoleOverrideBasePaletteInMain, pbuff);
+	CallInMainNoRet(fn);
+
+	return true;
+}
+
 void WinPortPanel::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 {
 	if (Index >= BASE_PALETTE_SIZE) {

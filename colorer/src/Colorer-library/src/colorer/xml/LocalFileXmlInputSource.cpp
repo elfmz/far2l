@@ -1,22 +1,21 @@
 #include "colorer/xml/LocalFileXmlInputSource.h"
-#include <filesystem>
 #include <memory>
 #include <xercesc/util/BinFileInputStream.hpp>
 #include "colorer/Exception.h"
+#include "colorer/utils/Environment.h"
 
 LocalFileXmlInputSource::LocalFileXmlInputSource(const XMLCh* path, const XMLCh* base)
 {
   auto upath = UnicodeString(path);
   auto ubase = UnicodeString(base);
-  auto clear_path = XmlInputSource::getClearFilePath(&ubase, &upath);
 
-  if (std::filesystem::is_regular_file(clear_path)) {
-    source_path = std::make_unique<UnicodeString>(clear_path.u16string().c_str());
-    input_source = std::make_unique<xercesc::LocalFileInputSource>(clear_path.u16string().c_str());
+  if (UnicodeString full_path; Environment::isRegularFile(&ubase, &upath, full_path)) {
+    source_path = std::make_unique<UnicodeString>(full_path);
+    input_source = std::make_unique<xercesc::LocalFileInputSource>(UStr::to_xmlch(&full_path).get());
     // file is not open yet, only after makeStream
   }
   else {
-    throw InputSourceException(UnicodeString(clear_path.c_str()) + " isn't regular file.");
+    throw InputSourceException(full_path + " isn't regular file.");
   }
 }
 

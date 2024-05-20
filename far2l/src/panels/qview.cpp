@@ -94,9 +94,9 @@ void QuickView::DisplayObject()
 	if (QView)
 		QView->SetPosition(X1 + 1, Y1 + 1, X2 - 1, Y2 - 3);
 
-	Box(X1, Y1, X2, Y2, COL_PANELBOX, DOUBLE_BOX);
-	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', COL_PANELTEXT);
-	SetColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
+	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
+	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
+	SetFarColor(Focus ? COL_PANELSELECTEDTITLE : COL_PANELTITLE);
 	GetTitle(strTitle);
 
 	if (!strTitle.IsEmpty()) {
@@ -105,7 +105,7 @@ void QuickView::DisplayObject()
 	}
 
 	DrawSeparator(Y2 - 2);
-	SetColor(COL_PANELTEXT);
+	SetFarColor(COL_PANELTEXT);
 	GotoXY(X1 + 1, Y2 - 1);
 	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(X2 - X1 - 1) << PointToName(strCurFileName);
 
@@ -114,7 +114,7 @@ void QuickView::DisplayObject()
 		strTypeText+= strCurFileType;
 		strTypeText+= L" ";
 		TruncStr(strTypeText, X2 - X1 - 1);
-		SetColor(COL_PANELSELECTEDINFO);
+		SetFarColor(COL_PANELSELECTEDINFO);
 		GotoXY(X1 + (X2 - X1 + 1 - (int)strTypeText.GetLength()) / 2, Y2 - 2);
 		Text(strTypeText);
 	}
@@ -122,7 +122,7 @@ void QuickView::DisplayObject()
 	if (Directory) {
 		FormatString FString;
 		FString << Msg::QuickViewFolder << L" \"" << strCurFileName << L"\"";
-		SetColor(COL_PANELTEXT);
+		SetFarColor(COL_PANELTEXT);
 		GotoXY(X1 + 2, Y1 + 2);
 		PrintText(FString);
 
@@ -152,7 +152,7 @@ void QuickView::DisplayObject()
 				TruncPathStr(strJuncName,X2-X1-1-StrLength((ID_Msg)));
 				FString.Clear();
 				FString<<(ID_Msg)<<L" \""<<strJuncName<<L"\"";
-				SetColor(COL_PANELTEXT);
+				SetFarColor(COL_PANELTEXT);
 				GotoXY(X1+2,Y1+3);
 				PrintText(FString);
 			}
@@ -163,43 +163,43 @@ void QuickView::DisplayObject()
 			PrintText(Msg::QuickViewContains);
 			GotoXY(X1 + 2, Y1 + 6);
 			PrintText(Msg::QuickViewFolders);
-			SetColor(COL_PANELINFOTEXT);
+			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
 			FString << DirCount;
 			PrintText(FString);
-			SetColor(COL_PANELTEXT);
+			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 7);
 			PrintText(Msg::QuickViewFiles);
-			SetColor(COL_PANELINFOTEXT);
+			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
 			FString << FileCount;
 			PrintText(FString);
-			SetColor(COL_PANELTEXT);
+			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 8);
 			PrintText(Msg::QuickViewBytes);
-			SetColor(COL_PANELINFOTEXT);
+			SetFarColor(COL_PANELINFOTEXT);
 			FARString strSize;
 			InsertCommas(FileSize, strSize);
 			PrintText(strSize);
-			SetColor(COL_PANELTEXT);
+			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 9);
 			PrintText(Msg::QuickViewPhysical);
-			SetColor(COL_PANELINFOTEXT);
+			SetFarColor(COL_PANELINFOTEXT);
 			InsertCommas(PhysicalSize, strSize);
 			PrintText(strSize);
-			SetColor(COL_PANELTEXT);
+			SetFarColor(COL_PANELTEXT);
 			GotoXY(X1 + 2, Y1 + 10);
 			PrintText(Msg::QuickViewRatio);
-			SetColor(COL_PANELINFOTEXT);
+			SetFarColor(COL_PANELINFOTEXT);
 			FString.Clear();
 			FString << ToPercent64(PhysicalSize, FileSize) << L"%";
 			PrintText(FString);
 
 			if (Directory == 1 && ClusterSize) {
-				SetColor(COL_PANELTEXT);
+				SetFarColor(COL_PANELTEXT);
 				GotoXY(X1 + 2, Y1 + 12);
 				PrintText(Msg::QuickViewCluster);
-				SetColor(COL_PANELINFOTEXT);
+				SetFarColor(COL_PANELINFOTEXT);
 				FARString strSize;
 				InsertCommas(ClusterSize, strSize);
 				PrintText(strSize);

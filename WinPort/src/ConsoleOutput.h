@@ -121,6 +121,8 @@ public:
 	virtual bool ConsoleBackgroundMode(bool TryEnterBackgroundMode);
 	virtual bool SetFKeyTitles(const CHAR **titles);
 	virtual BYTE GetColorPalette();
+	virtual void GetBasePalette(void *p);
+	virtual bool SetBasePalette(void *p);
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void RepaintsDeferStart();
 	virtual void RepaintsDeferFinish();

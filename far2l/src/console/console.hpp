@@ -79,8 +79,8 @@ public:
 	bool WriteOutput(const CHAR_INFO &Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT &WriteRegion);
 	bool Write(LPCWSTR Buffer, DWORD NumberOfCharsToWrite);
 
-	bool GetTextAttributes(WORD &Attributes);
-	bool SetTextAttributes(WORD Attributes);
+	bool GetTextAttributes(uint64_t &Attributes);
+	bool SetTextAttributes(uint64_t Attributes);
 
 	bool GetCursorInfo(CONSOLE_CURSOR_INFO &ConsoleCursorInfo);
 	bool SetCursorInfo(const CONSOLE_CURSOR_INFO &ConsoleCursorInfo);

@@ -84,12 +84,14 @@ void MoveRealCursor(int X, int Y);
 void GetRealCursorPos(SHORT &X, SHORT &Y);
 void ScrollScreen(int Count);
 
-void Text(int X, int Y, int Color, const WCHAR *Str);
-void Text64(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length);
+void Text(int X, int Y, uint64_t Color, const WCHAR *Str);
+void Text(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length);
 void Text(const WCHAR *Str, size_t Length = (size_t)-1);
+void TextEx(const WCHAR *Str, size_t Length = (size_t)-1);
+
 void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);
-void HiText(const WCHAR *Str, DWORD64 HiColor, int isVertText = 0);
+void HiText(const WCHAR *Str, uint64_t HiColor, int isVertText = 0);
 void mprintf(const wchar_t *fmt, ...);
 void vmprintf(const wchar_t *fmt, ...);
 void PutText(int X1, int Y1, int X2, int Y2, const void *Src);
@@ -97,23 +99,21 @@ void GetText(int X1, int Y1, int X2, int Y2, void *Dest, int DestSize);
 void BoxText(wchar_t Chr);
 void BoxText(const wchar_t *Str, int IsVert = 0);
 
-void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, int Color);
+void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, uint64_t Color);
 void MakeShadow(int X1, int Y1, int X2, int Y2);
-void ChangeBlockColor(int X1, int Y1, int X2, int Y2, int Color);
-void SetColor(DWORD64 Color, bool ApplyToConsole = false);
-void SetColor64(DWORD64 Color, bool ApplyToConsole = false);
+void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color);
+void SetColor(uint64_t Color, bool ApplyToConsole = false);
+void SetFarColor(uint16_t Color, bool ApplyToConsole = false);
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb, bool used);
 void FarTrueColorFromRGB(FarTrueColor &out, DWORD rgb);
 void FarTrueColorFromAttributes(FarTrueColorForeAndBack &TFB, DWORD64 Attrs);
 void FarTrueColorToAttributes(DWORD64 &Attrs, const FarTrueColorForeAndBack &TFB);
 DWORD64 ComposeColor(WORD BaseColor, const FarTrueColorForeAndBack *TFB);
 void ComposeAndSetColor(WORD BaseColor, const FarTrueColorForeAndBack *TFB, bool ApplyToConsole = false);
-void SetRealColor(DWORD64 wAttributes, bool ApplyToConsole = false);
-DWORD64 GetRealColor();
-void ClearScreen(int Color);
-DWORD64 GetColor();
+void ClearScreen(uint64_t Color);
+uint64_t GetColor();
 
-void Box(int x1, int y1, int x2, int y2, int Color, int Type);
+void Box(int x1, int y1, int x2, int y2, uint64_t Color, int Type);
 void ScrollBar(int X1, int Y1, int Length, unsigned int Current, unsigned int Total);
 bool ScrollBarRequired(UINT Length, UINT64 ItemsCount);
 bool ScrollBarEx(UINT X1, UINT Y1, UINT Length, UINT64 TopItem, UINT64 ItemsCount);

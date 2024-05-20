@@ -144,7 +144,7 @@ class PluginManager:
         }
         name = id2name[OpenFrom]
         log.debug("pluginGetFrom({0} ({1}), {2})".format(OpenFrom, name, Item))
-        if OpenFrom in [ffic.OPEN_DISKMENU]:
+        if OpenFrom in [ffic.OPEN_DISKMENU, ffic.OPEN_FINDLIST]:
             for plugin in self.plugins:
                 openFrom = plugin.Plugin.openFrom
                 log.debug(

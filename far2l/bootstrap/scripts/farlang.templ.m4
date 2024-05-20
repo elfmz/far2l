@@ -11698,15 +11698,15 @@ l:
 "Меню фільтраў"
 
 FilterBottom
-"+,-,Пробел,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Up,Ctrl-Dn"
-"+,-,Space,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Up,Ctrl-Dn"
-"+,-,Mezera,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Up,Ctrl-Dn"
-"+,-,Leer,I,X,BS,UmschBS,Einf,Entf,F4,F5,StrgUp,StrgDn"
-"+,-,Szóköz,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Fel,Ctrl-Le"
-"+,-,Spacja,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Up,Ctrl-Dn"
-"Seleccione: '+','-',Space. Editor: Ins,Del,F4"
-"+,-,Пробіл,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Up,Ctrl-Dn"
-"+,-,Space,I,X,BS,Shift-BS,Ins,Del,F4,F5,Ctrl-Up,Ctrl-Dn"
+"+ - Пробел I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"+ - Mezera I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"+ - Leer I X BS UmschBS Einf Entf F4 F5 StrgUp StrgDn"
+"+ - Szóköz I X BS Shift+BS Ins Del F4 F5 Ctrl+Fel Ctrl+Le"
+"+ - Spacja I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"Seleccione: '+' '-' Space. Editor: Ins Del F4"
+"+ - Пробіл I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
 
 PanelFileType
 "Файлы панели"
@@ -12421,15 +12421,15 @@ l:
 "Афарбоўка файлаў"
 
 HighlightBottom
-"Ins,Del,F4,F5,Ctrl-Up,Ctrl-Down"
-"Ins,Del,F4,F5,Ctrl-Up,Ctrl-Down"
-"Ins,Del,F4,F5,Ctrl-Nahoru,Ctrl-Dolů"
-"Einf,Entf,F4,F5,StrgUp,StrgDown"
-"Ins,Del,F4,F5,Ctrl-Fel,Ctrl-Le"
-"Ins,Del,F4,F5,Ctrl-Up,Ctrl-Down"
-"Ins,Del,F4,F5,Ctrl-Up,Ctrl-Down"
-"Ins,Del,F4,F5,Ctrl-Up,Ctrl-Down"
-"Ins,Del,F4,F5,Ctrl-Up,Ctrl-Down"
+"+ - Пробел Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
+"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down"
+"+ - Mezera Ins Del F4 F5 Ctrl+Nahoru Ctrl+Dolů"
+"+ - Leer Einf Entf F4 F5 StrgUp,StrgDown"
+"+ - Szóköz Ins Del F4 F5 Ctrl+Fel Ctrl+Le"
+"+ - Spacja Ins Del F4 F5 Ctrl+Up Ctrl+Down"
+"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down"
+"+ - Пробіл Ins Del F4 F5 Ctrl+Up Ctrl+Down"
+"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down"
 
 HighlightUpperSortGroup
 "Верхняя группа сортировки"
@@ -16458,6 +16458,28 @@ upd:"Last status change time"
 upd:"Last status change time"
 "Час зміни статусу"
 "Час змены статута"
+
+SetAttrSymlinkExplain1
+"Для символьных ссылок время, владение, права,..."
+"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+upd:"For symlinks all times, ownership, permissions,..."
+
+SetAttrSymlinkExplain2
+"  показаны и будут изменены для оригинального объекта"
+"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
+upd:"  are displayed and will be modified for the original object"
 
 SetColorPanel
 l:

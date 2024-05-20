@@ -6,9 +6,10 @@ struct WinPortRGB
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
+	unsigned char a;
 
-	inline WinPortRGB(DWORD rgb = 0) : r(rgb & 0xff), g((rgb >> 8) & 0xff), b((rgb >> 16) & 0xff) {}
-	inline WinPortRGB(unsigned char r_, unsigned char g_, unsigned char b_) : r(r_), g(g_), b(b_) {}
+	inline WinPortRGB(DWORD rgb = 0) : r(rgb & 0xff), g((rgb >> 8) & 0xff), b((rgb >> 16) & 0xff), a(0) {}
+	inline WinPortRGB(unsigned char r_, unsigned char g_, unsigned char b_) : r(r_), g(g_), b(b_), a(0) {}
 
 	inline bool operator == (const WinPortRGB &rgb) const
 	{
@@ -35,7 +36,6 @@ struct WinPortRGB
 	{
 		return uint32_t(r) | (uint32_t(g) << 8) | (uint32_t(b) << 16);
 	}
-
 
 	inline uint32_t AsBGR() const
 	{

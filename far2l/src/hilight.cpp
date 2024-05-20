@@ -58,7 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct HighlightStrings
 {
-	const char *UseAttr, *IncludeAttributes, *ExcludeAttributes, *AttrSet, *AttrClear, *IgnoreMask, *UseMask,
+	const char *Flags, *UseAttr, *IncludeAttributes, *ExcludeAttributes, *AttrSet, *AttrClear, *IgnoreMask, *UseMask,
 			*Mask, *NormalColor, *SelectedColor, *CursorColor, *SelectedCursorColor, *MarkCharNormalColor, *MarkCharSelectedColor,
 			*MarkCharCursorColor, *MarkCharSelectedCursorColor, *MarkChar, *ContinueProcessing, *UseDate, *DateType, *DateAfter,
 			*DateBefore, *DateRelative, *UseSize, *SizeAbove, *SizeBelow, *HighlightEdit, *HighlightList, *MarkStr, *NormalColorMask,
@@ -66,7 +66,7 @@ struct HighlightStrings
 			*MarkCharCursorColorMask, *MarkCharSelectedCursorColorMask;
 };
 
-static const HighlightStrings HLS = {"UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
+static const HighlightStrings HLS = {"Flags", "UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
 		"IgnoreMask", "UseMask", "Mask", "NormalColor", "SelectedColor", "CursorColor", "SelectedCursorColor", "MarkCharNormalColor",
 		"MarkCharSelectedColor", "MarkCharCursorColor","MarkCharSelectedCursorColor", "MarkChar", "ContinueProcessing", "UseDate",
 		"DateType", "DateAfter", "DateBefore", "DateRelative", "UseSize", "SizeAboveS", "SizeBelowS", "HighlightEdit", "HighlightList",
@@ -103,7 +103,7 @@ static void SetDefaultHighlighting()
 			L"*.it,*.itg,*.itp,*.j2b,*.mdl,*.med,*.mo3,*.mod,*.mt2,*.mtm,*.okt,*.plm,*.psm,*.ptm,*.s3m,*.sfx,*.stm,*.stp,*.uax,*.ult,*.xm";
 	static const wchar_t *MaskSharedObjects = L"*.dll,*.so,*.dll.*,*.so.*,*.obj,*.o,*.a,*.lib,*.sys,*.pyo,*.vim";
 	static const wchar_t *MaskVideoFiles = L"*.mkv,*.webm,*.mpg,*.mp2,*.mpeg,*.mpe,*.mpv,*.mp4,*.m4p,*.m4v,*.avi,*.wmv,*.mov,*.qt,*.flv,*.swf,*.avchd,*.3gp,*.vob";
-	static const wchar_t *MaskImageFiles = L"*.avif,*.jpg,*.jpeg,*.jpeg2000,*ico,*.gif,*.png,*.webp,*.tga,*.bmp,*.pcx,*.tiff,*.tif,*.psd,*.eps,*.indd,*.svg,*.ai,*.cpt,*.kra,*.pdn,*.psp,*.xcf,*.sai,*.cgm,*.mpo,*.pns,*.jps";
+	static const wchar_t *MaskImageFiles = L"*.avif,*.jpg,*.jpeg,*.jpeg2000,*.ico,*.gif,*.png,*.webp,*.tga,*.bmp,*.pcx,*.tiff,*.tif,*.psd,*.eps,*.indd,*.svg,*.ai,*.cpt,*.kra,*.pdn,*.psp,*.xcf,*.sai,*.cgm,*.mpo,*.pns,*.jps";
 	static const wchar_t *MaskSourceFiles = L"*.c,*.cpp,*.c++,*.h,*.hpp,*.h++,*.asm,*.inc,*.src,*.css,*.glsl,*.lua,*.java,*.php,*.go,*.perl,*.r,*.bas,*.pas,*.jsm,*.qml,"
 											L"*.js,*.kt,*.sample,*.vs,*.fs,*.fx,*.hlsl,*.fsh,*.vsh,*.pixel,*.vertex,*.fragmentshader,*.fragment,*.vertexshader,"
 											L"*.ml,*.frag,*.geom,*.vert,*.rs,*.ts,*.jam,*.tcl, *.swift";
@@ -124,42 +124,43 @@ static void SetDefaultHighlighting()
 		uint64_t CursorMask;
 		DWORD dwMarkChar;
 		DWORD continueProcessing;
+		DWORD Flags;
 
 	} StdHighlightData[] = {
 
 			//           Mask                NormalColor
 			//                        IncludeAttributes
 			//                     IgnoreMask       CursorColor
-	{L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT, 0x00, 0x90 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0x002190, 1},
-	{L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 1},
-	{L"*", 1, FILE_ATTRIBUTE_BROKEN, 0x00, 0x10 | F_LIGHTRED, 0xFFFFFFFD0F, 0x30 | F_LIGHTRED, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{L"*", 1, FILE_ATTRIBUTE_HIDDEN, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{L"*", 1, FILE_ATTRIBUTE_SYSTEM, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF263C, 1},
-	{L"*|..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{L"..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x00, 0xFFFFFFFD0F, 0x00, 0xFFFFFFFD0F, 0x000000, 0},
+	{L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT, 0x00, 0x90 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0x002190, 1, FFF_DISABLED},
+	{L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 1, FFF_DISABLED},
+	{L"*", 1, FILE_ATTRIBUTE_BROKEN, 0x00, 0x10 | F_LIGHTRED, 0xFFFFFFFD0F, 0x30 | F_LIGHTRED, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_HIDDEN, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_SYSTEM, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF263C, 1, FFF_DISABLED},
+	{L"*|..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x00, 0xFFFFFFFD0F, 0x00, 0xFFFFFFFD0F, 0x000000, 0, 0},
 
-	{MasksSoundFiles,0, 0x00,0x00, (0xAAFF00ull << 16) | (0x10 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF266A, 0},
-	{MaskSharedObjects,0, 0x00,0x00, (0x00b800ull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MaskSourceFiles,0, 0x00,0x00, (0xffbcacull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x8F0C00ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MaskVideoFiles,0, 0x00,0x00, (0x30b8ffull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x006767ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MaskImageFiles,0, 0x00,0x00, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MaskModelFiles,0, 0x00,0x00, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MaskTextFiles,0, 0x00,0x00, (0xccccccull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x767676ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0},
+	{MasksSoundFiles,0, 0x00,0x00, (0xAAFF00ull << 16) | (0x10 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF266A, 0, FFF_DISABLED},
+	{MaskSharedObjects,0, 0x00,0x00, (0x00b800ull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MaskSourceFiles,0, 0x00,0x00, (0xffbcacull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x8F0C00ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MaskVideoFiles,0, 0x00,0x00, (0x30b8ffull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x006767ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MaskImageFiles,0, 0x00,0x00, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MaskModelFiles,0, 0x00,0x00, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MaskTextFiles,0, 0x00,0x00, (0xccccccull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x767676ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
 
-	{MasksScripts,   0, 0x00,0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MasksArchives,  0, 0x00,0x00, 0x10 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0x30 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{MasksTemporary, 0, 0x00,0x00, 0x10 | F_BROWN, 0xFFFFFFFD0F, 0x30 | F_BROWN, 0xFFFFFFFD0F, 0xFF0000, 0},
+	{MasksScripts,   0, 0x00,0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MasksArchives,  0, 0x00,0x00, 0x10 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0x30 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{MasksTemporary, 0, 0x00,0x00, 0x10 | F_BROWN, 0xFFFFFFFD0F, 0x30 | F_BROWN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
 
 	// это настройка для каталогов на тех панелях, которые должны раскрашиваться
 	// без учета масок (например, список хостов в "far navigator")
-	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0, 0x10 | F_GREEN, 0xFFFFFFFD0F, 0x30 | F_GREEN, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF0000, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_CHAR, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_BLOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_FIFO, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_SOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0},
-	{L"*.*", 0, 0x00, 0x00, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF0000, 0}, // Чтобы не раскрашивало на NTFS все файлы в зеленый
-	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE, 0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0}
+	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0, 0x10 | F_GREEN, 0xFFFFFFFD0F, 0x30 | F_GREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_DEVICE_CHAR, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_DEVICE_BLOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_DEVICE_FIFO, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
+	{L"*", 1, FILE_ATTRIBUTE_DEVICE_SOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
+//	{L"*.*", 0, 0x00, 0x00, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF0000, 0}, // Чтобы не раскрашивало на NTFS все файлы в зеленый
+	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE, 0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0}
 
 	};
 
@@ -175,6 +176,7 @@ static void SetDefaultHighlighting()
 		cfg_writer.SetULL(HLS.CursorColorMask, StdHighlightData[I].CursorMask);
 		cfg_writer.SetUInt(HLS.MarkChar, StdHighlightData[I].dwMarkChar);
 		cfg_writer.SetInt(HLS.ContinueProcessing, StdHighlightData[I].continueProcessing);
+		cfg_writer.SetUInt(HLS.Flags, StdHighlightData[I].Flags);
 	}
 
 	cfg_writer.SelectSection(RegColorsHighlight);
@@ -214,10 +216,11 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 				(DWORD)cfg_reader.GetUInt(HLS.IncludeAttributes, 0),
 				(DWORD)cfg_reader.GetUInt(HLS.ExcludeAttributes, 0));
 	}
-
 	HData->SetSortGroup(SortGroup);
-	HighlightDataColor hl;
 
+	HData->SetFlags(FFFT_CUSTOM, cfg_reader.GetUInt(HLS.Flags, 0));
+
+	HighlightDataColor hl;
 	hl.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_NORMAL] = cfg_reader.GetULL(HLS.NormalColor, 0);
 	hl.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_SELECTED] = cfg_reader.GetULL(HLS.SelectedColor, 0);
 	hl.Color[HIGHLIGHTCOLORTYPE_FILE][HIGHLIGHTCOLOR_UNDERCURSOR] = cfg_reader.GetULL(HLS.CursorColor, 0);
@@ -380,7 +383,7 @@ static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 		// Для пометки возьмем цвета файла включая прозрачность.
 		if (!(hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] & 0xFF)) {
 
-			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = (Palette[FarColor[i] - COL_FIRSTPALETTECOLOR] & 0xFF );
+			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
 		}
 
 		// Если у метки black on black, то возьмем ей цвета и маску от имени
@@ -396,7 +399,7 @@ static void ApplyStartColors(HighlightDataColor *hl)
 {
 	// Начинаем с цветов "по умолчанию" и далее их раскрашиваем
 	for (int i = 0; i < 4; i++) {
-		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = (Palette[FarColor[i] - COL_FIRSTPALETTECOLOR] & 0xFF );
+		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
 		hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i] |= 0xFFFFFFFFFFFFFFFF;
 		hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Color[HIGHLIGHTCOLORTYPE_FILE][i];
 		hl->Mask[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i];
@@ -497,6 +500,8 @@ public:
 
 			for (size_t i = 0; i < _HiData.getCount(); i++) {
 				const FileFilterParams *CurHiData = _HiData.getConstItem(i);
+				if (CurHiData->GetFlags(FFFT_CUSTOM) & FFF_DISABLED)
+					continue;
 
 				if (_UseAttrHighlighting && CurHiData->GetMask(nullptr))
 					continue;
@@ -581,8 +586,17 @@ void HighlightFiles::FillMenu(VMenu *HiMenu, int MenuPos)
 
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
-			MenuString(HiMenuItem.strName, HiData.getItem(i), true);
+
+			FileFilterParams *ffp = HiData.getItem(i);
+			MenuString(HiMenuItem.strName, ffp, true);
+
+			if (ffp->GetFlags(FFFT_CUSTOM) & FFF_DISABLED) {
+				HiMenuItem.Flags |= LIF_GRAYED;
+				HiMenuItem.SetCheck(L'X');
+			}
+
 			HiMenu->AddItem(&HiMenuItem);
+			HiMenuItem.Clear();
 		}
 
 		HiMenuItem.strName.Clear();
@@ -649,7 +663,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 {
 	VMenu HiMenu(Msg::HighlightTitle, nullptr, 0, ScrY - 4);
 	HiMenu.SetHelp(FARString(HLS.HighlightList));
-	HiMenu.SetFlags(VMENU_WRAPMODE | VMENU_SHOWAMPERSAND);
+	HiMenu.SetFlags(VMENU_WRAPMODE | VMENU_SHOWAMPERSAND ); //
 	HiMenu.SetPosition(-1, -1, 0, 0);
 	HiMenu.SetBottomTitle(Msg::HighlightBottom);
 	FillMenu(&HiMenu, MenuPos);
@@ -669,8 +683,29 @@ void HighlightFiles::HiEdit(int MenuPos)
 						$ 07.07.2000 IS
 						Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
-				case KEY_CTRLR:
 
+				case KEY_SPACE: {
+					int *Count = nullptr;
+					int RealSelectPos = MenuPosToRealPos(SelectPos, &Count);
+
+					if (Count && RealSelectPos < (int)HiData.getCount()) {
+
+						FileFilterParams *ffp = HiData.getItem(RealSelectPos);
+						uint32_t flags = ffp->GetFlags(FFFT_CUSTOM);
+						if (flags & FFF_DISABLED)
+							ffp->SetFlags(FFFT_CUSTOM, flags & ~(FFF_DISABLED));
+						else
+							ffp->SetFlags(FFFT_CUSTOM, flags | FFF_DISABLED);
+
+						HiMenu.SetUpdateRequired(TRUE);
+						HiMenu.FastShow();
+						HiMenu.ProcessKey(KEY_DOWN);
+						NeedUpdate = true;
+					}
+				}
+				break;
+
+				case KEY_CTRLR:
 					if (Message(MSG_WARNING, 2, Msg::HighlightTitle, Msg::HighlightWarning,
 								Msg::HighlightAskRestore, Msg::Yes, Msg::Cancel))
 						break;
@@ -881,6 +916,8 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	cfg_writer.SetInt(HLS.UseAttr, CurHiData->GetAttr(&AttrSet, &AttrClear) ? 1 : 0);
 	cfg_writer.SetUInt((bSortGroup ? HLS.AttrSet : HLS.IncludeAttributes), AttrSet);
 	cfg_writer.SetUInt((bSortGroup ? HLS.AttrClear : HLS.ExcludeAttributes), AttrClear);
+
+	cfg_writer.SetUInt(HLS.Flags, CurHiData->GetFlags(FFFT_CUSTOM));
 
 	HighlightDataColor hl;
 	CurHiData->GetColors(&hl);

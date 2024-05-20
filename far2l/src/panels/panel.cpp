@@ -332,19 +332,28 @@ static void ConfigureChangeDriveMode()
 	}
 }
 
+/*
+
 LONG_PTR WINAPI ChDiskDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	switch (Msg) {
 		case DN_CTLCOLORDLGITEM: {
 			if (Param1 == 1)	// BUGBUG, magic number
 			{
-				int Color = FarColorToReal(COL_WARNDIALOGTEXT);
-				return ((Param2 & 0xFF00FF00) | (Color << 16) | Color);
+				uint64_t *ItemColor = reinterpret_cast<uint64_t *>(Param2);
+				uint64_t color = FarColorToReal(COL_WARNDIALOGTEXT);
+				ItemColor[0] = color;
+				ItemColor[2] = color;
+				return 1;
+//				int Color = FarColorToReal(COL_WARNDIALOGTEXT);
+//				return ((Param2 & 0xFF00FF00) | (Color << 16) | Color);
 			}
 		} break;
 	}
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
+
+*/
 
 static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 {
@@ -962,7 +971,7 @@ void Panel::FastFind(int FirstKey)
 		Edit FindEdit;
 		FindEdit.SetPosition(FindX + 2, FindY + 1, FindX + 19, FindY + 1);
 		FindEdit.SetEditBeyondEnd(FALSE);
-		FindEdit.SetObjectColor(COL_DIALOGEDIT);
+		FindEdit.SetObjectColor(FarColorToReal(COL_DIALOGEDIT));
 		FindEdit.Show();
 
 		while (!KeyToProcess) {
@@ -1126,14 +1135,14 @@ void Panel::FastFind(int FirstKey)
 
 void Panel::FastFindShow(int FindX, int FindY)
 {
-	SetColor(COL_DIALOGTEXT);
+	SetFarColor(COL_DIALOGTEXT);
 	GotoXY(FindX + 1, FindY + 1);
 	Text(L" ");
 	GotoXY(FindX + 20, FindY + 1);
 	Text(L" ");
-	Box(FindX, FindY, FindX + 21, FindY + 2, COL_DIALOGBOX, DOUBLE_BOX);
+	Box(FindX, FindY, FindX + 21, FindY + 2, FarColorToReal(COL_DIALOGBOX), DOUBLE_BOX);
 	GotoXY(FindX + 7, FindY);
-	SetColor(COL_DIALOGBOXTITLE);
+	SetFarColor(COL_DIALOGBOXTITLE);
 	Text(Msg::SearchFileTitle);
 }
 
@@ -1301,7 +1310,7 @@ void Panel::DragMessage(int X, int Y, int Move)
 	delete DragSaveScr;
 	DragSaveScr = new SaveScreen(MsgX, Y, MsgX + Length - 1, Y);
 	GotoXY(MsgX, Y);
-	SetColor(COL_PANELDRAGTEXT);
+	SetFarColor(COL_PANELDRAGTEXT);
 	Text(strDragMsg);
 }
 
@@ -1484,7 +1493,7 @@ void Panel::Show()
 void Panel::DrawSeparator(int Y)
 {
 	if (Y < Y2) {
-		SetColor(COL_PANELBOX);
+		SetFarColor(COL_PANELBOX);
 		GotoXY(X1, Y);
 		ShowSeparator(X2 - X1 + 1, 1);
 	}
@@ -1534,7 +1543,7 @@ void Panel::ShowScreensCount()
 			if (Prefix != '[') {
 				strScreensText+= L"]";
 				GotoXY(Opt.ShowColumnTitles ? X1 : X1 + 2, Y1);
-				SetColor(COL_PANELSCREENSNUMBER);
+				SetFarColor(COL_PANELSCREENSNUMBER);
 				Text(strScreensText);
 			}
 		}

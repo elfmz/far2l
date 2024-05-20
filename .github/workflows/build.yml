@@ -6,7 +6,7 @@ on:
   # run on push in master
   push:
     branches:
-        - master
+      - master
     paths-ignore:
       - '.vscode/**'
       - '.cirrus.yml'
@@ -42,9 +42,9 @@ jobs:
         compiler: [ gcc, clang ]
         include:
           - compiler: gcc
-            version: 9
-            c: /usr/bin/gcc-9
-            cxx: /usr/bin/g++-9
+            version: 10
+            c: /usr/bin/gcc-10
+            cxx: /usr/bin/g++-10
           - compiler: clang
             version: 10
             c: /usr/bin/clang-10
@@ -84,7 +84,7 @@ jobs:
         run: |
           cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
   
-  ubuntu-high-compiler:
+  ubuntu-medium-compiler:
     runs-on: ubuntu-22.04
 
     strategy:
@@ -93,9 +93,9 @@ jobs:
         compiler: [ gcc, clang ]
         include:
           - compiler: gcc
-            version: 13
-            c: /usr/bin/gcc-13
-            cxx: /usr/bin/g++-13
+            version: 12
+            c: /usr/bin/gcc-12
+            cxx: /usr/bin/g++-12
           - compiler: clang
             version: 15
             c: /usr/bin/clang-15
@@ -135,6 +135,57 @@ jobs:
         run: |
           cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
 
+  ubuntu-high-compiler:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ gcc, clang ]
+        include:
+          - compiler: gcc
+            version: 14
+            c: /usr/bin/gcc-14
+            cxx: /usr/bin/g++-14
+          - compiler: clang
+            version: 18
+            c: /usr/bin/clang-18
+            cxx: /usr/bin/clang++-18
+
+    name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+  
+      - name: Install dependencies
+        run: >
+          sudo apt-get update;
+          sudo apt-get -y install
+          libuchardet-dev libxerces-c-dev libwxgtk3.2-dev
+          libx11-dev libxi-dev
+          libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
+          libarchive-dev libpcre3-dev
+  
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+  
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: > 
+          cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+          -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+  
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
+        
   macos14-arm64-clang15:
     runs-on: macos-14
 

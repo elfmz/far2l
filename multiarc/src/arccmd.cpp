@@ -316,10 +316,14 @@ int ArcCommand::ReplaceVar(std::string &Command)
 	/////////////////////////////////
 	switch (Command[2]) {
 		case 'T':	/* charset, if known */
+		case 't':	/* same, especially for libarchive */
 			Command.clear();
 			for (int N = 0; N < ItemsNumber; ++N) {
 				const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[N].UserData;
-				if (Attrs && Attrs->Codepage > 0) {
+				if (Attrs && Attrs->LACodepage > 0 && Command[2] == 't') {
+					Command = StrPrintf("CP%u", Attrs->LACodepage);
+					break;
+				} else if (Attrs && Attrs->Codepage > 0) {
 					Command = StrPrintf("CP%u", Attrs->Codepage);
 					break;
 				}

@@ -342,9 +342,12 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 	if (LITEND(ZipHeader.Flags) & 0x800) {	// Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
 		;
 
-	} else if (ZipHeader.PackOS == 11 && ZipHeader.PackVer >= 20) {		// && ZipHeader.PackVer<25
-		CPToUTF8(CP_ACP, Info->PathName);
-		Info->Codepage = WINPORT(GetACP)();
+	} else if (ZipHeader.PackOS == 0 && ZipHeader.PackVer >= 25 && ZipHeader.PackVer <= 50) {
+		// See InfoZip's unzip source code for explanation.
+		// File name is unzpriv.h, search for "Convert filename (and file comment string)"
+		CPToUTF8(CP_OEMCP, Info->PathName);
+		Info->Codepage = WINPORT(GetOEMCP)();
+		Info->LACodepage = WINPORT(GetACP)();
 
 	} else if (ZipHeader.PackOS == 11 || ZipHeader.PackOS == 0) {
 		CPToUTF8(CP_OEMCP, Info->PathName);
@@ -470,6 +473,7 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 				Info->PathName = strbuf.data();
 #if ZIP_LIBARCHIVE	// if libarchive not used need to pass non-UTF8 codepage to zip/unzip workarounds
 				Info->Codepage = 0;
+				Info->LACodepage = 0;
 #endif
 			} else {
 				Info->Description.reset(new std::string(strbuf.data()));
@@ -533,21 +537,21 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, char *Dest)
 	if (Type == 0) {
 #if ZIP_LIBARCHIVE
 		// Console PKZIP 4.0/Win32 commands
-		static const char *Commands[] = {/*Extract               */ "^libarch X %%A -@%%R {-cs=%%T} "
+		static const char *Commands[] = {/*Extract               */ "^libarch X %%A -@%%R {-cs=%%t} "
 																	"{-pwd=%%P} -- %%FMq4096",
-				/*Extract without paths */ "^libarch x %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-				/*Test                  */ "^libarch t %%A {-cs=%%T}",
-				/*Delete                */ "^libarch d %%A {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+				/*Extract without paths */ "^libarch x %%A {-cs=%%t} {-pwd=%%P} -- %%FMq4096",
+				/*Test                  */ "^libarch t %%A {-cs=%%t}",
+				/*Delete                */ "^libarch d %%A {-cs=%%t} {-pwd=%%P} -- %%FMq4096",
 				/*Comment archive       */ "",
 				/*Comment files         */ "",
 				/*Convert to SFX        */ "",
 				/*Lock archive          */ "",
 				/*Protect archive       */ "",
 				/*Recover archive       */ "",
-				/*Add files             */ "^libarch a:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-				/*Move files            */ "^libarch m:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-				/*Add files and folders */ "^libarch A:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
-				/*Move files and folders*/ "^libarch M:zip %%A -@%%R {-cs=%%T} {-pwd=%%P} -- %%FMq4096",
+				/*Add files             */ "^libarch a:zip %%A -@%%R {-cs=%%t} {-pwd=%%P} -- %%FMq4096",
+				/*Move files            */ "^libarch m:zip %%A -@%%R {-cs=%%t} {-pwd=%%P} -- %%FMq4096",
+				/*Add files and folders */ "^libarch A:zip %%A -@%%R {-cs=%%t} {-pwd=%%P} -- %%FMq4096",
+				/*Move files and folders*/ "^libarch M:zip %%A -@%%R {-cs=%%t} {-pwd=%%P} -- %%FMq4096",
 				/*"All files" mask      */ ""};
 #else
 		// Linux zip/unzip

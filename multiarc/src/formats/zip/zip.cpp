@@ -341,12 +341,15 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 	//  if (ZipHeader.PackOS==11 && ZipHeader.PackVer>20 && ZipHeader.PackVer<25)
 	if (LITEND(ZipHeader.Flags) & 0x800) {	// Bit 11 - language encoding flag (EFS) - means filename&comment fields are UTF8
 		;
-
+	} else if (ZipHeader.PackOS == 11 && ZipHeader.PackVer >= 20) {
+		CPToUTF8(CP_ACP, Info->PathName);
+		Info->Codepage = WINPORT(GetACP)();
 	} else if (ZipHeader.PackOS == 0 && ZipHeader.PackVer >= 25 && ZipHeader.PackVer <= 50) {
 		// See InfoZip's unzip source code for explanation.
 		// File name is unzpriv.h, search for "Convert filename (and file comment string)"
 		CPToUTF8(CP_OEMCP, Info->PathName);
 		Info->Codepage = WINPORT(GetOEMCP)();
+		// libarchive use local header, we use central header. libarchive needs another charset here
 		Info->LACodepage = WINPORT(GetACP)();
 
 	} else if (ZipHeader.PackOS == 11 || ZipHeader.PackOS == 0) {

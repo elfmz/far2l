@@ -222,11 +222,11 @@ BOOL WINAPI FarShowHelp(const wchar_t *ModuleName, const wchar_t *HelpTopic, DWO
 	$ 05.07.2000 IS
 	Функция, которая будет действовать и в редакторе, и в панелях, и...
 */
-static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, void *Param)
+static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, void *Param1, void *Param2)
 {
 	if (ACTL_SYNCHRO == Command)	// must be first
 	{
-		PluginSynchroManager.Synchro(true, ModuleNumber, Param);
+		PluginSynchroManager.Synchro(true, ModuleNumber, Param1);
 		return 0;
 	}
 
@@ -265,8 +265,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 	switch (Command) {
 		case ACTL_GETFARVERSION: {
-			if (Param)
-				*(DWORD *)Param = FAR_VERSION;
+			if (Param1)
+				*(DWORD *)Param1 = FAR_VERSION;
 
 			return FAR_VERSION;
 		}
@@ -274,48 +274,56 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			return Opt.PluginMaxReadData;
 		}
 		case ACTL_GETSYSWORDDIV: {
-			if (Param)
-				wcscpy((wchar_t *)Param, Opt.strWordDiv);
+			if (Param1)
+				wcscpy((wchar_t *)Param1, Opt.strWordDiv);
 
 			return (int)Opt.strWordDiv.GetLength() + 1;
 		}
 		/*
 			$ 24.08.2000 SVS
 			ожидать определенную (или любую) клавишу
-			(int)Param - внутренний код клавиши, которую ожидаем, или -1
+			(int)Param1 - внутренний код клавиши, которую ожидаем, или -1
 			если все равно какую клавишу ждать.
 			возвращает 0;
 		*/
 		case ACTL_WAITKEY: {
-			return WaitKey(Param ? (DWORD)(DWORD_PTR)Param : (DWORD)-1, 0, false);
+			return WaitKey(Param1 ? (DWORD)(DWORD_PTR)Param1 : (DWORD)-1, 0, false);
 		}
 		/*
 			$ 04.12.2000 SVS
 			ACTL_GETCOLOR - получить определенный цвет по индекс, определенному
 			в farcolor.hpp
-			(int)Param - индекс.
+			(int)Param1 - индекс.
+			(uint64_t *)Param2 - адрес для получения цвета.
 			Return - значение цвета или -1 если индекс неверен.
+
 		*/
 		case ACTL_GETCOLOR: {
-			if ((int)(INT_PTR)Param < SIZE_ARRAY_PALETTE && (int)(INT_PTR)Param >= 0)
-				return (int)((unsigned int)Palette[(int)(INT_PTR)Param]);
+			if ((int)(INT_PTR)Param1 < SIZE_ARRAY_PALETTE && (int)(INT_PTR)Param1 >= 0) {
 
-			return -1;
+				*(uint64_t *)Param2 = (uint64_t)Palette[(int)(INT_PTR)Param1];
+				return TRUE;
+			}
+
+			return FALSE;
 		}
 		/*
-			$ 04.12.2000 SVS
 			ACTL_GETARRAYCOLOR - получить весь массив цветов
-			Param - указатель на массив или nullptr - чтобы получить размер буфера
+			Param1 - размер буфера (в элементах FarColor)
+			Param2 - указатель на буфер или nullptr, чтобы получить необходимый размер
 			Return - размер массива.
 		*/
 		case ACTL_GETARRAYCOLOR: {
-			if (Param)
-				memcpy(Param, Palette, SIZE_ARRAY_PALETTE);
+			if ((int)(intptr_t)Param1 > SIZE_ARRAY_PALETTE)
+				return SIZE_ARRAY_PALETTE;
+
+			if (Param2)
+				memcpy(Param2, Palette, (int)(intptr_t)Param1 * sizeof(Palette[0]));
 
 			return SIZE_ARRAY_PALETTE;
 		}
 		/*
-			Param=FARColor{
+			Param1=FARColor{
 				DWORD Flags;
 				int StartIndex;
 				int ColorItem;
@@ -324,12 +332,12 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			};
 		*/
 		case ACTL_SETARRAYCOLOR: {
-			if (Param) {
-				FarSetColors *Pal = (FarSetColors *)Param;
+			if (Param1) {
+				FarSetColors *Pal = (FarSetColors *)Param1;
 
 				if (Pal->Colors && Pal->StartIndex >= 0
 						&& Pal->StartIndex + Pal->ColorCount <= SIZE_ARRAY_PALETTE) {
-					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(uint64_t));
+					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(Palette[0]));
 
 					if (Pal->Flags & FCLR_REDRAW) {
 						ScrBuf.Lock();					// отменяем всякую прорисовку
@@ -347,16 +355,16 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		/*
 			$ 14.12.2000 SVS
 			ACTL_EJECTMEDIA - извлечь диск из съемного накопителя
-			Param - указатель на структуру ActlEjectMedia
+			Param1 - указатель на структуру ActlEjectMedia
 			Return - TRUE - успешное извлечение, FALSE - ошибка.
 		*/
 		case ACTL_EJECTMEDIA: {
-			return FALSE;	/*Param?EjectVolume((wchar_t)((ActlEjectMedia*)Param)->Letter,
-							   ((ActlEjectMedia*)Param)->Flags):FALSE;*/
+			return FALSE;	/*Param1?EjectVolume((wchar_t)((ActlEjectMedia*)Param1)->Letter,
+							   ((ActlEjectMedia*)Param1)->Flags):FALSE;*/
 							/*
-								if(Param)
+								if(Param1)
 								{
-									ActlEjectMedia *aem=(ActlEjectMedia *)Param;
+									ActlEjectMedia *aem=(ActlEjectMedia *)Param1;
 									char DiskLetter[4]=" :/";
 									DiskLetter[0]=(char)aem->Letter;
 									int DriveType = FAR_GetDriveType(DiskLetter,nullptr,FALSE); // здесь не определяем тип CD
@@ -375,7 +383,7 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		/*
 			case ACTL_GETMEDIATYPE:
 			{
-				ActlMediaType *amt=(ActlMediaType *)Param;
+				ActlMediaType *amt=(ActlMediaType *)Param1;
 				char DiskLetter[4]=" :/";
 				DiskLetter[0]=(amt)?(char)amt->Letter:0;
 				return FAR_GetDriveType(DiskLetter,nullptr,(amt && !(amt->Flags&MEDIATYPE_NODETECTCDROM)?TRUE:FALSE));
@@ -386,10 +394,10 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			Macro API
 		*/
 		case ACTL_KEYMACRO: {
-			if (CtrlObject && Param)					// все зависит от этой бадяги.
+			if (CtrlObject && Param1)					// все зависит от этой бадяги.
 			{
 				KeyMacro &Macro = CtrlObject->Macro;	//??
-				ActlKeyMacro *KeyMacro = (ActlKeyMacro *)Param;
+				ActlKeyMacro *KeyMacro = (ActlKeyMacro *)Param1;
 
 				switch (KeyMacro->Command) {
 					case MCMD_LOADALL:		// из реестра в память ФАР с затиранием предыдущего
@@ -447,13 +455,13 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 					case MCMD_COMPILEMACRO:
 					{
 						MacroRecord CurMacro={0};
-						int Ret=Macro.ParseMacroString(&CurMacro,KeyMacro->Param.PlainText.SequenceText);
+						int Ret=Macro.ParseMacroString(&CurMacro,KeyMacro->Param1.PlainText.SequenceText);
 
 						if (Ret)
 						{
-							//KeyMacro->Params.Compile.Flags=CurMacro.Flags;
-							KeyMacro->Param.Compile.Sequence=CurMacro.Buffer;
-							KeyMacro->Param.Compile.Count=CurMacro.BufferSize;
+							//KeyMacro->Param1s.Compile.Flags=CurMacro.Flags;
+							KeyMacro->Param1.Compile.Sequence=CurMacro.Buffer;
+							KeyMacro->Param1.Compile.Count=CurMacro.BufferSize;
 						}
 
 						return Ret;
@@ -465,15 +473,15 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			return FALSE;
 		}
 		case ACTL_POSTKEYSEQUENCE: {
-			if (CtrlObject && Param && ((KeySequence *)Param)->Count > 0) {
+			if (CtrlObject && Param1 && ((KeySequence *)Param1)->Count > 0) {
 				MacroRecord MRec{};
-				MRec.Flags = (((KeySequence *)Param)->Flags) << 8;
-				MRec.BufferSize = ((KeySequence *)Param)->Count;
+				MRec.Flags = (((KeySequence *)Param1)->Flags) << 8;
+				MRec.BufferSize = ((KeySequence *)Param1)->Count;
 
 				if (MRec.BufferSize == 1)
-					MRec.Buffer = (DWORD *)(DWORD_PTR)((KeySequence *)Param)->Sequence[0];
+					MRec.Buffer = (DWORD *)(DWORD_PTR)((KeySequence *)Param1)->Sequence[0];
 				else
-					MRec.Buffer = const_cast<DWORD *>(((KeySequence *)Param)->Sequence);
+					MRec.Buffer = const_cast<DWORD *>(((KeySequence *)Param1)->Sequence);
 
 				return CtrlObject->Macro.PostNewMacro(&MRec, TRUE, TRUE);
 #if 0
@@ -514,9 +522,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				thread safe window info
 			*/
 		case ACTL_GETSHORTWINDOWINFO: {
-			if (FrameManager && Param) {
+			if (FrameManager && Param1) {
 				FARString strType, strName;
-				WindowInfo *wi = (WindowInfo *)Param;
+				WindowInfo *wi = (WindowInfo *)Param1;
 				Frame *f;
 
 				/*
@@ -566,13 +574,13 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 		}
 		case ACTL_SETCURRENTWINDOW: {
 			// Запретим переключение фрэймов, если находимся в модальном редакторе/вьюере.
-			if (FrameManager && !FrameManager->InModalEV() && FrameManager->operator[]((int)(INT_PTR)Param)) {
+			if (FrameManager && !FrameManager->InModalEV() && FrameManager->operator[]((int)(INT_PTR)Param1)) {
 				int TypeFrame = FrameManager->GetCurrentFrame()->GetType();
 
 				// Запретим переключение фрэймов, если находимся в хелпе или диалоге (тоже модальных)
 				if (TypeFrame != MODALTYPE_HELP && TypeFrame != MODALTYPE_DIALOG) {
 					Frame *PrevFrame = FrameManager->GetCurrentFrame();
-					FrameManager->ActivateFrame((int)(INT_PTR)Param);
+					FrameManager->ActivateFrame((int)(INT_PTR)Param1);
 					FrameManager->DeactivateFrame(PrevFrame, 0);
 					return TRUE;
 				}
@@ -735,8 +743,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 		case ACTL_SETPROGRESSVALUE: {
 			BOOL Result = FALSE;
-			if (Param) {
-				// PROGRESSVALUE* PV=reinterpret_cast<PROGRESSVALUE*>(Param);
+			if (Param1) {
+				// PROGRESSVALUE* PV=reinterpret_cast<PROGRESSVALUE*>(Param1);
 				Result = TRUE;
 			}
 			return Result;
@@ -751,8 +759,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 		case ACTL_GETFARRECT: {
 			BOOL Result = FALSE;
-			if (Param) {
-				SMALL_RECT &Rect = *reinterpret_cast<PSMALL_RECT>(Param);
+			if (Param1) {
+				SMALL_RECT &Rect = *reinterpret_cast<PSMALL_RECT>(Param1);
 				COORD Size;
 				if (Console.GetSize(Size)) {
 					Rect.Left = 0;
@@ -767,8 +775,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 		case ACTL_GETCURSORPOS: {
 			BOOL Result = FALSE;
-			if (Param) {
-				COORD &Pos = *reinterpret_cast<PCOORD>(Param);
+			if (Param1) {
+				COORD &Pos = *reinterpret_cast<PCOORD>(Param1);
 				Result = Console.GetCursorPosition(Pos);
 			}
 			return Result;
@@ -776,8 +784,8 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 		case ACTL_SETCURSORPOS: {
 			BOOL Result = FALSE;
-			if (Param) {
-				COORD &Pos = *reinterpret_cast<PCOORD>(Param);
+			if (Param1) {
+				COORD &Pos = *reinterpret_cast<PCOORD>(Param1);
 				Result = Console.SetCursorPosition(Pos);
 			}
 			return Result;
@@ -791,9 +799,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 	return FALSE;
 }
 
-INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param)
+INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param1, void *Param2)
 {
-	return InterThreadCall<LONG_PTR, 0>(std::bind(FarAdvControlSynched, ModuleNumber, Command, Param));
+	return InterThreadCall<LONG_PTR, 0>(std::bind(FarAdvControlSynched, ModuleNumber, Command, Param1, Param2));
 }
 
 static int FarMenuFnSynched(INT_PTR PluginNumber, int X, int Y, int MaxHeight, DWORD Flags,
@@ -1961,7 +1969,7 @@ int WINAPI FarCmpName(const wchar_t *pattern, const wchar_t *string, int skippat
 	return (CmpName(pattern, string, skippath != 0) ? TRUE : FALSE);
 }
 
-static bool FarTextSynched(int X, int Y, int Color, const wchar_t *Str)
+static bool FarTextSynched(int X, int Y, uint64_t Color, const wchar_t *Str)
 {
 	if (DisablePluginsOutput || FrameManager->ManagerIsDown())
 		return false;
@@ -1977,7 +1985,7 @@ static bool FarTextSynched(int X, int Y, int Color, const wchar_t *Str)
 	return true;
 }
 
-void WINAPI FarText(int X, int Y, int Color, const wchar_t *Str)
+void WINAPI FarText(int X, int Y, uint64_t Color, const wchar_t *Str)
 {
 	InterThreadCall<bool>(std::bind(FarTextSynched, X, Y, Color, Str));
 }

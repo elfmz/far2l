@@ -284,7 +284,11 @@ void Editor::ShowEditor(int CurLineOnly)
 	if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT))
 		CtrlObject->Plugins.CurEditor = HostFileEditor;		// this;
 
-	XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
+	if (NumLastLine > (Y2 - Y1) + 1)
+		XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
+	else
+		XX2 = X2;
+
 	/*
 		17.04.2002 skv
 		Что б курсор не бегал при Alt-F9 в конце длинного файла.

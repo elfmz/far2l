@@ -374,8 +374,9 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 
 	if (!(Flags & MSG_KEEPBACKGROUND)) {
 		SetScreen(X1, Y1, X2, Y2, L' ', FarColorToReal((Flags & MSG_WARNING) ? COL_WARNDIALOGTEXT : COL_DIALOGTEXT));
-		MakeShadow(X1 + 2, Y2 + 1, X2 + 2, Y2 + 1);
+		MakeShadow(X1 + 2, Y2 + 1, X2, Y2 + 1);
 		MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1);
+
 		Box(X1 + 3, Y1 + 1, X2 - 3, Y2 - 1, FarColorToReal((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGBOX),
 				DOUBLE_BOX);
 	}

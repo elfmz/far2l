@@ -1814,7 +1814,6 @@ void Dialog::ShowDialog(unsigned ID)
 
 			uint64_t Color[4];
 
-			//FIXME:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 			Color[0] = FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ? COL_WARNDIALOGTEXT:COL_DIALOGTEXT);
 			DlgProc((HANDLE)this, DN_CTLCOLORDIALOG, 0, (LONG_PTR)Color);
 			SetScreen(X1, Y1, X2, Y2, L' ', Color[0]);

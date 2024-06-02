@@ -210,13 +210,14 @@ void ScreenObject::Shadow(bool Full)
 			if (!ShadowSaveScr)
 				ShadowSaveScr = new SaveScreen(0, 0, ScrX, ScrY);
 
-			MakeShadow(0, 0, ScrX, ScrY);
+			MakeShadow(0, 0, ScrX, ScrY, ShadowSaveScr);
+
 		} else {
 			if (!ShadowSaveScr)
 				ShadowSaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
 
-			MakeShadow(X1 + 2, Y2 + 1, X2 + 1, Y2 + 1);
-			MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1);
+			MakeShadow(X1 + 2, Y2 + 1, X2, Y2 + 1, ShadowSaveScr);
+			MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1, ShadowSaveScr);
 		}
 	}
 }

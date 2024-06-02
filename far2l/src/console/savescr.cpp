@@ -98,6 +98,10 @@ void SaveScreen::SaveArea(int X1, int Y1, int X2, int Y2)
 	SaveScreen::Y1 = Y1;
 	SaveScreen::X2 = X2;
 	SaveScreen::Y2 = Y2;
+
+	SaveScreen::W = (X2 - X1) + 1;
+	SaveScreen::H = (Y2 - Y1) + 1;
+
 	ScreenBuf = new (std::nothrow) CHAR_INFO[ScreenBufCharCount()];
 
 	if (!ScreenBuf)

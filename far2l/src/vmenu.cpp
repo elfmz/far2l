@@ -1578,8 +1578,8 @@ void VMenu::DrawEdges()
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
 
 			if (!CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR)) {
-				MakeShadow(X1 + 2, Y2 + 1, X2 + 1, Y2 + 1);
-				MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1);
+				MakeShadow(X1 + 2, Y2 + 1, X2, Y2 + 1, SaveScr);
+				MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1, SaveScr);
 			}
 		} else {
 			if (BoxType != NO_BOX)
@@ -1588,8 +1588,8 @@ void VMenu::DrawEdges()
 				SetScreen(X1, Y1, X2, Y2, L' ', Colors[VMenuColorBody]);
 
 			if (!CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR)) {
-				MakeShadow(X1, Y2 + 2, X2 + 3, Y2 + 2);
-				MakeShadow(X2 + 3, Y1, X2 + 4, Y2 + 2);
+				MakeShadow(X1, Y2 + 2, X2 + 2, Y2 + 2, SaveScr);
+				MakeShadow(X2 + 3, Y1, X2 + 4, Y2 + 2, SaveScr);
 			}
 
 			if (BoxType != NO_BOX)
@@ -1904,7 +1904,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					CheckMark[0] = wchar_t((Item[I]->Flags & 0xFFFF) ? Item[I]->Flags & 0xFFFF : 0x221A);
 				}
 
-				int Col;
+				uint64_t Col;
 				if ((Item[I]->Flags & LIF_SELECTED))
 					Col = Colors[Item[I]->Flags & LIF_GRAYED ? VMenuColorSelGrayed : VMenuColorSelected];
 				else
@@ -1980,6 +1980,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 			}
 
 			SetColor(Colors[VMenuColorText]);
+
 			// сделаем добавочку для NO_BOX
 			FS << fmt::Expand(((BoxType != NO_BOX) ? X2 - X1 - 1 : X2 - X1) + ((BoxType == NO_BOX) ? 1 : 0))
 				<< L"";

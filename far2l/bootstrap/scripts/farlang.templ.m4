@@ -1876,6 +1876,17 @@ upd:"&Remove duplicates in history:"
 upd:"&Remove duplicates in history:"
 upd:"&Remove duplicates in history:"
 
+ConfigHistoryRemoveDupsRuleNever
+"никогда"
+"never"
+upd:"never"
+upd:"never"
+upd:"never"
+upd:"never"
+upd:"never"
+upd:"never"
+upd:"never"
+
 ConfigHistoryRemoveDupsRuleByName
 "по имени"
 "by name"

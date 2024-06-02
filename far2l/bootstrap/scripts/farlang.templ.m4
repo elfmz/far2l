@@ -2706,6 +2706,17 @@ upd:"Do nothing"
 "Нічого не робити"
 "Нічога не рабіць"
 
+ConfigVMenuStopEdge
+"Остановить обертывание по краю"
+"Stop wrap on edge"
+"Zastavte obalení na okraji"
+"Stoppen Sie das Umwickeln am Rand"
+"Állítsd meg az szélén történő csomagolást"
+"Przerwij obracanie wzdłuż krawędzi"
+"Detenga el envoltorio en el borde"
+"Зупинити обертання по краю"
+"Паздзерджыць абгортку па краі"
+
 ConfigCmdlineTitle
 l:
 "Настройки командной строки"

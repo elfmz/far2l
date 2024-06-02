@@ -443,6 +443,8 @@ const ConfigOpt g_cfg_opts[] {
 
 	{true,  NSecCodePages, "CPMenuMode2", &Opt.CPMenuMode, 1},
 
+	{true,  NSecVMenu, "MenuStopWrapOnEdge", &Opt.VMenu.StopOnEdge, 1},
+
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "MBtnClick", &Opt.VMenu.MBtnClick, VMENUCLICK_APPLY},

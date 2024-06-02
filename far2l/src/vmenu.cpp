@@ -229,7 +229,7 @@ void VMenu::UpdateItemFlags(int Pos, DWORD NewFlags)
 }
 
 // переместить курсор c учётом пунктов которые не могу получать фокус
-int VMenu::SetSelectPos(int Pos, int Direct)
+int VMenu::SetSelectPos(int Pos, int Direct, bool stop_on_edge)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -238,7 +238,7 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 
 	for (int Pass = 0, I = 0;; I++) {
 		if (Pos < 0) {
-			if (CheckFlags(VMENU_WRAPMODE)) {
+			if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {
 				Pos = ItemCount - 1;
 			} else {
 				Pos = 0;
@@ -247,7 +247,7 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 		}
 
 		if (Pos >= ItemCount) {
-			if (CheckFlags(VMENU_WRAPMODE)) {
+			if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {
 				Pos = 0;
 			} else {
 				Pos = ItemCount - 1;
@@ -1062,21 +1062,30 @@ int VMenu::ProcessKey(FarKey Key)
 
 			break;
 		}
+
 		case KEY_MSWHEEL_UP:	// $ 27.04.2001 VVM - Обработка KEY_MSWHEEL_XXXX
+			SetSelectPos(SelectPos - 1, -1, true);
+			ShowMenu(true, false);
+			break;
+
+		case KEY_MSWHEEL_DOWN:	// $ 27.04.2001 VVM + Обработка KEY_MSWHEEL_XXXX
+			SetSelectPos(SelectPos + 1, 1, true);
+			ShowMenu(true, false);
+			break;
+
 		case KEY_LEFT:
 		case KEY_NUMPAD4:
 		case KEY_UP:
 		case KEY_NUMPAD8: {
-			SetSelectPos(SelectPos - 1, -1);
+			SetSelectPos(SelectPos - 1, -1, IsRepeatedKey() && Opt.VMenu.StopOnEdge);
 			ShowMenu(true, false);
 			break;
 		}
-		case KEY_MSWHEEL_DOWN:	// $ 27.04.2001 VVM + Обработка KEY_MSWHEEL_XXXX
 		case KEY_RIGHT:
 		case KEY_NUMPAD6:
 		case KEY_DOWN:
 		case KEY_NUMPAD2: {
-			SetSelectPos(SelectPos + 1, 1);
+			SetSelectPos(SelectPos + 1, 1, IsRepeatedKey() && Opt.VMenu.StopOnEdge);
 			ShowMenu(true, false);
 			break;
 		}

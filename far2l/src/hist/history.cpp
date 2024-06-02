@@ -142,7 +142,7 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Extra, const 
 							&& (!Opt.HistoryRemoveDupsRule || !StrCmpI(AddRecord.strExtra, HistoryItem->strExtra)))) {
 					AddRecord.Lock = HistoryItem->Lock;
 					HistoryItem = HistoryList.Delete(HistoryItem);
-					if( !Opt.HistoryRemoveDupsRule )
+					if( Opt.HistoryRemoveDupsRule )
 						break; // stop loop only if strict remove by Name and Extra
 				}
 			}

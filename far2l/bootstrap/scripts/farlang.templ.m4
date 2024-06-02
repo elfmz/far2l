@@ -1865,6 +1865,39 @@ ConfigSaveViewHistory
 "Зберігати історію п&ерегляду та редагування"
 "Захоўваць гісторыю п&раглядаў і зменаў"
 
+ConfigHistoryRemoveDupsRule
+"Удаление &дубликатов в истории:"
+"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+upd:"&Remove duplicates in history:"
+
+ConfigHistoryRemoveDupsRuleByName
+"по имени"
+"by name"
+upd:"by name"
+upd:"by name"
+upd:"by name"
+upd:"by name"
+upd:"by name"
+upd:"by name"
+upd:"by name"
+
+ConfigHistoryRemoveDupsRuleByNameExtra
+"по имени и пути"
+"by name and extra"
+upd:"by name and extra"
+upd:"by name and extra"
+upd:"by name and extra"
+upd:"by name and extra"
+upd:"by name and extra"
+upd:"by name and extra"
+upd:"by name and extra"
+
 ConfigAutoHighlightHistory
 "Автоподсветка в списках истории"
 "Autohighlight in history"

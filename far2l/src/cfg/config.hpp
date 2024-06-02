@@ -461,6 +461,7 @@ struct Options
 	int SavePluginFoldersHistory;
 	int FoldersHistoryCount;
 	int DialogsHistoryCount;
+	int HistoryRemoveDupsRule;
 	int AutoHighlightHistory;
 
 	BYTE HistoryShowTimes[8];

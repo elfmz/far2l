@@ -240,11 +240,15 @@ namespace Sudo
     {
         struct timespec times[2];
         int fd = bt.RecvFD();
-
+		int r = -1;
         bt.RecvPOD(times[0]);
         bt.RecvPOD(times[1]);
 
-        int r = futimens(fd, times);
+		if (fd != -1) {
+			r = futimens(fd, times);
+			close(fd);
+		}
+
         bt.SendInt(r);
         if (r==-1)
             bt.SendErrno();

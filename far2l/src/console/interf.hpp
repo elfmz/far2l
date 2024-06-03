@@ -100,7 +100,7 @@ void BoxText(wchar_t Chr);
 void BoxText(const wchar_t *Str, int IsVert = 0);
 
 void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, uint64_t Color);
-void MakeShadow(int X1, int Y1, int X2, int Y2);
+void MakeShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss = NULL);
 void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color);
 void SetColor(uint64_t Color, bool ApplyToConsole = false);
 void SetFarColor(uint16_t Color, bool ApplyToConsole = false);

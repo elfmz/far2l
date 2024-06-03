@@ -229,7 +229,7 @@ void VMenu::UpdateItemFlags(int Pos, DWORD NewFlags)
 }
 
 // переместить курсор c учётом пунктов которые не могу получать фокус
-int VMenu::SetSelectPos(int Pos, int Direct)
+int VMenu::SetSelectPos(int Pos, int Direct, bool stop_on_edge)
 {
 	CriticalSectionLock Lock(CS);
 
@@ -238,7 +238,7 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 
 	for (int Pass = 0, I = 0;; I++) {
 		if (Pos < 0) {
-			if (CheckFlags(VMENU_WRAPMODE)) {
+			if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {
 				Pos = ItemCount - 1;
 			} else {
 				Pos = 0;
@@ -247,7 +247,7 @@ int VMenu::SetSelectPos(int Pos, int Direct)
 		}
 
 		if (Pos >= ItemCount) {
-			if (CheckFlags(VMENU_WRAPMODE)) {
+			if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {
 				Pos = 0;
 			} else {
 				Pos = ItemCount - 1;
@@ -1062,21 +1062,30 @@ int VMenu::ProcessKey(FarKey Key)
 
 			break;
 		}
+
 		case KEY_MSWHEEL_UP:	// $ 27.04.2001 VVM - Обработка KEY_MSWHEEL_XXXX
+			SetSelectPos(SelectPos - 1, -1, true);
+			ShowMenu(true, false);
+			break;
+
+		case KEY_MSWHEEL_DOWN:	// $ 27.04.2001 VVM + Обработка KEY_MSWHEEL_XXXX
+			SetSelectPos(SelectPos + 1, 1, true);
+			ShowMenu(true, false);
+			break;
+
 		case KEY_LEFT:
 		case KEY_NUMPAD4:
 		case KEY_UP:
 		case KEY_NUMPAD8: {
-			SetSelectPos(SelectPos - 1, -1);
+			SetSelectPos(SelectPos - 1, -1, IsRepeatedKey() && Opt.VMenu.StopOnEdge);
 			ShowMenu(true, false);
 			break;
 		}
-		case KEY_MSWHEEL_DOWN:	// $ 27.04.2001 VVM + Обработка KEY_MSWHEEL_XXXX
 		case KEY_RIGHT:
 		case KEY_NUMPAD6:
 		case KEY_DOWN:
 		case KEY_NUMPAD2: {
-			SetSelectPos(SelectPos + 1, 1);
+			SetSelectPos(SelectPos + 1, 1, IsRepeatedKey() && Opt.VMenu.StopOnEdge);
 			ShowMenu(true, false);
 			break;
 		}
@@ -1578,8 +1587,8 @@ void VMenu::DrawEdges()
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
 
 			if (!CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR)) {
-				MakeShadow(X1 + 2, Y2 + 1, X2 + 1, Y2 + 1);
-				MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1);
+				MakeShadow(X1 + 2, Y2 + 1, X2, Y2 + 1, SaveScr);
+				MakeShadow(X2 + 1, Y1 + 1, X2 + 2, Y2 + 1, SaveScr);
 			}
 		} else {
 			if (BoxType != NO_BOX)
@@ -1588,8 +1597,8 @@ void VMenu::DrawEdges()
 				SetScreen(X1, Y1, X2, Y2, L' ', Colors[VMenuColorBody]);
 
 			if (!CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR)) {
-				MakeShadow(X1, Y2 + 2, X2 + 3, Y2 + 2);
-				MakeShadow(X2 + 3, Y1, X2 + 4, Y2 + 2);
+				MakeShadow(X1, Y2 + 2, X2 + 2, Y2 + 2, SaveScr);
+				MakeShadow(X2 + 3, Y1, X2 + 4, Y2 + 2, SaveScr);
 			}
 
 			if (BoxType != NO_BOX)
@@ -1904,7 +1913,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					CheckMark[0] = wchar_t((Item[I]->Flags & 0xFFFF) ? Item[I]->Flags & 0xFFFF : 0x221A);
 				}
 
-				int Col;
+				uint64_t Col;
 				if ((Item[I]->Flags & LIF_SELECTED))
 					Col = Colors[Item[I]->Flags & LIF_GRAYED ? VMenuColorSelGrayed : VMenuColorSelected];
 				else
@@ -1980,6 +1989,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 			}
 
 			SetColor(Colors[VMenuColorText]);
+
 			// сделаем добавочку для NO_BOX
 			FS << fmt::Expand(((BoxType != NO_BOX) ? X2 - X1 - 1 : X2 - X1) + ((BoxType == NO_BOX) ? 1 : 0))
 				<< L"";

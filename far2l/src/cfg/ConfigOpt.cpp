@@ -443,6 +443,8 @@ const ConfigOpt g_cfg_opts[] {
 
 	{true,  NSecCodePages, "CPMenuMode2", &Opt.CPMenuMode, 1},
 
+	{true,  NSecVMenu, "MenuStopWrapOnEdge", &Opt.VMenu.StopOnEdge, 1},
+
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "MBtnClick", &Opt.VMenu.MBtnClick, VMENUCLICK_APPLY},
@@ -585,10 +587,32 @@ static void SanitizePalette()
 
 static void MergePalette()
 {
+//	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+//
+//		Palette[i] &= 0xFFFFFFFFFFFFFF00;
+//		Palette[i] |= Palette8bit[i];
+//	}
+
+	uint32_t basepalette[32];
+	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+
 	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+		uint8_t color = Palette8bit[i];
 
 		Palette[i] &= 0xFFFFFFFFFFFFFF00;
-		Palette[i] |= Palette8bit[i];
+
+		if (!(Palette[i] & FOREGROUND_TRUECOLOR)) {
+			Palette[i] &= 0xFFFFFF000000FFFF;
+			Palette[i] += ((uint64_t)basepalette[16 + (color & 0xF)] << 16);
+			Palette[i] += FOREGROUND_TRUECOLOR;
+		}
+		if (!(Palette[i] & BACKGROUND_TRUECOLOR)) {
+			Palette[i] &= 0x000000FFFFFFFFFF;
+			Palette[i] += ((uint64_t)basepalette[color >> 4] << 40);
+			Palette[i] += BACKGROUND_TRUECOLOR;
+		}
+
+		Palette[i] += color;
 	}
 }
 

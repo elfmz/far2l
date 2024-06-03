@@ -619,18 +619,17 @@ public:
 		return -1;
 	}
 
-	virtual CALC_INT_PTR OnCtrlColorDlgItem(int param1, void *param2)
+	virtual CALC_INT_PTR OnCtrlColorDlgItem(int Param1, void *Param2)
 	{
-		CALC_INT_PTR result = (CALC_INT_PTR)param2;
+		uint64_t *ItemColor = reinterpret_cast<uint64_t *>(Param2);
 		FarDialogItem item;
-		GetDlgItemShort(param1, &item);
+		GetDlgItemShort(Param1, &item);
 		if (item.Flags & DIF_BOXCOLOR)
 		{
-			result&= 0xFF00FF00;
-			result|= ((CALC_INT_PTR)highlightColor) << 16;
-			result|= ((CALC_INT_PTR)highlightColor);
+			ItemColor[0] = highlightColor;
+			ItemColor[2] = highlightColor;
 		}
-		return result;
+		return 1;
 	}
 };
 
@@ -1006,17 +1005,17 @@ public:
 
 		return TRUE;
 	}
-	
-	virtual CALC_INT_PTR OnCtrlColorDlgItem(int param1, void *param2)
+
+	virtual CALC_INT_PTR OnCtrlColorDlgItem(int Param1, void *Param2)
 	{
-		CALC_INT_PTR result = (CALC_INT_PTR)param2;
-		if (param1 >= addons_info.edit_id1 && param1 <= addons_info.edit_id2)
+		uint64_t *ItemColor = reinterpret_cast<uint64_t *>(Param2);
+		if (Param1 >= addons_info.edit_id1 && Param1 <= addons_info.edit_id2)
 		{
-			result&= 0xFF00FF00;
-			result|= ((CALC_INT_PTR)selColor) << 16;
-			result|= ((CALC_INT_PTR)editColor);
+			ItemColor[0] = editColor;
+			ItemColor[2] = selColor;
+
 		}
-		return result;
+		return 1;
 	}
 };
 

@@ -241,14 +241,11 @@ public:
 		Info.EditorControl(ECTL_REDRAW, 0);
 	}
 
-	virtual void GetDlgColors(BYTE *edit_color, BYTE *sel_color, BYTE *highlight_color)
+	virtual void GetDlgColors(uint64_t *edit_color, uint64_t *sel_color, uint64_t *highlight_color)
 	{
-		*edit_color = (BYTE)(unsigned int)
-			Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void*)COL_DIALOGEDIT);
-		*sel_color = (BYTE)(unsigned int)
-			Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void*)COL_DIALOGEDITSELECTED);
-		*highlight_color = (BYTE)(unsigned int)
-			Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void*)COL_DIALOGHIGHLIGHTTEXT);
+		Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void *)COL_DIALOGEDIT, edit_color);
+		Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void *)COL_DIALOGEDITSELECTED, sel_color);
+		Info.AdvControl(Info.ModuleNumber, ACTL_GETCOLOR, (void *)COL_DIALOGHIGHLIGHTTEXT, highlight_color);
 	}
 
 	virtual int GetCmdLine(std::wstring &cmd)

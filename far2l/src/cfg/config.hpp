@@ -276,6 +276,7 @@ struct VMenuOptions
 	int LBtnClick;
 	int RBtnClick;
 	int MBtnClick;
+	bool StopOnEdge;
 };
 
 struct CommandLineOptions

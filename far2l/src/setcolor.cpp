@@ -125,6 +125,7 @@ void SetColors()
 		{(const wchar_t *)Msg::SetColorHelp,        0,             0},
 		{L"",                                       LIF_SEPARATOR, 0},
 		{(const wchar_t *)Msg::SetDefaultColors,    0,             0},
+		{(const wchar_t *)Msg::SetDefaultColorsRGB, 0,             0},
 		{(const wchar_t *)Msg::SetBW,               0,             0}
 	};
 	MenuDataEx PanelItems[] = {
@@ -338,12 +339,27 @@ void SetColors()
 				break;
 			}
 
-			// Set black & white 8 bit colors
+			// Set default RGB
 			if (GroupsCode == 13) {
+				uint32_t basepalette[32];
+				WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+
+				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+					uint8_t color = DefaultPalette8bit[i];
+					Palette[i] = ((uint64_t)basepalette[16 + (color & 0xF)] << 16);
+					Palette[i] += ((uint64_t)basepalette[color >> 4] << 40);
+					Palette[i] += FOREGROUND_TRUECOLOR + BACKGROUND_TRUECOLOR;
+					Palette[i] += color;
+				}
+
+				break;
+			}
+
+			// Set black & white 8 bit colors
+			if (GroupsCode == 14) {
 				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
 					Palette[i] = BlackPalette8bit[i];
 				}
-
 				break;
 			}
 

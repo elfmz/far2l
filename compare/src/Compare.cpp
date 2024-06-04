@@ -429,7 +429,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 			Opt.CompareContents = FALSE;
 		}
 		Opt.ProcessHidden =
-				(Info.AdvControl(Info.ModuleNumber, ACTL_GETPANELSETTINGS, NULL)
+				(Info.AdvControl(Info.ModuleNumber, ACTL_GETPANELSETTINGS, NULL, NULL)
 						& FPS_SHOWHIDDENANDSYSTEMFILES)
 				!= 0;
 
@@ -468,7 +468,7 @@ static bool CheckForEsc(void)
 	if (!WINPORT(CheckForKeyPress)(NULL, &EscCode, 1, CFKP_KEEP_OTHER_EVENTS))
 		return false;
 
-	if (Info.AdvControl(Info.ModuleNumber, ACTL_GETCONFIRMATIONS, NULL) & FCS_INTERRUPTOPERATION) {
+	if (Info.AdvControl(Info.ModuleNumber, ACTL_GETCONFIRMATIONS, NULL, NULL) & FCS_INTERRUPTOPERATION) {
 		const TCHAR *MsgItems[] = {GetMsg(MEscTitle), GetMsg(MEscBody), GetMsg(MOK), GetMsg(MCancel)};
 		if (Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 2) != 0)
 			return false;

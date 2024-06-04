@@ -1121,7 +1121,7 @@ bool FarEditorSet::SetBgEditor()
     fsc.ColorCount = 1;
     fsc.StartIndex = COL_EDITORTEXT;
     fsc.Colors = &c;
-    return !!Info.AdvControl(Info.ModuleNumber, ACTL_SETARRAYCOLOR, &fsc);
+    return !!Info.AdvControl(Info.ModuleNumber, ACTL_SETARRAYCOLOR, &fsc, nullptr);
   }
   return false;
 }

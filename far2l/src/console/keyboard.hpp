@@ -80,3 +80,4 @@ int IsShiftKey(DWORD Key);
 int CheckForEsc();
 int CheckForEscSilent();
 int ConfirmAbortOp();
+bool IsRepeatedKey();

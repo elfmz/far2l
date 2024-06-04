@@ -50,9 +50,8 @@ typedef struct hsvcolor_s
 } hsvcolor_t;
 
 #define RGB_2_BGR(c) (c & 0x00ff00) | (((c >> 16) & 0xff) | ((c & 0xff) << 16))
-//#define ATTR_RGBBACK_NEGF(rgb) (((uint64_t)rgb << 40) + ((uint64_t)((~rgb) & 0xFFFFFF) << 16) + 7 + BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)
-#define ATTR_RGBBACK_NEGF(rgb) (((((rgb & 0x0000FF00) >> 8) * 2 + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 382 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
-#define ATTR_RGBBACK_NEGF2(rgb) (((((rgb & 0x0000FF00) >> 8) * 2 + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 382 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
+#define ATTR_RGBBACK_NEGF(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
+#define ATTR_RGBBACK_NEGF2(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
 
 
 rgbcolor_t HSV_2_RGB(hsvcolor_t hsv);

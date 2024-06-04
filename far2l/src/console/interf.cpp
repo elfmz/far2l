@@ -705,7 +705,7 @@ void SetScreen(int X1, int Y1, int X2, int Y2, wchar_t Ch, uint64_t Color)
 	ScrBuf.FillRect(X1, Y1, X2, Y2, Ch, Color);
 }
 
-void MakeShadow(int X1, int Y1, int X2, int Y2)
+void MakeShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 {
 	if (X1 < 0)
 		X1 = 0;
@@ -719,7 +719,8 @@ void MakeShadow(int X1, int Y1, int X2, int Y2)
 	if (Y2 > ScrY)
 		Y2 = ScrY;
 
-	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xFFFFFFFFFFFFFFF8);
+//	ScrBuf.ApplyColorMask(X1, Y1, X2, Y2, 0xFFFFFFFFFFFFFFF8);
+	ScrBuf.ApplyShadow(X1, Y1, X2, Y2, ss);
 }
 
 void ChangeBlockColor(int X1, int Y1, int X2, int Y2, uint64_t Color)

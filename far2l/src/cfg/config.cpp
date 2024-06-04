@@ -178,11 +178,23 @@ void SystemSettings()
 				DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
 	MakeLinkSuggest->Indent(4);
 
+	Builder.AddSeparator();
 	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveFoldersHistory, &Opt.SaveFoldersHistory,
 			&Opt.FoldersHistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveViewHistory, &Opt.SaveViewHistory, &Opt.ViewHistoryCount);
+	DialogBuilderListItem CAHistRemoveListItems[] = {
+			{Msg::ConfigHistoryRemoveDupsRuleNever, 0},
+			{Msg::ConfigHistoryRemoveDupsRuleByName, 1},
+			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, 2},
+	};
+	DialogItemEx *HistRemove =
+		Builder.AddComboBox((int *)&Opt.HistoryRemoveDupsRule, 20, CAHistRemoveListItems, ARRAYSIZE(CAHistRemoveListItems),
+				DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
+	Builder.AddTextBefore(HistRemove, Msg::ConfigHistoryRemoveDupsRule);
+
 	Builder.AddCheckbox(Msg::ConfigAutoHighlightHistory, &Opt.AutoHighlightHistory);
+	Builder.AddSeparator();
 
 	Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
 	Builder.AddOKCancel();

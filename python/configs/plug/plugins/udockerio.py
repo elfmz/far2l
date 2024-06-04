@@ -115,7 +115,6 @@ class Docker(object):
 
     def list(self):
         lines = self.run("container", "ps", "-a")
-        print(lines)
         devices = []
         if len(lines) > 0 and lines[0].split()[0] == b"CONTAINER":
             line = lines[0].decode()

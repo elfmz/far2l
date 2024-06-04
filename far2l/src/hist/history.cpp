@@ -131,16 +131,18 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Extra, const 
 		AddRecord.strExtra = Extra;
 	}
 
-	if (RemoveDups)		// удалять дубликаты?
+	if (RemoveDups && Opt.HistoryRemoveDupsRule)		// удалять дубликаты?
 	{
 		for (HistoryRecord *HistoryItem = HistoryList.First(); HistoryItem;
 				HistoryItem = HistoryList.Next(HistoryItem)) {
 			if (EqualType(AddRecord.Type, HistoryItem->Type)) {
-				if ((RemoveDups == 1 && !StrCmp(AddRecord.strName, HistoryItem->strName))
-						|| (RemoveDups == 2 && !StrCmpI(AddRecord.strName, HistoryItem->strName))) {
+				if ((RemoveDups == 1 && !StrCmp(AddRecord.strName, HistoryItem->strName)
+							 && (Opt.HistoryRemoveDupsRule<2 || !StrCmp(AddRecord.strExtra, HistoryItem->strExtra)))
+						|| (RemoveDups == 2 && !StrCmpI(AddRecord.strName, HistoryItem->strName)
+							&& (Opt.HistoryRemoveDupsRule<2 || !StrCmpI(AddRecord.strExtra, HistoryItem->strExtra)))) {
 					AddRecord.Lock = HistoryItem->Lock;
 					HistoryItem = HistoryList.Delete(HistoryItem);
-					break;
+					// break; // not stop loop because after HistoryRemoveDupsRule==0 or ==2 history may has dups
 				}
 			}
 		}

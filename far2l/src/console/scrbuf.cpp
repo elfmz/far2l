@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "DList.hpp"
 #include "console.hpp"
+#include "savescr.hpp"
 
 enum
 {
@@ -186,6 +187,52 @@ void ScreenBuf::Read(int X1, int Y1, int X2, int Y2, CHAR_INFO *Text, int MaxTex
 		memcpy(Text + Idx, Buf + (Y1 + I) * BufX + X1,
 				Min((int)sizeof(CHAR_INFO) * Width, (int)MaxTextLength));
 }
+
+void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
+{
+	CriticalSectionLock Lock(CS);
+	int Width = X2 - X1 + 1;
+	int Height = Y2 - Y1 + 1;
+	int I, J;
+
+	for (I = 0; I < Height; I++) {
+		CHAR_INFO *DstBuf = Buf + (Y1 + I) * BufX + X1;
+		CHAR_INFO *SrcBuf = ss ? ss->GetBufferAddress() + ((Y1 + I) - ss->Y1) * ss->W + (X1 - ss->X1) : DstBuf;
+
+		for (J = 0; J < Width; J++, ++DstBuf, ++SrcBuf) {
+
+			union {
+				uint64_t attr64;
+				uint8_t attr[8];
+			};
+
+			attr64 = SrcBuf->Attributes;
+			attr64 &= 0xFFFFFFFFFFFFFF07;
+
+			attr[7] >>= 1;
+			attr[6] >>= 1;
+			attr[5] >>= 1;
+			attr[4] >>= 1;
+			attr[3] >>= 1;
+			attr[2] >>= 1;
+
+			if (!attr[0])
+				attr[0] = 8;
+
+			DstBuf->Attributes = attr64;
+		}
+	}
+
+#ifdef DIRECT_SCREEN_OUT
+	Flush();
+#elif defined(DIRECT_RT)
+
+	if (DirectRT)
+		Flush();
+
+#endif
+}
+
 
 /*
 	Изменить значение цветовых атрибутов в соответствии с маской

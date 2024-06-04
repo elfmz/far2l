@@ -879,7 +879,7 @@ typedef int (WINAPI *FARAPICONTROL)(
 typedef void (WINAPI *FARAPITEXT)(
 	int X,
 	int Y,
-	int Color,
+	uint64_t Color,
 	const wchar_t *Str
 );
 
@@ -1427,9 +1427,9 @@ struct PROGRESSVALUE
 typedef INT_PTR(WINAPI *FARAPIADVCONTROL)(
 	INT_PTR ModuleNumber,
 	int Command,
-	void *Param
+	void *Param1,
+	void *Param2
 );
-
 
 enum VIEWER_CONTROL_COMMANDS
 {

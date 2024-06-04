@@ -59,7 +59,7 @@ typedef CALC_INT_PTR (__stdcall *CALCDLGPROC)(DLGHANDLE hdlg, int msg, int param
 class CalcDialog
 {
 protected:
-	BYTE editColor, selColor, highlightColor;
+	uint64_t editColor, selColor, highlightColor;
 
 public:
 	CalcDialog();
@@ -164,7 +164,7 @@ public:
 	virtual void EditorInsert(const wchar_t *text) = 0;
 	virtual void EditorRedraw() = 0;
 
-	virtual void GetDlgColors(BYTE *edit_color, BYTE *sel_color, BYTE *highlight_color) = 0;
+	virtual void GetDlgColors(uint64_t *edit_color, uint64_t *sel_color, uint64_t *highlight_color) = 0;
 
 	virtual int  GetCmdLine(std::wstring &cmd) = 0;
 	virtual void SetCmdLine(const std::wstring & cmd) = 0;

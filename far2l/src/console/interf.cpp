@@ -764,15 +764,6 @@ void SetColor(uint64_t Color, bool ApplyToConsole)
 {
 	CurColor = Color;
 
-//	if (Color & 0xffffff0000000000) {
-//		CurColor|= BACKGROUND_TRUECOLOR;
-//		CurColor|= (Color & 0xffffff0000000000);
-//	}
-//	if (Color & 0x000000ffffff0000) {
-//		CurColor|= FOREGROUND_TRUECOLOR;
-//		CurColor|= (Color & 0x000000ffffff0000);
-//	}
-
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);
 	}
@@ -835,7 +826,7 @@ void ComposeAndSetColor(WORD BaseColor, const FarTrueColorForeAndBack *TrueColor
 
 void ClearScreen(uint64_t Color)
 {
-	Color = FarColorToReal(Color);
+	SetColor(Color);
 	ScrBuf.FillRect(0, 0, ScrX, ScrY, L' ', Color);
 	ScrBuf.ResetShadow();
 	ScrBuf.Flush();
@@ -844,7 +835,7 @@ void ClearScreen(uint64_t Color)
 
 uint64_t GetColor()
 {
-	return (CurColor);
+	return CurColor;
 }
 
 void ScrollScreen(int Count)

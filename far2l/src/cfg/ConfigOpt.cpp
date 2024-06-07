@@ -444,7 +444,7 @@ const ConfigOpt g_cfg_opts[] {
 
 	{true,  NSecCodePages, "CPMenuMode2", &Opt.CPMenuMode, 1},
 
-	{true,  NSecVMenu, "MenuStopWrapOnEdge", &Opt.VMenu.StopOnEdge, 1},
+	{true,  NSecVMenu, "MenuStopWrapOnEdge", &Opt.VMenu.MenuLoopScroll, 1},
 
 	{true,  NSecVMenu, "LBtnClick", &Opt.VMenu.LBtnClick, VMENUCLICK_CANCEL},
 	{true,  NSecVMenu, "RBtnClick", &Opt.VMenu.RBtnClick, VMENUCLICK_CANCEL},
@@ -588,15 +588,16 @@ static void SanitizePalette()
 
 static void MergePalette()
 {
-//	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
-//
-//		Palette[i] &= 0xFFFFFFFFFFFFFF00;
-//		Palette[i] |= Palette8bit[i];
-//	}
+	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
 
-	uint32_t basepalette[32];
-	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+		Palette[i] &= 0xFFFFFFFFFFFFFF00;
+		Palette[i] |= Palette8bit[i];
+	}
 
+//	uint32_t basepalette[32];
+//	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+
+/*
 	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
 		uint8_t color = Palette8bit[i];
 
@@ -615,6 +616,7 @@ static void MergePalette()
 
 		Palette[i] += color;
 	}
+*/
 }
 
 void ConfigOptFromCmdLine()

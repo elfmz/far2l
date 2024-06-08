@@ -33,6 +33,7 @@ class Entry(object):
         date=None,
         name=None,
         date_re=None,
+        datezone=None,
     ):
         self.st_mode = 0
         self.st_perms = perms
@@ -126,38 +127,40 @@ class Docker(object):
             cnames = line.find("NAMES", cports)
             for line in lines[1:]:
                 line = line.decode()
-                info = (line[cid:cimage].strip(), line[cnames:].strip())
+                info = (line[cid:cimage].strip(), line[cnames:].strip(), line[cstatus:cports].strip().split()[0] == 'Up')
                 devices.append(info)
         return devices
 
     ls = "/bin/ls -anL --full-time {}"
-    date_re = "%Y-%m-%d %H:%M"
-    file_re1 = (
-        "^"
-        "(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+"
-        "(?P<links>\d+)\s+"
-        "(?P<uid>\d+)\s+"
-        "(?P<gid>\d+)\s+"
-        "(?P<devmaj>\d+),\s+(?P<devmin>\d+)\s+"
-        "(?P<date>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+"
-        "(?P<name>.*)"
-    )
-    file_re2 = (
-        "^"
-        "(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+"
-        "(?P<links>\d+)\s+"
-        "(?P<uid>\d+)\s+"
-        "(?P<gid>\d+)\s+"
-        "(?P<size>\d+)\s+"
-        "(?P<date>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+"
-        "(?P<name>.*)"
-    )
+    date_re = "%Y-%m-%d %H:%M:%S"
+    file_re1 = r"""
+^
+(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+
+(?P<links>\d+)\s+
+(?P<uid>\d+)\s+
+(?P<gid>\d+)\s+
+(?P<devmaj>\d+),\s+(?P<devmin>\d+)\s+
+(?P<date>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})
+(?P<datezone>(\.\d+)?\s+\+\d{4})\s+
+(?P<name>.*)
+"""
+    file_re2 = r'''
+^
+(?P<perms>[\-bcdlps][\-rwxsStT]{9})\s+
+(?P<links>\d+)\s+
+(?P<uid>\d+)\s+
+(?P<gid>\d+)\s+
+(?P<size>\d+)\s+
+(?P<date>\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})
+(?P<datezone>(\.\d+)?\s+\+\d{4})\s+
+(?P<name>.*)
+'''
 
     def ls(self, deviceid, top):
-        file_re1 = re.compile(self.file_re1)
-        file_re2 = re.compile(self.file_re2)
+        file_re1 = re.compile(self.file_re1, re.VERBOSE)
+        file_re2 = re.compile(self.file_re2, re.VERBOSE)
         lines = self.run(
-            "exec", deviceid, "/bin/ls", "-anL", "--time-style=long-iso", top
+            "exec", deviceid, "/bin/ls", "-anL", "--full-time", top
         )
         result = []
         for line in lines:
@@ -197,6 +200,6 @@ if __name__ == "__main__":
     cls = Docker()
     info = cls.list()
     print(info)
-    result = cls.ls(info[0][0], "/dev")
+    result = cls.ls(info[0][0], "/")
     for e in result:
         print(e)

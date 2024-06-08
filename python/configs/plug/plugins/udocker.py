@@ -65,7 +65,10 @@ class Plugin(PluginVFS):
 
     def devLoadDevices(self):
         for d in self.clt.list():
-            self.addName(d[1], FILE_ATTRIBUTE_DIRECTORY, 0)
+            if d[2]:
+                self.addName(d[1], FILE_ATTRIBUTE_DIRECTORY, 0)
+            else:
+                self.addName(d[1], FILE_ATTRIBUTE_OFFLINE, 0)
 
     def devSelectDevice(self, name):
         self.device = None

@@ -527,17 +527,16 @@ void Viewer::ShowPage(int nMode)
 
 				ReadString(Strings[I], -1, MAX_VIEWLINE);
 			}
-
 			break;
-		case SHOW_UP:
 
+		case SHOW_UP:
 			Strings.ScrollUp();
 			Strings[0].nFilePos = FilePos;
 			SecondPos = Strings[1].nFilePos;
 			ReadString(Strings[0], (int)(SecondPos - FilePos), MAX_VIEWLINE);
 			break;
-		case SHOW_DOWN:
 
+		case SHOW_DOWN:
 			vseek(Strings[Y2 - Y1].nFilePos, SEEK_SET);
 			Strings.ScrollDown();
 			FilePos = Strings[0].nFilePos;
@@ -2082,10 +2081,11 @@ void Viewer::Up()
 			//	khffgkjkfdg dfkghd jgfhklf |
 			//	sdflksj lfjghf fglh lf     |
 			//	dfdffgljh ldgfhj           |
-
+			int SpaceStart = -1; // Keep spaces at beginning of wrapped line: #2246
 			for (I = 0; I < WrapBufSize;) {
 				if (!IsSpace(Buf[I])) {
-					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I) {
+					int CurLineStart = (SpaceStart < 0) ? I : SpaceStart;
+					for (int LastFitEnd = CurLineStart + 1;; ++I) {
 						if (I == WrapBufSize) {
 							int distance =
 									CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
@@ -2101,8 +2101,12 @@ void Viewer::Up()
 							LastFitEnd = I + 1;
 						}
 					}
+					SpaceStart = -1;
 
 				} else {
+					if (SpaceStart == -1) {
+						SpaceStart = I;
+					}
 					++I;
 				}
 			}

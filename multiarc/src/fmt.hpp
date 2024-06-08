@@ -48,7 +48,6 @@ struct ArcItemAttributes
 	int UnpVer{};
 	int Chapter{};
 	int Codepage{};
-	int LACodepage{}; // if code page for libarchive should be different
 
 	DWORD dwFileAttributes{};
 	DWORD dwUnixMode{};

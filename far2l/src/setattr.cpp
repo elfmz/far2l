@@ -76,53 +76,78 @@ enum SETATTRDLG
 	SA_TEXT_NAME,
 	SA_SEPARATOR1,
 	SA_TXTBTN_INFO,
+	SA_TEXT_INFO_CHMARK,
 	SA_EDIT_INFO,
 	SA_SEPARATOR_OWNERSHIP,
 	SA_TEXT_OWNER,
+	SA_TEXT_OWNER_CHMARK,
 	SA_COMBO_OWNER,
 	SA_TEXT_GROUP,
+	SA_TEXT_GROUP_CHMARK,
 	SA_COMBO_GROUP,
 
 	SA_SEPARATOR_MODE,
 	SA_SEPARATOR_MODE_V1,
 	SA_SEPARATOR_MODE_V2,
 	SA_TEXT_MODE_USER,
+	SA_TEXT_USER_READ_CHMARK,
 	SA_CHECKBOX_USER_READ,
+	SA_TEXT_USER_WRITE_CHMARK,
 	SA_CHECKBOX_USER_WRITE,
+	SA_TEXT_USER_EXECUTE_CHMARK,
 	SA_CHECKBOX_USER_EXECUTE,
 	SA_TEXT_MODE_GROUP,
+	SA_TEXT_GROUP_READ_CHMARK,
 	SA_CHECKBOX_GROUP_READ,
+	SA_TEXT_GROUP_WRITE_CHMARK,
 	SA_CHECKBOX_GROUP_WRITE,
+	SA_TEXT_GROUP_EXECUTE_CHMARK,
 	SA_CHECKBOX_GROUP_EXECUTE,
 	SA_TEXT_MODE_OTHER,
+	SA_TEXT_OTHER_READ_CHMARK,
 	SA_CHECKBOX_OTHER_READ,
+	SA_TEXT_OTHER_WRITE_CHMARK,
 	SA_CHECKBOX_OTHER_WRITE,
+	SA_TEXT_OTHER_EXECUTE_CHMARK,
 	SA_CHECKBOX_OTHER_EXECUTE,
+	SA_TEXT_SUID_CHMARK,
 	SA_CHECKBOX_SUID,
+	SA_TEXT_SGID_CHMARK,
 	SA_CHECKBOX_SGID,
+	SA_TEXT_STICKY_CHMARK,
 	SA_CHECKBOX_STICKY,
 
 	SA_TEXT_MODE_OCTAL,
+	SA_TEXT_MODE_OCTAL_CHMARK,
 	SA_FIXEDIT_MODE_OCTAL,
 	SA_BUTTON_MODE_ORIGINAL,
 
 	SA_SEPARATOR_ATTRIBUTES,
+	SA_TEXT_IMMUTABLE,
 	SA_CHECKBOX_IMMUTABLE,
+	SA_TEXT_APPEND,
 	SA_CHECKBOX_APPEND,
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+	SA_TEXT_HIDDEN,
 	SA_CHECKBOX_HIDDEN,
 #endif
 
 	SA_SEPARATOR3,
 	SA_TEXT_TITLEDATE,
 	SA_TEXT_LAST_ACCESS,
+	SA_TEXT_LAST_ACCESS_DATE_CHMARK,
 	SA_FIXEDIT_LAST_ACCESS_DATE,
+	SA_TEXT_LAST_ACCESS_TIME_CHMARK,
 	SA_FIXEDIT_LAST_ACCESS_TIME,
 	SA_TEXT_LAST_MODIFICATION,
+	SA_TEXT_LAST_MODIFICATION_DATE_CHMARK,
 	SA_FIXEDIT_LAST_MODIFICATION_DATE,
+	SA_TEXT_LAST_MODIFICATION_TIME_CHMARK,
 	SA_FIXEDIT_LAST_MODIFICATION_TIME,
 	SA_TEXT_LAST_CHANGE,
+	SA_TEXT_LAST_CHANGE_DATE_CHMARK,
 	SA_FIXEDIT_LAST_CHANGE_DATE,
+	SA_TEXT_LAST_CHANGE_TIME_CHMARK,
 	SA_FIXEDIT_LAST_CHANGE_TIME,
 	SA_BUTTON_ORIGINAL,
 	SA_BUTTON_CURRENT,
@@ -197,6 +222,12 @@ struct SetAttrDlgParam
 	unsigned char SymLinkInfoCycle = 0;
 	FARString SymLink;
 	FARString SymlinkButtonTitles[3];
+	// initial values at dialog start:
+	FARString strInitInfoSymLink,
+		strInitOwner, strInitGroup,
+		strInitOctal,
+		strInitAccessDate, strInitModifyDate, strInitStatusChangeDate,
+		strInitAccessTime, strInitModifyTime, strInitStatusChangeTime;
 };
 
 #define DM_SETATTR (DM_USER + 1)
@@ -208,6 +239,13 @@ static int DialogID2PreservedOriginalIndex(int id)
 			return i;
 	}
 	return -1;
+}
+
+inline static bool IsEditChanged(HANDLE hDlg, int EditControl, FARString &Original)
+{
+	return 0 != StrCmp(
+		reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, EditControl, 0)),
+		Original);
 }
 
 static void BlankEditIfChanged(HANDLE hDlg, int EditControl, FARString &Remembered, bool &Changed)
@@ -248,6 +286,29 @@ static std::wstring BriefInfo(const FARString &strSelName)
 	return out;
 }
 
+inline void SetAttrDefaultMark(HANDLE hDlg, int id, bool nodefault)
+{
+	// id - id of DI_TEXT for non-default marker
+	SendDlgMessage(hDlg, DM_SETTEXTPTR, id, // mark (un)changed
+		nodefault ? reinterpret_cast<LONG_PTR>(L"*") : reinterpret_cast<LONG_PTR>(L"") );
+}
+
+static void SetAttrSetCheckAndDefaultMark(HANDLE hDlg, SetAttrDlgParam *DlgParam, int idx, int id, int bstate)
+{
+	// idx - index in arrays PreserveOriginalIDs and OriginalCBAttr0, if < 0 will be detected here
+	// id - id of DI_CHECKBOX
+	// id-1 - must be DI_TEXT for non-default marker
+	SendDlgMessage(hDlg, DM_SETCHECK, id, bstate);
+
+	if( idx < 0 )
+		idx = DialogID2PreservedOriginalIndex(id);
+	if (idx != -1) {
+		if( DlgParam == nullptr )
+			DlgParam = reinterpret_cast<SetAttrDlgParam *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+		SetAttrDefaultMark(hDlg, id-1, bstate != DlgParam->OriginalCBAttr0[idx]);
+	}
+}
+
 static char SetAttrGetBitCharFromModeCheckBoxes(HANDLE hDlg, int _i1, int _i2, int _i3)
 {
 	int i1, i2, i3;
@@ -273,56 +334,56 @@ static void SetAttrCalcBitsCharFromModeCheckBoxes(HANDLE hDlg)
 	str_octal[2] = SetAttrGetBitCharFromModeCheckBoxes(hDlg, SA_CHECKBOX_GROUP_EXECUTE, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_READ);
 	str_octal[3] = SetAttrGetBitCharFromModeCheckBoxes(hDlg, SA_CHECKBOX_OTHER_EXECUTE, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_READ);
 
-	SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_FIXEDIT_MODE_OCTAL, (LONG_PTR)str_octal);
+	SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_FIXEDIT_MODE_OCTAL, reinterpret_cast<LONG_PTR>(str_octal));
 }
 
-void SetAttrGetModeCheckBoxesFromChar(HANDLE hDlg, wchar_t c, int _i1, int _i2, int _i3)
+static void SetAttrGetModeCheckBoxesFromChar(HANDLE hDlg, SetAttrDlgParam *DlgParam, wchar_t c, int _i1, int _i2, int _i3)
 {
 	switch(c) {
 		case L'0':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_UNCHECKED);
 			break;
 		case L'1':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_UNCHECKED);
 			break;
 		case L'2':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_UNCHECKED);
 			break;
 		case L'3':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_UNCHECKED);
 			break;
 		case L'4':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_CHECKED);
 			break;
 		case L'5':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_CHECKED);
 			break;
 		case L'6':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_UNCHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_UNCHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_CHECKED);
 			break;
 		case L'7':
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_CHECKED);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_CHECKED);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_CHECKED);
 			break;
 		default:
-			SendDlgMessage(hDlg, DM_SETCHECK, _i1, BSTATE_3STATE);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i2, BSTATE_3STATE);
-			SendDlgMessage(hDlg, DM_SETCHECK, _i3, BSTATE_3STATE);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i1, BSTATE_3STATE);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i2, BSTATE_3STATE);
+			SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, -1, _i3, BSTATE_3STATE);
 			break;
 	}
 }
@@ -352,6 +413,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 						SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
 						DlgParam->_b_mode_check_or_edit_process = false;
 					}
+					SetAttrDefaultMark(hDlg, Param1-1, Param2 != DlgParam->OriginalCBAttr0[OrigIdx]); // mark (un)changed
 				}
 				int FocusPos = static_cast<int>(SendDlgMessage(hDlg, DM_GETFOCUS, 0, 0));
 				FARCHECKEDSTATE SubfoldersState = static_cast<FARCHECKEDSTATE>(
@@ -372,7 +434,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], TRUE);
 										if (DlgParam->OriginalCBAttr2[i] == -1) {
-											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+											SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, i, PreserveOriginalIDs[i],
 													BSTATE_3STATE);
 										}
 									}
@@ -386,7 +448,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 								else {
 									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], FALSE);
-										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+										SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, i, PreserveOriginalIDs[i],
 												DlgParam->OriginalCBAttr[i]);
 									}
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
@@ -429,7 +491,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										if (DlgParam->OriginalCBAttr2[i] == -1) {
 											SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i], TRUE);
-											SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+											SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, i, PreserveOriginalIDs[i],
 													BSTATE_3STATE);
 										}
 									}
@@ -443,7 +505,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 									for (size_t i = 0; i < ARRAYSIZE(PreserveOriginalIDs); ++i) {
 										SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i],
 												((DlgParam->OriginalCBFlag[i] & DIF_3STATE) ? TRUE : FALSE));
-										SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+										SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, i, PreserveOriginalIDs[i],
 												DlgParam->OriginalCBAttr[i]);
 									}
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
@@ -496,7 +558,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					DlgParam->OriginalCBAttr2[i] = -1;
 					SendDlgMessage(hDlg, DM_SET3STATE, PreserveOriginalIDs[i],
 							((DlgParam->OriginalCBFlag[i] & DIF_3STATE) ? TRUE : FALSE));
-					SendDlgMessage(hDlg, DM_SETCHECK, PreserveOriginalIDs[i],
+					SetAttrSetCheckAndDefaultMark(hDlg, DlgParam, i, PreserveOriginalIDs[i],
 							DlgParam->OriginalCBAttr0[i]);
 				}
 				SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
@@ -535,6 +597,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			}
 
 			break;
+
 		case DN_MOUSECLICK: {
 			//_SVS(SysLog(L"Msg=DN_MOUSECLICK Param1=%d Param2=%d",Param1,Param2));
 			if (Param1 >= SA_TEXT_LAST_ACCESS && Param1 <= SA_FIXEDIT_LAST_CHANGE_TIME) {
@@ -552,35 +615,66 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				SendDlgMessage(hDlg, DM_SETFOCUS, Param1, 0);
 			}
 		} break;
+
 		case DN_EDITCHANGE: {
 			switch (Param1) {
 				case SA_FIXEDIT_MODE_OCTAL:
 					if (!DlgParam->_b_mode_check_or_edit_process) {
 						DlgParam->_b_mode_check_or_edit_process = true;
-						std::wstring str_octal;
 						int length = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, SA_FIXEDIT_MODE_OCTAL, 0);
-						str_octal.resize(length+1);
-						LONG_PTR rv = SendDlgMessage(hDlg, DM_GETTEXTPTR, SA_FIXEDIT_MODE_OCTAL, (LONG_PTR)&str_octal[0]);
-						if (rv>0) {
-							length = str_octal.length();
-							SetAttrGetModeCheckBoxesFromChar(hDlg, length<1 ? ' ' : str_octal[0], SA_CHECKBOX_STICKY, SA_CHECKBOX_SGID, SA_CHECKBOX_SUID);
-							SetAttrGetModeCheckBoxesFromChar(hDlg, length<2 ? ' ' : str_octal[1], SA_CHECKBOX_USER_EXECUTE,  SA_CHECKBOX_USER_WRITE,  SA_CHECKBOX_USER_READ);
-							SetAttrGetModeCheckBoxesFromChar(hDlg, length<3 ? ' ' : str_octal[2], SA_CHECKBOX_GROUP_EXECUTE, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_READ);
-							SetAttrGetModeCheckBoxesFromChar(hDlg, length<4 ? ' ' : str_octal[3], SA_CHECKBOX_OTHER_EXECUTE, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_READ);
+						LPCWSTR str_octal = reinterpret_cast<LPCWSTR>(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, SA_FIXEDIT_MODE_OCTAL, 0));
+						if (length>0 && str_octal!=nullptr) {
+							SetAttrGetModeCheckBoxesFromChar(hDlg, DlgParam, length<1 ? ' ' : str_octal[0], SA_CHECKBOX_STICKY, SA_CHECKBOX_SGID, SA_CHECKBOX_SUID);
+							SetAttrGetModeCheckBoxesFromChar(hDlg, DlgParam, length<2 ? ' ' : str_octal[1], SA_CHECKBOX_USER_EXECUTE,  SA_CHECKBOX_USER_WRITE,  SA_CHECKBOX_USER_READ);
+							SetAttrGetModeCheckBoxesFromChar(hDlg, DlgParam, length<3 ? ' ' : str_octal[2], SA_CHECKBOX_GROUP_EXECUTE, SA_CHECKBOX_GROUP_WRITE, SA_CHECKBOX_GROUP_READ);
+							SetAttrGetModeCheckBoxesFromChar(hDlg, DlgParam, length<4 ? ' ' : str_octal[3], SA_CHECKBOX_OTHER_EXECUTE, SA_CHECKBOX_OTHER_WRITE, SA_CHECKBOX_OTHER_READ);
 						}
 						DlgParam->_b_mode_check_or_edit_process = false;
 					}
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_MODE_OCTAL-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_MODE_OCTAL, DlgParam->strInitOctal) );
+					break;
+				case SA_EDIT_INFO:
+					SetAttrDefaultMark(hDlg, SA_EDIT_INFO-1, // mark (un)changed
+						DlgParam->SymLinkInfoCycle
+							? StrCmp(DlgParam->SymLink, DlgParam->strInitInfoSymLink)
+							: IsEditChanged(hDlg, SA_EDIT_INFO, DlgParam->strInitInfoSymLink) );
+				case SA_COMBO_OWNER:
+					SetAttrDefaultMark(hDlg, SA_COMBO_OWNER-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_COMBO_OWNER, DlgParam->strInitOwner) );
+					break;
+				case SA_COMBO_GROUP:
+					SetAttrDefaultMark(hDlg, SA_COMBO_GROUP-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitOwner) );
 					break;
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_ACCESS_DATE-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_LAST_ACCESS_DATE, DlgParam->strInitAccessDate) );
+					DlgParam->OAccessTime = true;
+					break;
 				case SA_FIXEDIT_LAST_ACCESS_TIME:
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_ACCESS_TIME-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_LAST_ACCESS_TIME, DlgParam->strInitAccessTime) );
 					DlgParam->OAccessTime = true;
 					break;
 				case SA_FIXEDIT_LAST_MODIFICATION_DATE:
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_MODIFICATION_DATE-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_LAST_MODIFICATION_DATE, DlgParam->strInitModifyDate) );
+					DlgParam->OModifyTime = true;
+					break;
 				case SA_FIXEDIT_LAST_MODIFICATION_TIME:
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_MODIFICATION_TIME-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_LAST_MODIFICATION_TIME, DlgParam->strInitModifyTime) );
 					DlgParam->OModifyTime = true;
 					break;
 				case SA_FIXEDIT_LAST_CHANGE_DATE:
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_CHANGE_DATE-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_LAST_CHANGE_DATE, DlgParam->strInitStatusChangeDate) );
+					DlgParam->OStatusChangeTime = true;
+					break;
 				case SA_FIXEDIT_LAST_CHANGE_TIME:
+					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_CHANGE_TIME-1, // mark (un)changed
+						IsEditChanged(hDlg, SA_FIXEDIT_LAST_CHANGE_TIME, DlgParam->strInitStatusChangeTime) );
 					DlgParam->OStatusChangeTime = true;
 					break;
 			}
@@ -876,57 +970,80 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND, L""},
 		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_FOCUS, Msg::SetAttrBriefInfo}, // if symlink in will Button & need first focus here
-		{DI_EDIT,      18,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY, L""}, // not readonly only if symlink
+		{DI_TEXT,      18,                  5,               18,               5,               {}, 0, L""},
+		{DI_EDIT,      19,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY, L""}, // not readonly only if symlink
 		{DI_TEXT,      3,                   6,               0,                6,               {}, DIF_SEPARATOR, Msg::SetAttrOwnerTitle},
 		{DI_TEXT,      5,                   7,               17,               7,               {}, 0, Msg::SetAttrOwner},
-		//{DI_EDIT,      18,                  6,               short(DlgX - 6),  6,               {}, 0, L""},
-		{DI_COMBOBOX,  18,                  7,               short(DlgX-6),    7,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+		{DI_TEXT,      18,                  7,               18,               7,               {}, 0, L""},
+		{DI_COMBOBOX,  19,                  7,               short(DlgX-6),    7,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 		{DI_TEXT,      5,                   8,               17,               8,               {}, 0, Msg::SetAttrGroup},
-		//{DI_EDIT,      18,                  7,               short(DlgX - 6),  7,               {}, 0, L""},
-		{DI_COMBOBOX,  18,                  8,               short(DlgX-6),    8,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+		{DI_TEXT,      18,                  8,               18,               8,               {}, 0, L""},
+		{DI_COMBOBOX,  19,                  8,               short(DlgX-6),    8,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
 
 		{DI_TEXT,      3,                   9,               0,                9,               {}, DIF_SEPARATOR, Msg::SetAttrModeTitle},
 		{DI_VTEXT,     39,                  10,              39,               12,              {}, DIF_BOXCOLOR, VerticalLine},
-		{DI_VTEXT,     51,                  10,              51,               12,              {}, DIF_BOXCOLOR, VerticalLine},
+		{DI_VTEXT,     52,                  10,              52,               12,              {}, DIF_BOXCOLOR, VerticalLine},
 
-		{DI_TEXT,      5,                   10,              18,               10,              {}, 0, Msg::SetAttrAccessUser},
+		{DI_TEXT,      5,                   10,              17,               10,              {}, 0, Msg::SetAttrAccessUser},
+		{DI_TEXT,      18,                  10,              18,               10,              {}, 0, L""},
 		{DI_CHECKBOX,  19,                  10,              23,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
+		{DI_TEXT,      25,                  10,              25,               10,              {}, 0, L""},
 		{DI_CHECKBOX,  26,                  10,              30,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
+		{DI_TEXT,      32,                  10,              32,               10,              {}, 0, L""},
 		{DI_CHECKBOX,  33,                  10,              37,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
 		{DI_TEXT,      5,                   11,              18,               11,              {}, 0, Msg::SetAttrAccessGroup},
+		{DI_TEXT,      18,                  11,              18,               11,              {}, 0, L""},
 		{DI_CHECKBOX,  19,                  11,              23,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
+		{DI_TEXT,      25,                  11,              25,               11,              {}, 0, L""},
 		{DI_CHECKBOX,  26,                  11,              30,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
+		{DI_TEXT,      32,                  11,              32,               11,              {}, 0, L""},
 		{DI_CHECKBOX,  33,                  11,              37,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
 		{DI_TEXT,      5,                   12,              18,               12,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_TEXT,      18,                  12,              18,               12,              {}, 0, L""},
 		{DI_CHECKBOX,  19,                  12,              23,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_TEXT,      25,                  12,              25,               12,              {}, 0, L""},
 		{DI_CHECKBOX,  26,                  12,              30,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_TEXT,      32,                  12,              32,               12,              {}, 0, L""},
 		{DI_CHECKBOX,  33,                  12,              37,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
 
-		{DI_CHECKBOX,  40,                  10,              52,               10,              {}, DIF_3STATE, Msg::SetAttrSUID},
-		{DI_CHECKBOX,  40,                  11,              52,               11,              {}, DIF_3STATE, Msg::SetAttrSGID},
-		{DI_CHECKBOX,  40,                  12,              52,               12,              {}, DIF_3STATE, Msg::SetAttrSticky},
+		{DI_TEXT,      40,                  10,              40,               10,              {}, 0, L""},
+		{DI_CHECKBOX,  41,                  10,              53,               10,              {}, DIF_3STATE, Msg::SetAttrSUID},
+		{DI_TEXT,      40,                  11,              40,               11,              {}, 0, L""},
+		{DI_CHECKBOX,  41,                  11,              53,               11,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_TEXT,      40,                  12,              40,               12,              {}, 0, L""},
+		{DI_CHECKBOX,  41,                  12,              53,               12,              {}, DIF_3STATE, Msg::SetAttrSticky},
 
-		{DI_TEXT,      52,                  10,              62,               10,              {}, 0, L"O&ctal: SUGO"},
-		{DI_FIXEDIT,   59,                  11,              62,               11,              {(DWORD_PTR)L"####"}, DIF_MASKEDIT, L""},
-		{DI_BUTTON,    52,                  12,              62,               12,              {}, DIF_BTNNOCLOSE, Msg::SetAttrModeOriginal},
+		{DI_TEXT,      53,                  10,              63,               10,              {}, 0, L"O&ctal: SUGO"},
+		{DI_TEXT,      59,                  11,              59,               11,              {}, 0, L""},
+		{DI_FIXEDIT,   60,                  11,              63,               11,              {(DWORD_PTR)L"####"}, DIF_MASKEDIT, L""},
+		{DI_BUTTON,    53,                  12,              63,               12,              {}, DIF_BTNNOCLOSE, Msg::SetAttrModeOriginal},
 
-		{DI_TEXT,      3,                   13,              0,                13,               {}, DIF_SEPARATOR, Msg::SetAttrAttributesTitle},
-		{DI_CHECKBOX,  ColX1Of3,            14,              0,                14,               {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_CHECKBOX,  ColX2Of3,            14,              0,                14,               {}, DIF_3STATE, Msg::SetAttrAppend},
+		{DI_TEXT,      3,                   13,              0,                13,              {}, DIF_SEPARATOR, Msg::SetAttrAttributesTitle},
+		{DI_TEXT,      ColX1Of3,            14,              ColX1Of3,         14,              {}, 0, L""},
+		{DI_CHECKBOX,  short(ColX1Of3+1),   14,              0,                14,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_TEXT,      ColX2Of3,            14,              ColX2Of3,         14,              {}, 0, L""},
+		{DI_CHECKBOX,  short(ColX2Of3+1),   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_CHECKBOX,  ColX3Of3,            14,              0,                14,               {}, DIF_3STATE, Msg::SetAttrHidden},
+		{DI_TEXT,      ColX3Of3,            14,              ColX3Of3,         14,              {}, 0, L""},
+		{DI_CHECKBOX,  short(ColX3Of3+1),   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
 		{DI_TEXT,      3,                   15,              0,                15,              {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      short(DlgX - 29),    16,              0,                16,              {}, 0, L""},
 		{DI_TEXT,      5,                   17,              0,                17,              {}, 0, Msg::SetAttrAccessTime},
+		{DI_TEXT,      short(DlgX - 30),    17,              short(DlgX - 30), 17,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 29),    17,              short(DlgX - 19), 17,              {}, DIF_MASKEDIT, L""},
+		{DI_TEXT,      short(DlgX - 18),    17,              short(DlgX - 18), 17,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 17),    17,              short(DlgX - 6),  17,              {}, DIF_MASKEDIT, L""},
 		{DI_TEXT,      5,                   18,              0,                18,              {}, 0, Msg::SetAttrModificationTime},
+		{DI_TEXT,      short(DlgX - 30),    18,              short(DlgX - 30), 18,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 29),    18,              short(DlgX - 19), 18,              {}, DIF_MASKEDIT, L""},
+		{DI_TEXT,      short(DlgX - 18),    18,              short(DlgX - 18), 18,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 17),    18,              short(DlgX - 6),  18,              {}, DIF_MASKEDIT, L""},
 		{DI_TEXT,      5,                   19,              0,                19,              {}, 0, Msg::SetAttrStatusChangeTime},
+		{DI_TEXT,      short(DlgX - 30),    19,              short(DlgX - 30), 19,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 29),    19,              short(DlgX - 19), 19,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
+		{DI_TEXT,      short(DlgX - 18),    19,              short(DlgX - 18), 19,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 17),    19,              short(DlgX - 6),  19,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
 		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal},
 		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent},
@@ -1293,7 +1410,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		DlgParam.strOwner = AttrDlg[SA_COMBO_OWNER].strData;
 		DlgParam.strGroup = AttrDlg[SA_COMBO_GROUP].strData;
-		FARString strInitOwner = DlgParam.strOwner, strInitGroup = DlgParam.strGroup;
+		DlgParam.strInitOwner = DlgParam.strOwner; DlgParam.strInitGroup = DlgParam.strGroup;
 
 		DlgParam.DialogMode = ((SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 						? MODE_FILE
@@ -1311,6 +1428,16 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		Dlg.SetPosition(-1, -1, DlgX, DlgY);
 		SetAttrCalcBitsCharFromModeCheckBoxes(&Dlg);	// set octal
+		// initial values at dialog start for control change marker
+		DlgParam.strInitInfoSymLink = reinterpret_cast<LPCWSTR>(SendDlgMessage(&Dlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
+		DlgParam.strInitOctal = reinterpret_cast<LPCWSTR>(SendDlgMessage(&Dlg, DM_GETCONSTTEXTPTR, SA_FIXEDIT_MODE_OCTAL, 0));
+		DlgParam.strInitAccessDate = AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData;
+		DlgParam.strInitAccessTime = AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData;
+		DlgParam.strInitModifyDate = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData;
+		DlgParam.strInitModifyTime = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData;
+		DlgParam.strInitStatusChangeDate = AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData;
+		DlgParam.strInitStatusChangeTime = AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData;
+
 		Dlg.Process();
 
 		switch (Dlg.GetExitCode()) {
@@ -1364,10 +1491,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					}
 
 					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner, SkipMode,
-								strSelName, strInitOwner))
+								strSelName, DlgParam.strInitOwner))
 						break;
 					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup, SkipMode,
-								strSelName, strInitGroup))
+								strSelName, DlgParam.strInitGroup))
 						break;
 
 					FILETIME UnixAccessTime = {}, UnixModificationTime = {};
@@ -1445,10 +1572,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						}
 
 						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner, SkipMode,
-									strSelName, strInitOwner))
+									strSelName, DlgParam.strInitOwner))
 							break;
 						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup, SkipMode,
-									strSelName, strInitGroup))
+									strSelName, DlgParam.strInitGroup))
 							break;
 
 						FILETIME UnixAccessTime = {}, UnixModificationTime = {};
@@ -1510,11 +1637,11 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 									}
 
 									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileOwner,
-												SkipMode, strFullName, strInitOwner,
+												SkipMode, strFullName, DlgParam.strInitOwner,
 												DlgParam.OSubfoldersState))
 										break;
 									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup,
-												SkipMode, strFullName, strInitGroup,
+												SkipMode, strFullName, DlgParam.strInitGroup,
 												DlgParam.OSubfoldersState))
 										break;
 

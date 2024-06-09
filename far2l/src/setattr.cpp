@@ -601,7 +601,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 
 		case DN_MOUSECLICK: {
 			//_SVS(SysLog(L"Msg=DN_MOUSECLICK Param1=%d Param2=%d",Param1,Param2));
-			if (Param1 >= SA_TEXT_LAST_ACCESS && Param1 <= SA_FIXEDIT_LAST_CHANGE_TIME) {
+			if (Param1 >= SA_TEXT_LAST_ACCESS && Param1 <= SA_FIXEDIT_LAST_MODIFICATION_TIME/*SA_FIXEDIT_LAST_CHANGE_TIME*/) {
 				if (reinterpret_cast<MOUSE_EVENT_RECORD *>(Param2)->dwEventFlags == DOUBLE_CLICK) {
 					// Дадим Менеджеру диалогов "попотеть"
 					DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -609,7 +609,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				}
 
 				if (Param1 == SA_TEXT_LAST_ACCESS || Param1 == SA_TEXT_LAST_MODIFICATION
-						|| Param1 == SA_TEXT_LAST_CHANGE) {
+						/*|| Param1 == SA_TEXT_LAST_CHANGE*/) {
 					Param1++;
 				}
 

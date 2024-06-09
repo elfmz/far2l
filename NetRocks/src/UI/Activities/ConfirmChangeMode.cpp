@@ -109,11 +109,11 @@ ConfirmChangeMode::ConfirmChangeMode(int selected_count, const std::string &disp
 
 	_di.NextLine();
 	_di.AddAtLine(DI_TEXT, 5,18, 0, MModeUser);
-	_i_mode_user_read = _di.AddAtLine(DI_CHECKBOX, 19,23, DIF_3STATE, MModeRead);
+	_i_mode_user_read = _di.AddAtLine(DI_CHECKBOX, 19,23, DIF_3STATE, MModeReadHot);
 	StateFromModes(_i_mode_user_read, may_recurse, mode_all, mode_any, S_IRUSR);
-	_i_mode_user_write = _di.AddAtLine(DI_CHECKBOX, 26,30, DIF_3STATE, MModeWrite);
+	_i_mode_user_write = _di.AddAtLine(DI_CHECKBOX, 26,30, DIF_3STATE, MModeWriteHot);
 	StateFromModes(_i_mode_user_write, may_recurse, mode_all, mode_any, S_IWUSR);
-	_i_mode_user_execute = _di.AddAtLine(DI_CHECKBOX, 33,37, DIF_3STATE, MModeExecute);
+	_i_mode_user_execute = _di.AddAtLine(DI_CHECKBOX, 33,37, DIF_3STATE, MModeExecuteHot);
 	StateFromModes(_i_mode_user_execute, may_recurse, mode_all, mode_any, S_IXUSR);
 	_i_mode_set_uid = _di.AddAtLine(DI_CHECKBOX, 40,52, DIF_3STATE, MModeSetUID);
 	StateFromModes(_i_mode_set_uid, may_recurse, mode_all, mode_any, S_ISUID);

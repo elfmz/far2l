@@ -118,17 +118,18 @@ enum SETATTRDLG
 	SA_CHECKBOX_STICKY,
 
 	SA_TEXT_MODE_OCTAL,
+	SA_TEXT_MODE_OCTAL_ORIGINAL,
 	SA_TEXT_MODE_OCTAL_CHMARK,
 	SA_FIXEDIT_MODE_OCTAL,
 	SA_BUTTON_MODE_ORIGINAL,
 
 	SA_SEPARATOR_ATTRIBUTES,
-	SA_TEXT_IMMUTABLE,
+	SA_TEXT_IMMUTABLE_CHMARK,
 	SA_CHECKBOX_IMMUTABLE,
-	SA_TEXT_APPEND,
+	SA_TEXT_APPEND_CHMARK,
 	SA_CHECKBOX_APPEND,
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-	SA_TEXT_HIDDEN,
+	SA_TEXT_HIDDEN_CHMARK,
 	SA_CHECKBOX_HIDDEN,
 #endif
 
@@ -1014,6 +1015,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_CHECKBOX,  41,                  12,              53,               12,              {}, DIF_3STATE, Msg::SetAttrSticky},
 
 		{DI_TEXT,      53,                  10,              63,               10,              {}, 0, L"O&ctal: SUGO"},
+		{DI_TEXT,      54,                  11,              57,               11,              {}, 0, L""},
 		{DI_TEXT,      59,                  11,              59,               11,              {}, 0, L""},
 		{DI_FIXEDIT,   60,                  11,              63,               11,              {(DWORD_PTR)L"####"}, DIF_MASKEDIT, L""},
 		{DI_BUTTON,    53,                  12,              63,               12,              {}, DIF_BTNNOCLOSE, Msg::SetAttrModeOriginal},
@@ -1431,6 +1433,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		// initial values at dialog start for control change marker
 		DlgParam.strInitInfoSymLink = reinterpret_cast<LPCWSTR>(SendDlgMessage(&Dlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
 		DlgParam.strInitOctal = reinterpret_cast<LPCWSTR>(SendDlgMessage(&Dlg, DM_GETCONSTTEXTPTR, SA_FIXEDIT_MODE_OCTAL, 0));
+		SendDlgMessage(&Dlg, DM_SETTEXTPTR, SA_TEXT_MODE_OCTAL_ORIGINAL, reinterpret_cast<LONG_PTR>(DlgParam.strInitOctal.CPtr()));
 		DlgParam.strInitAccessDate = AttrDlg[SA_FIXEDIT_LAST_ACCESS_DATE].strData;
 		DlgParam.strInitAccessTime = AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strData;
 		DlgParam.strInitModifyDate = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_DATE].strData;

@@ -1,0 +1,78 @@
+{                                                                                                                       
+        return !(Flags & (LIF_DISABLE | LIF_HIDDEN | LIF_SEPARATOR));                                                   
+}                                                                                                                       
+                                                                                                                        
+// может быть выбран                                                                                                    
+bool VMenu::ItemCanBeEntered(DWORD Flags)                                                                               
+{                                                                                                                       
+        return !(Flags & (LIF_DISABLE | LIF_HIDDEN | LIF_GRAYED | LIF_SEPARATOR));                                      
+}                                                                                                                       
+                                                                                                                        
+// видимый                                                                                                              
+bool VMenu::ItemIsVisible(DWORD Flags)                                                                                  
+{                                                                                                                       
+        return !(Flags & (LIF_HIDDEN));                                                                                 
+}                                                                                                                       
+                                                                                                                        
+bool VMenu::ItemIsSeparator(DWORD Flags)                                                                                
+{                                                                                                                       
+        return !!(Flags & (LIF_SEPARATOR));                                                                             
+}                                                                                                                       
+                                                                                                                        
+bool VMenu::UpdateRequired()                                                                                            
+{                                                                                                                       
+        CriticalSectionLock Lock(CS);                                                                                   
+                                                                                                                        
+        return CheckFlags(VMENU_UPDATEREQUIRED) != 0;                                                                   
+}                                                                                                                       
+                                                                                                                        
+void VMenu::UpdateInternalCounters(DWORD OldFlags, DWORD NewFlags)                                                      
+{                                                                                                                       
+        if (OldFlags & MIF_SUBMENU)                                                                                     
+                ItemSubMenusCount--;                                                                                    
+                                                                                                                        
+        if (!ItemIsVisible(OldFlags))                                                                                   
+                ItemHiddenCount--;                                                                                      
+                                                                                                                        
+        if (NewFlags & MIF_SUBMENU)                                                                                     
+                ItemSubMenusCount++;                                                                                    
+                                                                                                                        
+        if (!ItemIsVisible(NewFlags))                                                                                   
+                ItemHiddenCount++;                                                                                      
+}                                                                                                                       
+                                                                                                                        
+void VMenu::UpdateItemFlags(int Pos, DWORD NewFlags)                                                                    
+{                                                                                                                       
+        UpdateInternalCounters(Item[Pos]->Flags, NewFlags);                                                             
+                                                                                                                        
+        if (!ItemCanHaveFocus(NewFlags))                                                                                
+                NewFlags&= ~LIF_SELECTED;                                                                               
+                                                                                                                        
+        // remove selection                                                                                             
+        if ((Item[Pos]->Flags & LIF_SELECTED) && !(NewFlags & LIF_SELECTED)) {                                          
+                SelectPos = -1;                                                                                         
+        }                                                                                                               
+        // set new selection                                                                                            
+        else if (!(Item[Pos]->Flags & LIF_SELECTED) && (NewFlags & LIF_SELECTED)) {                                     
+                if (SelectPos >= 0)                                                                                     
+                        Item[SelectPos]->Flags&= ~LIF_SELECTED;                                                         
+                                                                                                                        
+                SelectPos = Pos;                                                                                        
+        }                                                                                                               
+                                                                                                                        
+        Item[Pos]->Flags = NewFlags;                                                                                    
+                                                                                                                        
+        if (SelectPos < 0)                                                                                              
+                SetSelectPos(0, 1);                                                                                     
+                                                                                                                        
+        if (LOWORD(Item[Pos]->Flags)) {                                                                                 
+                Item[Pos]->Flags|= LIF_CHECKED;                                                                         
+                if (LOWORD(Item[Pos]->Flags) == 1) {                                                                    
+                        Item[Pos]->Flags&= 0xFFFF0000;                                                                  
+                }                                                                                                       
+        }                                                                                                               
+}                                                                                                                       
+                                                                                                                        
+// переместить курсор c учётом пунктов которые не могу получать фокус                                                   
+int VMenu::SetSelectPos(int Pos, int Direct, bool stop_on_edge)                                                         
+{                                                                                                                       

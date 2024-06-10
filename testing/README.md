@@ -277,3 +277,25 @@ Hashes FS objects at given pathes or single path, returning hash that unique ide
 Hash optionally affected by files data, names, mode and times.  
 Thus this function allows to easily check if there're changes in file(s)  
 In case of any IO error - error text included into hashing result.
+
+---------------------------------------------------------
+
+`func LoadTextFile(fpath string) []string`
+
+Loads given text file into array of strings
+
+---------------------------------------------------------
+
+`func BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) bool`
+
+Loads given text file into array of strings and checks that given screen region contains exactly same strings
+
+---------------------------------------------------------
+
+`func SaveTextFile(fpath string, lines []string)`
+
+---------------------------------------------------------
+
+`func BoundedLinesSaveAsTextFile(left uint32, top uint32, width uint32, height uint32, fpath string)`
+
+---------------------------------------------------------

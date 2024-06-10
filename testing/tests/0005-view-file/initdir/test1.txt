@@ -1,0 +1,78 @@
+        VMenuProc(Proc ? Proc : (FARWINDOWPROC)VMenu::DefMenuProc),                                                     
+        OldTitle(nullptr),                                                                                              
+        bFilterEnabled(false),                                                                                          
+        bFilterLocked(false),                                                                                           
+        Item(nullptr),                                                                                                  
+        ItemCount(0),                                                                                                   
+        ItemHiddenCount(0),                                                                                             
+        ItemSubMenusCount(0)                                                                                            
+{                                                                                                                       
+        SaveScr = nullptr;                                                                                              
+        SetDynamicallyBorn(false);                                                                                      
+        SetFlags(Flags | VMENU_MOUSEREACTION | VMENU_UPDATEREQUIRED);                                                   
+        ClearFlags(VMENU_SHOWAMPERSAND | VMENU_MOUSEDOWN);                                                              
+        GetCursorType(PrevCursorVisible, PrevCursorSize);                                                               
+        bRightBtnPressed = false;                                                                                       
+        WrappedSeparatorIndex = -1;                                                                                     
+                                                                                                                        
+        // инициализируем перед тем, как добавлять айтема                                                               
+        UpdateMaxLengthFromTitles();                                                                                    
+                                                                                                                        
+        MenuItemEx NewItem;                                                                                             
+                                                                                                                        
+        for (int I = 0; I < ItemCount; I++) {                                                                           
+                NewItem.Clear();                                                                                        
+                                                                                                                        
+                if (!IsPtr(Data[I].Name))       // awful                                                                
+                        NewItem.strName = FarLangMsg{(int)(DWORD_PTR)Data[I].Name};                                     
+                else                                                                                                    
+                        NewItem.strName = Data[I].Name;                                                                 
+                                                                                                                        
+                // NewItem.AmpPos = -1;                                                                                 
+                NewItem.AccelKey = Data[I].AccelKey;                                                                    
+                NewItem.Flags = Data[I].Flags;                                                                          
+                AddItem(&NewItem);                                                                                      
+        }                                                                                                               
+                                                                                                                        
+        SetMaxHeight(MaxHeight);                                                                                        
+        SetColors(nullptr);             // Установим цвет по умолчанию                                                  
+                                                                                                                        
+        if (!CheckFlags(VMENU_LISTBOX) && CtrlObject) {                                                                 
+                PrevMacroMode = CtrlObject->Macro.GetMode();                                                            
+                                                                                                                        
+                if (!IsMenuArea(PrevMacroMode))                                                                         
+                        CtrlObject->Macro.SetMode(MACRO_MENU);                                                          
+        }                                                                                                               
+                                                                                                                        
+        if (!CheckFlags(VMENU_LISTBOX))                                                                                 
+                FrameManager->ModalizeFrame(this);                                                                      
+                                                                                                                        
+        if (ParentDialog)                                                                                               
+                SetBottomTitle(L"Ctrl-Alt-F"); // by default info about keys for toggle filtering feature               
+}                                                                                                                       
+                                                                                                                        
+VMenu::~VMenu()                                                                                                         
+{                                                                                                                       
+        if (!CheckFlags(VMENU_LISTBOX) && CtrlObject)                                                                   
+                CtrlObject->Macro.SetMode(PrevMacroMode);                                                               
+                                                                                                                        
+        bool WasVisible = Flags.Check(FSCROBJ_VISIBLE) != 0;                                                            
+        Hide();                                                                                                         
+        DeleteItems();                                                                                                  
+        SetCursorType(PrevCursorVisible, PrevCursorSize);                                                               
+                                                                                                                        
+        if (!CheckFlags(VMENU_LISTBOX)) {                                                                               
+                FrameManager->UnmodalizeFrame(this);                                                                    
+                if (WasVisible) {                                                                                       
+                        FrameManager->RefreshFrame();                                                                   
+                }                                                                                                       
+        }                                                                                                               
+}                                                                                                                       
+                                                                                                                        
+void VMenu::ResetCursor()                                                                                               
+{                                                                                                                       
+        GetCursorType(PrevCursorVisible, PrevCursorSize);                                                               
+}                                                                                                                       
+                                                                                                                        
+// может иметь фокус                                                                                                    
+bool VMenu::ItemCanHaveFocus(DWORD Flags)                                                                               

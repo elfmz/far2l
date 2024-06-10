@@ -95,7 +95,6 @@ static int CalcByteDistance(UINT CodePage, const wchar_t *begin, const wchar_t *
 
 	} else if (CodePage == CP_UTF8) {
 		distance = UtfCalcSpace<wchar_t, uint8_t>(begin, end - begin, false);
-
 	} else {	// one-byte code page?
 		distance = end - begin;
 	}
@@ -987,11 +986,22 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				bSelStartFound = true;
 			}
 
-			if (!(MaxSize--))
+			if (MaxSize == 0)
 				break;
 
 			if (!vgetc(Ch))
 				break;
+
+			if (MaxSize > 0) {
+				if (VM.CodePage == CP_UTF8) {
+					MaxSize-= UtfCalcSpace<wchar_t, char>(&Ch, 1, false);
+					if (MaxSize < 0) {
+						MaxSize = 0;
+					}
+				} else {
+					MaxSize--;
+				}
+			}
 
 			if (Ch == CRSym)
 				break;
@@ -2081,10 +2091,10 @@ void Viewer::Up()
 			//	khffgkjkfdg dfkghd jgfhklf |
 			//	sdflksj lfjghf fglh lf     |
 			//	dfdffgljh ldgfhj           |
-			int SpaceStart = -1; // Keep spaces at beginning of wrapped line: #2246
+			bool LeadingSpaces = WrapBufSize > 0 && IsSpace(Buf[I]);
 			for (I = 0; I < WrapBufSize;) {
 				if (!IsSpace(Buf[I])) {
-					int CurLineStart = (SpaceStart < 0) ? I : SpaceStart;
+					int CurLineStart = LeadingSpaces ? 0 : I; // Keep spaces at beginning of wrapped line: #2246
 					for (int LastFitEnd = CurLineStart + 1;; ++I) {
 						if (I == WrapBufSize) {
 							int distance =
@@ -2101,12 +2111,9 @@ void Viewer::Up()
 							LastFitEnd = I + 1;
 						}
 					}
-					SpaceStart = -1;
+					LeadingSpaces = false;
 
 				} else {
-					if (SpaceStart == -1) {
-						SpaceStart = I;
-					}
 					++I;
 				}
 			}

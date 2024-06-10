@@ -2091,7 +2091,7 @@ void Viewer::Up()
 			//	khffgkjkfdg dfkghd jgfhklf |
 			//	sdflksj lfjghf fglh lf     |
 			//	dfdffgljh ldgfhj           |
-			bool LeadingSpaces = WrapBufSize > 0 && IsSpace(Buf[I]);
+			bool LeadingSpaces = WrapBufSize > 0 && IsSpace(Buf[0]);
 			for (I = 0; I < WrapBufSize;) {
 				if (!IsSpace(Buf[I])) {
 					int CurLineStart = LeadingSpaces ? 0 : I; // Keep spaces at beginning of wrapped line: #2246

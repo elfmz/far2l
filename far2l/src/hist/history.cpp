@@ -429,7 +429,19 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 		bool IsUpdate = false;
 		HistoryMenu.DeleteItems();
 		HistoryMenu.Modal::ClearDone();
-		HistoryMenu.SetBottomTitle(Msg::HistoryFooter);
+		switch (TypeHistory) {
+			case HISTORYTYPE_CMD:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooterCmd);
+				break;
+			case HISTORYTYPE_VIEW:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooterViewEdit);
+				break;
+			case HISTORYTYPE_FOLDER:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooterFolder);
+				break;
+			default:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooter);
+		}
 		// заполнение пунктов меню
 		for (const HistoryRecord *HistoryItem =
 						TypeHistory == HISTORYTYPE_DIALOG ? HistoryList.Last() : HistoryList.First();

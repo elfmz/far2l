@@ -1,0 +1,22 @@
+        }                                                                                      
+                                                                                               
+        return PItem->UserDataSize;                                                            
+}                                                                                              
+                                                                                               
+// Присовокупить к итему данные.                                                               
+int VMenu::SetUserData(LPCVOID Data,    // Данные                                              
+                int Size,                                               // Размер, если =0 то  
+предполагается, что в Data-строка                                                              
+                int Position)                                   // номер итема                 
+{                                                                                              
+        CriticalSectionLock Lock(CS);                                                          
+                                                                                               
+        int ItemPos = GetItemPosition(Position);                                               
+                                                                                               
+        if (ItemPos < 0)                                                                       
+                return 0;                                                                      
+                                                                                               
+        return _SetUserData(Item[ItemPos], Data, Size);                                        
+}                                                                                              
+                                                                                               
+// Получить данные                                                                             

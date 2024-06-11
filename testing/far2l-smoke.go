@@ -444,6 +444,12 @@ func far2l_BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, heig
 			return false
 		}
 	}
+	if len(screen_lines) != len(file_lines) {
+		fpath_actual:= fpath + ".actual"
+		aux_SaveTextFile(fpath_actual, screen_lines)
+		setErrorString(fmt.Sprintf("Wrong lines count: %d != %d\nActual lines saved into: %s", len(screen_lines), len(file_lines), fpath_actual))
+		return false
+	}
 	return true
 }
 

@@ -1,0 +1,22 @@
+void *VMenu::GetUserData(void *Data, int Size, int Position)                                   
+{                                                                                              
+        CriticalSectionLock Lock(CS);                                                          
+                                                                                               
+        int ItemPos = GetItemPosition(Position);                                               
+                                                                                               
+        if (ItemPos < 0)                                                                       
+                return nullptr;                                                                
+                                                                                               
+        return _GetUserData(Item[ItemPos], Data, Size);                                        
+}                                                                                              
+                                                                                               
+FarListItem *VMenu::MenuItem2FarList(const MenuItemEx *MItem, FarListItem *FItem)              
+{                                                                                              
+        if (FItem && MItem) {                                                                  
+                memset(FItem, 0, sizeof(FarListItem));                                         
+                FItem->Flags = MItem->Flags;                                                   
+                FItem->Text = MItem->strName;                                                  
+                return FItem;                                                                  
+        }                                                                                      
+                                                                                               
+        return nullptr;                                                                        

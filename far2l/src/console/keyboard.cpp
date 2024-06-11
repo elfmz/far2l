@@ -1384,11 +1384,11 @@ int WriteInput(wchar_t Key, DWORD Flags)
 		return 0;
 }
 
-int CheckForEscSilent()
+bool CheckForEscSilent()
 {
 	INPUT_RECORD rec;
 	FarKey Key;
-	BOOL Processed = TRUE;
+	bool Processed = WinPortTesting() == FALSE;
 	/*
 		TODO: Здесь, в общем то - ХЗ, т.к.
 			по хорошему нужно проверять CtrlObject->Macro.PeekKey() на ESC или BREAK
@@ -1396,7 +1396,7 @@ int CheckForEscSilent()
 	*/
 
 	// если в "макросе"...
-	if (CtrlObject->Macro.IsExecuting() != MACROMODE_NOMACRO && FrameManager->GetCurrentFrame()) {
+	if (Processed && CtrlObject->Macro.IsExecuting() != MACROMODE_NOMACRO && FrameManager->GetCurrentFrame()) {
 #if 0
 
 		// ...но ЭТО конец последовательности (не Op-код)...
@@ -1408,7 +1408,7 @@ int CheckForEscSilent()
 #else
 
 		if (CtrlObject->Macro.IsDsableOutput())
-			Processed = FALSE;
+			Processed = false;
 
 #endif
 	}
@@ -1436,7 +1436,7 @@ int CheckForEscSilent()
 		else
 		*/
 		if (Key == KEY_ESC || Key == KEY_BREAK)
-			return TRUE;
+			return true;
 		else if (Key == KEY_ALTF9)
 			FrameManager->ProcessKey(KEY_ALTF9);
 	}
@@ -1444,25 +1444,25 @@ int CheckForEscSilent()
 	if (!Processed && CtrlObject->Macro.IsExecuting() != MACROMODE_NOMACRO)
 		ScrBuf.Flush();
 
-	return FALSE;
+	return false;
 }
 
-int ConfirmAbortOp()
+bool ConfirmAbortOp()
 {
-	return Opt.Confirm.Esc ? AbortMessage() : TRUE;
+	return Opt.Confirm.Esc ? AbortMessage() : true;
 }
 
 /*
 	$ 09.02.2001 IS
 	Подтверждение нажатия Esc
 */
-int CheckForEsc()
+bool CheckForEsc()
 {
 	if (!CheckForEscSilent())
-		return FALSE;
+		return false;
 
 	if (!Opt.Confirm.Esc)
-		return TRUE;
+		return true;
 
 	INPUT_RECORD rec;
 	// purge all pending input events to avoid closing confirmation dialog by second Esc thats very annoying
@@ -1759,7 +1759,7 @@ int TranslateKeyToVK(FarKey Key, int &VirtKey, int &ControlState, INPUT_RECORD *
 	return VirtKey;
 }
 
-int IsNavKey(DWORD Key)
+bool IsNavKey(DWORD Key)
 {
 	static DWORD NavKeys[][2] = {
 			{0, KEY_CTRLC}, {0, KEY_INS}, {0, KEY_NUMPAD0}, {0, KEY_CTRLINS}, {0, KEY_CTRLNUMPAD0},
@@ -1773,87 +1773,85 @@ int IsNavKey(DWORD Key)
 	for (int I = 0; I < int(ARRAYSIZE(NavKeys)); I++)
 		if ((!NavKeys[I][0] && Key == NavKeys[I][1])
 				|| (NavKeys[I][0] && (Key & 0x00FFFFFF) == (NavKeys[I][1] & 0x00FFFFFF)))
-			return TRUE;
+			return true;
 
-	return FALSE;
+	return false;
 }
 
-int IsShiftKey(DWORD Key)
+bool IsShiftKey(DWORD Key)
 {
-	static DWORD ShiftKeys[] = {
-			KEY_SHIFTLEFT,
-			KEY_SHIFTNUMPAD4,
-			KEY_SHIFTRIGHT,
-			KEY_SHIFTNUMPAD6,
-			KEY_SHIFTHOME,
-			KEY_SHIFTNUMPAD7,
-			KEY_SHIFTEND,
-			KEY_SHIFTNUMPAD1,
-			KEY_SHIFTUP,
-			KEY_SHIFTNUMPAD8,
-			KEY_SHIFTDOWN,
-			KEY_SHIFTNUMPAD2,
-			KEY_SHIFTPGUP,
-			KEY_SHIFTNUMPAD9,
-			KEY_SHIFTPGDN,
-			KEY_SHIFTNUMPAD3,
-			KEY_CTRLSHIFTHOME,
-			KEY_CTRLSHIFTNUMPAD7,
-			KEY_CTRLSHIFTPGUP,
-			KEY_CTRLSHIFTNUMPAD9,
-			KEY_CTRLSHIFTEND,
-			KEY_CTRLSHIFTNUMPAD1,
-			KEY_CTRLSHIFTPGDN,
-			KEY_CTRLSHIFTNUMPAD3,
-			KEY_CTRLSHIFTLEFT,
-			KEY_CTRLSHIFTNUMPAD4,
-			KEY_CTRLSHIFTRIGHT,
-			KEY_CTRLSHIFTNUMPAD6,
-			KEY_ALTSHIFTDOWN,
-			KEY_ALTSHIFTNUMPAD2,
-			KEY_ALTSHIFTLEFT,
-			KEY_ALTSHIFTNUMPAD4,
-			KEY_ALTSHIFTRIGHT,
-			KEY_ALTSHIFTNUMPAD6,
-			KEY_ALTSHIFTUP,
-			KEY_ALTSHIFTNUMPAD8,
-			KEY_ALTSHIFTEND,
-			KEY_ALTSHIFTNUMPAD1,
-			KEY_ALTSHIFTHOME,
-			KEY_ALTSHIFTNUMPAD7,
-			KEY_ALTSHIFTPGDN,
-			KEY_ALTSHIFTNUMPAD3,
-			KEY_ALTSHIFTPGUP,
-			KEY_ALTSHIFTNUMPAD9,
-			KEY_CTRLALTPGUP,
-			KEY_CTRLALTNUMPAD9,
-			KEY_CTRLALTHOME,
-			KEY_CTRLALTNUMPAD7,
-			KEY_CTRLALTPGDN,
-			KEY_CTRLALTNUMPAD2,
-			KEY_CTRLALTEND,
-			KEY_CTRLALTNUMPAD1,
-			KEY_CTRLALTLEFT,
-			KEY_CTRLALTNUMPAD4,
-			KEY_CTRLALTRIGHT,
-			KEY_CTRLALTNUMPAD6,
-			KEY_ALTUP,
-			KEY_ALTLEFT,
-			KEY_ALTDOWN,
-			KEY_ALTRIGHT,
-			KEY_ALTHOME,
-			KEY_ALTEND,
-			KEY_ALTPGUP,
-			KEY_ALTPGDN,
-			KEY_ALT,
-			KEY_CTRL,
-	};
+	switch (Key) {
+		case KEY_SHIFTLEFT:
+		case KEY_SHIFTNUMPAD4:
+		case KEY_SHIFTRIGHT:
+		case KEY_SHIFTNUMPAD6:
+		case KEY_SHIFTHOME:
+		case KEY_SHIFTNUMPAD7:
+		case KEY_SHIFTEND:
+		case KEY_SHIFTNUMPAD1:
+		case KEY_SHIFTUP:
+		case KEY_SHIFTNUMPAD8:
+		case KEY_SHIFTDOWN:
+		case KEY_SHIFTNUMPAD2:
+		case KEY_SHIFTPGUP:
+		case KEY_SHIFTNUMPAD9:
+		case KEY_SHIFTPGDN:
+		case KEY_SHIFTNUMPAD3:
+		case KEY_CTRLSHIFTHOME:
+		case KEY_CTRLSHIFTNUMPAD7:
+		case KEY_CTRLSHIFTPGUP:
+		case KEY_CTRLSHIFTNUMPAD9:
+		case KEY_CTRLSHIFTEND:
+		case KEY_CTRLSHIFTNUMPAD1:
+		case KEY_CTRLSHIFTPGDN:
+		case KEY_CTRLSHIFTNUMPAD3:
+		case KEY_CTRLSHIFTLEFT:
+		case KEY_CTRLSHIFTNUMPAD4:
+		case KEY_CTRLSHIFTRIGHT:
+		case KEY_CTRLSHIFTNUMPAD6:
+		case KEY_ALTSHIFTDOWN:
+		case KEY_ALTSHIFTNUMPAD2:
+		case KEY_ALTSHIFTLEFT:
+		case KEY_ALTSHIFTNUMPAD4:
+		case KEY_ALTSHIFTRIGHT:
+		case KEY_ALTSHIFTNUMPAD6:
+		case KEY_ALTSHIFTUP:
+		case KEY_ALTSHIFTNUMPAD8:
+		case KEY_ALTSHIFTEND:
+		case KEY_ALTSHIFTNUMPAD1:
+		case KEY_ALTSHIFTHOME:
+		case KEY_ALTSHIFTNUMPAD7:
+		case KEY_ALTSHIFTPGDN:
+		case KEY_ALTSHIFTNUMPAD3:
+		case KEY_ALTSHIFTPGUP:
+		case KEY_ALTSHIFTNUMPAD9:
+		case KEY_CTRLALTPGUP:
+		case KEY_CTRLALTNUMPAD9:
+		case KEY_CTRLALTHOME:
+		case KEY_CTRLALTNUMPAD7:
+		case KEY_CTRLALTPGDN:
+		case KEY_CTRLALTNUMPAD2:
+		case KEY_CTRLALTEND:
+		case KEY_CTRLALTNUMPAD1:
+		case KEY_CTRLALTLEFT:
+		case KEY_CTRLALTNUMPAD4:
+		case KEY_CTRLALTRIGHT:
+		case KEY_CTRLALTNUMPAD6:
+		case KEY_ALTUP:
+		case KEY_ALTLEFT:
+		case KEY_ALTDOWN:
+		case KEY_ALTRIGHT:
+		case KEY_ALTHOME:
+		case KEY_ALTEND:
+		case KEY_ALTPGUP:
+		case KEY_ALTPGDN:
+		case KEY_ALT:
+		case KEY_CTRL:
+			return true;
 
-	for (int I = 0; I < int(ARRAYSIZE(ShiftKeys)); I++)
-		if (Key == ShiftKeys[I])
-			return TRUE;
-
-	return FALSE;
+		default:
+			return false;
+	}
 }
 
 // GetAsyncKeyState(VK_RSHIFT)

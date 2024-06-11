@@ -814,7 +814,7 @@ int Editor::ProcessKey(FarKey Key)
 	int CurPos, CurVisPos, I;
 	CurPos = CurLine->GetCurPos();
 	CurVisPos = GetLineCurPos();
-	int isk = IsShiftKey(Key);
+	const bool isk = IsShiftKey(Key);
 	_SVS(SysLog(L"[%d] isk=%d", __LINE__, isk));
 
 	// if ((!isk || CtrlObject->Macro.IsExecuting()) && !isk && !Pasting)

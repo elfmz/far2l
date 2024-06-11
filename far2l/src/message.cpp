@@ -614,7 +614,7 @@ void SetMessageHelp(const wchar_t *Topic)
 		FALSE - продолжить операцию
 		TRUE  - прервать операцию
 */
-int AbortMessage()
+bool AbortMessage()
 {
 	int Res = Message(MSG_WARNING | MSG_KILLSAVESCREEN, 2, Msg::KeyESCWasPressed,
 			((Opt.Confirm.EscTwiceToInterrupt) ? Msg::DoYouWantToStopWork2 : Msg::DoYouWantToStopWork),
@@ -623,8 +623,5 @@ int AbortMessage()
 	if (Res == -1)	// Set "ESC" equal to "NO" button
 		Res = 1;
 
-	if ((Opt.Confirm.EscTwiceToInterrupt && Res) || (!Opt.Confirm.EscTwiceToInterrupt && !Res))
-		return (TRUE);
-	else
-		return (FALSE);
+	return ((Opt.Confirm.EscTwiceToInterrupt && Res) || (!Opt.Confirm.EscTwiceToInterrupt && !Res));
 }

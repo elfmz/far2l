@@ -1382,7 +1382,7 @@ static LONG_PTR WINAPI FindDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 						PauseFlag = true;
 						bool LocalRes = true;
 						if (Opt.Confirm.Esc)
-							LocalRes = AbortMessage() != 0;
+							LocalRes = AbortMessage();
 						PauseFlag = false;
 						if (LocalRes) {
 							StopFlag = true;

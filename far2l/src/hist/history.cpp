@@ -917,7 +917,8 @@ bool History::GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str)
 	for (HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem;
 			HistoryItem = HistoryList.Prev(HistoryItem)) {
 		if (!StrCmpNI(Str, HistoryItem->strName, Length) && StrCmp(Str, HistoryItem->strName)
-				&& IsAllowedForHistory(HistoryItem->strName.CPtr())) {
+				&& IsAllowedForHistory(HistoryItem->strName.CPtr())
+				&& HistoryMenu.FindItem(0, HistoryItem->strName.CPtr()) < 0) { // after #2241 history may have duplicate names
 			HistoryMenu.AddItem(HistoryItem->strName);
 		}
 	}

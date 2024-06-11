@@ -36,8 +36,10 @@ Otherwise - it returns error description and empties it for next invokations of 
 
 ---------------------------------------------------------
 
-`StartApp(["arg1", "arg2" ...])`  
+`StartApp(["arg1", "arg2" ...]) far2l_Status`  
+`StartAppWithSize(["arg1", "arg2" ...], cols int, rows int) far2l_Status`  
 Starts far2l with given arguments, note that path to far2l implicitly inserted as very first argument  
+StartAppWithSize allows also to specify initial terminal size  
 Returns status of started far2l as structure of following fields:
  * Title string      - application title
  * Width uint32      - application TUI columns
@@ -51,6 +53,12 @@ Returns status of started far2l as structure of following fields:
 
 `AppStatus()`  
 Returns actual status of far2l as structure described above.
+
+---------------------------------------------------------
+
+`Sync(tmout uint32) bool`  
+Waits (with given msec timeout) for all input events being processed.  
+Fails/Returns false if wait timed out.
 
 ---------------------------------------------------------
 
@@ -280,22 +288,22 @@ In case of any IO error - error text included into hashing result.
 
 ---------------------------------------------------------
 
-`func LoadTextFile(fpath string) []string`
+`SaveTextFile(fpath string, lines []string)`  
+Saves given array of strings as LF-separated text file.
 
+---------------------------------------------------------
+
+`BoundedLinesSaveAsTextFile(left uint32, top uint32, width uint32, height uint32, fpath string)`
+Saves specified screen area strings as LF-separated text file.
+
+---------------------------------------------------------
+
+`LoadTextFile(fpath string) []string`  
 Loads given text file into array of strings
 
 ---------------------------------------------------------
 
-`func BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) bool`
-
+`BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) bool`  
 Loads given text file into array of strings and checks that given screen region contains exactly same strings
-
----------------------------------------------------------
-
-`func SaveTextFile(fpath string, lines []string)`
-
----------------------------------------------------------
-
-`func BoundedLinesSaveAsTextFile(left uint32, top uint32, width uint32, height uint32, fpath string)`
 
 ---------------------------------------------------------

@@ -3,7 +3,7 @@ profile=mydir + "/profile"
 left=mydir + "/left"
 right=mydir + "/right"
 
-StartApp(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right]);
+StartAppWithSize(["--tty", "--nodetect", "--mortal", "-u", profile, "-cd", left, "-cd", right], 95, 24);
 ExpectString("Help - FAR2L", 0, 0, -1, -1, 10000);
 status = AppStatus();
 
@@ -13,6 +13,10 @@ TypeFKey(3)
 ExpectString("left/viewme.txt", 0, 0, -1, -1, 10000)
 
 Sync(10000)
+ToggleShift(true)
+TypeFKey(2)
+TypeFKey(2)
+ToggleShift(false)
 
 TypePageDown()
 Sync(10000)

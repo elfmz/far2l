@@ -148,7 +148,7 @@ func far2l_Close() {
 	}
 }
 
-func far2l_Start(args []string) far2l_Status {
+func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 	if g_far2l_running {
 		aux_Panic("far2l already running")
 	}
@@ -158,7 +158,7 @@ func far2l_Start(args []string) far2l_Status {
 		Environment : []string {
 			"FAR2L_STD=" + filepath.Join(g_test_workdir, "far2l.log"),
 			"FAR2L_TESTCTL=" + g_far2l_sock},
-		ExtraOpts: []expect.ConsoleOpt{expect.WithTermRows(80), expect.WithTermCols(120)},
+		ExtraOpts: []expect.ConsoleOpt{expect.WithTermRows(rows), expect.WithTermCols(cols)},
     }
 	var err error
     g_app, err = termtest.New(opts)
@@ -167,6 +167,10 @@ func far2l_Start(args []string) far2l_Status {
 	}
 	g_far2l_running = true
 	return far2l_RecvStatus()
+}
+
+func far2l_Start(args []string) far2l_Status {
+	return far2l_StartWithSize(args, 120, 80)
 }
 
 func far2l_ReqRecvStatus() far2l_Status {
@@ -189,6 +193,23 @@ func far2l_RecvStatus() far2l_Status {
 	g_status.Height = binary.LittleEndian.Uint32(g_buf[16:])
 	return g_status
 }
+
+
+func far2l_ReqRecvSync(tmout uint32) bool {
+	binary.LittleEndian.PutUint32(g_buf[0:], 6) // TEST_CMD_SYNC
+	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
+	n, err := g_socket.WriteTo(g_buf[0:8], g_addr)
+	if err != nil || n != 8 {
+		aux_Panic(err.Error())
+	}
+	far2l_ReadSocket(1, tmout)
+	if g_buf[0] == 0 {
+		setErrorString("Sync timout")
+		return false
+	}
+	return true
+}
+
 
 func far2l_ReqRecvExpectString(str string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
 	return far2l_ReqRecvExpectXStrings([]string{str}, x, y, w, h, tmout, true)
@@ -417,7 +438,9 @@ func far2l_BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, heig
 	file_lines:= aux_LoadTextFile(fpath)
 	for i:= 0; i != len(screen_lines) && i != len(file_lines); i++ {
 		if screen_lines[i] != file_lines[i] {
-			setErrorString(fmt.Sprintf("Line %d is wrong: '%s'", i, screen_lines[i]))
+			fpath_actual:= fpath + ".actual"
+			aux_SaveTextFile(fpath_actual, screen_lines)
+			setErrorString(fmt.Sprintf("Line %d is wrong: '%s'\nActual lines saved into: %s", i, screen_lines[i], fpath_actual))
 			return false
 		}
 	}
@@ -836,7 +859,11 @@ func initVM() {
 	setVMFunction("Inspect", aux_Inspect)
 
 	setVMFunction("StartApp", far2l_Start)
+	setVMFunction("StartAppWithSize", far2l_StartWithSize)
+
 	setVMFunction("AppStatus", far2l_ReqRecvStatus)
+	setVMFunction("Sync", far2l_ReqRecvSync)
+
 	setVMFunction("ReadCellRaw", far2l_ReqRecvReadCellRaw)
 	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
 	setVMFunction("CellCharMatches", far2l_CellCharMatches)
@@ -964,7 +991,7 @@ func main() {
         log.Fatal(err)
     }
 
-	for i := arg_ofs + 2; i < len(os.Args); i++ {
+	for i := arg_ofs + 1; i < len(os.Args); i++ {
 		name := filepath.Base(os.Args[i])
 		fmt.Println("\x1b[1;32m---> Running test: " + name + "\x1b[39;22m")
 		testdir, err := filepath.Abs(os.Args[i])

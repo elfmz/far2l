@@ -1,0 +1,22 @@
+                        Item[Pos]->Flags&= 0xFFFF0000;                                         
+                }                                                                              
+        }                                                                                      
+}                                                                                              
+                                                                                               
+// переместить курсор c учётом пунктов которые не могу получать фокус                          
+int VMenu::SetSelectPos(int Pos, int Direct, bool stop_on_edge)                                
+{                                                                                              
+        CriticalSectionLock Lock(CS);                                                          
+                                                                                               
+        if (!Item || !ItemCount)                                                               
+                return -1;                                                                     
+                                                                                               
+        for (int Pass = 0, I = 0;; I++) {                                                      
+                if (Pos < 0) {                                                                 
+                        if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {                     
+                                Pos = ItemCount - 1;                                           
+                        } else {                                                               
+                                Pos = 0;                                                       
+                                Pass++;                                                        
+                        }                                                                      
+                }                                                                              

@@ -24,6 +24,8 @@ class TestController : protected Threaded
 
 		TestRequestSendKey req_send_key;
 
+		TestRequestSync req_sync;
+		TestReplySync rep_sync;
 	} _buf;
 
 	virtual void *ThreadProc();
@@ -32,6 +34,7 @@ class TestController : protected Threaded
 	size_t ClientDispatchReadCell(size_t len);
 	size_t ClientDispatchWaitString(size_t len, bool need_presence);
 	size_t ClientDispatchSendKey(size_t len);
+	size_t ClientDispatchSync(size_t len);
 
 public:
 	TestController(const std::string &id);

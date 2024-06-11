@@ -10,6 +10,7 @@ enum TestCommand
 	TEST_CMD_WAIT_STRING,
 	TEST_CMD_WAIT_NO_STRING,
 	TEST_CMD_SEND_KEY,
+	TEST_CMD_SYNC,
 };
 
 struct TestReplyStatus
@@ -65,3 +66,15 @@ struct TestRequestSendKey
 	uint8_t  pressed;
 	uint8_t  reserved[3];
 };
+
+struct TestRequestSync
+{
+	uint32_t cmd;
+	uint32_t timeout; // msec
+};
+
+struct TestReplySync
+{
+	uint8_t waited;
+};
+

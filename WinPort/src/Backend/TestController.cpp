@@ -3,7 +3,10 @@
 #include "CheckedCast.hpp"
 #include "os_call.hpp"
 #include "WinPort.h"
+#include <atomic>
+#include <assert.h>
 #include <LocalSocket.h>
+#include <Event.h>
 
 static void StrCpyZeroFill(char *dst, size_t dst_len, const std::string &src)
 {
@@ -71,6 +74,10 @@ void TestController::ClientLoop(const std::string &ipc_client)
 
 			case TEST_CMD_SEND_KEY:
 				len = ClientDispatchSendKey(len);
+				break;
+
+			case TEST_CMD_SYNC:
+				len = ClientDispatchSync(len);
 				break;
 
 			default:
@@ -237,4 +244,45 @@ size_t TestController::ClientDispatchSendKey(size_t len)
 	}
 	g_winport_con_in->Enqueue(&ir, 1);
 	return 0;
+}
+
+//
+class TestSyncEvent : public Event
+{
+	std::atomic<int> _refcnt{2};
+
+public:
+	void Deref()
+	{
+		int refs = --_refcnt;
+		assert(refs >= 0);
+		if (refs == 0) {
+			delete this;
+		}
+	}
+};
+
+static VOID TestSyncCallback(VOID *ctx)
+{
+	TestSyncEvent *ev = (TestSyncEvent *)ctx;
+	ev->Signal();
+	ev->Deref();
+}
+
+size_t TestController::ClientDispatchSync(size_t len)
+{
+	if (len < sizeof(TestRequestSync)) {
+		throw std::runtime_error(StrPrintf("len=%lu < sizeof(TestRequestSync)", (unsigned long)len));
+	}
+	
+	TestSyncEvent *ev = new TestSyncEvent;
+	INPUT_RECORD ir{};
+	ir.EventType = CALLBACK_EVENT;
+	ir.Event.CallbackEvent.Function = TestSyncCallback;
+	ir.Event.CallbackEvent.Context = ev;
+	g_winport_con_in->Enqueue(&ir, 1);
+	const bool waited = ev->TimedWait(_buf.req_sync.timeout);
+	_buf.rep_sync.waited = waited ? 1 : 0;
+	ev->Deref();
+	return sizeof(_buf.rep_sync);
 }

@@ -1900,14 +1900,14 @@ upd:"by name"
 
 ConfigHistoryRemoveDupsRuleByNameExtra
 "по имени и пути"
-"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
+"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
 
 ConfigAutoHighlightHistory
 "Автоподсветка в списках истории"

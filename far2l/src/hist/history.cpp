@@ -425,6 +425,14 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 	SYSTEMTIME NowST{}, ItemST{}, PrevST{};
 	WINPORT(GetLocalTime)(&NowST);
 
+	if (TypeHistory == HISTORYTYPE_CMD) {
+		// correction if at start dirs prefix width exceed current screen width
+		if (Opt.HistoryDirsPrefixLen >= (unsigned) ScrX - 18)
+			Opt.HistoryDirsPrefixLen = (unsigned) ScrX / 4;
+		else if (Opt.HistoryDirsPrefixLen < 3)
+			Opt.HistoryDirsPrefixLen = 3;
+	}
+
 	while (!Done) {
 		bool IsUpdate = false;
 		HistoryMenu.DeleteItems();
@@ -448,9 +456,8 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				HistoryItem; HistoryItem = TypeHistory == HISTORYTYPE_DIALOG
 						? HistoryList.Prev(HistoryItem)
 						: HistoryList.Next(HistoryItem)) {
-			FARString strRecord = HistoryItem->strName;
+			FARString strRecord;
 			int StrPrefixLen = 0;
-			strRecord.Clear();
 			if (Opt.HistoryShowTimes[TypeHistory] != 2
 					&& WINPORT(FileTimeToLocalFileTime)(&HistoryItem->Timestamp, &ItemFT)
 					&& WINPORT(FileTimeToSystemTime(&ItemFT, &ItemST))) {
@@ -464,8 +471,17 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				}
 
 				if (Opt.HistoryShowTimes[TypeHistory] == 0) {
-					strRecord.AppendFormat(L"%02u:%02u.%02u ",
+					strRecord.AppendFormat(L"%02u:%02u:%02u ",
 						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
+					// add directory in prefix only for command history
+					if (TypeHistory == HISTORYTYPE_CMD && Opt.HistoryDirsPrefixLen > 3) {
+						if (HistoryItem->strExtra.IsEmpty())
+							strRecord.AppendFormat(L"%*lc ", Opt.HistoryDirsPrefixLen, L' ' );
+						else if (HistoryItem->strExtra.GetLength() <= Opt.HistoryDirsPrefixLen)
+							strRecord.AppendFormat(L"%*ls/", Opt.HistoryDirsPrefixLen, HistoryItem->strExtra.CPtr() );
+						else
+							strRecord.AppendFormat(L"...%ls/", HistoryItem->strExtra.CEnd()-(Opt.HistoryDirsPrefixLen-3) );
+					}
 					StrPrefixLen = strRecord.GetLength();
 				}
 				PrevST = ItemST;
@@ -615,12 +631,26 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						TruncStrFromCenter(strDir, std::max(ScrX - 32, 32));
 						strCmd.Insert(0, Msg::HistoryCommandLine);
 						strDir.Insert(0, Msg::HistoryCommandDir);
+
+						FILETIME ItemFT{};
+						SYSTEMTIME ItemST{};
+						WINPORT(FileTimeToLocalFileTime)(&CurrentRecord->Timestamp, &ItemFT);
+						WINPORT(FileTimeToSystemTime(&ItemFT, &ItemST));
+						FARString strDate;
+						FARString strTime;
+						strDate.Append(Msg::ColumnDate);
+						strTime.Append(Msg::ColumnTime);
+						strDate.AppendFormat(L": %04u-%02u-%02u",
+							(unsigned)ItemST.wYear, (unsigned)ItemST.wMonth, (unsigned)ItemST.wDay);
+						strTime.AppendFormat(L": %02u:%02u:%02u",
+							(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
+
 						if ( CurrentRecord->strExtra.IsEmpty() ) // STUB for old records
 							Message(MSG_LEFTALIGN, 1, Msg::HistoryCommandTitle, strCmd,
-									L"--- Directory --- No Information ---",
+									L"--- Directory --- No Information ---", strDate, strTime,
 									Msg::HistoryCommandClose);
 						else {
-							int i = Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
+							int i = Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir, strDate, strTime,
 									Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp);
 							switch (i) {
 								case 1: // ToDir
@@ -636,7 +666,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 									if( b1 || b2 )
 										strStr+= CurrentRecord->strName.SubStr(
 											!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
-											b2 && p2>0 ? p2 : -1);
+											b2 && p2>p1 ? p2-(b1 ? p1+2 : 0) : -1);
 									else
 										strStr+= CurrentRecord->strName; // all command has not ./ and spaces
 									if (i==2) { // Run-up
@@ -748,7 +778,34 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					CurrentItem = CurrentRecord;
 					break;
 				}
-			case KEY_CTRLF10: {
+				case KEY_CTRLNUMPAD4:
+				case KEY_CTRLLEFT: {
+					if (TypeHistory == HISTORYTYPE_CMD
+							&& Opt.HistoryShowTimes[HISTORYTYPE_CMD] == 0
+							&& Opt.HistoryDirsPrefixLen > 3) {
+						Opt.HistoryDirsPrefixLen--;
+						HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+						HistoryMenu.SetUpdateRequired(TRUE);
+						IsUpdate = true;
+						SetUpMenuPos = true;
+						CurrentItem = CurrentRecord;
+					}
+					break;
+				}
+				case KEY_CTRLNUMPAD6:
+				case KEY_CTRLRIGHT: {
+					if (TypeHistory == HISTORYTYPE_CMD
+							&& Opt.HistoryShowTimes[HISTORYTYPE_CMD] == 0) {
+						Opt.HistoryDirsPrefixLen++;
+						HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+						HistoryMenu.SetUpdateRequired(TRUE);
+						IsUpdate = true;
+						SetUpMenuPos = true;
+						CurrentItem = CurrentRecord;
+					}
+					break;
+				}
+				case KEY_CTRLF10: {
 					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord && !CurrentRecord->strExtra.IsEmpty() ) {
 						bool b1, b2;
 						size_t p1 = 0, p2 = 0;
@@ -761,7 +818,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						if( b1 || b2 )
 							strStr+= CurrentRecord->strName.SubStr(
 								!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
-								b2 && p2>0 ? p2 : -1);
+								b2 && p2>p1 ? p2-(b1 ? p1+2 : 0) : -1);
 						else
 							strStr+= CurrentRecord->strName; // all command has not ./ and spaces
 						Type = CurrentRecord->Type;

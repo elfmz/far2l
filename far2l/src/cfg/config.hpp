@@ -466,6 +466,7 @@ struct Options
 	int AutoHighlightHistory;
 
 	BYTE HistoryShowTimes[8];
+	DWORD HistoryDirsPrefixLen;
 
 	FindFileOptions FindOpt;
 

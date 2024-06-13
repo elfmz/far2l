@@ -576,29 +576,34 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				case KEY_CTRLR:		// обновить с удалением недоступных
 				{
 					if (TypeHistory == HISTORYTYPE_FOLDER || TypeHistory == HISTORYTYPE_VIEW) {
-						bool ModifiedHistory = false;
+						if (!Message(MSG_WARNING, 2,
+								TypeHistory == HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle,
+								TypeHistory == HISTORYTYPE_FOLDER ? Msg::HistoryRefreshFolder : Msg::HistoryRefreshView,
+								Msg::Ok, Msg::Cancel)) {
+							bool ModifiedHistory = false;
 
-						for (HistoryRecord *HistoryItem = HistoryList.First(); HistoryItem;
-								HistoryItem = HistoryList.Next(HistoryItem)) {
-							if (HistoryItem->Lock)	// залоченные не трогаем
-								continue;
+							for (HistoryRecord *HistoryItem = HistoryList.First(); HistoryItem;
+									HistoryItem = HistoryList.Next(HistoryItem)) {
+								if (HistoryItem->Lock)	// залоченные не трогаем
+									continue;
 
-							// убить запись из истории
-							if (apiGetFileAttributes(HistoryItem->strName) == INVALID_FILE_ATTRIBUTES) {
-								HistoryItem = HistoryList.Delete(HistoryItem);
-								ModifiedHistory = true;
+								// убить запись из истории
+								if (apiGetFileAttributes(HistoryItem->strName) == INVALID_FILE_ATTRIBUTES) {
+									HistoryItem = HistoryList.Delete(HistoryItem);
+									ModifiedHistory = true;
+								}
 							}
-						}
 
-						if (ModifiedHistory)	// избавляемся от лишних телодвижений
-						{
-							SaveHistory();		// сохранить
-							HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
-							HistoryMenu.SetUpdateRequired(TRUE);
-							IsUpdate = true;
-						}
+							if (ModifiedHistory)	// избавляемся от лишних телодвижений
+							{
+								SaveHistory();		// сохранить
+								HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+								HistoryMenu.SetUpdateRequired(TRUE);
+								IsUpdate = true;
+							}
 
-						ResetPosition();
+							ResetPosition();
+						}
 					}
 
 					break;

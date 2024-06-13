@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "clipboard.hpp"
 #include "config.hpp"
 #include "ConfigRW.hpp"
+#include "datetime.hpp"
 #include "strmix.hpp"
 #include "dialog.hpp"
 #include "interf.hpp"
@@ -433,6 +434,11 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 			Opt.HistoryDirsPrefixLen = 3;
 	}
 
+	// prepare date & time formats
+	int iDateFormat = GetDateFormat();
+	wchar_t cDateSeparator = GetDateSeparator();
+	wchar_t cTimeSeparator = GetTimeSeparator();
+
 	while (!Done) {
 		bool IsUpdate = false;
 		HistoryMenu.DeleteItems();
@@ -464,15 +470,30 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 
 				if (PrevST.wYear != ItemST.wYear || PrevST.wMonth != ItemST.wMonth || PrevST.wDay != ItemST.wDay) {
 					MenuItemEx DateSeparator;
-					DateSeparator.strName.Format(L"%04u-%02u-%02u",
-						(unsigned)ItemST.wYear, (unsigned)ItemST.wMonth, (unsigned)ItemST.wDay);
+					switch (iDateFormat) {
+						case 0:
+							// Дата в формате MM.DD.YYYYY
+							DateSeparator.strName.Format(L"%02u%lc%02u%lc%04u",
+								(unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wYear);
+							break;
+						case 1:
+							// Дата в формате DD.MM.YYYYY
+							DateSeparator.strName.Format(L"%02u%lc%02u%lc%04u",
+								(unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wYear);
+							break;
+						default:
+							// Дата в формате YYYYY.MM.DD
+							DateSeparator.strName.Format(L"%04u%lc%02u%lc%02u",
+								(unsigned)ItemST.wYear, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay);
+							break;
+					}
 					DateSeparator.Flags|= LIF_SEPARATOR;
 					HistoryMenu.AddItem(&DateSeparator);
 				}
 
 				if (Opt.HistoryShowTimes[TypeHistory] == 0) {
-					strRecord.AppendFormat(L"%02u:%02u:%02u ",
-						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
+					strRecord.AppendFormat(L"%02u%lc%02u%lc%02u ",
+						(unsigned)ItemST.wHour, cTimeSeparator, (unsigned)ItemST.wMinute, cTimeSeparator, (unsigned)ItemST.wSecond);
 					// add directory in prefix only for command history
 					if (TypeHistory == HISTORYTYPE_CMD && Opt.HistoryDirsPrefixLen > 3) {
 						if (HistoryItem->strExtra.IsEmpty())
@@ -645,10 +666,25 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						FARString strTime;
 						strDate.Append(Msg::ColumnDate);
 						strTime.Append(Msg::ColumnTime);
-						strDate.AppendFormat(L": %04u-%02u-%02u",
-							(unsigned)ItemST.wYear, (unsigned)ItemST.wMonth, (unsigned)ItemST.wDay);
-						strTime.AppendFormat(L": %02u:%02u:%02u",
-							(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
+						switch (iDateFormat) {
+							case 0:
+								// Дата в формате MM.DD.YYYYY
+								strDate.AppendFormat(L": %02u%lc%02u%lc%04u",
+									(unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wYear);
+								break;
+							case 1:
+								// Дата в формате DD.MM.YYYYY
+								strDate.AppendFormat(L": %02u%lc%02u%lc%04u",
+									(unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wYear);
+								break;
+							default:
+								// Дата в формате YYYYY.MM.DD
+								strDate.AppendFormat(L": %04u%lc%02u%lc%02u",
+									(unsigned)ItemST.wYear, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay);
+								break;
+						}
+						strTime.AppendFormat(L": %02u%lc%02u%lc%02u",
+							(unsigned)ItemST.wHour, cDateSeparator, (unsigned)ItemST.wMinute, cDateSeparator, (unsigned)ItemST.wSecond);
 
 						if ( CurrentRecord->strExtra.IsEmpty() ) // STUB for old records
 							Message(MSG_LEFTALIGN, 1, Msg::HistoryCommandTitle, strCmd,

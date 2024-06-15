@@ -234,7 +234,7 @@ bool ScanTree::GetNextMask()
   wchar *Name=PointToName(CurMask);
   if (*Name==0)
     wcsncatz(CurMask,MASKALL,ASIZE(CurMask));
-  if ((Name[0]=='.' && (Name[1]==0)) || (Name[1]=='.' && Name[2]==0))
+  if (Name[0]=='.' && (Name[1]==0 || (Name[1]=='.' && Name[2]==0)))
   {
     AddEndSlash(CurMask,ASIZE(CurMask));
     wcsncatz(CurMask,MASKALL,ASIZE(CurMask));

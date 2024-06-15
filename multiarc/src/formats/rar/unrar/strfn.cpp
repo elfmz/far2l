@@ -170,7 +170,7 @@ bool IsSpace(int ch)
 // values, resulting in undefined behavior in standard function.
 bool IsAlpha(int ch)
 {
-  return ch>='A' && ch<='Z' || ch>='a' && ch<='z';
+  return (ch>='A' && ch<='Z') || (ch>='a' && ch<='z');
 }
 
 

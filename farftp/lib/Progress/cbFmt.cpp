@@ -298,7 +298,7 @@ void TrafficInformation::DrawInfo(InfoItem *it, time_t tm)
 			if (((int)db) == 100)
 				FTP_Info->StrCpy(str, "100%", -1);
 			else
-				sprintf(str, "%2.1lf%%", db);
+				snprintf(str, sizeof(str), "%2.1lf%%", db);
 
 			break;
 			// 41 "FPc" ---- ALIAS `FPercent`
@@ -310,7 +310,7 @@ void TrafficInformation::DrawInfo(InfoItem *it, time_t tm)
 			if (((int)db) == 100)
 				FTP_Info->StrCpy(str, "100%", -1);
 			else
-				sprintf(str, "%2.1lf%%", db);
+				snprintf(str, sizeof(str), "%2.1lf%%", db);
 
 			break;
 			// 32 "Cn" ---- Complete count
@@ -336,7 +336,7 @@ void TrafficInformation::DrawInfo(InfoItem *it, time_t tm)
 			if (((int)db) == 100)
 				FTP_Info->StrCpy(str, "100%", -1);
 			else
-				sprintf(str, "%2.1lf%%", db);
+				snprintf(str, sizeof(str), "%2.1lf%%", db);
 
 			break;
 			// 37 "SkipPc" ---- Skipped percent
@@ -346,7 +346,7 @@ void TrafficInformation::DrawInfo(InfoItem *it, time_t tm)
 			if (((int)db) == 100)
 				FTP_Info->StrCpy(str, "100%", -1);
 			else
-				sprintf(str, "%2.1lf%%", db);
+				snprintf(str, sizeof(str), "%2.1lf%%", db);
 
 			break;
 			// 38 "CurPg"     ---- Current percent progress
@@ -376,7 +376,7 @@ void TrafficInformation::DrawInfo(InfoItem *it, time_t tm)
 			if (((int)db) == 100)
 				FTP_Info->StrCpy(str, "100%", -1);
 			else
-				sprintf(str, "%d%%", (int)db);
+				snprintf(str, sizeof(str), "%d%%", (int)db);
 
 			break;
 			// 48 "IFPc"      ----- Total "99%" percent
@@ -386,7 +386,7 @@ void TrafficInformation::DrawInfo(InfoItem *it, time_t tm)
 			if (((int)db) == 100)
 				FTP_Info->StrCpy(str, "100%", -1);
 			else
-				sprintf(str, "%d%%", (int)db);
+				snprintf(str, sizeof(str), "%d%%", (int)db);
 
 			break;
 	}

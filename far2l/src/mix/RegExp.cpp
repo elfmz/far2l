@@ -860,9 +860,6 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 	// current brackets depth
 	// one place reserved for surrounding 'main' brackets
 	int brdepth=1;
-	// compiling interior of lookbehind
-	// used to apply restrictions of lookbehind
-	int lookbehind=0;
 	// counter of normal brackets
 	int brcount=0;
 	// counter of closed brackets
@@ -1151,7 +1148,6 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 							else
 								return SetError(errSyntax, i + (src - start));
 
-							lookbehind++;
 						} break;
 						case L'{':
 						{
@@ -1231,7 +1227,6 @@ bool RegExp::InnerCompile(const wchar_t* const start, const wchar_t* src, int sr
 					case opLookBehind:
 					case opNotLookBehind:
 					{
-						lookbehind--;
 						int l=CalcPatternLength(brackets[brdepth] + 1, op - 1);
 
 						if (l == -1)return SetError(errVariableLengthLookBehind, i + (src - start));

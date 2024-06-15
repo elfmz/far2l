@@ -292,7 +292,7 @@ void Unpack::LongLZ()
   Inp.faddbits(7);
 
   OldAvr3=AvrLn3;
-  if (Length!=1 && Length!=4)
+  if (Length!=1 && Length!=4) {
     if (Length==0 && Distance <= MaxDist3)
     {
       AvrLn3++;
@@ -301,12 +301,13 @@ void Unpack::LongLZ()
     else
       if (AvrLn3 > 0)
         AvrLn3--;
+  }
   Length+=3;
   if (Distance >= MaxDist3)
     Length++;
   if (Distance <= 256)
     Length+=8;
-  if (OldAvr3 > 0xb0 || AvrPlc >= 0x2a00 && OldAvr2 < 0x40)
+  if (OldAvr3 > 0xb0 || (AvrPlc >= 0x2a00 && OldAvr2 < 0x40))
     MaxDist3=0x7f00;
   else
     MaxDist3=0x2001;

@@ -1232,7 +1232,7 @@ std::string EscapeUnprintable(const std::string &str)
 		unsigned char c = (unsigned char)*i;
 		if (c <= 0x20 || c > 0x7e || c == '\\') {
 			char buf[32];
-			sprintf(buf, "\\x%02x", c);
+			snprintf(buf, sizeof(buf), "\\x%02x", c);
 			out+= buf;
 		} else
 			out+= c;

@@ -27,6 +27,8 @@ size_t Archive::ReadHeader()
     case RARFMT50:
       ReadSize=ReadHeader50();
       break;
+    default:
+      break;
   }
 
   // It is important to check ReadSize>0 here, because it is normal
@@ -193,6 +195,7 @@ size_t Archive::ReadHeader15()
     case HEAD3_FILE:    ShortBlock.HeaderType=HEAD_FILE;     break;
     case HEAD3_SERVICE: ShortBlock.HeaderType=HEAD_SERVICE;  break;
     case HEAD3_ENDARC:  ShortBlock.HeaderType=HEAD_ENDARC;   break;
+    default: break;
   }
   CurHeaderType=ShortBlock.HeaderType;
 
@@ -897,6 +900,8 @@ size_t Archive::ReadHeader50()
         EndArcHead.RevSpace=false;
       }
       break;
+    default:
+      break;
   }
 
   return Raw.Size();
@@ -1011,7 +1016,7 @@ void Archive::ProcessExtra50(RawRead *Raw,size_t ExtraSize,const BaseBlock *bb)
                 }
               }
             }
-            if ((Flags & MHEXTRA_METADATA_CTIME)!=0)
+            if ((Flags & MHEXTRA_METADATA_CTIME)!=0) {
               if ((Flags & MHEXTRA_METADATA_UNIXTIME)!=0)
                 if ((Flags & MHEXTRA_METADATA_UNIX_NS)!=0)
                   hd->OrigTime.SetUnixNS(Raw->Get8());
@@ -1019,6 +1024,7 @@ void Archive::ProcessExtra50(RawRead *Raw,size_t ExtraSize,const BaseBlock *bb)
                   hd->OrigTime.SetUnix((time_t)Raw->Get4());
               else
                 hd->OrigTime.SetWin(Raw->Get8());
+            }
           }
           break;
       }
@@ -1103,21 +1109,24 @@ void Archive::ProcessExtra50(RawRead *Raw,size_t ExtraSize,const BaseBlock *bb)
           {
             byte Flags=(byte)Raw->GetV();
             bool UnixTime=(Flags & FHEXTRA_HTIME_UNIXTIME)!=0;
-            if ((Flags & FHEXTRA_HTIME_MTIME)!=0)
+            if ((Flags & FHEXTRA_HTIME_MTIME)!=0) {
               if (UnixTime)
                 hd->mtime.SetUnix(Raw->Get4());
               else
                 hd->mtime.SetWin(Raw->Get8());
-            if ((Flags & FHEXTRA_HTIME_CTIME)!=0)
+            }
+            if ((Flags & FHEXTRA_HTIME_CTIME)!=0) {
               if (UnixTime)
                 hd->ctime.SetUnix(Raw->Get4());
               else
                 hd->ctime.SetWin(Raw->Get8());
-            if ((Flags & FHEXTRA_HTIME_ATIME)!=0)
+            }
+            if ((Flags & FHEXTRA_HTIME_ATIME)!=0) {
               if (UnixTime)
                 hd->atime.SetUnix((time_t)Raw->Get4());
               else
                 hd->atime.SetWin(Raw->Get8());
+            }
             if (UnixTime && (Flags & FHEXTRA_HTIME_UNIX_NS)!=0) // Add nanoseconds.
             {
               uint ns;
@@ -1392,11 +1401,12 @@ void Archive::ConvertAttributes()
 
 void Archive::ConvertFileHeader(FileHeader *hd)
 {
-  if (hd->HSType==HSYS_UNKNOWN)
+  if (hd->HSType==HSYS_UNKNOWN) {
     if (hd->Dir)
       hd->FileAttr=0x10;
     else
       hd->FileAttr=0x20;
+  }
 
 #ifdef _WIN_ALL
   if (hd->HSType==HSYS_UNIX) // Convert Unix, OS X and Android decomposed chracters to Windows precomposed.
@@ -1434,7 +1444,7 @@ void Archive::ConvertFileHeader(FileHeader *hd)
     // Still, RAR 4.x uses backslashes as path separator even in Unix.
     // Forward slash is not allowed in both systems. In RAR 5.0 we use
     // the forward slash as universal path separator.
-    if (*s=='/' || *s=='\\' && Format!=RARFMT50)
+    if (*s=='/' || (*s=='\\' && Format!=RARFMT50))
       *s=CPATHDIVIDER;
   }
 }
@@ -1490,13 +1500,14 @@ bool Archive::ReadSubData(Array<byte> *UnpData,File *DestFile,bool TestMode)
       SubDataIO.SetUnpackToMemory(&(*UnpData)[0],(uint)SubHead.UnpSize);
     }
   }
-  if (SubHead.Encrypted)
+  if (SubHead.Encrypted) {
     if (Cmd->Password.IsSet())
       SubDataIO.SetEncryption(false,SubHead.CryptMethod,&Cmd->Password,
                 SubHead.SaltSet ? SubHead.Salt:NULL,SubHead.InitV,
                 SubHead.Lg2Count,SubHead.HashKey,SubHead.PswCheck);
     else
       return false;
+  }
   SubDataIO.UnpHash.Init(SubHead.FileHash.Type,1);
   SubDataIO.SetPackedSizeToRead(SubHead.PackSize);
   SubDataIO.EnableShowProgress(false);

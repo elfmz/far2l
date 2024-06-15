@@ -5,7 +5,9 @@ static MESSAGE_TYPE MsgStream=MSG_STDOUT;
 static RAR_CHARSET RedirectCharset=RCH_DEFAULT;
 static bool ProhibitInput=false;
 
+#ifdef _WIN_ALL
 const int MaxMsgSize=2*NM+2048;
+#endif
 
 static bool StdoutRedirected=false,StderrRedirected=false,StdinRedirected=false;
 

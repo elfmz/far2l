@@ -378,7 +378,6 @@ void CalcFileSum(File *SrcFile,uint *CRC32,byte *Blake2,uint Threads,int64 Size,
   HashBlake2.Init(HASH_BLAKE2,Threads);
 
   int64 BlockCount=0;
-  int64 TotalRead=0;
   while (true)
   {
     size_t SizeToRead;
@@ -389,7 +388,6 @@ void CalcFileSum(File *SrcFile,uint *CRC32,byte *Blake2,uint Threads,int64 Size,
     int ReadSize=SrcFile->Read(&Data[0],SizeToRead);
     if (ReadSize==0)
       break;
-    TotalRead+=ReadSize;
 
     if ((++BlockCount & 0xf)==0)
     {

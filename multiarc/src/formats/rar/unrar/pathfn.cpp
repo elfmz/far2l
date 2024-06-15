@@ -467,7 +467,7 @@ void MakeNameUsable(wchar *Name,bool Extended)
 {
   for (wchar *s=Name;*s!=0;s++)
   {
-    if (wcschr(Extended ? L"?*<>|\"":L"?*",*s)!=NULL || Extended && (uint)*s<32)
+    if (wcschr(Extended ? L"?*<>|\"":L"?*",*s)!=NULL || (Extended && (uint)*s<32))
       *s='_';
 #ifdef _UNIX
     // We were asked to apply Windows-like conversion in Linux in case
@@ -774,27 +774,28 @@ static void GenArcName(wchar *ArcName,size_t MaxSize,const wchar *GenerateMask,u
 
   int WeekDay=rlt.wDay==0 ? 6:rlt.wDay-1;
   int StartWeekDay=rlt.yDay-WeekDay;
-  if (StartWeekDay<0)
+  if (StartWeekDay<0) {
     if (StartWeekDay<=-4)
       StartWeekDay+=IsLeapYear(rlt.Year-1) ? 366:365;
     else
       StartWeekDay=0;
+  }
   int CurWeek=StartWeekDay/7+1;
   if (StartWeekDay%7>=4)
     CurWeek++;
 
   char Field[10][6];
 
-  sprintf(Field[0],"%04u",rlt.Year);
-  sprintf(Field[1],"%02u",rlt.Month);
-  sprintf(Field[2],"%02u",rlt.Day);
-  sprintf(Field[3],"%02u",rlt.Hour);
-  sprintf(Field[4],"%02u",rlt.Minute);
-  sprintf(Field[5],"%02u",rlt.Second);
-  sprintf(Field[6],"%02u",(uint)CurWeek);
-  sprintf(Field[7],"%u",(uint)WeekDay+1);
-  sprintf(Field[8],"%03u",rlt.yDay+1);
-  sprintf(Field[9],"%05u",ArcNumber);
+  snprintf(Field[0],sizeof(Field[0]),"%04u",rlt.Year);
+  snprintf(Field[1],sizeof(Field[1]),"%02u",rlt.Month);
+  snprintf(Field[2],sizeof(Field[2]),"%02u",rlt.Day);
+  snprintf(Field[3],sizeof(Field[3]),"%02u",rlt.Hour);
+  snprintf(Field[4],sizeof(Field[4]),"%02u",rlt.Minute);
+  snprintf(Field[5],sizeof(Field[5]),"%02u",rlt.Second);
+  snprintf(Field[6],sizeof(Field[6]),"%02u",(uint)CurWeek);
+  snprintf(Field[7],sizeof(Field[7]),"%u",(uint)WeekDay+1);
+  snprintf(Field[8],sizeof(Field[8]),"%03u",rlt.yDay+1);
+  snprintf(Field[9],sizeof(Field[9]),"%05u",ArcNumber);
 
   const wchar *MaskChars=L"YMDHISWAEN";
 

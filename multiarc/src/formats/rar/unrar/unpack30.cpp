@@ -558,7 +558,6 @@ void Unpack::UnpWriteBuf30()
           VM.SetMemory(FirstPartLength,Window,BlockEnd);
         }
 
-        VM_PreparedProgram *ParentPrg=&Filters30[flt->ParentFilter]->Prg;
         VM_PreparedProgram *Prg=&flt->Prg;
 
         ExecuteCode(Prg);
@@ -580,7 +579,6 @@ void Unpack::UnpWriteBuf30()
 
           VM.SetMemory(0,FilteredData,FilteredDataSize);
 
-          VM_PreparedProgram *ParentPrg=&Filters30[NextFilter->ParentFilter]->Prg;
           VM_PreparedProgram *NextPrg=&NextFilter->Prg;
 
           ExecuteCode(NextPrg);

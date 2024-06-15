@@ -25,11 +25,12 @@ File::File()
 
 File::~File()
 {
-  if (hFile!=FILE_BAD_HANDLE && !SkipClose)
+  if (hFile!=FILE_BAD_HANDLE && !SkipClose) {
     if (NewFile)
       Delete();
     else
       Close();
+  }
 }
 
 
@@ -180,8 +181,8 @@ bool File::Create(const wchar *Name,uint Mode)
   // before SetFileTime call. So we should use the write only mode if we plan
   // SetFileTime call and do not need to read from file.
   bool WriteMode=(Mode & FMF_WRITE)!=0;
-  bool ShareRead=(Mode & FMF_SHAREREAD)!=0 || File::OpenShared;
 #ifdef _WIN_ALL
+  bool ShareRead=(Mode & FMF_SHAREREAD)!=0 || File::OpenShared;
   CreateMode=Mode;
   uint Access=WriteMode ? GENERIC_WRITE:GENERIC_READ|GENERIC_WRITE;
   DWORD ShareMode=ShareRead ? FILE_SHARE_READ:0;
@@ -388,7 +389,7 @@ int File::Read(void *Data,size_t Size)
     if (ReadSize==-1)
     {
       ErrorType=FILE_READERROR;
-      if (AllowExceptions)
+      if (AllowExceptions) {
         if (ReadErrorMode==FREM_IGNORE)
         {
           ReadSize=0;
@@ -418,6 +419,7 @@ int File::Read(void *Data,size_t Size)
           }
           ErrHandler.ReadError(FileName);
         }
+      }
     }
     TotalRead+=ReadSize; // If ReadSize is -1, TotalRead is also set to -1 here.
 
@@ -527,7 +529,7 @@ bool File::RawSeek(int64 Offset,int Method)
     // We tried to dynamically allocate 32 KB buffer here, but it improved
     // speed in Windows 10 by mere ~1.5%.
     byte Buf[4096];
-    if (Method==SEEK_CUR || Method==SEEK_SET && Offset>=CurFilePos)
+    if (Method==SEEK_CUR || (Method==SEEK_SET && Offset>=CurFilePos))
     {
       uint64 SkipSize=Method==SEEK_CUR ? Offset:Offset-CurFilePos;
       while (SkipSize>0) // Reading to emulate seek forward.
@@ -581,11 +583,12 @@ bool File::RawSeek(int64 Offset,int Method)
 
 int64 File::Tell()
 {
-  if (hFile==FILE_BAD_HANDLE)
+  if (hFile==FILE_BAD_HANDLE) {
     if (AllowExceptions)
       ErrHandler.SeekError(FileName);
     else
       return -1;
+  }
   if (!IsSeekable())
     return CurFilePos;
 #ifdef _WIN_ALL

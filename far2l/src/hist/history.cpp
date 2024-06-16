@@ -658,8 +658,6 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						strCmd.Insert(0, Msg::HistoryCommandLine);
 						strDir.Insert(0, Msg::HistoryCommandDir);
 
-						FILETIME ItemFT{};
-						SYSTEMTIME ItemST{};
 						WINPORT(FileTimeToLocalFileTime)(&CurrentRecord->Timestamp, &ItemFT);
 						WINPORT(FileTimeToSystemTime(&ItemFT, &ItemST));
 						FARString strDate;
@@ -684,7 +682,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 								break;
 						}
 						strTime.AppendFormat(L": %02u%lc%02u%lc%02u",
-							(unsigned)ItemST.wHour, cDateSeparator, (unsigned)ItemST.wMinute, cDateSeparator, (unsigned)ItemST.wSecond);
+							(unsigned)ItemST.wHour, cTimeSeparator, (unsigned)ItemST.wMinute, cTimeSeparator, (unsigned)ItemST.wSecond);
 
 						if ( CurrentRecord->strExtra.IsEmpty() ) // STUB for old records
 							Message(MSG_LEFTALIGN, 1, Msg::HistoryCommandTitle, strCmd,

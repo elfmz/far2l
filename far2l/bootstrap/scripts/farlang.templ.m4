@@ -1603,7 +1603,7 @@ HistoryRefreshFolder
 l:
 "История будет обновлена: записи о недоступных папках будут удалены. Продолжить?"
 "History list will be refreshed: entries of non-existing folders will be deleted. Continue?"
-upd:"History list will be refreshed: entries of non-existing folder swill be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
 upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
 upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
 upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"

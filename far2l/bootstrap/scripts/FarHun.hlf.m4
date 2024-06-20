@@ -1713,9 +1713,11 @@ $ #Parancs előzmények#
     a lista legördítve marad                            vagy #Ctrl-Ins#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines + time column
+             * with date lines + time-path column
              * with date lines (as in far3)
              * plain history (as in far2)
+
+  Change path width in time-path column          #Ctrl-Left,Ctrl-Right#
 
   Show additional information                                      #F3#
 

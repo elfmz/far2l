@@ -1599,6 +1599,30 @@ HistoryExt
 "Зовнішній"
 "Знешні"
 
+HistoryRefreshFolder
+l:
+"История будет обновлена: записи о недоступных папках будут удалены. Продолжить?"
+"History list will be refreshed: entries of non-existing folders will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing folder will be deleted. Continue?"
+
+HistoryRefreshView
+l:
+"История будет обновлена: записи о недоступных файлах будут удалены. Продолжить?"
+"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+upd:"History list will be refreshed: entries of non-existing files will be deleted. Continue?"
+
 HistoryClear
 l:
 "История будет полностью очищена. Продолжить?"
@@ -1900,14 +1924,14 @@ upd:"by name"
 
 ConfigHistoryRemoveDupsRuleByNameExtra
 "по имени и пути"
-"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
-upd:"by name and extra"
+"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
+upd:"by name and path"
 
 ConfigAutoHighlightHistory
 "Автоподсветка в списках истории"

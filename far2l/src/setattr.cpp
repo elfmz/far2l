@@ -1440,6 +1440,20 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		DlgParam.strInitModifyTime = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strData;
 		DlgParam.strInitStatusChangeDate = AttrDlg[SA_FIXEDIT_LAST_CHANGE_DATE].strData;
 		DlgParam.strInitStatusChangeTime = AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strData;
+		// workaround to compare current & initial date:
+		//  - in case of mask "9999N" each edit adds a space to the last position after 4-digit year
+		switch (GetDateFormat()) {
+			case 0:
+			case 1:
+				if (DlgParam.strInitAccessDate.GetLength() < 11)
+					DlgParam.strInitAccessDate += L' ';
+				if (DlgParam.strInitModifyDate.GetLength() < 11)
+					DlgParam.strInitModifyDate += L' ';
+				if (DlgParam.strInitStatusChangeDate.GetLength() < 11)
+					DlgParam.strInitStatusChangeDate += L' ';
+			default:
+				break;
+		}
 
 		Dlg.Process();
 

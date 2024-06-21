@@ -363,16 +363,16 @@ static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANEL
 
 static const HighlightDataColor DefaultStartingColors =
 	{
-		{	0x0, 0x0, 0x0, 0x0,		// Color[0][4] 0 = Black on black = default theme color
-			0x0, 0x0, 0x0, 0x0},	// Color[1][4]
-		{	0x0, 0x0, 0x0, 0x0,		// Mask[0][4] // Transparency Masks 0 = fully transparent
-			0x0, 0x0, 0x0, 0x0},	// Mask[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},		// Color[0][4] 0 = Black on black = default theme color
+			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},		// Mask[0][4] // Transparency Masks 0 = fully transparent
+			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
 		{ 0 }, 						// wchar_t	Mark
 		0,     						// size_t	MarkLen;
 		true   						// bool	bMarkInherit;
 	};
 
-const HighlightDataColor ZeroColors{0};
+const HighlightDataColor ZeroColors{{{0}}};
 
 static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 {

@@ -374,8 +374,6 @@ public:
 
 class SCPDirectoryEnumer_ls : public SCPDirectoryEnumer
 {
-	struct timespec _now;
-
 	virtual bool TryParseLine(std::string &name, std::string &owner, std::string &group, FileInformation &file_info)
 	{
 /*
@@ -419,7 +417,7 @@ crw-------    1 root     root        3, 144 Jan  1  1970 ttyy0
 
 public:
 	SCPDirectoryEnumer_ls(std::shared_ptr<SSHConnection> &conn, const SCPQuirks &quirks, DirectoryEnumerMode dem, size_t count, const std::string *paths, const struct timespec &now)
-		: SCPDirectoryEnumer(conn), _now(now)
+		: SCPDirectoryEnumer(conn)
 	{
 		std::string command_line = "LC_TIME=C LS_COLORS= ls ";
 		if (quirks.ls_supports_dash_f)

@@ -140,7 +140,7 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 			if (dladdr(stk[i], &dli) && dli.dli_fname) {
 				FDWriteStr(fd, dli.dli_fname);
 				char tail[32];
-				sprintf(tail, " + 0x%x\n", unsigned(uintptr_t(stk[i]) - uintptr_t(dli.dli_fbase)));
+				snprintf(tail, sizeof(tail), " + 0x%x\n", unsigned(uintptr_t(stk[i]) - uintptr_t(dli.dli_fbase)));
 				FDWriteStr(fd, tail);
 			}
 		}
@@ -173,7 +173,7 @@ void SafeMMap::sSigaction(int num, siginfo_t *info, void *ctx)
 	{
 		SMM_Lock sl;
 		for (const auto &smm : s_safe_mmaps) {
-			if ((uintptr_t)info->si_addr >= (uintptr_t)smm->_view && 
+			if ((uintptr_t)info->si_addr >= (uintptr_t)smm->_view &&
 				(uintptr_t)info->si_addr - (uintptr_t)smm->_view < (uintptr_t)smm->_len) {
 				if (!smm->_dummy) {
 					smm->_dummy = true;

@@ -118,7 +118,9 @@
 
 			asm version is available only for x86 or amd64 platforms
 		*/
-		#define TTMATH_NOASM
+		#ifndef TTMATH_NOASM
+			#define TTMATH_NOASM
+		#endif
 	#endif
 
 
@@ -127,7 +129,9 @@
 		/*!
 			another compilers than MS VC or GCC by default use no asm version
 		*/
-		#define TTMATH_NOASM
+		#ifndef TTMATH_NOASM
+			#define TTMATH_NOASM
+		#endif
 	#endif
 
 #endif

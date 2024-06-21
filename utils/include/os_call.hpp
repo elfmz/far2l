@@ -7,6 +7,7 @@ template<class V, V BADV, typename ... ARGS>
 	static V os_call_v(V (*pfn)(ARGS ... args), ARGS ... args)
 {
 	for (unsigned char i = 0;; ++i) {
+		(void)i;
 		V r = pfn(args ...);
 		if (r == BADV && (errno == EAGAIN || errno == EINTR)) {
 //			if (i==0)

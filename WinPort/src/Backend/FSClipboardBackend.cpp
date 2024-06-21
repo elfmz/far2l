@@ -42,7 +42,7 @@ bool FSClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 	if (!_kfh)
 		return false;
 
-	char str_format[64]; sprintf(str_format, "0x%x", format);
+	char str_format[64]; snprintf(str_format, sizeof(str_format), "0x%x", format);
 
 	std::string str = _kfh->GetString("Data", str_format);
 	return (!str.empty() && str[0] == '#');
@@ -67,7 +67,7 @@ void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	}
 
 	char str_format[64];
-	sprintf(str_format, "0x%x", format);
+	snprintf(str_format, sizeof(str_format), "0x%x", format);
 
 	_kfh->SetString("Data", str_format, str.c_str());
 	return data;
@@ -79,7 +79,7 @@ void *FSClipboardBackend::OnClipboardGetData(UINT format)
 		return nullptr;
 
 	char str_format[64];
-	sprintf(str_format, "0x%x", (format == CF_UNICODETEXT) ? CF_TEXT : format);
+	snprintf(str_format, sizeof(str_format), "0x%x", (format == CF_UNICODETEXT) ? CF_TEXT : format);
 
 	std::string str = _kfh->GetString("Data", str_format);
 	if (str.empty() || str[0] != '#')

@@ -268,9 +268,9 @@ namespace VTLog
 		char name[128];
 		SYSTEMTIME st;
 		WINPORT(GetLocalTime)(&st);
-		sprintf(name, "farvt_%u-%u-%u_%u-%u-%u.%s",
-			st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-			colored ? "ans" : "log");
+		snprintf(name, sizeof(name), "farvt_%u-%u-%u_%u-%u-%u.%s",
+			 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+			 colored ? "ans" : "log");
 
 		std::string path = InMyTemp(name);
 				

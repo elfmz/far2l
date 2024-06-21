@@ -144,3 +144,52 @@ bool IsHexaDecimalNumberStr(const char *str)
 
 	return true;
 }
+
+char MakeHexDigit(const unsigned char c)
+{
+	if (c <= 9) {
+		return '0' + c;
+	}
+
+	if (c <= 0xf) {
+		return 'a' + (c - 0xa);
+	}
+
+	return 0;
+}
+
+
+void AppendHex(std::string &s, uint64_t v)
+{
+	if (v == 0) {
+		s+= '0';
+		return;
+	}
+
+	const size_t prev_sz = s.size();
+	size_t i = 0;
+	for (uint64_t tmp = v; tmp; tmp/= 16) {
+		++i;
+	}
+	s.resize(prev_sz + i);
+	for (uint64_t tmp = v; tmp; tmp/= 16) {
+		--i;
+		s[prev_sz + i] = MakeHexDigit((unsigned char)(tmp % 16));
+	}
+}
+
+std::string ToHex(uint64_t v)
+{
+	std::string s;
+	AppendHex(s, v);
+	return s;
+}
+
+std::string ToPrefixedHex(uint64_t v)
+{
+	std::string s;
+	s+= '0';
+	s+= 'x';
+	AppendHex(s, v);
+	return s;
+}

@@ -321,9 +321,7 @@ static char SetAttrGetBitCharFromModeCheckBoxes(HANDLE hDlg, int _i1, int _i2, i
 		return '-';
 	else {
 		int i = (i1 == BSTATE_CHECKED ? 1 : 0) + (i2 == BSTATE_CHECKED ? 2 : 0) + (i3 == BSTATE_CHECKED ? 4 : 0);
-		char buffer[3] = {0};
-		snprintf(buffer, 2, "%o", i);
-		return buffer[0];
+		return '0' + i;
 	}
 }
 

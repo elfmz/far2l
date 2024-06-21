@@ -30,6 +30,5 @@ void FilePathHashSuffix(std::string &pathname)
 
 	char sz_suffix[64];
 	snprintf(sz_suffix, sizeof(sz_suffix), "@%llx", (unsigned long long)suffix);
-
 	pathname+= sz_suffix;
 }

@@ -472,9 +472,7 @@ void BaseDialog::AbbreviableTextToDialogControl(int ctl, std::string str)
 
 void BaseDialog::LongLongToDialogControl(int ctl, long long value)
 {
-	char str[0x100] = {};
-	snprintf(str, sizeof(str) - 1, "%lld", value);
-	TextToDialogControl(ctl, str);
+	TextToDialogControl(ctl, ToDec(value));
 }
 
 void BaseDialog::LongLongToDialogControlThSeparated(int ctl, long long value)

@@ -242,7 +242,7 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 		n = (thisPInfo.PanelRect.right - thisPInfo.PanelRect.left) / 2;
 		// HOST
 		strcpy(Mode, "C0");
-		sprintf(ModeSz, hLen || nmLen || dizLen ? "%d" : "0", hstLen);
+		snprintf(ModeSz, sizeof(ModeSz), hLen || nmLen || dizLen ? "%d" : "0", hstLen);
 
 		// HOME
 		if (hLen) {
@@ -288,8 +288,8 @@ void FTP::GetOpenPluginInfo(struct OpenPluginInfo *pi)
 		} else {
 			PanelModesArray[3].ColumnTypes = (char *)"C0,Z";
 			PanelModesArray[3].ColumnWidths = ModeSz2;
-			sprintf(ModeSz2, "%d,0",
-					Min((int)(thisPInfo.PanelRect.right - thisPInfo.PanelRect.left) / 2, hstLen));
+			snprintf(ModeSz2, sizeof(ModeSz2),"%d,0",
+	 			 Min((int)(thisPInfo.PanelRect.right - thisPInfo.PanelRect.left) / 2, hstLen));
 		}
 
 		PanelModesArray[3].ColumnTitles = ColumnTitles2;

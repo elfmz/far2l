@@ -899,21 +899,21 @@ void KeyFileHelper::SetString(const std::string &section, const std::string &nam
 void KeyFileHelper::SetInt(const std::string &section, const std::string &name, int value)
 {
 	char tmp[32];
-	sprintf(tmp, "%d", value);
+	snprintf(tmp, sizeof(tmp), "%d", value);
 	SetString(section, name, tmp);
 }
 
 void KeyFileHelper::SetUInt(const std::string &section, const std::string &name, unsigned int value)
 {
 	char tmp[32];
-	sprintf(tmp, "0x%x", value);
+	snprintf(tmp, sizeof(tmp), "0x%x", value);
 	SetString(section, name, tmp);
 }
 
 void KeyFileHelper::SetULL(const std::string &section, const std::string &name, unsigned long long value)
 {
 	char tmp[64];
-	sprintf(tmp, "0x%llx", value);
+	snprintf(tmp, sizeof(tmp), "0x%llx", value);
 	SetString(section, name, tmp);
 }
 

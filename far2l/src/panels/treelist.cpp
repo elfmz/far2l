@@ -1909,7 +1909,7 @@ static void MkTreeName(FARString &out, const wchar_t *RootDir, const char *ext)
 	int r = sdc_stat(Wide2MB(RootDir).c_str(), &s);
 	if (r == 0) {
 		char tmp[128];
-		sprintf(tmp, "tree/%llx-%llx.%s", (unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
+		snprintf(tmp, sizeof(tmp), "tree/%llx-%llx.%s", (unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
 		out = InMyTemp(tmp);
 	} else {
 		std::string tmp = InMyTemp("tree/wtf-");

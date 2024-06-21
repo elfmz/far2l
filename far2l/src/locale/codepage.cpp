@@ -127,9 +127,9 @@ static void file_logger(int level, const char *cname, const char *msg, va_list v
 	while (cplog == 0 && idx < 10) {
 		char log_name[30];
 #ifdef __unix__
-		sprintf(log_name, "/tmp/cp-trace%d.log", idx);
+		snprintf(log_name, sizeof(log_name), "/tmp/cp-trace%d.log", idx);
 #else
-		sprintf(log_name, "c:/cp-trace%d.log", idx);
+		snprintf(log_name, sizeof(log_name), "c:/cp-trace%d.log", idx);
 #endif
 		cplog = fopen(log_name, "ab+");
 		idx++;

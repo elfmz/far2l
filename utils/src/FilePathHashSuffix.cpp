@@ -29,7 +29,7 @@ void FilePathHashSuffix(std::string &pathname)
 	}
 
 	char sz_suffix[64];
-	sprintf(sz_suffix, "@%llx", (unsigned long long)suffix);
+	snprintf(sz_suffix, sizeof(sz_suffix), "@%llx", (unsigned long long)suffix);
 
 	pathname+= sz_suffix;
 }

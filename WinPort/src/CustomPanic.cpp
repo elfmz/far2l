@@ -30,7 +30,7 @@ extern "C" {
 				char anykey_sz[64]{};
 				for (int i = 0; i < KEYPRESS_WAIT_SECONDS;) {
 					if (i >= KEYPRESS_IGNORE_SECONDS) {
-						sprintf(anykey_sz, "PRESS ANY KEY TO EXIT (%d)", KEYPRESS_WAIT_SECONDS - i);
+						snprintf(anykey_sz, sizeof(anykey_sz), "PRESS ANY KEY TO EXIT (%d)", KEYPRESS_WAIT_SECONDS - i);
 					}
 					PrintLine(FOREGROUND_RED, 0, "-------------------------");
 					PrintLine(FOREGROUND_RED, 1, "--- PANIC PANIC PANIC ---");

@@ -3279,9 +3279,7 @@ static bool replaceFunc(const TMacroFunction *)
 	int64_t Ret = 1;
 	// TODO: Здесь нужно проверить в соответствии с УНИХОДОМ!
 	FARString strStr;
-	int lenS = StrLength(Src.s());
 	int lenF = StrLength(Find.s());
-	int lenR = StrLength(Repl.s());
 	int cnt = 0;
 
 	if (lenF) {
@@ -3300,9 +3298,6 @@ static bool replaceFunc(const TMacroFunction *)
 	}
 
 	if (cnt) {
-		if (lenR > lenF)
-			lenS+= cnt * (lenR - lenF + 1);		//???
-
 		strStr = Src.s();
 		cnt = (int)Count.i();
 

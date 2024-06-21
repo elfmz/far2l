@@ -361,7 +361,7 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Dat
 		bool SpecifiedID = false, FoundID = false;
 		for (unsigned int J = 0; J != (unsigned int)-1; ++J) {
 			if (J != 0)
-				sprintf(IDName, "ID%u", J);
+				snprintf(IDName, sizeof(IDName), "ID%u", J);
 			else
 				strcpy(IDName, "ID");
 
@@ -727,7 +727,7 @@ static void FillFormat(const KeyFileValues *Values)
 	for (CustomStringList *CurFormat = Format;; CurFormat = CurFormat->Add()) {
 		char FormatName[100];
 
-		sprintf(FormatName, "Format%d", FormatNumber++);
+		snprintf(FormatName, sizeof(FormatName), "Format%d", FormatNumber++);
 		Values->GetChars(CurFormat->Str(), PROF_STR_LEN, FormatName, "");
 		if (*CurFormat->Str() == 0)
 			break;
@@ -740,7 +740,7 @@ static void FillFormat(const KeyFileValues *Values)
 	for (CustomStringList *CurIgnoreString = IgnoreStrings;; CurIgnoreString = CurIgnoreString->Add()) {
 		char Name[100];
 
-		sprintf(Name, "IgnoreString%d", Number++);
+		snprintf(Name, sizeof(Name), "IgnoreString%d", Number++);
 		Values->GetChars(CurIgnoreString->Str(), PROF_STR_LEN, Name, "");
 		if (*CurIgnoreString->Str() == 0)
 			break;

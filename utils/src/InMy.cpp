@@ -230,3 +230,13 @@ std::string InMyTemp(const char *subpath)
 
 	return path;
 }
+
+std::string InMyTempFmt(const char *subpath_fmt, ...)
+{
+	va_list args;
+	va_start(args, subpath_fmt);
+	const std::string &subpath = StrPrintfV(subpath_fmt, args);
+	va_end(args);
+
+	return InMyTemp(subpath.c_str());
+}

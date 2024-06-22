@@ -26,10 +26,7 @@ class ExecCommandFIFO
 public:
 	ExecCommandFIFO()
 	{
-		char sz[64] = {};
-		snprintf(sz, sizeof(sz) - 1, "NetRocks/fifo/%lx", (unsigned long)getpid());
-
-		_fifo = InMyTemp(sz);
+		_fifo = InMyTempFmt("NetRocks/fifo/%lx", (unsigned long)getpid());
 
 		CleanupFIFO();
 

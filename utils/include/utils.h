@@ -99,6 +99,7 @@ void InMyPathChanged(); // NOT thread safe, can be called only before any concur
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
 std::string InMyCache(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);
+std::string FN_PRINTF_ARGS(1) InMyTempFmt(const char *subpath_fmt, ...);
 
 bool IsPathIn(const wchar_t *path, const wchar_t *root);
 
@@ -322,8 +323,6 @@ template <typename ARRAY_T, class CHAR_T>
 
 bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);
-
-#define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
 
 bool IsCharFullWidth(wchar_t c);
 bool IsCharPrefix(wchar_t c);

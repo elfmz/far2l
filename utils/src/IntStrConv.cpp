@@ -159,7 +159,7 @@ char MakeHexDigit(const unsigned char c)
 }
 
 
-void AppendHex(std::string &s, uint64_t v)
+static void AppendHex(std::string &s, uint64_t v)
 {
 	if (v == 0) {
 		s+= '0';
@@ -185,11 +185,9 @@ std::string ToHex(uint64_t v)
 	return s;
 }
 
-std::string ToPrefixedHex(uint64_t v)
+std::string ToPrefixedHex(uint64_t v, const char *prefix)
 {
-	std::string s;
-	s+= '0';
-	s+= 'x';
+	std::string s(prefix);
 	AppendHex(s, v);
 	return s;
 }

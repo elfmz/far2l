@@ -540,7 +540,7 @@ namespace Sudo
 			return -1;
 		}
 
-		std::string ipc_client = InMyTemp(StrPrintf("sudo/%u", getpid()).c_str());
+		const auto &ipc_client = InMyTempFmt("sudo/%u", (unsigned int)getpid());
 
 		try {
 			LocalSocketClient udc(LocalSocket::STREAM, argv[0], ipc_client);

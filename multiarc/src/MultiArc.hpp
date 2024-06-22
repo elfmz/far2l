@@ -195,15 +195,14 @@ private:
 	std::string NextFileName;
 	int NameNumber;
 	int PrevFileNameNumber;
-	char PrefixFileName[32];
+	std::string PrefixFileName;
 	char ListFileName[NM];
 	unsigned int ExecCode;
 	unsigned int MaxAllowedExitCode;
 	int Silent;		// $ 07.02.2002 AA
 	int DefaultCodepage;
 
-	char CommentFileName[MAX_PATH];		//$ AA 25.11.2001
-										// HANDLE CommentFile; //$ AA 25.11.2001
+	std::string CommentFileName;		//$ AA 25.11.2001
 
 private:
 	bool ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors,

@@ -1429,7 +1429,7 @@ int i;
 	//warning C4996: 'sprintf': This function or variable may be unsafe.
 	#endif
 
-	sprintf(buf, "%d", par);
+	snprintf(buf, sizeof(buf), "%d", par);
 	for(i=0 ; buf[i] != 0 ; ++i)
 		buffer[i] = buf[i];
 

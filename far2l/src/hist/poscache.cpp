@@ -154,7 +154,7 @@ void FilePositionCache::AddPosition(const wchar_t *name, PosCache &poscache)
 	if (have_some_to_save) {
 		for (unsigned int i = 0; i < ARRAYSIZE(poscache.Position); ++i) {
 			char key[64];
-			sprintf(key, "Pos%u", i);
+			snprintf(key, sizeof(key), "Pos%u", i);
 			save_count = PositionCountToSave(poscache.Position[i]);
 			if (save_count) {
 				_kfh->SetBytes(section, key, (unsigned char *)poscache.Position[i],
@@ -201,7 +201,7 @@ bool FilePositionCache::GetPosition(const wchar_t *name, PosCache &poscache)
 		if (poscache.Position[i]) {
 			memset(poscache.Position[i], 0xff, sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT);
 			char key[64];
-			sprintf(key, "Pos%u", i);
+			snprintf(key, sizeof(key), "Pos%u", i);
 			values->GetBytes((unsigned char *)poscache.Position[i],
 					sizeof(poscache.Position[i][0]) * POSCACHE_BOOKMARK_COUNT, key);
 		}

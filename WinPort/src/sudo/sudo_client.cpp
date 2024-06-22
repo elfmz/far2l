@@ -176,7 +176,7 @@ namespace Sudo
 	
 	static bool OpenClientConnection()
 	{
-		std::string ipc = InMyTemp(StrPrintf("sudo/%u", getpid()).c_str());
+		std::string ipc = InMyTempFmt("sudo/%u", getpid());
 		try {
 			s_uds.reset(new LocalSocketServer(LocalSocket::STREAM, ipc));
 			FDScope dispatcher_leash(LaunchDispatcher(ipc));

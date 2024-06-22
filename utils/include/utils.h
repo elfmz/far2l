@@ -37,40 +37,6 @@ template <class C> static size_t tnzlen(const C *ptz, size_t n)
 	for (i = 0; i < n && ptz[i]; ++i);
 	return i;
 }
-
-// converts given hex digit to value between 0x0 and 0xf
-// in case of error returns 0xff
-template <class CHAR_T>
-	unsigned char ParseHexDigit(const CHAR_T hex)
-{
-	if (hex >= (CHAR_T)'0' && hex <= (CHAR_T)'9')
-		return hex - (CHAR_T)'0';
-	if (hex >= (CHAR_T)'a' && hex <= (CHAR_T)'f')
-		return 10 + hex - (CHAR_T)'a';
-	if (hex >= (CHAR_T)'A' && hex <= (CHAR_T)'F')
-		return 10 + hex - (CHAR_T)'A';
-
-	return 0xff;
-}
-
-// converts given two hex digits to value between 0x0 and 0xff
-// in case of error returns 0
-template <class CHAR_T>
-	unsigned char ParseHexByte(const CHAR_T *hex)
-{
-	const unsigned char rh = ParseHexDigit(hex[0]);
-	const unsigned char rl = ParseHexDigit(hex[1]);
-	if (rh == 0xff || rl == 0xff) {
-		return 0;
-	}
-	return ((rh << 4) | rl);
-}
-
-
-// converts given value between 0x0 and 0xf to lowercased hex digit
-// in case of error returns 0
-char MakeHexDigit(const unsigned char c);
-
 template <class StrT>
 	size_t StrStartsFrom(const StrT &haystack, const typename StrT::value_type needle)
 {
@@ -133,6 +99,7 @@ void InMyPathChanged(); // NOT thread safe, can be called only before any concur
 std::string InMyConfig(const char *subpath = NULL, bool create_path = true);
 std::string InMyCache(const char *subpath = NULL, bool create_path = true);
 std::string InMyTemp(const char *subpath = NULL);
+std::string FN_PRINTF_ARGS(1) InMyTempFmt(const char *subpath_fmt, ...);
 
 bool IsPathIn(const wchar_t *path, const wchar_t *root);
 
@@ -356,8 +323,6 @@ template <typename ARRAY_T, class CHAR_T>
 
 bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);
-
-#define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
 
 bool IsCharFullWidth(wchar_t c);
 bool IsCharPrefix(wchar_t c);

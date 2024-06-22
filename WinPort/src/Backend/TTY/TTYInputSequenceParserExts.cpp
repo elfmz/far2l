@@ -136,7 +136,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	/** also second_limit should be increased to maximum # of code points per key in "text-as-code points" mode */
 	const char first_limit = 2;
 	const char second_limit = 3;
-	int params[first_limit][second_limit] = {0};
+	int params[first_limit][second_limit] = {{0}};
 	int first_count = 0;
 	int second_count = 0;
 	bool end_found = 0;

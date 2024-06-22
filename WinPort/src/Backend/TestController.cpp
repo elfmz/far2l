@@ -29,7 +29,7 @@ TestController::~TestController()
 
 void *TestController::ThreadProc()
 {
-	const auto &ipc_client = InMyTemp(StrPrintf("test/%u", getpid()).c_str());
+	const auto &ipc_client = InMyTempFmt("test/%u", (unsigned int)getpid());
 	fprintf(stderr, "TestController: loop started, ipc_client='%s'\n", ipc_client.c_str());
 	try {
 		ClientLoop(ipc_client);

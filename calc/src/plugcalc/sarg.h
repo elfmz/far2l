@@ -42,7 +42,7 @@ private:
 		double  v_dbl;
 		float   v_flt;
 	
-	} arg;
+	} arg {};
 
 	// XXX:	
 	Big v_big;

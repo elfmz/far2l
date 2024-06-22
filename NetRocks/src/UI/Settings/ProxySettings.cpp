@@ -106,7 +106,7 @@ class ProxySettings : protected BaseDialog
 		if (kind.empty())
 			return;
 
-		UnlinkScope cfg_file(InMyTemp(StrPrintf("NetRocks/proxy/edit_%u.cfg", getpid()).c_str()));
+		UnlinkScope cfg_file(InMyTempFmt("NetRocks/proxy/edit_%u.cfg", getpid()));
 
 		const std::string &key = ProxifierCfgKey(kind);
 		std::string cfg = _sc.GetString(key.c_str());

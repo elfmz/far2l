@@ -159,9 +159,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		const BYTE col = static_cast<BYTE>(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 		char colorfgbg[32];
-		sprintf(colorfgbg, "%u;%u",
-			AnsiEsc::ConsoleColorToAnsi(col & 0xf),
-			AnsiEsc::ConsoleColorToAnsi((col >> 4) & 0xf));
+		snprintf(colorfgbg, sizeof(colorfgbg), "%u;%u",
+			 AnsiEsc::ConsoleColorToAnsi(col & 0xf),
+			 AnsiEsc::ConsoleColorToAnsi((col >> 4) & 0xf));
 
 		const auto color_bpp = WINPORT(GetConsoleColorPalette)(ConsoleHandle());
 		std::string askpass_app;
@@ -770,13 +770,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 			if (_win32_input_mode_expected) {
 				char buffer[64];
-				sprintf(buffer, "\x1B[%i;%i;%i;%i;%i;%i_",
-						KeyEvent.wVirtualKeyCode,
-						KeyEvent.wVirtualScanCode,
-						KeyEvent.uChar.UnicodeChar,
-						KeyEvent.bKeyDown,
-						KeyEvent.dwControlKeyState,
-						KeyEvent.wRepeatCount
+				snprintf(buffer, sizeof(buffer), "\x1B[%i;%i;%i;%i;%i;%i_",
+						 KeyEvent.wVirtualKeyCode,
+						 KeyEvent.wVirtualScanCode,
+						 KeyEvent.uChar.UnicodeChar,
+						 KeyEvent.bKeyDown,
+						 KeyEvent.dwControlKeyState,
+						 KeyEvent.wRepeatCount
 					);
 				return buffer;
 			}

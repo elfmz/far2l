@@ -2,7 +2,7 @@
 
 std::string StrPrintfV(const char *format, va_list args)
 {
-	std::string out(0x100, '#');
+	std::string out(15, '#'); // 15 is maximum number of characters when SSO still being used
 
 	va_list args_copy;
 	va_copy(args_copy, args);

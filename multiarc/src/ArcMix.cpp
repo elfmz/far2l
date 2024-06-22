@@ -191,10 +191,9 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 	} else {
 		WINPORT(GetConsoleScreenBufferInfo)(StdOutput, &csbi);
 
-		char Blank[1024];
-		snprintf(Blank, ARRAYSIZE(Blank), "%*s", csbi.dwSize.X, "");
+		std::string Blank(csbi.dwSize.X, ' ');
 		for (int Y = 0; Y < csbi.dwSize.Y; Y++)
-			Info.Text(0, Y, LIGHTGRAY, Blank);
+			Info.Text(0, Y, LIGHTGRAY, Blank.c_str());
 		Info.Text(0, 0, 0, NULL);
 
 		COORD C;
@@ -269,7 +268,7 @@ void InitDialogItems(const struct InitDialogItem *Init, struct FarDialogItem *It
 		PItem->History = (const char *)PInit->Selected;
 		PItem->Flags = PInit->Flags;
 		PItem->DefaultButton = PInit->DefaultButton;
-		strcpy(PItem->Data,
+		CharArrayCpyZ(PItem->Data,
 				((DWORD_PTR)PInit->Data < 2000) ? GetMsg((unsigned int)(DWORD_PTR)PInit->Data) : PInit->Data);
 	}
 }

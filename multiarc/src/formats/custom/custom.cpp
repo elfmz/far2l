@@ -725,9 +725,7 @@ static void FillFormat(const KeyFileValues *Values)
 	delete Format;
 	Format = new CustomStringList;
 	for (CustomStringList *CurFormat = Format;; CurFormat = CurFormat->Add()) {
-		char FormatName[100];
-
-		snprintf(FormatName, sizeof(FormatName), "Format%d", FormatNumber++);
+		const auto &FormatName = StrPrintf("Format%d", FormatNumber++);
 		Values->GetChars(CurFormat->Str(), PROF_STR_LEN, FormatName, "");
 		if (*CurFormat->Str() == 0)
 			break;
@@ -738,9 +736,7 @@ static void FillFormat(const KeyFileValues *Values)
 	delete IgnoreStrings;
 	IgnoreStrings = new CustomStringList;
 	for (CustomStringList *CurIgnoreString = IgnoreStrings;; CurIgnoreString = CurIgnoreString->Add()) {
-		char Name[100];
-
-		snprintf(Name, sizeof(Name), "IgnoreString%d", Number++);
+		const auto &Name = StrPrintf("IgnoreString%d", Number++);
 		Values->GetChars(CurIgnoreString->Str(), PROF_STR_LEN, Name, "");
 		if (*CurIgnoreString->Str() == 0)
 			break;

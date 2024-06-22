@@ -156,9 +156,8 @@ ssize_t LibArchOpenRead::RawRead(void *data, size_t len, off_t ofs)
 void LibArchOpenRead::PrepareForOpen(const char *charset)
 {
 	if (charset && *charset)  {
-		char opt_hdrcharset[0x100] = {0};
-		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
-		int r = LibArchCall(archive_read_set_options, _arc, (const char *)opt_hdrcharset);
+		const auto &opt_hdrcharset = StrPrintf("hdrcharset=%s", charset);
+		int r = LibArchCall(archive_read_set_options, _arc, opt_hdrcharset.c_str());
 		if (r != 0) {
 			fprintf(stderr, "LibArchOpenRead::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
@@ -390,9 +389,8 @@ LibArchOpenWrite::~LibArchOpenWrite()
 void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format, int compression_level)
 {
 	if (charset && *charset) {
-		char opt_hdrcharset[0x100] = {0};
-		snprintf(opt_hdrcharset, sizeof(opt_hdrcharset) - 1, "hdrcharset=%s", charset);
-		int r = LibArchCall(archive_write_set_options, _arc, (const char *)opt_hdrcharset);
+		const auto &opt_hdrcharset = StrPrintf("hdrcharset=%s", charset);
+		int r = LibArchCall(archive_write_set_options, _arc, opt_hdrcharset.c_str());
 		if (r != 0) {
 			fprintf(stderr, "LibArchOpenWrite::PrepareForOpen('%s') hdrcharset error %d (%s)\n",
 				charset, r, archive_error_string(_arc));
@@ -400,9 +398,8 @@ void LibArchOpenWrite::PrepareForOpen(const char *charset, unsigned int format, 
 	}
 
 	if (compression_level != -1) {
-		char sz[64] {};
-		snprintf(sz, sizeof(sz) - 1, "compression-level=%d", compression_level);
-		archive_write_set_options(_arc, sz);
+		const auto &opt_compr_lvl = StrPrintf("compression-level=%d", compression_level);
+		archive_write_set_options(_arc, opt_compr_lvl.c_str());
 	}
 
 #if (ARCHIVE_VERSION_NUMBER >= 3002000)

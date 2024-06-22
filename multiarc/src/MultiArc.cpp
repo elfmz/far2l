@@ -42,10 +42,6 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 
 	kfh.GetChars(Opt.CommandPrefix1, sizeof(Opt.CommandPrefix1), "Prefix1", "ma");
 
-#ifdef _NEW_ARC_SORT_
-	strcpy(IniFile, Info->ModuleName);
-	*((int *)(IniFile + strlen(IniFile) - 3)) = 0x696E69;	// :)
-#endif
 	Opt.PriorityClass = 2;									// default: NORMAL
 }
 

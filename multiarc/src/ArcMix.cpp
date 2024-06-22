@@ -163,8 +163,8 @@ void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list)
 /* tran 13.09.2000 $ */
 #endif
 
-int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo,
-		int ShowCommand, char *ListFileName)
+int Execute(HANDLE hPlugin, const std::string &CmdStr,
+	int HideOutput, int Silent, int NeedSudo, int ShowCommand, const char *ListFileName)
 {
 	if (!CmdStr.empty() && (CmdStr[0] == ' ' || CmdStr[0] == '\t')) {	// FSF.LTrim(ExpandedCmd); //$ AA 12.11.2001
 		std::string CmdStrTrimmed = CmdStr;

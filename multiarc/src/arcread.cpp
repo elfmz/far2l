@@ -8,7 +8,6 @@ PluginClass::PluginClass(int ArcPluginNumber)
 	PluginClass::ArcPluginNumber = ArcPluginNumber;
 	DizPresent = FALSE;
 	bGOPIFirstCall = true;
-	*farlang = 0;
 	ZeroFill(CurArcInfo);
 }
 
@@ -317,11 +316,10 @@ bool PluginClass::FarLangChanged()
 	if (!tmplang)
 		tmplang = "English";
 
-	if (!strcmp(tmplang, farlang))
+	if (farlang == tmplang)
 		return false;
 
-	CharArrayCpyZ(farlang, tmplang);
-
+	farlang = tmplang;
 	return true;
 }
 

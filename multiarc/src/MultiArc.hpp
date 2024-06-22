@@ -133,7 +133,7 @@ private:
 	int64_t PackedSize;
 	int DizPresent;
 
-	char farlang[100];
+	std::string farlang;
 
 	bool bGOPIFirstCall;
 	std::string PanelTitle;
@@ -196,7 +196,7 @@ private:
 	int NameNumber;
 	int PrevFileNameNumber;
 	std::string PrefixFileName;
-	char ListFileName[NM];
+	std::string ListFileName;
 	unsigned int ExecCode;
 	unsigned int MaxAllowedExitCode;
 	int Silent;		// $ 07.02.2002 AA
@@ -205,12 +205,10 @@ private:
 	std::string CommentFileName;		//$ AA 25.11.2001
 
 private:
-	bool ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors,
-			char *pcListFileName = nullptr);
+	bool ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors, const char *pcListFileName = nullptr);
 	void DeleteBraces(std::string &Command);
 	int ReplaceVar(std::string &Command);
-	int MakeListFile(char *ListFileName, int QuoteName, int UseSlash, int FolderName, int NameOnly,
-			int PathOnly, int FolderMask, const char *LocalAllFilesMask);
+	int MakeListFile(int QuoteName, int UseSlash, int FolderName, int NameOnly, int PathOnly, int FolderMask, const char *LocalAllFilesMask);
 
 public:
 	ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const std::string &FormatString,
@@ -315,8 +313,8 @@ bool ConfigGeneral();
 bool ConfigCommands(const std::string &ArcFormat, int IDFocus = 2, bool FastAccess = false, int PluginNumber = 0, int PluginType = 0);
 
 const char *GetMsg(int MsgId);
-int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo,
-		int ShowTitle, char *ListFileName = 0);
+int Execute(HANDLE hPlugin, const std::string &CmdStr,
+	int HideOutput, int Silent, int NeedSudo, int ShowTitle, const char *ListFileName = 0);
 size_t FindExt(const std::string &Name);
 bool AddExt(std::string &Name, const std::string &Ext);											//$ AA 28.11.2001
 bool DelExt(std::string &Name, const std::string &Ext);

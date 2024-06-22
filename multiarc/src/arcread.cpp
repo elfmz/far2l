@@ -306,7 +306,7 @@ int PluginClass::SetDirectory(const char *Dir, int OpMode)
 		return FALSE;
 	}
 
-	strcpy(CurDir, NewDir.c_str());
+	CharArrayCpyZ(CurDir, NewDir.c_str());
 	return TRUE;
 }
 

@@ -454,7 +454,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 		FarListItem ListPriorItem[5];
 		for (size_t I = 0; I < ARRAYSIZE(ListPriorItem); ++I) {
 			ListPriorItem[I].Flags = 0;
-			strcpy(ListPriorItem[I].Text, GetMsg((int)(MIdle_Priority_Class + I)));
+			CharArrayCpyZ(ListPriorItem[I].Text, GetMsg((int)(MIdle_Priority_Class + I)));
 		}
 		ListPriorItem[Opt.PriorityClass].Flags = LIF_SELECTED;
 		FarList ListPrior;

@@ -307,17 +307,17 @@ DWORD WINAPI _export ACE_GetSFXPos(void)
 	return SFXSize;
 }
 
-BOOL WINAPI _export ACE_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export ACE_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "ACE");
-		strcpy(DefaultExt, "ace");
+		FormatName = "ACE";
+		DefaultExt = "ace";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export ACE_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export ACE_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 		static const char *Commands[] = {/*Extract               */ "unace x -y {-p%%P} %%A %%F",
@@ -336,7 +336,7 @@ BOOL WINAPI _export ACE_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*Move files and folders*/ "",
 				/*"All files" mask      */ "*"};
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

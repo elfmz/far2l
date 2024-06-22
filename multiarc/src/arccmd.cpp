@@ -5,8 +5,8 @@
 #include <fcntl.h>
 #include "utils.h"
 
-ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const char *FormatString,
-		const char *ArcName, const char *ArcDir, const char *Password, const char *AllFilesMask,
+ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const std::string &FormatString,
+		const std::string &ArcName, const std::string &ArcDir, const std::string &Password, const std::string &AllFilesMask,
 		int IgnoreErrors, int CommandType, int ASilent, const char *RealArcDir, int DefaultCodepage)
 {
 	NeedSudo = false;
@@ -21,16 +21,16 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 	ArcCommand::DefaultCodepage = DefaultCodepage;
 
 	//  fprintf(stderr, "ArcCommand::ArcCommand = %d, FormatString=%s\n", ArcCommand::DefaultCodepage, FormatString);
-	if (*FormatString == 0)
+	if (FormatString.empty())
 		return;
 
 	bool arc_modify =
 			(CommandType != CMD_EXTRACT && CommandType != CMD_EXTRACTWITHOUTPATH && CommandType != CMD_TEST);
 
 	if (arc_modify) {
-		if (ArcName && *ArcName) {
-			auto ArcPath=ExtractFilePath(std::string(ArcName));
-			if ((sudo_client_is_required_for(ArcName, true) == 1) ||		// no write perms to archive itself?
+		if (!ArcName.empty()) {
+			const auto &ArcPath = ExtractFilePath(ArcName);
+			if ((sudo_client_is_required_for(ArcName.c_str(), true) == 1) ||		// no write perms to archive itself?
 				(sudo_client_is_required_for(ArcPath.c_str(), true)==1)) {	// no write perms to archive dir?
 				NeedSudo = true;
 			}
@@ -45,13 +45,12 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 			}
 		}
 	} else {
-		if((sudo_client_is_required_for(ArcName, false) == 1)							// do we have read access to the archive?
+		if((sudo_client_is_required_for(ArcName.c_str(), false) == 1)					// do we have read access to the archive?
 			|| ((CommandType == CMD_EXTRACT || CommandType == CMD_EXTRACTWITHOUTPATH)	// extraction from the archive,
 				&& (sudo_client_is_required_for(".", true) == 1))) {		// check if we have write access to dest dir
 			NeedSudo = true;
 		}
 	}
-
 
 	// char QPassword[NM+5],QTempPath[NM+5];
 	ArcCommand::PanelItem = PanelItem;
@@ -180,12 +179,11 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 
 	if (!IgnoreErrors && ExecCode != 0) {
 		if (!Silent) {
-			char ErrMsg[200];
-			char NameMsg[NM];
-			FSF.sprintf(ErrMsg, (char *)GetMsg(MArcNonZero), ExecCode);
-			const char *MsgItems[] = {GetMsg(MError), NameMsg, ErrMsg, GetMsg(MOk)};
-			ArrayCpyZ(NameMsg, ArcName.c_str());
+			char NameMsg[NM]{};
+			const auto &ErrMsg = StrPrintf(GetMsg(MArcNonZero), ExecCode);
+			CharArrayCpyZ(NameMsg, ArcName.c_str());
 			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
+			const char *MsgItems[] = {GetMsg(MError), NameMsg, ErrMsg.c_str(), GetMsg(MOk)};
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 		return false;
@@ -433,7 +431,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 						const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[N].UserData;
 						if (Attrs) {
 							if (Attrs->Prefix)
-								ArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+								CharArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
 							if (Attrs->LinkName)
 								cFileName = Attrs->LinkName->c_str();
 						}
@@ -518,7 +516,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		if (!Silent) {
 			char NameMsg[NM];
 			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), NameMsg, GetMsg(MOk)};
-			ArrayCpyZ(NameMsg, ListFileName);
+			CharArrayCpyZ(NameMsg, ListFileName);
 			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
@@ -555,7 +553,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[I].UserData;
 		if (Attrs) {
 			if (Attrs->Prefix)
-				ArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+				CharArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
 			if (Attrs->LinkName)
 				FileName = *Attrs->LinkName;
 		}

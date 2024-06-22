@@ -43,7 +43,6 @@ static FARAPIINPUTBOX FarInputBox = NULL;
 static FARAPIGETMSG FarGetMsg = NULL;
 static INT_PTR MainModuleNumber = -1;
 static FARAPIMESSAGE FarMessage = NULL;
-static FARSTDSPRINTF FarSprintf = NULL;
 static bool KeepSilent = false;
 
 #define Min(x, y) (((x) < (y)) ? (x) : (y))
@@ -54,7 +53,6 @@ void WINAPI _export RAR_SetFarInfo(const struct PluginStartupInfo *Info)
 	FarGetMsg = Info->GetMsg;
 	MainModuleNumber = Info->ModuleNumber;
 	FarMessage = Info->Message;
-	FarSprintf = Info->FSF->sprintf;
 }
 
 int CALLBACK CallbackProc(UINT msg, LPARAM UserData, LPARAM P1, LPARAM P2)
@@ -242,17 +240,17 @@ DWORD WINAPI _export RAR_GetSFXPos(void)
 	return SFXSize;
 }
 
-BOOL WINAPI _export RAR_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export RAR_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "RAR");
-		strcpy(DefaultExt, "rar");
+		FormatName = "RAR";
+		DefaultExt ="rar";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export RAR_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export RAR_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 		// Console RAR 2.50 commands
@@ -273,7 +271,7 @@ BOOL WINAPI _export RAR_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*Move files and folders*/ "rar m -r0 -y {-p%%P} {-ap%%R} {-w%%W} {%%S} -- %%A @%%LN",
 				/*"All files" mask      */ "*.*"};
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

@@ -294,7 +294,7 @@ int WINAPI _export ARC_GetArcItem(struct ArcItemInfo *Info)
 		Info->Comment = 1;
 	}
 
-	StrAssignArray(Info->PathName, Header.Name);
+	CharArrayAssignToStr(Info->PathName, Header.Name);
 	Info->nFileSize = Header.OrigSize;
 	Info->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;	//??
 	Info->nPhysicalSize = Header.CompSize;
@@ -330,17 +330,17 @@ BOOL WINAPI _export ARC_CloseArchive(struct ArcInfo *Info)
 	return (WINPORT(CloseHandle)(ArcHandle));
 }
 
-BOOL WINAPI _export ARC_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export ARC_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == ARC_FORMAT) {
-		strcpy(FormatName, "ARC");
-		strcpy(DefaultExt, "arc");
+		FormatName = "ARC";
+		DefaultExt = "arc";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export ARC_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export ARC_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == ARC_FORMAT) {
 		static const char *Commands[] = {/*Extract               */ "arc xo{g%%P} %%A %%FMQ",
@@ -359,7 +359,7 @@ BOOL WINAPI _export ARC_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*Move files and folders*/ "arc m{%%S}{g%%P} %%a %%FMQ",
 				/*"All files" mask      */ "*"};
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

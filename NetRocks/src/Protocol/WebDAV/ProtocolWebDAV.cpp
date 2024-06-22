@@ -20,7 +20,7 @@
 #include <neon/ne_uri.h>
 
 
-static const ne_propname PROP_DISPLAYNAME = { "DAV:", "displayname" };
+//static const ne_propname PROP_DISPLAYNAME = { "DAV:", "displayname" };
 
 static const ne_propname PROP_ISCOLLECTION = { "DAV:", "iscollection" };
 static const ne_propname PROP_COLLECTION = { "DAV:", "collection" };

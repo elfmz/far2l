@@ -18,7 +18,7 @@ static struct Codepages : std::vector<CodePage>, std::mutex
 		emplace_back();
 		auto &cp = back();
 		cp.id = id;
-		cp.name = StrPrintf("%u", id);
+		cp.name = ToDec((unsigned int)id);
 		if (cp.name.size() < 6) {
 			cp.name.append(6 - cp.name.size(), ' ');
 		}

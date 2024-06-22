@@ -243,7 +243,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
 
 	static char s_command_prefix[G.MAX_COMMAND_PREFIX + 1] = {}; // WHY?
-	strncpy(s_command_prefix, G.command_prefix.c_str(), sizeof(s_command_prefix));
+	strncpy(s_command_prefix, G.command_prefix.c_str(), sizeof(s_command_prefix) - 1);
 	Info->CommandPrefix = s_command_prefix;
 }
 

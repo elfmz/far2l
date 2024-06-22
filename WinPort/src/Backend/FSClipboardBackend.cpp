@@ -42,9 +42,7 @@ bool FSClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 	if (!_kfh)
 		return false;
 
-	char str_format[64]; sprintf(str_format, "0x%x", format);
-
-	std::string str = _kfh->GetString("Data", str_format);
+	std::string str = _kfh->GetString("Data", ToPrefixedHex(format));
 	return (!str.empty() && str[0] == '#');
 }
 
@@ -66,10 +64,7 @@ void *FSClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		str+= base64_encode( (const unsigned char*)data, len);
 	}
 
-	char str_format[64];
-	sprintf(str_format, "0x%x", format);
-
-	_kfh->SetString("Data", str_format, str.c_str());
+	_kfh->SetString("Data", ToPrefixedHex(format), str.c_str());
 	return data;
 }
 
@@ -78,10 +73,7 @@ void *FSClipboardBackend::OnClipboardGetData(UINT format)
 	if (!_kfh)
 		return nullptr;
 
-	char str_format[64];
-	sprintf(str_format, "0x%x", (format == CF_UNICODETEXT) ? CF_TEXT : format);
-
-	std::string str = _kfh->GetString("Data", str_format);
+	std::string str = _kfh->GetString("Data", ToPrefixedHex((format == CF_UNICODETEXT) ? CF_TEXT : format));
 	if (str.empty() || str[0] != '#')
 		return nullptr;
 

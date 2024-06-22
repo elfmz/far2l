@@ -433,7 +433,7 @@ static void RegValueSerializeBinary(std::ofstream &os, const BYTE *lpData, DWORD
 		if (i != 0 && (i % 16) == 0) {
 			os << std::endl;
 		}
-		sprintf(tmp, "%02x ", (unsigned int)(unsigned char)lpData[i]);
+		snprintf(tmp, sizeof(tmp), "%02x ", (unsigned int)(unsigned char)lpData[i]);
 		os << tmp;
 	}
 }

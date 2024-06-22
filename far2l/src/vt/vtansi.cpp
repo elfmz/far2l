@@ -1124,7 +1124,7 @@ struct VTAnsiContext
 
 				case 6: {	// ESC[6n Report cursor position
 					char buf[64] = {0};
-					sprintf( buf, "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
+					snprintf( buf, sizeof(buf), "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
 					SendSequence( buf );
 				}
 				return;

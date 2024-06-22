@@ -18,3 +18,6 @@
 #define ASSERT(COND) if (UNLIKELY(!(COND))) { ABORT_MSG("ASSERT"); }
 
 void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
+
+#define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
+

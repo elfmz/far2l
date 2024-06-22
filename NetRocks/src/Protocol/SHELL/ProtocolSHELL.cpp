@@ -48,7 +48,7 @@ static uint64_t GetIntegerBeforeStatusReplyLine(const std::string &data, size_t 
 void ProtocolSHELL::SubstituteCreds(std::string &str)
 {
 	Substitute(str, "$HOST", _host);
-	Substitute(str, "$PORT", StrPrintf("%u", _port));
+	Substitute(str, "$PORT", ToDec(_port));
 	Substitute(str, "$USER", _username);
 	Substitute(str, "$PASSWORD", _password);
 }

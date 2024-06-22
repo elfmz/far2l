@@ -105,12 +105,12 @@ std::string StringConfig::GetString(const char *name, const char *def) const
 
 void StringConfig::SetInt(const char *name, int val)
 {
-	_entries[name] = StrPrintf("%d", val);
+	_entries[name] = ToDec(val);
 }
 
 void StringConfig::SetHexULL(const char *name, unsigned long long val)
 {
-	_entries[name] = StrPrintf("%llx", val);
+	_entries[name] = ToHex(val);
 }
 
 void StringConfig::SetString(const char *name, const std::string &val)

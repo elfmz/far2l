@@ -261,7 +261,7 @@ void HostRemote::ReInitialize()
 	UnlinkScope prxf_cfg;
 	std::string prxf = sc_options.GetString("Proxifier");
 	if (!prxf.empty()) {
-		prxf_cfg = InMyTemp(StrPrintf("NetRocks/proxy/run_%u.cfg", getpid()).c_str());
+		prxf_cfg = InMyTempFmt("NetRocks/proxy/run_%u.cfg", getpid());
 		const std::string &cfg_content = sc_options.GetString(std::string("Proxifier_").append(prxf).c_str());
 		if (!WriteWholeFile(prxf_cfg.c_str(), cfg_content)) {
 			fprintf(stderr, "NetRocks: error %d creating proxifier config '%s'\n", errno, prxf_cfg.c_str());

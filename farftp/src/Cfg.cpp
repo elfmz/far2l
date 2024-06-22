@@ -373,7 +373,7 @@ static LONG_PTR WINAPI CDLG_WndProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			else if (Param1 >= cdlgBK && Param1 < cdlgBK + 16)
 				ColorBk = Param1 - cdlgBK;
 
-			sprintf(str, "%s(%3d 0x%02X %03o)", Title, FAR_COLOR(ColorFore, ColorBk),
+			snprintf(str, sizeof(str), "%s(%3d 0x%02X %03o)", Title, FAR_COLOR(ColorFore, ColorBk),
 					FAR_COLOR(ColorFore, ColorBk), FAR_COLOR(ColorFore, ColorBk));
 			// set caption
 			id.PtrLength = static_cast<int>(strlen(str));

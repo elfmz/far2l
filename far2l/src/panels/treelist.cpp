@@ -1908,9 +1908,7 @@ static void MkTreeName(FARString &out, const wchar_t *RootDir, const char *ext)
 	struct stat s{};
 	int r = sdc_stat(Wide2MB(RootDir).c_str(), &s);
 	if (r == 0) {
-		char tmp[128];
-		snprintf(tmp, sizeof(tmp), "tree/%llx-%llx.%s", (unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
-		out = InMyTemp(tmp);
+		out = InMyTempFmt("tree/%llx-%llx.%s", (unsigned long long)s.st_rdev, (unsigned long long)s.st_ino, ext);
 	} else {
 		std::string tmp = InMyTemp("tree/wtf-");
 		const std::string &RootMB = Wide2MB(RootDir);

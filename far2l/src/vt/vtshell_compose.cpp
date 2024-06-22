@@ -93,14 +93,13 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bo
 	const char *pwd_file_ext = need_sudo ? ".spwd" : ".pwd";
 
 	unsigned int id = ++s_vt_script_id;
-	char name[128];
-	snprintf(name, sizeof(name), "vtcmd/%x_%u", getpid(), id);
-	_cmd_script = InMyTemp(name);
+	const auto &name = StrPrintf("vtcmd/%x_%u", (unsigned int)getpid(), id);
+	_cmd_script = InMyTemp(name.c_str());
 	_pwd_file = _cmd_script + pwd_file_ext;
 	Create(cd, cmd, need_sudo, start_marker);
 	if (!_created) {
 		Cleanup();
-		_cmd_script = InMyCache(name);
+		_cmd_script = InMyCache(name.c_str());
 		_pwd_file = _cmd_script + pwd_file_ext;
 		Create(cd, cmd, need_sudo, start_marker);
 	}

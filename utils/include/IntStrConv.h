@@ -59,7 +59,7 @@ template <class CHAR_T>
 char MakeHexDigit(const unsigned char c);
 
 std::string ToHex(uint64_t v);
-std::string ToPrefixedHex(uint64_t v);
+std::string ToPrefixedHex(uint64_t v, const char *prefix = "0x");
 template <class V> std::string ToDec(V v)
 {
 	return std::to_string(v);

@@ -465,8 +465,8 @@ void FARString::Reserve(size_t DesiredCapacity)
 
 void FARStringFmtV(FARString &str, bool append, const wchar_t *format, va_list argptr)
 {
-	const size_t StartSize = 0x200;		// 512 bytes ought to be enough for mosts
-	const size_t MaxSize = 0x1000000;	// 16 megs ought to be enough for anybody
+	const size_t StartSize = 0x200;		// 512 chars ought to be enough for mosts
+	const size_t MaxSize = 0x1000000;	// 16 millions ought to be enough for anybody
 	size_t Size;
 
 	for (Size = StartSize; Size <= MaxSize; Size<<= 1)

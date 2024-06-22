@@ -76,8 +76,7 @@ bool Bookmarks::Get(int index, FARString *path,
 
 bool Bookmarks::Clear(int index)
 {
-	const auto &sec = ToDec(index);
-	_kfh.RemoveSection(sec);
+	_kfh.RemoveSection(ToDec(index));
 	if (index < 10)
 		return _kfh.Save();
 
@@ -97,8 +96,7 @@ bool Bookmarks::Clear(int index)
 		{
 			for (; dst_index <= index; ++dst_index)
 			{
-				const auto &sec = ToDec(dst_index);
-				_kfh.RemoveSection(sec);
+				_kfh.RemoveSection(ToDec(dst_index));
 			}
 			break;
 		}

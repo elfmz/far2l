@@ -383,7 +383,7 @@ size_t FindExt(const std::string &Name)
 	return p + 1;
 }
 
-bool DelExt(std::string &Name, std::string &Ext)
+bool DelExt(std::string &Name, const std::string &Ext)
 {
 	const size_t p = FindExt(Name);
 	if (p != std::string::npos && strcasecmp(Name.c_str() + p, Ext.c_str()) == 0) {
@@ -393,7 +393,7 @@ bool DelExt(std::string &Name, std::string &Ext)
 	return false;
 }
 
-bool AddExt(std::string &Name, std::string &Ext)
+bool AddExt(std::string &Name, const std::string &Ext)
 {// FSF.Unquote(Name);      //$ AA 15.04.2003 для правильной обработки имен в кавычках
 	size_t p = FindExt(Name);
 	if (p != std::string::npos) {

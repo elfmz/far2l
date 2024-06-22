@@ -138,8 +138,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		// GetRegKey(HKEY_CURRENT_USER,pdd->ArcFormat,"AddSwitches",Buffer,"",sizeof(Buffer));
 		// Info.SendDlgMessage(hDlg,DM_SETTEXTPTR, PDI_SWITCHESEDT, (long)Buffer);
 
-		const auto &title = StrPrintf(GetMsg(MAddTitle), pdd->ArcFormat.c_str());
-		SetDialogControlText(hDlg, 0, title);
+		SetDialogControlText(hDlg, 0, StrPrintf(GetMsg(MAddTitle), pdd->ArcFormat.c_str()));
 
 		// Info.SendDlgMessage(hDlg,MAM_SETNAME,0,0);
 

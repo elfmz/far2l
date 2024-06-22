@@ -2,7 +2,7 @@
 #include "marclng.hpp"
 #include <farkeys.h>
 
-int ConfigGeneral()
+bool ConfigGeneral()
 {
 	struct InitDialogItem InitItems[] = {
 			/*  0 */ {DI_DOUBLEBOX, 3, 1, 72, 17, 0, 0, 0, 0, (char *)MGConfigTitle},
@@ -48,7 +48,8 @@ int ConfigGeneral()
 	int ExitCode = Info.Dialog(Info.ModuleNumber, -1, -1, 76, 19, "ArcSettings1", DialogItems,
 			ARRAYSIZE(DialogItems));
 	if (ExitCode == 17 || ExitCode < 0)
-		return FALSE;
+		return false;
+
 	if (DialogItems[1].Selected)
 		Opt.HideOutput = 0;
 	else
@@ -79,15 +80,15 @@ int ConfigGeneral()
 	// kfh.SetInt(INI_SECTION,"AutoResetExactArcName",Opt.AutoResetExactArcName);
 	kfh.SetInt(INI_SECTION, "AdvFlags", (int)Opt.AdvFlags);
 
-	return TRUE;
+	return true;
 }
 
 #define DM_INITCONFIG DM_USER + 1
-typedef struct
+typedef struct FORMATINFO_
 {
 	std::string ArcFormat;
-	BOOL FastAccess{};
 	int PluginNumber{}, PluginType{};
+	bool FastAccess{};
 } FORMATINFO;
 
 LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
@@ -132,7 +133,7 @@ LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 	return Info.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-int ConfigCommands(const std::string &ArcFormat, int IDFocus, BOOL FastAccess, int PluginNumber, int PluginType)
+bool ConfigCommands(const std::string &ArcFormat, int IDFocus, bool FastAccess, int PluginNumber, int PluginType)
 {
 	struct InitDialogItem InitItems[] = {
 			/* 00 */ {DI_DOUBLEBOX, 3, 1, 72, 20, 0, 0, 0, 0, ArcFormat.c_str()},
@@ -197,11 +198,11 @@ int ConfigCommands(const std::string &ArcFormat, int IDFocus, BOOL FastAccess, i
 			ARRAYSIZE(DialogItems), 0, 0, CfgCmdProc, (LONG_PTR)&FormatInfo);
 
 	if (ExitCode == 35 || ExitCode < 0)
-		return FALSE;
+		return false;
 
 	KeyFileHelper kfh(INI_LOCATION);
 	for (I = 2, J = 0; I <= 32; I+= 2, J++)
 		kfh.SetString(ArcFormat, CmdNames[J], DialogItems[I].Data);
 
-	return TRUE;
+	return true;
 }

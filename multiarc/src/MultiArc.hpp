@@ -312,9 +312,8 @@ void WritePrivateProfileInt(char *Section, char *Key, int Value, char *Ini);
 
 std::string MakeFullName(const char *name);
 
-int ConfigGeneral();
-int ConfigCommands(const std::string &ArcFormat, int IDFocus = 2, BOOL FastAccess = FALSE, int PluginNumber = 0,
-		int PluginType = 0);
+bool ConfigGeneral();
+bool ConfigCommands(const std::string &ArcFormat, int IDFocus = 2, bool FastAccess = false, int PluginNumber = 0, int PluginType = 0);
 
 const char *GetMsg(int MsgId);
 int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo,

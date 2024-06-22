@@ -58,23 +58,21 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 	ArcCommand::AllFilesMask = AllFilesMask;
 	// WINPORT(GetTempPath)(ARRAYSIZE(TempPath),TempPath);
 	ArcCommand::TempPath = InMyTemp();
-	*ListFileName = 0;
 	NameNumber = -1;
 	NextFileName.clear();
 	do {
 		PrevFileNameNumber = -1;
-		if (!ProcessCommand(FormatString, CommandType, IgnoreErrors, ListFileName))
+		if (!ProcessCommand(FormatString, CommandType, IgnoreErrors, ListFileName.c_str()))
 			NameNumber = -1;
-		if (*ListFileName) {
+		if (!ListFileName.empty()) {
 			if (!Opt.Background)
-				sdc_remove(ListFileName);
-			*ListFileName = 0;
+				sdc_remove(ListFileName.c_str());
+			ListFileName.clear();
 		}
 	} while (NameNumber != -1 && NameNumber < ItemsNumber);
 }
 
-bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors,
-		char *pcListFileName)
+bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors, const char *pcListFileName)
 {
 	MaxAllowedExitCode = 0;
 	DeleteBraces(FormatString);
@@ -113,7 +111,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 	if ((Hide == 1 && CommandType == 0) || CommandType == 2)
 		Hide = 0;
 
-	ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+	ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 	fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
 
 // Unzip in MacOS definitely doesn't have -I and -O options, so dont even try encoding workarounds
@@ -122,13 +120,13 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 		// trying as utf8
 		std::string CommandRetry = Command;
 		CommandRetry.insert(6, "-I utf8 -O utf8 ");
-		ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+		ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 		if (ExecCode == 11) {
 			// "11" means file was not found in archive. retrying as oem
 			CommandRetry = Command;
 			unsigned int retry_cp = (DefaultCodepage > 0) ? DefaultCodepage : WINPORT(GetOEMCP)();
 			CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", retry_cp, retry_cp));
-			ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+			ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 		}
 		if (ExecCode == 1) {
 			// "1" exit code for unzip is warning only, no need to bother user
@@ -151,8 +149,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 					if (!def_char_used) {
 						std::string CommandRetry = Command.substr(0, i_entries);
 						CommandRetry.append(&oemstr[0]);
-						ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo,
-								Password.empty(), ListFileName);
+						ExecCode = Execute(this, CommandRetry.c_str(),
+							Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 						fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode,
 								CommandRetry.c_str());
 					} else {
@@ -336,8 +334,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 
 		case 'L':
 		case 'l':
-			if (!MakeListFile(ListFileName, QuoteName, UseSlash, FolderName, NameOnly, PathOnly, FolderMask,
-						LocalAllFilesMask.c_str())) {
+			if (!MakeListFile(QuoteName, UseSlash, FolderName, NameOnly, PathOnly, FolderMask, LocalAllFilesMask.c_str())) {
 				return -1;
 			}
 			Command = ListFileName;
@@ -481,7 +478,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 	return VarLength;
 }
 
-int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, int FolderName, int NameOnly,
+int ArcCommand::MakeListFile(int QuoteName, int UseSlash, int FolderName, int NameOnly,
 		int PathOnly, int FolderMask, const char *LocalAllFilesMask)
 {
 	//  FILE *ListFile;
@@ -493,19 +490,15 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 	sa.lpSecurityDescriptor=NULL;
 	sa.bInheritHandle=TRUE; //WTF???
 	*/
-
-	if (FSF.MkTemp(ListFileName, "FAR") == NULL
-			|| (ListFile = WINPORT(CreateFile)(MB2Wide(ListFileName).c_str(), GENERIC_WRITE,
+	char TmpListFileName[MAX_PATH + 1] = {0};
+	if (FSF.MkTemp(TmpListFileName, "FAR") == NULL
+			|| (ListFile = WINPORT(CreateFile)(MB2Wide(TmpListFileName).c_str(), GENERIC_WRITE,
 						FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,	//&sa
-						FILE_FLAG_SEQUENTIAL_SCAN, NULL))
-					== INVALID_HANDLE_VALUE)
-
+						FILE_FLAG_SEQUENTIAL_SCAN, NULL)) == INVALID_HANDLE_VALUE)
 	{
 		if (!Silent) {
-			char NameMsg[NM];
-			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), NameMsg, GetMsg(MOk)};
-			CharArrayCpyZ(NameMsg, ListFileName);
-			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
+			FSF.TruncPathStr(TmpListFileName, MAX_WIDTH_MESSAGE);
+			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), TmpListFileName, GetMsg(MOk)};
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 		/* $ 25.07.2001 AA
@@ -514,7 +507,6 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		25.07.2001 AA $*/
 		return FALSE;
 	}
-
 	std::string CurArcDir, FileName, OutName;
 	//  char Buf[3*NM];
 
@@ -584,7 +576,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		}
 		if (Error) {
 			WINPORT(CloseHandle)(ListFile);
-			sdc_remove(ListFileName);
+			sdc_remove(TmpListFileName);
 			if (!Silent) {
 				const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), GetMsg(MOk)};
 				Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
@@ -594,6 +586,8 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 	}
 
 	WINPORT(CloseHandle)(ListFile);
+	CharArrayAssignToStr(ListFileName, TmpListFileName);
+
 	/*
 	  if (!WINPORT(CloseHandle)(ListFile))
 	  {

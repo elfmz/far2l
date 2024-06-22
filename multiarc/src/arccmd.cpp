@@ -11,11 +11,6 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 {
 	NeedSudo = false;
 	Silent = ASilent;
-	//  CommentFile=INVALID_HANDLE_VALUE; //$ AA 25.11.2001
-	*CommentFileName = 0;	//$ AA 25.11.2001
-							//  ExecCode=-1;
-							/* $ 28.11.2000 AS
-							 */
 	ExecCode = (DWORD)-1;
 
 	ArcCommand::DefaultCodepage = DefaultCodepage;
@@ -63,7 +58,6 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 	ArcCommand::AllFilesMask = AllFilesMask;
 	// WINPORT(GetTempPath)(ARRAYSIZE(TempPath),TempPath);
 	ArcCommand::TempPath = InMyTemp();
-	*PrefixFileName = 0;
 	*ListFileName = 0;
 	NameNumber = -1;
 	NextFileName.clear();
@@ -355,23 +349,17 @@ int ArcCommand::ReplaceVar(std::string &Command)
 			break;
 
 		case 'C':
-			if (*CommentFileName)	// второй раз сюда не лезем
-				break;
-			{
+			if (!CommentFileName.empty()) {// второй раз сюда не лезем
 				Command.clear();
-				int CommentFile;
-				if (FSF.MkTemp(CommentFileName, "FAR")
-						&& (CommentFile = sdc_open(CommentFileName, O_CREAT | O_TRUNC | O_RDWR, 0660))
-								!= -1) {
-					char Buf[512];
-					if (Info.InputBox(GetMsg(MComment), GetMsg(MInputComment), NULL, "", Buf, sizeof(Buf),
-								NULL, 0))
-					//??тут можно и заполнить строку комментарием, но надо знать, файловый
-					//?? он или архивный. да и имя файла в архиве тоже надо знать...
-					{
-						sdc_write(CommentFile, Buf, strlen(Buf));
-						sdc_close(CommentFile);
-						Command = CommentFileName;
+				char Buf[MAX_PATH];
+				if (FSF.MkTemp(Buf, "FAR")) {
+					CharArrayAssignToStr(CommentFileName, Buf);
+					if (Info.InputBox(GetMsg(MComment), GetMsg(MInputComment), NULL, "", Buf, sizeof(Buf), NULL, 0)) {
+						//??тут можно и заполнить строку комментарием, но надо знать, файловый
+						//?? он или архивный. да и имя файла в архиве тоже надо знать...
+						if (WriteWholeFile(CommentFileName.c_str(), Buf, strnlen(Buf, ARRAYSIZE(Buf)))) {
+							Command = CommentFileName;
+						}
 					}
 					WINPORT(FlushConsoleInputBuffer)(NULL);		// GetStdHandle(STD_INPUT_HANDLE));
 				}
@@ -426,12 +414,12 @@ int ArcCommand::ReplaceVar(std::string &Command)
 						if (N >= ItemsNumber)
 							break;
 
-						*PrefixFileName = 0;
+						PrefixFileName.clear();
 						const char *cFileName = PanelItem[N].FindData.cFileName;
 						const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[N].UserData;
 						if (Attrs) {
 							if (Attrs->Prefix)
-								CharArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+								PrefixFileName = *Attrs->Prefix;
 							if (Attrs->LinkName)
 								cFileName = Attrs->LinkName->c_str();
 						}
@@ -549,11 +537,11 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 
 		int FileAttr = PanelItem[I].FindData.dwFileAttributes;
 
-		*PrefixFileName = 0;
+		PrefixFileName.clear();
 		const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[I].UserData;
 		if (Attrs) {
 			if (Attrs->Prefix)
-				CharArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+				PrefixFileName = *Attrs->Prefix;
 			if (Attrs->LinkName)
 				FileName = *Attrs->LinkName;
 		}
@@ -627,6 +615,6 @@ ArcCommand::~ArcCommand()	//$ AA 25.11.2001
 {
 	/*  if(CommentFile!=INVALID_HANDLE_VALUE)
 		WINPORT(CloseHandle)(CommentFile);*/
-	if (*CommentFileName)
-		sdc_remove(CommentFileName);
+	if (!CommentFileName.empty())
+		sdc_remove(CommentFileName.c_str());
 }

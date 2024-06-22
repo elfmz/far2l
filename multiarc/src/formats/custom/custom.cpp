@@ -631,7 +631,7 @@ BOOL WINAPI _export CUSTOM_CloseArchive(struct ArcInfo *Info)
 	return (TRUE);
 }
 
-BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export CUSTOM_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	std::string TypeName;
 	const KeyFileValues *Values = GetSection(Type, TypeName);
@@ -639,12 +639,12 @@ BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *Defau
 	if (!Values)
 		return (FALSE);
 
-	Values->GetChars(FormatName, 64, Str_TypeName, TypeName.c_str());
-	Values->GetChars(DefaultExt, NM, "Extension", "");
-	return (*FormatName != 0);
+	FormatName = Values->GetString(Str_TypeName, TypeName.c_str());
+	DefaultExt = Values->GetString("Extension");
+	return !FormatName.empty();
 }
 
-BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	std::string TypeName, FormatName;
 
@@ -663,7 +663,7 @@ BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
 			"AllFilesMask"};
 
 	if (Command < (int)(ARRAYSIZE(CmdNames))) {
-		Values->GetChars(Dest, 512, CmdNames[Command], "");
+		Dest = Values->GetString(CmdNames[Command], "");
 		return (TRUE);
 	}
 

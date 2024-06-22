@@ -533,17 +533,17 @@ DWORD WINAPI _export ZIP_GetSFXPos(void)
 	return (DWORD)SFXSize.QuadPart;
 }
 
-BOOL WINAPI _export ZIP_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export ZIP_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "ZIP");
-		strcpy(DefaultExt, "zip");
+		FormatName = "ZIP";
+		DefaultExt = "zip";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 #if ZIP_LIBARCHIVE
@@ -583,7 +583,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*"All files" mask      */ "*"};
 #endif
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

@@ -151,9 +151,9 @@ static U16B md_tohaattr(mode_t mdattr) {
 
 static char *attrstring(unsigned haattr) {
 
-    static char as[11];
-
-    sprintf(as,"%c%c%c%c%c%c%c%c%c%c",
+    static char as[12];
+	as[sizeof(as) - 1] = 0;
+    snprintf(as, sizeof(as) - 1, "%c%c%c%c%c%c%c%c%c%c",
 	    HA_ISFIFO(haattr)?'f':HA_ISSOCK(haattr)?'s':HA_ISLNK(haattr)?'l':
 	    HA_ISDIR(haattr)?'d':HA_ISCHR(haattr)?'c':HA_ISBLK(haattr)?'b':'-',
 	    (haattr&HA_IRUSR)?'r':'-',

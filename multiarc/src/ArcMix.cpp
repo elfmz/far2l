@@ -39,7 +39,7 @@ BOOL GoToFile(const char *Target, BOOL AllowChangeDir)
 	char Name[NM], Dir[NM * 5];
 	int pathlen;
 
-	ArrayCpyZ(Name, FSF.PointToName(const_cast<char *>(Target)));
+	CharArrayCpyZ(Name, FSF.PointToName(const_cast<char *>(Target)));
 	pathlen = (int)(FSF.PointToName(const_cast<char *>(Target)) - Target);
 	if (pathlen)
 		memcpy(Dir, Target, pathlen);
@@ -192,7 +192,7 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 		WINPORT(GetConsoleScreenBufferInfo)(StdOutput, &csbi);
 
 		char Blank[1024];
-		FSF.sprintf(Blank, "%*s", csbi.dwSize.X, "");
+		snprintf(Blank, ARRAYSIZE(Blank), "%*s", csbi.dwSize.X, "");
 		for (int Y = 0; Y < csbi.dwSize.Y; Y++)
 			Info.Text(0, Y, LIGHTGRAY, Blank);
 		Info.Text(0, 0, 0, NULL);
@@ -374,69 +374,65 @@ int FindExecuteFile(char *OriginalName, char *DestName, int SizeDest)
 	return DestName[0] ? TRUE : FALSE;
 }
 
-char *SeekDefExtPoint(char *Name, char *DefExt /*=NULL*/, char **Ext /*=NULL*/)
+size_t FindExt(const std::string &Name)
 {
-	FSF.Unquote(Name);	//$ AA 15.04.2003 для правильной обработки имен в кавычках
-	Name = FSF.PointToName(Name);
-	char *TempExt = strrchr(Name, '.');
-	if (!DefExt)
-		return TempExt;
-	if (Ext)
-		*Ext = TempExt;
-	return (TempExt != NULL) ? (strcasecmp(TempExt + 1, DefExt) ? NULL : TempExt) : NULL;
-}
-
-BOOL AddExt(char *Name, char *Ext)
-{
-	char *ExtPnt;
-	FSF.Unquote(Name);	//$ AA 15.04.2003 для правильной обработки имен в кавычках
-	if (Name && *Name && !SeekDefExtPoint(Name, Ext, &ExtPnt)) {
-		// transform Ext
-		char NewExt[NM], *Ptr;
-		strncpy(NewExt, Ext, sizeof(NewExt) - 1);
-
-		int Up = 0, Lw = 0;
-		Ptr = Name;
-		while (*Ptr) {
-			if (isalpha(*Ptr)) {
-				if (islower(*Ptr))
-					Lw++;
-				if (isupper(*Ptr))
-					Up++;
-			}
-			++Ptr;
-		}
-
-		if (Lw)
-			mystrlwr(NewExt);
-		else if (Up)
-			mystrupr(NewExt);
-
-		if (ExtPnt && !*(ExtPnt + 1))
-			strcpy(ExtPnt + 1, NewExt);
-		else
-			FSF.sprintf(Name + strlen(Name), ".%s", NewExt);
-		return TRUE;
+	size_t p = Name.find_last_of("./");
+	if (p == std::string::npos || Name[p] != '.') {
+		return std::string::npos;
 	}
-	return FALSE;
+	return p + 1;
 }
 
-#ifdef _NEW_ARC_SORT_
-void WritePrivateProfileInt(char *Section, char *Key, int Value, char *Ini)
+bool DelExt(std::string &Name, std::string &Ext)
 {
-	char Buf32[32];
-	wsprintf(Buf32, "%d", Value);
-	WritePrivateProfileString(Section, Key, Buf32, Ini);
+	const size_t p = FindExt(Name);
+	if (p != std::string::npos && strcasecmp(Name.c_str() + p, Ext.c_str()) == 0) {
+		Name.resize(p - 1);
+		return true;
+	}
+	return false;
 }
-#endif
 
-int WINAPI GetPassword(char *Password, const char *FileName)
+bool AddExt(std::string &Name, std::string &Ext)
+{// FSF.Unquote(Name);      //$ AA 15.04.2003 для правильной обработки имен в кавычках
+	size_t p = FindExt(Name);
+	if (p != std::string::npos) {
+		if (strcasecmp(Ext.c_str(), Name.c_str() + p) == 0) {
+			return false;
+		}
+		Name.resize(p);
+	} else {
+		Name+= '.';
+		p = Name.size();
+	}
+	if (Ext.empty()) {
+		return false;
+	}
+
+	bool has_lowers = false, has_uppers = false;
+	for (const auto &c : Name) {
+		if (isalpha(c)) {
+			has_lowers = has_lowers || islower(c);
+			has_uppers = has_uppers || isupper(c);
+		}
+	}
+	Name+= Ext;
+	if (has_lowers || has_uppers) {
+		for (; p < Name.size(); ++p) {
+			Name[p] = has_lowers ? tolower(Name[p]) : toupper(Name[p]);
+		}
+	}
+	return true;
+}
+
+int WINAPI GetPassword(std::string &Password, const char *FileName)
 {
-	char Prompt[2 * NM], InPass[512];
-	FSF.sprintf(Prompt, GetMsg(MGetPasswordForFile), FileName);
-	if (Info.InputBox((const char *)GetMsg(MGetPasswordTitle), (const char *)Prompt, NULL, NULL, InPass,
+	char InPass[512];
+	CharArrayCpyZ(InPass, Password.c_str());
+	const auto &Prompt = StrPrintf(GetMsg(MGetPasswordForFile), FileName);
+	if (Info.InputBox((const char *)GetMsg(MGetPasswordTitle), Prompt.c_str(), NULL, NULL, InPass,
 				sizeof(InPass), NULL, FIB_PASSWORD | FIB_ENABLEEMPTY)) {
-		strcpy(Password, InPass);
+		CharArrayAssignToStr(Password, InPass);
 		return TRUE;
 	}
 	return FALSE;
@@ -566,4 +562,22 @@ bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize)
 		return true;
 
 	return false;
+}
+
+std::string GetDialogControlText(HANDLE hDlg, int id)
+{
+	int len = Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, id, 0);
+	std::vector<char> buf(std::max(len + 1, 32));
+	Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, id, (ULONG_PTR)buf.data());
+	return std::string(buf.data());
+}
+
+void SetDialogControlText(HANDLE hDlg, int id, const char *str)
+{
+	Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, id, (ULONG_PTR)str);
+}
+
+void SetDialogControlText(HANDLE hDlg, int id, const std::string &str)
+{
+	Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, id, (ULONG_PTR)str.c_str());
 }

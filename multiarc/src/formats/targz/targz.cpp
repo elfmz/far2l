@@ -348,10 +348,10 @@ static int GetArcItemTAR(struct ArcItemInfo *Info)
 			} else {
 				Info->PathName.clear();
 				if (TAR_hdr.header.prefix[0]) {
-					StrAssignArray(Info->PathName, TAR_hdr.header.prefix);
+					CharArrayAssignToStr(Info->PathName, TAR_hdr.header.prefix);
 					Info->PathName+= '/';
 				}
-				StrAppendArray(Info->PathName, TAR_hdr.header.name);
+				CharArrayAppendToStr(Info->PathName, TAR_hdr.header.name);
 			}
 
 			Info->nFileSize = 0;
@@ -471,7 +471,7 @@ BOOL WINAPI _export TARGZ_CloseArchive(struct ArcInfo *Info)
 	return (WINPORT(CloseHandle)(ArcHandle));
 }
 
-BOOL WINAPI _export TARGZ_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export TARGZ_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	static const char *const FmtAndExt[5][2] = {
 			{"TAR",     "tar"},
@@ -486,14 +486,14 @@ BOOL WINAPI _export TARGZ_GetFormatName(int Type, char *FormatName, char *Defaul
 		case Z_FORMAT:
 		case BZ_FORMAT:
 		case XZ_FORMAT:
-			strcpy(FormatName, FmtAndExt[Type][0]);
-			strcpy(DefaultExt, FmtAndExt[Type][1]);
+			FormatName = FmtAndExt[Type][0];
+			DefaultExt = FmtAndExt[Type][1];
 			return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	static const char *Commands[5][15] = {
 			{	// TAR_FORMAT
@@ -528,7 +528,7 @@ BOOL WINAPI _export TARGZ_GetDefaultCommands(int Type, int Command, char *Dest)
 					"", "xz -c %%fq >%%A", "xz %%fq", "xz -c %%fq >%%A", "xz %%fq", "*"},
 	};
 	if (Type >= TAR_FORMAT && Type <= XZ_FORMAT && Command < (int)(ARRAYSIZE(Commands[Type]))) {
-		strcpy(Dest, Commands[Type][Command]);
+		Dest = Commands[Type][Command];
 		return (TRUE);
 	}
 	return (FALSE);

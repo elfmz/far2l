@@ -1655,6 +1655,8 @@ static void ScanPluginDir()
 	TruncStr(strDirName, 30);
 	CenterStr(strDirName, strDirName, 30);
 
+	FarGetPluginDirListMsg(strDirName, AbortOp ? 0 : MSG_KEEPBACKGROUND);
+
 	if (CheckForEscSilent()) {
 		if (Opt.Confirm.Esc)	// Будет выдаваться диалог?
 			AbortOp = TRUE;
@@ -1662,8 +1664,6 @@ static void ScanPluginDir()
 		if (ConfirmAbortOp())
 			StopSearch = TRUE;
 	}
-
-	FarGetPluginDirListMsg(strDirName, AbortOp ? 0 : MSG_KEEPBACKGROUND);
 
 	if (StopSearch || !CtrlObject->Plugins.GetFindData(hDirListPlugin, &PanelData, &ItemCount, OPM_FIND))
 		return;

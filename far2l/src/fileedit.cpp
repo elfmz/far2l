@@ -1491,14 +1491,6 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 		if (CurTime - StartTime > RedrawTimeout) {
 			StartTime = CurTime;
 
-			if (CheckForEscSilent()) {
-				if (ConfirmAbortOp()) {
-					UserBreak = 1;
-					EditFile.Close();
-					return FALSE;
-				}
-			}
-
 			SetCursorType(FALSE, 0);
 			INT64 CurPos = 0;
 			EditFile.GetPointer(CurPos);
@@ -1513,6 +1505,14 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 				}
 			}
 			Editor::EditorShowMsg(Msg::EditTitle, Msg::EditReading, Name, Percent);
+
+			if (CheckForEscSilent()) {
+				if (ConfirmAbortOp()) {
+					UserBreak = 1;
+					EditFile.Close();
+					return FALSE;
+				}
+			}
 		}
 
 		const wchar_t *CurEOL;

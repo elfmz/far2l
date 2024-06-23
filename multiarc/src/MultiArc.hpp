@@ -18,7 +18,6 @@ using namespace oldfar;
 #define INI_LOCATION (InMyConfig("plugins/multiarc/config.ini"))
 #define INI_SECTION  ("Settings")
 
-// #define _NEW_ARC_SORT_
 #define OLD_DIALOG_STYLE 1
 #define _ARC_UNDER_CURSOR_
 #define _GROUP_NAME_
@@ -292,20 +291,11 @@ extern struct PluginStartupInfo Info;
 extern class ArcPlugins *ArcPlugin;
 extern const char *CmdNames[];
 
-#ifdef _NEW_ARC_SORT_
-extern char IniFile[];
-extern const char *SortModes[];
-#endif	//_NEW_ARC_SORT_
-
 extern DWORD PriorityProcessCode[];
 
 /*
   Functions
 */
-
-#ifdef _NEW_ARC_SORT_
-void WritePrivateProfileInt(char *Section, char *Key, int Value, char *Ini);
-#endif	//_NEW_ARC_SORT_
 
 std::string MakeFullName(const char *name);
 

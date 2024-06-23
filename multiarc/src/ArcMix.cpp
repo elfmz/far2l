@@ -5,7 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 #include <windows.h>
 #include <Environment.h>
 #include <string>
@@ -102,34 +101,6 @@ SHAREDSYMBOL int BuiltinMain(int argc, char *argv[])
 	return r;
 }
 
-static int BuiltinFork(const char *cmd)
-{
-	Environment::ExplodeCommandLine ecl(cmd);
-	if (ecl.empty()) {
-		fprintf(stderr, "%s: cmd is empty - '%s'\n", __FUNCTION__, cmd);
-		return -1;
-	}
-	std::vector<char *> argv;
-	for (const auto &c : ecl) {
-		argv.emplace_back((char *)c.c_str());
-	}
-	fflush(stdout);
-	fflush(stderr);
-	pid_t p = fork();
-	if (p == 0) {
-		_exit(BuiltinMain(argv.size(), argv.data()));
-	}
-	if (p == (pid_t)-1) {
-		perror("BuiltinFork - fork");
-		return -1;
-	}
-	fprintf(stderr, "%s [%u]: %s\n", __FUNCTION__, (unsigned)p, cmd);
-
-	int status = 0;
-	waitpid(p, &status, 0);
-	return status;
-}
-
 /* $ 13.09.2000 tran
    запуск треда для ожидания момента убийства лист файла */
 #if 0
@@ -198,13 +169,10 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr,
 	if (!ShowCommand)
 		flags|= EF_NOCMDPRINT;
 
-	if (*CmdStr.c_str() != '^') {
-		ExitCode = FSF.Execute(CmdStr.c_str(), flags);
-
-	} else if (!HideOutput || NeedSudo) {
+	if (*CmdStr.c_str() == '^') {
 		ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), "BuiltinMain", CmdStr.c_str() + 1, flags);
 	} else {
-		ExitCode = BuiltinFork(CmdStr.c_str() + 1);
+		ExitCode = FSF.Execute(CmdStr.c_str(), flags);
 	}
 
 

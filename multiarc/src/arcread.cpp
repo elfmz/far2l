@@ -4,12 +4,10 @@
 
 PluginClass::PluginClass(int ArcPluginNumber)
 {
-	*ArcName = 0;
 	*CurDir = 0;
 	PluginClass::ArcPluginNumber = ArcPluginNumber;
 	DizPresent = FALSE;
 	bGOPIFirstCall = true;
-	*farlang = 0;
 	ZeroFill(CurArcInfo);
 }
 
@@ -30,10 +28,11 @@ int PluginClass::PreReadArchive(const char *Name)
 		return FALSE;
 	}
 
-	ArrayCpyZ(ArcName, Name);
+	ArcName = Name;
 
-	if (strchr(FSF.PointToName(ArcName), '.') == NULL)
-		strcat(ArcName, ".");
+	if (FindExt(ArcName) == std::string::npos) {
+		ArcName+= '.';
+	}
 
 	return TRUE;
 }
@@ -94,12 +93,9 @@ int PluginClass::ReadArchive(const char *Name, int OpMode)
 			const DWORD Now = GetProcessUptimeMSec();
 			if (Now >= UpdateTime) {
 				UpdateTime = Now + 100;
-				char FilesMsg[100];
-				char NameMsg[NM];
-				FSF.sprintf(FilesMsg, GetMsg(MArcReadFiles), (unsigned int)ArcDataCount);
-				const char *MsgItems[] = {GetMsg(MArcReadTitle), GetMsg(MArcReading), NameMsg, FilesMsg};
-				ArrayCpyZ(NameMsg, Name);
-				FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
+				const auto &NameMsg = FormatMessagePath(Name, false);
+				const auto &FilesMsg = StrPrintf(GetMsg(MArcReadFiles), (unsigned int)ArcDataCount);
+				const char *MsgItems[] = {GetMsg(MArcReadTitle), GetMsg(MArcReading), NameMsg.c_str(), FilesMsg.c_str()};
 				Info.Message(Info.ModuleNumber, MessageShown ? FMSG_KEEPBACKGROUND : 0, NULL, MsgItems,
 						ARRAYSIZE(MsgItems), 0);
 				MessageShown = true;
@@ -176,9 +172,8 @@ int PluginClass::ReadArchive(const char *Name, int OpMode)
 				break;
 		}
 
-		char NameMsg[NM];
-		const char *MsgItems[] = {GetMsg(MError), NameMsg, GetMsg(GetItemCode), GetMsg(MOk)};
-		FSF.TruncPathStr(strncpy(NameMsg, Name, sizeof(NameMsg) - 1), MAX_WIDTH_MESSAGE);
+		const auto &NameMsg = FormatMessagePath(Name, true);
+		const char *MsgItems[] = {GetMsg(MError), NameMsg.c_str(), GetMsg(GetItemCode), GetMsg(MOk)};
 		Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		return FALSE;	// Mantis#0001241
 	}
@@ -191,9 +186,8 @@ int PluginClass::ReadArchive(const char *Name, int OpMode)
 bool PluginClass::EnsureFindDataUpToDate(int OpMode)
 {
 	if (!ArcData.empty()) {
-		struct stat NewArcStat
-		{};
-		if (sdc_stat(ArcName, &NewArcStat) == -1)
+		struct stat NewArcStat{};
+		if (sdc_stat(ArcName.c_str(), &NewArcStat) == -1)
 			return false;
 
 		if (ArcStat.st_mtime == NewArcStat.st_mtime && ArcStat.st_size == NewArcStat.st_size)
@@ -201,7 +195,7 @@ bool PluginClass::EnsureFindDataUpToDate(int OpMode)
 	}
 
 	DWORD size = (DWORD)Info.AdvControl(Info.ModuleNumber, ACTL_GETPLUGINMAXREADDATA, (void *)0);
-	int fd = sdc_open(ArcName, O_RDONLY);
+	int fd = sdc_open(ArcName.c_str(), O_RDONLY);
 	if (fd == -1)
 		return false;
 
@@ -213,8 +207,8 @@ bool PluginClass::EnsureFindDataUpToDate(int OpMode)
 	if (read_size > 0) {
 		DWORD SFXSize = 0;
 
-		ReadArcOK = (ArcPlugin->IsArchive(ArcPluginNumber, ArcName, Data, read_size, &SFXSize)
-				&& ReadArchive(ArcName, OpMode));
+		ReadArcOK = (ArcPlugin->IsArchive(ArcPluginNumber, ArcName.c_str(), Data, read_size, &SFXSize)
+				&& ReadArchive(ArcName.c_str(), OpMode));
 	}
 	free(Data);
 
@@ -308,7 +302,7 @@ int PluginClass::SetDirectory(const char *Dir, int OpMode)
 		return FALSE;
 	}
 
-	strcpy(CurDir, NewDir.c_str());
+	CharArrayCpyZ(CurDir, NewDir.c_str());
 	return TRUE;
 }
 
@@ -319,11 +313,10 @@ bool PluginClass::FarLangChanged()
 	if (!tmplang)
 		tmplang = "English";
 
-	if (!strcmp(tmplang, farlang))
+	if (farlang == tmplang)
 		return false;
 
-	ArrayCpyZ(farlang, tmplang);
-
+	farlang = tmplang;
 	return true;
 }
 
@@ -336,8 +329,8 @@ static void AppendInfoData(std::string &Str, const char *Data)
 
 void PluginClass::SetInfoLineSZ(size_t Index, int TextID, const char *Data)
 {
-	ArrayCpyZ(InfoLines[Index].Text, GetMsg(TextID));
-	ArrayCpyZ(InfoLines[Index].Data, Data);
+	CharArrayCpyZ(InfoLines[Index].Text, GetMsg(TextID));
+	CharArrayCpyZ(InfoLines[Index].Data, Data);
 }
 
 void PluginClass::SetInfoLine(size_t Index, int TextID, const std::string &Data)
@@ -353,36 +346,31 @@ void PluginClass::SetInfoLine(size_t Index, int TextID, int DataID)
 void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
-	Info->Flags =
-			OPIF_USEFILTER | OPIF_USESORTGROUPS | OPIF_USEHIGHLIGHTING | OPIF_ADDDOTS | OPIF_COMPAREFATTIME;
-	Info->HostFile = ArcName;
+	Info->Flags = OPIF_USEFILTER | OPIF_USESORTGROUPS | OPIF_USEHIGHLIGHTING | OPIF_ADDDOTS | OPIF_COMPAREFATTIME;
+	Info->HostFile = ArcName.c_str();
 	Info->CurDir = CurDir;
 
 	if (bGOPIFirstCall)
 		ArcPlugin->GetFormatName(ArcPluginNumber, ArcPluginType, FormatName, DefExt);
 
-	char NameTitle[NM];
-	strncpy(NameTitle, FSF.PointToName(ArcName), sizeof(NameTitle) - 1);
-
-	{
-		struct PanelInfo PInfo;
-		if (::Info.Control((HANDLE)this, FCTL_GETPANELSHORTINFO, &PInfo)) {		// TruncStr
-			FSF.TruncPathStr(NameTitle,
-					(PInfo.PanelRect.right - PInfo.PanelRect.left + 1 - (strlen(FormatName) + 3 + 4)));
-		}
+	std::string NameTitle;
+	struct PanelInfo PInfo;
+	if (::Info.Control((HANDLE)this, FCTL_GETPANELSHORTINFO, &PInfo)) {		// TruncStr
+		NameTitle = FormatMessagePath(ArcName.c_str(), true,
+			(PInfo.PanelRect.right - PInfo.PanelRect.left + 1 - (FormatName.size() + 3 + 4)));
+	} else {
+		NameTitle = FormatMessagePath(ArcName.c_str(), true, -1);
 	}
 
-	FSF.snprintf(Title, ARRAYSIZE(Title) - 1, " %s:%s%s%s ", FormatName, NameTitle, *CurDir ? "/" : "",
-			*CurDir ? CurDir : "");
+	PanelTitle = StrPrintf(" %s:%s%s%s ", FormatName.c_str(), NameTitle.c_str(), *CurDir ? "/" : "", *CurDir ? CurDir : "");
 
-	Info->PanelTitle = Title;
+	Info->PanelTitle = PanelTitle.c_str();
 
 	if (bGOPIFirstCall || FarLangChanged()) {
-		FSF.snprintf(Format, ARRAYSIZE(Format) - 1, GetMsg(MArcFormat), FormatName);
+		Format = StrPrintf(GetMsg(MArcFormat), FormatName.c_str());
 
 		ZeroFill(InfoLines);
-		FSF.snprintf(InfoLines[0].Text, ARRAYSIZE(InfoLines[0].Text), GetMsg(MInfoTitle),
-				FSF.PointToName(ArcName));
+		FSF.snprintf(InfoLines[0].Text, ARRAYSIZE(InfoLines[0].Text), GetMsg(MInfoTitle), FSF.PointToName((char *)ArcName.c_str()));
 		InfoLines[0].Separator = TRUE;
 
 		std::string TmpInfoData = FormatName;
@@ -431,12 +419,12 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 		KeyBar.AltShiftTitles[9 - 1] = (char *)GetMsg(MAltShiftF9);
 	}
 
-	Info->Format = Format;
+	Info->Format = Format.c_str();
 	Info->KeyBar = &KeyBar;
 	Info->InfoLines = InfoLines;
 	Info->InfoLinesNumber = ARRAYSIZE(InfoLines);
 
-	ArrayCpyZ(DescrFilesString, Opt.DescriptionNames.c_str());
+	CharArrayCpyZ(DescrFilesString, Opt.DescriptionNames.c_str());
 
 	size_t DescrFilesNumber = 0;
 	char *NamePtr = DescrFilesString;

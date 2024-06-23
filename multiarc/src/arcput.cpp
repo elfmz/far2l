@@ -6,15 +6,15 @@
 
 struct PutDlgData
 {
-	PluginClass *Self;
-	char ArcFormat[NM];
+	PluginClass *Self{};
+	std::string ArcFormat;
 	// char OriginalName[512];   //$ AA 26.11.2001
-	char Password1[256];
+	std::string Password1;
 	// char Password2[256];      //$ AA 28.11.2001
-	char DefExt[NM];
-	BOOL DefaultPluginNotFound;		//$ AA 2?.11.2001
-	BOOL NoChangeArcName;			//$ AA 23.11.2001
-	BOOL OldExactState;				//$ AA 26.11.2001
+	std::string DefExt;
+	BOOL DefaultPluginNotFound{};	//$ AA 2?.11.2001
+	BOOL NoChangeArcName{};			//$ AA 23.11.2001
+	BOOL OldExactState{};			//$ AA 26.11.2001
 									// BOOL ArcNameChanged;        //$ AA 27.11.2001
 };
 
@@ -63,7 +63,7 @@ private:
 	FarList ListItems;
 
 public:
-	SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcFormat);
+	SelectFormatComboBox(FarDialogItem *DialogItem, const std::string &ArcFormat);
 	~SelectFormatComboBox() { free(ListItems.Items); }
 };
 
@@ -72,31 +72,29 @@ int SelectFormatComboBox::Compare(FarListItem *Item1, FarListItem *Item2)
 	return strcmp(Item1->Text, Item2->Text);
 }
 
-SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcFormat)
+SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, const std::string &ArcFormat)
 {
 	typedef int(__cdecl * FCmp)(const void *, const void *);
 	struct FarListItem *NewItems;
 	int &Count = ListItems.ItemsNumber;
 	FarListItem *&Items = ListItems.Items;
-	char Format[100], DefExt[NM];
 
 	DialogItem->ListItems = NULL;
 	Items = NULL;
 	Count = 0;
 	for (int i = 0; i < ArcPlugin->FmtCount(); i++) {
 		for (int j = 0;; j++) {
+			std::string Format, DefExt, DefCommand;
 			if (!ArcPlugin->GetFormatName(i, j, Format, DefExt))
 				break;
 
-			char Buffer[MA_MAX_SIZE_COMMAND_NAME];
-
 			//*Buffer=0; //$ AA сбросится в GetDefaultCommands
-			ArcPlugin->GetDefaultCommands(i, j, CMD_ADD, Buffer);
+			ArcPlugin->GetDefaultCommands(i, j, CMD_ADD, DefCommand);
 			// хитрый финт - подстановка Buffer в качестве дефолта для самого Buffer
-			KeyFileReadSection(INI_LOCATION, Format)
-					.GetChars(Buffer, sizeof(Buffer), CmdNames[CMD_ADD], Buffer);
+			DefCommand = KeyFileReadSection(INI_LOCATION, Format)
+					.GetString(CmdNames[CMD_ADD], DefCommand.c_str());
 
-			if (*Buffer == 0)
+			if (DefCommand.empty())
 				continue;
 
 			NewItems = (FarListItem *)realloc(Items, (Count + 1) * sizeof(FarListItem));
@@ -106,9 +104,9 @@ SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcF
 				return;
 			}
 			Items = NewItems;
-			strncpy(Items[Count].Text, Format, sizeof(Items[Count].Text) - 1);
-			Items[Count].Flags =
-					((Count == 0 && *ArcFormat == 0) || !strcasecmp(ArcFormat, Format)) ? MIF_SELECTED : 0;
+			strncpy(Items[Count].Text, Format.c_str(), sizeof(Items[Count].Text) - 1);
+			Items[Count].Flags = ((Count == 0 && ArcFormat.empty())
+				|| !strcasecmp(ArcFormat.c_str(), Format.c_str())) ? MIF_SELECTED : 0;
 			Count++;
 		}
 	}
@@ -126,7 +124,6 @@ SelectFormatComboBox::SelectFormatComboBox(FarDialogItem *DialogItem, char *ArcF
 
 LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	char Buffer[512];
 	PutDlgData *pdd = (struct PutDlgData *)Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 
 	if (Msg == DN_INITDIALOG) {
@@ -141,8 +138,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		// GetRegKey(HKEY_CURRENT_USER,pdd->ArcFormat,"AddSwitches",Buffer,"",sizeof(Buffer));
 		// Info.SendDlgMessage(hDlg,DM_SETTEXTPTR, PDI_SWITCHESEDT, (long)Buffer);
 
-		FSF.sprintf(Buffer, GetMsg(MAddTitle), pdd->ArcFormat);
-		Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, 0, (LONG_PTR)Buffer);
+		SetDialogControlText(hDlg, 0, StrPrintf(GetMsg(MAddTitle), pdd->ArcFormat.c_str()));
 
 		// Info.SendDlgMessage(hDlg,MAM_SETNAME,0,0);
 
@@ -177,7 +173,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			// pdd->ArcNameChanged=TRUE;
 			Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_EXACTNAMECHECK, 1);
 		} else if (Param1 == PDI_SELARCCOMB) {
-			ArrayCpyZ(pdd->ArcFormat, ((FarDialogItem *)Param2)->Data);
+			pdd->ArcFormat = ((FarDialogItem *)Param2)->Data;
 			Info.SendDlgMessage(hDlg, MAM_SELARC, 0, 0);
 		} else if (Param1 == PDI_SWITCHESEDT) {
 			Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_SAVEBTN, 1);
@@ -214,9 +210,8 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 
 			case PDI_SAVEBTN: {
 				KeyFileHelper kfh(INI_LOCATION);
-				kfh.SetString(INI_SECTION, "DefaultFormat", pdd->ArcFormat);
-				Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
-				kfh.SetString(INI_SECTION, "AddSwitches", Buffer);
+				kfh.SetString(INI_SECTION, "DefaultFormat", pdd->ArcFormat.c_str());
+				kfh.SetString(INI_SECTION, "AddSwitches", GetDialogControlText(hDlg, PDI_SWITCHESEDT));
 
 				// Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
 				// Info.SendDlgMessage(hDlg, DM_ADDHISTORY, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
@@ -229,10 +224,6 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			case PDI_SELARCBTN:
 				if (pdd->Self->SelectFormat(pdd->ArcFormat, TRUE)) {
 					Info.SendDlgMessage(hDlg, MAM_SELARC, 0, 0);
-#ifdef _NEW_ARC_SORT_
-					int Rate = GetPrivateProfileInt("ChoiceRate", pdd->ArcFormat, 0, IniFile);
-					WritePrivateProfileInt("ChoiceRate", pdd->ArcFormat, Rate + 1, IniFile);
-#endif	//_NEW_ARC_SORT_
 				}
 				Info.SendDlgMessage(hDlg, DM_SETFOCUS, PDI_ARCNAMEEDT, 0);
 				return TRUE;
@@ -250,10 +241,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 	} else if (Msg == DN_CLOSE) {
 		if (Param1 == PDI_ADDBTN && Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_ADDBTN, -1)) {
 			// проверка совпадения введенного пароля и подтверждения
-			char Password1[256], Password2[256];
-			Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_PASS0WEDT, (LONG_PTR)Password1);
-			Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_PASS1WEDT, (LONG_PTR)Password2);
-			if (strcmp(Password1, Password2)) {
+			if (GetDialogControlText(hDlg, PDI_PASS0WEDT) != GetDialogControlText(hDlg, PDI_PASS1WEDT)) {
 				const char *MsgItems[] = {GetMsg(MError), GetMsg(MAddPswNotMatch), GetMsg(MOk)};
 				Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 				return FALSE;
@@ -264,25 +252,26 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		return	/*Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_ADDBTN, -1) == TRUE ||*/
 				Param1 < 0 || Param1 == PDI_CANCELBTN;
 	} else if (Msg == MAM_SETDISABLE) {
-		ArcPlugin->GetDefaultCommands(pdd->Self->ArcPluginNumber, pdd->Self->ArcPluginType, CMD_ADD, Buffer);
-		KeyFileReadSection(INI_LOCATION, pdd->ArcFormat)
-				.GetChars(Buffer, sizeof(Buffer), CmdNames[CMD_ADD], Buffer);
-		Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_ADDBTN, *Buffer != 0);
+		std::string str;
+		ArcPlugin->GetDefaultCommands(pdd->Self->ArcPluginNumber, pdd->Self->ArcPluginType, CMD_ADD, str);
+		str = KeyFileReadSection(INI_LOCATION, pdd->ArcFormat).GetString(CmdNames[CMD_ADD], str.c_str());
+		Info.SendDlgMessage(hDlg, DM_ENABLE, PDI_ADDBTN, !str.empty());
+
 	} else if (Msg == MAM_ARCSWITCHES) {
 		// Выставляем данные из AddSwitches
-		KeyFileReadSection(INI_LOCATION, pdd->ArcFormat).GetChars(Buffer, sizeof(Buffer), "AddSwitches", "");
-		Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
-		if (*Buffer && Opt.UseLastHistory) {
-			Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR) "");
+		const auto &SwitchesStr = KeyFileReadSection(INI_LOCATION, pdd->ArcFormat).GetString("AddSwitches", "");
+		SetDialogControlText(hDlg, PDI_SWITCHESEDT, SwitchesStr);
+		if (!SwitchesStr.empty() && Opt.UseLastHistory) {
+			SetDialogControlText(hDlg, PDI_SWITCHESEDT, "");
 		}
 		// если AddSwitches пустой и юзается UseLastHistory, то...
-		static char SwHistoryName[NM];
-		FSF.sprintf(SwHistoryName, "ArcSwitches/%s", pdd->ArcFormat);
+		std::string SwHistoryName("ArcSwitches/");
+		SwHistoryName+= pdd->ArcFormat;
 		// ...следующая команда заставит выставить LastHistory
-		Info.SendDlgMessage(hDlg, DM_SETHISTORY, PDI_SWITCHESEDT, (LONG_PTR)SwHistoryName);
+		Info.SendDlgMessage(hDlg, DM_SETHISTORY, PDI_SWITCHESEDT, (LONG_PTR)SwHistoryName.c_str());
 		// если история была пустая то всё таки надо выставить это поле из настроек
-		if (*Buffer && !Info.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, PDI_SWITCHESEDT, 0)) {
-			Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
+		if (!SwitchesStr.empty() && !Info.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, PDI_SWITCHESEDT, 0)) {
+			SetDialogControlText(hDlg, PDI_SWITCHESEDT, SwitchesStr);
 		}
 
 		// Info.SendDlgMessage(hDlg, DM_EDITUNCHANGEDFLAG, PDI_SWITCHESEDT, 1);
@@ -296,21 +285,15 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		BOOL IsDelOldDefExt = (BOOL)Info.SendDlgMessage(hDlg, MAM_DELDEFEXT, 0, 0);
 		IsDelOldDefExt = IsDelOldDefExt && Info.SendDlgMessage(hDlg, DM_GETCHECK, PDI_EXACTNAMECHECK, 0);
 
-		KeyFileReadSection(INI_LOCATION, pdd->ArcFormat).GetChars(Buffer, sizeof(Buffer), "DefExt", "");
-		BOOL Ret = TRUE;
-		if (*Buffer == 0)
-			Ret = ArcPlugin->GetFormatName(pdd->Self->ArcPluginNumber, pdd->Self->ArcPluginType,
-					pdd->ArcFormat, Buffer);
-		if (!Ret)
-			pdd->DefExt[0] = 0;
-		else
-			strncpy(pdd->DefExt, Buffer, sizeof(pdd->DefExt) - 1);
+		pdd->DefExt = KeyFileReadSection(INI_LOCATION, pdd->ArcFormat).GetString("DefExt", "");
+		if (pdd->DefExt.empty()) {
+			ArcPlugin->GetFormatName(pdd->Self->ArcPluginNumber, pdd->Self->ArcPluginType, pdd->ArcFormat, pdd->DefExt);
+		}
 
 		if (IsDelOldDefExt)
 			Info.SendDlgMessage(hDlg, MAM_ADDDEFEXT, 0, 0);
 
-		FSF.sprintf(Buffer, GetMsg(MAddTitle), pdd->ArcFormat);
-		Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, 0, (LONG_PTR)Buffer);
+		SetDialogControlText(hDlg, 0, StrPrintf(GetMsg(MAddTitle), pdd->ArcFormat.c_str()));
 
 		Info.SendDlgMessage(hDlg, MAM_SETDISABLE, 0, 0);
 		Info.SendDlgMessage(hDlg, MAM_ARCSWITCHES, 0, 0);
@@ -320,17 +303,14 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		// Info.SendDlgMessage(hDlg,MAM_ARCSWITCHES,0,0);
 		return TRUE;
 	} else if (Msg == MAM_ADDDEFEXT) {
-		char Name[NM] /*, *Ext*/;
-		Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_ARCNAMEEDT, (LONG_PTR)Name);
+		std::string Name = GetDialogControlText(hDlg, PDI_ARCNAMEEDT);
 		AddExt(Name, pdd->DefExt);
-		Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, PDI_ARCNAMEEDT, (LONG_PTR)Name);
+		SetDialogControlText(hDlg, PDI_ARCNAMEEDT, Name);
 		return TRUE;
 	} else if (Msg == MAM_DELDEFEXT) {
-		char Name[NM] /*, *DefExt*/, *Ext;
-		Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_ARCNAMEEDT, (LONG_PTR)Name);
-		if (SeekDefExtPoint(Name, pdd->DefExt, &Ext) != NULL || (Ext != NULL && !*(Ext + 1))) {
-			*Ext = 0;
-			Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, PDI_ARCNAMEEDT, (LONG_PTR)Name);
+		std::string Name = GetDialogControlText(hDlg, PDI_ARCNAMEEDT);
+		if (DelExt(Name, pdd->DefExt)) {
+			SetDialogControlText(hDlg, PDI_ARCNAMEEDT, Name);
 			return TRUE;
 		}
 		return FALSE;
@@ -369,21 +349,18 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 	int ArcExitCode = 1;
 	BOOL OldExactState = Opt.AdvFlags.AutoResetExactArcName ? FALSE : Opt.AdvFlags.ExactArcName;
 	BOOL RestoreExactState = FALSE, NewArchive = TRUE;
-	struct PutDlgData pdd = {0};
+	struct PutDlgData pdd;
 	BOOL Ret = TRUE;
 
 	pdd.Self = this;
-	*pdd.Password1 /*=*pdd.Password2*/ = 0;
 
 	if (ArcPluginNumber == -1) {
-		char DefaultFormat[100];
-		KeyFileReadSection(INI_LOCATION, INI_SECTION)
-				.GetChars(DefaultFormat, sizeof(DefaultFormat), "DefaultFormat", "TARGZ");
+		std::string DefaultFormat = KeyFileReadSection(INI_LOCATION, INI_SECTION).GetString("DefaultFormat", "TARGZ");
 		if (!FormatToPlugin(DefaultFormat, ArcPluginNumber, ArcPluginType)) {
 			ArcPluginNumber = ArcPluginType = 0;
 			pdd.DefaultPluginNotFound = TRUE;
 		} else {
-			ArrayCpyZ(pdd.ArcFormat, DefaultFormat);
+			pdd.ArcFormat = DefaultFormat;
 			pdd.DefaultPluginNotFound = FALSE;
 		}
 	}
@@ -398,9 +375,8 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 	Opt.PriorityClass = 2;
 
 	while (1) {
-		KeyFileReadSection(INI_LOCATION, pdd.ArcFormat)
-				.GetChars(pdd.DefExt, sizeof(pdd.DefExt), "DefExt", "");
-		if (*pdd.DefExt == 0)
+		pdd.DefExt = KeyFileReadSection(INI_LOCATION, pdd.ArcFormat).GetString("DefExt");
+		if (pdd.DefExt.empty())
 			Ret = ArcPlugin->GetFormatName(ArcPluginNumber, ArcPluginType, pdd.ArcFormat, pdd.DefExt);
 		if (!Ret) {
 			Opt.PriorityClass = 2;
@@ -474,7 +450,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 		FarListItem ListPriorItem[5];
 		for (size_t I = 0; I < ARRAYSIZE(ListPriorItem); ++I) {
 			ListPriorItem[I].Flags = 0;
-			strcpy(ListPriorItem[I].Text, GetMsg((int)(MIdle_Priority_Class + I)));
+			CharArrayCpyZ(ListPriorItem[I].Text, GetMsg((int)(MIdle_Priority_Class + I)));
 		}
 		ListPriorItem[Opt.PriorityClass].Flags = LIF_SELECTED;
 		FarList ListPrior;
@@ -486,16 +462,18 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 		if (Opt.UseLastHistory)
 			DialogItems[PDI_SWITCHESEDT].Flags|= DIF_USELASTHISTORY;
 
-		if (*ArcName) {
+		if (!ArcName.empty()) {
 			pdd.NoChangeArcName = TRUE;
 			pdd.OldExactState = TRUE;
 			RestoreExactState = TRUE;
-			ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, ArcName);
+			CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, ArcName.c_str());
 		} else {
 			PanelInfo pi;
 			Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &pi);
 #ifdef _ARC_UNDER_CURSOR_
-			if (GetCursorName(DialogItems[PDI_ARCNAMEEDT].Data, pdd.ArcFormat, pdd.DefExt, &pi)) {
+			std::string ArcName(DialogItems[PDI_ARCNAMEEDT].Data);
+			if (GetCursorName(ArcName, pdd.ArcFormat, pdd.DefExt, &pi)) {
+				CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, ArcName.c_str());
 				// pdd.NoChangeArcName=TRUE;
 				RestoreExactState = TRUE;
 				pdd.OldExactState = TRUE;
@@ -508,25 +486,30 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 						&& (pi.SelectedItems[0].Flags & PPIF_SELECTED)) {
 					char CurDir[NM] = {0};
 					if (sdc_getcwd(CurDir, sizeof(CurDir)))
-						ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
+						CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
 				} else {
-					GetGroupName(PanelItem, ItemsNumber, DialogItems[PDI_ARCNAMEEDT].Data);
+					const auto &group = GetGroupName(PanelItem, ItemsNumber);
+					CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, group.c_str());
 				}
 #else	//_GROUP_NAME_
 			if (ItemsNumber == 1 && pi.SelectedItemsNumber == 1
 					&& !(pi.SelectedItems[0].Flags & PPIF_SELECTED)) {
-				ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, PanelItem->FindData.cFileName);
+				CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, PanelItem->FindData.cFileName);
 				char *Dot = strrchr(DialogItems[PDI_ARCNAMEEDT].Data, '.');
 				if (Dot != NULL)
 					*Dot = 0;
 			} else {
 				char CurDir[NM];
 				GetCurrentDirectory(sizeof(CurDir), CurDir);
-				ArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
+				CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, FSF.PointToName(CurDir));
 			}
 #endif	// else _GROUP_NAME_
-				if (pdd.OldExactState && !*ArcName)
-					AddExt(DialogItems[PDI_ARCNAMEEDT].Data, pdd.DefExt);
+				if (pdd.OldExactState && ArcName.empty()) {
+					std::string ArcNameTmp = DialogItems[PDI_ARCNAMEEDT].Data;
+					if (AddExt(ArcNameTmp, pdd.DefExt)) {
+						CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, ArcNameTmp.c_str());
+					}
+				}
 #ifdef _ARC_UNDER_CURSOR_
 			}
 #endif		//_ARC_UNDER_CURSOR_
@@ -553,7 +536,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 			int AskCode = Info.DialogEx(Info.ModuleNumber, -1, -1, 76, 17, "AddToArc", DialogItems,
 					ARRAYSIZE(DialogItems), 0, 0, PluginClass::PutDlgProc, (LONG_PTR)&pdd);
 
-			ArrayCpyZ(pdd.Password1, DialogItems[PDI_PASS0WEDT].Data);
+			pdd.Password1 = DialogItems[PDI_PASS0WEDT].Data;
 			// strcpy(pdd.Password2,DialogItems[PDI_PASS1WEDT].Data); //$ AA 28.11.2001
 			Opt.UserBackground = DialogItems[PDI_BGROUNDCHECK].Selected;
 			Opt.PriorityClass = DialogItems[PDI_PRIORCBOX].ListPos;
@@ -575,13 +558,15 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 			// SetRegKey(HKEY_CURRENT_USER,"","Background",Opt.UserBackground); // $ 06.02.2002 AA
 		}
 
-		char *Ext;
-		SeekDefExtPoint(DialogItems[PDI_ARCNAMEEDT].Data, pdd.DefExt, &Ext);
+		std::string Tmp = DialogItems[PDI_ARCNAMEEDT].Data;
 		if (DialogItems[PDI_EXACTNAMECHECK].Selected) {
-			if (Ext == NULL)
-				strcat(DialogItems[PDI_ARCNAMEEDT].Data, ".");
+			size_t p = Tmp.find_last_of("/.");
+			if (p == std::string::npos || Tmp[p] != '.') {
+				Tmp+= '.';
+			}
 		} else
-			AddExt(DialogItems[PDI_ARCNAMEEDT].Data, pdd.DefExt);
+			AddExt(Tmp, pdd.DefExt);
+		CharArrayCpyZ(DialogItems[PDI_ARCNAMEEDT].Data, Tmp.c_str());
 
 		int Recurse = FALSE;
 		for (int I = 0; I < ItemsNumber; I++)
@@ -602,11 +587,10 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 		Opt.Background = OpMode & OPM_SILENT ? 0 : Opt.UserBackground;
 		{
 			KeyFileReadSection kfh(INI_LOCATION, pdd.ArcFormat);
-			char DefBuf[MA_MAX_SIZE_COMMAND_NAME];
-			ArcPlugin->GetDefaultCommands(ArcPluginNumber, ArcPluginType, CommandType, DefBuf);
-			Command = kfh.GetString(CmdNames[CommandType], DefBuf);
-			ArcPlugin->GetDefaultCommands(ArcPluginNumber, ArcPluginType, CMD_ALLFILESMASK, DefBuf);
-			AllFilesMask = kfh.GetString("AllFilesMask", DefBuf);
+			ArcPlugin->GetDefaultCommands(ArcPluginNumber, ArcPluginType, CommandType, Command);
+			Command = kfh.GetString(CmdNames[CommandType], Command.c_str());
+			ArcPlugin->GetDefaultCommands(ArcPluginNumber, ArcPluginType, CMD_ALLFILESMASK, AllFilesMask);
+			AllFilesMask = kfh.GetString("AllFilesMask", AllFilesMask.c_str());
 		}
 		if (*CurDir && Command.find("%%R") == std::string::npos && Command.find("%%r") == std::string::npos) {
 			const char *MsgItems[] = {GetMsg(MWarning), GetMsg(MCannotPutToFolder), GetMsg(MPutToRoot),
@@ -644,11 +628,6 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 		// последующие операции (тестирование и тд) не должны быть фоновыми
 		Opt.Background = 0;		// $ 06.02.2002 AA
 
-#ifdef _NEW_ARC_SORT_
-		int Rate = GetPrivateProfileInt("RunRate", pdd.ArcFormat, 0, IniFile);
-		WritePrivateProfileInt("RunRate", pdd.ArcFormat, Rate + 1, IniFile);
-#endif	//_NEW_ARC_SORT_
-
 		if (!IgnoreErrors && ArcCmd.GetExecCode() != 0)
 			ArcExitCode = 0;
 		if (ArcCmd.GetExecCode() == RETEXEC_ARCNOTFOUND)
@@ -656,7 +635,7 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 
 		std::string fullname = MakeFullName(DialogItems[PDI_ARCNAMEEDT].Data);
 		if (!fullname.empty())
-			ArrayCpyZ(ArcName, fullname.c_str());
+			ArcName = std::move(fullname);
 		break;
 	}
 
@@ -664,13 +643,13 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 	if (Opt.UpdateDescriptions && ArcExitCode)
 		for (int I = 0; I < ItemsNumber; I++)
 			PanelItem[I].Flags|= PPIF_PROCESSDESCR;
-	if (!Opt.UserBackground && ArcExitCode && NewArchive && GoToFile(ArcName, Opt.AllowChangeDir))
+	if (!Opt.UserBackground && ArcExitCode && NewArchive && GoToFile(ArcName.c_str(), Opt.AllowChangeDir))
 		ArcExitCode = 2;
 	return ArcExitCode;
 }
 
 #ifdef _ARC_UNDER_CURSOR_
-BOOL PluginClass::GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, PanelInfo *pi)
+BOOL PluginClass::GetCursorName(std::string &ArcName, std::string &ArcFormat, std::string &ArcExt, PanelInfo *pi)
 {
 	// if(!GetRegKey(HKEY_CURRENT_USER,"","ArcUnderCursor",0))
 	if (!Opt.AdvFlags.ArcUnderCursor)
@@ -685,7 +664,7 @@ BOOL PluginClass::GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, Pa
 		return FALSE;
 
 	// должно быть непустое расширение
-	char *Dot = strrchr(CurItem->FindData.cFileName, '.');
+	char *Dot = CharArrayRChr(CurItem->FindData.cFileName, '.');
 	if (!Dot || !*(++Dot))
 		return FALSE;
 
@@ -693,28 +672,25 @@ BOOL PluginClass::GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, Pa
 
 	// курсор должен быть вне выделения
 	for (i = 0; i < pi->SelectedItemsNumber; i++)
-		if (!strcmp(CurItem->FindData.cFileName, SelItems[i].FindData.cFileName))
+		if (!CharArrayCmp(CurItem->FindData.cFileName, SelItems[i].FindData.cFileName))
 			return FALSE;
 
 	// под курсором должен быть файл с расширением архива
-	char Format[100], DefExt[NM];
+	std::string Format, DefExt;
 	for (i = 0; i < ArcPlugin->FmtCount(); i++)
 		for (j = 0;; j++) {
 			if (!ArcPlugin->GetFormatName(i, j, Format, DefExt))
 				break;
-			// хитрый хинт, чтение ключа с дефолтом из DefExt
-			KeyFileReadSection(INI_LOCATION, Format).GetChars(DefExt, sizeof(DefExt), "DefExt", DefExt);
+			// хитрый финт, чтение ключа с дефолтом из DefExt
+			DefExt = KeyFileReadSection(INI_LOCATION, Format).GetString("DefExt", DefExt.c_str());
 
-			if (!strcasecmp(Dot, DefExt)) {
-				strcpy(ArcName, CurItem->FindData.cFileName);
-				// int Len=Dot-CurItem->FindData.cFileName-1;
-				// strcpyn(ArcName, CurItem->FindData.cFileName, Len+1);
-
+			if (!strcasecmp(Dot, DefExt.c_str())) {
+				CharArrayAssignToStr(ArcName, CurItem->FindData.cFileName);
 				// выбрать соответствующий архиватор
 				ArcPluginNumber = i;
 				ArcPluginType = j;
-				strcpy(ArcFormat, Format);
-				strcpy(ArcExt, DefExt);
+				ArcFormat = std::move(Format);
+				ArcExt = std::move(DefExt);
 				return TRUE;
 			}
 		}
@@ -723,25 +699,26 @@ BOOL PluginClass::GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, Pa
 #endif	//_ARC_UNDER_CURSOR_
 
 #ifdef _GROUP_NAME_
-void PluginClass::GetGroupName(PluginPanelItem *Items, int Count, char *ArcName)
+std::string PluginClass::GetGroupName(PluginPanelItem *Items, int Count)
 {
 	BOOL NoGroup = !/*GetRegKey(HKEY_CURRENT_USER,"","GroupName",0)*/ Opt.AdvFlags.GroupName;
+	auto &FindData = Items->FindData;
+	const char *Dot = CharArrayRChr(FindData.cFileName, '.');
+	const int Len = (Dot && !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			? (int)(Dot - &FindData.cFileName[0])
+			: CharArrayLen(FindData.cFileName);
 
-	char *Name = Items->FindData.cFileName;
-	char *Dot = strrchr(Name, '.');
-	int Len = (Dot && !(Items->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			? ((int)(Dot - Name))
-			: strlen(Name);
-	for (int i = 1; i < Count; i++)
-		if (NoGroup || strncmp(Name, Items[i].FindData.cFileName, Len))
-		//    if(FSF.LStrnicmp(Name, Items[i].FindData.cFileName, Len))
-		{
+	for (int i = 1; i < Count; i++) {
+		if (NoGroup || strncmp(FindData.cFileName, Items[i].FindData.cFileName, Len)) {
 			// взять имя папки
-			char CurDir[NM] = {0};
-			if (sdc_getcwd(CurDir, sizeof(CurDir)))
-				strcpy(ArcName, FSF.PointToName(CurDir));
-			return;
+			char CurDir[NM + 1] = {0};
+			if (sdc_getcwd(CurDir, ARRAYSIZE(CurDir) - 1)) {
+				const char *CurDirName = FSF.PointToName(CurDir);
+				return std::string(CurDirName ? CurDirName : CurDir);
+			}
+			return std::string(".");
 		}
-	strncpy(ArcName, Name, Len + 1);
+	}
+	return std::string(FindData.cFileName, Len);
 }
 #endif	//_GROUP_NAME_

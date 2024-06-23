@@ -329,7 +329,7 @@ BOOL WINAPI _export LIBARCH_CloseArchive(struct ArcInfo *Info)
 }
 
 
-BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export LIBARCH_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	static const char * const FmtAndExt[5][2]={
 		{"TAR","tar"},
@@ -345,20 +345,20 @@ BOOL WINAPI _export LIBARCH_GetFormatName(int Type, char *FormatName, char *Defa
 		case MF_CPIOGZ:
 		case MF_CAB:
 		case MF_ISO:
-			strcpy(FormatName, FmtAndExt[Type][0]);
-			strcpy(DefaultExt, FmtAndExt[Type][1]);
+			FormatName = FmtAndExt[Type][0];
+			DefaultExt = FmtAndExt[Type][1];
 			return TRUE;
 
 		case MF_NOT_DISPLAYED:
-			strcpy(FormatName, "");
-			strcpy(DefaultExt, "");
+			FormatName = "";
+			DefaultExt = "";
 			return TRUE;
 	}
 
   	return FALSE;
 }
 
-BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	static const char *Commands[] = {
 	/*Extract               */"^libarch X %%A -@%%R -- %%FMq4096",
@@ -401,7 +401,7 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 	}
 
 	if (Type == MF_CAB) {
-		strcpy(Dest, CommandsCab[Command]);
+		Dest = CommandsCab[Command];
 		return TRUE;
 	}
 
@@ -416,7 +416,7 @@ BOOL WINAPI _export LIBARCH_GetDefaultCommands(int Type, int Command, char *Dest
 			default: cmd.replace(p, 8, "");
 		}
 	}
-	strcpy(Dest, cmd.c_str());
+	Dest = std::move(cmd);
 	return TRUE;
 }
 

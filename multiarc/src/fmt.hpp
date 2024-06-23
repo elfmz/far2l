@@ -107,8 +107,8 @@ DWORD WINAPI _export GetSFXPos(void);
 BOOL WINAPI _export OpenArchive(const char *Name, int *TypeArc);
 int WINAPI _export GetArcItem(struct ArcItemInfo *Info);
 BOOL WINAPI _export CloseArchive(struct ArcInfo *Info);
-BOOL WINAPI _export GetFormatName(int TypeArc, char *FormatName, char *DefaultExt);
-BOOL WINAPI _export GetDefaultCommands(int TypeArc, int Command, char *Dest);
+BOOL WINAPI _export GetFormatName(int TypeArc, std::string &FormatName, std::string &DefaultExt);
+BOOL WINAPI _export GetDefaultCommands(int TypeArc, int Command, std::string &Dest);
 
 #ifdef __cplusplus
 };

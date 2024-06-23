@@ -2,7 +2,7 @@
 #include "marclng.hpp"
 #include <farkeys.h>
 
-int ConfigGeneral()
+bool ConfigGeneral()
 {
 	struct InitDialogItem InitItems[] = {
 			/*  0 */ {DI_DOUBLEBOX, 3, 1, 72, 17, 0, 0, 0, 0, (char *)MGConfigTitle},
@@ -42,13 +42,14 @@ int ConfigGeneral()
 	//  DialogItems[7].Param.Selected=Opt.DeleteExtFile;
 	//  DialogItems[8].Param.Selected=Opt.AddExtArchive;
 	DialogItems[8].Selected = Opt.AdvFlags.AutoResetExactArcName;
-	ArrayCpyZ(DialogItems[12].Data, Opt.DescriptionNames.c_str());
+	CharArrayCpyZ(DialogItems[12].Data, Opt.DescriptionNames.c_str());
 	DialogItems[13].Selected = Opt.ReadDescriptions;
 	DialogItems[14].Selected = Opt.UpdateDescriptions;
 	int ExitCode = Info.Dialog(Info.ModuleNumber, -1, -1, 76, 19, "ArcSettings1", DialogItems,
 			ARRAYSIZE(DialogItems));
 	if (ExitCode == 17 || ExitCode < 0)
-		return FALSE;
+		return false;
+
 	if (DialogItems[1].Selected)
 		Opt.HideOutput = 0;
 	else
@@ -79,15 +80,15 @@ int ConfigGeneral()
 	// kfh.SetInt(INI_SECTION,"AutoResetExactArcName",Opt.AutoResetExactArcName);
 	kfh.SetInt(INI_SECTION, "AdvFlags", (int)Opt.AdvFlags);
 
-	return TRUE;
+	return true;
 }
 
 #define DM_INITCONFIG DM_USER + 1
-typedef struct
+typedef struct FORMATINFO_
 {
-	char *ArcFormat;
-	BOOL FastAccess;
-	int PluginNumber, PluginType;
+	std::string ArcFormat;
+	int PluginNumber{}, PluginType{};
+	bool FastAccess{};
 } FORMATINFO;
 
 LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
@@ -99,25 +100,24 @@ LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 
 		case DM_INITCONFIG: {
 			int I, J;
-			char Command[MA_MAX_SIZE_COMMAND_NAME];
+			std::string Command;
 			FORMATINFO *FormatInfo = (FORMATINFO *)Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			for (I = 2, J = 0; I <= 32; I+= 2, J++) {
-				*Command = 0;
+				Command.clear();
 				int PluginNumber = FormatInfo->PluginNumber, PluginType = FormatInfo->PluginType;
 				if (FormatInfo->FastAccess
 						|| PluginClass::FormatToPlugin(FormatInfo->ArcFormat, PluginNumber, PluginType)) {
 					if (I == 32) {
-						char PluginFormat[NM];
+						std::string PluginFormat;
 						ArcPlugin->GetFormatName(PluginNumber, PluginType, PluginFormat, Command);
 					} else
 						ArcPlugin->GetDefaultCommands(PluginNumber, PluginType, J, Command);
 				}
 				if (!Param1)	// if not Reset
 				{
-					KeyFileReadSection(INI_LOCATION, FormatInfo->ArcFormat)
-							.GetChars(Command, sizeof(Command), CmdNames[J], Command);
+					Command = KeyFileReadSection(INI_LOCATION, FormatInfo->ArcFormat).GetString(CmdNames[J], Command.c_str());
 				}
-				Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, I, (LONG_PTR)Command);
+				SetDialogControlText(hDlg, I, Command);
 			}
 			return TRUE;
 		}
@@ -133,10 +133,10 @@ LONG_PTR WINAPI CfgCmdProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 	return Info.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-int ConfigCommands(char *ArcFormat, int IDFocus, BOOL FastAccess, int PluginNumber, int PluginType)
+bool ConfigCommands(const std::string &ArcFormat, int IDFocus, bool FastAccess, int PluginNumber, int PluginType)
 {
 	struct InitDialogItem InitItems[] = {
-			/* 00 */ {DI_DOUBLEBOX, 3, 1, 72, 20, 0, 0, 0, 0, ArcFormat},
+			/* 00 */ {DI_DOUBLEBOX, 3, 1, 72, 20, 0, 0, 0, 0, ArcFormat.c_str()},
 			/* 01 */ {DI_TEXT, 5, 2, 0, 0, 0, 0, 0, 0, (char *)MArcSettingsExtract},
 			/* 02 */ {DI_EDIT, 25, 2, 70, 3, 0, 0, 0, 0, ""},
 			/* 03 */ {DI_TEXT, 5, 3, 0, 0, 0, 0, 0, 0, (char *)MArcSettingsExtractWithoutPath},
@@ -198,11 +198,11 @@ int ConfigCommands(char *ArcFormat, int IDFocus, BOOL FastAccess, int PluginNumb
 			ARRAYSIZE(DialogItems), 0, 0, CfgCmdProc, (LONG_PTR)&FormatInfo);
 
 	if (ExitCode == 35 || ExitCode < 0)
-		return FALSE;
+		return false;
 
 	KeyFileHelper kfh(INI_LOCATION);
 	for (I = 2, J = 0; I <= 32; I+= 2, J++)
 		kfh.SetString(ArcFormat, CmdNames[J], DialogItems[I].Data);
 
-	return TRUE;
+	return true;
 }

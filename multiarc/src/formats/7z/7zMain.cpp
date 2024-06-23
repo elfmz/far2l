@@ -699,7 +699,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
 #ifdef USE_WINDOWS_FILE
             SetFileTime(outFile.handle, ti.has_ctime ? &ti.ctime : &ti.mtime, NULL, ti.has_mtime ? &ti.mtime : &ti.ctime);
 #elif defined(ELFMZ_WINPORT)
-            struct timespec ts[2] = {0};
+            struct timespec ts[2]{};
             WINPORT(FileTime_Win32ToUnix)(ti.has_mtime ? &ti.mtime : &ti.ctime, &ts[0]);
             WINPORT(FileTime_Win32ToUnix)(ti.has_ctime ? &ti.ctime : &ti.mtime, &ts[1]);
             futimens(outFile.fd, ts);
@@ -738,7 +738,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
   File_Close(&archiveStream.file);
   for (auto i = dir2ti.rbegin(); i != dir2ti.rend(); ++i) {
 #if defined(ELFMZ_WINPORT)
-        struct timespec ts[2] = {0};
+        struct timespec ts[2]{};
         WINPORT(FileTime_Win32ToUnix)(i->second.has_mtime ? &i->second.mtime : &i->second.ctime, &ts[0]);
         WINPORT(FileTime_Win32ToUnix)(i->second.has_ctime ? &i->second.ctime : &i->second.mtime, &ts[1]);
         utimens(i->first.c_str(), ts);

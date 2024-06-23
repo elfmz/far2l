@@ -220,17 +220,17 @@ DWORD WINAPI _export CAB_GetSFXPos(void)
 	return SFXSize;
 }
 
-BOOL WINAPI _export CAB_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export CAB_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "CAB");
-		strcpy(DefaultExt, "cab");
+		FormatName = "CAB";
+		DefaultExt = "cab";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export CAB_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export CAB_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 		static const char *Commands[] = {/*Extract               */ "MsCab -i0 -FAR {-ap%%R} {-p%%P} {%%S} x "
@@ -250,7 +250,7 @@ BOOL WINAPI _export CAB_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*Move files and folders*/ "MsCab -r0 -i0 -dirs {-ap%%R} {-p%%P} {%%S} m %%A @%%LNMA",
 				/*"All files" mask      */ "*"};
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

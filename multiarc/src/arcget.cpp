@@ -28,7 +28,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 
 	char SaveDirBuf[NM];
 	char *SaveDir = sdc_getcwd(SaveDirBuf, sizeof(SaveDirBuf));
-	char Command[MA_MAX_SIZE_COMMAND_NAME], AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
+	std::string Command, AllFilesMask;
 	if (ItemsNumber == 0)
 		return /*0*/ 1;		//$ 07.02.2002 AA чтобы многотомные CABы нормально распаковывались
 	if (*DestPath)
@@ -71,8 +71,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 	DialogItems[9].Selected = Move;
 
 	if ((OpMode & OPM_SILENT) == 0) {
-		int AskCode = Info.Dialog(Info.ModuleNumber, -1, -1, 76, 15, "ExtrFromArc", DialogItems,
-				ARRAYSIZE(DialogItems));
+		int AskCode = Info.Dialog(Info.ModuleNumber, -1, -1, 76, 15, "ExtrFromArc", DialogItems, ARRAYSIZE(DialogItems));
 		if (AskCode != 11)
 			return -1;
 		strcpy(DestPath, DialogItems[2].Data);
@@ -107,14 +106,13 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 	}*/
 	CreateDirectory(DestPath);	//$ 16.05.2002 AA
 
-	if (*DestPath && DestPath[strlen(DestPath) - 1] != ':')
+	if (*DestPath)
 		FSF.AddEndSlash(DestPath);
-	GetCommandFormat(CMD_ALLFILESMASK, AllFilesMask, sizeof(AllFilesMask));
+	AllFilesMask = GetCommandFormat(CMD_ALLFILESMASK);
 
 	PluginPanelItem MaskPanelItem;
 
 	if (AskVolume) {
-		char VolMsg[300];
 		int MsgCode;
 
 		/*if(OpMode & OPM_TOPLEVEL) // $ 16.02.2002 AA
@@ -126,11 +124,9 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 		}
 		else        */
 		{
-			char NameMsg[NM];
-			FSF.TruncPathStr(strncpy(NameMsg, FSF.PointToName(ArcName), sizeof(NameMsg) - 1),
-					MAX_WIDTH_MESSAGE);
-			FSF.sprintf(VolMsg, GetMsg(MExtrVolume), FSF.PointToName(NameMsg));
-			const char *MsgItems[] = {GetMsg(MExtractTitle), VolMsg, GetMsg(MExtrVolumeAsk1),
+			const auto &NameMsg = FormatMessagePath(ArcName.c_str(), true);
+			const auto &VolMsg = StrPrintf(GetMsg(MExtrVolume), NameMsg.c_str());
+			const char *MsgItems[] = {GetMsg(MExtractTitle), VolMsg.c_str(), GetMsg(MExtrVolumeAsk1),
 					GetMsg(MExtrVolumeAsk2), GetMsg(MExtrVolumeSelFiles), GetMsg(MExtrAllVolumes)};
 			MsgCode = Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 2);
 		}
@@ -138,7 +134,7 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 			return -1;
 		if (MsgCode == 1) {
 			ZeroFill(MaskPanelItem);
-			ArrayCpyZ(MaskPanelItem.FindData.cFileName, AllFilesMask);
+			CharArrayCpyZ(MaskPanelItem.FindData.cFileName, AllFilesMask.c_str());
 			if (ItemsInfo.Encrypted)
 				MaskPanelItem.Flags = F_ENCRYPTED;
 			PanelItem = &MaskPanelItem;
@@ -147,15 +143,16 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 	}
 
 	int CommandType = LastWithoutPathsState ? CMD_EXTRACTWITHOUTPATH : CMD_EXTRACT;
-	GetCommandFormat(CommandType, Command, sizeof(Command));
-
-	if (*DialogItems[5].Data == 0 && strstr(Command, "%%P") != NULL)
+	Command = GetCommandFormat(CommandType);
+	if (*DialogItems[5].Data == 0 && Command.find("%%P") != std::string::npos)
 		for (int I = 0; I < ItemsNumber; I++)
 			if ((PanelItem[I].Flags & F_ENCRYPTED)
 					|| (ItemsInfo.Encrypted
 							&& (PanelItem[I].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))) {
-				if (OpMode & OPM_FIND || !GetPassword(DialogItems[5].Data, FSF.PointToName(ArcName)))
+				std::string PasswordStr;
+				if (OpMode & OPM_FIND || !GetPassword(PasswordStr, FSF.PointToName((char *)ArcName.c_str())))
 					return -1;
+				CharArrayCpyZ(DialogItems[5].Data, PasswordStr.c_str());
 				break;
 			}
 

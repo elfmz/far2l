@@ -5,32 +5,27 @@
 #include <fcntl.h>
 #include "utils.h"
 
-ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const char *FormatString,
-		const char *ArcName, const char *ArcDir, const char *Password, const char *AllFilesMask,
+ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const std::string &FormatString,
+		const std::string &ArcName, const std::string &ArcDir, const std::string &Password, const std::string &AllFilesMask,
 		int IgnoreErrors, int CommandType, int ASilent, const char *RealArcDir, int DefaultCodepage)
 {
 	NeedSudo = false;
 	Silent = ASilent;
-	//  CommentFile=INVALID_HANDLE_VALUE; //$ AA 25.11.2001
-	*CommentFileName = 0;	//$ AA 25.11.2001
-							//  ExecCode=-1;
-							/* $ 28.11.2000 AS
-							 */
 	ExecCode = (DWORD)-1;
 
 	ArcCommand::DefaultCodepage = DefaultCodepage;
 
 	//  fprintf(stderr, "ArcCommand::ArcCommand = %d, FormatString=%s\n", ArcCommand::DefaultCodepage, FormatString);
-	if (*FormatString == 0)
+	if (FormatString.empty())
 		return;
 
 	bool arc_modify =
 			(CommandType != CMD_EXTRACT && CommandType != CMD_EXTRACTWITHOUTPATH && CommandType != CMD_TEST);
 
 	if (arc_modify) {
-		if (ArcName && *ArcName) {
-			auto ArcPath=ExtractFilePath(std::string(ArcName));
-			if ((sudo_client_is_required_for(ArcName, true) == 1) ||		// no write perms to archive itself?
+		if (!ArcName.empty()) {
+			const auto &ArcPath = ExtractFilePath(ArcName);
+			if ((sudo_client_is_required_for(ArcName.c_str(), true) == 1) ||		// no write perms to archive itself?
 				(sudo_client_is_required_for(ArcPath.c_str(), true)==1)) {	// no write perms to archive dir?
 				NeedSudo = true;
 			}
@@ -45,13 +40,12 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 			}
 		}
 	} else {
-		if((sudo_client_is_required_for(ArcName, false) == 1)							// do we have read access to the archive?
+		if((sudo_client_is_required_for(ArcName.c_str(), false) == 1)					// do we have read access to the archive?
 			|| ((CommandType == CMD_EXTRACT || CommandType == CMD_EXTRACTWITHOUTPATH)	// extraction from the archive,
 				&& (sudo_client_is_required_for(".", true) == 1))) {		// check if we have write access to dest dir
 			NeedSudo = true;
 		}
 	}
-
 
 	// char QPassword[NM+5],QTempPath[NM+5];
 	ArcCommand::PanelItem = PanelItem;
@@ -64,24 +58,21 @@ ArcCommand::ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const
 	ArcCommand::AllFilesMask = AllFilesMask;
 	// WINPORT(GetTempPath)(ARRAYSIZE(TempPath),TempPath);
 	ArcCommand::TempPath = InMyTemp();
-	*PrefixFileName = 0;
-	*ListFileName = 0;
 	NameNumber = -1;
 	NextFileName.clear();
 	do {
 		PrevFileNameNumber = -1;
-		if (!ProcessCommand(FormatString, CommandType, IgnoreErrors, ListFileName))
+		if (!ProcessCommand(FormatString, CommandType, IgnoreErrors, ListFileName.c_str()))
 			NameNumber = -1;
-		if (*ListFileName) {
+		if (!ListFileName.empty()) {
 			if (!Opt.Background)
-				sdc_remove(ListFileName);
-			*ListFileName = 0;
+				sdc_remove(ListFileName.c_str());
+			ListFileName.clear();
 		}
 	} while (NameNumber != -1 && NameNumber < ItemsNumber);
 }
 
-bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors,
-		char *pcListFileName)
+bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors, const char *pcListFileName)
 {
 	MaxAllowedExitCode = 0;
 	DeleteBraces(FormatString);
@@ -120,7 +111,7 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 	if ((Hide == 1 && CommandType == 0) || CommandType == 2)
 		Hide = 0;
 
-	ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+	ExecCode = Execute(this, Command, Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 	fprintf(stderr, "ArcCommand::ProcessCommand: ExecCode=%d for '%s'\n", ExecCode, Command.c_str());
 
 // Unzip in MacOS definitely doesn't have -I and -O options, so dont even try encoding workarounds
@@ -129,13 +120,13 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 		// trying as utf8
 		std::string CommandRetry = Command;
 		CommandRetry.insert(6, "-I utf8 -O utf8 ");
-		ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+		ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 		if (ExecCode == 11) {
 			// "11" means file was not found in archive. retrying as oem
 			CommandRetry = Command;
 			unsigned int retry_cp = (DefaultCodepage > 0) ? DefaultCodepage : WINPORT(GetOEMCP)();
 			CommandRetry.insert(6, StrPrintf("-I CP%u -O CP%u ", retry_cp, retry_cp));
-			ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName);
+			ExecCode = Execute(this, CommandRetry, Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 		}
 		if (ExecCode == 1) {
 			// "1" exit code for unzip is warning only, no need to bother user
@@ -158,8 +149,8 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 					if (!def_char_used) {
 						std::string CommandRetry = Command.substr(0, i_entries);
 						CommandRetry.append(&oemstr[0]);
-						ExecCode = Execute(this, CommandRetry.c_str(), Hide, Silent, NeedSudo,
-								Password.empty(), ListFileName);
+						ExecCode = Execute(this, CommandRetry.c_str(),
+							Hide, Silent, NeedSudo, Password.empty(), ListFileName.c_str());
 						fprintf(stderr, "ArcCommand::ProcessCommand: retry ExecCode=%d for '%s'\n", ExecCode,
 								CommandRetry.c_str());
 					} else {
@@ -180,12 +171,9 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 
 	if (!IgnoreErrors && ExecCode != 0) {
 		if (!Silent) {
-			char ErrMsg[200];
-			char NameMsg[NM];
-			FSF.sprintf(ErrMsg, (char *)GetMsg(MArcNonZero), ExecCode);
-			const char *MsgItems[] = {GetMsg(MError), NameMsg, ErrMsg, GetMsg(MOk)};
-			ArrayCpyZ(NameMsg, ArcName.c_str());
-			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
+			const auto &ErrMsg = StrPrintf(GetMsg(MArcNonZero), ExecCode);
+			const auto &NameMsg = FormatMessagePath(ArcName.c_str(), false);
+			const char *MsgItems[] = {GetMsg(MError), NameMsg.c_str(), ErrMsg.c_str(), GetMsg(MOk)};
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 		return false;
@@ -344,8 +332,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 
 		case 'L':
 		case 'l':
-			if (!MakeListFile(ListFileName, QuoteName, UseSlash, FolderName, NameOnly, PathOnly, FolderMask,
-						LocalAllFilesMask.c_str())) {
+			if (!MakeListFile(QuoteName, UseSlash, FolderName, NameOnly, PathOnly, FolderMask, LocalAllFilesMask.c_str())) {
 				return -1;
 			}
 			Command = ListFileName;
@@ -357,23 +344,17 @@ int ArcCommand::ReplaceVar(std::string &Command)
 			break;
 
 		case 'C':
-			if (*CommentFileName)	// второй раз сюда не лезем
-				break;
-			{
+			if (!CommentFileName.empty()) {// второй раз сюда не лезем
 				Command.clear();
-				int CommentFile;
-				if (FSF.MkTemp(CommentFileName, "FAR")
-						&& (CommentFile = sdc_open(CommentFileName, O_CREAT | O_TRUNC | O_RDWR, 0660))
-								!= -1) {
-					char Buf[512];
-					if (Info.InputBox(GetMsg(MComment), GetMsg(MInputComment), NULL, "", Buf, sizeof(Buf),
-								NULL, 0))
-					//??тут можно и заполнить строку комментарием, но надо знать, файловый
-					//?? он или архивный. да и имя файла в архиве тоже надо знать...
-					{
-						sdc_write(CommentFile, Buf, strlen(Buf));
-						sdc_close(CommentFile);
-						Command = CommentFileName;
+				char Buf[MAX_PATH];
+				if (FSF.MkTemp(Buf, "FAR")) {
+					CharArrayAssignToStr(CommentFileName, Buf);
+					if (Info.InputBox(GetMsg(MComment), GetMsg(MInputComment), NULL, "", Buf, sizeof(Buf), NULL, 0)) {
+						//??тут можно и заполнить строку комментарием, но надо знать, файловый
+						//?? он или архивный. да и имя файла в архиве тоже надо знать...
+						if (WriteWholeFile(CommentFileName.c_str(), Buf, strnlen(Buf, ARRAYSIZE(Buf)))) {
+							Command = CommentFileName;
+						}
 					}
 					WINPORT(FlushConsoleInputBuffer)(NULL);		// GetStdHandle(STD_INPUT_HANDLE));
 				}
@@ -428,12 +409,12 @@ int ArcCommand::ReplaceVar(std::string &Command)
 						if (N >= ItemsNumber)
 							break;
 
-						*PrefixFileName = 0;
+						PrefixFileName.clear();
 						const char *cFileName = PanelItem[N].FindData.cFileName;
 						const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[N].UserData;
 						if (Attrs) {
 							if (Attrs->Prefix)
-								ArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+								PrefixFileName = *Attrs->Prefix;
 							if (Attrs->LinkName)
 								cFileName = Attrs->LinkName->c_str();
 						}
@@ -495,7 +476,7 @@ int ArcCommand::ReplaceVar(std::string &Command)
 	return VarLength;
 }
 
-int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, int FolderName, int NameOnly,
+int ArcCommand::MakeListFile(int QuoteName, int UseSlash, int FolderName, int NameOnly,
 		int PathOnly, int FolderMask, const char *LocalAllFilesMask)
 {
 	//  FILE *ListFile;
@@ -507,19 +488,15 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 	sa.lpSecurityDescriptor=NULL;
 	sa.bInheritHandle=TRUE; //WTF???
 	*/
-
-	if (FSF.MkTemp(ListFileName, "FAR") == NULL
-			|| (ListFile = WINPORT(CreateFile)(MB2Wide(ListFileName).c_str(), GENERIC_WRITE,
+	char TmpListFileName[MAX_PATH + 1] = {0};
+	if (FSF.MkTemp(TmpListFileName, "FAR") == NULL
+			|| (ListFile = WINPORT(CreateFile)(MB2Wide(TmpListFileName).c_str(), GENERIC_WRITE,
 						FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,	//&sa
-						FILE_FLAG_SEQUENTIAL_SCAN, NULL))
-					== INVALID_HANDLE_VALUE)
-
+						FILE_FLAG_SEQUENTIAL_SCAN, NULL)) == INVALID_HANDLE_VALUE)
 	{
 		if (!Silent) {
-			char NameMsg[NM];
-			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), NameMsg, GetMsg(MOk)};
-			ArrayCpyZ(NameMsg, ListFileName);
-			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
+			const auto &MsgListFileName = FormatMessagePath(TmpListFileName, false);
+			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), MsgListFileName.c_str(), GetMsg(MOk)};
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 		/* $ 25.07.2001 AA
@@ -528,7 +505,6 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		25.07.2001 AA $*/
 		return FALSE;
 	}
-
 	std::string CurArcDir, FileName, OutName;
 	//  char Buf[3*NM];
 
@@ -551,11 +527,11 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 
 		int FileAttr = PanelItem[I].FindData.dwFileAttributes;
 
-		*PrefixFileName = 0;
+		PrefixFileName.clear();
 		const ArcItemAttributes *Attrs = (const ArcItemAttributes *)PanelItem[I].UserData;
 		if (Attrs) {
 			if (Attrs->Prefix)
-				ArrayCpyZ(PrefixFileName, Attrs->Prefix->c_str());
+				PrefixFileName = *Attrs->Prefix;
 			if (Attrs->LinkName)
 				FileName = *Attrs->LinkName;
 		}
@@ -598,7 +574,7 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 		}
 		if (Error) {
 			WINPORT(CloseHandle)(ListFile);
-			sdc_remove(ListFileName);
+			sdc_remove(TmpListFileName);
 			if (!Silent) {
 				const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), GetMsg(MOk)};
 				Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
@@ -608,6 +584,8 @@ int ArcCommand::MakeListFile(char *ListFileName, int QuoteName, int UseSlash, in
 	}
 
 	WINPORT(CloseHandle)(ListFile);
+	CharArrayAssignToStr(ListFileName, TmpListFileName);
+
 	/*
 	  if (!WINPORT(CloseHandle)(ListFile))
 	  {
@@ -629,6 +607,6 @@ ArcCommand::~ArcCommand()	//$ AA 25.11.2001
 {
 	/*  if(CommentFile!=INVALID_HANDLE_VALUE)
 		WINPORT(CloseHandle)(CommentFile);*/
-	if (*CommentFileName)
-		sdc_remove(CommentFileName);
+	if (!CommentFileName.empty())
+		sdc_remove(CommentFileName.c_str());
 }

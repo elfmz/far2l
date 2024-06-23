@@ -406,8 +406,8 @@ int WINAPI _export LZH_GetArcItem(struct ArcItemInfo *Info)
 	if (PrevPosition >= NextPosition || PathSize > NM)
 		return (GETARC_BROKEN);
 
-	StrAssignArray(Info->PathName, PathName);
-	StrAppendArray(Info->PathName, FileName);
+	CharArrayAssignToStr(Info->PathName, PathName);
+	CharArrayAppendToStr(Info->PathName, FileName);
 
 	Info->dwFileAttributes = Attr;
 
@@ -461,17 +461,17 @@ DWORD WINAPI _export LZH_GetSFXPos(void)
 	return SFXSize;
 }
 
-BOOL WINAPI _export LZH_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export LZH_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "LZH");
-		strcpy(DefaultExt, "lzh");
+		FormatName = "LZH";
+		DefaultExt = "lzh";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export LZH_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export LZH_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 		// Correct Commands for LHA 2.55!
@@ -503,7 +503,7 @@ BOOL WINAPI _export LZH_GetDefaultCommands(int Type, int Command, char *Dest)
 #endif
 		};
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

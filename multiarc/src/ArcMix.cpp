@@ -113,6 +113,8 @@ static int BuiltinFork(const char *cmd)
 	for (const auto &c : ecl) {
 		argv.emplace_back((char *)c.c_str());
 	}
+	fflush(stdout);
+	fflush(stderr);
 	pid_t p = fork();
 	if (p == 0) {
 		_exit(BuiltinMain(argv.size(), argv.data()));

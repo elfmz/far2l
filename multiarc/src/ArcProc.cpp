@@ -175,12 +175,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 
 int __cdecl FormatSort(struct FarMenuItemEx *Item1, struct FarMenuItemEx *Item2)
 {
-#ifdef _NEW_ARC_SORT_
-	int Temp = (int)Item2->UserData - (int)Item1->UserData;
-	return Temp ? Temp : (int)Item1->UserData == -1 ? 0 : FSF.LStricmp(Item1->Text.Text, Item2->Text.Text);
-#else
 	return strcasecmp(Item1->Text.Text, Item2->Text.Text);
-#endif
 }
 
 bool PluginClass::SelectFormat(std::string &ArcFormat, int AddOnly)
@@ -192,15 +187,6 @@ bool PluginClass::SelectFormat(std::string &ArcFormat, int AddOnly)
 	int BreakCode;
 	int BreakKeys[] = {VK_F4, VK_RETURN, 0};
 	int ExitCode;
-
-#ifdef _NEW_ARC_SORT_
-	int SortModeIndex = GetPrivateProfileInt("MultiArc", "SortMode", 1, IniFile);
-	char *SortMode;
-	if (SortModeIndex <= 1 || SortModeIndex >= ARRAYSIZE(SortModes))
-		SortMode = NULL;
-	else
-		SortMode = SortModes[SortModeIndex];
-#endif
 
 	BreakKeys[1] = (AddOnly) ? 0 : VK_RETURN;
 
@@ -232,13 +218,6 @@ bool PluginClass::SelectFormat(std::string &ArcFormat, int AddOnly)
 				MenuItems[MenuItemsNumber].Flags =
 					((MenuItemsNumber == 0 && ArcFormat.empty()) || !strcasecmp(ArcFormat.c_str(), Format.c_str()))
 						? MIF_SELECTED : 0;
-#ifdef _NEW_ARC_SORT_
-				if (SortMode)
-					MenuItems[MenuItemsNumber].UserData = GetPrivateProfileInt(SortMode, Format, 0, IniFile);
-				else
-					MenuItems[MenuItemsNumber].UserData = SortModeIndex ? 0 : -1;
-#endif
-
 				MenuItemsNumber++;
 			}
 		}

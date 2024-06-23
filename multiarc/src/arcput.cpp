@@ -224,10 +224,6 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			case PDI_SELARCBTN:
 				if (pdd->Self->SelectFormat(pdd->ArcFormat, TRUE)) {
 					Info.SendDlgMessage(hDlg, MAM_SELARC, 0, 0);
-#ifdef _NEW_ARC_SORT_
-					int Rate = GetPrivateProfileInt("ChoiceRate", pdd->ArcFormat, 0, IniFile);
-					WritePrivateProfileInt("ChoiceRate", pdd->ArcFormat, Rate + 1, IniFile);
-#endif	//_NEW_ARC_SORT_
 				}
 				Info.SendDlgMessage(hDlg, DM_SETFOCUS, PDI_ARCNAMEEDT, 0);
 				return TRUE;
@@ -631,11 +627,6 @@ int PluginClass::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, in
 
 		// последующие операции (тестирование и тд) не должны быть фоновыми
 		Opt.Background = 0;		// $ 06.02.2002 AA
-
-#ifdef _NEW_ARC_SORT_
-		int Rate = GetPrivateProfileInt("RunRate", pdd.ArcFormat, 0, IniFile);
-		WritePrivateProfileInt("RunRate", pdd.ArcFormat, Rate + 1, IniFile);
-#endif	//_NEW_ARC_SORT_
 
 		if (!IgnoreErrors && ArcCmd.GetExecCode() != 0)
 			ArcExitCode = 0;

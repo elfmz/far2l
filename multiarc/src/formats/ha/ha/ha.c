@@ -92,7 +92,7 @@ static void info(void) {
     fflush(stdout);
     (*method[M_HSC].decode)();
     fflush(stdout);
-    exit(lasterror);
+    _exit(lasterror);
 }
 
 
@@ -120,7 +120,7 @@ static void usage(int ex) {
     fflush(stderr);
     if (ex) {
 	cu_do(NULL);
-	exit(ex); 
+	_exit(ex); 
     }
 }
 

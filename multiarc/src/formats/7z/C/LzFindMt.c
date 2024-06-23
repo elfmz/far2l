@@ -98,8 +98,8 @@ static void MtSync_Construct(CMtSync *p)
 
 #ifdef DEBUG_BUFFER_LOCK
 #include <stdlib.h>
-#define BUFFER_MUST_BE_LOCKED(p)    if (!(p)->csWasEntered) exit(1);
-#define BUFFER_MUST_BE_UNLOCKED(p)  if ( (p)->csWasEntered) exit(1);
+#define BUFFER_MUST_BE_LOCKED(p)    if (!(p)->csWasEntered) _exit(1);
+#define BUFFER_MUST_BE_UNLOCKED(p)  if ( (p)->csWasEntered) _exit(1);
 #else
 #define BUFFER_MUST_BE_LOCKED(p)
 #define BUFFER_MUST_BE_UNLOCKED(p)

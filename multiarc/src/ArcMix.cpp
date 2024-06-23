@@ -177,51 +177,21 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr,
 		return Execute(hPlugin, CmdStrTrimmed, HideOutput, Silent, NeedSudo, ShowCommand, ListFileName);
 	}
 
-	int ExitCode, LastError;
-
-	HANDLE StdInput = NULL;
-	HANDLE StdOutput = NULL;
 	HANDLE hScreen = NULL;
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-	if (HideOutput) {
-		if (!Silent) {
-			hScreen = Info.SaveScreen(0, 0, -1, -1);
-			const char *MsgItems[] = {"", GetMsg(MWaitForExternalProgram)};
-			Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 0);
-		}
-	} else {
-		WINPORT(GetConsoleScreenBufferInfo)(StdOutput, &csbi);
-
-		std::string Blank(csbi.dwSize.X, ' ');
-		for (int Y = 0; Y < csbi.dwSize.Y; Y++)
-			Info.Text(0, Y, LIGHTGRAY, Blank.c_str());
-		Info.Text(0, 0, 0, NULL);
-
-		COORD C;
-		C.X = 0;
-		C.Y = csbi.dwCursorPosition.Y;
-		WINPORT(SetConsoleCursorPosition)(StdOutput, C);
+	WCHAR SaveTitle[512];
+	if (HideOutput && !Silent) {
+		hScreen = Info.SaveScreen(0, 0, -1, -1);
+		const char *MsgItems[] = {"", GetMsg(MWaitForExternalProgram)};
+		Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 0);
+	}
+	if (ShowCommand) {
+		WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle) - 1);
+		SaveTitle[ARRAYSIZE(SaveTitle) - 1] = 0;
+		WINPORT(SetConsoleTitle)(NULL, StrMB2Wide(CmdStr).c_str());
 	}
 
-	DWORD ConsoleMode;
-	WINPORT(GetConsoleMode)(StdInput, &ConsoleMode);
-	WINPORT(SetConsoleMode)
-	(StdInput, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
+	int ExitCode;
 
-	WCHAR SaveTitle[512]{};
-	WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle) - 1);
-	if (ShowCommand)
-		WINPORT(SetConsoleTitle)(NULL, StrMB2Wide(CmdStr).c_str());
-
-	/* $ 14.02.2001 raVen
-	   делать окошку minimize, если в фоне */
-	/*  if (Opt.Background)
-	  {
-		si.dwFlags=si.dwFlags | STARTF_USESHOWWINDOW;
-		si.wShowWindow=SW_MINIMIZE;
-	  }*/
-	/* raVen $ */
 	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
 	if (NeedSudo)
 		flags|= EF_SUDO;
@@ -229,19 +199,18 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr,
 		flags|= EF_NOCMDPRINT;
 
 	if (*CmdStr.c_str() != '^') {
-		LastError = ExitCode = FSF.Execute(CmdStr.c_str(), flags);
+		ExitCode = FSF.Execute(CmdStr.c_str(), flags);
 
 	} else if (!HideOutput || NeedSudo) {
-		LastError = ExitCode =
-				FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), "BuiltinMain", CmdStr.c_str() + 1, flags);
+		ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), "BuiltinMain", CmdStr.c_str() + 1, flags);
 	} else {
-		LastError = ExitCode = BuiltinFork(CmdStr.c_str() + 1);
+		ExitCode = BuiltinFork(CmdStr.c_str() + 1);
 	}
 
 
-	WINPORT(SetLastError)(LastError);
-	WINPORT(SetConsoleTitle)(NULL, SaveTitle);
-	WINPORT(SetConsoleMode)(StdInput, ConsoleMode);
+	if (ShowCommand) {
+		WINPORT(SetConsoleTitle)(NULL, SaveTitle);
+	}
 	if (hScreen) {
 		Info.RestoreScreen(NULL);
 		Info.RestoreScreen(hScreen);

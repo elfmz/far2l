@@ -214,6 +214,7 @@ void PanelSettings()
 	Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
 	Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 	Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
+	Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
 	Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
 	Builder.AddCheckbox(Msg::ConfigReverseSort, &Opt.ReverseSort);
 

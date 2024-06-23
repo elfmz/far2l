@@ -2207,6 +2207,8 @@ files with the same name in the other panel, become marked.
     Subfolders are not compared. Files are compared only by name, size and
 time, and file contents have no effect on the operation.
 
+    See option #Case sensitive when compare or select# in ~Panel settings~@PanelSettings@.
+
 
 @UserMenu
 $ #User menu#
@@ -2508,6 +2510,9 @@ $ #Settings dialog: panel#
   #Select folders#          Enable to select folders, using #Gray +#
                           and #Gray *#. Otherwise these keys will
                           select files only.
+
+  #Case sensitive when#     Influence on ~Compare folders~@CompFolders@
+  #compare or select#       and ~Selecting files~@SelectFiles@.
 
   #Sort folder names#       Apply sorting by extension not only
   #by extension#            to files, but also to folders.
@@ -4025,6 +4030,9 @@ same function as #Gray *#.
     #Shift-<Gray +># and #Shift-<Gray -># selects and deselects all files.
 
     If no files are selected, only the file under the cursor will be processed.
+
+    See options #Select folders# and #Case sensitive when compare or select#
+in ~Panel settings~@PanelSettings@.
 
 
 @CopyFiles

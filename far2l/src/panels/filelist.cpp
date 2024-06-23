@@ -3210,13 +3210,14 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CFileMask FileMask;		// Класс для работы с масками
 	const wchar_t *HistoryName = L"Masks";
 	DialogDataEx SelectDlgData[] = {
-		{DI_DOUBLEBOX, 3, 1, 51, 6, {}, 0, L""},
+		{DI_DOUBLEBOX, 3, 1, 51, 7, {}, 0, L""},
 		{DI_EDIT,      5, 2, 49, 2, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY, L""},
 		{DI_CHECKBOX,  5, 3, 49, 3, {(DWORD_PTR)Opt.SelectFolders}, 0, Msg::SelectFolders},
-		{DI_TEXT,      0, 4, 0,  4, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 5, 0,  5, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 5, 0,  5, {}, DIF_CENTERGROUP, Msg::SelectFilter},
-		{DI_BUTTON,    0, 5, 0,  5, {}, DIF_CENTERGROUP, Msg::Cancel}
+		{DI_CHECKBOX,  5, 4, 49, 4, {(DWORD_PTR)Opt.PanelCaseSensitiveCompareSelect}, 0, Msg::SelectCase},
+		{DI_TEXT,      0, 5, 0,  5, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 6, 0,  6, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 6, 0,  6, {}, DIF_CENTERGROUP, Msg::SelectFilter},
+		{DI_BUTTON,    0, 6, 0,  6, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
 	MakeDialogItemsEx(SelectDlgData, SelectDlg);
 	FileFilter Filter(this, FFT_SELECT);
@@ -3281,26 +3282,26 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 					SelectDlg[0].strData = Msg::SelectTitle;
 				else {
 					SelectDlg[0].strData = Msg::UnselectTitle;
-					SelectDlg[2].Flags |= DIF_DISABLE; // Not need for Unselect, because it process all secelted items
+					SelectDlg[2].Flags |= DIF_DISABLE; // Not need for Unselect, because it process all selected items
 				}
 
 				{
 					Dialog Dlg(SelectDlg, ARRAYSIZE(SelectDlg));
 					Dlg.SetHelp(L"SelectFiles");
-					Dlg.SetPosition(-1, -1, 55, 8);
+					Dlg.SetPosition(-1, -1, 55, 9);
 
 					for (;;) {
 						Dlg.ClearDone();
 						Dlg.Process();
 
-						if (Dlg.GetExitCode() == 5 && Filter.FilterEdit()) {
+						if (Dlg.GetExitCode() == 6 && Filter.FilterEdit()) {
 							// Рефреш текущему времени для фильтра сразу после выхода из диалога
 							Filter.UpdateCurrentTime();
 							bUseFilter = true;
 							break;
 						}
 
-						if (Dlg.GetExitCode() != 4)
+						if (Dlg.GetExitCode() != 5)
 							return 0;
 
 						strMask = SelectDlg[1].strData;
@@ -3343,6 +3344,9 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 
 	long workCount = 0;
 
+	if (SelectDlg[3].Selected == BSTATE_UNCHECKED) // Opt.PanelCaseSensitiveCompareSelect
+		strMask.Lower(); // workaround for case-insensitive compare
+
 	if (bUseFilter || FileMask.Set(strMask, FMF_SILENT))	// Скомпилируем маски файлов и работаем
 	{														// дальше в зависимости от успеха компиляции
 		for (auto &CurPtr : ListData) {
@@ -3353,8 +3357,16 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 			else {
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
-				else
-					Match = FileMask.Compare(CurPtr->strName);
+				else {
+					if (SelectDlg[3].Selected == BSTATE_UNCHECKED) { // Opt.PanelCaseSensitiveCompareSelect
+						// workaround for case-insensitive compare
+						strCurName = CurPtr->strName;
+						strCurName.Lower();
+						Match = FileMask.Compare(strCurName);
+					}
+					else
+						Match = FileMask.Compare(CurPtr->strName);
+				}
 			}
 
 			if (Match) {
@@ -3498,7 +3510,8 @@ void FileList::CompareDir()
 			PtrTempName1 = PointToName(Item->strName);
 			PtrTempName2 = PointToName(AnotherItem->strName);
 
-			if (!StrCmpI(PtrTempName1, PtrTempName2)) {
+			if ((Opt.PanelCaseSensitiveCompareSelect && !StrCmp(PtrTempName1, PtrTempName2))
+					|| (!Opt.PanelCaseSensitiveCompareSelect && !StrCmpI(PtrTempName1, PtrTempName2))) {
 				if (CompareFatTime) {
 					WORD DosDate, DosTime, AnotherDosDate, AnotherDosTime;
 					WINPORT(FileTimeToDosDateTime)(&Item->WriteTime, &DosDate, &DosTime);

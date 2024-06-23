@@ -93,11 +93,9 @@ int PluginClass::ReadArchive(const char *Name, int OpMode)
 			const DWORD Now = GetProcessUptimeMSec();
 			if (Now >= UpdateTime) {
 				UpdateTime = Now + 100;
-				char NameMsg[NM];
-				CharArrayCpyZ(NameMsg, Name);
-				FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
+				const auto &NameMsg = FormatMessagePath(Name, false);
 				const auto &FilesMsg = StrPrintf(GetMsg(MArcReadFiles), (unsigned int)ArcDataCount);
-				const char *MsgItems[] = {GetMsg(MArcReadTitle), GetMsg(MArcReading), NameMsg, FilesMsg.c_str()};
+				const char *MsgItems[] = {GetMsg(MArcReadTitle), GetMsg(MArcReading), NameMsg.c_str(), FilesMsg.c_str()};
 				Info.Message(Info.ModuleNumber, MessageShown ? FMSG_KEEPBACKGROUND : 0, NULL, MsgItems,
 						ARRAYSIZE(MsgItems), 0);
 				MessageShown = true;
@@ -174,9 +172,8 @@ int PluginClass::ReadArchive(const char *Name, int OpMode)
 				break;
 		}
 
-		char NameMsg[NM];
-		const char *MsgItems[] = {GetMsg(MError), NameMsg, GetMsg(GetItemCode), GetMsg(MOk)};
-		FSF.TruncPathStr(strncpy(NameMsg, Name, sizeof(NameMsg) - 1), MAX_WIDTH_MESSAGE);
+		const auto &NameMsg = FormatMessagePath(Name, true);
+		const char *MsgItems[] = {GetMsg(MError), NameMsg.c_str(), GetMsg(GetItemCode), GetMsg(MOk)};
 		Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		return FALSE;	// Mantis#0001241
 	}
@@ -356,17 +353,16 @@ void PluginClass::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	if (bGOPIFirstCall)
 		ArcPlugin->GetFormatName(ArcPluginNumber, ArcPluginType, FormatName, DefExt);
 
-	char NameTitle[NM];
-	strncpy(NameTitle, FSF.PointToName((char *)ArcName.c_str()), sizeof(NameTitle) - 1);
-	NameTitle[sizeof(NameTitle) - 1] = 0;
-
+	std::string NameTitle;
 	struct PanelInfo PInfo;
 	if (::Info.Control((HANDLE)this, FCTL_GETPANELSHORTINFO, &PInfo)) {		// TruncStr
-		FSF.TruncPathStr(NameTitle,
-				(PInfo.PanelRect.right - PInfo.PanelRect.left + 1 - (FormatName.size() + 3 + 4)));
+		NameTitle = FormatMessagePath(ArcName.c_str(), true,
+			(PInfo.PanelRect.right - PInfo.PanelRect.left + 1 - (FormatName.size() + 3 + 4)));
+	} else {
+		NameTitle = FormatMessagePath(ArcName.c_str(), true, -1);
 	}
 
-	PanelTitle = StrPrintf(" %s:%s%s%s ", FormatName.c_str(), NameTitle, *CurDir ? "/" : "", *CurDir ? CurDir : "");
+	PanelTitle = StrPrintf(" %s:%s%s%s ", FormatName.c_str(), NameTitle.c_str(), *CurDir ? "/" : "", *CurDir ? CurDir : "");
 
 	Info->PanelTitle = PanelTitle.c_str();
 

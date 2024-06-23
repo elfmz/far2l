@@ -124,9 +124,8 @@ int PluginClass::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move,
 		}
 		else        */
 		{
-			char NameMsg[NM];
-			FSF.TruncPathStr(strncpy(NameMsg, FSF.PointToName((char *)ArcName.c_str()), sizeof(NameMsg) - 1), MAX_WIDTH_MESSAGE);
-			const auto &VolMsg = StrPrintf(GetMsg(MExtrVolume), FSF.PointToName(NameMsg));
+			const auto &NameMsg = FormatMessagePath(ArcName.c_str(), true);
+			const auto &VolMsg = StrPrintf(GetMsg(MExtrVolume), NameMsg.c_str());
 			const char *MsgItems[] = {GetMsg(MExtractTitle), VolMsg.c_str(), GetMsg(MExtrVolumeAsk1),
 					GetMsg(MExtrVolumeAsk2), GetMsg(MExtrVolumeSelFiles), GetMsg(MExtrAllVolumes)};
 			MsgCode = Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 2);

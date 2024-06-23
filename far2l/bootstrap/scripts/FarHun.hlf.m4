@@ -1875,6 +1875,8 @@ az azonos nevű fájloké.
 is csupán nevük, méretük és dátumuk alapján, így tartalmi eltéréseik nem hatnak
 a művelet eredményére.
 
+    See option #Case sensitive when compare or select# in ~Panel beállítások~@PanelSettings@.
+
 
 @UserMenu
 $ #Felhasználói menü#
@@ -2199,6 +2201,9 @@ a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
   #kijelölhetők#            fájlokat, hanem a mappákat is kijelöli.
                           ^<wrap>Kikapcsolt opciónál csak a fájlok kapnak
 jelölést.
+
+  #Case sensitive when#     Influence on ~Mappák összehasonlítása~@CompFolders@
+  #compare or select#       and ~Fájlok kijelölése~@SelectFiles@.
 
   #Mappák is rendezhetők#   A kiterjesztés szerinti rendezés nem csak
   #kiterjesztés szerint#    fájlokra, hanem mappákra is lehetséges.
@@ -3566,6 +3571,9 @@ kijelölést levesz.
 
     Ha nincsenek kjelölt fájlok, a műveletek csak a kurzor alatti fájlra
 hatnak.
+
+    See options #A mappák is kijelölhetők#
+and #Case sensitive when compare or select# in ~Panel beállítások~@PanelSettings@.
 
 
 @CopyFiles

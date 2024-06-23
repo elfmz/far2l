@@ -2044,6 +2044,17 @@ ConfigSelectFolders
 "Позначка &тек"
 "Адзнака ката&логаў"
 
+ConfigCaseSensitiveCompareSelect
+"&Учитывать регистр при сравнении или пометке"
+"Case sens&itive when compare or select"
+upd:"Case sensitive when compare or select"
+upd:"Case sensitive when compare or select"
+upd:"Case sensitive when compare or select"
+upd:"Case sensitive when compare or select"
+upd:"Case sensitive when compare or select"
+upd:"Case sensitive when compare or select"
+upd:"Case sensitive when compare or select"
+
 ConfigSortFolderExt
 "Сортировать имена папок по рас&ширению"
 "Sort folder names by e&xtension"
@@ -9301,6 +9312,17 @@ SelectFolders
 "Seleccionar &directorios"
 "Позначка &тек"
 "Адзнака ката&логаў"
+
+SelectCase
+"&Учитывать регистр"
+"&Case sensitive"
+"Roz&lišovat velikost písmen"
+"&Groß-/Kleinschreibung"
+"&Nagy/kisbetű érzékeny"
+"&Uwzględnij wielkość liter"
+"Sensible min/ma&yúsc."
+"&Враховувати регістр"
+"&Улічваць рэгістр"
 
 SelectFilter
 "&Фильтр"

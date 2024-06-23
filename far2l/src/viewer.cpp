@@ -2552,13 +2552,6 @@ void Viewer::Search(int Next, int FirstChar)
 				if (CurTime - StartTime > RedrawTimeout) {
 					StartTime = CurTime;
 
-					if (CheckForEscSilent()) {
-						if (ConfirmAbortOp()) {
-							Redraw();
-							return;
-						}
-					}
-
 					INT64 Total = ReverseSearch ? StartPos : FileSize - StartPos;
 					INT64 Current = _abs64(CurPos - StartPos);
 					int Percent = Total > 0 ? static_cast<int>(Current * 100 / Total) : -1;
@@ -2573,6 +2566,13 @@ void Viewer::Search(int Next, int FirstChar)
 						}
 					}
 					ViewerSearchMsg(strMsgStr, Percent);
+
+					if (CheckForEscSilent()) {
+						if (ConfirmAbortOp()) {
+							Redraw();
+							return;
+						}
+					}
 				}
 
 				/*

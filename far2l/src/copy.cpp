@@ -251,17 +251,16 @@ bool CopyProgress::Timer()
 void CopyProgress::Flush()
 {
 	if (Timer()) {
+		if (Total || (TotalFilesToProcess == 1)) {
+			CopyTitle.Set(L"{%d%%} %ls",
+					Total ? ToPercent64(TotalCopiedSize >> 8, TotalCopySize >> 8) : Percents,
+					(Move ? Msg::CopyMovingTitle : Msg::CopyCopyingTitle).CPtr());
+		}
 		if (!IsCancelled) {
 			if (CheckForEscSilent()) {
 				LockFrame LF((*FrameManager)[0]);
 				IsCancelled = ConfirmAbortOp();
 			}
-		}
-
-		if (Total || (TotalFilesToProcess == 1)) {
-			CopyTitle.Set(L"{%d%%} %ls",
-					Total ? ToPercent64(TotalCopiedSize >> 8, TotalCopySize >> 8) : Percents,
-					(Move ? Msg::CopyMovingTitle : Msg::CopyCopyingTitle).CPtr());
 		}
 	}
 }

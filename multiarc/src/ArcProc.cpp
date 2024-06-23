@@ -38,10 +38,8 @@ int PluginClass::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber,
 				GetMsg(MDeleteCancel)};
 		std::string Msg;
 		if (ItemsNumber == 1) {
-			char NameMsg[NM];
-			strncpy(NameMsg, PanelItem[0].FindData.cFileName, sizeof(NameMsg) - 1);
-			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
-			Msg = StrPrintf(GetMsg(MDeleteFile), NameMsg);
+			const auto &NameMsg = FormatMessagePath(PanelItem[0].FindData.cFileName, false);
+			Msg = StrPrintf(GetMsg(MDeleteFile), NameMsg.c_str());
 			MsgItems[1] = Msg.c_str();
 		}
 		if (Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 2) != 0)
@@ -143,9 +141,8 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 	struct PluginPanelItem MaskPanelItem;
 
 	if (AskVolume) {
-		char NameMsg[NM];
-		FSF.TruncPathStr(strncpy(NameMsg, FSF.PointToName((char *)ArcName.c_str()), sizeof(NameMsg) - 1), MAX_WIDTH_MESSAGE);
-		const auto &VolMsg = StrPrintf(GetMsg(MExtrVolume), NameMsg);
+		const auto &NameMsg = FormatMessagePath(ArcName.c_str(), true);
+		const auto &VolMsg = StrPrintf(GetMsg(MExtrVolume), NameMsg.c_str());
 		const char *MsgItems[] = {"", VolMsg.c_str(), GetMsg(MExtrVolumeAsk1), GetMsg(MExtrVolumeAsk2),
 				GetMsg(MExtrVolumeSelFiles), GetMsg(MExtrAllVolumes)};
 		int MsgCode = Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 2);
@@ -304,18 +301,12 @@ int PluginClass::ProcessKey(int Key, unsigned int ControlState)
 		//    HANDLE hScreen=Info.SaveScreen(0,0,-1,-1);
 		if (strstr(ArcName.c_str(), /*"FarTmp"*/ "FTMP") == NULL)		//$AA какая-то бяка баловалась
 		{
-			char CurDir[NM];
-			CharArrayCpyZ(CurDir, ArcName.c_str());
-			char *Slash = strrchr(CurDir, GOOD_SLASH);
-			if (Slash != NULL) {
-				if (Slash != CurDir)
-					*Slash = 0;
-				// if (Slash!=CurDir && *(Slash-1)==':')
-				//  Slash[1]=0;
-				// else
-				//  *Slash=0;
-				if (sdc_chdir(CurDir))
-					fprintf(stderr, "sdc_chdir('%s') - %u\n", CurDir, errno);
+			std::string CurDir = ArcName;
+			const size_t Slash = CurDir.rfind(GOOD_SLASH);
+			if (Slash != std::string::npos) {
+				CurDir.resize(Slash);
+				if (sdc_chdir(CurDir.c_str()))
+					fprintf(stderr, "sdc_chdir('%s') - %u\n", CurDir.c_str(), errno);
 			}
 		}
 		struct PanelInfo PInfo;

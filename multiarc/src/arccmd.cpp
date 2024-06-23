@@ -171,11 +171,9 @@ bool ArcCommand::ProcessCommand(std::string FormatString, int CommandType, int I
 
 	if (!IgnoreErrors && ExecCode != 0) {
 		if (!Silent) {
-			char NameMsg[NM]{};
 			const auto &ErrMsg = StrPrintf(GetMsg(MArcNonZero), ExecCode);
-			CharArrayCpyZ(NameMsg, ArcName.c_str());
-			FSF.TruncPathStr(NameMsg, MAX_WIDTH_MESSAGE);
-			const char *MsgItems[] = {GetMsg(MError), NameMsg, ErrMsg.c_str(), GetMsg(MOk)};
+			const auto &NameMsg = FormatMessagePath(ArcName.c_str(), false);
+			const char *MsgItems[] = {GetMsg(MError), NameMsg.c_str(), ErrMsg.c_str(), GetMsg(MOk)};
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 		return false;
@@ -497,8 +495,8 @@ int ArcCommand::MakeListFile(int QuoteName, int UseSlash, int FolderName, int Na
 						FILE_FLAG_SEQUENTIAL_SCAN, NULL)) == INVALID_HANDLE_VALUE)
 	{
 		if (!Silent) {
-			FSF.TruncPathStr(TmpListFileName, MAX_WIDTH_MESSAGE);
-			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), TmpListFileName, GetMsg(MOk)};
+			const auto &MsgListFileName = FormatMessagePath(TmpListFileName, false);
+			const char *MsgItems[] = {GetMsg(MError), GetMsg(MCannotCreateListFile), MsgListFileName.c_str(), GetMsg(MOk)};
 			Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 		/* $ 25.07.2001 AA

@@ -318,6 +318,7 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr,
 size_t FindExt(const std::string &Name);
 bool AddExt(std::string &Name, const std::string &Ext);											//$ AA 28.11.2001
 bool DelExt(std::string &Name, const std::string &Ext);
+std::string FormatMessagePath(const char *path, bool extract_name, int truncate = 0);
 std::string GetDialogControlText(HANDLE hDlg, int id);
 void SetDialogControlText(HANDLE hDlg, int id, const char *str);
 void SetDialogControlText(HANDLE hDlg, int id, const std::string &str);
@@ -342,8 +343,6 @@ std::string &NormalizePath(std::string &path);
 
 int WINAPI GetPassword(std::string &Password, const char *FileName);
 void WINAPI UnixTimeToFileTime(DWORD UnixTime, FILETIME *FileTime);
-
-#define MAX_WIDTH_MESSAGE (GetScrX() - 14)
 
 #ifdef __GNUC__
 #define I64(x) x##ll

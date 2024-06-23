@@ -17,69 +17,41 @@ BOOL FileExists(const char *Name)
 	return sdc_stat(Name, &s) != -1;
 }
 
-static void mystrlwr(char *p)
-{
-	for (; *p; ++p)
-		*p = tolower(*p);
-}
-
-static void mystrupr(char *p)
-{
-	for (; *p; ++p)
-		*p = toupper(*p);
-}
-
 BOOL GoToFile(const char *Target, BOOL AllowChangeDir)
 {
 	if (!Target || !*Target)
 		return FALSE;
-	BOOL rc = FALSE, search = TRUE;
-	PanelRedrawInfo PRI;
+
+	const char *TargetName = FSF.PointToName(const_cast<char *>(Target));
+	std::string TargetDir(Target, TargetName - Target);
+
 	PanelInfo PInfo;
-	char Name[NM], Dir[NM * 5];
-	int pathlen;
-
-	CharArrayCpyZ(Name, FSF.PointToName(const_cast<char *>(Target)));
-	pathlen = (int)(FSF.PointToName(const_cast<char *>(Target)) - Target);
-	if (pathlen)
-		memcpy(Dir, Target, pathlen);
-	Dir[pathlen] = 0;
-
-	FSF.Trim(Name);
-	FSF.Trim(Dir);
-	FSF.Unquote(Name);
-	FSF.Unquote(Dir);
-
 	Info.Control(INVALID_HANDLE_VALUE, FCTL_UPDATEPANEL, (void *)1);
 	Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
-	pathlen = strlen(Dir);
-	if (pathlen) {
-		if (*PInfo.CurDir && PInfo.CurDir[strlen(PInfo.CurDir) - 1] != '/'		// old path != "*\"
-				&& Dir[pathlen - 1] == '/')
-			Dir[pathlen - 1] = 0;
 
-		if (0 != strcmp(Dir, PInfo.CurDir)) {
-			if (AllowChangeDir) {
-				Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, &Dir);
-				Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
-			} else
-				search = FALSE;
+	if (!TargetDir.empty()) {
+		if (*PInfo.CurDir && PInfo.CurDir[strlen(PInfo.CurDir) - 1] != '/') {		// old path != "*\"
+			StrTrimRight(TargetDir, "/");
 		}
-	}
-
-	PRI.CurrentItem = PInfo.CurrentItem;
-	PRI.TopPanelItem = PInfo.TopPanelItem;
-	if (search) {
-		for (int J = 0; J < PInfo.ItemsNumber; J++) {
-			if (!strcmp(Name, FSF.PointToName(PInfo.PanelItems[J].FindData.cFileName))) {
-				PRI.CurrentItem = J;
-				PRI.TopPanelItem = J;
-				rc = TRUE;
-				break;
+		if (TargetDir != PInfo.CurDir) {
+			if (!AllowChangeDir) {
+				return FALSE;
 			}
+			Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, (void *)TargetDir.c_str());
+			Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
 		}
 	}
-	return rc ? Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWPANEL, &PRI) : FALSE;
+
+	for (int i = 0; i < PInfo.ItemsNumber; i++) {
+		if (!strcmp(TargetName, FSF.PointToName(PInfo.PanelItems[i].FindData.cFileName))) {
+			PanelRedrawInfo PRI{};
+			PRI.CurrentItem = i;
+			PRI.TopPanelItem = i;
+			return Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWPANEL, &PRI);
+		}
+	}
+
+	return FALSE;
 }
 
 int __isspace(int Chr)
@@ -422,6 +394,20 @@ bool AddExt(std::string &Name, const std::string &Ext)
 		}
 	}
 	return true;
+}
+
+std::string FormatMessagePath(const char *path, bool extract_name, int truncate)
+{
+	if (extract_name) {
+		path = FSF.PointToName((char *)path);
+	}
+	char buf[NM];
+	strncpy(buf, path, ARRAYSIZE(buf) - 1);
+	buf[ARRAYSIZE(buf) - 1] = 0;
+	if (truncate >= 0) {
+		FSF.TruncPathStr(buf, truncate ? truncate : (GetScrX() - 14));
+	}
+	return buf;
 }
 
 int WINAPI GetPassword(std::string &Password, const char *FileName)

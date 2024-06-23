@@ -364,17 +364,17 @@ DWORD WINAPI _export ARJ_GetSFXPos(void)
 	return SFXSize;
 }
 
-BOOL WINAPI _export ARJ_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export ARJ_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "ARJ");
-		strcpy(DefaultExt, "arj");
+		FormatName = "ARJ";
+		DefaultExt = "arj";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export ARJ_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export ARJ_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 		// Correct Arj/Win32 commands
@@ -394,7 +394,7 @@ BOOL WINAPI _export ARJ_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*Move files and folders*/ "arj m -+ -r -y -a1 {-g%%P} {-w%%W} -p {%%S} -- %%A !%%LM",
 				/*"All files" mask      */ "*.*"};
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

@@ -150,17 +150,17 @@ void ArcPlugins::CloseArchive(int PluginNumber, struct ArcInfo *Info)
 		PluginsData[PluginNumber].pCloseArchive(Info);
 }
 
-BOOL ArcPlugins::GetFormatName(int PluginNumber, int Type, char *FormatName, char *DefaultExt)
+BOOL ArcPlugins::GetFormatName(int PluginNumber, int Type, std::string &FormatName, std::string &DefaultExt)
 {
-	*FormatName = 0;
+	FormatName.clear();
 	if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pGetFormatName)
 		return PluginsData[PluginNumber].pGetFormatName(Type, FormatName, DefaultExt);
 	return FALSE;
 }
 
-BOOL ArcPlugins::GetDefaultCommands(int PluginNumber, int Type, int Command, char *Dest)
+BOOL ArcPlugins::GetDefaultCommands(int PluginNumber, int Type, int Command, std::string &Dest)
 {
-	*Dest = 0;
+	Dest.clear();
 	if ((DWORD)PluginNumber < PluginsData.size() && PluginsData[PluginNumber].pGetDefaultCommands)
 		return PluginsData[PluginNumber].pGetDefaultCommands(Type, Command, Dest);
 	return FALSE;

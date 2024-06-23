@@ -42,10 +42,6 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfo(const struct PluginStartupInfo *
 
 	kfh.GetChars(Opt.CommandPrefix1, sizeof(Opt.CommandPrefix1), "Prefix1", "ma");
 
-#ifdef _NEW_ARC_SORT_
-	strcpy(IniFile, Info->ModuleName);
-	*((int *)(IniFile + strlen(IniFile) - 3)) = 0x696E69;	// :)
-#endif
 	Opt.PriorityClass = 2;									// default: NORMAL
 }
 
@@ -237,7 +233,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 	Info->PluginConfigStrings = PluginCfgStrings;
 	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
 	static char CommandPrefix[sizeof(Opt.CommandPrefix1)];
-	ArrayCpyZ(CommandPrefix, Opt.CommandPrefix1);
+	CharArrayCpyZ(CommandPrefix, Opt.CommandPrefix1);
 	Info->CommandPrefix = CommandPrefix;
 }
 
@@ -264,8 +260,8 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 {
 	struct FarMenuItem MenuItems[2];
 	ZeroFill(MenuItems);
-	ArrayCpyZ(MenuItems[0].Text, GetMsg(MCfgLine1));
-	ArrayCpyZ(MenuItems[1].Text, GetMsg(MCfgLine2));
+	CharArrayCpyZ(MenuItems[0].Text, GetMsg(MCfgLine1));
+	CharArrayCpyZ(MenuItems[1].Text, GetMsg(MCfgLine2));
 	MenuItems[0].Selected = TRUE;
 
 	do {
@@ -278,8 +274,7 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 				ConfigGeneral();
 				break;
 			case 1: {
-				char ArcFormat[100];
-				*ArcFormat = 0;
+				std::string ArcFormat;
 				while (PluginClass::SelectFormat(ArcFormat))
 					;	// ConfigCommands(ArcFormat);
 				break;

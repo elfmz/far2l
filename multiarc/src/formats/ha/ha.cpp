@@ -132,19 +132,19 @@ BOOL WINAPI _export HA_CloseArchive(struct ArcInfo *Info)
   return(WINPORT(CloseHandle)(ArcHandle));
 }
 
-BOOL WINAPI _export HA_GetFormatName(int Type,char *FormatName,char *DefaultExt)
+BOOL WINAPI _export HA_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
   if (Type==0)
   {
-    strcpy(FormatName,"HA");
-    strcpy(DefaultExt,"ha");
+    FormatName = "HA";
+    DefaultExt = "ha";
     return(TRUE);
   }
   return(FALSE);
 }
 
 
-BOOL WINAPI _export HA_GetDefaultCommands(int Type,int Command,char *Dest)
+BOOL WINAPI _export HA_GetDefaultCommands(int Type,int Command,std::string &Dest)
 {
   if (Type==0)
   {
@@ -167,7 +167,7 @@ BOOL WINAPI _export HA_GetDefaultCommands(int Type,int Command,char *Dest)
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {
-      strcpy(Dest,Commands[Command]);
+      Dest = Commands[Command];
       return(TRUE);
     }
   }

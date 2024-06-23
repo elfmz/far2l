@@ -2,55 +2,58 @@
 #include "marclng.hpp"
 #include <errno.h>
 
-BOOL PluginClass::GetFormatName(char *FormatName, char *DefExt)
+BOOL PluginClass::GetFormatName(std::string &FormatName, std::string &DefExt)
 {
-	*FormatName = 0;
-	if (DefExt)
-		*DefExt = 0;
-	char TempDefExt[NM];
-	return ArcPlugin->GetFormatName(ArcPluginNumber, ArcPluginType, FormatName, DefExt ? DefExt : TempDefExt);
+	FormatName.clear();
+	DefExt.clear();
+	return ArcPlugin->GetFormatName(ArcPluginNumber, ArcPluginType, FormatName, DefExt);
 }
 
-void PluginClass::GetCommandFormat(int Command, char *Format, int FormatSize)
+BOOL PluginClass::GetFormatName(std::string &FormatName)
 {
-	//*Format=0;
-	char ArcFormat[100] /*,DefExt[NM]*/;
-	/*if (!ArcPlugin->GetFormatName(ArcPluginNumber,ArcPluginType,ArcFormat,DefExt))
-	  return;*/
+	FormatName.clear();
+	std::string TempDefExt;
+	return ArcPlugin->GetFormatName(ArcPluginNumber, ArcPluginType, FormatName, TempDefExt);
+}
+
+
+std::string PluginClass::GetCommandFormat(int Command)
+{
+	std::string ArcFormat;
 	if (!GetFormatName(ArcFormat))
-		return;
-	ArcPlugin->GetDefaultCommands(ArcPluginNumber, ArcPluginType, Command, Format);
-	KeyFileReadSection(INI_LOCATION, ArcFormat).GetChars(Format, FormatSize, CmdNames[Command], Format);
+		return std::string();
+	std::string CommandFormat;
+	ArcPlugin->GetDefaultCommands(ArcPluginNumber, ArcPluginType, Command, CommandFormat);
+	return KeyFileReadSection(INI_LOCATION, ArcFormat).GetString(CmdNames[Command], CommandFormat.c_str());
 }
 
 int PluginClass::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
-	char Command[MA_MAX_SIZE_COMMAND_NAME], AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
+	//char Command[MA_MAX_SIZE_COMMAND_NAME], AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
+	std::string Command, AllFilesMask;
 	if (ItemsNumber == 0)
 		return FALSE;
 	if ((OpMode & OPM_SILENT) == 0) {
 		const char *MsgItems[] = {GetMsg(MDeleteTitle), GetMsg(MDeleteFiles), GetMsg(MDeleteDelete),
 				GetMsg(MDeleteCancel)};
-		char Msg[512];
+		std::string Msg;
 		if (ItemsNumber == 1) {
-			char NameMsg[NM];
-			FSF.TruncPathStr(strncpy(NameMsg, PanelItem[0].FindData.cFileName, sizeof(NameMsg) - 1),
-					MAX_WIDTH_MESSAGE);
-			FSF.sprintf(Msg, GetMsg(MDeleteFile), NameMsg);
-			MsgItems[1] = Msg;
+			const auto &NameMsg = FormatMessagePath(PanelItem[0].FindData.cFileName, false);
+			Msg = StrPrintf(GetMsg(MDeleteFile), NameMsg.c_str());
+			MsgItems[1] = Msg.c_str();
 		}
 		if (Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 2) != 0)
 			return FALSE;
+
 		if (ItemsNumber > 1) {
-			char Msg[100];
-			FSF.sprintf(Msg, GetMsg(MDeleteNumberOfFiles), ItemsNumber);
-			MsgItems[1] = Msg;
+			Msg = StrPrintf(GetMsg(MDeleteNumberOfFiles), ItemsNumber);
+			MsgItems[1] = Msg.c_str();
 			if (Info.Message(Info.ModuleNumber, FMSG_WARNING, NULL, MsgItems, ARRAYSIZE(MsgItems), 2) != 0)
 				return FALSE;
 		}
 	}
-	GetCommandFormat(CMD_DELETE, Command, sizeof(Command));
-	GetCommandFormat(CMD_ALLFILESMASK, AllFilesMask, sizeof(AllFilesMask));
+	Command = GetCommandFormat(CMD_DELETE);
+	AllFilesMask = GetCommandFormat(CMD_ALLFILESMASK);
 	int IgnoreErrors = (CurArcInfo.Flags & AF_IGNOREERRORS);
 	ArcCommand ArcCmd(PanelItem, ItemsNumber, Command, ArcName, CurDir, "", AllFilesMask, IgnoreErrors, CMD_DELETE, 0,
 			CurDir, ItemsInfo.Codepage);
@@ -78,7 +81,7 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 			{MArcCmdLock,         CMD_LOCK        },
 	};
 
-	char Command[MA_MAX_SIZE_COMMAND_NAME], AllFilesMask[MA_MAX_SIZE_COMMAND_NAME];
+	std::string Command, AllFilesMask;
 	int CommandType;
 	int ExitCode = 0;
 
@@ -90,8 +93,8 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 
 		int Count = 0;
 		for (size_t i = 0; i < ARRAYSIZE(MenuData); i++) {
-			GetCommandFormat(MenuData[i].Cmd, Command, sizeof(Command));
-			if (*Command) {
+			Command = GetCommandFormat(MenuData[i].Cmd);
+			if (!Command.empty()) {
 				MenuItems[Count].Text.TextPtr = GetMsg(MenuData[i].Msg);
 				MenuItems[Count].Flags|= MIF_USETEXTPTR;
 				MenuItems[Count++].UserData = MenuData[i].Cmd;
@@ -112,8 +115,10 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 			if (BreakCode == 0)		// F4 pressed
 			{
 				MenuItems[0].Flags&= ~MIF_USETEXTPTR;
-				GetFormatName(MenuItems[0].Text.Text);
-				ConfigCommands(MenuItems[0].Text.Text, 2 + MenuData[ExitCode].Cmd * 2);
+				std::string FormatName;
+				GetFormatName(FormatName);
+				CharArrayCpyZ(MenuItems[0].Text.Text, FormatName.c_str());
+				ConfigCommands(FormatName, 2 + MenuData[ExitCode].Cmd * 2);
 				continue;
 			}
 			CommandType = (int)MenuItems[ExitCode].UserData;
@@ -126,30 +131,26 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 
 	WINPORT(FlushConsoleInputBuffer)(NULL);		// GetStdHandle(STD_INPUT_HANDLE));
 
-	GetCommandFormat(CommandType, Command, sizeof(Command));
-	GetCommandFormat(CMD_ALLFILESMASK, AllFilesMask, sizeof(AllFilesMask));
+	Command = GetCommandFormat(CommandType);
+	AllFilesMask = GetCommandFormat(CMD_ALLFILESMASK);
 	int IgnoreErrors = (CurArcInfo.Flags & AF_IGNOREERRORS);
-	char Password[512];
-	*Password = 0;
+	std::string Password;
 
 	int AskVolume = (OpMode & (OPM_FIND | OPM_VIEW | OPM_EDIT | OPM_QUICKVIEW)) == 0 && CurArcInfo.Volume
 			&& *CurDir == 0 && ExitCode == 0;
 	struct PluginPanelItem MaskPanelItem;
 
 	if (AskVolume) {
-		char VolMsg[300];
-		char NameMsg[NM];
-		FSF.TruncPathStr(strncpy(NameMsg, FSF.PointToName(ArcName), sizeof(NameMsg) - 1), MAX_WIDTH_MESSAGE);
-		FSF.sprintf(VolMsg, GetMsg(MExtrVolume), NameMsg);
-		const char *MsgItems[] = {"", VolMsg, GetMsg(MExtrVolumeAsk1), GetMsg(MExtrVolumeAsk2),
+		const auto &NameMsg = FormatMessagePath(ArcName.c_str(), true);
+		const auto &VolMsg = StrPrintf(GetMsg(MExtrVolume), NameMsg.c_str());
+		const char *MsgItems[] = {"", VolMsg.c_str(), GetMsg(MExtrVolumeAsk1), GetMsg(MExtrVolumeAsk2),
 				GetMsg(MExtrVolumeSelFiles), GetMsg(MExtrAllVolumes)};
 		int MsgCode = Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 2);
 		if (MsgCode < 0)
 			return -1;
 		if (MsgCode == 1) {
 			ZeroFill(MaskPanelItem);
-			strncpy(MaskPanelItem.FindData.cFileName, AllFilesMask,
-					ARRAYSIZE(MaskPanelItem.FindData.cFileName) - 1);
+			CharArrayCpyZ(MaskPanelItem.FindData.cFileName, AllFilesMask.c_str());
 			if (ItemsInfo.Encrypted)
 				MaskPanelItem.Flags = F_ENCRYPTED;
 			PanelItem = &MaskPanelItem;
@@ -157,50 +158,35 @@ int PluginClass::ProcessHostFile(struct PluginPanelItem *PanelItem, int ItemsNum
 		}
 	}
 
-	if (strstr(Command, "%%P") != NULL)
+	if (Command.find("%%P") != std::string::npos)
 		for (int I = 0; I < ItemsNumber; I++)
 			if ((PanelItem[I].Flags & F_ENCRYPTED)
 					|| (ItemsInfo.Encrypted
 							&& (PanelItem[I].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))) {
-				if (!GetPassword(Password, FSF.PointToName(ArcName)))
+				if (!GetPassword(Password, FSF.PointToName((char *)ArcName.c_str())))
 					return FALSE;
 				break;
 			}
 
-	ArcCommand ArcCmd(PanelItem, ItemsNumber, Command, ArcName, CurDir, Password, AllFilesMask, IgnoreErrors,
-			CommandType, 0, CurDir,
-			ItemsInfo.Codepage);
+	ArcCommand ArcCmd(PanelItem, ItemsNumber, Command, ArcName, CurDir,
+		Password, AllFilesMask, IgnoreErrors, CommandType, 0, CurDir, ItemsInfo.Codepage);
 	return IgnoreErrors || ArcCmd.GetExecCode() == 0;
 }
 
 int __cdecl FormatSort(struct FarMenuItemEx *Item1, struct FarMenuItemEx *Item2)
 {
-#ifdef _NEW_ARC_SORT_
-	int Temp = (int)Item2->UserData - (int)Item1->UserData;
-	return Temp ? Temp : (int)Item1->UserData == -1 ? 0 : FSF.LStricmp(Item1->Text.Text, Item2->Text.Text);
-#else
 	return strcasecmp(Item1->Text.Text, Item2->Text.Text);
-#endif
 }
 
-int PluginClass::SelectFormat(char *ArcFormat, int AddOnly)
+bool PluginClass::SelectFormat(std::string &ArcFormat, int AddOnly)
 {
 	typedef int(__cdecl * FCmp)(const void *, const void *);
 	struct FarMenuItemEx *MenuItems = NULL, *NewMenuItems;
 	int MenuItemsNumber = 0;
-	char Format[100], DefExt[NM];
+	std::string Format, DefExt;
 	int BreakCode;
 	int BreakKeys[] = {VK_F4, VK_RETURN, 0};
 	int ExitCode;
-
-#ifdef _NEW_ARC_SORT_
-	int SortModeIndex = GetPrivateProfileInt("MultiArc", "SortMode", 1, IniFile);
-	char *SortMode;
-	if (SortModeIndex <= 1 || SortModeIndex >= ARRAYSIZE(SortModes))
-		SortMode = NULL;
-	else
-		SortMode = SortModes[SortModeIndex];
-#endif
 
 	BreakKeys[1] = (AddOnly) ? 0 : VK_RETURN;
 
@@ -212,11 +198,10 @@ int PluginClass::SelectFormat(char *ArcFormat, int AddOnly)
 
 				if (AddOnly)	// Only add to archive?
 				{
-					char Buffer[MA_MAX_SIZE_COMMAND_NAME];
-					ArcPlugin->GetDefaultCommands(i, j, CMD_ADD, Buffer);
-					KeyFileReadSection(INI_LOCATION, Format)
-							.GetChars(Buffer, sizeof(Buffer), CmdNames[CMD_ADD], Buffer);
-					if (*Buffer == 0)
+					std::string CmdAdd;
+					ArcPlugin->GetDefaultCommands(i, j, CMD_ADD, CmdAdd);
+					CmdAdd = KeyFileReadSection(INI_LOCATION, Format).GetString(CmdNames[CMD_ADD], CmdAdd.c_str());
+					if (CmdAdd.empty())
 						continue;
 				}
 
@@ -224,29 +209,20 @@ int PluginClass::SelectFormat(char *ArcFormat, int AddOnly)
 						(MenuItemsNumber + 1) * sizeof(struct FarMenuItemEx));
 				if (NewMenuItems == NULL) {
 					free(MenuItems);
-					return FALSE;
+					return false;
 				}
 				MenuItems = NewMenuItems;
 				ZeroFill(MenuItems[MenuItemsNumber]);
 				MenuItems[MenuItemsNumber].UserData = MAKEWPARAM((WORD)i, (WORD)j);
-				strncpy(MenuItems[MenuItemsNumber].Text.Text, Format,
-						sizeof(MenuItems[MenuItemsNumber].Text.Text) - 1);
+				CharArrayCpyZ(MenuItems[MenuItemsNumber].Text.Text, Format.c_str());
 				MenuItems[MenuItemsNumber].Flags =
-						((MenuItemsNumber == 0 && *ArcFormat == 0) || !strcasecmp(ArcFormat, Format))
-						? MIF_SELECTED
-						: 0;
-#ifdef _NEW_ARC_SORT_
-				if (SortMode)
-					MenuItems[MenuItemsNumber].UserData = GetPrivateProfileInt(SortMode, Format, 0, IniFile);
-				else
-					MenuItems[MenuItemsNumber].UserData = SortModeIndex ? 0 : -1;
-#endif
-
+					((MenuItemsNumber == 0 && ArcFormat.empty()) || !strcasecmp(ArcFormat.c_str(), Format.c_str()))
+						? MIF_SELECTED : 0;
 				MenuItemsNumber++;
 			}
 		}
 		if (MenuItemsNumber == 0)
-			return FALSE;
+			return false;
 
 		FSF.qsort(MenuItems, MenuItemsNumber, sizeof(struct FarMenuItemEx), (FCmp)FormatSort);
 
@@ -262,10 +238,10 @@ int PluginClass::SelectFormat(char *ArcFormat, int AddOnly)
 		ExitCode = Info.Menu(Info.ModuleNumber, -1, -1, 0, Flags, GetMsg(MSelectArchiver), GetMsg(MSelectF4),
 				NULL, BreakKeys, &BreakCode, (struct FarMenuItem *)MenuItems, MenuItemsNumber);
 		if (ExitCode >= 0) {
-			strcpy(ArcFormat, MenuItems[ExitCode].Text.Text);
+			CharArrayAssignToStr(ArcFormat, MenuItems[ExitCode].Text.Text);
 			if ((BreakCode >= 0 && BreakCode <= 1) || !AddOnly)		// F4 or Enter pressed
-				ConfigCommands(ArcFormat, 2, TRUE, LOWORD(MenuItems[ExitCode].UserData),
-						HIWORD(MenuItems[ExitCode].UserData));
+				ConfigCommands(ArcFormat, 2, TRUE,
+					LOWORD(MenuItems[ExitCode].UserData), HIWORD(MenuItems[ExitCode].UserData));
 			else
 				break;
 		} else
@@ -279,21 +255,21 @@ int PluginClass::SelectFormat(char *ArcFormat, int AddOnly)
 	return ExitCode >= 0;
 }
 
-int PluginClass::FormatToPlugin(char *Format, int &PluginNumber, int &PluginType)
+bool PluginClass::FormatToPlugin(const std::string &Format, int &PluginNumber, int &PluginType)
 {
-	char PluginFormat[100], DefExt[NM];
+	std::string PluginFormat, DefExt;
 	for (int i = 0; i < ArcPlugin->FmtCount(); i++) {
 		for (int j = 0;; j++) {
 			if (!ArcPlugin->GetFormatName(i, j, PluginFormat, DefExt))
 				break;
-			if (!strcasecmp(PluginFormat, Format)) {
+			if (!strcasecmp(PluginFormat.c_str(), Format.c_str())) {
 				PluginNumber = i;
 				PluginType = j;
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber);
@@ -302,20 +278,14 @@ int PluginClass::ProcessKey(int Key, unsigned int ControlState)
 {
 	if ((ControlState & PKF_ALT) && Key == VK_F6) {
 		//    HANDLE hScreen=Info.SaveScreen(0,0,-1,-1);
-		if (strstr(ArcName, /*"FarTmp"*/ "FTMP") == NULL)		//$AA какая-то бяка баловалась
+		if (strstr(ArcName.c_str(), /*"FarTmp"*/ "FTMP") == NULL)		//$AA какая-то бяка баловалась
 		{
-			char CurDir[NM];
-			ArrayCpyZ(CurDir, ArcName);
-			char *Slash = strrchr(CurDir, GOOD_SLASH);
-			if (Slash != NULL) {
-				if (Slash != CurDir)
-					*Slash = 0;
-				// if (Slash!=CurDir && *(Slash-1)==':')
-				//  Slash[1]=0;
-				// else
-				//  *Slash=0;
-				if (sdc_chdir(CurDir))
-					fprintf(stderr, "sdc_chdir('%s') - %u\n", CurDir, errno);
+			std::string CurDir = ArcName;
+			const size_t Slash = CurDir.rfind(GOOD_SLASH);
+			if (Slash != std::string::npos) {
+				CurDir.resize(Slash);
+				if (sdc_chdir(CurDir.c_str()))
+					fprintf(stderr, "sdc_chdir('%s') - %u\n", CurDir.c_str(), errno);
 			}
 		}
 		struct PanelInfo PInfo;

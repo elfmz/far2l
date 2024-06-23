@@ -18,7 +18,6 @@ using namespace oldfar;
 #define INI_LOCATION (InMyConfig("plugins/multiarc/config.ini"))
 #define INI_SECTION  ("Settings")
 
-// #define _NEW_ARC_SORT_
 #define OLD_DIALOG_STYLE 1
 #define _ARC_UNDER_CURSOR_
 #define _GROUP_NAME_
@@ -63,8 +62,8 @@ typedef BOOL(WINAPI *PLUGINISARCHIVE)(const char *Name, const unsigned char *Dat
 typedef BOOL(WINAPI *PLUGINOPENARCHIVE)(const char *Name, int *Type, bool Silent);
 typedef int(WINAPI *PLUGINGETARCITEM)(struct ArcItemInfo *Info);
 typedef BOOL(WINAPI *PLUGINCLOSEARCHIVE)(struct ArcInfo *Info);
-typedef BOOL(WINAPI *PLUGINGETFORMATNAME)(int Type, char *FormatName, char *DefaultExt);
-typedef BOOL(WINAPI *PLUGINGETDEFAULTCOMMANDS)(int Type, int Command, char *Dest);
+typedef BOOL(WINAPI *PLUGINGETFORMATNAME)(int Type, std::string &FormatName, std::string &DefaultExt);
+typedef BOOL(WINAPI *PLUGINGETDEFAULTCOMMANDS)(int Type, int Command, std::string &Dest);
 typedef void(WINAPI *PLUGINSETFARINFO)(const struct PluginStartupInfo *plg);
 typedef DWORD(WINAPI *PLUGINGETSFXPOS)(void);
 
@@ -109,8 +108,8 @@ public:
 	BOOL OpenArchive(int PluginNumber, const char *Name, int *Type, bool Silent);
 	int GetArcItem(int PluginNumber, struct ArcItemInfo *Info);
 	void CloseArchive(int PluginNumber, struct ArcInfo *Info);
-	BOOL GetFormatName(int PluginNumber, int Type, char *FormatName, char *DefaultExt);
-	BOOL GetDefaultCommands(int PluginNumber, int Type, int Command, char *Dest);
+	BOOL GetFormatName(int PluginNumber, int Type, std::string &FormatName, std::string &DefaultExt);
+	BOOL GetDefaultCommands(int PluginNumber, int Type, int Command, std::string &Dest);
 	int FmtCount() { return (int)PluginsData.size(); }
 	static int WINAPI LoadFmtModules(const WIN32_FIND_DATA *FData, const char *FullName, ArcPlugins *plugins);
 	static int __cdecl CompareFmtModules(const void *elem1, const void *elem2);
@@ -119,7 +118,7 @@ public:
 class PluginClass
 {
 private:
-	char ArcName[NM + 2];
+	std::string ArcName;
 	char CurDir[NM];
 	ArcItemNode ArcData;
 	size_t ArcDataCount = 0;
@@ -133,15 +132,15 @@ private:
 	int64_t PackedSize;
 	int DizPresent;
 
-	char farlang[100];
+	std::string farlang;
 
 	bool bGOPIFirstCall;
-	char Title[NM];
-	char FormatName[100];
-	char DefExt[NM];
+	std::string PanelTitle;
+	std::string FormatName;
+	std::string DefExt;
 	struct InfoPanelLine InfoLines[15];
 	struct KeyBarTitles KeyBar;
-	char Format[100];
+	std::string Format;
 	char *DescrFiles[32];
 	char DescrFilesString[256];
 
@@ -150,10 +149,11 @@ private:
 	void SetInfoLine(size_t Index, int TextID, const std::string &Data);
 	void SetInfoLine(size_t Index, int TextID, int DataID);
 
-	void GetGroupName(PluginPanelItem *Items, int Count, char *ArcName);				//$ AA 29.11.2001
-	BOOL GetCursorName(char *ArcName, char *ArcFormat, char *ArcExt, PanelInfo *pi);	//$ AA 29.11.2001
-	BOOL GetFormatName(char *FormatName, char *DefExt = NULL);							//$ AA 25.11.2001
-	void GetCommandFormat(int Command, char *Format, int FormatSize);
+	std::string GetGroupName(PluginPanelItem *Items, int Count);				//$ AA 29.11.2001
+	BOOL GetCursorName(std::string &ArcName, std::string &ArcFormat, std::string &ArcExt, PanelInfo *pi);	//$ AA 29.11.2001
+	BOOL GetFormatName(std::string &FormatName, std::string &DefExt);							//$ AA 25.11.2001
+	BOOL GetFormatName(std::string &FormatName);
+	std::string GetCommandFormat(int Command);
 	void FreeArcData();
 	bool FarLangChanged();
 	bool EnsureFindDataUpToDate(int OpMode);
@@ -174,8 +174,8 @@ public:
 	int GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, char *DestPath, int OpMode);
 	int PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, int OpMode);
 	int ProcessKey(int Key, unsigned int ControlState);
-	static int SelectFormat(char *ArcFormat, int AddOnly = FALSE);
-	static int FormatToPlugin(char *Format, int &PluginNumber, int &PluginType);
+	static bool SelectFormat(std::string &ArcFormat, int AddOnly = FALSE);
+	static bool FormatToPlugin(const std::string &Format, int &PluginNumber, int &PluginType);
 	static LONG_PTR WINAPI PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 };
 
@@ -194,27 +194,24 @@ private:
 	std::string NextFileName;
 	int NameNumber;
 	int PrevFileNameNumber;
-	char PrefixFileName[32];
-	char ListFileName[NM];
+	std::string PrefixFileName;
+	std::string ListFileName;
 	unsigned int ExecCode;
 	unsigned int MaxAllowedExitCode;
 	int Silent;		// $ 07.02.2002 AA
 	int DefaultCodepage;
 
-	char CommentFileName[MAX_PATH];		//$ AA 25.11.2001
-										// HANDLE CommentFile; //$ AA 25.11.2001
+	std::string CommentFileName;		//$ AA 25.11.2001
 
 private:
-	bool ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors,
-			char *pcListFileName = nullptr);
+	bool ProcessCommand(std::string FormatString, int CommandType, int IgnoreErrors, const char *pcListFileName = nullptr);
 	void DeleteBraces(std::string &Command);
 	int ReplaceVar(std::string &Command);
-	int MakeListFile(char *ListFileName, int QuoteName, int UseSlash, int FolderName, int NameOnly,
-			int PathOnly, int FolderMask, const char *LocalAllFilesMask);
+	int MakeListFile(int QuoteName, int UseSlash, int FolderName, int NameOnly, int PathOnly, int FolderMask, const char *LocalAllFilesMask);
 
 public:
-	ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const char *FormatString,
-			const char *ArcName, const char *ArcDir, const char *Password, const char *AllFilesMask,
+	ArcCommand(struct PluginPanelItem *PanelItem, int ItemsNumber, const std::string &FormatString,
+			const std::string &ArcName, const std::string &ArcDir, const std::string &Password, const std::string &AllFilesMask,
 			int IgnoreErrors, int CommandType, int Silent, const char *RealArcDir, int DefaultCodepage);
 	~ArcCommand();	//$ AA 25.11.2001
 
@@ -294,32 +291,27 @@ extern struct PluginStartupInfo Info;
 extern class ArcPlugins *ArcPlugin;
 extern const char *CmdNames[];
 
-#ifdef _NEW_ARC_SORT_
-extern char IniFile[];
-extern const char *SortModes[];
-#endif	//_NEW_ARC_SORT_
-
 extern DWORD PriorityProcessCode[];
 
 /*
   Functions
 */
 
-#ifdef _NEW_ARC_SORT_
-void WritePrivateProfileInt(char *Section, char *Key, int Value, char *Ini);
-#endif	//_NEW_ARC_SORT_
-
 std::string MakeFullName(const char *name);
 
-int ConfigGeneral();
-int ConfigCommands(char *ArcFormat, int IDFocus = 2, BOOL FastAccess = FALSE, int PluginNumber = 0,
-		int PluginType = 0);
+bool ConfigGeneral();
+bool ConfigCommands(const std::string &ArcFormat, int IDFocus = 2, bool FastAccess = false, int PluginNumber = 0, int PluginType = 0);
 
 const char *GetMsg(int MsgId);
-int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo,
-		int ShowTitle, char *ListFileName = 0);
-char *SeekDefExtPoint(char *Name, char *DefExt = NULL, char **Ext = NULL);	//$ AA 28.11.2001
-BOOL AddExt(char *Name, char *Ext);											//$ AA 28.11.2001
+int Execute(HANDLE hPlugin, const std::string &CmdStr,
+	int HideOutput, int Silent, int NeedSudo, int ShowTitle, const char *ListFileName = 0);
+size_t FindExt(const std::string &Name);
+bool AddExt(std::string &Name, const std::string &Ext);											//$ AA 28.11.2001
+bool DelExt(std::string &Name, const std::string &Ext);
+std::string FormatMessagePath(const char *path, bool extract_name, int truncate = 0);
+std::string GetDialogControlText(HANDLE hDlg, int id);
+void SetDialogControlText(HANDLE hDlg, int id, const char *str);
+void SetDialogControlText(HANDLE hDlg, int id, const std::string &str);
 // void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list);
 char *QuoteText(char *Str);
 void InitDialogItems(const struct InitDialogItem *Init, struct FarDialogItem *Item, int ItemsNumber);
@@ -339,10 +331,8 @@ void NormalizePath(const char *SrcName, char *DestName);
 std::string &ExpandEnv(std::string &str);
 std::string &NormalizePath(std::string &path);
 
-int WINAPI GetPassword(char *Password, const char *FileName);
+int WINAPI GetPassword(std::string &Password, const char *FileName);
 void WINAPI UnixTimeToFileTime(DWORD UnixTime, FILETIME *FileTime);
-
-#define MAX_WIDTH_MESSAGE (GetScrX() - 14)
 
 #ifdef __GNUC__
 #define I64(x) x##ll

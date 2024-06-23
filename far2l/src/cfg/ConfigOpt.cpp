@@ -377,6 +377,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "Highlight", &Opt.Highlight, 1},
 	{true,  NSecPanel, "SortFolderExt", &Opt.SortFolderExt, 0},
 	{true,  NSecPanel, "SelectFolders", &Opt.SelectFolders, 0},
+	{true,  NSecPanel, "CaseSensitiveCompareSelect", &Opt.PanelCaseSensitiveCompareSelect, 1},
 	{true,  NSecPanel, "ReverseSort", &Opt.ReverseSort, 1},
 	{false, NSecPanel, "RightClickRule", &Opt.PanelRightClickRule, 2},
 	{false, NSecPanel, "CtrlFRule", &Opt.PanelCtrlFRule, 1},

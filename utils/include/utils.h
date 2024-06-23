@@ -14,6 +14,7 @@
 #include "PlatformConstants.h"
 #include "debug.h"
 #include "IntStrConv.h"
+#include "CharArray.hpp"
 
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x
@@ -24,19 +25,6 @@
 # define st_atim st_atimespec
 #endif
 
-template <class C> static size_t tzlen(const C *ptz)
-{
-	const C *etz;
-	for (etz = ptz; *etz; ++etz);
-	return (etz - ptz);
-}
-
-template <class C> static size_t tnzlen(const C *ptz, size_t n)
-{
-	size_t i;
-	for (i = 0; i < n && ptz[i]; ++i);
-	return i;
-}
 template <class StrT>
 	size_t StrStartsFrom(const StrT &haystack, const typename StrT::value_type needle)
 {
@@ -131,6 +119,7 @@ size_t ReadAll(int fd, void *data, size_t len);
 ssize_t ReadWritePiece(int fd_src, int fd_dst);
 
 bool ReadWholeFile(const char *path, std::string &result, size_t limit = (size_t)-1);
+bool WriteWholeFile(const char *path, const void *content, size_t length, unsigned int mode = 0600);
 bool WriteWholeFile(const char *path, const std::string &content, unsigned int mode = 0600);
 
 int pipe_cloexec(int pipedes[2]);
@@ -285,41 +274,6 @@ template <typename HaystackIT, typename NeedlesT>
 bool CaseIgnoreEngStrMatch(const std::string &str1, const std::string &str2);
 bool CaseIgnoreEngStrMatch(const char *str1, const char *str2, size_t len);
 const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
-
-template <class STRING_T, typename ARRAY_T>
-	void StrAssignArray(STRING_T &s, const ARRAY_T &a)
-{
-	static_assert ( sizeof(a) != sizeof(void *), "StrAssignArray should be used with arrays but not pointers");
-	s.assign(a, tnzlen(a, ARRAYSIZE(a)));
-}
-
-template <class STRING_T, typename ARRAY_T>
-	void StrAppendArray(STRING_T &s, const ARRAY_T &a)
-{
-	static_assert ( sizeof(a) != sizeof(void *), "StrAppendArray should be used with arrays but not pointers");
-	s.append(a, tnzlen(a, ARRAYSIZE(a)));
-}
-
-
-template <class STRING_T, typename ARRAY_T>
-	bool StrMatchArray(STRING_T &s, const ARRAY_T &a)
-{
-	static_assert ( sizeof(a) != sizeof(void *), "StrMatchArray should be used with arrays but not pointers");
-	const size_t l = tnzlen(a, ARRAYSIZE(a));
-	return s.size() == l && s.compare(0, std::string::npos, a, l) == 0;
-}
-
-template <typename ARRAY_T, class CHAR_T>
-	void ArrayCpyZ(ARRAY_T &dst, const CHAR_T *src)
-{
-	static_assert ( sizeof(dst) != sizeof(void *), "ArrayCpyZ should be used with arrays but not pointers");
-	size_t i;
-	for (i = 0; src[i] && i + 1 < ARRAYSIZE(dst); ++i) {
-		dst[i] = src[i];
-	}
-	dst[i] = 0;
-}
-
 
 bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);

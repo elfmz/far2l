@@ -409,6 +409,7 @@ struct Options
 	int RightSelectedFirst;
 	int LeftSelectedFirst;
 	int SelectFolders;
+	int PanelCaseSensitiveCompareSelect;
 	int ReverseSort;
 	int SortFolderExt;
 	int DeleteToRecycleBin;				// удалять в корзину?

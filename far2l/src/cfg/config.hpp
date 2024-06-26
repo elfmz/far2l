@@ -327,6 +327,7 @@ struct FindFileOptions
 	int FileSearchMode;
 	bool FindFolders;
 	bool FindSymLinks;
+	bool FindCaseSensitiveFileMask;
 	bool CollectFiles;
 	bool UseFilter;
 	bool FindAlternateStreams;

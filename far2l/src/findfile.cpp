@@ -393,6 +393,7 @@ enum FINDASKDLG
 	FAD_DOUBLEBOX,
 	FAD_TEXT_MASK,
 	FAD_EDIT_MASK,
+	FAD_CHECKBOX_CASEMASK,
 	FAD_SEPARATOR0,
 	FAD_TEXT_TEXTHEX,
 	FAD_EDIT_TEXT,
@@ -743,6 +744,13 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 
 					if (!Mask || !*Mask)
 						Mask = L"*";
+
+					if (SendDlgMessage(hDlg, DM_GETCHECK, FAD_CHECKBOX_CASEMASK, 0) == BSTATE_UNCHECKED) {
+						// workaround for case-insensitive compare
+						FARString tmp = Mask;
+						tmp.Lower();
+						return FileMaskForFindFile.Set(tmp.CPtr(), 0);
+					}
 
 					return FileMaskForFindFile.Set(Mask, 0);
 				}
@@ -1137,7 +1145,15 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem *FileItem, const wchar_
 		return;
 	if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 && !Opt.FindOpt.FindFolders)
 		return;
-	if (!FileMaskForFindFile.Compare(FileName))
+
+	if (!Opt.FindOpt.FindCaseSensitiveFileMask) {
+		// workaround for case-insensitive compare
+		FARString tmp = FileName;
+		tmp.Lower();
+		if (!FileMaskForFindFile.Compare(tmp))
+			return;
+	}
+	else if (!FileMaskForFindFile.Compare(FileName))
 		return;
 
 	size_t ArcIndex = itd.GetFindFileArcIndex();
@@ -2716,33 +2732,34 @@ FindFiles::FindFiles()
 		const wchar_t VSeparator[] = {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 				BoxSymbols[BS_V1], BoxSymbols[BS_B_H1V1], 0};
 		struct DialogDataEx FindAskDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1,  74, 18, {}, 0, Msg::FindFileTitle},
+			{DI_DOUBLEBOX, 3,  1,  74, 19, {}, 0, Msg::FindFileTitle},
 			{DI_TEXT,      5,  2,  0,  2,  {}, 0, Msg::FindFileMasks},
 			{DI_EDIT,      5,  3,  72, 3,  {(DWORD_PTR)MasksHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY,L""},
-			{DI_TEXT,      3,  4,  0,  4,  {}, DIF_SEPARATOR, L""},
-			{DI_TEXT,      5,  5,  0,  5,  {}, 0, L""},
-			{DI_EDIT,      5,  6,  72, 6,  {(DWORD_PTR)TextHistoryName}, DIF_HISTORY, L""},
-			{DI_FIXEDIT,   5,  6,  72, 6,  {(DWORD_PTR)HexMask}, DIF_MASKEDIT, L""},
-			{DI_TEXT,      5,  7,  0,  7,  {}, 0, L""},
-			{DI_COMBOBOX,  5,  8,  72, 8,  {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
-			{DI_TEXT,      3,  9,  0,  9,  {}, DIF_SEPARATOR, L""},
-			{DI_CHECKBOX,  5,  10, 0,  10, {}, 0, Msg::FindFileCase},
-			{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::FindFileWholeWords},
-			{DI_CHECKBOX,  5,  12, 0,  12, {}, 0, Msg::SearchForHex},
-			{DI_CHECKBOX,  40, 10, 0,  10, {}, 0, Msg::FindArchives},
-			{DI_CHECKBOX,  40, 11, 0,  11, {}, 0, Msg::FindFolders},
-			{DI_CHECKBOX,  40, 12, 0,  12, {}, 0, Msg::FindSymLinks},
-			{DI_TEXT,      3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
-			{DI_VTEXT,     38, 9,  0,  9,  {}, DIF_BOXCOLOR, VSeparator},
-			{DI_TEXT,      5,  14, 0,  14, {}, 0, Msg::SearchWhere},
-			{DI_COMBOBOX,  5,  15, 36, 15, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
-			{DI_CHECKBOX,  40, 15, 0,  15, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::FindUseFilter},
-			{DI_TEXT,      3,  16, 0,  16, {}, DIF_SEPARATOR, L""},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::FindFileFind},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::FindFileDrive},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::FindFileSetFilter},
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::FindFileAdvanced },
-			{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::Cancel}
+			{DI_CHECKBOX,  5,  4,  0,  4,  {}, 0, Msg::FindFileCaseFileMask},
+			{DI_TEXT,      3,  5,  0,  5,  {}, DIF_SEPARATOR, L""},
+			{DI_TEXT,      5,  6,  0,  6,  {}, 0, L""},
+			{DI_EDIT,      5,  7,  72, 7,  {(DWORD_PTR)TextHistoryName}, DIF_HISTORY, L""},
+			{DI_FIXEDIT,   5,  7,  72, 7,  {(DWORD_PTR)HexMask}, DIF_MASKEDIT, L""},
+			{DI_TEXT,      5,  8,  0,  8,  {}, 0, L""},
+			{DI_COMBOBOX,  5,  9,  72, 9,  {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
+			{DI_TEXT,      3,  10, 0,  10, {}, DIF_SEPARATOR, L""},
+			{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::FindFileCase},
+			{DI_CHECKBOX,  5,  12, 0,  12, {}, 0, Msg::FindFileWholeWords},
+			{DI_CHECKBOX,  5,  13, 0,  13, {}, 0, Msg::SearchForHex},
+			{DI_CHECKBOX,  40, 11, 0,  11, {}, 0, Msg::FindArchives},
+			{DI_CHECKBOX,  40, 12, 0,  12, {}, 0, Msg::FindFolders},
+			{DI_CHECKBOX,  40, 13, 0,  13, {}, 0, Msg::FindSymLinks},
+			{DI_TEXT,      3,  14, 0,  14, {}, DIF_SEPARATOR, L""},
+			{DI_VTEXT,     38, 10, 0,  10,  {}, DIF_BOXCOLOR, VSeparator},
+			{DI_TEXT,      5,  15, 0,  15, {}, 0, Msg::SearchWhere},
+			{DI_COMBOBOX,  5,  16, 36, 16, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND, L""},
+			{DI_CHECKBOX,  40, 16, 0,  16, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::FindUseFilter},
+			{DI_TEXT,      3,  17, 0,  17, {}, DIF_SEPARATOR, L""},
+			{DI_BUTTON,    0,  18, 0,  18, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::FindFileFind},
+			{DI_BUTTON,    0,  18, 0,  18, {}, DIF_CENTERGROUP, Msg::FindFileDrive},
+			{DI_BUTTON,    0,  18, 0,  18, {}, DIF_CENTERGROUP | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::FindFileSetFilter},
+			{DI_BUTTON,    0,  18, 0,  18, {}, DIF_CENTERGROUP, Msg::FindFileAdvanced },
+			{DI_BUTTON,    0,  18, 0,  18, {}, DIF_CENTERGROUP, Msg::Cancel}
 		};
 		MakeDialogItemsEx(FindAskDlgData, FindAskDlg);
 
@@ -2787,6 +2804,7 @@ FindFiles::FindFiles()
 			FindAskDlg[FAD_CHECKBOX_ARC].Selected = SearchInArchives;
 
 		FindAskDlg[FAD_EDIT_MASK].strData = strFindMask;
+		FindAskDlg[FAD_CHECKBOX_CASEMASK].Selected = Opt.FindOpt.FindCaseSensitiveFileMask;
 
 		if (SearchHex)
 			FindAskDlg[FAD_EDIT_HEX].strData = strFindStr;
@@ -2802,7 +2820,7 @@ FindFiles::FindFiles()
 				DIF_DISABLE);
 		Dlg.SetHelp(L"FindFile");
 		Dlg.SetId(FindFileId);
-		Dlg.SetPosition(-1, -1, 78, 20);
+		Dlg.SetPosition(-1, -1, 78, 21);
 		Dlg.Process();
 		ExitCode = Dlg.GetExitCode();
 		// Рефреш текущему времени для фильтра сразу после выхода из диалога
@@ -2811,6 +2829,8 @@ FindFiles::FindFiles()
 		if (ExitCode != FAD_BUTTON_FIND) {
 			return;
 		}
+
+		Opt.FindOpt.FindCaseSensitiveFileMask = (FindAskDlg[FAD_CHECKBOX_CASEMASK].Selected == BSTATE_CHECKED);
 
 		Opt.FindCodePage = CodePage;
 		CmpCase = FindAskDlg[FAD_CHECKBOX_CASE].Selected;

@@ -2732,7 +2732,7 @@ FindFiles::FindFiles()
 		const wchar_t VSeparator[] = {BoxSymbols[BS_T_H1V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 				BoxSymbols[BS_V1], BoxSymbols[BS_B_H1V1], 0};
 		struct DialogDataEx FindAskDlgData[] = {
-			{DI_DOUBLEBOX, 3,  1,  74, 18, {}, 0, Msg::FindFileTitle},
+			{DI_DOUBLEBOX, 3,  1,  74, 19, {}, 0, Msg::FindFileTitle},
 			{DI_TEXT,      5,  2,  0,  2,  {}, 0, Msg::FindFileMasks},
 			{DI_EDIT,      5,  3,  72, 3,  {(DWORD_PTR)MasksHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY,L""},
 			{DI_CHECKBOX,  5,  4,  0,  4,  {}, 0, Msg::FindFileCaseFileMask},
@@ -2820,7 +2820,7 @@ FindFiles::FindFiles()
 				DIF_DISABLE);
 		Dlg.SetHelp(L"FindFile");
 		Dlg.SetId(FindFileId);
-		Dlg.SetPosition(-1, -1, 78, 20);
+		Dlg.SetPosition(-1, -1, 78, 21);
 		Dlg.Process();
 		ExitCode = Dlg.GetExitCode();
 		// Рефреш текущему времени для фильтра сразу после выхода из диалога

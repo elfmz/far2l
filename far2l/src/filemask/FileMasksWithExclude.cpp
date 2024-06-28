@@ -130,7 +130,7 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 */
 bool FileMasksWithExclude::Compare(const wchar_t *FileName, bool ignorecase) const
 {
-	return (Include.Compare(FileName,ignorecase) && !Exclude.Compare(FileName,ignorecase));
+	return (Include.Compare(FileName, ignorecase) && !Exclude.Compare(FileName, ignorecase));
 }
 
 bool FileMasksWithExclude::IsEmpty() const

@@ -257,7 +257,7 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignore
 					if (rangec == L'-' && *(pattern - 2) != L'[' && *pattern != L']') {
 						match = ignorecase ?
 							(Upper(stringc) <= Upper(*pattern) && Upper(*(pattern - 2)) <= Upper(stringc))
-										   : (stringc <= *pattern && *(pattern - 2) <= stringc);
+							: (stringc <= *pattern && *(pattern - 2) <= stringc);
 						pattern++;
 					} else
 						match = ignorecase ? (Upper(stringc) == Upper(rangec)) : (stringc == rangec);

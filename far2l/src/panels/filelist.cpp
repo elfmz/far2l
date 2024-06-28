@@ -3344,9 +3344,6 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 
 	long workCount = 0;
 
-	if (SelectDlg[3].Selected == BSTATE_UNCHECKED) // Opt.PanelCaseSensitiveCompareSelect
-		strMask.Lower(); // workaround for case-insensitive compare
-
 	if (bUseFilter || FileMask.Set(strMask, FMF_SILENT))	// Скомпилируем маски файлов и работаем
 	{														// дальше в зависимости от успеха компиляции
 		for (auto &CurPtr : ListData) {
@@ -3358,14 +3355,8 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					if (SelectDlg[3].Selected == BSTATE_UNCHECKED) { // Opt.PanelCaseSensitiveCompareSelect
-						// workaround for case-insensitive compare
-						strCurName = CurPtr->strName;
-						strCurName.Lower();
-						Match = FileMask.Compare(strCurName);
-					}
-					else
-						Match = FileMask.Compare(CurPtr->strName);
+					Match = FileMask.Compare(CurPtr->strName,
+											 SelectDlg[3].Selected == BSTATE_UNCHECKED /*Opt.PanelCaseSensitiveCompareSelect*/);
 				}
 			}
 

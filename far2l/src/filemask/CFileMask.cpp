@@ -102,7 +102,7 @@ bool CFileMask::IsEmpty() const
 	Возвращает TRUE в случае успеха.
 	Путь в имени файла игнорируется.
 */
-bool CFileMask::Compare(const wchar_t *FileName) const
+bool CFileMask::Compare(const wchar_t *FileName, bool ignorecase) const
 {
-	return FileMask ? FileMask->Compare(PointToName(FileName)) : false;
+	return FileMask ? FileMask->Compare(PointToName(FileName), ignorecase) : false;
 }

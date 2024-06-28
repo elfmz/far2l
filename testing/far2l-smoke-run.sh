@@ -18,6 +18,22 @@ if [ ! -f ./far2l-smoke ] || [ ./far2l-smoke -ot ./far2l-smoke.go ]; then
 	go build
 	echo PREPARE: done
 fi
-rm -rf workdir
-mkdir -p workdir
-./far2l-smoke "$APP" workdir tests/*.js
+
+echo 'Cleaning up...'
+for test in tests/*; do
+	rm -rf "$test"/workdir
+done
+
+if [ "$2" == "clean" ]; then
+	exit 0
+fi
+
+echo 'Starting tests:' tests/"$2"*
+for test in tests/*; do
+	mkdir -p "$test"/workdir
+	if [ -e "$test"/initdir ]; then
+		cp -r -f "$test"/initdir/* "$test"/workdir/
+	fi
+done
+
+./far2l-smoke "$APP" tests/"$2"*

@@ -40,7 +40,7 @@ bool Bookmarks::Set(int index, const FARString *path,
 		return Clear(index);
 	}
 
-	char sec[32]; sprintf(sec, "%u", index);
+	const auto &sec = ToDec(index);
 	_kfh.RemoveSection(sec);
 
 	_kfh.SetString(sec, "Path", path ? path->GetMB().c_str() : "");
@@ -54,7 +54,7 @@ bool Bookmarks::Set(int index, const FARString *path,
 bool Bookmarks::Get(int index, FARString *path,
 	FARString *plugin, FARString *plugin_file, FARString *plugin_data)
 {
-	char sec[32]; sprintf(sec, "%u", index);
+	const auto &sec = ToDec(index);
 	FARString strFolder(_kfh.GetString(sec, "Path"));
 
 	if (!strFolder.IsEmpty())
@@ -76,8 +76,7 @@ bool Bookmarks::Get(int index, FARString *path,
 
 bool Bookmarks::Clear(int index)
 {
-	char sec[32]; sprintf(sec, "%u", index);
-	_kfh.RemoveSection(sec);
+	_kfh.RemoveSection(ToDec(index));
 	if (index < 10)
 		return _kfh.Save();
 
@@ -97,8 +96,7 @@ bool Bookmarks::Clear(int index)
 		{
 			for (; dst_index <= index; ++dst_index)
 			{
-				 sprintf(sec, "%u", dst_index);
-				_kfh.RemoveSection(sec);
+				_kfh.RemoveSection(ToDec(dst_index));
 			}
 			break;
 		}

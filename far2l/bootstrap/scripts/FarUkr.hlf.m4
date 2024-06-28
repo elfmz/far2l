@@ -1939,9 +1939,11 @@ $ #Історія команд#
  в Буфер Обміну не закриваючи списку або #Ctrl-Ins#
 
  Toggle history view:                                         #Ctrl-T#
-            * with date lines + time column
+            * with date lines + time-path column
             * with date lines (as in far3)
             * plain history (as in far2)
+
+ Change path width in time-path column          #Ctrl-Left,Ctrl-Right#
 
  Show additional information                                      #F3#
 
@@ -2091,6 +2093,8 @@ $ #Порівняння папок#
 
 Вкладені папки не порівнюються. Для порівняння файлів використовується їхнє ім'я,
 дата та час, але не вміст.
+
+ See option #Case sensitive when compare or select# in ~Установки панелі~@PanelSettings@.
 
 
 @UserMenu
@@ -2399,6 +2403,9 @@ $ #Налаштування панелі#
  #Позначка папок# Дозволяє позначку папок з використанням
 #Gray +# та #Gray *#. Інакше ці
  команди працюють лише з файлами.
+
+ #Case sensitive when compare or select#
+Influence on ~Порівняння папок~@CompFolders@ and ~Помітка файлів~@SelectFiles@.
 
  #Сортувати імена# Застосовувати режим сортування для розширення
 #папок розширення# не тільки до файлів, але і до папок. При
@@ -3964,6 +3971,9 @@ $ #Помітка файлів#
 файлів.
 
  Якщо жоден файл не вибраний, буде оброблено лише файл під курсором.
+
+ See options #Позначка папок# and
+#Case sensitive when compare or select# in ~Установки панелі~@PanelSettings@.
 
 
 @CopyFiles

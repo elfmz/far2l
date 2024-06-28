@@ -111,7 +111,7 @@ void GetMessagePosition(int &X1, int &Y1, int &X2, int &Y2);
 		FALSE - продолжить операцию
 		TRUE  - прервать операцию
 */
-int AbortMessage();
+bool AbortMessage();
 
 bool GetErrorString(FARString &strErrStr);
 void SetErrorString(const FARString &strErrStr);

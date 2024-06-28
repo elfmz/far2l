@@ -254,12 +254,12 @@ BOOL WINAPI _export SEVENZ_CloseArchive(struct ArcInfo *Info)
 
 
 
-BOOL WINAPI _export SEVENZ_GetFormatName(int Type,char *FormatName,char *DefaultExt)
+BOOL WINAPI _export SEVENZ_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
   if (Type==0)
   {
-    strcpy(FormatName,"7Z");
-    strcpy(DefaultExt,"7z");
+    FormatName = "7Z";
+    DefaultExt = "7z";
     return TRUE;
   }
   return FALSE;
@@ -267,7 +267,7 @@ BOOL WINAPI _export SEVENZ_GetFormatName(int Type,char *FormatName,char *Default
 
 
 
-BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
+BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,std::string &Dest)
 {
   if (Type==0)
   {
@@ -290,7 +290,7 @@ BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,char *Dest)
     };
     if (Command<(int)(ARRAYSIZE(Commands)))
     {
-      strcpy(Dest,Commands[Command]);
+      Dest = Commands[Command];
       return(TRUE);
     }
   }

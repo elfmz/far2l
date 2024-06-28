@@ -243,7 +243,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 	Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
 
 	static char s_command_prefix[G.MAX_COMMAND_PREFIX + 1] = {}; // WHY?
-	strncpy(s_command_prefix, G.command_prefix.c_str(), sizeof(s_command_prefix));
+	strncpy(s_command_prefix, G.command_prefix.c_str(), sizeof(s_command_prefix) - 1);
 	Info->CommandPrefix = s_command_prefix;
 }
 
@@ -274,10 +274,10 @@ SHAREDSYMBOL int WINAPI _export Configure(int ItemNumber)
 		{DI_BUTTON,     0,  4,  0,  4,  0, {}, DIF_CENTERGROUP, 0, {}}
 	};
 
-	ArrayCpyZ(fdi[0].Data, G.GetMsg(MTitle));
-	ArrayCpyZ(fdi[1].Data, G.GetMsg(MDescription));
-	ArrayCpyZ(fdi[2].Data, G.GetMsg(MOK));
-	ArrayCpyZ(fdi[3].Data, G.GetMsg(MCleanup));
+	CharArrayCpyZ(fdi[0].Data, G.GetMsg(MTitle));
+	CharArrayCpyZ(fdi[1].Data, G.GetMsg(MDescription));
+	CharArrayCpyZ(fdi[2].Data, G.GetMsg(MOK));
+	CharArrayCpyZ(fdi[3].Data, G.GetMsg(MCleanup));
 
 	if (G.info.Dialog(G.info.ModuleNumber, -1, -1, 74, 7, NULL, fdi, ARRAYSIZE(fdi)) == 3) {
 		Storage::Clear();

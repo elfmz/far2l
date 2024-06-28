@@ -50,7 +50,7 @@ static std::string GetTempSubdirUncached(const char *what)
 		if (i == 0x1000) {
 			srand(time(NULL) ^ (getpid() << 8));
 		}
-		sprintf(subdir, "%llx_%x", uid, (i < 0x1000) ? i : i | ((rand() & 0xffff) << 16) );
+		snprintf(subdir, sizeof(subdir), "%llx_%x", uid, (i < 0x1000) ? i : i | ((rand() & 0xffff) << 16) );
 
 		out.replace(base_len, out.size() - base_len, subdir);
 
@@ -229,4 +229,14 @@ std::string InMyTemp(const char *subpath)
 	}
 
 	return path;
+}
+
+std::string InMyTempFmt(const char *subpath_fmt, ...)
+{
+	va_list args;
+	va_start(args, subpath_fmt);
+	const auto &subpath = StrPrintfV(subpath_fmt, args);
+	va_end(args);
+
+	return InMyTemp(subpath.c_str());
 }

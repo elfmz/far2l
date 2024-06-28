@@ -379,6 +379,7 @@ static unsigned s_time_failmask = 0;
 
 WINPORT_DECL(GetTickCount, DWORD, ())
 {
+	(void)s_time_failmask;
 #ifdef _WIN32
 	return ::GetTickCount();
 #elif defined(__APPLE__)

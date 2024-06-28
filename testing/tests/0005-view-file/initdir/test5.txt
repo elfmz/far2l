@@ -1,0 +1,78 @@
+                        Item[SelectPos]->Flags&= ~LIF_SELECTED;                                                         
+                                                                                                                        
+                SelectPos = Pos;                                                                                        
+        }                                                                                                               
+                                                                                                                        
+        Item[Pos]->Flags = NewFlags;                                                                                    
+                                                                                                                        
+        if (SelectPos < 0)                                                                                              
+                SetSelectPos(0, 1);                                                                                     
+                                                                                                                        
+        if (LOWORD(Item[Pos]->Flags)) {                                                                                 
+                Item[Pos]->Flags|= LIF_CHECKED;                                                                         
+                if (LOWORD(Item[Pos]->Flags) == 1) {                                                                    
+                        Item[Pos]->Flags&= 0xFFFF0000;                                                                  
+                }                                                                                                       
+        }                                                                                                               
+}                                                                                                                       
+                                                                                                                        
+// переместить курсор c учётом пунктов которые не могу получать фокус                                                   
+int VMenu::SetSelectPos(int Pos, int Direct, bool stop_on_edge)                                                         
+{                                                                                                                       
+        CriticalSectionLock Lock(CS);                                                                                   
+                                                                                                                        
+        if (!Item || !ItemCount)                                                                                        
+                return -1;                                                                                              
+                                                                                                                        
+        for (int Pass = 0, I = 0;; I++) {                                                                               
+                if (Pos < 0) {                                                                                          
+                        if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {                                              
+                                Pos = ItemCount - 1;                                                                    
+                        } else {                                                                                        
+                                Pos = 0;                                                                                
+                                Pass++;                                                                                 
+                        }                                                                                               
+                }                                                                                                       
+                                                                                                                        
+                if (Pos >= ItemCount) {                                                                                 
+                        if (CheckFlags(VMENU_WRAPMODE) && !stop_on_edge) {                                              
+                                Pos = 0;                                                                                
+                        } else {                                                                                        
+                                Pos = ItemCount - 1;                                                                    
+                                Pass++;                                                                                 
+                        }                                                                                               
+                }                                                                                                       
+                                                                                                                        
+                if (ItemCanHaveFocus(Item[Pos]->Flags))                                                                 
+                        break;                                                                                          
+                                                                                                                        
+                if (Pos == 0) {                                                                                         
+                        TopPos = 0;                                                                                     
+                }                                                                                                       
+                                                                                                                        
+                if (Pass) {                                                                                             
+                        return SelectPos;                                                                               
+                }                                                                                                       
+                                                                                                                        
+                Pos+= Direct;                                                                                           
+                                                                                                                        
+                if (I >= ItemCount)             // круг пройден - ничего не найдено :-(                                 
+                        Pass++;                                                                                         
+        }                                                                                                               
+                                                                                                                        
+        UpdateItemFlags(Pos, Item[Pos]->Flags | LIF_SELECTED);                                                          
+                                                                                                                        
+        SetFlags(VMENU_UPDATEREQUIRED);                                                                                 
+                                                                                                                        
+        return Pos;                                                                                                     
+}                                                                                                                       
+                                                                                                                        
+// установить курсор и верхний итем                                                                                     
+int VMenu::SetSelectPos(FarListPos *ListPos)                                                                            
+{                                                                                                                       
+        CriticalSectionLock Lock(CS);                                                                                   
+                                                                                                                        
+        int Ret = SetSelectPos(ListPos->SelectPos, 1);                                                                  
+                                                                                                                        
+        if (Ret >= 0) {                                                                                                 
+                TopPos = ListPos->TopPos;                                                                               

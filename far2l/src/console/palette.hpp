@@ -43,9 +43,9 @@ extern uint8_t BlackPalette8bit[SIZE_ARRAY_PALETTE];
 
 extern uint64_t Palette[SIZE_ARRAY_PALETTE];
 
-inline uint64_t FarColorToReal(int FarColor)
+inline uint64_t FarColorToReal(unsigned int FarColor)
 {
-	return FarColor < SIZE_ARRAY_PALETTE ? Palette[FarColor] : 4 * 16 + 15;
+	return (FarColor < SIZE_ARRAY_PALETTE) ? Palette[FarColor] : 4 * 16 + 15;
 }
 
 void ConvertCurrentPalette();

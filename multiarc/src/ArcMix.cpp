@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <windows.h>
+#include <Environment.h>
 #include <string>
 #include <vector>
 
@@ -17,69 +18,41 @@ BOOL FileExists(const char *Name)
 	return sdc_stat(Name, &s) != -1;
 }
 
-static void mystrlwr(char *p)
-{
-	for (; *p; ++p)
-		*p = tolower(*p);
-}
-
-static void mystrupr(char *p)
-{
-	for (; *p; ++p)
-		*p = toupper(*p);
-}
-
 BOOL GoToFile(const char *Target, BOOL AllowChangeDir)
 {
 	if (!Target || !*Target)
 		return FALSE;
-	BOOL rc = FALSE, search = TRUE;
-	PanelRedrawInfo PRI;
+
+	const char *TargetName = FSF.PointToName(const_cast<char *>(Target));
+	std::string TargetDir(Target, TargetName - Target);
+
 	PanelInfo PInfo;
-	char Name[NM], Dir[NM * 5];
-	int pathlen;
-
-	ArrayCpyZ(Name, FSF.PointToName(const_cast<char *>(Target)));
-	pathlen = (int)(FSF.PointToName(const_cast<char *>(Target)) - Target);
-	if (pathlen)
-		memcpy(Dir, Target, pathlen);
-	Dir[pathlen] = 0;
-
-	FSF.Trim(Name);
-	FSF.Trim(Dir);
-	FSF.Unquote(Name);
-	FSF.Unquote(Dir);
-
 	Info.Control(INVALID_HANDLE_VALUE, FCTL_UPDATEPANEL, (void *)1);
 	Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
-	pathlen = strlen(Dir);
-	if (pathlen) {
-		if (*PInfo.CurDir && PInfo.CurDir[strlen(PInfo.CurDir) - 1] != '/'		// old path != "*\"
-				&& Dir[pathlen - 1] == '/')
-			Dir[pathlen - 1] = 0;
 
-		if (0 != strcmp(Dir, PInfo.CurDir)) {
-			if (AllowChangeDir) {
-				Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, &Dir);
-				Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
-			} else
-				search = FALSE;
+	if (!TargetDir.empty()) {
+		if (*PInfo.CurDir && PInfo.CurDir[strlen(PInfo.CurDir) - 1] != '/') {		// old path != "*\"
+			StrTrimRight(TargetDir, "/");
 		}
-	}
-
-	PRI.CurrentItem = PInfo.CurrentItem;
-	PRI.TopPanelItem = PInfo.TopPanelItem;
-	if (search) {
-		for (int J = 0; J < PInfo.ItemsNumber; J++) {
-			if (!strcmp(Name, FSF.PointToName(PInfo.PanelItems[J].FindData.cFileName))) {
-				PRI.CurrentItem = J;
-				PRI.TopPanelItem = J;
-				rc = TRUE;
-				break;
+		if (TargetDir != PInfo.CurDir) {
+			if (!AllowChangeDir) {
+				return FALSE;
 			}
+			Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, (void *)TargetDir.c_str());
+			Info.Control(INVALID_HANDLE_VALUE, FCTL_GETPANELINFO, &PInfo);
 		}
 	}
-	return rc ? Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWPANEL, &PRI) : FALSE;
+
+	for (int i = 0; i < PInfo.ItemsNumber; i++) {
+		if (!strcmp(TargetName, FSF.PointToName(PInfo.PanelItems[i].FindData.cFileName))) {
+			PanelRedrawInfo PRI{};
+			PRI.CurrentItem = i;
+			PRI.TopPanelItem = i;
+			return Info.Control(INVALID_HANDLE_VALUE, FCTL_REDRAWPANEL, &PRI);
+		}
+	}
+
+	return FALSE;
 }
 
 int __isspace(int Chr)
@@ -163,8 +136,8 @@ void StartThreadForKillListFile(PROCESS_INFORMATION *pi,char *list)
 /* tran 13.09.2000 $ */
 #endif
 
-int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silent, int NeedSudo,
-		int ShowCommand, char *ListFileName)
+int Execute(HANDLE hPlugin, const std::string &CmdStr,
+	int HideOutput, int Silent, int NeedSudo, int ShowCommand, const char *ListFileName)
 {
 	if (!CmdStr.empty() && (CmdStr[0] == ' ' || CmdStr[0] == '\t')) {	// FSF.LTrim(ExpandedCmd); //$ AA 12.11.2001
 		std::string CmdStrTrimmed = CmdStr;
@@ -175,52 +148,21 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 		return Execute(hPlugin, CmdStrTrimmed, HideOutput, Silent, NeedSudo, ShowCommand, ListFileName);
 	}
 
-	int ExitCode, LastError;
-
-	HANDLE StdInput = NULL;
-	HANDLE StdOutput = NULL;
 	HANDLE hScreen = NULL;
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-	if (HideOutput) {
-		if (!Silent) {
-			hScreen = Info.SaveScreen(0, 0, -1, -1);
-			const char *MsgItems[] = {"", GetMsg(MWaitForExternalProgram)};
-			Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 0);
-		}
-	} else {
-		WINPORT(GetConsoleScreenBufferInfo)(StdOutput, &csbi);
-
-		char Blank[1024];
-		FSF.sprintf(Blank, "%*s", csbi.dwSize.X, "");
-		for (int Y = 0; Y < csbi.dwSize.Y; Y++)
-			Info.Text(0, Y, LIGHTGRAY, Blank);
-		Info.Text(0, 0, 0, NULL);
-
-		COORD C;
-		C.X = 0;
-		C.Y = csbi.dwCursorPosition.Y;
-		WINPORT(SetConsoleCursorPosition)(StdOutput, C);
+	WCHAR SaveTitle[512];
+	if (HideOutput && !Silent) {
+		hScreen = Info.SaveScreen(0, 0, -1, -1);
+		const char *MsgItems[] = {"", GetMsg(MWaitForExternalProgram)};
+		Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 0);
+	}
+	if (ShowCommand) {
+		WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle) - 1);
+		SaveTitle[ARRAYSIZE(SaveTitle) - 1] = 0;
+		WINPORT(SetConsoleTitle)(NULL, StrMB2Wide(CmdStr).c_str());
 	}
 
-	DWORD ConsoleMode;
-	WINPORT(GetConsoleMode)(StdInput, &ConsoleMode);
-	WINPORT(SetConsoleMode)
-	(StdInput, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
+	int ExitCode;
 
-	WCHAR SaveTitle[512]{};
-	WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle) - 1);
-	if (ShowCommand)
-		WINPORT(SetConsoleTitle)(NULL, StrMB2Wide(CmdStr).c_str());
-
-	/* $ 14.02.2001 raVen
-	   делать окошку minimize, если в фоне */
-	/*  if (Opt.Background)
-	  {
-		si.dwFlags=si.dwFlags | STARTF_USESHOWWINDOW;
-		si.wShowWindow=SW_MINIMIZE;
-	  }*/
-	/* raVen $ */
 	DWORD flags = (HideOutput) ? EF_HIDEOUT : 0;
 	if (NeedSudo)
 		flags|= EF_SUDO;
@@ -228,15 +170,15 @@ int Execute(HANDLE hPlugin, const std::string &CmdStr, int HideOutput, int Silen
 		flags|= EF_NOCMDPRINT;
 
 	if (*CmdStr.c_str() == '^') {
-		LastError = ExitCode =
-				FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), "BuiltinMain", CmdStr.c_str() + 1, flags);
+		ExitCode = FSF.ExecuteLibrary(gMultiArcPluginPath.c_str(), "BuiltinMain", CmdStr.c_str() + 1, flags);
 	} else {
-		LastError = ExitCode = FSF.Execute(CmdStr.c_str(), flags);
+		ExitCode = FSF.Execute(CmdStr.c_str(), flags);
 	}
 
-	WINPORT(SetLastError)(LastError);
-	WINPORT(SetConsoleTitle)(NULL, SaveTitle);
-	WINPORT(SetConsoleMode)(StdInput, ConsoleMode);
+
+	if (ShowCommand) {
+		WINPORT(SetConsoleTitle)(NULL, SaveTitle);
+	}
 	if (hScreen) {
 		Info.RestoreScreen(NULL);
 		Info.RestoreScreen(hScreen);
@@ -269,7 +211,7 @@ void InitDialogItems(const struct InitDialogItem *Init, struct FarDialogItem *It
 		PItem->History = (const char *)PInit->Selected;
 		PItem->Flags = PInit->Flags;
 		PItem->DefaultButton = PInit->DefaultButton;
-		strcpy(PItem->Data,
+		CharArrayCpyZ(PItem->Data,
 				((DWORD_PTR)PInit->Data < 2000) ? GetMsg((unsigned int)(DWORD_PTR)PInit->Data) : PInit->Data);
 	}
 }
@@ -374,69 +316,79 @@ int FindExecuteFile(char *OriginalName, char *DestName, int SizeDest)
 	return DestName[0] ? TRUE : FALSE;
 }
 
-char *SeekDefExtPoint(char *Name, char *DefExt /*=NULL*/, char **Ext /*=NULL*/)
+size_t FindExt(const std::string &Name)
 {
-	FSF.Unquote(Name);	//$ AA 15.04.2003 для правильной обработки имен в кавычках
-	Name = FSF.PointToName(Name);
-	char *TempExt = strrchr(Name, '.');
-	if (!DefExt)
-		return TempExt;
-	if (Ext)
-		*Ext = TempExt;
-	return (TempExt != NULL) ? (strcasecmp(TempExt + 1, DefExt) ? NULL : TempExt) : NULL;
-}
-
-BOOL AddExt(char *Name, char *Ext)
-{
-	char *ExtPnt;
-	FSF.Unquote(Name);	//$ AA 15.04.2003 для правильной обработки имен в кавычках
-	if (Name && *Name && !SeekDefExtPoint(Name, Ext, &ExtPnt)) {
-		// transform Ext
-		char NewExt[NM], *Ptr;
-		strncpy(NewExt, Ext, sizeof(NewExt) - 1);
-
-		int Up = 0, Lw = 0;
-		Ptr = Name;
-		while (*Ptr) {
-			if (isalpha(*Ptr)) {
-				if (islower(*Ptr))
-					Lw++;
-				if (isupper(*Ptr))
-					Up++;
-			}
-			++Ptr;
-		}
-
-		if (Lw)
-			mystrlwr(NewExt);
-		else if (Up)
-			mystrupr(NewExt);
-
-		if (ExtPnt && !*(ExtPnt + 1))
-			strcpy(ExtPnt + 1, NewExt);
-		else
-			FSF.sprintf(Name + strlen(Name), ".%s", NewExt);
-		return TRUE;
+	size_t p = Name.find_last_of("./");
+	if (p == std::string::npos || Name[p] != '.') {
+		return std::string::npos;
 	}
-	return FALSE;
+	return p + 1;
 }
 
-#ifdef _NEW_ARC_SORT_
-void WritePrivateProfileInt(char *Section, char *Key, int Value, char *Ini)
+bool DelExt(std::string &Name, const std::string &Ext)
 {
-	char Buf32[32];
-	wsprintf(Buf32, "%d", Value);
-	WritePrivateProfileString(Section, Key, Buf32, Ini);
+	const size_t p = FindExt(Name);
+	if (p != std::string::npos && strcasecmp(Name.c_str() + p, Ext.c_str()) == 0) {
+		Name.resize(p - 1);
+		return true;
+	}
+	return false;
 }
-#endif
 
-int WINAPI GetPassword(char *Password, const char *FileName)
+bool AddExt(std::string &Name, const std::string &Ext)
+{// FSF.Unquote(Name);      //$ AA 15.04.2003 для правильной обработки имен в кавычках
+	size_t p = FindExt(Name);
+	if (p != std::string::npos) {
+		if (strcasecmp(Ext.c_str(), Name.c_str() + p) == 0) {
+			return false;
+		}
+		Name.resize(p);
+	} else {
+		Name+= '.';
+		p = Name.size();
+	}
+	if (Ext.empty()) {
+		return false;
+	}
+
+	bool has_lowers = false, has_uppers = false;
+	for (const auto &c : Name) {
+		if (isalpha(c)) {
+			has_lowers = has_lowers || islower(c);
+			has_uppers = has_uppers || isupper(c);
+		}
+	}
+	Name+= Ext;
+	if (has_lowers || has_uppers) {
+		for (; p < Name.size(); ++p) {
+			Name[p] = has_lowers ? tolower(Name[p]) : toupper(Name[p]);
+		}
+	}
+	return true;
+}
+
+std::string FormatMessagePath(const char *path, bool extract_name, int truncate)
 {
-	char Prompt[2 * NM], InPass[512];
-	FSF.sprintf(Prompt, GetMsg(MGetPasswordForFile), FileName);
-	if (Info.InputBox((const char *)GetMsg(MGetPasswordTitle), (const char *)Prompt, NULL, NULL, InPass,
+	if (extract_name) {
+		path = FSF.PointToName((char *)path);
+	}
+	char buf[NM];
+	strncpy(buf, path, ARRAYSIZE(buf) - 1);
+	buf[ARRAYSIZE(buf) - 1] = 0;
+	if (truncate >= 0) {
+		FSF.TruncPathStr(buf, truncate ? truncate : (GetScrX() - 14));
+	}
+	return buf;
+}
+
+int WINAPI GetPassword(std::string &Password, const char *FileName)
+{
+	char InPass[512];
+	CharArrayCpyZ(InPass, Password.c_str());
+	const auto &Prompt = StrPrintf(GetMsg(MGetPasswordForFile), FileName);
+	if (Info.InputBox((const char *)GetMsg(MGetPasswordTitle), Prompt.c_str(), NULL, NULL, InPass,
 				sizeof(InPass), NULL, FIB_PASSWORD | FIB_ENABLEEMPTY)) {
-		strcpy(Password, InPass);
+		CharArrayAssignToStr(Password, InPass);
 		return TRUE;
 	}
 	return FALSE;
@@ -566,4 +518,22 @@ bool CanBeExecutableFileHeader(const unsigned char *Data, int DataSize)
 		return true;
 
 	return false;
+}
+
+std::string GetDialogControlText(HANDLE hDlg, int id)
+{
+	int len = Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, id, 0);
+	std::vector<char> buf(std::max(len + 1, 32));
+	Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, id, (ULONG_PTR)buf.data());
+	return std::string(buf.data());
+}
+
+void SetDialogControlText(HANDLE hDlg, int id, const char *str)
+{
+	Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, id, (ULONG_PTR)str);
+}
+
+void SetDialogControlText(HANDLE hDlg, int id, const std::string &str)
+{
+	Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, id, (ULONG_PTR)str.c_str());
 }

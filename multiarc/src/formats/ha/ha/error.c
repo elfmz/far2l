@@ -69,7 +69,7 @@ void error(int fatal, int number, ...) {
 	fprintf(stderr,"%s",error_string[0]);
 	fprintf(stderr,"\n");
 	fflush(stderr);	
-	exit(inerror);
+	_exit(inerror);
     }
     inerror=number;
     fprintf(stderr,"\n%s: ",myname);
@@ -83,6 +83,6 @@ void error(int fatal, int number, ...) {
 	return;
     }
     cu_do(NULL);
-    exit(number);
+    _exit(number);
 }
 

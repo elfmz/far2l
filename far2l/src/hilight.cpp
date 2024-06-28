@@ -363,16 +363,16 @@ static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANEL
 
 static const HighlightDataColor DefaultStartingColors =
 	{
-		{	0x0, 0x0, 0x0, 0x0,		// Color[0][4] 0 = Black on black = default theme color
-			0x0, 0x0, 0x0, 0x0},	// Color[1][4]
-		{	0x0, 0x0, 0x0, 0x0,		// Mask[0][4] // Transparency Masks 0 = fully transparent
-			0x0, 0x0, 0x0, 0x0},	// Mask[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},		// Color[0][4] 0 = Black on black = default theme color
+			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},		// Mask[0][4] // Transparency Masks 0 = fully transparent
+			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
 		{ 0 }, 						// wchar_t	Mark
 		0,     						// size_t	MarkLen;
 		true   						// bool	bMarkInherit;
 	};
 
-const HighlightDataColor ZeroColors{0};
+const HighlightDataColor ZeroColors{{{0}}};
 
 static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 {
@@ -496,7 +496,7 @@ public:
 		for (int FCnt = 0; FCnt < _FileCount; ++FCnt) {
 			FileListItem &fli = *_FileItem[FCnt];
 			HighlightDataColor Colors = DefaultStartingColors;
-			ApplyStartColors(&Colors); // instead of ApplyFinalColors
+			ApplyStartColors(&Colors);
 
 			for (size_t i = 0; i < _HiData.getCount(); i++) {
 				const FileFilterParams *CurHiData = _HiData.getConstItem(i);
@@ -515,7 +515,6 @@ public:
 						break;
 				}
 			}
-//			ApplyFinalColors(&Colors);
 			fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
 	}
@@ -684,6 +683,8 @@ void HighlightFiles::HiEdit(int MenuPos)
 						Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
 
+				case KEY_SUBTRACT:
+				case KEY_ADD:
 				case KEY_SPACE: {
 					int *Count = nullptr;
 					int RealSelectPos = MenuPosToRealPos(SelectPos, &Count);
@@ -692,10 +693,12 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 						FileFilterParams *ffp = HiData.getItem(RealSelectPos);
 						uint32_t flags = ffp->GetFlags(FFFT_CUSTOM);
-						if (flags & FFF_DISABLED)
-							ffp->SetFlags(FFFT_CUSTOM, flags & ~(FFF_DISABLED));
-						else
-							ffp->SetFlags(FFFT_CUSTOM, flags | FFF_DISABLED);
+						if (Key == KEY_SUBTRACT && (flags & FFF_DISABLED))
+							break;
+						if (Key == KEY_ADD && !(flags & FFF_DISABLED))
+							break;
+
+						ffp->SetFlags(FFFT_CUSTOM, flags ^ FFF_DISABLED);
 
 						HiMenu.SetUpdateRequired(TRUE);
 						HiMenu.FastShow();

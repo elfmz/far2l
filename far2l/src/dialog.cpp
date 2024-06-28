@@ -1814,7 +1814,6 @@ void Dialog::ShowDialog(unsigned ID)
 
 			uint64_t Color[4];
 
-			//FIXME:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 			Color[0] = FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ? COL_WARNDIALOGTEXT:COL_DIALOGTEXT);
 			DlgProc((HANDLE)this, DN_CTLCOLORDIALOG, 0, (LONG_PTR)Color);
 			SetScreen(X1, Y1, X2, Y2, L' ', Color[0]);
@@ -3993,46 +3992,33 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos, int Step, int SkipGroup)
 {
 	CriticalSectionLock Lock(CS);
 	unsigned OrigFocusPos = CurFocusPos;
-	//	int FucusPosNeed=-1;
-	// В функцию обработки диалога здесь передаем сообщение,
-	// что элемент - LostFocus() - теряет фокус ввода.
-	//	if(DialogMode.Check(DMODE_INITOBJECTS))
-	//		FucusPosNeed=DlgProc((HANDLE)this,DN_KILLFOCUS,FocusPos,0);
-	//	if(FucusPosNeed != -1 && CanGetFocus(Item[FucusPosNeed].Type))
-	//		FocusPos=FucusPosNeed;
-	//	else
-	{
-		for (;;) {
-			CurFocusPos += Step;
 
-			if ((int)CurFocusPos < 0) {
-				CurFocusPos = ItemCount - 1;
-			}
+	for (;;) {
+		CurFocusPos += Step;
 
-			if (CurFocusPos >= ItemCount) {
-				CurFocusPos = 0;
-			}
+		if ((int)CurFocusPos < 0) {
+			CurFocusPos = ItemCount - 1;
+		}
 
-			if (IsItemFocusable(Item[CurFocusPos])) {
-				if (Item[CurFocusPos]->Type == DI_RADIOBUTTON && (SkipGroup || !Item[CurFocusPos]->Selected)) {
-					continue;
-				} else {
-					break;
-				}
-			}
+		if (CurFocusPos >= ItemCount) {
+			CurFocusPos = 0;
+		}
 
-			// убираем зацикливание с последующим подвисанием :-)
-			if (OrigFocusPos == CurFocusPos) {
+		if (IsItemFocusable(Item[CurFocusPos])) {
+			//move straight to selected radio when SkipGroup is true
+			if (Item[CurFocusPos]->Type == DI_RADIOBUTTON && !(SkipGroup && Item[CurFocusPos]->Selected)) {
+				continue;
+			} else {
 				break;
 			}
 		}
+
+		// убираем зацикливание с последующим подвисанием :-)
+		if (OrigFocusPos == CurFocusPos) {
+			break;
+		}
 	}
-	//	Dialog::FocusPos=FocusPos;
-	// В функцию обработки диалога здесь передаем сообщение,
-	// что элемент GotFocus() - получил фокус ввода.
-	// Игнорируем возвращаемое функцией диалога значение
-	//	if(DialogMode.Check(DMODE_INITOBJECTS))
-	//		DlgProc((HANDLE)this,DN_GOTFOCUS,FocusPos,0);
+
 	return (CurFocusPos);
 }
 

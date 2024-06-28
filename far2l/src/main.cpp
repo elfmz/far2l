@@ -396,9 +396,7 @@ int FarAppMain(int argc, char **argv)
 	Opt.LoadPlug.PluginsPersonal = TRUE;
 	Opt.LoadPlug.PluginsCacheOnly = FALSE;
 
-	char pid_str[32];
-	snprintf(pid_str, sizeof(pid_str) - 1, "%lu", (unsigned long)getpid());
-	setenv("FARPID", pid_str, 1);
+	setenv("FARPID", ToDec(getpid()).c_str(), 1);
 
 	g_strFarPath = g_strFarModuleName;
 

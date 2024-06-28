@@ -9,6 +9,7 @@ import (
 	"strings"
 	"strconv"
 	"os/exec"
+	"bufio"
 	"io"
 	"io/ioutil"
 	"io/fs"
@@ -147,7 +148,7 @@ func far2l_Close() {
 	}
 }
 
-func far2l_Start(args []string) far2l_Status {
+func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 	if g_far2l_running {
 		aux_Panic("far2l already running")
 	}
@@ -157,7 +158,7 @@ func far2l_Start(args []string) far2l_Status {
 		Environment : []string {
 			"FAR2L_STD=" + filepath.Join(g_test_workdir, "far2l.log"),
 			"FAR2L_TESTCTL=" + g_far2l_sock},
-		ExtraOpts: []expect.ConsoleOpt{expect.WithTermRows(80), expect.WithTermCols(120)},
+		ExtraOpts: []expect.ConsoleOpt{expect.WithTermRows(rows), expect.WithTermCols(cols)},
     }
 	var err error
     g_app, err = termtest.New(opts)
@@ -166,6 +167,10 @@ func far2l_Start(args []string) far2l_Status {
 	}
 	g_far2l_running = true
 	return far2l_RecvStatus()
+}
+
+func far2l_Start(args []string) far2l_Status {
+	return far2l_StartWithSize(args, 120, 80)
 }
 
 func far2l_ReqRecvStatus() far2l_Status {
@@ -188,6 +193,23 @@ func far2l_RecvStatus() far2l_Status {
 	g_status.Height = binary.LittleEndian.Uint32(g_buf[16:])
 	return g_status
 }
+
+
+func far2l_ReqRecvSync(tmout uint32) bool {
+	binary.LittleEndian.PutUint32(g_buf[0:], 6) // TEST_CMD_SYNC
+	binary.LittleEndian.PutUint32(g_buf[4:], tmout)
+	n, err := g_socket.WriteTo(g_buf[0:8], g_addr)
+	if err != nil || n != 8 {
+		aux_Panic(err.Error())
+	}
+	far2l_ReadSocket(1, tmout)
+	if g_buf[0] == 0 {
+		setErrorString("Sync timout")
+		return false
+	}
+	return true
+}
+
 
 func far2l_ReqRecvExpectString(str string, x uint32, y uint32, w uint32, h uint32, tmout uint32) far2l_FoundString {
 	return far2l_ReqRecvExpectXStrings([]string{str}, x, y, w, h, tmout, true)
@@ -319,6 +341,12 @@ func far2l_BoundedLine(left uint32, top uint32, width uint32, trim_chars string)
 
 func far2l_BoundedLines(left uint32, top uint32, width uint32, height uint32, trim_chars string) []string {
 	lines:= []string{}
+	if width == 0xffffffff {
+		width = g_status.Width
+	}
+	if height == 0xffffffff {
+		height = g_status.Height
+	}
 	for y := top; y < top + height; y++ {
 		line:= ""
 		for x := left; x < left + width; x++ {
@@ -371,6 +399,63 @@ func far2l_CheckCellChar(x uint32, y uint32, chars string) string {
 		setErrorString(fmt.Sprintf("Cell at %d:%d = '%s' doesnt represent any of: '%s'", x, y, cell.Text, chars))
 	}
 	return cell.Text
+}
+
+func aux_LoadTextFile(fpath string) []string {
+    var lines []string
+	file, err := os.Open(fpath)
+	if err != nil {
+		setErrorString(err.Error())
+		return lines
+	}
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        lines = append(lines, scanner.Text())
+    }
+    return lines
+}
+
+func aux_SaveTextFile(fpath string, lines []string) {
+	file, err := os.Create(fpath)
+	if err != nil {
+		setErrorString(err.Error())
+		return 
+	}
+    defer file.Close()
+
+	for _, line := range lines {
+		_, err := file.WriteString(line + "\n")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func far2l_BoundedLinesMatchTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) bool {
+	screen_lines:= far2l_BoundedLines(left, top, width, height, "")
+	file_lines:= aux_LoadTextFile(fpath)
+	for i:= 0; i != len(screen_lines) && i != len(file_lines); i++ {
+		if screen_lines[i] != file_lines[i] {
+			fpath_actual:= fpath + ".actual"
+			aux_SaveTextFile(fpath_actual, screen_lines)
+			setErrorString(fmt.Sprintf("Line %d is wrong: '%s'\nActual lines saved into: %s", i, screen_lines[i], fpath_actual))
+			return false
+		}
+	}
+	if len(screen_lines) != len(file_lines) {
+		fpath_actual:= fpath + ".actual"
+		aux_SaveTextFile(fpath_actual, screen_lines)
+		setErrorString(fmt.Sprintf("Wrong lines count: %d != %d\nActual lines saved into: %s", len(screen_lines), len(file_lines), fpath_actual))
+		return false
+	}
+	return true
+}
+
+func far2l_BoundedLinesSaveAsTextFile(left uint32, top uint32, width uint32, height uint32, fpath string) {
+	screen_lines:= far2l_BoundedLines(left, top, width, height, "")
+	aux_SaveTextFile(fpath, screen_lines)
 }
 
 func far2l_ReqBye() {
@@ -780,7 +865,11 @@ func initVM() {
 	setVMFunction("Inspect", aux_Inspect)
 
 	setVMFunction("StartApp", far2l_Start)
+	setVMFunction("StartAppWithSize", far2l_StartWithSize)
+
 	setVMFunction("AppStatus", far2l_ReqRecvStatus)
+	setVMFunction("Sync", far2l_ReqRecvSync)
+
 	setVMFunction("ReadCellRaw", far2l_ReqRecvReadCellRaw)
 	setVMFunction("ReadCell", far2l_ReqRecvReadCell)
 	setVMFunction("CellCharMatches", far2l_CellCharMatches)
@@ -860,6 +949,10 @@ func initVM() {
 	setVMFunction("HashPathes", aux_HashPathes)
 	setVMFunction("Exists", aux_Exists)
 	setVMFunction("CountExisting", aux_CountExisting)
+	setVMFunction("LoadTextFile", aux_LoadTextFile)
+	setVMFunction("SaveTextFile", aux_SaveTextFile)
+	setVMFunction("BoundedLinesMatchTextFile", far2l_BoundedLinesMatchTextFile)
+	setVMFunction("BoundedLinesSaveAsTextFile", far2l_BoundedLinesSaveAsTextFile)
 }
 
 func setVMFunction(name string, value interface{}) {
@@ -883,14 +976,12 @@ func main() {
 		}
 	}
 
-	if len(os.Args) < arg_ofs + 3 {
-		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/work/dir /path/to/test1.js [/path/to/test2.js [/path/to/test3.js ...]]\n")
+	if len(os.Args) < arg_ofs + 2 {
+		log.Fatal("Usage: far2l-smoke [-t TIMEOUT_SEC] /path/to/far2l /path/to/test1 [/path/to/test2 [/path/to/test3 ...]]\n")
 	}
 
-	workdir, err := filepath.Abs(os.Args[arg_ofs + 1])
-	if err != nil { log.Fatal(err) }
-
-	g_far2l_sock = filepath.Join(workdir, "far2l.sock")
+	g_far2l_sock = fmt.Sprintf("/tmp/far2l%d.sock", os.Getpid())
+//filepath.Join(workdir, "far2l.sock")
 	os.Remove(g_far2l_sock)
 	defer os.Remove(g_far2l_sock)
 
@@ -906,11 +997,13 @@ func main() {
         log.Fatal(err)
     }
 
-	for i := arg_ofs + 2; i < len(os.Args); i++ {
-		fmt.Println("\x1b[1;32m---> Running test: " + os.Args[i] + "\x1b[39;22m")
+	for i := arg_ofs + 1; i < len(os.Args); i++ {
 		name := filepath.Base(os.Args[i])
-		g_test_workdir = filepath.Join(workdir, strings.TrimSuffix(name, filepath.Ext(name)))
-		runTest(os.Args[i])
+		fmt.Println("\x1b[1;32m---> Running test: " + name + "\x1b[39;22m")
+		testdir, err := filepath.Abs(os.Args[i])
+		if err != nil { log.Fatal(err) }
+		g_test_workdir = filepath.Join(testdir, "workdir")
+		runTest(filepath.Join(testdir, "test.js"))
 	}
 }
 

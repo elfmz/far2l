@@ -265,14 +265,11 @@ namespace VTLog
 	
 	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines)
 	{
-		char name[128];
 		SYSTEMTIME st;
 		WINPORT(GetLocalTime)(&st);
-		sprintf(name, "farvt_%u-%u-%u_%u-%u-%u.%s",
-			st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-			colored ? "ans" : "log");
-
-		std::string path = InMyTemp(name);
+		const auto &path = InMyTempFmt("farvt_%u-%u-%u_%u-%u-%u.%s",
+			 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+			 colored ? "ans" : "log");
 				
 		int fd = open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, 0600);
 		if (fd==-1) {

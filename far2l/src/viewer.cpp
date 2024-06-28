@@ -95,7 +95,6 @@ static int CalcByteDistance(UINT CodePage, const wchar_t *begin, const wchar_t *
 
 	} else if (CodePage == CP_UTF8) {
 		distance = UtfCalcSpace<wchar_t, uint8_t>(begin, end - begin, false);
-
 	} else {	// one-byte code page?
 		distance = end - begin;
 	}
@@ -527,17 +526,16 @@ void Viewer::ShowPage(int nMode)
 
 				ReadString(Strings[I], -1, MAX_VIEWLINE);
 			}
-
 			break;
-		case SHOW_UP:
 
+		case SHOW_UP:
 			Strings.ScrollUp();
 			Strings[0].nFilePos = FilePos;
 			SecondPos = Strings[1].nFilePos;
 			ReadString(Strings[0], (int)(SecondPos - FilePos), MAX_VIEWLINE);
 			break;
-		case SHOW_DOWN:
 
+		case SHOW_DOWN:
 			vseek(Strings[Y2 - Y1].nFilePos, SEEK_SET);
 			Strings.ScrollDown();
 			FilePos = Strings[0].nFilePos;
@@ -988,11 +986,22 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				bSelStartFound = true;
 			}
 
-			if (!(MaxSize--))
+			if (MaxSize == 0)
 				break;
 
 			if (!vgetc(Ch))
 				break;
+
+			if (MaxSize > 0) {
+				if (VM.CodePage == CP_UTF8) {
+					MaxSize-= UtfCalcSpace<wchar_t, char>(&Ch, 1, false);
+					if (MaxSize < 0) {
+						MaxSize = 0;
+					}
+				} else {
+					MaxSize--;
+				}
+			}
 
 			if (Ch == CRSym)
 				break;
@@ -2082,10 +2091,11 @@ void Viewer::Up()
 			//	khffgkjkfdg dfkghd jgfhklf |
 			//	sdflksj lfjghf fglh lf     |
 			//	dfdffgljh ldgfhj           |
-
+			bool LeadingSpaces = WrapBufSize > 0 && IsSpace(Buf[0]);
 			for (I = 0; I < WrapBufSize;) {
 				if (!IsSpace(Buf[I])) {
-					for (int CurLineStart = I, LastFitEnd = I + 1;; ++I) {
+					int CurLineStart = LeadingSpaces ? 0 : I; // Keep spaces at beginning of wrapped line: #2246
+					for (int LastFitEnd = CurLineStart + 1;; ++I) {
 						if (I == WrapBufSize) {
 							int distance =
 									CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
@@ -2101,6 +2111,7 @@ void Viewer::Up()
 							LastFitEnd = I + 1;
 						}
 					}
+					LeadingSpaces = false;
 
 				} else {
 					++I;
@@ -2541,13 +2552,6 @@ void Viewer::Search(int Next, int FirstChar)
 				if (CurTime - StartTime > RedrawTimeout) {
 					StartTime = CurTime;
 
-					if (CheckForEscSilent()) {
-						if (ConfirmAbortOp()) {
-							Redraw();
-							return;
-						}
-					}
-
 					INT64 Total = ReverseSearch ? StartPos : FileSize - StartPos;
 					INT64 Current = _abs64(CurPos - StartPos);
 					int Percent = Total > 0 ? static_cast<int>(Current * 100 / Total) : -1;
@@ -2562,6 +2566,13 @@ void Viewer::Search(int Next, int FirstChar)
 						}
 					}
 					ViewerSearchMsg(strMsgStr, Percent);
+
+					if (CheckForEscSilent()) {
+						if (ConfirmAbortOp()) {
+							Redraw();
+							return;
+						}
+					}
 				}
 
 				/*

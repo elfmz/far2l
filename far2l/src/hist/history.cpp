@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "clipboard.hpp"
 #include "config.hpp"
 #include "ConfigRW.hpp"
+#include "datetime.hpp"
 #include "strmix.hpp"
 #include "dialog.hpp"
 #include "interf.hpp"
@@ -131,16 +132,18 @@ void History::AddToHistoryLocal(const wchar_t *Str, const wchar_t *Extra, const 
 		AddRecord.strExtra = Extra;
 	}
 
-	if (RemoveDups)		// удалять дубликаты?
+	if (RemoveDups && Opt.HistoryRemoveDupsRule)		// удалять дубликаты?
 	{
 		for (HistoryRecord *HistoryItem = HistoryList.First(); HistoryItem;
 				HistoryItem = HistoryList.Next(HistoryItem)) {
 			if (EqualType(AddRecord.Type, HistoryItem->Type)) {
-				if ((RemoveDups == 1 && !StrCmp(AddRecord.strName, HistoryItem->strName))
-						|| (RemoveDups == 2 && !StrCmpI(AddRecord.strName, HistoryItem->strName))) {
+				if ((RemoveDups == 1 && !StrCmp(AddRecord.strName, HistoryItem->strName)
+							 && (Opt.HistoryRemoveDupsRule<2 || !StrCmp(AddRecord.strExtra, HistoryItem->strExtra)))
+						|| (RemoveDups == 2 && !StrCmpI(AddRecord.strName, HistoryItem->strName)
+							&& (Opt.HistoryRemoveDupsRule<2 || !StrCmpI(AddRecord.strExtra, HistoryItem->strExtra)))) {
 					AddRecord.Lock = HistoryItem->Lock;
 					HistoryItem = HistoryList.Delete(HistoryItem);
-					break;
+					// break; // not stop loop because after HistoryRemoveDupsRule==0 or ==2 history may has dups
 				}
 			}
 		}
@@ -423,35 +426,83 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 	SYSTEMTIME NowST{}, ItemST{}, PrevST{};
 	WINPORT(GetLocalTime)(&NowST);
 
+	if (TypeHistory == HISTORYTYPE_CMD) {
+		// correction if at start dirs prefix width exceed current screen width
+		if (Opt.HistoryDirsPrefixLen >= (unsigned) ScrX - 18)
+			Opt.HistoryDirsPrefixLen = (unsigned) ScrX / 4;
+		else if (Opt.HistoryDirsPrefixLen < 3)
+			Opt.HistoryDirsPrefixLen = 3;
+	}
+
+	// prepare date & time formats
+	int iDateFormat = GetDateFormat();
+	wchar_t cDateSeparator = GetDateSeparator();
+	wchar_t cTimeSeparator = GetTimeSeparator();
+
 	while (!Done) {
 		bool IsUpdate = false;
 		HistoryMenu.DeleteItems();
 		HistoryMenu.Modal::ClearDone();
-		HistoryMenu.SetBottomTitle(Msg::HistoryFooter);
+		switch (TypeHistory) {
+			case HISTORYTYPE_CMD:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooterCmd);
+				break;
+			case HISTORYTYPE_VIEW:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooterViewEdit);
+				break;
+			case HISTORYTYPE_FOLDER:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooterFolder);
+				break;
+			default:
+				HistoryMenu.SetBottomTitle(Msg::HistoryFooter);
+		}
 		// заполнение пунктов меню
 		for (const HistoryRecord *HistoryItem =
 						TypeHistory == HISTORYTYPE_DIALOG ? HistoryList.Last() : HistoryList.First();
 				HistoryItem; HistoryItem = TypeHistory == HISTORYTYPE_DIALOG
 						? HistoryList.Prev(HistoryItem)
 						: HistoryList.Next(HistoryItem)) {
-			FARString strRecord = HistoryItem->strName;
+			FARString strRecord;
 			int StrPrefixLen = 0;
-			strRecord.Clear();
 			if (Opt.HistoryShowTimes[TypeHistory] != 2
 					&& WINPORT(FileTimeToLocalFileTime)(&HistoryItem->Timestamp, &ItemFT)
 					&& WINPORT(FileTimeToSystemTime(&ItemFT, &ItemST))) {
 
 				if (PrevST.wYear != ItemST.wYear || PrevST.wMonth != ItemST.wMonth || PrevST.wDay != ItemST.wDay) {
 					MenuItemEx DateSeparator;
-					DateSeparator.strName.Format(L"%04u-%02u-%02u",
-						(unsigned)ItemST.wYear, (unsigned)ItemST.wMonth, (unsigned)ItemST.wDay);
+					switch (iDateFormat) {
+						case 0:
+							// Дата в формате MM.DD.YYYYY
+							DateSeparator.strName.Format(L"%02u%lc%02u%lc%04u",
+								(unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wYear);
+							break;
+						case 1:
+							// Дата в формате DD.MM.YYYYY
+							DateSeparator.strName.Format(L"%02u%lc%02u%lc%04u",
+								(unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wYear);
+							break;
+						default:
+							// Дата в формате YYYYY.MM.DD
+							DateSeparator.strName.Format(L"%04u%lc%02u%lc%02u",
+								(unsigned)ItemST.wYear, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay);
+							break;
+					}
 					DateSeparator.Flags|= LIF_SEPARATOR;
 					HistoryMenu.AddItem(&DateSeparator);
 				}
 
 				if (Opt.HistoryShowTimes[TypeHistory] == 0) {
-					strRecord.AppendFormat(L"%02u:%02u.%02u ",
-						(unsigned)ItemST.wHour, (unsigned)ItemST.wMinute, (unsigned)ItemST.wSecond);
+					strRecord.AppendFormat(L"%02u%lc%02u%lc%02u ",
+						(unsigned)ItemST.wHour, cTimeSeparator, (unsigned)ItemST.wMinute, cTimeSeparator, (unsigned)ItemST.wSecond);
+					// add directory in prefix only for command history
+					if (TypeHistory == HISTORYTYPE_CMD && Opt.HistoryDirsPrefixLen > 3) {
+						if (HistoryItem->strExtra.IsEmpty())
+							strRecord.AppendFormat(L"%*lc ", Opt.HistoryDirsPrefixLen, L' ' );
+						else if (HistoryItem->strExtra.GetLength() <= Opt.HistoryDirsPrefixLen)
+							strRecord.AppendFormat(L"%*ls/", Opt.HistoryDirsPrefixLen, HistoryItem->strExtra.CPtr() );
+						else
+							strRecord.AppendFormat(L"...%ls/", HistoryItem->strExtra.CEnd()-(Opt.HistoryDirsPrefixLen-3) );
+					}
 					StrPrefixLen = strRecord.GetLength();
 				}
 				PrevST = ItemST;
@@ -546,29 +597,34 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				case KEY_CTRLR:		// обновить с удалением недоступных
 				{
 					if (TypeHistory == HISTORYTYPE_FOLDER || TypeHistory == HISTORYTYPE_VIEW) {
-						bool ModifiedHistory = false;
+						if (!Message(MSG_WARNING, 2,
+								TypeHistory == HISTORYTYPE_FOLDER ? Msg::FolderHistoryTitle : Msg::ViewHistoryTitle,
+								TypeHistory == HISTORYTYPE_FOLDER ? Msg::HistoryRefreshFolder : Msg::HistoryRefreshView,
+								Msg::Ok, Msg::Cancel)) {
+							bool ModifiedHistory = false;
 
-						for (HistoryRecord *HistoryItem = HistoryList.First(); HistoryItem;
-								HistoryItem = HistoryList.Next(HistoryItem)) {
-							if (HistoryItem->Lock)	// залоченные не трогаем
-								continue;
+							for (HistoryRecord *HistoryItem = HistoryList.First(); HistoryItem;
+									HistoryItem = HistoryList.Next(HistoryItem)) {
+								if (HistoryItem->Lock)	// залоченные не трогаем
+									continue;
 
-							// убить запись из истории
-							if (apiGetFileAttributes(HistoryItem->strName) == INVALID_FILE_ATTRIBUTES) {
-								HistoryItem = HistoryList.Delete(HistoryItem);
-								ModifiedHistory = true;
+								// убить запись из истории
+								if (apiGetFileAttributes(HistoryItem->strName) == INVALID_FILE_ATTRIBUTES) {
+									HistoryItem = HistoryList.Delete(HistoryItem);
+									ModifiedHistory = true;
+								}
 							}
-						}
 
-						if (ModifiedHistory)	// избавляемся от лишних телодвижений
-						{
-							SaveHistory();		// сохранить
-							HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
-							HistoryMenu.SetUpdateRequired(TRUE);
-							IsUpdate = true;
-						}
+							if (ModifiedHistory)	// избавляемся от лишних телодвижений
+							{
+								SaveHistory();		// сохранить
+								HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+								HistoryMenu.SetUpdateRequired(TRUE);
+								IsUpdate = true;
+							}
 
-						ResetPosition();
+							ResetPosition();
+						}
 					}
 
 					break;
@@ -601,12 +657,39 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						TruncStrFromCenter(strDir, std::max(ScrX - 32, 32));
 						strCmd.Insert(0, Msg::HistoryCommandLine);
 						strDir.Insert(0, Msg::HistoryCommandDir);
+
+						WINPORT(FileTimeToLocalFileTime)(&CurrentRecord->Timestamp, &ItemFT);
+						WINPORT(FileTimeToSystemTime(&ItemFT, &ItemST));
+						FARString strDate;
+						FARString strTime;
+						strDate.Append(Msg::ColumnDate);
+						strTime.Append(Msg::ColumnTime);
+						switch (iDateFormat) {
+							case 0:
+								// Дата в формате MM.DD.YYYYY
+								strDate.AppendFormat(L": %02u%lc%02u%lc%04u",
+									(unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wYear);
+								break;
+							case 1:
+								// Дата в формате DD.MM.YYYYY
+								strDate.AppendFormat(L": %02u%lc%02u%lc%04u",
+									(unsigned)ItemST.wDay, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wYear);
+								break;
+							default:
+								// Дата в формате YYYYY.MM.DD
+								strDate.AppendFormat(L": %04u%lc%02u%lc%02u",
+									(unsigned)ItemST.wYear, cDateSeparator, (unsigned)ItemST.wMonth, cDateSeparator, (unsigned)ItemST.wDay);
+								break;
+						}
+						strTime.AppendFormat(L": %02u%lc%02u%lc%02u",
+							(unsigned)ItemST.wHour, cTimeSeparator, (unsigned)ItemST.wMinute, cTimeSeparator, (unsigned)ItemST.wSecond);
+
 						if ( CurrentRecord->strExtra.IsEmpty() ) // STUB for old records
 							Message(MSG_LEFTALIGN, 1, Msg::HistoryCommandTitle, strCmd,
-									L"--- Directory --- No Information ---",
+									L"--- Directory --- No Information ---", strDate, strTime,
 									Msg::HistoryCommandClose);
 						else {
-							int i = Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir,
+							int i = Message(MSG_LEFTALIGN, 3, Msg::HistoryCommandTitle, strCmd, strDir, strDate, strTime,
 									Msg::HistoryCommandClose, Msg::HistoryCommandChDir, Msg::HistoryCommandRunUp);
 							switch (i) {
 								case 1: // ToDir
@@ -622,7 +705,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 									if( b1 || b2 )
 										strStr+= CurrentRecord->strName.SubStr(
 											!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
-											b2 && p2>0 ? p2 : -1);
+											b2 && p2>p1 ? p2-(b1 ? p1+2 : 0) : -1);
 									else
 										strStr+= CurrentRecord->strName; // all command has not ./ and spaces
 									if (i==2) { // Run-up
@@ -734,7 +817,34 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					CurrentItem = CurrentRecord;
 					break;
 				}
-			case KEY_CTRLF10: {
+				case KEY_CTRLNUMPAD4:
+				case KEY_CTRLLEFT: {
+					if (TypeHistory == HISTORYTYPE_CMD
+							&& Opt.HistoryShowTimes[HISTORYTYPE_CMD] == 0
+							&& Opt.HistoryDirsPrefixLen > 3) {
+						Opt.HistoryDirsPrefixLen--;
+						HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+						HistoryMenu.SetUpdateRequired(TRUE);
+						IsUpdate = true;
+						SetUpMenuPos = true;
+						CurrentItem = CurrentRecord;
+					}
+					break;
+				}
+				case KEY_CTRLNUMPAD6:
+				case KEY_CTRLRIGHT: {
+					if (TypeHistory == HISTORYTYPE_CMD
+							&& Opt.HistoryShowTimes[HISTORYTYPE_CMD] == 0) {
+						Opt.HistoryDirsPrefixLen++;
+						HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
+						HistoryMenu.SetUpdateRequired(TRUE);
+						IsUpdate = true;
+						SetUpMenuPos = true;
+						CurrentItem = CurrentRecord;
+					}
+					break;
+				}
+				case KEY_CTRLF10: {
 					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord && !CurrentRecord->strExtra.IsEmpty() ) {
 						bool b1, b2;
 						size_t p1 = 0, p2 = 0;
@@ -747,7 +857,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						if( b1 || b2 )
 							strStr+= CurrentRecord->strName.SubStr(
 								!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
-								b2 && p2>0 ? p2 : -1);
+								b2 && p2>p1 ? p2-(b1 ? p1+2 : 0) : -1);
 						else
 							strStr+= CurrentRecord->strName; // all command has not ./ and spaces
 						Type = CurrentRecord->Type;
@@ -915,7 +1025,8 @@ bool History::GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str)
 	for (HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem;
 			HistoryItem = HistoryList.Prev(HistoryItem)) {
 		if (!StrCmpNI(Str, HistoryItem->strName, Length) && StrCmp(Str, HistoryItem->strName)
-				&& IsAllowedForHistory(HistoryItem->strName.CPtr())) {
+				&& IsAllowedForHistory(HistoryItem->strName.CPtr())
+				&& HistoryMenu.FindItem(0, HistoryItem->strName.CPtr()) < 0) { // after #2241 history may have duplicate names
 			HistoryMenu.AddItem(HistoryItem->strName);
 		}
 	}

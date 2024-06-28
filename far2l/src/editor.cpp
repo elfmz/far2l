@@ -284,7 +284,11 @@ void Editor::ShowEditor(int CurLineOnly)
 	if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT))
 		CtrlObject->Plugins.CurEditor = HostFileEditor;		// this;
 
-	XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
+	if (NumLastLine > (Y2 - Y1) + 1)
+		XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
+	else
+		XX2 = X2;
+
 	/*
 		17.04.2002 skv
 		Что б курсор не бегал при Alt-F9 в конце длинного файла.
@@ -810,7 +814,7 @@ int Editor::ProcessKey(FarKey Key)
 	int CurPos, CurVisPos, I;
 	CurPos = CurLine->GetCurPos();
 	CurVisPos = GetLineCurPos();
-	int isk = IsShiftKey(Key);
+	const bool isk = IsShiftKey(Key);
 	_SVS(SysLog(L"[%d] isk=%d", __LINE__, isk));
 
 	// if ((!isk || CtrlObject->Macro.IsExecuting()) && !isk && !Pasting)
@@ -3420,19 +3424,19 @@ BOOL Editor::Search(int Next)
 			if (CurTime - StartTime > RedrawTimeout) {
 				StartTime = CurTime;
 
-				if (CheckForEscSilent()) {
-					if (ConfirmAbortOp()) {
-						UserBreak = TRUE;
-						break;
-					}
-				}
-
 				strMsgStr = strSearchStr;
 				InsertQuote(strMsgStr);
 				SetCursorType(FALSE, -1);
 				int Total = ReverseSearch ? StartLine : NumLastLine - StartLine;
 				int Current = abs(NewNumLine - StartLine);
 				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr, Current * 100 / Total);
+
+				if (CheckForEscSilent()) {
+					if (ConfirmAbortOp()) {
+						UserBreak = TRUE;
+						break;
+					}
+				}
 			}
 
 			int SearchLength = 0;

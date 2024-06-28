@@ -343,13 +343,28 @@ int WINAPI _export ZIP_GetArcItem(struct ArcItemInfo *Info)
 		;
 
 	} else if (ZipHeader.PackOS == 11 && ZipHeader.PackVer >= 20) {		// && ZipHeader.PackVer<25
+        // NTFS of Windows (11) and packer version >= 20, both headers in ANSI
+
 		CPToUTF8(CP_ACP, Info->PathName);
 		Info->Codepage = WINPORT(GetACP)();
 
-	} else if (ZipHeader.PackOS == 11 || ZipHeader.PackOS == 0) {
+	} else if (ZipHeader.PackOS == 0 && ZipHeader.PackVer >= 25 && ZipHeader.PackVer <= 40) {
+        // Special case: PKZIP for Windows 2.5, 2.6, 4.0
+        // Local header in ANSI, central header in OEM
+
+		// See InfoZip's unzip source code.
+		// File name is unzpriv.h, search for "Convert filename (and file comment string)"
+
+		CPToUTF8(CP_OEMCP, Info->PathName);
+		// libarchive use local header, we use central header. libarchive needs another charset here
+		Info->Codepage = WINPORT(GetACP)();
+
+	} else if (ZipHeader.PackOS == 11 || ZipHeader.PackOS == 6 || ZipHeader.PackOS == 0) {
+        // NTFS of Windows (11), HPFS of OS/2 (6), FAT of DOS (0)
+
 		CPToUTF8(CP_OEMCP, Info->PathName);
 		Info->Codepage = WINPORT(GetOEMCP)();
-	}
+	} // In all other cases do not touch encoding, assume system one
 
 	Info->UnpVer = (ZipHeader.UnpVer / 10) * 256 + (ZipHeader.UnpVer % 10);
 	Info->DictSize = 32;
@@ -518,17 +533,17 @@ DWORD WINAPI _export ZIP_GetSFXPos(void)
 	return (DWORD)SFXSize.QuadPart;
 }
 
-BOOL WINAPI _export ZIP_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export ZIP_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	if (Type == 0) {
-		strcpy(FormatName, "ZIP");
-		strcpy(DefaultExt, "zip");
+		FormatName = "ZIP";
+		DefaultExt = "zip";
 		return (TRUE);
 	}
 	return (FALSE);
 }
 
-BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
 #if ZIP_LIBARCHIVE
@@ -568,7 +583,7 @@ BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, char *Dest)
 				/*"All files" mask      */ "*"};
 #endif
 		if (Command < (int)(ARRAYSIZE(Commands))) {
-			strcpy(Dest, Commands[Command]);
+			Dest = Commands[Command];
 			return (TRUE);
 		}
 	}

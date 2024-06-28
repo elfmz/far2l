@@ -38,7 +38,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 	::Info.FSF = &::FSF;
 
 	TCHAR SysWordDiv[0x100];
-	int SysWordDivLen = (int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, SysWordDiv);
+	int SysWordDivLen = (int)::Info.AdvControl(::Info.ModuleNumber, ACTL_GETSYSWORDDIV, SysWordDiv, NULL);
 	if (SysWordDivLen > 0) {
 		ASSERT(SysWordDivLen <= (int)ARRAYSIZE(SysWordDiv));
 		WordDiv.append(SysWordDiv, SysWordDivLen);

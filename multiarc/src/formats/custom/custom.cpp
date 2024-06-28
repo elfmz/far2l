@@ -361,7 +361,7 @@ BOOL WINAPI _export CUSTOM_IsArchive(const char *FName, const unsigned char *Dat
 		bool SpecifiedID = false, FoundID = false;
 		for (unsigned int J = 0; J != (unsigned int)-1; ++J) {
 			if (J != 0)
-				sprintf(IDName, "ID%u", J);
+				snprintf(IDName, sizeof(IDName), "ID%u", J);
 			else
 				strcpy(IDName, "ID");
 
@@ -631,7 +631,7 @@ BOOL WINAPI _export CUSTOM_CloseArchive(struct ArcInfo *Info)
 	return (TRUE);
 }
 
-BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *DefaultExt)
+BOOL WINAPI _export CUSTOM_GetFormatName(int Type, std::string &FormatName, std::string &DefaultExt)
 {
 	std::string TypeName;
 	const KeyFileValues *Values = GetSection(Type, TypeName);
@@ -639,12 +639,12 @@ BOOL WINAPI _export CUSTOM_GetFormatName(int Type, char *FormatName, char *Defau
 	if (!Values)
 		return (FALSE);
 
-	Values->GetChars(FormatName, 64, Str_TypeName, TypeName.c_str());
-	Values->GetChars(DefaultExt, NM, "Extension", "");
-	return (*FormatName != 0);
+	FormatName = Values->GetString(Str_TypeName, TypeName.c_str());
+	DefaultExt = Values->GetString("Extension");
+	return !FormatName.empty();
 }
 
-BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
+BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	std::string TypeName, FormatName;
 
@@ -663,7 +663,7 @@ BOOL WINAPI _export CUSTOM_GetDefaultCommands(int Type, int Command, char *Dest)
 			"AllFilesMask"};
 
 	if (Command < (int)(ARRAYSIZE(CmdNames))) {
-		Values->GetChars(Dest, 512, CmdNames[Command], "");
+		Dest = Values->GetString(CmdNames[Command], "");
 		return (TRUE);
 	}
 
@@ -725,9 +725,7 @@ static void FillFormat(const KeyFileValues *Values)
 	delete Format;
 	Format = new CustomStringList;
 	for (CustomStringList *CurFormat = Format;; CurFormat = CurFormat->Add()) {
-		char FormatName[100];
-
-		sprintf(FormatName, "Format%d", FormatNumber++);
+		const auto &FormatName = StrPrintf("Format%d", FormatNumber++);
 		Values->GetChars(CurFormat->Str(), PROF_STR_LEN, FormatName, "");
 		if (*CurFormat->Str() == 0)
 			break;
@@ -738,9 +736,7 @@ static void FillFormat(const KeyFileValues *Values)
 	delete IgnoreStrings;
 	IgnoreStrings = new CustomStringList;
 	for (CustomStringList *CurIgnoreString = IgnoreStrings;; CurIgnoreString = CurIgnoreString->Add()) {
-		char Name[100];
-
-		sprintf(Name, "IgnoreString%d", Number++);
+		const auto &Name = StrPrintf("IgnoreString%d", Number++);
 		Values->GetChars(CurIgnoreString->Str(), PROF_STR_LEN, Name, "");
 		if (*CurIgnoreString->Str() == 0)
 			break;

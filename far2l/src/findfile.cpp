@@ -1139,7 +1139,7 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem *FileItem, const wchar_
 	if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 && !Opt.FindOpt.FindFolders)
 		return;
 
-	if (!FileMaskForFindFile.Compare(FileName, !Opt.FindOpt.FindCaseSensitiveFileMask ))
+	if (!FileMaskForFindFile.Compare(FileName, !Opt.FindOpt.FindCaseSensitiveFileMask))
 		return;
 
 	size_t ArcIndex = itd.GetFindFileArcIndex();

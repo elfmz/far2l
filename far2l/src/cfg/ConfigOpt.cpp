@@ -298,6 +298,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "SearchOutFormatWidth", &Opt.FindOpt.strSearchOutFormatWidth, L"14,13,0"},
 	{true,  NSecSystem, "FindFolders", &Opt.FindOpt.FindFolders, 1},
 	{true,  NSecSystem, "FindSymLinks", &Opt.FindOpt.FindSymLinks, 1},
+	{true,  NSecSystem, "FindCaseSensitiveFileMask", &Opt.FindOpt.FindCaseSensitiveFileMask, 1},
 	{true,  NSecSystem, "UseFilterInSearch", &Opt.FindOpt.UseFilter, 0},
 	{true,  NSecSystem, "FindCodePage", &Opt.FindCodePage, CP_AUTODETECT},
 	{false, NSecSystem, "CmdHistoryRule", &Opt.CmdHistoryRule, 0},

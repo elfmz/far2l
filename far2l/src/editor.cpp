@@ -3424,19 +3424,19 @@ BOOL Editor::Search(int Next)
 			if (CurTime - StartTime > RedrawTimeout) {
 				StartTime = CurTime;
 
-				if (CheckForEscSilent()) {
-					if (ConfirmAbortOp()) {
-						UserBreak = TRUE;
-						break;
-					}
-				}
-
 				strMsgStr = strSearchStr;
 				InsertQuote(strMsgStr);
 				SetCursorType(FALSE, -1);
 				int Total = ReverseSearch ? StartLine : NumLastLine - StartLine;
 				int Current = abs(NewNumLine - StartLine);
 				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr, Current * 100 / Total);
+
+				if (CheckForEscSilent()) {
+					if (ConfirmAbortOp()) {
+						UserBreak = TRUE;
+						break;
+					}
+				}
 			}
 
 			int SearchLength = 0;

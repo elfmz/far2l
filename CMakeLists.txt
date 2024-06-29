@@ -390,10 +390,21 @@ endif()
 
 if (NOT DEFINED MULTIARC OR MULTIARC)
     message(STATUS "MULTIARC plugin enabled")
+
     find_package(PkgConfig REQUIRED)
     pkg_search_module(LibArchive QUIET libarchive)
     if(NOT LibArchive_FOUND)
-        message(WARNING "${ColorRed}libarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${ColorNormal}")
+        # workaround for MacOS brew's/macports' libarchive
+        if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
+            set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
+            set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
+        elseif(EXISTS "/opt/local/lib/libarchive.dylib")
+            set(LibArchive_LIBRARY "/opt/local/lib/libarchive.dylib")
+        endif()
+        find_package(LibArchive)
+        if(NOT LibArchive_FOUND)
+            message(WARNING "${ColorRed}libarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${ColorNormal}")
+        endif()
     endif()
 
     pkg_search_module(PCRE QUIET libpcre)

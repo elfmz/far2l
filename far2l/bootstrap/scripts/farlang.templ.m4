@@ -11943,15 +11943,15 @@ FindFileCaseFileMask
 "Улічваць рэ&гістр (масак файлаў)"
 
 FindFileCase
-"&Учитывать регистр"
-"&Case sensitive"
+"&Учитывать регистр (текст)"
+"&Case sensitive (text)"
 "Roz&lišovat velikost písmen"
-"Gr&oß-/Kleinschreibung"
+"Gr&oß-/Kleinschreibung (text)"
 "&Nagy/kisbetű érzékeny"
 "&Uwzględnij wielkość liter"
-"Sensible min/ma&yúsc."
-"&Враховувати регістр"
-"&Улічваць рэгістр"
+"Sensible min/ma&yúsc (texto)"
+"&Враховувати регістр (текст)"
+"&Улічваць рэгістр (тэкст)"
 
 FindFileWholeWords
 "Только &целые слова"

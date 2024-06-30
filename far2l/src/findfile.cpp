@@ -745,13 +745,6 @@ static LONG_PTR WINAPI MainDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 					if (!Mask || !*Mask)
 						Mask = L"*";
 
-					if (SendDlgMessage(hDlg, DM_GETCHECK, FAD_CHECKBOX_CASEMASK, 0) == BSTATE_UNCHECKED) {
-						// workaround for case-insensitive compare
-						FARString tmp = Mask;
-						tmp.Lower();
-						return FileMaskForFindFile.Set(tmp.CPtr(), 0);
-					}
-
 					return FileMaskForFindFile.Set(Mask, 0);
 				}
 				case FAD_BUTTON_DRIVE: {
@@ -1146,14 +1139,7 @@ static void AnalyzeFileItem(HANDLE hDlg, PluginPanelItem *FileItem, const wchar_
 	if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 && !Opt.FindOpt.FindFolders)
 		return;
 
-	if (!Opt.FindOpt.FindCaseSensitiveFileMask) {
-		// workaround for case-insensitive compare
-		FARString tmp = FileName;
-		tmp.Lower();
-		if (!FileMaskForFindFile.Compare(tmp))
-			return;
-	}
-	else if (!FileMaskForFindFile.Compare(FileName))
+	if (!FileMaskForFindFile.Compare(FileName, !Opt.FindOpt.FindCaseSensitiveFileMask))
 		return;
 
 	size_t ArcIndex = itd.GetFindFileArcIndex();

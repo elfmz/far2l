@@ -38,4 +38,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // обработать имя файла: сравнить с маской, масками, сгенерировать по маске
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags);
 int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFolderNameLength);
-bool CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath = true);
+bool CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath = true, bool ignorecase = true);

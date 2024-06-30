@@ -54,7 +54,7 @@ public:
 
 public:
 	bool Set(const wchar_t *Masks, DWORD Flags);
-	bool Compare(const wchar_t *Name) const;
+	bool Compare(const wchar_t *Name, bool ignorecase = true) const;
 	bool IsEmpty() const;
 	void Free();
 };

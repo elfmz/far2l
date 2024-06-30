@@ -50,7 +50,7 @@ public:
 
 public:
 	virtual bool Set(const wchar_t *Masks, DWORD Flags);
-	virtual bool Compare(const wchar_t *Name) const;
+	virtual bool Compare(const wchar_t *Name, bool ignorecase = true) const;
 	virtual bool IsEmpty() const;
 	static bool IsExcludeMask(const wchar_t *masks);
 

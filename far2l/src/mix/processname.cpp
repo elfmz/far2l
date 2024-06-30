@@ -202,10 +202,10 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignore
 					const size_t str_len = wcslen(str);
 
 					bool result = (str_len >= pattern_len);
-					if(result) {
-						if(ignorecase) {
+					if (result) {
+						if (ignorecase) {
 							for(size_t i = 0; i< pattern_len; ++i) {
-								if(Upper(pattern[i]) != Upper(str[str_len - pattern_len + i])) {
+								if (Upper(pattern[i]) != Upper(str[str_len - pattern_len + i])) {
 									result = false;
 									break;
 								}

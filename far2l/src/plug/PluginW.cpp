@@ -419,6 +419,8 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.LStrlwr = farStrLower;
 		StandardFunctions.LStricmp = farStrCmpI;
 		StandardFunctions.LStrnicmp = farStrCmpNI;
+		StandardFunctions.LStrcmp = farStrCmp;
+		StandardFunctions.LStrncmp = farStrCmpN;
 		StandardFunctions.Unquote = Unquote;
 		StandardFunctions.LTrim = RemoveLeadingSpaces;
 		StandardFunctions.RTrim = RemoveTrailingSpaces;

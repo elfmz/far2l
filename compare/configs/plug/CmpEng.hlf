@@ -21,6 +21,9 @@ but it also provides additional compare options:
 
 #Compare:#
 
+  #case sensitive#           Compare file names with/witout
+  #file names#               case sensitive.
+
   #time#                     Compare file modification time.
                            Unlike the internal FAR command, this
                            option will mark files on both panels,

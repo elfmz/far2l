@@ -2084,8 +2084,6 @@ typedef struct FarStandardFunctions
 	FARSTDLOCALSTRLWR          LStrlwr;
 	FARSTDLOCALSTRICMP         LStricmp;
 	FARSTDLOCALSTRNICMP        LStrnicmp;
-	FARSTDLOCALSTRICMP         LStrcmp;
-	FARSTDLOCALSTRNICMP        LStrncmp;
 
 	FARSTDUNQUOTE              Unquote;
 	FARSTDLTRIM                LTrim;
@@ -2120,6 +2118,9 @@ typedef struct FarStandardFunctions
 	FARBACKGROUNDTASK          BackgroundTask;
 	FARSTRCELLSCOUNT           StrCellsCount;
 	FARSTRSIZEOFCELLS          StrSizeOfCells;
+
+	FARSTDLOCALSTRICMP         LStrcmp;
+	FARSTDLOCALSTRNICMP        LStrncmp;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

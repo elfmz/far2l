@@ -353,7 +353,7 @@ bool FileFilterParams::FileInFilterImpl(const FARString &strFileName, DWORD dwFi
 	}
 
 	// Режим проверки маски файла включен?
-	if (FMask.Used && !FMask.FilterMask.Compare(strFileName, false)) {		// Файл не попадает под маску введённую в фильтре?
+	if (FMask.Used && !FMask.FilterMask.Compare(strFileName)) {		// Файл не попадает под маску введённую в фильтре?
 		return false;														// Не пропускаем этот файл
 	}
 

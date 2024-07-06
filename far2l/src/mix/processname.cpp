@@ -204,7 +204,7 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignore
 					bool result = (str_len >= pattern_len);
 					if (result) {
 						if (ignorecase) {
-							for(size_t i = 0; i< pattern_len; ++i) {
+							for (size_t i = 0; i < pattern_len; ++i) {
 								if (Upper(pattern[i]) != Upper(str[str_len - pattern_len + i])) {
 									result = false;
 									break;
@@ -255,12 +255,14 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignore
 						continue;
 
 					if (rangec == L'-' && *(pattern - 2) != L'[' && *pattern != L']') {
-						match = ignorecase ?
-							(Upper(stringc) <= Upper(*pattern) && Upper(*(pattern - 2)) <= Upper(stringc))
+						match = ignorecase
+							? (Upper(stringc) <= Upper(*pattern) && Upper(*(pattern - 2)) <= Upper(stringc))
 							: (stringc <= *pattern && *(pattern - 2) <= stringc);
 						pattern++;
 					} else
-						match = ignorecase ? (Upper(stringc) == Upper(rangec)) : (stringc == rangec);
+						match = ignorecase
+							? (Upper(stringc) == Upper(rangec))
+							: (stringc == rangec);
 				}
 
 				if (!rangec)

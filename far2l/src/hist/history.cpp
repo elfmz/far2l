@@ -705,7 +705,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 									p2 = b1 ? p1 : -1;
 									do {
 										b2 = CurrentRecord->strName.Pos(p2, L' ', p2+1); // assume that in command filename end by first space
-									} while(b2 && p2>1 && CurrentRecord->strName.SubStr(p2-1,1) == L'\\'); // ignore escaping "\ "
+									} while(b2 && p2>0 && CurrentRecord->strName.SubStr(p2-1,1) == L'\\'); // ignore escaping "\ "
 									if( b1 || b2 )
 										tmp = CurrentRecord->strName.SubStr(
 											!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
@@ -863,7 +863,7 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 						p2 = b1 ? p1 : -1;
 						do {
 							b2 = CurrentRecord->strName.Pos(p2, L' ', p2+1); // assume that in command filename end by first space
-						} while(b2 && p2>1 && CurrentRecord->strName.SubStr(p2-1,1) == L'\\'); // ignore escaping "\ "
+						} while(b2 && p2>0 && CurrentRecord->strName.SubStr(p2-1,1) == L'\\'); // ignore escaping "\ "
 						if( b1 || b2 )
 							tmp = CurrentRecord->strName.SubStr(
 								!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,

@@ -45,6 +45,7 @@ enum CompareLng
 	MUseMaxScanDepth,
 	MProcessSelected,
 	MCompareBox,
+	MCompareCaseFileNames,
 	MCompareTime,
 	MCompareLowPrecision,
 	MCompareIgnoreTimeZone,
@@ -80,7 +81,8 @@ enum CompareLng
  ****************************************************************************/
 struct Options
 {
-	int ProcessSubfolders, UseMaxScanDepth, MaxScanDepth, ProcessSelected, ProcessHidden, CompareTime,
+	int ProcessSubfolders, UseMaxScanDepth, MaxScanDepth, ProcessSelected, ProcessHidden,
+			CompareCaseFileNames, CompareTime,
 			LowPrecisionTime, IgnorePossibleTimeZoneDifferences, CompareSize, CompareContents,
 			CompareContentsIgnore, IgnoreWhitespace, IgnoreNewLines, MessageWhenNoDiff;
 } Opt;
@@ -227,7 +229,7 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 		unsigned int Flags;
 		int *StoreTo;
 	} InitItems[] = {
-			/* 0*/ {DI_DOUBLEBOX, 3, 1, 62, 20, MCmpTitle, 0, NULL, 0, NULL},
+			/* 0*/ {DI_DOUBLEBOX, 3, 1, 62, 21, MCmpTitle, 0, NULL, 0, NULL},
 			/* 1*/ {DI_TEXT, 5, 2, 0, 0, MProcessBox, 0, NULL, 0, NULL},
 			/* 2*/
 			{DI_CHECKBOX, 5, 3, 0, 0, MProcessSubfolders, 0, ("ProcessSubfolders"), 0,
@@ -241,32 +243,33 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 			{DI_CHECKBOX, 5, 5, 0, 0, MProcessSelected, 0, ("ProcessSelected"), 0, &Opt.ProcessSelected},
 			/* 6*/ {DI_TEXT, 0, 6, 0, 0, MNoLngStringDefined, 0, NULL, DIF_SEPARATOR, NULL},
 			/* 7*/ {DI_TEXT, 5, 7, 0, 0, MCompareBox, 0, NULL, 0, NULL},
-			/* 8*/ {DI_CHECKBOX, 5, 8, 0, 0, MCompareTime, 1, ("CompareTime"), 0, &Opt.CompareTime},
-			/* 9*/
-			{DI_CHECKBOX, 9, 9, 0, 0, MCompareLowPrecision, 1, ("LowPrecisionTime"), 0,
-					&Opt.LowPrecisionTime},
+			/* 8*/ {DI_CHECKBOX, 5, 8, 0, 0, MCompareCaseFileNames, 1, ("CompareCaseFileNames"), 0, &Opt.CompareCaseFileNames},
+			/* 9*/ {DI_CHECKBOX, 5, 9, 0, 0, MCompareTime, 1, ("CompareTime"), 0, &Opt.CompareTime},
 			/*10*/
-			{DI_CHECKBOX, 9, 10, 0, 0, MCompareIgnoreTimeZone, 1, ("IgnorePossibleTimeZoneDifferences"), 0,
+			{DI_CHECKBOX, 9, 10, 0, 0, MCompareLowPrecision, 1, ("LowPrecisionTime"), 0,
+					&Opt.LowPrecisionTime},
+			/*11*/
+			{DI_CHECKBOX, 9, 11, 0, 0, MCompareIgnoreTimeZone, 1, ("IgnorePossibleTimeZoneDifferences"), 0,
 					&Opt.IgnorePossibleTimeZoneDifferences},
-			/*11*/ {DI_CHECKBOX, 5, 11, 0, 0, MCompareSize, 1, ("CompareSize"), 0, &Opt.CompareSize},
-			/*12*/
-			{DI_CHECKBOX, 5, 12, 0, 0, MCompareContents, 0, ("CompareContents"), 0, &Opt.CompareContents},
+			/*12*/ {DI_CHECKBOX, 5, 12, 0, 0, MCompareSize, 1, ("CompareSize"), 0, &Opt.CompareSize},
 			/*13*/
-			{DI_CHECKBOX, 9, 13, 0, 0, MCompareContentsIgnore, 0, ("CompareContentsIgnore"), 0,
-					&Opt.CompareContentsIgnore},
+			{DI_CHECKBOX, 5, 13, 0, 0, MCompareContents, 0, ("CompareContents"), 0, &Opt.CompareContents},
 			/*14*/
-			{DI_RADIOBUTTON, 13, 14, 0, 0, MCompareIgnoreNewLines, 1, ("IgnoreNewLines"), DIF_GROUP,
-					&Opt.IgnoreNewLines},
+			{DI_CHECKBOX, 9, 14, 0, 0, MCompareContentsIgnore, 0, ("CompareContentsIgnore"), 0,
+					&Opt.CompareContentsIgnore},
 			/*15*/
-			{DI_RADIOBUTTON, 13, 15, 0, 0, MCompareIgnoreWhitespace, 0, ("IgnoreWhitespace"), 0,
+			{DI_RADIOBUTTON, 13, 15, 0, 0, MCompareIgnoreNewLines, 1, ("IgnoreNewLines"), DIF_GROUP,
+					&Opt.IgnoreNewLines},
+			/*16*/
+			{DI_RADIOBUTTON, 13, 16, 0, 0, MCompareIgnoreWhitespace, 0, ("IgnoreWhitespace"), 0,
 					&Opt.IgnoreWhitespace},
-			/*16*/ {DI_TEXT, 0, 16, 0, 0, MNoLngStringDefined, 0, NULL, DIF_SEPARATOR, NULL},
-			/*17*/
-			{DI_CHECKBOX, 5, 17, 0, 0, MMessageWhenNoDiff, 0, ("MessageWhenNoDiff"), 0,
+			/*17*/ {DI_TEXT, 0, 17, 0, 0, MNoLngStringDefined, 0, NULL, DIF_SEPARATOR, NULL},
+			/*18*/
+			{DI_CHECKBOX, 5, 18, 0, 0, MMessageWhenNoDiff, 0, ("MessageWhenNoDiff"), 0,
 					&Opt.MessageWhenNoDiff},
-			/*18*/ {DI_TEXT, 0, 18, 0, 0, MNoLngStringDefined, 0, NULL, DIF_SEPARATOR, NULL},
-			/*19*/ {DI_BUTTON, 0, 19, 0, 0, MOK, 0, NULL, DIF_CENTERGROUP, NULL},
-			/*20*/ {DI_BUTTON, 0, 19, 0, 0, MCancel, 0, NULL, DIF_CENTERGROUP, NULL}};
+			/*19*/ {DI_TEXT, 0, 19, 0, 0, MNoLngStringDefined, 0, NULL, DIF_SEPARATOR, NULL},
+			/*20*/ {DI_BUTTON, 0, 20, 0, 0, MOK, 0, NULL, DIF_CENTERGROUP, NULL},
+			/*21*/ {DI_BUTTON, 0, 20, 0, 0, MCancel, 0, NULL, DIF_CENTERGROUP, NULL}};
 	struct FarDialogItem DialogItems[ARRAYSIZE(InitItems)];
 	TCHAR Mask[] = _T("99999");
 #ifdef UNICODE
@@ -394,10 +397,10 @@ static bool ShowDialog(bool bPluginPanels, bool bSelectionPresent)
 	}
 
 #ifndef UNICODE
-	int ExitCode = Info.DialogEx(Info.ModuleNumber, -1, -1, 66, 22, _T("Contents"), DialogItems,
+	int ExitCode = Info.DialogEx(Info.ModuleNumber, -1, -1, 66, 23, _T("Contents"), DialogItems,
 			ARRAYSIZE(DialogItems), 0, 0, ShowDialogProc, DlgData);
 #else
-	HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 66, 22, _T("Contents"), DialogItems,
+	HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 66, 23, _T("Contents"), DialogItems,
 			ARRAYSIZE(DialogItems), 0, 0, ShowDialogProc, DlgData);
 	if (hDlg == INVALID_HANDLE_VALUE)
 		return false;
@@ -511,7 +514,10 @@ static int __cdecl PICompare(const void *el1, const void *el2)
 			return 1;
 	}
 
-	return -FSF.LStricmp(ppi1->FindData._cFileName, ppi2->FindData._cFileName);
+	if (Opt.CompareCaseFileNames)
+		return -FSF.LStrcmp(ppi1->FindData._cFileName, ppi2->FindData._cFileName);
+	else
+		return -FSF.LStricmp(ppi1->FindData._cFileName, ppi2->FindData._cFileName);
 }
 
 /****************************************************************************

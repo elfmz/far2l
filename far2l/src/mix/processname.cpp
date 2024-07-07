@@ -169,7 +169,7 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 // IS: это реальное тело функции сравнения с маской, но использовать
 // IS: "снаружи" нужно не эту функцию, а CmpName (ее тело расположено
 // IS: после CmpName_Body)
-static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
+static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignorecase)
 {
 	for (;; ++str) {
 		/*
@@ -200,12 +200,25 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 				if (!FindAnyOfChars(pattern, "*?[")) {
 					const size_t pattern_len = wcslen(pattern);
 					const size_t str_len = wcslen(str);
-					return (str_len >= pattern_len
-							&& wmemcmp(pattern, str + str_len - pattern_len, pattern_len) == 0);
+
+					bool result = (str_len >= pattern_len);
+					if (result) {
+						if (ignorecase) {
+							for (size_t i = 0; i < pattern_len; ++i) {
+								if (Upper(pattern[i]) != Upper(str[str_len - pattern_len + i])) {
+									result = false;
+									break;
+								}
+							}
+						} else {
+							result = (wmemcmp(pattern, str + str_len - pattern_len, pattern_len) == 0);
+						}
+					}
+					return result;
 				}
 
 				do {
-					if (CmpName_Body(pattern, str))
+					if (CmpName_Body(pattern, str, ignorecase))
 						return true;
 				} while (*str++);
 
@@ -229,7 +242,7 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 				}
 
 				match = 0;
-				stringc = Upper(stringc);
+
 				while ((rangec = *pattern++) != 0) {
 					if (rangec == L']') {
 						if (match)
@@ -242,10 +255,14 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 						continue;
 
 					if (rangec == L'-' && *(pattern - 2) != L'[' && *pattern != L']') {
-						match = (stringc <= Upper(*pattern) && Upper(*(pattern - 2)) <= stringc);
+						match = ignorecase
+							? (Upper(stringc) <= Upper(*pattern) && Upper(*(pattern - 2)) <= Upper(stringc))
+							: (stringc <= *pattern && *(pattern - 2) <= stringc);
 						pattern++;
 					} else
-						match = (stringc == Upper(rangec));
+						match = ignorecase
+							? (Upper(stringc) == Upper(rangec))
+							: (stringc == rangec);
 				}
 
 				if (!rangec)
@@ -254,16 +271,20 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str)
 				break;
 
 			default:
-				if (Upper(patternc) != stringc && Lower(patternc) != stringc)
-					return false;
-
+				if (ignorecase) {
+					if (Upper(patternc) != stringc && Lower(patternc) != stringc)
+						return false;
+				} else {
+					if (patternc != stringc)
+						return false;
+				}
 				break;
 		}
 	}
 }
 
 // IS: функция для внешнего мира, использовать ее
-bool CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath)
+bool CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath, bool ignorecase)
 {
 	if (!pattern || !str)
 		return false;
@@ -271,5 +292,5 @@ bool CmpName(const wchar_t *pattern, const wchar_t *str, bool skippath)
 	if (skippath)
 		str = PointToName(str);
 
-	return CmpName_Body(pattern, str);
+	return CmpName_Body(pattern, str, ignorecase);
 }

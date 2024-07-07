@@ -695,19 +695,25 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 								case 1: // ToDir
 								case 2: // Run-up
 									bool b1, b2;
-									size_t p1 = 0, p2 = 0;
+									size_t p1 = 0, p2;
+									FARString tmp;
 									// directory
 									strStr = CurrentRecord->strExtra;
 									// try get filename from command
 									strStr+= L'\n';
 									b1 = CurrentRecord->strName.Pos(p1, L"./"); // not need ./ from start of command filename
-									b2 = CurrentRecord->strName.Pos(p2, L' '); // assume that in command filename end by first space
+									p2 = b1 ? p1 : -1;
+									do {
+										b2 = CurrentRecord->strName.Pos(p2, L' ', p2+1); // assume that in command filename end by first space
+									} while(b2 && p2>0 && CurrentRecord->strName.SubStr(p2-1,1) == L'\\'); // ignore escaping "\ "
 									if( b1 || b2 )
-										strStr+= CurrentRecord->strName.SubStr(
+										tmp = CurrentRecord->strName.SubStr(
 											!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
 											b2 && p2>p1 ? p2-(b1 ? p1+2 : 0) : -1);
 									else
-										strStr+= CurrentRecord->strName; // all command has not ./ and spaces
+										tmp = CurrentRecord->strName; // all command has not ./ and spaces
+									UnEscapeSpace(tmp);
+									strStr+= tmp;
 									if (i==2) { // Run-up
 										// command to command line
 										strStr+= L'\n';
@@ -847,19 +853,25 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				case KEY_CTRLF10: {
 					if (TypeHistory == HISTORYTYPE_CMD && CurrentRecord && !CurrentRecord->strExtra.IsEmpty() ) {
 						bool b1, b2;
-						size_t p1 = 0, p2 = 0;
+						size_t p1 = 0, p2;
+						FARString tmp;
 						// directory
 						strStr = CurrentRecord->strExtra;
 						// try get filename from command
 						strStr+= L'\n';
 						b1 = CurrentRecord->strName.Pos(p1, L"./"); // not need ./ from start of command filename
-						b2 = CurrentRecord->strName.Pos(p2, L' '); // assume that in command filename end by first space
+						p2 = b1 ? p1 : -1;
+						do {
+							b2 = CurrentRecord->strName.Pos(p2, L' ', p2+1); // assume that in command filename end by first space
+						} while(b2 && p2>0 && CurrentRecord->strName.SubStr(p2-1,1) == L'\\'); // ignore escaping "\ "
 						if( b1 || b2 )
-							strStr+= CurrentRecord->strName.SubStr(
+							tmp = CurrentRecord->strName.SubStr(
 								!b1 || (b2 && p1+2>=p2) ? 0 : p1+2,
 								b2 && p2>p1 ? p2-(b1 ? p1+2 : 0) : -1);
 						else
-							strStr+= CurrentRecord->strName; // all command has not ./ and spaces
+							tmp = CurrentRecord->strName; // all command has not ./ and spaces
+						UnEscapeSpace(tmp);
+						strStr+= tmp;
 						Type = CurrentRecord->Type;
 						return 8; // for command is equivalent to Go To Directory
 					}

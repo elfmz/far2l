@@ -32,8 +32,8 @@ all keyboard modifiers), almost perfect UX;
 
 - **TTY|X**: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
 
-- **TTY**: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the terminal
-emulators, which provide clipboard access and has their advanced keyboard-protocols).
+- **TTY**: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the [terminal
+emulators](#terminals), which provide clipboard access and has their advanced keyboard-protocols).
 
 
 ## Installing, Running
@@ -54,7 +54,7 @@ https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com
 
 <sub>Note: now far2l in official repositories Debian/Ubuntu is only TTY|Xi version with extra dependencies of pair X11-libs.
 It may be not convenient for some servers.
-For servers without X and only terminal/ssh access the pure far2l-TTY version is more suitable
+For servers without X and only terminal/ssh access the plain far2l-TTY version is more suitable
 (binaries or portable see in [Community packages & binaries](#community_bins)).</sub>
 
 #### OSX/MacOS binaries
@@ -272,6 +272,7 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
  * **Visual Studio Code** (required _CMake Tools extension_): open far2l root directory (by default building in subdirectory `_build`; you can change in `.vscode/settings.json`)
 
+<a name="terminals"></a>
 ### Terminals and SSH clients
 Supporting extended far2l keyboard shortcuts and clipboard access
 

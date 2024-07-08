@@ -122,10 +122,11 @@ FARString &Add_PATHEXT(FARString &strDest)
 	return strDest;
 }
 
-void FileFilterParams::SetMask(bool Used, const wchar_t *Mask)
+void FileFilterParams::SetMask(bool Used, const wchar_t *Mask, bool ignorecase)
 {
 	FMask.Used = Used;
 	FMask.strMask = Mask;
+	FMask.ignorecase = ignorecase;
 	/* Обработка %PATHEXT% */
 	FARString strMask = FMask.strMask;
 	size_t pos;
@@ -353,8 +354,8 @@ bool FileFilterParams::FileInFilterImpl(const FARString &strFileName, DWORD dwFi
 	}
 
 	// Режим проверки маски файла включен?
-	if (FMask.Used && !FMask.FilterMask.Compare(strFileName)) {		// Файл не попадает под маску введённую в фильтре?
-		return false;												// Не пропускаем этот файл
+	if (FMask.Used && !FMask.FilterMask.Compare(strFileName, FMask.ignorecase)) {	// Файл не попадает под маску введённую в фильтре?
+		return false;																// Не пропускаем этот файл
 	}
 
 	// Да! Файл выдержал все испытания и будет допущен к использованию

@@ -878,7 +878,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    5,           4,  0,      4,  {},                                  DIF_AUTOMATION,                         Msg::FileFilterMatchMask         },
 		{DI_EDIT,        5,           4,  82,     4,  {(DWORD_PTR)FilterMasksHistoryName}, DIF_HISTORY,                            L""                              },
 
-		{DI_CHECKBOX,    5,           5,  0,      5,  {},                                  0,				                       L"Case sensitive (file masks)"   }, // !! added
+		{DI_CHECKBOX,    5,           5,  0,      5,  {},                                  0,				                       Msg::FileFilterMatchMaskCase		},
 
 		{DI_TEXT,        0,           6,  0,      6,  {},                                  DIF_SEPARATOR,                          L""                              },
 

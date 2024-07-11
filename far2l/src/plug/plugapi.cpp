@@ -2056,6 +2056,16 @@ int WINAPI farStrCmpI(const wchar_t *s1, const wchar_t *s2)
 	return StrCmpI(s1, s2);
 }
 
+int WINAPI farStrCmpN(const wchar_t *s1, const wchar_t *s2, int n)
+{
+	return StrCmpN(s1, s2, n);
+}
+
+int WINAPI farStrCmp(const wchar_t *s1, const wchar_t *s2)
+{
+	return StrCmp(s1, s2);
+}
+
 int WINAPI farIsLower(wchar_t Ch)
 {
 	return IsLower(Ch);

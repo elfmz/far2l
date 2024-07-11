@@ -128,9 +128,9 @@ bool FileMasksWithExclude::Set(const wchar_t *masks, DWORD Flags)
 	Возвращает TRUE в случае успеха.
 	Путь к файлу в FileName НЕ игнорируется
 */
-bool FileMasksWithExclude::Compare(const wchar_t *FileName) const
+bool FileMasksWithExclude::Compare(const wchar_t *FileName, bool ignorecase) const
 {
-	return (Include.Compare(FileName) && !Exclude.Compare(FileName));
+	return (Include.Compare(FileName, ignorecase) && !Exclude.Compare(FileName, ignorecase));
 }
 
 bool FileMasksWithExclude::IsEmpty() const

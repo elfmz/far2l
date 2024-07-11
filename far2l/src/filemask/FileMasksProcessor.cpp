@@ -94,7 +94,7 @@ bool FileMasksProcessor::IsEmpty() const
 	Возвращает TRUE в случае успеха.
 	Путь к файлу в FileName НЕ игнорируется
 */
-bool FileMasksProcessor::Compare(const wchar_t *FileName) const
+bool FileMasksProcessor::Compare(const wchar_t *FileName, bool ignorecase) const
 {
 	if (re) {
 		StackHeapArray<RegExpMatch> m(n);
@@ -105,7 +105,7 @@ bool FileMasksProcessor::Compare(const wchar_t *FileName) const
 	const wchar_t *MaskPtr;		// указатель на текущую маску в списке
 	for (size_t MI = 0; nullptr != (MaskPtr = Masks.Get(MI)); ++MI) {
 		// SkipPath=FALSE, т.к. в CFileMask вызывается PointToName
-		if (CmpName(MaskPtr, FileName, false))
+		if (CmpName(MaskPtr, FileName, false, ignorecase))
 			return true;
 	}
 

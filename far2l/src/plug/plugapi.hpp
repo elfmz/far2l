@@ -56,6 +56,8 @@ wchar_t WINAPI farUpper(wchar_t Ch);
 wchar_t WINAPI farLower(wchar_t Ch);
 int WINAPI farStrCmpNI(const wchar_t *s1, const wchar_t *s2, int n);
 int WINAPI farStrCmpI(const wchar_t *s1, const wchar_t *s2);
+int WINAPI farStrCmpN(const wchar_t *s1, const wchar_t *s2, int n);
+int WINAPI farStrCmp(const wchar_t *s1, const wchar_t *s2);
 int WINAPI farIsLower(wchar_t Ch);
 int WINAPI farIsUpper(wchar_t Ch);
 int WINAPI farIsAlpha(wchar_t Ch);

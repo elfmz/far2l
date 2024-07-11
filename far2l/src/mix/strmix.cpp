@@ -192,7 +192,7 @@ FARString &EscapeSpace(FARString &strStr)
 static FARString unEscapeSpace(const wchar_t *str)
 {
 	if (*str == L'\0')
-		return "''";
+		return "";
 	FARString result;
 	for (const wchar_t *cur = str; *cur; ++cur) {
 		if (*cur == L'\\' && *(cur+1) != L'\\')

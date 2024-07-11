@@ -88,7 +88,7 @@ private:
 		bool Used;
 		FARString strMask;
 		CFileMask FilterMask;	// Хранилище скомпилированной маски.
-		bool ignorecase;
+		bool IgnoreCase;
 	} FMask;
 
 	struct
@@ -154,6 +154,7 @@ public:
 
 	const wchar_t *GetTitle() const;
 	bool GetMask(const wchar_t **Mask) const;
+	bool GetMaskIgnoreCase() const;
 	bool GetDate(DWORD *DateType, FILETIME *DateAfter, FILETIME *DateBefore, bool *bRelative) const;
 	bool GetSize(const wchar_t **SizeAbove, const wchar_t **SizeBelow) const;
 	bool GetAttr(DWORD *AttrSet, DWORD *AttrClear) const;

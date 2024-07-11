@@ -727,6 +727,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				FarListPos LPos = {0, 0};
 				SendDlgMessage(hDlg, DM_LISTSETCURPOS, ID_FF_DATETYPE, (LONG_PTR)&LPos);
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_MATCHMASK, BSTATE_CHECKED);
+				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_MATCHCASE, BSTATE_UNCHECKED);
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_MATCHSIZE, BSTATE_UNCHECKED);
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_MATCHDATE, BSTATE_UNCHECKED);
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_FF_DATERELATIVE, BSTATE_UNCHECKED);
@@ -1015,7 +1016,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	FilterDlg[ID_FF_MASKEDIT].strData = FMask;
 
 	if (!FilterDlg[ID_FF_MATCHMASK].Selected)
+	{
+		FilterDlg[ID_FF_MATCHCASE].Flags|= DIF_DISABLE;
 		FilterDlg[ID_FF_MASKEDIT].Flags|= DIF_DISABLE;
+	}
 
 	const wchar_t *SizeAbove, *SizeBelow;
 	FilterDlg[ID_FF_MATCHSIZE].Selected = FF->GetSize(&SizeAbove, &SizeBelow) ? 1 : 0;
@@ -1153,6 +1157,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	Dlg.SetHelp(ColorConfig ? L"HighlightEdit" : L"Filter");
 	Dlg.SetPosition(-1, -1, FilterDlg[ID_FF_TITLE].X2 + 4, FilterDlg[ID_FF_TITLE].Y2 + 2);
 	Dlg.SetAutomation(ID_FF_MATCHMASK, ID_FF_MASKEDIT, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
+	Dlg.SetAutomation(ID_FF_MATCHMASK, ID_FF_MATCHCASE, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 	Dlg.SetAutomation(ID_FF_MATCHSIZE, ID_FF_SIZEFROMSIGN, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 	Dlg.SetAutomation(ID_FF_MATCHSIZE, ID_FF_SIZEFROMEDIT, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 	Dlg.SetAutomation(ID_FF_MATCHSIZE, ID_FF_SIZETOSIGN, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);

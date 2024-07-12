@@ -139,7 +139,7 @@ public:
 	const FileFilterParams &operator=(const FileFilterParams &FF);
 
 	void SetTitle(const wchar_t *Title);
-	void SetMask(bool Used, const wchar_t *Mask, bool ignorecase = true);
+	void SetMask(bool Used, const wchar_t *Mask, bool IgnoreCase = true);
 	void SetDate(bool Used, DWORD DateType, FILETIME DateAfter, FILETIME DateBefore, bool bRelative);
 	void SetSize(bool Used, const wchar_t *SizeAbove, const wchar_t *SizeBelow);
 	void SetAttr(bool Used, DWORD AttrSet, DWORD AttrClear);

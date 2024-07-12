@@ -122,11 +122,11 @@ FARString &Add_PATHEXT(FARString &strDest)
 	return strDest;
 }
 
-void FileFilterParams::SetMask(bool Used, const wchar_t *Mask, bool ignorecase)
+void FileFilterParams::SetMask(bool Used, const wchar_t *Mask, bool IgnoreCase)
 {
 	FMask.Used = Used;
 	FMask.strMask = Mask;
-	FMask.IgnoreCase = ignorecase;
+	FMask.IgnoreCase = IgnoreCase;
 	/* Обработка %PATHEXT% */
 	FARString strMask = FMask.strMask;
 	size_t pos;

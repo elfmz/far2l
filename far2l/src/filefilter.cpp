@@ -463,14 +463,16 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 				strMask2 = FMask;
 				Unquote(strMask2);
 
-				if (StrCmpI(strMask1, strMask2) < 1)
+				// if (StrCmpI(strMask1, strMask2) < 1)
+				if (StrCmp(strMask1, strMask2) < 1)
 					break;
 
 				j++;
 			}
 
 			if (CurFilterData) {
-				if (!StrCmpI(Mask, FMask)) {
+				// if (!StrCmpI(Mask, FMask)) {
+				if (!StrCmp(Mask, FMask)) {
 					if (!Check) {
 						bool bCheckedNowhere = true;
 
@@ -897,5 +899,6 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr, const wchar_t *FileName, DWOR
 
 int _cdecl ExtSort(const void *el1, const void *el2)
 {
-	return StrCmpI((const wchar_t *)el1, (const wchar_t *)el2);
+	// return StrCmpI((const wchar_t *)el1, (const wchar_t *)el2);
+	return StrCmp((const wchar_t *)el1, (const wchar_t *)el2);
 }

@@ -203,24 +203,29 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	}
 
 	if (format==CF_UNICODETEXT) {
-		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+
 		wxString wx_str((const wchar_t *)data);
+
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
+
+		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		const std::string &tmp = wx_str.ToStdString();
 		cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
 		g_wx_data_to_clipboard->Add(cdo);
 
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
 #endif
 
 	} else if (format==CF_TEXT) {
+
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
+
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
 		g_wx_data_to_clipboard->Add(cdo);
 
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
 #endif

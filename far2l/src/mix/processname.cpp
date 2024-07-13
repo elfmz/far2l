@@ -177,7 +177,7 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignore
 			используем инлайновые версии
 		*/
 		wchar_t rangec;
-		int match;
+		bool match;
 		wchar_t stringc = *str;
 		wchar_t patternc = *pattern++;
 
@@ -234,14 +234,19 @@ static bool CmpName_Body(const wchar_t *pattern, const wchar_t *str, bool ignore
 				}
 
 				if (*pattern && *(pattern + 1) == L']') {
-					if (*pattern != *str)
-						return false;
+					if (ignorecase) {
+						if (Upper(*pattern) != Upper(*str))
+							return false;
+					} else {
+						if (*pattern != *str)
+							return false;
+					}
 
 					pattern+= 2;
 					break;
 				}
 
-				match = 0;
+				match = false;
 
 				while ((rangec = *pattern++) != 0) {
 					if (rangec == L']') {

@@ -2321,6 +2321,8 @@ static bool panelselectFunc(const TMacroFunction *)
 		if (Mode == 2 || Mode == 3) {
 			FARString strStr = ValItems.s();
 			ReplaceStrings(strStr, L"\r\n", L";");
+			ReplaceStrings(strStr, L"\r", L";");
+			ReplaceStrings(strStr, L"\n", L";");
 			ValItems = strStr.CPtr();
 		}
 

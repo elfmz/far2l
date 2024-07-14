@@ -14,7 +14,7 @@
 | [x] Enable desktop notifications                           |
 | [x] <ENTER> to execute files remotely when possible        |
 | [x] Smart symlinks copying                                 |
-| [ ] Copy attributes that overrides umask                   |
+| Use of chmod:                    [COMBOBOX               ] |
 | [ ] Remember working directory in site settings            |
 | Connections pool expiration (seconds):               [   ] |
 |------------------------------------------------------------|
@@ -57,15 +57,21 @@ class ConfigurePlugin : protected BaseDialog
 	int _i_enable_desktop_notifications = -1;
 	int _i_enter_exec_remotely = -1;
 	int _i_smart_symlinks_copy = -1;
-	int _i_umask_override = -1;
+	int _i_use_of_chmod = -1;
 	int _i_remember_directory = -1;
 	int _i_conn_pool_expiration = -1;
 
 	int _i_ok = -1, _i_cancel = -1;
 
+	FarListWrapper _di_use_of_chmod;
+
 public:
 	ConfigurePlugin()
 	{
+		_di_use_of_chmod.Add(MUseOfChmod_Auto);
+		_di_use_of_chmod.Add(MUseOfChmod_Always);
+		_di_use_of_chmod.Add(MUseOfChmod_Never);
+
 		_di.SetBoxTitleItem(MPluginOptionsTitle);
 
 		_di.SetLine(2);
@@ -78,7 +84,9 @@ public:
 		_i_smart_symlinks_copy = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSmartSymlinksCopy);
 
 		_di.NextLine();
-		_i_umask_override = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MUMaskOverride);
+		_di.AddAtLine(DI_TEXT, 5,37, 0, MUseOfChmod);
+		_i_use_of_chmod = _di.AddAtLine(DI_COMBOBOX, 38,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		_di[_i_use_of_chmod].ListItems = _di_use_of_chmod.Get();
 
 		_di.NextLine();
 		_i_remember_directory = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MRememberDirectory);
@@ -105,7 +113,7 @@ public:
 		SetCheckedDialogControl( _i_enable_desktop_notifications, G.GetGlobalConfigBool("EnableDesktopNotifications", true) );
 		SetCheckedDialogControl( _i_enter_exec_remotely, G.GetGlobalConfigBool("EnterExecRemotely", true) );
 		SetCheckedDialogControl( _i_smart_symlinks_copy, G.GetGlobalConfigBool("SmartSymlinksCopy", true) );
-		SetCheckedDialogControl( _i_umask_override, G.GetGlobalConfigBool("UMaskOverride", false) );
+		SetDialogListPosition( _i_use_of_chmod, G.GetGlobalConfigInt("UseOfChmod", 0) );
 		SetCheckedDialogControl( _i_remember_directory, G.GetGlobalConfigBool("RememberDirectory", false) );
 		LongLongToDialogControl( _i_conn_pool_expiration, G.GetGlobalConfigInt("ConnectionsPoolExpiration", 30) );
 
@@ -114,7 +122,7 @@ public:
 			gcw.SetBool("EnableDesktopNotifications", IsCheckedDialogControl(_i_enable_desktop_notifications) );
 			gcw.SetBool("EnterExecRemotely", IsCheckedDialogControl(_i_enter_exec_remotely) );
 			gcw.SetBool("SmartSymlinksCopy", IsCheckedDialogControl(_i_smart_symlinks_copy) );
-			gcw.SetBool("UMaskOverride", IsCheckedDialogControl(_i_umask_override) );
+			gcw.SetInt("UseOfChmod", GetDialogListPosition(_i_use_of_chmod));
 			gcw.SetBool("RememberDirectory", IsCheckedDialogControl(_i_remember_directory) );
 			gcw.SetInt("ConnectionsPoolExpiration", LongLongFromDialogControl( _i_conn_pool_expiration) );
 		}

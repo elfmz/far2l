@@ -552,11 +552,11 @@ int FarEditor::editorEvent(int event, void* param)
     int llen = egs.StringLength;
 
     // fills back
-    if (lno == ei.CurLine && showHorizontalCross) {
-      addFARColor(lno, 0, 0, horzCrossColor);  // ei.LeftPos + ei.WindowSizeX
+    if (lno == ei.CurLine && showHorizontalCross){
+      addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, horzCrossColor);
     }
-    else {
-      addFARColor(lno, 0, 0, convert(nullptr));  // ei.LeftPos + ei.WindowSizeX
+    else{
+      addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, convert(nullptr));
     }
 
     if (showVerticalCross) {
@@ -615,8 +615,11 @@ int FarEditor::editorEvent(int event, void* param)
           //
           int lend = l1->end;
 
-          if (lend == -1) {
-            lend = fullBackground ? 0 : llen;  // ei.LeftPos+ei.WindowSizeX
+          if (lend == -1){
+            if (fullBackground) {
+              addFARColor(lno, llen, ei.LeftPos+ei.WindowSizeX * 2, col, false);
+            }
+            lend = llen;
           }
 
           addFARColor(lno, l1->start, lend, col);
@@ -1302,7 +1305,7 @@ bool FarEditor::backDefault(color col)
     return col.cbk == rdBackground->back;
 }
 
-void FarEditor::addFARColor(int lno, int s, int e, color col)
+void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style)
 {
   if (TrueMod) {
     EditorTrueColor ec {};
@@ -1341,11 +1344,13 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
       {
         ec.Base.Color = BACKGROUND_INTENSITY;
       }
-      if (col.style & StyledRegion::RD_UNDERLINE) {
-        ec.Base.Color |= COMMON_LVB_UNDERSCORE;
-      }
-      if (col.style & StyledRegion::RD_STRIKEOUT) {
-        ec.Base.Color |= COMMON_LVB_STRIKEOUT;
+      if (add_style) {
+        if (col.style & StyledRegion::RD_UNDERLINE) {
+          ec.Base.Color |= COMMON_LVB_UNDERSCORE;
+        }
+        if (col.style & StyledRegion::RD_STRIKEOUT) {
+          ec.Base.Color |= COMMON_LVB_STRIKEOUT;
+        }
       }
     }
 
@@ -1370,8 +1375,8 @@ void FarEditor::cleanEditor()
 {
   color col;
   enterHandler();
-  for (int i = 0; i < ei.TotalLines; i++) {
-    addFARColor(i, -1, 0, col);
+  for (int i=0; i<ei.TotalLines; i++){
+    addFARColor(i, -1,0, col);
   }
 }
 

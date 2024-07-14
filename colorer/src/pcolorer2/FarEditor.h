@@ -186,7 +186,7 @@ class FarEditor : public LineSource
   bool foreDefault(color col);
   bool backDefault(color col);
   void showOutliner(Outliner* outliner);
-  void addFARColor(int lno, int s, int e, color col);
+  void addFARColor(int lno, int s, int e, color col, bool add_style = true);
   const wchar_t* GetMsg(int msg);
 };
 #endif

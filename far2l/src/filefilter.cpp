@@ -463,14 +463,16 @@ void FileFilter::ProcessSelection(VMenu *FilterList)
 				strMask2 = FMask;
 				Unquote(strMask2);
 
-				if (StrCmpI(strMask1, strMask2) < 1)
+				// if (StrCmpI(strMask1, strMask2) < 1)
+				if (StrCmp(strMask1, strMask2) < 1)
 					break;
 
 				j++;
 			}
 
 			if (CurFilterData) {
-				if (!StrCmpI(Mask, FMask)) {
+				// if (!StrCmpI(Mask, FMask)) {
+				if (!StrCmp(Mask, FMask)) {
 					if (!Check) {
 						bool bCheckedNowhere = true;
 
@@ -711,7 +713,8 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 			// настройки старых версий фара.
 			NewFilter->SetTitle(strTitle);
 			FARString strMask = cfg_reader.GetString("Mask", L"");
-			NewFilter->SetMask(cfg_reader.GetUInt("UseMask", 1) != 0, strMask);
+			UINT MaskIgnoreCase = cfg_reader.GetUInt("MaskIgnoreCase", 1);
+			NewFilter->SetMask(cfg_reader.GetUInt("UseMask", 1) != 0, strMask, MaskIgnoreCase == 1);
 
 			FILETIME DateAfter, DateBefore;
 			cfg_reader.GetPOD("DateAfter", DateAfter);
@@ -786,6 +789,7 @@ void FileFilter::SaveFilters(ConfigWriter &cfg_writer)
 		const wchar_t *Mask = nullptr;
 		cfg_writer.SetUInt("UseMask", CurFilterData->GetMask(&Mask) ? 1 : 0);
 		cfg_writer.SetString("Mask", Mask);
+		cfg_writer.SetUInt("MaskIgnoreCase", CurFilterData->GetMaskIgnoreCase() ? 1 : 0);
 		DWORD DateType;
 		FILETIME DateAfter, DateBefore;
 		bool bRelative;
@@ -895,5 +899,6 @@ int FileFilter::ParseAndAddMasks(wchar_t **ExtPtr, const wchar_t *FileName, DWOR
 
 int _cdecl ExtSort(const void *el1, const void *el2)
 {
-	return StrCmpI((const wchar_t *)el1, (const wchar_t *)el2);
+	// return StrCmpI((const wchar_t *)el1, (const wchar_t *)el2);
+	return StrCmp((const wchar_t *)el1, (const wchar_t *)el2);
 }

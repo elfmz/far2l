@@ -63,7 +63,7 @@ struct HighlightStrings
 			*MarkCharCursorColor, *MarkCharSelectedCursorColor, *MarkChar, *ContinueProcessing, *UseDate, *DateType, *DateAfter,
 			*DateBefore, *DateRelative, *UseSize, *SizeAbove, *SizeBelow, *HighlightEdit, *HighlightList, *MarkStr, *NormalColorMask,
 			*SelectedColorMask, *CursorColorMask, *SelectedCursorColorMask, *MarkCharNormalColorMask, *MarkCharSelectedColorMask,
-			*MarkCharCursorColorMask, *MarkCharSelectedCursorColorMask;
+			*MarkCharCursorColorMask, *MarkCharSelectedCursorColorMask, *MaskIgnoreCase;
 };
 
 static const HighlightStrings HLS = {"Flags", "UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
@@ -71,7 +71,7 @@ static const HighlightStrings HLS = {"Flags", "UseAttr", "IncludeAttributes", "E
 		"MarkCharSelectedColor", "MarkCharCursorColor","MarkCharSelectedCursorColor", "MarkChar", "ContinueProcessing", "UseDate",
 		"DateType", "DateAfter", "DateBefore", "DateRelative", "UseSize", "SizeAboveS", "SizeBelowS", "HighlightEdit", "HighlightList",
 		"MarkStr", "NormalColorMask", "SelectedColorMask", "CursorColorMask", "SelectedCursorColorMask", "MarkCharNormalColorMask",
-		"MarkCharSelectedColorMask", "MarkCharCursorColorMask", "MarkCharSelectedCursorColorMask"
+		"MarkCharSelectedColorMask", "MarkCharCursorColorMask", "MarkCharSelectedCursorColorMask", "MaskIgnoreCase"
 };
 
 static const char fmtFirstGroup[] = "Group%d";
@@ -197,7 +197,8 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 	if (bSortGroup)
 		HData->SetMask(cfg_reader.GetInt(HLS.UseMask, 1) != 0, Mask);
 	else
-		HData->SetMask(cfg_reader.GetInt(HLS.IgnoreMask, 0) == 0, Mask);
+		HData->SetMask(cfg_reader.GetInt(HLS.IgnoreMask, 0) == 0, Mask,
+					   cfg_reader.GetInt(HLS.MaskIgnoreCase, 1) == 1);
 
 	FILETIME DateAfter{}, DateBefore{};
 	cfg_reader.GetPOD(HLS.DateAfter, DateAfter);
@@ -897,6 +898,7 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 		const wchar_t *Mask = nullptr;
 		cfg_writer.SetInt(HLS.IgnoreMask, (CurHiData->GetMask(&Mask) ? 0 : 1));
 		cfg_writer.SetString(HLS.Mask, Mask);
+		cfg_writer.SetInt(HLS.MaskIgnoreCase, CurHiData->GetMaskIgnoreCase() ? 1 : 0);
 	}
 
 	DWORD DateType;

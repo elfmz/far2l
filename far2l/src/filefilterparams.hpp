@@ -88,6 +88,7 @@ private:
 		bool Used;
 		FARString strMask;
 		CFileMask FilterMask;	// Хранилище скомпилированной маски.
+		bool IgnoreCase;
 	} FMask;
 
 	struct
@@ -138,7 +139,7 @@ public:
 	const FileFilterParams &operator=(const FileFilterParams &FF);
 
 	void SetTitle(const wchar_t *Title);
-	void SetMask(bool Used, const wchar_t *Mask);
+	void SetMask(bool Used, const wchar_t *Mask, bool IgnoreCase = true);
 	void SetDate(bool Used, DWORD DateType, FILETIME DateAfter, FILETIME DateBefore, bool bRelative);
 	void SetSize(bool Used, const wchar_t *SizeAbove, const wchar_t *SizeBelow);
 	void SetAttr(bool Used, DWORD AttrSet, DWORD AttrClear);
@@ -153,6 +154,7 @@ public:
 
 	const wchar_t *GetTitle() const;
 	bool GetMask(const wchar_t **Mask) const;
+	bool GetMaskIgnoreCase() const;
 	bool GetDate(DWORD *DateType, FILETIME *DateAfter, FILETIME *DateBefore, bool *bRelative) const;
 	bool GetSize(const wchar_t **SizeAbove, const wchar_t **SizeBelow) const;
 	bool GetAttr(DWORD *AttrSet, DWORD *AttrClear) const;

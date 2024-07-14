@@ -423,6 +423,21 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 			Info->Flags|= OPIF_COMPAREFATTIME;
 		}
 	}
+	else {
+		// for site connections list don't use current far2l panel modes
+		//  - only name column(s) without dependence on panel Align file extensions
+		static struct PanelMode PanelModesArray[10] = {
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" },
+			{ .ColumnTypes = L"N,N,N", .ColumnWidths = L"0,0,0" },
+			{ .ColumnTypes = L"N,N", .ColumnWidths = L"0,0" },
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" },
+		};
+		Info->PanelModesArray = PanelModesArray;
+		Info->PanelModesNumber = ARRAYSIZE(PanelModesArray);
+	}
 	Info->HostFile = _standalone_config.empty() ? NULL : _standalone_config.c_str();
 	Info->CurDir = _cur_dir;
 	Info->Format = _format;

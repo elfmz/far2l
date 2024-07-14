@@ -62,6 +62,9 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo* fei)
   Info = *fei;
   FSF = *fei->FSF;
   Info.FSF = &FSF;
+
+  editorSet = nullptr;
+  inEventProcess = false;
 }
 
 /**

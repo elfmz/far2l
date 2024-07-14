@@ -22,6 +22,19 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * 7z ANSI-C Decoder
 * utf-cpp by ww898
 
+### UI Backends
+  FAR2L has base UI Backends (see details in build-in help section **UI backends**):
+
+- **GUI** (**WX**): uses wxWidgets, works in graphics mode, ideal UX, requires a lot of X11 dependencies;
+
+- **TTY|Xi**: works in terminal mode, requires a dependency on pair X11 libraries (to access clipboard and to get state of
+all keyboard modifiers), almost perfect UX;
+
+- **TTY|X**: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
+
+- **TTY**: plain terminal mode, no X11 dependencies, UX with some restrictions (works fully when running in the [terminal
+emulators](#terminals), which provide clipboard access and has their advanced keyboard-protocols).
+
 
 ## Installing, Running
 #### Debian/Ubuntu 23.10+ binaries (with TTY X/Xi backends only)
@@ -30,8 +43,19 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 apt-get install far2l
 ```
 
-Under Ubuntu Desktop 23.10 run as
+Only under Ubuntu Desktop 23.10 with Wayland run as
 `far2l --nodetect=xi --ee`
+
+
+<sub>**Debian** has far2 in **sid-unstable** / **13 trixie-testing** / **12 bookworm-backports**; **Ubuntu** from **23.10**.
+Details about versions in the official repositories see in
+https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com/search?keywords=far2l </sub>
+
+
+<sub>Note: now far2l in official repositories Debian/Ubuntu is only TTY|Xi version with extra dependencies of pair X11-libs.
+It may be not convenient for some servers.
+For servers without X and only terminal/ssh access the plain far2l-TTY version is more suitable
+(binaries or portable see in [Community packages & binaries](#community_bins)).</sub>
 
 #### OSX/MacOS binaries
 
@@ -248,6 +272,7 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
  * **CodeLite**: use this guide to setup a project: https://wiki.codelite.org/pmwiki.php/Main/TheCMakePlugin (to avoid polluting your source tree, don't create your workspace inside of the far2l directory)
  * **Visual Studio Code** (required _CMake Tools extension_): open far2l root directory (by default building in subdirectory `_build`; you can change in `.vscode/settings.json`)
 
+<a name="terminals"></a>
 ### Terminals and SSH clients
 Supporting extended far2l keyboard shortcuts and clipboard access
 

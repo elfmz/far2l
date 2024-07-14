@@ -14,7 +14,10 @@
 "Enable desktop &notifications"
 "<&ENTER> to execute files remotely when possible"
 "Smart &symlinks copying"
-"Copy attributes that override &umask"
+"Use of &chmod:"
+"Automatic"
+"Always (umask override)"
+"Never"
 "Remember working &directory in site settings"
 "Connections pool e&xpiration (seconds):"
 

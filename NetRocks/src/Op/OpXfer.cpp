@@ -27,7 +27,7 @@ OpXfer::OpXfer(int op_mode, std::shared_ptr<IHost> &base_host, const std::string
 	_direction(direction),
 	_io_buf(BUFFER_SIZE_INITIAL, BUFFER_SIZE_GRANULARITY, BUFFER_SIZE_LIMIT),
 	_smart_symlinks_copy(G.GetGlobalConfigBool("SmartSymlinksCopy", true)),
-	_umask_override(G.GetGlobalConfigBool("UMaskOverride", false))
+	_use_of_chmod(G.GetGlobalConfigInt("UseOfChmod", 0))
 {
 
 	_enumer = std::make_shared<Enumer>(_entries, _base_host, _base_dir, items, items_count, true, _state, _wea_state);
@@ -451,10 +451,18 @@ void OpXfer::CopyAttributes(const std::string &path_dst, const FileInformation &
 		}
 	);
 
-	if (!_umask_override && ( (info.mode | EXTRA_NEEDED_MODE) == info.mode)) {
-		return;
+	switch (_use_of_chmod) {
+		case 0: // auto
+			if ( (info.mode | EXTRA_NEEDED_MODE) == info.mode) {
+				return;
+			}
+			break;
+		case 1: // always
+			break;
+		case 2: // never
+			return;
 	}
-
+fprintf(stderr, "!!!! copy mode !!!\n");
 	WhatOnErrorWrap<WEK_CHMODE>(_wea_state, _state, _dst_host.get(), path_dst,
 		[&] () mutable
 		{

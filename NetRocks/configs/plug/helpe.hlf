@@ -67,7 +67,7 @@ $^#Configuration menu#
  #Enable desktop notifications# this options controls if NetRocks will use desktop environment notifications on operation completions or errors. Note that behavior of this notifications partially controlled by FAR.
  #<ENTER> to execute files remotely when possible# if enabled then pressing <ENTER> on remote executable file will execute it remotely instead of download and run locally. Note that this option only works for protocols that support it (like SFTP/SCP) and doesn't affect non-executable files, like documents, - they will be still downloaded and opened locally.
  #Smart symlinks copying# if (by default) enabled then NetRocks will translate symlinks paths to refer file that copied in same copy operation, or, if symlinks refer file that is not being copied - then such symlink will be converted to plain file. If disabled then NetRocks will just copy symlinks as is, without any efforts to ensure their validity in the new location.
- #Copy attributes that override umask# enable this options if want to have copied files modes to be exactly same as on source files, even in target system umask prevents some mode bits from being set.
+ #Use of chmod# change this options if want to have copied files modes to be exactly same as on source files, even in target system umask prevents some mode bits from being set. Or if you want to disable using of chmod at all - for example to avoid other inherited ACLs from being overriden by it.
  #Connections pool expiration# when exiting from some remote FS navigation NetRocks will keep actual connection active for specified amount of time and if same server connection will be established before expiration - it will use preserved connection instead of establishing new.
  
  ~Contents~@Contents@

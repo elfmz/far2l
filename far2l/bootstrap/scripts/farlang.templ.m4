@@ -25298,6 +25298,17 @@ FileFilterMatchMask
 "&Маска:"
 "&Маска:"
 
+FileFilterMatchMaskCase
+"Учитывать регистр (маски файлов)"
+"Case sensitive (file masks)"
+"Rozlišovat velikost písmen (masky souborů)"
+"Groß-/Kleinschreibung (dateimaske)"
+"Nagy/kisbetű érzékeny (fájlmaszk)"
+"Uwzględnij wielkość liter (maska pliku)"
+"Sensible min/mayúsc. (máscara de archivo)"
+"Враховувати регістр (масок файлів)"
+"Улічваць рэгістр (масак файлаў)"
+
 FileFilterSize
 "Разм&ер:"
 "Si&ze:"

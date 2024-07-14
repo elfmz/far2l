@@ -616,7 +616,10 @@ int FarEditor::editorEvent(int event, void* param)
           int lend = l1->end;
 
           if (lend == -1){
-            lend = fullBackground ? ei.LeftPos+ei.WindowSizeX : llen;
+            if (fullBackground) {
+              addFARColor(lno, llen, ei.LeftPos+ei.WindowSizeX * 2, col, false);
+            }
+            lend = llen;
           }
 
           addFARColor(lno, l1->start, lend, col);
@@ -1302,7 +1305,7 @@ bool FarEditor::backDefault(color col)
     return col.cbk == rdBackground->back;
 }
 
-void FarEditor::addFARColor(int lno, int s, int e, color col)
+void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style)
 {
   if (TrueMod) {
     EditorTrueColor ec {};
@@ -1341,11 +1344,13 @@ void FarEditor::addFARColor(int lno, int s, int e, color col)
       {
         ec.Base.Color = BACKGROUND_INTENSITY;
       }
-      if (col.style & StyledRegion::RD_UNDERLINE) {
-        ec.Base.Color |= COMMON_LVB_UNDERSCORE;
-      }
-      if (col.style & StyledRegion::RD_STRIKEOUT) {
-        ec.Base.Color |= COMMON_LVB_STRIKEOUT;
+      if (add_style) {
+        if (col.style & StyledRegion::RD_UNDERLINE) {
+          ec.Base.Color |= COMMON_LVB_UNDERSCORE;
+        }
+        if (col.style & StyledRegion::RD_STRIKEOUT) {
+          ec.Base.Color |= COMMON_LVB_STRIKEOUT;
+        }
       }
     }
 
@@ -1371,16 +1376,7 @@ void FarEditor::cleanEditor()
   color col;
   enterHandler();
   for (int i=0; i<ei.TotalLines; i++){
-    EditorGetString egs;
-    egs.StringNumber=i;
-    info->EditorControl(ECTL_GETSTRING,&egs);
-
-    if (ei.LeftPos + ei.WindowSizeX>egs.StringLength){
-      addFARColor(i,0,ei.LeftPos + ei.WindowSizeX,col);
-    }
-    else{
-      addFARColor(i,0,egs.StringLength,col);
-    }
+    addFARColor(i, -1,0, col);
   }
 }
 

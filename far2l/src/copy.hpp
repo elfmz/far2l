@@ -162,6 +162,7 @@ class ShellCopy
 	// в остальных случаях - RP_EXACTCOPY - как у источника
 	ReparsePointTypes RPT;
 	ShellCopyBuffer CopyBuffer;
+	bool CaseInsensitiveFS{false};
 
 	std::vector<FARString> SelectedPanelItems;
 	struct CopiedDirectory
@@ -190,14 +191,15 @@ class ShellCopy
 	int DeleteAfterMove(const wchar_t *Name, DWORD Attr);
 	void SetDestDizPath(const wchar_t *DestPath);
 	int AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcName, const wchar_t *DestName,
-			DWORD DestAttr, int SameName, int Rename, int AskAppend, int &Append, FARString &strNewName,
+			DWORD DestAttr, bool SameName, bool Rename, bool AskAppend, bool &Append, FARString &strNewName,
 			int &RetCode);
 	bool CalcTotalSize();
 
-	COPY_CODES
-	CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
-	COPY_CODES
-	CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
+	bool CmpFullNames(const wchar_t *Src, const wchar_t *Dest) const;
+	bool CmpNames(const wchar_t *Src, const wchar_t *Dest) const;
+
+	COPY_CODES CreateSymLink(const char *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
+	COPY_CODES CopySymLink(const wchar_t *ExistingName, const wchar_t *NewName, const FAR_FIND_DATA_EX &SrcData);
 
 public:
 	ShellCopy(Panel *SrcPanel, int Move, int Link, int CurrentOnly, int Ask, int &ToPlugin,

@@ -67,6 +67,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "panelmix.hpp"
 #include "processname.hpp"
+#include "MountInfo.h"
 #include "mix.hpp"
 #include "DlgGuid.hpp"
 #include "console.hpp"
@@ -482,7 +483,7 @@ static CopyProgress *CP = nullptr;
 	dest=path\filename (раньше возвращала 2 - т.е. сигнал об ошибке).
 */
 
-static int CmpFullNames(const wchar_t *Src, const wchar_t *Dest)
+bool ShellCopy::CmpFullNames(const wchar_t *Src, const wchar_t *Dest) const
 {
 	FARString strSrcFullName, strDestFullName;
 
@@ -492,7 +493,15 @@ static int CmpFullNames(const wchar_t *Src, const wchar_t *Dest)
 	DeleteEndSlash(strSrcFullName);
 	DeleteEndSlash(strDestFullName);
 
-	return !StrCmp(strSrcFullName, strDestFullName);
+	return CmpNames(strSrcFullName, strDestFullName);
+}
+
+bool ShellCopy::CmpNames(const wchar_t *Src, const wchar_t *Dest) const
+{
+	if (CaseInsensitiveFS)
+		return StrCmpI(Src, Dest) == 0;
+
+	return StrCmp(Src, Dest) == 0;
 }
 
 static FARString &GetParentFolder(const wchar_t *Src, FARString &strDest)
@@ -1090,6 +1099,12 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 			|| Opt.Diz.UpdateMode == DIZ_UPDATE_ALWAYS) {
 		CtrlObject->Cp()->LeftPanel->ReadDiz();
 		CtrlObject->Cp()->RightPanel->ReadDiz();
+	}
+
+	if (!DestPlugin) {
+		const auto &fs = MountInfo().GetFileSystem(strSrcDir.GetMB());
+		CaseInsensitiveFS = (fs == "vfat");
+		fprintf(stderr, "Copy source fs='%s' dir='%s'\n", fs.c_str(), strSrcDir.GetMB().c_str());
 	}
 
 	DestPanel->CloseFile();
@@ -1921,7 +1936,8 @@ ShellCopy::CreateSymLink(const char *Target, const wchar_t *NewName, const FAR_F
 		return COPY_SUCCESS;
 
 	if (errno == EEXIST) {
-		int RetCode = 0, Append = 0;
+		int RetCode = 0;
+		bool Append = false;
 		FARString strNewName = NewName, strTarget = Target;
 		if (AskOverwrite(SrcData, strTarget, NewName, 0, 0, 0, 0, Append, strNewName, RetCode)) {
 			if (strNewName == NewName) {
@@ -2071,25 +2087,22 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 			DestAttr = DestData.dwFileAttributes;
 	}
 
-	int SameName = 0, Append = 0;
+	bool SameName = false, Append = false;
 
 	if (DestAttr != INVALID_FILE_ATTRIBUTES && (DestAttr & FILE_ATTRIBUTE_DIRECTORY)) {
-		int CmpCode = CmpFullNames(Src, strDestPath);
-
-		if (CmpCode && SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT && RPT == RP_EXACTCOPY
-				&& Flags.SYMLINK != COPY_SYMLINK_ASFILE) {
-			CmpCode = 0;
+		bool CmpCode = CmpFullNames(Src, strDestPath);
+		if (CmpCode && (SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0
+				&& RPT == RP_EXACTCOPY && Flags.SYMLINK != COPY_SYMLINK_ASFILE) {
+			CmpCode = false;
 		}
 
-		if (CmpCode == 1)		// TODO: error check
-		{
-			SameName = 1;
-
+		if (CmpCode) {	// TODO: error check
+			SameName = true;
 			if (Rename) {
-				CmpCode = !StrCmp(PointToName(Src), PointToName(strDestPath));
+				CmpCode = CmpNames(PointToName(Src), PointToName(strDestPath));
 			}
 
-			if (CmpCode == 1) {
+			if (CmpCode) {
 				SetMessageHelp(L"ErrCopyItSelf");
 				Message(MSG_WARNING, 1, Msg::Error, Msg::CannotCopyFolderToItself1, Src,
 						Msg::CannotCopyFolderToItself2, Msg::Ok);
@@ -2224,22 +2237,21 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 
 	if (DestAttr != INVALID_FILE_ATTRIBUTES && !(DestAttr & FILE_ATTRIBUTE_DIRECTORY)) {
 		if (SrcData.nFileSize == DestData.nFileSize) {
-			int CmpCode = CmpFullNames(Src, strDestPath);
+			bool CmpCode = CmpFullNames(Src, strDestPath);
 
 			if (CmpCode && SrcData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT && RPT == RP_EXACTCOPY
 					&& Flags.SYMLINK != COPY_SYMLINK_ASFILE) {
-				CmpCode = 0;
+				CmpCode = false;
 			}
 
-			if (CmpCode == 1)		// TODO: error check
-			{
-				SameName = 1;
+			if (CmpCode) { // TODO: error check
+				SameName = true;
 
 				if (Rename) {
-					CmpCode = !StrCmp(PointToName(Src), PointToName(strDestPath));
+					CmpCode = CmpNames(PointToName(Src), PointToName(strDestPath));
 				}
 
-				if (CmpCode == 1 && !Rename) {
+				if (CmpCode && !Rename) {
 					Message(MSG_WARNING, 1, Msg::Error, Msg::CannotCopyFileToItself1, Src,
 							Msg::CannotCopyFileToItself2, Msg::Ok);
 					return (COPY_CANCEL);
@@ -2963,7 +2975,7 @@ LONG_PTR WINAPI WarnDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 }
 
 int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcName, const wchar_t *DestName,
-		DWORD DestAttr, int SameName, int Rename, int AskAppend, int &Append, FARString &strNewName,
+		DWORD DestAttr, bool SameName, bool Rename, bool AskAppend, bool &Append, FARString &strNewName,
 		int &RetCode)
 {
 	enum
@@ -2990,7 +3002,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcN
 	FAR_FIND_DATA_EX DestData;
 	DestData.Clear();
 	int DestDataFilled = FALSE;
-	Append = FALSE;
+	Append = false;
 
 	if (DestAttr == INVALID_FILE_ATTRIBUTES)
 		if ((DestAttr = apiGetFileAttributes(DestName)) == INVALID_FILE_ATTRIBUTES)
@@ -3105,7 +3117,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcN
 		case 7:
 			OvrMode = 6;
 		case 6:
-			Append = TRUE;
+			Append = true;
 			break;
 		case -1:
 		case -2:

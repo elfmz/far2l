@@ -208,14 +208,14 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 		wxString wx_str((const wchar_t *)data);
 
-		if (!g_wayland) {
+//		if (!g_wayland) {
 			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
-		} else {
+//		} else {
 			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 			wxScopedCharBuffer utf8_buf = wx_str.utf8_str();
 			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
-		}
+//		}
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
@@ -225,14 +225,14 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 		wxString wx_str = wxString::FromUTF8((const char *)data);
 
-		if (!g_wayland) {
+//		if (!g_wayland) {
 			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
-		} else {
+//		} else {
 			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 			wxScopedCharBuffer utf8_buf = wx_str.utf8_str();
 			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
-		}
+//		}
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);

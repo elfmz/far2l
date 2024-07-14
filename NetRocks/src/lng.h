@@ -16,7 +16,10 @@ enum LanguageID
 	MEnableDesktopNotifications,
 	MEnterExecRemotely,
 	MSmartSymlinksCopy,
-	MUMaskOverride,
+	MUseOfChmod,
+	MUseOfChmod_Auto,
+	MUseOfChmod_Always,
+	MUseOfChmod_Never,
 	MRememberDirectory,
 	MConnPoolExpiration,
 

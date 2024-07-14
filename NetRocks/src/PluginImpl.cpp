@@ -425,13 +425,15 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	}
 	else {
 		// for site connections list don't use current far2l panel modes
-		//  - always only 1 column (name) without dependence on panel Align file extensions
+		//  - only name column(s) without dependence on panel Align file extensions
 		static struct PanelMode PanelModesArray[10] = {
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" },
+			{ .ColumnTypes = L"N,N,N", .ColumnWidths = L"0,0,0" },
+			{ .ColumnTypes = L"N,N", .ColumnWidths = L"0,0" },
 			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
 			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
 			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
-			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
-			{ .ColumnTypes = L"N", .ColumnWidths = L"0" }, { .ColumnTypes = L"N", .ColumnWidths = L"0" },
+			{ .ColumnTypes = L"N", .ColumnWidths = L"0" },
 		};
 		Info->PanelModesArray = PanelModesArray;
 		Info->PanelModesNumber = ARRAYSIZE(PanelModesArray);

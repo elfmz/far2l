@@ -223,11 +223,14 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	} else if (format==CF_TEXT) {
 
+		wxString wx_str = wxString::FromUTF8((const char *)data);
+
 		if (!g_wayland) {
-			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
+			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
 		} else {
 			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-			cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
+			const std::string &tmp = wx_str.ToStdString();
+			cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
 		}
 

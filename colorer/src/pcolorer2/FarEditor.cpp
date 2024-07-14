@@ -552,11 +552,11 @@ int FarEditor::editorEvent(int event, void* param)
     int llen = egs.StringLength;
 
     // fills back
-    if (lno == ei.CurLine && showHorizontalCross) {
-      addFARColor(lno, 0, 0, horzCrossColor);  // ei.LeftPos + ei.WindowSizeX
+    if (lno == ei.CurLine && showHorizontalCross){
+      addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, horzCrossColor);
     }
-    else {
-      addFARColor(lno, 0, 0, convert(nullptr));  // ei.LeftPos + ei.WindowSizeX
+    else{
+      addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, convert(nullptr));
     }
 
     if (showVerticalCross) {
@@ -615,8 +615,8 @@ int FarEditor::editorEvent(int event, void* param)
           //
           int lend = l1->end;
 
-          if (lend == -1) {
-            lend = fullBackground ? 0 : llen;  // ei.LeftPos+ei.WindowSizeX
+          if (lend == -1){
+            lend = fullBackground ? ei.LeftPos+ei.WindowSizeX : llen;
           }
 
           addFARColor(lno, l1->start, lend, col);
@@ -1370,8 +1370,17 @@ void FarEditor::cleanEditor()
 {
   color col;
   enterHandler();
-  for (int i = 0; i < ei.TotalLines; i++) {
-    addFARColor(i, -1, 0, col);
+  for (int i=0; i<ei.TotalLines; i++){
+    EditorGetString egs;
+    egs.StringNumber=i;
+    info->EditorControl(ECTL_GETSTRING,&egs);
+
+    if (ei.LeftPos + ei.WindowSizeX>egs.StringLength){
+      addFARColor(i,0,ei.LeftPos + ei.WindowSizeX,col);
+    }
+    else{
+      addFARColor(i,0,egs.StringLength,col);
+    }
   }
 }
 

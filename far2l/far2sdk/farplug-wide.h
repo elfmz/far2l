@@ -1789,7 +1789,7 @@ struct EditorColor
 	int StringNumber;
 	int ColorItem;
 	int StartPos;
-	int EndPos; // -1 means edge of visible screen part, otherwise wanted edge position
+	int EndPos;
 	int Color;
 };
 

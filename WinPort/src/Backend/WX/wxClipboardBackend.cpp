@@ -212,8 +212,8 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
 		} else {
 			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-			const std::string &tmp = wx_str.ToStdString();
-			cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
+			wxScopedCharBuffer utf8_buf = wx_str.utf8_str();
+			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
 		}
 
@@ -229,8 +229,8 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
 		} else {
 			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-			const std::string &tmp = wx_str.ToStdString();
-			cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
+			wxScopedCharBuffer utf8_buf = wx_str.utf8_str();
+			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
 		}
 

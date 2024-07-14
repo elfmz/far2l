@@ -21,6 +21,8 @@
 #include "CallInMain.h"
 #include "WinPort.h"
 
+extern bool g_wayland;
+
 static class CustomFormats : std::map<UINT, wxDataFormat>
 {
 	UINT _next_index;
@@ -206,13 +208,14 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 		wxString wx_str((const wchar_t *)data);
 
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
-
-		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-		const std::string &tmp = wx_str.ToStdString();
-		cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
-		g_wx_data_to_clipboard->Add(cdo);
-
+		if (!g_wayland) {
+			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
+		} else {
+			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+			const std::string &tmp = wx_str.ToStdString();
+			cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
+			g_wx_data_to_clipboard->Add(cdo);
+		}
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
@@ -220,11 +223,13 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	} else if (format==CF_TEXT) {
 
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
-
-		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-		cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
-		g_wx_data_to_clipboard->Add(cdo);
+		if (!g_wayland) {
+			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
+		} else {
+			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+			cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
+			g_wx_data_to_clipboard->Add(cdo);
+		}
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);

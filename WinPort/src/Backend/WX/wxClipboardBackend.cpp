@@ -111,7 +111,7 @@ void wxClipboardBackend::OnClipboardClose()
 	} else {
 		fprintf(stderr, "CloseClipboard without data\n");
 	}
-	wxTheClipboard->Flush();
+//	wxTheClipboard->Flush();
 /*
 #if defined(__WXGTK__) && defined(__WXGTK3__) && !wxCHECK_VERSION(3, 1, 4)
 	typedef void *(*gtk_clipboard_get_t)(uintptr_t);
@@ -251,7 +251,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		}
 	}
 
-	wxTheClipboard->Flush();
+//	wxTheClipboard->Flush();
 
 	return data;
 }

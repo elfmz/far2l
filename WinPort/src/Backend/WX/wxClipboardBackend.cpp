@@ -216,7 +216,6 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
 		}
-		wxTheClipboard->Flush();
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
@@ -234,7 +233,6 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
 			g_wx_data_to_clipboard->Add(cdo);
 		}
-		wxTheClipboard->Flush();
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
@@ -252,6 +250,8 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			g_wx_data_to_clipboard->Add(dos);
 		}
 	}
+
+	wxTheClipboard->Flush();
 
 	return data;
 }

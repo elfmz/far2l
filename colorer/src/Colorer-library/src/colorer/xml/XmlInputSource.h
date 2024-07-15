@@ -4,8 +4,8 @@
 #include <xercesc/sax/InputSource.hpp>
 #include "colorer/Common.h"
 
-const char16_t kJar[] = u"jar:\0";
-const char16_t kPercent[] = u"%\0";
+XMLCH_LITERAL(kJar, u"jar:\0");
+XMLCH_LITERAL(kPercent, u"%\0");
 
 class XmlInputSource;
 

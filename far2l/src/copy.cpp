@@ -1103,7 +1103,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 
 	if (!DestPlugin) {
 		const auto &fs = MountInfo().GetFileSystem(strSrcDir.GetMB());
-		CaseInsensitiveFS = (fs == "vfat" || fs == "exfat");
+		CaseInsensitiveFS = (fs == "vfat" || fs == "exfat" || fs == "msdos");
 		fprintf(stderr, "Copy source fs='%s' dir='%s'\n", fs.c_str(), strSrcDir.GetMB().c_str());
 	}
 

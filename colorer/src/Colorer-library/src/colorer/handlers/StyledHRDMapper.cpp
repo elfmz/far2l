@@ -115,14 +115,13 @@ void StyledHRDMapper::setRegionDefine(const UnicodeString& name, const RegionDef
     return;
 
   const StyledRegion* new_region = StyledRegion::cast(rd);
-  RegionDefine* rd_new = new StyledRegion(*new_region);
+  auto rd_new = std::make_unique<StyledRegion>(*new_region);
 
   auto rd_old_it = regionDefines.find(name);
   if (rd_old_it == regionDefines.end()) {
-    std::pair<UnicodeString, RegionDefine*> pp(name, rd_new);
-    regionDefines.emplace(pp);
+    regionDefines.emplace(name, std::move(rd_new));
   }
   else {
-    rd_old_it->second.reset(rd_new);
+    rd_old_it->second = std::move(rd_new);
   }
 }

@@ -3,6 +3,7 @@
 
 #include <colorer/strings/legacy/CommonString.h>
 #include <memory>
+#include "../XMLChLiteral.h"
 
 class CString;
 
@@ -17,6 +18,8 @@ class UnicodeString
   UnicodeString(const char* str);
   UnicodeString(const wchar* str);
   UnicodeString(const w2char* str);
+  UnicodeString(const uint16_t* str);
+  UnicodeString(const XMLChLiteral &str);
   UnicodeString(const char* string, int32_t l);
   UnicodeString(const wchar* string, int32_t l);
   UnicodeString(const w2char* string, int32_t l);

@@ -363,7 +363,7 @@ void HrcLibrary::Impl::addPrototypeDetectParam(const xercesc::DOMElement* elem,
   auto weight = elem->getAttribute(hrcFilenameAttrWeight);
   if (!UStr::isEmpty(weight)) {
     try {
-      auto w = xercesc::XMLDouble(weight);
+      xercesc::XMLDouble w(weight);
       if (w.getValue() < 0) {
         logger->warn(
             "Weight must be greater than 0. Current value {0}. Default value will be used. Current "
@@ -401,7 +401,7 @@ void HrcLibrary::Impl::addPrototypeParameters(const xercesc::DOMNode* elem,
         auto& tp =
             current_parse_prototype->pimpl->addParam(UnicodeString(name), UnicodeString(value));
         if (!UStr::isEmpty(descr)) {
-          tp.description.emplace(descr);
+          tp.description.reset(new UnicodeString(descr));
         }
       }
       else {
@@ -816,7 +816,7 @@ const XMLCh* HrcLibrary::Impl::getElementText(const xercesc::DOMElement* blkel) 
 
 void HrcLibrary::Impl::parseSchemeKeywords(SchemeImpl* scheme, const xercesc::DOMElement* elem)
 {
-  XMLCh rg_tmpl[] = u"region\0";
+  XMLCH_ARRAY(rg_tmpl, u"region\0");
   const Region* region = getNCRegion(elem, rg_tmpl);
   if (region == nullptr) {
     logger->error(
@@ -938,7 +938,7 @@ size_t HrcLibrary::Impl::getSchemeKeywordsCount(const xercesc::DOMNode* elem)
 
 void HrcLibrary::Impl::loadRegions(SchemeNodeRegexp* node, const xercesc::DOMElement* el)
 {
-  XMLCh rg_tmpl[] = u"region\0\0";
+  XMLCH_ARRAY(rg_tmpl, u"region\0\0");
 
   if (el) {
     if (node->region == nullptr) {
@@ -959,7 +959,7 @@ void HrcLibrary::Impl::loadRegions(SchemeNodeRegexp* node, const xercesc::DOMEle
 void HrcLibrary::Impl::loadRegions(SchemeNodeBlock* node, const xercesc::DOMElement* el,
                                    bool start_element)
 {
-  XMLCh rg_tmpl[] = u"region\0\0";
+  XMLCH_ARRAY(rg_tmpl, u"region\0\0");
 
   if (el) {
     if (node->region == nullptr) {
@@ -992,7 +992,7 @@ void HrcLibrary::Impl::loadBlockRegions(SchemeNodeBlock* node, const xercesc::DO
 {
   // regions as attributes in main block element
 
-  XMLCh rg_tmpl[] = u"region\0\0\0";
+  XMLCH_ARRAY(rg_tmpl, u"region\0\0\0");
 
   node->region = getNCRegion(el, rg_tmpl);
   for (int i = 0; i < REGIONS_NUM; i++) {

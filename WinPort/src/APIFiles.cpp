@@ -24,8 +24,8 @@ template <class CHAR_T>
 {
 	DWORD rv = 0;
 	switch (unix_mode & S_IFMT) {
+		case 0: case S_IFREG: rv = FILE_ATTRIBUTE_ARCHIVE; break;
 		case S_IFDIR: rv = FILE_ATTRIBUTE_DIRECTORY; break;
-		case S_IFREG: rv = FILE_ATTRIBUTE_ARCHIVE; break;
 #ifndef _WIN32
 		case S_IFLNK: rv = FILE_ATTRIBUTE_REPARSE_POINT; break;
 		case S_IFSOCK: rv = FILE_ATTRIBUTE_DEVICE_SOCK; break;

@@ -109,7 +109,11 @@ void wxClipboardBackend::OnClipboardClose()
 	} else {
 		fprintf(stderr, "CloseClipboard without data\n");
 	}
+
+#if !defined(__WXGTK__)
+	// it never did what supposed to, and under Ubuntu 22.04/Wayland it started to kill gnome-shell
 	wxTheClipboard->Flush();
+#endif
 /*
 #if defined(__WXGTK__) && defined(__WXGTK3__) && !wxCHECK_VERSION(3, 1, 4)
 	typedef void *(*gtk_clipboard_get_t)(uintptr_t);

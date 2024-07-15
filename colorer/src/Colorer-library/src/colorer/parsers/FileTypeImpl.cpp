@@ -53,8 +53,8 @@ std::vector<UnicodeString> FileType::Impl::enumParams() const
 const UnicodeString* FileType::Impl::getParamDescription(const UnicodeString& param_name) const
 {
   auto tp = paramsHash.find(param_name);
-  if (tp != paramsHash.end() && tp->second.description.has_value()) {
-    return &tp->second.description.value();
+  if (tp != paramsHash.end() && tp->second.description) {
+    return tp->second.description.get();
   }
   return nullptr;
 }
@@ -63,8 +63,8 @@ const UnicodeString* FileType::Impl::getParamValue(const UnicodeString& param_na
 {
   auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
-    if (tp->second.user_value && tp->second.user_value.has_value()) {
-      return &tp->second.user_value.value();
+    if (tp->second.user_value && tp->second.user_value) {
+      return tp->second.user_value.get();
     }
     return &tp->second.value;
   }
@@ -99,16 +99,16 @@ const UnicodeString* FileType::Impl::getParamDefaultValue(const UnicodeString& p
 const UnicodeString* FileType::Impl::getParamUserValue(const UnicodeString& param_name) const
 {
   auto tp = paramsHash.find(param_name);
-  if (tp != paramsHash.end() && tp->second.user_value.has_value()) {
-    return &tp->second.user_value.value();
+  if (tp != paramsHash.end() && tp->second.user_value) {
+    return tp->second.user_value.get();
   }
   return nullptr;
 }
 
 TypeParameter& FileType::Impl::addParam(const UnicodeString& param_name, const UnicodeString& value)
 {
-  auto [it, status] = paramsHash.emplace(param_name, TypeParameter(param_name, value));
-  return it->second;
+  auto it = paramsHash.emplace(param_name, TypeParameter(param_name, value));
+  return it.first->second;
 }
 
 void FileType::Impl::setParamValue(const UnicodeString& param_name, const UnicodeString* value)
@@ -116,7 +116,7 @@ void FileType::Impl::setParamValue(const UnicodeString& param_name, const Unicod
   auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
     if (value) {
-      tp->second.user_value.emplace(*value);
+      tp->second.user_value.reset(new UnicodeString(*value));
     }
     else {
       tp->second.user_value.reset();
@@ -156,7 +156,7 @@ void FileType::Impl::setParamDescription(const UnicodeString& param_name,
 {
   auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
-    tp->second.description.emplace(*t_description);
+    tp->second.description.reset(new UnicodeString(*t_description));
   }
   else {
     throw FileTypeException("Don`t set value " + *t_description +

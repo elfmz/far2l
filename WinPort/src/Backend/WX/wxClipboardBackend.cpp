@@ -21,8 +21,6 @@
 #include "CallInMain.h"
 #include "WinPort.h"
 
-extern bool g_wayland;
-
 static class CustomFormats : std::map<UINT, wxDataFormat>
 {
 	UINT _next_index;
@@ -111,7 +109,11 @@ void wxClipboardBackend::OnClipboardClose()
 	} else {
 		fprintf(stderr, "CloseClipboard without data\n");
 	}
-//	wxTheClipboard->Flush();
+
+#if !defined(__WXGTK__)
+	// it never did what supposed to, and under Ubuntu 22.04/Wayland it started to kill gnome-shell
+	wxTheClipboard->Flush();
+#endif
 /*
 #if defined(__WXGTK__) && defined(__WXGTK3__) && !wxCHECK_VERSION(3, 1, 4)
 	typedef void *(*gtk_clipboard_get_t)(uintptr_t);
@@ -208,14 +210,13 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 		wxString wx_str((const wchar_t *)data);
 
-		if (!g_wayland) {
-			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
-		} else {
-			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-			wxScopedCharBuffer utf8_buf = wx_str.utf8_str();
-			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
-			g_wx_data_to_clipboard->Add(cdo);
-		}
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
+
+		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		const std::string &tmp = wx_str.ToStdString();
+		cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
+		g_wx_data_to_clipboard->Add(cdo);
+
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const wchar_t *)data);
@@ -223,16 +224,11 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	} else if (format==CF_TEXT) {
 
-		wxString wx_str = wxString::FromUTF8((const char *)data);
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 
-		if (!g_wayland) {
-			g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
-		} else {
-			wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
-			wxScopedCharBuffer utf8_buf = wx_str.utf8_str();
-			cdo->SetData(utf8_buf.length(), utf8_buf.data()); // not including ending NUL char
-			g_wx_data_to_clipboard->Add(cdo);
-		}
+		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
+		g_wx_data_to_clipboard->Add(cdo);
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
@@ -250,8 +246,6 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			g_wx_data_to_clipboard->Add(dos);
 		}
 	}
-
-//	wxTheClipboard->Flush();
 
 	return data;
 }

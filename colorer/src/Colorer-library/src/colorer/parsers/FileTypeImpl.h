@@ -1,7 +1,6 @@
 #ifndef COLORER_FILETYPEIMPL_H
 #define COLORER_FILETYPEIMPL_H
 
-#include <optional>
 #include <unordered_map>
 #include <vector>
 #include "colorer/FileType.h"
@@ -19,11 +18,11 @@ class TypeParameter
   /* parameter name*/
   UnicodeString name;
   /* parameter description*/
-  std::optional<UnicodeString> description;
+  std::unique_ptr<UnicodeString> description;
   /* default value*/
   UnicodeString value;
   /* user value*/
-  std::optional<UnicodeString> user_value;
+  std::unique_ptr<UnicodeString> user_value;
 };
 
 /**

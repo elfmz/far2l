@@ -8,6 +8,7 @@
 #else
 #include "colorer/strings/legacy/strings.h"
 #endif
+#include "colorer/strings/XMLChLiteral.h"
 
 /*
  Logging

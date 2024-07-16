@@ -31,6 +31,8 @@ UnicodeString::UnicodeString(const char* str) : UnicodeString(str, npos) {}
 UnicodeString::UnicodeString(const wchar* str) : UnicodeString(str, npos) {}
 
 UnicodeString::UnicodeString(const w2char* str) : UnicodeString(str, npos) {}
+UnicodeString::UnicodeString(const uint16_t* str) : UnicodeString((const w2char*)str, npos) {}
+UnicodeString::UnicodeString(const XMLChLiteral &str) : UnicodeString((const w2char*)(const XMLCh *)str, npos) {}
 
 UnicodeString::UnicodeString(const w4char* str) : UnicodeString(str, 0, npos) {}
 

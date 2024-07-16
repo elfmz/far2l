@@ -9,7 +9,8 @@ LocalFileXmlInputSource::LocalFileXmlInputSource(const XMLCh* path, const XMLCh*
   auto upath = UnicodeString(path);
   auto ubase = UnicodeString(base);
 
-  if (UnicodeString full_path; Environment::isRegularFile(&ubase, &upath, full_path)) {
+  UnicodeString full_path;
+  if (Environment::isRegularFile(&ubase, &upath, full_path)) {
     source_path = std::make_unique<UnicodeString>(full_path);
     input_source = std::make_unique<xercesc::LocalFileInputSource>(UStr::to_xmlch(&full_path).get());
     // file is not open yet, only after makeStream

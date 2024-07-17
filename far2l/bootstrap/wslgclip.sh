@@ -14,8 +14,8 @@ get)
 ;;
 set)
     CONTENT=$(cat)
-    echo "$CONTENT" | clip.exe
-    echo "$CONTENT"
+    echo -n "$CONTENT" | clip.exe
+    echo -n "$CONTENT"
 ;;
 "")
     (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)

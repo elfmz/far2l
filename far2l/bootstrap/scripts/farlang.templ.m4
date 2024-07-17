@@ -11932,26 +11932,26 @@ FindFileCodePageBottom
 "Space Ins"
 
 FindFileCaseFileMask
-"Учитывать ре&гистр (маски файлов)"
-"Case &sensitive (file masks)"
-"Rozlišovat &velikost písmen (masky souborů)"
+"Учитывать ре&гистр масок"
+"Case &sensitive file masks"
+"Zvážit &velikost písmen masky"
 "Groß-/Kleinschreibung (&dateimaske)"
 "Nagy/&kisbetű érzékeny (fájlmaszk)"
 "Uwzględnij &wielkość liter (maska pliku)"
 "&Sensible min/mayúsc. (máscara de archivo)"
-"Враховувати ре&гістр (масок файлів)"
-"Улічваць рэ&гістр (масак файлаў)"
+"Враховувати ре&гістр масок"
+"Улічваць рэ&гістр масак"
 
 FindFileCase
-"&Учитывать регистр (текст)"
-"&Case sensitive (text)"
-"Roz&lišovat velikost písmen"
+"&Учитывать регистр текста"
+"&Case sensitive text"
+"Zvážit &velikost písmen textu"
 "Gr&oß-/Kleinschreibung (text)"
 "&Nagy/kisbetű érzékeny"
 "&Uwzględnij wielkość liter"
 "Sensible min/ma&yúsc (texto)"
-"&Враховувати регістр (текст)"
-"&Улічваць рэгістр (тэкст)"
+"&Враховувати регістр тексту"
+"&Улічваць рэгістр тэксту"
 
 FindFileWholeWords
 "Только &целые слова"

@@ -99,3 +99,8 @@ add_custom_command(TARGET bootstrap
     COMMAND "cp" "${CMAKE_CURRENT_SOURCE_DIR}/*.vbs" "${INSTALL_DIR}"
     COMMAND "cp" "${CMAKE_CURRENT_SOURCE_DIR}/*.ini" "${INSTALL_DIR}"
 )
+
+add_custom_command(TARGET bootstrap
+    POST_BUILD
+    COMMAND "cp" "-rf" "${CMAKE_CURRENT_SOURCE_DIR}/unbindkeys" "${INSTALL_DIR}"
+)

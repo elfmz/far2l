@@ -84,8 +84,8 @@ public:
 		_i_smart_symlinks_copy = _di.AddAtLine(DI_CHECKBOX, 5,62, 0, MSmartSymlinksCopy);
 
 		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,37, 0, MUseOfChmod);
-		_i_use_of_chmod = _di.AddAtLine(DI_COMBOBOX, 38,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		_di.AddAtLine(DI_TEXT, 5,35, 0, MUseOfChmod);
+		_i_use_of_chmod = _di.AddAtLine(DI_COMBOBOX, 36,62, DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 		_di[_i_use_of_chmod].ListItems = _di_use_of_chmod.Get();
 
 		_di.NextLine();

@@ -5,20 +5,22 @@ script_path=$(dirname "$(readlink -f "$0")")
 
 case "$1" in
 get)
-    if command -v cscript.exe >/dev/null 2>&1; then
-        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
-    else
-        powershell.exe -Command Get-Clipboard
-    fi
+#    if command -v cscript.exe >/dev/null 2>&1; then
+#        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
+#    else
+#        powershell.exe -Command Get-Clipboard
+#    fi
+
+    #powershell is slower; also problems with non-ascii chars
+	cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
 
 ;;
 set)
-    CONTENT=$(cat)
-    echo -n "$CONTENT" | clip.exe
+    CONTENT="$(cat)"
+    echo -n "$CONTENT" | iconv -f utf-8 -t utf-16le | clip.exe
     echo -n "$CONTENT"
 ;;
 "")
     (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)
 ;;
 esac
-

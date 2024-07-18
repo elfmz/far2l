@@ -10,7 +10,10 @@ get)
 #    else
 #        powershell.exe -Command Get-Clipboard
 #    fi
-    powershell.exe -Command Get-Clipboard
+
+    #powershell is slower; also problems with non-ascii chars
+	cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
+
 ;;
 set)
     CONTENT="$(cat)"

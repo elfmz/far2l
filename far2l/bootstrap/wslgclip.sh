@@ -5,11 +5,12 @@ script_path=$(dirname "$(readlink -f "$0")")
 
 case "$1" in
 get)
-    if command -v cscript.exe >/dev/null 2>&1; then
-        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
-    else
-        powershell.exe -Command Get-Clipboard
-    fi
+#    if command -v cscript.exe >/dev/null 2>&1; then
+#        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
+#    else
+#        powershell.exe -Command Get-Clipboard
+#    fi
+    powershell.exe -Command Get-Clipboard
 ;;
 set)
     CONTENT="$(cat)"

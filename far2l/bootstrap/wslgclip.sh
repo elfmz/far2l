@@ -3,17 +3,16 @@
 
 script_path=$(dirname "$(readlink -f "$0")")
 
+export LANG=C.UTF-8
+
 case "$1" in
 get)
-#    if command -v cscript.exe >/dev/null 2>&1; then
-#        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
-#    else
-#        powershell.exe -Command Get-Clipboard
-#    fi
-
-    #powershell is slower; also problems with non-ascii chars
-	cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
-
+    if command -v cscript.exe >/dev/null 2>&1; then
+        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
+    else
+        powershell.exe -Command Get-Clipboard
+    fi
+    powershell.exe -Command Get-Clipboard
 ;;
 set)
     CONTENT="$(cat)"

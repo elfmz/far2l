@@ -3,16 +3,13 @@
 
 script_path=$(dirname "$(readlink -f "$0")")
 
-export LANG=C.UTF-8
-
 case "$1" in
 get)
     if command -v cscript.exe >/dev/null 2>&1; then
-        cscript.exe //Nologo $(wslpath -w "$script_path"/wslgclip.vbs)
+        cscript.exe //Nologo //u $(wslpath -w "$script_path"/wslgclip.vbs) | iconv -f utf-16le -t utf-8
     else
         powershell.exe -Command Get-Clipboard
     fi
-    powershell.exe -Command Get-Clipboard
 ;;
 set)
     CONTENT="$(cat)"

@@ -5,7 +5,7 @@ script_path=$(dirname "$(readlink -f "$0")")
 
 case "$1" in
 get)
-	powershell.exe -Command "\$OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard"
+	powershell.exe -Command "\$OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard -TextFormatType UnicodeText"
 ;;
 set)
     CONTENT=$(cat)

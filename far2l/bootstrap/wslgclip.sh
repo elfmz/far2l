@@ -10,15 +10,13 @@ get)
     else
         powershell.exe -Command Get-Clipboard
     fi
-
 ;;
 set)
-    CONTENT=$(cat)
-    echo -n "$CONTENT" | clip.exe
+    CONTENT="$(cat)"
+    echo -n "$CONTENT" | iconv -f utf-8 -t utf-16le | clip.exe
     echo -n "$CONTENT"
 ;;
 "")
     (far2l --clipboard=$(readlink -f $0) >/dev/null 2>&1 &)
 ;;
 esac
-

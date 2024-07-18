@@ -1,5 +1,10 @@
 #!/bin/bash
 
+#
+# set far2l friendly color scheme in konsole
+#
+# mkdir -p ~/.local/share/konsole && echo -e "[General]\nName=WhiteOnBlack\nParent=FALLBACK/\n\n[Appearance]\nColorScheme=WhiteOnBlack" > ~/.local/share/konsole/WhiteOnBlack.profile && { test -f ~/.config/konsolerc || echo -e "[Desktop Entry]\nDefaultProfile=WhiteOnBlack.profile" > ~/.config/konsolerc; grep -q 'DefaultProfile=' ~/.config/konsolerc && sed -i 's/^DefaultProfile=.*/DefaultProfile=WhiteOnBlack.profile/' ~/.config/konsolerc || echo -e "[Desktop Entry]\nDefaultProfile=WhiteOnBlack.profile" >> ~/.config/konsolerc; }
+
 file_path="$HOME/.config/kglobalshortcutsrc"
 
 if [ ! -f "$file_path" ]; then

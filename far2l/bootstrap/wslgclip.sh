@@ -5,11 +5,11 @@ script_path=$(dirname "$(readlink -f "$0")")
 
 case "$1" in
 get)
-    powershell.exe -Command Get-Clipboard
+	powershell.exe -Command "\$OutputEncoding = [System.Text.Encoding]::UTF8; Get-Clipboard"
 ;;
 set)
     CONTENT=$(cat)
-    echo -n "$CONTENT" | clip.exe
+    echo -n "$CONTENT" | iconv -f utf-8 -t utf-16le | clip.exe
     echo -n "$CONTENT"
 ;;
 "")

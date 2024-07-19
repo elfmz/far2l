@@ -214,24 +214,45 @@ FilePanels::~FilePanels()
 	RightPanel = nullptr;
 }
 
-void FilePanels::UpdateCmdLineVisibility()
+void FilePanels::UpdateCmdLineVisibility(bool repos)
 {
-	int x1, x2, y1, left_y2, right_y2;
-	LeftPanel->GetPosition(x1, y1, x2, left_y2);
-	RightPanel->GetPosition(x1, y1, x2, right_y2);
-	const bool cmd_line_visible = !LeftPanel->IsVisible() || !RightPanel->IsVisible()
-		|| left_y2 + Opt.ShowKeyBar < ScrY || right_y2 + Opt.ShowKeyBar < ScrY;
-	if (CtrlObject->CmdLine->IsVisible() != cmd_line_visible) {
-		CtrlObject->CmdLine->SetVisible(cmd_line_visible);
-		if (cmd_line_visible) {
+	int left_x1, left_x2, left_y1, left_y2;
+	int right_x1, right_x2, right_y1, right_y2;
+	int cl_x1, cl_x2, cl_y;
+	bool cl_visible = CtrlObject->CmdLine->IsVisible();
+
+	LeftPanel->GetPosition(left_x1, left_y1, left_x2, left_y2);
+	RightPanel->GetPosition(right_x1, right_y1, right_x2, right_y2);
+	CtrlObject->CmdLine->GetPosition(cl_x1, cl_y, cl_x2, cl_y);
+
+	const bool left_overlap = LeftPanel->IsVisible() && left_y2 + Opt.ShowKeyBar >= ScrY;
+	const bool right_overlap = RightPanel->IsVisible() && right_y2 + Opt.ShowKeyBar >= ScrY;
+	const bool new_cl_visible = !left_overlap || !right_overlap;
+
+	if (cl_visible != new_cl_visible) {
+		CtrlObject->CmdLine->SetVisible(new_cl_visible);
+		if (new_cl_visible) {
 			CtrlObject->CmdLine->Redraw();
-		} else {
-			if (LeftPanel->IsVisible()) {
-				LeftPanel->Redraw();
-			}
-			if (RightPanel->IsVisible()) {
-				RightPanel->Redraw();
-			}
+		}
+	}
+
+	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1, new_cl_y = ScrY - (Opt.ShowKeyBar);
+	if (new_cl_visible) {
+		if (left_overlap) {
+			new_cl_x1 = right_x1;
+		} else if (right_overlap) {
+			new_cl_x2 = left_x2 - 1;
+		}
+	}
+	if (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y) {
+		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y, new_cl_x2, new_cl_y);
+	}
+	if (cl_visible != new_cl_visible || new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y) {
+		if (LeftPanel->IsVisible()) {
+			LeftPanel->Redraw();
+		}
+		if (RightPanel->IsVisible()) {
+			RightPanel->Redraw();
 		}
 	}
 }
@@ -264,7 +285,7 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen)
 		RightPanel->SetPosition(ScrX / 2 + 1 - Opt.WidthDecrement, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
 	}
 
-	UpdateCmdLineVisibility();
+	UpdateCmdLineVisibility(true);
 }
 
 void FilePanels::SetScreenPosition()
@@ -274,7 +295,6 @@ void FilePanels::SetScreenPosition()
 	MainKeyBar.SetPosition(0, ScrY, ScrX, ScrY);
 	SetPanelPositions(LeftPanel->IsFullScreen(), RightPanel->IsFullScreen());
 	SetPosition(0, 0, ScrX, ScrY);
-	CtrlObject->CmdLine->SetPosition(0, ScrY - (Opt.ShowKeyBar), ScrX - 1, ScrY - (Opt.ShowKeyBar));
 }
 
 void FilePanels::RedrawKeyBar()

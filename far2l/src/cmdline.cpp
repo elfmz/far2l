@@ -389,7 +389,7 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 int CommandLine::ProcessKey(FarKey Key)
 {
 	switch (Key) {
-		case KEY_MSWHEEL_UP: case KEY_CTRL: case KEY_SHIFT:
+		case KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT:
 			ViewConsoleHistory(NULL, false, true);
 			return TRUE;
 		case KEY_CTRLSHIFTF3: case KEY_F3:

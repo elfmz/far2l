@@ -214,6 +214,28 @@ FilePanels::~FilePanels()
 	RightPanel = nullptr;
 }
 
+void FilePanels::UpdateCmdLineVisibility()
+{
+	int x1, x2, y1, left_y2, right_y2;
+	LeftPanel->GetPosition(x1, y1, x2, left_y2);
+	RightPanel->GetPosition(x1, y1, x2, right_y2);
+	const bool cmd_line_visible = !LeftPanel->IsVisible() || !RightPanel->IsVisible()
+		|| left_y2 + Opt.ShowKeyBar < ScrY || right_y2 + Opt.ShowKeyBar < ScrY;
+	if (CtrlObject->CmdLine->IsVisible() != cmd_line_visible) {
+		CtrlObject->CmdLine->SetVisible(cmd_line_visible);
+		if (cmd_line_visible) {
+			CtrlObject->CmdLine->Redraw();
+		} else {
+			if (LeftPanel->IsVisible()) {
+				LeftPanel->Redraw();
+			}
+			if (RightPanel->IsVisible()) {
+				RightPanel->Redraw();
+			}
+		}
+	}
+}
+
 void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen)
 {
 	if (Opt.WidthDecrement < -(ScrX / 2 - 10))
@@ -222,36 +244,37 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen)
 	if (Opt.WidthDecrement > (ScrX / 2 - 10))
 		Opt.WidthDecrement = (ScrX / 2 - 10);
 
-	Opt.LeftHeightDecrement = Max(0, Min(Opt.LeftHeightDecrement, ScrY - 7));
-	Opt.RightHeightDecrement = Max(0, Min(Opt.RightHeightDecrement, ScrY - 7));
+	Opt.LeftHeightDecrement = Max(-1, Min(Opt.LeftHeightDecrement, ScrY - 7));
+	Opt.RightHeightDecrement = Max(-1, Min(Opt.RightHeightDecrement, ScrY - 7));
+
+	const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement;
+	const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement;
 
 	if (LeftFullScreen) {
-		LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX,
-				ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement);
+		LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
 		LeftPanel->ViewSettings.FullScreen = 1;
 	} else {
-		LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX / 2 - Opt.WidthDecrement,
-				ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement);
+		LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX / 2 - Opt.WidthDecrement, LeftY2);
 	}
 
 	if (RightFullScreen) {
-		RightPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX,
-				ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement);
+		RightPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
 		RightPanel->ViewSettings.FullScreen = 1;
 	} else {
-		RightPanel->SetPosition(ScrX / 2 + 1 - Opt.WidthDecrement, Opt.ShowMenuBar ? 1 : 0, ScrX,
-				ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement);
+		RightPanel->SetPosition(ScrX / 2 + 1 - Opt.WidthDecrement, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
 	}
+
+	UpdateCmdLineVisibility();
 }
 
 void FilePanels::SetScreenPosition()
 {
 	_OT(SysLog(L"[%p] FilePanels::SetScreenPosition() {%d, %d - %d, %d}", this, X1, Y1, X2, Y2));
-	CtrlObject->CmdLine->SetPosition(0, ScrY - (Opt.ShowKeyBar), ScrX - 1, ScrY - (Opt.ShowKeyBar));
 	TopMenuBar.SetPosition(0, 0, ScrX, 0);
 	MainKeyBar.SetPosition(0, ScrY, ScrX, ScrY);
 	SetPanelPositions(LeftPanel->IsFullScreen(), RightPanel->IsFullScreen());
 	SetPosition(0, 0, ScrX, ScrY);
+	CtrlObject->CmdLine->SetPosition(0, ScrY - (Opt.ShowKeyBar), ScrX - 1, ScrY - (Opt.ShowKeyBar));
 }
 
 void FilePanels::RedrawKeyBar()
@@ -367,8 +390,7 @@ int FilePanels::ProcessKey(FarKey Key)
 
 	if ((Key == KEY_CTRLLEFT || Key == KEY_CTRLRIGHT || Key == KEY_CTRLNUMPAD4 || Key == KEY_CTRLNUMPAD6
 				/* || Key==KEY_CTRLUP || Key==KEY_CTRLDOWN || Key==KEY_CTRLNUMPAD8 || Key==KEY_CTRLNUMPAD2 */)
-			&& (CtrlObject->CmdLine->GetLength() > 0
-					|| (!LeftPanel->IsVisible() && !RightPanel->IsVisible()))) {
+			&& (CtrlObject->CmdLine->GetLength() > 0 || (!LeftPanel->IsVisible() && !RightPanel->IsVisible()))) {
 		CtrlObject->CmdLine->ProcessKey(Key);
 		return TRUE;
 	}
@@ -401,7 +423,7 @@ int FilePanels::ProcessKey(FarKey Key)
 
 				LeftPanel->Show();
 			}
-
+			UpdateCmdLineVisibility();
 			Redraw();
 			break;
 		}
@@ -417,7 +439,7 @@ int FilePanels::ProcessKey(FarKey Key)
 
 				RightPanel->Show();
 			}
-
+			UpdateCmdLineVisibility();
 			Redraw();
 			break;
 		}
@@ -508,6 +530,7 @@ int FilePanels::ProcessKey(FarKey Key)
 							RightPanel->SetFocus();
 					}
 				}
+				UpdateCmdLineVisibility();
 			}
 			break;
 		}
@@ -519,7 +542,7 @@ int FilePanels::ProcessKey(FarKey Key)
 					AnotherPanel->Hide();
 				else
 					AnotherPanel->Show();
-
+				UpdateCmdLineVisibility();
 				CtrlObject->CmdLine->Redraw();
 			}
 
@@ -531,9 +554,9 @@ int FilePanels::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_CTRLU: {
-			if (!LeftPanel->IsVisible() && !RightPanel->IsVisible())
+			if (!LeftPanel->IsVisible() && !RightPanel->IsVisible()) {
 				CtrlObject->CmdLine->ProcessKey(Key);
-			else
+			} else
 				SwapPanels();
 
 			break;
@@ -586,11 +609,11 @@ int FilePanels::ProcessKey(FarKey Key)
 		case KEY_CTRLDOWN:
 		case KEY_CTRLNUMPAD2: {
 			bool Set = false;
-			if (Opt.LeftHeightDecrement > 0) {
+			if (Opt.LeftHeightDecrement >= 0) {
 				Opt.LeftHeightDecrement--;
 				Set = true;
 			}
-			if (Opt.RightHeightDecrement > 0) {
+			if (Opt.RightHeightDecrement >= 0) {
 				Opt.RightHeightDecrement--;
 				Set = true;
 			}
@@ -991,10 +1014,10 @@ void FilePanels::ShowConsoleTitle()
 void FilePanels::ResizeConsole()
 {
 	Frame::ResizeConsole();
-	CtrlObject->CmdLine->ResizeConsole();
 	MainKeyBar.ResizeConsole();
 	TopMenuBar.ResizeConsole();
 	SetScreenPosition();
+	CtrlObject->CmdLine->ResizeConsole();
 	_OT(SysLog(L"[%p] FilePanels::ResizeConsole() {%d, %d - %d, %d}", this, X1, Y1, X2, Y2));
 }
 

@@ -764,6 +764,11 @@ void ConfigOptLoad()
 
 	FileFilter::InitFilter(cfg_reader);
 
+	// avoid negative decrement for now as hiding command line by Ctrl+Down is a new feature and may confuse
+	// some users, so let this state be not persistent for now so such users may recover by simple restart
+	Opt.LeftHeightDecrement = std::max(Opt.LeftHeightDecrement, 0);
+	Opt.RightHeightDecrement = std::max(Opt.RightHeightDecrement, 0);
+
 	g_config_ready = true;
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }

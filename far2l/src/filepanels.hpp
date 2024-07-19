@@ -59,6 +59,7 @@ public:
 public:
 	FilePanels();
 	virtual ~FilePanels();
+	void UpdateCmdLineVisibility();
 
 public:
 	void Init();

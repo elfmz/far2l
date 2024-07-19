@@ -2072,7 +2072,9 @@ int FileList::ProcessKey(FarKey Key)
 
 		default:
 			if (((Key >= KEY_ALT_BASE + 0x01 && Key <= KEY_ALT_BASE + 65535)
-						|| (Key >= KEY_ALTSHIFT_BASE + 0x01 && Key <= KEY_ALTSHIFT_BASE + 65535))
+				|| (Key >= KEY_ALTSHIFT_BASE + 0x01 && Key <= KEY_ALTSHIFT_BASE + 65535)
+				|| (Key >= 0x01 && Key <= 65535 && !CtrlObject->CmdLine->IsVisible())
+				)
 					&& (Key & ~KEY_ALTSHIFT_BASE) != KEY_BS && (Key & ~KEY_ALTSHIFT_BASE) != KEY_TAB
 					&& (Key & ~KEY_ALTSHIFT_BASE) != KEY_ENTER && (Key & ~KEY_ALTSHIFT_BASE) != KEY_ESC
 					&& !IS_KEY_EXTENDED(Key)) {
@@ -2229,6 +2231,7 @@ void FileList::ProcessEnter(bool EnableExec, bool SeparateWindow, bool EnableAss
 	if (CurFile >= ListData.Count())
 		return;
 
+	CmdLineVisibleScope CLVS;
 	SudoClientRegion sdc_rgn;
 
 	CurPtr = ListData[CurFile];

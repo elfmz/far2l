@@ -245,9 +245,12 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 		}
 	}
 	if (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y) {
+		repos = true;
+	}
+	if (repos) {
 		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y, new_cl_x2, new_cl_y);
 	}
-	if (cl_visible != new_cl_visible || new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y) {
+	if (cl_visible != new_cl_visible || repos) {
 		if (LeftPanel->IsVisible()) {
 			LeftPanel->Redraw();
 		}

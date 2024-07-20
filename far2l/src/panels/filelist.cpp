@@ -3315,6 +3315,8 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 							break;
 						}
 					}
+					Opt.SelectFolders = SelectDlg[2].Selected == BSTATE_CHECKED;
+					Opt.PanelCaseSensitiveCompareSelect = SelectDlg[3].Selected == BSTATE_CHECKED;
 				}
 			} else if (Mode == SELECT_ADDMASK || Mode == SELECT_REMOVEMASK || Mode == SELECT_INVERTMASK) {
 				strMask = Mask;
@@ -3358,8 +3360,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					Match = FileMask.Compare(CurPtr->strName,
-											 SelectDlg[3].Selected == BSTATE_UNCHECKED /*Opt.PanelCaseSensitiveCompareSelect*/);
+					Match = FileMask.Compare(CurPtr->strName, Opt.PanelCaseSensitiveCompareSelect);
 				}
 			}
 
@@ -3380,7 +3381,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 						break;
 				}
 
-				if (bUseFilter || !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) || SelectDlg[2].Selected == BSTATE_CHECKED //Opt.SelectFolders
+				if (bUseFilter || !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY) || Opt.SelectFolders
 						|| !Selection || RawSelection || Mode == SELECT_INVERTALL
 						|| Mode == SELECT_INVERTMASK) {
 					Select(CurPtr, Selection);

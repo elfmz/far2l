@@ -229,13 +229,6 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 	const bool right_overlap = RightPanel->IsVisible() && right_y2 + Opt.ShowKeyBar >= ScrY;
 	const bool new_cl_visible = !left_overlap || !right_overlap;
 
-	if (cl_visible != new_cl_visible) {
-		CtrlObject->CmdLine->SetVisible(new_cl_visible);
-		if (new_cl_visible) {
-			CtrlObject->CmdLine->Redraw();
-		}
-	}
-
 	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1, new_cl_y = ScrY - (Opt.ShowKeyBar);
 	if (new_cl_visible) {
 		if (left_overlap) {
@@ -247,10 +240,16 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 	if (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y) {
 		repos = true;
 	}
+	if (cl_visible != new_cl_visible) {
+		CtrlObject->CmdLine->SetVisible(new_cl_visible);
+	}
 	if (repos) {
 		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y, new_cl_x2, new_cl_y);
 	}
 	if (cl_visible != new_cl_visible || repos) {
+		if (new_cl_visible) {
+			CtrlObject->CmdLine->Redraw();
+		}
 		if (LeftPanel->IsVisible()) {
 			LeftPanel->Redraw();
 		}
@@ -664,7 +663,7 @@ int FilePanels::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD2: {
 			int &HeightDecrement =
 					(ActivePanel == LeftPanel) ? Opt.LeftHeightDecrement : Opt.RightHeightDecrement;
-			if (HeightDecrement > 0) {
+			if (HeightDecrement >= 0) {
 				HeightDecrement--;
 				SetScreenPosition();
 				FrameManager->RefreshFrame();

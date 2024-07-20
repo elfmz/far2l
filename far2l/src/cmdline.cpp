@@ -618,14 +618,14 @@ int CommandLine::GetCurDir(FARString &strCurDir)
 
 void CommandLine::SetString(const wchar_t *Str, BOOL Redraw)
 {
-	if (IsVisible()) {
-		LastCmdPartLength = -1;
-		CmdStr.SetString(Str);
-		CmdStr.SetLeftPos(0);
+	if (!IsVisible())
+		return;
 
-		if (Redraw)
-			CmdStr.Show();
-	}
+	LastCmdPartLength = -1;
+	CmdStr.SetString(Str);
+	CmdStr.SetLeftPos(0);
+	if (Redraw)
+		CmdStr.Show();
 }
 
 void CommandLine::ExecString(const wchar_t *Str, bool SeparateWindow, bool DirectRun, bool WaitForIdle,
@@ -639,11 +639,12 @@ void CommandLine::ExecString(const wchar_t *Str, bool SeparateWindow, bool Direc
 
 void CommandLine::InsertString(const wchar_t *Str)
 {
+	if (!IsVisible())
+		return;
+
 	LastCmdPartLength = -1;
-	if (IsVisible()) {
-		CmdStr.InsertString(Str);
-		CmdStr.Show();
-	}
+	CmdStr.InsertString(Str);
+	CmdStr.Show();
 }
 
 int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)

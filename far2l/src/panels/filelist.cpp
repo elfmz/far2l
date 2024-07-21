@@ -3213,14 +3213,15 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CFileMask FileMask;		// Класс для работы с масками
 	const wchar_t *HistoryName = L"Masks";
 	DialogDataEx SelectDlgData[] = {
-		{DI_DOUBLEBOX, 3, 1, 51, 7, {}, 0, L""},
+		{DI_DOUBLEBOX, 3, 1, 51, 8, {}, 0, L""},
 		{DI_EDIT,      5, 2, 49, 2, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY, L""},
 		{DI_CHECKBOX,  5, 3, 49, 3, {(DWORD_PTR)Opt.SelectFolders}, 0, Msg::SelectFolders},
 		{DI_CHECKBOX,  5, 4, 49, 4, {(DWORD_PTR)Opt.PanelCaseSensitiveCompareSelect}, 0, Msg::SelectCase},
-		{DI_TEXT,      0, 5, 0,  5, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 6, 0,  6, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 6, 0,  6, {}, DIF_CENTERGROUP, Msg::SelectFilter},
-		{DI_BUTTON,    0, 6, 0,  6, {}, DIF_CENTERGROUP, Msg::Cancel}
+		{DI_TEXT,      4, 5, 50,  5, {}, DIF_DISABLE | DIF_CENTERTEXT, Msg::SelectNote},
+		{DI_TEXT,      0, 6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::SelectFilter},
+		{DI_BUTTON,    0, 7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
 	MakeDialogItemsEx(SelectDlgData, SelectDlg);
 	FileFilter Filter(this, FFT_SELECT);
@@ -3297,14 +3298,14 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 						Dlg.ClearDone();
 						Dlg.Process();
 
-						if (Dlg.GetExitCode() == 6 && Filter.FilterEdit()) {
+						if (Dlg.GetExitCode() == 7 && Filter.FilterEdit()) {
 							// Рефреш текущему времени для фильтра сразу после выхода из диалога
 							Filter.UpdateCurrentTime();
 							bUseFilter = true;
 							break;
 						}
 
-						if (Dlg.GetExitCode() != 5)
+						if (Dlg.GetExitCode() != 6)
 							return 0;
 
 						strMask = SelectDlg[1].strData;
@@ -3360,7 +3361,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					Match = FileMask.Compare(CurPtr->strName, Opt.PanelCaseSensitiveCompareSelect);
+					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect);
 				}
 			}
 

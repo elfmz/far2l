@@ -9325,15 +9325,15 @@ SelectCase
 "&Улічваць рэгістр"
 
 SelectNote
-"Настройки влияют и на сравнение директорий"
-"Settings affect also Compare folders"
-upd:"Settings affecting also Compare folders"
-upd:"Settings affecting also Compare folders"
-upd:"Settings affecting also Compare folders"
-upd:"Settings affecting also Compare folders"
-upd:"Settings affecting also Compare folders"
-"Опції впливають і на порівняння директорій"
-"Наладкі ўплываюць і на параўнанне дырэкторый"
+"Настройка влияет и на сравнение директорий"
+"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+"Опція впливає і на порівняння директорій"
+"Наладка ўплывае на параўнанне дырэкторый"
 
 SelectFilter
 "&Фильтр"

@@ -94,6 +94,15 @@ CommandLine::~CommandLine()
 		delete BackgroundScreen;
 }
 
+void CommandLine::SetVisible(bool Visible)
+{
+	ScreenObject::SetVisible(Visible);
+	bool CurVisible;
+	DWORD CurSize;
+	GetCursorType(CurVisible, CurSize);
+	SetCursorType(Visible, CurSize);
+}
+
 void CommandLine::SetPersistentBlocks(int Mode)
 {
 	CmdStr.SetPersistentBlocks(Mode);
@@ -116,6 +125,9 @@ void CommandLine::SetAutoComplete(int Mode)
 void CommandLine::DisplayObject()
 {
 	_OT(SysLog(L"[%p] CommandLine::DisplayObject()", this));
+	if (!IsVisible())
+		return;
+
 	FARString strTruncDir;
 	GetPrompt(strTruncDir);
 	TruncPathStr(strTruncDir, (X2 - X1) / 2);
@@ -237,68 +249,233 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 	}
 }
 
-int CommandLine::ProcessKey(FarKey Key)
+void CommandLine::ProcessKey_ClearTerminalHistory()
 {
-	const wchar_t *PStr;
+	if (!Opt.Confirm.ClearVT || Message(MSG_WARNING, 2,
+			Msg::ClearTerminalTitle, Msg::ClearTerminalQuestion, Msg::Ok, Msg::Cancel) == 0) {
+		ClearScreen(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
+		SaveBackground();
+		VTLog::Reset(NULL);
+		ShowBackground();
+		Redraw();
+		//		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
+		CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
+		//		CmdExecute(L"reset", true, false, true, false, false, false);
+	}
+}
+
+void CommandLine::ProcessKey_ShowFolderTree()
+{
+	Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
+	// TODO: здесь можно добавить проверку, что мы в корне диска и отсутствие файла Tree.Far...
 	FARString strStr;
+	FolderTree::Present(strStr, MODALTREE_ACTIVE, TRUE, FALSE);
+	CtrlObject->Cp()->RedrawKeyBar();
 
-	if (Key == KEY_TAB || Key == KEY_SHIFTTAB) {
-		ProcessTabCompletion();
-		return TRUE;
-	}
-
-	if (Key != KEY_NONE)
-		strLastCompletionCmdStr.Clear();
-
-	if (Key == (KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT)) {
-		ViewConsoleHistory(NULL, false, true);
-		return TRUE;
-	}
-
-	if (Key == KEY_CTRLSHIFTF3 || Key == KEY_F3) {
-		ViewConsoleHistory(NULL, false, false);
-		return TRUE;
-	}
-
-	if (Key == KEY_CTRLSHIFTF4 || Key == KEY_F4) {
-		EditConsoleHistory(NULL, false);
-		return TRUE;
-	}
-
-	if (Key == KEY_F8) {
-		if (!Opt.Confirm.ClearVT || Message(MSG_WARNING, 2,
-				Msg::ClearTerminalTitle, Msg::ClearTerminalQuestion, Msg::Ok, Msg::Cancel) == 0) {
-			ClearScreen(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
-			SaveBackground();
-			VTLog::Reset(NULL);
-			ShowBackground();
-			Redraw();
-			//		ShellUpdatePanels(CtrlObject->Cp()->ActivePanel, FALSE);
-			CtrlObject->MainKeyBar->Refresh(Opt.ShowKeyBar);
-
-			//		CmdExecute(L"reset", true, false, true, false, false, false);
+	if (!strStr.IsEmpty()) {
+		ActivePanel->SetCurDir(strStr, TRUE);
+		ActivePanel->Show();
+		if (ActivePanel->GetType() == TREE_PANEL)
+			ActivePanel->ProcessKey(KEY_ENTER);
+	} else {
+		// TODO: ... а здесь проверить факт изменения/появления файла Tree.Far и мы опять же в корне (чтобы лишний раз не апдейтить панель)
+		ActivePanel->Update(UPDATE_KEEP_SELECTION);
+		ActivePanel->Redraw();
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
+		if (AnotherPanel->NeedUpdatePanel(ActivePanel)) {
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);	//|UPDATE_SECONDARY);
+			AnotherPanel->Redraw();
 		}
-		return TRUE;
+	}
+}
+
+void CommandLine::ProcessKey_ShowFolderHistory()
+{
+	FARString strStr;
+	int Type;
+	int SelectType = CtrlObject->FolderHistory->Select(Msg::FolderHistoryTitle, L"HistoryFolders", strStr, Type);
+	/* SelectType =
+		0 - Esc
+		1 - Enter
+		2 - Shift-Enter
+		3 - Ctrl-Enter
+		6 - Ctrl-Shift-Enter - на пассивную панель со сменой позиции
+	*/
+	switch (SelectType) {
+		case 1: case 2: case 6: ChangeDirFromHistory(Type == 1, SelectType, strStr); break;
+		case 3: SetString(strStr); break;
+	}
+}
+
+void CommandLine::ProcessKey_ShowCommandsHistory()
+{
+	FARString strStr;
+	int Type;
+	// $ 19.09.2000 SVS - При выборе из History (по Alt-F8) плагин не получал управление!
+	int SelectType = CtrlObject->CmdHistory->Select(Msg::HistoryTitle, L"History", strStr, Type);
+	// BUGBUG, magic numbers
+	if (SelectType == 8) {
+		size_t p1 = 0;
+		size_t p2 = 0;
+		//fprintf(stderr, "=== Alt-F8: strStr=\"%ls\"\n", strStr.CPtr());
+		if (strStr.Pos(p1, L'\n')) {
+			strStr.Pos(p2, L'\n', p1 + 1);
+			//fprintf(stderr, "=== Alt-F8: p1=%lu p2=%lu\n", p1, p2);
+			ChangeDirFromHistory(Type == 1, 1, strStr.SubStr(0, p1),
+				strStr.SubStr(p1 + 1, p2 > 0 ? p2 - p1 - 1 : -1) );
+			if( p2 > 0 ) {
+				strStr.Remove(0, p2 + 1);
+				SetString(strStr);
+			}
+		} else {
+			ChangeDirFromHistory(Type == 1, 1, strStr);
+		}
+
+	} else if ((SelectType > 0 && SelectType <= 3) || SelectType == 7) {
+		if (SelectType < 3 || SelectType == 7) {
+			CmdStr.DisableAC();
+		}
+		SetString(strStr);
+		if (SelectType < 3 || SelectType == 7) {
+			ProcessKey(SelectType == 7 ? static_cast<int>(KEY_CTRLALTENTER)
+									: (SelectType == 1 ? static_cast<int>(KEY_ENTER)
+														: static_cast<int>(KEY_SHIFTENTER)));
+			CmdStr.RevertAC();
+		}
+	}
+}
+
+int CommandLine::ProcessKey_Enter(FarKey Key)
+{
+	Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
+	FARString strStr;
+	CmdStr.Select(-1, 0);
+	CmdStr.Show();
+	CmdStr.GetString(strStr);
+
+	if (strStr.IsEmpty())
+		return FALSE;
+
+	ActivePanel->SetCurPath();
+
+	FARString strCurDirFromPanel;
+	ActivePanel->GetCurDirPluginAware(strCurDirFromPanel);
+
+	if (!(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTCMDLINE)) {
+		CtrlObject->CmdHistory->AddToHistoryExtra(strStr, strCurDirFromPanel);
 	}
 
-	if ((Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1) && CmdStr.GetCurPos() == CmdStr.GetLength()) {
-		if (LastCmdPartLength == -1)
-			strLastCmdStr = CmdStr.GetStringAddr();
-
-		strStr = strLastCmdStr;
-		int CurCmdPartLength = (int)strStr.GetLength();
-		CtrlObject->CmdHistory->GetSimilar(strStr, LastCmdPartLength);
-
-		if (LastCmdPartLength == -1) {
-			strLastCmdStr = CmdStr.GetStringAddr();
-			LastCmdPartLength = CurCmdPartLength;
-		}
-		CmdStr.DisableAC();
-		CmdStr.SetString(strStr);
-		CmdStr.Select(LastCmdPartLength, static_cast<int>(strStr.GetLength()));
-		CmdStr.RevertAC();
+	Redraw();
+	if ( ProcessFarCommands(strStr.CPtr()) ) {
+		CmdStr.SetString(L"", FALSE);
 		Show();
 		return TRUE;
+	}
+
+	// ProcessOSAliases(strStr);
+
+	if (ActivePanel->ProcessPluginEvent(FE_COMMAND, (void *)strStr.CPtr())) {
+		strCurDir = strCurDirFromPanel;
+		Show();
+		ActivePanel->SetTitle();
+
+	} else {
+		CmdExecute(strStr, Key == KEY_SHIFTENTER || Key == KEY_SHIFTNUMENTER, false, false, false,
+				Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
+	}
+	return TRUE;
+}
+
+int CommandLine::ProcessKey(FarKey Key)
+{
+	switch (Key) {
+		case KEY_MSWHEEL_UP | KEY_CTRL | KEY_SHIFT:
+			ViewConsoleHistory(NULL, false, true);
+			return TRUE;
+		case KEY_CTRLSHIFTF3: case KEY_F3:
+			ViewConsoleHistory(NULL, false, false);
+			return TRUE;
+		case KEY_CTRLSHIFTF4: case KEY_F4:
+			EditConsoleHistory(NULL, false);
+			return TRUE;
+		case KEY_F8:
+			ProcessKey_ClearTerminalHistory();
+			return TRUE;
+		case KEY_F2:
+			UserMenu::Present(false);
+			return TRUE;
+		case KEY_SHIFTF9:
+			ConfigOptSave(true);
+			return TRUE;
+		case KEY_F10:
+			FrameManager->ExitMainLoop(TRUE);
+			return TRUE;
+		case KEY_ALTF10:
+			ProcessKey_ShowFolderTree();
+			return TRUE;
+		case KEY_F11:
+			CtrlObject->Plugins.CommandsMenu(FALSE, FALSE, 0);
+			return TRUE;
+		case KEY_ALTF11:
+			ShowViewEditHistory();
+			CtrlObject->Cp()->Redraw();
+			return TRUE;
+		case KEY_ALTF12:
+			ProcessKey_ShowFolderHistory();
+			return TRUE;
+
+		case KEY_ALTF8:
+			ProcessKey_ShowCommandsHistory();
+			return TRUE;
+	}
+
+	if (!IsVisible())
+		return FALSE;
+
+	return ProcessKeyIfVisible(Key);
+
+}
+
+int CommandLine::ProcessKeyIfVisible(FarKey Key)
+{ // this handles key events only when CmdLine is visible
+	switch (Key) {
+		case KEY_NUMENTER:
+		case KEY_SHIFTNUMENTER:
+		case KEY_ENTER:
+		case KEY_SHIFTENTER:
+		case KEY_CTRLALTENTER:
+		case KEY_CTRLALTNUMENTER:
+			return ProcessKey_Enter(Key);
+
+		case KEY_CTRLEND: case KEY_CTRLNUMPAD1:
+			if (CmdStr.GetCurPos() == CmdStr.GetLength()) {
+				if (LastCmdPartLength == -1)
+					strLastCmdStr = CmdStr.GetStringAddr();
+
+				FARString strStr = strLastCmdStr;
+				int CurCmdPartLength = (int)strStr.GetLength();
+				CtrlObject->CmdHistory->GetSimilar(strStr, LastCmdPartLength);
+
+				if (LastCmdPartLength == -1) {
+					strLastCmdStr = CmdStr.GetStringAddr();
+					LastCmdPartLength = CurCmdPartLength;
+				}
+				CmdStr.DisableAC();
+				CmdStr.SetString(strStr);
+				CmdStr.Select(LastCmdPartLength, static_cast<int>(strStr.GetLength()));
+				CmdStr.RevertAC();
+				Show();
+				return TRUE;
+			}
+			break;
+
+		case KEY_TAB: case KEY_SHIFTTAB:
+			ProcessTabCompletion();
+			return TRUE;
+	}
+
+	if (Key != KEY_NONE) {
+		strLastCompletionCmdStr.Clear();
 	}
 
 	if (Key == KEY_UP || Key == KEY_NUMPAD8) {
@@ -331,6 +508,8 @@ int CommandLine::ProcessKey(FarKey Key)
 		}
 	}
 
+	FARString strStr;
+	const wchar_t *PStr;
 	switch (Key) {
 		case KEY_CTRLE:
 		case KEY_CTRLX:
@@ -354,148 +533,6 @@ int CommandLine::ProcessKey(FarKey Key)
 			}
 
 			SetString(PStr);
-			return TRUE;
-		case KEY_F2: {
-			UserMenu::Present(false);
-			return TRUE;
-		}
-		case KEY_ALTF8: {
-			int Type;
-			// $ 19.09.2000 SVS - При выборе из History (по Alt-F8) плагин не получал управление!
-			int SelectType = CtrlObject->CmdHistory->Select(Msg::HistoryTitle, L"History", strStr, Type);
-			// BUGBUG, magic numbers
-			if (SelectType == 8) {
-				size_t p1 = 0;
-				size_t p2 = 0;
-				//fprintf(stderr, "=== Alt-F8: strStr=\"%ls\"\n", strStr.CPtr());
-				if (strStr.Pos(p1, L'\n')) {
-					strStr.Pos(p2, L'\n', p1 + 1);
-					//fprintf(stderr, "=== Alt-F8: p1=%lu p2=%lu\n", p1, p2);
-					ChangeDirFromHistory(Type == 1, 1, strStr.SubStr(0, p1),
-						strStr.SubStr(p1 + 1, p2 > 0 ? p2 - p1 - 1 : -1) );
-					if( p2 > 0 ) {
-						strStr.Remove(0, p2 + 1);
-						SetString(strStr);
-					}
-				} else {
-					ChangeDirFromHistory(Type == 1, 1, strStr);
-				}
-
-			} else if ((SelectType > 0 && SelectType <= 3) || SelectType == 7) {
-				if (SelectType < 3 || SelectType == 7) {
-					CmdStr.DisableAC();
-				}
-				SetString(strStr);
-
-				if (SelectType < 3 || SelectType == 7) {
-					ProcessKey(SelectType == 7 ? static_cast<int>(KEY_CTRLALTENTER)
-											: (SelectType == 1 ? static_cast<int>(KEY_ENTER)
-																: static_cast<int>(KEY_SHIFTENTER)));
-					CmdStr.RevertAC();
-				}
-			}
-		}
-			return TRUE;
-		case KEY_SHIFTF9:
-			ConfigOptSave(true);
-			return TRUE;
-		case KEY_F10:
-			FrameManager->ExitMainLoop(TRUE);
-			return TRUE;
-		case KEY_ALTF10: {
-			Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
-			{
-				// TODO: здесь можно добавить проверку, что мы в корне диска и отсутствие файла Tree.Far...
-				FolderTree::Present(strStr, MODALTREE_ACTIVE, TRUE, FALSE);
-			}
-			CtrlObject->Cp()->RedrawKeyBar();
-
-			if (!strStr.IsEmpty()) {
-				ActivePanel->SetCurDir(strStr, TRUE);
-				ActivePanel->Show();
-
-				if (ActivePanel->GetType() == TREE_PANEL)
-					ActivePanel->ProcessKey(KEY_ENTER);
-			} else {
-				// TODO: ... а здесь проверить факт изменения/появления файла Tree.Far и мы опять же в корне (чтобы лишний раз не апдейтить панель)
-				ActivePanel->Update(UPDATE_KEEP_SELECTION);
-				ActivePanel->Redraw();
-				Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
-
-				if (AnotherPanel->NeedUpdatePanel(ActivePanel)) {
-					AnotherPanel->Update(UPDATE_KEEP_SELECTION);	//|UPDATE_SECONDARY);
-					AnotherPanel->Redraw();
-				}
-			}
-		}
-			return TRUE;
-		case KEY_F11:
-			CtrlObject->Plugins.CommandsMenu(FALSE, FALSE, 0);
-			return TRUE;
-		case KEY_ALTF11:
-			ShowViewEditHistory();
-			CtrlObject->Cp()->Redraw();
-			return TRUE;
-		case KEY_ALTF12: {
-			int Type;
-			int SelectType = CtrlObject->FolderHistory->Select(Msg::FolderHistoryTitle, L"HistoryFolders",
-					strStr, Type);
-
-			/*
-			SelectType =
-				0 - Esc
-				1 - Enter
-				2 - Shift-Enter
-				3 - Ctrl-Enter
-				6 - Ctrl-Shift-Enter - на пассивную панель со сменой позиции
-			*/
-			if (SelectType == 1 || SelectType == 2 || SelectType == 6) {
-				ChangeDirFromHistory(Type == 1, SelectType, strStr);
-			} else if (SelectType == 3)
-				SetString(strStr);
-		}
-			return TRUE;
-		case KEY_NUMENTER:
-		case KEY_SHIFTNUMENTER:
-		case KEY_ENTER:
-		case KEY_SHIFTENTER:
-		case KEY_CTRLALTENTER:
-		case KEY_CTRLALTNUMENTER: {
-			Panel *ActivePanel = CtrlObject->Cp()->ActivePanel;
-			CmdStr.Select(-1, 0);
-			CmdStr.Show();
-			CmdStr.GetString(strStr);
-
-			if (strStr.IsEmpty())
-				break;
-
-			ActivePanel->SetCurPath();
-
-			FARString strCurDirFromPanel;
-			ActivePanel->GetCurDirPluginAware(strCurDirFromPanel);
-
-			if (!(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTCMDLINE)) {
-				CtrlObject->CmdHistory->AddToHistoryExtra(strStr, strCurDirFromPanel);
-			}
-
-			if ( ProcessFarCommands(strStr.CPtr()) ) {
-				CmdStr.SetString(L"", FALSE);
-				Show();
-				return TRUE;
-			}
-
-			// ProcessOSAliases(strStr);
-
-			if (ActivePanel->ProcessPluginEvent(FE_COMMAND, (void *)strStr.CPtr())) {
-				strCurDir = strCurDirFromPanel;
-				Show();
-				ActivePanel->SetTitle();
-
-			} else {
-				CmdExecute(strStr, Key == KEY_SHIFTENTER || Key == KEY_SHIFTNUMENTER, false, false, false,
-						Key == KEY_CTRLALTENTER || Key == KEY_CTRLALTNUMENTER);
-			}
-		}
 			return TRUE;
 		case KEY_CTRLU:
 			CmdStr.Select(-1, 0);
@@ -581,10 +618,12 @@ int CommandLine::GetCurDir(FARString &strCurDir)
 
 void CommandLine::SetString(const wchar_t *Str, BOOL Redraw)
 {
+	if (!IsVisible())
+		return;
+
 	LastCmdPartLength = -1;
 	CmdStr.SetString(Str);
 	CmdStr.SetLeftPos(0);
-
 	if (Redraw)
 		CmdStr.Show();
 }
@@ -600,6 +639,9 @@ void CommandLine::ExecString(const wchar_t *Str, bool SeparateWindow, bool Direc
 
 void CommandLine::InsertString(const wchar_t *Str)
 {
+	if (!IsVisible())
+		return;
+
 	LastCmdPartLength = -1;
 	CmdStr.InsertString(Str);
 	CmdStr.Show();
@@ -828,6 +870,9 @@ void CommandLine::SaveBackground()
 }
 void CommandLine::ShowBackground()
 {
+	if (!IsVisible())
+		return;
+
 	if (BackgroundScreen) {
 		BackgroundScreen->RestoreArea();
 		fprintf(stderr, "CommandLine::ShowBackground: done\n");
@@ -842,6 +887,12 @@ void CommandLine::CorrectRealScreenCoord()
 	}
 }
 
+void CommandLine::Show()
+{
+	if (IsVisible())
+		ScreenObject::Show();
+}
+
 void CommandLine::ResizeConsole()
 {
 	BackgroundScreen->Resize(ScrX + 1, ScrY + 1, 2, FALSE);
@@ -850,6 +901,9 @@ void CommandLine::ResizeConsole()
 
 void CommandLine::RedrawWithoutComboBoxMark()
 {
+	if (!IsVisible())
+		return;
+
 	Redraw();
 	// erase \x2191 character...
 	DrawComboBoxMark(L' ');
@@ -1119,3 +1173,20 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 
 	return false; // not found any available prefixes
 }
+
+CmdLineVisibleScope::CmdLineVisibleScope()
+{
+	if (CtrlObject && CtrlObject->CmdLine && !CtrlObject->CmdLine->IsVisible()) {
+		CtrlObject->CmdLine->SetVisible(true);
+		CtrlObject->CmdLine->Show();
+	}
+}
+
+CmdLineVisibleScope::~CmdLineVisibleScope()
+{
+	FilePanels *cp = CtrlObject->Cp();
+	if (cp) {
+		cp->UpdateCmdLineVisibility();
+	}
+}
+

@@ -959,6 +959,10 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs);
 	fs =      L"       DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");
 	ListAbout.AddItem(fs);
+	fs =      L"       WSL_DISTRO_NAME: " + (apiGetEnvironmentVariable("WSL_DISTRO_NAME", fs2) ? fs2 : L"");
+	ListAbout.AddItem(fs);
+	fs =      L" WSL2_GUI_APPS_ENABLED: " + (apiGetEnvironmentVariable("WSL2_GUI_APPS_ENABLED", fs2) ? fs2 : L"");
+	ListAbout.AddItem(fs);
 
 	ListAbout.AddItem(L"");
 

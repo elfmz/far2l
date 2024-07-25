@@ -474,6 +474,8 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 
 		if (!pPlugin->HasOpenFilePlugin() && !(pPlugin->HasAnalyse() && pPlugin->HasOpenPlugin()))
 			continue;
+		if ((Type == OFP_EXTRACT && !pPlugin->HasGetFiles()) || (Type == OFP_COMMANDS && !pPlugin->HasProcessHostFile()))
+			continue;
 
 		if (Name && !smm) {
 			try {

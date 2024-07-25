@@ -3292,7 +3292,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				{
 					Dialog Dlg(SelectDlg, ARRAYSIZE(SelectDlg));
 					Dlg.SetHelp(L"SelectFiles");
-					Dlg.SetPosition(-1, -1, 55, 9);
+					Dlg.SetPosition(-1, -1, 55, 10);
 
 					for (;;) {
 						Dlg.ClearDone();

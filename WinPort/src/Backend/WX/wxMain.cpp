@@ -357,6 +357,8 @@ WinPortFrame::WinPortFrame(const wxString& title)
 
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
+	const auto bkclr = g_wx_palette.background[0];
+	SetBackgroundColour(wxColour(bkclr.r, bkclr.g, bkclr.b));
 	Create(NULL, wxID_ANY, title, _win_state.pos, _win_state.size, style);
 	_panel = new WinPortPanel(this, wxPoint(0, 0), GetClientSize());
 	_panel->SetFocus();
@@ -434,6 +436,7 @@ void WinPortFrame::OnEraseBackground(wxEraseEvent &event)
 void WinPortFrame::OnPaint(wxPaintEvent &event)
 {
 	wxPaintDC dc(this);
+	dc.Clear();
 }
 
 void WinPortFrame::OnChar(wxKeyEvent &event)

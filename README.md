@@ -36,6 +36,18 @@ all keyboard modifiers), almost perfect UX;
 emulators](#terminals), which provide clipboard access and has their advanced keyboard-protocols).
 
 
+
+| Mode<br>(UI Backends) | TTY<br>(plain far2l) | TTY\|X | TTY\|Xi | GUI |
+| ---: | --- | --- | --- | --- |
+| **Works:** | in terminal | in terminal | in terminal | in Desktop<br>environment<br><sub>(X11<br>or Wayland<br>or macOS)</sub> |
+| **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |
+| **Dependencies:** | minimal | + libx11 | + libx11, libxi | wxWidgets, GTK |
+| **Keyboard:** | <sub>Typical terminals:<br>**only essential<br>key combinations**<br><br>kitty (putty fork),<br>kitty (*nix one),<br>iTerm2,<br>Windows Terminal,<br>far2l’s VT: **full support**</sub> | <sub>Typical terminals:<br>**only essential<br>key combinations**<br><br>kitty (putty fork),<br>kitty (*nix one),<br>iTerm2,<br>Windows Terminal,<br>far2l’s VT: **full support**</sub> | <sub>Typical terminals:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>kitty (putty fork),<br>kitty (*nix one),<br>iTerm2,<br>Windows Terminal,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
+| **Clipboard<br>access:** | <sub>Typical terminals:<br>via command line<br>tools like xclip<br><br>kitty (*nix one),<br>iTerm2,<br>Windows Terminal:<br>via **OSC52**<br><br>kitty (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>Typical terminals,<br>kitty (*nix one):<br>via **x11 interaction**<br><br>Windows Terminal,<br>iTerm2:<br>via **OSC52**<br><br>kitty (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>Typical terminals,<br>kitty (*nix one):<br>via **x11 interaction**<br><br>Windows Terminal,<br>iTerm2:<br>via **OSC52**<br><br>kitty (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
+| **Typical<br>use case:** | Servers,<br>embedded | Run far2l in<br>favorite terminal<br>but with better UX | Run far2l in<br>favorite terminal<br>but with<br>even better UX | Desktop |
+| **Mandatory:** | yes | no | no | no |
+
+
 ## Installing, Running
 #### Debian/Ubuntu 23.10+ binaries (with TTY X/Xi backends only)
 

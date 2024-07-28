@@ -306,6 +306,10 @@ Supporting extended far2l keyboard shortcuts and clipboard access
    * **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
    * **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
 
+<sub>_Note_: to full transfer extended keyboard shortcuts and the clipboard to the **remote far2l**
+one of the best way to initiate the connection **inside local far2l-GUI**
+(see details in build-in help section **UI backends**).</sub>
+
 ### Useful 3rd-party extras
 
  * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros

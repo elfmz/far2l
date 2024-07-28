@@ -41,11 +41,19 @@ emulators](#terminals), which provide clipboard access and has their advanced ke
 | ---: | --- | --- | --- | --- |
 | **Works:** | in terminal | in terminal | in terminal | in Desktop<br>environment<br><sub>(X11<br>or Wayland<br>or macOS)</sub> |
 | **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |
-| **Dependencies:** | minimal | + libx11 | + libx11, libxi | wxWidgets, GTK |
+| **Dependencies:** | minimal | + libx11 | + libx11, libxi | + wxWidgets, GTK |
 | **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
-| **Typical<br>use case:** | **Servers**,<br>embedded | <sub>Run far2l in<br>favorite terminal<br>but with</sub><br>**better UX** | <sub>Run far2l in<br>favorite terminal<br>but with</sub><br>**even better UX** | **Desktop** |
+| **Typical<br>use case:** | **Servers**,<br>embedded | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**even better UX**</sub> | **Desktop** |
 | **Mandatory:** | yes | no | no | no |
+
+<sub>_Note about use OSC 52 in TTY/TTY|X_:
+to interact with the system clipboard you must **not forget to enable OSC 52**
+in both the **FAR2L settings** (Options->Interface settings->Use OSC52 to set clipboard data,
+which shown in the dialog only if far2l run in TTY/TTY|X mode and all other options for clipboard access are unavailable;
+you can run `far2l --tty --nodetect` to force not use others clipboard options),
+and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 is disabled in some terminals for security reasons;
+OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).</sub>
 
 
 ## Installing, Running

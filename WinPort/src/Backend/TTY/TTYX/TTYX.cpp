@@ -584,6 +584,12 @@ public:
 		}
 #endif
 
+#ifndef TTYXI
+		auto x_keymods = GetKeyModifiers();
+		event.dwControlKeyState|= x_keymods;
+		return;
+#endif
+
 #ifdef TTYXI
 		auto x_keymods = GetKeyModifiers();
 		if (!_xi) {

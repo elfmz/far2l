@@ -181,15 +181,15 @@ when it starts, far2l switches to #TTY|X# without i.
 
  #Special options for configuring FAR2L running in terminal emulators#
     - Menu(#F9#)->Options->Interface settings->#Use OSC52 to set clipboard data#
-(shown in the menu only if FAR2L run in TTY/TTY|X mode and all other options for clipboard access are unavailable).
+(shown in the dialog only if FAR2L run in TTY/TTY|X mode and all other options for clipboard access are unavailable).
 You can run #far2l --tty --nodetect# to force not use others clipboard options.
     - Menu(#F9#)->Options->Interface settings->#Override base colors palette#
-(shown in the menu only if FAR2L run in TTY/TTY|X mode) allows far2l to adjust terminal palette colors.
+(shown in the dialog only if FAR2L run in TTY/TTY|X mode) allows far2l to adjust terminal palette colors.
 If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts sequence in terminal after exit from far2l.
 
 
  #Full-functional work with the system clipboard in a plain terminal version FAR2L TTY#
-    To interact with the system clipboard, you must not forget to enable #OSC 52# in both the #FAR2L settings#
+    To interact with the system clipboard you must not forget to enable #OSC 52# in both the #FAR2L settings#
 (see details above),
 and in #terminal settings# option #OSC 52 must be allowed#
 (by default, OSC 52 is disabled in some terminals for security reasons; OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).

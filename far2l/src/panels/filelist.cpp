@@ -2072,8 +2072,7 @@ int FileList::ProcessKey(FarKey Key)
 
 		default:
 
-			const wchar_t* result = WinPortBackend();
-			if (wcscmp(result, L"TTY") == 0 || wcscmp(result, L"TTY|X") == 0) {
+			if ((Key == L'*') || (Key == L'+') || (Key == L'-')) {
 				FARString TmpStr;
 				CtrlObject->CmdLine->GetString(TmpStr);
 				if (TmpStr.IsEmpty()) {

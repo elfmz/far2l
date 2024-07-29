@@ -315,8 +315,8 @@ void TTYBackend::ReaderLoop()
 		// Also in linux console
 		#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 			if (!_esc_expiration) {
-				unsigned long int leds = 0;
-				if (ioctl(out, KDGETLED, &leds) == 0) {
+				int kd_mode;
+				if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
 					_esc_expiration = 100;
 				}
 			}

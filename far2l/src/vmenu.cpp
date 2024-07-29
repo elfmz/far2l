@@ -943,7 +943,7 @@ int VMenu::ProcessKey(FarKey Key)
 		case KEY_NUMENTER:
 		case KEY_ENTER: {
 			if (!ParentDialog || CheckFlags(VMENU_COMBOBOX)) {
-				if (ItemCanBeEntered(Item[SelectPos]->Flags)) {
+				if (SelectPos < 0 || ItemCanBeEntered(Item[SelectPos]->Flags)) {
 					EndLoop = TRUE;
 					Modal::ExitCode = SelectPos;
 				}

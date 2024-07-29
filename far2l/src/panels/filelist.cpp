@@ -2071,6 +2071,25 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 
 		default:
+
+			const wchar_t* result = WinPortBackend();
+			if (wcscmp(result, L"TTY") == 0 || wcscmp(result, L"TTY|X") == 0) {
+				FARString TmpStr;
+				CtrlObject->CmdLine->GetString(TmpStr);
+				if (TmpStr.IsEmpty()) {
+					if (Key == L'*') {
+						SelectFiles(SELECT_INVERT);
+						return TRUE;
+					} else if (Key == L'+') {
+						SelectFiles(SELECT_ADD);
+						return TRUE;
+					} else if (Key == L'-') {
+						SelectFiles(SELECT_REMOVE);
+						return TRUE;
+					}
+				}
+			}
+
 			if (((Key >= KEY_ALT_BASE + 0x01 && Key <= KEY_ALT_BASE + 65535)
 				|| (Key >= KEY_ALTSHIFT_BASE + 0x01 && Key <= KEY_ALTSHIFT_BASE + 65535)
 				|| (Key >= 0x01 && Key <= 65535 && !CtrlObject->CmdLine->IsVisible())

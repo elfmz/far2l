@@ -312,6 +312,16 @@ void TTYBackend::ReaderLoop()
 			_esc_expiration = 100;
 		}
 
+		// Also in linux console
+		#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+			if (!_esc_expiration) {
+				unsigned long int leds = 0;
+				if (ioctl(out, KDGETLED, &leds) == 0) {
+					_esc_expiration = 100;
+				}
+			}
+		#endif
+
 		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
 			struct timeval tv;
 			tv.tv_sec = _esc_expiration / 1000;

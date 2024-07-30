@@ -591,7 +591,10 @@ int FilePanels::ProcessKey(FarKey Key)
 			панели
 		*/
 		case (KEY_ALT | KEY_TAB): {
-			ActivePanel->ChangeDisk();
+			if (!getenv("DISPLAY") && !getenv("WAYLAND_DISPLAY")) {
+				// for kernel condole only
+				ActivePanel->ChangeDisk();
+			}
 
 			break;
 		}

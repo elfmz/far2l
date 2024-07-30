@@ -176,13 +176,13 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
 
-	if ((_nodetect & NODETECT_W)==0) {
+	if ((_nodetect & NODETECT_W) == 0) {
 		Format(ESC "[?9001h"); // win32-input-mode on
 	}
-	if ((_nodetect & NODETECT_A)==0) {
+	if ((_nodetect & NODETECT_A) == 0) {
 		Format(ESC "[?1337h"); // iTerm2 input mode on
 	}
-	if ((_nodetect & NODETECT_K)==0) {
+	if ((_nodetect & NODETECT_K) == 0) {
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
 	ChangeKeypad(true);
@@ -212,10 +212,16 @@ TTYOutput::~TTYOutput()
 		if (!_kernel_tty) {
 			Format(ESC "[0 q");
 		}
-		Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
+		if ((_nodetect & NODETECT_K) == 0) {
+			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
+		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
-		Format(ESC "[?9001l"); // win32-input-mode off
-		Format(ESC "[?1337l"); // iTerm2 input mode off
+		if ((_nodetect & NODETECT_W) == 0) {
+			Format(ESC "[?9001l"); // win32-input-mode off
+		}
+		if ((_nodetect & NODETECT_A) == 0) {
+			Format(ESC "[?1337l"); // iTerm2 input mode off
+		}
 		TTYBasePalette def_palette;
 		ChangePalette(def_palette);
 		Flush();

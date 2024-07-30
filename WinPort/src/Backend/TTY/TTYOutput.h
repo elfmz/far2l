@@ -39,6 +39,7 @@ class TTYOutput
 
 	int _out;
 	bool _far2l_tty, _norgb, _kernel_tty, _screen_tty, _wezterm;
+	DWORD _nodetect;
 	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
 	DWORD64 _prev_attr{};
@@ -54,7 +55,7 @@ class TTYOutput
 	void WriteUpdatedAttributes(DWORD64 new_attr, bool is_space);
 
 public:
-	TTYOutput(int out, bool far2l_tty, bool norgb);
+	TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect);
 	~TTYOutput();
 
 	void Flush();

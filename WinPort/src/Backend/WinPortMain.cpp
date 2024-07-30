@@ -238,7 +238,7 @@ extern "C" void WinPortHelp()
 	printf("FAR2L backend-specific options:\n");
 	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
 	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
-	printf("\t--nodetect or --nodetect=[f|][x|xi] - don't detect if TTY backend supports FAR2L or X11/Xi extensions\n");
+	printf("\t--nodetect or --nodetect=[x|xi][f][w][a][k] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes\n");
 	printf("\t--norgb - don't use true (24-bit) colors\n");
 	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
 	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
@@ -290,7 +290,7 @@ struct ArgOptions
 			norgb = true;
 
 		} else if (strcmp(a, "--nodetect") == 0) {
-			nodetect = NODETECT_F | NODETECT_X;
+			nodetect = NODETECT_F | NODETECT_X | NODETECT_A | NODETECT_K | NODETECT_W;
 
 		} else if (strstr(a, "--nodetect=") == a) {
 			if(strstr(a+11,"xi")) {
@@ -300,6 +300,15 @@ struct ArgOptions
 			}
 			if(strchr(a+11,'f')) {
 				nodetect |= NODETECT_F;
+			}
+			if(strchr(a+11,'a')) {
+				nodetect |= NODETECT_A;
+			}
+			if(strchr(a+11,'k')) {
+				nodetect |= NODETECT_K;
+			}
+			if(strchr(a+11,'w')) {
+				nodetect |= NODETECT_W;
 			}
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;

@@ -129,12 +129,10 @@ public:
 
 ITTYXGluePtr StartTTYX(const char *full_exe_path, bool allow_xi)
 {
-	/*
 	const char *d = getenv("DISPLAY");
 	if (!d || !*d) {
 		return ITTYXGluePtr();
 	}
-	*/
 
 	try {
 		std::string broker_path = full_exe_path;

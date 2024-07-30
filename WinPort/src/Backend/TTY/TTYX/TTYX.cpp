@@ -438,14 +438,7 @@ public:
 	TTYX(bool allow_xi)
 	{
 		const auto start_time = std::chrono::steady_clock::now();
-
-		// especially for kernel console: DISPLAY var is not set by default,
-		// assuming :0
-		if (!getenv("DISPLAY")) {
-			_display = XOpenDisplay(":0");
-		} else {
-			_display = XOpenDisplay(0);
-		}
+		_display = XOpenDisplay(0);
 		if (!_display)
 			throw std::runtime_error("Cannot open display");
 

@@ -545,7 +545,7 @@ int64_t Edit::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 		case MCODE_V_ITEMCOUNT:
 			return (int64_t)StrSize;
 		case MCODE_V_CURPOS:
-			return (int64_t)(CursorPos + 1);
+			return (int64_t)(CurPos + 1);
 		case MCODE_F_EDITOR_SEL: {
 			int Action = (int)((INT_PTR)vParam);
 

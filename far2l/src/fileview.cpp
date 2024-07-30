@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mix.hpp"
 #include "fileholder.hpp"
 #include "GrepFile.hpp"
+#include "exitcode.hpp"
 
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, int DisableEdit,
 		long ViewStartPos, const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs, UINT aCodePage)
@@ -329,11 +330,19 @@ int FileViewer::ProcessKey(FarKey Key)
 								| (SaveToSaveAs ? FFILEEDIT_SAVETOSAVEAS : 0)
 								| (DisableHistory ? FFILEEDIT_DISABLEHISTORY : 0),
 						-2, static_cast<int>(FilePos), strPluginData);
-				ShellEditor->SetEnableF6(TRUE);
-				/* $ 07.05.2001 DJ сохраняем NamesList */
-				ShellEditor->SetNamesList(View.GetNamesList());
-				FrameManager->DeleteFrame(this);	// Insert уже есть внутри конструктора
-				ShowTime(2);
+				int load = ShellEditor->GetExitCode();
+				if (load == XC_LOADING_INTERRUPTED || load == XC_OPEN_ERROR)
+				{
+					delete ShellEditor;
+				}
+				else
+				{
+					ShellEditor->SetEnableF6(TRUE);
+					/* $ 07.05.2001 DJ сохраняем NamesList */
+					ShellEditor->SetNamesList(View.GetNamesList());
+					FrameManager->DeleteFrame(this);	// Insert уже есть внутри конструктора
+					ShowTime(2);
+				}
 			}
 
 			return TRUE;

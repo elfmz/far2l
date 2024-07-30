@@ -590,6 +590,14 @@ int FilePanels::ProcessKey(FarKey Key)
 			текущим для системы после смены диска может быть каталог и на пассивной
 			панели
 		*/
+		case (KEY_ALT | KEY_TAB): {
+			if (!getenv("DISPLAY") && !getenv("WAYLAND_DISPLAY")) {
+				// for kernel condole only
+				ActivePanel->ChangeDisk();
+			}
+
+			break;
+		}
 		case KEY_ALTF1: {
 			LeftPanel->ChangeDisk();
 

@@ -16,7 +16,9 @@ get)
 #    fi
 ;;
 set)
-    CONTENT="$(cat)"
+    // shell removes tailing newlines. we should take care of it
+    CONTENT=$(cat; echo -n .)
+    CONTENT=${CONTENT%.}
     echo -n "$CONTENT" | iconv -f utf-8 -t utf-16le | clip.exe
     echo -n "$CONTENT"
 ;;

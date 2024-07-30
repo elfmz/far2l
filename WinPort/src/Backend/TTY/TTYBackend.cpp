@@ -314,12 +314,16 @@ void TTYBackend::ReaderLoop()
 
 		// Also in linux console
 		#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
-			if (!_esc_expiration) {
-				int kd_mode;
-				if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
-					_esc_expiration = 100;
+				if (!_esc_expiration) {
+					int kd_mode;
+					#if defined(__linux__)
+					if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
+					#else
+					if (ioctl(_stdin, KDGKBMODE, &kd_mode) == 0) {
+					#endif
+						_esc_expiration = 100;
+					}
 				}
-			}
 		#endif
 
 		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {

@@ -1,7 +1,7 @@
 name: check build
 
 on:
-  # allow manually running worflow, useful for testing branches
+  # allow manually running workflow, useful for testing branches
   workflow_dispatch:
   # run on push in master
   push:
@@ -195,11 +195,12 @@ jobs:
         uses: actions/checkout@v4
   
       - name: Install dependencies
+        # libx11, openssl is already installed
         run: >
           brew install
           uchardet xerces-c wxwidgets
-          libx11 libxi
-          openssl samba libnfs neon libssh
+          libxi
+          samba libnfs neon libssh
           libarchive pcre
 
       - name: Relink 'keg-only' packages

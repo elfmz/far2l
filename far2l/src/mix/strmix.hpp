@@ -135,7 +135,7 @@ inline const wchar_t GetDecimalSeparatorDefault() { return L'.'; };
 inline const wchar_t* GetDecimalSeparatorDefaultStr() { return L"."; };
 
 FARString
-ReplaceBrackets(const FARString &SearchStr, const FARString &ReplaceStr, RegExpMatch *Match, int Count);
+ReplaceBrackets(const wchar_t *SearchStr, const FARString &ReplaceStr, RegExpMatch *Match, int Count);
 
 bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARString &ReplaceStr,
 		int &CurPos, int Position, int Case, int WholeWords, int Reverse, int Regexp, int *SearchLength,

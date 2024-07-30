@@ -174,9 +174,11 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb)
 #endif
 
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
-	Format(ESC "[?9001h"); // win32-input-mode on
-	Format(ESC "[?1337h"); // iTerm2 input mode on
-	Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
+	if (!getenv("FAR2L_NOEXTKB")) {
+		Format(ESC "[?9001h"); // win32-input-mode on
+		Format(ESC "[?1337h"); // iTerm2 input mode on
+		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
+	}
 	ChangeKeypad(true);
 	ChangeMouse(true);
 

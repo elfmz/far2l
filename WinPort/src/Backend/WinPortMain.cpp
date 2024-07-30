@@ -301,6 +301,15 @@ struct ArgOptions
 			if(strchr(a+11,'f')) {
 				nodetect |= NODETECT_F;
 			}
+			if(strchr(a+11,'a')) {
+				nodetect |= NODETECT_A;
+			}
+			if(strchr(a+11,'k')) {
+				nodetect |= NODETECT_K;
+			}
+			if(strchr(a+11,'w')) {
+				nodetect |= NODETECT_W;
+			}
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
 

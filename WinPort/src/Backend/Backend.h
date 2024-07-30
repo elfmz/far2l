@@ -8,13 +8,15 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x09
+#define FAR2L_BACKEND_ABI_VERSION	0x0A
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
 #define NODETECT_X      0x0002
 #define NODETECT_F      0x0004
-
+#define NODETECT_W      0x0008
+#define NODETECT_A      0x0010
+#define NODETECT_K      0x0020
 
 class IConsoleOutputBackend
 {

@@ -14503,7 +14503,7 @@ MenuTogglePanelRight
 MenuChangeDriveRight
 "&Меню перехода             Alt+F2"
 "Lo&cation menu       Alt+F2"
-Z&měnit jednotku          Alt+F2"
+"Z&měnit jednotku          Alt+F2"
 "Laufwerk &wechseln    Alt+F2"
 "Meghajtó&váltás     Alt+F2"
 "Z&mień napęd          Alt+F2"

@@ -4850,7 +4850,7 @@ by manually editing the registry or by using special tools/plugins.
 documentation.
 
     Online documentation:
-    ~https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=en@
+    ~https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=en~@https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=en@
 
 @KeyMacroList
 $ #Макросы: Список установленных макросов#

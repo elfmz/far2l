@@ -4856,7 +4856,7 @@ $ #Макроси: макромова#
  Опис макромови можна знайти у супровідній документації.
 
  Онлайн документація:
- ~https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=uk@
+ ~https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=uk~@https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=uk@
 
 @KeyMacroList
 $ #Макроси: Список встановлених макросів#

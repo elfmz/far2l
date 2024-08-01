@@ -1197,7 +1197,7 @@ $ #Panels: tree panel#
 Within tree mode you may change to a folder quickly and perform folder
 operations.
 
-	!! Not relevant for Linux !!
+	!! Not relevant on Linux !!
 
     FAR2L stores folder tree information in the file named #Tree.Far# at root
 folder of each drive. For read-only drives this information is stored in the
@@ -1240,6 +1240,18 @@ for viewing the folder description file.
 
     A list of possible folder description file names may be defined using
 "Folder description files" command in the ~Options menu~@OptMenu@.
+
+    !! Not relevant on Linux !!
+
+    FAR2L will attempt to determine the type of each of the CD drives available
+in the system. Known types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM,
+DVD-RW and DVD-RAM. This function is available only for users either with
+administrative privileges or all local users, when it's stated explicitly in
+the Local Policy Editor (to do this, run a #secpol.msc# from the command
+prompt, and set the '#Local Policies/Security Options/Devices: Restrict#
+#CD-ROM access to locally logged-on user only#' setting to '#Enabled#')
+    For virtual devices (SUBST-disk) the parameters of the primary disk are
+shown.
 
     See also the list of ~macro keys~@KeyMacroInfoList@, available in the info panel.
 

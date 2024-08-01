@@ -41,11 +41,19 @@ emulators](#terminals), which provide clipboard access and has their advanced ke
 | ---: | --- | --- | --- | --- |
 | **Works:** | in terminal | in terminal | in terminal | in Desktop<br>environment<br><sub>(X11<br>or Wayland<br>or macOS)</sub> |
 | **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |
-| **Dependencies:** | minimal | + libx11 | + libx11, libxi | wxWidgets, GTK |
+| **[Dependencies](#required-dependencies):** | minimal | + libx11 | + libx11, libxi | + wxWidgets, GTK |
 | **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
-| **Typical<br>use case:** | **Servers**,<br>embedded | <sub>Run far2l in<br>favorite terminal<br>but with</sub><br>**better UX** | <sub>Run far2l in<br>favorite terminal<br>but with</sub><br>**even better UX** | **Desktop** |
+| **Typical<br>use case:** | **Servers**,<br>embedded | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
 | **Mandatory:** | yes | no | no | no |
+
+<sub>_Note about use OSC 52 in TTY/TTY|X_:
+to interact with the system clipboard you must **not forget to enable OSC 52**
+in both the **FAR2L settings** (`Options`->`Interface settings`->`Use OSC52 to set clipboard data`,
+which shown in the dialog only if far2l run in TTY/TTY|X mode and all other options for clipboard access are unavailable;
+you can run `far2l --tty --nodetect` to force not use others clipboard options),
+and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 is disabled in some terminals for security reasons;
+OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).</sub>
 
 
 ## Installing, Running
@@ -92,23 +100,23 @@ See also [Community packages & binaries](#community_bins)
 ## Building, Contributing, Hacking
 #### Required dependencies
 
-* libwxgtk3.0-gtk3-dev (or libwxgtk3.2-dev in newer distributions, or libwxgtk3.0-dev in older ones, optional - needed for GUI backend, not needed with -DUSEWX=no)
-* libx11-dev (optional - needed for X11 extension that provides better UX for TTY backend wherever X11 is available)
-* libxi-dev (optional - needed for X11/Xi extension that provides best UX for TTY backend wherever X11 Xi extension is available)
-* libxerces-c-dev (optional - needed for Colorer plugin, not needed with -DCOLORER=no)
-* libuchardet-dev (optional - needed for auto charset detection, not needed with -DUSEUCD=no)
-* libssh-dev (optional - needed for NetRocks/SFTP)
-* libssl-dev (optional - needed for NetRocks/FTPS)
-* libsmbclient-dev (optional - needed for NetRocks/SMB)
-* libnfs-dev (optional - needed for NetRocks/NFS)
-* libneon27-dev (or later, optional - needed for NetRocks/WebDAV)
-* libarchive-dev (optional - needed for better archives support in multiarc)
-* libunrar-dev (optional - needed for RAR archives support in multiarc, see UNRAR command line option)
-* libpcre3-dev (or libpcre2-dev in older distributions, optional - needed for advanced custom archive formats support in multiarc)
-* cmake ( >= 3.2.2 )
-* pkg-config
-* g++
-* git (needed for downloading source code)
+* `libwxgtk3.0-gtk3-dev` (or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones, _optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
+* `libx11-dev` (_optional_ - needed for **X11 extension** that provides better UX for TTY backend wherever X11 is available)
+* `libxi-dev` (_optional_ - needed for **X11/Xi extension** that provides best UX for TTY backend wherever X11 Xi extension is available)
+* `libxerces-c-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
+* `libuchardet-dev` (_optional_ - needed for **auto charset detection**, not needed with `-DUSEUCD=no`)
+* `libssh-dev` (_optional_ - needed for **NetRocks/SFTP**)
+* `libssl-dev` (_optional_ - needed for **NetRocks/FTPS**)
+* `libsmbclient-dev` (_optional_ - needed for **NetRocks/SMB**)
+* `libnfs-dev` (_optional_ - needed for **NetRocks/NFS**)
+* `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
+* `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
+* `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see UNRAR command line option)
+* `libpcre3-dev` (or `libpcre2-dev` in older distributions, _optional_ - needed for advanced custom archive formats support in **multiarc**)
+* `cmake` ( >= 3.2.2 )
+* `pkg-config`
+* `g++`
+* `git` (needed for downloading source code)
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
@@ -297,6 +305,10 @@ Supporting extended far2l keyboard shortcuts and clipboard access
    * **putty4far2l** (Windows ssh-client): https://github.com/ivanshatsky/putty4far2l/releases & https://github.com/unxed/putty4far2l (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
    * **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
    * **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
+
+_Note_: to full transfer extended keyboard shortcuts and the clipboard to/from the **remote far2l**
+one of the best way to initiate the connection **inside local far2l-GUI**
+(see details in build-in help section **UI backends**).
 
 ### Useful 3rd-party extras
 

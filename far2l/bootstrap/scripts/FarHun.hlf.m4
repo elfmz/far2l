@@ -4243,7 +4243,7 @@ erre a célra kifejlesztett segédprogramokkal és pluginekkel adhatunk a
     A makrónyelv leírása megtalálható a kísérő dokumentációban.
 
     Online dokumentáció:
-    ~https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=hu~@https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=hu@
+    ~https://api.farmanager.com/ru/macro/~@https://api.farmanager.com/ru/macro/@
 
 @KeyMacroEditList
 $ #Makrók: a szerkesztő makrói#

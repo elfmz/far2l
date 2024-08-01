@@ -780,7 +780,7 @@ newly created #/folder2/#.
   Execute in the separate window                         #Shift-Enter#
   Execute as administrator                            #Ctrl-Alt-Enter#
 
-    Pressing #Shift-Enter# on a directory invokes the GUI file browser and
+    Pressing #Shift-Enter# on a directory invokes the system GUI file browser and
 shows the selected directory. To show a root directory in the GUI file browser, you
 should press #Shift-Enter# on the required path in the ~location menu~@DriveDlg@.
 Pressing #Shift-Enter# on "#..#" opens the current directory in the GUI file browser.
@@ -1021,10 +1021,10 @@ and emulate file systems. For example, archives support, FTP client, temporary
 panel and network browser are plugins that emulate file systems.
 
     All plugins are stored in separate folders within the 'Plugins' folder,
-which is in the same folder as FAR.EXE. When detecting a new plugin FAR2L saves
-information about it and later loads the plugin only when necessary, so unused
-plugins do not require additional memory. But if you are sure that some plugins
-are useless for you, you may remove them to save disk space.
+which is in the same folder as far2l file. When detecting a new plugin FAR2L
+saves information about it and later loads the plugin only when necessary,
+so unused plugins do not require additional memory. But if you are sure that
+some plugins are useless for you, you may remove them to save disk space.
 
     Plugins may be called either from ~location menu~@DriveDlg@ or from
 #Plugin commands# menu, activated by #F11# or by corresponding item of
@@ -1197,16 +1197,18 @@ $ #Panels: tree panel#
 Within tree mode you may change to a folder quickly and perform folder
 operations.
 
-	!! Not relevant on Linux !!
+    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
 
-    FAR2L stores folder tree information in the file named #Tree.Far# at root
+    FAR stores folder tree information in the file named #Tree.Far# at root
 folder of each drive. For read-only drives this information is stored in the
-hidden folder Tree.Cache within the folder containing FAR2L.EXE. The Tree.FAR
+hidden folder Tree.Cache within the folder containing FAR.EXE. The Tree.FAR
 file doesn't exist by default. It will be automatically created after the first
-use of the #Tree Panel# or the #Find Folder# command. If that file exists, FAR2L
+use of the #Tree Panel# or the #Find Folder# command. If that file exists, FAR
 updates it with the changes to the tree structure it is aware of. If such
-changes were made outside of FAR2L and Tree.far is no longer current, it can be
+changes were made outside of FAR and Tree.far is no longer current, it can be
 refreshed by pressing #Ctrl-R#.
+
+    !! Windows legacy end !!
 
     You can find a folder quickly with the help of #speed search# action. Hold
 the Alt key and type the folder name until you point to the right folder.
@@ -1241,17 +1243,20 @@ for viewing the folder description file.
     A list of possible folder description file names may be defined using
 "Folder description files" command in the ~Options menu~@OptMenu@.
 
-    !! Not relevant on Linux !!
+    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
 
-    FAR2L will attempt to determine the type of each of the CD drives available
+    FAR will attempt to determine the type of each of the CD drives available
 in the system. Known types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM,
 DVD-RW and DVD-RAM. This function is available only for users either with
 administrative privileges or all local users, when it's stated explicitly in
 the Local Policy Editor (to do this, run a #secpol.msc# from the command
 prompt, and set the '#Local Policies/Security Options/Devices: Restrict#
 #CD-ROM access to locally logged-on user only#' setting to '#Enabled#')
+
     For virtual devices (SUBST-disk) the parameters of the primary disk are
 shown.
+
+    !! Windows legacy end !!
 
     See also the list of ~macro keys~@KeyMacroInfoList@, available in the info panel.
 
@@ -2360,7 +2365,7 @@ $ #Special symbols#
              Several such symbols are allowed in the same line,
              for example:
 
-             grep !?Search for:?! !?In:?*.*!|far\\far.exe -v -
+             grep !?Search for:?! !?In:?*.*!|far2l -v -
 
              A history name for the <init> string can be supplied
              in the <title>. In such case the command has the
@@ -2370,12 +2375,12 @@ $ #Special symbols#
 
              for example:
 
-             grep !?#$GrepHist$#Search for:?! !?In:?*.*!|far.exe -v -
+             grep !?#$GrepHist$#Search for:?! !?In:?*.*!|far2l -v -
 
              In <title> and <init> the usage of other meta-symbols is
              allowed by enclosing them in brackets.
 
-             (e.g. grep !?Find in (!.!):?! |far.exe -v -)
+             (e.g. grep !?Find in (!.!):?! |far2l -v -)
 
     #!###       "!##" modifier specified before a file association
              symbol forces it (and all the following characters)
@@ -2397,8 +2402,8 @@ $ #Special symbols#
 corresponding to the special character. No additional characters (for example,
 quotes) are added, and you should add them yourself if it is needed. For
 example, if a program used in the associations requires a file name to be
-enclosed in quotes, you should specify #program.exe "!.!"# and not
-#program.exe !.!#.
+enclosed in quotes, you should specify #program "!.!"# and not
+#program !.!#.
 
     2. ^<wrap>The following modifiers may be used with the associations !@@! and !$! :
 
@@ -2892,13 +2897,15 @@ $ #Viewer: control keys#
     1. Also to call search dialog you may just start typing the
        text to be located.
 
-    2. !! Not relevant on Linux !!
+    2. !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
 
        When the viewer opens a file, it permits the file to be
        deleted by other processes. If such a deletion happens,
        the file is actually deleted from the directory only after
        the viewer is closed, but any operations on the deleted
        file fail - this is a Windows feature.
+
+       !! Windows legacy end !!
 
     3. The current version of FAR2L has a limitation on the maximum
        number of columns in the internal viewer - the number
@@ -3300,7 +3307,7 @@ file panel if you chosen filesystem location, or selected Plugin panel will be o
     If the option "~Use Ctrl-PgUp for location menu~@InterfSettings@" is enabled,
 pressing #Ctrl-PgUp# works the same as pressing #Esc# - closes the menu.
 
-    Pressing #Shift-Enter# invokes the GUI file manager showing the directory
+    Pressing #Shift-Enter# invokes system GUI file manager showing the directory
 of the selected line (works only for disk drives and not for plugins).
 
     #Ctrl-R# allows to refresh the location menu.
@@ -4282,7 +4289,8 @@ as in ~File associations~@FileAssoc@ should be used to denote the file name.
     For example, 'type !.!' will output to the screen all selected files, one
 at a time, and the command 'rar32 m !.!.rar !.!' will move all selected files
 into RAR archives with the same names. The command 'explorer /select,!.!' will
-start the GUI file browser and set the cursor to the current file or directory.
+start system GUI file browser and set the cursor to the current file
+or directory.
 
     See also ~"Special commands"~@SpecCmd@
     See also ~"Operating system commands"~@OSCommands@
@@ -4297,9 +4305,11 @@ $ #Operating system commands#
 
     #disk:#
 
-    !! Not relevant on Linux !!
-    
+    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
+
     To change the current disk on the active panel to the specified disk.
+
+    !! Windows legacy end !!
 
     #CD path# or #CHDIR path#
 

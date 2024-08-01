@@ -1877,7 +1877,7 @@ int Editor::ProcessKey(FarKey Key)
 
 			return TRUE;
 		}
-		case KEY_CTRLH:
+		case KEY_CTRLR:
 		case KEY_CTRLF7: {
 			if (!Flags.Check(FEDITOR_LOCKMODE)) {
 				int ReplaceMode0 = ReplaceMode;

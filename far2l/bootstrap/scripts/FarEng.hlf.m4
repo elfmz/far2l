@@ -4849,6 +4849,9 @@ by manually editing the registry or by using special tools/plugins.
     Description of the macro language can be found in the accompanying
 documentation.
 
+    Online documentation:
+    https://api-farmanager-com.translate.goog/ru/macro/?_x_tr_sl=ru&_x_tr_tl=en
+
 @KeyMacroList
 $ #Макросы: Список установленных макросов#
     Ниже приведен список разделов, в которых можно узнать какие ~макросы~@KeyMacro@ 

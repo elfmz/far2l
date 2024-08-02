@@ -96,8 +96,8 @@ public:
 
 	void SavePrevScreen();
 	void Redraw();
-	int IsVisible() { return Flags.Check(FSCROBJ_VISIBLE); };
-	void SetVisible(int Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
+	bool IsVisible() const { return Flags.Check(FSCROBJ_VISIBLE) != 0; };
+	void SetVisible(bool Visible) { Flags.Change(FSCROBJ_VISIBLE, Visible); };
 	void SetRestoreScreenMode(int Mode) { Flags.Change(FSCROBJ_ENABLERESTORESCREEN, Mode); };
 	void Shadow(bool Full = false);
 

@@ -9324,6 +9324,17 @@ SelectCase
 "&Враховувати регістр"
 "&Улічваць рэгістр"
 
+SelectNote
+"Настройка влияет и на сравнение папок"
+"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+upd:"Setting affects also Compare folders"
+"Опція впливає і на порівняння тек"
+"Наладка ўплывае на параўнанне каталогаў"
+
 SelectFilter
 "&Фильтр"
 "&Filter"

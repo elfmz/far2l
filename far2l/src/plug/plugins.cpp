@@ -1753,7 +1753,9 @@ Plugin *PluginManager::FindPlugin(DWORD SysID)
 
 HANDLE PluginManager::OpenPlugin(Plugin *pPlugin, int OpenFrom, INT_PTR Item)
 {
+	Flags.Set(PSIF_ENTERTOOPENPLUGIN);
 	HANDLE hPlugin = pPlugin->OpenPlugin(OpenFrom, Item);
+	Flags.Clear(PSIF_ENTERTOOPENPLUGIN);
 
 	if (hPlugin != INVALID_HANDLE_VALUE) {
 		PluginHandle *handle = new PluginHandle;

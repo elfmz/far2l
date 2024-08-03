@@ -35,10 +35,10 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		F1       Shift     \x1bO2P
 		F1       Alt       \x1bO3P
 		F1       Ctrl      \x1bO5P */
-			if (ctrl && shift) return "\x1bO6P";
-			if (shift) return "\x1bO2P";
-			if (alt) return "\x1bO3P";
-			if (ctrl) return "\x1bO5P";
+			if (ctrl && shift) return "\x1b[1;6P"; // \x1bO6P
+			if (shift)         return "\x1b[1;2P"; // \x1bO2P
+			if (alt)           return "\x1b[1;3P"; // \x1bO3P
+			if (ctrl)          return "\x1b[1;5P"; // \x1bO5P
 			//if (keypad==2) return "\x1b[11~";
 			//if (keypad==1) return "\x1b[[A";
 			return "\x1bOP";
@@ -50,10 +50,10 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		F2       Shift     \x1bO2Q
 		F2       Alt       \x1bO3Q
 		F2       Ctrl      \x1bO5Q */
-			if (ctrl && shift) return "\x1bO6Q";
-			if (shift) return "\x1bO2Q";
-			if (alt) return "\x1bO3Q";
-			if (ctrl) return "\x1bO5Q";
+			if (ctrl && shift) return "\x1b[1;6Q"; // \x1bO6Q
+			if (shift)         return "\x1b[1;2Q"; // \x1bO2Q
+			if (alt)           return "\x1b[1;3Q"; // \x1bO3Q
+			if (ctrl)          return "\x1b[1;5Q"; // \x1bO5Q
 			//if (keypad==2) return "\x1b[12~";
 			//if (keypad==1) return "\x1b[[B";
 			return "\x1bOQ";
@@ -65,10 +65,10 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		F3       Shift     \x1bO2R
 		F3       Alt       \x1bO3R
 		F3       Ctrl      \x1bO5R */
-			if (ctrl && shift) return "\x1bO6R";
-			if (shift) return "\x1bO2R";
-			if (alt) return "\x1bO3R";
-			if (ctrl) return "\x1bO5R";
+			if (ctrl && shift) return "\x1b[1;6R"; // \x1bO6R
+			if (shift)         return "\x1b[1;2R"; // \x1bO2R
+			if (alt)           return "\x1b[1;3R"; // \x1bO3R
+			if (ctrl)          return "\x1b[1;5R"; // \x1bO5R
 			//if (keypad==2) return "\x1b[13~";
 			//if (keypad==1) return "\x1b[[C";
 			return "\x1bOR";
@@ -80,10 +80,10 @@ const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shi
 		F4       Shift     \x1bO2S
 		F4       Alt       \x1bO3S
 		F4       Ctrl      \x1bO5S */
-			if (ctrl && shift) return "\x1bO6S";
-			if (shift) return "\x1bO2S";
-			if (alt) return "\x1bO3S";
-			if (ctrl) return "\x1bO5S";
+			if (ctrl && shift) return "\x1b[1;6S"; // \x1bO6S
+			if (shift)         return "\x1b[1;2S"; // \x1bO2S
+			if (alt)           return "\x1b[1;3S"; // \x1bO3S
+			if (ctrl)          return "\x1b[1;5S"; // \x1bO5S
 			//if (keypad==2) return "\x1b[14~";
 			//if (keypad==1) return "\x1b[[D";
 			return "\x1bOS";

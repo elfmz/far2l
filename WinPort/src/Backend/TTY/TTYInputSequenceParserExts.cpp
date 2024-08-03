@@ -460,7 +460,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 //maybe it will be better not copy/paste TryParseAsWinTermEscapeSequence here
 //but passing yet another flag to it is less readable.
 //so keep it this way until microsoft fix their stuff in the win32-input protocol
-size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, size_t l)
+size_t TTYInputSequenceParser::TryUnwrappWinDoubleEscapeSequence(const char *s, size_t l)
 {
 	int args[6] = {0};
 	int args_cnt = 0;
@@ -491,7 +491,7 @@ size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, s
 
 	if(args[2] > 0 && args[3] == 1){ // only KeyDown and valid char should pass
 		//fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
-		_win_mouse_buffer.push_back((unsigned char)args[2]);
+		_win_double_buffer.push_back((unsigned char)args[2]);
 	}
 
 	return n;

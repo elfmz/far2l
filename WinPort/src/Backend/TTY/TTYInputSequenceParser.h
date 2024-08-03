@@ -120,8 +120,8 @@ class TTYInputSequenceParser
 		_ctrl_ind  = 0x10;
 
 	//work-around for double encoded mouse events in win32-input mode
-	std::vector<char> _win_mouse_buffer; // buffer for accumulate unpacked chras
-	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_mouse_buffer
+	std::vector<char> _win_double_buffer; // buffer for accumulate unpacked chras
+	bool _win32_accumulate = false;      // flag for parse win32-input sequence into _win_double_buffer
 
 	void AssertNoConflicts();
 
@@ -156,7 +156,7 @@ class TTYInputSequenceParser
 
 	void ParseAPC(const char *s, size_t l);
 	size_t TryParseAsWinTermEscapeSequence(const char *s, size_t l);
-	size_t TryUnwrappWinMouseEscapeSequence(const char *s, size_t l);
+	size_t TryUnwrappWinDoubleEscapeSequence(const char *s, size_t l);
 	size_t ReadUTF8InHex(const char *s, wchar_t *uni_char);
 	size_t TryParseAsITerm2EscapeSequence(const char *s, size_t l);
 	size_t TryParseAsKittyEscapeSequence(const char *s, size_t l);
@@ -181,10 +181,10 @@ public:
 	size_t Parse(const char *s, size_t l, bool idle_expired);
 
 	/**
-	 * parse and schedule mouse sequence from _win_mouse_buffer.
-	 * executed only if _win_mouse_buffer contains valid number of characters
+	 * parse and schedule mouse sequence from _win_double_buffer.
+	 * executed only if _win_double_buffer contains valid number of characters
 	 * for X10 mouse sequence
 	*/
-	void ParseWinMouseBuffer(bool idle_expired);
+	void ParseWinDoubleBuffer(bool idle_expired);
 	char UsingExtension() const { return _using_extension; };
 };

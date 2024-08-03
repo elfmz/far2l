@@ -471,6 +471,12 @@ size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, s
 			//fprintf(stderr, "\nwant mooore characters... \n");
 			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
 		}
+		if (i == 1 && s[0] == 27 && s[1] == '[') {
+			// _win32_accumulate is true, so we occured here from TryParseAsWinTermEscapeSequence
+			// even when pattern can contain additional \x1B at the beginning, need to skip it
+			n++;
+			continue;
+		}
 		if (s[i] == '_' || s[i] == ';') {
  			if (args_cnt == ARRAYSIZE(args)) {
 				return TTY_PARSED_BADSEQUENCE;

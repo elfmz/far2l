@@ -447,6 +447,18 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		ir.Event.KeyEvent.wRepeatCount = args[5];
 		_ir_pending.emplace_back(ir);
 	}
+	else if ((args[0] == 0) && (args[1] == 0) && (args[2] != 0)) {
+		// it can be non-latin paste char event
+		INPUT_RECORD ir = {};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
+		ir.Event.KeyEvent.wVirtualScanCode = 0;
+		ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
+		ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
+		ir.Event.KeyEvent.dwControlKeyState = args[4];
+		ir.Event.KeyEvent.wRepeatCount = args[5];
+		_ir_pending.emplace_back(ir);
+	}
 
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");

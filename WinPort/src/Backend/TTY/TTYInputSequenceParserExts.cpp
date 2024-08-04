@@ -447,6 +447,18 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		ir.Event.KeyEvent.wRepeatCount = args[5];
 		_ir_pending.emplace_back(ir);
 	}
+	else if ((args[0] == 0) && (args[1] == 0) && (args[2] != 0)) {
+		// it can be non-latin paste char event
+		INPUT_RECORD ir = {};
+		ir.EventType = KEY_EVENT;
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
+		ir.Event.KeyEvent.wVirtualScanCode = 0;
+		ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
+		ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
+		ir.Event.KeyEvent.dwControlKeyState = args[4];
+		ir.Event.KeyEvent.wRepeatCount = args[5];
+		_ir_pending.emplace_back(ir);
+	}
 
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
@@ -460,7 +472,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 //maybe it will be better not copy/paste TryParseAsWinTermEscapeSequence here
 //but passing yet another flag to it is less readable.
 //so keep it this way until microsoft fix their stuff in the win32-input protocol
-size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, size_t l)
+size_t TTYInputSequenceParser::TryUnwrappWinDoubleEscapeSequence(const char *s, size_t l)
 {
 	int args[6] = {0};
 	int args_cnt = 0;
@@ -491,7 +503,7 @@ size_t TTYInputSequenceParser::TryUnwrappWinMouseEscapeSequence(const char *s, s
 
 	if(args[2] > 0 && args[3] == 1){ // only KeyDown and valid char should pass
 		//fprintf(stderr, "Parsed: ==%c==\n", (unsigned char)(args[2]));
-		_win_mouse_buffer.push_back((unsigned char)args[2]);
+		_win_double_buffer.push_back((unsigned char)args[2]);
 	}
 
 	return n;

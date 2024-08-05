@@ -1,6 +1,6 @@
 /*
 FAR manager incremental search plugin, search as you type in editor.
-Copyright (C) 1999-2019, Stanislav V. Mekhanoshin
+Copyright (C) 1999-2024, Stanislav V. Mekhanoshin
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -1,6 +1,6 @@
 /*
 FAR manager incremental search plugin, search as you type in editor.
-Copyright (C) 1999-2019, Stanislav V. Mekhanoshin
+Copyright (C) 1999-2024, Stanislav V. Mekhanoshin
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -88,9 +88,9 @@ static void Help(void)
 {
 	static const DialogTemplateItem DialogTemplate[11] = {
 		{DI_TEXT,   2, 2,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("FAR Incremental Search plugin")},
-		{DI_TEXT,   2, 3,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Version 2.1")},
+		{DI_TEXT,   2, 3,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Version 2.2")},
 		{DI_TEXT,   2, 4,  FALSE, DIF_CENTERGROUP | DIF_BOXCOLOR | DIF_SEPARATOR, 0},
-		{DI_TEXT,   2, 5,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("copyright (c) 1999-2019, Stanislav V. Mekhanoshin")},
+		{DI_TEXT,   2, 5,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("copyright (c) 1999-2024, Stanislav V. Mekhanoshin")},
 		{DI_TEXT,   2, 6,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("This program comes with ABSOLUTELY NO WARRANTY")},
 		{DI_TEXT,   2, 7,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("This is free software, and you are welcome to redistribute it")},
 		{DI_TEXT,   2, 8,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("under certain conditions.")},

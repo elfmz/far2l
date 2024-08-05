@@ -1,5 +1,5 @@
 system nt_dll initi termi
-option version=2.1
+option version=2.2
 option quiet
 option case
 option eliminate

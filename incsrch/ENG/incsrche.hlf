@@ -3,8 +3,8 @@
 
 @Contents
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
-$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Version 2.2#
+$^#Copyright (C) 1999-2024 Stanislav V. Mekhanoshin#
 $^#Contents
  This plugin adds the #Incremental Search# capability to the internal FAR editor.
 
@@ -20,8 +20,8 @@ $^#Contents
 
 @Menu
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
-$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Version 2.2#
+$^#Copyright (C) 1999-2024 Stanislav V. Mekhanoshin#
 $^#Plugin menu#
  After choosing the plugin from editor plugins menu You will see the submenu like this:
 
@@ -49,8 +49,8 @@ $^#Plugin menu#
 
 @Cfg
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
-$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Version 2.2#
+$^#Copyright (C) 1999-2024 Stanislav V. Mekhanoshin#
 $^#Plugin configuration#
  There are two ways to configure plugin: from #Plugins configuration menu# (Main Menu|Options|Plugins Configuration|Incremental Search) or directly from ~Incremental Search plugin menu~@Menu@ from inside editor.
 
@@ -84,8 +84,8 @@ $^#Plugin configuration#
 
 @Iface
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
-$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Version 2.2#
+$^#Copyright (C) 1999-2024 Stanislav V. Mekhanoshin#
 $^#Interface and Keyboard reference#
  When in incremental search mode the leftmost characters of the top line will display the prompt #^:#. Start typing the search string and it will be displayed after this prompt.
 
@@ -96,25 +96,25 @@ $^#Interface and Keyboard reference#
 ^#Key bindings#
 @+
 
- #Any printable character#   appended to the search pattern
- #Backspace#                 delete last pattern character
- #Escape#                    ends incremental search
- #Ctrl-V, Shift-Ins#         paste search data from clipboard
- #Ctrl-Enter#                find next in forward search mode
-                           find previous in backward search mode
- #Ctrl-Shift-Enter#          find previous in forward search mode
-                           find next in backward search mode
- #F1#                        about window and help
- #Alt#                       clear messages area
- #Any control character,#    ends incremental search and bypass to FAR
+ #Any printable character#        appended to the search pattern
+ #Backspace#                      delete last pattern character
+ #Escape#                         ends incremental search
+ #Ctrl-V, Shift-Ins#              paste search data from clipboard
+ #Ctrl-Enter, Ctrl-G#             find next in forward search mode
+                                find previous in backward search mode
+ #Ctrl-Shift-Enter, Ctrl-Shift-G# find previous in forward search mode
+                                find next in backward search mode
+ #F1#                             about window and help
+ #Alt#                            clear messages area
+ #Any control character,#         ends incremental search and bypass to FAR
            #mouse click#
  
  ~Contents~@Contents@
 
 @Contact
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
-$^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
+$^#Version 2.2#
+$^#Copyright (C) 1999-2024 Stanislav V. Mekhanoshin#
 $^#Contact information#
 
  Stanislav V. Mekhanoshin, St.Petersburg, Russia

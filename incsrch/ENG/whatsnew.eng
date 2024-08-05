@@ -1,4 +1,8 @@
-Версия 2.1
+Version 2.2
+  + Added ^G, ^#G hotkeys in addition to ^Enter and ^#Enter  for  search
+    next/previous.
+
+Version 2.1
   + far2l (FAR for Linux) support
 
 Version 1.21

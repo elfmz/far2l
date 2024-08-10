@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "DialogBuilder.hpp"
 #include "wakeful.hpp"
+#include "codepage.hpp"
 
 static int ReplaceMode, ReplaceAll;
 
@@ -5496,6 +5497,8 @@ int Editor::EditorControl(int Command, void *Param)
 					case ESPT_CODEPAGE: {
 						// BUGBUG
 						if ((UINT)espar->Param.iParam == CP_AUTODETECT) {
+							rc = FALSE;
+						} else if (!IsCodePageSupported(espar->Param.iParam)) {
 							rc = FALSE;
 						} else {
 							if (HostFileEditor) {

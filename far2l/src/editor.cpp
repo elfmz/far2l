@@ -2299,7 +2299,9 @@ int Editor::ProcessKey(FarKey Key)
 			Lock();
 			Pasting++;
 
-			while (CurLine != TopList) {
+			Edit* PrevLine = nullptr;
+			while (CurLine!=TopList && PrevLine!=CurLine) {
+				PrevLine = CurLine;
 				ProcessKey(KEY_ALTUP);
 			}
 
@@ -2315,7 +2317,9 @@ int Editor::ProcessKey(FarKey Key)
 			Lock();
 			Pasting++;
 
-			while (CurLine != EndList) {
+			Edit* PrevLine = nullptr;
+			while (CurLine!=EndList && PrevLine!=CurLine) {
+				PrevLine = CurLine;
 				ProcessKey(KEY_ALTDOWN);
 			}
 

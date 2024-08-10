@@ -954,6 +954,7 @@ void FilePanels::OnChangeFocus(int f)
 			Redraw вызывается следом во Frame::OnChangeFocus.
 		*/
 		// Redraw();
+		ActivePanel->SetCurPath();
 		Frame::OnChangeFocus(1);
 	}
 }

@@ -56,7 +56,7 @@ void md_listhdr(void)
 void md_listdat(void) 
 	print attribute information from machine specific header.
 
-char *md_timestring(unsigned long t) 
+char *md_timestring(time_t t) 
 	Return pointer to string representin "unix time" t.
 
 void md_truncfile(int fh, U32B len) 

@@ -464,24 +464,14 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
-	//work-around for double encoded mouse events in win32-input mode
+	//work-around for double encoded events in win32-input mode
 	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
-	//following codes are part of some mouse input sequence and must be parsed in separate buffer
-	if ((l > 6 && s[1] == '[' && s[2] == '0' && s[3] == ';' && s[4] == '0' && s[5] == ';') || _win32_accumulate) {
-		size_t r = TryUnwrappWinMouseEscapeSequence(s, l);
-
-		//now we check if _win_mouse_buffer has enough characters for some mouse input sequence
-		if (_win_mouse_buffer.size() > 2 && _win_mouse_buffer[2] == '<') {
-			//seems like SGR extended mouse reporting,
-			//keep accumulate characters until terminator encountered
-			_win32_accumulate = (_win_mouse_buffer.back() == 'M' || _win_mouse_buffer.back() == 'm') ? false : true;
-		} else {
-			//seems like X10 mouse reporting,
-			//keep accumulate characters until we get 6 of them
-			_win32_accumulate = _win_mouse_buffer.size() > 5 ? false : true;
-		}
-
-		return r;
+	//following codes are part of some double encoded input sequence and must be parsed in separate buffer
+	if (
+		(l > 8 && s[1] == '[' && s[2] == '0' && s[3] == ';' && s[4] == '0' && s[5] == ';' && s[6] == '2' && s[7] == '7')
+		|| _win32_accumulate) {
+		_win32_accumulate = true;
+		return TryUnwrappWinDoubleEscapeSequence(s, l);
 	}
 
 	size_t r = ParseIntoPending(s, l);
@@ -673,26 +663,24 @@ void TTYInputSequenceParser::OnBracketedPaste(bool start)
 	_ir_pending.emplace_back(ir);
 }
 
-//work-around for double encoded mouse events in win32-input mode
-void TTYInputSequenceParser::ParseWinMouseBuffer(bool idle)
+//work-around for double encoded events in win32-input mode
+void TTYInputSequenceParser::ParseWinDoubleBuffer(bool idle)
 {
-	bool check = false;
-
-	if (_win_mouse_buffer.size() > 2 && _win_mouse_buffer[2] == '<') {
-		//seems like SGR extended mouse reporting,
-		check = (_win_mouse_buffer.back() == 'M' || _win_mouse_buffer.back() == 'm');
-	} else {
-		//seems like X10 mouse reporting,
-		check = (_win_mouse_buffer.size() > 5 && _win_mouse_buffer[2] == 'M');
-	}
-
-	if (check) {
+	if (_win_double_buffer.size() > 1 && _win_double_buffer.back() == 0x1b) {
+		// next sequence already started for some reason
+		// this is not normal, we need to investigate why it happened
 		_win32_accumulate = false;
-		Parse(&_win_mouse_buffer[0], _win_mouse_buffer.size(), idle);
-		_win_mouse_buffer.clear();
-		//fprintf(stderr, "!!!parsed accumulated mouse sequence \n");
-	} else {
+		Parse(&_win_double_buffer[0], _win_double_buffer.size() - 1, idle);
+		_win_double_buffer.erase(_win_double_buffer.begin(), _win_double_buffer.end() - 1);
+		_win32_accumulate = true;
 		return;
+	}
+	
+	if (_win_double_buffer.size() > 2 && _win_double_buffer.back() >= '@' && _win_double_buffer.back() <= '~') {
+		// end of sequence, whatever is it
+		_win32_accumulate = false;
+		Parse(&_win_double_buffer[0], _win_double_buffer.size(), idle);
+		_win_double_buffer.clear();
 	}
 }
 

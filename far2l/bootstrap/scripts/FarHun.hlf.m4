@@ -4242,6 +4242,8 @@ erre a célra kifejlesztett segédprogramokkal és pluginekkel adhatunk a
 
     A makrónyelv leírása megtalálható a kísérő dokumentációban.
 
+    Online dokumentáció:
+    ~https://api.farmanager.com/ru/macro/~@https://api.farmanager.com/ru/macro/@
 
 @KeyMacroEditList
 $ #Makrók: a szerkesztő makrói#

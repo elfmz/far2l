@@ -60,7 +60,7 @@ int md_mkspecial(char *ofname,unsigned sdlen,unsigned char *sdata);
 int md_filetype(char *path,char *name);
 void md_listhdr(void);
 void md_listdat(void);
-char *md_timestring(unsigned long t);
+char *md_timestring(time_t t);
 void md_truncfile(int fh, U32B len);
 char *md_tohapath(char *mdpath);
 char *md_tomdpath(char *hapath);

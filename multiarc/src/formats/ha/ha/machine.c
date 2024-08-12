@@ -341,12 +341,12 @@ void md_listdat(void) {
     printf("\n %s",attrstring(mdhd.attr));
 }
 
-char *md_timestring(unsigned long t) {
+char *md_timestring(time_t t) {
     
     static char ts[40];
     struct tm *tim;	
     
-    tim=localtime((long *)&t);
+    tim=localtime(&t);
     sprintf(ts,"%04d-%02d-%02d  %02d:%02d",tim->tm_year+1900,tim->tm_mon+1,
 	    tim->tm_mday,tim->tm_hour,tim->tm_min);
     return ts;	

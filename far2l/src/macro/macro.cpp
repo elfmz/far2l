@@ -6440,7 +6440,9 @@ BOOL KeyMacro::CheckEditSelected(DWORD CurFlags)
 
 BOOL KeyMacro::CheckInsidePlugin(DWORD CurFlags)
 {
-	if (CtrlObject && CtrlObject->Plugins.CurPluginItem && (CurFlags & MFLAGS_NOSENDKEYSTOPLUGINS))		// ?????
+	if (CtrlObject && (CtrlObject->Plugins.CurPluginItem ||
+	                   CtrlObject->Plugins.CheckFlags(PSIF_ENTERTOOPENPLUGIN)) &&
+		(CurFlags & MFLAGS_NOSENDKEYSTOPLUGINS))		// ?????
 		// if(CtrlObject && CtrlObject->Plugins.CurEditor && (CurFlags&MFLAGS_NOSENDKEYSTOPLUGINS))
 		return FALSE;
 

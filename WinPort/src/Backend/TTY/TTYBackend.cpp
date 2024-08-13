@@ -312,6 +312,20 @@ void TTYBackend::ReaderLoop()
 			_esc_expiration = 100;
 		}
 
+		// Also in kernel console
+		#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+				if (!_esc_expiration) {
+					int kd_mode;
+					#if defined(__linux__)
+					if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
+					#else
+					if (ioctl(_stdin, KDGKBMODE, &kd_mode) == 0) {
+					#endif
+						_esc_expiration = 100;
+					}
+				}
+		#endif
+
 		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
 			struct timeval tv;
 			tv.tv_sec = _esc_expiration / 1000;
@@ -1041,7 +1055,20 @@ void TTYBackend::OnUsingExtension(char extension)
 
 void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 {
-	if (_ttyx && !_using_extension) {
+	bool in_kernel = 0;
+	// In kernel console use kernel control keys info even if using TTY|X for clipboard
+	#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+		int kd_mode;
+		#if defined(__linux__)
+		if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
+		#else
+		if (ioctl(_stdin, KDGKBMODE, &kd_mode) == 0) {
+		#endif
+			in_kernel = 1;
+		}
+	#endif
+
+	if (_ttyx && !_using_extension && !in_kernel) {
 		_ttyx->InspectKeyEvent(event);
 
 	} else {

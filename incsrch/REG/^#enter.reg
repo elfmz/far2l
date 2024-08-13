@@ -8,3 +8,4 @@ REGEDIT4
 "DisableOutput"=dword:00000001
 "Description"="Search previous selection"
 "NoInsidePlugin"=dword:00000001
+"NoSendKeysToPlugins"=dword:00000001

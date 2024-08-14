@@ -8,6 +8,8 @@ get)
     cscript.exe //Nologo //u $(wslpath -w "$script_path"/wslgclip.vbs) | iconv -f utf-16le -t utf-8
 
 #   powershell method is slower, also it have unsolved charset problems. disabled for now
+#   possible solution for charset problem:
+#   https://github.com/microsoft/terminal/issues/280#issuecomment-1728298632
 
 #    if command -v cscript.exe >/dev/null 2>&1; then
 #        cscript.exe //Nologo //u $(wslpath -w "$script_path"/wslgclip.vbs) | iconv -f utf-16le -t utf-8
@@ -16,7 +18,9 @@ get)
 #    fi
 ;;
 set)
-    CONTENT="$(cat)"
+    # shell removes tailing newlines. we should take care of it
+    CONTENT=$(cat; echo -n .)
+    CONTENT=${CONTENT%.}
     echo -n "$CONTENT" | iconv -f utf-8 -t utf-16le | clip.exe
     echo -n "$CONTENT"
 ;;

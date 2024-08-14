@@ -2487,8 +2487,8 @@ upd:"Show total delete progress indicator"
 "Адлюстроўваць агульны індыкатар выдалення"
 
 ConfigPgUpChangeDisk
-"Использовать Ctrl+PgUp для в&ыбора диска"
-"Use Ctrl+Pg&Up to change drive"
+"Использовать Ctrl+PgUp для мен&ю перехода"
+"Use Ctrl+Pg&Up for location menu"
 "Použít Ctrl+Pg&Up pro změnu disku"
 "Strg+Pg&Up wechselt das Laufwerk"
 "A Ctrl+Pg&Up meghajtót vált"
@@ -13849,8 +13849,8 @@ MenuReread
 "П&ерачытаць                Ctrl+R"
 
 MenuChangeDrive
-"С&менить диск             Alt+F1"
-"&Change drive       Alt+F1"
+"&Меню перехода             Alt+F1"
+"Lo&cation menu       Alt+F1"
 "Z&měnit jednotku          Alt+F1"
 "Laufwerk we&chseln    Alt+F1"
 "Meghajtó&váltás     Alt+F1"
@@ -14501,8 +14501,8 @@ MenuTogglePanelRight
 "Панэль &Укл/Адкл          Ctrl+F2"
 
 MenuChangeDriveRight
-"С&менить диск             Alt+F2"
-"&Change drive       Alt+F2"
+"&Меню перехода             Alt+F2"
+"Lo&cation menu       Alt+F2"
 "Z&měnit jednotku          Alt+F2"
 "Laufwerk &wechseln    Alt+F2"
 "Meghajtó&váltás     Alt+F2"

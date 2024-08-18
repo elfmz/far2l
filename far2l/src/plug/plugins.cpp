@@ -1131,18 +1131,20 @@ void PluginManager::Configure(int StartPos)
 
 				switch (Key) {
 					case KEY_SHIFTF1:
-						strPluginModuleName = item->pPlugin->GetModuleName();
+						if (item)
+						{
+							strPluginModuleName = item->pPlugin->GetModuleName();
 
-						if (!FarShowHelp(strPluginModuleName, L"Config", FHELP_SELFHELP | FHELP_NOSHOWERROR)
-								&& !FarShowHelp(strPluginModuleName, L"Configure",
-										FHELP_SELFHELP | FHELP_NOSHOWERROR)) {
-							FarShowHelp(strPluginModuleName, nullptr, FHELP_SELFHELP | FHELP_NOSHOWERROR);
+							if (!FarShowHelp(strPluginModuleName, L"Config", FHELP_SELFHELP | FHELP_NOSHOWERROR)
+									&& !FarShowHelp(strPluginModuleName, L"Configure",
+											FHELP_SELFHELP | FHELP_NOSHOWERROR)) {
+								FarShowHelp(strPluginModuleName, nullptr, FHELP_SELFHELP | FHELP_NOSHOWERROR);
+							}
 						}
 
 						break;
 					case KEY_F4:
-
-						if (PluginList.GetItemCount() > 0 && SelPos < MenuItemNumber) {
+						if (item && PluginList.GetItemCount() > 0 && SelPos < MenuItemNumber) {
 							FARString strName00;
 							int nOffset = HotKeysPresent ? 3 : 0;
 							strName00 = PluginList.GetItemPtr()->strName.CPtr() + nOffset;
@@ -1283,15 +1285,15 @@ int PluginManager::CommandsMenu(int ModalType, int StartPos, const wchar_t *Hist
 				switch (Key) {
 					case KEY_SHIFTF1:
 						// Вызываем нужный топик, который передали в CommandsMenu()
-						FarShowHelp(item->pPlugin->GetModuleName(), HistoryName,
-								FHELP_SELFHELP | FHELP_NOSHOWERROR | FHELP_USECONTENTS);
+						if (item)
+							FarShowHelp(item->pPlugin->GetModuleName(), HistoryName,
+									FHELP_SELFHELP | FHELP_NOSHOWERROR | FHELP_USECONTENTS);
 						break;
 					case KEY_ALTF11:
 						// todo WriteEvent(FLOG_PLUGINSINFO);
 						break;
 					case KEY_F4:
-
-						if (PluginList.GetItemCount() > 0 && SelPos < MenuItemNumber) {
+						if (item && PluginList.GetItemCount() > 0 && SelPos < MenuItemNumber) {
 							FARString strName00;
 							int nOffset = HotKeysPresent ? 3 : 0;
 							strName00 = PluginList.GetItemPtr()->strName.CPtr() + nOffset;
@@ -1306,9 +1308,8 @@ int PluginManager::CommandsMenu(int ModalType, int StartPos, const wchar_t *Hist
 								PluginList.Show();
 							}
 						}
-
 						break;
-					case KEY_ALTSHIFTF9: {
+					case KEY_ALTSHIFTF9:
 						PluginList.Hide();
 						NeedUpdateItems = TRUE;
 						StartPos = SelPos;
@@ -1316,9 +1317,8 @@ int PluginManager::CommandsMenu(int ModalType, int StartPos, const wchar_t *Hist
 						Configure();
 						PluginList.Show();
 						break;
-					}
-					case KEY_SHIFTF9: {
-						if (PluginList.GetItemCount() > 0 && SelPos < MenuItemNumber) {
+					case KEY_SHIFTF9:
+						if (item && PluginList.GetItemCount() > 0 && SelPos < MenuItemNumber) {
 							NeedUpdateItems = TRUE;
 							StartPos = SelPos;
 
@@ -1328,9 +1328,7 @@ int PluginManager::CommandsMenu(int ModalType, int StartPos, const wchar_t *Hist
 							PluginList.SetExitCode(SelPos);
 							PluginList.Show();
 						}
-
 						break;
-					}
 					default:
 						PluginList.ProcessInput();
 						break;

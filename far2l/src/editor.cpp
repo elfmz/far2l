@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "DialogBuilder.hpp"
 #include "wakeful.hpp"
+#include "codepage.hpp"
 
 static int ReplaceMode, ReplaceAll;
 
@@ -2179,7 +2180,7 @@ int Editor::ProcessKey(FarKey Key)
 			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
 				BeginVBlockMarking();
 
-			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_prev->GetLength())
+			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_prev->RealPosToCell(CurLine->m_prev->GetLength()))
 				return TRUE;
 
 			Pasting++;
@@ -2209,7 +2210,7 @@ int Editor::ProcessKey(FarKey Key)
 			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
 				BeginVBlockMarking();
 
-			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_next->GetLength())
+			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_next->RealPosToCell(CurLine->m_prev->GetLength()))
 				return TRUE;
 
 			Pasting++;
@@ -2298,7 +2299,9 @@ int Editor::ProcessKey(FarKey Key)
 			Lock();
 			Pasting++;
 
-			while (CurLine != TopList) {
+			Edit* PrevLine = nullptr;
+			while (CurLine!=TopList && PrevLine!=CurLine) {
+				PrevLine = CurLine;
 				ProcessKey(KEY_ALTUP);
 			}
 
@@ -2314,7 +2317,9 @@ int Editor::ProcessKey(FarKey Key)
 			Lock();
 			Pasting++;
 
-			while (CurLine != EndList) {
+			Edit* PrevLine = nullptr;
+			while (CurLine!=EndList && PrevLine!=CurLine) {
+				PrevLine = CurLine;
 				ProcessKey(KEY_ALTDOWN);
 			}
 
@@ -5496,6 +5501,8 @@ int Editor::EditorControl(int Command, void *Param)
 					case ESPT_CODEPAGE: {
 						// BUGBUG
 						if ((UINT)espar->Param.iParam == CP_AUTODETECT) {
+							rc = FALSE;
+						} else if (!IsCodePageSupported(espar->Param.iParam)) {
 							rc = FALSE;
 						} else {
 							if (HostFileEditor) {

@@ -557,6 +557,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 	SHAREDSYMBOL void WINAPI EXP_NAME(ExitFAR)()
 	{
+		free(TmpPanelModule);
 		free(PluginRootKey);
 		for (int i = 0; i < COMMONPANELSNUMBER; ++i)
 			FreePanelItems(CommonPanels[i].Items, CommonPanels[i].ItemsNumber);

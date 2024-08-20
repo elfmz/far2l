@@ -100,6 +100,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::atomic<unsigned char> _keypad{0};
 	std::atomic<bool> _bracketed_paste_expected{false};
 	std::atomic<bool> _win32_input_mode_expected{false};
+	std::atomic<int> _kitty_kb_flags{0};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::unique_ptr<VTMouse> _mouse;
@@ -437,7 +438,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		DWORD dw;
 		const std::string &translated = TranslateKeyEvent(KeyEvent);
 
-		if (!KeyEvent.bKeyDown && !_win32_input_mode_expected)
+		if (!KeyEvent.bKeyDown && !_win32_input_mode_expected && !(_kitty_kb_flags & 2))
 			return;
 
 		if (!translated.empty()) {
@@ -556,6 +557,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual void OnWin32InputMode(bool enabled)
 	{
 		_win32_input_mode_expected = enabled;
+	}
+
+	virtual void SetKittyFlags(int flags)
+	{
+		_kitty_kb_flags = flags;
+	}
+
+	virtual int GetKittyFlags()
+	{
+		return _kitty_kb_flags;
 	}
 
 	virtual void OnApplicationProtocolCommand(const char *str)//NB: called not from main thread!
@@ -766,6 +777,146 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					OnConsoleLog(CLK_VIEW);
 					return "";
 				}
+			}
+
+			if (_kitty_kb_flags) {
+
+				// References:
+				// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
+				// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
+
+				char buffer[64];
+
+				// fixme: CAPS LOCK неработает, причем для английского и русского по-разному
+				// fixme: KEYPAD 5 работает как F5, а надо чтоб как F3
+
+				int keycode = towlower(KeyEvent.uChar.UnicodeChar);
+
+				int base = 0;
+				if ((KeyEvent.wVirtualKeyCode >= 'A') && (KeyEvent.wVirtualKeyCode <= 'Z')) {
+					base = towlower(KeyEvent.wVirtualKeyCode);
+					if (base == keycode) { base = 0; }
+				}
+
+				int shifted = 0;
+				if (shift) {
+					shifted = toupper(KeyEvent.uChar.UnicodeChar);
+				}
+
+				int modifiers = 0;
+
+				if (shift) modifiers |= 1; 
+				if (alt)   modifiers |= 2; 
+				if (ctrl)  modifiers |= 4; 
+				if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64; 
+				if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128; 
+
+				modifiers += 1; // as spec requres
+
+				char suffix = 'u';
+
+				// apply modifications for special keys
+
+				switch (KeyEvent.wVirtualKeyCode) {
+					case VK_ESCAPE:    keycode = 27;  break;
+					case VK_RETURN:    keycode = 13;  break;
+
+					case VK_TAB:       keycode = 9;   break;
+					case VK_BACK:      keycode = 127; break;
+
+					case VK_INSERT:    keycode = 2;   suffix = '~'; break;
+					case VK_DELETE:    keycode = 3;   suffix = '~'; break;
+
+					case VK_LEFT:      keycode = 1;   suffix = 'D'; break;
+					case VK_RIGHT:     keycode = 1;   suffix = 'C'; break;
+					case VK_UP:        keycode = 1;   suffix = 'A'; break;
+					case VK_DOWN:      keycode = 1;   suffix = 'B'; break;
+
+					case VK_PRIOR:     keycode = 5;   suffix = '~'; break;
+					case VK_NEXT:      keycode = 6;   suffix = '~'; break;
+
+					case VK_HOME:      keycode = 1;   suffix = 'H'; break;
+					case VK_END:       keycode = 1;   suffix = 'F'; break;
+
+					case VK_F1:        keycode = 11;  suffix = '~'; break;
+					case VK_F2:        keycode = 12;  suffix = '~'; break;
+					case VK_F3:        keycode = 13;  suffix = '~'; break;
+					case VK_F4:        keycode = 14;  suffix = '~'; break;
+					case VK_F5:        keycode = 15;  suffix = '~'; break;
+
+					case VK_F6:        keycode = 17;  suffix = '~'; break;
+					case VK_F7:        keycode = 18;  suffix = '~'; break;
+					case VK_F8:        keycode = 19;  suffix = '~'; break;
+					case VK_F9:        keycode = 20;  suffix = '~'; break;
+					case VK_F10:       keycode = 21;  suffix = '~'; break;
+
+					case VK_F11:       keycode = 23;  suffix = '~'; break;
+					case VK_F12:       keycode = 24;  suffix = '~'; break;
+				}
+
+				int flags = _kitty_kb_flags;
+
+
+				// Записываем ESC-последовательность
+
+				// CSI unicode-key-code:shifted-key:base-layout-key ; modifiers:event-type ; text-as-codepoints u
+
+				// Переменная для отслеживания текущей длины строки в буфере
+				int len = 0;
+
+				// Старт последовательности
+				len += snprintf(buffer + len, sizeof(buffer) - len, "\x1B[");
+
+				// Часть 1
+
+				// Добавляем значение keycode
+				len += snprintf(buffer + len, sizeof(buffer) - len, "%i", keycode);
+
+				if ((flags & 4) && (shifted || base)) { // "report alternative keys" enabled
+
+					len += snprintf(buffer + len, sizeof(buffer) - len, ":");
+	
+					if (shifted) {
+						// Добавляем значение shifted
+						len += snprintf(buffer + len, sizeof(buffer) - len, "%i", shifted);
+					}
+
+					if (base) {
+
+						// Добавляем значение base
+						len += snprintf(buffer + len, sizeof(buffer) - len, ":%i", base);
+					}
+				}
+
+				len += snprintf(buffer + len, sizeof(buffer) - len, ";");
+
+				// Часть 2
+
+				// Добавляем значение modifiers
+				len += snprintf(buffer + len, sizeof(buffer) - len, "%i", modifiers);
+
+				if ((flags & 2) && !KeyEvent.bKeyDown) {
+					// Добавляем значение для типа события (1 для keydown, 2 для repeat, 3 для keyup)
+					// fixme: repeat unimplemented
+					len += snprintf(buffer + len, sizeof(buffer) - len, ":%i", 3);
+				}
+
+				// Часть 3
+
+				if (flags & 16) { // "text as code points" enabled
+					// Добавляем значение keycode как кодовые точки
+					len += snprintf(buffer + len, sizeof(buffer) - len, ";%i", keycode);
+				}
+
+				// Финал
+
+				// Добавляем значение suffix
+				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", suffix);
+				
+				// Финальный 0
+				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", 0);
+				
+				return buffer;
 			}
 
 			if (_win32_input_mode_expected) {

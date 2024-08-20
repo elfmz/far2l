@@ -787,7 +787,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 				char buffer[64];
 
-				// fixme: CAPS LOCK неработает, причем для английского и русского по-разному
 				// fixme: KEYPAD 5 работает как F5, а надо чтоб как F3
 
 				int keycode = towlower(KeyEvent.uChar.UnicodeChar);
@@ -799,8 +798,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				}
 
 				int shifted = 0;
-				if (shift) {
-					shifted = toupper(KeyEvent.uChar.UnicodeChar);
+
+				// (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
+				// is workaround for far2l wx as it is not sending Shift state for Char events
+				// See
+				// ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
+				// and below in wxMain.cpp: dwControlKeyState not set
+				if (shift || (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))) {
+					shifted = KeyEvent.uChar.UnicodeChar;
 				}
 
 				int modifiers = 0;

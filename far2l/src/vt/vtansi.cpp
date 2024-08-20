@@ -803,6 +803,51 @@ struct VTAnsiContext
 				} }
 				return;
 			}
+			
+			if (suffix == 'u') { // kitty keys stuff
+				if (prefix2 == '=') {
+
+					// es_argv[0] - флаги, уже числом
+					// es_argv[0] - способ их модификации, число 1-3, по умолчанию 1; если es_argc < 2, используем значение "по умолчанию"
+
+					// Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
+					// Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
+
+					// write(#27'[>31u'); { try to set up kitty keys }
+					// write(#27'[<u'); {if we have kitty keys, disable them for now}
+
+					//FILE* f = fopen("far2l_to_file.log", "a");
+					//fprintf(f, " ***40 %c %c %c    %i: %i %i\n", prefix, prefix2, suffix, es_argc, es_argv[0], es_argv[1]);
+					//fclose(f);
+
+					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0); // assuming mode always 1; we do not support other modes now
+
+					return;			
+
+				} else if (prefix2 == '>') {
+
+					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0); // assuming mode always 1; we do not support other modes now
+
+					return;			
+
+				} else if (prefix2 == '<') {
+
+					vt_shell->SetKittyFlags(0); // we do not support mode stack now, just reset flags
+
+					return;			
+
+				} else if (prefix2 == '?') {
+
+					// reply with "CSI ? flags u"
+					char buf[64] = {0};
+					snprintf( buf, sizeof(buf), "\x1b[?%du", vt_shell->GetKittyFlags());
+					SendSequence( buf );
+
+					return;			
+
+				}
+			}
+
 			// Ignore any other private sequences.
 			if (prefix2 != 0) {
 				fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[0]);

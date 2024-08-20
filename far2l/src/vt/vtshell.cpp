@@ -747,7 +747,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 			if (KeyEvent.bKeyDown) {
 
-				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK) {
+				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK && !_kitty_kb_flags) {
 					//WCM has a setting for that, so probably in some cases backspace should be returned as is
 					char backspace[] = {127, 0};
 					return backspace;
@@ -920,6 +920,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				
 				// Финальный 0
 				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", 0);
+
+				/*
+				FILE* f = fopen("far2l_k.log", "a");
+				fprintf(f, "%s\n", buffer);
+				fclose(f);
+				*/
 				
 				return buffer;
 			}

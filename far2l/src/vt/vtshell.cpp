@@ -813,11 +813,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 				int modifiers = 0;
 
-				if (shift) modifiers |= 1; 
-				if (alt)   modifiers |= 2; 
-				if (ctrl)  modifiers |= 4; 
-				if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64; 
-				if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128; 
+				if (shift) modifiers |= 1;
+				if (alt)   modifiers |= 2;
+				if (ctrl)  modifiers |= 4;
+				if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64;
+				if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128;
 
 				modifiers += 1; // as spec requres
 
@@ -893,7 +893,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				if ((flags & 4) && (shifted || base)) { // "report alternative keys" enabled
 
 					len += snprintf(buffer + len, sizeof(buffer) - len, ":");
-	
+
 					if (shifted) {
 						// Добавляем значение shifted
 						len += snprintf(buffer + len, sizeof(buffer) - len, "%i", shifted);
@@ -944,7 +944,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					// just send text
 					len = snprintf(buffer, sizeof(buffer), "%lc", KeyEvent.uChar.UnicodeChar);
 				}
-				
+
 				// Финальный 0
 				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", 0);
 
@@ -953,7 +953,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				fprintf(f, "%s\n", buffer);
 				fclose(f);
 				*/
-				
+
 				return buffer;
 			}
 

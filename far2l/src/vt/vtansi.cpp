@@ -804,7 +804,7 @@ struct VTAnsiContext
 				return;
 			}
 
-		 	// kitty keys stuff	
+			// kitty keys stuff
 
 			if (suffix == 'u') {
 
@@ -813,21 +813,21 @@ struct VTAnsiContext
 					// assuming mode always 1; we do not support other modes currently
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
 
-					return;			
+					return;
 
 				} else if (prefix2 == '>') {
 
 					// assuming mode always 1; we do not support other modes currently
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
 
-					return;			
+					return;
 
 				} else if (prefix2 == '<') {
 
 					// we do not support mode stack currently, just reset flags
 					vt_shell->SetKittyFlags(0);
 
-					return;			
+					return;
 
 				} else if (prefix2 == '?') {
 
@@ -836,7 +836,7 @@ struct VTAnsiContext
 					snprintf( buf, sizeof(buf), "\x1b[?%du", vt_shell->GetKittyFlags());
 					SendSequence( buf );
 
-					return;			
+					return;
 
 				}
 			}

@@ -797,6 +797,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					if (base == keycode) { base = 0; }
 				}
 
+				// workaround for tty backend
+				if (base && !keycode) { keycode = base; }
+
 				int shifted = 0;
 
 				// (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
@@ -859,8 +862,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					case VK_F12:       keycode = 24;  suffix = '~'; break;
 				}
 
+				// avoid sending base char if it is equal to keycode
+				if (base == keycode) { base = 0; }
+
 				int flags = _kitty_kb_flags;
 
+
+				if (!(flags & 8)) { // "Report all keys as escape codes" disabled
+					// do not sent modifiers themselfs
+					if (!keycode && (modifiers > 1)) {
+						return "";
+					}
+				}
 
 				// Записываем ESC-последовательность
 
@@ -893,22 +906,31 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					}
 				}
 
-				len += snprintf(buffer + len, sizeof(buffer) - len, ";");
-
 				// Часть 2
 
-				// Добавляем значение modifiers
-				len += snprintf(buffer + len, sizeof(buffer) - len, "%i", modifiers);
+				if ((modifiers > 1) || ((flags & 2) && !KeyEvent.bKeyDown)) {
 
-				if ((flags & 2) && !KeyEvent.bKeyDown) {
-					// Добавляем значение для типа события (1 для keydown, 2 для repeat, 3 для keyup)
-					// fixme: repeat unimplemented
-					len += snprintf(buffer + len, sizeof(buffer) - len, ":%i", 3);
+					len += snprintf(buffer + len, sizeof(buffer) - len, ";");
+
+					// Добавляем значение modifiers
+					len += snprintf(buffer + len, sizeof(buffer) - len, "%i", modifiers);
+
+					if ((flags & 2) && !KeyEvent.bKeyDown) {
+						// Добавляем значение для типа события (1 для keydown, 2 для repeat, 3 для keyup)
+						// fixme: repeat unimplemented
+						len += snprintf(buffer + len, sizeof(buffer) - len, ":%i", 3);
+					}
 				}
 
 				// Часть 3
 
-				if (flags & 16) { // "text as code points" enabled
+				if ((flags & 16) && KeyEvent.uChar.UnicodeChar) { // "text as code points" enabled
+
+					if (!((modifiers > 1) || ((flags & 2) && !KeyEvent.bKeyDown))) {
+						// Если часть 2 пропущена, добавим ";", чтобы обозначить это
+						len += snprintf(buffer + len, sizeof(buffer) - len, ";");
+					}
+
 					// Добавляем значение UnicodeChar
 					len += snprintf(buffer + len, sizeof(buffer) - len, ";%i", KeyEvent.uChar.UnicodeChar);
 				}

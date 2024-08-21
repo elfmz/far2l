@@ -909,14 +909,19 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				// Часть 3
 
 				if (flags & 16) { // "text as code points" enabled
-					// Добавляем значение keycode как кодовые точки
-					len += snprintf(buffer + len, sizeof(buffer) - len, ";%i", keycode);
+					// Добавляем значение UnicodeChar
+					len += snprintf(buffer + len, sizeof(buffer) - len, ";%i", KeyEvent.uChar.UnicodeChar);
 				}
 
 				// Финал
 
 				// Добавляем значение suffix
 				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", suffix);
+
+				if (!(flags & 8) && KeyEvent.uChar.UnicodeChar && !alt && !ctrl) { // "Report all keys as escape codes" disabled
+					// just send text
+					len = snprintf(buffer, sizeof(buffer), "%lc", KeyEvent.uChar.UnicodeChar);
+				}
 				
 				// Финальный 0
 				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", 0);

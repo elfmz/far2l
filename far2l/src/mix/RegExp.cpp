@@ -3089,12 +3089,11 @@ bool RegExp::InnerMatch(const wchar_t* const start, const wchar_t* str, const wc
 							st.pos=op->range.bracket.nextalt;
 							st.savestr=str;
 						}
-						/*
-						if(op->bracket.index>=0 && op->bracket.index<matchcount)
+						if(op->bracket.index>=0 && op->bracket.index<matchcount && inrangebracket<0)
 						{
-							match[op->bracket.index].end=str-start;
+							match[op->bracket.index].start=-1;
+							match[op->bracket.index].end=-1;
 						}
-						*/
 						break;
 					}
 

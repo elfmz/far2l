@@ -249,6 +249,10 @@ Viewer::~Viewer()
 		CtrlObject->Plugins.CurViewer = this;	// HostFileViewer;
 		CtrlObject->Plugins.ProcessViewerEvent(VE_CLOSE, &ViewerID);
 	}
+
+	if (CtrlObject->Plugins.CurViewer == this) {
+		CtrlObject->Plugins.CurViewer = nullptr;
+	}
 }
 
 void Viewer::KeepInitParameters()

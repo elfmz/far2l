@@ -785,7 +785,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 				// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
-				char buffer[64];
+				char buffer[64] = {0};
 
 				// fixme: KEYPAD 5 работает как F5, а надо чтоб как F3
 
@@ -958,7 +958,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (_win32_input_mode_expected) {
-				char buffer[64];
+				char buffer[64] = {0};
 				snprintf(buffer, sizeof(buffer), "\x1B[%i;%i;%i;%i;%i;%i_",
 						 KeyEvent.wVirtualKeyCode,
 						 KeyEvent.wVirtualScanCode,

@@ -7,7 +7,7 @@ libx11-dev
 libxi-dev
 
 libuchardet-dev
-libxerces-c-dev
+libxml2-dev
 
 libarchive-dev
 libssh-dev

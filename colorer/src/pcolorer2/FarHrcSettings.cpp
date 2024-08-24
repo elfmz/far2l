@@ -1,9 +1,8 @@
 #include "FarHrcSettings.h"
 #include <KeyFileHelper.h>
 #include <colorer/base/XmlTagDefs.h>
-#include <colorer/xml/XmlParserErrorHandler.h>
+#include <colorer/xml/XmlReader.h>
 #include <utils.h>
-#include <xercesc/parsers/XercesDOMParser.hpp>
 #include "colorer/parsers/CatalogParser.h"
 
 void FarHrcSettings::loadUserHrc(const UnicodeString* filename)
@@ -19,33 +18,23 @@ void FarHrcSettings::loadUserHrd(const UnicodeString* filename)
     return;
   }
 
-  xercesc::XercesDOMParser xml_parser;
-  XmlParserErrorHandler err_handler;
-  xml_parser.setErrorHandler(&err_handler);
-  xml_parser.setLoadExternalDTD(false);
-  xml_parser.setSkipDTDValidation(true);
-  uXmlInputSource config = XmlInputSource::newInstance(filename);
-  xml_parser.parse(*config->getInputSource());
-  if (err_handler.getSawErrors()) {
+  XmlInputSource config(*filename);
+  XmlReader xml_parser(config);
+  if (!xml_parser.parse()) {
     throw ParserFactoryException(UnicodeString("Error reading ").append(*filename));
   }
-  xercesc::DOMDocument* catalog = xml_parser.getDocument();
-  xercesc::DOMElement* elem = catalog->getDocumentElement();
-  const XMLCh* tagHrdSets = catTagHrdSets;
-  const XMLCh* tagHrd = catTagHrd;
-  if (elem == nullptr || !xercesc::XMLString::equals(elem->getNodeName(), tagHrdSets)) {
+
+  std::list<XMLNode> nodes;
+  xml_parser.getNodes(nodes);
+
+  if (nodes.begin()->name !=  catTagHrdSets) {
     throw Exception("main '<hrd-sets>' block not found");
   }
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = static_cast<xercesc::DOMElement*>(node);
-      if (xercesc::XMLString::equals(subelem->getNodeName(), tagHrd)) {
-        auto hrd = CatalogParser::parseHRDSetsChild(subelem);
-        if (hrd)
-          parserFactory->addHrd(std::move(hrd));
-      }
+  for (const auto& node : nodes.begin()->children) {
+    if (node.name == catTagHrd) {
+      auto hrd = CatalogParser::parseHRDSetsChild(node);
+      if (hrd)
+        parserFactory->addHrd(std::move(hrd));
     }
   }
 }
@@ -66,77 +55,56 @@ void FarHrcSettings::readProfile()
 
 void FarHrcSettings::readXML(UnicodeString* file)
 {
-  xercesc::XercesDOMParser xml_parser;
-  XmlParserErrorHandler error_handler;
-  xml_parser.setErrorHandler(&error_handler);
-  xml_parser.setLoadExternalDTD(false);
-  xml_parser.setSkipDTDValidation(true);
-  xml_parser.setDisableDefaultEntityResolution(true);
-  uXmlInputSource config = XmlInputSource::newInstance(file);
-  xml_parser.parse(*(config->getInputSource()));
-  if (error_handler.getSawErrors()) {
+  XmlInputSource config(*file);
+  XmlReader xml_parser(config);
+  if (!xml_parser.parse()) {
     throw ParserFactoryException("Error reading hrcsettings.xml.");
   }
-  xercesc::DOMDocument* catalog = xml_parser.getDocument();
-  xercesc::DOMElement* elem = catalog->getDocumentElement();
 
-  const XMLCh* tagPrototype = hrcTagPrototype;
-  const XMLCh* tagHrcSettings = (const XMLCh*) u"hrc-settings\0";
+  std::list<XMLNode> nodes;
+  xml_parser.getNodes(nodes);
 
-  if (elem == nullptr || !xercesc::XMLString::equals(elem->getNodeName(), tagHrcSettings)) {
+  if (nodes.begin()->name !=  u"hrc-settings") {
     throw FarHrcSettingsException("main '<hrc-settings>' block not found");
   }
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      xercesc::DOMElement* subelem = static_cast<xercesc::DOMElement*>(node);
-      if (xercesc::XMLString::equals(subelem->getNodeName(), tagPrototype)) {
-        UpdatePrototype(subelem);
-      }
+
+  for (const auto& node : nodes.begin()->children) {
+    if (node.name == hrcTagPrototype) {
+      UpdatePrototype(node);
     }
   }
 }
 
-void FarHrcSettings::UpdatePrototype(xercesc::DOMElement* elem)
+void FarHrcSettings::UpdatePrototype(const XMLNode& elem)
 {
-  auto typeName = elem->getAttribute(hrcPrototypeAttrName);
-  if (typeName == nullptr) {
+  const auto& typeName = elem.getAttrValue(hrcPrototypeAttrName);
+  if (typeName.isEmpty()) {
     return;
   }
   auto& hrcLibrary = parserFactory->getHrcLibrary();
-  UnicodeString typenamed = UnicodeString(typeName);
-  auto* type = hrcLibrary.getFileType(&typenamed);
+  auto* type = hrcLibrary.getFileType(typeName);
   if (type == nullptr) {
     return;
   }
 
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = static_cast<xercesc::DOMElement*>(node);
-      if (xercesc::XMLString::equals(subelem->getNodeName(), hrcTagParam)) {
-        auto name = subelem->getAttribute(hrcParamAttrName);
-        auto value = subelem->getAttribute(hrcParamAttrValue);
-        auto descr = subelem->getAttribute(hrcParamAttrDescription);
+  for (const auto& node : elem.children) {
+    if (node.name == hrcTagParam) {
+      const auto& name = node.getAttrValue(hrcParamAttrName);
+      const auto& value = node.getAttrValue(hrcParamAttrValue);
+      const auto& descr = node.getAttrValue(hrcParamAttrDescription);
 
-        if (UStr::isEmpty(name)) {
-          continue;
-        }
+      if (name.isEmpty()) {
+        continue;
+      }
 
-        UnicodeString cname = UnicodeString(name);
-        UnicodeString cvalue = UnicodeString(value);
-        UnicodeString cdescr = UnicodeString(descr);
-        if (type->getParamValue(cname) == nullptr) {
-          type->addParam(cname, cvalue);
-        }
-        else {
-          type->setParamDefaultValue(cname, &cvalue);
-        }
-        if (descr != nullptr) {
-          type->setParamDescription(cname, &cdescr);
-        }
+      if (type->getParamValue(name) == nullptr) {
+        type->addParam(name, value);
+      }
+      else {
+        type->setParamDefaultValue(name, &value);
+      }
+      if (descr != nullptr) {
+        type->setParamDescription(name, &descr);
       }
     }
   }

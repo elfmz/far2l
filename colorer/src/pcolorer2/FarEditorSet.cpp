@@ -1,6 +1,5 @@
 #include "FarEditorSet.h"
 #include <KeyFileHelper.h>
-#include <colorer/xml/XmlInputSource.h>
 #include <sys/stat.h>
 #include <utils.h>
 #include "FarHrcSettings.h"

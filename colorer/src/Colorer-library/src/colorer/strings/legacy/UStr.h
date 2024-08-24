@@ -2,10 +2,10 @@
 #define COLORER_USTR_H
 
 #include <string>
+#include "colorer/Common.h"
 #ifndef COLORER_FEATURE_LIBXML
 #include <xercesc/util/XMLString.hpp>
 #endif
-#include "colorer/Common.h"
 #include "colorer/strings/legacy/CharacterClass.h"
 
 class UStr

@@ -1,6 +1,6 @@
 # Changelog for Colorer base
 
-## [1.2.0.46]
+## [Unreleased]
 
 ### Fixed
 - [calcset] update hrc for latest file structure.
@@ -16,8 +16,10 @@
 - [shell-posix] Comments are not recognized in case statement
 - [shell-posix] Commands are not recognized correctly after escaped new-line
 - [shell-bash] Redirection symbols < and > inside "magic backticks" block break background highlighting till the end of the file
+- [shell-bash] Fix magic backticks in for loop
 - [smarty] fixed the work of smarty templates
 - [markdown] amend emphasis with underscores
+- [markdown] fix trailing spaces in em and strong
 
 ### Changed
 - Simplified catalog.xml.
@@ -60,6 +62,8 @@
 - [prolog] add first line pattern
 - [shell-posix] add functions to outlined list
 - [shell-bash] add functions to outlined list
+- [markdown] added the ability to connect the backlight in 'code' by creating your own scheme 'markdown2:markdown2'
+- [markdown] highlight special all caps HTML tags
 
 ## [1.2.0] - 2021-09-12
 

@@ -1,9 +1,7 @@
 #include "colorer/parsers/CatalogParser.h"
-#include <xercesc/parsers/XercesDOMParser.hpp>
 #include "colorer/base/XmlTagDefs.h"
-#include "colorer/xml/BaseEntityResolver.h"
 #include "colorer/xml/XmlInputSource.h"
-#include "colorer/xml/XmlParserErrorHandler.h"
+#include "colorer/xml/XmlReader.h"
 
 void CatalogParser::parse(const UnicodeString* path)
 {
@@ -11,138 +9,95 @@ void CatalogParser::parse(const UnicodeString* path)
   hrc_locations.clear();
   hrd_nodes.clear();
 
-  xercesc::XercesDOMParser xml_parser;
-  XmlParserErrorHandler error_handler;
-  BaseEntityResolver resolver;
-  xml_parser.setErrorHandler(&error_handler);
-  xml_parser.setXMLEntityResolver(&resolver);
-  xml_parser.setLoadExternalDTD(false);
-  xml_parser.setSkipDTDValidation(true);
-  xml_parser.setDisableDefaultEntityResolution(true);
-
-  uXmlInputSource catalogXIS = XmlInputSource::newInstance(path);
-  xml_parser.parse(*catalogXIS->getInputSource());
-  if (error_handler.getSawErrors()) {
+  XmlInputSource catalogXIS(*path);
+  XmlReader xml(catalogXIS);
+  if (!xml.parse()) {
     throw CatalogParserException(*path + UnicodeString(" parse error"));
   }
-  xercesc::DOMDocument* catalog = xml_parser.getDocument();
-  xercesc::DOMElement* elem = catalog->getDocumentElement();
+  std::list<XMLNode> nodes;
+  xml.getNodes(nodes);
 
-  if (!elem || !xercesc::XMLString::equals(elem->getNodeName(), catTagCatalog)) {
-    throw CatalogParserException(
-        "Incorrect file structure catalog.xml. Main '<catalog>' block not found at file " + *path);
+  if (nodes.begin()->name != catTagCatalog) {
+    throw CatalogParserException("Incorrect file structure catalog.xml. Main '<catalog>' block not found at file " +
+                                 *path);
   }
 
-  parseCatalogBlock(elem);
+  parseCatalogBlock(*nodes.begin());
 
   logger->debug("end parse catalog.xml");
 }
 
-void CatalogParser::parseCatalogBlock(const xercesc::DOMNode* elem)
+void CatalogParser::parseCatalogBlock(const XMLNode& elem)
 {
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      // don`t use dynamic_cast, see https://github.com/colorer/Colorer-library/issues/32
-      auto* subelem = static_cast<xercesc::DOMElement*>(node);
-      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrcSets)) {
-        parseHrcSetsBlock(subelem);
-        continue;
-      }
-      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrdSets)) {
-        parseHrdSetsBlock(node);
-      }
-      continue;
+  for (const auto& node : elem.children) {
+    if (node.name == catTagHrcSets) {
+      parseHrcSetsBlock(node);
     }
-    if (node->getNodeType() == xercesc::DOMNode::ENTITY_REFERENCE_NODE) {
-      parseCatalogBlock(node);
-    }
-  }
-}
-
-void CatalogParser::parseHrcSetsBlock(const xercesc::DOMNode* elem)
-{
-  addHrcSetsLocation(elem);
-}
-
-void CatalogParser::addHrcSetsLocation(const xercesc::DOMNode* elem)
-{
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = static_cast<xercesc::DOMElement*>(node);
-      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagLocation)) {
-        auto attr_value = subelem->getAttribute(catLocationAttrLink);
-        if (!UStr::isEmpty(attr_value)) {
-          hrc_locations.emplace_back(UnicodeString(attr_value));
-          logger->debug("add hrc location: '{0}'", hrc_locations.back());
-        }
-        else {
-          logger->warn("found hrc with empty location. skip it location.");
-        }
-      }
-      continue;
-    }
-    if (node->getNodeType() == xercesc::DOMNode::ENTITY_REFERENCE_NODE) {
-      addHrcSetsLocation(node);
-    }
-  }
-}
-
-void CatalogParser::parseHrdSetsBlock(const xercesc::DOMNode* elem)
-{
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      auto* subelem = static_cast<xercesc::DOMElement*>(node);
-      if (xercesc::XMLString::equals(subelem->getNodeName(), catTagHrd)) {
-        auto hrd = parseHRDSetsChild(subelem);
-        if (hrd) {
-          hrd_nodes.push_back(std::move(hrd));
-        }
-      }
-      continue;
-    }
-    if (node->getNodeType() == xercesc::DOMNode::ENTITY_REFERENCE_NODE) {
+    else if (node.name == catTagHrdSets) {
       parseHrdSetsBlock(node);
     }
   }
 }
 
-std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const xercesc::DOMElement* elem)
+void CatalogParser::parseHrcSetsBlock(const XMLNode& elem)
 {
-  const XMLCh* xhrd_class = elem->getAttribute(catHrdAttrClass);
-  const XMLCh* xhrd_name = elem->getAttribute(catHrdAttrName);
-  const XMLCh* xhrd_desc = elem->getAttribute(catHrdAttrDescription);
+  addHrcSetsLocation(elem);
+}
 
-  if (UStr::isEmpty(xhrd_class) || UStr::isEmpty(xhrd_name)) {
+void CatalogParser::addHrcSetsLocation(const XMLNode& elem)
+{
+  for (const auto& node : elem.children) {
+    if (node.name == catTagLocation) {
+      const auto& attr_value = node.getAttrValue(catLocationAttrLink);
+      if (!attr_value.isEmpty()) {
+        hrc_locations.push_back(attr_value);
+        logger->debug("add hrc location: '{0}'", attr_value);
+      }
+      else {
+        logger->warn("found hrc with empty location. skip it location.");
+      }
+    }
+  }
+}
+
+void CatalogParser::parseHrdSetsBlock(const XMLNode& elem)
+{
+  for (const auto& node : elem.children) {
+    if (node.name == catTagHrd) {
+      auto hrd = parseHRDSetsChild(node);
+      if (hrd) {
+        hrd_nodes.push_back(std::move(hrd));
+      }
+    }
+  }
+}
+
+std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const XMLNode& elem)
+{
+  const auto& xhrd_class = elem.getAttrValue(catHrdAttrClass);
+  const auto& xhrd_name = elem.getAttrValue(catHrdAttrName);
+
+  if (xhrd_class.isEmpty() || xhrd_name.isEmpty()) {
     logger->warn("found HRD with empty class/name. skip this record.");
     return nullptr;
   }
 
+  const auto& xhrd_desc = elem.getAttrValue(catHrdAttrDescription);
   auto hrd_node = std::make_unique<HrdNode>();
   hrd_node->hrd_class = UnicodeString(xhrd_class);
   hrd_node->hrd_name = UnicodeString(xhrd_name);
   hrd_node->hrd_description = UnicodeString(xhrd_desc);
 
-  for (xercesc::DOMNode* node = elem->getFirstChild(); node != nullptr;
-       node = node->getNextSibling())
-  {
-    if (node->getNodeType() == xercesc::DOMNode::ELEMENT_NODE) {
-      if (xercesc::XMLString::equals(node->getNodeName(), catTagLocation)) {
-        auto* subelem = static_cast<xercesc::DOMElement*>(node);
-        auto attr_value = subelem->getAttribute(catLocationAttrLink);
-        if (!UStr::isEmpty(attr_value)) {
-          hrd_node->hrd_location.emplace_back(UnicodeString(attr_value));
-          logger->debug("add hrd location '{0}' for {1}:{2}", hrd_node->hrd_location.back(),
-                        hrd_node->hrd_class, hrd_node->hrd_name);
-        }
-        else {
-          logger->warn("found hrd with empty location. skip it location.");
-        }
+  for (const auto& node : elem.children) {
+    if (node.name == catTagLocation) {
+      auto attr_value = node.getAttrValue(catLocationAttrLink);
+      if (!attr_value.isEmpty()) {
+        hrd_node->hrd_location.emplace_back(attr_value);
+        logger->debug("add hrd location '{0}' for {1}:{2}", hrd_node->hrd_location.back(), hrd_node->hrd_class,
+                      hrd_node->hrd_name);
+      }
+      else {
+        logger->warn("found hrd with empty location. skip it location.");
       }
     }
   }
@@ -150,9 +105,6 @@ std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const xercesc::DOMElem
   if (!hrd_node->hrd_location.empty()) {
     return hrd_node;
   }
-  else {
-    logger->warn("skip HRD {0}:{1} - not found valid location", hrd_node->hrd_class,
-                 hrd_node->hrd_name);
-    return nullptr;
-  }
+  logger->warn("skip HRD {0}:{1} - not found valid location", hrd_node->hrd_class, hrd_node->hrd_name);
+  return nullptr;
 }

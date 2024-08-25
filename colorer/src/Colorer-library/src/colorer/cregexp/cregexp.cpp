@@ -1,5 +1,5 @@
 #include "colorer/cregexp/cregexp.h"
-
+#include <cstring>
 
 StackElem* CRegExp::RegExpStack {nullptr};
 int CRegExp::RegExpStack_Size {0};

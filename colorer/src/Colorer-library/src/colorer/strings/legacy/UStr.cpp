@@ -1,21 +1,11 @@
 #include "colorer/strings/legacy/UStr.h"
 #include <string>
 
+#ifndef COLORER_FEATURE_LIBXML
 std::string UStr::to_stdstr(const XMLCh* str)
 {
   std::string _string = std::string(xercesc::XMLString::transcode(str));
   return _string;
-}
-
-std::string UStr::to_stdstr(const UnicodeString* str)
-{
-  std::string out_str(str->getChars());
-  return out_str;
-}
-
-std::string UStr::to_stdstr(const uUnicodeString& str)
-{
-  return to_stdstr(str.get());
 }
 
 std::unique_ptr<XMLCh[]> UStr::to_xmlch(const UnicodeString* str)
@@ -29,6 +19,19 @@ std::unique_ptr<XMLCh[]> UStr::to_xmlch(const UnicodeString* str)
     out_s[len] = 0;
   }
   return out_s;
+}
+
+#endif
+
+std::string UStr::to_stdstr(const UnicodeString* str)
+{
+  std::string out_str(str->getChars());
+  return out_str;
+}
+
+std::string UStr::to_stdstr(const uUnicodeString& str)
+{
+  return to_stdstr(str.get());
 }
 
 std::wstring UStr::to_stdwstr(const UnicodeString* str)

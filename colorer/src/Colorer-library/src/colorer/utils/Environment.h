@@ -10,6 +10,7 @@ namespace fs = ghc::filesystem;
 namespace fs = std::filesystem;
 #endif
 #include <vector>
+namespace colorer {
 
 class Environment
 {
@@ -26,4 +27,5 @@ class Environment
   static bool isRegularFile(const UnicodeString* basePath, const UnicodeString* relPath, UnicodeString& fullPath);
 };
 
+}  // namespace colorer
 #endif  // COLORER_ENVIRONMENT_H

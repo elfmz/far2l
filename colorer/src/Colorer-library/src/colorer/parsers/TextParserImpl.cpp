@@ -246,7 +246,7 @@ int TextParser::Impl::searchKW(const SchemeNodeKeywords* node, int /*no*/, int l
       }
       if (!badbound) {
         CTRACE(logger->trace("[TextParserImpl] KW matched. gx={0}, region={1}", gx,
-                             *node->kwList->kwList[pos].region->getName()));
+                             node->kwList->kwList[pos].region->getName()));
         addRegion(current_parse_line, gx, gx + kwlen, node->kwList->kwList[pos].region);
         gx += kwlen;
         return MATCH_RE;
@@ -453,12 +453,12 @@ int TextParser::Impl::searchBL(SchemeNodeBlock* node, int no, int lowLen, int hi
 
 int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen, int hiLen)
 {
-  CTRACE(logger->trace("[TextParserImpl] searchMatch: entered scheme \"{0}\"", cscheme->getName()));
+  CTRACE(logger->trace("[TextParserImpl] searchMatch: entered scheme \"{0}\"", *cscheme->getName()));
 
   if (!cscheme) {
     return MATCH_NOTHING;
   }
-#if COLORER_USE_DEEPTRACE
+#ifdef COLORER_USE_DEEPTRACE
   int idx = 0;
 #endif
   for (auto const& schemeNode : cscheme->nodes) {
@@ -496,7 +496,7 @@ int TextParser::Impl::searchMatch(const SchemeImpl* cscheme, int no, int lowLen,
         break;
       }
     }
-#if COLORER_USE_DEEPTRACE
+#ifdef COLORER_USE_DEEPTRACE
     idx++;
 #endif
   }

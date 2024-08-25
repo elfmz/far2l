@@ -1,4 +1,4 @@
-#include "colorer/xml/SharedXmlInputSource.h"
+#include "colorer/xml/xercesc/SharedXmlInputSource.h"
 #include <xercesc/util/BinFileInputStream.hpp>
 #include "colorer/Exception.h"
 
@@ -19,7 +19,7 @@ int SharedXmlInputSource::delref()
   return ref_count;
 }
 
-SharedXmlInputSource::SharedXmlInputSource(uXmlInputSource source)
+SharedXmlInputSource::SharedXmlInputSource(uXercesXmlInputSource source)
 {
   ref_count = 1;
   input_source = std::move(source);
@@ -48,7 +48,7 @@ SharedXmlInputSource::~SharedXmlInputSource()
 SharedXmlInputSource* SharedXmlInputSource::getSharedInputSource(const XMLCh* path,
                                                                  const XMLCh* base)
 {
-  uXmlInputSource tempis = XmlInputSource::newInstance(path, base);
+  uXercesXmlInputSource tempis = XercesXmlInputSource::newInstance(path, base);
 
   if (isHash == nullptr) {
     isHash = new std::unordered_map<UnicodeString, SharedXmlInputSource*>();

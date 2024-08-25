@@ -86,7 +86,7 @@
 		</scheme>
 
 		<entity name="Sep" value="(?:(?:[\s]|\n|\r)*)" />
-		<entity name="Args" value="(?:%Sep;\(&Sep;(?{All}(?{First}[^\)\s]*)[^\)]*)\))" />
+		<entity name="Args" value="(?:%Sep;\(%Sep;(?{All}(?{First}[^\)\s]*)[^\)]*)\))" />
 		<entity name="ArgsMatch1" value="(?:%Sep;\(%Sep;(?:\y{First}||(?{def:Error}.+))%Sep;\))" />
 		<entity name="ArgsMatch0" value="(?:%Sep;\(%Sep;(?:\y{All}||(?{def:Error}.+))%Sep;\))" />
 

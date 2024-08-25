@@ -7,14 +7,19 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="markdown">
 <annotation><documentation><![CDATA[
 
-markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
+markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-29
 
-* Inline HTML should be valid XML.
+* Use markdown2 for extensions.
 * Opened spans are always colored.
-* Blockquotes are only partialy parsed.
+* Blockquotes are partially parsed.
 * List levels 4: only items are parsed.
 * List levels 5+: all is colored as code.
 * Indentation: 4/8/12 spaces, 1/2/3 tabs.
+
+Inline HTML
+
+* ALLCAPS tags are treated separately, not affecting markdown, see #6: https://github.github.com/gfm/#html-block
+* Other HTML is treated as XML and should be well formed.
 
 ]]></documentation></annotation>
 
@@ -70,6 +75,7 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
 <entity name="Ref" value=" {,3}\[[^\]]+\]:"/>
 <entity name="Rule" value=" {,3}(?:(?:\*\s*){3,}$|(?:-\s*){3,}$|(?:_\s*){3,}$)"/>
 <entity name="URI" value="(?:http|https|ftp|file):\/\/[^&gt;]*"/>
+<entity name="Html" value="(?:ADDRESS|ARTICLE|ASIDE|BASE|BASEFONT|BLOCKQUOTE|BODY|CAPTION|CENTER|COL|COLGROUP|DD|DETAILS|DIALOG|DIR|DIV|DL|DT|FIELDSET|FIGCAPTION|FIGURE|FOOTER|FORM|FRAME|FRAMESET|H1|H2|H3|H4|H5|H6|HEAD|HEADER|HR|HTML|IFRAME|LEGEND|LI|LINK|MAIN|MENU|MENUITEM|NAV|NOFRAMES|OL|OPTGROUP|OPTION|P|PARAM|SECTION|SOURCE|SUMMARY|TABLE|TBODY|TD|TFOOT|TH|THEAD|TITLE|TR|TRACK|UL)"/>
 
 <entity name="Top" value="^(?:\s*$|%Rule;|%Head;|%Ref;|%Abbr;)"/>
 <entity name="LEnd" value="^(?:%Top;|\s*%List2;|%Fence;|%i3;%Quote;)?="/>
@@ -105,15 +111,28 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
   start="/(?{start}(?{LinkMark}!?\[))/" end="/(?{end}(?{LinkMark}\](?:\([^)]*\)| ?\[[^\]]*\])?))|%PEnd;/"/>
 </scheme>
 
+<scheme name="Html">
+  <regexp match="/(?{LinkMark}&lt;)(?{LinkText}%URI;|%Email;)(?{LinkMark}&gt;)/"/>
+
+  <block scheme="xml:Attribute"
+    start="/(?{start}(?{xml:element.start.lt}&lt;)(?{xml:element.start.name}%Html;)\b)/"
+    end="/(?{end}(?{xml:element.start.gt}&gt;))/"
+  />
+
+  <regexp match="/(?{xml:element.end.lt}&lt;\/)(?{xml:element.end.name}%Html;)(?{xml:element.end.gt}&gt;)/"/>
+
+  <block scheme="xml:xml"
+    start="/\M&lt;(?:!--|\d?!\w+(?:\s|\/?&gt;|$))/"
+    end="//"
+  />
+</scheme>
+
 <scheme name="Base">
+  <inherit scheme="Wrap"/>
   <inherit scheme="Escape"/>
   <inherit scheme="CodeSpan"/>
   <inherit scheme="LinkSpan"/>
-
-  <regexp match="/(?{LinkMark}&lt;)(?{LinkText}%URI;|%Email;)(?{LinkMark}&gt;)/"/>
-
-  <block scheme="xml:xml"
-  start="/\M&lt;(?:!--|\d?!\w+(?:\s|\/?&gt;|$))/" end="//"/>
+  <inherit scheme="Html"/>
 </scheme>
 
 <scheme name="EmSpan">
@@ -121,7 +140,7 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
   start="/(?{start}\*)[^\s*]?=/" end="/[^\s*]?#1(?{end}\*)|%LEnd;/"/>
 
   <block scheme="StrongSpan" region="EmText"
-  start="/(?:^|\s?#1)(?{start}_)[^\s_]?=/" end="/[^\s_]?#1(?{end}_)(?:$|\s?=)|%LEnd;/"/>
+  start="/(?:^|\s?#1)(?{start}_)[^\s_]?=/" end="/[^\s_]?#1(?{end}_)(?:$|\W?=)|%LEnd;/"/>
 
   <inherit scheme="Base"/>
 </scheme>
@@ -141,7 +160,7 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
   start="/(?{start}\*{2,3})[^\s*]?=/" end="/[^\s*]?#1(?{end}\y{start})|%LEnd;/"/>
 
   <block scheme="EmSpan" region="StrongText"
-  start="/(?:^|\s?#1)(?{start}_{2,3})[^\s_]?=/" end="/[^\s_]?#1(?{end}\y{start})(?:$|\s?=)|%LEnd;/"/>
+  start="/(?:^|\s?#1)(?{start}_{2,3})[^\s_]?=/" end="/[^\s_]?#1(?{end}\y{start})(?:$|\W?=)|%LEnd;/"/>
 
   <inherit scheme="Base"/>
 </scheme>
@@ -151,7 +170,7 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
   start="/(?{start}\*{2,3})[^\s*]?=/" end="/[^\s*]?#1(?{end}\y{start})|%PEnd;/"/>
 
   <block scheme="PEmSpan" region="StrongText"
-  start="/(?:^|\s?#1)(?{start}_{2,3})[^\s_]?=/" end="/[^\s_]?#1(?{end}\y{start})(?:$|\s?=)|%PEnd;/"/>
+  start="/(?:^|\s?#1)(?{start}_{2,3})[^\s_]?=/" end="/[^\s_]?#1(?{end}\y{start})(?:$|\W?=)|%PEnd;/"/>
 
   <inherit scheme="Base"/>
 </scheme>
@@ -167,7 +186,6 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
 </scheme>
 
 <scheme name="Text">
-  <inherit scheme="Wrap"/>
   <inherit scheme="Base"/>
   <inherit scheme="EmSpan"/>
   <inherit scheme="StrongSpan"/>
@@ -186,9 +204,12 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
   <regexp match="/(?{HeadMark}#*\s*)?(?{Anchor}\{#%ID;\})(?{HeadMark}\s*#*\s*)$/"/>
   <regexp match="/(?{HeadMark}#+\s*)$/"/>
 
-  <inherit scheme="Base"/>
-  <inherit scheme="EmSpan"/>
-  <inherit scheme="StrongSpan"/>
+  <inherit scheme="EmSpan">
+    <virtual scheme="Wrap" subst-scheme="def:empty"/>
+  </inherit>
+  <inherit scheme="StrongSpan">
+    <virtual scheme="Wrap" subst-scheme="def:empty"/>
+  </inherit>
 </scheme>
 
 <scheme name="Item3">
@@ -267,6 +288,9 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
 </scheme>
 
 <scheme name="markdown">
+  <!--user extensions-->
+  <inherit scheme="markdown2:markdown2" />
+
   <regexp match="/^(?{Rule}%Rule;)/"/>
 
   <block scheme="Head" region="HeadText"
@@ -279,9 +303,9 @@ markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-10
   start="/(?{start}^ {4,}|\t+)\S.*/" end="/(?{end})\M%i3;\S/"/>
 
   <block scheme="def:empty" region="Code"
-  start="/(?{start}^%FenceMark;).*$/" end="/(?{end}^(?{FenceMark}\y{FenceMark})).*$/"/>
+  start="/(?{start}^%FenceMark;).*$/" end="/(?{end}^(?{FenceMark}\y{FenceMark}))\s*$/"/>
 
-  <regexp match="/^(?{Reference}%Ref;.*)/"/>
+  <regexp match="/^(?{def:Outlined}(?{Reference}%Ref;.*))/"/>
 
   <regexp match="/^(?{Abbreviation}%Abbr;.*)/"/>
 

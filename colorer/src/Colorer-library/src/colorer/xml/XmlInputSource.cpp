@@ -1,44 +1,48 @@
 #include "colorer/xml/XmlInputSource.h"
-#include "colorer/Exception.h"
-#include "colorer/xml/LocalFileXmlInputSource.h"
-#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
-#include "colorer/xml/ZipXmlInputSource.h"
-#endif
 
-uXmlInputSource XmlInputSource::newInstance(const UnicodeString* path, const UnicodeString* base)
+XmlInputSource::XmlInputSource(const UnicodeString& source_path) : XmlInputSource(source_path, nullptr) {}
+
+XmlInputSource::~XmlInputSource()
 {
-  return newInstance(UStr::to_xmlch(path).get(), UStr::to_xmlch(base).get());
+#ifndef COLORER_FEATURE_LIBXML
+  //xml_input_source child of xercesc classes and need to free before xercesc
+  xml_input_source.reset();
+  xercesc::XMLPlatformUtils::Terminate();
+#endif
 }
 
-uXmlInputSource XmlInputSource::newInstance(const XMLCh* path, const XMLCh* base)
+XmlInputSource::XmlInputSource(const UnicodeString& source_path, const UnicodeString* source_base)
 {
-  if (!path || (*path == '\0')) {
-    throw InputSourceException("XmlInputSource::newInstance: path is empty");
-  }
-  if (xercesc::XMLString::startsWith(path, kJar) || (base != nullptr && xercesc::XMLString::startsWith(base, kJar))) {
-#ifdef COLORER_FEATURE_ZIPINPUTSOURCE
-    return std::make_unique<ZipXmlInputSource>(path, base);
+#ifdef COLORER_FEATURE_LIBXML
+  xml_input_source = std::make_unique<LibXmlInputSource>(&source_path, source_base);
 #else
-    throw InputSourceException("ZipXmlInputSource not supported");
+  xercesc::XMLPlatformUtils::Initialize();
+  xml_input_source = XercesXmlInputSource::newInstance(&source_path, source_base);
 #endif
-  }
-  return std::make_unique<LocalFileXmlInputSource>(path, base);
 }
 
-bool XmlInputSource::isUriFile(const UnicodeString& path, const UnicodeString* base)
+uXmlInputSource XmlInputSource::createRelative(const UnicodeString& relPath) const
 {
-  if ((path.startsWith(kJar)) || (base && base->startsWith(kJar))) {
-    return false;
-  }
-  return true;
-}
-
-uXmlInputSource XmlInputSource::createRelative(const XMLCh* relPath)
-{
-  return newInstance(relPath, this->getInputSource()->getSystemId());
+  auto str = UnicodeString(xml_input_source->getPath());
+  return std::make_unique<XmlInputSource>(relPath, &str);
 }
 
 UnicodeString& XmlInputSource::getPath() const
 {
-  return *source_path;
+  return xml_input_source->getPath();
+}
+
+#ifndef COLORER_FEATURE_LIBXML
+XercesXmlInputSource* XmlInputSource::getInputSource() const
+{
+  return xml_input_source.get();
+}
+#endif
+
+bool XmlInputSource::isFileURI(const UnicodeString& path, const UnicodeString* base)
+{
+  if (path.startsWith(u"jar") || (base && base->startsWith(u"jar"))) {
+    return false;
+  }
+  return true;
 }

@@ -6,17 +6,13 @@
 
 ParserFactory::Impl::Impl()
 {
-  // init xercesc, need to work with xml string
-  xercesc::XMLPlatformUtils::Initialize();
   hrc_library = new HrcLibrary();
 }
 
 ParserFactory::Impl::~Impl()
 {
-  // hrc library has link to xercesc classes (SharedXmlInputSource) and need to free before xercesc
   delete hrc_library;
   CRegExp::clearRegExpStack();
-  xercesc::XMLPlatformUtils::Terminate();
 }
 
 void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
@@ -24,15 +20,15 @@ void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
   if (!catalog_path || catalog_path->isEmpty()) {
     logger->debug("loadCatalog for empty path");
 
-    auto env = Environment::getOSVariable("COLORER_CATALOG");
+    auto env = colorer::Environment::getOSVariable("COLORER_CATALOG");
     if (!env || env->isEmpty()) {
       throw ParserFactoryException("Can't find suitable catalog.xml for parse.");
     }
-    base_catalog_path = Environment::normalizePath(env.get());
+    base_catalog_path = colorer::Environment::normalizePath(env.get());
   }
   else {
     logger->debug("loadCatalog for {0}", *catalog_path);
-    base_catalog_path = Environment::normalizePath(catalog_path);
+    base_catalog_path = colorer::Environment::normalizePath(catalog_path);
   }
 
   parseCatalog(*base_catalog_path);
@@ -48,8 +44,8 @@ void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
 {
   try {
     logger->debug("try load '{0}'", location);
-    if (XmlInputSource::isUriFile(*base_catalog_path, &location)) {
-      auto files = Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
+    if (XmlInputSource::isFileURI(*base_catalog_path, &location)) {
+      auto files = colorer::Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
       for (auto& file : files) {
         loadHrc(file, nullptr);
       }
@@ -64,11 +60,11 @@ void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
 
 void ParserFactory::Impl::loadHrc(const UnicodeString& hrc_path, const UnicodeString* base_path) const
 {
-  uXmlInputSource dfis = XmlInputSource::newInstance(&hrc_path, base_path);
+  XmlInputSource dfis(hrc_path, base_path);
   try {
-    hrc_library->loadSource(dfis.get());
+    hrc_library->loadSource(&dfis);
   } catch (Exception& e) {
-    logger->error("Can't load hrc: {0}", dfis->getPath());
+    logger->error("Can't load hrc: {0}", dfis.getPath());
     logger->error("{0}", e.what());
   }
 }
@@ -88,7 +84,8 @@ void ParserFactory::Impl::parseCatalog(const UnicodeString& catalog_path)
   }
 }
 
-[[maybe_unused]] std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses()
+[[maybe_unused]]
+std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses()
 {
   std::vector<UnicodeString> result;
   result.reserve(hrd_nodes.size());
@@ -166,7 +163,7 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
   const UnicodeString* name_id;
   const UnicodeString name_default(HrdNameDefault);
   if (nameID == nullptr) {
-    auto hrd = Environment::getOSVariable("COLORER_HRD");
+    auto hrd = colorer::Environment::getOSVariable("COLORER_HRD");
     if (hrd) {
       name_id = hrd.get();
     }
@@ -183,8 +180,8 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
   for (const auto& idx : hrd_node.hrd_location) {
     if (idx.length() != 0) {
       try {
-        auto dfis = XmlInputSource::newInstance(&idx, base_catalog_path.get());
-        mapper.loadRegionMappings(*dfis);
+        XmlInputSource dfis(idx, base_catalog_path.get());
+        mapper.loadRegionMappings(dfis);
       } catch (Exception& e) {
         logger->error("Can't load hrd: ");
         logger->error("{0}", e.what());

@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 #include "colorer/Common.h"
-#include "colorer/xml/XmlInputSource.h"
+#include "colorer/xml/xercesc/XercesXmlInputSource.h"
 #include <xercesc/sax/InputSource.hpp>
 
 class SharedXmlInputSource
@@ -26,12 +26,12 @@ class SharedXmlInputSource
   SharedXmlInputSource& operator=(SharedXmlInputSource&&) = delete;
 
  private:
-  explicit SharedXmlInputSource(uXmlInputSource source);
+  explicit SharedXmlInputSource(uXercesXmlInputSource source);
   ~SharedXmlInputSource();
 
   static std::unordered_map<UnicodeString, SharedXmlInputSource*>* isHash;
 
-  uXmlInputSource input_source;
+  uXercesXmlInputSource input_source;
   int ref_count;
   std::unique_ptr<XMLByte[]> mSrc;
   XMLSize_t mSize;

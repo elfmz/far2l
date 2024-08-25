@@ -9,7 +9,7 @@ Colorer is a syntax highlighting library.
 
 To build library and other utils from source, you will need:
 
-* Visual Studio 2019 or higher / gcc 8 or higher
+* Visual Studio 2019 / gcc 7 / clang 7 or higher
 * git
 * cmake 3.10 or higher
 
@@ -46,13 +46,12 @@ You may build library on linux using standard package, without vcpkg.
 #### Ubuntu example
 
 ```bash
-sudo apt install libicu-dev libxerces-c-dev libspdlog-dev libfmt-dev zlib1g-dev libminizip-dev
+sudo apt install libicu-dev libxerces-c-dev libspdlog-dev libfmt-dev zlib1g-dev libminizip-dev libxml2-dev
 git clone https://github.com/colorer/Colorer-library.git
 cd Colorer-library
-mkdir build
-cd build
-cmake .. -DCOLORER_USE_VCPKG=OFF
-cmake --build .
+mkdir _build
+cmake -S . -B _build -G "Ninja" -DCOLORER_USE_VCPKG=OFF
+cmake --build _build -j$(nproc --all)
 ```
 
 #### CentOS Example
@@ -61,10 +60,19 @@ cmake --build .
 sudo yum install libicu-devel xerces-c-devel spdlog-devel fmt-devel zlib-devel minizip1.2-devel
 git clone https://github.com/colorer/Colorer-library.git
 cd Colorer-library
-mkdir build
-cd build
-cmake .. -DCOLORER_USE_VCPKG=OFF
-cmake --build .
+mkdir _build
+cmake -S . -B _build -G "Ninja" -DCOLORER_USE_VCPKG=OFF
+cmake --build _build -j$(nproc --all)
+```
+### MacOS
+
+```bash
+brew install xerces-c spdlog icu4c minizip ninja libxml2
+git clone https://github.com/colorer/Colorer-library.git
+cd Colorer-library
+mkdir _build
+cmake -S . -B _build -G "Ninja" -DCOLORER_USE_VCPKG=OFF
+cmake --build _build -j$(getconf _NPROCESSORS_ONLN)
 ```
 
 ### Options for build
@@ -76,10 +84,13 @@ This options available for build
 * `COLORER_BUILD_TOOLS` - Build colorer tools. Default 'ON'.
 * `COLORER_BUILD_TEST` - Build tests. Default 'OFF'.
 * `COLORER_BUILD_INSTALL` - Make targets for install. Default 'ON'.
+* `COLORER_BUILD_HARD_WARNINGS` - Compiler warnings as error on Release build. Default 'ON'.
+* `COLORER_BUILD_OLD_COMPILERS` - Use own implementation for standard library. Default 'OFF'.
 * `COLORER_USE_ZIPINPUTSOURCE` - Enable the ability to work with schemes in zip archives. Default 'ON'.
 * `COLORER_USE_DUMMY_LOGGER` - Use dummy logging. Default 'OFF'.
 * `COLORER_USE_DEEPTRACE` - Use trace logging. Default 'OFF'.
 * `COLORER_USE_ICU_STRINGS` - Use ICU library for strings. Default 'ON'.
+* `COLORER_USE_LIBXML` - Use LibXml2 library for parse xml, instead XercesC. Default 'OFF'.
 
 Links
 ========================

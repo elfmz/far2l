@@ -1,4 +1,4 @@
-#include "colorer/xml/MemoryFile.h"
+#include "colorer/xml/xercesc/MemoryFile.h"
 #include <cstring>
 
 voidpf ZCALLBACK mem_open_file_func(voidpf opaque, const char* /*filename*/, int /*mode*/)

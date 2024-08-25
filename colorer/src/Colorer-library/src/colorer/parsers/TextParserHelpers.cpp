@@ -5,7 +5,7 @@
 
 ParseCache::~ParseCache()
 {
-  CTRACE(logger->trace("[TPCache] ~ParseCache():{0},{1}-{2}", *scheme->getName(), sline, eline));
+  //CTRACE(logger->trace("[TPCache] ~ParseCache():{0},{1}-{2}", *scheme->getName(), sline, eline));
   delete backLine;
   delete children;
   prev = nullptr;

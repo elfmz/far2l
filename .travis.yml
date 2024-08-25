@@ -17,7 +17,7 @@ matrix:
             - g++-5
             - cmake
             - libwxgtk3.0-dev
-            - libxerces-c-dev
+            - libxml2-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
@@ -40,7 +40,7 @@ matrix:
             - g++-6
             - cmake
             - libwxgtk3.0-dev
-            - libxerces-c-dev
+            - libxml2-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
@@ -64,7 +64,7 @@ matrix:
             - clang-3.6
             - cmake
             - libwxgtk3.0-dev
-            - libxerces-c-dev
+            - libxml2-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev
@@ -88,7 +88,7 @@ matrix:
             - clang-3.7
             - cmake
             - libwxgtk3.0-dev
-            - libxerces-c-dev
+            - libxml2-dev
             - libuchardet-dev 
             - libssh-dev
             - libsmbclient-dev

@@ -515,6 +515,7 @@
         <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
         <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
         <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
+        <virtual scheme="shell-posix:evaluations" subst-scheme="evaluations"/>
     </inherit>
 </scheme>
 

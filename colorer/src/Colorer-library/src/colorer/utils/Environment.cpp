@@ -5,7 +5,7 @@
 #else
 #include <regex>
 #endif
-
+namespace colorer {
 fs::path Environment::to_filepath(const UnicodeString* str)
 {
 #ifdef _WINDOWS
@@ -141,3 +141,5 @@ bool Environment::isRegularFile(const UnicodeString* basePath, const UnicodeStri
   fullPath = clear_path.u16string().c_str();
   return fs::is_regular_file(clear_path);
 }
+
+}  // namespace colorer

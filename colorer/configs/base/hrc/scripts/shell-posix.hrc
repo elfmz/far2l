@@ -467,7 +467,7 @@
         <symb name="*"/>          <symb name="/"/>
         <symb name="="/>
         <symb name="%"/>
-        <symb name="&lt;&lt;="/>  <symb name="&ge;&ge;="/>
+        <symb name="&lt;&lt;="/>  <symb name="&gt;&gt;="/>
         <symb name="&lt;&lt;"/>   <symb name="&gt;&gt;"/>
         <symb name="&lt;="/>      <symb name="&gt;="/>
         <symb name="&lt;"/>       <symb name="&gt;"/>

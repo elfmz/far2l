@@ -1,9 +1,9 @@
-#include <colorer/strings/legacy/UnicodeString.h>
-#include "colorer/Exception.h"
 #include <colorer/strings/legacy/CString.h>
 #include <colorer/strings/legacy/Character.h>
 #include <colorer/strings/legacy/Encodings.h>
+#include <colorer/strings/legacy/UnicodeString.h>
 #include <cstdlib>
+#include "colorer/Exception.h"
 
 UnicodeString operator+(const UnicodeString& s1, const UnicodeString& s2)
 {
@@ -31,10 +31,10 @@ UnicodeString::UnicodeString(const char* str) : UnicodeString(str, npos) {}
 UnicodeString::UnicodeString(const wchar* str) : UnicodeString(str, npos) {}
 
 UnicodeString::UnicodeString(const w2char* str) : UnicodeString(str, npos) {}
-UnicodeString::UnicodeString(const uint16_t* str) : UnicodeString((const w2char*)str, npos) {}
-UnicodeString::UnicodeString(const XMLChLiteral &str) : UnicodeString((const w2char*)(const XMLCh *)str, npos) {}
 
 UnicodeString::UnicodeString(const w4char* str) : UnicodeString(str, 0, npos) {}
+
+UnicodeString::UnicodeString(const uint16_t* str) : UnicodeString((const w2char*) str, npos) {}
 
 UnicodeString::UnicodeString(const char* string, int32_t l)
 {
@@ -97,6 +97,27 @@ UnicodeString::UnicodeString(int no)
 int32_t UnicodeString::length() const
 {
   return len;
+}
+
+UnicodeString& UnicodeString::trim()
+{
+  int32_t left;
+  for (left = 0; left < len && Character::isWhitespace(wstr[left]); left++) {
+  }
+
+  int32_t right;
+  for (right = len - 1; right >= 0 && Character::isWhitespace(wstr[right]); right--) {
+  }
+
+  int32_t newLength = left < right ? right - left + 1 : 0;
+  auto wstr_new = std::make_unique<wchar[]>(newLength);
+  for (auto i = 0; i < newLength; i++) {
+    wstr_new[i] = wstr[left + i];
+  }
+  wstr = std::move(wstr_new);
+  len = newLength;
+  alloc = newLength;
+  return *this;
 }
 
 wchar UnicodeString::operator[](int32_t i) const
@@ -409,8 +430,7 @@ const char* UnicodeString::getChars(int encoding) const
   return ret_char_val;
 }
 
-UnicodeString& UnicodeString::findAndReplace(const UnicodeString& pattern,
-                                      const UnicodeString& newstring)
+UnicodeString& UnicodeString::findAndReplace(const UnicodeString& pattern, const UnicodeString& newstring)
 {
   int32_t copypos = 0;
   int32_t epos = 0;
@@ -446,16 +466,13 @@ UnicodeString::UnicodeString(const UnicodeString& cstring)
   construct(&cstring, 0, npos);
 }
 
-UnicodeString::UnicodeString(const UnicodeString& cstring, int32_t s)
-    : UnicodeString(cstring, s, npos)
-{
-}
+UnicodeString::UnicodeString(const UnicodeString& cstring, int32_t s) : UnicodeString(cstring, s, npos) {}
 
 UnicodeString::UnicodeString(const char* string, int32_t l, int enc)
 {
   if (!string)
     return;
-  CString ds((byte*)string, l, enc);
+  CString ds((byte*) string, l, enc);
   construct(&ds, 0, ds.length());
 }
 

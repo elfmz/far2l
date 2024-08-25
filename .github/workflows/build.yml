@@ -60,7 +60,7 @@ jobs:
         run: >
          sudo apt-get update;
          sudo apt-get -y install
-         libuchardet-dev libxerces-c-dev libwxgtk3.0-gtk3-dev
+         libuchardet-dev libxml2-dev libwxgtk3.0-gtk3-dev
          libx11-dev libxi-dev
          libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
          libarchive-dev libpcre3-dev
@@ -111,7 +111,7 @@ jobs:
         run: >
           sudo apt-get update;
           sudo apt-get -y install
-          libuchardet-dev libxerces-c-dev libwxgtk3.0-gtk3-dev
+          libuchardet-dev libxml2-dev libwxgtk3.0-gtk3-dev
           libx11-dev libxi-dev
           libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
           libarchive-dev libpcre3-dev
@@ -162,7 +162,7 @@ jobs:
         run: >
           sudo apt-get update;
           sudo apt-get -y install
-          libuchardet-dev libxerces-c-dev libwxgtk3.2-dev
+          libuchardet-dev libxml2-dev libwxgtk3.2-dev
           libx11-dev libxi-dev
           libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
           libarchive-dev libpcre3-dev
@@ -198,7 +198,7 @@ jobs:
         # libx11, openssl is already installed
         run: >
           brew install
-          uchardet xerces-c wxwidgets
+          uchardet libxml2 wxwidgets
           libxi
           samba libnfs neon libssh
           libarchive pcre

@@ -1,13 +1,13 @@
 #ifndef _COLORER_LOCALFILEINPUTSOURCE_H_
 #define _COLORER_LOCALFILEINPUTSOURCE_H_
 
-#include "colorer/xml/XmlInputSource.h"
+#include "colorer/xml/xercesc/XercesXmlInputSource.h"
 #include <xercesc/framework/LocalFileInputSource.hpp>
 
 /**
  * LocalFileXmlInputSource класс для работы с InputSource - локальными файлами
  */
-class LocalFileXmlInputSource : public XmlInputSource
+class LocalFileXmlInputSource : public XercesXmlInputSource
 {
  public:
   LocalFileXmlInputSource(const XMLCh* path, const XMLCh* base);
@@ -20,8 +20,6 @@ class LocalFileXmlInputSource : public XmlInputSource
   LocalFileXmlInputSource(LocalFileXmlInputSource&&) = delete;
   LocalFileXmlInputSource& operator=(LocalFileXmlInputSource&&) = delete;
 
- private:
-  std::unique_ptr<xercesc::LocalFileInputSource> input_source;
 };
 
 #endif  //_COLORER_LOCALFILEINPUTSOURCE_H_

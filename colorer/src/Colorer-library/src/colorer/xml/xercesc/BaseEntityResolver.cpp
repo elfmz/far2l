@@ -1,13 +1,13 @@
-#include "colorer/xml/BaseEntityResolver.h"
+#include "colorer/xml/xercesc/BaseEntityResolver.h"
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include "colorer/Exception.h"
-#include "colorer/xml/XmlInputSource.h"
+#include "colorer/xml/xercesc/XercesXmlInputSource.h"
 
 xercesc::InputSource* BaseEntityResolver::resolveEntity(xercesc::XMLResourceIdentifier* resourceIdentifier)
 {
   try {
     auto input_source =
-        XmlInputSource::newInstance(resourceIdentifier->getSystemId(), resourceIdentifier->getBaseURI());
+        XercesXmlInputSource::newInstance(resourceIdentifier->getSystemId(), resourceIdentifier->getBaseURI());
     return input_source.release();
   } catch (InputSourceException& e) {
     logger->warn(e.what());

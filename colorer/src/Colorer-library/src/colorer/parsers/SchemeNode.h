@@ -22,7 +22,7 @@ class SchemeNode
 {
  public:
   enum class SchemeNodeType { SNT_RE, SNT_BLOCK, SNT_KEYWORDS, SNT_INHERIT };
-  static constexpr const char *schemeNodeTypeNames[] = {"RE", "BLOCK", "KEYWORDS", "INHERIT"};
+  static constexpr const char* schemeNodeTypeNames[] = {"RE", "BLOCK", "KEYWORDS", "INHERIT"};
 
   SchemeNodeType type;
 

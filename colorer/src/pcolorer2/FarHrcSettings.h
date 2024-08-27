@@ -3,8 +3,8 @@
 
 #include <colorer/ParserFactory.h>
 #include <string>
-#include <xercesc/dom/DOM.hpp>
 #include "FarEditorSet.h"
+#include "colorer/xml/XMLNode.h"
 
 const char FarCatalogXml[] = "/base/catalog.xml";
 const char FarProfileXml[] = "/plug/hrcsettings.xml";
@@ -32,7 +32,7 @@ class FarHrcSettings
   void loadUserHrd(const UnicodeString* filename);
 
  private:
-  void UpdatePrototype(xercesc::DOMElement* elem);
+  void UpdatePrototype(const XMLNode& elem);
 
   FarEditorSet* farEditorSet;
   ParserFactory* parserFactory;

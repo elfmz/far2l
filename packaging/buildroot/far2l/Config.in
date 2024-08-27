@@ -39,7 +39,7 @@ config BR2_PACKAGE_FAR2L_NETROCKS
 config BR2_PACKAGE_FAR2L_COLORER
 	bool "Colorer plugin"
 	default y
-	select BR2_PACKAGE_XERCES
+	select BR2_PACKAGE_LIBXML2
 	help
 	  Text editor syntax coloring plugin.
 

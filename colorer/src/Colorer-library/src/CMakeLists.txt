@@ -86,25 +86,44 @@ set(SRC_COLORER
     colorer/viewer/TextConsoleViewer.h
     colorer/viewer/TextLinesStore.cpp
     colorer/viewer/TextLinesStore.h
-    colorer/xml/BaseEntityResolver.cpp
-    colorer/xml/BaseEntityResolver.h
-    colorer/xml/LocalFileXmlInputSource.cpp
-    colorer/xml/LocalFileXmlInputSource.h
-    colorer/xml/SharedXmlInputSource.cpp
-    colorer/xml/SharedXmlInputSource.h
+    colorer/xml/XMLNode.h
     colorer/xml/XmlInputSource.cpp
     colorer/xml/XmlInputSource.h
-    colorer/xml/XmlParserErrorHandler.cpp
-    colorer/xml/XmlParserErrorHandler.h
+    colorer/xml/XmlReader.cpp
+    colorer/xml/XmlReader.h
 )
 
-if(COLORER_USE_ZIPINPUTSOURCE)
+if(COLORER_USE_LIBXML)
+  set(COLORER_FEATURE_LIBXML 1)
+  set(SRC_COLORER_XML
+    colorer/xml/libxml2/LibXmlReader.cpp
+    colorer/xml/libxml2/LibXmlReader.h
+    colorer/xml/libxml2/LibXmlInputSource.h
+  )
+else()
+  set(SRC_COLORER_XML
+    colorer/xml/xercesc/BaseEntityResolver.cpp
+    colorer/xml/xercesc/BaseEntityResolver.h
+    colorer/xml/xercesc/LocalFileXmlInputSource.cpp
+    colorer/xml/xercesc/LocalFileXmlInputSource.h
+    colorer/xml/xercesc/SharedXmlInputSource.cpp
+    colorer/xml/xercesc/SharedXmlInputSource.h
+    colorer/xml/xercesc/XercesXmlInputSource.cpp
+    colorer/xml/xercesc/XercesXmlInputSource.h
+    colorer/xml/xercesc/XmlParserErrorHandler.cpp
+    colorer/xml/xercesc/XmlParserErrorHandler.h
+    colorer/xml/xercesc/XercesXmlReader.h
+    colorer/xml/xercesc/XercesXmlReader.cpp
+  )
+endif()
+
+if(COLORER_USE_ZIPINPUTSOURCE AND NOT(COLORER_USE_LIBXML))
   set(COLORER_FEATURE_ZIPINPUTSOURCE 1)
   set(SRC_COLORER_ZIP
-      colorer/xml/MemoryFile.cpp
-      colorer/xml/MemoryFile.h
-      colorer/xml/ZipXmlInputSource.cpp
-      colorer/xml/ZipXmlInputSource.h
+          colorer/xml/xercesc/MemoryFile.cpp
+          colorer/xml/xercesc/MemoryFile.h
+          colorer/xml/xercesc/ZipXmlInputSource.cpp
+          colorer/xml/xercesc/ZipXmlInputSource.h
   )
 endif()
 
@@ -223,7 +242,7 @@ set(MAIN_FLAGS_CXX_RELEASE ${FLAGS_CXX_RELEASE} ${FLAGS_CXX_DEFAULT})
 #====================================================
 # build
 #====================================================
-add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_COLORER_STRINGS} ${SRC_COLORER_ZIP} ${SRC_COLORER_SPDLOG} ${SRC_COLORER_PLATFORM})
+add_library(colorer_lib STATIC ${SRC_COLORER} ${SRC_COLORER_STRINGS} ${SRC_COLORER_XML} ${SRC_COLORER_ZIP} ${SRC_COLORER_SPDLOG} ${SRC_COLORER_PLATFORM})
 add_library(colorer::colorer ALIAS colorer_lib)
 target_include_directories(colorer_lib PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
@@ -237,16 +256,16 @@ set_target_properties(colorer_lib PROPERTIES
     CXX_EXTENSIONS NO
 )
 
-target_link_libraries(colorer_lib
-    PUBLIC XercesC::XercesC
-)
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(COLORER_USE_LIBXML)
   target_link_libraries(colorer_lib
-      PUBLIC stdc++
-      PUBLIC m
+          PUBLIC LibXml2::LibXml2
+  )
+else()
+  target_link_libraries(colorer_lib
+          PUBLIC XercesC::XercesC
   )
 endif()
+
 
 if(NOT COLORER_USE_DUMMY_LOGGER)
   target_link_libraries(colorer_lib

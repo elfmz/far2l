@@ -1,4 +1,5 @@
 #include "colorer/viewer/TextLinesStore.h"
+#include <cstring>
 #include "colorer/Exception.h"
 #include "colorer/io/InputSource.h"
 
@@ -34,7 +35,8 @@ void TextLinesStore::loadFile(const UnicodeString* inFileName, bool tab2spaces)
       memcpy(&stdin_array[stdin_array.size() - read_len], &line[0], read_len * sizeof(char));
     }
     file = Encodings::toUnicodeString(stdin_array.data(), (int32_t) stdin_array.size());
-  } else {
+  }
+  else {
     this->fileName = std::make_unique<UnicodeString>(*inFileName);
     colorer::InputSource* is = colorer::InputSource::newInstance(inFileName);
 

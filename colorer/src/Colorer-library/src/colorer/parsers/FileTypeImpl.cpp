@@ -1,5 +1,7 @@
 #include "colorer/parsers/FileTypeImpl.h"
 
+#include <memory>
+
 FileType::Impl::Impl(UnicodeString name, UnicodeString group, UnicodeString description)
     : name(std::move(name)), group(std::move(group)), description(std::move(description))
 {
@@ -63,7 +65,7 @@ const UnicodeString* FileType::Impl::getParamValue(const UnicodeString& param_na
 {
   auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
-    if (tp->second.user_value && tp->second.user_value) {
+    if (tp->second.user_value) {
       return tp->second.user_value.get();
     }
     return &tp->second.value;
@@ -116,7 +118,7 @@ void FileType::Impl::setParamValue(const UnicodeString& param_name, const Unicod
   auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
     if (value) {
-      tp->second.user_value.reset(new UnicodeString(*value));
+      tp->second.user_value = std::make_unique<UnicodeString>(*value);;
     }
     else {
       tp->second.user_value.reset();
@@ -156,7 +158,7 @@ void FileType::Impl::setParamDescription(const UnicodeString& param_name,
 {
   auto tp = paramsHash.find(param_name);
   if (tp != paramsHash.end()) {
-    tp->second.description.reset(new UnicodeString(*t_description));
+    tp->second.description = std::make_unique<UnicodeString>(*t_description);
   }
   else {
     throw FileTypeException("Don`t set value " + *t_description +

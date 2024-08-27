@@ -149,9 +149,12 @@ when it starts, far2l switches to #TTY|X# without i.
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
- #Keyboard shortcuts are exclusively captured by desktop environment#
+ #Keyboard shortcuts are exclusively captured by desktop environment and terminals#
     Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings.
     Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
+    Also you can use FAR2L lifehacks:
+        - ~Sticky controls~@MiscCmd@ via #Ctrl-Space# or #Alt-Space#;
+        - Exclusively handle hotkeys option in the ~Input settings~@InputSettings@ (only in GUI backend mode).
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -917,17 +920,18 @@ executed.
     You can move a dialog (window) by dragging it with mouse or by pressing
 #Ctrl-F5# and using #arrow# keys.
 
-    #Sticky controls# if your environment doesnt allow you to use some hotkeys
+    #Sticky controls# if your environment doesn't allow you to use some hotkeys
 due to TTY backend limitations or same hotkey used by other app you can following
 trick to achieve 'sticky' control keys behaviour. That means control key kept
 virtually pressed until next non-control key press:
-    Ctrl+SPACE gives sticky CONTROL key
-    Alt+SPACE gives sticky ALT key
-    RCtrl+SPACE gives sticky RCONTROL key
-    RAlt+SPACE gives sticky RALT key
-Another way to achieve working hotkeys may be changing settings of external applications
-(in order to release needed hotkey combinations) or using exclusive handle hotkeys option
-in the ~interface settings~@InterfSettings@.
+    #Ctrl+SPACE# gives sticky CONTROL key
+    #Alt+SPACE# gives sticky ALT key
+    #RCtrl+SPACE# gives sticky RCONTROL key
+    #RAlt+SPACE# gives sticky RALT key
+    Another way to achieve working hotkeys may be changing settings
+of desktop environment or external applications (in order to release needed hotkey combinations)
+or using exclusive handle hotkeys option
+in the ~Input Settings~@InputSettings@ (only in GUI backend mode).
 
 @SpecCmd
 $ #Special commands#
@@ -2076,6 +2080,8 @@ use the highlighted shortcut letters.
 respective option in the ~system settings dialog~@SystemSettings@.
 
     Locked history items will not be deleted when the history is cleared.
+
+    Remove duplicates method can be chosen in the ~system settings dialog~@SystemSettings@.
 
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 

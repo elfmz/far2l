@@ -103,7 +103,7 @@ See also [Community packages & binaries](#community_bins)
 * `libwxgtk3.0-gtk3-dev` (or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones, _optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
 * `libx11-dev` (_optional_ - needed for **X11 extension** that provides better UX for TTY backend wherever X11 is available)
 * `libxi-dev` (_optional_ - needed for **X11/Xi extension** that provides best UX for TTY backend wherever X11 Xi extension is available)
-* `libxerces-c-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
+* `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
 * `libuchardet-dev` (_optional_ - needed for **auto charset detection**, not needed with `-DUSEUCD=no`)
 * `libssh-dev` (_optional_ - needed for **NetRocks/SFTP**)
 * `libssl-dev` (_optional_ - needed for **NetRocks/FTPS**)
@@ -120,7 +120,7 @@ See also [Community packages & binaries](#community_bins)
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxerces-c-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
+apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
 A simple sid back port should be as easy as (build your own binary deb from the official source deb package):
@@ -170,7 +170,7 @@ To build without WX backend (console version only): change `-DUSEWX=yes` to `-DU
 
 To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable only TTY|Xi - add argument `-DTTYXI=no`
 
-To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add -DUSEUCD=no
+To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add `-DUSEUCD=no`
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 
@@ -214,7 +214,7 @@ cd far2l
 ```
  * Install needed dependencies with MacPorts:
 ``` sh
-sudo port install cmake pkgconfig wxWidgets-3.2 libssh openssl xercesc3 libfmt uchardet neon
+sudo port install cmake pkgconfig wxWidgets-3.2 libssh openssl libxml2 libfmt uchardet neon
 export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig
 ```
  * OR if you prefer to use brew packages, then:
@@ -254,7 +254,7 @@ Details see in [`issue`](https://github.com/elfmz/far2l/issues/1754).
 #### Building on Gentoo (and derivatives)
 For absolute minimum you need:
 ```
-emerge -avn dev-libs/xerces-c app-i18n/uchardet dev-util/cmake
+emerge -avn dev-libs/libxml2 app-i18n/uchardet dev-util/cmake
 ```
 If you want to build far2l with wxGTK support also install it:
 ```

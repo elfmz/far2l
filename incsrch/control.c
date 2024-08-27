@@ -88,6 +88,8 @@ Loop:
 												: KC_NEXT);
 								continue;
 							}
+							if (Event.Event.KeyEvent.wVirtualKeyCode == 'G')
+								goto Char;
 							goto Quit;
 						case VK_INSERT:
 							if (Event.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) {
@@ -102,6 +104,7 @@ Loop:
 									& (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))
 								goto Paste;
 						default:
+Char:
 							if ((Event.Event.KeyEvent.dwControlKeyState
 										& (ENHANCED_KEY | LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED
 												| RIGHT_ALT_PRESSED | RIGHT_CTRL_PRESSED))

@@ -2194,8 +2194,8 @@ megfelelően (néhány CD-ROM meghajtó hibás drivere miatt ez előfordulhat).
   #útvonala#                mappáinak elérési útvonalait, ahol a
                           ^<wrap>FAR-nak a "fő" plugineken túl modulokat
 kell keresnie. Több útvonalat beírhatunk, ";"-vel elválasztva, környezeti
-változók is használhatók. A saját pluginek nem töltődnek be, ha a FAR a /p
-vagy /co ~parancssori~@CmdLine@ kapcsolóval indul.
+változók is használhatók. A saját pluginek nem töltődnek be, ha a FAR a -p
+vagy -co ~parancssori~@CmdLine@ kapcsolóval indul.
 
   #Beállítások automatikus# Ha az opció be van kapcsolva, kilépéskor
   #mentése#                 a FAR önműködően menti a beállításait, a
@@ -3989,7 +3989,7 @@ az utódfolyamatok részére:
 
     #FARLANG#          A kezelőfelület aktuális nyelve.
 
-    #FARUSER#          ^<wrap>A ~parancssorban~@CmdLine@ a /u kapcsolóval
+    #FARUSER#          ^<wrap>A ~parancssorban~@CmdLine@ a -u kapcsolóval
 megadott felhasználói név.
 
 

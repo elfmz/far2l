@@ -1659,7 +1659,7 @@ $ #Plugins manager#
   #Path for personal plugins#
   Enter here the full path, where FAR2L will search for "personal" plugins in addition to the "main"
 plugins. Several search paths may be given separated by ';'. Environment variables can be entered in the
-search path. Personal plugins will not be loaded, if the switches /p or /co are given in the
+search path. Personal plugins will not be loaded, if the switches -p or -co are given in the
 ~command line~@CmdLine@.
 
 @ChoosePluginMenu
@@ -4390,7 +4390,7 @@ to child processes:
 
     #FARLANG#            the name of the current interface language.
 
-    #FARUSER#            ^<wrap>the name of the current user given by the /u ~command line~@CmdLine@ option.
+    #FARUSER#            ^<wrap>the name of the current user given by the -u ~command line~@CmdLine@ option.
 
     #FARDIRSTACK#        ^<wrap>the contents of directories stack top (the stack is managed with #pushd# and #popd# commands)
 

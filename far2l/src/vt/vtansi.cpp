@@ -518,8 +518,11 @@ struct VTAnsiContext
 	{
 		if (!*seq)
 			return;
-		
-		fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
+		if (*seq == '\e') {
+			fprintf(stderr, "VT: SendSequence - '\\e%s'\n", seq + 1);
+		} else {
+			fprintf(stderr, "VT: SendSequence - '%s'\n", seq);
+		}
 		vt_shell->InjectInput(seq);
 	}
 
@@ -652,14 +655,30 @@ struct VTAnsiContext
 	void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 	{
 		size_t pos = 0;
-		unsigned int index = DecToULong(args, args_size, &pos);
+		fprintf(stderr, "%s: cmd=%d args=%.*s\n", __FUNCTION__, cmd, (int)args_size, args);
+		int orig_index = DecToLong(args, args_size, &pos);
 		// Win <-> TTY color index adjustment
-		index = (((index) & 0b001) << 2 | ((index) & 0b100) >> 2 | ((index) & 0b1010));
+		int index = (((orig_index) & 0b001) << 2 | ((orig_index) & 0b100) >> 2 | ((orig_index) & 0b1010));
 
-		DWORD fg = 0xffffffff, bk = 0xffffffff;
+		DWORD fg = (DWORD)-1, bk = (DWORD)-1;
 		if (cmd == 4) {
+			if (pos + 2 == args_size && args[pos] == ';' && args[pos + 1] == '?') {
+				// not a set color but request current color
+				fg = bk = (DWORD)-2;
+				WINPORT(OverrideConsoleColor)(vt_shell->ConsoleHandle(),
+					(orig_index < 0) ? (DWORD)-1 : (DWORD)index, &fg, &bk);
+				if (index == -2) {
+					fg = bk;
+				}
+				// reply with OSC 4 ; index ; rgb : [red] / [green] / [blue] ST
+				const auto &reply = StrPrintf("\e]4;%d;rgb:%02x/%02x/%02x\a",
+					orig_index, fg & 0xff, (fg >> 8) & 0xff, (fg >> 16) & 0xff);
+				SendSequence(reply.c_str());
+//				abort();
+				return;
+			}
 			if (pos + 2 >= args_size || args[pos] != ';' || args[pos + 1] != '#') {
-				fprintf(stderr, "%s: bad args='%s'\n", __FUNCTION__, args);
+				fprintf(stderr, "%s(%d): bad args='%s'\n", __FUNCTION__, cmd, args);
 				return;
 			}
 			pos+= 2;
@@ -731,6 +750,19 @@ struct VTAnsiContext
 		ClearScreenAndHomeCursor(Info);
 	}
 
+	void LogFailedEscSeq(const std::string &why)
+	{
+		std::string s = "\\e";
+		if (prefix) s+= prefix;
+		if (prefix2) s+= prefix2;
+		for (int i = 0; i < es_argc; ++i) {
+			s+= StrPrintf(i ? ";%d" : "%d", es_argv[i]);
+		}
+		if (suffix) s+= suffix;
+		if (suffix2) s+= suffix2;
+		fprintf(stderr, "FailedEscSeq: '%s' due to '%s'\n", s.c_str(), why.c_str());
+	}
+
 	void InterpretEscSeq( void )
 	{
 		int i;
@@ -743,7 +775,6 @@ struct VTAnsiContext
 		CHAR_INFO  CharInfo;
 		DWORD      mode;
 		HANDLE con_hnd = vt_shell->ConsoleHandle();
-
 		if (prefix == '[') {
 			if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 				for (i = 0; i < es_argc; ++i) {
@@ -799,7 +830,7 @@ struct VTAnsiContext
 						break;
 
 					default:
-						fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[i]);
+						LogFailedEscSeq(StrPrintf("bad arg %d", i));
 				} }
 				return;
 			}
@@ -807,43 +838,33 @@ struct VTAnsiContext
 			// kitty keys stuff
 
 			if (suffix == 'u') {
-
 				if (prefix2 == '=') {
-
 					// assuming mode always 1; we do not support other modes currently
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
-
 					return;
 
 				} else if (prefix2 == '>') {
-
 					// assuming mode always 1; we do not support other modes currently
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
-
 					return;
 
 				} else if (prefix2 == '<') {
-
 					// we do not support mode stack currently, just reset flags
 					vt_shell->SetKittyFlags(0);
-
 					return;
 
 				} else if (prefix2 == '?') {
-
 					// reply with "CSI ? flags u"
 					char buf[64] = {0};
 					snprintf( buf, sizeof(buf), "\x1b[?%du", vt_shell->GetKittyFlags());
 					SendSequence( buf );
-
 					return;
-
 				}
 			}
 
 			// Ignore any other private sequences.
 			if (prefix2 != 0) {
-				fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[0]);
+				LogFailedEscSeq(StrPrintf("bad prefix2 %c", prefix2));
 				return;			
 			}
 
@@ -1209,13 +1230,21 @@ struct VTAnsiContext
 				WINPORT(SetConsoleScrollRegion)(con_hnd, es_argv[0] - 1, es_argv[1] - 1);
 				return;
 			
+			case 'c': // CSI P s c Send Device Attributes (Primary DA)
+				if (prefix2 == 0 && (es_argc < 1 || es_argv[0] == 0)) {
+					SendSequence("\e[?1;2c"); // → CSI ? 1 ; 2 c (‘‘VT100 with Advanced Video Option’’)
+					return;
+				}
+
 			default:
-				fprintf(stderr, "VTAnsi: unknown suffix %c\n", suffix);
+				LogFailedEscSeq(StrPrintf("bad suffix %c", suffix));
 				return;
 			}
+
 		} else { // (prefix == ']')
 			// Ignore any "private" sequences.
-			if (prefix!=']') fprintf(stderr, "VTAnsi: unknown prefix= %c\n", prefix);
+			if (prefix!=']')
+				LogFailedEscSeq(StrPrintf("bad prefix %c", prefix));
 			if (prefix2 != 0)
 				return;
 

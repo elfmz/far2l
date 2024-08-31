@@ -49,8 +49,8 @@ struct wx2INPUT_RECORD : INPUT_RECORD
 extern WinPortPalette g_wx_palette;
 extern bool g_wx_norgb;
 
-WinPortRGB ConsoleForeground2RGB(DWORD64 attributes);
-WinPortRGB ConsoleBackground2RGB(DWORD64 attributes);
+WinPortRGB WxConsoleForeground2RGB(DWORD64 attributes);
+WinPortRGB WxConsoleBackground2RGB(DWORD64 attributes);
 
 DWORD WxKeyboardLedsState();
 

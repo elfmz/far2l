@@ -256,8 +256,6 @@ static int IsEnhancedKey(int code, int code_raw)
 #endif
 		) return true;
 	
-	return false;
-
 #if defined (__WXGTK__)
 	if (code_raw == RAW_ALTGR || code_raw == RAW_CONTEXT || code_raw == RAW_RCTRL) return true;
 #endif

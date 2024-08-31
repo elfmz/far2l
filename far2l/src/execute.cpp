@@ -539,3 +539,31 @@ const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine)
 {
 	return L"";
 }
+
+FARString ExecuteCommandAndGrabItsOutput(FARString cmd, const char *cmd_stub)
+{
+	if (cmd.GetLength() == 0 && (cmd_stub == nullptr || strlen(cmd_stub)<=0) )
+		return FARString();
+
+	FARString strTempName;
+
+	if (!FarMkTempEx(strTempName))
+		return FARString();
+
+	std::string exec_cmd =
+			"echo Waiting command to complete...; "
+			"echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.; ";
+	if (cmd.GetLength() != 0) {
+		exec_cmd+= cmd.GetMB();
+	} else {
+		exec_cmd+= cmd_stub;
+	}
+
+	exec_cmd+= " >";
+	exec_cmd+= strTempName.GetMB();
+	exec_cmd+= " 2>&1";
+
+	farExecuteA(exec_cmd.c_str(), EF_NOCMDPRINT);
+
+	return strTempName;
+}

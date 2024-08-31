@@ -937,17 +937,18 @@ in the ~Input Settings~@InputSettings@ (only in GUI backend mode).
 $ #Special commands#
  Special FAR pseudo-command usually starting with a prefix and a colon are processed
 in the far2l ~internal command line~@CmdLineCmd@ and
-in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@.
+in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply command~@ApplyCmd@.
 
    #far:about#  - Far information, list and information about plugins.
 
    #far:config# - ~Configuration editor~@FarConfig@.
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
+   #view:<command# or #far:view:<command# or #far:view < command# - open in viewer result of #command# output in temporary file.
 
    #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
-
    #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
+   #edit:<command# or #far:edit:<command# or #far:edit < command# - open in editor result of #command# output in temporary file.
 
    #exit#       - reset shell in build-in ~Terminal~@Terminal@.
 
@@ -2352,7 +2353,7 @@ for which the conditions are true.
 @MetaSymbols
 $ #Special symbols#
     The following special symbols can be used in ~associated commands~@FileAssoc@,
-~user menu~@UserMenu@ and the command ~"Apply command"~@ApplyCmd@:
+~user menu~@UserMenu@ and the ~apply command~@ApplyCmd@:
 
     #!!#          '!' character
     #!#           File name without extension
@@ -4298,8 +4299,8 @@ into RAR archives with the same names. The command 'explorer /select,!.!' will
 start system GUI file browser and set the cursor to the current file
 or directory.
 
-    See also ~"Special commands"~@SpecCmd@
-    See also ~"Operating system commands"~@OSCommands@
+    See also ~Special commands~@SpecCmd@
+    See also ~Operating system commands~@OSCommands@
 
 @OSCommands
 $ #Operating system commands#

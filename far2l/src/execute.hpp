@@ -48,3 +48,5 @@ int Execute(const wchar_t *CmdStr, bool SeparateWindow = false, bool DirectRun =
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine);
 
 bool IsDirectExecutableFilePath(const char *path);
+
+FARString ExecuteCommandAndGrabItsOutput(FARString cmd, const char *cmd_stub = nullptr);

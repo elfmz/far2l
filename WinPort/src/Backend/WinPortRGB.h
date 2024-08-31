@@ -54,3 +54,21 @@ struct WinPortPalette
 extern WinPortPalette g_winport_palette;
 
 void InitPalette();
+
+inline WinPortRGB ConsoleForeground2RGB(const WinPortPalette &palette, DWORD64 attributes)
+{
+	if ((attributes & FOREGROUND_TRUECOLOR) != 0) {
+		return GET_RGB_FORE(attributes);
+	}
+
+	return palette.foreground[(attributes & 0x0f)];
+}
+
+inline WinPortRGB ConsoleBackground2RGB(const WinPortPalette &palette, DWORD64 attributes)
+{
+	if ((attributes & BACKGROUND_TRUECOLOR) != 0) {
+		return GET_RGB_BACK(attributes);
+	}
+
+	return palette.background[(attributes & 0xf0) >> 4];
+}

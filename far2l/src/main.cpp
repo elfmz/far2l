@@ -82,8 +82,10 @@ int DirectRT = 0;
 
 static void print_help(const char *self)
 {
-	printf("FAR2L - oldschool file manager, with built-in terminal and other usefulness'es\n"
-			"Usage: %s [switches] [-cd apath [-cd ppath]]\n\n"
+	bool is_far2ledit = strstr(self, "far2ledit") != NULL;
+	printf("FAR2L - two-panel file manager, with built-in terminal and other usefulness'es\n"
+			"Usage: %s [switches] [-cd apath [-cd ppath]]\n"
+			"   or: far2ledit [switches] [filename]\n\n"
 			"where\n"
 			"  apath - path to a folder (or a file or an archive or command with prefix)\n"
 			"          for the active panel\n"
@@ -113,8 +115,9 @@ static void print_help(const char *self)
 			" -set:<parameter>=<value>\n"
 			"      Override the configuration parameter, see far:config for details.\n"
 			"      Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false\n"
+			"Switches -cd, -v and -e are not applicable if far2ledit.\n"
 			"\n",
-			self);
+			is_far2ledit ? "far2l" : self);
 	WinPortHelp();
 	// Console.Write(HelpMsg, ARRAYSIZE(HelpMsg)-1);
 }
@@ -421,7 +424,8 @@ int FarAppMain(int argc, char **argv)
 	}
 
 	// run by symlink in editor mode
-	if (strstr(argv[0], "far2ledit") != NULL) {
+	bool is_far2ledit = strstr(argv[0], "far2ledit") != NULL;
+	if (is_far2ledit) {
 		Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
 		if (argc > 1) {
 			strEditViewArg = argv[argc - 1];	// use last argument
@@ -438,7 +442,7 @@ int FarAppMain(int argc, char **argv)
 			arg_w.erase(0, 1);
 		}
 		bool switchHandled = false;
-		if ((arg_w[0] == L'/' || arg_w[0] == L'-') && arg_w[1]) {
+		if ((/*arg_w[0] == L'/' ||*/ arg_w[0] == L'-') && arg_w[1]) {
 			switchHandled = true;
 			if (!StrCmpNI(arg_w.c_str() + 1, L"SET:", 4))
 			{
@@ -469,6 +473,9 @@ int FarAppMain(int argc, char **argv)
 					break;
 				case L'E':
 
+					if (is_far2ledit)
+						break;
+
 					if (iswdigit(arg_w[2])) {
 						StartLine = _wtoi((const wchar_t *)&arg_w[2]);
 						wchar_t *ChPtr = wcschr((wchar_t *)&arg_w[2], L':');
@@ -496,6 +503,9 @@ int FarAppMain(int argc, char **argv)
 
 					break;
 				case L'V':
+
+					if (is_far2ledit)
+						break;
 
 					if (I + 1 < argc) {
 						strEditViewArg = argv[I + 1];
@@ -539,6 +549,8 @@ int FarAppMain(int argc, char **argv)
 						Opt.LoadPlug.PluginsPersonal = FALSE;
 
 					} else if (Upper(arg_w[2]) == L'D' && !arg_w[3]) {
+						if (is_far2ledit)
+							break;
 						if (I + 1 < argc) {
 							I++;
 							arg_w = MB2Wide(argv[I]);
@@ -742,7 +754,7 @@ int _cdecl main(int argc, char *argv[])
 		}
 		if (argc > 1
 				&& (strncasecmp(argv[1], "--h", 3) == 0 || strncasecmp(argv[1], "-h", 2) == 0
-						|| strcasecmp(argv[1], "/h") == 0 || strcasecmp(argv[1], "/?") == 0)) {
+						/*|| strcasecmp(argv[1], "/h") == 0*/ || strcasecmp(argv[1], "-?") == 0)) {
 
 			print_help(name);
 			return 0;

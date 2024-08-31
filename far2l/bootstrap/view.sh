@@ -116,11 +116,14 @@ if [[ "$FILE" == *": "*"archive"* ]] \
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
-	if command -v 7z >/dev/null 2>&1; then
+	if command -v 7zz >/dev/null 2>&1; then
+		7zz l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	elif command -v 7z >/dev/null 2>&1; then
 		7z l -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
-		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+		echo "Install <7zip> or <p7zip-full> to see information" >>"$2" 2>&1
 	fi
 	if [[ "$FILE" == *": Debian "*" package"* ]]; then
 		echo "------------" >>"$2" 2>&1
@@ -221,11 +224,14 @@ if [[ "$FILE" == *": "*"ELF"*"executable"* ]] \
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
-	if command -v 7z >/dev/null 2>&1; then
+	if command -v 7zz >/dev/null 2>&1; then
+		7zz l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	elif command -v 7z >/dev/null 2>&1; then
 		7z l -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
-		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+		echo "Install <7zip> or <p7zip-full> to see information" >>"$2" 2>&1
 	fi
 	echo "------------" >>"$2" 2>&1
 	echo "Processing file with ldd" >>"$2" 2>&1
@@ -263,12 +269,16 @@ if [[ "$FILE" == *": "*"PE"*"executable"* ]] \
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
-	if command -v 7z >/dev/null 2>&1; then
+	if command -v 7zz >/dev/null 2>&1; then
+		7zz l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	elif command -v 7z >/dev/null 2>&1; then
 		7z l -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
-		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+		echo "Install <7zip> or <p7zip-full> to see information" >>"$2" 2>&1
 	fi
 	echo "----eof----" >>"$2" 2>&1
 	exit 0
@@ -895,11 +905,14 @@ if [[ "$FILE" == *": "*"boot sector"* ]] \
 	echo "Processing file as archive with 7z contents listing" >>"$2" 2>&1
 	echo "" >>"$2" 2>&1
 	echo "----bof----" >>"$2" 2>&1
-	if command -v 7z >/dev/null 2>&1; then
+	if command -v 7zz >/dev/null 2>&1; then
+		7zz l -- "$1" >>"$2" 2>&1
+		echo "" >>"$2" 2>&1
+	elif command -v 7z >/dev/null 2>&1; then
 		7z l -- "$1" >>"$2" 2>&1
 		echo "" >>"$2" 2>&1
 	else
-		echo "Install <p7zip-full> to see information" >>"$2" 2>&1
+		echo "Install <7zip> or <p7zip-full> to see information" >>"$2" 2>&1
 	fi
 	echo "----eof----" >>"$2" 2>&1
 	exit 0

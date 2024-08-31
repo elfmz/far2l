@@ -128,6 +128,19 @@ unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos)
 	return out;
 }
 
+long DecToLong(const char *str, size_t maxlen, size_t *pos)
+{
+	const bool minus = maxlen && *str == '-';
+	long out = DecToULong(minus ? str + 1 : str, minus ? maxlen - 1 : maxlen, pos);
+	if (minus) {
+		if (pos) {
+			++*pos;
+		}
+		out = -out;
+	}
+	return out;
+}
+
 bool IsHexaDecimalNumberStr(const char *str)
 {
 	if (!*str) {

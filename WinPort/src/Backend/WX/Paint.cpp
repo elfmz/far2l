@@ -754,7 +754,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 		FlushText(cx + nx - 1);
 	}
 
-	const WinPortRGB &clr_back = ConsoleBackground2RGB(attributes);
+	const WinPortRGB &clr_back = WxConsoleBackground2RGB(attributes);
 	PrepareBackground(cx, clr_back, nx);
 
 	const bool underlined = (attributes & COMMON_LVB_UNDERSCORE) != 0;
@@ -764,7 +764,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 		return;
 	}
 
-	const WinPortRGB &clr_text = ConsoleForeground2RGB(attributes);
+	const WinPortRGB &clr_text = WxConsoleForeground2RGB(attributes);
 
 	if (custom_draw) {
 		FlushBackground(cx + nx);

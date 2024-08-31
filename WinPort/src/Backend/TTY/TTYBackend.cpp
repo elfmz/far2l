@@ -308,7 +308,8 @@ void TTYBackend::ReaderLoop()
 		int rs;
 
 		// Enable esc expiration on Wayland as Xi not work there
-		if (!_esc_expiration && UnderWayland()) {
+		// Also enable if we've got no TTY|X or got TTY|X without Xi
+		if (!_esc_expiration && (UnderWayland() || !_ttyx || !(_ttyx->HasXi()))) {
 			_esc_expiration = 100;
 		}
 

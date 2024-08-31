@@ -865,7 +865,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					case VK_LMENU:
 					case VK_RMENU:
 					{
-						if (KeyEvent.dwControlKeyState & ENHANCED_KEY) {
+						if ((KeyEvent.dwControlKeyState & RIGHT_ALT_PRESSED) || KeyEvent.dwControlKeyState & ENHANCED_KEY) {
 							// right
 							keycode = 57449; suffix = 'u';
 						} else {
@@ -880,7 +880,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					case VK_LCONTROL:
 					case VK_RCONTROL:
                     {
-						if (KeyEvent.dwControlKeyState & RIGHT_CTRL_PRESSED) {
+						if ((KeyEvent.dwControlKeyState & RIGHT_CTRL_PRESSED) || (KeyEvent.dwControlKeyState & ENHANCED_KEY)) {
 							// right
 							keycode = 57448; suffix = 'u';
 						} else {
@@ -895,7 +895,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					case VK_LSHIFT:
 					case VK_RSHIFT:
 					{
-						if (KeyEvent.wVirtualKeyCode == VK_RSHIFT) {
+						if (KeyEvent.wVirtualKeyCode == VK_RSHIFT || KeyEvent.wVirtualScanCode == RIGHT_SHIFT_VSC) {
 							// right
 							keycode = 57447; suffix = 'u';
 						} else {

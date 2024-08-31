@@ -1804,6 +1804,24 @@ void WinPortPanel::ResetInputState()
 
 static void ConsoleOverrideColorInMain(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 {
+	if (Index == (DWORD)-1) {
+		const DWORD64 orig_attrs = g_winport_con_out->GetAttributes();
+		DWORD64 new_attrs = orig_attrs;
+		if ((*ColorFG & 0xff000000) == 0) {
+			SET_RGB_FORE(new_attrs, *ColorFG);
+		}
+		if ((*ColorBK & 0xff000000) == 0) {
+			SET_RGB_BACK(new_attrs, *ColorBK);
+		}
+		if (new_attrs != orig_attrs) {
+			g_winport_con_out->SetAttributes(new_attrs);
+		}
+
+		*ColorFG = WxConsoleForeground2RGB(orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		*ColorBK = WxConsoleBackground2RGB(orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		return;
+	}
+
 	WinPortRGB fg(*ColorFG), bk(*ColorBK);
 	if (*ColorFG == (DWORD)-1) {
 		fg = g_winport_palette.foreground[Index];
@@ -1811,10 +1829,16 @@ static void ConsoleOverrideColorInMain(DWORD Index, DWORD *ColorFG, DWORD *Color
 	if (*ColorBK == (DWORD)-1) {
 		bk = g_winport_palette.background[Index];
 	}
-	*ColorFG = g_wx_palette.foreground[Index].AsRGB();
-	*ColorBK = g_wx_palette.background[Index].AsRGB();
-	g_wx_palette.foreground[Index] = fg;
-	g_wx_palette.background[Index] = bk;
+	const auto prev_fg = g_wx_palette.foreground[Index].AsRGB();
+	const auto prev_bk = g_wx_palette.background[Index].AsRGB();
+	if (*ColorFG != (DWORD)-2) {
+		g_wx_palette.foreground[Index] = fg;
+	}
+	if (*ColorBK != (DWORD)-2) {
+		g_wx_palette.background[Index] = bk;
+	}
+	*ColorFG = prev_fg;
+	*ColorBK = prev_bk;
 }
 
 static void ConsoleOverrideBasePaletteInMain(void *pbuff)

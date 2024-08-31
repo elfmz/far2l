@@ -55,50 +55,26 @@ extern bool g_remote;
 WinPortPalette g_wx_palette;
 bool g_wx_norgb = false;
 
-static const WinPortRGB &InternalConsoleForeground2RGB(USHORT attributes)
-{
-	return g_wx_palette.foreground[(attributes & 0x0f)];
-}
 
-static const WinPortRGB &InternalConsoleBackground2RGB(USHORT attributes)
+WinPortRGB WxConsoleForeground2RGB(DWORD64 attributes)
 {
-	return g_wx_palette.background[(attributes & 0xf0) >> 4];
-}
-
-WinPortRGB ConsoleForeground2RGB(DWORD64 attributes)
-{
-	if (!g_wx_norgb) {
-		if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == FOREGROUND_TRUECOLOR) {
-			return GET_RGB_FORE(attributes);
-		}
-
-		if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
-			return GET_RGB_BACK(attributes);
-		}
+	if (g_wx_norgb) {
+		attributes&= ~(DWORD64)(BACKGROUND_TRUECOLOR | FOREGROUND_TRUECOLOR);
 	}
-
 	return (attributes & COMMON_LVB_REVERSE_VIDEO)
-		? InternalConsoleBackground2RGB((USHORT)attributes)
-		: InternalConsoleForeground2RGB((USHORT)attributes);
+		? ConsoleBackground2RGB(g_wx_palette, attributes)
+		: ConsoleForeground2RGB(g_wx_palette, attributes);
 }
 
-WinPortRGB ConsoleBackground2RGB(DWORD64 attributes)
+WinPortRGB WxConsoleBackground2RGB(DWORD64 attributes)
 {
-	if (!g_wx_norgb) {
-		if ( (attributes & (BACKGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == BACKGROUND_TRUECOLOR) {
-			return GET_RGB_BACK(attributes);
-		}
-
-		if ( (attributes & (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) == (FOREGROUND_TRUECOLOR | COMMON_LVB_REVERSE_VIDEO)) {
-			return GET_RGB_FORE(attributes);
-		}
+	if (g_wx_norgb) {
+		attributes&= ~(DWORD64)(BACKGROUND_TRUECOLOR | FOREGROUND_TRUECOLOR);
 	}
-
 	return (attributes & COMMON_LVB_REVERSE_VIDEO)
-		? InternalConsoleForeground2RGB((USHORT)attributes)
-		: InternalConsoleBackground2RGB((USHORT)attributes);
+		? ConsoleForeground2RGB(g_wx_palette, attributes)
+		: ConsoleBackground2RGB(g_wx_palette, attributes);
 }
-
 
 ////////////////////
 

@@ -111,7 +111,13 @@ extern "C" {
 	WINPORT_DECL(ConsoleDisplayNotification, VOID, (const WCHAR *title, const WCHAR *text));
 	WINPORT_DECL(ConsoleBackgroundMode, BOOL, (BOOL TryEnterBackgroundMode));
 	WINPORT_DECL(SetConsoleFKeyTitles, BOOL, (HANDLE hConsoleOutput, const CHAR **titles));
-	WINPORT_DECL(OverrideConsoleColor, VOID, (HANDLE hConsoleOutput, DWORD Index, DWORD *ColorFG, DWORD *ColorBK)); // 0xffffffff - to apply default color
+
+	// Query/Change or only Query palette color with specified index:
+	// if Index set to (DWORD)-1 then operates on currently chosen color (not using pallette)
+	// if initial *ColorFG or *ColorBK was set to (DWORD)-1 - it will change to default color
+	// if initial *ColorFG or *ColorBK was set to (DWORD)-2 - this color will not be changed (Query-only operation)
+	WINPORT_DECL(OverrideConsoleColor, VOID, (HANDLE hConsoleOutput, DWORD Index, DWORD *ColorFG, DWORD *ColorBK));
+
 	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (HANDLE hConsoleOutput, BOOL Deferring));
 
 #ifdef WINPORT_REGISTRY

@@ -576,6 +576,9 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
 	if (!event.GetKeyCode() && event.GetRawKeyCode() == RAW_CONTEXT) {
+		if (KeyDown) {
+			Event.KeyEvent.dwControlKeyState|= RIGHT_CTRL_PRESSED;
+		}
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 		Event.KeyEvent.wVirtualKeyCode = VK_MENU;
 	}

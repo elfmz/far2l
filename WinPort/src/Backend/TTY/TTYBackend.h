@@ -35,7 +35,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		FKS_NOT_SUPPORTED
 	} _fkeys_support = FKS_UNKNOWN;
 
-	unsigned int _esc_expiration = 0;
+	unsigned int _esc_expiration = 100;
 	int _notify_pipe = -1;
 	int *_result = nullptr;
 	int _kickass[2] = {-1, -1};

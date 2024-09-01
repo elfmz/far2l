@@ -1180,11 +1180,22 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			: 0 );
 	if (p > 0) {
 		p = str_command.find_first_not_of(L" \t", p);
-		if (p != std::string::npos) // after spaces found filename
-			new FileEditor(
-				std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
-				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
-		else
+		if (p != std::string::npos) { // after spaces found filename or command
+			if (str_command[p]==L'<') { // redirect command
+				p = str_command.find_first_not_of(L" \t", p+1);
+				if (p != std::string::npos) {
+					new FileEditor(
+						std::make_shared<FileHolder>(
+							ExecuteCommandAndGrabItsOutput( str_command.substr(p,std::string::npos).c_str() ) ),
+						CP_AUTODETECT, FFILEEDIT_ENABLEF6 | FFILEEDIT_DISABLEHISTORY);
+				}
+			}
+			else // filename
+				new FileEditor(
+					std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
+					CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+		}
+		else // new empty file
 			new FileEditor(
 				std::make_shared<FileHolder>( Msg::NewFileName.CPtr() ),
 				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
@@ -1197,8 +1208,19 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			: 0 );
 	if (p > 0) {
 		p = str_command.find_first_not_of(L" \t", p);
-		if (p != std::string::npos) // after spaces found filename
-			new FileViewer(std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ), TRUE);
+		if (p != std::string::npos) { // after spaces found filename or command
+			if (str_command[p]==L'<') { // redirect command
+				p = str_command.find_first_not_of(L" \t", p+1);
+				if (p != std::string::npos) {
+					new FileViewer(std::make_shared<FileHolder>(
+							ExecuteCommandAndGrabItsOutput( str_command.substr(p,std::string::npos).c_str() ) ),
+					TRUE/*EnableSwitch*/, TRUE/*DisableHistory*/, FALSE/*DisableEdit*/);
+				}
+			}
+			else // filename
+				new FileViewer(std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
+					TRUE/*EnableSwitch*/, FALSE/*DisableHistory*/, FALSE/*DisableEdit*/);
+		}
 		return true; // anyway prefix correct and was processed
 	}
 

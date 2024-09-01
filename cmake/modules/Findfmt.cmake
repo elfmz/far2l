@@ -1,7 +1,10 @@
 find_path(fmt_INCLUDE_DIR NAMES fmt/format.h)
 
 if(fmt_INCLUDE_DIR)
-  set(_fmt_version_file "${fmt_INCLUDE_DIR}/fmt/core.h")
+  set(_fmt_version_file "${fmt_INCLUDE_DIR}/fmt/base.h")
+  if(NOT EXISTS "${_fmt_version_file}")
+    set(_fmt_version_file "${fmt_INCLUDE_DIR}/fmt/core.h")
+  endif()
   if(NOT EXISTS "${_fmt_version_file}")
     set(_fmt_version_file "${fmt_INCLUDE_DIR}/fmt/format.h")
   endif()

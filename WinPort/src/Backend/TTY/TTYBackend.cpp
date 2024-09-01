@@ -308,7 +308,8 @@ void TTYBackend::ReaderLoop()
 		int rs;
 
 		// Enable esc expiration on Wayland as Xi not work there
-		if (!_esc_expiration && UnderWayland()) {
+		// Also enable if we've got no TTY|X or got TTY|X without Xi
+		if (!_esc_expiration && (UnderWayland() || !_ttyx || !(_ttyx->HasXi()))) {
 			_esc_expiration = 100;
 		}
 
@@ -824,26 +825,53 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 
 void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 {
+	if (Index == (DWORD)-1) {
+		const DWORD64 orig_attrs = g_winport_con_out->GetAttributes();
+		DWORD64 new_attrs = orig_attrs;
+		if ((*ColorFG & 0xff000000) == 0) {
+			SET_RGB_FORE(new_attrs, *ColorFG);
+		}
+		if ((*ColorBK & 0xff000000) == 0) {
+			SET_RGB_BACK(new_attrs, *ColorBK);
+		}
+		if (new_attrs != orig_attrs) {
+			g_winport_con_out->SetAttributes(new_attrs);
+		}
+
+		*ColorFG = ConsoleForeground2RGB(g_winport_palette, orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		*ColorBK = ConsoleBackground2RGB(g_winport_palette, orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		return;
+	}
+
 	if (Index >= BASE_PALETTE_SIZE) {
 		fprintf(stderr, "%s: too big index=%u\n", __FUNCTION__, Index);
 		return;
 	}
 
+	const DWORD fg = (*ColorFG == (DWORD)-1) ? g_winport_palette.foreground[Index].AsRGB() : *ColorFG;
+	const DWORD bk = (*ColorBK == (DWORD)-1) ? g_winport_palette.background[Index].AsRGB() : *ColorBK;
+	bool palette_changed = false;
 	{
 		std::unique_lock<std::mutex> lock(_palette_mtx);
-		if (_palette.foreground[Index] == *ColorFG && _palette.background[Index] == *ColorBK) {
-			return;
+		*ColorFG = _palette.foreground[Index];
+		*ColorBK = _palette.background[Index];
+		if (fg != (DWORD)-2 && _palette.foreground[Index] != fg) {
+			_palette.foreground[Index] = fg;
+			palette_changed = true;
 		}
-
-		std::swap(_palette.foreground[Index], *ColorFG);
-		std::swap(_palette.background[Index], *ColorBK);
+		if (bk != (DWORD)-2 && _palette.background[Index] != bk) {
+			_palette.background[Index] = bk;
+			palette_changed = true;
+		}
 	}
 
-	std::unique_lock<std::mutex> lock(_async_mutex);
-	_ae.palette = true;
-	_async_cond.notify_all();
-	while (_ae.palette) {
-		_async_cond.wait(lock);
+	if (palette_changed) {
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_ae.palette = true;
+		_async_cond.notify_all();
+		while (_ae.palette) {
+			_async_cond.wait(lock);
+		}
 	}
 }
 

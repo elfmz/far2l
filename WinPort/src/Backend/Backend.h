@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x0A
+#define FAR2L_BACKEND_ABI_VERSION	0x0B
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001

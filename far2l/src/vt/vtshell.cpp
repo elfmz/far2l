@@ -860,6 +860,46 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 					case VK_F11:       keycode = 23;  suffix = '~'; break;
 					case VK_F12:       keycode = 24;  suffix = '~'; break;
+
+					case VK_MENU:
+					{
+						if (KeyEvent.dwControlKeyState & ENHANCED_KEY) {
+							// right
+							keycode = 57449; suffix = 'u';
+						} else {
+							// left
+							keycode = 57443; suffix = 'u';
+						}
+
+						break;
+					}
+
+					case VK_CONTROL:
+					{
+						if ((KeyEvent.dwControlKeyState & ENHANCED_KEY)) {
+							// right
+							keycode = 57448; suffix = 'u';
+						} else {
+							// left
+							keycode = 57442; suffix = 'u';
+						}
+
+						break;
+					}
+
+					case VK_SHIFT:
+					{
+						if (KeyEvent.wVirtualScanCode == RIGHT_SHIFT_VSC) {
+							// right
+							keycode = 57447; suffix = 'u';
+						} else {
+							// left
+							keycode = 57441; suffix = 'u';
+						}
+
+						break;
+					}
+
 				}
 
 				// avoid sending base char if it is equal to keycode
@@ -886,6 +926,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				len += snprintf(buffer + len, sizeof(buffer) - len, "\x1B[");
 
 				// Часть 1
+
+				// We are not able to generate proper sequence for this key for now, sorry
+				if (!keycode) { return ""; }
 
 				// Добавляем значение keycode
 				len += snprintf(buffer + len, sizeof(buffer) - len, "%i", keycode);

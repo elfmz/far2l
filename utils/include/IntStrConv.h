@@ -20,6 +20,7 @@ wchar_t * _itow(int i, wchar_t *w, int radix);
 // and upon completion *pos is set to the end of parsed substring
 unsigned long HexToULong(const char *str, size_t maxlen, size_t *pos = nullptr);
 unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos = nullptr);
+long DecToLong(const char *str, size_t maxlen, size_t *pos = nullptr);
 
 bool IsHexaDecimalNumberStr(const char *str);
 

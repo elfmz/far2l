@@ -875,7 +875,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					}
 
 					case VK_CONTROL:
-                    {
+					{
 						if ((KeyEvent.dwControlKeyState & ENHANCED_KEY)) {
 							// right
 							keycode = 57448; suffix = 'u';

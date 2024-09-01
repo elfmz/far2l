@@ -307,26 +307,6 @@ void TTYBackend::ReaderLoop()
 
 		int rs;
 
-		// Enable esc expiration on Wayland as Xi not work there
-		// Also enable if we've got no TTY|X or got TTY|X without Xi
-		if (!_esc_expiration && (UnderWayland() || !_ttyx || !(_ttyx->HasXi()))) {
-			_esc_expiration = 100;
-		}
-
-		// Also in kernel console
-		#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
-				if (!_esc_expiration) {
-					int kd_mode;
-					#if defined(__linux__)
-					if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
-					#else
-					if (ioctl(_stdin, KDGKBMODE, &kd_mode) == 0) {
-					#endif
-						_esc_expiration = 100;
-					}
-				}
-		#endif
-
 		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
 			struct timeval tv;
 			tv.tv_sec = _esc_expiration / 1000;

@@ -1114,7 +1114,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	ResetTimerIdling();
 	DWORD now = WINPORT(GetTickCount)();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "OnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
+	fprintf(stderr, "\nOnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
 		event.GetRawKeyCode(), event.GetKeyCode(),
 		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), now);
 
@@ -1233,7 +1233,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
 	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "OnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
+	fprintf(stderr, "\nOnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
 		event.GetRawKeyCode(), event.GetKeyCode(),
 		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp());
 
@@ -1311,6 +1311,9 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 {
 	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
+	if (_key_tracker.LastKeydown().GetTimestamp() != event.GetTimestamp()) {
+		fprintf(stderr, "\n");
+	}
 	fprintf(stderr, "OnChar: raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
 		event.GetRawKeyCode(), event.GetKeyCode(),
 		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), _last_keydown_enqueued);

@@ -300,7 +300,7 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 {
 	if (size) {
 		for (DWORD i = 0; i < size; ++i) {
-			if (data[i].EventType == KEY_EVENT) {              
+			if (data[i].EventType == KEY_EVENT) {
 				fprintf(stderr, "ConsoleInput::Enqueue: %s %s \"%lc\" %s, %x %x %x %x\n",
 					FormatKeyState(data[i].Event.KeyEvent.dwControlKeyState),
 					VirtualKeyNames[data[i].Event.KeyEvent.wVirtualKeyCode],

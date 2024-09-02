@@ -68,7 +68,7 @@ private:
 
 public:
 	TArray(size_t Delta = 8);
-	TArray<Object>(const TArray<Object> &rhs);
+	TArray(const TArray<Object> &rhs);
 	~TArray() { Free(); }
 
 public:

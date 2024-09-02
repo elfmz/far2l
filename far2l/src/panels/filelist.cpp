@@ -4537,7 +4537,7 @@ const void *FileList::GetItem(int Index)
 
 void FileList::ClearAllItem()
 {
-	for (PrevDataItem **i = PrevDataList.First(); i; i = PrevDataList.Next(i)) {
+	for (PrevDataItem **i = PrevDataList.Last(); i; i = PrevDataList.Prev(i)) {
 		(*i)->PrevListData.Clear();	//???
 	}
 

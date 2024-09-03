@@ -244,13 +244,13 @@ extern "C" void WinPortHelp()
 	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
 	printf("\t--x11 - force GUI backend to run on X11\n");
 	printf("\t--wayland - force GUI backend to run on Wayland\n");
-	printf("\t--ee or --ee=N - ESC expiration in msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n");
+	printf("\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n");
 	printf("\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n");
 	printf("\t--maximize - force maximize window upon launch (only for GUI backend)\n");
 	printf("\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n");
 	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
     printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
-    printf("     (for example: export FAR2L_ARGS=\"--tty --nodetect --ee\" and then simple far2l to force start only TTY backend)\n");
+    printf("     (for example: export FAR2L_ARGS=\"--tty\" to start far2l in tty mode by default)\n");
 }
 
 struct ArgOptions
@@ -261,7 +261,7 @@ struct ArgOptions
 	bool x11 = false;
 	bool wayland = false;
 	std::string ext_clipboard;
-	unsigned int esc_expiration = 0;
+	unsigned int esc_expiration = 100;
 	std::vector<char *> filtered_argv;
 
 	ArgOptions() = default;
@@ -313,8 +313,8 @@ struct ArgOptions
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
 
-		} else if (strstr(a, "--ee") == a) {
-			esc_expiration = (a[4] == '=') ? atoi(&a[5]) : 100;
+		} else if (strstr(a, "--ee=") == a) {
+			esc_expiration = atoi(&a[5]);
 
 		} else if (need_strdup) {
 			char *a_dup = strdup(a);

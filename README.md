@@ -172,7 +172,11 @@ To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable
 
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add `-DUSEUCD=no`
 
-To build with Python plugin: add argument `-DPYTHON=yes`
+To build with Python plugin: add argument `-DPYTHON=yes`  but you must have installed additional packages within yours system:
+libpython3-dev
+libffi-dev
+python3-venv
+
 
 To control how RAR archives will be handled in multiarc:
  `-DUNRAR=bundled` (default) use bundled sources found in multiarc/src/formats/rar/unrar

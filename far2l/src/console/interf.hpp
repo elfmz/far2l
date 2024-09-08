@@ -86,6 +86,8 @@ void ScrollScreen(int Count);
 
 void Text(int X, int Y, uint64_t Color, const WCHAR *Str);
 void Text(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length);
+void Text(const WCHAR Ch, uint64_t Color, size_t Length);
+void Text(const WCHAR Ch, size_t Length);
 void Text(const WCHAR *Str, size_t Length = (size_t)-1);
 void TextEx(const WCHAR *Str, size_t Length = (size_t)-1);
 

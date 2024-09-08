@@ -924,7 +924,6 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 					GotoXY(CurX - 1, CurY);
 					BoxText(CurX - 1 == X2 ? BoxSymbols[BS_V2] : L' ');
 				}
-
 				continue;
 			}
 
@@ -967,24 +966,34 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 
 							if ((ViewFlags & COLUMN_MARK) && Width > 2) {
 								Text(ListData[ListPos]->Selected ? L"\x221A " : L"  ");
-								Width-= 2;
+								Width -= 2;
 							}
-#if 1
-							{ // Draw mark str
-								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
-								if ( Opt.Highlight && Width > 2 && hl->MarkLen ) {
 
-									const DWORD64 OldColor = GetColor();
+#if 1
+							if (Opt.ShowFilenameMarks && Opt.Highlight && Width > 2) { // Draw mark str
+								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
+								int	padlen = Opt.FilenameMarksAllign ? std::max((size_t)Opt.MinFilenameIndentation, LongestMarkLength) : Opt.MinFilenameIndentation;
+								if (padlen > Opt.MaxFilenameIndentation)
+									padlen = Opt.MaxFilenameIndentation;
+
+								if ( hl->MarkLen ) {
+									const uint64_t OldColor = GetColor();
 									size_t	ng = Width, outlen;
 
 									outlen = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
 									Width -= ng;
+									padlen -= ng;
 
 									if (!ShowStatus)
 										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKSTR);
 
 									Text(hl->Mark, outlen);
 									SetColor(OldColor);
+								}
+
+								if (padlen > 0) {
+									Width -= padlen;
+									Text(L' ', padlen);
 								}
 							}
 #endif

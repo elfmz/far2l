@@ -470,31 +470,31 @@ class HighlightFilesChunk : protected Threaded
 	uint64_t _CurrentTime;
 	const TPointerArray<FileFilterParams> &_HiData;
 	FileListItem **_FileItem;
-	int _FileCount;
+	size_t _FileCount, _LongestMarkLength;
 	bool _UseAttrHighlighting;
 
 	virtual void *ThreadProc()
 	{
-		DoNow();
-		return nullptr;
+		return DoNow();
 	}
 
 public:
 	HighlightFilesChunk(uint64_t CurrentTime, const TPointerArray<FileFilterParams> &HiData,
-			FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+			FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting)
 		:
 		_CurrentTime(CurrentTime),
 		_HiData(HiData),
 		_FileItem(FileItem),
 		_FileCount(FileCount),
+		_LongestMarkLength(0),
 		_UseAttrHighlighting(UseAttrHighlighting)
 	{}
 
 	virtual ~HighlightFilesChunk() { WaitThread(); }
 
-	void DoNow()
+	void *DoNow()
 	{
-		for (int FCnt = 0; FCnt < _FileCount; ++FCnt) {
+		for (size_t FCnt = 0; FCnt < _FileCount; ++FCnt) {
 			FileListItem &fli = *_FileItem[FCnt];
 			HighlightDataColor Colors = DefaultStartingColors;
 			ApplyStartColors(&Colors);
@@ -512,45 +512,66 @@ public:
 					CurHiData->GetColors(&TempColors);
 					ApplyColors(&Colors, &TempColors);
 
-					if (!CurHiData->GetContinueProcessing())	// || !HasTransparent(&fli->Colors))
+					if (!CurHiData->GetContinueProcessing())
 						break;
 				}
 			}
+
+			if (Colors.MarkLen > _LongestMarkLength)
+				_LongestMarkLength = Colors.MarkLen;
+
 			fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
+
+		return (void *)_LongestMarkLength;
 	}
 
-	void DoAsync()
+	void *GetResult() { return GetThreadResult(); }
+
+	bool DoAsync()
 	{
-		if (!StartThread()) {
-			DoNow();
-		}
+		return StartThread();
 	}
 };
 
-void HighlightFiles::GetHiColor(FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+void HighlightFiles::GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *_LongestMarkLength)
 {
 	if (!FileItem || !FileCount)
 		return;
 
+	size_t LongestMarkLength = 0;
+	size_t BestThreadsNum = std::max(BestThreadsCount(), 1u);
 	std::list<HighlightFilesChunk> async_hfc;
 
 	const int sFileCountTrh = 0x1000;	// empirically found, can be subject of (dynamic) adjustment
 
-	if (FileCount >= sFileCountTrh && BestThreadsCount() > 1) {
-		int FilePerCPU = std::max(FileCount / BestThreadsCount(), 0x400u);
-		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsCount()) {
+	if (FileCount >= sFileCountTrh && BestThreadsNum > 1) {
+		size_t FilePerCPU = std::max(FileCount / BestThreadsNum, (size_t)0x400u);
+
+		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsNum) {
 			async_hfc.emplace_back(CurrentTime, HiData, FileItem, FilePerCPU, UseAttrHighlighting);
-			async_hfc.back().DoAsync();
-			FileItem+= FilePerCPU;
-			FileCount-= FilePerCPU;
+			if (!async_hfc.back().DoAsync()) {
+				async_hfc.pop_back();
+				break;
+			}
+			FileItem += FilePerCPU;
+			FileCount -= FilePerCPU;
 		}
-		//		fprintf(stderr, "%s: spawned %u async processors %d files per each, %d files processed synchronously\n",
-		//			__FUNCTION__, (unsigned int)async_hfc.size(), FilePerCPU, FileCount);
 	}
 
-	HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
-	// async_hfc will join at d-tors
+	size_t len = (size_t)HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
+	if (len > LongestMarkLength)
+		LongestMarkLength = len;
+
+	while(!async_hfc.empty( )) {
+		len = (size_t)async_hfc.back().GetResult();
+		if (len > LongestMarkLength)
+			LongestMarkLength = len;
+		async_hfc.pop_back();
+	}
+
+	if (_LongestMarkLength && *_LongestMarkLength < LongestMarkLength )
+		*_LongestMarkLength = LongestMarkLength;
 }
 
 int HighlightFiles::GetGroup(const FileListItem *fli)

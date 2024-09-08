@@ -123,6 +123,7 @@ FileList::FileList()
 	SelFileSize(0),
 	TotalFileSize(0),
 	FreeDiskSize(0),
+	LongestMarkLength(0),
 	LastUpdateTime(0),
 	Height(0),
 	LeftPos(0),
@@ -1220,6 +1221,14 @@ int FileList::ProcessKey(FarKey Key)
 		}
 		case KEY_CTRLM: {
 			RestoreSelection();
+			return TRUE;
+		}
+		case KEY_CTRLM | KEY_ALT: {
+			Opt.ShowFilenameMarks ^= 1;
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
 			return TRUE;
 		}
 		case KEY_CTRLR: {
@@ -4537,8 +4546,11 @@ const void *FileList::GetItem(int Index)
 
 void FileList::ClearAllItem()
 {
-	for (PrevDataItem **i = PrevDataList.Last(); i; i = PrevDataList.Prev(i)) {
-		(*i)->PrevListData.Clear();	//???
+	if (!PrevDataList.Empty())		//???
+	{
+		for (PrevDataItem **i = PrevDataList.Last(); i; i = PrevDataList.Prev(i)) {
+			if (*i) (*i)->PrevListData.Clear();	//???
+		}
 	}
 
 #if 0

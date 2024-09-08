@@ -2022,6 +2022,61 @@ ConfigHighlight
 "&Розфарбовка файлів"
 "&Размалёўка файлаў"
 
+ConfigFilenameMarks
+"Показывать маркировку имен файлов"
+"Show file name markings"
+"Zobrazit označení názvů souborů"
+"Dateinamenmarkierungen anzeigen"
+"Fájlnevek megjelölésének megjelenítése"
+"Pokaż oznaczenia nazw plików"
+"Mostrar marcas de nombres de archivos"
+"Показати маркування імен файлів"
+"Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksAlign
+"Выравнивать имена файлов по маркировкам"
+"Align file names by markings"
+"Vyrovnat názvy souborů podle označení"
+"Dateinamen nach Markierungen ausrichten"
+"Fájlneveket igazítani a megjelölések szerint"
+"Wyrównaj nazwy plików według oznaczeń"
+"Alinear nombres de archivos por marcas"
+"Вирівняти імена файлів за маркуваннями"
+"Выраўнаваць імёны файлаў па маркіроўках"
+
+ConfigFilenameMinMaxIndentation
+"Мин - макс отступ имен файлов"
+"Min - max file names indentation"
+"Min - max odsazení názvů souborů"
+"Min - max Abstand von Dateinamen"
+"Min - max fájlnevek behúzása"
+"Min - maks wcięcie nazw plików"
+"Sangrado mín - máx de nombres de archivos"
+"Мін - макс відступ імен файлів"
+"Мін - макс адступ імёнаў файлаў"
+
+ConfigFilenameMinIndentation
+"Минимальный отступ имен файлов"
+"Min file names indentation"
+"Minimální odsazení názvů souborů"
+"Minimal Abstand von Dateinamen"
+"Minimális fájlnevek behúzása"
+"Minimalne wcięcie nazw plików"
+"Sangrado mínimo de nombres de archivos"
+"Мінімальний відступ імен файлів"
+"Мінімальны адступ імёнаў файлаў"
+
+ConfigFilenameMaxIndentation
+"Максимальный отступ имен файлов"
+"Max file names indentation"
+"Maximální odsazení názvů souborů"
+"Maximaler Abstand von Dateinamen"
+"Maximális fájlnevek behúzása"
+"Maksymalne wcięcie nazw plików"
+"Sangrado Máximo de nombres de archivos"
+"Максимальний відступ імен файлів"
+"Максімальны адступ імёнаў файлаў"
+
 ConfigAutoChange
 "&Автосмена папки"
 "&Auto change folder"

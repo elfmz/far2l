@@ -398,6 +398,11 @@ struct Options
 	int InactivityExit;
 	int InactivityExitTime;
 	int ShowHidden;
+
+	int ShowFilenameMarks;
+	int FilenameMarksAllign;
+	int MinFilenameIndentation, MaxFilenameIndentation;
+
 	int Highlight;
 	int CursorBlinkTime;
 

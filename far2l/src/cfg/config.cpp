@@ -132,6 +132,14 @@ void SanitizeHistoryCounts()
 	Opt.DialogsHistoryCount = std::max(Opt.DialogsHistoryCount, 16);
 }
 
+void SanitizeIndentationCounts()
+{
+	if (Opt.MaxFilenameIndentation > HIGHLIGHT_MAX_MARK_LENGTH)
+		Opt.MaxFilenameIndentation = HIGHLIGHT_MAX_MARK_LENGTH;
+	if (Opt.MinFilenameIndentation > HIGHLIGHT_MAX_MARK_LENGTH)
+		Opt.MinFilenameIndentation = HIGHLIGHT_MAX_MARK_LENGTH;
+}
+
 void SystemSettings()
 {
 	DialogBuilder Builder(Msg::ConfigSystemTitle, L"SystemSettings");
@@ -212,6 +220,21 @@ void PanelSettings()
 
 	Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 	Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
+	Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
+	Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAllign);
+
+	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField(&Opt.MinFilenameIndentation, 2);
+	DialogItemEx *MinText = Builder.AddTextBefore(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+
+	IndentationMinEdit->Indent(4);
+	MinText->Indent(4);
+
+	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField(&Opt.MaxFilenameIndentation, 2);
+	DialogItemEx *MaxText = Builder.AddTextBefore(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
+
+	IndentationMaxEdit->Indent(4);
+	MaxText->Indent(4);
+
 	Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 	Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
 	Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
@@ -239,6 +262,8 @@ void PanelSettings()
 	if (Builder.ShowDialog()) {
 		if (!AutoUpdate)
 			Opt.AutoUpdateLimit = 0;
+
+		SanitizeIndentationCounts();
 
 		// FrameManager->RefreshFrame();
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

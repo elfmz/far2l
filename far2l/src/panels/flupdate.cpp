@@ -169,6 +169,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	TotalFileSize = 0;
 	CacheSelIndex = -1;
 	CacheSelClearIndex = -1;
+	LongestMarkLength = 0;
 
 	if (Opt.ShowPanelFree) {
 		uint64_t TotalSize, TotalFree;
@@ -255,7 +256,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 			if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 				if ((fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0 || Opt.ScanJunction) {
-					TotalFileSize+= NewPtr->FileSize;
+					TotalFileSize += NewPtr->FileSize;
 				}
 			}
 
@@ -387,7 +388,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	}
 
 	if (Opt.Highlight && !ListData.IsEmpty())
-		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count());
+		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(), false, &LongestMarkLength);
 
 	CreateChangeNotification(FALSE);
 	CorrectPosition();
@@ -573,6 +574,8 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	TotalFileSize = 0;
 	CacheSelIndex = -1;
 	CacheSelClearIndex = -1;
+	LongestMarkLength = 0;
+
 	strPluginDizName.Clear();
 
 	if (!ListData.IsEmpty()) {
@@ -645,13 +648,13 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	}
 	if (!ListData.IsEmpty() && ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING)))
 		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(),
-				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0);
+				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &LongestMarkLength);
 
 	if ((Info.Flags & OPIF_ADDDOTS) && !DotsPresent) {
 		FileListItem *CurPtr = ListData.AddParentPoint();
 		if (CurPtr) {
 			if ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING))
-				CtrlObject->HiFiles->GetHiColor(&CurPtr, 1, (Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0);
+				CtrlObject->HiFiles->GetHiColor(&CurPtr, 1, (Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &LongestMarkLength );
 
 			if (Info.HostFile && *Info.HostFile) {
 				FAR_FIND_DATA_EX FindData;

@@ -223,13 +223,13 @@ void PanelSettings()
 	Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
 	Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAllign);
 
-	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField(&Opt.MinFilenameIndentation, 2);
+	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
 	DialogItemEx *MinText = Builder.AddTextBefore(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
 
 	IndentationMinEdit->Indent(4);
 	MinText->Indent(4);
 
-	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField(&Opt.MaxFilenameIndentation, 2);
+	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
 	DialogItemEx *MaxText = Builder.AddTextBefore(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
 
 	IndentationMaxEdit->Indent(4);

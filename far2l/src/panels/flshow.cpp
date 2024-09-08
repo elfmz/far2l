@@ -972,7 +972,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 #if 1
 							if (Opt.ShowFilenameMarks && Opt.Highlight && Width > 2) { // Draw mark str
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
-								int	padlen = Opt.FilenameMarksAllign ? std::max((size_t)Opt.MinFilenameIndentation, LongestMarkLength) : Opt.MinFilenameIndentation;
+								uint32_t padlen = Opt.FilenameMarksAllign ? std::max((size_t)Opt.MinFilenameIndentation, LongestMarkLength) : Opt.MinFilenameIndentation;
 								if (padlen > Opt.MaxFilenameIndentation)
 									padlen = Opt.MaxFilenameIndentation;
 

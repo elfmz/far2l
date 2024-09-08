@@ -401,7 +401,7 @@ struct Options
 
 	int ShowFilenameMarks;
 	int FilenameMarksAllign;
-	int MinFilenameIndentation, MaxFilenameIndentation;
+	DWORD MinFilenameIndentation, MaxFilenameIndentation;
 
 	int Highlight;
 	int CursorBlinkTime;

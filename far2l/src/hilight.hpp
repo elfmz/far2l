@@ -84,7 +84,7 @@ public:
 
 public:
 	void UpdateCurrentTime();
-	void GetHiColor(FileListItem **FileItem, int FileCount, bool UseAttrHighlighting = false);
+	void GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *LongestMarkLength);
 	int GetGroup(const FileListItem *fli);
 	void HiEdit(int MenuPos);
 

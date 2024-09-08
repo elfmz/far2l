@@ -625,7 +625,6 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
 			wchar_t VerticalLine0[] = {BoxSymbols[BS_V2], 0};
 			wchar_t VerticalLine1[] = {BoxSymbols[BS_V1], 0};
-			static const wchar_t *wstrSpaces = L"                               ";
 
 			union { SMALL_RECT drect; uint64_t i64drect; };
 			union { SMALL_RECT irect; uint64_t i64irect; };
@@ -673,7 +672,8 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				Text(x, y, ColorF, Msg::HighlightExample1, filenameexamplelen);
 				x += filenameexamplelen;
 				ColorF &= (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE));
-				Text(x, y, ColorF, wstrSpaces, freespace-ng);
+				Text(L' ', ColorF, freespace-ng);
+
 				x += (freespace - ng);
 				Text(x, y, ColorB, VerticalLine1, 1);
 			}

@@ -505,6 +505,20 @@ void Text(int X, int Y, uint64_t Color, const WCHAR *Str)
 	Text(Str);
 }
 
+void Text(const WCHAR Ch, uint64_t Color, size_t Length)
+{
+	if ( !Length )
+		return;
+
+	ScrBuf.FillRect(CurX, CurY, CurX + Length, CurY, Ch, Color);
+	CurX += Length;
+}
+
+void Text(const WCHAR Ch, size_t Length)
+{
+	Text(Ch, CurColor, Length);
+}
+
 void Text(const WCHAR *Str, size_t Length)
 {
 	if (Length == (size_t)-1)

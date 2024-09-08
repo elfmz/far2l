@@ -4537,6 +4537,11 @@ const void *FileList::GetItem(int Index)
 
 void FileList::ClearAllItem()
 {
+	for (PrevDataItem **i = PrevDataList.Last(); i; i = PrevDataList.Prev(i)) {
+		(*i)->PrevListData.Clear();	//???
+	}
+
+#if 0
 	// удалим пред.значение.
 	if (!PrevDataList.Empty())		//???
 	{
@@ -4544,5 +4549,7 @@ void FileList::ClearAllItem()
 			i->PrevListData.Clear();	//???
 		}
 	}
+#endif
+
 	SymlinksCache.clear();
 }

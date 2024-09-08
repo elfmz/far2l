@@ -372,13 +372,14 @@ class Plugin(PluginVFS):
         for rec in result:
             if rec.name in (".", ".."):
                 continue
+            name = rec.name.replace('\\ ', ' ')
             attr = 0
             attr |= FILE_ATTRIBUTE_DIRECTORY if rec.mode & stat.S_IFDIR else 0
             attr |= FILE_ATTRIBUTE_DEVICE if rec.mode & stat.S_IFCHR else 0
             attr |= FILE_ATTRIBUTE_ARCHIVE if rec.mode & stat.S_IFREG else 0
-            # log.debug('{} mode={:5o} attr={} perms={}'.format(rec.name, rec.mode, attr, rec.perms))
+            # log.debug('{} mode={:5o} attr={} perms={}'.format(name, rec.mode, attr, rec.perms))
             # datetime.datetime.fromtimestamp(rec.time).strftime('%Y-%m-%d %H:%M:%S')
-            item = self.setName(i, rec.name, attr, rec.size)
+            item = self.setName(i, name, attr, rec.size)
             item.dwUnixMode = rec.mode
 
             t = (

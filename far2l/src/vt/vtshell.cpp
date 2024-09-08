@@ -691,6 +691,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			OnTerminalResized(); // window could resize during dialog box processing
 		}
 
+		// remove "c;" prefix if any
+		size_t pos = str.rfind(';');
+		if (pos != std::string::npos) {
+			str.erase(0, pos + 1);
+		}
+
 		std::vector<unsigned char> plain;
 		base64_decode(plain, str);
 		{ // release no more needed memory

@@ -675,20 +675,30 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
 				SavedScreen saved_scr;
 				ScrBuf.FillBuf();
-				auto choice = Message(MSG_KEEPBACKGROUND, 3,
-					Msg::TerminalClipboardAccessTitle,
-					Msg::TerminalClipboardSetText,
-					Msg::TerminalClipboardAccessBlock,		// 0
-					Msg::TerminalClipboardSetAllowOnce,		// 1
-					Msg::TerminalClipboardSetAllowForCommand);	// 2
-				if (choice != 1 && choice != 2) {
+				int choice;
+				do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
+					choice = Message(MSG_KEEPBACKGROUND, 4,
+						Msg::TerminalClipboardAccessTitle,
+						Msg::TerminalClipboardSetText,
+						L"...",	// 0 - stub select for thoughtless tap
+						Msg::TerminalClipboardAccessBlock,		// 1
+						Msg::TerminalClipboardSetAllowOnce,		// 2
+						Msg::TerminalClipboardSetAllowForCommand);	// 3
+				} while (choice <= 0 );
+				if (choice != 2 && choice != 3) {
 					return;
 				}
-				if (choice == 2) {
+				if (choice == 3) {
 					_allow_osc_clipset = true;
 				}
 			}
 			OnTerminalResized(); // window could resize during dialog box processing
+		}
+
+		// remove "c;" prefix if any
+		size_t pos = str.rfind(';');
+		if (pos != std::string::npos) {
+			str.erase(0, pos + 1);
 		}
 
 		std::vector<unsigned char> plain;

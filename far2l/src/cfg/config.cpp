@@ -221,17 +221,15 @@ void PanelSettings()
 	Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 	Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
 	Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
-	Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAllign);
 
 	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
-	DialogItemEx *MinText = Builder.AddTextBefore(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+	DialogItemEx *MinText = Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+	IndentationMinEdit->Indent(1);
+	MinText->Indent(1);
 
-	IndentationMinEdit->Indent(4);
-	MinText->Indent(4);
-
+	Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAllign);
 	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
 	DialogItemEx *MaxText = Builder.AddTextBefore(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
-
 	IndentationMaxEdit->Indent(4);
 	MaxText->Indent(4);
 

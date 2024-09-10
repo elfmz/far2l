@@ -2056,15 +2056,15 @@ ConfigFilenameMinMaxIndentation
 "Мін - макс адступ імёнаў файлаў"
 
 ConfigFilenameMinIndentation
-"Минимальный отступ имен файлов"
-"Min file names indentation"
-"Minimální odsazení názvů souborů"
-"Minimal Abstand von Dateinamen"
-"Minimális fájlnevek behúzása"
-"Minimalne wcięcie nazw plików"
-"Sangrado mínimo de nombres de archivos"
-"Мінімальний відступ імен файлів"
-"Мінімальны адступ імёнаў файлаў"
+"Фиксированный отступ имен файлов"
+"Fixed indentation of file names"
+"Opravené odsazení názvů souborů"
+"Festgelegte Einrückung von Dateinamen"
+"A fájlnevek rögzített behúzása"
+"Naprawione wcięcie nazw plików"
+"Sangría fija de nombres de archivos"
+"Виправлене відступлення імен файлів"
+"Выпраўлены адступ імёнаў файлаў"
 
 ConfigFilenameMaxIndentation
 "Максимальный отступ имен файлов"

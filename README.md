@@ -111,8 +111,11 @@ See also [Community packages & binaries](#community_bins)
 * `libnfs-dev` (_optional_ - needed for **NetRocks/NFS**)
 * `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
-* `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see UNRAR command line option)
+* `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `UNRAR` command line option)
 * `libpcre3-dev` (or `libpcre2-dev` in older distributions, _optional_ - needed for advanced custom archive formats support in **multiarc**)
+* `libpython3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
+* `libffi-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
+* `python3-venv` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `cmake` ( >= 3.2.2 )
 * `pkg-config`
 * `g++`
@@ -172,10 +175,11 @@ To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable
 
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add `-DUSEUCD=no`
 
-To build with Python plugin: add argument `-DPYTHON=yes`  but you must have installed additional packages within yours system:
-libpython3-dev
-libffi-dev
-python3-venv
+To build with Python plugin: add argument `-DPYTHON=yes`
+but you must have installed additional packages within yours system:
+`libpython3-dev`,
+`libffi-dev`,
+`python3-venv`.
 
 
 To control how RAR archives will be handled in multiarc:

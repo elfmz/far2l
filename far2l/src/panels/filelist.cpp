@@ -1224,7 +1224,16 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_CTRLM | KEY_ALT: {
-			Opt.ShowFilenameMarks ^= 1;
+			if (!Opt.ShowFilenameMarks)
+				Opt.ShowFilenameMarks ^= 1;
+			else {
+				if (!Opt.FilenameMarksAllign)
+					Opt.FilenameMarksAllign ^= 1;
+				else {
+					Opt.ShowFilenameMarks ^= 1;
+					Opt.FilenameMarksAllign ^= 1;
+				}
+			}
 			Redraw();
 			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 			AnotherPanel->Update(UPDATE_KEEP_SELECTION);

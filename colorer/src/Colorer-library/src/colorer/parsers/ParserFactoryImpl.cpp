@@ -18,7 +18,7 @@ ParserFactory::Impl::~Impl()
 void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
 {
   if (!catalog_path || catalog_path->isEmpty()) {
-    logger->debug("loadCatalog for empty path");
+    COLORER_LOG_DEBUG("loadCatalog for empty path");
 
     auto env = colorer::Environment::getOSVariable("COLORER_CATALOG");
     if (!env || env->isEmpty()) {
@@ -27,23 +27,23 @@ void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
     base_catalog_path = colorer::Environment::normalizePath(env.get());
   }
   else {
-    logger->debug("loadCatalog for {0}", *catalog_path);
+    COLORER_LOG_DEBUG("loadCatalog for %", *catalog_path);
     base_catalog_path = colorer::Environment::normalizePath(catalog_path);
   }
 
   parseCatalog(*base_catalog_path);
-  logger->debug("start load hrc files");
+  COLORER_LOG_DEBUG("start load hrc files");
   for (const auto& location : hrc_locations) {
     loadHrcPath(location);
   }
 
-  logger->debug("end load hrc files");
+  COLORER_LOG_DEBUG("end load hrc files");
 }
 
 void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
 {
   try {
-    logger->debug("try load '{0}'", location);
+    COLORER_LOG_DEBUG("try load '%'", location);
     if (XmlInputSource::isFileURI(*base_catalog_path, &location)) {
       auto files = colorer::Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
       for (auto& file : files) {
@@ -54,7 +54,7 @@ void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
       loadHrc(location, base_catalog_path.get());
     }
   } catch (const Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
   }
 }
 
@@ -64,8 +64,8 @@ void ParserFactory::Impl::loadHrc(const UnicodeString& hrc_path, const UnicodeSt
   try {
     hrc_library->loadSource(&dfis);
   } catch (Exception& e) {
-    logger->error("Can't load hrc: {0}", dfis.getPath());
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("Can't load hrc: %", dfis.getPath());
+    COLORER_LOG_ERROR("%", e.what());
   }
 }
 
@@ -183,8 +183,8 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
         XmlInputSource dfis(idx, base_catalog_path.get());
         mapper.loadRegionMappings(dfis);
       } catch (Exception& e) {
-        logger->error("Can't load hrd: ");
-        logger->error("{0}", e.what());
+        COLORER_LOG_ERROR("Can't load hrd: ");
+        COLORER_LOG_ERROR("%", e.what());
         throw ParserFactoryException("Error load hrd");
       }
     }

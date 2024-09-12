@@ -10,11 +10,6 @@
 #cmakedefine COLORER_FEATURE_ZIPINPUTSOURCE
 
 /**
-  If defined, dummy logger is used.
-*/
-#cmakedefine COLORER_FEATURE_DUMMYLOGGER
-
-/**
   If defined, ICU strings is used.
 */
 #cmakedefine COLORER_FEATURE_ICU

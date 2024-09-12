@@ -30,7 +30,7 @@ void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
 
       auto rd_new = regionDefines.find(name);
       if (rd_new != regionDefines.end()) {
-        logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name, is.getPath());
+        COLORER_LOG_WARN("Duplicate region name '%' in file '%'. Previous value replaced.", name, is.getPath());
         regionDefines.erase(rd_new);
       }
 

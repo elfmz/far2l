@@ -22,7 +22,7 @@ class CerrLogger : public Logger
   ~CerrLogger() override = default;
 
   void log(Logger::LogLevel level, const char* /*filename_in*/, int /*line_in*/,
-           const char* /*funcname_in*/, const char* message)
+           const char* /*funcname_in*/, const char* message) override
   {
     if (level > current_level) {
       return;

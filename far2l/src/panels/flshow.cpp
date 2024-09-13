@@ -953,8 +953,8 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							if (Opt.ShowFilenameMarks && Opt.Highlight ) {
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
 
-								if (Opt.FilenameMarksAllign && LongestMarkLength > padlen)
-									padlen = std::min(LongestMarkLength, (size_t)Opt.MaxFilenameIndentation);
+								if (Opt.FilenameMarksAllign && MarkLM > padlen)
+									padlen = std::min(MarkLM, (size_t)Opt.MaxFilenameIndentation);
 
 								if (hl->MarkLen && Width > 2) {
 									const uint64_t OldColor = GetColor();
@@ -1090,8 +1090,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							Text(FormatStr_Size(ListData[ListPos]->FileSize, ListData[ListPos]->PhysicalSize,
 									ListData[ListPos]->strName, ListData[ListPos]->FileAttr,
 									ListData[ListPos]->ShowFolderSize, ColumnType, ColumnTypes[K],
-									ColumnWidth)
-											.CPtr());
+									ColumnWidth).CPtr());
 							break;
 						}
 

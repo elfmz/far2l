@@ -53,14 +53,19 @@ enum enumHighlightDataColor
 	HIGHLIGHTCOLORTYPE_MARKSTR  = 1,
 };
 
+enum HIGHLIGHT_FLAGS
+{
+	HL_FLAGS_MARK_INHERIT = 1,
+};
+
 struct HighlightDataColor
 {
 	uint64_t Color[2][4];	// [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor];
 							// nonzero upper 3 bytes meaning foreground RGB, nonzero lower 3 bytes meaning background RGB
 	uint64_t Mask[2][4];	// transparency mask, 0 = fully transparent
-	wchar_t	 Mark[HIGHLIGHT_MAX_MARK_LENGTH + 1]; 	// + null terminator
+	uint32_t Flags;
 	uint32_t MarkLen;
-	bool	 bMarkInherit;
+	wchar_t	 Mark[HIGHLIGHT_MAX_MARK_LENGTH + 1]; 	// + null terminator
 };
 
 class HighlightFiles
@@ -84,7 +89,7 @@ public:
 
 public:
 	void UpdateCurrentTime();
-	void GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *LongestMarkLength);
+	void GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *MarkLM);
 	int GetGroup(const FileListItem *fli);
 	void HiEdit(int MenuPos);
 

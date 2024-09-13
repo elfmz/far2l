@@ -169,7 +169,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	TotalFileSize = 0;
 	CacheSelIndex = -1;
 	CacheSelClearIndex = -1;
-	LongestMarkLength = 0;
+	MarkLM = 0;
 
 	if (Opt.ShowPanelFree) {
 		uint64_t TotalSize, TotalFree;
@@ -388,7 +388,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	}
 
 	if (Opt.Highlight && !ListData.IsEmpty())
-		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(), false, &LongestMarkLength);
+		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(), false, &MarkLM);
 
 	CreateChangeNotification(FALSE);
 	CorrectPosition();
@@ -574,7 +574,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	TotalFileSize = 0;
 	CacheSelIndex = -1;
 	CacheSelClearIndex = -1;
-	LongestMarkLength = 0;
+	MarkLM = 0;
 
 	strPluginDizName.Clear();
 
@@ -648,13 +648,13 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	}
 	if (!ListData.IsEmpty() && ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING)))
 		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(),
-				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &LongestMarkLength);
+				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &MarkLM);
 
 	if ((Info.Flags & OPIF_ADDDOTS) && !DotsPresent) {
 		FileListItem *CurPtr = ListData.AddParentPoint();
 		if (CurPtr) {
 			if ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING))
-				CtrlObject->HiFiles->GetHiColor(&CurPtr, 1, (Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &LongestMarkLength );
+				CtrlObject->HiFiles->GetHiColor(&CurPtr, 1, (Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &MarkLM );
 
 			if (Info.HostFile && *Info.HostFile) {
 				FAR_FIND_DATA_EX FindData;

@@ -123,7 +123,7 @@ FileList::FileList()
 	SelFileSize(0),
 	TotalFileSize(0),
 	FreeDiskSize(0),
-	LongestMarkLength(0),
+	MarkLM(0),
 	LastUpdateTime(0),
 	Height(0),
 	LeftPos(0),

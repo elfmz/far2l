@@ -245,7 +245,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		DWORD dwMarkLen = strMark.GetLength();
 		DWORD dwMarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
 
-		hl.bMarkInherit = (dwMarkChar & 0xFF0000);
+		hl.Flags = (dwMarkChar & 0xFF0000) >> 23;
 		dwMarkChar &= 0x0000FFFF;
 
 		if (dwMarkLen) {
@@ -364,16 +364,27 @@ static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANEL
 
 static const HighlightDataColor DefaultStartingColors =
 	{
-		{	{0x0, 0x0, 0x0, 0x0},		// Color[0][4] 0 = Black on black = default theme color
+		{	{0x0, 0x0, 0x0, 0x0},	// Color[0][4] 0 = Black on black = default theme color
 			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
-		{	{0x0, 0x0, 0x0, 0x0},		// Mask[0][4] // Transparency Masks 0 = fully transparent
+		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
 			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
-		{ 0 }, 						// wchar_t	Mark
 		0,     						// size_t	MarkLen;
-		true   						// bool	bMarkInherit;
+		1,   						// flags;
+		{ 0 }, 						// wchar_t	Mark
 	};
 
-const HighlightDataColor ZeroColors{{{0}}};
+const HighlightDataColor ZeroColors =
+	{
+		{	{0x0, 0x0, 0x0, 0x0},	// Color[0][4] 0 = Black on black = default theme color
+			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
+			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
+		0,     						// size_t	MarkLen;
+		0,   						// flags;
+		{ 0 }, 						// wchar_t	Mark
+	};
+
+//const HighlightDataColor ZeroColors{{{0}}};
 
 static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 {
@@ -406,7 +417,7 @@ static void ApplyStartColors(HighlightDataColor *hl)
 		hl->Mask[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i];
 	}
 
-	hl->bMarkInherit = false;
+	hl->Flags   = 0;
 	hl->MarkLen = 0;
 	hl->Mark[0] = 0;
 }
@@ -433,7 +444,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 	// Унаследуем пометку из Src в Dst если она есть
 	if (hlSrc->MarkLen) {
 		// Если нет наследования в Src, то просто заменим метку на новую в Dst
-		if (!hlSrc->bMarkInherit) {
+		if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) {
 			hlDst->MarkLen = hlSrc->MarkLen;
 			memcpy(hlDst->Mark, hlSrc->Mark, sizeof(wchar_t) * hlSrc->MarkLen);
 		}
@@ -446,7 +457,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 			}
 		}
 	}
-	else if (!hlSrc->bMarkInherit) { // Если нет наследования и метка пустая, то убираем метку совсем
+	else if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) { // Если нет наследования и метка пустая, то убираем метку совсем
 		hlDst->MarkLen = 0;
 	}
 }
@@ -470,7 +481,7 @@ class HighlightFilesChunk : protected Threaded
 	uint64_t _CurrentTime;
 	const TPointerArray<FileFilterParams> &_HiData;
 	FileListItem **_FileItem;
-	size_t _FileCount, _LongestMarkLength;
+	size_t _FileCount, _MarkLM;
 	bool _UseAttrHighlighting;
 
 	virtual void *ThreadProc()
@@ -486,7 +497,7 @@ public:
 		_HiData(HiData),
 		_FileItem(FileItem),
 		_FileCount(FileCount),
-		_LongestMarkLength(0),
+		_MarkLM(0),
 		_UseAttrHighlighting(UseAttrHighlighting)
 	{}
 
@@ -517,13 +528,13 @@ public:
 				}
 			}
 
-			if (Colors.MarkLen > _LongestMarkLength)
-				_LongestMarkLength = Colors.MarkLen;
+			if (Colors.MarkLen > _MarkLM && Colors.MarkLen <= Opt.MaxFilenameIndentation)
+				_MarkLM = Colors.MarkLen;
 
 			fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
 
-		return (void *)_LongestMarkLength;
+		return (void *)_MarkLM;
 	}
 
 	void *GetResult() { return GetThreadResult(); }
@@ -534,12 +545,12 @@ public:
 	}
 };
 
-void HighlightFiles::GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *_LongestMarkLength)
+void HighlightFiles::GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *_MarkLM)
 {
 	if (!FileItem || !FileCount)
 		return;
 
-	size_t LongestMarkLength = 0;
+	size_t MarkLM = 0;
 	size_t BestThreadsNum = std::max(BestThreadsCount(), 1u);
 	std::list<HighlightFilesChunk> async_hfc;
 
@@ -559,19 +570,17 @@ void HighlightFiles::GetHiColor(FileListItem **FileItem, size_t FileCount, bool 
 		}
 	}
 
-	size_t len = (size_t)HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
-	if (len > LongestMarkLength)
-		LongestMarkLength = len;
+	MarkLM = (size_t)HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
 
 	while(!async_hfc.empty( )) {
-		len = (size_t)async_hfc.back().GetResult();
-		if (len > LongestMarkLength)
-			LongestMarkLength = len;
+		size_t len = (size_t)async_hfc.back().GetResult();
+		if (len > MarkLM)
+			MarkLM = len;
 		async_hfc.pop_back();
 	}
 
-	if (_LongestMarkLength && *_LongestMarkLength < LongestMarkLength )
-		*_LongestMarkLength = LongestMarkLength;
+	if (_MarkLM && *_MarkLM < MarkLM )
+		*_MarkLM = MarkLM;
 }
 
 int HighlightFiles::GetGroup(const FileListItem *fli)
@@ -985,7 +994,7 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	{ // Save Mark str
 		FARString strMark = L"";
 		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
-		dwMarkChar |= (0xFF0000 * hl.bMarkInherit);
+		dwMarkChar |= (0xFF0000 * (hl.Flags & HL_FLAGS_MARK_INHERIT));
 
 		cfg_writer.SetUInt(HLS.MarkChar, dwMarkChar);
 
@@ -1050,25 +1059,7 @@ void HighlightFiles::SaveHiData()
 
 static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &hl2)
 {
-	if (hl1.MarkLen != hl2.MarkLen)
-		return false;
-	if (hl1.bMarkInherit != hl2.bMarkInherit)
-		return false;
-
-	if (hl1.MarkLen)
-		if (memcmp(&hl1.Mark[0], &hl2.Mark[0], sizeof(wchar_t) * hl1.MarkLen))
-			return false;
-
-	for (size_t i = 0; i < ARRAYSIZE(hl1.Color); ++i) {
-		for (size_t j = 0; j < ARRAYSIZE(hl1.Color[i]); ++j) {
-			if (hl1.Color[i][j] != hl2.Color[i][j])
-				return false;
-			if (hl1.Mask[i][j] != hl2.Mask[i][j])
-				return false;
-		}
-	}
-
-	return true;
+	return !memcmp(&hl1, &hl2, sizeof(HighlightDataColor));
 }
 
 struct HighlightDataColorHash
@@ -1076,6 +1067,7 @@ struct HighlightDataColorHash
 	size_t operator()(const HighlightDataColor &hl) const
 	{
 		size_t out = hl.MarkLen * 0xFFFF;
+
 		for (size_t i = 0; i < ARRAYSIZE(hl.Color); ++i) {
 			for (size_t j = 0; j < ARRAYSIZE(hl.Color[i]); ++j) {
 				out ^= hl.Color[i][j] + hl.Mask[i][j] + ((i ^ j) << 16);
@@ -1092,6 +1084,7 @@ static std::atomic<const HighlightDataColor *> s_last_color{&DefaultStartingColo
 const HighlightDataColor *PooledHighlightDataColor(const HighlightDataColor &color)
 {
 	const HighlightDataColor *last_color = s_last_color.load(std::memory_order_relaxed);
+
 	if (color == *last_color) {
 		return last_color;
 	}

@@ -773,7 +773,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				
 				int nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_HER_MARKEDIT, 0);
 				if (nLength > HIGHLIGHT_MAX_MARK_LENGTH ) {
-					SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
+					SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
 				}
 				else {
 					SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);
@@ -798,9 +798,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 					fphlstate->hl.MarkLen = nLength;
 				}
 
-//				HighlightDlgUpdateUserControl(fphlstate);
 				SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
-
 				return TRUE;
 			}
 
@@ -1005,7 +1003,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	FilterDlg[ID_HER_COLOREXAMPLE].VBuf = fphlstate.vbuff;
 
 	FilterDlg[ID_HER_MARKEDIT].strData = fphlstate.hl.Mark;
-	FilterDlg[ID_HER_MARKINHERIT].Selected = (fphlstate.hl.bMarkInherit ? 1 : 0);
+	FilterDlg[ID_HER_MARKINHERIT].Selected = ((fphlstate.hl.Flags & HL_FLAGS_MARK_INHERIT) ? 1 : 0);
 
 	FilterDlg[ID_HER_CONTINUEPROCESSING].Selected = (FF->GetContinueProcessing() ? 1 : 0);
 	FilterDlg[ID_FF_NAMEEDIT].strData = FF->GetTitle();
@@ -1189,7 +1187,8 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			if (FilterDlg[ID_FF_MATCHMASK].Selected && !FileMask.Set(FilterDlg[ID_FF_MASKEDIT].strData, 0))
 				continue;
 
-			fphlstate.hl.bMarkInherit = FilterDlg[ID_HER_MARKINHERIT].Selected;
+//			fphlstate.hl.Flags = 0;
+			fphlstate.hl.Flags = FilterDlg[ID_HER_MARKINHERIT].Selected; // HL_FLAGS_MARK_INHERIT
 
 			FF->SetColors(&fphlstate.hl);
 			FF->SetContinueProcessing(FilterDlg[ID_HER_CONTINUEPROCESSING].Selected != 0);

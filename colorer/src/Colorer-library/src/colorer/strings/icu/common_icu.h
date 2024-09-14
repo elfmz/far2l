@@ -1,7 +1,7 @@
 #ifndef COLORER_COMMON_ICU_H
 #define COLORER_COMMON_ICU_H
 
-#include <unicode/uniset.h>
+#include "unicode/uniset.h"
 #include <memory>
 
 using UnicodeString = icu::UnicodeString;

@@ -463,7 +463,7 @@ FillUserMenu(VMenu &UserMenu, const wchar_t *MenuKey, int MenuPos, int *FuncPos,
 			}
 
 			UserMenuItem.SetSelect(NumLines == MenuPos);
-			UserMenuItem.Flags&= ~LIF_SEPARATOR;
+			UserMenuItem.Flags &= ~LIF_SEPARATOR;
 		}
 
 		int ItemPos = UserMenu.AddItem(&UserMenuItem);
@@ -473,10 +473,13 @@ FillUserMenu(VMenu &UserMenu, const wchar_t *MenuKey, int MenuPos, int *FuncPos,
 		}
 	}
 
+#if 0
+	// Extra empty item
 	MenuItemEx UserMenuItem;
 	UserMenuItem.Clear();
 	UserMenuItem.SetSelect(NumLines == MenuPos);
 	UserMenu.AddItem(&UserMenuItem);
+#endif
 	return NumLines;
 }
 
@@ -580,28 +583,31 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 						break;
 					case KEY_NUMDEL:
 					case KEY_DEL:
-
-						if (MenuPos < NumLine)
+						if (NumLine && MenuPos > -1 && MenuPos < NumLine)
 							DeleteMenuRecord(MenuKey, MenuPos);
 
 						break;
 					case KEY_INS:
 					case KEY_F4:
 					case KEY_SHIFTF4:
-					case KEY_NUMPAD0:
+					case KEY_NUMPAD0: {
+						bool bInsertNew = (Key == KEY_INS || Key == KEY_NUMPAD0);
 
-						if (Key != KEY_INS && Key != KEY_NUMPAD0 && MenuPos >= NumLine)
+						if (!bInsertNew && (MenuPos >= NumLine || MenuPos < 0))
 							break;
+						if (bInsertNew && MenuPos < 0)
+							MenuPos = 0;
 
-						EditMenu(MenuKey, MenuPos, NumLine, Key == KEY_INS || Key == KEY_NUMPAD0);
+						EditMenu(MenuKey, MenuPos, NumLine, bInsertNew);
+					}
 						break;
 					case KEY_CTRLUP:
 					case KEY_CTRLDOWN: {
 						int Pos = UserMenu.GetSelectPos();
 
-						if (Pos != UserMenu.GetItemCount() - 1) {
+						if (Pos != UserMenu.GetItemCount()) {
 							if (!(Key == KEY_CTRLUP && !Pos)
-									&& !(Key == KEY_CTRLDOWN && Pos == UserMenu.GetItemCount() - 2)) {
+									&& !(Key == KEY_CTRLDOWN && Pos == UserMenu.GetItemCount() - 1)) {
 								MenuPos = Pos + (Key == KEY_CTRLUP ? -1 : +1);
 								MoveMenuItem(MenuKey, Pos, MenuPos);
 							}

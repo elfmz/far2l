@@ -528,8 +528,12 @@ public:
 				}
 			}
 
-			if (Colors.MarkLen > _MarkLM && Colors.MarkLen <= Opt.MaxFilenameIndentation)
-				_MarkLM = Colors.MarkLen;
+			if (Colors.MarkLen) {
+				size_t ncells = StrCellsCount( Colors.Mark, Colors.MarkLen );
+
+				if (ncells > _MarkLM && ncells <= Opt.MaxFilenameIndentation)
+					_MarkLM = ncells;
+			}
 
 			fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
@@ -993,14 +997,14 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 
 	{ // Save Mark str
 		FARString strMark = L"";
-		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
+//		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
+		DWORD dwMarkChar = 0;
 		dwMarkChar |= (0xFF0000 * (hl.Flags & HL_FLAGS_MARK_INHERIT));
 
 		cfg_writer.SetUInt(HLS.MarkChar, dwMarkChar);
 
-		if (hl.MarkLen > 1)
-			strMark = hl.Mark;
-
+//		if (hl.MarkLen > 1)
+		strMark = hl.Mark;
 		cfg_writer.SetString(HLS.MarkStr, strMark);
 	}
 

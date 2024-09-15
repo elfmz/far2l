@@ -948,13 +948,13 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							}
 #if 1
 							{ /// Draw mark str
-							size_t padlen = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
+							size_t prews = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
 
 							if (Opt.ShowFilenameMarks && Opt.Highlight ) {
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
 
-								if (Opt.FilenameMarksAllign && MarkLM > padlen)
-									padlen = std::min(MarkLM, (size_t)Opt.MaxFilenameIndentation);
+								if (Opt.FilenameMarksAllign && MarkLM > prews)
+									prews = std::min(MarkLM, (size_t)Opt.MaxFilenameIndentation);
 
 								if (hl->MarkLen && Width > 2) {
 									const uint64_t OldColor = GetColor();
@@ -964,10 +964,10 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 									ng = StrCellsCount( hl->Mark, outlen );
 
 									Width -= ng;
-									if (ng < padlen)
-										padlen -= ng;
+									if (ng < prews)
+										prews -= ng;
 									else
-										padlen = 0;
+										prews = 0;
 
 									if (!ShowStatus)
 										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKSTR);
@@ -977,15 +977,15 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 								}
 							}
 
-							if (!ShowStatus && padlen && Width > 2) {
-								if (padlen > (size_t)Width) {
-									padlen = Width;
+							if (!ShowStatus && prews && Width > 2) {
+								if (prews >= (size_t)Width) {
+									prews = Width;
 									Width = 0;
 								}
 								else
-									Width -= padlen;
+									Width -= prews;
 
-								Text(L' ', padlen);
+								Text(L' ', prews);
 							}
 							} /// Draw mark str
 #endif

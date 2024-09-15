@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pick_color.hpp"
 #include "datetime.hpp"
 #include "strmix.hpp"
+#include "config.hpp"
 
 FileFilterParams::FileFilterParams()
 {
@@ -637,9 +638,16 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			HighlightDataColor *hl = &fphlstate->hl;
 			size_t	filenameexamplelen = wcslen(Msg::HighlightExample1);
 			size_t	freespace = irect.Right - irect.Left - filenameexamplelen - 2;
-			size_t	ng = freespace, mcl;
-			mcl = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
+			size_t	ng = freespace;
+			size_t	mcl = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
 			ng = StrCellsCount( hl->Mark, mcl );
+
+			size_t	prews = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
+			if (ng < prews)
+				prews -= ng;
+			else
+				prews = 0;
+
 			uint64_t ColorB = FarColorToReal(COL_PANELBOX);
 
 			for (int i = 0; i < 4; i++) {
@@ -669,12 +677,18 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				x++;
 				Text(x, y, ColorM, hl->Mark, mcl);
 				x += ng;
+
+				if (prews) {
+					Text(L' ', prews);
+					x += prews;
+				}
+
 				Text(x, y, ColorF, Msg::HighlightExample1, filenameexamplelen);
 				x += filenameexamplelen;
 				ColorF &= (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE));
-				Text(L' ', ColorF, freespace-ng);
+				Text(L' ', ColorF, freespace-(ng + prews));
 
-				x += (freespace - ng);
+				x += (freespace - (ng + prews));
 				Text(x, y, ColorB, VerticalLine1, 1);
 			}
 

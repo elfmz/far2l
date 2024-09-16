@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pick_colorRGB.hpp"
 
 void SanitizeHistoryCounts();
+void SanitizeIndentationCounts();
 
 static bool g_config_ready = false;
 
@@ -385,6 +386,10 @@ const ConfigOpt g_cfg_opts[] {
 	{false, NSecPanel, "CtrlAltShiftRule", &Opt.PanelCtrlAltShiftRule, 0},
 	{false, NSecPanel, "RememberLogicalDrives", &Opt.RememberLogicalDrives, 0},
 	{true,  NSecPanel, "AutoUpdateLimit", &Opt.AutoUpdateLimit, 0},
+	{true,  NSecPanel, "ShowFilenameMarks", &Opt.ShowFilenameMarks, 1},
+	{true,  NSecPanel, "FilenameMarksAllign", &Opt.FilenameMarksAllign, 0},
+	{true,  NSecPanel, "MinFilenameIndentation", &Opt.MinFilenameIndentation, 0},
+	{true,  NSecPanel, "MaxFilenameIndentation", &Opt.MaxFilenameIndentation, HIGHLIGHT_MAX_MARK_LENGTH},
 
 	{true,  NSecPanelLeft, "Type", &Opt.LeftPanel.Type, 0},
 	{true,  NSecPanelLeft, "Visible", &Opt.LeftPanel.Visible, 1},
@@ -695,6 +700,7 @@ void ConfigOptLoad()
 	/* <ПОСТПРОЦЕССЫ> *************************************************** */
 
 	SanitizeHistoryCounts();
+	SanitizeIndentationCounts();
 
 	if (Opt.CursorBlinkTime < 100)
 		Opt.CursorBlinkTime = 100;

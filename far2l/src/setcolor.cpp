@@ -335,7 +335,6 @@ void SetColors()
 				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
 					Palette[i] = DefaultPalette8bit[i];
 				}
-
 				break;
 			}
 

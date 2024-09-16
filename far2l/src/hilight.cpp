@@ -245,7 +245,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		DWORD dwMarkLen = strMark.GetLength();
 		DWORD dwMarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
 
-		hl.bMarkInherit = (dwMarkChar & 0xFF0000);
+		hl.Flags = (dwMarkChar & 0xFF0000) >> 23;
 		dwMarkChar &= 0x0000FFFF;
 
 		if (dwMarkLen) {
@@ -364,16 +364,27 @@ static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANEL
 
 static const HighlightDataColor DefaultStartingColors =
 	{
-		{	{0x0, 0x0, 0x0, 0x0},		// Color[0][4] 0 = Black on black = default theme color
+		{	{0x0, 0x0, 0x0, 0x0},	// Color[0][4] 0 = Black on black = default theme color
 			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
-		{	{0x0, 0x0, 0x0, 0x0},		// Mask[0][4] // Transparency Masks 0 = fully transparent
+		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
 			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
-		{ 0 }, 						// wchar_t	Mark
 		0,     						// size_t	MarkLen;
-		true   						// bool	bMarkInherit;
+		1,   						// flags;
+		{ 0 }, 						// wchar_t	Mark
 	};
 
-const HighlightDataColor ZeroColors{{{0}}};
+const HighlightDataColor ZeroColors =
+	{
+		{	{0x0, 0x0, 0x0, 0x0},	// Color[0][4] 0 = Black on black = default theme color
+			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
+			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
+		0,     						// size_t	MarkLen;
+		0,   						// flags;
+		{ 0 }, 						// wchar_t	Mark
+	};
+
+//const HighlightDataColor ZeroColors{{{0}}};
 
 static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 {
@@ -406,7 +417,7 @@ static void ApplyStartColors(HighlightDataColor *hl)
 		hl->Mask[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i];
 	}
 
-	hl->bMarkInherit = false;
+	hl->Flags   = 0;
 	hl->MarkLen = 0;
 	hl->Mark[0] = 0;
 }
@@ -433,7 +444,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 	// Унаследуем пометку из Src в Dst если она есть
 	if (hlSrc->MarkLen) {
 		// Если нет наследования в Src, то просто заменим метку на новую в Dst
-		if (!hlSrc->bMarkInherit) {
+		if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) {
 			hlDst->MarkLen = hlSrc->MarkLen;
 			memcpy(hlDst->Mark, hlSrc->Mark, sizeof(wchar_t) * hlSrc->MarkLen);
 		}
@@ -446,7 +457,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 			}
 		}
 	}
-	else if (!hlSrc->bMarkInherit) { // Если нет наследования и метка пустая, то убираем метку совсем
+	else if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) { // Если нет наследования и метка пустая, то убираем метку совсем
 		hlDst->MarkLen = 0;
 	}
 }
@@ -470,31 +481,31 @@ class HighlightFilesChunk : protected Threaded
 	uint64_t _CurrentTime;
 	const TPointerArray<FileFilterParams> &_HiData;
 	FileListItem **_FileItem;
-	int _FileCount;
+	size_t _FileCount, _MarkLM;
 	bool _UseAttrHighlighting;
 
 	virtual void *ThreadProc()
 	{
-		DoNow();
-		return nullptr;
+		return DoNow();
 	}
 
 public:
 	HighlightFilesChunk(uint64_t CurrentTime, const TPointerArray<FileFilterParams> &HiData,
-			FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+			FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting)
 		:
 		_CurrentTime(CurrentTime),
 		_HiData(HiData),
 		_FileItem(FileItem),
 		_FileCount(FileCount),
+		_MarkLM(0),
 		_UseAttrHighlighting(UseAttrHighlighting)
 	{}
 
 	virtual ~HighlightFilesChunk() { WaitThread(); }
 
-	void DoNow()
+	void *DoNow()
 	{
-		for (int FCnt = 0; FCnt < _FileCount; ++FCnt) {
+		for (size_t FCnt = 0; FCnt < _FileCount; ++FCnt) {
 			FileListItem &fli = *_FileItem[FCnt];
 			HighlightDataColor Colors = DefaultStartingColors;
 			ApplyStartColors(&Colors);
@@ -512,45 +523,68 @@ public:
 					CurHiData->GetColors(&TempColors);
 					ApplyColors(&Colors, &TempColors);
 
-					if (!CurHiData->GetContinueProcessing())	// || !HasTransparent(&fli->Colors))
+					if (!CurHiData->GetContinueProcessing())
 						break;
 				}
 			}
+
+			if (Colors.MarkLen) {
+				size_t ncells = StrCellsCount( Colors.Mark, Colors.MarkLen );
+
+				if (ncells > _MarkLM && ncells <= Opt.MaxFilenameIndentation)
+					_MarkLM = ncells;
+			}
+
 			fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
+
+		return (void *)_MarkLM;
 	}
 
-	void DoAsync()
+	void *GetResult() { return GetThreadResult(); }
+
+	bool DoAsync()
 	{
-		if (!StartThread()) {
-			DoNow();
-		}
+		return StartThread();
 	}
 };
 
-void HighlightFiles::GetHiColor(FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+void HighlightFiles::GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *_MarkLM)
 {
 	if (!FileItem || !FileCount)
 		return;
 
+	size_t MarkLM = 0;
+	size_t BestThreadsNum = std::max(BestThreadsCount(), 1u);
 	std::list<HighlightFilesChunk> async_hfc;
 
 	const int sFileCountTrh = 0x1000;	// empirically found, can be subject of (dynamic) adjustment
 
-	if (FileCount >= sFileCountTrh && BestThreadsCount() > 1) {
-		int FilePerCPU = std::max(FileCount / BestThreadsCount(), 0x400u);
-		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsCount()) {
+	if (FileCount >= sFileCountTrh && BestThreadsNum > 1) {
+		size_t FilePerCPU = std::max(FileCount / BestThreadsNum, (size_t)0x400u);
+
+		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsNum) {
 			async_hfc.emplace_back(CurrentTime, HiData, FileItem, FilePerCPU, UseAttrHighlighting);
-			async_hfc.back().DoAsync();
-			FileItem+= FilePerCPU;
-			FileCount-= FilePerCPU;
+			if (!async_hfc.back().DoAsync()) {
+				async_hfc.pop_back();
+				break;
+			}
+			FileItem += FilePerCPU;
+			FileCount -= FilePerCPU;
 		}
-		//		fprintf(stderr, "%s: spawned %u async processors %d files per each, %d files processed synchronously\n",
-		//			__FUNCTION__, (unsigned int)async_hfc.size(), FilePerCPU, FileCount);
 	}
 
-	HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
-	// async_hfc will join at d-tors
+	MarkLM = (size_t)HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
+
+	while(!async_hfc.empty( )) {
+		size_t len = (size_t)async_hfc.back().GetResult();
+		if (len > MarkLM)
+			MarkLM = len;
+		async_hfc.pop_back();
+	}
+
+	if (_MarkLM && *_MarkLM < MarkLM )
+		*_MarkLM = MarkLM;
 }
 
 int HighlightFiles::GetGroup(const FileListItem *fli)
@@ -963,14 +997,14 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 
 	{ // Save Mark str
 		FARString strMark = L"";
-		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
-		dwMarkChar |= (0xFF0000 * hl.bMarkInherit);
+//		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
+		DWORD dwMarkChar = 0;
+		dwMarkChar |= (0xFF0000 * (hl.Flags & HL_FLAGS_MARK_INHERIT));
 
 		cfg_writer.SetUInt(HLS.MarkChar, dwMarkChar);
 
-		if (hl.MarkLen > 1)
-			strMark = hl.Mark;
-
+//		if (hl.MarkLen > 1)
+		strMark = hl.Mark;
 		cfg_writer.SetString(HLS.MarkStr, strMark);
 	}
 
@@ -1029,9 +1063,12 @@ void HighlightFiles::SaveHiData()
 
 static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &hl2)
 {
+#if 0
+	return !memcmp(&hl1, &hl2, sizeof(HighlightDataColor));
+#else
 	if (hl1.MarkLen != hl2.MarkLen)
 		return false;
-	if (hl1.bMarkInherit != hl2.bMarkInherit)
+	if (hl1.Flags != hl2.Flags)
 		return false;
 
 	if (hl1.MarkLen)
@@ -1048,13 +1085,16 @@ static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &
 	}
 
 	return true;
+#endif
 }
+
 
 struct HighlightDataColorHash
 {
 	size_t operator()(const HighlightDataColor &hl) const
 	{
 		size_t out = hl.MarkLen * 0xFFFF;
+
 		for (size_t i = 0; i < ARRAYSIZE(hl.Color); ++i) {
 			for (size_t j = 0; j < ARRAYSIZE(hl.Color[i]); ++j) {
 				out ^= hl.Color[i][j] + hl.Mask[i][j] + ((i ^ j) << 16);
@@ -1071,6 +1111,7 @@ static std::atomic<const HighlightDataColor *> s_last_color{&DefaultStartingColo
 const HighlightDataColor *PooledHighlightDataColor(const HighlightDataColor &color)
 {
 	const HighlightDataColor *last_color = s_last_color.load(std::memory_order_relaxed);
+
 	if (color == *last_color) {
 		return last_color;
 	}

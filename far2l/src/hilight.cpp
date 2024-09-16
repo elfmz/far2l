@@ -1063,8 +1063,31 @@ void HighlightFiles::SaveHiData()
 
 static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &hl2)
 {
+#if 0
 	return !memcmp(&hl1, &hl2, sizeof(HighlightDataColor));
+#else
+	if (hl1.MarkLen != hl2.MarkLen)
+		return false;
+	if (hl1.Flags != hl2.Flags)
+		return false;
+
+	if (hl1.MarkLen)
+		if (memcmp(&hl1.Mark[0], &hl2.Mark[0], sizeof(wchar_t) * hl1.MarkLen))
+			return false;
+
+	for (size_t i = 0; i < ARRAYSIZE(hl1.Color); ++i) {
+		for (size_t j = 0; j < ARRAYSIZE(hl1.Color[i]); ++j) {
+			if (hl1.Color[i][j] != hl2.Color[i][j])
+				return false;
+			if (hl1.Mask[i][j] != hl2.Mask[i][j])
+				return false;
+		}
+	}
+
+	return true;
+#endif
 }
+
 
 struct HighlightDataColorHash
 {

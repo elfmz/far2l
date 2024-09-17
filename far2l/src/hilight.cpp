@@ -1069,7 +1069,13 @@ static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &
 	if (hl1.MarkLen && wmemcmp(&hl1.Mark[0], &hl2.Mark[0], hl1.MarkLen) != 0)
 		return false;
 
-	return (hl1.Color == hl2.Color && hl1.Mask == hl2.Mask);
+	if (memcmp(hl1.Color, hl2.Color, sizeof(hl2.Color)) != 0)
+		return false;
+
+	if (memcmp(hl1.Mask, hl2.Mask, sizeof(hl2.Mask)) != 0)
+		return false;
+
+	return true;
 }
 
 
@@ -1077,7 +1083,7 @@ struct HighlightDataColorHash
 {
 	size_t operator()(const HighlightDataColor &hl) const
 	{
-		size_t out = hl.MarkLen * 0xFFFF;
+		size_t out = hl.Flags ^ (hl.MarkLen * 0xFFFF);
 
 		for (size_t i = 0; i < ARRAYSIZE(hl.Color); ++i) {
 			for (size_t j = 0; j < ARRAYSIZE(hl.Color[i]); ++j) {

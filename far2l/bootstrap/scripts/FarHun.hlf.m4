@@ -3006,6 +3006,9 @@ legalább egy maszknak (kikapcsolt maszkelemzésnél a fájlnév nem számít);
 
      - nincs egyetlen kizárt attribútuma sem.
 
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog.
+
     A Tömörített, Titkosított, Nem indexelt, Ritkított és Átmeneti
 attribútumok, valamint a szimbolikus linkek csak NTFS fájlrendszerben
 értelmezettek.

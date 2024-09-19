@@ -328,6 +328,7 @@ $ #Panelvezérlő parancsok#
 
   A rejtett és rendszerfájlokat megmutatja/elrejti            #Ctrl-H#
   Hosszú és rövid fájlnév nézet között vált                   #Ctrl-N#
+  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
 
   Elrejti/megmutatja a bal panelt                            #Ctrl-F1#
   Elrejti/megmutatja a jobb panelt                           #Ctrl-F2#
@@ -2211,6 +2212,9 @@ $ #Beállítások: panel beállítások#
 
   #Fájlok kiemelése#        A ~fájlkiemelések~@Highlight@ engedélyezése.
 
+  #Fájlnevek megjelölésének megjelenítése# and #Fájlneveket igazítani a megjelölések szerint#
+works only if #Fájlok kiemelése# enabled and may be switched by #Ctrl-Alt-M#.
+
   #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
   #mappaváltás#             a kurzor mozgatására a másik panel is
                           ^<wrap>mappát vált. Ha nincs engedélyezve,
@@ -2932,7 +2936,7 @@ párbeszédablakában a "Fájlok kiemelése" opcióval engedélyezhetjük vagy
 tilthatjuk le.
 
     Bármelyik csoport kiemelésének jellemzőit ~szerkeszthetjük~@HighlightEdit@
-a ~Beállítások~@OptMenu@ menü "Fájlkiemelések, rendezési csoportok"
+a ~Beállítások~@OptMenu@ menü "~Fájlkiemelések, rendezési csoportok~@HighlightList@"
 menüpontjában.
 
 
@@ -2940,6 +2944,8 @@ menüpontjában.
 $ #Fájlkiemelések, rendezési csoportok: vezérlőbillentyűk#
     A ~Fájlkiemelések, rendezési csoportok~@Highlight@ menüben különféle
 műveleteket hajthatunk végre a csoportok listáján, a következő billentyűkkel:
+
+  #Space#          - (De)Activate current group
 
   #Ins#            - Új kiemelési csoport létrehozása
 

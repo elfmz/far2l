@@ -224,9 +224,9 @@ void PanelSettings()
 	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
 	CbShowFilenameMarks->Indent(1);
 	Builder.LinkFlags(CbHighlight, CbShowFilenameMarks, DIF_DISABLE);
-	DialogItemEx *CbFilenameMarksAllign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAllign);
-	CbFilenameMarksAllign->Indent(2);
-	Builder.LinkFlags(CbHighlight, CbFilenameMarksAllign, DIF_DISABLE);
+	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
+	CbFilenameMarksAlign->Indent(2);
+	Builder.LinkFlags(CbHighlight, CbFilenameMarksAlign, DIF_DISABLE);
 	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
 	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
 	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);

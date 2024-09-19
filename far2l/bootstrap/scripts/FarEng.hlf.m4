@@ -3445,6 +3445,9 @@ will not be analyzed, and only file attributes will be taken into account.
 
      - it has none of the excluded attributes.
 
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog.
+
     The Compressed, Encrypted, Not indexed, Sparse, Temporary attributes and
 Symbolic links are valid for NTFS drives only.
 

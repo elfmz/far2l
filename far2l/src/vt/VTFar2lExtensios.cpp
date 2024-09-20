@@ -272,27 +272,30 @@ char VTFar2lExtensios::ClipboardAuthorize(std::string client_id)
 	{
 		SavedScreen saved_scr;
 		ScrBuf.FillBuf();
-		choice = Message(MSG_KEEPBACKGROUND, 4,
-			Msg::TerminalClipboardAccessTitle,
-			Msg::TerminalClipboardAccessText,
-			Msg::TerminalClipboardAccessBlock,		// 0
-			Msg::TerminalClipboardAccessTemporaryRemote,	// 1
-			Msg::TerminalClipboardAccessTemporaryLocal,	// 2
-			Msg::TerminalClipboardAccessAlwaysLocal);	// 3
+		do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
+			choice = Message(MSG_KEEPBACKGROUND, 5,
+				Msg::TerminalClipboardAccessTitle,
+				Msg::TerminalClipboardAccessText,
+				L"...",	// 0 - stub select for thoughtless tap
+				Msg::TerminalClipboardAccessBlock,		// 1
+				Msg::TerminalClipboardAccessTemporaryRemote,	// 2
+				Msg::TerminalClipboardAccessTemporaryLocal,	// 3
+				Msg::TerminalClipboardAccessAlwaysLocal);	// 4
+		} while( choice <= 0 );
 	}
 
 	_vt_shell->OnTerminalResized(); // window could resize during dialog box processing
 
 	switch (choice) {
-		case 3: // Always allow access to local clipboard
+		case 4: // Always allow access to local clipboard
 			ListFileAppend(autheds_file, client_id);
 			// fall through
 
-		case 2: // Temporary allow access to local clipboared
+		case 3: // Temporary allow access to local clipboared
 			_autheds.insert(client_id);
 			return 1;
 
-		case 1: // Tell client that he need to use own clipboard
+		case 2: // Tell client that he need to use own clipboard
 			return -1;
 
 		default: // Mimic just failed to open clipboard

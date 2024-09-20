@@ -19,33 +19,33 @@ fs::path Environment::to_filepath(const UnicodeString* str)
 uUnicodeString Environment::getOSVariable(const UnicodeString& name)
 {
 #ifdef WIN32
-  logger->debug("get system environment '{0}'", name);
+  COLORER_LOG_DEBUG("get system environment '%'", name);
   auto str_name = UStr::to_stdwstr(&name);
   size_t sz = 0;
   auto result_error = _wgetenv_s(&sz, nullptr, 0, str_name.c_str());
   if (result_error != 0 || sz == 0) {
-    logger->debug("'{0}' not set", name);
+    COLORER_LOG_DEBUG("'%' not set", name);
     return nullptr;
   }
   std::vector<wchar_t> value(sz);
   result_error = _wgetenv_s(&sz, &value[0], sz, str_name.c_str());
   if (result_error != 0) {
-    logger->debug("'{0}' not set", name);
+    COLORER_LOG_DEBUG("'%' not set", name);
     return nullptr;
   }
   auto result = std::make_unique<UnicodeString>(&value[0], int32_t(sz - 1));
-  logger->debug("'{0}' = '{1}'", name, *result);
+  COLORER_LOG_DEBUG("'%' = '%'", name, *result);
   return result;
 #else
-  logger->debug("get system environment '{0}'", name);
+  COLORER_LOG_DEBUG("get system environment '%'", name);
   auto str_name = UStr::to_stdstr(&name);
   const char* const value = std::getenv(str_name.c_str());
   if (!value) {
-    logger->debug("'{0}' not set", name);
+    COLORER_LOG_DEBUG("'%' not set", name);
     return nullptr;
   }
   else {
-    logger->debug("'{0}' = '{1}'", name, value);
+    COLORER_LOG_DEBUG("'%' = '%'", name, value);
     return std::make_unique<UnicodeString>(value);
   }
 #endif
@@ -53,7 +53,7 @@ uUnicodeString Environment::getOSVariable(const UnicodeString& name)
 
 uUnicodeString Environment::expandEnvironment(const UnicodeString* path)
 {
-  logger->debug("expand system environment for '{0}'", *path);
+  COLORER_LOG_DEBUG("expand system environment for '%'", *path);
 #ifdef WIN32
   std::wstring path_ws = UStr::to_stdwstr(path);
   size_t i = ExpandEnvironmentStringsW(path_ws.c_str(), nullptr, 0);
@@ -72,7 +72,7 @@ uUnicodeString Environment::expandEnvironment(const UnicodeString* path)
   }
   result += text;
 
-  logger->debug("result of expand '{0}'", result);
+  COLORER_LOG_DEBUG("result of expand '%'", result);
   return std::make_unique<UnicodeString>(result.c_str());
 #endif
 }

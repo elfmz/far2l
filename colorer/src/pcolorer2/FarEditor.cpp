@@ -409,7 +409,7 @@ void FarEditor::locateFunction()
     }
 
     UnicodeString funcname(curLine, sword + 1, eword - sword - 1);
-    logger->debug("FC] Letter {0}", funcname);
+    COLORER_LOG_DEBUG("FC] Letter %", funcname);
     baseEditor->validate(-1, false);
     EditorSetPosition esp;
     OutlineItem* item_found = nullptr;

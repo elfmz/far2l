@@ -1,0 +1,27 @@
+# bash completion for far2l                                   -*- shell-script -*-
+
+_far2l_completions()
+{
+    local cur prev words cword split
+    _init_completion -s || return
+
+    case $prev in
+        -!(-*)[ev])
+            _filedir
+            return
+            ;;
+    esac
+
+    $split && return
+
+    if [[ $cur == -* ]]; then
+        COMPREPLY=($(compgen -W '$(_parse_help "$1" -h)' -- "$cur"))
+        [[ ${COMPREPLY-} == *= ]] && compopt -o nospace
+        [[ ${COMPREPLY-} == *: ]] && compopt -o nospace
+    else
+        _filedir -d
+    fi
+} &&
+    complete -F _far2l_completions far2l
+
+# ex: filetype=sh

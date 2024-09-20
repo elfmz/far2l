@@ -1,5 +1,6 @@
 #include "colorer/xml/libxml2/LibXmlReader.h"
 #include <libxml/parserInternals.h>
+#include <cstring>
 
 LibXmlReader::LibXmlReader(const UnicodeString& source_file) : xmldoc(nullptr)
 {
@@ -125,7 +126,7 @@ void LibXmlReader::xml_error_func(void* /*ctx*/, const char* msg, ...)
 
   /* This shouldn't really happen */
   if (rc < 0) {
-    logger->error("+++ out of cheese error. redo from start +++\n");
+    COLORER_LOG_ERROR("+++ out of cheese error. redo from start +++\n");
     slen = 0;
     memset(buf, 0, sizeof(buf));
     return;
@@ -141,7 +142,7 @@ void LibXmlReader::xml_error_func(void* /*ctx*/, const char* msg, ...)
   /* We're assuming here that the last character is \n. */
   if (buf[slen - 1] == '\n') {
     buf[slen - 1] = '\0';
-    logger->error("{0}", buf);
+    COLORER_LOG_ERROR("%", buf);
     memset(buf, 0, sizeof(buf));
     slen = 0;
   }

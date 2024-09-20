@@ -166,7 +166,7 @@ void FarEditorSet::openMenu()
         break;
     };
   } catch (Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
     UnicodeString msg("openMenu: ");
     msg.append(e.what());
     showExceptionMessage(&msg);
@@ -646,7 +646,7 @@ void FarEditorSet::configure(bool fromEditor)
     Info.DialogFree(hDlg);
 
   } catch (Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
 
     UnicodeString msg("configure: ");
     msg.append(UnicodeString(e.what()));
@@ -753,7 +753,7 @@ int FarEditorSet::editorEvent(int Event, void* Param)
       }
     }
   } catch (Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
 
     UnicodeString msg("editorEvent: ");
     msg.append(UnicodeString(e.what()));
@@ -803,7 +803,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
       try {
         regionMapperLocal = parserFactoryLocal->createStyledMapper(&DConsole, sTempHrdName);
       } catch (ParserFactoryException& e) {
-        logger->error("{0}", e.what());
+        COLORER_LOG_ERROR("%", e.what());
         regionMapperLocal = parserFactoryLocal->createStyledMapper(&DConsole, nullptr);
       }
       regionMapperLocal = nullptr;
@@ -813,7 +813,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
       try {
         regionMapperLocal = parserFactoryLocal->createStyledMapper(&DRgb, sTempHrdNameTm);
       } catch (ParserFactoryException& e) {
-        logger->error("{0}", e.what());
+        COLORER_LOG_ERROR("%", e.what());
         regionMapperLocal = parserFactoryLocal->createStyledMapper(&DRgb, nullptr);
       }
     }
@@ -840,7 +840,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
       }
     }
   } catch (Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
     auto error_mes = UnicodeString(e.what());
     showExceptionMessage(&error_mes);
     Info.RestoreScreen(scr);
@@ -888,13 +888,13 @@ void FarEditorSet::ReloadBase()
     try {
       regionMapper = parserFactory->createStyledMapper(&hrdClass, &hrdName);
     } catch (ParserFactoryException& e) {
-      logger->error("{0}", e.what());
+      COLORER_LOG_ERROR("%", e.what());
       regionMapper = parserFactory->createStyledMapper(&hrdClass, nullptr);
     };
     // устанавливаем фон редактора при каждой перезагрузке схем.
     SetBgEditor();
   } catch (Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
     auto error_mes = UnicodeString(e.what());
     showExceptionMessage(&error_mes);
     disableColorer();

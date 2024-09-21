@@ -25343,15 +25343,15 @@ FileHilightTitle
 "Афарбоўка файлаў"
 
 FileFilterName
-"Имя &фильтра:"
-"Filter &name:"
-"Jmé&no filtru:"
-"Filter&name:"
-"Szűrő &neve:"
-"Nazwa &filtra:"
-"&Nombre filtro:"
-"Ім'я &фільтра:"
-"Імя &фільтра:"
+"&Имя:"
+"&Name:"
+"Jmé&no:"
+"&Name:"
+"&Neve:"
+"&Nazwa:"
+"&Nombre:"
+"&Ім'я:"
+"&Імя:"
 
 FileFilterMatchMask
 "&Маска:"

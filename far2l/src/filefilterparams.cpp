@@ -923,7 +923,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    7,           14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrH             },
 		{DI_CHECKBOX,    7,           15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrS             },
 		{DI_CHECKBOX,    7,           16, 0,      16, {},                                  DIF_3STATE,                             Msg::FileFilterAttrD             },
-		{DI_CHECKBOX,    7,           17, 0,      17, {},                                  DIF_3STATE,                             Msg::FileFilterAttrHardLinks     },
+		{DI_CHECKBOX,    26,          11, 0,      11, {},                                  DIF_3STATE,                             Msg::FileFilterAttrHardLinks     },
 
 		{DI_CHECKBOX,    26,          12, 0,      12, {},                                  DIF_3STATE,                             Msg::FileFilterAttrC             },
 		{DI_CHECKBOX,    26,          13, 0,      13, {},                                  DIF_3STATE,                             Msg::FileFilterAttrE             },
@@ -970,15 +970,16 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	MakeDialogItemsEx(FilterDlgData, FilterDlg);
 
 	if (ColorConfig) {
-		FilterDlg[ID_FF_TITLE].Y2+= 5;
 
-		for (int i = ID_FF_NAME; i <= ID_FF_SEPARATOR1; i++)
-			FilterDlg[i].Flags|= DIF_HIDDEN;
+		FilterDlg[ID_FF_TITLE].Y2 += 6;
 
-		for (int i = ID_FF_MATCHMASK; i <= ID_FF_LAST_ATTR; i++) {
-			FilterDlg[i].Y1-= 2;
-			FilterDlg[i].Y2-= 2;
-		}
+//		for (int i = ID_FF_NAME; i <= ID_FF_SEPARATOR1; i++)
+//			FilterDlg[i].Flags|= DIF_HIDDEN;
+
+//		for (int i = ID_FF_MATCHMASK; i <= ID_FF_LAST_ATTR; i++) {
+//			FilterDlg[i].Y1-= 2;
+//			FilterDlg[i].Y2-= 2;
+//		}
 
 		for (int i = ID_FF_SEPARATOR5; i <= ID_FF_MAKETRANSPARENT; i++) {
 			FilterDlg[i].Y1+= 5;

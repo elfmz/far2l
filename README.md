@@ -122,7 +122,7 @@ See also [Community packages & binaries](#community_bins)
 * `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `UNRAR` command line option)
-* `libpcre3-dev` (or `libpcre2-dev` in older distributions, _optional_ - needed for advanced custom archive formats support in **multiarc**)
+* `libpcre2-dev` (_optional_ - needed for advanced custom archive formats support in **multiarc**)
 * `libpython3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `libffi-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-venv` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
@@ -133,7 +133,7 @@ See also [Community packages & binaries](#community_bins)
 
 #### Or simply on Debian/Ubuntu:
 ``` sh
-apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre3-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
+apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre2-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
 A simple sid back port should be as easy as (build your own binary deb from the official source deb package):
@@ -146,7 +146,7 @@ debuild
 # cd .. and install your self built far2l*.deb
 ```
 
-In older distributions: use libpcre2-dev and libwxgtk3.0-dev instead of libpcre3-dev and libwxgtk3.0-gtk3-dev
+In older distributions: use libwxgtk3.0-dev instead of libwxgtk3.0-gtk3-dev
 
 #### Clone and Build
  * Clone current master

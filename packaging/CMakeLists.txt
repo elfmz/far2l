@@ -16,7 +16,7 @@ set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${VERSION})
 LIST(APPEND PACKAGE_DEPENDENCIES libc6)
 LIST(APPEND PACKAGE_DEPENDENCIES libglib2.0-0 libstdc++6)
 LIST(APPEND PACKAGE_DEPENDENCIES "libgcc-s1 | libgcc | libgcc1")
-LIST(APPEND PACKAGE_DEPENDENCIES libminizip1 libpcre3)
+LIST(APPEND PACKAGE_DEPENDENCIES libminizip1 libpcre2)
 # from main project
 IF (${USEWX})
     find_package(wxWidgets REQUIRED core base)

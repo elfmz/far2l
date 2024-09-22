@@ -219,19 +219,18 @@ void PanelSettings()
 	BOOL AutoUpdate = (Opt.AutoUpdateLimit);
 
 	Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
-	Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
-	Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
 
+	DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
+	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
+	CbShowFilenameMarks->Indent(1);
+	Builder.LinkFlags(CbHighlight, CbShowFilenameMarks, DIF_DISABLE);
+	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
+	CbFilenameMarksAlign->Indent(2);
+	Builder.LinkFlags(CbHighlight, CbFilenameMarksAlign, DIF_DISABLE);
 	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
-	DialogItemEx *MinText = Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
-	IndentationMinEdit->Indent(1);
-	MinText->Indent(1);
-
-	Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAllign);
+	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
 	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
-	DialogItemEx *MaxText = Builder.AddTextBefore(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
-	IndentationMaxEdit->Indent(4);
-	MaxText->Indent(4);
+	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
 
 	Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 	Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);

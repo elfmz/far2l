@@ -1227,11 +1227,11 @@ int FileList::ProcessKey(FarKey Key)
 			if (!Opt.ShowFilenameMarks)
 				Opt.ShowFilenameMarks ^= 1;
 			else {
-				if (!Opt.FilenameMarksAllign)
-					Opt.FilenameMarksAllign ^= 1;
+				if (!Opt.FilenameMarksAlign)
+					Opt.FilenameMarksAlign ^= 1;
 				else {
 					Opt.ShowFilenameMarks ^= 1;
-					Opt.FilenameMarksAllign ^= 1;
+					Opt.FilenameMarksAlign ^= 1;
 				}
 			}
 			Redraw();

@@ -387,7 +387,7 @@ const ConfigOpt g_cfg_opts[] {
 	{false, NSecPanel, "RememberLogicalDrives", &Opt.RememberLogicalDrives, 0},
 	{true,  NSecPanel, "AutoUpdateLimit", &Opt.AutoUpdateLimit, 0},
 	{true,  NSecPanel, "ShowFilenameMarks", &Opt.ShowFilenameMarks, 1},
-	{true,  NSecPanel, "FilenameMarksAllign", &Opt.FilenameMarksAllign, 0},
+	{true,  NSecPanel, "FilenameMarksAlign", &Opt.FilenameMarksAlign, 1},
 	{true,  NSecPanel, "MinFilenameIndentation", &Opt.MinFilenameIndentation, 0},
 	{true,  NSecPanel, "MaxFilenameIndentation", &Opt.MaxFilenameIndentation, HIGHLIGHT_MAX_MARK_LENGTH},
 

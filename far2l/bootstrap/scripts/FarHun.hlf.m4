@@ -2965,6 +2965,10 @@ csoportokat
     A FAR a csoportkiemeléseket felülről lefelé haladva vizsgálja. Ha érzékeli,
 hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja.
 
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
+
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @HighlightEdit
@@ -3007,7 +3011,8 @@ legalább egy maszknak (kikapcsolt maszkelemzésnél a fájlnév nem számít);
      - nincs egyetlen kizárt attribútuma sem.
 
     Display of markers is controlled globally via a checkbox
-in the ~Panel settings~@PanelSettings@ dialog.
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
     A Tömörített, Titkosított, Nem indexelt, Ritkított és Átmeneti
 attribútumok, valamint a szimbolikus linkek csak NTFS fájlrendszerben

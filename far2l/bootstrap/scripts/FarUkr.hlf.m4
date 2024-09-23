@@ -3311,6 +3311,10 @@ $ #Розмальовка файлів та групи сортування: к�
 належить до будь-якої групи, то приналежність до інших груп не
 перевіряється.
 
+ Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
+
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
 @HighlightEdit
@@ -3349,7 +3353,8 @@ $ #Розмальовка файлів та групи сортування: р�
  - він немає атрибутів винятку.
 
  Display of markers is controlled globally via a checkbox
-in the ~Panel settings~@PanelSettings@ dialog.
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
  Атрибути "Стиснутий", "Зашифрований", "Неіндексований", "Розріджений",
 "Тимчасовий", "Символічна посилання", "Автономний" та "Віртуальний" використовуються

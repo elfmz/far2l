@@ -3409,6 +3409,10 @@ combinations are available:
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked.
 
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
+
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
 
@@ -3446,7 +3450,8 @@ will not be analyzed, and only file attributes will be taken into account.
      - it has none of the excluded attributes.
 
     Display of markers is controlled globally via a checkbox
-in the ~Panel settings~@PanelSettings@ dialog.
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
     The Compressed, Encrypted, Not indexed, Sparse, Temporary attributes and
 Symbolic links are valid for NTFS drives only.

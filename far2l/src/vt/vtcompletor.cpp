@@ -254,6 +254,10 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 		}
 	}
 
+	size_t startFrom = reply.rfind("true jkJHYvgT");
+	if (startFrom != std::string::npos)
+		reply.erase(0, startFrom);
+
 	return true;
 }
 
@@ -264,11 +268,7 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 	if (!TalkWithShell(cmd, reply, "\t"))
 		return false;
 
-	size_t startFrom = reply.rfind("true jkJHYvgT");
-	if (startFrom == std::string::npos)
-		startFrom = 0;
-
-	size_t p = reply.find(cmd, startFrom);
+	size_t p = reply.find(cmd);
 	if (p == std::string::npos)
 		return false;
 

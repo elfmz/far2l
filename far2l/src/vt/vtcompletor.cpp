@@ -264,7 +264,11 @@ bool VTCompletor::ExpandCommand(std::string &cmd)
 	if (!TalkWithShell(cmd, reply, "\t"))
 		return false;
 
-	size_t p = reply.find(cmd);
+	size_t startFrom = reply.rfind("true jkJHYvgT");
+	if (startFrom == std::string::npos)
+		startFrom = 0;
+
+	size_t p = reply.find(cmd, startFrom);
 	if (p == std::string::npos)
 		return false;
 

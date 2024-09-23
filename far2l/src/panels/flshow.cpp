@@ -867,7 +867,6 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 
 	for (int I = Y1 + 1 + Opt.ShowColumnTitles, J = CurTopFile; I < Y2 - 2 * Opt.ShowPanelStatus; I++, J++) {
 		int CurColumn = StartColumn;
-//		uint64_t color;
 
 		if (ShowStatus) {
 			SetFarColor(COL_PANELTEXT);
@@ -876,25 +875,6 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 			SetShowColor(J);
 			GotoXY(X1 + 1, I);
 		}
-
-//		if (ShowStatus) {
-//			SetFarColor(COL_PANELTEXT);
-//			GotoXY(X1 + 1, Y2 - 1);
-//		} else {
-
-//			uint64_t color = GetShowColor(J, HIGHLIGHTCOLORTYPE_FILE);
-//			if (ColumnType != NAME_COLUMN)
-//			SetColor64(color);
-
-//			SetColor64( color & (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE)) );
-
-//			GotoXY(X1 + 1, I);
-//		}
-
-//	SetColor64(GetShowColor(Position, ColorType));
-//			color &= (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE));
-
-///ColumnType != NAME_COLUMN
 
 		int StatusLine = FALSE;
 		int Level = 1;
@@ -924,7 +904,6 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 					GotoXY(CurX - 1, CurY);
 					BoxText(CurX - 1 == X2 ? BoxSymbols[BS_V2] : L' ');
 				}
-
 				continue;
 			}
 
@@ -935,8 +914,6 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 					StatusShown = TRUE;
 					SetShowColor(ListPos);
 				}
-
-				//uint64_t color = GetShowColor(ListPos, HIGHLIGHTCOLORTYPE_FILE);
 
 				if (!ShowStatus)
 					SetShowColor(ListPos);
@@ -967,18 +944,30 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 
 							if ((ViewFlags & COLUMN_MARK) && Width > 2) {
 								Text(ListData[ListPos]->Selected ? L"\x221A " : L"  ");
-								Width-= 2;
+								Width -= 2;
 							}
 #if 1
-							{ // Draw mark str
-								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
-								if ( Opt.Highlight && Width > 2 && hl->MarkLen ) {
+							{ /// Draw mark str
+							size_t prews = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
 
-									const DWORD64 OldColor = GetColor();
+							if (Opt.ShowFilenameMarks && Opt.Highlight ) {
+								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
+
+								if (Opt.FilenameMarksAlign && MarkLM > prews)
+									prews = std::min(MarkLM, (size_t)Opt.MaxFilenameIndentation);
+
+								if (hl->MarkLen && Width > 2) {
+									const uint64_t OldColor = GetColor();
 									size_t	ng = Width, outlen;
 
 									outlen = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
+									ng = StrCellsCount( hl->Mark, outlen );
+
 									Width -= ng;
+									if (ng < prews)
+										prews -= ng;
+									else
+										prews = 0;
 
 									if (!ShowStatus)
 										SetShowColor(ListPos, HIGHLIGHTCOLORTYPE_MARKSTR);
@@ -987,9 +976,19 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 									SetColor(OldColor);
 								}
 							}
-#endif
-//							SetColor64( color );
 
+							if (!ShowStatus && prews && Width > 2) {
+								if (prews >= (size_t)Width) {
+									prews = Width;
+									Width = 0;
+								}
+								else
+									Width -= prews;
+
+								Text(L' ', prews);
+							}
+							} /// Draw mark str
+#endif
 							const wchar_t *NamePtr = ListData[ListPos]->strName;
 							const wchar_t *NameCopy = NamePtr;
 
@@ -1091,8 +1090,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							Text(FormatStr_Size(ListData[ListPos]->FileSize, ListData[ListPos]->PhysicalSize,
 									ListData[ListPos]->strName, ListData[ListPos]->FileAttr,
 									ListData[ListPos]->ShowFolderSize, ColumnType, ColumnTypes[K],
-									ColumnWidth)
-											.CPtr());
+									ColumnWidth).CPtr());
 							break;
 						}
 

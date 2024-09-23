@@ -132,6 +132,14 @@ void SanitizeHistoryCounts()
 	Opt.DialogsHistoryCount = std::max(Opt.DialogsHistoryCount, 16);
 }
 
+void SanitizeIndentationCounts()
+{
+	if (Opt.MaxFilenameIndentation > HIGHLIGHT_MAX_MARK_LENGTH)
+		Opt.MaxFilenameIndentation = HIGHLIGHT_MAX_MARK_LENGTH;
+	if (Opt.MinFilenameIndentation > HIGHLIGHT_MAX_MARK_LENGTH)
+		Opt.MinFilenameIndentation = HIGHLIGHT_MAX_MARK_LENGTH;
+}
+
 void SystemSettings()
 {
 	DialogBuilder Builder(Msg::ConfigSystemTitle, L"SystemSettings");
@@ -211,7 +219,19 @@ void PanelSettings()
 	BOOL AutoUpdate = (Opt.AutoUpdateLimit);
 
 	Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
-	Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
+
+	DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
+	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
+	CbShowFilenameMarks->Indent(1);
+	Builder.LinkFlags(CbHighlight, CbShowFilenameMarks, DIF_DISABLE);
+	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
+	CbFilenameMarksAlign->Indent(2);
+	Builder.LinkFlags(CbHighlight, CbFilenameMarksAlign, DIF_DISABLE);
+	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
+
 	Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 	Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
 	Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
@@ -239,6 +259,8 @@ void PanelSettings()
 	if (Builder.ShowDialog()) {
 		if (!AutoUpdate)
 			Opt.AutoUpdateLimit = 0;
+
+		SanitizeIndentationCounts();
 
 		// FrameManager->RefreshFrame();
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

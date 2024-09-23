@@ -14,10 +14,4 @@
 */
 #include "colorer/common/Logger.h"
 
-#ifdef COLORER_USE_DEEPTRACE
-#define CTRACE(info) info
-#else
-#define CTRACE(info)
-#endif
-
 #endif  // COLORER_COMMON_H

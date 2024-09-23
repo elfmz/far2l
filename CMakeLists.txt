@@ -107,10 +107,6 @@ if (NOT DEFINED UNRAR)
     set(UNRAR "bundled")
 endif()
 
-if (NOT DEFINED USESPDLOG)
-    set(USESPDLOG "NO")
-endif()
-
 # EACP disabled by default for now as FAR's GetCodePageInfo rejects all multibyte charsets due to BUGBUG.
 # Uncomment EACP-stuff here when that will be fixed. See https://github.com/elfmz/far2l/issues/1179
 #if (NOT DEFINED EACP)
@@ -536,6 +532,7 @@ endif()
 add_subdirectory (packaging)
 
 add_subdirectory(man)
+add_subdirectory(bash-completion)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FIXUP_SCRIPT packaging/osx/FixupBundle.cmake)

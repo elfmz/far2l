@@ -5,7 +5,7 @@
 
 void CatalogParser::parse(const UnicodeString* path)
 {
-  logger->debug("start parse {0} as catalog.xml", *path);
+  COLORER_LOG_DEBUG("start parse % as catalog.xml", *path);
   hrc_locations.clear();
   hrd_nodes.clear();
 
@@ -24,7 +24,7 @@ void CatalogParser::parse(const UnicodeString* path)
 
   parseCatalogBlock(*nodes.begin());
 
-  logger->debug("end parse catalog.xml");
+  COLORER_LOG_DEBUG("end parse catalog.xml");
 }
 
 void CatalogParser::parseCatalogBlock(const XMLNode& elem)
@@ -51,10 +51,10 @@ void CatalogParser::addHrcSetsLocation(const XMLNode& elem)
       const auto& attr_value = node.getAttrValue(catLocationAttrLink);
       if (!attr_value.isEmpty()) {
         hrc_locations.push_back(attr_value);
-        logger->debug("add hrc location: '{0}'", attr_value);
+        COLORER_LOG_DEBUG("add hrc location: '%'", attr_value);
       }
       else {
-        logger->warn("found hrc with empty location. skip it location.");
+        COLORER_LOG_WARN("found hrc with empty location. skip it location.");
       }
     }
   }
@@ -78,7 +78,7 @@ std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const XMLNode& elem)
   const auto& xhrd_name = elem.getAttrValue(catHrdAttrName);
 
   if (xhrd_class.isEmpty() || xhrd_name.isEmpty()) {
-    logger->warn("found HRD with empty class/name. skip this record.");
+    COLORER_LOG_WARN("found HRD with empty class/name. skip this record.");
     return nullptr;
   }
 
@@ -93,11 +93,11 @@ std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const XMLNode& elem)
       auto attr_value = node.getAttrValue(catLocationAttrLink);
       if (!attr_value.isEmpty()) {
         hrd_node->hrd_location.emplace_back(attr_value);
-        logger->debug("add hrd location '{0}' for {1}:{2}", hrd_node->hrd_location.back(), hrd_node->hrd_class,
+        COLORER_LOG_DEBUG("add hrd location '%' for %:%", hrd_node->hrd_location.back(), hrd_node->hrd_class,
                       hrd_node->hrd_name);
       }
       else {
-        logger->warn("found hrd with empty location. skip it location.");
+        COLORER_LOG_WARN("found hrd with empty location. skip it location.");
       }
     }
   }
@@ -105,6 +105,6 @@ std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const XMLNode& elem)
   if (!hrd_node->hrd_location.empty()) {
     return hrd_node;
   }
-  logger->warn("skip HRD {0}:{1} - not found valid location", hrd_node->hrd_class, hrd_node->hrd_name);
+  COLORER_LOG_WARN("skip HRD %:% - not found valid location", hrd_node->hrd_class, hrd_node->hrd_name);
   return nullptr;
 }

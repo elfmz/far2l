@@ -1908,6 +1908,8 @@ használhatók. Jegyezzük meg, hogy a #!?<név>?<alapérték>!# szimbólum
 segítségével olyan párbeszédablakot készíthetünk, amelynek beviteli mezőiben
 közvetlenül a végrehajtás előtt paraméterezhetjük a parancsokat.
 
+    You may reorder menu items by pressing #Ctrl-Up# and #Ctrl-Down#.
+
     A ~Parancsok menü~@CmdMenu@ #Felhasználói menü szerkesztése# menüpontjában
 szerkeszthetjük vagy létrehozhatjuk fő és helyi felhasználói menüinket.
 Főmenüből csak egy lehet, helyi menüje bármelyik mappának lehet. Ha egy

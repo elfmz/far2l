@@ -2232,6 +2232,8 @@ executed when invoking the user menu. The menu may contain submenus.
 titles. Note, that !?<title>?<init>! symbol may be used to enter additional
 parameters directly before executing commands.
 
+    You may reorder menu items by pressing #Ctrl-Up# and #Ctrl-Down#.
+
     With the #Edit user menu# command from the ~Commands menu~@CmdMenu@, you
 may edit or create main or local user menu. There may only be one main user
 menu. The main user menu is called if no local menu for the current folder is

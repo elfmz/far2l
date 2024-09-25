@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 def setup():
     if os.path.isdir(USERHOME):
-        sys.path.insert(3, USERHOME)
+        sys.path.insert(1, USERHOME)
         fname = os.path.join(USERHOME, "logger.ini")
         if os.path.isfile(fname):
             with open(fname, "rt") as fp:

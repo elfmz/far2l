@@ -1769,7 +1769,7 @@ upd:"Disable &write cache"
 "Выключыць кэ&шаванне запісу"
 
 CopyXAttr
-"Копировать расширенные а&ттрибуты"
+"Копировать расширенные а&трибуты"
 "Copy extended a&ttributes"
 upd:"Copy extended a&ttributes"
 upd:"Copy extended a&ttributes"
@@ -2432,7 +2432,7 @@ upd:"Override base colors &palette"
 "Ужываць сваю &палітру колераў"
 
 ConfigExclusiveKeys
-"&Экслюзивная обработка нажатий, включающих:"
+"&Эксклюзивная обработка нажатий, включающих:"
 "&Exclusively handle hotkeys that include:"
 upd:"&Exclusively handle hotkeys that include:"
 upd:"&Exclusively handle hotkeys that include:"
@@ -16053,7 +16053,7 @@ upd:"(current target '%ls')"
 upd:"(current target '%ls')"
 
 SetAttrSymlinkWarn4
-"Пропустить или все-равно изменить объект симлинка?"
+"Пропустить или все равно изменить объект симлинка?"
 "Skip or change symlink target anyway?"
 upd:"Skip or change symlink target anyway?"
 upd:"Skip or change symlink target anyway?"
@@ -26280,7 +26280,7 @@ upd:"In this case user can't change tab style by Ctrl+F5"
 "У гэтым выпадку карыстач не можа змяніць стыль таба па Ctrl+F5"
 
 EditorConfigOrgProblemCharset
-"В этом случае пользователь не может изменить кодировку по F8 or Shift+F8"
+"В этом случае пользователь не может изменить кодировку по F8 или Shift+F8"
 "In this case user can't change codepage by F8 or Shift+F8"
 upd:"In this case user can't change codepage by F8 or Shift+F8"
 upd:"In this case user can't change codepage by F8 or Shift+F8"

@@ -17,16 +17,11 @@
 #include <farplug-wide.h>
 #include <farcolor.h>
 #include <farkeys.h>
+#include "../far2l/src/console/savescr.hpp"
 
 static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
 
-// #define PYPLUGIN_DEBUGLOG "/tmp/far2.py.log"
- #define PYPLUGIN_DEBUGLOG "" /* to stderr */
-// #define PYPLUGIN_THREADED
-// #define PYPLUGIN_MEASURE_STARTUP
-
-#ifdef PYPLUGIN_DEBUGLOG
 static void python_log(const char *function, unsigned int line, const char *format, ...)
 {
     va_list args;
@@ -34,29 +29,12 @@ static void python_log(const char *function, unsigned int line, const char *form
     sprintf(xformat, "[PYTHON %lu]: %s@%u%s%s",
         (unsigned long)GetProcessUptimeMSec(), function, line, (*format != '\n') ? " - " : "", format);
 
-    FILE *stream = nullptr;
-    if (PYPLUGIN_DEBUGLOG[0]) {
-        stream = fopen(PYPLUGIN_DEBUGLOG, "at");
-    }
-    if (!stream) {
-        stream = stderr;
-    }
-
     va_start(args, format);
-    vfprintf(stream, xformat, args);
+    vfprintf(stderr, xformat, args);
     va_end(args);
-
-    if (stream != stderr) {
-        fclose(stream);
-    } else {
-        fflush(stderr);
-    }
 }
 
 #define PYTHON_LOG(args...)  python_log(__FUNCTION__, __LINE__, args)
-#else
-#define PYTHON_LOG(args...)
-#endif
 
 static PyObject *
 far2l_CheckForInput(PyObject *self, PyObject *args)
@@ -83,8 +61,8 @@ far2l_CheckForEscape(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef Far2lcMethods[] = {
-    {"CheckForInput",  far2l_CheckForInput, METH_VARARGS, "CheckForInput"},
-    {"CheckForEscape",  far2l_CheckForEscape, METH_VARARGS, "CheckForEscape"},
+    {"CheckForInput", far2l_CheckForInput, METH_VARARGS, "CheckForInput"},
+    {"CheckForEscape", far2l_CheckForEscape, METH_VARARGS, "CheckForEscape"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -110,9 +88,8 @@ PYTHON_LOG("status exception\n"); \
     goto done;                                                                 \
   }
 
-bool init_python(std::string program_name)
+static bool init_python()
 {
-#if 1
     PyStatus status;
 
     PyConfig config;
@@ -126,28 +103,15 @@ bool init_python(std::string program_name)
        (decode byte string from the locale encoding).
 
        Implicitly preinitialize Python. */
-    status = PyConfig_SetBytesString(&config, &config.program_name, program_name.c_str());
-    FAIL_IF_STATUS_EXCEPTION(status);
 
     /* Read all configuration at once */
-PYTHON_LOG("call PyConfig_Read\n");
     status = PyConfig_Read(&config);
     FAIL_IF_STATUS_EXCEPTION(status);
 
     PyImport_AppendInittab("far2lc", PyInit_far2lc);
 
-PYTHON_LOG("call Py_InitializeFromConfig\n");
     status = Py_InitializeFromConfig(&config);
     FAIL_IF_STATUS_EXCEPTION(status);
-
-#if 0
-{
-    PyObject *sys_path = PySys_GetObject("path");
-//    PyList_Insert(sys_path, 0, PyUnicode_FromString("/devel/bin/python3/lib/python3.11/site-packages"));
-    PyList_Insert(sys_path, 0, PyUnicode_FromString("/path/to/mode/modules2"));
-    PySys_SetObject("path", sys_path);
-}
-#endif
 
     PyConfig_Clear(&config);
     return true;
@@ -155,14 +119,6 @@ PYTHON_LOG("call Py_InitializeFromConfig\n");
 done:
     PyConfig_Clear(&config);
     return false;
-#else
-    PyImport_AppendInittab("far2lc", PyInit_far2lc);
-    Py_SetProgramName((wchar_t *)program_name.c_str());
-
-    Py_Initialize();
-
-    return true;
-#endif
 }
 
 #ifdef PYPLUGIN_THREADED
@@ -183,8 +139,8 @@ protected:
     {
         std::string syspath = "import sys";
         syspath += "\nsys.path.insert(1, '" + pluginPath + "')";
-        syspath += "\nsys.path.insert(1, '" + pluginPath + "/plugins')";
 
+PYTHON_LOG("initial sys.path=%s\n", syspath.c_str());
         PyRun_SimpleString(syspath.c_str());
 
         PyObject *pName;
@@ -219,14 +175,7 @@ public:
             pluginPath.resize(pos);
         }
 
-#ifdef VIRTUAL_PYTHON
-        std::string progname = VIRTUAL_PYTHON;
-#else
-        std::string progname = pluginPath;
-        progname += "/python/bin/python";
-#endif
-
-        PYTHON_LOG("pluginpath: %s, python library used:%s, progname: %s\n", pluginPath.c_str(), PYTHON_LIBRARY, progname.c_str());
+        PYTHON_LOG("pluginpath: %s, python library used:%s\n", pluginPath.c_str(), PYTHON_LIBRARY);
         soPythonInterpreter = dlopen(PYTHON_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
         if( !soPythonInterpreter ){
             PYTHON_LOG("error %u from dlopen('%s')\n", errno, PYTHON_LIBRARY);
@@ -234,7 +183,7 @@ public:
             return;
         }
 
-        initok = init_python(progname);
+        initok = init_python();
         if( initok )
         {
 #ifdef PYPLUGIN_THREADED

@@ -4,7 +4,6 @@ import os
 import re
 import pcpp
 import io
-import cffi
 
 source = sys.argv[1]
 target = os.path.join(sys.argv[2], "far2lcffi.py")

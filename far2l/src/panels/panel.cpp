@@ -1704,6 +1704,8 @@ int Panel::SetPluginCommand(int Command, int Param1, LONG_PTR Param2)
 				} PFLAGS[] = {
 						{&Opt.ShowHidden, PFLAGS_SHOWHIDDEN},
 						{&Opt.Highlight,  PFLAGS_HIGHLIGHT },
+						{&Opt.ShowFilenameMarks,   PFLAGS_HL_MARKERS_NOSHOW },
+						{&Opt.FilenameMarksAlign,  PFLAGS_HL_MARKERS_NOALIGN },
 				};
 				DWORD Flags = 0;
 
@@ -1740,6 +1742,12 @@ int Panel::SetPluginCommand(int Command, int Param1, LONG_PTR Param2)
 
 					if (PInfo.Flags & OPIF_USECRC32)
 						Info->Flags|= PFLAGS_USECRC32;
+
+					if (PInfo.Flags & OPIF_HL_MARKERS_NOSHOW)
+						Info->Flags|= PFLAGS_HL_MARKERS_NOSHOW;
+
+					if (PInfo.Flags & OPIF_HL_MARKERS_NOALIGN)
+						Info->Flags|= PFLAGS_HL_MARKERS_NOALIGN;
 
 					Reenter--;
 				}

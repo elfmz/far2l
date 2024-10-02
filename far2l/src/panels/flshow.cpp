@@ -952,7 +952,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 
 							if (Opt.ShowFilenameMarks && Opt.Highlight
 									&& (PanelMode != PLUGIN_PANEL
-										|| !( (Info.Flags & OPIF_HL_MARKERS_NOSHOW) && (Info.Flags & OPIF_USEHIGHLIGHTING) ))
+										|| ( !(Info.Flags & OPIF_HL_MARKERS_NOSHOW) && (Info.Flags & OPIF_USEHIGHLIGHTING) ))
 									) {
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
 

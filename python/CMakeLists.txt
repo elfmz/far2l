@@ -3,7 +3,7 @@ project(python)
 
 set(SOURCES
 src/python.cpp
-${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
+"${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
 )
 
 find_package(Python3 COMPONENTS Interpreter Development)        # find Python interpreter and library
@@ -40,20 +40,19 @@ set_target_properties(python PROPERTIES
     SUFFIX ".far-plug-wide"
 )
 
-add_custom_command(TARGET python POST_BUILD
+add_custom_command(
+    #TARGET python POST_BUILD
+    OUTPUT "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/far2lcffi.py
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py" "${INSTALL_DIR}/Plugins/python/plug/far2l"
-)
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/incpy/far2lcffi.py
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/pythongen.py
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/far2lcffi.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/far2lcffidefs.h
     DEPENDS ../far2l/far2sdk/farplug-wide.h
     DEPENDS ../far2l/far2sdk/farcolor.h
     DEPENDS ../far2l/far2sdk/farkeys.h
     DEPENDS ../WinPort/windows.h
     DEPENDS ../WinPort/WinCompat.h
     DEPENDS ../WinPort/WinPort.h
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}" "${Python3_EXECUTABLE}" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}"
+    DEPENDS ../WinPort/WinPortDecl.h
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}"
 )

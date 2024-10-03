@@ -17,10 +17,24 @@
 #include <farplug-wide.h>
 #include <farcolor.h>
 #include <farkeys.h>
-#include "../far2l/src/console/savescr.hpp"
 
 static struct PluginStartupInfo Info;
 static FARSTANDARDFUNCTIONS FSF;
+extern "C" {
+#undef WINPORT_DECL_DEF
+#define WINPORT_DECL_DEF(NAME, RV, ARGS) typedef RV (*ptrWINPORT_##NAME) ARGS;
+#include "WinPortDecl.h"
+#undef WINPORT_DECL_DEF
+#define WINPORT_DECL_DEF(NAME, RV, ARGS) ptrWINPORT_##NAME v##NAME;
+typedef struct _WINPORTDECL{
+#include "WinPortDecl.h"
+} WINPORTDECL;
+static WINPORTDECL winportvar = {
+#undef WINPORT_DECL_DEF
+#define WINPORT_DECL_DEF(NAME, RV, ARGS) &WINPORT_##NAME,
+#include "WinPortDecl.h"
+};
+}
 
 static void python_log(const char *function, unsigned int line, const char *format, ...)
 {
@@ -60,9 +74,20 @@ far2l_CheckForEscape(PyObject *self, PyObject *args)
     Py_RETURN_FALSE;
 }
 
+static PyObject *
+far2l_WINPORT(PyObject *self, PyObject *args)
+{
+    if (!PyArg_ParseTuple(args, ""))
+        return NULL;
+
+    PyObject *pValue = PyLong_FromLong((long int)&winportvar);
+    return pValue;
+}
+
 static PyMethodDef Far2lcMethods[] = {
     {"CheckForInput", far2l_CheckForInput, METH_VARARGS, "CheckForInput"},
     {"CheckForEscape", far2l_CheckForEscape, METH_VARARGS, "CheckForEscape"},
+    {"WINPORT", far2l_WINPORT, METH_VARARGS, "WINPORT"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

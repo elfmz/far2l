@@ -312,8 +312,10 @@ int ArcCommand::ReplaceVar(std::string &Command)
 					break;
 				}
 			}
+			/*
 			if (Command.empty() && DefaultCodepage > 0)
 				Command = StrPrintf("CP%u", DefaultCodepage);
+			*/
 
 			break;
 

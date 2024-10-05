@@ -241,9 +241,13 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 		fclose(f);
 	}
 
-	size_t p = reply.find(begin);
+	size_t p = reply.find(begin + '\n');
+	if (p == std::string::npos) {
+		p = reply.find(begin + '\r');
+	}
 	if (p != std::string::npos) {
 		reply.erase(0, p + begin.size());
+		StrTrimLeft(reply, "\r\n");
 	}
 	for (;;) {
 		p = reply.rfind('\a');

@@ -380,7 +380,7 @@ void FileList::ShowFileList(int Fast)
 		ShowTotalSize(Info);
 	}
 
-	ShowList(FALSE, 0);
+	ShowList(FALSE, 0, Info);
 	ShowSelectedSize();
 
 	if (Opt.ShowPanelScrollbar) {
@@ -859,7 +859,7 @@ static int MakeCurLeftPos(int ColumnWidth, const wchar_t *Str, int LeftPos, int 
 	return out;
 }
 
-void FileList::ShowList(int ShowStatus, int StartColumn)
+void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 {
 	int StatusShown = FALSE;
 	int MaxLeftPos = 0, MinLeftPos = FALSE;
@@ -909,7 +909,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 
 			if (ListPos < ListData.Count()) {
 				if (!ShowStatus && !StatusShown && CurFile == ListPos && Opt.ShowPanelStatus) {
-					ShowList(TRUE, CurColumn);
+					ShowList(TRUE, CurColumn, Info);
 					GotoXY(CurX, CurY);
 					StatusShown = TRUE;
 					SetShowColor(ListPos);
@@ -950,10 +950,15 @@ void FileList::ShowList(int ShowStatus, int StartColumn)
 							{ /// Draw mark str
 							size_t prews = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
 
-							if (Opt.ShowFilenameMarks && Opt.Highlight ) {
+							if (Opt.ShowFilenameMarks && Opt.Highlight
+									&& (PanelMode != PLUGIN_PANEL
+										|| ( !(Info.Flags & OPIF_HL_MARKERS_NOSHOW) && (Info.Flags & OPIF_USEHIGHLIGHTING) ))
+									) {
 								const HighlightDataColor *const hl = ListData[ListPos]->ColorsPtr;
 
-								if (Opt.FilenameMarksAlign && MarkLM > prews)
+								if (Opt.FilenameMarksAlign
+										&& (PanelMode != PLUGIN_PANEL || !(Info.Flags & OPIF_HL_MARKERS_NOALIGN))
+										&& MarkLM > prews)
 									prews = std::min(MarkLM, (size_t)Opt.MaxFilenameIndentation);
 
 								if (hl->MarkLen && Width > 2) {

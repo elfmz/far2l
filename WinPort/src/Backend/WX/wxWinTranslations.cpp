@@ -449,6 +449,9 @@ bool KeyTracker::RightControl() const
 //////////////////////
 
 static DWORD s_cached_led_state = 0;
+#ifdef __WXOSX__
+static bool s_toggle_numlock = false;
+#endif
 
 #if defined (__WXGTK__) && defined (__HASX11__)
 static int X11KeyCodeLookupUncached(wxUint32 keyflags)
@@ -594,6 +597,11 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
 
+#ifdef __WXOSX__
+	if (Event.KeyEvent.wVirtualKeyCode == VK_CLEAR && KeyDown)
+		s_toggle_numlock = !s_toggle_numlock;
+#endif
+
 	if (KeyDown || WINPORT(GetTickCount)() - key_tracker.LastKeydownTicks() > 500) {
 		s_cached_led_state = WxKeyboardLedsState();
 	}
@@ -649,8 +657,13 @@ DWORD WxKeyboardLedsState()
 	// to use wxGetKeyState with unsupported key causes assert callback
 	// to be invoked several times on each key event thats not good.
 	// Avoid asserts all the time by 'caching' unsupported state.
+#ifdef __WXOSX__
+	// NumLock emulation with Clear button
+	if (s_toggle_numlock) {
+#else
 	s_wx_assert_cache_bit = 1;
 	if ((s_wx_assert_cached_bits & 1) == 0 && wxGetKeyState(WXK_NUMLOCK)) {
+#endif
 		out|= NUMLOCK_ON;
 	}
 

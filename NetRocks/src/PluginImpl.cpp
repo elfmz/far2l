@@ -414,9 +414,8 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 //	fprintf(stderr, "NetRocks::GetOpenPluginInfo: '%ls' \n", &_cur_dir[0]);
 //	snprintf(_panel_title, ARRAYSIZE(_panel_title),
 //	          " Inside: %ls@%s ", _dir.c_str(), _name.c_str());
-	Info->Flags = OPIF_SHOWPRESERVECASE;
+	Info->Flags = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 	if (_remote) {
-		Info->Flags |= OPIF_USEHIGHLIGHTING;
 		IHost::Identity identity;
 		_remote->GetIdentity(identity);
 		const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
@@ -425,6 +424,7 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 		}
 	}
 	else {
+		Info->Flags|= OPIF_HL_MARKERS_NOSHOW; // for site connections list always don't show markers
 		// for site connections list don't use current far2l panel modes
 		//  - only name column(s) without dependence on panel Align file extensions
 		static struct PanelMode PanelModesArray[10] = {

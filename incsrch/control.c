@@ -1,6 +1,6 @@
 /*
 FAR manager incremental search plugin, search as you type in editor.
-Copyright (C) 1999-2019, Stanislav V. Mekhanoshin
+Copyright (C) 1999-2024, Stanislav V. Mekhanoshin
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -80,6 +80,7 @@ Loop:
 							PutEvent(KC_BACK);
 							continue;
 						case VK_RETURN:
+						case 'G':
 							if (Event.Event.KeyEvent.dwControlKeyState
 									& (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) {
 								PutEvent((Event.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED)
@@ -87,6 +88,8 @@ Loop:
 												: KC_NEXT);
 								continue;
 							}
+							if (Event.Event.KeyEvent.wVirtualKeyCode == 'G')
+								goto Char;
 							goto Quit;
 						case VK_INSERT:
 							if (Event.Event.KeyEvent.dwControlKeyState & SHIFT_PRESSED) {
@@ -101,6 +104,7 @@ Loop:
 									& (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))
 								goto Paste;
 						default:
+Char:
 							if ((Event.Event.KeyEvent.dwControlKeyState
 										& (ENHANCED_KEY | LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED
 												| RIGHT_ALT_PRESSED | RIGHT_CTRL_PRESSED))

@@ -80,3 +80,10 @@ far2l uses this to resolve symlink destination when user selects plugin's item t
 * `ECTL_GETTRUECOLOR` - retrieves coloring of editor like ECTL_GETCOLOR does but gets 24 RGB color using EditorTrueColor structure.
 
 Note that all true-color capable messages extend but don't replace 'base' 16 palette colors. This is done intentionally as far2l may run in terminal that doesn't support true color palette, and in such case 24bit colors will be ignored and base palette attributes will be used instead.
+
+### Added new flags:
+* Flags to **manage markers** in **panel** from plugins API
+(a la global parameters `Opt.ShowFilenameMarks` and `Opt.FilenameMarksAlign`):
+    - `OPIF_HL_MARKERS_NOSHOW` and `OPIF_HL_MARKERS_NOALIGN` (in `enum OPENPLUGININFO_FLAGS`);
+    - `PFLAGS_HL_MARKERS_NOSHOW` and `PFLAGS_HL_MARKERS_NOALIGN` (in `enum PANELINFOFLAGS`).
+

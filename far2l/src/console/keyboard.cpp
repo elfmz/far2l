@@ -2232,7 +2232,10 @@ FarKey CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros)
 				return '9';
 
 			return Modif | (Opt.UseNumPad ? KEY_NUMPAD9 : KEY_PGUP);
+#ifndef __APPLE__
+		// Clear button is used as NumLock emulator on OSX
 		case VK_CLEAR:
+#endif
 		case VK_NUMPAD5:
 
 			if (CtrlState & ENHANCED_KEY) {

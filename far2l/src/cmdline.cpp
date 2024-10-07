@@ -971,30 +971,37 @@ void FarAbout(PluginManager &Plugins)
 	fs.Format(L"         Temp directory: \"%s\"", InMyTemp("").c_str() );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
+	fs.Format(L"          Command shell: \"%ls\"", Opt.CmdLine.strShell.CPtr() );
+	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+
 	ListAbout.AddItem(L""); fs2copy += "\n";
 	struct utsname un;
-	fs =      L"                  uname: ";
-	if (uname(&un)==0)
-		fs.AppendFormat(L"%s %s %s %s", un.sysname, un.release, un.version, un.machine);
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   Host: " + (apiGetEnvironmentVariable("HOSTNAME", fs2) ? fs2 : L"???");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   User: " + (apiGetEnvironmentVariable("USER", fs2) ? fs2 : L"???");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"       XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   TERM: " + (apiGetEnvironmentVariable("TERM", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"              COLORTERM: " + (apiGetEnvironmentVariable("COLORTERM", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"            GDK_BACKEND: " + (apiGetEnvironmentVariable("GDK_BACKEND", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"        DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"        WSL_DISTRO_NAME: " + (apiGetEnvironmentVariable("WSL_DISTRO_NAME", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"  WSL2_GUI_APPS_ENABLED: " + (apiGetEnvironmentVariable("WSL2_GUI_APPS_ENABLED", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+	if (uname(&un)==0) {
+		fs.Format(L"                  uname: %s %s %s %s", un.sysname, un.release, un.version, un.machine);
+		ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+	}
+	if (apiGetEnvironmentVariable("HOSTNAME", fs2))
+	{ fs = L"                   Host: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("USER", fs2))
+	{ fs = L"                   User: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2))
+	{ fs = L"       XDG_SESSION_TYPE: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("TERM", fs2))
+	{ fs = L"                   TERM: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("COLORTERM", fs2))
+	{ fs = L"              COLORTERM: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("GDK_BACKEND", fs2))
+	{ fs = L"            GDK_BACKEND: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2))
+	{ fs = L"        DESKTOP_SESSION: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("WSL_DISTRO_NAME", fs2))
+	{ fs = L"        WSL_DISTRO_NAME: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("WSL2_GUI_APPS_ENABLED", fs2))
+	{ fs = L"  WSL2_GUI_APPS_ENABLED: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("DISPLAY", fs2))
+	{ fs = L"                DISPLAY: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+	if (apiGetEnvironmentVariable("WAYLAND_DISPLAY", fs2))
+	{ fs = L"        WAYLAND_DISPLAY: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
 
 	ListAbout.AddItem(L""); fs2copy += "\n";
 

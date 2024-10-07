@@ -27,7 +27,9 @@ static const char *vtc_inputrc = "set completion-query-items 0\n"
 	"set colored-completion-prefix off\n"
 	"set page-completions off\n"
 	"set colored-stats off\n"
-	"set colored-completion-prefix off\n";
+	"set colored-completion-prefix off\n"
+	"set show-all-if-ambiguous off\n"
+	"set show-all-if-unmodified off\n";
 
 std::string VTSanitizeHistcontrol();
 

@@ -30,7 +30,8 @@ class ProgressMessage(object):
         self.info.AdvControl(
             self.info.ModuleNumber,
             cmd,
-            self.ffi.cast("void *", par)
+            self.ffi.cast("void *", par),
+            self.ffi.NULL
         )
 
     def show(self):
@@ -67,7 +68,7 @@ class ProgressMessage(object):
         percent = value * 100 // self.maxvalue
 
         pv = self.ffi.new('struct PROGRESSVALUE *', (percent, 100))
-        self.info.AdvControl(self.info.ModuleNumber, self.ffic.ACTL_SETPROGRESSVALUE, pv)
+        self.adv(self.ffic.ACTL_SETPROGRESSVALUE, pv)
 
         nb = int(percent*PROGRESS_WIDTH // 100)
         self.bar =  '\u2588'*nb + '\u2591'*(PROGRESS_WIDTH-nb)

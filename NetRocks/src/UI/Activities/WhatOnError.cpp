@@ -47,13 +47,13 @@ WhatOnError::WhatOnError(WhatOnErrorKind wek, const std::string &error, const st
 	_di.AddAtLine(DI_TEXT, 5,62, 0, error.c_str());
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorObject);
-	int ctl = _di.AddAtLine(DI_TEXT, 20,62, 0, "");
+	_di.AddAtLine(DI_TEXT, 5,23, 0, MErrorObject);
+	int ctl = _di.AddAtLine(DI_TEXT, 24,62, 0, "");
 	AbbreviableTextToDialogControl(ctl, object);
 
 	_di.NextLine();
-	_di.AddAtLine(DI_TEXT, 5,19, 0, MErrorSite);
-	ctl = _di.AddAtLine(DI_TEXT, 20,62, 0, "");
+	_di.AddAtLine(DI_TEXT, 5,23, 0, MErrorSite);
+	ctl = _di.AddAtLine(DI_TEXT, 24,62, 0, "");
 	AbbreviableTextToDialogControl(ctl, site);
 
 	_di.NextLine();

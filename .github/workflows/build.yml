@@ -63,7 +63,7 @@ jobs:
          libuchardet-dev libxml2-dev libwxgtk3.0-gtk3-dev
          libx11-dev libxi-dev
          libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
-         libarchive-dev libpcre3-dev
+         libarchive-dev libpcre2-dev
   
       - name: Create Build Environment
         # Create a separate build directory as working directory for all subsequent commands
@@ -114,7 +114,7 @@ jobs:
           libuchardet-dev libxml2-dev libwxgtk3.0-gtk3-dev
           libx11-dev libxi-dev
           libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
-          libarchive-dev libpcre3-dev
+          libarchive-dev libpcre2-dev
   
       - name: Create Build Environment
         # Create a separate build directory as working directory for all subsequent commands
@@ -165,7 +165,7 @@ jobs:
           libuchardet-dev libxml2-dev libwxgtk3.2-dev
           libx11-dev libxi-dev
           libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
-          libarchive-dev libpcre3-dev
+          libarchive-dev libpcre2-dev
   
       - name: Create Build Environment
         # Create a separate build directory as working directory for all subsequent commands

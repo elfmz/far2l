@@ -30,7 +30,7 @@ void TextHRDMapper::loadRegionMappings(XmlInputSource& is)
 
       auto tp = regionDefines.find(name);
       if (tp != regionDefines.end()) {
-        logger->warn("Duplicate region name '{0}' in file '{1}'. Previous value replaced.", name, is.getPath());
+        COLORER_LOG_WARN("Duplicate region name '%' in file '%'. Previous value replaced.", name, is.getPath());
         regionDefines.erase(tp);
       }
       std::shared_ptr<const UnicodeString> stext;

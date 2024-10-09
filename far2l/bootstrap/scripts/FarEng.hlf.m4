@@ -470,6 +470,7 @@ $ #Panel control commands  #
 
   Toggle hidden and system files displaying                   #Ctrl-H#
   Toggle long/short file names view mode                      #Ctrl-N#
+  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
 
   Hide/Show left panel                                       #Ctrl-F1#
   Hide/Show right panel                                      #Ctrl-F2#
@@ -2231,6 +2232,8 @@ executed when invoking the user menu. The menu may contain submenus.
 titles. Note, that !?<title>?<init>! symbol may be used to enter additional
 parameters directly before executing commands.
 
+    You may reorder menu items by pressing #Ctrl-Up# and #Ctrl-Down#.
+
     With the #Edit user menu# command from the ~Commands menu~@CmdMenu@, you
 may edit or create main or local user menu. There may only be one main user
 menu. The main user menu is called if no local menu for the current folder is
@@ -2512,6 +2515,10 @@ $ #Settings dialog: panel#
                           also be switched by #Ctrl-H#.
 
   #Highlight files#         Enable ~files highlighting~@Highlight@.
+
+  #Show file name markings# and #Align file names by markings#
+works only if #Highlight files# enabled
+and may be switched by #Ctrl-Alt-M#.
 
   #Auto change folder#      If checked, cursor moves in the ~tree panel~@TreePanel@
                           will cause a folder change in the other
@@ -3376,7 +3383,7 @@ attributes) and assign colors to those groups.
 dialog (menu item Options | Panel settings).
 
     You can ~edit~@HighlightEdit@ the parameters of any highlight group through
-the "~Options~@OptMenu@" menu (item "Files highlighting and sort groups").
+the "~Options~@OptMenu@" menu (item "~Files highlighting and sort groups~@HighlightList@").
 
 
 @HighlightList
@@ -3384,6 +3391,8 @@ $ #Files highlighting and sort groups: control keys#
     The ~file highlighting and sort groups~@Highlight@ menu allows you to
 perform various operations with the list of the groups. The following key
 combinations are available:
+
+  #Space#        - (De)Activate current group
 
   #Ins#          - Add a new highlighting group
 
@@ -3401,6 +3410,10 @@ combinations are available:
 
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked.
+
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -3437,6 +3450,10 @@ will not be analyzed, and only file attributes will be taken into account.
      - it has all of the included attributes;
 
      - it has none of the excluded attributes.
+
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
     The Compressed, Encrypted, Not indexed, Sparse, Temporary attributes and
 Symbolic links are valid for NTFS drives only.

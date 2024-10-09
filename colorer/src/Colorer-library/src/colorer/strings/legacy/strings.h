@@ -7,9 +7,5 @@
 #include "colorer/strings/legacy/UStr.h"
 #include "colorer/strings/legacy/UnicodeStringContainer.h"
 #include "colorer/strings/legacy/UnicodeTools.h"
-#ifndef COLORER_FEATURE_DUMMYLOGGER
-#include "colorer/strings/legacy/UnicodeLogger.h"
-#endif
-
 
 #endif  // COLORER_STRINGS_H

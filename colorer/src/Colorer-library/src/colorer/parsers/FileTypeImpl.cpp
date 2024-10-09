@@ -82,7 +82,7 @@ int FileType::Impl::getParamValueInt(const UnicodeString& param_name, int def) c
     try {
       val = std::stoi(param_str, nullptr);
     } catch (std::exception&) {
-      logger->error("Error parse param {0} with value {1} to integer number", param_name,
+      COLORER_LOG_ERROR("Error parse param % with value % to integer number", param_name,
                     param_str);
     }
   }

@@ -424,6 +424,7 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 		}
 	}
 	else {
+		Info->Flags|= OPIF_HL_MARKERS_NOSHOW; // for site connections list always don't show markers
 		// for site connections list don't use current far2l panel modes
 		//  - only name column(s) without dependence on panel Align file extensions
 		static struct PanelMode PanelModesArray[10] = {

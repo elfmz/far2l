@@ -1,16 +1,7 @@
 #include "pcolorer.h"
 #include <utils.h>
 #include "FarEditorSet.h"
-#include "tools.h"
-
-#ifdef USESPDLOG
-#include <spdlog/sinks/stdout_sinks.h>
-#include <spdlog/spdlog.h>
-
-std::shared_ptr<spdlog::logger> logger;
-#else
-std::shared_ptr<DummyLogger> logger;
-#endif
+#include "CerrLogger.h"
 
 FarEditorSet* editorSet = nullptr;
 bool inEventProcess = false;
@@ -18,17 +9,17 @@ PluginStartupInfo Info;
 FarStandardFunctions FSF;
 UnicodeString* PluginPath = nullptr;
 
+std::unique_ptr<CerrLogger> logger;
+
 SHAREDSYMBOL void PluginModuleOpen(const char* path)
 {
   UnicodeString module(path);
   int pos = module.lastIndexOf('/');
   pos = module.lastIndexOf('/', pos);
   PluginPath = new UnicodeString(UnicodeString(module, 0, pos));
-#ifdef USESPDLOG
-  logger = spdlog::stderr_logger_mt("far2l-colorer");
-#else
-  logger = std::make_shared<DummyLogger>();
-#endif
+
+  logger = std::make_unique<CerrLogger>();
+  Log::registerLogger(*logger);
 }
 
 UnicodeString* GetConfigPath(const UnicodeString& sub)

@@ -328,6 +328,7 @@ $ #Panelvezérlő parancsok#
 
   A rejtett és rendszerfájlokat megmutatja/elrejti            #Ctrl-H#
   Hosszú és rövid fájlnév nézet között vált                   #Ctrl-N#
+  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
 
   Elrejti/megmutatja a bal panelt                            #Ctrl-F1#
   Elrejti/megmutatja a jobb panelt                           #Ctrl-F2#
@@ -1907,6 +1908,8 @@ használhatók. Jegyezzük meg, hogy a #!?<név>?<alapérték>!# szimbólum
 segítségével olyan párbeszédablakot készíthetünk, amelynek beviteli mezőiben
 közvetlenül a végrehajtás előtt paraméterezhetjük a parancsokat.
 
+    You may reorder menu items by pressing #Ctrl-Up# and #Ctrl-Down#.
+
     A ~Parancsok menü~@CmdMenu@ #Felhasználói menü szerkesztése# menüpontjában
 szerkeszthetjük vagy létrehozhatjuk fő és helyi felhasználói menüinket.
 Főmenüből csak egy lehet, helyi menüje bármelyik mappának lehet. Ha egy
@@ -2210,6 +2213,9 @@ $ #Beállítások: panel beállítások#
                           a #Ctrl-H#-val is átkapcsolható.
 
   #Fájlok kiemelése#        A ~fájlkiemelések~@Highlight@ engedélyezése.
+
+  #Fájlnevek megjelölésének megjelenítése# and #Fájlneveket igazítani a megjelölések szerint#
+works only if #Fájlok kiemelése# enabled and may be switched by #Ctrl-Alt-M#.
 
   #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
   #mappaváltás#             a kurzor mozgatására a másik panel is
@@ -2932,7 +2938,7 @@ párbeszédablakában a "Fájlok kiemelése" opcióval engedélyezhetjük vagy
 tilthatjuk le.
 
     Bármelyik csoport kiemelésének jellemzőit ~szerkeszthetjük~@HighlightEdit@
-a ~Beállítások~@OptMenu@ menü "Fájlkiemelések, rendezési csoportok"
+a ~Beállítások~@OptMenu@ menü "~Fájlkiemelések, rendezési csoportok~@HighlightList@"
 menüpontjában.
 
 
@@ -2940,6 +2946,8 @@ menüpontjában.
 $ #Fájlkiemelések, rendezési csoportok: vezérlőbillentyűk#
     A ~Fájlkiemelések, rendezési csoportok~@Highlight@ menüben különféle
 műveleteket hajthatunk végre a csoportok listáján, a következő billentyűkkel:
+
+  #Space#          - (De)Activate current group
 
   #Ins#            - Új kiemelési csoport létrehozása
 
@@ -2958,6 +2966,10 @@ csoportokat
 
     A FAR a csoportkiemeléseket felülről lefelé haladva vizsgálja. Ha érzékeli,
 hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja.
+
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -2999,6 +3011,10 @@ legalább egy maszknak (kikapcsolt maszkelemzésnél a fájlnév nem számít);
      - megvan minden szükséges attribútuma;
 
      - nincs egyetlen kizárt attribútuma sem.
+
+    Display of markers is controlled globally via a checkbox
+in the ~Panel settings~@PanelSettings@ dialog
+or may be switched by #Ctrl-Alt-M# in panels.
 
     A Tömörített, Titkosított, Nem indexelt, Ritkított és Átmeneti
 attribútumok, valamint a szimbolikus linkek csak NTFS fájlrendszerben

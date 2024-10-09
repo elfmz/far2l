@@ -5,7 +5,7 @@
 
 ParseCache::~ParseCache()
 {
-  //CTRACE(logger->trace("[TPCache] ~ParseCache():{0},{1}-{2}", *scheme->getName(), sline, eline));
+  //COLORER_LOG_DEEPTRACE("[TPCache] ~ParseCache():%,%-%", *scheme->getName(), sline, eline);
   delete backLine;
   delete children;
   prev = nullptr;
@@ -32,7 +32,7 @@ ParseCache* ParseCache::searchLine(int ln, ParseCache** cache)
   ParseCache *r1 = nullptr, *r2 = nullptr, *tmp = this;
   *cache = nullptr;
   while (tmp) {
-    CTRACE(logger->trace("[TPCache] searchLine() tmp:{0},{1}-{2}", *tmp->scheme->getName(), tmp->sline, tmp->eline));
+    COLORER_LOG_DEEPTRACE("[TPCache] searchLine() tmp:%,%-%", *tmp->scheme->getName(), tmp->sline, tmp->eline);
     if (tmp->sline <= ln && tmp->eline >= ln) {
       if (tmp->children) {
         r1 = tmp->children->searchLine(ln, &r2);

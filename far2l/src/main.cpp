@@ -263,14 +263,14 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 						AnotherPanel->SetFocus();
 						CtrlObject->CmdLine->ExecString(strDestName2, 0);
 						ActivePanel->SetFocus();
-					} else {
+					} /* else {
 						strPath = strDestName2;
 
 						if (!strPath.IsEmpty()) {
 							if (AnotherPanel->GoToFile(strPath))
 								AnotherPanel->ProcessKey(KEY_CTRLPGDN);
 						}
-					}
+					} */
 				}
 
 				ActivePanel->GetCurDir(strCurDir);
@@ -278,14 +278,14 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 				if (IsPluginPrefixPath(strDestName1)) {
 					CtrlObject->CmdLine->ExecString(strDestName1, 0);
-				} else {
+				} /* else {
 					strPath = strDestName1;
 
 					if (!strPath.IsEmpty()) {
 						if (ActivePanel->GoToFile(strPath))
 							ActivePanel->ProcessKey(KEY_CTRLPGDN);
 					}
-				}
+				} */
 
 				// !!! ВНИМАНИЕ !!!
 				// Сначала редравим пассивную панель, а потом активную!

@@ -83,6 +83,24 @@ std::string VTSanitizeHistcontrol()
 	return hc_override;
 }
 
+const char *GetSystemShell()
+{
+	const char *env_shell = getenv("SHELL");
+	if (!env_shell || !*env_shell) {
+		return "/bin/sh";
+	}
+
+	const char *slash = strrchr(env_shell, '/');
+	// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
+	if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
+	 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
+	 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
+		return "bash";
+	}
+
+	return env_shell;
+}
+
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	HANDLE _console_handle = NULL;
@@ -113,24 +131,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	bool _may_notify{false};
 	std::atomic<bool> _allow_osc_clipset{false};
 	std::string _init_user_profile;
-
-	static const char *GetSystemShell()
-	{
-		const char *env_shell = getenv("SHELL");
-		if (!env_shell || !*env_shell) {
-			return "/bin/sh";
-		}
-
-		const char *slash = strrchr(env_shell, '/');
-		// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
-		if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
-		 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
-		 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
-			return "bash";
-		}
-
-		return env_shell;
-	}
 
 	int ExecLeaderProcess()
 	{

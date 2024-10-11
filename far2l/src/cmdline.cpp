@@ -971,7 +971,10 @@ void FarAbout(PluginManager &Plugins)
 	fs.Format(L"         Temp directory: \"%s\"", InMyTemp("").c_str() );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
-	fs.Format(L"          Command shell: \"%ls\"", Opt.CmdLine.strShell.CPtr() );
+	if (Opt.CmdLine.UseShell)
+		fs.Format(L"   Command shell (User): \"%ls\"", Opt.CmdLine.strShell.CPtr() );
+	else
+		fs.Format(L" Command shell (System): \"%s\"", GetSystemShell() );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
 	ListAbout.AddItem(L""); fs2copy += "\n";

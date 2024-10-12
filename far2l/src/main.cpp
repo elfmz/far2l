@@ -263,7 +263,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 						AnotherPanel->SetFocus();
 						CtrlObject->CmdLine->ExecString(strDestName2, 0);
 						ActivePanel->SetFocus();
-					} /* else {
+					} /* else { // positioning on the file in UpdatePathOptions() is enough
 						strPath = strDestName2;
 
 						if (!strPath.IsEmpty()) {
@@ -278,7 +278,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 				if (IsPluginPrefixPath(strDestName1)) {
 					CtrlObject->CmdLine->ExecString(strDestName1, 0);
-				} /* else {
+				} /* else { // positioning on the file in UpdatePathOptions() is enough
 					strPath = strDestName1;
 
 					if (!strPath.IsEmpty()) {

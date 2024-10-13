@@ -41,9 +41,7 @@ set_target_properties(python PROPERTIES
 )
 
 add_custom_command(
-    #TARGET python POST_BUILD
     OUTPUT "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/far2lcffi.h
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/far2lcffidefs.h
     DEPENDS ../far2l/far2sdk/farplug-wide.h
@@ -53,6 +51,13 @@ add_custom_command(
     DEPENDS ../WinPort/WinCompat.h
     DEPENDS ../WinPort/WinPort.h
     DEPENDS ../WinPort/WinPortDecl.h
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/src/prebuild.sh "${CMAKE_SOURCE_DIR}" "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/far2l" "${INSTALL_DIR}/Plugins/python/plug/far2l"
+    COMMAND echo ${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS} -E -P -xc -I"${CMAKE_SOURCE_DIR}/far2l/far2sdk" -I"${CMAKE_SOURCE_DIR}/WinPort" "${CMAKE_SOURCE_DIR}/python/src/far2lcffi.h" > "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
+    COMMAND cat "${CMAKE_SOURCE_DIR}/python/src/far2lcffidefs.h" >> "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
+)
+
+add_custom_command(
+    TARGET python POST_BUILD
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/plugins
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/plugins" "${INSTALL_DIR}/Plugins/python/plug/plugins"
 )

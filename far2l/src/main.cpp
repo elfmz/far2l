@@ -138,6 +138,40 @@ static FARString ReconstructCommandLine(int argc, char **argv)
 	return cmd;
 }
 
+static void UpdatePathOptions(const FARString &strDestName, bool IsActivePanel)
+{
+	FARString *outFolder, *outCurFile;
+
+	// Та панель, которая имеет фокус - активна (начнем по традиции с Левой Панели ;-)
+	if ((IsActivePanel && Opt.LeftPanel.Focus) || (!IsActivePanel && !Opt.LeftPanel.Focus)) {
+		Opt.LeftPanel.Type = FILE_PANEL;  // сменим моду панели
+		Opt.LeftPanel.Visible = TRUE;     // и включим ее
+		outFolder = &Opt.strLeftFolder;
+		outCurFile = &Opt.strLeftCurFile;
+	}
+	else {
+		Opt.RightPanel.Type = FILE_PANEL;
+		Opt.RightPanel.Visible = TRUE;
+		outFolder = &Opt.strRightFolder;
+		outCurFile = &Opt.strRightCurFile;
+	}
+
+	auto Attr = apiGetFileAttributes(strDestName);
+	if (Attr != INVALID_FILE_ATTRIBUTES) {
+		if (Attr & FILE_ATTRIBUTE_DIRECTORY) {
+			outCurFile->Clear();
+			*outFolder = strDestName;
+		}
+		else {
+			*outCurFile = PointToName(strDestName);
+			*outFolder = strDestName;
+			CutToSlash(*outFolder, true);
+			if (outFolder->IsEmpty())
+				*outFolder = L"/";
+		}
+	}
+}
+
 static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARString strDestName2,
 		int StartLine, int StartChar)
 {
@@ -202,46 +236,12 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 			// воспользуемся тем, что ControlObject::Init() создает панели
 			// юзая Opt.*
-			if (strDestName1.GetLength())		// актиная панель
+			if (strDestName1.GetLength())  // активная панель
 			{
-				Opt.SetupArgv++;
-				strPath = strDestName1;
+				UpdatePathOptions(strDestName1, true);
 
-				if (strPath != "/") {
-					DeleteEndSlash(strPath);	// BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
-				}
-
-				// Та панель, которая имеет фокус - активна (начнем по традиции с Левой Панели ;-)
-				if (Opt.LeftPanel.Focus) {
-					Opt.LeftPanel.Type = FILE_PANEL;	// сменим моду панели
-					Opt.LeftPanel.Visible = TRUE;		// и включим ее
-					Opt.strLeftFolder = strPath;
-				} else {
-					Opt.RightPanel.Type = FILE_PANEL;
-					Opt.RightPanel.Visible = TRUE;
-					Opt.strRightFolder = strPath;
-				}
-
-				if (strDestName2.GetLength())		// пассивная панель
-				{
-					Opt.SetupArgv++;
-					strPath = strDestName2;
-
-					if (strPath != "/") {
-						DeleteEndSlash(strPath);	// BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
-					}
-
-					// а здесь с точнотью наоборот - обрабатываем пассивную панель
-					if (Opt.LeftPanel.Focus) {
-						Opt.RightPanel.Type = FILE_PANEL;	// сменим моду панели
-						Opt.RightPanel.Visible = TRUE;		// и включим ее
-						Opt.strRightFolder = strPath;
-					} else {
-						Opt.LeftPanel.Type = FILE_PANEL;
-						Opt.LeftPanel.Visible = TRUE;
-						Opt.strLeftFolder = strPath;
-					}
-				}
+				if (strDestName2.GetLength())  // пассивная панель
+					UpdatePathOptions(strDestName2, false);
 			}
 
 			// теперь все готово - создаем панели!
@@ -263,14 +263,14 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 						AnotherPanel->SetFocus();
 						CtrlObject->CmdLine->ExecString(strDestName2, 0);
 						ActivePanel->SetFocus();
-					} else {
+					} /* else { // positioning on the file in UpdatePathOptions() is enough
 						strPath = strDestName2;
 
 						if (!strPath.IsEmpty()) {
 							if (AnotherPanel->GoToFile(strPath))
 								AnotherPanel->ProcessKey(KEY_CTRLPGDN);
 						}
-					}
+					} */
 				}
 
 				ActivePanel->GetCurDir(strCurDir);
@@ -278,14 +278,14 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 				if (IsPluginPrefixPath(strDestName1)) {
 					CtrlObject->CmdLine->ExecString(strDestName1, 0);
-				} else {
+				} /* else { // positioning on the file in UpdatePathOptions() is enough
 					strPath = strDestName1;
 
 					if (!strPath.IsEmpty()) {
 						if (ActivePanel->GoToFile(strPath))
 							ActivePanel->ProcessKey(KEY_CTRLPGDN);
 					}
-				}
+				} */
 
 				// !!! ВНИМАНИЕ !!!
 				// Сначала редравим пассивную панель, а потом активную!

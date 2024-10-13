@@ -51,8 +51,7 @@ add_custom_command(
     DEPENDS ../WinPort/WinCompat.h
     DEPENDS ../WinPort/WinPort.h
     DEPENDS ../WinPort/WinPortDecl.h
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/far2l" "${INSTALL_DIR}/Plugins/python/plug/far2l"
-    COMMAND echo ${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS} -E -P -xc -I"${CMAKE_SOURCE_DIR}/far2l/far2sdk" -I"${CMAKE_SOURCE_DIR}/WinPort" "${CMAKE_SOURCE_DIR}/python/src/far2lcffi.h" > "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
+    COMMAND "${CMAKE_SOURCE_DIR}/python/src/build.sh" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}" "${CMAKE_SOURCE_DIR}" "${INSTALL_DIR}"
     COMMAND cat "${CMAKE_SOURCE_DIR}/python/src/far2lcffidefs.h" >> "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
 )
 

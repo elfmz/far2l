@@ -132,6 +132,7 @@ src/plug/plclass.cpp
 src/vt/vtansi.cpp
 src/vt/vtshell.cpp
 src/vt/vtshell_translation.cpp
+src/vt/vtshell_translation_kitty.cpp
 src/vt/vtshell_compose.cpp
 src/vt/vtshell_leader.cpp
 src/vt/vtshell_ioreaders.cpp

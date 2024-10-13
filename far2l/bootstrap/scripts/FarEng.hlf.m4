@@ -124,7 +124,7 @@ transforms your commands into the corresponding external archiver calls.
 
 @Far2lGettingStarted
 $ # FAR2L features - Getting Started#
-    FAR2L is Linux port FAR Manager v2 (see ~About FAR2L~@About@)
+    FAR2L is a Linux port of FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
 

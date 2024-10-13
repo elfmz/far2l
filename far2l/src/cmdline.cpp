@@ -983,28 +983,21 @@ void FarAbout(PluginManager &Plugins)
 		fs.Format(L"                  uname: %s %s %s %s", un.sysname, un.release, un.version, un.machine);
 		ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 	}
-	if (apiGetEnvironmentVariable("HOSTNAME", fs2))
-	{ fs = L"                   Host: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("USER", fs2))
-	{ fs = L"                   User: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2))
-	{ fs = L"       XDG_SESSION_TYPE: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("TERM", fs2))
-	{ fs = L"                   TERM: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("COLORTERM", fs2))
-	{ fs = L"              COLORTERM: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("GDK_BACKEND", fs2))
-	{ fs = L"            GDK_BACKEND: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2))
-	{ fs = L"        DESKTOP_SESSION: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("WSL_DISTRO_NAME", fs2))
-	{ fs = L"        WSL_DISTRO_NAME: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("WSL2_GUI_APPS_ENABLED", fs2))
-	{ fs = L"  WSL2_GUI_APPS_ENABLED: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("DISPLAY", fs2))
-	{ fs = L"                DISPLAY: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
-	if (apiGetEnvironmentVariable("WAYLAND_DISPLAY", fs2))
-	{ fs = L"        WAYLAND_DISPLAY: " + fs2; ListAbout.AddItem(fs); fs2copy += "\n" + fs; }
+
+	static const char * const env_vars[] = {
+		"HOSTNAME", "USER",
+		"XDG_SESSION_TYPE",
+		"TERM", "COLORTERM",
+		"GDK_BACKEND", "DESKTOP_SESSION",
+		"WSL_DISTRO_NAME", "WSL2_GUI_APPS_ENABLED",
+		"DISPLAY", "WAYLAND_DISPLAY" };
+	for (unsigned int i = 0; i < ARRAYSIZE(env_vars); i++) {
+		if (apiGetEnvironmentVariable(env_vars[i], fs2)) {
+			fs.Format(L"%23s: %ls", env_vars[i], fs2.CPtr());
+			ListAbout.AddItem(fs);
+			fs2copy += "\n" + fs;
+		}
+	}
 
 	ListAbout.AddItem(L""); fs2copy += "\n";
 

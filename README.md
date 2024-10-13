@@ -123,9 +123,8 @@ See also [Community packages & binaries](#community_bins)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `UNRAR` command line option)
 * `libpcre2-dev` (_optional_ - needed for advanced custom archive formats support in **multiarc**)
-* `libpython3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
-* `libffi-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
-* `python3-venv` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
+* `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
+* `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `cmake` ( >= 3.2.2 )
 * `pkg-config`
 * `g++`
@@ -187,9 +186,8 @@ To eliminate libuchardet requirement to reduce far2l dependencies by cost of los
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 but you must have installed additional packages within yours system:
-`libpython3-dev`,
-`libffi-dev`,
-`python3-venv`.
+`python3-dev`,
+`python3-cffi`.
 
 
 To control how RAR archives will be handled in multiarc:

@@ -469,6 +469,10 @@ if (DEFINED PYTHON AND PYTHON)
         DESTINATION "lib/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
         COMPONENT base FILES_MATCHING
         PATTERN "*")
+    install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/plugins"
+        DESTINATION "lib/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
+        COMPONENT base FILES_MATCHING
+        PATTERN "*")
 else()
     message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
     install(CODE "

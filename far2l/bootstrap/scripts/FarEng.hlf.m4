@@ -130,11 +130,12 @@ $ # FAR2L features - Getting Started#
 
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
-        - #GUI#: uses wxWidgets, works in graphics mode, ideal UX, requires a lot of X11 dependencies;
+        - #GUI#: uses wxWidgets, works in graphics mode, #ideal UX#
+(might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
         - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries
-(to access clipboard and to get state of all keyboard modifiers), almost perfect UX;
+(to access clipboard and to get state of all keyboard modifiers), #almost perfect UX#;
         - #TTY|X#: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
-        - #TTY#: plain terminal mode, no X11 dependencies, UX with some restrictions
+        - #TTY#: plain terminal mode, no X11 dependencies, #UX with some restrictions#
 (works fully when running in the terminal emulators,
 which provide clipboard access and has their advanced keyboard-protocols, see list below).
     You can see FAR2L version and currently used backend in window title or by ~pseudo-command~@SpecCmd@ #far:about#.

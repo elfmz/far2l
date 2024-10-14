@@ -47,6 +47,9 @@ endif(PCRE_FOUND)
 if(LibArchive_FOUND)
     LIST(APPEND PACKAGE_DEPENDENCIES libarchive13)
 endif(LibArchive_FOUND)
+IF (${PYTHON})
+    LIST(APPEND PACKAGE_DEPENDENCIES "python3, python3-cffi")
+ENDIF()
 
 string(REPLACE ";" ", " PACKAGE_DEPENDENCIES "${PACKAGE_DEPENDENCIES}")
 

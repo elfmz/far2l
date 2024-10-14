@@ -200,12 +200,18 @@ public:
             pluginPath.resize(pos);
         }
 
-        PYTHON_LOG("pluginpath: %s, python library used:%s\n", pluginPath.c_str(), PYTHON_LIBRARY);
-        soPythonInterpreter = dlopen(PYTHON_LIBRARY, RTLD_NOW | RTLD_GLOBAL);
+        std::string pythonso = PYTHON_LIBRARY;
+        PYTHON_LOG("pluginpath: %s, python library used:%s\n", pluginPath.c_str(), pythonso.c_str());
+        soPythonInterpreter = dlopen(pythonso.c_str(), RTLD_NOW | RTLD_GLOBAL);
         if( !soPythonInterpreter ){
-            PYTHON_LOG("error %u from dlopen('%s')\n", errno, PYTHON_LIBRARY);
-            initok = false;
-            return;
+            PYTHON_LOG("error %u from dlopen('%s'): %s\n", errno, pythonso.c_str(), dlerror());
+            pythonso += ".1";
+            soPythonInterpreter = dlopen(pythonso.c_str(), RTLD_NOW | RTLD_GLOBAL);
+            if( !soPythonInterpreter ){
+                PYTHON_LOG("error %u from dlopen('%s'): %s\n", errno, pythonso.c_str(), dlerror());
+                initok = false;
+                return;
+            }
         }
 
         initok = init_python();

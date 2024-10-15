@@ -235,22 +235,23 @@ static void ShimSigWinch(int sig)
 
 extern "C" void WinPortHelp()
 {
-	printf("FAR2L backend-specific options:\n");
-	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
-	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
-	printf("\t--nodetect or --nodetect=[x|xi][f][w][a][k] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes\n");
-	printf("\t--norgb - don't use true (24-bit) colors\n");
-	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
-	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
-	printf("\t--x11 - force GUI backend to run on X11\n");
-	printf("\t--wayland - force GUI backend to run on Wayland\n");
-	printf("\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n");
-	printf("\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n");
-	printf("\t--maximize - force maximize window upon launch (only for GUI backend)\n");
-	printf("\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n");
-	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
-    printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
-    printf("     (for example: export FAR2L_ARGS=\"--tty\" to start far2l in tty mode by default)\n");
+	printf("FAR2L backend-specific options:\n"
+			"\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n"
+			"\t--notty - don't fallback to TTY backend if GUI backend failed\n"
+			"\t--nodetect or --nodetect=[x|xi][f][w][a][k] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes\n"
+			"\t--norgb - don't use true (24-bit) colors\n"
+			"\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n"
+			"\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n"
+			"\t--x11 - force GUI backend to run on X11\n"
+			"\t--wayland - force GUI backend to run on Wayland\n"
+			"\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n"
+			"\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n"
+			"\t--maximize - force maximize window upon launch (only for GUI backend)\n"
+			"\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n"
+			"\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n"
+			"\n"
+			"All options (except -h and -u) also can be set via the FAR2L_ARGS environment variable\n"
+			" (for example: export FAR2L_ARGS=\"--tty\" to start far2l in tty mode by default)\n");
 }
 
 struct ArgOptions
@@ -385,7 +386,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		}
 	}
 
-	for (int i = 0; i < argc; ++i) {
+	for (int i = 1; i < argc; ++i) { // from 1 = skip self name here
 		arg_opts.ParseArg(argv[i], false);
 	}
 
@@ -407,6 +408,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		}
 	}
 
+	if (argc>0)
+		arg_opts.filtered_argv.emplace(arg_opts.filtered_argv.begin(), argv[0]); // self name should be always first
 	if (!arg_opts.filtered_argv.empty()) {
 		argv = &arg_opts.filtered_argv[0];
 	}

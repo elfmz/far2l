@@ -301,9 +301,6 @@ runs inside.
   Use PRIMARY selection instead of CLIPBOARD X11 selection. This argument applies only to far2l
 that runs with WX backend.
 
-  Backend-specific options also can be set via the #FAR2L_ARGS# environment variable
-(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
-
 
  #FAR2L command-line options:#
   #-a#
@@ -379,6 +376,10 @@ resides and place the cursor on the file, if it exists;
   - ^<wrap>when prefixes specified (simultaneous use with common paths allowed)
 passive command executes first (passive panel activates temporary). Односимвольные префиксы игнорируются.
   Example: far ma:Far20.7z "macro:post MsgBox(\\"FAR2L\\",\\"Successfully started\\")"
+
+
+  All options (except #-h# and #-u#) also can be set via the #FAR2L_ARGS# environment variable
+(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
 
 
 @KeyRef

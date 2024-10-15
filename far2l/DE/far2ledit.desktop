@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=far2ledit
+Comment=Editor from far2l file manager
+Exec=far2ledit %f
+TryExec=far2ledit
+Terminal=true
+MimeType=text/plain;
+Categories=Utility;TextEditor;
+Icon=far2ledit

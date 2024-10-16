@@ -105,7 +105,8 @@ static void print_help(const char *self)
 			//		" -p[<path>]\n"
 			//		"      Search for \"common\" plugins in the directory, specified by <path>.\n"
 			" -u <identity> OR </path/name>\n"
-			"      Allows to specify separate settings identity or FS location.\n"
+			"      Allows to specify separate settings identity or FS location\n"
+			"      (it override FARSETTINGS environment variable value).\n"
 			" -v <filename>\n"
 			"      View the specified file.\n"
 			" -v - <command line>\n"
@@ -683,7 +684,7 @@ static int libexec(const char *lib, const char *cd, const char *symbol, int argc
 static void SetCustomSettings(const char *arg)
 {
 	std::string refined;
-	if (arg[0] == '/') {
+	if (arg[0] == GOOD_SLASH) {
 		refined = arg;
 
 	} else if (arg[0] == '.' && arg[1] == GOOD_SLASH) {

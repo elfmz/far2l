@@ -345,7 +345,7 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   Macros with the "Run after FAR2L start" option set will not be run when FAR2L is started.
 
   #-u <identity># or #-u <path>#
-  Allows to specify separate settings identity or FS location.
+  Allows to specify separate settings identity or FS location (it override #FARSETTINGS# environment variable value).
   #-u <path>#: in path/.config/ (if path is full path)
   #-u <identity>#: in ~~/.config/far2l/custom/identity/ or in $XDG_CONFIG_HOME/far2l/custom/identity/
 

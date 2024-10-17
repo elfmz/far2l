@@ -232,7 +232,7 @@
 		</scheme>
 
 		<scheme name="Script">
-			<block start="/\s*\b((block|capture|function|for\b|literal|nocache|setfilter|strip|while))\b/" end="/(\/\Y2)/"
+			<block start="/\s*\b((block|capture|function|for\b|nocache|setfilter|strip|while))\b/" end="/(\/\Y2)/"
 				region01="PairStart"   region10="PairEnd"
 				region02="def:Keyword" region11="def:Keyword"
 				scheme="Script" priority="low"
@@ -281,6 +281,13 @@
 
 		<scheme name="Insertion">
 			<!--<inherit scheme="smartyEscape" />-->
+			<block start="/(\{)((literal))(\})/" end="/(\{)((\/literal))(\})/"
+				region01="OpenTag"   region11="OpenTag"
+				region02="def:PairStart" region12="def:PairEnd"
+				region04="OpenTag"   region14="OpenTag"
+				region03="def:Keyword"   region13="def:Keyword"
+				scheme="asp:html" priority="normal"  content-priority="normal"
+			/>
 			<inherit scheme="smartyComment" />
 			<inherit scheme="smartyPhpInsertion"/>
 
@@ -292,7 +299,7 @@
 		</scheme>
 
 		<scheme name="InverseInsertion">
-			<block start="/(\})/" end="/(\{)/" scheme="html"
+			<block start="/(\})/" end="/(\{)\M\S/" scheme="html"
 				priority="low" region="Text" inner-region="yes"
 				region00="Insertion" region10="Insertion" 
 				region01="OpenTag"   region11="OpenTag" 

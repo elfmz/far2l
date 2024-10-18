@@ -2678,7 +2678,9 @@ int VMenu::FindItem(int StartIndex, const wchar_t *Pattern, DWORD Flags)
 		for (int I = StartIndex; I < ItemCount; I++) {
 			FARString strTmpBuf(Item[I]->strName);
 			int LenNamePtr = (int)strTmpBuf.GetLength();
-			RemoveChar(strTmpBuf, L'&');
+			if ( (Flags & LIFIND_KEEPAMPERSAND) == 0) {
+				RemoveChar(strTmpBuf, L'&');
+			}
 
 			if (Flags & LIFIND_EXACTMATCH) {
 				if (!StrCmpNI(strTmpBuf, Pattern, Max(LenPattern, LenNamePtr)))

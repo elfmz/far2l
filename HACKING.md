@@ -86,4 +86,7 @@ Note that all true-color capable messages extend but don't replace 'base' 16 pal
 (a la global parameters `Opt.ShowFilenameMarks` and `Opt.FilenameMarksAlign`):
     - `OPIF_HL_MARKERS_NOSHOW` and `OPIF_HL_MARKERS_NOALIGN` (in `enum OPENPLUGININFO_FLAGS`);
     - `PFLAGS_HL_MARKERS_NOSHOW` and `PFLAGS_HL_MARKERS_NOALIGN` (in `enum PANELINFOFLAGS`).
+* Flag which prevents the removal of ampersand characters from menu items being iterated in `VMenu::FindItem()`
+(for the proper work of `History::GetAllSimilar()` function and in other similar situations):
+    - `LIFIND_KEEPAMPERSAND` (in `enum FARLISTFINDFLAGS`);
 

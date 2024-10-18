@@ -282,6 +282,7 @@ namespace oldfar
 	enum FARLISTFINDFLAGS
 	{
 		LIFIND_EXACTMATCH = 0x00000001,
+		LIFIND_KEEPAMPERSAND = 0x00000002,
 	};
 
 	struct FarListFind

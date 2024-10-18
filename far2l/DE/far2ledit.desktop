@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Far2l Editor
+Name[ru]=Редактор Far2l
+Comment=Edit text files
+Comment[ru]=Редактирование текстовых файлов
+Exec=far2ledit %f
+TryExec=far2ledit
+Terminal=true
+MimeType=text/plain;
+Categories=Utility;TextEditor;
+Icon=far2ledit
+Keywords=editor;console;text;

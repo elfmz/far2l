@@ -14,18 +14,29 @@ class FileTypeChooser
 
   /** Creates choose entry.
       @param type If 0 - filename RE, if 1 - firstline RE
-      @param prior Priority of this rule
+      @param priority Priority of this rule
       @param re Associated regular expression
   */
   FileTypeChooser(ChooserType type, double priority, CRegExp* re);
+
   /** Returns type of chooser */
-  [[nodiscard]] bool isFileName() const;
+  [[nodiscard]]
+  bool isFileName() const;
+
   /** Returns type of chooser */
-  [[nodiscard]] bool isFileContent() const;
+  [[nodiscard]]
+  bool isFileContent() const;
+
   /** Returns chooser priority */
-  [[nodiscard]] double getPriority() const;
+  [[nodiscard]]
+  double getPriority() const;
+
   /** Returns associated regular expression */
-  [[nodiscard]] CRegExp* getRE() const;
+  [[nodiscard]]
+  CRegExp* getRE() const;
+
+  [[nodiscard]]
+  double calcPriority(const UnicodeString* string) const;
 
  private:
   ChooserType m_type;

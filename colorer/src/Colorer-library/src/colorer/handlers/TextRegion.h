@@ -1,13 +1,12 @@
-#ifndef _COLORER_TEXTREGION_H_
-#define _COLORER_TEXTREGION_H_
+#ifndef COLORER_TEXTREGION_H
+#define COLORER_TEXTREGION_H
 
+#include "colorer/Common.h"
 #include "colorer/handlers/RegionDefine.h"
-#include <memory>
 
 /**
  * Contains information about region mapping into textual prefix/suffix.
  * These mappings are stored in HRD files.
- * @ingroup colorer_handlers
  */
 class TextRegion : public RegionDefine
 {
@@ -21,11 +20,11 @@ class TextRegion : public RegionDefine
   std::shared_ptr<const UnicodeString> start_back;
   std::shared_ptr<const UnicodeString> end_back;
 
-  /**
-   * Initial constructor
-   */
-  TextRegion(std::shared_ptr<const UnicodeString>& _start_text, std::shared_ptr<const UnicodeString>& _end_text,
-             std::shared_ptr<const UnicodeString>& _start_back, std::shared_ptr<const UnicodeString>& _end_back);
+  /** Common constructor */
+  TextRegion(const UnicodeString& start_text, const UnicodeString& end_text, const UnicodeString& start_back,
+             const UnicodeString& end_back);
+
+  /** Empty constructor */
   TextRegion();
 
   /**
@@ -44,17 +43,19 @@ class TextRegion : public RegionDefine
   static const TextRegion* cast(const RegionDefine* rd);
 
   /**
-   * Assigns region define with it's parent values.
+   * Assigns region define with its parent values.
    * All fields are to be replaced, if they are null-ed.
    */
-  void assignParent(const RegionDefine* _parent) override;
+  void assignParent(const RegionDefine* parent) override;
+
   /**
    * Direct assign of all passed @c rd values.
    * Do not assign region reference.
    */
-  void setValues(const RegionDefine* _rd) override;
+  void setValues(const RegionDefine* region_define) override;
 
-  [[nodiscard]] RegionDefine* clone() const override;
+  [[nodiscard]]
+  RegionDefine* clone() const override;
 };
 
 #endif

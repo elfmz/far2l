@@ -12,11 +12,7 @@ XmlReader::~XmlReader()
 
 bool XmlReader::parse()
 {
-#ifdef COLORER_FEATURE_LIBXML
   xml_reader = new LibXmlReader(*input_source);
-#else
-  xml_reader = new XercesXmlReader(*input_source);
-#endif
   return xml_reader->isParsed();
 }
 

@@ -3,9 +3,6 @@
 
 #include <string>
 #include "colorer/Common.h"
-#ifndef COLORER_FEATURE_LIBXML
-#include "xercesc/util/XMLString.hpp"
-#endif
 
 class UStr
 {
@@ -17,12 +14,6 @@ class UStr
   [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString* str);
   [[nodiscard]] static std::wstring to_stdwstr(const UnicodeString& str);
   [[nodiscard]] static std::wstring to_stdwstr(const uUnicodeString& str);
-#endif
-
-#ifndef COLORER_FEATURE_LIBXML
-  [[nodiscard]] static std::unique_ptr<XMLCh[]> to_xmlch(const UnicodeString* str);
-  [[nodiscard]] static std::string to_stdstr(const XMLCh* str);
-  inline static bool isEmpty(const XMLCh* string) { return *string == '\0'; }
 #endif
 
   static std::unique_ptr<CharacterClass> createCharClass(const UnicodeString& ccs, int pos, int* retPos,

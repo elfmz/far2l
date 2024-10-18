@@ -1,5 +1,4 @@
 #include "colorer/Exception.h"
-#include "colorer/Common.h"
 
 Exception::Exception(const char* msg) noexcept : what_str {msg} {}
 

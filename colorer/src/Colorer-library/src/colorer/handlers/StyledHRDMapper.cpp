@@ -3,11 +3,6 @@
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/xml/XmlReader.h"
 
-StyledHRDMapper::~StyledHRDMapper()
-{
-  regionDefines.clear();
-}
-
 void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
 {
   XmlReader xml(is);
@@ -60,18 +55,15 @@ void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
   }
 }
 
-/** Writes all currently loaded region definitions into
-    XML file. Note, that this method writes all loaded
-    defines from all loaded HRD files.
-*/
 void StyledHRDMapper::saveRegionMappings(Writer* writer) const
 {
-  writer->write("<?xml version=\"1.0\"?>\n");
+  writer->write(u"<?xml version=\"1.0\"?>\n");
+
   for (const auto& regionDefine : regionDefines) {
     const StyledRegion* rdef = StyledRegion::cast(regionDefine.second.get());
-    char temporary[256];
-    constexpr auto size_temporary = std::size(temporary);
-    writer->write("  <define name='" + regionDefine.first + "'");
+    constexpr auto size_temporary = 256;
+    char temporary[size_temporary];
+    writer->write(u"\t<define name='" + regionDefine.first + u"'");
     if (rdef->isForeSet) {
       snprintf(temporary, size_temporary, " fore=\"#%06x\"", rdef->fore);
       writer->write(temporary);
@@ -84,23 +76,24 @@ void StyledHRDMapper::saveRegionMappings(Writer* writer) const
       snprintf(temporary, size_temporary, " style=\"%u\"", rdef->style);
       writer->write(temporary);
     }
-    writer->write("/>\n");
+    writer->write(u"/>\n");
   }
-  writer->write("\n</hrd>\n");
+
+  writer->write(u"</hrd>\n");
 }
 
-/** Adds or replaces region definition */
-void StyledHRDMapper::setRegionDefine(const UnicodeString& name, const RegionDefine* rd)
+void StyledHRDMapper::setRegionDefine(const UnicodeString& region_name, const RegionDefine* rd)
 {
-  if (!rd)
+  if (!rd) {
     return;
+  }
 
   const StyledRegion* new_region = StyledRegion::cast(rd);
   auto rd_new = std::make_unique<StyledRegion>(*new_region);
 
-  auto rd_old_it = regionDefines.find(name);
+  const auto rd_old_it = regionDefines.find(region_name);
   if (rd_old_it == regionDefines.end()) {
-    regionDefines.emplace(name, std::move(rd_new));
+    regionDefines.emplace(region_name, std::move(rd_new));
   }
   else {
     rd_old_it->second = std::move(rd_new);

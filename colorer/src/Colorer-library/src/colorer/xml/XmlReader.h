@@ -3,11 +3,7 @@
 
 #include "colorer/xml/XMLNode.h"
 #include "colorer/xml/XmlInputSource.h"
-#ifdef COLORER_FEATURE_LIBXML
 #include "libxml2/LibXmlReader.h"
-#else
-#include "colorer/xml/xercesc/XercesXmlReader.h"
-#endif
 
 class XmlReader
 {
@@ -19,11 +15,7 @@ class XmlReader
 
  private:
   const XmlInputSource* input_source;
-#ifdef COLORER_FEATURE_LIBXML
   LibXmlReader* xml_reader = nullptr;
-#else
-  XercesXmlReader* xml_reader = nullptr;
-#endif
 };
 
 #endif  // COLORER_XMLREADER_H

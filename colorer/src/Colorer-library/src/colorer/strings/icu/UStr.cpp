@@ -241,24 +241,3 @@ int32_t UStr::indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& 
   auto tmp_str2 = str2;
   return tmp_str1.toUpper().indexOf(tmp_str2.toUpper(), pos);
 }
-
-#ifndef COLORER_FEATURE_LIBXML
-std::unique_ptr<XMLCh[]> UStr::to_xmlch(const UnicodeString* str)
-{
-  // XMLCh and UChar are the same size
-  std::unique_ptr<XMLCh[]> out_s;
-  if (str) {
-    auto len = str->length();
-    out_s = std::make_unique<XMLCh[]>(len + 1);
-    str->extract(0, len, out_s.get());
-    out_s[len] = 0;
-  }
-  return out_s;
-}
-
-std::string UStr::to_stdstr(const XMLCh* str)
-{
-  std::string _string = std::string(xercesc::XMLString::transcode(str));
-  return _string;
-}
-#endif

@@ -1,5 +1,5 @@
-#ifndef _COLORER_HRCLIBRARYIMPL_H_
-#define _COLORER_HRCLIBRARYIMPL_H_
+#ifndef COLORER_HRCLIBRARYIMPL_H
+#define COLORER_HRCLIBRARYIMPL_H
 
 #include <unordered_map>
 #include "colorer/HrcLibrary.h"
@@ -25,12 +25,12 @@ class HrcLibrary::Impl
   void loadSource(XmlInputSource* is);
   void loadFileType(FileType* filetype);
   FileType* getFileType(const UnicodeString* name);
-  FileType* enumerateFileTypes(unsigned int index);
+  FileType* enumerateFileTypes(unsigned int index) const;
   FileType* chooseFileType(const UnicodeString* fileName, const UnicodeString* firstLine, int typeNo = 0);
-  size_t getFileTypesCount();
+  size_t getFileTypesCount() const;
 
-  size_t getRegionCount();
-  const Region* getRegion(unsigned int id);
+  size_t getRegionCount() const;
+  const Region* getRegion(unsigned int id) const;
   const Region* getRegion(const UnicodeString* name);
 
  protected:
@@ -81,7 +81,7 @@ class HrcLibrary::Impl
   void loadRegions(SchemeNodeBlock* node, const XMLNode* el, bool start_element);
   void loadRegexpRegions(SchemeNodeRegexp* node, const XMLNode& el);
 
-  uUnicodeString qualifyOwnName(const UnicodeString& name);
+  uUnicodeString qualifyOwnName(const UnicodeString& name) const;
   bool checkNameExist(const UnicodeString* name, FileType* parseType, QualifyNameType qntype, bool logErrors);
   uUnicodeString qualifyForeignName(const UnicodeString* name, QualifyNameType qntype, bool logErrors);
 
@@ -95,4 +95,4 @@ class HrcLibrary::Impl
                           const std::unique_ptr<SchemeNodeKeywords>& scheme_node, const Region* region);
 };
 
-#endif
+#endif // COLORER_HRCLIBRARYIMPL_H

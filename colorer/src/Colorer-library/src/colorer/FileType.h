@@ -19,16 +19,14 @@ class FileType
  public:
   FileType(UnicodeString name, UnicodeString group, UnicodeString description);
 
-  void addParam(const UnicodeString* name, const UnicodeString* value);
-  void addParam(const UnicodeString& name, const UnicodeString& value);
-  [[maybe_unused]] void setName(const UnicodeString* name);
-  [[maybe_unused]] void setGroup(const UnicodeString* group);
-  [[maybe_unused]] void setDescription(const UnicodeString* description);
+  [[maybe_unused]] void setName(const UnicodeString& name);
+  [[maybe_unused]] void setGroup(const UnicodeString& group);
+  [[maybe_unused]] void setDescription(const UnicodeString& description);
 
   /**
-   * Public name of file type (HRC 'name' attribute).
-   * @return File type Name
-   */
+ * Public name of file type (HRC 'name' attribute).
+ * @return File type Name
+ */
   [[nodiscard]] const UnicodeString& getName() const;
 
   /**
@@ -41,6 +39,9 @@ class FileType
       @return File type Description
   */
   [[nodiscard]] const UnicodeString& getDescription() const;
+
+  void addParam(const UnicodeString& name, const UnicodeString* value);
+  void addParam(const UnicodeString& name, const UnicodeString& value);
 
   /** Returns the base scheme of this file type.
       Basically, this is the scheme with same public name, as it's type.
@@ -105,7 +106,7 @@ class FileType
   spimpl::unique_impl_ptr<Impl> pimpl;
 };
 
-class FileTypeException : public Exception
+class FileTypeException final : public Exception
 {
  public:
   explicit FileTypeException(const UnicodeString& msg) noexcept

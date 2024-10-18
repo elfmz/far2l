@@ -1,9 +1,10 @@
-#include "colorer/Exception.h"
 #include "colorer/handlers/StyledRegion.h"
+#include "colorer/Exception.h"
 
-StyledRegion::StyledRegion(bool _isForeSet, bool _isBackSet, unsigned int _fore, unsigned int _back, unsigned int _style)
+StyledRegion::StyledRegion(const bool _isForeSet, const bool _isBackSet, const unsigned int _fore,
+                           const unsigned int _back, const unsigned int _style)
 {
-  type = RegionDefine::RegionDefineType::STYLED_REGION;
+  type = RegionDefineType::STYLED_REGION;
   isForeSet = _isForeSet;
   isBackSet = _isBackSet;
   fore = _fore;
@@ -13,12 +14,7 @@ StyledRegion::StyledRegion(bool _isForeSet, bool _isBackSet, unsigned int _fore,
 
 StyledRegion::StyledRegion()
 {
-  type = RegionDefine::RegionDefineType::STYLED_REGION;
-  isForeSet = false;
-  isBackSet = false;
-  fore = 0;
-  back = 0;
-  style = RD_NONE;
+  type = RegionDefineType::STYLED_REGION;
 }
 
 StyledRegion::StyledRegion(const StyledRegion& rd) : RegionDefine()
@@ -28,27 +24,32 @@ StyledRegion::StyledRegion(const StyledRegion& rd) : RegionDefine()
 
 StyledRegion& StyledRegion::operator=(const StyledRegion& rd)
 {
-  if (this == &rd)
+  if (this == &rd) {
     return *this;
+  }
+
   setValues(&rd);
   return *this;
 }
 
 const StyledRegion* StyledRegion::cast(const RegionDefine* rd)
 {
-  if (rd == nullptr)
+  if (rd == nullptr) {
     return nullptr;
-  if (rd->type != RegionDefine::RegionDefineType::STYLED_REGION)
+  }
+  if (rd->type != RegionDefineType::STYLED_REGION) {
     throw Exception("Bad type cast exception into StyledRegion");
-  const auto* sr = (const StyledRegion*) (rd);
+  }
+  const auto* sr = dynamic_cast<const StyledRegion*>(rd);
   return sr;
 }
 
 void StyledRegion::assignParent(const RegionDefine* _parent)
 {
-  const StyledRegion* parent = StyledRegion::cast(_parent);
-  if (parent == nullptr)
+  const StyledRegion* parent = cast(_parent);
+  if (parent == nullptr) {
     return;
+  }
   if (!isForeSet) {
     fore = parent->fore;
     isForeSet = parent->isForeSet;
@@ -62,7 +63,7 @@ void StyledRegion::assignParent(const RegionDefine* _parent)
 
 void StyledRegion::setValues(const RegionDefine* _rd)
 {
-  const StyledRegion* rd = StyledRegion::cast(_rd);
+  const StyledRegion* rd = cast(_rd);
   if (rd) {
     fore = rd->fore;
     isForeSet = rd->isForeSet;

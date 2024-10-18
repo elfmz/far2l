@@ -3,7 +3,6 @@
 
 #cmakedefine COLORER_USE_DEEPTRACE
 
-#cmakedefine COLORER_FEATURE_LIBXML
 /**
   If defined, JAR InputSource is implemented.
 */

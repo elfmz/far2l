@@ -46,7 +46,7 @@ You may build library on linux using standard package, without vcpkg.
 #### Ubuntu example
 
 ```bash
-sudo apt install libicu-dev libxerces-c-dev zlib1g-dev libminizip-dev libxml2-dev
+sudo apt install libicu-dev zlib1g-dev libminizip-dev libxml2-dev
 git clone https://github.com/colorer/Colorer-library.git
 cd Colorer-library
 mkdir _build
@@ -57,7 +57,7 @@ cmake --build _build -j$(nproc --all)
 #### CentOS Example
 
 ```bash
-sudo yum install libicu-devel xerces-c-devel zlib-devel minizip1.2-devel
+sudo yum install libicu-devel zlib-devel minizip1.2-devel
 git clone https://github.com/colorer/Colorer-library.git
 cd Colorer-library
 mkdir _build
@@ -67,7 +67,7 @@ cmake --build _build -j$(nproc --all)
 ### MacOS
 
 ```bash
-brew install xerces-c icu4c minizip ninja libxml2
+brew install icu4c minizip ninja libxml2
 git clone https://github.com/colorer/Colorer-library.git
 cd Colorer-library
 mkdir _build
@@ -89,7 +89,6 @@ This options available for build
 * `COLORER_USE_ZIPINPUTSOURCE` - Enable the ability to work with schemes in zip archives. Default 'ON'.
 * `COLORER_USE_DEEPTRACE` - Use trace logging. Default 'OFF'.
 * `COLORER_USE_ICU_STRINGS` - Use ICU library for strings. Default 'ON'.
-* `COLORER_USE_LIBXML` - Use LibXml2 library for parse xml, instead XercesC. Default 'OFF'.
 
 Links
 ========================

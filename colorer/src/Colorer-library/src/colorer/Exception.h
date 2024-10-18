@@ -7,7 +7,6 @@
 
 /** Exception class.
     Defines throwable exception.
-    @ingroup common
 */
 class Exception : public std::exception
 {
@@ -22,9 +21,9 @@ class Exception : public std::exception
   Exception(Exception&&) = default;
   Exception& operator=(Exception&&) = default;
 
-  /** Returns exception message
-   */
-  [[nodiscard]] const char* what() const noexcept override;
+  /** Returns exception message */
+  [[nodiscard]]
+  const char* what() const noexcept override;
 
  protected:
   std::string what_str;
@@ -32,7 +31,6 @@ class Exception : public std::exception
 
 /**
     InputSourceException is thrown, if some IO error occurs.
-    @ingroup common
 */
 class InputSourceException : public Exception
 {

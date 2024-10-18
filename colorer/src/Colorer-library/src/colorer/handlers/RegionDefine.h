@@ -1,12 +1,10 @@
-#ifndef _COLORER_REGIONDEFINE_H_
-#define _COLORER_REGIONDEFINE_H_
+#ifndef COLORER_REGIONDEFINE_H
+#define COLORER_REGIONDEFINE_H
 
 /**
  * Object contains information about region mapping into real colors or other properties.
  * This class represents abstract mapping information and declares required methods
- * to be implemented in it's subclasses.
- *
- * @ingroup colorer_handlers
+ * to be implemented in its subclasses.
  */
 class RegionDefine
 {
@@ -14,8 +12,6 @@ class RegionDefine
   /**
    * Enumeration to distinguish different types of region mapping
    * Do not use RTTI because of compatibility problems
-   *
-   * @ingroup colorer_handlers
    */
   enum class RegionDefineType {
     UNKNOWN_REGION = 0,
@@ -26,12 +22,12 @@ class RegionDefine
   /**
    * Class type identifier
    */
-  RegionDefineType type = RegionDefineType::UNKNOWN_REGION;
+  RegionDefineType type {RegionDefineType::UNKNOWN_REGION};
 
   /**
-   * Completes region define values with it's parent values.
+   * Completes region define values with its parent values.
    * If region define has some incomplete information (fe some
-   * transparent fields), this methods completes them with
+   * transparent fields), these methods completes them with
    * passed parent's values.
    */
   virtual void assignParent(const RegionDefine* parent) = 0;
@@ -56,14 +52,16 @@ class RegionDefine
   }
 
   RegionDefine(const RegionDefine& rd) = delete;
+
   /**
    * Clones current region and creates it's duplicate.
    * To be implemented in subclasses.
    */
-  [[nodiscard]] virtual RegionDefine* clone() const = 0;
+  [[nodiscard]]
+  virtual RegionDefine* clone() const = 0;
 
-  /** Default Destructor */
   virtual ~RegionDefine() = default;
+
   RegionDefine(RegionDefine&&) = delete;
   RegionDefine& operator=(RegionDefine&&) = delete;
 

@@ -1,5 +1,5 @@
-#ifndef _COLORER_REGIONMAPPERIMPL_H_
-#define _COLORER_REGIONMAPPERIMPL_H_
+#ifndef COLORER_REGIONMAPPER_H
+#define COLORER_REGIONMAPPER_H
 
 #include <unordered_map>
 #include <vector>
@@ -9,10 +9,8 @@
 #include "colorer/xml/XmlInputSource.h"
 
 /** Abstract RegionMapper.
-    Stores all region mappings in hashtable and sequental vector for Region -> RegionDefine
-   mappings.
-    @ingroup colorer_handlers
-*/
+ *  Stores all region mappings in hashtable and sequential vector for Region -> RegionDefine mappings.
+ */
 class RegionMapper
 {
  public:
@@ -24,33 +22,32 @@ class RegionMapper
   virtual void loadRegionMappings(XmlInputSource& is) = 0;
 
   /** Saves all loaded region defines into @c writer.
-      Note, that result document would not be equal
-      to input one, because there could be multiple input
-      documents.
-  */
+   *  Note, that result document would not be equal
+   *  to input one, because there could be multiple input documents.
+   */
   virtual void saveRegionMappings(Writer* writer) const = 0;
 
   /** Changes specified region definition to @c rdnew
-      @param region Region full qualified name.
-      @param rdnew  New region definition to replace old one
-  */
+   *  @param region Region full qualified name.
+   *  @param rdnew  New region definition to replace old one
+   */
 
   virtual void setRegionDefine(const UnicodeString& region, const RegionDefine* rdnew) = 0;
 
   /** Enumerates all loaded region defines.
-      @return RegionDefine with specified internal index, or null if @c idx is too big
-  */
+   *  @return std::vector of RegionDefine
+   */
   std::vector<const RegionDefine*> enumerateRegionDefines() const;
 
   /**
    * Searches mapped region define value.
-   * @return Region define, associated with passed @c region
-   * parameter, or null if nothing found
+   * @return Region define, associated with passed @c region parameter, or null if nothing found
    */
   const RegionDefine* getRegionDefine(const Region* region) const;
 
   /**
-   * Searches mapped region define value with qualified name @c name.
+   * Searches mapped region define value with qualified name, or null if nothing found
+   * @param name
    */
   const RegionDefine* getRegionDefine(const UnicodeString& name) const;
 

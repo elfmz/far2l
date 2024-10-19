@@ -1,5 +1,4 @@
 #include "colorer/parsers/HrcLibraryImpl.h"
-#include <algorithm>
 #include <memory>
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/FileTypeImpl.h"
@@ -24,7 +23,7 @@ HrcLibrary::Impl::~Impl()
     delete it.second;
   }
 
-  for (const auto *it : regionNamesVector) {
+  for (const auto* it : regionNamesVector) {
     delete it;
   }
 
@@ -84,7 +83,7 @@ void HrcLibrary::Impl::loadFileType(FileType* filetype)
 
   thisType->pimpl->input_source_loading = true;
 
-  auto& input_source = thisType->pimpl->inputSource;
+  const auto& input_source = thisType->pimpl->inputSource;
   try {
     loadSource(input_source.get());
   } catch (InputSourceException& e) {
@@ -109,7 +108,7 @@ FileType* HrcLibrary::Impl::chooseFileType(const UnicodeString* fileName, const 
   FileType* best = nullptr;
   double max_prior = 0;
   const double DELTA = 1e-6;
-  for (auto *ret : fileTypeVector) {
+  for (auto* ret : fileTypeVector) {
     double const prior = ret->pimpl->getPriority(fileName, firstLine);
 
     if (typeNo > 0 && (prior - max_prior < DELTA)) {
@@ -132,14 +131,14 @@ FileType* HrcLibrary::Impl::getFileType(const UnicodeString* name)
   if (name == nullptr) {
     return nullptr;
   }
-  auto filetype = fileTypeHash.find(*name);
+  const auto filetype = fileTypeHash.find(*name);
   if (filetype != fileTypeHash.end()) {
     return filetype->second;
   }
   return nullptr;
 }
 
-FileType* HrcLibrary::Impl::enumerateFileTypes(unsigned int index)
+FileType* HrcLibrary::Impl::enumerateFileTypes(const unsigned int index) const
 {
   if (index < fileTypeVector.size()) {
     return fileTypeVector[index];
@@ -147,17 +146,17 @@ FileType* HrcLibrary::Impl::enumerateFileTypes(unsigned int index)
   return nullptr;
 }
 
-size_t HrcLibrary::Impl::getFileTypesCount()
+size_t HrcLibrary::Impl::getFileTypesCount() const
 {
   return fileTypeVector.size();
 }
 
-size_t HrcLibrary::Impl::getRegionCount()
+size_t HrcLibrary::Impl::getRegionCount() const
 {
   return regionNamesVector.size();
 }
 
-const Region* HrcLibrary::Impl::getRegion(unsigned int id)
+const Region* HrcLibrary::Impl::getRegion(const unsigned int id) const
 {
   if (id >= regionNamesVector.size()) {
     return nullptr;
@@ -170,7 +169,7 @@ const Region* HrcLibrary::Impl::getRegion(const UnicodeString* name)
   if (name == nullptr) {
     return nullptr;
   }
-  return getNCRegion(name, false);  // regionNamesHash.get(name);
+  return getNCRegion(name, false);
 }
 
 // protected methods
@@ -210,7 +209,7 @@ void HrcLibrary::Impl::parseHRC(const XmlInputSource& is)
 
 void HrcLibrary::Impl::parseHrcBlock(const XMLNode& elem)
 {
-  for (auto node : elem.children) {
+  for (const auto& node : elem.children) {
     if (node.name == hrcTagPrototype || node.name == hrcTagPackage) {
       addPrototype(node);
     }
@@ -235,7 +234,7 @@ void HrcLibrary::Impl::addPrototype(const XMLNode& elem)
     return;
   }
 
-  auto ft = fileTypeHash.find(typeName);
+  const auto ft = fileTypeHash.find(typeName);
   if (ft != fileTypeHash.end()) {
     unloadFileType(ft->second);
     COLORER_LOG_WARN("Duplicate prototype '%'. First version unloaded, current is loading.", typeName);
@@ -261,7 +260,7 @@ void HrcLibrary::Impl::addPrototype(const XMLNode& elem)
 
 void HrcLibrary::Impl::parsePrototypeBlock(const XMLNode& elem, FileType* current_parse_prototype)
 {
-  for (auto node : elem.children) {
+  for (const auto& node : elem.children) {
     if (node.name == hrcTagLocation) {
       addPrototypeLocation(node, current_parse_prototype);
     }
@@ -278,7 +277,7 @@ void HrcLibrary::Impl::parsePrototypeBlock(const XMLNode& elem, FileType* curren
     }
     else {
       COLORER_LOG_WARN("Unused element '%' in prototype '%'. Current file %.", node.name,
-                   current_parse_prototype->pimpl->name, current_input_source->getPath());
+                       current_parse_prototype->pimpl->name, current_input_source->getPath());
     }
   }
 }
@@ -304,7 +303,7 @@ void HrcLibrary::Impl::addPrototypeDetectParam(const XMLNode& elem, FileType* cu
   matchRE->setPositionMoves(true);
   if (!matchRE->isOk()) {
     COLORER_LOG_WARN("Fault compiling chooser RE '%' in prototype '%'", elem.text,
-                 current_parse_prototype->pimpl->name);
+                     current_parse_prototype->pimpl->name);
     return;
   }
   auto ctype = elem.name == hrcTagFilename ? FileTypeChooser::ChooserType::CT_FILENAME
@@ -335,7 +334,7 @@ void HrcLibrary::Impl::addPrototypeDetectParam(const XMLNode& elem, FileType* cu
 
 void HrcLibrary::Impl::addPrototypeParameters(const XMLNode& elem, FileType* current_parse_prototype)
 {
-  for (auto node : elem.children) {
+  for (const auto& node : elem.children) {
     if (node.name == hrcTagParam) {
       const auto& name = node.getAttrValue(hrcParamAttrName);
       const auto& value = node.getAttrValue(hrcParamAttrValue);
@@ -351,7 +350,7 @@ void HrcLibrary::Impl::addPrototypeParameters(const XMLNode& elem, FileType* cur
     }
     else {
       COLORER_LOG_WARN("Unused element '%' in prototype '%'. Current file %.", node.name,
-                   current_parse_prototype->pimpl->name, current_input_source->getPath());
+                       current_parse_prototype->pimpl->name, current_input_source->getPath());
     }
   }
 }
@@ -370,7 +369,7 @@ void HrcLibrary::Impl::addType(const XMLNode& elem)
     COLORER_LOG_ERROR("Type '%s' without prototype", typeName);
     return;
   }
-  auto *const type = type_ref->second;
+  auto* const type = type_ref->second;
   if (type->pimpl->type_loading) {
     COLORER_LOG_WARN("Type '%' is loading already. Current file %", typeName, current_input_source->getPath());
     return;
@@ -435,7 +434,8 @@ void HrcLibrary::Impl::addTypeRegion(const XMLNode& elem)
 
   const auto& regionParent = elem.getAttrValue(hrcRegionAttrParent);
   const auto& regionDescr = elem.getAttrValue(hrcRegionAttrDescription);
-  const auto qname2 = qualifyForeignName(regionParent.isEmpty() ? nullptr : &regionParent, QualifyNameType::QNT_DEFINE, true);
+  const auto qname2 =
+      qualifyForeignName(regionParent.isEmpty() ? nullptr : &regionParent, QualifyNameType::QNT_DEFINE, true);
 
   const Region* region = new Region(*qname1, &regionDescr, getRegion(qname2.get()), regionNamesVector.size());
   regionNamesVector.push_back(region);
@@ -531,7 +531,7 @@ void HrcLibrary::Impl::addSchemeInherit(SchemeImpl* scheme, const XMLNode& elem)
   auto nqSchemeName = elem.getAttrValue(hrcInheritAttrScheme);
   if (nqSchemeName.isEmpty()) {
     COLORER_LOG_ERROR("there is empty scheme name in inherit block of scheme '%', skip this inherit block.",
-                  *scheme->schemeName);
+                      *scheme->schemeName);
     return;
   }
   auto scheme_node = std::make_unique<SchemeNodeInherit>();
@@ -548,7 +548,7 @@ void HrcLibrary::Impl::addSchemeInherit(SchemeImpl* scheme, const XMLNode& elem)
       const auto& x_substName = node.getAttrValue(hrcVirtualAttrSubstScheme);
       if (x_schemeName.isEmpty() || x_substName.isEmpty()) {
         COLORER_LOG_ERROR("there is bad virtualize attributes of scheme '%', skip this virtual block.",
-                      *scheme_node->schemeName);
+                          *scheme_node->schemeName);
         continue;
       }
       scheme_node->virtualEntryVector.emplace_back(new VirtualEntry(&x_schemeName, &x_substName));
@@ -567,7 +567,7 @@ void HrcLibrary::Impl::addSchemeRegexp(SchemeImpl* scheme, const XMLNode& elem)
 
   if (matchParam.isEmpty()) {
     COLORER_LOG_ERROR("there is no 'match' attribute in regexp of scheme '%', skip this regexp block.",
-                  *scheme->schemeName);
+                      *scheme->schemeName);
     return;
   }
 
@@ -575,7 +575,7 @@ void HrcLibrary::Impl::addSchemeRegexp(SchemeImpl* scheme, const XMLNode& elem)
   auto regexp = std::make_unique<CRegExp>(entMatchParam.get());
   if (!regexp->isOk()) {
     COLORER_LOG_ERROR("fault compiling regexp '%' of scheme '%', skip this regexp block.", *entMatchParam,
-                  *scheme->schemeName);
+                      *scheme->schemeName);
     return;
   }
 
@@ -601,7 +601,8 @@ void HrcLibrary::Impl::addSchemeBlock(SchemeImpl* scheme, const XMLNode& elem)
   const XMLNode* element_start = nullptr;
   const XMLNode* element_end = nullptr;
 
-  if ((end_param.isEmpty() && start_param.isEmpty())) {
+  if (end_param.isEmpty() && start_param.isEmpty()) {
+    // don`t use range-based loop , we need pointer to elements
     for (auto node = elem.children.begin(); node != elem.children.end(); ++node) {
       if (node->name == hrcBlockAttrStart) {
         element_start = &*node;
@@ -614,7 +615,7 @@ void HrcLibrary::Impl::addSchemeBlock(SchemeImpl* scheme, const XMLNode& elem)
       }
       else if (node->name == hrcBlockAttrEnd) {
         element_end = &*node;
-        if (node->isExist(hrcBlockAttrMatch) ) {
+        if (node->isExist(hrcBlockAttrMatch)) {
           end_param = node->getAttrValue(hrcBlockAttrMatch);
         }
         else {
@@ -643,7 +644,7 @@ void HrcLibrary::Impl::addSchemeBlock(SchemeImpl* scheme, const XMLNode& elem)
   start_regexp->setPositionMoves(false);
   if (!start_regexp->isOk()) {
     COLORER_LOG_ERROR("fault compiling start regexp '%' in block of scheme '%', skip this block.", *startParam,
-                  *scheme->schemeName);
+                      *scheme->schemeName);
     return;
   }
 
@@ -654,7 +655,7 @@ void HrcLibrary::Impl::addSchemeBlock(SchemeImpl* scheme, const XMLNode& elem)
   end_regexp->setRE(endParam.get());
   if (!end_regexp->isOk()) {
     COLORER_LOG_ERROR("fault compiling end regexp '%' in block of scheme '%', skip this block.", *startParam,
-                  *scheme->schemeName);
+                      *scheme->schemeName);
     return;
   }
 
@@ -678,7 +679,7 @@ void HrcLibrary::Impl::addSchemeBlock(SchemeImpl* scheme, const XMLNode& elem)
 
 void HrcLibrary::Impl::parseSchemeKeywords(SchemeImpl* scheme, const XMLNode& elem)
 {
-  auto rg_tmpl = UnicodeString(u"region");
+  const auto rg_tmpl = UnicodeString(u"region");
   const Region* region = getNCRegion(&elem, rg_tmpl);
   if (region == nullptr) {
     COLORER_LOG_ERROR(
@@ -730,13 +731,14 @@ void HrcLibrary::Impl::loopSchemeKeywords(const XMLNode& elem, const SchemeImpl*
   }
 }
 
-void HrcLibrary::Impl::addSchemeKeyword(const XMLNode& elem, const SchemeImpl* scheme, const SchemeNodeKeywords* scheme_node,
-                                        const Region* region, KeywordInfo::KeywordType keyword_type)
+void HrcLibrary::Impl::addSchemeKeyword(const XMLNode& elem, const SchemeImpl* scheme,
+                                        const SchemeNodeKeywords* scheme_node, const Region* region,
+                                        const KeywordInfo::KeywordType keyword_type)
 {
   const auto& keyword_value = elem.getAttrValue(hrcWordAttrName);
   if (keyword_value.isEmpty()) {
     COLORER_LOG_WARN("the 'name' attribute in the '%' element of scheme '%' is empty or missing, skip it.",
-                 *scheme->schemeName, keyword_type == KeywordInfo::KeywordType::KT_WORD ? "word" : "symb");
+                     *scheme->schemeName, keyword_type == KeywordInfo::KeywordType::KT_WORD ? "word" : "symb");
     return;
   }
 
@@ -749,8 +751,8 @@ void HrcLibrary::Impl::addSchemeKeyword(const XMLNode& elem, const SchemeImpl* s
   KeywordInfo& list = scheme_node->kwList->kwList[scheme_node->kwList->count];
   list.keyword = std::make_unique<UnicodeString>(keyword_value);
   list.region = rgn;
-  list.isSymbol = (keyword_type == KeywordInfo::KeywordType::KT_SYMB);
-  auto *first_char = scheme_node->kwList->firstChar.get();
+  list.isSymbol = keyword_type == KeywordInfo::KeywordType::KT_SYMB;
+  auto* first_char = scheme_node->kwList->firstChar.get();
   first_char->add(keyword_value[0]);
   if (!scheme_node->kwList->matchCase) {
     first_char->add(Character::toLowerCase(keyword_value[0]));
@@ -765,7 +767,7 @@ size_t HrcLibrary::Impl::getSchemeKeywordsCount(const XMLNode& elem)
 {
   size_t result = 0;
   for (const auto& node : elem.children) {
-    if ((node.name == hrcTagWord || node.name == hrcTagSymb)) {
+    if (node.name == hrcTagWord || node.name == hrcTagSymb) {
       const auto& atr = node.getAttrValue(hrcWordAttrName);
       if (!atr.isEmpty()) {
         result++;
@@ -793,7 +795,7 @@ void HrcLibrary::Impl::loadRegexpRegions(SchemeNodeRegexp* node, const XMLNode& 
   }
 }
 
-void HrcLibrary::Impl::loadRegions(SchemeNodeBlock* node, const XMLNode* el, bool start_element)
+void HrcLibrary::Impl::loadRegions(SchemeNodeBlock* node, const XMLNode* el, const bool start_element)
 {
   char16_t rg_tmpl[] = u"region\0";
   if (el) {
@@ -804,7 +806,7 @@ void HrcLibrary::Impl::loadRegions(SchemeNodeBlock* node, const XMLNode* el, boo
     for (int i = 0; i < REGIONS_NUM; i++) {
       rg_tmpl[6] = static_cast<char16_t>((i < 0xA ? i : i + 39) + '0');
 
-      const auto *reg = getNCRegion(el, UnicodeString(rg_tmpl));
+      const auto* reg = getNCRegion(el, UnicodeString(rg_tmpl));
       if (start_element) {
         node->regions[i] = reg;
       }
@@ -840,7 +842,7 @@ void HrcLibrary::Impl::loadBlockRegions(SchemeNodeBlock* node, const XMLNode& el
   }
 }
 
-void HrcLibrary::Impl::updateSchemeLink(uUnicodeString& scheme_name, SchemeImpl** scheme_impl, byte scheme_type,
+void HrcLibrary::Impl::updateSchemeLink(uUnicodeString& scheme_name, SchemeImpl** scheme_impl, const byte scheme_type,
                                         const SchemeImpl* current_scheme)
 {
   static const char* message[4] = {"cannot resolve scheme name '%' of block in scheme '%'",
@@ -866,7 +868,7 @@ void HrcLibrary::Impl::updateLinks()
   while (structureChanged) {
     structureChanged = false;
     for (auto& scheme_it : schemeHash) {
-      SchemeImpl* scheme = scheme_it.second;
+      const SchemeImpl* scheme = scheme_it.second;
       if (!scheme->fileType->pimpl->loadDone) {
         continue;
       }
@@ -874,16 +876,16 @@ void HrcLibrary::Impl::updateLinks()
       current_parse_type = scheme->fileType;
       for (auto& snode : scheme->nodes) {
         if (snode->type == SchemeNode::SchemeNodeType::SNT_BLOCK) {
-          auto *snode_block = static_cast<SchemeNodeBlock*>(snode.get());
+          auto* snode_block = static_cast<SchemeNodeBlock*>(snode.get());
 
           updateSchemeLink(snode_block->schemeName, &snode_block->scheme, 0, scheme);
         }
 
         if (snode->type == SchemeNode::SchemeNodeType::SNT_INHERIT) {
-          auto *snode_inherit = static_cast<SchemeNodeInherit*>(snode.get());
+          auto* snode_inherit = static_cast<SchemeNodeInherit*>(snode.get());
 
           updateSchemeLink(snode_inherit->schemeName, &snode_inherit->scheme, 1, scheme);
-          for (auto *vt : snode_inherit->virtualEntryVector) {
+          for (auto* vt : snode_inherit->virtualEntryVector) {
             updateSchemeLink(vt->virtSchemeName, &vt->virtScheme, 2, scheme);
             updateSchemeLink(vt->substSchemeName, &vt->substScheme, 3, scheme);
           }
@@ -897,13 +899,13 @@ void HrcLibrary::Impl::updateLinks()
   }
 }
 
-uUnicodeString HrcLibrary::Impl::qualifyOwnName(const UnicodeString& name)
+uUnicodeString HrcLibrary::Impl::qualifyOwnName(const UnicodeString& name) const
 {
-  auto colon = name.indexOf(':');
+  const auto colon = name.indexOf(':');
   if (colon != -1) {
     if (UnicodeString(name, 0, colon).compare(current_parse_type->pimpl->name) != 0) {
       COLORER_LOG_ERROR("type name qualifer in '%' doesn't match current type '%'", name,
-                    current_parse_type->pimpl->name);
+                        current_parse_type->pimpl->name);
       return nullptr;
     }
     return std::make_unique<UnicodeString>(name);
@@ -914,8 +916,8 @@ uUnicodeString HrcLibrary::Impl::qualifyOwnName(const UnicodeString& name)
   return sbuf;
 }
 
-bool HrcLibrary::Impl::checkNameExist(const UnicodeString* name, FileType* parseType, QualifyNameType qntype,
-                                      bool logErrors)
+bool HrcLibrary::Impl::checkNameExist(const UnicodeString* name, FileType* parseType, const QualifyNameType qntype,
+                                      const bool logErrors)
 {
   if (qntype == QualifyNameType::QNT_DEFINE && regionNamesHash.find(*name) == regionNamesHash.end()) {
     if (logErrors) {
@@ -938,15 +940,16 @@ bool HrcLibrary::Impl::checkNameExist(const UnicodeString* name, FileType* parse
   return true;
 }
 
-uUnicodeString HrcLibrary::Impl::qualifyForeignName(const UnicodeString* name, QualifyNameType qntype, bool logErrors)
+uUnicodeString HrcLibrary::Impl::qualifyForeignName(const UnicodeString* name, const QualifyNameType qntype,
+                                                    const bool logErrors)
 {
   if (name == nullptr) {
     return nullptr;
   }
-  auto colon = name->indexOf(':');
+  const auto colon = name->indexOf(':');
   if (colon != -1) {  // qualified name
-    UnicodeString prefix(*name, 0, colon);
-    auto ft = fileTypeHash.find(prefix);
+    const UnicodeString prefix(*name, 0, colon);
+    const auto ft = fileTypeHash.find(prefix);
     FileType* prefType = nullptr;
     if (ft != fileTypeHash.end()) {
       prefType = ft->second;
@@ -986,7 +989,7 @@ uUnicodeString HrcLibrary::Impl::qualifyForeignName(const UnicodeString* name, Q
     }
     if (logErrors) {
       COLORER_LOG_ERROR("unqualified name '%' doesn't belong to any imported type [%]", *name,
-                    current_input_source->getPath());
+                        current_input_source->getPath());
     }
   }
   return nullptr;
@@ -1012,7 +1015,7 @@ uUnicodeString HrcLibrary::Impl::useEntities(const UnicodeString* name)
       epos++;
       continue;
     }
-    auto elpos = name->indexOf(';', epos);
+    const auto elpos = name->indexOf(';', epos);
     if (elpos == -1) {
       epos = name->length();
       break;
@@ -1039,17 +1042,17 @@ uUnicodeString HrcLibrary::Impl::useEntities(const UnicodeString* name)
   return newname;
 }
 
-const Region* HrcLibrary::Impl::getNCRegion(const UnicodeString* name, bool logErrors)
+const Region* HrcLibrary::Impl::getNCRegion(const UnicodeString* name, const bool logErrors)
 {
   if (name == nullptr || name->isEmpty()) {
     return nullptr;
   }
   const Region* reg = nullptr;
-  auto qname = qualifyForeignName(name, QualifyNameType::QNT_DEFINE, logErrors);
+  const auto qname = qualifyForeignName(name, QualifyNameType::QNT_DEFINE, logErrors);
   if (qname == nullptr) {
     return nullptr;
   }
-  auto reg_ = regionNamesHash.find(*qname);
+  const auto reg_ = regionNamesHash.find(*qname);
   if (reg_ != regionNamesHash.end()) {
     reg = reg_->second;
   }
@@ -1058,8 +1061,8 @@ const Region* HrcLibrary::Impl::getNCRegion(const UnicodeString* name, bool logE
       Regions with this name are always transparent
   */
   if (reg != nullptr) {
-    auto s_name = reg->getName();
-    auto idx = s_name.indexOf(":default");
+    const auto s_name = reg->getName();
+    const auto idx = s_name.indexOf(":default");
     if (idx != -1 && idx + 8 == s_name.length()) {
       return nullptr;
     }

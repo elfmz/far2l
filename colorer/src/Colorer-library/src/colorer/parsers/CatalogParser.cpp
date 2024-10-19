@@ -9,7 +9,7 @@ void CatalogParser::parse(const UnicodeString* path)
   hrc_locations.clear();
   hrd_nodes.clear();
 
-  XmlInputSource catalogXIS(*path);
+  const XmlInputSource catalogXIS(*path);
   XmlReader xml(catalogXIS);
   if (!xml.parse()) {
     throw CatalogParserException(*path + UnicodeString(" parse error"));
@@ -94,7 +94,7 @@ std::unique_ptr<HrdNode> CatalogParser::parseHRDSetsChild(const XMLNode& elem)
       if (!attr_value.isEmpty()) {
         hrd_node->hrd_location.emplace_back(attr_value);
         COLORER_LOG_DEBUG("add hrd location '%' for %:%", hrd_node->hrd_location.back(), hrd_node->hrd_class,
-                      hrd_node->hrd_name);
+                          hrd_node->hrd_name);
       }
       else {
         COLORER_LOG_WARN("found hrd with empty location. skip it location.");

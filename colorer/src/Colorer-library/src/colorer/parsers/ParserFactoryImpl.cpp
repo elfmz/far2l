@@ -20,7 +20,7 @@ void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
   if (!catalog_path || catalog_path->isEmpty()) {
     COLORER_LOG_DEBUG("loadCatalog for empty path");
 
-    auto env = colorer::Environment::getOSVariable("COLORER_CATALOG");
+    auto env = colorer::Environment::getOSEnv("COLORER_CATALOG");
     if (!env || env->isEmpty()) {
       throw ParserFactoryException("Can't find suitable catalog.xml for parse.");
     }
@@ -44,7 +44,7 @@ void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
 {
   try {
     COLORER_LOG_DEBUG("try load '%'", location);
-    if (XmlInputSource::isFileURI(*base_catalog_path, &location)) {
+    if (XmlInputSource::isFsURI(*base_catalog_path, &location)) {
       auto files = colorer::Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
       for (auto& file : files) {
         loadHrc(file, nullptr);
@@ -163,7 +163,7 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
   const UnicodeString* name_id;
   const UnicodeString name_default(HrdNameDefault);
   if (nameID == nullptr) {
-    auto hrd = colorer::Environment::getOSVariable("COLORER_HRD");
+    auto hrd = colorer::Environment::getOSEnv("COLORER_HRD");
     if (hrd) {
       name_id = hrd.get();
     }

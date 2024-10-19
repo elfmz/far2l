@@ -31,7 +31,7 @@ class CatalogParser
   void parseHrdSetsBlock(const XMLNode& elem);
 };
 
-class CatalogParserException : public Exception
+class CatalogParserException final : public Exception
 {
  public:
   explicit CatalogParserException(const UnicodeString& msg) noexcept : Exception("[CatalogParserException] " + msg) {}

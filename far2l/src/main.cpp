@@ -75,6 +75,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "ConfigOptSaveLoad.hpp"
 #include "help.hpp"
+#include "farversion.h"
 
 #ifdef DIRECT_RT
 int DirectRT = 0;
@@ -83,7 +84,8 @@ int DirectRT = 0;
 static void print_help(const char *self)
 {
 	bool is_far2ledit = strstr(self, "far2ledit") != NULL;
-	printf("FAR2L - two-panel file manager, with built-in terminal and other usefulness'es\n"
+	printf("FAR2L Version: %s\n"
+			"FAR2L - two-panel file manager, with built-in terminal and other usefulness'es\n"
 			"Usage: %s [switches] [-cd apath [-cd ppath]]\n"
 			"   or: far2ledit [switches] [filename]\n\n"
 			"where\n"
@@ -103,7 +105,8 @@ static void print_help(const char *self)
 			//		" -p[<path>]\n"
 			//		"      Search for \"common\" plugins in the directory, specified by <path>.\n"
 			" -u <identity> OR </path/name>\n"
-			"      Allows to specify separate settings identity or FS location.\n"
+			"      Allows to specify separate settings identity or FS location\n"
+			"      (it override FARSETTINGS environment variable value).\n"
 			" -v <filename>\n"
 			"      View the specified file.\n"
 			" -v - <command line>\n"
@@ -117,7 +120,7 @@ static void print_help(const char *self)
 			"      Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false\n"
 			"Switches -cd, -v and -e are not applicable if far2ledit.\n"
 			"\n",
-			is_far2ledit ? "far2l" : self);
+			FAR_BUILD, is_far2ledit ? "far2l" : self);
 	WinPortHelp();
 	// Console.Write(HelpMsg, ARRAYSIZE(HelpMsg)-1);
 }
@@ -286,6 +289,10 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 							ActivePanel->ProcessKey(KEY_CTRLPGDN);
 					}
 				} */
+
+				// Update pointers as the above prefixed plugin calls could recreate one or both panels
+				ActivePanel=CtrlObject->Cp()->ActivePanel;
+				AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
 
 				// !!! ВНИМАНИЕ !!!
 				// Сначала редравим пассивную панель, а потом активную!
@@ -681,7 +688,7 @@ static int libexec(const char *lib, const char *cd, const char *symbol, int argc
 static void SetCustomSettings(const char *arg)
 {
 	std::string refined;
-	if (arg[0] == '/') {
+	if (arg[0] == GOOD_SLASH) {
 		refined = arg;
 
 	} else if (arg[0] == '.' && arg[1] == GOOD_SLASH) {

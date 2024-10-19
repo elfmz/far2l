@@ -986,6 +986,7 @@ void FarAbout(PluginManager &Plugins)
 
 	static const char * const env_vars[] = {
 		"HOSTNAME", "USER",
+		"FARSETTINGS", "FAR2L_ARGS",
 		"XDG_SESSION_TYPE",
 		"TERM", "COLORTERM",
 		"GDK_BACKEND", "DESKTOP_SESSION",

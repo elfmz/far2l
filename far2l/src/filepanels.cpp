@@ -250,12 +250,14 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 		if (new_cl_visible) {
 			CtrlObject->CmdLine->Redraw();
 		}
+/* Don't remember why it was added, but it causes infinite recursion with old FTP plugin (#2443)
 		if (LeftPanel->IsVisible()) {
 			LeftPanel->Redraw();
 		}
 		if (RightPanel->IsVisible()) {
 			RightPanel->Redraw();
 		}
+*/
 	}
 }
 

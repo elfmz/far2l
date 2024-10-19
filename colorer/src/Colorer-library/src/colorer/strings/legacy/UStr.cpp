@@ -1,28 +1,6 @@
 #include "colorer/strings/legacy/UStr.h"
 #include <string>
 
-#ifndef COLORER_FEATURE_LIBXML
-std::string UStr::to_stdstr(const XMLCh* str)
-{
-  std::string _string = std::string(xercesc::XMLString::transcode(str));
-  return _string;
-}
-
-std::unique_ptr<XMLCh[]> UStr::to_xmlch(const UnicodeString* str)
-{
-  // XMLCh and UChar are the same size
-  std::unique_ptr<XMLCh[]> out_s;
-  if (str) {
-    auto len = str->length();
-    out_s = std::make_unique<XMLCh[]>(len + 1);
-    memcpy(out_s.get(),str->getW2Chars(),len*2);
-    out_s[len] = 0;
-  }
-  return out_s;
-}
-
-#endif
-
 std::string UStr::to_stdstr(const UnicodeString* str)
 {
   std::string out_str(str->getChars());

@@ -282,7 +282,7 @@ class BaseEditor : public RegionHandler
    * Searches for the paired token and creates PairMatch
    * object with valid initial properties filled.
    */
-  PairMatch* getPairMatch(int lineNo, int pos);
+  PairMatch* getPairMatch(int lineNo, int pos, LineRegion** line_region);
 };
 
 #endif

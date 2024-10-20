@@ -292,9 +292,17 @@ int GetOptionsParam(FILE *SrcFile, const wchar_t *KeyName, FARString &strValue, 
 
 ///////////////////////////////////////
 
+
+typedef struct lang_data_item_s {
+
+	void  *ptr;
+	size_t datasize;
+
+} lang_data_item_t;
+
 class LanguageData
 {
-	std::vector<void *> _data;
+	std::vector<lang_data_item_t> _data;
 	bool _shrinked = false;
 
 	LanguageData(const LanguageData &) = delete;
@@ -305,28 +313,29 @@ public:
 	~LanguageData()
 	{
 		for (const auto &p : _data) {
-			free(p);
+			free(p.ptr);
 		}
 	}
 
-	int Add(const void *ptr, size_t len)
+	int Add(const void *ptr, size_t len, size_t chars)
 	{
 		_shrinked = false;
 		_data.emplace_back();
-		_data.back() = malloc(len);
-		if (!_data.back()) {
+		_data.back().ptr = malloc(len);
+		if (!_data.back().ptr) {
 			_data.pop_back();
 			return -1;
 		}
 
-		memcpy(_data.back(), ptr, len);
+		memcpy(_data.back().ptr, ptr, len);
+		_data.back().datasize = (chars >= 2) ? chars - 2 : 0;
 		return _data.size() - 1;
 	}
 
 	template <class CharT>
 	inline int AddChars(const CharT *chars, size_t cnt)
 	{
-		return Add(chars, cnt * sizeof(CharT));
+		return Add(chars, cnt * sizeof(CharT), cnt);
 	}
 
 	template <class StrT>
@@ -341,7 +350,16 @@ public:
 			_shrinked = true;
 			_data.shrink_to_fit();
 		}
-		return (ID < _data.size()) ? _data[ID] : nullptr;
+		return (ID < _data.size()) ? _data[ID].ptr : nullptr;
+	}
+
+	const size_t GetDataSize(size_t ID)
+	{
+		if (!_shrinked) {
+			_shrinked = true;
+			_data.shrink_to_fit();
+		}
+		return (ID < _data.size()) ? _data[ID].datasize : (size_t)0;
 	}
 
 	inline int Count() const { return _data.size(); }
@@ -548,6 +566,15 @@ const void *Language::GetMsg(FarLangMsgID id) const
 	return nullptr;
 }
 
+const size_t Language::GetMsgLen(FarLangMsgID id) const
+{
+	if (_data && (_loaded || this == &Lang)) {
+		return _data->GetDataSize(id);
+	}
+
+	return 0;
+}
+
 const wchar_t *Language::GetMsgWide(FarLangMsgID id) const
 {
 	if (!_wide) {
@@ -556,6 +583,15 @@ const wchar_t *Language::GetMsgWide(FarLangMsgID id) const
 	}
 
 	return (const wchar_t *)GetMsg(id);
+}
+
+const  size_t Language::GetMsgWLen(FarLangMsgID id) const
+{
+//	if (!_wide) {
+//		fprintf(stderr, "Language::GetMsgWLen(%d): but language is MULTIBYTE\n", id);
+//		return 0;
+//	}
+	return GetMsgLen(id);
 }
 
 const char *Language::GetMsgMB(FarLangMsgID id) const
@@ -600,4 +636,9 @@ FarLangMsgID Language::InternMsg(const char *str)
 const wchar_t *FarLangMsg::GetMsg(FarLangMsgID id)
 {
 	return ::Lang.GetMsgWide(id);
+}
+
+const size_t FarLangMsg::GetMsgLen(FarLangMsgID id)
+{
+	return ::Lang.GetMsgWLen(id);
 }

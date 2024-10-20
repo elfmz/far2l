@@ -48,3 +48,8 @@ void TextToViewSettings(const wchar_t *ColumnTitles, const wchar_t *ColumnWidths
 		unsigned int *ViewColumnTypes, int *ViewColumnWidths, int *ViewColumnWidthsTypes, int &ColumnCount);
 void ViewSettingsToText(unsigned int *ViewColumnTypes, int *ViewColumnWidths, int *ViewColumnWidthsTypes,
 		int ColumnCount, FARString &strColumnTitles, FARString &strColumnWidths);
+
+#define DIRNAME_STYLE_SURR_CH	0x10
+#define DIRNAME_STYLE_CENTERED	0x20
+
+void UpdateDefaultColumnTypeWidths( void );

@@ -49,6 +49,8 @@ enum UDL_FLAGS
 	ULF_NOTTRIM          = 0x00000040,		// не удалять пробелы
 	ULF_NOTUNQUOTES      = 0x00000080,		// не раскавычивать
 	ULF_ACCOUNTEMPTYLINE = 0x00000100,		// учитывать пустые "строки"
+	ULF_CASESENSITIVE    =0x00000200, // регистрозависимый
+	ULF_PROCESSREGEXP    =0x00000400, // учитывать регулярные выражения, например /a+,b+;c+/i
 };
 
 class UserDefinedListItem

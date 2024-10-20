@@ -912,17 +912,19 @@ void CommandLine::RedrawWithoutComboBoxMark()
 
 void FarAbout(PluginManager &Plugins)
 {
+	static bool b_hide_empty = true;
 	int npl;
 	FARString fs, fs2, fs2copy;
 	MenuItemEx mi, mis;
+	mi.Flags = b_hide_empty ? LIF_HIDDEN : 0;
 	mis.Flags = LIF_SEPARATOR;
 
-	VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
+	VMenu ListAbout(b_hide_empty ? L"far:about *" : L"far:about", nullptr, 0, ScrY-4);
 	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);
 	ListAbout.SetHelp(L"SpecCmd");//L"FarAbout");
-	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-C or Ctrl-Ins - copy all, Ctrl-Alt-F - filtering");
+	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-C or Ctrl-Ins - copy all, Ctrl-H - (un)hide empty, Ctrl-Alt-F - filtering");
 
 	fs.Format(L"          FAR2L Version: %s", FAR_BUILD);
 	ListAbout.AddItem(fs); fs2copy = fs;
@@ -979,10 +981,16 @@ void FarAbout(PluginManager &Plugins)
 
 	ListAbout.AddItem(L""); fs2copy += "\n";
 	struct utsname un;
+	fs = L"                  uname: ";
 	if (uname(&un)==0) {
-		fs.Format(L"                  uname: %s %s %s %s", un.sysname, un.release, un.version, un.machine);
-		ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+		fs.AppendFormat(L"%s %s %s %s", un.sysname, un.release, un.version, un.machine);
+		ListAbout.AddItem(fs);
 	}
+	else {
+		mi.strName = fs;
+		ListAbout.AddItem(&mi);
+	}
+	fs2copy += "\n" + fs;
 
 	static const char * const env_vars[] = {
 		"HOSTNAME", "USER",
@@ -993,11 +1001,16 @@ void FarAbout(PluginManager &Plugins)
 		"WSL_DISTRO_NAME", "WSL2_GUI_APPS_ENABLED",
 		"DISPLAY", "WAYLAND_DISPLAY" };
 	for (unsigned int i = 0; i < ARRAYSIZE(env_vars); i++) {
+		fs.Format(L"%23s: ", env_vars[i]);
 		if (apiGetEnvironmentVariable(env_vars[i], fs2)) {
-			fs.Format(L"%23s: %ls", env_vars[i], fs2.CPtr());
+			fs += fs2.CPtr();
 			ListAbout.AddItem(fs);
-			fs2copy += "\n" + fs;
 		}
+		else {
+			mi.strName = fs;
+			ListAbout.AddItem(&mi);
+		}
+		fs2copy += "\n" + fs;
 	}
 
 	ListAbout.AddItem(L""); fs2copy += "\n";
@@ -1005,6 +1018,8 @@ void FarAbout(PluginManager &Plugins)
 	npl = Plugins.GetPluginsCount();
 	fs.Format(L"      Number of plugins: %d", npl);
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+
+	mi.Flags = 0;
 
 	for(int i = 0; i < npl; i++)
 	{
@@ -1137,6 +1152,28 @@ void FarAbout(PluginManager &Plugins)
 				case KEY_CTRLINS:
 				case KEY_CTRLNUMPAD0:
 					CopyToClipboard(fs2copy.CPtr());
+					break;
+				case KEY_CTRLH: {
+						struct MenuItemEx *mip;
+						if (b_hide_empty) {
+							b_hide_empty = false;
+							for (int i = 0; i < ListAbout.GetItemCount(); i++) {
+								mip = ListAbout.GetItemPtr(i);
+								mip->Flags &= ~LIF_HIDDEN;
+							}
+							ListAbout.SetTitle(L"far:about");
+						}
+						else {
+							b_hide_empty = true;
+							for (int i = 0; i < ListAbout.GetItemCount(); i++) {
+								mip = ListAbout.GetItemPtr(i);
+								if (mip->strName.Ends(L": "))
+									mip->Flags |= LIF_HIDDEN;
+							}
+							ListAbout.SetTitle(L"far:about *");
+						}
+					}
+					ListAbout.Show();
 					break;
 				default:
 					ListAbout.ProcessInput();

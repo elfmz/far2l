@@ -457,7 +457,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 	// Унаследуем пометку из Src в Dst если она есть
 	if (hlSrc->MarkLen) {
 		// Если нет наследования в Src, то просто заменим метку на новую в Dst
-		if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) {
+		if ( !(hlSrc->Flags & HL_FLAGS_MARK_INHERIT) || !hlDst->MarkLen ) {
 			hlDst->MarkLen = hlSrc->MarkLen;
 			memcpy(hlDst->Mark, hlSrc->Mark, sizeof(wchar_t) * hlSrc->MarkLen);
 		}

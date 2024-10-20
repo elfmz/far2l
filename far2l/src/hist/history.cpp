@@ -80,12 +80,14 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 		return false;
 
 	FileMasksProcessor fmp;
-	fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMPF_ADDASTERISK);
-	if (!fmp.IsEmpty() && fmp.Compare(Str)) {
-		return false;
-	}
+	return !(fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMF_ADDASTERISK) && fmp.Compare(Str,true));
 
-	return true;
+//	fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMF_ADDASTERISK);
+//	if (!fmp.IsEmpty() && fmp.Compare(Str, true)) {
+//		return false;
+//	}
+
+//	return true;
 }
 
 /*

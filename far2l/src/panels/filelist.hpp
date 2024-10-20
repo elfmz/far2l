@@ -194,12 +194,17 @@ private:
 	uint64_t SelFileSize;
 	uint64_t TotalFileSize;
 	uint64_t FreeDiskSize;
+	uint64_t TotalFilePhysSize;
+	uint64_t LargestFilSize;
+	uint64_t LargestFilSizeL;
+	uint64_t LargestFilPhysSize;
 	size_t	MarkLM;
 	clock_t LastUpdateTime;
 	int Height, Columns;
 	std::deque<std::string> _symlinks_backlog;
 
 	int ColumnsInGlobal;
+	int AutoColumnWidth[32];
 
 	int LeftPos;
 	int ShiftSelection;
@@ -270,7 +275,7 @@ private:
 	HANDLE OpenPluginForFile(const wchar_t *FileName, DWORD FileAttr, OPENFILEPLUGINTYPE Type);
 	int PreparePanelView(PanelViewSettings *PanelView);
 	int PrepareColumnWidths(unsigned int *ColumnTypes, int *ColumnWidths, int *ColumnWidthsTypes,
-			int &ColumnCount, int FullScreen);
+			int &ColumnCount, int FullScreen, bool bStatus);
 	void PrepareViewSettings(int ViewMode, OpenPluginInfo *PlugInfo);
 
 	void PluginDelete();
@@ -323,6 +328,7 @@ public:
 	virtual void CloseChangeNotification();
 	virtual void SortFileList(int KeepPosition);
 	virtual void SetViewMode(int ViewMode);
+
 	virtual void SetSortMode(int SortMode);
 	void SetSortMode0(int SortMode);
 	virtual void ChangeSortOrder(int NewOrder);
@@ -336,6 +342,8 @@ public:
 	virtual int GetPrevNumericSort();
 	virtual int GetPrevCaseSensitiveSort();
 	virtual int GetPrevDirectoriesFirst();
+
+	void UpdateAutoColumnWidth();
 
 	HANDLE OpenFilePlugin(const wchar_t *FileName, int PushPrev, OPENFILEPLUGINTYPE Type);
 	virtual int GetFileName(FARString &strName, int Pos, DWORD &FileAttr);

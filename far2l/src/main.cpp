@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigOptSaveLoad.hpp"
 #include "help.hpp"
 #include "farversion.h"
+#include "mix/panelmix.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT = 0;
@@ -593,7 +594,10 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal = FALSE;
 	}
 
+	ZeroFarPalette();
 	ConfigOptLoad();
+	InitFarPalette();
+
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
 
@@ -619,6 +623,7 @@ int FarAppMain(int argc, char **argv)
 	setenv("FARLANG", Opt.strLanguage.GetMB().c_str(), 1);
 	initMacroVarTable(1);
 
+	UpdateDefaultColumnTypeWidths();
 	CheckForImportLegacyShortcuts();
 
 	// (!!!) temporary STUB because now Editor can not input filename "", see: fileedit.cpp -> FileEditor::Init()

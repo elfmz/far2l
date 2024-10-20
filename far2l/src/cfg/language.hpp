@@ -57,6 +57,7 @@ public:
 	void Close();
 
 	const wchar_t *GetMsgWide(FarLangMsgID id) const;
+	const size_t GetMsgWLen(FarLangMsgID id) const;
 	const char *GetMsgMB(FarLangMsgID id) const;
 
 	inline bool IsLanguageLoaded() const { return _loaded; }
@@ -73,6 +74,7 @@ private:
 	bool _wide                 = true;
 
 	const void *GetMsg(FarLangMsgID id) const;
+	const size_t GetMsgLen(FarLangMsgID id) const;
 };
 
 extern Language Lang;

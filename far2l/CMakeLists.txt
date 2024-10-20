@@ -100,7 +100,7 @@ src/console/scrsaver.cpp
 
 src/filemask/CFileMask.cpp
 src/filemask/FileMasksProcessor.cpp
-src/filemask/FileMasksWithExclude.cpp
+#src/filemask/FileMasksWithExclude.cpp
 
 src/locale/codepage.cpp
 src/locale/DetectCodepage.cpp
@@ -119,6 +119,7 @@ src/cfg/ConfigRW.cpp
 src/cfg/ConfigLegacy.cpp
 src/cfg/HotkeyLetterDialog.cpp
 src/cfg/language.cpp
+src/cfg/MaskGroups.cpp
 
 src/hist/history.cpp
 src/hist/poscache.cpp

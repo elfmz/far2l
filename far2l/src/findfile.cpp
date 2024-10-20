@@ -2892,7 +2892,7 @@ FindFiles::FindFiles()
 
 FindFiles::~FindFiles()
 {
-	FileMaskForFindFile.Free();
+//	FileMaskForFindFile.Free();
 	itd.ClearAllLists();
 	ScrBuf.ResetShadow();
 

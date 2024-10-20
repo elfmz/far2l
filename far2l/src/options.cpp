@@ -59,6 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "interf.hpp"
 #include "codepage.hpp"
+#include "MaskGroups.hpp"
 
 enum enumMenus
 {
@@ -128,6 +129,7 @@ enum enumCommandsMenu
 	MENU_COMMANDS_FOLDERHISTORY,
 	MENU_COMMANDS_SEPARATOR1,
 	MENU_COMMANDS_SWAPPANELS,
+	MENU_COMMANDS_HORZPANELS,
 	MENU_COMMANDS_TOGGLEPANELS,
 	MENU_COMMANDS_COMPAREFOLDERS,
 	MENU_COMMANDS_SEPARATOR2,
@@ -155,6 +157,7 @@ enum enumOptionsMenu
 	MENU_OPTIONS_VMENUSETTINGS,
 	MENU_OPTIONS_CMDLINESETTINGS,
 	MENU_OPTIONS_AUTOCOMPLETESETTINGS,
+	MENU_OPTIONS_MASKGROUPS,
 	//	MENU_OPTIONS_INFOPANELSETTINGS,
 	MENU_OPTIONS_SEPARATOR1,
 	MENU_OPTIONS_CONFIRMATIONS,
@@ -254,6 +257,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuFoldersHistory,   0,             KEY_ALTF12},
 		{L"",                       LIF_SEPARATOR, 0         },
 		{Msg::MenuSwapPanels,       0,             KEY_CTRLU },
+		{ Opt.PanelsDisposition ? Msg::MenuVerticalPanels : Msg::MenuHorizontalPanels, 0,(KEY_CTRL + KEY_COMMA) },
 		{Msg::MenuTogglePanels,     0,             KEY_CTRLO },
 		{Msg::MenuCompareFolders,   0,             0         },
 		{L"",                       LIF_SEPARATOR, 0         },
@@ -278,6 +282,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuVMenuSettings,          0,             0          },
 		{Msg::MenuCmdlineSettings,        0,             0          },
 		{Msg::MenuAutoCompleteSettings,   0,             0          },
+		{Msg::MenuMaskGroups,             0,             0          },
 		{L"",                             LIF_SEPARATOR, 0          },
 		{Msg::MenuConfirmation,           0,             0          },
 		{Msg::MenuFilePanelModes,         0,             0          },
@@ -503,6 +508,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 				case MENU_COMMANDS_SWAPPANELS:	// Swap panels
 					FrameManager->ProcessKey(KEY_CTRLU);
 					break;
+				case MENU_COMMANDS_HORZPANELS:	// Hrz/Vert panels disposition
+					FrameManager->ProcessKey(KEY_CTRL + KEY_COMMA);
+					break;
 				case MENU_COMMANDS_TOGGLEPANELS:	// Panels On/Off
 					FrameManager->ProcessKey(KEY_CTRLO);
 					break;
@@ -576,6 +584,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 					//				case MENU_OPTIONS_INFOPANELSETTINGS: // InfoPanel Settings
 					//					InfoPanelSettings();
 					//					break;
+				case MENU_OPTIONS_MASKGROUPS:
+					MaskGroupsSettings();
+					break;
 				case MENU_OPTIONS_CONFIRMATIONS:	// Confirmations
 					SetConfirmations();
 					break;

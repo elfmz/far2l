@@ -87,6 +87,7 @@ set(SRC_COLORER
     colorer/viewer/TextConsoleViewer.h
     colorer/viewer/TextLinesStore.cpp
     colorer/viewer/TextLinesStore.h
+    colorer/xml/XMLNode.cpp
     colorer/xml/XMLNode.h
     colorer/xml/XmlInputSource.cpp
     colorer/xml/XmlInputSource.h
@@ -94,37 +95,22 @@ set(SRC_COLORER
     colorer/xml/XmlReader.h
 )
 
-if(COLORER_USE_LIBXML)
-  set(COLORER_FEATURE_LIBXML 1)
-  set(SRC_COLORER_XML
-    colorer/xml/libxml2/LibXmlReader.cpp
-    colorer/xml/libxml2/LibXmlReader.h
-    colorer/xml/libxml2/LibXmlInputSource.h
-  )
-else()
-  set(SRC_COLORER_XML
-    colorer/xml/xercesc/BaseEntityResolver.cpp
-    colorer/xml/xercesc/BaseEntityResolver.h
-    colorer/xml/xercesc/LocalFileXmlInputSource.cpp
-    colorer/xml/xercesc/LocalFileXmlInputSource.h
-    colorer/xml/xercesc/SharedXmlInputSource.cpp
-    colorer/xml/xercesc/SharedXmlInputSource.h
-    colorer/xml/xercesc/XercesXmlInputSource.cpp
-    colorer/xml/xercesc/XercesXmlInputSource.h
-    colorer/xml/xercesc/XmlParserErrorHandler.cpp
-    colorer/xml/xercesc/XmlParserErrorHandler.h
-    colorer/xml/xercesc/XercesXmlReader.h
-    colorer/xml/xercesc/XercesXmlReader.cpp
-  )
-endif()
 
-if(COLORER_USE_ZIPINPUTSOURCE AND NOT(COLORER_USE_LIBXML))
+set(SRC_COLORER_XML
+  colorer/xml/libxml2/LibXmlReader.cpp
+  colorer/xml/libxml2/LibXmlReader.h
+  colorer/xml/libxml2/LibXmlInputSource.h
+  colorer/xml/libxml2/LibXmlInputSource.cpp
+)
+
+
+if(COLORER_USE_ZIPINPUTSOURCE)
   set(COLORER_FEATURE_ZIPINPUTSOURCE 1)
   set(SRC_COLORER_ZIP
-          colorer/xml/xercesc/MemoryFile.cpp
-          colorer/xml/xercesc/MemoryFile.h
-          colorer/xml/xercesc/ZipXmlInputSource.cpp
-          colorer/xml/xercesc/ZipXmlInputSource.h
+    colorer/xml/libxml2/SharedXmlInputSource.cpp
+    colorer/xml/libxml2/SharedXmlInputSource.h
+    colorer/zip/MemoryFile.cpp
+    colorer/zip/MemoryFile.h
   )
 endif()
 
@@ -246,15 +232,9 @@ set_target_properties(colorer_lib PROPERTIES
     CXX_EXTENSIONS NO
 )
 
-if(COLORER_USE_LIBXML)
-  target_link_libraries(colorer_lib
-          PUBLIC LibXml2::LibXml2
-  )
-else()
-  target_link_libraries(colorer_lib
-          PUBLIC XercesC::XercesC
-  )
-endif()
+target_link_libraries(colorer_lib
+        PUBLIC LibXml2::LibXml2
+)
 
 if(COLORER_USE_ICU_STRINGS)
   target_link_libraries(colorer_lib

@@ -1,52 +1,12 @@
-#!/usr/bin/env vpython3
-import sys
-import os
-import re
-import pcpp
-import io
-import cffi
+// WinCompat.h
 
-source = sys.argv[1]
-target = os.path.join(sys.argv[2], "far2lcffi.py")
+#define CONSOLE_FULLSCREEN_MODE 1
+#define CONSOLE_WINDOWED_MODE 2
 
-cpp = pcpp.Preprocessor()
-cpp.add_path(source)
-cpp.add_path(os.path.join(source, "far2l", "far2sdk"))
-cpp.add_path(sys.argv[2])  # to find consts.h
-cpp.define("FAR_USE_INTERNALS 1")
-# cpp.define('WINPORT_DIRECT')
-cpp.define("WINPORT_REGISTRY")
-cpp.define("UNICODE")
-cpp.define("PROCPLUGINMACROFUNC")
-cpp.define("__GNUC__")
-cpp.define("_FAR_NO_NAMELESS_UNIONS")
-cpp.define("_FILE_OFFSET_BITS 64")
-cpp.define("FAR_PYTHON_GEN 1")
-data = """\
-#define uid_t uint32_t
-#define gid_t uint32_t
-#include "consts.h"
-#include "farplug-wide.h"
-#include "farcolor.h"
-#include "farkeys.h"
-"""
+//
+// ControlKeyState flags
+//
 
-cpp.parse(data)
-fp = io.StringIO()
-cpp.write(fp)
-
-data = fp.getvalue()
-for s in re.findall("'.+'", data):
-    t = str(ord(s[-2].encode("ascii")))
-    data = data.replace(s, t)
-data = data.replace("#line", "//#line")
-data = data.replace("#pragma", "//#pragma")
-
-with open(target, 'wt') as fp:
-    fp.write('''\
-data = """\\
-''')
-    fp.write('''\
 #define RIGHT_ALT_PRESSED     0x0001 // the right alt key is pressed.
 #define LEFT_ALT_PRESSED      0x0002 // the left alt key is pressed.
 #define RIGHT_CTRL_PRESSED    0x0004 // the right ctrl key is pressed.
@@ -359,29 +319,33 @@ data = """\\
 #define FILE_ATTRIBUTE_NO_SCRUB_DATA    0x00020000
 #define FILE_ATTRIBUTE_BROKEN           0x00200000
 #define FILE_ATTRIBUTE_EXECUTABLE       0x00400000
-''')
-    fp.write(data)
-    fp.write('''\
-"""
-''')
-    fp.write('''\
-import cffi
-ffi = cffi.FFI()
-pack = None
-while True:
-    i = data.find('//#pragma pack')
-    if i < 0:
-        ffi.cdef(data, pack=pack)
-        break
-    ndata = data[:i]
-    ffi.cdef(ndata, pack=pack)
-    data = data[i:]
-    i = data.find(')')
-    s = data[:i+1]
-    if s.find('()') > 0:
-        pack = None
-    else:
-        pack = 2
-    data = data[i+1:]
-del pack, data, i, ndata, s
-''')
+#define FILE_ATTRIBUTE_DEVICE_CHAR          0x00800000
+#define FILE_ATTRIBUTE_DEVICE_FIFO          0x01000000
+#define FILE_ATTRIBUTE_DEVICE_SOCK          0x02000000
+#define FILE_ATTRIBUTE_HARDLINKS            0x08000000
+
+// WinPort.h
+
+#define CFKP_KEEP_MATCHED_KEY_EVENTS    0x001
+#define CFKP_KEEP_UNMATCHED_KEY_EVENTS  0x002
+#define CFKP_KEEP_MOUSE_EVENTS          0x004
+#define CFKP_KEEP_OTHER_EVENTS          0x100
+
+#define EXCLUSIVE_CTRL_LEFT			0x00000001
+#define EXCLUSIVE_CTRL_RIGHT		0x00000002
+#define EXCLUSIVE_ALT_LEFT			0x00000004
+#define EXCLUSIVE_ALT_RIGHT			0x00000008
+#define EXCLUSIVE_WIN_LEFT			0x00000010
+#define EXCLUSIVE_WIN_RIGHT			0x00000020
+
+#define CONSOLE_PAINT_SHARP			0x00010000
+#define CONSOLE_OSC52CLIP_SET		0x00020000
+
+#define CONSOLE_TTY_PALETTE_OVERRIDE	0x00040000
+
+#define TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS	0x01
+#define TWEAK_STATUS_SUPPORT_PAINT_SHARP	0x02
+#define TWEAK_STATUS_SUPPORT_OSC52CLIP_SET	0x04
+#define TWEAK_STATUS_SUPPORT_CHANGE_FONT	0x08
+#define TWEAK_STATUS_SUPPORT_TTY_PALETTE	0x10
+#define TWEAK_STATUS_SUPPORT_BLINK_RATE		0x20

@@ -13,8 +13,7 @@
 class TypeParameter
 {
  public:
-  TypeParameter(UnicodeString t_name, UnicodeString t_value)
-      : name(std::move(t_name)), value(std::move(t_value)) {};
+  TypeParameter(UnicodeString t_name, UnicodeString t_value) : name(std::move(t_name)), value(std::move(t_value)) {}
 
   /* parameter name*/
   UnicodeString name;
@@ -34,33 +33,44 @@ class TypeParameter
 class FileType::Impl
 {
  public:
-  Impl(UnicodeString name, UnicodeString group, UnicodeString description);
+  Impl(UnicodeString l_name, UnicodeString l_group, UnicodeString l_description);
 
-  [[nodiscard]] const UnicodeString& getName() const;
-  [[nodiscard]] const UnicodeString& getGroup() const;
-  [[nodiscard]] const UnicodeString& getDescription() const;
+  [[nodiscard]]
+  const UnicodeString& getName() const;
+  [[nodiscard]]
+  const UnicodeString& getGroup() const;
+  [[nodiscard]]
+  const UnicodeString& getDescription() const;
 
-  void setName(const UnicodeString* param_name);
-  void setGroup(const UnicodeString* group_name);
-  void setDescription(const UnicodeString* description);
+  void setName(const UnicodeString& param_name);
+  void setGroup(const UnicodeString& group_name);
+  void setDescription(const UnicodeString& description);
 
-  [[nodiscard]] const UnicodeString* getParamValue(const UnicodeString& param_name) const;
-  [[nodiscard]] const UnicodeString* getParamDefaultValue(const UnicodeString& param_name) const;
-  [[nodiscard]] const UnicodeString* getParamUserValue(const UnicodeString& param_name) const;
-  [[nodiscard]] const UnicodeString* getParamDescription(const UnicodeString& param_name) const;
-  [[nodiscard]] int getParamValueInt(const UnicodeString& param_name, int def) const;
+  [[nodiscard]]
+  const UnicodeString* getParamValue(const UnicodeString& param_name) const;
+  [[nodiscard]]
+  const UnicodeString* getParamDefaultValue(const UnicodeString& param_name) const;
+  [[nodiscard]]
+  const UnicodeString* getParamUserValue(const UnicodeString& param_name) const;
+  [[nodiscard]]
+  const UnicodeString* getParamDescription(const UnicodeString& param_name) const;
+  [[nodiscard]]
+  int getParamValueInt(const UnicodeString& param_name, int def) const;
 
   void setParamValue(const UnicodeString& param_name, const UnicodeString* value);
   void setParamDefaultValue(const UnicodeString& param_name, const UnicodeString* value);
   void setParamUserValue(const UnicodeString& param_name, const UnicodeString* value);
   void setParamDescription(const UnicodeString& param_name, const UnicodeString* description);
 
-  [[nodiscard]] std::vector<UnicodeString> enumParams() const;
-  [[nodiscard]] size_t getParamCount() const;
+  [[nodiscard]]
+  std::vector<UnicodeString> enumParams() const;
+  [[nodiscard]]
+  size_t getParamCount() const;
 
   TypeParameter& addParam(const UnicodeString& param_name, const UnicodeString& value);
 
-  [[nodiscard]] Scheme* getBaseScheme() const;
+  [[nodiscard]]
+  Scheme* getBaseScheme() const;
   /**
    * Returns total priority, accordingly to all it's
    * choosers (filename and firstline choosers).

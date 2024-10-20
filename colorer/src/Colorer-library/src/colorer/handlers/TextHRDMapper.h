@@ -1,5 +1,5 @@
-#ifndef _COLORER_TEXTHRDMAPPER_H_
-#define _COLORER_TEXTHRDMAPPER_H_
+#ifndef COLORER_TEXTHRDMAPPER_H
+#define COLORER_TEXTHRDMAPPER_H
 
 #include "colorer/handlers/RegionMapper.h"
 #include "colorer/handlers/TextRegion.h"
@@ -9,14 +9,12 @@
     text indention information.
     For example, HTML indention (@c stext, @c sback, @c etext, @c eback)
     allows to create colorized HTML code.
-
-    @ingroup colorer_handlers
 */
 class TextHRDMapper : public RegionMapper
 {
  public:
   TextHRDMapper() = default;
-  ~TextHRDMapper() override;
+  ~TextHRDMapper() override = default;
 
   /** Loads region definitions from HRD file.
    * Multiple files could be loaded.
@@ -36,10 +34,10 @@ class TextHRDMapper : public RegionMapper
 
   /**
    * Changes specified region definition to @c rdnew
-   * @param region Region full qualified name.
+   * @param region_name Region full qualified name.
    * @param rdnew  New region definition to replace old one
    */
-  void setRegionDefine(const UnicodeString& region, const RegionDefine* rdnew) override;
+  void setRegionDefine(const UnicodeString& region_name, const RegionDefine* rdnew) override;
 };
 
 #endif

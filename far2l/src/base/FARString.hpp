@@ -251,8 +251,8 @@ public:
 	inline bool Ends(wchar_t Ch) const
 		{ return m_pContent->GetLength() > 0 && m_pContent->GetData()[m_pContent->GetLength() - 1] == Ch; }
 
-	inline bool Ends(const FARString &strFind) const;
-	inline bool Ends(const wchar_t *lpwszFind) const;
+	bool Ends(const FARString &strFind) const;
+	bool Ends(const wchar_t *lpwszFind) const;
 
 	template <typename CharT>
 		bool ContainsAnyOf(const CharT *needles)

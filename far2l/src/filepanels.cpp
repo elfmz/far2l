@@ -92,7 +92,7 @@ static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
 void FilePanels::Init()
 {
 	SetPanelPositions(FileList::IsModeFullScreen(Opt.LeftPanel.ViewMode),
-			FileList::IsModeFullScreen(Opt.RightPanel.ViewMode));
+			FileList::IsModeFullScreen(Opt.RightPanel.ViewMode), Opt.PanelsDisposition);
 	LeftPanel->SetViewMode(Opt.LeftPanel.ViewMode);
 	RightPanel->SetViewMode(Opt.RightPanel.ViewMode);
 	LeftPanel->SetSortMode(std::min(std::max(Opt.LeftPanel.SortMode, 0), (int)MAX_PANEL_SORT_MODE));
@@ -227,7 +227,8 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 
 	const bool left_overlap = LeftPanel->IsVisible() && left_y2 + Opt.ShowKeyBar >= ScrY;
 	const bool right_overlap = RightPanel->IsVisible() && right_y2 + Opt.ShowKeyBar >= ScrY;
-	const bool new_cl_visible = !left_overlap || !right_overlap;
+//	const bool new_cl_visible = !left_overlap || !right_overlap;
+	const bool new_cl_visible = !left_overlap && !right_overlap;
 
 	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1, new_cl_y = ScrY - (Opt.ShowKeyBar);
 	if (new_cl_visible) {
@@ -259,32 +260,63 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 	}
 }
 
-void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen)
+void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int Disposition)
 {
-	if (Opt.WidthDecrement < -(ScrX / 2 - 10))
-		Opt.WidthDecrement = -(ScrX / 2 - 10);
+	if (Disposition == 0) { /// vertical panels
 
-	if (Opt.WidthDecrement > (ScrX / 2 - 10))
-		Opt.WidthDecrement = (ScrX / 2 - 10);
+		Opt.LeftHeightDecrement = Max(-1, Min(Opt.LeftHeightDecrement, ScrY - 7));
+		Opt.RightHeightDecrement = Max(-1, Min(Opt.RightHeightDecrement, ScrY - 7));
 
-	Opt.LeftHeightDecrement = Max(-1, Min(Opt.LeftHeightDecrement, ScrY - 7));
-	Opt.RightHeightDecrement = Max(-1, Min(Opt.RightHeightDecrement, ScrY - 7));
+		if (Opt.WidthDecrement < -(ScrX / 2 - 10))
+			Opt.WidthDecrement = -(ScrX / 2 - 10);
 
-	const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement;
-	const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement;
+		if (Opt.WidthDecrement > (ScrX / 2 - 10))
+			Opt.WidthDecrement = (ScrX / 2 - 10);
 
-	if (LeftFullScreen) {
-		LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
-		LeftPanel->ViewSettings.FullScreen = 1;
-	} else {
-		LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX / 2 - Opt.WidthDecrement, LeftY2);
+		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement;
+		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement;
+
+		if (LeftFullScreen) {
+			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
+			LeftPanel->ViewSettings.FullScreen = 1;
+		} else {
+			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX / 2 - Opt.WidthDecrement, LeftY2);
+		}
+
+		if (RightFullScreen) {
+			RightPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
+			RightPanel->ViewSettings.FullScreen = 1;
+		} else {
+			RightPanel->SetPosition(ScrX / 2 + 1 - Opt.WidthDecrement, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
+		}
 	}
+	else if (Disposition == 1) { /// horizontal panels
 
-	if (RightFullScreen) {
-		RightPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
-		RightPanel->ViewSettings.FullScreen = 1;
-	} else {
-		RightPanel->SetPosition(ScrX / 2 + 1 - Opt.WidthDecrement, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
+		Opt.LeftHeightDecrement = Max(-1, Min(Opt.LeftHeightDecrement, ScrY - 13));
+		Opt.RightHeightDecrement = Max(-1, Min(Opt.RightHeightDecrement, ScrY - 13));
+
+		if (Opt.WidthDecrement < -((ScrY - Opt.LeftHeightDecrement) / 2 - 6))
+			Opt.WidthDecrement = -((ScrY - Opt.LeftHeightDecrement) / 2 - 6);
+
+		if (Opt.WidthDecrement > ((ScrY - Opt.LeftHeightDecrement) / 2 - 6))
+			Opt.WidthDecrement = ((ScrY - Opt.LeftHeightDecrement) / 2 - 6);
+
+		const int LeftY2 = (ScrY - Opt.ShowMenuBar) / 2 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement / 2;
+		const int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - Opt.RightHeightDecrement;
+
+		if (LeftFullScreen) {
+			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
+			LeftPanel->ViewSettings.FullScreen = 1;
+		} else {
+			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2 - Opt.WidthDecrement );
+		}
+
+		if (RightFullScreen) {
+			RightPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, RightY2);
+			RightPanel->ViewSettings.FullScreen = 1;
+		} else {
+			RightPanel->SetPosition(0, LeftY2 + 1 - Opt.WidthDecrement, ScrX, RightY2);
+		}
 	}
 
 	UpdateCmdLineVisibility(true);
@@ -295,7 +327,7 @@ void FilePanels::SetScreenPosition()
 	_OT(SysLog(L"[%p] FilePanels::SetScreenPosition() {%d, %d - %d, %d}", this, X1, Y1, X2, Y2));
 	TopMenuBar.SetPosition(0, 0, ScrX, 0);
 	MainKeyBar.SetPosition(0, ScrY, ScrX, ScrY);
-	SetPanelPositions(LeftPanel->IsFullScreen(), RightPanel->IsFullScreen());
+	SetPanelPositions(LeftPanel->IsFullScreen(), RightPanel->IsFullScreen(), Opt.PanelsDisposition);
 	SetPosition(0, 0, ScrX, ScrY);
 }
 
@@ -583,6 +615,14 @@ int FilePanels::ProcessKey(FarKey Key)
 
 			break;
 		}
+//		case (KEY_CTRL + KEY_COMMA) | KEY_ALT: {
+		case (KEY_CTRL + KEY_COMMA): {
+			Opt.PanelsDisposition ^= 1;
+			SetScreenPosition();
+			FrameManager->RefreshFrame();
+			break;
+		}
+
 		/*
 			$ 08.04.2002 IS
 			При смене диска установим принудительно текущий каталог на активной

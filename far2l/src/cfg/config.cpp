@@ -929,6 +929,7 @@ void LanguageSettings()
 		CtrlObject->Cp()->RedrawKeyBar();
 		CtrlObject->Cp()->SetScreenPosition();
 		ApplySudoConfiguration();
+		UpdateDefaultColumnTypeWidths();
 	}
 	delete LangMenu;	//???? BUGBUG
 }

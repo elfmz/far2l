@@ -1521,6 +1521,61 @@ le://End of functional keys
 ""
 ""
 
+MaskGroupTitle
+"Группы масок файлов"
+"Groups of file masks"
+"Skupiny masek souborů"
+"Gruppe der Datenmasken"
+upd:"Groups of file masks"
+"Grupy masek plików"
+"Grupos de máscara de archivos"
+"Групи масок файлів"
+"Суполкі масак файлаў"
+
+MaskGroupName
+"&Имя:"
+"&Name:"
+"Jmé&no:"
+"&Name:"
+"&Neve:"
+"&Nazwa:"
+"&Nombre:"
+"&Ім'я:"
+"&Імя:"
+
+MaskGroupMasks
+"Одна или несколько &масок файлов:"
+"A file &mask or several file masks:"
+"&Maska nebo masky souborů:"
+"Datei&maske (mehrere getrennt mit Komma):"
+"F&ájlmaszk(ok, vesszővel elválasztva):"
+"&Maska pliku lub kilka masek oddzielonych przecinkami:"
+"&Máscara de archivo o múltiples máscaras de archivos:"
+"Одна або декілька &масок файлів:"
+"Адна ці некалькі &масак файлаў"
+
+MaskGroupAskDelete
+"Вы хотите удалить"
+"Do you wish to delete"
+"Přejete si smazat"
+"Wollen Sie folgendes Objekt löschen"
+"Törölni akar"
+"Czy chcesz usunąć"
+"Quiere borrar"
+"Ви бажаєте видалити"
+"Вы жадаеце выдаліць"
+
+MaskGroupRestore
+"Вы хотите восстановить наборы масок по умолчанию?"
+"Do you wish to restore default mask sets?"
+"Přejete si obnovit výchozí sestavy masek?"
+"Wollen Sie voreingestellte Maskensets zurückstellen?"
+upd:"Do you wish to restore default mask sets?"
+"Chcesz przywrócić domyślne ustawienia masek?"
+"Quiere restablecer por defecto máscaras?"
+"Ви бажаєте відновити набори масок за замовчуванням?"
+"Вы жадаеце узнавіць прадвызначаны набор масак?"
+
 HistoryTitle
 l:
 "История команд"
@@ -9145,50 +9200,181 @@ ColumnMumLinks
 "КлС"
 "КлСпасылак"
 
-ListUp
-l:
+DirUp
 "Вверх"
-"  Up  "
+"Up"
 "Nahoru"
-" Hoch "
-"  Fel  "
+"Nach oben"
+"Felfelé"
 "W górę"
-"UP-DIR"
+"Arriba"
 "Вгору"
 "Уверх"
 
-ListFolder
+DirName
 "Папка"
 "Folder"
-"Adresář"
+"Složka"
 "Ordner"
-" Mappa "
+"Mappa"
 "Folder"
-" DIR  "
-"Тека"
-"Каталог"
+"Carpeta"
+"Папка"
+"Папка"
 
-ListSymLink
+DirUp2
+"КАТАЛОГ"
+"UP--DIR"
+"KATALOG"
+"KATALOG"
+"KATALÓG"
+"KATALOG"
+"CATÁLOG"
+"КАТАЛОГ"
+"КАТАЛОГ"
+
+DirName2
+"КАТАЛОГ"
+"SUB-DIR"
+"KATALOG"
+"KATALOG"
+"KATALÓG"
+"KATALOG"
+"CATÁLOG"
+"КАТАЛОГ"
+"КАТАЛОГ"
+
+DirUp3
+"ДИР-ВВЕРХ"
+"DIR-UP"
+"DIR-NAHORU"
+"VERZ-OBEN"
+"KÖNYV-FENT"
+"KAT-W GÓRĘ"
+"DIR-ARRIBA"
+"ДИР-ВГОРУ"
+"ДЫР-ЎВЕРХ"
+
+DirName3
+"ДИРЕКТОРИЯ"
+"DIRECTORY"
+"ADRESÁŘ"
+"VERZEICHNIS"
+"KÖNYVTÁR"
+"KATALOG"
+"DIRECTORIO"
+"ДИРЕКТОРІЯ"
+"ДЫРЭКТЫРЫЯ"
+
+DirUp4
+"ДИР-ВВЕРХ"
+"DIR-UP"
+"DIR-NAHORU"
+"VERZ-OBEN"
+"KÖNYV-FENT"
+"KAT-W GÓRĘ"
+"DIR-ARRIBA"
+"ДИР-ВГОРУ"
+"ДЫР-ЎВЕРХ"
+
+DirName4
+"ПОД-ДИРЕК"
+"SUB-DIR"
+"POD-ADRESÁ"
+"UNTERVERZ"
+"ALMAPPÁLYA"
+"PODKATALOG"
+"SUBDIRECTO"
+"ПІД-ДИРЕК"
+"ПАД-ДЫРЭК"
+
+SymLinkName
 "Ссылка"
 "Symlink"
 "Link"
 "Symlink"
 "SzimLnk"
 "LinkSym"
-" Enlac"
+"Enlac"
 "Посилання"
 "Спасылак"
 
-ListJunction
+SymLinkName2
+"Ссылка"
+"Symlink"
+"Syodkaz"
+"Symlink"
+"Hivatko"
+"Symlink"
+"Enlace"
+"Посилан"
+"Справка"
+
+SymLinkName3
+"ССЫЛКА"
+"SYMLINK"
+"SYODKAZ"
+"SYMLINK"
+"HIVATKO"
+"SYMLINK"
+"ENLACE"
+"ПОСИЛАН"
+"СПРАВКА"
+
+SymLinkName4
+"ССЫЛКА"
+"SYMLINK"
+"SYODKAZ"
+"SYMLINK"
+"HIVATKO"
+"SYMLINK"
+"ENLACE"
+"ПОСИЛАН"
+"СПРАВКА"
+
+JunctionName
 "Связь"
 "Junction"
 "Křížení"
 "Knoten"
 "Csomópt"
 "Dowiązania"
-" Junc "
+"Junc"
 "Зв'язок"
 "Злучэнне"
+
+JunctionName2
+"СВЯЗЬ"
+"JUNCDIR"
+"KŘÍŽENÍ"
+"KNOTEN"
+"CSOMÓPT"
+"DOWIĄZANIA"
+"JUNC"
+"ЗВ'ЯЗОК"
+"ЗЛУЧЭННЕ"
+
+JunctionName3
+"СВЯЗЬ"
+"JUNCDIR"
+"KŘÍŽENÍ"
+"KNOTEN"
+"CSOMÓPT"
+"DOWIĄZANIA"
+"JUNC"
+"ЗВ'ЯЗОК"
+"ЗЛУЧЭННЕ"
+
+JunctionName4
+"СВЯЗЬ"
+"JUNCDIR"
+"KŘÍŽENÍ"
+"KNOTEN"
+"CSOMÓPT"
+"DOWIĄZANIA"
+"JUNC"
+"ЗВ'ЯЗОК"
+"ЗЛУЧЭННЕ"
 
 ListBytes
 "Б"
@@ -12709,6 +12895,28 @@ HighlightMarkStrInherit
 "Спадкувати"
 "Падзярэваць"
 
+HighlightMarkAddInherit
+"Добавить"
+"Add"
+"Přidat"
+"Hinzufügen"
+"Hozzáad"
+"Dodaj"
+"Añadir"
+"Додати"
+"Дадаць"
+
+HighlightCustomIdent
+"Отступ"
+"Indent"
+"Odsazení"
+"Einzug"
+"Behúzás"
+"Wcięcie"
+"Sangría"
+"Відступ"
+"Адступ"
+
 HighlightColors
 " Цвета файлов (\"чёрный на чёрном\" - цвет по умолчанию) "
 " File name colors (\"black on black\" - default color) "
@@ -14180,6 +14388,28 @@ MenuSwapPanels
 "Зм&інити панелі            Ctrl+U"
 "З&мяніць панэлі           Ctrl+U"
 
+MenuHorizontalPanels
+"Гори&зонтальные панели    Ctrl+,"
+"Hori&zontal panels   Ctrl+,"
+"Hori&zontální panely            Ctrl+,"
+"Hori&zontale Paneele  Strg+,"
+"Hori&zontális panel  Ctrl+,"
+"Po&ziome panele            Ctrl+,"
+"Paneles hori&zontales  Ctrl+,"
+"Гори&зонтальні панелі      Ctrl+,"
+"Гори&зантальныя панэлі    Ctrl+,"
+
+MenuVerticalPanels
+"Вер&тикальные панели      Ctrl+,"
+"Ver&tical panels     Ctrl+,"
+"Ver&tikální panely              Ctrl+,"
+"Ver&tikale Paneele    Strg+,"
+"Ver&tikális panelek  Ctrl+,"
+"Pionow&e panele            Ctrl+,"
+"Paneles ver&ticales    Ctrl+,"
+"Вер&тикальні панелі        Ctrl+,"
+"Вер&тыкальныя панэлі      Ctrl+,"
+
 MenuTogglePanels
 "Панели &Вкл/Выкл          Ctrl+O"
 "&Panels On/Off       Ctrl+O"
@@ -14411,6 +14641,17 @@ upd:"AutoComplete && History settings"
 "Opciones de autocompletar e historial"
 "На&лаштування автозавершення та історії"
 "На&лады аўтазаканчэння і гістарычных"
+
+MenuMaskGroups
+"Группы масок файлов"
+"Groups of file mas&ks"
+"Skupiny masek souborů"
+"Gruppe der Datenmasken"
+upd:"Groups of file masks"
+"Grupy masek p&lików"
+"Grupos de máscara de archivos"
+"Групи масок файлів"
+"Суполкі масак файлаў"
 
 MenuInfoPanelSettings
 "Нас&тройки информационной панели"
@@ -16847,6 +17088,17 @@ SetBW
 "Чорно-біл&ий режим"
 "Чорна-бел&ы рэжым"
 
+Palette
+"П&алитра"
+"P&alette"
+"P&aleta"
+"P&alette"
+"P&aletta"
+"P&aleta"
+"P&aleta"
+"П&алітра"
+"&алiтра"
+
 SetColorPanelNormal
 l:
 "Обычный текст"
@@ -18596,15 +18848,15 @@ LocalMenuTitle
 "Мясцовае меню"
 
 MainMenuBottomTitle
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Entf Einf F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
-"Del Ins F4 Ctrl+F4 Ctrl+Up Ctrl+Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
 
 AskDeleteMenuItem
 "Вы хотите удалить пункт меню"

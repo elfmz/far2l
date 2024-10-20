@@ -1,12 +1,60 @@
-#include "colorer/xml/xercesc/MemoryFile.h"
+#include "colorer/zip/MemoryFile.h"
 #include <cstring>
+#include "colorer/Exception.h"
+
+std::unique_ptr<std::vector<byte>> unzip(const byte* src, int size, const UnicodeString& path_in_zip)
+{
+  MemoryFile mf;
+  mf.stream = src;
+  mf.length = size;
+  zlib_filefunc_def zlib_ff;
+  fill_mem_filefunc(&zlib_ff, &mf);
+
+  unzFile fid = unzOpen2(nullptr, &zlib_ff);
+
+  if (!fid) {
+    unzClose(fid);
+    throw InputSourceException("Can't locate file in JAR content: '" + path_in_zip + "'");
+  }
+  int ret = unzLocateFile(fid, UStr::to_stdstr(&path_in_zip).c_str(), 0);
+  if (ret != UNZ_OK) {
+    unzClose(fid);
+    throw InputSourceException("Can't locate file in JAR content: '" + path_in_zip + "'");
+  }
+  unz_file_info file_info;
+  ret = unzGetCurrentFileInfo(fid, &file_info, nullptr, 0, nullptr, 0, nullptr, 0);
+  if (ret != UNZ_OK) {
+    unzClose(fid);
+    throw InputSourceException("Can't retrieve current file in JAR content: '" + path_in_zip + "'");
+  }
+
+  const auto len = file_info.uncompressed_size;
+  auto stream = std::make_unique<std::vector<byte>>(len);
+  ret = unzOpenCurrentFile(fid);
+  if (ret != UNZ_OK) {
+    unzClose(fid);
+    throw InputSourceException("Can't open current file in JAR content: '" + path_in_zip + "'");
+  }
+  ret = unzReadCurrentFile(fid, stream->data(), len);
+  if (ret <= 0) {
+    unzClose(fid);
+    throw InputSourceException("Can't read current file in JAR content: '" + path_in_zip + "' (" + ret + ")");
+  }
+  ret = unzCloseCurrentFile(fid);
+  if (ret == UNZ_CRCERROR) {
+    unzClose(fid);
+    throw InputSourceException("Bad JAR file CRC");
+  }
+  unzClose(fid);
+  return stream;
+}
 
 voidpf ZCALLBACK mem_open_file_func(voidpf opaque, const char* /*filename*/, int /*mode*/)
 {
   MemoryFile* mf = (MemoryFile*) opaque;
   mf->error = 0;
   mf->pointer = 0;
-  return (voidpf) 0x666888; //-V566
+  return (voidpf) 0x666888;  //-V566
 }
 
 uLong ZCALLBACK mem_read_file_func(voidpf opaque, voidpf /*stream*/, void* buf, uLong size)

@@ -21,3 +21,4 @@ size_t VTShell_Count();
 void VTShell_Enum(VTInfos &vts);
 int VTShell_Switch(size_t index);
 
+const char *GetSystemShell();

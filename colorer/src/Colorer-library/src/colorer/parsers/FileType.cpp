@@ -47,17 +47,17 @@ const UnicodeString* FileType::getParamDefaultValue(const UnicodeString& name) c
   return pimpl->getParamDefaultValue(name);
 }
 
-int FileType::getParamValueInt(const UnicodeString& name, int def_value) const
+int FileType::getParamValueInt(const UnicodeString& name, const int def_value) const
 {
   return pimpl->getParamValueInt(name, def_value);
 }
 
-void FileType::addParam(const UnicodeString* name, const UnicodeString* value)
+void FileType::addParam(const UnicodeString& name, const UnicodeString* value)
 {
-  if (name == nullptr || value == nullptr) {
-    throw FileTypeException("Parameter must have not empty name and value");
+  if (value == nullptr) {
+    throw FileTypeException("Parameter must have not empty value");
   }
-  pimpl->addParam(*name, *value);
+  pimpl->addParam(name, *value);
 }
 
 void FileType::addParam(const UnicodeString& name, const UnicodeString& value)
@@ -70,19 +70,19 @@ size_t FileType::getParamCount() const
   return pimpl->getParamCount();
 }
 
-const UnicodeString* FileType::getParamUserValue(const UnicodeString& name_) const
+const UnicodeString* FileType::getParamUserValue(const UnicodeString& name) const
 {
-  return pimpl->getParamUserValue(name_);
+  return pimpl->getParamUserValue(name);
 }
 
-void FileType::setParamDescription(const UnicodeString& name_, const UnicodeString* value)
+void FileType::setParamDescription(const UnicodeString& name, const UnicodeString* value)
 {
-  pimpl->setParamDescription(name_, value);
+  pimpl->setParamDescription(name, value);
 }
 
-void FileType::setParamDefaultValue(const UnicodeString& name_, const UnicodeString* value)
+void FileType::setParamDefaultValue(const UnicodeString& name, const UnicodeString* value)
 {
-  pimpl->setParamDefaultValue(name_, value);
+  pimpl->setParamDefaultValue(name, value);
 }
 
 void FileType::setParamValue(const UnicodeString& name, const UnicodeString* value)
@@ -90,17 +90,17 @@ void FileType::setParamValue(const UnicodeString& name, const UnicodeString* val
   pimpl->setParamValue(name, value);
 }
 
-void FileType::setName(const UnicodeString* name)
+void FileType::setName(const UnicodeString& name)
 {
   pimpl->setName(name);
 }
 
-void FileType::setGroup(const UnicodeString* group)
+void FileType::setGroup(const UnicodeString& group)
 {
   pimpl->setGroup(group);
 }
 
-void FileType::setDescription(const UnicodeString* description)
+void FileType::setDescription(const UnicodeString& description)
 {
   pimpl->setDescription(description);
 }

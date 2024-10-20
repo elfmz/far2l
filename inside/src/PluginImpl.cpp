@@ -7,7 +7,7 @@ bool PluginImpl::AddUnsized(FP_SizeItemList &il, const char *name, DWORD attrs)
 {
 	PluginPanelItem tmp;
 	ZeroFill(tmp); // ensure zeroed padding after tmp.FindData.cFileName
-	strncpy(tmp.FindData.cFileName, name, ARRAYSIZE(tmp.FindData.cFileName));
+	CharArrayCpy(tmp.FindData.cFileName, name);
 	tmp.FindData.dwFileAttributes = attrs;
 	tmp.Description = tmp.FindData.cFileName;
 	return il.Add(&tmp);

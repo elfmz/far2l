@@ -30,7 +30,7 @@ class SchemeNode
   virtual ~SchemeNode() = default;
 };
 
-class SchemeNodeInherit : public SchemeNode
+class SchemeNodeInherit final : public SchemeNode
 {
  public:
   uUnicodeString schemeName = nullptr;
@@ -40,7 +40,7 @@ class SchemeNodeInherit : public SchemeNode
   ~SchemeNodeInherit() override;
 };
 
-class SchemeNodeRegexp : public SchemeNode
+class SchemeNodeRegexp final : public SchemeNode
 {
  public:
   bool lowPriority = false;
@@ -53,7 +53,7 @@ class SchemeNodeRegexp : public SchemeNode
   ~SchemeNodeRegexp() override = default;
 };
 
-class SchemeNodeBlock : public SchemeNode
+class SchemeNodeBlock final : public SchemeNode
 {
  public:
   bool innerRegion = false;
@@ -73,7 +73,7 @@ class SchemeNodeBlock : public SchemeNode
   ~SchemeNodeBlock() override = default;
 };
 
-class SchemeNodeKeywords : public SchemeNode
+class SchemeNodeKeywords final : public SchemeNode
 {
  public:
   std::unique_ptr<KeywordList> kwList;

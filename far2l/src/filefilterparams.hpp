@@ -179,5 +179,5 @@ public:
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig = false);
 
 // Централизованная функция для создания строк меню различных фильтров.
-void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType = false, int Hotkey = 0,
+void MenuString(FARString &strDest, FileFilterParams *FF, uint32_t maskstyle, bool bHighlightType = false, int Hotkey = 0,
 		bool bPanelType = false, const wchar_t *FMask = nullptr, const wchar_t *Title = nullptr);

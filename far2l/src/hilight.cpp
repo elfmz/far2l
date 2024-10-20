@@ -630,12 +630,13 @@ void HighlightFiles::FillMenu(VMenu *HiMenu, int MenuPos)
 	};
 	HiMenu->DeleteItems();
 	HiMenuItem.Clear();
+	uint32_t attrstyle = Opt.AttrStrStyle;
 
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
 
 			FileFilterParams *ffp = HiData.getItem(i);
-			MenuString(HiMenuItem.strName, ffp, true);
+			MenuString(HiMenuItem.strName, ffp, attrstyle, true);
 
 			if (ffp->GetFlags(FFFT_CUSTOM) & FFF_DISABLED) {
 				HiMenuItem.Flags |= LIF_GRAYED;
@@ -730,6 +731,11 @@ void HighlightFiles::HiEdit(int MenuPos)
 						$ 07.07.2000 IS
 						Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
+				case KEY_CTRLM: {
+					Opt.AttrStrStyle ^= 1;
+					NeedUpdate = true;
+				}
+				break;
 
 				case KEY_SUBTRACT:
 				case KEY_ADD:

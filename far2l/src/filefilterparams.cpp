@@ -397,7 +397,23 @@ void FillPreviewStr(wchar_t *dstStr, size_t dstsize, const wchar_t *srcStr, cons
 	*dstStr = 0;
 }
 
-void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uint32_t ExcludeAttr)
+#if 0
+	wchar_t Attr[ARRAYSIZE(AttrC) * 2] = {0};
+
+	for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+		wchar_t *Ptr = Attr + i * 2;
+		*Ptr = AttrC[i];
+
+		if ((IncludeAttr & AttrF[i]) == AttrF[i])
+			*(Ptr + 1) = L'+';
+		else if ((ExcludeAttr & AttrF[i]) == AttrF[i])
+			*(Ptr + 1) = L'-';
+		else
+			*Ptr = *(Ptr + 1) = L'.';
+	}
+#endif
+
+void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uint32_t ExcludeAttr, uint32_t style)
 {
 	static const wchar_t AttrC[] = L"RAHSD<CEI$TLOVXBYKFN";
 	static const DWORD AttrF[ARRAYSIZE(AttrC) - 1] = {FILE_ATTRIBUTE_READONLY, FILE_ATTRIBUTE_ARCHIVE,
@@ -411,40 +427,71 @@ void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uin
 	if (!AttrStr || truncatelen < 2)
 		return;
 
-	if (IncludeAttr) {
-		*Ptr++ = L'+';
-		for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
-			if ((IncludeAttr & AttrF[i]))
-				*Ptr++ = AttrC[i];
-		}
-		*Ptr++ = L' ';
-	}
-	if (ExcludeAttr) {
-		*Ptr++ = L'-';
-		for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
-			if ((ExcludeAttr & AttrF[i]))
-				*Ptr++ = AttrC[i];
-		}
-	}
-	*Ptr = 0;
+	if (style == 1) {
 
-	if ((size_t)(Ptr - AttrStr) > truncatelen - 1) {
-		AttrStr[truncatelen - 1] = L'…';
-		AttrStr[truncatelen] = 0;
+		if (IncludeAttr) {
+			*Ptr++ = L'+';
+			for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+				if ((IncludeAttr & AttrF[i]))
+					*Ptr++ = AttrC[i];
+			}
+			*Ptr++ = L' ';
+		}
+		if (ExcludeAttr) {
+			*Ptr++ = L'-';
+			for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+				if ((ExcludeAttr & AttrF[i]))
+					*Ptr++ = AttrC[i];
+			}
+		}
+		*Ptr = 0;
+
+		if ((size_t)(Ptr - AttrStr) > truncatelen - 1) {
+			AttrStr[truncatelen - 1] = L'…';
+			AttrStr[truncatelen] = 0;
+			return;
+		}
+
 	}
+	else {
+		for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+			wchar_t *Ptr = AttrStr + i * 2;
+			*Ptr = AttrC[i];
+
+			if ((IncludeAttr & AttrF[i]) == AttrF[i])
+				*(Ptr + 1) = L'+';
+			else if ((ExcludeAttr & AttrF[i]) == AttrF[i])
+				*(Ptr + 1) = L'-';
+			else
+				*Ptr = *(Ptr + 1) = L'.';
+		}
+		Ptr += ARRAYSIZE(AttrF) * 2;
+	}
+
+	while(Ptr < (AttrStr + truncatelen)) {
+		*Ptr++ = 32;
+	}
+
+	AttrStr[truncatelen] = 0;
 }
 
 // Централизованная функция для создания строк меню различных фильтров.
-void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType,
+void MenuString(FARString &strDest, FileFilterParams *FF, uint32_t attrstyle, bool bHighlightType, int Hotkey, bool bPanelType,
 		const wchar_t *FMask, const wchar_t *Title)
 {
 	wchar_t MarkStrPrw[8];
 	wchar_t NameStrPrw[32];
 
-	const wchar_t Format1A[] = L"%ls %lc %-16.16ls %-2.2ls %lc %ls";
-	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-16.16ls %-2.2ls %lc %ls";
-	const wchar_t Format1d[] = L"   %-18.18ls %lc %-16.16ls %-2.2ls %lc %ls";
-	const wchar_t Format2[] = L"%ls %lc %ls %lc %-16.16ls %-3.3ls %lc %ls";
+//	const wchar_t Format1A[] = L"%ls %lc %-16.16ls %-2.2ls %lc %ls";
+	const wchar_t Format1A[] = L"%ls %lc %ls %-2.2ls %lc %ls";
+
+	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %ls %-2.2ls %lc %ls";
+	const wchar_t Format1d[] = L"   %-18.18ls %lc %ls %-2.2ls %lc %ls";
+
+//	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-16.16ls %-2.2ls %lc %ls";
+//	const wchar_t Format1d[] = L"   %-18.18ls %lc %-16.16ls %-2.2ls %lc %ls";
+
+	const wchar_t Format2[] = L"%ls %lc %ls %lc %ls %-3.3ls %lc %ls";
 	const wchar_t DownArrow = 0x2193;
 	const wchar_t *Name, *Mask;
 
@@ -476,8 +523,11 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 		UseDate = FF->GetDate(nullptr, nullptr, nullptr, &RelativeDate);
 	}
 
-	wchar_t Attr[32];
-	FillAttrStr(Attr, 16, IncludeAttr, ExcludeAttr);
+	wchar_t Attr[64];
+	switch(attrstyle) {
+		case 0: FillAttrStr(Attr, 38, IncludeAttr, ExcludeAttr, attrstyle); break;
+		case 1: FillAttrStr(Attr, 16, IncludeAttr, ExcludeAttr, attrstyle); break;
+	}
 
 	wchar_t SizeDate[4] = L"...";
 

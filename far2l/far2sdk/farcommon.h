@@ -13,4 +13,10 @@ typedef uint32_t FarKey;
 # define CP_AUTODETECT ((UINT)-1)
 #endif
 
+#define VTH_LOGEXPORT_COLORED           0x00000001
+#define VTH_LOGEXPORT_WITH_SCREENLINES  0x00000002
+
+// returns actual handles count, if returned value > count argument - then need to extend array buffer and retry
+typedef SIZE_T (WINAPI *FARAPIVT_ENUM_BACKGROUND)(HANDLE *con_hnds, SIZE_T count);
+
 #endif // __FAR2SDK_FARCOMMON_H__

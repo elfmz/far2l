@@ -67,6 +67,7 @@ public:
 	FileFilter(Panel *HostPanel, FAR_FILE_FILTER_TYPE FilterType);
 	~FileFilter();
 
+	void FillMenu(VMenu &FilterList);
 	bool FilterEdit();
 	void UpdateCurrentTime();
 	bool FileInFilter(const FileListItem &fli, enumFileInFilterType *foundType = nullptr);

@@ -12051,15 +12051,15 @@ l:
 "Меню фільтраў"
 
 FilterBottom
-"+ - Пробел I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Mezera I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Leer I X BS UmschBS Einf Entf F4 F5 StrgUp StrgDn"
-"+ - Szóköz I X BS Shift+BS Ins Del F4 F5 Ctrl+Fel Ctrl+Le"
-"+ - Spacja I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"Seleccione: '+' '-' Space. Editor: Ins Del F4"
-"+ - Пробіл I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"+ - Пробел I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Mezera I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Leer I X BS UmschBS Einf Entf F4 F5 StrgUp/Dn Ctrl+M"
+"+ - Szóköz I X BS Shift+BS Ins Del F4 F5 Ctrl+Fel/Le Ctrl+M"
+"+ - Spacja I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"Seleccione: '+' '-' Space. Editor: Ins Del F4 Ctrl+M"
+"+ - Пробіл I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
 
 PanelFileType
 "Файлы панели"
@@ -12785,15 +12785,15 @@ l:
 "Афарбоўка файлаў"
 
 HighlightBottom
-"+ - Пробел Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Mezera Ins Del F4 F5 Ctrl+Nahoru Ctrl+Dolů"
-"+ - Leer Einf Entf F4 F5 Strg+Up,Strg+Down Strg+R"
-"+ - Szóköz Ins Del F4 F5 Ctrl+Fel Ctrl+Le Ctrl+R"
-"+ - Spacja Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Пробіл Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
+"+ - Пробел Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Space Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Mezera Ins Del F4 F5 Ctrl+Nahoru/Dolů Ctrl+M"
+"+ - Leer Einf Entf F4 F5 Strg+Up/Down Strg+R Strg+M"
+"+ - Szóköz Ins Del F4 F5 Ctrl+Fel/Le Ctrl+R Ctrl+M"
+"+ - Spacja Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Space Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Пробіл Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Space Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
 
 HighlightUpperSortGroup
 "Верхняя группа сортировки"

@@ -276,7 +276,6 @@ enum enumDirCfgDialog
 	ID_DIRCFG_STYLE_TEXT,
 	ID_DIRCFG_STYLE_COMBO,
 	ID_DIRCFG_SEPARATOR,
-	ID_DIRCFG_BUTTON_APPLY,
 
 	ID_DIRCFG_CHECKBOX_CENTER,
 	ID_DIRCFG_CHECKBOX_SURR,
@@ -285,7 +284,8 @@ enum enumDirCfgDialog
 	ID_DIRCFG_SEPARATOR2,
 	ID_DIRCFG_BUTTON_OK,
 	ID_DIRCFG_BUTTON_RESTORE,
-	ID_DIRCFG_BUTTON_CANCEL
+	ID_DIRCFG_BUTTON_CANCEL,
+	ID_DIRCFG_BUTTON_APPLY,
 };
 
 typedef struct dircfg_data_s {
@@ -390,21 +390,20 @@ void DirectoryNameSettings()
 	dircfg_data_t dircfg_data;
 	DialogDataEx DirCfgDlgData[] = {
 
-		{DI_DOUBLEBOX, 3,  1,  46,  11, {}, 0, Msg::DirSettingsTitle},
+		{DI_DOUBLEBOX, 3,  1,  47,  10, {}, 0, Msg::DirSettingsTitle},
 		{DI_TEXT,      5,  2,  35,   2, {}, 0, Msg::DirSettingsShowAs},
 		{DI_COMBOBOX,  5,  3,  5+40, 3, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 		{DI_TEXT,      0,  4,  0,    4, {}, DIF_SEPARATOR, L""},
 
-		{DI_BUTTON,    30, 5,  36,   5, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
+		{DI_CHECKBOX,  5,  5,  20,   5, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
+		{DI_CHECKBOX,  5,  6,  20,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
+		{DI_COMBOBOX,  9, 7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 
-		{DI_CHECKBOX,  5,  6,  20,   6, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
-		{DI_CHECKBOX,  5,  7,  20,   7, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
+		{DI_TEXT,      0,  8,  0,    8, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
 
-		{DI_COMBOBOX,  10, 8,  26,   8, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
-
-		{DI_TEXT,      0,  9,  0,    9, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 10,  0,   10, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 10,  0,   10, {}, DIF_CENTERGROUP, Msg::Cancel},
 	};
 
 	MakeDialogItemsEx(DirCfgDlgData, DirCfgDlg);
@@ -422,8 +421,8 @@ void DirectoryNameSettings()
 
 	Dialog Dlg(DirCfgDlg, ARRAYSIZE(DirCfgDlg), DirCfgDlgProc, (LONG_PTR)&dircfg_data);
 
-	int dialogsizex = 50;
-	int dialogsizey = 13;
+	int dialogsizex = 51;
+	int dialogsizey = 12;
 	Dlg.SetPosition(-1, -1, dialogsizex, dialogsizey);
 	Dlg.SetAutomation(ID_DIRCFG_CHECKBOX_SURR, ID_DIRCFG_SURR_COMBO, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 

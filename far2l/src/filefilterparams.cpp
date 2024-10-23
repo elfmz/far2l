@@ -413,7 +413,7 @@ void FillPreviewStr(wchar_t *dstStr, size_t dstsize, const wchar_t *srcStr, cons
 	}
 #endif
 
-void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uint32_t ExcludeAttr, uint32_t style)
+void FillAttrStr(wchar_t *AttrStr, uint32_t IncludeAttr, uint32_t ExcludeAttr, uint32_t style)
 {
 	static const wchar_t AttrC[] = L"RAHSD<CEI$TLOVXBYKFN";
 	static const DWORD AttrF[ARRAYSIZE(AttrC) - 1] = {FILE_ATTRIBUTE_READONLY, FILE_ATTRIBUTE_ARCHIVE,
@@ -424,7 +424,7 @@ void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uin
 			FILE_ATTRIBUTE_DEVICE_CHAR, FILE_ATTRIBUTE_DEVICE_BLOCK, FILE_ATTRIBUTE_DEVICE_FIFO, FILE_ATTRIBUTE_DEVICE_SOCK};
 	wchar_t *Ptr = AttrStr;
 
-	if (!AttrStr || truncatelen < 2)
+	if (!AttrStr)
 		return;
 
 	if (style == 1) {
@@ -444,14 +444,11 @@ void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uin
 					*Ptr++ = AttrC[i];
 			}
 		}
-		*Ptr = 0;
 
-		if ((size_t)(Ptr - AttrStr) > truncatelen - 1) {
-			AttrStr[truncatelen - 1] = L'…';
-			AttrStr[truncatelen] = 0;
-			return;
+		while(Ptr < (AttrStr + 23)) {
+			*Ptr++ = 32;
 		}
-
+		*Ptr = 0;
 	}
 	else {
 		for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
@@ -466,13 +463,8 @@ void FillAttrStr(wchar_t *AttrStr, size_t truncatelen, uint32_t IncludeAttr, uin
 				*Ptr = *(Ptr + 1) = L'.';
 		}
 		Ptr += ARRAYSIZE(AttrF) * 2;
+		*Ptr = 0;
 	}
-
-	while(Ptr < (AttrStr + truncatelen)) {
-		*Ptr++ = 32;
-	}
-
-	AttrStr[truncatelen] = 0;
 }
 
 // Централизованная функция для создания строк меню различных фильтров.
@@ -525,8 +517,8 @@ void MenuString(FARString &strDest, FileFilterParams *FF, uint32_t attrstyle, bo
 
 	wchar_t Attr[64];
 	switch(attrstyle) {
-		case 0: FillAttrStr(Attr, 38, IncludeAttr, ExcludeAttr, attrstyle); break;
-		case 1: FillAttrStr(Attr, 16, IncludeAttr, ExcludeAttr, attrstyle); break;
+		case 0: FillAttrStr(Attr, IncludeAttr, ExcludeAttr, attrstyle); break;
+		case 1: FillAttrStr(Attr, IncludeAttr, ExcludeAttr, attrstyle); break;
 	}
 
 	wchar_t SizeDate[4] = L"...";
@@ -718,14 +710,16 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
 			wchar_t VerticalLine0[] = {BoxSymbols[BS_V2], 0};
 			wchar_t VerticalLine1[] = {BoxSymbols[BS_V1], 0};
+			SMALL_RECT drect;
+			SMALL_RECT irect;
 
-			union { SMALL_RECT drect; uint64_t i64drect; };
-			union { SMALL_RECT irect; uint64_t i64irect; };
 			SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (intptr_t)&drect);
-			drect.Right = drect.Left;
-			drect.Bottom = drect.Top;
 			SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID_HER_COLOREXAMPLE, (intptr_t)&irect);
-			i64irect += i64drect;
+
+			irect.Top += drect.Top;
+			irect.Bottom += drect.Top;
+			irect.Right += drect.Left;
+			irect.Left += drect.Left;
 
 			HighlightDataColor *hl = &fphlstate->hl;
 			size_t	filenameexamplelen = wcslen(Msg::HighlightExample1);

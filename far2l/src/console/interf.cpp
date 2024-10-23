@@ -510,7 +510,22 @@ void Text(const WCHAR Ch, uint64_t Color, size_t Length)
 	if ( !Length )
 		return;
 
-	ScrBuf.FillRect(CurX, CurY, CurX + Length, CurY, Ch, Color);
+	int X1 = CurX;
+	int Y1 = CurY;
+	int X2 = CurX + Length;
+	int Y2 = CurY;
+
+	if (X1 < 0)
+		X1 = 0;
+	if (Y1 < 0)
+		Y1 = 0;
+
+	if (X2 > ScrX)
+		X2 = ScrX;
+	if (Y2 > ScrY)
+		Y2 = ScrY;
+
+	ScrBuf.FillRect(X1, Y1, X2, Y2, Ch, Color);
 	CurX += Length;
 }
 

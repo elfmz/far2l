@@ -663,3 +663,4 @@ void SetFolderInfoFiles();
 void InfoPanelSettings();
 void AutoCompleteSettings();
 void LanguageSettings();
+void DirectoryNameSettings();

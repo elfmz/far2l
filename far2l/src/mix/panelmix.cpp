@@ -78,13 +78,12 @@ static const wchar_t *ColumnSymbol[] = {L"N", L"S", L"P", L"D", L"T", L"DM", L"D
 		L"O", L"U", L"LN", L"F", L"G", L"C0", L"C1", L"C2", L"C3", L"C4", L"C5", L"C6", L"C7", L"C8", L"C9",
 		L"C10", L"C11", L"C12", L"C13", L"C14", L"C15", L"C16", L"C17", L"C18", L"C19"};
 
-static const FarLangMsg DirUpNames[4] = {Msg::DirUp, Msg::DirUp2, Msg::DirUp3, Msg::DirUp4};
-static const FarLangMsg DirNames[4] = {Msg::DirName, Msg::DirName2, Msg::DirName3, Msg::DirName4};
-static const FarLangMsg SymLinkNames[4] = {Msg::SymLinkName, Msg::SymLinkName2, Msg::SymLinkName3, Msg::SymLinkName4};
-static const FarLangMsg JunctionNames[4] = {Msg::JunctionName, Msg::JunctionName2, Msg::JunctionName3, Msg::JunctionName4};
-
-static const wchar_t surdircharleft[4] = { 60, 16, 61, 32 };
-static const wchar_t surdircharright[4] = { 62, 17, 61, 32 };
+FarLangMsg DirUpNames[4] = {Msg::DirUp, Msg::DirUp2, Msg::DirUp3, Msg::DirUp4};
+FarLangMsg DirNames[4] = {Msg::DirName, Msg::DirName2, Msg::DirName3, Msg::DirName4};
+FarLangMsg SymLinkNames[4] = {Msg::SymLinkName, Msg::SymLinkName2, Msg::SymLinkName3, Msg::SymLinkName4};
+FarLangMsg JunctionNames[4] = {Msg::JunctionName, Msg::JunctionName2, Msg::JunctionName3, Msg::JunctionName4};
+wchar_t surdircharleft[4] = { 60, 16, 61, 32 };
+wchar_t surdircharright[4] = { 62, 17, 61, 32 };
 
 void UpdateDefaultColumnTypeWidths( void )
 {

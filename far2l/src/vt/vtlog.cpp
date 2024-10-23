@@ -199,11 +199,11 @@ namespace VTLog
 				}
 			}
 		}
-		
+
 	} g_lines;
 
 	static unsigned int g_pause_cnt = 0;
-	
+
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
 		if (g_pause_cnt == 0) {
@@ -263,13 +263,18 @@ namespace VTLog
 		}		
 	}
 	
-	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines)
+	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines, const char *wanted_path)
 	{
-		SYSTEMTIME st;
-		WINPORT(GetLocalTime)(&st);
-		const auto &path = InMyTempFmt("farvt_%u-%u-%u_%u-%u-%u.%s",
-			 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-			 colored ? "ans" : "log");
+		std::string path;
+		if (wanted_path && *wanted_path) {
+			path = wanted_path;
+		} else {
+			SYSTEMTIME st;
+			WINPORT(GetLocalTime)(&st);
+			path = InMyTempFmt("farvt_%u-%u-%u_%u-%u-%u.%s",
+				 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+				 colored ? "ans" : "log");
+		}
 				
 		int fd = open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, 0600);
 		if (fd==-1) {

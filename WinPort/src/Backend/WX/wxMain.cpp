@@ -1336,8 +1336,12 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	// We can not trust OnKeyDown Unicode character value for Alt+letter due to wx issue #23421,
+	// so let's fall back to OnChar value for such key combinations.
+
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-		|| (dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
+		|| ( (dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) &&
+			(!LEFT_ALT_PRESSED || !event.GetUnicodeKey()) ) // work around wx issue #23421
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
 		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
 	{
@@ -1436,7 +1440,10 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.bKeyDown = TRUE;
 		}
 #endif
-		wxConsoleInputShim::Enqueue(&ir, 1);
+		if (!LEFT_ALT_PRESSED || !event.GetUnicodeKey()) { // work around wx issue #23421
+
+			wxConsoleInputShim::Enqueue(&ir, 1);
+		}
 	}
 	if ((!_key_tracker.Alt() || g_wayland) && _key_tracker.CheckForSuddenModifiersUp()) {
 		_exclusive_hotkeys.Reset();
@@ -1484,6 +1491,17 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			}
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
+
+		if (event.AltDown()) {
+
+			// work around wx issue #23421
+
+			// OnChar KeyCode value is empty for non-latin letters in older wx so let's use value from previous KeyDown
+			wx2INPUT_RECORD ir_tmp(TRUE, _key_tracker.LastKeydown(), _key_tracker);
+			ir.Event.KeyEvent.wVirtualKeyCode = ir_tmp.Event.KeyEvent.wVirtualKeyCode;
+
+			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+		}
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);

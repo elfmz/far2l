@@ -1497,6 +1497,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			// work around wx issue #23421
 
 			// OnChar KeyCode value is empty for non-latin letters in older wx so let's use value from previous KeyDown
+			// See wx issue #23379 for details
 			wx2INPUT_RECORD ir_tmp(TRUE, _key_tracker.LastKeydown(), _key_tracker);
 			ir.Event.KeyEvent.wVirtualKeyCode = ir_tmp.Event.KeyEvent.wVirtualKeyCode;
 

@@ -48,3 +48,15 @@ void TextToViewSettings(const wchar_t *ColumnTitles, const wchar_t *ColumnWidths
 		unsigned int *ViewColumnTypes, int *ViewColumnWidths, int *ViewColumnWidthsTypes, int &ColumnCount);
 void ViewSettingsToText(unsigned int *ViewColumnTypes, int *ViewColumnWidths, int *ViewColumnWidthsTypes,
 		int ColumnCount, FARString &strColumnTitles, FARString &strColumnWidths);
+
+extern FarLangMsg DirUpNames[4];
+extern FarLangMsg DirNames[4];
+extern FarLangMsg SymLinkNames[4];
+extern FarLangMsg JunctionNames[4];
+extern wchar_t surdircharleft[4];
+extern wchar_t surdircharright[4];
+
+#define DIRNAME_STYLE_SURR_CH	0x10
+#define DIRNAME_STYLE_CENTERED	0x20
+
+void UpdateDefaultColumnTypeWidths( void );

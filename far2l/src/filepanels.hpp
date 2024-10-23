@@ -69,7 +69,7 @@ public:
 	Panel *GetAnotherPanel(Panel *Current);
 	Panel *ChangePanelToFilled(Panel *Current, int NewType);
 	Panel *ChangePanel(Panel *Current, int NewType, int CreateNew, int Force);
-	void SetPanelPositions(int LeftFullScreen, int RightFullScreen);
+	void SetPanelPositions(int LeftFullScreen, int RightFullScreen, int Disposition);
 	// void   SetPanelPositions();
 
 	void SetupKeyBar();

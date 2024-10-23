@@ -869,9 +869,10 @@ void CommandLine::SaveBackground()
 	} else
 		fprintf(stderr, "CommandLine::SaveBackground: no BackgroundScreen\n");
 }
-void CommandLine::ShowBackground()
+
+void CommandLine::ShowBackground(bool showanyway)
 {
-	if (!IsVisible())
+	if (!IsVisible() && !showanyway)
 		return;
 
 	if (BackgroundScreen) {

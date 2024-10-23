@@ -84,6 +84,7 @@ DialogBuilder::DialogBuilder(FarLangMsg TitleMessageId, const wchar_t *HelpTopic
 	:
 	HelpTopic(HelpTopic)
 {
+	UserDlgProc = nullptr;
 	AddBorder(GetLangString(TitleMessageId));
 }
 
@@ -210,11 +211,22 @@ void DialogBuilder::LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogI
 
 LONG_PTR WINAPI DialogBuilder::DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
+#if 0
+	DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
+
+	if (Builder->UserDlgProc) {
+		const LONG_PTR rv = Builder->UserDlgProc(hDlg, Msg, Param1, Param2);
+		if (rv != -1)
+			return rv;
+	}
+#endif
+
 	if (Msg == DN_INITDIALOG) {
 		DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
 		for (const auto &CB : Builder->CodePageBoxes) {
 			FillCodePagesList(hDlg, CB.Index, CB.Value, CB.allowAuto, CB.allowAll);
 		}
+
 	} else if (Msg == DN_EDITCHANGE) {
 		DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
 		for (auto &CB : Builder->CodePageBoxes)
@@ -226,6 +238,14 @@ LONG_PTR WINAPI DialogBuilder::DlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PT
 	}
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
+}
+
+bool DialogBuilder::SetUserDlgProc(FARWINDOWPROC UserDlgProc, LONG_PTR UserParam2)
+{
+	this->UserDlgProc = UserDlgProc;
+	this->UserData = UserParam2;
+
+	return true;
 }
 
 int DialogBuilder::DoShowDialog()

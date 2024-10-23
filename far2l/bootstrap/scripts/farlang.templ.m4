@@ -2321,6 +2321,72 @@ upd:"Input settings"
 "Налаштування введення"
 "Налады увода"
 
+DirSettingsTitle
+"Настройки отображения каталога"
+"Directory showas settings"
+"Nastavení zobrazení adresáře"
+"Einstellungen zur Anzeige des Verzeichnisses"
+"Könyvtár megjelenítési beállításai"
+"Ustawienia wyświetlania katalogu"
+"Configuración de visualización del directorio"
+"Налаштування відображення каталогу"
+"Налады адлюстравання каталога"
+
+DirSettingsCenter
+"Выравнивать по центру"
+"Center align"
+"Zarovnat do středu"
+"Zentrieren"
+"Középre igazítani"
+"Wyśrodkować"
+"Alinear al centro"
+"Вирівняти по центру"
+"Выраўнаваць па цэнтры"
+
+DirSettingsSurround
+"Символы вокруг"
+"Symbols around"
+"Symboly kolem"
+"Symbole um"
+"Szimbólumok körül"
+"Symbole wokół"
+"Símbolos alrededor"
+"Символи навколо"
+"Сімвалы вакол"
+
+DirSettingsShowAs
+"Показывать директорию как:"
+"Show directory as:"
+"Zobrazit adresář jako:"
+"Verzeichnis anzeigen als:"
+"Könyvtár megjelenítéseként:"
+"Pokaż katalog jako:"
+"Mostrar directorio como:"
+"Показувати каталог як:"
+"Паказваць каталог як:"
+
+DirSettingsEmpty
+"-"
+"-"
+"-"
+"-"
+"-"
+"-"
+"-"
+"-"
+"-"
+
+DirSettingsApply
+"Применить"
+"Apply"
+"Použít"
+"Anwenden"
+"Alkalmaz"
+"Zastosować"
+"Aplicar"
+"Застосувати"
+"Ужыць"
+
 ConfigClock
 "&Часы в панелях"
 "&Clock in panels"

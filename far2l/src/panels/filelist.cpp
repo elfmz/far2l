@@ -1249,13 +1249,15 @@ int FileList::ProcessKey(FarKey Key)
 		}
 
 		case KEY_CTRLD | KEY_ALT: {
-			++Opt.DirNameStyle &= 63;
-			UpdateDefaultColumnTypeWidths( );
-			UpdateAutoColumnWidth();
-			Redraw();
-			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
-			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
-			AnotherPanel->Redraw();
+			DirectoryNameSettings( );
+
+//			++Opt.DirNameStyle &= 63;
+//			UpdateDefaultColumnTypeWidths( );
+//			UpdateAutoColumnWidth();
+//			Redraw();
+//			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+//			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+//			AnotherPanel->Redraw();
 			return TRUE;
 		}
 

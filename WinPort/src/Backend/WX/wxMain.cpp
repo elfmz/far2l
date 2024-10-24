@@ -1341,7 +1341,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 		|| ( (dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) &&
-			(!LEFT_ALT_PRESSED || !event.GetUnicodeKey()) ) // work around wx issue #23421
+			(!LEFT_ALT_PRESSED || !event.GetUnicodeKey()) ) // workaround for #2294, 2464, wx issue #23421
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
 		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
 	{
@@ -1440,7 +1440,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.bKeyDown = TRUE;
 		}
 #endif
-		if (!LEFT_ALT_PRESSED || !event.GetUnicodeKey()) { // work around wx issue #23421
+		if (!LEFT_ALT_PRESSED || !event.GetUnicodeKey()) { // // workaround for #2294, 2464, wx issue #23421
 
 			wxConsoleInputShim::Enqueue(&ir, 1);
 		}
@@ -1494,7 +1494,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 		if (event.AltDown()) {
 
-			// work around wx issue #23421
+			// // workaround for #2294, 2464, wx issue #23421
 
 			// OnChar KeyCode value is empty for non-latin letters in older wx so let's use value from previous KeyDown
 			// See wx issue #23379 for details

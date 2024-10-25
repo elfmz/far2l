@@ -2358,8 +2358,8 @@ SIZE_T farAPIVTEnumBackground(HANDLE *con_hnds, SIZE_T count)
 BOOL farAPIVTLogExportA(HANDLE con_hnd, DWORD vth_flags, const char *file)
 {
 	const auto &saved_path = VTLog::GetAsFile(con_hnd,
-		(vth_flags & VTH_LOGEXPORT_COLORED) != 0,
-		(vth_flags & VTH_LOGEXPORT_WITH_SCREENLINES) != 0,
+		(vth_flags & VT_LOGEXPORT_COLORED) != 0,
+		(vth_flags & VT_LOGEXPORT_WITH_SCREENLINES) != 0,
 		file);
 	if (saved_path.empty())
 		return FALSE;
@@ -2374,8 +2374,8 @@ BOOL farAPIVTLogExportA(HANDLE con_hnd, DWORD vth_flags, const char *file)
 BOOL farAPIVTLogExportW(HANDLE con_hnd, DWORD vth_flags, const wchar_t *file)
 {
 	const auto &saved_path = VTLog::GetAsFile(con_hnd,
-		(vth_flags & VTH_LOGEXPORT_COLORED) != 0,
-		(vth_flags & VTH_LOGEXPORT_WITH_SCREENLINES) != 0,
+		(vth_flags & VT_LOGEXPORT_COLORED) != 0,
+		(vth_flags & VT_LOGEXPORT_WITH_SCREENLINES) != 0,
 		Wide2MB(file).c_str());
 	if (saved_path.empty())
 		return FALSE;

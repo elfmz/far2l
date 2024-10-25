@@ -10,6 +10,10 @@
 
 #include "vtlog.h"
 
+#include "vtshell.h"
+#include "ctrlobj.hpp"
+#include "cmdline.hpp"
+
 
 #define FOREGROUND_RGB (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE)
 #define BACKGROUND_RGB (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)
@@ -199,11 +203,11 @@ namespace VTLog
 				}
 			}
 		}
-		
+
 	} g_lines;
 
 	static unsigned int g_pause_cnt = 0;
-	
+
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
 		if (g_pause_cnt == 0) {
@@ -243,7 +247,17 @@ namespace VTLog
 		g_lines.Reset(con_hnd);
 	}
 	
-	static void AppendScreenLines(HANDLE con_hnd, std::string &s, DumpState &ds, bool colored)
+	static void AppendScreenLine(const CHAR_INFO *line, unsigned int width, std::string &s, DumpState &ds, bool colored)
+	{
+		width = ActualLineWidth(width, line);
+		if (width || ds.nonempty) {
+			ds.nonempty = true;
+			EncodeLine(s, width, line, colored);
+			s+= NATIVE_EOL;
+		}
+	}
+
+	static void AppendActiveScreenLines(HANDLE con_hnd, std::string &s, DumpState &ds, bool colored)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
 		if (WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 0) {
@@ -252,26 +266,40 @@ namespace VTLog
 			SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
 			for (rc.Top = rc.Bottom = 0; rc.Top < csbi.dwSize.Y; rc.Top = ++rc.Bottom) {
 				if (WINPORT(ReadConsoleOutput)(con_hnd, &line[0], buf_size, buf_pos, &rc)) {
-					unsigned int width = ActualLineWidth(csbi.dwSize.X, &line[0]);
-					if (width || ds.nonempty) {
-						ds.nonempty = true;
-						EncodeLine(s, width, &line[0], colored);
-						s+= NATIVE_EOL;
-					}
+					AppendScreenLine(&line[0], (unsigned int)csbi.dwSize.X, s, ds, colored);
 				}
 			}
 		}		
 	}
-	
-	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines)
+
+	static void AppendSavedScreenLines(std::string &s, DumpState &ds, bool colored)
 	{
-		SYSTEMTIME st;
-		WINPORT(GetLocalTime)(&st);
-		const auto &path = InMyTempFmt("farvt_%u-%u-%u_%u-%u-%u.%s",
-			 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-			 colored ? "ans" : "log");
+		if (CtrlObject->CmdLine) {
+			int w = 0, h = 0;
+			const CHAR_INFO *ci = CtrlObject->CmdLine->GetBackgroundScreen(w, h);
+			if (ci && w > 0 && h > 0) {
+				while (h--) {
+					AppendScreenLine(ci, (unsigned int)w, s, ds, colored);
+					ci+= w;
+				}
+			}
+		}
+	}
+
+	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines, const char *wanted_path)
+	{
+		std::string path;
+		if (wanted_path && *wanted_path) {
+			path = wanted_path;
+		} else {
+			SYSTEMTIME st;
+			WINPORT(GetLocalTime)(&st);
+			path = InMyTempFmt("farvt_%u-%u-%u_%u-%u-%u.%s",
+				 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+				 colored ? "ans" : "log");
+		}
 				
-		int fd = open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC, 0600);
+		int fd = open(path.c_str(), O_CREAT | O_TRUNC | O_RDWR | O_CLOEXEC, 0600);
 		if (fd==-1) {
 			fprintf(stderr, "VTLog: errno %u creating '%s'\n", errno, path.c_str() );
 			return std::string();
@@ -281,7 +309,11 @@ namespace VTLog
 		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {
 			std::string s;
-			AppendScreenLines(con_hnd, s, ds, colored);
+			if (!con_hnd && !VTShell_Busy()) {
+				AppendSavedScreenLines(s, ds, colored);
+			} else {
+				AppendActiveScreenLines(con_hnd, s, ds, colored);
+			}
 			if (!s.empty()) {
 				if (write(fd, s.c_str(), s.size()) != (int)s.size())
 					perror("VTLog: write");				

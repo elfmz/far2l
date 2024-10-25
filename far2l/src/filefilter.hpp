@@ -76,6 +76,7 @@ public:
 	bool IsEnabledOnPanel();
 
 	static void InitFilter(ConfigReader &cfg_reader);
+	static void AddDefaultFileFilters();
 	static void CloseFilter();
 	static void SwapFilter();
 	static void SaveFilters(ConfigWriter &cfg_writer);

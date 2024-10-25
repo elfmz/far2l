@@ -1268,6 +1268,16 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	return false; // not found any available prefixes
 }
 
+const CHAR_INFO *CommandLine::GetBackgroundScreen(int &W, int &H)
+{
+	if (!BackgroundScreen)
+		return NULL;
+
+	W = (BackgroundScreen->X2 - BackgroundScreen->X1) + 1;
+	H = (BackgroundScreen->Y2 - BackgroundScreen->Y1) + 1;
+	return BackgroundScreen->GetBufferAddress();
+}
+
 CmdLineVisibleScope::CmdLineVisibleScope()
 {
 	if (CtrlObject && CtrlObject->CmdLine && !CtrlObject->CmdLine->IsVisible()) {
@@ -1283,4 +1293,3 @@ CmdLineVisibleScope::~CmdLineVisibleScope()
 		cp->UpdateCmdLineVisibility();
 	}
 }
-

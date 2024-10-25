@@ -51,7 +51,6 @@ private:
 
 public:
 	int X1, Y1, X2, Y2;
-	int W, H;
 
 	SaveScreen();
 	SaveScreen(int X1, int Y1, int X2, int Y2);

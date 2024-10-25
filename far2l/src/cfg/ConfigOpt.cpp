@@ -69,6 +69,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigOptSaveLoad.hpp"
 #include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
+#include "MaskGroups.hpp"
+
 
 void SanitizeHistoryCounts();
 void SanitizeIndentationCounts();
@@ -740,6 +742,7 @@ void ConfigOptLoad()
 			Opt.FindOpt.OutColumnWidthType, Opt.FindOpt.OutColumnCount);
 	}
 
+	CheckMaskGroups();
 	FileFilter::InitFilter(cfg_reader);
 
 	// avoid negative decrement for now as hiding command line by Ctrl+Down is a new feature and may confuse

@@ -736,6 +736,24 @@ bool FileFilter::IsEnabledOnPanel()
 	return false;
 }
 
+void FileFilter::AddDefaultFileFilters()
+{
+	static const std::pair<const wchar_t*, const wchar_t*> Sets[]
+	{
+		{ L"archives", L"<arc>" },
+		{ L"pictures", L"<pic>" },
+	};
+
+	for ( auto i : Sets ) {
+		FileFilterParams *NewFilter = FilterData.addItem();
+		if (!NewFilter)
+			break;
+
+		NewFilter->SetTitle(i.first);
+		NewFilter->SetMask(true, i.second, true);
+	}
+}
+
 void FileFilter::InitFilter(ConfigReader &cfg_reader)
 {
 	FilterData.Free();
@@ -778,6 +796,9 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 		} else
 			break;
 	}
+
+	if (!FilterData.getCount())
+		AddDefaultFileFilters();
 
 	while (1) {
 		cfg_reader.SelectSectionFmt("Filters/PanelMask%d", (int)TempFilterData.getCount());

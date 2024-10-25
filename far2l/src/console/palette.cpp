@@ -413,7 +413,7 @@ void ZeroFarPalette( void )
 	memset( Palette8bit, 0, SIZE_ARRAY_PALETTE );
 	memset( Palette, 0, sizeof(uint64_t) * SIZE_ARRAY_PALETTE );
 }
-
+#if 0
 static uint32_t def16rgbpal0[32] = { // test
 	0x000000,0xA02800,0x00A000,0xA0A000,0x0000A0,0xA000A0,0x00A0A0,0xC0C0C0,
 	0x808080,0xFF5500,0x00FF00,0xFFFF00,0x0000FF,0xFF00FF,0x00FFFF,0xFFFFFF,
@@ -427,7 +427,7 @@ static uint32_t def16rgbpal1[32] = { // test
 	0X000000,0XAA0000,0X00AA00,0XAAAA00,0X0000AA,0XAA00AA,0X0055AA,0XAAAAAA,
 	0X555555,0XFF5555,0X55FF55,0XFFFF55,0X5555FF,0XFF55FF,0X55FFFF,0XFFFFFF
 };
-
+#endif
 void InitFarPalette( void )  // test
 {
 	if ( *((uint64_t *)&Palette8bit[0]) != 0 ) {

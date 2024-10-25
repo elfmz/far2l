@@ -1532,6 +1532,17 @@ upd:"Groups of file masks"
 "Групи масок файлів"
 "Суполкі масак файлаў"
 
+MaskGroupBottomTitle
+"Ins Del F4 F7 Ctrl+Вверх/Вниз Ctrl+R"
+"Ins Del F4 F7 Ctrl+Up/Down Ctrl+R"
+"Ins Del F4 F7 Ctrl+Nahoru/Dolů Ctrl+R"
+"Ins Del F4 F7 Ctrl+Hoch/Runter Ctrl+R"
+"Ins Del F4 F7 Ctrl+Felfelé/Lefelé Ctrl+R"
+"Ins Del F4 F7 Ctrl+Wgórę/Wdół Ctrl+R"
+"Ins Del F4 F7 Ctrl+Arriba/Abajo Ctrl+R"
+"Ins Del F4 F7 Ctrl+Вгору/Вниз Ctrl+R"
+"Ins Del F4 F7 Ctrl+Уверх/Уніз Ctrl+R""
+
 MaskGroupName
 "&Имя:"
 "&Name:"
@@ -1565,16 +1576,50 @@ MaskGroupAskDelete
 "Ви бажаєте видалити"
 "Вы жадаеце выдаліць"
 
+MaskGroupTargetFilter
+"&Имя цели для масок:"
+"Target &name for masks:"
+"&Cílové jméno pro masky:"
+"&Zielname für Masken:"
+"&Cél neve a maszkokhoz:
+"&Nazwa docelowa dla masek:"
+"&Nombre de destino para máscaras:"
+"&Ім'я цілі для масок:"
+"&Імя мэты для масак:"
+
+MaskGroupTotal
+"Всего: %d"
+"Total: %d"
+"Celkem: %d"
+"Insgesamt: %d"
+"Összesen: %d"
+"Razem: %d"
+"Total: %d"
+"Всього: %d"
+"Усяго: %d"
+
+MaskGroupWarning
+"Будут потеряны все Ваши настройки"
+"You will lose all changes"
+"Všechny změny budou ztraceny"
+"Sie verlieren jegliche Änderungen"
+"Minden változtatás elvész"
+"Wszystkie zmiany zostaną utracone"
+"Usted perderá todos los cambios"
+"Втрачені всі Ваші налаштування"
+"Будуць згублены усе Налады"
+
 MaskGroupRestore
 "Вы хотите восстановить наборы масок по умолчанию?"
-"Do you wish to restore default mask sets?"
-"Přejete si obnovit výchozí sestavy masek?"
-"Wollen Sie voreingestellte Maskensets zurückstellen?"
-upd:"Do you wish to restore default mask sets?"
-"Chcesz przywrócić domyślne ustawienia masek?"
-"Quiere restablecer por defecto máscaras?"
-"Ви бажаєте відновити набори масок за замовчуванням?"
-"Вы жадаеце узнавіць прадвызначаны набор масак?"
+"Do you want to restore the default mask sets?"
+"Chcete obnovit výchozí sady masek?"
+"Möchten Sie die Standardmaskensätze wiederherstellen?"
+"Szeretné visszaállítani az alapértelmezett maszkhalmazokat?"
+"Czy chcesz przywrócić domyślne zestawy masek?"
+"¿Quieres restaurar los conjuntos de máscaras predeterminados?"
+"Ви хочете відновити набори масок за замовчуванням?"
+"Вы хочаце адновіць наборы масак па змаўчанні?"
+
 
 HistoryTitle
 l:

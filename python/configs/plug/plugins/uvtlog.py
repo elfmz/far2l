@@ -30,8 +30,8 @@ class Plugin(PluginBase):
             fp.close()
             os.unlink(fp.name)
             try:
-                flags = self.ffic.VTH_LOGEXPORT_COLORED
-                flags = self.ffic.VTH_LOGEXPORT_WITH_SCREENLINES
+                flags = self.ffic.VT_LOGEXPORT_COLORED
+                flags = self.ffic.VT_LOGEXPORT_WITH_SCREENLINES
             except:
                 flags = 0
             vtssize = self.info.FSF.VTLogExport(con_hnds[0], flags, self.s2f(fp.name))

@@ -40,6 +40,8 @@ public:
 
 	std::string GetFileSystem(const std::string &path) const;
 
+	std::string GetFileSystemMountPoint(const wchar_t *lpwsz_path) const;
+
 	/// Returns true if path fine to be used multi-threaded-ly
 	bool IsMultiThreadFriendly(const std::string &path) const;
 };

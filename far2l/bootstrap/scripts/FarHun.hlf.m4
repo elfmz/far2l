@@ -657,6 +657,8 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
 
   Belépés a gyökérmappába                                     #Ctrl-\\#
 
+  Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
+
   Change to the home directory (~~)                            #Ctrl-`#
 
   Belépés mappába vagy tömörített fájlba (SFX-be is),      #Ctrl-PgDn#

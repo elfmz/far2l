@@ -384,6 +384,22 @@ std::string MountInfo::GetFileSystem(const std::string &path) const
 	return out;
 }
 
+std::string MountInfo::GetFileSystemMountPoint(const wchar_t *lpwsz_path) const
+{
+	std::string out;
+	size_t longest_match = 0;
+	FARString str_real_path;
+	ConvertNameToReal(lpwsz_path, str_real_path);
+	const std::string &path = Wide2MB( str_real_path.CPtr() );
+	for (const auto &it : *_mountpoints) {
+		if (it.path.size() > longest_match && StrStartsFrom(path, it.path.c_str())) {
+			longest_match = it.path.size();
+			out = it.path;
+		}
+	}
+	return out;
+}
+
 bool MountInfo::IsMultiThreadFriendly(const std::string &path) const
 {
 	if (_mtfs != 0) {
@@ -400,4 +416,3 @@ bool MountInfo::IsMultiThreadFriendly(const std::string &path) const
 	}
 	return out;
 }
-

@@ -13062,6 +13062,138 @@ InfoDiskNumber
 "Серійний номер"
 "Серыйны нумар"
 
+InfoDiskCurDir
+"Текущий каталог"
+"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+
+InfoDiskRealDir
+"Реальный путь к каталогу"
+"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+
+InfoDiskMountPoint
+"ФС Точка монтирования"
+"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+
+InfoDiskMaxFilenameLength
+"ФС Максимальная длина имени"
+"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+
+InfoPluginTitle
+" Плагин на панели "
+" Plugin in panel "
+upd:" Plugin in panel "
+upd:" Plugin in panel "
+upd:" Plugin in panel "
+upd:" Plugin in panel "
+upd:" Plugin in panel "
+upd:" Plugin in panel "
+upd:" Plugin in panel "
+
+InfoPluginStartDir
+"Плагин запущен в каталоге"
+"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+
+InfoPluginModuleName
+"Plugin Module Name"
+"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+
+InfoPluginHostFile
+"Plugin HostFile"
+"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+
+InfoPluginCurDir
+"Plugin CurDir"
+"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+
+InfoPluginPanelTitle
+"Plugin PanelTitle"
+"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+
+InfoPluginFormat
+"Plugin Format"
+"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+
+InfoPluginShortcutData
+"Plugin ShortcutData"
+"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+
 InfoMemory
 " Память "
 " Memory "

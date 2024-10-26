@@ -912,17 +912,19 @@ void CommandLine::RedrawWithoutComboBoxMark()
 
 void FarAbout(PluginManager &Plugins)
 {
+	static bool b_hide_empty = true;
 	int npl;
 	FARString fs, fs2, fs2copy;
 	MenuItemEx mi, mis;
+	mi.Flags = b_hide_empty ? LIF_HIDDEN : 0;
 	mis.Flags = LIF_SEPARATOR;
 
-	VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
+	VMenu ListAbout(b_hide_empty ? L"far:about *" : L"far:about", nullptr, 0, ScrY-4);
 	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);
 	ListAbout.SetHelp(L"SpecCmd");//L"FarAbout");
-	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-C or Ctrl-Ins - copy all, Ctrl-Alt-F - filtering");
+	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-C or Ctrl-Ins - copy all, Ctrl-H - (un)hide empty, Ctrl-Alt-F - filtering");
 
 	fs.Format(L"          FAR2L Version: %s", FAR_BUILD);
 	ListAbout.AddItem(fs); fs2copy = fs;
@@ -971,36 +973,53 @@ void FarAbout(PluginManager &Plugins)
 	fs.Format(L"         Temp directory: \"%s\"", InMyTemp("").c_str() );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
+	if (Opt.CmdLine.UseShell)
+		fs.Format(L"   Command shell (User): \"%ls\"", Opt.CmdLine.strShell.CPtr() );
+	else
+		fs.Format(L" Command shell (System): \"%s\"", GetSystemShell() );
+	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+
 	ListAbout.AddItem(L""); fs2copy += "\n";
 	struct utsname un;
-	fs =      L"                  uname: ";
-	if (uname(&un)==0)
+	fs = L"                  uname: ";
+	if (uname(&un)==0) {
 		fs.AppendFormat(L"%s %s %s %s", un.sysname, un.release, un.version, un.machine);
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   Host: " + (apiGetEnvironmentVariable("HOSTNAME", fs2) ? fs2 : L"???");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   User: " + (apiGetEnvironmentVariable("USER", fs2) ? fs2 : L"???");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"       XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   TERM: " + (apiGetEnvironmentVariable("TERM", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"              COLORTERM: " + (apiGetEnvironmentVariable("COLORTERM", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"            GDK_BACKEND: " + (apiGetEnvironmentVariable("GDK_BACKEND", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"        DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"        WSL_DISTRO_NAME: " + (apiGetEnvironmentVariable("WSL_DISTRO_NAME", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"  WSL2_GUI_APPS_ENABLED: " + (apiGetEnvironmentVariable("WSL2_GUI_APPS_ENABLED", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+		ListAbout.AddItem(fs);
+	}
+	else {
+		mi.strName = fs;
+		ListAbout.AddItem(&mi);
+	}
+	fs2copy += "\n" + fs;
+
+	static const char * const env_vars[] = {
+		"HOSTNAME", "USER",
+		"FARSETTINGS", "FAR2L_ARGS",
+		"XDG_SESSION_TYPE",
+		"TERM", "COLORTERM",
+		"GDK_BACKEND", "DESKTOP_SESSION",
+		"WSL_DISTRO_NAME", "WSL2_GUI_APPS_ENABLED",
+		"DISPLAY", "WAYLAND_DISPLAY" };
+	for (unsigned int i = 0; i < ARRAYSIZE(env_vars); i++) {
+		fs.Format(L"%23s: ", env_vars[i]);
+		if (apiGetEnvironmentVariable(env_vars[i], fs2)) {
+			fs += fs2.CPtr();
+			ListAbout.AddItem(fs);
+		}
+		else {
+			mi.strName = fs;
+			ListAbout.AddItem(&mi);
+		}
+		fs2copy += "\n" + fs;
+	}
 
 	ListAbout.AddItem(L""); fs2copy += "\n";
 
 	npl = Plugins.GetPluginsCount();
 	fs.Format(L"      Number of plugins: %d", npl);
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+
+	mi.Flags = 0;
 
 	for(int i = 0; i < npl; i++)
 	{
@@ -1134,6 +1153,28 @@ void FarAbout(PluginManager &Plugins)
 				case KEY_CTRLNUMPAD0:
 					CopyToClipboard(fs2copy.CPtr());
 					break;
+				case KEY_CTRLH: {
+						struct MenuItemEx *mip;
+						if (b_hide_empty) {
+							b_hide_empty = false;
+							for (int i = 0; i < ListAbout.GetItemCount(); i++) {
+								mip = ListAbout.GetItemPtr(i);
+								mip->Flags &= ~LIF_HIDDEN;
+							}
+							ListAbout.SetTitle(L"far:about");
+						}
+						else {
+							b_hide_empty = true;
+							for (int i = 0; i < ListAbout.GetItemCount(); i++) {
+								mip = ListAbout.GetItemPtr(i);
+								if (mip->strName.Ends(L": "))
+									mip->Flags |= LIF_HIDDEN;
+							}
+							ListAbout.SetTitle(L"far:about *");
+						}
+					}
+					ListAbout.Show();
+					break;
 				default:
 					ListAbout.ProcessInput();
 					continue;
@@ -1227,6 +1268,16 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	return false; // not found any available prefixes
 }
 
+const CHAR_INFO *CommandLine::GetBackgroundScreen(int &W, int &H)
+{
+	if (!BackgroundScreen)
+		return NULL;
+
+	W = (BackgroundScreen->X2 - BackgroundScreen->X1) + 1;
+	H = (BackgroundScreen->Y2 - BackgroundScreen->Y1) + 1;
+	return BackgroundScreen->GetBufferAddress();
+}
+
 CmdLineVisibleScope::CmdLineVisibleScope()
 {
 	if (CtrlObject && CtrlObject->CmdLine && !CtrlObject->CmdLine->IsVisible()) {
@@ -1242,4 +1293,3 @@ CmdLineVisibleScope::~CmdLineVisibleScope()
 		cp->UpdateCmdLineVisibility();
 	}
 }
-

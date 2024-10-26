@@ -75,6 +75,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "ConfigOptSaveLoad.hpp"
 #include "help.hpp"
+#include "farversion.h"
 
 #ifdef DIRECT_RT
 int DirectRT = 0;
@@ -83,7 +84,8 @@ int DirectRT = 0;
 static void print_help(const char *self)
 {
 	bool is_far2ledit = strstr(self, "far2ledit") != NULL;
-	printf("FAR2L - two-panel file manager, with built-in terminal and other usefulness'es\n"
+	printf("FAR2L Version: %s\n"
+			"FAR2L - two-panel file manager, with built-in terminal and other usefulness'es\n"
 			"Usage: %s [switches] [-cd apath [-cd ppath]]\n"
 			"   or: far2ledit [switches] [filename]\n\n"
 			"where\n"
@@ -103,7 +105,8 @@ static void print_help(const char *self)
 			//		" -p[<path>]\n"
 			//		"      Search for \"common\" plugins in the directory, specified by <path>.\n"
 			" -u <identity> OR </path/name>\n"
-			"      Allows to specify separate settings identity or FS location.\n"
+			"      Allows to specify separate settings identity or FS location\n"
+			"      (it override FARSETTINGS environment variable value).\n"
 			" -v <filename>\n"
 			"      View the specified file.\n"
 			" -v - <command line>\n"
@@ -117,7 +120,7 @@ static void print_help(const char *self)
 			"      Example: far2l -set:Language.Main=English -set:Screen.Clock=0 -set:XLat.Flags=0xff -set:System.FindFolders=false\n"
 			"Switches -cd, -v and -e are not applicable if far2ledit.\n"
 			"\n",
-			is_far2ledit ? "far2l" : self);
+			FAR_BUILD, is_far2ledit ? "far2l" : self);
 	WinPortHelp();
 	// Console.Write(HelpMsg, ARRAYSIZE(HelpMsg)-1);
 }
@@ -136,6 +139,40 @@ static FARString ReconstructCommandLine(int argc, char **argv)
 		}
 	}
 	return cmd;
+}
+
+static void UpdatePathOptions(const FARString &strDestName, bool IsActivePanel)
+{
+	FARString *outFolder, *outCurFile;
+
+	// Та панель, которая имеет фокус - активна (начнем по традиции с Левой Панели ;-)
+	if ((IsActivePanel && Opt.LeftPanel.Focus) || (!IsActivePanel && !Opt.LeftPanel.Focus)) {
+		Opt.LeftPanel.Type = FILE_PANEL;  // сменим моду панели
+		Opt.LeftPanel.Visible = TRUE;     // и включим ее
+		outFolder = &Opt.strLeftFolder;
+		outCurFile = &Opt.strLeftCurFile;
+	}
+	else {
+		Opt.RightPanel.Type = FILE_PANEL;
+		Opt.RightPanel.Visible = TRUE;
+		outFolder = &Opt.strRightFolder;
+		outCurFile = &Opt.strRightCurFile;
+	}
+
+	auto Attr = apiGetFileAttributes(strDestName);
+	if (Attr != INVALID_FILE_ATTRIBUTES) {
+		if (Attr & FILE_ATTRIBUTE_DIRECTORY) {
+			outCurFile->Clear();
+			*outFolder = strDestName;
+		}
+		else {
+			*outCurFile = PointToName(strDestName);
+			*outFolder = strDestName;
+			CutToSlash(*outFolder, true);
+			if (outFolder->IsEmpty())
+				*outFolder = L"/";
+		}
+	}
 }
 
 static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARString strDestName2,
@@ -202,46 +239,12 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 			// воспользуемся тем, что ControlObject::Init() создает панели
 			// юзая Opt.*
-			if (strDestName1.GetLength())		// актиная панель
+			if (strDestName1.GetLength())  // активная панель
 			{
-				Opt.SetupArgv++;
-				strPath = strDestName1;
+				UpdatePathOptions(strDestName1, true);
 
-				if (strPath != "/") {
-					DeleteEndSlash(strPath);	// BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
-				}
-
-				// Та панель, которая имеет фокус - активна (начнем по традиции с Левой Панели ;-)
-				if (Opt.LeftPanel.Focus) {
-					Opt.LeftPanel.Type = FILE_PANEL;	// сменим моду панели
-					Opt.LeftPanel.Visible = TRUE;		// и включим ее
-					Opt.strLeftFolder = strPath;
-				} else {
-					Opt.RightPanel.Type = FILE_PANEL;
-					Opt.RightPanel.Visible = TRUE;
-					Opt.strRightFolder = strPath;
-				}
-
-				if (strDestName2.GetLength())		// пассивная панель
-				{
-					Opt.SetupArgv++;
-					strPath = strDestName2;
-
-					if (strPath != "/") {
-						DeleteEndSlash(strPath);	// BUGBUG!! если конечный слешь не убрать - получаем забавный эффект - отсутствует ".."
-					}
-
-					// а здесь с точнотью наоборот - обрабатываем пассивную панель
-					if (Opt.LeftPanel.Focus) {
-						Opt.RightPanel.Type = FILE_PANEL;	// сменим моду панели
-						Opt.RightPanel.Visible = TRUE;		// и включим ее
-						Opt.strRightFolder = strPath;
-					} else {
-						Opt.LeftPanel.Type = FILE_PANEL;
-						Opt.LeftPanel.Visible = TRUE;
-						Opt.strLeftFolder = strPath;
-					}
-				}
+				if (strDestName2.GetLength())  // пассивная панель
+					UpdatePathOptions(strDestName2, false);
 			}
 
 			// теперь все готово - создаем панели!
@@ -263,14 +266,14 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 						AnotherPanel->SetFocus();
 						CtrlObject->CmdLine->ExecString(strDestName2, 0);
 						ActivePanel->SetFocus();
-					} else {
+					} /* else { // positioning on the file in UpdatePathOptions() is enough
 						strPath = strDestName2;
 
 						if (!strPath.IsEmpty()) {
 							if (AnotherPanel->GoToFile(strPath))
 								AnotherPanel->ProcessKey(KEY_CTRLPGDN);
 						}
-					}
+					} */
 				}
 
 				ActivePanel->GetCurDir(strCurDir);
@@ -278,14 +281,18 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 				if (IsPluginPrefixPath(strDestName1)) {
 					CtrlObject->CmdLine->ExecString(strDestName1, 0);
-				} else {
+				} /* else { // positioning on the file in UpdatePathOptions() is enough
 					strPath = strDestName1;
 
 					if (!strPath.IsEmpty()) {
 						if (ActivePanel->GoToFile(strPath))
 							ActivePanel->ProcessKey(KEY_CTRLPGDN);
 					}
-				}
+				} */
+
+				// Update pointers as the above prefixed plugin calls could recreate one or both panels
+				ActivePanel=CtrlObject->Cp()->ActivePanel;
+				AnotherPanel=CtrlObject->Cp()->GetAnotherPanel(ActivePanel);
 
 				// !!! ВНИМАНИЕ !!!
 				// Сначала редравим пассивную панель, а потом активную!
@@ -681,7 +688,7 @@ static int libexec(const char *lib, const char *cd, const char *symbol, int argc
 static void SetCustomSettings(const char *arg)
 {
 	std::string refined;
-	if (arg[0] == '/') {
+	if (arg[0] == GOOD_SLASH) {
 		refined = arg;
 
 	} else if (arg[0] == '.' && arg[1] == GOOD_SLASH) {

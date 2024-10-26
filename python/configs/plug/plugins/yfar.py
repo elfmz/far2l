@@ -224,6 +224,128 @@ class _Panel:
         return self._get_control(self._plugin.ffic.FCTL_GETPANELINFO)
 
 
+class _Editor:
+    def __init__(self, plugin):
+        self._plugin = plugin
+        self._control = self._plugin.info.EditorControl
+        self._info = None
+
+    def _get_info(self):
+        info = self._info
+        if info is None:  # cache the info
+            p = self._plugin
+            info = p.ffi.new('struct EditorInfo *')
+            self._control(p.ffic.ECTL_GETINFO, info)
+            self._info = info
+        return info
+
+    @property
+    def file_name(self):
+        """
+        Get file name that is currently being edited.
+        """
+        p = self._plugin
+        size = self._control(p.ffic.ECTL_GETFILENAME, p.ffi.NULL)
+        fn = p.ffi.new('wchar_t []', size + 1)
+        self._control(p.ffic.ECTL_GETFILENAME, fn)
+        return p.f2s(fn)
+
+    def __len__(self):
+        """
+        Returns number of lines in the editor.
+        """
+        return self._get_info().TotalLines
+
+    def __getitem__(self, line):
+        """
+        Returns line text from editor.
+        """
+        if not 0 <= line < len(self):
+            raise IndexError('Line index {} outside of editor line '
+                             'range'.format(line))
+        p = self._plugin
+        egs = p.ffi.new("struct EditorGetString *")
+        egs.StringNumber = line
+        self._control(p.ffic.ECTL_GETSTRING, egs)
+        return self._plugin.f2s(egs.StringText)
+
+    def __iter__(self):
+        for i in range(len(self)):
+            yield self[i]
+
+    @property
+    def size(self):
+        """
+        Returns editor window size as 2-tuple of (width, height)
+        """
+        info = self._get_info()
+        return (info.WindowSizeX, info.WindowSizeY)
+
+    def _set_position(self, **kwargs):
+        self._info = None  # drop cache
+        p = self._plugin
+        esp = p.ffi.new("struct EditorSetPosition *")
+        esp.CurPos = esp.Overtype = esp.CurTabPos\
+            = esp.TopScreenLine = esp.LeftPos = -1
+        for k, v in kwargs.items():
+            setattr(esp, k, v)
+        self._control(p.ffic.ECTL_SETPOSITION, esp)
+
+    @property
+    def cursor(self):
+        """
+        Returns cursor position as a 2-tuple of (line, pos)
+        """
+        info = self._get_info()
+        return (info.CurPos, info.CurLine)
+
+    @cursor.setter
+    def cursor(self, new_pos):
+        x, y = new_pos
+        if y > len(self):
+            raise IndexError('Setting cursor line to {} is beyond '
+                             'last line'.format(y))
+        self._set_position(CurLine=y, CurPos=x)
+
+    def focus_cursor(self, x, y):
+        """
+        Better cursor jumping which takes into account scroll
+        to focus on given position better.
+        """
+        sx, sy = self.scroll
+        new_sy = sy
+        w, h = self.size
+        if y <= sy - 1 or y >= sy + h - 2:
+            new_sy = y - h//2
+        self.cursor = (x, y)
+        if new_sy != sy:
+            self.scroll = (sx, new_sy)
+
+    @property
+    def scroll(self):
+        """
+        Returns editor scroll position as 2-tuple in form of
+        (left offset, top offset)
+        """
+        info = self._get_info()
+        return (info.LeftPos, info.TopScreenLine)
+
+    @scroll.setter
+    def scroll(self, new_pos):
+        """
+        Changes scroll position. New position is provided as 2-tuple of:
+        (left offset, top offset)
+        """
+        x, y = new_pos
+        if y > len(self):
+            raise IndexError('Setting scroll line to {} is beyond '
+                             'last line'.format(y))
+        cx, cy = self.cursor
+        # cursor needs to be set when setting scroll, otherwise it
+        # will be buggy
+        self._set_position(LeftPos=x, TopScreenLine=y, CurPos=cx, CurLine=cy)
+
+
 class FarPlugin(PluginBase):
     """
     More simplistic FAR plugin interface. Provides functions that
@@ -231,7 +353,6 @@ class FarPlugin(PluginBase):
     """
     def __init__(self, *args, **kwargs):
         PluginBase.__init__(self, *args, **kwargs)
-        # type, first call returns size
 
     def get_panel(self, is_active=True):
         """
@@ -295,7 +416,13 @@ class FarPlugin(PluginBase):
             return False
         return None
 
-    def menu(self, names, title=''):
+    def get_editor(self):
+        """
+        Get object to control currently opened editor.
+        """
+        return _Editor(self)
+
+    def menu(self, names, title='', selected=0):
         """
         Simple menu. ``names`` is a list of items. Optional
         ``title`` can be provided.
@@ -304,10 +431,10 @@ class FarPlugin(PluginBase):
         refs = []
         for i, name in enumerate(names):
             item = items[i]
-            item.Selected = item.Checked = item.Separator = 0
+            item.Checked = item.Separator = 0
+            item.Selected = i == selected
             item.Text = txt = self.s2f(name)
             refs.append(txt)
-        items[0].Selected = 1
         title = self.s2f(title)
         NULL = self.ffi.NULL
         return self.info.Menu(self.info.ModuleNumber, -1, -1, 0, 

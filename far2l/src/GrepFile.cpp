@@ -69,6 +69,7 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 		if (s_whole_words) {
 			cmd+= "-w ";
 		}
+		cmd+= "-- ";
 		cmd+= cmd_excl_pattern;
 		cmd+= ' ';
 		cmd+= cmd_in_file;
@@ -83,6 +84,7 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 	if (s_context > 0) {
 		cmd+= StrPrintf("-A %d -B %d ", s_context, s_context);
 	}
+	cmd+= "-- ";
 	cmd+= cmd_pattern;
 	if (s_exclude_pattern.IsEmpty()) {
 		cmd+= ' ';

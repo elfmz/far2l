@@ -1,6 +1,6 @@
 .\" -*- mode: troff; coding: UTF-8 -*-
 .\"TOPICS "Topics:"
-.TH FAR2L 1 "30-08-24" "FAR2L Version 2.6.3" "Linux fork of FAR Manager v2"
+.TH FAR2L 1 "October 2024" "FAR2L Version 2.6.4" "Linux fork of FAR Manager v2"
 .\"SKIP_SECTION"
 .SH "NAME"
 far2l \- Two-panel file manager, with built\-in terminal and other usefulness\'es.
@@ -49,7 +49,7 @@ Do not load macros.
 Do not execute auto run macros.
 .TP
 \fB\-u\fR \fI\,IDENTITY\/\fR OR \fI\,/PATH/NAME\/\fR
-Allows to specify separate settings \fI\,IDENTITY\/\fR or FS location.
+Allows to specify separate settings \fI\,IDENTITY\/\fR or FS location (it override \fB\,FARSETTINGS\/\fR environment variable value).
 .TP
 \fB\-v\fR \fI\,FILENAME\/\fR
 View the specified file.
@@ -111,7 +111,7 @@ dont maximize window upon launch even if its has saved maximized state (only for
 \fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
 use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout
 .P
-Backend-specific options also can be set via the \fB\,FAR2L_ARGS\/\fR environment variable
+All options (except \fB\-h\fR and \fB\-u\fR) also can be set via the \fB\,FAR2L_ARGS\/\fR environment variable
 .EX
 (for example: export FAR2L_ARGS="--tty --nodetect --ee" and then simple far2l to force start only TTY backend).
 .EE

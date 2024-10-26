@@ -3,11 +3,6 @@
 #include "colorer/base/XmlTagDefs.h"
 #include "colorer/xml/XmlReader.h"
 
-TextHRDMapper::~TextHRDMapper()
-{
-  regionDefines.clear();
-}
-
 void TextHRDMapper::loadRegionMappings(XmlInputSource& is)
 {
   XmlReader xml(is);
@@ -33,26 +28,11 @@ void TextHRDMapper::loadRegionMappings(XmlInputSource& is)
         COLORER_LOG_WARN("Duplicate region name '%' in file '%'. Previous value replaced.", name, is.getPath());
         regionDefines.erase(tp);
       }
-      std::shared_ptr<const UnicodeString> stext;
-      std::shared_ptr<const UnicodeString> etext;
-      std::shared_ptr<const UnicodeString> sback;
-      std::shared_ptr<const UnicodeString> eback;
-      const auto& sval = node.getAttrValue(hrdAssignAttrSText);
-      if (!sval.isEmpty()) {
-        stext = std::make_unique<UnicodeString>(sval);
-      }
-      const auto& sval2 = node.getAttrValue(hrdAssignAttrEText);
-      if (!sval2.isEmpty()) {
-        etext = std::make_unique<UnicodeString>(sval2);
-      }
-      const auto& sval3 = node.getAttrValue(hrdAssignAttrSBack);
-      if (!sval3.isEmpty()) {
-        sback = std::make_unique<UnicodeString>(sval3);
-      }
-      const auto& sval4 = node.getAttrValue(hrdAssignAttrEBack);
-      if (!sval4.isEmpty()) {
-        eback = std::make_unique<UnicodeString>(sval4);
-      }
+
+      const auto& stext = node.getAttrValue(hrdAssignAttrSText);
+      const auto& etext = node.getAttrValue(hrdAssignAttrEText);
+      const auto& sback = node.getAttrValue(hrdAssignAttrSBack);
+      const auto& eback = node.getAttrValue(hrdAssignAttrEBack);
 
       auto rdef = std::make_unique<TextRegion>(stext, etext, sback, eback);
       regionDefines.emplace(name, std::move(rdef));
@@ -62,28 +42,30 @@ void TextHRDMapper::loadRegionMappings(XmlInputSource& is)
 
 void TextHRDMapper::saveRegionMappings(Writer* writer) const
 {
-  writer->write("<?xml version=\"1.0\"?>\n");
+  writer->write(u"<?xml version=\"1.0\"?>\n");
+
   for (const auto& regionDefine : regionDefines) {
     const TextRegion* rdef = TextRegion::cast(regionDefine.second.get());
-    writer->write("  <define name='" + regionDefine.first + "'");
+    writer->write(u"\t<define name='" + regionDefine.first + u"'");
     if (rdef->start_text != nullptr) {
-      writer->write(" start_text='" + *rdef->start_text + "'");
+      writer->write(u" start_text='" + *rdef->start_text + u"'");
     }
     if (rdef->end_text != nullptr) {
-      writer->write(" end_text='" + *rdef->end_text + "'");
+      writer->write(u" end_text='" + *rdef->end_text + u"'");
     }
     if (rdef->start_back != nullptr) {
-      writer->write(" start_back='" + *rdef->start_back + "'");
+      writer->write(u" start_back='" + *rdef->start_back + u"'");
     }
     if (rdef->end_back != nullptr) {
-      writer->write(" end_back='" + *rdef->end_back + "'");
+      writer->write(u" end_back='" + *rdef->end_back + u"'");
     }
-    writer->write("/>\n");
+    writer->write(u"/>\n");
   }
-  writer->write("\n</hrd>\n");
+
+  writer->write(u"</hrd>\n");
 }
 
-void TextHRDMapper::setRegionDefine(const UnicodeString& name, const RegionDefine* rd)
+void TextHRDMapper::setRegionDefine(const UnicodeString& region_name, const RegionDefine* rd)
 {
   if (!rd)
     return;
@@ -91,9 +73,9 @@ void TextHRDMapper::setRegionDefine(const UnicodeString& name, const RegionDefin
   const TextRegion* rd_new = TextRegion::cast(rd);
   auto new_region = std::make_unique<TextRegion>(*rd_new);
 
-  auto rd_old_it = regionDefines.find(name);
+  const auto rd_old_it = regionDefines.find(region_name);
   if (rd_old_it == regionDefines.end()) {
-    regionDefines.emplace(name, std::move(new_region));
+    regionDefines.emplace(region_name, std::move(new_region));
   }
   else {
     rd_old_it->second = std::move(new_region);

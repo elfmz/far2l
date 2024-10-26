@@ -171,7 +171,6 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	std::string done = "K2Ld8Gfg"; // another most unique string in Universe
 	AvoidMarkerCollision(done, cmd);  // if it still not enough unique
 	AvoidMarkerCollision(begin, cmd);  // if it still not enough unique
-	//begin+= '\n';
 	// dont do that: done+= '\n'; otherwise proposed command is executed, see https://github.com/elfmz/far2l/issues/1244
 
 	std::string sendline = " PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''";

@@ -309,6 +309,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		}
 
 	} else {
+		UnlockScreen Unlock;
 		FarExecuteScope fes((ExecFlags & EF_NOCMDPRINT) ? "" : CmdStr);
 		r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0, (ExecFlags & EF_MAYBGND) != 0, may_notify);
 	}

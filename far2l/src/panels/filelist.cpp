@@ -82,6 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "plugapi.hpp"
 #include "CachedCreds.hpp"
+#include "MountInfo.h"
 
 extern PanelViewSettings ViewSettingsArray[];
 extern size_t SizeViewSettingsArray;
@@ -1286,6 +1287,7 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 
+		case KEY_CTRLBACKSLASH | KEY_ALT:
 		case KEY_CTRLBACKSLASH: {
 			_ALGO(CleverSysLog clv(L"Ctrl-/"));
 			_ALGO(SysLog(L"%ls, FileCount=%d", (PanelMode == PLUGIN_PANEL ? "PluginPanel" : "FilePanel"),
@@ -1309,8 +1311,14 @@ int FileList::ProcessKey(FarKey Key)
 				}
 			}
 
-			if (NeedChangeDir)
-				ChangeDir(WGOOD_SLASH);
+			if (NeedChangeDir) {
+				if ( (Key & KEY_ALT) && (PanelMode != PLUGIN_PANEL) ) { // to mount point only in local FS
+					FARString strFileSystemMountPoint = MountInfo().GetFileSystemMountPoint(strCurDir);
+					ChangeDir(strFileSystemMountPoint.IsEmpty() ? WGOOD_SLASH : strFileSystemMountPoint);
+				}
+				else // to root dir
+					ChangeDir(WGOOD_SLASH);
+			}
 
 			CtrlObject->Cp()->ActivePanel->Show();
 			return TRUE;

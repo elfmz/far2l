@@ -793,6 +793,8 @@ Pressing #Shift-Enter# on "#..#" opens the current directory in the GUI file bro
 
   Change to the root folder                                           #Ctrl-\\#
 
+  Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
+
   Change to the home directory (~~)                                    #Ctrl-`#
 
   Change folder, enter an archive (also a SFX archive),    #Ctrl-[Shift-]PgDn#

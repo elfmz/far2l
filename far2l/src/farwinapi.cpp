@@ -486,7 +486,7 @@ BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolum
 	if (lpVolumeSerialNumber)
 		*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
 	if (lpFileSystemFlags)
-		*lpFileSystemFlags = 0;		// TODO: svfs.f_flags;
+		*lpFileSystemFlags = (DWORD)svfs.f_flag;
 
 	if (pVolumeName) {
 		pVolumeName->Clear();

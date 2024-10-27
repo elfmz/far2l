@@ -13106,6 +13106,17 @@ upd:"FS Maximum Filename Length"
 upd:"FS Maximum Filename Length"
 upd:"FS Maximum Filename Length"
 
+InfoDiskFlags
+"ФС Флаги"
+"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+
 InfoPluginTitle
 " Плагин на панели "
 " Plugin in panel "

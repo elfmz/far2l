@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <mutex>
 #include <unordered_set>
+#include "pick_color_common.hpp"
 
 struct HighlightStrings
 {

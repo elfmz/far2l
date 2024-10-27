@@ -47,5 +47,5 @@ class CFileMask : private NonCopyable
 
 	public:
 		bool Set(const wchar_t *Masks, DWORD Flags);
-		bool Compare(const wchar_t *Name, bool CaseSens, bool SkipPath=true) const;
+		bool Compare(const wchar_t *Name, bool ignorecase, bool SkipPath=true) const;
 };

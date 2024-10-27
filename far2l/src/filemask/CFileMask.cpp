@@ -69,7 +69,7 @@ bool CFileMask::Set(const wchar_t *Masks, DWORD Flags)
 /* сравнить имя файла со списком масок
    Возвращает TRUE в случае успеха.
 */
-bool CFileMask::Compare(const wchar_t *FileName, bool CaseSens, bool SkipPath) const
+bool CFileMask::Compare(const wchar_t *FileName, bool ignorecase, bool SkipPath) const
 {
-	return FileMask.Compare(SkipPath ? PointToName(FileName):FileName, CaseSens);
+	return FileMask.Compare(SkipPath ? PointToName(FileName):FileName, ignorecase);
 }

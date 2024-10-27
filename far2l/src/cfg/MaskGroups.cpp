@@ -207,9 +207,14 @@ void MaskGroupsSettings()
 			if (OuterLoop || MenuModified)
 			{
 				if (MenuModified)
-				{
 					CtrlObject->HiFiles->UpdateHighlighting(true);
+
+				if (bFilter) {
+					bFilter = false;
+					MasksMenu.SetTitle(Msg::MaskGroupTitle);
+					MasksMenu.SetBottomTitle(Msg::MaskGroupBottomTitle);
 				}
+
 				MasksMenu.Hide();
 				NumLine = FillMasksMenu(&MasksMenu, MenuPos);
 				MasksMenu.SetPosition(-1, -1, -1, -1);
@@ -245,14 +250,14 @@ void MaskGroupsSettings()
 			{
 				case KEY_NUMDEL:
 				case KEY_DEL:
-					MenuModified = (MenuPos < NumLine) && DeleteMaskRecord(MenuPos);
+					if (MenuPos < 0 || MenuPos >= NumLine) break;
+					MenuModified = DeleteMaskRecord(MenuPos);
 					break;
 
 				case KEY_NUMPAD0:
 				case KEY_INS:
-					if (MenuPos == -1)
-						MenuPos = 0;
-					MenuModified = EditMaskRecord(MenuPos, true);
+					if (bFilter) break;
+					MenuModified = EditMaskRecord(MenuPos < 0 ? 0 : MenuPos, true);
 					break;
 
 				case KEY_NUMENTER:
@@ -263,6 +268,7 @@ void MaskGroupsSettings()
 					break;
 
 				case KEY_CTRLR:
+					if (bFilter) break;
 					if (Message(MSG_WARNING, 2, Msg::MaskGroupTitle, Msg::MaskGroupWarning,
 								Msg::MaskGroupRestore, Msg::Yes, Msg::Cancel))
 						break;
@@ -282,47 +288,45 @@ void MaskGroupsSettings()
 					Builder.AddText(Msg::MaskGroupTargetFilter);
 					Builder.AddEditField(&Value, 60);
 					Builder.AddCheckbox(Msg::EditSearchCase, &bCaseSensitive);
-
 					Builder.AddOKCancel();
 
-					if (Builder.ShowDialog())
-					{
-						ConfigReader cfg_reader;
-						CFileMask chkFileMask;
-						FARString strMasks;
-						wchar_t tmp[64];
-						int n = MasksMenu.GetItemCount();
+					if (!Builder.ShowDialog())
+						break;
 
-						for (int i = 0; i < n; i++) {
-							cfg_reader.SelectSectionFmt(FMS.TypeFmt, i);
-							strMasks = cfg_reader.GetString(FMS.MaskValue);
+					ConfigReader cfg_reader;
+					CFileMask chkFileMask;
+					FARString strMasks;
+					wchar_t tmp[64];
+					int n = MasksMenu.GetItemCount();
 
-							if (!chkFileMask.Set(strMasks.CPtr(), 0))
-								continue;
+					for (int i = 0; i < n; i++) {
+						cfg_reader.SelectSectionFmt(FMS.TypeFmt, i);
+						strMasks = cfg_reader.GetString(FMS.MaskValue);
 
-							if ( !chkFileMask.Compare(Value.CPtr(), !(bool)(bCaseSensitive)) ) {
-								MenuItemEx *item = MasksMenu.GetItemPtr(i);
-								if (!item) continue;
-								MasksMenu.UpdateItemFlags(i, item->Flags | MIF_HIDDEN);
-							}
+						if (!chkFileMask.Set(strMasks.CPtr(), 0))
+							continue;
+
+						if ( !chkFileMask.Compare(Value.CPtr(), !(bool)(bCaseSensitive)) ) {
+							MenuItemEx *item = MasksMenu.GetItemPtr(i);
+							if (!item) continue;
+							MasksMenu.UpdateItemFlags(i, item->Flags | MIF_HIDDEN);
 						}
-						MasksMenu.SetTitle( Value.CPtr());
-
-						swprintf(tmp, 64, Msg::MaskGroupTotal, MasksMenu.GetShowItemCount());
-						MasksMenu.SetBottomTitle(tmp);
-//						MasksMenu.SetBottomTitle(StrPrintf(Msg::MaskGroupTotal.CPtr(), MasksMenu.GetShowItemCount()).c_str());
-
-						MasksMenu.SetPosition(-1, -1, 0, 0);
-						MasksMenu.SetSelectPos(0, 1);
-						MasksMenu.Show();
-						bFilter = true;
 					}
+
+					MasksMenu.SetTitle( Value.CPtr());
+					swprintf(tmp, 64, Msg::MaskGroupTotal, MasksMenu.GetShowItemCount());
+					MasksMenu.SetBottomTitle(tmp);
+					MasksMenu.SetPosition(-1, -1, 0, 0);
+					MasksMenu.SetSelectPos(0, 1);
+					MasksMenu.Show();
+					bFilter = true;
 				}
 				break;
 
 				case KEY_CTRLUP:
 				case KEY_CTRLDOWN: {
-
+					if (bFilter) 
+						break;
 					if (MenuPos < MasksMenu.GetItemCount() && !(Key == KEY_CTRLUP && !MenuPos)
 							&& !(Key == KEY_CTRLDOWN && MenuPos == (MasksMenu.GetItemCount() - 1))) {
 						int NewPos = MenuPos + (Key == KEY_CTRLDOWN ? 1 : -1);

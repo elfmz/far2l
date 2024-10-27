@@ -75,9 +75,9 @@ bool SingleFileMask::Set(const wchar_t *Masks, DWORD Flags)
 	return !Mask.IsEmpty();
 }
 
-bool SingleFileMask::Compare(const wchar_t *Name, bool CaseSens) const
+bool SingleFileMask::Compare(const wchar_t *Name, bool ignorecase) const
 {
-	return CmpName(Mask.CPtr(), Name, false, CaseSens);
+	return CmpName(Mask.CPtr(), Name, false, ignorecase);
 }
 
 void SingleFileMask::Reset()
@@ -111,7 +111,7 @@ bool RegexMask::Set(const wchar_t *masks, DWORD Flags)
 	return false;
 }
 
-bool RegexMask::Compare(const wchar_t *FileName, bool CaseSens) const
+bool RegexMask::Compare(const wchar_t *FileName, bool ignorecase) const
 {
 	if (re)
 	{
@@ -264,15 +264,15 @@ bool FileMasksProcessor::SetPart(const wchar_t *masks, DWORD Flags, std::vector<
 /* сравнить имя файла со списком масок
    Возвращает TRUE в случае успеха.
    Путь к файлу в FileName НЕ игнорируется */
-bool FileMasksProcessor::Compare(const wchar_t *FileName, bool CaseSens) const
+bool FileMasksProcessor::Compare(const wchar_t *FileName, bool ignorecase) const
 {
 	for (auto I: IncludeMasks)
 	{
-		if (I->Compare(FileName, CaseSens))
+		if (I->Compare(FileName, ignorecase))
 		{
 			for (auto J: ExcludeMasks)
 			{
-				if (J->Compare(FileName, CaseSens))	return false;
+				if (J->Compare(FileName, ignorecase))	return false;
 			}
 			return true;
 		}

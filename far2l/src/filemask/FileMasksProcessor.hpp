@@ -55,7 +55,7 @@ class BaseFileMask : private NonCopyable
 
 	public:
 		virtual bool Set(const wchar_t *Masks, DWORD Flags) = 0;
-		virtual bool Compare(const wchar_t *Name, bool CaseSens) const = 0;
+		virtual bool Compare(const wchar_t *Name, bool ignorecase) const = 0;
 		virtual void Reset() = 0;
 };
 
@@ -67,7 +67,7 @@ class SingleFileMask : public BaseFileMask
 
 	public:
 		bool Set(const wchar_t *Masks, DWORD Flags) override;
-		bool Compare(const wchar_t *Name, bool CaseSens) const override;
+		bool Compare(const wchar_t *Name, bool ignorecase) const override;
 		void Reset() override;
 
 	private:
@@ -82,7 +82,7 @@ class RegexMask : public BaseFileMask
 
 	public:
 		bool Set(const wchar_t *Masks, DWORD Flags) override;
-		bool Compare(const wchar_t *Name, bool CaseSens) const override;
+		bool Compare(const wchar_t *Name, bool ignorecase) const override;
 		void Reset() override;
 
 	private:
@@ -97,7 +97,7 @@ class FileMasksProcessor : public BaseFileMask
 
 	public:
 		bool Set(const wchar_t *Masks, DWORD Flags) override;
-		bool Compare(const wchar_t *Name, bool CaseSens) const override;
+		bool Compare(const wchar_t *Name, bool ignorecase) const override;
 		void Reset() override;
 
 	private:

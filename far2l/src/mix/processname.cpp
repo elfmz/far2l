@@ -42,11 +42,11 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 {
 	bool skippath = (flags & PN_SKIPPATH);
 	bool silent = !(flags & PN_SHOWERRORMESSAGE);
-	bool casesens = (flags & PN_CASESENSITIVE);
+	bool ignorecase = !(flags & PN_CASESENSITIVE);
 	DWORD mode = flags & 0xFF0000;
 
 	if (mode == PN_CMPNAME)
-		return CmpName(param1, param2, skippath, casesens) ? TRUE : FALSE;
+		return CmpName(param1, param2, skippath, ignorecase) ? TRUE : FALSE;
 
 	else if (mode == PN_CMPNAMELIST || mode == PN_CHECKMASK)
 	{
@@ -55,7 +55,7 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 			return FALSE;
 		if (mode == PN_CHECKMASK)
 			return TRUE;
-		return Masks.Compare(param2, casesens, skippath) ? TRUE : FALSE;
+		return Masks.Compare(param2, ignorecase, skippath) ? TRUE : FALSE;
 	}
 
 	else if (mode == PN_GENERATENAME)

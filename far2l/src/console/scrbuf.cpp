@@ -197,7 +197,8 @@ void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 
 	for (I = 0; I < Height; I++) {
 		CHAR_INFO *DstBuf = Buf + (Y1 + I) * BufX + X1;
-		CHAR_INFO *SrcBuf = ss ? ss->GetBufferAddress() + ((Y1 + I) - ss->Y1) * ss->W + (X1 - ss->X1) : DstBuf;
+		CHAR_INFO *SrcBuf = ss ? ss->GetBufferAddress()
+			+ ((Y1 + I) - ss->Y1) * (ss->X2 + 1 - ss->X1) + (X1 - ss->X1) : DstBuf;
 
 		for (J = 0; J < Width; J++, ++DstBuf, ++SrcBuf) {
 

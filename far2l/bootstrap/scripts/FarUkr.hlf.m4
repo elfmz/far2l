@@ -661,6 +661,8 @@ $ #Команда управління панелями - сервісні ко�
 
  Змінити папку на кореневу #Ctrl-\\#
 
+ Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
+
  Change to the home directory (~~)                            #Ctrl-`#
 
  Зміна папки, вхід до архіву (також у SFX архів), #Ctrl-[Shift-]PgDn#

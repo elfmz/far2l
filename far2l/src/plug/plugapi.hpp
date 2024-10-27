@@ -70,6 +70,9 @@ int WINAPI farConvertPath(CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *De
 int WINAPI farGetReparsePointInfo(const wchar_t *Src, wchar_t *Dest, int DestSize);
 
 int WINAPI farGetPathRoot(const wchar_t *Path, wchar_t *Root, int DestSize);
+SIZE_T farAPIVTEnumBackground(HANDLE *con_hnds, SIZE_T count);
+BOOL  farAPIVTLogExportW(HANDLE con_hnd, DWORD vth_flags, const wchar_t *file);
+BOOL  farAPIVTLogExportA(HANDLE con_hnd, DWORD vth_flags, const char *file);
 
 int WINAPI FarGetPluginDirList(INT_PTR PluginNumber, HANDLE hPlugin, const wchar_t *Dir,
 		struct PluginPanelItem **pPanelItem, int *pItemsNumber);

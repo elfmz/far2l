@@ -139,6 +139,8 @@ public:
 	void RevertAC() { return CmdStr.RevertAC(); }
 
 	void RedrawWithoutComboBoxMark();
+
+	const CHAR_INFO *GetBackgroundScreen(int &W, int &H);
 };
 
 struct CmdLineVisibleScope

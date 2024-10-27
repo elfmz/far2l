@@ -63,7 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #elif !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
 #include <sys/sysinfo.h>
 #endif
-#include <sys/statfs.h>
+#include <sys/statvfs.h>
 
 static int LastDizWrapMode = -1;
 static int LastDizWrapType = -1;

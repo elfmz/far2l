@@ -1502,6 +1502,8 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			// See wx issue #23379 for details
 			wx2INPUT_RECORD ir_tmp(TRUE, _key_tracker.LastKeydown(), _key_tracker);
 			ir.Event.KeyEvent.wVirtualKeyCode = ir_tmp.Event.KeyEvent.wVirtualKeyCode;
+			ir.Event.KeyEvent.wVirtualScanCode = ir_tmp.Event.KeyEvent.wVirtualScanCode;
+			ir.Event.KeyEvent.dwControlKeyState = ir_tmp.Event.KeyEvent.dwControlKeyState;
 
 			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
 		}

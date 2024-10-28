@@ -8,7 +8,8 @@
 ############################################################
 
 if [ -x ~/.config/far2l/ps.sh ]; then
-. ~/.config/far2l/ps.sh
+	. ~/.config/far2l/ps.sh
+	exit 0
 fi
 
 if command -v htop >/dev/null 2>&1; then #GNOME

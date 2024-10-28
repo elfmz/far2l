@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #elif !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
 #include <sys/sysinfo.h>
 #endif
+#include <sys/statvfs.h>
 
 static int LastDizWrapMode = -1;
 static int LastDizWrapType = -1;
@@ -221,6 +222,64 @@ void InfoList::DisplayObject()
 			PrintText(Msg::InfoDiskMaxFilenameLength);
 			strTitle.Format(L"%lu", (unsigned long) MaxNameLength);
 			PrintInfo(strTitle);
+
+			strOutStr.Clear();
+#ifdef ST_RDONLY		/* Mount read-only.  */
+			strOutStr += (FileSystemFlags & ST_RDONLY) ? "ro" : "rw";
+#endif
+#ifdef ST_NOSUID		/* Ignore suid and sgid bits.  */
+			if (FileSystemFlags & ST_NOSUID)
+				strOutStr += ",nosuid";
+#endif
+#ifdef ST_NODEV			/* Disallow access to device special files.  */
+			if (FileSystemFlags & ST_NODEV)
+				strOutStr += ",nodev";
+#endif
+#ifdef ST_NOEXEC		/* Disallow program execution.  */
+			if (FileSystemFlags & ST_NOEXEC)
+				strOutStr += ",noexec";
+#endif
+#ifdef ST_SYNCHRONOUS	/* Writes are synced at once.  */
+			if (FileSystemFlags & ST_SYNCHRONOUS)
+				strOutStr += ",sync";
+#endif
+#ifdef ST_MANDLOCK		/* Allow mandatory locks on an FS.  */
+			if (FileSystemFlags & ST_MANDLOCK)
+				strOutStr += ",mandlock";
+#endif
+#ifdef ST_WRITE			/* Write on file/directory/symlink.  */
+			if (FileSystemFlags & ST_WRITE)
+				strOutStr += ",write";
+#endif
+#ifdef ST_APPEND		/* Append-only file.  */
+			if (FileSystemFlags & ST_APPEND)
+				strOutStr += ",append";
+#endif
+#ifdef ST_IMMUTABLE		/* Immutable file.  */
+			if (FileSystemFlags & ST_IMMUTABLE)
+				strOutStr += ",immutable";
+#endif
+#ifdef ST_NOATIME		/* Do not update access times.  */
+			if (FileSystemFlags & ST_NOATIME)
+				strOutStr += ",noatime";
+#endif
+#ifdef ST_NODIRATIME	/* Do not update directory access times.  */
+			if (FileSystemFlags & ST_NODIRATIME)
+				strOutStr += ",nodiratime";
+#endif
+#ifdef ST_RELATIME		/* Update atime relative to mtime/ctime.  */
+			if (FileSystemFlags & ST_RELATIME)
+				strOutStr += ",relatime";
+#endif
+#ifdef ST_NOSYMFOLLOW
+			if (FileSystemFlags & ST_NOSYMFOLLOW)
+				strOutStr += ",nosymfollow";
+#endif
+			if (!strOutStr.IsEmpty()) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoDiskFlags);
+				PrintInfo(strOutStr);
+			}
 		}
 
 	}

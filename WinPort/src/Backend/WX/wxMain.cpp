@@ -1341,8 +1341,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// so let's fall back to OnChar value for such key combinations.
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-		|| ( (dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) &&
-			(g_wayland || !event.AltDown() || !event.GetUnicodeKey()) ) // workaround for wx issue #23421
+		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
+#ifndef __WXOSX__
+			&& (g_wayland || !event.AltDown() || !event.GetUnicodeKey()) // workaround for wx issue #23421
+#endif
+			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
 		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
 	{
@@ -1441,10 +1444,15 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.bKeyDown = TRUE;
 		}
 #endif
-		if (g_wayland || !event.AltDown() || !event.GetUnicodeKey()) { // workaround for wx issue #23421
 
+#ifndef __WXOSX__
+		if (g_wayland || !event.AltDown() || !event.GetUnicodeKey()) { // workaround for wx issue #23421
+#else
+		{
+#endif
 			wxConsoleInputShim::Enqueue(&ir, 1);
 		}
+
 	}
 	if ((!_key_tracker.Alt() || _key_tracker.Shift() || g_wayland) && // workaround for #2294, 2464
 		_key_tracker.CheckForSuddenModifiersUp()) {

@@ -242,7 +242,7 @@ far2l, який працює у режимі WX.
 
 
   All options (except #-h# and #-u#) also can be set via the #FAR2L_ARGS# environment variable
-(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
+(for example: #export FAR2L_ARGS="--tty --nodetect"# and then simple #far2l# to force start only TTY backend).
 
 
 @KeyRef

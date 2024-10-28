@@ -1242,6 +1242,35 @@ char* FormatWxKeyState(uint16_t state) {
 	return buffer;
 }
 
+bool isNumpadNumericKey(int keycode)
+{
+	switch (keycode) {
+		case WXK_NUMPAD0:
+		case WXK_NUMPAD1:
+		case WXK_NUMPAD2:
+		case WXK_NUMPAD3:
+		case WXK_NUMPAD4:
+		case WXK_NUMPAD5:
+		case WXK_NUMPAD6:
+		case WXK_NUMPAD7:
+		case WXK_NUMPAD8:
+		case WXK_NUMPAD9:
+		case WXK_NUMPAD_INSERT:
+		case WXK_NUMPAD_END:
+		case WXK_NUMPAD_DOWN:
+		case WXK_NUMPAD_PAGEDOWN:
+		case WXK_NUMPAD_LEFT:
+		case 0x17F: // numpad center
+		case WXK_NUMPAD_RIGHT:
+		case WXK_NUMPAD_HOME:
+		case WXK_NUMPAD_UP:
+		case WXK_NUMPAD_PAGEUP:
+			return true;
+		default:
+			return false;
+	}
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
 	ResetTimerIdling();
@@ -1304,7 +1333,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// also it didnt cause problems yet
 	if ( (_key_tracker.Shift() && !event.ShiftDown())
 		|| ((_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown())) {
-		if ((!_key_tracker.Alt() || _key_tracker.Shift() || g_wayland) && // workaround for #2294, 2464
+		if ((!_key_tracker.Alt() || _key_tracker.Shift() || !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
 			_key_tracker.CheckForSuddenModifiersUp()) {
 				_exclusive_hotkeys.Reset();
 		}
@@ -1454,7 +1483,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 
 	}
-	if ((!_key_tracker.Alt() || _key_tracker.Shift() || g_wayland) && // workaround for #2294, 2464
+	if ((!_key_tracker.Alt() || _key_tracker.Shift() || !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
 		_key_tracker.CheckForSuddenModifiersUp()) {
 			_exclusive_hotkeys.Reset();
 	}

@@ -1260,7 +1260,7 @@ bool isNumpadNumericKey(int keycode)
 		case WXK_NUMPAD_DOWN:
 		case WXK_NUMPAD_PAGEDOWN:
 		case WXK_NUMPAD_LEFT:
-		case 0x17F: // numpad center
+		case WXK_NUMPAD_BEGIN: // NumPad center (5)
 		case WXK_NUMPAD_RIGHT:
 		case WXK_NUMPAD_HOME:
 		case WXK_NUMPAD_UP:

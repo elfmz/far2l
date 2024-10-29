@@ -1349,8 +1349,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	if ( (_key_tracker.Shift() && !event.ShiftDown())
 		|| ((_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown())) {
 
-		if ((!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
+		if (
+#ifndef __WXOSX__
+			(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
 			|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
+#endif
 
 				_key_tracker.CheckForSuddenModifiersUp()) {
 					_exclusive_hotkeys.Reset();
@@ -1416,6 +1419,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	_enqueued_in_onchar = false;
+
 	event.Skip();
 }
 
@@ -1430,6 +1435,11 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp());
 
 	_exclusive_hotkeys.OnKeyUp(event);
+
+	if (_enqueued_in_onchar) {
+		_enqueued_in_onchar = false;
+		return;
+	}
 
 	if (event.GetSkipped()) {
 		fprintf(stderr, " SKIPPED\n");
@@ -1501,8 +1511,11 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 
 	}
-	if ((!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
+	if (
+#ifndef __WXOSX__
+		(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
 		|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
+#endif
 
 			_key_tracker.CheckForSuddenModifiersUp()) {
 				_exclusive_hotkeys.Reset();
@@ -1570,7 +1583,8 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
-		
+
+		_enqueued_in_onchar = true;
 	}
 	//event.Skip();
 }

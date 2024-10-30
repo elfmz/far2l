@@ -96,8 +96,8 @@ force GUI backend to run on X11
 \fB\-\-wayland\fP
 force GUI backend to run on Wayland
 .TP
-\fB\-\-ee\fP, \fB\-\-ee\fP=\fI\,N\/\fR
-ESC expiration in \fI\,N\/\fR msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)
+\fB\-\-ee\fP=\fI\,N\/\fR
+ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)
 .TP
 \fB\-\-primary-selection\fP
 use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)
@@ -110,10 +110,18 @@ dont maximize window upon launch even if its has saved maximized state (only for
 .TP
 \fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
 use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout
-.P
+.EE
+.\"NODE "ENVIRONMENT"
+.\"DONT_SPLIT"
+.SH "ENVIRONMENT"
+.TP
+\fBFARSETTINGS\fR\fP
+Override location of user settings and configuration files (see option \fB\-u\fR).
+.TP
+\fBFAR2L_ARGS\fR\fP
 All options (except \fB\-h\fR and \fB\-u\fR) also can be set via the \fB\,FAR2L_ARGS\/\fR environment variable
 .EX
-(for example: export FAR2L_ARGS="--tty --nodetect --ee" and then simple far2l to force start only TTY backend).
+(for example: export FAR2L_ARGS="--tty --nodetect" and then simple far2l to force start only TTY backend).
 .EE
 .\"NODE "FULL HELP"
 .SH "FULL HELP"

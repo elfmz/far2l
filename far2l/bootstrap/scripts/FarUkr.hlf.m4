@@ -242,7 +242,7 @@ far2l, який працює у режимі WX.
 
 
   All options (except #-h# and #-u#) also can be set via the #FAR2L_ARGS# environment variable
-(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
+(for example: #export FAR2L_ARGS="--tty --nodetect"# and then simple #far2l# to force start only TTY backend).
 
 
 @KeyRef
@@ -660,6 +660,8 @@ $ #Команда управління панелями - сервісні ко�
 #Shift-Enter# на папці з ім'ям "#..#" відкриває у Провіднику поточну папку.
 
  Змінити папку на кореневу #Ctrl-\\#
+
+ Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
 
  Change to the home directory (~~)                            #Ctrl-`#
 

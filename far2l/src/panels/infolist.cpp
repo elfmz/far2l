@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #elif !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__HAIKU__)
 #include <sys/sysinfo.h>
 #endif
+#include <sys/statvfs.h>
 
 static int LastDizWrapMode = -1;
 static int LastDizWrapType = -1;
@@ -107,9 +108,10 @@ void InfoList::DisplayObject()
 {
 	FARString strTitle;
 	FARString strOutStr;
+	FARString strRealDir;
 	Panel *AnotherPanel;
 	//	FARString strDriveRoot;
-	FARString strVolumeName, strFileSystemName;
+	FARString strVolumeName, strFileSystemName, strFileSystemMountPoint;
 	DWORD MaxNameLength, FileSystemFlags;
 	DWORD64 VolumeNumber;
 	FARString strDiskNumber;
@@ -150,50 +152,177 @@ void InfoList::DisplayObject()
 	AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 	AnotherPanel->GetCurDir(strCurDir);
 
-	if (strCurDir.IsEmpty())
-		apiGetCurrentDirectory(strCurDir);
+	if (AnotherPanel->GetMode() != PLUGIN_PANEL) {
 
-	fprintf(stderr, "apiGetVolumeInformation: %ls\n", strCurDir.CPtr());
-	if (apiGetVolumeInformation(strCurDir, &strVolumeName, &VolumeNumber, &MaxNameLength, &FileSystemFlags,
-				&strFileSystemName)) {
-		//		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
-		strTitle = FARString(L" ") + L" (" + strFileSystemName + L") ";
+		if (strCurDir.IsEmpty())
+			apiGetCurrentDirectory(strCurDir);
 
-		strDiskNumber.Format(L"%08X-%08X", (DWORD)(VolumeNumber >> 32), (DWORD)(VolumeNumber & 0xffffffff));
-	} else						// Error!
-		strTitle = strCurDir;	// strDriveRoot;
+		ConvertNameToReal(strCurDir, strRealDir);
 
-	TruncStr(strTitle, X2 - X1 - 3);
-	GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, CurY++);
-	PrintText(strTitle);
+		fprintf(stderr, "apiGetVolumeInformation: %ls\n", strRealDir.CPtr());
+		bool b_info = apiGetVolumeInformation(strRealDir, &strVolumeName, &VolumeNumber, &MaxNameLength, &FileSystemFlags,
+					&strFileSystemName, &strFileSystemMountPoint);
+		if (b_info) {
+			//		strTitle=FARString(L" ")+DiskType+L" "+Msg::InfoDisk+L" "+(strDriveRoot)+L" ("+strFileSystemName+L") ";
+			strTitle = FARString(L"") + L" (" + strFileSystemName + L") ";
 
-	/* #3 - disk info: size */
+			strDiskNumber.Format(L"%08X-%08X", (DWORD)(VolumeNumber >> 32), (DWORD)(VolumeNumber & 0xffffffff));
+		} else						// Error!
+			strTitle = strCurDir;	// strDriveRoot;
 
-	uint64_t TotalSize, TotalFree, UserFree;
+		TruncStr(strTitle, X2 - X1 - 3);
+		GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, CurY++);
+		PrintText(strTitle);
 
-	if (apiGetDiskSize(strCurDir, &TotalSize, &TotalFree, &UserFree)) {
+		/* #3 - disk info: size */
+
+		uint64_t TotalSize, TotalFree, UserFree;
+
+		if (apiGetDiskSize(strCurDir, &TotalSize, &TotalFree, &UserFree)) {
+			GotoXY(X1 + 2, CurY++);
+			PrintText(Msg::InfoDiskTotal);
+			InsertCommas(TotalSize, strOutStr);
+			PrintInfo(strOutStr);
+
+			GotoXY(X1 + 2, CurY++);
+			PrintText(Msg::InfoDiskFree);
+			InsertCommas(UserFree, strOutStr);
+			PrintInfo(strOutStr);
+		}
+
+		/* #4 - disk info: label & SN */
+
+		if (!strVolumeName.IsEmpty()) {
+			GotoXY(X1 + 2, CurY++);
+			PrintText(Msg::InfoDiskLabel);
+			PrintInfo(strVolumeName);
+		}
+
 		GotoXY(X1 + 2, CurY++);
-		PrintText(Msg::InfoDiskTotal);
-		InsertCommas(TotalSize, strOutStr);
-		PrintInfo(strOutStr);
+		PrintText(Msg::InfoDiskNumber);
+		PrintInfo(strDiskNumber);
+
+		// new fields
+		CurY++; // skip line
 
 		GotoXY(X1 + 2, CurY++);
-		PrintText(Msg::InfoDiskFree);
-		InsertCommas(UserFree, strOutStr);
-		PrintInfo(strOutStr);
+		PrintText(Msg::InfoDiskCurDir);
+		PrintInfo(strCurDir);
+
+		GotoXY(X1 + 2, CurY++);
+		PrintText(Msg::InfoDiskRealDir);
+		PrintInfo(strRealDir);
+
+		if (b_info) {
+			GotoXY(X1 + 2, CurY++);
+			PrintText(Msg::InfoDiskMountPoint);
+			PrintInfo(strFileSystemMountPoint);
+
+			GotoXY(X1 + 2, CurY++);
+			PrintText(Msg::InfoDiskMaxFilenameLength);
+			strTitle.Format(L"%lu", (unsigned long) MaxNameLength);
+			PrintInfo(strTitle);
+
+			strOutStr.Clear();
+#ifdef ST_RDONLY		/* Mount read-only.  */
+			strOutStr += (FileSystemFlags & ST_RDONLY) ? "ro" : "rw";
+#endif
+#ifdef ST_NOSUID		/* Ignore suid and sgid bits.  */
+			if (FileSystemFlags & ST_NOSUID)
+				strOutStr += ",nosuid";
+#endif
+#ifdef ST_NODEV			/* Disallow access to device special files.  */
+			if (FileSystemFlags & ST_NODEV)
+				strOutStr += ",nodev";
+#endif
+#ifdef ST_NOEXEC		/* Disallow program execution.  */
+			if (FileSystemFlags & ST_NOEXEC)
+				strOutStr += ",noexec";
+#endif
+#ifdef ST_SYNCHRONOUS	/* Writes are synced at once.  */
+			if (FileSystemFlags & ST_SYNCHRONOUS)
+				strOutStr += ",sync";
+#endif
+#ifdef ST_MANDLOCK		/* Allow mandatory locks on an FS.  */
+			if (FileSystemFlags & ST_MANDLOCK)
+				strOutStr += ",mandlock";
+#endif
+#ifdef ST_WRITE			/* Write on file/directory/symlink.  */
+			if (FileSystemFlags & ST_WRITE)
+				strOutStr += ",write";
+#endif
+#ifdef ST_APPEND		/* Append-only file.  */
+			if (FileSystemFlags & ST_APPEND)
+				strOutStr += ",append";
+#endif
+#ifdef ST_IMMUTABLE		/* Immutable file.  */
+			if (FileSystemFlags & ST_IMMUTABLE)
+				strOutStr += ",immutable";
+#endif
+#ifdef ST_NOATIME		/* Do not update access times.  */
+			if (FileSystemFlags & ST_NOATIME)
+				strOutStr += ",noatime";
+#endif
+#ifdef ST_NODIRATIME	/* Do not update directory access times.  */
+			if (FileSystemFlags & ST_NODIRATIME)
+				strOutStr += ",nodiratime";
+#endif
+#ifdef ST_RELATIME		/* Update atime relative to mtime/ctime.  */
+			if (FileSystemFlags & ST_RELATIME)
+				strOutStr += ",relatime";
+#endif
+#ifdef ST_NOSYMFOLLOW
+			if (FileSystemFlags & ST_NOSYMFOLLOW)
+				strOutStr += ",nosymfollow";
+#endif
+			if (!strOutStr.IsEmpty()) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoDiskFlags);
+				PrintInfo(strOutStr);
+			}
+		}
+
 	}
+	else { // plugin
+		strTitle = Msg::InfoPluginTitle;
+		GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, CurY++);
+		PrintText(strTitle);
 
-	/* #4 - disk info: label & SN */
-
-	if (!strVolumeName.IsEmpty()) {
 		GotoXY(X1 + 2, CurY++);
-		PrintText(Msg::InfoDiskLabel);
-		PrintInfo(strVolumeName);
-	}
+		PrintText(Msg::InfoPluginStartDir);
+		PrintInfo(strCurDir);
 
-	GotoXY(X1 + 2, CurY++);
-	PrintText(Msg::InfoDiskNumber);
-	PrintInfo(strDiskNumber);
+		HANDLE hPlugin = AnotherPanel->GetPluginHandle();
+		if (hPlugin != INVALID_HANDLE_VALUE) {
+			PluginHandle *ph = (PluginHandle *)hPlugin;
+			GotoXY(X1 + 2, CurY++);
+			PrintText(Msg::InfoPluginModuleName);
+			PrintInfo(PointToName(ph->pPlugin->GetModuleName()));
+		}
+
+		OpenPluginInfo Info;
+		AnotherPanel->GetOpenPluginInfo(&Info);
+
+		GotoXY(X1 + 2, CurY++);
+		PrintText(Msg::InfoPluginHostFile);
+		PrintInfo(Info.HostFile);
+
+		GotoXY(X1 + 2, CurY++);
+		PrintText(Msg::InfoPluginCurDir);
+		PrintInfo(Info.CurDir);
+
+		GotoXY(X1 + 2, CurY++);
+		PrintText(Msg::InfoPluginPanelTitle);
+		PrintInfo(Info.PanelTitle);
+
+		GotoXY(X1 + 2, CurY++);
+		PrintText(Msg::InfoPluginFormat);
+		PrintInfo(Info.Format);
+
+		GotoXY(X1 + 2, CurY++);
+		PrintText(Msg::InfoPluginShortcutData);
+		PrintInfo(Info.ShortcutData);
+	}
 
 	/* #4 - memory info */
 

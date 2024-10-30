@@ -473,7 +473,7 @@ bool apiExpandEnvironmentStrings(const wchar_t *src, FARString &strDest)
 
 BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolumeName,
 		DWORD64 *lpVolumeSerialNumber, LPDWORD lpMaximumComponentLength, LPDWORD lpFileSystemFlags,
-		FARString *pFileSystemName)
+		FARString *pFileSystemName, FARString *pFileSystemMountPoint)
 {
 	struct statvfs svfs {};
 	const std::string &path = Wide2MB(lpwszRootPathName);
@@ -486,7 +486,7 @@ BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolum
 	if (lpVolumeSerialNumber)
 		*lpVolumeSerialNumber = (DWORD)svfs.f_fsid;
 	if (lpFileSystemFlags)
-		*lpFileSystemFlags = 0;		// TODO: svfs.f_flags;
+		*lpFileSystemFlags = (DWORD)svfs.f_flag;
 
 	if (pVolumeName) {
 		pVolumeName->Clear();
@@ -506,6 +506,9 @@ BOOL apiGetVolumeInformation(const wchar_t *lpwszRootPathName, FARString *pVolum
 
 	if (pFileSystemName) {
 		*pFileSystemName = MountInfo().GetFileSystem(path);
+	}
+	if (*pFileSystemMountPoint) {
+		*pFileSystemMountPoint = MountInfo().GetFileSystemMountPoint(lpwszRootPathName);
 	}
 
 	return TRUE;

@@ -99,8 +99,8 @@ force GUI backend to run on X11
 \fB\-\-wayland\fP
 force GUI backend to run on Wayland
 .TP
-\fB\-\-ee\fP, \fB\-\-ee\fP=\fI\,N\/\fR
-Срок действия ESC \fI\,N\/\fR мсек (100 по умолчанию), чтобы избежать необходимости двойного нажатия ESC (действительно только в режиме TTY без расширений FAR2L).
+\fB\-\-ee\fP=\fI\,N\/\fR
+Срок действия ESC в мсек (по умолчанию 100, укажите 0 для отключения), чтобы избежать необходимости двойного нажатия ESC (действительно только в режиме TTY без расширений FAR2L).
 .TP
 \fB\-\-primary-selection\fP
 Использовать PRIMARY selection вместо CLIPBOARD X11 selection. Этот аргумент применим только для far2l, который работает в режиме WX.
@@ -113,10 +113,18 @@ dont maximize window upon launch even if its has saved maximized state (only for
 .TP
 \fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
 use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout
-.P
+.EE
+.\"NODE "ENVIRONMENT"
+.\"DONT_SPLIT"
+.SH "ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ"
+.TP
+\fBFARSETTINGS\fR\fP
+Переопределяет расположение пользовательских настроек и конфигурационных файлов (см. параметр \fB\-u\fR).
+.TP
+\fBFAR2L_ARGS\fR\fP
 Все параметры (кроме \fB\-h\fR и \fB\-u\fR) также могут быть установлены через переменную окружения \fB\,FAR2L_ARGS\/\fR
 .EX
-(например: export FAR2L_ARGS="--tty --nodetect --ee" и затем просто far2l для принудительного запуска только режима TTY).
+(например: export FAR2L_ARGS="--tty --nodetect" и затем просто far2l для принудительного запуска только режима TTY).
 .EE
 .\"NODE "FULL HELP"
 .SH "ПОЛНАЯ СПРАВКА"

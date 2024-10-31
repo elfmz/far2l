@@ -625,9 +625,19 @@ void InfoList::ShowDirDescription(int YPos)
 				std::vector<std::wstring> lines;
 				std::string cmd = "git -C \"";
 				cmd+= EscapeCmdStr(Wide2MB(strDir.CPtr()));
-				cmd+= "\" status";
+				cmd+= "\" status -s -b";
 
 				if (POpen(lines, cmd.c_str())) {
+					// text " git status " in separator
+					strGit = L" git status -s -b ";
+					TruncStrFromEnd(strGit, X2 - X1 - 3);
+					GotoXY(X1 + (X2 - X1 + 1 - (int)strGit.GetLength()) / 2, YPos);
+					PrintText(strGit);
+					// print git root dir
+					GotoXY(X1 + 2, ++YPos);
+					PrintText(Msg::InfoGitRootDir);
+					PrintInfo(strDir);
+					// print result of git status 
 					for (const auto &l : lines) {
 						GotoXY(X1 + 2, ++YPos);
 						PrintText(l.c_str());

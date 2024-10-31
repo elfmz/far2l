@@ -13304,6 +13304,17 @@ upd:"Free paging file"
 "Вільно файлу підкачки"
 "Вольна файла падпампоўкі"
 
+InfoGitRootDir
+"Git Root Directory"
+"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+
 InfoDizAbsent
 "Файл описания папки отсутствует"
 "Folder description file is absent"

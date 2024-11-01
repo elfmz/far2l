@@ -781,7 +781,7 @@ void InfoList::ShowPluginDescription()
 	for (int I = 0; I < Info.InfoLinesNumber; I++) {
 		Y = Y2 - Info.InfoLinesNumber + I;
 
-		if (Y <= Y1 + 1)
+		if (Y <= Y1)
 			continue;
 
 		const InfoPanelLine *InfoLine = &Info.InfoLines[I];

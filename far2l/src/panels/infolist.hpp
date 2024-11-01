@@ -76,9 +76,12 @@ private:
 	int OldWrapMode;
 	int OldWrapType;
 	FARString strDizFileName;
+	struct InfoListSectionState;
+	std::vector<InfoListSectionState> SectionState;
 
 private:
 	virtual void DisplayObject();
+	void ShowGitStatus(int &YPos);
 	void ShowDirDescription(int YPos);
 	void ShowPluginDescription();
 
@@ -86,6 +89,8 @@ private:
 	void PrintText(FarLangMsg MsgID);
 	void PrintInfo(const wchar_t *Str);
 	void PrintInfo(FarLangMsg MsgID);
+	void DrawTitle(const wchar_t *Str, int Id, int &CurY);
+	void DrawTitle(FarLangMsg MsgID, int Id, int &CurY);
 
 	int OpenDizFile(const wchar_t *DizFile, int YPos);
 	void SetMacroMode(int Restore = FALSE);

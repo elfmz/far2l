@@ -2232,6 +2232,8 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 		}
 		if (SrcData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			TreeList::AddTreeName(strDestPath);
+		if (Flags.MOVE && PointToName(strDestPath) == strDestPath.CPtr())
+			strRenamedName = strDestPath;
 		return COPY_SUCCESS;
 	}
 

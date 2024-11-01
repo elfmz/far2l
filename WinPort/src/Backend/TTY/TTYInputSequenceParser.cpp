@@ -179,7 +179,7 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStrF1F5(VK_F2, "Q"); AddStr(VK_F2, 0, "[[B");
 	AddStrF1F5(VK_F3, "R"); AddStr(VK_F3, 0, "[[C");
 	AddStrF1F5(VK_F4, "S"); AddStr(VK_F4, 0, "[[D");
-	AddStrF1F5(VK_F5, "E"); AddStr(VK_F5, 0, "[[E");
+	AddStrF1F5(VK_CLEAR, "E"); AddStr(VK_CLEAR, 0, "[[E"); // NumPad center (5)
 
 	AddStrTilde(VK_HOME, 1);
 	AddStrTilde(VK_INSERT, 2);

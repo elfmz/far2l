@@ -434,20 +434,29 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	}
 
 	// Workarounds for some weird win32-input-mode use cases
+	// Todo: add scan codes
+	// Ctrl+letter
 	if (
-		(!args[0] && args[2] >= 1 && args[2] <= 27 && !(args[4] & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))) ||
-		( args[0] && args[2] >= 1 && args[2] <= 27 &&  (args[4] & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)))
+		(!args[0] && args[2] >= 1 && args[2] <= 26 && !(args[4] & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))) ||
+		( args[0] && args[2] >= 1 && args[2] <= 26 &&  (args[4] & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)))
 	) {
 		args[0] = args[2] + 64;
-		// Todo: add scan codes
 		args[2] = (args[4] & SHIFT_PRESSED) ? args[0] : tolower(args[0]);
 		args[4] |= LEFT_CTRL_PRESSED;
 	}
+	// Ctrl+BS
 	if (args[0] == 0 && args[2] == 127 && args[3]) {
 		args[0] = 8;
-		// Todo: add scan codes
 		args[2] = args[0];
 		args[4] |= LEFT_CTRL_PRESSED;
+	}
+	// Enter
+	if (args[0] == 0 && args[2] == 13 && args[3]) {
+		args[0] = 13;
+	}
+	// Esc
+	if (args[0] == 0 && args[2] == 27 && args[3]) {
+		args[0] = 27;
 	}
 
 	INPUT_RECORD ir = {};

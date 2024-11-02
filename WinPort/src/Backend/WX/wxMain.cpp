@@ -1392,7 +1392,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
-#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) && !wxCHECK_VERSION(3, 2 ,6)
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
 
 			&& (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) // workaround for wx issue #23421
 #endif
@@ -1503,7 +1503,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 #endif
 
-#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) && !wxCHECK_VERSION(3, 2 ,6)
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
 		if (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) { // workaround for wx issue #23421
 #else
 		{
@@ -1565,7 +1565,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
-#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) && !wxCHECK_VERSION(3, 2 ,6)
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
 		if (event.AltDown()) {
 
 			// workaround for wx issue #23421

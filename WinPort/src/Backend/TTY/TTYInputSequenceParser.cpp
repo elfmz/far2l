@@ -5,8 +5,6 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
-bool bracketed_paste_mode = 0;
-
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
@@ -423,7 +421,7 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 		case 0x13: case 0x14: case 0x15: case 0x16: case 0x17: case 0x18: case 0x19: case 0x1a:
 
 			// workaround for \x0a received instead of \x0d in kitty and wezterm in bracketed paste mode
-			if (bracketed_paste_mode && *s == 0x0a) {
+			if (_bracketed_paste_mode && *s == 0x0a) {
 				AddPendingKeyEvent(TTYInputKey{VK_RETURN, 0});
 				return 1;
 			}
@@ -670,7 +668,7 @@ void TTYInputSequenceParser::OnBracketedPaste(bool start)
 	ir.Event.BracketedPaste.bStartPaste = start ? TRUE : FALSE;
 	_ir_pending.emplace_back(ir);
 
-	bracketed_paste_mode = start ? TRUE : FALSE;
+	_bracketed_paste_mode = start;
 }
 
 //work-around for double encoded events in win32-input mode

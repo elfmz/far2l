@@ -1392,7 +1392,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
-#ifndef __WXOSX__
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) && !wxCHECK_VERSION(3, 2 ,6)
+
 			&& (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) // workaround for wx issue #23421
 #endif
 			)
@@ -1502,7 +1503,7 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 #endif
 
-#ifndef __WXOSX__
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) && !wxCHECK_VERSION(3, 2 ,6)
 		if (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) { // workaround for wx issue #23421
 #else
 		{
@@ -1564,6 +1565,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) && !wxCHECK_VERSION(3, 2 ,6)
 		if (event.AltDown()) {
 
 			// workaround for wx issue #23421
@@ -1577,6 +1579,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
 		}
+#endif
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);

@@ -1044,54 +1044,55 @@ void FarAbout(PluginManager &Plugins)
 		ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 
 		int iFlags;
+		int j;
 		PluginInfo pInfo{};
 		KeyFileReadHelper kfh(PluginsIni());
 		FARString fsCommandPrefix = L"";
-		FARString fsDiskMenuStrings = L"";
-		FARString fsPluginMenuStrings = L"";
-		FARString fsPluginConfigStrings = L"";
+		std::vector<FARString> fsDiskMenuStrings;
+		std::vector<FARString> fsPluginMenuStrings;
+		std::vector<FARString> fsPluginConfigStrings;
 
 		if (pPlugin->CheckWorkFlags(PIWF_CACHED)) {
 			iFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags", 0);
 			fsCommandPrefix = kfh.GetString(pPlugin->GetSettingsName(), "CommandPrefix", L"");
-			for (int j = 0; ; j++) {
+			for (j = 0; ; j++) {
 				const auto &key_name = StrPrintf("DiskMenuString%d", j);
 				/*if (!kfh.HasKey(key_name))
 					break;*/
 				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
 				if( fs2.IsEmpty() )
 					break;
-				fsDiskMenuStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
+				fsDiskMenuStrings.emplace_back(fs2);
 			}
-			for (int j = 0; ; j++) {
+			for (j = 0; ; j++) {
 				const auto &key_name = StrPrintf("PluginMenuString%d", j);
 				/*if (!kfh.HasKey(key_name))
 					break;*/
 				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
 				if( fs2.IsEmpty() )
 					break;
-				fsPluginMenuStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
+				fsPluginMenuStrings.emplace_back(fs2);
 			}
-			for (int j = 0; ; j++) {
+			for (j = 0; ; j++) {
 				const auto &key_name = StrPrintf("PluginConfigString%d", j);
 				/*if (!kfh.HasKey(key_name))
 					break;*/
 				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
 				if( fs2.IsEmpty() )
 					break;
-				fsPluginConfigStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
+				fsPluginConfigStrings.emplace_back(fs2);
 			}
 		}
 		else {
 			if (pPlugin->GetPluginInfo(&pInfo)) {
 				iFlags = pInfo.Flags;
 				fsCommandPrefix = pInfo.CommandPrefix;
-				for (int j = 0; j < pInfo.DiskMenuStringsNumber; j++)
-					fsDiskMenuStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.DiskMenuStrings[j]);
-				for (int j = 0; j < pInfo.PluginMenuStringsNumber; j++)
-					fsPluginMenuStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.PluginMenuStrings[j]);
-				for (int j = 0; j < pInfo.PluginConfigStringsNumber; j++)
-					fsPluginConfigStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.PluginConfigStrings[j]);
+				for (j = 0; j < pInfo.DiskMenuStringsNumber; j++)
+					fsDiskMenuStrings.emplace_back(pInfo.DiskMenuStrings[j]);
+				for (j = 0; j < pInfo.PluginMenuStringsNumber; j++)
+					fsPluginMenuStrings.emplace_back(pInfo.PluginMenuStrings[j]);
+				for (j = 0; j < pInfo.PluginConfigStringsNumber; j++)
+					fsPluginConfigStrings.emplace_back(pInfo.PluginConfigStrings[j]);
 			}
 			else
 				iFlags = -1;
@@ -1116,16 +1117,22 @@ void FarAbout(PluginManager &Plugins)
 		mi.strName.Format(L"%ls     %s EditorInput ", fs.CPtr(), pPlugin->HasProcessEditorInput() ? "[x]" : "[ ]");
 		ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 
-		if ( !fsDiskMenuStrings.IsEmpty() ) {
-			mi.strName = fs + L"    DiskMenuStrings:" + fsDiskMenuStrings;
+		j = 0;
+		for (auto& fs_vec : fsDiskMenuStrings) {
+			j++;
+			mi.strName.Format(L"%ls     DiskMenuString: %2d=\"%ls\"", fs.CPtr(), j, fs_vec.CPtr());
 			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 		}
-		if ( !fsPluginMenuStrings.IsEmpty() ) {
-			mi.strName = fs + L"  PluginMenuStrings:" + fsPluginMenuStrings;
+		j = 0;
+		for (auto& fs_vec : fsPluginMenuStrings) {
+			j++;
+			mi.strName.Format(L"%ls   PluginMenuString: %2d=\"%ls\"", fs.CPtr(), j, fs_vec.CPtr());
 			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 		}
-		if ( !fsPluginConfigStrings.IsEmpty() ) {
-			mi.strName = fs + L"PluginConfigStrings:" + fsPluginConfigStrings;
+		j = 0;
+		for (auto& fs_vec : fsPluginConfigStrings) {
+			j++;
+			mi.strName.Format(L"%ls PluginConfigString: %2d=\"%ls\"", fs.CPtr(), j, fs_vec.CPtr());
 			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 		}
 		if ( !fsCommandPrefix.IsEmpty() ) {

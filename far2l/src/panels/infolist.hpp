@@ -83,14 +83,14 @@ private:
 	virtual void DisplayObject();
 	void ShowGitStatus(int &YPos);
 	void ShowDirDescription(int YPos);
-	void ShowPluginDescription();
+	void ShowPluginDescription(int YPos);
 
 	void PrintText(const wchar_t *Str);
 	void PrintText(FarLangMsg MsgID);
 	void PrintInfo(const wchar_t *Str);
 	void PrintInfo(FarLangMsg MsgID);
-	void DrawTitle(const wchar_t *Str, int Id, int &CurY);
-	void DrawTitle(FarLangMsg MsgID, int Id, int &CurY);
+	void DrawTitle(const wchar_t *Str, int Id, int CurY);
+	void DrawTitle(FarLangMsg MsgID, int Id, int CurY);
 
 	int OpenDizFile(const wchar_t *DizFile, int YPos);
 	void SetMacroMode(int Restore = FALSE);

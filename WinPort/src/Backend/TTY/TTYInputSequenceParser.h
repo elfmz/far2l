@@ -110,6 +110,7 @@ class TTYInputSequenceParser
 	StackSerializer _tmp_stk_ser;
 	DWORD _extra_control_keys = 0;
 	std::vector<INPUT_RECORD> _ir_pending;
+	bool _bracketed_paste_mode = false;
 	bool _kitty_right_ctrl_down = false;
 	int _iterm_last_flags = 0;
 	char _using_extension = 0;

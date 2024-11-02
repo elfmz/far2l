@@ -1242,7 +1242,7 @@ char* FormatWxKeyState(uint16_t state) {
 	return buffer;
 }
 
-bool isNumpadNumericKey(int keycode)
+static bool isNumpadNumericKey(int keycode)
 {
 	switch (keycode) {
 		case WXK_NUMPAD0:

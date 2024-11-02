@@ -1563,6 +1563,27 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 				ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
 			}
 		}
+
+#ifdef __WXOSX__
+		int lkc = _key_tracker.LastKeydown().GetKeyCode();
+		if ((uni >= 48) && (uni <= 57) && (lkc < WXK_NUMPAD0 || lkc > WXK_NUMPAD9)
+			&& (lkc < WXK_NUMPAD_SPACE || lkc > WXK_NUMPAD_DIVIDE))
+		{
+			// on Macs OnKeyDown sometimes produce wrong key code then pressing numbers in some keyboard layouts:
+			/*
+				OnKeyDown: raw=16 code=a7 uni=a7 (§) ts=1293737678 [now=1293737684]
+				OnChar: raw=16 code=36 uni=36 (6) ts=1293737678 lke=0
+				ConsoleInput::Enqueue: 6 36 a7 10 DOWN
+				ConsoleInput::Enqueue: 6 36 a7 10 UP
+			*/
+			// (its number 6 in French AZERTY layout on Mac)
+			// Windows virtual key code a7 is VK_BROWSER_FORWARD, defenitely wrong
+			// lets use unicode char to detect proper codes for such keys
+
+			ir.Event.KeyEvent.wVirtualKeyCode = uni;
+		}
+#endif
+
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
 #if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)

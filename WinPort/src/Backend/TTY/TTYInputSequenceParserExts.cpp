@@ -345,7 +345,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'D': ir.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
-		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
+		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_CLEAR; break; // NumPad center (5)
 		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'F': ir.Event.KeyEvent.wVirtualKeyCode = VK_END;

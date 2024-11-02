@@ -74,8 +74,8 @@ enum InfoListSectionStateIndex
 	ILSS_DISKINFO,
 	ILSS_MEMORYINFO,
 	ILSS_GITINFO,
-	ILSS_DIRDESCRIPTION,
-	/*ILSS_PLDESCRIPTION,
+	/*ILSS_DIRDESCRIPTION,
+	ILSS_PLDESCRIPTION,
 	ILSS_POWERSTATUS,*/
 
 	ILSS_SIZE
@@ -127,7 +127,7 @@ FARString &InfoList::GetTitle(FARString &strTitle, int SubLen, int TruncSize)
 	return strTitle;
 }
 
-void InfoList::DrawTitle(const wchar_t *Str, int Id, int &CurY)
+void InfoList::DrawTitle(const wchar_t *Str, int Id, int CurY)
 {
 	SetFarColor(COL_PANELBOX);
 	DrawSeparator(CurY);
@@ -140,13 +140,14 @@ void InfoList::DrawTitle(const wchar_t *Str, int Id, int &CurY)
 		GotoXY(X1 + (X2 - X1 + 1 - (int)strTitle.GetLength()) / 2, CurY);
 		PrintText(strTitle);
 	}
-	GotoXY(X1 + 1, CurY);
-	PrintText(SectionState[Id].Show ? L"[-]" : L"[+]");
-	SectionState[Id].Y=CurY;
-	CurY++;
+	if (Id >= 0 && Id < ILSS_SIZE ) {
+		GotoXY(X1 + 1, CurY);
+		PrintText(SectionState[Id].Show ? L"[-]" : L"[+]");
+		SectionState[Id].Y = CurY;
+	}
 }
 
-inline void InfoList::DrawTitle(FarLangMsg MsgID, int Id, int &CurY)
+inline void InfoList::DrawTitle(FarLangMsg MsgID, int Id, int CurY)
 {
 	DrawTitle(MsgID.CPtr(), Id, CurY);
 }
@@ -214,7 +215,7 @@ void InfoList::DisplayObject()
 		} else						// Error!
 			strTitle = strCurDir;	// strDriveRoot;
 
-		DrawTitle(strTitle.CPtr(), ILSS_DISKINFO, CurY);
+		DrawTitle(strTitle.CPtr(), ILSS_DISKINFO, CurY++);
 		if (SectionState[ILSS_DISKINFO].Show) {
 			/* #2a.2 - disk info: size */
 
@@ -328,7 +329,7 @@ void InfoList::DisplayObject()
 	}
 	/* 2b - plugin */
 	else {
-		DrawTitle(Msg::InfoPluginTitle, ILSS_DISKINFO, CurY);
+		DrawTitle(Msg::InfoPluginTitle, ILSS_DISKINFO, CurY++);
 		if (SectionState[ILSS_DISKINFO].Show) {
 			GotoXY(X1 + 2, CurY++);
 			PrintText(Msg::InfoPluginStartDir);
@@ -368,7 +369,7 @@ void InfoList::DisplayObject()
 	}
 
 	/* #3 - memory info */
-	DrawTitle(Msg::InfoMemory, ILSS_MEMORYINFO, CurY);
+	DrawTitle(Msg::InfoMemory, ILSS_MEMORYINFO, CurY++);
 	if (SectionState[ILSS_MEMORYINFO].Show) {
 
 #ifdef __APPLE__
@@ -457,6 +458,7 @@ void InfoList::DisplayObject()
 		}
 #endif
 	}
+
 	/* #4 - git status */
 	ShowGitStatus(CurY);
 
@@ -464,7 +466,7 @@ void InfoList::DisplayObject()
 	ShowDirDescription(CurY);
 
 	/* #6 - plugin description */
-	ShowPluginDescription();
+	ShowPluginDescription(CurY);
 }
 
 int64_t InfoList::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -667,38 +669,39 @@ void InfoList::ShowGitStatus(int &YPos)
 {
 	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
-	if (AnotherPanel->GetMode() == FILE_PANEL) {
-		FARString strDir;
-		AnotherPanel->GetCurDir(strDir);
-		do {
-			FARString strGit = strDir + L"/.git";
-			struct stat s;
-			if (stat(strGit.GetMB().c_str(), &s) == 0) {
-				fprintf(stderr, "GIT: %ls\n", strGit.CPtr());
-				std::vector<std::wstring> lines;
-				std::string cmd = "git -C \"";
-				cmd+= EscapeCmdStr(Wide2MB(strDir.CPtr()));
-				cmd+= "\" status -s -b";
+	if (AnotherPanel->GetMode() != FILE_PANEL)
+		return;
 
-				if (POpen(lines, cmd.c_str())) {
-					// text " git status " in separator
-					DrawTitle(L"git status -s -b", ILSS_GITINFO, YPos);
-					if (SectionState[ILSS_GITINFO].Show) {
-						// print git root dir
+	FARString strDir;
+	AnotherPanel->GetCurDir(strDir);
+	do {
+		FARString strGit = strDir + L"/.git";
+		struct stat s;
+		if (stat(strGit.GetMB().c_str(), &s) == 0) {
+			fprintf(stderr, "GIT: %ls\n", strGit.CPtr());
+			std::vector<std::wstring> lines;
+			std::string cmd = "git -C \"";
+			cmd+= EscapeCmdStr(Wide2MB(strDir.CPtr()));
+			cmd+= "\" status -s -b";
+
+			if (POpen(lines, cmd.c_str())) {
+				// text " git status " in separator
+				DrawTitle(L"git status -s -b", ILSS_GITINFO, YPos++);
+				if (SectionState[ILSS_GITINFO].Show) {
+					// print git root dir
+					GotoXY(X1 + 2, YPos++);
+					PrintText(Msg::InfoGitRootDir);
+					PrintInfo(strDir);
+					// print result of git status 
+					for (const auto &l : lines) {
 						GotoXY(X1 + 2, YPos++);
-						PrintText(Msg::InfoGitRootDir);
-						PrintInfo(strDir);
-						// print result of git status 
-						for (const auto &l : lines) {
-							GotoXY(X1 + 2, YPos++);
-							PrintText(l.c_str());
-						}
+						PrintText(l.c_str());
 					}
 				}
-				break;
 			}
-		} while (CutToSlash(strDir, true));
-	}
+			break;
+		}
+	} while (CutToSlash(strDir, true));
 }
 
 void InfoList::ShowDirDescription(int YPos)
@@ -707,12 +710,7 @@ void InfoList::ShowDirDescription(int YPos)
 	if (AnotherPanel->GetMode() != FILE_PANEL)
 		return;
 
-	if (!SectionState[ILSS_DIRDESCRIPTION].Show) {
-		DrawTitle(Msg::InfoDescription, ILSS_DIRDESCRIPTION, YPos);
-		return;
-	}
-
-	DrawTitle(nullptr, ILSS_DIRDESCRIPTION, YPos);
+	DrawTitle(nullptr, -1/*ILSS_DIRDESCRIPTION*/, YPos);
 
 	FARString strDir;
 	AnotherPanel->GetCurDir(strDir);
@@ -736,7 +734,7 @@ void InfoList::ShowDirDescription(int YPos)
 		CutToSlash(strFullDizName, false);
 		strFullDizName+= FindData.strFileName;
 
-		if (OpenDizFile(strFullDizName, YPos - 1))
+		if (OpenDizFile(strFullDizName, YPos))
 			return;
 	}
 
@@ -746,7 +744,7 @@ void InfoList::ShowDirDescription(int YPos)
 	strDir += Msg::InfoDescription;
 	strDir += L" ";
 	TruncStr(strDir, X2 - X1 - 3);
-	GotoXY(X1 + (X2 - X1 - (int)strDir.GetLength()) / 2, YPos - 1);
+	GotoXY(X1 + (X2 - X1 - (int)strDir.GetLength()) / 2, YPos++);
 	SetFarColor(COL_PANELTEXT);
 	PrintText(strDir);
 
@@ -755,7 +753,7 @@ void InfoList::ShowDirDescription(int YPos)
 	PrintText(Msg::InfoDizAbsent);
 }
 
-void InfoList::ShowPluginDescription()
+void InfoList::ShowPluginDescription(int YPos)
 {
 	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
@@ -765,19 +763,16 @@ void InfoList::ShowPluginDescription()
 	OpenPluginInfo Info;
 	AnotherPanel->GetOpenPluginInfo(&Info);
 
-	if (Info.InfoLinesNumber <= 0)
+	if (Info.InfoLinesNumber <= 0) {
+		DrawTitle(Msg::InfoPluginDescription, -1/*ILSS_DIRDESCRIPTION*/, YPos++);
+		GotoXY(X1 + 2, YPos);
+		PrintText(Msg::InfoPluginAbsent);
 		return;
+	}
 
 	static wchar_t VertcalLine[2] = {BoxSymbols[BS_V2], 0};
 	int Y;
 
-	/*if (!SectionState[ILSS_PLDESCRIPTION].Show) {
-		Y = Y2 - 1;
-		DrawTitle(L"Plugin", ILSS_PLDESCRIPTION, Y);
-		return;
-	}
-	Y = Y2 - Info.InfoLinesNumber - 1;
-	DrawTitle(L"Plugin", ILSS_PLDESCRIPTION, Y);*/
 	for (int I = 0; I < Info.InfoLinesNumber; I++) {
 		Y = Y2 - Info.InfoLinesNumber + I;
 

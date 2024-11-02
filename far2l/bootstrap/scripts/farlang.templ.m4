@@ -13337,6 +13337,28 @@ InfoDizAbsent
 "Файл опису теки відсутній"
 "Файл апісання каталога адсутнічае"
 
+InfoPluginDescription
+"Описание от плагина"
+"Plugin Description"
+"Plugin Popis"
+"Plugin Beschreibung"
+"Plugin Megjegyzés"
+"Plugin Opis"
+"Plugin Descripción"
+"Опис від модуля"
+"Апісанне ад дадаткі"
+
+InfoPluginAbsent
+"Расширенная информация от плагина отсутствует"
+"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+
 ErrorInvalidFunction
 l:
 "Некорректная функция"

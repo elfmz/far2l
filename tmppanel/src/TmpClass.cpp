@@ -6,6 +6,8 @@ Temporary panel plugin class implementation
 */
 
 #include "TmpPanel.hpp"
+#include <string>
+#include <utils.h>
 
 TmpPanel::TmpPanel()
 {
@@ -816,16 +818,17 @@ void TmpPanel::SaveListFile(const TCHAR *Path)
 	}
 
 	DWORD BytesWritten;
-#ifdef UNICODE
-	static const unsigned short bom = BOM_UCS2;
-	WriteFile(hFile, &bom, sizeof(bom), &BytesWritten, NULL);
-#endif
+
+	static const unsigned char bomhi = BOM_UTF8_HI;
+	static const unsigned short bomlo = BOM_UTF8_LO;
+	WriteFile(hFile, &bomlo, sizeof(bomlo), &BytesWritten, NULL);
+	WriteFile(hFile, &bomhi, sizeof(bomhi), &BytesWritten, NULL);
 	int i = 0;
 	do {
-		static const TCHAR *CRLF = _T("\r\n");
-		const TCHAR *FName = TmpPanelItem[i].FindData.FILE_NAME;
-		WriteFile(hFile, FName, sizeof(TCHAR) * lstrlen(FName), &BytesWritten, NULL);
-		WriteFile(hFile, CRLF, 2 * sizeof(TCHAR), &BytesWritten, NULL);
+		std::string FName;
+		Wide2MB(TmpPanelItem[i].FindData.lpwszFileName,FName);
+		WriteFile(hFile, FName.c_str(), sizeof(char) * FName.size(), &BytesWritten, NULL);
+		WriteFile(hFile, "\n", sizeof(char), &BytesWritten, NULL);
 	} while (++i < TmpItemsNumber);
 	CloseHandle(hFile);
 }

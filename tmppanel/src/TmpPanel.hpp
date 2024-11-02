@@ -57,6 +57,8 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd);
 #define BOM_UCS2    0xFEFF
 #define BOM_UCS2_BE 0xFFFE
 #define BOM_UTF8    0xBFBBEF
+#define BOM_UTF8_LO    0xBBEF
+#define BOM_UTF8_HI    0xBF
 #endif
 
 #define NT_MAX_PATH 32768

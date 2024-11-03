@@ -49,6 +49,8 @@ class CerrLogger : public Logger
     return Logger::LOG_OFF;
   }
 
+  void flush() override {};
+
  private:
   Logger::LogLevel current_level = Logger::LOG_OFF;
 };

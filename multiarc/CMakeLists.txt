@@ -70,7 +70,10 @@ set(SOURCES
         src/formats/7z/C/Ppmd7aDec.c
         src/formats/7z/C/Sha1Opt.c
         src/formats/7z/C/Sha256Opt.c
-
+        src/formats/7z/C/Sha256Opt.c
+        src/formats/7z/C/Xxh64.c
+        src/formats/7z/C/SwapBytes.c
+        src/formats/7z/C/ZstdDec.c
         src/formats/ha/ha/acoder.c
         src/formats/ha/ha/archive.c
         src/formats/ha/ha/asc.c

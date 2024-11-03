@@ -52,7 +52,7 @@ void FreePanelItems(PluginPanelItem *Items, DWORD Total);
 TCHAR *ParseParam(TCHAR *&str);
 void GetOptions(void);
 void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd);
-
+int PWZ_to_PZ(const wchar_t *src, char *dst, int lendst);
 
 #define BOM_UCS2    0xFEFF
 #define BOM_UCS2_BE 0xFFFE

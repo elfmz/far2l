@@ -250,78 +250,52 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 	StrBuf TMP(NT_MAX_PATH);	// BUGBUG
 	DWORD Len, Pos = 0, Size = FileSizeLow;
 
-	bool ucs2 = false;
-	if (Size >= 2)
-		switch (*(LPWORD)FileData) {
-			case (BOM_UTF8 & 0xFFFF):
-				if (Size >= 3 && ((LPBYTE)FileData)[2] == (BYTE)(BOM_UTF8 >> 16)) {
-					case BOM_UCS2_BE:
-						goto done;
-				}
-			default:
-				break;
-			case BOM_UCS2:
-				ucs2 = true;
-				Pos+= 2;
-				break;
+	if (Size >= 3) {
+		if ( ((LPBYTE)FileData)[0]==0xEF && ((LPBYTE)FileData)[1]==0xBB && ((LPBYTE)FileData)[2]==0xBF
+			//*(LPWORD)FileData == BOM_UTF8 & 0xFFFF && ((LPBYTE)FileData)[2] == (BYTE)(BOM_UTF8 >> 16)
+			){
+			Pos+= 3;
 		}
+	}
 
 	while (Pos < Size) {
-		if (!ucs2) {
-			char c;
-			while (Pos < Size && ((c = FileData[Pos]) == '\r' || c == '\n'))
-				Pos++;
-			DWORD Off = Pos;
-			while (Pos < Size && (c = FileData[Pos]) != '\r' && c != '\n')
-				Pos++;
-			Len = Pos - Off;
 
-		    Len = MultiByteToWideChar(CP_OEMCP, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, &FileData[Off], Len, TMP,
-				TMP.Size() - 1);
-	}
-	else
-	{
-		wchar_t c;
-		--Size;
-		while (Pos < Size && ((c = *(wchar_t *)&FileData[Pos]) == L'\r' || c == L'\n'))
-			Pos+= sizeof(wchar_t);
+		char c;
+		while (Pos < Size && ((c = FileData[Pos]) == '\r' || c == '\n'))
+			Pos++;
 		DWORD Off = Pos;
-		while (Pos < Size && (c = *(wchar_t *)&FileData[Pos]) != L'\r' && c != L'\n')
-			Pos+= sizeof(wchar_t);
-		if (Pos < Size)
-			++Size;
-		Len = (Pos - Off) / sizeof(wchar_t);
-		if (Len >= (DWORD)TMP.Size())
-			Len = TMP.Size() - 1;
-		memcpy(TMP.Ptr(), &FileData[Off], Len * sizeof(wchar_t));
-	}
-			if (!Len)
-				continue;
+		while (Pos < Size && (c = FileData[Pos]) != '\r' && c != '\n')
+			Pos++;
+		Len = Pos - Off;
 
-			TMP.Ptr()[Len] = 0;
+	    Len = MultiByteToWideChar(CP_UTF8, MB_PRECOMPOSED | MB_ERR_INVALID_CHARS, &FileData[Off], Len, TMP,
+			TMP.Size() - 1);
 
-			FSF.Trim(TMP);
-			FSF.Unquote(TMP);
+		if (!Len)
+			continue;
 
-			Len = lstrlen(TMP);
-			if (!Len)
-				continue;
+		TMP.Ptr()[Len] = 0;
 
-			if (argv)
-				*argv++ = args;
+		FSF.Trim(TMP);
+		FSF.Unquote(TMP);
 
-			if (args) {
-				lstrcpy(args, TMP);
-				args+= Len + 1;
-			}
+		Len = lstrlen(TMP);
+		if (!Len)
+			continue;
 
-			(*numchars)+= Len + 1;
-			++*numargs;
+		if (argv)
+			*argv++ = args;
+
+		if (args) {
+			lstrcpy(args, TMP);
+			args+= Len + 1;
 		}
 
-	done:
-		munmap((LPVOID)FileData, FileSizeLow);
+		(*numchars)+= Len + 1;
+		++*numargs;
 	}
+
+}
 
 	static void ReadFileList(TCHAR * filename, int *argc, TCHAR ***argv WITH_ANSI_PARAM)
 	{

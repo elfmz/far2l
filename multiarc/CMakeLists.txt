@@ -59,6 +59,7 @@ set(SOURCES
         src/formats/7z/C/XzIn.c
         src/formats/7z/C/CpuArch.c
         src/formats/7z/C/LzFind.c
+        src/formats/7z/C/LzFindMt.c
         src/formats/7z/C/Ppmd7.c
         src/formats/7z/C/Lzma2Enc.c
         src/formats/7z/C/Sha256.c

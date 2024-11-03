@@ -674,15 +674,22 @@ void TmpPanel::SaveListFile(const TCHAR *Path)
 
 	DWORD BytesWritten;
 
-	static const unsigned short bom = BOM_UCS2;
-	WriteFile(hFile, &bom, sizeof(bom), &BytesWritten, NULL);
+	static const char bom_utf8[] = {'\xEF', '\xBB', '\xBF'};
+	WriteFile(hFile, &bom_utf8, sizeof(bom_utf8), &BytesWritten, NULL);
 
 	int i = 0;
 	do {
-		static const TCHAR *CRLF = _T("\r\n");
-		const TCHAR *FName = TmpPanelItem[i].FindData.lpwszFileName;
-		WriteFile(hFile, FName, sizeof(TCHAR) * lstrlen(FName), &BytesWritten, NULL);
-		WriteFile(hFile, CRLF, 2 * sizeof(TCHAR), &BytesWritten, NULL);
+		static const char *LF = "\n";
+		const wchar_t *FName = TmpPanelItem[i].FindData.lpwszFileName;
+
+	    size_t Size = 4 * wcslen(FName) + 1;
+	    LPSTR FNameA = new char[Size];
+	    PWZ_to_PZ(FName, FNameA, Size);
+
+		WriteFile(hFile, FNameA, sizeof(char) * strlen(FNameA), &BytesWritten, NULL);
+		WriteFile(hFile, LF, sizeof(char) * strlen(LF), &BytesWritten, NULL);
+
+	    delete[] FNameA;
 	} while (++i < TmpItemsNumber);
 	CloseHandle(hFile);
 }

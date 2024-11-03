@@ -246,3 +246,9 @@ wchar_t *GetFullPath(const wchar_t *input, StrBuf &output)
 	}
 	return output;
 }
+
+int PWZ_to_PZ(const wchar_t *src, char *dst, int lendst)
+{
+    ErrnoSaver ErSr;
+    return WINPORT(WideCharToMultiByte)(CP_UTF8, 0, (src), -1, (dst), (int)(lendst), nullptr, nullptr);
+}

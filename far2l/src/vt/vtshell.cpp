@@ -1076,10 +1076,16 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
-		_far2l_exts.reset();
-		_host_id.clear();
-		_mouse.reset();
+		// reset special terminal modes to avoid messing up of
+		// terminal if application that used them exited abnormally
+		_bracketed_paste_expected = false;
+		_win32_input_mode_expected = false;
+		_kitty_kb_flags = 0;
 		_mouse_expectations = 0;
+		_far2l_exts.reset();
+		_mouse.reset();
+		// cleanup also NetRocks per-session identifier
+		_host_id.clear();
 		return true;
 	}
 

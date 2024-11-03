@@ -15,11 +15,11 @@ int rar_main(int argc, char *argv[])
   ErrHandler.SetSignalHandlers(true);
 
 #ifdef SFX_MODULE
-  wchar ModuleName[NM];
+  std::wstring ModuleName;
 #ifdef _WIN_ALL
-  GetModuleFileName(NULL,ModuleName,ASIZE(ModuleName));
+  ModuleName=GetModuleFileStr();
 #else
-  CharToWide(argv[0],ModuleName,ASIZE(ModuleName));
+  CharToWide(argv[0],ModuleName);
 #endif
 #endif
 
@@ -38,9 +38,10 @@ int rar_main(int argc, char *argv[])
   try 
   {
   
-    CommandData *Cmd=new CommandData;
+    // Use std::unique_ptr to free Cmd in case of exception.
+    std::unique_ptr<CommandData> Cmd(new CommandData);
 #ifdef SFX_MODULE
-    wcsncpyz(Cmd->Command,L"X",ASIZE(Cmd->Command));
+    Cmd->Command=L"X";
     char *Switch=argc>1 ? argv[1]:NULL;
     if (Switch!=NULL && Cmd->IsSwitch(Switch[0]))
     {
@@ -71,7 +72,7 @@ int rar_main(int argc, char *argv[])
 
 #if defined(_WIN_ALL) && !defined(SFX_MODULE)
     ShutdownOnClose=Cmd->Shutdown;
-    if (ShutdownOnClose)
+    if (ShutdownOnClose!=POWERMODE_KEEP)
       ShutdownCheckAnother(true);
 #endif
 
@@ -81,7 +82,6 @@ int rar_main(int argc, char *argv[])
 
     Cmd->OutTitle();
     Cmd->ProcessCommand();
-    delete Cmd;
   }
   catch (RAR_EXIT ErrCode)
   {
@@ -103,7 +103,6 @@ int rar_main(int argc, char *argv[])
     Shutdown(ShutdownOnClose);
 #endif
   ErrHandler.MainExit=true;
+  CloseLogOptions();
   return ErrHandler.GetErrorCode();
 }
-
-

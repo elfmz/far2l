@@ -55,8 +55,8 @@ void format_log_string(std::ostream& out, std::string_view format, Args&&... arg
 
 #include "unicode/unistr.h"
 namespace details {
-template <> inline
-void ArgumentT<icu::UnicodeString>::print(std::ostream& out) const
+template <>
+inline void ArgumentT<icu::UnicodeString>::print(std::ostream& out) const
 {
   std::string result8;
   mData.toUTF8String(result8);
@@ -66,13 +66,13 @@ void ArgumentT<icu::UnicodeString>::print(std::ostream& out) const
 #else
 #include "colorer/strings/legacy/strings.h"
 namespace details {
-template <> inline
-void details::ArgumentT<UnicodeString>::print(std::ostream& out) const
+template <>
+inline void details::ArgumentT<UnicodeString>::print(std::ostream& out) const
 {
   std::string const result8 = mData.getChars();
   out << result8;
 }
-}
+}  // namespace details
 #endif
 
 class Logger
@@ -83,13 +83,20 @@ class Logger
   virtual ~Logger() = default;
   virtual void log(LogLevel level, const char* filename_in, int line_in, const char* funcname_in,
                    const char* message) = 0;
+  virtual void flush() = 0;
 };
 
 class Log
 {
  public:
-
   static void registerLogger(Logger& logger_) { logger = &logger_; }
+  static void removeLogger() { logger = nullptr; }
+  static void flush()
+  {
+    if (logger) {
+      logger->flush();
+    }
+  }
 
   template <typename... Args>
   static void log(const Logger::LogLevel level, const char* filename_in, const int line_in, const char* funcname_in,
@@ -106,7 +113,8 @@ class Log
   static Logger* logger;
 };
 
-#define COLORER_LOGGER_PRINTF(level, ...) Log::log(level, __FILE__, __LINE__, static_cast<const char *>(__FUNCTION__), __VA_ARGS__)
+#define COLORER_LOGGER_PRINTF(level, ...) \
+  Log::log(level, __FILE__, __LINE__, static_cast<const char*>(__FUNCTION__), __VA_ARGS__)
 #define COLORER_LOG_ERROR(...) COLORER_LOGGER_PRINTF(Logger::LogLevel::LOG_ERROR, __VA_ARGS__)
 #define COLORER_LOG_WARN(...) COLORER_LOGGER_PRINTF(Logger::LogLevel::LOG_WARN, __VA_ARGS__)
 #define COLORER_LOG_INFO(...) COLORER_LOGGER_PRINTF(Logger::LogLevel::LOG_INFO, __VA_ARGS__)
@@ -118,6 +126,5 @@ class Log
 #else
 #define COLORER_LOG_DEEPTRACE(...)
 #endif
-
 
 #endif  // COLORER_LOGGER_H

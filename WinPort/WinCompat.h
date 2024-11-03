@@ -1139,6 +1139,7 @@ typedef void *HKL;
 #define ERROR_INSUFFICIENT_BUFFER        ENOBUFS
 #define ERROR_NO_UNICODE_TRANSLATION     EILSEQ
 #define ERROR_DIRECTORY                  EISDIR
+#define ERROR_TOO_MANY_POSTS             E2BIG
 #define ERROR_INVALID_NAME               ENAMETOOLONG
 #define ERROR_FILE_EXISTS                EEXIST
 #define ERROR_OUTOFMEMORY                ENOMEM

@@ -127,7 +127,7 @@ bool Environment::isRegularFile(const UnicodeString* basePath, const UnicodeStri
 
 bool Environment::isRegularFile(const UnicodeString& path)
 {
-  return fs::is_regular_file(UStr::to_stdstr(&path));
+  return fs::is_regular_file(to_filepath(&path));
 }
 
 UnicodeString Environment::getAbsolutePath(const UnicodeString& basePath, const UnicodeString& relPath)
@@ -156,7 +156,7 @@ UnicodeString Environment::expandSpecialEnvironment(const UnicodeString& path)
   auto result = expandEnvByRegexp(text, std::regex(R"--(\$([[:alpha:]]\w*)\b)--"));
 
   COLORER_LOG_DEBUG("result of expand '%'", result);
-  return {result.c_str()};
+  return UStr::to_unistr(result);
 }
 
 UnicodeString Environment::expandEnvironment(const UnicodeString& path)
@@ -172,20 +172,21 @@ UnicodeString Environment::expandEnvironment(const UnicodeString& path)
   size_t i = ExpandEnvironmentStringsW(path_ws.c_str(), nullptr, 0);
   auto temp = std::make_unique<wchar_t[]>(i);
   ExpandEnvironmentStringsW(path_ws.c_str(), temp.get(), static_cast<DWORD>(i));
-  COLORER_LOG_DEBUG("result of expand '%'", temp.get());
-  return {temp.get()};
+  UnicodeString result(temp.get());
+  COLORER_LOG_DEBUG("result of expand '%'", result);
+  return result;
 #else
   const auto text = UStr::to_stdstr(&path);
   auto res = expandEnvByRegexp(text, std::regex(R"--(\$\{([[:alpha:]]\w*)\})--"));
   res = expandEnvByRegexp(res, std::regex(R"--(\$([[:alpha:]]\w*)\b)--"));
   COLORER_LOG_DEBUG("result of expand '%'", res);
-  return {res.c_str()};
+  return UStr::to_unistr(res);
 #endif
 }
 
 uintmax_t Environment::getFileSize(const UnicodeString& path)
 {
-  return fs::file_size(UStr::to_stdstr(&path));
+  return fs::file_size( to_filepath(&path));
 }
 
 std::string Environment::expandEnvByRegexp(const std::string& path, const std::regex& regex)

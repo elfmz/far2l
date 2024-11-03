@@ -1242,7 +1242,7 @@ char* FormatWxKeyState(uint16_t state) {
 	return buffer;
 }
 
-bool isNumpadNumericKey(int keycode)
+static bool isNumpadNumericKey(int keycode)
 {
 	switch (keycode) {
 		case WXK_NUMPAD0:
@@ -1392,7 +1392,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
-#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) // workaround is still needed at least in wx 3.2.6, see wx issue #24772
 
 			&& (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) // workaround for wx issue #23421
 #endif

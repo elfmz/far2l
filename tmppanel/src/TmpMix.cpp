@@ -29,14 +29,8 @@ void InitDialogItems(const MyInitDialogItem *Init, struct FarDialogItem *Item, i
 		PItem->Focus = 0;
 		PItem->History = 0;
 		PItem->DefaultButton = 0;
-#ifdef UNICODE
 		PItem->MaxLen = 0;
-#endif
-#ifndef UNICODE
-		lstrcpy(PItem->Data, PInit->Data != -1 ? GetMsg(PInit->Data) : "");
-#else
 		PItem->PtrData = PInit->Data != -1 ? GetMsg(PInit->Data) : L"";
-#endif
 	}
 }
 
@@ -46,10 +40,8 @@ void FreePanelItems(PluginPanelItem *Items, DWORD Total)
 		for (DWORD I = 0; I < Total; I++) {
 			if (Items[I].Owner)
 				free((void *)Items[I].Owner);
-#ifdef UNICODE
 			if (Items[I].FindData.lpwszFileName)
 				free((void *)Items[I].FindData.lpwszFileName);
-#endif
 		}
 		free(Items);
 	}
@@ -74,17 +66,10 @@ TCHAR *ParseParam(TCHAR *&str)
 
 void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 {
-#ifndef UNICODE
-	int FCTL_SetPanelDir = AnotherPanel ? FCTL_SETANOTHERPANELDIR : FCTL_SETPANELDIR;
-	int FCTL_GetPanelInfo = AnotherPanel ? FCTL_GETANOTHERPANELINFO : FCTL_GETPANELINFO;
-	int FCTL_RedrawPanel = AnotherPanel ? FCTL_REDRAWANOTHERPANEL : FCTL_REDRAWPANEL;
-#define _PANEL_HANDLE INVALID_HANDLE_VALUE
-#else
 #define FCTL_SetPanelDir  FCTL_SETPANELDIR
 #define FCTL_GetPanelInfo FCTL_GETPANELINFO
 #define FCTL_RedrawPanel  FCTL_REDRAWPANEL
 	HANDLE _PANEL_HANDLE = AnotherPanel ? PANEL_PASSIVE : PANEL_ACTIVE;
-#endif
 
 	PanelRedrawInfo PRI;
 	PanelInfo PInfo;
@@ -105,54 +90,34 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 	FSF.Unquote(Dir);
 
 	if (*Dir.Ptr()) {
-#ifndef UNICODE
-		Info.Control(_PANEL_HANDLE, FCTL_SetPanelDir, Dir.Ptr());
-#else
 		Info.Control(_PANEL_HANDLE, FCTL_SetPanelDir, 0, (LONG_PTR)Dir.Ptr());
-#endif
 	}
 
-#ifndef UNICODE
-	Info.Control(_PANEL_HANDLE, FCTL_GetPanelInfo, &PInfo);
-#else
 	Info.Control(_PANEL_HANDLE, FCTL_GetPanelInfo, 0, (LONG_PTR)&PInfo);
-#endif
 
 	PRI.CurrentItem = PInfo.CurrentItem;
 	PRI.TopPanelItem = PInfo.TopPanelItem;
 
 	for (int J = 0; J < PInfo.ItemsNumber; J++) {
 
-#ifndef UNICODE
-#define FileName PInfo.PanelItems[J].FindData.cFileName
-#else
 #define FileName (PPI ? PPI->FindData.lpwszFileName : NULL)
 		PluginPanelItem *PPI =
 				(PluginPanelItem *)malloc(Info.Control(_PANEL_HANDLE, FCTL_GETPANELITEM, J, 0));
 		if (PPI) {
 			Info.Control(_PANEL_HANDLE, FCTL_GETPANELITEM, J, (LONG_PTR)PPI);
 		}
-#endif
 
 		if (!FSF.LStricmp(Name, FSF.PointToName(FileName)))
 #undef FileName
 		{
 			PRI.CurrentItem = J;
 			PRI.TopPanelItem = J;
-#ifdef UNICODE
 			free(PPI);
-#endif
 			break;
 		}
-#ifdef UNICODE
 		free(PPI);
-#endif
 	}
-#ifndef UNICODE
-	Info.Control(_PANEL_HANDLE, FCTL_RedrawPanel, &PRI);
-#else
 	Info.Control(_PANEL_HANDLE, FCTL_RedrawPanel, 0, (LONG_PTR)&PRI);
-#endif
 #undef _PANEL_HANDLE
 #undef FCTL_SetPanelDir
 #undef FCTL_GetPanelInfo
@@ -168,14 +133,9 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
 	ffd.ftLastWriteTime = wfd.ftLastWriteTime;
 	ffd.nFileSize = wfd.nFileSize;
 	ffd.nPhysicalSize = wfd.nPhysicalSize;
-#ifndef UNICODE
-	strncpy(ffd.cFileName, wfd.cFileName, ARRAYSIZE(ffd.cFileName));
-#else
 	ffd.lpwszFileName = wcsdup(wfd.cFileName);
-#endif
 }
 
-#ifdef UNICODE
 wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf)
 {
 	int l = lstrlen(path);
@@ -183,11 +143,10 @@ wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf)
 	lstrcpy(buf, path);
 	return buf;
 }
-#endif
 
 TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output)
 {
-#ifdef UNICODE
+
 	std::string s;
 	Wide2MB(input, s);
 	Environment::ExpandString(s, false);
@@ -196,10 +155,6 @@ TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output)
 	output.Grow(w.size() + 1);
 	lstrcpy(output, w.c_str());
 
-#else
-	output.Grow(MAX_PATH);
-	FSF.ExpandEnvironmentStr(input, output, output.Size());
-#endif
 	return output;
 }
 
@@ -227,23 +182,14 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 	StrBuf Path;
 	DWORD dwSize;
 
-#ifdef UNICODE
 	StrBuf FullPath;
 	GetFullPath(FileName, FullPath);
 	StrBuf NtPath;
 	FormNtPath(FullPath, NtPath);
-#else
-	const char *FullPath = FileName;
-	const char *NtPath = FileName;
-#endif
 
 	const TCHAR *final = NULL;
 	if (GetFileAttributes(NtPath) != INVALID_FILE_ATTRIBUTES) {
-#ifdef UNICODE
 		output.Grow(FullPath.Size());
-#else
-		output.Grow(lstrlen(FullPath) + 1);
-#endif
 		lstrcpy(output, FullPath);
 		return true;
 	}
@@ -290,7 +236,6 @@ success:
 	return true;
 }
 
-#ifdef UNICODE
 wchar_t *GetFullPath(const wchar_t *input, StrBuf &output)
 {
 	output.Grow(MAX_PATH);
@@ -301,4 +246,9 @@ wchar_t *GetFullPath(const wchar_t *input, StrBuf &output)
 	}
 	return output;
 }
-#endif
+
+int PWZ_to_PZ(const wchar_t *src, char *dst, int lendst)
+{
+    ErrnoSaver ErSr;
+    return WINPORT(WideCharToMultiByte)(CP_UTF8, 0, (src), -1, (dst), (int)(lendst), nullptr, nullptr);
+}

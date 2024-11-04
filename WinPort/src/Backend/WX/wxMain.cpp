@@ -132,9 +132,15 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 		return false;
 
 	fprintf(stderr, "FAR2L wxWidgets build version %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
+	char s_wx_build[15];
+	snprintf(s_wx_build, ARRAYSIZE(s_wx_build), "%d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
+	setenv("FAR2L_WX_BUILD", s_wx_build, 1);
 #if wxCHECK_VERSION(2, 9, 2)
 	wxVersionInfo wxv = wxGetLibraryVersionInfo();
 	fprintf(stderr, "FAR2L wxWidgets use version %d.%d.%d\n", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
+	char s_wx_use[15];
+	snprintf(s_wx_use, ARRAYSIZE(s_wx_use), "%d.%d.%d", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
+	setenv("FAR2L_WX_USE", s_wx_use, 1);
 #endif
 
 	wxSetAssertHandler(WinPortWxAssertHandler);

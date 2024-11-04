@@ -1,10 +1,12 @@
 #!/bin/sh
 ############################################################
-#This script used by FAR to show processes list
+# This script used by FAR to show processes list
 ############################################################
 ############################################################
-#For per user customization - create:
+# For per user customization - create:
 #~/.config/far2l/ps.sh
+# note that per-user script must do 'exit 0' at the end if
+# no need to continue default implementation in main ps.sh
 ############################################################
 
 if [ -x ~/.config/far2l/ps.sh ]; then

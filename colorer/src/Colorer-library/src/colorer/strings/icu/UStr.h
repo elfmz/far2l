@@ -8,6 +8,7 @@ class UStr
 {
  public:
   [[nodiscard]] static UnicodeString to_unistr(int number);
+  [[nodiscard]] static UnicodeString to_unistr(const std::string& str);
   [[nodiscard]] static std::string to_stdstr(const UnicodeString* str);
   [[nodiscard]] static std::string to_stdstr(const uUnicodeString& str);
 #ifdef _WINDOWS

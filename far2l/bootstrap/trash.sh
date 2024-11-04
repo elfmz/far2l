@@ -1,10 +1,12 @@
 #!/bin/sh
-##########################################################
-#This script used by FAR to move files to Trash
-##########################################################
-#For per user customization - create:
+################################################################
+# This script used by FAR to move files to Trash
+################################################################
+# For per user customization - create:
 #~/.config/far2l/trash.sh
-##########################################################
+# note that per-user script must do 'exit 0' at the end if
+# no need to continue default implementation of main trash.sh
+################################################################
 
 set -e
 

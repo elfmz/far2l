@@ -52,13 +52,11 @@ void FreePanelItems(PluginPanelItem *Items, DWORD Total);
 TCHAR *ParseParam(TCHAR *&str);
 void GetOptions(void);
 void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd);
+int PWZ_to_PZ(const wchar_t *src, char *dst, int lendst);
 
-#ifdef UNICODE
 #define BOM_UCS2    0xFEFF
 #define BOM_UCS2_BE 0xFFFE
 #define BOM_UTF8    0xBFBBEF
-#endif
-
 #define NT_MAX_PATH 32768
 
 class StrBuf
@@ -123,11 +121,11 @@ public:
 	~PtrGuard() { free(ptr); }
 };
 
-#ifdef UNICODE
+
 wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf);
 wchar_t *GetFullPath(const wchar_t *input, StrBuf &output);
-#endif
 TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output);
 bool FindListFile(const TCHAR *FileName, StrBuf &output);
 const wchar_t *GetTmpPanelModule();
+
 #endif	/* __TMPPANEL_HPP__ */

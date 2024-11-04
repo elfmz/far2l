@@ -443,21 +443,34 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		args[0] = args[2] + 64;
 		args[2] = (args[4] & SHIFT_PRESSED) ? args[0] : tolower(args[0]);
 		args[4] |= LEFT_CTRL_PRESSED;
+		fprintf(stderr, "W32I: Ctrl+letter hack\n");
 	}
 	// Ctrl+BS
 	if (args[0] == 0 && args[2] == 127 && args[3]) {
 		args[0] = 8;
 		args[2] = args[0];
 		args[4] |= LEFT_CTRL_PRESSED;
+		fprintf(stderr, "W32I: Ctrl+BS hack\n");
 	}
 	// Enter
 	if (args[0] == 0 && args[2] == 13 && args[3]) {
 		args[0] = 13;
+		fprintf(stderr, "W32I: Enter hack\n");
 	}
 	// Esc
 	if (args[0] == 0 && args[2] == 27 && args[3]) {
 		args[0] = 27;
+		fprintf(stderr, "W32I: Esc hack\n");
 	}
+
+	fprintf(stderr, "W32I: parsed %i %i %i %i %i %i\n", args[0], args[1], args[2], args[3], args[4], args[5]);
+
+/*
+// problematic sequences:
+Enter:  \x1b[0;0;13;1;0;1_  \x1b[13;28;13;0;0;1_
+Ctrl-C: \x1b[17;29;0;1;8;1_ \x1b[0;0;3;1;0;1_    \x1b[67;46;3;0;8;1_ \x1b[17;29;0;0;0;1_
+Esc:    \x1b[0;0;27;1;0;1_  \x1b[27;1;27;0;0;1_
+*/
 
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;

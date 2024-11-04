@@ -67,7 +67,7 @@ byte* SharedXmlInputSource::getSrc() const
 void SharedXmlInputSource::open()
 {
   if (!is_open) {
-    std::ifstream f(UStr::to_stdstr(&source_path), std::ios::in | std::ios::binary);
+    std::ifstream f(colorer::Environment::to_filepath(&source_path), std::ios::in | std::ios::binary);
     if (!f.is_open()) {
       COLORER_LOG_ERROR("failed to open %", source_path);
       throw InputSourceException("failed to open " + source_path);

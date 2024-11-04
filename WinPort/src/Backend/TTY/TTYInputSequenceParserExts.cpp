@@ -433,12 +433,12 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		}
 	}
 
-	// Workarounds for some weird win32-input-mode use cases
+	// Workarounds for some weird win32-input-mode setups
 	// Todo: add scan codes
-	// Ctrl+letter
+	// Ctrl+letters
 	if (
-		(!args[0] && args[2] >= 1 && args[2] <= 26 && !(args[4] & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))) ||
-		( args[0] && args[2] >= 1 && args[2] <= 26 &&  (args[4] & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)))
+		(!args[0] && args[2] >= 1 && args[2] <= 26 && !(args[4] & LEFT_CTRL_PRESSED)) ||
+		( args[0] && args[2] >= 1 && args[2] <= 26 &&  (args[4] & LEFT_CTRL_PRESSED))
 	) {
 		args[0] = args[2] + 64;
 		args[2] = (args[4] & SHIFT_PRESSED) ? args[0] : tolower(args[0]);
@@ -446,21 +446,35 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		fprintf(stderr, "W32I: Ctrl+letter hack\n");
 	}
 	// Ctrl+BS
-	if (args[0] == 0 && args[2] == 127 && args[3]) {
-		args[0] = 8;
+	if (args[0] == 0 && args[2] == 0x7F && args[3]) {
+		args[0] = VK_BACK;
 		args[2] = args[0];
 		args[4] |= LEFT_CTRL_PRESSED;
 		fprintf(stderr, "W32I: Ctrl+BS hack\n");
 	}
 	// Enter
-	if (args[0] == 0 && args[2] == 13 && args[3]) {
-		args[0] = 13;
+	if (args[0] == 0 && args[2] == 0x0D && args[3]) {
+		args[0] = VK_RETURN;
 		fprintf(stderr, "W32I: Enter hack\n");
 	}
+	// Enter#2: Ctrl+M encoded as win32-input-mode seq, 77 0 109 1 8 1
+	if (args[0] == 'M' && !args[1] && args[2] == 'm' && args[3] && (args[4] & LEFT_CTRL_PRESSED)) {
+		args[0] = VK_RETURN;
+		args[2] = 0x0D;
+		args[4] = 0;
+		fprintf(stderr, "W32I: Enter hack #2\n");
+	}
 	// Esc
-	if (args[0] == 0 && args[2] == 27 && args[3]) {
-		args[0] = 27;
+	if (args[0] == 0 && args[2] == 0x1B && args[3]) {
+		args[0] = 0x1B;
 		fprintf(stderr, "W32I: Esc hack\n");
+	}
+	// Esc#2: Ctrl+[ encoded as win32-input-mode seq
+	if (args[0] == VK_OEM_4 && !args[1] && args[2] == '[' && args[3] && (args[4] & LEFT_CTRL_PRESSED)) {
+		args[0] = VK_ESCAPE;
+		args[2] = 0x1B;
+		args[4] = 0;
+		fprintf(stderr, "W32I: Esc hack #2\n");
 	}
 
 	fprintf(stderr, "W32I: parsed %i %i %i %i %i %i\n", args[0], args[1], args[2], args[3], args[4], args[5]);

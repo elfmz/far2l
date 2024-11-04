@@ -138,13 +138,15 @@ xmlParserInputPtr LibXmlReader::xmlMyExternalEntityLoader(const char* URL, const
   /*
    * The function is called before each opening of a file within libxml, whether it is an xmlReadFile,
    * or opening a file for an external entity.
-   * I.e., the path to the file can be checked or modified here.  If the external entity specifies a path similar
+   * I.e., the path to the file can be checked or modified here. If the external entity specifies a path similar
    * to the file path, then libxml itself forms the full path to the entity file by gluing the path from the current
-   * file and the one specified in the external entity.
+   * file and the one specified in the external entity. But sometimes it fails, for example, on non-Latin letters in
+   * the path to the main file.
    * At the same time, there is no path to the source file or to the file in the entity in the function parameters.
    */
 
-  UnicodeString string_url(URL);
+  auto filename = Encodings::fromUTF8(const_cast<char*>(URL), static_cast<int32_t>(strlen(URL)));
+  UnicodeString string_url(*filename.get());
 
   // read entity string like "env:$FAR_HOME/hrd/catalog-console.xml"
   static const UnicodeString env(u"env:");
@@ -152,6 +154,7 @@ xmlParserInputPtr LibXmlReader::xmlMyExternalEntityLoader(const char* URL, const
     const auto exp = colorer::Environment::expandSpecialEnvironment(string_url);
     string_url = UnicodeString(exp, env.length());
   }
+
 #ifdef COLORER_FEATURE_ZIPINPUTSOURCE
   if (string_url.startsWith(jar) || current_file->startsWith(jar)) {
     const auto paths = LibXmlInputSource::getFullPathsToZip(string_url, is_first_call ? nullptr : current_file.get());
@@ -164,6 +167,15 @@ xmlParserInputPtr LibXmlReader::xmlMyExternalEntityLoader(const char* URL, const
     return ret;
   }
 #endif
+  // We check if the file exists after all the conversions. If not, then we check the file relative to the one being processed.
+  // This is relevant for the case of non-Latin letters in the path to the main file and entity on linux. There is no such problem on windows.
+  if (!is_first_call && !colorer::Environment::isRegularFile(string_url)) {
+    auto new_string_url = colorer::Environment::getAbsolutePath(*current_file.get(), string_url);
+    if (colorer::Environment::isRegularFile(new_string_url)) {
+      string_url = std::move(new_string_url);
+    }
+  }
+
   is_first_call = false;
   // read it as a regular file
   xmlParserInputPtr ret = xmlNewInputFromFile(ctxt, UStr::to_stdstr(&string_url).c_str());

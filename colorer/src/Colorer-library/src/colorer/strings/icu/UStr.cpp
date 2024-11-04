@@ -6,6 +6,11 @@ UnicodeString UStr::to_unistr(const int number)
   return {std::to_string(number).c_str()};
 }
 
+UnicodeString UStr::to_unistr(const std::string& str)
+{
+  return {str.c_str(), static_cast<int32_t>(str.length()), Encodings::ENC_UTF8};
+}
+
 std::string UStr::to_stdstr(const UnicodeString* str)
 {
   std::string out_str;

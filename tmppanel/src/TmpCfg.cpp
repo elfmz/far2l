@@ -9,13 +9,8 @@ Temporary panel configuration
 #include <KeyFileHelper.h>
 #include <utils.h>
 
-#ifndef UNICODE
-#define GetCheck(i)   DialogItems[i].Selected
-#define GetDataPtr(i) DialogItems[i].Data
-#else
 #define GetCheck(i)   (int)Info.SendDlgMessage(hDlg, DM_GETCHECK, i, 0)
 #define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, i, 0))
-#endif
 
 #define INI_LOCATION InMyConfig("plugins/tmppanel/config.ini")
 #define INI_SECTION  "Settings"
@@ -36,9 +31,6 @@ enum
 	ColumnWidths,
 	StatusColumnTypes,
 	StatusColumnWidths,
-#ifndef UNICODE
-	DisksMenuDigit,
-#endif
 	Mask,
 	Prefix
 };
@@ -46,11 +38,7 @@ enum
 options_t Opt;
 
 static const char REGStr[][9] = {("InDisks"), ("InPlug"), ("Common"), ("Safe"), ("Any"), ("Contents"),
-		("Mode"), ("Menu"), ("NewP"), ("Full"), ("ColT"), ("ColW"), ("StatT"), ("StatW"),
-#ifndef UNICODE
-		("DigitV"),
-#endif
-		("Mask"), ("Prefix")};
+		("Mode"), ("Menu"), ("NewP"), ("Full"), ("ColT"), ("ColW"), ("StatT"), ("StatW"), ("Mask"), ("Prefix")};
 
 struct COptionsList
 {
@@ -79,9 +67,6 @@ static const struct COptionsList OptionsList[] = {
 		{Opt.StatusColumnTypes,         _T("NR,SC,D,T"), 19, sizeof(Opt.StatusColumnTypes)       },
 		{Opt.StatusColumnWidths,        _T("0,8,0,5"),   21, sizeof(Opt.StatusColumnWidths)      },
 
-#ifndef UNICODE
-		{Opt.DisksMenuDigit,            _T("1"),         2,  sizeof(Opt.DisksMenuDigit)          },
-#endif
 		{Opt.Mask,                      _T("*.temp"),    25, sizeof(Opt.Mask)                    },
 		{Opt.Prefix,                    _T("tmp"),       27, sizeof(Opt.Mask)                    },
 };
@@ -116,21 +101,9 @@ int Config()
 
 			/* 1*/ {DI_CHECKBOX, 5, 2, 0, 0, 0, MConfigAddToDisksMenu},
 			/* 2*/
-			{DI_FIXEDIT, 7, 3, 7, 3,
-					0
-#ifdef UNICODE
-							| DIF_HIDDEN
-#endif
-					,
-					-1},
+			{DI_FIXEDIT, 7, 3, 7, 3,DIF_HIDDEN, -1},
 			/* 3*/
-			{DI_TEXT, 9, 3, 0, 0,
-					0
-#ifdef UNICODE
-							| DIF_HIDDEN
-#endif
-					,
-					MConfigDisksMenuDigit},
+			{DI_TEXT, 9, 3, 0, 0,DIF_HIDDEN,MConfigDisksMenuDigit},
 			/* 4*/ {DI_CHECKBOX, DC, 2, 0, 0, 0, MConfigAddToPluginsMenu},
 			/* 5*/ {DI_TEXT, 5, 4, 0, 0, DIF_BOXCOLOR | DIF_SEPARATOR, -1},
 
@@ -178,23 +151,14 @@ int Config()
 		if (i < ColumnTypes)
 			DialogItems[OptionsList[i].DialogItem].Selected = *(int *)(OptionsList[i].Option);
 		else
-#ifndef UNICODE
-			lstrcpy(DialogItems[OptionsList[i].DialogItem].Data, (char *)OptionsList[i].Option);
-#else
 			DialogItems[OptionsList[i].DialogItem].PtrData = (TCHAR *)OptionsList[i].Option;
-#endif
 
-#ifndef UNICODE
-	int Ret = Info.Dialog(Info.ModuleNumber, -1, -1, DIALOG_WIDTH, DIALOG_HEIGHT, "Config", DialogItems,
-			ARRAYSIZE(DialogItems));
-#else
 	HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, DIALOG_WIDTH, DIALOG_HEIGHT, L"Config",
 			DialogItems, ARRAYSIZE(DialogItems), 0, 0, NULL, 0);
 	if (hDlg == INVALID_HANDLE_VALUE)
 		return FALSE;
 
 	int Ret = Info.DialogRun(hDlg);
-#endif
 
 	KeyFileHelper kfh(INI_LOCATION);
 	if ((unsigned)Ret >= ARRAYSIZE(InitItems) - 1)
@@ -220,8 +184,6 @@ int Config()
 		Info.PluginsControl(NULL, PCTL_CACHEFORGET, PLT_PATH, (LONG_PTR)GetTmpPanelModule());
 	}
 done:
-#ifdef UNICODE
 	Info.DialogFree(hDlg);
-#endif
 	return ((unsigned)Ret < ARRAYSIZE(InitItems));
 }

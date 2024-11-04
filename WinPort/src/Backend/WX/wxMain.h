@@ -97,6 +97,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	unsigned char _force_size_on_paint_state{0};
 	bool _extra_refresh{false};
 	bool _last_keydown_enqueued{false};
+	bool _enqueued_in_onchar{false};
 	bool _app_entry_started{false};
 	bool _adhoc_quickedit{false};
 	enum

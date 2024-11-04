@@ -131,6 +131,12 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	if (!wxInitialize())
 		return false;
 
+	fprintf(stderr, "FAR2L wxWidgets build version %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
+#if wxCHECK_VERSION(2, 9, 2)
+	wxVersionInfo wxv = wxGetLibraryVersionInfo();
+	fprintf(stderr, "FAR2L wxWidgets use version %d.%d.%d\n", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
+#endif
+
 	wxSetAssertHandler(WinPortWxAssertHandler);
 
 	DetectHostAbilities();

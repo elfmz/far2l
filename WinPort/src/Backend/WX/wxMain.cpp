@@ -131,6 +131,12 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	if (!wxInitialize())
 		return false;
 
+	fprintf(stderr, "FAR2L wxWidgets build version %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
+#if wxCHECK_VERSION(2, 9, 2)
+	wxVersionInfo wxv = wxGetLibraryVersionInfo();
+	fprintf(stderr, "FAR2L wxWidgets use version %d.%d.%d\n", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
+#endif
+
 	wxSetAssertHandler(WinPortWxAssertHandler);
 
 	DetectHostAbilities();
@@ -1242,6 +1248,50 @@ char* FormatWxKeyState(uint16_t state) {
 	return buffer;
 }
 
+static bool isNumpadNumericKey(int keycode)
+{
+	switch (keycode) {
+		case WXK_NUMPAD0:
+		case WXK_NUMPAD1:
+		case WXK_NUMPAD2:
+		case WXK_NUMPAD3:
+		case WXK_NUMPAD4:
+		case WXK_NUMPAD5:
+		case WXK_NUMPAD6:
+		case WXK_NUMPAD7:
+		case WXK_NUMPAD8:
+		case WXK_NUMPAD9:
+		case WXK_NUMPAD_INSERT:
+		case WXK_NUMPAD_END:
+		case WXK_NUMPAD_DOWN:
+		case WXK_NUMPAD_PAGEDOWN:
+		case WXK_NUMPAD_LEFT:
+		case WXK_NUMPAD_BEGIN: // NumPad center (5)
+		case WXK_NUMPAD_RIGHT:
+		case WXK_NUMPAD_HOME:
+		case WXK_NUMPAD_UP:
+		case WXK_NUMPAD_PAGEUP:
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool isLayoutDependentKey( wxKeyEvent& event ) {
+	switch (event.GetKeyCode()) {
+		// Those keys generate Unicode key codes, but they are not keyboard layout-dependent keys
+		case WXK_ESCAPE:
+		case WXK_DELETE:
+		case WXK_BACK:
+		case WXK_TAB:
+		case WXK_RETURN:
+		case WXK_SPACE:
+			return false;
+		default:
+			return event.GetUnicodeKey() > 0;
+	}
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
 	ResetTimerIdling();
@@ -1304,9 +1354,15 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// also it didnt cause problems yet
 	if ( (_key_tracker.Shift() && !event.ShiftDown())
 		|| ((_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown())) {
-		if ((!_key_tracker.Alt() || _key_tracker.Shift() || g_wayland) && // workaround for #2294, 2464
-			_key_tracker.CheckForSuddenModifiersUp()) {
-				_exclusive_hotkeys.Reset();
+
+		if (
+#ifndef __WXOSX__
+			(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
+			|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
+#endif
+
+				_key_tracker.CheckForSuddenModifiersUp()) {
+					_exclusive_hotkeys.Reset();
 		}
 	}
 
@@ -1342,8 +1398,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
 		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
-#ifndef __WXOSX__
-			&& (g_wayland || !event.AltDown() || !event.GetUnicodeKey()) // workaround for wx issue #23421
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) // workaround is still needed at least in wx 3.2.6, see wx issue #24772
+
+			&& (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) // workaround for wx issue #23421
 #endif
 			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
@@ -1369,6 +1426,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	_enqueued_in_onchar = false;
+
 	event.Skip();
 }
 
@@ -1383,6 +1442,11 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp());
 
 	_exclusive_hotkeys.OnKeyUp(event);
+
+	if (_enqueued_in_onchar) {
+		_enqueued_in_onchar = false;
+		return;
+	}
 
 	if (event.GetSkipped()) {
 		fprintf(stderr, " SKIPPED\n");
@@ -1445,8 +1509,8 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 #endif
 
-#ifndef __WXOSX__
-		if (g_wayland || !event.AltDown() || !event.GetUnicodeKey()) { // workaround for wx issue #23421
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
+		if (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) { // workaround for wx issue #23421
 #else
 		{
 #endif
@@ -1454,9 +1518,14 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		}
 
 	}
-	if ((!_key_tracker.Alt() || _key_tracker.Shift() || g_wayland) && // workaround for #2294, 2464
-		_key_tracker.CheckForSuddenModifiersUp()) {
-			_exclusive_hotkeys.Reset();
+	if (
+#ifndef __WXOSX__
+		(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
+		|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
+#endif
+
+			_key_tracker.CheckForSuddenModifiersUp()) {
+				_exclusive_hotkeys.Reset();
 	}
 	//event.Skip();
 }
@@ -1502,6 +1571,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
 		if (event.AltDown()) {
 
 			// workaround for wx issue #23421
@@ -1515,13 +1585,15 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
 		}
+#endif
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 		
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
-		
+
+		_enqueued_in_onchar = true;
 	}
 	//event.Skip();
 }

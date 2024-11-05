@@ -470,6 +470,18 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
+	// Workaround for some weird win32-input-mode setups
+	if (
+		(l > 8 && s[1] == '[' && s[2] == '2' && s[3] == '7' && s[4] == ';' && s[10] == '0')
+		&& _win32_accumulate) {
+
+		AddPendingKeyEvent(TTYInputKey{VK_ESCAPE, 0});
+
+		_win32_accumulate = false;
+		_win_double_buffer.clear();
+		return 16; // на самом деле искать ближайший _
+	}
+
 	//work-around for double encoded events in win32-input mode
 	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
 	//following codes are part of some double encoded input sequence and must be parsed in separate buffer

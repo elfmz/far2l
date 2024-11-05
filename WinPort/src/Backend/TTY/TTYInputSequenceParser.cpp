@@ -5,11 +5,6 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
-#include <iostream>
-#include <fstream>
-#include <unistd.h>  // For getuid() and getpwuid()
-#include <pwd.h>     // For struct passwd
-
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
@@ -475,30 +470,6 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 
 size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 {
-
-	// Get home directory
-	struct passwd *pw = getpwuid(getuid());
-	const char *homedir = pw->pw_dir;
-
-	// Construct log file path
-	std::string logFilePath = std::string(homedir) + "/far2l_ttyin.log";
-
-	// Open log file in append mode
-	std::ofstream logFile(logFilePath, std::ios::app);
-
-	if (logFile.is_open()) {
-		for (size_t i = 0; i < l; ++i) {
-			if (s[i] == '\033') { // Check for escape character (27 in decimal or 033 in octal)
-				logFile << std::endl; // Add newline before ESC
-			}
-			logFile << s[i];
-		}
-		logFile << std::flush; // Ensure data is written to the file immediately
-		logFile.close();
-	} else {
-		std::cerr << "Error opening log file: " << logFilePath << std::endl;
-	}
-
 	//work-around for double encoded events in win32-input mode
 	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
 	//following codes are part of some double encoded input sequence and must be parsed in separate buffer

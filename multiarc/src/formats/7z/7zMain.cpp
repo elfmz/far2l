@@ -472,7 +472,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
     {
       lookStream.bufSize = kInputBufSize;
       lookStream.realStream = &archiveStream.vt;
-      LookToRead2_Init(&lookStream);
+      LookToRead2_INIT(&lookStream);
     }
   }
     

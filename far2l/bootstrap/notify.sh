@@ -1,13 +1,15 @@
 #!/bin/sh
-############################################################
-#This script used by FAR to display desktop notifcations
-############################################################
-#$1= action
-#$2= object
-############################################################
-#For per user customization - create:
+################################################################
+# This script used by FAR to display desktop notifcations
+################################################################
+# $1= action
+# $2= object
+################################################################
+# For per user customization - create:
 #~/.config/far2l/notify.sh
-############################################################
+# note that per-user script must do 'exit 0' at the end if
+# no need to continue default implementation of main notify.sh
+################################################################
 
 action=$1
 object=$2 

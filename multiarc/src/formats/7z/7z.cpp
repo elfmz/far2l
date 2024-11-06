@@ -107,7 +107,7 @@ public:
 
     _look_stream.bufSize = inbuf_len;
     _look_stream.realStream = &_file_stream.vt;
-    LookToRead2_Init(&_look_stream);
+    LookToRead2_INIT(&_look_stream);
 
     static volatile int i = (CrcGenerateTable(), 0);
     i;

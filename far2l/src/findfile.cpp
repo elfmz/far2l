@@ -1032,7 +1032,7 @@ static bool ScanFileByMapping(const char *Name)
 
 		const void *View = smm.View();
 		size_t Length = smm.Length();
-		for (UINT LastPercents = 0;;) {
+		for (UINT LastPercents = 0;!StopFlag;) {
 			const bool FirstFragment = (FilePos == 0);
 			const bool LastFragment = (FilePos + off_t(smm.Length()) >= FileSize);
 			const size_t AnalyzeLength = LastFragment

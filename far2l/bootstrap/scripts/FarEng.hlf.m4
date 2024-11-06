@@ -144,8 +144,8 @@ when it starts, far2l switches to #TTY|X# without i.
     Far2l running and selecting backend:
         - if you have FAR2L-GUI installed, then when you run FAR2L it will try to use GUI mode;
         - to force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
-        - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi --ee#;
-        - to force run in plain mode TTY use in command line: #far2l --tty --nodetect=x --ee#;
+        - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi#;
+        - to force run in plain mode TTY use in command line: #far2l --tty --nodetect=x#;
         - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
@@ -379,7 +379,7 @@ passive command executes first (passive panel activates temporary). Односи
 
 
   All options (except #-h# and #-u#) also can be set via the #FAR2L_ARGS# environment variable
-(for example: #export FAR2L_ARGS="--tty --nodetect --ee"# and then simple #far2l# to force start only TTY backend).
+(for example: #export FAR2L_ARGS="--tty --nodetect"# and then simple #far2l# to force start only TTY backend).
 
 
 @KeyRef

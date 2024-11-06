@@ -314,8 +314,9 @@ struct ArgOptions
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
 
-		} else if (strstr(a, "--ee=") == a) {
-			esc_expiration = atoi(&a[5]);
+		} else if (strstr(a, "--ee") == a) {
+			if (a[4] == '=')
+				esc_expiration = atoi(&a[5]);
 
 		} else if (need_strdup) {
 			char *a_dup = strdup(a);

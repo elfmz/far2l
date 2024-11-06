@@ -14,7 +14,7 @@ std::string UStr::to_stdstr(const uUnicodeString& str)
 
 std::wstring UStr::to_stdwstr(const UnicodeString* str)
 {
-  std::wstring out_string (str->getWChars());
+  std::wstring out_string(str->getWChars());
   return out_string;
 }
 
@@ -23,8 +23,7 @@ std::wstring UStr::to_stdwstr(const UnicodeString& str)
   return to_stdwstr(&str);
 }
 
-std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, int pos,
-                                                      int* retPos, bool ignore_case)
+std::unique_ptr<CharacterClass> UStr::createCharClass(const UnicodeString& ccs, int pos, int* retPos, bool ignore_case)
 {
   return CharacterClass::createCharClass(ccs, pos, retPos, ignore_case);
 }
@@ -37,6 +36,11 @@ int8_t UStr::caseCompare(const UnicodeString& str1, const UnicodeString& str2)
 UnicodeString UStr::to_unistr(int number)
 {
   return {number};
+}
+
+UnicodeString UStr::to_unistr(const std::string& str)
+{
+  return {str.c_str(), static_cast<int32_t>(str.length()), Encodings::ENC_UTF8};
 }
 
 bool UStr::HexToUInt(const UnicodeString& str_hex, unsigned int* result)

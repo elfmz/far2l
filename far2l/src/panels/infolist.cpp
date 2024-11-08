@@ -84,7 +84,7 @@ enum InfoListSectionStateIndex
 struct InfoList::InfoListSectionState
 {
 	bool Show;   // раскрыть/свернуть?
-	int Y;     // Где? (<0 - отсутствует)
+	int Y;       // Где? (<0 - отсутствует)
 };
 
 InfoList::InfoList()
@@ -152,6 +152,13 @@ inline void InfoList::DrawTitle(FarLangMsg MsgID, int Id, int CurY)
 	DrawTitle(MsgID.CPtr(), Id, CurY);
 }
 
+void InfoList::ClearTitles()
+{
+	for (int i=0; i<ILSS_SIZE; i++)
+		SectionState[i].Y = -1;
+}
+
+
 void InfoList::DisplayObject()
 {
 	FARString strTitle;
@@ -164,6 +171,7 @@ void InfoList::DisplayObject()
 	DWORD64 VolumeNumber;
 	FARString strDiskNumber;
 	CloseFile();
+	ClearTitles();
 
 	Box(X1, Y1, X2, Y2, FarColorToReal(COL_PANELBOX), DOUBLE_BOX);
 	SetScreen(X1 + 1, Y1 + 1, X2 - 1, Y2 - 1, L' ', FarColorToReal(COL_PANELTEXT));
@@ -770,24 +778,12 @@ void InfoList::ShowPluginDescription(int YPos)
 		return;
 	}
 
-	static wchar_t VertcalLine[2] = {BoxSymbols[BS_V2], 0};
-	int Y;
+	if (!Info.InfoLines[0].Separator) // show default, if plugin info start without its own separator
+		DrawTitle(Msg::InfoPluginDescription, -1/*ILSS_DIRDESCRIPTION*/, YPos++);
 
-	for (int I = 0; I < Info.InfoLinesNumber; I++) {
-		Y = Y2 - Info.InfoLinesNumber + I;
-
-		if (Y <= Y1)
-			continue;
-
+	for (int I = 0; I < Info.InfoLinesNumber && YPos < Y2; I++, YPos++) {
 		const InfoPanelLine *InfoLine = &Info.InfoLines[I];
-		GotoXY(X1, Y);
-		SetFarColor(COL_PANELBOX);
-		Text(VertcalLine);
-		SetFarColor(COL_PANELTEXT);
-		FS << fmt::Cells() << fmt::Expand(X2 - X1 - 1) << L"";
-		SetFarColor(COL_PANELBOX);
-		Text(VertcalLine);
-		GotoXY(X1 + 2, Y);
+		GotoXY(X1 + 2, YPos);
 
 		if (InfoLine->Separator) {
 			FARString strTitle;
@@ -795,9 +791,9 @@ void InfoList::ShowPluginDescription(int YPos)
 			if (InfoLine->Text && *InfoLine->Text)
 				strTitle.Append(L" ").Append(InfoLine->Text).Append(L" ");
 
-			DrawSeparator(Y);
+			DrawSeparator(YPos);
 			TruncStr(strTitle, X2 - X1 - 3);
-			GotoXY(X1 + (X2 - X1 - (int)strTitle.GetLength()) / 2, Y);
+			GotoXY(X1 + (X2 - X1 - (int)strTitle.GetLength()) / 2, YPos);
 			SetFarColor(COL_PANELTEXT);
 			PrintText(strTitle);
 		} else {

@@ -91,6 +91,7 @@ private:
 	void PrintInfo(FarLangMsg MsgID);
 	void DrawTitle(const wchar_t *Str, int Id, int CurY);
 	void DrawTitle(FarLangMsg MsgID, int Id, int CurY);
+	void ClearTitles();
 
 	int OpenDizFile(const wchar_t *DizFile, int YPos);
 	void SetMacroMode(int Restore = FALSE);

@@ -589,7 +589,8 @@ int InfoList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	int RetCode;
 
-	if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+			&& (MouseEvent->dwEventFlags != MOUSE_MOVED))
 	{
 		for (auto &elem : SectionState)
 		{

@@ -22,8 +22,8 @@ else
 		N=$(printf '\e[0m')
 		echo "It is recommended to install <${B}htop${N}> utility."
 		echo "Without <${B}htop${N}> installed far2l will use <${B}top${N}>."
-		echo "Press any key to continue..."
-		read -r -n 1 k <&1
+		echo "Press Enter to continue..."
+		read k
 		touch ~/.config/far2l/ps.warned
 	fi
 	top

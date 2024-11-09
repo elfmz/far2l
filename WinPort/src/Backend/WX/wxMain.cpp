@@ -1230,7 +1230,11 @@ const char* GetWxVirtualKeyCodeName(int keycode)
 #undef WXK_
 
 	default:
-		return "ERR";
+
+		static char buffer[20] = {0};
+		snprintf(buffer, sizeof(buffer),
+			((keycode >= 20) && (keycode <= 0x7f)) ? "\"%c\"" : "%d", keycode);
+		return buffer;
 	}
 }
 
@@ -1297,11 +1301,11 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	ResetTimerIdling();
 	DWORD now = WINPORT(GetTickCount)();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "\nOnKeyDown: %s %s raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
+	fprintf(stderr, "\nOnKeyDown: %s %s raw=%x code=%x uni=%x \"%lc\" ts=%lu [now=%u]",
 		FormatWxKeyState(event.GetModifiers()),
 		GetWxVirtualKeyCodeName(event.GetKeyCode()),
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), now);
+		uni, (uni > 0x1f) ? uni : L'?', event.GetTimestamp(), now);
 
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
@@ -1435,16 +1439,17 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
 	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "\nOnKeyUp: %s %s raw=%x code=%x uni=%x (%lc) ts=%lu",
+	fprintf(stderr, "\nOnKeyUp: %s %s raw=%x code=%x uni=%x \"%lc\" ts=%lu",
 		FormatWxKeyState(event.GetModifiers()),
 		GetWxVirtualKeyCodeName(event.GetKeyCode()),
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp());
+		uni, (uni > 0x1f) ? uni : L'?', event.GetTimestamp());
 
 	_exclusive_hotkeys.OnKeyUp(event);
 
 	if (_enqueued_in_onchar) {
 		_enqueued_in_onchar = false;
+		fprintf(stderr, " IN_ONCHAR\n");
 		return;
 	}
 
@@ -1537,11 +1542,11 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 	if (_key_tracker.LastKeydown().GetTimestamp() != event.GetTimestamp()) {
 		fprintf(stderr, "\n");
 	}
-	fprintf(stderr, "OnChar: %s %s raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
+	fprintf(stderr, "\nOnChar: %s %s raw=%x code=%x uni=%x \"%lc\" ts=%lu lke=%u",
 		FormatWxKeyState(event.GetModifiers()),
 		GetWxVirtualKeyCodeName(event.GetKeyCode()),
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), _last_keydown_enqueued);
+		uni, (uni > 0x1f) ? uni : L'?', event.GetTimestamp(), _last_keydown_enqueued);
 	_exclusive_hotkeys.OnKeyUp(event);
 
 	if (event.GetSkipped()) {
@@ -1572,7 +1577,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
 
 #if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
-		if (event.AltDown()) {
+		if (event.AltDown() && isLayoutDependentKey(event)) {
 
 			// workaround for wx issue #23421
 
@@ -1592,6 +1597,10 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
+
+		// avoid double up event in ResetInputState()
+		wxKeyEvent keyEventCopy = _key_tracker.LastKeydown();
+		_key_tracker.OnKeyUp(keyEventCopy);
 
 		_enqueued_in_onchar = true;
 	}

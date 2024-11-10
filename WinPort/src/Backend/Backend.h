@@ -214,7 +214,7 @@ public:
 	virtual bool SetBasePalette(void *p) = 0;
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void RepaintsDeferStart() = 0;
-	virtual void RepaintsDeferFinish() = 0;
+	virtual void RepaintsDeferFinish(bool force) = 0;
 
 	virtual const char *BackendInfo(int entity) = 0;
 

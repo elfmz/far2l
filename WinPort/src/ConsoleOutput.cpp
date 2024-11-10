@@ -874,3 +874,8 @@ unsigned int ConsoleOutput::WaitForChange(unsigned int prev_change_id, unsigned 
 	}
 	return _change_id;
 }
+
+const char *ConsoleOutput::BackendInfo(int entity)
+{
+	return _backend->OnConsoleBackendInfo(entity);
+}

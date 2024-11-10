@@ -44,6 +44,9 @@ static DWORD g_TIMER_IDLING_CYCLES = TIMER_IDLING_TIME / DEF_TIMER_PERIOD;
 
 bool WinPortClipboard_IsBusy();
 
+WINPORT_DECL_DEF(FreezeConsoleOutput,VOID,())
+WINPORT_DECL_DEF(UnfreezeConsoleOutput,VOID,())
+
 static void NormalizeArea(SMALL_RECT &area)
 {
 	if (area.Left > area.Right) std::swap(area.Left, area.Right);
@@ -1791,8 +1794,9 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 		_mouse_qedit_start_ticks = WINPORT(GetTickCount)();
 		if (!_mouse_qedit_start_ticks) _mouse_qedit_start_ticks = 1;
 		_mouse_qedit_moved = false;
+		WINPORT(FreezeConsoleOutput)();
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
-		
+
 	} else if (_mouse_qedit_start_ticks != 0) {
 		if (event.Moving() || event.Dragging()) {
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
@@ -1836,6 +1840,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			_mouse_qedit_start_ticks = 0;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);
+			WINPORT(UnfreezeConsoleOutput)();
 		}
 	}
 }

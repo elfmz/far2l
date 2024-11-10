@@ -125,7 +125,7 @@ public:
 	virtual bool SetBasePalette(void *p);
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void RepaintsDeferStart();
-	virtual void RepaintsDeferFinish();
+	virtual void RepaintsDeferFinish(bool force);
 
 	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle);
 	virtual void JoinConsoleOutput(IConsoleOutput *con_out);

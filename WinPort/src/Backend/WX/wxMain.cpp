@@ -23,6 +23,10 @@
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
+// This defines muh much time UI remain frozen after user released qedit, that
+// allows user to quickly select another location before all shadowed output changes applied
+#define QEDIT_UNFREEZE_DELAY     1000
+
 #if (wxCHECK_VERSION(3, 0, 5) || (wxCHECK_VERSION(3, 0, 4) && WX304PATCH)) && !(wxCHECK_VERSION(3, 1, 0) && !wxCHECK_VERSION(3, 1, 3))
 	// wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
 	#define WX_ALT_NONLATIN
@@ -791,6 +795,12 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 		return;
 	}
 
+	if (_qedit_unfreeze_start_ticks != 0
+			&& WINPORT(GetTickCount)() - _qedit_unfreeze_start_ticks >= QEDIT_UNFREEZE_DELAY) {
+		WINPORT(UnfreezeConsoleOutput)();
+		_qedit_unfreeze_start_ticks = 0;
+	}
+
 	CheckForResizePending();
 	CheckPutText2CLip();	
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
@@ -799,7 +809,10 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	_paint_context.BlinkCursor();
 	++_timer_idling_counter;
 	// stop timer if counter reached limit and cursor is visible and no other timer-dependent things remained
-	if (_timer_idling_counter >= g_TIMER_IDLING_CYCLES && _paint_context.CursorBlinkState() && _text2clip.empty()) {
+	if (_timer_idling_counter >= g_TIMER_IDLING_CYCLES
+			&& _paint_context.CursorBlinkState()
+			&& _qedit_unfreeze_start_ticks == 0
+			&& _text2clip.empty()) {
 		_periodic_timer->Stop();
 	}
 }
@@ -1794,7 +1807,12 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 		_mouse_qedit_start_ticks = WINPORT(GetTickCount)();
 		if (!_mouse_qedit_start_ticks) _mouse_qedit_start_ticks = 1;
 		_mouse_qedit_moved = false;
-		WINPORT(FreezeConsoleOutput)();
+		if (_qedit_unfreeze_start_ticks == 0) {
+			WINPORT(FreezeConsoleOutput)();
+		} else {
+			_qedit_unfreeze_start_ticks = 0;
+		}
+		_qedit_out_state = QOS_FROZEN_BUSY;
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 
 	} else if (_mouse_qedit_start_ticks != 0) {
@@ -1840,7 +1858,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			_mouse_qedit_start_ticks = 0;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);
-			WINPORT(UnfreezeConsoleOutput)();
+			_qedit_unfreeze_start_ticks = WINPORT(GetTickCount)();
 		}
 	}
 }

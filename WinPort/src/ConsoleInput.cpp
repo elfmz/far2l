@@ -2,33 +2,33 @@
 #include "ConsoleInput.h"
 
 const char* VirtualKeyNames[] = {
-    "ERR",              // 0x00
+    "0x00",             // 0x00
     "VK_LBUTTON",       // 0x01
     "VK_RBUTTON",       // 0x02
     "VK_CANCEL",        // 0x03
     "VK_MBUTTON",       // 0x04
     "VK_XBUTTON1",      // 0x05
     "VK_XBUTTON2",      // 0x06
-    "ERR",              // 0x07
+    "0x07",             // 0x07
     "VK_BACK",          // 0x08
     "VK_TAB",           // 0x09
-    "ERR",              // 0x0A
-    "ERR",              // 0x0B
+    "0x0A",             // 0x0A
+    "0x0B",             // 0x0B
     "VK_CLEAR",         // 0x0C
     "VK_RETURN",        // 0x0D
-    "ERR",              // 0x0E
-    "ERR",              // 0x0F
+    "0x0E",             // 0x0E
+    "0x0F",             // 0x0F
     "VK_SHIFT",         // 0x10
     "VK_CONTROL",       // 0x11
     "VK_MENU",          // 0x12
     "VK_PAUSE",         // 0x13
     "VK_CAPITAL",       // 0x14
     "VK_HANGUEL",       // 0x15
-    "ERR",              // 0x16
+    "0x16",             // 0x16
     "VK_JUNJA",         // 0x17
     "VK_FINAL",         // 0x18
     "VK_HANJA",         // 0x19
-    "ERR",              // 0x1A
+    "0x1A",             // 0x1A
     "VK_ESCAPE",        // 0x1B
     "VK_CONVERT",       // 0x1C
     "VK_NONCONVERT",    // 0x1D
@@ -60,13 +60,13 @@ const char* VirtualKeyNames[] = {
     "VK_7",             // 0x37
     "VK_8",             // 0x38
     "VK_9",             // 0x39
-    "ERR",              // 0x3A
-    "ERR",              // 0x3B
-    "ERR",              // 0x3C
-    "ERR",              // 0x3D
-    "ERR",              // 0x3E
-    "ERR",              // 0x3F
-    "ERR",              // 0x40
+    "0x3A",             // 0x3A
+    "0x3B",             // 0x3B
+    "0x3C",             // 0x3C
+    "0x3D",             // 0x3D
+    "0x3E",             // 0x3E
+    "0x3F",             // 0x3F
+    "0x40",             // 0x40
     "VK_A",             // 0x41
     "VK_B",             // 0x42
     "VK_C",             // 0x43
@@ -96,7 +96,7 @@ const char* VirtualKeyNames[] = {
     "VK_LWIN",          // 0x5B
     "VK_RWIN",          // 0x5C
     "VK_APPS",          // 0x5D
-    "ERR",              // 0x5E
+    "0x5E",             // 0x5E
     "VK_SLEEP",         // 0x5F
     "VK_NUMPAD0",       // 0x60
     "VK_NUMPAD1",       // 0x61
@@ -138,56 +138,56 @@ const char* VirtualKeyNames[] = {
     "VK_F22",           // 0x85
     "VK_F23",           // 0x86
     "VK_F24",           // 0x87
-    "ERR",              // 0x88
-    "ERR",              // 0x89
-    "ERR",              // 0x8A
-    "ERR",              // 0x8B
-    "ERR",              // 0x8C
-    "ERR",              // 0x8D
-    "ERR",              // 0x8E
-    "ERR",              // 0x8F
+    "0x88",             // 0x88
+    "0x89",             // 0x89
+    "0x8A",             // 0x8A
+    "0x8B",             // 0x8B
+    "0x8C",             // 0x8C
+    "0x8D",             // 0x8D
+    "0x8E",             // 0x8E
+    "0x8F",             // 0x8F
     "VK_NUMLOCK",       // 0x90
     "VK_SCROLL",        // 0x91
-    "ERR",              // 0x92
-    "ERR",              // 0x93
-    "ERR",              // 0x94
-    "ERR",              // 0x95
-    "ERR",              // 0x96
-    "ERR",              // 0x97
-    "ERR",              // 0x98
-    "ERR",              // 0x99
-    "ERR",              // 0x9A
-    "ERR",              // 0x9B
-    "ERR",              // 0x9C
-    "ERR",              // 0x9D
-    "ERR",              // 0x9E
-    "ERR",              // 0x9F
+    "0x92",             // 0x92
+    "0x93",             // 0x93
+    "0x94",             // 0x94
+    "0x95",             // 0x95
+    "0x96",             // 0x96
+    "0x97",             // 0x97
+    "0x98",             // 0x98
+    "0x99",             // 0x99
+    "0x9A",             // 0x9A
+    "0x9B",             // 0x9B
+    "0x9C",             // 0x9C
+    "0x9D",             // 0x9D
+    "0x9E",             // 0x9E
+    "0x9F",             // 0x9F
     "VK_LSHIFT",        // 0xA0
     "VK_RSHIFT",        // 0xA1
     "VK_LCONTROL",      // 0xA2
     "VK_RCONTROL",      // 0xA3
     "VK_LMENU",         // 0xA4
     "VK_RMENU",         // 0xA5
-    "VK_BROWSER_BACK",  // 0xA6
-    "VK_BROWSER_FORWARD", // 0xA7
-    "VK_BROWSER_REFRESH", // 0xA8
-    "VK_BROWSER_STOP",  // 0xA9
-    "VK_BROWSER_SEARCH", // 0xAA
-    "VK_BROWSER_FAVORITES", // 0xAB
-    "VK_BROWSER_HOME",  // 0xAC
-    "VK_VOLUME_MUTE",   // 0xAD
-    "VK_VOLUME_DOWN",   // 0xAE
-    "VK_VOLUME_UP",     // 0xAF
-    "VK_MEDIA_NEXT_TRACK", // 0xB0
-    "VK_MEDIA_PREV_TRACK", // 0xB1
-    "VK_MEDIA_STOP",    // 0xB2
-    "VK_MEDIA_PLAY_PAUSE", // 0xB3
-    "VK_LAUNCH_MAIL",   // 0xB4
-    "VK_LAUNCH_MEDIA_SELECT", // 0xB5
-    "VK_LAUNCH_APP1",   // 0xB6
-    "VK_LAUNCH_APP2",   // 0xB7
-    "ERR",              // 0xB8
-    "ERR",              // 0xB9
+    "VK_BROWSER_BACK",         // 0xA6
+    "VK_BROWSER_FORWARD",      // 0xA7
+    "VK_BROWSER_REFRESH",      // 0xA8
+    "VK_BROWSER_STOP",         // 0xA9
+    "VK_BROWSER_SEARCH",       // 0xAA
+    "VK_BROWSER_FAVORITES",    // 0xAB
+    "VK_BROWSER_HOME",         // 0xAC
+    "VK_VOLUME_MUTE",          // 0xAD
+    "VK_VOLUME_DOWN",          // 0xAE
+    "VK_VOLUME_UP",            // 0xAF
+    "VK_MEDIA_NEXT_TRACK",     // 0xB0
+    "VK_MEDIA_PREV_TRACK",     // 0xB1
+    "VK_MEDIA_STOP",           // 0xB2
+    "VK_MEDIA_PLAY_PAUSE",     // 0xB3
+    "VK_LAUNCH_MAIL",          // 0xB4
+    "VK_LAUNCH_MEDIA_SELECT",  // 0xB5
+    "VK_LAUNCH_APP1",          // 0xB6
+    "VK_LAUNCH_APP2",          // 0xB7
+    "0xB8",             // 0xB8
+    "0xB9",             // 0xB9
     "VK_OEM_1",         // 0xBA
     "VK_OEM_PLUS",      // 0xBB
     "VK_OEM_COMMA",     // 0xBC
@@ -195,59 +195,59 @@ const char* VirtualKeyNames[] = {
     "VK_OEM_PERIOD",    // 0xBE
     "VK_OEM_2",         // 0xBF
     "VK_OEM_3",         // 0xC0
-    "ERR",              // 0xC1
-    "ERR",              // 0xC2
-    "ERR",              // 0xC3
-    "ERR",              // 0xC4
-    "ERR",              // 0xC5
-    "ERR",              // 0xC6
-    "ERR",              // 0xC7
-    "ERR",              // 0xC8
-    "ERR",              // 0xC9
-    "ERR",              // 0xCA
-    "ERR",              // 0xCB
-    "ERR",              // 0xCC
-    "ERR",              // 0xCD
-    "ERR",              // 0xCE
-    "ERR",              // 0xCF
-    "ERR",              // 0xD0
-    "ERR",              // 0xD1
-    "ERR",              // 0xD2
-    "ERR",              // 0xD3
-    "ERR",              // 0xD4
-    "ERR",              // 0xD5
-    "ERR",              // 0xD6
-    "ERR",              // 0xD7
-    "ERR",              // 0xD8
-    "ERR",              // 0xD9
-    "ERR",              // 0xDA
+    "0xC1",             // 0xC1
+    "0xC2",             // 0xC2
+    "0xC3",             // 0xC3
+    "0xC4",             // 0xC4
+    "0xC5",             // 0xC5
+    "0xC6",             // 0xC6
+    "0xC7",             // 0xC7
+    "0xC8",             // 0xC8
+    "0xC9",             // 0xC9
+    "0xCA",             // 0xCA
+    "0xCB",             // 0xCB
+    "0xCC",             // 0xCC
+    "0xCD",             // 0xCD
+    "0xCE",             // 0xCE
+    "0xCF",             // 0xCF
+    "0xD0",             // 0xD0
+    "0xD1",             // 0xD1
+    "0xD2",             // 0xD2
+    "0xD3",             // 0xD3
+    "0xD4",             // 0xD4
+    "0xD5",             // 0xD5
+    "0xD6",             // 0xD6
+    "0xD7",             // 0xD7
+    "0xD8",             // 0xD8
+    "0xD9",             // 0xD9
+    "0xDA",             // 0xDA
     "VK_OEM_4",         // 0xDB
     "VK_OEM_5",         // 0xDC
     "VK_OEM_6",         // 0xDD
     "VK_OEM_7",         // 0xDE
     "VK_OEM_8",         // 0xDF
-    "ERR",              // 0xE0
-    "ERR",              // 0xE1
+    "0xE0",             // 0xE0
+    "0xE1",             // 0xE1
     "VK_OEM_102",       // 0xE2
-    "ERR",              // 0xE3
-    "ERR",              // 0xE4
+    "0xE3",             // 0xE3
+    "0xE4",             // 0xE4
     "VK_PROCESSKEY",    // 0xE5
-    "ERR",              // 0xE6
+    "0xE6",             // 0xE6
     "VK_PACKET",        // 0xE7
-    "ERR",              // 0xE8
-    "ERR",              // 0xE9
-    "ERR",              // 0xEA
-    "ERR",              // 0xEB
-    "ERR",              // 0xEC
-    "ERR",              // 0xED
-    "ERR",              // 0xEE
-    "ERR",              // 0xEF
-    "ERR",              // 0xF0
-    "ERR",              // 0xF1
-    "ERR",              // 0xF2
-    "ERR",              // 0xF3
-    "ERR",              // 0xF4
-    "ERR",              // 0xF5
+    "0xE8",             // 0xE8
+    "0xE9",             // 0xE9
+    "0xEA",             // 0xEA
+    "0xEB",             // 0xEB
+    "0xEC",             // 0xEC
+    "0xED",             // 0xED
+    "0xEE",             // 0xEE
+    "0xEF",             // 0xEF
+    "0xF0",             // 0xF0
+    "0xF1",             // 0xF1
+    "0xF2",             // 0xF2
+    "0xF3",             // 0xF3
+    "0xF4",             // 0xF4
+    "0xF5",             // 0xF5
     "VK_ATTN",          // 0xF6
     "VK_CRSEL",         // 0xF7
     "VK_EXSEL",         // 0xF8
@@ -301,10 +301,11 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 	if (size) {
 		for (DWORD i = 0; i < size; ++i) {
 			if (data[i].EventType == KEY_EVENT) {
+				const auto uni = data[i].Event.KeyEvent.uChar.UnicodeChar;
 				fprintf(stderr, "ConsoleInput::Enqueue: %s %s \"%lc\" %s, %x %x %x %x\n",
 					FormatKeyState(data[i].Event.KeyEvent.dwControlKeyState),
 					VirtualKeyNames[data[i].Event.KeyEvent.wVirtualKeyCode],
-					data[i].Event.KeyEvent.uChar.UnicodeChar ? data[i].Event.KeyEvent.uChar.UnicodeChar : '#',
+					(uni && (uni > 0x1f)) ? uni : L'?',
 					data[i].Event.KeyEvent.bKeyDown ? "DOWN" : "UP",
 
 					data[i].Event.KeyEvent.dwControlKeyState,

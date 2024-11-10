@@ -170,41 +170,10 @@ bool TTYBackend::Startup()
 	return true;
 }
 
-static wchar_t s_backend_identification[8] = L"TTY";
-
-static void AppendBackendIdentificationChar(char ch)
+void TTYBackend::BackendInfoChanged()
 {
-	const size_t l = wcslen(s_backend_identification);
-	if (l + 1 >= ARRAYSIZE(s_backend_identification)) {
-		abort();
-	}
-	s_backend_identification[l + 1] = 0;
-	s_backend_identification[l] = (unsigned char)ch;
-}
-
-void TTYBackend::UpdateBackendIdentification()
-{
-	s_backend_identification[3] = 0;
-
-	if (_far2l_tty || _ttyx || _using_extension) {
-		AppendBackendIdentificationChar('|');
-	}
-
-	if (_far2l_tty) {
-		AppendBackendIdentificationChar('F');
-
-	} else if (_ttyx || _using_extension) {
-		if (_ttyx) {
-			AppendBackendIdentificationChar('X');
-		}
-		if (_using_extension) {
-			AppendBackendIdentificationChar(_using_extension);
-		} else if (_ttyx && _ttyx->HasXi()) {
-			AppendBackendIdentificationChar('i');
-		}
-	}
-
-	g_winport_backend = s_backend_identification;
+	std::lock_guard<std::mutex> lock(_backend_info);
+	_backend_info.flavor.clear();
 }
 
 static bool UnderWayland()
@@ -245,7 +214,7 @@ void TTYBackend::ReaderThread()
 				ChooseSimpleClipboardBackend();
 			}
 		}
-		UpdateBackendIdentification();
+		BackendInfoChanged();
 		prev_far2l_tty = _far2l_tty;
 
 		{
@@ -1057,7 +1026,7 @@ void TTYBackend::OnUsingExtension(char extension)
 {
 	if (_using_extension != extension) {
 		_using_extension = extension;
-		UpdateBackendIdentification();
+		BackendInfoChanged();
 	}
 }
 
@@ -1237,6 +1206,37 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 	}
 
 	return true;
+}
+
+const char *TTYBackend::OnConsoleBackendInfo(int entity)
+{
+	if (entity != -1)
+		return nullptr;
+
+	std::lock_guard<std::mutex> lock(_backend_info);
+	if (_backend_info.flavor.empty()) {
+		_backend_info.flavor.reserve(16); // avoid reallocation ever then
+		_backend_info.flavor = "TTY";
+
+		if (_far2l_tty || _ttyx || _using_extension) {
+			_backend_info.flavor+= '|';
+		}
+
+		if (_far2l_tty) {
+			_backend_info.flavor+= 'F';
+		} else if (_ttyx || _using_extension) {
+			if (_ttyx) {
+				_backend_info.flavor+= 'X';
+			}
+			if (_using_extension) {
+				_backend_info.flavor+= _using_extension;
+			} else if (_ttyx && _ttyx->HasXi()) {
+				_backend_info.flavor+= 'i';
+			}
+		}
+	}
+
+	return _backend_info.flavor.c_str();
 }
 
 

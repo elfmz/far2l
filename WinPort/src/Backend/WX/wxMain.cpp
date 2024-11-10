@@ -1,4 +1,5 @@
 #include "wxMain.h"
+#include <dlfcn.h>
 
 #define AREAS_REDUCTION
 
@@ -130,18 +131,6 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 	if (!wxInitialize())
 		return false;
-
-	fprintf(stderr, "FAR2L wxWidgets build version %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
-	char s_wx_build[15];
-	snprintf(s_wx_build, ARRAYSIZE(s_wx_build), "%d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
-	setenv("FAR2L_WX_BUILD", s_wx_build, 1);
-#if wxCHECK_VERSION(2, 9, 2)
-	wxVersionInfo wxv = wxGetLibraryVersionInfo();
-	fprintf(stderr, "FAR2L wxWidgets use version %d.%d.%d\n", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
-	char s_wx_use[15];
-	snprintf(s_wx_use, ARRAYSIZE(s_wx_use), "%d.%d.%d", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
-	setenv("FAR2L_WX_USE", s_wx_use, 1);
-#endif
 
 	wxSetAssertHandler(WinPortWxAssertHandler);
 
@@ -584,6 +573,32 @@ wxEND_EVENT_TABLE()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
 	: _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
 {
+	_backend_info.emplace_back(
+		StrPrintf("Build/wxWidgets %d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
+
+#if wxCHECK_VERSION(2, 9, 2)
+	wxVersionInfo wxv = wxGetLibraryVersionInfo();
+	_backend_info.emplace_back(
+		StrPrintf("wxWidgets %d.%d.%d", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro()));
+	fprintf(stderr, "FAR2L wxWidgets build: %d.%d.%d actual: %d.%d.%d\n",
+		wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER, wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro());
+#else
+	fprintf(stderr, "FAR2L wxWidgets build: %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER);
+#endif
+
+#ifdef __WXGTK__
+	typedef unsigned int (*gtk_get_x_version_t)(void);
+	gtk_get_x_version_t pfn_gtk_get_major_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_major_version");
+	if (pfn_gtk_get_major_version) {
+		gtk_get_x_version_t pfn_gtk_get_minor_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_minor_version");
+		gtk_get_x_version_t pfn_gtk_get_micro_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_micro_version");
+		_backend_info.emplace_back(
+			StrPrintf("GTK %d.%d.%d", pfn_gtk_get_major_version(),
+				pfn_gtk_get_minor_version ? pfn_gtk_get_minor_version() : -1,
+				pfn_gtk_get_micro_version ? pfn_gtk_get_micro_version() : -1));
+	}
+#endif
+
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 	Create(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER);
@@ -2020,6 +2035,24 @@ void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
 	if (event)
 		wxQueueEvent(this, event);
 }
+
+const char *WinPortPanel::OnConsoleBackendInfo(int entity)
+{
+	if (entity == -1) {
+		return "GUI";
+	}
+
+	if (entity < 0) {
+		return nullptr;
+	}
+
+	if (size_t(entity) >= _backend_info.size()) {
+		return nullptr;
+	}
+
+	return _backend_info[size_t(entity)].c_str();
+}
+
 
 void WinPortPanel::CheckPutText2CLip()
 {

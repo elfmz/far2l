@@ -131,4 +131,5 @@ public:
 	virtual void JoinConsoleOutput(IConsoleOutput *con_out);
 
 	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1);
+	virtual const char *BackendInfo(int entity);
 };

@@ -3,6 +3,7 @@
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
+#include "Backend.h"
 #include <utils.h>
 #include <errno.h>
 
@@ -49,4 +50,8 @@ extern "C" {
 		return TRUE;
 	}
 
+	const char *WinPortBackendInfo(int entity)
+	{
+		return g_winport_con_out->BackendInfo(entity);
+	}
 }

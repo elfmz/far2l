@@ -90,6 +90,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	MOUSE_EVENT_RECORD _prev_mouse_event{};
 	DWORD _prev_mouse_event_ts{0};
 
+	struct BI : std::vector<std::string> {} _backend_info;
+
 	wxTimer* _periodic_timer{nullptr};
 	unsigned int _timer_idling_counter{0};
 	std::atomic<unsigned int> _last_title_ticks{0};
@@ -166,6 +168,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual bool OnConsoleSetBasePalette(void *pbuff);
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
+	virtual const char *OnConsoleBackendInfo(int entity);
 
 public:
 	WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

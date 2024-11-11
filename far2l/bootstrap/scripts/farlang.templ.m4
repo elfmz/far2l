@@ -13118,15 +13118,15 @@ upd:"FS Flags"
 upd:"FS Flags"
 
 InfoPluginTitle
-" Плагин на панели "
-" Plugin in panel "
-upd:" Plugin in panel "
-upd:" Plugin in panel "
-upd:" Plugin in panel "
-upd:" Plugin in panel "
-upd:" Plugin in panel "
-upd:" Plugin in panel "
-upd:" Plugin in panel "
+"Плагин на панели"
+"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
 
 InfoPluginStartDir
 "Плагин запущен в каталоге"
@@ -13206,15 +13206,15 @@ upd:"Plugin ShortcutData"
 upd:"Plugin ShortcutData"
 
 InfoMemory
-" Память "
-" Memory "
-" Paměť "
-" Speicher "
-" Memória "
-" Pamięć "
-" Memoria "
-" Пам'ять "
-" Памяць "
+"Память"
+"Memory"
+"Paměť"
+"Speicher"
+"Memória"
+"Pamięć"
+"Memoria"
+"Пам'ять"
+"Памяць"
 
 InfoMemoryLoad
 "Загрузка памяти"
@@ -13304,6 +13304,28 @@ upd:"Free paging file"
 "Вільно файлу підкачки"
 "Вольна файла падпампоўкі"
 
+InfoGitRootDir
+"Git Root Directory"
+"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+
+InfoDescription
+"Описание"
+"Description"
+"Popis"
+"Beschreibung"
+"Megjegyzés"
+"Opis"
+"Descripción"
+"Опис"
+"Апісанне"
+
 InfoDizAbsent
 "Файл описания папки отсутствует"
 "Folder description file is absent"
@@ -13314,6 +13336,28 @@ InfoDizAbsent
 "archivo descripción del directorio está ausente"
 "Файл опису теки відсутній"
 "Файл апісання каталога адсутнічае"
+
+InfoPluginDescription
+"Описание от плагина"
+"Plugin Description"
+"Plugin Popis"
+"Plugin Beschreibung"
+"Plugin Megjegyzés"
+"Plugin Opis"
+"Plugin Descripción"
+"Опис від модуля"
+"Апісанне ад дадаткі"
+
+InfoPluginAbsent
+"Расширенная информация от плагина отсутствует"
+"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
 
 ErrorInvalidFunction
 l:

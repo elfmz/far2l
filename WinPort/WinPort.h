@@ -55,7 +55,10 @@ extern "C" {
 #ifndef FAR_PYTHON_GEN
 	int WinPortMain(const char *full_exe_path, int argc, char **argv, int (*AppMain)(int argc, char **argv));
 	void WinPortHelp();
-	const wchar_t *WinPortBackend();
+
+	// entity = -1 - current backend flavor
+	// entity = [0 .. until NULL result) - version information of different components
+	const char *WinPortBackendInfo(int entity);
 
 	// true means far2l runs under smoke testing and code must
 	// not skip events from input queue that sometimes used to make UX smoother

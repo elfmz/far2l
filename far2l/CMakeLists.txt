@@ -73,6 +73,7 @@ src/ViewerStrings.cpp
 src/ViewerPrinter.cpp
 src/fileholder.cpp
 src/GrepFile.cpp
+src/about.cpp
 
 src/panels/panel.cpp
 src/panels/filelist.cpp

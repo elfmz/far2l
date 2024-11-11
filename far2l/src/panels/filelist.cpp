@@ -3330,12 +3330,12 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 
 			auto fName = EscapeCmdStr(strCurName.CPtr(), L".^$*+-?()[]{}\\|");    // special PCRE characters
 
-			strMask.Format(L"/^%ls(?:\\.[^.]+)", fName.c_str());
-			if (!strCurName.RPos(pos, '.') || (pos == 0 || pos == strCurName.GetLength() - 1)) {
-				strMask += L"?";  // allow empty extension
-			}
-			strMask += L"$/";
-			if (!Opt.PanelCaseSensitiveCompareSelect) strMask+=L"i";
+			bool allowEmptyExtension = (!strCurName.RPos(pos, '.') || (pos == 0 || pos == strCurName.GetLength() - 1));
+			bool caseSensitive = Opt.PanelCaseSensitiveCompareSelect;
+
+			strMask.Format(L"/^%ls(?:\\.[^.]+)%ls$/", fName.c_str(), allowEmptyExtension ? L"?" : L"");
+			if (!caseSensitive) strMask+=L"i";
+
 			SkipPath = true;
 			Mode = (Mode == SELECT_ADDNAME) ? SELECT_ADD : SELECT_REMOVE;
 		} else {
@@ -3421,8 +3421,9 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					// TODO: uncomment ", SkipPath" after merging https://github.com/elfmz/far2l/pull/2452
-					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect /*, SkipPath*/);
+					// TODO: change Compare call after merging https://github.com/elfmz/far2l/pull/2452 :
+					// Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect, SkipPath);
+					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect);
 				}
 			}
 

@@ -40,7 +40,6 @@
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
-const wchar_t *g_winport_backend = L"";
 static BOOL g_winport_testing = FALSE;
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
@@ -510,8 +509,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
 			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
 			if (WinPortMainBackend_p) {
-				g_winport_backend = L"GUI";
-
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
 				SudoAskpassServer askpass_srv(&askass_impl);
@@ -536,7 +533,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	}
 
 	if (arg_opts.tty) {
-		g_winport_backend = L"tty";
 		if (!tty_raw_mode) {
 			tty_raw_mode.reset(new TTYRawMode(std_in, std_out));
 		}
@@ -598,9 +594,4 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	g_winport_con_in = nullptr;
 
 	return result;
-}
-
-extern "C" const wchar_t *WinPortBackend()
-{
-	return g_winport_backend;
 }

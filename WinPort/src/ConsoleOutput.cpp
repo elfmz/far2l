@@ -800,14 +800,19 @@ void ConsoleOutput::RepaintsDeferStart()
 	ASSERT(_repaint_defer > 0);
 }
 
-void ConsoleOutput::RepaintsDeferFinish()
+void ConsoleOutput::RepaintsDeferFinish(bool force)
 {
 	std::vector<SMALL_RECT> deferred_repaints;
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		ASSERT(_repaint_defer > 0);
-		--_repaint_defer;
-		deferred_repaints.swap(_deferred_repaints);
+		if (force) {
+			_repaint_defer = 0;
+		} else if (_repaint_defer > 0) {
+			--_repaint_defer;
+		}
+		if (_repaint_defer == 0) {
+			deferred_repaints.swap(_deferred_repaints);
+		}
 		if (!deferred_repaints.empty()) {
 			LockedChangeIdUpdate();
 		}
@@ -873,4 +878,9 @@ unsigned int ConsoleOutput::WaitForChange(unsigned int prev_change_id, unsigned 
 		}
 	}
 	return _change_id;
+}
+
+const char *ConsoleOutput::BackendInfo(int entity)
+{
+	return _backend->OnConsoleBackendInfo(entity);
 }

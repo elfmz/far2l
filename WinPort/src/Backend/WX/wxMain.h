@@ -90,6 +90,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	MOUSE_EVENT_RECORD _prev_mouse_event{};
 	DWORD _prev_mouse_event_ts{0};
 
+	struct BI : std::vector<std::string> {} _backend_info;
+
 	wxTimer* _periodic_timer{nullptr};
 	unsigned int _timer_idling_counter{0};
 	std::atomic<unsigned int> _last_title_ticks{0};
@@ -106,6 +108,14 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 		RP_DEFER,
 		RP_INSTANT
 	} _resize_pending{RP_NONE};
+	enum
+	{
+		QOS_NOT_FROZEN,
+		QOS_FROZEN_BUSY,
+		QOS_UNFREEZE_PENDING,
+		QOS_UNFREEZE_PENDING2,
+	} _qedit_out_state{QOS_NOT_FROZEN};
+	DWORD _qedit_unfreeze_start_ticks{0};
 	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
 	wchar_t _stolen_key{0};
@@ -166,6 +176,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual bool OnConsoleSetBasePalette(void *pbuff);
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
+	virtual const char *OnConsoleBackendInfo(int entity);
 
 public:
 	WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

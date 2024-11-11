@@ -108,13 +108,6 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 		RP_DEFER,
 		RP_INSTANT
 	} _resize_pending{RP_NONE};
-	enum
-	{
-		QOS_NOT_FROZEN,
-		QOS_FROZEN_BUSY,
-		QOS_UNFREEZE_PENDING,
-		QOS_UNFREEZE_PENDING2,
-	} _qedit_out_state{QOS_NOT_FROZEN};
 	DWORD _qedit_unfreeze_start_ticks{0};
 	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};

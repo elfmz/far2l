@@ -70,9 +70,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtcompletor.h"
 #include <limits>
 
-#include "clipboard.hpp"
-#include "farversion.h"
-
 CommandLine::CommandLine()
 	:
 	CmdStr(CtrlObject->Cp(), 0, true, CtrlObject->CmdHistory, 0,

@@ -1,8 +1,6 @@
 #ifndef COLORER_XMLTAGDEFS_H
 #define COLORER_XMLTAGDEFS_H
 
-#define UNICODE_LITERAL(name, value) inline const auto name = UnicodeString(value);
-
 /* catalog.xml
 
 <catalog>

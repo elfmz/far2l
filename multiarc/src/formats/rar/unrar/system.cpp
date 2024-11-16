@@ -213,12 +213,12 @@ SSE_VERSION GetSSEVersion()
     if ((CPUInfo[3] & 0x2000000)!=0)
       return SSE_SSE;
   }
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) && (!defined(__clang__) || (__clang_major__ >= 9))
   if (__builtin_cpu_supports("avx2"))
     return SSE_AVX2;
   if (__builtin_cpu_supports("sse4.1"))
     return SSE_SSE41;
-  if (__builtin_cpu_supports("ssse3"))
+  if (__builtin_cpu_supports("sse3"))
     return SSE_SSSE3;
   if (__builtin_cpu_supports("sse2"))
     return SSE_SSE2;

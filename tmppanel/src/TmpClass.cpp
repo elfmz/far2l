@@ -58,7 +58,7 @@ void TmpPanel::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	if (StartupOptCommonPanel)
 		FSF.snprintf(Title, ARRAYSIZE(Title) - 1, GetMsg(MTempPanelTitleNum), PANEL_MODE, PanelIndex);
 	else
-		FSF.snprintf(Title, ARRAYSIZE(Title) - 1, _T(" %s%s "), PANEL_MODE, GetMsg(MTempPanel));
+		FSF.snprintf(Title, ARRAYSIZE(Title) - 1, _T(" %ls%ls "), PANEL_MODE, GetMsg(MTempPanel));
 #undef PANEL_MODE
 
 	Info->PanelTitle = Title;
@@ -728,7 +728,7 @@ void TmpPanel::ProcessPanelSwitchMenu()
 		else if (i < 36)
 			FSF.snprintf(_OUT, sizeof(_OUT) - 1, fmt1, _T('A') - 10 + i, txt, CommonPanels[i].ItemsNumber);
 		else
-			FSF.snprintf(_OUT, sizeof(_OUT) - 1, _T("   %s %d"), txt, CommonPanels[i].ItemsNumber);
+			FSF.snprintf(_OUT, sizeof(_OUT) - 1, _T("   %ls %d"), txt, CommonPanels[i].ItemsNumber);
 #undef _OUT
 	}
 	fmi[PanelIndex].Selected = TRUE;

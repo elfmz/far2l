@@ -83,10 +83,10 @@ far2l uses this to resolve symlink destination when user selects plugin's item t
 
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
-* `DM_GETCOLOR` - retrieves current color attributes of selected dialog item
-* `DM_SETCOLOR` - changes current color attributes of selected dialog item
-* `DM_SETTRUECOLOR` - sets 24-bit RGB colors to selected dialog item, can be used within DN_CTLCOLORDLGITEM handler to provide extra coloring.
-* `DM_GETTRUECOLOR` - retrieves 24-bit RGB colors of selected dialog item, if they were set before by DM_SETTRUECOLOR.
+* `DM_GETDEFAULTCOLOR`
+* `DM_GETCOLOR = DM_SETTRUECOLOR` - sets 24-bit RGB colors to selected dialog item (see DN_CTLCOLORDLGITEM).
+* `DM_SETCOLOR = DM_GETTRUECOLOR` - retrieves 24-bit RGB colors of selected dialog item.
+* `DM_SETTEXTPTRSILENT`
 * `ECTL_ADDTRUECOLOR` - applies coloring to editor like ECTL_ADDCOLOR does but allows to specify 24 RGB color using EditorTrueColor structure.
 * `ECTL_GETTRUECOLOR` - retrieves coloring of editor like ECTL_GETCOLOR does but gets 24 RGB color using EditorTrueColor structure.
 

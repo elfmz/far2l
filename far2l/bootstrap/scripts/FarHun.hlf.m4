@@ -2967,7 +2967,9 @@ csoportokat
   #Ctrl-Le#        - A csoportot lefelé mozgatja
 
     A FAR a csoportkiemeléseket felülről lefelé haladva vizsgálja. Ha érzékeli,
-hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja.
+hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja,
+unless #[x] Folyamatos feldolgozás# is set in the group
+(see last indicator #↓# in group list).
 
     Display of markers is controlled globally via a checkbox
 in the ~Panel settings~@PanelSettings@ dialog

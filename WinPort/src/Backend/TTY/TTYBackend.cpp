@@ -128,6 +128,18 @@ TTYBackend::~TTYBackend()
 	DetachNotifyPipe();
 }
 
+static unsigned short GetWinSizeEnv(const char *env, unsigned short def)
+{
+	const char *psz = getenv(env);
+	if (psz && *psz) { // use it if it contains sane integer value
+		int v = atoi(psz);
+		if (v > 10 && v < 4096) {
+			return (unsigned short)v;
+		}
+	}
+	return def;
+}
+
 void TTYBackend::GetWinSize(struct winsize &w)
 {
 	int r = ioctl(_stdout, TIOCGWINSZ, &w);
@@ -135,9 +147,16 @@ void TTYBackend::GetWinSize(struct winsize &w)
 		r = ioctl(_stdin, TIOCGWINSZ, &w);
 		if (UNLIKELY(r != 0)) {
 			perror("TIOCGWINSZ");
-			w.ws_row = g_far2l_term_height;
-			w.ws_col = g_far2l_term_width;
 		}
+	}
+	if (UNLIKELY(r != 0) || (w.ws_row == 0 && w.ws_col == 0)) {
+		// when running over serial console 0:0 is returned always and far2l unusable
+		// try to use $LINES and $COLUMNS if they contain sane values,
+		// otherwise fallback to hardcoded 80:25
+		w.ws_row = GetWinSizeEnv("LINES", g_far2l_term_height);
+		w.ws_col = GetWinSizeEnv("COLUMNS", g_far2l_term_width);
+		fprintf(stderr, "%s: fallback size %u:%u\n",
+			__FUNCTION__, (unsigned int)w.ws_row, (unsigned int)w.ws_col);
 	}
 }
 

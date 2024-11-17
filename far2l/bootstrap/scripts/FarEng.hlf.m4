@@ -3413,7 +3413,9 @@ combinations are available:
   #Ctrl-Down#    - Move a group down.
 
     The highlighting groups are checked from top to bottom. If it is detected
-that a file belongs to a group, no further groups are checked.
+that a file belongs to a group, no further groups are checked,
+unless #[x] Continue processing# is set in the group
+(see last indicator #↓# in group list).
 
     Display of markers is controlled globally via a checkbox
 in the ~Panel settings~@PanelSettings@ dialog

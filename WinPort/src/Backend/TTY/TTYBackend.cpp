@@ -139,6 +139,13 @@ void TTYBackend::GetWinSize(struct winsize &w)
 			w.ws_col = g_far2l_term_width;
 		}
 	}
+	if (w.ws_row == 0 && w.ws_col == 0) {
+		// when running over serial console 0:0 is returned always and far2l unusable
+		// TBD: may be set fixed size resolution for such case through env variable or command line arguments?
+		fprintf(stderr, "%s: ignoring 0:0 terminal size\n", __FUNCTION__);
+		w.ws_row = g_far2l_term_height;
+		w.ws_col = g_far2l_term_width;
+	}
 }
 
 void TTYBackend::DetachNotifyPipe()

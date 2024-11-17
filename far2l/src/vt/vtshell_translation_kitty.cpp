@@ -7,6 +7,14 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 	const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 	const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 	const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
+
+	std::string out;
+	if (!(flags & 8) && KeyEvent.uChar.UnicodeChar && !alt && !ctrl) { // "Report all keys as escape codes" disabled
+		// just send text
+		Wide2MB(&KeyEvent.uChar.UnicodeChar, 1, out);
+		return out;
+	}
+
 	// References:
 	// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 	// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
@@ -145,7 +153,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 	if (!keycode)
 		return std::string();
 
-	std::string out = "\x1B["; // Старт последовательности
+	out = "\x1B["; // Старт последовательности
 
 	// Добавляем значение keycode
 	out+= std::to_string(keycode);
@@ -192,11 +200,6 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 
 	// Добавляем значение suffix
 	out+= suffix;
-
-	if (!(flags & 8) && KeyEvent.uChar.UnicodeChar && !alt && !ctrl) { // "Report all keys as escape codes" disabled
-		// just send text
-		Wide2MB(&KeyEvent.uChar.UnicodeChar, 1, out, true);
-	}
 
 	return out;
 }

@@ -229,7 +229,7 @@ target_include_directories(colorer_lib PUBLIC
 set_target_properties(colorer_lib PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS NO
+    CXX_EXTENSIONS YES
 )
 
 target_link_libraries(colorer_lib

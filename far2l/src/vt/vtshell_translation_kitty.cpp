@@ -95,6 +95,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 
 		case VK_MENU:
 		{
+			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
+				return std::string();
+			}
+
 			if (KeyEvent.dwControlKeyState & ENHANCED_KEY) {
 				// right
 				keycode = 57449; suffix = 'u';
@@ -108,6 +112,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 
 		case VK_CONTROL:
 		{
+			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
+				return std::string();
+			}
+
 			if ((KeyEvent.dwControlKeyState & ENHANCED_KEY)) {
 				// right
 				keycode = 57448; suffix = 'u';
@@ -121,6 +129,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 
 		case VK_SHIFT:
 		{
+			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
+				return std::string();
+			}
+
 			if (KeyEvent.wVirtualScanCode == RIGHT_SHIFT_VSC) {
 				// right
 				keycode = 57447; suffix = 'u';
@@ -136,13 +148,6 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 
 	// avoid sending base char if it is equal to keycode
 	if (base == keycode) { base = 0; }
-
-	if (!(flags & 8)) { // "Report all keys as escape codes" disabled
-		// do not sent modifiers themselfs
-		if (!keycode && (modifiers > 1)) {
-			return std::string();
-		}
-	}
 
 	// Записываем ESC-последовательность
 	// CSI unicode-key-code:shifted-key:base-layout-key ; modifiers:event-type ; text-as-codepoints u

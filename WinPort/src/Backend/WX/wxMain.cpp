@@ -1621,8 +1621,8 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			ir.Event.KeyEvent.wVirtualKeyCode = ir_tmp.Event.KeyEvent.wVirtualKeyCode;
 			ir.Event.KeyEvent.wVirtualScanCode = ir_tmp.Event.KeyEvent.wVirtualScanCode;
 			ir.Event.KeyEvent.dwControlKeyState = ir_tmp.Event.KeyEvent.dwControlKeyState;
-
 			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+			WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
 		}
 #endif
 
@@ -1632,11 +1632,12 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 
+		_enqueued_in_onchar = true;
+
 #if !defined(__WXOSX__)
 		// avoid double up event in ResetInputState()
 		wxKeyEvent keyEventCopy = _key_tracker.LastKeydown();
 		_key_tracker.OnKeyUp(keyEventCopy);
-		_enqueued_in_onchar = true;
 #endif
 	}
 	//event.Skip();

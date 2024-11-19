@@ -50,6 +50,7 @@ struct FarLangMsg
 
 	inline FarLangMsgID ID() const { return _id; }
 	inline const wchar_t *CPtr() const { return GetMsg(_id); }
+	inline const size_t Len() const { return GetMsgLen(_id); }
 	inline operator const wchar_t *() const { return GetMsg(_id); }
 
 	inline FarLangMsg operator+(int delta) const { return FarLangMsg{_id + delta}; }
@@ -63,6 +64,7 @@ struct FarLangMsg
 
 private:
 	static const wchar_t *GetMsg(FarLangMsgID id);	// impl in cfg/language.cpp
+	static const size_t GetMsgLen(FarLangMsgID id);
 };
 
 namespace Msg

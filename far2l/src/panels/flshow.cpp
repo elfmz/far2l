@@ -693,16 +693,37 @@ void FileList::PrepareViewSettings(int ViewMode, OpenPluginInfo *PlugInfo)
 		Height+= 2;
 }
 
+void FileList::UpdateAutoColumnWidth( void )
+{
+	for (int c = 0; c < ViewSettings.ColumnCount; c++) {
+
+		int ColumnType = std::min( ViewSettings.ColumnType[c] & 0xff, 31u );
+		bool bPhysical = (ColumnType == PHYSICAL_COLUMN);
+
+		if (ColumnType == SIZE_COLUMN || bPhysical) {
+
+			FARString strOutStr;
+			size_t len = FileSizeToStr(strOutStr, bPhysical ? LargestFilPhysSize : Opt.ShowSymlinkSize ? LargestFilSizeL : LargestFilSize, -1, ViewSettings.ColumnType[c]).GetLength();
+
+			AutoColumnWidth[ColumnType] = std::max( len + 1, (size_t)ColumnTypeWidth[ColumnType] );
+		}
+		else {
+			AutoColumnWidth[ColumnType] = ColumnTypeWidth[ColumnType];
+		}
+	}
+}
+
 int FileList::PreparePanelView(PanelViewSettings *PanelView)
 {
 	PrepareColumnWidths(PanelView->StatusColumnType, PanelView->StatusColumnWidth,
-			PanelView->StatusColumnWidthType, PanelView->StatusColumnCount, PanelView->FullScreen);
+			PanelView->StatusColumnWidthType, PanelView->StatusColumnCount, PanelView->FullScreen, true);
+
 	return (PrepareColumnWidths(PanelView->ColumnType, PanelView->ColumnWidth, PanelView->ColumnWidthType,
-			PanelView->ColumnCount, PanelView->FullScreen));
+			PanelView->ColumnCount, PanelView->FullScreen, false));
 }
 
 int FileList::PrepareColumnWidths(unsigned int *ColumnTypes, int *ColumnWidths, int *ColumnWidthsTypes,
-		int &ColumnCount, int FullScreen)
+		int &ColumnCount, int FullScreen, bool bStatusBar)
 {
 	int TotalWidth, TotalPercentWidth, TotalPercentCount, ZeroLengthCount, EmptyColumns, I;
 	ZeroLengthCount = EmptyColumns = 0;
@@ -710,16 +731,18 @@ int FileList::PrepareColumnWidths(unsigned int *ColumnTypes, int *ColumnWidths, 
 	TotalPercentCount = TotalPercentWidth = 0;
 
 	for (I = 0; I < ColumnCount; I++) {
+
 		if (ColumnWidths[I] < 0) {
 			EmptyColumns++;
 			continue;
 		}
 
-		int ColumnType = ColumnTypes[I] & 0xff;
+//		int ColumnType = ColumnTypes[I] & 0xff;
+		int ColumnType = std::min( ColumnTypes[I] & 0xff, 31u );
 
 		if (!ColumnWidths[I]) {
 			ColumnWidthsTypes[I] = COUNT_WIDTH;		// manage all zero-width columns in same way
-			ColumnWidths[I] = ColumnTypeWidth[ColumnType];
+			ColumnWidths[I] = (ColumnTypes[I] & COLUMN_AUTO) ? AutoColumnWidth[ColumnType] : ColumnTypeWidth[ColumnType];
 
 			if (ColumnType == WDATE_COLUMN || ColumnType == CDATE_COLUMN || ColumnType == ADATE_COLUMN
 					|| ColumnType == CHDATE_COLUMN) {
@@ -728,6 +751,12 @@ int FileList::PrepareColumnWidths(unsigned int *ColumnTypes, int *ColumnWidths, 
 
 				if (ColumnTypes[I] & COLUMN_MONTH)
 					ColumnWidths[I]++;
+			}
+		}
+		else {
+			if (ColumnType == SIZE_COLUMN || ColumnType == PHYSICAL_COLUMN) {
+				if (ColumnWidths[I] < ColumnTypeWidth[SIZE_COLUMN])
+					ColumnWidths[I] = ColumnTypeWidth[SIZE_COLUMN];
 			}
 		}
 
@@ -851,10 +880,13 @@ static int MakeCurLeftPos(int ColumnWidth, const wchar_t *Str, int LeftPos, int 
 		LeftPos = Cells - ColumnWidth;
 
 	size_t ng = LeftPos;
-	int out = StrSizeOfCells(Str, wcslen(Str), ng, false);
+	int out = StrSizeOfCells(Str, wcslen(Str), ng, true);
 
-	if (MaxLeftPos < (int)ng)
-		MaxLeftPos = (int)ng;
+//	if (MaxLeftPos < (int)ng)
+//		MaxLeftPos = (int)ng;
+
+	if (MaxLeftPos < LeftPos)
+		MaxLeftPos = LeftPos;
 
 	return out;
 }
@@ -950,7 +982,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 							{ /// Draw mark str
 							size_t prews = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
 
-							if (Opt.ShowFilenameMarks && Opt.Highlight
+							if (Opt.ShowFilenameMarks && Opt.Highlight && (!ShowStatus || Opt.FilenameMarksInStatusBar)
 									&& (PanelMode != PLUGIN_PANEL
 										|| ( !(Info.Flags & OPIF_HL_MARKERS_NOSHOW) && (Info.Flags & OPIF_USEHIGHLIGHTING) ))
 									) {
@@ -966,7 +998,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 									size_t	ng = Width, outlen;
 
 									outlen = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
-									ng = StrCellsCount( hl->Mark, outlen );
+//									ng = StrCellsCount( hl->Mark, outlen );
 
 									Width -= ng;
 									if (ng < prews)
@@ -1011,7 +1043,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 							if (!ShowStatus && LeftPos) {
 								if (LeftPos > 0 && !RightAlign) {
 									CurLeftPos = MakeCurLeftPos(Width, NamePtr, LeftPos, MaxLeftPos);
-									NamePtr+= CurLeftPos;
+									NamePtr += CurLeftPos;
 								} else if (RightAlign) {
 									int Cells = (int)StrZCellsCount(NamePtr);
 									if (Cells > Width) {
@@ -1022,7 +1054,7 @@ void FileList::ShowList(int ShowStatus, int StartColumn, OpenPluginInfo &Info)
 											RightBracket = TRUE;
 
 										size_t ng = Cells + CurRightPos - Width;
-										NamePtr+= StrSizeOfCells(NamePtr, wcslen(NamePtr), ng, false);
+										NamePtr += StrSizeOfCells(NamePtr, wcslen(NamePtr), ng, false);
 										RightAlign = FALSE;
 
 										if (MinLeftPos > CurRightPos)

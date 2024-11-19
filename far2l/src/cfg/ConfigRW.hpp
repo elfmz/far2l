@@ -44,7 +44,7 @@ public:
 	inline bool HasSection() const { return _has_section; };
 	bool HasKey(const std::string &name) const;
 	FARString GetString(const std::string &name, const wchar_t *def = L"") const;
-	bool GetString(FARString &out, const std::string &name, const wchar_t *def) const;
+	bool GetString(FARString &out, const std::string &name, const wchar_t *def = L"") const;
 	bool GetString(std::string &out, const std::string &name, const char *def) const;
 	int GetInt(const std::string &name, int def = 0) const;
 	unsigned int GetUInt(const std::string &name, unsigned int def = 0) const;

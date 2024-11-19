@@ -35,13 +35,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "colors.hpp"
 #include "CFileMask.hpp"
-#include "FileMasksWithExclude.hpp"
+//#include "FileMasksWithExclude.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
 #include "ctrlobj.hpp"
 #include "dialog.hpp"
 #include "filelist.hpp"
 #include "filefilterparams.hpp"
+#include "udlist.hpp"
 #include "palette.hpp"
 #include "message.hpp"
 #include "interf.hpp"
@@ -204,6 +205,11 @@ void FileFilterParams::SetColors(HighlightDataColor *Colors)
 const wchar_t *FileFilterParams::GetTitle() const
 {
 	return m_strTitle;
+}
+
+const size_t FileFilterParams::GetTitleLen() const
+{
+	return m_strTitle.GetLength();
 }
 
 bool FileFilterParams::GetMask(const wchar_t **Mask) const
@@ -369,66 +375,29 @@ bool FileFilterParams::FileInFilterImpl(const FARString &strFileName, DWORD dwFi
 	return true;
 }
 
-// Централизованная функция для создания строк меню различных фильтров.
-void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, int Hotkey, bool bPanelType,
-		const wchar_t *FMask, const wchar_t *Title)
+void FillPreviewStr(wchar_t *dstStr, size_t dstsize, const wchar_t *srcStr, const size_t srcsize)
 {
-	const wchar_t AttrC[] = L"RAHSD<CEI$TLOVXBYKFN";
-	const DWORD AttrF[ARRAYSIZE(AttrC) - 1] = {FILE_ATTRIBUTE_READONLY, FILE_ATTRIBUTE_ARCHIVE,
-			FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_SYSTEM, FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_COMPRESSED,
-			FILE_ATTRIBUTE_ENCRYPTED, FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, FILE_ATTRIBUTE_SPARSE_FILE,
-			FILE_ATTRIBUTE_TEMPORARY, FILE_ATTRIBUTE_REPARSE_POINT, FILE_ATTRIBUTE_OFFLINE,
-			FILE_ATTRIBUTE_VIRTUAL, FILE_ATTRIBUTE_EXECUTABLE, FILE_ATTRIBUTE_BROKEN,
-			FILE_ATTRIBUTE_DEVICE_CHAR, FILE_ATTRIBUTE_DEVICE_BLOCK, FILE_ATTRIBUTE_DEVICE_FIFO, FILE_ATTRIBUTE_DEVICE_SOCK};
-	const wchar_t Format1a[] = L"%-21.21ls %lc %-38.38ls %-2.2ls %lc %ls";
-	const wchar_t Format1b[] = L"%-22.22ls %lc %-38.38ls %-2.2ls %lc %ls";
-	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-38.38ls %-2.2ls %lc %ls";
-	const wchar_t Format1d[] = L"   %-18.18ls %lc %-38.38ls %-2.2ls %lc %ls";
+	size_t	ng = 0, mcl = 0;
 
-	const wchar_t Format2[] = L"%ls %lc %-38.38ls %-3.3ls %lc %ls";
-//	const wchar_t Format2[] = L"%-5.5ls %lc %-38.38ls %-3.3ls %lc %ls";
-	const wchar_t DownArrow = 0x2193;
-	const wchar_t *Name, *Mask;
-	DWORD IncludeAttr, ExcludeAttr;
-	bool UseMask, UseSize, UseDate, RelativeDate;
+	if (!dstStr || !dstsize)
+		return;
 
-	HighlightDataColor hl;
-	#define	MARK_STRING_PREVIEW_LENGTH	5
-	wchar_t MarkStrPrw[MARK_STRING_PREVIEW_LENGTH + 4] = {0};
-
-	if (bPanelType) {
-		Name = Title;
-		UseMask = true;
-		Mask = FMask;
-		IncludeAttr = 0;
-		ExcludeAttr = FILE_ATTRIBUTE_DIRECTORY;
-		RelativeDate = UseDate = UseSize = false;
-	} else {
-
-		FF->GetColors(&hl);
-		size_t	ng = 0, mcl = 0;
-
-		if (hl.MarkLen) {
-			ng = MARK_STRING_PREVIEW_LENGTH;
-			mcl = StrSizeOfCells(hl.Mark, hl.MarkLen, ng, false);
-			memcpy(MarkStrPrw, hl.Mark, mcl * sizeof(wchar_t));
-			ng = StrCellsCount( MarkStrPrw, mcl );
-		}
-		for (int i = ng; i < MARK_STRING_PREVIEW_LENGTH; i++, mcl++) {
-			MarkStrPrw[mcl] = 32;
-		}
-		MarkStrPrw[mcl] = 0;
-
-		Name = FF->GetTitle();
-		UseMask = FF->GetMask(&Mask);
-
-		if (!FF->GetAttr(&IncludeAttr, &ExcludeAttr))
-			IncludeAttr = ExcludeAttr = 0;
-
-		UseSize = FF->GetSize(nullptr, nullptr);
-		UseDate = FF->GetDate(nullptr, nullptr, nullptr, &RelativeDate);
+	if (srcStr && srcsize) {
+		ng = dstsize;
+		mcl = StrSizeOfCells(srcStr, srcsize, ng, false);
+		memcpy(dstStr, srcStr, mcl * sizeof(wchar_t));
+		dstStr += mcl;
 	}
 
+	while(ng < dstsize) {
+		*dstStr++ = 32;
+		ng++;
+	}
+
+	*dstStr = 0;
+}
+
+#if 0
 	wchar_t Attr[ARRAYSIZE(AttrC) * 2] = {0};
 
 	for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
@@ -441,6 +410,115 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 			*(Ptr + 1) = L'-';
 		else
 			*Ptr = *(Ptr + 1) = L'.';
+	}
+#endif
+
+void FillAttrStr(wchar_t *AttrStr, uint32_t IncludeAttr, uint32_t ExcludeAttr, uint32_t style)
+{
+	static const wchar_t AttrC[] = L"RAHSD<CEI$TLOVXBYKFN";
+	static const DWORD AttrF[ARRAYSIZE(AttrC) - 1] = {FILE_ATTRIBUTE_READONLY, FILE_ATTRIBUTE_ARCHIVE,
+			FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_SYSTEM, FILE_ATTRIBUTE_DIRECTORY, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_COMPRESSED,
+			FILE_ATTRIBUTE_ENCRYPTED, FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, FILE_ATTRIBUTE_SPARSE_FILE,
+			FILE_ATTRIBUTE_TEMPORARY, FILE_ATTRIBUTE_REPARSE_POINT, FILE_ATTRIBUTE_OFFLINE,
+			FILE_ATTRIBUTE_VIRTUAL, FILE_ATTRIBUTE_EXECUTABLE, FILE_ATTRIBUTE_BROKEN,
+			FILE_ATTRIBUTE_DEVICE_CHAR, FILE_ATTRIBUTE_DEVICE_BLOCK, FILE_ATTRIBUTE_DEVICE_FIFO, FILE_ATTRIBUTE_DEVICE_SOCK};
+	wchar_t *Ptr = AttrStr;
+
+	if (!AttrStr)
+		return;
+
+	if (style == 1) {
+
+		if (IncludeAttr) {
+			*Ptr++ = L'+';
+			for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+				if ((IncludeAttr & AttrF[i]))
+					*Ptr++ = AttrC[i];
+			}
+			*Ptr++ = L' ';
+		}
+		if (ExcludeAttr) {
+			*Ptr++ = L'-';
+			for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+				if ((ExcludeAttr & AttrF[i]))
+					*Ptr++ = AttrC[i];
+			}
+		}
+
+		while(Ptr < (AttrStr + 23)) {
+			*Ptr++ = 32;
+		}
+		*Ptr = 0;
+	}
+	else {
+		for (size_t i = 0; i < ARRAYSIZE(AttrF); i++) {
+			wchar_t *Ptr = AttrStr + i * 2;
+			*Ptr = AttrC[i];
+
+			if ((IncludeAttr & AttrF[i]) == AttrF[i])
+				*(Ptr + 1) = L'+';
+			else if ((ExcludeAttr & AttrF[i]) == AttrF[i])
+				*(Ptr + 1) = L'-';
+			else
+				*Ptr = *(Ptr + 1) = L'.';
+		}
+		Ptr += ARRAYSIZE(AttrF) * 2;
+		*Ptr = 0;
+	}
+}
+
+// Централизованная функция для создания строк меню различных фильтров.
+void MenuString(FARString &strDest, FileFilterParams *FF, uint32_t attrstyle, bool bHighlightType, int Hotkey, bool bPanelType,
+		const wchar_t *FMask, const wchar_t *Title)
+{
+	wchar_t MarkStrPrw[8];
+	wchar_t NameStrPrw[32];
+
+//	const wchar_t Format1A[] = L"%ls %lc %-16.16ls %-2.2ls %lc %ls";
+	const wchar_t Format1A[] = L"%ls %lc %ls %-2.2ls %lc %ls";
+
+	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %ls %-2.2ls %lc %ls";
+	const wchar_t Format1d[] = L"   %-18.18ls %lc %ls %-2.2ls %lc %ls";
+
+//	const wchar_t Format1c[] = L"&%lc. %-18.18ls %lc %-16.16ls %-2.2ls %lc %ls";
+//	const wchar_t Format1d[] = L"   %-18.18ls %lc %-16.16ls %-2.2ls %lc %ls";
+
+	const wchar_t Format2[] = L"%ls %lc %ls %lc %ls %-3.3ls %lc %ls";
+	const wchar_t DownArrow = 0x2193;
+	const wchar_t *Name, *Mask;
+
+	size_t NameLen;
+	DWORD IncludeAttr, ExcludeAttr;
+	bool UseMask, UseSize, UseDate, RelativeDate;
+	HighlightDataColor hl;
+
+	if (bPanelType) {
+		Name = Title;
+		NameLen = wcslen(Title);
+		UseMask = true;
+		Mask = FMask;
+		IncludeAttr = 0;
+		ExcludeAttr = FILE_ATTRIBUTE_DIRECTORY;
+		RelativeDate = UseDate = UseSize = false;
+	} else {
+		FF->GetColors(&hl);
+		Name = FF->GetTitle();
+		NameLen = FF->GetTitleLen();
+		FillPreviewStr(MarkStrPrw, 5, hl.Mark, hl.MarkLen);
+
+		UseMask = FF->GetMask(&Mask);
+
+		if (!FF->GetAttr(&IncludeAttr, &ExcludeAttr))
+			IncludeAttr = ExcludeAttr = 0;
+
+		UseSize = FF->GetSize(nullptr, nullptr);
+		UseDate = FF->GetDate(nullptr, nullptr, nullptr, &RelativeDate);
+	}
+
+	wchar_t Attr[64];
+	switch(attrstyle) {
+		case 0: FillAttrStr(Attr, IncludeAttr, ExcludeAttr, attrstyle); break;
+		case 1: FillAttrStr(Attr, IncludeAttr, ExcludeAttr, attrstyle); break;
 	}
 
 	wchar_t SizeDate[4] = L"...";
@@ -460,13 +538,15 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 		if (FF->GetContinueProcessing())
 			SizeDate[2] = DownArrow;
 
-		strDest.Format(Format2, MarkStrPrw, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
+		FillPreviewStr(NameStrPrw, 18, Name, NameLen);
+		strDest.Format(Format2, MarkStrPrw, BoxSymbols[BS_V1], NameStrPrw, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
 				UseMask ? Mask : L"");
 	} else {
 		SizeDate[2] = 0;
 
 		if (!Hotkey && !bPanelType) {
-			strDest.Format(wcschr(Name, L'&') ? Format1b : Format1a, Name, BoxSymbols[BS_V1], Attr, SizeDate,
+			FillPreviewStr(NameStrPrw, wcschr(Name, L'&') ? 22 : 21, Name, NameLen);
+			strDest.Format(Format1A, NameStrPrw, BoxSymbols[BS_V1], Attr, SizeDate,
 					BoxSymbols[BS_V1], UseMask ? Mask : L"");
 		} else if (Hotkey) {
 			strDest.Format(Format1c,
@@ -483,6 +563,7 @@ void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType, i
 struct filterpar_highlight_state_s
 {
 	HighlightDataColor hl;
+	wchar_t wsIndent[16];
 	CHAR_INFO vbuff[64];
 };
 
@@ -556,6 +637,9 @@ enum enumFileFilterConfig
 	ID_HER_MARK_TITLE,
 	ID_HER_MARKEDIT,
 	ID_HER_MARKINHERIT,
+	ID_HER_MARKADDINHERIT,
+	ID_HER_CUSTOMINDENT,
+	ID_HER_INDENTEDIT,
 
 	ID_HER_NORMALFILE,
 	ID_HER_NORMALMARKING,
@@ -626,21 +710,22 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
 			wchar_t VerticalLine0[] = {BoxSymbols[BS_V2], 0};
 			wchar_t VerticalLine1[] = {BoxSymbols[BS_V1], 0};
+			SMALL_RECT drect;
+			SMALL_RECT irect;
 
-			union { SMALL_RECT drect; uint64_t i64drect; };
-			union { SMALL_RECT irect; uint64_t i64irect; };
 			SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (intptr_t)&drect);
-			drect.Right = drect.Left;
-			drect.Bottom = drect.Top;
 			SendDlgMessage(hDlg, DM_GETITEMPOSITION, ID_HER_COLOREXAMPLE, (intptr_t)&irect);
-			i64irect += i64drect;
+
+			irect.Top += drect.Top;
+			irect.Bottom += drect.Top;
+			irect.Right += drect.Left;
+			irect.Left += drect.Left;
 
 			HighlightDataColor *hl = &fphlstate->hl;
 			size_t	filenameexamplelen = wcslen(Msg::HighlightExample1);
 			size_t	freespace = irect.Right - irect.Left - filenameexamplelen - 2;
 			size_t	ng = freespace;
 			size_t	mcl = StrSizeOfCells(hl->Mark, hl->MarkLen, ng, false);
-			ng = StrCellsCount( hl->Mark, mcl );
 
 			size_t	prews = std::min(Opt.MinFilenameIndentation, Opt.MaxFilenameIndentation);
 			if (ng < prews)
@@ -815,6 +900,35 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 				return TRUE;
 			}
+			if (Param1 == ID_HER_INDENTEDIT) {
+
+				int nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_HER_INDENTEDIT, 0);
+				if (nLength > 2 || nLength < 0) {
+					SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_HER_INDENTEDIT, (LONG_PTR)&fphlstate->wsIndent[0]);
+					SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+					return TRUE;
+				}
+				wchar_t wsTemp[16];
+				SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_INDENTEDIT, (LONG_PTR)&wsTemp[0]);
+				for (size_t i = 0; i < (size_t)nLength; i++) {
+					if (wsTemp[i] < L'0' || wsTemp[i] > L'9') {
+						SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_HER_INDENTEDIT, (LONG_PTR)&fphlstate->wsIndent[0]);
+						SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+						return TRUE;
+					}
+				}
+				size_t v = wcstoul(wsTemp, nullptr, 10);
+				if (v > HIGHLIGHT_MAX_MARK_LENGTH) {
+					SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_HER_INDENTEDIT, (LONG_PTR)&fphlstate->wsIndent[0]);
+					SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+					return TRUE;
+				}
+				fphlstate->hl.Indent = v;
+				SendDlgMessage(hDlg, DM_GETTEXTPTR, ID_HER_INDENTEDIT, (LONG_PTR)&fphlstate->wsIndent[0]);
+
+				SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+				return TRUE;
+			}
 
 			break;
 		case DN_CLOSE:
@@ -923,8 +1037,8 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    7,           14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrH             },
 		{DI_CHECKBOX,    7,           15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrS             },
 		{DI_CHECKBOX,    7,           16, 0,      16, {},                                  DIF_3STATE,                             Msg::FileFilterAttrD             },
-		{DI_CHECKBOX,    7,           17, 0,      17, {},                                  DIF_3STATE,                             Msg::FileFilterAttrHardLinks     },
 
+		{DI_CHECKBOX,    26,          11, 0,      11, {},                                  DIF_3STATE,                             Msg::FileFilterAttrHardLinks     },
 		{DI_CHECKBOX,    26,          12, 0,      12, {},                                  DIF_3STATE,                             Msg::FileFilterAttrC             },
 		{DI_CHECKBOX,    26,          13, 0,      13, {},                                  DIF_3STATE,                             Msg::FileFilterAttrE             },
 		{DI_CHECKBOX,    26,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrNI            },
@@ -942,25 +1056,26 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    64,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevFIFO       },
 		{DI_CHECKBOX,    64,          15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevSock       },
 
-		{DI_TEXT,        -1,          16, 0,      16, {},                                  DIF_SEPARATOR,                          Msg::HighlightColors             },
-		{DI_TEXT,        16,          17, 0,      17, {},                                  0,                                      Msg::HighlightMarking            },
-		{DI_EDIT,        5,           17, 14,     17, {},                                  0,                                      L""                              },
-		{DI_CHECKBOX,    0,           17, 0,      17, {},                                  0,                                      Msg::HighlightMarkStrInherit     },
+		{DI_TEXT,        -1,          17, 0,      17, {},                                  DIF_SEPARATOR,                          Msg::HighlightColors             },
+		{DI_TEXT,        16,          18, 0,      18, {},                                  0,                                      Msg::HighlightMarking            },
+		{DI_EDIT,        5,           18, 14,     18, {},                                  0,                                      L""                              },
+		{DI_CHECKBOX,    0,           18, 0,      18, {},                                  0,                                      Msg::HighlightMarkStrInherit     },
+		{DI_CHECKBOX,    0,           18, 0,      18, {},                                  0,                                      Msg::HighlightMarkAddInherit     },
+		{DI_CHECKBOX,    0,           18, 0,      18, {},                                  DIF_HIDDEN,                             Msg::HighlightCustomIdent        },
+		{DI_EDIT,        0,           18, 4,      18, {},                                  DIF_HIDDEN,                             L""                              },
 
-		{DI_BUTTON,      5,           18, 0,      18, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName1          },
-		{DI_BUTTON,      0,           18, 0,      18, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking1           },
-		{DI_BUTTON,      5,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName2          },
-		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking2           },
-		{DI_BUTTON,      5,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName3          },
-		{DI_BUTTON,      0,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking3           },
-		{DI_BUTTON,      5,           21, 0,      21, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName4          },
-		{DI_BUTTON,      0,           21, 0,      21, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking4           },
+		{DI_BUTTON,      5,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName1          },
+		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking1           },
+		{DI_BUTTON,      5,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName2          },
+		{DI_BUTTON,      0,           20, 0,      20, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking2           },
+		{DI_BUTTON,      5,           21, 0,      21, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName3          },
+		{DI_BUTTON,      0,           21, 0,      21, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking3           },
+		{DI_BUTTON,      5,           22, 0,      22, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightFileName4          },
+		{DI_BUTTON,      0,           22, 0,      22, {},                                  DIF_BTNNOCLOSE | DIF_NOBRACKETS,        Msg::HighlightMarking4           },
+		{DI_USERCONTROL, 54,          19, 79,     22, {},                                  DIF_NOFOCUS,                            L""                              },
 
-		{DI_USERCONTROL, 54,          18, 79,     21, {},                                  DIF_NOFOCUS,                            L""                              },
-		{DI_CHECKBOX,    5,           22, 0,      22, {},                                  0,                                      Msg::HighlightContinueProcessing },
-
+		{DI_CHECKBOX,    5,           23, 0,      23, {},                                  0,                                      Msg::HighlightContinueProcessing },
 		{DI_TEXT,        0,           18, 0,      18, {},                                  DIF_SEPARATOR,                          L""                              },
-
 		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_DEFAULT | DIF_CENTERGROUP,          Msg::Ok                          },
 		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_CENTERGROUP | DIF_BTNNOCLOSE,       Msg::FileFilterReset             },
 		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_CENTERGROUP,                        Msg::FileFilterCancel            },
@@ -970,20 +1085,14 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	MakeDialogItemsEx(FilterDlgData, FilterDlg);
 
 	if (ColorConfig) {
-		FilterDlg[ID_FF_TITLE].Y2+= 5;
 
-		for (int i = ID_FF_NAME; i <= ID_FF_SEPARATOR1; i++)
-			FilterDlg[i].Flags|= DIF_HIDDEN;
-
-		for (int i = ID_FF_MATCHMASK; i <= ID_FF_LAST_ATTR; i++) {
-			FilterDlg[i].Y1-= 2;
-			FilterDlg[i].Y2-= 2;
-		}
+		FilterDlg[ID_FF_TITLE].Y2 += 6;
 
 		for (int i = ID_FF_SEPARATOR5; i <= ID_FF_MAKETRANSPARENT; i++) {
-			FilterDlg[i].Y1+= 5;
-			FilterDlg[i].Y2+= 5;
+			FilterDlg[i].Y1 += 6;
+			FilterDlg[i].Y2 += 6;
 		}
+
 	} else {
 		for (int i = ID_HER_SEPARATOR1; i <= ID_HER_CONTINUEPROCESSING; i++)
 			FilterDlg[i].Flags|= DIF_HIDDEN;
@@ -1005,6 +1114,17 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	FilterDlg[ID_HER_MARKINHERIT].X1 = FilterDlg[ID_HER_MARK_TITLE].X1
 			+ (int)FilterDlg[ID_HER_MARK_TITLE].strData.GetLength()
 			- (FilterDlg[ID_HER_MARK_TITLE].strData.Contains(L'&') ? 1 : 0) + 1;
+	FilterDlg[ID_HER_MARKADDINHERIT].X1 = FilterDlg[ID_HER_MARKINHERIT].X1
+			+ (int)FilterDlg[ID_HER_MARKINHERIT].strData.GetLength()
+			- (FilterDlg[ID_HER_MARKINHERIT].strData.Contains(L'&') ? 1 : 0) + 5;
+	FilterDlg[ID_HER_CUSTOMINDENT].X1 = FilterDlg[ID_HER_MARKADDINHERIT].X1
+			+ (int)FilterDlg[ID_HER_MARKADDINHERIT].strData.GetLength()
+			- (FilterDlg[ID_HER_MARKADDINHERIT].strData.Contains(L'&') ? 1 : 0) + 5;
+	FilterDlg[ID_HER_INDENTEDIT].X1 = FilterDlg[ID_HER_CUSTOMINDENT].X1
+			+ (int)FilterDlg[ID_HER_CUSTOMINDENT].strData.GetLength()
+			- (FilterDlg[ID_HER_CUSTOMINDENT].strData.Contains(L'&') ? 1 : 0) + 5;
+	FilterDlg[ID_HER_INDENTEDIT].X2 = FilterDlg[ID_HER_INDENTEDIT].X1 + 4;
+
 
 	for (int i = ID_HER_NORMALMARKING; i <= ID_HER_SELECTEDCURSORMARKING; i+= 2)
 		FilterDlg[i].X1 = FilterDlg[ID_HER_NORMALFILE].X1
@@ -1016,8 +1136,13 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 	FF->GetColors(&fphlstate.hl);
 	FilterDlg[ID_HER_COLOREXAMPLE].VBuf = fphlstate.vbuff;
 
+	swprintf(fphlstate.wsIndent, 10, L"%u", fphlstate.hl.Indent);
+	FilterDlg[ID_HER_INDENTEDIT].strData = fphlstate.wsIndent;
+
 	FilterDlg[ID_HER_MARKEDIT].strData = fphlstate.hl.Mark;
 	FilterDlg[ID_HER_MARKINHERIT].Selected = ((fphlstate.hl.Flags & HL_FLAGS_MARK_INHERIT) ? 1 : 0);
+	FilterDlg[ID_HER_MARKADDINHERIT].Selected = ((fphlstate.hl.Flags & HL_FLAGS_MARK_ADD) ? 1 : 0);
+	FilterDlg[ID_HER_CUSTOMINDENT].Selected = ((fphlstate.hl.Flags & HL_FLAGS_INDENT) ? 1 : 0);
 
 	FilterDlg[ID_HER_CONTINUEPROCESSING].Selected = (FF->GetContinueProcessing() ? 1 : 0);
 	FilterDlg[ID_FF_NAMEEDIT].strData = FF->GetTitle();
@@ -1201,8 +1326,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			if (FilterDlg[ID_FF_MATCHMASK].Selected && !FileMask.Set(FilterDlg[ID_FF_MASKEDIT].strData, 0))
 				continue;
 
-//			fphlstate.hl.Flags = 0;
-			fphlstate.hl.Flags = FilterDlg[ID_HER_MARKINHERIT].Selected; // HL_FLAGS_MARK_INHERIT
+			fphlstate.hl.Flags = (HL_FLAGS_MARK_INHERIT * FilterDlg[ID_HER_MARKINHERIT].Selected);
+			fphlstate.hl.Flags |= (HL_FLAGS_MARK_ADD * FilterDlg[ID_HER_MARKADDINHERIT].Selected);
+			fphlstate.hl.Flags |= (HL_FLAGS_INDENT * FilterDlg[ID_HER_CUSTOMINDENT].Selected);
+			fphlstate.hl.Indent = wcstoul(FilterDlg[ID_HER_INDENTEDIT].strData, nullptr, 10);
 
 			FF->SetColors(&fphlstate.hl);
 			FF->SetContinueProcessing(FilterDlg[ID_HER_CONTINUEPROCESSING].Selected != 0);

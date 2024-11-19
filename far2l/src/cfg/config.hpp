@@ -401,7 +401,10 @@ struct Options
 
 	int ShowFilenameMarks;
 	int FilenameMarksAlign;
+	DWORD FilenameMarksInStatusBar;
 	DWORD MinFilenameIndentation, MaxFilenameIndentation;
+	DWORD DirNameStyle;
+	DWORD ShowSymlinkSize;
 
 	int Highlight;
 	int CursorBlinkTime;
@@ -415,6 +418,7 @@ struct Options
 	int RightSelectedFirst;
 	int LeftSelectedFirst;
 	int SelectFolders;
+	int AttrStrStyle;
 	int PanelCaseSensitiveCompareSelect;
 	int ReverseSort;
 	int SortFolderExt;
@@ -480,6 +484,7 @@ struct Options
 	int LeftHeightDecrement;
 	int RightHeightDecrement;
 	int WidthDecrement;
+	int PanelsDisposition;
 
 	int ShowColumnTitles;
 	int ShowPanelStatus;
@@ -658,3 +663,4 @@ void SetFolderInfoFiles();
 void InfoPanelSettings();
 void AutoCompleteSettings();
 void LanguageSettings();
+void DirectoryNameSettings();

@@ -99,6 +99,10 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 	} else if (DataSize >= 8 && Data[0] == 'f' && Data[1] == 'L' && Data[2] == 'a' && Data[3] == 'C'
 		&& ext && strcasecmp(ext, ".flac") == 0) {
 		return "FLAC";
+	} else if (DataSize >= 4 && Data[0] == 0x4d && Data[1] == 0x5a
+		&& ext && (strcasecmp(ext, ".exe") == 0 || strcasecmp(ext, ".dll") == 0 || strcasecmp(ext, ".sys") == 0
+			|| strcasecmp(ext, ".drv") == 0 || strcasecmp(ext, ".ocx") == 0 || strcasecmp(ext, ".efi") == 0)) {
+		return "PE";
 	}
 
 	return nullptr;

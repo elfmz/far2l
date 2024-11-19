@@ -55,10 +55,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <mutex>
 #include <unordered_set>
+#include "pick_color_common.hpp"
 
 struct HighlightStrings
 {
-	const char *Flags, *UseAttr, *IncludeAttributes, *ExcludeAttributes, *AttrSet, *AttrClear, *IgnoreMask, *UseMask,
+	const char *Name, *Flags, *CFlags, *Indent, *UseAttr, *IncludeAttributes, *ExcludeAttributes, *AttrSet, *AttrClear, *IgnoreMask, *UseMask,
 			*Mask, *NormalColor, *SelectedColor, *CursorColor, *SelectedCursorColor, *MarkCharNormalColor, *MarkCharSelectedColor,
 			*MarkCharCursorColor, *MarkCharSelectedCursorColor, *MarkChar, *ContinueProcessing, *UseDate, *DateType, *DateAfter,
 			*DateBefore, *DateRelative, *UseSize, *SizeAbove, *SizeBelow, *HighlightEdit, *HighlightList, *MarkStr, *NormalColorMask,
@@ -66,7 +67,7 @@ struct HighlightStrings
 			*MarkCharCursorColorMask, *MarkCharSelectedCursorColorMask, *MaskIgnoreCase;
 };
 
-static const HighlightStrings HLS = {"Flags", "UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
+static const HighlightStrings HLS = {"Name","Flags", "CFlags", "Indent", "UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
 		"IgnoreMask", "UseMask", "Mask", "NormalColor", "SelectedColor", "CursorColor", "SelectedCursorColor", "MarkCharNormalColor",
 		"MarkCharSelectedColor", "MarkCharCursorColor","MarkCharSelectedCursorColor", "MarkChar", "ContinueProcessing", "UseDate",
 		"DateType", "DateAfter", "DateBefore", "DateRelative", "UseSize", "SizeAboveS", "SizeBelowS", "HighlightEdit", "HighlightList",
@@ -196,6 +197,8 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 {
 	// Дефолтные значения выбраны так чтоб как можно правильней загрузить
 	// настройки старых версий фара.
+
+
 	if (bSortGroup)
 		HData->SetMask(cfg_reader.GetInt(HLS.UseMask, 1) != 0, Mask);
 	else
@@ -242,12 +245,17 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 	hl.Mask[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_UNDERCURSOR] = cfg_reader.GetULL(HLS.MarkCharCursorColorMask, 0);
 	hl.Mask[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] = cfg_reader.GetULL(HLS.MarkCharSelectedCursorColorMask, 0);
 
+	hl.Flags = cfg_reader.GetUInt(HLS.CFlags, 0);
+	hl.Indent = cfg_reader.GetUInt(HLS.Indent, 0);
+	if (hl.Indent > HIGHLIGHT_MAX_MARK_LENGTH)
+		hl.Indent = HIGHLIGHT_MAX_MARK_LENGTH;
+
 	{ // Load Mark str
 		FARString strMark = cfg_reader.GetString(HLS.MarkStr, L"");
 		DWORD dwMarkLen = strMark.GetLength();
 		DWORD dwMarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
 
-		hl.Flags = (dwMarkChar & 0xFF0000) >> 23;
+		hl.Flags |= (dwMarkChar & 0xFF0000) >> 23;
 		dwMarkChar &= 0x0000FFFF;
 
 		if (dwMarkLen) {
@@ -255,7 +263,6 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 				dwMarkLen = HIGHLIGHT_MAX_MARK_LENGTH;
 
 			memcpy(&hl.Mark[0], strMark.GetBuffer(), sizeof(wchar_t) * dwMarkLen);
-			strMark.ReleaseBuffer();
 		}
 		else if (dwMarkChar) {
 			hl.Mark[0] = dwMarkChar;
@@ -266,8 +273,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		hl.MarkLen = dwMarkLen;
 	}
 
-
-#if 1
+#if 0
 	  // FIXME: Temporary code for compatibility with old settings where there are no transparency masks for colors
 
 	for (int j = 0; j < 2; j++) {
@@ -304,6 +310,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 void HighlightFiles::InitHighlightFiles()
 {
 	FARString strMask;
+	FARString strName;
 	std::string strGroupName, strRegKey;
 	const int GroupDelta[4] = {DEFAULT_SORT_GROUP, 0, DEFAULT_SORT_GROUP + 1, DEFAULT_SORT_GROUP};
 	const char *KeyNames[4] = {RegColorsHighlight, SortGroupsKeyName, SortGroupsKeyName, RegColorsHighlight};
@@ -340,6 +347,9 @@ void HighlightFiles::InitHighlightFiles()
 			FileFilterParams *HData = HiData.addItem();
 
 			if (HData) {
+				cfg_reader->GetString(strName, HLS.Name, L"");
+				HData->SetTitle(strName);
+
 				LoadFilter(HData, *cfg_reader, strMask,
 						GroupDelta[j] + (GroupDelta[j] == DEFAULT_SORT_GROUP ? 0 : i),
 						(GroupDelta[j] == DEFAULT_SORT_GROUP ? false : true));
@@ -371,7 +381,8 @@ static const HighlightDataColor DefaultStartingColors =
 		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
 			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
 		0,     						// size_t	MarkLen;
-		1,   						// flags;
+		HL_FLAGS_MARK_INHERIT | HL_FLAGS_MARK_ADD, // flags;
+		0,							// indent
 		{ 0 }, 						// wchar_t	Mark
 	};
 
@@ -383,6 +394,7 @@ const HighlightDataColor ZeroColors =
 			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
 		0,     						// size_t	MarkLen;
 		0,   						// flags;
+		0,							// indent
 		{ 0 }, 						// wchar_t	Mark
 	};
 
@@ -446,11 +458,11 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 	// Унаследуем пометку из Src в Dst если она есть
 	if (hlSrc->MarkLen) {
 		// Если нет наследования в Src, то просто заменим метку на новую в Dst
-		if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) {
+		if ( !(hlSrc->Flags & HL_FLAGS_MARK_INHERIT) || !hlDst->MarkLen ) {
 			hlDst->MarkLen = hlSrc->MarkLen;
 			memcpy(hlDst->Mark, hlSrc->Mark, sizeof(wchar_t) * hlSrc->MarkLen);
 		}
-		else { // Если есть наследование, добавим метку к старой
+		else if (hlSrc->Flags & HL_FLAGS_MARK_ADD) { // Если есть наследование, добавим метку к старой
 			uint32_t freespace = (HIGHLIGHT_MAX_MARK_LENGTH - hlDst->MarkLen);
 			if (freespace) { // Если есть хоть какое то место, добавим что влезет
 				uint32_t copylen = (freespace < hlSrc->MarkLen) ? freespace : hlSrc->MarkLen;
@@ -619,12 +631,13 @@ void HighlightFiles::FillMenu(VMenu *HiMenu, int MenuPos)
 	};
 	HiMenu->DeleteItems();
 	HiMenuItem.Clear();
+	uint32_t attrstyle = Opt.AttrStrStyle;
 
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
 
 			FileFilterParams *ffp = HiData.getItem(i);
-			MenuString(HiMenuItem.strName, ffp, true);
+			MenuString(HiMenuItem.strName, ffp, attrstyle, true);
 
 			if (ffp->GetFlags(FFFT_CUSTOM) & FFF_DISABLED) {
 				HiMenuItem.Flags |= LIF_GRAYED;
@@ -719,6 +732,11 @@ void HighlightFiles::HiEdit(int MenuPos)
 						$ 07.07.2000 IS
 						Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
+				case KEY_CTRLM: {
+					Opt.AttrStrStyle ^= 1;
+					NeedUpdate = true;
+				}
+				break;
 
 				case KEY_SUBTRACT:
 				case KEY_ADD:
@@ -997,18 +1015,9 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	cfg_writer.SetULL(HLS.MarkCharSelectedCursorColorMask,
 			hl.Mask[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
 
-	{ // Save Mark str
-		FARString strMark = L"";
-//		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
-		DWORD dwMarkChar = 0;
-		dwMarkChar |= (0xFF0000 * (hl.Flags & HL_FLAGS_MARK_INHERIT));
-
-		cfg_writer.SetUInt(HLS.MarkChar, dwMarkChar);
-
-//		if (hl.MarkLen > 1)
-		strMark = hl.Mark;
-		cfg_writer.SetString(HLS.MarkStr, strMark);
-	}
+	cfg_writer.SetUInt(HLS.Indent, hl.Indent);
+	cfg_writer.SetUInt(HLS.CFlags, hl.Flags);
+	cfg_writer.SetString(HLS.MarkStr, hl.Mark);
 
 	cfg_writer.SetInt(HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
 }
@@ -1037,10 +1046,13 @@ void HighlightFiles::SaveHiData()
 			if (j == 1 || j == 2) {
 				const wchar_t *Mask = nullptr;
 				CurHiData->GetMask(&Mask);
+
 				cfg_writer.SelectSection(KeyNames[j]);
 				cfg_writer.SetString(strGroupName, Mask);
 			}
 			cfg_writer.SelectSection(strRegKey);
+			cfg_writer.SetString(HLS.Name, CurHiData->GetTitle());
+
 			SaveFilter(CurHiData, cfg_writer, (j == 1 || j == 2));
 		}
 
@@ -1060,12 +1072,31 @@ void HighlightFiles::SaveHiData()
 	}
 }
 
+void HighlightFiles::UpdateHighlighting(bool RefreshMasks)
+{
+	ScrBuf.Lock();	// отменяем всякую прорисовку
+
+	ProcessGroups();
+
+	if (RefreshMasks) {
+		for (size_t i = 0; i < HiData.getCount(); i++) {
+			HiData.getItem(i)->RefreshMask();
+		}
+	}
+
+	CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+	CtrlObject->Cp()->LeftPanel->Redraw();
+	CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+	CtrlObject->Cp()->RightPanel->Redraw();
+
+	ScrBuf.Unlock();	// разрешаем прорисовку
+}
 
 ////////
 
 static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &hl2)
 {
-	if (hl1.Flags != hl2.Flags || hl1.MarkLen != hl2.MarkLen)
+	if (hl1.Flags != hl2.Flags || hl1.MarkLen != hl2.MarkLen || hl1.Indent != hl2.Indent)
 		return false;
 
 	if (hl1.MarkLen && wmemcmp(&hl1.Mark[0], &hl2.Mark[0], hl1.MarkLen) != 0)
@@ -1080,12 +1111,11 @@ static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &
 	return true;
 }
 
-
 struct HighlightDataColorHash
 {
 	size_t operator()(const HighlightDataColor &hl) const
 	{
-		size_t out = hl.Flags ^ (hl.MarkLen * 0xFFFF);
+		size_t out = (hl.Flags + hl.Indent) ^ (hl.MarkLen * 0xFFFF);
 
 		for (size_t i = 0; i < ARRAYSIZE(hl.Color); ++i) {
 			for (size_t j = 0; j < ARRAYSIZE(hl.Color[i]); ++j) {

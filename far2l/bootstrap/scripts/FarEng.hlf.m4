@@ -417,6 +417,8 @@ $ #Menu control commands#
 $ #Panel control commands  #
     #Common panel commands#
 
+  Vertical or Horizontal panel layout                         #Ctrl-,#
+
   Change active panel                                            #Tab#
   Swap panels                                                 #Ctrl-U#
   Re-read panel                                               #Ctrl-R#
@@ -435,7 +437,7 @@ $ #Panel control commands  #
     (when the command line is empty)
   Restore default panels width                          #Ctrl-Numpad5#
   Restore default panels height                     #Ctrl-Alt-Numpad5#
-  Show/Hide functional key bar at the bottom line.            #Ctrl-B#
+  Show/Hide functional key bar at the bottom line             #Ctrl-B#
 
     #File panel commands#
 
@@ -472,7 +474,14 @@ $ #Panel control commands  #
 
   Toggle hidden and system files displaying                   #Ctrl-H#
   Toggle long/short file names view mode                      #Ctrl-N#
-  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
+
+  Customize Size column:
+   change style of names for dirs and symlinks            #Ctrl-Alt-D#
+   toggle for symlinks "Symlink" or target file size      #Ctrl-Alt-L#
+
+  File name ~highlighting markers~@Highlight@:
+   toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
+   toggle hide/show in status bar                         #Ctrl-Alt-N#
 
   Hide/Show left panel                                       #Ctrl-F1#
   Hide/Show right panel                                      #Ctrl-F2#
@@ -791,7 +800,7 @@ shows the selected directory. To show a root directory in the GUI file browser, 
 should press #Shift-Enter# on the required path in the ~location menu~@DriveDlg@.
 Pressing #Shift-Enter# on "#..#" opens the current directory in the GUI file browser.
 
-  Change to the root folder                                           #Ctrl-\\#
+  Change to the root folder (/)                                       #Ctrl-\\#
 
   Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
 
@@ -3408,9 +3417,11 @@ combinations are available:
 
   #Ctrl-R#       - Restore the default file highlighting groups
 
-  #Ctrl-Up#      - Move a group up.
+  #Ctrl-Up#      - Move a group up
 
-  #Ctrl-Down#    - Move a group down.
+  #Ctrl-Down#    - Move a group down
+
+  #Ctrl-M#       - Toggle attribute column view: short/long
 
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked,

@@ -272,6 +272,8 @@ $ #Menu control commands#
 $ #Panelvezérlő parancsok#
   #Általános panelparancsok#
 
+  Vertical or Horizontal panel layout                         #Ctrl-,#
+
   Aktív panel váltó                                              #Tab#
   Panelek megcserélése                                        #Ctrl-U#
   Panel frissítése                                            #Ctrl-R#
@@ -328,7 +330,14 @@ $ #Panelvezérlő parancsok#
 
   A rejtett és rendszerfájlokat megmutatja/elrejti            #Ctrl-H#
   Hosszú és rövid fájlnév nézet között vált                   #Ctrl-N#
-  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
+
+  Customize Size column:
+   change style of names for dirs and symlinks            #Ctrl-Alt-D#
+   toggle for symlinks "Symlink" or target file size      #Ctrl-Alt-L#
+
+  File name ~highlighting markers~@Highlight@:
+   toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
+   toggle hide/show in status bar                         #Ctrl-Alt-N#
 
   Elrejti/megmutatja a bal panelt                            #Ctrl-F1#
   Elrejti/megmutatja a jobb panelt                           #Ctrl-F2#
@@ -655,7 +664,7 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
     ~meghajtók~@DriveDlg@ menü megfelelő meghajtóján. A #Shift-Enter# a mappák
     #..# elemén lenyomva az aktuális mappát nyitja meg az Intézőben.
 
-  Belépés a gyökérmappába                                     #Ctrl-\\#
+  Belépés a gyökérmappába (/)                                 #Ctrl-\\#
 
   Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
 
@@ -2965,6 +2974,8 @@ csoportokat
   #Ctrl-Fel#       - A csoportot felfelé mozgatja
 
   #Ctrl-Le#        - A csoportot lefelé mozgatja
+
+  #Ctrl-M#         - Toggle attribute column view: short/long
 
     A FAR a csoportkiemeléseket felülről lefelé haladva vizsgálja. Ha érzékeli,
 hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja,

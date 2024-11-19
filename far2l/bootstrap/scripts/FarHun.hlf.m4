@@ -3617,7 +3617,7 @@ To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be us
 
  #Del#         - ^<wrap>remove the current group
 
- #Enter#/#F4#  - ^<wrap>edit the current group
+ #Enter#/#F4#    - ^<wrap>edit the current group
 
  #F7#          - ^<wrap>find all groups containing the specified mask
 

@@ -360,14 +360,17 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			for (int i = 0; i < argc; ++i) {
 				TCHAR *param, *p = TMP;
 				ExpandEnvStrs(argv[i], TMP);
-				param = ParseParam(p);
-				FSF.TruncStr(param ? param : p, 67);
+				param =  ParseParam(p);
+				if (!param) {
+					param = p;
+				}
 
-			    fmi[i].Text = wcsdup(param ? param : p);
-
-				fmi[i].Separator = !lstrcmp(param, _T("-"));
+				FSF.TruncStr(param, 67);
+				fmi[i].Text = wcsdup(param);
+				fmi[i].Separator = !lstrcmp(param, L"-");
 				fmi[i].Selected = FALSE;
 				fmi[i].Checked = FALSE;
+
 			}
 			//    fmi[0].Selected=TRUE;
 
@@ -389,9 +392,10 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			free(fmi);
 
 			if ((unsigned)ExitCode < (unsigned)argc) {
-				ExpandEnvStrs(argv[ExitCode], TMP);
-				TCHAR *p = TMP;
+				TCHAR *p = argv[ExitCode];
 				ParseParam(p);
+				ExpandEnvStrs(p, TMP);
+				p = TMP;
 
 				FAR_FIND_DATA FindData;
 				int bShellExecute = BreakCode != -1;
@@ -445,7 +449,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			return hPlugin;
 		} else {
 			ShowMenuFromList(pName);
-			return INVALID_HANDLE_VALUE;
+			return ((HANDLE)-2);
 		}
 #undef pName
 	}

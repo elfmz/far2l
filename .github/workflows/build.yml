@@ -34,6 +34,7 @@ env:
 
 jobs:
   ubuntu-low-compiler:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: ubuntu-20.04
 
     strategy:
@@ -90,6 +91,7 @@ jobs:
           cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
   
   ubuntu-medium-compiler:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: ubuntu-22.04
 
     strategy:
@@ -142,6 +144,7 @@ jobs:
           cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
 
   ubuntu-high-compiler:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: ubuntu-24.04
 
     strategy:
@@ -194,6 +197,7 @@ jobs:
           cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
         
   macos14-arm64-clang15:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: macos-14
 
     steps:

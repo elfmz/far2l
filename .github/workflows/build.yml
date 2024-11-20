@@ -79,7 +79,7 @@ jobs:
         shell: bash
         # -S and -B options specify source and build directories
         run: > 
-         cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+         cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
          -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
   
       - name: Build
@@ -130,7 +130,7 @@ jobs:
         shell: bash
         # -S and -B options specify source and build directories
         run: > 
-         cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+         cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
          -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
   
       - name: Build
@@ -181,7 +181,7 @@ jobs:
         shell: bash
         # -S and -B options specify source and build directories
         run: > 
-          cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+          cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
           -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
   
       - name: Build
@@ -219,7 +219,7 @@ jobs:
         # access regardless of the host operating system
         shell: bash
         # -S and -B options specify source and build directories
-        run: cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE  -DPYTHON=yes
+        run: cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
   
       - name: Build
         shell: bash

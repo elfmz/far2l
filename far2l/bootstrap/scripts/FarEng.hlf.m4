@@ -3852,18 +3852,20 @@ characters, delimited with commas. Allowed column types are:
                  These modifiers may be used in combination,
                  for example NMR
 
-    S[C,T,F,E] - file size
-    P[C,T,F,E] - packed file size
-    G[C,T,F,E] - size of file streams
-                 where: C - format file size;
-                        T - use 1000 instead of 1024 as a divider;
-                        F - show file sizes similar to Windows
-                            Explorer (i.e. 999 bytes will be
-                            displayed as 999 and 1000 bytes will
-                            be displayed as 0.97 K);
-                        E - economic mode, no space between file
-                            size and suffix will be shown
-                            (i.e. 0.97K);
+    S[C,T,F,E,A] - file size
+    P[C,T,F,E,A] - packed file size
+    G[C,T,F,E,A] - size of file streams
+                   where: C - format file size;
+                          T - use 1000 instead of 1024 as a divider;
+                          F - show file sizes similar to Windows
+                              Explorer (i.e. 999 bytes will be
+                              displayed as 999 and 1000 bytes will
+                              be displayed as 0.97 K);
+                          E - economic mode, no space between file
+                              size and suffix will be shown
+                              (i.e. 0.97K);
+                          A - automatic width by max number
+                              (works only if 0 in "Column widths");
 
     D          - file last write date
     T          - file last write time

@@ -3407,16 +3407,18 @@ pluginekhez);
                         R - jobbra igazított nevek;
                  A módosítókat kombinálni is lehet, például NMR.
 
-    S[C,T,F,E] - fájlméret
-    P[C,T,F,E] - tömörített fájlméret
-    G[C,T,F,E] - a fájlstream-ek mérete
-                 ahol:  C - rendezett fájlméret formátum;
-                        T - 1024 helyett 1000 az osztó;
-                        F - ^<wrap>a fájlméretek a Windows Exploreréhez
+    S[C,T,F,E,A] - fájlméret
+    P[C,T,F,E,A] - tömörített fájlméret
+    G[C,T,F,E,A] - a fájlstream-ek mérete
+                   ahol: C - rendezett fájlméret formátum;
+                         T - 1024 helyett 1000 az osztó;
+                         F - ^<wrap>a fájlméretek a Windows Exploreréhez
 hasonló formátumúak (például 999 bájt 999-ként, de 1000 bájt 0.97 kB formában
 jelenik meg);
-                        E - takarékos mód, nincs szóköz a fájlméret
+                         E - takarékos mód, nincs szóköz a fájlméret
 és az utótag közt;
+                         A - automatic width by max number
+                             (works only if 0 in "Column widths");
 
     D          - a fájl módosításának dátuma
     T          - a fájl módosításának ideje

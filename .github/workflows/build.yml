@@ -42,23 +42,27 @@ jobs:
         compiler: [ gcc, clang ]
         include:
           - compiler: gcc
-            version: 10
-            c: /usr/bin/gcc-10
-            cxx: /usr/bin/g++-10
+            version: 7
+            c: /usr/bin/gcc-7
+            cxx: /usr/bin/g++-7
           - compiler: clang
-            version: 10
-            c: /usr/bin/clang-10
-            cxx: /usr/bin/clang++-10
+            version: 7
+            c: /usr/bin/clang-7
+            cxx: /usr/bin/clang++-7
 
     name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-  
-      - name: Install dependencies
+
+      - name: Install compilers
         run: >
-         sudo apt-get update;
+          sudo apt-get update;
+          sudo apt-get -y install gcc-7 g++-7 clang-7
+
+      - name: Install far2l dependencies
+        run: >
          sudo apt-get -y install
          libuchardet-dev libxml2-dev libwxgtk3.0-gtk3-dev
          libx11-dev libxi-dev
@@ -107,7 +111,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
   
-      - name: Install dependencies
+      - name: Install far2l dependencies
         run: >
           sudo apt-get update;
           sudo apt-get -y install
@@ -158,7 +162,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
   
-      - name: Install dependencies
+      - name: Install far2l dependencies
         run: >
           sudo apt-get update;
           sudo apt-get -y install
@@ -194,7 +198,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
   
-      - name: Install dependencies
+      - name: Install far2l dependencies
         # libx11, openssl is already installed
         run: >
           brew install

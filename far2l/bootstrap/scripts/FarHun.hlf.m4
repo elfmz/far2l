@@ -337,7 +337,7 @@ $ #Panelvezérlő parancsok#
 
   File name ~highlighting markers~@Highlight@:
    toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
-   toggle hide/show in status bar                         #Ctrl-Alt-N#
+   toggle hide/show in status line                        #Ctrl-Alt-N#
 
   Elrejti/megmutatja a bal panelt                            #Ctrl-F1#
   Elrejti/megmutatja a jobb panelt                           #Ctrl-F2#

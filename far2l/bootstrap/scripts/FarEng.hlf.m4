@@ -481,7 +481,7 @@ $ #Panel control commands  #
 
   File name ~highlighting markers~@Highlight@:
    toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
-   toggle hide/show in status bar                         #Ctrl-Alt-N#
+   toggle hide/show in status line                        #Ctrl-Alt-N#
 
   Hide/Show left panel                                       #Ctrl-F1#
   Hide/Show right panel                                      #Ctrl-F2#

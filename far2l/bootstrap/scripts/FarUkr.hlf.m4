@@ -340,7 +340,7 @@ $ #Команди управління панелями#
 
   File name ~highlighting markers~@Highlight@:
    toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
-   toggle hide/show in status bar                         #Ctrl-Alt-N#
+   toggle hide/show in status line                        #Ctrl-Alt-N#
 
  Сховати/Показати ліву панель #Ctrl-F1#
  Сховати/Показати праву панель #Ctrl-F2#

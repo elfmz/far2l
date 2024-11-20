@@ -100,4 +100,5 @@ Note that all true-color capable messages extend but don't replace 'base' 16 pal
 * Flag which prevents the removal of ampersand characters from menu items being iterated in `VMenu::FindItem()`
 (for the proper work of `History::GetAllSimilar()` function and in other similar situations):
     - `LIFIND_KEEPAMPERSAND` (in `enum FARLISTFINDFLAGS`);
-
+* Flags in `enum PROCESSNAME_FLAGS` (added in #2452):
+    - `PN_GENERATENAME`, `PN_CHECKMASK`, `PN_SHOWERRORMESSAGE`, `PN_RESERVED1`, `PN_CASESENSITIVE`, `PN_NONE`

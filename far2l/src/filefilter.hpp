@@ -67,6 +67,7 @@ public:
 	FileFilter(Panel *HostPanel, FAR_FILE_FILTER_TYPE FilterType);
 	~FileFilter();
 
+	void FillMenu(VMenu &FilterList);
 	bool FilterEdit();
 	void UpdateCurrentTime();
 	bool FileInFilter(const FileListItem &fli, enumFileInFilterType *foundType = nullptr);
@@ -75,6 +76,7 @@ public:
 	bool IsEnabledOnPanel();
 
 	static void InitFilter(ConfigReader &cfg_reader);
+	static void AddDefaultFileFilters();
 	static void CloseFilter();
 	static void SwapFilter();
 	static void SaveFilters(ConfigWriter &cfg_writer);

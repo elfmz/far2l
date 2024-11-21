@@ -34,75 +34,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "headers.hpp"
 
 #include "CFileMask.hpp"
-#include "FileMasksProcessor.hpp"
-#include "FileMasksWithExclude.hpp"
 #include "lang.hpp"
 #include "message.hpp"
 #include "pathmix.hpp"
-
-CFileMask::CFileMask()
-	:
-	FileMask(nullptr)
-{}
-
-void CFileMask::Free()
-{
-	if (FileMask)
-		delete FileMask;
-
-	FileMask = nullptr;
-}
+#include "strmix.hpp"
 
 /*
  Инициализирует список масок. Принимает список, разделенных запятой или точкой
  с запятой. Разрешается указывать маски исключения, отделив их от основных
- символом '|' Возвращает FALSE при неудаче (например, одна из длина одной из
+ символом '|' Возвращает FALSE при неудаче (например, длина одной из
  масок равна 0).
 */
-
 bool CFileMask::Set(const wchar_t *Masks, DWORD Flags)
 {
-	Free();
-	bool Result = false;
 	int Silent = Flags & FMF_SILENT;
-	DWORD flags = 0;
 
-	if (Flags & FMF_ADDASTERISK)
-		flags|= FMPF_ADDASTERISK;
+	FARString strMask(Masks);
+	RemoveTrailingSpaces(strMask);
+	FileMask.Reset();
 
-	if (Masks && *Masks) {
-		if (FileMasksWithExclude::IsExcludeMask(Masks)) {
-			if (!(Flags & FMF_FORBIDEXCLUDE))
-				FileMask = new FileMasksWithExclude;
-		} else {
-			FileMask = new FileMasksProcessor;
-		}
+	bool Result = !strMask.IsEmpty() && FileMask.Set(strMask, Flags & FMF_ADDASTERISK);
 
-		if (FileMask)
-			Result = FileMask->Set(Masks, flags);
+	if (!Result)
+	{
+		FileMask.Reset();
 
-		if (!Result)
-			Free();
+		if (!Silent)
+			Message(MSG_WARNING,1,Msg::Warning,Msg::IncorrectMask, Msg::Ok);
 	}
-
-	if (!Silent && !Result)
-		Message(MSG_WARNING, 1, Msg::Warning, Msg::IncorrectMask, Msg::Ok);
 
 	return Result;
 }
 
-// Возвращает TRUE, если список масок пустой
-bool CFileMask::IsEmpty() const
-{
-	return FileMask ? FileMask->IsEmpty() : true;
-}
-
-/*
-	сравнить имя файла со списком масок
-	Возвращает TRUE в случае успеха.
-	Путь в имени файла игнорируется.
+/* сравнить имя файла со списком масок
+   Возвращает TRUE в случае успеха.
 */
-bool CFileMask::Compare(const wchar_t *FileName, bool ignorecase) const
+bool CFileMask::Compare(const wchar_t *FileName, bool ignorecase, bool SkipPath) const
 {
-	return FileMask ? FileMask->Compare(PointToName(FileName), ignorecase) : false;
+	return FileMask.Compare(SkipPath ? PointToName(FileName):FileName, ignorecase);
 }

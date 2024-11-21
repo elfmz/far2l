@@ -253,7 +253,7 @@ public:
 	{
 		ProcessShowClock++;
 		if (CtrlObject && CtrlObject->CmdLine) {
-			CtrlObject->CmdLine->ShowBackground();
+			CtrlObject->CmdLine->ShowBackground(true);
 			CtrlObject->CmdLine->RedrawWithoutComboBoxMark();
 		}
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);

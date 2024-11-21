@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "message.hpp"
+#include "mix.hpp"
 #include "clipboard.hpp"
 #include "xlat.hpp"
 #include "datetime.hpp"
@@ -3427,7 +3428,7 @@ BOOL Editor::Search(int Next)
 				SetCursorType(FALSE, -1);
 				int Total = ReverseSearch ? StartLine : NumLastLine - StartLine;
 				int Current = abs(NewNumLine - StartLine);
-				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr, Current * 100 / Total);
+				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr, ToPercent64(Current, Total));
 
 				if (CheckForEscSilent()) {
 					if (ConfirmAbortOp()) {
@@ -6246,7 +6247,7 @@ void Editor::EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar
 {
 	FARString strProgress;
 
-	if (Percent != -1) {
+	if (Percent > -1) {
 		FormatString strPercent;
 		strPercent << Percent;
 

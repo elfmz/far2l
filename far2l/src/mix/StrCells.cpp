@@ -41,10 +41,12 @@ size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 		}
 		if (i < n) {
 			if (IsCharFullWidth(pwz[i])) {
-				++g;
-				if (!round_up && g == ng) {
+//				++g;
+//				if (!round_up && g == ng) {
+				if (!round_up && (g + 1) == ng) {
 					break;
 				}
+				++g;
 			}
 			++i;
 		}

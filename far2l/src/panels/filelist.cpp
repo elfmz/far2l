@@ -124,6 +124,10 @@ FileList::FileList()
 	SelFileSize(0),
 	TotalFileSize(0),
 	FreeDiskSize(0),
+	TotalFilePhysSize(0),
+	LargestFilSize(0),
+	LargestFilSizeL(0),
+	LargestFilPhysSize(0),
 	MarkLM(0),
 	LastUpdateTime(0),
 	Height(0),
@@ -166,6 +170,9 @@ FileList::FileList()
 	DirectoriesFirst = 1;
 	Columns = PreparePanelView(&ViewSettings);
 	PluginCommand = -1;
+
+	extern int ColumnTypeWidth[32];
+	memcpy(AutoColumnWidth, ColumnTypeWidth, sizeof(int) * 32);
 }
 
 FileList::~FileList()
@@ -1241,6 +1248,39 @@ int FileList::ProcessKey(FarKey Key)
 			AnotherPanel->Redraw();
 			return TRUE;
 		}
+
+		case KEY_CTRLD | KEY_ALT: {
+			DirectoryNameSettings( );
+
+//			++Opt.DirNameStyle &= 63;
+//			UpdateDefaultColumnTypeWidths( );
+//			UpdateAutoColumnWidth();
+//			Redraw();
+//			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+//			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+//			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLL | KEY_ALT: {
+			Opt.ShowSymlinkSize ^= 1;
+			UpdateAutoColumnWidth();
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLN | KEY_ALT: {
+			Opt.FilenameMarksInStatusBar ^= 1;
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
 		case KEY_CTRLR: {
 			Update(UPDATE_KEEP_SELECTION | UPDATE_CAN_BE_ANNOYING);
 			Redraw();
@@ -2962,6 +3002,8 @@ void FileList::SetViewMode(int ViewMode)
 		if (AnotherPanel->GetType() == TREE_PANEL)
 			AnotherPanel->Redraw();
 	}
+
+	UpdateAutoColumnWidth();
 }
 
 void FileList::SetSortMode(int SortMode)
@@ -3405,7 +3447,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect);
+					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect, false);
 				}
 			}
 
@@ -4265,6 +4307,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 				Item->FileSize = FileSize;
 				Item->PhysicalSize = PhysicalSize;
 				Item->ShowFolderSize = 1;
+				LargestFilSize = std::max(FileSize, LargestFilSize);
+				LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
+				LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
 			} else
 				break;
 		}
@@ -4286,9 +4331,13 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			ListData[CurFile]->FileSize = FileSize;
 			ListData[CurFile]->PhysicalSize = PhysicalSize;
 			ListData[CurFile]->ShowFolderSize = 1;
+			LargestFilSize = std::max(FileSize, LargestFilSize);
+			LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
+			LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
 		}
 	}
 
+	UpdateAutoColumnWidth( );
 	SortFileList(TRUE);
 	ShowFileList(TRUE);
 	CtrlObject->Cp()->Redraw();

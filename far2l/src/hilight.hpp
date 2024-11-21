@@ -56,6 +56,8 @@ enum enumHighlightDataColor
 enum HIGHLIGHT_FLAGS
 {
 	HL_FLAGS_MARK_INHERIT = 1,
+	HL_FLAGS_MARK_ADD     = 2, // to inheritable
+	HL_FLAGS_INDENT       = 4,
 };
 
 struct HighlightDataColor
@@ -63,8 +65,9 @@ struct HighlightDataColor
 	uint64_t Color[2][4];	// [0=file, 1=mark][0=normal,1=selected,2=undercursor,3=selectedundercursor];
 							// nonzero upper 3 bytes meaning foreground RGB, nonzero lower 3 bytes meaning background RGB
 	uint64_t Mask[2][4];	// transparency mask, 0 = fully transparent
-	uint32_t Flags;
 	uint32_t MarkLen;
+	uint32_t Flags;
+	uint32_t Indent;
 	wchar_t	 Mark[HIGHLIGHT_MAX_MARK_LENGTH + 1]; 	// + null terminator
 };
 
@@ -92,6 +95,7 @@ public:
 	void GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *MarkLM);
 	int GetGroup(const FileListItem *fli);
 	void HiEdit(int MenuPos);
+	void UpdateHighlighting(bool RefreshMasks = false);
 
 	void SaveHiData();
 };

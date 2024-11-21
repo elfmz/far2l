@@ -30,6 +30,7 @@ static const SectionProps s_section_props [] = {
 	{"Panel", "settings/panel.ini", false},
 	{"CodePages", "settings/codepages.ini", false},
 	{"XLat", "settings/xlat.ini", false},
+	{"MaskGroups", "settings/maskgroups.ini"},
 	{"Colors", "settings/colors.ini", false},
 	{"SortGroups", "settings/colors.ini", false},
 	{"UserMenu", "settings/user_menu.ini", false},

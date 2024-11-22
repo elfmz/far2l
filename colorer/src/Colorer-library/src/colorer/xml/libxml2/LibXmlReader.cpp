@@ -107,7 +107,7 @@ void LibXmlReader::getAttributes(const xmlNode* node, std::unordered_map<Unicode
 {
   for (xmlAttrPtr attr = node->properties; attr != nullptr; attr = attr->next) {
     const auto content = xmlNodeGetContent(attr->children);
-    data.emplace(std::make_pair(reinterpret_cast<const char*>(attr->name), reinterpret_cast<const char*>(content)));
+    data.emplace(reinterpret_cast<const char*>(attr->name), reinterpret_cast<const char*>(content));
     xmlFree(content);
   }
 }

@@ -80,6 +80,7 @@ set(SRC_COLORER
     colorer/parsers/VirtualEntry.h
     colorer/utils/Environment.cpp
     colorer/utils/Environment.h
+    colorer/utils/FileSystems.h
     colorer/version.h
     colorer/viewer/ParsedLineWriter.cpp
     colorer/viewer/ParsedLineWriter.h
@@ -226,11 +227,19 @@ target_include_directories(colorer_lib PUBLIC
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
-set_target_properties(colorer_lib PROPERTIES
-    CXX_STANDARD 17
-    CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS YES
-)
+if(COLORER_BUILD_OLD_COMPILERS)
+  set_target_properties(colorer_lib PROPERTIES
+          CXX_STANDARD 17
+          CXX_STANDARD_REQUIRED YES
+          CXX_EXTENSIONS YES
+  )
+else()
+  set_target_properties(colorer_lib PROPERTIES
+          CXX_STANDARD 17
+          CXX_STANDARD_REQUIRED YES
+          CXX_EXTENSIONS NO
+  )
+endif()
 
 target_link_libraries(colorer_lib
         PUBLIC LibXml2::LibXml2

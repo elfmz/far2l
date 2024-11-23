@@ -269,6 +269,179 @@ void PanelSettings()
 	}
 }
 
+enum enumDirCfgDialog
+{
+	ID_DIRCFG_TITLE = 0,
+
+	ID_DIRCFG_STYLE_TEXT,
+	ID_DIRCFG_STYLE_COMBO,
+	ID_DIRCFG_SEPARATOR,
+
+	ID_DIRCFG_CHECKBOX_CENTER,
+	ID_DIRCFG_CHECKBOX_SURR,
+	ID_DIRCFG_SURR_COMBO,
+
+	ID_DIRCFG_SEPARATOR2,
+	ID_DIRCFG_BUTTON_OK,
+	ID_DIRCFG_BUTTON_CANCEL,
+	ID_DIRCFG_BUTTON_APPLY,
+};
+
+typedef struct dircfg_data_s {
+
+	int DirNameStyle;
+	int SurrIndex;
+	bool bCentered;
+	bool bSurr;
+
+} dircfg_data_t;
+
+static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+{
+	//	DialogBuilder *Builder = (DialogBuilder *)((Dialog *)hDlg)->GetDialogData();
+	dircfg_data_t *dircfg_data = (dircfg_data_t *)SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+	wchar_t tmp[48 * 4];
+
+	auto update_surrcombo = [&]() {
+
+		FarListItem listitems[4];
+		FarList farlist = { 4, listitems };
+//		FarListPos flpos = {dircfg_data->SurrIndex, 0};
+
+		for (size_t i = 0; i < 4; i++) {
+			swprintf(tmp + i * 16, 16, L"%C%S%C", surdircharleft[i], DirNames[dircfg_data->DirNameStyle].CPtr(), surdircharright[i]);
+//			listitems[i] = {0, tmp + i * 16, {(DWORD)i,0,0} };
+			listitems[i].Flags = (i == (size_t)dircfg_data->SurrIndex) ? LIF_SELECTED : 0;
+			listitems[i].Text = tmp + i * 16;
+			listitems[i].Reserved[0] = (DWORD)i;
+		}
+
+		SendDlgMessage(hDlg, DM_LISTSET, ID_DIRCFG_SURR_COMBO, (LONG_PTR)&farlist);
+//		SendDlgMessage(hDlg, DM_LISTSETCURPOS, dircfg_data->DirNameStyleComboID, (LONG_PTR)&flpos);
+	};
+
+	switch (Msg) {
+
+	case DN_INITDIALOG: {
+
+		FarListItem listitems[4];
+		FarList farlist = { 4, listitems };
+//		FarListPos flpos = {dircfg_data->DirNameStyle, 0};
+
+		for (size_t i = 0; i < 4; i++) {
+			swprintf(tmp + i * 48, 48, L"%-10.10S | %-10.10S | %-10.10S", DirNames[i].CPtr(), DirUpNames[i].CPtr(), SymLinkNames[i].CPtr());
+//			listitems[i] = {0, tmp + i * 48, {(DWORD)i,(DWORD)i,(DWORD)i} };
+			listitems[i].Flags = (i == (size_t)dircfg_data->DirNameStyle) ? LIF_SELECTED : 0;
+			listitems[i].Text = tmp + i * 48;
+			listitems[i].Reserved[0] = (DWORD)i;
+		}
+
+		SendDlgMessage(hDlg, DM_LISTSET, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)&farlist);
+//		SendDlgMessage(hDlg, DM_LISTSETCURPOS, dircfg_data->DirNameStyleComboID, (LONG_PTR)&flpos);
+		update_surrcombo( );
+	}
+	break;
+
+	case DN_LISTCHANGE: {
+		if (Param1 == ID_DIRCFG_STYLE_COMBO) {
+
+			dircfg_data->DirNameStyle = SendDlgMessage(hDlg, DM_LISTGETCURPOS, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)0);
+			update_surrcombo( );
+			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+		}
+		else if (Param1 == ID_DIRCFG_SURR_COMBO) {
+			dircfg_data->SurrIndex = SendDlgMessage(hDlg, DM_LISTGETCURPOS, ID_DIRCFG_SURR_COMBO, (LONG_PTR)0);
+		}
+	}
+
+	case DN_BTNCLICK: {
+		if (Param1 == ID_DIRCFG_CHECKBOX_CENTER) {
+			dircfg_data->bCentered = (bool)(SendDlgMessage(hDlg, DM_GETCHECK, ID_DIRCFG_CHECKBOX_CENTER, 0));
+		}
+		else if (Param1 == ID_DIRCFG_CHECKBOX_SURR) {
+			dircfg_data->bSurr = (bool)(SendDlgMessage(hDlg, DM_GETCHECK, ID_DIRCFG_CHECKBOX_SURR, 0));
+		}
+		else if (Param1 == ID_DIRCFG_BUTTON_APPLY) {
+
+			Opt.DirNameStyle = dircfg_data->DirNameStyle;
+			Opt.DirNameStyle |= (dircfg_data->SurrIndex << 2);
+			Opt.DirNameStyle |= DIRNAME_STYLE_CENTERED * dircfg_data->bCentered;
+			Opt.DirNameStyle |= DIRNAME_STYLE_SURR_CH * dircfg_data->bSurr;
+
+			SendDlgMessage(hDlg, DM_SHOWDIALOG, 0, 0);
+			UpdateDefaultColumnTypeWidths( );
+			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->Redraw();
+
+			SendDlgMessage(hDlg, DM_SHOWDIALOG, 1, 0);
+			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+		}
+	}
+
+	} // switch
+
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
+}
+
+void DirectoryNameSettings()
+{
+	dircfg_data_t dircfg_data;
+	DialogDataEx DirCfgDlgData[] = {
+
+		{DI_DOUBLEBOX, 3,  1,  47,  10, {}, 0, Msg::DirSettingsTitle},
+		{DI_TEXT,      5,  2,  35,   2, {}, 0, Msg::DirSettingsShowAs},
+		{DI_COMBOBOX,  5,  3,  5+40, 3, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
+		{DI_TEXT,      0,  4,  0,    4, {}, DIF_SEPARATOR, L""},
+
+		{DI_CHECKBOX,  5,  5,  20,   5, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
+		{DI_CHECKBOX,  5,  6,  20,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
+		{DI_COMBOBOX,  9, 7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
+
+		{DI_TEXT,      0,  8,  0,    8, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
+
+	};
+
+	MakeDialogItemsEx(DirCfgDlgData, DirCfgDlg);
+
+	dircfg_data.DirNameStyle = Opt.DirNameStyle & 3;
+	dircfg_data.SurrIndex = (Opt.DirNameStyle >> 2) & 3;
+	dircfg_data.bCentered = (Opt.DirNameStyle & DIRNAME_STYLE_CENTERED);
+	dircfg_data.bSurr = (Opt.DirNameStyle & DIRNAME_STYLE_SURR_CH);
+
+	DirCfgDlg[ID_DIRCFG_CHECKBOX_CENTER].Selected = dircfg_data.bCentered;
+	DirCfgDlg[ID_DIRCFG_CHECKBOX_SURR].Selected = dircfg_data.bSurr;
+
+	if (!dircfg_data.bSurr)
+		DirCfgDlg[ID_DIRCFG_SURR_COMBO].Flags |= DIF_DISABLE;
+
+	Dialog Dlg(DirCfgDlg, ARRAYSIZE(DirCfgDlg), DirCfgDlgProc, (LONG_PTR)&dircfg_data);
+
+	int dialogsizex = 51;
+	int dialogsizey = 12;
+	Dlg.SetPosition(-1, -1, dialogsizex, dialogsizey);
+	Dlg.SetAutomation(ID_DIRCFG_CHECKBOX_SURR, ID_DIRCFG_SURR_COMBO, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
+
+	Dlg.Process();
+	int ExitCode = Dlg.GetExitCode();
+
+	if (ExitCode == ID_DIRCFG_BUTTON_OK) {
+		Opt.DirNameStyle = dircfg_data.DirNameStyle;
+		Opt.DirNameStyle |= (dircfg_data.SurrIndex << 2);
+		Opt.DirNameStyle |= DIRNAME_STYLE_CENTERED * dircfg_data.bCentered;
+		Opt.DirNameStyle |= DIRNAME_STYLE_SURR_CH * dircfg_data.bSurr;
+
+		UpdateDefaultColumnTypeWidths( );
+		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+		CtrlObject->Cp()->Redraw();
+	}
+}
+
+
 void InputSettings()
 {
 	const DWORD supported_tweaks = ApplyConsoleTweaks();
@@ -929,6 +1102,7 @@ void LanguageSettings()
 		CtrlObject->Cp()->RedrawKeyBar();
 		CtrlObject->Cp()->SetScreenPosition();
 		ApplySudoConfiguration();
+		UpdateDefaultColumnTypeWidths();
 	}
 	delete LangMenu;	//???? BUGBUG
 }

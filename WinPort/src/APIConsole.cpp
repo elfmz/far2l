@@ -1,8 +1,10 @@
 #include <mutex>
 #include <map>
 #include <vector>
+#include <atomic>
 #include <stdexcept>
 #include <debug.h>
+#include <unistd.h>
 
 #include "WinPort.h"
 #include "Backend.h"
@@ -16,15 +18,41 @@ struct ForkedConsole
 	IConsoleOutput *con_out{nullptr};
 };
 
-static IConsoleOutput *ChooseConOut(HANDLE hConsole)
+static std::atomic<IConsoleOutput *> s_shadow_out{nullptr};
+static std::atomic<int> s_shadow_usecnt{0};
+
+class ChooseConOut
 {
-	if (!hConsole) {
-		return g_winport_con_out;
+	IConsoleOutput *_chosen{};
+	bool _using_shadow{false};
+
+public:
+	ChooseConOut(HANDLE hConsole)
+	{
+		if (hConsole) {
+			ForkedConsole *fc = (ForkedConsole *)hConsole;
+			ASSERT(fc->magic == FORKED_CONSOLE_MAGIC);
+			_chosen = fc->con_out;
+			return;
+		}
+		++s_shadow_usecnt;
+		_chosen = s_shadow_out;
+		if (LIKELY(_chosen == nullptr)) {
+			--s_shadow_usecnt; // not gonna use shadow
+			_chosen = g_winport_con_out;
+		} else {
+			_using_shadow = true;
+		}
 	}
-	ForkedConsole *fc = (ForkedConsole *)hConsole;
-	ASSERT(fc->magic == FORKED_CONSOLE_MAGIC);
-	return fc->con_out;
-}
+	~ChooseConOut()
+	{
+		if (_using_shadow) {
+			--s_shadow_usecnt;
+		}
+	}
+	inline operator IConsoleOutput *() { return _chosen; }
+	inline IConsoleOutput *operator->() { return _chosen; }
+};
 
 static IConsoleInput *ChooseConIn(HANDLE hConsole)
 {
@@ -37,6 +65,38 @@ static IConsoleInput *ChooseConIn(HANDLE hConsole)
 }
 
 extern "C" {
+
+	WINPORT_DECL(FreezeConsoleOutput,VOID,())
+	{
+		if (s_shadow_out == nullptr) {
+			try {
+				// use NULL handle to make app treat its scroll callbacks as from main output
+				IConsoleOutput *shadow_out = g_winport_con_out->ForkConsoleOutput(NULL);
+				shadow_out = s_shadow_out.exchange(shadow_out);
+				if (shadow_out) {
+					g_winport_con_out->JoinConsoleOutput(shadow_out);
+				}
+			} catch (...) {
+				fprintf(stderr, "%s: exception\n", __FUNCTION__);
+			}
+		} else {
+			fprintf(stderr, "%s: called while already frozen\n", __FUNCTION__);
+		}
+	}
+
+	WINPORT_DECL(UnfreezeConsoleOutput,VOID,())
+	{
+		IConsoleOutput *shadow_out = s_shadow_out.exchange(nullptr);
+		if (shadow_out) {
+			while (s_shadow_usecnt != 0) {
+				usleep(1);
+			}
+			g_winport_con_out->JoinConsoleOutput(shadow_out);
+			g_winport_con_out->RepaintsDeferFinish(true);
+		} else {
+			fprintf(stderr, "%s: called while not frozen\n", __FUNCTION__);
+		}
+	}
 
 	WINPORT_DECL(ForkConsole,HANDLE,())
 	{
@@ -123,7 +183,7 @@ extern "C" {
 	WINPORT_DECL(GetConsoleScreenBufferInfo,BOOL,(HANDLE hConsoleOutput,CONSOLE_SCREEN_BUFFER_INFO *lpConsoleScreenBufferInfo))
 	{
 		unsigned int width = 0, height = 0;
-		auto *con_out = ChooseConOut(hConsoleOutput);
+		ChooseConOut con_out(hConsoleOutput);
 		con_out->GetSize(width, height);
 		lpConsoleScreenBufferInfo->dwCursorPosition = con_out->GetCursor();
 		lpConsoleScreenBufferInfo->wAttributes = con_out->GetAttributes();
@@ -429,10 +489,11 @@ extern "C" {
 
 	WINPORT_DECL(SetConsoleRepaintsDefer, VOID, (HANDLE hConsoleOutput, BOOL Deferring))
 	{
+		ChooseConOut con_out(hConsoleOutput);
 		if (Deferring) {
-			ChooseConOut(hConsoleOutput)->RepaintsDeferStart();
+			con_out->RepaintsDeferStart();
 		} else {
-			ChooseConOut(hConsoleOutput)->RepaintsDeferFinish();
+			con_out->RepaintsDeferFinish(false);
 		}
 	}
 

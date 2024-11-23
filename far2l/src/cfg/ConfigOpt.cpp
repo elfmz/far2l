@@ -69,6 +69,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigOptSaveLoad.hpp"
 #include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
+#include "MaskGroups.hpp"
+
 
 void SanitizeHistoryCounts();
 void SanitizeIndentationCounts();
@@ -122,10 +124,10 @@ static constexpr const char *NSecVMenu = "VMenu";
 static FARString strKeyNameConsoleDetachKey;
 
 const ConfigOpt g_cfg_opts[] {
-	{true,  NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, (BYTE *)Palette8bit, (BYTE *)DefaultPalette8bit},
-	{true,  NSecColors, "CurrentPaletteRGB", SIZE_ARRAY_PALETTE * 8, (BYTE *)Palette, nullptr},
-	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, g_tempcolors256},
-	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, (BYTE *)g_tempcolorsRGB},
+	{false, NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, (BYTE *)Palette8bit, nullptr},
+	{true,  NSecColors, "CurrentPaletteRGB", SIZE_ARRAY_PALETTE * sizeof(uint64_t), (BYTE *)Palette, nullptr},
+	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, nullptr},
+	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
@@ -379,6 +381,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "Highlight", &Opt.Highlight, 1},
 	{true,  NSecPanel, "SortFolderExt", &Opt.SortFolderExt, 0},
 	{true,  NSecPanel, "SelectFolders", &Opt.SelectFolders, 0},
+	{true,  NSecPanel, "AttrStrStyle", &Opt.AttrStrStyle, 1},
 	{true,  NSecPanel, "CaseSensitiveCompareSelect", &Opt.PanelCaseSensitiveCompareSelect, 1},
 	{true,  NSecPanel, "ReverseSort", &Opt.ReverseSort, 1},
 	{false, NSecPanel, "RightClickRule", &Opt.PanelRightClickRule, 2},
@@ -388,8 +391,11 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "AutoUpdateLimit", &Opt.AutoUpdateLimit, 0},
 	{true,  NSecPanel, "ShowFilenameMarks", &Opt.ShowFilenameMarks, 1},
 	{true,  NSecPanel, "FilenameMarksAlign", &Opt.FilenameMarksAlign, 1},
+	{true,  NSecPanel, "FilenameMarksInStatusBar", &Opt.FilenameMarksAlign, 1},
 	{true,  NSecPanel, "MinFilenameIndentation", &Opt.MinFilenameIndentation, 0},
 	{true,  NSecPanel, "MaxFilenameIndentation", &Opt.MaxFilenameIndentation, HIGHLIGHT_MAX_MARK_LENGTH},
+	{true,  NSecPanel, "DirNameStyle", &Opt.DirNameStyle, (1 + (0 << 2)) + DIRNAME_STYLE_SURR_CH + DIRNAME_STYLE_CENTERED },
+	{true,  NSecPanel, "ShowSymlinkSize", &Opt.ShowSymlinkSize, 0},
 
 	{true,  NSecPanelLeft, "Type", &Opt.LeftPanel.Type, 0},
 	{true,  NSecPanelLeft, "Visible", &Opt.LeftPanel.Visible, 1},
@@ -432,6 +438,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecLayout, "RightHeightDecrement", &Opt.RightHeightDecrement, 0},
 	{true,  NSecLayout, "WidthDecrement", &Opt.WidthDecrement, 0},
 	{true,  NSecLayout, "FullscreenHelp", &Opt.FullScreenHelp, 0},
+	{true,  NSecLayout, "PanelsDisposition", &Opt.PanelsDisposition, 0},
 
 	{true,  NSecDescriptions, "ListNames", &Opt.Diz.strListNames, L"Descript.ion,Files.bbs"},
 	{true,  NSecDescriptions, "UpdateMode", &Opt.Diz.UpdateMode, DIZ_UPDATE_IF_DISPLAYED},
@@ -594,39 +601,6 @@ static void SanitizePalette()
 #endif
 }
 
-static void MergePalette()
-{
-	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
-
-		Palette[i] &= 0xFFFFFFFFFFFFFF00;
-		Palette[i] |= Palette8bit[i];
-	}
-
-//	uint32_t basepalette[32];
-//	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
-
-/*
-	for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
-		uint8_t color = Palette8bit[i];
-
-		Palette[i] &= 0xFFFFFFFFFFFFFF00;
-
-		if (!(Palette[i] & FOREGROUND_TRUECOLOR)) {
-			Palette[i] &= 0xFFFFFF000000FFFF;
-			Palette[i] += ((uint64_t)basepalette[16 + (color & 0xF)] << 16);
-			Palette[i] += FOREGROUND_TRUECOLOR;
-		}
-		if (!(Palette[i] & BACKGROUND_TRUECOLOR)) {
-			Palette[i] &= 0x000000FFFFFFFFFF;
-			Palette[i] += ((uint64_t)basepalette[color >> 4] << 40);
-			Palette[i] += BACKGROUND_TRUECOLOR;
-		}
-
-		Palette[i] += color;
-	}
-*/
-}
-
 void ConfigOptFromCmdLine()
 {
 	for (auto Str: Opt.CmdLineStrings)
@@ -716,7 +690,7 @@ void ConfigOptLoad()
 
 	Opt.HelpTabSize = 8; // пока жестко пропишем...
 //	SanitizePalette();
-	MergePalette();
+//	MergePalette();
 
 	Opt.ViOpt.ViewerIsWrap&= 1;
 	Opt.ViOpt.ViewerWrap&= 1;
@@ -768,6 +742,7 @@ void ConfigOptLoad()
 			Opt.FindOpt.OutColumnWidthType, Opt.FindOpt.OutColumnCount);
 	}
 
+	CheckMaskGroups();
 	FileFilter::InitFilter(cfg_reader);
 
 	// avoid negative decrement for now as hiding command line by Ctrl+Down is a new feature and may confuse

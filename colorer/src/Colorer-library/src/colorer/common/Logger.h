@@ -3,6 +3,14 @@
 
 #include <sstream>
 
+#if __cplusplus < 201703L
+# include <experimental/string_view>
+namespace std
+{
+	typedef experimental::string_view string_view;
+}
+#endif
+
 namespace details {
 
 class Argument

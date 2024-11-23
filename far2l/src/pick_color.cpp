@@ -802,16 +802,21 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool
 
 	colorState.update_color( );
 
+	static const FarLangMsg msgTextStyles[] = {
+		Msg::PickColorStyleOverline,
+		Msg::PickColorStyleStrikeout,
+		Msg::PickColorStyleUnderline,
+		Msg::PickColorStyleInverse,
+		Msg::PickColorStyleBlinking,
+		Msg::PickColorStyleBold,
+		Msg::PickColorStyleItalic };
+
 	size_t extrasize = 10;
-	{
-		size_t ml;
-		if ((ml = wcslen(Msg::PickColorStyleOverline)) > extrasize) extrasize = ml;
-		if ((ml = wcslen(Msg::PickColorStyleStrikeout)) > extrasize) extrasize = ml;
-		if ((ml = wcslen(Msg::PickColorStyleUnderline)) > extrasize) extrasize = ml;
-		if ((ml = wcslen(Msg::PickColorStyleInverse)) > extrasize) extrasize = ml;
-		if ((ml = wcslen(Msg::PickColorStyleBlinking)) > extrasize) extrasize = ml;
-		if ((ml = wcslen(Msg::PickColorStyleBold)) > extrasize) extrasize = ml;
-		if ((ml = wcslen(Msg::PickColorStyleItalic)) > extrasize) extrasize = ml;
+
+	for (size_t i = 0; i < ARRAYSIZE(msgTextStyles); i++) {
+		size_t len = msgTextStyles[i].Len();
+		if (extrasize < len)
+			extrasize = len;
 	}
 
 	DialogDataEx ColorDlgData[] = {

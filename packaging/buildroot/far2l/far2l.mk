@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-FAR2L_VERSION = master
+FAR2L_VERSION = v_2.6.4
 FAR2L_SITE = $(call github,elfmz,far2l,$(FAR2L_VERSION))
 FAR2L_LICENSE = GPL-2
 FAR2L_LICENSE_FILES = LICENSE.txt

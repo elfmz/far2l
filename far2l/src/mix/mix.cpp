@@ -98,7 +98,7 @@ FarRecursiveSearch(const wchar_t *InitDir, const wchar_t *Mask, FRSUSERFUNC Func
 		ScTree.SetFindPath(InitDir, L"*");
 
 		while (ScTree.GetNextName(&FindData, strFullName)) {
-			if (FMask.Compare(FindData.strFileName)) {
+			if (FMask.Compare(FindData.strFileName, false)) {
 				FAR_FIND_DATA fdata;
 				apiFindDataExToData(&FindData, &fdata);
 

@@ -2122,16 +2122,27 @@ ConfigHighlight
 "&Розфарбовка файлів"
 "&Размалёўка файлаў"
 
+ConfigFilenameMarksStatusLine
+"Строка статуса: Показывать маркировку имен файлов"
+"Status line: Show file name markings"
+"Stavový řádek: Zobrazit označení názvů souborů"
+"Statuszeile: Dateinamenmarkierungen anzeigen"
+"Állapotsor: Fájlnevek megjelölésének megjelenítése"
+"Linia statusu: Pokaż oznaczenia nazw plików"
+"Línea de estado: Mostrar marcas de nombres de archivos"
+"Рядок статусу: Показати маркування імен файлів"
+"Радок стану: Паказаць маркіроўку імёнаў файлаў"
+
 ConfigFilenameMarks
-"Показывать маркировку имен файлов"
-"Show file name markings"
-"Zobrazit označení názvů souborů"
-"Dateinamenmarkierungen anzeigen"
-"Fájlnevek megjelölésének megjelenítése"
-"Pokaż oznaczenia nazw plików"
-"Mostrar marcas de nombres de archivos"
-"Показати маркування імен файлів"
-"Паказаць маркіроўку імёнаў файлаў"
+"Панели: Показывать маркировку имен файлов"
+"Panel: Show file name markings"
+"Panely: Zobrazit označení názvů souborů"
+"Paneele: Dateinamenmarkierungen anzeigen"
+"Panelek: Fájlnevek megjelölésének megjelenítése"
+"Panele: Pokaż oznaczenia nazw plików"
+"Paneles: Mostrar marcas de nombres de archivos"
+"Панелі: Показати маркування імен файлів"
+"Панэлі: Паказаць маркіроўку імёнаў файлаў"
 
 ConfigFilenameMarksAlign
 "Выравнивать имена файлов по маркировкам"

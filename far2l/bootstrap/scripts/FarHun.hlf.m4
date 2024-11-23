@@ -2227,8 +2227,15 @@ $ #Beállítások: panel beállítások#
 
   #Fájlok kiemelése#        A ~fájlkiemelések~@Highlight@ engedélyezése.
 
+  #Állapotsor: Fájlnevek megjelölésének megjelenítése#
+works only if #Fájlok kiemelése# enabled and may be switched by #Ctrl-Alt-N#.
+
   #Fájlnevek megjelölésének megjelenítése# and #Fájlneveket igazítani a megjelölések szerint#
 works only if #Fájlok kiemelése# enabled and may be switched by #Ctrl-Alt-M#.
+
+  #Könyvtár megjelenítési beállításai# Button for open dialog, which can be
+also open from panel by #Ctrl-Alt-D#.
+
 
   #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
   #mappaváltás#             a kurzor mozgatására a másik panel is

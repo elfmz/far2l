@@ -150,7 +150,6 @@ See also [Community packages & binaries](#community_bins)
 * `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
-* `libpcre2-dev` (_optional_ - needed for advanced custom archive formats support in **multiarc**)
 * `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `cmake` ( >= 3.2.2 )
@@ -160,7 +159,7 @@ See also [Community packages & binaries](#community_bins)
 
 or simply on **Debian/Ubuntu**:
 ``` sh
-apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre2-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
+apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
 In older distributions: use `libwxgtk3.0-dev` instead of `libwxgtk3.0-gtk3-dev`.

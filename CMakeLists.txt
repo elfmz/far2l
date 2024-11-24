@@ -403,11 +403,6 @@ if (NOT DEFINED MULTIARC OR MULTIARC)
         endif()
     endif()
 
-    pkg_search_module(PCRE QUIET libpcre)
-    if(NOT PCRE_FOUND)
-        message(WARNING "${ColorRed}libpcre not found, multiarc will have no regexp support in custom archive format descriptions. Install libpcre and reconfigure far2l if you need that functionality.${ColorNormal}")
-    endif()
-
     add_subdirectory (multiarc)
 else()
     message(STATUS "${ColorRed}MULTIARC plugin disabled due to MULTIARC=${MULTIARC}${ColorNormal}")

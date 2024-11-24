@@ -95,7 +95,6 @@ matrix:
             - libnfs-dev
             - libneon27-dev
             - libarchive-dev
-            - libpcre2-dev
             - zlib1g-dev
             - ninja-build
       env: CXX=clang++-3.7

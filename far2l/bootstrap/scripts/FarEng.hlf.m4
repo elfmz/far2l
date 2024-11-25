@@ -2531,16 +2531,14 @@ $ #Settings dialog: panel#
 
   #Highlight files#         Enable ~files highlighting~@Highlight@.
 
-  #Status line: Show file name markings#
-works only if #Highlight files# enabled
-and may be switched by #Ctrl-Alt-N#.
-
-  #Panel: Show file name markings# and #Align file names by markings#
-works only if #Highlight files# enabled
-and may be switched by #Ctrl-Alt-M#.
+  #Highlight files - Marking# Button for open dialog
+                          (works only if #Highlight files# enabled)
+                          for customize show/align markers in panel
+                          (from the panel it can be switched by
+                          #Ctrl-Alt-N# and #Ctrl-Alt-M#).
 
   #Directory showas settings# Button for open dialog, which can be
-also open from panel by #Ctrl-Alt-D#.
+                          also open from panel by #Ctrl-Alt-D#.
 
 
   #Auto change folder#      If checked, cursor moves in the ~tree panel~@TreePanel@

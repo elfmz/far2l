@@ -213,6 +213,38 @@ void SystemSettings()
 	}
 }
 
+void PanelSettings_HighlightMarks()
+{
+	DialogBuilder Builder(Msg::ConfigPanelHighlightMarksTitle, L"PanelSettings");
+
+	Builder.AddCheckbox(Msg::ConfigFilenameMarksStatusLine, &Opt.FilenameMarksInStatusBar);
+	DialogItemEx *tShowFilenameMarksInStatusLineHint = Builder.AddText(Msg::ConfigFilenameMarksStatusLineHint);
+	tShowFilenameMarksInStatusLineHint->Flags = DIF_CENTERGROUP | DIF_DISABLE;
+
+	Builder.AddSeparator();
+
+	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
+	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
+	CbFilenameMarksAlign->Indent(1);
+	Builder.LinkFlags(CbShowFilenameMarks, CbFilenameMarksAlign, DIF_DISABLE);
+	DialogItemEx *tShowFilenameMarksHint = Builder.AddText(Msg::ConfigFilenameMarksHint);
+	tShowFilenameMarksHint->Flags = DIF_CENTERGROUP | DIF_DISABLE;
+
+	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+	IndentationMinEdit->Indent(1);
+	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
+	IndentationMaxEdit->Indent(1);
+
+	Builder.AddOKCancel();
+
+	if (Builder.ShowDialog()) {
+		SanitizeHistoryCounts();
+		ApplySudoConfiguration();
+	}
+}
+
 void PanelSettings()
 {
 	for (;;) {
@@ -222,26 +254,15 @@ void PanelSettings()
 		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 
 		DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
-		DialogItemEx *CbShowFilenameMarksStatusLine = Builder.AddCheckbox(Msg::ConfigFilenameMarksStatusLine, &Opt.FilenameMarksInStatusBar);
-		CbShowFilenameMarksStatusLine->Indent(1);
-		Builder.LinkFlags(CbHighlight, CbShowFilenameMarksStatusLine, DIF_DISABLE);
-		DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
-		CbShowFilenameMarks->Indent(1);
-		Builder.LinkFlags(CbHighlight, CbShowFilenameMarks, DIF_DISABLE);
-		DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
-		CbFilenameMarksAlign->Indent(2);
-		Builder.LinkFlags(CbHighlight, CbFilenameMarksAlign, DIF_DISABLE);
-		DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
-		Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
-		DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
-		Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
+		int HighlightMarksID = -1;
+		DialogItemEx *HighlightMarksItem = Builder.AddButton(Msg::ConfigPanelHighlightMarksButton, HighlightMarksID);
+		HighlightMarksItem->Indent(2);
+		Builder.LinkFlags(CbHighlight, HighlightMarksItem, DIF_DISABLE);
 
 		int ChangeSizeColumnStyleID = -1;
 		DialogItemEx *ChangeSizeColumnStyleItem = Builder.AddButton(Msg::DirSettingsTitle, ChangeSizeColumnStyleID);
 		//ChangeSizeColumnStyleItem->Flags = DIF_CENTERGROUP;
 		ChangeSizeColumnStyleItem->Indent(1);
-
-		Builder.AddSeparator();
 
 		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 		Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
@@ -280,7 +301,9 @@ void PanelSettings()
 			CtrlObject->Cp()->Redraw();
 			break;
 		}
-		if (clicked_id == ChangeSizeColumnStyleID)
+		if (clicked_id == HighlightMarksID)
+			PanelSettings_HighlightMarks();
+		else if (clicked_id == ChangeSizeColumnStyleID)
 			DirectoryNameSettings();
 		else
 			break;		

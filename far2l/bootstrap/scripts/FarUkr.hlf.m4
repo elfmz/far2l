@@ -2416,14 +2416,14 @@ $ #Налаштування панелі#
 
  #Розмальовка файлів# Дозволяє ~розмальовку файлів~@Highlight@
 
- #Рядок статусу: Показати маркування імен файлів#
-works only if #Розмальовка файлів# enabled and may be switched by #Ctrl-Alt-N#.
+ #Розфарбовка файлів - Маркування# Button for open dialog
+                          (works only if #Розмальовка файлів# enabled)
+                          for customize show/align markers in panel
+                          (from the panel it can be switched by
+                          #Ctrl-Alt-N# and #Ctrl-Alt-M#).
 
- #Панелі: Показати маркування імен файлів# and #Вирівняти імена файлів за маркуваннями#
-works only if #Розмальовка файлів# enabled and may be switched by #Ctrl-Alt-M#.
-
-  #Налаштування відображення каталогу# Button for open dialog, which can be
-also open from panel by #Ctrl-Alt-D#.
+ #Налаштування відображення каталогу# Button for open dialog, which can be
+                          also open from panel by #Ctrl-Alt-D#.
 
 
  #Автозміна папки# Якщо ця опція увімкнена, то пересування

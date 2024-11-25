@@ -78,6 +78,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "farversion.h"
 #include "mix/panelmix.hpp"
 
+#include "message.hpp"
+
 #ifdef DIRECT_RT
 int DirectRT = 0;
 #endif
@@ -302,8 +304,27 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			}
 
 			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start));
-			if( Opt.IsFirstStart )
+
+
+			if( Opt.IsFirstStart ) {
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
+
+				DWORD tweaks = WINPORT(SetConsoleTweaks)(0);
+				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
+
+					if (Message(0, 2,
+						Msg::ConfigOSC52ClipSet,
+						Msg::Yes,
+						Msg::No))
+					{
+						Opt.OSC52ClipSet = 0;
+					} else {
+						Opt.OSC52ClipSet = 1;
+					}
+					ConfigOptSave(false);
+				}
+			}
+
 			FrameManager->EnterMainLoop();
 		}
 

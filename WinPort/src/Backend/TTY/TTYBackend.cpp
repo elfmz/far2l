@@ -1203,13 +1203,42 @@ DWORD TTYBackend::QueryControlKeys()
 
 void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
-	try {
-		StackSerializer stk_ser;
-		stk_ser.PushStr(Wide2MB(text));
-		stk_ser.PushStr(Wide2MB(title));
-		stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
-		Far2lInteract(stk_ser, false);
-	} catch (std::exception &) {}
+	if (_far2l_tty) {
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushStr(Wide2MB(text));
+			stk_ser.PushStr(Wide2MB(title));
+			stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
+			Far2lInteract(stk_ser, false);
+		} catch (std::exception &) {}
+	} else {
+
+		char command[1024];
+		char title_utf8[256];
+		char text_utf8[256];
+
+		// Преобразуем wchar_t в utf-8 для дальнейшего использования
+		wcstombs(title_utf8, title, sizeof(title_utf8));
+		wcstombs(text_utf8, text, sizeof(text_utf8));
+
+		// Проверяем, используется ли X11 или Wayland
+		const char *display = getenv("DISPLAY");
+		const char *wayland_display = getenv("WAYLAND_DISPLAY");
+		bool nsa = false;
+
+		if (display || wayland_display) {
+			// Пытаемся использовать notify-send
+			snprintf(command, sizeof(command), "notify-send \"%s\" \"%s\"", title_utf8, text_utf8);
+			if (system(command) == 0) {
+				nsa = true;
+				//fprintf(stderr, "Ушло через notify-send\n");
+			} else {
+				//fprintf(stderr, "notify-send недоступен.\n");
+			}
+		} else {
+			//fprintf(stderr, "Графическая среда не обнаружена (ни X11, ни Wayland).\n");
+		}
+	}
 }
 
 bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)

@@ -8,6 +8,7 @@ Temporary panel main plugin code
 #include "TmpPanel.hpp"
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include "utils.h"
 
 TCHAR *PluginRootKey;
 unsigned int CurrentCommonPanel;
@@ -413,8 +414,12 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 					}
 				}
 
-				if (bShellExecute)
-					fprintf(stderr, "TODO: ShellExecute: %ls\n", p);	// ShellExecute(NULL,_T("open"),p,NULL,NULL,SW_SHOW);
+				if (bShellExecute) {
+					DWORD flags = EF_OPEN | EF_NOCMDPRINT | EF_NOWAIT;
+					std::wstring cmd = p;
+					QuoteCmdArgIfNeed(cmd);
+					FSF.Execute(cmd.c_str(), flags);
+				}
 			}
 		}
 

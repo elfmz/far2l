@@ -398,19 +398,22 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 				ExpandEnvStrs(p, TMP);
 				p = TMP;
 
-				FAR_FIND_DATA FindData;
+				FAR_FIND_DATA FindData = {};
 				int bShellExecute = BreakCode != -1;
 
 				if (!bShellExecute) {
 					if (TmpPanel::GetFileInfoAndValidate(p, &FindData, FALSE)) {
 						if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-						Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, 0, (LONG_PTR)p);
+							Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, 0, (LONG_PTR)p);
 						} else {
 							bShellExecute = TRUE;
 						}
 					} else {
+						Info.Control(PANEL_ACTIVE, FCTL_SETCMDLINE, 0, (LONG_PTR)p);
+					}
 
-					Info.Control(PANEL_ACTIVE, FCTL_SETCMDLINE, 0, (LONG_PTR)p);
+					if (FindData.lpwszFileName) {
+						free((void *)FindData.lpwszFileName);
 					}
 				}
 

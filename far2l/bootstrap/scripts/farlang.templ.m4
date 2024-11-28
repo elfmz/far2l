@@ -17450,7 +17450,7 @@ Palette
 "P&aleta"
 "P&aleta"
 "П&алітра"
-"&алiтра"
+"П&алiтра"
 
 SetColorPanelNormal
 l:

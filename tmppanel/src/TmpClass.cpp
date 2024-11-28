@@ -181,10 +181,12 @@ int TmpPanel::PutOneFile(const TCHAR *SrcPath, PluginPanelItem &PanelItem)
 	if (CurPanelItem->FindData.lpwszFileName == NULL)
 		return FALSE;
 
-	lstrcpy((TCHAR *)CurPanelItem->FindData.lpwszFileName, SrcPath);
-	if (*SrcPath) {
+	*(wchar_t*)CurPanelItem->FindData.lpwszFileName = L'\0';
+	if (*SrcPath && !wcschr(PanelItem.FindData.lpwszFileName, L'/')) {
+		lstrcpy((TCHAR *)CurPanelItem->FindData.lpwszFileName, SrcPath);
 		FSF.AddEndSlash((TCHAR *)CurPanelItem->FindData.lpwszFileName);
 	}
+
 	lstrcat((TCHAR *)CurPanelItem->FindData.lpwszFileName, PanelItem.FindData.lpwszFileName);
 	TmpItemsNumber++;
 	if (Opt.SelectedCopyContents && (CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))

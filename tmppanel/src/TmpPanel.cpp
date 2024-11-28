@@ -95,11 +95,15 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 			StrBuf tmpTMP(k + 1);
 			TCHAR *TMP = tmpTMP;
-			lstrcpyn(TMP, argv - k, k + 1);
+			lstrcpyn(TMP, argv - k, k);
+			TMP[k] = L'\0';
 
-			for (int i = 0; i < OPT_COUNT; i++)
-				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0)
+			for (int i = 0; i < OPT_COUNT; i++) {
+				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0) {
 					*(int *)ParamsOpt[i] = *TMP == _T('+');
+					break;
+				}
+			}
 
 			if (*(TMP + 1) >= _T('0') && *(TMP + 1) <= _T('9'))
 				CurrentCommonPanel = *(TMP + 1) - _T('0');

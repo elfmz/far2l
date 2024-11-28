@@ -384,7 +384,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 	{
 	if (!Name) 
 		return INVALID_HANDLE_VALUE;
-
+	GetOptions();
 	StrBuf pName(NT_MAX_PATH);	// BUGBUG
 	lstrcpy(pName, Name);
 #define PNAME_ARG pName, pName.Size()

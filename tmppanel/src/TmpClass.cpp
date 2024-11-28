@@ -797,7 +797,6 @@ bool TmpPanel::GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *Find
 				WIN32_FIND_DATA wfd;
 				HANDLE fff = FindFirstFile(NtPath, &wfd);
 				if (fff != INVALID_HANDLE_VALUE) {
-					WFD2FFD(wfd, *FindData);
 					FindClose(fff);
 				} else {
 					memset(&wfd, 0, sizeof(wfd));
@@ -810,8 +809,8 @@ bool TmpPanel::GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *Find
 						wfd.nPhysicalSize = wfd.nFileSize = GetFileSize64(hFile);
 						CloseHandle(hFile);
 					}
-					WFD2FFD(wfd, *FindData);
 				}
+				WFD2FFD(wfd, *FindData);
 				FileName = FullPath;
 				copyName = true;
 			} else {

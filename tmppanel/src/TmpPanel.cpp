@@ -6,6 +6,7 @@ Temporary panel main plugin code
 */
 
 #include "TmpPanel.hpp"
+#include <string>
 #include <sys/stat.h>
 #include <sys/mman.h>
 
@@ -39,7 +40,7 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
 #define WITH_ANSI_PARAM
 static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode WITH_ANSI_PARAM);
 static void ShowMenuFromList(TCHAR *Name);
-static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM);
+static HANDLE OpenPanelFromOutput(wchar_t *argv);
 
 static TCHAR TmpPanelPath[] = WGOOD_SLASH _T("TmpPanel");
 static wchar_t *TmpPanelModule = nullptr;
@@ -116,7 +117,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		if (lstrlen(argv)) {
 			if (*argv == _T('<')) {
 				argv++;
-				hPlugin = OpenPanelFromOutput(argv WITH_ANSI_ARG);
+				hPlugin = OpenPanelFromOutput(argv);
 				if (Opt.MenuForFilelist)
 					return INVALID_HANDLE_VALUE;
 			} else {
@@ -151,88 +152,29 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	return hPlugin;
 }
 
-static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
+static HANDLE OpenPanelFromOutput(wchar_t *argv)
 {
-	TCHAR *tempDir = ParseParam(argv);
+	StrBuf tempfilename(MAX_PATH);
+	FSF.MkTemp(tempfilename, tempfilename.Size(), L"FAR");
 
-	BOOL allOK = FALSE;
+	std::wstring fullcmd = L"echo Waiting command to complete...; "
+						   L"echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.; ";
+	fullcmd +=  argv;
+	fullcmd += L" >";
+	fullcmd += tempfilename;
 
-	StrBuf tempfilename(NT_MAX_PATH);	// BUGBUG
-	StrBuf cmdparams(NT_MAX_PATH);		// BUGBUG
-	StrBuf fullcmd;
-
-	FSF.MkTemp(tempfilename, tempfilename.Size(), _T("FARTMP"));
-	lstrcpy(cmdparams, _T("%COMSPEC% /c "));
-	lstrcat(cmdparams, argv);
-	ExpandEnvStrs(cmdparams, fullcmd);
-
-	/*SECURITY_ATTRIBUTES sa;
-	memset(&sa, 0, sizeof(sa));
-	sa.nLength=sizeof(sa);
-	sa.bInheritHandle=TRUE;*/
-
-	HANDLE FileHandle;
-	FileHandle = CreateFile(tempfilename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
-			FILE_FLAG_SEQUENTIAL_SCAN, NULL);		//&sa
-
-	if (FileHandle != INVALID_HANDLE_VALUE) {
-		/*
-		STARTUPINFO si;
-		memset(&si,0,sizeof(si));
-		si.cb=sizeof(si);
-		si.dwFlags=STARTF_USESTDHANDLES;
-		si.hStdInput=GetStdHandle(STD_INPUT_HANDLE);
-		si.hStdOutput=FileHandle;
-		si.hStdError=FileHandle;
-
-		PROCESS_INFORMATION pi;
-		memset(&pi,0,sizeof(pi));
-		*/
-
-		StrBuf workDir(1);	// make empty string just in case
-
-		if (tempDir) {
-			workDir.Reset(NT_MAX_PATH);		// BUGBUG
-			ExpandEnvStrs(tempDir, workDir);
-		} else {
-			DWORD Size = FSF.GetCurrentDirectory(0, NULL);
-			if (Size) {
-				workDir.Reset(Size);
-				FSF.GetCurrentDirectory(Size, workDir);
-			}
-		}
-
-		TCHAR consoleTitle[255];
-		DWORD tlen = GetConsoleTitle(NULL, consoleTitle, ARRAYSIZE(consoleTitle));
-		SetConsoleTitle(NULL, argv);
-		fprintf(stderr, "TODO: CreateProcess %ls\n", fullcmd.Ptr());
-		/*
-			BOOL Created=CreateProcess(NULL,fullcmd,NULL,NULL,TRUE,0,NULL,workDir,&si,&pi);
-
-			if (Created)
-			{
-			  WaitForSingleObject(pi.hProcess,INFINITE);
-			  CloseHandle(pi.hThread);
-			  CloseHandle(pi.hProcess);
-			  allOK=TRUE;
-			}
-		*/
-		CloseHandle(FileHandle);
-
-		if (tlen)
-			SetConsoleTitle(NULL, consoleTitle);
-	}
+	DWORD flags = EF_NOCMDPRINT;
 
 	HANDLE hPlugin = INVALID_HANDLE_VALUE;
 
-	if (allOK) {
+	if (FSF.Execute(fullcmd.c_str(), flags) == 0) {
 		if (Opt.MenuForFilelist) {
 			ShowMenuFromList(tempfilename);
 		} else {
 			hPlugin = new TmpPanel();
 			if (hPlugin == NULL)
 				return INVALID_HANDLE_VALUE;
-			ProcessList(hPlugin, tempfilename, Opt.Mode WITH_ANSI_ARG);
+			ProcessList(hPlugin, tempfilename, Opt.Mode);
 		}
 	}
 

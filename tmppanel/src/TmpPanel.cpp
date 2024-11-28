@@ -37,9 +37,7 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
 }
 #endif
 
-#define WITH_ANSI_ARG
-#define WITH_ANSI_PARAM
-static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode WITH_ANSI_PARAM);
+static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode);
 static void ShowMenuFromList(TCHAR *Name);
 static HANDLE OpenPanelFromOutput(wchar_t *argv);
 
@@ -135,7 +133,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 						if (hPlugin == NULL)
 							return INVALID_HANDLE_VALUE;
 
-						ProcessList(hPlugin, TmpOut, Opt.Mode WITH_ANSI_ARG);
+						ProcessList(hPlugin, TmpOut, Opt.Mode);
 					}
 				} else {
 					return INVALID_HANDLE_VALUE;
@@ -184,7 +182,7 @@ static HANDLE OpenPanelFromOutput(wchar_t *argv)
 }
 
 void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *numargs,
-		UINT *numchars WITH_ANSI_PARAM)
+		UINT *numchars)
 {
 	*numchars = 0;
 	*numargs = 0;
@@ -244,7 +242,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 }
 
-	static void ReadFileList(TCHAR * filename, int *argc, TCHAR ***argv WITH_ANSI_PARAM)
+	static void ReadFileList(TCHAR * filename, int *argc, TCHAR ***argv)
 	{
 		*argc = 0;
 		*argv = NULL;
@@ -261,16 +259,16 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			int fd = GetFileDescriptor(hFile);
 			if (fd != -1 && FileSizeLow != INVALID_FILE_SIZE) {
 				UINT i;
-				ReadFileLines(fd, FileSizeLow, NULL, NULL, (UINT *)argc, &i WITH_ANSI_ARG);
+				ReadFileLines(fd, FileSizeLow, NULL, NULL, (UINT *)argc, &i);
 				*argv = (TCHAR **)malloc(*argc * sizeof(TCHAR *) + i * sizeof(TCHAR));
 				ReadFileLines(fd, FileSizeLow, *argv, (TCHAR *)&(*argv)[*argc], (UINT *)argc,
-						&i WITH_ANSI_ARG);
+						&i);
 			}
 			CloseHandle(hFile);
 		}
 	}
 
-	static void ProcessList(HANDLE hPlugin, TCHAR * Name, int Mode WITH_ANSI_PARAM)
+	static void ProcessList(HANDLE hPlugin, TCHAR * Name, int Mode)
 	{
 		if (Mode) {
 			FreePanelItems(CommonPanels[CurrentCommonPanel].Items,
@@ -282,7 +280,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 		int argc;
 		TCHAR **argv;
-		ReadFileList(Name, &argc, &argv WITH_ANSI_ARG);
+		ReadFileList(Name, &argc, &argv);
 
 		HANDLE hScreen = Panel->BeginPutFiles();
 
@@ -299,7 +297,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 		int argc;
 		TCHAR **argv = 0;
 
-		ReadFileList(Name, &argc, &argv WITH_ANSI_ARG);
+		ReadFileList(Name, &argc, &argv);
 
 		FarMenuItem *fmi = (FarMenuItem *)malloc(argc * sizeof(FarMenuItem));
 		if (fmi) {
@@ -375,36 +373,29 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			free(argv);
 	}
 
-#define _CONST const
-#define _OPARG , int
 	SHAREDSYMBOL HANDLE WINAPI
-	EXP_NAME(OpenFilePlugin)(_CONST TCHAR * Name, const unsigned char *, int DataSize, int OpMode)
-#undef _OPARG
-#undef _CONST
+	EXP_NAME(OpenFilePlugin)(const TCHAR * Name, const unsigned char *, int DataSize, int OpMode)
 	{
-	if (!Name) 
-		return INVALID_HANDLE_VALUE;
-	GetOptions();
-	StrBuf pName(NT_MAX_PATH);	// BUGBUG
-	lstrcpy(pName, Name);
-#define PNAME_ARG pName, pName.Size()
-
-		if (!DataSize || !FSF.ProcessName(Opt.Mask, PNAME_ARG, PN_CMPNAMELIST))
+		if (!Name)
 			return INVALID_HANDLE_VALUE;
-#undef PNAME_ARG
+		GetOptions();
+		StrBuf pName(NT_MAX_PATH);	// BUGBUG
+		lstrcpy(pName, Name);
+
+		if (!DataSize || !FSF.ProcessName(Opt.Mask, pName, pName.Size(), PN_CMPNAMELIST))
+			return INVALID_HANDLE_VALUE;
 
 		if (!Opt.MenuForFilelist) {
 			HANDLE hPlugin = new TmpPanel();
 			if (hPlugin == NULL)
 				return INVALID_HANDLE_VALUE;
 
-			ProcessList(hPlugin, pName, Opt.Mode WITH_ANSI_ARG);
+			ProcessList(hPlugin, pName, Opt.Mode);
 			return hPlugin;
 		} else {
 			ShowMenuFromList(pName);
 			return ((HANDLE)-2);
 		}
-#undef pName
 	}
 
 	SHAREDSYMBOL void WINAPI EXP_NAME(ClosePlugin)(HANDLE hPlugin)

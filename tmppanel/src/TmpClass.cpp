@@ -785,46 +785,51 @@ bool TmpPanel::GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *Find
 	StrBuf NtPath;
 	FormNtPath(FullPath, NtPath);
 
-	if (!wcscmp(FileName, L"/")) {
-	copy_name_set_attr:
-		FindData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-	copy_name:
+	bool copyName = false;
 
+	if (!wcscmp(FileName, L"/")) {
+		FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+		copyName = true;
+	} else {
+		if (lstrlen(FileName)) {
+			DWORD dwAttr = GetFileAttributes(NtPath);
+			if (dwAttr != INVALID_FILE_ATTRIBUTES) {
+				WIN32_FIND_DATA wfd;
+				HANDLE fff = FindFirstFile(NtPath, &wfd);
+				if (fff != INVALID_HANDLE_VALUE) {
+					WFD2FFD(wfd, *FindData);
+					FindClose(fff);
+				} else {
+					memset(&wfd, 0, sizeof(wfd));
+					wfd.dwFileAttributes = dwAttr;
+					HANDLE hFile = CreateFile(NtPath, FILE_READ_ATTRIBUTES,
+											  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+											  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS, NULL);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						GetFileTime(hFile, &wfd.ftCreationTime, &wfd.ftLastAccessTime, &wfd.ftLastWriteTime);
+						wfd.nPhysicalSize = wfd.nFileSize = GetFileSize64(hFile);
+						CloseHandle(hFile);
+					}
+					WFD2FFD(wfd, *FindData);
+				}
+				FileName = FullPath;
+				copyName = true;
+			} else {
+				if (Any) {
+					FindData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+					copyName = true;
+				}
+			}
+		}
+	}
+
+	if (copyName) {
 		if (FindData->lpwszFileName)
 			free((void *)FindData->lpwszFileName);
 		FindData->lpwszFileName = wcsdup(FileName);
 		return (TRUE);
 	}
 
-	if (lstrlen(FileName)) {
-		DWORD dwAttr = GetFileAttributes(NtPath);
-		if (dwAttr != INVALID_FILE_ATTRIBUTES) {
-			WIN32_FIND_DATA wfd;
-			HANDLE fff = FindFirstFile(NtPath, &wfd);
-			if (fff != INVALID_HANDLE_VALUE) {
-				WFD2FFD(wfd, *FindData);
-				FindClose(fff);
-				FileName = FullPath;
-				goto copy_name;
-			} else {
-				memset(&wfd, 0, sizeof(wfd));
-				wfd.dwFileAttributes = dwAttr;
-				HANDLE hFile = CreateFile(NtPath, FILE_READ_ATTRIBUTES,
-						FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
-						FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS, NULL);
-				if (hFile != INVALID_HANDLE_VALUE) {
-					GetFileTime(hFile, &wfd.ftCreationTime, &wfd.ftLastAccessTime, &wfd.ftLastWriteTime);
-					wfd.nPhysicalSize = wfd.nFileSize = GetFileSize64(hFile);
-					CloseHandle(hFile);
-				}
-				WFD2FFD(wfd, *FindData);
-				FileName = FullPath;
-				goto copy_name;
-			}
-		}
-		if (Any)
-			goto copy_name_set_attr;
-	}
 	return (FALSE);
 }
 

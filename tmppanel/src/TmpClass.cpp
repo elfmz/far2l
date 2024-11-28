@@ -484,8 +484,11 @@ bool TmpPanel::IsCurrentFileCorrect(TCHAR **pCurFileName)
 	if (lstrcmp(CurFileName, _T("..")) == 0) {
 		IsCorrectFile = true;
 	} else {
-		FAR_FIND_DATA TempFindData;
+		FAR_FIND_DATA TempFindData = {};
 		IsCorrectFile = GetFileInfoAndValidate(CurFileName, &TempFindData, FALSE);
+		if (TempFindData.lpwszFileName) {
+			free((void *)TempFindData.lpwszFileName);
+		}
 	}
 
 	if (pCurFileName) {

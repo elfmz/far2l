@@ -18,7 +18,10 @@
 | Max write block size, bytes:                [9999999]      |
 | Automatically retry connect, times:         [##]           |
 | Connection timeout, seconds:                [###]          |
-| Allowed host keys:    [EDIT..............................] |
+| Allowed host keys:           [EDIT.......................] |
+| Allowed KEX algorithms:      [EDIT.......................] |
+| Allowed HMAC client->server: [EDIT.......................] |
+| Allowed HMAC server->client: [EDIT.......................] |
 | OpenSSH config files: [COMBOBOX Config file              ] |  (Default), (None), ...
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
@@ -38,6 +41,9 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_max_read_block_size = -1, _i_max_write_block_size = -1;
 	int _i_connect_retries = -1, _i_connect_timeout = -1;
 	int _i_allowed_hostkeys = -1;
+	int _i_allowed_kex = -1;
+	int _i_allowed_hmac_cs = -1;
+	int _i_allowed_hmac_sc = -1;
 	int _i_openssh_configs = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	int _i_ignore_time_and_mode_errors = -1;
@@ -199,13 +205,25 @@ public:
 		_i_connect_timeout = _di.AddAtLine(DI_FIXEDIT, 51,53, DIF_MASKEDIT, "20", "999");
 
 		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPOpenSSHConfigs);
-		_i_openssh_configs = _di.AddAtLine(DI_COMBOBOX, 27,62, DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
+		_di.AddAtLine(DI_TEXT, 5,33, 0, MSFTPOpenSSHConfigs);
+		_i_openssh_configs = _di.AddAtLine(DI_COMBOBOX, 34,62, DIF_LISTAUTOHIGHLIGHT | DIF_LISTNOAMPERSAND, "");
 		_di[_i_openssh_configs].ListItems = _di_openssh_configs.Get();
 
 		_di.NextLine();
-		_di.AddAtLine(DI_TEXT, 5,26, 0, MSFTPAllowedHostkeys);
-		_i_allowed_hostkeys = _di.AddAtLine(DI_EDIT, 27,62, 0, "");
+		_di.AddAtLine(DI_TEXT, 5,33, 0, MSFTPAllowedHostkeys);
+		_i_allowed_hostkeys = _di.AddAtLine(DI_EDIT, 34,62, 0, "");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,33, 0, MSFTPAllowedKexAlgorithms);
+		_i_allowed_kex = _di.AddAtLine(DI_EDIT, 34,62, 0, "");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,33, 0, MSFTPAllowedHMAC_CS);
+		_i_allowed_hmac_cs = _di.AddAtLine(DI_EDIT, 34,62, 0, "");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,33, 0, MSFTPAllowedHMAC_SC);
+		_i_allowed_hmac_sc = _di.AddAtLine(DI_EDIT, 34,62, 0, "");
 
 		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
@@ -286,6 +304,9 @@ public:
 		}
 
 		TextToDialogControl(_i_allowed_hostkeys, sc.GetString("HostKeys"));
+		TextToDialogControl(_i_allowed_kex, sc.GetString("KexAlgorithms"));
+		TextToDialogControl(_i_allowed_hmac_cs, sc.GetString("HmacCS"));
+		TextToDialogControl(_i_allowed_hmac_sc, sc.GetString("HmacSC"));
 
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
 		if (Show(L"ProtocolOptionsSFTPSCP", 6, 2) == _i_ok) {
@@ -339,6 +360,15 @@ public:
 
 			TextFromDialogControl(_i_allowed_hostkeys, str);
 			sc.SetString("HostKeys", str);
+
+			TextFromDialogControl(_i_allowed_kex, str);
+			sc.SetString("KexAlgorithms", str);
+
+			TextFromDialogControl(_i_allowed_hmac_cs, str);
+			sc.SetString("HmacCS", str);
+
+			TextFromDialogControl(_i_allowed_hmac_sc, str);
+			sc.SetString("HmacSC", str);
 
 	//		sc.SetInt("Sandbox", IsCheckedDialogControl(_i_enable_sandbox) ? 1 : 0);
 			options = sc.Serialize();

@@ -129,7 +129,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 						ShowMenuFromList(TmpOut);
 						return INVALID_HANDLE_VALUE;
 					} else {
-						hPlugin = new TmpPanel();
+						hPlugin = new TmpPanel(TmpOut);
 						if (hPlugin == NULL)
 							return INVALID_HANDLE_VALUE;
 
@@ -386,7 +386,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			return INVALID_HANDLE_VALUE;
 
 		if (!Opt.MenuForFilelist) {
-			HANDLE hPlugin = new TmpPanel();
+			HANDLE hPlugin = new TmpPanel(pName);
 			if (hPlugin == NULL)
 				return INVALID_HANDLE_VALUE;
 

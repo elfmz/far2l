@@ -664,10 +664,6 @@ void TmpPanel::ProcessSaveListKey()
 		Info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
 		Info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 	}
-#undef _HANDLE
-#undef _UPDATE
-#undef _REDRAW
-#undef _GET
 }
 
 void TmpPanel::SaveListFile(const TCHAR *Path)
@@ -799,11 +795,11 @@ bool TmpPanel::GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *Find
 	StrBuf NtPath;
 	FormNtPath(FullPath, NtPath);
 
-	bool copyName = false;
+	bool Result = false;
 
 	if (!wcscmp(FileName, L"/")) {
 		FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
-		copyName = true;
+		Result = true;
 	} else {
 		if (lstrlen(FileName)) {
 			DWORD dwAttr = GetFileAttributes(NtPath);
@@ -826,24 +822,23 @@ bool TmpPanel::GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *Find
 				}
 				WFD2FFD(wfd, *FindData);
 				FileName = FullPath;
-				copyName = true;
+				Result = true;
 			} else {
 				if (Any) {
 					FindData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-					copyName = true;
+					Result = true;
 				}
 			}
 		}
 	}
 
-	if (copyName) {
+	if (Result) {
 		if (FindData->lpwszFileName)
 			free((void *)FindData->lpwszFileName);
 		FindData->lpwszFileName = wcsdup(FileName);
-		return (TRUE);
 	}
 
-	return (FALSE);
+	return Result;
 }
 
 void TmpPanel::IfOptCommonPanel(void)

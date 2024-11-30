@@ -166,15 +166,14 @@ static HANDLE OpenPanelFromOutput(wchar_t *argv)
 
 	HANDLE hPlugin = INVALID_HANDLE_VALUE;
 
-	if (FSF.Execute(fullcmd.c_str(), flags) == 0) {
-		if (Opt.MenuForFilelist) {
-			ShowMenuFromList(tempfilename);
-		} else {
-			hPlugin = new TmpPanel();
-			if (hPlugin == NULL)
-				return INVALID_HANDLE_VALUE;
-			ProcessList(hPlugin, tempfilename, Opt.Mode);
-		}
+	FSF.Execute(fullcmd.c_str(), flags);
+	if (Opt.MenuForFilelist) {
+		ShowMenuFromList(tempfilename);
+	} else {
+		hPlugin = new TmpPanel();
+		if (hPlugin == NULL)
+			return INVALID_HANDLE_VALUE;
+		ProcessList(hPlugin, tempfilename, Opt.Mode);
 	}
 
 	DeleteFile(tempfilename);

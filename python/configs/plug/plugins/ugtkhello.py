@@ -1,3 +1,4 @@
+import threading
 from far2l.plugin import PluginBase
 
 import gi
@@ -33,6 +34,10 @@ class Plugin(PluginBase):
     def OpenPlugin(self, OpenFrom):
         if OpenFrom == 5:
             # EDITOR
-            win = MyWindow()
-            Gtk.main()
+            def proc():
+                win = MyWindow()
+                Gtk.main()
+            t = threading.Thread(target=proc)
+            t.daemon = True
+            t.start()
         return -1

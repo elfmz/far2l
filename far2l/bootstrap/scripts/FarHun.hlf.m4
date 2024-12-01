@@ -272,6 +272,8 @@ $ #Menu control commands#
 $ #Panelvezérlő parancsok#
   #Általános panelparancsok#
 
+  Vertical or Horizontal panel layout                         #Ctrl-,#
+
   Aktív panel váltó                                              #Tab#
   Panelek megcserélése                                        #Ctrl-U#
   Panel frissítése                                            #Ctrl-R#
@@ -328,7 +330,14 @@ $ #Panelvezérlő parancsok#
 
   A rejtett és rendszerfájlokat megmutatja/elrejti            #Ctrl-H#
   Hosszú és rövid fájlnév nézet között vált                   #Ctrl-N#
-  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
+
+  Customize Size column:
+   change style of names for dirs and symlinks            #Ctrl-Alt-D#
+   toggle for symlinks "Symlink" or target file size      #Ctrl-Alt-L#
+
+  File name ~highlighting markers~@Highlight@:
+   toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
+   toggle hide/show in status line                        #Ctrl-Alt-N#
 
   Elrejti/megmutatja a bal panelt                            #Ctrl-F1#
   Elrejti/megmutatja a jobb panelt                           #Ctrl-F2#
@@ -655,7 +664,7 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
     ~meghajtók~@DriveDlg@ menü megfelelő meghajtóján. A #Shift-Enter# a mappák
     #..# elemén lenyomva az aktuális mappát nyitja meg az Intézőben.
 
-  Belépés a gyökérmappába                                     #Ctrl-\\#
+  Belépés a gyökérmappába (/)                                 #Ctrl-\\#
 
   Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
 
@@ -1384,6 +1393,8 @@ $ #Menük: Beállítások menü#
    #Párbeszédablak#       A ~párbeszédablak beállítások~@DialogSettings@
    #beállítások#          párbeszédablakot jeleníti meg.
 
+   #Groups of file masks# Shows ~Groups of file masks~@MaskGroupsSettings@ menu.
+
    #Nyelvek#              A program és a súgó nyelve választható ki.
                         ^<wrap>Használjuk a "Beállítások mentése" funkciót!
 
@@ -1944,7 +1955,7 @@ a nevét (ami majd a menüben jelenik meg) és a végrehajtandó parancs sorát.
 
     Almenü szerkesztésénél csak a gyorsbillentyűt és a nevet kell megadni.
 
-    A helyi felhasználói menü az adott mappában egy #FarMenu.Ini# nevű fájlba
+    A helyi felhasználói menü az adott mappában egy #FarMenu.ini# nevű fájlba
 mentődik.
     A FAR a főmenüt a profilkönyvtárba menti az #~~/.config/far2l/settings/user_menu.ini# fájlba
 (a formátum eltér a FarMenu.ini-től).
@@ -2216,8 +2227,15 @@ $ #Beállítások: panel beállítások#
 
   #Fájlok kiemelése#        A ~fájlkiemelések~@Highlight@ engedélyezése.
 
-  #Fájlnevek megjelölésének megjelenítése# and #Fájlneveket igazítani a megjelölések szerint#
-works only if #Fájlok kiemelése# enabled and may be switched by #Ctrl-Alt-M#.
+  #Fájlok kiemelése - Jelzés# Button for open dialog
+                          (works only if #Fájlok kiemelése# enabled)
+                          for customize show/align markers in panel
+                          (from the panel it can be switched by
+                          #Ctrl-Alt-N# and #Ctrl-Alt-M#).
+
+  #Könyvtár megjelenítési beállításai# Button for open dialog, which can be
+                          also open from panel by #Ctrl-Alt-D#.
+
 
   #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
   #mappaváltás#             a kurzor mozgatására a másik panel is
@@ -2966,6 +2984,8 @@ csoportokat
 
   #Ctrl-Le#        - A csoportot lefelé mozgatja
 
+  #Ctrl-M#         - Toggle attribute column view: short/long
+
     A FAR a csoportkiemeléseket felülről lefelé haladva vizsgálja. Ha érzékeli,
 hogy a fájl valamelyik csoport tagja, további hovatartozását nem vizsgálja,
 unless #[x] Folyamatos feldolgozás# is set in the group
@@ -3394,16 +3414,18 @@ pluginekhez);
                         R - jobbra igazított nevek;
                  A módosítókat kombinálni is lehet, például NMR.
 
-    S[C,T,F,E] - fájlméret
-    P[C,T,F,E] - tömörített fájlméret
-    G[C,T,F,E] - a fájlstream-ek mérete
-                 ahol:  C - rendezett fájlméret formátum;
-                        T - 1024 helyett 1000 az osztó;
-                        F - ^<wrap>a fájlméretek a Windows Exploreréhez
+    S[C,T,F,E,A] - fájlméret
+    P[C,T,F,E,A] - tömörített fájlméret
+    G[C,T,F,E,A] - a fájlstream-ek mérete
+                   ahol: C - rendezett fájlméret formátum;
+                         T - 1024 helyett 1000 az osztó;
+                         F - ^<wrap>a fájlméretek a Windows Exploreréhez
 hasonló formátumúak (például 999 bájt 999-ként, de 1000 bájt 0.97 kB formában
 jelenik meg);
-                        E - takarékos mód, nincs szóköz a fájlméret
+                         E - takarékos mód, nincs szóköz a fájlméret
 és az utótag közt;
+                         A - automatic width by max number
+                             (works only if 0 in "Column widths");
 
     D          - a fájl módosításának dátuma
     T          - a fájl módosításának ideje
@@ -3581,6 +3603,34 @@ egyszer szerepelhet.
 
     A "," (vagy ";") az egyes maszkokat, a "|" karakter pedig a befoglaló és a
 kizáró maszkok csoportját választja el egymástól.
+
+ File masks can be joined into ~groups~@MaskGroupsSettings@.
+
+
+@MaskGroupsSettings
+$ #Groups of file masks#
+ An arbirtary number of ~file masks~@FileMasks@ can be joined into a named group.
+
+ Hereinafter the group name, enclosed in angle brackets (i.e. #<#name#>#), can be used wherever masks can be used.
+
+ Groups can contain other groups.
+
+ For example, the #<arc># group contains the "*.rar,*.zip,*.[zj],*.[bg7]z,*.[bg]zip,*.tar" masks.
+To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be used.
+
+ Control keys:
+
+ #Ctrl+R#      - ^<wrap>restore the default predefined groups
+
+ #Ins#         - ^<wrap>add a new group
+
+ #Del#         - ^<wrap>remove the current group
+
+ #Enter#/#F4#    - ^<wrap>edit the current group
+
+ #F7#          - ^<wrap>find all groups containing the specified mask
+
+ Also see ~Options menu~@OptMenu@.
 
 
 @SelectFiles

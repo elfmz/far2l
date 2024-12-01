@@ -1471,7 +1471,6 @@ int FileList::ProcessKey(FarKey Key)
 
 						if (!strLastFileName.IsEmpty()) {
 							strFileName = strLastFileName;
-							Unquote(strFileName);
 
 							if (IsAbsolutePath(strFileName)) {
 								PluginMode = FALSE;

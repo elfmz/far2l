@@ -7,7 +7,7 @@ Temporary panel plugin class implementation
 
 #include "TmpPanel.hpp"
 
-TmpPanel::TmpPanel()
+TmpPanel::TmpPanel(const wchar_t* pHostFile)
 {
 	LastOwnersRead = FALSE;
 	LastLinksRead = FALSE;
@@ -16,12 +16,24 @@ TmpPanel::TmpPanel()
 	TmpItemsNumber = 0;
 	PanelIndex = CurrentCommonPanel;
 	IfOptCommonPanel();
+
+
+	HostFile=nullptr;
+	if (pHostFile)
+	{
+		HostFile = (wchar_t*)malloc((wcslen(pHostFile)+1)*sizeof(wchar_t));
+		wcscpy(HostFile, pHostFile);
+	}
+
 }
 
 TmpPanel::~TmpPanel()
 {
 	if (!StartupOptCommonPanel)
 		FreePanelItems(TmpPanelItem, TmpItemsNumber);
+
+	if (HostFile)
+		free(HostFile);
 }
 
 int TmpPanel::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
@@ -48,7 +60,7 @@ void TmpPanel::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	if (!Opt.SafeModePanel)
 		Info->Flags|= OPIF_REALNAMES;
 
-	Info->HostFile = NULL;
+	Info->HostFile=this->HostFile;
 	Info->CurDir = _T("");
 
 	Info->Format = (TCHAR *)GetMsg(MTempPanel);
@@ -181,10 +193,12 @@ int TmpPanel::PutOneFile(const TCHAR *SrcPath, PluginPanelItem &PanelItem)
 	if (CurPanelItem->FindData.lpwszFileName == NULL)
 		return FALSE;
 
-	lstrcpy((TCHAR *)CurPanelItem->FindData.lpwszFileName, SrcPath);
-	if (*SrcPath) {
+	*(wchar_t*)CurPanelItem->FindData.lpwszFileName = L'\0';
+	if (*SrcPath && !wcschr(PanelItem.FindData.lpwszFileName, L'/')) {
+		lstrcpy((TCHAR *)CurPanelItem->FindData.lpwszFileName, SrcPath);
 		FSF.AddEndSlash((TCHAR *)CurPanelItem->FindData.lpwszFileName);
 	}
+
 	lstrcat((TCHAR *)CurPanelItem->FindData.lpwszFileName, PanelItem.FindData.lpwszFileName);
 	TmpItemsNumber++;
 	if (Opt.SelectedCopyContents && (CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
@@ -484,8 +498,11 @@ bool TmpPanel::IsCurrentFileCorrect(TCHAR **pCurFileName)
 	if (lstrcmp(CurFileName, _T("..")) == 0) {
 		IsCorrectFile = true;
 	} else {
-		FAR_FIND_DATA TempFindData;
+		FAR_FIND_DATA TempFindData = {};
 		IsCorrectFile = GetFileInfoAndValidate(CurFileName, &TempFindData, FALSE);
+		if (TempFindData.lpwszFileName) {
+			free((void *)TempFindData.lpwszFileName);
+		}
 	}
 
 	if (pCurFileName) {
@@ -647,10 +664,6 @@ void TmpPanel::ProcessSaveListKey()
 		Info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
 		Info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
 	}
-#undef _HANDLE
-#undef _UPDATE
-#undef _REDRAW
-#undef _GET
 }
 
 void TmpPanel::SaveListFile(const TCHAR *Path)
@@ -782,47 +795,50 @@ bool TmpPanel::GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *Find
 	StrBuf NtPath;
 	FormNtPath(FullPath, NtPath);
 
+	bool Result = false;
+
 	if (!wcscmp(FileName, L"/")) {
-	copy_name_set_attr:
-		FindData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
-	copy_name:
-
-		if (FindData->lpwszFileName)
-			free((void *)FindData->lpwszFileName);
-		FindData->lpwszFileName = wcsdup(FileName);
-		return (TRUE);
-	}
-
-	if (lstrlen(FileName)) {
-		DWORD dwAttr = GetFileAttributes(NtPath);
-		if (dwAttr != INVALID_FILE_ATTRIBUTES) {
-			WIN32_FIND_DATA wfd;
-			HANDLE fff = FindFirstFile(NtPath, &wfd);
-			if (fff != INVALID_HANDLE_VALUE) {
-				WFD2FFD(wfd, *FindData);
-				FindClose(fff);
-				FileName = FullPath;
-				goto copy_name;
-			} else {
-				memset(&wfd, 0, sizeof(wfd));
-				wfd.dwFileAttributes = dwAttr;
-				HANDLE hFile = CreateFile(NtPath, FILE_READ_ATTRIBUTES,
-						FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
-						FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS, NULL);
-				if (hFile != INVALID_HANDLE_VALUE) {
-					GetFileTime(hFile, &wfd.ftCreationTime, &wfd.ftLastAccessTime, &wfd.ftLastWriteTime);
-					wfd.nPhysicalSize = wfd.nFileSize = GetFileSize64(hFile);
-					CloseHandle(hFile);
+		FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+		Result = true;
+	} else {
+		if (lstrlen(FileName)) {
+			DWORD dwAttr = GetFileAttributes(NtPath);
+			if (dwAttr != INVALID_FILE_ATTRIBUTES) {
+				WIN32_FIND_DATA wfd;
+				HANDLE fff = FindFirstFile(NtPath, &wfd);
+				if (fff != INVALID_HANDLE_VALUE) {
+					FindClose(fff);
+				} else {
+					memset(&wfd, 0, sizeof(wfd));
+					wfd.dwFileAttributes = dwAttr;
+					HANDLE hFile = CreateFile(NtPath, FILE_READ_ATTRIBUTES,
+											  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
+											  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS, NULL);
+					if (hFile != INVALID_HANDLE_VALUE) {
+						GetFileTime(hFile, &wfd.ftCreationTime, &wfd.ftLastAccessTime, &wfd.ftLastWriteTime);
+						wfd.nPhysicalSize = wfd.nFileSize = GetFileSize64(hFile);
+						CloseHandle(hFile);
+					}
 				}
 				WFD2FFD(wfd, *FindData);
 				FileName = FullPath;
-				goto copy_name;
+				Result = true;
+			} else {
+				if (Any) {
+					FindData->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+					Result = true;
+				}
 			}
 		}
-		if (Any)
-			goto copy_name_set_attr;
 	}
-	return (FALSE);
+
+	if (Result) {
+		if (FindData->lpwszFileName)
+			free((void *)FindData->lpwszFileName);
+		FindData->lpwszFileName = wcsdup(FileName);
+	}
+
+	return Result;
 }
 
 void TmpPanel::IfOptCommonPanel(void)

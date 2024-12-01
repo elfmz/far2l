@@ -4,15 +4,7 @@
 #include <regex>
 #include <vector>
 #include "colorer/Common.h"
-
-#ifdef COLORER_FEATURE_OLD_COMPILERS
-#include "colorer/platform/filesystem.hpp"
-namespace fs = ghc::filesystem;
-#else
-#include <filesystem>
-namespace fs = std::filesystem;
-#endif
-
+#include "colorer/utils/FileSystems.h"
 
 namespace colorer {
 

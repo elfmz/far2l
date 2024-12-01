@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        HashiCorp Terraform
+
+        Based on:
+            https://github.com/hashicorp/syntax/blob/main/src/terraform.yml
+
+        Notes:
+            This schema can be simplified by reducing the number of schemas.
+            However, now its structure is similar to the official reference at
+            https://github.com/hashicorp/syntax/blob/main/src/terraform.yml to make
+            it easier to add new features and enhancements.
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="terraform" group="scripts" description="HashiCorp Terraform">
+            <location link="scripts/hcl/terraform.hrc"/>
+            <filename>/\.tf$/i</filename>
+            <filename>/\.tfvars$/i</filename>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="terraform">
+
+<region name="BlockType" parent="hcl:BlockType"/>
+<region name="BlockTypeKnown" parent="hcl:Keyword"/>
+<region name="BlockVariable" parent="hcl:BlockVariable"/>
+<region name="BlockVariableEdge" parent="hcl:BlockVariableEdge"/>
+
+<region name="Function" parent="hcl:Function"/>
+<region name="Namespace" parent="hcl:Namespace"/>
+
+<region name="Variable" parent="def:Var"/>
+
+<region name="Symbol" parent="hcl:Symbol"/>
+<region name="SymbolStrong" parent="hcl:SymbolStrong"/>
+
+<scheme name="terraform">
+    <inherit scheme="hcl:hcl">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+</scheme>
+
+<scheme name="block">
+    <!-- Known block type -->
+    <block start="/(\bdata|check|import|locals|module|output|provider|resource|terraform|variable\b)\M(?:\s+&quot;[^&quot;]*&quot;)*\s*\{/" end="//"
+        scheme="block-start"
+        region00="BlockTypeKnown"/>
+    <!-- Unknown block type -->
+    <block start="/(\b\w[\-\w]*)\M(?:\s+&quot;[^&quot;]*&quot;)*\s*\{/" end="//"
+        scheme="block-start"
+        region00="BlockType"/>
+</scheme>
+
+<scheme name="block-start">
+    <regexp match="/\s+/"/>
+    <block start="/(&quot;)\M[^&quot;]*&quot;/" end="/(&quot;)/" region="BlockVariable" scheme="def:empty"
+        region01="def:PairStart"  region11="def:PairEnd"
+        region00="BlockVariableEdge" region10="BlockVariableEdge"/>
+    <block start="/(\{)/" end="/((\}))\s*(?{Error}.*)$/" scheme="terraform"
+        region01="def:PairStart" region12="def:PairEnd"
+        region00="SymbolStrong"  region11="SymbolStrong"/>
+</scheme>
+
+<scheme name="functions">
+    <!-- Built-in terraform functions -->
+    <block start="/\b((?{Namespace}core)(?{Symbol}::))?(abs|abspath|alltrue|anytrue|base64decode|base64encode|base64gzip|base64sha256|base64sha512|basename|bcrypt|can|ceil|chomp|chunklist|cidrhost|cidrnetmask|cidrsubnet|cidrsubnets|coalesce|coalescelist|compact|concat|contains|csvdecode|dirname|distinct|element|endswith|file|filebase64|filebase64sha256|filebase64sha512|fileexists|filemd5|fileset|filesha1|filesha256|filesha512|flatten|floor|format|formatdate|formatlist|indent|index|join|jsondecode|jsonencode|keys|length|log|lookup|lower|matchkeys|max|md5|merge|min|nonsensitive|one|parseint|pathexpand|plantimestamp|pow|range|regex|regexall|replace|reverse|rsadecrypt|sensitive|setintersection|setproduct|setsubtract|setunion|sha1|sha256|sha512|signum|slice|sort|split|startswith|strcontains|strrev|substr|sum|templatefile|textdecodebase64|textencodebase64|timeadd|timecmp|timestamp|title|tobool|tolist|tomap|tonumber|toset|tostring|transpose|trim|trimprefix|trimspace|trimsuffix|try|upper|urlencode|uuid|uuidv5|values|yamldecode|yamlencode|zipmap)\b((\())/" end="/(\))/"
+        scheme="hcl:functions_body"
+        region02="Function"
+        region03="def:PairStart" region11="def:PairEnd"
+        region04="Symbol"        region10="Symbol"/>
+    <!-- Provider functions -->
+    <block start="/\b(?{Namespace}provider)(?{Symbol}::)(?{Namespace}[a-zA-Z][\w_-]*)(?{Symbol}::)([a-zA-Z][\w_-]*)\b((\())/" end="/(\))/"
+        scheme="hcl:functions_body"
+        region01="Function"
+        region02="def:PairStart" region11="def:PairEnd"
+        region03="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="named_value_references">
+    <keywords region="Variable" ignorecase="no">
+        <word name="var"/>
+        <word name="local"/>
+        <word name="module"/>
+        <word name="data"/>
+        <word name="path"/>
+        <word name="terraform"/>
+    </keywords>
+</scheme>
+
+<scheme name="literal_values">
+    <inherit scheme="hcl:literal_values">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="named_value_references"/>
+</scheme>
+
+<scheme name="objects_body">
+    <inherit scheme="hcl:comments"/>
+    <inherit scheme="hcl:objects">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:inline_for_expression">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:inline_if_expression">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <!-- Literal, named object key -->
+    <regexp match="/\b(null|false|true)?!([a-zA-Z][a-zA-Z0-9_-]*)\s*(=&gt;?)\s*/"
+        region2="Variable" region3="Symbol"/>
+    <!-- String object key -->
+    <regexp match="/^\s*(&quot;)([^&quot;]*)(&quot;)\s*(=(=)?!)\s*/"
+        region="Variable"
+        region1="def:PairStart" region3="def:PairEnd"
+        region4="Symbol"/>
+    <!-- Computed object key (any expression between parens) -->
+    <block start="/^\s*(\()/" end="/((\)))\s*(=|:)\s*/" scheme="objects_body_computed_key"
+        region01="def:PairStart" region12="def:PairEnd"
+        region00="Symbol"        region11="Symbol"
+                                 region13="Symbol"/>
+    <!-- object key values -->
+    <inherit scheme="hcl:tuple_for_expression">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:object_for_expression">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:heredoc">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:functions">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:literal_values">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+    <inherit scheme="hcl:operators"/>
+</scheme>
+
+<scheme name="objects_body_computed_key">
+    <inherit scheme="named_value_references"/>
+    <inherit scheme="hcl:objects_body_computed_key">
+        <virtual scheme="hcl:objects_body" subst-scheme="objects_body"/>
+        <virtual scheme="hcl:literal_values" subst-scheme="literal_values"/>
+        <virtual scheme="hcl:block" subst-scheme="block"/>
+        <virtual scheme="hcl:functions" subst-scheme="functions"/>
+        <virtual scheme="hcl:hcl" subst-scheme="terraform"/>
+    </inherit>
+</scheme>
+
+</type>
+</hrc>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
+   - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+   - This program is free software; you can redistribute it and/or
+   - modify it under the terms of the GNU General Public License
+   - as published by the Free Software Foundation; either version 2
+   - of the License, or (at your option) any later version.
+   - This program is distributed in the hope that it will be useful,
+   - but WITHOUT ANY WARRANTY; without even the implied warranty of
+   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   - GNU General Public License for more details.
+   - You should have received a copy of the GNU General Public License
+   - along with this program; If not, see <http://www.gnu.org/licenses/>.
+   - ***** END LICENSE BLOCK ***** -->

@@ -758,29 +758,31 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 
 DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 {
-	const auto prev_osc52clip_set = _osc52clip_set;
-	_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
+	if (tweaks) {
 
-	if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
-		ChooseSimpleClipboardBackend();
-	}
+		const auto prev_osc52clip_set = _osc52clip_set;
+		_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
 
-	bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
-	{
-		std::lock_guard<std::mutex> lock(_palette_mtx);
-		std::swap(override_default_palette, _override_default_palette);
-	}
+		if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
+			ChooseSimpleClipboardBackend();
+		}
 
-	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
-		std::unique_lock<std::mutex> lock(_async_mutex);
-		_ae.palette = true;
-		_async_cond.notify_all();
-		while (_ae.palette) {
-			_async_cond.wait(lock);
+		bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
+		{
+			std::lock_guard<std::mutex> lock(_palette_mtx);
+			std::swap(override_default_palette, _override_default_palette);
+		}
+
+		if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_ae.palette = true;
+			_async_cond.notify_all();
+			while (_ae.palette) {
+				_async_cond.wait(lock);
+			}
 		}
 	}
 
-//
 
 	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
 

@@ -10,12 +10,11 @@
 static std::string GetNotifySH(const char *far2l_path)
 {
 	std::string out(far2l_path);
-
 	if (TranslateInstallPath_Bin2Share(out)) {
-		out+= APP_BASENAME "/";
+		ReplaceFileNamePart(out, APP_BASENAME "/notify.sh");
+	} else {
+		ReplaceFileNamePart(out, "notify.sh");
 	}
-
-	out+= "notify.sh";
 
 	struct stat s;
 	if (stat(out.c_str(), &s) == 0) {

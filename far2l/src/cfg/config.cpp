@@ -213,59 +213,100 @@ void SystemSettings()
 	}
 }
 
-void PanelSettings()
+void PanelSettings_HighlightMarks()
 {
-	DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
-	BOOL AutoUpdate = (Opt.AutoUpdateLimit);
+	DialogBuilder Builder(Msg::ConfigPanelHighlightMarksTitle, L"PanelSettings");
 
-	Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
-
-	DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
-	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
-	CbShowFilenameMarks->Indent(1);
-	Builder.LinkFlags(CbHighlight, CbShowFilenameMarks, DIF_DISABLE);
-	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
-	CbFilenameMarksAlign->Indent(2);
-	Builder.LinkFlags(CbHighlight, CbFilenameMarksAlign, DIF_DISABLE);
-	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
-	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
-	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
-	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
-
-	Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
-	Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
-	Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
-	Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
-	Builder.AddCheckbox(Msg::ConfigReverseSort, &Opt.ReverseSort);
-
-	DialogItemEx *AutoUpdateEnabled = Builder.AddCheckbox(Msg::ConfigAutoUpdateLimit, &AutoUpdate);
-	DialogItemEx *AutoUpdateLimit = Builder.AddIntEditField((int *)&Opt.AutoUpdateLimit, 6);
-	Builder.LinkFlags(AutoUpdateEnabled, AutoUpdateLimit, DIF_DISABLE, false);
-	DialogItemEx *AutoUpdateText = Builder.AddTextBefore(AutoUpdateLimit, Msg::ConfigAutoUpdateLimit2);
-	AutoUpdateLimit->Indent(4);
-	AutoUpdateText->Indent(4);
-	Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
+	Builder.AddCheckbox(Msg::ConfigFilenameMarksStatusLine, &Opt.FilenameMarksInStatusBar);
+	DialogItemEx *tShowFilenameMarksInStatusLineHint = Builder.AddText(Msg::ConfigFilenameMarksStatusLineHint);
+	tShowFilenameMarksInStatusLineHint->Flags = DIF_CENTERGROUP | DIF_DISABLE;
 
 	Builder.AddSeparator();
-	Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);
-	Builder.AddCheckbox(Msg::ConfigShowStatus, &Opt.ShowPanelStatus);
-	Builder.AddCheckbox(Msg::ConfigShowTotal, &Opt.ShowPanelTotals);
-	Builder.AddCheckbox(Msg::ConfigShowFree, &Opt.ShowPanelFree);
-	Builder.AddCheckbox(Msg::ConfigShowScrollbar, &Opt.ShowPanelScrollbar);
-	Builder.AddCheckbox(Msg::ConfigShowScreensNumber, &Opt.ShowScreensNumber);
-	Builder.AddCheckbox(Msg::ConfigShowSortMode, &Opt.ShowSortMode);
+
+	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
+	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
+	CbFilenameMarksAlign->Indent(1);
+	Builder.LinkFlags(CbShowFilenameMarks, CbFilenameMarksAlign, DIF_DISABLE);
+	DialogItemEx *tShowFilenameMarksHint = Builder.AddText(Msg::ConfigFilenameMarksHint);
+	tShowFilenameMarksHint->Flags = DIF_CENTERGROUP | DIF_DISABLE;
+
+	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+	IndentationMinEdit->Indent(1);
+	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
+	IndentationMaxEdit->Indent(1);
+
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
-		if (!AutoUpdate)
-			Opt.AutoUpdateLimit = 0;
+		SanitizeHistoryCounts();
+		ApplySudoConfiguration();
+	}
+}
 
-		SanitizeIndentationCounts();
+void PanelSettings()
+{
+	for (;;) {
+		DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
+		BOOL AutoUpdate = (Opt.AutoUpdateLimit);
 
-		// FrameManager->RefreshFrame();
-		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
-		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
-		CtrlObject->Cp()->Redraw();
+		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
+
+		DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
+		int HighlightMarksID = -1;
+		DialogItemEx *HighlightMarksItem = Builder.AddButton(Msg::ConfigPanelHighlightMarksButton, HighlightMarksID);
+		HighlightMarksItem->Indent(2);
+		Builder.LinkFlags(CbHighlight, HighlightMarksItem, DIF_DISABLE);
+
+		int ChangeSizeColumnStyleID = -1;
+		DialogItemEx *ChangeSizeColumnStyleItem = Builder.AddButton(Msg::DirSettingsTitle, ChangeSizeColumnStyleID);
+		//ChangeSizeColumnStyleItem->Flags = DIF_CENTERGROUP;
+		ChangeSizeColumnStyleItem->Indent(1);
+
+		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
+		Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
+		Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
+		Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
+		Builder.AddCheckbox(Msg::ConfigReverseSort, &Opt.ReverseSort);
+
+		DialogItemEx *AutoUpdateEnabled = Builder.AddCheckbox(Msg::ConfigAutoUpdateLimit, &AutoUpdate);
+		DialogItemEx *AutoUpdateLimit = Builder.AddIntEditField((int *)&Opt.AutoUpdateLimit, 6);
+		Builder.LinkFlags(AutoUpdateEnabled, AutoUpdateLimit, DIF_DISABLE, false);
+		DialogItemEx *AutoUpdateText = Builder.AddTextBefore(AutoUpdateLimit, Msg::ConfigAutoUpdateLimit2);
+		AutoUpdateLimit->Indent(4);
+		AutoUpdateText->Indent(4);
+		Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
+
+		Builder.AddSeparator();
+		Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);
+		Builder.AddCheckbox(Msg::ConfigShowStatus, &Opt.ShowPanelStatus);
+		Builder.AddCheckbox(Msg::ConfigShowTotal, &Opt.ShowPanelTotals);
+		Builder.AddCheckbox(Msg::ConfigShowFree, &Opt.ShowPanelFree);
+		Builder.AddCheckbox(Msg::ConfigShowScrollbar, &Opt.ShowPanelScrollbar);
+		Builder.AddCheckbox(Msg::ConfigShowScreensNumber, &Opt.ShowScreensNumber);
+		Builder.AddCheckbox(Msg::ConfigShowSortMode, &Opt.ShowSortMode);
+		Builder.AddOKCancel();
+
+		int clicked_id = -1;
+		if (Builder.ShowDialog(&clicked_id)) {
+			if (!AutoUpdate)
+				Opt.AutoUpdateLimit = 0;
+
+			SanitizeIndentationCounts();
+
+			// FrameManager->RefreshFrame();
+			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->Redraw();
+			break;
+		}
+		if (clicked_id == HighlightMarksID)
+			PanelSettings_HighlightMarks();
+		else if (clicked_id == ChangeSizeColumnStyleID)
+			DirectoryNameSettings();
+		else
+			break;		
 	}
 }
 

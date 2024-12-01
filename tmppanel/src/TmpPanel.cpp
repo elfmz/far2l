@@ -6,8 +6,10 @@ Temporary panel main plugin code
 */
 
 #include "TmpPanel.hpp"
+#include <string>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include "utils.h"
 
 TCHAR *PluginRootKey;
 unsigned int CurrentCommonPanel;
@@ -35,11 +37,9 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
 }
 #endif
 
-#define WITH_ANSI_ARG
-#define WITH_ANSI_PARAM
-static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode WITH_ANSI_PARAM);
+static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode);
 static void ShowMenuFromList(TCHAR *Name);
-static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM);
+static HANDLE OpenPanelFromOutput(wchar_t *argv);
 
 static TCHAR TmpPanelPath[] = WGOOD_SLASH _T("TmpPanel");
 static wchar_t *TmpPanelModule = nullptr;
@@ -95,11 +95,15 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 			StrBuf tmpTMP(k + 1);
 			TCHAR *TMP = tmpTMP;
-			lstrcpyn(TMP, argv - k, k + 1);
+			lstrcpyn(TMP, argv - k, k);
+			TMP[k] = L'\0';
 
-			for (int i = 0; i < OPT_COUNT; i++)
-				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0)
+			for (int i = 0; i < OPT_COUNT; i++) {
+				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0) {
 					*(int *)ParamsOpt[i] = *TMP == _T('+');
+					break;
+				}
+			}
 
 			if (*(TMP + 1) >= _T('0') && *(TMP + 1) <= _T('9'))
 				CurrentCommonPanel = *(TMP + 1) - _T('0');
@@ -112,7 +116,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		if (lstrlen(argv)) {
 			if (*argv == _T('<')) {
 				argv++;
-				hPlugin = OpenPanelFromOutput(argv WITH_ANSI_ARG);
+				hPlugin = OpenPanelFromOutput(argv);
 				if (Opt.MenuForFilelist)
 					return INVALID_HANDLE_VALUE;
 			} else {
@@ -125,11 +129,11 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 						ShowMenuFromList(TmpOut);
 						return INVALID_HANDLE_VALUE;
 					} else {
-						hPlugin = new TmpPanel();
+						hPlugin = new TmpPanel(TmpOut);
 						if (hPlugin == NULL)
 							return INVALID_HANDLE_VALUE;
 
-						ProcessList(hPlugin, TmpOut, Opt.Mode WITH_ANSI_ARG);
+						ProcessList(hPlugin, TmpOut, Opt.Mode);
 					}
 				} else {
 					return INVALID_HANDLE_VALUE;
@@ -147,89 +151,29 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	return hPlugin;
 }
 
-static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
+static HANDLE OpenPanelFromOutput(wchar_t *argv)
 {
-	TCHAR *tempDir = ParseParam(argv);
+	StrBuf tempfilename(MAX_PATH);
+	FSF.MkTemp(tempfilename, tempfilename.Size(), L"FAR");
 
-	BOOL allOK = FALSE;
+	std::wstring fullcmd = L"echo Waiting command to complete...; "
+						   L"echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.; ";
+	fullcmd +=  argv;
+	fullcmd += L" >";
+	fullcmd += tempfilename;
 
-	StrBuf tempfilename(NT_MAX_PATH);	// BUGBUG
-	StrBuf cmdparams(NT_MAX_PATH);		// BUGBUG
-	StrBuf fullcmd;
-
-	FSF.MkTemp(tempfilename, tempfilename.Size(), _T("FARTMP"));
-	lstrcpy(cmdparams, _T("%COMSPEC% /c "));
-	lstrcat(cmdparams, argv);
-	ExpandEnvStrs(cmdparams, fullcmd);
-
-	/*SECURITY_ATTRIBUTES sa;
-	memset(&sa, 0, sizeof(sa));
-	sa.nLength=sizeof(sa);
-	sa.bInheritHandle=TRUE;*/
-
-	HANDLE FileHandle;
-	FileHandle = CreateFile(tempfilename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
-			FILE_FLAG_SEQUENTIAL_SCAN, NULL);		//&sa
-
-	if (FileHandle != INVALID_HANDLE_VALUE) {
-		/*
-		STARTUPINFO si;
-		memset(&si,0,sizeof(si));
-		si.cb=sizeof(si);
-		si.dwFlags=STARTF_USESTDHANDLES;
-		si.hStdInput=GetStdHandle(STD_INPUT_HANDLE);
-		si.hStdOutput=FileHandle;
-		si.hStdError=FileHandle;
-
-		PROCESS_INFORMATION pi;
-		memset(&pi,0,sizeof(pi));
-		*/
-
-		StrBuf workDir(1);	// make empty string just in case
-
-		if (tempDir) {
-			workDir.Reset(NT_MAX_PATH);		// BUGBUG
-			ExpandEnvStrs(tempDir, workDir);
-		} else {
-			DWORD Size = FSF.GetCurrentDirectory(0, NULL);
-			if (Size) {
-				workDir.Reset(Size);
-				FSF.GetCurrentDirectory(Size, workDir);
-			}
-		}
-
-		TCHAR consoleTitle[255];
-		DWORD tlen = GetConsoleTitle(NULL, consoleTitle, ARRAYSIZE(consoleTitle));
-		SetConsoleTitle(NULL, argv);
-		fprintf(stderr, "TODO: CreateProcess %ls\n", fullcmd.Ptr());
-		/*
-			BOOL Created=CreateProcess(NULL,fullcmd,NULL,NULL,TRUE,0,NULL,workDir,&si,&pi);
-
-			if (Created)
-			{
-			  WaitForSingleObject(pi.hProcess,INFINITE);
-			  CloseHandle(pi.hThread);
-			  CloseHandle(pi.hProcess);
-			  allOK=TRUE;
-			}
-		*/
-		CloseHandle(FileHandle);
-
-		if (tlen)
-			SetConsoleTitle(NULL, consoleTitle);
-	}
+	DWORD flags = EF_NOCMDPRINT;
 
 	HANDLE hPlugin = INVALID_HANDLE_VALUE;
 
-	if (allOK) {
-		if (Opt.MenuForFilelist) {
-			ShowMenuFromList(tempfilename);
-		} else {
-			hPlugin = new TmpPanel();
-			if (hPlugin == NULL)
-				return INVALID_HANDLE_VALUE;
-			ProcessList(hPlugin, tempfilename, Opt.Mode WITH_ANSI_ARG);
-		}
+	FSF.Execute(fullcmd.c_str(), flags);
+	if (Opt.MenuForFilelist) {
+		ShowMenuFromList(tempfilename);
+	} else {
+		hPlugin = new TmpPanel();
+		if (hPlugin == NULL)
+			return INVALID_HANDLE_VALUE;
+		ProcessList(hPlugin, tempfilename, Opt.Mode);
 	}
 
 	DeleteFile(tempfilename);
@@ -237,7 +181,7 @@ static HANDLE OpenPanelFromOutput(TCHAR *argv WITH_ANSI_PARAM)
 }
 
 void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *numargs,
-		UINT *numchars WITH_ANSI_PARAM)
+		UINT *numchars)
 {
 	*numchars = 0;
 	*numargs = 0;
@@ -297,7 +241,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 }
 
-	static void ReadFileList(TCHAR * filename, int *argc, TCHAR ***argv WITH_ANSI_PARAM)
+	static void ReadFileList(TCHAR * filename, int *argc, TCHAR ***argv)
 	{
 		*argc = 0;
 		*argv = NULL;
@@ -314,16 +258,16 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			int fd = GetFileDescriptor(hFile);
 			if (fd != -1 && FileSizeLow != INVALID_FILE_SIZE) {
 				UINT i;
-				ReadFileLines(fd, FileSizeLow, NULL, NULL, (UINT *)argc, &i WITH_ANSI_ARG);
+				ReadFileLines(fd, FileSizeLow, NULL, NULL, (UINT *)argc, &i);
 				*argv = (TCHAR **)malloc(*argc * sizeof(TCHAR *) + i * sizeof(TCHAR));
 				ReadFileLines(fd, FileSizeLow, *argv, (TCHAR *)&(*argv)[*argc], (UINT *)argc,
-						&i WITH_ANSI_ARG);
+						&i);
 			}
 			CloseHandle(hFile);
 		}
 	}
 
-	static void ProcessList(HANDLE hPlugin, TCHAR * Name, int Mode WITH_ANSI_PARAM)
+	static void ProcessList(HANDLE hPlugin, TCHAR * Name, int Mode)
 	{
 		if (Mode) {
 			FreePanelItems(CommonPanels[CurrentCommonPanel].Items,
@@ -335,7 +279,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 		int argc;
 		TCHAR **argv;
-		ReadFileList(Name, &argc, &argv WITH_ANSI_ARG);
+		ReadFileList(Name, &argc, &argv);
 
 		HANDLE hScreen = Panel->BeginPutFiles();
 
@@ -352,7 +296,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 		int argc;
 		TCHAR **argv = 0;
 
-		ReadFileList(Name, &argc, &argv WITH_ANSI_ARG);
+		ReadFileList(Name, &argc, &argv);
 
 		FarMenuItem *fmi = (FarMenuItem *)malloc(argc * sizeof(FarMenuItem));
 		if (fmi) {
@@ -397,24 +341,30 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 				ExpandEnvStrs(p, TMP);
 				p = TMP;
 
-				FAR_FIND_DATA FindData;
 				int bShellExecute = BreakCode != -1;
 
 				if (!bShellExecute) {
+					FAR_FIND_DATA FindData = {};
 					if (TmpPanel::GetFileInfoAndValidate(p, &FindData, FALSE)) {
 						if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-						Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, 0, (LONG_PTR)p);
+							Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, 0, (LONG_PTR)p);
 						} else {
 							bShellExecute = TRUE;
 						}
 					} else {
-
-					Info.Control(PANEL_ACTIVE, FCTL_SETCMDLINE, 0, (LONG_PTR)p);
+						Info.Control(PANEL_ACTIVE, FCTL_SETCMDLINE, 0, (LONG_PTR)p);
+					}
+					if (FindData.lpwszFileName) {
+						free((void *)FindData.lpwszFileName);
 					}
 				}
 
-				if (bShellExecute)
-					fprintf(stderr, "TODO: ShellExecute: %ls\n", p);	// ShellExecute(NULL,_T("open"),p,NULL,NULL,SW_SHOW);
+				if (bShellExecute) {
+					DWORD flags = EF_OPEN | EF_NOCMDPRINT | EF_NOWAIT;
+					std::wstring cmd = p;
+					QuoteCmdArgIfNeed(cmd);
+					FSF.Execute(cmd.c_str(), flags);
+				}
 			}
 		}
 
@@ -422,36 +372,29 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			free(argv);
 	}
 
-#define _CONST const
-#define _OPARG , int
 	SHAREDSYMBOL HANDLE WINAPI
-	EXP_NAME(OpenFilePlugin)(_CONST TCHAR * Name, const unsigned char *, int DataSize, int OpMode)
-#undef _OPARG
-#undef _CONST
+	EXP_NAME(OpenFilePlugin)(const TCHAR * Name, const unsigned char *, int DataSize, int OpMode)
 	{
-	if (!Name) 
-		return INVALID_HANDLE_VALUE;
-
-	StrBuf pName(NT_MAX_PATH);	// BUGBUG
-	lstrcpy(pName, Name);
-#define PNAME_ARG pName, pName.Size()
-
-		if (!DataSize || !FSF.ProcessName(Opt.Mask, PNAME_ARG, PN_CMPNAMELIST))
+		if (!Name)
 			return INVALID_HANDLE_VALUE;
-#undef PNAME_ARG
+		GetOptions();
+		StrBuf pName(NT_MAX_PATH);	// BUGBUG
+		lstrcpy(pName, Name);
+
+		if (!DataSize || !FSF.ProcessName(Opt.Mask, pName, pName.Size(), PN_CMPNAMELIST))
+			return INVALID_HANDLE_VALUE;
 
 		if (!Opt.MenuForFilelist) {
-			HANDLE hPlugin = new TmpPanel();
+			HANDLE hPlugin = new TmpPanel(pName);
 			if (hPlugin == NULL)
 				return INVALID_HANDLE_VALUE;
 
-			ProcessList(hPlugin, pName, Opt.Mode WITH_ANSI_ARG);
+			ProcessList(hPlugin, pName, Opt.Mode);
 			return hPlugin;
 		} else {
 			ShowMenuFromList(pName);
 			return ((HANDLE)-2);
 		}
-#undef pName
 	}
 
 	SHAREDSYMBOL void WINAPI EXP_NAME(ClosePlugin)(HANDLE hPlugin)

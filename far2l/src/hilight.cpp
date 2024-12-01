@@ -278,7 +278,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		hl.MarkLen = dwMarkLen;
 	}
 
-#if 0
+#if 1
 	  // FIXME: Temporary code for compatibility with old settings where there are no transparency masks for colors
 
 	for (int j = 0; j < 2; j++) {

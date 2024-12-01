@@ -309,9 +309,8 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			if( Opt.IsFirstStart ) {
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
 
-				DWORD tweaks = WINPORT(SetConsoleTweaks)(0);
+				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
 				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
-
 					if (Message(0, 2,
 						Msg::ConfigOSC52ClipSet,
 						Msg::Yes,

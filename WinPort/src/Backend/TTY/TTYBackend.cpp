@@ -27,6 +27,8 @@
 #include "TTYNegotiateFar2l.h"
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
+#include "../NotifySh.h"
+
 
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
 static volatile long s_terminal_size_change_id = 0;
@@ -758,8 +760,7 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 
 DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 {
-	if (tweaks) {
-
+	if (tweaks != TWEAKS_ONLY_QUERY_SUPPORTED) {
 		const auto prev_osc52clip_set = _osc52clip_set;
 		_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
 
@@ -1213,33 +1214,14 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 			stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
 			Far2lInteract(stk_ser, false);
 		} catch (std::exception &) {}
+
+	} else if (getenv("DISPLAY") != NULL || UnderWayland()) {
+		const std::string &str_title = Wide2MB(title);
+		const std::string &str_text = Wide2MB(text);
+		Far2l_NotifySh(_full_exe_path, str_title.c_str(), str_text.c_str());
+
 	} else {
-
-		char command[1024];
-		char title_utf8[256];
-		char text_utf8[256];
-
-		// Преобразуем wchar_t в utf-8 для дальнейшего использования
-		wcstombs(title_utf8, title, sizeof(title_utf8));
-		wcstombs(text_utf8, text, sizeof(text_utf8));
-
-		// Проверяем, используется ли X11 или Wayland
-		const char *display = getenv("DISPLAY");
-		const char *wayland_display = getenv("WAYLAND_DISPLAY");
-		bool nsa = false;
-
-		if (display || wayland_display) {
-			// Пытаемся использовать notify-send
-			snprintf(command, sizeof(command), "notify-send \"%s\" \"%s\"", title_utf8, text_utf8);
-			if (system(command) == 0) {
-				nsa = true;
-				//fprintf(stderr, "Ушло через notify-send\n");
-			} else {
-				//fprintf(stderr, "notify-send недоступен.\n");
-			}
-		} else {
-			//fprintf(stderr, "Графическая среда не обнаружена (ни X11, ни Wayland).\n");
-		}
+		fprintf(stderr, "OnConsoleDisplayNotification('%ls', '%ls') - unsupported\n", title, text);
 	}
 }
 

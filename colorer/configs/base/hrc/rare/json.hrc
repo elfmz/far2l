@@ -1,47 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
-	"http://colorer.sf.net/2003/hrc.dtd">
+    "http://colorer.sf.net/2003/hrc.dtd">
 <hrc
-	version="take5"
-	xmlns="http://colorer.sf.net/2003/hrc"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+    version="take5"
+    xmlns="http://colorer.sf.net/2003/hrc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
 
 <type name="json">
 
-	<annotation><documentation>
-		json scheme
-	</documentation><contributors><![CDATA[
-		Aliaksei Chapyzhenka <alex.drom@gmail.com>
-	]]></contributors></annotation>
+    <annotation><documentation>
+        json scheme
+    </documentation><contributors><![CDATA[
+        Aliaksei Chapyzhenka <alex.drom@gmail.com>
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors></annotation>
 
-	<import type="def"/>
+    <import type="def"/>
 
-	<scheme name="jsonComment">
-	</scheme>
-      
-	<scheme name='jsonQuote'>
-		<regexp match="/\\u[\dA-Fa-f]{4}/" region0="StringContent"/>
-      	<regexp match="/\\x[\dA-Fa-f]{2}/" region0="StringContent"/>
-      	<regexp match="/\\[\\bfnrtv]/"     region0="StringContent"/>
-	</scheme>
+    <scheme name="jsonComment">
+    </scheme>
 
-	<scheme name="jsonMETA">
-		<inherit scheme='jsonQuote'/>
-		<regexp match="/\\[&quot;&apos;/]/" region0="StringContent"/>
-	</scheme>
+    <scheme name='jsonQuote'>
+        <regexp match="/\\u[\dA-Fa-f]{4}/" region0="StringContent"/>
+        <regexp match="/\\x[\dA-Fa-f]{2}/" region0="StringContent"/>
+        <regexp match="/\\[\\bfnrtv]/"     region0="StringContent"/>
+    </scheme>
 
-	<scheme name="String">
-		<inherit scheme="jsonMETA"/>
-	</scheme>
+    <scheme name="jsonMETA">
+        <inherit scheme='jsonQuote'/>
+        <regexp match="/\\[&quot;&apos;/]/" region0="StringContent"/>
+    </scheme>
 
-	<scheme name="RE">
-		<inherit scheme="regexp:pcre.regexp">
-			<virtual scheme="regexp:string" subst-scheme="jsonMETA"/>
-			<virtual scheme="regexp:pcre.regexp" subst-scheme="RE"/>        
-		</inherit>
-	</scheme>
+    <scheme name="String">
+        <inherit scheme="jsonMETA"/>
+    </scheme>
 
+    <scheme name="Key">
+        <regexp match="/\\([\\bfnrtv&quot;&apos;\/]|x[\dA-Fa-f]{2}|u[\dA-Fa-f]{4})/x" region="VarStrong"/>
+    </scheme>
+
+    <scheme name="RE">
+        <inherit scheme="regexp:pcre.regexp">
+            <virtual scheme="regexp:string" subst-scheme="jsonMETA"/>
+            <virtual scheme="regexp:pcre.regexp" subst-scheme="RE"/>
+        </inherit>
+    </scheme>
+
+    <scheme name="Object">
+        <regexp match="/\s+/"/>
+        <!-- object value -->
+        <block start="/:/" end="/\M,|\}/" region00="SymbolStrong" scheme="json"/>
+        <!-- object key -->
+        <block start="/(&quot;)/" end="/(&quot;)/"
+            scheme="Key" region="Var"
+            region00='VarStrong' region01='PairStart'
+            region10='VarStrong' region11='PairEnd'
+        />
+        <keywords region="def:Symbol">
+            <symb name=","/>
+        </keywords>
+        <regexp match="/[^\}]/" region="def:Error" priority="low" />
+    </scheme>
 
     <scheme name="json.float">
         <regexp match="/(-)? \B    (\.)\d+ (e[\-+]?\d+)? \b/ix" region0="NumberFloat" region1="def:Symbol" region2="def:Symbol" region3="NumberSuffix"/>
@@ -51,66 +71,75 @@
     <scheme name="json.decimal">
         <regexp match="/(-)?\b\d+ (ul{0,2}|l{1,2}u?|i64|i128)?\b/ix" region0="NumberDec" region1="def:Symbol" region2="NumberSuffix"/>
     </scheme>
-<!-- JSON допускает ТОЛЬКО десятичные и float числа -->
+    <!-- JSON only allows integers and floats -->
     <scheme name="json.numbers">
       <inherit scheme="json.float"/>
       <inherit scheme="json.decimal"/>
     </scheme>
 
-<!-- JSON !!!НЕ ДОПУСКАЕТ!!! использование одинарных кавычек! -->
-	<scheme name="jsonString">
-		<block start="/(&quot;)/" end="/(&quot;)/"
-			scheme="String" region="String"
-			region00='StringEdge' region01='PairStart'
-			region10='StringEdge' region11='PairEnd'
-		/>
-	</scheme>
-	<scheme name="booleans">
-		<keywords region="def:BooleanConstant">
-			<word name="false"/>
-			<word name="true"/>
-		</keywords>
-	</scheme>
-	<scheme name="null">
-		<keywords region="def:Keyword">
-			<word name="null"/>
-		</keywords>
-	</scheme>
-      
-	<scheme name="json">
-		<block start="/\/\//" end="/\M(&lt;\/scr|$)/i" scheme="jsonComment" region="Comment"/>
-		<block start="/\/\*/" end="/\*\//"             scheme="jsonComment" region="Comment" region00="PairStart" region10="PairEnd"/>
-		<inherit scheme="PairedBrackets">
-			<virtual scheme="PairedBrackets" subst-scheme="json"/>
-		</inherit>
-		<inherit scheme="json.numbers"/>
-		<inherit scheme="jsonString"/>
-		<inherit scheme="booleans"/>
-		<inherit scheme="null"/>
-		<keywords region="def:Symbol">
-			<symb name=","/>
-		</keywords>
-		<keywords region="def:SymbolStrong">
-			<symb name=":"/>
-		</keywords>
-		<block scheme="RE" region="String">
-			<start region1="Symbol" region2="StringEdge" region3="PairStart">
-			<![CDATA[
-				/
-				( [\=\!]\~ | && | \|\| |
-				[^<\]\}\)\+\-\w\s\/\;] |
-				\bif | ~ | ^)
-				\s* ((\/))\M[^\/\*>] /x
-			]]>
-			</start>
-			<end region0="StringEdge" region1="PairEnd" region2="regexp:SpecArea">
-				<![CDATA[
-				/(\y2([cmiogxes]*))/x
-				]]>
-			</end>
-		</block>
-		<regexp match="/[^\s]/" region="def:Error" priority="low" />
-	</scheme>
+    <!-- JSON only allows double quotes (not single quotes) -->
+    <scheme name="jsonString">
+        <block start="/(&quot;)/" end="/(&quot;)/"
+            scheme="String" region="String"
+            region00='StringEdge' region01='PairStart'
+            region10='StringEdge' region11='PairEnd'
+        />
+    </scheme>
+    <scheme name="booleans">
+        <keywords region="def:BooleanConstant">
+            <word name="false"/>
+            <word name="true"/>
+        </keywords>
+    </scheme>
+    <scheme name="null">
+        <keywords region="def:Keyword">
+            <word name="null"/>
+        </keywords>
+    </scheme>
+
+    <scheme name="json">
+
+        <regexp match="/\s+/"/>
+
+        <block start="/\/\//" end="/\M(&lt;\/scr|$)/i" scheme="jsonComment" region="Comment"/>
+        <block start="/\/\*/" end="/\*\//"             scheme="jsonComment" region="Comment" region00="PairStart" region10="PairEnd"/>
+
+        <block start="/(\{)/" end="/(\})/" scheme="Object"
+            region00="SymbolStrong" region10="SymbolStrong"
+            region01="PairStart"    region11="PairEnd"/>
+
+        <block start="/(\[)/" end="/(\])/" scheme="json"
+            region00="Symbol"    region10="Symbol"
+            region01="PairStart" region11="PairEnd"/>
+
+        <inherit scheme="json.numbers"/>
+        <inherit scheme="jsonString"/>
+        <inherit scheme="booleans"/>
+        <inherit scheme="null"/>
+        <keywords region="def:Symbol">
+            <symb name=","/>
+        </keywords>
+        <keywords region="def:SymbolStrong">
+            <symb name=":"/>
+        </keywords>
+        <block scheme="RE" region="String">
+            <start region1="Symbol" region2="StringEdge" region3="PairStart">
+            <![CDATA[
+                /
+                ( [\=\!]\~ | && | \|\| |
+                [^<\]\}\)\+\-\w\s\/\;] |
+                \bif | ~ | ^)
+                \s* ((\/))\M[^\/\*>] /x
+            ]]>
+            </start>
+            <end region0="StringEdge" region1="PairEnd" region2="regexp:SpecArea">
+                <![CDATA[
+                /(\y2([cmiogxes]*))/x
+                ]]>
+            </end>
+        </block>
+        <regexp match="/[^\s]/" region="def:Error" priority="low" />
+    </scheme>
 
 </type>
 </hrc>

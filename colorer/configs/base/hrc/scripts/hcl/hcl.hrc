@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        HashiCorp HCL
+
+        Based on:
+            https://github.com/hashicorp/hcl/blob/main/hclsyntax/spec.md
+            https://github.com/hashicorp/syntax/blob/main/syntaxes/hcl.tmGrammar.json
+
+        Notes:
+            This schema can be simplified by reducing the number of schemas.
+            However, now its structure is similar to the official reference at
+            https://github.com/hashicorp/syntax/blob/main/src/_main.yml to make
+            it easier to add new features and enhancements.
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="hcl" group="scripts" description="HashiCorp HCL">
+            <location link="scripts/hcl/hcl.hrc"/>
+            <filename>/\.hcl$/i</filename>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="hcl">
+
+<region name="Text" parent="def:Text"/>
+<region name="Comment" parent="def:Comment"/>
+
+<region name="BlockType" parent="def:TypeKeyword"/>
+<region name="BlockVariable" parent="def:Parameter"/>
+<region name="BlockVariableEdge" parent="def:ParameterStrong"/>
+
+<region name="Keyword" parent="def:Keyword"/>
+<region name="Function" parent="def:ClassKeyword"/>
+<region name="Namespace" parent="def:InterfaceKeyword"/>
+<region name="Types" parent="def:InterfaceKeyword"/>
+
+<region name="String" parent="def:String"/>
+<region name="StringEdge" parent="def:StringEdge"/>
+<region name="StringContent" parent="def:StringContent"/>
+
+<region name="Symbol" parent="def:Symbol"/>
+<region name="SymbolStrong" parent="def:SymbolStrong"/>
+<region name="Operator" parent="def:Operator"/>
+
+<region name="Error" parent="def:Error"/>
+
+<region name="Variable" parent="def:Var"/>
+<region name="VariableStrong" parent="def:VarStrong"/>
+<region name="Constant" parent="def:Constant"/>
+
+<region name="HeredocOperator" parent="Operator"/>
+<region name="HeredocAnchor" parent="def:Label"/>
+
+<!-- for testing -->
+<region name="Test" parent="def:URL"/>
+<region name="Test2" parent="def:TODO"/>
+
+<scheme name="hcl">
+    <regexp match="/\s+/"/>
+    <inherit scheme="comments"/>
+    <inherit scheme="attribute_definition"/>
+    <inherit scheme="block"/>
+    <inherit scheme="expressions"/>
+</scheme>
+
+<scheme name="char_escapes">
+    <regexp match="/\\[nrt&quot;\\]|\\u([0-9a-fA-F]{8}|[0-9a-fA-F]{4})/" region="StringContent"/>
+</scheme>
+
+<scheme name="comma">
+    <regexp match="/,/" region="Symbol"/>
+</scheme>
+
+<scheme name="language_constants">
+    <keywords region="Constant">
+        <word name="true"/>
+        <word name="false"/>
+        <word name="null"/>
+    </keywords>
+</scheme>
+
+<scheme name="local_identifiers">
+    <regexp match="/\b(null|false|true)?![a-zA-Z][a-zA-Z0-9_-]*\b/" region="Variable"/>
+</scheme>
+
+<scheme name="hcl_type_keywords">
+    <keywords region="Types" ignorecase="no">
+        <word name="any"/>
+        <word name="string"/>
+        <word name="number"/>
+        <word name="bool"/>
+        <word name="list"/>
+        <word name="set"/>
+        <word name="map"/>
+        <word name="tuple"/>
+        <word name="object"/>
+    </keywords>
+</scheme>
+
+<scheme name="comments">
+    <!-- Line comments start with // or # sequence and end with the next newline sequence -->
+    <block start="/(\/\/|#)/" end="/$/" region="Comment" scheme="def:Comment"/>
+    <!-- Inline comments start with the /* sequence and end with the */ sequence -->
+    <block start="/\/\*/" end="/\*\//" region="Comment" scheme="def:Comment"
+        region00="def:PairStart" region10="def:PairEnd"/>
+</scheme>
+
+<scheme name="attribute_definition">
+    <regexp match="/(\()?\b(null\b|false\b|true\b)?!([a-zA-Z][a-zA-Z0-9_-]*)(\))?\s*(=(=|&gt;)?!)\s*/"
+        region1="Symbol" region3="Variable" region4="Symbol" region5="Symbol"/>
+</scheme>
+
+<scheme name="block">
+    <block start="/(\w[\-\w]*)\M(?:\s+(?:\w[\-\w]*|&quot;[^&quot;]*&quot;))*\s*\{/" end="//"
+        scheme="block-start"
+        region00="BlockType"/>
+</scheme>
+
+<scheme name="block-start">
+    <regexp match="/\s+/"/>
+    <regexp match="/\w[\-\w]*/" region="BlockVariable"/>
+    <block start="/(&quot;)\M[^&quot;]*&quot;/" end="/(&quot;)/" region="BlockVariable" scheme="def:empty"
+        region01="def:PairStart"     region11="def:PairEnd"
+        region00="BlockVariableEdge" region10="BlockVariableEdge"/>
+    <block start="/(\{)/" end="/((\}))\s*(?{Error}.*)$/" scheme="hcl"
+        region01="def:PairStart" region12="def:PairEnd"
+        region00="SymbolStrong"  region11="SymbolStrong"/>
+</scheme>
+
+<scheme name="expressions">
+    <regexp match="/\s+/"/>
+    <inherit scheme="literal_values"/>
+    <inherit scheme="operators"/>
+    <inherit scheme="tuple_for_expression"/>
+    <inherit scheme="object_for_expression"/>
+    <inherit scheme="brackets"/>
+    <inherit scheme="objects"/>
+    <inherit scheme="attribute_access"/>
+    <inherit scheme="functions"/>
+    <inherit scheme="parens"/>
+</scheme>
+
+<scheme name="literal_values">
+    <inherit scheme="numeric_literals"/>
+    <inherit scheme="language_constants"/>
+    <inherit scheme="string_literals"/>
+    <inherit scheme="heredoc"/>
+    <inherit scheme="hcl_type_keywords"/>
+</scheme>
+
+<scheme name="numeric_literals">
+    <!-- Integer, no fraction, optional exponent -->
+    <regexp match="/-?\b\d+([Ee][+-]?)\d+\b/" region="def:NumberFloat"/>
+    <!-- Integer, fraction, optional exponent -->
+    <regexp match="/-?\b\d+(\.)\d+(?:([Ee][+-]?)\d+)?\b/" region="def:NumberFloat"/>
+    <!-- Integers -->
+    <regexp match="/-?\b\d+\b/" region="def:NumberDec"/>
+</scheme>
+
+<scheme name="string_literals">
+    <block start="/(&quot;)/" end="/(&quot;)/" region="String" scheme="string_literals_body"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+</scheme>
+
+<scheme name="string_literals_body">
+    <inherit scheme="string_interpolation"/>
+    <inherit scheme="char_escapes"/>
+</scheme>
+
+<scheme name="string_interpolation">
+    <block start="/[%\$]?~1([%\$]\{)/" end="/(\})/" scheme="string_interpolation_body"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="string_interpolation_body">
+    <!-- Trim left whitespace -->
+    <regexp match="/\{?#1\~/" region="Namespace"/>
+    <!-- Trim right whitespace -->
+    <regexp match="/\~(\})?=/" region="Namespace"/>
+    <regexp match="/\s+/"/>
+    <keywords region="Keyword">
+        <word name="if"/>
+        <word name="else"/>
+        <word name="endif"/>
+        <word name="for"/>
+        <word name="in"/>
+        <word name="endfor"/>
+    </keywords>
+    <inherit scheme="expressions"/>
+    <inherit scheme="local_identifiers"/>
+</scheme>
+
+<scheme name="heredoc">
+    <block start="/(?{HeredocOperator}&lt;&lt;-?)\s*(?{HeredocAnchor}\w+)$/"
+        end="/^\s*((\y{HeredocAnchor}))\s*$/"
+        scheme="string_interpolation" region="String"
+        region12="HeredocAnchor"
+        region00="def:PairStart" region11="def:PairEnd"/>
+</scheme>
+
+<scheme name="operators">
+    <keywords region="Operator">
+        <symb name="&gt;="/>      <symb name="&lt;="/>
+        <symb name="=="/>         <symb name="!="/>
+        <symb name="+"/>          <symb name="-"/>
+        <symb name="*"/>          <symb name="/"/>
+        <symb name="%"/>
+        <symb name="&amp;&amp;"/> <symb name="||"/>
+        <symb name="!"/>
+        <symb name="&gt;"/>       <symb name="&lt;"/>
+        <symb name="?"/>
+        <symb name="..."/>
+        <symb name=":"/>
+        <symb name="=&gt;"/>
+    </keywords>
+    <!-- due unknown reason, '!' in keywords doesn't work in some cases.
+    Thus let's match it additionally. -->
+    <regexp match="/!/" region="Operator"/>
+</scheme>
+
+<scheme name="brackets">
+    <block start="/(\[)/" end="/(\])/" scheme="brackets_body"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="Symbol"    region10="Symbol"/>
+</scheme>
+
+<scheme name="brackets_body">
+    <regexp match="/\*/" region="Keyword"/>
+    <inherit scheme="comma"/>
+    <inherit scheme="comments"/>
+    <inherit scheme="inline_for_expression"/>
+    <inherit scheme="inline_if_expression"/>
+    <inherit scheme="expressions"/>
+    <inherit scheme="local_identifiers"/>
+</scheme>
+
+<scheme name="objects">
+    <block start="/(\{)/" end="/(\})/" scheme="objects_body"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="SymbolStrong"  region10="SymbolStrong"/>
+</scheme>
+
+<scheme name="objects_body">
+    <inherit scheme="comments"/>
+    <inherit scheme="objects"/>
+    <inherit scheme="inline_for_expression"/>
+    <inherit scheme="inline_if_expression"/>
+    <!-- Literal, named object key -->
+    <regexp match="/\b(null|false|true)?!([a-zA-Z][a-zA-Z0-9_-]*)\s*(=(=)?!)\s*/"
+        region2="Variable" region3="Symbol"/>
+    <!-- String object key -->
+    <regexp match="/^\s*(&quot;)([^&quot;]*)(&quot;)\s*(=(=)?!)\s*/"
+        region="Variable"
+        region1="def:PairStart" region3="def:PairEnd"
+        region4="Symbol"/>
+    <!-- Computed object key (any expression between parens) -->
+    <block start="/^\s*(\()/" end="/((\)))\s*(=|:)\s*/" scheme="objects_body_computed_key"
+        region01="def:PairStart" region12="def:PairEnd"
+        region00="Symbol"        region11="Symbol"
+                                 region13="Symbol"/>
+    <!-- object key values -->
+    <inherit scheme="tuple_for_expression"/>
+    <inherit scheme="object_for_expression"/>
+    <inherit scheme="heredoc"/>
+    <inherit scheme="functions"/>
+    <inherit scheme="literal_values"/>
+    <inherit scheme="operators"/>
+</scheme>
+
+<scheme name="objects_body_computed_key">
+    <inherit scheme="attribute_access"/>
+</scheme>
+
+<scheme name="tuple_for_expression">
+    <block start="/((\[))\s?(for)/" end="/(\])/" scheme="for_expression_body"
+        region03="Keyword"
+        region02="def:PairStart" region11="def:PairEnd"
+        region01="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="object_for_expression">
+    <block start="/((\{))\s?(for)/" end="/(\})/" scheme="for_expression_body_object"
+        region03="Keyword"
+        region02="def:PairStart" region11="def:PairEnd"
+        region01="SymbolStrong"  region10="SymbolStrong"/>
+</scheme>
+
+<scheme name="inline_for_expression">
+    <block start="/(for)\b/" end="//" scheme="for_expression_body_object"
+        region00="Keyword"/>
+</scheme>
+
+<scheme name="inline_if_expression">
+    <block start="/(if)\b/" end="/$/" scheme="inline_if_expression_body"
+        region00="Keyword"/>
+</scheme>
+
+<scheme name="inline_if_expression_body">
+    <regexp match="/\s+/"/>
+    <inherit scheme="comments"/>
+    <inherit scheme="expressions"/>
+    <inherit scheme="comma"/>
+    <inherit scheme="local_identifiers"/>
+</scheme>
+
+<scheme name="for_expression_body">
+    <regexp match="/(\b(in|if)\b)|:/" region="Keyword"/>
+    <inherit scheme="inline_if_expression_body"/>
+</scheme>
+
+<scheme name="for_expression_body_object">
+    <regexp match="/=&gt;/" region="Types"/>
+    <inherit scheme="for_expression_body"/>
+</scheme>
+
+<scheme name="attribute_access">
+    <regexp match="/(\.)(null|false|true)?!([a-zA-Z][a-zA-Z0-9_-]*)/"
+        region1="VariableStrong" region3="Variable"/>
+    <regexp match="/(\.)(\d+)/"
+        region1="VariableStrong" region2="def:NumberDec"/>
+    <regexp match="/(\.)(\*)/"
+        region1="VariableStrong" region2="Keyword"/>
+</scheme>
+
+<scheme name="functions">
+    <!-- Built-in function calls -->
+    <block start="/\b([a-zA-Z][\w_-]*)((\())/" end="/(\))/" scheme="functions_body"
+        region01="Function"
+        region02="def:PairStart" region11="def:PairEnd"
+        region03="Symbol"        region10="Symbol"/>
+    <!-- Namespaced function calls -->
+    <block start="/\b([a-zA-Z][\w_-]*)(::)(([a-zA-Z][\w_-]*)(::))?([a-zA-Z][\w_-]*)((\())/" end="/(\))/"
+        scheme="functions_body"
+        region01="Namespace" region02="Symbol"
+        region04="Namespace" region05="Symbol"
+        region06="Function"
+        region07="def:PairStart" region11="def:PairEnd"
+        region08="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="functions_body">
+    <inherit scheme="comments"/>
+    <inherit scheme="expressions"/>
+    <inherit scheme="comma"/>
+</scheme>
+
+<scheme name="parens">
+    <block start="/(\()/" end="/(\))/" scheme="parens_body"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="parens_body">
+    <inherit scheme="comments"/>
+    <inherit scheme="expressions"/>
+</scheme>
+
+</type>
+</hrc>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
+   - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+   - This program is free software; you can redistribute it and/or
+   - modify it under the terms of the GNU General Public License
+   - as published by the Free Software Foundation; either version 2
+   - of the License, or (at your option) any later version.
+   - This program is distributed in the hope that it will be useful,
+   - but WITHOUT ANY WARRANTY; without even the implied warranty of
+   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   - GNU General Public License for more details.
+   - You should have received a copy of the GNU General Public License
+   - along with this program; If not, see <http://www.gnu.org/licenses/>.
+   - ***** END LICENSE BLOCK ***** -->

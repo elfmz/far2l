@@ -1946,8 +1946,7 @@ void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wcha
 	auto fn = std::bind(MacDisplayNotify, str_title.c_str(), str_text.c_str());
 	CallInMain<bool>(fn);
 #else
-	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
-	wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+	wxString fn_str = wxStandardPaths::Get().GetExecutablePath();
 	Far2l_NotifySh(fn_str.mb_str(), str_title.c_str(), str_text.c_str());
 #endif
 }

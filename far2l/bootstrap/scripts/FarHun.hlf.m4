@@ -1955,7 +1955,7 @@ a nevét (ami majd a menüben jelenik meg) és a végrehajtandó parancs sorát.
 
     Almenü szerkesztésénél csak a gyorsbillentyűt és a nevet kell megadni.
 
-    A helyi felhasználói menü az adott mappában egy #FarMenu.Ini# nevű fájlba
+    A helyi felhasználói menü az adott mappában egy #FarMenu.ini# nevű fájlba
 mentődik.
     A FAR a főmenüt a profilkönyvtárba menti az #~~/.config/far2l/settings/user_menu.ini# fájlba
 (a formátum eltér a FarMenu.ini-től).

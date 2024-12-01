@@ -2278,7 +2278,7 @@ sequence to execute when this item will be selected.
     When you edit or create a submenu, you should enter the hot key and the
 item title only.
 
-    Local user menus are stored in the text files #FarMenu.Ini#.
+    Local user menus are stored in the text files #FarMenu.ini#.
     The main menu is stored in profile in #~~/.config/far2l/settings/user_menu.ini#
 (the format is different from FarMenu.ini).
 If you create a local menu in the FAR2L folder, it will be used instead of

@@ -733,6 +733,16 @@
         <filename weight='1'>/\.y$/i</filename>
     </prototype>
 
+    <!--  HashiCorp scripts  -->
+    <prototype name="hcl" group="scripts" description="HashiCorp HCL">
+        <location link="scripts/hcl/hcl.hrc"/>
+        <filename>/\.hcl$/i</filename>
+    </prototype>
+    <prototype name="terraform" group="scripts" description="HashiCorp Terraform">
+        <location link="scripts/hcl/terraform.hrc"/>
+        <filename>/\.tf$/i</filename>
+        <filename>/\.tfvars$/i</filename>
+    </prototype>
 
     <prototype name="delphiform" group="scripts" description="Delphi form">
         <location link="scripts/dfm.hrc" />
@@ -788,6 +798,12 @@
         <filename>/\.nut$/i</filename>
     </prototype>
 
+    <prototype name="dockerfile" group="scripts" description="Dockerfile">
+        <location link="scripts/dockerfile.hrc"/>
+        <filename>/^[Dd]ockerfile\..+$/</filename>
+        <filename>/^[Dd]ockerfile$/</filename>
+        <firstline>/^\s*FROM\b/</firstline>
+    </prototype>
 
     <prototype name="rarscript" group="scripts.install" description="RAR Install Script">
         <location link="scripts/rarscrpt.hrc" />
@@ -927,7 +943,6 @@
         <location link="rare/jcl.hrc" />
         <filename>/\.jcl$/i</filename>
     </prototype>
-
     <prototype name="sml" group="rare" description="Standard ML">
         <location link="rare/sml.hrc" />
         <filename>/\.(sml|sig)$/i</filename>

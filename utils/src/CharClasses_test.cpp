@@ -12,16 +12,17 @@ int main() {
 
 	int ct = 0, last = 0x10ffff;
 	for (int i=0; i<=last; i++) {
-		if (IsCharFullWidth(i) && (wcwidth(i) != 2) && (wcwidth(i) != -1)) {
+		CharClasses cc(i);
+		if (cc.FullWidth() && (wcwidth(i) != 2) && (wcwidth(i) != -1)) {
 			printf("i=%i IsCharFullWidth(i)=true wcwidth(i)=%i\n", i, wcwidth(i));
 		}
-		if (IsCharPrefix(i) && (wcwidth(i) != 0) && (wcwidth(i) != -1)) {
+		if (cc.Prefix() && (wcwidth(i) != 0) && (wcwidth(i) != -1)) {
 			printf("i=%i IsCharPrefix(i)=true wcwidth(i)=%i\n", i, wcwidth(i));
 		}
-		if (IsCharSuffix(i) && (wcwidth(i) != 0) && (wcwidth(i) != -1)) {
+		if (cc.Suffix() && (wcwidth(i) != 0) && (wcwidth(i) != -1)) {
 			printf("i=%i IsCharSuffix(i)=true wcwidth(i)=%i\n", i, wcwidth(i));
 		}
-		if ((wcwidth(i) != 1) && !IsCharXxxfix(i) && !IsCharFullWidth(i) && (wcwidth(i) != -1)) {
+		if ((wcwidth(i) != 1) && !cc.Xxxfix() && !cc.FullWidth() && (wcwidth(i) != -1)) {
 			printf("i=%i IsCharFullWidth(i)=false IsCharXxxfix(i)=false wcwidth(i)=%i\n", i, wcwidth(i));
 		}
 	}

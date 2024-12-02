@@ -54,8 +54,7 @@ _Sticky controls via **Ctrl**-**Space** or **Alt**-**Space**_ or _Exclusively ha
 | **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (\*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
 | **Typical<br>use case:** | **Servers**,<br>embedded<br>(\*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
-| [Debian](#debian) packages: | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_)</sup> |
-| [Ubuntu](#debian) packages: | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | _none_ |
+| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories:</sup> | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
 | Community [PPA](#community_bins): | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` |
 
 <sub><a name="downgrade"></a>_Note_: When running far2l automatically downgrade
@@ -86,7 +85,7 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
     apt install far2l
     ```
 
-* **GUI** backend (Debian since far2l _2.6.4_)
+* **GUI** backend (Debian since far2l _2.6.4_ / Ubuntu 25.04+)
     ```sh
     apt install far2l-wx
     ```

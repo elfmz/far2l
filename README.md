@@ -150,6 +150,7 @@ See also [Community packages & binaries](#community_bins)
 * `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
+* `libicu-dev` (_optional_ - needed if used non-default ICU_MODE, see `-DICU_MODE` command line option)
 * `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `cmake` ( >= 3.2.2 )
@@ -200,6 +201,12 @@ To build without WX backend (console version only): change `-DUSEWX=yes` to `-DU
 To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable only TTY|Xi - add argument `-DTTYXI=no`
 
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add `-DUSEUCD=no`
+
+By default far2l uses pre-generated "hardcoded" UNICODE characters properties. But this can be changed by specifying -DICU_MODE when configuring cmake:
+ `-DICU_MODE=prebuilt` - is a described above default implementaion. Most dependency-less option.
+ `-DICU_MODE=build` - re-generate characters properties during build by using libicu available on build system, but it still not required to be present on target.
+ `-DICU_MODE=runtime` - obtain properties at runtime (that can be bit slower) using libicu that required to be present on target system.
+
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 but you must have installed additional packages within yours system:

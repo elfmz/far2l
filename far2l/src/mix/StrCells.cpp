@@ -8,9 +8,10 @@ size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 {
 	size_t out = 0;
 	for (size_t i = 0; i < nw; ++i) {
-		if (IsCharFullWidth(pwz[i])) {
+		CharClasses cc(pwz[i]);
+		if (cc.FullWidth()) {
 			out+= 2;
-		} else if ((i == nw - 1 || !IsCharPrefix(pwz[i])) && (i == 0 || !IsCharSuffix(pwz[i]))) {
+		} else if ((i == nw - 1 || !cc.Prefix()) && (i == 0 || !cc.Suffix())) {
 			++out;
 		}
 	}
@@ -21,9 +22,10 @@ size_t StrZCellsCount(const wchar_t *pwz)
 {
 	size_t out = 0;
 	for (size_t i = 0; pwz[i] != 0; ++i) {
-		if (IsCharFullWidth(pwz[i])) {
+		CharClasses cc(pwz[i]);
+		if (cc.FullWidth()) {
 			out+= 2;
-		} else if ((pwz[i + 1] == 0 || !IsCharPrefix(pwz[i])) && (i == 0 || !IsCharSuffix(pwz[i]))) {
+		} else if ((pwz[i + 1] == 0 || !cc.Prefix()) && (i == 0 || !cc.Suffix())) {
 			++out;
 		}
 	}
@@ -35,12 +37,12 @@ size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 	size_t i = 0, g = 0;
 	for (; g < ng && i < n; ++g) {
 		for (; i < n; ++i) {
-			if (!IsCharPrefix(pwz[i])) {
+			if (!CharClasses(pwz[i]).Prefix()) {
 				break;
 			}
 		}
 		if (i < n) {
-			if (IsCharFullWidth(pwz[i])) {
+			if (CharClasses(pwz[i]).FullWidth()) {
 //				++g;
 //				if (!round_up && g == ng) {
 				if (!round_up && (g + 1) == ng) {
@@ -51,7 +53,7 @@ size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 			++i;
 		}
 		for (; i < n; ++i) {
-			if (!IsCharSuffix(pwz[i])) {
+			if (!CharClasses(pwz[i]).Suffix()) {
 				break;
 			}
 		}
@@ -86,7 +88,7 @@ void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
 	}
 
 	for (size_t ofs = rpl.len; ofs < n; ++ofs) {
-		if (!IsCharXxxfix(pwz[ofs]) && StrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
+		if (!CharClasses(pwz[ofs]).Xxxfix() && StrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
 			n-= ofs;
 			wmemmove(pwz + rpl.len, pwz + ofs, n);
 			n+= rpl.len;
@@ -108,7 +110,7 @@ void StrCellsTruncateRight(wchar_t *pwz, size_t &n, size_t ng)
 
 	n-= rpl.len; // pre-reserve space for ...
 	do {
-		while (n > 0 && IsCharXxxfix(pwz[n - 1])) {
+		while (n > 0 && CharClasses(pwz[n - 1]).Xxxfix()) {
 			--n;
 		}
 		if (n == 0) {
@@ -136,18 +138,18 @@ void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 	if (cut_start > 0 && rpl.len > 1) {
 		--cut_start;
 	}
-	while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {
+	while (cut_start > 0 && CharClasses(pwz[cut_start]).Xxxfix()) {
 		--cut_start;
 	}
 	auto cut_end = cut_start + rpl.len;
-	while (cut_end < n && IsCharXxxfix(pwz[cut_end])) {
+	while (cut_end < n && CharClasses(pwz[cut_end]).Xxxfix()) {
 		++cut_end;
 	}
 
 	while (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len > ng) {
 		if (cut_start > 0) {
 			--cut_start;
-			while (cut_start > 0 && IsCharXxxfix(pwz[cut_start])) {
+			while (cut_start > 0 && CharClasses(pwz[cut_start]).Xxxfix()) {
 				--cut_start;
 			}
 			if (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
@@ -156,7 +158,7 @@ void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 		}
 		if (cut_end < n) {
 			++cut_end;
-			while (cut_end < n && IsCharXxxfix(pwz[cut_end])) {
+			while (cut_end < n && CharClasses(pwz[cut_end]).Xxxfix()) {
 				++cut_end;
 			}
 		}

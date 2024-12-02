@@ -326,7 +326,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			int BreakCode;
 			static const int BreakKeys[2] = {MAKELONG(VK_RETURN, PKF_SHIFT), 0};
 
-			int ExitCode = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, Title, NULL,
+			int ExitCode = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, Title, L"Enter Shift+Enter Esc Ctrl+Alt+F",
 					_T("Contents"), &BreakKeys[0], &BreakCode, fmi, argc);
 
 			for (int i = 0; i < argc; ++i)

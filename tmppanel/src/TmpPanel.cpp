@@ -341,29 +341,56 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 				ExpandEnvStrs(p, TMP);
 				p = TMP;
 
-				int bShellExecute = BreakCode != -1;
+				bool bShellExecute = BreakCode != -1;
 
-				if (!bShellExecute) {
-					FAR_FIND_DATA FindData = {};
-					if (TmpPanel::GetFileInfoAndValidate(p, &FindData, FALSE)) {
-						if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-							Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, 0, (LONG_PTR)p);
-						} else {
-							bShellExecute = TRUE;
-						}
+				enum { ACTION_NOP, ACTION_SETPANELDIR, ACTION_SETCMDLINE, ACTION_OPEN,
+					   ACTION_EXECUTE} Action = ACTION_NOP;
+
+				FAR_FIND_DATA FindData = {};
+
+				if (TmpPanel::GetFileInfoAndValidate(p, &FindData, FALSE)) {
+					if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+						Action = bShellExecute ? ACTION_OPEN : ACTION_SETPANELDIR;
+					} else if (FindData.dwFileAttributes & FILE_ATTRIBUTE_EXECUTABLE) {
+						Action = ACTION_EXECUTE;
 					} else {
-						Info.Control(PANEL_ACTIVE, FCTL_SETCMDLINE, 0, (LONG_PTR)p);
+						Action = ACTION_OPEN;
 					}
-					if (FindData.lpwszFileName) {
-						free((void *)FindData.lpwszFileName);
-					}
+				} else {
+					Action = bShellExecute ? ACTION_OPEN : ACTION_SETCMDLINE;
 				}
 
-				if (bShellExecute) {
-					DWORD flags = EF_OPEN | EF_NOCMDPRINT | EF_NOWAIT;
-					std::wstring cmd = p;
-					QuoteCmdArgIfNeed(cmd);
-					FSF.Execute(cmd.c_str(), flags);
+				if (FindData.lpwszFileName) {
+					free((void *)FindData.lpwszFileName);
+				}
+
+				switch (Action) {
+					case ACTION_SETPANELDIR: {
+						Info.Control(INVALID_HANDLE_VALUE, FCTL_SETPANELDIR, 0, (LONG_PTR)p);
+						break;
+					}
+
+					case ACTION_SETCMDLINE: {
+						Info.Control(PANEL_ACTIVE, FCTL_SETCMDLINE, 0, (LONG_PTR)p);
+						break;
+					}
+
+					case ACTION_OPEN: {
+						std::wstring cmd = p;
+						QuoteCmdArgIfNeed(cmd);
+						FSF.Execute(cmd.c_str(), EF_OPEN | EF_NOCMDPRINT | EF_NOWAIT);
+						break;
+					}
+
+					case ACTION_EXECUTE: {
+						std::wstring cmd = p;
+						QuoteCmdArgIfNeed(cmd);
+						FSF.Execute(cmd.c_str(), bShellExecute ? EF_NOWAIT : 0);
+						break;
+					}
+
+					default:
+						;
 				}
 			}
 		}

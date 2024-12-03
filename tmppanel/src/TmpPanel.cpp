@@ -385,7 +385,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 					case ACTION_EXECUTE: {
 						std::wstring cmd = p;
 						QuoteCmdArgIfNeed(cmd);
-						FSF.Execute(cmd.c_str(), bShellExecute ? EF_NOWAIT : 0);
+						FSF.Execute(cmd.c_str(), bShellExecute ? EF_EXTERNALTERM | EF_NOCMDPRINT | EF_HIDEOUT: EF_MAYBGND);
 						break;
 					}
 

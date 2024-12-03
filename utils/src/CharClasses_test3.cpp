@@ -1577,16 +1577,17 @@ int main() {
 
 	int ct = 0, last = 0x10ffff;
 	for (int i=0; i<=last; i++) {
-		if (IsCharFullWidth(i) && (wcw(i) != 2) && (wcw(i) != -1)) {
+		CharClasses cc(i);
+		if (cc.FullWidth() && (wcw(i) != 2) && (wcw(i) != -1)) {
 			printf("i=%i IsCharFullWidth(i)=true widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
-		if (IsCharPrefix(i) && (wcw(i) != 0) && (wcw(i) != -1)) {
+		if (cc.Prefix() && (wcw(i) != 0) && (wcw(i) != -1)) {
 			printf("i=%i IsCharPrefix(i)=true widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
-		if (IsCharSuffix(i) && (wcw(i) != 0) && (wcw(i) != -1)) {
+		if (cc.Suffix() && (wcw(i) != 0) && (wcw(i) != -1)) {
 			printf("i=%i IsCharSuffix(i)=true widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
-		if ((wcw(i) != 1) && !IsCharXxxfix(i) && !IsCharFullWidth(i) && (wcw(i) != -1)) {
+		if ((wcw(i) != 1) && !cc.Xxxfix() && !cc.FullWidth() && (wcw(i) != -1)) {
 			printf("i=%i IsCharFullWidth(i)=false IsCharXxxfix(i)=false widechar_wcwidth(i)=%i\n", i, widechar_wcwidth(i));
 		}
 	}

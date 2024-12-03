@@ -407,14 +407,15 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 	SHORT out = 1;
 
 	switch (sm.kind) {
-		case SequenceModifier::SM_WRITE_STR:
-			if (IsCharPrefix(*sm.str)) {
+		case SequenceModifier::SM_WRITE_STR: {
+			CharClasses cc(*sm.str);
+			if (cc.Prefix()) {
 				out = 0;
 				CI_SET_WCHAR(ch, *sm.str);
 				// surrogate pairs not used for UTF32, so dont need to do special tricks to keep it,
 				// so let following normal character to overwrite abnormal surrogate pair prefixx
 
-			} else if (IsCharSuffix(*sm.str) && _prev_pos.X >= 0) {
+			} else if (_prev_pos.X >= 0 && cc.Suffix()) {
 				out = 0;
 				if (!_buf.Read(ch, _prev_pos)) {
 					return false;
@@ -429,12 +430,12 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 				tmp+= *sm.str;
 				CI_SET_COMPOSITE(ch, tmp.c_str());
 
+			} else if (*sm.str == L'\t' && (_mode & ENABLE_PROCESSED_OUTPUT) != 0) {
+				 CI_SET_WCHAR(ch, L' ');
+
 			} else {
 				CI_SET_WCHAR(ch, *sm.str);
-				if ((_mode&ENABLE_PROCESSED_OUTPUT)!=0 && ch.Char.UnicodeChar==L'\t') {
-					 CI_SET_WCHAR(ch, L' ');
-				}
-				if (IsCharFullWidth(ch.Char.UnicodeChar)) {
+				if (cc.FullWidth()) {
 //					fprintf(stderr, "IsCharFullWidth: %lc [0x%llx]\n",
 //						(WCHAR)ch.Char.UnicodeChar, (unsigned long long)ch.Char.UnicodeChar);
 					out = 2;
@@ -442,21 +443,21 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 			}
 			CI_SET_ATTR(ch, _attributes);
 			_prev_pos = pos;
-			break;
+		} break;
 
-		case SequenceModifier::SM_FILL_CHAR:
+		case SequenceModifier::SM_FILL_CHAR: {
 			if (!_buf.Read(ch, pos))
 				return out;
 
 			CI_SET_WCHAR(ch, sm.chr);
-			break;
+		} break;
 
-		case SequenceModifier::SM_FILL_ATTR:
+		case SequenceModifier::SM_FILL_ATTR: {
 			if (!_buf.Read(ch, pos))
 				return out;
 
 			CI_SET_ATTR(ch, sm.attr);
-			break;
+		} break;
 	}
 	
 	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {

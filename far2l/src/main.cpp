@@ -311,8 +311,13 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
 				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
-					if (Message(0, 2,
-						Msg::ConfigOSC52ClipSet,
+					SetMessageHelp(L"Far2lGettingStarted");
+					if (Message(0, 2, // at 1st start always only English and we not need use Msg here
+						L"Use OSC52 to set clipboard data (question at first start)",
+						L"You can toggle use of OSC52 on/off at any time",
+						L"in Menu(F9)->\'Options\"->\"Interface settings\"",
+						L"",
+						L"Use OSC52 to set clipboard data",
 						Msg::Yes,
 						Msg::No))
 					{

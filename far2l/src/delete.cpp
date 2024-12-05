@@ -115,7 +115,7 @@ public:
 			_last_redraw = now;
 
 			const int percent = (Opt.DelOpt.DelShowTotal && total != (ULONG)-1)
-					? (total ? (processed * 100 / total) : 0)
+					? (total ? ToPercent64(processed, total) : 0)
 					: -1;
 
 			if (percent != -1)
@@ -353,6 +353,7 @@ static ULONG ShellCalcCountOfItemsToDelete(Panel *SrcPanel, bool Wipe)
 
 	SrcPanel->GetSelNameCompat(nullptr, FileAttr);
 	while (SrcPanel->GetSelNameCompat(&strSelName, FileAttr)) {
+		ItemsCount++;
 		if (!(FileAttr & FILE_ATTRIBUTE_REPARSE_POINT)) {
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
 				if (!SDMS.Update(strSelName, Wipe))
@@ -366,9 +367,7 @@ static ULONG ShellCalcCountOfItemsToDelete(Panel *SrcPanel, bool Wipe)
 						<= 0)
 					return (ULONG)-1;
 
-				ItemsCount+= CurrentFileCount + CurrentDirCount + 1;
-			} else {
-				ItemsCount++;
+				ItemsCount+= CurrentFileCount + CurrentDirCount;
 			}
 		}
 	}
@@ -475,7 +474,7 @@ void ShellDeleteMsg(const wchar_t *Name, bool Wipe, int Percent)
 	FARString strProgress;
 	size_t Width = 52;
 
-	if (Percent != -1) {
+	if (Percent > -1) {
 		size_t Length = Width - 5;	// -5 под проценты
 		size_t CurPos = Min(Percent, 100) * Length / 100;
 		strProgress.Reserve(Length);

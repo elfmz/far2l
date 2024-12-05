@@ -104,9 +104,6 @@
 #define    FindNextFile           WINPORT(FindNextFile)
 #define    FindClose              WINPORT(FindClose)
 
-#define    GetTempFileName        WINPORT(GetTempFileName)
-#define    GetFullPathName        WINPORT(GetFullPathName)
-
 #define    EvaluateAttributes     WINPORT(Sleep)
 
 #define    Sleep                      WINPORT(Sleep)

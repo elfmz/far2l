@@ -304,7 +304,7 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 				const auto uni = data[i].Event.KeyEvent.uChar.UnicodeChar;
 				fprintf(stderr, "ConsoleInput::Enqueue: %s %s \"%lc\" %s, %x %x %x %x\n",
 					FormatKeyState(data[i].Event.KeyEvent.dwControlKeyState),
-					VirtualKeyNames[data[i].Event.KeyEvent.wVirtualKeyCode],
+					data[i].Event.KeyEvent.wVirtualKeyCode < sizeof(VirtualKeyNames) / sizeof(const char*) ? VirtualKeyNames[data[i].Event.KeyEvent.wVirtualKeyCode] : "0x00",
 					(uni && (uni > 0x1f)) ? uni : L'?',
 					data[i].Event.KeyEvent.bKeyDown ? "DOWN" : "UP",
 

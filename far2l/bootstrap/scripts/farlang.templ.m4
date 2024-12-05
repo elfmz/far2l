@@ -2122,61 +2122,6 @@ ConfigHighlight
 "&Розфарбовка файлів"
 "&Размалёўка файлаў"
 
-ConfigFilenameMarks
-"Показывать маркировку имен файлов"
-"Show file name markings"
-"Zobrazit označení názvů souborů"
-"Dateinamenmarkierungen anzeigen"
-"Fájlnevek megjelölésének megjelenítése"
-"Pokaż oznaczenia nazw plików"
-"Mostrar marcas de nombres de archivos"
-"Показати маркування імен файлів"
-"Паказаць маркіроўку імёнаў файлаў"
-
-ConfigFilenameMarksAlign
-"Выравнивать имена файлов по маркировкам"
-"Align file names by markings"
-"Vyrovnat názvy souborů podle označení"
-"Dateinamen nach Markierungen ausrichten"
-"Fájlneveket igazítani a megjelölések szerint"
-"Wyrównaj nazwy plików według oznaczeń"
-"Alinear nombres de archivos por marcas"
-"Вирівняти імена файлів за маркуваннями"
-"Выраўнаваць імёны файлаў па маркіроўках"
-
-ConfigFilenameMinMaxIndentation
-"Мин - макс отступ имен файлов"
-"Min - max file names indentation"
-"Min - max odsazení názvů souborů"
-"Min - max Abstand von Dateinamen"
-"Min - max fájlnevek behúzása"
-"Min - maks wcięcie nazw plików"
-"Sangrado mín - máx de nombres de archivos"
-"Мін - макс відступ імен файлів"
-"Мін - макс адступ імёнаў файлаў"
-
-ConfigFilenameMinIndentation
-"Фиксированный отступ имен файлов"
-"Fixed indentation of file names"
-"Opravené odsazení názvů souborů"
-"Festgelegte Einrückung von Dateinamen"
-"A fájlnevek rögzített behúzása"
-"Naprawione wcięcie nazw plików"
-"Sangría fija de nombres de archivos"
-"Виправлене відступлення імен файлів"
-"Выпраўлены адступ імёнаў файлаў"
-
-ConfigFilenameMaxIndentation
-"Максимальный отступ имен файлов"
-"Max file names indentation"
-"Maximální odsazení názvů souborů"
-"Maximaler Abstand von Dateinamen"
-"Maximális fájlnevek behúzása"
-"Maksymalne wcięcie nazw plików"
-"Sangrado Máximo de nombres de archivos"
-"Максимальний відступ імен файлів"
-"Максімальны адступ імёнаў файлаў"
-
 ConfigAutoChange
 "&Автосмена папки"
 "&Auto change folder"
@@ -2341,6 +2286,116 @@ ConfigShowSortMode
 "Mostrar letra para &modo de orden"
 "Показувати літеру режиму сор&тування"
 "Адлюстроўваць літару стану пара&дкавання"
+
+ConfigPanelHighlightMarksButton
+"Раскраска файлов - Маркировка"
+"Highlight files - Marking"   
+"Zvýrazňovat soubory - Označení"  
+"Dateien markieren - Markierung"
+"Fájlok kiemelése - Jelzés"    
+"Wyróżniaj pliki - Cechowanie"
+"Resaltar archivos - Marcado"   
+"Розфарбовка файлів - Маркування"
+"Размалёўка файлаў - Маркіроўка"
+
+ConfigPanelHighlightMarksTitle
+"Настройки панели - Раскраска файлов - Маркировка"
+"Panel settings - Highlight files - Marking"   
+"Nastavení panelů - Zvýrazňovat soubory - Označení"  
+"Panels einrichten - Dateien markieren - Markierung"
+"Panel beállítások - Fájlok kiemelése - Jelzés"    
+"Ustawienia panelu - Wyróżniaj pliki - Cechowanie"
+"Configuración de paneles - Resaltar archivos - Marcado"   
+"Налаштування панели - Розфарбовка файлів - Маркування"
+"Налады стужкі - Размалёўка файлаў - Маркіроўка"
+
+ConfigFilenameMarksStatusLine
+"Строка статуса: Показывать маркировку имен файлов"
+"Status line: Show file name markings"
+"Stavový řádek: Zobrazit označení názvů souborů"
+"Statuszeile: Dateinamenmarkierungen anzeigen"
+"Állapotsor: Fájlnevek megjelölésének megjelenítése"
+"Linia statusu: Pokaż oznaczenia nazw plików"
+"Línea de estado: Mostrar marcas de nombres de archivos"
+"Рядок статусу: Показати маркування імен файлів"
+"Радок стану: Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksStatusLineHint
+"Ctrl-Alt-N для быстрого переключения на панелях"
+"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+
+ConfigFilenameMarks
+"Панели: Показывать маркировку имен файлов"
+"Panel: Show file name markings"
+"Panely: Zobrazit označení názvů souborů"
+"Paneele: Dateinamenmarkierungen anzeigen"
+"Panelek: Fájlnevek megjelölésének megjelenítése"
+"Panele: Pokaż oznaczenia nazw plików"
+"Paneles: Mostrar marcas de nombres de archivos"
+"Панелі: Показати маркування імен файлів"
+"Панэлі: Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksHint
+"Ctrl-Alt-M для быстрого переключения на панелях"
+"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+
+ConfigFilenameMarksAlign
+"Выравнивать имена файлов по маркировкам"
+"Align file names by markings"
+"Vyrovnat názvy souborů podle označení"
+"Dateinamen nach Markierungen ausrichten"
+"Fájlneveket igazítani a megjelölések szerint"
+"Wyrównaj nazwy plików według oznaczeń"
+"Alinear nombres de archivos por marcas"
+"Вирівняти імена файлів за маркуваннями"
+"Выраўнаваць імёны файлаў па маркіроўках"
+
+ConfigFilenameMinMaxIndentation
+"Мин - макс отступ имен файлов"
+"Min - max file names indentation"
+"Min - max odsazení názvů souborů"
+"Min - max Abstand von Dateinamen"
+"Min - max fájlnevek behúzása"
+"Min - maks wcięcie nazw plików"
+"Sangrado mín - máx de nombres de archivos"
+"Мін - макс відступ імен файлів"
+"Мін - макс адступ імёнаў файлаў"
+
+ConfigFilenameMinIndentation
+"Фиксированный отступ имен файлов"
+"Fixed indentation of file names"
+"Opravené odsazení názvů souborů"
+"Festgelegte Einrückung von Dateinamen"
+"A fájlnevek rögzített behúzása"
+"Naprawione wcięcie nazw plików"
+"Sangría fija de nombres de archivos"
+"Виправлене відступлення імен файлів"
+"Выпраўлены адступ імёнаў файлаў"
+
+ConfigFilenameMaxIndentation
+"Максимальный отступ имен файлов"
+"Max file names indentation"
+"Maximální odsazení názvů souborů"
+"Maximaler Abstand von Dateinamen"
+"Maximális fájlnevek behúzása"
+"Maksymalne wcięcie nazw plików"
+"Sangrado Máximo de nombres de archivos"
+"Максимальний відступ імен файлів"
+"Максімальны адступ імёнаў файлаў"
 
 ConfigInterfaceTitle
 l:
@@ -17395,7 +17450,7 @@ Palette
 "P&aleta"
 "P&aleta"
 "П&алітра"
-"&алiтра"
+"П&алiтра"
 
 SetColorPanelNormal
 l:

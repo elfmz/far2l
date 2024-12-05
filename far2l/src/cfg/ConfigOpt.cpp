@@ -394,7 +394,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "FilenameMarksInStatusBar", &Opt.FilenameMarksAlign, 1},
 	{true,  NSecPanel, "MinFilenameIndentation", &Opt.MinFilenameIndentation, 0},
 	{true,  NSecPanel, "MaxFilenameIndentation", &Opt.MaxFilenameIndentation, HIGHLIGHT_MAX_MARK_LENGTH},
-	{true,  NSecPanel, "DirNameStyle", &Opt.DirNameStyle, (1 + (0 << 2)) + DIRNAME_STYLE_SURR_CH + DIRNAME_STYLE_CENTERED },
+	{true,  NSecPanel, "DirNameStyle", &Opt.DirNameStyle, 0 },
 	{true,  NSecPanel, "ShowSymlinkSize", &Opt.ShowSymlinkSize, 0},
 
 	{true,  NSecPanelLeft, "Type", &Opt.LeftPanel.Type, 0},

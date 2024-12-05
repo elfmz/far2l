@@ -3,6 +3,34 @@ project(utils)
 
 find_package(PkgConfig REQUIRED)
 
+if(NOT DEFINED ICU_MODE)
+    message(STATUS "Using prebuilt character classes by default")
+    set(CHAR_CLASSES_CPP src/CharClasses.cpp)
+
+elseif("${ICU_MODE}" STREQUAL "prebuilt")
+    message(STATUS "Using prebuilt character classes due to ICU_MODE=${ICU_MODE}")
+    set(CHAR_CLASSES_CPP src/CharClasses.cpp)
+
+elseif("${ICU_MODE}" STREQUAL "build")
+    message(STATUS "Buld-time character classes generaction due to ICU_MODE=${ICU_MODE}")
+    # Not using CMAKE_CXX_COMPILER due to it can be cross-compilation but here we want to compile native executable
+    # TODO: there must be some less lame way to use host's compiler and host's libicuuc
+    add_custom_target(utils_icu
+        c++ -O2 ${CMAKE_CURRENT_SOURCE_DIR}/src/CharClasses_mk.cpp -licuuc -o ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk && ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk > ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses.cpp)
+    set(CHAR_CLASSES_CPP ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses.cpp)
+
+elseif("${ICU_MODE}" STREQUAL "runtime")
+    find_package(ICU COMPONENTS uc)
+    if(NOT ICU_FOUND)
+        message(FATAL_ERROR "${ColorRed}ICUUC not found but required by ICU_MODE=${ICU_MODE}${ColorNormal}")
+    endif()
+    message(STATUS "Using runtime ICUUC dependency due to ICU_MODE=${ICU_MODE}, ICU_LIBRARIES=${ICU_LIBRARIES}")
+    set(CHAR_CLASSES_CPP src/CharClassesICU.cpp)
+
+else()
+    message(FATAL_ERROR "${ColorRed}Bad ICU_MODE=${ICU_MODE}, use one of: prebuilt build runtime${ColorNormal}")
+endif()
+
 set(SOURCES
     src/Threaded.cpp
     src/ThreadedWorkQueue.cpp
@@ -30,7 +58,6 @@ set(SOURCES
     src/TestPath.cpp
     src/PipeIPC.cpp
     src/PathParts.cpp
-    src/CharClasses.cpp
     src/POpen.cpp
     src/VT256ColorTable.cpp
     src/ReadWholeFile.cpp
@@ -42,12 +69,18 @@ set(SOURCES
     src/EnsureDir.cpp
     src/RandomString.cpp
     src/MakePTYAndFork.cpp
+    ${CHAR_CLASSES_CPP}
 )
 
 add_library (utils STATIC ${SOURCES})
 
-
 target_include_directories(utils PRIVATE include)
+
+if("${ICU_MODE}" STREQUAL "build")
+    add_dependencies(utils utils_icu)
+elseif("${ICU_MODE}" STREQUAL "runtime")
+    target_link_libraries(utils ${ICU_LIBRARIES})
+endif()
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)

@@ -15,6 +15,7 @@
 #include "debug.h"
 #include "IntStrConv.h"
 #include "CharArray.hpp"
+#include "CharClasses.h"
 
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x
@@ -277,11 +278,6 @@ const char *CaseIgnoreEngStrChr(const char c, const char *str, size_t len);
 
 bool POpen(std::string &result, const char *command);
 bool POpen(std::vector<std::wstring> &result, const char *command);
-
-bool IsCharFullWidth(wchar_t c);
-bool IsCharPrefix(wchar_t c);
-bool IsCharSuffix(wchar_t c);
-bool IsCharXxxfix(wchar_t c);
 
 void FN_NORETURN FN_PRINTF_ARGS(1) ThrowPrintf(const char *format, ...); // throws std::runtime_error with formatted .what()
 

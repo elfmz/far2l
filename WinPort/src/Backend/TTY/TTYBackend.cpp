@@ -27,6 +27,8 @@
 #include "TTYNegotiateFar2l.h"
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
+#include "../NotifySh.h"
+
 
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
 static volatile long s_terminal_size_change_id = 0;
@@ -758,29 +760,30 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 
 DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 {
-	const auto prev_osc52clip_set = _osc52clip_set;
-	_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
+	if (tweaks != TWEAKS_ONLY_QUERY_SUPPORTED) {
+		const auto prev_osc52clip_set = _osc52clip_set;
+		_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
 
-	if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
-		ChooseSimpleClipboardBackend();
-	}
+		if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
+			ChooseSimpleClipboardBackend();
+		}
 
-	bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
-	{
-		std::lock_guard<std::mutex> lock(_palette_mtx);
-		std::swap(override_default_palette, _override_default_palette);
-	}
+		bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
+		{
+			std::lock_guard<std::mutex> lock(_palette_mtx);
+			std::swap(override_default_palette, _override_default_palette);
+		}
 
-	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
-		std::unique_lock<std::mutex> lock(_async_mutex);
-		_ae.palette = true;
-		_async_cond.notify_all();
-		while (_ae.palette) {
-			_async_cond.wait(lock);
+		if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_ae.palette = true;
+			_async_cond.notify_all();
+			while (_ae.palette) {
+				_async_cond.wait(lock);
+			}
 		}
 	}
 
-//
 
 	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
 
@@ -1203,13 +1206,23 @@ DWORD TTYBackend::QueryControlKeys()
 
 void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
-	try {
-		StackSerializer stk_ser;
-		stk_ser.PushStr(Wide2MB(text));
-		stk_ser.PushStr(Wide2MB(title));
-		stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
-		Far2lInteract(stk_ser, false);
-	} catch (std::exception &) {}
+	if (_far2l_tty) {
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushStr(Wide2MB(text));
+			stk_ser.PushStr(Wide2MB(title));
+			stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
+			Far2lInteract(stk_ser, false);
+		} catch (std::exception &) {}
+
+	} else if (getenv("DISPLAY") != NULL || UnderWayland()) {
+		const std::string &str_title = Wide2MB(title);
+		const std::string &str_text = Wide2MB(text);
+		Far2l_NotifySh(_full_exe_path, str_title.c_str(), str_text.c_str());
+
+	} else {
+		fprintf(stderr, "OnConsoleDisplayNotification('%ls', '%ls') - unsupported\n", title, text);
+	}
 }
 
 bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)

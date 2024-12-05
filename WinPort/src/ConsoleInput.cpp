@@ -256,7 +256,8 @@ const char* VirtualKeyNames[] = {
     "VK_ZOOM",          // 0xFB
     "VK_NONAME",        // 0xFC
     "VK_PA1",           // 0xFD
-    "VK_OEM_CLEAR"      // 0xFE
+    "VK_OEM_CLEAR",     // 0xFE
+    "0xFF"              // 0xFF
 };
 
 char* FormatKeyState(uint16_t state) {

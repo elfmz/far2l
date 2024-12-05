@@ -2422,15 +2422,26 @@ upd:"Input settings"
 "Налады увода"
 
 DirSettingsTitle
-"Настройки отображения каталога"
-"Directory showas settings"
-"Nastavení zobrazení adresáře"
-"Einstellungen zur Anzeige des Verzeichnisses"
-"Könyvtár megjelenítési beállításai"
-"Ustawienia wyświetlania katalogu"
-"Configuración de visualización del directorio"
-"Налаштування відображення каталогу"
-"Налады адлюстравання каталога"
+"Каталоги и симлинки в столбце Размер"
+"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+
+DirSettingsHint
+"Ctrl-Alt-D для быстрого открытия с панелей"
+"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
 
 DirSettingsCenter
 "Выравнивать по центру"
@@ -2465,16 +2476,27 @@ DirSettingsShowAs
 "Показувати каталог як:"
 "Паказваць каталог як:"
 
-DirSettingsEmpty
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
+DirSettingsSymlinkText
+"Для симлинка на файл показывать:"
+"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+
+DirSettingsSymlinkRadio2
+"размер целевого файла"
+"size of target file"
+upd:"size of target file"
+upd:"size of target file"
+upd:"size of target file"
+upd:"size of target file"
+upd:"size of target file"
+upd:"size of target file"
+upd:"size of target file"
 
 DirSettingsApply
 "Применить"
@@ -2486,6 +2508,17 @@ DirSettingsApply
 "Aplicar"
 "Застосувати"
 "Ужыць"
+
+DirSettingsSymlinkSizeHint
+"Ctrl-Alt-L для переключения из панелей"
+"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
 
 ConfigClock
 "&Часы в панелях"

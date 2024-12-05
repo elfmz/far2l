@@ -2422,7 +2422,7 @@ $ #Налаштування панелі#
                           (from the panel it can be switched by
                           #Ctrl-Alt-N# and #Ctrl-Alt-M#).
 
- #Налаштування відображення каталогу# Button for open dialog, which can be
+ #Dirs and symlinks in Size column# Button for open dialog, which can be
                           also open from panel by #Ctrl-Alt-D#.
 
 

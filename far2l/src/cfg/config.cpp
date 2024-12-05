@@ -387,7 +387,7 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 //		SendDlgMessage(hDlg, DM_LISTSETCURPOS, dircfg_data->DirNameStyleComboID, (LONG_PTR)&flpos);
 		update_surrcombo( );
 
-		swprintf(tmp, 48, L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
+		swprintf(tmp, ARRAYSIZE(tmp), L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_DIRCFG_SYMLINK_RADIO1_TEXT, (LONG_PTR)tmp);
 	}
 	break;
@@ -397,7 +397,7 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 
 			dircfg_data->DirNameStyle = SendDlgMessage(hDlg, DM_LISTGETCURPOS, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)0);
 			update_surrcombo( );
-			swprintf(tmp, 48, L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
+			swprintf(tmp, ARRAYSIZE(tmp), L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
 			SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_DIRCFG_SYMLINK_RADIO1_TEXT, (LONG_PTR)tmp);
 			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 		}
@@ -504,7 +504,6 @@ void DirectoryNameSettings()
 			Opt.ShowSymlinkSize = 1;
 
 		UpdateDefaultColumnTypeWidths( );
-		//UpdateAutoColumnWidth();
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
 		CtrlObject->Cp()->Redraw();

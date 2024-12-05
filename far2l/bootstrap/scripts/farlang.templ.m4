@@ -2477,7 +2477,7 @@ DirSettingsShowAs
 "Паказваць каталог як:"
 
 DirSettingsSymlinkText
-"Для симлинка на файлы показывать:"
+"Для симлинка на файл показывать:"
 "For symlink to file show:"
 upd:"For symlink to file show:"
 upd:"For symlink to file show:"

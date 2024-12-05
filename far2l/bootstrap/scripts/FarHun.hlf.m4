@@ -2227,14 +2227,14 @@ $ #Beállítások: panel beállítások#
 
   #Fájlok kiemelése#        A ~fájlkiemelések~@Highlight@ engedélyezése.
 
-  #Fájlok kiemelése - Jelzés# Button for open dialog
-                          (works only if #Fájlok kiemelése# enabled)
+  #Fájlok kiemelése#        Button for open dialog
+  # - Jelzés#               (works only if #Fájlok kiemelése# enabled)
                           for customize show/align markers in panel
                           (from the panel it can be switched by
                           #Ctrl-Alt-N# and #Ctrl-Alt-M#).
 
-  #Könyvtár megjelenítési beállításai# Button for open dialog, which can be
-                          also open from panel by #Ctrl-Alt-D#.
+  #Dirs and symlinks#       Button for open dialog, which can be
+  #in Size column#          also open from panel by #Ctrl-Alt-D#.
 
 
   #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@

@@ -417,6 +417,8 @@ $ #Menu control commands#
 $ #Panel control commands  #
     #Common panel commands#
 
+  Vertical or Horizontal panel layout                         #Ctrl-,#
+
   Change active panel                                            #Tab#
   Swap panels                                                 #Ctrl-U#
   Re-read panel                                               #Ctrl-R#
@@ -435,7 +437,7 @@ $ #Panel control commands  #
     (when the command line is empty)
   Restore default panels width                          #Ctrl-Numpad5#
   Restore default panels height                     #Ctrl-Alt-Numpad5#
-  Show/Hide functional key bar at the bottom line.            #Ctrl-B#
+  Show/Hide functional key bar at the bottom line             #Ctrl-B#
 
     #File panel commands#
 
@@ -472,7 +474,14 @@ $ #Panel control commands  #
 
   Toggle hidden and system files displaying                   #Ctrl-H#
   Toggle long/short file names view mode                      #Ctrl-N#
-  Toggle hide/show/align file name ~highlighting markers~@Highlight@   #Ctrl-Alt-M#
+
+  Customize Size column:
+   change style of names for dirs and symlinks            #Ctrl-Alt-D#
+   toggle for symlinks "Symlink" or target file size      #Ctrl-Alt-L#
+
+  File name ~highlighting markers~@Highlight@:
+   toggle hide/show/align in file list on panels          #Ctrl-Alt-M#
+   toggle hide/show in status line                        #Ctrl-Alt-N#
 
   Hide/Show left panel                                       #Ctrl-F1#
   Hide/Show right panel                                      #Ctrl-F2#
@@ -791,7 +800,7 @@ shows the selected directory. To show a root directory in the GUI file browser, 
 should press #Shift-Enter# on the required path in the ~location menu~@DriveDlg@.
 Pressing #Shift-Enter# on "#..#" opens the current directory in the GUI file browser.
 
-  Change to the root folder                                           #Ctrl-\\#
+  Change to the root folder (/)                                       #Ctrl-\\#
 
   Change to the mount point of the current folder's file system   #Ctrl-Alt-\\#
 
@@ -1495,6 +1504,8 @@ $ #Menus: options menu#
    #Menu settings#         Shows ~menu settings~@VMenuSettings@ dialog.
 
    #Command line settings# Shows ~command line settings~@CmdlineSettings@ dialog.
+
+   #Groups of file masks#  Shows ~Groups of file masks~@MaskGroupsSettings@ menu.
 
    #Languages#             Select main and help language.
                          Use "Save setup" to save selected languages.
@@ -2267,7 +2278,7 @@ sequence to execute when this item will be selected.
     When you edit or create a submenu, you should enter the hot key and the
 item title only.
 
-    Local user menus are stored in the text files #FarMenu.Ini#.
+    Local user menus are stored in the text files #FarMenu.ini#.
     The main menu is stored in profile in #~~/.config/far2l/settings/user_menu.ini#
 (the format is different from FarMenu.ini).
 If you create a local menu in the FAR2L folder, it will be used instead of
@@ -2520,9 +2531,15 @@ $ #Settings dialog: panel#
 
   #Highlight files#         Enable ~files highlighting~@Highlight@.
 
-  #Show file name markings# and #Align file names by markings#
-works only if #Highlight files# enabled
-and may be switched by #Ctrl-Alt-M#.
+  #Highlight files - Marking# Button for open dialog
+                          (works only if #Highlight files# enabled)
+                          for customize show/align markers in panel
+                          (from the panel it can be switched by
+                          #Ctrl-Alt-N# and #Ctrl-Alt-M#).
+
+  #Directory showas settings# Button for open dialog, which can be
+                          also open from panel by #Ctrl-Alt-D#.
+
 
   #Auto change folder#      If checked, cursor moves in the ~tree panel~@TreePanel@
                           will cause a folder change in the other
@@ -3408,9 +3425,11 @@ combinations are available:
 
   #Ctrl-R#       - Restore the default file highlighting groups
 
-  #Ctrl-Up#      - Move a group up.
+  #Ctrl-Up#      - Move a group up
 
-  #Ctrl-Down#    - Move a group down.
+  #Ctrl-Down#    - Move a group down
+
+  #Ctrl-M#       - Toggle attribute column view: short/long
 
     The highlighting groups are checked from top to bottom. If it is detected
 that a file belongs to a group, no further groups are checked,
@@ -3839,18 +3858,20 @@ characters, delimited with commas. Allowed column types are:
                  These modifiers may be used in combination,
                  for example NMR
 
-    S[C,T,F,E] - file size
-    P[C,T,F,E] - packed file size
-    G[C,T,F,E] - size of file streams
-                 where: C - format file size;
-                        T - use 1000 instead of 1024 as a divider;
-                        F - show file sizes similar to Windows
-                            Explorer (i.e. 999 bytes will be
-                            displayed as 999 and 1000 bytes will
-                            be displayed as 0.97 K);
-                        E - economic mode, no space between file
-                            size and suffix will be shown
-                            (i.e. 0.97K);
+    S[C,T,F,E,A] - file size
+    P[C,T,F,E,A] - packed file size
+    G[C,T,F,E,A] - size of file streams
+                   where: C - format file size;
+                          T - use 1000 instead of 1024 as a divider;
+                          F - show file sizes similar to Windows
+                              Explorer (i.e. 999 bytes will be
+                              displayed as 999 and 1000 bytes will
+                              be displayed as 0.97 K);
+                          E - economic mode, no space between file
+                              size and suffix will be shown
+                              (i.e. 0.97K);
+                          A - automatic width by max number
+                              (works only if 0 in "Column widths");
 
     D          - file last write date
     T          - file last write time
@@ -4035,6 +4056,34 @@ the character '#|#'.
 
     The comma (or semicolon) is used for separating file masks from each other,
 and the '|' character separates include masks from exclude masks.
+
+ File masks can be joined into ~groups~@MaskGroupsSettings@.
+
+
+@MaskGroupsSettings
+$ #Groups of file masks#
+ An arbirtary number of ~file masks~@FileMasks@ can be joined into a named group.
+
+ Hereinafter the group name, enclosed in angle brackets (i.e. #<#name#>#), can be used wherever masks can be used.
+
+ Groups can contain other groups.
+
+ For example, the #<arc># group contains the "*.rar,*.zip,*.[zj],*.[bg7]z,*.[bg]zip,*.tar" masks.
+To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be used.
+
+ Control keys:
+
+ #Ctrl+R#      - ^<wrap>restore the default predefined groups
+
+ #Ins#         - ^<wrap>add a new group
+
+ #Del#         - ^<wrap>remove the current group
+
+ #Enter#/#F4#    - ^<wrap>edit the current group
+
+ #F7#          - ^<wrap>find all groups containing the specified mask
+
+ Also see ~Options menu~@OptMenu@.
 
 
 @SelectFiles

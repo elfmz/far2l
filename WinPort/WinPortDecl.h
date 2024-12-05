@@ -154,8 +154,6 @@
 // not implemented
 	WINPORT_DECL_DEF(GetDriveType, UINT, (LPCWSTR lpRootPathName))
 #endif
-	WINPORT_DECL_DEF(GetTempFileName, UINT,( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer ))
-	WINPORT_DECL_DEF(GetFullPathName, DWORD, (LPCTSTR lpFileName, DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart))
 
 	WINPORT_DECL_DEF(EvaluateAttributes, DWORD,( uint32_t unix_mode, const WCHAR *name ))
 	WINPORT_DECL_DEF(EvaluateAttributesA, DWORD,( uint32_t unix_mode, const char *name ))

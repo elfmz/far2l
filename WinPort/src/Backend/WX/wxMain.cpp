@@ -1,5 +1,6 @@
 #include "wxMain.h"
 #include <dlfcn.h>
+#include "../NotifySh.h"
 
 #define AREAS_REDUCTION
 
@@ -1922,9 +1923,11 @@ DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 	if (_exclusive_hotkeys.Available())
 		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
 
-	EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
-	if (event)
-		wxQueueEvent(this, event);
+	if (tweaks != TWEAKS_ONLY_QUERY_SUPPORTED) {
+		EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
+		if (event)
+			wxQueueEvent(this, event);
+	}
 
 	return out;
 }
@@ -1935,59 +1938,16 @@ bool WinPortPanel::OnConsoleIsActive()
 	return _focused_ts != 0;
 }
 
-static std::string GetNotifySH()
-{
-	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
-	wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
-	std::string out(fn_str.mb_str());
-
-	if (TranslateInstallPath_Bin2Share(out)) {
-		out+= APP_BASENAME "/";
-	}
-
-	out+= "notify.sh";
-
-	struct stat s;
-	if (stat(out.c_str(), &s) == 0) {
-		return out;
-	}
-
-	if (TranslateInstallPath_Share2Lib(out) && stat(out.c_str(), &s) == 0) {
-		return out;
-	}
-
-	return std::string();
-}
-
 void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
 	const std::string &str_title = Wide2MB(title);
 	const std::string &str_text = Wide2MB(text);
-
 #ifdef __APPLE__
 	auto fn = std::bind(MacDisplayNotify, str_title.c_str(), str_text.c_str());
 	CallInMain<bool>(fn);
-
 #else
-
-	static std::string s_notify_sh = GetNotifySH();
-	if (s_notify_sh.empty()) {
-		fprintf(stderr, "OnConsoleDisplayNotification: notify.sh not found\n");
-		return;
-	}
-
-	pid_t pid = fork();
-	if (pid == 0) {
-		if (fork() == 0) {
-			execl(s_notify_sh.c_str(), s_notify_sh.c_str(), str_title.c_str(), str_text.c_str(), NULL);
-			perror("DisplayNotification - execl");
-		}
-		_exit(0);
-		exit(0);
-
-	} else if (pid != -1) {
-		waitpid(pid, 0, 0);
-	}
+	wxString fn_str = wxStandardPaths::Get().GetExecutablePath();
+	Far2l_NotifySh(fn_str.mb_str(), str_title.c_str(), str_text.c_str());
 #endif
 }
 

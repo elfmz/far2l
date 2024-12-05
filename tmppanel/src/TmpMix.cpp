@@ -66,9 +66,6 @@ TCHAR *ParseParam(TCHAR *&str)
 
 void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 {
-#define FCTL_SetPanelDir  FCTL_SETPANELDIR
-#define FCTL_GetPanelInfo FCTL_GETPANELINFO
-#define FCTL_RedrawPanel  FCTL_REDRAWPANEL
 	HANDLE _PANEL_HANDLE = AnotherPanel ? PANEL_PASSIVE : PANEL_ACTIVE;
 
 	PanelRedrawInfo PRI;
@@ -90,25 +87,23 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 	FSF.Unquote(Dir);
 
 	if (*Dir.Ptr()) {
-		Info.Control(_PANEL_HANDLE, FCTL_SetPanelDir, 0, (LONG_PTR)Dir.Ptr());
+		Info.Control(_PANEL_HANDLE, FCTL_SETPANELDIR, 0, (LONG_PTR)Dir.Ptr());
 	}
 
-	Info.Control(_PANEL_HANDLE, FCTL_GetPanelInfo, 0, (LONG_PTR)&PInfo);
+	Info.Control(_PANEL_HANDLE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PInfo);
 
 	PRI.CurrentItem = PInfo.CurrentItem;
 	PRI.TopPanelItem = PInfo.TopPanelItem;
 
 	for (int J = 0; J < PInfo.ItemsNumber; J++) {
 
-#define FileName (PPI ? PPI->FindData.lpwszFileName : NULL)
 		PluginPanelItem *PPI =
 				(PluginPanelItem *)malloc(Info.Control(_PANEL_HANDLE, FCTL_GETPANELITEM, J, 0));
 		if (PPI) {
 			Info.Control(_PANEL_HANDLE, FCTL_GETPANELITEM, J, (LONG_PTR)PPI);
 		}
 
-		if (!FSF.LStricmp(Name, FSF.PointToName(FileName)))
-#undef FileName
+		if (!FSF.LStricmp(Name, FSF.PointToName((PPI ? PPI->FindData.lpwszFileName : NULL))))
 		{
 			PRI.CurrentItem = J;
 			PRI.TopPanelItem = J;
@@ -117,11 +112,7 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 		}
 		free(PPI);
 	}
-	Info.Control(_PANEL_HANDLE, FCTL_RedrawPanel, 0, (LONG_PTR)&PRI);
-#undef _PANEL_HANDLE
-#undef FCTL_SetPanelDir
-#undef FCTL_GetPanelInfo
-#undef FCTL_RedrawPanel
+	Info.Control(_PANEL_HANDLE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&PRI);
 }
 
 void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)

@@ -1471,7 +1471,6 @@ int FileList::ProcessKey(FarKey Key)
 
 						if (!strLastFileName.IsEmpty()) {
 							strFileName = strLastFileName;
-							Unquote(strFileName);
 
 							if (IsAbsolutePath(strFileName)) {
 								PluginMode = FALSE;
@@ -3339,30 +3338,46 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CurPtr = ListData[CurFile];
 	FARString strCurName = CurPtr->strName;
 
+	bool SkipPath = false;
+
 	if (Mode == SELECT_ADDEXT || Mode == SELECT_REMOVEEXT) {
+		if (strCurName == L"..")
+			return 0;
+		strCurName = PointToName(strCurName);
 		size_t pos;
 
-		if (strCurName.RPos(pos, L'.')) {
+		if (strCurName.RPos(pos, L'.') && pos != strCurName.GetLength() - 1 &&  pos != 0) {
 			// Учтем тот момент, что расширение может содержать символы-разделители
-			strRawMask.Format(L"\"*.%ls\"", strCurName.CPtr() + pos + 1);
+			strRawMask.Format(L"\"?*.%ls\"", strCurName.CPtr() + pos + 1);
 			WrapBrackets = true;
-		} else {
-			strMask = L"*.";
-		}
 
+		} else {
+			// file without extension, e.g.: "readme", ".readme" & "readme."
+			strMask = L"/^(?:[^.]+|\\.[^.]+|.+\\.)$/";
+		}
+		SkipPath = true;
 		Mode = (Mode == SELECT_ADDEXT) ? SELECT_ADD : SELECT_REMOVE;
 	} else {
 		if (Mode == SELECT_ADDNAME || Mode == SELECT_REMOVENAME) {
-			// Учтем тот момент, что имя может содержать символы-разделители
-			strRawMask = L"\"";
-			strRawMask+= strCurName;
+			if (strCurName == L"..")
+				return 0;
+			strCurName = PointToName(strCurName);
+
 			size_t pos;
 
-			if (strRawMask.RPos(pos, L'.') && pos != strRawMask.GetLength() - 1)
-				strRawMask.Truncate(pos);
+			if (strCurName.RPos(pos, L'.') && pos != strCurName.GetLength() - 1 &&  pos != 0) {
+				strCurName.Truncate(pos);
+			}
 
-			strRawMask+= L".*\"";
-			WrapBrackets = true;
+			auto fName = EscapeCmdStr(strCurName.CPtr(), L".^$*+-?()[]{}\\|");    // special PCRE characters
+
+			bool allowEmptyExtension = (!strCurName.RPos(pos, '.') || (pos == 0 || pos == strCurName.GetLength() - 1));
+			bool caseSensitive = Opt.PanelCaseSensitiveCompareSelect;
+
+			strMask.Format(L"/^%ls(?:\\.[^.]+)%ls$/", fName.c_str(), allowEmptyExtension ? L"?" : L"");
+			if (!caseSensitive) strMask+=L"i";
+
+			SkipPath = true;
 			Mode = (Mode == SELECT_ADDNAME) ? SELECT_ADD : SELECT_REMOVE;
 		} else {
 			if (Mode == SELECT_ADD || Mode == SELECT_REMOVE) {
@@ -3447,7 +3462,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect, false);
+					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect, SkipPath);
 				}
 			}
 

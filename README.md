@@ -139,7 +139,7 @@ See also [Community packages & binaries](#community_bins)
 ## Building, Contributing, Hacking
 #### Required dependencies
 
-* `libwxgtk3.0-gtk3-dev` <sub>or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones</sub> (_optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
+* `libwxgtk3.0-gtk3-dev` or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones (_optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
 * `libx11-dev` (_optional_ - needed for **X11 extension** that provides better UX for TTY backend wherever X11 is available)
 * `libxi-dev` (_optional_ - needed for **X11/Xi extension** that provides best UX for TTY backend wherever X11 Xi extension is available)
 * `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
@@ -385,9 +385,9 @@ one of the best way to initiate the connection **inside local far2l-GUI**
             sudo apt remove far2l*                      # required if any far2l was installed
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository ppa:far2l-team/ppa
-            sudo apt install far2l-gui  # (!) use if you need GUI version
-            sudo apt install far2l-ttyx # (!) use if you need TTY\|Xi version
-            sudo apt install far2l      # (!) use if you need plain version
+            #sudo apt install far2l-gui  # (!) use if you need plain+GUI backends
+            #sudo apt install far2l-ttyx # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install far2l      # (!) use if you need only plain backend
             ```
 
         - Disconnection PPA and **return to official [Ubuntu](#debian) repository**
@@ -396,18 +396,18 @@ one of the best way to initiate the connection **inside local far2l-GUI**
             sudo apt remove far2l*                      # required if any far2l was installed
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository --remove ppa:far2l-team/ppa
-            sudo apt install far2l     # (!) use if you need TTY\|Xi version
-            sudo apt install far2l-wx  # (!) use if you need GUI version
+            #sudo apt install far2l     # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install far2l-wx  # (!) use if you need plain+GUI backends
             ```
 
     </details>
 
  * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
  * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/ <br>
-    <sub>(contain separate packages with external plugins, in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
+    <sub>(contain separate packages with external plugins;<br>in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
  * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
  * **Termux**: https://github.com/spvkgn/far2l-termux
- * **Flatpak**: https://github.com/spvkgn/far2l-flatpak (access only to part of real filesystem via sandbox)
+ * **Flatpak**: https://github.com/spvkgn/far2l-flatpak <sub>(access only to part of real filesystem via sandbox)</sub>
 
  See also in https://github.com/elfmz/far2l/issues/647
 

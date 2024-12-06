@@ -405,9 +405,13 @@ typedef struct _CHAR_INFO {
 
 #define CI_SET_WCATTR(CI, WC, ATTR) {(CI).Char.UnicodeChar = (COMP_CHAR)(uint32_t)(WC); (CI).Attributes = (DWORD64)ATTR;}
 
-#define CI_USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
-#define CI_FULL_WIDTH_CHAR(CI) ( (!CI_USING_COMPOSITE_CHAR(CI) && CharClasses((CI).Char.UnicodeChar).FullWidth()) \
-    || (CI_USING_COMPOSITE_CHAR(CI) && CharClasses(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar)).FullWidth()))
+#define CI_USING_COMPOSITE_CHAR(CI) (UNLIKELY(((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0))
+
+#define CI_FULL_WIDTH_CHAR(CI) ( \
+        CharClasses( CI_USING_COMPOSITE_CHAR(CI) \
+            ? *WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar) \
+            : (CI).Char.UnicodeChar ).FullWidth() \
+        )
 
 #define GET_RGB_FORE(ATTR)       ((DWORD)(((ATTR) >> 16) & 0xffffff))
 #define GET_RGB_BACK(ATTR)       ((DWORD)(((ATTR) >> 40) & 0xffffff))

@@ -486,6 +486,8 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 			// Its enough arguments to assume that ls will be handled by busybox.
 			if (busybox_cmd.empty()) {
 				busybox_cmd = "busybox";
+			} else if (busybox_cmd.front() != '/') {
+				busybox_cmd.insert(0, "/bin/"); // link relative to /bin as its obtained from /bin/sh
 			}
 			busybox_cmd+= " 2>&1";
 			fprintf(stderr, "ProtocolSCP: busybox_cmd='%s'\n", busybox_cmd.c_str());

@@ -97,7 +97,9 @@ https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com
 <sub>_Note_: binaries in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
-<details><summary>Backport official packages for old Debian/Ubuntu system</summary>
+<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with pythons subplugins.</sub>
+
+<details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
 
 <sub>A simple sid back port should be as easy as (build your own binary deb from the official source deb package,
 required install [dependencies](#required-dependencies)):</sub>
@@ -137,7 +139,7 @@ See also [Community packages & binaries](#community_bins)
 ## Building, Contributing, Hacking
 #### Required dependencies
 
-* `libwxgtk3.0-gtk3-dev` (or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones, _optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
+* `libwxgtk3.0-gtk3-dev` or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones (_optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
 * `libx11-dev` (_optional_ - needed for **X11 extension** that provides better UX for TTY backend wherever X11 is available)
 * `libxi-dev` (_optional_ - needed for **X11/Xi extension** that provides best UX for TTY backend wherever X11 Xi extension is available)
 * `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
@@ -357,6 +359,14 @@ one of the best way to initiate the connection **inside local far2l-GUI**
  * far2ltricks: https://github.com/unxed/far2ltricks
     * tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
 
+ * External far2l plugins:
+    + **jumpword** (far2l editor plugin for quick searching the word under cursor): https://github.com/axxie/far2l-jumpword/
+    + **netcfg** (far2l net interfaces configuration plugin): https://github.com/VPROFi/netcfgplugin
+    + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
+    + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes
+
+ * **far2m** is fork with FAR3 macro system (Lua) and extended plugins: https://github.com/shmuz/far2m
+
  * **Community wiki & tips** (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
 
 <a name="community_bins"></a>
@@ -366,11 +376,38 @@ one of the best way to initiate the connection **inside local far2l-GUI**
 
  * **Portable** (_with TTY X/Xi backend_) | **AppImage** (_with wx-GUI and some extra plugins_): https://github.com/spvkgn/far2l-portable/releases
  * **Ubuntu** and **Mint** from PPA with fresh far2l: https://launchpad.net/~far2l-team/+archive/ubuntu/ppa
+
+    - <details><summary>tips for toggle between repositories PPA and official Ubuntu <sub>[<i>click to expand/collapse</i>]</sub></summary>
+
+        - **Tranfser to binaries from PPA repository**
+
+            ```shell
+            sudo apt remove far2l*                      # required if any far2l was installed
+            sudo apt install software-properties-common # required if add-apt-repository not installed
+            sudo add-apt-repository ppa:far2l-team/ppa
+            #sudo apt install far2l-gui  # (!) use if you need plain+GUI backends
+            #sudo apt install far2l-ttyx # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install far2l      # (!) use if you need only plain backend
+            ```
+
+        - Disconnection PPA and **return to official [Ubuntu](#debian) repository**
+
+            ```shell
+            sudo apt remove far2l*                      # required if any far2l was installed
+            sudo apt install software-properties-common # required if add-apt-repository not installed
+            sudo add-apt-repository --remove ppa:far2l-team/ppa
+            #sudo apt install far2l     # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install far2l-wx  # (!) use if you need plain+GUI backends
+            ```
+
+    </details>
+
  * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
- * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/
+ * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/ <br>
+    <sub>(contain separate packages with external plugins;<br>in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
  * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
  * **Termux**: https://github.com/spvkgn/far2l-termux
- * **Flatpak**: https://github.com/spvkgn/far2l-flatpak (access only to part of real filesystem via sandbox)
+ * **Flatpak**: https://github.com/spvkgn/far2l-flatpak <sub>(access only to part of real filesystem via sandbox)</sub>
 
  See also in https://github.com/elfmz/far2l/issues/647
 

@@ -139,7 +139,7 @@ See also [Community packages & binaries](#community_bins)
 ## Building, Contributing, Hacking
 #### Required dependencies
 
-* `libwxgtk3.0-gtk3-dev` (or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones, _optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
+* `libwxgtk3.0-gtk3-dev` <sub>or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones</sub> (_optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
 * `libx11-dev` (_optional_ - needed for **X11 extension** that provides better UX for TTY backend wherever X11 is available)
 * `libxi-dev` (_optional_ - needed for **X11/Xi extension** that provides best UX for TTY backend wherever X11 Xi extension is available)
 * `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
@@ -365,7 +365,7 @@ one of the best way to initiate the connection **inside local far2l-GUI**
     + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
     + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes
 
- * **far2m** is fork with FAR3 macro system (LUA) and extended plugins: https://github.com/shmuz/far2m
+ * **far2m** is fork with FAR3 macro system (Lua) and extended plugins: https://github.com/shmuz/far2m
 
  * **Community wiki & tips** (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
 
@@ -379,9 +379,9 @@ one of the best way to initiate the connection **inside local far2l-GUI**
 
     - <details><summary>tips for toggle between repositories PPA and official Ubuntu <sub>[<i>click to expand/collapse</i>]</sub></summary>
 
-        - **Tranfser to binaries for PPA repository**
+        - **Tranfser to binaries from PPA repository**
 
-            ```shell 
+            ```shell
             sudo apt remove far2l*                      # required if any far2l was installed
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository ppa:far2l-team/ppa
@@ -390,10 +390,10 @@ one of the best way to initiate the connection **inside local far2l-GUI**
             sudo apt install far2l      # (!) use if you need plain version
             ```
 
-        - Disconnection PPA and **return to official Ubuntu repository**
+        - Disconnection PPA and **return to official [Ubuntu](#debian) repository**
 
-            ```shell 
-            sudo apt remove far2l*                      # required, if any far2l was installed
+            ```shell
+            sudo apt remove far2l*                      # required if any far2l was installed
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository --remove ppa:far2l-team/ppa
             sudo apt install far2l     # (!) use if you need TTY\|Xi version
@@ -404,7 +404,7 @@ one of the best way to initiate the connection **inside local far2l-GUI**
 
  * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
  * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/ <br>
-    <sub>(in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
+    <sub>(contain separate packages with external plugins, in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
  * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
  * **Termux**: https://github.com/spvkgn/far2l-termux
  * **Flatpak**: https://github.com/spvkgn/far2l-flatpak (access only to part of real filesystem via sandbox)

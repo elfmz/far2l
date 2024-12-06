@@ -97,7 +97,9 @@ https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com
 <sub>_Note_: binaries in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
-<details><summary>Backport official packages for old Debian/Ubuntu system</summary>
+<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with pythons subplugins.</sub>
+
+<details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
 
 <sub>A simple sid back port should be as easy as (build your own binary deb from the official source deb package,
 required install [dependencies](#required-dependencies)):</sub>
@@ -357,6 +359,14 @@ one of the best way to initiate the connection **inside local far2l-GUI**
  * far2ltricks: https://github.com/unxed/far2ltricks
     * tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
 
+ * External far2l plugins:
+    + **jumpword** (far2l editor plugin for quick searching the word under cursor): https://github.com/axxie/far2l-jumpword/
+    + **netcfg** (far2l net interfaces configuration plugin): https://github.com/VPROFi/netcfgplugin
+    + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
+    + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes
+
+ * **far2m** is fork with FAR3 macro system (LUA) and extended plugins: https://github.com/shmuz/far2m
+
  * **Community wiki & tips** (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
 
 <a name="community_bins"></a>
@@ -366,8 +376,35 @@ one of the best way to initiate the connection **inside local far2l-GUI**
 
  * **Portable** (_with TTY X/Xi backend_) | **AppImage** (_with wx-GUI and some extra plugins_): https://github.com/spvkgn/far2l-portable/releases
  * **Ubuntu** and **Mint** from PPA with fresh far2l: https://launchpad.net/~far2l-team/+archive/ubuntu/ppa
+
+    - <details><summary>tips for toggle between repositories PPA and official Ubuntu <sub>[<i>click to expand/collapse</i>]</sub></summary>
+
+        - **Tranfser to binaries for PPA repository**
+
+            ```shell 
+            sudo apt remove far2l*                      # required if any far2l was installed
+            sudo apt install software-properties-common # required if add-apt-repository not installed
+            sudo add-apt-repository ppa:far2l-team/ppa
+            sudo apt install far2l-gui  # (!) use if you need GUI version
+            sudo apt install far2l-ttyx # (!) use if you need TTY\|Xi version
+            sudo apt install far2l      # (!) use if you need plain version
+            ```
+
+        - Disconnection PPA and **return to official Ubuntu repository**
+
+            ```shell 
+            sudo apt remove far2l*                      # required, if any far2l was installed
+            sudo apt install software-properties-common # required if add-apt-repository not installed
+            sudo add-apt-repository --remove ppa:far2l-team/ppa
+            sudo apt install far2l     # (!) use if you need TTY\|Xi version
+            sudo apt install far2l-wx  # (!) use if you need GUI version
+            ```
+
+    </details>
+
  * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
- * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/
+ * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/ <br>
+    <sub>(in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
  * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
  * **Termux**: https://github.com/spvkgn/far2l-termux
  * **Flatpak**: https://github.com/spvkgn/far2l-flatpak (access only to part of real filesystem via sandbox)

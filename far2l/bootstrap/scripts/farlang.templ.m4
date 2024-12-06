@@ -2422,7 +2422,7 @@ upd:"Input settings"
 "Налады увода"
 
 DirSettingsTitle
-"Каталоги и симлинки в столбце Размер"
+"Каталоги и симлинки в колонке Размер"
 "Dirs and symlinks in Size column"
 upd:"Dirs and symlinks in Size column"
 upd:"Dirs and symlinks in Size column"
@@ -2499,15 +2499,15 @@ upd:"size of target file"
 upd:"size of target file"
 
 DirSettingsApply
-"Применить"
-"Apply"
-"Použít"
-"Anwenden"
-"Alkalmaz"
-"Zastosować"
-"Aplicar"
-"Застосувати"
-"Ужыць"
+"&Применить"
+"&Apply"
+"&Použít"
+"&Anwenden"
+"&Alkalmaz"
+"&Zastosować"
+"&Aplicar"
+"&Застосувати"
+"&Ужыць"
 
 DirSettingsSymlinkSizeHint
 "Ctrl-Alt-L для переключения из панелей"

@@ -126,7 +126,9 @@ void SetColors()
 		{L"",                                       LIF_SEPARATOR, 0},
 		{(const wchar_t *)Msg::SetDefaultColors,    0,             0},
 		{(const wchar_t *)Msg::SetDefaultColorsRGB, 0,             0},
-		{(const wchar_t *)Msg::SetBW,               0,             0}
+		{(const wchar_t *)Msg::SetBW,               0,             0},
+		{L"",                                       LIF_SEPARATOR, 0},
+		{(const wchar_t *)Msg::Palette,             0,             0}
 	};
 	MenuDataEx PanelItems[] = {
 		{(const wchar_t *)Msg::SetColorPanelNormal,          LIF_SELECTED, 0},

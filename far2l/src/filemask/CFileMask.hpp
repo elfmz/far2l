@@ -33,28 +33,19 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "BaseFileMask.hpp"
+#include "FileMasksProcessor.hpp"
 #include "noncopyable.hpp"
-
-enum FM_FLAGS
-{
-	FMF_SILENT        = 0x00000001,
-	FMF_FORBIDEXCLUDE = 0x00000002,
-	FMF_ADDASTERISK   = 0x00000004
-};
 
 class CFileMask : private NonCopyable
 {
-private:
-	BaseFileMask *FileMask;
+	private:
+		FileMasksProcessor FileMask;
 
-public:
-	CFileMask();
-	~CFileMask() { Free(); }
+	public:
+		CFileMask() {}
+		~CFileMask() {}
 
-public:
-	bool Set(const wchar_t *Masks, DWORD Flags);
-	bool Compare(const wchar_t *Name, bool ignorecase = true) const;
-	bool IsEmpty() const;
-	void Free();
+	public:
+		bool Set(const wchar_t *Masks, DWORD Flags);
+		bool Compare(const wchar_t *Name, bool ignorecase, bool SkipPath=true) const;
 };

@@ -98,7 +98,7 @@ FarRecursiveSearch(const wchar_t *InitDir, const wchar_t *Mask, FRSUSERFUNC Func
 		ScTree.SetFindPath(InitDir, L"*");
 
 		while (ScTree.GetNextName(&FindData, strFullName)) {
-			if (FMask.Compare(FindData.strFileName)) {
+			if (FMask.Compare(FindData.strFileName, false)) {
 				FAR_FIND_DATA fdata;
 				apiFindDataExToData(&FindData, &fdata);
 
@@ -139,36 +139,36 @@ int WINAPI FarMkTemp(wchar_t *Dest, DWORD size, const wchar_t *Prefix)
 FARString &
 FarMkTempEx(FARString &strDest, const wchar_t *Prefix, BOOL WithTempPath, const wchar_t *UserTempPath)
 {
-	if (!(Prefix && *Prefix))
-		Prefix = L"FTMP";
 	FARString strPath = L".";
-
 	if (WithTempPath) {
 		apiGetTempPath(strPath);
 	} else if (UserTempPath) {
 		strPath = UserTempPath;
 	}
 
+	strDest.Clear();
+
 	AddEndSlash(strPath);
+	strPath+= (Prefix && *Prefix) ? Prefix : L"FTMP";
 
-	wchar_t *lpwszDest = strDest.GetBuffer(StrLength(Prefix) + strPath.GetLength() + 13);
-	UINT uniq = WINPORT(GetCurrentProcessId)(), savePid = uniq;
-
-	for (;;) {
-		if (!uniq)
-			++uniq;
-
-		if (WINPORT(GetTempFileName)(strPath, Prefix, uniq, lpwszDest)
-				&& apiGetFileAttributes(lpwszDest) == INVALID_FILE_ATTRIBUTES)
-			break;
-
-		if (++uniq == savePid) {
-			*lpwszDest = 0;
+	const size_t BasePathLen = strPath.GetLength();
+	for (unsigned int uniq = (GetInterThreadID() << 4) ^ RevBytes(WINPORT(GetCurrentProcessId)()), wraps = 0;; ++uniq) {
+		strPath.AppendFormat(L"%x.tmp", uniq);
+		if (apiGetFileAttributes(strPath) == INVALID_FILE_ATTRIBUTES) {
+			strDest = std::move(strPath);
 			break;
 		}
+		strPath.Truncate(BasePathLen);
+		if (uniq == 0) {
+			if (++wraps == 4) {
+				fprintf(stderr, "%s: gave up - '%ls'\n", __FUNCTION__, strPath.CPtr());
+				break;
+			}
+			fprintf(stderr, "%s: wrap around - '%ls'\n", __FUNCTION__, strPath.CPtr());
+			usleep(10000);
+		}
 	}
-
-	strDest.ReleaseBuffer();
+	// fprintf(stderr, "%s: '%ls'\n", __FUNCTION__, strDest.CPtr());
 	return strDest;
 }
 

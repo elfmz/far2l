@@ -69,7 +69,7 @@ static Byte InvS[256];
   #elif defined(Z7_CLANG_VERSION) && (Z7_CLANG_VERSION >= 30800) \
      || defined(Z7_GCC_VERSION)   && (Z7_GCC_VERSION   >= 40400)
     #define USE_HW_AES
-      #if defined(__clang__) && (__clang_major__ >= 8) \
+      #if defined(__clang__) && (__clang_major__ >= 9) \
           || defined(__GNUC__) && (__GNUC__ >= 8)
         #define USE_HW_VAES
       #endif

@@ -153,6 +153,7 @@ public:
 	void ClearAllFlags() { memset(FFlags, 0, sizeof(FFlags)); }
 
 	const wchar_t *GetTitle() const;
+	const size_t GetTitleLen() const;
 	bool GetMask(const wchar_t **Mask) const;
 	bool GetMaskIgnoreCase() const;
 	bool GetDate(DWORD *DateType, FILETIME *DateAfter, FILETIME *DateBefore, bool *bRelative) const;
@@ -171,10 +172,12 @@ public:
 	bool FileInFilter(const FileListItem &fli, uint64_t CurrentTime) const;
 	bool FileInFilter(const FAR_FIND_DATA_EX &fde, uint64_t CurrentTime) const;
 	bool FileInFilter(const FAR_FIND_DATA &fd, uint64_t CurrentTime) const;
+
+	void RefreshMask() { if(FMask.Used) FMask.FilterMask.Set(FMask.strMask, FMF_SILENT); }
 };
 
 bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig = false);
 
 // Централизованная функция для создания строк меню различных фильтров.
-void MenuString(FARString &strDest, FileFilterParams *FF, bool bHighlightType = false, int Hotkey = 0,
+void MenuString(FARString &strDest, FileFilterParams *FF, uint32_t maskstyle, bool bHighlightType = false, int Hotkey = 0,
 		bool bPanelType = false, const wchar_t *FMask = nullptr, const wchar_t *Title = nullptr);

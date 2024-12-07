@@ -48,6 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "strmix.hpp"
 #include "interf.hpp"
+#include "scrbuf.hpp"
+
 
 static int _cdecl ExtSort(const void *el1, const void *el2);
 
@@ -76,27 +78,19 @@ Panel *FileFilter::GetHostPanel()
 	return m_HostPanel;
 }
 
-bool FileFilter::FilterEdit()
+void FileFilter::FillMenu(VMenu &FilterList)
 {
-	if (bMenuOpen)
-		return false;
-
-	bMenuOpen = true;
 	MenuItemEx ListItem;
-	int ExitCode;
-	bool bNeedUpdate = false;
-	VMenu FilterList(Msg::FilterTitle, nullptr, 0, ScrY - 6);
-	FilterList.SetHelp(L"FiltersMenu");
-	FilterList.SetPosition(-1, -1, 0, 0);
-	FilterList.SetBottomTitle(Msg::FilterBottom);
-	FilterList.SetFlags(/*VMENU_SHOWAMPERSAND|*/ VMENU_WRAPMODE);
+	uint32_t attrstyle = Opt.AttrStrStyle;
+
+	FilterList.DeleteItems();
 
 	for (size_t i = 0; i < FilterData.getCount(); i++) {
 		ListItem.Clear();
-		MenuString(ListItem.strName, FilterData.getItem(i));
+		MenuString(ListItem.strName, FilterData.getItem(i), attrstyle);
 
 		if (!i)
-			ListItem.Flags|= LIF_SELECTED;
+			ListItem.Flags |= LIF_SELECTED;
 
 		auto Check = GetCheck(FilterData.getItem(i));
 
@@ -139,7 +133,7 @@ bool FileFilter::FilterEdit()
 		FilterList.AddItem(&ListItem);
 		ListItem.Clear();
 		FoldersFilter.SetTitle(Msg::FolderFileType);
-		MenuString(ListItem.strName, &FoldersFilter, false, L'0');
+		MenuString(ListItem.strName, &FoldersFilter, attrstyle, false, L'0');
 		auto Check = GetCheck(&FoldersFilter);
 
 		if (Check)
@@ -172,14 +166,34 @@ bool FileFilter::FilterEdit()
 		for (int i = 0, h = L'1'; i < ExtCount;
 				i++, (h == L'9' ? h = L'A' : (h == L'Z' || h ? h++ : h = 0))) {
 			wchar_t *CurExtPtr = ExtPtr + i * MAX_PATH;
-			MenuString(ListItem.strName, nullptr, false, h, true, CurExtPtr, Msg::PanelFileType);
+			MenuString(ListItem.strName, nullptr, attrstyle, false, h, true, CurExtPtr, Msg::PanelFileType);
 			ListItem.SetCheck(CurExtPtr[StrLength(CurExtPtr) + 1]);
 			FilterList.SetUserData(CurExtPtr, 0, FilterList.AddItem(&ListItem));
 		}
 
 		free(ExtPtr);
 	}
+}
 
+bool FileFilter::FilterEdit()
+{
+	if (bMenuOpen)
+		return false;
+
+	bMenuOpen = true;
+	MenuItemEx ListItem;
+	int ExitCode;
+	bool bNeedUpdate = false;
+	Panel *LeftPanel = CtrlObject->Cp()->LeftPanel;
+	Panel *RightPanel = CtrlObject->Cp()->RightPanel;
+
+	VMenu FilterList(Msg::FilterTitle, nullptr, 0, ScrY - 6);
+	FilterList.SetHelp(L"FiltersMenu");
+	FilterList.SetPosition(-1, -1, 0, 0);
+	FilterList.SetBottomTitle(Msg::FilterBottom);
+	FilterList.SetFlags(/*VMENU_SHOWAMPERSAND|*/ VMENU_WRAPMODE);
+
+	FillMenu(FilterList);
 	FilterList.Show();
 
 	while (!FilterList.Done()) {
@@ -195,6 +209,27 @@ bool FileFilter::FilterEdit()
 			Key = L'X';
 
 		switch (Key) {
+			case KEY_CTRLM: {
+				Opt.AttrStrStyle ^= 1;
+
+				int SelPos = FilterList.GetSelectPos();
+				if (SelPos < 0 || SelPos == (int)FilterData.getCount())
+					SelPos = 0;
+
+				ScrBuf.Lock();
+				FilterList.Hide();
+				LeftPanel->Update(UPDATE_KEEP_SELECTION);
+				LeftPanel->Redraw();
+				RightPanel->Update(UPDATE_KEEP_SELECTION);
+				RightPanel->Redraw();
+				FillMenu(FilterList);
+				FilterList.SetPosition(-1, -1, 0, 0);
+				FilterList.SetSelectPos(SelPos, 1);
+				FilterList.Show();
+				ScrBuf.Unlock();
+				break;
+			}
+
 			case L'+':
 			case L'-':
 			case L'I':
@@ -241,7 +276,7 @@ bool FileFilter::FilterEdit()
 				if (SelPos < (int)FilterData.getCount()) {
 					if (FileFilterConfig(FilterData.getItem(SelPos))) {
 						ListItem.Clear();
-						MenuString(ListItem.strName, FilterData.getItem(SelPos));
+						MenuString(ListItem.strName, FilterData.getItem(SelPos), Opt.AttrStrStyle);
 						auto Check = GetCheck(FilterData.getItem(SelPos));
 
 						if (Check)
@@ -302,7 +337,7 @@ bool FileFilter::FilterEdit()
 
 				if (FileFilterConfig(NewFilter)) {
 					ListItem.Clear();
-					MenuString(ListItem.strName, NewFilter);
+					MenuString(ListItem.strName, NewFilter, Opt.AttrStrStyle);
 					FilterList.AddItem(&ListItem, static_cast<int>(SelPos));
 					FilterList.SetSelectPos(static_cast<int>(SelPos), 1);
 					FilterList.SetPosition(-1, -1, 0, 0);
@@ -701,6 +736,24 @@ bool FileFilter::IsEnabledOnPanel()
 	return false;
 }
 
+void FileFilter::AddDefaultFileFilters()
+{
+	static const std::pair<const wchar_t*, const wchar_t*> Sets[]
+	{
+		{ L"archives", L"<arc>" },
+		{ L"pictures", L"<pic>" },
+	};
+
+	for ( auto i : Sets ) {
+		FileFilterParams *NewFilter = FilterData.addItem();
+		if (!NewFilter)
+			break;
+
+		NewFilter->SetTitle(i.first);
+		NewFilter->SetMask(true, i.second, true);
+	}
+}
+
 void FileFilter::InitFilter(ConfigReader &cfg_reader)
 {
 	FilterData.Free();
@@ -743,6 +796,9 @@ void FileFilter::InitFilter(ConfigReader &cfg_reader)
 		} else
 			break;
 	}
+
+	if (!FilterData.getCount())
+		AddDefaultFileFilters();
 
 	while (1) {
 		cfg_reader.SelectSectionFmt("Filters/PanelMask%d", (int)TempFilterData.getCount());

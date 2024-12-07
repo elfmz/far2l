@@ -99,9 +99,9 @@ void TmpPanel::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 
 int TmpPanel::SetDirectory(const wchar_t *Dir, int OpMode)
 {
-	if ((OpMode & OPM_FIND) /* || lstrcmp(Dir,L"\\")==0*/)
+	if ((OpMode & OPM_FIND) /* || wcscmp(Dir,L"\\")==0*/)
 		return (FALSE);
-	if (lstrcmp(Dir, WGOOD_SLASH) == 0)
+	if (wcscmp(Dir, WGOOD_SLASH) == 0)
 		Info.Control(this, FCTL_CLOSEPLUGIN, 0, 0);
 	else
 		Info.Control(this, FCTL_CLOSEPLUGIN, 0, (LONG_PTR)Dir);
@@ -138,7 +138,7 @@ HANDLE TmpPanel::BeginPutFiles()
 
 static inline int cmp_names(const WIN32_FIND_DATA &wfd, const FAR_FIND_DATA &ffd)
 {
-	return lstrcmp(wfd.cFileName, FSF.PointToName(ffd.lpwszFileName));
+	return wcscmp(wfd.cFileName, FSF.PointToName(ffd.lpwszFileName));
 }
 
 int TmpPanel::PutDirectoryContents(const wchar_t *Path)
@@ -189,17 +189,17 @@ int TmpPanel::PutOneFile(const wchar_t *SrcPath, PluginPanelItem &PanelItem)
 	CurPanelItem->FindData = PanelItem.FindData;
 	CurPanelItem->UserData = TmpItemsNumber;
 	CurPanelItem->FindData.lpwszFileName = reinterpret_cast<wchar_t *>(
-			malloc((lstrlen(SrcPath) + 1 + lstrlen(PanelItem.FindData.lpwszFileName) + 1) * sizeof(wchar_t)));
+			malloc((wcslen(SrcPath) + 1 + wcslen(PanelItem.FindData.lpwszFileName) + 1) * sizeof(wchar_t)));
 	if (CurPanelItem->FindData.lpwszFileName == NULL)
 		return FALSE;
 
 	*(wchar_t*)CurPanelItem->FindData.lpwszFileName = L'\0';
 	if (*SrcPath && !wcschr(PanelItem.FindData.lpwszFileName, L'/')) {
-		lstrcpy((wchar_t *)CurPanelItem->FindData.lpwszFileName, SrcPath);
+		wcscpy((wchar_t *)CurPanelItem->FindData.lpwszFileName, SrcPath);
 		FSF.AddEndSlash((wchar_t *)CurPanelItem->FindData.lpwszFileName);
 	}
 
-	lstrcat((wchar_t *)CurPanelItem->FindData.lpwszFileName, PanelItem.FindData.lpwszFileName);
+	wcscat((wchar_t *)CurPanelItem->FindData.lpwszFileName, PanelItem.FindData.lpwszFileName);
 	TmpItemsNumber++;
 	if (Opt.SelectedCopyContents && (CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 		return PutDirectoryContents(CurPanelItem->FindData.lpwszFileName);
@@ -289,7 +289,7 @@ int _cdecl SortListCmp(const void *el1, const void *el2, void *userparam)
 	PluginPanelItem *TmpPanelItem = reinterpret_cast<PluginPanelItem *>(userparam);
 	int idx1 = *reinterpret_cast<const int *>(el1);
 	int idx2 = *reinterpret_cast<const int *>(el2);
-	int res = lstrcmp(TmpPanelItem[idx1].FindData.lpwszFileName, TmpPanelItem[idx2].FindData.lpwszFileName);
+	int res = wcscmp(TmpPanelItem[idx1].FindData.lpwszFileName, TmpPanelItem[idx2].FindData.lpwszFileName);
 	if (res == 0) {
 		if (idx1 < idx2)
 			return -1;
@@ -310,7 +310,7 @@ void TmpPanel::RemoveDups()
 		indices[i] = i;
 	FSF.qsortex(indices, TmpItemsNumber, sizeof(int), SortListCmp, TmpPanelItem);
 	for (int i = 0; i + 1 < TmpItemsNumber; i++)
-		if (lstrcmp(TmpPanelItem[indices[i]].FindData.lpwszFileName,
+		if (wcscmp(TmpPanelItem[indices[i]].FindData.lpwszFileName,
 					TmpPanelItem[indices[i + 1]].FindData.lpwszFileName)
 				== 0)
 			TmpPanelItem[indices[i + 1]].Flags|= REMOVE_FLAG;
@@ -367,7 +367,7 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 		HANDLE FindHandle;
 		const wchar_t *lpFullName = CurItem->FindData.lpwszFileName;
 
-		const wchar_t *lpSlash = _tcsrchr(lpFullName, GOOD_SLASH);
+		const wchar_t *lpSlash = wcsrchr(lpFullName, GOOD_SLASH);
 		int Length = lpSlash ? (int)(lpSlash - lpFullName + 1) : 0;
 
 		int SameFolderItems = 1;
@@ -376,11 +376,11 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 		   этот каталог не найдет. Поэтому для каталогов оптимизацию с
 		   SameFolderItems пропускаем.
 		*/
-		if (Length > 0 && Length > (int)lstrlen(lpFullName))	/* DJ $ */
+		if (Length > 0 && Length > (int)wcslen(lpFullName))	/* DJ $ */
 		{
 			for (int j = 1; i + j < TmpItemsNumber; j++) {
 				if (memcmp(lpFullName, CurItem[j].FindData.lpwszFileName, Length * sizeof(wchar_t)) == 0
-						&& _tcschr((const wchar_t *)CurItem[j].FindData.lpwszFileName + Length, GOOD_SLASH)
+						&& wcschr((const wchar_t *)CurItem[j].FindData.lpwszFileName + Length, GOOD_SLASH)
 								== NULL) {
 					SameFolderItems++;
 				} else {
@@ -397,8 +397,8 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 			WIN32_FIND_DATA FindData;
 
 			StrBuf FindFile((int)(lpSlash - lpFullName) + 1 + 1 + 1);
-			lstrcpyn(FindFile, lpFullName, (int)(lpSlash - lpFullName) + 1);
-			lstrcpy(FindFile + (lpSlash + 1 - lpFullName), L"*");
+			wcsncpy(FindFile, lpFullName, (int)(lpSlash - lpFullName) + 1);
+			wcscpy(FindFile + (lpSlash + 1 - lpFullName), L"*");
 
 			StrBuf NtPath;
 			FormNtPath(FindFile, NtPath);
@@ -444,7 +444,7 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 					CurItem->Owner = NULL;
 				}
 				if (FSF.GetFileOwner(NULL, CurItem->FindData.lpwszFileName, Owner,80))
-					CurItem->Owner = _tcsdup(Owner);
+					CurItem->Owner = wcsdup(Owner);
 			}
 			if (ShowLinks)
 				CurItem->NumberOfLinks = FSF.GetNumberOfLinks(CurItem->FindData.lpwszFileName);
@@ -495,7 +495,7 @@ bool TmpPanel::IsCurrentFileCorrect(wchar_t **pCurFileName)
 	}
 
 	bool IsCorrectFile = false;
-	if (lstrcmp(CurFileName, L"..") == 0) {
+	if (wcscmp(CurFileName, L"..") == 0) {
 		IsCorrectFile = true;
 	} else {
 		FAR_FIND_DATA TempFindData = {};
@@ -506,8 +506,8 @@ bool TmpPanel::IsCurrentFileCorrect(wchar_t **pCurFileName)
 	}
 
 	if (pCurFileName) {
-		*pCurFileName = (wchar_t *)malloc((lstrlen(CurFileName) + 1) * sizeof(wchar_t));
-		lstrcpy(*pCurFileName, CurFileName);
+		*pCurFileName = (wchar_t *)malloc((wcslen(CurFileName) + 1) * sizeof(wchar_t));
+		wcscpy(*pCurFileName, CurFileName);
 	}
 
 	free(PPI);
@@ -532,7 +532,7 @@ int TmpPanel::ProcessKey(int Key, unsigned int ControlState)
 		if (IsCurrentFileCorrect(CurFileName.PtrPtr())) {
 			struct PanelInfo PInfo;
 			Info.Control(this, FCTL_GETPANELINFO, 0, (LONG_PTR)&PInfo);
-			if (lstrcmp(CurFileName, L"..") != 0) {
+			if (wcscmp(CurFileName, L"..") != 0) {
 
 				PluginPanelItem *PPI = (PluginPanelItem *)malloc(
 						Info.Control(this, FCTL_GETPANELITEM, PInfo.CurrentItem, 0));
@@ -572,13 +572,13 @@ int TmpPanel::ProcessKey(int Key, unsigned int ControlState)
 	if (Opt.SafeModePanel && ControlState == PKF_CONTROL && Key == VK_PRIOR) {
 		PtrGuard CurFileName;
 		if (IsCurrentFileCorrect(CurFileName.PtrPtr())) {
-			if (lstrcmp(CurFileName, L"..")) {
+			if (wcscmp(CurFileName, L"..")) {
 				GoToFile(CurFileName, false);
 				return TRUE;
 			}
 		}
 
-		if (CurFileName.Ptr() && !lstrcmp(CurFileName, L"..")) {
+		if (CurFileName.Ptr() && !wcscmp(CurFileName, L"..")) {
 			SetDirectory(L".", 0);
 			return TRUE;
 		}
@@ -645,18 +645,18 @@ void TmpPanel::ProcessSaveListKey()
 	Info.Control(PANEL_PASSIVE, FCTL_GETPANELDIR, NT_MAX_PATH, (LONG_PTR)ListPath.Ptr());
 
 	FSF.AddEndSlash(ListPath);
-	lstrcat(ListPath, L"panel");
+	wcscat(ListPath, L"panel");
 	if (Opt.CommonPanel)
-		FSF.itoa(PanelIndex, ListPath.Ptr() + lstrlen(ListPath), 10);
+		FSF.itoa(PanelIndex, ListPath.Ptr() + wcslen(ListPath), 10);
 
 	wchar_t ExtBuf[512];
-	lstrcpy(ExtBuf, Opt.Mask);
-	wchar_t *comma = _tcschr(ExtBuf, L',');
+	wcscpy(ExtBuf, Opt.Mask);
+	wchar_t *comma = wcschr(ExtBuf, L',');
 	if (comma)
 		*comma = L'\0';
-	wchar_t *ext = _tcschr(ExtBuf, L'.');
-	if (ext && !_tcschr(ext, L'*') && !_tcschr(ext, L'?'))
-		lstrcat(ListPath, ext);
+	wchar_t *ext = wcschr(ExtBuf, L'.');
+	if (ext && !wcschr(ext, L'*') && !wcschr(ext, L'?'))
+		wcscat(ListPath, ext);
 
 	if (Info.InputBox(GetMsg(MTempPanel), GetMsg(MListFilePath), L"TmpPanel.SaveList", ListPath, ListPath,
 				ListPath.Size() - 1, NULL, FIB_BUTTONS)) {
@@ -771,7 +771,7 @@ int TmpPanel::IsLinksDisplayed(LPCTSTR ColumnTypes)
 
 inline bool isDevice(const wchar_t *FileName, const wchar_t *dev_begin)
 {
-	const int len = (int)lstrlen(dev_begin);
+	const int len = (int)wcslen(dev_begin);
 	if (FSF.LStrnicmp(FileName, dev_begin, len))
 		return false;
 	FileName+= len;
@@ -801,7 +801,7 @@ bool TmpPanel::GetFileInfoAndValidate(const wchar_t *FilePath, FAR_FIND_DATA *Fi
 		FindData->dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 		Result = true;
 	} else {
-		if (lstrlen(FileName)) {
+		if (wcslen(FileName)) {
 			DWORD dwAttr = GetFileAttributes(NtPath);
 			if (dwAttr != INVALID_FILE_ATTRIBUTES) {
 				WIN32_FIND_DATA wfd;

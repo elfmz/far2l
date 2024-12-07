@@ -85,7 +85,7 @@ void GetOptions(void)
 			if (str.size() * sizeof(wchar_t) > OptionsList[i].OptionSize) {
 				str.resize(OptionsList[i].OptionSize / sizeof(wchar_t));
 			}
-			lstrcpy((wchar_t *)OptionsList[i].Option, str.c_str());
+			wcscpy((wchar_t *)OptionsList[i].Option, str.c_str());
 		}
 	}
 }
@@ -169,7 +169,7 @@ int Config()
 			*((int *)OptionsList[i].Option) = GetCheck(OptionsList[i].DialogItem);
 			kfh.SetInt(INI_SECTION, REGStr[i], *(int *)OptionsList[i].Option);
 		} else {
-			FSF.Trim(lstrcpy((wchar_t *)OptionsList[i].Option, GetDataPtr(OptionsList[i].DialogItem)));
+			FSF.Trim(wcscpy((wchar_t *)OptionsList[i].Option, GetDataPtr(OptionsList[i].DialogItem)));
 			kfh.SetString(INI_SECTION, REGStr[i], (wchar_t *)OptionsList[i].Option);
 		}
 	}

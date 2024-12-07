@@ -56,9 +56,9 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 	::Info.FSF = &::FSF;
 	TmpPanelModule = wcsdup(Info->ModuleName);
 
-	PluginRootKey = (wchar_t *)malloc((lstrlen(Info->RootKey) + 1) * sizeof(wchar_t) + sizeof(TmpPanelPath));
-	lstrcpy(PluginRootKey, Info->RootKey);
-	lstrcat(PluginRootKey, TmpPanelPath);
+	PluginRootKey = (wchar_t *)malloc((wcslen(Info->RootKey) + 1) * sizeof(wchar_t) + sizeof(TmpPanelPath));
+	wcscpy(PluginRootKey, Info->RootKey);
+	wcscat(PluginRootKey, TmpPanelPath);
 	GetOptions();
 	StartupOptFullScreenPanel = Opt.FullScreenPanel;
 	StartupOptCommonPanel = Opt.CommonPanel;
@@ -86,7 +86,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		while (*argv == L' ')
 			argv++;
 
-		while (lstrlen(argv) > 1 && (*argv == L'+' || *argv == L'-')) {
+		while (wcslen(argv) > 1 && (*argv == L'+' || *argv == L'-')) {
 			int k = 0;
 			while (*argv && *argv != L' ' && *argv != L'<') {
 				k++;
@@ -95,11 +95,11 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 			StrBuf tmpTMP(k + 1);
 			wchar_t *TMP = tmpTMP;
-			lstrcpyn(TMP, argv - k, k);
+			wcsncpy(TMP, argv - k, k);
 			TMP[k] = L'\0';
 
 			for (int i = 0; i < OPT_COUNT; i++) {
-				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0) {
+				if (wcscasecmp(TMP + 1, ParamsStr[i]) == 0) {
 					*(int *)ParamsOpt[i] = *TMP == L'+';
 					break;
 				}
@@ -113,7 +113,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		}
 
 		FSF.Trim(argv);
-		if (lstrlen(argv)) {
+		if (wcslen(argv)) {
 			if (*argv == L'<') {
 				argv++;
 				hPlugin = OpenPanelFromOutput(argv);
@@ -223,7 +223,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 		FSF.Trim(TMP);
 		FSF.Unquote(TMP);
 
-		Len = lstrlen(TMP);
+		Len = wcslen(TMP);
 		if (!Len)
 			continue;
 
@@ -231,7 +231,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 			*argv++ = args;
 
 		if (args) {
-			lstrcpy(args, TMP);
+			wcscpy(args, TMP);
 			args+= Len + 1;
 		}
 
@@ -311,7 +311,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 
 				FSF.TruncStr(param, 67);
 				fmi[i].Text = wcsdup(param);
-				fmi[i].Separator = !lstrcmp(param, L"-");
+				fmi[i].Separator = !wcscmp(param, L"-");
 				fmi[i].Selected = FALSE;
 				fmi[i].Checked = FALSE;
 
@@ -319,7 +319,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 			//    fmi[0].Selected=TRUE;
 
 			wchar_t Title[128];	// BUGBUG
-			FSF.ProcessName(FSF.PointToName(Name), lstrcpy(Title, L"*."),
+			FSF.ProcessName(FSF.PointToName(Name), wcscpy(Title, L"*."),
 					ARRAYSIZE(Title),PN_GENERATENAME);
 			FSF.TruncPathStr(Title, 64);
 
@@ -406,7 +406,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 			return INVALID_HANDLE_VALUE;
 		GetOptions();
 		StrBuf pName(NT_MAX_PATH);	// BUGBUG
-		lstrcpy(pName, Name);
+		wcscpy(pName, Name);
 
 		if (!DataSize || !FSF.ProcessName(Opt.Mask, pName, pName.Size(), PN_CMPNAMELIST))
 			return INVALID_HANDLE_VALUE;

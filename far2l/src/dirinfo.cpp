@@ -177,6 +177,8 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0 && !Opt.OnlyFilesSize) {
 				FileSize+= s.st_size;
 			}
+
+			FileCount++;
 			if (!ScTree.IsSymlinksScanEnabled())
 				continue;
 		}

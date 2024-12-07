@@ -27,6 +27,8 @@
 #include "TTYNegotiateFar2l.h"
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
+#include "../NotifySh.h"
+
 
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
 static volatile long s_terminal_size_change_id = 0;
@@ -128,6 +130,18 @@ TTYBackend::~TTYBackend()
 	DetachNotifyPipe();
 }
 
+static unsigned short GetWinSizeEnv(const char *env, unsigned short def)
+{
+	const char *psz = getenv(env);
+	if (psz && *psz) { // use it if it contains sane integer value
+		int v = atoi(psz);
+		if (v > 10 && v < 4096) {
+			return (unsigned short)v;
+		}
+	}
+	return def;
+}
+
 void TTYBackend::GetWinSize(struct winsize &w)
 {
 	int r = ioctl(_stdout, TIOCGWINSZ, &w);
@@ -135,9 +149,16 @@ void TTYBackend::GetWinSize(struct winsize &w)
 		r = ioctl(_stdin, TIOCGWINSZ, &w);
 		if (UNLIKELY(r != 0)) {
 			perror("TIOCGWINSZ");
-			w.ws_row = g_far2l_term_height;
-			w.ws_col = g_far2l_term_width;
 		}
+	}
+	if (UNLIKELY(r != 0) || (w.ws_row == 0 && w.ws_col == 0)) {
+		// when running over serial console 0:0 is returned always and far2l unusable
+		// try to use $LINES and $COLUMNS if they contain sane values,
+		// otherwise fallback to hardcoded 80:25
+		w.ws_row = GetWinSizeEnv("LINES", g_far2l_term_height);
+		w.ws_col = GetWinSizeEnv("COLUMNS", g_far2l_term_width);
+		fprintf(stderr, "%s: fallback size %u:%u\n",
+			__FUNCTION__, (unsigned int)w.ws_row, (unsigned int)w.ws_col);
 	}
 }
 
@@ -170,41 +191,10 @@ bool TTYBackend::Startup()
 	return true;
 }
 
-static wchar_t s_backend_identification[8] = L"TTY";
-
-static void AppendBackendIdentificationChar(char ch)
+void TTYBackend::BackendInfoChanged()
 {
-	const size_t l = wcslen(s_backend_identification);
-	if (l + 1 >= ARRAYSIZE(s_backend_identification)) {
-		abort();
-	}
-	s_backend_identification[l + 1] = 0;
-	s_backend_identification[l] = (unsigned char)ch;
-}
-
-void TTYBackend::UpdateBackendIdentification()
-{
-	s_backend_identification[3] = 0;
-
-	if (_far2l_tty || _ttyx || _using_extension) {
-		AppendBackendIdentificationChar('|');
-	}
-
-	if (_far2l_tty) {
-		AppendBackendIdentificationChar('F');
-
-	} else if (_ttyx || _using_extension) {
-		if (_ttyx) {
-			AppendBackendIdentificationChar('X');
-		}
-		if (_using_extension) {
-			AppendBackendIdentificationChar(_using_extension);
-		} else if (_ttyx && _ttyx->HasXi()) {
-			AppendBackendIdentificationChar('i');
-		}
-	}
-
-	g_winport_backend = s_backend_identification;
+	std::lock_guard<std::mutex> lock(_backend_info);
+	_backend_info.flavor.clear();
 }
 
 static bool UnderWayland()
@@ -245,7 +235,7 @@ void TTYBackend::ReaderThread()
 				ChooseSimpleClipboardBackend();
 			}
 		}
-		UpdateBackendIdentification();
+		BackendInfoChanged();
 		prev_far2l_tty = _far2l_tty;
 
 		{
@@ -770,29 +760,30 @@ void TTYBackend::OnConsoleAdhocQuickEdit()
 
 DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 {
-	const auto prev_osc52clip_set = _osc52clip_set;
-	_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
+	if (tweaks != TWEAKS_ONLY_QUERY_SUPPORTED) {
+		const auto prev_osc52clip_set = _osc52clip_set;
+		_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
 
-	if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
-		ChooseSimpleClipboardBackend();
-	}
+		if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
+			ChooseSimpleClipboardBackend();
+		}
 
-	bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
-	{
-		std::lock_guard<std::mutex> lock(_palette_mtx);
-		std::swap(override_default_palette, _override_default_palette);
-	}
+		bool override_default_palette = (tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0;
+		{
+			std::lock_guard<std::mutex> lock(_palette_mtx);
+			std::swap(override_default_palette, _override_default_palette);
+		}
 
-	if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
-		std::unique_lock<std::mutex> lock(_async_mutex);
-		_ae.palette = true;
-		_async_cond.notify_all();
-		while (_ae.palette) {
-			_async_cond.wait(lock);
+		if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_ae.palette = true;
+			_async_cond.notify_all();
+			while (_ae.palette) {
+				_async_cond.wait(lock);
+			}
 		}
 	}
 
-//
 
 	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
 
@@ -1057,7 +1048,7 @@ void TTYBackend::OnUsingExtension(char extension)
 {
 	if (_using_extension != extension) {
 		_using_extension = extension;
-		UpdateBackendIdentification();
+		BackendInfoChanged();
 	}
 }
 
@@ -1215,13 +1206,23 @@ DWORD TTYBackend::QueryControlKeys()
 
 void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
-	try {
-		StackSerializer stk_ser;
-		stk_ser.PushStr(Wide2MB(text));
-		stk_ser.PushStr(Wide2MB(title));
-		stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
-		Far2lInteract(stk_ser, false);
-	} catch (std::exception &) {}
+	if (_far2l_tty) {
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushStr(Wide2MB(text));
+			stk_ser.PushStr(Wide2MB(title));
+			stk_ser.PushNum(FARTTY_INTERACT_DESKTOP_NOTIFICATION);
+			Far2lInteract(stk_ser, false);
+		} catch (std::exception &) {}
+
+	} else if (getenv("DISPLAY") != NULL || UnderWayland()) {
+		const std::string &str_title = Wide2MB(title);
+		const std::string &str_text = Wide2MB(text);
+		Far2l_NotifySh(_full_exe_path, str_title.c_str(), str_text.c_str());
+
+	} else {
+		fprintf(stderr, "OnConsoleDisplayNotification('%ls', '%ls') - unsupported\n", title, text);
+	}
 }
 
 bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
@@ -1237,6 +1238,37 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 	}
 
 	return true;
+}
+
+const char *TTYBackend::OnConsoleBackendInfo(int entity)
+{
+	if (entity != -1)
+		return nullptr;
+
+	std::lock_guard<std::mutex> lock(_backend_info);
+	if (_backend_info.flavor.empty()) {
+		_backend_info.flavor.reserve(16); // avoid reallocation ever then
+		_backend_info.flavor = "TTY";
+
+		if (_far2l_tty || _ttyx || _using_extension) {
+			_backend_info.flavor+= '|';
+		}
+
+		if (_far2l_tty) {
+			_backend_info.flavor+= 'F';
+		} else if (_ttyx || _using_extension) {
+			if (_ttyx) {
+				_backend_info.flavor+= 'X';
+			}
+			if (_using_extension) {
+				_backend_info.flavor+= _using_extension;
+			} else if (_ttyx && _ttyx->HasXi()) {
+				_backend_info.flavor+= 'i';
+			}
+		}
+	}
+
+	return _backend_info.flavor.c_str();
 }
 
 

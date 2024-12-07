@@ -22,6 +22,15 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * 7z ANSI-C Decoder
 * utf-cpp by ww898
 
+<sub><a name="keyshells"></a>_Note_: Far2l uses keyboard shortcurts in the tradition of the Far Manager for Windows,
+but some of them (**Alt**-**F1**, **Alt**-**F2**, **Alt**-**F7**, **Ctrl**-arrows, etc.)
+usually exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. and in terminal emulators.
+To work with these keys in far2l you need to _release keyboard shortcuts globally_
+in the environment settings (see [#2326](https://github.com/elfmz/far2l/issues/2326))
+or use far2l lifehacks:
+_Sticky controls via **Ctrl**-**Space** or **Alt**-**Space**_ or _Exclusively handle hotkeys option in the Input settings_
+(see details in buil-in far2l help).</sub>
+
 ### UI Backends
   FAR2L has base UI Backends (see details in build-in help section **UI backends**):
 
@@ -42,11 +51,10 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 | **Works:** | in **console**<br>and in any<br>**terminal** | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **Desktop<br>environment**<br><sub>(X11<br>or Wayland<br>or macOS)<br>via wxWidgets</sub> |
 | **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |
 | **[Dependencies](#required-dependencies):** | minimal | + libx11 | + libx11, libxi | + wxWidgets, GTK |
-| **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
-| **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
-| **Typical<br>use case:** | **Servers**,<br>embedded<br>(*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
-| [Debian](https://packages.debian.org/search?keywords=far2l) packages: | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_)</sup> |
-| [Ubuntu](https://packages.ubuntu.com/search?keywords=far2l) packages: | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | _none_ |
+| **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
+| **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (\*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
+| **Typical<br>use case:** | **Servers**,<br>embedded<br>(\*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
+| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories:</sup> | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
 | Community [PPA](#community_bins): | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` |
 
 <sub><a name="downgrade"></a>_Note_: When running far2l automatically downgrade
@@ -61,7 +69,7 @@ for plain **TTY**: `far2l --tty --nodetect=x`
 
 <sub>_Note about use OSC 52 in TTY/TTY|X_:
 to interact with the system clipboard you must **not forget to enable OSC 52**
-in both the **FAR2L settings** (`Options`->`Interface settings`->`Use OSC52 to set clipboard data`,
+in both the **FAR2L settings** (`Options`⇒`Interface settings`⇒`Use OSC52 to set clipboard data`,
 which shown in the dialog only if far2l run in TTY/TTY|X mode and all other options for clipboard access are unavailable;
 you can run `far2l --tty --nodetect` to force not use others clipboard options),
 and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 is disabled in some terminals for security reasons;
@@ -69,6 +77,7 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
 
 
 ## Installing, Running
+<a name="debian"></a>
 #### Debian/Ubuntu binaries from the official repositories
 
 * **TTY X/Xi** backends only (Debian / Ubuntu 23.10+)
@@ -76,7 +85,7 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
     apt install far2l
     ```
 
-* **GUI** backend (Debian since far2l _2.6.4_)
+* **GUI** backend (Debian since far2l _2.6.4_ / Ubuntu 25.04+)
     ```sh
     apt install far2l-wx
     ```
@@ -87,6 +96,25 @@ https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com
 
 <sub>_Note_: binaries in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
+
+<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with pythons subplugins.</sub>
+
+<details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
+
+<sub>A simple sid back port should be as easy as (build your own binary deb from the official source deb package,
+required install [dependencies](#required-dependencies)):</sub>
+
+```sh
+# you will find the latest dsc link at http://packages.debian.org/sid/far2l
+dget http://deb.debian.org/debian/pool/main/f/far2l/2.6.3~beta+ds-1.dsc
+dpkg-source -x *.dsc
+cd far2l-*/
+debuild
+# cd .. and install your self built far2l*.deb
+```
+
+</details>
+
 
 #### OSX/MacOS binaries
 
@@ -111,7 +139,7 @@ See also [Community packages & binaries](#community_bins)
 ## Building, Contributing, Hacking
 #### Required dependencies
 
-* `libwxgtk3.0-gtk3-dev` (or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones, _optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
+* `libwxgtk3.0-gtk3-dev` or `libwxgtk3.2-dev` in newer distributions, or `libwxgtk3.0-dev` in older ones (_optional_ - needed for **GUI backend**, not needed with `-DUSEWX=no`)
 * `libx11-dev` (_optional_ - needed for **X11 extension** that provides better UX for TTY backend wherever X11 is available)
 * `libxi-dev` (_optional_ - needed for **X11/Xi extension** that provides best UX for TTY backend wherever X11 Xi extension is available)
 * `libxml2-dev` (_optional_ - needed for **Colorer plugin**, not needed with `-DCOLORER=no`)
@@ -122,8 +150,8 @@ See also [Community packages & binaries](#community_bins)
 * `libnfs-dev` (_optional_ - needed for **NetRocks/NFS**)
 * `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
-* `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `UNRAR` command line option)
-* `libpcre2-dev` (_optional_ - needed for advanced custom archive formats support in **multiarc**)
+* `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
+* `libicu-dev` (_optional_ - needed if used non-default ICU_MODE, see `-DICU_MODE` command line option)
 * `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `cmake` ( >= 3.2.2 )
@@ -131,22 +159,12 @@ See also [Community packages & binaries](#community_bins)
 * `g++`
 * `git` (needed for downloading source code)
 
-#### Or simply on Debian/Ubuntu:
+or simply on **Debian/Ubuntu**:
 ``` sh
-apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libpcre2-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
+apt-get install libwxgtk3.0-gtk3-dev libx11-dev libxi-dev libxml2-dev libuchardet-dev libssh-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libarchive-dev cmake pkg-config g++ git
 ```
 
-A simple sid back port should be as easy as (build your own binary deb from the official source deb package):
-```sh
-# you will find the latest dsc link at http://packages.debian.org/sid/far2l
-dget http://deb.debian.org/debian/pool/main/f/far2l/far2l_2.5.0~beta+git20230223+ds-2.dsc
-dpkg-source -x *.dsc
-cd far2l-*/
-debuild
-# cd .. and install your self built far2l*.deb
-```
-
-In older distributions: use libwxgtk3.0-dev instead of libwxgtk3.0-gtk3-dev
+In older distributions: use `libwxgtk3.0-dev` instead of `libwxgtk3.0-gtk3-dev`.
 
 #### Clone and Build
  * Clone current master
@@ -184,6 +202,12 @@ To build without WX backend (console version only): change `-DUSEWX=yes` to `-DU
 To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable only TTY|Xi - add argument `-DTTYXI=no`
 
 To eliminate libuchardet requirement to reduce far2l dependencies by cost of losing automatic charset detection functionality: add `-DUSEUCD=no`
+
+By default far2l uses pre-generated "hardcoded" UNICODE characters properties. But this can be changed by specifying -DICU_MODE when configuring cmake:
+ `-DICU_MODE=prebuilt` - is a described above default implementaion. Most dependency-less option.
+ `-DICU_MODE=build` - re-generate characters properties during build by using libicu available on build system, but it still not required to be present on target.
+ `-DICU_MODE=runtime` - obtain properties at runtime (that can be bit slower) using libicu that required to be present on target system.
+
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 but you must have installed additional packages within yours system:
@@ -313,7 +337,7 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
 ## Terminals and SSH clients
 Supporting extended far2l keyboard shortcuts and clipboard access
 
- * **kovidgoyal's kitty** (Linux, macOS, *BSD): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
+ * **kovidgoyal's kitty** (Linux, macOS, \*BSD): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
  * **Wez's Terminal Emulator** (Linux, FreeBSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
  * **iTerm2** (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
  * **Windows Terminal** (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
@@ -332,7 +356,16 @@ one of the best way to initiate the connection **inside local far2l-GUI**
  * A collection of macros for far2l: https://github.com/corporateshark/far2l-macros
  * Turbo Vision, TUI framework supporting far2l terminal extensions: https://github.com/magiblot/tvision
  * turbo, text editor supporting far2l terminal extensions: https://github.com/magiblot/turbo
- * Tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
+ * far2ltricks: https://github.com/unxed/far2ltricks
+    * tool to import color schemes from windows FAR manager 2 .reg format: https://github.com/unxed/far2ltricks/blob/main/misc/far2l_import.pl
+
+ * External far2l plugins:
+    + **jumpword** (far2l editor plugin for quick searching the word under cursor): https://github.com/axxie/far2l-jumpword/
+    + **netcfg** (far2l net interfaces configuration plugin): https://github.com/VPROFi/netcfgplugin
+    + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
+    + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes
+
+ * **far2m** is fork with FAR3 macro system (Lua) and extended plugins: https://github.com/shmuz/far2m
 
  * **Community wiki & tips** (in Russian; unofficial): https://github.com/akruphi/far2l/wiki
 
@@ -343,11 +376,38 @@ one of the best way to initiate the connection **inside local far2l-GUI**
 
  * **Portable** (_with TTY X/Xi backend_) | **AppImage** (_with wx-GUI and some extra plugins_): https://github.com/spvkgn/far2l-portable/releases
  * **Ubuntu** and **Mint** from PPA with fresh far2l: https://launchpad.net/~far2l-team/+archive/ubuntu/ppa
+
+    - <details><summary>tips for toggle between repositories PPA and official Ubuntu <sub>[<i>click to expand/collapse</i>]</sub></summary>
+
+        - **Tranfser to binaries from PPA repository**
+
+            ```shell
+            sudo apt remove far2l*                      # required if any far2l was installed
+            sudo apt install software-properties-common # required if add-apt-repository not installed
+            sudo add-apt-repository ppa:far2l-team/ppa
+            #sudo apt install far2l-gui  # (!) use if you need plain+GUI backends
+            #sudo apt install far2l-ttyx # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install far2l      # (!) use if you need only plain backend
+            ```
+
+        - Disconnection PPA and **return to official [Ubuntu](#debian) repository**
+
+            ```shell
+            sudo apt remove far2l*                      # required if any far2l was installed
+            sudo apt install software-properties-common # required if add-apt-repository not installed
+            sudo add-apt-repository --remove ppa:far2l-team/ppa
+            #sudo apt install far2l     # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install far2l-wx  # (!) use if you need plain+GUI backends
+            ```
+
+    </details>
+
  * **Fedora** and **CentOS**: https://copr.fedorainfracloud.org/coprs/polter/far2l
- * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/
+ * **OpenSUSE**, **Fedora**, **Debian**, **Ubuntu**: https://download.opensuse.org/repositories/home:/viklequick/ <br>
+    <sub>(contain separate packages with external plugins;<br>in `sources.list` you may add: `deb https://downloadcontentcdn.opensuse.org/repositories/home:/viklequick/<os-version> ./`)</sub>
  * **OpenWrt**: https://github.com/spvkgn/far2l-openwrt
  * **Termux**: https://github.com/spvkgn/far2l-termux
- * **Flatpak**: https://github.com/spvkgn/far2l-flatpak (access only to part of real filesystem via sandbox)
+ * **Flatpak**: https://github.com/spvkgn/far2l-flatpak <sub>(access only to part of real filesystem via sandbox)</sub>
 
  See also in https://github.com/elfmz/far2l/issues/647
 

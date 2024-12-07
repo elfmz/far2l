@@ -53,7 +53,7 @@ wchar_t *ParseParam(wchar_t *&str)
 	wchar_t *parm = NULL;
 	if (*p == L'|') {
 		parm = ++p;
-		p = _tcschr(p, L'|');
+		p = wcschr(p, L'|');
 		if (p) {
 			*p = L'\0';
 			str = p + 1;
@@ -73,8 +73,8 @@ void GoToFile(const wchar_t *Target, BOOL AnotherPanel)
 	int pathlen;
 
 	const wchar_t *p = FSF.PointToName(const_cast<wchar_t *>(Target));
-	StrBuf Name(lstrlen(p) + 1);
-	lstrcpy(Name, p);
+	StrBuf Name(wcslen(p) + 1);
+	wcscpy(Name, p);
 	pathlen = (int)(p - Target);
 	StrBuf Dir(pathlen + 1);
 	if (pathlen)
@@ -129,9 +129,9 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
 
 wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf)
 {
-	int l = lstrlen(path);
+	int l = wcslen(path);
 	buf.Grow(l + 1);
-	lstrcpy(buf, path);
+	wcscpy(buf, path);
 	return buf;
 }
 
@@ -144,7 +144,7 @@ wchar_t *ExpandEnvStrs(const wchar_t *input, StrBuf &output)
 	std::wstring w;
 	StrMB2Wide(s, w);
 	output.Grow(w.size() + 1);
-	lstrcpy(output, w.c_str());
+	wcscpy(output, w.c_str());
 
 	return output;
 }
@@ -181,13 +181,13 @@ bool FindListFile(const wchar_t *FileName, StrBuf &output)
 	const wchar_t *final = NULL;
 	if (GetFileAttributes(NtPath) != INVALID_FILE_ATTRIBUTES) {
 		output.Grow(FullPath.Size());
-		lstrcpy(output, FullPath);
+		wcscpy(output, FullPath);
 		return true;
 	}
 	{
 		const wchar_t *tmp = FSF.PointToName(Info.ModuleName);
 		Path.Grow((int)(tmp - Info.ModuleName + 1));
-		lstrcpyn(Path, Info.ModuleName, (int)(tmp - Info.ModuleName + 1));
+		wcsncpy(Path, Info.ModuleName, (int)(tmp - Info.ModuleName + 1));
 		dwSize = LookAtPath(Path, FileName);
 		if (dwSize) {
 			final = Path;
@@ -195,7 +195,7 @@ bool FindListFile(const wchar_t *FileName, StrBuf &output)
 		}
 	}
 	ExpandEnvStrs(L"$FARHOME:$PATH", Path);
-	for (wchar_t *str = Path, *p = _tcschr(Path, L':'); *str; p = _tcschr(str, L':')) {
+	for (wchar_t *str = Path, *p = wcschr(Path, L':'); *str; p = wcschr(str, L':')) {
 		if (p)
 			*p = 0;
 

@@ -51,11 +51,11 @@ TCHAR *ParseParam(TCHAR *&str)
 {
 	TCHAR *p = str;
 	TCHAR *parm = NULL;
-	if (*p == _T('|')) {
+	if (*p == L'|') {
 		parm = ++p;
-		p = _tcschr(p, _T('|'));
+		p = _tcschr(p, L'|');
 		if (p) {
-			*p = _T('\0');
+			*p = L'\0';
 			str = p + 1;
 			FSF.LTrim(str);
 			return parm;
@@ -79,7 +79,7 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 	StrBuf Dir(pathlen + 1);
 	if (pathlen)
 		memcpy(Dir.Ptr(), Target, pathlen * sizeof(TCHAR));
-	Dir[pathlen] = _T('\0');
+	Dir[pathlen] = L'\0';
 
 	FSF.Trim(Name);
 	FSF.Trim(Dir);
@@ -194,8 +194,8 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 			goto success;
 		}
 	}
-	ExpandEnvStrs(_T("$FARHOME:$PATH"), Path);
-	for (TCHAR *str = Path, *p = _tcschr(Path, _T(':')); *str; p = _tcschr(str, _T(':'))) {
+	ExpandEnvStrs(L"$FARHOME:$PATH", Path);
+	for (TCHAR *str = Path, *p = _tcschr(Path, L':'); *str; p = _tcschr(str, L':')) {
 		if (p)
 			*p = 0;
 

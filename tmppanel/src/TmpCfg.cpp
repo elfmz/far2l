@@ -49,26 +49,26 @@ struct COptionsList
 };
 
 static const struct COptionsList OptionsList[] = {
-		{&Opt.AddToDisksMenu,           _T(""),          1,  sizeof(Opt.AddToDisksMenu)          },
-		{&Opt.AddToPluginsMenu,         _T(""),          4,  sizeof(Opt.AddToPluginsMenu)        },
+		{&Opt.AddToDisksMenu,           L"",          1,  sizeof(Opt.AddToDisksMenu)          },
+		{&Opt.AddToPluginsMenu,         L"",          4,  sizeof(Opt.AddToPluginsMenu)        },
 
-		{&Opt.CommonPanel,              _T(""),          6,  sizeof(Opt.CommonPanel)             },
+		{&Opt.CommonPanel,              L"",          6,  sizeof(Opt.CommonPanel)             },
 		{&Opt.SafeModePanel,            NULL,            7,  sizeof(Opt.SafeModePanel)           },
 		{&Opt.AnyInPanel,               NULL,            8,  sizeof(Opt.AnyInPanel)              },
 		{&Opt.CopyContents,             NULL,            9,  sizeof(Opt.CopyContents)            },
-		{&Opt.Mode,                     _T(""),          10, sizeof(Opt.Mode)                    },
+		{&Opt.Mode,                     L"",          10, sizeof(Opt.Mode)                    },
 		{&Opt.MenuForFilelist,          NULL,            11, sizeof(Opt.MenuForFilelist)         },
 		{&Opt.NewPanelForSearchResults, NULL,            12, sizeof(Opt.NewPanelForSearchResults)},
 
 		{&Opt.FullScreenPanel,          NULL,            22, sizeof(Opt.FullScreenPanel)         },
 
-		{Opt.ColumnTypes,               _T("N,S"),       15, sizeof(Opt.ColumnTypes)             },
-		{Opt.ColumnWidths,              _T("0,8"),       17, sizeof(Opt.ColumnWidths)            },
-		{Opt.StatusColumnTypes,         _T("NR,SC,D,T"), 19, sizeof(Opt.StatusColumnTypes)       },
-		{Opt.StatusColumnWidths,        _T("0,8,0,5"),   21, sizeof(Opt.StatusColumnWidths)      },
+		{Opt.ColumnTypes,               L"N,S",       15, sizeof(Opt.ColumnTypes)             },
+		{Opt.ColumnWidths,              L"0,8",       17, sizeof(Opt.ColumnWidths)            },
+		{Opt.StatusColumnTypes,         L"NR,SC,D,T", 19, sizeof(Opt.StatusColumnTypes)       },
+		{Opt.StatusColumnWidths,        L"0,8,0,5",   21, sizeof(Opt.StatusColumnWidths)      },
 
-		{Opt.Mask,                      _T("*.temp"),    25, sizeof(Opt.Mask)                    },
-		{Opt.Prefix,                    _T("tmp"),       27, sizeof(Opt.Mask)                    },
+		{Opt.Mask,                      L"*.temp",    25, sizeof(Opt.Mask)                    },
+		{Opt.Prefix,                    L"tmp",       27, sizeof(Opt.Mask)                    },
 };
 
 int StartupOptFullScreenPanel, StartupOptCommonPanel, StartupOpenFrom;

@@ -10,7 +10,7 @@ Temporary panel configuration
 #include <utils.h>
 
 #define GetCheck(i)   (int)Info.SendDlgMessage(hDlg, DM_GETCHECK, i, 0)
-#define GetDataPtr(i) ((const TCHAR *)Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, i, 0))
+#define GetDataPtr(i) ((const wchar_t *)Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, i, 0))
 
 #define INI_LOCATION InMyConfig("plugins/tmppanel/config.ini")
 #define INI_SECTION  "Settings"
@@ -43,7 +43,7 @@ static const char REGStr[][9] = {("InDisks"), ("InPlug"), ("Common"), ("Safe"), 
 struct COptionsList
 {
 	void *Option;
-	const TCHAR *pStr;
+	const wchar_t *pStr;
 	unsigned int DialogItem;
 	size_t OptionSize;
 };
@@ -82,10 +82,10 @@ void GetOptions(void)
 			(*(int *)(OptionsList[i]).Option) = kfh.GetInt(REGStr[i], (OptionsList[i].pStr ? 1 : 0));
 		} else {
 			str = kfh.GetString(REGStr[i], OptionsList[i].pStr);
-			if (str.size() * sizeof(TCHAR) > OptionsList[i].OptionSize) {
-				str.resize(OptionsList[i].OptionSize / sizeof(TCHAR));
+			if (str.size() * sizeof(wchar_t) > OptionsList[i].OptionSize) {
+				str.resize(OptionsList[i].OptionSize / sizeof(wchar_t));
 			}
-			lstrcpy((TCHAR *)OptionsList[i].Option, str.c_str());
+			lstrcpy((wchar_t *)OptionsList[i].Option, str.c_str());
 		}
 	}
 }
@@ -151,7 +151,7 @@ int Config()
 		if (i < ColumnTypes)
 			DialogItems[OptionsList[i].DialogItem].Selected = *(int *)(OptionsList[i].Option);
 		else
-			DialogItems[OptionsList[i].DialogItem].PtrData = (TCHAR *)OptionsList[i].Option;
+			DialogItems[OptionsList[i].DialogItem].PtrData = (wchar_t *)OptionsList[i].Option;
 
 	HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, DIALOG_WIDTH, DIALOG_HEIGHT, L"Config",
 			DialogItems, ARRAYSIZE(DialogItems), 0, 0, NULL, 0);
@@ -169,14 +169,14 @@ int Config()
 			*((int *)OptionsList[i].Option) = GetCheck(OptionsList[i].DialogItem);
 			kfh.SetInt(INI_SECTION, REGStr[i], *(int *)OptionsList[i].Option);
 		} else {
-			FSF.Trim(lstrcpy((TCHAR *)OptionsList[i].Option, GetDataPtr(OptionsList[i].DialogItem)));
+			FSF.Trim(lstrcpy((wchar_t *)OptionsList[i].Option, GetDataPtr(OptionsList[i].DialogItem)));
 			kfh.SetString(INI_SECTION, REGStr[i], (wchar_t *)OptionsList[i].Option);
 		}
 	}
 	kfh.Save();
 
 	if (StartupOptFullScreenPanel != Opt.FullScreenPanel || StartupOptCommonPanel != Opt.CommonPanel) {
-		const TCHAR *MsgItems[] = {GetMsg(MTempPanel), GetMsg(MConfigNewOption), GetMsg(MOk)};
+		const wchar_t *MsgItems[] = {GetMsg(MTempPanel), GetMsg(MConfigNewOption), GetMsg(MOk)};
 		Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 1);
 	}
 	if (GetTmpPanelModule()) {

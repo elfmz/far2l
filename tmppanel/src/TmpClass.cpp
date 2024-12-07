@@ -61,16 +61,16 @@ void TmpPanel::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 		Info->Flags|= OPIF_REALNAMES;
 
 	Info->HostFile=this->HostFile;
-	Info->CurDir = _T("");
+	Info->CurDir = L"";
 
 	Info->Format = (TCHAR *)GetMsg(MTempPanel);
 
 	static TCHAR Title[100] = {};
-#define PANEL_MODE (Opt.SafeModePanel ? _T("(R) ") : _T(""))
+#define PANEL_MODE (Opt.SafeModePanel ? L"(R) " : L"")
 	if (StartupOptCommonPanel)
 		FSF.snprintf(Title, ARRAYSIZE(Title) - 1, GetMsg(MTempPanelTitleNum), PANEL_MODE, PanelIndex);
 	else
-		FSF.snprintf(Title, ARRAYSIZE(Title) - 1, _T(" %ls%ls "), PANEL_MODE, GetMsg(MTempPanel));
+		FSF.snprintf(Title, ARRAYSIZE(Title) - 1, L" %ls%ls ", PANEL_MODE, GetMsg(MTempPanel));
 #undef PANEL_MODE
 
 	Info->PanelTitle = Title;
@@ -86,7 +86,7 @@ void TmpPanel::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 
 	Info->PanelModesArray = PanelModesArray;
 	Info->PanelModesNumber = ARRAYSIZE(PanelModesArray);
-	Info->StartPanelMode = _T('4');
+	Info->StartPanelMode = L'4';
 	static struct KeyBarTitles KeyBar;
 	memset(&KeyBar, 0, sizeof(KeyBar));
 	KeyBar.Titles[7 - 1] = (TCHAR *)GetMsg(MF7);
@@ -99,7 +99,7 @@ void TmpPanel::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 
 int TmpPanel::SetDirectory(const TCHAR *Dir, int OpMode)
 {
-	if ((OpMode & OPM_FIND) /* || lstrcmp(Dir,_T("\\"))==0*/)
+	if ((OpMode & OPM_FIND) /* || lstrcmp(Dir,L"\\")==0*/)
 		return (FALSE);
 	if (lstrcmp(Dir, WGOOD_SLASH) == 0)
 		Info.Control(this, FCTL_CLOSEPLUGIN, 0, 0);
@@ -145,7 +145,7 @@ int TmpPanel::PutDirectoryContents(const TCHAR *Path)
 {
 	if (Opt.SelectedCopyContents == 2) {
 		const TCHAR *MsgItems[] = {GetMsg(MWarning), GetMsg(MCopyContentsMsg)};
-		Opt.SelectedCopyContents = !Info.Message(Info.ModuleNumber, FMSG_MB_YESNO, _T("Config"), MsgItems,
+		Opt.SelectedCopyContents = !Info.Message(Info.ModuleNumber, FMSG_MB_YESNO, L"Config", MsgItems,
 				ARRAYSIZE(MsgItems), 0);
 	}
 	if (Opt.SelectedCopyContents) {
@@ -398,7 +398,7 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 
 			StrBuf FindFile((int)(lpSlash - lpFullName) + 1 + 1 + 1);
 			lstrcpyn(FindFile, lpFullName, (int)(lpSlash - lpFullName) + 1);
-			lstrcpy(FindFile + (lpSlash + 1 - lpFullName), _T("*"));
+			lstrcpy(FindFile + (lpSlash + 1 - lpFullName), L"*");
 
 			StrBuf NtPath;
 			FormNtPath(FindFile, NtPath);
@@ -495,7 +495,7 @@ bool TmpPanel::IsCurrentFileCorrect(TCHAR **pCurFileName)
 	}
 
 	bool IsCorrectFile = false;
-	if (lstrcmp(CurFileName, _T("..")) == 0) {
+	if (lstrcmp(CurFileName, L"..") == 0) {
 		IsCorrectFile = true;
 	} else {
 		FAR_FIND_DATA TempFindData = {};
@@ -532,7 +532,7 @@ int TmpPanel::ProcessKey(int Key, unsigned int ControlState)
 		if (IsCurrentFileCorrect(CurFileName.PtrPtr())) {
 			struct PanelInfo PInfo;
 			Info.Control(this, FCTL_GETPANELINFO, 0, (LONG_PTR)&PInfo);
-			if (lstrcmp(CurFileName, _T("..")) != 0) {
+			if (lstrcmp(CurFileName, L"..") != 0) {
 
 				PluginPanelItem *PPI = (PluginPanelItem *)malloc(
 						Info.Control(this, FCTL_GETPANELITEM, PInfo.CurrentItem, 0));
@@ -572,14 +572,14 @@ int TmpPanel::ProcessKey(int Key, unsigned int ControlState)
 	if (Opt.SafeModePanel && ControlState == PKF_CONTROL && Key == VK_PRIOR) {
 		PtrGuard CurFileName;
 		if (IsCurrentFileCorrect(CurFileName.PtrPtr())) {
-			if (lstrcmp(CurFileName, _T(".."))) {
+			if (lstrcmp(CurFileName, L"..")) {
 				GoToFile(CurFileName, false);
 				return TRUE;
 			}
 		}
 
-		if (CurFileName.Ptr() && !lstrcmp(CurFileName, _T(".."))) {
-			SetDirectory(_T("."), 0);
+		if (CurFileName.Ptr() && !lstrcmp(CurFileName, L"..")) {
+			SetDirectory(L".", 0);
 			return TRUE;
 		}
 	}
@@ -595,8 +595,8 @@ int TmpPanel::ProcessKey(int Key, unsigned int ControlState)
 			if (Key == VK_F12) {
 				ProcessPanelSwitchMenu();
 				return (TRUE);
-			} else if (Key >= _T('0') && Key <= _T('9')) {
-				SwitchToPanel(Key - _T('0'));
+			} else if (Key >= L'0' && Key <= L'9') {
+				SwitchToPanel(Key - L'0');
 				return TRUE;
 			}
 		}
@@ -645,20 +645,20 @@ void TmpPanel::ProcessSaveListKey()
 	Info.Control(PANEL_PASSIVE, FCTL_GETPANELDIR, NT_MAX_PATH, (LONG_PTR)ListPath.Ptr());
 
 	FSF.AddEndSlash(ListPath);
-	lstrcat(ListPath, _T("panel"));
+	lstrcat(ListPath, L"panel");
 	if (Opt.CommonPanel)
 		FSF.itoa(PanelIndex, ListPath.Ptr() + lstrlen(ListPath), 10);
 
 	TCHAR ExtBuf[512];
 	lstrcpy(ExtBuf, Opt.Mask);
-	TCHAR *comma = _tcschr(ExtBuf, _T(','));
+	TCHAR *comma = _tcschr(ExtBuf, L',');
 	if (comma)
-		*comma = _T('\0');
-	TCHAR *ext = _tcschr(ExtBuf, _T('.'));
-	if (ext && !_tcschr(ext, _T('*')) && !_tcschr(ext, _T('?')))
+		*comma = L'\0';
+	TCHAR *ext = _tcschr(ExtBuf, L'.');
+	if (ext && !_tcschr(ext, L'*') && !_tcschr(ext, L'?'))
 		lstrcat(ListPath, ext);
 
-	if (Info.InputBox(GetMsg(MTempPanel), GetMsg(MListFilePath), _T("TmpPanel.SaveList"), ListPath, ListPath,
+	if (Info.InputBox(GetMsg(MTempPanel), GetMsg(MListFilePath), L"TmpPanel.SaveList", ListPath, ListPath,
 				ListPath.Size() - 1, NULL, FIB_BUTTONS)) {
 		SaveListFile(ListPath);
 		Info.Control(PANEL_PASSIVE, FCTL_UPDATEPANEL, 0, 0);
@@ -731,17 +731,17 @@ void TmpPanel::ProcessPanelSwitchMenu()
 	const TCHAR *txt = GetMsg(MSwitchMenuTxt);
 
 	wchar_t tmpstr[COMMONPANELSNUMBER][128];
-	static const TCHAR fmt1[] = _T("&%c. %ls %d");
+	static const TCHAR fmt1[] = L"&%c. %ls %d";
 	for (unsigned int i = 0; i < COMMONPANELSNUMBER; ++i) {
 
 #define _OUT tmpstr[i]
 		fmi[i].Text = tmpstr[i];
 		if (i < 10)
-			FSF.snprintf(_OUT, sizeof(_OUT) - 1, fmt1, _T('0') + i, txt, CommonPanels[i].ItemsNumber);
+			FSF.snprintf(_OUT, sizeof(_OUT) - 1, fmt1, L'0' + i, txt, CommonPanels[i].ItemsNumber);
 		else if (i < 36)
-			FSF.snprintf(_OUT, sizeof(_OUT) - 1, fmt1, _T('A') - 10 + i, txt, CommonPanels[i].ItemsNumber);
+			FSF.snprintf(_OUT, sizeof(_OUT) - 1, fmt1, L'A' - 10 + i, txt, CommonPanels[i].ItemsNumber);
 		else
-			FSF.snprintf(_OUT, sizeof(_OUT) - 1, _T("   %ls %d"), txt, CommonPanels[i].ItemsNumber);
+			FSF.snprintf(_OUT, sizeof(_OUT) - 1, L"   %ls %d", txt, CommonPanels[i].ItemsNumber);
 #undef _OUT
 	}
 	fmi[PanelIndex].Selected = TRUE;
@@ -753,8 +753,8 @@ void TmpPanel::ProcessPanelSwitchMenu()
 int TmpPanel::IsOwnersDisplayed(LPCTSTR ColumnTypes)
 {
 	for (int i = 0; ColumnTypes[i]; i++)
-		if (ColumnTypes[i] == _T('O') && (i == 0 || ColumnTypes[i - 1] == _T(','))
-				&& (ColumnTypes[i + 1] == _T(',') || ColumnTypes[i + 1] == 0))
+		if (ColumnTypes[i] == L'O' && (i == 0 || ColumnTypes[i - 1] == L',')
+				&& (ColumnTypes[i + 1] == L',' || ColumnTypes[i + 1] == 0))
 			return (TRUE);
 	return (FALSE);
 }
@@ -762,9 +762,9 @@ int TmpPanel::IsOwnersDisplayed(LPCTSTR ColumnTypes)
 int TmpPanel::IsLinksDisplayed(LPCTSTR ColumnTypes)
 {
 	for (int i = 0; ColumnTypes[i]; i++)
-		if (ColumnTypes[i] == _T('L') && ColumnTypes[i + 1] == _T('N')
-				&& (i == 0 || ColumnTypes[i - 1] == _T(','))
-				&& (ColumnTypes[i + 2] == _T(',') || ColumnTypes[i + 2] == 0))
+		if (ColumnTypes[i] == L'L' && ColumnTypes[i + 1] == L'N'
+				&& (i == 0 || ColumnTypes[i - 1] == L',')
+				&& (ColumnTypes[i + 2] == L',' || ColumnTypes[i + 2] == 0))
 			return (TRUE);
 	return (FALSE);
 }
@@ -777,7 +777,7 @@ inline bool isDevice(const TCHAR *FileName, const TCHAR *dev_begin)
 	FileName+= len;
 	if (!*FileName)
 		return false;
-	while (*FileName >= _T('0') && *FileName <= _T('9'))
+	while (*FileName >= L'0' && *FileName <= L'9')
 		FileName++;
 	return !*FileName;
 }

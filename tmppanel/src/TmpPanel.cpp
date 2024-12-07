@@ -41,7 +41,7 @@ static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode);
 static void ShowMenuFromList(TCHAR *Name);
 static HANDLE OpenPanelFromOutput(wchar_t *argv);
 
-static TCHAR TmpPanelPath[] = WGOOD_SLASH _T("TmpPanel");
+static TCHAR TmpPanelPath[] = WGOOD_SLASH L"TmpPanel";
 static wchar_t *TmpPanelModule = nullptr;
 
 const wchar_t *GetTmpPanelModule()
@@ -79,16 +79,16 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		TCHAR *argv = (TCHAR *)Item;
 
 #define OPT_COUNT 5
-		static const TCHAR ParamsStr[OPT_COUNT][8] = {_T("safe"), _T("any"), _T("replace"), _T("menu"), _T("full")};
+		static const TCHAR ParamsStr[OPT_COUNT][8] = {L"safe", L"any", L"replace", L"menu", L"full"};
 		const int *ParamsOpt[OPT_COUNT] = {
 				&Opt.SafeModePanel, &Opt.AnyInPanel, &Opt.Mode, &Opt.MenuForFilelist, &Opt.FullScreenPanel};
 
-		while (*argv == _T(' '))
+		while (*argv == L' ')
 			argv++;
 
-		while (lstrlen(argv) > 1 && (*argv == _T('+') || *argv == _T('-'))) {
+		while (lstrlen(argv) > 1 && (*argv == L'+' || *argv == L'-')) {
 			int k = 0;
-			while (*argv && *argv != _T(' ') && *argv != _T('<')) {
+			while (*argv && *argv != L' ' && *argv != L'<') {
 				k++;
 				argv++;
 			}
@@ -100,21 +100,21 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 			for (int i = 0; i < OPT_COUNT; i++) {
 				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0) {
-					*(int *)ParamsOpt[i] = *TMP == _T('+');
+					*(int *)ParamsOpt[i] = *TMP == L'+';
 					break;
 				}
 			}
 
-			if (*(TMP + 1) >= _T('0') && *(TMP + 1) <= _T('9'))
-				CurrentCommonPanel = *(TMP + 1) - _T('0');
+			if (*(TMP + 1) >= L'0' && *(TMP + 1) <= L'9')
+				CurrentCommonPanel = *(TMP + 1) - L'0';
 
-			while (*argv == _T(' '))
+			while (*argv == L' ')
 				argv++;
 		}
 
 		FSF.Trim(argv);
 		if (lstrlen(argv)) {
-			if (*argv == _T('<')) {
+			if (*argv == L'<') {
 				argv++;
 				hPlugin = OpenPanelFromOutput(argv);
 				if (Opt.MenuForFilelist)
@@ -319,7 +319,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			//    fmi[0].Selected=TRUE;
 
 			TCHAR Title[128];	// BUGBUG
-			FSF.ProcessName(FSF.PointToName(Name), lstrcpy(Title, _T("*.")),
+			FSF.ProcessName(FSF.PointToName(Name), lstrcpy(Title, L"*."),
 					ARRAYSIZE(Title),PN_GENERATENAME);
 			FSF.TruncPathStr(Title, 64);
 
@@ -327,7 +327,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			static const int BreakKeys[2] = {MAKELONG(VK_RETURN, PKF_SHIFT), 0};
 
 			int ExitCode = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, Title, L"Enter Shift+Enter Esc Ctrl+Alt+F",
-					_T("Contents"), &BreakKeys[0], &BreakCode, fmi, argc);
+					L"Contents", &BreakKeys[0], &BreakCode, fmi, argc);
 
 			for (int i = 0; i < argc; ++i)
 				if (fmi[i].Text)

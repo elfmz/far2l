@@ -45,7 +45,7 @@ bool SplitLocationSpecification(const char *specification, std::string &protocol
 		username.assign(proto_end, at - proto_end);
 		size_t up_div = username.find(':');
 		if (up_div!=std::string::npos) {
-			password = username.substr(up_div);
+			password = username.substr(up_div + 1);
 			username.resize(up_div);
 		}
 		++at;

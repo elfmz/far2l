@@ -17,11 +17,13 @@
 - [shell-posix] Commands are not recognized correctly after escaped new-line
 - [shell-bash] Redirection symbols < and > inside "magic backticks" block break background highlighting till the end of the file
 - [shell-bash] Fix magic backticks in for loop
+- [shell-bash] Fix array extension in for loop
 - [smarty] fixed the work of smarty templates
 - [markdown] amend emphasis with underscores
 - [markdown] fix trailing spaces in em and strong
 - [smarty] fixed working with nested brackets
 - [smarty] literal block - text only
+- [shell-posix] fix variable assignments with line continuations
 
 ### Changed
 - Simplified catalog.xml.
@@ -32,6 +34,7 @@
 - remove obsolete from visual-rgb.hrd
 - [groovy] add .gradle as groovy
 - Use the new shell-posix schema for shell scripts by default
+- [json] highlight JSON object keys
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.
@@ -66,6 +69,9 @@
 - [shell-bash] add functions to outlined list
 - [markdown] added the ability to connect the backlight in 'code' by creating your own scheme 'markdown2:markdown2'
 - [markdown] highlight special all caps HTML tags
+- [hcl] add a new schema for HashiCorp HCL
+- [terraform] add a new schema for HashiCorp Terraform
+- [dockerfile] add a new schema for Dockerfile
 
 ## [1.2.0] - 2021-09-12
 

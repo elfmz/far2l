@@ -213,59 +213,100 @@ void SystemSettings()
 	}
 }
 
-void PanelSettings()
+void PanelSettings_HighlightMarks()
 {
-	DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
-	BOOL AutoUpdate = (Opt.AutoUpdateLimit);
+	DialogBuilder Builder(Msg::ConfigPanelHighlightMarksTitle, L"PanelSettings");
 
-	Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
-
-	DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
-	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
-	CbShowFilenameMarks->Indent(1);
-	Builder.LinkFlags(CbHighlight, CbShowFilenameMarks, DIF_DISABLE);
-	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
-	CbFilenameMarksAlign->Indent(2);
-	Builder.LinkFlags(CbHighlight, CbFilenameMarksAlign, DIF_DISABLE);
-	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
-	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
-	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
-	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
-
-	Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
-	Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
-	Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
-	Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
-	Builder.AddCheckbox(Msg::ConfigReverseSort, &Opt.ReverseSort);
-
-	DialogItemEx *AutoUpdateEnabled = Builder.AddCheckbox(Msg::ConfigAutoUpdateLimit, &AutoUpdate);
-	DialogItemEx *AutoUpdateLimit = Builder.AddIntEditField((int *)&Opt.AutoUpdateLimit, 6);
-	Builder.LinkFlags(AutoUpdateEnabled, AutoUpdateLimit, DIF_DISABLE, false);
-	DialogItemEx *AutoUpdateText = Builder.AddTextBefore(AutoUpdateLimit, Msg::ConfigAutoUpdateLimit2);
-	AutoUpdateLimit->Indent(4);
-	AutoUpdateText->Indent(4);
-	Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
+	Builder.AddCheckbox(Msg::ConfigFilenameMarksStatusLine, &Opt.FilenameMarksInStatusBar);
+	DialogItemEx *tShowFilenameMarksInStatusLineHint = Builder.AddText(Msg::ConfigFilenameMarksStatusLineHint);
+	tShowFilenameMarksInStatusLineHint->Flags = DIF_CENTERGROUP | DIF_DISABLE;
 
 	Builder.AddSeparator();
-	Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);
-	Builder.AddCheckbox(Msg::ConfigShowStatus, &Opt.ShowPanelStatus);
-	Builder.AddCheckbox(Msg::ConfigShowTotal, &Opt.ShowPanelTotals);
-	Builder.AddCheckbox(Msg::ConfigShowFree, &Opt.ShowPanelFree);
-	Builder.AddCheckbox(Msg::ConfigShowScrollbar, &Opt.ShowPanelScrollbar);
-	Builder.AddCheckbox(Msg::ConfigShowScreensNumber, &Opt.ShowScreensNumber);
-	Builder.AddCheckbox(Msg::ConfigShowSortMode, &Opt.ShowSortMode);
+
+	DialogItemEx *CbShowFilenameMarks = Builder.AddCheckbox(Msg::ConfigFilenameMarks, &Opt.ShowFilenameMarks);
+	DialogItemEx *CbFilenameMarksAlign = Builder.AddCheckbox(Msg::ConfigFilenameMarksAlign, &Opt.FilenameMarksAlign);
+	CbFilenameMarksAlign->Indent(1);
+	Builder.LinkFlags(CbShowFilenameMarks, CbFilenameMarksAlign, DIF_DISABLE);
+	DialogItemEx *tShowFilenameMarksHint = Builder.AddText(Msg::ConfigFilenameMarksHint);
+	tShowFilenameMarksHint->Flags = DIF_CENTERGROUP | DIF_DISABLE;
+
+	DialogItemEx *IndentationMinEdit = Builder.AddIntEditField((int *)&Opt.MinFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMinEdit, Msg::ConfigFilenameMinIndentation);
+	IndentationMinEdit->Indent(1);
+	DialogItemEx *IndentationMaxEdit = Builder.AddIntEditField((int *)&Opt.MaxFilenameIndentation, 2);
+	Builder.AddTextAfter(IndentationMaxEdit, Msg::ConfigFilenameMaxIndentation);
+	IndentationMaxEdit->Indent(1);
+
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
-		if (!AutoUpdate)
-			Opt.AutoUpdateLimit = 0;
+		SanitizeHistoryCounts();
+		ApplySudoConfiguration();
+	}
+}
 
-		SanitizeIndentationCounts();
+void PanelSettings()
+{
+	for (;;) {
+		DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
+		BOOL AutoUpdate = (Opt.AutoUpdateLimit);
 
-		// FrameManager->RefreshFrame();
-		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
-		CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
-		CtrlObject->Cp()->Redraw();
+		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
+
+		DialogItemEx *CbHighlight = Builder.AddCheckbox(Msg::ConfigHighlight, &Opt.Highlight);
+		int HighlightMarksID = -1;
+		DialogItemEx *HighlightMarksItem = Builder.AddButton(Msg::ConfigPanelHighlightMarksButton, HighlightMarksID);
+		HighlightMarksItem->Indent(2);
+		Builder.LinkFlags(CbHighlight, HighlightMarksItem, DIF_DISABLE);
+
+		int ChangeSizeColumnStyleID = -1;
+		DialogItemEx *ChangeSizeColumnStyleItem = Builder.AddButton(Msg::DirSettingsTitle, ChangeSizeColumnStyleID);
+		//ChangeSizeColumnStyleItem->Flags = DIF_CENTERGROUP;
+		ChangeSizeColumnStyleItem->Indent(1);
+
+		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
+		Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
+		Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
+		Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
+		Builder.AddCheckbox(Msg::ConfigReverseSort, &Opt.ReverseSort);
+
+		DialogItemEx *AutoUpdateEnabled = Builder.AddCheckbox(Msg::ConfigAutoUpdateLimit, &AutoUpdate);
+		DialogItemEx *AutoUpdateLimit = Builder.AddIntEditField((int *)&Opt.AutoUpdateLimit, 6);
+		Builder.LinkFlags(AutoUpdateEnabled, AutoUpdateLimit, DIF_DISABLE, false);
+		DialogItemEx *AutoUpdateText = Builder.AddTextBefore(AutoUpdateLimit, Msg::ConfigAutoUpdateLimit2);
+		AutoUpdateLimit->Indent(4);
+		AutoUpdateText->Indent(4);
+		Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
+
+		Builder.AddSeparator();
+		Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);
+		Builder.AddCheckbox(Msg::ConfigShowStatus, &Opt.ShowPanelStatus);
+		Builder.AddCheckbox(Msg::ConfigShowTotal, &Opt.ShowPanelTotals);
+		Builder.AddCheckbox(Msg::ConfigShowFree, &Opt.ShowPanelFree);
+		Builder.AddCheckbox(Msg::ConfigShowScrollbar, &Opt.ShowPanelScrollbar);
+		Builder.AddCheckbox(Msg::ConfigShowScreensNumber, &Opt.ShowScreensNumber);
+		Builder.AddCheckbox(Msg::ConfigShowSortMode, &Opt.ShowSortMode);
+		Builder.AddOKCancel();
+
+		int clicked_id = -1;
+		if (Builder.ShowDialog(&clicked_id)) {
+			if (!AutoUpdate)
+				Opt.AutoUpdateLimit = 0;
+
+			SanitizeIndentationCounts();
+
+			// FrameManager->RefreshFrame();
+			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+			CtrlObject->Cp()->Redraw();
+			break;
+		}
+		if (clicked_id == HighlightMarksID)
+			PanelSettings_HighlightMarks();
+		else if (clicked_id == ChangeSizeColumnStyleID)
+			DirectoryNameSettings();
+		else
+			break;		
 	}
 }
 
@@ -273,13 +314,19 @@ enum enumDirCfgDialog
 {
 	ID_DIRCFG_TITLE = 0,
 
+	ID_DIRCFG_STYLE_HINT_D,
 	ID_DIRCFG_STYLE_TEXT,
 	ID_DIRCFG_STYLE_COMBO,
-	ID_DIRCFG_SEPARATOR,
 
 	ID_DIRCFG_CHECKBOX_CENTER,
 	ID_DIRCFG_CHECKBOX_SURR,
 	ID_DIRCFG_SURR_COMBO,
+
+	ID_DIRCFG_SEPARATOR,
+	ID_DIRCFG_SYMLINK_TEXT,
+	ID_DIRCFG_SYMLINK_RADIO1_TEXT,
+	ID_DIRCFG_SYMLINK_RADIO2_SIZE,
+	ID_DIRCFG_STYLE_HINT_L,
 
 	ID_DIRCFG_SEPARATOR2,
 	ID_DIRCFG_BUTTON_OK,
@@ -339,6 +386,9 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		SendDlgMessage(hDlg, DM_LISTSET, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)&farlist);
 //		SendDlgMessage(hDlg, DM_LISTSETCURPOS, dircfg_data->DirNameStyleComboID, (LONG_PTR)&flpos);
 		update_surrcombo( );
+
+		swprintf(tmp, ARRAYSIZE(tmp), L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
+		SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_DIRCFG_SYMLINK_RADIO1_TEXT, (LONG_PTR)tmp);
 	}
 	break;
 
@@ -347,6 +397,8 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 
 			dircfg_data->DirNameStyle = SendDlgMessage(hDlg, DM_LISTGETCURPOS, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)0);
 			update_surrcombo( );
+			swprintf(tmp, ARRAYSIZE(tmp), L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
+			SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_DIRCFG_SYMLINK_RADIO1_TEXT, (LONG_PTR)tmp);
 			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 		}
 		else if (Param1 == ID_DIRCFG_SURR_COMBO) {
@@ -368,6 +420,11 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			Opt.DirNameStyle |= DIRNAME_STYLE_CENTERED * dircfg_data->bCentered;
 			Opt.DirNameStyle |= DIRNAME_STYLE_SURR_CH * dircfg_data->bSurr;
 
+			if (BSTATE_CHECKED == SendDlgMessage(hDlg, DM_GETCHECK, ID_DIRCFG_SYMLINK_RADIO1_TEXT, 0))
+				Opt.ShowSymlinkSize = 0;
+			else if (BSTATE_CHECKED == SendDlgMessage(hDlg, DM_GETCHECK, ID_DIRCFG_SYMLINK_RADIO2_SIZE, 0))
+				Opt.ShowSymlinkSize = 1;
+
 			SendDlgMessage(hDlg, DM_SHOWDIALOG, 0, 0);
 			UpdateDefaultColumnTypeWidths( );
 			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
@@ -388,22 +445,29 @@ void DirectoryNameSettings()
 {
 	dircfg_data_t dircfg_data;
 	DialogDataEx DirCfgDlgData[] = {
+		{DI_DOUBLEBOX, 3,  1,  48,  15, {}, 0, Msg::DirSettingsTitle},
+		{DI_TEXT,      5,  2,  46,   2, {}, DIF_DISABLE, Msg::DirSettingsHint},
+		{DI_TEXT,      5,  3,  46,   3, {}, 0, Msg::DirSettingsShowAs},
+		{DI_COMBOBOX,  5,  4,  5+40, 4, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 
-		{DI_DOUBLEBOX, 3,  1,  47,  10, {}, 0, Msg::DirSettingsTitle},
-		{DI_TEXT,      5,  2,  35,   2, {}, 0, Msg::DirSettingsShowAs},
-		{DI_COMBOBOX,  5,  3,  5+40, 3, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
-		{DI_TEXT,      0,  4,  0,    4, {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5,  5,  46,   5, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
+		{DI_CHECKBOX,  5,  6,  46,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
+		{DI_COMBOBOX,  9,  7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 
-		{DI_CHECKBOX,  5,  5,  20,   5, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
-		{DI_CHECKBOX,  5,  6,  20,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
-		{DI_COMBOBOX,  9, 7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
+		{DI_TEXT,      0,  8,   0,   8, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5,  9,  46,   9, {}, 0, Msg::DirSettingsSymlinkText},
+		{DI_RADIOBUTTON, 5, 10,  46,  10, {}, DIF_GROUP, Msg::SymLinkName},
+		{DI_RADIOBUTTON, 5, 11,  46,  11, {}, 0, Msg::DirSettingsSymlinkRadio2},
+		{DI_TEXT,      5, 12,  46,  12, {}, DIF_DISABLE, Msg::DirSettingsSymlinkSizeHint},
 
-		{DI_TEXT,      0,  8,  0,    8, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP, Msg::Cancel},
-		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
+		{DI_TEXT,      0, 13,   0,  13, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
 
 	};
+	const int dialogsizex = 52;
+	const int dialogsizey = 17;
 
 	MakeDialogItemsEx(DirCfgDlgData, DirCfgDlg);
 
@@ -418,10 +482,10 @@ void DirectoryNameSettings()
 	if (!dircfg_data.bSurr)
 		DirCfgDlg[ID_DIRCFG_SURR_COMBO].Flags |= DIF_DISABLE;
 
+	DirCfgDlg[ID_DIRCFG_SYMLINK_RADIO1_TEXT + (Opt.ShowSymlinkSize ? 1 : 0)].Selected = TRUE;
+
 	Dialog Dlg(DirCfgDlg, ARRAYSIZE(DirCfgDlg), DirCfgDlgProc, (LONG_PTR)&dircfg_data);
 
-	int dialogsizex = 51;
-	int dialogsizey = 12;
 	Dlg.SetPosition(-1, -1, dialogsizex, dialogsizey);
 	Dlg.SetAutomation(ID_DIRCFG_CHECKBOX_SURR, ID_DIRCFG_SURR_COMBO, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 
@@ -433,6 +497,11 @@ void DirectoryNameSettings()
 		Opt.DirNameStyle |= (dircfg_data.SurrIndex << 2);
 		Opt.DirNameStyle |= DIRNAME_STYLE_CENTERED * dircfg_data.bCentered;
 		Opt.DirNameStyle |= DIRNAME_STYLE_SURR_CH * dircfg_data.bSurr;
+
+		if (DirCfgDlg[ID_DIRCFG_SYMLINK_RADIO1_TEXT].Selected)
+			Opt.ShowSymlinkSize = 0;
+		else if (DirCfgDlg[ID_DIRCFG_SYMLINK_RADIO2_SIZE].Selected)
+			Opt.ShowSymlinkSize = 1;
 
 		UpdateDefaultColumnTypeWidths( );
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

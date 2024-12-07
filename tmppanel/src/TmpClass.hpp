@@ -33,9 +33,10 @@ private:
 	int LastOwnersRead;
 	int LastLinksRead;
 	int UpdateNotNeeded;
+	wchar_t* HostFile;
 
 public:
-	TmpPanel();
+	TmpPanel(const wchar_t *pHostFile = nullptr);
 	~TmpPanel();
 	int PanelIndex;
 	//    int OpenFrom;

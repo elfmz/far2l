@@ -21,7 +21,7 @@
         #if !defined(__AES__)
           #define ATTRIB_AES __attribute__((__target__("aes")))
         #endif
-      #if defined(__clang__) && (__clang_major__ >= 8) \
+      #if defined(__clang__) && (__clang_major__ >= 9) \
           || defined(__GNUC__) && (__GNUC__ >= 8)
         #define USE_INTEL_VAES
         #if !defined(__AES__) || !defined(__VAES__) || !defined(__AVX__) || !defined(__AVX2__)
@@ -351,7 +351,6 @@ AES_FUNC_START2 (AesCtr_Code_HW)
 }
 
 
-
 #ifdef USE_INTEL_VAES
 
 /*
@@ -665,6 +664,7 @@ VAES_COMPAT_STUB (AesCtr_Code_HW)
   13.0.1 : __ARM_NEON && __ARM_FP : __ARM_ARCH >= 8 && defined(__ARM_FEATURE_AES)
   16     : __ARM_NEON && __ARM_FP : __ARM_ARCH >= 8
 */
+
 #if defined(__clang__) && __clang_major__ < 16
 #if !defined(__ARM_FEATURE_AES) && \
     !defined(__ARM_FEATURE_CRYPTO)

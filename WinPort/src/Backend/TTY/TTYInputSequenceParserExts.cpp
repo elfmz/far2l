@@ -378,12 +378,25 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	if ((modif_state & KITTY_MOD_CAPSLOCK) && !(modif_state & KITTY_MOD_SHIFT)) {
 		// it's weird, but kitty can not give us uppercase utf8 in caps lock mode
 		// ("text-as-codepoints" mode should solve it, but it is not working for cyrillic chars for unknown reason)
-		ir.Event.KeyEvent.uChar.UnicodeChar = towupper(ir.Event.KeyEvent.uChar.UnicodeChar);
+		// ir.Event.KeyEvent.uChar.UnicodeChar = towupper(ir.Event.KeyEvent.uChar.UnicodeChar);
+		WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
 	}
 
 	ir.Event.KeyEvent.bKeyDown = (event_type != KITTY_EVT_KEYUP) ? 1 : 0;
 
 	ir.Event.KeyEvent.wRepeatCount = 0;
+
+	if ((ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED) ||
+		(ir.Event.KeyEvent.dwControlKeyState & RIGHT_ALT_PRESSED)) {
+		switch (ir.Event.KeyEvent.wVirtualKeyCode) {
+			case VK_ESCAPE: case VK_DELETE: case VK_BACK: case VK_TAB: case VK_RETURN: case VK_SPACE:
+				break;
+			default:
+				if (ir.Event.KeyEvent.uChar.UnicodeChar > 0) {
+					WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
+				}
+		}
+	}
 
 	_ir_pending.emplace_back(ir);
 

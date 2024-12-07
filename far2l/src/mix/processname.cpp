@@ -38,6 +38,38 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "CFileMask.hpp"
 
+int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags)
+{
+	bool skippath = (flags & PN_SKIPPATH);
+	bool silent = !(flags & PN_SHOWERRORMESSAGE);
+	bool ignorecase = !(flags & PN_CASESENSITIVE);
+	DWORD mode = flags & 0xFF0000;
+
+	if (mode == PN_CMPNAME)
+		return CmpName(param1, param2, skippath, ignorecase) ? TRUE : FALSE;
+
+	else if (mode == PN_CMPNAMELIST || mode == PN_CHECKMASK)
+	{
+		CFileMask Masks;
+		if (!Masks.Set(param1, silent ? FMF_SILENT : 0))
+			return FALSE;
+		if (mode == PN_CHECKMASK)
+			return TRUE;
+		return Masks.Compare(param2, ignorecase, skippath) ? TRUE : FALSE;
+	}
+
+	else if (mode == PN_GENERATENAME)
+	{
+		FARString strResult = param2;
+		int nResult = ConvertWildcards(param1, strResult, flags & 0xFFFF);
+		far_wcsncpy(param2, strResult, size);
+		return nResult;
+	}
+
+	return FALSE;
+}
+
+#if 0
 // обработать имя файла: сравнить с маской, масками, сгенерировать по маске
 int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags)
 {
@@ -62,6 +94,7 @@ int WINAPI ProcessName(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD
 
 	return FALSE;
 }
+#endif
 
 /*
 	$ 09.10.2000 IS

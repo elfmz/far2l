@@ -76,6 +76,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigOptSaveLoad.hpp"
 #include "help.hpp"
 #include "farversion.h"
+#include "mix/panelmix.hpp"
+
+#include "message.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT = 0;
@@ -301,8 +304,31 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			}
 
 			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start));
-			if( Opt.IsFirstStart )
+
+
+			if( Opt.IsFirstStart ) {
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
+
+				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
+				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
+					SetMessageHelp(L"Far2lGettingStarted");
+					if (Message(0, 2, // at 1st start always only English and we not need use Msg here
+						L"Use OSC52 to set clipboard data (question at first start)",
+						L"You can toggle use of OSC52 on/off at any time",
+						L"in Menu(F9)->\'Options\"->\"Interface settings\"",
+						L"",
+						L"Use OSC52 to set clipboard data",
+						Msg::Yes,
+						Msg::No))
+					{
+						Opt.OSC52ClipSet = 0;
+					} else {
+						Opt.OSC52ClipSet = 1;
+					}
+					ConfigOptSave(false);
+				}
+			}
+
 			FrameManager->EnterMainLoop();
 		}
 
@@ -593,7 +619,10 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal = FALSE;
 	}
 
+	ZeroFarPalette();
 	ConfigOptLoad();
+	InitFarPalette();
+
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
 
@@ -619,6 +648,7 @@ int FarAppMain(int argc, char **argv)
 	setenv("FARLANG", Opt.strLanguage.GetMB().c_str(), 1);
 	initMacroVarTable(1);
 
+	UpdateDefaultColumnTypeWidths();
 	CheckForImportLegacyShortcuts();
 
 	// (!!!) temporary STUB because now Editor can not input filename "", see: fileedit.cpp -> FileEditor::Init()

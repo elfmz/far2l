@@ -125,10 +125,11 @@ public:
 	virtual bool SetBasePalette(void *p);
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void RepaintsDeferStart();
-	virtual void RepaintsDeferFinish();
+	virtual void RepaintsDeferFinish(bool force);
 
 	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle);
 	virtual void JoinConsoleOutput(IConsoleOutput *con_out);
 
 	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1);
+	virtual const char *BackendInfo(int entity);
 };

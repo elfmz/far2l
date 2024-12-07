@@ -214,6 +214,14 @@ uint8_t DefaultPalette8bit[SIZE_ARRAY_PALETTE] = {
 		F_YELLOW | B_LIGHTGRAY,			// COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
 };
 
+//uint64_t DefaultPaletteRGB[SIZE_ARRAY_PALETTE] = {
+//uint64_t DefaultPaletteRGB[1] = {
+
+//	RGB(90, 90, 90)
+
+//};
+
+
 uint8_t BlackPalette8bit[SIZE_ARRAY_PALETTE] = {
 		F_BLACK | B_LIGHTGRAY,		// COL_MENUTEXT,
 		F_LIGHTGRAY | B_BLACK,		// COL_MENUSELECTEDTEXT,
@@ -392,8 +400,62 @@ uint8_t BlackPalette8bit[SIZE_ARRAY_PALETTE] = {
 		F_WHITE | B_BLACK,				// COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
 };
 
+
 uint8_t Palette8bit[SIZE_ARRAY_PALETTE];
 uint64_t Palette[SIZE_ARRAY_PALETTE];
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//// FIXME
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ZeroFarPalette( void )
+{
+	memset( Palette8bit, 0, SIZE_ARRAY_PALETTE );
+	memset( Palette, 0, sizeof(uint64_t) * SIZE_ARRAY_PALETTE );
+}
+#if 0
+static uint32_t def16rgbpal0[32] = { // test
+	0x000000,0xA02800,0x00A000,0xA0A000,0x0000A0,0xA000A0,0x00A0A0,0xC0C0C0,
+	0x808080,0xFF5500,0x00FF00,0xFFFF00,0x0000FF,0xFF00FF,0x00FFFF,0xFFFFFF,
+	0x000000,0x800000,0x008000,0x808000,0x000080,0x800080,0x008080,0xC0C0C0,
+	0x808080,0xFF0000,0x00FF00,0xFFFF00,0x0000FF,0xFF00FF,0x00FFFF,0xFFFFFF
+};
+
+static uint32_t def16rgbpal1[32] = { // test
+	0X000000,0XAA0000,0X00AA00,0XAAAA00,0X0000AA,0XAA00AA,0X0055AA,0XAAAAAA,
+	0X555555,0XFF5555,0X55FF55,0XFFFF55,0X5555FF,0XFF55FF,0X55FFFF,0XFFFFFF,
+	0X000000,0XAA0000,0X00AA00,0XAAAA00,0X0000AA,0XAA00AA,0X0055AA,0XAAAAAA,
+	0X555555,0XFF5555,0X55FF55,0XFFFF55,0X5555FF,0XFF55FF,0X55FFFF,0XFFFFFF
+};
+#endif
+void InitFarPalette( void )  // test
+{
+	if ( *((uint64_t *)&Palette8bit[0]) != 0 ) {
+		for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+			Palette[i] &= 0xFFFFFFFFFFFFFF00;
+			Palette[i] |= Palette8bit[i];
+		}
+		return;
+	}
+
+	uint32_t basepalette[32];
+	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+
+	if ( !Palette[0] && !Palette[1] && !Palette[2] && !Palette[3] ) {
+
+		for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
+			uint8_t color = DefaultPalette8bit[i];
+			Palette[i] = ((uint64_t)basepalette[16 + (color & 0xF)] << 16);
+			Palette[i] += ((uint64_t)basepalette[color >> 4] << 40);
+//			Palette[i] = ((uint64_t)def16rgbpal1[16 + (color & 0xF)] << 16);
+//			Palette[i] += ((uint64_t)def16rgbpal1[color >> 4] << 40);
+
+			Palette[i] += FOREGROUND_TRUECOLOR + BACKGROUND_TRUECOLOR;
+			Palette[i] += color;
+		}
+	}
+
+}
 
 /*
   1.65            - 0x52
@@ -408,6 +470,7 @@ uint64_t Palette[SIZE_ARRAY_PALETTE];
   1.75 rc1 (2555) - 0x8B
   2.0 (848)       - 0x8B
 */
+
 void ConvertCurrentPalette()
 {
 	//  DWORD Size=GetRegKeySize("Colors","CurrentPalette");

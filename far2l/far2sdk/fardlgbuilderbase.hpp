@@ -216,8 +216,15 @@ class DialogBuilderBase
 			case DI_TEXT:
 				return TextWidth(Item);
 
+			case DI_DOUBLEBOX: // text in dialog title
+				{
+					int Width = TextWidth(Item);
+					return (Width ? Width + 2 : 0);
+				}
+
 			case DI_CHECKBOX:
 			case DI_RADIOBUTTON:
+			case DI_BUTTON:
 				return TextWidth(Item) + 4;
 
 			case DI_EDIT:
@@ -250,7 +257,7 @@ class DialogBuilderBase
 
 		int MaxTextWidth()
 		{
-			int MaxWidth = 0;
+			int MaxWidth = ItemWidth(DialogItems [0]); // text in dialog title
 			for(int i=1; i<DialogItemsCount; i++)
 			{
 				if (DialogItems [i].X1 == SECOND_COLUMN) continue;

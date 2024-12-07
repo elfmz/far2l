@@ -112,7 +112,9 @@ void Rijndael::Init(bool Encrypt,const byte *key,uint keyLen,const byte * initVe
   else
     AES_NI=false;
 #elif defined(__GNUC__)
+# if !defined(__clang__) || (__clang_major__ >= 9) // ElCapinal's XCode: "error: invalid cpu feature string for builtin"
   AES_NI=__builtin_cpu_supports("aes");
+# endif
 #endif
 
 #elif defined(USE_NEON_AES)

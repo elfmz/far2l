@@ -124,6 +124,10 @@ FileList::FileList()
 	SelFileSize(0),
 	TotalFileSize(0),
 	FreeDiskSize(0),
+	TotalFilePhysSize(0),
+	LargestFilSize(0),
+	LargestFilSizeL(0),
+	LargestFilPhysSize(0),
 	MarkLM(0),
 	LastUpdateTime(0),
 	Height(0),
@@ -166,6 +170,9 @@ FileList::FileList()
 	DirectoriesFirst = 1;
 	Columns = PreparePanelView(&ViewSettings);
 	PluginCommand = -1;
+
+	extern int ColumnTypeWidth[32];
+	memcpy(AutoColumnWidth, ColumnTypeWidth, sizeof(int) * 32);
 }
 
 FileList::~FileList()
@@ -1241,6 +1248,39 @@ int FileList::ProcessKey(FarKey Key)
 			AnotherPanel->Redraw();
 			return TRUE;
 		}
+
+		case KEY_CTRLD | KEY_ALT: {
+			DirectoryNameSettings( );
+
+//			++Opt.DirNameStyle &= 63;
+//			UpdateDefaultColumnTypeWidths( );
+//			UpdateAutoColumnWidth();
+//			Redraw();
+//			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+//			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+//			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLL | KEY_ALT: {
+			Opt.ShowSymlinkSize ^= 1;
+			UpdateAutoColumnWidth();
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLN | KEY_ALT: {
+			Opt.FilenameMarksInStatusBar ^= 1;
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
 		case KEY_CTRLR: {
 			Update(UPDATE_KEEP_SELECTION | UPDATE_CAN_BE_ANNOYING);
 			Redraw();
@@ -1431,7 +1471,6 @@ int FileList::ProcessKey(FarKey Key)
 
 						if (!strLastFileName.IsEmpty()) {
 							strFileName = strLastFileName;
-							Unquote(strFileName);
 
 							if (IsAbsolutePath(strFileName)) {
 								PluginMode = FALSE;
@@ -2962,6 +3001,8 @@ void FileList::SetViewMode(int ViewMode)
 		if (AnotherPanel->GetType() == TREE_PANEL)
 			AnotherPanel->Redraw();
 	}
+
+	UpdateAutoColumnWidth();
 }
 
 void FileList::SetSortMode(int SortMode)
@@ -3297,30 +3338,46 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CurPtr = ListData[CurFile];
 	FARString strCurName = CurPtr->strName;
 
+	bool SkipPath = false;
+
 	if (Mode == SELECT_ADDEXT || Mode == SELECT_REMOVEEXT) {
+		if (strCurName == L"..")
+			return 0;
+		strCurName = PointToName(strCurName);
 		size_t pos;
 
-		if (strCurName.RPos(pos, L'.')) {
+		if (strCurName.RPos(pos, L'.') && pos != strCurName.GetLength() - 1 &&  pos != 0) {
 			// Учтем тот момент, что расширение может содержать символы-разделители
-			strRawMask.Format(L"\"*.%ls\"", strCurName.CPtr() + pos + 1);
+			strRawMask.Format(L"\"?*.%ls\"", strCurName.CPtr() + pos + 1);
 			WrapBrackets = true;
-		} else {
-			strMask = L"*.";
-		}
 
+		} else {
+			// file without extension, e.g.: "readme", ".readme" & "readme."
+			strMask = L"/^(?:[^.]+|\\.[^.]+|.+\\.)$/";
+		}
+		SkipPath = true;
 		Mode = (Mode == SELECT_ADDEXT) ? SELECT_ADD : SELECT_REMOVE;
 	} else {
 		if (Mode == SELECT_ADDNAME || Mode == SELECT_REMOVENAME) {
-			// Учтем тот момент, что имя может содержать символы-разделители
-			strRawMask = L"\"";
-			strRawMask+= strCurName;
+			if (strCurName == L"..")
+				return 0;
+			strCurName = PointToName(strCurName);
+
 			size_t pos;
 
-			if (strRawMask.RPos(pos, L'.') && pos != strRawMask.GetLength() - 1)
-				strRawMask.Truncate(pos);
+			if (strCurName.RPos(pos, L'.') && pos != strCurName.GetLength() - 1 &&  pos != 0) {
+				strCurName.Truncate(pos);
+			}
 
-			strRawMask+= L".*\"";
-			WrapBrackets = true;
+			auto fName = EscapeCmdStr(strCurName.CPtr(), L".^$*+-?()[]{}\\|");    // special PCRE characters
+
+			bool allowEmptyExtension = (!strCurName.RPos(pos, '.') || (pos == 0 || pos == strCurName.GetLength() - 1));
+			bool caseSensitive = Opt.PanelCaseSensitiveCompareSelect;
+
+			strMask.Format(L"/^%ls(?:\\.[^.]+)%ls$/", fName.c_str(), allowEmptyExtension ? L"?" : L"");
+			if (!caseSensitive) strMask+=L"i";
+
+			SkipPath = true;
 			Mode = (Mode == SELECT_ADDNAME) ? SELECT_ADD : SELECT_REMOVE;
 		} else {
 			if (Mode == SELECT_ADD || Mode == SELECT_REMOVE) {
@@ -3405,7 +3462,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect);
+					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect, SkipPath);
 				}
 			}
 
@@ -4265,6 +4322,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 				Item->FileSize = FileSize;
 				Item->PhysicalSize = PhysicalSize;
 				Item->ShowFolderSize = 1;
+				LargestFilSize = std::max(FileSize, LargestFilSize);
+				LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
+				LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
 			} else
 				break;
 		}
@@ -4286,9 +4346,13 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			ListData[CurFile]->FileSize = FileSize;
 			ListData[CurFile]->PhysicalSize = PhysicalSize;
 			ListData[CurFile]->ShowFolderSize = 1;
+			LargestFilSize = std::max(FileSize, LargestFilSize);
+			LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
+			LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
 		}
 	}
 
+	UpdateAutoColumnWidth( );
 	SortFileList(TRUE);
 	ShowFileList(TRUE);
 	CtrlObject->Cp()->Redraw();

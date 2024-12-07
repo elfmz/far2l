@@ -1,4 +1,6 @@
 #include "wxMain.h"
+#include <dlfcn.h>
+#include "../NotifySh.h"
 
 #define AREAS_REDUCTION
 
@@ -22,6 +24,10 @@
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
+// This defines how much time UI remain frozen after user released qedit, that
+// allows user to quickly select another location before all shadowed output changes applied
+#define QEDIT_UNFREEZE_DELAY     1000
+
 #if (wxCHECK_VERSION(3, 0, 5) || (wxCHECK_VERSION(3, 0, 4) && WX304PATCH)) && !(wxCHECK_VERSION(3, 1, 0) && !wxCHECK_VERSION(3, 1, 3))
 	// wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
 	#define WX_ALT_NONLATIN
@@ -42,6 +48,9 @@ static DWORD g_TIMER_PERIOD = DEF_TIMER_PERIOD;
 static DWORD g_TIMER_IDLING_CYCLES = TIMER_IDLING_TIME / DEF_TIMER_PERIOD;
 
 bool WinPortClipboard_IsBusy();
+
+WINPORT_DECL_DEF(FreezeConsoleOutput,VOID,())
+WINPORT_DECL_DEF(UnfreezeConsoleOutput,VOID,())
 
 static void NormalizeArea(SMALL_RECT &area)
 {
@@ -130,18 +139,6 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 	if (!wxInitialize())
 		return false;
-
-	fprintf(stderr, "FAR2L wxWidgets build version %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
-	char s_wx_build[15];
-	snprintf(s_wx_build, ARRAYSIZE(s_wx_build), "%d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER );
-	setenv("FAR2L_WX_BUILD", s_wx_build, 1);
-#if wxCHECK_VERSION(2, 9, 2)
-	wxVersionInfo wxv = wxGetLibraryVersionInfo();
-	fprintf(stderr, "FAR2L wxWidgets use version %d.%d.%d\n", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
-	char s_wx_use[15];
-	snprintf(s_wx_use, ARRAYSIZE(s_wx_use), "%d.%d.%d", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro() );
-	setenv("FAR2L_WX_USE", s_wx_use, 1);
-#endif
 
 	wxSetAssertHandler(WinPortWxAssertHandler);
 
@@ -584,6 +581,32 @@ wxEND_EVENT_TABLE()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
 	: _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
 {
+	_backend_info.emplace_back(
+		StrPrintf("Build/wxWidgets %d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
+
+#if wxCHECK_VERSION(2, 9, 2)
+	wxVersionInfo wxv = wxGetLibraryVersionInfo();
+	_backend_info.emplace_back(
+		StrPrintf("wxWidgets %d.%d.%d", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro()));
+	fprintf(stderr, "FAR2L wxWidgets build: %d.%d.%d actual: %d.%d.%d\n",
+		wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER, wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro());
+#else
+	fprintf(stderr, "FAR2L wxWidgets build: %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER);
+#endif
+
+#ifdef __WXGTK__
+	typedef unsigned int (*gtk_get_x_version_t)(void);
+	gtk_get_x_version_t pfn_gtk_get_major_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_major_version");
+	if (pfn_gtk_get_major_version) {
+		gtk_get_x_version_t pfn_gtk_get_minor_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_minor_version");
+		gtk_get_x_version_t pfn_gtk_get_micro_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_micro_version");
+		_backend_info.emplace_back(
+			StrPrintf("GTK %d.%d.%d", pfn_gtk_get_major_version(),
+				pfn_gtk_get_minor_version ? pfn_gtk_get_minor_version() : -1,
+				pfn_gtk_get_micro_version ? pfn_gtk_get_micro_version() : -1));
+	}
+#endif
+
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 	Create(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER);
@@ -773,6 +796,12 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 		return;
 	}
 
+	if (_qedit_unfreeze_start_ticks != 0
+			&& WINPORT(GetTickCount)() - _qedit_unfreeze_start_ticks >= QEDIT_UNFREEZE_DELAY) {
+		WINPORT(UnfreezeConsoleOutput)();
+		_qedit_unfreeze_start_ticks = 0;
+	}
+
 	CheckForResizePending();
 	CheckPutText2CLip();	
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
@@ -781,7 +810,10 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	_paint_context.BlinkCursor();
 	++_timer_idling_counter;
 	// stop timer if counter reached limit and cursor is visible and no other timer-dependent things remained
-	if (_timer_idling_counter >= g_TIMER_IDLING_CYCLES && _paint_context.CursorBlinkState() && _text2clip.empty()) {
+	if (_timer_idling_counter >= g_TIMER_IDLING_CYCLES
+			&& _paint_context.CursorBlinkState()
+			&& _qedit_unfreeze_start_ticks == 0
+			&& _text2clip.empty()) {
 		_periodic_timer->Stop();
 	}
 }
@@ -839,11 +871,11 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 		if (_refresh_rects.empty()) {
 			action = A_QUEUE;
 #ifndef __APPLE__
-		} else if (_refresh_rects_throttle != (DWORD)-1 &&
+		} else if (_refresh_rects_throttle != 0 &&
 				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500 &&
 				!wxIsMainThread()) {
 			action = A_THROTTLE;
-			_refresh_rects_throttle = (DWORD)-1;
+			_refresh_rects_throttle = 0;
 #else
 //TODO: fix stuck
 #endif
@@ -927,8 +959,6 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 			CallInMain<int>(fn);
 			std::lock_guard<std::mutex> lock(_refresh_rects);
 			_refresh_rects_throttle = WINPORT(GetTickCount)();
-			if (_refresh_rects_throttle == (DWORD)-1)
-				_refresh_rects_throttle = 0;
 		} break;
 		
 		case A_NOTHING: break;
@@ -1534,9 +1564,8 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
 		|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
 #endif
-
-			_key_tracker.CheckForSuddenModifiersUp()) {
-				_exclusive_hotkeys.Reset();
+		_key_tracker.CheckForSuddenModifiersUp()) {
+			_exclusive_hotkeys.Reset();
 	}
 	//event.Skip();
 }
@@ -1593,8 +1622,8 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			ir.Event.KeyEvent.wVirtualKeyCode = ir_tmp.Event.KeyEvent.wVirtualKeyCode;
 			ir.Event.KeyEvent.wVirtualScanCode = ir_tmp.Event.KeyEvent.wVirtualScanCode;
 			ir.Event.KeyEvent.dwControlKeyState = ir_tmp.Event.KeyEvent.dwControlKeyState;
-
 			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+			WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
 		}
 #endif
 
@@ -1604,11 +1633,13 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 
+		_enqueued_in_onchar = true;
+
+#if !defined(__WXOSX__)
 		// avoid double up event in ResetInputState()
 		wxKeyEvent keyEventCopy = _key_tracker.LastKeydown();
 		_key_tracker.OnKeyUp(keyEventCopy);
-
-		_enqueued_in_onchar = true;
+#endif
 	}
 	//event.Skip();
 }
@@ -1776,8 +1807,13 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 		_mouse_qedit_start_ticks = WINPORT(GetTickCount)();
 		if (!_mouse_qedit_start_ticks) _mouse_qedit_start_ticks = 1;
 		_mouse_qedit_moved = false;
+		if (_qedit_unfreeze_start_ticks == 0) {
+			WINPORT(FreezeConsoleOutput)();
+		} else {
+			_qedit_unfreeze_start_ticks = 0;
+		}
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
-		
+
 	} else if (_mouse_qedit_start_ticks != 0) {
 		if (event.Moving() || event.Dragging()) {
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
@@ -1821,6 +1857,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			_mouse_qedit_start_ticks = 0;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);
+			_qedit_unfreeze_start_ticks = WINPORT(GetTickCount)();
 		}
 	}
 }
@@ -1886,9 +1923,11 @@ DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 	if (_exclusive_hotkeys.Available())
 		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
 
-	EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
-	if (event)
-		wxQueueEvent(this, event);
+	if (tweaks != TWEAKS_ONLY_QUERY_SUPPORTED) {
+		EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
+		if (event)
+			wxQueueEvent(this, event);
+	}
 
 	return out;
 }
@@ -1899,59 +1938,16 @@ bool WinPortPanel::OnConsoleIsActive()
 	return _focused_ts != 0;
 }
 
-static std::string GetNotifySH()
-{
-	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
-	wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
-	std::string out(fn_str.mb_str());
-
-	if (TranslateInstallPath_Bin2Share(out)) {
-		out+= APP_BASENAME "/";
-	}
-
-	out+= "notify.sh";
-
-	struct stat s;
-	if (stat(out.c_str(), &s) == 0) {
-		return out;
-	}
-
-	if (TranslateInstallPath_Share2Lib(out) && stat(out.c_str(), &s) == 0) {
-		return out;
-	}
-
-	return std::string();
-}
-
 void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
 	const std::string &str_title = Wide2MB(title);
 	const std::string &str_text = Wide2MB(text);
-
 #ifdef __APPLE__
 	auto fn = std::bind(MacDisplayNotify, str_title.c_str(), str_text.c_str());
 	CallInMain<bool>(fn);
-
 #else
-
-	static std::string s_notify_sh = GetNotifySH();
-	if (s_notify_sh.empty()) {
-		fprintf(stderr, "OnConsoleDisplayNotification: notify.sh not found\n");
-		return;
-	}
-
-	pid_t pid = fork();
-	if (pid == 0) {
-		if (fork() == 0) {
-			execl(s_notify_sh.c_str(), s_notify_sh.c_str(), str_title.c_str(), str_text.c_str(), NULL);
-			perror("DisplayNotification - execl");
-		}
-		_exit(0);
-		exit(0);
-
-	} else if (pid != -1) {
-		waitpid(pid, 0, 0);
-	}
+	wxString fn_str = wxStandardPaths::Get().GetExecutablePath();
+	Far2l_NotifySh(fn_str.mb_str(), str_title.c_str(), str_text.c_str());
 #endif
 }
 
@@ -2020,6 +2016,24 @@ void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
 	if (event)
 		wxQueueEvent(this, event);
 }
+
+const char *WinPortPanel::OnConsoleBackendInfo(int entity)
+{
+	if (entity == -1) {
+		return "GUI";
+	}
+
+	if (entity < 0) {
+		return nullptr;
+	}
+
+	if (size_t(entity) >= _backend_info.size()) {
+		return nullptr;
+	}
+
+	return _backend_info[size_t(entity)].c_str();
+}
+
 
 void WinPortPanel::CheckPutText2CLip()
 {

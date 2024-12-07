@@ -46,7 +46,6 @@ config BR2_PACKAGE_FAR2L_COLORER
 config BR2_PACKAGE_FAR2L_MULTIARC
 	bool "MultiArc plugin"
 	default y
-	select BR2_PACKAGE_PCRE2
 	select BR2_PACKAGE_LIBARCHIVE
 	help
 	  Various archive file types support.

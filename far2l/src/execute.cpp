@@ -253,7 +253,7 @@ public:
 	{
 		ProcessShowClock++;
 		if (CtrlObject && CtrlObject->CmdLine) {
-			CtrlObject->CmdLine->ShowBackground();
+			CtrlObject->CmdLine->ShowBackground(true);
 			CtrlObject->CmdLine->RedrawWithoutComboBoxMark();
 		}
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);
@@ -296,6 +296,13 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		OpenCmd+= ' ';
 		OpenCmd+= CmdStr;
 		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_OPEN));
+	}
+
+	if (ExecFlags & EF_EXTERNALTERM) {
+		std::string OpenCmd = GetOpenShVerb("exec");
+		OpenCmd+= ' ';
+		OpenCmd+= CmdStr;
+		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_EXTERNALTERM));
 	}
 
 	const bool may_notify = (ExecFlags & (EF_NOTIFY | EF_NOWAIT)) == EF_NOTIFY && Opt.NotifOpt.OnConsole;

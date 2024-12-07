@@ -47,12 +47,52 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "lang.hpp"
 #include "datetime.hpp"
 
-int ColumnTypeWidth[] = {0, 6, 6, 8, 5, 14, 14, 14, 14, 10, 0, 0, 3, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 0};
+#if 0
+enum PANEL_COLUMN_TYPE
+{
+	NAME_COLUMN = 0,
+	SIZE_COLUMN,
+	PHYSICAL_COLUMN,
+	DATE_COLUMN,
+	TIME_COLUMN,
+	WDATE_COLUMN,
+	CDATE_COLUMN,
+	ADATE_COLUMN,
+	CHDATE_COLUMN,
+	ATTR_COLUMN,
+	DIZ_COLUMN,
+	OWNER_COLUMN,
+	GROUP_COLUMN,
+	NUMLINK_COLUMN,
+	RESERVED_COLUMN1,
+	RESERVED_COLUMN2,
+	CUSTOM_COLUMN0,
+	CUSTOM_COLUMN_LAST = CUSTOM_COLUMN0 + 19,
+};
+#endif
+
+int ColumnTypeWidth[32] = {0, 9, 9, 8, 5, 14, 14, 14, 14, 10, 0, 0, 3, 3, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0 };
 
 static const wchar_t *ColumnSymbol[] = {L"N", L"S", L"P", L"D", L"T", L"DM", L"DC", L"DA", L"DE", L"A", L"Z",
 		L"O", L"U", L"LN", L"F", L"G", L"C0", L"C1", L"C2", L"C3", L"C4", L"C5", L"C6", L"C7", L"C8", L"C9",
 		L"C10", L"C11", L"C12", L"C13", L"C14", L"C15", L"C16", L"C17", L"C18", L"C19"};
+
+FarLangMsg DirUpNames[4] = {Msg::DirUp, Msg::DirUp2, Msg::DirUp3, Msg::DirUp4};
+FarLangMsg DirNames[4] = {Msg::DirName, Msg::DirName2, Msg::DirName3, Msg::DirName4};
+FarLangMsg SymLinkNames[4] = {Msg::SymLinkName, Msg::SymLinkName2, Msg::SymLinkName3, Msg::SymLinkName4};
+FarLangMsg JunctionNames[4] = {Msg::JunctionName, Msg::JunctionName2, Msg::JunctionName3, Msg::JunctionName4};
+wchar_t surdircharleft[4] = { 60, 16, 61, 32 };
+wchar_t surdircharright[4] = { 62, 17, 61, 32 };
+
+void UpdateDefaultColumnTypeWidths( void )
+{
+	size_t nameindex = Opt.DirNameStyle & 3;
+
+	ColumnTypeWidth[SIZE_COLUMN] = ColumnTypeWidth[PHYSICAL_COLUMN] = \
+			std::max( std::max(DirUpNames[nameindex].Len(), DirNames[nameindex].Len()) + \
+			((Opt.DirNameStyle & DIRNAME_STYLE_SURR_CH) >> 3), (size_t)6ul );
+}
 
 void ShellUpdatePanels(Panel *SrcPanel, BOOL NeedSetUpADir)
 {
@@ -257,6 +297,9 @@ void TextToViewSettings(const wchar_t *ColumnTitles, const wchar_t *ColumnWidths
 						case L'T':
 							ColumnType|= COLUMN_THOUSAND;
 							break;
+						case L'A':
+							ColumnType|= COLUMN_AUTO;
+							break;
 					}
 
 					Ptr++;
@@ -373,6 +416,9 @@ void ViewSettingsToText(unsigned int *ViewColumnTypes, int *ViewColumnWidths, in
 
 				if (ViewColumnTypes[I] & COLUMN_THOUSAND)
 					strColumnTitles+= L'T';
+
+				if (ViewColumnTypes[I] & COLUMN_AUTO)
+					strColumnTitles+= L'A';
 				break;
 
 			case WDATE_COLUMN:
@@ -528,6 +574,7 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 		DWORD FileAttributes, uint8_t ShowFolderSize, int ColumnType, DWORD Flags, int Width)
 {
 	FormatString strResult;
+	static const wchar_t *wstrwhitespace = L"                                                                                                 ";
 
 	bool Physical = (ColumnType == PHYSICAL_COLUMN);
 
@@ -536,20 +583,42 @@ const FARString FormatStr_Size(int64_t FileSize, int64_t PhysicalSize, const FAR
 		strResult << L"~";
 	}
 
-	if (!Physical && (FileAttributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))
-			&& !ShowFolderSize) {
-		const wchar_t *PtrName = Msg::ListFolder;
+	if (!Physical && (FileAttributes & (FILE_ATTRIBUTE_DIRECTORY | (FILE_ATTRIBUTE_REPARSE_POINT * (!Opt.ShowSymlinkSize)))) && !ShowFolderSize) {
+
+		size_t nameindex = Opt.DirNameStyle & 3;
+		FarLangMsg lname = DirNames[nameindex];
 
 		if (TestParentFolderName(strName)) {
-			PtrName = Msg::ListUp;
+			lname = DirUpNames[nameindex];
 		} else if (FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			PtrName = Msg::ListSymLink;
+			lname = SymLinkNames[nameindex];
 		}
 
+		const wchar_t *PtrName = lname;
+		size_t namelen = lname.Len();
+
 		strResult << fmt::Size(Width);
-		if (StrLength(PtrName) <= Width - 2) {
+
+		if ((intptr_t)namelen <= Width - 2) {
+			FARString strOutStr;
+
+			if (Opt.DirNameStyle & DIRNAME_STYLE_SURR_CH) {
+				size_t surindex = (Opt.DirNameStyle >> 2) & 3;
+				strOutStr.Append(&surdircharleft[surindex], 1);
+				strOutStr.Append(PtrName, namelen);
+				strOutStr.Append(&surdircharright[surindex], 1);
+			}
+			else {
+				strOutStr.Append(PtrName, namelen);
+			}
+
+			if (Opt.DirNameStyle & DIRNAME_STYLE_CENTERED) {
+				size_t addfc = (((size_t)Width - (namelen + ((Opt.DirNameStyle & DIRNAME_STYLE_SURR_CH) >> 3)) + 1 ) >> 1) & 63;
+				if (addfc)
+					strOutStr.Append(wstrwhitespace, addfc);
+			}
 			// precombine into tmp string to avoid miseffect of fmt::Size etc (#1137)
-			strResult << FARString(L"<").Append(PtrName).Append(L'>');
+			strResult << strOutStr;
 		} else {
 			strResult << PtrName;
 		}

@@ -281,12 +281,12 @@
 
 		<scheme name="Insertion">
 			<!--<inherit scheme="smartyEscape" />-->
-			<block start="/(\{)((literal))(\})/" end="/(\{)((\/literal))(\})/"
-				region01="OpenTag"   region11="OpenTag"
+			<block start="/(\{)((literal))(\})/" end="/(\{)((\/literal))(\})/"	
+				region01="OpenTag"   region11="OpenTag" 
 				region02="def:PairStart" region12="def:PairEnd"
-				region04="OpenTag"   region14="OpenTag"
+				region04="OpenTag"   region14="OpenTag" 
 				region03="def:Keyword"   region13="def:Keyword"
-				scheme="asp:html" priority="normal"  content-priority="normal"
+				scheme="asp:html" priority="normal"  content-priority="normal" 
 			/>
 			<inherit scheme="smartyComment" />
 			<inherit scheme="smartyPhpInsertion"/>

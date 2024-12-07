@@ -34,31 +34,79 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "BaseFileMask.hpp"
-#include "udlist.hpp"
+#include <vector>
+#include "noncopyable.hpp"
 #include "RegExp.hpp"
+#include "FARString.hpp"
 
-enum FMP_FLAGS
+#define EXCLUDEMASKSEPARATOR (L'|')
+
+enum FM_FLAGS
 {
-	FMPF_ADDASTERISK = 0x00000001		// Добавлять '*', если маска не содержит
-										// ни одного из следующих
-										// символов: '*', '?', '.'
+	FMF_SILENT      = 0x00000001,
+	FMF_ADDASTERISK = 0x00000002, // Добавлять '*', если маска не содержит ни одного из символов: '*', '?', '.'
+};
+
+class BaseFileMask : private NonCopyable
+{
+	public:
+		BaseFileMask() {}
+		virtual ~BaseFileMask() {}
+
+	public:
+		virtual bool Set(const wchar_t *Masks, DWORD Flags) = 0;
+		virtual bool Compare(const wchar_t *Name, bool ignorecase) const = 0;
+		virtual void Reset() = 0;
+};
+
+class SingleFileMask : public BaseFileMask
+{
+	public:
+		SingleFileMask() : BaseFileMask() {}
+		~SingleFileMask() override {}
+
+	public:
+		bool Set(const wchar_t *Masks, DWORD Flags) override;
+		bool Compare(const wchar_t *Name, bool ignorecase) const override;
+		void Reset() override;
+
+	private:
+		FARString Mask;
+};
+
+class RegexMask : public BaseFileMask
+{
+	public:
+		RegexMask();
+		~RegexMask() override {}
+
+	public:
+		bool Set(const wchar_t *Masks, DWORD Flags) override;
+		bool Compare(const wchar_t *Name, bool ignorecase) const override;
+		void Reset() override;
+
+	private:
+		std::unique_ptr<RegExp> re;
 };
 
 class FileMasksProcessor : public BaseFileMask
 {
-public:
-	FileMasksProcessor();
-	virtual ~FileMasksProcessor() { Free(); }
+	public:
+		FileMasksProcessor();
+		~FileMasksProcessor() override { Reset(); }
 
-public:
-	virtual bool Set(const wchar_t *Masks, DWORD Flags);
-	virtual bool Compare(const wchar_t *Name, bool ignorecase = true) const;
-	virtual bool IsEmpty() const;
-	void Free();
+	public:
+		bool Set(const wchar_t *Masks, DWORD Flags) override;
+		bool Compare(const wchar_t *Name, bool ignorecase) const override;
+		void Reset() override;
 
-private:
-	UserDefinedList Masks;	// список масок файлов
-	std::unique_ptr<RegExp> re;
-	int n = 0;
+	private:
+		std::vector<BaseFileMask*> IncludeMasks;
+		std::vector<BaseFileMask*> ExcludeMasks;
+		const int CallDepth;
+
+	private:
+		FileMasksProcessor(int aCallDepth);
+		bool SetPart(const wchar_t *Masks, DWORD Flags, std::vector<BaseFileMask*>& Target);
 };
+

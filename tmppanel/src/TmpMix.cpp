@@ -9,7 +9,7 @@ Temporary panel miscellaneous utility functions
 #include <string>
 #include <utils.h>
 
-const TCHAR *GetMsg(int MsgId)
+const wchar_t *GetMsg(int MsgId)
 {
 	return (Info.GetMsg(Info.ModuleNumber, MsgId));
 }
@@ -47,10 +47,10 @@ void FreePanelItems(PluginPanelItem *Items, DWORD Total)
 	}
 }
 
-TCHAR *ParseParam(TCHAR *&str)
+wchar_t *ParseParam(wchar_t *&str)
 {
-	TCHAR *p = str;
-	TCHAR *parm = NULL;
+	wchar_t *p = str;
+	wchar_t *parm = NULL;
 	if (*p == L'|') {
 		parm = ++p;
 		p = _tcschr(p, L'|');
@@ -64,7 +64,7 @@ TCHAR *ParseParam(TCHAR *&str)
 	return NULL;
 }
 
-void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
+void GoToFile(const wchar_t *Target, BOOL AnotherPanel)
 {
 	HANDLE _PANEL_HANDLE = AnotherPanel ? PANEL_PASSIVE : PANEL_ACTIVE;
 
@@ -72,13 +72,13 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 	PanelInfo PInfo;
 	int pathlen;
 
-	const TCHAR *p = FSF.PointToName(const_cast<TCHAR *>(Target));
+	const wchar_t *p = FSF.PointToName(const_cast<wchar_t *>(Target));
 	StrBuf Name(lstrlen(p) + 1);
 	lstrcpy(Name, p);
 	pathlen = (int)(p - Target);
 	StrBuf Dir(pathlen + 1);
 	if (pathlen)
-		memcpy(Dir.Ptr(), Target, pathlen * sizeof(TCHAR));
+		memcpy(Dir.Ptr(), Target, pathlen * sizeof(wchar_t));
 	Dir[pathlen] = L'\0';
 
 	FSF.Trim(Name);
@@ -135,7 +135,7 @@ wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf)
 	return buf;
 }
 
-TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output)
+wchar_t *ExpandEnvStrs(const wchar_t *input, StrBuf &output)
 {
 
 	std::string s;
@@ -149,7 +149,7 @@ TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output)
 	return output;
 }
 
-static DWORD LookAtPath(const TCHAR *dir, const TCHAR *name, TCHAR *buffer = NULL, DWORD buf_size = 0)
+static DWORD LookAtPath(const wchar_t *dir, const wchar_t *name, wchar_t *buffer = NULL, DWORD buf_size = 0)
 {
 	std::wstring path(dir);
 	if (path.empty())
@@ -168,7 +168,7 @@ static DWORD LookAtPath(const TCHAR *dir, const TCHAR *name, TCHAR *buffer = NUL
 	return path.size() + 1;
 }
 
-bool FindListFile(const TCHAR *FileName, StrBuf &output)
+bool FindListFile(const wchar_t *FileName, StrBuf &output)
 {
 	StrBuf Path;
 	DWORD dwSize;
@@ -178,14 +178,14 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 	StrBuf NtPath;
 	FormNtPath(FullPath, NtPath);
 
-	const TCHAR *final = NULL;
+	const wchar_t *final = NULL;
 	if (GetFileAttributes(NtPath) != INVALID_FILE_ATTRIBUTES) {
 		output.Grow(FullPath.Size());
 		lstrcpy(output, FullPath);
 		return true;
 	}
 	{
-		const TCHAR *tmp = FSF.PointToName(Info.ModuleName);
+		const wchar_t *tmp = FSF.PointToName(Info.ModuleName);
 		Path.Grow((int)(tmp - Info.ModuleName + 1));
 		lstrcpyn(Path, Info.ModuleName, (int)(tmp - Info.ModuleName + 1));
 		dwSize = LookAtPath(Path, FileName);
@@ -195,7 +195,7 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 		}
 	}
 	ExpandEnvStrs(L"$FARHOME:$PATH", Path);
-	for (TCHAR *str = Path, *p = _tcschr(Path, L':'); *str; p = _tcschr(str, L':')) {
+	for (wchar_t *str = Path, *p = _tcschr(Path, L':'); *str; p = _tcschr(str, L':')) {
 		if (p)
 			*p = 0;
 

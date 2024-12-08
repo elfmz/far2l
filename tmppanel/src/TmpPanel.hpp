@@ -118,8 +118,6 @@ public:
 	~PtrGuard() { free(ptr); }
 };
 
-
-wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf);
 wchar_t *GetFullPath(const wchar_t *input, StrBuf &output);
 wchar_t *ExpandEnvStrs(const wchar_t *input, StrBuf &output);
 bool FindListFile(const wchar_t *FileName, StrBuf &output);

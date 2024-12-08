@@ -127,14 +127,6 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
 	ffd.lpwszFileName = wcsdup(wfd.cFileName);
 }
 
-wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf)
-{
-	int l = wcslen(path);
-	buf.Grow(l + 1);
-	wcscpy(buf, path);
-	return buf;
-}
-
 wchar_t *ExpandEnvStrs(const wchar_t *input, StrBuf &output)
 {
 

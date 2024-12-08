@@ -11,7 +11,7 @@ Temporary panel main plugin code
 #include <sys/mman.h>
 #include "utils.h"
 
-TCHAR *PluginRootKey;
+wchar_t *PluginRootKey;
 unsigned int CurrentCommonPanel;
 struct PluginStartupInfo Info;
 struct FarStandardFunctions FSF;
@@ -37,11 +37,11 @@ BOOL WINAPI DllMainCRTStartup(HANDLE hDll, DWORD dwReason, LPVOID lpReserved)
 }
 #endif
 
-static void ProcessList(HANDLE hPlugin, TCHAR *Name, int Mode);
-static void ShowMenuFromList(TCHAR *Name);
+static void ProcessList(HANDLE hPlugin, wchar_t *Name, int Mode);
+static void ShowMenuFromList(wchar_t *Name);
 static HANDLE OpenPanelFromOutput(wchar_t *argv);
 
-static TCHAR TmpPanelPath[] = WGOOD_SLASH _T("TmpPanel");
+static wchar_t TmpPanelPath[] = WGOOD_SLASH L"TmpPanel";
 static wchar_t *TmpPanelModule = nullptr;
 
 const wchar_t *GetTmpPanelModule()
@@ -56,9 +56,9 @@ SHAREDSYMBOL void WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo
 	::Info.FSF = &::FSF;
 	TmpPanelModule = wcsdup(Info->ModuleName);
 
-	PluginRootKey = (TCHAR *)malloc((lstrlen(Info->RootKey) + 1) * sizeof(TCHAR) + sizeof(TmpPanelPath));
-	lstrcpy(PluginRootKey, Info->RootKey);
-	lstrcat(PluginRootKey, TmpPanelPath);
+	PluginRootKey = (wchar_t *)malloc((wcslen(Info->RootKey) + 1) * sizeof(wchar_t) + sizeof(TmpPanelPath));
+	wcscpy(PluginRootKey, Info->RootKey);
+	wcscat(PluginRootKey, TmpPanelPath);
 	GetOptions();
 	StartupOptFullScreenPanel = Opt.FullScreenPanel;
 	StartupOptCommonPanel = Opt.CommonPanel;
@@ -76,45 +76,42 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 
 	StartupOpenFrom = OpenFrom;
 	if (OpenFrom == OPEN_COMMANDLINE) {
-		TCHAR *argv = (TCHAR *)Item;
+		wchar_t *argv = (wchar_t *)Item;
 
-#define OPT_COUNT 5
-		static const TCHAR ParamsStr[OPT_COUNT][8] = {_T("safe"), _T("any"), _T("replace"), _T("menu"), _T("full")};
-		const int *ParamsOpt[OPT_COUNT] = {
-				&Opt.SafeModePanel, &Opt.AnyInPanel, &Opt.Mode, &Opt.MenuForFilelist, &Opt.FullScreenPanel};
+		constexpr size_t OPT_COUNT = 5;
 
-		while (*argv == _T(' '))
+		static const wchar_t ParamsStr[OPT_COUNT][8] = {L"safe", L"any", L"replace", L"menu", L"full"};
+		const int *ParamsOpt[OPT_COUNT] = {&Opt.SafeModePanel, &Opt.AnyInPanel, &Opt.Mode, &Opt.MenuForFilelist, &Opt.FullScreenPanel};
+
+		while (*argv == L' ')
 			argv++;
 
-		while (lstrlen(argv) > 1 && (*argv == _T('+') || *argv == _T('-'))) {
-			int k = 0;
-			while (*argv && *argv != _T(' ') && *argv != _T('<')) {
+		while (wcslen(argv) > 1 && (*argv == L'+' || *argv == L'-')) {
+			size_t k = 0;
+			while (*argv && *argv != L' ' && *argv != L'<') {
 				k++;
 				argv++;
 			}
 
-			StrBuf tmpTMP(k + 1);
-			TCHAR *TMP = tmpTMP;
-			lstrcpyn(TMP, argv - k, k);
-			TMP[k] = L'\0';
+			std::wstring tmp(argv - k, k);
 
-			for (int i = 0; i < OPT_COUNT; i++) {
-				if (lstrcmpi(TMP + 1, ParamsStr[i]) == 0) {
-					*(int *)ParamsOpt[i] = *TMP == _T('+');
+			for (size_t i = 0; i < OPT_COUNT; i++) {
+				if (wcscasecmp(tmp.c_str() + 1, ParamsStr[i]) == 0) {
+					*(int *)ParamsOpt[i] = (tmp[0] == L'+');
 					break;
 				}
 			}
 
-			if (*(TMP + 1) >= _T('0') && *(TMP + 1) <= _T('9'))
-				CurrentCommonPanel = *(TMP + 1) - _T('0');
+			if (tmp[1] >= L'0' && tmp[1] <= L'9')
+				CurrentCommonPanel = tmp[1] - L'0';
 
-			while (*argv == _T(' '))
+			while (*argv == L' ')
 				argv++;
 		}
 
 		FSF.Trim(argv);
-		if (lstrlen(argv)) {
-			if (*argv == _T('<')) {
+		if (wcslen(argv)) {
+			if (*argv == L'<') {
 				argv++;
 				hPlugin = OpenPanelFromOutput(argv);
 				if (Opt.MenuForFilelist)
@@ -180,7 +177,7 @@ static HANDLE OpenPanelFromOutput(wchar_t *argv)
 	return hPlugin;
 }
 
-void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *numargs,
+void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UINT *numargs,
 		UINT *numchars)
 {
 	*numchars = 0;
@@ -195,9 +192,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 	DWORD Len, Pos = 0, Size = FileSizeLow;
 
 	if (Size >= 3) {
-		if ( ((LPBYTE)FileData)[0]==0xEF && ((LPBYTE)FileData)[1]==0xBB && ((LPBYTE)FileData)[2]==0xBF
-			//*(LPWORD)FileData == BOM_UTF8 & 0xFFFF && ((LPBYTE)FileData)[2] == (BYTE)(BOM_UTF8 >> 16)
-			){
+		if (((LPBYTE)FileData)[0] == 0xEF && ((LPBYTE)FileData)[1] == 0xBB && ((LPBYTE)FileData)[2] == 0xBF) {
 			Pos+= 3;
 		}
 	}
@@ -223,7 +218,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 		FSF.Trim(TMP);
 		FSF.Unquote(TMP);
 
-		Len = lstrlen(TMP);
+		Len = wcslen(TMP);
 		if (!Len)
 			continue;
 
@@ -231,7 +226,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			*argv++ = args;
 
 		if (args) {
-			lstrcpy(args, TMP);
+			wcscpy(args, TMP);
 			args+= Len + 1;
 		}
 
@@ -241,17 +236,15 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 }
 
-	static void ReadFileList(TCHAR * filename, int *argc, TCHAR ***argv)
+	static void ReadFileList(wchar_t * filename, int *argc, wchar_t ***argv)
 	{
 		*argc = 0;
 		*argv = NULL;
 
 		StrBuf FullPath;
 		GetFullPath(filename, FullPath);
-		StrBuf NtPath;
-		FormNtPath(FullPath, NtPath);
 
-		HANDLE hFile = CreateFile(NtPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		HANDLE hFile = CreateFile(FullPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 
 		if (hFile != INVALID_HANDLE_VALUE) {
 			DWORD FileSizeLow = GetFileSize(hFile, NULL);
@@ -259,15 +252,15 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			if (fd != -1 && FileSizeLow != INVALID_FILE_SIZE) {
 				UINT i;
 				ReadFileLines(fd, FileSizeLow, NULL, NULL, (UINT *)argc, &i);
-				*argv = (TCHAR **)malloc(*argc * sizeof(TCHAR *) + i * sizeof(TCHAR));
-				ReadFileLines(fd, FileSizeLow, *argv, (TCHAR *)&(*argv)[*argc], (UINT *)argc,
+				*argv = (wchar_t **)malloc(*argc * sizeof(wchar_t *) + i * sizeof(wchar_t));
+				ReadFileLines(fd, FileSizeLow, *argv, (wchar_t *)&(*argv)[*argc], (UINT *)argc,
 						&i);
 			}
 			CloseHandle(hFile);
 		}
 	}
 
-	static void ProcessList(HANDLE hPlugin, TCHAR * Name, int Mode)
+	static void ProcessList(HANDLE hPlugin, wchar_t * Name, int Mode)
 	{
 		if (Mode) {
 			FreePanelItems(CommonPanels[CurrentCommonPanel].Items,
@@ -278,7 +271,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 		TmpPanel *Panel = (TmpPanel *)hPlugin;
 
 		int argc;
-		TCHAR **argv;
+		wchar_t **argv;
 		ReadFileList(Name, &argc, &argv);
 
 		HANDLE hScreen = Panel->BeginPutFiles();
@@ -291,10 +284,10 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			free(argv);
 	}
 
-	void ShowMenuFromList(TCHAR * Name)
+	void ShowMenuFromList(wchar_t * Name)
 	{
 		int argc;
-		TCHAR **argv = 0;
+		wchar_t **argv = 0;
 
 		ReadFileList(Name, &argc, &argv);
 
@@ -302,7 +295,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 		if (fmi) {
 			StrBuf TMP(NT_MAX_PATH);	// BUGBUG
 			for (int i = 0; i < argc; ++i) {
-				TCHAR *param, *p = TMP;
+				wchar_t *param, *p = TMP;
 				ExpandEnvStrs(argv[i], TMP);
 				param =  ParseParam(p);
 				if (!param) {
@@ -311,15 +304,15 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 
 				FSF.TruncStr(param, 67);
 				fmi[i].Text = wcsdup(param);
-				fmi[i].Separator = !lstrcmp(param, L"-");
+				fmi[i].Separator = !wcscmp(param, L"-");
 				fmi[i].Selected = FALSE;
 				fmi[i].Checked = FALSE;
 
 			}
 			//    fmi[0].Selected=TRUE;
 
-			TCHAR Title[128];	// BUGBUG
-			FSF.ProcessName(FSF.PointToName(Name), lstrcpy(Title, _T("*.")),
+			wchar_t Title[128];	// BUGBUG
+			FSF.ProcessName(FSF.PointToName(Name), wcscpy(Title, L"*."),
 					ARRAYSIZE(Title),PN_GENERATENAME);
 			FSF.TruncPathStr(Title, 64);
 
@@ -327,7 +320,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			static const int BreakKeys[2] = {MAKELONG(VK_RETURN, PKF_SHIFT), 0};
 
 			int ExitCode = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, Title, L"Enter Shift+Enter Esc Ctrl+Alt+F",
-					_T("Contents"), &BreakKeys[0], &BreakCode, fmi, argc);
+					L"Contents", &BreakKeys[0], &BreakCode, fmi, argc);
 
 			for (int i = 0; i < argc; ++i)
 				if (fmi[i].Text)
@@ -336,7 +329,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 			free(fmi);
 
 			if ((unsigned)ExitCode < (unsigned)argc) {
-				TCHAR *p = argv[ExitCode];
+				wchar_t *p = argv[ExitCode];
 				ParseParam(p);
 				ExpandEnvStrs(p, TMP);
 				p = TMP;
@@ -400,13 +393,13 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 	}
 
 	SHAREDSYMBOL HANDLE WINAPI
-	EXP_NAME(OpenFilePlugin)(const TCHAR * Name, const unsigned char *, int DataSize, int OpMode)
+	EXP_NAME(OpenFilePlugin)(const wchar_t * Name, const unsigned char *, int DataSize, int OpMode)
 	{
 		if (!Name)
 			return INVALID_HANDLE_VALUE;
 		GetOptions();
 		StrBuf pName(NT_MAX_PATH);	// BUGBUG
-		lstrcpy(pName, Name);
+		wcscpy(pName, Name);
 
 		if (!DataSize || !FSF.ProcessName(Opt.Mask, pName, pName.Size(), PN_CMPNAMELIST))
 			return INVALID_HANDLE_VALUE;
@@ -448,16 +441,16 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 	{
 		Info->StructSize = sizeof(*Info);
 		Info->Flags = 0;
-		static const TCHAR *DiskMenuStrings[1];
+		static const wchar_t *DiskMenuStrings[1];
 		DiskMenuStrings[0] = GetMsg(MDiskMenuString);
 		Info->DiskMenuStrings = DiskMenuStrings;
 
 		Info->DiskMenuStringsNumber = Opt.AddToDisksMenu ? ARRAYSIZE(DiskMenuStrings) : 0;
-		static const TCHAR *PluginMenuStrings[1];
+		static const wchar_t *PluginMenuStrings[1];
 		PluginMenuStrings[0] = GetMsg(MTempPanel);
 		Info->PluginMenuStrings = Opt.AddToPluginsMenu ? PluginMenuStrings : NULL;
 		Info->PluginMenuStringsNumber = Opt.AddToPluginsMenu ? ARRAYSIZE(PluginMenuStrings) : 0;
-		static const TCHAR *PluginCfgStrings[1];
+		static const wchar_t *PluginCfgStrings[1];
 		PluginCfgStrings[0] = GetMsg(MTempPanel);
 		Info->PluginConfigStrings = PluginCfgStrings;
 		Info->PluginConfigStringsNumber = ARRAYSIZE(PluginCfgStrings);
@@ -470,7 +463,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, TCHAR **argv, TCHAR *args, UINT *n
 		Panel->GetOpenPluginInfo(Info);
 	}
 
-	SHAREDSYMBOL int WINAPI EXP_NAME(SetDirectory)(HANDLE hPlugin, const TCHAR *Dir, int OpMode)
+	SHAREDSYMBOL int WINAPI EXP_NAME(SetDirectory)(HANDLE hPlugin, const wchar_t *Dir, int OpMode)
 	{
 		TmpPanel *Panel = (TmpPanel *)hPlugin;
 		return (Panel->SetDirectory(Dir, OpMode));

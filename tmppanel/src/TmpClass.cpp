@@ -569,7 +569,7 @@ int TmpPanel::ProcessKey(int Key, unsigned int ControlState)
 		}
 	}
 
-	if (Opt.SafeModePanel && ControlState == PKF_CONTROL && Key == VK_PRIOR) {
+	if (ControlState == PKF_CONTROL && Key == VK_PRIOR) {
 		PtrGuard CurFileName;
 		if (IsCurrentFileCorrect(CurFileName.PtrPtr())) {
 			if (wcscmp(CurFileName, L"..")) {

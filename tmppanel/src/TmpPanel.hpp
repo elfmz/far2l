@@ -54,9 +54,6 @@ void GetOptions(void);
 void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd);
 int PWZ_to_PZ(const wchar_t *src, char *dst, int lendst);
 
-#define BOM_UCS2    0xFEFF
-#define BOM_UCS2_BE 0xFFFE
-#define BOM_UTF8    0xBFBBEF
 #define NT_MAX_PATH 32768
 
 class StrBuf

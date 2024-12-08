@@ -192,9 +192,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 	DWORD Len, Pos = 0, Size = FileSizeLow;
 
 	if (Size >= 3) {
-		if ( ((LPBYTE)FileData)[0]==0xEF && ((LPBYTE)FileData)[1]==0xBB && ((LPBYTE)FileData)[2]==0xBF
-			//*(LPWORD)FileData == BOM_UTF8 & 0xFFFF && ((LPBYTE)FileData)[2] == (BYTE)(BOM_UTF8 >> 16)
-			){
+		if (((LPBYTE)FileData)[0] == 0xEF && ((LPBYTE)FileData)[1] == 0xBB && ((LPBYTE)FileData)[2] == 0xBF) {
 			Pos+= 3;
 		}
 	}

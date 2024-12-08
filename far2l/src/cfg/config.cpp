@@ -314,13 +314,19 @@ enum enumDirCfgDialog
 {
 	ID_DIRCFG_TITLE = 0,
 
+	ID_DIRCFG_STYLE_HINT_D,
 	ID_DIRCFG_STYLE_TEXT,
 	ID_DIRCFG_STYLE_COMBO,
-	ID_DIRCFG_SEPARATOR,
 
 	ID_DIRCFG_CHECKBOX_CENTER,
 	ID_DIRCFG_CHECKBOX_SURR,
 	ID_DIRCFG_SURR_COMBO,
+
+	ID_DIRCFG_SEPARATOR,
+	ID_DIRCFG_SYMLINK_TEXT,
+	ID_DIRCFG_SYMLINK_RADIO1_TEXT,
+	ID_DIRCFG_SYMLINK_RADIO2_SIZE,
+	ID_DIRCFG_STYLE_HINT_L,
 
 	ID_DIRCFG_SEPARATOR2,
 	ID_DIRCFG_BUTTON_OK,
@@ -380,6 +386,9 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		SendDlgMessage(hDlg, DM_LISTSET, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)&farlist);
 //		SendDlgMessage(hDlg, DM_LISTSETCURPOS, dircfg_data->DirNameStyleComboID, (LONG_PTR)&flpos);
 		update_surrcombo( );
+
+		swprintf(tmp, ARRAYSIZE(tmp), L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
+		SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_DIRCFG_SYMLINK_RADIO1_TEXT, (LONG_PTR)tmp);
 	}
 	break;
 
@@ -388,6 +397,8 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 
 			dircfg_data->DirNameStyle = SendDlgMessage(hDlg, DM_LISTGETCURPOS, ID_DIRCFG_STYLE_COMBO, (LONG_PTR)0);
 			update_surrcombo( );
+			swprintf(tmp, ARRAYSIZE(tmp), L"\"%ls\"", SymLinkNames[dircfg_data->DirNameStyle].CPtr());
+			SendDlgMessage(hDlg, DM_SETTEXTPTR, ID_DIRCFG_SYMLINK_RADIO1_TEXT, (LONG_PTR)tmp);
 			SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 		}
 		else if (Param1 == ID_DIRCFG_SURR_COMBO) {
@@ -409,6 +420,11 @@ static LONG_PTR WINAPI DirCfgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			Opt.DirNameStyle |= DIRNAME_STYLE_CENTERED * dircfg_data->bCentered;
 			Opt.DirNameStyle |= DIRNAME_STYLE_SURR_CH * dircfg_data->bSurr;
 
+			if (BSTATE_CHECKED == SendDlgMessage(hDlg, DM_GETCHECK, ID_DIRCFG_SYMLINK_RADIO1_TEXT, 0))
+				Opt.ShowSymlinkSize = 0;
+			else if (BSTATE_CHECKED == SendDlgMessage(hDlg, DM_GETCHECK, ID_DIRCFG_SYMLINK_RADIO2_SIZE, 0))
+				Opt.ShowSymlinkSize = 1;
+
 			SendDlgMessage(hDlg, DM_SHOWDIALOG, 0, 0);
 			UpdateDefaultColumnTypeWidths( );
 			CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
@@ -429,22 +445,29 @@ void DirectoryNameSettings()
 {
 	dircfg_data_t dircfg_data;
 	DialogDataEx DirCfgDlgData[] = {
+		{DI_DOUBLEBOX, 3,  1,  48,  15, {}, 0, Msg::DirSettingsTitle},
+		{DI_TEXT,      5,  2,  46,   2, {}, DIF_DISABLE, Msg::DirSettingsHint},
+		{DI_TEXT,      5,  3,  46,   3, {}, 0, Msg::DirSettingsShowAs},
+		{DI_COMBOBOX,  5,  4,  5+40, 4, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 
-		{DI_DOUBLEBOX, 3,  1,  47,  10, {}, 0, Msg::DirSettingsTitle},
-		{DI_TEXT,      5,  2,  35,   2, {}, 0, Msg::DirSettingsShowAs},
-		{DI_COMBOBOX,  5,  3,  5+40, 3, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
-		{DI_TEXT,      0,  4,  0,    4, {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5,  5,  46,   5, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
+		{DI_CHECKBOX,  5,  6,  46,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
+		{DI_COMBOBOX,  9,  7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 
-		{DI_CHECKBOX,  5,  5,  20,   5, {}, DIF_AUTOMATION, Msg::DirSettingsCenter},
-		{DI_CHECKBOX,  5,  6,  20,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
-		{DI_COMBOBOX,  9, 7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
+		{DI_TEXT,      0,  8,   0,   8, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5,  9,  46,   9, {}, 0, Msg::DirSettingsSymlinkText},
+		{DI_RADIOBUTTON, 5, 10,  46,  10, {}, DIF_GROUP, Msg::SymLinkName},
+		{DI_RADIOBUTTON, 5, 11,  46,  11, {}, 0, Msg::DirSettingsSymlinkRadio2},
+		{DI_TEXT,      5, 12,  46,  12, {}, DIF_DISABLE, Msg::DirSettingsSymlinkSizeHint},
 
-		{DI_TEXT,      0,  8,  0,    8, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP, Msg::Cancel},
-		{DI_BUTTON,    0, 9,  0,   9, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
+		{DI_TEXT,      0, 13,   0,  13, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
 
 	};
+	const int dialogsizex = 52;
+	const int dialogsizey = 17;
 
 	MakeDialogItemsEx(DirCfgDlgData, DirCfgDlg);
 
@@ -459,10 +482,10 @@ void DirectoryNameSettings()
 	if (!dircfg_data.bSurr)
 		DirCfgDlg[ID_DIRCFG_SURR_COMBO].Flags |= DIF_DISABLE;
 
+	DirCfgDlg[ID_DIRCFG_SYMLINK_RADIO1_TEXT + (Opt.ShowSymlinkSize ? 1 : 0)].Selected = TRUE;
+
 	Dialog Dlg(DirCfgDlg, ARRAYSIZE(DirCfgDlg), DirCfgDlgProc, (LONG_PTR)&dircfg_data);
 
-	int dialogsizex = 51;
-	int dialogsizey = 12;
 	Dlg.SetPosition(-1, -1, dialogsizex, dialogsizey);
 	Dlg.SetAutomation(ID_DIRCFG_CHECKBOX_SURR, ID_DIRCFG_SURR_COMBO, DIF_DISABLE, DIF_NONE, DIF_NONE, DIF_DISABLE);
 
@@ -474,6 +497,11 @@ void DirectoryNameSettings()
 		Opt.DirNameStyle |= (dircfg_data.SurrIndex << 2);
 		Opt.DirNameStyle |= DIRNAME_STYLE_CENTERED * dircfg_data.bCentered;
 		Opt.DirNameStyle |= DIRNAME_STYLE_SURR_CH * dircfg_data.bSurr;
+
+		if (DirCfgDlg[ID_DIRCFG_SYMLINK_RADIO1_TEXT].Selected)
+			Opt.ShowSymlinkSize = 0;
+		else if (DirCfgDlg[ID_DIRCFG_SYMLINK_RADIO2_SIZE].Selected)
+			Opt.ShowSymlinkSize = 1;
 
 		UpdateDefaultColumnTypeWidths( );
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

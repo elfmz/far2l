@@ -170,31 +170,17 @@ static DWORD LookAtPath(const wchar_t *dir, const wchar_t *name, wchar_t *buffer
 
 bool FindListFile(const wchar_t *FileName, StrBuf &output)
 {
-	StrBuf Path;
-	DWORD dwSize;
-
 	StrBuf FullPath;
 	GetFullPath(FileName, FullPath);
-	StrBuf NtPath;
-	FormNtPath(FullPath, NtPath);
 
-	const wchar_t *final = NULL;
-	if (GetFileAttributes(NtPath) != INVALID_FILE_ATTRIBUTES) {
+	if (GetFileAttributes(FullPath) != INVALID_FILE_ATTRIBUTES) {
 		output.Grow(FullPath.Size());
 		wcscpy(output, FullPath);
 		return true;
 	}
-	{
-		const wchar_t *tmp = FSF.PointToName(Info.ModuleName);
-		Path.Grow((int)(tmp - Info.ModuleName + 1));
-		wcsncpy(Path, Info.ModuleName, (int)(tmp - Info.ModuleName + 1));
-		dwSize = LookAtPath(Path, FileName);
-		if (dwSize) {
-			final = Path;
-			goto success;
-		}
-	}
-	ExpandEnvStrs(L"$FARHOME:$PATH", Path);
+
+	StrBuf Path;
+	ExpandEnvStrs(L"$HOME:$FARHOME:$PATH", Path);
 	for (wchar_t *str = Path, *p = wcschr(Path, L':'); *str; p = wcschr(str, L':')) {
 		if (p)
 			*p = 0;
@@ -203,10 +189,12 @@ bool FindListFile(const wchar_t *FileName, StrBuf &output)
 		FSF.Trim(str);
 
 		if (*str) {
-			dwSize = LookAtPath(str, FileName);
+			DWORD dwSize = LookAtPath(str, FileName);
 			if (dwSize) {
-				final = str;
-				goto success;
+				output.Grow(dwSize);
+				if (LookAtPath(str, FileName, output, dwSize) != dwSize)
+					fprintf(stderr, "LookAtPath: unexpected size\n");
+				return true;
 			}
 		}
 
@@ -217,14 +205,6 @@ bool FindListFile(const wchar_t *FileName, StrBuf &output)
 	}
 
 	return false;
-
-success:
-
-	output.Grow(dwSize);
-	if (LookAtPath(final, FileName, output, dwSize) != dwSize)
-		fprintf(stderr, "LookAtPath: unexpected size\n");
-
-	return true;
 }
 
 wchar_t *GetFullPath(const wchar_t *input, StrBuf &output)

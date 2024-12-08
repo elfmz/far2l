@@ -78,35 +78,32 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	if (OpenFrom == OPEN_COMMANDLINE) {
 		wchar_t *argv = (wchar_t *)Item;
 
-#define OPT_COUNT 5
+		constexpr size_t OPT_COUNT = 5;
+
 		static const wchar_t ParamsStr[OPT_COUNT][8] = {L"safe", L"any", L"replace", L"menu", L"full"};
-		const int *ParamsOpt[OPT_COUNT] = {
-				&Opt.SafeModePanel, &Opt.AnyInPanel, &Opt.Mode, &Opt.MenuForFilelist, &Opt.FullScreenPanel};
+		const int *ParamsOpt[OPT_COUNT] = {&Opt.SafeModePanel, &Opt.AnyInPanel, &Opt.Mode, &Opt.MenuForFilelist, &Opt.FullScreenPanel};
 
 		while (*argv == L' ')
 			argv++;
 
 		while (wcslen(argv) > 1 && (*argv == L'+' || *argv == L'-')) {
-			int k = 0;
+			size_t k = 0;
 			while (*argv && *argv != L' ' && *argv != L'<') {
 				k++;
 				argv++;
 			}
 
-			StrBuf tmpTMP(k + 1);
-			wchar_t *TMP = tmpTMP;
-			wcsncpy(TMP, argv - k, k);
-			TMP[k] = L'\0';
+			std::wstring tmp(argv - k, k);
 
-			for (int i = 0; i < OPT_COUNT; i++) {
-				if (wcscasecmp(TMP + 1, ParamsStr[i]) == 0) {
-					*(int *)ParamsOpt[i] = *TMP == L'+';
+			for (size_t i = 0; i < OPT_COUNT; i++) {
+				if (wcscasecmp(tmp.c_str() + 1, ParamsStr[i]) == 0) {
+					*(int *)ParamsOpt[i] = (tmp[0] == L'+');
 					break;
 				}
 			}
 
-			if (*(TMP + 1) >= L'0' && *(TMP + 1) <= L'9')
-				CurrentCommonPanel = *(TMP + 1) - L'0';
+			if (tmp[1] >= L'0' && tmp[1] <= L'9')
+				CurrentCommonPanel = tmp[1] - L'0';
 
 			while (*argv == L' ')
 				argv++;

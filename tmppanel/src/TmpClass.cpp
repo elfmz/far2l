@@ -400,13 +400,10 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 			wcsncpy(FindFile, lpFullName, (int)(lpSlash - lpFullName) + 1);
 			wcscpy(FindFile + (lpSlash + 1 - lpFullName), L"*");
 
-			StrBuf NtPath;
-			FormNtPath(FindFile, NtPath);
-
 			for (int J = 0; J < SameFolderItems; J++)
 				CurItem[J].Flags|= REMOVE_FLAG;
 
-			int Done = (FindHandle = FindFirstFile(NtPath, &FindData)) == INVALID_HANDLE_VALUE;
+			int Done = (FindHandle = FindFirstFile(FindFile, &FindData)) == INVALID_HANDLE_VALUE;
 			while (!Done) {
 				for (int J = 0; J < SameFolderItems; J++) {
 					if ((CurItem[J].Flags & 1) && cmp_names(FindData, CurItem[J].FindData) == 0) {
@@ -675,10 +672,8 @@ void TmpPanel::SaveListFile(const wchar_t *Path)
 
 	StrBuf FullPath;
 	GetFullPath(Path, FullPath);
-	StrBuf NtPath;
-	FormNtPath(FullPath, NtPath);
 
-	HANDLE hFile = CreateFile(NtPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE hFile = CreateFile(FullPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		const wchar_t *Items[] = {GetMsg(MError)};
 		Info.Message(Info.ModuleNumber, FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_OK, NULL, Items, 1, 0);
@@ -792,8 +787,6 @@ bool TmpPanel::GetFileInfoAndValidate(const wchar_t *FilePath, FAR_FIND_DATA *Fi
 
 	StrBuf FullPath;
 	GetFullPath(FileName, FullPath);
-	StrBuf NtPath;
-	FormNtPath(FullPath, NtPath);
 
 	bool Result = false;
 
@@ -802,16 +795,16 @@ bool TmpPanel::GetFileInfoAndValidate(const wchar_t *FilePath, FAR_FIND_DATA *Fi
 		Result = true;
 	} else {
 		if (wcslen(FileName)) {
-			DWORD dwAttr = GetFileAttributes(NtPath);
+			DWORD dwAttr = GetFileAttributes(FullPath);
 			if (dwAttr != INVALID_FILE_ATTRIBUTES) {
 				WIN32_FIND_DATA wfd;
-				HANDLE fff = FindFirstFile(NtPath, &wfd);
+				HANDLE fff = FindFirstFile(FullPath, &wfd);
 				if (fff != INVALID_HANDLE_VALUE) {
 					FindClose(fff);
 				} else {
 					memset(&wfd, 0, sizeof(wfd));
 					wfd.dwFileAttributes = dwAttr;
-					HANDLE hFile = CreateFile(NtPath, FILE_READ_ATTRIBUTES,
+					HANDLE hFile = CreateFile(FullPath, FILE_READ_ATTRIBUTES,
 											  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING,
 											  FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_POSIX_SEMANTICS, NULL);
 					if (hFile != INVALID_HANDLE_VALUE) {

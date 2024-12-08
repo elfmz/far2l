@@ -243,10 +243,8 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 
 		StrBuf FullPath;
 		GetFullPath(filename, FullPath);
-		StrBuf NtPath;
-		FormNtPath(FullPath, NtPath);
 
-		HANDLE hFile = CreateFile(NtPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+		HANDLE hFile = CreateFile(FullPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 
 		if (hFile != INVALID_HANDLE_VALUE) {
 			DWORD FileSizeLow = GetFileSize(hFile, NULL);

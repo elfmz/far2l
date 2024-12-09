@@ -25,8 +25,8 @@ private:
 	void ProcessPanelSwitchMenu();
 	void SwitchToPanel(int NewPanelIndex);
 	void FindSearchResultsPanel();
-	void SaveListFile(const TCHAR *Path);
-	bool IsCurrentFileCorrect(TCHAR **pCurFileName);
+	void SaveListFile(const wchar_t *Path);
+	bool IsCurrentFileCorrect(wchar_t **pCurFileName);
 
 	PluginPanelItem *TmpPanelItem;
 	int TmpItemsNumber;
@@ -42,20 +42,20 @@ public:
 	//    int OpenFrom;
 	int GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
 	void GetOpenPluginInfo(struct OpenPluginInfo *Info);
-	int SetDirectory(const TCHAR *Dir, int OpMode);
+	int SetDirectory(const wchar_t *Dir, int OpMode);
 
 	int
-	PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const TCHAR *SrcPath, int OpMode);
+	PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode);
 	HANDLE BeginPutFiles();
 	void CommitPutFiles(HANDLE hRestoreScreen, int Success);
-	int PutDirectoryContents(const TCHAR *Path);
-	int PutOneFile(const TCHAR *SrcPath, PluginPanelItem &PanelItem);
-	int PutOneFile(const TCHAR *FilePath);
+	int PutDirectoryContents(const wchar_t *Path);
+	int PutOneFile(const wchar_t *SrcPath, PluginPanelItem &PanelItem);
+	int PutOneFile(const wchar_t *FilePath);
 
 	int SetFindList(const struct PluginPanelItem *PanelItem, int ItemsNumber);
 	int ProcessEvent(int Event, void *Param);
 	int ProcessKey(int Key, unsigned int ControlState);
-	static bool GetFileInfoAndValidate(const TCHAR *FilePath, FAR_FIND_DATA *FindData, int Any);
+	static bool GetFileInfoAndValidate(const wchar_t *FilePath, FAR_FIND_DATA *FindData, int Any);
 	void IfOptCommonPanel(void);
 };
 

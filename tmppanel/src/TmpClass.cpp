@@ -764,19 +764,6 @@ int TmpPanel::IsLinksDisplayed(LPCTSTR ColumnTypes)
 	return (FALSE);
 }
 
-inline bool isDevice(const wchar_t *FileName, const wchar_t *dev_begin)
-{
-	const int len = (int)wcslen(dev_begin);
-	if (FSF.LStrnicmp(FileName, dev_begin, len))
-		return false;
-	FileName+= len;
-	if (!*FileName)
-		return false;
-	while (*FileName >= L'0' && *FileName <= L'9')
-		FileName++;
-	return !*FileName;
-}
-
 bool TmpPanel::GetFileInfoAndValidate(const wchar_t *FilePath, FAR_FIND_DATA *FindData, int Any)
 {
 	StrBuf ExpFilePath;

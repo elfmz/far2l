@@ -27,6 +27,10 @@ following ways:
     to the temporary panel. In order to do this, you should click
     the "#Panel#" button in the dialog with the list of found files.
 
+  - send to the panel the results of executing an arbitrary command by
+    redirecting its output using the following syntax: #tmp: <command#, e.g.:
+    #tmp: <ls -1a /usr/bin/*mkfs*#
+
    Files being put to the temporary panel are not copied physically,
 only references to them are created. All operations that you perform
 on the temporary panel are applied to the real files at their actual

@@ -315,18 +315,17 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					if (Message(0, 2, // at 1st start always only English and we not need use Msg here
 						L"Use OSC52 to set clipboard data (question at first start)",
 						L"",
-						L"OSC52 allow copy from far2l (inside terminal/ssh-connection)",
-						L"to your local system clipboard",
+						L"OSC52 allows copying from far2l running",
+						L"in TTY mode (even via SSH connection) to your local system clipboard",
 						L"(if you are using far2l on a remote untrusted system, giving remote",
 						L"system write access to your clipboard may be potentially unsafe).",
 						L"",
-						L"To use OSC52 feature you must enable it in both",
-						L"the far2l's and the terminal settings.",
+						L"Some terminals also need OSC52 to be enabled in terminal's settings.",
 						L"",
 						L"You can toggle use of OSC52 on/off at any time",
 						L"in Menu(F9)->\'Options\"->\"Interface settings\".",
 						L"",
-						L"Turn on far2l's OSC52 to set clipboard data?",
+						L"Allow far2l to set clipboard data using OSC52?",
 						Msg::Yes,
 						Msg::No))
 					{

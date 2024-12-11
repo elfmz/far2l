@@ -15,9 +15,17 @@ elseif("${ICU_MODE}" STREQUAL "build")
     message(STATUS "Buld-time character classes generaction due to ICU_MODE=${ICU_MODE}")
     # Not using CMAKE_CXX_COMPILER due to it can be cross-compilation but here we want to compile native executable
     # TODO: there must be some less lame way to use host's compiler and host's libicuuc
-    add_custom_target(utils_icu
-        c++ -O2 ${CMAKE_CURRENT_SOURCE_DIR}/src/CharClasses_mk.cpp -licuuc -o ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk && ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk > ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses.cpp)
+    find_package(ICU COMPONENTS uc REQUIRED)
     set(CHAR_CLASSES_CPP ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses.cpp)
+    add_custom_command(
+        OUTPUT ${CHAR_CLASSES_CPP}
+        COMMAND c++ ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} ${CMAKE_CURRENT_SOURCE_DIR}/src/CharClasses_mk.cpp ${ICU_LIBRARY} -o ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk && ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk > ${CHAR_CLASSES_CPP}
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMENT ${CHAR_CLASSES_CPP}
+    )
+    add_custom_target(utils_icu
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses.cpp
+    )
 
 elseif("${ICU_MODE}" STREQUAL "runtime")
     find_package(ICU COMPONENTS uc)

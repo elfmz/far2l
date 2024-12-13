@@ -48,4 +48,6 @@ inline uint64_t FarColorToReal(unsigned int FarColor)
 	return (FarColor < SIZE_ARRAY_PALETTE) ? Palette[FarColor] : 4 * 16 + 15;
 }
 
+void ZeroFarPalette( void );
+void InitFarPalette( void );
 void ConvertCurrentPalette();

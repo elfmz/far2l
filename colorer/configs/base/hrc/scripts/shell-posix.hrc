@@ -329,6 +329,7 @@
 </scheme>
 
 <scheme name="variable_assignments">
+    <inherit scheme="escape_newline"/>
     <block start="/\s*\M(%var;)(=)/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignments_caught"/>
 </scheme>
 

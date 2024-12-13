@@ -512,6 +512,7 @@
         region02="PairStart"       region11="PairEnd"/>
     <inherit scheme="shell-posix:for">
         <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+        <virtual scheme="shell-posix:variable_assignments" subst-scheme="variable_assignments"/>
         <virtual scheme="shell-posix:strings" subst-scheme="strings"/>
         <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
         <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>

@@ -1902,11 +1902,17 @@ typedef int (WINAPI *FARSTDLOCALSTRNCMP)(const wchar_t *s1,const wchar_t *s2,int
 
 enum PROCESSNAME_FLAGS
 {
-	PN_CMPNAME      = 0x00000000UL,
-	PN_CMPNAMELIST  = 0x00010000UL,
-	PN_GENERATENAME = 0x00020000UL,
-	PN_SKIPPATH     = 0x01000000UL,
+	PN_CMPNAME          = 0x00000000UL,
+	PN_CMPNAMELIST      = 0x00010000UL,
+	PN_GENERATENAME     = 0x00020000UL,
+	PN_CHECKMASK        = 0x00030000UL,
+	PN_SKIPPATH         = 0x01000000UL,
+	PN_SHOWERRORMESSAGE = 0x02000000UL,
+	PN_RESERVED1        = 0x04000000UL,
+	PN_CASESENSITIVE    = 0x08000000UL,
+	PN_NONE             = 0
 };
+
 
 typedef int (WINAPI *FARSTDPROCESSNAME)(const wchar_t *param1, wchar_t *param2, DWORD size, DWORD flags);
 
@@ -1978,7 +1984,8 @@ enum EXECUTEFLAGS
 	EF_NOTIFY = 0x08,     // notify when command completed (if such notifications enabled in settings)
 	EF_NOCMDPRINT = 0x10, // dont print command in command line nor include it to history
 	EF_OPEN = 0x20,       // use desktop shell (if present) to open command (e.g. URLs, documents..)
-	EF_MAYBGND = 0x40     // allow put command to background mode
+	EF_MAYBGND = 0x40,     // allow put command to background mode
+	EF_EXTERNALTERM = 0x80 // execute command in configured external terminal
 };
 
 typedef int (WINAPI *FAREXECUTE)(const wchar_t *CmdStr, unsigned int ExecFlags);

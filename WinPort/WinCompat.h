@@ -405,9 +405,13 @@ typedef struct _CHAR_INFO {
 
 #define CI_SET_WCATTR(CI, WC, ATTR) {(CI).Char.UnicodeChar = (COMP_CHAR)(uint32_t)(WC); (CI).Attributes = (DWORD64)ATTR;}
 
-#define CI_USING_COMPOSITE_CHAR(CI) ( ((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0 )
-#define CI_FULL_WIDTH_CHAR(CI) ( (!CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth((CI).Char.UnicodeChar)) \
-    || (CI_USING_COMPOSITE_CHAR(CI) && IsCharFullWidth(*WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar))))
+#define CI_USING_COMPOSITE_CHAR(CI) (UNLIKELY(((CI).Char.UnicodeChar & COMPOSITE_CHAR_MARK) != 0))
+
+#define CI_FULL_WIDTH_CHAR(CI) ( \
+        CharClasses( CI_USING_COMPOSITE_CHAR(CI) \
+            ? *WINPORT(CompositeCharLookup)((CI).Char.UnicodeChar) \
+            : (CI).Char.UnicodeChar ).FullWidth() \
+        )
 
 #define GET_RGB_FORE(ATTR)       ((DWORD)(((ATTR) >> 16) & 0xffffff))
 #define GET_RGB_BACK(ATTR)       ((DWORD)(((ATTR) >> 40) & 0xffffff))
@@ -1139,6 +1143,7 @@ typedef void *HKL;
 #define ERROR_INSUFFICIENT_BUFFER        ENOBUFS
 #define ERROR_NO_UNICODE_TRANSLATION     EILSEQ
 #define ERROR_DIRECTORY                  EISDIR
+#define ERROR_TOO_MANY_POSTS             E2BIG
 #define ERROR_INVALID_NAME               ENAMETOOLONG
 #define ERROR_FILE_EXISTS                EEXIST
 #define ERROR_OUTOFMEMORY                ENOMEM

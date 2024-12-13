@@ -64,6 +64,7 @@ private:
 		bool allowAll;
 	};
 	std::list<CodePageBox> CodePageBoxes;	// must be list to keep pointers valid
+	FARWINDOWPROC UserDlgProc;
 
 	const wchar_t *HelpTopic;
 
@@ -85,6 +86,9 @@ public:
 	// Добавляет поле типа DI_EDIT для редактирования указанного строкового значения.
 	DialogItemEx *
 	AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
+
+	LONG_PTR UserData;
+	bool SetUserDlgProc(FARWINDOWPROC UserProc, LONG_PTR UserParam2);
 
 	// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
 	virtual DialogItemEx *AddIntEditField(int *Value, int Width, int Flags = 0);

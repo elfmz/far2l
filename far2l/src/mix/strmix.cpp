@@ -665,6 +665,7 @@ FARString &WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width,
 		strStr.Format(L"%llu", Sz);
 
 	if ((!UseMinSizeIndex && strStr.GetLength() <= static_cast<size_t>(Width)) || Width < 5) {
+
 		if (ShowBytesIndex) {
 			Width-= (Economic ? 1 : 2);
 
@@ -677,6 +678,7 @@ FARString &WINAPI FileSizeToStr(FARString &strDestStr, uint64_t Size, int Width,
 				strDestStr.Format(L"%*.*ls %1.1ls", Width, Width, strStr.CPtr(), UnitStr[0][IndexDiv]);
 		} else
 			strDestStr.Format(L"%*.*ls", Width, Width, strStr.CPtr());
+
 	} else {
 		Width-= (Economic ? 1 : 2);
 		IndexB = 0;

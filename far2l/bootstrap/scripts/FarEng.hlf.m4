@@ -1600,8 +1600,7 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
   Hard kill everything in shell                             #Ctrl+Alt+C#
     (not recommended, it may cause corruption or lost of unsaved data)
 
-  Put far2l instance to background                          #Ctrl+Alt+Z#
-    (only if far2l works in TTY backend)
+  Send currently running command to the background          #Ctrl+Alt+Z#
 
   See also: ~pseudo-commands~@SpecCmd@
 
@@ -4378,69 +4377,22 @@ or directory.
 $ #Operating system commands#
     FAR2L by itself processes the following operating system commands:
 
-    #CLS#
+    #reset#
 
-    Clears the screen.
-
-    #disk:#
-
-    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
-
-    To change the current disk on the active panel to the specified disk.
-
-    !! Windows legacy end !!
-
-    #CD path# or #CHDIR path#
-
-    To change the current path on the active panel to the specified path.
-If the active panel shows a ~plugin~@Plugins@ emulated file system, the command
-"CD" in the command line may be used to change the folder in the plugin file
-system. Unlike "CD", "CHDIR" command always treats the specified parameter
-as a real folder name, regardless of the file panel type.
-
-    #CHCP [nnn]#
-
-    Displays or sets the active code page number. "nnn" - specifies a code
-page number. Type CHCP without a parameter to display the active code
-page number.
-
-    #SET variable=[string]#
-
-    Set environment variable "variable" to the value "string". If "string" is
-not specified, the environment variable "variable" will be removed. On startup,
-FAR2L sets several ~environment variables~@FAREnv@ by itself.
-
-    #IF [NOT] EXIST filename command#
-
-    Execute a command "command" if "filename" exists. Prefix "NOT" - execute
-the command only if the condition is false.
-
-    #IF [NOT] DEFINED variable command#
-
-    The "DEFINED" conditional works just like "EXISTS" except it takes an
-environment variable name and returns true if the environment variable is
-defined.
-
-
-    "IF" commands can be nested, for instance, command "command"
-
-    #if exist file1 if not exist file2 if defined variable command#
-
-    will be executed if the file "file1" exists, the file "file2" does not
-exist and the environment variable "variable" is defined.
+    Clears the screen of the built-in ~Terminal~@Terminal@.
 
     #pushd path#
 
-    Команда PUSHD сохраняет текущий каталог во внутреннем стеке и делает
-текущим каталог path.
+    Stores the current path on the internal stack and sets the current
+directory on the active panel to specified path.
 
     #popd#
 
-    Переходит в каталог, сохраненный командой PUSHD.
+    Changes the current path on the active panel to that stored by the “pushd” command.
 
-    #clrd#
+    #exit#
 
-    Очищает стек каталогов, сохраненных командой PUSHD.
+    Сloses the background shell of the built-in ~Terminal~@Terminal@.
 
     Notes:
 
@@ -4459,15 +4411,15 @@ $ #Environment variables#
     On startup, FAR2L sets the following environment variables available
 to child processes:
 
-    #FARHOME#            path to the folder from which FAR2L was started.
+    #FARHOME#            directory containing far2l resources (e.g. /usr/share/far2l)
 
     #FARLANG#            the name of the current interface language.
 
-    #FARUSER#            ^<wrap>the name of the current user given by the -u ~command line~@CmdLine@ option.
+    #FARSETTINGS#        ^<wrap>the name of user given by the -u ~command line~@CmdLine@ option.
 
-    #FARDIRSTACK#        ^<wrap>the contents of directories stack top (the stack is managed with #pushd# and #popd# commands)
+    #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator (i.e., if its effective user ID is 0)
 
-    #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator
+    #FARPID#             FAR2L process id
 
 
 @RegExp

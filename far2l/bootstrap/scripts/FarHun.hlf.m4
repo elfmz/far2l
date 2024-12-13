@@ -4033,6 +4033,8 @@ megadott felhasználói név.
 
     #FARPID#             FAR2L process id
 
+    See also ~FAR2L: command line switches~@CmdLine@ for the #FAR2L_ARGS# environment variable.
+
 
 @RegExp
 $ #Regular expressions#

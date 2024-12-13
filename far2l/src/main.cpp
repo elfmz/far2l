@@ -336,9 +336,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					ConfigOptSave(false);
 				}
 
-			
 				if (!getenv("SSH_TTY") && !(getenv("XDG_SESSION_TYPE") && strcmp(getenv("XDG_SESSION_TYPE"), "tty") == 0)) {
-
 					char *term = getenv("TERM");
 					char kitty_app_path[PATH_MAX];
 					char *home = getenv("HOME");
@@ -351,59 +349,78 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 					if ((long unsigned int)snprintf(config_dir, sizeof(config_dir), "%s/.config/kitty", home) >= sizeof(config_dir) ||
 						(long unsigned int)snprintf(config_file, sizeof(config_file), "%s/kitty.conf", config_dir) >= sizeof(config_file)) {
-							size_ok = false;
+						size_ok = false;
 					}
 
 					if (size_ok && (term && strstr(term, "kitty")) &&
 						(access("/usr/bin/kitty", F_OK) == 0 ||
-						access("/usr/local/bin/kitty", F_OK) == 0 ||
-						access(kitty_app_path, F_OK) == 0)) {
+							 access("/usr/local/bin/kitty", F_OK) == 0 ||
+							 access(kitty_app_path, F_OK) == 0)) {
 
-						if (!Message(0, 2, // at 1st start always only English and we not need use Msg here
-							L"Handle Ctrl + navigation keys by far2l or kitty terminal?",
-							L"",
-							L"It seems you are running far2l inside kitty terminal.",
-							L"It uses Ctrl + navigation keys for it's own purposes,",
-							L"this can make harm to far2l UX. Do you want",
-							L"far2l to handle such key combinations instead?",
-							L"",
-							Msg::Yes,
-							Msg::No))
-						{
+						bool found_keys[4] = {false, false, false, false};
+						const char *key_strings[] = {"map ctrl+shift+right", "map ctrl+shift+left", "map ctrl+shift+home", "map ctrl+shift+end"};
 
-							struct stat sb;
-							if (stat(config_dir, &sb) != 0 || !S_ISDIR(sb.st_mode)) mkdir(config_dir, 0755);
-
-							if (access(config_file, F_OK) != 0) {
-								FILE *f = fopen(config_file, "w");
-								fclose(f);
+						FILE *file = fopen(config_file, "r+");
+						if (file) {
+							char line[256];
+							while (fgets(line, sizeof(line), file)) {
+								for (int i = 0; i < 4; i++) {
+									if (strstr(line, key_strings[i])) {
+										found_keys[i] = true;
+									}
+								}
 							}
+							fclose(file);
+						}
 
-							FILE *file = fopen(config_file, "r+");
-							if (file) {
-								bool found_right = false;
-								bool found_left = false;
-								bool found_home = false;
-								bool found_end = false;
-								char line[256];
+						if (!found_keys[0] || !found_keys[1] || !found_keys[2] || !found_keys[3]) {
+							if (
+								!Message(0, 2,
+										 L"Handle Ctrl + navigation keys by far2l or kitty terminal?",
+										 L"",
+										 L"It seems you are running far2l inside kitty terminal.",
+										 L"It uses Ctrl + navigation keys for it's own purposes,",
+										 L"this can make harm to far2l UX. Do you want",
+										 L"far2l to handle such key combinations instead?",
+										 L"",
+										 Msg::Yes,
+										 Msg::No
+								) &&
+								!Message(MSG_WARNING, 2,
+										 L"Confirmation",
+										 L"",
+										 L"This will alter your kitty.conf file.",
+										 L"Are you sure?",
+										 L"",
+										 Msg::Yes,
+										 Msg::No
+								)
+							) {
 
-								while (fgets(line, sizeof(line), file)) {
-									if (strstr(line, "map ctrl+shift+right")) found_right = true;
-									if (strstr(line, "map ctrl+shift+left")) found_left = true;
-									if (strstr(line, "map ctrl+shift+home")) found_home = true;
-									if (strstr(line, "map ctrl+shift+end")) found_end = true;
+								struct stat sb;
+								if (stat(config_dir, &sb) != 0 || !S_ISDIR(sb.st_mode)) mkdir(config_dir, 0755);
+
+								if (access(config_file, F_OK) != 0) {
+									FILE *f = fopen(config_file, "w");
+									fclose(f);
 								}
 
-								fseek(file, 0, SEEK_END);
-								if (!found_right) fprintf(file, "map ctrl+shift+right no_op\n");
-								if (!found_left) fprintf(file, "map ctrl+shift+left no_op\n");
-								if (!found_home) fprintf(file, "map ctrl+shift+home no_op\n");
-								if (!found_end) fprintf(file, "map ctrl+shift+end no_op\n");
-								fclose(file);
+								file = fopen(config_file, "a"); 
+								if (file) {
+									for (int i = 0; i < 4; i++) {
+										if (!found_keys[i]) fprintf(file, "%s no_op\n", key_strings[i]);
+									}
+									fclose(file);
+								}
+							} else {
+								// don't ask any more
+								Opt.IsFirstStart = false;
+								ConfigOptSave(false);
 							}
 						}
 					}
 				}
+
 			}
 
 			FrameManager->EnterMainLoop();

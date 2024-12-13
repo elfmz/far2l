@@ -48,7 +48,7 @@ static bool MatchEditorConfigFileSection(const char *edited_file, const std::str
 		}
 	}
 
-	const char *edited_file_name = strrchr(edited_file, '/');
+	const char *edited_file_name = strrchr(edited_file, GOOD_SLASH);
 	edited_file_name = edited_file_name ? edited_file_name + 1 : edited_file;
 	return MatchWildcardICE(edited_file_name, section.c_str());
 }
@@ -78,7 +78,7 @@ void EditorConfigOrg::Populate(const char *edited_file)
 	KeyFileValues props;
 	std::string path(edited_file);
 	for (;;) {
-		size_t slash_pos = path.rfind('/');
+		size_t slash_pos = path.rfind(GOOD_SLASH);
 		if (slash_pos == std::string::npos) {
 			break;
 		}
@@ -87,6 +87,9 @@ void EditorConfigOrg::Populate(const char *edited_file)
 		KeyFileReadHelper kfh(path);
 		if (kfh.IsLoaded()) {
 			fprintf(stderr, "EditorConfigOrg: loaded '%s'\n", path.c_str());
+			pos_trim_dir_root = slash_pos;
+			if (pos_trim_dir_nearest < 0)
+				pos_trim_dir_nearest = slash_pos;
 			if (ParseEditorConfigFile(edited_file + slash_pos + 1, kfh, props)) {
 				break;
 			}

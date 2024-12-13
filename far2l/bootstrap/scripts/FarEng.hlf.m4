@@ -233,7 +233,7 @@ for clipboard need turn on OSC 52)
 
  #Location of FAR2L settings and history#
     - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l/#
-    - command line switch #-u# (or #$FARSETTINGS# environment variable) allows to specify arbitrary settings location:
+    - command line switch #-u# (or #$FARSETTINGS# ~environment variable~@FAREnv@) allows to specify arbitrary settings location:
         #-u <path>#: in #path/.config/# (if path or $FARSETTINGS is full path)
         #-u <identity>#: in #~~/.config/far2l/custom/identity/# or in #$XDG_CONFIG_HOME/far2l/custom/identity/#
     - some settings files (may be missing):
@@ -345,7 +345,7 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   Macros with the "Run after FAR2L start" option set will not be run when FAR2L is started.
 
   #-u <identity># or #-u <path>#
-  Allows to specify separate settings identity or FS location (it override #FARSETTINGS# environment variable value).
+  Allows to specify separate settings identity or FS location (it override #FARSETTINGS# ~environment variable~@FAREnv@ value).
   #-u <path>#: in path/.config/ (if path is full path)
   #-u <identity>#: in ~~/.config/far2l/custom/identity/ or in $XDG_CONFIG_HOME/far2l/custom/identity/
 
@@ -4420,6 +4420,8 @@ to child processes:
     #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator (i.e., if its effective user ID is 0)
 
     #FARPID#             FAR2L process id
+
+    See also ~FAR2L: command line switches~@CmdLine@ for the #FAR2L_ARGS# environment variable.
 
 
 @RegExp

@@ -27,6 +27,10 @@ following ways:
     to the temporary panel. In order to do this, you should click
     the "#Panel#" button in the dialog with the list of found files.
 
+  - send to the panel the results of executing an arbitrary command by
+    redirecting its output using the following syntax: #tmp: <command#, e.g.:
+    #tmp: <ls -1a /usr/bin/*mkfs*#
+
    Files being put to the temporary panel are not copied physically,
 only references to them are created. All operations that you perform
 on the temporary panel are applied to the real files at their actual
@@ -61,13 +65,8 @@ can use the hotkey #Alt-Shift-F2#.
 $ #Temporary panel: configuration#
    In this dialog you may change the following options:
 
- #Add to disks menu#
-   Enables adding the "Temporary" item to the disks menu.
-
- #Disks menu hotkey#
-   Hotkey for the temporary panel item in the disks menu.
-You can enter a value from 1 to 9 or leave this field empty if
-you prefer the hotkey to be assigned automatically.
+ #Add to Location menu#
+   Enables adding the "Temporary" item to the Location menu.
 
  #Add to plugins menu#
    Enables adding the "Temporary" item to the plugins menu.
@@ -95,16 +94,15 @@ moving, deleting etc.) are disabled. The only available operations are:
    If this option is enabled, the plugin will not check for path
 validity before putting an element to a panel.
    It becomes possible to use panel elements like:
-   #ftp:#
-   #ftp:my_favorite_ftp#
-   #reg:HKEY_CURRENT_USER\Software#
-   #copy d:\work\tmppanel d:\work\tmppanel\backup /y#
-   #format a:#
+   #smb://johndoe@@acmecorp/C$#
+   #sftp://198.51.100.42:12345#
+   #ftp://alice:topsecret@@ftp.example.org/pub/#
+   #cp -R ~~/work ~~/backups/work.$(date -Iseconds)#
    and so on.
 
    For example, it is possible to use this option to sort the lines
 in a text file:
-   #tmp:+any +full <type filename.ext#
+   #tmp:+any +full <cat ./filename.ext#
    Then you press #Ctrl-F3# in the panel to sort the lines, and then
 #Ctrl-Gray* Ctrl-Ins# to copy the lines to the Windows clipboard, or
 #Alt-Shift-F2# to save the lines to a file.
@@ -137,18 +135,13 @@ delimiter will be executed when the item is selected.
 the menu.
 
    Example of a list file: #shortcuts.temp#
-   #|&A: removable|A:#
-   #|&C: fixed|C:#
-   #|&D: fixed|D:#
-   #|-|#
-   #|&M: Music|D:\Music#
-   #|&M: Tools|D:\Tools#
-   #|&M: Desktop|%HOMEDRIVE%%HOMEPATH%\Desktop#
+   #|&M: Music|/mnt/Music#
+   #|&T: Tools|/mnt/Tools#
+   #|&H: HOME|~~#
    #|-|#
    #|&1: Temporary|tmp:#
-   #|&2: Far Navigator|ftp:#
-   #|&3: Network|net:#
-   #|&8: Registry|reg:#
+   #|&2: Network|net:#
+   #|&3: Calculator|calc:#
 
  #New panel for search results#
    This option works when #"Use common panel"# is enabled and allows
@@ -178,49 +171,43 @@ line and for ~file list operations~@List@.
 $ #Temporary panel: list files#
    The temporary panel can read a list of filenames from a list file.
 
-   Each line in the list file must contain
-     - either an existing file or directory (C:\Windows)
-     - or a drive letter (C:)
-     - or the name of a network resource (\\Server\Music)
+   Each line in the list file must contain an existing file or directory
+(/usr/bin/bash, /var/log).
 
    If the option #"Any elements in panel#" in the
-~configuration dialog@Config@ is not enabled, lines not matching any
+~configuration dialog~@Config@ is not enabled, lines not matching any
 of the conditions mentioned above are not added to the panel. If the
 option is enabled, the list file can contain arbitrary lines - all of
 them will be shown in the panel.
 
    Names of files and directories in the list file can contain
-environment variables (%WINDIR%\System).
+environment variables ($HOME/.bashrc).
 
    List file example:
-     #c:#
-     #d:#
-     #d:\Games\Quake3#
-     #\\server\c$#
-     #\\server\music#
-     #%ProgramFiles%#
-     #%HOMEDRIVE%%HOMEPATH%\Desktop#
+     #/boot/grub#
+     #/usr/local/bin#
+     #/#
+     #$XDG_CONFIG_HOME#
+
    If the option "Any elements in panel" is enabled, the list file
 can also contain such lines:
-     #ftp:#
-     #ftp:ftp.cdrom.com#
-     #reg:HKEY_CURRENT_USER\Software#
-     #dir#
+     #ls -l#
+     #shell://janedoe:cool@@192.168.1.60:12345/#
 
    There are two ways to process the list file:
 
    a) Press #Enter# or #Ctrl-PgDn# when the cursor is on such a file.
       The file must match one of the file masks for file lists specified
-in the configuration dialog, and it must be in the OEM codepage.
+in the configuration dialog, and it must be in the UTF-8.
 
    b) Enter #tmp:"list file name"# in the ~command line~@CMD@.
       If the list file name does not contain a path, the plugin will
 attempt to locate it in the following directories and in the following
 sequence:
       1. The current directory
-      2. In the plugin directory.
-      3. In #%FARHOME%#.
-      4. The directories that are listed in the #%PATH%# environment variable.
+      2. In the current user's home directory.
+      3. In #$FARHOME#.
+      4. The directories that are listed in the #$PATH# environment variable.
 
    The command line prefix used for file list operations (in the examples
 given above - #tmp:#) can be set in the configuration dialog.
@@ -241,7 +228,6 @@ $^#Temporary panel: Command line#
                 case-sensitive)
 
    #+0..+9#        - switch to a panel with the specified index
-   #+ansi#         - the filelist is in the ANSI codepage
    #+full# / #-full# - fullscreen/normal panel mode
    #+safe# / #-safe# - safe/normal panel mode
    #+any#  / #-any#  - any elements/existing paths in the list file

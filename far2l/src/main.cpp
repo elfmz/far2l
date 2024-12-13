@@ -335,6 +335,75 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					}
 					ConfigOptSave(false);
 				}
+
+			
+				if (!getenv("SSH_TTY") && !(getenv("XDG_SESSION_TYPE") && strcmp(getenv("XDG_SESSION_TYPE"), "tty") == 0)) {
+
+					char *term = getenv("TERM");
+					char kitty_app_path[PATH_MAX];
+					char *home = getenv("HOME");
+					snprintf(kitty_app_path, sizeof(kitty_app_path), "%s/.local/kitty.app/bin/kitty", home);
+
+					char config_dir[PATH_MAX];
+					char config_file[PATH_MAX];
+
+					bool size_ok = true;
+
+					if ((long unsigned int)snprintf(config_dir, sizeof(config_dir), "%s/.config/kitty", home) >= sizeof(config_dir) ||
+						(long unsigned int)snprintf(config_file, sizeof(config_file), "%s/kitty.conf", config_dir) >= sizeof(config_file)) {
+							size_ok = false;
+					}
+
+					if (size_ok && (term && strstr(term, "kitty")) &&
+						(access("/usr/bin/kitty", F_OK) == 0 ||
+						access("/usr/local/bin/kitty", F_OK) == 0 ||
+						access(kitty_app_path, F_OK) == 0)) {
+
+						if (!Message(0, 2, // at 1st start always only English and we not need use Msg here
+							L"Handle Ctrl + navigation keys by far2l or kitty terminal?",
+							L"",
+							L"It seems you are running far2l inside kitty terminal.",
+							L"It uses Ctrl + navigation keys for it's own purposes,",
+							L"this can make harm to far2l UX. Do you want",
+							L"far2l to handle such key combinations instead?",
+							L"",
+							Msg::Yes,
+							Msg::No))
+						{
+
+							struct stat sb;
+							if (stat(config_dir, &sb) != 0 || !S_ISDIR(sb.st_mode)) mkdir(config_dir, 0755);
+
+							if (access(config_file, F_OK) != 0) {
+								FILE *f = fopen(config_file, "w");
+								fclose(f);
+							}
+
+							FILE *file = fopen(config_file, "r+");
+							if (file) {
+								bool found_right = false;
+								bool found_left = false;
+								bool found_home = false;
+								bool found_end = false;
+								char line[256];
+
+								while (fgets(line, sizeof(line), file)) {
+									if (strstr(line, "map ctrl+shift+right")) found_right = true;
+									if (strstr(line, "map ctrl+shift+left")) found_left = true;
+									if (strstr(line, "map ctrl+shift+home")) found_home = true;
+									if (strstr(line, "map ctrl+shift+end")) found_end = true;
+								}
+
+								fseek(file, 0, SEEK_END);
+								if (!found_right) fprintf(file, "map ctrl+shift+right no_op\n");
+								if (!found_left) fprintf(file, "map ctrl+shift+left no_op\n");
+								if (!found_home) fprintf(file, "map ctrl+shift+home no_op\n");
+								if (!found_end) fprintf(file, "map ctrl+shift+end no_op\n");
+								fclose(file);
+							}
+						}
+					}
+				}
 			}
 
 			FrameManager->EnterMainLoop();

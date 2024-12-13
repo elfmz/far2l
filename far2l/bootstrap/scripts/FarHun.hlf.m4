@@ -3988,56 +3988,22 @@ $ #Operációs rendszer parancsok#
     A FAR Manager önmaga is képes az operációs rendszer bizonyos parancsait
 értelmezni. Ezek a következők:
 
-    #CLS#
+    #reset#
 
-    A képernyő törlése.
+    Clears the screen of the built-in ~Terminal~@Terminal@.
 
-    #MEGHAJTÓ BETŰJELE:#
+    #pushd path#
 
-    Az aktív panelt az aktuális meghajtóról a megadott betűjelű meghajtóra
-váltja át.
+    Stores the current path on the internal stack and sets the current
+directory on the active panel to specified path.
 
-    #CD [meghajtó:]elérési út# vagy #CHDIR [meghajtó:]elérési út#
+    #popd#
 
-    Az aktív panelt a megadott elérési útvonalra váltja. Ha a meghajtó
-betűjelét is megadtuk, az aktuális meghajtó is megváltozik. Ha az
-aktív panel ~pluginnel~@Plugins@ emulált fájlrendszert mutat, a "CD" paranccsal a
-plugin fájlrendszerének mappái között mozoghatunk. A "CD" parancstól eltérően
-a "CHDIR" mindig valódi mappaként kezeli az utána álló paramétert, a fájlpanel
-jellegétől függetlenül.
+    Changes the current path on the active panel to that stored by the “pushd” command.
 
-    #CHCP [nnn]#
+    #exit#
 
-    Megjeleníti vagy beállítja az aktív kódlap számát (értéke "nnn"). A
-paraméter nélküli CHCP parancs megjeleníti az aktív kódlap számát.
-
-    #SET változó=[sztring]#
-
-    A "változó" nevű környezeti változónak a "sztring" értéket adja. Ha az
-egyenlőségjel után a "sztring" helyére nem írunk semmit, a "változó" nevű
-környezeti változó törlődik. A FAR Manager indulásakor több
-~környezeti változót~@FAREnv@ definiál.
-
-    #IF [NOT] EXIST fájlnév parancs#
-
-    Akkor hajtja végre a "parancs" nevű parancsot, ha a "fájlnév" létezik. A
-"NOT" előtag hatására a parancs csak akkor hajtódik végre, ha a feltétel
-hamis.
-
-    #IF [NOT] DEFINED változó parancs#
-
-    A DEFINED az EXIST-hez hasonlóan feltételesen működik, de nem
-fájlnévtől függ a "parancs" végrehajtása, hanem attól, hogy a "változó" nevű
-környezeti változó igaz vagy hamis értéket ad-e vissza, azaz létezik-e vagy
-sem.
-
-    Egész sor "IF" feltételt alkalmazhatunk, például a következő sor "parancs"
-nevű parancsa
-
-    #if exist fájl1 if not exist fájl2 if defined változó parancs#
-
-    csak akkor hajtódik végre, ha "fájl1" fájl létezik, "fájl2" fájl nem
-létezik és a "változó" nevű környezeti változó létezik.
+    Сloses the background shell of the built-in ~Terminal~@Terminal@.
 
     Megjegyzések:
 
@@ -4056,12 +4022,16 @@ $ #Környezeti változók#
     A FAR Manager indításakor a következő környezeti változókat definiálja
 az utódfolyamatok részére:
 
-    #FARHOME#          A mappa elérési útja, ahonnan a FAR indult.
+    #FARHOME#          directory containing far2l resources (e.g. /usr/share/far2l).
 
     #FARLANG#          A kezelőfelület aktuális nyelve.
 
-    #FARUSER#          ^<wrap>A ~parancssorban~@CmdLine@ a -u kapcsolóval
+    #FARSETTINGS#          ^<wrap>A ~parancssorban~@CmdLine@ a -u kapcsolóval
 megadott felhasználói név.
+
+    #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator (i.e., if its effective user ID is 0)
+
+    #FARPID#             FAR2L process id
 
 
 @RegExp

@@ -314,6 +314,11 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	fprintf(stderr, "\n");
 	*/
 
+	if (l > 1 && s[0] == '[' && (s[1] == 'I' || s[1] == 'O')) { // focus
+		_handler->OnFocusChange(s[1] == 'I');
+		return 2;
+	}
+
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {
 		return 3;
 	}

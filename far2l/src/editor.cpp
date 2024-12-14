@@ -4712,7 +4712,7 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 	if (ptrInitData)
 		DataSize = wcslen(ptrInitData);
 
-	// RealPos всегда <= TabPos, поэтому берём максимальный размер буффера
+	// RealPos всегда <= TabPos, поэтому берём максимальный размер буфера
 	size_t TotalChars = DataSize + (VBlockSizeX + wcslen(NATIVE_EOLW)) * VBlockSizeY + 1;
 
 	wchar_t *CopyData = (wchar_t *)malloc(TotalChars * sizeof(wchar_t));

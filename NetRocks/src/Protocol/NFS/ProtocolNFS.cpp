@@ -507,7 +507,11 @@ public:
 
 	virtual size_t Read(void *buf, size_t len)
 	{
+#ifdef LIBNFS_API_V2
+		const auto rc = nfs_read(_nfs->ctx, _file, (char *)buf, len);
+#else
 		const auto rc = nfs_read(_nfs->ctx, _file, len, (char *)buf);
+#endif
 		if (rc < 0)
 			throw ProtocolError("Read file error", errno);
 		// uncomment to simulate connection stuck if ( (rand()%100) == 0) sleep(60);
@@ -518,7 +522,11 @@ public:
 	virtual void Write(const void *buf, size_t len)
 	{
 		if (len > 0) for (;;) {
-			const auto rc = nfs_write(_nfs->ctx, _file, len, (char *)buf);
+#ifdef LIBNFS_API_V2
+			const auto rc = nfs_write(_nfs->ctx, _file, (const char *)buf, len);
+#else
+			const auto rc = nfs_write(_nfs->ctx, _file, len, (const char *)buf);
+#endif
 			if (rc <= 0)
 				throw ProtocolError("Write file error", errno);
 			if ((size_t)rc >= len)

@@ -56,7 +56,7 @@ WayToShell::WayToShell(int fd_ipc_recv, const WayToShellConfig &cfg, const Strin
 	}
 }
 
-// That long echo after exit makes things work smooter, dunno why.
+// That long echo after exit makes things work smoother, dunno why.
 // And it really needs to be rather long
 static const char s_exit_cmd[] = "\nexit\necho =================================\n";
 

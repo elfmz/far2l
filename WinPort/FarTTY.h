@@ -138,7 +138,7 @@ Glossary:
   Predefined ID values used by far2l based on Win32 IDs, but with some modifications, currently
   only following predefined values are used by far2l in reality:
    1  - CF_TEXT - text encoded as UTF8
-   13 - CF_UNICODETEXT - text encoded as UTF32 (depcrecated in recent releases in favor of CF_TEXT)
+   13 - CF_UNICODETEXT - text encoded as UTF32 (deprecated in recent releases in favor of CF_TEXT)
    Also far2l dynamically registers some own data formats to copy-paste vertical text blocks etc.
     At same moment of time clipboard may contain several different formats, thus allowing data to be
     represented in different forms. Also CF_TEXT/CF_UNICODETEXT transparently transcoded if needed.
@@ -239,7 +239,7 @@ Glossary:
 */
 #define FARTTY_FEAT_TERMINAL_SIZE             0x00000002
 
-/** Server reports this on responce of FARTTY_INTERRACT_CLIP_OPEN if it supports clipboard data ID.
+/** Server reports this on response of FARTTY_INTERRACT_CLIP_OPEN if it supports clipboard data ID.
  Clipboard data ID allows client-side caching of clipboard data to avoid known data transfers.
 */
 #define FARTTY_FEATCLIP_DATA_ID               0x00000001

@@ -1095,6 +1095,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_vta.OnStop();
 		_allow_osc_clipset = false;
 		_bracketed_paste_expected = false;
+		_focus_change_expected = false;
 		DeliverPendingWindowInfo();
 		if (_console_kill_requested) {
 			_console_kill_requested = false;
@@ -1106,6 +1107,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		// terminal if application that used them exited abnormally
 		_bracketed_paste_expected = false;
 		_win32_input_mode_expected = false;
+		_focus_change_expected = false;
 		_kitty_kb_flags = 0;
 		_mouse_expectations = 0;
 		_far2l_exts.reset();

@@ -213,6 +213,9 @@ void *VTInputReader::ThreadProc()
 		} else if (ir.EventType == KEY_EVENT) {
 			_processor->OnInputKey(ir.Event.KeyEvent);
 
+		} else if (ir.EventType == FOCUS_EVENT) {
+			_processor->OnFocusChanged();
+
 		} else if (ir.EventType == BRACKETED_PASTE_EVENT) {
 			_processor->OnBracketedPaste(ir.Event.BracketedPaste.bStartPaste != FALSE);
 

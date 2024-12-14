@@ -75,6 +75,7 @@ public:
 	{
 		virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent) = 0;
 		virtual void OnInputKey(const KEY_EVENT_RECORD &KeyEvent) = 0;
+		virtual void OnFocusChanged() = 0;
 		virtual void OnInputResized(const INPUT_RECORD &ir) = 0;
 		virtual void OnInputInjected(const std::string &str) = 0;
 		virtual void OnBracketedPaste(bool start) = 0;

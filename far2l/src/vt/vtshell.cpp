@@ -40,8 +40,10 @@
 #include "AnsiEsc.hpp"
 #include "TestPath.h"
 
-#define BRACKETED_PASTE_SEQ_START "\x1b[200~"
-#define BRACKETED_PASTE_SEQ_STOP  "\x1b[201~"
+#define BRACKETED_PASTE_SEQ_START  "\x1b[200~"
+#define BRACKETED_PASTE_SEQ_STOP   "\x1b[201~"
+#define FOCUS_CHANGED_SEQ_ACTIVE   "\x1b[I"
+#define FOCUS_CHANGED_SEQ_INACTIVE "\x1b[O"
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0, WCHAR uc = 0);
 std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int kitty_kb_flags);
@@ -118,6 +120,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::atomic<unsigned char> _keypad{0};
 	std::atomic<bool> _bracketed_paste_expected{false};
 	std::atomic<bool> _win32_input_mode_expected{false};
+	std::atomic<bool> _focus_change_expected{false};
 	std::atomic<int> _kitty_kb_flags{0};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
@@ -456,6 +459,21 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}		
 	}
 
+	virtual void OnFocusChanged() // called from worker thread
+	{
+		if (_focus_change_expected) {
+			bool active = WINPORT(IsConsoleActive)() != FALSE;
+			const char *seq = active ? FOCUS_CHANGED_SEQ_ACTIVE : FOCUS_CHANGED_SEQ_INACTIVE;
+			if (!WriteTerm(seq, strlen(seq))) {
+				fprintf(stderr, "VT: OnFocusChanged - write error %d\n", errno);
+			} else {
+				fprintf(stderr, "VT: OnFocusChanged - %s\n", active ? "active" : "inactive");
+			}
+		} else {
+				fprintf(stderr, "VT: OnFocusChanged - SKIPPED\n");
+		}
+	}
+
 	void OnCtrlC(bool alt)
 	{
 		if (alt) {
@@ -552,6 +570,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	virtual void OnBracketedPasteExpectation(bool enabled)
 	{
 		_bracketed_paste_expected = enabled;
+	}
+
+	virtual void OnFocusChangeExpectation(bool enabled)
+	{
+		bool was_enabled = _focus_change_expected.exchange(enabled);
+		if (!was_enabled) {
+			OnFocusChanged();
+		}
 	}
 
 	virtual void OnWin32InputMode(bool enabled)

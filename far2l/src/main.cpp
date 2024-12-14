@@ -357,14 +357,22 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 							 access("/usr/local/bin/kitty", F_OK) == 0 ||
 							 access(kitty_app_path, F_OK) == 0)) {
 
-						bool found_keys[4] = {false, false, false, false};
-						const char *key_strings[] = {"map ctrl+shift+right", "map ctrl+shift+left", "map ctrl+shift+home", "map ctrl+shift+end"};
+						const char *key_strings[] = {
+							"map ctrl+shift+right",
+							"map ctrl+shift+left",
+							"map ctrl+shift+home",
+							"map ctrl+shift+end",
+							"map ctrl+shift+page_up",
+							"map ctrl+shift+page_down"
+						};
+						const int keys_count = sizeof(key_strings) / sizeof(key_strings[0]);
+						bool found_keys[keys_count] = {0};
 
 						FILE *file = fopen(config_file, "r+");
 						if (file) {
 							char line[256];
 							while (fgets(line, sizeof(line), file)) {
-								for (int i = 0; i < 4; i++) {
+								for (int i = 0; i < keys_count; i++) {
 									if (strstr(line, key_strings[i])) {
 										found_keys[i] = true;
 									}
@@ -373,14 +381,17 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 							fclose(file);
 						}
 
-						if (!found_keys[0] || !found_keys[1] || !found_keys[2] || !found_keys[3]) {
+						bool not_found = false;
+						for (int i = 0; i < keys_count; i++) { not_found |= !found_keys[i]; }
+
+						if (not_found) {
 							if (
 								!Message(0, 2,
 										 L"Handle Ctrl + navigation keys by far2l or kitty terminal?",
 										 L"",
 										 L"It seems you are running far2l inside kitty terminal.",
 										 L"It uses Ctrl + navigation keys for it's own purposes,",
-										 L"this can make harm to far2l UX. Do you want",
+										 L"this could cause some inconvenience. Do you want",
 										 L"far2l to handle such key combinations instead?",
 										 L"",
 										 Msg::Yes,
@@ -407,9 +418,13 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 								file = fopen(config_file, "a"); 
 								if (file) {
-									for (int i = 0; i < 4; i++) {
+
+									fprintf(file, "\n# added by far2l, begin\n");
+									for (int i = 0; i < keys_count; i++) {
 										if (!found_keys[i]) fprintf(file, "%s no_op\n", key_strings[i]);
 									}
+									fprintf(file, "# added by far2l, end\n");
+
 									fclose(file);
 								}
 							} else {

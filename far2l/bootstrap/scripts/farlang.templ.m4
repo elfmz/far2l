@@ -13711,6 +13711,28 @@ upd:"Free paging file"
 "Вільно файлу підкачки"
 "Вольна файла падпампоўкі"
 
+InfoEdCfgNearestDir
+".editorconfig Nearest Dir"
+".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+
+InfoEdCfgRootDir
+".editorconfig Root Dir"
+".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+
 InfoGitRootDir
 "Git Root Directory"
 "Git Root Directory"
@@ -26885,15 +26907,15 @@ upd:"In .editorconfig 'indent_style' set to '%s'"
 "У .editorconfig 'indent_style' усталяваны '%s'"
 
 EditorConfigOrgValueOfCharset
-"В .editorconfig 'charset' установлен '%d'"
-"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-"У .editorconfig 'charset' встановлено '%d'"
-"У .editorconfig 'charset' усталяваны '%d'"
+"В .editorconfig 'charset' установлен '%ls'"
+"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+"У .editorconfig 'charset' встановлено '%ls'"
+"У .editorconfig 'charset' усталяваны '%ls'"
 
 EditorConfigOrgProblemIndentSize
 "В этом случае пользователь не может изменить размер таба по Shift+F5"

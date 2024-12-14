@@ -2057,8 +2057,8 @@ használhatjuk:
     #!.!#           Fájlnév, kiterjesztéssel
     #!@@!# vagy #!$!#  A fájl neve, a kijelölt fájlnevek listájával
     #!&#            A kijelölt fájlok listája
-    #!/#  vagy #!\\#   Az aktuális elérési útvonal
-    #!=/# vagy #!=\\#  Az aktuális elérési út, a ~szimbolikus linkeket~@HardSymLink@
+    #!/#            Az aktuális elérési útvonal
+    #!=/#           Az aktuális elérési út, a ~szimbolikus linkeket~@HardSymLink@
 is figyelembe véve.
 
     #!?<név>?<alapérték>!#   A parancs végrehajtásakor e szimbólum helyén
@@ -2094,7 +2094,7 @@ passzív panel aktuális fájlnevére utal.
     #!^#       ^<wrap>A fájlokra hivatkozó szimbólumok elé írt "!^" módosító
 hatására a szimbólum (és az összes azt követő karakter) az aktív panelre
 vonatkozik (lásd 4-es számú megjegyzés). Például a !^!.! szimbólum az aktív
-panel aktuális fájljára utal, a !##!\\!^!.! pedig a passzív panelen lévő fájl
+panel aktuális fájljára utal, a !##!/!^!.! pedig a passzív panelen lévő fájl
 nevére és az aktív panel aktuális, azonos nevű fájljára utal.
 
     Megjegyzések:
@@ -2126,7 +2126,7 @@ szintén átkapcsoló előtagig terjed.
 
        Például:
 
-         if exist !##!\\!^!.! diff -c -p !##!\\!^!.! !\\!.!
+         if exist !##!/!^!.! diff -c -p !##!/!^!.! !/!.!
 
        ^<wrap>"Ha a passzív panelen létezik ugyanolyan nevű fájl, mint amin az
 aktív panel sávkurzora áll, mutassa meg a két fájl különbségét, függetlenül

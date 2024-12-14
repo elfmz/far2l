@@ -174,7 +174,8 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 	}
 #endif
 
-	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
+	// enable mouse and focus notifications
+	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h" ESC "[?1004h");
 
 	if ((_nodetect & NODETECT_W) == 0) {
 		Format(ESC "[?9001h"); // win32-input-mode on
@@ -185,6 +186,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 	if ((_nodetect & NODETECT_K) == 0) {
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
+
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -215,7 +217,7 @@ TTYOutput::~TTYOutput()
 		if ((_nodetect & NODETECT_K) == 0) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
-		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
+		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
 		if ((_nodetect & NODETECT_W) == 0) {
 			Format(ESC "[?9001l"); // win32-input-mode off
 		}

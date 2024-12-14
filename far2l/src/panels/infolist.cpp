@@ -56,6 +56,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "strmix.hpp"
 #include "mix.hpp"
 #include "execute.hpp"
+#include "EditorConfigOrg.hpp"
+#include "codepage.hpp" // for ShortReadableCodepageName()
 #ifdef __APPLE__
 // # include <sys/sysctl.h>
 #include <mach/mach_host.h>
@@ -73,6 +75,7 @@ enum InfoListSectionStateIndex
 {
 	ILSS_DISKINFO,
 	ILSS_MEMORYINFO,
+	ILSS_EdCfgINFO,
 	ILSS_GITINFO,
 	/*ILSS_DIRDESCRIPTION,
 	ILSS_PLDESCRIPTION,
@@ -254,8 +257,6 @@ void InfoList::DisplayObject()
 			PrintInfo(strDiskNumber);
 
 			// new fields
-			CurY++; // skip line
-
 			GotoXY(X1 + 2, CurY++);
 			PrintText(Msg::InfoDiskCurDir);
 			PrintInfo(strCurDir);
@@ -467,13 +468,16 @@ void InfoList::DisplayObject()
 #endif
 	}
 
-	/* #4 - git status */
+	/* #4 - .editorconfig info */
+	ShowEditorConfig(CurY);
+
+	/* #5 - git status */
 	ShowGitStatus(CurY);
 
-	/* #5 - dir description */
+	/* #6 - dir description */
 	ShowDirDescription(CurY);
 
-	/* #6 - plugin description */
+	/* #7 - plugin description */
 	ShowPluginDescription(CurY);
 }
 
@@ -674,6 +678,82 @@ void InfoList::PrintInfo(FarLangMsg MsgID)
 	PrintInfo(MsgID.CPtr());
 }
 
+void InfoList::ShowEditorConfig(int &YPos)
+{
+	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+
+	if (AnotherPanel->GetMode() != FILE_PANEL)
+		return;
+
+	FARString str;
+	AnotherPanel->GetCurDir(str);
+	str += GOOD_SLASH;
+
+	EditorConfigOrg EdCfg;
+	EdCfg.Populate(str.GetMB().c_str());
+
+	if( EdCfg.pos_trim_dir_nearest >= 0) {
+		// text " EditorConfig " in separator
+		DrawTitle(L"EditorConfig", ILSS_EdCfgINFO, YPos++);
+		if (SectionState[ILSS_EdCfgINFO].Show) {
+			// print .editorconfig nearest dir
+			str.Truncate(EdCfg.pos_trim_dir_nearest);
+			GotoXY(X1 + 2, YPos++);
+			PrintText(Msg::InfoEdCfgNearestDir);
+			PrintInfo(str);
+			// print .editorconfig root dir
+			str.Truncate(EdCfg.pos_trim_dir_root);
+			GotoXY(X1 + 2, YPos++);
+			PrintText(Msg::InfoEdCfgRootDir);
+			PrintInfo(str);
+			// print result of .editorconfig for mask [*]
+			if (EdCfg.ExpandTabs >= 0) {
+				GotoXY(X1 + 2, YPos++);
+				PrintText(L"[*] indent_style");
+				PrintInfo(EdCfg.ExpandTabs==EXPAND_NOTABS ? L"tab"
+					: EdCfg.ExpandTabs==EXPAND_NEWTABS ? L"space"
+					: L"????");
+			}
+			if (EdCfg.TabSize > 0) {
+				GotoXY(X1 + 2, YPos++);
+				PrintText(L"[*] indent_size");
+				str.Format(L"%d", EdCfg.TabSize);
+				PrintInfo(str);
+			}
+			if (EdCfg.EndOfLine) {
+				GotoXY(X1 + 2, YPos++);
+				PrintText(L"[*] end_of_line");
+				PrintInfo(wcscmp(EdCfg.EndOfLine,L"\n")==0 ? L"lf (\"\\n\")"
+					: wcscmp(EdCfg.EndOfLine,L"\r")==0 ? L"cr (\"\\r\")"
+					: wcscmp(EdCfg.EndOfLine,L"\r\n")==0 ? L"crlf (\"\\r\\n\")"
+					: L"????");
+			}
+			if (EdCfg.CodePage > 0) {
+				GotoXY(X1 + 2, YPos++);
+				PrintText(L"[*] charset");
+				ShortReadableCodepageName(EdCfg.CodePage,str);
+				if (EdCfg.CodePageBOM > 0)
+					str += L"-BOM";
+				PrintInfo(str);
+			}
+			if (EdCfg.TrimTrailingWhitespace >= 0) {
+				GotoXY(X1 + 2, YPos++);
+				PrintText(L"[*] trim_trailing_whitespace");
+				PrintInfo(EdCfg.TrimTrailingWhitespace==1 ? L"true"
+					: EdCfg.TrimTrailingWhitespace==0 ? L"false"
+					: L"????");
+			}
+			if (EdCfg.InsertFinalNewline >= 0) {
+				GotoXY(X1 + 2, YPos++);
+				PrintText(L"[*] insert_final_newline");
+				PrintInfo(EdCfg.InsertFinalNewline==1 ? L"true"
+					: EdCfg.InsertFinalNewline==0 ? L"false"
+					: L"????");
+			}
+		}
+	}
+}
+
 void InfoList::ShowGitStatus(int &YPos)
 {
 	Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
@@ -701,7 +781,7 @@ void InfoList::ShowGitStatus(int &YPos)
 					GotoXY(X1 + 2, YPos++);
 					PrintText(Msg::InfoGitRootDir);
 					PrintInfo(strDir);
-					// print result of git status 
+					// print result of git status
 					for (const auto &l : lines) {
 						GotoXY(X1 + 2, YPos++);
 						PrintText(l.c_str());

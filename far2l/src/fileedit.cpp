@@ -1192,8 +1192,9 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 			case KEY_F8:
 			case KEY_SHIFTF8: {
 				if (EdCfg && EdCfg->CodePage > 0) {
-					FARString strTmp;
-					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, EdCfg->CodePage);
+					FARString strTmp, strCodepage;
+					ShortReadableCodepageName(EdCfg->CodePage, strCodepage);
+					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, strCodepage.CPtr());
 					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemCharset);
 					return TRUE;
 				}

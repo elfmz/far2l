@@ -369,6 +369,7 @@ void TTYBackend::WriterThread()
 {
 	bool gone_background = false;
 	try {
+		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
 		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
@@ -959,7 +960,7 @@ void TTYBackend::OnConsoleExit()
 
 bool TTYBackend::OnConsoleIsActive()
 {
-	return false;//true;
+	return _focused;
 }
 
 void TTYBackend_OnTerminalDamaged(bool flush_input_queue)
@@ -1080,6 +1081,16 @@ void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 	if (!event.uChar.UnicodeChar && IsEnhancedKey(event.wVirtualKeyCode)) {
 		event.dwControlKeyState|= ENHANCED_KEY;
 	}
+}
+
+void TTYBackend::OnFocusChange(bool focused)
+{
+	fprintf(stderr, "OnFocusChange: %u\n", (unsigned)!!focused);
+	_focused = focused;
+	INPUT_RECORD ir = {};
+	ir.EventType = FOCUS_EVENT;
+	ir.Event.FocusEvent.bSetFocus = focused ? TRUE : FALSE;
+	g_winport_con_in->Enqueue(&ir, 1);
 }
 
 void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)

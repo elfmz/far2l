@@ -6,6 +6,6 @@ Comment=File and archive manager
 Exec=far2l --tty
 TryExec=far2l
 Terminal=true
-Categories=Utility;FileManager;
+Categories=Utility;FileManager;System;FileTools;
 Icon=far2l
 StartupNotify=true

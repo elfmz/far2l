@@ -800,6 +800,9 @@ struct VTAnsiContext
 	//					alternative_screen_buffer.Toggle(suffix == 'h');
 	//					break;
 
+					case 1004:
+						vt_shell->OnFocusChangeExpectation(suffix == 'h');
+						break;
 					case 2004:
 						vt_shell->OnBracketedPasteExpectation(suffix == 'h');
 						break;

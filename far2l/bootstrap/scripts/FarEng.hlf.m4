@@ -127,9 +127,9 @@ $ # FAR2L features - Getting Started#
     FAR2L is a Linux port of FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
-  - Having troubles? Search for solution in communiry wiki:
-    ~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
-    (currently in Russian only)
+    Having troubles? Search for solution in community wiki:
+~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
+(currently in Russian only).
 
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
@@ -746,7 +746,7 @@ internal editor.
     the selected files will be carried out using that plugin,
     otherwise by using internal facilities.
 
-  Create ~file links~@HardSymLink@ (NTFS only)                               #Alt-F6#
+  Create ~file links~@HardSymLink@                                           #Alt-F6#
 
     Using hard file links you may have several different file names referring
 to the same data.
@@ -1401,6 +1401,8 @@ $ #Menus: files menu#
    #Copy#               ~Copy~@CopyFiles@ files and folders.
 
    #Rename or move#     ~Rename or move~@CopyFiles@ files and folders.
+
+   #Link#               Create ~file links~@HardSymLink@.
 
    #Make folder#        ~Create~@MakeFolder@ new folder.
 

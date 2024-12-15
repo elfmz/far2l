@@ -602,7 +602,7 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
     nyomtatása ezen a nyomtatóvezérlő pluginen keresztül történik.
     Ha nincs telepítve, akkor a belső lehetőségek szerint.
 
-  ~Fájl linkek~@HardSymLink@ létrehozása (csak NTFS)                         #Alt-F6#
+  ~Fájl linkek~@HardSymLink@ létrehozása                                     #Alt-F6#
 
     A hardlinkek segítségével különböző fájlnevekkel hivatkozhatunk
     ugyanarra az adatra.
@@ -1283,6 +1283,8 @@ mappák tartalmának méretét.
 
    #Átnevez-Mozgat#         ^<wrap>Fájlokat és mappákat
 ~nevez át vagy mozgat~@CopyFiles@.
+
+   #Link#                   Create ~file links~@HardSymLink@.
 
    #Új mappa#               ~Új mappát~@MakeFolder@ hoz létre.
 

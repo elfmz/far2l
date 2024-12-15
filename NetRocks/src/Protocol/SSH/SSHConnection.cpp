@@ -464,7 +464,7 @@ void SSHExecutedCommand::IOLoop()
 		if (ssh_channel_is_eof(_channel)) {
 			int status = ssh_channel_get_exit_status(_channel);
 			if (status == 0) {
-				_succeess = true;
+				_success = true;
 			}
 			FDScope fd_status(open((_fifo + ".status").c_str(), O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600));
 			if (fd_status.Valid()) {
@@ -550,7 +550,7 @@ SSHExecutedCommand::~SSHExecutedCommand()
 	}
 	CheckedCloseFDPair(_kickass);
 
-	if (_succeess) {
+	if (_success) {
 		std::vector<std::string> parts;
 		StrExplode(parts, _command_line, " ");
 		if (parts.size() > 1) {

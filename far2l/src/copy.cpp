@@ -881,7 +881,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 		DLG_HEIGHT-= 3;
 	}
 
-	// корректирем позицию " to"
+	// корректируем позицию " to"
 	CopyDlg[ID_SC_TARGETTITLE].X1 = CopyDlg[ID_SC_TARGETTITLE].X2 =
 			CopyDlg[ID_SC_SOURCEFILENAME].X1 + (int)CopyDlg[ID_SC_SOURCEFILENAME].strData.GetLength();
 
@@ -928,7 +928,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 			ComboList.Items[CM_APPEND].Text = Msg::CopyAppend;
 			ComboList.Items[CM_ONLYNEWER].Text = Msg::CopyOnlyNewerFiles;
 			ComboList.Items[CM_ASKRO].Text = Msg::CopyAskRO;
-			// if uncehcked in Options->Confirmations then disable variants & set only Overwrite
+			// if unchecked in Options->Confirmations then disable variants & set only Overwrite
 			if ( (Move && !Opt.Confirm.Move) || (!Move && !Opt.Confirm.Copy) ) {
 				ComboList.Items[CM_OVERWRITE].Flags= LIF_SELECTED;
 				CopyDlg[ID_SC_COMBO].Flags|= DIF_DISABLE;
@@ -2165,8 +2165,8 @@ COPY_CODES ShellCopy::ShellCopyOneFileNoRetry(const wchar_t *Src, const FAR_FIND
 		if ((SrcData.dwFileAttributes & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY))
 				== FILE_ATTRIBUTE_DIRECTORY) {
 			/*
-				Enqueue attributes before creating directory, so even if will fail (like directory exists)
-				but ignored then still will still try apply them on whole copy process finish successfully
+				Enqueue attributes before creating directory, so even if it will fail (like directory exists)
+				but ignored then will still try to apply them on whole copy process finish successfully
 			*/
 			EnqueueDirectoryAttributes(SrcData, strDestPath);
 		}
@@ -2750,7 +2750,7 @@ DWORD ShellFileTransfer::PieceCopy()
 
 	if (BytesWritten > BytesRead) {
 		/*
-			likely we written bit more due to no_buffering requires aligned io
+			likely we have written bit more due to no_buffering requires aligned io
 			move backward and correct file size
 		*/
 		if (!_DestFile.SetPointer((INT64)BytesRead - (INT64)WriteSize, nullptr, FILE_CURRENT))

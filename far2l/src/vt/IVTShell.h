@@ -15,6 +15,7 @@ struct IVTShell
 {
 	virtual void OnMouseExpectation(MouseExpectation mex, bool enabled) = 0;
 	virtual void OnBracketedPasteExpectation(bool enabled)              = 0;
+	virtual void OnFocusChangeExpectation(bool enabled)                 = 0;
 	virtual void OnWin32InputMode(bool enabled)                         = 0;
 	virtual void SetKittyFlags(int flags)                               = 0;
 	virtual int  GetKittyFlags()                                        = 0;

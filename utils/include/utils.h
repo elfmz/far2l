@@ -17,6 +17,10 @@
 #include "CharArray.hpp"
 #include "CharClasses.h"
 
+#define IsLocaleMatches(current, wanted_literal) \
+	( strncmp((current), wanted_literal, sizeof(wanted_literal) - 1) == 0 && \
+	( (current)[sizeof(wanted_literal) - 1] == 0 || (current)[sizeof(wanted_literal) - 1] == '.') )
+
 #define MAKE_STR(x) _MAKE_STR(x)
 #define _MAKE_STR(x) #x
 

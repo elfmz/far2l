@@ -305,27 +305,43 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start));
 
-
 			if( Opt.IsFirstStart ) {
+
+				const char *locale = setlocale(LC_CTYPE, NULL);
+				// Only Russian translation can be currently considered complete
+				if (IsLocaleMatches(locale, "ru_RU")) {
+					Opt.strLanguage = L"Russian";
+					Opt.strHelpLanguage = L"Russian";
+					ConfigOptSave(false);
+				}
+
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
 
 				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
 				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
 					SetMessageHelp(L"Far2lGettingStarted");
-					if (Message(0, 2, // at 1st start always only English and we not need use Msg here
-						L"Use OSC52 to set clipboard data (question at first start)",
-						L"",
-						L"OSC52 allows copying from far2l running",
-						L"in TTY mode (even via SSH connection) to your local system clipboard",
-						L"(if you are using far2l on a remote untrusted system, giving remote",
-						L"system write access to your clipboard may be potentially unsafe).",
-						L"",
-						L"Some terminals also need OSC52 to be enabled in terminal's settings.",
-						L"",
-						L"You can toggle use of OSC52 on/off at any time",
-						L"in Menu(F9)->\'Options\"->\"Interface settings\".",
-						L"",
-						L"Allow far2l to set clipboard data using OSC52?",
+
+					std::wstring source_str = Msg::OSC52Confirm.CPtr();
+					std::vector<std::wstring> lines;
+					std::wstring currentLine;
+					for (wchar_t c : source_str) {
+						if (c == L'\n') {
+							lines.push_back(currentLine);
+							currentLine.clear();
+						} else {
+							currentLine += c;
+						}
+					}
+					lines.push_back(currentLine);
+
+					if (Message(0, 2,
+						lines.size() > 0  ? lines[0].c_str()  : L"", lines.size() > 1  ? lines[1].c_str()  : L"",
+						lines.size() > 2  ? lines[2].c_str()  : L"", lines.size() > 3  ? lines[3].c_str()  : L"",
+						lines.size() > 4  ? lines[4].c_str()  : L"", lines.size() > 5  ? lines[5].c_str()  : L"",
+						lines.size() > 6  ? lines[6].c_str()  : L"", lines.size() > 7  ? lines[7].c_str()  : L"",
+						lines.size() > 8  ? lines[8].c_str()  : L"", lines.size() > 9  ? lines[9].c_str()  : L"",
+						lines.size() > 10 ? lines[10].c_str() : L"", lines.size() > 11 ? lines[11].c_str() : L"",
+						lines.size() > 12 ? lines[12].c_str() : L"", lines.size() > 13 ? lines[13].c_str() : L"",
 						Msg::Yes,
 						Msg::No))
 					{

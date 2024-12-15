@@ -127,6 +127,9 @@ $ # FAR2L features - Getting Started#
     FAR2L is a Linux port of FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
+  - Having troubles? Search for solution in communiry wiki:
+    ~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
+    (currently in Russian only)
 
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):

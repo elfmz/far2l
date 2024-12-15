@@ -131,6 +131,8 @@ $ # Особенности FAR2L - начало работы#
     FAR2L - Linux порт FAR Manager v2 (см.: ~Что такое FAR2L~@About@)
     FAR2L официальный сайт: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
+  - Столкнулись с проблемой? Поищите решение в волонтерской wiki:
+    ~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
 
  #Режимы интерфейса#
     У FAR2L три основных бекенда отрисовки (подробности в ~Режимы интерфейса~@UIBackends@):

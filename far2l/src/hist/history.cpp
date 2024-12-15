@@ -879,11 +879,11 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					}
 					if (TypeHistory == HISTORYTYPE_VIEW && CurrentRecord) {
 						strStr = CurrentRecord->strName;
-						return 9; // for files: Go To Directory & postion to file
+						return 9; // for files: Go To Directory & position to file
 					}
 					if (TypeHistory == HISTORYTYPE_FOLDER && CurrentRecord) {
 						strStr = CurrentRecord->strName;
-						return 1; // for directory is equialent to ENTER
+						return 1; // for directory is equivalent to ENTER
 					}
 					break;
 				}

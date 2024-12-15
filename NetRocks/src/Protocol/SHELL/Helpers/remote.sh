@@ -1,5 +1,5 @@
 # This script is compactized when sent:
-# All comments and empty lines are discared.
+# All comments and empty lines are discarded.
 # Tokens started by SHELLVAR_ and SHELLFCN_ are renamed to shorter names.
 
 SAVED_PS1=$PS1;SAVED_PS2=$PS2;SAVED_PS2=$PS3;SAVED_PS4=$PS4;SAVED_PC=$PROMPT_COMMAND;export PS1=;export PS2=;export PS3=;export PS4=;export PROMPT_COMMAND=;
@@ -228,7 +228,7 @@ SHELLFCN_CMD_WRITE() {
   [ -n "$SHELLVAR_DD" ] && SHELLFCN_WRITE=SHELLFCN_WRITE_BY_DD
   if ! [ -n "$SHELLVAR_DD" ] && [ $SHELLVAR_OFFSET -ne 0 ] && ! truncate --size="$SHELLVAR_OFFSET" "$SHELLVAR_ARG" >>$SHELLVAR_LOG 2>&1 ; then
    SHELLFCN_SEND_ERROR_AND_RESYNC "$?"
-   # avoid futher writings
+   # avoid further writings
    SHELLVAR_ARG=/dev/null
   else
     echo '+OK'
@@ -250,7 +250,7 @@ SHELLFCN_CMD_WRITE() {
     NSEQ=`expr $NSEQ + 1`
    else
     SHELLFCN_SEND_ERROR_AND_RESYNC "SEQ=$SEQ NSEQ=$NSEQ $?"
-    # avoid futher writings
+    # avoid further writings
     SHELLVAR_ARG=/dev/null
    fi
   done
@@ -473,8 +473,8 @@ while true; do
   cont ) echo 'Odd cont' >>$SHELLVAR_LOG; SHELLVAR_NOPROMPT=Y;;
   noop ) ;;
   exit ) echo '73!'; exit 0; break;;
-# Another special case - if its part of inital sequence supposed to be sent to shell
-# - lets mimic shell's responce so negotiation sequence will continue.
+# Another special case - if its part of initial sequence supposed to be sent to shell
+# - lets mimic shell's response so negotiation sequence will continue.
 # sleep 3 ensures 'fishy' prompt will be printed at the right time moment
   echo ) echo; echo 'far2l is ready for fishing'; sleep 3;;
   * ) echo "Bad CMD='$SHELLVAR_CMD'" >>$SHELLVAR_LOG; echo "??? '$SHELLVAR_CMD'";;

@@ -295,7 +295,7 @@ private:
 	bool IsFilterEditKey(FarKey Key);
 	bool ShouldSendKeyToFilter(FarKey Key);
 	bool AddToFilter(const wchar_t *str);
-	// коректировка текущей позиции и флагов SELECTED
+	// корректировка текущей позиции и флагов SELECTED
 	void UpdateSelectPos();
 	void EnableFilter(bool Enable);
 

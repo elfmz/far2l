@@ -209,7 +209,7 @@ template <class CharT>
 
 
 template <class CharT>
-	void StrExplode(std::vector<std::basic_string<CharT> > &out, const std::basic_string<CharT> &str, const CharT *divs)
+	void StrExplode(std::vector<std::basic_string<CharT> > &out, const std::basic_string<CharT> &str, const CharT *divs, bool skipEmpty = true)
 {
 	for (size_t i = 0, j = 0; i <= str.size(); ++i) {
 		const CharT *d = divs;
@@ -217,8 +217,9 @@ template <class CharT>
 			for (; *d && *d != str[i]; ++d);
 		}
 		if (*d) {
-			if (i > j) {
-				out.emplace_back(str.substr(j, i - j));
+			size_t len = i - j;
+			if (len > 0 || !skipEmpty) { // Check for empty string and skipEmpty flag
+				out.emplace_back(str.substr(j, len));
 			}
 			j = i + 1;
 		}

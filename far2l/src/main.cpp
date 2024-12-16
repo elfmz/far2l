@@ -323,28 +323,15 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 					std::wstring source_str = Msg::OSC52Confirm.CPtr();
 					std::vector<std::wstring> lines;
-					std::wstring currentLine;
-					for (wchar_t c : source_str) {
-						if (c == L'\n') {
-							lines.push_back(currentLine);
-							currentLine.clear();
-						} else {
-							currentLine += c;
-						}
+					ExMessager em;
+					StrExplode(lines, source_str, L"\n", false);
+					for (const auto &current_line : lines) {
+						em.AddDup(current_line.c_str());
 					}
-					lines.push_back(currentLine);
+					em.AddDup(L"Yes");
+					em.AddDup(L"No");
 
-					if (Message(0, 2,
-						lines.size() > 0  ? lines[0].c_str()  : L"", lines.size() > 1  ? lines[1].c_str()  : L"",
-						lines.size() > 2  ? lines[2].c_str()  : L"", lines.size() > 3  ? lines[3].c_str()  : L"",
-						lines.size() > 4  ? lines[4].c_str()  : L"", lines.size() > 5  ? lines[5].c_str()  : L"",
-						lines.size() > 6  ? lines[6].c_str()  : L"", lines.size() > 7  ? lines[7].c_str()  : L"",
-						lines.size() > 8  ? lines[8].c_str()  : L"", lines.size() > 9  ? lines[9].c_str()  : L"",
-						lines.size() > 10 ? lines[10].c_str() : L"", lines.size() > 11 ? lines[11].c_str() : L"",
-						lines.size() > 12 ? lines[12].c_str() : L"", lines.size() > 13 ? lines[13].c_str() : L"",
-						Msg::Yes,
-						Msg::No))
-					{
+					if (em.Show(0, 2)) {
 						Opt.OSC52ClipSet = 0;
 					} else {
 						Opt.OSC52ClipSet = 1;

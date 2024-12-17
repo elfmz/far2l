@@ -190,6 +190,7 @@ public:
 	int OpenFile(FileHolderPtr NewFileHolder, int warning);
 	void SetViewKeyBar(KeyBar *ViewKeyBar);
 
+	virtual void Show();
 	virtual int ProcessKey(FarKey Key);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);

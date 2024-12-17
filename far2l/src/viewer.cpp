@@ -268,6 +268,12 @@ void Viewer::KeepInitParameters()
 	InitHex = VM.Hex;
 }
 
+void Viewer::Show()
+{
+	if (!OpenFailed)
+		ScreenObject::Show();
+}
+
 int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
 {
 	VM.CodePage = DefCodePage;

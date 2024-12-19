@@ -753,12 +753,12 @@ int FileList::PrepareColumnWidths(unsigned int *ColumnTypes, int *ColumnWidths, 
 					ColumnWidths[I]++;
 			}
 		}
-		else {
+		/*else { // revert after #2452
 			if (ColumnType == SIZE_COLUMN || ColumnType == PHYSICAL_COLUMN) {
 				if (ColumnWidths[I] < ColumnTypeWidth[SIZE_COLUMN])
 					ColumnWidths[I] = ColumnTypeWidth[SIZE_COLUMN];
 			}
-		}
+		}*/
 
 		if (!ColumnWidths[I])
 			ZeroLengthCount++;

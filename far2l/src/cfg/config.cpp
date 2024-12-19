@@ -322,6 +322,9 @@ enum enumDirCfgDialog
 	ID_DIRCFG_CHECKBOX_SURR,
 	ID_DIRCFG_SURR_COMBO,
 
+	ID_DIRCFG_STYLE_HINT_1,
+	ID_DIRCFG_STYLE_HINT_2,
+
 	ID_DIRCFG_SEPARATOR,
 	ID_DIRCFG_SYMLINK_TEXT,
 	ID_DIRCFG_SYMLINK_RADIO1_TEXT,
@@ -445,7 +448,7 @@ void DirectoryNameSettings()
 {
 	dircfg_data_t dircfg_data;
 	DialogDataEx DirCfgDlgData[] = {
-		{DI_DOUBLEBOX, 3,  1,  48,  15, {}, 0, Msg::DirSettingsTitle},
+		{DI_DOUBLEBOX, 3,  1,  48,  17, {}, 0, Msg::DirSettingsTitle},
 		{DI_TEXT,      5,  2,  46,   2, {}, DIF_DISABLE, Msg::DirSettingsHint},
 		{DI_TEXT,      5,  3,  46,   3, {}, 0, Msg::DirSettingsShowAs},
 		{DI_COMBOBOX,  5,  4,  5+40, 4, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
@@ -454,20 +457,23 @@ void DirectoryNameSettings()
 		{DI_CHECKBOX,  5,  6,  46,   6, {}, DIF_AUTOMATION, Msg::DirSettingsSurround},
 		{DI_COMBOBOX,  9,  7,  26,   7, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
 
-		{DI_TEXT,      0,  8,   0,   8, {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,      5,  9,  46,   9, {}, 0, Msg::DirSettingsSymlinkText},
-		{DI_RADIOBUTTON, 5, 10,  46,  10, {}, DIF_GROUP, Msg::SymLinkName},
-		{DI_RADIOBUTTON, 5, 11,  46,  11, {}, 0, Msg::DirSettingsSymlinkRadio2},
-		{DI_TEXT,      5, 12,  46,  12, {}, DIF_DISABLE, Msg::DirSettingsSymlinkSizeHint},
+		{DI_TEXT,      5,  8,  46,   8, {}, DIF_DISABLE, Msg::DirSettingsHint1},
+		{DI_TEXT,      5,  9,  46,   9, {}, DIF_DISABLE, Msg::DirSettingsHint2},
 
-		{DI_TEXT,      0, 13,   0,  13, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_CENTERGROUP, Msg::Cancel},
-		{DI_BUTTON,    0, 14,   0,  14, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
+		{DI_TEXT,      0, 10,  0,   10, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      5, 11,  46,  11, {}, 0, Msg::DirSettingsSymlinkText},
+		{DI_RADIOBUTTON, 5, 12,  46,  12, {}, DIF_GROUP, Msg::SymLinkName},
+		{DI_RADIOBUTTON, 5, 13,  46,  13, {}, 0, Msg::DirSettingsSymlinkRadio2},
+		{DI_TEXT,      5, 14,  46,  14, {}, DIF_DISABLE, Msg::DirSettingsSymlinkSizeHint},
+
+		{DI_TEXT,      0, 15,   0,  15, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0, 16,   0,  16, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+		{DI_BUTTON,    0, 16,   0,  16, {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, 16,   0,  16, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
 
 	};
 	const int dialogsizex = 52;
-	const int dialogsizey = 17;
+	const int dialogsizey = 19;
 
 	MakeDialogItemsEx(DirCfgDlgData, DirCfgDlg);
 

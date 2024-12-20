@@ -2477,18 +2477,18 @@ DirSettingsShowAs
 "Паказваць &каталог як:"
 
 DirSettingsWidthText
-"Подстройка &ширины столбца "Размер" под текст:"
+"Подстройка &ширины колонки "Размер" под текст:"
 "Adjust "Size" column &width to text:"
 upd:"Adjust "Size" column &width to text:"
 upd:"Adjust "Size" column &width to text:"
 upd:"Adjust "Size" column &width to text:"
 upd:"Adjust "Size" column &width to text:"
 upd:"Adjust "Size" column &width to text:"
-"Відрегулюйте &ширину стовпця "Розмір" до тексту:"
+"Відрегулюйте &ширину колонки "Розмір" до тексту:"
 "Адрэгулюйце &шырыню слупка "Памер" да тэксту:"
 
 DirSettingsWidthCombo0
-"когда в режимах панели ширина столбца 0"
+"когда в режимах панели ширина колонки 0"
 "when in file panel mode it width is 0"
 upd:"when in file panel mode it width is 0"
 upd:"when in file panel mode it width is 0"

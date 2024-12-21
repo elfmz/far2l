@@ -393,14 +393,40 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInteract(stk_ser);
 
-	} else if (_kernel_tty) {
-		; // avoid printing 'q' on screen
-
 	} else if (height < 30) {
-		Format(ESC "[3 q"); // Blink Underline
+
+		if (_kernel_tty) {
+
+			// Available sizes are from 2 to 8
+			Format(ESC "[?2c");
+
+			/**
+
+			Same for FreeBSD:
+
+			https://man.freebsd.org/cgi/man.cgi?query=screen
+			E[=s;eC Set custom cursor shape, where
+			s is the starting and e is the ending
+			scanlines of the cursor
+
+			**/
+
+		} else {
+			Format(ESC "[3 q"); // Blink Underline
+			Format(ESC "]50;CursorShape=2\x07"); // Same for iTerm2
+		}
 
 	} else {
-		Format(ESC "[0 q"); // Blink Block (Default)
+
+		if (_kernel_tty) {
+
+			// Available sizes are from 2 to 8
+			Format(ESC "[?6c");
+
+		} else {
+			Format(ESC "[0 q"); // Blink Block (Default)
+			Format(ESC "]50;CursorShape=0\x07"); // Same for iTerm2
+		}
 	}
 }
 

@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(PluginBase):
-    label = "Python CMAP"
+    label = "Python Character Map"
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
     def OpenPlugin(self, OpenFrom):
@@ -38,8 +38,6 @@ class Plugin(PluginBase):
             import debugpy
             debugpy.breakpoint()
 
-        self.cur_row = 0
-        self.cur_col = 0
         self.max_col = 32
         symbols = ''.join([chr(i) for i in range(256)])+(
             'ЂЃ‚ѓ„…†‡€‰Љ‹ЊЌЋЏ'

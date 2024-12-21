@@ -597,7 +597,7 @@ static DeletionResult ShellRemoveFile(const wchar_t *Name, bool Wipe, int Opt_De
 						Msg::DeleteHardLink2, Msg::DeleteHardLink3, Msg::DeleteFileWipe, Msg::DeleteFileAll,
 						Msg::DeleteFileSkip, Msg::DeleteFileSkipAll, Msg::DeleteCancel);
 			}
-			// !!! [All] & [Skip all] now equivalent for wipe symlink & file with several hardlink - may be do separete?
+			// !!! [All] & [Skip all] now equivalent for wipe symlink & file with several hardlink - may be do separate?
 
 			switch (MsgCode) {
 				case -1:

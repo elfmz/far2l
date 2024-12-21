@@ -127,6 +127,9 @@ $ # FAR2L features - Getting Started#
     FAR2L is a Linux port of FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
+  - Having troubles? Search for solution in communiry wiki:
+    ~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
+    (currently in Russian only)
 
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
@@ -2378,8 +2381,8 @@ $ #Special symbols#
     #!.!#         File name with extension
     #!@@!# or #!$!#  Name of file with selected file names list
     #!&#          List of selected files
-    #!/#  or #!\\#   Current path
-    #!=/# or #!=\\#  Current path considering ~symbolic links~@HardSymLink@.
+    #!/#          Current path
+    #!=/#         Current path considering ~symbolic links~@HardSymLink@.
 
     #!?<title>?<init>!#
              This symbol is replaced by user input, when
@@ -2416,7 +2419,7 @@ $ #Special symbols#
              symbol forces it (and all the following characters)
              to refer to the active panel (see note 4).
              For example, !^!.! denotes a current file name on
-             the active panel, !##!\\!^!.! - a file on the passive
+             the active panel, !##!/!^!.! - a file on the passive
              panel with the same name as the name of the current
              file on the active panel.
 
@@ -2449,7 +2452,7 @@ command is executed.
     4. ^<wrap>The prefixes "!##" and "!^" work as toggles for associations. The effect
 of these prefixes continues up to the next similar prefix. For example:
 
-    if exist !##!\\!^!.! diff -c -p !##!\\!^!.! !\\!.!
+    if exist !##!/!^!.! diff -c -p !##!/!^!.! !/!.!
 
   "If the same file exists on the passive panel as the file under
    the cursor on the active panel, show the differences between

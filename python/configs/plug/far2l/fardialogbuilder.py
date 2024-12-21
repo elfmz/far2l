@@ -259,8 +259,8 @@ class USERCONTROL(Element):
 
     def __init__(self, varname, width, height, **kwargs):
         super().__init__(varname, **kwargs)
-        self.width
-        self.height
+        self.width = width
+        self.height = height
 
     def get_best_size(self):
         return (self.width, self.height)

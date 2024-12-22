@@ -27,30 +27,6 @@ from udockerio import Docker
 
 log = logging.getLogger(__name__)
 
-TICKS_PER_SECOND = 10000000
-EPOCH_DIFFERENCE = 11644473600
-
-FILE_ATTRIBUTE_READONLY = 0x00000001
-FILE_ATTRIBUTE_HIDDEN = 0x00000002
-FILE_ATTRIBUTE_SYSTEM = 0x00000004
-FILE_ATTRIBUTE_DIRECTORY = 0x00000010
-FILE_ATTRIBUTE_ARCHIVE = 0x00000020
-FILE_ATTRIBUTE_DEVICE = 0x00000040
-FILE_ATTRIBUTE_NORMAL = 0x00000080
-FILE_ATTRIBUTE_TEMPORARY = 0x00000100
-FILE_ATTRIBUTE_SPARSE_FILE = 0x00000200
-FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400
-FILE_ATTRIBUTE_COMPRESSED = 0x00000800
-FILE_ATTRIBUTE_OFFLINE = 0x00001000
-FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000
-FILE_ATTRIBUTE_ENCRYPTED = 0x00004000
-FILE_ATTRIBUTE_INTEGRITY_STREAM = 0x00008000
-FILE_ATTRIBUTE_VIRTUAL = 0x00010000
-FILE_ATTRIBUTE_NO_SCRUB_DATA = 0x00020000
-FILE_ATTRIBUTE_BROKEN = 0x00200000
-FILE_ATTRIBUTE_EXECUTABLE = 0x00400000
-
-
 class Plugin(PluginVFS):
     label = "Python Docker"
     openFrom = ["PLUGINSMENU", "DISKMENU"]
@@ -63,12 +39,18 @@ class Plugin(PluginVFS):
         self.devicepath = "/"
         return True
 
+    def devStart(self, name):
+        self.clt.start(name)
+
+    def devStop(self, name):
+        self.clt.stop(name)
+
     def devLoadDevices(self):
         for d in self.clt.list():
             if d[2]:
-                self.addName(d[1], FILE_ATTRIBUTE_DIRECTORY, 0)
+                self.addName(d[1], self.ffic.FILE_ATTRIBUTE_DIRECTORY, 0)
             else:
-                self.addName(d[1], FILE_ATTRIBUTE_OFFLINE, 0)
+                self.addName(d[1], self.ffic.FILE_ATTRIBUTE_OFFLINE, 0)
 
     def devSelectDevice(self, name):
         self.device = None
@@ -124,17 +106,17 @@ class Plugin(PluginVFS):
             if rec.st_name in (".", ".."):
                 continue
             attr = 0
-            attr |= FILE_ATTRIBUTE_DIRECTORY if rec.st_mode & stat.S_IFDIR else 0
-            attr |= FILE_ATTRIBUTE_DEVICE if rec.st_mode & stat.S_IFCHR else 0
-            attr |= FILE_ATTRIBUTE_ARCHIVE if rec.st_mode & stat.S_IFREG else 0
+            attr |= self.ffic.FILE_ATTRIBUTE_DIRECTORY if rec.st_mode & stat.S_IFDIR else 0
+            attr |= self.ffic.FILE_ATTRIBUTE_DEVICE if rec.st_mode & stat.S_IFCHR else 0
+            attr |= self.ffic.FILE_ATTRIBUTE_ARCHIVE if rec.st_mode & stat.S_IFREG else 0
             # log.debug('{} mode={:5o} attr={} perms={}'.format(rec.name, rec.mode, attr, rec.perms))
             # datetime.datetime.fromtimestamp(rec.time).strftime('%Y-%m-%d %H:%M:%S')
             item = self.setName(i, rec.st_name, attr, rec.st_size)
             item.dwUnixMode = rec.st_mode
 
             t = (
-                int(time.mktime(rec.st_mtime.timetuple())) + EPOCH_DIFFERENCE
-            ) * TICKS_PER_SECOND
+                int(time.mktime(rec.st_mtime.timetuple())) + self.ffic.EPOCH_DIFFERENCE
+            ) * self.ffic.TICKS_PER_SECOND
             item.ftLastWriteTime.dwHighDateTime = t >> 32
             item.ftLastWriteTime.dwLowDateTime = t & 0xFFFFFFFF
             i += 1
@@ -166,58 +148,23 @@ class Plugin(PluginVFS):
         self.info.Control(self.hplugin, self.ffic.FCTL_REDRAWPANEL, 0, 0)
         return True
 
-    def Message(self, lines):
-        _MsgItems = [
-            self.s2f("Docker"),
-            self.s2f(""),
-        ]
-        for line in lines:
-            _MsgItems.append(self.s2f(line))
-        _MsgItems.extend(
-            [
-                self.s2f(""),
-                self.s2f("\x01"),
-                self.s2f("&Ok"),
-            ]
-        )
-        # log.debug('_msgItems: %s', _MsgItems)
-        MsgItems = self.ffi.new("wchar_t *[]", _MsgItems)
-        self.info.Message(
+    def Message(self, body, title="Docker", flags=0):
+        items = []
+        if title:
+            items.extend([
+                title,
+            ])
+        items.extend([s for s in body.split('\n')])
+        items = [self.s2f(s) for s in items]
+        MsgItems = self.ffi.new("wchar_t *[]", items)
+        rc = self.info.Message(
             self.info.ModuleNumber,  # GUID
-            self.ffic.FMSG_WARNING | self.ffic.FMSG_LEFTALIGN,  # Flags
-            self.s2f("Contents"),  # HelpTopic
+            flags,  # Flags
+            self.ffi.NULL,  # HelpTopic
             MsgItems,  # Items
             len(MsgItems),  # ItemsNumber
             1,  # ButtonsNumber
         )
-
-    def ConfirmDialog(self, title, lines):
-        _MsgItems = [
-            self.s2f(title),
-            self.s2f(""),
-        ]
-        for line in lines:
-            _MsgItems.append(self.s2f(line))
-        _MsgItems.extend(
-            [
-                self.s2f(""),
-                self.s2f("\x01"),
-                self.s2f("&Cancel"),
-                self.s2f("&Ok"),
-            ]
-        )
-        # log.debug('_msgItems: %s', _MsgItems)
-        MsgItems = self.ffi.new("wchar_t *[]", _MsgItems)
-        rc = self.info.Message(
-            self.info.ModuleNumber,  # GUID
-            self.ffic.FMSG_WARNING | self.ffic.FMSG_LEFTALIGN,  # Flags
-            self.s2f("Contents"),  # HelpTopic
-            MsgItems,  # Items
-            len(MsgItems),  # ItemsNumber
-            2,  # ButtonsNumber
-        )
-        # 0 = Cancel, 1 = OK
-        # log.debug('confirm={}'.format(rc))
         return rc
 
     def GetOpenPluginInfo(self, OpenInfo):
@@ -268,18 +215,14 @@ class Plugin(PluginVFS):
                 self.devLoadDevices()
             except Exception as ex:
                 log.exception("unknown exception:")
-                msg = str(ex).split("\n")
-                msg.insert(0, "Unknown exception.")
-                self.Message(msg)
+                self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         else:
             try:
                 self.loadDirectory()
             except Exception as ex:
                 log.exception("unknown exception:")
-                msg = str(ex).split("\n")
-                msg.insert(0, "Unknown exception.")
-                self.Message(msg)
+                self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         PanelItem = self.ffi.cast("struct PluginPanelItem **", PanelItem)
         ItemsNumber = self.ffi.cast("int *", ItemsNumber)
@@ -319,9 +262,7 @@ class Plugin(PluginVFS):
             except Exception as ex:
                 self.device = None
                 log.exception("unknown exception:")
-                msg = str(ex).split("\n")
-                msg.insert(0, "Unknown exception.")
-                self.Message(msg)
+                self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         else:
             self.devicepath = os.path.join(self.devicepath, name)
@@ -357,13 +298,25 @@ class Plugin(PluginVFS):
         # super().GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode)
         if ItemsNumber == 0 or Move:
             return False
+        items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         if self.device is None:
-            self.Message(["GetFiles allowed only inside device."])
+            name = self.f2s(items[ItemsNumber-1].FindData.lpwszFileName)
+            yesno = self.Message(f"Device '{name}' is not started.\nStart it ?", flags=self.ffic.FMSG_MB_YESNO)
+            if yesno == 0:
+                # yes
+                log.debug(f'Start device: {name}')
+                try:
+                    self.devStart(name)
+                except Exception as ex:
+                    self.device = None
+                    log.exception("start device:")
+                    self.Message(str(ex), f"Start device '{name}' failed", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
+                    return False
+                return True
             return True
         # TODO dialog with copy parameters
         # TODO progress dialog
         # TODO copy in background
-        items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         DestPath = self.ffi.cast("wchar_t **", DestPath)
         dpath = self.ffi.string(DestPath[0])
         # log.debug('GetFiles: {} {} OpMode={}'.format(ItemsNumber, OpMode, dpath))
@@ -378,9 +331,7 @@ class Plugin(PluginVFS):
                 self.devGetFile(sqname, dqname)
             except Exception as ex:
                 log.exception("unknown exception:")
-                msg = str(ex).split("\n")
-                msg.insert(0, "Unknown exception.")
-                self.Message(msg)
+                self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         return True
 
@@ -389,7 +340,7 @@ class Plugin(PluginVFS):
         if ItemsNumber == 0 or Move:
             return False
         if self.device is None:
-            self.Message(["PetFiles allowed only inside device."])
+            self.Message("PutFiles allowed only inside device.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
             return True
         items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         spath = self.f2s(SrcPath)
@@ -404,9 +355,7 @@ class Plugin(PluginVFS):
                 self.devPutFile(sqname, dqname)
             except Exception as ex:
                 log.exception("unknown exception:")
-                msg = str(ex).split("\n")
-                msg.insert(0, "Unknown exception.")
-                self.Message(msg)
+                self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         return True
 
@@ -414,16 +363,29 @@ class Plugin(PluginVFS):
         # super().DeleteFiles(PanelItem, ItemsNumber, OpMode)
         if ItemsNumber == 0:
             return False
-        if self.device is None:
-            self.Message(["DeleteFiles allowed only inside device."])
-            return True
         items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
+        if self.device is None:
+            name = self.f2s(items[ItemsNumber-1].FindData.lpwszFileName)
+            yesno = self.Message(f"Device '{name}' is started.\nStop it ?", flags=self.ffic.FMSG_MB_YESNO)
+            if yesno == 0:
+                # yes
+                log.debug(f'Stop device: {name}')
+                try:
+                    self.devStop(name)
+                except Exception as ex:
+                    self.device = None
+                    log.exception("stopt device:")
+                    self.Message(str(ex), f"Stop device '{name}' failed", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
+                    return False
+                return True
+            return True
         if ItemsNumber > 1:
-            rc = self.ConfirmDialog("Delete", ["Do you wish to delete the files"])
+            yesno = self.Message("Do you wish to delete the files ?", flags=self.ffic.FMSG_MB_YESNO)
         else:
             name = self.f2s(items[0].FindData.lpwszFileName)
-            rc = self.ConfirmDialog("Delete", ["Do you wish to delete the file", name])
-        if rc != 1:
+            yesno = self.Message(f"Do you wish to delete the file:\n{name}", flags=self.ffic.FMSG_MB_YESNO)
+        if yesno == 1:
+            # no
             return True
         for i in range(ItemsNumber):
             name = self.f2s(items[i].FindData.lpwszFileName)
@@ -435,16 +397,14 @@ class Plugin(PluginVFS):
                 self.devDelete(dqname)
             except Exception as ex:
                 log.exception("unknown exception:")
-                msg = str(ex).split("\n")
-                msg.insert(0, "Unknown exception.")
-                self.Message(msg)
+                self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         return True
 
     def MakeDirectory(self, Name, OpMode):
         # super().DMakeDirectory(Name, OpMode)
         if self.device is None:
-            self.Message(["Make directory allowed only inside device."])
+            self.Message("Make directory allowed only inside device.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
             return True
         name = self.ffi.cast("wchar_t **", Name)
         name = self.ffi.string(name[0])
@@ -508,9 +468,7 @@ class Plugin(PluginVFS):
                     self.devMakeDirectory(dqname)
                 except Exception as ex:
                     log.exception("unknown exception:")
-                    msg = str(ex).split("\n")
-                    msg.insert(0, "Unknown exception.")
-                    self.Message(msg)
+                    self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                     return False
         self.info.DialogFree(dlg.hDlg)
 

@@ -250,6 +250,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					UpdatePathOptions(strDestName2, false);
 			}
 
+			bool cfgNeedSave = false;
 			//нужно проверить локаль до начала отрисовки интерфейса
 			if (Opt.IsFirstStart)
 			{
@@ -258,7 +259,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 				if (IsLocaleMatches(locale, "ru_RU")) {
 					Opt.strLanguage = L"Russian";
 					Opt.strHelpLanguage = L"Russian";
-					ConfigOptSave(false);
+					cfgNeedSave = true;
 				}
 			}
 
@@ -339,10 +340,12 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					} else {
 						Opt.OSC52ClipSet = 1;
 					}
-					ConfigOptSave(false);
+					cfgNeedSave = true;
 				}
 			}
 
+			if (cfgNeedSave) ConfigOptSave(false);
+			
 			FrameManager->EnterMainLoop();
 		}
 

@@ -328,8 +328,9 @@ void QuickView::ShowFile(const wchar_t *FileName, int TempFile, HANDLE hDirPlugi
 
 	if (!hDirPlugin) {
 		FileAttr = apiGetFileAttributes(FileName);
-		if (FileAttr != INVALID_FILE_ATTRIBUTES && (FileAttr & FILE_ATTRIBUTE_DEVICE) != 0)		// avoid stuck
-			return;
+		if (FileAttr != INVALID_FILE_ATTRIBUTES
+			&& ((FileAttr & FILE_ATTRIBUTE_DEVICE) != 0 || (FileAttr & FILE_ATTRIBUTE_BROKEN) != 0) )
+			return; // avoid stuck
 	}
 
 	bool SameFile = !StrCmp(strCurFileName, FileName);

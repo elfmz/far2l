@@ -133,11 +133,6 @@ template <class BYTES_TYPE, bool BYTEREV>
 	return TranscodeUTF(flags, (const BYTES_TYPE *)src, srclen, dst, dstlen);
 }
 
-
-#define IsLocaleMatches(current, wanted_literal) \
-	( strncmp((current), wanted_literal, sizeof(wanted_literal) - 1) == 0 && \
-	( (current)[sizeof(wanted_literal) - 1] == 0 || (current)[sizeof(wanted_literal) - 1] == '.') )
-
 struct Codepages
 {
 	int oem;

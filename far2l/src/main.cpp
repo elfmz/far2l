@@ -179,7 +179,7 @@ static void UpdatePathOptions(const FARString &strDestName, bool IsActivePanel)
 }
 
 static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARString strDestName2,
-		int StartLine, int StartChar)
+		int StartLine, int StartChar, bool cfgNeedSave)
 {
 	InterThreadCallsDispatcherThread itc_dispatcher_thread;
 
@@ -248,19 +248,6 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 				if (strDestName2.GetLength())  // пассивная панель
 					UpdatePathOptions(strDestName2, false);
-			}
-
-			bool cfgNeedSave = false;
-			//нужно проверить локаль до начала отрисовки интерфейса
-			if (Opt.IsFirstStart)
-			{
-				const char *locale = setlocale(LC_CTYPE, NULL);
-				// Only Russian translation can be currently considered complete
-				if (IsLocaleMatches(locale, "ru_RU")) {
-					Opt.strLanguage = L"Russian";
-					Opt.strHelpLanguage = L"Russian";
-					cfgNeedSave = true;
-				}
 			}
 
 			// теперь все готово - создаем панели!
@@ -344,8 +331,10 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 				}
 			}
 
-			if (cfgNeedSave) ConfigOptSave(false);
-			
+			if (cfgNeedSave) {
+				ConfigOptSave(false);
+			}
+
 			FrameManager->EnterMainLoop();
 		}
 
@@ -643,6 +632,19 @@ int FarAppMain(int argc, char **argv)
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
 
+	bool cfgNeedSave = false;
+	//нужно проверить локаль до начала отрисовки интерфейса
+	if (Opt.IsFirstStart)
+	{
+		const char *locale = setlocale(LC_CTYPE, NULL);
+		// Only Russian translation can be currently considered complete
+		if (IsLocaleMatches(locale, "ru_RU")) {
+			Opt.strLanguage = L"Russian";
+			Opt.strHelpLanguage = L"Russian";
+			cfgNeedSave = true;
+		}
+	}
+
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");
 
@@ -673,7 +675,7 @@ int FarAppMain(int argc, char **argv)
 	if ( Opt.OnlyEditorViewerUsed == Options::ONLY_EDITOR && strEditViewArg.IsEmpty() )
 		strEditViewArg = Msg::NewFileName;
 
-	int Result = MainProcess(strEditViewArg, DestNames[0], DestNames[1], StartLine, StartChar);
+	int Result = MainProcess(strEditViewArg, DestNames[0], DestNames[1], StartLine, StartChar, cfgNeedSave);
 
 	EmptyInternalClipboard();
 	doneMacroVarTable(1);

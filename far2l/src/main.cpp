@@ -608,18 +608,6 @@ int FarAppMain(int argc, char **argv)
 	KbLayoutsTrIn = KeyboardLayouts->GetString(LangCode, "Latin");
 	KbLayoutsTrOut = KeyboardLayouts->GetString(LangCode, "Local");
 
-	bool cfgNeedSave = false;
-	//нужно проверить локаль до начала отрисовки интерфейса
-	if (Opt.IsFirstStart)
-	{
-		// Only Russian translation can be currently considered complete
-		if (IsLocaleMatches(locale, "ru_RU")) {
-			Opt.strLanguage = L"Russian";
-			Opt.strHelpLanguage = L"Russian";
-			cfgNeedSave = true;
-		}
-	}
-
 	// Настройка OEM сортировки. Должна быть после CopyGlobalSettings и перед InitKeysArray!
 	// LocalUpperInit();
 	// InitLCIDSort();
@@ -643,6 +631,18 @@ int FarAppMain(int argc, char **argv)
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
+
+	bool cfgNeedSave = false;
+	//нужно проверить локаль до начала отрисовки интерфейса
+	if (Opt.IsFirstStart)
+	{
+		// Only Russian translation can be currently considered complete
+		if (IsLocaleMatches(locale, "ru_RU")) {
+			Opt.strLanguage = L"Russian";
+			Opt.strHelpLanguage = L"Russian";
+			cfgNeedSave = true;
+		}
+	}
 
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");

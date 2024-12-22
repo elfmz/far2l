@@ -14575,6 +14575,17 @@ MenuMove
 "П&еренесення           F6"
 "П&еранесці             F6"
 
+MenuLink
+"Ссы&лка                Alt+F6"
+"Lin&k               Alt+F6"
+"Link                       Alt+F6"
+upd:"Li&nk                 Alt+F6"
+upd:"&Link                 Alt+F6"
+"Link                      Alt+F6"
+"En&lace                Alt+F6"
+"Поси&лання             Alt+F6"
+"Спасы&лак              Alt+F6"
+
 MenuCreateFolder
 "&Создание папки        F7"
 "&Make folder        F7"

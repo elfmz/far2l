@@ -599,14 +599,26 @@ int FarAppMain(int argc, char **argv)
 	std::string kblo_path = StrPrintf("%lskblayouts.ini", far2l_path);
 	KeyboardLayouts.reset(new KeyFileHelper(kblo_path.c_str()));
 
-	const char *lc = setlocale(LC_CTYPE, NULL);
+	const char *locale = setlocale(LC_CTYPE, NULL);
 	char LangCode[3];
-	LangCode[0] = lc[0];
-	LangCode[1] = lc[1];
+	LangCode[0] = locale[0];
+	LangCode[1] = locale[1];
 	LangCode[2] = 0;
 
 	KbLayoutsTrIn = KeyboardLayouts->GetString(LangCode, "Latin");
 	KbLayoutsTrOut = KeyboardLayouts->GetString(LangCode, "Local");
+
+	bool cfgNeedSave = false;
+	//нужно проверить локаль до начала отрисовки интерфейса
+	if (Opt.IsFirstStart)
+	{
+		// Only Russian translation can be currently considered complete
+		if (IsLocaleMatches(locale, "ru_RU")) {
+			Opt.strLanguage = L"Russian";
+			Opt.strHelpLanguage = L"Russian";
+			cfgNeedSave = true;
+		}
+	}
 
 	// Настройка OEM сортировки. Должна быть после CopyGlobalSettings и перед InitKeysArray!
 	// LocalUpperInit();
@@ -631,19 +643,6 @@ int FarAppMain(int argc, char **argv)
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
-
-	bool cfgNeedSave = false;
-	//нужно проверить локаль до начала отрисовки интерфейса
-	if (Opt.IsFirstStart)
-	{
-		const char *locale = setlocale(LC_CTYPE, NULL);
-		// Only Russian translation can be currently considered complete
-		if (IsLocaleMatches(locale, "ru_RU")) {
-			Opt.strLanguage = L"Russian";
-			Opt.strHelpLanguage = L"Russian";
-			cfgNeedSave = true;
-		}
-	}
 
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");

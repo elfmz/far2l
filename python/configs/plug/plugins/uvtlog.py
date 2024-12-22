@@ -43,7 +43,7 @@ class Plugin(PluginBase):
         try:
             block = block.decode('utf-8')
         except:
-            log.exception()
+            log.exception('block.decode')
             return
         s = self.s2f(block)
         self.info.EditorControl(self.ffic.ECTL_INSERTTEXT, s)

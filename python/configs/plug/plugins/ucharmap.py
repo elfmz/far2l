@@ -73,18 +73,25 @@ class Plugin(PluginBase):
         def setColor(col, row, attr):
             self.charbuf[xy2lin(col, row)].Attributes = attr
 
+        def updateOffset(offset):
+            char = symbols[offset]
+            dlg.SetText(dlg.ID_voffset, f"{offset}")
+            dlg.SetText(dlg.ID_vchar, f'{char}/{ord(char):4x}')
+
         @self.ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == self.ffic.DN_INITDIALOG:
                 self.SetCursorPos(hDlg, dlg.ID_hex, 0, 0)
                 setColor(0, 0, attrSelected)
-                self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hex, 1|(0x0f0f<<32))
+                updateOffset(0)
+                self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hex, 1|(100<<32))
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
             elif Msg == self.ffic.DN_BTNCLICK:
                 #log.debug(f"btn DialogProc({Param1}, {Param2})")
                 col, row = self.GetCursorPos(hDlg, dlg.ID_hex)
                 offset = xy2lin(col, row)
                 self.text = symbols[offset]
+                updateOffset(offset)
                 #log.debug(f"enter:{offset} row:{row} col:{col}, ch:{self.text} cb={self.charbuf[offset].Attributes:x}")
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
             elif Msg == self.ffic.DN_KEY and Param1 == dlg.ID_hex:
@@ -117,6 +124,8 @@ class Plugin(PluginBase):
                 elif row == -1:
                     row = self.max_row - 1
                 setColor(col, row, attrSelected)
+                offset = xy2lin(col, row)
+                updateOffset(offset)
                 #log.debug(f"col={col}/{self.max_col} row={row}/{self.max_row}")
                 self.SetCursorPos(hDlg, dlg.ID_hex, col, row)
                 return 1
@@ -131,6 +140,7 @@ class Plugin(PluginBase):
                 #log.debug(f"mou DialogProc(col={col} row={row})")
                 offset = xy2lin(col, row)
                 self.text = self.symbols[offset]
+                updateOffset(offset)
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
         b = DialogBuilder(
@@ -140,6 +150,13 @@ class Plugin(PluginBase):
             "charmap",
             0,
             VSizer(
+                HSizer(
+                    TEXT(None, "Offset:"),
+                    TEXT("voffset", " "*8),
+                    TEXT(None, "Char:"),
+                    TEXT("vchar", " "*6),
+                ),
+                HLine(),
                 USERCONTROL('hex', self.max_col, self.max_row, param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(self.charbuf))}),
                 HLine(),
                 HSizer(

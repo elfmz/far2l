@@ -250,6 +250,18 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					UpdatePathOptions(strDestName2, false);
 			}
 
+			//нужно проверить локаль до начала отрисовки интерфейса
+			if (Opt.IsFirstStart)
+			{
+				const char *locale = setlocale(LC_CTYPE, NULL);
+				// Only Russian translation can be currently considered complete
+				if (IsLocaleMatches(locale, "ru_RU")) {
+					Opt.strLanguage = L"Russian";
+					Opt.strHelpLanguage = L"Russian";
+					ConfigOptSave(false);
+				}
+			}
+
 			// теперь все готово - создаем панели!
 			CtrlObj.Init();
 
@@ -306,15 +318,6 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start));
 
 			if( Opt.IsFirstStart ) {
-
-				const char *locale = setlocale(LC_CTYPE, NULL);
-				// Only Russian translation can be currently considered complete
-				if (IsLocaleMatches(locale, "ru_RU")) {
-					Opt.strLanguage = L"Russian";
-					Opt.strHelpLanguage = L"Russian";
-					ConfigOptSave(false);
-				}
-
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
 
 				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);

@@ -47,7 +47,6 @@ $^(help file last translated for build 882)
    ~Szűrők menü~@FiltersMenu@
    ~Képernyők váltása~@ScrSwitch@
    ~Futó programok~@TaskList@
-   ~Hotplug eszközök~@HotPlugList@
 
    ~Rendszer beállítások~@SystemSettings@
    ~Panel beállítások~@PanelSettings@
@@ -160,8 +159,6 @@ nyitja meg. A -e után megadható, hogy melyik sor hányadik karakterhelyére
 
           Például: far -e70:2 readme.
 
-  #-i#    ^<wrap>Kicsi, 16x16-os ikont állít be a FAR konzolhoz. Néhány
-konfigurációnál a kapcsoló használata instabil működést eredményezhet.
           ^<wrap>
   #-p[<path>]#  A "fő" plugineket a <path>-ben megadott elérési út
           ^<wrap>mappáiban keresi. Több keresési útvonal is megadható,
@@ -213,13 +210,6 @@ kiolvasni.
 az előző példánál maradva a "dir" parancsot elhagyjuk), akkor a FAR a
 végtelenségig fog várakozni a bemenő adatfolyam végére. Ezt a hibát a FAR
 egy későbbi verziójában a szerzők valószínűleg ki fogják javítani.
-
-  #-w#
-  Stretch to console window instead of console buffer.
-
-  #-x#    ^<wrap>Letiltja a kivételek kezelését. Ezt a lehetőséget
-a szerzők a pluginek fejlesztői részére tervezték, ezért nem ajánlott normál
-használat közben alkalmazni.
 
   #-set:<parameter>=<value>#
   Override the configuration parameter, see ~far:config~@FarConfig@ for details.
@@ -1260,14 +1250,11 @@ számokkal) és dátuma.
 
    #Rendezési elv#        A lehetséges rendezési módok megjelenítése.
 
-   #Hosszú fájlnevek#     A fájlnevek hosszú/rövid módja közt vált.
-
    #Panel be/ki#          Megmutatja vagy elrejti a panelt.
 
    #Frissítés#            Újraolvassa a panel tartalmát.
 
-   #Meghajtóváltás#       ^<wrap>Az aktuális meghajtóról másikra válthatunk a
-Meghajtók menüben.
+   #Meghajtóváltás#       ^<wrap>Show ~Location menu~@DriveDlg@ dialog to change the panel's current location or open a new plugin panel.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -1377,8 +1364,6 @@ részletezi a lehetőségeit.
    #Képernyők#            A megnyitott ~képernyők listája~@ScrSwitch@.
 
    #Futó programok#       A ~futó programok listája~@TaskList@.
-
-   #Hotplug eszközök#     A ~hotplug eszközök listája~@HotPlugList@.
 
    See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -1885,19 +1870,6 @@ $ #Előzmények: mappa előzmények#
 $ #Futó programok#
     The task list displays active tasks by using #htop# (if available).
 
-@HotPlugList
-$ #Hotplug eszközök#
-    A Hotplug eszközök menü a PC kártyaolvasók és a számítógéphez
-csatlakoztatott egyéb analóg eszközök listáját jeleníti meg.
-
-    A leválasztandó eszköz nevét ki kell választani a listából és #Del#-t ütni
-rajta. Ezután a Windows gondoskodik az eszköz biztonságos eltávolításáról és
-értesítést kapunk, ha az eltávolítás már biztosan nem jár adatvesztéssel.
-
-    A #Ctrl-R# frissíti a csatlakozó eszközök listáját.
-
-    See also: common ~menu~@MenuCmd@ keyboard commands.
-
 @CompFolders
 $ #Mappák összehasonlítása#
     A Mappák összehasonlítása parancs csak akkor használható, ha mindkét
@@ -2142,8 +2114,11 @@ szeretnénk a fájllal azonos nevű mappába kibontani, a parancs:
 
 @SystemSettings
 $ #Beállítások: rendszer beállítások#
-  #Csak olvasható attr.#    Törli a CD-ről másolt fájlok "csak
-  #törlése CD fájlokról#    olvasható" attribútumát.
+  #Enable sudo privileges elevation#
+  If enabled, FAR2L will prompt sudo password when attempting access to files requiring root permissions.
+
+  #Always confirm modify operations#
+  If enabled, FAR2L will request confirmation for each modifying operation when running with privilege elevation.
 
   #Törlés a Lomtárba#       ^<wrap>A fájlok vagy mappák törlésénél
 közbeiktatja a Lomtárat. A "Törlés a Lomtárba" művelet csak helyi
@@ -2152,29 +2127,17 @@ merevlemezeken működik.
   #Szimbolikus linkek#      Megkeresi és törli a mappák szimbolikus
   #törlése#                 linkjeit, mielőtt a Lomtárba dobná őket.
 
-  #Másoláshoz a rendszer-#  A FAR beépített másolórutinja helyett az
-  #rutin használata#        operációs rendszer rutinját használja.
-                          ^<wrap>Alkalmazása NTFS fájlrendszerben hasznos
-lehet, mert a CopyFileEx rendszerfunkció ésszerűbb lemezfoglalási módszert
-használ, azonkívül a fájlokat bővített attribútumkészletükkel együtt másolja
-át. Másrészt viszont az operációs rendszer metódusa meggátolja a fájlok
-feloszthatóságát, ha a ~másolás~@CopyFiles@ vagy mozgatás nem használható.
-
-  #Írásra megnyitott#       Megengedi más programokban írásra
-  #fájlok másolhatók#       megnyitott fájlok másolását.
-                          ^<wrap>A módszer praktikus lehet a hosszú időre
-megnyitott fájlok másolására, de veszélyessé is válhat, ha a fájl a másolás
-ideje alatt módosul.
-
   #Szimbolikus linkek#      Ha ez az opció be van kapcsolva, akkor a
   #vizsgálata#              a mappák fastruktúrájának feltérképezése
                           ^<wrap>során a normál mappák mérete, valamint a
 ~szimbolikus linkjeik~@HardSymLink@ mérete együttesen fogják meghatározni a
 mappákban található fájlok méretének összegét.
 
-  #Mappák létrehozása#      Ha az új mappa nevét csupa kisbetűvel
-  #NAGYBETŰKKEL#            írjuk be és ez az opció be van kapcsolva,
-                          a mappa neve nagybetűs lesz.
+  #Use only files size in estimation#
+  This option determines how FAR2L estimates the overall size of the directory when building the
+directory tree. The value is used during file operations such as copying, deleting, quick viewing, etc.
+Enable to sum up the space occupied by files only. Disable to include directory overhead
+(space used to store the metadata of directories themselves) as well.
 
   #A FAR kilép x perc#      A FAR futása abbamarad, ha a megadott
   #tétlenség után#          időtartam alatt nem történik billentyű-
@@ -2197,24 +2160,14 @@ is megjeleníthető.
                           ^<wrap>Az előzmények listáját az #Alt-F11#-gyel is
 megjeleníthetjük.
 
-  #Windows regisztrált#     Ha az opció be van kapcsolva és #Enter#-t
-  #fájltípusok használata#  ütünk egy olyan típusú fájlon, amit a
-                          ^<wrap>Windows ismer és a típus nem szerepel a FAR
-~fájltársítások~@FileAssoc@ listáján, a Windows a saját társítású programjával
-próbálja megnyitni.
-
-  #CD tálca automatikus#    Ha CD-ROM típusú meghajtót választottunk a
-  #behúzása#                ~Meghajtók menüben~@DriveDlg@, a FAR megpróbálja
-                          behúzni a meghajtó nyitott tálcáját.
-                          ^<wrap>Kapcsoljuk ki az opciót, ha nem működik
-megfelelően (néhány CD-ROM meghajtó hibás drivere miatt ez előfordulhat).
-
-  #Saját pluginek#          Itt adhatjuk meg "saját" pluginjeink
-  #útvonala#                mappáinak elérési útvonalait, ahol a
-                          ^<wrap>FAR-nak a "fő" plugineken túl modulokat
-kell keresnie. Több útvonalat beírhatunk, ";"-vel elválasztva, környezeti
-változók is használhatók. A saját pluginek nem töltődnek be, ha a FAR a -p
-vagy -co ~parancssori~@CmdLine@ kapcsolóval indul.
+  #Remove duplicates in history#
+  The option specifies the rules for history lists processing and what exactly is considered duplicate records.
+  - never: history is kept in its entirety, identical records are not deleted.
+  - by name: the most recent record (viewed ~file~@HistoryViews@, opened ~directory~@HistoryFolders@, or executed ~command~@History@) is saved,
+while its earlier occurrences are deleted from the history.
+  - by name and path: the same as "by name", but for the ~command history~@History@ the working directory from which
+the command was executed is also taken into account; that is, if the same command was executed from
+two different directories, both entries will be saved in the history.
 
   #Beállítások automatikus# Ha az opció be van kapcsolva, kilépéskor
   #mentése#                 a FAR önműködően menti a beállításait, a
@@ -2870,10 +2823,7 @@ lemezeit.
 szükséges. A CD-ROM-ok tálcáját az #Ins# billentyűvel tolhatjuk be.
 
     A #Shift-Del# billentyűkombinációval biztonságosan eltávolíthatjuk az USB
-portra csatlakoztatott tárolóeszközöket. Ha olyan kártyaolvasóba
-helyezett flash memóriakártyára adtuk ki a ~biztonságos eltávolítás~@HotPlugList@
-parancsot, ahol a kártyalvasó több lemez kezelésére képes, a parancs a
-kártyaolvasót választja le.
+portra csatlakoztatott tárolóeszközöket.
 
     A Meghajtók menüben a #Ctrl-1 - Ctrl-9# billentyűkkel a meghajtókra
 vonatkozó különféle információk megjelenítését kapcsolhatjuk ki vagy be:

@@ -48,7 +48,6 @@ $^#File and archive manager#
    ~Filters menu~@FiltersMenu@
    ~Screens switching~@ScrSwitch@
    ~Task list~@TaskList@
-   ~Hotplug devices list~@HotPlugList@
 
    ~System settings~@SystemSettings@
    ~Panel settings~@PanelSettings@
@@ -127,6 +126,9 @@ $ # FAR2L features - Getting Started#
     FAR2L is a Linux port of FAR Manager v2 (see ~About FAR2L~@About@)
     FAR2L official site: ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
 
+    Having troubles? Search for solution in community wiki:
+~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
+(currently in Russian only).
 
  #UI Backends#
     FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
@@ -233,7 +235,7 @@ for clipboard need turn on OSC 52)
 
  #Location of FAR2L settings and history#
     - FAR2L by default works with settings located in #~~/.config/far2l/# or in #$XDG_CONFIG_HOME/far2l/#
-    - command line switch #-u# (or #$FARSETTINGS# environment variable) allows to specify arbitrary settings location:
+    - command line switch #-u# (or #$FARSETTINGS# ~environment variable~@FAREnv@) allows to specify arbitrary settings location:
         #-u <path>#: in #path/.config/# (if path or $FARSETTINGS is full path)
         #-u <identity>#: in #~~/.config/far2l/custom/identity/# or in #$XDG_CONFIG_HOME/far2l/custom/identity/#
     - some settings files (may be missing):
@@ -345,7 +347,7 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   Macros with the "Run after FAR2L start" option set will not be run when FAR2L is started.
 
   #-u <identity># or #-u <path>#
-  Allows to specify separate settings identity or FS location (it override #FARSETTINGS# environment variable value).
+  Allows to specify separate settings identity or FS location (it override #FARSETTINGS# ~environment variable~@FAREnv@ value).
   #-u <path>#: in path/.config/ (if path is full path)
   #-u <identity>#: in ~~/.config/far2l/custom/identity/ or in $XDG_CONFIG_HOME/far2l/custom/identity/
 
@@ -354,13 +356,6 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   #-v - <command line>#
   Executes given command line and opens viewer with its output.
   For example, #far2l -v - ls# will view ls command output.
-
-  #-w# [Unsupported in far2l]
-  Stretch to console window instead of console buffer.
-
-  #-x# [Unsupported in far2l]
-  Disable exception handling. This option has been designed for plugin developers,
-and it is not recommended to specify it during normal operation.
 
   #-set:<parameter>=<value>#
   Override the configuration parameter, see ~far:config~@FarConfig@ for details.
@@ -743,7 +738,7 @@ internal editor.
     the selected files will be carried out using that plugin,
     otherwise by using internal facilities.
 
-  Create ~file links~@HardSymLink@ (NTFS only)                               #Alt-F6#
+  Create ~file links~@HardSymLink@                                           #Alt-F6#
 
     Using hard file links you may have several different file names referring
 to the same data.
@@ -846,7 +841,7 @@ $ #Deleting and wiping files and folders#
     #Shift-F8#   - delete only the file under cursor
                  (with no regard to selection in the panel);
 
-    #Shift-Del#  - delete selected objects, skipping the Recycle Bin;
+    #Shift-Del#  - delete selected objects, skipping the Trash;
 
     #Alt-Del#    - Wipe out files and folders.
 
@@ -854,8 +849,8 @@ $ #Deleting and wiping files and folders#
     Remarks:
 
     1. ^<wrap>In accordance to ~System Settings~@SystemSettings@ the hotkeys #F8# and
-#Shift-F8# do or do not move the deleted files to the Recycle Bin. The
-#Shift-Del# hotkey always deletes, skipping the Recycle Bin.
+#Shift-F8# do or do not move the deleted files to the Trash. The
+#Shift-Del# hotkey always deletes, skipping the Trash.
 
     2. ^<wrap>Before file deletion its data is overwritten with zeroes (you can
 specify other overwrite characters - see TechInfo##29), after which the file
@@ -1379,13 +1374,11 @@ respectively. These menus include the following items:
 
    #Sort modes#           Show available sort modes.
 
-   #Show long names#      Show long/short file names.
-
    #Panel On/Off#         Show/hide panel.
 
    #Re-read#              Re-read panel.
 
-   #Location#             Change current location.
+   #Location#             Show ~Location menu~@DriveDlg@ dialog to change the panel's current location or open a new plugin panel.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -1398,6 +1391,8 @@ $ #Menus: files menu#
    #Copy#               ~Copy~@CopyFiles@ files and folders.
 
    #Rename or move#     ~Rename or move~@CopyFiles@ files and folders.
+
+   #Link#               Create ~file links~@HardSymLink@.
 
    #Make folder#        ~Create~@MakeFolder@ new folder.
 
@@ -1484,8 +1479,6 @@ $ #Menus: commands menu#
    #Screens list#         Show open ~screens list~@ScrSwitch@
 
    #Task list#            Shows ~active tasks list~@TaskList@.
-
-   #Hotplug devices list# Show ~hotplug devices list~@HotPlugList@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -1600,8 +1593,7 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
   Hard kill everything in shell                             #Ctrl+Alt+C#
     (not recommended, it may cause corruption or lost of unsaved data)
 
-  Put far2l instance to background                          #Ctrl+Alt+Z#
-    (only if far2l works in TTY backend)
+  Send currently running command to the background          #Ctrl+Alt+Z#
 
   See also: ~pseudo-commands~@SpecCmd@
 
@@ -2212,19 +2204,6 @@ of time if a folder was located on a currently unavailable remote resource.
 $ #Task list#
     The task list displays active tasks by using #htop# (if available).
 
-@HotPlugList
-$ #Hotplug devices list#
-    Hotplug devices list displays PC Card boards and other analogue devices
-which are installed and work in the computer.
-
-    To remove a device you need to select it in the list and press the #Del#
-key. After that OS will prepare the device for safe removal and a
-notification will be displayed when it is safe to remove the device.
-
-    #Ctrl-R# allows to refresh the list of connected devices.
-
-    See also: common ~menu~@MenuCmd@ keyboard commands.
-
 @CompFolders
 $ #Compare folders#
     The compare folders command is applicable only when two ~file panels~@FilePanel@
@@ -2379,8 +2358,8 @@ $ #Special symbols#
     #!.!#         File name with extension
     #!@@!# or #!$!#  Name of file with selected file names list
     #!&#          List of selected files
-    #!/#  or #!\\#   Current path
-    #!=/# or #!=\\#  Current path considering ~symbolic links~@HardSymLink@.
+    #!/#          Current path
+    #!=/#         Current path considering ~symbolic links~@HardSymLink@.
 
     #!?<title>?<init>!#
              This symbol is replaced by user input, when
@@ -2417,7 +2396,7 @@ $ #Special symbols#
              symbol forces it (and all the following characters)
              to refer to the active panel (see note 4).
              For example, !^!.! denotes a current file name on
-             the active panel, !##!\\!^!.! - a file on the passive
+             the active panel, !##!/!^!.! - a file on the passive
              panel with the same name as the name of the current
              file on the active panel.
 
@@ -2450,7 +2429,7 @@ command is executed.
     4. ^<wrap>The prefixes "!##" and "!^" work as toggles for associations. The effect
 of these prefixes continues up to the next similar prefix. For example:
 
-    if exist !##!\\!^!.! diff -c -p !##!\\!^!.! !\\!.!
+    if exist !##!/!^!.! diff -c -p !##!/!^!.! !/!.!
 
   "If the same file exists on the passive panel as the file under
    the cursor on the active panel, show the differences between
@@ -2465,34 +2444,28 @@ extract a rar archive to a folder with the same name
 
 @SystemSettings
 $ #Settings dialog: system#
-  #Clear R/O attribute from CD files#
-  Clear read-only attribute from files copied from CD.
+  #Enable sudo privileges elevation#
+  If enabled, FAR2L will prompt sudo password when attempting access to files requiring root permissions.
 
-  #Delete to Recycle Bin#
-  Enables file deletion via the Recycle Bin.The operation of deleting to the Recycle
-Bin can be performed only for local hard disks.
+  #Always confirm modify operations#
+  If enabled, FAR2L will request confirmation for each modifying operation when running with privilege elevation.
+
+  #Delete to Trash#
+  Enables file deletion via the Trash. The operation of deleting to the Trash
+can be performed only for local hard disks.
 
   #Delete symbolic links#
-  Scan for and delete symbolic links to subfolders before deleting to Recycle Bin.
-
-  #Use system copy routine#
-  Use the file copy functions provided by the operating system instead of internal
-file copy implementation. It may be useful on NTFS, because the system function
-(CopyFileEx) copies file extended attributes. On the other hand, when using the system
-function, the possibility to split files when ~copying~@CopyFiles@ or moving is not available.
-
-  #Copy files opened for writing#
-  Allows to copy files that are opened by other programs for writing. This mode
-is handy to copy a file opened for a long time, but it could be dangerous, if a file
-is being modified at the same time as copying.
+  Scan for and delete symbolic links to subfolders before deleting to Trash.
 
   #Scan symbolic links#
   Scan ~symbolic links~@HardSymLink@ along with normal sub-folders when building the folder tree,
 determining the total file size in the sub-folders.
 
-
-  #Create folders in uppercase#
-  If the name of a new folder contains only lowercase letters and this option is on, the folder will be created in uppercase.
+  #Use only files size in estimation#
+  This option determines how FAR2L estimates the overall size of the directory when building the
+directory tree. The value is used during file operations such as copying, deleting, quick viewing, etc.
+Enable to sum up the space occupied by files only. Disable to include directory overhead
+(space used to store the metadata of directories themselves) as well.
 
   #Inactivity time#
   Terminate FAR2L after a specified interval without keyboard or mouse activity. This works only if FAR2L waits for command line
@@ -2500,6 +2473,7 @@ input without viewer or editor screens in the background.
 
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
+Commands history list may be activated by #Alt-F8#.
 
   #Save folders history#
   Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR2L.
@@ -2509,15 +2483,14 @@ Folders history list may be activated by #Alt-F12#.
   Forces saving ~history of viewed and edited~@HistoryViews@ files before exit and restoring it after
 starting FAR2L. View and edit history list may be activated by #Alt-F11#.
 
-  #Use OS registered types#
-  When this option is on and #Enter# is pressed on a file, the type of which is known to
-OS and absent in the list of FAR2L ~file associations~@FileAssoc@, the OS program
-registered to process this file type will be executed.
-
-  #CD drive auto mount#
-  When a CD-ROM drive is selected from the ~location menu~@DriveDlg@, FAR2L will close the open
-tray of a CD drive. Turn off this option if automatic CD-ROM mounting does not work
-correctly (this can happen because of bugs in the drivers of some CD-ROM drives).
+  #Remove duplicates in history#
+  The option specifies the rules for history lists processing and what exactly is considered duplicate records.
+  - never: history is kept in its entirety, identical records are not deleted.
+  - by name: the most recent record (viewed ~file~@HistoryViews@, opened ~directory~@HistoryFolders@, or executed ~command~@History@) is saved,
+while its earlier occurrences are deleted from the history.
+  - by name and path: the same as "by name", but for the ~command history~@History@ the working directory from which
+the command was executed is also taken into account; that is, if the same command was executed from
+two different directories, both entries will be saved in the history.
 
   #Auto save setup#
   If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
@@ -4268,8 +4241,8 @@ links, and so they cannot be seen from DOS programs.
     When the file size or date changes, all of the corresponding directory
 entries are updated automatically. When a file is deleted, it is not deleted
 physically until all the hard links pointing at it will be deleted. The
-deletion order doesn't matter. When a hard link is deleted into the recycle
-bin, the number of links of a file does not change.
+deletion order doesn't matter. When a hard link is deleted into the Trash,
+the number of links of a file does not change.
 
     FAR2L can create hard links and can show the number of the file's hard links
 in a separate column (by default, it's the last column in the 9th panel mode)
@@ -4378,69 +4351,22 @@ or directory.
 $ #Operating system commands#
     FAR2L by itself processes the following operating system commands:
 
-    #CLS#
+    #reset#
 
-    Clears the screen.
-
-    #disk:#
-
-    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
-
-    To change the current disk on the active panel to the specified disk.
-
-    !! Windows legacy end !!
-
-    #CD path# or #CHDIR path#
-
-    To change the current path on the active panel to the specified path.
-If the active panel shows a ~plugin~@Plugins@ emulated file system, the command
-"CD" in the command line may be used to change the folder in the plugin file
-system. Unlike "CD", "CHDIR" command always treats the specified parameter
-as a real folder name, regardless of the file panel type.
-
-    #CHCP [nnn]#
-
-    Displays or sets the active code page number. "nnn" - specifies a code
-page number. Type CHCP without a parameter to display the active code
-page number.
-
-    #SET variable=[string]#
-
-    Set environment variable "variable" to the value "string". If "string" is
-not specified, the environment variable "variable" will be removed. On startup,
-FAR2L sets several ~environment variables~@FAREnv@ by itself.
-
-    #IF [NOT] EXIST filename command#
-
-    Execute a command "command" if "filename" exists. Prefix "NOT" - execute
-the command only if the condition is false.
-
-    #IF [NOT] DEFINED variable command#
-
-    The "DEFINED" conditional works just like "EXISTS" except it takes an
-environment variable name and returns true if the environment variable is
-defined.
-
-
-    "IF" commands can be nested, for instance, command "command"
-
-    #if exist file1 if not exist file2 if defined variable command#
-
-    will be executed if the file "file1" exists, the file "file2" does not
-exist and the environment variable "variable" is defined.
+    Clears the screen of the built-in ~Terminal~@Terminal@.
 
     #pushd path#
 
-    Команда PUSHD сохраняет текущий каталог во внутреннем стеке и делает
-текущим каталог path.
+    Stores the current path on the internal stack and sets the current
+directory on the active panel to specified path.
 
     #popd#
 
-    Переходит в каталог, сохраненный командой PUSHD.
+    Changes the current path on the active panel to that stored by the “pushd” command.
 
-    #clrd#
+    #exit#
 
-    Очищает стек каталогов, сохраненных командой PUSHD.
+    Сloses the background shell of the built-in ~Terminal~@Terminal@.
 
     Notes:
 
@@ -4459,15 +4385,17 @@ $ #Environment variables#
     On startup, FAR2L sets the following environment variables available
 to child processes:
 
-    #FARHOME#            path to the folder from which FAR2L was started.
+    #FARHOME#            directory containing far2l resources (e.g. /usr/share/far2l)
 
     #FARLANG#            the name of the current interface language.
 
-    #FARUSER#            ^<wrap>the name of the current user given by the -u ~command line~@CmdLine@ option.
+    #FARSETTINGS#        ^<wrap>the name of user given by the -u ~command line~@CmdLine@ option.
 
-    #FARDIRSTACK#        ^<wrap>the contents of directories stack top (the stack is managed with #pushd# and #popd# commands)
+    #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator (i.e., if its effective user ID is 0)
 
-    #FARADMINMODE#       ^<wrap>equals "1" if FAR2L was run by an administrator
+    #FARPID#             FAR2L process id
+
+    See also ~FAR2L: command line switches~@CmdLine@ for the #FAR2L_ARGS# environment variable.
 
 
 @RegExp

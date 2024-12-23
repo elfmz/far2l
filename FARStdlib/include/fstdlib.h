@@ -34,10 +34,10 @@
 
 /** @defgroup FSTDLib Library Compilation/Porting
 
-	FARStdLibrary already ported to next compillers:
-	  - Borland C compiller version 5.xx
-	  - Visual C compiller version 6.xx
-	  - Symantec  compiller version 7.2
+	FARStdLibrary already ported to next compilers:
+	  - Borland C compiler version 5.xx
+	  - Visual C compiler version 6.xx
+	  - Symantec  compiler version 7.2
 	  - GCC
 */
 
@@ -294,7 +294,7 @@ public:
 	{
 		FP_Info->SendDlgMessage(Handle, DM_SETCHECK, num, v ? BSTATE_CHECKED : BSTATE_UNCHECKED);
 	}
-	void CheckTogle(int num) const { Checked(num, !Checked(num)); }
+	void CheckToggle(int num) const { Checked(num, !Checked(num)); }
 
 	bool GetItem(int num, FarDialogItem *p) const
 	{

@@ -1,5 +1,14 @@
 import logging
 from far2l.plugin import PluginBase
+from far2l.fardialogbuilder import (
+    TEXT,
+    BUTTON,
+    USERCONTROL,
+    HLine,
+    HSizer,
+    VSizer,
+    DialogBuilder,
+)
 
 
 log = logging.getLogger(__name__)
@@ -9,426 +18,156 @@ class Plugin(PluginBase):
     label = "Python Character Map"
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
-    def Rebuild(self, hDlg):
-        self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
-        prefix = ["", "&"]
-        for i in range(len(self.symbols)):
-            row = i // self.max_col
-            col = i % self.max_col
-            p = prefix[row == self.cur_row and col == self.cur_col]
-            offset = self.first_text_item + row * self.max_col + col
-            ch = self.s2f(p + self.symbols[i])
-            self.info.SendDlgMessage(
-                hDlg, self.ffic.DM_SETTEXTPTR, offset, self.ffi.cast("LONG_PTR", ch)
-            )
-        self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
-
     def OpenPlugin(self, OpenFrom):
+        try:
+            return self._OpenPlugin(OpenFrom)
+        except Exception as ex:
+            log.exception('run')
+
+    def GetCursorPos(self, hDlg, ID):
+        cpos = self.ffi.new("COORD *", dict(X=0, Y=0))
+        self.info.SendDlgMessage(hDlg, self.ffic.DM_GETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
+        return (cpos.X, cpos.Y)
+
+    def SetCursorPos(self, hDlg, ID, col, row):
+        cpos = self.ffi.new("COORD *", dict(X=col, Y=row))
+        self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
+
+    def _OpenPlugin(self, OpenFrom):
         if 0:
             import debugpy
-
             debugpy.breakpoint()
-        symbols = []
-        for i in range(256):
-            symbols.append(chr(i))
-        symbols.extend(
-            [
-                "Ђ",
-                "Ѓ",
-                "‚",
-                "ѓ",
-                "„",
-                "…",
-                "†",
-                "‡",
-                "€",
-                "‰",
-                "Љ",
-                "‹",
-                "Њ",
-                "Ќ",
-                "Ћ",
-                "Џ",
-                "ђ",
-                "‘",
-                "’",
-                "“",
-                "”",
-                "•",
-                "–",
-                "—",
-                "",
-                "™",
-                "љ",
-                "›",
-                "њ",
-                "ќ",
-                "ћ",
-                "џ",
-                " ",
-                "Ў",
-                "ў",
-                "Ј",
-                "¤",
-                "Ґ",
-                "¦",
-                "§",
-                "Ё",
-                "©",
-                "Є",
-                "«",
-                "¬",
-                "­",
-                "®",
-                "Ї",
-                "°",
-                "±",
-                "І",
-                "і",
-                "ґ",
-                "µ",
-                "¶",
-                "·",
-                "ё",
-                "№",
-                "є",
-                "»",
-                "ј",
-                "Ѕ",
-                "ѕ",
-                "ї",
-                "А",
-                "Б",
-                "В",
-                "Г",
-                "Д",
-                "Е",
-                "Ж",
-                "З",
-                "И",
-                "Й",
-                "К",
-                "Л",
-                "М",
-                "Н",
-                "О",
-                "П",
-                "Р",
-                "С",
-                "Т",
-                "У",
-                "Ф",
-                "Х",
-                "Ц",
-                "Ч",
-                "Ш",
-                "Щ",
-                "Ъ",
-                "Ы",
-                "Ь",
-                "Э",
-                "Ю",
-                "Я",
-                "а",
-                "б",
-                "в",
-                "г",
-                "д",
-                "е",
-                "ж",
-                "з",
-                "и",
-                "й",
-                "к",
-                "л",
-                "м",
-                "н",
-                "о",
-                "п",
-                "р",
-                "с",
-                "т",
-                "у",
-                "ф",
-                "х",
-                "ц",
-                "ч",
-                "ш",
-                "щ",
-                "ъ",
-                "ы",
-                "ь",
-                "э",
-                "ю",
-                "я",
-                "░",
-                "▒",
-                "▓",
-                "│",
-                "┤",
-                "╡",
-                "╢",
-                "╖",
-                "╕",
-                "╣",
-                "║",
-                "╗",
-                "╝",
-                "╜",
-                "╛",
-                "┐",
-                "└",
-                "┴",
-                "┬",
-                "├",
-                "─",
-                "┼",
-                "╞",
-                "╟",
-                "╚",
-                "╔",
-                "╩",
-                "╦",
-                "╠",
-                "═",
-                "╬",
-                "╧",
-                "╨",
-                "╤",
-                "╥",
-                "╙",
-                "╘",
-                "╒",
-                "╓",
-                "╫",
-                "╪",
-                "┘",
-                "┌",
-                "█",
-                "▄",
-                "▌",
-                "▐",
-                "▀",
-                "∙",
-                "√",
-                "■",
-                "⌠",
-                "≈",
-                "≤",
-                "≥",
-                "⌡",
-                "²",
-                "÷",
-                "ą",
-                "ć",
-                "ę",
-                "ł",
-                "ń",
-                "ó",
-                "ś",
-                "ż",
-                "ź",
-                "Ą",
-                "Ć",
-                "Ę",
-                "Ł",
-                "Ń",
-                "Ó",
-                "Ś",
-                "Ż",
-                "Ź",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-                " ",
-            ]
-        )
-        Items = [
-            (
-                self.ffic.DI_DOUBLEBOX,
-                3,
-                1,
-                38,
-                18,
-                0,
-                {"Selected": 0},
-                0,
-                0,
-                self.s2f("Character Map"),
-                0,
-            ),
-            (
-                self.ffic.DI_BUTTON,
-                7,
-                17,
-                12,
-                18,
-                0,
-                {"Selected": 0},
-                1,
-                self.ffic.DIF_DEFAULT + self.ffic.DIF_CENTERGROUP,
-                self.s2f("OK"),
-                0,
-            ),
-            (
-                self.ffic.DI_BUTTON,
-                13,
-                17,
-                38,
-                18,
-                0,
-                {"Selected": 0},
-                0,
-                self.ffic.DIF_CENTERGROUP,
-                self.s2f("Cancel"),
-                0,
-            ),
-            (
-                self.ffic.DI_USERCONTROL,
-                3,
-                2,
-                38,
-                16,
-                0,
-                {"Selected": 0},
-                0,
-                self.ffic.DIF_FOCUS,
-                self.ffi.NULL,
-                0,
-            ),
-        ]
-        self.cur_row = 0
-        self.cur_col = 0
-        self.max_col = 32
-        self.max_row = len(symbols) // self.max_col
-        self.first_text_item = len(Items)
-        self.symbols = symbols
-        self.text = None
 
+        self.max_col = 32
+        symbols = ''.join([chr(i) for i in range(256)])+(
+            'ЂЃ‚ѓ„…†‡€‰Љ‹ЊЌЋЏ'
+            'ђ‘’“”•–—™љ›њќћџ'
+            ' ЎўЈ¤Ґ¦§Ё©Є«¬"®Ї'
+            '°±Ііґµ¶·ё№є»јЅѕї'
+            'АБВГДЕЖЗИЙКЛМНОП'
+            'РСТУФХЦЧШЩЪЫЬЭЮЯ'
+            'абвгдежзийклмноп'
+            'рстуфхцчшщъыьэюя'
+            '░▒▓│┤╡╢╖╕╣║╗╝╜╛┐'
+            '└┴┬├─┼╞╟╚╔╩╦╠═╬╧'
+            '╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀'
+            '∙√■⌠≈≤≥⌡²÷ąćęłńó'
+            'śżźĄĆĘŁŃÓŚŻŹ'
+        )
+        n = len(symbols) % self.max_col
+        if n:
+            symbols += ' '*(self.max_col-n)
+        self.max_row = len(symbols) // self.max_col
+        self.text = ''
+        self.charbuf = self.ffi.new("CHAR_INFO []", len(symbols))
+        attrNormal = 0x170
+        attrSelected = 0x1c
         for i in range(len(symbols)):
-            row = i // self.max_col
-            col = i % self.max_col
-            Items.append(
-                (
-                    self.ffic.DI_TEXT,
-                    5 + col,
-                    self.first_text_item - 2 + row,
-                    5 + col,
-                    self.first_text_item - 2 + row,
-                    0,
-                    {"Selected": 0},
-                    0,
-                    0,
-                    self.ffi.NULL,
-                    0,
-                )
-            )
+            cb = self.charbuf[i]
+            cb.Attributes = attrNormal
+            cb.Char.UnicodeChar = ord(symbols[i])
+
+        def xy2lin(col, row):
+            return row * self.max_col + col
+
+        def setColor(col, row, attr):
+            self.charbuf[xy2lin(col, row)].Attributes = attr
+
+        def updateOffset(offset):
+            char = symbols[offset]
+            dlg.SetText(dlg.ID_voffset, f"{offset}")
+            dlg.SetText(dlg.ID_vchar, f'{char}/{ord(char):4x}')
 
         @self.ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == self.ffic.DN_INITDIALOG:
-                self.Rebuild(hDlg)
+                self.SetCursorPos(hDlg, dlg.ID_hex, 0, 0)
+                setColor(0, 0, attrSelected)
+                updateOffset(0)
+                self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hex, 1|(100<<32))
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
             elif Msg == self.ffic.DN_BTNCLICK:
-                log.debug(
-                    "btn DialogProc({0}, {1})".format(
-                        Param1, Param2
-                    )
-                )
+                #log.debug(f"btn DialogProc({Param1}, {Param2})")
+                col, row = self.GetCursorPos(hDlg, dlg.ID_hex)
+                offset = xy2lin(col, row)
+                self.text = symbols[offset]
+                updateOffset(offset)
+                #log.debug(f"enter:{offset} row:{row} col:{col}, ch:{self.text} cb={self.charbuf[offset].Attributes:x}")
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
-            elif Msg == self.ffic.DN_KEY and Param1 == self.first_text_item - 1:
-                log.debug(
-                    "key DialogProc({0}, {1}, {2}, {3})".format(
-                        hDlg, "DN_KEY", Param1, Param2
-                    )
-                )
+            elif Msg == self.ffic.DN_KEY and Param1 == dlg.ID_hex:
+                col, row = self.GetCursorPos(hDlg, dlg.ID_hex)
+                setColor(col, row, attrNormal)
+                #log.debug(f"key DialogProc({Param1}, {Param2:x}), col={col} row={row})")
                 if Param2 == self.ffic.KEY_LEFT:
-                    self.cur_col -= 1
+                    col -= 1
                 elif Param2 == self.ffic.KEY_UP:
-                    self.cur_row -= 1
+                    row -= 1
                 elif Param2 == self.ffic.KEY_RIGHT:
-                    self.cur_col += 1
+                    col += 1
                 elif Param2 == self.ffic.KEY_DOWN:
-                    self.cur_row += 1
+                    row += 1
                 elif Param2 == self.ffic.KEY_ENTER:
-                    offset = self.cur_row * self.max_col + self.cur_col
-                    self.text = self.symbols[offset]
-                    log.debug(
-                        "enter:{0} row:{1} col:{2}, ch:{3}".format(
-                            offset, self.cur_row, self.cur_col, self.text
-                        )
-                    )
+                    offset = xy2lin(col, row)
+                    self.text = symbols[offset]
+                    #log.debug(f"enter:{offset} row:{row} col:{col}, ch:{self.text} cb={self.charbuf[offset].Attributes:x}")
                     return 0
                 elif Param2 == self.ffic.KEY_ESC:
                     return 0
                 else:
                     return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
-                if self.cur_col == self.max_col:
-                    self.cur_col = 0
-                elif self.cur_col == -1:
-                    self.cur_col = self.max_col - 1
-                if self.cur_row == self.max_row:
-                    self.cur_row = 0
-                elif self.cur_row == -1:
-                    self.cur_row = self.max_row - 1
-                self.Rebuild(hDlg)
+                if col == self.max_col:
+                    col = 0
+                elif col == -1:
+                    col = self.max_col - 1
+                if row == self.max_row:
+                    row = 0
+                elif row == -1:
+                    row = self.max_row - 1
+                setColor(col, row, attrSelected)
+                offset = xy2lin(col, row)
+                updateOffset(offset)
+                #log.debug(f"col={col}/{self.max_col} row={row}/{self.max_row}")
+                self.SetCursorPos(hDlg, dlg.ID_hex, col, row)
                 return 1
-            elif Msg == self.ffic.DN_MOUSECLICK:
-                log.debug(
-                    "mou DialogProc({0}, {1}, {2}, {3})".format(
-                        hDlg, "DN_MOUSECLICK", Param1, Param2
-                    )
-                )
-                ch = Param1 - self.first_text_item
-                if ch >= 0:
-                    focus = self.info.SendDlgMessage(hDlg, self.ffic.DM_GETFOCUS, 0, 0)
-                    log.debug("ch:{0} focus:{1}".format(ch, focus))
-                    if focus != self.first_text_item - 1:
-                        self.info.SendDlgMessage(
-                            hDlg, self.ffic.DM_SETFOCUS, self.first_text_item - 1, 0
-                        )
-                    self.cur_row = ch // self.max_col
-                    self.cur_col = ch % self.max_col
-                    self.cur_col = min(max(0, self.cur_col), self.max_col - 1)
-                    self.cur_row = min(max(0, self.cur_row), self.max_row - 1)
-                    offset = self.cur_row * self.max_col + self.cur_col
-                    self.text = self.symbols[offset]
-                    self.Rebuild(hDlg)
-                    return 0
+            elif Msg == self.ffic.DN_MOUSECLICK and Param1 == dlg.ID_hex:
+                col, row = self.GetCursorPos(hDlg, dlg.ID_hex)
+                setColor(col, row, attrNormal)
+                mou = self.ffi.cast("MOUSE_EVENT_RECORD *", Param2)
+                col = mou.dwMousePosition.X
+                row = mou.dwMousePosition.Y
+                setColor(col, row, attrSelected)
+                self.SetCursorPos(hDlg, dlg.ID_hex, col, row)
+                #log.debug(f"mou DialogProc(col={col} row={row})")
+                offset = xy2lin(col, row)
+                self.text = self.symbols[offset]
+                updateOffset(offset)
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
-        fdi = self.ffi.new("struct FarDialogItem []", Items)
-        hDlg = self.info.DialogInit(
-            self.info.ModuleNumber,
-            -1,
-            -1,
-            42,
-            20,
-            self.s2f("Character Map"),
-            fdi,
-            len(fdi),
-            0,
-            0,
+        b = DialogBuilder(
+            self,
             DialogProc,
+            "Python CharMap",
+            "charmap",
             0,
+            VSizer(
+                HSizer(
+                    TEXT(None, "Offset:"),
+                    TEXT("voffset", " "*8),
+                    TEXT(None, "Char:"),
+                    TEXT("vchar", " "*6),
+                ),
+                HLine(),
+                USERCONTROL('hex', self.max_col, self.max_row, param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(self.charbuf))}),
+                HLine(),
+                HSizer(
+                    BUTTON("vok", "OK", flags=self.ffic.DIF_CENTERGROUP),
+                    BUTTON("vcancel", "Cancel", flags=self.ffic.DIF_CENTERGROUP),
+                ),
+            ),
         )
-        res = self.info.DialogRun(hDlg)
-        if res == 1 and self.text:
+        dlg = b.build(-1, -1)
+
+        res = self.info.DialogRun(dlg.hDlg)
+        if res in (1, dlg.ID_vok):
             self.info.FSF.CopyToClipboard(self.s2f(self.text))
-        self.info.DialogFree(hDlg)
+        self.info.DialogFree(dlg.hDlg)

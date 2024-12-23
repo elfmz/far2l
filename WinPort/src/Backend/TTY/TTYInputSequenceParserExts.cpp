@@ -446,6 +446,14 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		}
 	}
 
+	// lens problem
+	if (args[3] && args[0]) { // keydown
+		vkc_prev = args[0];
+	} else if (args[0] && vkc_prev && (vkc_prev != (DWORD)args[0])) {
+		args[3] = 1;
+		vkc_prev = 0;
+	}
+
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.wVirtualKeyCode = args[0] ? args[0] : VK_UNASSIGNED;

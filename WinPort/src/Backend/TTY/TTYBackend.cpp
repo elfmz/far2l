@@ -36,6 +36,7 @@ static TTYBackend * g_vtb = nullptr;
 
 long _iterm2_cmd_ts = 0;
 bool _iterm2_cmd_state = 0;
+DWORD vkc_prev = 0;
 
 static void OnSigHup(int signo);
 

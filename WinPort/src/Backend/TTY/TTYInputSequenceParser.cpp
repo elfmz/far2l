@@ -478,12 +478,14 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 	//work-around for double encoded events in win32-input mode
 	//we encountered sequence \x1B[0;0;27;1;0;1_ it is \x1B encoded in win32 input
 	//following codes are part of some double encoded input sequence and must be parsed in separate buffer
+	/*
 	if (
 		(l > 8 && s[1] == '[' && s[2] == '0' && s[3] == ';' && s[4] == '0' && s[5] == ';' && s[6] == '2' && s[7] == '7')
 		|| _win32_accumulate) {
 		_win32_accumulate = true;
 		return TryUnwrappWinDoubleEscapeSequence(s, l);
 	}
+	*/
 
 	size_t r = ParseIntoPending(s, l);
 

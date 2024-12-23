@@ -179,7 +179,7 @@ static void UpdatePathOptions(const FARString &strDestName, bool IsActivePanel)
 }
 
 static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARString strDestName2,
-		int StartLine, int StartChar)
+		int StartLine, int StartChar, bool cfgNeedSave)
 {
 	InterThreadCallsDispatcherThread itc_dispatcher_thread;
 
@@ -306,15 +306,6 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			fprintf(stderr, "STARTUP: %llu\n", (unsigned long long)(clock() - cl_start));
 
 			if( Opt.IsFirstStart ) {
-
-				const char *locale = setlocale(LC_CTYPE, NULL);
-				// Only Russian translation can be currently considered complete
-				if (IsLocaleMatches(locale, "ru_RU")) {
-					Opt.strLanguage = L"Russian";
-					Opt.strHelpLanguage = L"Russian";
-					ConfigOptSave(false);
-				}
-
 				Help::Present(L"Far2lGettingStarted",L"",FHELP_NOSHOWERROR);
 
 				DWORD tweaks = WINPORT(SetConsoleTweaks)(TWEAKS_ONLY_QUERY_SUPPORTED);
@@ -336,8 +327,12 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 					} else {
 						Opt.OSC52ClipSet = 1;
 					}
-					ConfigOptSave(false);
+					cfgNeedSave = true;
 				}
+			}
+
+			if (cfgNeedSave) {
+				ConfigOptSave(false);
 			}
 
 			FrameManager->EnterMainLoop();
@@ -604,10 +599,10 @@ int FarAppMain(int argc, char **argv)
 	std::string kblo_path = StrPrintf("%lskblayouts.ini", far2l_path);
 	KeyboardLayouts.reset(new KeyFileHelper(kblo_path.c_str()));
 
-	const char *lc = setlocale(LC_CTYPE, NULL);
+	const char *locale = setlocale(LC_CTYPE, NULL);
 	char LangCode[3];
-	LangCode[0] = lc[0];
-	LangCode[1] = lc[1];
+	LangCode[0] = locale[0];
+	LangCode[1] = locale[1];
 	LangCode[2] = 0;
 
 	KbLayoutsTrIn = KeyboardLayouts->GetString(LangCode, "Latin");
@@ -636,6 +631,18 @@ int FarAppMain(int argc, char **argv)
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
+
+	bool cfgNeedSave = false;
+	//нужно проверить локаль до начала отрисовки интерфейса
+	if (Opt.IsFirstStart)
+	{
+		// Only Russian translation can be currently considered complete
+		if (IsLocaleMatches(locale, "ru_RU")) {
+			Opt.strLanguage = L"Russian";
+			Opt.strHelpLanguage = L"Russian";
+			cfgNeedSave = true;
+		}
+	}
 
 	static_assert(!IsPtr(Msg::NewFileName._id),
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");
@@ -667,7 +674,7 @@ int FarAppMain(int argc, char **argv)
 	if ( Opt.OnlyEditorViewerUsed == Options::ONLY_EDITOR && strEditViewArg.IsEmpty() )
 		strEditViewArg = Msg::NewFileName;
 
-	int Result = MainProcess(strEditViewArg, DestNames[0], DestNames[1], StartLine, StartChar);
+	int Result = MainProcess(strEditViewArg, DestNames[0], DestNames[1], StartLine, StartChar, cfgNeedSave);
 
 	EmptyInternalClipboard();
 	doneMacroVarTable(1);

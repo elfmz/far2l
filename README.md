@@ -191,9 +191,13 @@ cmake -DUSEWX=yes -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 cmake --build .
 ```
 
- * If above commands finished without errors - you may also install far2l, `sudo cmake --install .`
+ * If above commands finished without errors - you may:
 
- * Also it's possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
+    * just run far2l from `./install/far2l`<br><sup>(use the full path to run from any location: `<path>/far2l/_build/install/far2l`)</sup>
+
+    * or/and install far2l: `sudo cmake --install .`
+
+    * or/and it's possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
 
 ##### Additional build configuration options:
 

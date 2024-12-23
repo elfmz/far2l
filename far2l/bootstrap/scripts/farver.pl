@@ -10,7 +10,7 @@ my $patch = shift;
 
 die 'Bad args' if !defined($path) || !defined($arch) || !defined($major) || !defined($minor) || !defined($patch);
 
-my (@tm) = localtime(time());
+my (@tm) = localtime($ENV{SOURCE_DATE_EPOCH} || time());
 my $year = $tm[5] + 1900;
 
 my $tmp = "$path.tmp";

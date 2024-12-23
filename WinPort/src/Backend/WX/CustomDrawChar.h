@@ -8,6 +8,7 @@ namespace WXCustomDrawChar
 		wxCoord fw;
 		wxCoord fh;
 		wxCoord thickness;
+		wchar_t wc;
 
 		bool MayDrawFadedEdges();
 

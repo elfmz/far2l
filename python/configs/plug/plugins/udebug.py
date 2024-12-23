@@ -48,7 +48,7 @@ class Plugin(PluginBase):
             debugpy.wait_for_client()
             # debugpy.breakpoint()
         except:
-            log.exception()
+            log.exception('configured')
         finally:
             t.close()
 

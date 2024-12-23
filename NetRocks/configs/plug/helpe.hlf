@@ -6,11 +6,11 @@ $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
 $^#Contents
- This plugin adds SFTP/SCP/SHELL/NFS/SMB/WebDAV connectivity to far2l with possibility to add other protocols.
+ This plugin adds SFTP/SCP/SHELL/NFS/SMB/WebDAV/FTP(S) connectivity to far2l with possibility to add other protocols.
 
- To access this module open plugins menu (F11) or use disks (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
+ To access this module open plugins menu (F11) or use Location (Alt+F1/Alt+F2) menu. Then choose the "NetRocks". See further topics for more detail.
 
-   ~Disks/Plugin menu and sites list~@DisksMenu@
+   ~Location/Plugin menu and sites list~@LocationMenu@
 
    ~Background tasks menu~@BackgroundTasksMenu@
 
@@ -29,14 +29,13 @@ you can switch it to background;
 (available only during background action via Plugin commands list by #F11# or via #F9#/Options/Plugins configuration).
 
 
-@DisksMenu
+@LocationMenu
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
-$^#Disks/Plugin menu#
+$^#Location/Plugin menu#
  
- After choosing the plugin from disks menu (#Alt+F1#/#Alt+F2#) or from Plugin menu (#F11#) you will see connection sites list. 
+ After choosing the plugin from Location menu (#Alt+F1#/#Alt+F2#) or from Plugin menu (#F11#) you will see connection sites list.
  Initially there're no sites defined, but you can add site using #<Create site connection># entry or pressing #Shift+F4#. 
  After being added any site connection can be edited by pressing #F4# or removed by pressing #F8#. 
  You can #export# selected sites settings to filesystem by opening disk directory in another panel and using #F5#/#F6# keys. 
@@ -49,7 +48,6 @@ present in that config.
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Background tasks menu#
  
  This NetRocks-related menu item available in F11 or Plugins configuration but appears only if there're any background tasks spawned. Here you can examine state of each background task and switch to working (usually destination) directory of completed task by selecting them in opened submenu. Note that selection of completed tasks items automatically removes them from this list.
@@ -60,14 +58,18 @@ $^#Background tasks menu#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Configuration menu#
 
  Here you can change some plugin-wide options:
+
  #Enable desktop notifications# this options controls if NetRocks will use desktop environment notifications on operation completions or errors. Note that behavior of this notifications partially controlled by FAR.
+
  #<ENTER> to execute files remotely when possible# if enabled then pressing <ENTER> on remote executable file will execute it remotely instead of download and run locally. Note that this option only works for protocols that support it (like SFTP/SCP) and doesn't affect non-executable files, like documents, - they will be still downloaded and opened locally.
+
  #Smart symlinks copying# if (by default) enabled then NetRocks will translate symlinks paths to refer file that copied in same copy operation, or, if symlinks refer file that is not being copied - then such symlink will be converted to plain file. If disabled then NetRocks will just copy symlinks as is, without any efforts to ensure their validity in the new location.
+
  #Use of chmod# change this options if want to have copied files modes to be exactly same as on source files, even in target system umask prevents some mode bits from being set. Or if you want to disable using of chmod at all - for example to avoid other inherited ACLs from being overriden by it.
+
  #Connections pool expiration# when exiting from some remote FS navigation NetRocks will keep actual connection active for specified amount of time and if same server connection will be established before expiration - it will use preserved connection instead of establishing new.
  
  ~Contents~@Contents@
@@ -76,19 +78,20 @@ $^#Configuration menu#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Site connection editor#
 
- This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like #hostname and port# to connect to, #login mode# and #username and password# if needed.
-Also by clicking on #Extra options# button you can modify some ~extra site settings~@ExtraSiteSettings@.
+ This dialog allows you to create new connection site or modify existing connection site settings. You should select protocol you want use and the define connection settings, like #hostname and port# to connect to, #login mode# and #username and password# if needed. #Display name# can further be used for quick access from the ~command line~@CommandLine@.
+
+ Also by clicking on #Extra options# button you can modify some ~extra site settings~@ExtraSiteSettings@.
 Also by clicking on #Protocol options# button you can modify some protocol-specific settings.
 Also by clicking on #Proxy options# button you can modify generic ~proxy settings~@ProxySettings@.
+
  ~SFTP:// and SCP:// protocols specific options~@ProtocolOptionsSFTPSCP@
  ~SHELL:// protocols specific options~@ProtocolOptionsSHELL@
  ~FTP:// and FTPS:// protocols specific options~@ProtocolOptionsFTP@
  ~SMB:// protocol specific options~@ProtocolOptionsSMB@
  ~NFS:// protocol specific options~@ProtocolOptionsNFS@
- DAV:// and DAVS:// protocol specific options
+ ~DAV:// and DAVS:// protocol specific options~@ProtocolOptionsWebDAV@
  ~FILE:// protocol specific options~@ProtocolOptionsFILE@
 
  ~Contents~@Contents@
@@ -97,11 +100,12 @@ Also by clicking on #Proxy options# button you can modify generic ~proxy setting
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Command line and remote FAR2L#
 
  When entering commands in command line when panel displays usual files list you can open connection by typing NetRocks-supported protocol URL, like #sftp://192.168.1.15# or alternatively you can open preconfigured site by invoking its name between triangle brackets and prefixed with net: prefix, like: #net:<SITE>#
+
  When entering commands in command line when panel displays active NetRocks connection of SFTP and SCP protocols - NetRocks will execute them directly on remote host, opening full-featured pseudoterminal for controlling remotely-executed commands. This essentially #allows using NetRocks as SSH client# with FAR2L-extended pseudoterminal.
+
  If you're working in GUI-based FAR2L you can run #remote TTY-mode FAR2L# directly in NetRocks SFTP/SCP connected panel and work in that remote FAR2L with user experience of local GUI-based version (full keyboard support, clipboard sharing, desktop notifications) as well as being sure that if connection suddenly drops - remote work will not be killed instantly, since remote terminal-based FAR2L will remain alive and active in background and next time you will reconnect and re-launch far2l - it will prompt to activate that backgrounded FAR2L instance.
 
  ~Contents~@Contents@
@@ -110,10 +114,10 @@ $^#Command line and remote FAR2L#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#SMB:// protocol specific options#
 
  This dialog allows you to modify "smb://" protocol specific settings, which is file sharing protocol primarily used in Windows networks.
+
  #Workgroup:# here you can specify workgroup name where to search hosts.
  #Enum network with SMB:# check this option to enable using of libsmbclient to scan for hosts when open empty path ("smb://")
  #Enum network with NMB:# check this option to enable using of NetRock's builtin NetBios name service scanner to scan for hosts when open empty path ("smb://")
@@ -124,19 +128,27 @@ $^#SMB:// protocol specific options#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#SFTP:// SCP:// protocols specific options#
 
  This dialog allows you to modify "sftp://" and "scp://" protocols specific settings. Here you can enable authentication by key file, change maximum IO block size or enable TCP_NODELAY socket option.
+
  #Private key file:# can be used for SSH server instead of 'usual' username:password authentication. Note that in such case password field in the main connection settings is actually 'passphrase' used to access private key file.
+
  #IO block size:# increasing this value usually gives performance improvement, especially on uploading files. However not all servers support block size more than 32768 bytes, so use higher values only if you sure it will work with your server.
+
  #TCP_NODELAY socket option:# also can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+
  #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
  #Custom subsystem request/exec# here you can replace default SFTP subsystem handler with specific command, usually its used to get superuser access from sudo'er account by using command line like [sudo /usr/lib/openssh/sftp-server]
+
  #Allowed host keys# if non-empty then forces using only specified host key algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. ssh-rsa if server doesn't support modern ones.
+
  #Allowed KEX algorithms# if non-empty then forces using only specified key-exchange algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. diffie-hellman-group1-sha1 if server doesn't support modern ones.
+
  #Allowed HMAC client->server# if non-empty then forces using only specified HMAC client->server algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. hmac-sha1 if server doesn't support modern ones.
+
  #Allowed HMAC server->client# if non-empty then forces using only specified HMAC server->client algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. hmac-sha1 if server doesn't support modern ones.
+
  #OpenSSH config files# allows to specify which OpenSSH config files to use for this connection. By default ~~/.ssh/config and /etc/ssh/ssh_config are used. Note that libssh version prior 0.9.0 always parses default config files regardless of this option (so you can only add extra configs), but since version 0.9.0 it's possible to disable/override default config files parsing. To specify more than one file - use colon to separate their paths.
 
  ~Contents~@Contents@
@@ -145,12 +157,13 @@ $^#SFTP:// SCP:// protocols specific options#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#SHELL:// protocols specific options#
 
  This dialog allows you to modify "shell://" protocols specific settings.
+
  Note that this protocol is specific in a way it communicates with server - instead of using dedicated file access protocol it runs on server special helper script that handles required text commands, allowing to browse and transfer files.
  Due to this, SHELL protocol in general picky about server's shell and which standard UNIX tools are accessible there.
+
  Currently you may choose from two predefines ways to access server's shell - either using installed on #client SSH client# (ssh) either using #serial port interface#.
  Note that #serial port way# is very sensitive to losses on communication line and sensitive to printouts noise that may arrive from server's kernel or whatever else. So don't use serial port way unless your surely knows what you need and be careful with file transfers afterwards. You may reduce printouts from kernel by following command: #echo 0 > /proc/sys/kernel/printk# before using serial port for this. And make sure serial port is not used by any other process that otherwise can interfere with NetRocks SHELL protocol.
 
@@ -160,18 +173,26 @@ $^#SHELL:// protocols specific options#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#FTP:// FTPS:// protocols specific options#
 
  This dialog allows you to modify "ftp://" and "ftps://" protocols specific settings. Here you can setup encryption and adjust various options of protocol and networking.
+
  #Explicit encryption:# can be used to enable encryption through AUTH command if FTP server supports it. Note that this option not enabled for FTPS cuz it always uses encryption.
+
  #Minimal encryption protocol:# here you can adjust which protocols can be used for encryption. Note that currently SSL and TLSv1.0 not considered as secure so its not recommended to use them.
+
  #Directory list command:# specify exact command to be used to list files in directory. Most FTP server accepts LIST -la, where -la specifies full list format that includes also .dotfiles, however some servers don't understand -la argument and may require this to be changed to LIST to properly list files.
+
  #Use MLSD/MLST if possible:# use MLSD and MLST commands to retrieve directory listing or information about particular file. If unchecked only LIST command can be used, that is potentially less reliable and slower.
+
  #Passive mode:# selecting this makes NetRocks to use PASV command for data transmission that is most compatible setting. Unchecking it will make NetRocks to use PORT command instead, that uses reversed connection schema and may be incompatible with some firewalls and NAT'ed networks.
+
  #Enable commands pipelining:# allow sending multiple FTP commands as once before receiving response for each command. Reduces delays, but some FTP servers may be incompatible with it.
+
  #Ensure data connection peer matches server:# if checked NetRocks will check that data connection peer IP address of accepted PORT connection matches to actual IP server address. Also if encryption used this will require data connection's certificate to match with command connection's.
+
  #TCP_NODELAY socket option:# can improve network performance by eliminating delay used by TCP stack to buffer outgoing data. However in some cases it may also increase network packets rate, so use it when you know that its better.
+
  #TCP_QUICKACK socket option:# if enabled, TCP ack packets are sent immediately, rather than delayed that may improve receive performance.
 
  ~Contents~@Contents@
@@ -180,7 +201,6 @@ $^#FTP:// FTPS:// protocols specific options#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#NFS:// protocol specific options#
 
  This dialog allows you to modify "nfs://" protocol specific settings. Here you can override default user credentials: host, UID, GID and comma-separated list of additional group IDs. Note that some old libnfs may not support this options - in such case they will have no effect.
@@ -191,7 +211,6 @@ $^#NFS:// protocol specific options#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#FILE:// protocol specific options#
 
  Pseudo-protocol "file:" has not additional options.
@@ -210,14 +229,15 @@ you can switch it to background;
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Extra site settings#
 
  This dialog allows you to modify some extra (not frequently used) site settings:
+
   To prevent connection from disconnect-due-to-idle - set non-zero #keepalive# period.
   Apply remote files timestamps adjustement.
   Change #codepage# being used by server.
-  It's possible to #execute specific command# when opening or closing site connection, and that command can, for example, do mounting of some resource that is to be accessed using this connection site. This command will have defined as environment fields of host (#$HOST#), port (#$PORT#), username (#$USER#), password (#$PASSWORD#) and additional extra string configured in this dialog (#$EXTRA#). In this dialog its also possible to define amount of time NetRocks will wait for completion of this command (if command will not complete during that time - timeout error will be raised). Special environment variable #$SINGULAR# equals to 1 in case command being executed on a connection that is singular to specified protocol/user/host/port across all NetRocks instances, so you may use this to initialize/cleanup shared things. In case your init/cleanup have to exchange some data - save it into file indicated by $STORAGE environment variable, and then don't forget to delete this file from cleanup script running in singular context.
+
+ It's possible to #execute specific command# when opening or closing site connection, and that command can, for example, do mounting of some resource that is to be accessed using this connection site. This command will have defined as environment fields of host (#$HOST#), port (#$PORT#), username (#$USER#), password (#$PASSWORD#) and additional extra string configured in this dialog (#$EXTRA#). In this dialog its also possible to define amount of time NetRocks will wait for completion of this command (if command will not complete during that time - timeout error will be raised). Special environment variable #$SINGULAR# equals to 1 in case command being executed on a connection that is singular to specified protocol/user/host/port across all NetRocks instances, so you may use this to initialize/cleanup shared things. In case your init/cleanup have to exchange some data - save it into file indicated by $STORAGE environment variable, and then don't forget to delete this file from cleanup script running in singular context.
 
  ~Contents~@Contents@
 
@@ -225,8 +245,7 @@ $^#Extra site settings#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
-$^#DAV://  and DAVS:// protocol specific options#
+$^#DAV:// and DAVS:// protocol specific options#
 
  This dialog allows you to modify "dav://" and "davs://" protocol specific settings: enable connect via HTTP/HTTPS proxy with optional proxy authentication.
 
@@ -236,7 +255,6 @@ $^#DAV://  and DAVS:// protocol specific options#
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Proxy settings dialog#
 
  This dialog allows you to specify generic proxy settings for connection. Currently such generic support is implemented by using of external 'proxifier' tool. Two such tools are supported: #proxychains# and #tsocks#. So in order to use this option
@@ -250,7 +268,6 @@ you have to install any of them (however proxychains is recommended) and edit it
 $^#NetRocks plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2019 elfmz#
-$^#Contents
 $^#Contact information#
 
  elfmz

@@ -10,7 +10,7 @@ class String
 	int len, maxchar;
 
 private:
-	void BeginSet(size_t start_sise = DEF_STR_ALLOC);
+	void BeginSet(size_t start_size = DEF_STR_ALLOC);
 
 public:
 	virtual ~String();

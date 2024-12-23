@@ -57,7 +57,7 @@ class SSHExecutedCommand : protected Threaded
 	SSHChannel _channel;
 	int _kickass[2] {-1, -1};
 	bool _pty = false;
-	bool _succeess = false;
+	bool _success = false;
 
 	void OnReadFDIn(const char *buf, size_t len);
 	virtual void SendSignal(int sig);

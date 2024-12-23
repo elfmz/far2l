@@ -178,7 +178,7 @@ TTYInputSequenceParser::TTYInputSequenceParser(ITTYInputSpecialSequenceHandler *
 	AddStrF1F5(VK_F2, "Q"); AddStr(VK_F2, 0, "[[B");
 	AddStrF1F5(VK_F3, "R"); AddStr(VK_F3, 0, "[[C");
 	AddStrF1F5(VK_F4, "S"); AddStr(VK_F4, 0, "[[D");
-	AddStrF1F5(VK_CLEAR, "E"); AddStr(VK_CLEAR, 0, "[[E"); // NumPad center (5)
+	AddStrF1F5(VK_CLEAR, "E"); AddStr(VK_F5, 0, "[[E"); // VK_CLEAR is NumPad center (5)
 
 	AddStrTilde(VK_HOME, 1);
 	AddStrTilde(VK_INSERT, 2);
@@ -313,6 +313,11 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	}
 	fprintf(stderr, "\n");
 	*/
+
+	if (l > 1 && s[0] == '[' && (s[1] == 'I' || s[1] == 'O')) { // focus
+		_handler->OnFocusChange(s[1] == 'I');
+		return 2;
+	}
 
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {
 		return 3;

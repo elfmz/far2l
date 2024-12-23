@@ -446,52 +446,6 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		}
 	}
 
-	// Workarounds for some weird win32-input-mode setups
-	// Todo: add scan codes
-	// Ctrl+letters
-	if (
-		(!args[0] && args[2] >= 1 && args[2] <= 26 && !(args[4] & LEFT_CTRL_PRESSED)) ||
-		( args[0] && args[2] >= 1 && args[2] <= 26 &&  (args[4] & LEFT_CTRL_PRESSED))
-	) {
-		args[0] = args[2] + 64;
-		args[2] = (args[4] & SHIFT_PRESSED) ? args[0] : tolower(args[0]);
-		args[4] |= LEFT_CTRL_PRESSED;
-		fprintf(stderr, "W32I: Ctrl+letter hack\n");
-	}
-	// Ctrl+BS
-	if (args[0] == 0 && args[2] == 0x7F && args[3]) {
-		args[0] = VK_BACK;
-		args[2] = args[0];
-		args[4] |= LEFT_CTRL_PRESSED;
-		fprintf(stderr, "W32I: Ctrl+BS hack\n");
-	}
-	// Esc
-	if (args[0] == 0 && args[2] == 0x1B && args[3]) {
-		args[0] = VK_ESCAPE;
-		fprintf(stderr, "W32I: Esc hack\n");
-	}
-	// Enter
-	if (args[0] == 0 && args[2] == 0x0D && args[3]) {
-		args[0] = VK_RETURN;
-		fprintf(stderr, "W32I: Enter hack\n");
-	}
-	// Enter#2: Ctrl+M encoded as win32-input-mode seq, 77 0 109 1 8 1
-	if (args[0] == 'M' && !args[1] && args[2] == 'm' && args[3] && (args[4] & LEFT_CTRL_PRESSED)) {
-		args[0] = VK_RETURN;
-		args[2] = 0x0D;
-		args[4] = 0;
-		fprintf(stderr, "W32I: Enter hack #2\n");
-	}
-
-	fprintf(stderr, "W32I: parsed %i %i %i %i %i %i\n", args[0], args[1], args[2], args[3], args[4], args[5]);
-
-/*
-// problematic sequences:
-Enter:  \x1b[0;0;13;1;0;1_  \x1b[13;28;13;0;0;1_
-Ctrl-C: \x1b[17;29;0;1;8;1_ \x1b[0;0;3;1;0;1_    \x1b[67;46;3;0;8;1_ \x1b[17;29;0;0;0;1_
-Esc:    \x1b[0;0;27;1;0;1_  \x1b[27;1;27;0;0;1_
-*/
-
 	INPUT_RECORD ir = {};
 	ir.EventType = KEY_EVENT;
 	ir.Event.KeyEvent.wVirtualKeyCode = args[0] ? args[0] : VK_UNASSIGNED;

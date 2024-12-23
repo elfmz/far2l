@@ -5,11 +5,6 @@
 #include "WinPort.h"
 #include <utils.h>
 
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <unistd.h>  // For getuid() and getpwuid()
-#include <pwd.h>     // For struct passwd
 
 TTYInput::TTYInput(ITTYInputSpecialSequenceHandler *handler) :
 	_parser(handler), _handler(handler)
@@ -94,30 +89,6 @@ void TTYInput::OnBufUpdated(bool idle)
 
 void TTYInput::OnInput(const char *data, size_t len)
 {
-
-	// Get home directory
-	struct passwd *pw = getpwuid(getuid());
-	const char *homedir = pw->pw_dir;
-
-	// Construct log file path
-	std::string logFilePath = std::string(homedir) + "/far2l_ttyin.log";
-
-	// Open log file in append mode
-	std::ofstream logFile(logFilePath, std::ios::app);
-
-	if (logFile.is_open()) {
-		for (size_t i = 0; i < len; ++i) {
-			if (data[i] == '\033') { // Check for escape character (27 in decimal or 033 in octal)
-				logFile << std::endl; // Add newline before ESC
-			}
-			logFile << data[i];
-		}
-		logFile << std::flush; // Ensure data is written to the file immediately
-		logFile.close();
-	} else {
-		std::cerr << "Error opening log file: " << logFilePath << std::endl;
-	}
-
 	if (len) try {
 		_buf.reserve(_buf.size() + len);
 

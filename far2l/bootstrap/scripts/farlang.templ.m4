@@ -1837,7 +1837,7 @@ upd:"Confirm elevated privileges use"
 
 ConfigRecycleBin
 "Удалять в &Корзину"
-"&Delete to Recycle Bin"
+"&Delete to Trash"
 "&Mazat do Koše"
 "In Papierkorb &löschen"
 "&Törlés a Lomtárba"
@@ -2530,7 +2530,6 @@ upd:"&text"
 upd:"&text"
 upd:"&text"
 upd:"&text"
-
 DirSettingsSymlinkRadio2
 "размер целевого &файла"
 "size of target &file"
@@ -5428,7 +5427,7 @@ AskDelete
 
 AskDeleteRecycleFolder
 "Вы хотите переместить в Корзину папку"
-"Do you wish to move to the Recycle Bin the folder"
+"Do you wish to move to the Trash the folder"
 "Přejete si přesunout do Koše adresář"
 "Wollen Sie den Ordner in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a mappát?"
@@ -5439,7 +5438,7 @@ AskDeleteRecycleFolder
 
 AskDeleteRecycleFile
 "Вы хотите переместить в Корзину файл"
-"Do you wish to move to the Recycle Bin the file"
+"Do you wish to move to the Trash the file"
 "Přejete si přesunout do Koše soubor"
 "Wollen Sie die Datei in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a fájlt?"
@@ -5450,7 +5449,7 @@ AskDeleteRecycleFile
 
 AskDeleteRecycle
 "Вы хотите переместить в Корзину"
-"Do you wish to move to the Recycle Bin"
+"Do you wish to move to the Trash"
 "Přejete si přesunout do Koše"
 "Wollen Sie das Objekt in den Papierkorb verschieben"
 "A Lomtárba akar dobni"
@@ -5920,13 +5919,13 @@ DeleteRetry
 
 DeleteRetryNotRecycleBin
 "&Без корзины"
-"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
+"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
 "&Без Кошыка"
 
 DeleteSkip
@@ -14460,7 +14459,7 @@ MenuOwnersView
 "Fájl tula&jdonos    BalCtrl+8"
 "&Właściciele          LCtrl+8"
 "Du&eños de archivos    LCtrl+8"
-"Власники файлів           LCtrl+8"
+"Власники файлів          LCtrl+8"
 "Ул&адальнікі файлаў        LCtrl+8"
 
 MenuLinksView
@@ -14471,7 +14470,7 @@ MenuLinksView
 "Fájl li&nkek        BalCtrl+9"
 "Dowiąza&nia           LCtrl+9"
 "En&laces               LCtrl+9"
-"Зв'язки файлів            LCtrl+9"
+"Зв'язки файлів           LCtrl+9"
 "Сувя&зя файлаў             LCtrl+9"
 
 MenuAlternativeView
@@ -14560,7 +14559,7 @@ MenuReread
 "Friss&ítés          Ctrl+R"
 "Odśw&ież              Ctrl+R"
 "&Releer                Ctrl+R"
-"Перечитати                Ctrl+R"
+"Перечитати               Ctrl+R"
 "П&ерачытаць                Ctrl+R"
 
 MenuChangeDrive
@@ -14571,7 +14570,7 @@ MenuChangeDrive
 "Meghajtó&váltás     Alt+F1"
 "Z&mień napęd          Alt+F1"
 "Cambiar &unidad        Alt+F1"
-"З&мінити диск             Alt+F1"
+"&Меню переходу             Alt+F1"
 "З&мяніць дыск              Alt+F1"
 
 MenuView
@@ -14748,7 +14747,7 @@ MenuUnselectGroup
 "Jelölést l&evesz      Szürke -"
 "Odz&nacz grupę             Szary -"
 "Deseleccio&nar grupo   Gray -"
-"З&няти позначку         Gray -"
+"З&няти позначку        Gray -"
 "З&няць адзнаку          Gray -"
 
 MenuInvertSelection
@@ -14971,17 +14970,6 @@ MenuProcessList
 "Lista de &tareas       Ctrl+W"
 "Список & завдань          Ctrl+W"
 "Спіс &задачаў             Ctrl+W"
-
-MenuHotPlugList
-"Список Hotplug-&устройств"
-"Ho&tplug devices list"
-"Seznam v&yjímatelných zařízení"
-"Sicheres En&tfernen"
-"H&otplug eszközök"
-"Lista urządzeń Ho&tplug"
-"Lista de dispositivos ho&tplug"
-"Список Hotplug-&пристроїв"
-"Спіс прылад гарачай &устаноўкі"
 
 MenuSystemSettings
 l:
@@ -15267,7 +15255,7 @@ MenuChangeDriveRight
 "Meghajtó&váltás     Alt+F2"
 "Z&mień napęd          Alt+F2"
 "Cambiar &unidad        Alt+F2"
-"З&мінити диск             Alt+F2"
+"&Меню переходу             Alt+F2"
 "З&мяніць дыск             Alt+F2"
 
 MenuLeftTitle
@@ -26643,11 +26631,11 @@ upd:"to create this symbolic link:"
 
 AdminRequiredRecycle
 "для перемещения этого объекта в корзину:"
-"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
+"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
 "para mover este objeto a la papelera:"
 "для переміщення цього об'єкта в кошик:"
 "для пераносу гэтага аб'екту ў Сметнік:"

@@ -48,7 +48,6 @@ $^#File and archive manager#
    ~Filters menu~@FiltersMenu@
    ~Screens switching~@ScrSwitch@
    ~Task list~@TaskList@
-   ~Hotplug devices list~@HotPlugList@
 
    ~System settings~@SystemSettings@
    ~Panel settings~@PanelSettings@
@@ -357,13 +356,6 @@ and from the path given at the "~Path for personal plugins~@PluginsManagerSettin
   #-v - <command line>#
   Executes given command line and opens viewer with its output.
   For example, #far2l -v - ls# will view ls command output.
-
-  #-w# [Unsupported in far2l]
-  Stretch to console window instead of console buffer.
-
-  #-x# [Unsupported in far2l]
-  Disable exception handling. This option has been designed for plugin developers,
-and it is not recommended to specify it during normal operation.
 
   #-set:<parameter>=<value>#
   Override the configuration parameter, see ~far:config~@FarConfig@ for details.
@@ -849,7 +841,7 @@ $ #Deleting and wiping files and folders#
     #Shift-F8#   - delete only the file under cursor
                  (with no regard to selection in the panel);
 
-    #Shift-Del#  - delete selected objects, skipping the Recycle Bin;
+    #Shift-Del#  - delete selected objects, skipping the Trash;
 
     #Alt-Del#    - Wipe out files and folders.
 
@@ -857,8 +849,8 @@ $ #Deleting and wiping files and folders#
     Remarks:
 
     1. ^<wrap>In accordance to ~System Settings~@SystemSettings@ the hotkeys #F8# and
-#Shift-F8# do or do not move the deleted files to the Recycle Bin. The
-#Shift-Del# hotkey always deletes, skipping the Recycle Bin.
+#Shift-F8# do or do not move the deleted files to the Trash. The
+#Shift-Del# hotkey always deletes, skipping the Trash.
 
     2. ^<wrap>Before file deletion its data is overwritten with zeroes (you can
 specify other overwrite characters - see TechInfo##29), after which the file
@@ -1382,13 +1374,11 @@ respectively. These menus include the following items:
 
    #Sort modes#           Show available sort modes.
 
-   #Show long names#      Show long/short file names.
-
    #Panel On/Off#         Show/hide panel.
 
    #Re-read#              Re-read panel.
 
-   #Location#             Change current location.
+   #Location#             Show ~Location menu~@DriveDlg@ dialog to change the panel's current location or open a new plugin panel.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -1489,8 +1479,6 @@ $ #Menus: commands menu#
    #Screens list#         Show open ~screens list~@ScrSwitch@
 
    #Task list#            Shows ~active tasks list~@TaskList@.
-
-   #Hotplug devices list# Show ~hotplug devices list~@HotPlugList@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -2216,19 +2204,6 @@ of time if a folder was located on a currently unavailable remote resource.
 $ #Task list#
     The task list displays active tasks by using #htop# (if available).
 
-@HotPlugList
-$ #Hotplug devices list#
-    Hotplug devices list displays PC Card boards and other analogue devices
-which are installed and work in the computer.
-
-    To remove a device you need to select it in the list and press the #Del#
-key. After that OS will prepare the device for safe removal and a
-notification will be displayed when it is safe to remove the device.
-
-    #Ctrl-R# allows to refresh the list of connected devices.
-
-    See also: common ~menu~@MenuCmd@ keyboard commands.
-
 @CompFolders
 $ #Compare folders#
     The compare folders command is applicable only when two ~file panels~@FilePanel@
@@ -2469,34 +2444,28 @@ extract a rar archive to a folder with the same name
 
 @SystemSettings
 $ #Settings dialog: system#
-  #Clear R/O attribute from CD files#
-  Clear read-only attribute from files copied from CD.
+  #Enable sudo privileges elevation#
+  If enabled, FAR2L will prompt sudo password when attempting access to files requiring root permissions.
 
-  #Delete to Recycle Bin#
-  Enables file deletion via the Recycle Bin.The operation of deleting to the Recycle
-Bin can be performed only for local hard disks.
+  #Always confirm modify operations#
+  If enabled, FAR2L will request confirmation for each modifying operation when running with privilege elevation.
+
+  #Delete to Trash#
+  Enables file deletion via the Trash. The operation of deleting to the Trash
+can be performed only for local hard disks.
 
   #Delete symbolic links#
-  Scan for and delete symbolic links to subfolders before deleting to Recycle Bin.
-
-  #Use system copy routine#
-  Use the file copy functions provided by the operating system instead of internal
-file copy implementation. It may be useful on NTFS, because the system function
-(CopyFileEx) copies file extended attributes. On the other hand, when using the system
-function, the possibility to split files when ~copying~@CopyFiles@ or moving is not available.
-
-  #Copy files opened for writing#
-  Allows to copy files that are opened by other programs for writing. This mode
-is handy to copy a file opened for a long time, but it could be dangerous, if a file
-is being modified at the same time as copying.
+  Scan for and delete symbolic links to subfolders before deleting to Trash.
 
   #Scan symbolic links#
   Scan ~symbolic links~@HardSymLink@ along with normal sub-folders when building the folder tree,
 determining the total file size in the sub-folders.
 
-
-  #Create folders in uppercase#
-  If the name of a new folder contains only lowercase letters and this option is on, the folder will be created in uppercase.
+  #Use only files size in estimation#
+  This option determines how FAR2L estimates the overall size of the directory when building the
+directory tree. The value is used during file operations such as copying, deleting, quick viewing, etc.
+Enable to sum up the space occupied by files only. Disable to include directory overhead
+(space used to store the metadata of directories themselves) as well.
 
   #Inactivity time#
   Terminate FAR2L after a specified interval without keyboard or mouse activity. This works only if FAR2L waits for command line
@@ -2504,6 +2473,7 @@ input without viewer or editor screens in the background.
 
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
+Commands history list may be activated by #Alt-F8#.
 
   #Save folders history#
   Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR2L.
@@ -2513,15 +2483,14 @@ Folders history list may be activated by #Alt-F12#.
   Forces saving ~history of viewed and edited~@HistoryViews@ files before exit and restoring it after
 starting FAR2L. View and edit history list may be activated by #Alt-F11#.
 
-  #Use OS registered types#
-  When this option is on and #Enter# is pressed on a file, the type of which is known to
-OS and absent in the list of FAR2L ~file associations~@FileAssoc@, the OS program
-registered to process this file type will be executed.
-
-  #CD drive auto mount#
-  When a CD-ROM drive is selected from the ~location menu~@DriveDlg@, FAR2L will close the open
-tray of a CD drive. Turn off this option if automatic CD-ROM mounting does not work
-correctly (this can happen because of bugs in the drivers of some CD-ROM drives).
+  #Remove duplicates in history#
+  The option specifies the rules for history lists processing and what exactly is considered duplicate records.
+  - never: history is kept in its entirety, identical records are not deleted.
+  - by name: the most recent record (viewed ~file~@HistoryViews@, opened ~directory~@HistoryFolders@, or executed ~command~@History@) is saved,
+while its earlier occurrences are deleted from the history.
+  - by name and path: the same as "by name", but for the ~command history~@History@ the working directory from which
+the command was executed is also taken into account; that is, if the same command was executed from
+two different directories, both entries will be saved in the history.
 
   #Auto save setup#
   If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
@@ -4272,8 +4241,8 @@ links, and so they cannot be seen from DOS programs.
     When the file size or date changes, all of the corresponding directory
 entries are updated automatically. When a file is deleted, it is not deleted
 physically until all the hard links pointing at it will be deleted. The
-deletion order doesn't matter. When a hard link is deleted into the recycle
-bin, the number of links of a file does not change.
+deletion order doesn't matter. When a hard link is deleted into the Trash,
+the number of links of a file does not change.
 
     FAR2L can create hard links and can show the number of the file's hard links
 in a separate column (by default, it's the last column in the 9th panel mode)

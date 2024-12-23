@@ -33,7 +33,7 @@ AppDir:
       - libwayland-client0
       - libwayland-cursor0
       - libwayland-egl1
-      - libwxgtk3.0-gtk3-0v5
+      - libwxgtk3.2-1t64
       - libxml2
     exclude:
       - adwaita-icon-theme

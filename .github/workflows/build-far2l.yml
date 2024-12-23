@@ -73,7 +73,7 @@ jobs:
         env:
           PACKAGES: >
             ccache cmake desktop-file-utils file g++ libarchive-dev libfuse2 libneon27-dev libnfs-dev libpcre3-dev
-            libsmbclient-dev libssh-dev libuchardet-dev libwxgtk3.0-gtk3-dev libxml2-dev libxi-dev ninja-build patch
+            libsmbclient-dev libssh-dev libuchardet-dev libwxgtk3.2-dev libxml2-dev libxi-dev ninja-build patch
             patchelf python3-minimal python3-wheel quilt wget
         run: |
             sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}

@@ -465,6 +465,11 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		args[4] |= LEFT_CTRL_PRESSED;
 		fprintf(stderr, "W32I: Ctrl+BS hack\n");
 	}
+	// Esc
+	if (args[0] == 0 && args[2] == 0x1B && args[3]) {
+		args[0] = VK_ESCAPE;
+		fprintf(stderr, "W32I: Esc hack\n");
+	}
 	// Enter
 	if (args[0] == 0 && args[2] == 0x0D && args[3]) {
 		args[0] = VK_RETURN;

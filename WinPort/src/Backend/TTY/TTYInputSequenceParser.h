@@ -6,6 +6,7 @@
 
 extern long _iterm2_cmd_ts;
 extern bool _iterm2_cmd_state;
+extern DWORD vkc_prev;
 
 struct TTYInputKey
 {

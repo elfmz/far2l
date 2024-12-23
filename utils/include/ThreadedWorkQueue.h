@@ -11,7 +11,7 @@
 
 struct IThreadedWorkItem
 {
-	/// Invoked within main thread after WorkProc completed or discared
+	/// Invoked within main thread after WorkProc completed or discarded
 	/// from Finalize(), Queue() or ThreadedWorkQueue's d-tor
 	virtual ~IThreadedWorkItem() {}
 

@@ -209,7 +209,7 @@ inline LPCSTR FP_GetMsg(LPCSTR Msg)
 	@{
 
 	[fstd_RegXX.cpp]
-	Wrappers for regestry Win API.
+	Wrappers for registry Win API.
 */
 #if !defined(__FP_NOT_FUNCTIONS__)
 extern int WINAPI FP_GetRegKey(LPCSTR Key, LPCSTR ValueName, DWORD Default);

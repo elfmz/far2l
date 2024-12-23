@@ -769,6 +769,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 	if (custom_draw) {
 		FlushBackground(cx + nx);
 		WXCustomDrawCharPainter cdp(*this, clr_text, clr_back);
+		cdp.wc = wcz[0];
 		custom_draw(cdp, _start_y, cx);
 		if (underlined || strikeout) {
 			_start_cx = cx;

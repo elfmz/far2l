@@ -514,7 +514,7 @@ static void ProcessSelected(bool select)
 				if (!normalCodePages)
 					AddSeparator(Msg::GetCodePageOther);
 
-				// Добавляем кодовою страницу в нормальные
+				// Добавляем кодовую страницу в нормальные
 				CodePages->AddItem(&newItem,
 						GetCodePageInsertPosition(codePage, CodePages->GetItemCount() - normalCodePages,
 								normalCodePages));

@@ -331,7 +331,7 @@ void TreeList::DisplayTree(int Fast)
 	}
 
 	UpdateViewPanel();
-	SetTitle();		// не забудим прорисовать заголовок
+	SetTitle();		// не забудeм прорисовать заголовок
 
 	if (LckScreen)
 		delete LckScreen;
@@ -1798,7 +1798,7 @@ int TreeCmp(const wchar_t *Str1, const wchar_t *Str2, int Numeric, int CaseSensi
 
 /*
 	$ 16.10.2000 tran
-	функция, определяющаяя необходимость кеширования
+	функция, определяющая необходимость кеширования
 	файла
 */
 int TreeList::MustBeCached(const wchar_t *Root)

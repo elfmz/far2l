@@ -386,6 +386,10 @@ void TTYOutput::Flush()
 
 void TTYOutput::ChangeCursorHeight(unsigned int height)
 {
+	// See also:
+	// https://unix.stackexchange.com/questions/49485/escape-code-to-change-cursor-shape
+	// https://github.com/kovidgoyal/kitty/issues/715
+
 	if (_far2l_tty) {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(UCHAR(height));
@@ -399,17 +403,6 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 
 			// Available sizes are from 2 to 8
 			Format(ESC "[?2c");
-
-			/**
-
-			Same for FreeBSD:
-
-			https://man.freebsd.org/cgi/man.cgi?query=screen
-			E[=s;eC Set custom cursor shape, where
-			s is the starting and e is the ending
-			scanlines of the cursor
-
-			**/
 
 		} else {
 			Format(ESC "[3 q"); // Blink Underline

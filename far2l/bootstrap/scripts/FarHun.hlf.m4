@@ -1116,19 +1116,6 @@ a mappák megjegyzéseinek megtekintésénél is.
     Hogy a FAR mely fájlokat kezelje mappa megjegyzésként, megadhatjuk a
 ~Beállítások menü~@OptMenu@ "Mappa megjegyzésfájlok" menüjének listájában.
 
-    A FAR igyekszik felismerni az összes rendszerbe csatlakozó CD meghajtó
-típusát. A felismert típusok: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW és
-DVD-RAM. Ez a funkció csak Windows NT/XP-n elérhető; a rendszergazda
-jogokkal rendelkező felhasználóknál és a helyi felhasználóknál működik,
-ha a "Helyi biztonsági beállítások" szerkesztőjében a
-#Helyi házirend/Biztonsági beállítások/Eszközök:#-ben
-#A CD-ROM használatához kötelező bejelentkezni a helyi számítógépre#
-paramétert engedélyeztük. Az említett biztonsági szerkesztőprogramot a
-parancssorból a #secpol.msc# parancs kiadásával is elindíthatjuk.
-
-    Virtuális lemezeknél (SUBST-disk) az info panelről a gazdalemez
-jellemzőit olvashatjuk le.
-
 @QViewPanel
 $ #Panelek: gyorsnézet panel#
     A gyorsnézet panel a ~fájlpanel~@FilePanel@ vagy a ~fastruktúra panel~@TreePanel@
@@ -2804,84 +2791,62 @@ $ #ANSI and OEM codepage setting#
   or, if its absence, by environment variable #LC_CTYPE#
 
 @DriveDlg
-$ #Meghajtóváltás (Meghajtók menü)#
-    A Meghajtók menüben másik meghajtót választhatunk a panelhez,
-leválaszthatjuk a hálózati meghajtókat vagy új ~plugin~@Plugins@ panelt
-nyithatunk meg.
+$ #Location menu#
+    This menu allows to change the current location of a panel, unmount mountpoint 
+or open a new ~plugin~@Plugins@ panel.
 
-    A meghajtók és a pluginek közül sávkurzorral vagy a hozzájuk rendelt
-betűjelekkel és számokkal választhatunk. Ha a panel típusa eredetileg
-nem ~fájlpanel~@FilePanel@ volt, meghajtóváltás után az lesz.
+    Select the item and press Enter to change the location to specified filesystem path
+or plugin. If the panel type is not a ~file panel~@FilePanel@, it will be changed to the
+file panel if you chosen filesystem location, or selected Plugin panel will be opened.
 
-    #Ctrl-A#, #F4# nyílt a Windows meghajtó tulajdonságai párbeszédpanelen.
+    #F4# key can be used to assign a hotkey to item.
 
-    A #Del# billentyűvel:
+    #Del# key can be used:
 
-    - ~leválaszthatjuk~@DisconnectDrive@ a hálózati meghajtókat;
+     - to ~unmount~@DisconnectDrive@ filesystem at given path.
 
-    - ^<wrap>törölhetjük a SUBST paranccsal létrehozott virtuális
-meghajtókat;
+     - to delete a bookmark.
 
-    - ^<wrap>kiadathatjuk a CD-ROM-ok vagy más cserélhető lemezes meghajtók
-lemezeit.
+    The #Shift-Del# hotkey can be used to force-unmount filesystem that requires root privileges.
 
-      ^<wrap>A ZIP meghajtók lemezének kiadásához rendszergazda jogosultság
-szükséges. A CD-ROM-ok tálcáját az #Ins# billentyűvel tolhatjuk be.
+    #Ctrl-1# - #Ctrl-9# switch the display of different information:
 
-    A #Shift-Del# billentyűkombinációval biztonságosan eltávolíthatjuk az USB
-portra csatlakoztatott tárolóeszközöket.
+    #F9# shows a ~dialog for configuring Location menu~@ChangeLocationConfig@.
 
-    A Meghajtók menüben a #Ctrl-1 - Ctrl-9# billentyűkkel a meghajtókra
-vonatkozó különféle információk megjelenítését kapcsolhatjuk ki vagy be:
+    #Location# menu settings are saved in the FAR2L configuration.
 
-    Ctrl-1 - a lemez típusa;
-    Ctrl-2 - ^<wrap>a hálózat neve (és a SUBST meghajtó gazdalemezén annak a
-mappának az elérési útvonala, amihez a virtuális meghajtót hozzárendeltük);
-    Ctrl-3 - a lemez címkéje;
-    Ctrl-4 - a fájlrendszer;
-    Ctrl-5 - a teljes és a szabad lemezterület mérete (kétféle
-megjelenítési módja van, nyomjuk le kétszer);
-    Ctrl-6 - a kivehető lemez paraméterei;
-    Ctrl-7 - pluginek megjelenítése;
-    Ctrl-8 - a CD meghajtók fajtái;
-    Ctrl-9 - a hálózat jellemzői.
+    If the option "~Use Ctrl-PgUp for location menu~@InterfSettings@" is enabled,
+pressing #Ctrl-PgUp# works the same as pressing #Esc# - closes the menu.
 
-    A #Meghajtók# menü beállításait a FAR a többi konfigurációs adattal együtt
-menti.
+    Pressing #Shift-Enter# invokes system GUI file manager showing the directory
+of the selected line (works only for disk drives and not for plugins).
 
-    Ha ~A Ctrl-PgUp meghajtót vált~@InterfSettings@ opciót engedélyeztük, a
-#Ctrl-PgUp# ugyanúgy működik, mint az #Esc#: kilép a Meghajtók menüből és
-bezárja az ablakot.
+    #Ctrl-R# allows to refresh the location menu.
 
-    A #Shift-Enter# meghívja a Windows Explorert, megjelenítve benne a
-kiválasztott meghajtó gyökerét (csak "valódi" meghajtóknál működik,
-pluginnel emulált fájlrendszereknél nem).
+    #Alt-Shift-F9# allows you to ~configure plugins~@PluginsConfig@ (it works only if
+display of plugin items is enabled).
 
-    A #Ctrl-R# frissíti a Meghajtók menü tartalmát.
+    #Shift-F9# in the plugins list opens the configuration dialog of the
+currently selected plugin.
 
-    Ha a #CD meghajtó típusa# mód engedélyezve van (#Ctrl-8#), a FAR
-igyekszik felismerni az összes rendszerbe csatlakozó CD meghajtó
-típusát. A felismert típusok: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW és
-DVD-RAM. Ez a funkció csak a rendszergazda jogokkal rendelkező
-felhasználóknál és helyi felhasználóknál működik, ha a "Helyi biztonsági
-beállítások" szerkesztőjében a
-#Helyi házirend/Biztonsági beállítások/Eszközök:# tételnél
-#A CD-ROM használatához kötelező bejelentkezni a helyi számítógépre#
-szabályt engedélyeztük. A biztonsági szerkesztőprogramot a
-parancssorból a #secpol.msc# parancs kiadásával is elindíthatjuk.
+    #Shift-F1# in the plugins list displays the context-sensitive help of the
+currently selected plugin, if the plugin has a help file.
 
-    A Meghajtók menüben az #Alt-Shift-F9# meghívja a
-~plugin beállítások~@PluginsConfig@ menüt (ha #Ctrl-7#-tel engedélyeztük
-a pluginek megjelenítését).
-
-    A #Shift-F9# pluginen lenyomva meghívja a plugin beállításainak
-párbeszédablakát.
-
-    A #Shift-F1# pluginen lenyomva meghívja a plugin helyzetérzékeny
-súgóját (ha a súgófájl létezik).
+    You can specify manual/scripted source of additional items in Location menu that
+will be appended to mountpoints entries. For that you need to create text file under
+path #~~/.config/far2l/favorites# and that file must contain lines, each line can have
+one or two or three parts separated by <TAB> character. First part represent path,
+second and third parts are optional and represent information rendered in additional
+columns. It's possible to insert separator with optional title by specifying line
+with first part having only '-' character and another part (if present) defining
+title text.
+Note that favorites file can contain shell environment variables denoted with $
+character like $HOME, and shell commands substitution, i.e. $(/path/to/some/script.sh)
+will invoke that script.sh and its output will be embedded into content of this file
+during processing. This allows to implement custom dynamic locations list composing.
 
     If you don't see mounted flash drive in the Location menu (#Alt-F1/F2#)
-then check #Exceptions list# in Location Menu Options (#F9#).
+then check #Exceptions list# in ~Location Menu Options~@ChangeLocationConfig@ (#F9#).
 E.g., the #/run/*# pattern is included there by default.
 If you have udisks2 configured to mount removable drives under #/run/media/$USER/#
 you need to delete #/run/*# substring from exceptions list.
@@ -2889,6 +2854,7 @@ After that add more accurate patterns such as #/run/user/*#
 in order to hide garbage mountpoints from the Location menu.
 
     See also:
+      The list of ~macro keys~@KeyMacroDisksList@, available in the Location menu.
       Common ~menu~@MenuCmd@ keyboard commands.
 
 @DisconnectDrive

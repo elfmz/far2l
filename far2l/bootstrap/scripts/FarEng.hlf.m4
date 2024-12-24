@@ -1236,21 +1236,6 @@ for viewing the folder description file.
     A list of possible folder description file names may be defined using
 "Folder description files" command in the ~Options menu~@OptMenu@.
 
-    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
-
-    FAR will attempt to determine the type of each of the CD drives available
-in the system. Known types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM,
-DVD-RW and DVD-RAM. This function is available only for users either with
-administrative privileges or all local users, when it's stated explicitly in
-the Local Policy Editor (to do this, run a #secpol.msc# from the command
-prompt, and set the '#Local Policies/Security Options/Devices: Restrict#
-#CD-ROM access to locally logged-on user only#' setting to '#Enabled#')
-
-    For virtual devices (SUBST-disk) the parameters of the primary disk are
-shown.
-
-    !! Windows legacy end !!
-
     See also the list of ~macro keys~@KeyMacroInfoList@, available in the info panel.
 
 @QViewPanel
@@ -3338,7 +3323,7 @@ After that add more accurate patterns such as #/run/user/*#
 in order to hide garbage mountpoints from the Location menu.
 
     See also:
-      The list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
+      The list of ~macro keys~@KeyMacroDisksList@, available in the Location menu.
       Common ~menu~@MenuCmd@ keyboard commands.
 
 

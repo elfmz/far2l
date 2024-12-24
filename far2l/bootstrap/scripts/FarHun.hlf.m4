@@ -159,33 +159,15 @@ nyitja meg. A -e után megadható, hogy melyik sor hányadik karakterhelyére
 
           Például: far -e70:2 readme.
 
-          ^<wrap>
-  #-p[<path>]#  A "fő" plugineket a <path>-ben megadott elérési út
-          ^<wrap>mappáiban keresi. Több keresési útvonal is megadható,
-";"-vel elválasztva.
-
-          Példa: far -p%SystemRoot%\\Profiles\\%USERNAME%\\FAR
-
   #-co#   ^<wrap>A FAR pluginjei csak a gyorsítótárból töltődhetnek be.
 Bár így a betöltésük gyorsabb, az új vagy megváltozott plugineket a FAR nem
 érzékeli. CSAK állandó pluginek esetén használjuk! Pluginek hozzáadása,
 cseréje vagy törlése után a FAR-t a kapcsoló nélkül kell elindítani. Ha a
 gyorsítótár üres, nem töltődik be plugin.
 
-          Megjegyzések a -p és -co kapcsolókhoz:
-
-        - ^<wrap>ha a -p után nincs érték, a FAR pluginek nélkül
-fog elindulni;
-        - ha -p-nek adtunk <path> értéket, csak a megadott útvonalról
-töltődnek be pluginek;
-        - ha csak a -co kapcsolóval indítjuk és a plugin gyorsítótár
-nem üres, a gyorsítótárból töltődnek be a pluginek;
-        - a -co kapcsolót a FAR figyelmen kívül hagyja, ha -p is áll
-mellette;
-        - ha sem a -p, sem a -co kapcsoló nem szerepel a parancssorban,
-akkor a pluginek csak az alapértelmezett plugin mappából, valamint a
-~saját pluginek elérési útvonala~@SystemSettings@ által meghatározott
-mappákból töltődnek be.
+Ha a parancssorban nincs -co kapcsoló, akkor a pluginek csak az alapértelmezett
+plugin mappából, valamint a ~saját pluginek elérési útvonala~@SystemSettings@
+által meghatározott mappákból töltődnek be.
 
   #-m#    ^<wrap>A FAR induláskor nem tölti be a registryből a makróit.
 
@@ -1097,15 +1079,9 @@ $ #Panelek: fastruktúra panel#
 hasonlóan ábrázolja. Ebben a nézetben gyorsan lehet mappát váltani és
 a mappákkat kezelni.
 
-    A FAR a mappák szerkezeti adatainak tárolásához minden meghajtó
-gyökérmappájában létrehoz egy-egy #Tree.Far# nevű fájlt, a csak olvasható
-meghajtók adatait pedig egy Tree.Cache nevű rejtett mappába menti el,
-a FAR.EXE mappáján belül. A Tree.Far fájl eredetileg nem létezik, a
-#Fastruktúra panel# vagy a #Mappa keresése# funkció első használata után jön
-létre automatikusan. Ha a Tree.Far már létezik és ha változik a fa, a FAR
-frissíti a megváltozott szerkezet adatait. Ha a szerkezeti
-változások akkor történtek, amikor a FAR nem futott és a Tree.Far tartalma
-már nem teljesen időszerű, a #Ctrl-R# leütésével frissíthetjük.
+    FAR stores folder tree information in its folder in the system's temporary directory
+(/tmp, /var/tmp, or $TMPDIR).  If necessary, the tree state can be updated using
+#Ctrl-R# key combination.
 
     A #gyorskeresés# segítségével hamarabb megtalálhatjuk a mappákat. Tartsuk
 nyomva az Alt billentyűt és addig írjuk be a keresett mappa nevét, amíg rá nem
@@ -1567,6 +1543,42 @@ tartományon túli része a szöveget, oda nem terjed ki a keresés.
     G - gigabájt;
     T - terabájt.
 
+    Az #F3# és az #F4# a megtalált fájlok megnézésére és szerkesztésére
+szolgál és pluginnel emulált fájlrendszerekben is használható. Érdemes
+megjegyezni, hogy ha emulált fájlrendszerben mentjük a szerkesztés változásait
+az #F2#-vel, egyszerű #Mentés# helyett #Mentés másként# művelet történik.
+
+    Az Windows attribútumok betűjeleinek jelentése:
+       #R#         - Read only (Csak olvasható)
+       #S#         - System (Rendszer)
+       #H#         - Hidden (Rejtett)
+       #A#         - Archive (Archiv)
+       #L#         - Mappa csomópont vagy szimbolikus link
+       #C# vagy #E#  - ^<wrap>Compressed vagy Encrypted (Tömörített vagy
+Titkosított)
+       #$#         - Sparse (Ritkított)
+       #T#         - Temporary (Átmeneti)
+       #I#         - Nem (tartalom)indexelt
+       #O#         - Offline
+       #V#         - Virtuális
+
+    Unix file types:
+       #B#         - Broken
+       #d#         - Directory
+       #c#         - Character device
+       #b#         - Block device
+       #p#         - FIFO (named Pipe)
+       #s#         - Socket
+       #l#         - Symbolic Link
+       #-#         - Regular file
+
+    Unix file permissions (in each triad for owner, group, other users):
+       #r# or #-#    - readable or not
+       #w# or #-#    - writable or not
+       #x# or #-#    - executable or not
+       #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
+       #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
+
 @FindFileResult
 $ #Fájlkeresés: vezérlőgombok#
     A #Fájlkeresés# ablakban - akár ~keresés~@FindFile@ közben, akár annak
@@ -1590,12 +1602,6 @@ jeleníti meg.
 aktív.
 
     #Mégsem#          Bezárja a keresés párbeszédablakát.
-
-    Az #F3# és az #F4# a megtalált fájlok megnézésére és szerkesztésére
-szolgál és pluginnel emulált fájlrendszerekben is használható. Érdemes
-megjegyezni, hogy ha emulált fájlrendszerben mentjük a szerkesztés változásait
-az #F2#-vel, egyszerű #Mentés# helyett #Mentés másként# művelet történik.
-
 
 @FindFolder
 $ #Mappakeresés#
@@ -3424,6 +3430,7 @@ Titkosított)
        #s#         - Socket
        #l#         - Symbolic Link
        #-#         - Regular file
+
     Unix file permissions (in each triad for owner, group, other users):
        #r# or #-#    - readable or not
        #w# or #-#    - writable or not
@@ -3666,9 +3673,7 @@ forrásfájl tartalmát hozzáfűzhetjük a célfájl végéhez.
 
     Ha a másolás vagy mozgatás során a céllemez megtelik, felfüggeszthetjük
 a másolást vagy kicserélhetjük a lemezt és alkalmazhatjuk a "Felosztást".
-Utóbbi esetben a FAR a másolt fájlt a céllemez méretére szeleteli fel. Ez az
-opció csak akkor jelenik meg, ha a ~Rendszer beállítások~@SystemSettings@ menüben a
-"Másoláshoz a rendszerrutin használata" opció ki van kapcsolva.
+Utóbbi esetben a FAR a másolt fájlt a céllemez méretére szeleteli fel.
 
     A "Hozzáférési jogok" opció csak NTFS fájlrendszernél működik, vele a
 fájlok hozzáférési információit is átmásolhatjuk. A másolás és mozgatás
@@ -3821,19 +3826,6 @@ utolsó oszlopában) és rendezni is tudja a fájlokat hardlinkjeik száma szeri
 
     Hardlinkek kizárólag a forrásfájllal azonos meghajtón készíthetők.
 
-    #Csomópontok#
-
-    A mappa csomópont létrehozása olyan eljárást jelent, amellyel bármelyik
-helyi mappát összerendelhetjük bármely másik helyi mappával. Például, ha a
-D:\\SYMLINK mappa a C:\\WINNT\\SYSTEM32 mappára mutat, akkor az a
-program, amelyik a D:\\SYMLINK\\DRIVERS mappához fér hozzá, valójában a
-C:\\WINNT\\SYSTEM32\\DRIVERS mappát éri el. A hardlinkektől eltérően a
-szimbolikus linkek célpontjainak nem kell a forrással azonos meghajtón lenniük.
-
-    Windows 2000 alatt CD-ROM-ok mappáihoz közvetlenül nem készíthető szimlink,
-de ez a korlátozás kikerülhető, ha a CD-ROM-ot egy NTFS partíció valamelyik
-mappájához mountoljuk.
-
     #Szimbolikus linkek#
 
     Az NTFS a Windows Vista (NT 6.0) verziótól támogatja a szimbolikus
@@ -3852,41 +3844,6 @@ másolhatunk vagy mozgathatunk önmaga belsejébe (saját almappájaként).
 
     Ez a hiba akkor is előfordulhat, ha két mappánk van és az egyik mappa a
 másik ~szimbolikus linkje~@HardSymLink@.
-
-
-@WarnCopyEncrypt
-$ #Figyelem: a titkosítás el fog veszni#
-    A forrásfájl titkosított, másik lemezre másolása vagy mozgatása csak akkor
-lehetséges, ha a fájl a céllemezre titkosítatlanul kerülhet.
-
-    A "Mégis" (vagy "Mégis mind") gombbal figyelmen kívül hagyhatjuk a
-figyelmeztetést és a fájlt titkosítatlanul ugyan, de átmásolhatjuk.
-
-    A FAR mindig az operációs rendszer belső másolási mechanizmusát használja
-a titkosított fájlok aktuális lemezétől eltérő céllemezre másolásakor, a
-"Másoláshoz a rendszerrutin használata" opció állapotától függetlenül.
-
-
-@WarnCopyStream
-$ #Figyelem: több streamet tartalmazó fájl másolása vagy mozgatása#
-    A forrásfájl több adatstreamet tartalmaz, vagy a célhely fájlrendszere
-nem támogatja az ilyen többszintű adatstruktúrával rendelkező fájlokat.
-
-    A stream az NTFS fájlrendszer olyan lehetősége, amelyek a fájlokra
-vonatkozó további információkat (például a szerző nevét, címet, kulcsszavakat
-vagy egyéb adatokat) tartalmazhatnak. Ezek az adatok a fájlokkal
-együtt tárolódnak el, de láthatatlanok az adatokat kiolvasni
-és kezelni nem képes programok számára. Például a Windows Explorere a
-streameket használja a fájlok járulékos információinak tárolására
-(Summary = összegzés). A FAT/FAT32 fájlrendszer nem támogatja a streameket.
-
-    Ha a fájlokat minden adatukkal együtt szeretnénk átmásolni (az összes
-streamjükkel együtt), kapcsoljuk be a ~Rendszer beállítások~@SystemSettings@
-menüben a "#Másoláshoz a rendszerrutin használata#" opciót.
-
-    Ha nem NTFS fájlrendszerű lemezre másolunk több streamet tartalmazó
-fájlokat, a művelet adatvesztéssel jár: csak a fájlok fő streamje másolódik
-át.
 
 
 @ErrLoadPlugin

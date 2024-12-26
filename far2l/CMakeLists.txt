@@ -281,8 +281,8 @@ add_custom_command(TARGET far2l POST_BUILD
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 #TODO
 else()
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l-tty.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-tty.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit-tty.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-tty.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l-wx.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-wx.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit-wx.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-wx.desktop")
 
@@ -290,8 +290,8 @@ else()
 
 	# Have to make desktop files executable, see:
 	# https://wiki.ubuntu.com/SecurityTeam/Policies#Execute-Permission_Bit_Required
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop"
-                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop"
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-tty.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-tty.desktop"
                   "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-wx.desktop"
                   "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-wx.desktop"
         DESTINATION "share/applications"

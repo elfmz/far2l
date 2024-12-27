@@ -602,13 +602,16 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 					}
 						break;
 					case KEY_CTRLUP:
-					case KEY_CTRLDOWN: {
+					case KEY_CTRLDOWN:
+					case KEY_CTRLNUMPAD8:
+					case KEY_CTRLNUMPAD2: {
 						int Pos = UserMenu.GetSelectPos();
 
 						if (Pos != UserMenu.GetItemCount()) {
-							if (!(Key == KEY_CTRLUP && !Pos)
-									&& !(Key == KEY_CTRLDOWN && Pos == UserMenu.GetItemCount() - 1)) {
-								MenuPos = Pos + (Key == KEY_CTRLUP ? -1 : +1);
+							if (!((Key == KEY_CTRLUP || Key == KEY_CTRLNUMPAD8) && !Pos)
+									&& !((Key == KEY_CTRLDOWN || Key == KEY_CTRLNUMPAD2)
+											&& Pos == UserMenu.GetItemCount() - 1)) {
+								MenuPos = Pos + ((Key == KEY_CTRLUP || Key == KEY_CTRLNUMPAD8) ? -1 : +1);
 								MoveMenuItem(MenuKey, Pos, MenuPos);
 							}
 						}

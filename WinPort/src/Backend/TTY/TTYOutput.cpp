@@ -174,7 +174,8 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 	}
 #endif
 
-	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h");
+	// enable mouse and focus notifications
+	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h" ESC "[?1004h");
 
 	if ((_nodetect & NODETECT_W) == 0) {
 		Format(ESC "[?9001h"); // win32-input-mode on
@@ -185,6 +186,7 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 	if ((_nodetect & NODETECT_K) == 0) {
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
+
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -215,7 +217,7 @@ TTYOutput::~TTYOutput()
 		if ((_nodetect & NODETECT_K) == 0) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
-		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" "\r\n");
+		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
 		if ((_nodetect & NODETECT_W) == 0) {
 			Format(ESC "[?9001l"); // win32-input-mode off
 		}
@@ -384,6 +386,10 @@ void TTYOutput::Flush()
 
 void TTYOutput::ChangeCursorHeight(unsigned int height)
 {
+	// See also:
+	// https://unix.stackexchange.com/questions/49485/escape-code-to-change-cursor-shape
+	// https://github.com/kovidgoyal/kitty/issues/715
+
 	if (_far2l_tty) {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(UCHAR(height));
@@ -391,14 +397,29 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 		stk_ser.PushNum((uint8_t)0); // zero ID means not expecting reply
 		SendFar2lInteract(stk_ser);
 
-	} else if (_kernel_tty) {
-		; // avoid printing 'q' on screen
-
 	} else if (height < 30) {
-		Format(ESC "[3 q"); // Blink Underline
+
+		if (_kernel_tty) {
+
+			// Available sizes are from 2 to 8
+			Format(ESC "[?2c");
+
+		} else {
+			Format(ESC "[3 q"); // Blink Underline
+			Format(ESC "]50;CursorShape=2\x07"); // Same for iTerm2
+		}
 
 	} else {
-		Format(ESC "[0 q"); // Blink Block (Default)
+
+		if (_kernel_tty) {
+
+			// Available sizes are from 2 to 8
+			Format(ESC "[?6c");
+
+		} else {
+			Format(ESC "[0 q"); // Blink Block (Default)
+			Format(ESC "]50;CursorShape=0\x07"); // Same for iTerm2
+		}
 	}
 }
 

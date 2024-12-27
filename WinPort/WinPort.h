@@ -33,6 +33,10 @@
 
 #define CONSOLE_TTY_PALETTE_OVERRIDE	0x00040000
 
+// using this value causes SetConsoleTweaks not to change any existing tweak(s) but only return support status
+#define TWEAKS_ONLY_QUERY_SUPPORTED 0xffffffffffffffff
+
+
 #define TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS	0x01
 #define TWEAK_STATUS_SUPPORT_PAINT_SHARP	0x02
 #define TWEAK_STATUS_SUPPORT_OSC52CLIP_SET	0x04

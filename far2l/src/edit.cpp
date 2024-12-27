@@ -387,14 +387,15 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			if (IsCharFullWidth(wc)) {
+			CharClasses cc(wc);
+			if (cc.FullWidth()) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
 					break;
 				}
 				OutStrCells+= 2;
-			} else if (!IsCharXxxfix(wc) || i == RealLeftPos)
+			} else if (i == RealLeftPos || !cc.Xxxfix())
 				OutStrCells++;
 
 			OutStr.emplace_back(wc ? wc : L' ');
@@ -641,11 +642,11 @@ int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 		if (Pos < LimitPos)
 			do {
 				Pos++;
-			} while (Pos < LimitPos && Pos < StrSize && IsCharXxxfix(Str[Pos]));
+			} while (Pos < LimitPos && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
 	} else
 		do {
 			Pos++;
-		} while (Pos < StrSize && IsCharXxxfix(Str[Pos]));
+		} while (Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
 
 	return Pos;
 }
@@ -657,7 +658,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 	do {
 		--Pos;
-	} while (Pos > 0 && IsCharXxxfix(Str[Pos]));
+	} while (Pos > 0 && CharClasses(Str[Pos]).Xxxfix());
 
 	return Pos;
 }
@@ -2047,8 +2048,8 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 			// Обрабатываем табы
 			if (Str[Index] == L'\t' && TabExpandMode != EXPAND_ALLTABS) {
-				// Если есть необходимость делать корректировку табов и эта коректировка
-				// ещё не проводилась, то увеличиваем длину обрабатываемой строки на еденицу
+				// Если есть необходимость делать корректировку табов и эта корректировка
+				// ещё не проводилась, то увеличиваем длину обрабатываемой строки на единицу
 				if (bCorrectPos) {
 					++Pos;
 					*CorrectPos = 1;
@@ -2059,10 +2060,13 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 				TabPos+= TabSize - (TabPos % TabSize);
 			}
 			// Обрабатываем все остальные символы
-			else if (IsCharFullWidth(Str[Index])) {
-				TabPos+= 2;
-			} else if (!IsCharXxxfix(Str[Index])) {
-				TabPos++;
+			else {
+				CharClasses cc(Str[Index]);
+				if (cc.FullWidth()) {
+					TabPos+= 2;
+				} else if (!cc.Xxxfix()) {
+					TabPos++;
+				}
 			}
 
 		// Если позиция находится за пределами строки, то там точно нет табов и всё просто
@@ -2090,8 +2094,8 @@ int Edit::CellPosToReal(int Pos)
 
 			CellPos = NewCellPos;
 		} else {
-			CellPos+= IsCharFullWidth(Str[Index]) ? 2 : 1;
-			while (Index + 1 < StrSize && IsCharXxxfix(Str[Index + 1])) {
+			CellPos+= CharClasses(Str[Index]).FullWidth() ? 2 : 1;
+			while (Index + 1 < StrSize && CharClasses(Str[Index + 1]).Xxxfix()) {
 				Index++;
 			}
 		}
@@ -2103,10 +2107,10 @@ int Edit::CellPosToReal(int Pos)
 void Edit::SanitizeSelectionRange()
 {
 	if (SelEnd >= SelStart && SelStart >= 0) {
-		while (SelStart > 0 && IsCharXxxfix(Str[SelStart]))
+		while (SelStart > 0 && CharClasses(Str[SelStart]).Xxxfix())
 			--SelStart;
 
-		while (SelEnd < StrSize && IsCharXxxfix(Str[SelEnd]))
+		while (SelEnd < StrSize && CharClasses(Str[SelEnd]).Xxxfix())
 			++SelEnd;
 	}
 

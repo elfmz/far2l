@@ -11,6 +11,7 @@ env:
 
 jobs:
   build:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     # The CMake configure and build commands are platform agnostic and should work equally
     # well on Windows or Mac.
     runs-on: ubuntu-latest
@@ -36,7 +37,7 @@ jobs:
       # access regardless of the host operating system
       shell: bash
       # -S and -B options specify source and build directories
-      run: cmake -S . -B _build -DCMAKE_BUILD_TYPE=$BUILD_TYPE ${{ matrix.options }}
+      run: cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE ${{ matrix.options }}
 
     - name: Build
       shell: bash

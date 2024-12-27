@@ -285,12 +285,17 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else()
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l-wx.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-wx.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit-wx.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-wx.desktop")
 
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/DE/icons" DESTINATION "share" USE_SOURCE_PERMISSIONS COMPONENT desktop FILES_MATCHING PATTERN "*")
 
 	# Have to make desktop files executable, see:
 	# https://wiki.ubuntu.com/SecurityTeam/Policies#Execute-Permission_Bit_Required
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop"
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-wx.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-wx.desktop"
         DESTINATION "share/applications"
         COMPONENT desktop
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)

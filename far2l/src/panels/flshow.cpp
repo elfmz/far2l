@@ -753,7 +753,7 @@ int FileList::PrepareColumnWidths(unsigned int *ColumnTypes, int *ColumnWidths, 
 					ColumnWidths[I]++;
 			}
 		}
-		else {
+		else if (Opt.DirNameStyleColumnWidthAlways) {
 			if (ColumnType == SIZE_COLUMN || ColumnType == PHYSICAL_COLUMN) {
 				if (ColumnWidths[I] < ColumnTypeWidth[SIZE_COLUMN])
 					ColumnWidths[I] = ColumnTypeWidth[SIZE_COLUMN];

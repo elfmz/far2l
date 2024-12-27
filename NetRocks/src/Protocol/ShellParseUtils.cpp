@@ -120,9 +120,17 @@ namespace ShellParseUtils
 		if (line.empty())
 			return false;
 
-		const std::string &str_size = ExtractStringHead(line, " \t");
+		std::string str_size = ExtractStringHead(line, " \t");
 		if (line.empty())
 			return false;
+
+		if (str_group == "domain" && ClassifyNumberStr(str_size.c_str()) != NK_NUMBER_DEC) {
+			// drwx--x--x 7 user domain users 4096 apr 27 2024 mnt
+			str_group = str_size;
+			str_size = ExtractStringHead(line, " \t");
+			if (line.empty())
+				return false;
+		}
 
 		bool size_is_not_size = false;
 		if (!str_size.empty() && str_size.back() == ',') {

@@ -98,16 +98,22 @@ class Entry(object):
 
 
 class Docker(object):
-    def __init__(self):
-        pass
+    def __init__(self, dockerexecutable="/usr/bin/docker"):
+        self.dockerexecutable = dockerexecutable
 
-    def run(self, *args, timeout=2):
-        cmd = ["/usr/bin/docker"]
+    def run(self, *args, timeout=2, stderr=False):
+        cmd = [self.dockerexecutable]
         cmd.extend(args)
-        # log.debug('docker.run: {}'.format(cmd))
+        log.debug(f"docker.run: {cmd}")
         res = subprocess.run(cmd, capture_output=True, timeout=timeout)
-        log.debug("rc={} stderr={}".format(res.returncode, res.stderr.decode()))
+        log.debug(f"docker.run: rc={res.returncode}")
         res.check_returncode()
+        if stderr:
+            fp = io.BytesIO(res.stdout)
+            lines1 = fp.readlines()
+            fp = io.BytesIO(res.stderr)
+            lines2 = fp.readlines()
+            return lines1, lines2
         assert res.stderr == b""
         fp = io.BytesIO(res.stdout)
         lines = fp.readlines()
@@ -130,6 +136,15 @@ class Docker(object):
                 info = (line[cid:cimage].strip(), line[cnames:].strip(), line[cstatus:cports].strip().split()[0] == 'Up')
                 devices.append(info)
         return devices
+
+    def start(self, name):
+        self.run("container", "start", name)
+
+    def stop(self, name):
+        self.run("container", "stop", name)
+
+    def logs(self, name):
+        return self.run("container", "logs", name, stderr=True)
 
     ls = "/bin/ls -anL --full-time {}"
     date_re = "%Y-%m-%d %H:%M:%S"
@@ -203,3 +218,6 @@ if __name__ == "__main__":
     result = cls.ls(info[0][0], "/")
     for e in result:
         print(e)
+    cls.stop('redmine')
+    cls.start('redmine')
+    cls.logs('redmine')

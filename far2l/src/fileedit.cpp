@@ -792,7 +792,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 
 				// проверка на "а может это говно удалили уже?"
 				// возможно здесь она и не нужна!
-				// хотя, раз уж были изменени, то
+				// хотя, раз уж были изменения, то
 				if (m_editor->IsFileChanged() &&												// в текущем сеансе были изменения?
 						apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES)		// а файл еще существует?
 				{
@@ -959,7 +959,6 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 						m_AddSignature = AddSignature ? FB_YES : FB_NO;
 
 						apiExpandEnvironmentStrings(strSaveAsName, strSaveAsName);
-						Unquote(strSaveAsName);
 						NameChanged = StrCmpI(strSaveAsName,
 								(Flags.Check(FFILEEDIT_SAVETOSAVEAS) ? strFullFileName : strFileName));
 
@@ -1193,8 +1192,9 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 			case KEY_F8:
 			case KEY_SHIFTF8: {
 				if (EdCfg && EdCfg->CodePage > 0) {
-					FARString strTmp;
-					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, EdCfg->CodePage);
+					FARString strTmp, strCodepage;
+					ShortReadableCodepageName(EdCfg->CodePage, strCodepage);
+					strTmp.Format(Msg::EditorConfigOrgValueOfCharset, strCodepage.CPtr());
 					EditorConfigOrgConflictMessage(strTmp, Msg::EditorConfigOrgProblemCharset);
 					return TRUE;
 				}
@@ -2340,7 +2340,7 @@ DWORD FileEditor::EditorGetFileAttributes(const wchar_t *Name)
 }
 
 /*
-	Return TRUE - панель обовили
+	Return TRUE - панель обновили
 */
 BOOL FileEditor::UpdateFileList()
 {

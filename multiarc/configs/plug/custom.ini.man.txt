@@ -148,36 +148,6 @@
 ;    If an external archiver does not support a particular command,
 ;leave the corresponding string blank.
 ;
-; Regular expressions notice.
-;
-;Now regular expressions can be used in parameters 'FormatX', 'IgnoreStringX',
-;'Start', 'End'. Regular expression are parsed by PCRE library
-;(ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/) which recognizes
-;Perl5-compatible syntax. To specify that pattern should be matched as regular
-;expression, enclose it in slashes ('/'). The following regexp flags can be
-;used (if corresponding characters are placed after closing slash):
-;    i - ignore case
-;    x - extended (use explaining spaces)
-;    m - multiline
-;    s - "." matches new line characters also ('\n', '\r')
-;
-;When using regexps in 'FormatX' parameter, named strings are used to
-;extract information from listing lines. The following field names are
-;available:
-;    name - file name with relative path (leading and trailing spaces
-;        are trimmed)
-;    description - file description
-;    size - unpacked file size in bytes (non-digit characters are ignored
-;        in this and all other numeric fields)
-;    packedSize - packed file size in bytes
-;    attr - file attributes (A - archive, R - readonly, S - system, C -
-;        compressed, H - hidden, D - directory)
-;    cYear, cDay, cMonth, cHour, cMin, cSec - creation time
-;    mYear, mDay, mMonth, mHour, mMin, mSec - modification time
-;    mAMPM, mMonthA - extended time fields for modification time
-;    aYear, aDay, aMonth, aHour, aMin, aSec - access time
-;    CRC - 32 bit file Cyclic Redundancy Checksum
-;
 ;------------------------------------------------------------------------
 ;Several examples of new syntax:
 ;

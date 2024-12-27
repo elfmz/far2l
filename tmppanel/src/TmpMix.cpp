@@ -9,7 +9,7 @@ Temporary panel miscellaneous utility functions
 #include <string>
 #include <utils.h>
 
-const TCHAR *GetMsg(int MsgId)
+const wchar_t *GetMsg(int MsgId)
 {
 	return (Info.GetMsg(Info.ModuleNumber, MsgId));
 }
@@ -47,15 +47,15 @@ void FreePanelItems(PluginPanelItem *Items, DWORD Total)
 	}
 }
 
-TCHAR *ParseParam(TCHAR *&str)
+wchar_t *ParseParam(wchar_t *&str)
 {
-	TCHAR *p = str;
-	TCHAR *parm = NULL;
-	if (*p == _T('|')) {
+	wchar_t *p = str;
+	wchar_t *parm = NULL;
+	if (*p == L'|') {
 		parm = ++p;
-		p = _tcschr(p, _T('|'));
+		p = wcschr(p, L'|');
 		if (p) {
-			*p = _T('\0');
+			*p = L'\0';
 			str = p + 1;
 			FSF.LTrim(str);
 			return parm;
@@ -64,25 +64,22 @@ TCHAR *ParseParam(TCHAR *&str)
 	return NULL;
 }
 
-void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
+void GoToFile(const wchar_t *Target, BOOL AnotherPanel)
 {
-#define FCTL_SetPanelDir  FCTL_SETPANELDIR
-#define FCTL_GetPanelInfo FCTL_GETPANELINFO
-#define FCTL_RedrawPanel  FCTL_REDRAWPANEL
 	HANDLE _PANEL_HANDLE = AnotherPanel ? PANEL_PASSIVE : PANEL_ACTIVE;
 
 	PanelRedrawInfo PRI;
 	PanelInfo PInfo;
 	int pathlen;
 
-	const TCHAR *p = FSF.PointToName(const_cast<TCHAR *>(Target));
-	StrBuf Name(lstrlen(p) + 1);
-	lstrcpy(Name, p);
+	const wchar_t *p = FSF.PointToName(const_cast<wchar_t *>(Target));
+	StrBuf Name(wcslen(p) + 1);
+	wcscpy(Name, p);
 	pathlen = (int)(p - Target);
 	StrBuf Dir(pathlen + 1);
 	if (pathlen)
-		memcpy(Dir.Ptr(), Target, pathlen * sizeof(TCHAR));
-	Dir[pathlen] = _T('\0');
+		memcpy(Dir.Ptr(), Target, pathlen * sizeof(wchar_t));
+	Dir[pathlen] = L'\0';
 
 	FSF.Trim(Name);
 	FSF.Trim(Dir);
@@ -90,25 +87,23 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 	FSF.Unquote(Dir);
 
 	if (*Dir.Ptr()) {
-		Info.Control(_PANEL_HANDLE, FCTL_SetPanelDir, 0, (LONG_PTR)Dir.Ptr());
+		Info.Control(_PANEL_HANDLE, FCTL_SETPANELDIR, 0, (LONG_PTR)Dir.Ptr());
 	}
 
-	Info.Control(_PANEL_HANDLE, FCTL_GetPanelInfo, 0, (LONG_PTR)&PInfo);
+	Info.Control(_PANEL_HANDLE, FCTL_GETPANELINFO, 0, (LONG_PTR)&PInfo);
 
 	PRI.CurrentItem = PInfo.CurrentItem;
 	PRI.TopPanelItem = PInfo.TopPanelItem;
 
 	for (int J = 0; J < PInfo.ItemsNumber; J++) {
 
-#define FileName (PPI ? PPI->FindData.lpwszFileName : NULL)
 		PluginPanelItem *PPI =
 				(PluginPanelItem *)malloc(Info.Control(_PANEL_HANDLE, FCTL_GETPANELITEM, J, 0));
 		if (PPI) {
 			Info.Control(_PANEL_HANDLE, FCTL_GETPANELITEM, J, (LONG_PTR)PPI);
 		}
 
-		if (!FSF.LStricmp(Name, FSF.PointToName(FileName)))
-#undef FileName
+		if (!FSF.LStricmp(Name, FSF.PointToName((PPI ? PPI->FindData.lpwszFileName : NULL))))
 		{
 			PRI.CurrentItem = J;
 			PRI.TopPanelItem = J;
@@ -117,11 +112,7 @@ void GoToFile(const TCHAR *Target, BOOL AnotherPanel)
 		}
 		free(PPI);
 	}
-	Info.Control(_PANEL_HANDLE, FCTL_RedrawPanel, 0, (LONG_PTR)&PRI);
-#undef _PANEL_HANDLE
-#undef FCTL_SetPanelDir
-#undef FCTL_GetPanelInfo
-#undef FCTL_RedrawPanel
+	Info.Control(_PANEL_HANDLE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&PRI);
 }
 
 void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
@@ -136,15 +127,7 @@ void WFD2FFD(WIN32_FIND_DATA &wfd, FAR_FIND_DATA &ffd)
 	ffd.lpwszFileName = wcsdup(wfd.cFileName);
 }
 
-wchar_t *FormNtPath(const wchar_t *path, StrBuf &buf)
-{
-	int l = lstrlen(path);
-	buf.Grow(l + 1);
-	lstrcpy(buf, path);
-	return buf;
-}
-
-TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output)
+wchar_t *ExpandEnvStrs(const wchar_t *input, StrBuf &output)
 {
 
 	std::string s;
@@ -153,12 +136,12 @@ TCHAR *ExpandEnvStrs(const TCHAR *input, StrBuf &output)
 	std::wstring w;
 	StrMB2Wide(s, w);
 	output.Grow(w.size() + 1);
-	lstrcpy(output, w.c_str());
+	wcscpy(output, w.c_str());
 
 	return output;
 }
 
-static DWORD LookAtPath(const TCHAR *dir, const TCHAR *name, TCHAR *buffer = NULL, DWORD buf_size = 0)
+static DWORD LookAtPath(const wchar_t *dir, const wchar_t *name, wchar_t *buffer = NULL, DWORD buf_size = 0)
 {
 	std::wstring path(dir);
 	if (path.empty())
@@ -177,34 +160,20 @@ static DWORD LookAtPath(const TCHAR *dir, const TCHAR *name, TCHAR *buffer = NUL
 	return path.size() + 1;
 }
 
-bool FindListFile(const TCHAR *FileName, StrBuf &output)
+bool FindListFile(const wchar_t *FileName, StrBuf &output)
 {
-	StrBuf Path;
-	DWORD dwSize;
-
 	StrBuf FullPath;
 	GetFullPath(FileName, FullPath);
-	StrBuf NtPath;
-	FormNtPath(FullPath, NtPath);
 
-	const TCHAR *final = NULL;
-	if (GetFileAttributes(NtPath) != INVALID_FILE_ATTRIBUTES) {
+	if (GetFileAttributes(FullPath) != INVALID_FILE_ATTRIBUTES) {
 		output.Grow(FullPath.Size());
-		lstrcpy(output, FullPath);
+		wcscpy(output, FullPath);
 		return true;
 	}
-	{
-		const TCHAR *tmp = FSF.PointToName(Info.ModuleName);
-		Path.Grow((int)(tmp - Info.ModuleName + 1));
-		lstrcpyn(Path, Info.ModuleName, (int)(tmp - Info.ModuleName + 1));
-		dwSize = LookAtPath(Path, FileName);
-		if (dwSize) {
-			final = Path;
-			goto success;
-		}
-	}
-	ExpandEnvStrs(_T("$FARHOME:$PATH"), Path);
-	for (TCHAR *str = Path, *p = _tcschr(Path, _T(':')); *str; p = _tcschr(str, _T(':'))) {
+
+	StrBuf Path;
+	ExpandEnvStrs(L"$HOME:$FARHOME:$PATH", Path);
+	for (wchar_t *str = Path, *p = wcschr(Path, L':'); *str; p = wcschr(str, L':')) {
 		if (p)
 			*p = 0;
 
@@ -212,10 +181,12 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 		FSF.Trim(str);
 
 		if (*str) {
-			dwSize = LookAtPath(str, FileName);
+			DWORD dwSize = LookAtPath(str, FileName);
 			if (dwSize) {
-				final = str;
-				goto success;
+				output.Grow(dwSize);
+				if (LookAtPath(str, FileName, output, dwSize) != dwSize)
+					fprintf(stderr, "LookAtPath: unexpected size\n");
+				return true;
 			}
 		}
 
@@ -226,14 +197,6 @@ bool FindListFile(const TCHAR *FileName, StrBuf &output)
 	}
 
 	return false;
-
-success:
-
-	output.Grow(dwSize);
-	if (LookAtPath(final, FileName, output, dwSize) != dwSize)
-		fprintf(stderr, "LookAtPath: unexpected size\n");
-
-	return true;
 }
 
 wchar_t *GetFullPath(const wchar_t *input, StrBuf &output)

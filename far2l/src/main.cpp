@@ -77,6 +77,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "help.hpp"
 #include "farversion.h"
 #include "mix/panelmix.hpp"
+#include "farcolors.hpp"
 
 #ifdef DIRECT_RT
 int DirectRT = 0;
@@ -594,9 +595,8 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal = FALSE;
 	}
 
-	ZeroFarPalette();
 	ConfigOptLoad();
-	InitFarPalette();
+	FarColors::InitFarColors();
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);

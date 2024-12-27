@@ -17,7 +17,7 @@ FAR2L_DEPENDENCIES += libxml2
 endif
 
 ifeq ($(BR2_PACKAGE_FAR2L_MULTIARC),y)
-FAR2L_DEPENDENCIES += pcre2 libarchive
+FAR2L_DEPENDENCIES += libarchive
 endif
 
 ifeq ($(BR2_PACKAGE_FAR2L_NETROCKS),y)

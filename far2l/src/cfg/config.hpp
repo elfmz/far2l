@@ -401,9 +401,10 @@ struct Options
 
 	int ShowFilenameMarks;
 	int FilenameMarksAlign;
-	DWORD FilenameMarksInStatusBar;
+	int FilenameMarksInStatusBar;
 	DWORD MinFilenameIndentation, MaxFilenameIndentation;
 	DWORD DirNameStyle;
+	DWORD DirNameStyleColumnWidthAlways;
 	DWORD ShowSymlinkSize;
 
 	int Highlight;

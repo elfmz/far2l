@@ -375,7 +375,7 @@ bool FileFilterParams::FileInFilterImpl(const FARString &strFileName, DWORD dwFi
 	return true;
 }
 
-void FillPreviewStr(wchar_t *dstStr, size_t dstsize, const wchar_t *srcStr, const size_t srcsize)
+void FillPreviewStr(wchar_t *dstStr, size_t dstsize, const wchar_t *srcStr, const size_t srcsize, bool b_trim_dots = false)
 {
 	size_t	ng = 0, mcl = 0;
 
@@ -384,9 +384,21 @@ void FillPreviewStr(wchar_t *dstStr, size_t dstsize, const wchar_t *srcStr, cons
 
 	if (srcStr && srcsize) {
 		ng = dstsize;
+		if (b_trim_dots) { // need truncate by dots
+			if (StrCellsCount(srcStr, srcsize) > dstsize)
+				ng -= 3;
+			else
+				b_trim_dots = false;
+		}
 		mcl = StrSizeOfCells(srcStr, srcsize, ng, false);
 		memcpy(dstStr, srcStr, mcl * sizeof(wchar_t));
 		dstStr += mcl;
+		if (b_trim_dots) {
+			*dstStr=L'.'; dstStr++;
+			*dstStr=L'.'; dstStr++;
+			*dstStr=L'.'; dstStr++;
+			ng += 3;
+		}
 	}
 
 	while(ng < dstsize) {
@@ -538,7 +550,7 @@ void MenuString(FARString &strDest, FileFilterParams *FF, uint32_t attrstyle, bo
 		if (FF->GetContinueProcessing())
 			SizeDate[2] = DownArrow;
 
-		FillPreviewStr(NameStrPrw, 18, Name, NameLen);
+		FillPreviewStr(NameStrPrw, 18, Name, NameLen, true);
 		strDest.Format(Format2, MarkStrPrw, BoxSymbols[BS_V1], NameStrPrw, BoxSymbols[BS_V1], Attr, SizeDate, BoxSymbols[BS_V1],
 				UseMask ? Mask : L"");
 	} else {

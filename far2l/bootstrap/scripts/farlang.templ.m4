@@ -1837,7 +1837,7 @@ upd:"Confirm elevated privileges use"
 
 ConfigRecycleBin
 "Удалять в &Корзину"
-"&Delete to Recycle Bin"
+"&Delete to Trash"
 "&Mazat do Koše"
 "In Papierkorb &löschen"
 "&Törlés a Lomtárba"
@@ -2122,61 +2122,6 @@ ConfigHighlight
 "&Розфарбовка файлів"
 "&Размалёўка файлаў"
 
-ConfigFilenameMarks
-"Показывать маркировку имен файлов"
-"Show file name markings"
-"Zobrazit označení názvů souborů"
-"Dateinamenmarkierungen anzeigen"
-"Fájlnevek megjelölésének megjelenítése"
-"Pokaż oznaczenia nazw plików"
-"Mostrar marcas de nombres de archivos"
-"Показати маркування імен файлів"
-"Паказаць маркіроўку імёнаў файлаў"
-
-ConfigFilenameMarksAlign
-"Выравнивать имена файлов по маркировкам"
-"Align file names by markings"
-"Vyrovnat názvy souborů podle označení"
-"Dateinamen nach Markierungen ausrichten"
-"Fájlneveket igazítani a megjelölések szerint"
-"Wyrównaj nazwy plików według oznaczeń"
-"Alinear nombres de archivos por marcas"
-"Вирівняти імена файлів за маркуваннями"
-"Выраўнаваць імёны файлаў па маркіроўках"
-
-ConfigFilenameMinMaxIndentation
-"Мин - макс отступ имен файлов"
-"Min - max file names indentation"
-"Min - max odsazení názvů souborů"
-"Min - max Abstand von Dateinamen"
-"Min - max fájlnevek behúzása"
-"Min - maks wcięcie nazw plików"
-"Sangrado mín - máx de nombres de archivos"
-"Мін - макс відступ імен файлів"
-"Мін - макс адступ імёнаў файлаў"
-
-ConfigFilenameMinIndentation
-"Фиксированный отступ имен файлов"
-"Fixed indentation of file names"
-"Opravené odsazení názvů souborů"
-"Festgelegte Einrückung von Dateinamen"
-"A fájlnevek rögzített behúzása"
-"Naprawione wcięcie nazw plików"
-"Sangría fija de nombres de archivos"
-"Виправлене відступлення імен файлів"
-"Выпраўлены адступ імёнаў файлаў"
-
-ConfigFilenameMaxIndentation
-"Максимальный отступ имен файлов"
-"Max file names indentation"
-"Maximální odsazení názvů souborů"
-"Maximaler Abstand von Dateinamen"
-"Maximális fájlnevek behúzása"
-"Maksymalne wcięcie nazw plików"
-"Sangrado Máximo de nombres de archivos"
-"Максимальний відступ імен файлів"
-"Максімальны адступ імёнаў файлаў"
-
 ConfigAutoChange
 "&Автосмена папки"
 "&Auto change folder"
@@ -2342,6 +2287,116 @@ ConfigShowSortMode
 "Показувати літеру режиму сор&тування"
 "Адлюстроўваць літару стану пара&дкавання"
 
+ConfigPanelHighlightMarksButton
+"Раскраска файлов - Маркировка"
+"Highlight files - Marking"   
+"Zvýrazňovat soubory - Označení"  
+"Dateien markieren - Markierung"
+"Fájlok kiemelése - Jelzés"    
+"Wyróżniaj pliki - Cechowanie"
+"Resaltar archivos - Marcado"   
+"Розфарбовка файлів - Маркування"
+"Размалёўка файлаў - Маркіроўка"
+
+ConfigPanelHighlightMarksTitle
+"Настройки панели - Раскраска файлов - Маркировка"
+"Panel settings - Highlight files - Marking"   
+"Nastavení panelů - Zvýrazňovat soubory - Označení"  
+"Panels einrichten - Dateien markieren - Markierung"
+"Panel beállítások - Fájlok kiemelése - Jelzés"    
+"Ustawienia panelu - Wyróżniaj pliki - Cechowanie"
+"Configuración de paneles - Resaltar archivos - Marcado"   
+"Налаштування панели - Розфарбовка файлів - Маркування"
+"Налады стужкі - Размалёўка файлаў - Маркіроўка"
+
+ConfigFilenameMarksStatusLine
+"Строка статуса: Показывать маркировку имен файлов"
+"Status line: Show file name markings"
+"Stavový řádek: Zobrazit označení názvů souborů"
+"Statuszeile: Dateinamenmarkierungen anzeigen"
+"Állapotsor: Fájlnevek megjelölésének megjelenítése"
+"Linia statusu: Pokaż oznaczenia nazw plików"
+"Línea de estado: Mostrar marcas de nombres de archivos"
+"Рядок статусу: Показати маркування імен файлів"
+"Радок стану: Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksStatusLineHint
+"Ctrl-Alt-N для быстрого переключения на панелях"
+"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+
+ConfigFilenameMarks
+"Панели: Показывать маркировку имен файлов"
+"Panel: Show file name markings"
+"Panely: Zobrazit označení názvů souborů"
+"Paneele: Dateinamenmarkierungen anzeigen"
+"Panelek: Fájlnevek megjelölésének megjelenítése"
+"Panele: Pokaż oznaczenia nazw plików"
+"Paneles: Mostrar marcas de nombres de archivos"
+"Панелі: Показати маркування імен файлів"
+"Панэлі: Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksHint
+"Ctrl-Alt-M для быстрого переключения на панелях"
+"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+
+ConfigFilenameMarksAlign
+"Выравнивать имена файлов по маркировкам"
+"Align file names by markings"
+"Vyrovnat názvy souborů podle označení"
+"Dateinamen nach Markierungen ausrichten"
+"Fájlneveket igazítani a megjelölések szerint"
+"Wyrównaj nazwy plików według oznaczeń"
+"Alinear nombres de archivos por marcas"
+"Вирівняти імена файлів за маркуваннями"
+"Выраўнаваць імёны файлаў па маркіроўках"
+
+ConfigFilenameMinMaxIndentation
+"Мин - макс отступ имен файлов"
+"Min - max file names indentation"
+"Min - max odsazení názvů souborů"
+"Min - max Abstand von Dateinamen"
+"Min - max fájlnevek behúzása"
+"Min - maks wcięcie nazw plików"
+"Sangrado mín - máx de nombres de archivos"
+"Мін - макс відступ імен файлів"
+"Мін - макс адступ імёнаў файлаў"
+
+ConfigFilenameMinIndentation
+"Фиксированный отступ имен файлов"
+"Fixed indentation of file names"
+"Opravené odsazení názvů souborů"
+"Festgelegte Einrückung von Dateinamen"
+"A fájlnevek rögzített behúzása"
+"Naprawione wcięcie nazw plików"
+"Sangría fija de nombres de archivos"
+"Виправлене відступлення імен файлів"
+"Выпраўлены адступ імёнаў файлаў"
+
+ConfigFilenameMaxIndentation
+"Максимальный отступ имен файлов"
+"Max file names indentation"
+"Maximální odsazení názvů souborů"
+"Maximaler Abstand von Dateinamen"
+"Maximális fájlnevek behúzása"
+"Maksymalne wcięcie nazw plików"
+"Sangrado Máximo de nombres de archivos"
+"Максимальний відступ імен файлів"
+"Максімальны адступ імёнаў файлаў"
+
 ConfigInterfaceTitle
 l:
 "Настройки интерфейса"
@@ -2367,70 +2422,146 @@ upd:"Input settings"
 "Налады увода"
 
 DirSettingsTitle
-"Настройки отображения каталога"
-"Directory showas settings"
-"Nastavení zobrazení adresáře"
-"Einstellungen zur Anzeige des Verzeichnisses"
-"Könyvtár megjelenítési beállításai"
-"Ustawienia wyświetlania katalogu"
-"Configuración de visualización del directorio"
-"Налаштування відображення каталогу"
-"Налады адлюстравання каталога"
+"Каталоги и симлинки в колонке Размер"
+"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+
+DirSettingsHint
+"Ctrl-Alt-D для быстрого открытия с панелей"
+"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
 
 DirSettingsCenter
-"Выравнивать по центру"
-"Center align"
-"Zarovnat do středu"
-"Zentrieren"
-"Középre igazítani"
-"Wyśrodkować"
-"Alinear al centro"
-"Вирівняти по центру"
-"Выраўнаваць па цэнтры"
+"Выравнивать по &центру"
+"&Center align"
+"&Zarovnat do středu"
+"&Zentrieren"
+"&Középre igazítani"
+"&Wyśrodkować"
+"Alinear al &centro"
+"Вирівняти по &центру"
+"Выраўнаваць па &цэнтры"
 
 DirSettingsSurround
-"Символы вокруг"
-"Symbols around"
-"Symboly kolem"
-"Symbole um"
-"Szimbólumok körül"
-"Symbole wokół"
-"Símbolos alrededor"
-"Символи навколо"
-"Сімвалы вакол"
+"&Символы вокруг"
+"&Symbols around"
+"&Symboly kolem"
+"&Symbole um"
+"&Szimbólumok körül"
+"&Symbole wokół"
+"&Símbolos alrededor"
+"&Символи навколо"
+"&Сімвалы вакол"
 
 DirSettingsShowAs
-"Показывать директорию как:"
-"Show directory as:"
-"Zobrazit adresář jako:"
-"Verzeichnis anzeigen als:"
-"Könyvtár megjelenítéseként:"
-"Pokaż katalog jako:"
-"Mostrar directorio como:"
-"Показувати каталог як:"
-"Паказваць каталог як:"
+"Показывать &директорию как:"
+"Show &directory as:"
+"Zobrazit &adresář jako:"
+"&Verzeichnis anzeigen als:"
+"Könyvtár &megjelenítéseként:"
+"Pokaż &katalog jako:"
+"Mostrar &directorio como:"
+"Показувати &каталог як:"
+"Паказваць &каталог як:"
 
-DirSettingsEmpty
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
-"-"
+DirSettingsWidthText
+"Подстройка &ширины колонки "Размер" под текст:"
+"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+"Відрегулюйте &ширину колонки "Розмір" до тексту:"
+"Адрэгулюйце &шырыню слупка "Памер" да тэксту:"
+
+DirSettingsWidthCombo0
+"когда в режимах панели ширина колонки 0"
+"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+"коли в режимі панелі файлів ширина 0"
+"калі ў рэжыме панэлі файла шырыня 0"
+
+DirSettingsWidthCombo1
+"всегда"
+"always"
+upd:"always"
+upd:"always"
+upd:"always"
+upd:"always"
+upd:"always"
+"завжди"
+"заўсёды"
+
+DirSettingsSymlinkText
+"Для симлинка на файл показывать:"
+"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+
+DirSettingsSymlinkRadio1
+"&текст"
+"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+DirSettingsSymlinkRadio2
+"размер целевого &файла"
+"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
 
 DirSettingsApply
-"Применить"
-"Apply"
-"Použít"
-"Anwenden"
-"Alkalmaz"
-"Zastosować"
-"Aplicar"
-"Застосувати"
-"Ужыць"
+"&Применить"
+"&Apply"
+"&Použít"
+"&Anwenden"
+"&Alkalmaz"
+"&Zastosować"
+"&Aplicar"
+"&Застосувати"
+"&Ужыць"
+
+DirSettingsSymlinkSizeHint
+"Ctrl-Alt-L для переключения из панелей"
+"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
 
 ConfigClock
 "&Часы в панелях"
@@ -5296,7 +5427,7 @@ AskDelete
 
 AskDeleteRecycleFolder
 "Вы хотите переместить в Корзину папку"
-"Do you wish to move to the Recycle Bin the folder"
+"Do you wish to move to the Trash the folder"
 "Přejete si přesunout do Koše adresář"
 "Wollen Sie den Ordner in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a mappát?"
@@ -5307,7 +5438,7 @@ AskDeleteRecycleFolder
 
 AskDeleteRecycleFile
 "Вы хотите переместить в Корзину файл"
-"Do you wish to move to the Recycle Bin the file"
+"Do you wish to move to the Trash the file"
 "Přejete si přesunout do Koše soubor"
 "Wollen Sie die Datei in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a fájlt?"
@@ -5318,7 +5449,7 @@ AskDeleteRecycleFile
 
 AskDeleteRecycle
 "Вы хотите переместить в Корзину"
-"Do you wish to move to the Recycle Bin"
+"Do you wish to move to the Trash"
 "Přejete si přesunout do Koše"
 "Wollen Sie das Objekt in den Papierkorb verschieben"
 "A Lomtárba akar dobni"
@@ -5788,13 +5919,13 @@ DeleteRetry
 
 DeleteRetryNotRecycleBin
 "&Без корзины"
-"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
+"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
 "&Без Кошыка"
 
 DeleteSkip
@@ -13623,6 +13754,28 @@ upd:"Free paging file"
 "Вільно файлу підкачки"
 "Вольна файла падпампоўкі"
 
+InfoEdCfgNearestDir
+".editorconfig Nearest Dir"
+".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+
+InfoEdCfgRootDir
+".editorconfig Root Dir"
+".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+
 InfoGitRootDir
 "Git Root Directory"
 "Git Root Directory"
@@ -14306,7 +14459,7 @@ MenuOwnersView
 "Fájl tula&jdonos    BalCtrl+8"
 "&Właściciele          LCtrl+8"
 "Du&eños de archivos    LCtrl+8"
-"Власники файлів           LCtrl+8"
+"Власники файлів          LCtrl+8"
 "Ул&адальнікі файлаў        LCtrl+8"
 
 MenuLinksView
@@ -14317,7 +14470,7 @@ MenuLinksView
 "Fájl li&nkek        BalCtrl+9"
 "Dowiąza&nia           LCtrl+9"
 "En&laces               LCtrl+9"
-"Зв'язки файлів            LCtrl+9"
+"Зв'язки файлів           LCtrl+9"
 "Сувя&зя файлаў             LCtrl+9"
 
 MenuAlternativeView
@@ -14406,7 +14559,7 @@ MenuReread
 "Friss&ítés          Ctrl+R"
 "Odśw&ież              Ctrl+R"
 "&Releer                Ctrl+R"
-"Перечитати                Ctrl+R"
+"Перечитати               Ctrl+R"
 "П&ерачытаць                Ctrl+R"
 
 MenuChangeDrive
@@ -14417,7 +14570,7 @@ MenuChangeDrive
 "Meghajtó&váltás     Alt+F1"
 "Z&mień napęd          Alt+F1"
 "Cambiar &unidad        Alt+F1"
-"З&мінити диск             Alt+F1"
+"&Меню переходу             Alt+F1"
 "З&мяніць дыск              Alt+F1"
 
 MenuView
@@ -14464,6 +14617,17 @@ MenuMove
 "&Renombrar o mover     F6"
 "П&еренесення           F6"
 "П&еранесці             F6"
+
+MenuLink
+"Ссы&лка                Alt+F6"
+"Lin&k               Alt+F6"
+"Link                       Alt+F6"
+upd:"Li&nk                 Alt+F6"
+upd:"&Link                 Alt+F6"
+"Link                      Alt+F6"
+"En&lace                Alt+F6"
+"Поси&лання             Alt+F6"
+"Спасы&лак              Alt+F6"
 
 MenuCreateFolder
 "&Создание папки        F7"
@@ -14583,7 +14747,7 @@ MenuUnselectGroup
 "Jelölést l&evesz      Szürke -"
 "Odz&nacz grupę             Szary -"
 "Deseleccio&nar grupo   Gray -"
-"З&няти позначку         Gray -"
+"З&няти позначку        Gray -"
 "З&няць адзнаку          Gray -"
 
 MenuInvertSelection
@@ -14806,17 +14970,6 @@ MenuProcessList
 "Lista de &tareas       Ctrl+W"
 "Список & завдань          Ctrl+W"
 "Спіс &задачаў             Ctrl+W"
-
-MenuHotPlugList
-"Список Hotplug-&устройств"
-"Ho&tplug devices list"
-"Seznam v&yjímatelných zařízení"
-"Sicheres En&tfernen"
-"H&otplug eszközök"
-"Lista urządzeń Ho&tplug"
-"Lista de dispositivos ho&tplug"
-"Список Hotplug-&пристроїв"
-"Спіс прылад гарачай &устаноўкі"
 
 MenuSystemSettings
 l:
@@ -15102,7 +15255,7 @@ MenuChangeDriveRight
 "Meghajtó&váltás     Alt+F2"
 "Z&mień napęd          Alt+F2"
 "Cambiar &unidad        Alt+F2"
-"З&мінити диск             Alt+F2"
+"&Меню переходу             Alt+F2"
 "З&мяніць дыск             Alt+F2"
 
 MenuLeftTitle
@@ -17395,7 +17548,7 @@ Palette
 "P&aleta"
 "P&aleta"
 "П&алітра"
-"&алiтра"
+"П&алiтра"
 
 SetColorPanelNormal
 l:
@@ -26478,11 +26631,11 @@ upd:"to create this symbolic link:"
 
 AdminRequiredRecycle
 "для перемещения этого объекта в корзину:"
-"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
+"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
 "para mover este objeto a la papelera:"
 "для переміщення цього об'єкта в кошик:"
 "для пераносу гэтага аб'екту ў Сметнік:"
@@ -26797,15 +26950,15 @@ upd:"In .editorconfig 'indent_style' set to '%s'"
 "У .editorconfig 'indent_style' усталяваны '%s'"
 
 EditorConfigOrgValueOfCharset
-"В .editorconfig 'charset' установлен '%d'"
-"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-"У .editorconfig 'charset' встановлено '%d'"
-"У .editorconfig 'charset' усталяваны '%d'"
+"В .editorconfig 'charset' установлен '%ls'"
+"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+"У .editorconfig 'charset' встановлено '%ls'"
+"У .editorconfig 'charset' усталяваны '%ls'"
 
 EditorConfigOrgProblemIndentSize
 "В этом случае пользователь не может изменить размер таба по Shift+F5"
@@ -26905,6 +27058,17 @@ upd:"Context (&lines):"
 upd:"Context (&lines):"
 "&Контекст (рядків):"
 "&Кантэкст (радкоў):"
+
+OSC52Confirm
+"Использовать OSC52 для установки данных буфера обмена (вопрос при первом запуске)\n\nOSC52 позволяет копировать из far2l, работающего в TTY-режиме\n(даже через подключение по SSH), в буфер обмена вашей локальной системы.\n(Если вы используете far2l на удалённой небезопасной системе, предоставление\nей доступа на запись в ваш буфер обмена может быть потенциально небезопасным).\n\nНекоторым терминалам также требуется включение OSC52 в их настройках.\n\nВы можете в любой момент включать/выключать OSC52\nв Меню(F9)->Параметры->Настройки интерфейса.\n\nРазрешить far2l использовать OSC52 для работы с буфером обмена?\n"
+"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+"Використовувати OSC52 для встановлення даних буфера обміну (запит при першому запуску)\n\nOSC52 дозволяє копіювати з far2l, що працює в режимі TTY\n(навіть через підключення по SSH), до буфера обміну вашої локальної системи.\n(Якщо ви використовуєте far2l на віддаленій небезпечній системі, надання\nдоступу до запису в буфер обміну може бути потенційно небезпечним).\n\nДеяким терміналам також потрібно ввімкнення OSC52 у налаштуваннях терміналу.\n\nВи можете в будь-який момент вмикати/вимикати OSC52\nу Меню(F9)->Параметри->Налаштування інтерфейсу.\n\nДозволити far2l використовувати OSC52 для роботи з буфером обміну?\n"
+"Выкарыстоўваць OSC52 для ўстаноўкі даных буфера абмену (пытанне пры першым запуску)\n\nOSC52 дазваляе капіяваць з far2l, які працуе ў TTY-рэжыме\n(нават праз падключэнне па SSH), у буфер абмену вашай лакальнай сістэмы.\n(Калі вы выкарыстоўваеце far2l на аддаленай ненадзейнай сістэме, прадастаўленне\nдоступу да запісу ў ваш буфер абмену можа быць патэнцыйна небяспечным).\n\nНекаторым тэрміналам таксама трэба ўключыць OSC52 у іх наладках.\n\nВы можаце ў любы момант уключаць/выключаць OSC52\nу Меню(F9)->Параметры->Налады інтэрфейсу.\n\nДазволіць far2l выкарыстоўваць OSC52 для працы з буферам абмену?\n"
 
 #Must be the last
 NewFileName

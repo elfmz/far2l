@@ -10,5 +10,8 @@ struct EditorConfigOrg
 	int CodePage = -1;
 	int CodePageBOM = -1;
 
+	int pos_trim_dir_nearest = -1;
+	int pos_trim_dir_root = -1;
+
 	void Populate(const char *edited_file);
 };

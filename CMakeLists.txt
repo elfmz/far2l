@@ -40,7 +40,8 @@ if(GIT_FOUND)
     execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tag
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         OUTPUT_VARIABLE GIT_TAG
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
 endif()
 
 if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
@@ -141,6 +142,11 @@ endif()
 if(${CMAKE_VERSION} VERSION_LESS "3.1.0")
     message("Please consider to switch to newer CMake")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+if("${ICU_MODE}" STREQUAL "runtime")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUNTIME_ICU")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRUNTIME_ICU")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
@@ -401,11 +407,6 @@ if (NOT DEFINED MULTIARC OR MULTIARC)
         if(NOT LibArchive_FOUND)
             message(WARNING "${ColorRed}libarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${ColorNormal}")
         endif()
-    endif()
-
-    pkg_search_module(PCRE QUIET libpcre)
-    if(NOT PCRE_FOUND)
-        message(WARNING "${ColorRed}libpcre not found, multiarc will have no regexp support in custom archive format descriptions. Install libpcre and reconfigure far2l if you need that functionality.${ColorNormal}")
     endif()
 
     add_subdirectory (multiarc)

@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        Dockerfile
+
+        Based on:
+            https://docs.docker.com/reference/dockerfile/
+
+        Limitations:
+            1. Custom escape character is not supported.
+            2. Shell is assumed to be a posix shell. There is no possability
+               to highlight as other shell (e.g. powershell).
+            3. heredoc in RUN instruction is highlighted as a shell script.
+               Practically, it can be anything else (e.g. python script).
+
+        TODO:
+            1. Parse URIs in source parameters for ADD/COPY
+            2. Highlight sources and destinations differently for ADD/COPY
+            3. Recognize and hightlight image name for "COPY --from=..."
+            4. Recognize and validate parameters for instructions (FROM/RUN/ADD etc.)
+            5. Recognize and highlight parser directives (https://docs.docker.com/reference/dockerfile/#parser-directives)
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="dockerfile" group="scripts" description="Dockerfile">
+            <location link="scripts/dockerfile.hrc"/>
+            <filename>/^[Dd]ockerfile\..+$/</filename>
+            <filename>/^[Dd]ockerfile$/</filename>
+            <firstline>/^\s*FROM\b/</firstline>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="dockerfile">
+
+<region name="Text" parent="def:Text"/>
+<region name="Comment" parent="def:Comment"/>
+<region name="String"  parent="def:String"/>
+<region name="StringEdge" parent="def:StringEdge"/>
+
+<region name="ImageRepo" parent="def:Tag"/>
+<region name="ImageName" parent="def:Prefix"/>
+<region name="ImageTag" parent="def:Identifier"/>
+<region name="ImageDigest" parent="def:Directive"/>
+<region name="ImageLabel" parent="def:Label"/>
+
+<region name="Instruction" parent="def:Keyword"/>
+<region name="InstructionOnBuild" parent="def:StructKeyword"/>
+
+<region name="Parameter" parent="def:Parameter"/>
+<region name="Symbol" parent="def:Symbol"/>
+
+<region name="Variable" parent="def:Var"/>
+<region name="VariableStrong" parent="def:VarStrong"/>
+
+<region name="HeredocOperator" parent="shell-posix:HeredocOperator"/>
+<region name="HeredocAnchor" parent="shell-posix:HeredocAnchor"/>
+
+<region name="Number" parent="def:Number"/>
+<region name="Path" parent="def:Path"/>
+
+<region name="UID" parent="def:Constant"/>
+<region name="GID" parent="def:Identifier"/>
+
+<region name="Constant" parent="def:Constant"/>
+
+<region name="Error" parent="def:Error"/>
+
+<!-- for testing -->
+<region name="Test" parent="def:URL"/>
+<region name="Test2" parent="def:TODO"/>
+
+<entity name="escape" value="\\"/>
+
+<scheme name="dockerfile">
+    <!-- For backward compatibility, leading whitespace before comments (#) and
+    instructions (such as RUN) are ignored, but discouraged -->
+    <regexp match="/\s+/"/>
+    <!-- comments -->
+    <block start="/#/" end="/$/" region="Comment" scheme="def:Comment"/>
+    <!-- instruction: FROM -->
+    <block start="/(FROM)\b/i" end="/$/" region01="Instruction" scheme="FROM"/>
+    <!-- instruction: RUN -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(RUN)\b/i" end="/$/" region01="Instruction" scheme="RUN"/>
+    <!-- instruction: CMD / ENTRYPOINT -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(CMD|ENTRYPOINT)\b/i" end="/$/" region01="Instruction" scheme="CMD"/>
+    <!-- instruction: LABEL -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(LABEL)\b/i" end="/$/" region01="Instruction" scheme="LABEL"/>
+    <!-- instruction: MAINTAINER -->
+    <block start="/(MAINTAINER)\b/i" end="/$/" region01="Instruction" scheme="MAINTAINER"/>
+    <!-- instruction: EXPOSE -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(EXPOSE)\b/i" end="/$/" region01="Instruction" scheme="EXPOSE"/>
+    <!-- instruction: ENV -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(ENV)\b/i" end="/$/" region01="Instruction" scheme="ENV"/>
+    <!-- instruction: ADD -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(ADD)\b/i" end="/$/" region01="Instruction" scheme="ADD"/>
+    <!-- instruction: COPY -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(COPY)\b/i" end="/$/" region01="Instruction" scheme="COPY"/>
+    <!-- instruction: VOLUME -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(VOLUME)\b/i" end="/$/" region01="Instruction" scheme="VOLUME"/>
+    <!-- instruction: USER -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(USER)\b/i" end="/$/" region01="Instruction" scheme="USER"/>
+    <!-- instruction: WORKDIR -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(WORKDIR)\b/i" end="/$/" region01="Instruction" scheme="WORKDIR"/>
+    <!-- instruction: ARG -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(ARG)\b/i" end="/$/" region01="Instruction" scheme="ARG"/>
+    <!-- instruction: STOPSIGNAL -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(STOPSIGNAL)\b/i" end="/$/" region01="Instruction" scheme="STOPSIGNAL"/>
+    <!-- instruction: HEALTHCHECK -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(HEALTHCHECK)\b/i" end="/$/" region01="Instruction" scheme="HEALTHCHECK"/>
+    <!-- instruction: SHELL -->
+    <block start="/(?{InstructionOnBuild}ONBUILD\s+)?(SHELL)\b/i" end="/$/" region01="Instruction" scheme="SHELL"/>
+    <!-- enything else is an error -->
+    <block start="//" end="/$/" region="Error" scheme="def:empty"/>
+</scheme>
+
+<scheme name="inline-comment">
+    <block start="/^\s*#/" end="/^/" region="Comment" scheme="def:Comment"/>
+</scheme>
+
+<scheme name="escape_newline">
+    <!-- spaces between backslash and EOL are usually unexpected -->
+    <block start="/%escape;\s+$/" end="/$/" region00="Symbol" scheme="def:empty" region="Error"/>
+    <!-- escape new line -->
+    <block start="/%escape;$/" end="/^/" region00="Symbol" scheme="def:empty"/>
+    <inherit scheme="inline-comment"/>
+</scheme>
+
+<scheme name="escapes">
+    <inherit scheme="escape_newline"/>
+    <!-- ignore other escaped char -->
+    <regexp match="/%escape;./"/>
+</scheme>
+
+<scheme name="string-with-var">
+    <inherit scheme="escapes"/>
+    <inherit scheme="shell-bash:variables"/>
+    <inherit scheme="def:Number"/>
+</scheme>
+
+<scheme name="string-without-var">
+    <inherit scheme="escapes"/>
+    <inherit scheme="def:Number"/>
+</scheme>
+
+<scheme name="string-array-body">
+    <inherit scheme="escape_newline"/>
+    <block start="/(\[?#1|\s*(?{Symbol},)|^)\s*((&quot;))(.*&quot;)?=/" end="/(&quot;|$)\M(?{Symbol},)?/" scheme="string-with-var"
+        region="String"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="Symbol"        region11="Symbol"/>
+    <!-- skip some free space -->
+    <regexp match="/\s+\M\]/"/>
+    <regexp match="/\s*,?\s*\M%escape;$/"/>
+    <!-- everything else except closing bracket is an error -->
+    <block start="/(\])?!/" end="/\M(\]|$)/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="string-array">
+    <block start="/(\[)/" end="/((\]|$))\s*(?{Error}.*)$/" scheme="string-array-body"
+        region01="def:PairStart" region12="def:PairEnd"
+        region00="Symbol"        region11="Symbol"
+                                 region13="Error"/>
+</scheme>
+
+<scheme name="string-list">
+    <inherit scheme="escape_newline"/>
+    <regexp match="/\s+/"/>
+    <!-- quoted path -->
+    <block start="/((&quot;))/" end="/((&quot;|$))/" scheme="string-with-var"
+        region01="def:PairStart" region11="def:PairEnd"
+        region02="StringEdge"    region12="StringEdge"/>
+    <!-- unquoted path -->
+    <block start="/\S?=/" end="/\M\s|$/" scheme="string-with-var"/>
+</scheme>
+
+<scheme name="key-value">
+    <inherit scheme="escape_newline"/>
+    <!-- quoted value -->
+    <block start="/(=)((&quot;))/" end="/((&quot;))/" scheme="string-with-var" region="String"
+        region01="Symbol"
+        region02="def:PairStart"  region11="def:PairEnd"
+        region03="StringEdge"     region12="StringEdge"/>
+    <!-- unquoted value -->
+    <block start="/(=)/" end="/\M(\s|$)/" scheme="string-with-var" region="String"
+        region01="Symbol"/>
+    <!-- quoted key -->
+    <block start="/(?{}\s?#1|^)((&quot;))(.*&quot;)?=/" end="/((&quot;))\M=/" scheme="string-with-var" region="Variable"
+        region01="def:PairStart"  region11="def:PairEnd"
+        region02="VariableStrong" region12="VariableStrong"/>
+    <!-- unquoted key -->
+    <block start="/(?{}\s?#1|^)(\S+=)?=/" end="/\M=/" scheme="string-with-var" region="Variable"/>
+    <!-- everything is an error -->
+    <block start="/\S?=/" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="image-name">
+    <block start="/\s*\M\S+\//" end="/~\S+\m\//" scheme="string-with-var"
+        region="ImageRepo" region10="Symbol"/>
+    <block start="/(\s|\/)?#1\M[^\s:@]+/" end="/~[^\s:@]+\m\M([\s:@]|$)/" scheme="string-with-var"
+        region="ImageName"/>
+    <block start="/(:)\M[^\s@]+/" end="/~[^\s@]+\m\M([\s@]|$)/" scheme="string-with-var"
+        region="ImageTag" region01="Symbol"/>
+    <block start="/(@)\M\S+/" end="/~\S+\m\M(\s|$)/" scheme="string-with-var"
+        region="ImageDigest" region01="Symbol"/>
+</scheme>
+
+<scheme name="parameters">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <regexp match="/--([a-z]+)\b(=)?!/i" region="Parameter"/>
+    <block start="/(--[a-z]+)(=)/i" end="/\M(\s|$)/" scheme="string-with-var" region="String"
+        region01="Parameter" region02="Symbol"/>
+</scheme>
+
+<scheme name="FROM">
+    <inherit scheme="parameters"/>
+    <block start="//" end="/$/" scheme="FROM-image"/>
+</scheme>
+
+<scheme name="FROM-image">
+    <!-- report an error when an unknown word appears in FROM instruction -->
+    <block start="/(AS)?!\M\S+\s+(AS)?!\S/i" end="/~\S+\m\s*(.+)$/" scheme="image-name"
+        region11="Error"/>
+    <block start="/\s?#1\s*(AS)\s+\M\S+/i" end="/~(\S+)\m\s*(?{Error}.*)$/" scheme="string-with-var"
+        region01="Instruction" region11="ImageLabel"/>
+    <inherit scheme="image-name"/>
+</scheme>
+
+<scheme name="RUN-heredoc">
+    <block start="/\M./" end="/$/" scheme="shell-posix:script" region00="Test2" priority="low"/>
+</scheme>
+
+<scheme name="RUN">
+    <inherit scheme="parameters"/>
+    <inherit scheme="string-array"/>
+    <block start="/(?{HeredocOperator}&lt;&lt;-?)([&quot;&apos;]?)(?{HeredocAnchor}[\w\d_-]+)(\1)/"
+        end="/^(\y{HeredocAnchor})\s*$/" scheme="RUN-heredoc"
+        region01="StringEdge" region02="StringEdge" region11="HeredocAnchor"
+        region00="def:PairStart" region10="def:PairEnd"/>
+    <block start="/(\S)?=/" end="/$/" scheme="shell-script"/>
+</scheme>
+
+<scheme name="CMD">
+    <inherit scheme="string-array"/>
+    <block start="/(\S)?=/" end="/$/" scheme="shell-script"/>
+</scheme>
+
+<scheme name="LABEL">
+    <block start="//" end="/$/" scheme="key-value"/>
+</scheme>
+
+<scheme name="MAINTAINER">
+    <block start="//" end="/$/" scheme="def:empty" region="String"/>
+</scheme>
+
+<scheme name="EXPOSE">
+    <inherit scheme="escape_newline"/>
+    <regexp match="/\s+/"/>
+    <inherit scheme="shell-bash:variables"/>
+    <regexp match="/\d+/" region="Number"/>
+    <regexp match="/\S?#1(\/)(tcp|udp)\b/" region1="Symbol" region2="Constant"/>
+    <!-- everything is an error -->
+    <block start="/\S?=/" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="ENV-legacy">
+    <inherit scheme="escape_newline"/>
+    <!-- key is quoted -->
+    <block start="/(?{}\s?#1|^)((&quot;))/" end="/((&quot;))/" scheme="string-with-var" region="Variable"
+        region01="def:PairStart"  region11="def:PairEnd"
+        region02="VariableStrong" region12="VariableStrong"/>
+    <!-- key is unquoted -->
+    <block start="/(?{}\s?#1|^)\S?=/" end="/\M\s|$/" scheme="string-with-var" region="Variable"/>
+    <!-- value -->
+    <block start="//" end="/$/" scheme="string-list" region="String"/>
+</scheme>
+
+<scheme name="ENV">
+    <inherit scheme="escape_newline"/>
+    <regexp match="/\s+/"/>
+    <!-- the first word that starts with a quote and has a space inside is an error -->
+    <block start="/&quot;[^&quot;\s]*(\s|$)/" end="/$/" scheme="def:empty" region="Error"/>
+    <!-- legacy syntax -->
+    <block start="/([^\s=]+(\s|$))?=/" end="/$/" scheme="ENV-legacy"/>
+    <!-- normal key-value syntax -->
+    <block start="//" end="/$/" scheme="key-value"/>
+</scheme>
+
+<scheme name="ADD">
+    <inherit scheme="parameters"/>
+    <inherit scheme="string-array"/>
+    <block start="/(\S)?=/" end="/$/" scheme="string-list" region="Path"/>
+</scheme>
+
+<scheme name="COPY">
+    <inherit scheme="parameters"/>
+    <inherit scheme="string-array"/>
+    <block start="/((?{HeredocOperator}&lt;&lt;-?)([&quot;&apos;]?)(?{HeredocAnchor}[\w\d_-]+)(\2))(\s+(?{Path}.*))?/"
+        end="/^(\y{HeredocAnchor})\s*$/" scheme="def:empty" region="String"
+        region02="StringEdge" region03="StringEdge" region11="HeredocAnchor"
+        region01="def:PairStart" region10="def:PairEnd"/>
+    <block start="/(\S)?=/" end="/$/" scheme="string-list" region="Path"/>
+</scheme>
+
+<scheme name="VOLUME">
+    <inherit scheme="escape_newline"/>
+    <inherit scheme="string-array"/>
+    <block start="/(\S)?=/" end="/$/" scheme="string-list" region="Path"/>
+</scheme>
+
+<scheme name="USER">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <!-- user as UID -->
+    <block start="/(?{}\s?#1|^)\d?=/" end="/(?{Symbol}:)|(?{Error}\D.*)|$/" scheme="string-with-var"
+        region="Number"/>
+    <!-- user as a string -->
+    <block start="/(?{}\s?#1|^)[\$\w_-]?=/" end="/(?{Symbol}:)|(?{Error}[^\$\w_-].*)|$/" scheme="string-with-var"
+        region="UID"/>
+    <!-- group as GID -->
+    <block start="/(\S:)?#2\d?=/" end="/[^\$\d].*|$/" scheme="string-with-var"
+        region="Number" region10="Error"/>
+    <!-- group as a string -->
+    <block start="/(\S:)?#2[\$\w_-]?=/" end="/[^\$\w_-].*|$/" scheme="string-with-var"
+        region="GID" region10="Error"/>
+    <!-- everything is an error -->
+    <block start="//" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="WORKDIR">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <block start="//" end="/\s+(?{Error}.*)|$/" scheme="string-with-var" region="Path"/>
+</scheme>
+
+<scheme name="ARG">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <!-- we cannot use key-value scheme as value is optional and
+    environment variables don't work in ARG instruction -->
+    <!-- quoted value -->
+    <block start="/(=)((&quot;))/" end="/((&quot;))/" scheme="string-without-var" region="String"
+        region01="Symbol"
+        region02="def:PairStart"  region11="def:PairEnd"
+        region03="StringEdge"     region12="StringEdge"/>
+    <!-- unquoted value -->
+    <block start="/(=)/" end="/\M(\s|$)/" scheme="string-without-var" region="String"
+        region01="Symbol"/>
+    <!-- quoted key -->
+    <block start="/=?~1((&quot;))/" end="/((&quot;|$))/" scheme="string-without-var" region="Variable"
+        region01="def:PairStart"  region11="def:PairEnd"
+        region02="VariableStrong" region12="VariableStrong"/>
+    <!-- unquoted key -->
+    <regexp match="/=?~1[^\s=]+/" region="Variable"/>
+    <!-- everything is an error -->
+    <block start="//" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="STOPSIGNAL">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <!-- signal as an integer -->
+    <block start="/(\d)?=/" end="/(?{Error}\D.*)|$/" scheme="string-with-var" region="Number"/>
+    <!-- signal as SIG* -->
+    <block start="/(S|\$)?=/" end="/(?{Error}\W.*)|$/" scheme="string-with-var" region="Constant"/>
+    <!-- everything is an error -->
+    <block start="//" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="HEALTHCHECK-cmd">
+    <inherit scheme="parameters"/>
+    <block start="/CMD\b\s*/" end="/$/" scheme="shell-script" region00="Constant"/>
+    <!-- everything is an error -->
+    <block start="//" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="HEALTHCHECK">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <!-- NONE value -->
+    <regexp match="/(?{Constant}NONE)\s*(?{Error}.*)$/"/>
+    <!-- if there is not NONE, switch scheme to avoid NONE match -->
+    <block start="//" end="/$/" scheme="HEALTHCHECK-cmd"/>
+</scheme>
+
+<scheme name="SHELL">
+    <regexp match="/\s+/"/>
+    <inherit scheme="escape_newline"/>
+    <inherit scheme="string-array"/>
+    <!-- everything is an error -->
+    <block start="//" end="/$/" scheme="def:empty" region="Error"/>
+</scheme>
+
+<scheme name="shell-script">
+    <inherit scheme="inline-comment"/>
+    <inherit scheme="shell-posix:script">
+        <virtual scheme="shell-posix:escape_newline" subst-scheme="shell-script-escape_newline"/>
+    </inherit>
+</scheme>
+
+<scheme name="shell-script-escape_newline">
+    <inherit scheme="inline-comment"/>
+    <inherit scheme="shell-posix:escape_newline"/>
+</scheme>
+
+</type>
+</hrc>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
+   - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+   - This program is free software; you can redistribute it and/or
+   - modify it under the terms of the GNU General Public License
+   - as published by the Free Software Foundation; either version 2
+   - of the License, or (at your option) any later version.
+   - This program is distributed in the hope that it will be useful,
+   - but WITHOUT ANY WARRANTY; without even the implied warranty of
+   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   - GNU General Public License for more details.
+   - You should have received a copy of the GNU General Public License
+   - along with this program; If not, see <http://www.gnu.org/licenses/>.
+   - ***** END LICENSE BLOCK ***** -->

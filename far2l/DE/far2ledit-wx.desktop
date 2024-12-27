@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Far2l Editor (WX GUI)
+Name[ru]=Редактор Far2l (WX GUI)
+Comment=Edit text files
+Comment[ru]=Редактирование текстовых файлов
+Exec=far2ledit --notty %f
+TryExec=far2ledit
+Terminal=false
+MimeType=text/plain;
+Categories=Utility;TextEditor;
+Icon=far2ledit
+Keywords=editor;console;text;

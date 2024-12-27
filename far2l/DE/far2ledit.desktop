@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Far2l Editor
-Name[ru]=Редактор Far2l
+Name=Far2l Editor (Terminal)
+Name[ru]=Редактор Far2l (Терминал)
 Comment=Edit text files
 Comment[ru]=Редактирование текстовых файлов
-Exec=far2ledit %f
+Exec=far2ledit --tty %f
 TryExec=far2ledit
 Terminal=true
 MimeType=text/plain;

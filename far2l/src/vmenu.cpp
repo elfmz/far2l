@@ -1925,7 +1925,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				SetColor(Col);
 				Text(CheckMark);
 				// табуляции меняем только при показе!!!
-				// для сохранение оригинальной строки!!!
+				// для сохранения оригинальной строки!!!
 				ReplaceTabsBySpaces(strMenuLine, 1);
 				if (strMItemPtrPrefixLen) {
 					SetColor(VMenu::Colors[Item[I]->Flags & LIF_SELECTED ? VMenuColorSelGrayed : VMenuColorGrayed]);

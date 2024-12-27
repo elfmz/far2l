@@ -2,12 +2,11 @@
 #define COLORER_LOGGER_H
 
 #include <sstream>
-
-#if __cplusplus < 201703L
-# include <experimental/string_view>
+#if __cplusplus < 201703L && !defined(_MSC_VER)
+#include <experimental/string_view>
 namespace std
 {
-	typedef experimental::string_view string_view;
+typedef experimental::string_view string_view;
 }
 #endif
 

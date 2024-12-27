@@ -42,9 +42,10 @@ int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 	int out;
 	for (out = 0; *str && limit != 0; ++str, --limit) {
 		if (!ShouldSkip(*str)) {
-			if (IsCharFullWidth(*str))
+			CharClasses cc(*str);
+			if (cc.FullWidth())
 				out+= 2;
-			else if (!IsCharXxxfix(*str))
+			else if (!cc.Xxxfix())
 				++out;
 		}
 	}
@@ -56,12 +57,13 @@ void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 	SetColor(_selection ? FarColorToReal(COL_VIEWERSELECTEDTEXT) : _color);
 
 	for(; skip_len > 0 && *str; ++str) {
-		if (ShouldSkip(*str))
-			;
-		else if (IsCharFullWidth(*str))
-			skip_len-= 2;
-		else if (!IsCharXxxfix(*str))
-			skip_len--;
+		if (!ShouldSkip(*str)) {
+			CharClasses cc(*str);
+			if (cc.FullWidth())
+				skip_len-= 2;
+			else if (!cc.Xxxfix())
+				skip_len--;
+		}
 	}
 
 	while (print_len > 0) {

@@ -546,7 +546,7 @@ void Connection::doproxy(int argc, char *argv[])
 		return;
 	}
 
-	// Allready in proxy mode
+	// Already in proxy mode
 	if (proxy > 0)
 		ExecCmdTab(c, argc - 1, argv + 1);
 	else {

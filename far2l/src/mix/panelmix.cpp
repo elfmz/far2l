@@ -90,7 +90,8 @@ void UpdateDefaultColumnTypeWidths( void )
 	size_t nameindex = Opt.DirNameStyle & 3;
 
 	ColumnTypeWidth[SIZE_COLUMN] = ColumnTypeWidth[PHYSICAL_COLUMN] = \
-			std::max( std::max(DirUpNames[nameindex].Len(), DirNames[nameindex].Len()) + \
+			std::max(
+				std::max( std::max(DirUpNames[nameindex].Len(), DirNames[nameindex].Len()), SymLinkNames[nameindex].Len()) + \
 			((Opt.DirNameStyle & DIRNAME_STYLE_SURR_CH) >> 3), (size_t)6ul );
 }
 

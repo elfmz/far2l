@@ -73,7 +73,7 @@ class TEXT(Element):
         self.text = text
 
     def get_best_size(self):
-        return (len(self.text), 1)
+        return (len(self.text.replace('&','')), 1)
 
     def makeItem(self, dlg):
         self.data = dlg.s2f(self.text)
@@ -84,10 +84,15 @@ class EDIT(Element):
     dit = "DI_EDIT"
 
     def __init__(self, varname, width, mask=None, height=1, **kwargs):
+        if "history" in kwargs:
+            history = kwargs.pop("history")
+        else:
+            history = None
         super().__init__(varname, **kwargs)
         self.width = width
         self.height = height
         self.mask = None
+        self.history = history
 
     def get_best_size(self):
         return (self.width, self.height)
@@ -97,6 +102,9 @@ class EDIT(Element):
         if self.mask is not None:
             self.param = {"Mask": dlg.s2f(self.mask)}
             self.flags = dlg.ffic.DIF_MASKEDIT
+        elif self.history is not None:
+            self.param = {"History": dlg.s2f(self.history)}
+            self.flags = dlg.ffic.DIF_HISTORY
         super().makeItem(dlg)
 
 
@@ -127,7 +135,7 @@ class BUTTON(Element):
 
     def get_best_size(self):
         # [ text ]
-        return (4 + len(self.text), 1)
+        return (4 + len(self.text.replace('&','')), 1)
 
     def makeItem(self, dlg):
         self.data = dlg.s2f(self.text)
@@ -145,7 +153,7 @@ class CHECKBOX(Element):
 
     def get_best_size(self):
         # [?] text
-        return (4 + len(self.text), 1)
+        return (4 + len(self.text.replace('&','')), 1)
 
     def makeItem(self, dlg):
         self.data = dlg.s2f(self.text)
@@ -162,7 +170,7 @@ class RADIOBUTTON(Element):
 
     def get_best_size(self):
         # (?) text
-        return (4 + len(self.text), 1)
+        return (4 + len(self.text.replace('&','')), 1)
 
     def makeItem(self, dlg):
         self.data = dlg.s2f(self.text)
@@ -173,10 +181,14 @@ class COMBOBOX(Element):
     dit = "DI_COMBOBOX"
 
     def __init__(self, varname, selected, *items, **kwargs):
+        if "width" in kwargs:
+            width = kwargs.pop("width")
+        else:
+            width = max([len(s) for s in items])
         super().__init__(varname, **kwargs)
         self.selected = selected
         self.items = items
-        self.width = max([len(s) for s in items])
+        self.width = width
 
     def get_best_size(self):
         return (2 + self.width, 1)
@@ -247,8 +259,8 @@ class USERCONTROL(Element):
 
     def __init__(self, varname, width, height, **kwargs):
         super().__init__(varname, **kwargs)
-        self.width
-        self.height
+        self.width = width
+        self.height = height
 
     def get_best_size(self):
         return (self.width, self.height)
@@ -307,6 +319,22 @@ class HSizer(sizer.HSizer):
 class VSizer(sizer.VSizer):
     def __init__(self, *controls, border=(0, 0, 0, 0)):
         super().__init__()
+        self.controls = controls
+        for control in controls:
+            self.add(control, border)
+
+    def makeID(self, dlg):
+        for control in self.controls:
+            control.makeID(dlg)
+
+    def makeItem(self, dlg):
+        for control in self.controls:
+            control.makeItem(dlg)
+
+
+class FlowSizer(sizer.FlowSizer):
+    def __init__(self, cols, *controls, border=(0, 0, 0, 0)):
+        super().__init__(cols)
         self.controls = controls
         for control in controls:
             self.add(control, border)

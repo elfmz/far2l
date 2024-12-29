@@ -2073,15 +2073,28 @@ void WinPortPanel::CheckPutText2CLip()
 void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 {
 	//fprintf(stderr, "OnSetFocus\n");
+	const bool was_focused = (_focused_ts != 0);
 	const DWORD ts = WINPORT(GetTickCount)();
 	_focused_ts = ts ? ts : 1;
 	ResetTimerIdling();
+	if (!was_focused) {
+		INPUT_RECORD ir = {};
+		ir.EventType = FOCUS_EVENT;
+		ir.Event.FocusEvent.bSetFocus = TRUE;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
 }
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");
-	_focused_ts = 0;
+	if (_focused_ts) {
+		_focused_ts = 0;
+		INPUT_RECORD ir = {};
+		ir.EventType = FOCUS_EVENT;
+		ir.Event.FocusEvent.bSetFocus = FALSE;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
 	ResetInputState();
 }
 

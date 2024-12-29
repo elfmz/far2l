@@ -11,7 +11,8 @@ my $arch = shift;
 my $full_version = "$major.$minor.$patch $arch";
 
 # Получаем текущий год
-my $current_year = (localtime)[5] + 1900;
+my (@tm) = localtime($ENV{SOURCE_DATE_EPOCH} || time());
+my $current_year = $tm[5] + 1900;
 my $copyright_years = "2016-$current_year";
 
 # Открываем файл и читаем его содержимое

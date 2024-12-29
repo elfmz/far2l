@@ -1,4 +1,4 @@
-/// NB: This file linked both into NetRocks plugin binary and into SHELL protocol broker executeable
+/// NB: This file linked both into NetRocks plugin binary and into SHELL protocol broker executable
 #include "WayToShellConfig.h"
 #include <KeyFileHelper.h>
 #include <utils.h>

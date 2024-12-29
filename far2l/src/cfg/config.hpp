@@ -404,6 +404,7 @@ struct Options
 	int FilenameMarksInStatusBar;
 	DWORD MinFilenameIndentation, MaxFilenameIndentation;
 	DWORD DirNameStyle;
+	DWORD DirNameStyleColumnWidthAlways;
 	DWORD ShowSymlinkSize;
 
 	int Highlight;

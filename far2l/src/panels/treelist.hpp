@@ -177,6 +177,6 @@ public:
 	static void ReadCache(const wchar_t *TreeRoot);
 	static void FlushCache();
 
-	static int MustBeCached(const wchar_t *Root);	// $ 16.10.2000 tran - функция, определяющаяя необходимость кеширования файла
+	static int MustBeCached(const wchar_t *Root);	// $ 16.10.2000 tran - функция, определяющая необходимость кеширования файла
 	static void PR_MsgReadTree();
 };

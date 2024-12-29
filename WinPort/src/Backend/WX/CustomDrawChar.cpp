@@ -6,12 +6,12 @@ namespace WXCustomDrawChar
 
 	struct CharMetrics
 	{
-		inline CharMetrics(Painter &p, unsigned int start_y, unsigned int cx)
+		inline CharMetrics(Painter &p, unsigned int start_y, unsigned int cx) :
+			left(cx * p.fw),
+			right(left + p.fw - 1),
+			top(start_y),
+			bottom(top + p.fh - 1)
 		{
-			left = cx * p.fw;
-			right = left + p.fw - 1;
-			top = start_y;
-			bottom = top + p.fh - 1;
 		}
 
 		wxCoord left;
@@ -23,10 +23,10 @@ namespace WXCustomDrawChar
 	struct SingleLineBoxMetrics : CharMetrics
 	{
 		inline SingleLineBoxMetrics(Painter &p, unsigned int start_y, unsigned int cx)
-			: CharMetrics(p, start_y, cx)
+			: CharMetrics(p, start_y, cx),
+			  middle_y(top + p.fh / 2 - p.thickness / 2),
+			  middle_x(left + p.fw / 2 - p.thickness / 2)
 		{
-			middle_y = top + p.fh / 2 - p.thickness / 2;
-			middle_x = left + p.fw / 2 - p.thickness / 2;
 		}
 
 		wxCoord middle_y;
@@ -894,95 +894,16 @@ namespace WXCustomDrawChar
 		p.FillRectangle(m.left, m.top, m.right, m.top + (p.fh / 2) - 1);
 	}
 
-	static void Draw_2581(Painter &p, unsigned int start_y, unsigned int cx) /* ▁ */
-	{
+	static void Draw_2581_2588(Painter &p, unsigned int start_y, unsigned int cx)
+	{	/* '▁' '▂' '▃' '▄' '▅' '▆' '▇' '█' */
 		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (7 * p.fh / 8), m.right, m.bottom);
+		p.FillRectangle(m.left, m.top + (p.fh * (0x2588 - p.wc) / 8), m.right, m.bottom);
 	}
 
-	static void Draw_2582(Painter &p, unsigned int start_y, unsigned int cx) /* ▂ */
-	{
+	static void Draw_2589_258f(Painter &p, unsigned int start_y, unsigned int cx)
+	{	/* '▉' '▊' '▋' '▌' '▍' '▎' '▏' */
 		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (6 * p.fh / 8), m.right, m.bottom);
-	}
-
-	static void Draw_2583(Painter &p, unsigned int start_y, unsigned int cx) /* ▂ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (5 * p.fh / 8), m.right, m.bottom);
-	}
-
-	static void Draw_2584(Painter &p, unsigned int start_y, unsigned int cx) /* ▄ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (4 * p.fh / 8), m.right, m.bottom);
-	}
-
-	static void Draw_2585(Painter &p, unsigned int start_y, unsigned int cx) /* ▅ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (3 * p.fh / 8), m.right, m.bottom);
-	}
-
-	static void Draw_2586(Painter &p, unsigned int start_y, unsigned int cx) /* ▆ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (2 * p.fh / 8), m.right, m.bottom);
-	}
-
-	static void Draw_2587(Painter &p, unsigned int start_y, unsigned int cx) /* ▇ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top + (1 * p.fh / 8), m.right, m.bottom);
-	}
-
-	static void Draw_2588(Painter &p, unsigned int start_y, unsigned int cx) /* █ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.right, m.bottom);
-	}
-
-
-	static void Draw_2589(Painter &p, unsigned int start_y, unsigned int cx) /* ▉ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (7 * p.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258a(Painter &p, unsigned int start_y, unsigned int cx) /* ▊ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (6 * p.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258b(Painter &p, unsigned int start_y, unsigned int cx) /* ▋ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (5 * p.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258c(Painter &p, unsigned int start_y, unsigned int cx) /* ▌ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (4 * p.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258d(Painter &p, unsigned int start_y, unsigned int cx) /* ▍ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (3 * p.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258e(Painter &p, unsigned int start_y, unsigned int cx) /* ▎ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (2 * p.fw / 8) - 1, m.bottom);
-	}
-
-	static void Draw_258f(Painter &p, unsigned int start_y, unsigned int cx) /* ▏ */
-	{
-		CharMetrics m(p, start_y, cx);
-		p.FillRectangle(m.left, m.top, m.left + (1 * p.fw / 8) - 1, m.bottom);
+		p.FillRectangle(m.left, m.top, m.left + (p.fw * (0x2590 - p.wc) / 8) - 1, m.bottom);
 	}
 
 	static void Draw_2590(Painter &p, unsigned int start_y, unsigned int cx) /* ▐ */
@@ -990,6 +911,19 @@ namespace WXCustomDrawChar
 		CharMetrics m(p, start_y, cx);
 		p.FillRectangle(m.left + (p.fw / 2), m.top, m.right, m.bottom);
 	}
+
+#if 0 // TODO: optimize
+	static void Draw_2591_2593(Painter &p, unsigned int start_y, unsigned int cx)
+	{	/* ░ ▒ ▓ */
+		CharMetrics m(p, start_y, cx);
+		wxCoord step = (0x2593 + 1 - p.wc) + 1;
+		for (wxCoord y = m.top; y < m.bottom; y+= step) {
+			for (wxCoord x = m.left; x < m.right; x+= step) {
+				p.FillPixel(x, y);
+			}
+		}
+	}
+#endif
 
 	static void Draw_2594(Painter &p, unsigned int start_y, unsigned int cx) /* ▔ */
 	{
@@ -1002,7 +936,6 @@ namespace WXCustomDrawChar
 		CharMetrics m(p, start_y, cx);
 		p.FillRectangle(m.left + (7 * p.fw / 8), m.top, m.right, m.bottom);
 	}
-
 
 	static void Draw_2596(Painter &p, unsigned int start_y, unsigned int cx) /* ▖ */
 	{
@@ -1068,6 +1001,35 @@ namespace WXCustomDrawChar
 		CharMetrics m(p, start_y, cx);
 		p.FillRectangle(m.left + (p.fw / 2), m.top, m.right, m.top + (p.fh / 2) - 1);
 		p.FillRectangle(m.left, m.top + (p.fh / 2), m.right, m.bottom);
+	}
+
+	static void Draw_1fb00_1fb3b(Painter &p, unsigned int start_y, unsigned int cx)
+	{
+		const struct SixBoxMetrics : CharMetrics
+		{
+			SixBoxMetrics(Painter &p, unsigned int start_y, unsigned int cx)
+				: CharMetrics(p, start_y, cx),
+				middle_x(left + p.fw / 2),
+				line1_y(top + p.fh / 2 - p.fh / 6),
+				line2_y(top + p.fh / 2 + p.fh / 6)
+			{ }
+			wxCoord middle_x;
+			wxCoord line1_y, line2_y;
+	/*
+			##
+			##
+			##
+	*/
+		} m(p, start_y, cx);
+		unsigned int bits = (p.wc - 0x1FB00) + 1;
+		if (bits>= 0b010101) bits++;
+		if (bits>= 0b101010) bits++;
+		if (bits & 0b000001) p.FillRectangle(m.left, m.top, m.middle_x - 1, m.line1_y - 1);
+		if (bits & 0b000010) p.FillRectangle(m.middle_x, m.top, m.right, m.line1_y - 1);
+		if (bits & 0b000100) p.FillRectangle(m.left, m.line1_y, m.middle_x - 1, m.line2_y - 1);
+		if (bits & 0b001000) p.FillRectangle(m.middle_x, m.line1_y, m.right, m.line2_y - 1);
+		if (bits & 0b010000) p.FillRectangle(m.left, m.line2_y, m.middle_x - 1, m.bottom);
+		if (bits & 0b100000) p.FillRectangle(m.middle_x, m.line2_y, m.right, m.bottom);
 	}
 
 	static void Draw_WCHAR_ESCAPING(Painter &p, unsigned int start_y, unsigned int cx)
@@ -1159,39 +1121,29 @@ namespace WXCustomDrawChar
 
 //not fadable
 			case 0x2580: return Draw_2580; /* ▀ */
-			case 0x2581: return Draw_2581; /* ▁ */
-			case 0x2582: return Draw_2582; /* ▂ */
-			case 0x2583: return Draw_2583; /* ▃ */
-			case 0x2584: return Draw_2584; /* ▄ */
-			case 0x2585: return Draw_2585; /* ▅ */
-			case 0x2586: return Draw_2586; /* ▆ */
-			case 0x2587: return Draw_2587; /* ▇ */
-			case 0x2588: return Draw_2588; /* █ */
-			case 0x2589: return Draw_2589; /* ▉ */
-			case 0x258a: return Draw_258a; /* ▊ */
-			case 0x258b: return Draw_258b; /* ▋ */
-			case 0x258c: return Draw_258c; /* ▌ */
-			case 0x258d: return Draw_258d; /* ▍ */
-			case 0x258e: return Draw_258e; /* ▎ */
-			case 0x258f: return Draw_258f; /* ▏ */
+
+			case 0x2581 ... 0x2588: return Draw_2581_2588; /* '▁' '▂' '▃' '▄' '▅' '▆' '▇' '█' */
+			case 0x2589 ... 0x258f: return Draw_2589_258f;   /* '▉' '▊' '▋' '▌' '▍' '▎' '▏' */
+
 			case 0x2590: return Draw_2590; /* ▐ */
-#if 0
-			case 0x2591: return Draw_2591; /* ░ */
-			case 0x2592: return Draw_2592; /* ▒ */
-			case 0x2593: return Draw_2593; /* ▓ */
-#endif
+
+			// case 0x2591 ... 0x2593 : return Draw_2591_2593; /* ░ ▒ ▓ */
+
 			case 0x2594: return Draw_2594; /* ▔ */
-			case 0x2595: return Draw_2595; /* ▖ */
-			case 0x2596: return Draw_2596; /* ▗ */
-			case 0x2597: return Draw_2597; /* ▘ */
-			case 0x2598: return Draw_2598; /* ▙ */
-			case 0x2599: return Draw_2599; /* ▚ */
-			case 0x259a: return Draw_259a; /* ▛ */
-			case 0x259b: return Draw_259b; /* ▜ */
+			case 0x2595: return Draw_2595; /* ▕ */
+
+			case 0x2596: return Draw_2596; /* ▖ */
+			case 0x2597: return Draw_2597; /* ▗ */
+			case 0x2598: return Draw_2598; /* ▘ */
+			case 0x2599: return Draw_2599; /* ▙ */
+			case 0x259a: return Draw_259a; /* ▚ */
+			case 0x259b: return Draw_259b; /* ▛ */
 			case 0x259c: return Draw_259c; /* ▜ */
 			case 0x259d: return Draw_259d; /* ▝ */
 			case 0x259e: return Draw_259e; /* ▞ */
 			case 0x259f: return Draw_259f; /* ▟ */
+
+			case 0x1FB00 ... 0x1FB3b: return Draw_1fb00_1fb3b;
 
 			case WCHAR_ESCAPING: return Draw_WCHAR_ESCAPING;
 		}
@@ -1224,6 +1176,11 @@ U+257x 	╰ 	╱ 	╲ 	╳ 	╴ 	╵ 	╶ 	╷ 	╸ 	╹ 	╺ 	╻ 	╼ 	╽ 	�
 U+258x 	▀ 	▁ 	▂ 	▃ 	▄ 	▅ 	▆ 	▇ 	█ 	▉ 	▊ 	▋ 	▌ 	▍ 	▎ 	▏
 
 U+259x 	▐ 	░ 	▒ 	▓ 	▔ 	▕ 	▖ 	▗ 	▘ 	▙ 	▚ 	▛ 	▜ 	▝ 	▞ 	▟ 
+
+U+1FB0x	🬀	🬁	🬂	🬃	🬄	🬅	🬆	🬇	🬈	🬉	🬊	🬋	🬌	🬍	🬎	🬏
+U+1FB1x	🬐	🬑	🬒	🬓	🬔	🬕	🬖	🬗	🬘	🬙	🬚	🬛	🬜	🬝	🬞	🬟
+U+1FB2x	🬠	🬡	🬢	🬣	🬤	🬥	🬦	🬧	🬨	🬩	🬪	🬫	🬬	🬭	🬮	🬯
+U+1FB3x	🬰	🬱	🬲	🬳	🬴	🬵	🬶	🬷	🬸	🬹	🬺	🬻
 
 */
 

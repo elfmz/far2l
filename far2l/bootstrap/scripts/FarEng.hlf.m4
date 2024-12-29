@@ -320,25 +320,13 @@ executing FAR2L under telnet.
 and line position.
   For example: #far2l -e70:2 readme#.
 
-  #-p[<path>]# [Unsupported in far2l]
-  Search for "main" plugins in the folder given in <path>.
-  Several search paths may be given separated by ';'.
-
   #-co#
   Forces FAR2L to load plugins from cache only. Plugins are loaded faster this way,
 but new or changed plugins are not discovered. Should be used ONLY with a stable
 list of plugins. After adding, replacing or deleting a plugin FAR2L should be loaded
 without this switch. If the cache is empty, no plugins will be loaded.
-
-  Remarks about switches -p and -co:
-
-  - ^<wrap>if -p is empty, then FAR2L will be loaded with no plugins;
-  - ^<wrap>if -p is given with a <path>, then only plugins from <path> will be loaded;
-  - ^<wrap>if only the -co switch is given and plugins cache is not empty, then plugins
-will be loaded from cache;
-  - ^<wrap>-co is ignored, if -p is given;
-  - ^<wrap>if -p and -co are not given, then plugins will be loaded from the main folder,
-and from the path given at the "~Path for personal plugins~@PluginsManagerSettings@" parameter.
+  If -co is not given, then plugins will be loaded from the main folder, and from the path
+given at the "~Path for personal plugins~@PluginsManagerSettings@" parameter.
 
   #-m#
   FAR2L will not load macros from config file when started.
@@ -1211,18 +1199,9 @@ $ #Panels: tree panel#
 Within tree mode you may change to a folder quickly and perform folder
 operations.
 
-    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
-
-    FAR stores folder tree information in the file named #Tree.Far# at root
-folder of each drive. For read-only drives this information is stored in the
-hidden folder Tree.Cache within the folder containing FAR.EXE. The Tree.FAR
-file doesn't exist by default. It will be automatically created after the first
-use of the #Tree Panel# or the #Find Folder# command. If that file exists, FAR
-updates it with the changes to the tree structure it is aware of. If such
-changes were made outside of FAR and Tree.far is no longer current, it can be
-refreshed by pressing #Ctrl-R#.
-
-    !! Windows legacy end !!
+    FAR stores folder tree information in its folder in the system's temporary directory
+(/tmp, /var/tmp, or $TMPDIR).  If necessary, the tree state can be updated using
+#Ctrl-R# key combination.
 
     You can find a folder quickly with the help of #speed search# action. Hold
 the Alt key and type the folder name until you point to the right folder.
@@ -1237,42 +1216,43 @@ on the same level.
 $ #Panels: info panel#
     The information panel contains the following data:
 
- - ^<wrap>#network# names of the computer and the current user (see ~Info panel settings~@InfoPanelSettings@);
+ 1. ^<wrap>#Network# names of the computer and the current user.
 
- - ^<wrap>type of the file system of the #current disk#, network
-name, total and free space, disk volume label and serial number;
+ 2. ^<wrap>Information about the current directory and its file system.
+    ^<wrap>File system type, total space and space available to unprivileged user, filesystem id, the current
+directory and its resolved path (including symbolic links), mount point of the current directory's file system,
+maximum filename length, and mount options.
 
- - ^<wrap>#memory# load percentage (100% means all of available memory is used),
-size of the installed physical memory if possible, total and free size of the physical
-memory (available for OS), virtual memory and paging file;
+ 3. ^<wrap>Memory information.
+    ^<wrap>Memory load percentage (100% means all of available memory is used), total usable main memory size,
+available memory size, amount of shared memory, memory used by buffers, total swap space size,
+swap space still available.
 
- - #folder description# file
+ 4. ^<wrap>EditorConfig information (if available).
+    ^<wrap>Paths to the #.editorconfig# files, including the root and nearest, as well as values of #indent_style#,
+#indent_size#, #end_of_line#, #charset#, #trim_trailing_whitespace#, #insert_final_newline# properties for #[*]# mask.
+    ^<wrap>Learn more about EditorConfig on its official website: ~https://editorconfig.org/~@https://editorconfig.org/@.
 
-    You may view the contents of the folder description file in full screen by
+ 5. ^<wrap>Git brief status (if available).
+    ^<wrap>When in a local Git repository/working tree, the Git root directory path and the output of #git status -s -b# will be shown.
+
+ 6. ^<wrap>#Folder description# file
+
+    ^<wrap>You may view the contents of the folder description file in full screen by
 pressing the #F3# key or clicking the #left mouse button#. To edit or create the
 description file, press #F4# or click the #right mouse button#. You can also use
 many of the ~viewer commands~@Viewer@ (search, code page selection and so on)
 for viewing the folder description file.
 
-    A list of possible folder description file names may be defined using
+    ^<wrap>A list of possible folder description file names may be defined using
 "Folder description files" command in the ~Options menu~@OptMenu@.
 
-    !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
+ 7. ^<wrap>Plugin panel.
+    ^<wrap>Contains information about the opposite plugin panel, if provided by the plugin.
 
-    FAR will attempt to determine the type of each of the CD drives available
-in the system. Known types are as follows: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM,
-DVD-RW and DVD-RAM. This function is available only for users either with
-administrative privileges or all local users, when it's stated explicitly in
-the Local Policy Editor (to do this, run a #secpol.msc# from the command
-prompt, and set the '#Local Policies/Security Options/Devices: Restrict#
-#CD-ROM access to locally logged-on user only#' setting to '#Enabled#')
+ See also: ^<wrap>~Info panel settings~@InfoPanelSettings@
+           ^<wrap>~Macro keys list~@KeyMacroInfoList@ available in the info panel.
 
-    For virtual devices (SUBST-disk) the parameters of the primary disk are
-shown.
-
-    !! Windows legacy end !!
-
-    See also the list of ~macro keys~@KeyMacroInfoList@, available in the info panel.
 
 @QViewPanel
 $ #Panels: quick view panel#
@@ -1778,13 +1758,6 @@ file will be ignored even if the required sequence exists there.
     P - for petabytes;
     E - for exabytes.
 
-
-    #Обрабатывать альтернативные потоки данных# - помимо основного потока данных
-(представляющего собой непосредственно содержимое файла)
-производить поиск также в альтернативных именованных потоках, поддерживаемых некоторыми
-файловыми системами (например, #NTFS#).
-
-
   - #Column types# - позволяет задавать формат вывода результатов поиска.
 Column types are encoded as one or several characters, delimited with commas.
 Allowed column types are:
@@ -1823,27 +1796,42 @@ Allowed column types are:
     F          - number of streams
 
 
-    Атрибуты файла имеют следующие обозначения:
+    Windows file attributes have the following indications:
+       #R#         - Read only
+       #S#         - System
+       #H#         - Hidden
+       #A#         - Archive
+       #L#         - Junction or symbolic link
+       #C# or #E#    - Compressed or Encrypted
+       #$#         - Sparse
+       #T#         - Temporary
+       #I#         - Not content indexed
+       #O#         - Offline
+       #V#         - Virtual
 
-       #R#         - Только для чтения
-       #S#         - Системный
-       #H#         - Скрытый
-       #A#         - Архивный
-       #L#         - Связь или символическая ссылка
-       #C# или #E#   - Сжатый или Зашифрованный
-       #$#         - Разрежённый (sparse)
-       #T#         - Временный
-       #I#         - Неиндексируемый по содержимому
-       #O#         - Автономный (offline)
-       #V#         - Виртуальный
+    Unix file types:
+       #B#         - Broken
+       #d#         - Directory
+       #c#         - Character device
+       #b#         - Block device
+       #p#         - FIFO (named Pipe)
+       #s#         - Socket
+       #l#         - Symbolic Link
+       #-#         - Regular file
 
-    Порядок отображения атрибутов - RSHALCTIOV. Символ атрибута
-"Разрежённый" применяется только для файлов и ставится вместо 'L'.
-Символ атрибута "Зашифрованный" ставится вместо 'C', т.к. файл/каталог не
-могут иметь одновременно оба атрибута ("Сжатый" и "Зашифрованный"). По
-умолчанию размер колонки атрибутов - 6 символов. Для отображения
-дополнительных атрибутов 'T', 'I', 'O' и 'V' необходимо явно указать
-размер колонки в 10 символов.
+    Unix file permissions (in each triad for owner, group, other users):
+       #r# or #-#    - readable or not
+       #w# or #-#    - writable or not
+       #x# or #-#    - executable or not
+       #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
+       #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
+
+    The "Sparse" attribute applies only to files and is shown instead of 'L'. The
+"Encrypted" attribute is shown instead of 'C' as a file/folder can not have both
+attributes ("Compressed" and "Encrypted") set at the same time.
+    By default the size of the attributes column is 6 characters. To display
+the additional 'T', 'I', 'O' and 'V' attributes it is necessary to manually
+set the size of the column to 10 characters.
 
     #Ширина колонок# - позволяет изменить ширину колонок результатов поиска.
 Если ширина равна 0, то используется значение по умолчанию.
@@ -2620,6 +2608,23 @@ to calculate the total files count.
   - for network drives - activates the Network plugin (if it is available)
 or location menu (if the Network plugin is not available).
 
+  #Datetime format#
+
+  #Cursor blink interval# (*GUI-backend only)
+
+  #Change font# (*GUI-backend only)
+
+  #Disable antialiasing# (*GUI-backend only)
+
+  #Use OSC52 to set clipboard data# (*TTY-backend only)
+  OSC52 allows copying from far2l running in TTY mode (even via SSH connection) to
+your local system clipboard.
+  Some terminals also need OSC52 to be enabled in terminal's settings.
+  If you are using far2l on a remote untrusted system, giving remote system write access
+to your clipboard may be potentially unsafe.
+
+  #Override base colors palette# (*TTY-backend only)
+
   #FAR window title#
   Information displayed in the console window title. Can contain any text
 including the following variables:
@@ -2630,6 +2635,7 @@ including the following variables:
   - #%Host# - host name of the machine where FAR2L is running;
   - #%User# - user name under wich FAR2L is running;
   - #%Admin# - name "Root", if FAR2L runs under root privileges, otherwise - empty string.
+
 
 @InputSettings
 $ #Settings dialog: input#
@@ -2729,65 +2735,8 @@ $ #Settings dialog: AutoComplete & History#
    and #erasedups# (all previous lines matching the current line are removed from the history).
 
 @InfoPanelSettings
-$ #Настройка информационной панели#
-  #Формат вывода имени компьютера#
+$ #Information Panel settings#
 
-  Задает формат вывода имени компьютера. Может быть одним из:
-
-    #Physical NetBIOS#
-      ^<wrap>NetBIOS имя локального компьютера.
-
-    #Physical DNS hostname#
-      ^<wrap>DNS имя локального компьютера.
-
-    #Physical DNS domain#
-      ^<wrap>DNS имя домена, которому принадлежит компьютер.
-
-    #Physical DNS fully-qualified#
-      ^<wrap>Полное доменное имя, которое однозначно идентифицирует этот компьютер. Имя представляет собой комбинацию DNS имени хоста и DNS имени домена (формат HostName.DomainName).
-
-    #NetBIOS#
-      ^<wrap>NetBIOS имя локального компьютера. Если компьютер является узлом кластера, то выводится NetBIOS имя кластера виртуального сервера.
-
-    #DNS hostname#
-      ^<wrap>DNS имя локального компьютера. Если компьютер является узлом кластера, то выводится DNS имя кластера виртуального сервера.
-
-    #DNS domain#
-      ^<wrap>DNS имя домена, которому принадлежит компьютер. Если компьютер является узлом кластера, то выводится DNS имя домена кластера виртуального сервера.
-
-    #DNS fully-qualified#
-      ^<wrap>Полное доменное имя, которое однозначно идентифицирует этот компьютер. Имя представляет собой комбинацию DNS имени хоста и DNS имени домена (формат HostName.DomainName). Если компьютер является узлом кластера, то выводится полное DNS имя кластера виртуального сервера.
-
-    Формат вывода зависит от наличия доменной структуры, групповых политик, настроек DNS.
-
-  #Формат вывода имени пользователя#
-
-  Задает формат вывода имени пользователя. Может быть одним из:
-
-    #По умолчанию#
-      Логин пользователя, например, JohnDoe
-    #Полностью определенное имя домена#
-      ^<wrap>FQDN (Fully Qualified Domain Name) - включает наименования всех уровней иерархии, начиная от имени конечного узла и заканчивая корневой точкой (логином), например,
-      CN=JohnDoe, OU=Software, OU=Engineering, O=Widget, C=US
-    #Sam Compatible#
-      Engineering\JohnDoe
-    #Display#
-      Probably "John Doe" but could be something else.  I.e. The display name is not necessarily the defining RDN.
-    #Уникальный идентификатор#
-      ^<wrap>Уникальный идентификатор имени пользователя (GUID), например,
-      {4fa050f0-f561-11cf-bdd9-00aa003a77b6}
-    #Канонический вид#
-      ^<wrap>ADCN (Active Directory Canonical Name) - данный формат является путем в иерархической структуре к объекту (логину), например,
-      engineering.widget.com/software/JohnDoe
-    #Основное имя пользователя#
-      ^<wrap>UPN (User Principal Name) - известен так же как адрес электронной почты, например,
-      someone@example.com
-    #Service Principal#
-      www/srv.engineering.com/engineering.com
-    #Dns Domain#
-      engineering.widget.com\JohnDoe
-
-    Формат вывода зависит от наличия доменной структуры.
 
 @CommandPrompt
 $ #Command line prompt format#
@@ -3351,7 +3300,7 @@ After that add more accurate patterns such as #/run/user/*#
 in order to hide garbage mountpoints from the Location menu.
 
     See also:
-      The list of ~macro keys~@KeyMacroDisksList@, available in the disk menu.
+      The list of ~macro keys~@KeyMacroDisksList@, available in the Location menu.
       Common ~menu~@MenuCmd@ keyboard commands.
 
 
@@ -3891,6 +3840,7 @@ the file panel will be displayed in multicolumn form.
        #s#         - Socket
        #l#         - Symbolic Link
        #-#         - Regular file
+
     Unix file permissions (in each triad for owner, group, other users):
        #r# or #-#    - readable or not
        #w# or #-#    - writable or not
@@ -4167,8 +4117,7 @@ appended with the file being copied.
     If during copying or moving the destination disk becomes full, it is
 possible to either cancel the operation or replace the disk and select the
 "Split" item. In the last case the file being copied will be split between
-disks. This feature is available only when "Use system copy routine" option in
-the ~System settings~@SystemSettings@ dialog is switched off.
+disks.
 
     The "Already existing files" option controls FAR2L behavior if a target file
 of the same name already exists.
@@ -4264,41 +4213,6 @@ $ #Error: copy/move onto itself.#
 
     This error can also happen if there are two directories, one of which is
 a ~symbolic link~@HardSymLink@ to another.
-
-
-@WarnCopyEncrypt
-$ #Warning: Losing file encryption#
-    The source file is encrypted. Copying or moving it outside of the current
-disk is possible if in the destination the file will be decrypted.
-
-    The "Ignore" (or "Ignore all") buttons ignore the given warning and copy
-the file unencrypted to the destination.
-
-    The internal copying mechanism will be used for copying encrypted files
-outside of the current disk with no regard to the "Use system copy routine"
-option.
-
-
-@WarnCopyStream
-$ #Warning: copying or moving file with multiple streams#
-
-    The source file contains more than one data stream or the destination file
-system does not support files with multiple streams.
-
-    Streams are a feature of the NTFS file system allowing to associate
-additional information with a file (for example, author's name, title, keywords
-and so on, or any other data). This information is stored together with the
-file and is invisible to programs that do not support streams. For example,
-streams are used by Windows Explorer to store additional file properties
-(summary). FAT/FAT32 file systems do not support streams.
-
-    To copy a file completely (together with all its streams), turn on the
-option "#Use system copy routine#" in the ~system settings~@SystemSettings@
-dialog.
-
-    If you are copying a file with multiple streams to a volume with a file
-system other than NTFS, you will also lose data - only the main stream will be
-copied.
 
 
 @ErrLoadPlugin

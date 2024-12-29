@@ -81,6 +81,7 @@ private:
 
 private:
 	virtual void DisplayObject();
+	void ShowEditorConfig(int &CurY);
 	void ShowGitStatus(int &YPos);
 	void ShowDirDescription(int YPos);
 	void ShowPluginDescription(int YPos);

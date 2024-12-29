@@ -117,7 +117,7 @@ Use snake_case for all variables, however:
 &nbsp;&nbsp; Static variables - prefix by 's\_'   
 &nbsp;&nbsp; Global nonstatic variables - prefix by 'g\_'   
 Use UPPER_CASE_WITH_UNDERSCORES for macroses, values of enum-s.   
-Additionally values of enums must be prefixes with a abbreviation of corresponding enum's name.   
+Additionally values of enums must be prefixes with an abbreviation of corresponding enum's name.   
 Templates:   
 &nbsp;&nbsp; For template arguments that represent type name - use CamelCaseT (camel case with T suffix).   
 &nbsp;&nbsp; For template arguments that typed constant value - use UPPER_CASE_WITH_UNDERSCORES_T.   

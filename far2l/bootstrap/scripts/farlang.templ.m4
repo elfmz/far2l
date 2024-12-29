@@ -4921,51 +4921,6 @@ CannotCopyFileToItself2
 "у самого себе"
 "у самога сябе"
 
-CopyStream1
-l:
-"Исходный файл содержит более одного потока данных,"
-"The source file contains more than one data stream."
-"Zdrojový soubor obsahuje více než jeden datový proud."
-"Die Quelldatei enthält mehr als einen Datenstream"
-"A forrásfájl több stream-et tartalmaz,"
-"Plik źródłowy zawiera więcej niż jeden strumień danych."
-"El archivo origen contiene más de un flujo de datos."
-"Вихідний файл містить більше одного потоку даних,"
-"Зыходны файл змяшчае больш аднай струмені дадзеных,"
-
-CopyStream2
-"но вы не используете системную функцию копирования."
-"but since you do not use a system copy routine."
-"protože nepoužíváte systémovou kopírovací rutinu."
-"aber Sie verwenden derzeit nicht die systemeigene Kopierroutine."
-"de nem a rendszer másolórutinját használja."
-"ale ze względu na rezygnację z systemowej procedury kopiowania."
-"pero desde que usted no usa la rutina de copia del sistema."
-"але ви не використовуєте системну функцію копіювання."
-"але вы не ужываеце сістэмную функцыю капіявання."
-
-CopyStream3
-"но том назначения не поддерживает этой возможности."
-"but the destination volume does not support this feature."
-"protože cílový svazek nepodporuje tuto vlastnost."
-"aber der Zieldatenträger unterstützt diese Fähigkeit nicht."
-"de a célkötet nem támogatja ezt a lehetőséget."
-"ale napęd docelowy nie obsługuje tej funkcji."
-"pero el volumen de destino no soporta esta opción."
-"але тому призначення не підтримує цієї можливості."
-"але дыск прызначэння не падтрымлівае гэтай магчымасці."
-
-CopyStream4
-"Часть сведений не будет сохранена."
-"Some data will not be preserved as a result."
-"To bude mít za následek, že některá data nebudou uchována."
-"Ein Teil der Daten bleiben daher nicht erhalten."
-"Az adatok egy része el fog veszni."
-"Nie wszystkie dane zostaną zachowane."
-"Algunos datos no serán preservados como un resultado."
-"Частина відомостей не буде збережена."
-"Частка звестак не будзе захавана."
-
 CopyDirectoryOrFile
 l:
 "Подразумевается имя папки или файла?"
@@ -5255,39 +5210,6 @@ CannotCopyTo
 "hacia %ls"
 "в"
 "у"
-
-CopyEncryptWarn1
-"Файл"
-"The file"
-"Soubor"
-"Die Datei"
-"A fájl"
-"Plik"
-"El archivo"
-"Файл"
-"Файл"
-
-CopyEncryptWarn2
-"нельзя скопировать или переместить, не потеряв его шифрование."
-"cannot be copied or moved without losing its encryption."
-"nemůže být zkopírován nebo přesunut bez ztráty jeho šifrování."
-"kann nicht bewegt werden ohne ihre Verschlüsselung zu verlieren."
-"csak titkosítása elvesztésével másolható vagy mozgatható."
-"nie może zostać skopiowany/przeniesiony bez utraty szyfrowania"
-"no puede copiarse o moverse sin perder el cifrado."
-"Не можна скопіювати або перемістити, не втративши його шифрування."
-"Нельга капіяваць ці перанесці, не згубіўшы яго шыфраванне."
-
-CopyEncryptWarn3
-"Можно пропустить эту ошибку или отменить операцию."
-"You can choose to ignore this error and continue, or cancel."
-"Můžete tuto chybu ignorovat a pokračovat, nebo operaci ukončit."
-"Sie können dies ignorieren und fortfahren oder abbrechen."
-"Ennek ellenére folytathatja vagy felfüggesztheti."
-"Możesz zignorować błąd i kontynuować lub anulować operację."
-"Usted puede ignorar este error y continuar, o cancelar."
-"Можна пропустити цю помилку або скасувати операцію."
-"Можна прапусціць гэтую памылку альбо адмяніць дзею."
 
 CopyReadError
 l:
@@ -13325,138 +13247,6 @@ InfoUserName
 "Им'я користувача"
 "Імя карыстальніка"
 
-InfoRemovable
-"Сменный"
-"Removable"
-"Vyměnitelný"
-"Austauschbares"
-"Kivehető"
-"Wyjmowalny"
-"Removible"
-"Змінний"
-"Зменны"
-
-InfoFixed
-"Жёсткий"
-"Fixed"
-"Pevný"
-"Lokales"
-"Fix"
-"Stały"
-"Rígido"
-"Жорсткий"
-"Замацаваныя"
-
-InfoNetwork
-"Сетевой"
-"Network"
-"Síťový"
-"Netzwerk"
-"Hálózati"
-"Sieciowy"
-"Red"
-"Мережевий"
-"Сеткавы"
-
-InfoCDROM
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-
-InfoCD_RW
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-
-InfoCD_RWDVD
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-
-InfoDVD_ROM
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-
-InfoDVD_RW
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-
-InfoDVD_RAM
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-
-InfoRAM
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-
-InfoSUBST
-"SUBST"
-"Subst"
-"SUBST"
-"Subst"
-"Virtuális"
-"Subst"
-"Subst"
-"SUBST"
-"SUBST"
-
-InfoVirtual
-"Виртуальный"
-"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-"Віртуальний"
-"Уяўны"
-
 InfoDisk
 "диск"
 "disk"
@@ -13676,17 +13466,6 @@ InfoMemoryLoad
 "Carga en Memoria"
 "Завантаження пам'яті"
 "Загрузка памяці"
-
-InfoMemoryInstalled
-"Установлено памяти"
-"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-"Memoria instalada"
-"Встановлено пам'яті"
-"Усталявана памяці"
 
 InfoMemoryTotal
 "Всего памяти"

@@ -71,7 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "DialogBuilder.hpp"
 #include "setattr.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "panel.hpp"
 #include "drivemix.hpp"
 #include "xlat.hpp"

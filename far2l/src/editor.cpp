@@ -56,7 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "datetime.hpp"
 #include "stddlg.hpp"
 #include "strmix.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "DialogBuilder.hpp"
 #include "wakeful.hpp"
 #include "codepage.hpp"

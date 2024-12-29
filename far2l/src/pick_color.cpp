@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
 #include "pick_color.hpp"
-#include "pick_color_common.hpp"
+#include "color.hpp"
 #include "keys.hpp"
 #include "lang.hpp"
 #include "colors.hpp"
@@ -49,7 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "chgmmode.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
 
 #include "VT256ColorTable.h" // For g_VT256ColorTable[VT_256COLOR_TABLE_COUNT]
@@ -404,14 +404,11 @@ void set_color_s::draw_panels_vbuff(void)
 {
 	static const uint8_t dotfc[16] = { 15, 15, 0, 0, 15, 15, 15, 0, 15, 0, 0, 0, 0, 0, 0, 0 };
 
-	// For foreground-colored boxes invert Fg&Bg colors and add COMMON_LVB_REVERSE_VIDEO attribute
-	// this will put real colors on them if mapping of colors is different for Fg and Bg indexes
-	// 0xBF
-
 	// Fill foreground colors rect
 	for (size_t i = 0; i < 16; i++) {
 		CHAR_INFO *const vbuff = cPanel[IDC_FOREGROUND_PANEL].vbuff;
-		uint64_t attr = ATTR_RGBBACK_NEGF(basepalette[i + 16]) + (i << 4) + dotfc[i];
+//		uint64_t attr = ATTR_RGBBACK_NEGF(basepalette[i + 16]) + (i << 4) + dotfc[i];
+		uint64_t attr = (dotfc[i] << 16 ) + i + COMMON_LVB_REVERSE_VIDEO;
 
 		vbuff[i * 3 + 0].Char.UnicodeChar = 32;
 		vbuff[i * 3 + 0].Attributes = attr;
@@ -424,7 +421,8 @@ void set_color_s::draw_panels_vbuff(void)
 	// Fill background colors rect
 	for (size_t i = 0; i < 16; i++) {
 		CHAR_INFO *const vbuff = cPanel[IDC_BACKGROUND_PANEL].vbuff;
-		uint64_t attr = ATTR_RGBBACK_NEGF(basepalette[i]) + (i << 4) + dotfc[i];
+//		uint64_t attr = ATTR_RGBBACK_NEGF(basepalette[i]) + (i << 4) + dotfc[i];
+		uint64_t attr = (i << 4) + dotfc[i];
 
 		vbuff[i * 3 + 0].Char.UnicodeChar = 32;
 		vbuff[i * 3 + 0].Attributes = attr;

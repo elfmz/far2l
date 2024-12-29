@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "message.hpp"
 #include "filefilter.hpp"
 #include "fileowner.hpp"
@@ -301,9 +301,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 		*/
 		case ACTL_GETCOLOR: {
-			if ((int)(INT_PTR)Param1 < SIZE_ARRAY_PALETTE && (int)(INT_PTR)Param1 >= 0) {
+			if ((int)(INT_PTR)Param1 < SIZE_ARRAY_FARCOLORS && (int)(INT_PTR)Param1 >= 0) {
 
-				*(uint64_t *)Param2 = (uint64_t)Palette[(int)(INT_PTR)Param1];
+				*(uint64_t *)Param2 = (uint64_t)FarColors::setcolors[(int)(INT_PTR)Param1];
 				return TRUE;
 			}
 
@@ -316,13 +316,13 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			Return - размер массива.
 		*/
 		case ACTL_GETARRAYCOLOR: {
-			if ((int)(intptr_t)Param1 > SIZE_ARRAY_PALETTE)
-				return SIZE_ARRAY_PALETTE;
+			if ((int)(intptr_t)Param1 > SIZE_ARRAY_FARCOLORS)
+				return SIZE_ARRAY_FARCOLORS;
 
 			if (Param2)
-				memcpy(Param2, Palette, (int)(intptr_t)Param1 * sizeof(Palette[0]));
+				memcpy(Param2, &FarColors::setcolors[0], (int)(intptr_t)Param1 * sizeof(FarColors::setcolors[0]));
 
-			return SIZE_ARRAY_PALETTE;
+			return SIZE_ARRAY_FARCOLORS;
 		}
 		/*
 			Param1=FARColor{
@@ -338,8 +338,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				FarSetColors *Pal = (FarSetColors *)Param1;
 
 				if (Pal->Colors && Pal->StartIndex >= 0
-						&& Pal->StartIndex + Pal->ColorCount <= SIZE_ARRAY_PALETTE) {
-					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(Palette[0]));
+						&& Pal->StartIndex + Pal->ColorCount <= SIZE_ARRAY_FARCOLORS) {
+//					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(Palette[0]));
+					FarColors::SetRange(Pal->StartIndex, Pal->ColorCount, Pal->Colors );
 
 					if (Pal->Flags & FCLR_REDRAW) {
 						ScrBuf.Lock();					// отменяем всякую прорисовку

@@ -49,9 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "chgmmode.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
-
 #include "pick_color.hpp"
 
 static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int TypeSub);
@@ -334,33 +333,26 @@ void SetColors()
 
 			// Set default 8 bit colors
 			if (GroupsCode == 12) {
-				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
-					Palette[i] = DefaultPalette8bit[i];
-				}
+
+				FarColors::FARColors.ResetToDefaultIndex();
+				FarColors::FARColors.Set();
 				break;
 			}
 
 			// Set default RGB
 			if (GroupsCode == 13) {
-				uint32_t basepalette[32];
-				WINPORT(GetConsoleBasePalette)(NULL, basepalette);
 
-				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
-					uint8_t color = DefaultPalette8bit[i];
-					Palette[i] = ((uint64_t)basepalette[16 + (color & 0xF)] << 16);
-					Palette[i] += ((uint64_t)basepalette[color >> 4] << 40);
-					Palette[i] += FOREGROUND_TRUECOLOR + BACKGROUND_TRUECOLOR;
-					Palette[i] += color;
-				}
-
+				FarColors::FARColors.ResetToDefaultIndexRGB();
+				FarColors::FARColors.Set();
 				break;
 			}
 
 			// Set black & white 8 bit colors
 			if (GroupsCode == 14) {
-				for(size_t i = 0; i < SIZE_ARRAY_PALETTE; i++) {
-					Palette[i] = BlackPalette8bit[i];
-				}
+
+				FarColors::FARColors.ResetToDefaultIndex(BlackColorsIndex16);
+				FarColors::FARColors.Set();
+
 				break;
 			}
 
@@ -453,14 +445,14 @@ static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int Ty
 	}
 }
 
-void GetColor(int PaletteIndex)
+void GetColor(int ColorIndex)
 {
 	ChangeMacroMode chgMacroMode(MACRO_MENU);
-	uint64_t NewColor = Palette[PaletteIndex];
+	uint64_t NewColor = FarColors::FARColors.colors[ColorIndex];
 
 	if (GetColorDialog(&NewColor, false)) {
-		Palette[PaletteIndex] = NewColor;
-		Palette8bit[PaletteIndex] = static_cast<uint8_t>(NewColor);
+		FarColors::FARColors.colors[ColorIndex] = NewColor;
+		FarColors::setcolors[ColorIndex] = NewColor;
 
 		ScrBuf.Lock();	// отменяем всякую прорисовку
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

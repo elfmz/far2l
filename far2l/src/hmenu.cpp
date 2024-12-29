@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hmenu.hpp"
 #include "colors.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "keys.hpp"
 #include "dialog.hpp"
 #include "vmenu.hpp"

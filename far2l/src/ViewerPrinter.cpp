@@ -3,7 +3,7 @@
 #include "ViewerPrinter.hpp"
 #include "interf.hpp"
 #include "colors.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 
 static const wchar_t s_many_spaces[] = L"                                                                ";
 

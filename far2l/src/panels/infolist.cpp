@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "infolist.hpp"
 #include "macroopcode.hpp"
 #include "colors.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "lang.hpp"
 #include "keys.hpp"
 #include "ctrlobj.hpp"

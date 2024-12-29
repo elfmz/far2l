@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "filelist.hpp"
 #include "colors.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "lang.hpp"
 #include "filefilter.hpp"
 #include "cmdline.hpp"

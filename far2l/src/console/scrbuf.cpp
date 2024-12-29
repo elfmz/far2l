@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ctrlobj.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
 #include "DList.hpp"
 #include "console.hpp"

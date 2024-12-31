@@ -131,7 +131,7 @@ $ # FAR2L features - Getting Started#
 (currently in Russian only).
 
  #UI Backends#
-    FAR2L has 3 base UI Backends (see details in ~UI backends~@UIBackends@):
+    FAR2L has base UI Backends (see details in ~UI backends~@UIBackends@):
         - #GUI#: uses wxWidgets, works in graphics mode, #ideal UX#
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
         - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries
@@ -169,7 +169,7 @@ when it starts, far2l switches to #TTY|X# without i.
 
 
  #Pasting feature in terminals#
-    The keyboard shortcut of the #terminal pasting# (terminal simulates keyboard input) and #FAR2L pasting# (FAR2L itself does paste) are different. Note that pasting keyboard shortcut in different terminals is various (and may overlap the standard FAR2L's pasting #Shift-Ins# or #Ctrl-V#).
+    The keyboard shortcut of the #terminal pasting# (terminal simulates keyboard input via bracketed paste) and #FAR2L pasting# (FAR2L itself does paste) are different. Note that pasting keyboard shortcut in different terminals is various (and may overlap the standard FAR2L's pasting #Shift-Ins# or #Ctrl-V#).
     In FAR2L without TTY|X (and without enabled OSC 52 both in FAR2L and in terminal) FAR2L's pasting uses its #internal clipboard# (because FAR2L does not access the system clipboard), terminal pasting uses #system clipboard#.
 
 
@@ -202,34 +202,39 @@ and in #terminal settings# option #OSC 52 must be allowed#
 
 
  #Terminals and ssh-clients supporting extended FAR2L keyboard shortcuts for plain terminal version FAR2L TTY#
-    - Internal terminal in FAR2L-GUI (Linux, macOS, *BSD),
+    - Internal terminal in #FAR2L-GUI# (Linux/BSD, macOS),
 see ~UI backends~@UIBackends@ and in help of #NetRocks plugin# section #Command line and remote FAR2L#
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
-
-    - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
+    - kovidgoyal's #kitty# (Linux/BSD, macOS): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
 (~TTY|k backend~@UIBackends@: keys by kovidgoyal's kitty keyboard protocol;
-for clipboard need turn on OSC 52)
-
-    - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(~TTY|k backend~@UIBackends@: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol;
+for clipboard need turn on OSC 52 in kitty and in far2l)
+    - #Alacritty# (Linux/BSD, macOS, Windows): ~https://github.com/alacritty/alacritty~@https://github.com/alacritty/alacritty@ & ~https://alacritty.org/~@https://alacritty.org/@
+(~TTY|k backend~@UIBackends@: keys by kovidgoyal's kitty keyboard protocol;
+for clipboard need turn on OSC 52 only in far2l)
+[in Windows in system must be conpty.dll]
+    - #Rio Terminal# (Linux/BSD, macOS, Windows): ~https://github.com/raphamorim/rio~@https://github.com/raphamorim/rio@ & ~https://raphamorim.io/rio/~@https://raphamorim.io/rio/@
+(~TTY|k backend~@UIBackends@: keys by kovidgoyal's kitty keyboard protocol;
+for clipboard need turn on OSC 52 only in far2l)
+    - #Ghostty# (Linux, macOS): ~https://github.com/ghostty-org/ghostty~@https://github.com/ghostty-org/ghostty@ & ~https://ghostty.org/~@https://ghostty.org/@
+(~TTY|k backend~@UIBackends@: keys by kovidgoyal's kitty keyboard protocol;
+for clipboard need turn on OSC 52 only in far2l)
+    - #Wez's Terminal Emulator# (Linux/BSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
+(~TTY|k backend~@UIBackends@: keys in Linux/BSD by kovidgoyal's kitty keyboard protocol;
 ~TTY|w backend~@UIBackends@: keys in Windows by win32-input-mode which enable by default;
 for clipboard need turn on OSC 52)
 [in macOS & in Windows in wezterm the kitty keyboard protocol support not working]
-
-    - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
+    - #iTerm2# (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
 (~TTY|a backend~@UIBackends@: keys by iTerm2 "raw keyboard" protocol;
 for clipboard need turn on OSC 52)
-
-    - Windows Terminal
+    - #Windows Terminal#
 (~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
+  Original Putty does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
+    - #putty4far2l# (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
-
-    - cyd01's KiTTY (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
+    - cyd01's #KiTTY# (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
-
-    - putty-nd (Windows ssh-client): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
+    - #putty-nd# (Windows ssh-client): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
 
 

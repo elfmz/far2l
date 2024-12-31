@@ -341,9 +341,13 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
 ## Terminals and SSH clients
 Supporting extended far2l keyboard shortcuts and clipboard access
 
- * **kovidgoyal's kitty** (Linux, macOS, \*BSD): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
- * **Wez's Terminal Emulator** (Linux, FreeBSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux, FreeBSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
+ * **kovidgoyal's kitty** (Linux/BSD, macOS): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
+ * **Alacritty** (Linux/BSD, macOS, Windows): https://github.com/alacritty/alacritty & https://alacritty.org/ (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support) [in Windows in system must be conpty.dll: https://github.com/alacritty/alacritty/issues/8360]
+ * **Rio Terminal** (Linux/BSD, macOS, Windows): https://github.com/raphamorim/rio & https://raphamorim.io/rio/ (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
+ * **Ghostty** (Linux, macOS): https://github.com/ghostty-org/ghostty & https://ghostty.org/ (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
+ * **Wez's Terminal Emulator** (Linux/BSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux/BSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
  * **iTerm2** (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
+ * **foot** (Linux Wayland only): https://codeberg.org/dnkl/foot (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
  * **Windows Terminal** (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
 
  * _Original Putty_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
@@ -368,6 +372,7 @@ one of the best way to initiate the connection **inside local far2l-GUI**
     + **netcfg** (far2l net interfaces configuration plugin): https://github.com/VPROFi/netcfgplugin
     + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
     + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes
+    + **far-gvfs (gvfspanel)** (far2l plugin to work with Gnome VFS): https://github.com/cycleg/far-gvfs
 
  * **far2m** is fork with FAR3 macro system (Lua) and extended plugins: https://github.com/shmuz/far2m
 

@@ -778,6 +778,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 					{
 						ConfigWriter(RegColorsHighlight).RemoveSection();
+						ConfigWriter(SortGroupsKeyName).RemoveSection(); // see https://github.com/elfmz/far2l/issues/2605
 					}
 					HiMenu.Hide();
 					ClearData();
@@ -1032,6 +1033,13 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 
 void HighlightFiles::SaveHiData()
 {
+	{
+		// hotfix for https://github.com/elfmz/far2l/issues/2605
+		// TODO: verify it's correct fix, not just a workaround
+		ConfigWriter(RegColorsHighlight).RemoveSection();
+		ConfigWriter(SortGroupsKeyName).RemoveSection();
+	}
+
 	std::string strRegKey, strGroupName;
 	const char *KeyNames[4] = {RegColorsHighlight, SortGroupsKeyName, SortGroupsKeyName, RegColorsHighlight};
 	const char *GroupNames[4] = {fmtFirstGroup, fmtUpperGroup, fmtLowerGroup, fmtLastGroup};

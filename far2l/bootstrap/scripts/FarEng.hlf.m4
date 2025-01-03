@@ -846,19 +846,6 @@ is truncated to a zero sized file, renamed to a temporary name and then
 deleted.
 
 
-@ErrCannotExecute
-$ #Error: Cannot execute#
-    The program you tries to execute is not recognized as an internal or
-external command, operable program or batch file.
-
-    When executing the contents of the command line, FAR2L searches for the
-executable in the following sequence (sequentially substituting all extensions
-listed in the environment variable %PATHEXT%):
-
-  1. The current directory
-  2. The directories that are listed in the PATH environment variable
-
-
 @MiscCmd
 $ #Panel control commands - miscellaneous#
   Screen grabber                                             #Alt-Ins#
@@ -1509,6 +1496,9 @@ $ #Menus: options menu#
    #Files highlighting#    Change ~files highlighting and sort groups~@Highlight@
    #and sort groups#       settings.
 
+   #Notifications#         Shows ~Notifications Settings~@NotificationsSettings@ dialog.
+   #Settings#
+
    #Save setup#            Save current configuration, colors and
                          screen layout.
 
@@ -1648,8 +1638,7 @@ $ #Plugins manager#
   #Path for personal plugins#
   Enter here the full path, where FAR2L will search for "personal" plugins in addition to the "main"
 plugins. Several search paths may be given separated by ';'. Environment variables can be entered in the
-search path. Personal plugins will not be loaded, if the switches -p or -co are given in the
-~command line~@CmdLine@.
+search path. Personal plugins will not be loaded, if the switch -co is given in the ~command line~@CmdLine@.
 
 @ChoosePluginMenu
 $ #Plugin selection menu#
@@ -2417,18 +2406,13 @@ command is executed.
     4. ^<wrap>The prefixes "!##" and "!^" work as toggles for associations. The effect
 of these prefixes continues up to the next similar prefix. For example:
 
-    if exist !##!/!^!.! diff -c -p !##!/!^!.! !/!.!
+    [ -f !##!/!^!.! ] && diff -c -p !##!/!^!.! !/!.!
 
   "If the same file exists on the passive panel as the file under
    the cursor on the active panel, show the differences between
    the file on the passive panel and the file on the active panel,
    regardless of the name of the current file on the passive panel"
 
-    5. ^<wrap>If it is needed to pass to a program a name with an ending
-backslash, use the following meta-symbol - #!.\#. For example, to
-extract a rar archive to a folder with the same name
-
-    winrar x "!.!" "!.\"
 
 @SystemSettings
 $ #Settings dialog: system#
@@ -2462,6 +2446,7 @@ input without viewer or editor screens in the background.
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
 Commands history list may be activated by #Alt-F8#.
+  This option can also be found in the ~Command line settings~@CmdlineSettings@ dialog.
 
   #Save folders history#
   Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR2L.
@@ -2479,6 +2464,12 @@ while its earlier occurrences are deleted from the history.
   - by name and path: the same as "by name", but for the ~command history~@History@ the working directory from which
 the command was executed is also taken into account; that is, if the same command was executed from
 two different directories, both entries will be saved in the history.
+
+  #Autohighlight in history#
+  Allow FAR2L to automatically assign single-button shortcuts to items in the ~Commands history~@History@,
+~Folders history~@HistoryFolders@ and ~File view history~@HistoryViews@. This can be convenient, but there
+is also a risk of accidental selection due to unintentional key presses, given the dynamic nature
+of such lists. If you do not use this feature or feel uncomfortable with it, you can disable it.
 
   #Auto save setup#
   If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
@@ -2533,9 +2524,7 @@ $ #Settings dialog: panel#
                           system changes will be disabled if the
                           count of file objects exceeds the
                           specified value.
-
-    The auto-update mechanism works only for FAT/FAT32/NTFS file
-    systems. The value of 0 means "update always". To force an
+    The value of 0 means "update always". To force an
     update of the panels, press #Ctrl-R#.
 
   #Network drives#          This option enables panel autorefresh
@@ -2603,18 +2592,27 @@ This may require some additional time before starting deleting
 to calculate the total files count.
 
   #Use Ctrl-PgUp for location menu#
-  Pressing #Ctrl-PgUp# in the root directory:
-  - for local drives - shows the location menu;
-  - for network drives - activates the Network plugin (if it is available)
-or location menu (if the Network plugin is not available).
+  Pressing #Ctrl-PgUp# in the root directory shows the ~Location menu~@DriveDlg@.
 
   #Datetime format#
+  Here you can select the order in which the day, month, and year are displayed, and
+specify the separators for date and time based on your preferences.
+  "Reset to default" button restores the settings to the standard values offered by far2l.
+  "Reset to current" button is useful if you want to cancel changes that have not
+yet been confirmed, and return to the current far2l settings.
+  "From system locale" button sets the date and time format according to your operating
+system's locale.
 
   #Cursor blink interval# (*GUI-backend only)
+  Allows decreasing or increasing the cursor blink frequency; the acceptable range of
+values is from 100 to 500 ms.
 
   #Change font# (*GUI-backend only)
+  Shows the font selection dialog where you can choose a font for displaying the far2l interface.
 
   #Disable antialiasing# (*GUI-backend only)
+  Disabling anti-aliasing algorithms may slightly speed up rendering, but it can negatively
+affect the visual perception of text.
 
   #Use OSC52 to set clipboard data# (*TTY-backend only)
   OSC52 allows copying from far2l running in TTY mode (even via SSH connection) to
@@ -2622,6 +2620,8 @@ your local system clipboard.
   Some terminals also need OSC52 to be enabled in terminal's settings.
   If you are using far2l on a remote untrusted system, giving remote system write access
 to your clipboard may be potentially unsafe.
+  Note: The option is displayed if other preferred clipboard access methods (TTY|X, TTY|F)
+are inaccessible.
 
   #Override base colors palette# (*TTY-backend only)
 
@@ -2698,8 +2698,18 @@ $ #Menu settings#
   You may choose action for mouse buttons, when click occures outside a menu:
   #Cancel menu#, #Execute selected item# or #Do nothing#.
 
+  #Loop list scrolling#
+  Enable this option to allow circular scrolling through vertical menus when
+the arrow keys are held down. After reaching the top or bottom item, the cursor
+will automatically jump to the opposite end of the list.
+
+
 @CmdlineSettings
 $ #Settings dialog: command line#
+  #Save commands history#
+  Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
+  This option can also be found in the ~System settings~@SystemSettings@ dialog.
+
   #Persistent blocks#
   Do not remove block selection after moving the cursor in command line.
 
@@ -2712,8 +2722,27 @@ but this block.
 disabled, you may use the #Ctrl-Shift-End# key to autocomplete a line. The autocomplete
 feature is disabled while a macro is being recorded or executed.
 
+  #Command output splitter#
+  Enables the display of dividing lines between command outputs in the built-in ~Terminal~@Terminal@.
+  A green line of "-" characters indicates successful command execution, and a yellow
+line of "~~" characters indicates errors. This makes the output more structured and helps
+to evaluate the results of command execution faster.
+
+  #Wait keypress before close#
+  Pause for key press after executing a command in the built-in ~Terminal~@Terminal@ before
+showing the panels. Possible values: Never/On error/Always.
+
   #Set command line prompt format#
   This option allows to set the default FAR2L command ~line prompt~@CommandPrompt@.
+
+  #Use shell#
+  Force the use of the specified command shell in the built-in ~terminal~@Terminal@.
+  If no shell is provided, far2l will attempt to use the system shell (#$SHELL#). If the system
+shell does not meet far2l's internal requirements, #bash# will be used as a fallback.
+  You can find out the current command shell used by far2l with the ~pseudo-command~@SpecCmd@
+#far:about#.
+  Be aware that, currently, full support is available only for #bash#, and working with other
+command shells may have significant limitations or errors.
 
 @AutoCompleteSettings
 $ #Settings dialog: AutoComplete & History#
@@ -3406,6 +3435,22 @@ or may be switched by #Ctrl-Alt-M# in panels.
 Symbolic links are valid for NTFS drives only.
 
 
+@NotificationsSettings
+$ #Notifications settings#
+
+  #Notify on file operation completion#
+  Send desktop notifications when long-running operations like copying, moving,
+and searching for files are completed.
+
+  #Notify on console command completion#
+  Send desktop notification when the command in the built-in ~Terminal~@terminal@ has
+completed or failed.
+
+  #Notify only if in background#
+  Track the far2l window's state and send desktop notifications only when it is inactive.
+Works in both graphical and terminal versions of far2l.
+
+
 @ViewerSettings
 $ #Settings dialog: viewer#
     This dialog allows to change the default external or
@@ -3577,69 +3622,71 @@ non-typical text files.
 
 @FileAttrDlg
 $ #File attributes dialog#
-    With this command it is possible to change file attributes and file time.
-Either single file or group of files may be processed. If you do not want to
-process files in subfolders, clear the "Process subfolders" option.
+    This command can be applied to individual files as well as groups of files
+and directories, allowing you to view and modify permissions, ownership,
+timestamps, and some file attributes.
+    If you do not want to process files in subfolders, clear the "Process
+subfolders" option.
 
-  #File attributes#
+    The dialog has 5 sections.
 
-    Checkboxes used in the dialog can have the following 3 states:
+    1. ^<wrap>#Info#
+       ^<wrap>The type of the current object, as determined by the #file# command.
+       ^<wrap>When the current object is a symbolic link, you can switch between
+the "Info", the value of a symbolic link ("#Symlink#"), and its resolved absolute path
+("#Object#"). The "Symlink" field is editable.
 
-     #[x]# - attribute is set for all selected items
-           (set the attribute for all items)
+    2. ^<wrap>#Ownership#
+       ^<wrap>Allows to change the user and/or group that owns selected file(s).
+Select the required names from the corresponding dropdown lists.
 
-     #[ ]# - attribute is not set for all selected items
-           (clear the attribute for all items)
+    3. ^<wrap>#Permissions#
+       ^<wrap>Allows to change the access permissions (read/write/execute
+for user/group/others) and the special mode flags (setuid, setgid, and sticky) of
+selected file(s). For convenience, the information is displayed and synchronously
+updated in two notations: symbolic and numeric (octal-based).
 
-     #[?]# - attribute state is not the same for selected items
-           (don't change the attribute)
+       ^<wrap>Checkboxes used in the dialog can have the following 3 states:
 
-    When all selected files have the same attribute value, the corresponding
+       ^<wrap> #[x]# - attribute is set for all selected items
+       ^<wrap>       (set the attribute for all items)
+       ^<wrap> #[ ]# - attribute is not set for all selected items
+       ^<wrap>       (clear the attribute for all items)
+       ^<wrap> #[?]# - attribute state is not the same for selected items
+       ^<wrap>       (don't change the attribute)
+
+       ^<wrap>When all selected files have the same attribute value, the corresponding
 checkbox will be in 2-state mode - set/clear only. When there are selected
 folders, all checkboxes will always be 3-state.
-
-    Only those attributes will be changed for which the state of the
+       ^<wrap>Only those attributes will be changed for which the state of the
 corresponding checkboxes was changed from the initial state.
 
-    The #Compressed#, #Encrypted#, #Not indexed#, #Sparse#, #Temporary#,
-#Offline#, #Reparse point# and #Virtual# attributes are available only on NTFS drives. The
-#Virtual# attribute is not used in Windows 2000/XP/2003. The #Compressed#
-and #Encrypted# attributes are mutually exclusive, that is, you can set only
-one of them. You cannot clear the #Sparse# attribute in Windows 2000/XP/2003.
+    4. ^<wrap>#Attributes / Flags#
+       ^<wrap>Allows to set or unset the "Immutable", "Append", and "Hidden" (*the latter is
+on macOS and BSD only) attributes for the selected file.
 
-    For ~symbolic links~@HardSymLink@ the dialog will display the path where it refers to.
-If this information is not available, then the "#(data not available)#" message will be shown.
+    5. ^<wrap>#File date and time#
+       ^<wrap>Three different file times are supported:
 
-  #File date and time#
+       ^<wrap> - last access time (atime);
+       ^<wrap> - last modification time (mtime);
+       ^<wrap> - last status change time (ctime);
 
-    Four different file times are supported:
-
-    - last write time;
-
-    - creation time;
-
-    - last access time;
-
-    - change time.
-
-    On FAT drives the hours, minutes, seconds and milliseconds of the last access time are
-always equal to zero.
-
-    If you do not want to change the file time, leave the respective field
+       ^<wrap>If you do not want to change the file time, leave the respective field
 empty. You can push the #Blank# button to clear all the date and time fields
 and then change an individual component of the date or time, for example, only
 month or only minutes. All the other date and time components will remain
-unchanged.
+unchanged. The #Current# button fills the file time fields with the current time.
+The #Original# button fills the file time fields with their original values (available
+only when the dialog is invoked for a single file object).
 
-    The #Current# button fills the file time fields with the current time.
+       ^<wrap>Note that "last status change time" is for viewing only and cannot be modified.
+       ^<wrap>On FAT drives the hours, minutes, seconds and milliseconds of the last access time are
+always equal to zero.
 
-    The #Original# button fills the file time fields with their original
-values. Available only when the dialog is invoked for a single file object.
-
-
-    The #System properties# button invoke the system properties dialog for
-selected objects.
-
+    #Be aware that some operations may require superuser rights.#
+    You should ensure that privilege elevation is permitted in the
+~System settings~@SystemSettings@ dialog, or far2l must be run as root.
 
 
 @Bookmarks
@@ -4252,11 +4299,9 @@ $ #Apply command#
 apply a command to each selected file. The same ~special symbols~@MetaSymbols@
 as in ~File associations~@FileAssoc@ should be used to denote the file name.
 
-    For example, 'type !.!' will output to the screen all selected files, one
-at a time, and the command 'rar32 m !.!.rar !.!' will move all selected files
-into RAR archives with the same names. The command 'explorer /select,!.!' will
-start system GUI file browser and set the cursor to the current file
-or directory.
+    For example, 'cat !.!' will output to the screen all selected files, one
+at a time, and the command 'tar --remove-files -cvjf !.!.tar.bz2 !.!' will move all selected files
+into TAR/BZIP2 archives with the same names.
 
     See also ~Special commands~@SpecCmd@
     See also ~Operating system commands~@OSCommands@

@@ -940,6 +940,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
 
+ See also ~Operating system commands~@OSCommands@
+
 @FarConfig
 $ #Configuration editor#
  Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
@@ -1041,11 +1043,6 @@ available help on the modules by pressing
 
     If the plugin has no help file, then context-dependent help will not pop
 out.
-
-    If the active panel shows a plugin emulated file system, the command "CD"
-in the command line may be used to change the plugin file system folder. Unlike
-"CD", "CHDIR" command always treats the specified parameter as a real folder
-name regardless a file panel type.
 
     Use #Alt-Shift-F9# to ~configure plugins~@PluginsConfig@.
 
@@ -2119,10 +2116,7 @@ respective option in the ~system settings dialog~@SystemSettings@.
 
   Remarks:
 
-  1. ^<wrap>List refresh operation (#Ctrl-R#) can take a considerable amount
-of time if a file was located on a currently unavailable remote resource.
-
-  2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
+  1. ^<wrap>Locked items will not be deleted when clearing or refreshing the history.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
               common ~history~@HistoryCmd@ keyboard commands.
@@ -2169,17 +2163,15 @@ respective option in the ~system settings dialog~@SystemSettings@.
 
   Remarks:
 
-  1. ^<wrap>List refresh operation (#Ctrl-R#) can take a considerable amount
-of time if a folder was located on a currently unavailable remote resource.
-
-  2. ^<wrap>Заблокированные пункты не будут удаляться при очистке или обновлении истории.
+  1. ^<wrap>Locked items will not be deleted when clearing or refreshing the history.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
               common ~history~@HistoryCmd@ keyboard commands.
 
 @TaskList
 $ #Task list#
-    The task list displays active tasks by using #htop# (if available).
+    The task list displays active tasks by using #htop# (if available)
+or #top# as a fallback.
 
 @CompFolders
 $ #Compare folders#
@@ -2311,17 +2303,6 @@ program, start its command line with '#@@#' character.
 
     The following ~special symbols~@MetaSymbols@ may be used in the associated
 command.
-
-  Notes:
-
-  1. ^<wrap>If no execute command is associated with file and
-#Use OS registered types# option in ~System settings~@SystemSettings@
-is on, FAR2L tries to use OS association to execute this file type;
-
-  2. ^<wrap>Operating system ~commands~@OSCommands@ "IF EXIST" and "IF DEFINED"
-allow to configure "smarter" associations - if you have specified several
-associations for a file type, the menu will show only the associations
-for which the conditions are true.
 
 
 @MetaSymbols
@@ -3118,8 +3099,9 @@ $ #Editor: search/replace#
 $ #Editor: Open/Create file#
     With #Shift-F4#, one can open the existing file or create a new file.
 
-    According to ~editor settings~@EditorSettings@, newly created file
-is assigned to OEM or ANSI codepage. You can change the codepage with #Shift-F8#.
+    For a newly created file, the code page is selected according to
+~editor settings~@EditorSettings@. If necessary, another code page can be
+selected from the #list#.
 
     For existing file, changing the codepage has sense if it hasn't been
 correctly detected at open.
@@ -3337,9 +3319,6 @@ in order to hide garbage mountpoints from the Location menu.
 $ #Disconnect network drive#
     You can unmount mountpoint by pressing #Del# in the
 ~location menu~@DriveDlg@.
-
-    The option #[x] Reconnect at logon# is enabled only for permanently
-connected network drives.
 
     The confirmation can be disabled in the ~confirmations~@ConfirmDlg@ dialog.
 
@@ -4272,7 +4251,7 @@ $ #Error: plugin not loaded#
    2. For some reason, the module returned an error code
       telling the system to abort plugin loading.
 
-   3. The DLL file of the plugin is corrupt.
+   3. The file of the plugin is corrupt.
 
 
 @ScrSwitch
@@ -4337,6 +4316,8 @@ system command processor.
        - ~Apply command~@ApplyCmd@
        - ~User menu~@UserMenu@
        - ~File associations~@FileAssoc@
+
+    See also ~Special commands~@SpecCmd@
 
 
 @FAREnv

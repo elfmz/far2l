@@ -799,6 +799,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
 
+ Lásd még ~Operációs rendszer parancsok~@OSCommands@.
+
 @FarConfig
 $ #Configuration editor#
  Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
@@ -898,11 +900,6 @@ pluginek súgóinak listája a következők szerint jeleníthető meg:
 
     Ha a pluginnek nincs súgója, a helyzetérzékeny súgó ablaka nem
 jelenik meg.
-
-    Ha az aktív panel pluginnel emulált fájlrendszert mutat, a
-parancssorból kiadott "CD" parancs a pluginnel emulált fájlrendszer mappái
-közt vált. A "CD"-vel ellentétben a "CHDIR" parancs mindig valódi mappanévként
-kezeli a megadott paramétert, függetlenül a fájlpanel típusától.
 
     Az #Alt-Shift-F9# billentyűkombináció meghívja a
 ~plugin beállítások~@PluginsConfig@ menüt.
@@ -1802,10 +1799,7 @@ $ #Előzmények: megnézett és szerkesztett fájlok előzménye#
 
   Megjegyzések:
 
-     1. A lista frissítése (#Ctrl-R#) hosszú időt vehet igénybe, ha
-        jelenleg nem elérhető távoli helyeket kell vizsgálnia.
-
-     2. A zárolt előzményelemek nem törlődnek az előzménylista
+     1. A zárolt előzményelemek nem törlődnek az előzménylista
         módosulása vagy törlése esetén sem.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -1853,10 +1847,7 @@ $ #Előzmények: mappa előzmények#
 
   Megjegyzések:
 
-    1. A lista frissítése (#Ctrl-R#) hosszú időt vehet igénybe, ha
-       pillanatnyilag nem elérhető távoli helyeket kell vizsgálnia.
-
-    2. A zárolt előzményelemek nem törlődnek az előzménylista
+    1. A zárolt előzményelemek nem törlődnek az előzménylista
        módosulása vagy törlése esetén sem.
 
    See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -1864,7 +1855,8 @@ $ #Előzmények: mappa előzmények#
 
 @TaskList
 $ #Futó programok#
-    The task list displays active tasks by using #htop# (if available).
+    The task list displays active tasks by using #htop# (if available)
+or #top# as a fallback.
 
 @CompFolders
 $ #Mappák összehasonlítása#
@@ -2000,19 +1992,6 @@ végrehajtható parancsot lehet hozzárendelni:
 paneljei kikapcsolódjanak, kezdjük a parancssort #@@# karakterrel.
 
     A parancssorban ~különleges szimbólumokat~@MetaSymbols@ is használhatunk.
-
-  Megjegyzések:
-
-  1. ^<wrap>Ha egy fájltípushoz nincs definiált társítás és a
-~Rendszer beállítások~@SystemSettings@ menüben a #Windows regisztrált#
-#fájltípusainak használata# opció be van kapcsolva, a FAR megpróbálja a
-Windowsban definiált társításokat alkalmazni.
-
-  2. ^<wrap>Az operációs rendszer "IF EXIST" és "IF DEFINED"
-~parancsaival~@OSCommands@ a társításoknak kifinomultabb feltételrendszert
-szabhatunk. Ha azonos fájltípushoz több különböző társítást adtunk meg, az
-említett szabályok hatására a menüben csak a feltételeknek megfelelő
-társítások jelennek meg.
 
 
 @MetaSymbols
@@ -2763,8 +2742,8 @@ $ #Szerkesztő: fájl megnyitása/létrehozása#
     A #Shift-F4# billentyűkombinációval létező vagy új fájlt nyithatunk meg
 szerkesztésre.
 
-    A ~szerkesztő beállításaitól~@EditorSettings@ függően az új fájl OEM
-vagy ANSI kódolású lesz, de szükség esetén a kódlapok #listájából# más
+Az új fájl kódolása a ~szerkesztő beállításaitól~@EditorSettings@ 
+függően lesz. De szükség esetén a kódlapok #listájából# más
 kódlapot is választhatunk.
 
     Létező fájlnál is szükség lehet a #Кódlap# paraméter átállítására,
@@ -2947,9 +2926,6 @@ in order to hide garbage mountpoints from the Location menu.
 $ #Hálózati meghajtó leválasztása#
     A ~Meghajtók~@DriveDlg@ menüben a #Del# lenyomásával leválaszthatjuk
 a hálózati meghajtókat.
-
-    A #[x] Belépéskor újracsatlakoztat# opció csak az állandóan csatlakozó
-hálózati meghajtóknál engedélyezett.
 
     A leválasztás jóváhagyása a ~megerősítések~@ConfirmDlg@
 párbeszédablakban kapcsolható ki/be.
@@ -3920,13 +3896,13 @@ másik ~szimbolikus linkje~@HardSymLink@.
 $ #Hiba: plugin betöltési hiba#
    A hibaüzenet ezekben az esetekben jelenhet meg:
 
-   1. ^<wrap>A plugin helyes működéséhez szükséges .dll fájl nem található
+   1. ^<wrap>A plugin helyes működéséhez szükséges fájl nem található
 a rendszerben.
 
    2. ^<wrap>Valamilyen oknál fogva a plugin hibakóddal tér vissza és nem
 engedi, hogy a plugin a rendszerbe töltődjön.
 
-   3. A plugint képviselő .dll fájl hibás.
+   3. A plugint képviselő fájl hibás.
 
 
 @ScrSwitch
@@ -3992,6 +3968,8 @@ az operációs rendszer parancsértelmezőjének.
        ~Parancs végrehajtása~@ApplyCmd@
        ~Felhasználói menü~@UserMenu@
        ~Fájltársítások~@FileAssoc@
+
+    See also ~Special commands~@SpecCmd@
 
 
 @FAREnv

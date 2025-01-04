@@ -566,6 +566,16 @@ Messager &FN_NOINLINE ExMessager::AddDup(const wchar_t *v)
 	return *this;
 }
 
+Messager &FN_NOINLINE ExMessager::AddMultiline(const wchar_t *v, const wchar_t *divs)
+{
+	std::wstring source_str = v;
+	std::vector<std::wstring> lines;
+	StrExplode(lines, source_str, divs, false);
+	for (const auto &current_line : lines)
+		AddDup(current_line.c_str());
+	return *this;
+}
+
 ///////////////////////////////////
 
 void GetMessagePosition(int &X1, int &Y1, int &X2, int &Y2)

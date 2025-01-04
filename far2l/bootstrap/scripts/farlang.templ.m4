@@ -16435,6 +16435,17 @@ upd:"selected %d items"
 upd:"selected %d items"
 upd:"selected %d items"
 
+SetAttrInfoSelDevices
+"%lsустройств: %d"
+"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+
 SetAttrInfoSelDirs
 "%lsкаталогов: %d"
 "%lsdirs: %d"

@@ -206,7 +206,6 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 	// Дефолтные значения выбраны так чтоб как можно правильней загрузить
 	// настройки старых версий фара.
 
-
 	if (bSortGroup)
 		HData->SetMask(cfg_reader.GetInt(HLS.UseMask, 1) != 0, Mask);
 	else
@@ -1043,6 +1042,7 @@ void HighlightFiles::SaveHiData()
 	};
 
 	ConfigWriter cfg_writer;
+
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
 			strGroupName = StrPrintf(GroupNames[j], i - Count[j][0]);

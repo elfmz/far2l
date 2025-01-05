@@ -238,15 +238,14 @@ bool FarColors::Load(KeyFileHelper &kfh) noexcept {
 	for (size_t i = 0; i < SIZE_ARRAY_FARCOLORS; i++) {
 		const std::string &expstr = kfh.GetString(FARCOLORS_SECTION, ColorsInit[i].name, FARCOLORS_DEFCOLOR);
 
-		uint64_t color = 0;
-		bool rez = ExprToFarColor(expstr.c_str(), color);
+		uint64_t color = ExprToFarColor(expstr.c_str(), expstr.size());
 
-		if (rez)
-			FARColors.colors[i] = color;
-		else {
-			FARColors.colors[i] = 4 * 16 + 15;
-			fprintf(stderr, " %s = %s = %lu rez = %u\n", ColorsInit[i].name.c_str(), expstr.c_str(), color, rez );
-		}
+//		if (rez)
+		FARColors.colors[i] = color;
+//		else {
+//			FARColors.colors[i] = 4 * 16 + 15;
+//			fprintf(stderr, " %s = %s = %lu rez = %u\n", ColorsInit[i].name.c_str(), expstr.c_str(), color, rez );
+//		}
 	}
 
 	return true;

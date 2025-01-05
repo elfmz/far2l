@@ -32,5 +32,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-bool ExprToFarColor(const char *exsp, uint64_t &c);
+uint64_t ExprToFarColor(const char *exsp, size_t len);
 size_t FarColorToExpr(uint64_t c, char *exsp, size_t s);

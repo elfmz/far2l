@@ -123,7 +123,21 @@ static tident_t const_idents[] = {
 
 constexpr int const_idents_total = sizeof(const_idents) / sizeof(const_idents[0]);
 
-static uint64_t f_rand(void) { return 999; }
+static uint32_t xs30_seed[4] = {0x3D696D09, 0xCD6BEB33, 0x9D1A0022, 0x9D1B0022};
+static uint64_t f_rand(void)
+{
+	uint32_t *zseed = &xs30_seed[0];
+	zseed[0] ^= zseed[0] << 16;
+	zseed[0] ^= zseed[0] >> 5;
+	zseed[0] ^= zseed[0] << 1;
+	uint32_t t = zseed[0];
+	zseed[0] = zseed[1];
+	zseed[1] = zseed[2];
+	zseed[2] = t ^ zseed[0] ^ zseed[1];
+	return (uint64_t)zseed[0];
+}
+
+//static uint64_t f_rand(void) { return 999; }
 static uint64_t f_FOREGROUND(uint64_t rgb) { return (rgb << 16) | FOREGROUND_TRUECOLOR; }
 static uint64_t f_FORE_RGB(uint64_t r, uint64_t g, uint64_t b) { return ((r | (g << 8) | (b << 16)) << 16) | FOREGROUND_TRUECOLOR; }
 static uint64_t f_BACK_RGB(uint64_t r, uint64_t g, uint64_t b) { return ((r | (g << 8) | (b << 16)) << 40) | BACKGROUND_TRUECOLOR; }
@@ -475,5 +489,28 @@ size_t FarColorToExpr(uint64_t c, char *exsp, size_t s)
 			n += snprintf(exsp + n, s - n, "%s", i.second);
 		}
 	}
+
+#if 1 // rgb comments
+	if (c & BACKGROUND_TRUECOLOR || c & FOREGROUND_TRUECOLOR) {
+		exsp[n++] = ';';
+		exsp[n++] = ' ';
+	}
+	if (c & BACKGROUND_TRUECOLOR) {
+		uint32_t bc = (uint32_t)(c >> 40);
+		n += snprintf(exsp + n, s - n, "back_rgb(%u, %u, %u)", GetRValue(bc), GetGValue(bc), GetBValue(bc));
+		addop = true;
+	}
+	if (c & FOREGROUND_TRUECOLOR) {
+		if (addop) {
+			exsp[n++] = ' ';
+			exsp[n++] = '|';
+			exsp[n++] = ' ';
+		}
+		uint32_t bc = (uint32_t)((c >> 16) & 0xFFFFFF);
+		n += snprintf(exsp + n, s - n, "fore_rgb(%u, %u, %u)", GetRValue(bc), GetGValue(bc), GetBValue(bc));
+		addop = true;
+	}
+#endif
+
 	return n;
 }

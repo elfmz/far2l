@@ -406,7 +406,7 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 
 		} else {
 			Format(ESC "[3 q"); // Blink Underline
-			Format(ESC "]50;CursorShape=2\x07"); // Same for iTerm2
+			Format(ESC "]1337;CursorShape=2\x07"); // Same for iTerm2
 		}
 
 	} else {
@@ -418,7 +418,7 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 
 		} else {
 			Format(ESC "[0 q"); // Blink Block (Default)
-			Format(ESC "]50;CursorShape=0\x07"); // Same for iTerm2
+			Format(ESC "]1337;CursorShape=0\x07"); // Same for iTerm2
 		}
 	}
 }

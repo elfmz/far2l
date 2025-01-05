@@ -159,33 +159,15 @@ nyitja meg. A -e után megadható, hogy melyik sor hányadik karakterhelyére
 
           Például: far -e70:2 readme.
 
-          ^<wrap>
-  #-p[<path>]#  A "fő" plugineket a <path>-ben megadott elérési út
-          ^<wrap>mappáiban keresi. Több keresési útvonal is megadható,
-";"-vel elválasztva.
-
-          Példa: far -p%SystemRoot%\\Profiles\\%USERNAME%\\FAR
-
   #-co#   ^<wrap>A FAR pluginjei csak a gyorsítótárból töltődhetnek be.
 Bár így a betöltésük gyorsabb, az új vagy megváltozott plugineket a FAR nem
 érzékeli. CSAK állandó pluginek esetén használjuk! Pluginek hozzáadása,
 cseréje vagy törlése után a FAR-t a kapcsoló nélkül kell elindítani. Ha a
 gyorsítótár üres, nem töltődik be plugin.
 
-          Megjegyzések a -p és -co kapcsolókhoz:
-
-        - ^<wrap>ha a -p után nincs érték, a FAR pluginek nélkül
-fog elindulni;
-        - ha -p-nek adtunk <path> értéket, csak a megadott útvonalról
-töltődnek be pluginek;
-        - ha csak a -co kapcsolóval indítjuk és a plugin gyorsítótár
-nem üres, a gyorsítótárból töltődnek be a pluginek;
-        - a -co kapcsolót a FAR figyelmen kívül hagyja, ha -p is áll
-mellette;
-        - ha sem a -p, sem a -co kapcsoló nem szerepel a parancssorban,
-akkor a pluginek csak az alapértelmezett plugin mappából, valamint a
-~saját pluginek elérési útvonala~@SystemSettings@ által meghatározott
-mappákból töltődnek be.
+Ha a parancssorban nincs -co kapcsoló, akkor a pluginek csak az alapértelmezett
+plugin mappából, valamint a ~saját pluginek elérési útvonala~@SystemSettings@
+által meghatározott mappákból töltődnek be.
 
   #-m#    ^<wrap>A FAR induláskor nem tölti be a registryből a makróit.
 
@@ -1097,15 +1079,9 @@ $ #Panelek: fastruktúra panel#
 hasonlóan ábrázolja. Ebben a nézetben gyorsan lehet mappát váltani és
 a mappákkat kezelni.
 
-    A FAR a mappák szerkezeti adatainak tárolásához minden meghajtó
-gyökérmappájában létrehoz egy-egy #Tree.Far# nevű fájlt, a csak olvasható
-meghajtók adatait pedig egy Tree.Cache nevű rejtett mappába menti el,
-a FAR.EXE mappáján belül. A Tree.Far fájl eredetileg nem létezik, a
-#Fastruktúra panel# vagy a #Mappa keresése# funkció első használata után jön
-létre automatikusan. Ha a Tree.Far már létezik és ha változik a fa, a FAR
-frissíti a megváltozott szerkezet adatait. Ha a szerkezeti
-változások akkor történtek, amikor a FAR nem futott és a Tree.Far tartalma
-már nem teljesen időszerű, a #Ctrl-R# leütésével frissíthetjük.
+    FAR stores folder tree information in its folder in the system's temporary directory
+(/tmp, /var/tmp, or $TMPDIR).  If necessary, the tree state can be updated using
+#Ctrl-R# key combination.
 
     A #gyorskeresés# segítségével hamarabb megtalálhatjuk a mappákat. Tartsuk
 nyomva az Alt billentyűt és addig írjuk be a keresett mappa nevét, amíg rá nem
@@ -1116,42 +1092,46 @@ lépkedhetünk.
 a szintnek a mappáin.
 
 @InfoPanel
-$ #Panelek: info panel#
-    Az információs panelről a következő adatok olvashatók le:
+$ #Panels: info panel#
+    The information panel contains the following data:
 
-    - ^<wrap>a számítógép és az aktuális felhasználó #hálózati# neve;
+ 1. ^<wrap>#Network# names of the computer and the current user (see ~Info panel settings~@InfoPanelSettings@).
 
-    - ^<wrap>az #aktuális lemez# betűjele és fajtája, a fájlrendszer típusa,
-a hálózat neve, a teljes és a szabad lemezterület, a kötet címkéje és
-sorozatszáma;
+ 2. ^<wrap>Information about the current directory and its file system.
+    ^<wrap>File system type, total space and space available to unprivileged user, filesystem id, the current
+directory and its resolved path (including symbolic links), mount point of the current directory's file system,
+maximum filename length, and mount options.
 
-    - ^<wrap>a #memória# foglaltsága százalékban (a 100% a teljes rendelkezésre
-álló memória foglaltságát jelenti), a fizikai és a virtuális memória
-teljes és szabad mérete;
+ 3. ^<wrap>Memory information.
+    ^<wrap>Memory load percentage (100% means all of available memory is used), total usable main memory size,
+available memory size, amount of shared memory, memory used by buffers, total swap space size,
+swap space still available.
 
-    - #mappa megjegyzésfájl#.
+ 4. ^<wrap>EditorConfig information (if available).
+    ^<wrap>Paths to the #.editorconfig# files, including the root and nearest, as well as values of #indent_style#,
+#indent_size#, #end_of_line#, #charset#, #trim_trailing_whitespace#, #insert_final_newline# properties for #[*]# mask.
+    ^<wrap>Learn more about EditorConfig on its official website: ~https://editorconfig.org/~@https://editorconfig.org/@.
 
-    A mappa megjegyzésfájlok tartalmát teljes képernyőn tekinthetjük meg az
-#F3#-mal vagy a #bal egérgombbal#. A megjegyzés megnézéséhez vagy
-szerkesztéséhez nyomjuk le az #F4#-et vagy a #jobb egérgombot#. Több
-~nézőke parancs~@Viewer@ (keresés, kódlap kiválasztása és mások) használható
-a mappák megjegyzéseinek megtekintésénél is.
+ 5. ^<wrap>Git brief status (if available).
+    ^<wrap>When in a local Git repository/working tree, the Git root directory path and the output of #git status -s -b# will be shown.
 
-    Hogy a FAR mely fájlokat kezelje mappa megjegyzésként, megadhatjuk a
-~Beállítások menü~@OptMenu@ "Mappa megjegyzésfájlok" menüjének listájában.
+ 6. ^<wrap>#Folder description# file
 
-    A FAR igyekszik felismerni az összes rendszerbe csatlakozó CD meghajtó
-típusát. A felismert típusok: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW és
-DVD-RAM. Ez a funkció csak Windows NT/XP-n elérhető; a rendszergazda
-jogokkal rendelkező felhasználóknál és a helyi felhasználóknál működik,
-ha a "Helyi biztonsági beállítások" szerkesztőjében a
-#Helyi házirend/Biztonsági beállítások/Eszközök:#-ben
-#A CD-ROM használatához kötelező bejelentkezni a helyi számítógépre#
-paramétert engedélyeztük. Az említett biztonsági szerkesztőprogramot a
-parancssorból a #secpol.msc# parancs kiadásával is elindíthatjuk.
+    ^<wrap>You may view the contents of the folder description file in full screen by
+pressing the #F3# key or clicking the #left mouse button#. To edit or create the
+description file, press #F4# or click the #right mouse button#. You can also use
+many of the ~viewer commands~@Viewer@ (search, code page selection and so on)
+for viewing the folder description file.
 
-    Virtuális lemezeknél (SUBST-disk) az info panelről a gazdalemez
-jellemzőit olvashatjuk le.
+    ^<wrap>A list of possible folder description file names may be defined using
+"Folder description files" command in the ~Options menu~@OptMenu@.
+
+ 7. ^<wrap>Plugin panel.
+    ^<wrap>Contains information about the opposite plugin panel, if provided by the plugin.
+
+ See also: ^<wrap>~Info panel settings~@InfoPanelSettings@
+           ^<wrap>~Macro keys list~@KeyMacroInfoList@ available in the info panel.
+
 
 @QViewPanel
 $ #Panelek: gyorsnézet panel#
@@ -1567,6 +1547,42 @@ tartományon túli része a szöveget, oda nem terjed ki a keresés.
     G - gigabájt;
     T - terabájt.
 
+    Az #F3# és az #F4# a megtalált fájlok megnézésére és szerkesztésére
+szolgál és pluginnel emulált fájlrendszerekben is használható. Érdemes
+megjegyezni, hogy ha emulált fájlrendszerben mentjük a szerkesztés változásait
+az #F2#-vel, egyszerű #Mentés# helyett #Mentés másként# művelet történik.
+
+    Az Windows attribútumok betűjeleinek jelentése:
+       #R#         - Read only (Csak olvasható)
+       #S#         - System (Rendszer)
+       #H#         - Hidden (Rejtett)
+       #A#         - Archive (Archiv)
+       #L#         - Mappa csomópont vagy szimbolikus link
+       #C# vagy #E#  - ^<wrap>Compressed vagy Encrypted (Tömörített vagy
+Titkosított)
+       #$#         - Sparse (Ritkított)
+       #T#         - Temporary (Átmeneti)
+       #I#         - Nem (tartalom)indexelt
+       #O#         - Offline
+       #V#         - Virtuális
+
+    Unix file types:
+       #B#         - Broken
+       #d#         - Directory
+       #c#         - Character device
+       #b#         - Block device
+       #p#         - FIFO (named Pipe)
+       #s#         - Socket
+       #l#         - Symbolic Link
+       #-#         - Regular file
+
+    Unix file permissions (in each triad for owner, group, other users):
+       #r# or #-#    - readable or not
+       #w# or #-#    - writable or not
+       #x# or #-#    - executable or not
+       #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
+       #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
+
 @FindFileResult
 $ #Fájlkeresés: vezérlőgombok#
     A #Fájlkeresés# ablakban - akár ~keresés~@FindFile@ közben, akár annak
@@ -1590,12 +1606,6 @@ jeleníti meg.
 aktív.
 
     #Mégsem#          Bezárja a keresés párbeszédablakát.
-
-    Az #F3# és az #F4# a megtalált fájlok megnézésére és szerkesztésére
-szolgál és pluginnel emulált fájlrendszerekben is használható. Érdemes
-megjegyezni, hogy ha emulált fájlrendszerben mentjük a szerkesztés változásait
-az #F2#-vel, egyszerű #Mentés# helyett #Mentés másként# művelet történik.
-
 
 @FindFolder
 $ #Mappakeresés#
@@ -2303,6 +2313,24 @@ menüt;
 plugint (ha lehetséges) vagy meghívja a Meghajtók menüt (ha a Hálózat plugin
 nem elérhető).
 
+  #Datetime format#
+
+  #Cursor blink interval# (*GUI-backend only)
+
+  #Change font# (*GUI-backend only)
+
+  #Disable antialiasing# (*GUI-backend only)
+
+  #Use OSC52 to set clipboard data# (*TTY-backend only)
+  OSC52 allows copying from far2l running in TTY mode (even via SSH connection) to
+your local system clipboard.
+  Some terminals also need OSC52 to be enabled in terminal's settings.
+  If you are using far2l on a remote untrusted system, giving remote system write access
+to your clipboard may be potentially unsafe.
+
+  #Override base colors palette# (*TTY-backend only)
+
+
 @DialogSettings
 $ #Beállítások: párbeszédablak beállítások#
   #Beviteli sorok#          Megőrzi egyes FAR párbeszédablakok
@@ -2338,7 +2366,7 @@ végrehajtása átmenetileg letiltja az automatikus kiegészítést.
 opcióval letilthatjuk ezt a működést.
 
 @InfoPanelSettings
-$ #Настройка информационной панели#
+$ #Information Panel settings#
 
 
 @CommandPrompt
@@ -2798,84 +2826,62 @@ $ #ANSI and OEM codepage setting#
   or, if its absence, by environment variable #LC_CTYPE#
 
 @DriveDlg
-$ #Meghajtóváltás (Meghajtók menü)#
-    A Meghajtók menüben másik meghajtót választhatunk a panelhez,
-leválaszthatjuk a hálózati meghajtókat vagy új ~plugin~@Plugins@ panelt
-nyithatunk meg.
+$ #Location menu#
+    This menu allows to change the current location of a panel, unmount mountpoint 
+or open a new ~plugin~@Plugins@ panel.
 
-    A meghajtók és a pluginek közül sávkurzorral vagy a hozzájuk rendelt
-betűjelekkel és számokkal választhatunk. Ha a panel típusa eredetileg
-nem ~fájlpanel~@FilePanel@ volt, meghajtóváltás után az lesz.
+    Select the item and press Enter to change the location to specified filesystem path
+or plugin. If the panel type is not a ~file panel~@FilePanel@, it will be changed to the
+file panel if you chosen filesystem location, or selected Plugin panel will be opened.
 
-    #Ctrl-A#, #F4# nyílt a Windows meghajtó tulajdonságai párbeszédpanelen.
+    #F4# key can be used to assign a hotkey to item.
 
-    A #Del# billentyűvel:
+    #Del# key can be used:
 
-    - ~leválaszthatjuk~@DisconnectDrive@ a hálózati meghajtókat;
+     - to ~unmount~@DisconnectDrive@ filesystem at given path.
 
-    - ^<wrap>törölhetjük a SUBST paranccsal létrehozott virtuális
-meghajtókat;
+     - to delete a bookmark.
 
-    - ^<wrap>kiadathatjuk a CD-ROM-ok vagy más cserélhető lemezes meghajtók
-lemezeit.
+    The #Shift-Del# hotkey can be used to force-unmount filesystem that requires root privileges.
 
-      ^<wrap>A ZIP meghajtók lemezének kiadásához rendszergazda jogosultság
-szükséges. A CD-ROM-ok tálcáját az #Ins# billentyűvel tolhatjuk be.
+    #Ctrl-1# - #Ctrl-9# switch the display of different information:
 
-    A #Shift-Del# billentyűkombinációval biztonságosan eltávolíthatjuk az USB
-portra csatlakoztatott tárolóeszközöket.
+    #F9# shows a ~dialog for configuring Location menu~@ChangeLocationConfig@.
 
-    A Meghajtók menüben a #Ctrl-1 - Ctrl-9# billentyűkkel a meghajtókra
-vonatkozó különféle információk megjelenítését kapcsolhatjuk ki vagy be:
+    #Location# menu settings are saved in the FAR2L configuration.
 
-    Ctrl-1 - a lemez típusa;
-    Ctrl-2 - ^<wrap>a hálózat neve (és a SUBST meghajtó gazdalemezén annak a
-mappának az elérési útvonala, amihez a virtuális meghajtót hozzárendeltük);
-    Ctrl-3 - a lemez címkéje;
-    Ctrl-4 - a fájlrendszer;
-    Ctrl-5 - a teljes és a szabad lemezterület mérete (kétféle
-megjelenítési módja van, nyomjuk le kétszer);
-    Ctrl-6 - a kivehető lemez paraméterei;
-    Ctrl-7 - pluginek megjelenítése;
-    Ctrl-8 - a CD meghajtók fajtái;
-    Ctrl-9 - a hálózat jellemzői.
+    If the option "~Use Ctrl-PgUp for location menu~@InterfSettings@" is enabled,
+pressing #Ctrl-PgUp# works the same as pressing #Esc# - closes the menu.
 
-    A #Meghajtók# menü beállításait a FAR a többi konfigurációs adattal együtt
-menti.
+    Pressing #Shift-Enter# invokes system GUI file manager showing the directory
+of the selected line (works only for disk drives and not for plugins).
 
-    Ha ~A Ctrl-PgUp meghajtót vált~@InterfSettings@ opciót engedélyeztük, a
-#Ctrl-PgUp# ugyanúgy működik, mint az #Esc#: kilép a Meghajtók menüből és
-bezárja az ablakot.
+    #Ctrl-R# allows to refresh the location menu.
 
-    A #Shift-Enter# meghívja a Windows Explorert, megjelenítve benne a
-kiválasztott meghajtó gyökerét (csak "valódi" meghajtóknál működik,
-pluginnel emulált fájlrendszereknél nem).
+    #Alt-Shift-F9# allows you to ~configure plugins~@PluginsConfig@ (it works only if
+display of plugin items is enabled).
 
-    A #Ctrl-R# frissíti a Meghajtók menü tartalmát.
+    #Shift-F9# in the plugins list opens the configuration dialog of the
+currently selected plugin.
 
-    Ha a #CD meghajtó típusa# mód engedélyezve van (#Ctrl-8#), a FAR
-igyekszik felismerni az összes rendszerbe csatlakozó CD meghajtó
-típusát. A felismert típusok: CD-ROM, CD-RW, CD-RW/DVD, DVD-ROM, DVD-RW és
-DVD-RAM. Ez a funkció csak a rendszergazda jogokkal rendelkező
-felhasználóknál és helyi felhasználóknál működik, ha a "Helyi biztonsági
-beállítások" szerkesztőjében a
-#Helyi házirend/Biztonsági beállítások/Eszközök:# tételnél
-#A CD-ROM használatához kötelező bejelentkezni a helyi számítógépre#
-szabályt engedélyeztük. A biztonsági szerkesztőprogramot a
-parancssorból a #secpol.msc# parancs kiadásával is elindíthatjuk.
+    #Shift-F1# in the plugins list displays the context-sensitive help of the
+currently selected plugin, if the plugin has a help file.
 
-    A Meghajtók menüben az #Alt-Shift-F9# meghívja a
-~plugin beállítások~@PluginsConfig@ menüt (ha #Ctrl-7#-tel engedélyeztük
-a pluginek megjelenítését).
-
-    A #Shift-F9# pluginen lenyomva meghívja a plugin beállításainak
-párbeszédablakát.
-
-    A #Shift-F1# pluginen lenyomva meghívja a plugin helyzetérzékeny
-súgóját (ha a súgófájl létezik).
+    You can specify manual/scripted source of additional items in Location menu that
+will be appended to mountpoints entries. For that you need to create text file under
+path #~~/.config/far2l/favorites# and that file must contain lines, each line can have
+one or two or three parts separated by <TAB> character. First part represent path,
+second and third parts are optional and represent information rendered in additional
+columns. It's possible to insert separator with optional title by specifying line
+with first part having only '-' character and another part (if present) defining
+title text.
+Note that favorites file can contain shell environment variables denoted with $
+character like $HOME, and shell commands substitution, i.e. $(/path/to/some/script.sh)
+will invoke that script.sh and its output will be embedded into content of this file
+during processing. This allows to implement custom dynamic locations list composing.
 
     If you don't see mounted flash drive in the Location menu (#Alt-F1/F2#)
-then check #Exceptions list# in Location Menu Options (#F9#).
+then check #Exceptions list# in ~Location Menu Options~@ChangeLocationConfig@ (#F9#).
 E.g., the #/run/*# pattern is included there by default.
 If you have udisks2 configured to mount removable drives under #/run/media/$USER/#
 you need to delete #/run/*# substring from exceptions list.
@@ -2883,6 +2889,7 @@ After that add more accurate patterns such as #/run/user/*#
 in order to hide garbage mountpoints from the Location menu.
 
     See also:
+      The list of ~macro keys~@KeyMacroDisksList@, available in the Location menu.
       Common ~menu~@MenuCmd@ keyboard commands.
 
 @DisconnectDrive
@@ -3424,6 +3431,7 @@ Titkosított)
        #s#         - Socket
        #l#         - Symbolic Link
        #-#         - Regular file
+
     Unix file permissions (in each triad for owner, group, other users):
        #r# or #-#    - readable or not
        #w# or #-#    - writable or not
@@ -3666,9 +3674,7 @@ forrásfájl tartalmát hozzáfűzhetjük a célfájl végéhez.
 
     Ha a másolás vagy mozgatás során a céllemez megtelik, felfüggeszthetjük
 a másolást vagy kicserélhetjük a lemezt és alkalmazhatjuk a "Felosztást".
-Utóbbi esetben a FAR a másolt fájlt a céllemez méretére szeleteli fel. Ez az
-opció csak akkor jelenik meg, ha a ~Rendszer beállítások~@SystemSettings@ menüben a
-"Másoláshoz a rendszerrutin használata" opció ki van kapcsolva.
+Utóbbi esetben a FAR a másolt fájlt a céllemez méretére szeleteli fel.
 
     A "Hozzáférési jogok" opció csak NTFS fájlrendszernél működik, vele a
 fájlok hozzáférési információit is átmásolhatjuk. A másolás és mozgatás
@@ -3821,19 +3827,6 @@ utolsó oszlopában) és rendezni is tudja a fájlokat hardlinkjeik száma szeri
 
     Hardlinkek kizárólag a forrásfájllal azonos meghajtón készíthetők.
 
-    #Csomópontok#
-
-    A mappa csomópont létrehozása olyan eljárást jelent, amellyel bármelyik
-helyi mappát összerendelhetjük bármely másik helyi mappával. Például, ha a
-D:\\SYMLINK mappa a C:\\WINNT\\SYSTEM32 mappára mutat, akkor az a
-program, amelyik a D:\\SYMLINK\\DRIVERS mappához fér hozzá, valójában a
-C:\\WINNT\\SYSTEM32\\DRIVERS mappát éri el. A hardlinkektől eltérően a
-szimbolikus linkek célpontjainak nem kell a forrással azonos meghajtón lenniük.
-
-    Windows 2000 alatt CD-ROM-ok mappáihoz közvetlenül nem készíthető szimlink,
-de ez a korlátozás kikerülhető, ha a CD-ROM-ot egy NTFS partíció valamelyik
-mappájához mountoljuk.
-
     #Szimbolikus linkek#
 
     Az NTFS a Windows Vista (NT 6.0) verziótól támogatja a szimbolikus
@@ -3852,41 +3845,6 @@ másolhatunk vagy mozgathatunk önmaga belsejébe (saját almappájaként).
 
     Ez a hiba akkor is előfordulhat, ha két mappánk van és az egyik mappa a
 másik ~szimbolikus linkje~@HardSymLink@.
-
-
-@WarnCopyEncrypt
-$ #Figyelem: a titkosítás el fog veszni#
-    A forrásfájl titkosított, másik lemezre másolása vagy mozgatása csak akkor
-lehetséges, ha a fájl a céllemezre titkosítatlanul kerülhet.
-
-    A "Mégis" (vagy "Mégis mind") gombbal figyelmen kívül hagyhatjuk a
-figyelmeztetést és a fájlt titkosítatlanul ugyan, de átmásolhatjuk.
-
-    A FAR mindig az operációs rendszer belső másolási mechanizmusát használja
-a titkosított fájlok aktuális lemezétől eltérő céllemezre másolásakor, a
-"Másoláshoz a rendszerrutin használata" opció állapotától függetlenül.
-
-
-@WarnCopyStream
-$ #Figyelem: több streamet tartalmazó fájl másolása vagy mozgatása#
-    A forrásfájl több adatstreamet tartalmaz, vagy a célhely fájlrendszere
-nem támogatja az ilyen többszintű adatstruktúrával rendelkező fájlokat.
-
-    A stream az NTFS fájlrendszer olyan lehetősége, amelyek a fájlokra
-vonatkozó további információkat (például a szerző nevét, címet, kulcsszavakat
-vagy egyéb adatokat) tartalmazhatnak. Ezek az adatok a fájlokkal
-együtt tárolódnak el, de láthatatlanok az adatokat kiolvasni
-és kezelni nem képes programok számára. Például a Windows Explorere a
-streameket használja a fájlok járulékos információinak tárolására
-(Summary = összegzés). A FAT/FAT32 fájlrendszer nem támogatja a streameket.
-
-    Ha a fájlokat minden adatukkal együtt szeretnénk átmásolni (az összes
-streamjükkel együtt), kapcsoljuk be a ~Rendszer beállítások~@SystemSettings@
-menüben a "#Másoláshoz a rendszerrutin használata#" opciót.
-
-    Ha nem NTFS fájlrendszerű lemezre másolunk több streamet tartalmazó
-fájlokat, a művelet adatvesztéssel jár: csak a fájlok fő streamje másolódik
-át.
 
 
 @ErrLoadPlugin

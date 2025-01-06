@@ -228,6 +228,17 @@ upd:"Change"
 upd:"Change"
 upd:"Change"
 
+Reset
+"Сбросить"
+"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+"Reiniciar"
+"Скинути"
+"Зкінуць"
+
 HCancel
 l:
 "&Отмена"

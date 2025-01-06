@@ -12,6 +12,7 @@ class FSFileFlags
 public:
 	FSFileFlags(const std::string &path);
 	void Apply(const std::string &path, bool force = false);
+	inline void Reset() { _flags = _actual_flags; }
 
 	inline bool Valid() const { return _valid; }
 

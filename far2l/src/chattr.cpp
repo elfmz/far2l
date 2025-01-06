@@ -196,7 +196,8 @@ enum CHATTRDLG
 	CA_LIST_FLAGS,
 	CA_SEPARATOR2,
 	CA_BUTTON_SET,
-	CA_BUTTON_CANCEL
+	CA_BUTTON_CANCEL,
+	CA_BUTTON_RESET
 };
 
 static void flags_show(HANDLE hDlg, bool toggle)
@@ -208,11 +209,11 @@ static void flags_show(HANDLE hDlg, bool toggle)
 	FSFileFlags *FFFlags =
 			reinterpret_cast<FSFileFlags *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 
-	int sel_pos = ListBox->GetSelectPos();
-	if (toggle && sel_pos >= 0 && sel_pos < (int)ARRAYSIZE(flags_list))
-		FFFlags->FlagInverse(flags_list[sel_pos].flag);
-	else
-		toggle = false;
+	FarListPos ListPos;
+	ListBox->GetSelectPos(&ListPos);
+	bool sel_pos = ListPos.SelectPos >= 0 && ListPos.SelectPos < (int)ARRAYSIZE(flags_list);
+	if (toggle && sel_pos)
+		FFFlags->FlagInverse(flags_list[ListPos.SelectPos].flag);
 
 	ListBox->DeleteItems();
 	for (unsigned i=0; i<ARRAYSIZE(flags_list); i++) {
@@ -223,8 +224,8 @@ static void flags_show(HANDLE hDlg, bool toggle)
 		SendDlgMessage(hDlg, DM_SETTEXTPTR, CA_TEXT_FLAGSBAR, (LONG_PTR)strFlagsBar.CPtr());
 	}
 
-	if (toggle) {
-		ListBox->SetSelectPos(sel_pos, 0);
+	if (sel_pos) {
+		ListBox->SetSelectPos(&ListPos);
 		ListBox->FastShow();
 	}
 }
@@ -248,6 +249,15 @@ static LONG_PTR WINAPI ChattrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			if (Param1 == CA_LIST_FLAGS) { // without DIF_LISTNOCLOSE mouse click in ListBox try close dialog
 				flags_show(hDlg, true);
 				return FALSE; // no close if mouse click in ListBox
+			}
+			break;
+		case DN_BTNCLICK:
+			if (Param1 == CA_BUTTON_RESET) { 
+				FSFileFlags *FFFlags =
+						reinterpret_cast<FSFileFlags *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+				FFFlags->Reset();
+				flags_show(hDlg, false);
+				return TRUE;
 			}
 			break;
 	}
@@ -348,7 +358,8 @@ bool ChattrDialog(Panel *SrcPanel)
 		{DI_LISTBOX,   4, 5, (short)(DlgWidth - 5), (short)(DlgHeight - 5), {}, DIF_FOCUS | DIF_LISTNOBOX /*| DIF_LISTNOCLOSE*/, L""},
 		{DI_TEXT,      0, (short)(DlgHeight - 4), 0, (short)(DlgHeight - 4), {}, DIF_SEPARATOR, L""},
 		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetAttrSet},
-		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP, Msg::Cancel}
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP, Msg::Cancel},
+		{DI_BUTTON,    0, (short)(DlgHeight - 3), 0, (short)(DlgHeight - 3), {}, DIF_CENTERGROUP, Msg::Reset},
 	};
 	MakeDialogItemsEx(ChattrDlgData, ChattrDlg);
 

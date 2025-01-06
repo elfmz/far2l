@@ -5,6 +5,7 @@ add_subdirectory (bootstrap)
 set(SOURCES
 src/farversion.cpp
 src/cache.cpp
+src/chattr.cpp
 src/clipboard.cpp
 src/cmdline.cpp
 src/copy.cpp

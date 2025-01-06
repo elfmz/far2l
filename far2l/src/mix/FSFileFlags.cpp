@@ -41,7 +41,8 @@ void FSFileFlags::Apply(const std::string &path, bool force)
 			_errno = errno;
 			fprintf(stderr, "FSFileFlags::Apply: error %d; path='%s'\n", errno, path.c_str());
 		}
-	}
+	} else
+		_errno = 0;
 }
 
 ////////

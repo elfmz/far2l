@@ -397,6 +397,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "DirNameStyle", &Opt.DirNameStyle, 0 },
 	{true,  NSecPanel, "DirNameStyleColumnWidthAlways", &Opt.DirNameStyleColumnWidthAlways, 0 },
 	{true,  NSecPanel, "ShowSymlinkSize", &Opt.ShowSymlinkSize, 0},
+	{true,  NSecPanel, "ClassicHotkeyLinkResolving", &Opt.ClassicHotkeyLinkResolving, 1},
 
 	{true,  NSecPanelLeft, "Type", &Opt.LeftPanel.Type, 0},
 	{true,  NSecPanelLeft, "Visible", &Opt.LeftPanel.Visible, 1},

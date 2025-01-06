@@ -267,7 +267,7 @@ private:
 	void PushPlugin(HANDLE hPlugin, const wchar_t *HostFile);
 	int PopPlugin(int EnableRestoreViewMode);
 	void CopyFiles();
-	void CopyNames(bool FullPathName, bool UNC);
+	void CopyNames(bool FullPathName, bool RealName);
 	void SelectSortMode();
 	bool ApplyCommand();
 	void DescribeFiles();
@@ -399,7 +399,7 @@ public:
 	int PluginPanelHelp(HANDLE hPlugin);
 	virtual long GetFileCount() { return ListData.Count(); }
 
-	FARString &CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, int UNC);
+	FARString &CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, bool RealName);
 
 	virtual const void *GetItem(int Index);
 	virtual BOOL UpdateKeyBar();

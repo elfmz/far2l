@@ -25,9 +25,9 @@ Copyright (c) 2025- Far2l Group
 #include "FSFileFlags.h"
 
 static struct {
-    unsigned long flag;
-    char name_short;
-    const char *name_long;
+	unsigned long flag;
+	char name_short;
+	const char *name_long;
 } flags_list[] = {
 #ifdef __linux__
 // for linux systems see actual constants in <linux/fs.h>
@@ -117,7 +117,7 @@ static struct {
 #endif
 #endif
 
-#if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 // see actual constants in <sys/stat.h>
 // Super-user and owner changeable flags
 #ifdef UF_NODUMP	// 0x00000001
@@ -176,7 +176,7 @@ static struct {
 	{ SF_NOUNLINK,		'+', "sunlink: file may not be removed or renamed (super-user only)" },
 #endif
 #ifdef SF_SNAPSHOT	// 0x00200000
-	{ SF_SNAPSHOT,		'+', "snapshot: snapshot inode (filesystems do not	allow changing this flag)" },
+	{ SF_SNAPSHOT,		'+', "snapshot: snapshot inode (filesystems do not allow changing this flag)" },
 #endif
 #endif
 };
@@ -320,8 +320,16 @@ bool ChattrDialog(Panel *SrcPanel)
 	FARString strSelName;
 	DWORD FileAttr, FileMode;
 	SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
-    SrcPanel->GetSelName(&strSelName, FileAttr, FileMode);
+	SrcPanel->GetSelName(&strSelName, FileAttr, FileMode);
 	//SrcPanel->GetCurName(strSelName);
+
+	if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
+		ExMessager em(Msg::ChAttrTitle);
+		em.AddMultiline(Msg::ChAttrWarnNoSymlinks);
+		em.AddDup(Msg::Ok);
+		em.Show(MSG_WARNING, 1);
+		return false;
+	}
 
 	if (TestParentFolderName(strSelName))
 		return false;

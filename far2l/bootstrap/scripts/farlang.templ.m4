@@ -17240,6 +17240,17 @@ upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurren
 upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
 upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
 
+ChAttrWarnNoSymlinks
+"Не применимо к символьным ссылкам"
+"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+
 ChAttrErrorGetFlags
 "Не удается получить флаги для \"%ls\":\n"
 "Cannot get flags of \"%ls\":\n"

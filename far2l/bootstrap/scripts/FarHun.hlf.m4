@@ -616,12 +616,12 @@ $ #Panelvezérlő parancsok - rendszerparancsok#
     Ha nem, akkor a forrásmappát az új elérési útra nevezi át (vagy
     helyezi át).
 
-    Példaként #c:\mappa1\#-et mozgassuk #d:\mappa2\#-re:
+    Példaként #/mappa1/#-et mozgassuk #/mappa2/#-re:
 
-    - ha #d:\mappa2\# létezik, akkor #c:\mappa1\# tartalma átkerül
-      #d:\mappa2\mappa1\# mappába;
-    - ha nem létezik, akkor #c:\mappa1\# áthelyeződik (átneveződik)
-      az újonnan létrehozott #d:\mappa2\# mappába (mappára).
+    - ha #/mappa2/# létezik, akkor #/mappa1/# tartalma átkerül
+      #/mappa2/mappa1/# mappába;
+    - ha nem létezik, akkor #/mappa1/# áthelyeződik (átneveződik)
+      az újonnan létrehozott #/mappa2/# mappába (mappára).
 
   A kurzor alatti ~fájl törlése~@DeleteFile@                              #Shift-F8#
   Beállítások mentése                                       #Shift-F9#
@@ -693,26 +693,9 @@ a #Shift-F8# a törölt fájlokat a Lomtárba teszi-e vagy sem. Ezzel szemben
 a #Shift-Del# mindig a Lomtár kihagyásával töröl.
 
     2. Kisöprésnél (#Alt-Del#) a FAR a fájl adatait törlés előtt nullákkal
-írja felül (a TechInfo##29-ben elolvasható, hogyan lehet zéró helyett más
-felülíró karaktert megadni), ezután a fájl méretét nulla hosszúságúra
+írja felül (Lehet zéró helyett más felülíró karaktert megadni:
+System.WipeSymbol a ~far:config~@FarConfig@ párbeszédablakban), ezután a fájl méretét nulla hosszúságúra
 állítja, átmeneti nevet ad neki, végül törli.
-
-
-@ErrCannotExecute
-$ #Hiba: nem végrehajtható#
-    A program, amit megpróbáltunk futtatni, nem értelmezhető sem belső, sem
-külső parancsként, sem futtatható programként, sem batch fájlként.
-
-    Amikor a FAR megpróbálja végrehajtani a parancssor tartalmát, a
-következő sorrendben kutatja át a mappákat futtatható fájlok után,
-a %PATHEXT% környezeti változóban definiált sorrendben behelyettesítve minden
-kiterjesztést, kezdve a ".BAT;.CMD;.EXE;.COM;" kiterjesztésekkel:
-
-  1. Az aktuális mappában keres.
-  2. A %PATH% környezeti változó elérési útvonalaiban keres.
-  3. A 32 bites Windows rendszermappában keres (SYSTEM32).
-  4. A 16 bites Windows rendszermappában keres (SYSTEM).
-  5. A Windows mappájában keres.
 
 
 @MiscCmd
@@ -816,6 +799,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
  Plugins can define their own command prefixes, see for each available plugin list of Command Prefixes via #far:about#.
 
+ Lásd még ~Operációs rendszer parancsok~@OSCommands@.
+
 @FarConfig
 $ #Configuration editor#
  Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
@@ -915,11 +900,6 @@ pluginek súgóinak listája a következők szerint jeleníthető meg:
 
     Ha a pluginnek nincs súgója, a helyzetérzékeny súgó ablaka nem
 jelenik meg.
-
-    Ha az aktív panel pluginnel emulált fájlrendszert mutat, a
-parancssorból kiadott "CD" parancs a pluginnel emulált fájlrendszer mappái
-közt vált. A "CD"-vel ellentétben a "CHDIR" parancs mindig valódi mappanévként
-kezeli a megadott paramétert, függetlenül a fájlpanel típusától.
 
     Az #Alt-Shift-F9# billentyűkombináció meghívja a
 ~plugin beállítások~@PluginsConfig@ menüt.
@@ -1395,6 +1375,9 @@ az eredeti színkombináció.
    #Fájlkiemelések,#      A ~fájlkiemelések, rendezési csoportok~@Highlight@
    #rendezési csoportok#  beállításai.
 
+   #Notifications#        Shows ~Notifications Settings~@NotificationsSettings@ dialog.
+   #Settings#
+
    #Beállítások#          Elmenti a jelenlegi beállításokat, színeket
    #mentése#              és a képernyő elrendezését.
 
@@ -1437,9 +1420,9 @@ $ #Új mappa#
     Ezzel a funkcióval új mappákat hozhatunk létre. Környezeti változókat is
 megadhatunk a parancssorban, helyükön a mappa létrehozásakor az értékük fog
 megjelenni. Egy lépésben hozhatunk létre mélyebbre ágyazott almappákat, ha a
-mappák neveit #\\#-karakterrel választjuk el. Példa:
+mappák neveit #/#-karakterrel választjuk el. Példa:
 
-    #%USERDOMAIN%\\%USERNAME%\\Mappa3#
+    #$HOSTNAME/$USER/Mappa3#
 
     Ha a #Több név feldolgozása# opciót engedélyezzük, egyszerre több mappát
 készíthetünk. Ebben az esetben a mappák neveit "#;#" vagy "#,#" karakterrel kell
@@ -1447,9 +1430,9 @@ elválasztani. Ha a fent említett opciót engedélyeztük és a mappa nevében 
 "#;#" (vagy "#,#") karakter, akkor a nevet idézőjelek közé kell tenni. Például
 a következő soron Entert ütve:
 
-    #C:\\Foo1;"E:\\foo,2;";D:\\foo3#
+    #Foo1;"foo,2;";foo3#
 
- a #C:\\Foo1#, az #E:\\foo,2;# és a #D:\\foo3# nevű mappák jönnek létre.
+ a #Foo1#, az #foo,2;# és a #foo3# nevű mappák jönnek létre.
 
 
 @FindFile
@@ -1505,7 +1488,7 @@ lennének.
     - ^<wrap>minden helyi meghajtóra, a kivehető és hálózati meghajtók
 kivételével;
 
-    - ^<wrap>A %PATH% környezeti változóban megadott összes mappára
+    - ^<wrap>A $PATH környezeti változóban megadott összes mappára
 (a belőlük nyíló almappákra nem);
 
     - ^<wrap>az aktuális meghajtó vagy a #Meghajtó# gombbal
@@ -1878,7 +1861,8 @@ $ #Előzmények: mappa előzmények#
 
 @TaskList
 $ #Futó programok#
-    The task list displays active tasks by using #htop# (if available).
+    The task list displays active tasks by using #htop# (if available)
+or #top# as a fallback.
 
 @CompFolders
 $ #Mappák összehasonlítása#
@@ -2015,19 +1999,6 @@ paneljei kikapcsolódjanak, kezdjük a parancssort #@@# karakterrel.
 
     A parancssorban ~különleges szimbólumokat~@MetaSymbols@ is használhatunk.
 
-  Megjegyzések:
-
-  1. ^<wrap>Ha egy fájltípushoz nincs definiált társítás és a
-~Rendszer beállítások~@SystemSettings@ menüben a #Windows regisztrált#
-#fájltípusainak használata# opció be van kapcsolva, a FAR megpróbálja a
-Windowsban definiált társításokat alkalmazni.
-
-  2. ^<wrap>Az operációs rendszer "IF EXIST" és "IF DEFINED"
-~parancsaival~@OSCommands@ a társításoknak kifinomultabb feltételrendszert
-szabhatunk. Ha azonos fájltípushoz több különböző társítást adtunk meg, az
-említett szabályok hatására a menüben csak a feltételeknek megfelelő
-társítások jelennek meg.
-
 
 @MetaSymbols
 $ #Különleges szimbólumok#
@@ -2051,7 +2022,7 @@ egy felhasználói beviteli ablak jelenik meg. A <név> a beviteli mező neve, a
 
              Több ilyen szimbólum lehet egy sorban, például:
 
-               grep !?Keresés:?! !?Maszk:?*.*!|c:\\far\\far.exe -v -
+               grep !?Search for:?! !?In:?*.*!|far2l -v -
 
              ^<wrap>A <név> mező kiegészülhet az <alapérték> sztringre
 vonatkozó előzménnyel (az <előzmény> változó nevével).
@@ -2110,17 +2081,12 @@ szintén átkapcsoló előtagig terjed.
 
        Például:
 
-         if exist !##!/!^!.! diff -c -p !##!/!^!.! !/!.!
+         [ -f !##!/!^!.! ] && diff -c -p !##!/!^!.! !/!.!
 
        ^<wrap>"Ha a passzív panelen létezik ugyanolyan nevű fájl, mint amin az
 aktív panel sávkurzora áll, mutassa meg a két fájl különbségét, függetlenül
 attól, hogy a passzív panelen mi a jelenleg aktív fájl neve."
 
-    5. ^<wrap>Ha valamelyik program a név megadásánál lezáró \\-jelet igényel,
-használjuk a #!.\# metaszimbólumot. Például, ha egy RAR-ral tömörített fájlt
-szeretnénk a fájllal azonos nevű mappába kibontani, a parancs:
-
-         winrar x "!.!" "!.\"
 
 @SystemSettings
 $ #Beállítások: rendszer beállítások#
@@ -2179,6 +2145,12 @@ while its earlier occurrences are deleted from the history.
 the command was executed is also taken into account; that is, if the same command was executed from
 two different directories, both entries will be saved in the history.
 
+  #Autohighlight in history#
+  Allow FAR2L to automatically assign single-button shortcuts to items in the ~Commands history~@History@,
+~Folders history~@HistoryFolders@ and ~File view history~@HistoryViews@. This can be convenient, but there
+is also a risk of accidental selection due to unintentional key presses, given the dynamic nature
+of such lists. If you do not use this feature or feel uncomfortable with it, you can disable it.
+
   #Beállítások automatikus# Ha az opció be van kapcsolva, kilépéskor
   #mentése#                 a FAR önműködően menti a beállításait, a
                           panelek aktuális helyzetével együtt.
@@ -2231,8 +2203,7 @@ mappákat akkor is név szerint rendezi, ha a fájlokat kiterjesztésük szerint
                           nem vonja maga után a panel automatikus
                           frissítését.
 
-                          ^<wrap>Az automatikus frissítés csak FAT,
-FAT32 és NTFS fájlrendszerben működik. A "0" érték azt jelenti, hogy
+                          ^<wrap>A "0" érték azt jelenti, hogy
 "mindig frissít". A frissítés kézzel is elvégezhető a #Ctrl-R#-rel.
 
   #Hálózati meghajtók#      Engedélyezi a panelek automatikus
@@ -2309,17 +2280,26 @@ meg.
   #meghajtót vált#          gyökérmappájában:
                         - ^<wrap>helyi meghajtónál megjeleníti a Meghajtók
 menüt;
-                        - hálózati meghajtónál elindítja a Hálózat
-plugint (ha lehetséges) vagy meghívja a Meghajtók menüt (ha a Hálózat plugin
-nem elérhető).
 
   #Datetime format#
+  Here you can select the order in which the day, month, and year are displayed, and
+specify the separators for date and time based on your preferences.
+  "Reset to default" button restores the settings to the standard values offered by far2l.
+  "Reset to current" button is useful if you want to cancel changes that have not
+yet been confirmed, and return to the current far2l settings.
+  "From system locale" button sets the date and time format according to your operating
+system's locale.
 
   #Cursor blink interval# (*GUI-backend only)
+  Allows decreasing or increasing the cursor blink frequency; the acceptable range of
+values is from 100 to 500 ms.
 
   #Change font# (*GUI-backend only)
+  Shows the font selection dialog where you can choose a font for displaying the far2l interface.
 
   #Disable antialiasing# (*GUI-backend only)
+  Disabling anti-aliasing algorithms may slightly speed up rendering, but it can negatively
+affect the visual perception of text.
 
   #Use OSC52 to set clipboard data# (*TTY-backend only)
   OSC52 allows copying from far2l running in TTY mode (even via SSH connection) to
@@ -2327,6 +2307,8 @@ your local system clipboard.
   Some terminals also need OSC52 to be enabled in terminal's settings.
   If you are using far2l on a remote untrusted system, giving remote system write access
 to your clipboard may be potentially unsafe.
+  Note: The option is displayed if other preferred clipboard access methods (TTY|X, TTY|F)
+are inaccessible.
 
   #Override base colors palette# (*TTY-backend only)
 
@@ -2365,6 +2347,60 @@ végrehajtása átmenetileg letiltja az automatikus kiegészítést.
                           ^<wrap>ablak (lásd ~egyebek~@MiscCmd@). Az
 opcióval letilthatjuk ezt a működést.
 
+
+@VMenuSettings
+$ #Menu settings#
+  #Left/Right/Middle mouse click outside a menu#
+  You may choose action for mouse buttons, when click occures outside a menu:
+  #Cancel menu#, #Execute selected item# or #Do nothing#.
+
+  #Hurok lista görgetés#
+  Enable this option to allow circular scrolling through vertical menus when
+the arrow keys are held down. After reaching the top or bottom item, the cursor
+will automatically jump to the opposite end of the list.
+
+
+@CmdlineSettings
+$ #Settings dialog: command line#
+  #Save commands history#
+  Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
+  This option can also be found in the ~System settings~@SystemSettings@ dialog.
+
+  #Persistent blocks#
+  Do not remove block selection after moving the cursor in command line.
+
+  #Del removes blocks#
+  If a block is selected, pressing Del will not remove the character under cursor,
+but this block.
+
+  #AutoComplete#
+  Allows to use the AutoComplete function in command line. When the option is
+disabled, you may use the #Ctrl-Shift-End# key to autocomplete a line. The autocomplete
+feature is disabled while a macro is being recorded or executed.
+
+  #Command output splitter#
+  Enables the display of dividing lines between command outputs in the built-in ~Terminal~@Terminal@.
+  A green line of "-" characters indicates successful command execution, and a yellow
+line of "~~" characters indicates errors. This makes the output more structured and helps
+to evaluate the results of command execution faster.
+
+  #Wait keypress before close#
+  Pause for key press after executing a command in the built-in ~Terminal~@Terminal@ before
+showing the panels. Possible values: Never/On error/Always.
+
+  #Set command line prompt format#
+  This option allows to set the default FAR2L command ~line prompt~@CommandPrompt@.
+
+  #Use shell#
+  Force the use of the specified command shell in the built-in ~terminal~@Terminal@.
+  If no shell is provided, far2l will attempt to use the system shell (#$SHELL#). If the system
+shell does not meet far2l's internal requirements, #bash# will be used as a fallback.
+  You can find out the current command shell used by far2l with the ~pseudo-command~@SpecCmd@
+#far:about#.
+  Be aware that, currently, full support is available only for #bash#, and working with other
+command shells may have significant limitations or errors.
+
+
 @InfoPanelSettings
 $ #Information Panel settings#
 
@@ -2388,18 +2424,17 @@ jeleníthet meg.
      $h - törli az előző karaktert
      $l - < karakter
      $## - ## character if user is root, otherwise $
-     $p - az aktuális meghajtó és elérési út
+     $p - az aktuális elérési út
      $q - = karakter
      $s - szóköz
      $t - az aktuális idő óó:pp:mm formátumban
      $$ - $ karakter
 
-   Alapértelmezett a #$p$g# formátum - az aktuális meghajtó és az elérési
-útvonal (#C:\>#).
+   Alapértelmezett a #$p$g# formátum - az aktuális az elérési útvonal.
 
    Példák:
 
-   1. ^<wrap>A #[%HOSTNAME%]$S$P$### formátumú prompt a számítógép nevét,
+   1. ^<wrap>A #[$HOSTNAME]$S$P$### formátumú prompt a számítógép nevét,
 az aktuális meghajtó betűjelét és az elérési utat tartalmazza.
 
    2. ^<wrap>A #[$T$H$H$H]$S$P$G# formátumú promptban az aktuális idő
@@ -2712,8 +2747,8 @@ $ #Szerkesztő: fájl megnyitása/létrehozása#
     A #Shift-F4# billentyűkombinációval létező vagy új fájlt nyithatunk meg
 szerkesztésre.
 
-    A ~szerkesztő beállításaitól~@EditorSettings@ függően az új fájl OEM
-vagy ANSI kódolású lesz, de szükség esetén a kódlapok #listájából# más
+Az új fájl kódolása a ~szerkesztő beállításaitól~@EditorSettings@ 
+függően lesz. De szükség esetén a kódlapok #listájából# más
 kódlapot is választhatunk.
 
     Létező fájlnál is szükség lehet a #Кódlap# paraméter átállítására,
@@ -2897,9 +2932,6 @@ $ #Hálózati meghajtó leválasztása#
     A ~Meghajtók~@DriveDlg@ menüben a #Del# lenyomásával leválaszthatjuk
 a hálózati meghajtókat.
 
-    A #[x] Belépéskor újracsatlakoztat# opció csak az állandóan csatlakozó
-hálózati meghajtóknál engedélyezett.
-
     A leválasztás jóváhagyása a ~megerősítések~@ConfirmDlg@
 párbeszédablakban kapcsolható ki/be.
 
@@ -3002,6 +3034,22 @@ or may be switched by #Ctrl-Alt-M# in panels.
     A Tömörített, Titkosított, Nem indexelt, Ritkított és Átmeneti
 attribútumok, valamint a szimbolikus linkek csak NTFS fájlrendszerben
 értelmezettek.
+
+
+@NotificationsSettings
+$ #Notifications settings#
+
+  #Notify on file operation completion#
+  Send desktop notifications when long-running operations like copying, moving,
+and searching for files are completed.
+
+  #Notify on console command completion#
+  Send desktop notification when the command in the built-in ~Terminal~@terminal@ has
+completed or failed.
+
+  #Notify only if in background#
+  Track the far2l window's state and send desktop notifications only when it is inactive.
+Works in both graphical and terminal versions of far2l.
 
 
 @ViewerSettings
@@ -3163,70 +3211,72 @@ garantálható, különösen, ha rövid vagy nem tipikus szövegfájlt nyitunk m
 
 
 @FileAttrDlg
-$ #Fájl attribútumok párbeszédablak#
-    A párbeszédablakban a fájlobjektumok attribútumait, valamint dátumát és
-idejét változtathatjuk meg. Használhatjuk egyetlen fájlra vagy fájlok
-csoportjára is. Ha nem szeretnénk, hogy a változtatások almappákban is
-végbemenjenek, "Az almappákon is" opciót ne kapcsoljuk be.
+$ #File attributes dialog#
+    This command can be applied to individual files as well as groups of files
+and directories, allowing you to view and modify permissions, ownership,
+timestamps, and some file attributes.
+    If you do not want to process files in subfolders, clear the "Process
+subfolders" option.
 
-  #Fájl attribútumok#
+    The dialog has 5 sections.
 
-    A párbeszédablak jelölőnégyzetei három állapotot vehetnek fel:
+    1. ^<wrap>#Info#
+       ^<wrap>The type of the current object, as determined by the #file# command.
+       ^<wrap>When the current object is a symbolic link, you can switch between
+the "Info", the value of a symbolic link ("#Symlink#"), and its resolved absolute path
+("#Object#"). The "Symlink" field is editable.
 
-     #[x]# - ^<wrap>minden kijelölt elemnek van ilyen attribútuma (minden
-kijelölt elemre ráteszi az attribútumot)
+    2. ^<wrap>#Ownership#
+       ^<wrap>Allows to change the user and/or group that owns selected file(s).
+Select the required names from the corresponding dropdown lists.
 
-     #[ ]# - ^<wrap>egyetlen kijelölt elemnek sincs ilyen attribútuma (minden
-kijelölt elemről leveszi az attribútumot)
+    3. ^<wrap>#Permissions#
+       ^<wrap>Allows to change the access permissions (read/write/execute
+for user/group/others) and the special mode flags (setuid, setgid, and sticky) of
+selected file(s). For convenience, the information is displayed and synchronously
+updated in two notations: symbolic and numeric (octal-based).
 
-     #[?]# - ^<wrap>nincs minden kijelölt elemnek ilyen attribútuma (ne
-változtasson az attribútumon)
+       ^<wrap>Checkboxes used in the dialog can have the following 3 states:
 
-    Azok a jelölőnégyzetek, ahol minden kijelölt fájlnak megegyeznek az
-attribútumai, kétállapotúra változnak: csak bejelölni vagy törölni lehet az
-értéküket. Ha csoportos változtatásnál a kijelölt elemek közt mappák is
-vannak, minden jelölőnégyzet háromállapotú lesz.
+       ^<wrap> #[x]# - attribute is set for all selected items
+       ^<wrap>       (set the attribute for all items)
+       ^<wrap> #[ ]# - attribute is not set for all selected items
+       ^<wrap>       (clear the attribute for all items)
+       ^<wrap> #[?]# - attribute state is not the same for selected items
+       ^<wrap>       (don't change the attribute)
 
-    Csak azok az attribútumok fognak megváltozni, ahol a jelölőnégyzetekben
-az eredeti állapothoz képest változtatás történt.
+       ^<wrap>When all selected files have the same attribute value, the corresponding
+checkbox will be in 2-state mode - set/clear only. When there are selected
+folders, all checkboxes will always be 3-state.
+       ^<wrap>Only those attributes will be changed for which the state of the
+corresponding checkboxes was changed from the initial state.
 
-    A "Tömörített", "Titkosított", "Nem indexelt", "Ritkított", "Átmeneti" és
-az "Offline" attribútum csak NTFS fájlrendszerű meghajtókon használható.
-A "Virtuális" attribútum csak Windows Vista/2008 alatt használható. A
-"Tömörített" (C) és a "Titkosított" (E) attribútum kizárja egymást: vagy
-az egyik, vagy a másik adható meg.
+    4. ^<wrap>#Attributes / Flags#
+       ^<wrap>Allows to set or unset the "Immutable", "Append", and "Hidden" (*the latter is
+on macOS and BSD only) attributes for the selected file.
 
-    ~Mappa linkek~@HardSymLink@ esetében a párbeszédablak az eredeti mappa
-adatait fogja megjeleníteni (csak NTFS fájlrendszerben). Ha az eredeti mappa
-adatai nem állnak rendelkezésre (különösen távoli mappák szimbolikus
-linkjeinél), az "#(adat nem elérhető)#" üzenet jelenik meg.
+    5. ^<wrap>#File date and time#
+       ^<wrap>Three different file times are supported:
 
-  #Fájlok dátuma és ideje#
+       ^<wrap> - last access time (atime);
+       ^<wrap> - last modification time (mtime);
+       ^<wrap> - last status change time (ctime);
 
-    A fájlobjektumoknak három időtípusa van:
+       ^<wrap>If you do not want to change the file time, leave the respective field
+empty. You can push the #Blank# button to clear all the date and time fields
+and then change an individual component of the date or time, for example, only
+month or only minutes. All the other date and time components will remain
+unchanged. The #Current# button fills the file time fields with the current time.
+The #Original# button fills the file time fields with their original values (available
+only when the dialog is invoked for a single file object).
 
-    - az utolsó módosítás időpontja;
+       ^<wrap>Note that "last status change time" is for viewing only and cannot be modified.
+       ^<wrap>On FAT drives the hours, minutes, seconds and milliseconds of the last access time are
+always equal to zero.
 
-    - a létrehozás időpontja;
-
-    - az utolsó hozzáférés időpontja.
-
-    FAT fájlrendszerű meghajtókon az utolsó hozzáférés óra, perc és másodperc
-értéke mindig nulla.
-
-    Ha nem akarunk változtatni a fájl dátumán vagy idején, hagyjuk a megfelelő
-mezőket üresen vagy eredeti állapotukban. Az #Üres# gomb megnyomása minden
-dátum- és időértéket töröl, ezután a megfelelő mezőkbe beírhatjuk a változtatni
-kívánt értéket. Nem kötelező mindent kitölteni, mert a nem változtatott mezők
-eredeti értékei megmaradnak.
-
-    Az #Aktuális# gomb a jelenlegi idővel tölti fel a dátum/idő mezőket.
-
-    Az #Eredeti# gomb a fájl vagy mappa eredeti időértékeivel tölti fel a
-dátum/idő mezőket. Csak egy kijelölt fájlra vagy mappára használható,
-csoportra nem.
-
-    ~Szimbolikus linkek~@HardSymLink@ dátuma és ideje nem állítható.
+    #Be aware that some operations may require superuser rights.#
+    You should ensure that privilege elevation is permitted in the
+~System settings~@SystemSettings@ dialog, or far2l must be run as root.
 
 
 @Bookmarks
@@ -3645,11 +3695,11 @@ $ #Másolás, mozgatás, átnevezés és linkek létrehozása#
  mozgatja. Ha nem, akkor a forrásmappát az új elérési útra nevezi
  át (vagy helyezi át).
 
-    Példaként #c:\mappa1\#-et mozgassuk #d:\mappa2\#-re:
-    - ha #d:\mappa2\# létezik, akkor #c:\mappa1\# tartalma átkerül
-      #d:\mappa2\mappa1\# mappába;
-    - ha nem létezik, akkor #c:\mappa1\# áthelyeződik (átneveződik)
-      az újonnan létrehozott #d:\mappa2\# mappába (mappára).
+    Példaként #/mappa1/#-et mozgassuk #/mappa2/#-re:
+    - ha #/mappa2/# létezik, akkor #/mappa1/# tartalma átkerül
+      #/mappa2/mappa1/# mappába;
+    - ha nem létezik, akkor #/mappa1/# áthelyeződik (átneveződik)
+      az újonnan létrehozott #/mappa2/# mappába (mappára).
 
   ~Fájl linkek~@HardSymLink@ létrehozása                                   #Alt-F6#
 
@@ -3765,38 +3815,6 @@ $ #Másolás: szabályok#
     A mappák és a ~szimbolikus linkek~@HardSymLink@ ~másolására/mozgatására~@CopyFiles@
 a következő szabályok érvényesek:
 
-    #Szimbolikus linkek másolása#
-
-    Ha a "Szimbolikus linkek másolása" opció be van kapcsolva, vagy a másolás
-cél- és forráslemeze távoli meghajtó, akkor a FAR egy mappát hoz létre a
-célhelyen és belemásolja a forrás szimbolikus link tartalmát (önhivatkozással
-a kapcsolt linkekhez).
-
-    Ha a "Szimbolikus linkek másolása" opció ki van kapcsolva és a forrás és a
-cél helyi meghajtó, akkor a céllemezen olyan szimbolikus link jön létre, ami a
-forrás szimbolikus linkre mutat.
-
-    #Szimbolikus linkek mozgatása#
-
-    Ha a "Szimbolikus linkek másolása" opció be van kapcsolva, vagy a másolás
-cél- és forráslemeze távoli meghajtó, akkor a FAR egy mappát hoz létre a
-célhelyen és belemásolja a forrás szimbolikus link tartalmát (önhivatkozással
-a kapcsolt linkekhez), majd a forráslinket törli.
-
-    Ha a "Szimbolikus linkek másolása" opció ki van kapcsolva és a forrás és a
-cél helyi meghajtó, akkor a FAR a forrás szimbolikus linket átmozgatja a célra.
-Önhivatkozó öröklés a fastruktúrán ilyenkor nem történik.
-
-    #Szimbolikus linkeket tartalmazó mappa mozgatása#
-
-    Ha a forrás és a cél helyi meghajtó, akkor a FAR ugyanúgy helyezi át a
-mappát, mint egy közönséges mappát.
-
-    Ha a forrás vagy a cél távoli meghajtó, akkor a "Szimbolikus linkek
-másolása" opció beállításától függetlenül a FAR egy mappát hoz létre a
-célhelyen, belemásolja a forrás szimbolikus link tartalmát (önhivatkozással
-a kapcsolt linkekhez), végül a forráslinket törli.
-
 
 @HardSymLink
 $ #Hardlinkek és szimbolikus linkek#
@@ -3851,13 +3869,13 @@ másik ~szimbolikus linkje~@HardSymLink@.
 $ #Hiba: plugin betöltési hiba#
    A hibaüzenet ezekben az esetekben jelenhet meg:
 
-   1. ^<wrap>A plugin helyes működéséhez szükséges .dll fájl nem található
+   1. ^<wrap>A plugin helyes működéséhez szükséges fájl nem található
 a rendszerben.
 
    2. ^<wrap>Valamilyen oknál fogva a plugin hibakóddal tér vissza és nem
 engedi, hogy a plugin a rendszerbe töltődjön.
 
-   3. A plugint képviselő .dll fájl hibás.
+   3. A plugint képviselő fájl hibás.
 
 
 @ScrSwitch
@@ -3883,11 +3901,9 @@ $ #Parancs végrehajtása#
 kijelölt fájlra közös parancsot adhatunk ki. A ~fájltársításoknál~@FileAssoc@
 alkalmazható ~különleges szimbólumok~@MetaSymbols@ itt is használhatók.
 
-    Például a "type !.!" parancs sorban egyenként a képernyőre irányítja a
-kijelölt fájlok tartalmát, a "rar32 m !.!.rar !.!" parancs pedig a fájlnevekkel
-megegyező nevű RAR tömörített fájlokba mozgatja a kijelölt fájlokat. Az
-"explorer /select,!.!" parancs megnyitja a Windows Intézőt és ráállítja a
-kurzort az aktuális fájlra vagy mappára.
+    Például a "cat !.!" parancs sorban egyenként a képernyőre irányítja a
+kijelölt fájlok tartalmát, a "tar --remove-files -cvjf !.!.tar.bz2 !.!" parancs pedig a fájlnevekkel
+megegyező nevű TAR/BZIP2 tömörített fájlokba mozgatja a kijelölt fájlokat.
 
     See also ~Special commands~@SpecCmd@
     Lásd még ~Operációs rendszer parancsok~@OSCommands@.
@@ -3925,6 +3941,8 @@ az operációs rendszer parancsértelmezőjének.
        ~Parancs végrehajtása~@ApplyCmd@
        ~Felhasználói menü~@UserMenu@
        ~Fájltársítások~@FileAssoc@
+
+    See also ~Special commands~@SpecCmd@
 
 
 @FAREnv

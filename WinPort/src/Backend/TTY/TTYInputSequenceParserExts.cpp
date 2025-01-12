@@ -5,6 +5,12 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
+#define KITTY_MOD_SHIFT    1
+#define KITTY_MOD_ALT      2
+#define KITTY_MOD_CONTROL  4
+#define KITTY_MOD_CAPSLOCK 64
+#define KITTY_MOD_NUMLOCK  128
+#define KITTY_EVT_KEYUP    3
 
 size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char action, char col, char raw)
 {
@@ -121,13 +127,6 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	// todo: enhanced key flag now set for essential keys only, should be set for more ones
 
 	// todo: add more keys. all needed by far2l seem to be here, but kitty supports much more
-
-	#define KITTY_MOD_SHIFT    1
-	#define KITTY_MOD_ALT      2
-	#define KITTY_MOD_CONTROL  4
-	#define KITTY_MOD_CAPSLOCK 64
-	#define KITTY_MOD_NUMLOCK  128
-	#define KITTY_EVT_KEYUP    3
 
 	/** 32 is enough without "text-as-code points" mode, but should be increased if this mode is enabled */
 	const int max_kitty_esc_size = 32;
@@ -407,6 +406,80 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	return i+1;
+}
+
+size_t TTYInputSequenceParser::TryParseModifyOtherKeys(const char *s, size_t l) {
+
+	int modif_state = 0, code = 0;
+	int state = 0; // 0 - начальное состояние, 1 - чтение modif_state, 2 - чтение code
+
+	for (size_t i = 1; i < l; ++i) { // Начинаем с 1, чтобы пропустить '['
+		if (s[i] == ';') {
+			state++;
+			continue;
+		} else if (s[i] == '~') {
+			break; // Конец последовательности
+		}
+
+		if (state == 1) {
+			modif_state = modif_state * 10 + (s[i] - '0');
+		} else if (state == 2) {
+			code = code * 10 + (s[i] - '0');
+		}
+	}
+
+	if (!code) return TTY_PARSED_BADSEQUENCE;
+
+	INPUT_RECORD ir = {0};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.bKeyDown = 1;
+	ir.Event.KeyEvent.wRepeatCount = 0;
+
+	if (modif_state) {
+		modif_state -= 1;
+
+		// same as in kitty portocol implementation, but without right ctrl tracking
+		if (modif_state & KITTY_MOD_SHIFT)    { ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED; }
+		if (modif_state & KITTY_MOD_ALT)      { ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; }
+		if (modif_state & KITTY_MOD_CONTROL)  { ir.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED; }
+		if (modif_state & KITTY_MOD_CAPSLOCK) { ir.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON; }
+		if (modif_state & KITTY_MOD_NUMLOCK)  { ir.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON; }
+	}
+
+	ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
+
+	if (isdigit(code)) {
+		ir.Event.KeyEvent.wVirtualKeyCode = (code - '0') + 0x30;
+	}
+
+	switch (code) {
+		case '-'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS; break;
+		case '_'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS; break;
+
+		case ','   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA; break;
+		case '<'   : ir.Event.KeyEvent.wVirtualKeyCode =
+			(modif_state & KITTY_MOD_SHIFT) ? VK_OEM_COMMA : VK_OEM_102; break;
+
+		case '>'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA; break; // or Shift + VK_OEM_102
+		case '.'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD; break;
+
+		case '='   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS; break;
+		case '+'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS; break;
+
+		case ';'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1; break;
+		case ':'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1; break;
+
+		case 13    : ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN; break;
+	}
+
+	ir.Event.KeyEvent.uChar.UnicodeChar = code;
+
+	_ir_pending.emplace_back(ir);
+
+	ir.Event.KeyEvent.bKeyDown = FALSE;
+	_ir_pending.emplace_back(ir);
+
+	return l;
 }
 
 size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, size_t l)

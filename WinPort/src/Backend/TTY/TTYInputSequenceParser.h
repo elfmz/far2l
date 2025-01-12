@@ -162,6 +162,7 @@ class TTYInputSequenceParser
 	size_t ReadUTF8InHex(const char *s, wchar_t *uni_char);
 	size_t TryParseAsITerm2EscapeSequence(const char *s, size_t l);
 	size_t TryParseAsKittyEscapeSequence(const char *s, size_t l);
+	size_t TryParseModifyOtherKeys(const char *s, size_t l);
 	size_t ParseEscapeSequence(const char *s, size_t l);
 	void OnBracketedPaste(bool start);
 

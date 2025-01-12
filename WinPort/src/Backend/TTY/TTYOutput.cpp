@@ -187,6 +187,8 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
 
+	Format(ESC "[?1036h"); // ModifyOtherKeys mode on
+
 	ChangeKeypad(true);
 	ChangeMouse(true);
 
@@ -224,6 +226,9 @@ TTYOutput::~TTYOutput()
 		if ((_nodetect & NODETECT_A) == 0) {
 			Format(ESC "[?1337l"); // iTerm2 input mode off
 		}
+
+		Format(ESC "[?1036l"); // ModifyOtherKeys mode off
+
 		TTYBasePalette def_palette;
 		ChangePalette(def_palette);
 		Flush();

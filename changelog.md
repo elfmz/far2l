@@ -29,7 +29,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Default Files highlighting with dirs/files markers a la `mc` and `ls -F`
 * _New:_ Panels customization align filenames by marks (by dialog and **Ctrl+Alt+M**)
 * Info panel: add hide/show blocks + additions in file systems info and tuning git status
-* _New:_ **Ctrl-Alt-\** quick jump to the mount point of the current folder's file system
+* _New:_ **Ctrl-Alt-\\** quick jump to the mount point of the current folder's file system
 * Enable esc expiration if we've got no TTY|X or got TTY|X without Xi (`--ee` no need more)
 * _New:_ Add special commands `edit:<` and `view:<` for grab redirect output
 * _New:_ Extend `--nodetect` option to cover win32/iTerm2/kovidgoyal's kitty modes

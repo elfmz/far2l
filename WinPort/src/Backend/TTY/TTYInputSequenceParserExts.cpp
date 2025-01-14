@@ -430,56 +430,15 @@ size_t TTYInputSequenceParser::TryParseModifyOtherKeys(const char *s, size_t l) 
 
 	if (!code) return TTY_PARSED_BADSEQUENCE;
 
-	INPUT_RECORD ir = {0};
-	ir.EventType = KEY_EVENT;
-	ir.Event.KeyEvent.bKeyDown = 1;
-	ir.Event.KeyEvent.wRepeatCount = 0;
+	// convert to kitty esc seq format
+	// and let kitty parser do the rest
+	
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "[%d;%du", code, modif_state);
+    size_t length = strlen(buffer);
+    size_t result = TryParseAsKittyEscapeSequence(buffer, length);
 
-	if (modif_state) {
-		modif_state -= 1;
-
-		// same as in kitty portocol implementation, but without right ctrl tracking
-		if (modif_state & KITTY_MOD_SHIFT)    { ir.Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED; }
-		if (modif_state & KITTY_MOD_ALT)      { ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED; }
-		if (modif_state & KITTY_MOD_CONTROL)  { ir.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED; }
-		if (modif_state & KITTY_MOD_CAPSLOCK) { ir.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON; }
-		if (modif_state & KITTY_MOD_NUMLOCK)  { ir.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON; }
-	}
-
-	ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
-
-	if (isdigit(code)) {
-		ir.Event.KeyEvent.wVirtualKeyCode = (code - '0') + 0x30;
-	}
-
-	switch (code) {
-		case '-'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS; break;
-		case '_'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_MINUS; break;
-
-		case ','   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA; break;
-		case '<'   : ir.Event.KeyEvent.wVirtualKeyCode =
-			(modif_state & KITTY_MOD_SHIFT) ? VK_OEM_COMMA : VK_OEM_102; break;
-
-		case '>'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_COMMA; break; // or Shift + VK_OEM_102
-		case '.'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD; break;
-
-		case '='   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS; break;
-		case '+'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PLUS; break;
-
-		case ';'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1; break;
-		case ':'   : ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_1; break;
-
-		case 13    : ir.Event.KeyEvent.wVirtualKeyCode = VK_RETURN; break;
-	}
-
-	ir.Event.KeyEvent.uChar.UnicodeChar = code;
-
-	_ir_pending.emplace_back(ir);
-
-	ir.Event.KeyEvent.bKeyDown = FALSE;
-	_ir_pending.emplace_back(ir);
-
-	return l;
+    if (result == length) { return l; } else { return TTY_PARSED_BADSEQUENCE; }
 }
 
 size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, size_t l)

@@ -187,7 +187,9 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
 
-	Format(ESC "[?1036h"); // ModifyOtherKeys mode on
+	// ModifyOtherKeys on, set to mode 2 if possible
+	Format(ESC "[?1036h");
+	Format(ESC "[>4;2m");
 
 	ChangeKeypad(true);
 	ChangeMouse(true);
@@ -219,6 +221,7 @@ TTYOutput::~TTYOutput()
 		if ((_nodetect & NODETECT_K) == 0) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
+
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
 		if ((_nodetect & NODETECT_W) == 0) {
 			Format(ESC "[?9001l"); // win32-input-mode off
@@ -227,7 +230,9 @@ TTYOutput::~TTYOutput()
 			Format(ESC "[?1337l"); // iTerm2 input mode off
 		}
 
-		Format(ESC "[?1036l"); // ModifyOtherKeys mode off
+		// ModifyOtherKeys off
+		Format(ESC "[?1036l");
+		Format(ESC "[>4;0m");
 
 		TTYBasePalette def_palette;
 		ChangePalette(def_palette);
@@ -538,7 +543,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 
 void TTYOutput::ChangeKeypad(bool app)
 {
-	Format(ESC "[?1%c", app ? 'h' : 'l');
+	//Format(ESC "[?1%c", app ? 'h' : 'l');
 }
 
 void TTYOutput::ChangeMouse(bool enable)

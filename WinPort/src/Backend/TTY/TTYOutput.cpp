@@ -187,9 +187,13 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
 
-	// ModifyOtherKeys on, set to mode 2 if possible
+	// ModifyOtherKeys on, set to mode 2 if possible (more keys supported)
 	Format(ESC "[?1036h");
-	Format(ESC "[>4;2m");
+	// oops, this brakes Alt+letter quick search in non-latin kb layouts
+	// Format(ESC "[>4;2m");
+	// todo: user should have an option to decide if he wants Ctrl+numbers etc (mode 2)
+    // todo: or Alt+non_latin_letters working
+	Format(ESC "[>4;1m");
 
 	ChangeKeypad(true);
 	ChangeMouse(true);

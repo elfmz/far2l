@@ -5,6 +5,7 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
+
 size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char action, char col, char raw)
 {
 	/*

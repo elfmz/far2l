@@ -226,7 +226,6 @@ TTYOutput::~TTYOutput()
 		if ((_nodetect & NODETECT_K) == 0) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
-
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
 		if ((_nodetect & NODETECT_W) == 0) {
 			Format(ESC "[?9001l"); // win32-input-mode off

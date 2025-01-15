@@ -547,7 +547,7 @@ void TTYOutput::WriteLine(const CHAR_INFO *ci, unsigned int cnt)
 
 void TTYOutput::ChangeKeypad(bool app)
 {
-	//Format(ESC "[?1%c", app ? 'h' : 'l');
+	Format(ESC "[?1%c", app ? 'h' : 'l');
 }
 
 void TTYOutput::ChangeMouse(bool enable)

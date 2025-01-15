@@ -5,13 +5,6 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
-#define KITTY_MOD_SHIFT    1
-#define KITTY_MOD_ALT      2
-#define KITTY_MOD_CONTROL  4
-#define KITTY_MOD_CAPSLOCK 64
-#define KITTY_MOD_NUMLOCK  128
-#define KITTY_EVT_KEYUP    3
-
 size_t TTYInputSequenceParser::ParseX10Mouse(const char *s, size_t l)//(char action, char col, char raw)
 {
 	/*
@@ -127,6 +120,13 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	// todo: enhanced key flag now set for essential keys only, should be set for more ones
 
 	// todo: add more keys. all needed by far2l seem to be here, but kitty supports much more
+
+	#define KITTY_MOD_SHIFT    1
+	#define KITTY_MOD_ALT      2
+	#define KITTY_MOD_CONTROL  4
+	#define KITTY_MOD_CAPSLOCK 64
+	#define KITTY_MOD_NUMLOCK  128
+	#define KITTY_EVT_KEYUP    3
 
 	/** 32 is enough without "text-as-code points" mode, but should be increased if this mode is enabled */
 	const int max_kitty_esc_size = 32;

@@ -412,14 +412,14 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 size_t TTYInputSequenceParser::TryParseModifyOtherKeys(const char *s, size_t l) {
 
 	int modif_state = 0, code = 0;
-	int state = 0; // 0 - начальное состояние, 1 - чтение modif_state, 2 - чтение code
+	int state = 0; // 0 - initial state, 1 - reading modif_state, 2 - reading code
 
-	for (size_t i = 1; i < l; ++i) { // Начинаем с 1, чтобы пропустить '['
+	for (size_t i = 1; i < l; ++i) { // Starting with 1 to skip '['
 		if (s[i] == ';') {
 			state++;
 			continue;
 		} else if (s[i] == '~') {
-			break; // Конец последовательности
+			break; // End of sequence
 		}
 
 		if (state == 1) {
@@ -431,7 +431,7 @@ size_t TTYInputSequenceParser::TryParseModifyOtherKeys(const char *s, size_t l) 
 
 	if (!code) return TTY_PARSED_BADSEQUENCE;
 
-	// convert to kitty esc seq format
+	// Convert to kitty escape sequence format
 	// and let kitty parser do the rest
 	
     char buffer[32];

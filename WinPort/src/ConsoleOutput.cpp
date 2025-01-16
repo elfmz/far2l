@@ -811,7 +811,7 @@ void ConsoleOutput::RepaintsDeferFinish(bool force)
 		} else if (_repaint_defer > 0) {
 			--_repaint_defer;
 		}
-		if (_repaint_defer == 0) {
+		if (!_deferred_repaints.empty()) { 
 			deferred_repaints.swap(_deferred_repaints);
 		}
 		if (!deferred_repaints.empty()) {

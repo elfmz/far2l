@@ -4,8 +4,6 @@ import ctypes as ct
 from far2l.plugin import PluginBase
 import far2lc
 
-import debugpy
-
 
 log = logging.getLogger(__name__)
 

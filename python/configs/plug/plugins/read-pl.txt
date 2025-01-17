@@ -13,9 +13,11 @@ a) zaladowanie wtyczki odbywa się komendą "py:load nazwa-pliku" na przykład p
 b) odładowanie wtyczki odbywa się komendą "py:unload nazwa-pliku" na przykład py:unload ucharmap
 
 D. Przykłady
-a) ucharmap.py - przykładowa wtyczka pokazująca część zestawu znakow UTF-8
+a) ucharmap.py - przykładowa wtyczka pokazująca zestawu znakow UTF-8
     F11 + "Python Character Map" wyświetli dialog
     wybranie OK lub naciśnięcie Enter skopiuje podświetlony znak do schowka
+    Offset - położenie w zestawie znaków
+    Goto - zmiana położenia - dopuszczalna jest liczba dziesiętna lub szsnatkowa lub znak
 b) udialog.py - wtyczka z dwoma przykładami, dialog i rozszerzenie wiersza poleceń o komendy "py:dialog" oraz "py:exec polecenia.pythona.do.wykonania"
     F11 + "Python udialog" - wyświetli pierwszy dialog
     py:dialog  - wyświetli druki dialog

@@ -17,7 +17,7 @@ class FileInfo:
         self._fileoffset = 0
         self._codepage = 0
         self._readonly = True
-        self._modified = False
+        self._modified = {}
 
     @property
     def mmap(self):
@@ -47,13 +47,12 @@ class FileInfo:
 
     readonly = property(get_readonly, set_readonly)
 
-    def get_modified(self):
+    @property
+    def modified(self):
         return self._modified
 
-    def set_modified(self, modified):
-        self._modified = modified
-
-    modified = property(get_modified, set_modified)
+    def modifiy(self, offset, b):
+        self._modified[offset] = b
 
 
 class Screen:
@@ -91,6 +90,9 @@ class Screen:
 
     def alloc(self, color):
         self._buffer = self.ffi.new("CHAR_INFO []", self._width*self._height)
+        self.fillbuffer(color)
+
+    def fillbuffer(self, color):
         for i in range(self._width*self._height):
             self._buffer[i].Char.AsciiChar = b' '
             self._buffer[i].Attributes = color
@@ -101,8 +103,8 @@ class Screen:
         if val is not None:
             for i in range(len(val)):
                 b[start + i].Char.UnicodeChar = ord(val[i])
-        if attr is not None:
-            b[start].Attributes = attr
+                if attr is not None:
+                    b[start + i].Attributes = attr
 
     def write_bytes(self, row, col, val):
         b = self._buffer
@@ -142,7 +144,7 @@ class StatusBar(Screen):
         self.write(0, self.positions[1], ['RW', 'RO'][self._fileinfo.readonly])
 
     def write_modified(self):
-        self.write(0, self.positions[2], [' ','*'][self._fileinfo.modified])
+        self.write(0, self.positions[2], [' ','*'][len(self._fileinfo.modified)!=0])
 
     def write_codepage(self):
         #self.write(0, self.positions[3], self._fileinfo.codepage)
@@ -175,6 +177,7 @@ class KeyBar(Screen):
     def set_state(self, state):
         self._state = state
         self.set_labels()
+        log.debug(f'keybar.state={self._state:x}')
 
     state = property(get_state, set_state)
 
@@ -249,10 +252,12 @@ class HexEditor(Screen):
     def __init__(self, plugin, fileinfo, width, height):
         super().__init__(plugin, width, height)
         self.color = self.plugin.GetColor(self.ffic.COL_EDITORTEXT)
+        self.colorm = 0xe0
         super().alloc(self.color)
         self._fileinfo = fileinfo
 
     def fill(self):
+        super().fillbuffer(self.color)
         fileoffset = self._fileinfo.fileoffset
         filesize = self._fileinfo.filesize
         mmap = self._fileinfo.mmap
@@ -266,9 +271,6 @@ class HexEditor(Screen):
                 else:
                     self.write(row, n, '  ')
                 n += 3
-                if col == 7:
-                    self.write(row, n, '|')
-                    n += 2
                 fileoffset += 1
             b = mmap[fileoffset-16:fileoffset]
             b = bytes([c if c!=0 else 32 for c in b])
@@ -282,60 +284,55 @@ class HexEditor(Screen):
                     self.write(row, 0, b)
                     row += 1
                 return
+        filemin = self._fileinfo.fileoffset
+        for k, b in self._fileinfo.modified.items():
+            if filemin <= k < fileoffset:
+                row = (k - filemin) // 16
+                col = ((k - filemin) % 16)
+                self.write(row, col * 3 + 12, f'{b:02x}', self.colorm)
+                self.write_bytes(row, 64 + col, bytes([b]))
+
+    def Offset(self, parent, row, col):
+        offset = self._fileinfo.fileoffset + row * 16
+        if 12 <= col < 60:
+            i = (col-12)//3*3+12
+            lo = 1 if col > i else 0
+            offset += (col-12)//3
+            return offset, lo, False
+        elif 64 <= col < 80:
+            return offset+col-64, True
+        return None, None, False
 
     def Click(self, parent, row, col):
-        if 12 <= col < 36:
+        if 12 <= col < 60:
             i = (col-12)//3*3+12
-        elif 38 <= col < 61:
-            i = (col-38)//3*3+38
+            i += 1 if col > i else 0
+            return i
         elif 64 <= col < 80:
             return col
-        else:
-            return
-        i += 1 if col > i else 0
-        return i
+        return
 
     def Tab(self, parent, row, col):
-        if 12 <= col < 36:
+        if 12 <= col < 60:
             return row, (col-12)//3+64
-        elif 38 <= col < 61:
-            return row, (col-38)//3+64+8
         elif 64 <= col < 80:
-            log.debug(f'1.col={col}')
-            col = (col - 64) * 3
-            col += 12 if col < 24 else 14
-            log.debug(f'2.col={col}')
-            return row, col
+            return row, 12 + (col - 64) * 3
         return None, None
 
     def Move(self, parent, row, col, rowinc, colinc):
         if rowinc is not None:
             row += 1 if rowinc else -1
         else:
-            if 12 <= col < 36:
+            if 12 <= col < 60:
                 i = (col-12)//3*3+12
                 if col == i:
                     i += 1 if colinc else -2
                 elif col > i:
                     i += 3 if colinc else 0
-                else:
-                    i += 2 if colinc else -1
-                if i == 10:
-                    i = 60
-                elif i == 36:
-                    i = 38
-            elif 38 <= col < 61:
-                i = (col-38)//3*3+38
-                if col == i:
-                    i += 1 if colinc else -2
-                elif col > i:
-                    i += 3 if colinc else 0
-                else:
-                    i += 2 if colinc else -1
-                if i == 36:
-                    i = 34
-                elif i == 62:
+                if i == 60:
                     i = 12
+                elif i == 10:
+                    i = 58
             elif 64 <= col < 80:
                 i = col + (1 if colinc else -1)
                 if i < 64:
@@ -409,9 +406,7 @@ class Plugin(FarPlugin):
         return data
 
     def HexEdit(self, fqname, mm):
-        if 0:
-            import debugpy
-            debugpy.breakpoint()
+        # import debugpy; debugpy.breakpoint()
 
         r = self.GetFarRect()
         wwidth = max(r.Right-r.Left+1, 80)
@@ -428,35 +423,42 @@ class Plugin(FarPlugin):
             if size < 0:
                 fileoffset = max(0, fileinfo.fileoffset + size)
                 if fileoffset == fileinfo.fileoffset:
-                    return
+                    return False
             else:
                 fileoffset = fileinfo.fileoffset + size
                 if fileoffset >= fileinfo.filesize:
-                    return
+                    return False
             fileinfo.fileoffset = fileoffset
             hexeditor.fill()
             self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
             self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
+            return True
 
         def _DialogProc(hDlg, Msg, Param1, Param2):
+            if Msg < self.ffic.DN_FIRST and Msg != 9:
+                log.debug(f"dlg: Msg={Msg:08x} Param1={Param1:08x} Param2={Param2:08x}")
             if Msg == self.ffic.DN_INITDIALOG:
                 self.SetCursorPos(hDlg, dlg.ID_hexeditor, hexeditor.COL, 0)
                 self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hexeditor, 1|(100<<16))
                 dlg.SetFocus(dlg.ID_hexeditor)
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
             elif Msg == self.ffic.DN_RESIZECONSOLE:
+                # TODO
                 size = self.ffi.cast("COORD *", Param2)
                 log.debug(f"resize {size}")
-            #elif Msg == self.ffic.DN_CONTROLINPUT:
-            #    XXX control, shift, alt ? howto catch them ???
-            #    rec = self.ffi.cast("INPUT_RECORD *", Param2)
-            #    log.debug(f"ctrl {rec.EventType}")
-            #    if rec.EventType == self.ffic.KEY_EVENT:
-            #        log.debug(f"ctrl key {rec.Event.KeyEvent}")
-            #        if rec.Event.KeyEvent.wVirtualKeyCode in (self.ffic.VK_SHIFT, self.ffic.VK_CONTROL, self.ffic.VK_MENU):
-            #            return 1
-            #    return 0
             elif Msg == self.ffic.DN_KEY and Param1 == dlg.ID_hexeditor:
+                st = KeyBar.ST_NORMAL
+                if Param2 & self.ffic.KEY_SHIFT:
+                    st |= KeyBar.ST_SHIFT
+                if Param2 & self.ffic.KEY_CTRL:
+                    st |= KeyBar.ST_CTRL
+                if Param2 & self.ffic.KEY_ALT:
+                    st |= KeyBar.ST_ALT
+                if keybar.state != st:
+                    log.debug(f"dlg.DN_KEY: Param1={Param1} Param2={Param2}")
+                    keybar.state = st
+                    self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
+                    self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
                 col, row = self.GetCursorPos(hDlg, dlg.ID_hexeditor)
                 if Param2 == self.ffic.KEY_PGUP:
                     Scroll(hDlg, -16 * hexeditor.height)
@@ -467,23 +469,43 @@ class Plugin(FarPlugin):
                 elif Param2 == self.ffic.KEY_LEFT:
                     row, col = hexeditor.Move(self, row, col, None, False)
                 elif Param2 == self.ffic.KEY_UP:
-                    if row == 0:
-                        # scroll 1 row
-                        return None, None
-                    elif row >= self.height:
-                        # scroll 1 row
-                        return None, None
-
                     row, col = hexeditor.Move(self, row, col, False, None)
+                    if row == -1:
+                        Scroll(hDlg, -16)
+                        return 1
                 elif Param2 == self.ffic.KEY_RIGHT:
                     row, col = hexeditor.Move(self, row, col, None, True)
+                    offset, lo, ascii = hexeditor.Offset(self, row, col)
+                    if offset >= fileinfo.filesize:
+                        return 1
                 elif Param2 == self.ffic.KEY_DOWN:
                     row, col = hexeditor.Move(self, row, col, True, None)
+                    offset, lo, ascii = hexeditor.Offset(self, row, col)
+                    if offset >= fileinfo.filesize:
+                        return 1
+                    if row == hexeditor.height:
+                        Scroll(hDlg, 16)
+                        return 1
                 elif Param2 == self.ffic.KEY_TAB:
                     row, col = hexeditor.Tab(self, row, col)
                 elif Param2 == self.ffic.KEY_ESC:
                     return 0
                 else:
+                    if 48 <= Param2 <= 57 or 97 <= Param2 <= 102:
+                        offset, lo, ascii = hexeditor.Offset(self, row, col)
+                        if not ascii:
+                            b = fileinfo.modified.get(offset) or mm[offset]
+                            v = Param2 - (48 if Param2 < 91 else 87)
+                            if lo:
+                                b = b&0xf0|v
+                            else:
+                                b = b&0x0f|(v<<4)
+                            fileinfo.modifiy(offset, b)
+                            hexeditor.fill()
+                            row, col = hexeditor.Move(self, row, col, None, True)
+                            self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
+                            self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
+                            self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
                     return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
                 if row is not None:
                     self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
@@ -524,6 +546,5 @@ class Plugin(FarPlugin):
         )
         dlg = b.build_nobox(-1, -1, wwidth, wheight)
 
-        res = self.info.DialogRun(dlg.hDlg)
-        log.debug(f'res={res}')
+        self.info.DialogRun(dlg.hDlg)
         self.info.DialogFree(dlg.hDlg)

@@ -10,16 +10,20 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Customize Size column in panels (all by dialog or **Ctrl+Alt+D**, symlinks by **Ctrl+Alt+L**)
 * More customize dirs/files markers in panels (by dialog or **Ctrl+Alt+M** and **Ctrl+Alt+N**)
 * _New:_ Link item in File menu (in addition to the usual **Alt+F6**)
-* _New:_ Chattr / chflags with all flags for single file (in File menu or by **Ctrl+Alt+A**)
+* _New:_ Chattr / chflags with all flags for single file (in File menu or by **Ctrl+Alt+A**) _[if https://github.com/elfmz/far2l/pull/2614 will be accepted]_
 * _New:_ Python-subplugin: copy/paste files via clipboard - wx ONLY version - with support for gnome clipboard types, works with gnome files/nautilus
 * _New:_ At 1st run detect Russian locale
 * _New:_ At 1st run show OSC52 info (if need)
+* _New:_ Far colors moved to farcolors.ini _[if https://github.com/elfmz/far2l/pull/2600 will be accepted]_
 * Help actualization and improvements
 * Info panel: New EditorConfig block
 * _colorer plugin_: Update colorer schemes to v1.2.0.57
 * _Inside plugin_: Add PE format, add png, ogg, m4a
 * _multiarc plugin_: Removed PCRE library dependencies
 * _NetRocks plugin_: Explicit SSH algorithms options
+* _NetRocks plugin_: Add AWS S3 protocol support _[if https://github.com/elfmz/far2l/pull/2621 will be accepted]_
+* _python plugin_: New subplugin **hex editor** _[if https://github.com/elfmz/far2l/pull/2637 will be accepted]_
+* _python plugin_: Removed debugpy dependencies _[if https://github.com/elfmz/far2l/pull/2637 will be accepted]_
 * _Temporary panel plugin_: Significant fixes, tweaks and improvements
 * optional ability to use icu available on build system or target
 * Several bugfixes
@@ -50,6 +54,8 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Case (in)sensitive option for Compare folders and (De)Select in Panels
 * _New:_ Attributes dialog (by **Ctrl+A**) - dynamically show marks (\*) near changed fields
 * _New:_ Option to disable automatic highlights in history lists
+* _New:_ Commands History - delete duplicates if Name and Path equal (customization via System settings)
+* _New:_ Datetime format customization via Interface settings
 * _New:_ RGB in far2l Palette
 * Several bugfixes
 

@@ -377,6 +377,42 @@ class Plugin(FarPlugin):
         except Exception as ex:
             log.exception('run')
 
+    def GotoDialog(self):
+        @self.ffi.callback("FARWINDOWPROC")
+        def DialogProc(hDlg, Msg, Param1, Param2):
+            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+
+        b = fdb.DialogBuilder(
+            self,
+            DialogProc,
+            "Goto",
+            "charmap",
+            0,
+            fdb.VSizer(
+                fdb.HSizer(
+                    fdb.TEXT(None, "&Goto:"),
+                    fdb.EDIT("vgoto", width=10, history='uhexeditvgoto', flags=self.ffic.DIF_USELASTHISTORY),
+                ),
+                fdb.HLine(),
+                fdb.HSizer(
+                    fdb.BUTTON("vok", "OK", default=True, flags=self.ffic.DIF_CENTERGROUP),
+                    fdb.BUTTON("vcancel", "Cancel", flags=self.ffic.DIF_CENTERGROUP),
+                ),
+            ),
+        )
+        dlg = b.build(-1, -1)
+
+        res = self.info.DialogRun(dlg.hDlg)
+        if res == dlg.ID_vok:
+            v = dlg.GetText(dlg.ID_vgoto)
+            try:
+                offset = int(v, 16 if v[:2] == '0x' else 10)
+                return offset
+            except:
+                log.exception('goto')
+                return None
+        return None
+
     def GetCursorPos(self, hDlg, ID):
         cpos = self.ffi.new("COORD *")
         self.info.SendDlgMessage(hDlg, self.ffic.DM_GETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
@@ -524,8 +560,21 @@ class Plugin(FarPlugin):
                     self.notice("Not implemented F4=RO/RW swap.", "HexEditor")
                     return 1
                 elif Param2 == self.ffic.KEY_F5:
-                    log.debug(f"dlg.DN_KEY: F5={Param2:08x} state={keybar.state:08x}")
-                    self.notice("Not implemented F5=Goto.", "HexEditor")
+                    offset = self.GotoDialog()
+                    if offset is not None and offset >= 0 and offset < fileinfo.filesize:
+                        if fileinfo.fileoffset <= offset and offset < 16 * hexeditor.height:
+                            offset -= fileinfo.fileoffset
+                            row = offset // 16
+                            col = 12+(offset % 16)*3
+                        else:
+                            fileinfo.fileoffset = max(offset - 8 * hexeditor.height, 0)
+                            offset -= fileinfo.fileoffset
+                            row = offset // 16
+                            col = 12+(offset % 16)*3
+                            hexeditor.fill()
+                        self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
+                        self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
+                        self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
                     return 1
                 elif Param2 in (
                     self.ffic.KEY_F7, 

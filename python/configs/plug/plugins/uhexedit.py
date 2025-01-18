@@ -537,7 +537,15 @@ class Plugin(FarPlugin):
                 elif Param2 == self.ffic.KEY_TAB:
                     row, col = hexeditor.Tab(self, row, col)
                 elif Param2 == self.ffic.KEY_ESC:
-                    return 0
+                    if not fileinfo.modified:
+                        return 0
+                    rc = self._popup("File is modified. Save ?", "HexEditor", self.ffic.FMSG_MB_YESNOCANCEL)
+                    if rc == 0: #YES
+                        Save(None, True)
+                        return 0
+                    elif rc == 1: #NO
+                        return 0
+                    return 1
                 elif Param2 == self.ffic.KEY_F1:
                     # TODO help
                     log.debug(f"dlg.DN_KEY: F1={Param2:08x} state={keybar.state:08x}")

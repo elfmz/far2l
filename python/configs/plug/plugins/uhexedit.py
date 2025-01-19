@@ -593,8 +593,7 @@ class Plugin(FarPlugin):
                         self.Setup()
                     elif fkey == 10:
                         if self.Quit() == 0:
-                            # TODO how to close yourself ?
-                            return self.info.DefDlgProc(self.dlg.hDlg, self.ffic.DN_CLOSE, 0, 0)
+                            self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_CLOSE, 1, 0)
                 elif self.state == KeyBar.ST_ALT:
                     if fkey == 7:
                         self.SearchPrev()

@@ -106,6 +106,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ( brew update || brew update || brew update ) ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew pin tmate ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew bundle -v ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install aws-sdk-cpp ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository -y ppa:saiarcot895/chromium-beta ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo sudo apt-get update ; fi
 

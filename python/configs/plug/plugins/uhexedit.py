@@ -15,8 +15,6 @@ class FileInfo:
         self._filename = filename
         self._filesize = filesize
         self._fileoffset = 0
-        self._codepage = 0
-        self._readonly = True
         self._modified = {}
 
     @property
@@ -38,14 +36,6 @@ class FileInfo:
         self._fileoffset = fileoffset
 
     fileoffset = property(get_fileoffset, set_fileoffset)
-
-    def get_readonly(self):
-        return self._readonly
-
-    def set_readonly(self, readonly):
-        self._readonly = readonly
-
-    readonly = property(get_readonly, set_readonly)
 
     @property
     def modified(self):
@@ -118,20 +108,16 @@ class StatusBar(Screen):
         self.color = self.plugin.GetColor(self.ffic.COL_EDITORSTATUS)
         super().alloc(self.color)
         self.positions = [
-            0,
-            self.width-8-1-8-2-5-2-2,
-            self.width-8-1-8-2-5-2,
-            self.width-8-1-8-2-5,
-            self.width-8-1-8,
-            self.width-8-1,
+            0,                    # file name
+            self.width-8-1-8-1-1, # modified
+            self.width-8-1-8,     # offset
+            self.width-8-1,       # file size
         ]
         self._fileinfo = fileinfo
         self.write_filename()
         self.write_filesize()
-        self.write_readonly()
         self.write_modified()
-        self.write_codepage()
-        self.write_offset()
+        self.write_offset(0)
 
     def write_filename(self):
         maxlen = self.positions[1]
@@ -140,21 +126,14 @@ class StatusBar(Screen):
             filename = '...'+filename[:maxlen-3]
         self.write(0, 0, filename)
 
-    def write_readonly(self):
-        self.write(0, self.positions[1], ['RW', 'RO'][self._fileinfo.readonly])
-
     def write_modified(self):
-        self.write(0, self.positions[2], [' ','*'][len(self._fileinfo.modified)!=0])
+        self.write(0, self.positions[1], [' ','*'][len(self._fileinfo.modified)!=0])
 
-    def write_codepage(self):
-        #self.write(0, self.positions[3], self._fileinfo.codepage)
-        pass
-
-    def write_offset(self):
-        self.write(0, self.positions[4], f'{self._fileinfo.fileoffset:08x}')
+    def write_offset(self, offset):
+        self.write(0, self.positions[2], f'{offset:08x}')
 
     def write_filesize(self):
-        self.write(0, self.positions[5], f'/{self._fileinfo.filesize:08x}')
+        self.write(0, self.positions[3], f'/{self._fileinfo.filesize:08x}')
 
 
 class KeyBar(Screen):
@@ -177,7 +156,6 @@ class KeyBar(Screen):
     def set_state(self, state):
         self._state = state
         self.set_labels()
-        log.debug(f'keybar.state={self._state:x}')
 
     state = property(get_state, set_state)
 
@@ -197,12 +175,9 @@ class KeyBar(Screen):
             self.write_label(i+1, '')
         if self._state == self.ST_NORMAL:
             self.write_label(1, "Help")
-            if self._fileinfo.modified:
-                self.write_label(2, "Save")
-            self.write_label(4, ["RW", "RO"][self._fileinfo.readonly])
+            self.write_label(2, "Save")
             self.write_label(5, "Goto")
             self.write_label(7, "Search")
-            self.write_label(8, "CodePg")
             self.write_label(9, "Setup")
             self.write_label(10, "Quit")
         elif self._state == self.ST_ALT:
@@ -217,45 +192,15 @@ class KeyBar(Screen):
         w = self.width // 12
         return (col // w)+1
 
-    def Click(self, parent, col):
-        fkey = self.col2fkey(col)
-        if self.state == self.ST_NORMAL:
-            if fkey == 1: # Help
-                pass
-            elif fkey == 2: # Save if fileinfo.modified
-                pass
-            elif fkey == 4: # swap fileinfo.readonly
-                pass
-            elif fkey == 5: # goto
-                pass
-            elif fkey == 7: # search
-                pass
-            elif fkey == 8: # codepage
-                pass
-            elif fkey == 9: # setup
-                pass
-            elif fkey == 10: # quit
-                pass
-            pass
-        elif self.state == self.ST_ALT:
-            if fkey == 7: # search prev
-                pass
-        elif self.state == self.ST_SHIFT:
-            if fkey == 2: # save as
-                pass
-            elif fkey == 7: # search next
-                pass
-
 
 class HexEditor(Screen):
     COL = 12
     def __init__(self, plugin, fileinfo, width, height):
         super().__init__(plugin, width, height)
         self.color = self.plugin.GetColor(self.ffic.COL_EDITORTEXT)
-        self.colorm = 0xe0
+        self.colormodified = 0xe0
         super().alloc(self.color)
         self._fileinfo = fileinfo
-        self._area = False # hex=false, ascii=true
 
     def fill(self):
         super().fillbuffer(self.color)
@@ -290,10 +235,10 @@ class HexEditor(Screen):
             if filemin <= k < fileoffset:
                 row = (k - filemin) // 16
                 col = ((k - filemin) % 16)
-                self.write(row, col * 3 + 12, f'{b:02x}', self.colorm)
+                self.write(row, col * 3 + 12, f'{b:02x}', self.colormodified)
                 self.write_bytes(row, 64 + col, bytes([b]))
 
-    def Offset(self, parent, row, col):
+    def Offset(self, row, col):
         offset = self._fileinfo.fileoffset + row * 16
         if 12 <= col < 60:
             i = (col-12)//3*3+12
@@ -301,10 +246,10 @@ class HexEditor(Screen):
             offset += (col-12)//3
             return offset, lo, False
         elif 64 <= col < 80:
-            return offset+col-64, True
+            return offset+col-64, 0, True
         return None, None, False
 
-    def Click(self, parent, row, col):
+    def Click(self, row, col):
         if 12 <= col < 60:
             i = (col-12)//3*3+12
             i += 1 if col > i else 0
@@ -313,14 +258,14 @@ class HexEditor(Screen):
             return col
         return
 
-    def Tab(self, parent, row, col):
+    def Tab(self, row, col):
         if 12 <= col < 60:
             return row, (col-12)//3+64
         elif 64 <= col < 80:
             return row, 12 + (col - 64) * 3
         return None, None
 
-    def Move(self, parent, row, col, rowinc, colinc):
+    def Move(self, row, col, rowinc, colinc):
         if rowinc is not None:
             row += 1 if rowinc else -1
         else:
@@ -364,7 +309,7 @@ class Plugin(FarPlugin):
         else:
             log.debug(f"unsupported open from {OpenFrom}")
             return
-        log.debug(f"fqname={fqname}")
+        # log.debug(f"fqname={fqname}")
         try:
             with open(fqname, "r+b") as f:
                 mm = mmap.mmap(f.fileno(), 0)
@@ -442,210 +387,240 @@ class Plugin(FarPlugin):
         )
         return data
 
+    def Help(self):
+        # TODO
+        self.notice("TODO: F1=Help.", "HexEditor")
+
+    def Save(self, nname=False, showinfo=True):
+        if nname:
+            # TODO save as
+            self.notice("TODO: F2+SHIFT=Save as ...", "HexEditor")
+            return
+        else:
+            if not self.fileinfo.modified:
+                self.notice("File is not modified - not saved.", "HexEditor")
+                return
+            mm = self.fileinfo.mmap
+            for offset, b in self.fileinfo.modified.items():
+                mm[offset] = b
+        self.fileinfo._modified = {}
+        self.hexeditor.fill()
+        self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_statusbar, 1)
+        self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_hexeditor, 1)
+        if showinfo:
+            self.notice("File is saved.", "HexEditor")
+
+    def Goto(self):
+        offset = self.GotoDialog()
+        if offset is None or offset < 0 or offset >= self.fileinfo.filesize:
+            return None, None
+        if self.fileinfo.fileoffset <= offset and offset < 16 * self.hexeditor.height:
+            offset -= self.fileinfo.fileoffset
+            row = offset // 16
+            col = 12+(offset % 16)*3
+        else:
+            self.fileinfo.fileoffset = max(offset - 8 * self.hexeditor.height, 0)
+            offset -= self.fileinfo.fileoffset
+            row = offset // 16
+            col = 12+(offset % 16)*3
+            self.hexeditor.fill()
+        return row, col
+
+    def Search(self):
+        # TODO
+        self.notice("TODO: F7=Search +ALT=Prev +SHIFT=Next.", "HexEditor")
+    SearchNext = SearchPrev = Search
+
+    def Setup(self):
+        # TODO
+        self.notice("Not implemented F9=Setup.", "HexEditor")
+
+    def Quit(self):
+        if not self.fileinfo.modified:
+            return 0
+        rc = self._popup("File is modified. Save ?", "HexEditor", self.ffic.FMSG_MB_YESNOCANCEL)
+        if rc == 0: # Yes
+            self.Save(False, True)
+            return 0
+        elif rc == 1: # NO
+            return 0
+        return 1
+
+    def Resize(self, size):
+        # TODO resize
+        pass
+
+    def Scroll(self, size):
+        if size < 0:
+            fileoffset = max(0, self.fileinfo.fileoffset + size)
+            if fileoffset == self.fileinfo.fileoffset:
+                return False
+        else:
+            fileoffset = self.fileinfo.fileoffset + size
+            if fileoffset >= self.fileinfo.filesize:
+                return False
+        self.fileinfo.fileoffset = fileoffset
+        self.hexeditor.fill()
+        self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_hexeditor, 1)
+        return True
+
+    def DialogProc(self, Msg, Param1, Param2):
+        # log.debug(f"dlg: Msg={Msg:08x} Param1={Param1:08x} Param2={Param2:08x}")
+        if Msg == self.ffic.DN_INITDIALOG:
+            self.hexeditor.fill()
+            self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, self.hexeditor.COL, 0)
+            self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SETCURSORSIZE, self.dlg.ID_hexeditor, 1|(100<<16))
+            self.dlg.SetFocus(self.dlg.ID_hexeditor)
+            return self.info.DefDlgProc(self.dlg.hDlg, Msg, Param1, Param2)
+        elif Msg == self.ffic.DN_RESIZECONSOLE:
+            size = self.ffi.cast("COORD *", Param2)
+            self.Resize(size)
+            return 1
+        elif Msg == self.ffic.DN_KEY and Param1 == 0:
+            st = KeyBar.ST_NORMAL
+            if Param2 & self.ffic.KEY_SHIFT:
+                st = KeyBar.ST_SHIFT
+            elif Param2 & self.ffic.KEY_CTRL:
+                st = KeyBar.ST_CTRL
+            elif Param2 & self.ffic.KEY_ALT:
+                st = KeyBar.ST_ALT
+            if self.keybar.state != st:
+                self.keybar.state = st
+                self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_keybar, 1)
+                return 1
+        elif Msg == self.ffic.DN_KEY and Param1 == self.dlg.ID_hexeditor:
+            # log.debug(f"dlg.DN_KEY: Param1={Param1:08x} Param2={Param2:08x}")
+            col, row = self.GetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor)
+            if Param2 == self.ffic.KEY_PGUP:
+                self.Scroll(-16 * self.hexeditor.height)
+            elif Param2 == self.ffic.KEY_PGDN:
+                self.Scroll(16 * self.hexeditor.height)
+            elif Param2 == self.ffic.KEY_LEFT:
+                row, col = self.hexeditor.Move(row, col, None, False)
+            elif Param2 == self.ffic.KEY_UP:
+                row, col = self.hexeditor.Move(row, col, False, None)
+                if row == -1:
+                    self.Scroll(-16)
+                    row = 0
+            elif Param2 == self.ffic.KEY_RIGHT:
+                row, col = self.hexeditor.Move(row, col, None, True)
+                offset, lo, ascii = self.hexeditor.Offset(row, col)
+                if offset >= self.fileinfo.filesize:
+                    return 1
+            elif Param2 == self.ffic.KEY_DOWN:
+                row, col = self.hexeditor.Move(row, col, True, None)
+                offset, lo, ascii = self.hexeditor.Offset(row, col)
+                if offset >= self.fileinfo.filesize:
+                    return 1
+                if row == self.hexeditor.height:
+                    self.Scroll(16)
+            elif Param2 == self.ffic.KEY_TAB:
+                row, col = self.hexeditor.Tab(row, col)
+            elif Param2 == self.ffic.KEY_ESC:
+                return self.Quit()
+            elif Param2 == self.ffic.KEY_F1:
+                self.Help()
+                return 1
+            elif Param2 in (
+                self.ffic.KEY_F2,
+                self.ffic.KEY_F2|self.ffic.KEY_SHIFT,
+            ):
+                self.Save(Param2 == self.ffic.KEY_F2|self.ffic.KEY_SHIFT, True)
+                return 1
+            elif Param2 == self.ffic.KEY_F5:
+                row, col = self.Goto()
+                if row is None:
+                    return 1
+            elif Param2 in (
+                self.ffic.KEY_F7, 
+                self.ffic.KEY_F7|self.ffic.KEY_SHIFT,
+                self.ffic.KEY_F7|self.ffic.KEY_ALT,
+            ):
+                if Param2 == self.ffic.KEY_F7:
+                    self.Search()
+                elif Param2 == self.ffic.KEY_F7|self.ffic.KEY_SHIFT:
+                    self.SearchNext()
+                else:
+                    self.SearchPrev()
+                return 1
+            elif Param2 == self.ffic.KEY_F9:
+                self.Setup()
+                return 1
+            elif Param2 == self.ffic.KEY_F10:
+                return self.Quit()
+            else:
+                if 48 <= Param2 <= 57 or 97 <= Param2 <= 102:
+                    offset, lo, ascii = self.hexeditor.Offset(row, col)
+                    if not ascii:
+                        b = self.fileinfo.modified.get(offset) or self.fileinfo.mmap[offset]
+                        v = Param2 - (48 if Param2 < 91 else 87)
+                        if lo:
+                            b = b&0xf0|v
+                        else:
+                            b = b&0x0f|(v<<4)
+                        self.fileinfo.modifiy(offset, b)
+                        self.hexeditor.fill()
+                        row, col = self.hexeditor.Move(row, col, None, True)
+                else:
+                    return self.info.DefDlgProc(self.dlg.hDlg, Msg, Param1, Param2)
+            if row is not None:
+                self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, col, row)
+                self.statusbar.write_offset(self.hexeditor.Offset(row, col)[0])
+                self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_statusbar, 1)
+            return 1
+        elif Msg == self.ffic.DN_MOUSECLICK:
+            mou = self.ffi.cast("MOUSE_EVENT_RECORD *", Param2)
+            col = mou.dwMousePosition.X
+            row = mou.dwMousePosition.Y
+            if Param1 == self.dlg.ID_hexeditor:
+                col = self.hexeditor.Click(row, col)
+                if col is not None:
+                    self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, col, row)
+            elif Param1 == self.dlg.ID_keybar:
+                fkey = self.keybar.col2fkey(col)
+                if self.keybar.state == KeyBar.ST_NORMAL:
+                    if fkey == 1:
+                        self.Help()
+                    elif fkey == 2:
+                        self.Save(False, True)
+                    elif fkey == 5:
+                        row, col = self.Goto()
+                        if row is not None:
+                            self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, col, row)
+                    elif fkey == 7:
+                        self.Search()
+                    elif fkey == 9:
+                        self.Setup()
+                    elif fkey == 10:
+                        if self.Quit() == 0:
+                            # TODO how to close yourself ?
+                            return self.info.DefDlgProc(self.dlg.hDlg, self.ffic.DN_CLOSE, 0, 0)
+                elif self.state == KeyBar.ST_ALT:
+                    if fkey == 7:
+                        self.SearchPrev()
+                elif self.state == KeyBar.ST_SHIFT:
+                    if fkey == 2:
+                        self.Save(True, True)
+                    elif fkey == 7: # search next
+                        self.SearchNext()
+            return 1
+        return self.info.DefDlgProc(self.dlg.hDlg, Msg, Param1, Param2)
+
     def HexEdit(self, fqname, mm):
         # import debugpy; debugpy.breakpoint()
 
         r = self.GetFarRect()
-        wwidth = max(r.Right-r.Left+1, 80)
-        wheight = max(r.Bottom-r.Top+1, 3)
-        fileinfo = FileInfo(mm, fqname, os.stat(fqname)[stat.ST_SIZE])
-        hexeditor = HexEditor(self, fileinfo, wwidth, wheight-2)
-        statusbar = StatusBar(self, fileinfo, wwidth)
-        keybar = KeyBar(self, fileinfo, wwidth)
-
-        hexeditor.fill()
-        log.debug(f'{wwidth}x{wheight}')
-
-        def Save(nname=None, showinfo=True):
-            if nname:
-                # TODO save as
-                pass
-            else:
-                for offset, b in fileinfo.modified.items():
-                    mm[offset] = b
-            fileinfo._modified = {}
-            if showinfo:
-                self.notice("File is saved.", "HexEditor")
-
-        def Scroll(hDlg, size):
-            if size < 0:
-                fileoffset = max(0, fileinfo.fileoffset + size)
-                if fileoffset == fileinfo.fileoffset:
-                    return False
-            else:
-                fileoffset = fileinfo.fileoffset + size
-                if fileoffset >= fileinfo.filesize:
-                    return False
-            fileinfo.fileoffset = fileoffset
-            hexeditor.fill()
-            self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
-            self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
-            return True
-
-        def _DialogProc(hDlg, Msg, Param1, Param2):
-            if Msg < self.ffic.DN_FIRST and Msg != 9:
-                log.debug(f"dlg: Msg={Msg:08x} Param1={Param1:08x} Param2={Param2:08x}")
-            if Msg == self.ffic.DN_INITDIALOG:
-                self.SetCursorPos(hDlg, dlg.ID_hexeditor, hexeditor.COL, 0)
-                self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hexeditor, 1|(100<<16))
-                dlg.SetFocus(dlg.ID_hexeditor)
-                return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
-            elif Msg == self.ffic.DN_RESIZECONSOLE:
-                # TODO resize
-                size = self.ffi.cast("COORD *", Param2)
-                log.debug(f"resize {size}")
-            elif Msg == self.ffic.DN_KEY and Param1 == dlg.ID_hexeditor:
-                st = KeyBar.ST_NORMAL
-                if Param2 & self.ffic.KEY_SHIFT:
-                    st |= KeyBar.ST_SHIFT
-                if Param2 & self.ffic.KEY_CTRL:
-                    st |= KeyBar.ST_CTRL
-                if Param2 & self.ffic.KEY_ALT:
-                    st |= KeyBar.ST_ALT
-                if keybar.state != st:
-                    log.debug(f"dlg.DN_KEY: Param1={Param1:08x} Param2={Param2:08x}")
-                    keybar.state = st
-                    self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
-                    self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
-                col, row = self.GetCursorPos(hDlg, dlg.ID_hexeditor)
-                if Param2 == self.ffic.KEY_PGUP:
-                    Scroll(hDlg, -16 * hexeditor.height)
-                    return 1
-                elif Param2 == self.ffic.KEY_PGDN:
-                    Scroll(hDlg, 16 * hexeditor.height)
-                    return 1
-                elif Param2 == self.ffic.KEY_LEFT:
-                    row, col = hexeditor.Move(self, row, col, None, False)
-                elif Param2 == self.ffic.KEY_UP:
-                    row, col = hexeditor.Move(self, row, col, False, None)
-                    if row == -1:
-                        Scroll(hDlg, -16)
-                        return 1
-                elif Param2 == self.ffic.KEY_RIGHT:
-                    row, col = hexeditor.Move(self, row, col, None, True)
-                    offset, lo, ascii = hexeditor.Offset(self, row, col)
-                    if offset >= fileinfo.filesize:
-                        return 1
-                elif Param2 == self.ffic.KEY_DOWN:
-                    row, col = hexeditor.Move(self, row, col, True, None)
-                    offset, lo, ascii = hexeditor.Offset(self, row, col)
-                    if offset >= fileinfo.filesize:
-                        return 1
-                    if row == hexeditor.height:
-                        Scroll(hDlg, 16)
-                        return 1
-                elif Param2 == self.ffic.KEY_TAB:
-                    row, col = hexeditor.Tab(self, row, col)
-                elif Param2 == self.ffic.KEY_ESC:
-                    if not fileinfo.modified:
-                        return 0
-                    rc = self._popup("File is modified. Save ?", "HexEditor", self.ffic.FMSG_MB_YESNOCANCEL)
-                    if rc == 0: #YES
-                        Save(None, True)
-                        return 0
-                    elif rc == 1: #NO
-                        return 0
-                    return 1
-                elif Param2 == self.ffic.KEY_F1:
-                    # TODO help
-                    log.debug(f"dlg.DN_KEY: F1={Param2:08x} state={keybar.state:08x}")
-                    return 1
-                elif Param2 in (
-                    self.ffic.KEY_F2,
-                    self.ffic.KEY_F2|self.ffic.KEY_SHIFT,
-                ):
-                    log.debug(f"dlg.DN_KEY: F2={Param2:08x} state={keybar.state:08x}")
-                    if not fileinfo.modified:
-                        self.notice("File is not modified - not saved.", "HexEditor")
-                    elif Param2 == self.ffic.KEY_F2:
-                        Save(None, True)
-                    else:
-                        self.notice("Not implemented SHIFT+F2=SaveAs.", "HexEditor")
-                        pass
-                    return 1
-                elif Param2 == self.ffic.KEY_F4:
-                    log.debug(f"dlg.DN_KEY: F4={Param2:08x} state={keybar.state:08x}")
-                    self.notice("Not implemented F4=RO/RW swap.", "HexEditor")
-                    return 1
-                elif Param2 == self.ffic.KEY_F5:
-                    offset = self.GotoDialog()
-                    if offset is not None and offset >= 0 and offset < fileinfo.filesize:
-                        if fileinfo.fileoffset <= offset and offset < 16 * hexeditor.height:
-                            offset -= fileinfo.fileoffset
-                            row = offset // 16
-                            col = 12+(offset % 16)*3
-                        else:
-                            fileinfo.fileoffset = max(offset - 8 * hexeditor.height, 0)
-                            offset -= fileinfo.fileoffset
-                            row = offset // 16
-                            col = 12+(offset % 16)*3
-                            hexeditor.fill()
-                        self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
-                        self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
-                        self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
-                    return 1
-                elif Param2 in (
-                    self.ffic.KEY_F7, 
-                    self.ffic.KEY_F7|self.ffic.KEY_SHIFT,
-                    self.ffic.KEY_F7|self.ffic.KEY_ALT,
-                ):
-                    log.debug(f"dlg.DN_KEY: F7={Param2:08x} state={keybar.state:08x}")
-                    self.notice("Not implemented F7=Search +ALT=Prev +SHIFT=Next.", "HexEditor")
-                    return 1
-                elif Param2 == self.ffic.KEY_F9:
-                    log.debug(f"dlg.DN_KEY: F9={Param2:08x} state={keybar.state:08x}")
-                    self.notice("Not implemented F9=Setup.", "HexEditor")
-                    return 1
-                elif Param2 == self.ffic.KEY_F8:
-                    log.debug(f"dlg.DN_KEY: F8={Param2:08x} state={keybar.state:08x}")
-                    self.notice("Not implemented F8=CodePg.", "HexEditor")
-                    return 1
-                elif Param2 == self.ffic.KEY_F10:
-                    if not fileinfo.modified:
-                        return 0
-                    rc = self._popup("File is modified. Save ?", "HexEditor", self.ffic.FMSG_MB_OKCANCEL)
-                    if rc == 0: #OK
-                        Save(None, True)
-                        return 0
-                    return 1
-                else:
-                    if 48 <= Param2 <= 57 or 97 <= Param2 <= 102:
-                        offset, lo, ascii = hexeditor.Offset(self, row, col)
-                        if not ascii:
-                            b = fileinfo.modified.get(offset) or mm[offset]
-                            v = Param2 - (48 if Param2 < 91 else 87)
-                            if lo:
-                                b = b&0xf0|v
-                            else:
-                                b = b&0x0f|(v<<4)
-                            fileinfo.modifiy(offset, b)
-                            hexeditor.fill()
-                            row, col = hexeditor.Move(self, row, col, None, True)
-                            self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
-                            self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
-                            self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 1, 0)
-                        return 1
-                    return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
-                if row is not None:
-                    self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
-                return 1
-            elif Msg == self.ffic.DN_MOUSECLICK:
-                mou = self.ffi.cast("MOUSE_EVENT_RECORD *", Param2)
-                col = mou.dwMousePosition.X
-                row = mou.dwMousePosition.Y
-                if Param1 == dlg.ID_hexeditor:
-                    col = hexeditor.Click(self, row, col)
-                    if col is not None:
-                        self.SetCursorPos(hDlg, dlg.ID_hexeditor, col, row)
-                elif Param1 == dlg.ID_keybar:
-                    keybar.Click(self, col)
-                return 1
-            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+        self.wwidth = max(r.Right-r.Left+1, 80)
+        self.wheight = max(r.Bottom-r.Top+1, 3)
+        self.fileinfo = FileInfo(mm, fqname, os.stat(fqname)[stat.ST_SIZE])
+        self.hexeditor = HexEditor(self, self.fileinfo, self.wwidth, self.wheight-2)
+        self.statusbar = StatusBar(self, self.fileinfo, self.wwidth)
+        self.keybar = KeyBar(self, self.fileinfo, self.wwidth)
 
         @self.ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
             try:
-                return _DialogProc(hDlg, Msg, Param1, Param2)
+                return self.DialogProc(Msg, Param1, Param2)
             except:
                 log.exception('dialogproc')
                 return 1
@@ -657,13 +632,21 @@ class Plugin(FarPlugin):
             "hexedit",
             0,
             fdb.VSizer(
-                fdb.USERCONTROL('statusbar', statusbar.width, statusbar.height, param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(statusbar.buffer))}),
-                fdb.USERCONTROL('hexeditor', hexeditor.width, hexeditor.height, param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(hexeditor.buffer))}),
-                fdb.USERCONTROL('keybar', keybar.width, keybar.height, param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(keybar.buffer))}),
+                fdb.USERCONTROL('statusbar', self.statusbar.width, self.statusbar.height,
+                    param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(self.statusbar.buffer))}),
+                fdb.USERCONTROL('hexeditor', self.hexeditor.width, self.hexeditor.height,
+                    param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(self.hexeditor.buffer))}),
+                fdb.USERCONTROL('keybar', self.keybar.width, self.keybar.height,
+                    param={'VBuf':self.ffi.cast("CHAR_INFO *", self.ffi.addressof(self.keybar.buffer))}),
             ),
             (0, 0, 0, 0)
         )
-        dlg = b.build_nobox(-1, -1, wwidth, wheight)
+        self.dlg = b.build_nobox(-1, -1, self.wwidth, self.wheight)
 
-        self.info.DialogRun(dlg.hDlg)
-        self.info.DialogFree(dlg.hDlg)
+        self.info.DialogRun(self.dlg.hDlg)
+        self.info.DialogFree(self.dlg.hDlg)
+        self.dlg = None
+        self.keybar = None
+        self.statusbar = None
+        self.hexeditor = None
+        self.fileinfo = None

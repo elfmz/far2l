@@ -3,7 +3,7 @@ freebsd_test_task:
         image_family: freebsd-14-0
     name: cirrus/FreeBSD
     install_script: |
-        pkg install -y cmake git pkgconf bash wx32-gtk3 libssh openssl libnfs neon libarchive samba416 uchardet libxml2 zip unzip curl tar
+        pkg install -y cmake git pkgconf bash wx32-gtk3 libssh openssl libnfs neon libarchive samba416 uchardet libxml2 zip unzip curl
         git clone https://github.com/microsoft/vcpkg.git
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install aws-sdk-cpp

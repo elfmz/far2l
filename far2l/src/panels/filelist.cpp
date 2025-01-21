@@ -1322,7 +1322,9 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 
-		case KEY_CTRL | '`': {
+		case KEY_CTRL | '`':
+		case KEY_CTRL | '\'':
+		{
 			SetLocation_Directory(CachedHomeDir());
 			return TRUE;
 		}

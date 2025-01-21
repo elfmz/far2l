@@ -14497,15 +14497,15 @@ MenuAttributes
 "А&трыбуты файлаў       Ctrl+A"
 
 MenuChattr
-"cha&ttr / chflags      Ctrl+Alt+A"
-"cha&ttr / chflags   Ctrl+Alt+A"
-upd:"cha&ttr / chflags           Ctrl+Alt+A"
-upd:"cha&ttr / chflags     Ctrl+Alt+A"
-upd:"cha&ttr / chflags     Ctrl+Alt+A"
-upd:"cha&ttr / chflags          Ctrl+Alt+A"
-upd:"cha&ttr / chflags      Ctrl+Alt+A"
-upd:"cha&ttr / chflags      Ctrl+Alt+A"
-upd:"cha&ttr / chflags      Ctrl+Alt+A"
+"chattr / chflag&s      Ctrl+Alt+A"
+"chattr / ch&flags   Ctrl+Alt+A"
+upd:"chattr / ch&flags           Ctrl+Alt+A"
+upd:"chattr / ch&flags     Ctrl+Alt+A"
+upd:"c&hattr / chflags     Ctrl+Alt+A"
+upd:"chattr / ch&flags          Ctrl+Alt+A"
+upd:"chattr / ch&flags      Ctrl+Alt+A"
+upd:"chattr / chflag&s      Ctrl+Alt+A"
+upd:"c&hattr / chflags      Ctrl+Alt+A"
 
 MenuApplyCommand
 "Применить коман&ду     Ctrl+G"

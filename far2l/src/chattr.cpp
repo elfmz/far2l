@@ -120,64 +120,79 @@ static struct {
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 // see actual constants in <sys/stat.h>
 // Super-user and owner changeable flags
-#ifdef UF_NODUMP	// 0x00000001
-	{ UF_NODUMP,		'+', "nodump: do not dump file (owner or super-user only)" },
+#ifdef UF_NODUMP		// 0x00000001
+	{ UF_NODUMP,		'+', "nodump:      do not dump file (owner or super-user only)" },
 #endif
-#ifdef UF_IMMUTABLE	// 0x00000002
-	{ UF_IMMUTABLE,		'+', "uimmutable: file may not be changed (owner or super-user only)" },
+#ifdef UF_IMMUTABLE		// 0x00000002
+	{ UF_IMMUTABLE,		'+', "uimmutable:  file may not be changed (owner or super-user only)" },
 #endif
-#ifdef UF_APPEND	// 0x00000004
-	{ UF_APPEND,		'+', "uappend: writes to file may only append (owner or super-user only)" },
+#ifdef UF_APPEND		// 0x00000004
+	{ UF_APPEND,		'+', "uappend:     writes to file may only append (owner or super-user only)" },
 #endif
-#ifdef UF_OPAQUE	// 0x00000008
-	{ UF_OPAQUE,		'+', "opaque: directory is opaque wrt. union (owner or super-user only)" },
+#ifdef UF_OPAQUE		// 0x00000008
+	{ UF_OPAQUE,		'+', "opaque:      directory is opaque wrt. union (owner or super-user only)" },
 #endif
-#ifdef UF_NOUNLINK	// 0x00000010
-	{ UF_NOUNLINK,		'+', "uunlink: file may not be removed or renamed (owner or super-user only)" },
+#ifdef UF_NOUNLINK		// 0x00000010
+	{ UF_NOUNLINK,		'+', "uunlink:     file may not be removed or renamed (owner or super-user only)" },
 #endif
-#ifdef UF_COMPRESSED	// 0x00000020
-	{ UF_COMPRESSED,	'+', "ucompressed: file is compressed (macOS only) (owner or super-user only)" },
+#ifdef UF_COMPRESSED	// 0x00000020 (in macOS)
+	{ UF_COMPRESSED,	'+', "ucompressed: file is compressed (macOS only) (read-only some file-systems)" },
 #endif
-#ifdef UF_TRACKED	// 0x00000040
-	{ UF_TRACKED,		'+', "utracked: renames and deletes are tracked (macOS only) (owner or super-user only)" },
+#ifdef UF_TRACKED		// 0x00000040 (in macOS)
+	{ UF_TRACKED,		'+', "utracked:    renames and deletes are tracked (macOS only) (owner or super-user only)" },
 #endif
-#ifdef UF_SYSTEM	// 0x00000080
-	{ UF_SYSTEM,		'+', "usystem: Windows system file bit (owner or super-user only)" },
+#ifdef UF_SYSTEM		// 0x00000080
+	{ UF_SYSTEM,		'+', "usystem:     Windows system file bit (owner or super-user only)" },
+#elif defined(UF_DATAVAULT)	// 0x00000080 (in macOS)
+	{ UF_DATAVAULT,		'+', "udatavault:  entitlement required for reading and writing (read-only)" },
 #endif
-#ifdef UF_SPARSE	// 0x00000100
-	{ UF_SPARSE,		'+', "usparse: sparse file (owner or super-user only)" },
+#ifdef UF_SPARSE		// 0x00000100
+	{ UF_SPARSE,		'+', "usparse:     sparse file (owner or super-user only)" },
 #endif
-#ifdef UF_OFFLINE	// 0x00000200
-	{ UF_OFFLINE,		'+', "uoffline: file is offline (owner or super-user only)" },
+#ifdef UF_OFFLINE		// 0x00000200
+	{ UF_OFFLINE,		'+', "uoffline:    file is offline (owner or super-user only)" },
 #endif
-#ifdef UF_REPARSE	// 0x00000400
-	{ UF_REPARSE,		'+', "ureparse: Windows reparse point file bit (owner or super-user only)" },
+#ifdef UF_REPARSE		// 0x00000400
+	{ UF_REPARSE,		'+', "ureparse:    Windows reparse point file bit (owner or super-user only)" },
 #endif
-#ifdef UF_ARCHIVE	// 0x00000800
-	{ UF_ARCHIVE,		'+', "uarchive: file needs to be archived (owner or super-user only)" },
+#ifdef UF_ARCHIVE		// 0x00000800
+	{ UF_ARCHIVE,		'+', "uarchive:    file needs to be archived (owner or super-user only)" },
 #endif
-#ifdef UF_READONLY	// 0x00001000
-	{ UF_READONLY,		'+', "ureadonly: Windows readonly file bit (owner or super-user only)" },
+#ifdef UF_READONLY		// 0x00001000
+	{ UF_READONLY,		'+', "ureadonly:   Windows readonly file bit (owner or super-user only)" },
 #endif
-#ifdef UF_HIDDEN	// 0x00008000
-	{ UF_HIDDEN,		'+', "uhidden: file is hidden (owner or super-user only)" },
+#ifdef UF_HIDDEN		// 0x00008000
+	{ UF_HIDDEN,		'+', "uhidden:     file is hidden (owner or super-user only)" },
 #endif
 // Super-user changeable flags
-#ifdef SF_ARCHIVED	// 0x00010000
-	{ SF_ARCHIVED,		'+', "sarchive: file is archived (super-user only)" },
+#ifdef SF_ARCHIVED		// 0x00010000
+	{ SF_ARCHIVED,		'+', "sarchive:    file is archived (super-user only)" },
 #endif
-#ifdef SF_IMMUTABLE	// 0x00020000
-	{ SF_IMMUTABLE,		'+', "simmutable: file may not be changed (super-user only)" },
+#ifdef SF_IMMUTABLE		// 0x00020000
+	{ SF_IMMUTABLE,		'+', "simmutable:  file may not be changed (super-user only)" },
 #endif
-#ifdef SF_APPEND	// 0x00040000
-	{ SF_APPEND,		'+', "sappend: writes to file may only append (super-user only)" },
+#ifdef SF_APPEND		// 0x00040000
+	{ SF_APPEND,		'+', "sappend:     writes to file may only append (super-user only)" },
 #endif
-#ifdef SF_NOUNLINK	// 0x00100000
-	{ SF_NOUNLINK,		'+', "sunlink: file may not be removed or renamed (super-user only)" },
+#ifdef SF_RESTRICTED	// 0x00080000 (in macOS)
+	{ SF_RESTRICTED,	'+', "srestricted: entitlement required for writing (super-user only)" },
 #endif
-#ifdef SF_SNAPSHOT	// 0x00200000
-	{ SF_SNAPSHOT,		'+', "snapshot: snapshot inode (filesystems do not allow changing this flag)" },
+#ifdef SF_NOUNLINK		// 0x00100000
+	{ SF_NOUNLINK,		'+', "sunlink:     file may not be removed or renamed (super-user only)" },
 #endif
+#ifdef SF_SNAPSHOT		// 0x00200000
+	{ SF_SNAPSHOT,		'+', "snapshot:    snapshot inode (filesystems do not allow changing this flag)" },
+#endif
+#ifdef SF_FIRMLINK		// 0x00800000 (in macOS)
+	{ SF_FIRMLINK,		'+', "sfirmlink:   file is a firmlink (super-user only)" },
+#endif
+#ifdef SF_DATALESS		// 0x40000000 (in macOS)
+	{ SF_DATALESS,		'+', "sdataless:   file is dataless object (read-only)" },
+#endif
+#endif
+
+#if defined(__HAIKU__)
+// TODO ?
 #endif
 };
 

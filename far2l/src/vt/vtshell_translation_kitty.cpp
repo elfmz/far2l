@@ -10,7 +10,9 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
 
 
-// todo: flags stack, push, pop
+// todo: flags stack
+
+// todo: flags change modes 2 and 3
 
 // todo: correct keypad handling: separate keycodes in different num lock modes
 // KP_BEGIN, 1 E or 57427 ~
@@ -94,6 +96,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 			  KeyEvent.wVirtualKeyCode != VK_NUMPAD5)   || // See https://github.com/kovidgoyal/kitty/issues/8256
 			 (KeyEvent.wVirtualKeyCode == VK_DECIMAL)   ||
 			 (KeyEvent.wVirtualKeyCode == VK_SEPARATOR) ||
+			 (KeyEvent.wVirtualKeyCode == VK_CLEAR)     || // Fixme: workaround; far2l is not sending VK_CLEAR in tty at all
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
 			// Other key combinations that can not be represented in legacy encoding
 			// See https://github.com/kovidgoyal/kitty/issues/8255
@@ -156,6 +159,9 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 
 		// leaving suffix 'u' unchanged
 		case VK_BACK:      keycode = 127; break;
+
+		// Fixme: WIP: make VK_CLEAR (numpad 5 without numlock) work until full keypad support is finished
+		case VK_CLEAR:     keycode = 1; suffix = 'E'; break;
 
 		// non-CSIu keys: keycode is not an unicode code point
 

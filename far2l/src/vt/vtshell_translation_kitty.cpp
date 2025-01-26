@@ -10,14 +10,23 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
 
 
+// todo: inspect all "Fixme" and "workaround" lines
+
 // todo: flags stack
 
 // todo: flags change modes 2 and 3
 
-// todo: correct keypad handling: separate keycodes in different num lock modes
-// KP_BEGIN, 1 E or 57427 ~
-// KP_5, 57404 u
-// in Wine: VK_NUMPAD5 with numlock on, or VK_CLEAR - 0x0C - CLEAR key
+// todo: correct keypad handling:
+// - separate keycodes in different num lock modes
+// - keypad + modifiers as CSI u in mode 1
+// - Alt/Ctrl + keypad numbers in numeric mode generates nothing, but should generate CSI u
+// (also problem in legacy code: should generate just numbers)
+// Center keypad key in kitty:
+// KP_5, 57404 u with numlock on
+// KP_BEGIN, 1 E or 57427 ~ with numlock off
+// in Wine:
+// VK_NUMPAD5 with numlock on
+// VK_CLEAR with numlock off
 
 // todo: report other keys
 // num lock, caps lock
@@ -119,15 +128,18 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 	if (alt)   modifiers |= 2;
 	if (ctrl)  modifiers |= 4;
 
-	if (flags & 8) {
+	// this condition is in spec ("Lock modifiers are not reported for text producing keys")
+	// but it seems that kitty does not do this check,
+	// see https://github.com/kovidgoyal/kitty/issues/8259
+	//if ((flags & 8) || !KeyEvent.uChar.UnicodeChar) {
 		if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64;
 		if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128;
-	}
+	//}
 
 
 	// generating shifted value
 
-	// (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
+	// Fixme: (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
 	// is workaround for far2l wx backend as it is not sending Shift state for Char events
 	// See
 	// ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
@@ -141,9 +153,14 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 	keycode = towlower(KeyEvent.uChar.UnicodeChar);
 	if ((KeyEvent.wVirtualKeyCode >= 'A') && (KeyEvent.wVirtualKeyCode <= 'Z')) {
 		base = towlower(KeyEvent.wVirtualKeyCode);
+
+		if (ctrl) {
+			// Fixme: workaround for far2l wx sending unicode char with ctrl in wrong kb layout
+			keycode = base;
+		}
 	}
 
-	// workaround for far2l tty backend
+	// Fixme: workaround for far2l tty backend
 	if (base && !keycode) keycode = base;
 
 

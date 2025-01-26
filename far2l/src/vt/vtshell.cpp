@@ -782,7 +782,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 			if (KeyEvent.bKeyDown) {
 
-				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK && !_kitty_kb_flags) {
+				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK && !(_kitty_kb_flags & 8)) {
 					//WCM has a setting for that, so probably in some cases backspace should be returned as is
 					char backspace[] = {127, 0};
 					return backspace;
@@ -815,7 +815,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (_kitty_kb_flags) {
-				return VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags);
+				std::string as_kitty = VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags);
+				if (as_kitty != "") { return as_kitty; }
 			}
 
 			if (_win32_input_mode_expected) {

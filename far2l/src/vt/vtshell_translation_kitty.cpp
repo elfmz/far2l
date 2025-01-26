@@ -10,6 +10,8 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
 
 
+// todo: support more key combinations in legacy modes, search for "WIP"
+
 // todo: correct keypad handling: separate keycodes in different num lock modes
 // KP_BEGIN, 1 E or 57427 ~
 // KP_5, 57404 u
@@ -93,11 +95,11 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 			 (KeyEvent.wVirtualKeyCode == VK_DECIMAL)   ||
 			 (KeyEvent.wVirtualKeyCode == VK_SEPARATOR) ||
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
-			// Enter, Tab and Backspace with modifiers only
+			// Todo: WIP
+			// See https://github.com/kovidgoyal/kitty/issues/8255
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (ctrl|alt|shift)) ||
 			((KeyEvent.wVirtualKeyCode == VK_TAB)    && (ctrl|alt|shift)) ||
 			((KeyEvent.wVirtualKeyCode == VK_BACK)   && (ctrl|alt|shift)) ||
-			// Undocumented, see https://github.com/kovidgoyal/kitty/issues/8255
 			((KeyEvent.wVirtualKeyCode == VK_SPACE)  && (ctrl|alt))
 		))
 	);

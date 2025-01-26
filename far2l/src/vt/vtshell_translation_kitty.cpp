@@ -10,6 +10,8 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 */
 
 
+// todo: flags stack, push, pop
+
 // todo: correct keypad handling: separate keycodes in different num lock modes
 // KP_BEGIN, 1 E or 57427 ~
 // KP_5, 57404 u

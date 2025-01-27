@@ -81,7 +81,7 @@ ArcPlugins::ArcPlugins(const char *ModuleName)
 			LZH_GetDefaultCommands, LZH_SetFarInfo, LZH_GetSFXPos);
 #endif
 
-AddPluginItem(CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule,
+	AddPluginItem(CUSTOM_IsArchive, CUSTOM_OpenArchive, CUSTOM_GetArcItem, CUSTOM_LoadFormatModule,
 			CUSTOM_CloseArchive, CUSTOM_GetFormatName, CUSTOM_GetDefaultCommands, CUSTOM_SetFarInfo,
 			CUSTOM_GetSFXPos);
 

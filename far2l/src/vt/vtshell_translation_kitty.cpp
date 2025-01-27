@@ -109,6 +109,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
 			// Other key combinations that can not be represented in legacy encoding
 			// See https://github.com/kovidgoyal/kitty/issues/8255
+			// and https://github.com/kovidgoyal/kitty/issues/8263
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (ctrl|alt|shift)) ||
 			((KeyEvent.wVirtualKeyCode == VK_TAB)    && (ctrl|alt|shift)) ||
 			((KeyEvent.wVirtualKeyCode == VK_BACK)   && (ctrl|alt|shift)) ||

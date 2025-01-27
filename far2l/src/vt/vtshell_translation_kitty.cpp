@@ -112,8 +112,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (ctrl|alt|shift)) ||
 			((KeyEvent.wVirtualKeyCode == VK_TAB)    && (ctrl|alt|shift)) ||
 			((KeyEvent.wVirtualKeyCode == VK_BACK)   && (ctrl|alt|shift)) ||
-			((KeyEvent.wVirtualKeyCode == VK_SPACE)  && (ctrl|alt)) ||
-			(KeyEvent.uChar.UnicodeChar && (ctrl|alt))
+			((KeyEvent.wVirtualKeyCode == VK_SPACE)  && (ctrl|alt))
+//			(KeyEvent.uChar.UnicodeChar && (ctrl|alt)) // redundancy
 		))
 	);
 

@@ -816,7 +816,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 			if (_kitty_kb_flags) {
 				std::string as_kitty = VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags, _keypad);
-				if (as_kitty != "") { return as_kitty; }
+				if (as_kitty.length() > 0) {
+					return as_kitty;
+				}
 			}
 
 			if (_win32_input_mode_expected) {
@@ -830,10 +832,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (!KeyEvent.bKeyDown)
-				return std::string();
+				return "";
 
 			const char *spec = VT_TranslateSpecialKey(
 				KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad, KeyEvent.uChar.UnicodeChar);
+
 			if (spec)
 				return spec;
 		}

@@ -18,6 +18,8 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
 // todo: flags change modes 2 and 3
 
+// todo: key tracking for WinKey modifier
+
 // todo: correct keypad handling:
 // - separate keycodes in different num lock modes
 // - keypad + modifiers as CSI u in mode 1
@@ -48,17 +50,18 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 {
 	std::string out;
 	int shifted = 0;
-	int modifiers = 1; // bit mask + 1 as spec requres
+	int modifiers = 0;
 	char suffix = 'u';
 	int keycode = 0;
 	int base = 0;
 	bool skipped = false;
 	bool kitty;
+	const char *legacy;
 
 
 	// initialization
 
-	fprintf(stderr, "Generating kitty sequence\n");
+	//fprintf(stderr, "Generating kitty sequence\n");
 
 	const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 	const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
@@ -72,6 +75,13 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		(!ctrl && alt && shift)      // Shift+Alt+Key
 	);
 
+	const bool is_text_key = (
+		(KeyEvent.uChar.UnicodeChar > 0x1F) &&
+		(KeyEvent.uChar.UnicodeChar != 0x7F) &&
+		!(ctrl|alt)
+	);
+
+	//fprintf(stderr, "disabm = %i\n", disambiguate);
 
 	// if mode 8 is not set, we should not report releases of some keys
 	// see https://github.com/kovidgoyal/kitty/issues/8212
@@ -81,8 +91,12 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		((KeyEvent.wVirtualKeyCode == VK_TAB)    && !(ctrl|alt|shift)) ||
 		((KeyEvent.wVirtualKeyCode == VK_BACK)   && !(ctrl|alt|shift))
 	)) {
-		return std::string();
+		return "";
 	}
+
+	// Get legacy representation. We will fall back to in some cases
+	legacy = VT_TranslateSpecialKey(
+		KeyEvent.wVirtualKeyCode, ctrl, alt, shift, keypad, KeyEvent.uChar.UnicodeChar);
 
 
 	// check if we should fall back to legacy escape sequences generatinon
@@ -119,38 +133,60 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) // keypad Enter
 		))
 	);
+	//fprintf(stderr, "(1) kitty = %i\n", kitty);
 
 	if ((flags & 1) && !kitty) {
 
-		// Other key combinations that can not be represented in legacy encoding
 		// See https://github.com/kovidgoyal/kitty/issues/8263
 
-		// Get legacy representation
-		const char *spec = VT_TranslateSpecialKey(
-			KeyEvent.wVirtualKeyCode, ctrl, alt, shift, keypad, KeyEvent.uChar.UnicodeChar);
-
-		if (!spec) {
-			// No representation in legacy mode. Use kitty.
+		if (!legacy && !is_text_key) {
+			// Special key with no representation in legacy mode. Use kitty.
 			kitty = true;
-		} else if (!((spec[0] >= 0x00 && spec[0] <= 0x1F) || (spec[0] == 0x7F))) {
-			// Special char, not text. Use legacy.
 		} else if (
-			((KeyEvent.wVirtualKeyCode == VK_RETURN) && !(ctrl|alt|shift)) ||
-			((KeyEvent.wVirtualKeyCode == VK_TAB) && !(ctrl|alt|shift))  ||
-			((KeyEvent.wVirtualKeyCode == VK_BACK) && !(ctrl|alt|shift))
+			// Text key. Use legacy.
+			!is_text_key &&
+			// Enter, Tab, Backspace without modifiers. Use legacy.
+			!(
+				((KeyEvent.wVirtualKeyCode == VK_RETURN) && !(ctrl|alt|shift)) ||
+				((KeyEvent.wVirtualKeyCode == VK_TAB) && !(ctrl|alt|shift))  ||
+				((KeyEvent.wVirtualKeyCode == VK_BACK) && !(ctrl|alt|shift))
+			)
 		) {
-			// Key is enter/tab/backspace press without modifiers. Use legacy.
-		} else {
 			kitty = true;
 		}
 
-		if (!kitty) {
-			return spec;
+		if (!kitty && legacy && legacy[0] && legacy[1]) { // [1] check for debug only
+
+			//fprintf(stderr, "Legacy fallback: %s\n", legacy + 1);
+			return legacy;
 		}
+
+		// We also fall back to legacy generation for non-CSIu function keys
+		// if mode is not 8 to avoid affecting legacy apps by possible bugs here,
+		// see "Prefer using legacy code" below
+
 	}
+	//fprintf(stderr, "(2) kitty = %i, is_text_key = %i\n", kitty, is_text_key);
 
 	if (!kitty) {
-		return std::string();
+		return "";
+	}
+
+	if (!(flags & 8)) {
+		// do not send modifier presses without mode 8
+		if (
+			(KeyEvent.wVirtualKeyCode == VK_NUMLOCK) ||
+			(KeyEvent.wVirtualKeyCode == VK_CAPITAL) ||
+			(KeyEvent.wVirtualKeyCode == VK_SCROLL) ||
+			(KeyEvent.wVirtualKeyCode == VK_LSHIFT) ||
+			(KeyEvent.wVirtualKeyCode == VK_RSHIFT) ||
+			(KeyEvent.wVirtualKeyCode == VK_LCONTROL) ||
+			(KeyEvent.wVirtualKeyCode == VK_RCONTROL) ||
+			(KeyEvent.wVirtualKeyCode == VK_LMENU) ||
+			(KeyEvent.wVirtualKeyCode == VK_RMENU) ||
+			(KeyEvent.wVirtualKeyCode == VK_LWIN) ||
+			(KeyEvent.wVirtualKeyCode == VK_RWIN)
+		) { return ""; }
 	}
 
 
@@ -159,6 +195,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	if (shift) modifiers |= 1;
 	if (alt)   modifiers |= 2;
 	if (ctrl)  modifiers |= 4;
+	modifiers++; // bit mask + 1 as spec requres
 
 	// this condition is in spec ("Lock modifiers are not reported for text producing keys")
 	// but it seems that kitty does not do this check,
@@ -172,10 +209,9 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// generating shifted value
 
 	// Fixme: (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
-	// is workaround for far2l wx backend as it is not sending Shift state for Char events
-	// See
-	// ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
-	// and below in wxMain.cpp: dwControlKeyState not set
+	// Fixme: is workaround for far2l wx backend as it is not sending Shift state for Char events.
+	// Fixme: See "ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;"
+	// Fixme: and below in wxMain.cpp: dwControlKeyState not set
 	if (shift || (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))) {
 		shifted = KeyEvent.uChar.UnicodeChar;
 	}
@@ -244,7 +280,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_MENU:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
-				return std::string();
+				return "";
 			}
 
 			if (KeyEvent.dwControlKeyState & ENHANCED_KEY) {
@@ -261,7 +297,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_CONTROL:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
-				return std::string();
+				return "";
 			}
 
 			if ((KeyEvent.dwControlKeyState & ENHANCED_KEY)) {
@@ -278,7 +314,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_SHIFT:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
-				return std::string();
+				return "";
 			}
 
 			if (KeyEvent.wVirtualScanCode == RIGHT_SHIFT_VSC) {
@@ -294,13 +330,22 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 	}
 
+	// Prefer using legacy code for all cases then kitty generation and legacy generation
+	// in theory should be equal — to avoid bugs in new code affecting apps using legacy encoding.
+	// So fall back to legacy if this is a non-CSIu function key,
+	// flag 8 is not enabled and legacy generation is possible.
+	if ((suffix != 'u') && legacy && legacy[1] && !(flags & 8)) {
+		//fprintf(stderr, "Function non-CSIu key, falling back to legacy generation\n");
+		return legacy;
+	}
+
 	// avoid sending base char if it is equal to keycode
 	if (base == keycode) { base = 0; }
 
 
 	// check if we can finally generate escape sequence for this key
 	if (!keycode)
-		return std::string();
+		return "";
 
 
 	// generate final escape sequence
@@ -346,6 +391,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	}
 
 	out+= suffix;
+
+	//fprintf(stderr, "Generated as kitty\n");
 
 	return out;
 }

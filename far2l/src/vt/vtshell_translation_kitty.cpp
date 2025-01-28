@@ -197,13 +197,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	if (ctrl)  modifiers |= 4;
 	modifiers++; // bit mask + 1 as spec requres
 
-	// this condition is in spec ("Lock modifiers are not reported for text producing keys")
-	// but it seems that kitty does not do this check,
-	// see https://github.com/kovidgoyal/kitty/issues/8259
-	//if ((flags & 8) || !KeyEvent.uChar.UnicodeChar) {
+	if ((flags & 8) || !is_text_key) {
 		if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64;
 		if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128;
-	//}
+	}
 
 
 	// generating shifted value

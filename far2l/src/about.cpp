@@ -28,7 +28,7 @@ void FarAbout(PluginManager &Plugins)
 
 	fs.Format(L"          FAR2L Version: %s", FAR_BUILD);
 	ListAbout.AddItem(fs); fs2copy = fs;
-	fs =      L"               Compiler: ";
+	fs =      L"         Build Compiler: ";
 #if defined (__clang__)
 	fs.AppendFormat(L"Clang, version %d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__);
 #elif defined (__INTEL_COMPILER)
@@ -40,8 +40,49 @@ void FarAbout(PluginManager &Plugins)
 #endif
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
-	fs.Format(L"               Platform: %s", FAR_PLATFORM);
+	fs.Format(L"         Build Platform: %s", FAR_PLATFORM);
+// subset of full OS list from https://sourceforge.net/p/predef/wiki/OperatingSystems/
+#if defined(__ANDROID__)
+	fs += " (Android)";
+#elif defined(__linux__)
+	fs += " (Linux)";
+#elif defined(__APPLE__) || (__MACH__)
+	fs += " (macOS)";
+#elif defined(__FreeBSD__)
+	fs += " (FreeBSD)";
+#elif defined(__NetBSD__)
+	fs += " (NetBSD)";
+#elif defined(__OpenBSD__)
+	fs += " (OpenBSD)";
+#elif defined(__DragonFly__)
+	fs += " (DragonFly)";
+#elif defined(BSD)
+	fs += " (unknown BSD)";
+#elif defined(__HAIKU__)
+	fs += " (Haiku)";
+#elif defined(_WIN64)
+	fs += " (Windows 64)";
+#elif defined(_WIN32)
+	fs += " (Windows 32)";
+#elif defined(__CYGWIN__)
+	fs += " (Cygwin)";
+#elif defined(_AIX)
+	fs += " (AIX)";
+#elif defined(sun) || defined(__sun)
+# if defined(__SVR4) || defined(__svr4__)
+	fs += " (Solaris)";
+# else
+	fs += " (SunOS)";
+# endif
+#elif defined(__EMSCRIPTEN__)
+	fs += " (WEB: Emscripten)";
+#elif defined(__QNX__)
+	fs += " (QNX)";
+#else
+	fs += " (unknown)";
+#endif
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+
 	fs.Format(L"                Backend: %s", WinPortBackendInfo(-1));
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 	fs.Format(L"    ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );

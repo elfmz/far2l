@@ -46,7 +46,7 @@
 #define FOCUS_CHANGED_SEQ_INACTIVE "\x1b[O"
 
 const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0, WCHAR uc = 0);
-std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int kitty_kb_flags);
+std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int kitty_kb_flags, unsigned char keypad);
 
 #if 0 //change to 1 to enable verbose I/O reports to stderr
 static void DbgPrintEscaped(const char *info, const char *s, size_t l)
@@ -815,7 +815,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (_kitty_kb_flags) {
-				std::string as_kitty = VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags);
+				std::string as_kitty = VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags, _keypad);
 				if (as_kitty != "") { return as_kitty; }
 			}
 

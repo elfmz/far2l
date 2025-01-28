@@ -1,6 +1,8 @@
 #include "headers.hpp"
 #include <string>
 
+const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0, WCHAR uc = 0);
+
 /**
 References:
 
@@ -42,7 +44,7 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
 
 //const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad, WCHAR uc
-std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
+std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, unsigned char keypad)
 {
 	std::string out;
 	int shifted = 0;
@@ -61,6 +63,14 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 	const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 	const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 	const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
+
+	// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/#disambiguate-escape-codes
+	const bool disambiguate = (
+		(ctrl && !alt && !shift) ||  // Ctrl+Key
+		(!ctrl && alt && !shift) ||  // Alt+Key
+		(ctrl && alt && !shift)  ||  // Ctrl+Alt+Key
+		(!ctrl && alt && shift)      // Shift+Alt+Key
+	);
 
 
 	// if mode 8 is not set, we should not report releases of some keys
@@ -98,7 +108,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 			 (KeyEvent.wVirtualKeyCode == VK_OEM_COMMA)  ||  // ,<
 			 (KeyEvent.wVirtualKeyCode == VK_OEM_PERIOD) ||  // .>
 			 (KeyEvent.wVirtualKeyCode == VK_OEM_2)          // /?
-			) && ctrl|alt) ||
+			) && disambiguate) ||
 			 // Keypad
 			 (KeyEvent.wVirtualKeyCode >= VK_NUMPAD0 &&
 			  KeyEvent.wVirtualKeyCode <= VK_NUMPAD9 &&
@@ -106,17 +116,38 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags)
 			 (KeyEvent.wVirtualKeyCode == VK_DECIMAL)   ||
 			 (KeyEvent.wVirtualKeyCode == VK_SEPARATOR) ||
 			 (KeyEvent.wVirtualKeyCode == VK_CLEAR)     || // Fixme: workaround; far2l is not sending VK_CLEAR in tty at all
-			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
-			// Other key combinations that can not be represented in legacy encoding
-			// See https://github.com/kovidgoyal/kitty/issues/8255
-			// and https://github.com/kovidgoyal/kitty/issues/8263
-			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (ctrl|alt|shift)) ||
-			((KeyEvent.wVirtualKeyCode == VK_TAB)    && (ctrl|alt|shift)) ||
-			((KeyEvent.wVirtualKeyCode == VK_BACK)   && (ctrl|alt|shift)) ||
-			((KeyEvent.wVirtualKeyCode == VK_SPACE)  && (ctrl|alt))
-//			(KeyEvent.uChar.UnicodeChar && (ctrl|alt)) // redundancy
+			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) // keypad Enter
 		))
 	);
+
+	if ((flags & 1) && !kitty) {
+
+		// Other key combinations that can not be represented in legacy encoding
+		// See https://github.com/kovidgoyal/kitty/issues/8263
+
+		// Get legacy representation
+		const char *spec = VT_TranslateSpecialKey(
+			KeyEvent.wVirtualKeyCode, ctrl, alt, shift, keypad, KeyEvent.uChar.UnicodeChar);
+
+		if (!spec) {
+			// No representation in legacy mode. Use kitty.
+			kitty = true;
+		} else if (!((spec[0] >= 0x00 && spec[0] <= 0x1F) || (spec[0] == 0x7F))) {
+			// Special char, not text. Use legacy.
+		} else if (
+			((KeyEvent.wVirtualKeyCode == VK_RETURN) && !(ctrl|alt|shift)) ||
+			((KeyEvent.wVirtualKeyCode == VK_TAB) && !(ctrl|alt|shift))  ||
+			((KeyEvent.wVirtualKeyCode == VK_BACK) && !(ctrl|alt|shift))
+		) {
+			// Key is enter/tab/backspace press without modifiers. Use legacy.
+		} else {
+			kitty = true;
+		}
+
+		if (!kitty) {
+			return spec;
+		}
+	}
 
 	if (!kitty) {
 		return std::string();

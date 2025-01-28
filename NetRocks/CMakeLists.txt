@@ -151,7 +151,7 @@ if (LIBNFS_FOUND AND ((NOT DEFINED NR_NFS) OR NR_NFS))
     target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
     find_package(GnuTLS)
     if (GNUTLS_FOUND)
-        target_link_libraries(NetRocks-NFS gnutls)
+        target_link_libraries(NetRocks-NFS ${GNUTLS_LIBRARIES})
     endif ()
     target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
     set_target_properties(NetRocks-NFS

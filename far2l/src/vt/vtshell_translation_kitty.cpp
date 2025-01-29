@@ -57,6 +57,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	bool skipped = false;
 	bool kitty;
 	const char *legacy;
+	bool nolegacy = false;
 
 
 	// initialization
@@ -155,7 +156,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			kitty = true;
 		}
 
-		if (!kitty && legacy && legacy[0] && legacy[1]) { // [1] check for debug only
+		if (!kitty && KeyEvent.bKeyDown && legacy && legacy[0] && legacy[1]) { // [1] check for debug only
 
 			//fprintf(stderr, "Legacy fallback: %s\n", legacy + 1);
 			return legacy;
@@ -198,8 +199,14 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	modifiers++; // bit mask + 1 as spec requres
 
 	if ((flags & 8) || !is_text_key) {
-		if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64;
-		if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128;
+		if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) {
+			modifiers |= 64;
+			nolegacy = true;
+		}
+		if (KeyEvent.dwControlKeyState & NUMLOCK_ON) {
+			modifiers |= 128;
+			nolegacy = true;
+		}
 	}
 
 
@@ -331,7 +338,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// in theory should be equal — to avoid bugs in new code affecting apps using legacy encoding.
 	// So fall back to legacy if this is a non-CSIu function key,
 	// flag 8 is not enabled and legacy generation is possible.
-	if ((suffix != 'u') && legacy && legacy[1] && !(flags & 8)) {
+	if ((suffix != 'u') && KeyEvent.bKeyDown && !nolegacy && legacy && legacy[1] && !(flags & 8)) {
 		//fprintf(stderr, "Function non-CSIu key, falling back to legacy generation\n");
 		return legacy;
 	}

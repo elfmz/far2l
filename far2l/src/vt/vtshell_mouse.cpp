@@ -16,19 +16,20 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 		return false;
 	}
 
-	unsigned int button = 3;
-	bool no_pressed   = ((MouseEvent.dwButtonState & BUTTONS_PRESS_MASK) == 0) && !(MouseEvent.dwEventFlags & MOUSE_WHEELED);
+	bool no_pressed = ((MouseEvent.dwButtonState & BUTTONS_PRESS_MASK) == 0) && !(MouseEvent.dwEventFlags & MOUSE_WHEELED);
 
-	//send MOUSE_MOVED if only MEX_ANY_EVENT_MOUSE present
+	//send MOUSE_MOVED if only MODE_ANY_EVENT_MOUSE present
 	if ((MouseEvent.dwEventFlags & MOUSE_MOVED) &&
 		(no_pressed && (_mode & MODE_ANY_EVENT_MOUSE) == 0)) {
 		return true;
 	}
 
-	if (MouseEvent.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)      button = 0;
-	else if (MouseEvent.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) button = 1;
-	else if (MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED)     button = 2;
-	else if (MouseEvent.dwEventFlags & MOUSE_WHEELED)                 button = (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 0x40 : 0x41;
+	// 3 means no button pressed
+	unsigned int button = 3;
+	if (MouseEvent.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) button = 0;
+	if (MouseEvent.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) button = 1;
+	if (MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED)     button = 2;
+	if (MouseEvent.dwEventFlags & MOUSE_WHEELED)                 button = (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 0x40 : 0x41;
 
 	//track previos button for proper released event in SGR
  	if (no_pressed && (_mode & MODE_SGR_EXT_MOUSE) && _sgr_prev_ibut != 0) {
@@ -48,24 +49,21 @@ bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	char seq[64]; seq[sizeof(seq) - 1] = 0;
 	if (_mode & MODE_SGR_EXT_MOUSE) {
 		//in SGR pressed or released state is enocoded by suffix
-		char suffix = no_pressed ? 'm' : 'M';
-
 		snprintf(seq, sizeof(seq) - 1, "\x1b[<%d;%d;%d%c",
 			button,
 			MouseEvent.dwMousePosition.X + 1,
 			MouseEvent.dwMousePosition.Y + 1,
-			suffix
+			(no_pressed ? 'm' : 'M')
 		);
 	} else {
 		if(MouseEvent.dwMousePosition.X < SHORT(0xff - 33) && MouseEvent.dwMousePosition.Y < SHORT(0xff - 33)) {
-			//in X Button Encoding 3 == means no button pressed
-			//and 32 (x20) is added to all values
+			//in X10 Encoding button release and no button pressed are the same and 32 (0x20) is added to all values
 			button |= 0x20;
 
-			snprintf(seq, sizeof(seq) - 1, "\x1b[M%d%d%d",
-				button,
-				MouseEvent.dwMousePosition.X + 33,
-				MouseEvent.dwMousePosition.Y + 33
+			snprintf(seq, sizeof(seq) - 1, "\x1b[M%c%c%c",
+				char(button),
+				char(MouseEvent.dwMousePosition.X + 33),
+				char(MouseEvent.dwMousePosition.Y + 33)
 			);
 		} else {
 			// mouse out of encodeable region - skip events to avoid misclicks

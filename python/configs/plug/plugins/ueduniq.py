@@ -4,8 +4,6 @@ import ctypes as ct
 from far2l.plugin import PluginBase
 import far2lc
 
-import debugpy
-
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +73,6 @@ class Plugin(PluginBase):
 
 
     def OpenPlugin(self, OpenFrom):
-        # debugpy.breakpoint()
         if OpenFrom == 5:
             # EDITOR
             self.Perform()

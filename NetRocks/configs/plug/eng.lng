@@ -316,13 +316,3 @@
 "Not using proxifier"
 "&Proxifier kind to use:"
 "&Edit proxifier configuration"
-
-"AWS S3 Storage"
-"User agent"
-"Region"
-"Use proxy"
-"Proxy host"
-"Proxy port"
-"Auth proxy"
-"Proxy username"
-"Proxy password"

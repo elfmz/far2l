@@ -117,11 +117,10 @@ static const char *DetectPlainKind(const char *Name, const unsigned char *Data, 
 			|| strcasecmp(ext, ".drv") == 0 || strcasecmp(ext, ".ocx") == 0 || strcasecmp(ext, ".efi") == 0)) {
 		return "PE";
 
-	} else if (DataSize >= 8 && (Data[0] == 0xfe && Data[1] == 0xed && Data[2] == 0xfa && Data[3] == 0xce) ||
-        (Data[0] == 0xce && Data[1] == 0xfa && Data[2] == 0xed && Data[3] == 0xfe) ||
-        (Data[0] == 0xca && Data[1] == 0xfe && Data[2] == 0xba && Data[3] == 0xbe)) {
-        return "Mach-O";
-
+	} else if ((DataSize >= 8 && (Data[0] == 0xfe && Data[1] == 0xed && Data[2] == 0xfa && Data[3] == 0xce)) ||
+       (Data[0] == 0xce && Data[1] == 0xfa && Data[2] == 0xed && Data[3] == 0xfe) ||
+       (Data[0] == 0xca && Data[1] == 0xfe && Data[2] == 0xba && Data[3] == 0xbe)) {
+	    return "Mach-O";
 	}
 
 	return nullptr;

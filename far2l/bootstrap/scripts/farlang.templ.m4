@@ -2199,6 +2199,17 @@ ConfigAutoUpdateLimit2
 "якщо об'ектів більше"
 "калі аб'ектаў больш"
 
+ConfigClassicHotkeyLinkResolving
+"&Классическое разрешение ссылок по хоткеям"
+"Classic hotkey &link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+"&Класичне розширення посилань гарячими клавішами"
+upd:"Classic hotkey link resolving"
+
 ConfigAutoUpdateRemoteDrive
 "Автообновление с&етевых дисков"
 "Network drives autor&efresh"

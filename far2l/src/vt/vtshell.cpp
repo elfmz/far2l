@@ -18,10 +18,10 @@
 #include <errno.h>
 #include <iostream>
 #include <fstream>
-#include <sys/ioctl.h> 
-#include <sys/wait.h> 
+#include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <condition_variable>
-#include <base64.h> 
+#include <base64.h>
 #include <StackSerializer.h>
 #include <ScopeHelpers.h>
 #include "dirmix.hpp"
@@ -34,8 +34,8 @@
 #include "vtshell_ioreaders.h"
 #include "vtshell_mouse.h"
 #include "../WinPort/src/SavedScreen.h"
-#define __USE_BSD 
-#include <termios.h> 
+#define __USE_BSD
+#include <termios.h>
 #include "palette.hpp"
 #include "AnsiEsc.hpp"
 #include "TestPath.h"
@@ -59,13 +59,13 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 		} else if (c <= 32 || c > 127) {
 			char zz[64]; sprintf(zz, "\\%02x", (unsigned int)(unsigned char)c);
 			msg+= zz;
-		} else 
+		} else
 			msg+= (char)(unsigned char)c;
 	}
 	fprintf(stderr, "VT %s: '%s'\n", info, msg.c_str());
 }
 #else
-# define DbgPrintEscaped(i, s, l) 
+# define DbgPrintEscaped(i, s, l)
 #endif
 
 int VTShell_Leader(char *const shell_argv[], const char *pty);
@@ -126,7 +126,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::unique_ptr<VTMouse> _mouse;
 	std::mutex _read_state_mutex, _write_term_mutex;
-	uint32_t _mouse_expectations{0};
+	uint32_t _mouse_mode{0};
 
 	std::string _start_marker, _exit_marker;
 	std::string _host_id;
@@ -238,37 +238,37 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		exit(err);
 		return -1;
 	}
-	
+
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
 		if (WINPORT(GetConsoleScreenBufferInfo)(ConsoleHandle(), &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
 			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
-			struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
+			struct winsize ws = {(unsigned short)csbi.dwSize.Y,
 				(unsigned short)csbi.dwSize.X, 0, 0};
 			if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
 				perror("VT: ioctl(TIOCSWINSZ)");
 		}
 	}
-	
+
 	bool InitTerminal()
 	{
 		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
 		_slavename.clear();
 		if (fd_term!=-1) {
 			MakeFDCloexec(fd_term);
-			
+
 			if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
 				UpdateTerminalSize(fd_term);
 				const char *slavename = ptsname(fd_term);
 				if (slavename && *slavename)
 					_slavename = slavename;
 				else
-					perror("VT: ptsname");				
+					perror("VT: ptsname");
 			} else
 				perror("VT: grantpt/unlockpt");
-				
+
 			if (_slavename.empty()) {
 				CheckedCloseFD(fd_term);
 			}
@@ -290,7 +290,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 			MakeFDCloexec(fd_in[1]);
 			MakeFDCloexec(fd_out[0]);
-			
+
 			_pipes_fallback_in = fd_in[0];
 			_pipes_fallback_out = fd_out[1];
 			_fd_in = fd_in[1];
@@ -325,7 +325,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (!InitTerminal())
 			return false;
-		
+
 		int r = ExecLeaderProcess();
 		if (r == -1) {
 			perror("VT: exec leader");
@@ -336,7 +336,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
 		return true;
 	}
-	
+
 
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
@@ -361,7 +361,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		return !_exit_marker.empty();
 	}
-	
+
 	virtual void OnTerminalResized()
 	{
 		if (!_slavename.empty())
@@ -375,7 +375,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		OnTerminalResized();
 		_last_window_info_ir = ir;
 	}
-	
+
 	virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	{
 		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
@@ -453,10 +453,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				fprintf(stderr, "VT: OnInputKeyDown - write error %d\n", errno);
 			}
 		} else {
-			fprintf(stderr, "VT: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n", 
+			fprintf(stderr, "VT: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n",
 				KeyEvent.wVirtualKeyCode, KeyEvent.dwControlKeyState,
 				KeyEvent.uChar.UnicodeChar );
-		}		
+		}
 	}
 
 	virtual void OnFocusChanged() // called from worker thread
@@ -481,7 +481,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
 			SendSignalToVT(SIGKILL);
 			DetachTerminal();
-			
+
 		} else if (_slavename.empty()) {//pipes fallback
 			SendSignalToVT(SIGINT);
 		}
@@ -523,7 +523,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		//called in input thread context
 		//we're input, stop output and remember _vta state
-		
+
 		StopAndStart<VTOutputReader> sas(_output_reader);
 		VTAnsiSuspend vta_suspend(_vta);
 		if (!vta_suspend)
@@ -550,20 +550,20 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_keypad = keypad;
 	}
 
-	virtual void OnMouseExpectation(MouseExpectation mex, bool enable)
+	virtual void OnMouseExpectation(MouseMode mex, bool enable)
 	{
 		fprintf(stderr, "VT::OnMouseExpectation: %u\n", mex);
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
-		const auto prev_mouse_expectations = _mouse_expectations;
+		const auto prev_mouse_mode = _mouse_mode;
 		if (enable) {
-			_mouse_expectations|= mex;
+			_mouse_mode|= mex;
 		} else {
-			_mouse_expectations&= ~(uint32_t)mex;
+			_mouse_mode&= ~(uint32_t)mex;
 		}
-		if (prev_mouse_expectations != _mouse_expectations) {
+		if (prev_mouse_mode != _mouse_mode) {
 			_mouse.reset();
-			_mouse.reset(new VTMouse(this, _mouse_expectations));
+			_mouse.reset(new VTMouse(this, _mouse_mode));
 		}
 	}
 
@@ -739,7 +739,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		CopyToClipboard(ws.c_str());
 	}
-	
+
 	virtual void InjectInput(const char *str)
 	{
 		_input_reader.InjectInput(str, strlen(str));
@@ -772,7 +772,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		return out;
 	}
-	
+
 	std::string TranslateKeyEvent(const KEY_EVENT_RECORD &KeyEvent)
 	{
 		if (KeyEvent.wVirtualKeyCode) {
@@ -840,10 +840,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		wchar_t wz[3] = {KeyEvent.uChar.UnicodeChar, 0};
 		if (_slavename.empty() && wz[0] == '\r') //pipes fallback
 			wz[0] = '\n';
-		
+
 		return Wide2MB(&wz[0]);
 	}
-	
+
 	void SendSignalToVT(int sig)
 	{
 		if (_leader_pid == -1) {
@@ -862,7 +862,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			fprintf(stderr, "%s: kill(%d, %d) -> %d errno=%d\n", __FUNCTION__, _leader_pid, sig, r, errno);
 		}
 	}
-	
+
 	void DetachTerminal()
 	{
 		FDScope dev_null(open("/dev/null", O_RDWR));
@@ -1000,7 +1000,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (!Startup())
 			return;
 	}
-	
+
 	virtual ~VTShell()
 	{
 		fprintf(stderr, "~VTShell this=%p\n", this);
@@ -1109,7 +1109,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_win32_input_mode_expected = false;
 		_focus_change_expected = false;
 		_kitty_kb_flags = 0;
-		_mouse_expectations = 0;
+		_mouse_mode = 0;
 		_far2l_exts.reset();
 		_mouse.reset();
 		// cleanup also NetRocks per-session identifier
@@ -1187,7 +1187,7 @@ static int VTShell_ExecuteCommonTail(bool completed)
 }
 
 int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_notify)
-{	
+{
 	VTShell_BusyScope vts_bs;
 	if (!vts_bs.owner) {
 		fprintf(stderr, "%s('%s') - not owner\n", __FUNCTION__, cmd);

@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stddlg.hpp"
 #include "mkdir.hpp"
 #include "setattr.hpp"
+#include "chattr.hpp"
 #include "filetype.hpp"
 #include "execute.hpp"
 #include "Bookmarks.hpp"
@@ -1189,6 +1190,16 @@ int FileList::ProcessKey(FarKey Key)
 
 			if (!ListData.IsEmpty() && SetCurPath()) {
 				ShellSetFileAttributes(this);
+				Show();
+			}
+
+			return TRUE;
+		}
+		case KEY_CTRLALTA: {
+			_ALGO(CleverSysLog clv(L"Ctrl-Alt-A"));
+
+			if (!ListData.IsEmpty() && SetCurPath()) {
+				ChattrDialog(this);
 				Show();
 			}
 

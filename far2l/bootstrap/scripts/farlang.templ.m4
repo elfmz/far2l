@@ -228,6 +228,17 @@ upd:"Change"
 upd:"Change"
 upd:"Change"
 
+Reset
+"Сбросить"
+"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+"Reiniciar"
+"Скинути"
+"Зкінуць"
+
 HCancel
 l:
 "&Отмена"
@@ -14496,6 +14507,17 @@ MenuAttributes
 "А&трибути файлів       Ctrl+A"
 "А&трыбуты файлаў       Ctrl+A"
 
+MenuChattr
+"chattr / chflag&s      Ctrl+Alt+A"
+"chattr / ch&flags   Ctrl+Alt+A"
+upd:"chattr / ch&flags           Ctrl+Alt+A"
+upd:"chattr / ch&flags     Ctrl+Alt+A"
+upd:"c&hattr / chflags     Ctrl+Alt+A"
+upd:"chattr / ch&flags          Ctrl+Alt+A"
+upd:"chattr / ch&flags      Ctrl+Alt+A"
+upd:"chattr / chflag&s      Ctrl+Alt+A"
+upd:"c&hattr / chflags      Ctrl+Alt+A"
+
 MenuApplyCommand
 "Применить коман&ду     Ctrl+G"
 "A&pply command      Ctrl+G"
@@ -16446,6 +16468,17 @@ upd:"selected %d items"
 upd:"selected %d items"
 upd:"selected %d items"
 
+SetAttrInfoSelDevices
+"%lsустройств: %d"
+"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+
 SetAttrInfoSelDirs
 "%lsкаталогов: %d"
 "%lsdirs: %d"
@@ -17173,6 +17206,84 @@ upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
+
+ChAttrTitle
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+
+ChAttrWarnSystem
+"Far2l пока ещё не умеет работать с флагами на Вашей системе"
+"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+
+ChAttrWarnNoOne
+"Применимо только к одному объекту.\nСейчас на панели выбрано несколько объектов."
+"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+
+ChAttrWarnNoRealFile
+"Применимо только к реальному объекту доступному локально.\nСейчас на панели плагина не объект реальной файловой системы."
+"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+
+ChAttrWarnNoSymlinks
+"Не применимо к символьным ссылкам"
+"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+
+ChAttrErrorGetFlags
+"Не удается получить флаги для \"%ls\":\n"
+"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+
+ChAttrErrorSetFlags
+"Не удается установить флаги для \"%ls\":\n"
+"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+
 
 SetColorPanel
 l:

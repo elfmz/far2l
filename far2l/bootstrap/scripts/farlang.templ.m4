@@ -14364,14 +14364,14 @@ MenuReread
 "П&ерачытаць                Ctrl+R"
 
 MenuChangeDrive
-"&Меню перехода             Alt+F1"
-"Lo&cation menu       Alt+F1"
+"&Меню перехода            Alt+F1"
+"Lo&cation menu      Alt+F1"
 "Z&měnit jednotku          Alt+F1"
 "Laufwerk we&chseln    Alt+F1"
 "Meghajtó&váltás     Alt+F1"
 "Z&mień napęd          Alt+F1"
 "Cambiar &unidad        Alt+F1"
-"&Меню переходу             Alt+F1"
+"&Меню переходу            Alt+F1"
 "З&мяніць дыск              Alt+F1"
 
 MenuView
@@ -14560,7 +14560,7 @@ MenuUnselectGroup
 "Odz&nacz grupę             Szary -"
 "Deseleccio&nar grupo   Gray -"
 "З&няти позначку        Gray -"
-"З&няць адзнаку          Gray -"
+"З&няць адзнаку         Gray -"
 
 MenuInvertSelection
 "&Инверсия пометки      Gray *"
@@ -14593,8 +14593,8 @@ l:
 "Fájl&keresés         Alt+F7"
 "&Znajdź plik               Alt+F7"
 "Buscar &archivos       Alt+F7"
-"&Пошук файла              Alt+F7"
-"&Пошук файла              Alt+F7"
+"&Пошук файла               Alt+F7"
+"&Пошук файла               Alt+F7"
 
 MenuHistory
 "&История команд           Alt+F8"
@@ -14604,8 +14604,8 @@ MenuHistory
 "Parancs &előzmények  Alt+F8"
 "&Historia                  Alt+F8"
 "&Historial             Alt+F8"
-"&Історія команд           Alt+F8"
-"Г&історыя камандаў        Alt+F8"
+"&Історія команд            Alt+F8"
+"Г&історыя камандаў         Alt+F8"
 
 MenuVideoMode
 "Видео&режим               Alt+F9"
@@ -14615,8 +14615,8 @@ MenuVideoMode
 "&Video mód           Alt+F9"
 "&Tryb wyświetlania         Alt+F9"
 "Modo de video         Alt+F9"
-"Відео&режим               Alt+F9"
-"Відэа&рэжым               Alt+F9"
+"Відео&режим                Alt+F9"
+"Відэа&рэжым                Alt+F9"
 
 MenuFindFolder
 "Поис&к папки              Alt+F10"
@@ -14626,8 +14626,8 @@ MenuFindFolder
 "&Mappakeresés        Alt+F10"
 "Znajdź kata&log            Alt+F10"
 "Buscar &directorios    Alt+F10"
-"Пошу&к теки               Alt+F10"
-"Пошу&к каталога           Alt+F10"
+"Пошу&к теки                Alt+F10"
+"Пошу&к каталога            Alt+F10"
 
 MenuViewHistory
 "Ис&тория просмотра        Alt+F11"
@@ -14637,8 +14637,8 @@ MenuViewHistory
 "Fáj&l előzmények     Alt+F11"
 "Historia &podglądu plików  Alt+F11"
 "Historial &visor       Alt+F11"
-"Іс&торія перегляду        Alt+F11"
-"Гіс&торыя прагляду        Alt+F11"
+"Іс&торія перегляду         Alt+F11"
+"Гіс&торыя прагляду         Alt+F11"
 
 MenuFoldersHistory
 "Ист&ория папок            Alt+F12"
@@ -14648,8 +14648,8 @@ MenuFoldersHistory
 "Ma&ppa előzmények    Alt+F12"
 "Historia &katalogów        Alt+F12"
 "Histo&rial dir.        Alt+F12"
-"Іст&орія тек              Alt+F12"
-"Гіст&орыя каталогаў       Alt+F12"
+"Іст&орія тек               Alt+F12"
+"Гіст&орыя каталогаў        Alt+F12"
 
 MenuSwapPanels
 "По&менять панели          Ctrl+U"
@@ -14660,7 +14660,7 @@ MenuSwapPanels
 "Z&amień panele             Ctrl+U"
 "I&nvertir paneles      Ctrl+U"
 "Зм&інити панелі            Ctrl+U"
-"З&мяніць панэлі           Ctrl+U"
+"З&мяніць панэлі            Ctrl+U"
 
 MenuHorizontalPanels
 "Гори&зонтальные панели    Ctrl+,"
@@ -14671,7 +14671,7 @@ MenuHorizontalPanels
 "Po&ziome panele            Ctrl+,"
 "Paneles hori&zontales  Ctrl+,"
 "Гори&зонтальні панелі      Ctrl+,"
-"Гори&зантальныя панэлі    Ctrl+,"
+"Гори&зантальныя панэлі     Ctrl+,"
 
 MenuVerticalPanels
 "Вер&тикальные панели      Ctrl+,"
@@ -14682,7 +14682,7 @@ MenuVerticalPanels
 "Pionow&e panele            Ctrl+,"
 "Paneles ver&ticales    Ctrl+,"
 "Вер&тикальні панелі        Ctrl+,"
-"Вер&тыкальныя панэлі      Ctrl+,"
+"Вер&тыкальныя панэлі       Ctrl+,"
 
 MenuTogglePanels
 "Панели &Вкл/Выкл          Ctrl+O"
@@ -14693,7 +14693,7 @@ MenuTogglePanels
 "&Włącz/Wyłącz panele       Ctrl+O"
 "&Paneles Si/No         Ctrl+O"
 "Панели &Ввмк/Вимк          Ctrl+O"
-"Панели &Укл/Адкл          Ctrl+O"
+"Панели &Укл/Адкл           Ctrl+O"
 
 MenuCompareFolders
 "&Сравнение папок"
@@ -14769,8 +14769,8 @@ MenuWindowsList
 "Képer&nyők           F12"
 "L&ista ekranów             F12"
 "&Listado ventanas      F12"
-"Список екра&нів           F12"
-"Спіс экра&наў             F12"
+"Список екра&нів            F12"
+"Спіс экра&наў              F12"
 
 MenuProcessList
 "Список &задач             Ctrl+W"
@@ -14780,8 +14780,8 @@ MenuProcessList
 "Futó p&rogramok      Ctrl+W"
 "Lista za&dań               Ctrl+W"
 "Lista de &tareas       Ctrl+W"
-"Список & завдань          Ctrl+W"
-"Спіс &задачаў             Ctrl+W"
+"Список & завдань           Ctrl+W"
+"Спіс &задачаў              Ctrl+W"
 
 MenuSystemSettings
 l:
@@ -15057,18 +15057,18 @@ MenuTogglePanelRight
 "Włącz/wyłącz pane&l   Ctrl+F2"
 "Panel &Si/No           Ctrl+F2"
 "Панель &Ввмк/Вимк         Ctrl+F2"
-"Панэль &Укл/Адкл          Ctrl+F2"
+"Панэль &Укл/Адкл           Ctrl+F2"
 
 MenuChangeDriveRight
-"&Меню перехода             Alt+F2"
-"Lo&cation menu       Alt+F2"
+"&Меню перехода            Alt+F2"
+"Lo&cation menu      Alt+F2"
 "Z&měnit jednotku          Alt+F2"
 "Laufwerk &wechseln    Alt+F2"
 "Meghajtó&váltás     Alt+F2"
 "Z&mień napęd          Alt+F2"
 "Cambiar &unidad        Alt+F2"
-"&Меню переходу             Alt+F2"
-"З&мяніць дыск             Alt+F2"
+"&Меню переходу            Alt+F2"
+"З&мяніць дыск              Alt+F2"
 
 MenuLeftTitle
 l:

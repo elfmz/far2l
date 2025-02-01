@@ -10,6 +10,33 @@
 #include "farversion.h"
 #include "vtshell.h"
 
+#include <fstream>
+
+bool get_os_release_PrettyName(FARString &fsPrettyName)
+{
+	// see standard https://www.freedesktop.org/software/systemd/man/latest/os-release.html
+	//  and examples https://github.com/chef/os_release
+	std::ifstream file("/etc/os-release", std::ios::in);
+	if (!file.is_open())
+		return false;
+
+	std::string::size_type p;
+	std::string line;
+	while (std::getline(file, line)) {
+		p = line.find("PRETTY_NAME=\"");
+		if (p == std::string::npos)
+			continue;
+		// Remove the PRETTY_NAME= part and the surrounding quotes
+		p += 13; // 13=strlen("PRETTY_NAME=\"")
+		std::string::size_type p2 = line.rfind('"'); // last quote
+		if (p2 == std::string::npos || p >= p2)
+			return false;
+		fsPrettyName = line.substr(p, p2 - p).c_str();
+		return true;
+	}
+	return false;
+}
+
 void FarAbout(PluginManager &Plugins)
 {
 	static bool b_hide_empty = true;
@@ -121,6 +148,12 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 
 	ListAbout.AddItem(L""); fs2copy += "\n";
+
+	if (get_os_release_PrettyName(fs2)) {
+		fs = L" os-release PRETTY_NAME: " + fs2;
+		ListAbout.AddItem(fs); fs2copy += "\n" + fs;
+	}
+
 	struct utsname un;
 	fs = L"                  uname: ";
 	if (uname(&un)==0) {

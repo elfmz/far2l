@@ -644,7 +644,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					break;
 				case SA_COMBO_GROUP:
 					SetAttrDefaultMark(hDlg, SA_COMBO_GROUP-1, // mark (un)changed
-						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitOwner) );
+						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitGroup) );
 					break;
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_ACCESS_DATE-1, // mark (un)changed
@@ -1651,7 +1651,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 										}
 									}
 
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileOwner,
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner,
 												SkipMode, strFullName, DlgParam.strInitOwner,
 												DlgParam.OSubfoldersState))
 										break;

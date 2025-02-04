@@ -350,10 +350,11 @@ Supporting extended far2l keyboard shortcuts and clipboard access
  * **foot** (Linux Wayland only): https://codeberg.org/dnkl/foot (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
  * **Windows Terminal** (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
 
- * _Original Putty_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
+ * _Original PuTTY_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
    * **putty4far2l** (Windows ssh-client): https://github.com/ivanshatsky/putty4far2l/releases & https://github.com/unxed/putty4far2l (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
    * **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
    * **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
+   * **PuTTY 0.82+**: since 0.82 in vanilla PuTTY you can set keyboard settings `Xterm 216+` and `xterm-style bitmap` (see: https://github.com/elfmz/far2l/issues/2630 )
 
 _Note_: to full transfer extended keyboard shortcuts and the clipboard to/from the **remote far2l**
 one of the best way to initiate the connection **inside local far2l-GUI**

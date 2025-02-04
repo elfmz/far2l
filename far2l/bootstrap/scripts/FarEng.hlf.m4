@@ -229,13 +229,14 @@ for clipboard need turn on OSC 52)
     - #Windows Terminal#
 (~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-  Original Putty does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
+  Original PuTTY does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
     - #putty4far2l# (Windows ssh-client): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
     - cyd01's #KiTTY# (Windows ssh-client): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
     - #putty-nd# (Windows ssh-client): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
+    - #PuTTY 0.82+#: since 0.82 in vanilla PuTTY you can set keyboard settings #Xterm 216+# and #xterm-style bitmap# (see: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@)
 
 
  #Location of FAR2L settings and history#

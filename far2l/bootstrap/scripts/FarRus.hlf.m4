@@ -231,7 +231,7 @@ $ # Особенности FAR2L - начало работы#
 (~TTY|w режим~@UIBackends@: клавиши через win32-input-mode; для взаимодействия с клипбордом включить OSC 52;
 присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-  Оригинальный Putty не корректно пересылает в far2l некоторые клавиатурные комбинации.
+  Оригинальный PuTTY не корректно пересылает в far2l некоторые клавиатурные комбинации.
 Под Windows используйте специальные форки putty с поддержкой far2l TTY extensions support:
     - #putty4far2l# (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
@@ -239,6 +239,7 @@ $ # Особенности FAR2L - начало работы#
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
     - #putty-nd# (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
+    - #PuTTY 0.82+#: начиная с версии 0.82 в ванильном PuTTY в настройках клавиатуры можно выставить #Xterm 216+# и #xterm-style bitmap# (см.: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@)
 
 
  #Расположение персональных настроек FAR2L и истории#

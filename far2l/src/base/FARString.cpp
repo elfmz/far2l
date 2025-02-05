@@ -354,7 +354,7 @@ FARString& FARString::Copy(const char *lpszData, UINT CodePage)
 			WINPORT(MultiByteToWideChar)(CodePage, 0, lpszData, -1, m_pContent->GetData(), nSize);
 			m_pContent->SetLength(nSize - 1);
 
-		} else 
+		} else
 			Init();
 	}
 
@@ -647,4 +647,22 @@ size_t FARString::TruncateByCells(size_t nCount)
 	size_t sz = StrSizeOfCells(CPtr(), GetLength(), ng, false);
 	Truncate(sz);
 	return ng;
+}
+
+
+// Definition of dump_value for FARString
+#include "debug.h"
+template <>
+inline void dump_value(
+	bool to_file,
+	bool firstcall,
+	pid_t pID,
+	unsigned int tID,
+	std::string_view var_name,
+	const FARString& value,
+	std::string_view func_name,
+	std::string_view location)
+{
+	std::string str_value = value.GetMB();
+	dump_value(to_file, firstcall, pID, tID, var_name, str_value, func_name, location);
 }

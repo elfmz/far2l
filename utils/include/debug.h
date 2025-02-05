@@ -1,5 +1,18 @@
 #pragma once
+
 #include "cctweaks.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <locale>
+#include <chrono>
+#include <ctime>
+#include <cstdlib>
+#include <string>
+#include <type_traits>
+#include <codecvt>
+#include <string_view>
+
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -21,3 +34,95 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
 
+template <typename T>
+inline void dump_value(
+	bool to_file,
+	bool firstcall,
+	pid_t pID,
+	unsigned int tID,
+	std::string_view var_name,
+	const T& value,
+	std::string_view func_name,
+	std::string_view location)
+{
+
+	if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+		dump_value(to_file, firstcall, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+		return;
+	}
+
+	std::ostringstream oss;
+
+	if (firstcall) {
+		auto now = std::chrono::system_clock::now();
+		auto time_t_now = std::chrono::system_clock::to_time_t(now);
+		std::tm tm_now{};
+		localtime_r(&time_t_now, &tm_now);
+		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+		char buffer[80];
+		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_now);
+		std::string time_str = std::string(buffer);
+		oss << std::endl << "/-----[PID:" << pID << ", TID:" << tID << "]-----[" << time_str << ","<< ms.count() << "]-----" << std::endl;
+		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
+	}
+
+	oss << "|=> " << var_name << " = " << value;
+
+	std::string log_entry = oss.str();
+
+	if (to_file) {
+		std::ofstream(std::string(std::getenv("HOME")) + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+	} else {
+		std::clog << log_entry << std::endl;
+	}
+}
+
+template <>
+inline void dump_value(
+	bool to_file,
+	bool firstcall,
+	pid_t pID,
+	unsigned int tID,
+	std::string_view var_name,
+	const std::wstring& value,
+	std::string_view func_name,
+	std::string_view location)
+	{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    dump_value(to_file, firstcall, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+}
+
+template<typename T, typename... Args>
+void dump(
+    bool to_file,
+    bool firstcall,
+    std::string_view func_name,
+    std::string_view location,
+	pid_t pID,
+	unsigned int tID,
+    std::string_view var_name,
+    const T& value,
+    const Args&... args)
+{
+
+    dump_value(to_file, firstcall, pID, tID, var_name, value, func_name, location);
+
+    if constexpr (sizeof...(args) > 0) {
+        dump(to_file, false, func_name, location, pID, tID, args...);
+    }
+}
+
+#define STRINGIZE(x) #x
+#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
+#define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
+
+#ifdef _FAR2L_PROJECT
+	#define DUMP(to_file, ...) dump(to_file, true, __func__, LOCATION, getpid(), GetInterThreadID(), __VA_ARGS__)
+#else
+	#define DUMP(to_file, ...) dump(to_file, true, __func__, LOCATION, getpid(), 0, __VA_ARGS__)
+#endif
+
+#define DVV(xxx) #xxx, xxx
+#define DMSG(xxx) "msg", xxx

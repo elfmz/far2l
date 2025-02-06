@@ -65,8 +65,8 @@ inline std::string dump_escape_string(const std::string &input)
 
 template <typename T>
 inline void dump_value(
+	std::ostringstream& oss,
 	bool to_file,
-	bool firstcall,
 	pid_t pID,
 	unsigned int tID,
 	std::string_view var_name,
@@ -77,12 +77,47 @@ inline void dump_value(
 
 	if constexpr (std::is_convertible_v<T, const wchar_t*>) {
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		dump_value(to_file, firstcall, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+		dump_value(oss, to_file, pID, tID, var_name, conv.to_bytes(value), func_name, location);
 		return;
 	}
 
-	std::ostringstream oss;
+	if constexpr (std::is_convertible_v<T, std::string_view> || std::is_same_v<T, char> || std::is_same_v<T, wchar_t>) {
+		std::string s_value{ value };
+		std::string escaped = dump_escape_string(s_value);
+		oss << "|=> " << var_name << " = " << escaped << std::endl;
+	} else {
+		oss << "|=> " << var_name << " = " << value << std::endl;
+	}
+}
 
+template <>
+inline void dump_value(
+	std::ostringstream& oss,
+	bool to_file,
+	pid_t pID,
+	unsigned int tID,
+	std::string_view var_name,
+	const std::wstring& value,
+	std::string_view func_name,
+	std::string_view location)
+	{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+	dump_value(oss, to_file, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+}
+
+template<typename T, typename... Args>
+void dump(
+	std::ostringstream& oss,
+    bool to_file,
+    bool firstcall,
+    std::string_view func_name,
+    std::string_view location,
+	pid_t pID,
+	unsigned int tID,
+    std::string_view var_name,
+    const T& value,
+    const Args&... args)
+{
 	if (firstcall) {
 		auto now = std::chrono::system_clock::now();
 		auto time_t_now = std::chrono::system_clock::to_time_t(now);
@@ -97,56 +132,19 @@ inline void dump_value(
 		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
 	}
 
-	if constexpr (std::is_convertible_v<T, std::string_view> || std::is_same_v<T, char> || std::is_same_v<T, wchar_t>) {
-		std::string s_value{ value };
-		std::string escaped = dump_escape_string(s_value);
-		oss << "|=> " << var_name << " = " << escaped;
-	} else {
-		oss << "|=> " << var_name << " = " << value;
-	}
-
-	std::string log_entry = oss.str();
-
-	if (to_file) {
-		std::ofstream(std::string(std::getenv("HOME")) + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
-	} else {
-		std::clog << log_entry << std::endl;
-	}
-}
-
-template <>
-inline void dump_value(
-	bool to_file,
-	bool firstcall,
-	pid_t pID,
-	unsigned int tID,
-	std::string_view var_name,
-	const std::wstring& value,
-	std::string_view func_name,
-	std::string_view location)
-	{
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-    dump_value(to_file, firstcall, pID, tID, var_name, conv.to_bytes(value), func_name, location);
-}
-
-template<typename T, typename... Args>
-void dump(
-    bool to_file,
-    bool firstcall,
-    std::string_view func_name,
-    std::string_view location,
-	pid_t pID,
-	unsigned int tID,
-    std::string_view var_name,
-    const T& value,
-    const Args&... args)
-{
-
-    dump_value(to_file, firstcall, pID, tID, var_name, value, func_name, location);
+	dump_value(oss, to_file, pID, tID, var_name, value, func_name, location);
 
     if constexpr (sizeof...(args) > 0) {
-        dump(to_file, false, func_name, location, pID, tID, args...);
-    }
+		dump(oss, to_file, false, func_name, location, pID, tID, args...);
+	} else {
+		std::string log_entry = oss.str();
+
+		if (to_file) {
+			std::ofstream(std::string(std::getenv("HOME")) + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+		} else {
+			std::clog << log_entry << std::endl;
+		}
+	}
 }
 
 #define STRINGIZE(x) #x
@@ -154,9 +152,9 @@ void dump(
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
 #ifdef _FAR2L_PROJECT
-	#define DUMP(to_file, ...) dump(to_file, true, __func__, LOCATION, getpid(), GetInterThreadID(), __VA_ARGS__)
+#define DUMP(to_file, ...) { std::ostringstream oss; dump(oss, to_file, true, __func__, LOCATION, getpid(), GetInterThreadID(), __VA_ARGS__); }
 #else
-	#define DUMP(to_file, ...) dump(to_file, true, __func__, LOCATION, getpid(), 0, __VA_ARGS__)
+#define DUMP(to_file, ...) { std::ostringstream oss; dump(oss, to_file, true, __func__, LOCATION, getpid(), 0, __VA_ARGS__); }
 #endif
 
 #define DVV(xxx) #xxx, xxx

@@ -655,14 +655,9 @@ size_t FARString::TruncateByCells(size_t nCount)
 template <>
 inline void dump_value(
 	std::ostringstream& oss,
-	bool to_file,
-	pid_t pID,
-	unsigned int tID,
 	std::string_view var_name,
-	const FARString& value,
-	std::string_view func_name,
-	std::string_view location)
+	const FARString& value)
 {
 	std::string str_value = value.GetMB();
-	dump_value(oss, to_file, pID, tID, var_name, str_value, func_name, location);
+	dump_value(oss, var_name, str_value);
 }

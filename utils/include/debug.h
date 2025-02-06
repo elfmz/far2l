@@ -14,6 +14,7 @@
 #include <string_view>
 #include <unistd.h>
 #include <iomanip>
+#include <mutex>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -34,6 +35,8 @@
 void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
+
+static std::mutex dumper_mutex;
 
 inline std::string dump_escape_string(const std::string &input)
 {
@@ -128,6 +131,8 @@ void dump(
 		dump(oss, to_file, false, func_name, location, pID, tID, args...);
 	} else {
 		std::string log_entry = oss.str();
+
+		std::lock_guard<std::mutex> lock(dumper_mutex);
 
 		if (to_file) {
 			std::ofstream(std::string(std::getenv("HOME")) + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;

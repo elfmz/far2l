@@ -12,7 +12,8 @@
 #include <type_traits>
 #include <codecvt>
 #include <string_view>
-
+#include <unistd.h>
+#include <iomanip>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -33,6 +34,34 @@
 void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
+
+inline std::string dump_escape_string(const std::string &input)
+{
+	std::ostringstream output;
+
+	for (unsigned char c : input) {
+
+		if (c > '\x1F') {
+			output << c;
+		} else {
+			switch (c) {
+			case '\t': output << "\\t"; break;
+			case '\r': output << "\\r"; break;
+			case '\n': output << "\\n"; break;
+			case '\a': output << "\\a"; break;
+			case '\b': output << "\\b"; break;
+			case '\v': output << "\\v"; break;
+			case '\f': output << "\\f"; break;
+			case '\e': output << "\\e"; break;
+			// case '\\': output << "\\\\"; break;
+			default:
+				output << "\\x{" << std::setfill('0') << std::setw(2) << std::right<< std::hex << static_cast<unsigned int>(c) << "}";
+				break;
+			}
+		}
+	}
+	return output.str();
+}
 
 template <typename T>
 inline void dump_value(
@@ -68,7 +97,13 @@ inline void dump_value(
 		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
 	}
 
-	oss << "|=> " << var_name << " = " << value;
+	if constexpr (std::is_convertible_v<T, std::string_view> || std::is_same_v<T, char> || std::is_same_v<T, wchar_t>) {
+		std::string s_value{ value };
+		std::string escaped = dump_escape_string(s_value);
+		oss << "|=> " << var_name << " = " << escaped;
+	} else {
+		oss << "|=> " << var_name << " = " << value;
+	}
 
 	std::string log_entry = oss.str();
 

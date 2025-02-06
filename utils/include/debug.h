@@ -66,18 +66,13 @@ inline std::string dump_escape_string(const std::string &input)
 template <typename T>
 inline void dump_value(
 	std::ostringstream& oss,
-	bool to_file,
-	pid_t pID,
-	unsigned int tID,
 	std::string_view var_name,
-	const T& value,
-	std::string_view func_name,
-	std::string_view location)
+	const T& value)
 {
 
 	if constexpr (std::is_convertible_v<T, const wchar_t*>) {
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		dump_value(oss, to_file, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+		dump_value(oss, var_name, conv.to_bytes(value));
 		return;
 	}
 
@@ -93,16 +88,11 @@ inline void dump_value(
 template <>
 inline void dump_value(
 	std::ostringstream& oss,
-	bool to_file,
-	pid_t pID,
-	unsigned int tID,
 	std::string_view var_name,
-	const std::wstring& value,
-	std::string_view func_name,
-	std::string_view location)
+	const std::wstring& value)
 	{
     std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-	dump_value(oss, to_file, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+	dump_value(oss, var_name, conv.to_bytes(value));
 }
 
 template<typename T, typename... Args>
@@ -132,7 +122,7 @@ void dump(
 		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
 	}
 
-	dump_value(oss, to_file, pID, tID, var_name, value, func_name, location);
+	dump_value(oss, var_name, value);
 
     if constexpr (sizeof...(args) > 0) {
 		dump(oss, to_file, false, func_name, location, pID, tID, args...);

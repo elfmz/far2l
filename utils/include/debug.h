@@ -98,6 +98,31 @@ inline void dump_value(
 	dump_value(oss, var_name, conv.to_bytes(value));
 }
 
+template <typename T>
+struct DumpBuffer {
+DumpBuffer(T* data, size_t length)
+	: data(data), length(length) {}
+  T* data;
+  size_t length;
+};
+
+template <typename T>
+inline void dump_value(
+  std::ostringstream& oss,
+  std::string_view var_name,
+  const DumpBuffer<T>& buffer) {
+
+  if constexpr (std::is_same_v<std::remove_cv_t<T>, char> || std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
+  std::string s_value ((char*)buffer.data, buffer.length);
+  dump_value(oss, var_name, s_value);
+  } else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
+  std::wstring ws_value (buffer.data, buffer.length);
+  dump_value(oss, var_name, ws_value);
+  } else {
+	oss << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;
+  }
+}
+
 template<typename T, typename... Args>
 void dump(
 	std::ostringstream& oss,
@@ -154,3 +179,4 @@ void dump(
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", xxx
+#define DBUF(ptr,length) #ptr, DumpBuffer(ptr,length)

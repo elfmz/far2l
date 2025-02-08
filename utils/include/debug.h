@@ -14,6 +14,7 @@
 #include <string_view>
 #include <unistd.h>
 #include <iomanip>
+#include <mutex>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -34,6 +35,8 @@
 void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 #define DBGLINE fprintf(stderr, "%d %d @%s\n", getpid(), __LINE__, __FILE__)
+
+static std::mutex dumper_mutex;
 
 inline std::string dump_escape_string(const std::string &input)
 {
@@ -65,24 +68,74 @@ inline std::string dump_escape_string(const std::string &input)
 
 template <typename T>
 inline void dump_value(
-	bool to_file,
-	bool firstcall,
-	pid_t pID,
-	unsigned int tID,
+	std::ostringstream& oss,
 	std::string_view var_name,
-	const T& value,
-	std::string_view func_name,
-	std::string_view location)
+	const T& value)
 {
 
 	if constexpr (std::is_convertible_v<T, const wchar_t*>) {
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		dump_value(to_file, firstcall, pID, tID, var_name, conv.to_bytes(value), func_name, location);
+		dump_value(oss, var_name, conv.to_bytes(value));
 		return;
 	}
 
-	std::ostringstream oss;
+	if constexpr (std::is_convertible_v<T, std::string_view> || std::is_same_v<T, char> || std::is_same_v<T, wchar_t>) {
+		std::string s_value{ value };
+		std::string escaped = dump_escape_string(s_value);
+		oss << "|=> " << var_name << " = " << escaped << std::endl;
+	} else {
+		oss << "|=> " << var_name << " = " << value << std::endl;
+	}
+}
 
+template <>
+inline void dump_value(
+	std::ostringstream& oss,
+	std::string_view var_name,
+	const std::wstring& value)
+	{
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+	dump_value(oss, var_name, conv.to_bytes(value));
+}
+
+template <typename T>
+struct DumpBuffer {
+DumpBuffer(T* data, size_t length)
+	: data(data), length(length) {}
+  T* data;
+  size_t length;
+};
+
+template <typename T>
+inline void dump_value(
+  std::ostringstream& oss,
+  std::string_view var_name,
+  const DumpBuffer<T>& buffer) {
+
+  if constexpr (std::is_same_v<std::remove_cv_t<T>, char> || std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
+  std::string s_value ((char*)buffer.data, buffer.length);
+  dump_value(oss, var_name, s_value);
+  } else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
+  std::wstring ws_value (buffer.data, buffer.length);
+  dump_value(oss, var_name, ws_value);
+  } else {
+	oss << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;
+  }
+}
+
+template<typename T, typename... Args>
+void dump(
+	std::ostringstream& oss,
+    bool to_file,
+    bool firstcall,
+    std::string_view func_name,
+    std::string_view location,
+	pid_t pID,
+	unsigned int tID,
+    std::string_view var_name,
+    const T& value,
+    const Args&... args)
+{
 	if (firstcall) {
 		auto now = std::chrono::system_clock::now();
 		auto time_t_now = std::chrono::system_clock::to_time_t(now);
@@ -97,56 +150,21 @@ inline void dump_value(
 		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
 	}
 
-	if constexpr (std::is_convertible_v<T, std::string_view> || std::is_same_v<T, char> || std::is_same_v<T, wchar_t>) {
-		std::string s_value{ value };
-		std::string escaped = dump_escape_string(s_value);
-		oss << "|=> " << var_name << " = " << escaped;
-	} else {
-		oss << "|=> " << var_name << " = " << value;
-	}
-
-	std::string log_entry = oss.str();
-
-	if (to_file) {
-		std::ofstream(std::string(std::getenv("HOME")) + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
-	} else {
-		std::clog << log_entry << std::endl;
-	}
-}
-
-template <>
-inline void dump_value(
-	bool to_file,
-	bool firstcall,
-	pid_t pID,
-	unsigned int tID,
-	std::string_view var_name,
-	const std::wstring& value,
-	std::string_view func_name,
-	std::string_view location)
-	{
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-    dump_value(to_file, firstcall, pID, tID, var_name, conv.to_bytes(value), func_name, location);
-}
-
-template<typename T, typename... Args>
-void dump(
-    bool to_file,
-    bool firstcall,
-    std::string_view func_name,
-    std::string_view location,
-	pid_t pID,
-	unsigned int tID,
-    std::string_view var_name,
-    const T& value,
-    const Args&... args)
-{
-
-    dump_value(to_file, firstcall, pID, tID, var_name, value, func_name, location);
+	dump_value(oss, var_name, value);
 
     if constexpr (sizeof...(args) > 0) {
-        dump(to_file, false, func_name, location, pID, tID, args...);
-    }
+		dump(oss, to_file, false, func_name, location, pID, tID, args...);
+	} else {
+		std::string log_entry = oss.str();
+
+		std::lock_guard<std::mutex> lock(dumper_mutex);
+
+		if (to_file) {
+			std::ofstream(std::string(std::getenv("HOME")) + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+		} else {
+			std::clog << log_entry << std::endl;
+		}
+	}
 }
 
 #define STRINGIZE(x) #x
@@ -154,10 +172,11 @@ void dump(
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
 #ifdef _FAR2L_PROJECT
-	#define DUMP(to_file, ...) dump(to_file, true, __func__, LOCATION, getpid(), GetInterThreadID(), __VA_ARGS__)
+#define DUMP(to_file, ...) { std::ostringstream oss; dump(oss, to_file, true, __func__, LOCATION, getpid(), GetInterThreadID(), __VA_ARGS__); }
 #else
-	#define DUMP(to_file, ...) dump(to_file, true, __func__, LOCATION, getpid(), 0, __VA_ARGS__)
+#define DUMP(to_file, ...) { std::ostringstream oss; dump(oss, to_file, true, __func__, LOCATION, getpid(), 0, __VA_ARGS__); }
 #endif
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", xxx
+#define DBUF(ptr,length) #ptr, DumpBuffer(ptr,length)

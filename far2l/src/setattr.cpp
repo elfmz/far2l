@@ -1700,8 +1700,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
-										ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 									}
+									ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 								}
 							}
 						}

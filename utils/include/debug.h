@@ -120,6 +120,8 @@ namespace Dumper {
 	}
 
 
+	// ********** поддержка строковых буферов, доступных по указателю/размерности
+
 	template <typename T>
 	struct DumpBuffer {
 		DumpBuffer(T* data, size_t length) : data(data), length(length) {}
@@ -146,6 +148,57 @@ namespace Dumper {
 		}
 	}
 
+	// ********** поддержка контейнеров с итераторами
+
+	template <typename Container, typename = decltype(std::begin(std::declval<Container>())),
+		 typename = decltype(std::end(std::declval<Container>()))>
+	struct DumpContainer {
+	  DumpContainer(const Container& data, size_t maxlength) : data(data), maxlength(maxlength) {}
+	  const Container& data;
+	  size_t maxlength;
+	};
+
+
+	template <typename Container>
+	inline void dump_value(
+	  std::ostringstream& oss,
+	  std::string_view var_name,
+	  const DumpContainer<Container>& container)
+	{
+	  std::size_t index = 0;
+	  for (const auto &item : container.data) {
+		if (container.maxlength > 0 && index >= container.maxlength)
+		  break;
+		auto itemName = std::string(var_name) + "[" + std::to_string(index++) + "]";
+		dump_value(oss, itemName, item);
+	  }
+	}
+
+	// ********** поддержка статических массивов
+
+	template <typename T, std::size_t N>
+	struct DumpContainer<T (&)[N]> {
+	  DumpContainer(const T (&data)[N], size_t maxlength)
+		: data(data), maxlength(maxlength) {}
+	  const T (&data)[N];
+	  size_t maxlength;
+	};
+
+	template <typename T, std::size_t N>
+	inline void dump_value(std::ostringstream& oss, std::string_view var_name, const DumpContainer<T (&)[N]>& container)
+	{
+	  size_t effective = (container.maxlength > 0 && container.maxlength < N ? container.maxlength : N);
+	  for (std::size_t index = 0; index < effective; ++index) {
+		auto itemName = std::string(var_name) + "[" + std::to_string(index) + "]";
+		dump_value(oss, itemName, container.data[index]);
+	  }
+	}
+
+
+	template <typename T, std::size_t N>
+	DumpContainer(const T (&)[N], size_t) -> DumpContainer<T (&)[N]>;
+
+	// **********
 
 	template<typename T, typename... Args>
 	void dump(
@@ -191,6 +244,7 @@ namespace Dumper {
 		}
 	}
 
+	// ********** поддержка дампинга только переменных
 
 	template<typename ValuesTuple, std::size_t... I>
 	void dumpWrapperImpl(
@@ -273,3 +327,4 @@ namespace Dumper {
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", xxx
 #define DBUF(ptr,length) #ptr, Dumper::DumpBuffer(ptr,length)
+#define DCONT(container,maxlength) #container, Dumper::DumpContainer(container,maxlength)

@@ -50,9 +50,14 @@ namespace Dumper {
 		std::ostringstream output;
 
 		for (unsigned char c : input) {
-
-			if (c > '\x1F') {
-				output << c;
+			if (c >= '\x20') {
+				switch (c) {
+				case '"':  output << "\\\""; break;
+				case '\\': output << "\\\\"; break;
+				default:
+					output << c;
+					break;
+				}
 			} else {
 				switch (c) {
 				case '\t': output << "\\t"; break;
@@ -63,9 +68,9 @@ namespace Dumper {
 				case '\v': output << "\\v"; break;
 				case '\f': output << "\\f"; break;
 				case '\e': output << "\\e"; break;
-				// case '\\': output << "\\\\"; break;
 				default:
-					output << "\\x{" << std::setfill('0') << std::setw(2) << std::right<< std::hex << static_cast<unsigned int>(c) << "}";
+					output << "\\x{" << std::setfill('0') << std::setw(2) << std::right
+						   << std::hex << static_cast<unsigned int>(c) << "}";
 					break;
 				}
 			}
@@ -80,7 +85,7 @@ namespace Dumper {
 		static std::once_flag flag;
 		std::call_once(flag, [] {
 			const char* envHome = std::getenv("HOME");
-			home = (envHome != nullptr) ? std::string(envHome) : std::string("");
+			home = (envHome != nullptr) ? std::string(envHome) : std::string("/tmp");
 		});
 		return home;
 	}
@@ -143,7 +148,8 @@ namespace Dumper {
 		return;
 	}
 
-	// ********** поддержка char[] и wchar_t[]
+
+	// ********** поддержка (unsigned) char[] и wchar_t[]
 	template <typename CharT, std::size_t N>
 	inline std::enable_if_t<
 		std::is_same_v<std::remove_cv_t<CharT>, char> ||
@@ -182,6 +188,10 @@ namespace Dumper {
 		std::string_view var_name,
 		const DumpBuffer<T>& buffer)
 	{
+		if (buffer.data == nullptr) {
+			oss << "|=> " << var_name << " = (nullptr)" << std::endl;
+			return;
+		}
 
 		if constexpr (std::is_same_v<std::remove_cv_t<T>, char> || std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
 			std::string s_value ((char*)buffer.data, buffer.length);
@@ -199,7 +209,8 @@ namespace Dumper {
 	template <typename Container, typename = decltype(std::begin(std::declval<Container>())),
 		 typename = decltype(std::end(std::declval<Container>()))>
 	struct DumpContainer {
-	  DumpContainer(const Container& data, size_t maxlength) : data(data), maxlength(maxlength) {}
+	  DumpContainer(const Container& data, size_t maxlength)
+			: data(data), maxlength(maxlength) {}
 	  const Container& data;
 	  size_t maxlength;
 	};
@@ -207,18 +218,19 @@ namespace Dumper {
 
 	template <typename Container>
 	inline void dump_value(
-	  std::ostringstream& oss,
-	  std::string_view var_name,
-	  const DumpContainer<Container>& container)
+		std::ostringstream& oss,
+		std::string_view var_name,
+		const DumpContainer<Container>& container)
 	{
-	  std::size_t index = 0;
-	  for (const auto &item : container.data) {
-		if (container.maxlength > 0 && index >= container.maxlength)
-		  break;
-		auto itemName = std::string(var_name) + "[" + std::to_string(index++) + "]";
-		dump_value(oss, itemName, item);
-	  }
+		std::size_t index = 0;
+		for (const auto &item : container.data) {
+			if (container.maxlength > 0 && index >= container.maxlength)
+				break;
+			auto itemName = std::string(var_name) + "[" + std::to_string(index++) + "]";
+			dump_value(oss, itemName, item);
+		}
 	}
+
 
 	// ********** поддержка статических массивов
 
@@ -230,47 +242,54 @@ namespace Dumper {
 	  size_t maxlength;
 	};
 
+
 	template <typename T, std::size_t N>
-	inline void dump_value(std::ostringstream& oss, std::string_view var_name, const DumpContainer<T (&)[N]>& container)
+	inline void dump_value(std::ostringstream& oss, std::string_view var_name,
+						   const DumpContainer<T (&)[N]>& container)
 	{
-	  size_t effective = (container.maxlength > 0 && container.maxlength < N ? container.maxlength : N);
-	  for (std::size_t index = 0; index < effective; ++index) {
-		auto itemName = std::string(var_name) + "[" + std::to_string(index) + "]";
-		dump_value(oss, itemName, container.data[index]);
-	  }
+		size_t effective = (container.maxlength > 0 && container.maxlength < N ? container.maxlength : N);
+		for (std::size_t index = 0; index < effective; ++index) {
+			auto itemName = std::string(var_name) + "[" + std::to_string(index) + "]";
+			dump_value(oss, itemName, container.data[index]);
+		}
 	}
 
 
 	template <typename T, std::size_t N>
 	DumpContainer(const T (&)[N], size_t) -> DumpContainer<T (&)[N]>;
 
+
 	// **********
+
+	inline std::string format_log_header(pid_t pID, unsigned int tID,
+								  std::string_view func_name,
+								  std::string_view location)
+	{
+		auto now = std::chrono::system_clock::now();
+		auto time_t_now = std::chrono::system_clock::to_time_t(now);
+		std::tm tm_now{};
+		localtime_r(&time_t_now, &tm_now);
+		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+		char buffer[80];
+		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_now);
+
+		std::ostringstream oss;
+		oss << std::endl << "/-----[PID:" << pID << ", TID:" << tID << "]-----["
+			<< buffer << ","<< ms.count() << "]-----" << std::endl;
+		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
+		return oss.str();
+	}
+
 
 	template<typename T, typename... Args>
 	void dump(
-		std::ostringstream& oss,
-		bool to_file,
-		bool firstcall,
-		std::string_view func_name,
-		std::string_view location,
-		pid_t pID,
-		unsigned int tID,
-		std::string_view var_name,
-		const T& value,
-		const Args&... args)
+		std::ostringstream& oss, bool to_file, bool firstcall, std::string_view func_name,
+		std::string_view location, pid_t pID, unsigned int tID, std::string_view var_name,
+		const T& value, const Args&... args)
 	{
 		if (firstcall) {
-			auto now = std::chrono::system_clock::now();
-			auto time_t_now = std::chrono::system_clock::to_time_t(now);
-			std::tm tm_now{};
-			localtime_r(&time_t_now, &tm_now);
-			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-
-			char buffer[80];
-			strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_now);
-			std::string time_str = std::string(buffer);
-			oss << std::endl << "/-----[PID:" << pID << ", TID:" << tID << "]-----[" << time_str << ","<< ms.count() << "]-----" << std::endl;
-			oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
+			oss << format_log_header(pID, tID, func_name, location);
 		}
 
 		dump_value(oss, var_name, value);
@@ -289,6 +308,7 @@ namespace Dumper {
 			}
 		}
 	}
+
 
 	// ********** поддержка дампинга только переменных
 

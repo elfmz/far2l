@@ -92,14 +92,33 @@ namespace Dumper {
 		std::string_view var_name,
 		const T& value)
 	{
+		if constexpr (std::is_pointer_v<T>) {
+			if (value == nullptr) {
+				oss << "|=> " << var_name << " = (nullptr)" << std::endl;
+				return;
+			}
 
-		if constexpr (std::is_convertible_v<T, const wchar_t*>) {
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-			dump_value(oss, var_name, conv.to_bytes(value));
-			return;
+			if constexpr ( std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char> ) {
+				dump_value(oss, var_name, reinterpret_cast<const char*>(value));
+				return;
+			}
+
+			if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+				std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+				try {
+					dump_value(oss, var_name, conv.to_bytes(value));
+				} catch (const std::range_error& e) {
+					oss << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
+				}
+				return;
+			}
 		}
 
-		if constexpr (std::is_convertible_v<T, std::string_view> || std::is_same_v<T, char> || std::is_same_v<T, wchar_t>) {
+		if constexpr (std::is_convertible_v<T, std::string_view> ||
+						std::is_same_v<std::remove_cv_t<T>, char> ||
+						std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+						std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
+
 			std::string s_value{ value };
 			std::string escaped = escape_string(s_value);
 			oss << "|=> " << var_name << " = " << escaped << std::endl;

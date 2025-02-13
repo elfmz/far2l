@@ -102,16 +102,16 @@ namespace Dumper {
 				dump_value(oss, var_name, reinterpret_cast<const char*>(value));
 				return;
 			}
+		}
 
-			if constexpr (std::is_convertible_v<T, const wchar_t*>) {
-				std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-				try {
-					dump_value(oss, var_name, conv.to_bytes(value));
-				} catch (const std::range_error& e) {
-					oss << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
-				}
-				return;
+		if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+			try {
+				dump_value(oss, var_name, conv.to_bytes(value));
+			} catch (const std::range_error& e) {
+				oss << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
 			}
+			return;
 		}
 
 		if constexpr (std::is_convertible_v<T, std::string_view> ||
@@ -138,6 +138,22 @@ namespace Dumper {
 		dump_value(oss, var_name, conv.to_bytes(value));
 	}
 
+	// ********** поддержка char[] и wchar_t[]
+	template <typename CharT, std::size_t N>
+	inline std::enable_if_t<std::is_same_v<std::remove_cv_t<CharT>, char>
+							|| std::is_same_v<std::remove_cv_t<CharT>, wchar_t>>
+	dump_value(
+		std::ostringstream& oss,
+		std::string_view var_name,
+		const CharT (&value)[N])
+	{
+		constexpr std::size_t size = N;
+		if constexpr (std::is_same_v<std::remove_cv_t<CharT>, char>) {
+			dump_value(oss, var_name, std::string(value, size));
+		} else if constexpr (std::is_same_v<std::remove_cv_t<CharT>, wchar_t>) {
+			dump_value(oss, var_name, std::wstring(value, size));
+		}
+	}
 
 	// ********** поддержка строковых буферов, доступных по указателю/размерности
 

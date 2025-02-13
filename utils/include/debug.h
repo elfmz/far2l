@@ -135,7 +135,12 @@ namespace Dumper {
 		const std::wstring& value)
 	{
 		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		dump_value(oss, var_name, conv.to_bytes(value));
+		try {
+			dump_value(oss, var_name, conv.to_bytes(value));
+		} catch (const std::range_error& e) {
+			oss << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
+		}
+		return;
 	}
 
 	// ********** поддержка char[] и wchar_t[]

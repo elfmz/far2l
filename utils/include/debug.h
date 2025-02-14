@@ -372,6 +372,19 @@ namespace Dumper {
 			if(start != std::string::npos && end != std::string::npos)
 				varNames.push_back(token.substr(start, end - start + 1));
 		}
+		constexpr auto argCount = sizeof...(args);
+		if (varNames.size() != argCount) {
+			std::string error_message =
+				"dumpv: Mismatch between parsed variable names count (" + std::to_string(varNames.size()) +
+				") and passed arguments (" + std::to_string(argCount) + "). " +
+				"Only simple variables are supported as arguments. " +
+				"Function calls or complex expressions with internal commas are not supported.";
+
+			std::vector<std::string> errorNames = { "ERROR" };
+			auto errorTuple = std::make_tuple(error_message);
+			dumpWrapper(oss, to_file, func_name, location, pID, tID, errorNames, errorTuple);
+			return;
+		}
 
 		auto varValues = std::forward_as_tuple(args...);
 		dumpWrapper(oss, to_file, func_name, location, pID, tID, varNames, varValues);

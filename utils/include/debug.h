@@ -271,13 +271,11 @@ namespace Dumper {
 		localtime_r(&time_t_now, &tm_now);
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
-		char buffer[80];
-		strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm_now);
-
 		std::ostringstream oss;
-		oss << std::endl << "/-----[PID:" << pID << ", TID:" << tID << "]-----["
-			<< buffer << ","<< ms.count() << "]-----" << std::endl;
-		oss << "|[" << location << "] in "  << func_name << "()"  << std::endl;
+		oss << std::endl << "/-----[PID:" << pID << ", TID:" << tID << "]-----[";
+
+		oss << std::put_time(&tm_now, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----" << std::endl;
+		oss << "|[" << location << "] in " << func_name << "()" << std::endl;
 		return oss.str();
 	}
 

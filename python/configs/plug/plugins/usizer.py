@@ -1,9 +1,3 @@
-if 0:
-    import debugpy
-
-    debugpy.listen(("127.0.0.1", 5678))
-    debugpy.wait_for_client()
-
 import logging
 from far2l.plugin import PluginBase
 from far2l.fardialogbuilder import (
@@ -121,7 +115,6 @@ class Plugin(PluginBase):
                 ),
             ),
         )
-        # debugpy.breakpoint()
         dlg = b.build(-1, -1)
 
         res = self.info.DialogRun(dlg.hDlg)

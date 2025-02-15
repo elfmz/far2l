@@ -15,8 +15,6 @@ class Element(sizer.Window):
     def __init__(
         self, varname=None, focus=0, param=None, flags=0, default=0, maxlength=0
     ):
-        Element.no += 1
-        self.no = Element.no
         self.varname = varname
         self.focus = focus
         self.param = param or {"Selected": 0}
@@ -26,6 +24,8 @@ class Element(sizer.Window):
         self.data = None
 
     def makeID(self, dlg):
+        self.no = Element.no
+        Element.no += 1
         if self.varname is not None:
             setattr(dlg, "ID_" + self.varname, self.no)
 
@@ -54,10 +54,12 @@ class Element(sizer.Window):
 class Spacer(Element):
     def __init__(self, width=1, height=1):
         super().__init__()
-        # non countable ID
-        Element.no -= 1
         self.width = width
         self.height = height
+
+    def makeID(self, dlg):
+        # non countable ID
+        pass
 
     def get_best_size(self):
         return (self.width, self.height)
@@ -362,8 +364,6 @@ class DialogBuilder(sizer.HSizer):
         self.add(contents, border)
 
     def build(self, x, y):
-        # for building dlg.ID_<varname>
-        Element.no = 0
 
         dlg = Dialog(self.plugin)
 
@@ -373,10 +373,12 @@ class DialogBuilder(sizer.HSizer):
         dlg.width = w
         dlg.height = h
 
+        # for building dlg.ID_<varname>
+        Element.no = 1
         self.contents.makeID(dlg)
         self.size(3, 1, w, h)
 
-        dlg.dialogItems.append(
+        dlg.dialogItems.insert(0,
             (
                 dlg.ffic.DI_DOUBLEBOX,
                 3,
@@ -403,6 +405,37 @@ class DialogBuilder(sizer.HSizer):
             y,
             w + 4,
             h + 2,
+            dlg.s2f(self.helptopic),
+            dlg.fdi,
+            len(dlg.fdi),
+            0,
+            self.flags,
+            self.dialogProc,
+            0,
+        )
+        return dlg
+
+    def build_nobox(self, x, y, w, h):
+
+        dlg = Dialog(self.plugin)
+
+        dlg.width = w
+        dlg.height = h
+
+        # for building dlg.ID_<varname>
+        Element.no = 0
+        self.contents.makeID(dlg)
+        self.size(0, 0, w, h)
+
+        self.contents.makeItem(dlg)
+
+        dlg.fdi = dlg.ffi.new("struct FarDialogItem []", dlg.dialogItems)
+        dlg.hDlg = dlg.info.DialogInit(
+            dlg.info.ModuleNumber,
+            x,
+            y,
+            w,
+            h,
             dlg.s2f(self.helptopic),
             dlg.fdi,
             len(dlg.fdi),

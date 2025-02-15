@@ -404,6 +404,6 @@ namespace Dumper {
 #define DUMPV(to_file, ...) { std::ostringstream logStream; Dumper::dumpv(logStream, to_file, __func__, LOCATION, getpid(), DUMP_THREAD, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(xxx) #xxx, xxx
-#define DMSG(xxx) "msg", xxx
+#define DMSG(xxx) "msg", std::string(xxx)
 #define DBUF(ptr,length) #ptr, Dumper::DumpBuffer(ptr,length)
 #define DCONT(container,maxElements) #container, Dumper::DumpContainer(container,maxElements)

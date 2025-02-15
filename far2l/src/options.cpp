@@ -111,6 +111,7 @@ enum enumFilesMenu
 	MENU_FILES_ARCHIVECOMMANDS,
 	MENU_FILES_SEPARATOR2,
 	MENU_FILES_ATTRIBUTES,
+	MENU_FILES_CHATTR,
 	MENU_FILES_APPLYCOMMAND,
 	MENU_FILES_DESCRIBE,
 	MENU_FILES_SEPARATOR3,
@@ -242,6 +243,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuArchiveCommands,  0,             KEY_SHIFTF3 },
 		{L"",                       LIF_SEPARATOR, 0           },
 		{Msg::MenuAttributes,       0,             KEY_CTRLA   },
+		{Msg::MenuChattr,           0,             KEY_CTRLALTA},
 		{Msg::MenuApplyCommand,     0,             KEY_CTRLG   },
 		{Msg::MenuDescribe,         0,             KEY_CTRLZ   },
 		{L"",                       LIF_SEPARATOR, 0           },
@@ -467,6 +469,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 					break;
 				case MENU_FILES_ATTRIBUTES:		// File attributes
 					CtrlObject->Cp()->ActivePanel->ProcessKey(KEY_CTRLA);
+					break;
+				case MENU_FILES_CHATTR:		// chattr
+					CtrlObject->Cp()->ActivePanel->ProcessKey(KEY_CTRLALTA);
 					break;
 				case MENU_FILES_APPLYCOMMAND:	// Apply command
 					CtrlObject->Cp()->ActivePanel->ProcessKey(KEY_CTRLG);

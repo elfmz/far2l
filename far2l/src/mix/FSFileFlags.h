@@ -7,13 +7,23 @@ class FSFileFlags
 {
 	unsigned long _flags = 0, _actual_flags = 0;
 	bool _valid = false;
+	int _errno = 0;
 
 public:
 	FSFileFlags(const std::string &path);
 	void Apply(const std::string &path, bool force = false);
+	inline void Reset() { _flags = _actual_flags; }
 
 	inline bool Valid() const { return _valid; }
 
+	inline int Errno() const { return _errno; }
+
+	inline unsigned long GetFlags() const { return _flags; }
+	inline unsigned long GetActualFlags() const { return _actual_flags; }
+
+	inline bool FlagIsOn(unsigned long flag) const { return _flags & flag; }
+	inline bool FlagEqActual(unsigned long flag) const { return (_flags & flag) == (_actual_flags & flag); }
+	inline void FlagInverse(unsigned long flag) { _flags = _flags ^ flag; }
 
 	bool Immutable() const;
 	void SetImmutable(bool v);

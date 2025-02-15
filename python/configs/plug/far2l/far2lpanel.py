@@ -57,7 +57,7 @@ class Panel:
         self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELFORMAT, nb, self.ffi.cast("LONG_PTR", data))
         return self.plugin.f2s(data)
 
-    def GetPanelFormat(self, active=True):
+    def GetPanelDir(self, active=True):
         nb = self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELDIR, 0, 0)
         data = self.ffi.new("wchar_t []", nb)
         self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELDIR, nb, self.ffi.cast("LONG_PTR", data))

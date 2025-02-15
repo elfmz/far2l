@@ -68,6 +68,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtlog.h"
 #include "vtshell.h"
 #include "vtcompletor.h"
+#include "Environment.h"
+#include "WideMB.h"
 #include <limits>
 
 CommandLine::CommandLine()
@@ -912,6 +914,14 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	bool b_far, b_edit = false, b_view = false;
 	std::string::size_type p;
 	std::wstring str_command(CmdLine);
+	auto expandString = [](const std::wstring &Filename) -> std::wstring {
+		std::string new_path_mb;
+		StrWide2MB(Filename, new_path_mb);
+		Environment::ExpandString(new_path_mb, true);
+		std::wstring result;
+		StrMB2Wide(new_path_mb, result);
+		return result;
+	};
 
 	StrTrim(str_command);
 
@@ -953,10 +963,12 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 						CP_AUTODETECT, FFILEEDIT_ENABLEF6 | FFILEEDIT_DISABLEHISTORY);
 				}
 			}
-			else // filename
+			else { // filename
+				const std::wstring filename = expandString(str_command.substr(p,std::string::npos));
 				new FileEditor(
-					std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
+					std::make_shared<FileHolder>( filename.c_str() ),
 					CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+			}
 		}
 		else // new empty file
 			new FileEditor(
@@ -980,9 +992,11 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 					TRUE/*EnableSwitch*/, TRUE/*DisableHistory*/, FALSE/*DisableEdit*/);
 				}
 			}
-			else // filename
-				new FileViewer(std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
+			else { // filename
+				const std::wstring filename = expandString(str_command.substr(p,std::string::npos));
+				new FileViewer(std::make_shared<FileHolder>( filename.c_str() ),
 					TRUE/*EnableSwitch*/, FALSE/*DisableHistory*/, FALSE/*DisableEdit*/);
+			}
 		}
 		return true; // anyway prefix correct and was processed
 	}

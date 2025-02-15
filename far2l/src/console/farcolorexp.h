@@ -1,9 +1,7 @@
 #pragma once
 
 /*
-pick_color_common.hpp
-
-Установка фаровских цветов
+farcolorexp.h
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,26 +31,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-typedef struct rgbcolor_s
-{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-	uint8_t a;
-} rgbcolor_t;
 
-typedef struct hsvcolor_s
-{
-	uint8_t h;
-	uint8_t s;
-	uint8_t v;
-	uint8_t a;
-} hsvcolor_t;
-
-#define RGB_2_BGR(c) (c & 0x00ff00) | (((c >> 16) & 0xff) | ((c & 0xff) << 16))
-#define ATTR_RGBBACK_NEGF(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
-#define ATTR_RGBBACK_NEGF2(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
-
-
-rgbcolor_t HSV_2_RGB(hsvcolor_t hsv);
-hsvcolor_t RGB_2_HSV(rgbcolor_t rgb);
+uint64_t ExprToFarColor(const char *exsp, size_t len);
+size_t FarColorToExpr(uint64_t c, char *exsp, size_t s);

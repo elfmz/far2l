@@ -1,9 +1,8 @@
 #pragma once
 
 /*
-palette.hpp
+color.hpp
 
-Таблица цветов
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,46 +32,48 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <WinCompat.h>
-#include <utils.h>
-#include <KeyFileHelper.h>
-#include "color.hpp"
-
-class Palette : NonCopyable
+typedef struct rgbcolor_s
 {
-
-public:
-
 	union {
-		rgbcolor_t palbuff[32];
 		struct {
-			rgbcolor_t background[16];
-			rgbcolor_t foreground[16];
+			uint8_t r;
+			uint8_t g;
+			uint8_t b;
+			uint8_t a;
 		};
+		uint32_t rgba;
 	};
+} rgbcolor_t;
 
-//    static rgbcolor_t cur_palette[32];
-    static Palette FARPalette;
+typedef struct hsvcolor_s
+{
+	union {
+		struct {
+			uint8_t h;
+			uint8_t s;
+			uint8_t v;
+			uint8_t a;
+		};
+		uint32_t hsva;
+	};
+} hsvcolor_t;
 
-	Palette() noexcept;
-	~Palette() noexcept;
+#ifndef RGB
+#define RGB(r, g, b)   ((uint32_t)(((uint32_t)(r) | ((uint32_t)(g) << 8)) | (((uint32_t)(uint8_t)(b)) << 16)))
 
-	static void InitFarPalette( ) noexcept;
+#define GetRValue(rgb) ((uint8_t)(rgb))
+#define GetGValue(rgb) ((uint8_t)((rgb) >> 8))
+#define GetBValue(rgb) ((uint8_t)((rgb) >> 16))
+#endif
 
-	void Set();
-	bool Load(KeyFileHelper &kfh) noexcept;
-	bool Save(KeyFileHelper &kfh) noexcept;
-	void ResetToDefault() noexcept;
-//	bool GammaChanged;
+#ifndef RGBA
+#define RGBA(r, g, b, a) ((uint32_t)((uint32_t)RGB(r, g, b) | (uint32_t)(a) << 24))
+#define GetAValue(rgba)	 ((uint8_t)((rgba) >> 24))
+#endif
 
-	const rgbcolor_t &operator[](size_t const Index) const
-	{
-		return palbuff[Index];
-	}
+#define RGB_2_BGR(c) (c & 0x00ff00) | (((c >> 16) & 0xff) | ((c & 0xff) << 16))
+#define ATTR_RGBBACK_NEGF(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
+#define ATTR_RGBBACK_NEGF2(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
 
-	size_t size() const
-	{
-		return 32;
-	}
-
-};
+rgbcolor_t HSV_2_RGB(hsvcolor_t hsv);
+hsvcolor_t RGB_2_HSV(rgbcolor_t rgb);

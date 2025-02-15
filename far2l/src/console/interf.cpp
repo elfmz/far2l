@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "manager.hpp"
 #include "scrbuf.hpp"
 #include "syslog.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "strmix.hpp"
 #include "console.hpp"
 #include "vtshell.h"

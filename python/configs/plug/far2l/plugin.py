@@ -30,6 +30,33 @@ class PluginBase:
     def f2s(self, s):
         return self.ffi.string(self.ffi.cast("wchar_t *", s))
 
+    def notice(self, body, title=None):
+        return self._popup(body, title, 0)
+
+    def error(self, body, title=None):
+        return self._popup(body, title, self.ffic.FMSG_WARNING)
+
+    def _popup(self, body, title, flags):
+        items = [self.s2f(title)] if title else [self.s2f('')]
+        if isinstance(body, str):
+            if '\n' in body:
+                body = body.split('\n')
+            else:
+                items.append(self.s2f(body))
+        if not isinstance(body, str):
+            items.extend(self.s2f(s) for s in body)
+        # note: needs to be at least 2 items, otherwise message 
+        # box is not shown
+        citems = self.ffi.new('wchar_t *[]', items)
+        if not flags:
+            flags = self.ffic.FMSG_MB_OK
+        return self.info.Message(
+            self.info.ModuleNumber,  # GUID
+            flags,  # Flags
+            self.ffi.NULL,  # HelpTopic
+            citems, len(citems), 1,  # ButtonsNumber
+        )
+
     @staticmethod
     def HandleCommandLine(line):
         log.debug("Plugin.HandleCommandLine({})".format(line))

@@ -36,7 +36,7 @@
 #include "../WinPort/src/SavedScreen.h"
 #define __USE_BSD 
 #include <termios.h> 
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "AnsiEsc.hpp"
 #include "TestPath.h"
 

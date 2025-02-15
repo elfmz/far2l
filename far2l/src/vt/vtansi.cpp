@@ -168,6 +168,7 @@ jadoxa@yahoo.com.au
 
 #include <mutex>
 #include <atomic>
+#include <optional>
 #include <map>
 #include "vtansi.h"
 #include "AnsiEsc.hpp"
@@ -1312,6 +1313,7 @@ struct VTAnsiContext
 				}
 
 			} else {
+				_crds.reset(); // prevent clipboard dialog miss repaints
 				vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 			}
 		}
@@ -1416,12 +1418,16 @@ struct VTAnsiContext
 // the last arguments are processed (no es_argv[] overflow).
 //-----------------------------------------------------------------------------
 
+	std::optional<ConsoleRepaintsDeferScope> _crds;
+
 	void ParseAndPrintString(
 		LPCVOID lpBuffer,
 		DWORD nNumberOfBytesToWrite)
 	{
 		DWORD   i;
 		LPCWSTR s;
+
+		_crds.emplace(vt_shell->ConsoleHandle());
 
 		for (i = nNumberOfBytesToWrite, s = (LPCWSTR)lpBuffer; i > 0; i--, s++) {
 			if (state == 1) {
@@ -1581,6 +1587,7 @@ struct VTAnsiContext
 			}
 		}
 		FlushBuffer();
+		_crds.reset();
 		ASSERT(i == 0);
 	}
 
@@ -1723,7 +1730,6 @@ void VTAnsi::Write(const char *str, size_t len)
 		--len;
 	}
 
-	ConsoleRepaintsDeferScope crds(_ctx->vt_shell->ConsoleHandle());
 	_ctx->ParseAndPrintString(_ws.c_str(), _ws.size());
 }
 

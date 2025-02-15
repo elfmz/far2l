@@ -310,6 +310,7 @@ private:
 
 	GUID Id;
 	bool IdExist;
+	int AltState, CtrlState, ShiftState;
 
 private:
 	void Init(FARWINDOWPROC DlgProc, LONG_PTR InitParam);

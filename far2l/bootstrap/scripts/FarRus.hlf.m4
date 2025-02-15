@@ -134,7 +134,7 @@ $ # Особенности FAR2L - начало работы#
 ~https://github.com/akruphi/far2l/wiki~@https://github.com/akruphi/far2l/wiki@
 
  #Режимы интерфейса#
-    У FAR2L три основных бекенда отрисовки (подробности в ~Режимы интерфейса~@UIBackends@):
+    У FAR2L основные бекенды отрисовки (подробности в ~Режимы интерфейса~@UIBackends@):
         - #GUI# - на базе wxWidgets, работает в графическом режиме, #идеальный UX#
 (возможны дополнительные зависимости к вашей desktop environment: wxWidgets toolkit и соответствующие пакеты);
         - #TTY|Xi# - работает в терминальном режиме, зависимости буквально от пары иксовых либ
@@ -171,7 +171,7 @@ $ # Особенности FAR2L - начало работы#
 
 
  #Особенность вставки в терминалах#
-    Есть комбинация #вставки терминала# (терминал имитирует ввод с клавиатуры) и есть #вставка самого фара# (сам FAR2L делает paste). При этом комбинация вставки терминала в разных терминалах разная (и может перекрывать стандартные клавиши вставки FAR2L #Shift-Ins# или #Ctrl-V#).
+    Есть комбинация #вставки терминала# (терминал имитирует ввод с клавиатуры через bracketed paste) и есть #вставка самого фара# (сам FAR2L делает paste). При этом комбинация вставки терминала в разных терминалах разная (и может перекрывать стандартные клавиши вставки FAR2L #Shift-Ins# или #Ctrl-V#).
     В версии без TTY|X (и без включенной поддержки OSC 52 как в FAR2L, так и в терминале) вставка самого фара использует его #внутренний буфер# (т.к. FAR2L не получает доступ к системному буферу обмена), а вставка терминала - #системный буфер обмена#.
 
 
@@ -204,35 +204,42 @@ $ # Особенности FAR2L - начало работы#
 
 
  #Терминалы и ssh-клиенты, поддерживающие расширенные сочетания клавиш FAR2L для чистой терминальной версии FAR2L TTY#
-    - Встроенный терминал FAR2L-GUI (Linux, macOS, *BSD),
+    - Встроенный терминал #FAR2L-GUI# (Linux/BSD, macOS),
 см. ~Режимы интерфейса~@UIBackends@ и в помощи #NetRocks plugin# раздел #Command line and remote FAR2L#
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
-
-    - kovidgoyal's kitty (Linux, macOS, *BSD): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
+    - kovidgoyal's #kitty# (Linux/BSD, macOS): ~https://github.com/kovidgoyal/kitty~@https://github.com/kovidgoyal/kitty@ & ~https://sw.kovidgoyal.net/kitty~@https://sw.kovidgoyal.net/kitty@
 (~TTY|k режим~@UIBackends@: клавиши через kovidgoyal's kitty keyboard protocol;
-для взаимодействия с клипбордом включить OSC 52)
-
-    - Wez's Terminal Emulator (Linux, FreeBSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
-(~TTY|k режим~@UIBackends@: клавиши в Linux, FreeBSD через kovidgoyal's kitty keyboard protocol;
+для взаимодействия с клипбордом включить OSC 52 и в kitty и в far2l)
+    - #Alacritty# (Linux/BSD, macOS, Windows): ~https://github.com/alacritty/alacritty~@https://github.com/alacritty/alacritty@ & ~https://alacritty.org/~@https://alacritty.org/@
+(~TTY|k режим~@UIBackends@: клавиши через kovidgoyal's kitty keyboard protocol;
+для взаимодействия с клипбордом включить OSC 52 только в far2l)
+[под Windows в системе должен быть conpty.dll]
+    - #Rio Terminal# (Linux/BSD, macOS, Windows):  ~https://github.com/raphamorim/rio~@https://github.com/raphamorim/rio@ & ~https://raphamorim.io/rio/~@https://raphamorim.io/rio/@
+(~TTY|k режим~@UIBackends@: клавиши через kovidgoyal's kitty keyboard protocol;
+для взаимодействия с клипбордом включить OSC 52 только в far2l)
+    - #Ghostty# (Linux, macOS): ~https://github.com/ghostty-org/ghostty~@https://github.com/ghostty-org/ghostty@ & ~https://ghostty.org/~@https://ghostty.org/@
+(~TTY|k режим~@UIBackends@: клавиши через kovidgoyal's kitty keyboard protocol;
+для взаимодействия с клипбордом включить OSC 52 только в far2l)
+    - #Wez's Terminal Emulator# (Linux/BSD, Windows): ~https://github.com/wez/wezterm~@https://github.com/wez/wezterm@ & ~https://wezfurlong.org/wezterm~@https://wezfurlong.org/wezterm@
+(~TTY|k режим~@UIBackends@: клавиши в Linux/BSD через kovidgoyal's kitty keyboard protocol;
 ~TTY|w режим~@UIBackends@: клавиши в Windows через win32-input-mode, который включен по умолчанию;
 для взаимодействия с клипбордом включить OSC 52)
 [в macOS и в Windows в wezterm поддержка режима kitty не работает]
-
-    - iTerm2 (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
+    - #iTerm2# (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
 (~TTY|a режим~@UIBackends@: клавиши через iTerm2 "raw keyboard" protocol; для взаимодействия с клипбордом включить OSC 52)
-
-    - Windows Terminal [в win11 стоит из коробки, в win10 надо ставить]
+    - #Windows Terminal# [в win11 стоит из коробки, в win10 надо ставить]
 (~TTY|w режим~@UIBackends@: клавиши через win32-input-mode; для взаимодействия с клипбордом включить OSC 52;
 присутствует баг с мышью: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
-    - putty4far2l (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
+  Оригинальный PuTTY не корректно пересылает в far2l некоторые клавиатурные комбинации.
+Под Windows используйте специальные форки putty с поддержкой far2l TTY extensions support:
+    - #putty4far2l# (Windows ssh-клиент): ~https://github.com/ivanshatsky/putty4far2l/releases~@https://github.com/ivanshatsky/putty4far2l/releases@ & ~https://github.com/unxed/putty4far2l~@https://github.com/unxed/putty4far2l@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
-
-    - cyd01's KiTTY (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
+    - cyd01's #KiTTY# (Windows ssh-клиент): ~https://github.com/cyd01/KiTTY~@https://github.com/cyd01/KiTTY@ & ~https://www.9bis.net/kitty~@https://www.9bis.net/kitty@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
-
-    - putty-nd (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
+    - #putty-nd# (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
+    - #PuTTY 0.82+#: начиная с версии 0.82 в ванильном PuTTY в настройках клавиатуры можно выставить #Xterm 216+# и #xterm-style bitmap# (см.: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@)
 
 
  #Расположение персональных настроек FAR2L и истории#

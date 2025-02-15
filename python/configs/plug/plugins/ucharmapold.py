@@ -26,8 +26,8 @@ class Plugin(PluginBase):
     def OpenPlugin(self, OpenFrom):
         if 0:
             import debugpy
-
             debugpy.breakpoint()
+
         symbols = []
         for i in range(256):
             symbols.append(chr(i))

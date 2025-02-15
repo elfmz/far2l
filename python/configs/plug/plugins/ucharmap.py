@@ -26,7 +26,7 @@ class Plugin(PluginBase):
             log.exception('run')
 
     def GetCursorPos(self, hDlg, ID):
-        cpos = self.ffi.new("COORD *", dict(X=0, Y=0))
+        cpos = self.ffi.new("COORD *")
         self.info.SendDlgMessage(hDlg, self.ffic.DM_GETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
         return (cpos.X, cpos.Y)
 
@@ -39,13 +39,25 @@ class Plugin(PluginBase):
             import debugpy
             debugpy.breakpoint()
 
+        def GetColor(no):
+            data = self.ffi.new("DWORD *")
+            rc = self.info.AdvControl(
+                self.info.ModuleNumber,
+                self.ffic.ACTL_GETCOLOR,
+                self.ffi.cast("VOID *", no),
+                self.ffi.cast("VOID *", data)
+            )
+            return data[0]
+
         self.offset = 0
         self.max_col = 64
         self.max_row = 20
         self.text = ''
         self.charbuf = self.ffi.new("CHAR_INFO []", self.max_col*self.max_row)
-        attrNormal = 0x170
-        attrSelected = 0x1c
+        attrNormal = GetColor(self.ffic.COL_EDITORTEXT)
+        attrSelected = GetColor(self.ffic.COL_EDITORSELECTEDTEXT)
+        #attrNormal = 0x170
+        #attrSelected = 0x1c
 
         def setVBuf(hDlg):
             self.info.SendDlgMessage(hDlg, self.ffic.DM_ENABLEREDRAW, 0, 0)
@@ -73,28 +85,34 @@ class Plugin(PluginBase):
                 self.SetCursorPos(hDlg, dlg.ID_hex, 0, 0)
                 setColor(0, 0, attrSelected)
                 updateOffset(0)
-                self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hex, 1|(100<<32))
+                self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORSIZE, dlg.ID_hex, 0|(0<<16))
                 dlg.SetFocus(dlg.ID_hex)
                 return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
             elif Msg == self.ffic.DN_BTNCLICK:
                 #log.debug(f"btn DialogProc({Param1}, {Param2})")
                 if Param1 == dlg.ID_vgoto:
                     v = dlg.GetText(dlg.ID_vgotovalue).strip()
-                    if not v:
-                        v = '0'
-                    try:
-                        offset = int(v, 16 if v[:2] == '0x' else 10)
-                        self.offset = offset
-                        setVBuf(hDlg)
-                    except:
-                        if len(v) == 1:
-                            self.offset = ord(v)
-                            setVBuf(hDlg)
-                        else:
-                            log.exception('goto')
-                    dlg.SetFocus(dlg.ID_hex)
-                    self.SetCursorPos(hDlg, dlg.ID_hex, 0, 0)
+                    if v:
+                        try:
+                            offset = int(v, 16 if v[:2] == '0x' else 10)
+                            if offset > 0xffff:
+                                offset = 0
+                                dlg.SetText(dlg.ID_vgotovalue, '0')
+                            self.offset = offset
+                        except:
+                            if len(v) == 1:
+                                self.offset = ord(v)
+                                setVBuf(hDlg)
+                            else:
+                                dlg.SetText(dlg.ID_vgotovalue, '')
+                                log.exception('goto')
+                    setVBuf(hDlg)
                     updateOffset(self.offset)
+                    col, row = self.GetCursorPos(hDlg, dlg.ID_hex)
+                    setColor(col, row, attrNormal)
+                    setColor(0, 0, attrSelected)
+                    self.SetCursorPos(hDlg, dlg.ID_hex, 0, 0)
+                    dlg.SetFocus(dlg.ID_hex)
                     return 1
                 elif Param1 == dlg.ID_vok:
                     col, row = self.GetCursorPos(hDlg, dlg.ID_hex)

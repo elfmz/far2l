@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
 #include "pick_color.hpp"
-#include "pick_color_common.hpp"
+#include "color.hpp"
 #include "keys.hpp"
 #include "lang.hpp"
 #include "colors.hpp"
@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "chgmmode.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
 
 #include "VT256ColorTable.h" // For g_VT256ColorTable[VT_256COLOR_TABLE_COUNT]

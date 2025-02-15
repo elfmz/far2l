@@ -53,17 +53,7 @@ class SqlData:
         self.parent = None
 
     def GetCurrentPanelItem(self):
-        handle = self.ffi.cast("HANDLE", -1)
-        # get buffer size
-        rc = self.parent.info.Control(handle, self.ffic.FCTL_GETCURRENTPANELITEM, 0, 0)
-        if rc:
-            # allocate buffer
-            data = self.ffi.new("char []", rc)
-            rc = self.parent.info.Control(handle, self.ffic.FCTL_GETCURRENTPANELITEM, 0, self.ffi.cast("LONG_PTR", data))
-            # cast buffer to PluginPanelItem *
-            pnli = self.ffi.cast("struct PluginPanelItem *", data)
-            return pnli, data
-        return None, None
+        return self.parent.GetCurrentPanelItem()
 
 class SqlDataHandler(SqlData):
     def __init__(self, parent, conn, tablename):
@@ -455,7 +445,7 @@ from sqlite_master
                                 fname,
                                 fname,
                                 0, 0, -1, -1,
-                                0,#self.ffic.EF_DELETEONCLOSE,
+                                self.ffic.EF_DISABLEHISTORY,#|self.ffic.EF_DELETEONCLOSE,
                                 0,
                                 0,
                                 0xFFFFFFFF,  # =-1=self.ffic.CP_AUTODETECT

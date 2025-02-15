@@ -4,8 +4,8 @@ import mmap
 import logging
 import far2lc
 from far2l import fardialogbuilder as fdb
-from yfar import FarPlugin
-
+from far2l.plugin import PluginBase
+from far2l.far2ledit import Edit
 
 log = logging.getLogger(__name__)
 
@@ -290,22 +290,23 @@ class HexEditor(Screen):
             col = i
         return row, col
 
-class Plugin(FarPlugin):
+class Plugin(PluginBase):
     label = "Python Hex Edit"
     openFrom = ["PLUGINSMENU", "EDITOR", "VIEWER"]
 
     def OpenPlugin(self, OpenFrom):
         # 5=edit, 6=viewer, 1=panel
         if OpenFrom == 5:
-            fqname = self.get_editor().file_name
+            fqname = Edit(self, self.info, self.ffi, self.ffic).GetFileName()
         elif OpenFrom == 6:
             data = self.ffi.new("struct ViewerInfo *")
             data.StructSize = self.ffi.sizeof("struct ViewerInfo")
             self.info.ViewerControl(self.ffic.VCTL_GETINFO, data)
             fqname = self.f2s(data.FileName)
         elif OpenFrom == 1:
-            pnl = self.get_panel()
-            fqname = os.path.join(pnl.directory, pnl.current.file_name)
+            pnli, pnlidata = self.api.GetCurrentPanelItem()
+            fname = self.f2s(pnli.FindData.lpwszFileName)
+            fqname = os.path.join(self.api.GetPanelDir(), fname)
         else:
             log.debug(f"unsupported open from {OpenFrom}")
             return

@@ -1,4 +1,6 @@
 import logging
+from .far2lpanel import Panel
+
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ class PluginBase:
         self.ffi = ffi
         self.ffic = ffic
         self.hplugin = self.ffi.cast("void *", id(self))
+        self.api = Panel(self, info, ffi, ffic)
 
     def s2f(self, s):
         return self.ffi.new("wchar_t []", s)
@@ -57,28 +60,23 @@ class PluginBase:
     def OpenFilePlugin(parent, info, ffi, ffic, Name, Data, DataSize, OpMode):
         return False
 
-    @staticmethod
-    def ProcessDialogEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessDialogEvent(self, Event, Param):
         # log.debug("Plugin.ProcessDialogEvent({0}, {1})".format(Event, Param))
         return 0
 
-    @staticmethod
-    def ProcessEditorEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessEditorEvent(self, Event, Param):
         # log.debug("Plugin.ProcessEditorEvent({0}, {1})".format(Event, Param))
         return 0
 
-    @staticmethod
-    def ProcessEditorInput(parent, info, ffi, ffic, Rec):
+    def ProcessEditorInput(self, Rec):
         # log.debug("Plugin.ProcessEditorInput({0})".format(Rec))
         return 0
 
-    @staticmethod
-    def ProcessSynchroEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessSynchroEvent(self, Event, Param):
         # log.debug("Plugin.ProcessSynchroEvent({0}, {1})".format(Event, Param))
         return 0
 
-    @staticmethod
-    def ProcessViewerEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessViewerEvent(self, Event, Param):
         # log.debug("Plugin.ProcessViewerEvent({0}, {1})".format(Event, Param))
         return 0
 

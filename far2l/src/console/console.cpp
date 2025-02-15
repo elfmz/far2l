@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <StackHeapArray.hpp>
 #include "console.hpp"
 #include "config.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "colors.hpp"
 #include "interf.hpp"
 

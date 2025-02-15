@@ -42,10 +42,10 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 
 namespace Dumper {
-	inline std::mutex dumper_mutex;
+	inline std::mutex logOutputMutex;
 
 
-	inline std::string escape_string(std::string_view input)
+	inline std::string EscapeString(std::string_view input)
 	{
 		std::ostringstream output;
 
@@ -79,7 +79,7 @@ namespace Dumper {
 	}
 
 
-	inline const std::string& getHomeDir()
+	inline const std::string& GetHomeDir()
 	{
 		static std::string home;
 		static std::once_flag flag;
@@ -125,7 +125,7 @@ namespace Dumper {
 						std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
 
 			std::string s_value{ value };
-			std::string escaped = escape_string(s_value);
+			std::string escaped = EscapeString(s_value);
 			logStream << "|=> " << var_name << " = " << escaped << std::endl;
 		} else {
 			logStream << "|=> " << var_name << " = " << value << std::endl;
@@ -175,8 +175,8 @@ namespace Dumper {
 	// ********** поддержка строковых буферов, доступных по указателю/размерности
 
 	template <typename T>
-	struct DumpBuffer {
-		DumpBuffer(T* data, size_t length) : data(data), length(length) {}
+	struct BufferWrapper {
+		BufferWrapper(T* data, size_t length) : data(data), length(length) {}
 		T* data;
 		size_t length;
 	};
@@ -186,7 +186,7 @@ namespace Dumper {
 	inline void dump_value(
 		std::ostringstream& logStream,
 		std::string_view var_name,
-		const DumpBuffer<T>& buffer)
+		const BufferWrapper<T>& buffer)
 	{
 		if (buffer.data == nullptr) {
 			logStream << "|=> " << var_name << " = (nullptr)" << std::endl;
@@ -208,8 +208,8 @@ namespace Dumper {
 
 	template <typename Container, typename = decltype(std::begin(std::declval<Container>())),
 		 typename = decltype(std::end(std::declval<Container>()))>
-	struct DumpContainer {
-	  DumpContainer(const Container& data, size_t maxElements)
+	struct ContainerWrapper {
+	  ContainerWrapper(const Container& data, size_t maxElements)
 			: data(data), maxElements(maxElements) {}
 	  const Container& data;
 	  size_t maxElements;
@@ -220,7 +220,7 @@ namespace Dumper {
 	inline void dump_value(
 		std::ostringstream& logStream,
 		std::string_view var_name,
-		const DumpContainer<Container>& container)
+		const ContainerWrapper<Container>& container)
 	{
 		std::size_t index = 0;
 		for (const auto &item : container.data) {
@@ -235,8 +235,8 @@ namespace Dumper {
 	// ********** поддержка статических массивов
 
 	template <typename T, std::size_t N>
-	struct DumpContainer<T (&)[N]> {
-	  DumpContainer(const T (&data)[N], size_t maxElements)
+	struct ContainerWrapper<T (&)[N]> {
+	  ContainerWrapper(const T (&data)[N], size_t maxElements)
 		: data(data), maxElements(maxElements) {}
 	  const T (&data)[N];
 	  size_t maxElements;
@@ -245,7 +245,7 @@ namespace Dumper {
 
 	template <typename T, std::size_t N>
 	inline void dump_value(std::ostringstream& logStream, std::string_view var_name,
-						   const DumpContainer<T (&)[N]>& container)
+						   const ContainerWrapper<T (&)[N]>& container)
 	{
 		size_t effective = (container.maxElements > 0 && container.maxElements < N ? container.maxElements : N);
 		for (std::size_t index = 0; index < effective; ++index) {
@@ -256,12 +256,12 @@ namespace Dumper {
 
 
 	template <typename T, std::size_t N>
-	DumpContainer(const T (&)[N], size_t) -> DumpContainer<T (&)[N]>;
+	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
 
 
 	// **********
 
-	inline std::string format_log_header(pid_t pID, unsigned int tID,
+	inline std::string FormatLogHeader(pid_t pID, unsigned int tID,
 								  std::string_view func_name,
 								  std::string_view location)
 	{
@@ -287,7 +287,7 @@ namespace Dumper {
 		const T& value, const Args&... args)
 	{
 		if (firstcall) {
-			logStream << format_log_header(pID, tID, func_name, location);
+			logStream << FormatLogHeader(pID, tID, func_name, location);
 		}
 
 		dump_value(logStream, var_name, value);
@@ -297,10 +297,10 @@ namespace Dumper {
 		} else {
 			std::string log_entry = logStream.str();
 
-			std::lock_guard<std::mutex> lock(dumper_mutex);
+			std::lock_guard<std::mutex> lock(logOutputMutex);
 
 			if (to_file) {
-				std::ofstream(getHomeDir() + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+				std::ofstream(GetHomeDir() + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
 			} else {
 				std::clog << log_entry << std::endl;
 			}
@@ -358,7 +358,7 @@ namespace Dumper {
 		pid_t pID,
 		unsigned int tID,
 		const char* varNamesStr,
-		const Ts&... args)
+		const Ts&... varValuesArgs)
 	{
 		std::vector<std::string> varNames;
 		std::istringstream varNamesStream(varNamesStr);
@@ -370,21 +370,21 @@ namespace Dumper {
 			if(start != std::string::npos && end != std::string::npos)
 				varNames.push_back(nameToken.substr(start, end - start + 1));
 		}
-		constexpr auto argCount = sizeof...(args);
-		if (varNames.size() != argCount) {
-			std::string error_message =
+		constexpr auto varValuesCount = sizeof...(varValuesArgs);
+		if (varNames.size() != varValuesCount) {
+			std::string errorMessage =
 				"dumpv: Mismatch between parsed variable names count (" + std::to_string(varNames.size()) +
-				") and passed arguments (" + std::to_string(argCount) + "). " +
+				") and passed arguments (" + std::to_string(varValuesCount) + "). " +
 				"Only simple variables are supported as arguments. " +
 				"Function calls or complex expressions with internal commas are not supported.";
 
 			std::vector<std::string> errorNames = { "ERROR" };
-			auto errorTuple = std::make_tuple(error_message);
+			auto errorTuple = std::make_tuple(errorMessage);
 			dumpWrapper(logStream, to_file, func_name, location, pID, tID, errorNames, errorTuple);
 			return;
 		}
 
-		auto varValues = std::forward_as_tuple(args...);
+		auto varValues = std::forward_as_tuple(varValuesArgs...);
 		dumpWrapper(logStream, to_file, func_name, location, pID, tID, varNames, varValues);
 	}
 
@@ -405,5 +405,5 @@ namespace Dumper {
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", std::string(xxx)
-#define DBUF(ptr,length) #ptr, Dumper::DumpBuffer(ptr,length)
-#define DCONT(container,maxElements) #container, Dumper::DumpContainer(container,maxElements)
+#define DBUF(ptr,length) #ptr, Dumper::BufferWrapper(ptr,length)
+#define DCONT(container,maxElements) #container, Dumper::ContainerWrapper(container,maxElements)

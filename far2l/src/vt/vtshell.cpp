@@ -832,7 +832,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (!KeyEvent.bKeyDown)
-				return "";
+				return std::string();
 
 			const char *spec = VT_TranslateSpecialKey(
 				KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad, KeyEvent.uChar.UnicodeChar);

@@ -23,6 +23,7 @@ src/UI/Settings/ExtraSiteSettings.cpp
 src/UI/Settings/ProxySettings.cpp
 src/UI/Settings/ConfigureProtocolSFTPSCP.cpp
 src/UI/Settings/ConfigureProtocolFTP.cpp
+src/UI/Settings/ConfigureProtocolAWS.cpp
 src/UI/Settings/ConfigureProtocolSMB.cpp
 src/UI/Settings/ConfigureProtocolNFS.cpp
 src/UI/Settings/ConfigureProtocolWebDAV.cpp
@@ -149,6 +150,10 @@ if (LIBNFS_FOUND AND ((NOT DEFINED NR_NFS) OR NR_NFS))
         src/Protocol/NFS/ProtocolNFS.cpp
     )
     target_link_libraries(NetRocks-NFS utils ${LIBNFS_LIBRARIES})
+    find_package(GnuTLS)
+    if (GNUTLS_FOUND)
+        target_link_libraries(NetRocks-NFS ${GNUTLS_LIBRARIES})
+    endif ()
     target_include_directories(NetRocks-NFS PRIVATE src ${LIBNFS_INCLUDE_DIRS})
     set_target_properties(NetRocks-NFS
         PROPERTIES
@@ -167,6 +172,26 @@ if (LIBNEON_FOUND AND ((NOT DEFINED NR_WEBDAV) OR NR_WEBDAV))
     target_link_libraries(NetRocks-WebDAV utils ${LIBNEON_LIBRARIES})
     target_include_directories(NetRocks-WebDAV PRIVATE src ${LIBNEON_INCLUDE_DIRS})
     set_target_properties(NetRocks-WebDAV
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
+        PREFIX ""
+        SUFFIX ".broker")
+endif ()
+
+if (AWSSDK_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_AWS")
+    add_executable (NetRocks-AWS
+        ${PROTOCOL_SOURCES}
+        src/Protocol/AWS/AWSFile.cpp
+        src/Protocol/AWS/AWSFileWriter.cpp
+        src/Protocol/AWS/AWSFileReader.cpp
+        src/Protocol/AWS/S3Repository.cpp
+        src/Protocol/AWS/ProtocolAWS.cpp
+    )
+    target_include_directories(NetRocks-AWS PRIVATE src ${AWSSDK_INCLUDE_DIR})
+    target_link_libraries(NetRocks-AWS utils ${AWSSDK_LINK_LIBRARIES})
+
+    set_target_properties(NetRocks-AWS
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"
         PREFIX ""

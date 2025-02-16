@@ -1,9 +1,3 @@
-if 0:
-    import debugpy
-
-    debugpy.listen(("127.0.0.1", 5678))
-    debugpy.wait_for_client()
-
 import logging
 from far2l.plugin import PluginBase
 from far2l.fardialogbuilder import (
@@ -33,8 +27,25 @@ class Plugin(PluginBase):
     openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
     def OpenPlugin(self, OpenFrom):
-        @self.ffi.callback("FARWINDOWPROC")
+        msg2name = {}
+        for name in dir(self.ffic):
+            if name[:3] == 'DN_':
+                msg2name[getattr(self.ffic, name)] = name
+        SilentMsg = (
+            self.ffic.DN_ENTERIDLE,
+            self.ffic.DN_KILLFOCUS,
+            self.ffic.DN_GOTFOCUS,
+            self.ffic.DN_DRAWDIALOG,
+            self.ffic.DN_CTLCOLORDIALOG,
+            self.ffic.DN_DRAWDLGITEM,
+            self.ffic.DN_DRAWDIALOGDONE,
+            self.ffic.DN_CTLCOLORDLGITEM,
+            self.ffic.DN_CTLCOLORDLGLIST
+        )
+
         def DialogProc(hDlg, Msg, Param1, Param2):
+            if Msg not in SilentMsg:
+                log.debug(f'dlg: msg={Msg}/{msg2name.get(Msg)} Param1={Param1} Param2={Param2}')
             if Msg == self.ffic.DN_INITDIALOG:
                 try:
                     dlg.SetText(dlg.ID_vapath, "vapath initial")
@@ -63,12 +74,23 @@ class Plugin(PluginBase):
                 elif Param2 == self.ffic.KEY_ESC:
                     pass
             elif Msg == self.ffic.DN_MOUSECLICK:
-                pass
+                if Param1 == dlg.ID_vlist:
+                    return 1
+                elif Param1 == dlg.ID_vcombo:
+                    return 1
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+
+        @self.ffi.callback("FARWINDOWPROC")
+        def _DialogProc(hDlg, Msg, Param1, Param2):
+            try:
+                return DialogProc(hDlg, Msg, Param1, Param2)
+            except:
+                log.exception('dialogproc')
+                return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
         b = DialogBuilder(
             self,
-            DialogProc,
+            _DialogProc,
             "Python dialog",
             "helptopic",
             0,
@@ -95,22 +117,22 @@ class Plugin(PluginBase):
                 # MEMOEDIT("vmemo", 40, 5, 512),
                 HLine(),
                 HSizer(
-                    RADIOBUTTON("vr1", "p1", flags=self.ffic.DIF_GROUP),
-                    RADIOBUTTON("vr2", "p2"),
-                    RADIOBUTTON("vr3", "p3", flags=self.ffic.BSTATE_CHECKED),
+                    RADIOBUTTON("vr1", "rb1", flags=self.ffic.DIF_GROUP),
+                    RADIOBUTTON("vr2", "rb2"),
+                    RADIOBUTTON("vr3", "rb3", flags=self.ffic.BSTATE_CHECKED),
                     #                    TEXT(None, "X"),
                 ),
                 HSizer(
                     LISTBOX(
-                        "vlist", 1, "element A", "element B", "element C", "element D"
+                        "vlist", 1, "listbox A", "listbox B", "listbox C", "listbox D"
                     ),
                     COMBOBOX(
-                        "vcombo", 2, "element A", "element B", "element C", "element D"
+                        "vcombo", 2, "combo A", "combo B", "combo C", "combo D"
                     ),
                     VSizer(
-                        CHECKBOX("vc1", "c1"),
-                        CHECKBOX("vc2", "c2"),
-                        CHECKBOX("vc3", "c3", flags=self.ffic.BSTATE_CHECKED),
+                        CHECKBOX("vc1", "cb1"),
+                        CHECKBOX("vc2", "cb2"),
+                        CHECKBOX("vc3", "cb3", flags=self.ffic.BSTATE_CHECKED),
                     ),
                     #                    TEXT(None, "X"),
                 ),
@@ -121,26 +143,22 @@ class Plugin(PluginBase):
                 ),
             ),
         )
-        # debugpy.breakpoint()
         dlg = b.build(-1, -1)
 
         res = self.info.DialogRun(dlg.hDlg)
         log.debug(
             """\
-ok={} \
+ok={}
 a path=[{}] \
 b path=[{}] \
 allow={} \
 pass=[{}] \
 seconds=[{}] \
-radio1={} \
-radio2={} \
-radio3={} \
-checkbox1={} \
-checkbox2={} \
-checkbox3={} \
+radio1={} radio2={} radio3={} \
+checkbox1={} checkbox2={} checkbox3={} \
 vlist={} \
-vcombo={} \
+vcombo={}
+{}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={} {}={}
 """.format(
                 res == dlg.ID_vok,
                 dlg.GetText(dlg.ID_vapath),
@@ -156,6 +174,21 @@ vcombo={} \
                 dlg.GetCheck(dlg.ID_vc3),
                 dlg.GetCurPos(dlg.ID_vlist),
                 dlg.GetCurPos(dlg.ID_vcombo),
+                "dlg.ID_vapath", dlg.ID_vapath,
+                "dlg.ID_vbpath", dlg.ID_vbpath,
+                "dlg.ID_vallow", dlg.ID_vallow,
+                "dlg.ID_vuserpass", dlg.ID_vuserpass,
+                "dlg.ID_vseconds", dlg.ID_vseconds,
+                "dlg.ID_vr1", dlg.ID_vr1,
+                "dlg.ID_vr2", dlg.ID_vr2,
+                "dlg.ID_vr3", dlg.ID_vr3,
+                "dlg.ID_vc1", dlg.ID_vc1,
+                "dlg.ID_vc2", dlg.ID_vc2,
+                "dlg.ID_vc3", dlg.ID_vc3,
+                "dlg.ID_vlist", dlg.ID_vlist,
+                "dlg.ID_vcombo", dlg.ID_vcombo,
+                "dlg.ID_vok", dlg.ID_vok,
+                "dlg.ID_vcancel", dlg.ID_vcancel,
             )
         )
         self.info.DialogFree(dlg.hDlg)

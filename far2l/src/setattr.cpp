@@ -644,7 +644,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					break;
 				case SA_COMBO_GROUP:
 					SetAttrDefaultMark(hDlg, SA_COMBO_GROUP-1, // mark (un)changed
-						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitOwner) );
+						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitGroup) );
 					break;
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_ACCESS_DATE-1, // mark (un)changed
@@ -1139,11 +1139,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		AttrDlg[SA_FIXEDIT_LAST_ACCESS_TIME].strMask = AttrDlg[SA_FIXEDIT_LAST_MODIFICATION_TIME].strMask =
 				AttrDlg[SA_FIXEDIT_LAST_CHANGE_TIME].strMask = strTMask;
 		bool FolderPresent = false;//, LinkPresent = false;
-		int  FolderCount = 0, Link2FileCount = 0, Link2DirCount = 0;
+		int  FolderCount = 0, Link2FileCount = 0, Link2DirCount = 0, DeviceCount = 0, FSFileFlagsErrno = 0;
 		FARString strLinkName;
 
 		if (SelCount == 1) {
 			FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
+			FSFileFlagsErrno = FFFlags.Errno();
 			if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) {
 				DlgParam.SymlinkButtonTitles[0] = Msg::SetAttrSymlinkObject;
 				DlgParam.SymlinkButtonTitles[1] = Msg::SetAttrSymlinkObjectInfo;
@@ -1165,9 +1166,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevFIFO;
 			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_SOCK)
 				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevSock;
-			else {
+			else
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
-			}
 
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1272,7 +1272,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				SrcPanel->GetSelName(nullptr, FileAttr, FileMode);
 			}
 			FolderPresent = false;
-			FolderCount = 0; Link2FileCount = 0; Link2DirCount = 0;
+			FolderCount = 0; Link2FileCount = 0; Link2DirCount = 0; DeviceCount = 0;
 
 			if (SrcPanel) {
 				FARString strComputerName;
@@ -1299,6 +1299,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					}
 					else if (FileAttr & FILE_ATTRIBUTE_REPARSE_POINT)
 						Link2FileCount++;
+					else if (FileAttr & FILE_ATTRIBUTE_DEVICE)
+						DeviceCount++;
 
 					for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
 						if (FileMode & AP[i].Mode) {
@@ -1309,6 +1311,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 					CheckFileOwnerGroup(AttrDlg[SA_COMBO_GROUP], GetFileGroup, strComputerName, strSelName);
 
 					FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
+					if( FFFlags.Errno() != 0 ) // last errno if was error
+						FSFileFlagsErrno = FFFlags.Errno();
 					if (FFFlags.Immutable())
 						AttrDlg[SA_CHECKBOX_IMMUTABLE].Selected++;
 					if (FFFlags.Append())
@@ -1357,8 +1361,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 			{
 				FARString strTmp, strSep=L" (";
-				int FilesCount = SelCount-FolderCount-Link2FileCount-Link2DirCount;
+				int FilesCount = SelCount-DeviceCount-FolderCount-Link2FileCount-Link2DirCount;
 				strTmp.Format(Msg::SetAttrInfoSelAll, SelCount);
+				if (DeviceCount>0)
+				{ strTmp.AppendFormat(Msg::SetAttrInfoSelDevices, strSep.CPtr(), DeviceCount); strSep=L", "; }
 				if (FolderCount>0)
 				{ strTmp.AppendFormat(Msg::SetAttrInfoSelDirs, strSep.CPtr(), FolderCount); strSep=L", "; }
 				if (FilesCount>0)
@@ -1410,7 +1416,20 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		DlgParam.strOwner = AttrDlg[SA_COMBO_OWNER].strData;
 		DlgParam.strGroup = AttrDlg[SA_COMBO_GROUP].strData;
-		DlgParam.strInitOwner = DlgParam.strOwner; DlgParam.strInitGroup = DlgParam.strGroup;
+		DlgParam.strInitOwner = DlgParam.strOwner;
+		DlgParam.strInitGroup = DlgParam.strGroup;
+
+		// if was error during obtain attributes / flags make it disabled
+		if (FSFileFlagsErrno != 0) {
+			AttrDlg[SA_TEXT_IMMUTABLE_CHMARK].Flags|= DIF_DISABLE;
+			AttrDlg[SA_CHECKBOX_IMMUTABLE].Flags|= DIF_DISABLE;
+			AttrDlg[SA_TEXT_APPEND_CHMARK].Flags|= DIF_DISABLE;
+			AttrDlg[SA_CHECKBOX_APPEND].Flags|= DIF_DISABLE;
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+			AttrDlg[SA_TEXT_HIDDEN_CHMARK].Flags|= DIF_DISABLE;
+			AttrDlg[SA_CHECKBOX_HIDDEN].Flags|= DIF_DISABLE;
+#endif
+		}
 
 		DlgParam.DialogMode = ((SelCount == 1 && !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
 						? MODE_FILE
@@ -1651,7 +1670,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 										}
 									}
 
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileOwner,
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner,
 												SkipMode, strFullName, DlgParam.strInitOwner,
 												DlgParam.OSubfoldersState))
 										break;
@@ -1700,8 +1719,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
-										ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 									}
+									ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 								}
 							}
 						}

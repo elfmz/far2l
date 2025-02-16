@@ -54,6 +54,5 @@ class Plugin(PluginBase):
         log.debug('vtinsert end')
 
     def OpenPlugin(self, OpenFrom):
-        # debugpy.breakpoint()
         self.Perform()
         return -1

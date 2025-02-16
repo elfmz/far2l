@@ -277,6 +277,7 @@ void PanelSettings()
 		AutoUpdateLimit->Indent(4);
 		AutoUpdateText->Indent(4);
 		Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
+		Builder.AddCheckbox(Msg::ConfigClassicHotkeyLinkResolving, &Opt.ClassicHotkeyLinkResolving);
 
 		Builder.AddSeparator();
 		Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);
@@ -674,7 +675,7 @@ void InterfaceSettings()
 
 		int ChangeFontID = -1;
 		DialogItemEx *ChangeFontItem = nullptr;
-		if (supported_tweaks & TWEAK_STATUS_SUPPORT_PAINT_SHARP) {
+		if (supported_tweaks & TWEAK_STATUS_SUPPORT_CHANGE_FONT) {
 			ChangeFontItem = Builder.AddButton(Msg::ConfigConsoleChangeFont, ChangeFontID);
 		}
 

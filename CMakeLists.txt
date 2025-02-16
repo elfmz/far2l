@@ -75,7 +75,7 @@ set(VERSION_PATCH "${VERSION_PATCH}-beta")
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -141,7 +141,7 @@ endif()
 
 if(${CMAKE_VERSION} VERSION_LESS "3.1.0")
     message("Please consider to switch to newer CMake")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
 
 if("${ICU_MODE}" STREQUAL "runtime")
@@ -453,6 +453,13 @@ if (NOT DEFINED NETROCKS OR NETROCKS)
     else()
         message(WARNING "${ColorRed}libneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${ColorNormal}")
     endif(LIBNEON_FOUND)
+
+    find_package(AWSSDK QUIET COMPONENTS s3)
+    if(AWSSDK_FOUND)
+        message(STATUS "aws-sdk-cpp found -> enjoy AWS s3 support in NetRocks")
+    else()
+        message(WARNING "${ColorRed}aws-sdk-cpp not found, NetRocks will not have AWS S3 protocol support. Install aws-sdk-cpp if you want AWS S3 protocol available in NetRocks.${ColorNormal}")
+    endif(AWSSDK_FOUND)
 
     add_subdirectory (NetRocks)
 else()

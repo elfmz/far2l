@@ -11,6 +11,7 @@ void ConfigureProtocolWebDAV(std::string &options);
 void ConfigureProtocolWebDAVs(std::string &options);
 void ConfigureProtocolFile(std::string &options);
 void ConfigureProtocolSHELL(std::string &options);
+void ConfigureProtocolAWS(std::string &options);
 
 static ProtocolInfo s_protocols[] = {
 #ifdef HAVE_SFTP
@@ -37,9 +38,14 @@ static ProtocolInfo s_protocols[] = {
 	{ "davs", "NetRocks-WebDAV", 443, true, true, true, ConfigureProtocolWebDAVs},
 #endif
 
+#ifdef HAVE_AWS
+	{ "aws", "NetRocks-AWS", 443, true, true, false, ConfigureProtocolAWS},
+#endif
+
 	{ "file", "NetRocks-FILE", 0, false, true, false, nullptr},
 	{ }
 };
+
 
 const ProtocolInfo *ProtocolInfoHead()
 {

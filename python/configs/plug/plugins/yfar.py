@@ -246,7 +246,7 @@ class _Editor:
         """
         p = self._plugin
         size = self._control(p.ffic.ECTL_GETFILENAME, p.ffi.NULL)
-        fn = p.ffi.new('wchar_t []', size + 1)
+        fn = p.ffi.new('wchar_t []', size)
         self._control(p.ffic.ECTL_GETFILENAME, fn)
         return p.f2s(fn)
 
@@ -385,9 +385,11 @@ class FarPlugin(PluginBase):
         # note: needs to be at least 2 items, otherwise message 
         # box is not shown
         citems = self.ffi.new('wchar_t *[]', items)
-        self.info.Message(
+        if not flags:
+            flags = self.ffic.FMSG_MB_OK
+        return self.info.Message(
             self.info.ModuleNumber,  # GUID
-            flags | self.ffic.FMSG_MB_OK,  # Flags
+            flags,  # Flags
             self.ffi.NULL,  # HelpTopic
             citems, len(citems), 1,  # ButtonsNumber
         )

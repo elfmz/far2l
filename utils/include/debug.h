@@ -185,7 +185,7 @@ namespace Dumper {
 			DumpValue(log_stream, var_name, std::wstring(value, size));
 		} else if constexpr (std::is_same_v<std::remove_cv_t<CharT>, unsigned char>) {
 			DumpValue(log_stream, var_name, std::string(reinterpret_cast<const char*>(value), size));
-		} else { // тип char
+		} else {
 			DumpValue(log_stream, var_name, std::string(value, size));
 		}
 	}
@@ -205,19 +205,19 @@ namespace Dumper {
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const BufferWrapper<T>& buffer)
+		const BufferWrapper<T>& buffer_wrapper)
 	{
-		if (buffer.data == nullptr) {
+		if (buffer_wrapper.data == nullptr) {
 			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
 			return;
 		}
 
 		if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
 					  std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
-			std::string str_value ((char*)buffer.data, buffer.length);
+			std::string str_value ((char*)buffer_wrapper.data, buffer_wrapper.length);
 			DumpValue(log_stream, var_name, str_value);
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
-			std::wstring wstr_value (buffer.data, buffer.length);
+			std::wstring wstr_value (buffer_wrapper.data, buffer_wrapper.length);
 			DumpValue(log_stream, var_name, wstr_value);
 		} else {
 			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;

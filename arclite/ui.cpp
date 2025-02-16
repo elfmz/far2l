@@ -497,7 +497,7 @@ struct ExportProfile
 
 typedef std::vector<ExportProfile> ExportProfiles;
 
-static const wchar_t kPosixTypes[16 + 1] = L"0pc3d5b7-9lBsDEF";
+//static const wchar_t kPosixTypes[16 + 1] = L"0pc3d5b7-9lBsDEF";
 #define ATTR_CHAR(a, n, c) (((a) & (1 << (n))) ? c : L'-')
 
 static void format_posix_attrib(wchar_t *attr, uint32_t val)
@@ -836,9 +836,9 @@ private:
 
 	int export_file_attributes_ctrl_id;
 	int custom_file_attributes_ctrl_id;
-	int but_file_attributes_ctrl_id;
+//	int but_file_attributes_ctrl_id;
 	int label_file_attributes_ctrl_id;
-	int file_attributes_ctrl_id;
+//	int file_attributes_ctrl_id;
 	bool bFileAttributes = true;
 
 	int export_file_descriptions_ctrl_id;

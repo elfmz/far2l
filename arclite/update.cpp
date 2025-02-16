@@ -10,9 +10,11 @@
 #include "options.hpp"
 #include "sfx.hpp"
 
-// for major minor:
-// BSD: <sys/types.h>
-#include <sys/sysmacros.h>
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/types.h>
+#else
+#include <sys/sysmacros.h>	  // major / minor
+#endif
 
 static std::wstring format_time(UInt64 t)
 {

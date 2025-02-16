@@ -522,6 +522,7 @@ struct Options
 	FARString strLanguage;
 	int SmallIcon;
 	FARString strRegRoot;
+	int ClassicHotkeyLinkResolving;
 	int PanelRightClickRule;	// задает поведение правой клавиши мыши
 	int PanelCtrlAltShiftRule;	// задает поведение Ctrl-Alt-Shift для панелей.
 	// Panel/CtrlFRule в реестре - задает поведение Ctrl-F. Если = 0, то штампуется файл как есть, иначе - с учетом отображения на панели

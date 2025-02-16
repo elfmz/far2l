@@ -229,10 +229,10 @@ struct ExportOptions
 
 	bool export_unix_device;
 	bool custom_unix_device;
-    uint64_t UnixDevice;
+	uint64_t UnixDevice;
 	bool export_unix_mode;
 	bool custom_unix_mode;
-    uint64_t UnixNode;
+	uint64_t UnixNode;
 
 	bool export_file_attributes;
     DWORD dwExportAttributesMask;

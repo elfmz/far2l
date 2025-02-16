@@ -432,10 +432,10 @@ static void save_export_options(OptionsKey &key, const ExportOptions &export_opt
 	SET_VALUE(Group, str);
 	SET_VALUE(export_unix_device, bool);
 	SET_VALUE(custom_unix_device, bool);
-	SET_VALUE(UnixDevice, int);
+	SET_VALUE(UnixDevice, int64);
 	SET_VALUE(export_unix_mode, bool);
 	SET_VALUE(custom_unix_mode, bool);
-	SET_VALUE(UnixNode, int);
+	SET_VALUE(UnixNode, int64);
 	SET_VALUE(export_file_attributes, bool);
 	SET_VALUE(dwExportAttributesMask, int);
 	SET_VALUE(custom_file_attributes, bool);

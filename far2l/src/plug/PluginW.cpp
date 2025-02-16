@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "cmdline.hpp"
 #include "filepanels.hpp"
+#include "fileattr.hpp"
 #include "panel.hpp"
 #include "vmenu.hpp"
 #include "dialog.hpp"
@@ -66,8 +67,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <list>
 #include <vector>
 #include <KeyFileHelper.h>
+#include <fileowner.hpp>
+
+#include "datetime.hpp"
 
 #include "farversion.h"
+
 
 static const char *szCache_Preload = "Preload";
 static const char *szCache_Preopen = "Preopen";
@@ -389,11 +394,229 @@ static size_t WINAPI farStrCellsCount(const wchar_t *Str, size_t CharsCount)
 	return StrCellsCount(Str, CharsCount);
 }
 
-static size_t WINAPI
-farStrSizeOfCells(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp)
+static size_t WINAPI farStrSizeOfCells(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp)
 {
 	return StrSizeOfCells(Str, CharsCount, *CellsCount, RoundUp != FALSE);
 }
+
+static BOOL farsdc_lstat(const wchar_t *lpwszFileName, void *_s)
+{
+	struct stat *s = (struct stat *)_s;
+	int r = sdc_lstat(Wide2MB(lpwszFileName).c_str(), s);
+	if (r == -1) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static int WINAPI farESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
+{
+	return ESetFileMode(Name, Mode, SkipMode);
+}
+
+static int WINAPI farESetFileTime(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime, DWORD FileAttr, int SkipMode)
+{
+	return ESetFileTime(Name, AccessTime, ModifyTime, FileAttr, SkipMode);
+}
+
+static int WINAPI farESetFileGroup(const wchar_t *Name, const wchar_t *Group, int SkipMode)
+{
+	return ESetFileGroup(Name, Group, SkipMode);
+}
+
+static int WINAPI farESetFileOwner(const wchar_t *Name, const wchar_t *Owner, int SkipMode)
+{
+	return ESetFileOwner(Name, Owner, SkipMode);
+}
+
+static const char *WINAPI farOwnerNameByID(uid_t id)
+{
+	return OwnerNameByID(id);
+}
+
+static const char *WINAPI farGroupNameByID(uid_t id)
+{
+	return GroupNameByID(id);
+}
+
+static size_t WINAPI farReadLink(const char *path, char *buf, size_t bufsiz)
+{
+//Wide2MB(Symbol).c_str()
+	return sdc_readlink(path, buf, bufsiz);
+}
+
+
+static BOOL farGetFindData(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindDataW)
+{
+	FAR_FIND_DATA_EX FindDataEx;
+
+	if (!apiGetFindDataForExactPathName(lpwszFileName, FindDataEx))
+		return FALSE;
+
+	if (FindDataEx.strFileName.GetLength() >= MAX_NAME)
+		return FALSE;
+
+	FindDataW->ftCreationTime = FindDataEx.ftCreationTime;
+	FindDataW->ftLastAccessTime = FindDataEx.ftLastAccessTime;
+	FindDataW->ftLastWriteTime = FindDataEx.ftLastWriteTime;
+
+	FindDataW->UnixOwner = FindDataEx.UnixOwner;
+	FindDataW->UnixGroup = FindDataEx.UnixGroup;
+	FindDataW->UnixDevice = FindDataEx.UnixDevice;
+	FindDataW->UnixNode = FindDataEx.UnixNode;
+	FindDataW->dwFileAttributes = FindDataEx.dwFileAttributes;
+	FindDataW->nFileSize = FindDataEx.nFileSize;
+	FindDataW->dwUnixMode = FindDataEx.dwUnixMode;
+	FindDataW->nHardLinks = FindDataEx.nHardLinks;
+	FindDataW->nBlockSize = FindDataEx.nBlockSize;
+
+	memcpy(FindDataW->cFileName, FindDataEx.strFileName.GetBuffer(), sizeof(WCHAR) * (FindDataEx.strFileName.GetLength() + 1) );
+
+/**
+typedef struct _WIN32_FIND_DATAW {
+    FILETIME ftCreationTime;
+    FILETIME ftLastAccessTime;
+    FILETIME ftLastWriteTime;
+    uid_t UnixOwner;
+    gid_t UnixGroup;
+    DWORD64 UnixDevice;
+    DWORD64 UnixNode;
+    DWORD64 nPhysicalSize;
+    DWORD64 nFileSize;
+    DWORD dwFileAttributes;
+    DWORD dwUnixMode;
+    DWORD nHardLinks;
+    DWORD nBlockSize;
+    WCHAR cFileName[ MAX_NAME ];
+} WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
+**/
+
+	return TRUE;
+}
+
+//static size_t WINAPI farReadLink(const char *path, char *buf, size_t bufsiz)
+//{
+//Wide2MB(Symbol).c_str()
+//	return sdc_readlink(path, buf, bufsiz);
+//}
+
+static int WINAPI farGetDateFormat() {return GetDateFormat();}
+static wchar_t WINAPI farGetDateSeparator() {return GetDateSeparator();}
+static wchar_t WINAPI farGetTimeSeparator() {return GetTimeSeparator();}
+static wchar_t WINAPI farGetDecimalSeparator() {return GetDecimalSeparator();}
+
+
+//int GetDateFormat()
+//wchar_t GetDateSeparator()
+//wchar_t GetTimeSeparator()
+
+
+
+
+/**
+static BOOL farGetFindData(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX &FindData)
+
+BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindDataW)
+{
+	struct stat s{};
+	int r = sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
+	if (r == -1) {
+		return FALSE;
+	}
+
+	FindData.Clear();
+
+	FindData.nPhysicalSize = ((DWORD64)s.st_blocks) * 512;
+
+	DWORD symattr = 0;
+	if ((s.st_mode & S_IFMT) == S_IFLNK) {
+		struct stat s2
+		{};
+		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s2) == 0) {
+			s = s2;
+			symattr = FILE_ATTRIBUTE_REPARSE_POINT;
+		} else {
+			symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+		}
+	}
+
+	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
+	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
+	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
+	FindData.ftChangeTime = FindData.ftLastWriteTime;
+	FindData.UnixOwner = s.st_uid;
+	FindData.UnixGroup = s.st_gid;
+	FindData.UnixDevice = s.st_dev;
+	FindData.UnixNode = s.st_ino;
+	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName) | symattr;
+	FindData.nFileSize = s.st_size;
+	FindData.dwUnixMode = s.st_mode;
+	FindData.nHardLinks = (DWORD)s.st_nlink;
+	FindData.nBlockSize = (DWORD)s.st_blksize;
+	FindData.strFileName = PointToName(lpwszFileName);
+
+	if (FindData.nHardLinks > 1)
+		FindData.dwFileAttributes |= FILE_ATTRIBUTE_HARDLINKS;
+
+	return TRUE;
+}
+
+
+typedef struct _WIN32_FIND_DATAW {
+    FILETIME ftCreationTime;
+    FILETIME ftLastAccessTime;
+    FILETIME ftLastWriteTime;
+    uid_t UnixOwner;
+    gid_t UnixGroup;
+    DWORD64 UnixDevice;
+    DWORD64 UnixNode;
+    DWORD64 nPhysicalSize;
+    DWORD64 nFileSize;
+    DWORD dwFileAttributes;
+    DWORD dwUnixMode;
+    DWORD nHardLinks;
+    DWORD nBlockSize;
+    WCHAR cFileName[ MAX_NAME ];
+} WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
+**/
+
+//static size_t WINAPI farSymLink(const char *path1, const char *path2)
+//{
+//Wide2MB(Symbol).c_str()
+//	return sdc_symlink(path1, path2);
+//}
+
+//	sdc_unlink(strSelName.GetMB().c_str());
+//	r = sdc_symlink(DlgParam.SymLink.GetMB().c_str(), strSelName.GetMB().c_str());
+
+
+
+/**
+
+extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_readlink(const char *path, char *buf, size_t bufsiz)
+
+const char *OwnerNameByID(uid_t id)
+{
+	struct passwd *pw = getpwuid(id);
+	if (!pw) {
+		perror("OwnerNameByID");
+		return NULL;
+	}
+	return pw->pw_name;
+}
+
+const char *GroupNameByID(gid_t id)
+{
+	struct group *gr = getgrgid(id);
+	if (!gr) {
+		perror("GroupNameByID");
+		return NULL;
+	}
+	return gr->gr_name;
+}
+**/
 
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
@@ -443,7 +666,6 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.FarNameToKey = KeyNameToKeyW;
 		StandardFunctions.FarInputRecordToKey = InputRecordToKey;
 		StandardFunctions.XLat = Xlat;
-		StandardFunctions.GetFileOwner = farGetFileOwner;
 		StandardFunctions.GetNumberOfLinks = GetNumberOfLinks;
 		StandardFunctions.FarRecursiveSearch = FarRecursiveSearch;
 		StandardFunctions.MkTemp = FarMkTemp;
@@ -462,6 +684,22 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.StrSizeOfCells = farStrSizeOfCells;
 		StandardFunctions.VTEnumBackground = farAPIVTEnumBackground;
 		StandardFunctions.VTLogExport = farAPIVTLogExportW;
+
+		StandardFunctions.GetFileOwner = farGetFileOwner;
+		StandardFunctions.GetFileGroup = farGetFileGroup;
+		StandardFunctions.ESetFileMode = farESetFileMode;
+		StandardFunctions.ESetFileTime = farESetFileTime;
+		StandardFunctions.ESetFileGroup = farESetFileGroup;
+		StandardFunctions.ESetFileOwner = farESetFileOwner;
+		StandardFunctions.OwnerNameByID = farOwnerNameByID;
+		StandardFunctions.GroupNameByID = farGroupNameByID;
+		StandardFunctions.ReadLink = farReadLink;
+		StandardFunctions.sdc_lstat = farsdc_lstat;
+		StandardFunctions.GetFindData = farGetFindData;
+		StandardFunctions.GetDateFormat = farGetDateFormat;
+		StandardFunctions.GetDateSeparator = farGetDateSeparator;
+		StandardFunctions.GetTimeSeparator = farGetTimeSeparator;
+		StandardFunctions.GetDecimalSeparator = farGetDecimalSeparator;
 	}
 
 	if (!StartupInfo.StructSize) {
@@ -484,6 +722,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StartupInfo.ViewerControl = FarViewerControl;
 		StartupInfo.ShowHelp = FarShowHelp;
 		StartupInfo.AdvControl = FarAdvControl;
+		StartupInfo.AdvControlAsync = FarAdvControlAsync;
 		StartupInfo.DialogInit = FarDialogInit;
 		StartupInfo.DialogRun = FarDialogRun;
 		StartupInfo.DialogFree = FarDialogFree;
@@ -621,7 +860,8 @@ bool PluginW::IsPanelPlugin()
 			|| pClosePluginW;
 }
 
-int PluginW::Analyse(const AnalyseData *pData)
+//int PluginW::Analyse(const AnalyseInfo *pData)
+HANDLE PluginW::Analyse(const AnalyseInfo *pData)
 {
 	if (Load() && pAnalyseW) {
 		ExecuteStruct es;
@@ -629,10 +869,11 @@ int PluginW::Analyse(const AnalyseData *pData)
 		es.bDefaultResult = FALSE;
 		es.bResult = FALSE;
 		EXECUTE_FUNCTION_EX(pAnalyseW(pData), es);
-		return es.bResult;
+//		return es.bResult;
+		return es.hResult;
 	}
 
-	return FALSE;
+	return INVALID_HANDLE_VALUE;
 }
 
 HANDLE PluginW::OpenPlugin(int OpenFrom, INT_PTR Item)

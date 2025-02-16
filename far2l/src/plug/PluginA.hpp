@@ -219,7 +219,7 @@ public:
 	}
 #endif
 
-	int Analyse(const AnalyseData *pData) { return FALSE; }
+	HANDLE Analyse(const AnalyseInfo *pData) { return FALSE; }
 
 	bool GetPluginInfo(PluginInfo *pi);
 	int Configure(int MenuItem);

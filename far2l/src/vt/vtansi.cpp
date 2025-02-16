@@ -841,19 +841,20 @@ struct VTAnsiContext
 
 			// kitty keys stuff
 
-			if (suffix == 'u') {
+			// proceed only if mode is not specified or specified as 1 (default)
+			// we do not support other modes currently
+			if ((suffix == 'u') && ((es_argc < 2) || (es_argv[1] == 1))) {
 				if (prefix2 == '=') {
-					// assuming mode always 1; we do not support other modes currently
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
 					return;
 
 				} else if (prefix2 == '>') {
-					// assuming mode always 1; we do not support other modes currently
+					// we do not support flags stack currently, just set new mode
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
 					return;
 
 				} else if (prefix2 == '<') {
-					// we do not support mode stack currently, just reset flags
+					// we do not support flags stack currently, just reset flags
 					vt_shell->SetKittyFlags(0);
 					return;
 

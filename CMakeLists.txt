@@ -459,7 +459,7 @@ if (NOT DEFINED NETROCKS OR NETROCKS)
         message(STATUS "aws-sdk-cpp found -> enjoy AWS s3 support in NetRocks")
     else()
         message(WARNING "${ColorRed}aws-sdk-cpp not found, NetRocks will not have AWS S3 protocol support. Install aws-sdk-cpp if you want AWS S3 protocol available in NetRocks.${ColorNormal}")
-    endif(LIBNEON_FOUND)
+    endif(AWSSDK_FOUND)
 
     add_subdirectory (NetRocks)
 else()

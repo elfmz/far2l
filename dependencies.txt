@@ -2,7 +2,7 @@ cmake
 g++
 pkg-config
 
-libwxgtk3.0-gtk3-dev
+libwxgtk3.2-dev
 libx11-dev
 libxi-dev
 

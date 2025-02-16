@@ -212,6 +212,12 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	int base_char = params[0][2] ? params[0][2] : params[0][0];
+
+	// fix for xterm in ModifyOtherKeys=2 formatOtherKeys=1 mode
+	if (base_char <= UCHAR_MAX && isalpha(base_char)) {
+		base_char = tolower(base_char);
+	}
+
 	if (base_char <= UCHAR_MAX && isalpha(base_char)) {
 		ir.Event.KeyEvent.wVirtualKeyCode = (base_char - 'a') + 0x41;
 	}

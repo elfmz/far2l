@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
 #include "processname.hpp"
 #include "pathmix.hpp"
@@ -1575,6 +1575,11 @@ void VMenu::DisplayObject()
 			SaveScr = new SaveScreen(X1 - 2, Y1 - 1, X2 + 4, Y2 + 2);
 		else
 			SaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
+	}
+
+	if (!CheckFlags(VMENU_LISTBOX)) {
+		DrawTitles();
+		WaitInMainLoop = FALSE;
 	}
 
 	ShowMenu(true, true);

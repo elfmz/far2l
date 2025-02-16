@@ -52,7 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hilight.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "message.hpp"
 #include "stddlg.hpp"
 #include "pathmix.hpp"
@@ -124,8 +124,8 @@ static constexpr const char *NSecVMenu = "VMenu";
 static FARString strKeyNameConsoleDetachKey;
 
 const ConfigOpt g_cfg_opts[] {
-	{false, NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, (BYTE *)Palette8bit, nullptr},
-	{true,  NSecColors, "CurrentPaletteRGB", SIZE_ARRAY_PALETTE * sizeof(uint64_t), (BYTE *)Palette, nullptr},
+//	{false, NSecColors, "CurrentPalette", SIZE_ARRAY_PALETTE, (BYTE *)Palette8bit, nullptr},
+//	{true,  NSecColors, "CurrentPaletteRGB", SIZE_ARRAY_PALETTE * sizeof(uint64_t), (BYTE *)Palette, nullptr},
 	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, nullptr},
 	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
@@ -397,6 +397,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "DirNameStyle", &Opt.DirNameStyle, 0 },
 	{true,  NSecPanel, "DirNameStyleColumnWidthAlways", &Opt.DirNameStyleColumnWidthAlways, 0 },
 	{true,  NSecPanel, "ShowSymlinkSize", &Opt.ShowSymlinkSize, 0},
+	{true,  NSecPanel, "ClassicHotkeyLinkResolving", &Opt.ClassicHotkeyLinkResolving, 1},
 
 	{true,  NSecPanelLeft, "Type", &Opt.LeftPanel.Type, 0},
 	{true,  NSecPanelLeft, "Visible", &Opt.LeftPanel.Visible, 1},
@@ -823,5 +824,6 @@ void ConfigOptSave(bool Ask)
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();
 
+	FarColors::SaveFarColors();
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }

@@ -4,8 +4,6 @@ import ctypes as ct
 from far2l.plugin import PluginBase
 import far2lc
 
-import debugpy
-
 
 log = logging.getLogger(__name__)
 
@@ -14,7 +12,29 @@ class Plugin(PluginBase):
     label = "Python ED Indent"
     openFrom = ["PLUGINSMENU", "EDITOR"]
 
-    def Perform(self, indent_dedent):
+    def OpenPlugin(self, OpenFrom):
+        return 0
+
+    def ProcessEditorInput(self, Rec):
+        rec = ffi.cast("INPUT_RECORD *", Rec)
+
+        if (
+            rec.EventType != ffic.KEY_EVENT
+            or not rec.Event.KeyEvent.bKeyDown
+            or (rec.Event.KeyEvent.wVirtualKeyCode != self.ffic.VK_TAB)
+            or (rec.Event.KeyEvent.dwControlKeyState & (
+                self.ffic.RIGHT_ALT_PRESSED
+                | self.ffic.LEFT_ALT_PRESSED
+                | self.ffic.RIGHT_CTRL_PRESSED
+                | self.ffic.LEFT_CTRL_PRESSED
+            ))
+        ):
+            return 0
+        indent = (rec.Event.KeyEvent.dwControlKeyState & (self.ffic.SHIFT_PRESSED)) != 0
+        self.Perform(indent)
+        return 1
+
+    def Perform(self, indent):
         ei = self.ffi.new("struct EditorInfo *")
         self.info.EditorControl(self.ffic.ECTL_GETINFO, ei)
 
@@ -61,7 +81,7 @@ class Plugin(PluginBase):
                 es.BlockHeight = line - ei.BlockStartLine + 1
                 self.info.EditorControl(self.ffic.ECTL_SELECT, es)
 
-            if indent_dedent:
+            if indent:
                 self.info.EditorControl(self.ffic.ECTL_INSERTTEXT, fIndentStr)
             else:
                 if egs.StringText[0] == '\t':
@@ -79,22 +99,3 @@ class Plugin(PluginBase):
         self.info.EditorControl(self.ffic.ECTL_UNDOREDO, eur)
 
         self.info.EditorControl(self.ffic.ECTL_REDRAW, self.ffi.NULL)
-
-    def OpenPlugin(self, OpenFrom):
-        return 0
-
-    @staticmethod
-    def ProcessEditorInput(parent, info, ffi, ffic, Rec):
-        rec = ffi.cast("INPUT_RECORD *", Rec)
-
-        if (
-            rec.EventType != ffic.KEY_EVENT
-            or not rec.Event.KeyEvent.bKeyDown
-            or (rec.Event.KeyEvent.wVirtualKeyCode & 0x7FFF) != 9
-            or (rec.Event.KeyEvent.dwControlKeyState & (ffic.RIGHT_ALT_PRESSED | ffic.LEFT_ALT_PRESSED | ffic.RIGHT_CTRL_PRESSED | ffic.LEFT_CTRL_PRESSED))
-        ):
-            return 0
-        indent_dedent = (rec.Event.KeyEvent.dwControlKeyState & (ffic.SHIFT_PRESSED)) == 0
-        inst = Plugin(parent, info, ffi, ffic)
-        inst.Perform(indent_dedent)
-        return 1

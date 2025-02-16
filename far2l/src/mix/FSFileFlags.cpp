@@ -18,8 +18,9 @@ FSFileFlags::FSFileFlags(const std::string &path)
 	if (sdc_fs_flags_get(path.c_str(), &_flags) == 0) {
 		_valid = true;
 		_actual_flags = _flags;
-
+		_errno = 0;
 	} else {
+		_errno = errno;
 		fprintf(stderr, "FSFileFlags: error %d; path='%s'\n", errno, path.c_str());
 	}
 }
@@ -27,17 +28,21 @@ FSFileFlags::FSFileFlags(const std::string &path)
 void FSFileFlags::Apply(const std::string &path, bool force)
 {
 	if (!_valid) {
+		_errno = -1;
 		fprintf(stderr, "FSFileFlags::Apply: not valid; path='%s'\n", path.c_str());
 
 	} else if (_flags != _actual_flags || force) {
 		if (sdc_fs_flags_set(path.c_str(), _flags) == 0) {
 			_actual_flags = _flags;
+			_errno = 0;
 			fprintf(stderr, "FSFileFlags::Apply: OK; path='%s'\n", path.c_str());
 
 		} else {
+			_errno = errno;
 			fprintf(stderr, "FSFileFlags::Apply: error %d; path='%s'\n", errno, path.c_str());
 		}
-	}
+	} else
+		_errno = 0;
 }
 
 ////////

@@ -13,9 +13,21 @@ a) the plugins are loaded with the command "py:load filename" for example py:loa
 b) unloading the plugin is done with the command "py:unload filename" for example py:unload ucharmap
 
 D. Examples
-a) ucharmap.py - an example plugin showing part of the UTF-8 character set
+a) ucharmap.py - an example plugin showing whole UTF-8 character set
     F11 + "Python Character Map" - display its dialog
-    after pressing Enter/OK selected character is coppied into clipboard
+    Offset - position in the character set
+    Goto - change position - decimal or hexadecimal number or 1 character is allowed, valid range is <0x0000-0xffff>
+    Keys:
+        Home = goto first visible offset
+        PgUp = prevoius page
+        PgDn = next page
+        Left = prevoius character in row
+        Right = next character in row
+        Up = prevoius row
+        Down = next row
+        ENTER/OK = copy character at aooset into clipboard
+    Mouse:
+        Click - select character at pointer position
 b) udialog.py - plugin with two examples, dialog and command line extensions "py:dialog" and "py:exec python.script.goes.here"
     F11 + "Python udialog" - will display the first dialog
     py:dialog - will display a second dialog with one input element

@@ -34,20 +34,45 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <WinCompat.h>
+#include <utils.h>
+#include <KeyFileHelper.h>
+#include "color.hpp"
 
-#define SIZE_ARRAY_PALETTE 147
-
-extern uint8_t DefaultPalette8bit[SIZE_ARRAY_PALETTE];
-extern uint8_t Palette8bit[SIZE_ARRAY_PALETTE];
-extern uint8_t BlackPalette8bit[SIZE_ARRAY_PALETTE];
-
-extern uint64_t Palette[SIZE_ARRAY_PALETTE];
-
-inline uint64_t FarColorToReal(unsigned int FarColor)
+class Palette : NonCopyable
 {
-	return (FarColor < SIZE_ARRAY_PALETTE) ? Palette[FarColor] : 4 * 16 + 15;
-}
 
-void ZeroFarPalette( void );
-void InitFarPalette( void );
-void ConvertCurrentPalette();
+public:
+
+	union {
+		rgbcolor_t palbuff[32];
+		struct {
+			rgbcolor_t background[16];
+			rgbcolor_t foreground[16];
+		};
+	};
+
+//    static rgbcolor_t cur_palette[32];
+    static Palette FARPalette;
+
+	Palette() noexcept;
+	~Palette() noexcept;
+
+	static void InitFarPalette( ) noexcept;
+
+	void Set();
+	bool Load(KeyFileHelper &kfh) noexcept;
+	bool Save(KeyFileHelper &kfh) noexcept;
+	void ResetToDefault() noexcept;
+//	bool GammaChanged;
+
+	const rgbcolor_t &operator[](size_t const Index) const
+	{
+		return palbuff[Index];
+	}
+
+	size_t size() const
+	{
+		return 32;
+	}
+
+};

@@ -53,9 +53,7 @@ from .plugin import PluginBase
 #     py:load <python modulename>
 #     py:unload <registered python module name>
 
-from .far2lcffi import ffi
-
-ffic = ffi.dlopen(None)
+from .far2lcffi import ffi, ffic
 
 
 class PluginManager:
@@ -83,6 +81,10 @@ class PluginManager:
     @handle_error
     def pluginRemove(self, name):
         log.debug("remove plugin: {0}".format(name))
+        for hplugin, plugin in self.openplugins.items():
+            if plugin.name == name:
+                del self.openplugins[hplugin]
+                break
         for i in range(len(self.plugins)):
             if self.plugins[i].Plugin.name == name:
                 del self.plugins[i]
@@ -139,6 +141,7 @@ class PluginManager:
             ffic.OPEN_SHORTCUT: "SHORTCUT",
             ffic.OPEN_COMMANDLINE: "COMMANDLINE",
             ffic.OPEN_EDITOR: "EDITOR",
+            ffic.OPEN_DIALOG: "DIALOG",
             ffic.OPEN_VIEWER: "VIEWER",
             ffic.OPEN_FILEPANEL: "FILEPANEL",
         }
@@ -156,9 +159,49 @@ class PluginManager:
                     if not Item:
                         return plugin
                     Item -= 1
+        elif OpenFrom == ffic.OPEN_DIALOG:
+            plugins = []
+            for plugin in self.plugins:
+                openFrom = plugin.Plugin.openFrom
+                log.debug(
+                    "pluginGetFrom(openok={0}, no={1} : {2})".format(
+                        name in openFrom, Item, plugin.Plugin.name
+                    )
+                )
+                if name in openFrom:
+                    plugins.append(plugin)
+            if len(plugins) == 1:
+                plugin = plugins[0]
+            elif len(plugins) > 1:
+                names = [p.name for p in plugins]
+                n = self.menu(names, 'Select plugin')
+                plugin = plugins[n]
+            else:
+                return None
+            return plugin
         elif Item < len(self.plugins):
             return self.plugins[Item]
         return None
+
+    def menu(self, names, title='', selected=0):
+        """
+        Simple menu. ``names`` is a list of items. Optional
+        ``title`` can be provided.
+        """
+        items = self.ffi.new('struct FarMenuItem []', len(names))
+        refs = []
+        for i, name in enumerate(names):
+            item = items[i]
+            item.Checked = item.Separator = 0
+            item.Selected = i == selected
+            item.Text = txt = self.s2f(name)
+            refs.append(txt)
+        title = self.s2f(title)
+        NULL = self.ffi.NULL
+        return self.info.Menu(self.info.ModuleNumber, -1, -1, 0, 
+                              self.ffic.FMENU_AUTOHIGHLIGHT
+                              | self.ffic.FMENU_WRAPMODE, title,
+                              NULL, NULL, NULL, NULL, items, len(items));
 
     def s2f(self, s):
         return self.ffi.new("wchar_t []", s)
@@ -306,40 +349,40 @@ class PluginManager:
 
     @handle_error
     def ProcessDialogEvent(self, Event, Param):
-        for plugin in self.plugins:
-            rc = plugin.Plugin.ProcessDialogEvent(self, self.info, ffi, ffic, Event, Param)
+        for hplugin, plugin in self.openplugins.items():
+            rc = plugin.ProcessDialogEvent(Event, Param)
             if rc:
                 return rc
         return 0
 
     @handle_error
     def ProcessEditorEvent(self, Event, Param):
-        for plugin in self.plugins:
-            rc = plugin.Plugin.ProcessEditorEvent(self, self.info, ffi, ffic, Event, Param)
+        for hplugin, plugin in self.openplugins.items():
+            rc = plugin.ProcessEditorEvent(Event, Param)
             if rc:
                 return rc
         return 0
 
     @handle_error
     def ProcessEditorInput(self, Rec):
-        for plugin in self.plugins:
-            rc = plugin.Plugin.ProcessEditorInput(self, self.info, ffi, ffic, Rec)
+        for hplugin, plugin in self.openplugins.items():
+            rc = plugin.ProcessEditorInput(Rec)
             if rc:
                 return rc
         return 0
 
     @handle_error
     def ProcessSynchroEvent(self, Event, Param):
-        for plugin in self.plugins:
-            rc = plugin.Plugin.ProcessSynchroEvent(self, self.info, ffi, ffic, Event, Param)
+        for hplugin, plugin in self.openplugins.items():
+            rc = plugin.ProcessSynchroEvent(Event, Param)
             if rc:
                 return rc
         return 0
 
     @handle_error
     def ProcessViewerEvent(self, Event, Param):
-        for plugin in self.plugins:
-            rc = plugin.Plugin.ProcessViewerEvent(self, self.info, ffi, ffic, Event, Param)
+        for hplugin, plugin in self.openplugins.items():
+            rc = plugin.ProcessViewerEvent(Event, Param)
             if rc:
                 return rc
         return 0

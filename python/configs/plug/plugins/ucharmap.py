@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class Plugin(PluginBase):
     label = "Python Character Map"
-    openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
+    openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER", "DIALOG"]
 
     def OpenPlugin(self, OpenFrom):
         try:

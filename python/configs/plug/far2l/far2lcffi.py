@@ -4,7 +4,7 @@ import re
 import cffi
 ffi = cffi.FFI()
 
-__all__ = ["ffi"]
+__all__ = ["ffi", "ffic"]
 
 def convert():
     with open(os.path.join(os.path.dirname(__file__), 'far2lcffi.h'), 'rt') as fp:
@@ -32,3 +32,12 @@ def convert():
         data = data[i+1:]
 
 convert()
+
+ffi.cdef('''
+wchar_t *wcsdup(wchar_t *src);
+void *calloc(size_t size, size_t count);
+void *malloc(size_t size);
+void free(void *ptr);
+''')
+
+ffic = ffi.dlopen(None)

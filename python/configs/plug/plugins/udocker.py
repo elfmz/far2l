@@ -4,6 +4,7 @@ import time
 import logging
 
 from far2l.plugin import PluginVFS
+from far2l.farprogress import ProgressMessage
 from far2l.fardialogbuilder import (
     Spacer,
     TEXT,
@@ -317,10 +318,14 @@ class Plugin(PluginVFS):
         # TODO dialog with copy parameters
         # TODO progress dialog
         # TODO copy in background
+
+        t = ProgressMessage(self, "Progress demo", "Please wait ... working", 100)
+        t.show()
         DestPath = self.ffi.cast("wchar_t **", DestPath)
         dpath = self.ffi.string(DestPath[0])
         # log.debug('GetFiles: {} {} OpMode={}'.format(ItemsNumber, OpMode, dpath))
         for i in range(ItemsNumber):
+            t.update(i)
             name = self.f2s(items[i].FindData.lpwszFileName)
             if name in (".", ".."):
                 continue
@@ -330,9 +335,11 @@ class Plugin(PluginVFS):
             try:
                 self.devGetFile(sqname, dqname)
             except Exception as ex:
+                t.close()
                 log.exception("unknown exception:")
                 self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
+        t.close()
         return True
 
     def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):

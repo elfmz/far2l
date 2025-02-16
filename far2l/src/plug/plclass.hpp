@@ -35,14 +35,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FARString.hpp"
 #include <string>
 
-struct AnalyseData
+/**
+struct AnalyseInfo
 {
 	int StructSize;
 	const wchar_t *lpwszFileName;
 	const unsigned char *pBuffer;
 	DWORD dwBufferSize;
 	int OpMode;
+	void * Instance;	
 };
+
+struct AnalyseInfo
+{
+	size_t          StructSize;
+	const wchar_t  *FileName;
+	void           *Buffer;
+	size_t          BufferSize;
+	uint32_t     	OpMode;
+	void* Instance;
+};
+
+**/
 
 class PluginManager;
 
@@ -191,7 +205,7 @@ public:
 			FarMacroValue **Results, int *nResults) = 0;
 #endif
 
-	virtual int Analyse(const AnalyseData *pData) = 0;
+	virtual HANDLE Analyse(const AnalyseInfo *pData) = 0;
 
 	virtual bool GetPluginInfo(PluginInfo *pi) = 0;
 	virtual int Configure(int MenuItem)        = 0;

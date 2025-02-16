@@ -201,7 +201,7 @@ typedef void *LPVOID;
 // typedef void VOID;
 // typedef ULONG_PTR DWORD_PTR, *PDWORD_PTR;
 // gcc / clang on Unix  : sizeof(long==sizeof(void*) in 32 or 64 bits)
-typedef          long  INT_PTR;
+///typedef          long  INT_PTR;
 typedef unsigned long  UINT_PTR;
 typedef          long  LONG_PTR;
 

@@ -228,6 +228,17 @@ upd:"Change"
 upd:"Change"
 upd:"Change"
 
+Reset
+"Сбросить"
+"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+"Reiniciar"
+"Скинути"
+"Зкінуць"
+
 HCancel
 l:
 "&Отмена"
@@ -1837,7 +1848,7 @@ upd:"Confirm elevated privileges use"
 
 ConfigRecycleBin
 "Удалять в &Корзину"
-"&Delete to Recycle Bin"
+"&Delete to Trash"
 "&Mazat do Koše"
 "In Papierkorb &löschen"
 "&Törlés a Lomtárba"
@@ -2199,6 +2210,17 @@ ConfigAutoUpdateLimit2
 "якщо об'ектів більше"
 "калі аб'ектаў больш"
 
+ConfigClassicHotkeyLinkResolving
+"&Классическое разрешение ссылок по хоткеям"
+"Classic hotkey &link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+"&Класичне розширення посилань гарячими клавішами"
+upd:"Classic hotkey link resolving"
+
 ConfigAutoUpdateRemoteDrive
 "Автообновление с&етевых дисков"
 "Network drives autor&efresh"
@@ -2530,7 +2552,6 @@ upd:"&text"
 upd:"&text"
 upd:"&text"
 upd:"&text"
-
 DirSettingsSymlinkRadio2
 "размер целевого &файла"
 "size of target &file"
@@ -4922,51 +4943,6 @@ CannotCopyFileToItself2
 "у самого себе"
 "у самога сябе"
 
-CopyStream1
-l:
-"Исходный файл содержит более одного потока данных,"
-"The source file contains more than one data stream."
-"Zdrojový soubor obsahuje více než jeden datový proud."
-"Die Quelldatei enthält mehr als einen Datenstream"
-"A forrásfájl több stream-et tartalmaz,"
-"Plik źródłowy zawiera więcej niż jeden strumień danych."
-"El archivo origen contiene más de un flujo de datos."
-"Вихідний файл містить більше одного потоку даних,"
-"Зыходны файл змяшчае больш аднай струмені дадзеных,"
-
-CopyStream2
-"но вы не используете системную функцию копирования."
-"but since you do not use a system copy routine."
-"protože nepoužíváte systémovou kopírovací rutinu."
-"aber Sie verwenden derzeit nicht die systemeigene Kopierroutine."
-"de nem a rendszer másolórutinját használja."
-"ale ze względu na rezygnację z systemowej procedury kopiowania."
-"pero desde que usted no usa la rutina de copia del sistema."
-"але ви не використовуєте системну функцію копіювання."
-"але вы не ужываеце сістэмную функцыю капіявання."
-
-CopyStream3
-"но том назначения не поддерживает этой возможности."
-"but the destination volume does not support this feature."
-"protože cílový svazek nepodporuje tuto vlastnost."
-"aber der Zieldatenträger unterstützt diese Fähigkeit nicht."
-"de a célkötet nem támogatja ezt a lehetőséget."
-"ale napęd docelowy nie obsługuje tej funkcji."
-"pero el volumen de destino no soporta esta opción."
-"але тому призначення не підтримує цієї можливості."
-"але дыск прызначэння не падтрымлівае гэтай магчымасці."
-
-CopyStream4
-"Часть сведений не будет сохранена."
-"Some data will not be preserved as a result."
-"To bude mít za následek, že některá data nebudou uchována."
-"Ein Teil der Daten bleiben daher nicht erhalten."
-"Az adatok egy része el fog veszni."
-"Nie wszystkie dane zostaną zachowane."
-"Algunos datos no serán preservados como un resultado."
-"Частина відомостей не буде збережена."
-"Частка звестак не будзе захавана."
-
 CopyDirectoryOrFile
 l:
 "Подразумевается имя папки или файла?"
@@ -5257,39 +5233,6 @@ CannotCopyTo
 "в"
 "у"
 
-CopyEncryptWarn1
-"Файл"
-"The file"
-"Soubor"
-"Die Datei"
-"A fájl"
-"Plik"
-"El archivo"
-"Файл"
-"Файл"
-
-CopyEncryptWarn2
-"нельзя скопировать или переместить, не потеряв его шифрование."
-"cannot be copied or moved without losing its encryption."
-"nemůže být zkopírován nebo přesunut bez ztráty jeho šifrování."
-"kann nicht bewegt werden ohne ihre Verschlüsselung zu verlieren."
-"csak titkosítása elvesztésével másolható vagy mozgatható."
-"nie może zostać skopiowany/przeniesiony bez utraty szyfrowania"
-"no puede copiarse o moverse sin perder el cifrado."
-"Не можна скопіювати або перемістити, не втративши його шифрування."
-"Нельга капіяваць ці перанесці, не згубіўшы яго шыфраванне."
-
-CopyEncryptWarn3
-"Можно пропустить эту ошибку или отменить операцию."
-"You can choose to ignore this error and continue, or cancel."
-"Můžete tuto chybu ignorovat a pokračovat, nebo operaci ukončit."
-"Sie können dies ignorieren und fortfahren oder abbrechen."
-"Ennek ellenére folytathatja vagy felfüggesztheti."
-"Możesz zignorować błąd i kontynuować lub anulować operację."
-"Usted puede ignorar este error y continuar, o cancelar."
-"Можна пропустити цю помилку або скасувати операцію."
-"Можна прапусціць гэтую памылку альбо адмяніць дзею."
-
 CopyReadError
 l:
 "Ошибка чтения данных из"
@@ -5428,7 +5371,7 @@ AskDelete
 
 AskDeleteRecycleFolder
 "Вы хотите переместить в Корзину папку"
-"Do you wish to move to the Recycle Bin the folder"
+"Do you wish to move to the Trash the folder"
 "Přejete si přesunout do Koše adresář"
 "Wollen Sie den Ordner in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a mappát?"
@@ -5439,7 +5382,7 @@ AskDeleteRecycleFolder
 
 AskDeleteRecycleFile
 "Вы хотите переместить в Корзину файл"
-"Do you wish to move to the Recycle Bin the file"
+"Do you wish to move to the Trash the file"
 "Přejete si přesunout do Koše soubor"
 "Wollen Sie die Datei in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a fájlt?"
@@ -5450,7 +5393,7 @@ AskDeleteRecycleFile
 
 AskDeleteRecycle
 "Вы хотите переместить в Корзину"
-"Do you wish to move to the Recycle Bin"
+"Do you wish to move to the Trash"
 "Přejete si přesunout do Koše"
 "Wollen Sie das Objekt in den Papierkorb verschieben"
 "A Lomtárba akar dobni"
@@ -5920,13 +5863,13 @@ DeleteRetry
 
 DeleteRetryNotRecycleBin
 "&Без корзины"
-"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
+"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
 "&Без Кошыка"
 
 DeleteSkip
@@ -13326,138 +13269,6 @@ InfoUserName
 "Им'я користувача"
 "Імя карыстальніка"
 
-InfoRemovable
-"Сменный"
-"Removable"
-"Vyměnitelný"
-"Austauschbares"
-"Kivehető"
-"Wyjmowalny"
-"Removible"
-"Змінний"
-"Зменны"
-
-InfoFixed
-"Жёсткий"
-"Fixed"
-"Pevný"
-"Lokales"
-"Fix"
-"Stały"
-"Rígido"
-"Жорсткий"
-"Замацаваныя"
-
-InfoNetwork
-"Сетевой"
-"Network"
-"Síťový"
-"Netzwerk"
-"Hálózati"
-"Sieciowy"
-"Red"
-"Мережевий"
-"Сеткавы"
-
-InfoCDROM
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-
-InfoCD_RW
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-
-InfoCD_RWDVD
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-
-InfoDVD_ROM
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-
-InfoDVD_RW
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-
-InfoDVD_RAM
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-
-InfoRAM
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-
-InfoSUBST
-"SUBST"
-"Subst"
-"SUBST"
-"Subst"
-"Virtuális"
-"Subst"
-"Subst"
-"SUBST"
-"SUBST"
-
-InfoVirtual
-"Виртуальный"
-"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-"Віртуальний"
-"Уяўны"
-
 InfoDisk
 "диск"
 "disk"
@@ -13677,17 +13488,6 @@ InfoMemoryLoad
 "Carga en Memoria"
 "Завантаження пам'яті"
 "Загрузка памяці"
-
-InfoMemoryInstalled
-"Установлено памяти"
-"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-"Memoria instalada"
-"Встановлено пам'яті"
-"Усталявана памяці"
 
 InfoMemoryTotal
 "Всего памяти"
@@ -14460,7 +14260,7 @@ MenuOwnersView
 "Fájl tula&jdonos    BalCtrl+8"
 "&Właściciele          LCtrl+8"
 "Du&eños de archivos    LCtrl+8"
-"Власники файлів           LCtrl+8"
+"Власники файлів          LCtrl+8"
 "Ул&адальнікі файлаў        LCtrl+8"
 
 MenuLinksView
@@ -14471,7 +14271,7 @@ MenuLinksView
 "Fájl li&nkek        BalCtrl+9"
 "Dowiąza&nia           LCtrl+9"
 "En&laces               LCtrl+9"
-"Зв'язки файлів            LCtrl+9"
+"Зв'язки файлів           LCtrl+9"
 "Сувя&зя файлаў             LCtrl+9"
 
 MenuAlternativeView
@@ -14560,18 +14360,18 @@ MenuReread
 "Friss&ítés          Ctrl+R"
 "Odśw&ież              Ctrl+R"
 "&Releer                Ctrl+R"
-"Перечитати                Ctrl+R"
+"Перечитати               Ctrl+R"
 "П&ерачытаць                Ctrl+R"
 
 MenuChangeDrive
-"&Меню перехода             Alt+F1"
-"Lo&cation menu       Alt+F1"
+"&Меню перехода            Alt+F1"
+"Lo&cation menu      Alt+F1"
 "Z&měnit jednotku          Alt+F1"
 "Laufwerk we&chseln    Alt+F1"
 "Meghajtó&váltás     Alt+F1"
 "Z&mień napęd          Alt+F1"
 "Cambiar &unidad        Alt+F1"
-"З&мінити диск             Alt+F1"
+"&Меню переходу            Alt+F1"
 "З&мяніць дыск              Alt+F1"
 
 MenuView
@@ -14707,6 +14507,17 @@ MenuAttributes
 "А&трибути файлів       Ctrl+A"
 "А&трыбуты файлаў       Ctrl+A"
 
+MenuChattr
+"chattr / chflag&s      Ctrl+Alt+A"
+"chattr / ch&flags   Ctrl+Alt+A"
+upd:"chattr / ch&flags           Ctrl+Alt+A"
+upd:"chattr / ch&flags     Ctrl+Alt+A"
+upd:"c&hattr / chflags     Ctrl+Alt+A"
+upd:"chattr / ch&flags          Ctrl+Alt+A"
+upd:"chattr / ch&flags      Ctrl+Alt+A"
+upd:"chattr / chflag&s      Ctrl+Alt+A"
+upd:"c&hattr / chflags      Ctrl+Alt+A"
+
 MenuApplyCommand
 "Применить коман&ду     Ctrl+G"
 "A&pply command      Ctrl+G"
@@ -14748,8 +14559,8 @@ MenuUnselectGroup
 "Jelölést l&evesz      Szürke -"
 "Odz&nacz grupę             Szary -"
 "Deseleccio&nar grupo   Gray -"
-"З&няти позначку         Gray -"
-"З&няць адзнаку          Gray -"
+"З&няти позначку        Gray -"
+"З&няць адзнаку         Gray -"
 
 MenuInvertSelection
 "&Инверсия пометки      Gray *"
@@ -14782,8 +14593,8 @@ l:
 "Fájl&keresés         Alt+F7"
 "&Znajdź plik               Alt+F7"
 "Buscar &archivos       Alt+F7"
-"&Пошук файла              Alt+F7"
-"&Пошук файла              Alt+F7"
+"&Пошук файла               Alt+F7"
+"&Пошук файла               Alt+F7"
 
 MenuHistory
 "&История команд           Alt+F8"
@@ -14793,8 +14604,8 @@ MenuHistory
 "Parancs &előzmények  Alt+F8"
 "&Historia                  Alt+F8"
 "&Historial             Alt+F8"
-"&Історія команд           Alt+F8"
-"Г&історыя камандаў        Alt+F8"
+"&Історія команд            Alt+F8"
+"Г&історыя камандаў         Alt+F8"
 
 MenuVideoMode
 "Видео&режим               Alt+F9"
@@ -14804,8 +14615,8 @@ MenuVideoMode
 "&Video mód           Alt+F9"
 "&Tryb wyświetlania         Alt+F9"
 "Modo de video         Alt+F9"
-"Відео&режим               Alt+F9"
-"Відэа&рэжым               Alt+F9"
+"Відео&режим                Alt+F9"
+"Відэа&рэжым                Alt+F9"
 
 MenuFindFolder
 "Поис&к папки              Alt+F10"
@@ -14815,8 +14626,8 @@ MenuFindFolder
 "&Mappakeresés        Alt+F10"
 "Znajdź kata&log            Alt+F10"
 "Buscar &directorios    Alt+F10"
-"Пошу&к теки               Alt+F10"
-"Пошу&к каталога           Alt+F10"
+"Пошу&к теки                Alt+F10"
+"Пошу&к каталога            Alt+F10"
 
 MenuViewHistory
 "Ис&тория просмотра        Alt+F11"
@@ -14826,8 +14637,8 @@ MenuViewHistory
 "Fáj&l előzmények     Alt+F11"
 "Historia &podglądu plików  Alt+F11"
 "Historial &visor       Alt+F11"
-"Іс&торія перегляду        Alt+F11"
-"Гіс&торыя прагляду        Alt+F11"
+"Іс&торія перегляду         Alt+F11"
+"Гіс&торыя прагляду         Alt+F11"
 
 MenuFoldersHistory
 "Ист&ория папок            Alt+F12"
@@ -14837,8 +14648,8 @@ MenuFoldersHistory
 "Ma&ppa előzmények    Alt+F12"
 "Historia &katalogów        Alt+F12"
 "Histo&rial dir.        Alt+F12"
-"Іст&орія тек              Alt+F12"
-"Гіст&орыя каталогаў       Alt+F12"
+"Іст&орія тек               Alt+F12"
+"Гіст&орыя каталогаў        Alt+F12"
 
 MenuSwapPanels
 "По&менять панели          Ctrl+U"
@@ -14849,7 +14660,7 @@ MenuSwapPanels
 "Z&amień panele             Ctrl+U"
 "I&nvertir paneles      Ctrl+U"
 "Зм&інити панелі            Ctrl+U"
-"З&мяніць панэлі           Ctrl+U"
+"З&мяніць панэлі            Ctrl+U"
 
 MenuHorizontalPanels
 "Гори&зонтальные панели    Ctrl+,"
@@ -14860,7 +14671,7 @@ MenuHorizontalPanels
 "Po&ziome panele            Ctrl+,"
 "Paneles hori&zontales  Ctrl+,"
 "Гори&зонтальні панелі      Ctrl+,"
-"Гори&зантальныя панэлі    Ctrl+,"
+"Гори&зантальныя панэлі     Ctrl+,"
 
 MenuVerticalPanels
 "Вер&тикальные панели      Ctrl+,"
@@ -14871,7 +14682,7 @@ MenuVerticalPanels
 "Pionow&e panele            Ctrl+,"
 "Paneles ver&ticales    Ctrl+,"
 "Вер&тикальні панелі        Ctrl+,"
-"Вер&тыкальныя панэлі      Ctrl+,"
+"Вер&тыкальныя панэлі       Ctrl+,"
 
 MenuTogglePanels
 "Панели &Вкл/Выкл          Ctrl+O"
@@ -14882,7 +14693,7 @@ MenuTogglePanels
 "&Włącz/Wyłącz panele       Ctrl+O"
 "&Paneles Si/No         Ctrl+O"
 "Панели &Ввмк/Вимк          Ctrl+O"
-"Панели &Укл/Адкл          Ctrl+O"
+"Панели &Укл/Адкл           Ctrl+O"
 
 MenuCompareFolders
 "&Сравнение папок"
@@ -14958,8 +14769,8 @@ MenuWindowsList
 "Képer&nyők           F12"
 "L&ista ekranów             F12"
 "&Listado ventanas      F12"
-"Список екра&нів           F12"
-"Спіс экра&наў             F12"
+"Список екра&нів            F12"
+"Спіс экра&наў              F12"
 
 MenuProcessList
 "Список &задач             Ctrl+W"
@@ -14969,19 +14780,8 @@ MenuProcessList
 "Futó p&rogramok      Ctrl+W"
 "Lista za&dań               Ctrl+W"
 "Lista de &tareas       Ctrl+W"
-"Список & завдань          Ctrl+W"
-"Спіс &задачаў             Ctrl+W"
-
-MenuHotPlugList
-"Список Hotplug-&устройств"
-"Ho&tplug devices list"
-"Seznam v&yjímatelných zařízení"
-"Sicheres En&tfernen"
-"H&otplug eszközök"
-"Lista urządzeń Ho&tplug"
-"Lista de dispositivos ho&tplug"
-"Список Hotplug-&пристроїв"
-"Спіс прылад гарачай &устаноўкі"
+"Список & завдань           Ctrl+W"
+"Спіс &задачаў              Ctrl+W"
 
 MenuSystemSettings
 l:
@@ -15257,18 +15057,18 @@ MenuTogglePanelRight
 "Włącz/wyłącz pane&l   Ctrl+F2"
 "Panel &Si/No           Ctrl+F2"
 "Панель &Ввмк/Вимк         Ctrl+F2"
-"Панэль &Укл/Адкл          Ctrl+F2"
+"Панэль &Укл/Адкл           Ctrl+F2"
 
 MenuChangeDriveRight
-"&Меню перехода             Alt+F2"
-"Lo&cation menu       Alt+F2"
+"&Меню перехода            Alt+F2"
+"Lo&cation menu      Alt+F2"
 "Z&měnit jednotku          Alt+F2"
 "Laufwerk &wechseln    Alt+F2"
 "Meghajtó&váltás     Alt+F2"
 "Z&mień napęd          Alt+F2"
 "Cambiar &unidad        Alt+F2"
-"З&мінити диск             Alt+F2"
-"З&мяніць дыск             Alt+F2"
+"&Меню переходу            Alt+F2"
+"З&мяніць дыск              Alt+F2"
 
 MenuLeftTitle
 l:
@@ -16668,6 +16468,17 @@ upd:"selected %d items"
 upd:"selected %d items"
 upd:"selected %d items"
 
+SetAttrInfoSelDevices
+"%lsустройств: %d"
+"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+
 SetAttrInfoSelDirs
 "%lsкаталогов: %d"
 "%lsdirs: %d"
@@ -17395,6 +17206,84 @@ upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
+
+ChAttrTitle
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+
+ChAttrWarnSystem
+"Far2l пока ещё не умеет работать с флагами на Вашей системе"
+"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+
+ChAttrWarnNoOne
+"Применимо только к одному объекту.\nСейчас на панели выбрано несколько объектов."
+"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+
+ChAttrWarnNoRealFile
+"Применимо только к реальному объекту доступному локально.\nСейчас на панели плагина не объект реальной файловой системы."
+"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+
+ChAttrWarnNoSymlinks
+"Не применимо к символьным ссылкам"
+"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+
+ChAttrErrorGetFlags
+"Не удается получить флаги для \"%ls\":\n"
+"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+
+ChAttrErrorSetFlags
+"Не удается установить флаги для \"%ls\":\n"
+"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+
 
 SetColorPanel
 l:
@@ -26643,11 +26532,11 @@ upd:"to create this symbolic link:"
 
 AdminRequiredRecycle
 "для перемещения этого объекта в корзину:"
-"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
+"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
 "para mover este objeto a la papelera:"
 "для переміщення цього об'єкта в кошик:"
 "для пераносу гэтага аб'екту ў Сметнік:"

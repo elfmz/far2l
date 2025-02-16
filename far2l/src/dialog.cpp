@@ -51,7 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TPreRedrawFunc.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "message.hpp"
 #include "strmix.hpp"
 #include "history.hpp"
@@ -401,7 +401,7 @@ Dialog::Dialog(DialogItemEx *SrcItem,		// Набор элементов диал
 		FARWINDOWPROC DlgProc,				// Диалоговая процедура
 		LONG_PTR InitParam)					// Ассоцированные с диалогом данные
 	:
-	CMM(MACRO_DIALOG)
+	CMM(MACRO_DIALOG), AltState(0), CtrlState(0), ShiftState(0)
 {
 	Dialog::Item = (DialogItemEx **)malloc(sizeof(DialogItemEx *) * SrcItemCount);
 
@@ -2663,6 +2663,15 @@ int Dialog::ProcessKey(FarKey Key)
 	unsigned I;
 	FARString strStr;
 
+	if ((ShiftPressed != ShiftState || CtrlPressed != CtrlState || AltPressed != AltState) && !DialogMode.Check(DMODE_KEY)) {
+		ShiftState = ShiftPressed;
+		CtrlState = CtrlPressed;
+		AltState = AltPressed;
+		FarKey fKey = ShiftState ? KEY_SHIFT : 0;
+		fKey |= CtrlPressed ? KEY_CTRL : 0;
+		fKey |= AltPressed ? KEY_ALT : 0;
+		DlgProc((HANDLE)this, DN_KEY, 0, fKey);
+	}
 	if (Key == KEY_NONE || Key == KEY_IDLE) {
 		DlgProc((HANDLE)this, DN_ENTERIDLE, 0, 0);	// $ 28.07.2000 SVS Передадим этот факт в обработчик :-)
 		return FALSE;

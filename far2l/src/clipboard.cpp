@@ -233,7 +233,7 @@ wchar_t *Clipboard::Paste(bool &IsVertical, int MaxChars)
 
 	IsVertical = false;
 
-	if (wcsstr(ClipText, NATIVE_EOLW)) {
+	if (ClipText && wcsstr(ClipText, NATIVE_EOLW)) {
 		UINT FormatType = RegisterFormat(FAR_VerticalBlock_Unicode);
 		if (FormatType && IsFormatAvailable(FormatType)) {
 			IsVertical = true;

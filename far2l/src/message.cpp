@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "scrbuf.hpp"
 #include "keys.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
 #include "mix.hpp"
 #include "InterThreadCall.hpp"
@@ -563,6 +563,16 @@ Messager &FN_NOINLINE ExMessager::AddDup(const wchar_t *v)
 {
 	_owneds.emplace_back(v);
 	Add(_owneds.back().CPtr());
+	return *this;
+}
+
+Messager &FN_NOINLINE ExMessager::AddMultiline(const wchar_t *v, const wchar_t *divs)
+{
+	std::wstring source_str = v;
+	std::vector<std::wstring> lines;
+	StrExplode(lines, source_str, divs, false);
+	for (const auto &current_line : lines)
+		AddDup(current_line.c_str());
 	return *this;
 }
 

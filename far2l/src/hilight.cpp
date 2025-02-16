@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "savescr.hpp"
 #include "ctrlobj.hpp"
 #include "scrbuf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "message.hpp"
 #include "config.hpp"
 #include "interf.hpp"
@@ -55,7 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <mutex>
 #include <unordered_set>
-#include "pick_color_common.hpp"
+#include "color.hpp"
 
 struct HighlightStrings
 {
@@ -205,7 +205,6 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 {
 	// Дефолтные значения выбраны так чтоб как можно правильней загрузить
 	// настройки старых версий фара.
-
 
 	if (bSortGroup)
 		HData->SetMask(cfg_reader.GetInt(HLS.UseMask, 1) != 0, Mask);
@@ -417,7 +416,7 @@ static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 		// Для пометки возьмем цвета файла включая прозрачность.
 		if (!(hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] & 0xFF)) {
 
-			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
+			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = FarColors::setcolors[FarColor[i]];
 		}
 
 		// Если у метки black on black, то возьмем ей цвета и маску от имени
@@ -433,7 +432,7 @@ static void ApplyStartColors(HighlightDataColor *hl)
 {
 	// Начинаем с цветов "по умолчанию" и далее их раскрашиваем
 	for (int i = 0; i < 4; i++) {
-		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
+		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = FarColors::setcolors[FarColor[i]];
 		hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i] |= 0xFFFFFFFFFFFFFFFF;
 		hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Color[HIGHLIGHTCOLORTYPE_FILE][i];
 		hl->Mask[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i];
@@ -778,6 +777,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 					{
 						ConfigWriter(RegColorsHighlight).RemoveSection();
+						ConfigWriter(SortGroupsKeyName).RemoveSection(); // see https://github.com/elfmz/far2l/issues/2605
 					}
 					HiMenu.Hide();
 					ClearData();
@@ -1032,6 +1032,13 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 
 void HighlightFiles::SaveHiData()
 {
+	{
+		// hotfix for https://github.com/elfmz/far2l/issues/2605
+		// TODO: verify it's correct fix, not just a workaround
+		ConfigWriter(RegColorsHighlight).RemoveSection();
+		ConfigWriter(SortGroupsKeyName).RemoveSection();
+	}
+
 	std::string strRegKey, strGroupName;
 	const char *KeyNames[4] = {RegColorsHighlight, SortGroupsKeyName, SortGroupsKeyName, RegColorsHighlight};
 	const char *GroupNames[4] = {fmtFirstGroup, fmtUpperGroup, fmtLowerGroup, fmtLastGroup};
@@ -1043,6 +1050,7 @@ void HighlightFiles::SaveHiData()
 	};
 
 	ConfigWriter cfg_writer;
+
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
 			strGroupName = StrPrintf(GroupNames[j], i - Count[j][0]);

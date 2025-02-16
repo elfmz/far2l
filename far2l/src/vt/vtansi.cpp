@@ -168,6 +168,7 @@ jadoxa@yahoo.com.au
 
 #include <mutex>
 #include <atomic>
+#include <optional>
 #include <map>
 #include "vtansi.h"
 #include "AnsiEsc.hpp"
@@ -840,19 +841,20 @@ struct VTAnsiContext
 
 			// kitty keys stuff
 
-			if (suffix == 'u') {
+			// proceed only if mode is not specified or specified as 1 (default)
+			// we do not support other modes currently
+			if ((suffix == 'u') && ((es_argc < 2) || (es_argv[1] == 1))) {
 				if (prefix2 == '=') {
-					// assuming mode always 1; we do not support other modes currently
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
 					return;
 
 				} else if (prefix2 == '>') {
-					// assuming mode always 1; we do not support other modes currently
+					// we do not support flags stack currently, just set new mode
 					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
 					return;
 
 				} else if (prefix2 == '<') {
-					// we do not support mode stack currently, just reset flags
+					// we do not support flags stack currently, just reset flags
 					vt_shell->SetKittyFlags(0);
 					return;
 
@@ -1312,6 +1314,7 @@ struct VTAnsiContext
 				}
 
 			} else {
+				_crds.reset(); // prevent clipboard dialog miss repaints
 				vt_shell->OnApplicationProtocolCommand(os_cmd_arg.c_str());
 			}
 		}
@@ -1416,12 +1419,16 @@ struct VTAnsiContext
 // the last arguments are processed (no es_argv[] overflow).
 //-----------------------------------------------------------------------------
 
+	std::optional<ConsoleRepaintsDeferScope> _crds;
+
 	void ParseAndPrintString(
 		LPCVOID lpBuffer,
 		DWORD nNumberOfBytesToWrite)
 	{
 		DWORD   i;
 		LPCWSTR s;
+
+		_crds.emplace(vt_shell->ConsoleHandle());
 
 		for (i = nNumberOfBytesToWrite, s = (LPCWSTR)lpBuffer; i > 0; i--, s++) {
 			if (state == 1) {
@@ -1581,6 +1588,7 @@ struct VTAnsiContext
 			}
 		}
 		FlushBuffer();
+		_crds.reset();
 		ASSERT(i == 0);
 	}
 
@@ -1723,7 +1731,6 @@ void VTAnsi::Write(const char *str, size_t len)
 		--len;
 	}
 
-	ConsoleRepaintsDeferScope crds(_ctx->vt_shell->ConsoleHandle());
 	_ctx->ParseAndPrintString(_ws.c_str(), _ws.size());
 }
 

@@ -77,6 +77,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "help.hpp"
 #include "farversion.h"
 #include "mix/panelmix.hpp"
+#include "farcolors.hpp"
 
 #include "message.hpp"
 
@@ -312,22 +313,18 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 				if (tweaks & TWEAK_STATUS_SUPPORT_OSC52CLIP_SET) {
 					SetMessageHelp(L"Far2lGettingStarted");
 
-					std::wstring source_str = Msg::OSC52Confirm.CPtr();
-					std::vector<std::wstring> lines;
 					ExMessager em;
-					StrExplode(lines, source_str, L"\n", false);
-					for (const auto &current_line : lines) {
-						em.AddDup(current_line.c_str());
-					}
+					em.AddMultiline(Msg::OSC52Confirm);
 					em.AddDup(L"Yes");
 					em.AddDup(L"No");
 
 					if (em.Show(0, 2)) {
-						Opt.OSC52ClipSet = 0;
+						if (Opt.OSC52ClipSet != 0)
+						{ Opt.OSC52ClipSet = 0; cfgNeedSave = true; }
 					} else {
-						Opt.OSC52ClipSet = 1;
+						if (Opt.OSC52ClipSet != 1)
+						{ Opt.OSC52ClipSet = 1; cfgNeedSave = true; }
 					}
-					cfgNeedSave = true;
 				}
 			}
 
@@ -625,9 +622,8 @@ int FarAppMain(int argc, char **argv)
 		Opt.LoadPlug.PluginsPersonal = FALSE;
 	}
 
-	ZeroFarPalette();
 	ConfigOptLoad();
-	InitFarPalette();
+	FarColors::InitFarColors();
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);

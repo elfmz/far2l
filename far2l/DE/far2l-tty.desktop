@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=far2l (WX GUI)
+Name=far2l (Terminal)
 GenericName=far2l
 Comment=File and archive manager
-Exec=far2l --notty
+Exec=far2l --tty
 TryExec=far2l
-Terminal=false
+Terminal=true
 Categories=Utility;FileManager;System;FileTools;
 Icon=far2l
 StartupNotify=true

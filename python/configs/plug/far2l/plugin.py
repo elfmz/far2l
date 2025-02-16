@@ -1,4 +1,6 @@
 import logging
+from .far2lpanel import Panel
+
 
 log = logging.getLogger(__name__)
 
@@ -20,12 +22,40 @@ class PluginBase:
         self.ffi = ffi
         self.ffic = ffic
         self.hplugin = self.ffi.cast("void *", id(self))
+        self.api = Panel(self, info, ffi, ffic)
 
     def s2f(self, s):
         return self.ffi.new("wchar_t []", s)
 
     def f2s(self, s):
         return self.ffi.string(self.ffi.cast("wchar_t *", s))
+
+    def notice(self, body, title=None):
+        return self._popup(body, title, 0)
+
+    def error(self, body, title=None):
+        return self._popup(body, title, self.ffic.FMSG_WARNING)
+
+    def _popup(self, body, title, flags):
+        items = [self.s2f(title)] if title else [self.s2f('')]
+        if isinstance(body, str):
+            if '\n' in body:
+                body = body.split('\n')
+            else:
+                items.append(self.s2f(body))
+        if not isinstance(body, str):
+            items.extend(self.s2f(s) for s in body)
+        # note: needs to be at least 2 items, otherwise message 
+        # box is not shown
+        citems = self.ffi.new('wchar_t *[]', items)
+        if not flags:
+            flags = self.ffic.FMSG_MB_OK
+        return self.info.Message(
+            self.info.ModuleNumber,  # GUID
+            flags,  # Flags
+            self.ffi.NULL,  # HelpTopic
+            citems, len(citems), 1,  # ButtonsNumber
+        )
 
     @staticmethod
     def HandleCommandLine(line):
@@ -57,28 +87,23 @@ class PluginBase:
     def OpenFilePlugin(parent, info, ffi, ffic, Name, Data, DataSize, OpMode):
         return False
 
-    @staticmethod
-    def ProcessDialogEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessDialogEvent(self, Event, Param):
         # log.debug("Plugin.ProcessDialogEvent({0}, {1})".format(Event, Param))
         return 0
 
-    @staticmethod
-    def ProcessEditorEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessEditorEvent(self, Event, Param):
         # log.debug("Plugin.ProcessEditorEvent({0}, {1})".format(Event, Param))
         return 0
 
-    @staticmethod
-    def ProcessEditorInput(parent, info, ffi, ffic, Rec):
+    def ProcessEditorInput(self, Rec):
         # log.debug("Plugin.ProcessEditorInput({0})".format(Rec))
         return 0
 
-    @staticmethod
-    def ProcessSynchroEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessSynchroEvent(self, Event, Param):
         # log.debug("Plugin.ProcessSynchroEvent({0}, {1})".format(Event, Param))
         return 0
 
-    @staticmethod
-    def ProcessViewerEvent(parent, info, ffi, ffic, Event, Param):
+    def ProcessViewerEvent(self, Event, Param):
         # log.debug("Plugin.ProcessViewerEvent({0}, {1})".format(Event, Param))
         return 0
 

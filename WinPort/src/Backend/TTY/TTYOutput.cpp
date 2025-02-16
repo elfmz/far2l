@@ -386,6 +386,10 @@ void TTYOutput::Flush()
 
 void TTYOutput::ChangeCursorHeight(unsigned int height)
 {
+	// See also:
+	// https://unix.stackexchange.com/questions/49485/escape-code-to-change-cursor-shape
+	// https://github.com/kovidgoyal/kitty/issues/715
+
 	if (_far2l_tty) {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(UCHAR(height));
@@ -400,20 +404,9 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 			// Available sizes are from 2 to 8
 			Format(ESC "[?2c");
 
-			/**
-
-			Same for FreeBSD:
-
-			https://man.freebsd.org/cgi/man.cgi?query=screen
-			E[=s;eC Set custom cursor shape, where
-			s is the starting and e is the ending
-			scanlines of the cursor
-
-			**/
-
 		} else {
 			Format(ESC "[3 q"); // Blink Underline
-			Format(ESC "]50;CursorShape=2\x07"); // Same for iTerm2
+			Format(ESC "]1337;CursorShape=2\x07"); // Same for iTerm2
 		}
 
 	} else {
@@ -425,7 +418,7 @@ void TTYOutput::ChangeCursorHeight(unsigned int height)
 
 		} else {
 			Format(ESC "[0 q"); // Blink Block (Default)
-			Format(ESC "]50;CursorShape=0\x07"); // Same for iTerm2
+			Format(ESC "]1337;CursorShape=0\x07"); // Same for iTerm2
 		}
 	}
 }

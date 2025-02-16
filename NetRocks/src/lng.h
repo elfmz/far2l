@@ -320,4 +320,14 @@ enum LanguageID
 	MProxySettingsKind,
 	MProxySettingsEdit,
 
+	MAWSOprionTitle,
+	MAWSUserAgent,
+	MAWSRegion,
+	MAWSUseProxy,
+	MAWSProxyHost,
+	MAWSProxyPort,
+	MAWSAuthProxy,
+	MAWSProxyUsername,
+	MAWSProxyPassword,
+
 };

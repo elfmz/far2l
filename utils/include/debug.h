@@ -360,27 +360,33 @@ namespace Dumper {
 		const char* varNamesStr,
 		const Ts&... varValuesArgs)
 	{
-		std::vector<std::string> varNames;
-		std::istringstream varNamesStream(varNamesStr);
-		std::string nameToken;
-		while (std::getline(varNamesStream, nameToken, ','))
-		{
-			size_t start = nameToken.find_first_not_of(" \t");
-			size_t end = nameToken.find_last_not_of(" \t");
-			if(start != std::string::npos && end != std::string::npos)
-				varNames.push_back(nameToken.substr(start, end - start + 1));
-		}
-		constexpr auto varValuesCount = sizeof...(varValuesArgs);
-		if (varNames.size() != varValuesCount) {
+		auto reportError = [&]() {
 			std::string errorMessage =
-				"dumpv: Mismatch between parsed variable names count (" + std::to_string(varNames.size()) +
-				") and passed arguments (" + std::to_string(varValuesCount) + "). " +
-				"Only simple variables are supported as arguments. " +
+				"dumpv: Only simple variables are allowed as arguments. "
 				"Function calls or complex expressions with internal commas are not supported.";
-
 			std::vector<std::string> errorNames = { "ERROR" };
 			auto errorTuple = std::make_tuple(errorMessage);
 			dumpWrapper(logStream, to_file, func_name, location, pID, tID, errorNames, errorTuple);
+		};
+
+		if (std::strchr(varNamesStr, '(') != nullptr) {
+			reportError();
+			return;
+		}
+
+		std::vector<std::string> varNames;
+		std::istringstream varNamesStream(varNamesStr);
+		std::string nameToken;
+		while (std::getline(varNamesStream, nameToken, ',')) {
+			size_t start = nameToken.find_first_not_of(" \t");
+			size_t end = nameToken.find_last_not_of(" \t");
+			if(start != std::string::npos && end != std::string::npos)
+				varNames.emplace_back(nameToken.substr(start, end - start + 1));
+		}
+
+		constexpr auto varValuesCount = sizeof...(varValuesArgs);
+		if (varNames.size() != varValuesCount) {
+			reportError();
 			return;
 		}
 

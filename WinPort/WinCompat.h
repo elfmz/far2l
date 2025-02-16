@@ -162,7 +162,7 @@ typedef ULONGLONG *PULONGLONG;
 //#define TCHAR WCHAR 
 #define CONST const
 
-typedef const CHAR *LPCSTR;
+//typedef const CHAR *LPCSTR;
 //typedef CHAR TCHAR;
 typedef WCHAR TCHAR;
 typedef const TCHAR *LPCTSTR;

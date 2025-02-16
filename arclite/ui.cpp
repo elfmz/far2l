@@ -14,7 +14,12 @@
 #include "sfx.hpp"
 #include <Threaded.h>
 #include <algorithm>
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/types.h>
+#else
 #include <sys/sysmacros.h>	  // major / minor
+#endif
 
 struct ArchiveType
 {

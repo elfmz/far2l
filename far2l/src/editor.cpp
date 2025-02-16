@@ -2329,10 +2329,10 @@ int Editor::ProcessKey(FarKey Key)
 			Show();
 			return TRUE;
 		}
-		case KEY_CTRLALTBRACKET:		// Вставить сетевое (UNC) путь из левой панели
-		case KEY_CTRLALTBACKBRACKET:	// Вставить сетевое (UNC) путь из правой панели
-		case KEY_ALTSHIFTBRACKET:		// Вставить сетевое (UNC) путь из активной панели
-		case KEY_ALTSHIFTBACKBRACKET:	// Вставить сетевое (UNC) путь из пассивной панели
+		case KEY_CTRLALTBRACKET:		// Вставить реальный (разрешенный) путь из левой панели
+		case KEY_CTRLALTBACKBRACKET:	// Вставить реальный (разрешенный) путь из правой панели
+		case KEY_ALTSHIFTBRACKET:		// Вставить реальный (разрешенный) путь из активной панели
+		case KEY_ALTSHIFTBACKBRACKET:	// Вставить реальный (разрешенный) путь из пассивной панели
 		case KEY_CTRLBRACKET:			// Вставить путь из левой панели
 		case KEY_CTRLBACKBRACKET:		// Вставить путь из правой панели
 		case KEY_CTRLSHIFTBRACKET:		// Вставить путь из активной панели

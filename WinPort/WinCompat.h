@@ -169,7 +169,7 @@ typedef const TCHAR *LPCTSTR;
 
 //typedef wchar_t WCHAR;
 typedef WCHAR OLECHAR;
-typedef const WCHAR *LPCWSTR;
+//typedef const WCHAR *LPCWSTR;
 typedef OLECHAR *BSTR;
 typedef const OLECHAR *LPCOLESTR;
 typedef OLECHAR *LPOLESTR;

@@ -20,6 +20,8 @@
 #include <utility>
 #include <functional>
 #include <cstring>
+#include <thread>
+#include <unordered_map>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -44,6 +46,10 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 namespace Dumper {
 	inline std::mutex g_log_output_mutex;
+
+	inline std::size_t g_thread_idx = 0;
+	inline std::mutex g_thread_mutex;
+	inline std::unordered_map<std::thread::id, std::size_t> g_thread_ids;
 
 
 	inline std::string EscapeString(std::string_view input)
@@ -89,6 +95,17 @@ namespace Dumper {
 			s_home = (env_home != nullptr) ? std::string(env_home) : std::string("/tmp");
 		});
 		return s_home;
+	}
+
+
+	inline std::size_t GetNiceThreadId() noexcept {
+		std::lock_guard<std::mutex> lock(g_thread_mutex);
+		std::thread::id id = std::this_thread::get_id();
+		auto iter = g_thread_ids.find(id);
+		if (iter == g_thread_ids.end()) {
+			iter = g_thread_ids.insert({ id, g_thread_idx++ }).first;
+		}
+		return iter->second;
 	}
 
 
@@ -264,9 +281,9 @@ namespace Dumper {
 	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
 
 
-	//
 
-	inline std::string FormatLogHeader(pid_t pid, unsigned int tid,
+
+	inline std::string FormatLogHeader(pid_t pid, unsigned long int tid,
 								  std::string_view func_name,
 								  std::string_view location)
 	{
@@ -288,7 +305,7 @@ namespace Dumper {
 	template<typename T, typename... Args>
 	void Dump(
 		std::ostringstream& log_stream, bool to_file, bool firstcall, std::string_view func_name,
-		std::string_view location, pid_t pid, unsigned int tid, std::string_view var_name,
+		std::string_view location, pid_t pid, unsigned long int tid, std::string_view var_name,
 		const T& value, const Args&... args)
 	{
 		if (firstcall) {
@@ -322,7 +339,7 @@ namespace Dumper {
 		std::string_view func_name,
 		std::string_view location,
 		pid_t pid,
-		unsigned int tid,
+		unsigned long int tid,
 		const std::vector<std::string>& var_names,
 		ValuesTuple&& var_values,
 		std::index_sequence<I...>)
@@ -344,7 +361,7 @@ namespace Dumper {
 		std::string_view func_name,
 		std::string_view location,
 		pid_t pid,
-		unsigned int tid,
+		unsigned long int tid,
 		const std::vector<std::string>& var_names,
 		ValuesTuple&& var_values)
 	{
@@ -361,7 +378,7 @@ namespace Dumper {
 		std::string_view func_name,
 		std::string_view location,
 		pid_t pid,
-		unsigned int tid,
+		unsigned long int tid,
 		const char* var_names_str,
 		const Ts&... var_values_args)
 	{
@@ -405,10 +422,11 @@ namespace Dumper {
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
-#ifdef GET_INTER_THREAD_ID
-#define DUMP_THREAD GetInterThreadID()
+#define NICE_THREAD_ID
+#ifdef NICE_THREAD_ID
+#define DUMP_THREAD Dumper::GetNiceThreadId()
 #else
-#define DUMP_THREAD 0 /*gettid()*/
+#define DUMP_THREAD std::hash<std::thread::id>{}(std::this_thread::get_id())
 #endif
 
 #define DUMP(to_file, ...) { std::ostringstream log_stream; Dumper::Dump(log_stream, to_file, true, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }

@@ -91,7 +91,7 @@ namespace Dumper {
 		static std::string s_home;
 		static std::once_flag s_flag;
 		std::call_once(s_flag, [] {
-			const char* env_home = std::getenv("HOME");
+			const char *env_home = std::getenv("HOME");
 			s_home = (env_home != nullptr) ? std::string(env_home) : std::string("/tmp");
 		});
 		return s_home;
@@ -195,8 +195,8 @@ namespace Dumper {
 
 	template <typename T>
 	struct BufferWrapper {
-		BufferWrapper(T* data, size_t length) : data(data), length(length) {}
-		T* data;
+		BufferWrapper(T *data, size_t length) : data(data), length(length) {}
+		T *data;
 		size_t length;
 	};
 
@@ -379,7 +379,7 @@ namespace Dumper {
 		std::string_view location,
 		pid_t pid,
 		unsigned long int tid,
-		const char* var_names_str,
+		const char *var_names_str,
 		const Ts&... var_values_args)
 	{
 		auto ReportError = [&]() {

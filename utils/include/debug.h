@@ -302,6 +302,20 @@ namespace Dumper {
 	}
 
 
+	inline void FlushLog(std::ostringstream& log_stream, bool to_file)
+	{
+		std::string log_entry = log_stream.str();
+
+		std::lock_guard<std::mutex> lock(g_log_output_mutex);
+
+		if (to_file) {
+			std::ofstream(GetHomeDir() + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+		} else {
+			std::clog << log_entry << std::endl;
+		}
+	}
+
+
 	template<typename T, typename... Args>
 	void Dump(
 		std::ostringstream& log_stream, bool to_file, bool firstcall, std::string_view func_name,
@@ -317,57 +331,40 @@ namespace Dumper {
 		if constexpr (sizeof...(args) > 0) {
 			Dump(log_stream, to_file, false, func_name, location, pid, tid, args...);
 		} else {
-			std::string log_entry = log_stream.str();
-
-			std::lock_guard<std::mutex> lock(g_log_output_mutex);
-
-			if (to_file) {
-				std::ofstream(GetHomeDir() + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
-			} else {
-				std::clog << log_entry << std::endl;
-			}
+			FlushLog(log_stream, to_file);
 		}
 	}
 
-
 	// Поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений): через DUMPV
 
-	template<typename ValuesTupleT, std::size_t... I>
-	void DumpWrapperImpl(
-		std::ostringstream& log_stream,
-		bool to_file,
-		std::string_view func_name,
-		std::string_view location,
-		pid_t pid,
-		unsigned long int tid,
-		const std::vector<std::string>& var_names,
-		ValuesTupleT&& var_values,
-		std::index_sequence<I...>)
+	template <std::size_t... I, typename ValuesTupleT>
+	void DumpEachVariable(const std::vector<std::string>& var_names, std::ostringstream& log_stream,
+						  ValuesTupleT& values_tuple, std::index_sequence<I...>)
 	{
-		auto name_value_pairs = std::tuple_cat(
-			std::make_tuple(std::string_view(var_names[I]),
-			std::cref(std::get<I>(std::forward<ValuesTupleT>(var_values))))...
-			);
-		std::apply([&](auto&&... name_value_pair_args) {
-			Dump(log_stream, to_file, true, func_name, location, pid, tid, name_value_pair_args...);
-		}, name_value_pairs);
+		(DumpValue(log_stream, var_names[I], std::get<I>(values_tuple)), ...);
 	}
 
 
-	template<typename ValuesTupleT>
-	void DumpWrapper(
-		std::ostringstream& log_stream,
-		bool to_file,
-		std::string_view func_name,
-		std::string_view location,
-		pid_t pid,
-		unsigned long int tid,
-		const std::vector<std::string>& var_names,
-		ValuesTupleT&& var_values)
+	inline bool TryParseVariableNames(const char *var_names_str, std::vector<std::string> &var_names, size_t var_values_count)
 	{
-		constexpr auto N = std::tuple_size<std::decay_t<ValuesTupleT>>::value;
-		DumpWrapperImpl(log_stream, to_file, func_name, location, pid, tid, var_names,
-						std::forward<ValuesTupleT>(var_values), std::make_index_sequence<N>{});
+		if (!var_names_str || std::strchr(var_names_str, '(') != nullptr) {
+			return false;
+		}
+
+		std::istringstream var_names_stream(var_names_str);
+		std::string name_token;
+		while (std::getline(var_names_stream, name_token, ',')) {
+			size_t start = name_token.find_first_not_of(" \t");
+			size_t end = name_token.find_last_not_of(" \t");
+			if(start != std::string::npos && end != std::string::npos)
+				var_names.emplace_back(name_token.substr(start, end - start + 1));
+		}
+
+		if (var_names.size() != var_values_count) {
+			return false;
+		}
+
+		return true;
 	}
 
 
@@ -380,41 +377,31 @@ namespace Dumper {
 		pid_t pid,
 		unsigned long int tid,
 		const char *var_names_str,
-		const Ts&... var_values_args)
+		const Ts&... var_values)
 	{
 		auto ReportError = [&]() {
 			std::string error_message =
 				"dumpv: Only simple variables are allowed as arguments. "
 				"Function calls or complex expressions with internal commas are not supported.";
-			std::vector<std::string> error_names = { "ERROR" };
-			auto error_tuple = std::make_tuple(error_message);
-			DumpWrapper(log_stream, to_file, func_name, location, pid, tid, error_names, error_tuple);
+			DumpValue(log_stream, "ERROR", error_message);
 		};
 
-		if (std::strchr(var_names_str, '(') != nullptr) {
-			ReportError();
-			return;
-		}
 
+		log_stream << FormatLogHeader(pid, tid, func_name, location);
+
+		constexpr auto var_values_count = sizeof...(var_values);
 		std::vector<std::string> var_names;
-		std::istringstream var_names_stream(var_names_str);
-		std::string name_token;
-		while (std::getline(var_names_stream, name_token, ',')) {
-			size_t start = name_token.find_first_not_of(" \t");
-			size_t end = name_token.find_last_not_of(" \t");
-			if(start != std::string::npos && end != std::string::npos)
-				var_names.emplace_back(name_token.substr(start, end - start + 1));
-		}
 
-		constexpr auto var_values_count = sizeof...(var_values_args);
-		if (var_names.size() != var_values_count) {
+		if (TryParseVariableNames(var_names_str, var_names, var_values_count)) {
+			auto values_tuple = std::forward_as_tuple(var_values...);
+			DumpEachVariable(var_names, log_stream, values_tuple, std::make_index_sequence<var_values_count>{});
+		} else {
 			ReportError();
-			return;
 		}
 
-		auto var_values = std::forward_as_tuple(var_values_args...);
-		DumpWrapper(log_stream, to_file, func_name, location, pid, tid, var_names, var_values);
+		FlushLog(log_stream, to_file);
 	}
+
 
 } // end namespace Dumper
 

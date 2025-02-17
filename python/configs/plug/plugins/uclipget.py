@@ -27,10 +27,11 @@ class Plugin(FarPlugin):
             log.debug(f'CopyFile: {fqname} -> {dqname}')
             with open(dqname, 'wb') as fo:
                 with open(fqname, 'rb') as fi:
-                    rec = fi.read(4096)
-                    if not rec:
-                        break
-                    fo.write(rec)
+                    while True:
+                        rec = fi.read(4096)
+                        if not rec:
+                            break
+                        fo.write(rec)
 
     def OpenPlugin(self, OpenFrom):
         winport = self.ffi.cast("struct WINPORTDECL *", far2lc.WINPORT())

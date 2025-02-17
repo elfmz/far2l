@@ -143,9 +143,16 @@ public:
 static bool load_arclite_xml(Options &options)
 {
 	xml_parser xml(options);
-	auto plugin_path = add_trailing_slash(Far::get_plugin_module_path());
+//	auto plugin_path = add_trailing_slash(Far::get_plugin_module_path());
+	auto plugin_path = StrMB2Wide(InMyConfig("plugins/arclite/"));
 	auto r1 = xml.parse(plugin_path + L"arclite.xml");
-	xml.parse(plugin_path + L"arclite.xml.custom");
+
+
+
+//StrMB2Wide(symlinkaddr).c_str()
+
+//	xml.parse(plugin_path + L"arclite.xml.custom");
+	//	settingsIni = InMyConfig("plugins/arclite/arclite.ini");
 	//  auto profile_path = expand_env_vars(L"%FARPROFILE%");
 	//  if (!profile_path.empty())
 	//    xml.parse(add_trailing_slash(profile_path) + L"arclite.xml.custom");

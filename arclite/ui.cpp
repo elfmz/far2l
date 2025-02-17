@@ -665,7 +665,7 @@ public:
 			new_line();
 		}
 
-		clear_ctrl_id = def_button(Far::get_msg(MSG_BUTTON_CLEAR), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
+		clear_ctrl_id = button(Far::get_msg(MSG_BUTTON_CLEAR), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
 		reset_ctrl_id = button(Far::get_msg(MSG_BUTTON_RESET), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
 		new_line();
 		separator();

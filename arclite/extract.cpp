@@ -283,6 +283,13 @@ private:
 			progress->update_cache_written(size_written);
 		}
 	}
+
+//#include <WinCompat.h>
+//#include <WinPort.h>
+//#include <sudo.h>
+//#include <utils.h>
+
+
 	void close_file()
 	{
 		if (file.is_open()) {
@@ -301,8 +308,11 @@ private:
 							slsize = PATH_MAX - 1;
 						char *symlinkaddr = file.getsymlink();
 						symlinkaddr[slsize] = 0;
-//						fprintf(stderr, "CREATE SYMLINK To %S -> %S \n", StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str() );
-						int res = Far::g_fsf.MkLink(StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str(), FLINK_SYMLINKDIR | FLINK_DONOTUPDATEPANEL );
+						fprintf(stderr, "CREATE SYMLINK To %S -> %S \n", StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str() );
+//						int res = Far::g_fsf.MkLink(StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str(), FLINK_SYMLINKDIR | FLINK_DONOTUPDATEPANEL );
+//			StrWide2MB(current_rec.file_path);
+						int res	= Far::g_fsf.sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
+
 						if (!res) {}
 					}
 				}

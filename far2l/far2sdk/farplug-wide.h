@@ -2037,12 +2037,15 @@ typedef const char *(WINAPI *FAROWNERNAMEBYID)(uid_t id);
 typedef const char *(WINAPI *FARGROUPNAMEBYID)(uid_t id);
 typedef size_t (WINAPI *FARREADLINK)(const char *path, char *buf, size_t bufsiz);
 typedef BOOL (WINAPI *FARSDCLSTAT)(const wchar_t *path, void *s);
+typedef int (WINAPI *FARSDCSYMLINK)(const char *path1, const char *path2);
 typedef BOOL (WINAPI *FARGETFINDDATA)(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindDataW);
 
 typedef int (WINAPI *FARGETDATEFORMAT)(void);
 typedef wchar_t (WINAPI *FARGETDATESEPARATOR)(void);
 typedef wchar_t (WINAPI *FARGETTIMESEPARATOR)(void);
 typedef wchar_t (WINAPI *FARGETDECIMALSEPARATOR)(void);
+
+
 
 // Exports to file virtual terminal history of given VT console
 //  con_hnd - NULL means active console, otherise - must be one of handles obtained from VTEnumBackground
@@ -2187,11 +2190,13 @@ typedef struct FarStandardFunctions
 	FARGROUPNAMEBYID		   GroupNameByID;
 	FARREADLINK				   ReadLink;
 	FARSDCLSTAT				   sdc_lstat;
+	FARSDCSYMLINK			   sdc_symlink;
 	FARGETFINDDATA			   GetFindData;
 	FARGETDATEFORMAT		   GetDateFormat;
 	FARGETDATESEPARATOR		   GetDateSeparator;
 	FARGETTIMESEPARATOR		   GetTimeSeparator;
 	FARGETDECIMALSEPARATOR	   GetDecimalSeparator;
+
 
 	FARAPIVT_ENUM_BACKGROUND   VTEnumBackground;
 	FARAPIVT_LOGEXPORT         VTLogExport;

@@ -409,6 +409,11 @@ static BOOL farsdc_lstat(const wchar_t *lpwszFileName, void *_s)
 	return TRUE;
 }
 
+static int farsdc_symlink(const char *path1, const char *path2)
+{
+	return sdc_symlink(path1, path2);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static int WINAPI farESetFileMode(const wchar_t *Name, DWORD Mode, int SkipMode)
@@ -474,149 +479,14 @@ static BOOL farGetFindData(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindD
 
 	memcpy(FindDataW->cFileName, FindDataEx.strFileName.GetBuffer(), sizeof(WCHAR) * (FindDataEx.strFileName.GetLength() + 1) );
 
-/**
-typedef struct _WIN32_FIND_DATAW {
-    FILETIME ftCreationTime;
-    FILETIME ftLastAccessTime;
-    FILETIME ftLastWriteTime;
-    uid_t UnixOwner;
-    gid_t UnixGroup;
-    DWORD64 UnixDevice;
-    DWORD64 UnixNode;
-    DWORD64 nPhysicalSize;
-    DWORD64 nFileSize;
-    DWORD dwFileAttributes;
-    DWORD dwUnixMode;
-    DWORD nHardLinks;
-    DWORD nBlockSize;
-    WCHAR cFileName[ MAX_NAME ];
-} WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
-**/
-
 	return TRUE;
 }
-
-//static size_t WINAPI farReadLink(const char *path, char *buf, size_t bufsiz)
-//{
-//Wide2MB(Symbol).c_str()
-//	return sdc_readlink(path, buf, bufsiz);
-//}
 
 static int WINAPI farGetDateFormat() {return GetDateFormat();}
 static wchar_t WINAPI farGetDateSeparator() {return GetDateSeparator();}
 static wchar_t WINAPI farGetTimeSeparator() {return GetTimeSeparator();}
 static wchar_t WINAPI farGetDecimalSeparator() {return GetDecimalSeparator();}
 
-
-//int GetDateFormat()
-//wchar_t GetDateSeparator()
-//wchar_t GetTimeSeparator()
-
-
-
-
-/**
-static BOOL farGetFindData(const wchar_t *lpwszFileName, FAR_FIND_DATA_EX &FindData)
-
-BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindDataW)
-{
-	struct stat s{};
-	int r = sdc_lstat(Wide2MB(lpwszFileName).c_str(), &s);
-	if (r == -1) {
-		return FALSE;
-	}
-
-	FindData.Clear();
-
-	FindData.nPhysicalSize = ((DWORD64)s.st_blocks) * 512;
-
-	DWORD symattr = 0;
-	if ((s.st_mode & S_IFMT) == S_IFLNK) {
-		struct stat s2
-		{};
-		if (sdc_stat(Wide2MB(lpwszFileName).c_str(), &s2) == 0) {
-			s = s2;
-			symattr = FILE_ATTRIBUTE_REPARSE_POINT;
-		} else {
-			symattr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
-		}
-	}
-
-	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
-	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
-	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
-	FindData.ftChangeTime = FindData.ftLastWriteTime;
-	FindData.UnixOwner = s.st_uid;
-	FindData.UnixGroup = s.st_gid;
-	FindData.UnixDevice = s.st_dev;
-	FindData.UnixNode = s.st_ino;
-	FindData.dwFileAttributes = WINPORT(EvaluateAttributes)(s.st_mode, FindData.strFileName) | symattr;
-	FindData.nFileSize = s.st_size;
-	FindData.dwUnixMode = s.st_mode;
-	FindData.nHardLinks = (DWORD)s.st_nlink;
-	FindData.nBlockSize = (DWORD)s.st_blksize;
-	FindData.strFileName = PointToName(lpwszFileName);
-
-	if (FindData.nHardLinks > 1)
-		FindData.dwFileAttributes |= FILE_ATTRIBUTE_HARDLINKS;
-
-	return TRUE;
-}
-
-
-typedef struct _WIN32_FIND_DATAW {
-    FILETIME ftCreationTime;
-    FILETIME ftLastAccessTime;
-    FILETIME ftLastWriteTime;
-    uid_t UnixOwner;
-    gid_t UnixGroup;
-    DWORD64 UnixDevice;
-    DWORD64 UnixNode;
-    DWORD64 nPhysicalSize;
-    DWORD64 nFileSize;
-    DWORD dwFileAttributes;
-    DWORD dwUnixMode;
-    DWORD nHardLinks;
-    DWORD nBlockSize;
-    WCHAR cFileName[ MAX_NAME ];
-} WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
-**/
-
-//static size_t WINAPI farSymLink(const char *path1, const char *path2)
-//{
-//Wide2MB(Symbol).c_str()
-//	return sdc_symlink(path1, path2);
-//}
-
-//	sdc_unlink(strSelName.GetMB().c_str());
-//	r = sdc_symlink(DlgParam.SymLink.GetMB().c_str(), strSelName.GetMB().c_str());
-
-
-
-/**
-
-extern "C" __attribute__ ((visibility("default"))) ssize_t sdc_readlink(const char *path, char *buf, size_t bufsiz)
-
-const char *OwnerNameByID(uid_t id)
-{
-	struct passwd *pw = getpwuid(id);
-	if (!pw) {
-		perror("OwnerNameByID");
-		return NULL;
-	}
-	return pw->pw_name;
-}
-
-const char *GroupNameByID(gid_t id)
-{
-	struct group *gr = getgrgid(id);
-	if (!gr) {
-		perror("GroupNameByID");
-		return NULL;
-	}
-	return gr->gr_name;
-}
-**/
 
 void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandardFunctions *FSF)
 {
@@ -695,6 +565,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StandardFunctions.GroupNameByID = farGroupNameByID;
 		StandardFunctions.ReadLink = farReadLink;
 		StandardFunctions.sdc_lstat = farsdc_lstat;
+		StandardFunctions.sdc_symlink = farsdc_symlink;
 		StandardFunctions.GetFindData = farGetFindData;
 		StandardFunctions.GetDateFormat = farGetDateFormat;
 		StandardFunctions.GetDateSeparator = farGetDateSeparator;

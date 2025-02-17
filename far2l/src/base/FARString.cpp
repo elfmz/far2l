@@ -650,16 +650,16 @@ size_t FARString::TruncateByCells(size_t nCount)
 }
 
 
-// Definition of dump_value for FARString
+// Definition of DumpValue for FARString
 namespace Dumper {
 	#include "debug.h"
 	template <>
-	inline void dump_value(
-		std::ostringstream& oss,
+	inline void DumpValue(
+		std::ostringstream& log_stream,
 		std::string_view var_name,
 		const FARString& value)
 	{
 		std::string str_value = value.GetMB();
-		dump_value(oss, var_name, str_value);
+		DumpValue(log_stream, var_name, str_value);
 	}
 }

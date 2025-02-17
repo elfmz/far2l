@@ -40,7 +40,7 @@ class Panel:
         # wchar_t *
         return self.info.Control(self._handle(active), self.ffic.FCTL_CLOSEPLUGIN, 0, self.ffi.cast("LONG_PTR", arg))
 
-    def GetPanelInfo(self, no, active=True):
+    def GetPanelInfo(self, active=True):
         pnl = self.ffi.new("struct PanelInfo *")
         if self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELINFO, 0, self.ffi.cast("LONG_PTR", pnl)):
             return pnl

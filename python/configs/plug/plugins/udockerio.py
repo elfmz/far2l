@@ -8,15 +8,8 @@ import subprocess
 import re
 import logging
 
-if __name__ == "__main__":
-    import sys
-    class Log:
-        def debug(self, msg):
-            sys.stdout.write(msg)
-            sys.stdout.write('\n')
-    log = Log()
-else:
-    log = logging.getLogger(__name__)
+
+log = logging.getLogger(__name__)
 
 
 class Entry(object):
@@ -146,7 +139,6 @@ class Docker(object):
     def logs(self, name):
         return self.run("container", "logs", name, stderr=True)
 
-    ls = "/bin/ls -anL --full-time {}"
     date_re = "%Y-%m-%d %H:%M:%S"
     file_re1 = r"""
 ^
@@ -197,27 +189,15 @@ class Docker(object):
     def pull(self, deviceid, sqname, dqname):
         lines = self.run("cp", "{}:{}".format(deviceid, sqname), dqname)
         for line in lines:
-            log.debug("pull:".format(line))
+            log.debug(f"pull: {line}")
 
     def push(self, deviceid, sqname, dqname):
         lines = self.run("cp", sqname, "{}:{}".format(deviceid, dqname))
         for line in lines:
-            log.debug("push:".format(line))
+            log.debug(f"push: {line}")
 
     def mkdir(self, deviceid, dqname):
         self.run("exec", deviceid, "mkdir", dqname)
 
     def remove(self, deviceid, dqname):
         self.run("exec", deviceid, "rm", "-rf", dqname)
-
-
-if __name__ == "__main__":
-    cls = Docker()
-    info = cls.list()
-    print(info)
-    result = cls.ls(info[0][0], "/")
-    for e in result:
-        print(e)
-    cls.stop('redmine')
-    cls.start('redmine')
-    cls.logs('redmine')

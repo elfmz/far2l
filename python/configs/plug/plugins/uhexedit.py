@@ -5,7 +5,7 @@ import logging
 import far2lc
 from far2l import fardialogbuilder as fdb
 from far2l.plugin import PluginBase
-from far2l.far2ledit import Edit
+from far2l.far2leditor import Editor
 
 log = logging.getLogger(__name__)
 
@@ -297,16 +297,16 @@ class Plugin(PluginBase):
     def OpenPlugin(self, OpenFrom):
         # 5=edit, 6=viewer, 1=panel
         if OpenFrom == 5:
-            fqname = Edit(self, self.info, self.ffi, self.ffic).GetFileName()
+            fqname = Editor(self).GetFileName()
         elif OpenFrom == 6:
             data = self.ffi.new("struct ViewerInfo *")
             data.StructSize = self.ffi.sizeof("struct ViewerInfo")
             self.info.ViewerControl(self.ffic.VCTL_GETINFO, data)
             fqname = self.f2s(data.FileName)
         elif OpenFrom == 1:
-            pnli, pnlidata = self.api.GetCurrentPanelItem()
+            pnli, pnlidata = self.panel.GetCurrentPanelItem()
             fname = self.f2s(pnli.FindData.lpwszFileName)
-            fqname = os.path.join(self.api.GetPanelDir(), fname)
+            fqname = os.path.join(self.panel.GetPanelDir(), fname)
         else:
             log.debug(f"unsupported open from {OpenFrom}")
             return
@@ -324,13 +324,9 @@ class Plugin(PluginBase):
             log.exception('run')
 
     def GotoDialog(self):
-        @self.ffi.callback("FARWINDOWPROC")
-        def DialogProc(hDlg, Msg, Param1, Param2):
-            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
-
         b = fdb.DialogBuilder(
             self,
-            DialogProc,
+            self.info.DefDlgProc,
             "Goto",
             "charmap",
             0,
@@ -358,15 +354,6 @@ class Plugin(PluginBase):
                 log.exception('goto')
                 return None
         return None
-
-    def GetCursorPos(self, hDlg, ID):
-        cpos = self.ffi.new("COORD *")
-        self.info.SendDlgMessage(hDlg, self.ffic.DM_GETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
-        return (cpos.X, cpos.Y)
-
-    def SetCursorPos(self, hDlg, ID, col, row):
-        cpos = self.ffi.new("COORD *", dict(X=col, Y=row))
-        self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
 
     def GetColor(self, no):
         data = self.ffi.new("DWORD *")
@@ -406,8 +393,8 @@ class Plugin(PluginBase):
                 mm[offset] = b
         self.fileinfo._modified = {}
         self.hexeditor.fill()
-        self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_statusbar, 1)
-        self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_hexeditor, 1)
+        self.dlg.ShowItem(self.dlg.ID_statusbar, 1)
+        self.dlg.ShowItem(self.dlg.ID_hexeditor, 1)
         if showinfo:
             self.notice("File is saved.", "HexEditor")
 
@@ -462,15 +449,15 @@ class Plugin(PluginBase):
                 return False
         self.fileinfo.fileoffset = fileoffset
         self.hexeditor.fill()
-        self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_hexeditor, 1)
+        self.dlg.ShowItem(self.dlg.ID_hexeditor, 1)
         return True
 
     def DialogProc(self, Msg, Param1, Param2):
         # log.debug(f"dlg: Msg={Msg:08x} Param1={Param1:08x} Param2={Param2:08x}")
         if Msg == self.ffic.DN_INITDIALOG:
             self.hexeditor.fill()
-            self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, self.hexeditor.COL, 0)
-            self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SETCURSORSIZE, self.dlg.ID_hexeditor, 1|(100<<16))
+            self.dlg.SetCursorPos(self.dlg.ID_hexeditor, self.hexeditor.COL, 0)
+            self.dlg.SetCursorSize(self.dlg.ID_hexeditor, 1, 100)
             self.dlg.SetFocus(self.dlg.ID_hexeditor)
             return self.info.DefDlgProc(self.dlg.hDlg, Msg, Param1, Param2)
         elif Msg == self.ffic.DN_RESIZECONSOLE:
@@ -487,11 +474,11 @@ class Plugin(PluginBase):
                 st = KeyBar.ST_ALT
             if self.keybar.state != st:
                 self.keybar.state = st
-                self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_keybar, 1)
+                self.dlg.ShowItem(self.dlg.ID_keybar, 1)
                 return 1
         elif Msg == self.ffic.DN_KEY and Param1 == self.dlg.ID_hexeditor:
             # log.debug(f"dlg.DN_KEY: Param1={Param1:08x} Param2={Param2:08x}")
-            col, row = self.GetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor)
+            col, row = self.dlg.GetCursorPos(self.dlg.ID_hexeditor)
             if Param2 == self.ffic.KEY_PGUP:
                 self.Scroll(-16 * self.hexeditor.height)
             elif Param2 == self.ffic.KEY_PGDN:
@@ -565,9 +552,9 @@ class Plugin(PluginBase):
                 else:
                     return self.info.DefDlgProc(self.dlg.hDlg, Msg, Param1, Param2)
             if row is not None:
-                self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, col, row)
+                self.dlg.SetCursorPos(self.dlg.ID_hexeditor, col, row)
                 self.statusbar.write_offset(self.hexeditor.Offset(row, col)[0])
-                self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_SHOWITEM, self.dlg.ID_statusbar, 1)
+                self.dlg.ShowItem(self.dlg.ID_statusbar, 1)
             return 1
         elif Msg == self.ffic.DN_MOUSECLICK:
             mou = self.ffi.cast("MOUSE_EVENT_RECORD *", Param2)
@@ -576,7 +563,7 @@ class Plugin(PluginBase):
             if Param1 == self.dlg.ID_hexeditor:
                 col = self.hexeditor.Click(row, col)
                 if col is not None:
-                    self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, col, row)
+                    self.dlg.SetCursorPos(self.dlg.ID_hexeditor, col, row)
             elif Param1 == self.dlg.ID_keybar:
                 fkey = self.keybar.col2fkey(col)
                 if self.keybar.state == KeyBar.ST_NORMAL:
@@ -587,14 +574,14 @@ class Plugin(PluginBase):
                     elif fkey == 5:
                         row, col = self.Goto()
                         if row is not None:
-                            self.SetCursorPos(self.dlg.hDlg, self.dlg.ID_hexeditor, col, row)
+                            self.dlg.SetCursorPos(self.dlg.ID_hexeditor, col, row)
                     elif fkey == 7:
                         self.Search()
                     elif fkey == 9:
                         self.Setup()
                     elif fkey == 10:
                         if self.Quit() == 0:
-                            self.info.SendDlgMessage(self.dlg.hDlg, self.ffic.DM_CLOSE, 1, 0)
+                            self.dlg.Close(1)
                 elif self.state == KeyBar.ST_ALT:
                     if fkey == 7:
                         self.SearchPrev()

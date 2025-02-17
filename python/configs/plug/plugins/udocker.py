@@ -148,7 +148,7 @@ class Plugin(PluginVFS):
         self.info.Control(self.hplugin, self.ffic.FCTL_UPDATEPANEL, 0, 0)
         self.info.Control(self.hplugin, self.ffic.FCTL_REDRAWPANEL, 0, 0)
         return True
-
+ 
     def Message(self, body, title="Docker", flags=0):
         items = []
         if title:
@@ -173,13 +173,15 @@ class Plugin(PluginVFS):
             title = "docker://{}{}".format(self.device, self.devicepath)
         else:
             title = self.label
+        log.debug(f'GetOpenPluginInfo: {title}')
         #
         # WARNING WARNING - dangerous pointers and lifetime of a variable in python
         # anything passed as a pointer must be kept in local python variables
         # otherwise gc/cffi will delete them and miracles will happen
         #
+        self.title = title
         self._curdir = self.s2f(self.devicepath)
-        self._title = self.s2f(title)
+        self._title = self.s2f(self.title)
         self._label = self.s2f(self.label)
 
         Info = self.ffi.cast("struct OpenPluginInfo *", OpenInfo)
@@ -205,6 +207,7 @@ class Plugin(PluginVFS):
         # Info.StartSortOrder = 0
         # const struct KeyBarTitles *KeyBar;
         # Info.ShortcutData = self.s2f('py:adb cd '+title)
+        log.debug(f'GetOpenPluginInfo: {title}')
 
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):
         # super().GetFindData(PanelItem, ItemsNumber, OpMode)
@@ -234,7 +237,7 @@ class Plugin(PluginVFS):
         return True
 
     def FreeFindData(self, PanelItem, ItemsNumber):
-        # log.debug("FreeFindData({0}, {1}, n.names={2}, n.Items={3})".format(PanelItem, ItemsNumber, len(self.names), len(self.Items)))
+        log.debug(f"FreeFindData({PanelItem}, {ItemsNumber}, n.Items={len(self.Items)})")
         self.names = []
         self.Items = []
 
@@ -484,10 +487,29 @@ class Plugin(PluginVFS):
     def Execute(self):
         pass
 
+    def ShowLogs(self):
+        item, ppidata = self.parent.GetCurrentPanelItem()
+        isdir = (item.Flags & self.ffic.FILE_ATTRIBUTE_DIRECTORY) != 0
+        open("/tmp/uinfo", "wt").write(f'''\
+device={self.device}
+path={self.devicepath}
+name={self.f2s(item.FindData.lpwszFileName)}
+isdir={isdir}
+''')
+        self.info.Editor(
+            "/tmp/uinfo",
+            "uinfo",
+            0, 0, -1, -1,
+            #0,0,50,25,
+            self.ffic.EF_DISABLEHISTORY,#|self.ffic.EF_NONMODAL|self.ffic.EF_IMMEDIATERETURN
+            0,
+            0,
+            0xFFFFFFFF,  # =-1=self.ffic.CP_AUTODETECT
+        )
+        os.unlink('/tmp/uinfo')
+
     def ProcessKey(self, Key, ControlState):
-        # log.debug("ProcessKey({0}, {1})".format(Key, ControlState))
-        if ControlState == self.ffic.PKF_CONTROL:
-            log.debug("ProcessKey(0x{:x}, {})".format(Key, ControlState))
+        log.debug("ProcessKey({0}, {1})".format(Key, ControlState))
         # if (
         #    Key == 0x80051 # FARMACRO_KEY_EVENT = 0x80000|1...
         #    and ControlState == self.ffic.PKF_CONTROL
@@ -495,13 +517,19 @@ class Plugin(PluginVFS):
         #    # 0x80051 = CTRL+Q = quick view, here its equal to core dump when scanning /proc directory
         #    return True
         if (
+            Key == self.ffic.VK_F3
+            and ControlState == 0
+        ):
+            self.ShowLogs()
+            return 1
+        if (
             False
             and Key == self.ffic.KEY_CTRLA - self.ffic.KEY_CTRL
             and ControlState == self.ffic.PKF_CONTROL
         ):
             log.debug("ProcessKey: CTRL+A")
             # self.EditAttributes()
-            return True
+            return 1
         if (
             Key == self.ffic.KEY_ENTER
             and ControlState == self.ffic.PKF_CONTROL
@@ -509,5 +537,5 @@ class Plugin(PluginVFS):
         ):
             log.debug("ProcessKey: CTRL+ENTER")
             self.Execute()
-            return True
-        return False
+            return 1
+        return 0

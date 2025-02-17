@@ -22,7 +22,7 @@ class PluginBase:
         self.ffi = ffi
         self.ffic = ffic
         self.hplugin = self.ffi.cast("void *", id(self))
-        self.api = Panel(self, info, ffi, ffic)
+        self.panel = Panel(self)
 
     def s2f(self, s):
         return self.ffi.new("wchar_t []", s)

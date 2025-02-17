@@ -315,27 +315,33 @@ namespace Dumper {
 		}
 	}
 
+	// Бэкенд для макроса DUMP: аргументы заключаются в дополнительные макросы DVV, DBUF, DCONT, DMSG...
 
-	template<typename T, typename... Args>
-	void Dump(
-		std::ostringstream& log_stream, bool to_file, bool firstcall, std::string_view func_name,
-		std::string_view location, pid_t pid, unsigned long int tid, std::string_view var_name,
-		const T& value, const Args&... args)
+	template<std::size_t... I, typename NameValueTupleT>
+	void ProcessPairs(const NameValueTupleT& name_value_tuple, std::ostringstream & log_stream, std::index_sequence<I...>)
 	{
-		if (firstcall) {
-			log_stream << FormatLogHeader(pid, tid, func_name, location);
-		}
 
-		DumpValue(log_stream, var_name, value);
-
-		if constexpr (sizeof...(args) > 0) {
-			Dump(log_stream, to_file, false, func_name, location, pid, tid, args...);
-		} else {
-			FlushLog(log_stream, to_file);
-		}
+		(DumpValue(log_stream, std::get<2 * I>(name_value_tuple), std::get<2 * I + 1>(name_value_tuple)), ...);
 	}
 
-	// Поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений): через DUMPV
+
+	template<typename... Args>
+	void Dump(std::ostringstream& log_stream, bool to_file,
+			  std::string_view func_name, std::string_view location,
+			  pid_t pid, unsigned long int tid, const Args&... args)
+	{
+		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
+
+		log_stream << FormatLogHeader(pid, tid, func_name, location);
+
+		auto args_tuple = std::forward_as_tuple(args...);
+		constexpr std::size_t pair_count = sizeof...(args) / 2;
+		ProcessPairs(args_tuple, log_stream, std::make_index_sequence<pair_count>{});
+		FlushLog(log_stream, to_file);
+	}
+
+
+	// Бэкенд для макроса DUMPV: поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений)
 
 	template <std::size_t... I, typename ValuesTupleT>
 	void DumpEachVariable(const std::vector<std::string>& var_names, std::ostringstream& log_stream,
@@ -416,7 +422,7 @@ namespace Dumper {
 #define DUMP_THREAD std::hash<std::thread::id>{}(std::this_thread::get_id())
 #endif
 
-#define DUMP(to_file, ...) { std::ostringstream log_stream; Dumper::Dump(log_stream, to_file, true, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }
+#define DUMP(to_file, ...) { std::ostringstream log_stream; Dumper::Dump(log_stream, to_file, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }
 #define DUMPV(to_file, ...) { std::ostringstream log_stream; Dumper::DumpV(log_stream, to_file, __func__, LOCATION, getpid(), DUMP_THREAD, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(xxx) #xxx, xxx

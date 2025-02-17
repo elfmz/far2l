@@ -404,6 +404,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			case DN_BTNCLICK:
 			OrigIdx = DialogID2PreservedOriginalIndex(Param1);
 			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS) {
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 				if (OrigIdx != -1) {
 					DlgParam->OriginalCBAttr[OrigIdx] = static_cast<int>(Param2);
 					DlgParam->OriginalCBAttr2[OrigIdx] = 0;
@@ -520,6 +521,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
 					DlgParam->_b_mode_check_or_edit_process = false;
 				}
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 
 				return TRUE;
 			}

@@ -236,11 +236,11 @@ namespace Dumper {
 	};
 
 
-	template <typename Container>
+	template <typename ContainerT>
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const ContainerWrapper<Container>& container_wrapper)
+		const ContainerWrapper<ContainerT>& container_wrapper)
 	{
 		std::size_t index = 0;
 		for (const auto &item : container_wrapper.data) {
@@ -332,7 +332,7 @@ namespace Dumper {
 
 	// Поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений): через DUMPV
 
-	template<typename ValuesTuple, std::size_t... I>
+	template<typename ValuesTupleT, std::size_t... I>
 	void DumpWrapperImpl(
 		std::ostringstream& log_stream,
 		bool to_file,
@@ -341,12 +341,12 @@ namespace Dumper {
 		pid_t pid,
 		unsigned long int tid,
 		const std::vector<std::string>& var_names,
-		ValuesTuple&& var_values,
+		ValuesTupleT&& var_values,
 		std::index_sequence<I...>)
 	{
 		auto name_value_pairs = std::tuple_cat(
 			std::make_tuple(std::string_view(var_names[I]),
-			std::cref(std::get<I>(std::forward<ValuesTuple>(var_values))))...
+			std::cref(std::get<I>(std::forward<ValuesTupleT>(var_values))))...
 			);
 		std::apply([&](auto&&... name_value_pair_args) {
 			Dump(log_stream, to_file, true, func_name, location, pid, tid, name_value_pair_args...);
@@ -354,7 +354,7 @@ namespace Dumper {
 	}
 
 
-	template<typename ValuesTuple>
+	template<typename ValuesTupleT>
 	void DumpWrapper(
 		std::ostringstream& log_stream,
 		bool to_file,
@@ -363,11 +363,11 @@ namespace Dumper {
 		pid_t pid,
 		unsigned long int tid,
 		const std::vector<std::string>& var_names,
-		ValuesTuple&& var_values)
+		ValuesTupleT&& var_values)
 	{
-		constexpr auto N = std::tuple_size<std::decay_t<ValuesTuple>>::value;
+		constexpr auto N = std::tuple_size<std::decay_t<ValuesTupleT>>::value;
 		DumpWrapperImpl(log_stream, to_file, func_name, location, pid, tid, var_names,
-						std::forward<ValuesTuple>(var_values), std::make_index_sequence<N>{});
+						std::forward<ValuesTupleT>(var_values), std::make_index_sequence<N>{});
 	}
 
 

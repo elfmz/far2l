@@ -326,12 +326,12 @@ namespace Dumper {
 
 
 	template<typename... Args>
-	void Dump(std::ostringstream& log_stream, bool to_file,
-			  std::string_view func_name, std::string_view location,
+	void Dump(bool to_file, std::string_view func_name, std::string_view location,
 			  pid_t pid, unsigned long int tid, const Args&... args)
 	{
 		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
 
+		std::ostringstream log_stream;
 		log_stream << FormatLogHeader(pid, tid, func_name, location);
 
 		auto args_tuple = std::forward_as_tuple(args...);
@@ -374,9 +374,17 @@ namespace Dumper {
 	}
 
 
+	inline void ReportDumpVError(std::ostringstream &log_stream)
+	{
+		const std::string error_message =
+			"dumpv: Only simple variables are allowed as arguments. "
+			"Function calls or complex expressions with internal commas are not supported.";
+		DumpValue(log_stream, "ERROR", error_message);
+	}
+
+
 	template<typename... Ts>
 	void DumpV(
-		std::ostringstream& log_stream,
 		bool to_file,
 		std::string_view func_name,
 		std::string_view location,
@@ -385,14 +393,7 @@ namespace Dumper {
 		const char *var_names_str,
 		const Ts&... var_values)
 	{
-		auto ReportError = [&]() {
-			std::string error_message =
-				"dumpv: Only simple variables are allowed as arguments. "
-				"Function calls or complex expressions with internal commas are not supported.";
-			DumpValue(log_stream, "ERROR", error_message);
-		};
-
-
+		std::ostringstream log_stream;
 		log_stream << FormatLogHeader(pid, tid, func_name, location);
 
 		constexpr auto var_values_count = sizeof...(var_values);
@@ -402,7 +403,7 @@ namespace Dumper {
 			auto values_tuple = std::forward_as_tuple(var_values...);
 			DumpEachVariable(var_names, log_stream, values_tuple, std::make_index_sequence<var_values_count>{});
 		} else {
-			ReportError();
+			ReportDumpVError(log_stream);
 		}
 
 		FlushLog(log_stream, to_file);
@@ -422,8 +423,8 @@ namespace Dumper {
 #define DUMP_THREAD std::hash<std::thread::id>{}(std::this_thread::get_id())
 #endif
 
-#define DUMP(to_file, ...) { std::ostringstream log_stream; Dumper::Dump(log_stream, to_file, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }
-#define DUMPV(to_file, ...) { std::ostringstream log_stream; Dumper::DumpV(log_stream, to_file, __func__, LOCATION, getpid(), DUMP_THREAD, #__VA_ARGS__, __VA_ARGS__); }
+#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }
+#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, getpid(), DUMP_THREAD, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", std::string(xxx)

@@ -35,10 +35,6 @@ class Plugin(PluginBase):
         self.info.SendDlgMessage(hDlg, self.ffic.DM_SETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
 
     def _OpenPlugin(self, OpenFrom):
-        if 0:
-            import debugpy
-            debugpy.breakpoint()
-
         def GetColor(no):
             data = self.ffi.new("DWORD *")
             rc = self.info.AdvControl(

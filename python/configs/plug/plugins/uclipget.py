@@ -1,20 +1,17 @@
 import os
-import sys
 import logging
 
-import ctypes as ct
 import far2lc
 from far2l.plugin import PluginBase
-from yfar import FarPlugin
 
 log = logging.getLogger(__name__)
 
-class Plugin(FarPlugin):
+class Plugin(PluginBase):
     label = "Python Clip GET"
     openFrom = ["PLUGINSMENU", 'FILEPANEL']
 
     def CopyFiles(self, data):
-        pwd = self.get_panel().directory
+        pwd = self.panel.GetPanelDir()
         data = data.decode('utf8')
         log.debug(f'copyfiles: {data}')
         prefix = 'file://'

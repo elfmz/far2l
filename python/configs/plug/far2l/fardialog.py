@@ -110,3 +110,18 @@ class Dialog:
     # def SetItemStrAsData(self, ID, Index, Str):
     #    struct FarListItemData FLID{Index, 0, Str, 0}
     #    self.info.SendDlgMessage(self.hDlg, self.ffic.DM_LISTSETDATA, ID, (LONG_PTR)&FLID)
+
+    def GetCursorPos(self, ID):
+        cpos = self.ffi.new("COORD *")
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_GETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
+        return (cpos.X, cpos.Y)
+
+    def SetCursorPos(self, ID, X, Y):
+        cpos = self.ffi.new("COORD *", dict(X=X, Y=Y))
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETCURSORPOS, ID, self.ffi.cast("LONG_PTR", cpos))
+
+    def ShowItem(self, ID, On):
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SHOWITEM, ID, On)
+
+    def SetCursorSize(self, ID, On, Size):
+        self.info.SendDlgMessage(self.hDlg, self.ffic.DM_SETCURSORSIZE, ID, On|(Size<<16))

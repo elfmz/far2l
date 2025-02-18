@@ -99,13 +99,16 @@ namespace Dumper {
 
 
 	inline std::size_t GetNiceThreadId() noexcept {
-		std::lock_guard<std::mutex> lock(g_thread_mutex);
-		std::thread::id id = std::this_thread::get_id();
-		auto iter = g_thread_ids.find(id);
-		if (iter == g_thread_ids.end()) {
-			iter = g_thread_ids.insert({ id, g_thread_idx++ }).first;
-		}
-		return iter->second;
+		static thread_local std::size_t s_nice_thread_id = [] {
+			std::lock_guard<std::mutex> lock(g_thread_mutex);
+			std::thread::id thread_id = std::this_thread::get_id();
+			auto iter = g_thread_ids.find(thread_id);
+			if (iter == g_thread_ids.end()) {
+				iter = g_thread_ids.insert({ thread_id, g_thread_idx++ }).first;
+			}
+			return iter->second;
+		}();
+		return s_nice_thread_id;
 	}
 
 

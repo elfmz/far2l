@@ -247,6 +247,7 @@ for clipboard need turn on OSC 52)
     - some settings files (may be missing):
         - #settings/config.ini# - general config
         - #settings/colors.ini# - ~files highlighting and sort groups~@Highlight@
+        - #settings/farcolors.ini# - interface colors (configurable via F9->~Options~@OptMenu@->Colors)
         - #settings/key_macros.ini# - ~keyboard macro commands~@KeyMacro@
         - #settings/user_menu.ini# - main ~user menu~@UserMenu@ (the format is different from local user FarMenu.ini)
         - #settings/associations.ini# - ~file associations~@FileAssoc@

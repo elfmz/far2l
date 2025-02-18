@@ -415,6 +415,39 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	return i+1;
 }
 
+size_t TTYInputSequenceParser::TryParseModifyOtherKeys(const char *s, size_t l) {
+
+	int modif_state = 0, code = 0;
+	int state = 0; // 0 - initial state, 1 - reading modif_state, 2 - reading code
+
+	for (size_t i = 1; i < l; ++i) { // Starting with 1 to skip '['
+		if (s[i] == ';') {
+			state++;
+			continue;
+		} else if (s[i] == '~') {
+			break; // End of sequence
+		}
+
+		if (state == 1) {
+			modif_state = modif_state * 10 + (s[i] - '0');
+		} else if (state == 2) {
+			code = code * 10 + (s[i] - '0');
+		}
+	}
+
+	if (!code) return TTY_PARSED_BADSEQUENCE;
+
+	// Convert to kitty escape sequence format
+	// and let kitty parser do the rest
+	
+    char buffer[32];
+    snprintf(buffer, sizeof(buffer), "[%d;%du", code, modif_state);
+    size_t length = strlen(buffer);
+    size_t result = TryParseAsKittyEscapeSequence(buffer, length);
+
+    if (result == length) { return l; } else { return TTY_PARSED_BADSEQUENCE; }
+}
+
 size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, size_t l)
 {
 	// check for nasty win32-input-mode sequence: as described in

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.elfmz.far2l</id>
+
+  <name>far2l</name>
+  <summary>Linux port of FAR v2</summary>
+  <categories>
+    <category>Utility</category>
+    <category>FileManager</category>
+    <category>System</category>
+    <category>FileTools</category>
+  </categories>
+  <url type="homepage">https://github.com/elfmz/far2l</url>
+  <developer id="io.github.elfmz">
+    <name>elfmz</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0-only</project_license>
+
+  <description>
+    <p>
+      This is a clone of FAR manager for Windows, similar, but more powerful than Norton Commander/Midnight Commander.
+    </p>
+    <p>
+      Plug-ins that are currently working:
+    </p>
+    <ul>
+      <li>align</li>
+      <li>autowrap</li>
+      <li>calc</li>
+      <li>colorer</li>
+      <li>compare</li>
+      <li>drawline</li>
+      <li>editcase</li>
+      <li>editorcomp</li>
+      <li>filecase</li>
+      <li>incsrch</li>
+      <li>inside</li>
+      <li>multiarc</li>
+      <li>NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)</li>
+      <li>python</li>
+      <li>SimpleIndent</li>
+      <li>tmppanel</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">far2l.desktop</launchable>
+
+  <releases>
+    <release version="2.6.5" type="development" date="2025-XX-XX">
+      <description>
+        <ul>
+          <li><em>New:</em> Different desktop files for launch WX (GUI) <code>--notty</code> and TTY <code>--tty</code></li>
+          <li><em>New:</em> Horizontal panels layout (toggle horizontal-vertical by <em>Ctrl+,</em>)</li>
+          <li><em>New:</em> Groups of file masks</li>
+          <li><em>New:</em> “Files highlighting and sort groups” dialog short/full view by <em>Ctrl+M</em></li>
+          <li><em>New:</em> Customize Size column in panels (all by dialog or <em>Ctrl+Alt+D</em>, symlinks by <em>Ctrl+Alt+L</em>)</li>
+          <li>More customize dirs/files markers in panels (by dialog or <em>Ctrl+Alt+M</em> and <em>Ctrl+Alt+N</em>)</li>
+          <li><em>New:</em> Link item in File menu (in addition to the usual <em>Alt+F6</em>)</li>
+          <li><em>New:</em> Chattr / chflags with all flags for single file (in File menu or by <em>Ctrl+Alt+A</em>)</li>
+          <li><em>New:</em> Python-subplugin: copy/paste files via clipboard - wx ONLY version - with support for gnome clipboard types, works with gnome files/nautilus</li>
+          <li><em>New:</em> At 1st run detect Russian locale</li>
+          <li><em>New:</em> At 1st run show OSC52 info (if needed)</li>
+          <li>Help actualization and improvements</li>
+          <li>Info panel: New EditorConfig block</li>
+          <li><em>colorer plugin</em>: Update colorer schemes to v1.2.0.57</li>
+          <li><em>Inside plugin</em>: Add PE format, add png, ogg, m4a</li>
+          <li><em>multiarc plugin</em>: Removed PCRE library dependencies</li>
+          <li><em>NetRocks plugin</em>: Explicit SSH algorithms options</li>
+          <li><em>Temporary panel plugin</em>: Significant fixes, tweaks and improvements</li>
+          <li>optional ability to use icu available on build system or target</li>
+          <li>Several bugfixes</li>
+        </ul>
+      </description>
+    </release>
+    <release version="2.6.4" type="development" date="2024-11-18"/>
+    <release version="2.6.3" type="development" date="2024-07-25"/>
+    <release version="2.6.2" type="development" date="2024-07-16"/>
+    <release version="2.6.1" type="development" date="2024-04-13"/>
+    <release version="2.6.0" type="development" date="2024-02-19"/>
+    <release version="2.5.3" type="development" date="2023-11-05"/>
+    <release version="2.5.2" type="development" date="2023-08-15"/>
+    <release version="2.5.1" type="development" date="2023-05-28"/>
+    <release version="2.5.0" type="development" date="2023-01-15"/>
+    <release version="2.4.1" type="development" date="2022-09-25"/>
+    <release version="2.4.0" type="development" date="2022-01-12"/>
+    <release version="2.3.2" type="development" date="2021-12-24"/>
+  </releases>
+</component>

@@ -59,7 +59,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ RGB in far2l Palette
 * Several bugfixes
 
-## 2.6.1 beta + hotfix (2024-04-14)
+## 2.6.1 beta (2024-04-14)
 ## 2.6.0 beta (2024-02-19)
 ## 2.5.3 beta (2023-11-05)
 ## 2.5.3 beta (2023-11-05)

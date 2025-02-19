@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.elfmz.far2l</id>
+
+  <name>far2l</name>
+  <summary>Linux port of FAR v2</summary>
+  <categories>
+    <category>Utility</category>
+    <category>FileManager</category>
+    <category>System</category>
+    <category>FileTools</category>
+  </categories>
+  <url type="homepage">https://github.com/elfmz/far2l</url>
+  <developer id="io.github.elfmz">
+    <name>elfmz</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-2.0 and BSD-3-Clause</project_license>
+
+  <description>
+    <p>
+      This is a clone of FAR manager for Windows, similar, but more powerful than Norton Commander/Midnight Commander.
+    </p>
+    <p>
+      Plug-ins that are currently working:
+    </p>
+    <ul>
+      <li>align</li>
+      <li>autowrap</li>
+      <li>calc</li>
+      <li>colorer</li>
+      <li>compare</li>
+      <li>drawline</li>
+      <li>editcase</li>
+      <li>editorcomp</li>
+      <li>filecase</li>
+      <li>incsrch</li>
+      <li>inside</li>
+      <li>multiarc</li>
+      <li>NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)</li>
+      <li>python</li>
+      <li>SimpleIndent</li>
+      <li>tmppanel</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">far2l.desktop</launchable>
+
+  <releases/>
+</component>

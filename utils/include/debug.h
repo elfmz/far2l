@@ -22,6 +22,7 @@
 #include <cstring>
 #include <thread>
 #include <unordered_map>
+#include <sys/stat.h>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -285,6 +286,94 @@ namespace Dumper {
 	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
 
 
+	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...
+
+	enum class FlagsAs {
+		FILE_ATTRIBUTES,
+		UNIX_MODE
+	};
+
+
+	struct FlagsWrapper {
+		unsigned long int value;
+		FlagsAs type;
+		FlagsWrapper(unsigned long int v, FlagsAs t)
+			: value(v), type(t) {}
+	};
+
+
+	template <std::size_t N>
+	std::string FlagsToString(unsigned long int input,
+							  const unsigned long int (&flag_values)[N],
+							  const std::string_view (&flag_names)[N])
+	{
+		std::string result;
+		bool first_in_list = true;
+		for (std::size_t i = 0; i < N; ++i) {
+			if (input & flag_values[i]) {
+				if (!first_in_list)
+					result.append(", ");
+				result.append(flag_names[i]);
+				first_in_list = false;
+			}
+		}
+		if (result.empty())
+			return "[none]";
+		return result;
+	}
+
+
+	inline std::string DecodeFileAttributes(unsigned long int flags)
+	{
+		constexpr unsigned long int f_attr[] = {
+			0x00000001, 0x00000002, 0x00000004, 0x00000010, 0x00000020, 0x00000040, 0x00000080, 0x00000100,
+			0x00000200, 0x00000400, 0x00000800, 0x00001000, 0x00002000, 0x00004000, 0x00008000, 0x00010000,
+			0x00020000, 0x00200000, 0x00400000, 0x00800000, 0x01000000, 0x02000000, 0x08000000};
+
+		constexpr std::string_view s_attr[] = {
+			"READONLY", "HIDDEN", "SYSTEM", "DIRECTORY", "ARCHIVE", "DEVICE_BLOCK", "NORMAL", "TEMPORARY",
+			"SPARSE_FILE", "REPARSE_POINT", "COMPRESSED", "OFFLINE", "NOT_CONTENT_INDEXED", "ENCRYPTED",
+			"INTEGRITY_STREAM", "VIRTUAL", "NO_SCRUB_DATA", "BROKEN", "EXECUTABLE", "DEVICE_CHAR", "DEVICE_FIFO",
+			"DEVICE_SOCK", "HARDLINKS"};
+
+		return FlagsToString(flags, f_attr, s_attr);
+	}
+
+
+	inline std::string DecodeUnixMode(unsigned long int flags) {
+		std::ostringstream result;
+		result << std::oct << flags << " ("
+			<< ((flags & S_IRUSR) ? "r" : "-")
+			<< ((flags & S_IWUSR) ? "w" : "-")
+			<< ((flags & S_IXUSR) ? "x" : "-")
+			<< ((flags & S_IRGRP) ? "r" : "-")
+			<< ((flags & S_IWGRP) ? "w" : "-")
+			<< ((flags & S_IXGRP) ? "x" : "-")
+			<< ((flags & S_IROTH) ? "r" : "-")
+			<< ((flags & S_IWOTH) ? "w" : "-")
+			<< ((flags & S_IXOTH) ? "x" : "-");
+		if(flags & S_ISUID) result << " suid";
+		if(flags & S_ISGID) result << " sgid";
+		if(flags & S_ISVTX) result << " sticky";
+		result << ")";
+		return result.str();
+	}
+
+
+	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name, const FlagsWrapper& df) {
+		std::string decoded;
+		switch (df.type) {
+		case FlagsAs::FILE_ATTRIBUTES:
+			decoded = DecodeFileAttributes(df.value);
+			break;
+		case FlagsAs::UNIX_MODE:
+			decoded = DecodeUnixMode(df.value);
+			break;
+		default:
+			decoded = "[not implemented]";
+		}
+		log_stream << "|=> " << var_name << " = " << decoded << std::endl;
+	}
 
 
 	inline std::string FormatLogHeader(pid_t pid, unsigned long int tid,
@@ -434,3 +523,4 @@ namespace Dumper {
 #define DMSG(xxx) "msg", std::string(xxx)
 #define DBUF(ptr,length) #ptr, Dumper::BufferWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)
+#define DFLAGS(var, treat_as) #var, Dumper::FlagsWrapper(var, treat_as)

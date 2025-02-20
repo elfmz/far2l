@@ -46,6 +46,7 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 
 namespace Dumper {
+
 	inline std::mutex g_log_output_mutex;
 
 	inline std::size_t g_thread_idx = 0;
@@ -376,9 +377,7 @@ namespace Dumper {
 	}
 
 
-	inline std::string FormatLogHeader(pid_t pid, unsigned long int tid,
-								  std::string_view func_name,
-								  std::string_view location)
+	inline std::string CreateLogHeader(std::string_view func_name, std::string_view location)
 	{
 		auto current_time = std::chrono::system_clock::now();
 		auto current_time_t = std::chrono::system_clock::to_time_t(current_time);
@@ -387,8 +386,7 @@ namespace Dumper {
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
 
 		std::ostringstream header_stream;
-		header_stream << std::endl << "/-----[PID:" << pid << ", TID:" << tid << "]-----[";
-
+		header_stream << std::endl << "/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
 		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----" << std::endl;
 		header_stream << "|[" << location << "] in " << func_name << "()" << std::endl;
 		return header_stream.str();
@@ -419,13 +417,12 @@ namespace Dumper {
 
 
 	template<typename... Args>
-	void Dump(bool to_file, std::string_view func_name, std::string_view location,
-			  pid_t pid, unsigned long int tid, const Args&... args)
+	void Dump(bool to_file, std::string_view func_name, std::string_view location, const Args&... args)
 	{
 		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
 
 		std::ostringstream log_stream;
-		log_stream << FormatLogHeader(pid, tid, func_name, location);
+		log_stream << CreateLogHeader(func_name, location);
 
 		auto args_tuple = std::forward_as_tuple(args...);
 		constexpr std::size_t pair_count = sizeof...(args) / 2;
@@ -481,13 +478,11 @@ namespace Dumper {
 		bool to_file,
 		std::string_view func_name,
 		std::string_view location,
-		pid_t pid,
-		unsigned long int tid,
 		const char *var_names_str,
 		const Ts&... var_values)
 	{
 		std::ostringstream log_stream;
-		log_stream << FormatLogHeader(pid, tid, func_name, location);
+		log_stream << CreateLogHeader(func_name, location);
 
 		constexpr auto var_values_count = sizeof...(var_values);
 		std::vector<std::string> var_names;
@@ -509,15 +504,8 @@ namespace Dumper {
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
-#define NICE_THREAD_ID
-#ifdef NICE_THREAD_ID
-#define DUMP_THREAD Dumper::GetNiceThreadId()
-#else
-#define DUMP_THREAD std::hash<std::thread::id>{}(std::this_thread::get_id())
-#endif
-
-#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }
-#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, getpid(), DUMP_THREAD, #__VA_ARGS__, __VA_ARGS__); }
+#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, __VA_ARGS__); }
+#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", std::string(xxx)

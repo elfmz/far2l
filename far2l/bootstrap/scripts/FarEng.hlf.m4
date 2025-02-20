@@ -504,8 +504,8 @@ $ #Panel control commands  #
    (ignore command line state)
   Copy full names of selected files to the clipboard   #Alt-Shift-Ins#
    (ignore command line state)
-  Copy network (UNC) names of selected files to the     #Ctrl-Alt-Ins#
-   clipboard (ignore command line state)
+  Copy full names of selected files to the clipboard    #Ctrl-Alt-Ins#
+   (ignore command line state) (*3)
 
   See also the list of ~macro keys~@KeyMacroShellList@, available in the panels.
 
@@ -520,10 +520,9 @@ and descriptions, work only with non-numpad #Left# and #Right# keys. This is due
 the fact that when #Alt# is pressed, numpad cursor keys are used to enter characters
 via their decimal codes.
 
-  3. ^<wrap>The key combination #Ctrl-Alt-Ins# puts the following text into the clipboard:
-       ^<wrap>* for network drives - the network (UNC) name of the file object;
-       ^<wrap>* for local drives - the local name of the file taking into account
-~symbolic links~@HardSymLink@.
+  3. ^<wrap>The key combination #Ctrl-Alt-Ins# adheres to the following rules:
+     ^<wrap>If "Classic hotkey link resolving" option in ~Panel settings~@PanelSettings@
+dialog is enabled, the full name is used with ~symbolic links~@HardSymLink@ expanded.
 
   4. ^<wrap>If #Ctrl-Ins#, #Alt-Shift-Ins# or #Ctrl-Alt-Ins# is pressed when the cursor
 is on the file "#..#", the name of the current folder is copied.
@@ -628,20 +627,21 @@ $ #Command line commands#
      file mask entered in the fast find box.
 
   Insert current file name from the passive panel   #Ctrl-Shift-Enter#
+
   Insert full file name from the active panel                 #Ctrl-F#
   Insert full file name from the passive panel                #Ctrl-;#
-  Insert network (UNC) file name from the active panel    #Ctrl-Alt-F#
-  Insert network (UNC) file name from the passive panel   #Ctrl-Alt-;#
-
   Insert path from the left panel                             #Ctrl-[#
   Insert path from the right panel                            #Ctrl-]#
-  Insert network (UNC) path from the left panel           #Ctrl-Alt-[#
-  Insert network (UNC) path from the right panel          #Ctrl-Alt-]#
-
   Insert path from the active panel                     #Ctrl-Shift-[#
   Insert path from the passive panel                    #Ctrl-Shift-]#
-  Insert network (UNC) path from the active panel        #Alt-Shift-[#
-  Insert network (UNC) path from the passive panel       #Alt-Shift-]#
+
+  (*5)
+  Insert full file name from the active panel             #Ctrl-Alt-F#
+  Insert full file name from the passive panel            #Ctrl-Alt-;#
+  Insert path from the left panel                         #Ctrl-Alt-[#
+  Insert path from the right panel                        #Ctrl-Alt-]#
+  Insert path from the active panel                      #Alt-Shift-[#
+  Insert path from the passive panel                     #Alt-Shift-]#
 
   Notes:
 
@@ -658,8 +658,9 @@ controls in dialogs and internal editor.
   4. ^<wrap>#Alt-Shift-Left#, #Alt-Shift-Right#, #Alt-Shift-Home# and #Alt-Shift-End# select
 the block in the command line also when the panels are on.
 
-  5. ^<wrap>For local drives, the commands to insert the network (UNC) name of a file object
-insert the local name of the file with ~symbolic links~@HardSymLink@ expanded.
+  5. ^<wrap>The marked key combinations adhere to the following rules:
+     ^<wrap>If "Classic hotkey link resolving" option in ~Panel settings~@PanelSettings@
+dialog is enabled, the full name is used with ~symbolic links~@HardSymLink@ expanded.
 
   6. ^<wrap>About hotkeys and other tricks of built-in terminal emulator: ~read here~@Terminal@
 
@@ -2516,15 +2517,19 @@ $ #Settings dialog: panel#
   #update of panels#        the panels when the state of the file
                           system changes will be disabled if the
                           count of file objects exceeds the
-                          specified value.
-    The value of 0 means "update always". To force an
-    update of the panels, press #Ctrl-R#.
+                          specified value. The value of 0 means
+                          "update always". To force an update of the
+                          panels, press #Ctrl-R#.
 
   #Network drives#          This option enables panel autorefresh
   #autorefresh#             when state of filesystem on network
                           drives is being changed. It can be useful
                           to disable this option on slow network
                           connections
+
+  #Classic hotkey link#     Expand ~symbolic links~@HardSymLink@ when using certain
+  #resolving#               keyboard shortcuts. See ~Panel control commands~@PanelCmd@ and
+                          ~Command line commands~@CmdLineCmd@ for details.
 
   #Show column titles#      Enable display of ~file panel~@FilePanel@ column titles.
 

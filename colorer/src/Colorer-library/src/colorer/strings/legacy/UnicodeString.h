@@ -3,6 +3,7 @@
 
 #include <colorer/strings/legacy/CommonString.h>
 #include <memory>
+#include <cstdint>
 
 class CString;
 

@@ -21,7 +21,8 @@
 #include <functional>
 #include <cstring>
 #include <thread>
-#include <unordered_map>
+#include <atomic>
+#include <cstddef>
 #include <sys/stat.h>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -48,11 +49,7 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 namespace Dumper {
 
 	inline std::mutex g_log_output_mutex;
-
-	inline std::size_t g_thread_idx = 0;
-	inline std::mutex g_thread_mutex;
-	inline std::unordered_map<std::thread::id, std::size_t> g_thread_ids;
-
+	inline std::atomic<std::size_t> g_thread_counter {0};
 
 	inline std::string EscapeString(std::string_view input)
 	{
@@ -102,14 +99,8 @@ namespace Dumper {
 
 	inline std::size_t GetNiceThreadId() noexcept {
 		static thread_local std::size_t s_nice_thread_id = 0;
-		if (s_nice_thread_id == 0) {
-			std::lock_guard<std::mutex> lock(g_thread_mutex);
-			std::thread::id thread_id = std::this_thread::get_id();
-			auto iter = g_thread_ids.find(thread_id);
-			if (iter == g_thread_ids.end()) {
-				iter = g_thread_ids.insert({ thread_id, ++g_thread_idx }).first;
-			}
-			s_nice_thread_id = iter->second;
+		if (UNLIKELY(s_nice_thread_id == 0)) {
+			s_nice_thread_id = g_thread_counter.fetch_add(1, std::memory_order_relaxed) + 1;
 		}
 		return s_nice_thread_id;
 	}

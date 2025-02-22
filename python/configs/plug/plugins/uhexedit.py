@@ -464,7 +464,7 @@ class Plugin(PluginBase):
             size = self.ffi.cast("COORD *", Param2)
             self.Resize(size)
             return 1
-        elif Msg == self.ffic.DN_KEY and Param1 == 0:
+        elif Msg == self.ffic.DN_KEY and Param1 == -1:
             st = KeyBar.ST_NORMAL
             if Param2 & self.ffic.KEY_SHIFT:
                 st = KeyBar.ST_SHIFT

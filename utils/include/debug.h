@@ -99,7 +99,7 @@ namespace Dumper {
 
 	inline std::size_t GetNiceThreadId() noexcept {
 		static thread_local std::size_t s_nice_thread_id = 0;
-		if (UNLIKELY(s_nice_thread_id == 0)) {
+		if (UNLIKELY(!s_nice_thread_id)) {
 			s_nice_thread_id = g_thread_counter.fetch_add(1, std::memory_order_relaxed) + 1;
 		}
 		return s_nice_thread_id;
@@ -113,54 +113,36 @@ namespace Dumper {
 		const T& value)
 	{
 		if constexpr (std::is_pointer_v<T>) {
-			if (value == nullptr) {
+			if (!value) {
 				log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
-				return;
-			}
-
-			if constexpr ( std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char> ) {
-				DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value));
 				return;
 			}
 		}
 
-		if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+		if constexpr (std::is_pointer_v<T> &&
+					  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char>) {
+			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value));
+
+		} else if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::wstring> ||
+							 std::is_convertible_v<T, const wchar_t*>) {
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
 			try {
 				DumpValue(log_stream, var_name, conv.to_bytes(value));
 			} catch (const std::range_error& e) {
 				log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
 			}
-			return;
-		}
 
-		if constexpr (std::is_convertible_v<T, std::string_view> ||
-						std::is_same_v<std::remove_cv_t<T>, char> ||
-						std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
-						std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
-
+		} else if constexpr (std::is_convertible_v<T, std::string_view> ||
+							 std::is_same_v<std::remove_cv_t<T>, char> ||
+							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+							 std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
 			std::string str_value{ value };
 			std::string escaped = EscapeString(str_value);
 			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+
 		} else {
 			log_stream << "|=> " << var_name << " = " << value << std::endl;
 		}
-	}
-
-
-	template <>
-	inline void DumpValue(
-		std::ostringstream& log_stream,
-		std::string_view var_name,
-		const std::wstring& value)
-	{
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		try {
-			DumpValue(log_stream, var_name, conv.to_bytes(value));
-		} catch (const std::range_error& e) {
-			log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
-		}
-		return;
 	}
 
 

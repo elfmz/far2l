@@ -315,8 +315,8 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 
 					ExMessager em;
 					em.AddMultiline(Msg::OSC52Confirm);
-					em.AddDup(L"Yes");
-					em.AddDup(L"No");
+					em.AddDup(Msg::Yes);
+					em.AddDup(Msg::No);
 
 					if (em.Show(0, 2)) {
 						if (Opt.OSC52ClipSet != 0)

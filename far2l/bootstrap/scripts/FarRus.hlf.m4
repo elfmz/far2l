@@ -239,7 +239,8 @@ $ # Особенности FAR2L - начало работы#
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
     - #putty-nd# (Windows ssh-клиент): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (~TTY|F режим~@UIBackends@: клавиши и буфер обмена через FAR2L TTY extensions support)
-    - #PuTTY 0.82+#: начиная с версии 0.82 в ванильном PuTTY в настройках клавиатуры можно выставить #Xterm 216+# и #xterm-style bitmap# (см.: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@)
+    - #PuTTY 0.82+#: начиная с версии 0.82 в ванильном PuTTY в настройках клавиатуры можно выставить #Xterm 216+# и #xterm-style bitmap# (см.: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@),
+но оригинальный PuTTY не может передавать буфер обмена.
 
 
  #Расположение персональных настроек FAR2L и истории#

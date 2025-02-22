@@ -236,7 +236,8 @@ for clipboard need turn on OSC 52)
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
     - #putty-nd# (Windows ssh-client): ~https://sourceforge.net/projects/putty-nd~@https://sourceforge.net/projects/putty-nd@ & ~https://github.com/noodle1983/putty-nd~@https://github.com/noodle1983/putty-nd@
 (~TTY|F backend~@UIBackends@: keys and clipboard by FAR2L TTY extensions support)
-    - #PuTTY 0.82+#: since 0.82 in vanilla PuTTY you can set keyboard settings #Xterm 216+# and #xterm-style bitmap# (see: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@)
+    - #PuTTY 0.82+#: since 0.82 in vanilla PuTTY you can set keyboard settings #Xterm 216+# and #xterm-style bitmap# (see: ~https://github.com/elfmz/far2l/issues/2630~@https://github.com/elfmz/far2l/issues/2630@),
+but vanilla PuTTY can not transfer clipboard.
 
 
  #Location of FAR2L settings and history#

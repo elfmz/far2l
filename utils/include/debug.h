@@ -170,11 +170,11 @@ namespace Dumper {
 	}
 
 
-	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DBUF + DUMP
+	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DSTRBUF + DUMP
 
 	template <typename T>
-	struct BufferWrapper {
-		BufferWrapper(T *data, size_t length) : data(data), length(length) {}
+	struct StrBufWrapper {
+		StrBufWrapper(T *data, size_t length) : data(data), length(length) {}
 		T *data;
 		size_t length;
 	};
@@ -184,19 +184,19 @@ namespace Dumper {
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const BufferWrapper<T>& buffer_wrapper)
+		const StrBufWrapper<T>& str_buf_wrapper)
 	{
-		if (buffer_wrapper.data == nullptr) {
+		if (!str_buf_wrapper.data) {
 			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
 			return;
 		}
 
 		if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
 					  std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
-			std::string str_value ((char*)buffer_wrapper.data, buffer_wrapper.length);
+			std::string str_value ((char*)str_buf_wrapper.data, str_buf_wrapper.length);
 			DumpValue(log_stream, var_name, str_value);
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
-			std::wstring wstr_value (buffer_wrapper.data, buffer_wrapper.length);
+			std::wstring wstr_value (str_buf_wrapper.data, str_buf_wrapper.length);
 			DumpValue(log_stream, var_name, wstr_value);
 		} else {
 			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;
@@ -482,6 +482,6 @@ namespace Dumper {
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", std::string(xxx)
-#define DBUF(ptr,length) #ptr, Dumper::BufferWrapper(ptr,length)
+#define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)
 #define DFLAGS(var, treat_as) #var, Dumper::FlagsWrapper(var, treat_as)

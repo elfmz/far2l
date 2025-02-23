@@ -34,7 +34,7 @@ SharedXmlInputSource* SharedXmlInputSource::getSharedInputSource(const UnicodeSt
   }
 
   auto* sis = new SharedXmlInputSource(path);
-  isHash->emplace(path, sis);
+  isHash->try_emplace(path, sis);
   return sis;
 }
 

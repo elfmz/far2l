@@ -2,8 +2,8 @@
 #define COLORER_UNICODESTRING_H
 
 #include <colorer/strings/legacy/CommonString.h>
-#include <memory>
 #include <cstdint>
+#include <memory>
 
 class CString;
 
@@ -94,8 +94,11 @@ class UnicodeString
   int32_t indexOf(wchar wc, int32_t pos = 0) const;
   /** Searches first index of substring @c str, starting from @c pos ignoring character case */
   int32_t indexOfIgnoreCase(const UnicodeString& str, int32_t pos = 0) const;
-  /** Searches last index of character @c wc, ending with @c pos */
-  int32_t lastIndexOf(wchar wc, int32_t pos = npos) const;
+  int32_t lastIndexOf(wchar wc) const;
+  /** Locate in this the last occurrence of the characters in text starting at offset start*/
+  int32_t lastIndexOf(wchar wc, int32_t start) const;
+  /** Locate in this the last occurrence in the range [start, start + length) of the characters in text, using bitwise comparison.*/
+  int32_t lastIndexOf(wchar wc, int32_t start, int32_t length) const;
 
   /** Tests, if string starts with specified @c str substring at position @c pos */
   bool startsWith(const UnicodeString& str, int32_t pos = 0) const;

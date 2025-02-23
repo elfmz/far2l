@@ -1,5 +1,5 @@
-#ifndef _COLORER_LINEREGIONSSUPPORT_H_
-#define _COLORER_LINEREGIONSSUPPORT_H_
+#ifndef COLORER_LINEREGIONSSUPPORT_H
+#define COLORER_LINEREGIONSSUPPORT_H
 
 #include "colorer/RegionHandler.h"
 #include "colorer/handlers/LineRegion.h"
@@ -24,7 +24,7 @@ class LineRegionsSupport : public RegionHandler
   /**
    * Return current size of this line regions structure
    */
-  size_t size();
+  size_t size() const;
 
   /**
    * Drops all internal structures
@@ -41,7 +41,7 @@ class LineRegionsSupport : public RegionHandler
   /**
    * Returns first line position, installed in this line structures.
    */
-  size_t getFirstLine();
+  size_t getFirstLine() const;
 
   /**
    * Background region define, which is used to
@@ -98,4 +98,4 @@ class LineRegionsSupport : public RegionHandler
   size_t lineCount;
 };
 
-#endif
+#endif // COLORER_LINEREGIONSSUPPORT_H

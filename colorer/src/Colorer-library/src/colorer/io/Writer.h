@@ -1,5 +1,5 @@
-#ifndef _COLORER_WRITER_H_
-#define _COLORER_WRITER_H_
+#ifndef COLORER_WRITER_H
+#define COLORER_WRITER_H
 
 #include "colorer/Common.h"
 
@@ -31,4 +31,4 @@ class Writer
   Writer() = default;
 };
 
-#endif
+#endif // COLORER_WRITER_H

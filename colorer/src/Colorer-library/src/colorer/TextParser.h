@@ -1,5 +1,5 @@
-#ifndef _COLORER_TEXTPARSER_H_
-#define _COLORER_TEXTPARSER_H_
+#ifndef COLORER_TEXTPARSER_H
+#define COLORER_TEXTPARSER_H
 
 #include "colorer/FileType.h"
 #include "colorer/LineSource.h"
@@ -100,4 +100,4 @@ class TextParser
   spimpl::unique_impl_ptr<Impl> pimpl;
 };
 
-#endif  //_COLORER_TEXTPARSER_H_
+#endif  // COLORER_TEXTPARSER_H

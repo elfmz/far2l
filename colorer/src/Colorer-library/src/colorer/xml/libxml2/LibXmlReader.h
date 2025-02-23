@@ -30,7 +30,7 @@ class LibXmlReader
   static void getAttributes(const xmlNode* node, std::unordered_map<UnicodeString, UnicodeString>& data);
   void getChildren(xmlNode* node, XMLNode& result);
   bool populateNode(xmlNode* node, XMLNode& result);
-  static UnicodeString getElementText(const xmlNode* node);
+  static uUnicodeString getElementText(const xmlNode* node);
 
   /* the name of the file that is being processed */
   static uUnicodeString current_file;

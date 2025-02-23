@@ -24,6 +24,7 @@
 #include <atomic>
 #include <cstddef>
 #include <sys/stat.h>
+#include <cstdint>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -206,7 +207,7 @@ namespace Dumper {
 
 	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
 
-	inline std::string CreateHexDump(const uint8_t* data, size_t length,
+	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
 									 std::string_view line_prefix, size_t bytes_per_line = 16)
 	{
 		auto separator_pos = bytes_per_line / 2;
@@ -254,8 +255,9 @@ namespace Dumper {
 			return;
 		}
 
-		constexpr size_t max_length = 1024 * 1024;
-		size_t effective_length = (bin_buf_wrapper.length > max_length) ? max_length : bin_buf_wrapper.length;
+		constexpr size_t MAX_LENGTH = 1024 * 1024;
+		size_t effective_length = (bin_buf_wrapper.length > MAX_LENGTH)
+									  ? MAX_LENGTH : bin_buf_wrapper.length;
 
 		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
 											effective_length, "|   ");
@@ -263,7 +265,7 @@ namespace Dumper {
 		log_stream << "|=> " << var_name << " =" << std::endl;
 		log_stream << hexDump;
 
-		if (bin_buf_wrapper.length > max_length) {
+		if (bin_buf_wrapper.length > MAX_LENGTH) {
 			log_stream << "|   Output truncated to " << effective_length
 					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)" << std::endl;
 		}

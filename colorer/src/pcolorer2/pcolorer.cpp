@@ -15,7 +15,7 @@ SHAREDSYMBOL void PluginModuleOpen(const char* path)
 {
   UnicodeString module(path);
   int pos = module.lastIndexOf('/');
-  pos = module.lastIndexOf('/', pos);
+  pos = module.lastIndexOf('/', 0, pos);
   PluginPath = new UnicodeString(UnicodeString(module, 0, pos));
 
   logger = std::make_unique<CerrLogger>();

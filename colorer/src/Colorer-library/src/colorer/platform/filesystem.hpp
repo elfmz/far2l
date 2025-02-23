@@ -2318,7 +2318,8 @@ GHC_INLINE file_status status_from_INFO(const path& p, const INFO* info, std::er
 GHC_INLINE bool is_not_found_error(std::error_code& ec)
 {
 #ifdef GHC_OS_WINDOWS
-    return ec.value() == ERROR_FILE_NOT_FOUND || ec.value() == ERROR_PATH_NOT_FOUND || ec.value() == ERROR_INVALID_NAME;
+    return ec.value() == ERROR_FILE_NOT_FOUND || ec.value() == ERROR_PATH_NOT_FOUND || ec.value() == ERROR_INVALID_NAME ||
+        ec.value() == ERROR_BAD_PATHNAME;
 #else
     return ec.value() == ENOENT || ec.value() == ENOTDIR;
 #endif
@@ -4229,7 +4230,7 @@ GHC_INLINE path current_path(std::error_code& ec)
     }
     return path(std::wstring(buffer.get()), path::native_format);
 #elif defined(__GLIBC__)
-    std::unique_ptr<char, decltype(&std::free)> buffer { ::getcwd(NULL, 0), std::free };
+    std::unique_ptr<char, decltype(&std::free)> buffer { ::get_current_dir_name(), std::free };
     if (buffer == nullptr) {
         ec = detail::make_system_error();
         return path();

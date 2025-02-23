@@ -16,7 +16,8 @@ int UnicodeTools::getHex(UChar c)
 
 int UnicodeTools::getHexNumber(const UnicodeString* pstr)
 {
-  int r = 0, num = 0;
+  int r = 0;
+  int num = 0;
   if (pstr == nullptr) {
     return -1;
   }
@@ -67,7 +68,7 @@ UChar UnicodeTools::getEscapedChar(const UnicodeString& str, int pos, int& retPo
         return static_cast<UChar>(tmp);
       }
       else {
-        UnicodeString dtmp = UnicodeString(str, pos + 2, 2);
+        auto dtmp = UnicodeString(str, pos + 2, 2);
         int tmp = getHexNumber(&dtmp);
         if (str.length() <= pos + 2 || tmp == -1) {
           return BAD_WCHAR;

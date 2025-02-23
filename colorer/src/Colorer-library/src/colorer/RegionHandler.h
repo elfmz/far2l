@@ -1,5 +1,5 @@
-#ifndef _COLORER_REGIONHANDLER_H_
-#define _COLORER_REGIONHANDLER_H_
+#ifndef COLORER_REGIONHANDLER_H
+#define COLORER_REGIONHANDLER_H
 
 #include "colorer/Region.h"
 #include "colorer/Scheme.h"
@@ -92,4 +92,4 @@ class RegionHandler
   RegionHandler() = default;
 };
 
-#endif
+#endif // COLORER_REGIONHANDLER_H

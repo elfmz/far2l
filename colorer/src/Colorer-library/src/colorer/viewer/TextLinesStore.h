@@ -1,5 +1,5 @@
-#ifndef _COLORER_TEXTLINESSTORE_H_
-#define _COLORER_TEXTLINESSTORE_H_
+#ifndef COLORER_TEXTLINESSTORE_H
+#define COLORER_TEXTLINESSTORE_H
 
 #include <vector>
 #include "colorer/LineSource.h"
@@ -26,9 +26,9 @@ public:
   void loadFile(const UnicodeString* inFileName, bool tab2spaces);
   /** Returns loaded file name.
   */
-  const UnicodeString* getFileName();
+  const UnicodeString* getFileName() const;
   /** Returns total lines count in text. */
-  size_t getLineCount();
+  size_t getLineCount() const;
 
   UnicodeString* getLine(size_t lno) override;
 protected:
@@ -42,6 +42,4 @@ private:
 
 };
 
-#endif
-
-
+#endif // COLORER_TEXTLINESSTORE_H

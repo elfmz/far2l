@@ -46,6 +46,7 @@ public:
 
   static uUnicodeString toUnicodeString(char* data, int32_t len);
   static uUnicodeString fromUTF8(char* data, int32_t len);
+  static uUnicodeString fromUTF8(unsigned char* data);
 };
 
 #endif

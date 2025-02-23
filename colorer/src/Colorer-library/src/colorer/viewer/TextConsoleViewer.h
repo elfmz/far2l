@@ -1,5 +1,5 @@
-#ifndef _COLORER_TEXTVIEWER_H_
-#define _COLORER_TEXTVIEWER_H_
+#ifndef COLORER_TEXTVIEWER_H
+#define COLORER_TEXTVIEWER_H
 
 #ifdef WIN32
 #include<windows.h>
@@ -25,6 +25,4 @@ public:
   void view();
 };
 
-#endif
-
-
+#endif // COLORER_TEXTVIEWER_H

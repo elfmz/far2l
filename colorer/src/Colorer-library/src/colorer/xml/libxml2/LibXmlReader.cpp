@@ -56,8 +56,8 @@ bool LibXmlReader::populateNode(xmlNode* node, XMLNode& result)
     result.name = UnicodeString(reinterpret_cast<const char*>(node->name));
 
     const auto text_string = getElementText(node);
-    if (!text_string.isEmpty()) {
-      result.text = text_string;
+    if (text_string && !text_string->isEmpty()) {
+      result.text = UnicodeString(*text_string.get());
     }
     getChildren(node, result);
     getAttributes(node, result.attributes);
@@ -67,22 +67,22 @@ bool LibXmlReader::populateNode(xmlNode* node, XMLNode& result)
   return false;
 }
 
-UnicodeString LibXmlReader::getElementText(const xmlNode* node)
+uUnicodeString LibXmlReader::getElementText(const xmlNode* node)
 {
   for (const xmlNode* child = node->children; child != nullptr; child = child->next) {
     if (child->type == XML_CDATA_SECTION_NODE) {
-      return {reinterpret_cast<const char*>(child->content)};
+      return Encodings::fromUTF8(child->content);
     }
     if (child->type == XML_TEXT_NODE) {
-      auto temp_string = UnicodeString(reinterpret_cast<const char*>(child->content));
-      temp_string.trim();
-      if (temp_string.isEmpty()) {
+      auto temp_string = Encodings::fromUTF8(child->content);
+      temp_string->trim();
+      if (temp_string->isEmpty()) {
         continue;
       }
       return temp_string;
     }
   }
-  return {u""};
+  return nullptr;
 }
 
 void LibXmlReader::getChildren(xmlNode* node, XMLNode& result)
@@ -107,7 +107,8 @@ void LibXmlReader::getAttributes(const xmlNode* node, std::unordered_map<Unicode
 {
   for (xmlAttrPtr attr = node->properties; attr != nullptr; attr = attr->next) {
     const auto content = xmlNodeGetContent(attr->children);
-    data.emplace(reinterpret_cast<const char*>(attr->name), reinterpret_cast<const char*>(content));
+    auto decoded_string = Encodings::fromUTF8(content);
+    data.try_emplace(reinterpret_cast<const char*>(attr->name), *decoded_string.get());
     xmlFree(content);
   }
 }

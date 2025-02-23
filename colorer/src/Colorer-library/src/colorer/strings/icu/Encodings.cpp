@@ -1,4 +1,5 @@
 #include "colorer/strings/icu/Encodings.h"
+#include <cstring>
 #include "colorer/Exception.h"
 #include "unicode/ucnv.h"
 #include "unicode/ustring.h"
@@ -24,7 +25,13 @@ uUnicodeString Encodings::toUnicodeString(char* data, int32_t len)
 
 uUnicodeString Encodings::fromUTF8(char* data, int32_t len)
 {
-  return std::make_unique<UnicodeString>(data , len , ENC_UTF8);
+  return std::make_unique<UnicodeString>(data, len, ENC_UTF8);
+}
+
+uUnicodeString Encodings::fromUTF8(unsigned char* data)
+{
+  const auto c = reinterpret_cast<char*>(data);
+  return fromUTF8(c,(int32_t)strlen(c));
 }
 
 int Encodings::toUTF8Bytes(UChar wc, byte* dest)

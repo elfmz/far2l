@@ -1,5 +1,5 @@
-#ifndef _COLORER_LINEREGION_H_
-#define _COLORER_LINEREGION_H_
+#ifndef COLORER_LINEREGION_H
+#define COLORER_LINEREGION_H
 
 #include "colorer/Scheme.h"
 #include "colorer/handlers/RegionDefine.h"
@@ -50,12 +50,12 @@ class LineRegion
   /** Transforms this region's reference into styled region define
       and returns new pointer.
   */
-  const StyledRegion* styled();
+  const StyledRegion* styled() const;
 
   /** Transforms this region's reference into text region define
       and returns new pointer.
   */
-  const TextRegion* texted();
+  const TextRegion* texted() const;
 
   /** Copy operator */
   LineRegion& operator=(const LineRegion& lr);
@@ -73,4 +73,4 @@ class LineRegion
   void assigment(const LineRegion& lr);
 };
 
-#endif
+#endif // COLORER_LINEREGION_H

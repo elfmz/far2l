@@ -72,7 +72,7 @@ void TextLinesStore::loadFile(const UnicodeString* inFileName, bool tab2spaces)
   }
 }
 
-const UnicodeString* TextLinesStore::getFileName()
+const UnicodeString* TextLinesStore::getFileName() const
 {
   return fileName.get();
 }
@@ -85,7 +85,7 @@ UnicodeString* TextLinesStore::getLine(size_t lno)
   return lines[lno];
 }
 
-size_t TextLinesStore::getLineCount()
+size_t TextLinesStore::getLineCount() const
 {
   return lines.size();
 }

@@ -203,6 +203,73 @@ namespace Dumper {
 		}
 	}
 
+
+	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
+
+	inline std::string CreateHexDump(const uint8_t* data, size_t length,
+									 std::string_view line_prefix, size_t bytes_per_line = 16)
+	{
+		auto separator_pos = bytes_per_line / 2;
+
+		std::ostringstream result;
+
+		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
+			result << line_prefix << std::setw(8) << std::setfill('0') << std::hex << offset << "  ";
+			for (size_t i = 0; i < bytes_per_line && (offset + i) < length; ++i) {
+				if (i == separator_pos) {
+					result << "| ";
+				}
+				result << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(data[offset + i]) << " ";
+			}
+			result << "\n";
+		}
+
+		return result.str();
+	}
+
+
+	template <typename T,
+			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	struct BinBufWrapper {
+		BinBufWrapper(T data, size_t length) : data(data), length(length) {}
+		const T data;
+		size_t length;
+	};
+
+
+	template <typename T,
+			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	inline void DumpValue(
+		std::ostringstream& log_stream,
+		std::string_view var_name,
+		const BinBufWrapper<T>& bin_buf_wrapper)
+	{
+		if (!bin_buf_wrapper.data) {
+			log_stream << "|=> " << var_name << " = (nullptr)\n";
+			return;
+		}
+
+		if (bin_buf_wrapper.length == 0) {
+			log_stream << "|=> " << var_name << " = (empty)\n";
+			return;
+		}
+
+		constexpr size_t max_length = 1024 * 1024;
+		size_t effective_length = (bin_buf_wrapper.length > max_length) ? max_length : bin_buf_wrapper.length;
+
+		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
+											effective_length, "|   ");
+
+		log_stream << "|=> " << var_name << " =" << std::endl;
+		log_stream << hexDump;
+
+		if (bin_buf_wrapper.length > max_length) {
+			log_stream << "|   Output truncated to " << effective_length
+					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)" << std::endl;
+		}
+	}
+
+
 	// Поддержка контейнеров с итераторами: через макросы DCONT + DUMP
 
 	template <typename ContainerT, typename = decltype(std::begin(std::declval<ContainerT>())),
@@ -482,6 +549,7 @@ namespace Dumper {
 
 #define DVV(xxx) #xxx, xxx
 #define DMSG(xxx) "msg", std::string(xxx)
+#define DBINBUF(ptr,length) #ptr, Dumper::BinBufWrapper(ptr,length)
 #define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)
 #define DFLAGS(var, treat_as) #var, Dumper::FlagsWrapper(var, treat_as)

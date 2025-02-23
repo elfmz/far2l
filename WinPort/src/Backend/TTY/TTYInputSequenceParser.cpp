@@ -383,6 +383,13 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		}
 	}
 
+	// None of above? May be ModifyOtherKeys
+	if (l > 3 && s[0] == '[' && s[1] == '2' && s[2] == '7') {
+		r = TryParseModifyOtherKeys(s, l);
+		if (r != TTY_PARSED_BADSEQUENCE) {
+			return r;
+		}
+	}
 
 	// be well-responsive on panic-escaping
 	for (size_t i = 0; (i + 1) < l; ++i) {
@@ -447,7 +454,7 @@ size_t TTYInputSequenceParser::ParseIntoPending(const char *s, size_t l)
 //			return 1;
 
 		case 0x1c:
-			AddPendingKeyEvent(TTYInputKey{VK_OEM_5, 0});
+			AddPendingKeyEvent(TTYInputKey{VK_OEM_5, LEFT_CTRL_PRESSED});
 			return 1;
 
 		case 0x1d:
@@ -525,6 +532,9 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 //	ir.Event.KeyEvent.uChar.UnicodeChar = i.second.unicode_char;
 	if (k.vk == VK_SPACE) {
 		ir.Event.KeyEvent.uChar.UnicodeChar = L' ';
+	}
+	if (k.vk == VK_OEM_5) {
+		ir.Event.KeyEvent.uChar.UnicodeChar = L'\\';
 	}
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;

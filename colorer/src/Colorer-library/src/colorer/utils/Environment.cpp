@@ -122,12 +122,17 @@ bool Environment::isRegularFile(const UnicodeString* basePath, const UnicodeStri
 {
   auto clear_path = Environment::getClearFilePath(basePath, relPath);
   fullPath = clear_path.u16string().c_str();
-  return fs::is_regular_file(clear_path);
+  return isRegularFile(fullPath);
 }
 
 bool Environment::isRegularFile(const UnicodeString& path)
 {
-  return fs::is_regular_file(to_filepath(&path));
+  std::error_code ec;
+  auto result = fs::is_regular_file(to_filepath(&path), ec);
+  if (ec) {
+    COLORER_LOG_ERROR("Error on checking file status. File: % , Error: %.", path, ec.message());
+  }
+  return result;
 }
 
 UnicodeString Environment::getAbsolutePath(const UnicodeString& basePath, const UnicodeString& relPath)

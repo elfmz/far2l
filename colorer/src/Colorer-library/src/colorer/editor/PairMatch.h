@@ -1,5 +1,5 @@
-#ifndef _COLORER_PAIRMATCH_H_
-#define _COLORER_PAIRMATCH_H_
+#ifndef COLORER_PAIRMATCH_H
+#define COLORER_PAIRMATCH_H
 
 #include "colorer/handlers/LineRegionsSupport.h"
 
@@ -101,4 +101,4 @@ class PairMatch
   LineRegion* startRef;
 };
 
-#endif
+#endif // COLORER_PAIRMATCH_H

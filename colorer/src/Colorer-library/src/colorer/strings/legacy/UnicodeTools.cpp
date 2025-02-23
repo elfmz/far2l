@@ -4,7 +4,8 @@
 
 int UnicodeTools::getNumber(const UnicodeString* pstr)
 {
-  int r = 1, num = 0;
+  int r = 1;
+  int num = 0;
   if (pstr == nullptr)
     return -1;
   for (int i = pstr->length() - 1; i >= 0; i--) {
@@ -84,7 +85,7 @@ wchar UnicodeTools::getEscapedChar(const UnicodeString& str, int pos, int& retPo
         return static_cast<UChar>(tmp);
       }
       else {
-        UnicodeString dtmp = UnicodeString(str, pos + 2, 2);
+        auto dtmp = UnicodeString(str, pos + 2, 2);
         int tmp = getHexNumber(&dtmp);
         if (str.length() <= pos + 2 || tmp == -1) {
           return BAD_WCHAR;

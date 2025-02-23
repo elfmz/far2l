@@ -1,5 +1,5 @@
-#ifndef _COLORER_LINESOURCE_H_
-#define _COLORER_LINESOURCE_H_
+#ifndef COLORER_LINESOURCE_H
+#define COLORER_LINESOURCE_H
 
 #include "colorer/Common.h"
 
@@ -49,5 +49,4 @@ protected:
   LineSource() = default;
 };
 
-#endif
-
+#endif // COLORER_LINESOURCE_H

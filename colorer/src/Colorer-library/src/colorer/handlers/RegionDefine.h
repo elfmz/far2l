@@ -45,9 +45,9 @@ class RegionDefine
    */
   RegionDefine& operator=(const RegionDefine& rd)
   {
-    if (this == &rd)
-      return *this;
-    setValues(&rd);
+    if (this != &rd) {
+      setValues(&rd);
+    }
     return *this;
   }
 

@@ -1334,7 +1334,6 @@ int FileList::ProcessKey(FarKey Key)
 		}
 
 		case KEY_CTRL | '`':
-		case KEY_CTRL | '\'':
 		{
 			SetLocation_Directory(CachedHomeDir());
 			return TRUE;

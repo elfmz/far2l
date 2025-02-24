@@ -25,7 +25,9 @@ Both macros take a first boolean parameter `to_file` that determines where the l
 
 **Syntax:**
 
-    DUMPV (to_file, var1, var2, ...)
+```cpp
+DUMPV (to_file, var1, var2, ...);
+```
 
 **Purpose:** 
 
@@ -35,17 +37,20 @@ Use DUMPV for quickly logging a list of plain variables. It will automatically e
 
 **Example Usage:**
 
-    int i = 42;
-    double d = 3.1415;
-    std::string s = "FAR2L is a Linux port of FAR Manager";
-    DUMPV(0, a, b, c);
-
+```cpp
+int i = 42;
+double d = 3.1415;
+std::string s = "FAR2L is a Linux port of FAR Manager";
+DUMPV(0, a, b, c);
+```
 
 ## 3. DUMP macro
 
 **Syntax:**
 
-    DUMP(to_file, HELPER_MACRO1 (expr1), HELPER_MACRO2 (expr2), ...)
+```cpp
+DUMP(to_file, HELPER_MACRO1 (expr1), HELPER_MACRO2 (expr2), ...);
+```
 
 
 **Purpose:**
@@ -56,9 +61,11 @@ Use DUMP when working with types that need special handling. It requires you to 
 
 **Example Usage:**
 
-    FARString fs = "The quick brown fox jumps over the lazy dog.";
-    std::vector<int> primes {2, 3, 5, 7, 11, 13, 17};
-    DUMP(true, DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes,0));
+```cpp
+FARString fs = "The quick brown fox jumps over the lazy dog.";
+std::vector<int> primes {2, 3, 5, 7, 11, 13, 17};
+DUMP(true, DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes,0));
+```
 
 
 ## 4. Additional Helper Macros
@@ -67,7 +74,9 @@ Use DUMP when working with types that need special handling. It requires you to 
 
 **Syntax:**
 
-    DVV (expr)
+```cpp
+DVV (expr);
+```
 
 **Purpose:** 
 
@@ -75,13 +84,17 @@ Wraps a simple variable or expression.
 
 **Example Usage:**
 
-    DUMP(true, DVV(RightAlign && SrcVisualLength > MaxLength));
+```cpp
+DUMP(true, DVV(RightAlign && SrcVisualLength > MaxLength));
+```
 
 
 ### 4.2. DMSG macro
 **Syntax:**
 
-DMSG (string)
+```cpp
+DMSG (string);
+```
 
 **Purpose:**
 
@@ -89,13 +102,17 @@ Wraps custom text messages.
 
 **Example Usage:**
 
-    DUMP(true, DMSG("Operation completed successfully!"));
+```cpp
+DUMP(true, DMSG("Operation completed successfully!"));
+```
 
 ### 4.3. DSTRBUF macro
 
 **Syntax:**
 
-     DSTRBUF (ptr, length)
+```cpp
+DSTRBUF (ptr, length);
+```
 
 **Purpose:**
 
@@ -110,9 +127,11 @@ DSTRBUF accepts two arguments:
 
 **Example Usage:**
 
-	WINPORT_DECL(WriteConsole,BOOL,(HANDLE hConsoleOutput, const WCHAR *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved))
-	{
+```cpp
+WINPORT_DECL(WriteConsole,BOOL,(HANDLE hConsoleOutput, const WCHAR *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved))
+{
 	DUMP(true, DSTRBUF(lpBuffer,nNumberOfCharsToWrite));
+```
 
 
 
@@ -120,7 +139,9 @@ DSTRBUF accepts two arguments:
 
 **Syntax:**
 
-    DBINBUF(ptr, length)
+```cpp
+DBINBUF(ptr, length);
+```
 
 **Purpose:**
 
@@ -134,24 +155,28 @@ DBINBUF takes two arguments:
 
 **Example Usage:**
 
-	struct Header {
-		uint32_t magic;
-		uint16_t version;
-		uint16_t flags;
-	};
+```cpp
+struct Header {
+	uint32_t magic;
+	uint16_t version;
+	uint16_t flags;
+};
 
-	Header hdr = { 0xDEADBEEF, 0x0102, 0x000F };
-	const wchar_t *wch=L"The quick brown fox jumps over the lazy dog.";
+Header hdr = { 0xDEADBEEF, 0x0102, 0x000F };
+const wchar_t *wch=L"The quick brown fox jumps over the lazy dog.";
 
-	DUMP(true,
-		 DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
-		 DBINBUF(&hdr, sizeof(hdr)));
+DUMP(true,
+	 DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
+	 DBINBUF(&hdr, sizeof(hdr)));
+```
 
 ### 4.5. DCONT macro
 
 **Syntax:**
 
-    DCONT(container, max_elements)
+```cpp
+DCONT(container, max_elements);
+```
 
 **Purpose:**
 
@@ -165,16 +190,20 @@ DCONT takes two arguments:
 
 **Example Usage:**
 
-    std::vector<std::string> possibilities;
-    if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
-    	DUMP(true, DCONT(possibilities, 0));
+```cpp
+std::vector<std::string> possibilities;
+if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
+	DUMP(true, DCONT(possibilities, 0));
+```
 
 
 ### 4.6. DFLAGS macro
 
 **Syntax:**
 
-    DFLAGS(var, treat_as)
+```cpp
+DFLAGS(var, treat_as);
+```
 
 **Purpose:**
 
@@ -189,11 +218,12 @@ DFLAGS takes two arguments:
 
 **Example Usage:**
 
-    int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
-     FARString &strDestName, int Append)
+```cpp
+int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
+	FARString &strDestName, int Append)
      
-      DUMP(true,
-         DVV(SrcData.strFileName),
-         DFLAGS(SrcData.dwFileAttributes, Dumper::FlagsAs::FILE_ATTRIBUTES),
-         DFLAGS(SrcData.dwUnixMode, Dumper::FlagsAs::UNIX_MODE));
-
+DUMP(true,
+	 DVV(SrcData.strFileName),
+	 DFLAGS(SrcData.dwFileAttributes, Dumper::FlagsAs::FILE_ATTRIBUTES),
+	 DFLAGS(SrcData.dwUnixMode, Dumper::FlagsAs::UNIX_MODE));
+```

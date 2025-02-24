@@ -549,8 +549,8 @@ namespace Dumper {
 #define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, __VA_ARGS__); }
 #define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
 
-#define DVV(xxx) #xxx, xxx
-#define DMSG(xxx) "msg", std::string(xxx)
+#define DVV(expr) #expr, expr
+#define DMSG(msg) "msg", std::string(msg)
 #define DBINBUF(ptr,length) #ptr, Dumper::BinBufWrapper(ptr,length)
 #define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)

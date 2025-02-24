@@ -21,8 +21,10 @@
 #include <functional>
 #include <cstring>
 #include <thread>
-#include <unordered_map>
+#include <atomic>
+#include <cstddef>
 #include <sys/stat.h>
+#include <cstdint>
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -46,12 +48,9 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 
 namespace Dumper {
+
 	inline std::mutex g_log_output_mutex;
-
-	inline std::size_t g_thread_idx = 0;
-	inline std::mutex g_thread_mutex;
-	inline std::unordered_map<std::thread::id, std::size_t> g_thread_ids;
-
+	inline std::atomic<std::size_t> g_thread_counter {0};
 
 	inline std::string EscapeString(std::string_view input)
 	{
@@ -101,14 +100,8 @@ namespace Dumper {
 
 	inline std::size_t GetNiceThreadId() noexcept {
 		static thread_local std::size_t s_nice_thread_id = 0;
-		if (s_nice_thread_id == 0) {
-			std::lock_guard<std::mutex> lock(g_thread_mutex);
-			std::thread::id thread_id = std::this_thread::get_id();
-			auto iter = g_thread_ids.find(thread_id);
-			if (iter == g_thread_ids.end()) {
-				iter = g_thread_ids.insert({ thread_id, ++g_thread_idx }).first;
-			}
-			s_nice_thread_id = iter->second;
+		if (UNLIKELY(!s_nice_thread_id)) {
+			s_nice_thread_id = g_thread_counter.fetch_add(1, std::memory_order_relaxed) + 1;
 		}
 		return s_nice_thread_id;
 	}
@@ -121,54 +114,36 @@ namespace Dumper {
 		const T& value)
 	{
 		if constexpr (std::is_pointer_v<T>) {
-			if (value == nullptr) {
+			if (!value) {
 				log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
-				return;
-			}
-
-			if constexpr ( std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char> ) {
-				DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value));
 				return;
 			}
 		}
 
-		if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+		if constexpr (std::is_pointer_v<T> &&
+					  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char>) {
+			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value));
+
+		} else if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::wstring> ||
+							 std::is_convertible_v<T, const wchar_t*>) {
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
 			try {
 				DumpValue(log_stream, var_name, conv.to_bytes(value));
 			} catch (const std::range_error& e) {
 				log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
 			}
-			return;
-		}
 
-		if constexpr (std::is_convertible_v<T, std::string_view> ||
-						std::is_same_v<std::remove_cv_t<T>, char> ||
-						std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
-						std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
-
+		} else if constexpr (std::is_convertible_v<T, std::string_view> ||
+							 std::is_same_v<std::remove_cv_t<T>, char> ||
+							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+							 std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
 			std::string str_value{ value };
 			std::string escaped = EscapeString(str_value);
 			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+
 		} else {
 			log_stream << "|=> " << var_name << " = " << value << std::endl;
 		}
-	}
-
-
-	template <>
-	inline void DumpValue(
-		std::ostringstream& log_stream,
-		std::string_view var_name,
-		const std::wstring& value)
-	{
-		std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-		try {
-			DumpValue(log_stream, var_name, conv.to_bytes(value));
-		} catch (const std::range_error& e) {
-			log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
-		}
-		return;
 	}
 
 
@@ -196,11 +171,11 @@ namespace Dumper {
 	}
 
 
-	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DBUF + DUMP
+	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DSTRBUF + DUMP
 
 	template <typename T>
-	struct BufferWrapper {
-		BufferWrapper(T *data, size_t length) : data(data), length(length) {}
+	struct StrBufWrapper {
+		StrBufWrapper(T *data, size_t length) : data(data), length(length) {}
 		T *data;
 		size_t length;
 	};
@@ -210,24 +185,92 @@ namespace Dumper {
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const BufferWrapper<T>& buffer_wrapper)
+		const StrBufWrapper<T>& str_buf_wrapper)
 	{
-		if (buffer_wrapper.data == nullptr) {
+		if (!str_buf_wrapper.data) {
 			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
 			return;
 		}
 
 		if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
 					  std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
-			std::string str_value ((char*)buffer_wrapper.data, buffer_wrapper.length);
+			std::string str_value ((char*)str_buf_wrapper.data, str_buf_wrapper.length);
 			DumpValue(log_stream, var_name, str_value);
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
-			std::wstring wstr_value (buffer_wrapper.data, buffer_wrapper.length);
+			std::wstring wstr_value (str_buf_wrapper.data, str_buf_wrapper.length);
 			DumpValue(log_stream, var_name, wstr_value);
 		} else {
 			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;
 		}
 	}
+
+
+	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
+
+	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
+									 std::string_view line_prefix, size_t bytes_per_line = 16)
+	{
+		auto separator_pos = bytes_per_line / 2;
+
+		std::ostringstream result;
+
+		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
+			result << line_prefix << std::setw(8) << std::setfill('0') << std::hex << offset << "  ";
+			for (size_t i = 0; i < bytes_per_line && (offset + i) < length; ++i) {
+				if (i == separator_pos) {
+					result << "| ";
+				}
+				result << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(data[offset + i]) << " ";
+			}
+			result << "\n";
+		}
+
+		return result.str();
+	}
+
+
+	template <typename T,
+			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	struct BinBufWrapper {
+		BinBufWrapper(T data, size_t length) : data(data), length(length) {}
+		const T data;
+		size_t length;
+	};
+
+
+	template <typename T,
+			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	inline void DumpValue(
+		std::ostringstream& log_stream,
+		std::string_view var_name,
+		const BinBufWrapper<T>& bin_buf_wrapper)
+	{
+		if (!bin_buf_wrapper.data) {
+			log_stream << "|=> " << var_name << " = (nullptr)\n";
+			return;
+		}
+
+		if (bin_buf_wrapper.length == 0) {
+			log_stream << "|=> " << var_name << " = (empty)\n";
+			return;
+		}
+
+		constexpr size_t MAX_LENGTH = 1024 * 1024;
+		size_t effective_length = (bin_buf_wrapper.length > MAX_LENGTH)
+									  ? MAX_LENGTH : bin_buf_wrapper.length;
+
+		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
+											effective_length, "|   ");
+
+		log_stream << "|=> " << var_name << " =" << std::endl;
+		log_stream << hexDump;
+
+		if (bin_buf_wrapper.length > MAX_LENGTH) {
+			log_stream << "|   Output truncated to " << effective_length
+					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)" << std::endl;
+		}
+	}
+
 
 	// Поддержка контейнеров с итераторами: через макросы DCONT + DUMP
 
@@ -376,9 +419,7 @@ namespace Dumper {
 	}
 
 
-	inline std::string FormatLogHeader(pid_t pid, unsigned long int tid,
-								  std::string_view func_name,
-								  std::string_view location)
+	inline std::string CreateLogHeader(std::string_view func_name, std::string_view location)
 	{
 		auto current_time = std::chrono::system_clock::now();
 		auto current_time_t = std::chrono::system_clock::to_time_t(current_time);
@@ -387,8 +428,7 @@ namespace Dumper {
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
 
 		std::ostringstream header_stream;
-		header_stream << std::endl << "/-----[PID:" << pid << ", TID:" << tid << "]-----[";
-
+		header_stream << std::endl << "/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
 		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----" << std::endl;
 		header_stream << "|[" << location << "] in " << func_name << "()" << std::endl;
 		return header_stream.str();
@@ -419,13 +459,12 @@ namespace Dumper {
 
 
 	template<typename... Args>
-	void Dump(bool to_file, std::string_view func_name, std::string_view location,
-			  pid_t pid, unsigned long int tid, const Args&... args)
+	void Dump(bool to_file, std::string_view func_name, std::string_view location, const Args&... args)
 	{
 		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
 
 		std::ostringstream log_stream;
-		log_stream << FormatLogHeader(pid, tid, func_name, location);
+		log_stream << CreateLogHeader(func_name, location);
 
 		auto args_tuple = std::forward_as_tuple(args...);
 		constexpr std::size_t pair_count = sizeof...(args) / 2;
@@ -481,13 +520,11 @@ namespace Dumper {
 		bool to_file,
 		std::string_view func_name,
 		std::string_view location,
-		pid_t pid,
-		unsigned long int tid,
 		const char *var_names_str,
 		const Ts&... var_values)
 	{
 		std::ostringstream log_stream;
-		log_stream << FormatLogHeader(pid, tid, func_name, location);
+		log_stream << CreateLogHeader(func_name, location);
 
 		constexpr auto var_values_count = sizeof...(var_values);
 		std::vector<std::string> var_names;
@@ -509,18 +546,12 @@ namespace Dumper {
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
-#define NICE_THREAD_ID
-#ifdef NICE_THREAD_ID
-#define DUMP_THREAD Dumper::GetNiceThreadId()
-#else
-#define DUMP_THREAD std::hash<std::thread::id>{}(std::this_thread::get_id())
-#endif
+#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, __VA_ARGS__); }
+#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
 
-#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, getpid(), DUMP_THREAD, __VA_ARGS__); }
-#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, getpid(), DUMP_THREAD, #__VA_ARGS__, __VA_ARGS__); }
-
-#define DVV(xxx) #xxx, xxx
-#define DMSG(xxx) "msg", std::string(xxx)
-#define DBUF(ptr,length) #ptr, Dumper::BufferWrapper(ptr,length)
+#define DVV(expr) #expr, expr
+#define DMSG(msg) "msg", std::string(msg)
+#define DBINBUF(ptr,length) #ptr, Dumper::BinBufWrapper(ptr,length)
+#define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)
 #define DFLAGS(var, treat_as) #var, Dumper::FlagsWrapper(var, treat_as)

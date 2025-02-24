@@ -28,7 +28,9 @@ Both macros take a first boolean parameter `to_file` that determines where the l
     DUMPV (to_file, var1, var2, ...)
 
 **Purpose:** 
+
 Log simple variables.
+
 Use DUMPV for quickly logging a list of plain variables. It will automatically extract the variable names as written in your source code via stringification. However, be aware that function calls or complex expressions with internal commas are not supported.
 
 **Example Usage:**
@@ -47,6 +49,7 @@ Use DUMPV for quickly logging a list of plain variables. It will automatically e
 
 
 **Purpose:**
+
 Log complex data and/or expressions.
 
 Use DUMP when working with types that need special handling. It requires you to wrap the variable tokens with helper macros (like DVV, DCONT, DSTRBUF, DFLAGS, etc.) so that the logging backend knows how to properly print out the value.
@@ -67,6 +70,7 @@ Use DUMP when working with types that need special handling. It requires you to 
     DVV (expr)
 
 **Purpose:** 
+
 Wraps a simple variable or expression.
 
 **Example Usage:**
@@ -76,9 +80,11 @@ Wraps a simple variable or expression.
 
 ### 4.2. DMSG macro
 **Syntax:**
+
 DMSG (string)
 
 **Purpose:**
+
 Wraps custom text messages.
 
 **Example Usage:**
@@ -92,7 +98,9 @@ Wraps custom text messages.
      DSTRBUF (ptr, length)
 
 **Purpose:**
+
 Wraps string buffers.
+
 Use DSTRBUF when you are logging string buffers provided as a pointer with an associated length. This is common when dealing with non-null-terminated character arrays or when the length is known separately.
 
 DSTRBUF accepts two arguments:
@@ -115,7 +123,9 @@ DSTRBUF accepts two arguments:
     DBINBUF(ptr, length)
 
 **Purpose:**
+
 Wraps binary buffers.
+
 Use DBINBUF to log the contents of a binary buffer (i.e., an area of memory represented by a pointer and a length in bytes). The macro produces a hex dump output, which is particularly useful when you need to inspect raw binary data.
 
 DBINBUF takes two arguments:
@@ -144,7 +154,9 @@ DBINBUF takes two arguments:
     DCONT(container, max_elements)
 
 **Purpose:**
+
 Wraps containers or static arrays.
+
 Use DCONT to log the contents of static arrays and iterable (those providing `begin()` and `end()` methods) containers in a detailed and structured way.
 
 DCONT takes two arguments:
@@ -165,7 +177,9 @@ DCONT takes two arguments:
     DFLAGS(var, treat_as)
 
 **Purpose:**
+
 Wraps integers representing bit masks or flag sets.
+
 DFLAGS is designed to help with logging values that represent bit masks or flag sets (for example, file attributes or Unix permission bits). It decodes these numeric flag values into human-readable strings.
 
 DFLAGS takes two arguments:

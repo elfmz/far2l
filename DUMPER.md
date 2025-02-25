@@ -80,7 +80,7 @@ Wraps a simple variable or expression.
 **Syntax:**
 
 ```cpp
-DVV(expr);
+DVV(expr)
 ```
 
 **Usage:**
@@ -97,7 +97,7 @@ Wraps custom text messages.
 **Syntax:**
 
 ```cpp
-DMSG(msg);
+DMSG(msg)
 ```
 
 **Usage:**
@@ -115,7 +115,7 @@ Use when logging string buffers provided as a pointer with an associated length.
 **Syntax:**
 
 ```cpp
-DSTRBUF(ptr, length);
+DSTRBUF(ptr, length)
 ```
 
 Accepts two arguments:
@@ -142,7 +142,7 @@ Use to log the contents of a binary buffer — a memory region defined by a poin
 **Syntax:**
 
 ```cpp
-DBINBUF(ptr, length);
+DBINBUF(ptr, length)
 ```
 
 Accepts two arguments:
@@ -176,7 +176,7 @@ Use to log the contents of static arrays and iterable containers (i.e. container
 **Syntax:**
 
 ```cpp
-DCONT(container, max_elements);
+DCONT(container, max_elements)
 ```
 
 Accepts two arguments:
@@ -203,7 +203,7 @@ This macro is designed to help log values that represent bit masks or flag sets 
 **Syntax:**
 
 ```cpp
-DFLAGS(var, treat_as);
+DFLAGS(var, treat_as)
 ```
 
 Accepts two arguments:

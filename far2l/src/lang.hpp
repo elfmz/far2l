@@ -51,7 +51,7 @@ struct FarLangMsg
 #endif
 
 	inline FarLangMsgID ID() const { return _id; }
-	inline const wchar_t *CPtr() const { return GetMsg(_id); }
+	inline const wchar_t *CPtr() const { LastMessageId = _id; return GetMsg(_id); }
 	inline const size_t Len() const { return GetMsgLen(_id); }
 	inline operator const wchar_t *() const { LastMessageId = _id; return GetMsg(_id); }
 

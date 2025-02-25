@@ -1038,7 +1038,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD0:
 		case KEY_CTRLC:				// копировать имена
 		case KEY_CTRLALTINS:
-		case KEY_CTRLALTNUMPAD0:	// копировать UNC-имена
+		case KEY_CTRLALTNUMPAD0:	// копировать реальные (разрешенные) имена
 		case KEY_ALTSHIFTINS:
 		case KEY_ALTSHIFTNUMPAD0:
 		case KEY_ALTSHIFTC:		// копировать полные имена
@@ -1050,8 +1050,8 @@ int FileList::ProcessKey(FarKey Key)
 			{
 				bool FullPath = Key == KEY_CTRLALTINS || Key == KEY_ALTSHIFTINS || Key == KEY_CTRLALTNUMPAD0
 						|| Key == KEY_ALTSHIFTNUMPAD0 || Key == KEY_ALTSHIFTC;
-				bool unc = (Key & (KEY_CTRL | KEY_ALT)) == (KEY_CTRL | KEY_ALT);
-				CopyNames(FullPath, unc);
+				bool RealName = (Key & (KEY_CTRL | KEY_ALT)) == (KEY_CTRL | KEY_ALT);
+				CopyNames(FullPath, RealName);
 			}
 			return TRUE;
 
@@ -1064,7 +1064,7 @@ int FileList::ProcessKey(FarKey Key)
 			/*
 				$ 14.02.2001 VVM
 				+ Ctrl: вставляет имя файла с пассивной панели.
-				+ CtrlAlt: вставляет UNC-имя файла с пассивной панели
+				+ CtrlAlt: вставляет реальное (разрешенное) имя файла с пассивной панели
 			*/
 		case KEY_CTRL | KEY_SEMICOLON:
 		case KEY_CTRL | KEY_ALT | KEY_SEMICOLON: {
@@ -1169,10 +1169,10 @@ int FileList::ProcessKey(FarKey Key)
 
 			return TRUE;
 		}
-		case KEY_CTRLALTBRACKET:			// Вставить сетевое (UNC) путь из левой панели
-		case KEY_CTRLALTBACKBRACKET:		// Вставить сетевое (UNC) путь из правой панели
-		case KEY_ALTSHIFTBRACKET:			// Вставить сетевое (UNC) путь из активной панели
-		case KEY_ALTSHIFTBACKBRACKET:		// Вставить сетевое (UNC) путь из пассивной панели
+		case KEY_CTRLALTBRACKET:			// Вставить реальный (разрешенный) путь из левой панели
+		case KEY_CTRLALTBACKBRACKET:		// Вставить реальный (разрешенный) путь из правой панели
+		case KEY_ALTSHIFTBRACKET:			// Вставить реальный (разрешенный) путь из активной панели
+		case KEY_ALTSHIFTBACKBRACKET:		// Вставить реальный (разрешенный) путь из пассивной панели
 		case KEY_CTRLBRACKET:				// Вставить путь из левой панели
 		case KEY_CTRLBACKBRACKET:			// Вставить путь из правой панели
 		case KEY_CTRLSHIFTBRACKET:			// Вставить путь из активной панели
@@ -1333,7 +1333,9 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 
-		case KEY_CTRL | '`': {
+		case KEY_CTRL | '`':
+		case KEY_CTRL | '\'':
+		{
 			SetLocation_Directory(CachedHomeDir());
 			return TRUE;
 		}
@@ -3685,7 +3687,7 @@ void FileList::CopyFiles()
 			if (TestParentFolderName(strSelName)) {
 				strSelName.Truncate(1);
 			}
-			if (!CreateFullPathName(strSelName, FileAttr, strSelName, FALSE)) {
+			if (!CreateFullPathName(strSelName, FileAttr, strSelName, false)) {
 				if (CopyData) {
 					free(CopyData);
 					CopyData = nullptr;
@@ -3715,7 +3717,7 @@ void FileList::CopyFiles()
 	}
 }
 
-void FileList::CopyNames(bool FullPathName, bool UNC)
+void FileList::CopyNames(bool FullPathName, bool RealName)
 {
 	OpenPluginInfo Info{};
 	wchar_t *CopyData = nullptr;
@@ -3747,7 +3749,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 					strQuotedName.Truncate(1);
 				}
 
-				if (!CreateFullPathName(strQuotedName, FileAttr, strQuotedName, UNC)) {
+				if (!CreateFullPathName(strQuotedName, FileAttr, strQuotedName, RealName)) {
 					if (CopyData) {
 						free(CopyData);
 						CopyData = nullptr;
@@ -3814,7 +3816,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 	free(CopyData);
 }
 
-FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, int UNC)
+FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, bool RealName)
 {
 	FARString strFileName = strDest;
 	const wchar_t *NameLastSlash = LastSlash(Name);
@@ -3823,12 +3825,9 @@ FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FAR
 		ConvertNameToFull(strFileName, strFileName);
 	}
 
-	/*
-		$ 29.01.2001 VVM
-		+ По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
-	*/
-	/*if (UNC)
-		ConvertNameToUNC(strFileName);*/
+	if (Opt.ClassicHotkeyLinkResolving && RealName) {
+		ConvertNameToReal(strFileName, strFileName);
+	}
 
 	// $ 20.10.2000 SVS Сделаем фичу Ctrl-F опциональной!
 	if (Opt.PanelCtrlFRule) {

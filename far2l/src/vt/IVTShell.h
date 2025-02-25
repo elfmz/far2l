@@ -1,19 +1,19 @@
 #pragma once
 #include <string>
 
-enum MouseExpectation
+enum MouseMode
 {
-	MEX_X10_MOUSE             = 0x00001,
-	MEX_VT200_MOUSE           = 0x00002,
-//	MEX_VT200_HIGHLIGHT_MOUSE = 0x00004, irrelevant???
-	MEX_BTN_EVENT_MOUSE       = 0x00008,
-	MEX_ANY_EVENT_MOUSE       = 0x00010,
-	MEX_SGR_EXT_MOUSE         = 0x00020
+	MODE_X10_MOUSE             = 0x00001,
+	MODE_VT200_MOUSE           = 0x00002,
+//	MODE_VT200_HIGHLIGHT_MOUSE = 0x00004, not used
+	MODE_BTN_EVENT_MOUSE       = 0x00008,
+	MODE_ANY_EVENT_MOUSE       = 0x00010,
+	MODE_SGR_EXT_MOUSE         = 0x00020
 };
 
 struct IVTShell
 {
-	virtual void OnMouseExpectation(MouseExpectation mex, bool enabled) = 0;
+	virtual void OnMouseExpectation(MouseMode mex, bool enabled) = 0;
 	virtual void OnBracketedPasteExpectation(bool enabled)              = 0;
 	virtual void OnFocusChangeExpectation(bool enabled)                 = 0;
 	virtual void OnWin32InputMode(bool enabled)                         = 0;

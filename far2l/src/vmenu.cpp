@@ -1577,6 +1577,11 @@ void VMenu::DisplayObject()
 			SaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
 	}
 
+	if (!CheckFlags(VMENU_LISTBOX)) {
+		DrawTitles();
+		WaitInMainLoop = FALSE;
+	}
+
 	ShowMenu(true, true);
 }
 

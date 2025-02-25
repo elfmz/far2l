@@ -404,6 +404,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			case DN_BTNCLICK:
 			OrigIdx = DialogID2PreservedOriginalIndex(Param1);
 			if (OrigIdx != -1 || Param1 == SA_CHECKBOX_SUBFOLDERS) {
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 				if (OrigIdx != -1) {
 					DlgParam->OriginalCBAttr[OrigIdx] = static_cast<int>(Param2);
 					DlgParam->OriginalCBAttr2[OrigIdx] = 0;
@@ -520,6 +521,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					SetAttrCalcBitsCharFromModeCheckBoxes(hDlg);
 					DlgParam->_b_mode_check_or_edit_process = false;
 				}
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 
 				return TRUE;
 			}
@@ -644,7 +646,7 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 					break;
 				case SA_COMBO_GROUP:
 					SetAttrDefaultMark(hDlg, SA_COMBO_GROUP-1, // mark (un)changed
-						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitOwner) );
+						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitGroup) );
 					break;
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_ACCESS_DATE-1, // mark (un)changed
@@ -1670,7 +1672,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 										}
 									}
 
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileOwner,
+									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner,
 												SkipMode, strFullName, DlgParam.strInitOwner,
 												DlgParam.OSubfoldersState))
 										break;
@@ -1719,8 +1721,8 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 											SkipMode = SETATTR_RET_SKIP;
 											continue;
 										}
-										ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 									}
+									ApplyFSFileFlags(AttrDlg, strFullName, FileAttr);
 								}
 							}
 						}

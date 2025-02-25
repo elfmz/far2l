@@ -1,5 +1,6 @@
 #include "headers.hpp"
 #include <string>
+#include "vtshell_translation.h"
 
 //See: 
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm:

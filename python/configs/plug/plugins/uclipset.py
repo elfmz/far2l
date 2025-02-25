@@ -1,10 +1,9 @@
-import sys
+import os
 import logging
 
 import ctypes as ct
 import far2lc
 from far2l.plugin import PluginBase
-from yfar import FarPlugin
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +16,7 @@ class ClipboardAllocHeader(ct.Structure):
 		('magic', ct.c_uint64),
     ]
 
-class Plugin(FarPlugin):
+class Plugin(PluginBase):
     label = "Python Clip SET"
     openFrom = ["PLUGINSMENU", 'FILEPANEL']
 
@@ -53,10 +52,11 @@ class Plugin(FarPlugin):
             return
         try:
             files = []
-            panel = self.get_panel()
-            for f in panel.selected:
-                fqname = f.full_file_name
-                files.append("file://"+fqname)
+            pwd = self.panel.GetPanelDir()
+            for i in range(self.panel.GetPanelInfo().SelectedItemsNumber):
+                pnli, pnlidata = self.panel.GetSelectedPanelItem(i)
+                fqname = self.f2s(pnli.FindData.lpwszFileName)
+                files.append("file://"+os.path.join(pwd, fqname))
             #self.SetClipboard(winport, 1, fqname)
             self.SetClipboard(winport, clipurifmt, "\n".join(files))
             self.SetClipboard(winport, clipgnofmt, "copy\n"+"\n".join(files))

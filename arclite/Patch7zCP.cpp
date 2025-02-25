@@ -603,7 +603,9 @@ void CItem::GetUnicodeString(UString &res, const AString &s, bool isComment, boo
 #else
 void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
 {
-	ElfW(Dyn) *dynamic = map->l_ld;
+//	ElfW(Dyn) *dynamic = map->l_ld;
+	ElfW(Dyn) *dynamic = reinterpret_cast<ElfW(Dyn)*>(map->l_ld);
+
 	ElfW(Addr) symtab_addr = 0;
 	ElfW(Addr) strtab_addr = 0;
 	ElfW(Addr) pltgot_addr = 0;
@@ -678,6 +680,9 @@ void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
 
 static bool patch_got(void *handle)
 {
+#if defined(__APPLE__)
+	return false;
+#else
 	_MultiByteToUnicodeString2 = (void (*)(UString &dest, const AString &src, UINT codePage))dlsym(handle,
 			"_Z25MultiByteToUnicodeString2R7UStringRK7AStringj");
 	_ConvertUTF8ToUnicode = (bool (*)(const AString &src, UString &dest))dlsym(handle,
@@ -706,9 +711,6 @@ static bool patch_got(void *handle)
 //	fprintf(stderr, "&NArchive::NZip::CItem::GetUnicodeString = %p\n",
 //			(void *)&NArchive::NZip::CItem::GetUnicodeString);
 
-#if defined(__APPLE__)
-	return false;
-#else
 	struct link_map *map;
 	if (dlinfo(handle, RTLD_DI_LINKMAP, &map) != 0) {
 		perror("dlinfo failed");
@@ -727,7 +729,13 @@ static bool patch_got(void *handle)
 		return false;
 	}
 
-	*got_entry = (void *)&NArchive::NZip::CItem::GetUnicodeString;
+	union {
+		void (NArchive::NZip::CItem::*methodPtr)(UString&, const AString&, bool, bool, UINT) const = &NArchive::NZip::CItem::GetUnicodeString;
+		void *fptr;
+	} u;
+
+	*got_entry = (void *)u.fptr;
+
 	mprotect(page, getpagesize(), PROT_READ);
 #endif
 

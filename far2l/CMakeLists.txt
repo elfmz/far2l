@@ -75,6 +75,7 @@ src/ViewerPrinter.cpp
 src/fileholder.cpp
 src/GrepFile.cpp
 src/about.cpp
+src/lang.cpp
 
 src/panels/panel.cpp
 src/panels/filelist.cpp

@@ -484,6 +484,7 @@ FN_NOINLINE Messager::~Messager() {}
 
 Messager &FN_NOINLINE Messager::Add(FarLangMsg v)
 {
+	LastMessageId = v.ID();
 	return Add(v.CPtr());
 }
 

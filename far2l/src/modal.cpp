@@ -48,6 +48,9 @@ Modal::Modal()
 
 void Modal::Process()
 {
+	if (LastMessageId >= 0)
+		fprintf(stderr, "\nLast message id for this modal is %s\n", GetStringId(LastMessageId));
+
 	Show();
 
 	while (!Done()) {

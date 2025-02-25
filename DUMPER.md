@@ -1,159 +1,156 @@
-﻿# DUMPER
+# DUMPER
 
-## 1. Overview
+## Overview
 
-This tool is designed to assist far2l developers by producing detailed debug prints. All the logging functionality is provided in a single header file (debug.h). There are two main entry points:
+This tool is designed to assist far2l developers by producing detailed debug prints. All logging functionality is provided in the single header file `debug.h`.
 
- - DUMPV (to_file, ...)
- - DUMP (to_file, ...)
+There are two main entry points:
 
-Each of these macros logs variable values along with their names, but they differ in how arguments are provided.
+- `DUMPV(to_file, ...)`
+- `DUMP(to_file, ...)`
+
+Each of these macros logs the values of variables along with their names, but they differ in how arguments are provided.
 
 Every log entry is automatically prefixed with a header containing:
 
-- process ID
-- thread ID
-- formatted local time (with millisecond precision)
-- source file and line number information
-- the calling function’s name
+- process ID,
+- thread ID,
+- formatted local time (with millisecond precision),
+- source file and line number,
+- the calling function’s name.
 
-When outputting string values, any special characters (such as newlines, tabs, quotes, etc.) are automatically escaped to ensure the log remains clear and unambiguous.
+When logging string values, special characters (such as newlines, tabs, quotes) are automatically escaped to ensure clarity and unambiguity in the log.
 
-Both macros take a first boolean parameter `to_file` that determines where the log entry is sent. If `to_file` is **true**, the log is appended to far2l_debug.log in the user’s home directory (using $HOME or /tmp as fallback). Otherwise, the log is printed to standard error via std::clog.
+Both macros take a boolean parameter `to_file` as their first argument, which determines the output destination of the log entry. If `to_file` is `true`, the log is appended to `far2l_debug.log` in the user’s home directory (using `$HOME` or, if unavailable, `/tmp` as a fallback). Otherwise, the log is printed to standard error via `std::clog`.
 
-## 2. DUMPV macro
+## 1. DUMPV macro
+
+Logs simple variables.
+
+Use it for quickly logging a list of plain variables. It automatically extracts the variable names as written in your source code via stringification.
+
+> **Warning**
+> 
+> Function calls or complex expressions with internal commas are not supported.
 
 **Syntax:**
 
 ```cpp
-DUMPV (to_file, var1, var2, ...);
+DUMPV(to_file, var1, var2, ...);
 ```
 
-**Purpose:** 
-
-Log simple variables.
-
-Use DUMPV for quickly logging a list of plain variables. It will automatically extract the variable names as written in your source code via stringification. However, be aware that function calls or complex expressions with internal commas are not supported.
-
-**Example Usage:**
+**Usage:**
 
 ```cpp
 int i = 42;
 double d = 3.1415;
 std::string s = "FAR2L is a Linux port of FAR Manager";
-DUMPV(0, a, b, c);
+
+DUMPV(true, i, d, s);
 ```
 
-## 3. DUMP macro
+## 2. DUMP macro
+
+Logs complex data and/or expressions.
+
+Use when working with types that need special handling. It requires you to wrap the variable tokens with helper macros (like `DVV`, `DCONT`, `DSTRBUF`, `DFLAGS`, etc.), so that the logging backend knows how to properly print out the value.
 
 **Syntax:**
 
 ```cpp
-DUMP(to_file, HELPER_MACRO1 (expr1), HELPER_MACRO2 (expr2), ...);
+DUMP(to_file, HELPER_MACRO1(expr1), HELPER_MACRO2(expr2), ...);
 ```
 
-
-**Purpose:**
-
-Log complex data and/or expressions.
-
-Use DUMP when working with types that need special handling. It requires you to wrap the variable tokens with helper macros (like DVV, DCONT, DSTRBUF, DFLAGS, etc.) so that the logging backend knows how to properly print out the value.
-
-**Example Usage:**
+**Usage:**
 
 ```cpp
 FARString fs = "The quick brown fox jumps over the lazy dog.";
 std::vector<int> primes {2, 3, 5, 7, 11, 13, 17};
-DUMP(true, DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes,0));
+
+DUMP(true, DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes, 0));
 ```
 
 
-## 4. Additional Helper Macros
+## 3. Additional Helper Macros
 
-### 4.1. DVV macro
+### 3.1. DVV
+
+Wraps a simple variable or expression.
 
 **Syntax:**
 
 ```cpp
-DVV (expr);
+DVV(expr)
 ```
 
-**Purpose:** 
-
-Wraps a simple variable or expression.
-
-**Example Usage:**
+**Usage:**
 
 ```cpp
 DUMP(true, DVV(RightAlign && SrcVisualLength > MaxLength));
 ```
 
 
-### 4.2. DMSG macro
-**Syntax:**
-
-```cpp
-DMSG (string);
-```
-
-**Purpose:**
+### 3.2. DMSG
 
 Wraps custom text messages.
 
-**Example Usage:**
+**Syntax:**
+
+```cpp
+DMSG(msg)
+```
+
+**Usage:**
 
 ```cpp
 DUMP(true, DMSG("Operation completed successfully!"));
 ```
 
-### 4.3. DSTRBUF macro
-
-**Syntax:**
-
-```cpp
-DSTRBUF (ptr, length);
-```
-
-**Purpose:**
+### 3.3. DSTRBUF
 
 Wraps string buffers.
 
-Use DSTRBUF when you are logging string buffers provided as a pointer with an associated length. This is common when dealing with non-null-terminated character arrays or when the length is known separately.
-
-DSTRBUF accepts two arguments:
-
- -  a pointer to the character data (which may be a `char*`, `unsigned char*`or `wchar_t*`).
- -  the length of the string buffer (in characters).
-
-**Example Usage:**
-
-```cpp
-WINPORT_DECL(WriteConsole,BOOL,(HANDLE hConsoleOutput, const WCHAR *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved))
-{
-	DUMP(true, DSTRBUF(lpBuffer,nNumberOfCharsToWrite));
-```
-
-
-
-### 4.4. DBINBUF macro
+Use when logging string buffers provided as a pointer with an associated length. This is typically needed for non-null-terminated character arrays or strings that may contain embedded null characters.
 
 **Syntax:**
 
 ```cpp
-DBINBUF(ptr, length);
+DSTRBUF(ptr, length)
 ```
 
-**Purpose:**
+Accepts two arguments:
+
+- pointer to character data (`char *`, `unsigned char *` or `wchar_t *`),
+- length of the string buffer (in characters).
+
+**Usage:**
+
+```cpp
+WINPORT_DECL(WriteConsole, BOOL, (HANDLE hConsoleOutput, const WCHAR *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved))
+{
+	DUMP(true, DSTRBUF(lpBuffer, nNumberOfCharsToWrite));
+	// ...
+}
+```
+
+### 3.4. DBINBUF
 
 Wraps binary buffers.
 
-Use DBINBUF to log the contents of a binary buffer (i.e., an area of memory represented by a pointer and a length in bytes). The macro produces a hex dump output, which is particularly useful when you need to inspect raw binary data.
+Use to log the contents of a binary buffer — a memory region defined by a pointer and its length in bytes. The macro produces a hexadecimal dump, which is especially useful for inspecting raw binary data.
 
-DBINBUF takes two arguments:
-- a pointer to the data you want to dump,
-- the length of the data (in bytes).
+**Syntax:**
 
-**Example Usage:**
+```cpp
+DBINBUF(ptr, length)
+```
+
+Accepts two arguments:
+
+- pointer to data you want to dump,
+- data length (in bytes).
+
+**Usage:**
 
 ```cpp
 struct Header {
@@ -163,64 +160,64 @@ struct Header {
 };
 
 Header hdr = { 0xDEADBEEF, 0x0102, 0x000F };
-const wchar_t *wch=L"The quick brown fox jumps over the lazy dog.";
+const wchar_t *wch = L"The quick brown fox jumps over the lazy dog.";
 
 DUMP(true,
-	 DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
-	 DBINBUF(&hdr, sizeof(hdr)));
+	DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
+	DBINBUF(&hdr, sizeof(hdr)));
 ```
 
-### 4.5. DCONT macro
-
-**Syntax:**
-
-```cpp
-DCONT(container, max_elements);
-```
-
-**Purpose:**
+### 3.5. DCONT
 
 Wraps containers or static arrays.
 
-Use DCONT to log the contents of static arrays and iterable (those providing `begin()` and `end()` methods) containers in a detailed and structured way.
-
-DCONT takes two arguments:
-- the container (or static array) you want to inspect,
-- an integer indicating the maximum number of elements to log (0 = log all).
-
-**Example Usage:**
-
-```cpp
-std::vector<std::string> possibilities;
-if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
-	DUMP(true, DCONT(possibilities, 0));
-```
-
-
-### 4.6. DFLAGS macro
+Use to log the contents of static arrays and iterable containers (i.e. containers that provide both `begin()` and `end()` methods) in a detailed and structured way.
 
 **Syntax:**
 
 ```cpp
-DFLAGS(var, treat_as);
+DCONT(container, max_elements)
 ```
 
-**Purpose:**
+Accepts two arguments:
+
+- container or static array you want to inspect,
+- integer indicating the maximum number of elements to log (pass `0` to log all available data).
+
+**Usage:**
+
+```cpp
+std::vector<std::string> possibilities;
+
+if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
+	DUMP(true, DCONT(possibilities, 0));
+}
+```
+
+### 3.6. DFLAGS
 
 Wraps integers representing bit masks or flag sets.
 
-DFLAGS is designed to help with logging values that represent bit masks or flag sets (for example, file attributes or Unix permission bits). It decodes these numeric flag values into human-readable strings.
+This macro is designed to help log values that represent bit masks or flag sets (for example, file attributes or Unix permission bits) by decoding these numeric flag values into human-readable strings.
 
-DFLAGS takes two arguments:
+**Syntax:**
 
-- the flag variable (typically of an unsigned integer type),
-- a flag type indicator (an enumeration value, such as `Dumper::FlagsAs::FILE_ATTRIBUTES` or `Dumper::FlagsAs::UNIX_MODE`) to determine how the numeric value should be interpreted.
+```cpp
+DFLAGS(var, treat_as)
+```
 
-**Example Usage:**
+Accepts two arguments:
+
+- flag variable (typically of an unsigned integer type),
+- flag type indicator (an enumeration value, such as `Dumper::FlagsAs::FILE_ATTRIBUTES`) that determines how the numeric value should be interpreted.
+
+**Usage:**
 
 ```cpp
 int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
 	FARString &strDestName, int Append)
+
+// ...
      
 DUMP(true,
 	 DVV(SrcData.strFileName),

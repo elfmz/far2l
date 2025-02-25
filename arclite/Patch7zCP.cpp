@@ -18,9 +18,8 @@
 #else
 #include <link.h>
 #include <elf.h>
-#endif
-
 #include <iconv.h>
+#endif
 
 static UINT orig_oemCP = 0, orig_ansiCP = 0;
 static UINT over_oemCP = 0, over_ansiCP = 0;
@@ -103,6 +102,9 @@ static const char *lcToAnsiTable[] = {
 	"ur_PK", "CP1256", "uz_UZ", "CP1251", "uz_UZ", "CP1254", "vi_VN", "CP1258",
 	"wa_BE", "CP1252", "zh_HK", "CP950", "zh_SG", "CP936"};
 
+#if defined(__APPLE__)
+static void Get_AOEMCP(void) {}
+#else
 static void Get_AOEMCP(void)
 {
 	char *lc = setlocale(LC_CTYPE, "");
@@ -129,6 +131,7 @@ static void Get_AOEMCP(void)
 		}
 	}
 }
+#endif
 
 static bool is_valid_cp(UINT cp)
 {
@@ -136,6 +139,11 @@ static bool is_valid_cp(UINT cp)
 	//  return cp > CP_THREAD_ACP && ::GetCPInfo(cp, &cpinfo) != FALSE;
 	return TRUE;
 }
+
+#if defined(__APPLE__)
+
+
+#else
 
 #include "MyStringLite.h"
 
@@ -583,6 +591,9 @@ void CItem::GetUnicodeString(UString &res, const AString &s, bool isComment, boo
 
 }	 // namespace NZip
 }	 // namespace NArchive
+#endif // NOT APPLE
+
+
 
 #if defined(__APPLE__)
 //void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)

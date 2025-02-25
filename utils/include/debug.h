@@ -52,17 +52,23 @@ namespace Dumper {
 	inline std::mutex g_log_output_mutex;
 	inline std::atomic<std::size_t> g_thread_counter {0};
 
-	inline std::string EscapeString(std::string_view input)
-	{
+	inline std::string EscapeString(std::string_view input, bool process_non_ascii = false) {
 		std::ostringstream output;
 
-		for (unsigned char c : input) {
-			if (c >= '\x20') {
+		bool need_escape_as_hex = false;
+		for (unsigned char c: input) {
+			if (LIKELY(c >= 0x20)) {
 				switch (c) {
-				case '"':  output << "\\\""; break;
-				case '\\': output << "\\\\"; break;
+				case '"':
+					output << "\\\""; break;
+				case '\\':
+					output << "\\\\"; break;
 				default:
-					output << c;
+					if (UNLIKELY(process_non_ascii && (c >= 0x80))) {
+						need_escape_as_hex = true;
+					} else {
+						output << c;
+					}
 					break;
 				}
 			} else {
@@ -76,10 +82,14 @@ namespace Dumper {
 				case '\f': output << "\\f"; break;
 				case '\e': output << "\\e"; break;
 				default:
-					output << "\\x{" << std::setfill('0') << std::setw(2) << std::right
-						   << std::hex << static_cast<unsigned int>(c) << "}";
+					need_escape_as_hex = true;
 					break;
 				}
+			}
+			if (need_escape_as_hex) {
+				output << "\\x{" << std::setfill('0') << std::setw(2) << std::right <<
+					std::hex << static_cast < unsigned int > (c) << "}";
+				need_escape_as_hex = false;
 			}
 		}
 		return output.str();
@@ -133,10 +143,17 @@ namespace Dumper {
 				log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
 			}
 
-		} else if constexpr (std::is_convertible_v<T, std::string_view> ||
-							 std::is_same_v<std::remove_cv_t<T>, char> ||
-							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
-							 std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
+		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
+							 std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
+			std::string str_value{ static_cast<const char>(value) };
+			std::string escaped = EscapeString(str_value, true);
+			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+
+		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
+			std::wstring wstr_value {value };
+			DumpValue(log_stream, var_name, wstr_value);
+
+		} else if constexpr (std::is_convertible_v<T, std::string_view>) {
 			std::string str_value{ value };
 			std::string escaped = EscapeString(str_value);
 			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
@@ -222,7 +239,7 @@ namespace Dumper {
 				}
 				result << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(data[offset + i]) << " ";
 			}
-			result << "\n";
+			result << std::endl;
 		}
 
 		return result.str();
@@ -246,12 +263,12 @@ namespace Dumper {
 		const BinBufWrapper<T>& bin_buf_wrapper)
 	{
 		if (!bin_buf_wrapper.data) {
-			log_stream << "|=> " << var_name << " = (nullptr)\n";
+			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
 			return;
 		}
 
 		if (bin_buf_wrapper.length == 0) {
-			log_stream << "|=> " << var_name << " = (empty)\n";
+			log_stream << "|=> " << var_name << " = (empty)"  << std::endl;
 			return;
 		}
 

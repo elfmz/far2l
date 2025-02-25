@@ -1487,7 +1487,6 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 		if (!g_options.handle_commands)
 			FAIL(E_INVALIDARG);
 
-// FIXME: SOME BUGS HERE  =============================================================================
 #if 1
 		bool pgdn = (info->OpMode & OPM_PGDN) != 0;
 
@@ -1532,7 +1531,6 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 				FAIL(E_INVALIDARG);
 		}
 #endif
-// FIXME: SOME BUGS HERE  =============================================================================
 
 	} else {
 		options.detect = g_detect_next_time == triTrue;

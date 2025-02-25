@@ -5,18 +5,12 @@ import time
 from datetime import datetime
 import io
 import subprocess
+import threading
 import re
 import logging
 
-if __name__ == "__main__":
-    import sys
-    class Log:
-        def debug(self, msg):
-            sys.stdout.write(msg)
-            sys.stdout.write('\n')
-    log = Log()
-else:
-    log = logging.getLogger(__name__)
+
+log = logging.getLogger(__name__)
 
 
 class Entry(object):
@@ -101,6 +95,48 @@ class Docker(object):
     def __init__(self, dockerexecutable="/usr/bin/docker"):
         self.dockerexecutable = dockerexecutable
 
+    class Runner(threading.Thread):
+        def __init__(self, cmd, stderr=False):
+            super().__init__()
+            self.cmd = cmd
+            self.stderr = stderr
+            self.done = threading.Event()
+            # 1=killed, 2=exit!=0 3=stderr!=''
+            self.error = 0
+            self.errors = None
+            self.output = None
+
+        def kill(self):
+            self.proc.kill()
+            self.error = 1
+
+        @property
+        def isDone(self):
+            return self.done.is_set()
+
+        def run(self):
+            self.proc = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self.error = 0
+            try:
+                outs, errs = self.proc.communicate()
+            except:
+                self.proc.kill()
+                outs = errs = b""
+                self.error = 2
+            if errs != b"":
+                fp = io.BytesIO(errs)
+                self.errors = fp.readlines()
+                if not self.stderr:
+                    self.error = 3
+            else:
+                self.errors = []
+            if outs != b"":
+                fp = io.BytesIO(outs)
+                self.output = fp.readlines()
+            else:
+                self.output = []
+            self.done.set()
+
     def run(self, *args, timeout=2, stderr=False):
         cmd = [self.dockerexecutable]
         cmd.extend(args)
@@ -137,16 +173,23 @@ class Docker(object):
                 devices.append(info)
         return devices
 
-    def start(self, name):
+    def start(self, name, thread=False):
+        if thread:
+            t = self.Runner([self.dockerexecutable, "container", "start", name])
+            t.start()
+            return t
         self.run("container", "start", name)
 
-    def stop(self, name):
+    def stop(self, name, thread=False):
+        if thread:
+            t = self.Runner([self.dockerexecutable, "container", "stop", name])
+            t.start()
+            return t
         self.run("container", "stop", name)
 
     def logs(self, name):
         return self.run("container", "logs", name, stderr=True)
 
-    ls = "/bin/ls -anL --full-time {}"
     date_re = "%Y-%m-%d %H:%M:%S"
     file_re1 = r"""
 ^
@@ -175,7 +218,7 @@ class Docker(object):
         file_re1 = re.compile(self.file_re1, re.VERBOSE)
         file_re2 = re.compile(self.file_re2, re.VERBOSE)
         lines = self.run(
-            "exec", deviceid, "/bin/ls", "-anL", "--full-time", top
+            "exec", "-u", "root:root", deviceid, "/bin/ls", "-anL", "--full-time", top
         )
         result = []
         for line in lines:
@@ -194,30 +237,26 @@ class Docker(object):
             result.append(entry)
         return result
 
-    def pull(self, deviceid, sqname, dqname):
-        lines = self.run("cp", "{}:{}".format(deviceid, sqname), dqname)
+    def pull(self, deviceid, sqname, dqname, thread=False):
+        if thread:
+            t = self.Runner([self.dockerexecutable, "cp", f"{deviceid}:{sqname}", dqname])
+            t.start()
+            return t
+        lines = self.run("cp", f"{deviceid}:{sqname}", dqname)
         for line in lines:
-            log.debug("pull:".format(line))
+            log.debug(f"pull: {line}")
 
-    def push(self, deviceid, sqname, dqname):
-        lines = self.run("cp", sqname, "{}:{}".format(deviceid, dqname))
+    def push(self, deviceid, sqname, dqname, thread=False):
+        if thread:
+            t = self.Runner([self.dockerexecutable, "cp", sqname, f"{deviceid}:{dqname}"])
+            t.start()
+            return t
+        lines = self.run("cp", sqname, f"{deviceid}:{dqname}")
         for line in lines:
-            log.debug("push:".format(line))
+            log.debug(f"push: {line}")
 
     def mkdir(self, deviceid, dqname):
-        self.run("exec", deviceid, "mkdir", dqname)
+        self.run("exec", "-u", "root:root", deviceid, "mkdir", dqname)
 
     def remove(self, deviceid, dqname):
-        self.run("exec", deviceid, "rm", "-rf", dqname)
-
-
-if __name__ == "__main__":
-    cls = Docker()
-    info = cls.list()
-    print(info)
-    result = cls.ls(info[0][0], "/")
-    for e in result:
-        print(e)
-    cls.stop('redmine')
-    cls.start('redmine')
-    cls.logs('redmine')
+        self.run("exec", "-u", "root:root", deviceid, "rm", "-rf", dqname)

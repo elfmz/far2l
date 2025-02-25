@@ -1,9 +1,10 @@
 class Panel:
-    def __init__(self, plugin, info, ffi, ffic):
-        self.plugin = plugin
-        self.info = info
-        self.ffi = ffi
-        self.ffic = ffic
+    def __init__(self, plugin):
+        self.info = plugin.info
+        self.ffic = plugin.ffic
+        self.ffi = plugin.ffi
+        self.s2f = plugin.s2f
+        self.f2s = plugin.f2s
 
     def _handle(self, active):
         return self.ffi.cast("HANDLE", -1 if active else -2)
@@ -39,7 +40,7 @@ class Panel:
         # wchar_t *
         return self.info.Control(self._handle(active), self.ffic.FCTL_CLOSEPLUGIN, 0, self.ffi.cast("LONG_PTR", arg))
 
-    def GetPanelInfo(self, no, active=True):
+    def GetPanelInfo(self, active=True):
         pnl = self.ffi.new("struct PanelInfo *")
         if self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELINFO, 0, self.ffi.cast("LONG_PTR", pnl)):
             return pnl
@@ -49,31 +50,31 @@ class Panel:
         nb = self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELHOSTFILE, 0, 0)
         data = self.ffi.new("wchar_t []", nb)
         self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELHOSTFILE, nb, self.ffi.cast("LONG_PTR", data))
-        return self.plugin.f2s(data)
+        return self.f2s(data)
 
     def GetPanelFormat(self, active=True):
         nb = self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELFORMAT, 0, 0)
         data = self.ffi.new("wchar_t []", nb)
         self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELFORMAT, nb, self.ffi.cast("LONG_PTR", data))
-        return self.plugin.f2s(data)
+        return self.f2s(data)
 
     def GetPanelDir(self, active=True):
         nb = self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELDIR, 0, 0)
         data = self.ffi.new("wchar_t []", nb)
         self.info.Control(self._handle(active), self.ffic.FCTL_GETPANELDIR, nb, self.ffi.cast("LONG_PTR", data))
-        return self.plugin.f2s(data)
+        return self.f2s(data)
 
     def GetColumnTypes(self, active=True):
         nb = self.info.Control(self._handle(active), self.ffic.FCTL_GETCOLUMNTYPES, 0, 0)
         data = self.ffi.new("wchar_t []", nb)
         self.info.Control(self._handle(active), self.ffic.FCTL_GETCOLUMNTYPES, nb, self.ffi.cast("LONG_PTR", data))
-        return self.plugin.f2s(data)
+        return self.f2s(data)
 
     def GetColumnWidths(self, active=True):
         nb = self.info.Control(self._handle(active), self.ffic.FCTL_GETCOLUMNWIDTHS, 0, 0)
         data = self.ffi.new("wchar_t []", nb)
         self.info.Control(self._handle(active), self.ffic.FCTL_GETCOLUMNWIDTHS, nb, self.ffi.cast("LONG_PTR", data))
-        return self.plugin.f2s(data)
+        return self.f2s(data)
 
     def GetPanelItem(self, no, active=True):
         # get buffer size
@@ -132,5 +133,5 @@ class Panel:
         return self.info.Control(self._handle(active), self.ffic.FCTL_REDRAWPANEL, 0, self.ffi.cast("LONG_PTR", panelinfo))
 
     def SetPanelDir(self, paneldir, active=True):
-        paneldir = self.plugin.s2f(paneldir)
+        paneldir = self.s2f(paneldir)
         return self.info.Control(self._handle(active), self.ffic.FCTL_SETPANELDIR, 0, self.ffi.cast("LONG_PTR", paneldir))

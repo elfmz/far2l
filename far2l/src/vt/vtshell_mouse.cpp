@@ -3,109 +3,73 @@
 
 #define BUTTONS_PRESS_MASK (FROM_LEFT_1ST_BUTTON_PRESSED | FROM_LEFT_2ND_BUTTON_PRESSED | RIGHTMOST_BUTTON_PRESSED)
 
-VTMouse::VTMouse(IVTShell *vtshell, uint32_t mex)
-	: _vtshell(vtshell), _mex(mex)
+VTMouse::VTMouse(IVTShell *vtshell, uint32_t mode)
+	: _vtshell(vtshell), _mode(mode)
 {
 }
 
-static constexpr char sClickMatrix[4][4] { // [Button] [Mods: none, ctrl, alt, ctrl+alt]
-	{'#', '3', '+', ';'}, // B_NONE (button released)
-	{' ', '0', '(', '8'}, // B_LEFT
-	{'!', '1', ')', '9'}, // B_MID
-	{'"', '2', '*', ':'}, // B_RIGHT
-};
-
-static constexpr char sMoveMatrix[4][4] { // [Button] [Mods: none, ctrl, alt, ctrl+alt]
-	{'C', 'S', 'K', '['}, // B_NONE (no button pressed)
-	{'@', 'P', 'H', 'X'}, // B_LEFT
-	{'A', 'Q', 'I', 'Y'}, // B_MID
-	{'B', 'R', 'J', 'Z'}, // B_RIGHT
-};
-
-static constexpr char sWheelMatrix[2][2] { // [Direction] [Mods: none, ctrl]
-	{'`', 'p'}, // UP
-	{'a', 'q'}, // DOWN
-};
-
 bool VTMouse::OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 {
-	if (MouseEvent.dwControlKeyState & SHIFT_PRESSED) {
-		return false; // shift combinations reserved by VT
+	//mode == 0 means that all mouse handling is disabled
+	//shift combinations reserved by VT
+	if (MouseEvent.dwControlKeyState & SHIFT_PRESSED || _mode == 0) {
+		return false;
 	}
 
-	if (MouseEvent.dwEventFlags & MOUSE_MOVED) {
-		if ((_mex & (MEX_BTN_EVENT_MOUSE | MEX_ANY_EVENT_MOUSE)) == 0)
-			return true;
+	bool no_pressed = ((MouseEvent.dwButtonState & BUTTONS_PRESS_MASK) == 0) && !(MouseEvent.dwEventFlags & MOUSE_WHEELED);
 
-		if ((MouseEvent.dwButtonState & BUTTONS_PRESS_MASK) == 0
-				&& (_mex & MEX_ANY_EVENT_MOUSE) == 0) {
-			return true;
-		}
-	}
-	unsigned int imod = 0, ibut = 0;
-
-	if (MouseEvent.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) imod|= 1;
-	if (MouseEvent.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) imod|= 2;
-
-	if (MouseEvent.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) ibut = 1;
-	else if (MouseEvent.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) ibut = 2;
-	else if (MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED) ibut = 3;
-
-	if (_mex & MEX_SGR_EXT_MOUSE) {
-		int action;
-		char suffix = 'M';
-		if (MouseEvent.dwEventFlags & MOUSE_MOVED) {
-			action = 35;
-			if (ibut) {
-				action = (ibut == 1) ? 0 : ((ibut == 2) ? 1 : 2);
-				action|= 32;
-			}
-
-		} else if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
-			action = (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 64 : 65;
-
-		} else {
-			int abut = ibut;
-			if (ibut == 0 && _sgr_prev_ibut != 0) {
-				suffix = 'm';
-				abut = _sgr_prev_ibut;
-			}
-			_sgr_prev_ibut = ibut;
-			action = (abut == 1) ? 0 : ((abut == 2) ? 1 : 2);
-		}
-		if (imod & 1) action|= 16;
-		if (imod & 2) action|= 8;
-		if (MouseEvent.dwControlKeyState & SHIFT_PRESSED) action|= 4;
-
-		char seq[64]; seq[sizeof(seq) - 1] = 0;
-		snprintf(seq, sizeof(seq) - 1, "\x1b[<%d;%d;%d%c", action,
-			MouseEvent.dwMousePosition.X + 1, MouseEvent.dwMousePosition.Y + 1,
-			suffix);
-		_vtshell->InjectInput(seq);
+	//send MOUSE_MOVED if only MODE_ANY_EVENT_MOUSE present
+	if ((MouseEvent.dwEventFlags & MOUSE_MOVED) &&
+		(no_pressed && (_mode & MODE_ANY_EVENT_MOUSE) == 0)) {
 		return true;
 	}
 
-	if ( MouseEvent.dwMousePosition.X < 0 || MouseEvent.dwMousePosition.X > SHORT(0xff - '!')
-		|| MouseEvent.dwMousePosition.Y < 0 || MouseEvent.dwMousePosition.Y > SHORT(0xff - '!') )
-	{
-		// mouse out of encodeable region - skip events to avoid misclicks
-		fprintf(stderr, "VTMouse: far away - %d:%d\n", MouseEvent.dwMousePosition.X, MouseEvent.dwMousePosition.Y);
-		return true;
-	}
+	// 3 means no button pressed
+	unsigned int button = 3;
+	if (MouseEvent.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) button = 0;
+	if (MouseEvent.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) button = 1;
+	if (MouseEvent.dwButtonState & RIGHTMOST_BUTTON_PRESSED)     button = 2;
+	if (MouseEvent.dwEventFlags & MOUSE_WHEELED)                 button = (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 0x40 : 0x41;
 
-	char seq[] = {0x1b, '[', 'M', 0 /* action */,
-		char('!' + MouseEvent.dwMousePosition.X),
-		char('!' + MouseEvent.dwMousePosition.Y),
-		0};
-
-	if (MouseEvent.dwEventFlags & MOUSE_WHEELED) {
-		seq[3] = sWheelMatrix[ (SHORT(MouseEvent.dwButtonState >> 16) > 0) ? 0 : 1 ][ (imod & 1) ? 1 : 0 ];
-
-	} else if (MouseEvent.dwEventFlags & MOUSE_MOVED) {
-		seq[3] = sMoveMatrix[ibut][imod];
-
+	//track previos button for proper released event in SGR
+ 	if (no_pressed && (_mode & MODE_SGR_EXT_MOUSE) && _sgr_prev_ibut != 0) {
+		button = _sgr_prev_ibut;
+		_sgr_prev_ibut = 0;
 	} else {
-		seq[3] = sClickMatrix[ibut][imod];
+		_sgr_prev_ibut = button;
+	}
+
+	if (MouseEvent.dwEventFlags & MOUSE_MOVED) button |= 0x20;
+
+	if (MouseEvent.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) button |= _ctrl_ind;
+	if (MouseEvent.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))   button |= _alt_ind;
+	if (MouseEvent.dwControlKeyState & SHIFT_PRESSED)							 button |= _shift_ind;
+
+
+	char seq[64]; seq[sizeof(seq) - 1] = 0;
+	if (_mode & MODE_SGR_EXT_MOUSE) {
+		//in SGR pressed or released state is enocoded by suffix
+		snprintf(seq, sizeof(seq) - 1, "\x1b[<%d;%d;%d%c",
+			button,
+			MouseEvent.dwMousePosition.X + 1,
+			MouseEvent.dwMousePosition.Y + 1,
+			(no_pressed ? 'm' : 'M')
+		);
+	} else {
+		if(MouseEvent.dwMousePosition.X < SHORT(0xff - 33) && MouseEvent.dwMousePosition.Y < SHORT(0xff - 33)) {
+			//in X10 Encoding button release and no button pressed are the same and 32 (0x20) is added to all values
+			button |= 0x20;
+
+			snprintf(seq, sizeof(seq) - 1, "\x1b[M%c%c%c",
+				char(button),
+				char(MouseEvent.dwMousePosition.X + 33),
+				char(MouseEvent.dwMousePosition.Y + 33)
+			);
+		} else {
+			// mouse out of encodeable region - skip events to avoid misclicks
+			fprintf(stderr, "VTMouse: far away - %d:%d\n", MouseEvent.dwMousePosition.X, MouseEvent.dwMousePosition.Y);
+			return true;
+		}
 	}
 
 	_vtshell->InjectInput(seq);

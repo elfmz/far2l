@@ -230,6 +230,7 @@ static void flags_show(HANDLE hDlg, bool toggle)
 	if (toggle && sel_pos)
 		FFFlags->FlagInverse(flags_list[ListPos.SelectPos].flag);
 
+	SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 	ListBox->DeleteItems();
 	for (unsigned i=0; i<ARRAYSIZE(flags_list); i++) {
 		GetFlagStr2BarList(i, ch, strListBoxLine,
@@ -243,6 +244,7 @@ static void flags_show(HANDLE hDlg, bool toggle)
 		ListBox->SetSelectPos(&ListPos);
 		ListBox->FastShow();
 	}
+	SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 }
 
 static LONG_PTR WINAPI ChattrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)

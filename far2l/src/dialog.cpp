@@ -2670,7 +2670,7 @@ int Dialog::ProcessKey(FarKey Key)
 		FarKey fKey = ShiftState ? KEY_SHIFT : 0;
 		fKey |= CtrlPressed ? KEY_CTRL : 0;
 		fKey |= AltPressed ? KEY_ALT : 0;
-		DlgProc((HANDLE)this, DN_KEY, 0, fKey);
+		DlgProc((HANDLE)this, DN_KEY, -1, fKey);
 	}
 	if (Key == KEY_NONE || Key == KEY_IDLE) {
 		DlgProc((HANDLE)this, DN_ENTERIDLE, 0, 0);	// $ 28.07.2000 SVS Передадим этот факт в обработчик :-)

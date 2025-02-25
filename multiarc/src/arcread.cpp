@@ -30,10 +30,6 @@ int PluginClass::PreReadArchive(const char *Name)
 
 	ArcName = Name;
 
-	if (FindExt(ArcName) == std::string::npos) {
-		ArcName+= '.';
-	}
-
 	return TRUE;
 }
 

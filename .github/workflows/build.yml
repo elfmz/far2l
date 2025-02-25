@@ -69,7 +69,6 @@ jobs:
          libx11-dev libxi-dev
          libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
          libarchive-dev
-         libarchive-dev
          python3-dev python3-cffi
  
       - name: Create Build Environment
@@ -177,6 +176,7 @@ jobs:
           libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
           libarchive-dev
           python3-dev python3-cffi
+          python3-markdown appstream
   
       - name: Create Build Environment
         # Create a separate build directory as working directory for all subsequent commands
@@ -196,6 +196,9 @@ jobs:
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: |
           cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
+
+      - name: Validate AppStream metainfo file
+        run: appstreamcli validate --strict _build/far2l/DE/io.github.elfmz.far2l.metainfo.xml
         
   macos14-arm64-clang15:
     if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}

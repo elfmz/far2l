@@ -425,7 +425,8 @@ void ArcAPI::load_libs(const std::wstring &path)
 		arc_lib.module_path = add_trailing_slash(dir) + file_enum.data().cFileName;
 
 		const std::string s2(arc_lib.module_path.begin(), arc_lib.module_path.end());
-		arc_lib.h_module = dlopen(s2.c_str(), RTLD_LAZY);
+		//arc_lib.h_module = dlopen(s2.c_str(), RTLD_LAZY);
+		arc_lib.h_module = dlopen(s2.c_str(), RTLD_NOW);
 
 		if (arc_lib.h_module == nullptr) {
 			continue;
@@ -666,13 +667,12 @@ void ArcAPI::find_sfx_modules(const std::wstring &path)
 			continue;
 		std::string sig(buffer.data(), sz);
 
-		//    if (sig != "MZ") {
-		//	  fprintf(stderr, " MZ ???? \n");
-		//      continue;
-		//	}
+		if (sig == "MZ") {
+			//  fprintf(stderr, " MZ ???? \n");
+		      continue;
+		}
 
 //		fprintf(stderr, "ArcAPI::find_sfx_modules: Added sfx!\n");
-
 		sfx_modules.push_back(sfx_module);
 	}
 }

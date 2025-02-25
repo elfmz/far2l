@@ -356,7 +356,7 @@ Options::Options()
 	  use_disabled_formats(false),
 	  disabled_formats(),
 	  pgdn_formats(false),
-	  saveCP(false),
+	  saveCP(true),
 	  oemCP(866),
 	  ansiCP(1251),
 	  correct_name_mode(0x12),

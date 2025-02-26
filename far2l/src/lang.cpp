@@ -8,7 +8,6 @@ const char* MsgIds[] = {
 	#define DECLARE_FARLANGMSG(NAME, ID) #NAME,
 	#include "bootstrap/lang.inc"
 	#undef DECLARE_FARLANGMSG
-	"UnavailableInReleaseBuild"
 	#endif
 };
 
@@ -20,6 +19,6 @@ const char* GetStringId(int id) {
 		return "UnknownMessage";
 	}
 	#else
-	return MsgIds[0];
+	return "UnavailableInReleaseBuild";
 	#endif
 }

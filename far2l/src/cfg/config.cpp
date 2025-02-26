@@ -111,6 +111,9 @@ static void ApplySudoConfiguration()
 	sudo_client_configure(mode, Opt.SudoPasswordExpiration, sudo_app.c_str(), askpass_app.c_str(),
 			Wide2MB(Msg::SudoTitle).c_str(), Wide2MB(Msg::SudoPrompt).c_str(),
 			Wide2MB(Msg::SudoConfirm).c_str());
+
+	FirstMessageId = -1;
+	LastMessageId = -1;
 }
 
 static void AddHistorySettings(DialogBuilder &Builder, FarLangMsg MTitle, int *OptEnabled, int *OptCount)

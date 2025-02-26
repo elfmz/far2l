@@ -470,6 +470,9 @@ static int ShowMessage(DWORD Flags, int Buttons, const wchar_t *Title, const wch
 
 FN_NOINLINE Messager::Messager(FarLangMsg title)
 {
+	FirstMessageId = -1;
+	LastMessageId = -1;
+
 	Add(title);
 }
 
@@ -478,9 +481,13 @@ FN_NOINLINE Messager::Messager(const wchar_t *title)
 	Add(title);
 }
 
-FN_NOINLINE Messager::Messager() {}
+FN_NOINLINE Messager::Messager() {
+	FirstMessageId = -1;
+	LastMessageId = -1;
+}
 
-FN_NOINLINE Messager::~Messager() {}
+FN_NOINLINE Messager::~Messager() {
+}
 
 Messager &FN_NOINLINE Messager::Add(FarLangMsg v)
 {
@@ -527,6 +534,8 @@ ExMessager::ExMessager(const wchar_t *title) : Messager(title)
 
 ExMessager::ExMessager()
 {
+	FirstMessageId = -1;
+	LastMessageId = -1;
 }
 
 ExMessager::~ExMessager()

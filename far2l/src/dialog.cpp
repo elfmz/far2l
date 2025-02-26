@@ -4524,6 +4524,12 @@ void Dialog::Process()
 	ClearDone();
 	InitDialog();
 
+	if (LastMessageId >= 0) {
+		fprintf(stderr, "\nFirst and last message ids for this dialog are %s and %s\n", GetStringId(FirstMessageId), GetStringId(LastMessageId));
+		FirstMessageId = -1;
+		LastMessageId = -1;
+	}
+
 	if (ExitCode == -1) {
 		clock_t btm = 0;
 		long save = 0;

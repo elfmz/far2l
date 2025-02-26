@@ -82,6 +82,10 @@ if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Release")
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-DBUILD_TYPE_RELEASE=1)
+endif()
+
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE} Version: ${VERSION}")
 
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

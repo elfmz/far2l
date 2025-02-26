@@ -1461,8 +1461,11 @@ bool VMenu::ShiftItemShowPos(int Pos, int Direct)
 
 void VMenu::Show()
 {
-	if (LastMessageId >= 0)
-		fprintf(stderr, "\nLast message id for this menu is %s\n", GetStringId(LastMessageId));
+	if (LastMessageId >= 0) {
+		fprintf(stderr, "\nFirst and last message ids for this menu are %s and %s\n", GetStringId(FirstMessageId), GetStringId(LastMessageId));
+		FirstMessageId = -1;
+		LastMessageId = -1;
+	}
 
 	CriticalSectionLock Lock(CS);
 
@@ -1560,8 +1563,6 @@ void VMenu::Hide()
 		delete OldTitle;
 		OldTitle = nullptr;
 	}
-
-	LastMessageId = -1;
 }
 
 void VMenu::DisplayObject()

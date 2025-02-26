@@ -394,8 +394,6 @@ void DataToItemEx(const DialogDataEx *Data, DialogItemEx *Item, int Count)
 		else
 			Item[i].strData = Data[i].Data;
 	}
-
-//	fprintf(stderr, "Creating dialog items. LastMessageId is %s\n", GetStringId(LastMessageId));
 }
 
 Dialog::Dialog(DialogItemEx *SrcItem,		// Набор элементов диалога
@@ -4526,8 +4524,11 @@ void Dialog::Process()
 	ClearDone();
 	InitDialog();
 
-	if (LastMessageId >= 0)
-		fprintf(stderr, "\nLast message id for this dialog is %s\n", GetStringId(LastMessageId));
+	if (LastMessageId >= 0) {
+		fprintf(stderr, "\nFirst and last message ids for this dialog are %s and %s\n", GetStringId(FirstMessageId), GetStringId(LastMessageId));
+		FirstMessageId = -1;
+		LastMessageId = -1;
+	}
 
 	if (ExitCode == -1) {
 		clock_t btm = 0;

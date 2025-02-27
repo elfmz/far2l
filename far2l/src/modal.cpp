@@ -49,7 +49,7 @@ Modal::Modal()
 void Modal::Process()
 {
 	if (LastMessageId >= 0) {
-		fprintf(stderr, "\nFirst and last message ids for this modal are %s and %s\n", GetStringId(FirstMessageId), GetStringId(LastMessageId));
+		fprintf(stderr, "\nFirst & last msg ids for this dialog (best guess) are %s and %s\n", GetStringId(FirstMessageId), GetStringId(LastMessageId));
 		FirstMessageId = -1;
 		LastMessageId = -1;
 	}

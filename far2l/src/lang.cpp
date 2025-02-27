@@ -22,3 +22,20 @@ const char* GetStringId(int id) {
 	return "UnavailableInReleaseBuild";
 	#endif
 }
+
+void FarLangMsg::UpdateLastMessageId(int id) const {
+	if (
+		(id != Msg::Yes.ID()) &&
+		(id != Msg::HYes.ID()) &&
+		(id != Msg::No.ID()) &&
+		(id != Msg::HNo.ID()) &&
+		(id != Msg::Ok.ID()) &&
+		(id != Msg::HOk.ID()) &&
+		(id != Msg::Cancel.ID()) &&
+		(id != Msg::HCancel.ID())
+	) {
+		if (FirstMessageId == -1)
+			FirstMessageId = id;
+		LastMessageId = id; 
+	}
+}

@@ -657,9 +657,10 @@ namespace Dumper {
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const FARString& value)
+		const FARString& value,
+		const IndentInfo& indentInfo)
 	{
 		std::string str_value = value.GetMB();
-		DumpValue(log_stream, var_name, str_value);
+		DumpValue(log_stream, var_name, str_value, indentInfo);
 	}
 }

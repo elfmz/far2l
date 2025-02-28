@@ -25,6 +25,8 @@
 #include <cstddef>
 #include <sys/stat.h>
 #include <cstdint>
+#include <bitset>
+
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -49,8 +51,13 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 namespace Dumper {
 
+	// ****************************************************************************************************
+	// Вспомогательные переменные, функции и структуры
+	// ****************************************************************************************************
+
 	inline std::mutex g_log_output_mutex;
 	inline std::atomic<std::size_t> g_thread_counter {0};
+
 
 	inline std::string EscapeString(std::string_view input, bool process_non_ascii = false) {
 		std::ostringstream output;
@@ -117,54 +124,141 @@ namespace Dumper {
 	}
 
 
+	// Метафункция для проверки на этапе компиляции: является ли тип T контейнером?
+
+	template <typename T, typename = void>
+	struct is_container : std::false_type { };
+
+	template <typename T>
+	struct is_container<T, std::void_t<
+							   decltype(std::declval<T>().begin()),
+							   decltype(std::declval<T>().end())
+							   >> : std::true_type { };
+
+	template <typename T>
+	inline constexpr bool is_container_v = is_container<T>::value;
+
+	// ****************************************************************************************************
+	// Форматирование имён/значений переменных с учётом уровня их возможной вложенности при отображении контейнеров
+	// ****************************************************************************************************
+
+	constexpr std::size_t MAX_INDENT_LEVEL = 32;
+
+	struct IndentInfo {
+		std::bitset<MAX_INDENT_LEVEL> levels;
+		int cur_level;
+
+		IndentInfo() : levels(), cur_level(0) {}
+
+		std::string MakeIndent() const {
+			std::string result;
+			result.reserve(4 * (cur_level + 1));
+			result.push_back('|');
+			if (UNLIKELY(cur_level != 0)) {
+				const std::string indent(3, ' ');
+				result.append(indent);
+				for (int i = 0; i < cur_level - 1; ++i) {
+					result.push_back(levels.test(i) ? '|' : ' ');
+					result.append(indent);
+				}
+				result.push_back(levels.test(cur_level - 1) ? '|' : '\\');
+			}
+			result.append("=> ");
+			return result;
+		}
+
+		IndentInfo CreateChild(bool current_branch_has_next_elements) const {
+			auto child = *this;
+			if (cur_level < static_cast<int>(MAX_INDENT_LEVEL)) {
+				child.levels.set(cur_level, current_branch_has_next_elements);
+				++child.cur_level;
+			}
+			return child;
+		}
+	};
+
+
+	template <typename T>
+	inline void LogVarWithIndentation(std::ostringstream& log_stream,
+								   std::string_view var_name,
+								   const T& var_value,
+								   const IndentInfo& indent_info,
+								   bool print_value = true)
+	{
+		log_stream << indent_info.MakeIndent();
+		log_stream << var_name;
+		if (print_value)
+			log_stream << " = " << var_value;
+		log_stream << std::endl;
+	}
+
+
+
+	// ****************************************************************************************************
+	// DumpValue() - главная реализация-"диспетчер", обрабатывающая основные типы
+	// ****************************************************************************************************
+
 	template <typename T>
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const T& value)
+		const T& value,
+		const IndentInfo& indent_info = IndentInfo())
 	{
 		if constexpr (std::is_pointer_v<T>) {
 			if (!value) {
-				log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
+				LogVarWithIndentation(log_stream, var_name, "(nullptr)", indent_info);
 				return;
 			}
 		}
 
 		if constexpr (std::is_pointer_v<T> &&
 					  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char>) {
-			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value));
+			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value), indent_info);
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::wstring> ||
 							 std::is_convertible_v<T, const wchar_t*>) {
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
 			try {
-				DumpValue(log_stream, var_name, conv.to_bytes(value));
+				DumpValue(log_stream, var_name, conv.to_bytes(value), indent_info);
 			} catch (const std::range_error& e) {
-				log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
+				LogVarWithIndentation(log_stream, var_name, std::string("[conversion error: ") + e.what() + "]", indent_info);
 			}
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
 							 std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
 			std::string str_value{ static_cast<const char>(value) };
 			std::string escaped = EscapeString(str_value, true);
-			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+			LogVarWithIndentation(log_stream, var_name, escaped, indent_info);
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
 			std::wstring wstr_value {value };
-			DumpValue(log_stream, var_name, wstr_value);
+			DumpValue(log_stream, var_name, wstr_value, indent_info);
 
 		} else if constexpr (std::is_convertible_v<T, std::string_view>) {
 			std::string str_value{ value };
 			std::string escaped = EscapeString(str_value);
-			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+			LogVarWithIndentation(log_stream, var_name, escaped, indent_info);
+
+		} else if constexpr (is_container_v<T>) {
+			LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
+			std::size_t index = 0;
+			for(auto it = value.begin(); it != value.end(); ++index) {
+				bool is_last = (std::next(it) == value.end());
+				auto child_indent_info = indent_info.CreateChild(!is_last);
+				auto item_name = std::string(var_name) + "[" + std::to_string(index) + "]";
+				DumpValue(log_stream, item_name, *it, child_indent_info);
+				++it;
+			}
 
 		} else {
-			log_stream << "|=> " << var_name << " = " << value << std::endl;
+			LogVarWithIndentation(log_stream, var_name, value, indent_info);
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка статических массивов char[], unsigned char[] и wchar_t[]
+	// ****************************************************************************************************
 
 	template <typename CharT, std::size_t N>
 	inline std::enable_if_t<
@@ -188,7 +282,9 @@ namespace Dumper {
 	}
 
 
+	// ****************************************************************************************************
 	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DSTRBUF + DUMP
+	// ****************************************************************************************************
 
 	template <typename T>
 	struct StrBufWrapper {
@@ -221,8 +317,9 @@ namespace Dumper {
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
+	// ****************************************************************************************************
 
 	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
 									 std::string_view line_prefix, size_t bytes_per_line = 16)
@@ -246,8 +343,7 @@ namespace Dumper {
 	}
 
 
-	template <typename T,
-			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	template <typename T, typename = std::enable_if_t<std::is_pointer_v<T>>>
 	struct BinBufWrapper {
 		BinBufWrapper(T data, size_t length) : data(data), length(length) {}
 		const T data;
@@ -255,8 +351,7 @@ namespace Dumper {
 	};
 
 
-	template <typename T,
-			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	template <typename T, typename = std::enable_if_t<std::is_pointer_v<T>>>
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
@@ -288,8 +383,9 @@ namespace Dumper {
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка контейнеров с итераторами: через макросы DCONT + DUMP
+	// ****************************************************************************************************
 
 	template <typename ContainerT, typename = decltype(std::begin(std::declval<ContainerT>())),
 		 typename = decltype(std::end(std::declval<ContainerT>()))>
@@ -316,8 +412,9 @@ namespace Dumper {
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка статических массивов: через макросы DCONT + DUMP
+	// ****************************************************************************************************
 
 	template <typename T, std::size_t N>
 	struct ContainerWrapper<T (&)[N]> {
@@ -346,7 +443,9 @@ namespace Dumper {
 	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
 
 
+	// ****************************************************************************************************
 	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...
+	// ****************************************************************************************************
 
 	enum class FlagsAs {
 		FILE_ATTRIBUTES,
@@ -435,6 +534,10 @@ namespace Dumper {
 		log_stream << "|=> " << var_name << " = " << decoded << std::endl;
 	}
 
+	// ****************************************************************************************************
+	// Вспомогательный код для работы с логом
+	// ****************************************************************************************************
+
 
 	inline std::string CreateLogHeader(std::string_view func_name, std::string_view location)
 	{
@@ -465,7 +568,9 @@ namespace Dumper {
 		}
 	}
 
+	// ****************************************************************************************************
 	// Бэкенд для макроса DUMP: аргументы заключаются в дополнительные макросы DVV, DBUF, DCONT, DMSG...
+	// ****************************************************************************************************
 
 	template<std::size_t... I, typename NameValueTupleT>
 	void ProcessPairs(const NameValueTupleT& name_value_tuple, std::ostringstream & log_stream, std::index_sequence<I...>)
@@ -489,8 +594,9 @@ namespace Dumper {
 		FlushLog(log_stream, to_file);
 	}
 
-
+	// ****************************************************************************************************
 	// Бэкенд для макроса DUMPV: поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений)
+	// ****************************************************************************************************
 
 	template <std::size_t... I, typename ValuesTupleT>
 	void DumpEachVariable(const std::vector<std::string>& var_names, std::ostringstream& log_stream,
@@ -555,7 +661,6 @@ namespace Dumper {
 
 		FlushLog(log_stream, to_file);
 	}
-
 
 } // end namespace Dumper
 

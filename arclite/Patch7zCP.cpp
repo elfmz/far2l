@@ -11,6 +11,7 @@
 
 // #if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__)
 #include <dlfcn.h>	  // dlopen, dlsym и dlclose
+#include <iconv.h>
 
 #if defined(__APPLE__)
 #include <mach-o/loader.h>
@@ -18,7 +19,6 @@
 #else
 #include <link.h>
 #include <elf.h>
-#include <iconv.h>
 #endif
 
 static UINT orig_oemCP = 0, orig_ansiCP = 0;
@@ -26,10 +26,7 @@ static UINT over_oemCP = 0, over_ansiCP = 0;
 static bool patched_7z_dll = false;
 static char cover_oemCP[32], cover_ansiCP[32];
 static const char *pcorig_oemCP = nullptr, *pcorig_ansiCP = nullptr;
-
-#ifndef Z7_ARRAY_SIZE
-#define Z7_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-#endif
+static void *_target_addr = nullptr;
 
   // locale -> code page translation tables generated from Wine source code
 static const char *lcToOemTable[] = {
@@ -102,9 +99,9 @@ static const char *lcToAnsiTable[] = {
 	"ur_PK", "CP1256", "uz_UZ", "CP1251", "uz_UZ", "CP1254", "vi_VN", "CP1258",
 	"wa_BE", "CP1252", "zh_HK", "CP950", "zh_SG", "CP936"};
 
-#if defined(__APPLE__)
-static void Get_AOEMCP(void) {}
-#else
+//#if defined(__APPLE__)
+//static void Get_AOEMCP(void) {}
+//#else
 static void Get_AOEMCP(void)
 {
 	char *lc = setlocale(LC_CTYPE, "");
@@ -131,7 +128,7 @@ static void Get_AOEMCP(void)
 		}
 	}
 }
-#endif
+//#endif
 
 static bool is_valid_cp(UINT cp)
 {
@@ -139,11 +136,6 @@ static bool is_valid_cp(UINT cp)
 	//  return cp > CP_THREAD_ACP && ::GetCPInfo(cp, &cpinfo) != FALSE;
 	return TRUE;
 }
-
-#if defined(__APPLE__)
-
-
-#else
 
 #include "MyStringLite.h"
 
@@ -481,7 +473,7 @@ public:
 	}
 };
 
-void CItem::GetUnicodeString(UString &res, const AString &s, bool isComment, bool useSpecifiedCodePage,
+FAR_ALIGNED(16) void CItem::GetUnicodeString(UString &res, const AString &s, bool isComment, bool useSpecifiedCodePage,
 		UINT codePage) const
 {
 	bool isUtf8 = IsUtf8();
@@ -591,20 +583,18 @@ void CItem::GetUnicodeString(UString &res, const AString &s, bool isComment, boo
 
 }	 // namespace NZip
 }	 // namespace NArchive
-#endif // NOT APPLE
-
 
 
 #if defined(__APPLE__)
-//void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
+//void **find_plt_entry_for_symbol(struct link_map *map, void *target_addr)
 //{
 //	return NULL;
 //}
 #else
-void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
+void **find_plt_entry_for_symbol(struct link_map *map, void *target_addr)
 {
 //	ElfW(Dyn) *dynamic = map->l_ld;
-	ElfW(Dyn) *dynamic = reinterpret_cast<ElfW(Dyn)*>(map->l_ld);
+	ElfW(Dyn) *dynamic = (ElfW(Dyn)*)map->l_ld;
 
 	ElfW(Addr) symtab_addr = 0;
 	ElfW(Addr) strtab_addr = 0;
@@ -612,6 +602,9 @@ void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
 
 	ElfW(Xword) strsz = 0;
 	ElfW(Xword) syment = 0;
+
+	if (!dynamic)
+		return NULL;
 
 	for (; dynamic->d_tag != DT_NULL; dynamic++) {
 		switch (dynamic->d_tag) {
@@ -638,6 +631,10 @@ void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
 		return NULL;
 	}
 
+//	fprintf(stderr, "strsz = %lu:\n", strsz);
+//	fprintf(stderr, "syment = %lu:\n", syment);
+//	fprintf(stderr, "sizeof(ElfW(Sym)) = %lu:\n", sizeof(ElfW(Sym)));
+
 	//	ElfW(Sym) *symtab = (ElfW(Sym) *) (map->l_addr + symtab_addr);
 	//	char *strtab = (char *) (map->l_addr + strtab_addr);
 	//	void **got_plt = (void **) (map->l_addr + pltgot_addr);
@@ -647,42 +644,56 @@ void **find_got_entry_for_symbol(struct link_map *map, void *target_addr)
 
 	(void)symtab;
 	(void)strtab;
+	(void)strsz;
+	(void)syment;
 
-	size_t symtab_size = strsz / syment;
+    FILE *maps = fopen("/proc/self/maps", "r");
+    if (!maps) {
+        perror("fopen /proc/self/maps");
+        return NULL;
+    }
 
-//	fprintf(stderr, "\nContents of DT_SYMTAB (%zu entries):\n", symtab_size);
+    char line[512];
+    ElfW(Addr) got_start = pltgot_addr;
+    ElfW(Addr) got_end = 0;
 
-	if (symtab_addr && symtab_size > 0) {
+    while (fgets(line, sizeof(line), maps)) {
+        unsigned long start, end;
+        char perm[5], path[256];
+
+        if (sscanf(line, "%lx-%lx %4s %*x %*x:%*x %*d %255s", &start, &end, perm, path) == 4) {
+            if (start <= got_start && got_start < end) {
+                got_end = end;
+                break;
+            }
+        }
+    }
+
+    fclose(maps);
+
+    size_t got_size = got_end - got_start;
+//    fprintf(stderr, "gplt size: %lu bytes\n", got_size);
+    size_t num_got_entries = got_size / sizeof(void *);
+//    fprintf(stderr, "num_got_entries = %lu\n", num_got_entries);
+
+	if (num_got_entries > 0) {
 		void **found_entry = NULL;
-		size_t n = 0;
-		ElfW(Sym) *sym = (ElfW(Sym) *)((char *)symtab_addr);
-
-		for (size_t i = 0; i < symtab_size; i += sizeof(ElfW(Sym))) {
-//			char *symbol_name = (char *)strtab_addr + sym->st_name;
-
-			void **got_entry = got_plt + n;
-//			fprintf(stderr, "Got entry %lu ][%s] ADDR %p :-> value = %p\n", n, symbol_name, got_entry,
-//					*got_entry);
-			if (*got_entry == target_addr) {
+		for (size_t i = 0; i < num_got_entries; i++) {
+			void **got_entry = got_plt + i;
+			if (got_entry && *got_entry == target_addr) {
 				found_entry = got_entry;
 				return found_entry;
 			}
-			++n;
-			sym++;
 		}
-		return found_entry;
+//		return found_entry;
 	}
 
-	//	fprintf(stderr, "Error: Symbol '%s' not found in library %s\n", target_name, map->l_name);
 	return NULL;
 }
 #endif
 
-static bool patch_got(void *handle)
+bool get_faddrs(void *handle)
 {
-#if defined(__APPLE__)
-	return false;
-#else
 	_MultiByteToUnicodeString2 = (void (*)(UString &dest, const AString &src, UINT codePage))dlsym(handle,
 			"_Z25MultiByteToUnicodeString2R7UStringRK7AStringj");
 	_ConvertUTF8ToUnicode = (bool (*)(const AString &src, UString &dest))dlsym(handle,
@@ -693,12 +704,12 @@ static bool patch_got(void *handle)
 	_Convert_UTF8_Buf_To_Unicode = (bool (*)(const char *src, size_t srcSize, UString &dest,
 			unsigned flags))dlsym(handle, "_Z27Convert_UTF8_Buf_To_UnicodePKcmR7UStringj");
 
-	void *target_addr = dlsym(handle, "_ZNK8NArchive4NZip5CItem16GetUnicodeStringER7UStringRK7AStringbbj");
+	_target_addr = dlsym(handle, "_ZNK8NArchive4NZip5CItem16GetUnicodeStringER7UStringRK7AStringbbj");
 
 	if (!_MultiByteToUnicodeString2 || !_ConvertUTF8ToUnicode || !_Check_UTF8_Buf || !_CrcCalc
-			|| !_Convert_UTF8_Buf_To_Unicode || !target_addr) {
+			|| !_Convert_UTF8_Buf_To_Unicode || !_target_addr) {
 
-		fprintf(stderr, "patch_got(): failed!!!\n");
+		fprintf(stderr, "patch_plt(): failed!!!\n");
 		return false;
 	}
 
@@ -708,18 +719,25 @@ static bool patch_got(void *handle)
 	fprintf(stderr, "_CrcCalc = %p\n", _CrcCalc);
 	fprintf(stderr, "_Convert_UTF8_Buf_To_Unicode = %p\n", _Convert_UTF8_Buf_To_Unicode);
 
-//	fprintf(stderr, "&NArchive::NZip::CItem::GetUnicodeString = %p\n",
-//			(void *)&NArchive::NZip::CItem::GetUnicodeString);
+	fprintf(stderr, "&NArchive::NZip::CItem::GetUnicodeString = %p\n", _target_addr);
 
+	return true;
+}
+
+static bool patch_plt(void *handle)
+{
+#if defined(__APPLE__)
+	return false;
+#else
 	struct link_map *map;
 	if (dlinfo(handle, RTLD_DI_LINKMAP, &map) != 0) {
 		perror("dlinfo failed");
 		return false;
 	}
 
-	void **got_entry = find_got_entry_for_symbol(map, target_addr);
+	void **got_entry = find_plt_entry_for_symbol(map, _target_addr);
 	if (!got_entry) {
-		fprintf(stderr, "Error: Cannot find GOT entry for symbol\n");
+		fprintf(stderr, "Error: Cannot find plt entry for %p\n", _target_addr);
 		return false;
 	}
 
@@ -738,7 +756,6 @@ static bool patch_got(void *handle)
 
 	mprotect(page, getpagesize(), PROT_READ);
 #endif
-
 	return true;
 }
 
@@ -749,7 +766,9 @@ static bool patch_7z_dll()
 		return false;
 
 	for (size_t lib_index = 0; lib_index < libs.size(); ++lib_index) {
-		if ( patch_got(libs[0].h_module) )
+		if (!get_faddrs(libs[0].h_module))
+			continue;
+		if ( patch_plt(libs[0].h_module) )
 			return true;
 	}
 
@@ -767,9 +786,9 @@ void Patch7zCP::SetCP(UINT oemCP, UINT ansiCP)
 
 	if (!patched_7z_dll) {
 		if (patch_7z_dll()) {
-//			patched_7z_dll = true;
+			patched_7z_dll = true;
 		}
-		patched_7z_dll = true;
+//		patched_7z_dll = true;
 	}
 }
 

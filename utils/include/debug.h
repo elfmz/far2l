@@ -58,24 +58,18 @@ namespace Dumper {
 	inline std::mutex g_log_output_mutex;
 	inline std::atomic<std::size_t> g_thread_counter {0};
 
-
-	inline std::string EscapeString(std::string_view input, bool process_non_ascii = false) {
+	inline std::string EscapeString(std::string_view input)
+	{
 		std::ostringstream output;
+		output << std::hex << std::setfill('0') << std::right;
 
-		bool need_escape_as_hex = false;
-		for (unsigned char c: input) {
-			if (LIKELY(c >= 0x20)) {
+		for (unsigned char c : input) {
+			if (LIKELY (c >= '\x20')) {
 				switch (c) {
-				case '"':
-					output << "\\\""; break;
-				case '\\':
-					output << "\\\\"; break;
+				case '"':  output << "\\\""; break;
+				case '\\': output << "\\\\"; break;
 				default:
-					if (UNLIKELY(process_non_ascii && (c >= 0x80))) {
-						need_escape_as_hex = true;
-					} else {
-						output << c;
-					}
+					output << c;
 					break;
 				}
 			} else {
@@ -89,14 +83,9 @@ namespace Dumper {
 				case '\f': output << "\\f"; break;
 				case '\e': output << "\\e"; break;
 				default:
-					need_escape_as_hex = true;
+					output << "\\x{" << std::setw(2) << static_cast<unsigned int>(c) << "}";
 					break;
 				}
-			}
-			if (need_escape_as_hex) {
-				output << "\\x{" << std::setfill('0') << std::setw(2) << std::right <<
-					std::hex << static_cast < unsigned int > (c) << "}";
-				need_escape_as_hex = false;
 			}
 		}
 		return output.str();
@@ -226,10 +215,16 @@ namespace Dumper {
 			}
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
-							 std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
-			std::string str_value{ static_cast<const char>(value) };
-			std::string escaped = EscapeString(str_value, true);
-			LogVarWithIndentation(log_stream, var_name, escaped, indent_info);
+							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+							 std::is_same_v<std::remove_cv_t<T>, signed char>) {
+			auto code = static_cast<unsigned char>(value);
+			if (code >= 0x20 && code < 0x80) {
+				LogVarWithIndentation(log_stream, var_name, static_cast<char>(value), indent_info);
+			} else {
+				char buffer[5];
+				std::snprintf(buffer, sizeof(buffer), "0x%02X", code);
+				LogVarWithIndentation(log_stream, var_name, std::string(buffer), indent_info);
+			}
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
 			std::wstring wstr_value {value };
@@ -327,14 +322,15 @@ namespace Dumper {
 		auto separator_pos = bytes_per_line / 2;
 
 		std::ostringstream result;
+		result << std::hex << std::setfill('0');
 
 		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
-			result << line_prefix << std::setw(8) << std::setfill('0') << std::hex << offset << "  ";
+			result << line_prefix << std::setw(8)  << offset << "  ";
 			for (size_t i = 0; i < bytes_per_line && (offset + i) < length; ++i) {
 				if (i == separator_pos) {
 					result << "| ";
 				}
-				result << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(data[offset + i]) << " ";
+				result << std::setw(2) << static_cast<unsigned int>(data[offset + i]) << " ";
 			}
 			result << std::endl;
 		}

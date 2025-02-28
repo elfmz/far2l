@@ -212,7 +212,7 @@ int PASCAL RARReadHeaderEx(HANDLE hArcData,struct RARHeaderDataEx *D)
     if ((Data->HeaderSize=(int)Data->Arc.SearchBlock(HEAD_FILE))<=0)
     {
       if (Data->Arc.Volume && Data->Arc.GetHeaderType()==HEAD_ENDARC &&
-          Data->Arc.EndArcHead.NextVolume)
+          Data->Arc.EndArcHead.NextVolume) {
         if (MergeArchive(Data->Arc,NULL,false,'L'))
         {
           Data->Arc.Seek(Data->Arc.CurBlockPos,SEEK_SET);
@@ -220,6 +220,7 @@ int PASCAL RARReadHeaderEx(HANDLE hArcData,struct RARHeaderDataEx *D)
         }
         else
           return ERAR_EOPEN;
+      }
 
       if (Data->Arc.BrokenHeader)
         return ERAR_BAD_DATA;
@@ -330,11 +331,11 @@ int PASCAL ProcessFile(HANDLE hArcData,int Operation,char *DestPath,char *DestNa
   try
   {
     Data->Cmd.DllError=0;
-    if (Data->OpenMode==RAR_OM_LIST || Data->OpenMode==RAR_OM_LIST_INCSPLIT ||
-        Operation==RAR_SKIP && !Data->Arc.Solid)
+    if ( Data->OpenMode==RAR_OM_LIST || Data->OpenMode==RAR_OM_LIST_INCSPLIT ||
+        (Operation==RAR_SKIP && !Data->Arc.Solid) )
     {
       if (Data->Arc.Volume && Data->Arc.GetHeaderType()==HEAD_FILE &&
-          Data->Arc.FileHead.SplitAfter)
+          Data->Arc.FileHead.SplitAfter) {
         if (MergeArchive(Data->Arc,NULL,false,'L'))
         {
           Data->Arc.Seek(Data->Arc.CurBlockPos,SEEK_SET);
@@ -342,6 +343,8 @@ int PASCAL ProcessFile(HANDLE hArcData,int Operation,char *DestPath,char *DestNa
         }
         else
           return ERAR_EOPEN;
+	  }
+
       Data->Arc.SeekToNext();
     }
     else

@@ -68,12 +68,14 @@ static bool IsNewStyleRev(const std::wstring &Name)
   if (ExtPos==std::wstring::npos || ExtPos==0)
     return true;
   int DigitGroup=0;
-  for (ExtPos--;ExtPos>0;ExtPos--)
-    if (!IsDigit(Name[ExtPos]))
+  for (ExtPos--;ExtPos>0;ExtPos--) {
+    if (!IsDigit(Name[ExtPos])) {
       if (Name[ExtPos]=='_' && IsDigit(Name[ExtPos-1]))
         DigitGroup++;
       else
         break;
+    }
+  }
   return DigitGroup<2;
 }
 
@@ -204,9 +206,9 @@ bool RecVolumes3::Restore(CommandData *Cmd,const std::wstring &Name,bool Silent)
       if (WrongParam)
         continue;
     }
-    if (P[0]<=0 || P[1]<=0 || P[2]<=0 || P[1]+P[2]>255 || P[0]+P[2]-1>255)
+    if ( P[0]<=0 || P[1]<=0 || P[2]<=0 || (P[1]+P[2])>255 || (P[0]+P[2]-1)>255 )
       continue;
-    if (RecVolNumber!=0 && RecVolNumber!=P[1] || FileNumber!=0 && FileNumber!=P[2])
+    if ( (RecVolNumber!=0 && RecVolNumber!=P[1]) || (FileNumber!=0 && FileNumber!=P[2]) )
     {
       uiMsg(UIERROR_RECVOLDIFFSETS,CurName,PrevName);
       return false;

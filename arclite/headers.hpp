@@ -84,6 +84,20 @@ WARNING_DISABLE_CLANG("-Weverything")
 //	#include "7z/h2/CPP/7zip/ICoder.h"
 #endif
 
+#ifndef Z7_ARRAY_SIZE
+#define Z7_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif
+
+#ifdef _MSC_VER
+	#define	FAR_ALIGNED(x) __declspec( align(x) )
+	#define	FN_STATIC_INLINE static __forceinline
+	#define	FN_INLINE __forceinline
+#else
+	#define	FAR_ALIGNED(x) __attribute__ ((aligned (x)))
+	#define	FN_STATIC_INLINE static __attribute__((always_inline)) inline
+	#define	FN_INLINE __attribute__((always_inline)) inline
+#endif
+
 WARNING_POP()
 
 extern GUID IID_IUnknown;

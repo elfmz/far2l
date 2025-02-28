@@ -843,7 +843,7 @@ static bool patch_addr(void *handle)
 #elif defined(__aarch64__)
     uintptr_t addr = (uintptr_t)newf_addr;
 
-    unsigned char patch_code[16] = {
+    unsigned char patch_code[20] = {
         0x58, 0x00, 0x02, 0xD5, // movz x16, #imm16 << 0
         0x92, 0x00, 0x42, 0xF2, // movk x16, #imm16 << 16
         0xd2, 0x00, 0x82, 0xf2, // movk x16, #imm16 << 32

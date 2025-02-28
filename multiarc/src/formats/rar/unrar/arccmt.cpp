@@ -50,7 +50,7 @@ bool Archive::DoGetComment(std::wstring &CmtData)
 #endif
   }
 #ifndef SFX_MODULE
-  if (Format==RARFMT14 && MainHead.PackComment || Format!=RARFMT14 && CommHead.Method!=0x30)
+  if ( (Format==RARFMT14 && MainHead.PackComment) || (Format!=RARFMT14 && CommHead.Method!=0x30) )
   {
     if (Format!=RARFMT14 && (CommHead.UnpVer < 15 || CommHead.UnpVer > VER_UNPACK || CommHead.Method > 0x35))
       return false;
@@ -143,7 +143,7 @@ bool Archive::ReadCommentData(std::wstring &CmtData)
   std::vector<byte> CmtRaw;
   if (!ReadSubData(&CmtRaw,NULL,false))
     return false;
-  size_t CmtSize=CmtRaw.size();
+  size_t CmtSize=CmtRaw.size(); (void)CmtSize;
   CmtRaw.push_back(0);
 //  CmtData->resize(CmtSize+1);
   if (Format==RARFMT50)
@@ -169,7 +169,7 @@ void Archive::ViewComment()
   std::wstring CmtBuf;
   if (GetComment(CmtBuf)) // In GUI too, so "Test" command detects broken comments.
   {
-    size_t CmtSize=CmtBuf.size();
+    size_t CmtSize=CmtBuf.size(); (void)CmtSize;
     auto EndPos=CmtBuf.find(0x1A);
     if (EndPos!=std::wstring::npos)
       CmtSize=EndPos;

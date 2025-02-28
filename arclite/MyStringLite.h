@@ -17,8 +17,10 @@ class UString
 public:
   UString();
   unsigned Len() const { return _len; }
+//  unsigned Limit() const { return _limit; }
   bool IsEmpty() const { return _len == 0; }
   void Empty() { _len = 0; _chars[0] = 0; }
+  void SetLen(unsigned len) { _len = len; _chars[len] = 0; }
   ~UString() { MY_STRING_DELETE(_chars) }
 
   operator const wchar_t *() const { return _chars; }
@@ -30,6 +32,14 @@ public:
   wchar_t Back() const { return _chars[(size_t)_len - 1]; }
 
   void ReplaceOneCharAtPos(unsigned pos, wchar_t c) { _chars[pos] = c; }
+  void SetNewSize(unsigned size) {
+	MY_STRING_DELETE(_chars);
+	_chars = NULL;
+	_chars = MY_STRING_NEW_wchar_t(size);
+	_len = 0;
+	_limit = size - 1;
+	_chars[0] = 0;
+  }
 
   wchar_t *GetBuf() { return _chars; }
 };

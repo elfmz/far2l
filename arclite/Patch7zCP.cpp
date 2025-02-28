@@ -214,6 +214,7 @@ struct CWzAesExtra
 	}
 };
 
+/**
 namespace NStrongCrypto_AlgId
 {
 const UInt16 kDES = 0x6601;
@@ -228,6 +229,7 @@ const UInt16 kBlowfish = 0x6720;
 const UInt16 kTwofish = 0x6721;
 const UInt16 kRC4 = 0x6801;
 }	 // namespace NStrongCrypto_AlgId
+**/
 
 struct CStrongCryptoExtra
 {
@@ -532,8 +534,9 @@ FAR_ALIGNED(16) void CItem::GetUnicodeString(UString &res, const AString &s, boo
 	}
 
 	if (isOem || isAnsi) {
-		const char *legacyCp = nullptr;
 
+		#if 0 // Use iconv
+		const char *legacyCp = nullptr;
 		if (isOem) {
 			if (over_oemCP)
 				legacyCp = cover_oemCP;
@@ -545,7 +548,6 @@ FAR_ALIGNED(16) void CItem::GetUnicodeString(UString &res, const AString &s, boo
 			else
 				legacyCp = pcorig_ansiCP;
 		}
-
 		// fprintf(stderr, "legacyCP = %s\n", legacyCp ? legacyCp : "none");
 		if (legacyCp) {
 			iconv_t cd;
@@ -571,6 +573,35 @@ FAR_ALIGNED(16) void CItem::GetUnicodeString(UString &res, const AString &s, boo
 				}
 			}
 		}
+		#else // Use far2l WINPORT
+		UINT uilegacyCp = 0;
+		if (isOem) {
+			if (over_oemCP)
+				uilegacyCp = over_oemCP;
+			else
+				uilegacyCp = orig_oemCP;
+		} else if (isAnsi) {
+			if (over_ansiCP)
+				uilegacyCp = over_ansiCP;
+			else
+				uilegacyCp = orig_ansiCP;
+		}
+
+		if (uilegacyCp) {
+			size_t slen = s.Len();
+//			// size_t dlen = 256;
+			size_t dlen = slen * 4 + 1;
+			res.SetNewSize( dlen );
+			char *srcPtr = (char *)s.Ptr();	   // iconv requires non-const input pointer
+			wchar_t *destPtr = (wchar_t *)res.Ptr();
+
+			int r = WINPORT(MultiByteToWideChar)(uilegacyCp, 0, srcPtr, slen, destPtr, dlen - 1);
+			if (r != 0) {
+				res.SetLen(r);
+				return;
+			}
+		}
+		#endif
 	}	 // if (isOem || isAnsi) {
 
 #endif

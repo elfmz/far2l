@@ -24,11 +24,14 @@ File::File()
 
 File::~File()
 {
-  if (hFile!=FILE_BAD_HANDLE && !SkipClose)
-    if (NewFile)
+  if (hFile!=FILE_BAD_HANDLE && !SkipClose) {
+    if (NewFile) {
       Delete();
-    else
+    }
+    else {
       Close();
+    }
+  }
 }
 
 
@@ -180,6 +183,7 @@ bool File::Create(const std::wstring &Name,uint Mode)
   // SetFileTime call and do not need to read from file.
   bool WriteMode=(Mode & FMF_WRITE)!=0;
   bool ShareRead=(Mode & FMF_SHAREREAD)!=0 || File::OpenShared;
+  (void)ShareRead;
 #ifdef _WIN_ALL
   CreateMode=Mode;
   uint Access=WriteMode ? GENERIC_WRITE:GENERIC_READ|GENERIC_WRITE;
@@ -387,7 +391,7 @@ int File::Read(void *Data,size_t Size)
     if (ReadSize==-1)
     {
       ErrorType=FILE_READERROR;
-      if (AllowExceptions)
+      if (AllowExceptions) {
         if (ReadErrorMode==FREM_IGNORE)
         {
           ReadSize=0;
@@ -397,8 +401,9 @@ int File::Read(void *Data,size_t Size)
             size_t SizeToRead=Min(Size-I,512);
             int ReadCode=DirectRead(Data,SizeToRead);
             ReadSize+=(ReadCode==-1) ? 512:ReadCode;
-            if (ReadSize!=-1)
+            if (ReadSize!=-1) {
               TotalRead+=ReadSize;
+			}
           }
         }
         else
@@ -417,6 +422,7 @@ int File::Read(void *Data,size_t Size)
           }
           ErrHandler.ReadError(FileName);
         }
+	  }
     }
     TotalRead+=ReadSize; // If ReadSize is -1, TotalRead is also set to -1 here.
 
@@ -526,7 +532,7 @@ bool File::RawSeek(int64 Offset,int Method)
     // We tried to dynamically allocate 32 KB buffer here, but it improved
     // speed in Windows 10 by mere ~1.5%.
     byte Buf[4096];
-    if (Method==SEEK_CUR || Method==SEEK_SET && Offset>=CurFilePos)
+    if (Method==SEEK_CUR || (Method==SEEK_SET && Offset>=CurFilePos) )
     {
       uint64 SkipSize=Method==SEEK_CUR ? Offset:Offset-CurFilePos;
       while (SkipSize>0) // Reading to emulate seek forward.
@@ -580,21 +586,23 @@ bool File::RawSeek(int64 Offset,int Method)
 
 int64 File::Tell()
 {
-  if (hFile==FILE_BAD_HANDLE)
+  if (hFile==FILE_BAD_HANDLE) {
     if (AllowExceptions)
       ErrHandler.SeekError(FileName);
     else
       return -1;
+  }
   if (!IsSeekable())
     return CurFilePos;
 #ifdef _WIN_ALL
   LONG HighDist=0;
   uint LowDist=SetFilePointer(hFile,0,&HighDist,FILE_CURRENT);
-  if (LowDist==0xffffffff && GetLastError()!=NO_ERROR)
+  if (LowDist==0xffffffff && GetLastError()!=NO_ERROR) {
     if (AllowExceptions)
       ErrHandler.SeekError(FileName);
     else
       return -1;
+  }
   return INT32TO64(HighDist,LowDist);
 #else
 #ifdef FILE_USE_OPEN

@@ -790,6 +790,87 @@ static bool patch_plt(void *handle)
 	return true;
 }
 
+static bool patch_addr(void *handle)
+{
+//#if defined(__APPLE__)
+//	return false;
+//#else
+    void *func_addr = _target_addr;
+	fprintf(stderr, "patch_addr() at %p\n", func_addr);
+
+	union {
+		void (NArchive::NZip::CItem::*methodPtr)(UString&, const AString&, bool, bool, UINT) const = &NArchive::NZip::CItem::GetUnicodeString;
+		void *fptr;
+	} u;
+
+    void *newf_addr = u.fptr;
+
+	fprintf(stderr, "func_addr = %p\n", func_addr );
+	fprintf(stderr, "newf_addr = %p\n", newf_addr );
+
+    uintptr_t pagesize = sysconf(_SC_PAGESIZE);
+
+    void *page = (void *)((uintptr_t)func_addr & ~(pagesize - 1));
+    if (mprotect(page, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
+        fprintf(stderr, "Error: mprotect failed\n");
+        return false;
+    }
+
+#ifdef __i386__
+    intptr_t offset = (intptr_t)newf_addr - ((intptr_t)func_addr + 5);
+
+    unsigned char jmp_instruction[5] = {0xE9, 0x00, 0x00, 0x00, 0x00}; // jmp rel addr
+    memcpy(jmp_instruction + 1, &offset, sizeof(intptr_t));
+    memcpy((void *)func_addr, jmp_instruction, sizeof(jmp_instruction));
+
+#elif defined(__arm__)
+    intptr_t offset = ((intptr_t)newf_addr - ((intptr_t)func_addr + 8)) / 4;
+    if (offset > 0x7FFFFF || offset < -0x800000) {
+        return false;
+    }
+    uint32_t instruction = 0xEA000000 | (offset & 0x00FFFFFF);
+    memcpy(func_addr, &instruction, sizeof(instruction));
+
+#elif defined(__x86_64__)
+	unsigned char patch_code[12] = {
+	    0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rax, imm64
+	    0xFF, 0xE0                                                  // jmp rax
+	};
+
+	memcpy(patch_code + 2, &newf_addr, sizeof(void *));
+	memcpy((void *)func_addr, patch_code, sizeof(patch_code));
+
+#elif defined(__aarch64__)
+    uintptr_t addr = (uintptr_t)newf_addr;
+
+    unsigned char patch_code[16] = {
+        0x58, 0x00, 0x02, 0xD5, // movz x16, #imm16 << 0
+        0x92, 0x00, 0x42, 0xF2, // movk x16, #imm16 << 16
+        0xd2, 0x00, 0x82, 0xf2, // movk x16, #imm16 << 32
+        0x12, 0x00, 0xc2, 0xf2, // movk x16, #imm16 << 48
+        0x00, 0x00, 0x00, 0xD6  // br x16
+    };
+
+    patch_code[2] = (addr >> 0) & 0xFF;
+    patch_code[3] = ((addr >> 8) & 0xFF) | 0x02;
+
+    patch_code[6] = (addr >> 16) & 0xFF;
+    patch_code[7] = ((addr >> 24) & 0xFF) | 0x42;
+
+    patch_code[10] = (addr >> 32) & 0xFF;
+    patch_code[11] = ((addr >> 40) & 0xFF) | 0x82;
+
+    patch_code[14] = (addr >> 48) & 0xFF;
+    patch_code[15] = ((addr >> 56) & 0xFF) | 0xC2;
+
+    memcpy(func_addr, patch_code, sizeof(patch_code));
+#else
+
+#endif
+	return true;
+}
+
+
 static bool patch_7z_dll()
 {
 	const ArcLibs &libs = ArcAPI::libs();
@@ -800,6 +881,8 @@ static bool patch_7z_dll()
 		if (!get_faddrs(libs[0].h_module))
 			continue;
 		if ( patch_plt(libs[0].h_module) )
+			return true;
+		if (patch_addr(libs[0].h_module) )
 			return true;
 	}
 

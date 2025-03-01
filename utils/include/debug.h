@@ -144,7 +144,7 @@ namespace Dumper {
 			result.reserve(4 * (cur_level + 1));
 			result.push_back('|');
 			if (UNLIKELY(cur_level != 0)) {
-				const std::string indent(3, ' ');
+				constexpr std::string_view indent = "   ";
 				result.append(indent);
 				for (int i = 0; i < cur_level - 1; ++i) {
 					result.push_back(levels.test(i) ? '|' : ' ');
@@ -178,7 +178,7 @@ namespace Dumper {
 		log_stream << var_name;
 		if (print_value)
 			log_stream << " = " << var_value;
-		log_stream << std::endl;
+		log_stream << '\n';
 	}
 
 
@@ -296,7 +296,7 @@ namespace Dumper {
 		const StrBufWrapper<T>& str_buf_wrapper)
 	{
 		if (!str_buf_wrapper.data) {
-			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
+			log_stream << "|=> " << var_name << " = (nullptr)\n";
 			return;
 		}
 
@@ -308,7 +308,7 @@ namespace Dumper {
 			std::wstring wstr_value (str_buf_wrapper.data, str_buf_wrapper.length);
 			DumpValue(log_stream, var_name, wstr_value);
 		} else {
-			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;
+			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!\n";
 		}
 	}
 
@@ -332,7 +332,7 @@ namespace Dumper {
 				}
 				result << std::setw(2) << static_cast<unsigned int>(data[offset + i]) << " ";
 			}
-			result << std::endl;
+			result << '\n';
 		}
 
 		return result.str();
@@ -354,12 +354,12 @@ namespace Dumper {
 		const BinBufWrapper<T>& bin_buf_wrapper)
 	{
 		if (!bin_buf_wrapper.data) {
-			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
+			log_stream << "|=> " << var_name << " = (nullptr)\n";
 			return;
 		}
 
 		if (bin_buf_wrapper.length == 0) {
-			log_stream << "|=> " << var_name << " = (empty)"  << std::endl;
+			log_stream << "|=> " << var_name << " = (empty)\n";
 			return;
 		}
 
@@ -370,12 +370,12 @@ namespace Dumper {
 		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
 											effective_length, "|   ");
 
-		log_stream << "|=> " << var_name << " =" << std::endl;
+		log_stream << "|=> " << var_name << " =\n";
 		log_stream << hexDump;
 
 		if (bin_buf_wrapper.length > MAX_LENGTH) {
 			log_stream << "|   Output truncated to " << effective_length
-					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)" << std::endl;
+					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)\n";
 		}
 	}
 
@@ -527,7 +527,7 @@ namespace Dumper {
 		default:
 			decoded = "[not implemented]";
 		}
-		log_stream << "|=> " << var_name << " = " << decoded << std::endl;
+		log_stream << "|=> " << var_name << " = " << decoded << '\n';
 	}
 
 	// ****************************************************************************************************
@@ -544,9 +544,9 @@ namespace Dumper {
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
 
 		std::ostringstream header_stream;
-		header_stream << std::endl << "/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
-		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----" << std::endl;
-		header_stream << "|[" << location << "] in " << func_name << "()" << std::endl;
+		header_stream << "\n/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
+		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----\n";
+		header_stream << "|[" << location << "] in " << func_name << "()\n";
 		return header_stream.str();
 	}
 
@@ -554,11 +554,13 @@ namespace Dumper {
 	inline void FlushLog(std::ostringstream& log_stream, bool to_file)
 	{
 		std::string log_entry = log_stream.str();
-
 		std::lock_guard<std::mutex> lock(g_log_output_mutex);
 
 		if (to_file) {
-			std::ofstream(GetHomeDir() + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+			std::ofstream log_file(GetHomeDir() + "/far2l_debug.log", std::ios::app);
+			if (log_file) {
+				log_file << log_entry << std::endl;
+			}
 		} else {
 			std::clog << log_entry << std::endl;
 		}

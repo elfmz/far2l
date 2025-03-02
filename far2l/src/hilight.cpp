@@ -769,7 +769,8 @@ void HighlightFiles::HiEdit(int MenuPos)
 						const wchar_t *Mask;
 						HiData.getItem(RealSelectPos)->GetMask(&Mask);
 
-						if (Message(MSG_WARNING, 2, Msg::HighlightTitle, Msg::HighlightAskDel, Mask,
+						if (Message(MSG_WARNING, 2, Msg::HighlightTitle, Msg::HighlightAskDel,
+									HiData.getItem(RealSelectPos)->GetTitle(), Mask,
 									Msg::Delete, Msg::Cancel))
 							break;
 
@@ -789,35 +790,35 @@ void HighlightFiles::HiEdit(int MenuPos)
 						FileFilterParams *ffp = HiData.getItem(RealSelectPos);
 						FARString fs;
 
-						ExMessager em(L"Files highlighting expand Mask Groups");
-						fs.Format(L"== Highlighting Name: \"%ls\"", ffp->GetTitle());
+						ExMessager em(Msg::HighlightViewTitle);
+						fs = Msg::HighlightViewName;
+						fs.AppendFormat(L" \"%ls\"", ffp->GetTitle());
 						em.AddDup(fs);
 						{
 							HighlightDataColor hl;
 							ffp->GetColors(&hl);
-							fs.Format(L"== Highlighting Marker: \"%ls\"", hl.Mark);
+							fs = Msg::HighlightViewMarker;
+							fs.AppendFormat(L" \"%ls\"", hl.Mark);
 							em.AddDup(fs);
 						}
 						if (!ffp->GetMask(&fmask) )
-							em.AddDup(L"== Highlighting has empty masks");
+							em.AddDup(Msg::HighlightViewMasksEmpty);
 						else {
 							fs = L"== " + Msg::FileFilterMatchMaskCase;
 							fs.AppendFormat(L": %s", ffp->GetMaskIgnoreCase() ? "OFF" : "ON");
 							em.AddDup(fs);
 							em.AddDup(L"");
-							em.AddDup(L"== Highlighting masks before expand:");
+							em.AddDup(Msg::HighlightViewMasksBeforeExpand);
 							em.AddDupWrap(fmask);
 
 							// expand all groups
-							bool b_first = true;
 							int ngroups = 0;
-							size_t pos_open, pos_close;
+							size_t pos_open, pos_close = 0;
 							FARString fs_group_name, fs_masks_from_group;
 							fs = fmask;
 							for( ;; ) {
-								if( !fs.Pos(pos_open, '<', b_first ? 0 : pos_close+1) )
+								if( !fs.Pos(pos_open, '<', pos_close) )
 									break;
-								b_first = false;
 								if( !fs.Pos(pos_close, '>', pos_open+1) )
 									break;
 								if( pos_close-pos_open < 2 )
@@ -826,14 +827,15 @@ void HighlightFiles::HiEdit(int MenuPos)
 								if( !GetMaskGroup(fs_group_name, fs_masks_from_group) )
 									continue;
 								fs.Replace(pos_open, pos_close-pos_open+1, fs_masks_from_group);
-								pos_close = pos_open-1; // may be need recursive expand
+								pos_close = pos_open; // may be need recursive expand
 								ngroups++;
 							}
 							em.AddDup(L"");
-							fs_group_name.Format(L"== Correctly expanded Groups inside Highlighting masks: %d", ngroups);
+							fs_group_name = Msg::HighlightViewMasksCountExpandedGroups;
+							fs_group_name.AppendFormat(L" %d", ngroups);
 							em.AddDup(fs_group_name);
 							em.AddDup(L"");
-							em.AddDup(L"== Highlighting masks after expand all groups:");
+							em.AddDup(Msg::HighlightViewMasksAfterExpand);
 							em.AddDupWrap(fs);
 						}
 						em.AddDup(Msg::Ok);

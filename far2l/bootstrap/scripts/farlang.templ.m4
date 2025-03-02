@@ -13047,6 +13047,83 @@ HighlightAskRestore
 "Ви хочете відновити забарвлення файлів за замовчуванням?"
 "Вы жадаеце узнавіць прадвызначаную афарбоўку файлаў?"
 
+HighlightViewTitle
+"Раскраска файлов - раскрытие групп масок"
+"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+
+HighlightViewName
+"== Раскраска файлов - Имя:"
+"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+
+HighlightViewMarker
+"== Раскраска файлов - Маркер:"
+"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+
+HighlightViewMasksEmpty
+"== Раскраска файлов - строка масок пуста"
+"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+
+HighlightViewMasksBeforeExpand
+"== Раскраска файлов - маски до раскрытия групп масок:"
+"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+
+HighlightViewMasksCountExpandedGroups
+"== Число корректно раскрытых групп внутри масок:"
+"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+
+HighlightViewMasksAfterExpand
+"== Раскраска файлов - маски после раскрытия всех групп масок:"
+"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+
 HighlightEditTitle
 l:
 "Редактирование раскраски файлов"

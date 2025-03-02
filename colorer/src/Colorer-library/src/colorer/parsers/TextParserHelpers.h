@@ -1,5 +1,5 @@
-#ifndef _COLORER_TEXTPARSERPELPERS_H_
-#define _COLORER_TEXTPARSERPELPERS_H_
+#ifndef COLORER_TEXTPARSERPELPERS_H
+#define COLORER_TEXTPARSERPELPERS_H
 
 #include "colorer/parsers/HrcLibraryImpl.h"
 
@@ -92,4 +92,4 @@ class ParseCache
   ParseCache* searchLine(int ln, ParseCache** cache);
 };
 
-#endif
+#endif // COLORER_TEXTPARSERPELPERS_H

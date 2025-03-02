@@ -1,5 +1,5 @@
-#ifndef _COLORER_TEXTPARSERIMPL_H_
-#define _COLORER_TEXTPARSERIMPL_H_
+#ifndef COLORER_TEXTPARSERIMPL_H
+#define COLORER_TEXTPARSERIMPL_H
 
 #include "colorer/TextParser.h"
 #include "colorer/parsers/TextParserHelpers.h"
@@ -71,4 +71,4 @@ class TextParser::Impl
   bool colorize(CRegExp* root_end_re, bool lowContentPriority);
 };
 
-#endif
+#endif // COLORER_TEXTPARSERIMPL_H

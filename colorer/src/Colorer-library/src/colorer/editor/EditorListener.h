@@ -1,5 +1,5 @@
-#ifndef _COLORER_EDITORLISTENER_H_
-#define _COLORER_EDITORLISTENER_H_
+#ifndef COLORER_EDITORLISTENER_H
+#define COLORER_EDITORLISTENER_H
 
 #include <memory>
 /**
@@ -23,4 +23,4 @@ class EditorListener
   EditorListener& operator=(EditorListener&&) = delete;
 };
 
-#endif
+#endif  // COLORER_EDITORLISTENER_H

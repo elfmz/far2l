@@ -1,5 +1,5 @@
-#ifndef _COLORER_STREAMWRITER_H_
-#define _COLORER_STREAMWRITER_H_
+#ifndef COLORER_STREAMWRITER_H
+#define COLORER_STREAMWRITER_H
 
 #include "colorer/io/Writer.h"
 #include <cstdio>
@@ -29,4 +29,4 @@ class StreamWriter : public Writer
   bool useBOM = false;
 };
 
-#endif
+#endif // COLORER_STREAMWRITER_H

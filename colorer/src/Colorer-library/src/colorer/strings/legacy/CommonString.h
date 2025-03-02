@@ -3,11 +3,11 @@
 
 /// default unicode char definition
 
-typedef char16_t UChar;
-typedef wchar_t wchar;
-typedef char16_t w2char;
-typedef char32_t w4char;
-typedef unsigned char byte;
+using UChar = char16_t;
+using wchar = wchar_t;
+using w2char = char16_t;
+using w4char = char32_t;
+using byte = unsigned char;
 
 constexpr UChar BAD_WCHAR = 0xFFFF;
 

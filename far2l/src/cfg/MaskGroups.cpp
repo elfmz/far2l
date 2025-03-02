@@ -40,12 +40,13 @@ static void ApplyDefaultMaskGroups()
 {
 	static const std::pair<const wchar_t*, const wchar_t*> Sets[]
 	{
-		{ L"arc",    L"*.rar,*.zip,*.[zj],*.[bxg7]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,"
-				     L"*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,"
+		{ L"arc",    L"*.rar,*.zip,*.[zj],*.[7bglx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,"
+				     L"*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.tbz2,*.zoo,*.zst,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,"
 				     L"*.x2,*.rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz" },
 		{ L"temp",   L"*.cache,*.temp,*.tmp,*.bak,*.old,*.backup,*.back,temp,temp.*,temporary*" },
 		{ L"tmp",    L"<temp>" },
-		{ L"exec",   L"*.sh,*.pl,*.cmd,*.exe,*.bat,*.com,*.elf,*.run,*.AppImage,*.apk,*.rb" },
+		{ L"exec",   L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com,*.elf,*.run,*.AppImage,*.apk,*.rb" },
+		{ L"shared", L"*.dll,*.so,*.dll.*,*.so.*,*.obj,*.o,*.a,*.lib,*.sys,*.pyo,*.vim" },
 		{ L"sound",  L"*.aif,*.cda,*.mid,*.midi,*.mp3,*.mpa,*.ogg,*.wma,*.flac,*.wav,*.ape,*.wv,*.voc,*.669,*.digi,*.amf,*.ams,*.dbm,*.dmf,*.dsm,*.gdm,"
 				     L"*.imf,*.it,*.itg,*.itp,*.j2b,*.mdl,*.med,*.mo3,*.mod,*.mt2,*.mtm,*.okt,*.plm,*.psm,*.ptm,*.s3m,*.sfx,*.stm,*.stp,*.uax,*.ult,*.xm"},
 		{ L"snd",    L"<sound>" },

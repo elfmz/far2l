@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <unordered_set>
 #include "color.hpp"
+#include "MaskGroups.hpp"
 
 struct HighlightStrings
 {
@@ -775,6 +776,70 @@ void HighlightFiles::HiEdit(int MenuPos)
 						HiData.deleteItem(RealSelectPos);
 						(*Count)--;
 						NeedUpdate = TRUE;
+					}
+
+					break;
+				}
+				case KEY_F3: { // show for current item file masks after expand all groups
+					int *Count = nullptr;
+					int RealSelectPos = MenuPosToRealPos(SelectPos, &Count);
+
+					if (Count && RealSelectPos < (int)HiData.getCount()) {
+						const wchar_t *fmask;
+						FileFilterParams *ffp = HiData.getItem(RealSelectPos);
+						FARString fs;
+
+						ExMessager em(L"Files highlighting expand Mask Groups");
+						fs.Format(L"== Highlighting Name: \"%ls\"", ffp->GetTitle());
+						em.AddDup(fs);
+						{
+							HighlightDataColor hl;
+							ffp->GetColors(&hl);
+							fs.Format(L"== Highlighting Marker: \"%ls\"", hl.Mark);
+							em.AddDup(fs);
+						}
+						if (!ffp->GetMask(&fmask) )
+							em.AddDup(L"== Highlighting has empty masks");
+						else {
+							fs = L"== " + Msg::FileFilterMatchMaskCase;
+							fs.AppendFormat(L": %s", ffp->GetMaskIgnoreCase() ? "OFF" : "ON");
+							em.AddDup(fs);
+							em.AddDup(L"");
+							em.AddDup(L"== Highlighting masks before expand:");
+							em.AddDupWrap(fmask);
+
+							// expand all groups
+							bool b_first = true;
+							int ngroups = 0;
+							size_t pos_open, pos_close;
+							FARString fs_group_name, fs_masks_from_group;
+							fs = fmask;
+							for( ;; ) {
+								if( !fs.Pos(pos_open, '<', b_first ? 0 : pos_close+1) )
+									break;
+								b_first = false;
+								if( !fs.Pos(pos_close, '>', pos_open+1) )
+									break;
+								if( pos_close-pos_open < 2 )
+									continue;
+								fs_group_name = fs.SubStr(pos_open+1, pos_close-pos_open-1);
+								if( !GetMaskGroup(fs_group_name, fs_masks_from_group) )
+									continue;
+								fs.Replace(pos_open, pos_close-pos_open+1, fs_masks_from_group);
+								pos_close = pos_open-1; // may be need recursive expand
+								ngroups++;
+							}
+							em.AddDup(L"");
+							fs_group_name.Format(L"== Correctly expanded Groups inside Highlighting masks: %d", ngroups);
+							em.AddDup(fs_group_name);
+							em.AddDup(L"");
+							em.AddDup(L"== Highlighting masks after expand all groups:");
+							em.AddDupWrap(fs);
+						}
+						em.AddDup(Msg::Ok);
+						em.AddDup(Msg::MaskGroupTitle);
+						if( em.Show(MSG_LEFTALIGN, 2) == 1)
+							MaskGroupsSettings();
 					}
 
 					break;

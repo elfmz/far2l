@@ -12971,15 +12971,15 @@ l:
 "Афарбоўка файлаў"
 
 HighlightBottom
-"+ - Пробел Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Space Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Mezera Ins Del F4 F5 Ctrl+Nahoru/Dolů Ctrl+M"
-"+ - Leer Einf Entf F4 F5 Strg+Up/Down Strg+R Strg+M"
-"+ - Szóköz Ins Del F4 F5 Ctrl+Fel/Le Ctrl+R Ctrl+M"
-"+ - Spacja Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Space Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Пробіл Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Space Ins Del F4 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Пробел Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Space Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Mezera Ins Del Enter/F4 F3 F5 Ctrl+Nahoru/Dolů Ctrl+M"
+"+ - Leer Einf Entf Enter/F4 F3 F5 Strg+Up/Down Strg+R Strg+M"
+"+ - Szóköz Ins Del Enter/F4 F3 F5 Ctrl+Fel/Le Ctrl+R Ctrl+M"
+"+ - Spacja Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Space Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Пробіл Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Прабел Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
 
 HighlightUpperSortGroup
 "Верхняя группа сортировки"

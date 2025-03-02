@@ -3370,6 +3370,8 @@ combinations are available:
 
   #Enter# or #F4#  - ~Edit~@HighlightEdit@ the current highlighting group
 
+  #F3#           - Show for current item file masks after expand all masks groups
+
   #Ctrl-R#       - Restore the default file highlighting groups
 
   #Ctrl-Up#      - Move a group up

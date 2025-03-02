@@ -66,17 +66,17 @@ namespace Dumper {
 		std::array<std::string, 256> table{};
 		char buf[8];
 		for (size_t i = 0; i < 256; ++i) {
-			auto c = static_cast<unsigned char>(i);
-			if (c >= 0x20) {
-				switch (c) {
+			auto character_code = static_cast<unsigned char>(i);
+			if (character_code >= 0x20) {
+				switch (character_code) {
 				case '"': table[i] = "\\\""; break;
 				case '\\': table[i] = "\\\\"; break;
 				default:
-					table[i] = std::string(1, c);
+					table[i] = std::string(1, character_code);
 					break;
 				}
 			} else {
-				switch (c) {
+				switch (character_code) {
 				case '\t': table[i] = "\\t"; break;
 				case '\r': table[i] = "\\r"; break;
 				case '\n': table[i] = "\\n"; break;
@@ -86,7 +86,7 @@ namespace Dumper {
 				case '\f': table[i] = "\\f"; break;
 				case '\x1B': table[i] = "\\e"; break;
 				default:
-					std::snprintf(buf, sizeof(buf), "\\x{%02x}", c);
+					std::snprintf(buf, sizeof(buf), "\\x{%02x}", character_code);
 					table[i] = buf;
 					break;
 				}
@@ -122,7 +122,8 @@ namespace Dumper {
 	}
 
 
-	inline std::size_t GetNiceThreadId() noexcept {
+	inline std::size_t GetNiceThreadId() noexcept
+	{
 		static thread_local std::size_t s_nice_thread_id = 0;
 		if (UNLIKELY(!s_nice_thread_id)) {
 			s_nice_thread_id = g_thread_counter.fetch_add(1, std::memory_order_relaxed) + 1;
@@ -151,13 +152,15 @@ namespace Dumper {
 
 	constexpr std::size_t MAX_INDENT_LEVEL = 32;
 
-	struct IndentInfo {
+	struct IndentInfo
+	{
 		std::bitset<MAX_INDENT_LEVEL> levels;
 		int cur_level;
 
 		IndentInfo() : levels(), cur_level(0) {}
 
-		std::string MakeIndent() const {
+		std::string MakeIndent() const
+		{
 			std::string result;
 			result.reserve(4 * (cur_level + 1));
 			result.push_back('|');
@@ -174,7 +177,8 @@ namespace Dumper {
 			return result;
 		}
 
-		IndentInfo CreateChild(bool current_branch_has_next_elements) const {
+		IndentInfo CreateChild(bool current_branch_has_next_elements) const
+		{
 			auto child = *this;
 			if (cur_level < static_cast<int>(MAX_INDENT_LEVEL)) {
 				child.levels.set(cur_level, current_branch_has_next_elements);
@@ -300,7 +304,8 @@ namespace Dumper {
 	// ****************************************************************************************************
 
 	template <typename T>
-	struct StrBufWrapper {
+	struct StrBufWrapper
+	{
 		StrBufWrapper(T *data, size_t length) : data(data), length(length) {}
 		T *data;
 		size_t length;
@@ -358,7 +363,8 @@ namespace Dumper {
 
 
 	template <typename T, typename = std::enable_if_t<std::is_pointer_v<T>>>
-	struct BinBufWrapper {
+	struct BinBufWrapper
+	{
 		BinBufWrapper(T data, size_t length) : data(data), length(length) {}
 		const T data;
 		size_t length;
@@ -403,7 +409,8 @@ namespace Dumper {
 
 	template <typename ContainerT, typename = decltype(std::begin(std::declval<ContainerT>())),
 		 typename = decltype(std::end(std::declval<ContainerT>()))>
-	struct ContainerWrapper {
+	struct ContainerWrapper
+	{
 	  ContainerWrapper(const ContainerT& data, size_t max_elements)
 			: data(data), max_elements(max_elements) {}
 	  const ContainerT& data;
@@ -431,7 +438,8 @@ namespace Dumper {
 	// ****************************************************************************************************
 
 	template <typename T, std::size_t N>
-	struct ContainerWrapper<T (&)[N]> {
+	struct ContainerWrapper<T (&)[N]>
+	{
 	  ContainerWrapper(const T (&data)[N], size_t max_elements)
 		: data(data), max_elements(max_elements) {}
 	  const T (&data)[N];
@@ -461,13 +469,15 @@ namespace Dumper {
 	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...
 	// ****************************************************************************************************
 
-	enum class FlagsAs {
+	enum class FlagsAs
+	{
 		FILE_ATTRIBUTES,
 		UNIX_MODE
 	};
 
 
-	struct FlagsWrapper {
+	struct FlagsWrapper
+	{
 		unsigned long int value;
 		FlagsAs type;
 		FlagsWrapper(unsigned long int v, FlagsAs t)
@@ -513,7 +523,8 @@ namespace Dumper {
 	}
 
 
-	inline std::string DecodeUnixMode(unsigned long int flags) {
+	inline std::string DecodeUnixMode(unsigned long int flags)
+	{
 		std::ostringstream result;
 		result << std::oct << flags << " ("
 			<< ((flags & S_IRUSR) ? "r" : "-")
@@ -533,7 +544,8 @@ namespace Dumper {
 	}
 
 
-	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name, const FlagsWrapper& df) {
+	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name, const FlagsWrapper& df)
+	{
 		std::string decoded;
 		switch (df.type) {
 		case FlagsAs::FILE_ATTRIBUTES:
@@ -622,7 +634,7 @@ namespace Dumper {
 	}
 
 
-	inline bool TryParseVariableNames(const char *var_names_str, std::vector<std::string> &var_names, size_t var_values_count)
+	inline bool TryParseVariableNames(const char *var_names_str, std::vector<std::string> &var_names, size_t expected_count)
 	{
 		if (!var_names_str || std::strchr(var_names_str, '(') != nullptr) {
 			return false;
@@ -637,7 +649,7 @@ namespace Dumper {
 				var_names.emplace_back(name_token.substr(start, end - start + 1));
 		}
 
-		if (var_names.size() != var_values_count) {
+		if (var_names.size() != expected_count) {
 			return false;
 		}
 

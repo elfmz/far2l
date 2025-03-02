@@ -398,6 +398,9 @@ void FileList::ShowFileList(int Fast)
 
 	if (PanelMode == PLUGIN_PANEL)
 		CtrlObject->Cp()->RedrawKeyBar();
+
+	FirstMessageId = -1;
+	LastMessageId = -1;
 }
 
 DWORD64 FileList::GetShowColor(int Position, int ColorType)

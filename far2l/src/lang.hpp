@@ -36,6 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #define FARLANG_SANITIZE_PRINTF
 // #pragma GCC diagnostic warning "-Wconditionally-supported"
 
+extern int FirstMessageId;
+extern int LastMessageId;
+
 struct FarLangMsg
 {
 	FarLangMsgID _id;
@@ -49,9 +52,9 @@ struct FarLangMsg
 #endif
 
 	inline FarLangMsgID ID() const { return _id; }
-	inline const wchar_t *CPtr() const { return GetMsg(_id); }
+	inline const wchar_t *CPtr() const { UpdateLastMessageId(_id); return GetMsg(_id); }
 	inline const size_t Len() const { return GetMsgLen(_id); }
-	inline operator const wchar_t *() const { return GetMsg(_id); }
+	inline operator const wchar_t *() const { UpdateLastMessageId(_id); return GetMsg(_id); }
 
 	inline FarLangMsg operator+(int delta) const { return FarLangMsg{_id + delta}; }
 	inline FarLangMsg operator-(int delta) const { return FarLangMsg{_id - delta}; }
@@ -65,6 +68,7 @@ struct FarLangMsg
 private:
 	static const wchar_t *GetMsg(FarLangMsgID id);	// impl in cfg/language.cpp
 	static const size_t GetMsgLen(FarLangMsgID id);
+	void UpdateLastMessageId(int id) const;
 };
 
 namespace Msg
@@ -79,3 +83,8 @@ namespace Msg
 
 #undef DECLARE_FARLANGMSG
 };	// namespace Msg
+
+// Debug stuff
+extern const char* MsgIds[];
+const char* GetStringId(int id);
+// Debug stuff end

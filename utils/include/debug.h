@@ -253,19 +253,17 @@ namespace Dumper {
 			DumpValue(log_stream, var_name, wstr_value, indent_info);
 
 		} else if constexpr (std::is_convertible_v<T, std::string_view>) {
-			std::string str_value{ value };
-			std::string escaped = EscapeString(str_value);
-			LogVarWithIndentation(log_stream, var_name, escaped, indent_info);
+			LogVarWithIndentation(log_stream, var_name, EscapeString(value), indent_info);
 
 		} else if constexpr (is_container_v<T>) {
 			LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
 			std::size_t index = 0;
-			for(auto it = value.begin(); it != value.end(); ++index) {
-				bool is_last = (std::next(it) == value.end());
+			for (auto it = value.begin(); it != value.end(); ) {
+				auto curr = it++;
+				bool is_last = (it == value.end());
 				auto child_indent_info = indent_info.CreateChild(!is_last);
-				auto item_name = std::string(var_name) + "[" + std::to_string(index) + "]";
-				DumpValue(log_stream, item_name, *it, child_indent_info);
-				++it;
+				auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
+				DumpValue(log_stream, item_name, *curr, child_indent_info);
 			}
 
 		} else {

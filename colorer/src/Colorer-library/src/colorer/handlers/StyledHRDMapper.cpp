@@ -50,7 +50,7 @@ void StyledHRDMapper::loadRegionMappings(XmlInputSource& is)
       }
 
       auto rdef = std::make_unique<StyledRegion>(bfore, bback, fore, back, style);
-      regionDefines.emplace(name, std::move(rdef));
+      regionDefines.try_emplace(name, std::move(rdef));
     }
   }
 }
@@ -59,11 +59,11 @@ void StyledHRDMapper::saveRegionMappings(Writer* writer) const
 {
   writer->write(u"<?xml version=\"1.0\"?>\n");
 
-  for (const auto& regionDefine : regionDefines) {
-    const StyledRegion* rdef = StyledRegion::cast(regionDefine.second.get());
+  for (const auto& [key, value] : regionDefines) {
+    const StyledRegion* rdef = StyledRegion::cast(value.get());
     constexpr auto size_temporary = 256;
     char temporary[size_temporary];
-    writer->write(u"\t<define name='" + regionDefine.first + u"'");
+    writer->write(u"\t<define name='" + key + u"'");
     if (rdef->isForeSet) {
       snprintf(temporary, size_temporary, " fore=\"#%06x\"", rdef->fore);
       writer->write(temporary);
@@ -93,7 +93,7 @@ void StyledHRDMapper::setRegionDefine(const UnicodeString& region_name, const Re
 
   const auto rd_old_it = regionDefines.find(region_name);
   if (rd_old_it == regionDefines.end()) {
-    regionDefines.emplace(region_name, std::move(rd_new));
+    regionDefines.try_emplace(region_name, std::move(rd_new));
   }
   else {
     rd_old_it->second = std::move(rd_new);

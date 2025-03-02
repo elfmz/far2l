@@ -10,6 +10,7 @@ class Encodings
 
   static uUnicodeString toUnicodeString(char* data, int32_t len);
   static uUnicodeString fromUTF8(char* data, int32_t len);
+  static uUnicodeString fromUTF8(unsigned char* data);
   static int toUTF8Bytes(UChar, byte*);
 };
 

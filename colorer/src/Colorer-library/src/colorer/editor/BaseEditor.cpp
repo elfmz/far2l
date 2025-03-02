@@ -132,7 +132,7 @@ FileType* BaseEditor::chooseFileTypeCh(const UnicodeString* fileName, int choose
   UnicodeString textStart;
   int totalLength = 0;
   for (int i = 0; i < chooseStr; i++) {
-    UnicodeString* iLine = lineSource->getLine(i);
+    const UnicodeString* iLine = lineSource->getLine(i);
     if (iLine == nullptr) {
       break;
     }
@@ -164,10 +164,11 @@ FileType* BaseEditor::chooseFileType(const UnicodeString* fileName)
     currentFileType = parserFactory->getHrcLibrary().chooseFileType(fileName, nullptr);
   }
   else {
-    int chooseStr = CHOOSE_STR, chooseLen = CHOOSE_LEN;
+    int chooseStr = CHOOSE_STR;
+    int chooseLen = CHOOSE_LEN;
 
     UnicodeString ds_def = UnicodeString("default");
-    FileType* def = parserFactory->getHrcLibrary().getFileType(&ds_def);
+    const FileType* def = parserFactory->getHrcLibrary().getFileType(&ds_def);
     if (def) {
       chooseStr = def->getParamValueInt("firstlines", chooseStr);
       chooseLen = def->getParamValueInt("firstlinebytes", chooseLen);
@@ -360,7 +361,7 @@ void BaseEditor::lineCountEvent(int newLineCount)
   lineCount = newLineCount;
 }
 
-inline int BaseEditor::getLastVisibleLine()
+inline int BaseEditor::getLastVisibleLine() const
 {
   int r1 = (wStart + wSize);
   int r2 = lineCount;
@@ -369,7 +370,8 @@ inline int BaseEditor::getLastVisibleLine()
 
 void BaseEditor::validate(int lno, bool rebuildRegions)
 {
-  int parseFrom, parseTo;
+  int parseFrom;
+  int parseTo;
   bool layoutChanged = false;
   TextParser::TextParseMode tpmode = TextParser::TextParseMode::TPM_CACHE_READ;
 
@@ -420,8 +422,7 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
     }
     firstLine = newFirstLine;
     layoutChanged = true;
-    COLORER_LOG_DEBUG("[BaseEditor] newFirstLine=%, parseFrom=%, parseTo=%", firstLine, parseFrom,
-                  parseTo);
+    COLORER_LOG_DEBUG("[BaseEditor] newFirstLine=%, parseFrom=%, parseTo=%", firstLine, parseFrom, parseTo);
   }
 
   if (!layoutChanged) {
@@ -445,7 +446,7 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
   /* Runs parser */
   if (parseTo - parseFrom > 0) {
     COLORER_LOG_DEBUG("[BaseEditor] validate:parse:%-%, %", parseFrom, parseTo,
-                  tpmode == TextParser::TextParseMode::TPM_CACHE_READ ? "READ" : "UPDATE");
+                      tpmode == TextParser::TextParseMode::TPM_CACHE_READ ? "READ" : "UPDATE");
     int stopLine = textParser->parse(parseFrom, parseTo - parseFrom, tpmode);
 
     if (tpmode == TextParser::TextParseMode::TPM_CACHE_UPDATE) {
@@ -518,7 +519,7 @@ void BaseEditor::leaveScheme(size_t lno, UnicodeString* line, int sx, int ex, co
   }
 }
 
-bool BaseEditor::haveInvalidLine()
+bool BaseEditor::haveInvalidLine() const
 {
   return invalidLine < lineCount;
 }

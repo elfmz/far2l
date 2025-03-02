@@ -1,5 +1,5 @@
-#ifndef _COLORER_FILEINPUTSOURCE_H_
-#define _COLORER_FILEINPUTSOURCE_H_
+#ifndef COLORER_FILEINPUTSOURCE_H
+#define COLORER_FILEINPUTSOURCE_H
 
 #include "colorer/io/InputSource.h"
 
@@ -26,4 +26,4 @@ class FileInputSource : public colorer::InputSource
   int len = 0;
 };
 
-#endif
+#endif // COLORER_FILEINPUTSOURCE_H

@@ -53,7 +53,7 @@ class Outliner : public RegionHandler, public EditorListener
   /**
    * Total number of currently available outline items
    */
-  size_t itemCount();
+  size_t itemCount() const;
 
   void startParsing(size_t lno) override;
   void endParsing(size_t lno) override;
@@ -64,7 +64,7 @@ class Outliner : public RegionHandler, public EditorListener
   void modifyEvent(size_t topLine) override;
 
  protected:
-  bool isOutlined(const Region* region);
+  bool isOutlined(const Region* region) const;
 
   BaseEditor* baseEditor;
   const Region* searchRegion;

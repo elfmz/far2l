@@ -48,5 +48,36 @@
 
   <launchable type="desktop-id">far2l.desktop</launchable>
 
+  <screenshots>
+    <screenshot type="default">
+      <caption>far2l</caption>
+      <image type="source" width="1598" height="874">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>NetRocks plugin, site connection settings</caption>
+      <image type="source" width="1597" height="873">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l_NetRocks.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Editing file attributes for a symlink</caption>
+      <image type="source" width="1597" height="873">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l_attribs_symlink.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Editing file attributes for multiple files</caption>
+      <image type="source" width="1597" height="873">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l_attribs_several.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>far2l interface settings</caption>
+      <image type="source" width="1597" height="873">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l_interface_settings.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>far2l editor, code page selection</caption>
+      <image type="source" width="1598" height="872">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l_editor_codepages.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>far2l editor, syntaxes for code highlighting</caption>
+      <image type="source" width="1598" height="872">https://raw.githubusercontent.com/elfmz/far2l/master/far2l/DE/screenshots/far2l_editor_colorer.png</image>
+    </screenshot>
+  </screenshots>
+
   <releases/>
 </component>

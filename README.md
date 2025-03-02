@@ -22,6 +22,17 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * 7z ANSI-C Decoder
 * utf-cpp by ww898
 
+### Screenshots
+
+![far2l main UI][scr_far2l] | ![NetRocks][scr_netrocks]
+--------------------------- | -------------------------
+![Attributes][scr_attribs]  | ![Editor][scr_editor]
+
+[scr_far2l]: ./far2l/DE/screenshots/far2l.png
+[scr_netrocks]: ./far2l/DE/screenshots/far2l_NetRocks.png
+[scr_attribs]: ./far2l/DE/screenshots/far2l_attribs_several.png
+[scr_editor]: ./far2l/DE/screenshots/far2l_editor_colorer.png
+
 ### Jump To:
 * [Getting Started](#gstarted)
 * [Installing, Running](#inst_run)

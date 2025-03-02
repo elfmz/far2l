@@ -89,6 +89,7 @@ struct ExMessager : Messager
 	Messager &AddFormat(FarLangMsg fmt, ...);
 	Messager &AddFormat(const wchar_t *fmt, ...);
 	Messager &AddDup(const wchar_t *v);
+	Messager &AddDupWrap(const wchar_t *v);
 	Messager &AddMultiline(const wchar_t *v, const wchar_t *divs = L"\n");
 	inline Messager &AddMultiline(FarLangMsg v, const wchar_t *divs = L"\n")
 	{ return AddMultiline(v.CPtr(), divs); };

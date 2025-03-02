@@ -2973,6 +2973,8 @@ műveleteket hajthatunk végre a csoportok listáján, a következő billentyűk
 
   #Enter# vagy #F4#  - Az aktuális kiemelési csoport ~szerkesztése~@HighlightEdit@
 
+  #F3#             - Show for current item file masks after expand all masks groups
+
   #Ctrl-R#         - ^<wrap>Visszaállítja az alapértelmezett kiemelési
 csoportokat
 

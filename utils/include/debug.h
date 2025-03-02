@@ -57,38 +57,56 @@ namespace Dumper {
 
 	inline std::mutex g_log_output_mutex;
 	inline std::atomic<std::size_t> g_thread_counter {0};
+	inline std::once_flag g_escape_table_flag;
+	inline std::array<std::string, 256> g_escape_table;
 
-	inline std::string EscapeString(std::string_view input)
+
+	inline std::array<std::string, 256> BuildEscapeTable()
 	{
-		std::ostringstream output;
-		output << std::hex << std::setfill('0') << std::right;
-
-		for (unsigned char c : input) {
-			if (LIKELY (c >= '\x20')) {
+		std::array<std::string, 256> table{};
+		char buf[8];
+		for (size_t i = 0; i < 256; ++i) {
+			auto c = static_cast<unsigned char>(i);
+			if (c >= 0x20) {
 				switch (c) {
-				case '"':  output << "\\\""; break;
-				case '\\': output << "\\\\"; break;
+				case '"': table[i] = "\\\""; break;
+				case '\\': table[i] = "\\\\"; break;
 				default:
-					output << c;
+					table[i] = std::string(1, c);
 					break;
 				}
 			} else {
 				switch (c) {
-				case '\t': output << "\\t"; break;
-				case '\r': output << "\\r"; break;
-				case '\n': output << "\\n"; break;
-				case '\a': output << "\\a"; break;
-				case '\b': output << "\\b"; break;
-				case '\v': output << "\\v"; break;
-				case '\f': output << "\\f"; break;
-				case '\e': output << "\\e"; break;
+				case '\t': table[i] = "\\t"; break;
+				case '\r': table[i] = "\\r"; break;
+				case '\n': table[i] = "\\n"; break;
+				case '\a': table[i] = "\\a"; break;
+				case '\b': table[i] = "\\b"; break;
+				case '\v': table[i] = "\\v"; break;
+				case '\f': table[i] = "\\f"; break;
+				case '\x1B': table[i] = "\\e"; break;
 				default:
-					output << "\\x{" << std::setw(2) << static_cast<unsigned int>(c) << "}";
+					std::snprintf(buf, sizeof(buf), "\\x{%02x}", c);
+					table[i] = buf;
 					break;
 				}
 			}
 		}
-		return output.str();
+		return table;
+	}
+
+
+	inline std::string EscapeString(std::string_view input)
+	{
+		std::call_once(g_escape_table_flag, []{
+			g_escape_table = BuildEscapeTable();
+		});
+
+		std::string output;
+		for (unsigned char c : input) {
+			output.append(g_escape_table[c]);
+		}
+		return output;
 	}
 
 

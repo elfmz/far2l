@@ -24,7 +24,7 @@ void LineRegionsSupport::resize(size_t lineCount_)
   this->lineCount = lineCount_;
 }
 
-size_t LineRegionsSupport::size()
+size_t LineRegionsSupport::size() const
 {
   return lineCount;
 }
@@ -60,7 +60,7 @@ void LineRegionsSupport::setFirstLine(size_t first)
   firstLineNo = first;
 }
 
-size_t LineRegionsSupport::getFirstLine()
+size_t LineRegionsSupport::getFirstLine() const
 {
   return firstLineNo;
 }

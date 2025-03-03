@@ -5,7 +5,7 @@
 
 ParseCache::~ParseCache()
 {
-  //COLORER_LOG_DEEPTRACE("[TPCache] ~ParseCache():%,%-%", *scheme->getName(), sline, eline);
+  // COLORER_LOG_DEEPTRACE("[TPCache] ~ParseCache():%,%-%", *scheme->getName(), sline, eline);
   delete backLine;
   delete children;
   prev = nullptr;
@@ -29,7 +29,9 @@ ParseCache::~ParseCache()
 
 ParseCache* ParseCache::searchLine(int ln, ParseCache** cache)
 {
-  ParseCache *r1 = nullptr, *r2 = nullptr, *tmp = this;
+  ParseCache* r1 = nullptr;
+  ParseCache* r2 = nullptr;
+  ParseCache* tmp = this;
   *cache = nullptr;
   while (tmp) {
     COLORER_LOG_DEEPTRACE("[TPCache] searchLine() tmp:%,%-%", *tmp->scheme->getName(), tmp->sline, tmp->eline);

@@ -25,7 +25,7 @@ class Exception : public std::exception
   [[nodiscard]]
   const char* what() const noexcept override;
 
- protected:
+ private:
   std::string what_str;
 };
 

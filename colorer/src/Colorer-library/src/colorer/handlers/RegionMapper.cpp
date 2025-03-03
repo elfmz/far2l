@@ -3,8 +3,8 @@
 std::vector<const RegionDefine*> RegionMapper::enumerateRegionDefines() const
 {
   std::vector<const RegionDefine*> result(regionDefines.size());
-  for (const auto& regionDefine : regionDefines) {
-    result.push_back(regionDefine.second.get());
+  for (const auto& [key, value] : regionDefines) {
+    result.push_back(value.get());
   }
   return result;
 }

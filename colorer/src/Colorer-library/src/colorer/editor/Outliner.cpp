@@ -24,17 +24,17 @@ OutlineItem* Outliner::getItem(size_t idx)
   return outline.at(idx);
 }
 
-size_t Outliner::itemCount()
+size_t Outliner::itemCount() const
 {
   return outline.size();
 }
 
 size_t Outliner::manageTree(std::vector<int>& treeStack, int newLevel)
 {
-  while (treeStack.size() > 0 && newLevel < treeStack.back()) {
+  while (!treeStack.empty() && newLevel < treeStack.back()) {
     treeStack.pop_back();
   }
-  if (treeStack.size() == 0 || newLevel > treeStack.back()) {
+  if (treeStack.empty() || newLevel > treeStack.back()) {
     treeStack.push_back(newLevel);
     return treeStack.size() - 1;
   }
@@ -44,7 +44,7 @@ size_t Outliner::manageTree(std::vector<int>& treeStack, int newLevel)
   return 0;
 }
 
-bool Outliner::isOutlined(const Region* region)
+bool Outliner::isOutlined(const Region* region) const
 {
   return region->hasParent(searchRegion);
 }
@@ -92,7 +92,8 @@ void Outliner::addRegion(size_t lno, UnicodeString* line, int sx, int ex, const 
 
   if (lineIsEmpty) {
     outline.push_back(new OutlineItem(lno, sx, curLevel, &itemLabel, region));
-  } else {
+  }
+  else {
     OutlineItem* thisItem = outline.back();
     if (thisItem->token != nullptr && thisItem->lno == lno) {
       thisItem->token->append(itemLabel);
@@ -101,12 +102,14 @@ void Outliner::addRegion(size_t lno, UnicodeString* line, int sx, int ex, const 
   lineIsEmpty = false;
 }
 
-void Outliner::enterScheme(size_t /*lno*/, UnicodeString* /*line*/, int /*sx*/, int /*ex*/, const Region* /*region*/, const Scheme* /*scheme*/)
+void Outliner::enterScheme(size_t /*lno*/, UnicodeString* /*line*/, int /*sx*/, int /*ex*/, const Region* /*region*/,
+                           const Scheme* /*scheme*/)
 {
   curLevel++;
 }
 
-void Outliner::leaveScheme(size_t /*lno*/, UnicodeString* /*line*/, int /*sx*/, int /*ex*/, const Region* /*region*/, const Scheme* /*scheme*/)
+void Outliner::leaveScheme(size_t /*lno*/, UnicodeString* /*line*/, int /*sx*/, int /*ex*/, const Region* /*region*/,
+                           const Scheme* /*scheme*/)
 {
   curLevel--;
 }

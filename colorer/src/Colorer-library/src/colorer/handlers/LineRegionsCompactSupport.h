@@ -1,5 +1,5 @@
-#ifndef _COLORER_LINEREGIONSCOMPACTSUPPORT_H_
-#define _COLORER_LINEREGIONSCOMPACTSUPPORT_H_
+#ifndef COLORER_LINEREGIONSCOMPACTSUPPORT_H
+#define COLORER_LINEREGIONSCOMPACTSUPPORT_H
 
 #include "colorer/handlers/LineRegionsSupport.h"
 
@@ -23,4 +23,4 @@ class LineRegionsCompactSupport : public LineRegionsSupport
   void addLineRegion(size_t lno, LineRegion* ladd) override;
 };
 
-#endif
+#endif // COLORER_LINEREGIONSCOMPACTSUPPORT_H

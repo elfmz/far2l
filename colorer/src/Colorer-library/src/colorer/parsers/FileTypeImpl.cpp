@@ -51,8 +51,8 @@ std::vector<UnicodeString> FileType::Impl::enumParams() const
 {
   std::vector<UnicodeString> r;
   r.reserve(paramsHash.size());
-  for (const auto& p : paramsHash) {
-    r.push_back(p.first);
+  for (const auto& [key, value] : paramsHash) {
+    r.push_back(key);
   }
   return r;
 }
@@ -113,8 +113,8 @@ const UnicodeString* FileType::Impl::getParamUserValue(const UnicodeString& para
 
 TypeParameter& FileType::Impl::addParam(const UnicodeString& param_name, const UnicodeString& value)
 {
-  auto it = paramsHash.emplace(param_name, TypeParameter(param_name, value));
-  return it.first->second;
+  auto [fst, snd] = paramsHash.try_emplace(param_name, param_name, value);
+  return fst->second;
 }
 
 void FileType::Impl::setParamValue(const UnicodeString& param_name, const UnicodeString* value)

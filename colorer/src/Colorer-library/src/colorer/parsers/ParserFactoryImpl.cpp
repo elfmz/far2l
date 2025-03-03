@@ -46,7 +46,7 @@ void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
     COLORER_LOG_DEBUG("try load '%'", location);
     if (XmlInputSource::isFsURI(*base_catalog_path, &location)) {
       auto files = colorer::Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
-      for (auto& file : files) {
+      for (const auto& file : files) {
         loadHrc(file, nullptr);
       }
     }
@@ -89,7 +89,7 @@ std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses()
 {
   std::vector<UnicodeString> result;
   result.reserve(hrd_nodes.size());
-  for (auto& hrd_node : hrd_nodes) {
+  for (const auto& hrd_node : hrd_nodes) {
     result.push_back(hrd_node.first);
   }
   return result;
@@ -100,7 +100,7 @@ std::vector<const HrdNode*> ParserFactory::Impl::enumHrdInstances(const UnicodeS
   auto hash = hrd_nodes.find(classID);
   std::vector<const HrdNode*> result;
   result.reserve(hash->second->size());
-  for (auto& p : *hash->second) {
+  for (const auto& p : *hash->second) {
     result.push_back(p.get());
   }
   return result;
@@ -112,7 +112,7 @@ const HrdNode& ParserFactory::Impl::getHrdNode(const UnicodeString& classID, con
   if (hash == hrd_nodes.end()) {
     throw ParserFactoryException("can't find HRDClass '" + classID + "'");
   }
-  for (auto& p : *hash->second) {
+  for (const auto& p : *hash->second) {
     if (nameID.compare(p->hrd_name) == 0) {
       return *p;
     }
@@ -194,7 +194,7 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
 void ParserFactory::Impl::addHrd(std::unique_ptr<HrdNode> hrd)
 {
   if (hrd_nodes.find(hrd->hrd_class) == hrd_nodes.end()) {
-    hrd_nodes.emplace(hrd->hrd_class, std::make_unique<std::vector<std::unique_ptr<HrdNode>>>());
+    hrd_nodes.try_emplace(hrd->hrd_class, std::make_unique<std::vector<std::unique_ptr<HrdNode>>>());
   }
   hrd_nodes.at(hrd->hrd_class)->emplace_back(std::move(hrd));
 }

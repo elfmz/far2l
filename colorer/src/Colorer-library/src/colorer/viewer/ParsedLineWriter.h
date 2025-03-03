@@ -1,5 +1,5 @@
-#ifndef _COLORER_PARSEDLINEWRITER_H_
-#define _COLORER_PARSEDLINEWRITER_H_
+#ifndef COLORER_PARSEDLINEWRITER_H
+#define COLORER_PARSEDLINEWRITER_H
 
 #include <unordered_map>
 #include "colorer/handlers/LineRegion.h"
@@ -65,4 +65,4 @@ class ParsedLineWriter
                         const UnicodeString& token, bool start);
 };
 
-#endif
+#endif // COLORER_PARSEDLINEWRITER_H

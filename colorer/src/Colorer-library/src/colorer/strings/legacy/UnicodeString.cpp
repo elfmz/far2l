@@ -329,16 +329,31 @@ int32_t UnicodeString::indexOfIgnoreCase(const UnicodeString& str, int32_t pos) 
   return -1;
 }
 
-int32_t UnicodeString::lastIndexOf(wchar wc, int32_t pos) const
+int32_t UnicodeString::lastIndexOf(wchar wc) const
 {
-  int32_t idx;
-  if (pos == npos)
-    pos = this->length();
-  if (pos > this->length())
+  return lastIndexOf(wc,0);
+}
+
+int32_t UnicodeString::lastIndexOf(wchar wc, int32_t start) const
+{
+  if (start > len || start < 0)
     return npos;
-  for (idx = pos; idx > 0 && (*this)[idx - 1] != wc; idx--) {
+  int32_t idx;
+  for (idx = len; idx > start && (*this)[idx - 1] != wc; idx--) {
   }
-  return idx == 0 ? npos : idx - 1;
+  return idx < start ? npos : idx - 1;
+}
+
+int32_t UnicodeString::lastIndexOf(wchar wc, int32_t start, int32_t length) const
+{
+  if (start > len || start < 0 || length < 0)
+    return npos;
+  if (start + length > len)
+    length = len - start;
+  int32_t idx;
+  for (idx = start + length - 1; idx > start && (*this)[idx - 1] != wc; idx--) {
+  }
+  return idx < start ? npos : idx - 1;
 }
 
 bool UnicodeString::startsWith(const UnicodeString& str, int32_t pos) const

@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mutex>
 #include <unordered_set>
 #include "color.hpp"
+#include "MaskGroups.hpp"
 
 struct HighlightStrings
 {
@@ -87,31 +88,6 @@ static void SetDefaultHighlighting()
 	fprintf(stderr, "SetDefaultHighlighting\n");
 
 	ConfigWriter cfg_writer;
-	static const wchar_t *MasksArchives = /* 1 */
-			L"*.rar,*.zip,*.[zj],*.[7bglx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*."
-			L"bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.tbz2,*.zoo,*.zst,*.hqx,*.sit,*"
-			L".ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,*.x2,*.rkv,*.[lw]sz,*.h[ay]"
-			L"p,*.lim,*.sqz,*.chz";
-	static const wchar_t *MasksTemporary = /* 2 */ L"*.bak,*.tmp";
-										/*
-											$ 25.09.2001  IS
-											Эта маска для каталогов: обрабатывать все каталоги, кроме тех, что
-											являются родительскими (их имена - две точки).
-										*/
-	static const wchar_t *MasksScripts = L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com,*.run,*.elf";
-	static const wchar_t *MasksSoundFiles = 
-			L"*.aif,*.cda,*.mid,*.midi,*.mp3,*.mpa,*.ogg,*.wma,*.flac,*.wav,*.ape,*.wv,*.voc,*.669,*.digi,*.amf,*.ams,*.dbm,*.dmf,*.dsm,*.gdm,*.imf,"
-			L"*.it,*.itg,*.itp,*.j2b,*.mdl,*.med,*.mo3,*.mod,*.mt2,*.mtm,*.okt,*.plm,*.psm,*.ptm,*.s3m,*.sfx,*.stm,*.stp,*.uax,*.ult,*.xm";
-	static const wchar_t *MaskSharedObjects = L"*.dll,*.so,*.dll.*,*.so.*,*.obj,*.o,*.a,*.lib,*.sys,*.pyo,*.vim";
-	static const wchar_t *MaskVideoFiles = L"*.mkv,*.webm,*.mpg,*.mp2,*.mpeg,*.mpe,*.mpv,*.mp4,*.m4p,*.m4v,*.avi,*.wmv,*.mov,*.qt,*.flv,*.swf,*.avchd,*.3gp,*.vob";
-	static const wchar_t *MaskImageFiles = L"*.avif,*.jpg,*.jpeg,*.jpeg2000,*.ico,*.gif,*.png,*.webp,*.tga,*.bmp,*.pcx,*.tiff,*.tif,*.psd,*.eps,*.indd,*.svg,*.ai,*.cpt,*.kra,*.pdn,*.psp,*.xcf,*.sai,*.cgm,*.mpo,*.pns,*.jps";
-	static const wchar_t *MaskSourceFiles = L"*.c,*.cpp,*.c++,*.h,*.hpp,*.h++,*.asm,*.inc,*.src,*.css,*.glsl,*.lua,*.java,*.php,*.go,*.perl,*.r,*.bas,*.pas,*.jsm,*.qml,"
-											L"*.js,*.kt,*.sample,*.vs,*.fs,*.fx,*.hlsl,*.fsh,*.vsh,*.pixel,*.vertex,*.fragmentshader,*.fragment,*.vertexshader,"
-											L"*.ml,*.frag,*.geom,*.vert,*.rs,*.ts,*.jam,*.tcl, *.swift";
-	static const wchar_t *MaskModelFiles =  L"*.ma,*.mb,*.opengex,*.ply,*.pov-ray,*.prc,*.step,*.skp,*.stl,*.u3d,*.vrml,*.xaml,*.xgl,*.xvl,*.xvrml,*.x3d,*.3d,*.3df,*.3dm,*.3ds,*.3dxml,*.x3d,"
-											L"*.dds,*.sdkmesh,*.x,*.hdr,*.ktx,*.amf,*.asymptote,*.blend,*.collada,*.dgn,*.dwf,*.dwg,*.dxf,*.drawings,*.flt,*.fvrml,*.gltf,*.hsf,*.iges,*.imml,*.ipa,*.jt";
-	static const wchar_t *MaskTextFiles =  	L"*.docx,*.odt,*.pdf,*.rtf,*.tex,*.wpd,*.htm,*.html,*.key,*.odp,*.pps,*.ppt,*.pptx,*.ods,*.xls,*.xlsm,*.xlsx,*.srt,*.nfo,*.rst,*.man,"
-											L"read.me,readme*,*.txt,*.chm,*.hlp,*.doc,*.md,NEWS";
 
 	static struct DefaultData
 	{
@@ -159,18 +135,18 @@ static void SetDefaultHighlighting()
 	{L"System",        L"*", 1, FILE_ATTRIBUTE_SYSTEM, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF263C, 1, 0},
 	{L"Hardlinks > 1", L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 0, 0},
 	// without any mark, only different colors
-	{L"Shared",     MaskSharedObjects, 0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00b800ull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Source",     MaskSourceFiles,   0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xffbcacull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x8F0C00ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Image",      MaskImageFiles,    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Model",      MaskModelFiles,    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Scripts",    MasksScripts,      0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Archives",   MasksArchives,     0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0x30 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Temporary",  MasksTemporary,    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_BROWN, 0xFFFFFFFD0F, 0x30 | F_BROWN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Shared",     L"<shared>", 0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00b800ull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Source",     L"<src>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xffbcacull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x8F0C00ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Image",      L"<pic>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Model",      L"<3d>",     0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Scripts",    L"<exec>",   0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Archives",   L"<arc>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0x30 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Temporary",  L"<temp>",   0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_BROWN, 0xFFFFFFFD0F, 0x30 | F_BROWN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
 	// sound '♪' (disabled by default)
-	{L"Sound",      MasksSoundFiles,   0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xAAFF00ull << 16) | (0x10 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF266A/*♪*/, 0, FFF_DISABLED},
+	{L"Sound",      L"<sound>",  0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xAAFF00ull << 16) | (0x10 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF266A/*♪*/, 0, FFF_DISABLED},
 	// without any mark, only different colors
-	{L"Video",      MaskVideoFiles,    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x30b8ffull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x006767ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"Text files", MaskTextFiles,     0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xccccccull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x767676ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Video",      L"<video>",  0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x30b8ffull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x006767ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Text files", L"<doc>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xccccccull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x767676ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
 
 	};
 
@@ -800,6 +776,70 @@ void HighlightFiles::HiEdit(int MenuPos)
 						HiData.deleteItem(RealSelectPos);
 						(*Count)--;
 						NeedUpdate = TRUE;
+					}
+
+					break;
+				}
+				case KEY_F3: { // show for current item file masks after expand all groups
+					int *Count = nullptr;
+					int RealSelectPos = MenuPosToRealPos(SelectPos, &Count);
+
+					if (Count && RealSelectPos < (int)HiData.getCount()) {
+						const wchar_t *fmask;
+						FileFilterParams *ffp = HiData.getItem(RealSelectPos);
+						FARString fs;
+
+						ExMessager em(L"Files highlighting expand Mask Groups");
+						fs.Format(L"== Highlighting Name: \"%ls\"", ffp->GetTitle());
+						em.AddDup(fs);
+						{
+							HighlightDataColor hl;
+							ffp->GetColors(&hl);
+							fs.Format(L"== Highlighting Marker: \"%ls\"", hl.Mark);
+							em.AddDup(fs);
+						}
+						if (!ffp->GetMask(&fmask) )
+							em.AddDup(L"== Highlighting has empty masks");
+						else {
+							fs = L"== " + Msg::FileFilterMatchMaskCase;
+							fs.AppendFormat(L": %s", ffp->GetMaskIgnoreCase() ? "OFF" : "ON");
+							em.AddDup(fs);
+							em.AddDup(L"");
+							em.AddDup(L"== Highlighting masks before expand:");
+							em.AddDupWrap(fmask);
+
+							// expand all groups
+							bool b_first = true;
+							int ngroups = 0;
+							size_t pos_open, pos_close;
+							FARString fs_group_name, fs_masks_from_group;
+							fs = fmask;
+							for( ;; ) {
+								if( !fs.Pos(pos_open, '<', b_first ? 0 : pos_close+1) )
+									break;
+								b_first = false;
+								if( !fs.Pos(pos_close, '>', pos_open+1) )
+									break;
+								if( pos_close-pos_open < 2 )
+									continue;
+								fs_group_name = fs.SubStr(pos_open+1, pos_close-pos_open-1);
+								if( !GetMaskGroup(fs_group_name, fs_masks_from_group) )
+									continue;
+								fs.Replace(pos_open, pos_close-pos_open+1, fs_masks_from_group);
+								pos_close = pos_open-1; // may be need recursive expand
+								ngroups++;
+							}
+							em.AddDup(L"");
+							fs_group_name.Format(L"== Correctly expanded Groups inside Highlighting masks: %d", ngroups);
+							em.AddDup(fs_group_name);
+							em.AddDup(L"");
+							em.AddDup(L"== Highlighting masks after expand all groups:");
+							em.AddDupWrap(fs);
+						}
+						em.AddDup(Msg::Ok);
+						em.AddDup(Msg::MaskGroupTitle);
+						if( em.Show(MSG_LEFTALIGN, 2) == 1)
+							MaskGroupsSettings();
 					}
 
 					break;

@@ -24,11 +24,9 @@ StyledRegion::StyledRegion(const StyledRegion& rd) : RegionDefine()
 
 StyledRegion& StyledRegion::operator=(const StyledRegion& rd)
 {
-  if (this == &rd) {
-    return *this;
+  if (this != &rd) {
+    setValues(&rd);
   }
-
-  setValues(&rd);
   return *this;
 }
 

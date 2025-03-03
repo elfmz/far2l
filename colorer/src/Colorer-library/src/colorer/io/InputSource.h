@@ -1,5 +1,5 @@
-#ifndef _COLORER_INPUTSOURCE_H_
-#define _COLORER_INPUTSOURCE_H_
+#ifndef COLORER_INPUTSOURCE_H
+#define COLORER_INPUTSOURCE_H
 
 #include "colorer/Common.h"
 #include "colorer/Exception.h"
@@ -15,7 +15,8 @@ class InputSource
  public:
   /** Current stream location
    */
-  [[nodiscard]] virtual const UnicodeString* getLocation() const = 0;
+  [[nodiscard]]
+  virtual const UnicodeString* getLocation() const = 0;
 
   /** Opens stream and returns array of readed bytes.
   @throw InputSourceException If some IO-errors occurs.
@@ -29,7 +30,8 @@ class InputSource
   /** Return length of opened stream
   @throw InputSourceException If stream is closed.
   */
-  [[nodiscard]] virtual int length() const = 0;
+  [[nodiscard]]
+  virtual int length() const = 0;
 
   /** Tries statically create instance of InputSource object,
   according to passed @c path string.
@@ -62,10 +64,7 @@ class InputSource
   relatively to the current.
   @param relPath Relative URI part.
   */
-  virtual InputSource* createRelative([[maybe_unused]] const UnicodeString* relPath)
-  {
-    return nullptr;
-  };
+  virtual InputSource* createRelative([[maybe_unused]] const UnicodeString* relPath) { return nullptr; };
 
   virtual ~InputSource() = default;
   InputSource(InputSource&&) = delete;
@@ -78,4 +77,4 @@ class InputSource
 };
 
 }  // namespace colorer
-#endif
+#endif  // COLORER_INPUTSOURCE_H

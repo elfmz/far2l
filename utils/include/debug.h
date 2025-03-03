@@ -25,6 +25,8 @@
 #include <cstddef>
 #include <sys/stat.h>
 #include <cstdint>
+#include <bitset>
+
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
   * - Errors logged into ~/.config/far2l/crash.log
@@ -49,50 +51,62 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 namespace Dumper {
 
+	// ****************************************************************************************************
+	// Вспомогательные переменные, функции и структуры
+	// ****************************************************************************************************
+
 	inline std::mutex g_log_output_mutex;
 	inline std::atomic<std::size_t> g_thread_counter {0};
+	inline std::once_flag g_escape_table_flag;
+	inline std::array<std::string, 256> g_escape_table;
 
-	inline std::string EscapeString(std::string_view input, bool process_non_ascii = false) {
-		std::ostringstream output;
 
-		bool need_escape_as_hex = false;
-		for (unsigned char c: input) {
-			if (LIKELY(c >= 0x20)) {
-				switch (c) {
-				case '"':
-					output << "\\\""; break;
-				case '\\':
-					output << "\\\\"; break;
+	inline std::array<std::string, 256> BuildEscapeTable()
+	{
+		std::array<std::string, 256> table{};
+		char buf[8];
+		for (size_t i = 0; i < 256; ++i) {
+			auto character_code = static_cast<unsigned char>(i);
+			if (character_code >= 0x20) {
+				switch (character_code) {
+				case '"': table[i] = "\\\""; break;
+				case '\\': table[i] = "\\\\"; break;
 				default:
-					if (UNLIKELY(process_non_ascii && (c >= 0x80))) {
-						need_escape_as_hex = true;
-					} else {
-						output << c;
-					}
+					table[i] = std::string(1, character_code);
 					break;
 				}
 			} else {
-				switch (c) {
-				case '\t': output << "\\t"; break;
-				case '\r': output << "\\r"; break;
-				case '\n': output << "\\n"; break;
-				case '\a': output << "\\a"; break;
-				case '\b': output << "\\b"; break;
-				case '\v': output << "\\v"; break;
-				case '\f': output << "\\f"; break;
-				case '\e': output << "\\e"; break;
+				switch (character_code) {
+				case '\t': table[i] = "\\t"; break;
+				case '\r': table[i] = "\\r"; break;
+				case '\n': table[i] = "\\n"; break;
+				case '\a': table[i] = "\\a"; break;
+				case '\b': table[i] = "\\b"; break;
+				case '\v': table[i] = "\\v"; break;
+				case '\f': table[i] = "\\f"; break;
+				case '\x1B': table[i] = "\\e"; break;
 				default:
-					need_escape_as_hex = true;
+					std::snprintf(buf, sizeof(buf), "\\x{%02x}", character_code);
+					table[i] = buf;
 					break;
 				}
 			}
-			if (need_escape_as_hex) {
-				output << "\\x{" << std::setfill('0') << std::setw(2) << std::right <<
-					std::hex << static_cast < unsigned int > (c) << "}";
-				need_escape_as_hex = false;
-			}
 		}
-		return output.str();
+		return table;
+	}
+
+
+	inline std::string EscapeString(std::string_view input)
+	{
+		std::call_once(g_escape_table_flag, []{
+			g_escape_table = BuildEscapeTable();
+		});
+
+		std::string output;
+		for (unsigned char c : input) {
+			output.append(g_escape_table[c]);
+		}
+		return output;
 	}
 
 
@@ -108,7 +122,8 @@ namespace Dumper {
 	}
 
 
-	inline std::size_t GetNiceThreadId() noexcept {
+	inline std::size_t GetNiceThreadId() noexcept
+	{
 		static thread_local std::size_t s_nice_thread_id = 0;
 		if (UNLIKELY(!s_nice_thread_id)) {
 			s_nice_thread_id = g_thread_counter.fetch_add(1, std::memory_order_relaxed) + 1;
@@ -117,54 +132,148 @@ namespace Dumper {
 	}
 
 
+	// Метафункция для проверки на этапе компиляции: является ли тип T контейнером?
+
+	template <typename T, typename = void>
+	struct is_container : std::false_type { };
+
+	template <typename T>
+	struct is_container<T, std::void_t<
+							   decltype(std::declval<T>().begin()),
+							   decltype(std::declval<T>().end())
+							   >> : std::true_type { };
+
+	template <typename T>
+	inline constexpr bool is_container_v = is_container<T>::value;
+
+	// ****************************************************************************************************
+	// Форматирование имён/значений переменных с учётом уровня их возможной вложенности при отображении контейнеров
+	// ****************************************************************************************************
+
+	constexpr std::size_t MAX_INDENT_LEVEL = 32;
+
+	struct IndentInfo
+	{
+		std::bitset<MAX_INDENT_LEVEL> levels;
+		int cur_level;
+
+		IndentInfo() : levels(), cur_level(0) {}
+
+		std::string MakeIndent() const
+		{
+			std::string result;
+			result.reserve(4 * (cur_level + 1));
+			result.push_back('|');
+			if (UNLIKELY(cur_level != 0)) {
+				constexpr std::string_view indent = "   ";
+				result.append(indent);
+				for (int i = 0; i < cur_level - 1; ++i) {
+					result.push_back(levels.test(i) ? '|' : ' ');
+					result.append(indent);
+				}
+				result.push_back(levels.test(cur_level - 1) ? '|' : '\\');
+			}
+			result.append("=> ");
+			return result;
+		}
+
+		IndentInfo CreateChild(bool current_branch_has_next_elements) const
+		{
+			auto child = *this;
+			if (cur_level < static_cast<int>(MAX_INDENT_LEVEL)) {
+				child.levels.set(cur_level, current_branch_has_next_elements);
+				++child.cur_level;
+			}
+			return child;
+		}
+	};
+
+
+	template <typename T>
+	inline void LogVarWithIndentation(std::ostringstream& log_stream,
+								   std::string_view var_name,
+								   const T& var_value,
+								   const IndentInfo& indent_info,
+								   bool print_value = true)
+	{
+		log_stream << indent_info.MakeIndent();
+		log_stream << var_name;
+		if (print_value)
+			log_stream << " = " << var_value;
+		log_stream << '\n';
+	}
+
+
+
+	// ****************************************************************************************************
+	// DumpValue() - главная реализация-"диспетчер", обрабатывающая основные типы
+	// ****************************************************************************************************
+
 	template <typename T>
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
-		const T& value)
+		const T& value,
+		const IndentInfo& indent_info = IndentInfo())
 	{
 		if constexpr (std::is_pointer_v<T>) {
 			if (!value) {
-				log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
+				LogVarWithIndentation(log_stream, var_name, "(nullptr)", indent_info);
 				return;
 			}
 		}
 
 		if constexpr (std::is_pointer_v<T> &&
 					  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char>) {
-			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value));
+			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value), indent_info);
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::wstring> ||
 							 std::is_convertible_v<T, const wchar_t*>) {
 			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
 			try {
-				DumpValue(log_stream, var_name, conv.to_bytes(value));
+				DumpValue(log_stream, var_name, conv.to_bytes(value), indent_info);
 			} catch (const std::range_error& e) {
-				log_stream << "|=> " << var_name << " = [conversion error: "  << e.what() << "]" << std::endl;
+				LogVarWithIndentation(log_stream, var_name, std::string("[conversion error: ") + e.what() + "]", indent_info);
 			}
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
-							 std::is_same_v<std::remove_cv_t<T>, unsigned char>) {
-			std::string str_value{ static_cast<const char>(value) };
-			std::string escaped = EscapeString(str_value, true);
-			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
+							 std::is_same_v<std::remove_cv_t<T>, signed char>) {
+			auto code = static_cast<unsigned char>(value);
+			if (code >= 0x20 && code < 0x80) {
+				LogVarWithIndentation(log_stream, var_name, static_cast<char>(value), indent_info);
+			} else {
+				char buffer[5];
+				std::snprintf(buffer, sizeof(buffer), "0x%02X", code);
+				LogVarWithIndentation(log_stream, var_name, std::string(buffer), indent_info);
+			}
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, wchar_t>) {
 			std::wstring wstr_value {value };
-			DumpValue(log_stream, var_name, wstr_value);
+			DumpValue(log_stream, var_name, wstr_value, indent_info);
 
 		} else if constexpr (std::is_convertible_v<T, std::string_view>) {
-			std::string str_value{ value };
-			std::string escaped = EscapeString(str_value);
-			log_stream << "|=> " << var_name << " = " << escaped << std::endl;
+			LogVarWithIndentation(log_stream, var_name, EscapeString(value), indent_info);
+
+		} else if constexpr (is_container_v<T>) {
+			LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
+			std::size_t index = 0;
+			for (auto it = value.begin(); it != value.end(); ) {
+				auto curr = it++;
+				bool is_last = (it == value.end());
+				auto child_indent_info = indent_info.CreateChild(!is_last);
+				auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
+				DumpValue(log_stream, item_name, *curr, child_indent_info);
+			}
 
 		} else {
-			log_stream << "|=> " << var_name << " = " << value << std::endl;
+			LogVarWithIndentation(log_stream, var_name, value, indent_info);
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка статических массивов char[], unsigned char[] и wchar_t[]
+	// ****************************************************************************************************
 
 	template <typename CharT, std::size_t N>
 	inline std::enable_if_t<
@@ -188,10 +297,13 @@ namespace Dumper {
 	}
 
 
+	// ****************************************************************************************************
 	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DSTRBUF + DUMP
+	// ****************************************************************************************************
 
 	template <typename T>
-	struct StrBufWrapper {
+	struct StrBufWrapper
+	{
 		StrBufWrapper(T *data, size_t length) : data(data), length(length) {}
 		T *data;
 		size_t length;
@@ -205,7 +317,7 @@ namespace Dumper {
 		const StrBufWrapper<T>& str_buf_wrapper)
 	{
 		if (!str_buf_wrapper.data) {
-			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
+			log_stream << "|=> " << var_name << " = (nullptr)\n";
 			return;
 		}
 
@@ -217,12 +329,13 @@ namespace Dumper {
 			std::wstring wstr_value (str_buf_wrapper.data, str_buf_wrapper.length);
 			DumpValue(log_stream, var_name, wstr_value);
 		} else {
-			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!" << std::endl;
+			log_stream << "|=> " << var_name << " : ERROR, UNSUPPORTED TYPE!\n";
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
+	// ****************************************************************************************************
 
 	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
 									 std::string_view line_prefix, size_t bytes_per_line = 16)
@@ -230,45 +343,45 @@ namespace Dumper {
 		auto separator_pos = bytes_per_line / 2;
 
 		std::ostringstream result;
+		result << std::hex << std::setfill('0');
 
 		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
-			result << line_prefix << std::setw(8) << std::setfill('0') << std::hex << offset << "  ";
+			result << line_prefix << std::setw(8)  << offset << "  ";
 			for (size_t i = 0; i < bytes_per_line && (offset + i) < length; ++i) {
 				if (i == separator_pos) {
 					result << "| ";
 				}
-				result << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(data[offset + i]) << " ";
+				result << std::setw(2) << static_cast<unsigned int>(data[offset + i]) << " ";
 			}
-			result << std::endl;
+			result << '\n';
 		}
 
 		return result.str();
 	}
 
 
-	template <typename T,
-			 typename = std::enable_if_t<std::is_pointer_v<T>>>
-	struct BinBufWrapper {
+	template <typename T, typename = std::enable_if_t<std::is_pointer_v<T>>>
+	struct BinBufWrapper
+	{
 		BinBufWrapper(T data, size_t length) : data(data), length(length) {}
 		const T data;
 		size_t length;
 	};
 
 
-	template <typename T,
-			 typename = std::enable_if_t<std::is_pointer_v<T>>>
+	template <typename T, typename = std::enable_if_t<std::is_pointer_v<T>>>
 	inline void DumpValue(
 		std::ostringstream& log_stream,
 		std::string_view var_name,
 		const BinBufWrapper<T>& bin_buf_wrapper)
 	{
 		if (!bin_buf_wrapper.data) {
-			log_stream << "|=> " << var_name << " = (nullptr)" << std::endl;
+			log_stream << "|=> " << var_name << " = (nullptr)\n";
 			return;
 		}
 
 		if (bin_buf_wrapper.length == 0) {
-			log_stream << "|=> " << var_name << " = (empty)"  << std::endl;
+			log_stream << "|=> " << var_name << " = (empty)\n";
 			return;
 		}
 
@@ -279,21 +392,23 @@ namespace Dumper {
 		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
 											effective_length, "|   ");
 
-		log_stream << "|=> " << var_name << " =" << std::endl;
+		log_stream << "|=> " << var_name << " =\n";
 		log_stream << hexDump;
 
 		if (bin_buf_wrapper.length > MAX_LENGTH) {
 			log_stream << "|   Output truncated to " << effective_length
-					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)" << std::endl;
+					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)\n";
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка контейнеров с итераторами: через макросы DCONT + DUMP
+	// ****************************************************************************************************
 
 	template <typename ContainerT, typename = decltype(std::begin(std::declval<ContainerT>())),
 		 typename = decltype(std::end(std::declval<ContainerT>()))>
-	struct ContainerWrapper {
+	struct ContainerWrapper
+	{
 	  ContainerWrapper(const ContainerT& data, size_t max_elements)
 			: data(data), max_elements(max_elements) {}
 	  const ContainerT& data;
@@ -316,11 +431,13 @@ namespace Dumper {
 		}
 	}
 
-
+	// ****************************************************************************************************
 	// Поддержка статических массивов: через макросы DCONT + DUMP
+	// ****************************************************************************************************
 
 	template <typename T, std::size_t N>
-	struct ContainerWrapper<T (&)[N]> {
+	struct ContainerWrapper<T (&)[N]>
+	{
 	  ContainerWrapper(const T (&data)[N], size_t max_elements)
 		: data(data), max_elements(max_elements) {}
 	  const T (&data)[N];
@@ -346,15 +463,19 @@ namespace Dumper {
 	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
 
 
+	// ****************************************************************************************************
 	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...
+	// ****************************************************************************************************
 
-	enum class FlagsAs {
+	enum class FlagsAs
+	{
 		FILE_ATTRIBUTES,
 		UNIX_MODE
 	};
 
 
-	struct FlagsWrapper {
+	struct FlagsWrapper
+	{
 		unsigned long int value;
 		FlagsAs type;
 		FlagsWrapper(unsigned long int v, FlagsAs t)
@@ -400,7 +521,8 @@ namespace Dumper {
 	}
 
 
-	inline std::string DecodeUnixMode(unsigned long int flags) {
+	inline std::string DecodeUnixMode(unsigned long int flags)
+	{
 		std::ostringstream result;
 		result << std::oct << flags << " ("
 			<< ((flags & S_IRUSR) ? "r" : "-")
@@ -420,7 +542,8 @@ namespace Dumper {
 	}
 
 
-	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name, const FlagsWrapper& df) {
+	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name, const FlagsWrapper& df)
+	{
 		std::string decoded;
 		switch (df.type) {
 		case FlagsAs::FILE_ATTRIBUTES:
@@ -432,8 +555,12 @@ namespace Dumper {
 		default:
 			decoded = "[not implemented]";
 		}
-		log_stream << "|=> " << var_name << " = " << decoded << std::endl;
+		log_stream << "|=> " << var_name << " = " << decoded << '\n';
 	}
+
+	// ****************************************************************************************************
+	// Вспомогательный код для работы с логом
+	// ****************************************************************************************************
 
 
 	inline std::string CreateLogHeader(std::string_view func_name, std::string_view location)
@@ -445,9 +572,9 @@ namespace Dumper {
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
 
 		std::ostringstream header_stream;
-		header_stream << std::endl << "/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
-		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----" << std::endl;
-		header_stream << "|[" << location << "] in " << func_name << "()" << std::endl;
+		header_stream << "\n/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
+		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----\n";
+		header_stream << "|[" << location << "] in " << func_name << "()\n";
 		return header_stream.str();
 	}
 
@@ -455,17 +582,21 @@ namespace Dumper {
 	inline void FlushLog(std::ostringstream& log_stream, bool to_file)
 	{
 		std::string log_entry = log_stream.str();
-
 		std::lock_guard<std::mutex> lock(g_log_output_mutex);
 
 		if (to_file) {
-			std::ofstream(GetHomeDir() + "/far2l_debug.log", std::ios::app) << log_entry << std::endl;
+			std::ofstream log_file(GetHomeDir() + "/far2l_debug.log", std::ios::app);
+			if (log_file) {
+				log_file << log_entry << std::endl;
+			}
 		} else {
 			std::clog << log_entry << std::endl;
 		}
 	}
 
+	// ****************************************************************************************************
 	// Бэкенд для макроса DUMP: аргументы заключаются в дополнительные макросы DVV, DBUF, DCONT, DMSG...
+	// ****************************************************************************************************
 
 	template<std::size_t... I, typename NameValueTupleT>
 	void ProcessPairs(const NameValueTupleT& name_value_tuple, std::ostringstream & log_stream, std::index_sequence<I...>)
@@ -489,8 +620,9 @@ namespace Dumper {
 		FlushLog(log_stream, to_file);
 	}
 
-
+	// ****************************************************************************************************
 	// Бэкенд для макроса DUMPV: поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений)
+	// ****************************************************************************************************
 
 	template <std::size_t... I, typename ValuesTupleT>
 	void DumpEachVariable(const std::vector<std::string>& var_names, std::ostringstream& log_stream,
@@ -500,7 +632,7 @@ namespace Dumper {
 	}
 
 
-	inline bool TryParseVariableNames(const char *var_names_str, std::vector<std::string> &var_names, size_t var_values_count)
+	inline bool TryParseVariableNames(const char *var_names_str, std::vector<std::string> &var_names, size_t expected_count)
 	{
 		if (!var_names_str || std::strchr(var_names_str, '(') != nullptr) {
 			return false;
@@ -515,7 +647,7 @@ namespace Dumper {
 				var_names.emplace_back(name_token.substr(start, end - start + 1));
 		}
 
-		if (var_names.size() != var_values_count) {
+		if (var_names.size() != expected_count) {
 			return false;
 		}
 
@@ -555,7 +687,6 @@ namespace Dumper {
 
 		FlushLog(log_stream, to_file);
 	}
-
 
 } // end namespace Dumper
 

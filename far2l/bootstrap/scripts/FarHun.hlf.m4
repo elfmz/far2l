@@ -3645,6 +3645,8 @@ To ~highlight~@Highlight@ all archives except "*.rar" #<arc>|*.rar# should be us
 
  #Enter#/#F4#    - ^<wrap>edit the current group
 
+ #F3#          - view the current group with wrap long line of masks
+
  #F7#          - ^<wrap>find all groups containing the specified mask
 
  Also see ~Options menu~@OptMenu@.

@@ -261,6 +261,22 @@ void MaskGroupsSettings()
 					MenuModified = EditMaskRecord(MenuPos < 0 ? 0 : MenuPos, true);
 					break;
 
+				case KEY_F3:
+					if (MenuPos != -1) { // view the current group with wrap long line of masks
+						ConfigReader cfg_reader;
+						cfg_reader.SelectSectionFmt(FMS.TypeFmt, MenuPos);
+
+						FARString strTitle;
+						strTitle = Msg::MaskGroupTitle;
+						strTitle.AppendFormat(L" \"%ls\"", cfg_reader.GetString(FMS.MaskName).CPtr());
+
+						ExMessager em(strTitle);
+						em.AddDupWrap(cfg_reader.GetString(FMS.MaskValue));
+						em.AddDup(Msg::Ok);
+						em.Show(MSG_LEFTALIGN, 1);
+					}
+					break;
+
 				case KEY_NUMENTER:
 				case KEY_ENTER:
 				case KEY_F4:

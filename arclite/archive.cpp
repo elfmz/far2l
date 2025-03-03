@@ -722,7 +722,7 @@ void ArcAPI::load()
 	find_sfx_modules(_7zip_path + L"*.sfx");
 
 	if (arc_libs.empty()) {
-		_7zip_path = L"/lib/7zip/";
+		_7zip_path = L"/usr/lib/7zip/";
 		load_libs(_7zip_path + L"*.so");
 		if (sfx_modules.empty())
 			find_sfx_modules(_7zip_path + L"*.sfx");

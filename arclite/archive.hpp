@@ -191,6 +191,7 @@ public:
 	static void create_in_archive(const ArcType &arc_type, IInArchive **in_arc);
 	static void create_out_archive(const ArcType &format, IOutArchive **out_arc);
 	static void free();
+	static void reload();
 
 	static bool is_single_file_format(const ArcType &arc_ty)
 	{
@@ -241,7 +242,6 @@ class Archive : public std::enable_shared_from_this<Archive>
 {
 	// open
 private:
-	//  IInArchive *in_arc;
 	ComObject<IInArchive> in_arc;
 	UInt32 error_flags, warning_flags;
 	std::wstring error_text, warning_text;

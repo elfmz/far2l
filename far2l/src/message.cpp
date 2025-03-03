@@ -472,11 +472,9 @@ static int ShowMessage(DWORD Flags, int Buttons, const wchar_t *Title, const wch
 		int ItemsNumber, INT_PTR PluginNumber)
 {
 	if (Flags & MSG_ASYNC) {
-		fprintf(stderr, "FAR2L ShowMessageSynched() (call not synched & MSG_ASYNC) \n");
 		return ShowMessageSynched(Flags, Buttons, Title, Items, ItemsNumber, PluginNumber);
 	}
 	else {
-		fprintf(stderr, "InterThreadCall ShowMessageSynched() \n");
 		return InterThreadCall<int, 0>(std::bind(ShowMessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
 	}
 }

@@ -678,28 +678,27 @@ void **find_plt_entry_for_symbol(struct link_map *map, void *target_addr)
 	(void)strsz;
 	(void)syment;
 
-    FILE *maps = fopen("/proc/self/maps", "r");
-    if (!maps) {
-        perror("fopen /proc/self/maps");
-        return NULL;
-    }
+	FILE *maps = fopen("/proc/self/maps", "r");
+	if (!maps) {
+		perror("fopen /proc/self/maps");
+		return NULL;
+	}
 
-    char line[512];
-    ElfW(Addr) got_start = pltgot_addr;
-    ElfW(Addr) got_end = 0;
+	char line[512];
+	ElfW(Addr) got_start = pltgot_addr;
+	ElfW(Addr) got_end = 0;
 
-    while (fgets(line, sizeof(line), maps)) {
-        unsigned long start, end;
-        char perm[5], path[256];
+	while (fgets(line, sizeof(line), maps)) {
+		unsigned long start, end;
+		char perm[5], path[256];
 
-        if (sscanf(line, "%lx-%lx %4s %*x %*x:%*x %*d %255s", &start, &end, perm, path) == 4) {
-            if (start <= got_start && got_start < end) {
-                got_end = end;
-                break;
-            }
-        }
-    }
-
+		if (sscanf(line, "%lx-%lx %4s %*x %*x:%*x %*d %255s", &start, &end, perm, path) == 4) {
+			if (start <= got_start && got_start < end) {
+				got_end = end;
+				break;
+			}
+		}
+	}
     fclose(maps);
 
     size_t got_size = got_end - got_start;
@@ -740,7 +739,7 @@ bool get_faddrs(void *handle)
 	if (!_MultiByteToUnicodeString2 || !_ConvertUTF8ToUnicode || !_Check_UTF8_Buf || !_CrcCalc
 			|| !_Convert_UTF8_Buf_To_Unicode || !_target_addr) {
 
-		fprintf(stderr, "patch_plt(): failed!!!\n");
+		fprintf(stderr, "get_faddrs() failed!!!\n");
 		return false;
 	}
 
@@ -792,10 +791,7 @@ static bool patch_plt(void *handle)
 
 static bool patch_addr(void *handle)
 {
-//#if defined(__APPLE__)
-//	return false;
-//#else
-    void *func_addr = _target_addr;
+	void *func_addr = _target_addr;
 	fprintf(stderr, "patch_addr() at %p\n", func_addr);
 
 	union {
@@ -803,38 +799,38 @@ static bool patch_addr(void *handle)
 		void *fptr;
 	} u;
 
-    void *newf_addr = u.fptr;
+	void *newf_addr = u.fptr;
 
 	fprintf(stderr, "func_addr = %p\n", func_addr );
 	fprintf(stderr, "newf_addr = %p\n", newf_addr );
 
-    uintptr_t pagesize = sysconf(_SC_PAGESIZE);
+	uintptr_t pagesize = sysconf(_SC_PAGESIZE);
 
-    void *page = (void *)((uintptr_t)func_addr & ~(pagesize - 1));
-    if (mprotect(page, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
-        fprintf(stderr, "Error: mprotect failed\n");
-        return false;
-    }
+	void *page = (void *)((uintptr_t)func_addr & ~(pagesize - 1));
+	if (mprotect(page, pagesize, PROT_READ | PROT_WRITE | PROT_EXEC) == -1) {
+		fprintf(stderr, "Error: mprotect failed\n");
+		return false;
+	}
 
 #ifdef __i386__
-    intptr_t offset = (intptr_t)newf_addr - ((intptr_t)func_addr + 5);
+	intptr_t offset = (intptr_t)newf_addr - ((intptr_t)func_addr + 5);
 
-    unsigned char jmp_instruction[5] = {0xE9, 0x00, 0x00, 0x00, 0x00}; // jmp rel addr
-    memcpy(jmp_instruction + 1, &offset, sizeof(intptr_t));
-    memcpy((void *)func_addr, jmp_instruction, sizeof(jmp_instruction));
+	unsigned char jmp_instruction[5] = {0xE9, 0x00, 0x00, 0x00, 0x00}; // jmp rel addr
+	memcpy(jmp_instruction + 1, &offset, sizeof(intptr_t));
+	memcpy((void *)func_addr, jmp_instruction, sizeof(jmp_instruction));
 
 #elif defined(__arm__)
-    intptr_t offset = ((intptr_t)newf_addr - ((intptr_t)func_addr + 8)) / 4;
-    if (offset > 0x7FFFFF || offset < -0x800000) {
-        return false;
-    }
-    uint32_t instruction = 0xEA000000 | (offset & 0x00FFFFFF);
-    memcpy(func_addr, &instruction, sizeof(instruction));
+	intptr_t offset = ((intptr_t)newf_addr - ((intptr_t)func_addr + 8)) / 4;
+	if (offset > 0x7FFFFF || offset < -0x800000) {
+		return false;
+	}
+	uint32_t instruction = 0xEA000000 | (offset & 0x00FFFFFF);
+	memcpy(func_addr, &instruction, sizeof(instruction));
 
 #elif defined(__x86_64__)
 	unsigned char patch_code[12] = {
-	    0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rax, imm64
-	    0xFF, 0xE0                                                  // jmp rax
+		0x48, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov rax, imm64
+		0xFF, 0xE0                                                  // jmp rax
 	};
 
 	memcpy(patch_code + 2, &newf_addr, sizeof(void *));
@@ -844,32 +840,31 @@ static bool patch_addr(void *handle)
     uintptr_t addr = (uintptr_t)newf_addr;
 
     unsigned char patch_code[20] = {
-        0x58, 0x00, 0x02, 0xD5, // movz x16, #imm16 << 0
-        0x92, 0x00, 0x42, 0xF2, // movk x16, #imm16 << 16
-        0xd2, 0x00, 0x82, 0xf2, // movk x16, #imm16 << 32
-        0x12, 0x00, 0xc2, 0xf2, // movk x16, #imm16 << 48
-        0x00, 0x00, 0x00, 0xD6  // br x16
+		0x58, 0x00, 0x02, 0xD5, // movz x16, #imm16 << 0
+		0x92, 0x00, 0x42, 0xF2, // movk x16, #imm16 << 16
+		0xd2, 0x00, 0x82, 0xf2, // movk x16, #imm16 << 32
+		0x12, 0x00, 0xc2, 0xf2, // movk x16, #imm16 << 48
+		0x00, 0x00, 0x00, 0xD6  // br x16
     };
 
-    patch_code[2] = (addr >> 0) & 0xFF;
-    patch_code[3] = ((addr >> 8) & 0xFF) | 0x02;
+	patch_code[2] = (addr >> 0) & 0xFF;
+	patch_code[3] = ((addr >> 8) & 0xFF) | 0x02;
 
-    patch_code[6] = (addr >> 16) & 0xFF;
-    patch_code[7] = ((addr >> 24) & 0xFF) | 0x42;
+	patch_code[6] = (addr >> 16) & 0xFF;
+	patch_code[7] = ((addr >> 24) & 0xFF) | 0x42;
 
-    patch_code[10] = (addr >> 32) & 0xFF;
-    patch_code[11] = ((addr >> 40) & 0xFF) | 0x82;
+	patch_code[10] = (addr >> 32) & 0xFF;
+	patch_code[11] = ((addr >> 40) & 0xFF) | 0x82;
 
-    patch_code[14] = (addr >> 48) & 0xFF;
-    patch_code[15] = ((addr >> 56) & 0xFF) | 0xC2;
+	patch_code[14] = (addr >> 48) & 0xFF;
+	patch_code[15] = ((addr >> 56) & 0xFF) | 0xC2;
 
-    memcpy(func_addr, patch_code, sizeof(patch_code));
+	memcpy(func_addr, patch_code, sizeof(patch_code));
 #else
 
 #endif
 	return true;
 }
-
 
 static bool patch_7z_dll()
 {
@@ -877,19 +872,19 @@ static bool patch_7z_dll()
 	if (libs.empty())
 		return false;
 
-	for (size_t lib_index = 0; lib_index < libs.size(); ++lib_index) {
-		if (!get_faddrs(libs[0].h_module))
+	for (size_t i = 0; i < libs.size(); ++i) {
+		if (!get_faddrs(libs[i].h_module))
 			continue;
-		if ( patch_plt(libs[0].h_module) )
+		if ( patch_plt(libs[i].h_module) )
 			return true;
-		if (patch_addr(libs[0].h_module) )
+		if (patch_addr(libs[i].h_module) )
 			return true;
 	}
 
 	return false;
 }
 
-void Patch7zCP::SetCP(UINT oemCP, UINT ansiCP)
+void Patch7zCP::SetCP(UINT oemCP, UINT ansiCP, bool bRePatch)
 {
 	Get_AOEMCP();
 
@@ -898,11 +893,11 @@ void Patch7zCP::SetCP(UINT oemCP, UINT ansiCP)
 	snprintf(cover_oemCP, 32, "CP%u", over_oemCP);
 	snprintf(cover_ansiCP, 32, "CP%u", over_ansiCP);
 
-	if (!patched_7z_dll) {
+	if (!patched_7z_dll || bRePatch) {
 		if (patch_7z_dll()) {
-			patched_7z_dll = true;
+//			patched_7z_dll = true;
 		}
-//		patched_7z_dll = true;
+		patched_7z_dll = true;
 	}
 }
 

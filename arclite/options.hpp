@@ -104,7 +104,7 @@ struct Options
 	bool use_disabled_formats;
 	std::wstring disabled_formats;
 	bool pgdn_formats;
-	bool saveCP;
+	bool patchCP;
 //	uintptr_t oemCP;
 //	uintptr_t ansiCP;
 	unsigned int oemCP;

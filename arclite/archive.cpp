@@ -405,10 +405,21 @@ ArcAPI *ArcAPI::get()
 	if (arc_api == nullptr) {
 		arc_api = new ArcAPI();
 		arc_api->load();
-		Patch7zCP::SetCP(static_cast<UINT>(g_options.oemCP), static_cast<UINT>(g_options.ansiCP));
+		if (g_options.patchCP) {
+			Patch7zCP::SetCP(static_cast<UINT>(g_options.oemCP), static_cast<UINT>(g_options.ansiCP));
+		}
+	}
+	return arc_api;
+}
+
+void ArcAPI::reload()
+{
+	if (arc_api) {
+		ArcAPI::free();
 	}
 
-	return arc_api;
+	arc_api = new ArcAPI();
+	arc_api->load();
 }
 
 void ArcAPI::load_libs(const std::wstring &path)
@@ -710,37 +721,19 @@ void ArcAPI::load()
 	load_libs(_7zip_path + L"*.so");
 	find_sfx_modules(_7zip_path + L"*.sfx");
 
-	if (arc_libs.empty() && sfx_modules.empty()) {
+	if (arc_libs.empty()) {
 		_7zip_path = L"/lib/7zip/";
-
 		load_libs(_7zip_path + L"*.so");
-		find_sfx_modules(_7zip_path + L"*.sfx");
+		if (sfx_modules.empty())
+			find_sfx_modules(_7zip_path + L"*.sfx");
 
-		if (arc_libs.empty() || sfx_modules.empty()) {
+		if (arc_libs.empty()) {
 			_7zip_path = L"/usr/local/lib/7zip/";
 			load_libs(_7zip_path + L"*.so");
-
-			if (!arc_libs.empty() && sfx_modules.empty())
+			if (sfx_modules.empty())
 				find_sfx_modules(_7zip_path + L"*.sfx");
 		}
 	}
-
-#if 0
-  if (arc_libs.empty()) {
-    std::wstring _7z_dll_path;
-    IGNORE_ERRORS(_7z_dll_path = search_path(L"7z.so"));
-    fprintf(stderr, "serch sfx in _7z_dll_path = %S\n", _7z_dll_path.c_str());
-
-    if (!_7z_dll_path.empty()) {
-      load_libs(_7z_dll_path);
-      if (!arc_libs.empty()) {
-        dll_path = add_trailing_slash(extract_file_path(_7z_dll_path));
-        if (sfx_modules.empty())
-          find_sfx_modules(dll_path + L"*.sfx");
-      }
-    }
-  }
-#endif
 
 	n_base_format_libs = n_format_libs = arc_libs.size();
 	load_libs(_7zip_path + L"Formats/*.format");

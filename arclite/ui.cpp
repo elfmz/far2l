@@ -137,6 +137,10 @@ ProgressMonitor::ProgressMonitor(const std::wstring &progress_title, bool progre
 
 ProgressMonitor::~ProgressMonitor()
 {
+	if (time_elapsed() >= 1000) {
+		Far::g_fsf.DisplayNotification(L"Arclite - op complete", progress_title.c_str());
+	}
+
 	clean();
 }
 
@@ -172,8 +176,8 @@ void ProgressMonitor::update_ui(bool force)
 
 	if ((time_total >= time_update) || force) {
 
-		//        fprintf(stderr, "time_total = %lu, time_update = %lu %ld\n", time_total, time_update,
-		//        pthread_self());
+//		        fprintf(stderr, "time_total = %lu, time_update = %lu %ld\n", time_total, time_update,
+//		        pthread_self());
 
 		time_update = time_total + time_freq / c_update_delay_div;
 		if (h_scr == nullptr) {
@@ -3965,7 +3969,7 @@ private:
 	int own_panel_view_mode_ctrl_id{};
 	int oemCP_ctrl_id{};
 	int ansiCP_ctrl_id{};
-	int saveCPs_ctrl_id{};
+	int patchCPs_ctrl_id{};
 	int use_include_masks_ctrl_id{};
 	int edit_include_masks_ctrl_id{};
 	int include_masks_ctrl_id{};
@@ -3985,6 +3989,8 @@ private:
 	int lib_info_ctrl_id{};
 	int ok_ctrl_id{};
 	int cancel_ctrl_id{};
+	int reload_ctrl_id{};
+	int edit_path_ctrl_id{};
 
 	intptr_t dialog_proc(intptr_t msg, intptr_t param1, void *param2) override
 	{
@@ -3994,7 +4000,7 @@ private:
 			settings.own_panel_view_mode = get_check(own_panel_view_mode_ctrl_id);
 			settings.oemCP = (UINT)str_to_uint(strip(get_text(oemCP_ctrl_id)));
 			settings.ansiCP = (UINT)str_to_uint(strip(get_text(ansiCP_ctrl_id)));
-			settings.saveCP = get_check(saveCPs_ctrl_id);
+			settings.patchCP = get_check(patchCPs_ctrl_id);
 			settings.use_include_masks = get_check(use_include_masks_ctrl_id);
 			settings.include_masks = get_text(include_masks_ctrl_id);
 			settings.use_exclude_masks = get_check(use_exclude_masks_ctrl_id);
@@ -4005,6 +4011,7 @@ private:
 			settings.use_disabled_formats = get_check(use_disabled_formats_ctrl_id);
 			settings.disabled_formats = get_text(disabled_formats_ctrl_id);
 			settings.pgdn_formats = get_check(pgdn_formats_ctrl_id);
+			settings.preferred_7zip_path = add_trailing_slash(get_text(edit_path_ctrl_id));
 		} else if (msg == DN_INITDIALOG) {
 			enable(include_masks_ctrl_id, settings.use_include_masks);
 			enable(edit_include_masks_ctrl_id, settings.use_include_masks && !settings.include_masks.empty());
@@ -4071,6 +4078,13 @@ private:
 		} else if (msg == DN_BTNCLICK && param1 == lib_info_ctrl_id) {
 			FormatLibraryInfoDialog().show();
 		}
+		else if (msg == DN_BTNCLICK && param1 == reload_ctrl_id) {
+			g_options.preferred_7zip_path = settings.preferred_7zip_path = add_trailing_slash(get_text(edit_path_ctrl_id));
+			ArcAPI::reload();
+			if (g_options.patchCP) {
+				Patch7zCP::SetCP(static_cast<UINT>(g_options.oemCP), static_cast<UINT>(g_options.ansiCP), true);
+			}
+		}
 		return default_dialog_proc(msg, param1, param2);
 	}
 
@@ -4135,7 +4149,7 @@ public:
 		new_line();
 		std::wstring label1 = Far::get_msg(MSG_SETTINGS_DLG_OEM_CODEPAGE);
 		std::wstring label2 = Far::get_msg(MSG_SETTINGS_DLG_ANSI_CODEPAGE);
-		std::wstring label3 = Far::get_msg(MSG_SETTINGS_DLG_SAVE_CODEPAGE);
+		std::wstring label3 = Far::get_msg(MSG_SETTINGS_DLG_PATCH_CODEPAGE);
 		label(label1);
 		std::wstring tmp1 = settings.oemCP ? uint_to_str(settings.oemCP) : std::wstring();
 		oemCP_ctrl_id = edit_box(tmp1, 5);
@@ -4149,7 +4163,7 @@ public:
 		std::wstring tmp2 = settings.ansiCP ? uint_to_str(settings.ansiCP) : std::wstring();
 		ansiCP_ctrl_id = edit_box(tmp2, 5);
 		pad(width - llen(label3, 4));
-		saveCPs_ctrl_id = check_box(label3, settings.saveCP);
+		patchCPs_ctrl_id = check_box(label3, settings.patchCP);
 		new_line();
 		separator();
 		new_line();
@@ -4204,7 +4218,26 @@ public:
 		separator();
 		new_line();
 
+		label(Far::get_msg(MSG_SETTINGS_DLG_7Z_PATH));
+		new_line();
+		edit_path_ctrl_id = edit_box(settings.preferred_7zip_path, width);
+		new_line();
+
 		lib_info_ctrl_id = button(Far::get_msg(MSG_SETTINGS_DLG_LIB_INFO), DIF_BTNNOCLOSE);
+		spacer(2);
+
+		{
+			bool bEnableReload = false;
+			PanelInfo panel_info1;
+			PanelInfo panel_info2;
+			if (Far::get_panel_info(PANEL_ACTIVE, panel_info1) &&
+				Far::get_panel_info(PANEL_PASSIVE, panel_info2)) {
+				if (Far::is_real_file_panel(panel_info1) && Far::is_real_file_panel(panel_info2) )
+					bEnableReload = true;
+			}
+			reload_ctrl_id = button(Far::get_msg(MSG_SETTINGS_DLG_RELOAD), bEnableReload ? DIF_BTNNOCLOSE : (DIF_BTNNOCLOSE | DIF_DISABLE) );
+		}
+
 		new_line();
 		separator();
 		new_line();

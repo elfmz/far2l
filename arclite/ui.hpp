@@ -45,9 +45,10 @@ struct PluginSettings
 	bool use_disabled_formats;
 	std::wstring disabled_formats;
 	bool pgdn_formats;
-	bool saveCP;
+	bool patchCP;
 	UINT oemCP;
 	UINT ansiCP;
+	std::wstring preferred_7zip_path;
 };
 
 bool settings_dialog(PluginSettings &settings);

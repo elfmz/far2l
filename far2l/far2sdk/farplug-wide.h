@@ -2027,7 +2027,9 @@ typedef size_t (WINAPI *FARSTRCELLSCOUNT)(const wchar_t *Str, size_t CharsCount)
 //  crossed initial value specified in *CellsCount.
 typedef size_t (WINAPI *FARSTRSIZEOFCELLS)(const wchar_t *Str, size_t CharsCount, size_t *CellsCount, BOOL RoundUp);
 
-typedef int (WINAPI *FARGETFILEGROUP)(const wchar_t *Computer, const wchar_t *Name, wchar_t *Owner, int Size);
+//int WINAPI farGetFileOwner(const wchar_t *Computer, const wchar_t *Name, wchar_t *Owner, int Size)
+
+typedef int (WINAPI *FARGETFILEOWNER)(const wchar_t *Computer, const wchar_t *Name, wchar_t *Owner, int Size);
 typedef int (WINAPI *FARSETFILEGROUP)(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size);
 typedef int (WINAPI *FARESETFILEMODE)(const wchar_t *Name, DWORD Mode, int SkipMode);
 typedef int (WINAPI *FARESETFILETIME)(const wchar_t *Name, FILETIME *AccessTime, FILETIME *ModifyTime, DWORD FileAttr, int SkipMode);
@@ -2180,7 +2182,7 @@ typedef struct FarStandardFunctions
 	FARSTDLOCALSTRICMP         LStrcmp;
 	FARSTDLOCALSTRNICMP        LStrncmp;
 
-	FARGETFILEGROUP			   GetFileOwner;
+	FARSETFILEGROUP			   GetFileOwner;
 	FARSETFILEGROUP			   GetFileGroup;
 	FARESETFILEMODE			   ESetFileMode;
 	FARESETFILETIME			   ESetFileTime;

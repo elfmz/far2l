@@ -1170,7 +1170,6 @@ public:
 		arc_types = ArcAPI::formats().find_by_name(g_options.update_arc_repack_format_name);
 		options.repack_arc_type = arc_types.empty() ? c_7z : arc_types.front();
 		options.repack = g_options.update_repack;
-//		options.repack = false;
 
 		options.sfx_options = g_options.update_sfx_options;
 		options.level = g_options.update_level;
@@ -1468,13 +1467,9 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *info)
 	FAR_ERROR_HANDLER_END(return, return, false)
 }
 
-// static HANDLE analyse_open(const AnalyseInfo* info, bool from_analyse) {
 static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 {
 	GUARD(g_detect_next_time = triUndef);
-
-//	fprintf(stderr, " +++ analyse_open() +++\n");
-//	fprintf(stderr, "==== TREAD [%ld] \n", pthread_self());
 
 	OpenOptions options;
 	options.arc_path = info->FileName;
@@ -1975,9 +1970,10 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 	settings.use_disabled_formats = g_options.use_disabled_formats;
 	settings.disabled_formats = g_options.disabled_formats;
 	settings.pgdn_formats = g_options.pgdn_formats;
-	settings.saveCP = g_options.saveCP;
+	settings.patchCP = g_options.patchCP;
 	settings.oemCP = (UINT)g_options.oemCP;
 	settings.ansiCP = (UINT)g_options.ansiCP;
+	settings.preferred_7zip_path = g_options.preferred_7zip_path;
 
 	if (settings_dialog(settings)) {
 		g_options.handle_create = settings.handle_create;
@@ -1993,11 +1989,14 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 		g_options.use_disabled_formats = settings.use_disabled_formats;
 		g_options.disabled_formats = settings.disabled_formats;
 		g_options.pgdn_formats = settings.pgdn_formats;
-		g_options.saveCP = settings.saveCP;
+		g_options.patchCP = settings.patchCP;
 		g_options.oemCP = settings.oemCP;
 		g_options.ansiCP = settings.ansiCP;
 		g_options.save();
-		Patch7zCP::SetCP(settings.oemCP, settings.ansiCP);
+		if (g_options.patchCP) {
+			Patch7zCP::SetCP(settings.oemCP, settings.ansiCP);
+		}
+		g_options.preferred_7zip_path = settings.preferred_7zip_path;
 		return TRUE;
 	} else
 		return FALSE;

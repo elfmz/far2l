@@ -99,9 +99,6 @@ static const char *lcToAnsiTable[] = {
 	"ur_PK", "CP1256", "uz_UZ", "CP1251", "uz_UZ", "CP1254", "vi_VN", "CP1258",
 	"wa_BE", "CP1252", "zh_HK", "CP950", "zh_SG", "CP936"};
 
-//#if defined(__APPLE__)
-//static void Get_AOEMCP(void) {}
-//#else
 static void Get_AOEMCP(void)
 {
 	char *lc = setlocale(LC_CTYPE, "");
@@ -128,7 +125,28 @@ static void Get_AOEMCP(void)
 		}
 	}
 }
-//#endif
+
+int Patch7zCP::GetDefCP_OEM()
+{
+	if (orig_oemCP == 0) {
+		Get_AOEMCP( );
+		if (!orig_oemCP) {
+			orig_oemCP = 866;
+		}
+	}
+	return orig_oemCP;
+}
+
+int Patch7zCP::GetDefCP_ANSI()
+{
+	if (orig_ansiCP == 0) {
+		Get_AOEMCP( );
+		if (!orig_ansiCP) {
+			orig_ansiCP = 1251;
+		}
+	}
+	return orig_ansiCP;
+}
 
 static bool is_valid_cp(UINT cp)
 {

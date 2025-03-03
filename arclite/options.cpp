@@ -302,7 +302,7 @@ Options g_options;
 Options::Options()
 	: handle_create(true),
 	  handle_commands(true),
-	  preferred_7zip_path(L"/opt/7zip/"),
+	  preferred_7zip_path(L"/usr/lib/7zip/"),
 	  plugin_prefix(L"arc"),
 	  max_check_size(1 << 20),
 	  extract_ignore_errors(false),
@@ -357,8 +357,8 @@ Options::Options()
 	  disabled_formats(),
 	  pgdn_formats(false),
 	  patchCP(true),
-	  oemCP(866),
-	  ansiCP(1251),
+	  oemCP(Patch7zCP::GetDefCP_OEM()),
+	  ansiCP(Patch7zCP::GetDefCP_ANSI()),
 	  correct_name_mode(0x12),
 	  qs_by_default(false),
 	  strict_case(true)

@@ -268,6 +268,8 @@ class Patch7zCP
 {
 public:
 	static void SetCP(UINT oemCP, UINT ansiCP, bool bRePatch = false);
+	static int GetDefCP_OEM();
+	static int GetDefCP_ANSI();
 };
 
 std::pair<DWORD, DWORD> get_posix_and_nt_attributes(DWORD RawAttributes);

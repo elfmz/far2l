@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <cstdint>
 #include <bitset>
+#include <iterator>
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -139,8 +140,8 @@ namespace Dumper {
 
 	template <typename T>
 	struct is_container<T, std::void_t<
-							   decltype(std::declval<T>().begin()),
-							   decltype(std::declval<T>().end())
+							   decltype(std::begin(std::declval<T&>())),
+							   decltype(std::end(std::declval<T&>()))
 							   >> : std::true_type { };
 
 	template <typename T>
@@ -258,9 +259,11 @@ namespace Dumper {
 		} else if constexpr (is_container_v<T>) {
 			LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
 			std::size_t index = 0;
-			for (auto it = value.begin(); it != value.end(); ) {
+			auto it_begin = std::begin(value);
+			auto it_end   = std::end(value);
+			for (auto it = it_begin; it != it_end; ) {
 				auto curr = it++;
-				bool is_last = (it == value.end());
+				bool is_last = (it == it_end);
 				auto child_indent_info = indent_info.CreateChild(!is_last);
 				auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
 				DumpValue(log_stream, item_name, *curr, child_indent_info);

@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <bitset>
 #include <iterator>
+#include <algorithm>
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -424,12 +425,25 @@ namespace Dumper {
 		std::string_view var_name,
 		const ContainerWrapper<ContainerT> &container_wrapper)
 	{
+		auto indent_info = IndentInfo();
+		LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
+
+		auto container_size = std::size(container_wrapper.data);
+		size_t effective_size = (container_wrapper.max_elements == 0)
+									  ? container_size
+									  : std::min(container_size, container_wrapper.max_elements);
+
 		std::size_t index = 0;
 		for (const auto &item : container_wrapper.data) {
-			if (container_wrapper.max_elements > 0 && index >= container_wrapper.max_elements)
-				break;
+			bool is_last = (index == effective_size - 1);
+			auto child_indent_info = indent_info.CreateChild(!is_last);
 			auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
-			DumpValue(log_stream, item_name, item);
+			DumpValue(log_stream, item_name, item, child_indent_info);
+			if (is_last) break;
+		}
+		if (effective_size != container_size) {
+			log_stream << "|   Output limited to " << effective_size
+					   << " elements (total elements: " << container_size << ")\n";
 		}
 	}
 

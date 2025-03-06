@@ -405,25 +405,24 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка контейнеров с итераторами: через макросы DCONT + DUMP
+	// Поддержка итерируемых STL контейнеров и статических массивов: через макросы DCONT + DUMP
 	// ****************************************************************************************************
 
-	template <typename ContainerT, typename = decltype(std::begin(std::declval<ContainerT>())),
-		 typename = decltype(std::end(std::declval<ContainerT>()))>
+	template <typename ContainerT, typename = std::enable_if_t<is_container_v<ContainerT>>>
 	struct ContainerWrapper
 	{
-	  ContainerWrapper(const ContainerT& data, size_t max_elements)
+		ContainerWrapper(const ContainerT &data, size_t max_elements)
 			: data(data), max_elements(max_elements) {}
-	  const ContainerT& data;
-	  size_t max_elements;
+		const ContainerT &data;
+		size_t max_elements;
 	};
 
 
 	template <typename ContainerT>
 	inline void DumpValue(
-		std::ostringstream& log_stream,
+		std::ostringstream &log_stream,
 		std::string_view var_name,
-		const ContainerWrapper<ContainerT>& container_wrapper)
+		const ContainerWrapper<ContainerT> &container_wrapper)
 	{
 		std::size_t index = 0;
 		for (const auto &item : container_wrapper.data) {
@@ -433,38 +432,6 @@ namespace Dumper {
 			DumpValue(log_stream, item_name, item);
 		}
 	}
-
-	// ****************************************************************************************************
-	// Поддержка статических массивов: через макросы DCONT + DUMP
-	// ****************************************************************************************************
-
-	template <typename T, std::size_t N>
-	struct ContainerWrapper<T (&)[N]>
-	{
-	  ContainerWrapper(const T (&data)[N], size_t max_elements)
-		: data(data), max_elements(max_elements) {}
-	  const T (&data)[N];
-	  size_t max_elements;
-	};
-
-
-	template <typename T, std::size_t N>
-	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name,
-						   const ContainerWrapper<T (&)[N]>& container_wrapper)
-	{
-		size_t effective = (container_wrapper.max_elements > 0 && container_wrapper.max_elements < N
-								? container_wrapper.max_elements : N);
-
-		for (std::size_t index = 0; index < effective; ++index) {
-			auto item_name = std::string(var_name) + "[" + std::to_string(index) + "]";
-			DumpValue(log_stream, item_name, container_wrapper.data[index]);
-		}
-	}
-
-
-	template <typename T, std::size_t N>
-	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
-
 
 	// ****************************************************************************************************
 	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...

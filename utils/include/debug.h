@@ -275,6 +275,20 @@ namespace Dumper {
 		}
 	}
 
+
+	template<typename FirstT, typename SecondT>
+	inline void DumpValue(
+		std::ostringstream& log_stream,
+		std::string_view var_name,
+		const std::pair<FirstT, SecondT>& value,
+		const IndentInfo& indent_info)
+	{
+		LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
+		DumpValue(log_stream, std::string(var_name)+".first", value.first, indent_info.CreateChild(true));
+		DumpValue(log_stream, std::string(var_name)+".second", value.second, indent_info.CreateChild(false));
+	}
+
+
 	// ****************************************************************************************************
 	// Поддержка статических массивов char[], unsigned char[] и wchar_t[]
 	// ****************************************************************************************************

@@ -356,24 +356,38 @@ namespace Dumper {
 	// ****************************************************************************************************
 
 	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
-									 std::string_view line_prefix, size_t bytes_per_line = 16)
+					std::string_view line_prefix, size_t bytes_per_line = 16)
 	{
 		auto separator_pos = bytes_per_line / 2;
-
 		std::ostringstream result;
 		result << std::hex << std::setfill('0');
 
-		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
-			result << line_prefix << std::setw(8)  << offset << "  ";
-			for (size_t i = 0; i < bytes_per_line && (offset + i) < length; ++i) {
-				if (i == separator_pos) {
-					result << "| ";
-				}
-				result << std::setw(2) << static_cast<unsigned int>(data[offset + i]) << " ";
-			}
-			result << '\n';
+		result << line_prefix << "          ";
+		for (size_t i = 0; i < bytes_per_line; ++i) {
+			if (i == separator_pos) result << "| ";
+			result << std::setw(2) << i << " ";
 		}
+		result << " | ASCII\n";
+		result << line_prefix << "------------";
+		result << std::string(3 * bytes_per_line, '-');
+		result << "-+" << std::string(bytes_per_line + 1, '-') << "\n";
 
+		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
+			result << line_prefix << std::setw(8) << offset << "  ";
+			std::string ascii;
+			for (size_t i = 0; i < bytes_per_line; ++i) {
+				if (i == separator_pos) result << "| ";
+				if (offset + i < length) {
+					auto byte = data[offset + i];
+					result << std::setw(2) << static_cast<unsigned int>(byte) << " ";
+					ascii.push_back((byte >= 32 && byte < 127) ? byte : '.');
+				} else {
+					result << "   ";
+					ascii.push_back(' ');
+				}
+			}
+			result << " | " << ascii << '\n';
+		}
 		return result.str();
 	}
 

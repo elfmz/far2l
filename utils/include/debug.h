@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <cstdint>
 #include <bitset>
+#include <iterator>
+#include <algorithm>
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -139,8 +141,8 @@ namespace Dumper {
 
 	template <typename T>
 	struct is_container<T, std::void_t<
-							   decltype(std::declval<T>().begin()),
-							   decltype(std::declval<T>().end())
+							   decltype(std::begin(std::declval<T&>())),
+							   decltype(std::end(std::declval<T&>()))
 							   >> : std::true_type { };
 
 	template <typename T>
@@ -258,9 +260,11 @@ namespace Dumper {
 		} else if constexpr (is_container_v<T>) {
 			LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
 			std::size_t index = 0;
-			for (auto it = value.begin(); it != value.end(); ) {
+			auto it_begin = std::begin(value);
+			auto it_end   = std::end(value);
+			for (auto it = it_begin; it != it_end; ) {
 				auto curr = it++;
-				bool is_last = (it == value.end());
+				bool is_last = (it == it_end);
 				auto child_indent_info = indent_info.CreateChild(!is_last);
 				auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
 				DumpValue(log_stream, item_name, *curr, child_indent_info);
@@ -270,6 +274,20 @@ namespace Dumper {
 			LogVarWithIndentation(log_stream, var_name, value, indent_info);
 		}
 	}
+
+
+	template<typename FirstT, typename SecondT>
+	inline void DumpValue(
+		std::ostringstream& log_stream,
+		std::string_view var_name,
+		const std::pair<FirstT, SecondT>& value,
+		const IndentInfo& indent_info)
+	{
+		LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
+		DumpValue(log_stream, std::string(var_name)+".first", value.first, indent_info.CreateChild(true));
+		DumpValue(log_stream, std::string(var_name)+".second", value.second, indent_info.CreateChild(false));
+	}
+
 
 	// ****************************************************************************************************
 	// Поддержка статических массивов char[], unsigned char[] и wchar_t[]
@@ -338,24 +356,38 @@ namespace Dumper {
 	// ****************************************************************************************************
 
 	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
-									 std::string_view line_prefix, size_t bytes_per_line = 16)
+					std::string_view line_prefix, size_t bytes_per_line = 16)
 	{
 		auto separator_pos = bytes_per_line / 2;
-
 		std::ostringstream result;
 		result << std::hex << std::setfill('0');
 
-		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
-			result << line_prefix << std::setw(8)  << offset << "  ";
-			for (size_t i = 0; i < bytes_per_line && (offset + i) < length; ++i) {
-				if (i == separator_pos) {
-					result << "| ";
-				}
-				result << std::setw(2) << static_cast<unsigned int>(data[offset + i]) << " ";
-			}
-			result << '\n';
+		result << line_prefix << "          ";
+		for (size_t i = 0; i < bytes_per_line; ++i) {
+			if (i == separator_pos) result << "| ";
+			result << std::setw(2) << i << " ";
 		}
+		result << " | ASCII\n";
+		result << line_prefix << "------------";
+		result << std::string(3 * bytes_per_line, '-');
+		result << "-+" << std::string(bytes_per_line + 1, '-') << "\n";
 
+		for (size_t offset = 0; offset < length; offset += bytes_per_line) {
+			result << line_prefix << std::setw(8) << offset << "  ";
+			std::string ascii;
+			for (size_t i = 0; i < bytes_per_line; ++i) {
+				if (i == separator_pos) result << "| ";
+				if (offset + i < length) {
+					auto byte = data[offset + i];
+					result << std::setw(2) << static_cast<unsigned int>(byte) << " ";
+					ascii.push_back((byte >= 32 && byte < 127) ? byte : '.');
+				} else {
+					result << "   ";
+					ascii.push_back(' ');
+				}
+			}
+			result << " | " << ascii << '\n';
+		}
 		return result.str();
 	}
 
@@ -402,66 +434,46 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка контейнеров с итераторами: через макросы DCONT + DUMP
+	// Поддержка итерируемых STL контейнеров и статических массивов: через макросы DCONT + DUMP
 	// ****************************************************************************************************
 
-	template <typename ContainerT, typename = decltype(std::begin(std::declval<ContainerT>())),
-		 typename = decltype(std::end(std::declval<ContainerT>()))>
+	template <typename ContainerT, typename = std::enable_if_t<is_container_v<ContainerT>>>
 	struct ContainerWrapper
 	{
-	  ContainerWrapper(const ContainerT& data, size_t max_elements)
+		ContainerWrapper(const ContainerT &data, size_t max_elements)
 			: data(data), max_elements(max_elements) {}
-	  const ContainerT& data;
-	  size_t max_elements;
+		const ContainerT &data;
+		size_t max_elements;
 	};
 
 
 	template <typename ContainerT>
 	inline void DumpValue(
-		std::ostringstream& log_stream,
+		std::ostringstream &log_stream,
 		std::string_view var_name,
-		const ContainerWrapper<ContainerT>& container_wrapper)
+		const ContainerWrapper<ContainerT> &container_wrapper)
 	{
+		auto indent_info = IndentInfo();
+		LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
+
+		auto container_size = std::size(container_wrapper.data);
+		size_t effective_size = (container_wrapper.max_elements == 0)
+									  ? container_size
+									  : std::min(container_size, container_wrapper.max_elements);
+
 		std::size_t index = 0;
 		for (const auto &item : container_wrapper.data) {
-			if (container_wrapper.max_elements > 0 && index >= container_wrapper.max_elements)
-				break;
+			bool is_last = (index == effective_size - 1);
+			auto child_indent_info = indent_info.CreateChild(!is_last);
 			auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
-			DumpValue(log_stream, item_name, item);
+			DumpValue(log_stream, item_name, item, child_indent_info);
+			if (is_last) break;
+		}
+		if (effective_size != container_size) {
+			log_stream << "|   Output limited to " << effective_size
+					   << " elements (total elements: " << container_size << ")\n";
 		}
 	}
-
-	// ****************************************************************************************************
-	// Поддержка статических массивов: через макросы DCONT + DUMP
-	// ****************************************************************************************************
-
-	template <typename T, std::size_t N>
-	struct ContainerWrapper<T (&)[N]>
-	{
-	  ContainerWrapper(const T (&data)[N], size_t max_elements)
-		: data(data), max_elements(max_elements) {}
-	  const T (&data)[N];
-	  size_t max_elements;
-	};
-
-
-	template <typename T, std::size_t N>
-	inline void DumpValue(std::ostringstream& log_stream, std::string_view var_name,
-						   const ContainerWrapper<T (&)[N]>& container_wrapper)
-	{
-		size_t effective = (container_wrapper.max_elements > 0 && container_wrapper.max_elements < N
-								? container_wrapper.max_elements : N);
-
-		for (std::size_t index = 0; index < effective; ++index) {
-			auto item_name = std::string(var_name) + "[" + std::to_string(index) + "]";
-			DumpValue(log_stream, item_name, container_wrapper.data[index]);
-		}
-	}
-
-
-	template <typename T, std::size_t N>
-	ContainerWrapper(const T (&)[N], size_t) -> ContainerWrapper<T (&)[N]>;
-
 
 	// ****************************************************************************************************
 	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...

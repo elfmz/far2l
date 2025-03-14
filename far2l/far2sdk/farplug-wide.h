@@ -2161,7 +2161,7 @@ typedef struct FarStandardFunctions
 	FARSTDKEYNAMETOKEY         FarNameToKey;
 	FARSTDINPUTRECORDTOKEY     FarInputRecordToKey;
 	FARSTDXLAT                 XLat;
-//	FARSTDGETFILEOWNER         GetFileOwner;
+	FARSTDGETFILEOWNER         GetFileOwner;
 	FARSTDGETNUMBEROFLINKS     GetNumberOfLinks;
 	FARSTDRECURSIVESEARCH      FarRecursiveSearch;
 	FARSTDMKTEMP               MkTemp;
@@ -2182,7 +2182,10 @@ typedef struct FarStandardFunctions
 	FARSTDLOCALSTRICMP         LStrcmp;
 	FARSTDLOCALSTRNICMP        LStrncmp;
 
-	FARSETFILEGROUP			   GetFileOwner;
+	FARAPIVT_ENUM_BACKGROUND   VTEnumBackground;
+	FARAPIVT_LOGEXPORT         VTLogExport;
+
+//	FARSETFILEGROUP			   GetFileOwner;
 	FARSETFILEGROUP			   GetFileGroup;
 	FARESETFILEMODE			   ESetFileMode;
 	FARESETFILETIME			   ESetFileTime;
@@ -2199,9 +2202,6 @@ typedef struct FarStandardFunctions
 	FARGETTIMESEPARATOR		   GetTimeSeparator;
 	FARGETDECIMALSEPARATOR	   GetDecimalSeparator;
 
-
-	FARAPIVT_ENUM_BACKGROUND   VTEnumBackground;
-	FARAPIVT_LOGEXPORT         VTLogExport;
 } FARSTANDARDFUNCTIONS;
 
 struct PluginStartupInfo

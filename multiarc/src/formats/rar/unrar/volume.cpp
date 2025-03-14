@@ -19,7 +19,7 @@ bool MergeArchive(Archive &Arc,ComprDataIO *DataIO,bool ShowFileName,wchar Comma
   if (DataIO!=NULL && SplitHeader)
   {
     bool PackedHashPresent=Arc.Format==RARFMT50 || 
-         hd->UnpVer>=20 && hd->FileHash.CRC32!=0xffffffff;
+         (hd->UnpVer>=20 && hd->FileHash.CRC32!=0xffffffff);
     if (PackedHashPresent && 
         !DataIO->PackedDataHash.Cmp(&hd->FileHash,hd->UseHashKey ? hd->HashKey:NULL))
       uiMsg(UIERROR_CHECKSUMPACKED, Arc.FileName, hd->FileName);
@@ -253,7 +253,7 @@ bool DllVolChange(CommandData *Cmd,std::wstring &NextName)
   // It is legitimate for program to return the same name when waiting
   // for currently non-existent volume.
   // Also we quit to prevent an infinite loop if no callback is defined.
-  if (DllVolAborted || Cmd->Callback==NULL && Cmd->ChangeVolProc==NULL)
+  if (DllVolAborted || (Cmd->Callback==NULL && Cmd->ChangeVolProc==NULL) )
   {
     Cmd->DllError=ERAR_EOPEN;
     return false;

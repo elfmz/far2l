@@ -43,7 +43,7 @@ void ListArchive(CommandData *Cmd)
             mprintf(L", %s", St(MListSolid));
           if (Arc.SFXSize>0)
             mprintf(L", %s", St(MListSFX));
-          if (Arc.Volume)
+          if (Arc.Volume) {
             if (Arc.Format==RARFMT50)
             {
               // RAR 5.0 archives store the volume number in main header,
@@ -53,6 +53,8 @@ void ListArchive(CommandData *Cmd)
             }
             else
               mprintf(L", %s", St(MListVolume));
+          }
+
           if (Arc.Protected)
             mprintf(L", %s", St(MListRR));
           if (Arc.Locked)
@@ -116,10 +118,12 @@ void ListArchive(CommandData *Cmd)
                   ListFileHeader(Arc,Arc.SubHead,TitleShown,Verbose,true,false,Cmd->DisableNames);
               }
               break;
+			defalut:
+			break;
           }
           Arc.SeekToNext();
         }
-        if (!Bare && !Technical)
+        if (!Bare && !Technical) {
           if (TitleShown)
           {
             wchar UnpSizeText[20];
@@ -146,15 +150,17 @@ void ListArchive(CommandData *Cmd)
             SumPackSize+=TotalPackSize;
             mprintf(L"\n");
           }
-          else
+          else {
             mprintf(St(MListNoFiles));
+          }
+		}
 
         ArcCount++;
 
 #ifndef NOVOLUME
-        if (Cmd->VolSize==VOLSIZE_AUTO && (Arc.FileHead.SplitAfter ||
-            Arc.GetHeaderType()==HEAD_ENDARC && Arc.EndArcHead.NextVolume) &&
-            MergeArchive(Arc,NULL,false,Cmd->Command[0]))
+        if ( (Cmd->VolSize==VOLSIZE_AUTO && (Arc.FileHead.SplitAfter)) ||
+            (Arc.GetHeaderType()==HEAD_ENDARC && Arc.EndArcHead.NextVolume &&
+            MergeArchive(Arc,NULL,false,Cmd->Command[0])) )
           Arc.Seek(0,SEEK_SET);
         else
 #endif
@@ -285,7 +291,7 @@ void ListFileHeader(Archive &Arc,FileHeader &hd,bool &TitleShown,bool Verbose,bo
             Type=St(MListCopy);     break;
         }
       mprintf(L"\n%12ls: %ls",St(MListType),Type);
-      if (hd.RedirType!=FSREDIR_NONE)
+      if (hd.RedirType!=FSREDIR_NONE) {
         if (Format==RARFMT15)
         {
           std::string LinkTargetA;
@@ -307,8 +313,10 @@ void ListFileHeader(Archive &Arc,FileHeader &hd,bool &TitleShown,bool Verbose,bo
           CharToWide(LinkTargetA,LinkTarget);
           mprintf(L"\n%12ls: %ls",St(MListTarget),LinkTarget.c_str());
         }
-        else
+        else {
           mprintf(L"\n%12ls: %ls",St(MListTarget),hd.RedirName.c_str());
+	    }
+      }
     }
     if (!hd.Dir)
     {
@@ -361,17 +369,22 @@ void ListFileHeader(Archive &Arc,FileHeader &hd,bool &TitleShown,bool Verbose,bo
       mprintf(L"\n%12ls: %ls",St(MListHostOS),HostOS);
 
     std::wstring WinSize;
-    if (!hd.Dir)
-      if (hd.WinSize%1073741824==0)
+    if (!hd.Dir) {
+      if (hd.WinSize%1073741824==0) {
         WinSize=L" -md=" + std::to_wstring(hd.WinSize/1073741824) + L"g";
-      else
-        if (hd.WinSize%1048576==0)
+      }
+      else {
+        if (hd.WinSize%1048576==0) {
           WinSize=L" -md=" + std::to_wstring(hd.WinSize/1048576) + L"m";
-        else
+        }
+        else {
           if (hd.WinSize>=1024)
             WinSize=L" -md=" + std::to_wstring(hd.WinSize/1024) + L"k";
           else
             WinSize=L" -md=?";
+        }
+      }
+    }
 
     mprintf(L"\n%12ls: RAR %ls(v%d) -m%d%s",St(MListCompInfo),
             Format==RARFMT15 ? L"1.5":L"5.0",
@@ -422,8 +435,9 @@ void ListFileHeader(Archive &Arc,FileHeader &hd,bool &TitleShown,bool Verbose,bo
 
   if (Verbose)
   {
-    if (hd.FileHash.Type==HASH_CRC32)
+    if (hd.FileHash.Type==HASH_CRC32) {
       mprintf(L"%8.8X  ",hd.FileHash.CRC32);
+    }
     else
       if (hd.FileHash.Type==HASH_BLAKE2)
       {

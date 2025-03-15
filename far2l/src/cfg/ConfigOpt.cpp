@@ -335,6 +335,8 @@ const ConfigOpt g_cfg_opts[] {
 
 	{true,  NSecSystem, "FolderInfo", &Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
 
+	{true,  NSecSystem, "OwnerGroupShowId", &Opt.OwnerGroupShowId, 0},
+
 	{false, NSecSystemNowell, "MoveRO", &Opt.Nowell.MoveRO, 1},
 
 	{false, NSecSystemExecutor, "RestoreCP", &Opt.RestoreCPAfterExecute, 1},

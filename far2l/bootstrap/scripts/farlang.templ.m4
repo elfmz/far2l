@@ -16809,6 +16809,28 @@ upd:"(multiple values)"
 "(кілька значень)"
 "(некалькі значэнняў)"
 
+SetAttrOwnerGroupShowId
+"Показывать U&id / Gid"
+"Show Ui&d / Gid"
+"&Zobrazit Uid / Gid"
+"Ui&d / Gid anzeigen"
+"Megjelenítése Ui&d / Gid"
+"Pokaż &Uid / Gid"
+"Mostrar Uid / Gid"
+"Показувати U&id / Gid"
+"Паказваць U&id / Gid"
+
+SetAttrOwnerOriginal
+"Исходное"
+"Original"
+"Originál"
+"Original"
+"Eredeti"
+"Oryginalny"
+"Original"
+"Вихідне"
+"Першасны"
+
 SetAttrModification
 "Время последней &записи:"
 "Last &write time:"

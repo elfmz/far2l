@@ -10,6 +10,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Customize Size column in panels (all by dialog or **Ctrl+Alt+D**, symlinks by **Ctrl+Alt+L**)
 * More customize dirs/files markers in panels (by dialog or **Ctrl+Alt+M** and **Ctrl+Alt+N**)
 * _New:_ Link item in File menu (in addition to the usual **Alt+F6**)
+* File attributes dialog (by **Ctrl+A**): ability to show "uname"/"gname" or "uid: uname"/"gid: gname"
 * _New:_ Chattr / chflags with all flags for single file (in File menu or by **Ctrl+Alt+A**)
 * _New:_ Python-subplugin: copy/paste files via clipboard - wx ONLY version - with support for gnome clipboard types, works with gnome files/nautilus
 * _New:_ At 1st run detect Russian locale

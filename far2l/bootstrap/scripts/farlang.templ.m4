@@ -17075,6 +17075,17 @@ upd:"Grou&p:"
 "Гр&упа:"
 "С&уполка:"
 
+SetAttrOwnerGroupShowId
+"Показывать U&id / Gid"
+"Show Ui&d / Gid"
+"&Zobrazit Uid / Gid"
+"Ui&d / Gid anzeigen"
+"Megjelenítése Ui&d / Gid"
+"Pokaż &Uid / Gid"
+"Mostrar Uid / Gid"
+"Показувати U&id / Gid"
+"Паказваць U&id / Gid"
+
 SetAttrModeTitle
 " Права доступа (chmod) "
 " Permissions (chmod) "

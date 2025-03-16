@@ -546,7 +546,7 @@ BOOL WINAPI _export ZIP_GetFormatName(int Type, std::string &FormatName, std::st
 BOOL WINAPI _export ZIP_GetDefaultCommands(int Type, int Command, std::string &Dest)
 {
 	if (Type == 0) {
-#if ZIP_LIBARCHIVE
+#if ZIP_LIBARCHIVE && !defined(__APPLE__)
 		// Console PKZIP 4.0/Win32 commands
 		static const char *Commands[] = {/*Extract               */ "^libarch X %%A -@%%R {-cs=%%T} "
 																	"{-pwd=%%P} -- %%FMq4096",

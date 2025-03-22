@@ -34,6 +34,11 @@
 #include <cmath>
 #include <cstring>
 
+#include <thread>
+#include <mutex>
+#include <future>
+#include <condition_variable>
+
 /*
  */
 
@@ -65,24 +70,20 @@ WARNING_DISABLE_CLANG("-Weverything")
 #define HELLO_I_AM_FROM_ARCLITE 1
 #define EXTERNAL_CODECS			1
 
-#ifndef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
+/*
+	virtual destructor in IUnknown:
+	- no  : 7-Zip (Windows)
+	- no  : 7-Zip (Linux) (v23) in default mode
+	- yes : p7zip
+	- yes : 7-Zip (Linux) before v23
+	- yes : 7-Zip (Linux) (v23), if Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN is defined
+*/
 //	#define Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN 1
-#endif
 
-#if 0
-#include "7z/CPP/7zip/Archive/IArchive.h"
-#include "7z/CPP/7zip/IPassword.h"
-#include "7z/CPP/7zip/ICoder.h"
-#else
-//ddddddddddd
 #include "7z/h/CPP/7zip/Archive/IArchive.h"
 #include "7z/h/CPP/7zip/IPassword.h"
 #include "7z/h/CPP/7zip/ICoder.h"
 #include "7z/h/CPP/Common/MyCom.h"
-//	#include "7z/h2/CPP/7zip/Archive/IArchive.h"
-//	#include "7z/h2/CPP/7zip/IPassword.h"
-//	#include "7z/h2/CPP/7zip/ICoder.h"
-#endif
 
 #ifndef Z7_ARRAY_SIZE
 #define Z7_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))

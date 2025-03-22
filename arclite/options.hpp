@@ -47,6 +47,8 @@ struct Options
 	std::wstring preferred_7zip_path;
 	std::wstring plugin_prefix;
 	unsigned max_check_size;
+	int relay_buffer_size;
+	int max_arc_cache_size;
 	// extract
 	bool extract_ignore_errors;
 	bool extract_access_rights;
@@ -88,9 +90,8 @@ struct Options
 	bool confirm_esc_interrupt_operation;
 	// panel mode
 	bool own_panel_view_mode;
-//	uintptr_t panel_view_mode;
 	unsigned int panel_view_mode;
-	uint32_t panel_sort_mode;
+	int panel_sort_mode;
 	bool panel_reverse_sort;
 	// masks
 	bool use_include_masks;
@@ -105,10 +106,8 @@ struct Options
 	std::wstring disabled_formats;
 	bool pgdn_formats;
 	bool patchCP;
-//	uintptr_t oemCP;
-//	uintptr_t ansiCP;
-	unsigned int oemCP;
-	unsigned int ansiCP;
+	int oemCP;
+	int ansiCP;
 	unsigned int correct_name_mode;
 	bool qs_by_default;
 	bool strict_case;

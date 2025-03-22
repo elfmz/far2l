@@ -221,6 +221,8 @@ std::wstring ArcChain::to_string() const
 		if (!result.empty())
 			result += L"→";
 		result += ArcAPI::formats().at(arc.type).name;
+		if (arc.flags & 1)
+			result += L"@";
 	});
 	return result;
 }
@@ -463,11 +465,37 @@ void ArcAPI::load_libs(const std::wstring &path)
 				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetIsArc")));
 		arc_lib.SetCodecs = reinterpret_cast<Func_SetCodecs>(
 				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "SetCodecs")));
+		arc_lib.GetModuleProp = reinterpret_cast<Func_GetModuleProp>(
+				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetModuleProp")));
 
-		if (arc_lib.CreateObject
-				&& ((arc_lib.GetNumberOfFormats && arc_lib.GetHandlerProperty2)
+		if (arc_lib.CreateObject && ((arc_lib.GetNumberOfFormats && arc_lib.GetHandlerProperty2)
 						|| arc_lib.GetHandlerProperty)) {
-			arc_lib.version = get_module_version(arc_lib.module_path);
+			if (arc_lib.GetModuleProp) {
+				PropVariant prop;
+				if (arc_lib.GetModuleProp(NModulePropID::kVersion, prop.ref()) == S_OK && prop.is_uint()) {
+					arc_lib.version = prop.get_uint();
+				}
+				if (arc_lib.GetModuleProp(NModulePropID::kInterfaceType, prop.ref()) == S_OK && prop.is_uint()) {
+					uint32_t haveVirtDestructor = prop.get_uint();
+#ifdef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
+						if (!haveVirtDestructor) {
+							fprintf(stderr, "ArcAPI::load_libs() skipped %s without VIRTUAL_DESTRUCTOR_IN_IUNKNOWN\n", s2.c_str());
+							dlclose(arc_lib.h_module);
+							continue;
+						}
+#else
+						if (haveVirtDestructor) {
+							fprintf(stderr, "ArcAPI::load_libs() skipped %s with VIRTUAL_DESTRUCTOR_IN_IUNKNOWN\n", s2.c_str());
+							dlclose(arc_lib.h_module);
+							continue;
+						}
+#endif
+				}
+			}
+			else {
+				arc_lib.version = get_module_version(arc_lib.module_path);
+			}
+
 			Func_GetHashers getHashers = reinterpret_cast<Func_GetHashers>(
 					reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetHashers")));
 			if (getHashers) {
@@ -885,6 +913,13 @@ bool ArcFileInfo::operator<(const ArcFileInfo &file_info) const
 	else
 		return parent < file_info.parent;
 }
+
+//bool Archive::is_()
+//{
+
+
+
+//}
 
 void Archive::make_index()
 {

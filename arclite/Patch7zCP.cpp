@@ -124,15 +124,20 @@ static void Get_AOEMCP(void)
 			break;	  // Stop searching once a match is found
 		}
 	}
+
+	if (!orig_oemCP) {
+		orig_oemCP = 866;
+	}
+
+	if (!orig_ansiCP) {
+		orig_ansiCP = 1251;
+	}
 }
 
 int Patch7zCP::GetDefCP_OEM()
 {
 	if (orig_oemCP == 0) {
 		Get_AOEMCP( );
-		if (!orig_oemCP) {
-			orig_oemCP = 866;
-		}
 	}
 	return orig_oemCP;
 }
@@ -141,9 +146,6 @@ int Patch7zCP::GetDefCP_ANSI()
 {
 	if (orig_ansiCP == 0) {
 		Get_AOEMCP( );
-		if (!orig_ansiCP) {
-			orig_ansiCP = 1251;
-		}
 	}
 	return orig_ansiCP;
 }
@@ -754,13 +756,6 @@ bool get_faddrs(void *handle)
 
 	_target_addr = dlsym(handle, "_ZNK8NArchive4NZip5CItem16GetUnicodeStringER7UStringRK7AStringbbj");
 
-	if (!_MultiByteToUnicodeString2 || !_ConvertUTF8ToUnicode || !_Check_UTF8_Buf || !_CrcCalc
-			|| !_Convert_UTF8_Buf_To_Unicode || !_target_addr) {
-
-		fprintf(stderr, "get_faddrs() failed!!!\n");
-		return false;
-	}
-
 	fprintf(stderr, "_MultiByteToUnicodeString2 = %p\n", _MultiByteToUnicodeString2);
 	fprintf(stderr, "_ConvertUTF8ToUnicode = %p\n", _ConvertUTF8ToUnicode);
 	fprintf(stderr, "_Check_UTF8_Buf = %p\n", _Check_UTF8_Buf);
@@ -768,6 +763,13 @@ bool get_faddrs(void *handle)
 	fprintf(stderr, "_Convert_UTF8_Buf_To_Unicode = %p\n", _Convert_UTF8_Buf_To_Unicode);
 
 	fprintf(stderr, "&NArchive::NZip::CItem::GetUnicodeString = %p\n", _target_addr);
+
+	if (!_MultiByteToUnicodeString2 || !_ConvertUTF8ToUnicode || !_Check_UTF8_Buf || !_CrcCalc
+			|| !_Convert_UTF8_Buf_To_Unicode || !_target_addr) {
+
+		fprintf(stderr, "get_faddrs() failed!!!\n");
+		return false;
+	}
 
 	return true;
 }
@@ -801,10 +803,10 @@ static bool patch_plt(void *handle)
 	} u;
 
 	*got_entry = (void *)u.fptr;
-
 	mprotect(page, getpagesize(), PROT_READ);
-#endif
+
 	return true;
+#endif
 }
 
 static bool patch_addr(void *handle)

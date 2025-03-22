@@ -417,8 +417,9 @@ public:
 		//    PAGE_NOACCESS));
 		buffer = (unsigned char *)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE,
 				MAP_PRIVATE /*|MAP_NORESERVE*/ | MAP_ANONYMOUS, -1, 0);
-		WINPORT_SetLastError(buffer ? ERROR_SUCCESS : ERROR_NOT_ENOUGH_MEMORY);
-		CHECK_SYS(buffer);
+		if (!buffer) {
+			FAIL(E_OUTOFMEMORY);
+		}
 	}
 	~FileWriteCache()
 	{
@@ -545,7 +546,6 @@ public:
 		if (file_info.is_dir)
 			return S_OK;
 
-//		fprintf(stderr, "^ ArchiveExtractor::GetStream( ) %S \n", file_info.name.c_str() );
 		const auto cmode = static_cast<int>(g_options.correct_name_mode);
 		file_path = correct_filename(file_info.name, cmode, file_info.is_altstream);
 		UInt32 parent_index = file_info.parent;
@@ -725,7 +725,6 @@ private:
 
 	void prepare_extract(const FileIndexRange &index_range, const std::wstring &parent_dir)
 	{
-//		fprintf(stderr, "=== prepare_extract( ) \n" );
 		const auto cmode = static_cast<int>(g_options.correct_name_mode);
 		std::for_each(index_range.first, index_range.second, [&](UInt32 file_index) {
 			const ArcFileInfo &file_info = archive.file_list[file_index];
@@ -833,7 +832,6 @@ private:
 
 	void set_dir_attr(const FileIndexRange &index_range, const std::wstring &parent_dir)
 	{
-//		fprintf(stderr, " +++ EXTRACT - set_dir_attr( ) - set range %u - %u parent %S Thread %ld\n", *index_range.first, *index_range.second, parent_dir.c_str(), pthread_self());
 		const auto cmode = static_cast<int>(g_options.correct_name_mode);
 
 		for_each(index_range.first, index_range.second, [&](UInt32 file_index) {
@@ -904,6 +902,134 @@ public:
 	}
 };
 
+class SimpleExtractor : public IArchiveExtractCallback, public ICryptoGetTextPassword, public ComBase
+{
+private:
+	std::shared_ptr<Archive> archive;
+	ComObject<ISequentialOutStream> mem_stream;
+
+public:
+	SimpleExtractor(std::shared_ptr<Archive> archive, ISequentialOutStream* stream = nullptr)
+	:	archive(archive),
+		mem_stream(stream)
+	{}
+
+	UNKNOWN_IMPL_BEGIN
+	UNKNOWN_IMPL_ITF(IProgress)
+	UNKNOWN_IMPL_ITF(IArchiveExtractCallback)
+	UNKNOWN_IMPL_ITF(ICryptoGetTextPassword)
+	UNKNOWN_IMPL_END
+
+	STDMETHODIMP SetTotal(UInt64 total) noexcept override
+	{
+//		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP SetCompleted(const UInt64 *completeValue) noexcept override
+	{
+//		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP
+	GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode) noexcept override
+	{
+		COM_ERROR_HANDLER_BEGIN
+		if (mem_stream) {
+			mem_stream.detach(outStream);
+		}
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP PrepareOperation(Int32 askExtractMode) noexcept override
+	{
+//		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP SetOperationResult(Int32 resultEOperationResult) noexcept override
+	{
+		COM_ERROR_HANDLER_BEGIN
+		return S_OK;
+		COM_ERROR_HANDLER_END
+/**
+		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		RETRY_OR_IGNORE_BEGIN
+		bool encrypted = !archive->m_password.empty();
+		Error error;
+		switch (resultEOperationResult) {
+			case NArchive::NExtract::NOperationResult::kOK:
+			case NArchive::NExtract::NOperationResult::kDataAfterEnd:
+				return S_OK;
+			case NArchive::NExtract::NOperationResult::kUnsupportedMethod:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNSUPPORTED_METHOD));
+				break;
+			case NArchive::NExtract::NOperationResult::kDataError:
+				archive->m_password.clear();
+				error.messages.emplace_back(Far::get_msg(
+						encrypted ? MSG_ERROR_EXTRACT_DATA_ERROR_ENCRYPTED : MSG_ERROR_EXTRACT_DATA_ERROR));
+				break;
+			case NArchive::NExtract::NOperationResult::kCRCError:
+				archive->m_password.clear();
+				error.messages.emplace_back(Far::get_msg(
+						encrypted ? MSG_ERROR_EXTRACT_CRC_ERROR_ENCRYPTED : MSG_ERROR_EXTRACT_CRC_ERROR));
+				break;
+			case NArchive::NExtract::NOperationResult::kUnavailable:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNAVAILABLE_DATA));
+				break;
+			case NArchive::NExtract::NOperationResult::kUnexpectedEnd:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNEXPECTED_END_DATA));
+				break;
+			// case NArchive::NExtract::NOperationResult::kDataAfterEnd:
+			//   error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_DATA_AFTER_END));
+			//   break;
+			case NArchive::NExtract::NOperationResult::kIsNotArc:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_IS_NOT_ARCHIVE));
+				break;
+			case NArchive::NExtract::NOperationResult::kHeadersError:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_HEADERS_ERROR));
+				break;
+			case NArchive::NExtract::NOperationResult::kWrongPassword:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_WRONG_PASSWORD));
+				break;
+			default:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNKNOWN));
+				break;
+		}
+		error.code = E_MESSAGE;
+		error.messages.emplace_back(file_path);
+		error.messages.emplace_back(archive->arc_path);
+		throw error;
+		IGNORE_END(*ignore_errors, *error_log, *progress)
+		COM_ERROR_HANDLER_END
+**/
+	}
+
+	STDMETHODIMP CryptoGetTextPassword(BSTR *password) noexcept override
+	{
+//		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		if (archive->m_password.empty()) {
+		//			ProgressSuspend ps(*progress);
+		//			if (!password_dialog(archive->m_password, archive->arc_path))
+			return S_OK;
+		//			FAIL(E_ABORT);
+		}
+		BStr(archive->m_password).detach(password);
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+};
+
 void Archive::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indices,
 		const ExtractOptions &options, std::shared_ptr<ErrorLog> error_log,
 		std::vector<UInt32> *extracted_indices)
@@ -937,7 +1063,39 @@ void Archive::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indic
 			shared_from_this(), overwrite_action, ignore_errors, 
 			error_log, cache, progress,
 			skipped_indices));
-	COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor));
+
+	UInt64 bCommStream = 0;
+	if (ex_stream) {
+		ex_stream->Seek(0, STREAM_CTL_GETFULLSIZE, &bCommStream);
+	}
+
+	if (ex_stream && !bCommStream) {
+		ex_stream->Seek(0, STREAM_CTL_RESET, nullptr);
+		UInt32 indices2[2] = { 0, 0 };
+		ComObject<IArchiveExtractCallback> extractor2(new SimpleExtractor(parent, ex_out_stream));
+
+		std::promise<int> promise;
+		std::future<int> future = promise.get_future();
+
+		std::thread ex_thread([&]() {
+			int errc = parent->in_arc->Extract(indices2, 1, 0, extractor2);
+			ex_stream->Seek(0, STREAM_CTL_FINISH, nullptr);
+			promise.set_value(errc);
+		});
+
+		int errc1 = in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor);
+		ex_stream->Seek(0, STREAM_CTL_FINISH, nullptr);
+		ex_thread.join();
+		int errc2 = future.get();
+
+		COM_ERROR_CHECK(errc1);
+		(void)errc2;
+		//COM_ERROR_CHECK(errc2);
+	}
+	else {
+		COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor));
+	}
+
 	cache->finalize();
 	progress->clean();
 

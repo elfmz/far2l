@@ -38,7 +38,7 @@ unsigned calc_percent(UInt64 completed, UInt64 total)
 
 UInt64 get_module_version(const std::wstring &file_path)
 {
-	UInt64 version = 999;
+	UInt64 version = 0;
 //  DWORD dw_handle;
 //  DWORD ver_size = GetFileVersionInfoSizeW(file_path.c_str(), &dw_handle);
 #if 0

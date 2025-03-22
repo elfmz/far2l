@@ -305,6 +305,8 @@ Options::Options()
 	  preferred_7zip_path(L"/usr/lib/7zip/"),
 	  plugin_prefix(L"arc"),
 	  max_check_size(1 << 20),
+	  relay_buffer_size(32),
+	  max_arc_cache_size(128),
 	  extract_ignore_errors(false),
 	  extract_access_rights(true),
 	  extract_owners_groups(false),
@@ -343,7 +345,7 @@ Options::Options()
 	  panel_view_mode(2),
 	  panel_sort_mode(SM_NAME),
 	  panel_reverse_sort(false),
-	  use_include_masks(true),
+	  use_include_masks(false),
 	  include_masks(L"*.zip,*.rar,*.[7bgx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-"
 					L"9],*.bz2,*.cab,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,"
 					L"*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.[ah]pk,*.ddi,*.x2,*."
@@ -524,6 +526,9 @@ bool Options::load()
 	GET_VALUE(preferred_7zip_path, str);
 	GET_VALUE(plugin_prefix, str);
 	GET_VALUE_XML(max_check_size, int);
+	GET_VALUE(relay_buffer_size, int);
+	GET_VALUE(max_arc_cache_size, int);
+	GET_VALUE(extract_ignore_errors, bool);
 	GET_VALUE(extract_ignore_errors, bool);
 	GET_VALUE(extract_access_rights, bool);
 	GET_VALUE(extract_owners_groups, bool);
@@ -601,6 +606,8 @@ void Options::save() const
 	SET_VALUE(preferred_7zip_path, str);
 	SET_VALUE(plugin_prefix, str);
 	SET_VALUE_XML(max_check_size, int);
+	SET_VALUE(relay_buffer_size, int);
+	SET_VALUE(max_arc_cache_size, int);
 	SET_VALUE(extract_ignore_errors, bool);
 	SET_VALUE(extract_access_rights, bool);
 	SET_VALUE(extract_owners_groups, bool);
@@ -652,10 +659,8 @@ void Options::save() const
 	SET_VALUE(disabled_formats, str);
 	SET_VALUE(pgdn_formats, bool);
 	SET_VALUE(patchCP, bool);
-	if (patchCP) {
-		SET_VALUE(oemCP, int);
-		SET_VALUE(ansiCP, int);
-	}
+	SET_VALUE(oemCP, int);
+	SET_VALUE(ansiCP, int);
 	SET_VALUE_XML(correct_name_mode, int);
 	SET_VALUE_XML(qs_by_default, bool);
 	SET_VALUE_XML(strict_case, bool);
@@ -680,7 +685,7 @@ ProfileOptions::ProfileOptions()
 	  process_priority(2),
 	  threads_num(0),
 	  repack(),
-	  solid(true),
+	  solid(false),
 	  password(),
 	  encrypt(false),
 	  encrypt_header(triUndef),

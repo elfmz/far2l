@@ -10,6 +10,10 @@
 #define ERROR_INVALID_DATA 13L
 #endif
 
+#define STREAM_CTL_RESET		9001
+#define STREAM_CTL_FINISH		9002
+#define STREAM_CTL_GETFULLSIZE	9003
+
 enum SETATTR_RET_CODES
 {
 	SETATTR_RET_UNKNOWN = -1,
@@ -76,7 +80,7 @@ class ProgressMonitor : private NonCopyable
 private:
 	HANDLE h_scr;
 	std::wstring con_title;
-	static const unsigned c_first_delay_div = 16;
+	static const unsigned c_first_delay_div = 4;
 	static const unsigned c_update_delay_div = 16;
 	UInt64 time_cnt;
 	UInt64 time_freq;
@@ -139,6 +143,7 @@ struct OpenOptions
 {
 	std::wstring arc_path;
 	bool detect;
+	bool open_ex;
 	ArcTypes arc_types;
 	std::wstring password;
 	int *open_password_len;

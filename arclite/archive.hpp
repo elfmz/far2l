@@ -67,6 +67,10 @@ struct ArcLib
 	Func_CreateDecoder CreateDecoder;
 	Func_CreateEncoder CreateEncoder;
 	Func_GetIsArc GetIsArc;
+	Func_GetModuleProp GetModuleProp;
+//  typedef HRESULT (WINAPI *Func_GetModuleProp)(PROPID propID, PROPVARIANT *value);
+
+
 	ComObject<IHashers> ComHashers;
 
 	HRESULT get_prop(UInt32 index, PROPID prop_id, PROPVARIANT *prop) const;
@@ -224,7 +228,8 @@ struct ArcEntry
 {
 	ArcType type;
 	size_t sig_pos;
-	ArcEntry(const ArcType &type, size_t sig_pos) : type(type), sig_pos(sig_pos) {}
+	size_t flags;
+	ArcEntry(const ArcType &type, size_t sig_pos, size_t flags = 0) : type(type), sig_pos(sig_pos), flags(flags) {}
 };
 
 typedef std::list<ArcEntry> ArcEntries;
@@ -243,9 +248,12 @@ class Archive : public std::enable_shared_from_this<Archive>
 	// open
 private:
 	ComObject<IInArchive> in_arc;
-	UInt32 error_flags, warning_flags;
+	UInt32 error_flags, warning_flags, flags;
 	std::wstring error_text, warning_text;
 	IInStream *base_stream;
+	IInStream *ex_stream;
+	ISequentialOutStream *ex_out_stream;
+
 	UInt64 get_physize();
 	UInt64 archive_filesize();
 	UInt64 get_skip_header(IInStream *stream, const ArcType &type);
@@ -285,6 +293,7 @@ public:
 	// archive contents
 public:
 	UInt32 m_num_indices;
+	UInt32 m_parent_file_index;
 	FileList file_list;
 	FileIndex file_list_index;
 	void make_index();
@@ -311,7 +320,7 @@ public:
 	bool get_isaltstream(UInt32 index) const;
 
 	UInt64 get_offset(UInt32 index) const;
-	// std::wstring get_filesystem(UInt32 index) const;
+/// std::wstring get_filesystem(UInt32 index) const;
 
 	void read_open_results();
 	std::list<std::wstring> get_open_errors() const;
@@ -370,7 +379,10 @@ public:
 public:
 	Archive()
 		: base_stream(nullptr),
+		  ex_stream(nullptr),
+		  ex_out_stream(nullptr),
 		  m_num_indices(0),
+		  m_parent_file_index(0xFFFFFFFF),
 		  m_level(0),
 		  m_solid(false),
 		  m_encrypted(false),
@@ -378,6 +390,6 @@ public:
 		  m_update_props_defined(false),
 		  m_has_crc(false)
 	{
-		error_flags = warning_flags = 0;
+		flags = error_flags = warning_flags = 0;
 	}
 };

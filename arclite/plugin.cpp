@@ -28,6 +28,8 @@ static const wchar_t ext_EXTn[] = L".ext";
 static const wchar_t ext_HFS[] = L".hfs";
 static const wchar_t ext_APFS[] = L".apfs";
 
+static const wchar_t ext_TAR[] = L".tar";
+
 class Plugin
 {
 private:
@@ -74,10 +76,6 @@ public:
 			if (format_idx == -1)
 				FAIL(E_ABORT);
 		}
-
-		//		auto plugin = std::make_unique<Plugin>(real_file);
-		//		Plugin *plugin = std::make_unique<Plugin>(real_file);
-		// std::unique_ptr<MyStruct> ptr(new MyStruct());
 
 		std::unique_ptr<Plugin> plugin(new Plugin(real_file));
 
@@ -199,17 +197,43 @@ public:
 		i.user_data = (void *)(uintptr_t)(index);
 		return true;
 	}
-	//
+
+/***
+struct PanelItem
+{
+	uintptr_t file_attributes;
+	FILETIME creation_time;
+	FILETIME last_access_time;
+	FILETIME last_write_time;
+	UInt64 file_size;
+	UInt64 pack_size;
+	std::wstring file_name;
+	std::wstring alt_file_name;
+	void *user_data;
+};
+***/
+
 	bool set_partition(const Far::PanelItem &i)
 	{
-		if (!part_mode || !current_dir.empty())
+		if (!part_mode || !current_dir.empty()) {
 			return false;
-		if (!i.file_size || i.file_size != i.pack_size || (i.file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		}
+
+		if (i.file_attributes & FILE_ATTRIBUTE_DIRECTORY) {
 			return false;
+		}
+
+		if (!i.file_size || i.file_size != i.pack_size) {
+			return false;
+		}
+
 		const auto index = (UInt32)(size_t)i.user_data;
 		const auto off = archive->get_offset(index);
-		if (off == ~0ULL)
+
+		if (off == ~0ULL) {
+			fprintf(stderr, "set_partition() invalid offset %lluu return false\n", ~0ULL );
 			return false;
+		}
 
 		const ArcType *p_type = nullptr;
 		if (str_end_with(i.file_name, ext_FAT))
@@ -230,8 +254,11 @@ public:
 			p_type = &c_ext4;
 		else if (str_end_with(i.file_name, ext_EXTn))
 			p_type = &c_ext4;
-		else
+		else if (str_end_with(i.file_name, ext_TAR))
+			p_type = &c_tar;
+		else {
 			return false;
+		}
 
 		part_idx = -1;
 		partition = nullptr;
@@ -365,7 +392,6 @@ public:
 		return;
 	}
 
-	//  void list(PluginPanelItem** panel_items, size_t* items_number) {
 	void list(PluginPanelItem **panel_items, int *items_number)
 	{
 		if (!archive->is_open())
@@ -385,33 +411,34 @@ public:
 
 		memset(items.get(), 0, size * sizeof(PluginPanelItem));
 		unsigned idx = 0;
+
 		std::for_each(dir_list.first, dir_list.second, [&](UInt32 file_index) {
 			ArcFileInfo &file_info = archive->file_list[file_index];
 
-		DWORD attr = 0, posixattr = 0, farattr = 0;
-		attr = archive->get_attr(file_index, &posixattr);
+			DWORD attr = 0, posixattr = 0, farattr = 0;
+			attr = archive->get_attr(file_index, &posixattr);
 
-		if (posixattr) {
+			if (posixattr) {
 
-			switch (posixattr & S_IFMT) {
-				case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
-				case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
-				#ifndef _WIN32
-				case S_IFLNK: farattr = FILE_ATTRIBUTE_REPARSE_POINT; break;
-				case S_IFSOCK: farattr = FILE_ATTRIBUTE_DEVICE_SOCK; break;
-				#endif
-				case S_IFCHR: farattr = FILE_ATTRIBUTE_DEVICE_CHAR; break;
-				case S_IFBLK: farattr = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
-				case S_IFIFO: farattr = FILE_ATTRIBUTE_DEVICE_FIFO; break;
-				default: farattr = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
+				switch (posixattr & S_IFMT) {
+					case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
+					case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
+					#ifndef _WIN32
+					case S_IFLNK: farattr = FILE_ATTRIBUTE_REPARSE_POINT; break;
+					case S_IFSOCK: farattr = FILE_ATTRIBUTE_DEVICE_SOCK; break;
+					#endif
+					case S_IFCHR: farattr = FILE_ATTRIBUTE_DEVICE_CHAR; break;
+					case S_IFBLK: farattr = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
+					case S_IFIFO: farattr = FILE_ATTRIBUTE_DEVICE_FIFO; break;
+					default: farattr = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
+				}
+
+				if ((posixattr & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
+					farattr |= FILE_ATTRIBUTE_EXECUTABLE;
+
+				if ((posixattr & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
+					farattr |= FILE_ATTRIBUTE_READONLY;
 			}
-
-			if ((posixattr & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
-				farattr |= FILE_ATTRIBUTE_EXECUTABLE;
-
-			if ((posixattr & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
-				farattr |= FILE_ATTRIBUTE_READONLY;
-		}
 
 			if (archive->get_encrypted(file_index))
 				farattr |= FILE_ATTRIBUTE_ENCRYPTED;
@@ -423,7 +450,7 @@ public:
 					farattr |= FILE_ATTRIBUTE_HARDLINKS;
 			}
 
-//			items[idx].FindData.dwFileAttributes = (attr & c_valid_import_attributes) | farattr;
+			//	items[idx].FindData.dwFileAttributes = (attr & c_valid_import_attributes) | farattr;
 			items[idx].FindData.dwFileAttributes = attr | farattr;
 			items[idx].FindData.dwUnixMode = posixattr;
 
@@ -449,6 +476,7 @@ public:
 			items[idx].CRC32 = archive->get_crc(file_index);
 			idx++;
 		});
+
 		*panel_items = items.release();
 		*items_number = size;
 	}
@@ -651,6 +679,7 @@ public:
 				OpenOptions open_options;
 				open_options.arc_path = arc_list[i];
 				open_options.detect = false;
+				open_options.open_ex = true;
 				open_options.password = options.password;
 				open_options.arc_types = ArcAPI::formats().get_arc_types();
 				archives = Archive::open(open_options);
@@ -754,6 +783,7 @@ public:
 		OpenOptions open_options;
 		open_options.arc_path = arch_name;
 		open_options.detect = false;
+		open_options.open_ex = false; /// !!!!!!!!!!!!!!!!!!!!!
 		open_options.password = options.password;
 		open_options.arc_types = ArcAPI::formats().get_arc_types();
 		archives = Archive::open(open_options);
@@ -789,6 +819,7 @@ public:
 		OpenOptions open_options;
 		open_options.arc_path = arch_name;
 		open_options.detect = false;
+		open_options.open_ex = true;
 		open_options.password = options.password;
 		open_options.arc_types = ArcAPI::formats().get_arc_types();
 		archives = Archive::open(open_options);
@@ -896,6 +927,7 @@ public:
 				OpenOptions open_options;
 				open_options.arc_path = arc_list[i];
 				open_options.detect = false;
+				open_options.open_ex = false; // !
 				open_options.arc_types = ArcAPI::formats().get_arc_types();
 				archives = Archive::open(open_options);
 				if (archives->empty())
@@ -1288,6 +1320,7 @@ public:
 			OpenOptions open_options;
 			open_options.arc_path = options.arc_path;
 			open_options.detect = false;
+			open_options.open_ex = false; // !!!
 			open_options.password = options.password;
 			open_options.arc_types = ArcAPI::formats().get_arc_types();
 			const auto archives = Archive::open(open_options);
@@ -1353,9 +1386,7 @@ public:
 		PanelInfo panel_info;
 		if (!Far::get_panel_info(PANEL_ACTIVE, panel_info))
 			FAIL(E_ABORT);
-
-		///		TODO: Set attr dialog ???
-
+		// ----------------------
 	}
 
 	void create_dir(const wchar_t **name, OPERATION_MODES op_mode)
@@ -1473,18 +1504,17 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 
 	OpenOptions options;
 	options.arc_path = info->FileName;
+	bool pgdn = (info->OpMode & OPM_PGDN) != 0;
 
 	options.arc_types = ArcAPI::formats().get_arc_types();
+	options.open_ex = !pgdn;
 
 	if (g_detect_next_time == triUndef) {
 
 		options.detect = false;
 		if (!g_options.handle_commands)
 			FAIL(E_INVALIDARG);
-
 #if 1
-		bool pgdn = (info->OpMode & OPM_PGDN) != 0;
-
 		if (!pgdn || g_options.pgdn_masks) {
 			if (g_options.use_include_masks
 					&& !Far::match_masks(extract_file_name(info->FileName), g_options.include_masks))
@@ -1815,6 +1845,7 @@ SHAREDSYMBOL int WINAPI SetDirectoryW(HANDLE hPlugin, const wchar_t *Dir, int Op
 {
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
+//	fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %S )         >>>>>>>>>>>\n", Dir );
 	reinterpret_cast<Plugin *>(hPlugin)->set_dir(Dir);
 	return TRUE;
 	FAR_ERROR_HANDLER_END(return FALSE, return FALSE, (OpMode & (OPM_SILENT | OPM_FIND)) != 0)
@@ -1939,12 +1970,15 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 		return TRUE;
 	}
 
-    // Enter [Ctrl+PgDn]
-	if ( (Key == VK_RETURN && !(ControlState & PKF_CONTROL)) ||  (Key == VK_RETURN && (ControlState & PKF_CONTROL)) ) {
+	if ( (Key == VK_RETURN && !(ControlState & PKF_CONTROL)) || (Key == VK_RETURN && (ControlState & PKF_CONTROL)) ) {
+
 		Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
+
 		if (plugin->set_partition(panel_item)) {
 			Far::update_panel(PANEL_ACTIVE, false, true);
 			return TRUE;
+		}
+		else {
 		}
 	}
 

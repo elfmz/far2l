@@ -8,6 +8,7 @@
 #include "ui.hpp"
 #include "msearch.hpp"
 #include "archive.hpp"
+#include "options.hpp"
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -22,8 +23,397 @@
 #endif
 
 OpenOptions::OpenOptions()
-	: detect(false), open_password_len(nullptr), recursive_panel(false), delete_on_close('\0')
+	: detect(false), open_ex(true), open_password_len(nullptr), recursive_panel(false), delete_on_close('\0')
 {}
+
+class DataRelayStream : public IInStream, public ISequentialOutStream, public ComBase {
+private:
+	uint8_t *buffer;
+	size_t buffer_size;
+	size_t buffer_max_size;
+	size_t file_size;
+	size_t read_pos = 0;
+	size_t write_pos = 0;
+	size_t data_size = 0;
+	bool full_size = true;
+	bool writing_finished = false;
+	bool reading_finished = false;
+	std::mutex mtx;
+	std::condition_variable cv;
+
+public:
+    DataRelayStream(size_t initial_capacity = 32, size_t max_size = 64, size_t filesize = 0xFFFFFFFFFFFFFFFF)
+	:	buffer_size(initial_capacity << 20),
+		buffer_max_size(max_size << 20),
+		file_size(filesize) {
+
+		if (!filesize) { // unknown size ?
+			file_size = 0xFFFFFFFFFFFFFFFF;
+			buffer_size = buffer_max_size;
+		}
+		else {
+			uintptr_t pagesize = sysconf(_SC_PAGESIZE);
+			size_t aligned_size = (filesize + pagesize - 1) & ~(pagesize - 1);
+
+			if (aligned_size > buffer_max_size)
+				buffer_size = buffer_max_size;
+			else
+				buffer_size = aligned_size;
+		}
+
+		buffer = (unsigned char *)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE,
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+		if (!buffer) {
+			FAIL(E_OUTOFMEMORY);
+		}
+	}
+
+	~DataRelayStream() {
+		if (buffer)
+			munmap(buffer, buffer_size);
+	}
+
+	UNKNOWN_IMPL_BEGIN
+	UNKNOWN_IMPL_ITF(IInStream)
+	UNKNOWN_IMPL_ITF(ISequentialOutStream)
+	UNKNOWN_IMPL_END
+
+	STDMETHODIMP Seek(Int64 offset, UInt32 seekOrigin, UInt64 *newPosition) noexcept override {
+		std::unique_lock<std::mutex> lock(mtx);
+		COM_ERROR_HANDLER_BEGIN
+
+		switch (seekOrigin) {
+			case STREAM_CTL_RESET: {
+				/// reset stream
+				read_pos = 0;
+				write_pos = 0;
+				data_size = 0;
+				writing_finished = false;
+				reading_finished = false;
+				break;
+			}
+			case STREAM_CTL_FINISH: {
+				writing_finished = true;
+				cv.notify_all();
+				break;
+			}
+			case STREAM_CTL_GETFULLSIZE: {
+				*newPosition = full_size;
+				break;
+			}
+			case STREAM_SEEK_SET: {
+				if (offset < 0) {
+					fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
+					return E_INVALIDARG;
+				}
+				if ((UInt64)offset < write_pos && (write_pos - (UInt64)offset) > buffer_size ) {
+					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %li\n", offset);
+					return E_INVALIDARG;
+				}
+				read_pos = offset;
+				data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+				cv.notify_all();
+
+				if (newPosition) {
+					*newPosition = read_pos;
+				}
+				break;
+			}
+            case STREAM_SEEK_CUR: {
+				Int64 new_offset = (Int64)read_pos + offset;
+				if (new_offset < 0)
+					new_offset = 0;
+
+				if ((UInt64)new_offset < write_pos && (write_pos - (UInt64)new_offset) > buffer_size ) {
+					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %li\n", offset);
+					return E_INVALIDARG;
+				}
+
+				read_pos = new_offset;
+				data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+				cv.notify_all();
+
+				if (newPosition) {
+					*newPosition = read_pos;
+				}
+
+				break;
+			}
+			case STREAM_SEEK_END: {
+				if (newPosition) {
+					*newPosition = file_size;
+				}
+				break;
+			}
+		}
+
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP Read(void *data, UInt32 size, UInt32 *processedSize) noexcept override {
+		std::unique_lock<std::mutex> lock(mtx);
+		COM_ERROR_HANDLER_BEGIN
+
+		if (writing_finished && data_size == 0) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			return S_OK;
+		}
+
+		cv.wait(lock, [this, size] {
+			return (data_size >= size) || writing_finished;
+		});
+
+		//		if (reading_finished) {
+		//			if (processedSize) {
+		//				*processedSize = 0;
+		//			}
+		//			return E_ABORT;
+		//      }
+
+		if (writing_finished && data_size == 0) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			return S_OK;
+		}
+
+		size_t available = std::min<size_t>(size, data_size);
+		size_t read_ptr = (read_pos % buffer_size);
+
+		size_t firstChunk = std::min(available, buffer_size - read_ptr);
+		memcpy(data, buffer + read_ptr, firstChunk);
+		if (firstChunk < available) {
+			memcpy(static_cast<BYTE*>(data) + firstChunk, buffer, available - firstChunk);
+		}
+
+		read_pos += available;
+		data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+
+		if (processedSize) {
+			*processedSize = static_cast<UInt32>(available);
+		}
+		cv.notify_all();
+
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP Write(const void *data, UInt32 size, UInt32 *processedSize) noexcept override {
+		std::unique_lock<std::mutex> lock(mtx);
+		COM_ERROR_HANDLER_BEGIN
+
+		cv.wait(lock, [this, size] {
+			return ((buffer_size - data_size) >= size) || writing_finished || reading_finished;
+		});
+
+		if (writing_finished) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			full_size = false;
+			return E_ABORT;
+		}
+
+		if ((buffer_size - data_size) < size && reading_finished) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			full_size = false;
+			return E_ABORT;
+		}
+
+		size_t write_ptr = (write_pos % buffer_size);
+		size_t bytesToWrite = std::min<size_t>(size, buffer_size - data_size);
+		size_t firstChunk = std::min(bytesToWrite, buffer_size - write_ptr);
+
+		memcpy(buffer + write_ptr, data, firstChunk);
+		if (firstChunk < bytesToWrite)  {
+			memcpy(buffer, static_cast<const BYTE*>(data) + firstChunk, bytesToWrite - firstChunk);
+		}
+
+		write_pos += bytesToWrite;
+		data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+		if (write_pos > buffer_size) {
+			full_size = false;
+		}
+
+		if (processedSize) {
+			*processedSize = size;
+		}
+		cv.notify_all();
+
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	void FinishWriting() {
+		std::unique_lock<std::mutex> lock(mtx);
+		writing_finished = true;
+		cv.notify_all();
+	}
+
+	void FinishReading() {
+		std::unique_lock<std::mutex> lock(mtx);
+		reading_finished = true;
+		cv.notify_all();
+	}
+
+	bool GetFullSize() {
+		return full_size;
+	}
+};
+
+class SimpleRelExtractor : public IArchiveExtractCallback, public ICryptoGetTextPassword, public ComBase, public ProgressMonitor
+{
+private:
+	std::shared_ptr<Archive> archive;
+	ComObject<ISequentialOutStream> mem_stream;
+	UInt64 total_files;
+	UInt64 total_bytes;
+	UInt64 completed_files;
+	UInt64 completed_bytes;
+
+	void do_update_ui() override
+	{
+		const unsigned c_width = 60;
+		std::wostringstream st;
+		st << format_data_size(completed_bytes, get_size_suffixes()) << L" / "
+		   << format_data_size(total_bytes, get_size_suffixes()) << L'\n';
+		st << Far::get_progress_bar_str(c_width, completed_bytes, total_bytes) << L'\n';
+		progress_text = st.str();
+		percent_done = calc_percent(completed_bytes, total_bytes);
+	}
+
+public:
+	SimpleRelExtractor(std::shared_ptr<Archive> archive, ISequentialOutStream *stream = nullptr, size_t sizetotal = 0xFFFFFFFFFFFFFFFF)
+	: ProgressMonitor(Far::get_msg(MSG_PROGRESS_OPEN)),
+	archive(archive),
+	mem_stream(stream),
+	total_bytes(sizetotal)
+	{}
+
+	UNKNOWN_IMPL_BEGIN
+	UNKNOWN_IMPL_ITF(IProgress)
+	UNKNOWN_IMPL_ITF(IArchiveExtractCallback)
+	UNKNOWN_IMPL_ITF(ICryptoGetTextPassword)
+	UNKNOWN_IMPL_END
+
+	STDMETHODIMP SetTotal(UInt64 total) noexcept override
+	{
+		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		total_bytes = total;
+		update_ui();
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP SetCompleted(const UInt64 *completeValue) noexcept override
+	{
+		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		if (completeValue)
+			completed_bytes = *completeValue;
+		update_ui();
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP
+	GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode) noexcept override
+	{
+		COM_ERROR_HANDLER_BEGIN
+		if (mem_stream) {
+			mem_stream.detach(outStream);
+		}
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP PrepareOperation(Int32 askExtractMode) noexcept override
+	{
+		COM_ERROR_HANDLER_BEGIN
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP SetOperationResult(Int32 resultEOperationResult) noexcept override
+	{
+		COM_ERROR_HANDLER_BEGIN
+		return S_OK;
+		COM_ERROR_HANDLER_END
+/**
+		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		RETRY_OR_IGNORE_BEGIN
+		bool encrypted = !archive->m_password.empty();
+		Error error;
+		switch (resultEOperationResult) {
+			case NArchive::NExtract::NOperationResult::kOK:
+			case NArchive::NExtract::NOperationResult::kDataAfterEnd:
+				return S_OK;
+			case NArchive::NExtract::NOperationResult::kUnsupportedMethod:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNSUPPORTED_METHOD));
+				break;
+			case NArchive::NExtract::NOperationResult::kDataError:
+				archive->m_password.clear();
+				error.messages.emplace_back(Far::get_msg(
+						encrypted ? MSG_ERROR_EXTRACT_DATA_ERROR_ENCRYPTED : MSG_ERROR_EXTRACT_DATA_ERROR));
+				break;
+			case NArchive::NExtract::NOperationResult::kCRCError:
+				archive->m_password.clear();
+				error.messages.emplace_back(Far::get_msg(
+						encrypted ? MSG_ERROR_EXTRACT_CRC_ERROR_ENCRYPTED : MSG_ERROR_EXTRACT_CRC_ERROR));
+				break;
+			case NArchive::NExtract::NOperationResult::kUnavailable:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNAVAILABLE_DATA));
+				break;
+			case NArchive::NExtract::NOperationResult::kUnexpectedEnd:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNEXPECTED_END_DATA));
+				break;
+			// case NArchive::NExtract::NOperationResult::kDataAfterEnd:
+			//   error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_DATA_AFTER_END));
+			//   break;
+			case NArchive::NExtract::NOperationResult::kIsNotArc:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_IS_NOT_ARCHIVE));
+				break;
+			case NArchive::NExtract::NOperationResult::kHeadersError:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_HEADERS_ERROR));
+				break;
+			case NArchive::NExtract::NOperationResult::kWrongPassword:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_WRONG_PASSWORD));
+				break;
+			default:
+				error.messages.emplace_back(Far::get_msg(MSG_ERROR_EXTRACT_UNKNOWN));
+				break;
+		}
+		error.code = E_MESSAGE;
+		error.messages.emplace_back(file_path);
+		error.messages.emplace_back(archive->arc_path);
+		throw error;
+		IGNORE_END(*ignore_errors, *error_log, *progress)
+		COM_ERROR_HANDLER_END
+**/
+	}
+
+	STDMETHODIMP CryptoGetTextPassword(BSTR *password) noexcept override
+	{
+		CriticalSectionLock lock(GetSync());
+		COM_ERROR_HANDLER_BEGIN
+		if (archive->m_password.empty()) {
+			ProgressSuspend ps(*this);
+			if (!password_dialog(archive->m_password, archive->arc_path))
+				FAIL(E_ABORT);
+		}
+		BStr(archive->m_password).detach(password);
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+};
 
 class ArchiveSubStream : public IInStream, private ComBase
 {
@@ -63,6 +453,7 @@ class ArchiveOpenStream : public IInStream, private ComBase, private File
 {
 private:
 	bool device_file;
+	bool stream_file;
 	UInt64 device_pos;
 	UInt64 device_size;
 	unsigned device_sector_size;
@@ -72,7 +463,7 @@ private:
 
 	void check_device_file()
 	{
-		device_pos = 0;
+ 		device_pos = 0;
 		device_file = false;
 		if (size_nt(device_size))
 			return;
@@ -120,6 +511,7 @@ public:
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, OPEN_EXISTING,
 				FILE_FLAG_SEQUENTIAL_SCAN);
 		check_device_file();
+		stream_file = false;
 		cached_header = nullptr;
 		cached_size = 0;
 	}
@@ -177,8 +569,9 @@ public:
 					set_pos(static_cast<Int64>(siz), FILE_CURRENT);
 				}
 			}
-			if (size > 0)
+			if (size > 0) {
 				size_read += static_cast<unsigned>(read(data, size));
+			}
 		}
 		if (processedSize)
 			*processedSize = size_read;
@@ -208,7 +601,26 @@ public:
 			}
 			new_position = device_pos;
 		} else {
-			new_position = set_pos(offset, translate_seek_method(seekOrigin));
+			DWORD method;
+			switch (seekOrigin) {
+				case STREAM_SEEK_SET:
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_SET > %li \n", offset );
+					method = FILE_BEGIN;
+					break;
+				case STREAM_SEEK_CUR:
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_CUR +> %li \n", offset );
+					method = FILE_CURRENT;
+					break;
+				case STREAM_SEEK_END:
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_END < %li \n", offset );
+					method = FILE_END;
+					break;
+				default: {
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_UNKNOWN > %li \n", offset );
+					FAIL(E_INVALIDARG);
+				}
+			}
+			new_position = set_pos(offset, method);
 		}
 		if (newPosition)
 			*newPosition = new_position;
@@ -290,24 +702,27 @@ public:
 
 	STDMETHODIMP SetTotal(const UInt64 *files, const UInt64 *bytes) noexcept override
 	{
-		//    CriticalSectionLock lock(GetSync());
+		CriticalSectionLock lock(GetSync());
 		COM_ERROR_HANDLER_BEGIN
 		if (files)
 			total_files = *files;
 		if (bytes)
 			total_bytes = *bytes;
+
 		update_ui();
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP SetCompleted(const UInt64 *files, const UInt64 *bytes) noexcept override
 	{
-		//    CriticalSectionLock lock(GetSync());
+		CriticalSectionLock lock(GetSync());
 		COM_ERROR_HANDLER_BEGIN
 		if (files)
 			completed_files = *files;
 		if (bytes)
 			completed_bytes = *bytes;
+
 		update_ui();
 		return S_OK;
 		COM_ERROR_HANDLER_END
@@ -388,24 +803,31 @@ public:
 bool Archive::get_stream(UInt32 index, IInStream **stream)
 {
 	UInt32 num_indices = 0;
-	if (in_arc->GetNumberOfItems(&num_indices) != S_OK)
+
+	if (in_arc->GetNumberOfItems(&num_indices) != S_OK) {
 		return false;
-	if (index >= num_indices)
+	}
+
+	if (index >= num_indices) {
 		return false;
+	}
 
 	ComObject<IInArchiveGetStream> get_stream;
 	if (in_arc->QueryInterface((REFIID)IID_IInArchiveGetStream, reinterpret_cast<void **>(&get_stream))
 					!= S_OK
-			|| !get_stream)
+			|| !get_stream) {
 		return false;
+	}
 
 	ComObject<ISequentialInStream> seq_stream;
-	if (get_stream->GetStream(index, seq_stream.ref()) != S_OK || !seq_stream)
+	if (get_stream->GetStream(index, seq_stream.ref()) != S_OK || !seq_stream) {
 		return false;
+	}
 
 	if (seq_stream->QueryInterface((REFIID)IID_IInStream, reinterpret_cast<void **>(stream)) != S_OK
-			|| !stream)
+			|| !stream) {
 		return false;
+	}
 
 	return true;
 }
@@ -444,7 +866,6 @@ HRESULT Archive::copy_prologue(IOutStream *out_stream)
 
 bool Archive::open(IInStream *stream, const ArcType &type, const bool allow_tail)
 {
-//	fprintf(stderr, "=== Archive::open ===\n");
 	ArcAPI::create_in_archive(type, in_arc.ref());
 	ComObject<IArchiveOpenCallback> opener(new ArchiveOpener(shared_from_this()));
 
@@ -457,8 +878,10 @@ bool Archive::open(IInStream *stream, const ArcType &type, const bool allow_tail
 	}
 
 	const UInt64 max_check_start_position = 0;
+
 	auto res = in_arc->Open(stream, &max_check_start_position, opener);
-	//  auto res = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
+//	auto res = in_arc->Open(nullptr, &max_check_start_position, opener);
+//  auto res = HRESULT_FROM_WIN32(ERROR_INVALID_DATA);
 
 	if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
 		res = S_FALSE;
@@ -650,6 +1073,7 @@ UInt64 Archive::get_skip_header(IInStream *stream, const ArcType &type)
 
 void Archive::open(const OpenOptions &options, Archives &archives)
 {
+	bool bExStream = false;
 	size_t parent_idx = -1;
 	if (!archives.empty())
 		parent_idx = archives.size() - 1;
@@ -657,24 +1081,112 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 	ArchiveOpenStream *stream_impl = nullptr;
 	ComObject<IInStream> stream;
 	FindData arc_info{};
+
 	if (parent_idx == (size_t)-1) {
 		stream_impl = new ArchiveOpenStream(options.arc_path);
 		stream = stream_impl;
 		arc_info = stream_impl->get_info();
 	} else {
-		UInt32 main_file;
-		if (!archives[parent_idx]->get_main_file(main_file))
+		if (parent_idx > 0 && archives[parent_idx]->flags & 1) {
 			return;
-		if (!archives[parent_idx]->get_stream(main_file, stream.ref()))
+		}
+
+		UInt32 main_file_index = 0, num_indices = 0;
+		bool bMainFile = archives[parent_idx]->get_main_file(main_file_index);
+		bool bInArcStream = archives[parent_idx]->get_stream(main_file_index, stream.ref());
+		archives[parent_idx]->in_arc->GetNumberOfItems(&num_indices);
+
+		if (!num_indices) {
 			return;
-		arc_info = archives[parent_idx]->get_file_info(main_file);
+		}
+
+		if (bMainFile) {
+			if (parent_idx > 0 && !bInArcStream ) {
+				return;
+			}
+		}
+		else {
+			ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
+
+			if (!options.open_ex) return;
+			uint32_t open_index = 0;
+			if (open_index >= num_indices) // not exist
+				return;
+
+			if (!ArcAPI::is_single_file_format(pArcType)) {
+				if (num_indices > 1) {
+					return;
+				}
+			}
+
+			UInt32 indices[2] = { open_index, 0 };
+
+			FindData ef = archives[parent_idx]->get_file_info(open_index);
+			if (ef.is_dir()) return;
+			size_t fsize = ef.size();
+
+//			ComObject<DataRelayStream> mem_stream(new DataRelayStream((size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
+			ComObject<DataRelayStream> mem_stream(new DataRelayStream(32, 64, fsize));
+			ComObject<IArchiveExtractCallback> extractor(new SimpleRelExtractor(archives[parent_idx], mem_stream, fsize));
+
+			const auto archive = std::make_shared<Archive>();
+
+			if (options.open_password_len && *options.open_password_len == -'A')
+				archive->m_open_password = *options.open_password_len;
+
+			archive->arc_path = options.arc_path;
+			archive->arc_info = arc_info;
+			archive->m_password = options.password;
+			if (parent_idx != (size_t)-1)
+				archive->volume_names = archives[parent_idx]->volume_names;
+
+			stream = mem_stream;
+
+			std::promise<bool> promise;
+			std::future<bool> future = promise.get_future();
+
+			std::thread extract_thread([&]() {
+				bool opened = archive->open(stream, c_tar, false);
+				if (!opened) {
+					mem_stream->FinishWriting();
+				}
+				else {
+					mem_stream->FinishReading();
+				}
+				promise.set_value(opened);
+			});
+
+			int errc = archives[parent_idx]->in_arc->Extract(indices, 1, 0, extractor);
+
+			(void)errc;
+			mem_stream->FinishWriting();
+			extract_thread.join();
+			bool opened = future.get();
+
+			if (opened) {
+				bool bFullSize = mem_stream->GetFullSize();
+				ArcEntry tarentry(c_tar, 0, 2 + bFullSize);
+				archive->ex_stream = stream;
+				archive->ex_out_stream = mem_stream;
+				archive->flags = 2 + bFullSize;
+				archive->parent = archives[parent_idx];
+				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),
+				archives[parent_idx]->arc_chain.end());
+				archive->arc_chain.push_back(tarentry);
+				archives.push_back(archive);
+			}
+			return;
+		}
+
 	}
 
 	Buffer<unsigned char> buffer(max_check_size);
 	UInt32 size;
 	CHECK_COM(stream->Read(buffer.data(), static_cast<UInt32>(buffer.size()), &size));
-	if (stream_impl)
+
+	if (stream_impl) {
 		stream_impl->CacheHeader(buffer.data(), size);
+	}
 
 	UInt64 skip_header = 0;
 	bool first_open = true;
@@ -693,9 +1205,11 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			archive->volume_names = archives[parent_idx]->volume_names;
 
 		const auto &format = ArcAPI::formats().at(arc_entry->type);
+
 		bool opened = false, have_tail = false;
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
 		if (!arc_entry->sig_pos) {
+
 			opened = archive->open(stream, arc_entry->type);
 			if (archive->m_open_password && options.open_password_len)
 				*options.open_password_len = archive->m_open_password;
@@ -721,6 +1235,7 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			if (opened)
 				archive->base_stream = stream;
 		}
+
 		if (opened) {
 			if (parent_idx != (size_t)-1) {
 				archive->parent = archives[parent_idx];
@@ -732,8 +1247,9 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			archives.push_back(archive);
 			open(options, archives);
 
-			if (!options.detect && !have_tail)
+			if ((!options.detect && !have_tail) || bExStream)
 				break;
+
 			skip_header = arc_entry->sig_pos + std::min(archive->arc_info.size(), archive->get_physize());
 		}
 		first_open = false;

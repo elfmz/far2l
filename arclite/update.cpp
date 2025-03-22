@@ -37,6 +37,7 @@ private:
 	UInt64 file_completed;
 	UInt64 total_data_read;
 	UInt64 total_data_written;
+	bool silent = false;
 
 	void do_update_ui() override
 	{
@@ -81,7 +82,7 @@ private:
 	}
 
 public:
-	ArchiveUpdateProgress(bool new_arc, const std::wstring &arcpath)
+	ArchiveUpdateProgress(bool new_arc, const std::wstring &arcpath, bool silent = false)
 		: ProgressMonitor(Far::get_msg(new_arc ? MSG_PROGRESS_CREATE : MSG_PROGRESS_UPDATE)),
 		  total(0),
 		  completed(0),
@@ -89,11 +90,13 @@ public:
 		  file_total(0),
 		  file_completed(0),
 		  total_data_read(0),
-		  total_data_written(0)
+		  total_data_written(0),
+		  silent(silent)
 	{}
 
 	void on_open_file(const std::wstring &file_path_value, UInt64 size)
 	{
+		if (silent) return;
 		CriticalSectionLock lock(GetSync());
 		file_path = file_path_value;
 		file_total = size;
@@ -102,6 +105,7 @@ public:
 	}
 	void on_read_file(unsigned size)
 	{
+		if (silent) return;
 		CriticalSectionLock lock(GetSync());
 		file_completed += size;
 		total_data_read += size;
@@ -109,18 +113,21 @@ public:
 	}
 	void on_write_archive(unsigned size)
 	{
+		if (silent) return;
 		CriticalSectionLock lock(GetSync());
 		total_data_written += size;
 		update_ui();
 	}
 	void on_total_update(UInt64 total_value)
 	{
+		if (silent) return;
 		CriticalSectionLock lock(GetSync());
 		total = total_value;
 		update_ui();
 	}
 	void on_completed_update(UInt64 completed_value)
 	{
+		if (silent) return;
 		CriticalSectionLock lock(GetSync());
 		completed = completed_value;
 		update_ui();
@@ -183,6 +190,7 @@ public:
 		size_written = static_cast<unsigned>(write(data, size));
 		RETRY_END(*progress)
 		progress->on_write_archive(size_written);
+
 		if (processedSize)
 			*processedSize = size_written;
 		return S_OK;
@@ -197,6 +205,7 @@ public:
 		UInt64 new_position = set_pos(offset, translate_seek_method(seekOrigin));
 		if (newPosition)
 			*newPosition = new_position;
+
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -207,6 +216,7 @@ public:
 		set_pos(newSize, FILE_BEGIN);
 		set_end();
 		RETRY_END(*progress)
+
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -568,6 +578,94 @@ public:
 	}
 };
 
+class AcmRelayStream : public ISequentialOutStream, public ISequentialInStream, public ComBase {
+private:
+	std::vector<BYTE> buffer;
+	size_t buffer_capacity;
+	size_t read_pos = 0;
+	size_t write_pos = 0;
+	size_t data_size = 0;
+	bool writing_finished = false;
+	std::mutex mtx;
+	std::condition_variable cv;
+
+public:
+	AcmRelayStream(size_t capacity = 1024 * 1024 * 16) 
+		: buffer(capacity), buffer_capacity(capacity) {}
+
+	UNKNOWN_IMPL_BEGIN
+	UNKNOWN_IMPL_ITF(ISequentialOutStream)
+	UNKNOWN_IMPL_ITF(ISequentialInStream)
+	UNKNOWN_IMPL_END
+
+	STDMETHODIMP Write(const void *data, UInt32 size, UInt32 *processedSize) noexcept override {
+		std::unique_lock<std::mutex> lock(mtx);
+		COM_ERROR_HANDLER_BEGIN
+
+		cv.wait(lock, [this, size]() {
+			return (buffer_capacity - data_size) >= size || writing_finished;
+		});
+
+		if (writing_finished) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			return S_OK;
+		}
+
+		size_t bytes_to_write = std::min(size, static_cast<UInt32>(buffer_capacity - data_size));
+		size_t first_chunk = std::min(bytes_to_write, buffer_capacity - write_pos);
+		memcpy(buffer.data() + write_pos, data, first_chunk);
+		if (first_chunk < bytes_to_write) {
+			memcpy(buffer.data(), (BYTE*)data + first_chunk, bytes_to_write - first_chunk);
+		}
+
+		write_pos = (write_pos + bytes_to_write) % buffer_capacity;
+		data_size += bytes_to_write;
+
+		if (processedSize) {
+			*processedSize = static_cast<UInt32>(bytes_to_write);
+		}
+
+		fprintf(stderr, "AcmRelayStream want [Writed] %lu and notify!\n", bytes_to_write );
+
+		cv.notify_all();
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	STDMETHODIMP Read(void *data, UInt32 size, UInt32 *processedSize) noexcept override {
+		std::unique_lock<std::mutex> lock(mtx);
+		COM_ERROR_HANDLER_BEGIN
+
+		cv.wait(lock, [this]() { return data_size > 0 || writing_finished; });
+
+		size_t bytes_to_read = std::min(size, static_cast<UInt32>(data_size));
+		size_t first_chunk = std::min(bytes_to_read, buffer_capacity - read_pos);
+		memcpy(data, buffer.data() + read_pos, first_chunk);
+		if (first_chunk < bytes_to_read) {
+			memcpy((BYTE*)data + first_chunk, buffer.data(), bytes_to_read - first_chunk);
+		}
+
+		read_pos = (read_pos + bytes_to_read) % buffer_capacity;
+		data_size -= bytes_to_read;
+
+		if (processedSize) {
+			*processedSize = static_cast<UInt32>(bytes_to_read);
+		}
+
+		cv.notify_all();
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	void FinishWriting() {
+		std::unique_lock<std::mutex> lock(mtx);
+		writing_finished = true;
+		cv.notify_all();
+	}
+};
+
 struct FileIndexInfo
 {
 	std::wstring rel_path;
@@ -789,13 +887,16 @@ private:
 	bool dereference_symlinks;
 	std::shared_ptr<ErrorLog> error_log;
 	std::shared_ptr<ArchiveUpdateProgress> progress;
+	ComObject<ISequentialInStream> mem_stream;
+    bool use_mem_stream = false;
 	FILETIME crft;
 
 public:
 	ArchiveUpdater(const std::wstring &src_dir, const std::wstring &dst_dir, UInt32 num_indices,
 			std::shared_ptr<FileIndexMap> file_index_map, const UpdateOptions &options,
 			std::shared_ptr<bool> ignore_errors, bool dereference_symlinks, std::shared_ptr<ErrorLog> error_log,
-			std::shared_ptr<ArchiveUpdateProgress> progress)
+			std::shared_ptr<ArchiveUpdateProgress> progress, ISequentialInStream* stream = nullptr, 
+			bool use_mem_stream = false)
 		: src_dir(src_dir),
 		  dst_dir(dst_dir),
 		  num_indices(num_indices),
@@ -804,7 +905,8 @@ public:
 		  ignore_errors(ignore_errors),
 		  dereference_symlinks(dereference_symlinks),
 		  error_log(error_log),
-		  progress(progress)
+		  progress(progress),
+		  mem_stream(stream), use_mem_stream(use_mem_stream)
 	{
 		WINPORT(GetSystemTimeAsFileTime)(&crft);
 	}
@@ -815,6 +917,11 @@ public:
 	UNKNOWN_IMPL_ITF(ICryptoGetTextPassword2)
 	UNKNOWN_IMPL_END
 
+	void SetMemoryStream(ISequentialInStream* stream) {
+		mem_stream = stream;
+		use_mem_stream = true;
+	}
+
 	STDMETHODIMP SetTotal(UInt64 total) noexcept override
 	{
 		CriticalSectionLock lock(GetSync());
@@ -823,6 +930,7 @@ public:
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP SetCompleted(const UInt64 *completeValue) noexcept override
 	{
 		CriticalSectionLock lock(GetSync());
@@ -890,6 +998,10 @@ public:
 				prop = file_index_info.find_data.cFileName;
 				break;
 			case kpidIsDir:
+				if (use_mem_stream) {
+					prop = (bool)false;
+					break;
+				}
 				if (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
 					if (!dereference_symlinks && (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ) {
 						prop = (bool)false;
@@ -899,6 +1011,10 @@ public:
 				prop = file_index_info.find_data.is_dir();
 				break;
 			case kpidSize:
+				if (use_mem_stream) {
+					prop = (UInt64)1ull;
+					break;
+				}
 				prop = file_index_info.find_data.size();
 				break;
 			case kpidCTime:
@@ -952,7 +1068,6 @@ public:
 			case kpidAttrib: {
 				uint32_t attributes = 0;
 				uint32_t unixmode = 0;
-
 				if (options.use_export_settings) {
 					if (options.export_options.export_file_attributes) {
 						if (options.export_options.custom_file_attributes) {
@@ -1093,27 +1208,16 @@ public:
 				else
 					prop = (const wchar_t *)&wtmp[0];
 			break;
+
 			case kpidComment:
 				if (options.use_export_settings && options.export_options.export_file_descriptions) {
-					prop = L"This is file description";
+					prop = L"TODO:";
 				}
 			break;
 
 ///			case kpidCommented:
 ///				prop = static_cast<bool>(true);
 ///			break;
-
-//			case kpidLinks:
-//				prop = (UInt32)999;
-//				break;
-
-//			case kpidHardLink:
-//				prop = L"/link/link";
-//				break;
-
-//			case kpidINode:
-//				prop = (UInt32)999;
-//				break;
 
 			case kpidDeviceMajor:
 				if (options.use_export_settings) {
@@ -1149,6 +1253,14 @@ public:
 	{
 		COM_ERROR_HANDLER_BEGIN
 		*inStream = nullptr;
+
+		if (use_mem_stream) {
+			if (mem_stream) {
+				mem_stream.detach(inStream);
+			}
+			return S_OK;
+		}
+
 		const FileIndexInfo &file_index_info = file_index_map->at(index);
 
 		if (file_index_info.find_data.is_dir() && (!(file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || dereference_symlinks) ) {
@@ -1588,99 +1700,121 @@ public:
 	}
 };
 
-//std::string vectorToString(const std::vector<unsigned char>& vec) {
-//    return std::string(vec.begin(), vec.end());
-//}
-
 void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
 		UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
 {
 	DisableSleepMode dsm;
 	const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
 
-	{
-		UInt32 new_index = 0;
-		bool skipped_files = false;
-		const auto file_index_map = std::make_shared<FileIndexMap>();
+	if (options.arc_type == c_tar && options.repack) {
 
-		PrepareUpdate(src_dir, file_names, c_root_index, *this, *file_index_map, new_index, oaOverwrite,
-				*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
+		UInt32 new_index = 0, new_index2 = 0;
+		bool skipped_files = false;
+		UpdateOptions repack_options = options;
+		const auto tar_file_index_map = std::make_shared<FileIndexMap>();
+		const auto arc_file_index_map = std::make_shared<FileIndexMap>();
+
+		ComObject<IOutArchive> out_tar;
+		ArcAPI::create_out_archive(options.arc_type, out_tar.ref());
+		set_properties(out_tar, options);
+
+		std::wstring tar_filename = extract_file_name(options.arc_path);
+		std::wstring arc_suff = ArcAPI::formats().at(options.repack_arc_type).default_extension();
+		repack_options.arc_path.append(arc_suff);
+
+		FindData src_find_data;
+		memset(&src_find_data, 0, sizeof(FindData));
+		memcpy(src_find_data.cFileName, tar_filename.c_str(), (tar_filename.length() + 1) * sizeof(wchar_t));
+
+		FileIndexInfo file_index_info;
+		file_index_info.rel_path = L"";
+		file_index_info.find_data = src_find_data;
+		FileIndexMap &_file_index_map = *arc_file_index_map;
+		_file_index_map[0] = file_index_info;
+		new_index2++;
+		repack_options.arc_type = options.repack_arc_type;
 
 		ComObject<IOutArchive> out_arc;
-		ArcAPI::create_out_archive(options.arc_type, out_arc.ref());
+		ArcAPI::create_out_archive(repack_options.arc_type, out_arc.ref());
+		set_properties(out_arc, repack_options);
 
-		set_properties(out_arc, options);
+		const auto progress = std::make_shared<ArchiveUpdateProgress>(true, repack_options.arc_path);
+		const auto progress2 = std::make_shared<ArchiveUpdateProgress>(true, repack_options.arc_path, true);
 
-		const auto progress = std::make_shared<ArchiveUpdateProgress>(true, options.arc_path);
-		ComObject<IArchiveUpdateCallback> updater(new ArchiveUpdater(src_dir, std::wstring(), 0, file_index_map,
+		PrepareUpdate(src_dir, file_names, c_root_index, *this, *tar_file_index_map, new_index, oaOverwrite,
+				*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
+
+		ComObject<IArchiveUpdateCallback> tar_updater(new ArchiveUpdater(src_dir, std::wstring(), 0, tar_file_index_map,
 				options, ignore_errors, options.dereference_symlinks, error_log, progress));
 
-		prepare_dst_dir(extract_file_path(options.arc_path));
-		UpdateStream *stream_impl;
+		ComObject<AcmRelayStream> mem_stream(new AcmRelayStream(((size_t)g_options.relay_buffer_size) << 20));
 
-		if (options.arc_type == c_tar && options.repack && options.enable_volumes) {
-			if (extract_file_ext(options.arc_path) == L".001") {
-				removeExtension(options.arc_path);
-			}
-		}
+		std::promise<int> promise;
+		std::future<int> future = promise.get_future();
 
-		if (options.enable_volumes && !(options.arc_type == c_tar && options.repack)) {
-			stream_impl = new MultiVolumeUpdateStream(options.arc_path, parse_size_string(options.volume_size),progress);
-		}
-		else if (options.create_sfx && options.arc_type == c_7z)
-			stream_impl = new SfxUpdateStream(options.arc_path, options.sfx_options, progress);
+		std::thread tar_thread([&]() {
+			int errc = out_tar->UpdateItems(mem_stream, new_index, tar_updater);
+			mem_stream->FinishWriting();
+			promise.set_value(errc);
+		});
+
+		ComObject<IArchiveUpdateCallback> arc_updater(new ArchiveUpdater(src_dir, std::wstring(), 0, arc_file_index_map,
+				repack_options, ignore_errors, repack_options.dereference_symlinks, error_log, progress, mem_stream, true));
+
+		UpdateStream *arc_wstream_impl;
+		if (options.enable_volumes)
+			arc_wstream_impl = new MultiVolumeUpdateStream(repack_options.arc_path, parse_size_string(repack_options.volume_size), progress2);
 		else
-			stream_impl = new SimpleUpdateStream(options.arc_path, progress);
+			arc_wstream_impl = new SimpleUpdateStream(repack_options.arc_path, progress2);
 
-		ComObject<IOutStream> update_stream(stream_impl);
+		ComObject<IOutStream> arc_update_stream(arc_wstream_impl);
+		int errc = out_arc->UpdateItems(arc_update_stream, new_index2, arc_updater);
+
+		mem_stream->FinishWriting();
+		tar_thread.join();
+		int errc2 = future.get();
 
 		try {
-			COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, new_index, updater));
+			COM_ERROR_CHECK(errc);
+			COM_ERROR_CHECK(errc2);
+			//(void)errc2;
 		} catch (...) {
-			stream_impl->clean_files();
+			arc_wstream_impl->clean_files();
 			throw;
 		}
-
-		if (options.move_files && error_log->empty() && !options.filter && !skipped_files)
-			DeleteSrcFiles(src_dir, file_names, *ignore_errors, *error_log);
-	}
-
-	if (options.arc_type != c_tar || !options.repack) {
 		return;
 	}
 
-	std::wstring arc_oldpath = options.arc_path;
-	std::wstring arc_suff = ArcAPI::formats().at(options.repack_arc_type).default_extension();
-	options.arc_path.append(arc_suff);
-
-	FindData src_find_data;
-	src_find_data = File::get_find_data(arc_oldpath);
 	UInt32 new_index = 0;
+	bool skipped_files = false;
 	const auto file_index_map = std::make_shared<FileIndexMap>();
-	FileIndexInfo file_index_info;
-	file_index_info.rel_path = L"";
-	file_index_info.find_data = src_find_data;
 
-
-	FileIndexMap &_file_index_map = *file_index_map;
-	_file_index_map[0] = file_index_info;
-	new_index++;
-
-	options.arc_type = options.repack_arc_type;
+	PrepareUpdate(src_dir, file_names, c_root_index, *this, *file_index_map, new_index, oaOverwrite,
+			*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
 
 	ComObject<IOutArchive> out_arc;
 	ArcAPI::create_out_archive(options.arc_type, out_arc.ref());
-	set_properties(out_arc, options);
 
-	prepare_dst_dir(extract_file_path(options.arc_path));
-	UpdateStream *stream_impl;
+	set_properties(out_arc, options);
 
 	const auto progress = std::make_shared<ArchiveUpdateProgress>(true, options.arc_path);
 	ComObject<IArchiveUpdateCallback> updater(new ArchiveUpdater(src_dir, std::wstring(), 0, file_index_map,
 			options, ignore_errors, options.dereference_symlinks, error_log, progress));
 
-	if (options.enable_volumes)
-		stream_impl = new MultiVolumeUpdateStream(options.arc_path, parse_size_string(options.volume_size), progress);
+	prepare_dst_dir(extract_file_path(options.arc_path));
+	UpdateStream *stream_impl;
+
+	if (options.arc_type == c_tar && options.repack && options.enable_volumes) {
+		if (extract_file_ext(options.arc_path) == L".001") {
+			removeExtension(options.arc_path);
+		}
+	}
+
+	if (options.enable_volumes && !(options.arc_type == c_tar && options.repack)) {
+		stream_impl = new MultiVolumeUpdateStream(options.arc_path, parse_size_string(options.volume_size),progress);
+	}
+	else if (options.create_sfx && options.arc_type == c_7z)
+		stream_impl = new SfxUpdateStream(options.arc_path, options.sfx_options, progress);
 	else
 		stream_impl = new SimpleUpdateStream(options.arc_path, progress);
 
@@ -1693,8 +1827,8 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 		throw;
 	}
 
-//	File::set_attr_nt(arc_oldpath, FILE_ATTRIBUTE_NORMAL);
-	File::delete_file(arc_oldpath);
+	if (options.move_files && error_log->empty() && !options.filter && !skipped_files)
+		DeleteSrcFiles(src_dir, file_names, *ignore_errors, *error_log);
 }
 
 void Archive::update(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,

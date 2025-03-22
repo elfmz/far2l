@@ -306,7 +306,7 @@ Options::Options()
 	  plugin_prefix(L"arc"),
 	  max_check_size(1 << 20),
 	  relay_buffer_size(32),
-	  max_arc_cache_size(128),
+	  max_arc_cache_size(64),
 	  extract_ignore_errors(false),
 	  extract_access_rights(true),
 	  extract_owners_groups(false),

@@ -358,7 +358,7 @@ Options::Options()
 	  use_disabled_formats(false),
 	  disabled_formats(),
 	  pgdn_formats(false),
-	  patchCP(true),
+	  patchCP(false),
 	  oemCP(Patch7zCP::GetDefCP_OEM()),
 	  ansiCP(Patch7zCP::GetDefCP_ANSI()),
 	  correct_name_mode(0x12),

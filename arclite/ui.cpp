@@ -179,7 +179,6 @@ void ProgressMonitor::update_ui(bool force)
 	}
 
 	if (time_elapsed() > 60 && !sleep_disabled) {
-
 		sleep_disabled = true;
 	}
 

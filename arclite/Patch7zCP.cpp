@@ -771,6 +771,8 @@ bool get_faddrs(void *handle)
 		return false;
 	}
 
+	fprintf(stderr, "get_faddrs() ok\n");
+
 	return true;
 }
 
@@ -801,6 +803,8 @@ static bool patch_plt(void *handle)
 		void (NArchive::NZip::CItem::*methodPtr)(UString&, const AString&, bool, bool, UINT) const = &NArchive::NZip::CItem::GetUnicodeString;
 		void *fptr;
 	} u;
+
+	fprintf(stderr, "got_entry = %p\n", got_entry);
 
 	*got_entry = (void *)u.fptr;
 	mprotect(page, getpagesize(), PROT_READ);
@@ -895,9 +899,9 @@ static bool patch_7z_dll()
 	for (size_t i = 0; i < libs.size(); ++i) {
 		if (!get_faddrs(libs[i].h_module))
 			continue;
-		if ( patch_plt(libs[i].h_module) )
-			return true;
-		if (patch_addr(libs[i].h_module) )
+//		if (patch_plt(libs[i].h_module))
+//			return true;
+		if (patch_addr(libs[i].h_module))
 			return true;
 	}
 

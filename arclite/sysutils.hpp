@@ -12,6 +12,13 @@
 	#define FILE_FLAG_CREATE_REPARSE_POINT  0x00400000
 #endif
 
+#define _IDLE_PRIORITY_CLASS 19
+
+int _map_priority(int user_priority);
+pid_t _GetCurrentProcess(void);
+int _GetPriorityClass(pid_t pid);
+void _SetPriorityClass(pid_t pid, int priority);
+
 void CoCreateGuid(GUID *guid);
 void StringFromGUID2A(GUID *guid, char *str, uint32_t size);
 void StringFromGUID2(GUID *guid, wchar_t *str, uint32_t size);

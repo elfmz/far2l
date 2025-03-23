@@ -62,21 +62,21 @@ struct CompressionMethod
 };
 
 const CompressionMethod c_methods[] = {
-		{MSG_COMPRESSION_METHOD_LZMA,	  c_method_lzma,		 CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_LZMA2,	   c_method_lzma2,	   CMF_7ZIP		   },
-		{MSG_COMPRESSION_METHOD_PPMD,	  c_method_ppmd,		 CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_DEFLATE,	 c_method_deflate,   CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_DEFLATE64, c_method_deflate64, CMF_ZIP			  },
-		{MSG_COMPRESSION_METHOD_BZIP2,	   c_method_bzip2,	   CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_DELTA,	   c_method_delta,	   CMF_7ZIP		   },
-		{MSG_COMPRESSION_METHOD_BCJ,		 c_method_bcj,	   CMF_7ZIP		   },
-		{MSG_COMPRESSION_METHOD_BCJ2,	  c_method_bcj2,		 CMF_7ZIP			 },
+		{MSG_COMPRESSION_METHOD_LZMA,		c_method_lzma,		CMF_7ZIP | CMF_ZIP},
+		{MSG_COMPRESSION_METHOD_LZMA2,		c_method_lzma2,		CMF_7ZIP },
+		{MSG_COMPRESSION_METHOD_PPMD,		c_method_ppmd,		CMF_7ZIP | CMF_ZIP},
+		{MSG_COMPRESSION_METHOD_DEFLATE,	c_method_deflate,	CMF_7ZIP | CMF_ZIP},
+		{MSG_COMPRESSION_METHOD_DEFLATE64,	c_method_deflate64,	CMF_ZIP	},
+		{MSG_COMPRESSION_METHOD_BZIP2,		c_method_bzip2,		CMF_7ZIP | CMF_ZIP},
+		{MSG_COMPRESSION_METHOD_DELTA,		c_method_delta,		CMF_7ZIP },
+		{MSG_COMPRESSION_METHOD_BCJ,		c_method_bcj,		CMF_7ZIP },
+		{MSG_COMPRESSION_METHOD_BCJ2,		c_method_bcj2,		CMF_7ZIP },
 };
 
 const CompressionMethod c_tar_methods[] = {
-		{MSG_COMPRESSION_TAR_METHOD_GNU,	 c_tar_method_gnu,   1},
-		{MSG_COMPRESSION_TAR_METHOD_PAX,	 c_tar_method_pax,   1},
-		{MSG_COMPRESSION_TAR_METHOD_POSIX, c_tar_method_posix, 1},
+		{MSG_COMPRESSION_TAR_METHOD_GNU,	c_tar_method_gnu,	1},
+		{MSG_COMPRESSION_TAR_METHOD_PAX,	c_tar_method_pax,	1},
+		{MSG_COMPRESSION_TAR_METHOD_POSIX,	c_tar_method_posix,	1},
 };
 
 enum TBPFLAG
@@ -104,15 +104,18 @@ static inline void QueryPerformanceFrequency(UInt64 *x)
 	*x = 1000;
 }
 
-// GetInterThreadID
-ProgressMonitor::ProgressMonitor(const std::wstring &progress_title, bool progress_known, bool lazy)
-	: h_scr(nullptr),
-	  paused(false),
-	  low_priority(false),
-	  confirm_esc(false),
-	  progress_title(progress_title),
-	  progress_known(progress_known),
-	  percent_done(0)
+ProgressMonitor::ProgressMonitor(const std::wstring &progress_title, bool progress_known, bool lazy, int priority)
+	:   h_scr(nullptr),
+		paused(false),
+		low_priority(false),
+		priority_changed(false),
+		sleep_disabled(false),
+		initial_priority(priority),
+		original_priority(-1),
+		confirm_esc(false),
+		progress_title(progress_title),
+		progress_known(progress_known),
+		percent_done(0)
 {
 	//  fprintf(stderr, "==== ProgressMonitor::ProgressMonitor( )\n");
 	//  fprintf(stderr, "==== TREAD [%ld] \n", pthread_self());
@@ -130,17 +133,11 @@ ProgressMonitor::ProgressMonitor(const std::wstring &progress_title, bool progre
 
 	//	CHECK(get_app_option(FSSF_CONFIRMATIONS, c_esc_confirmation_option, confirm_esc));
 	confirm_esc = g_options.confirm_esc_interrupt_operation;
-
-	//	initial_priority = GetPriorityClass(GetCurrentProcess());
-	initial_priority = THREAD_PRIORITY_NORMAL;
+	original_priority = _GetPriorityClass(_GetCurrentProcess());
 }
 
 ProgressMonitor::~ProgressMonitor()
 {
-	if (time_elapsed() >= 1000) {
-		Far::g_fsf.DisplayNotification(L"Arclite - op complete", progress_title.c_str());
-	}
-
 	clean();
 }
 
@@ -173,6 +170,18 @@ void ProgressMonitor::display()
 void ProgressMonitor::update_ui(bool force)
 {
 	update_time();
+
+	if (time_elapsed() > 2000) {
+		if (!priority_changed && initial_priority != -1) {
+			_SetPriorityClass(_GetCurrentProcess(), _map_priority(initial_priority));
+			priority_changed = true;
+		}
+	}
+
+	if (time_elapsed() > 60 && !sleep_disabled) {
+
+		sleep_disabled = true;
+	}
 
 	if ((time_total >= time_update) || force) {
 
@@ -211,8 +220,8 @@ void ProgressMonitor::update_ui(bool force)
 						handle_esc();
 					} else if (key_event.wVirtualKeyCode == c_vk_b) {
 						low_priority = !low_priority;
-						WINPORT_SetThreadPriority(low_priority ? THREAD_PRIORITY_IDLE : initial_priority);
-
+						_SetPriorityClass(_GetCurrentProcess(), low_priority ? _IDLE_PRIORITY_CLASS : original_priority);
+						priority_changed = true;
 						if (paused)
 							display();
 					} else if (key_event.wVirtualKeyCode == c_vk_p) {
@@ -260,7 +269,18 @@ void ProgressMonitor::clean()
 		Far::set_progress_state(TBPF_NOPROGRESS);
 		h_scr = nullptr;
 	}
-	WINPORT_SetThreadPriority(initial_priority);
+
+	if (priority_changed) {
+		_SetPriorityClass(_GetCurrentProcess(), original_priority);
+	}
+
+	if (sleep_disabled) {
+
+	}
+
+	if (time_elapsed() >= 5000) {
+		Far::g_fsf.DisplayNotification(L"Arclite - operation complete", progress_title.c_str());
+	}
 }
 
 void ProgressMonitor::update_time()

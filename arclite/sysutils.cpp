@@ -10,6 +10,38 @@
 
 HINSTANCE g_h_instance = nullptr;
 
+int _map_priority(int user_priority) {
+    switch (user_priority) {
+        case 0: return 19;   // Low
+        case 1: return 10;   // Below Normal
+        case 2: return 0;    // Normal
+        case 3: return -5;   // Above Normal
+        case 4: return -10;  // High
+        case 5: return -20;  // Highest
+        default:
+            fprintf(stderr, "Invalid priority value. Using default (Normal).\n");
+            return 0; // Default to Normal
+    }
+}
+
+pid_t _GetCurrentProcess(void) {
+	return getpid();
+}
+
+int _GetPriorityClass(pid_t pid) {
+    int current_priority = getpriority(PRIO_PROCESS, pid);
+    if (current_priority == -1) {
+		return 0;
+    }
+    return current_priority;
+}
+
+void _SetPriorityClass(pid_t pid, int priority) {
+    if (setpriority(PRIO_PROCESS, pid, priority) != 0) {
+		fprintf(stderr, "arclite:SetPriorityClass(): Failed to set process priority\n");
+    }
+}
+
 uint32_t xs30_seed[4] = {0x3D696D09, 0xCD6BEB33, 0x9D1A0022, 0x9D1B0022};
 static inline uint32_t zRAND(uint32_t *zseed = &xs30_seed[0])
 {

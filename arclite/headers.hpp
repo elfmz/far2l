@@ -39,6 +39,8 @@
 #include <future>
 #include <condition_variable>
 
+#include <sys/resource.h>
+
 /*
  */
 

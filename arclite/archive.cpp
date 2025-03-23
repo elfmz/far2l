@@ -743,13 +743,19 @@ void ArcAPI::load()
 	fprintf(stderr, "dll_path = %S\n", dll_path.c_str());
 	fprintf(stderr, "dll_path = %S + *.so\n", dll_path.c_str());
 
-//	std::wstring _7zip_path = dll_path;
-	std::wstring _7zip_path = g_options.preferred_7zip_path;
+	std::wstring _7zip_path = dll_path; // First, let's check in the plugin directory.
 
 	load_libs(_7zip_path + L"*.so");
 	find_sfx_modules(_7zip_path + L"*.sfx");
 
 	if (arc_libs.empty()) {
+		_7zip_path = g_options.preferred_7zip_path; // Then we'll check in the directory from the settings.
+		load_libs(_7zip_path + L"*.so");
+		if (sfx_modules.empty())
+			find_sfx_modules(_7zip_path + L"*.sfx");
+	}
+
+	if (arc_libs.empty()) { // And then we'll check the standard paths for 7-Zip.
 		_7zip_path = L"/usr/lib/7zip/";
 		load_libs(_7zip_path + L"*.so");
 		if (sfx_modules.empty())

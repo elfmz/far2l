@@ -88,7 +88,10 @@ private:
 	UInt64 time_update;
 	bool paused;
 	bool low_priority;
-	DWORD initial_priority;
+	bool priority_changed;
+	bool sleep_disabled;
+	int initial_priority;
+	int original_priority;
 	pthread_t tID;
 	bool confirm_esc;
 	void update_time();
@@ -107,7 +110,7 @@ protected:
 	void handle_esc();
 
 public:
-	ProgressMonitor(const std::wstring &progress_title, bool progress_known = true, bool lazy = true);
+	ProgressMonitor(const std::wstring &progress_title, bool progress_known = true, bool lazy = true, int priority = -1);
 	virtual ~ProgressMonitor();
 	void update_ui(bool force = false);
 	void clean();

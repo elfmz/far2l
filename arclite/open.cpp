@@ -1125,8 +1125,8 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			if (ef.is_dir()) return;
 			size_t fsize = ef.size();
 
-//			ComObject<DataRelayStream> mem_stream(new DataRelayStream((size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
-			ComObject<DataRelayStream> mem_stream(new DataRelayStream(32, 64, fsize));
+			ComObject<DataRelayStream> mem_stream(new DataRelayStream((size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
+//			ComObject<DataRelayStream> mem_stream(new DataRelayStream(32, 64, fsize));
 			ComObject<IArchiveExtractCallback> extractor(new SimpleRelExtractor(archives[parent_idx], mem_stream, fsize));
 
 			const auto archive = std::make_shared<Archive>();

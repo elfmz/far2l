@@ -11,6 +11,8 @@ int wine_cp_mbstowcs( const union cptable *table, int flags,
                       WCHAR *dst, int dstlen );
 const union cptable *get_codepage_table( unsigned int codepage );
 
+unsigned int wine_decompose( int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen );
+
 #ifdef __cplusplus
 }
 #endif

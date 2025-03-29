@@ -9,14 +9,58 @@
 #include <utils.h>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
+#include <WinPort.h>
 
 #include "libarch_utils.h"
 #include "libarch_cmd.h"
 
+static std::wstring Str2WideDecomposed(const std::string &s)
+{
+	const auto &ws = StrMB2Wide(s);
+	std::wstring out;
+	out.reserve(ws.size());
+	wchar_t tmp[8] = {0};
+	for (const auto &w : ws) {
+		unsigned int n = WINPORT(DecomposeCharW)(0, w, tmp, sizeof(tmp) / sizeof(tmp[0]));
+		if (n > 0) {
+			out.append(tmp, n);
+		} else {
+			out+= w;
+		}
+	}
+	return out;
+}
+
+static bool HasNonLatinChars(const std::string &s)
+{
+	for (const auto &c : s) {
+		if (c & 0x80) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool PartMatchesWanted(const std::string &part, const std::string &wanted)
+{
+	if (part == wanted || wanted == "*") {
+		return true;
+	}
+
+	// see https://github.com/elfmz/far2l/issues/2613
+	if (HasNonLatinChars(wanted) && HasNonLatinChars(part)) {
+		if (Str2WideDecomposed(wanted) == Str2WideDecomposed(part)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static bool PartsMatchesWanted(const PathParts &wanted, const PathParts &parts)
 {
 	size_t i = 0;
-	while (i != wanted.size() && i != parts.size() && (wanted[i] == parts[i] || wanted[i] == "*")) {
+	while (i != wanted.size() && i != parts.size() && PartMatchesWanted(parts[i], wanted[i])) {
 		++i;
 	}
 

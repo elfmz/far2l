@@ -398,5 +398,10 @@ extern "C" {
 		}
 	}
 
+	WINPORT_DECL(DecomposeCharW, unsigned int, (int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen))
+	{
+		return wine_decompose(flags, ch, dst, dstlen);
+	}
+
 }
 

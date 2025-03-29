@@ -62,6 +62,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "interf.hpp" // for BoxSymbols
 
+#define FILE_OWNER_GROUP_ID_SHOW_MIN_ID_LENGTH 6
+
 struct FSFileFlagsSafe : FSFileFlags
 {
 	FSFileFlagsSafe(const FARString &path, DWORD attrs)
@@ -85,6 +87,8 @@ enum SETATTRDLG
 	SA_TEXT_GROUP,
 	SA_TEXT_GROUP_CHMARK,
 	SA_COMBO_GROUP,
+	SA_CHECKBOX_OWNER_GROUP_ID,
+	SA_BUTTON_OWNER_ORIGINAL,
 
 	SA_SEPARATOR_MODE,
 	SA_SEPARATOR_MODE_V1,
@@ -205,12 +209,11 @@ enum DIALOGMODE
 
 struct SetAttrDlgParam
 {
-	bool Plugin = false;
-	DWORD FileSystemFlags = 0;
+	bool Plugin = false; // true = inside plugin and no real file system
 	DIALOGMODE DialogMode;
 	FARString strSelName;
-	FARString strOwner;
-	FARString strGroup;
+	FARString strOwner={}, strOwnerIDShow={};
+	FARString strGroup={}, strGroupIDShow={};
 	bool OwnerChanged = false, GroupChanged = false;
 	// значения CheckBox`ов на момент старта диалога
 	int OriginalCBAttr[ARRAYSIZE(PreserveOriginalIDs)]; // values at dialog start and any user change for restore by subfolders checkbox
@@ -225,10 +228,11 @@ struct SetAttrDlgParam
 	FARString SymlinkButtonTitles[3];
 	// initial values at dialog start:
 	FARString strInitInfoSymLink,
-		strInitOwner, strInitGroup,
+		strInitOwner, strInitOwnerIDShow, strInitGroup, strInitGroupIDShow,
 		strInitOctal,
 		strInitAccessDate, strInitModifyDate, strInitStatusChangeDate,
 		strInitAccessTime, strInitModifyTime, strInitStatusChangeTime;
+	FarList *flOwner, *flOwnerIDShow, *flGroup, *flGroupIDShow;
 };
 
 #define DM_SETATTR (DM_USER + 1)
@@ -439,9 +443,11 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 										}
 									}
 
-									BlankEditIfChanged(hDlg, SA_COMBO_OWNER, DlgParam->strOwner,
+									BlankEditIfChanged(hDlg, SA_COMBO_OWNER,
+											Opt.OwnerGroupShowId ? DlgParam->strOwnerIDShow : DlgParam->strOwner,
 											DlgParam->OwnerChanged);
-									BlankEditIfChanged(hDlg, SA_COMBO_GROUP, DlgParam->strGroup,
+									BlankEditIfChanged(hDlg, SA_COMBO_GROUP,
+											Opt.OwnerGroupShowId ? DlgParam->strGroupIDShow : DlgParam->strGroup,
 											DlgParam->GroupChanged);
 								}
 								// сняли?
@@ -452,9 +458,13 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 												DlgParam->OriginalCBAttr[i]);
 									}
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
-											reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+											Opt.OwnerGroupShowId
+												? reinterpret_cast<LONG_PTR>(DlgParam->strOwnerIDShow.CPtr())
+												: reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP,
-											reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
+											Opt.OwnerGroupShowId
+												? reinterpret_cast<LONG_PTR>(DlgParam->strGroupIDShow.CPtr())
+												: reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 
 								if (Opt.SetAttrFolderRules) {
@@ -509,9 +519,13 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 												DlgParam->OriginalCBAttr[i]);
 									}
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER,
-											reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
+											Opt.OwnerGroupShowId
+												? reinterpret_cast<LONG_PTR>(DlgParam->strOwnerIDShow.CPtr())
+												: reinterpret_cast<LONG_PTR>(DlgParam->strOwner.CPtr()));
 									SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP,
-											reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
+											Opt.OwnerGroupShowId
+												? reinterpret_cast<LONG_PTR>(DlgParam->strGroupIDShow.CPtr())
+												: reinterpret_cast<LONG_PTR>(DlgParam->strGroup.CPtr()));
 								}
 							}
 						}
@@ -526,31 +540,72 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 				return TRUE;
 			}
 			else if (Param1 == SA_TXTBTN_INFO) {
-				FARString strText;
-				SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_TXTBTN_INFO,
-					reinterpret_cast<LONG_PTR>(DlgParam->SymlinkButtonTitles[DlgParam->SymLinkInfoCycle].CPtr()));
+				if (!DlgParam->Plugin) { // we can obtain info only in real filesystem
+					FARString strText;
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_TXTBTN_INFO,
+						reinterpret_cast<LONG_PTR>(DlgParam->SymlinkButtonTitles[DlgParam->SymLinkInfoCycle].CPtr()));
 
-				switch (DlgParam->SymLinkInfoCycle++) {
-					case 0: {
-							DlgParam->SymLink = reinterpret_cast<LPCWSTR>
-								(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
+					switch (DlgParam->SymLinkInfoCycle++) {
+						case 0: {
+								DlgParam->SymLink = reinterpret_cast<LPCWSTR>
+									(SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, SA_EDIT_INFO, 0));
+								ConvertNameToReal(DlgParam->SymLink, strText);
+								SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 1);
+							} break;
+
+						case 1:
 							ConvertNameToReal(DlgParam->SymLink, strText);
+							strText = BriefInfo(strText);
 							SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 1);
-						} break;
+							break;
 
-					case 1:
-						ConvertNameToReal(DlgParam->SymLink, strText);
-						strText = BriefInfo(strText);
-						SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 1);
-						break;
-
-					default:
-						strText = DlgParam->SymLink;
-						SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 0);
-						DlgParam->SymLinkInfoCycle = 0;
+						default:
+							strText = DlgParam->SymLink;
+							SendDlgMessage(hDlg, DM_SETREADONLY, SA_EDIT_INFO, 0);
+							DlgParam->SymLinkInfoCycle = 0;
+					}
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_INFO, reinterpret_cast<LONG_PTR>(strText.CPtr()));
 				}
-				SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_EDIT_INFO, reinterpret_cast<LONG_PTR>(strText.CPtr()));
 				return TRUE;
+
+			// change Owner & Group show ID
+			} else if (Param1 == SA_CHECKBOX_OWNER_GROUP_ID) {
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
+				Opt.OwnerGroupShowId = (DWORD)SendDlgMessage(hDlg, DM_GETCHECK, SA_CHECKBOX_OWNER_GROUP_ID, 0);
+				// change list values and reset combobox'es to original values
+				// Note: reset to original is used here because we use 2 separate list with different order
+				//  and only have "id: name" -> "name" (via FileOwnerGroupIDShowNameSanitize())
+				//  but have not easy way to make "name" -> "id: name"
+				if (Opt.OwnerGroupShowId) {
+					SendDlgMessage(hDlg, DM_LISTSET, SA_COMBO_OWNER, reinterpret_cast<LONG_PTR>(DlgParam->flOwnerIDShow));
+					SendDlgMessage(hDlg, DM_LISTSET, SA_COMBO_GROUP, reinterpret_cast<LONG_PTR>(DlgParam->flGroupIDShow));
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER, reinterpret_cast<LONG_PTR>(DlgParam->strInitOwnerIDShow.CPtr()));
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP, reinterpret_cast<LONG_PTR>(DlgParam->strInitGroupIDShow.CPtr()));
+				}
+				else {
+					SendDlgMessage(hDlg, DM_LISTSET, SA_COMBO_OWNER, reinterpret_cast<LONG_PTR>(DlgParam->flOwner));
+					SendDlgMessage(hDlg, DM_LISTSET, SA_COMBO_GROUP, reinterpret_cast<LONG_PTR>(DlgParam->flGroup));
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER, reinterpret_cast<LONG_PTR>(DlgParam->strInitOwner.CPtr()));
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP, reinterpret_cast<LONG_PTR>(DlgParam->strInitGroup.CPtr()));
+				}
+				DlgParam->OwnerChanged = false;
+				DlgParam->GroupChanged = false;
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
+
+			// Set Original for Owner and Group
+			} else if(Param1 == SA_BUTTON_OWNER_ORIGINAL) {
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
+				if (Opt.OwnerGroupShowId) {
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER, reinterpret_cast<LONG_PTR>(DlgParam->strInitOwnerIDShow.CPtr()));
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP, reinterpret_cast<LONG_PTR>(DlgParam->strInitGroupIDShow.CPtr()));
+				}
+				else {
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_OWNER, reinterpret_cast<LONG_PTR>(DlgParam->strInitOwner.CPtr()));
+					SendDlgMessage(hDlg, DM_SETTEXTPTR, SA_COMBO_GROUP, reinterpret_cast<LONG_PTR>(DlgParam->strInitGroup.CPtr()));
+				}
+				DlgParam->OwnerChanged = false;
+				DlgParam->GroupChanged = false;
+				SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 
 			// Set Original for Modes and Attributes
 			} else if (Param1 == SA_BUTTON_MODE_ORIGINAL) {
@@ -642,11 +697,13 @@ LONG_PTR WINAPI SetAttrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 							: IsEditChanged(hDlg, SA_EDIT_INFO, DlgParam->strInitInfoSymLink) );
 				case SA_COMBO_OWNER:
 					SetAttrDefaultMark(hDlg, SA_COMBO_OWNER-1, // mark (un)changed
-						IsEditChanged(hDlg, SA_COMBO_OWNER, DlgParam->strInitOwner) );
+						IsEditChanged(hDlg, SA_COMBO_OWNER,
+							Opt.OwnerGroupShowId ? DlgParam->strInitOwnerIDShow : DlgParam->strInitOwner) );
 					break;
 				case SA_COMBO_GROUP:
 					SetAttrDefaultMark(hDlg, SA_COMBO_GROUP-1, // mark (un)changed
-						IsEditChanged(hDlg, SA_COMBO_GROUP, DlgParam->strInitGroup) );
+						IsEditChanged(hDlg, SA_COMBO_GROUP,
+							Opt.OwnerGroupShowId ? DlgParam->strInitGroupIDShow : DlgParam->strInitGroup) );
 					break;
 				case SA_FIXEDIT_LAST_ACCESS_DATE:
 					SetAttrDefaultMark(hDlg, SA_FIXEDIT_LAST_ACCESS_DATE-1, // mark (un)changed
@@ -846,27 +903,33 @@ void PR_ShellSetFileAttributesMsg()
 	ShellSetFileAttributesMsg(reinterpret_cast<const wchar_t *>(preRedrawItem.Param.Param1));
 }
 
-static void CheckFileOwnerGroup(DialogItemEx &ComboItem,
-		bool(WINAPI *GetFN)(const wchar_t *, const wchar_t *, FARString &),
+static void CheckFileOwnerGroup(FARString &strName, FARString &strNameIDShow,
+		bool(WINAPI *GetFN)(const wchar_t *, const wchar_t *, FARString &, FARString &, unsigned),
 		FARString strComputerName,
 		FARString strSelName)
 {
-	FARString strCur;
-	GetFN(strComputerName, strSelName, strCur);
-	if (ComboItem.strData.IsEmpty()) {
-		ComboItem.strData = strCur;
+	FARString strCur, strCurIDShow;
+	GetFN(strComputerName, strSelName, strCur, strCurIDShow, FILE_OWNER_GROUP_ID_SHOW_MIN_ID_LENGTH);
+	if (strName.IsEmpty()) {
+		strName = strCur;
 	}
-	else if (ComboItem.strData != strCur) {
-		ComboItem.strData = Msg::SetAttrOwnerMultiple;
+	else if (strName != strCur) {
+		strName = Msg::SetAttrOwnerMultiple;
+	}
+	if (strNameIDShow.IsEmpty()) {
+		strNameIDShow = strCurIDShow;
+	}
+	else if (strNameIDShow != strCurIDShow) {
+		strNameIDShow = Msg::SetAttrOwnerMultiple;
 	}
 }
 
-static bool ApplyFileOwnerGroupIfChanged(DialogItemEx &ComboItem,
+static bool ApplyFileOwnerGroupIfChanged(LPCWSTR strCur,
 		int (*ESetFN)(LPCWSTR Name, LPCWSTR Owner, int SkipMode),
 		int &SkipMode, const FARString &strSelName, const FARString &strInit, bool force = false)
 {
-	if (!ComboItem.strData.IsEmpty() && (force || StrCmp(strInit, ComboItem.strData))) {
-		int Result = ESetFN(strSelName, ComboItem.strData, SkipMode);
+	if (*strCur && (force || StrCmp(strInit, strCur))) {
+		int Result = ESetFN(strSelName, strCur, SkipMode);
 		if (Result == SETATTR_RET_SKIPALL) {
 			SkipMode = SETATTR_RET_SKIP;
 		}
@@ -903,23 +966,31 @@ class ListPwGrEnt {
 	FarList List;
 	void Append(const wchar_t *s) { Set.emplace(s); }
 	void Append(const char *s) { Set.emplace(s); }
+	std::set<FARString> SetIDShow; // sorts and prevents duplicates
+	std::vector<FarListItem> ItemsIDShow;
+	FarList ListIDShow;
+	void AppendIDShow(const FARString &s) { SetIDShow.emplace(s.CPtr()); }
 public:
 	ListPwGrEnt(bool bGroups, int SelCount);
 	FarList *GetFarList() {
 		return &List;
 	}
+	FarList *GetFarListIDShow() {
+		return &ListIDShow;
+	}
 };
 
 ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 {
-	if (SelCount >= 2)
-		Append(Msg::SetAttrOwnerMultiple);
+	FARString fs;
 
 	if (!bGroups) { // usernames
 		struct passwd *pw;
 		setpwent();
 		while ((pw = getpwent()) != NULL) {
 			Append(pw->pw_name);
+			MakeFileOwnerGroupIDShowStr(pw->pw_uid, pw->pw_name, fs, FILE_OWNER_GROUP_ID_SHOW_MIN_ID_LENGTH);
+			AppendIDShow(fs);
 		}
 		endpwent();
 	}
@@ -928,11 +999,28 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 		setgrent();
 		while ((gr = getgrent()) != NULL) {
 			Append(gr->gr_name);
+			MakeFileOwnerGroupIDShowStr(gr->gr_gid, gr->gr_name, fs, FILE_OWNER_GROUP_ID_SHOW_MIN_ID_LENGTH);
+			AppendIDShow(fs);
 		}
 		endgrent();
 	}
 
-	Items.reserve(Set.size());
+	if( SelCount >= 2 ) {
+		Items.reserve(Set.size() + 1);
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = Msg::SetAttrOwnerMultiple.CPtr();
+
+		ItemsIDShow.reserve(SetIDShow.size() + 1);
+		ItemsIDShow.emplace_back();
+		ItemsIDShow.back().Flags = 0;
+		ItemsIDShow.back().Text = Msg::SetAttrOwnerMultiple.CPtr();
+	}
+	else {
+		Items.reserve(Set.size());
+		ItemsIDShow.reserve(SetIDShow.size());
+	}
+
 	for (const auto &Str: Set) {
 		Items.emplace_back();
 		Items.back().Flags = 0;
@@ -941,6 +1029,15 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 
 	List.ItemsNumber = Items.size();
 	List.Items = Items.data();
+
+	for (const auto &Str: SetIDShow) {
+		ItemsIDShow.emplace_back();
+		ItemsIDShow.back().Flags = 0;
+		ItemsIDShow.back().Text = Str.CPtr();
+	}
+
+	ListIDShow.ItemsNumber = ItemsIDShow.size();
+	ListIDShow.Items = ItemsIDShow.data();
 }
 
 bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
@@ -950,7 +1047,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 	SudoClientRegion scr;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);
-	short DlgX = 70, DlgY = 25;
+	short DlgX = 70, DlgY = 26;
 
 	int SelCount = SrcPanel ? SrcPanel->GetSelCount() : 1;
 
@@ -980,78 +1077,80 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_TEXT,      5,                   8,               17,               8,               {}, 0, Msg::SetAttrGroup},
 		{DI_TEXT,      18,                  8,               18,               8,               {}, 0, L""},
 		{DI_COMBOBOX,  19,                  8,               short(DlgX-6),    8,               {}, DIF_DROPDOWNLIST|DIF_LISTNOAMPERSAND|DIF_LISTWRAPMODE,L""},
+		{DI_CHECKBOX,  5,                   9,               51,               9,               {Opt.OwnerGroupShowId}, 0, Msg::SetAttrOwnerGroupShowId},
+		{DI_BUTTON,    53,                  9,               63,               9,               {}, DIF_BTNNOCLOSE, Msg::SetAttrOwnerOriginal},
 
-		{DI_TEXT,      3,                   9,               0,                9,               {}, DIF_SEPARATOR, Msg::SetAttrModeTitle},
-		{DI_VTEXT,     39,                  10,              39,               12,              {}, DIF_BOXCOLOR, VerticalLine},
-		{DI_VTEXT,     52,                  10,              52,               12,              {}, DIF_BOXCOLOR, VerticalLine},
+		{DI_TEXT,      3,                   10,               0,               10,              {}, DIF_SEPARATOR, Msg::SetAttrModeTitle},
+		{DI_VTEXT,     39,                  11,              39,               13,              {}, DIF_BOXCOLOR, VerticalLine},
+		{DI_VTEXT,     52,                  11,              52,               13,              {}, DIF_BOXCOLOR, VerticalLine},
 
-		{DI_TEXT,      5,                   10,              17,               10,              {}, 0, Msg::SetAttrAccessUser},
-		{DI_TEXT,      18,                  10,              18,               10,              {}, 0, L""},
-		{DI_CHECKBOX,  19,                  10,              23,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
-		{DI_TEXT,      25,                  10,              25,               10,              {}, 0, L""},
-		{DI_CHECKBOX,  26,                  10,              30,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
-		{DI_TEXT,      32,                  10,              32,               10,              {}, 0, L""},
-		{DI_CHECKBOX,  33,                  10,              37,               10,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
-		{DI_TEXT,      5,                   11,              18,               11,              {}, 0, Msg::SetAttrAccessGroup},
+		{DI_TEXT,      5,                   11,              17,               11,              {}, 0, Msg::SetAttrAccessUser},
 		{DI_TEXT,      18,                  11,              18,               11,              {}, 0, L""},
-		{DI_CHECKBOX,  19,                  11,              23,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
+		{DI_CHECKBOX,  19,                  11,              23,               11,              {}, DIF_3STATE, Msg::SetAttrAccessUserRead},
 		{DI_TEXT,      25,                  11,              25,               11,              {}, 0, L""},
-		{DI_CHECKBOX,  26,                  11,              30,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
+		{DI_CHECKBOX,  26,                  11,              30,               11,              {}, DIF_3STATE, Msg::SetAttrAccessUserWrite},
 		{DI_TEXT,      32,                  11,              32,               11,              {}, 0, L""},
-		{DI_CHECKBOX,  33,                  11,              37,               11,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
-		{DI_TEXT,      5,                   12,              18,               12,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_CHECKBOX,  33,                  11,              37,               11,              {}, DIF_3STATE, Msg::SetAttrAccessUserExecute},
+		{DI_TEXT,      5,                   12,              18,               12,              {}, 0, Msg::SetAttrAccessGroup},
 		{DI_TEXT,      18,                  12,              18,               12,              {}, 0, L""},
-		{DI_CHECKBOX,  19,                  12,              23,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_CHECKBOX,  19,                  12,              23,               12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupRead},
 		{DI_TEXT,      25,                  12,              25,               12,              {}, 0, L""},
-		{DI_CHECKBOX,  26,                  12,              30,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_CHECKBOX,  26,                  12,              30,               12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupWrite},
 		{DI_TEXT,      32,                  12,              32,               12,              {}, 0, L""},
-		{DI_CHECKBOX,  33,                  12,              37,               12,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
+		{DI_CHECKBOX,  33,                  12,              37,               12,              {}, DIF_3STATE, Msg::SetAttrAccessGroupExecute},
+		{DI_TEXT,      5,                   13,              18,               13,              {}, 0, Msg::SetAttrAccessOther},
+		{DI_TEXT,      18,                  13,              18,               13,              {}, 0, L""},
+		{DI_CHECKBOX,  19,                  13,              23,               13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherRead},
+		{DI_TEXT,      25,                  13,              25,               13,              {}, 0, L""},
+		{DI_CHECKBOX,  26,                  13,              30,               13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherWrite},
+		{DI_TEXT,      32,                  13,              32,               13,              {}, 0, L""},
+		{DI_CHECKBOX,  33,                  13,              37,               13,              {}, DIF_3STATE, Msg::SetAttrAccessOtherExecute},
 
-		{DI_TEXT,      40,                  10,              40,               10,              {}, 0, L""},
-		{DI_CHECKBOX,  41,                  10,              53,               10,              {}, DIF_3STATE, Msg::SetAttrSUID},
 		{DI_TEXT,      40,                  11,              40,               11,              {}, 0, L""},
-		{DI_CHECKBOX,  41,                  11,              53,               11,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_CHECKBOX,  41,                  11,              53,               11,              {}, DIF_3STATE, Msg::SetAttrSUID},
 		{DI_TEXT,      40,                  12,              40,               12,              {}, 0, L""},
-		{DI_CHECKBOX,  41,                  12,              53,               12,              {}, DIF_3STATE, Msg::SetAttrSticky},
+		{DI_CHECKBOX,  41,                  12,              53,               12,              {}, DIF_3STATE, Msg::SetAttrSGID},
+		{DI_TEXT,      40,                  13,              40,               13,              {}, 0, L""},
+		{DI_CHECKBOX,  41,                  13,              53,               13,              {}, DIF_3STATE, Msg::SetAttrSticky},
 
-		{DI_TEXT,      53,                  10,              63,               10,              {}, 0, L"O&ctal: SUGO"},
-		{DI_TEXT,      54,                  11,              57,               11,              {}, 0, L""},
-		{DI_TEXT,      59,                  11,              59,               11,              {}, 0, L""},
-		{DI_FIXEDIT,   60,                  11,              63,               11,              {(DWORD_PTR)L"####"}, DIF_MASKEDIT, L""},
-		{DI_BUTTON,    53,                  12,              63,               12,              {}, DIF_BTNNOCLOSE, Msg::SetAttrModeOriginal},
+		{DI_TEXT,      53,                  11,              63,               11,              {}, 0, L"O&ctal: SUGO"},
+		{DI_TEXT,      54,                  12,              57,               12,              {}, 0, L""},
+		{DI_TEXT,      59,                  12,              59,               12,              {}, 0, L""},
+		{DI_FIXEDIT,   60,                  12,              63,               12,              {(DWORD_PTR)L"####"}, DIF_MASKEDIT, L""},
+		{DI_BUTTON,    53,                  13,              63,               13,              {}, DIF_BTNNOCLOSE, Msg::SetAttrModeOriginal},
 
-		{DI_TEXT,      3,                   13,              0,                13,              {}, DIF_SEPARATOR, Msg::SetAttrAttributesTitle},
-		{DI_TEXT,      ColX1Of3,            14,              ColX1Of3,         14,              {}, 0, L""},
-		{DI_CHECKBOX,  short(ColX1Of3+1),   14,              0,                14,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
-		{DI_TEXT,      ColX2Of3,            14,              ColX2Of3,         14,              {}, 0, L""},
-		{DI_CHECKBOX,  short(ColX2Of3+1),   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrAppend},
+		{DI_TEXT,      3,                   14,              0,                14,              {}, DIF_SEPARATOR, Msg::SetAttrAttributesTitle},
+		{DI_TEXT,      ColX1Of3,            15,              ColX1Of3,         15,              {}, 0, L""},
+		{DI_CHECKBOX,  short(ColX1Of3+1),   15,              0,                15,              {}, DIF_FOCUS | DIF_3STATE, Msg::SetAttrImmutable},
+		{DI_TEXT,      ColX2Of3,            15,              ColX2Of3,         15,              {}, 0, L""},
+		{DI_CHECKBOX,  short(ColX2Of3+1),   15,              0,                15,              {}, DIF_3STATE, Msg::SetAttrAppend},
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		{DI_TEXT,      ColX3Of3,            14,              ColX3Of3,         14,              {}, 0, L""},
-		{DI_CHECKBOX,  short(ColX3Of3+1),   14,              0,                14,              {}, DIF_3STATE, Msg::SetAttrHidden},
+		{DI_TEXT,      ColX3Of3,            15,              ColX3Of3,         15,              {}, 0, L""},
+		{DI_CHECKBOX,  short(ColX3Of3+1),   15,              0,                15,              {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_TEXT,      3,                   15,              0,                15,              {}, DIF_SEPARATOR, L""},
-		{DI_TEXT,      short(DlgX - 29),    16,              0,                16,              {}, 0, L""},
-		{DI_TEXT,      5,                   17,              0,                17,              {}, 0, Msg::SetAttrAccessTime},
-		{DI_TEXT,      short(DlgX - 30),    17,              short(DlgX - 30), 17,              {}, 0, L""},
-		{DI_FIXEDIT,   short(DlgX - 29),    17,              short(DlgX - 19), 17,              {}, DIF_MASKEDIT, L""},
-		{DI_TEXT,      short(DlgX - 18),    17,              short(DlgX - 18), 17,              {}, 0, L""},
-		{DI_FIXEDIT,   short(DlgX - 17),    17,              short(DlgX - 6),  17,              {}, DIF_MASKEDIT, L""},
-		{DI_TEXT,      5,                   18,              0,                18,              {}, 0, Msg::SetAttrModificationTime},
+		{DI_TEXT,      3,                   16,              0,                16,              {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      short(DlgX - 29),    17,              0,                17,              {}, 0, L""},
+		{DI_TEXT,      5,                   18,              0,                18,              {}, 0, Msg::SetAttrAccessTime},
 		{DI_TEXT,      short(DlgX - 30),    18,              short(DlgX - 30), 18,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 29),    18,              short(DlgX - 19), 18,              {}, DIF_MASKEDIT, L""},
 		{DI_TEXT,      short(DlgX - 18),    18,              short(DlgX - 18), 18,              {}, 0, L""},
 		{DI_FIXEDIT,   short(DlgX - 17),    18,              short(DlgX - 6),  18,              {}, DIF_MASKEDIT, L""},
-		{DI_TEXT,      5,                   19,              0,                19,              {}, 0, Msg::SetAttrStatusChangeTime},
+		{DI_TEXT,      5,                   19,              0,                19,              {}, 0, Msg::SetAttrModificationTime},
 		{DI_TEXT,      short(DlgX - 30),    19,              short(DlgX - 30), 19,              {}, 0, L""},
-		{DI_FIXEDIT,   short(DlgX - 29),    19,              short(DlgX - 19), 19,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
+		{DI_FIXEDIT,   short(DlgX - 29),    19,              short(DlgX - 19), 19,              {}, DIF_MASKEDIT, L""},
 		{DI_TEXT,      short(DlgX - 18),    19,              short(DlgX - 18), 19,              {}, 0, L""},
-		{DI_FIXEDIT,   short(DlgX - 17),    19,              short(DlgX - 6),  19,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
-		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal},
-		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent},
-		{DI_BUTTON,    0,                   20,              0,                20,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrBlank},
-		{DI_TEXT,      3,                   21,              0,                21,              {}, DIF_SEPARATOR | DIF_HIDDEN, L""},
-		{DI_CHECKBOX,  5,                   22,              0,                22,              {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSubfolders},
+		{DI_FIXEDIT,   short(DlgX - 17),    19,              short(DlgX - 6),  19,              {}, DIF_MASKEDIT, L""},
+		{DI_TEXT,      5,                   20,              0,                20,              {}, 0, Msg::SetAttrStatusChangeTime},
+		{DI_TEXT,      short(DlgX - 30),    20,              short(DlgX - 30), 20,              {}, 0, L""},
+		{DI_FIXEDIT,   short(DlgX - 29),    20,              short(DlgX - 19), 20,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
+		{DI_TEXT,      short(DlgX - 18),    20,              short(DlgX - 18), 20,              {}, 0, L""},
+		{DI_FIXEDIT,   short(DlgX - 17),    20,              short(DlgX - 6),  20,              {}, DIF_MASKEDIT | DIF_READONLY, L""},
+		{DI_BUTTON,    0,                   21,              0,                21,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal},
+		{DI_BUTTON,    0,                   21,              0,                21,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent},
+		{DI_BUTTON,    0,                   21,              0,                21,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrBlank},
+		{DI_TEXT,      3,                   22,              0,                22,              {}, DIF_SEPARATOR | DIF_HIDDEN, L""},
+		{DI_CHECKBOX,  5,                   23,              0,                23,              {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSubfolders},
 		{DI_TEXT,      3,                   short(DlgY - 4), 0,                short(DlgY - 4), {}, DIF_SEPARATOR, L""},
 		{DI_TEXT,      5,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSymlinkExplain1},
 		{DI_TEXT,      5,                   short(DlgY - 2), 0,                short(DlgY - 2), {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSymlinkExplain2},
@@ -1063,8 +1162,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 	ListPwGrEnt Owners(false, SelCount);
 	ListPwGrEnt Groups(true, SelCount);
-	AttrDlg[SA_COMBO_OWNER].ListItems = Owners.GetFarList();
-	AttrDlg[SA_COMBO_GROUP].ListItems = Groups.GetFarList();
+	DlgParam.flOwner = Owners.GetFarList(); DlgParam.flOwnerIDShow = Owners.GetFarListIDShow();
+	DlgParam.flGroup = Groups.GetFarList(); DlgParam.flGroupIDShow = Groups.GetFarListIDShow();
+	AttrDlg[SA_COMBO_OWNER].ListItems = Opt.OwnerGroupShowId ? DlgParam.flOwnerIDShow : DlgParam.flOwner;
+	AttrDlg[SA_COMBO_GROUP].ListItems = Opt.OwnerGroupShowId ? DlgParam.flGroupIDShow : DlgParam.flGroup;
 
 	if (SrcPanel && SrcPanel->GetMode() == PLUGIN_PANEL) {
 		OpenPluginInfo Info;
@@ -1078,7 +1179,14 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 
 		if (!(Info.Flags & OPIF_REALNAMES)) {
 			AttrDlg[SA_BUTTON_SET].Flags|= DIF_DISABLE;
-			//AttrDlg[SA_BUTTON_BRIEFINFO].Flags|= DIF_DISABLE;
+			//AttrDlg[SA_TXTBTN_INFO].Flags|= DIF_DISABLE;
+			AttrDlg[SA_TEXT_OWNER].Flags|= DIF_DISABLE;
+			AttrDlg[SA_TEXT_OWNER_CHMARK].Flags|= DIF_DISABLE;
+			AttrDlg[SA_COMBO_OWNER].Flags|= DIF_DISABLE;
+			AttrDlg[SA_TEXT_GROUP].Flags|= DIF_DISABLE;
+			AttrDlg[SA_TEXT_GROUP_CHMARK].Flags|= DIF_DISABLE;
+			AttrDlg[SA_COMBO_GROUP].Flags|= DIF_DISABLE;
+			AttrDlg[SA_CHECKBOX_OWNER_GROUP_ID].Flags|= DIF_DISABLE;
 			DlgParam.Plugin = true;
 		}
 	}
@@ -1168,8 +1276,10 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevFIFO;
 			else if (FileAttr & FILE_ATTRIBUTE_DEVICE_SOCK)
 				AttrDlg[SA_EDIT_INFO].strData = Msg::FileFilterAttrDevSock;
-			else
+			else if (!DlgParam.Plugin) // we can obtain info only in real filesystem
 				AttrDlg[SA_EDIT_INFO].strData = BriefInfo(strSelName);
+			else
+				AttrDlg[SA_EDIT_INFO].strData = ">>> inside plugin, not in real local filesystem";
 
 
 			if (FileAttr & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1246,8 +1356,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				SrcPanel->GetCurDir(strCurDir);
 			}
 
-			GetFileOwner(strComputerName, strSelName, AttrDlg[SA_COMBO_OWNER].strData);
-			GetFileGroup(strComputerName, strSelName, AttrDlg[SA_COMBO_GROUP].strData);
+			if (!DlgParam.Plugin) { // we can obtain owner/group only in real filesystem
+				GetFileOwnerIDShow(strComputerName, strSelName,
+					DlgParam.strOwner, DlgParam.strOwnerIDShow, FILE_OWNER_GROUP_ID_SHOW_MIN_ID_LENGTH);
+				GetFileGroupIDShow(strComputerName, strSelName,
+					DlgParam.strGroup, DlgParam.strGroupIDShow, FILE_OWNER_GROUP_ID_SHOW_MIN_ID_LENGTH);
+			}
 		}		// end of if (SelCount==1)
 		else {
 			for (size_t i = 0; i < ARRAYSIZE(AP); i++) {
@@ -1309,8 +1423,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 							AttrDlg[AP[i].Item].Selected++;
 						}
 					}
-					CheckFileOwnerGroup(AttrDlg[SA_COMBO_OWNER], GetFileOwner, strComputerName, strSelName);
-					CheckFileOwnerGroup(AttrDlg[SA_COMBO_GROUP], GetFileGroup, strComputerName, strSelName);
+					if (!DlgParam.Plugin) { // we can obtain owner/group only in real filesystem
+						CheckFileOwnerGroup(DlgParam.strOwner, DlgParam.strOwnerIDShow,
+							GetFileOwnerIDShow, strComputerName, strSelName);
+						CheckFileOwnerGroup(DlgParam.strGroup, DlgParam.strGroupIDShow,
+							GetFileGroupIDShow, strComputerName, strSelName);
+					}
 
 					FSFileFlagsSafe FFFlags(strSelName.GetMB(), FileAttr);
 					if( FFFlags.Errno() != 0 ) // last errno if was error
@@ -1416,10 +1534,12 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			DlgY+= 2;
 		}
 
-		DlgParam.strOwner = AttrDlg[SA_COMBO_OWNER].strData;
-		DlgParam.strGroup = AttrDlg[SA_COMBO_GROUP].strData;
 		DlgParam.strInitOwner = DlgParam.strOwner;
 		DlgParam.strInitGroup = DlgParam.strGroup;
+		DlgParam.strInitOwnerIDShow = DlgParam.strOwnerIDShow;
+		DlgParam.strInitGroupIDShow = DlgParam.strGroupIDShow;
+		AttrDlg[SA_COMBO_OWNER].strData = Opt.OwnerGroupShowId ? DlgParam.strOwnerIDShow : DlgParam.strOwner;
+		AttrDlg[SA_COMBO_GROUP].strData = Opt.OwnerGroupShowId ? DlgParam.strGroupIDShow : DlgParam.strGroup; 
 
 		// if was error during obtain attributes / flags make it disabled
 		if (FSFileFlagsErrno != 0) {
@@ -1526,12 +1646,22 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 						}
 					}
 
-					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner, SkipMode,
-								strSelName, DlgParam.strInitOwner))
-						break;
-					if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup, SkipMode,
-								strSelName, DlgParam.strInitGroup))
-						break;
+					if (!DlgParam.Plugin) { // we can change owner/group only in real filesystem
+						if (!ApplyFileOwnerGroupIfChanged(
+									Opt.OwnerGroupShowId
+										? FileOwnerGroupIDShowNameSanitize(AttrDlg[SA_COMBO_OWNER].strData)
+										: AttrDlg[SA_COMBO_OWNER].strData.CPtr(),
+									ESetFileOwner, SkipMode,
+									strSelName, DlgParam.strInitOwner))
+							break;
+						if (!ApplyFileOwnerGroupIfChanged(
+									Opt.OwnerGroupShowId
+										? FileOwnerGroupIDShowNameSanitize(AttrDlg[SA_COMBO_GROUP].strData)
+										: AttrDlg[SA_COMBO_GROUP].strData.CPtr(),
+									ESetFileGroup, SkipMode,
+									strSelName, DlgParam.strInitGroup))
+							break;
+					}
 
 					FILETIME UnixAccessTime = {}, UnixModificationTime = {};
 					int SetAccessTime = DlgParam.OAccessTime
@@ -1607,12 +1737,22 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 								break;
 						}
 
-						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner, SkipMode,
-									strSelName, DlgParam.strInitOwner))
-							break;
-						if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup, SkipMode,
-									strSelName, DlgParam.strInitGroup))
-							break;
+						if (!DlgParam.Plugin) { // we can change owner/group only in real filesystem
+							if (!ApplyFileOwnerGroupIfChanged(
+										Opt.OwnerGroupShowId
+											? FileOwnerGroupIDShowNameSanitize(AttrDlg[SA_COMBO_OWNER].strData)
+											: AttrDlg[SA_COMBO_OWNER].strData.CPtr(),
+										ESetFileOwner, SkipMode,
+										strSelName, DlgParam.strInitOwner))
+								break;
+							if (!ApplyFileOwnerGroupIfChanged(
+										Opt.OwnerGroupShowId
+											? FileOwnerGroupIDShowNameSanitize(AttrDlg[SA_COMBO_GROUP].strData)
+											: AttrDlg[SA_COMBO_GROUP].strData.CPtr(),
+										ESetFileGroup, SkipMode,
+										strSelName, DlgParam.strInitGroup))
+								break;
+						}
 
 						FILETIME UnixAccessTime = {}, UnixModificationTime = {};
 						int SetAccessTime = DlgParam.OAccessTime
@@ -1672,14 +1812,24 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 										}
 									}
 
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_OWNER], ESetFileOwner,
-												SkipMode, strFullName, DlgParam.strInitOwner,
-												DlgParam.OSubfoldersState))
-										break;
-									if (!ApplyFileOwnerGroupIfChanged(AttrDlg[SA_COMBO_GROUP], ESetFileGroup,
-												SkipMode, strFullName, DlgParam.strInitGroup,
-												DlgParam.OSubfoldersState))
-										break;
+									if (!DlgParam.Plugin) { // we can change owner/group only in real filesystem
+										if (!ApplyFileOwnerGroupIfChanged(
+													Opt.OwnerGroupShowId
+														? FileOwnerGroupIDShowNameSanitize(AttrDlg[SA_COMBO_OWNER].strData)
+														: AttrDlg[SA_COMBO_OWNER].strData.CPtr(),
+													ESetFileOwner,
+													SkipMode, strFullName, DlgParam.strInitOwner,
+													DlgParam.OSubfoldersState))
+											break;
+										if (!ApplyFileOwnerGroupIfChanged(
+													Opt.OwnerGroupShowId
+														? FileOwnerGroupIDShowNameSanitize(AttrDlg[SA_COMBO_GROUP].strData)
+														: AttrDlg[SA_COMBO_GROUP].strData.CPtr(),
+													ESetFileGroup,
+													SkipMode, strFullName, DlgParam.strInitGroup,
+													DlgParam.OSubfoldersState))
+											break;
+									}
 
 									SetAccessTime = DlgParam.OAccessTime
 											&& ReadFileTime(0, strFullName, UnixAccessTime,

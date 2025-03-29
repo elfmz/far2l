@@ -193,6 +193,7 @@
 	WINPORT_DECL_DEF(GetCPInfo, BOOL, (UINT CodePage, LPCPINFO lpCPInfo))
 	WINPORT_DECL_DEF(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo))
 	WINPORT_DECL_DEF(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags))
+	WINPORT_DECL_DEF(DecomposeCharW, unsigned int, (int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen))
 
 	//clipboard
 	WINPORT_DECL_DEF(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat))
@@ -219,4 +220,3 @@
 	WINPORT_DECL_DEF(VkKeyScan, SHORT, (WCHAR ch))
 	WINPORT_DECL_DEF(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState, 
 		LPWSTR pwszBuff, int cchBuff, UINT wFlags, HKL dwhkl))
-

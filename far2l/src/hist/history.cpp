@@ -767,10 +767,12 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				}
 				case KEY_SHIFTNUMDEL:
 				case KEY_SHIFTDEL: {
-					if (HistoryMenu.GetItemCount() /* > 1*/) {
+					if (HistoryMenu.GetShowItemCount() /* > 1*/) {
 						if (!CurrentRecord->Lock) {
 							HistoryMenu.Hide();
 							CurrentItem = HistoryList.Delete(CurrentRecord);
+							CurrentItem = (HistoryRecord *)HistoryMenu.GetUserData(nullptr, sizeof(HistoryRecord *),
+													HistoryMenu.SetSelectPos(Pos.SelectPos - 1, -1, true));
 							//ResetPosition();
 							SaveHistory();
 							HistoryMenu.Modal::SetExitCode(Pos.SelectPos);

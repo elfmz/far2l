@@ -395,7 +395,8 @@ if (NOT DEFINED MULTIARC OR MULTIARC)
 
     find_package(PkgConfig REQUIRED)
     pkg_search_module(LibArchive QUIET libarchive)
-    if(NOT LibArchive_FOUND)
+    find_package(LibArchive)
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # workaround for MacOS brew's/macports' libarchive
         if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
             set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")

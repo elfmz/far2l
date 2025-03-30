@@ -104,7 +104,7 @@
 <entity name="wrdbreakchars" value="|;#)&amp;`"/>
 <entity name="wrdbreak" value="[%wrdbreakchars;]"/>
 <entity name="wrdnotbreak" value="[^%wrdbreakchars;]"/>
-<entity name="cmdbreak" value="%wrdbreak;|$"/>
+<entity name="cmdbreak" value="%wrdbreak;|&quot;|&apos;|$"/>
 
 <scheme name="shell-posix">
     <inherit scheme="def:unixCommentFirstline">
@@ -323,9 +323,9 @@
 
 <scheme name="variable_assignments_caught">
     <!-- variable name -->
-    <block start="/\M%var;/" end="/\M(=)/" scheme="variable_names" region11="Symbol"/>
+    <block start="/~\M%var;/" end="/=/" scheme="variable_names" region10="Symbol"/>
     <!-- expression -->
-    <block start="/=\m/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"/>
+    <block start="/=?#1/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"/>
 </scheme>
 
 <scheme name="variable_assignments">
@@ -422,7 +422,7 @@
 
 <scheme name="comments">
     <!-- linear comment -->
-    <block start="/(^|(\s|%wrdbreak;)?#1)\#/" end="/$/" scheme="def:Comment" region="Comment"/>
+    <block start="/(^|\s+|(\s|%wrdbreak;)?#1)\m#/" end="/$/" scheme="def:Comment" region="Comment"/>
 </scheme>
 
 <scheme name="escape_newline">
@@ -500,39 +500,41 @@
 
 <scheme name="if">
     <!-- if/elif ... then -->
-    <block start="/\b(if|elif)\b/" end="/\s*\M\b(then)\b/" scheme="script"
-        region00="CommandReserved" region11="CommandReserved"/>
+    <block start="/\b(if|elif)\b/" end="/\s*\M\bthen\b/" scheme="script"
+        region00="CommandReserved"/>
     <!-- then ... fi/elif/else -->
     <block start="/\bthen\b/" end="/\s*\M\b(fi|elif|else)\b/" scheme="script"
-        region00="CommandReserved" region11="CommandReserved"/>
+        region00="CommandReserved"/>
     <!-- else ... fi -->
-    <block start="/\belse\b/" end="/\s*\M\b(fi)\b/" scheme="script"
-        region00="CommandReserved" region11="CommandReserved"/>
+    <block start="/\belse\b/" end="/\s*\M\bfi\b/" scheme="script"
+        region00="CommandReserved"/>
 </scheme>
 
 <scheme name="while">
     <!-- while/until ... do -->
-    <block start="/\b(while|until)\b/" end="/\s*\M\b(do)\b/" scheme="script"
-        region00="CommandReserved" region11="CommandReserved"/>
+    <block start="/\b(while|until)\b/" end="/\s*\M\bdo\b/" scheme="script"
+        region00="CommandReserved"/>
     <!-- do ... done -->
-    <block start="/\bdo\b/" end="/\s*\M\b(done)\b/" scheme="script"
-        region00="CommandReserved" region11="CommandReserved"/>
+    <block start="/\bdo\b/" end="/\s*\M\bdone\b/" scheme="script"
+        region00="CommandReserved"/>
 </scheme>
 
 <scheme name="for">
     <inherit scheme="comments"/>
     <!-- for VAR ... done -->
-    <block start="/\b(for)\b\s*/" end="/\s*(?{Error}[^;#]*?)(\M(?{SymbolStrong};)|\bin\b|\s+|#|$)/"
-        scheme="script_words.maybe-variable" region01="CommandReserved"/>
+    <block start="/~\b(for)\b\s*/" end="/\M\s+|;|#|$/" scheme="script_words.maybe-variable"
+        region01="CommandReserved"/>
     <!-- in ... -->
-    <block start="/\s*\b(in)\b/" end="/\M(;|#|$)/" scheme="script_words"
-        region01="CommandReserved" region11="SymbolStrong"/>
+    <block start="/\s+\b(in)\b/" end="/\M;|#|$/" scheme="script_words"
+        region01="CommandReserved" region10="Error"/>
     <!-- do ... done -->
-    <block start="/\s*\b(do)\b/" end="/\s*\M\b(done)\b/" scheme="script"
-        region01="CommandReserved" region11="CommandReserved"/>
+    <block start="/(^|\s*(?{SymbolStrong};))\s*\b(do)\b/" end="/\s*\M\bdone\b/" scheme="script"
+        region02="CommandReserved"/>
+    <!-- don't mark semicolons as errors -->
+    <regexp match="/;/" region="SymbolStrong" priority="low"/>
     <!-- anything else is an error -->
-    <block start="/(done)?!\s*\m/" end="/\M(%cmdbreak;)/" scheme="def:empty"
-        region="Error" region11="SymbolStrong"/>
+    <block start="/(done)?!\s*\m\S/" end="/\M%cmdbreak;/" scheme="def:empty"
+        region="Error"/>
 </scheme>
 
 <scheme name="case_pattern">
@@ -578,7 +580,7 @@
     <!-- skip whitespace -->
     <regexp match="/\s+/"/>
     <inherit scheme="redirections_end"/>
-    <regexp match="/%wrdnotbreak;/" region="Error"/>
+    <regexp match="/%wrdnotbreak;/" region="Error" priority="low"/>
 </scheme>
 
 <scheme name="cmd-one-parameter-number">

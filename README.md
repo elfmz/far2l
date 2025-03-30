@@ -278,7 +278,7 @@ brew install --HEAD yurikoles/yurikoles/far2l
 ```sh
 brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
 ```
- * Additionally you can enable python support by adding `--with-python@3.10` to the one of two above commands.
+ * Additionally you can enable python support by adding `--with-python@3.13` to the one of two above commands.
 
 ##### Full OSX/MacOS build from sources (harder):
 Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependencies.

@@ -85,9 +85,13 @@ class SudoAskpassScreen
 		} else if (rec.wVirtualKeyCode == VK_ESCAPE || rec.wVirtualKeyCode == VK_F10) {
 			_result = RES_CANCEL;
 
-		} else if (rec.wVirtualKeyCode == VK_BACK) {
+		} else if (rec.wVirtualKeyCode == VK_BACK || rec.wVirtualKeyCode == VK_DELETE) {
 			if (!_input.empty()) {
-				_input.resize(_input.size() - 1);
+				if (rec.wVirtualKeyCode == VK_BACK) {
+					_input.pop_back();
+				} else {
+					_input.clear();
+				}
 				if (_input.empty() && _password_expected && _panno_hash != 0) {
 					// immediately indicate password became empty
 					_panno_hash = 0;

@@ -223,7 +223,6 @@
         <filename>/\.groovy$/i</filename>
         <filename>/\.gdsl$/i</filename>
         <filename>/\.gradle$/i</filename>
-        <filename>/Jenkinsfile/i</filename>
         <firstline>/^import/</firstline>
         <firstline>/^#!groovy/</firstline>
         <parameters>
@@ -231,6 +230,17 @@
             <param name="tabs-as-errors" value="false" description="Shows tabulation symbol as error" />
             <param name="spaces-as-errors" value="false" description="Shows trailing spaces as error" />
         </parameters>
+    </prototype>
+    <prototype name="jenkinsfile" group="scripts" description="Jenkinsfile">
+        <location link="scripts/jenkinsfile.hrc"/>
+        <filename>/^Jenkins[Ff]ile\..+$/</filename>
+        <filename>/^.+\.Jenkins[Ff]ile/</filename>
+        <filename>/^Jenkins[Ff]ile$/</filename>
+        <filename>/\.gdsl$/i</filename>
+        <firstline weight='3'>/(^|\n)\s*pipeline\s+\{\s*$/</firstline>
+        <firstline weight='3'>/(^|\n)\s*node\s+\{\s*$/</firstline>
+        <firstline weight='3'>/(^|\n)\s*node\([^\)]\)\s+\{\s*$/</firstline>
+        <firstline weight='3'>/(^|\n)\s*import\s+org\.jenkinsci\./</firstline>
     </prototype>
 
     <prototype name="rust" group="main" description="Rust">
@@ -638,13 +648,11 @@
         <filename>/\.(text|md|markdown)$/i</filename>
     </prototype>
     &scripts-colorer-protos;
-  &scripts-far-protos;
+    &scripts-far-protos;
     <prototype name="makefile" group="scripts" description="makefile">
         <location link="scripts/makefile.hrc" />
         <filename>/(makefile | tools\.ini) | \.(mak|gmk|ds(p|w)|bp(k|r|g))$/ix</filename>
         <filename weight='3'>/\.mk$/i</filename>
-        <!--firstline>/Microsoft Developer Studio Project File/i</firstline>
-    <firstline>/^\!if/i</firstline-->
         <firstline>/makefile/s</firstline>
         <parameters>
             <param name="gnu" value="false" description="use GNU make only" />
@@ -824,10 +832,10 @@
 
     <!--  rare languages  -->
     &rare-j2ee-protos;
-  &rare-gen-protos;
-  &rare-scripts-protos;
-  &rare-qrm-protos;
-  &rare-ie-weidu-protos;
+    &rare-gen-protos;
+    &rare-scripts-protos;
+    &rare-qrm-protos;
+    &rare-ie-weidu-protos;
     <prototype name="c1c" group="rare" description="1C">
         <location link="rare/1c.hrc" />
         <filename>/\.1c$/i</filename>
@@ -850,7 +858,7 @@
     </prototype>
 
     <!--  !! you may wish to swap next two types
-  because of collision with extensions  -->
+     because of collision with extensions  -->
     <prototype name="dssp" group="rare" description="Dssp">
         <location link="rare/dssp.hrc" />
         <filename>/\.dsp$/i</filename>
@@ -1087,6 +1095,7 @@
     </prototype>
 
     <prototype name="default" group="other" description="default type">
+        <location link="base/default.hrc" />
         <filename weight='1'>//</filename>
         <parameters>
             <!-- firstline -->
@@ -1095,15 +1104,10 @@
         </parameters>
     </prototype>
 
-    <type name="default">
-        <scheme name='default' />
-    </type>
-
-
     <!--  packages  -->
 
     <package name="def" description="core definitions">
-        <location link="lib/default.hrc" />
+        <location link="lib/def.hrc" />
     </package>
     <package name="uri" description="URI (RFC 2396)">
         <location link="lib/uri.hrc" />

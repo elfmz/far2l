@@ -18,7 +18,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Far colors moved to farcolors.ini
 * Help actualization and improvements
 * Info panel: New EditorConfig block
-* _colorer plugin_: Update colorer schemes to v1.2.0.57
+* _colorer plugin_: Update colorer schemes to v1.2.0.62
 * _colorer plugin_: Update colorer library to v1.4.1-24.01.2025
 * _Inside plugin_: Add PE format, add png, ogg, m4a and Mach-O support
 * _multiarc plugin_: Removed PCRE library dependencies

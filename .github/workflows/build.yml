@@ -172,12 +172,7 @@ jobs:
   
       - name: Install far2l dependencies
         # libx11, openssl is already installed
-        run: >
-          brew install
-          uchardet libxml2 wxwidgets
-          libxi
-          samba libnfs neon libssh
-          libarchive
+        run: brew bundle -v
 
       - name: Relink 'keg-only' packages
         run: brew link libarchive --force

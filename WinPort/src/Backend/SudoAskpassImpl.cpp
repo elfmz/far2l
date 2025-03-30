@@ -6,6 +6,7 @@
 #include <SavedScreen.h>
 #include "Backend.h"
 #include "SudoAskpassImpl.h"
+#include "WinPort.h"
 
 class SudoAskpassScreen
 {
@@ -49,12 +50,36 @@ class SudoAskpassScreen
 
 	SMALL_RECT _rect{0}; // filled by Repaint()
 
+
+	void PasteFromClipboard()
+	{
+		if (!WINPORT(OpenClipboard)(NULL))
+			return;
+
+		wchar_t *data = (wchar_t *)WINPORT(GetClipboardData)(CF_UNICODETEXT);
+		if (data) {
+			_input.append(data,
+				wcsnlen(data, WINPORT(ClipboardSize)(data) / sizeof(wchar_t)));
+		}
+		WINPORT(CloseClipboard)();
+
+		if (!_input.empty() && _password_expected && _panno_hash == 0) {
+			// immediately indicate password became non-empty
+			_panno_hash = 1;
+			_need_repaint = true;
+		}
+	}
+
 	void DispatchInputKey(const KEY_EVENT_RECORD &rec)
 	{
 		if (!rec.bKeyDown)
 			return;
 
-		if (rec.wVirtualKeyCode == VK_RETURN) {
+		if ( (rec.wVirtualKeyCode == 'V' && (rec.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0)
+				|| (rec.wVirtualKeyCode == VK_INSERT && (rec.dwControlKeyState & SHIFT_PRESSED) != 0)) {
+			PasteFromClipboard();
+
+		} else if (rec.wVirtualKeyCode == VK_RETURN) {
 			_result = RES_OK;
 
 		} else if (rec.wVirtualKeyCode == VK_ESCAPE || rec.wVirtualKeyCode == VK_F10) {
@@ -82,6 +107,10 @@ class SudoAskpassScreen
 
 	void DispatchInputMouse(const MOUSE_EVENT_RECORD &rec)
 	{
+		if ( (rec.dwEventFlags & (MOUSE_MOVED | MOUSE_WHEELED | MOUSE_HWHEELED | DOUBLE_CLICK)) == 0
+				&& (rec.dwButtonState & FROM_LEFT_2ND_BUTTON_PRESSED) != 0 ) {
+			PasteFromClipboard();
+		}
 	}
 
 	void DispatchInput()
@@ -265,12 +294,16 @@ public:
 					const uint64_t hash = TypedPasswordHash();
 					if (_panno_hash != hash) {
 						_panno_hash = hash;
+						_need_repaint = true;
 					}
 				}
 
-				if (_result != RES_PENDING)
+				if (_result != RES_PENDING) {
 					return _result == RES_OK;
+				}
+			}
 
+			if (_need_repaint) {
 				Repaint();
 			}
 		}

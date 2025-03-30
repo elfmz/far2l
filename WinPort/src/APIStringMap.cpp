@@ -13,6 +13,7 @@
 #include "WinPort.h"
 #include "wineguts.h"
 #include "PathHelpers.h"
+#include "UtfConvert.hpp"
 
 /*************************************************************************
 *           LCMapStringEx   (KERNEL32.@)
@@ -398,9 +399,91 @@ extern "C" {
 		}
 	}
 
-	WINPORT_DECL(DecomposeCharW, unsigned int, (int flags, WCHAR ch, WCHAR *dst, unsigned int dstlen))
+	WINPORT_DECL(MatchDecomposedUTF8, BOOL, (int flags, const char *s1, size_t l1, const char *s2, size_t l2))
 	{
-		return wine_decompose(flags, ch, dst, dstlen);
+		size_t i = 0;
+		// if both s1 and s2 contains latin charactars at beginning - do plain compare
+		// of them until reaching end of any of strings or finding non-latin character
+		for (;;++i) {
+			if (i == l1 || i == l2) { // reached end of one of strings while comparing latin chars
+				return (l1 == l2);  // if reached end of both strings - then they're same
+			}
+			if ( (s1[i] & 0x80) != 0 || (s2[i] & 0x80) != 0) {
+				if ( (s1[i] & 0x80) != (s2[i] & 0x80)) {
+					// report mismatch due to latin character at one string and non-latin at another at same position
+					return FALSE;
+				}
+				// reached non-latin character at both strings, so stop this loop to proceed to decomposing comparing
+				break;
+			}
+			if (s1[i] != s2[i]) {
+				return FALSE; // mismatch due to have different latin characters at same position
+			}
+		}
+		// Now i points to first non-latin character at both s1 and s2,
+		// this is where need to actually do decomposed strings matching.
+		// Start from trying to decompose character by character and compare directly
+		// those part that consists of not precomposed characters only, and proceed
+		// full-featured decomposed matching only once found at least one precomposed character
+		// Note that wine_decompose uses UTF16 directly casted from with wchar_t.
+		UtfConverter<char, uint16_t> s1UTF16(s1 + i, l1 - i);
+		UtfConverter<char, uint16_t> s2UTF16(s2 + i, l2 - i);
+		WCHAR dec1[16], dec2[16];
+		for (auto it1 = s1UTF16.cbegin(), it2 = s2UTF16.cbegin();;) {
+			if (it1 == s1UTF16.cend()) {
+				return (it2 == s2UTF16.cend());
+			}
+			if (it2 == s2UTF16.cend()) {
+				return FALSE;
+			}
+			auto r1 = wine_decompose(flags, (wchar_t)*it1, dec1, ARRAYSIZE(dec1));
+			auto r2 = wine_decompose(flags, (wchar_t)*it2, dec2, ARRAYSIZE(dec2));
+			if (r1 < 2 && r2 < 2) {
+				// trivial case - both characters not precomposed, may be some even illformed
+				// so compare only initial values regardless wine_decompose() results
+				if (*it1 != *it2) {
+					return FALSE;
+				}
+				++it1;
+				++it2;
+			} else if (r1 == 0 || r2 == 0) {
+				// one character precomposed while another - illformed
+				// for us this means that  strings don't match
+				return FALSE;
+			} else {
+				// really have decomposable character at least in one of strings so
+				// fully decompose both strings remainders into vectors for final matching
+				std::vector<uint16_t> dv1;
+				dv1.reserve(r1 * (s1UTF16.cend() - it1));
+				for (;;) {
+					if (r1) {
+						dv1.insert(dv1.end(), &dec1[0], &dec1[r1]);
+					} else { // use source char if wine_decompose failed
+						dv1.push_back(*it1);
+					}
+					++it1;
+					if (it1 == s1UTF16.cend()) {
+						break;
+					}
+					r1 = wine_decompose(flags, (wchar_t)*it1, dec1, ARRAYSIZE(dec1));
+				}
+				std::vector<uint16_t> dv2;
+				dv2.reserve(r2 * (s2UTF16.cend() - it2));
+				for (;;) {
+					if (r2) {
+						dv2.insert(dv2.end(), &dec2[0], &dec2[r2]);
+					} else { // use source char if wine_decompose failed
+						dv2.push_back(*it2);
+					}
+					++it2;
+					if (it2 == s2UTF16.cend()) {
+						break;
+					}
+					r2 = wine_decompose(flags, (wchar_t)*it2, dec2, ARRAYSIZE(dec2));
+				}
+				return dv1 == dv2;
+			}
+		}
 	}
 
 }

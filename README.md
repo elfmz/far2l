@@ -2,7 +2,7 @@
 
 # far2l [![tag](https://img.shields.io/github/tag/elfmz/far2l.svg)](https://github.com/elfmz/far2l/tags)
 Linux fork of FAR Manager v2 (http://farmanager.com/)   
-Works also on OSX/MacOS and BSD (but latter not tested on regular manner)   
+Works also on macOS and BSD (but latter not tested on regular manner)
 BETA VERSION.   
 **Use on your own risk!**
 
@@ -145,7 +145,7 @@ debuild
 </details>
 
 
-#### OSX/MacOS binaries
+#### macOS binaries
 
 You can install prebuilt package for x86_64 platform via Homebrew Cask, by command:
 ```sh
@@ -257,7 +257,7 @@ To control how RAR archives will be handled in multiarc:
 
 There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
 
-#### OSX/MacOS build
+#### macOS build
 
 To make custom/recent build use brew or MacPorts.
 
@@ -268,7 +268,7 @@ To make custom/recent build use brew or MacPorts.
  * If you want to build using Homebrew - first visit <https://brew.sh/> for installation instructions. Note that there're reported problems with Homebrew-based build under MacOS Big Sur.
  * If you want to build using MacPorts - first visit <https://www.macports.org/install.php> for installation instructions.
 
-##### One line OSX/MacOS install latest far2l git master via unofficial brew tap
+##### One line macOS install latest far2l git master via unofficial brew tap
 
  * With GUI/TTY backends:
 ```sh
@@ -278,9 +278,9 @@ brew install --HEAD yurikoles/yurikoles/far2l
 ```sh
 brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
 ```
- * Additionally you can enable python support by adding `--with-python@3.10` to the one of two above commands.
+ * Additionally you can enable python support by adding `--with-python@3.13` to the one of two above commands.
 
-##### Full OSX/MacOS build from sources (harder):
+##### Full macOS build from sources (harder):
 Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependencies.
 
  * Clone:

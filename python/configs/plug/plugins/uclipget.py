@@ -15,7 +15,7 @@ class Plugin(PluginBase):
         data = data.decode('utf8')
         log.debug(f'copyfiles: {data}')
         prefix = 'file://'
-        for uri in data.split('\r\n'):
+        for uri in data.split('\n'):
             if uri[:len(prefix)] != prefix:
                 continue
             fqname = uri[len(prefix):]
@@ -47,13 +47,13 @@ class Plugin(PluginBase):
             data = winport.GetClipboardData(clipurifmt)
             if data is not None:
                 nb = winport.ClipboardSize(data)
-                result = self.ffi.buffer(self.ffi.cast("PSTR", data), nb-1)
+                result = self.ffi.buffer(self.ffi.cast("PSTR", data), nb)
                 self.CopyFiles(bytes(result))
             else:
                 data = winport.GetClipboardData(clipgnofmt)
                 if data is not None:
                     nb = winport.ClipboardSize(data)
-                    result = self.ffi.buffer(self.ffi.cast("PSTR", data), nb-1)
+                    result = self.ffi.buffer(self.ffi.cast("PSTR", data), nb)
                     self.CopyFiles(bytes(result))
         except:
             log.exception('uclipset.GetClipboardData')

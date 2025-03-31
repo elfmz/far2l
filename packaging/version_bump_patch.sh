@@ -11,6 +11,11 @@ echo $NEW_VERSION > ./version
 
 sed -i "s|FAR2L_VERSION = .*|FAR2L_VERSION = $NEW_TAG|" buildroot/far2l/far2l.mk
 
-git add ./version ./buildroot/far2l/far2l.mk
+sed -i "s|Master (current development)|${NEW_VERSION} beta ($(date -I))|" ../changelog.md
+
+git add ./version ./buildroot/far2l/far2l.mk ../changelog.md
 git commit -m "Bump version to $NEW_VERSION"
 git tag $NEW_TAG
+
+sed -i "/${NEW_VERSION} beta/i ## Master (current development)\n" ../changelog.md
+git commit ../changelog.md -m "Start a new changelog entry"

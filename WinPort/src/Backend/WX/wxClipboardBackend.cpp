@@ -317,9 +317,9 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		}
 				
 		const size_t data_size = data.GetDataSize();
-		p = WINPORT(ClipboardAlloc)(data_size + 1); 
+		p = WINPORT(ClipboardAlloc)(data_size); 
 		if (!p) {
-			fprintf(stderr, "GetClipboardData(%s) - cant alloc %u + 1\n", 
+			fprintf(stderr, "GetClipboardData(%s) - cant alloc %u\n", 
 				(const char *)data_format->GetId().char_str(), (unsigned int)data_size);
 			return nullptr;
 		}

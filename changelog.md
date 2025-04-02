@@ -3,6 +3,7 @@
 Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
 
 ## Master (current development)
+* Editor: Display of various non-printable characters on **F5** (ShwSpc)
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`

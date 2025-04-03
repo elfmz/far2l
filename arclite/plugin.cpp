@@ -1603,6 +1603,11 @@ SHAREDSYMBOL HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 			if (!g_options.handle_create)
 				FAIL(E_INVALIDARG);
 
+			const ArcLibs &arc_libs = ArcAPI::libs();
+			if (!arc_libs.size()) {
+				FAIL(E_INVALIDARG);
+			}
+
 			return new Archives();
 		} else {
 			return analyse_open(info, true);

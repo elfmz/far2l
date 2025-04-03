@@ -9,14 +9,24 @@
 #include <utils.h>
 #include <os_call.hpp>
 #include <ScopeHelpers.h>
+#include <WinPort.h>
 
 #include "libarch_utils.h"
 #include "libarch_cmd.h"
 
+static bool PartMatchesWanted(const std::string &part, const std::string &wanted)
+{
+	if (wanted.size() == 1 && wanted.front() == '*') {
+		return true;
+	}
+
+	return WINPORT(MatchDecomposedUTF8(0, part.c_str(), part.size(), wanted.c_str(), wanted.size())) != FALSE;
+}
+
 static bool PartsMatchesWanted(const PathParts &wanted, const PathParts &parts)
 {
 	size_t i = 0;
-	while (i != wanted.size() && i != parts.size() && (wanted[i] == parts[i] || wanted[i] == "*")) {
+	while (i != wanted.size() && i != parts.size() && PartMatchesWanted(parts[i], wanted[i])) {
 		++i;
 	}
 

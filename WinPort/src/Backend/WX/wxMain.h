@@ -121,6 +121,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void CheckPutText2CLip();
 	void SetInitialSize();
 	void OnInitialized( wxCommandEvent& event );
+	void CheckForUnfreeze(bool force);
 	void OnTimerPeriodic(wxTimerEvent& event);	
 	void OnWindowMovedSync( wxCommandEvent& event );
 	void OnRefreshSync( wxCommandEvent& event );

@@ -1,0 +1,563 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        Jenkinsfile
+
+        Notes:
+            It is not a comprehensive Jenkins goovy DSL syntax analyzer,
+            but it highlights the basic building blocks. Methods are divided
+            into 4 categories for easier navigation in Jenkinsfile:
+              - main methods
+              - configuration
+              - conditions
+              - others
+
+        Links:
+            https://github.com/jakovistuk/script2/blob/master/src/main/resources/idea.gdsl
+            https://github.com/jaydubb12/jenkins-dsl-pipelines/blob/main/src/main/jenkins.gdsl
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="jenkinsfile" group="scripts" description="Jenkinsfile">
+            <location link="scripts/jenkinsfile.hrc"/>
+            <filename>/^Jenkins[Ff]ile\..+$/</filename>
+            <filename>/^.+\.Jenkins[Ff]ile/</filename>
+            <filename>/^Jenkins[Ff]ile$/</filename>
+            <filename>/\.gdsl$/i</filename>
+            <firstline weight='3'>/(^|\n)\s*pipeline\s+\{\s*$/</firstline>
+            <firstline weight='3'>/(^|\n)\s*node\s+\{\s*$/</firstline>
+            <firstline weight='3'>/(^|\n)\s*node\([^\)]\)\s+\{\s*$/</firstline>
+            <firstline weight='3'>/(^|\n)\s*import\s+org\.jenkinsci\./</firstline>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="jenkinsfile">
+
+<region name="Text" parent="def:Text"/>
+<region name="Comment" parent="def:Comment"/>
+<region name="String"  parent="def:String"/>
+<region name="StringEdge" parent="def:StringEdge"/>
+
+<region name="Symbol" parent="def:Symbol"/>
+<region name="SymbolStrong" parent="def:SymbolStrong"/>
+
+<region name="Variable" parent="def:Var"/>
+<region name="Constant" parent="def:Constant"/>
+
+<region name="MainMethod" parent="def:ClassKeyword"/>
+<region name="ConditionMethod" parent="def:InterfaceKeyword"/>
+<region name="ConfigurationMethod" parent="def:StructKeyword"/>
+<region name="OtherMethod" parent="def:FunctionKeyword"/>
+
+<region name="Insertion" parent="def:Insertion"/>
+
+<region name="Error" parent="def:Error"/>
+
+<!-- for testing -->
+<region name="Test" parent="def:URL"/>
+<region name="Test2" parent="def:TODO"/>
+
+<scheme name="jenkinsfile">
+    <inherit scheme="def:unixCommentFirstline">
+        <virtual scheme="def:def" subst-scheme="script"/>
+    </inherit>
+</scheme>
+
+<scheme name="script">
+
+    <block start="/^\s*(pipeline|node)\s+((\{))/" end="/(\})/" scheme="pipeline"
+        region01="MainMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(node)\M\(/" end="//" scheme="node" region01="MainMethod"/>
+
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="pipeline-keywords"/>
+        <virtual scheme="groovy" subst-scheme="pipeline"/>
+    </inherit>
+
+</scheme>
+
+<scheme name="keywords"/>
+
+<scheme name="groovy">
+
+    <keywords region="Constant" ignorecase="no">
+        <word name="$class"/>
+    </keywords>
+
+    <inherit scheme="groovy:groovy">
+        <virtual scheme="groovy:groovy" subst-scheme="groovy"/>
+    </inherit>
+
+    <block start="/\b\M\w+(\s*\{|\(|\s+\w|\s+\$|\s+&quot;|\s+&apos;)?=/"
+        end="/~\w+\m(\s*\{|\(|\s+\w|\s+\$|\s+&quot;|\s+&apos;)?=/"
+        scheme="keywords"/>
+
+</scheme>
+
+
+<!-- node(...) { ... } -->
+
+<scheme name="node">
+    <block start="/(\()/" end="/(\))/" scheme="groovy"
+        region00="def:PairStart" region10="def:PairEnd"
+        region01="SymbolStrong"  region11="SymbolStrong"/>
+    <block start="/\)?#1\s+(\{)/" end="/(\})/" scheme="pipeline"
+        region00="def:PairStart" region10="def:PairEnd"
+        region01="SymbolStrong"  region11="SymbolStrong"/>
+</scheme>
+
+<!-- pipeline/node -->
+
+<scheme name="pipeline">
+
+    <regexp match="/^\s*(agent)\s+(any|none)\b/" region1="ConfigurationMethod" region2="Constant"/>
+
+    <block start="/^\s*(environment)\s+((\{))/" end="/(\})/" scheme="environment"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(agent)\s+((\{))/" end="/(\})/" scheme="agent"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(tools?)\s+((\{))/" end="/(\})/" scheme="tool"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(options)\s+((\{))/" end="/(\})/" scheme="options"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(parameters)\s+((\{))/" end="/(\})/" scheme="parameters"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(triggers)\s+((\{))/" end="/(\})/" scheme="triggers"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(when)\s+((\{))/" end="/(\})/" scheme="when"
+        region01="ConditionMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <!--
+        Unfortunately, it is not possible to highlight shell scripts in constructs
+        like "sh ...", because the parameter to "sh" is actually a groovy string that
+        is first parsed by groovy, and then the result of the parsing is passed to
+        the shell. This means that shell variables are represented as \$VARNAME and
+        ${ ... } parts are GStrings. It also violates some sensitive shell syntax rules,
+        such as heredocs when the closing word must be strictly at the beginning
+        of the line. All these makes shell highlighting error prone.
+    -->
+
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="pipeline-keywords"/>
+        <virtual scheme="groovy" subst-scheme="pipeline"/>
+    </inherit>
+
+</scheme>
+
+<scheme name="pipeline-keywords">
+
+    <keywords region="MainMethod" ignorecase="no">
+        <word name="pipeline"/>
+        <word name="stages"/>
+        <word name="stage"/>
+        <word name="steps"/>
+        <word name="step"/>
+        <word name="post"/>
+        <word name="parallel"/>
+        <word name="node"/>
+        <word name="milestone"/>
+        <word name="always"/>
+        <word name="cleanup"/>
+    </keywords>
+
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="ansiColor"/>
+        <word name="parameters"/>
+        <word name="triggers"/>
+        <word name="library"/>
+        <word name="libraryResource"/>
+        <word name="properties"/>
+        <word name="checkoutToSubdirectory"/>
+        <word name="maven"/>
+        <!-- stage methods -->
+        <word name="failFast"/>
+    </keywords>
+
+    <keywords region="ConditionMethod" ignorecase="no">
+        <!-- pipeline methods -->
+        <word name="when"/>
+        <word name="isUnix"/>
+        <word name="input"/>
+        <word name="waitUntil"/>
+        <!-- post methods -->
+        <word name="success"/>
+        <word name="failure"/>
+        <word name="unstable"/>
+        <word name="changed"/>
+        <word name="fixed"/>
+        <word name="regression"/>
+        <word name="aborted"/>
+        <word name="unsuccessful"/>
+    </keywords>
+
+    <keywords region="OtherMethod" ignorecase="no">
+        <!-- pipeline methods -->
+        <word name="echo"/>
+        <word name="jiraComment"/>
+        <word name="jiraIssueSelector"/>
+        <word name="jiraIssueSelector"/>
+        <word name="jiraSearch"/>
+        <word name="build"/>
+        <word name="ec2"/>
+        <word name="error"/>
+        <word name="mail"/>
+        <word name="readTrusted"/>
+        <word name="resolveScm"/>
+        <word name="retry"/>
+        <word name="script"/>
+        <word name="sleep"/>
+        <word name="timeout"/>
+        <word name="withCredentials"/>
+        <word name="withEnv"/>
+        <word name="wrap"/>
+        <word name="ws"/>
+        <word name="catchError"/>
+        <word name="dockerFingerprintRun"/>
+        <word name="envVarsForTool"/>
+        <word name="getContext"/>
+        <word name="withContext"/>
+        <!-- stage methods -->
+        <word name="warnError"/>
+        <!-- steps methods -->
+        <word name="timestamp"/>
+        <word name="bat"/>
+        <word name="checkout"/>
+        <word name="cleanWs"/>
+        <word name="deleteDir"/>
+        <word name="dir"/>
+        <word name="fileExists"/>
+        <word name="git"/>
+        <word name="junit"/>
+        <word name="load"/>
+        <word name="powershell"/>
+        <word name="publishHTML"/>
+        <word name="pwd"/>
+        <word name="readFile"/>
+        <word name="sh"/>
+        <word name="stash"/>
+        <word name="tee"/>
+        <word name="tm"/>
+        <word name="touch"/>
+        <word name="unstash"/>
+        <word name="unzip"/>
+        <word name="updateIdP"/>
+        <word name="updateTrustPolicy"/>
+        <word name="validateDeclarativePipeline"/>
+        <word name="wrap"/>
+        <word name="writeCSV"/>
+        <word name="writeFile"/>
+        <word name="writeJSON"/>
+        <word name="writeMavenPom"/>
+        <word name="writeYaml"/>
+        <word name="zip"/>
+        <word name="archive"/>
+        <word name="container"/>
+        <word name="dockerFingerprintFrom"/>
+        <word name="unarchive"/>
+        <word name="withDockerContainer"/>
+        <word name="withDockerRegistry"/>
+        <word name="withDockerServer"/>
+        <word name="aliyunOSSUpload"/>
+        <word name="archiveArtifacts"/>
+        <word name="buildName"/>
+        <word name="buildDescription"/>
+        <word name="publishIssues"/>
+        <word name="scanForIssues"/>
+        <word name="acceptGitLabMR"/>
+        <word name="addEmbeddableBadgeConfiguration"/>
+        <word name="addGitLabMRComment"/>
+        <word name="awaitDeploymentCompletion"/>
+        <word name="awsIdentity"/>
+        <word name="cfInvalidate"/>
+        <word name="cfnCreateChangeSet"/>
+        <word name="cfnDelete"/>
+        <word name="cfnDeleteStackSet"/>
+        <word name="cfnDescribe"/>
+        <word name="cfnExecuteChangeSet"/>
+        <word name="cfnExports"/>
+        <word name="cfnUpdate"/>
+        <word name="cfnUpdateStackSet"/>
+        <word name="cfnValidate"/>
+        <word name="containerLog"/>
+        <word name="deployAPI"/>
+        <word name="dockerNode"/>
+        <word name="ec2ShareAmi"/>
+        <word name="ecrDeleteImage"/>
+        <word name="ecrListImages"/>
+        <word name="ecrLogin"/>
+        <word name="findFiles"/>
+        <word name="gitlabBuilds"/>
+        <word name="gitlabCommitStatus"/>
+        <word name="httpRequest"/>
+        <word name="listAWSAccounts"/>
+        <word name="lock"/>
+        <word name="nodesByLabel"/>
+        <word name="readCSV"/>
+        <word name="readJSON"/>
+        <word name="readManifest"/>
+        <word name="readMavenPom"/>
+        <word name="readProperties"/>
+        <word name="readYaml"/>
+        <word name="s3Copy"/>
+        <word name="s3Delete"/>
+        <word name="s3DoesObjectExist"/>
+        <word name="s3Download"/>
+        <word name="s3FindFiles"/>
+        <word name="s3PresignURL"/>
+        <word name="s3Upload"/>
+        <word name="setAccountAlias"/>
+        <word name="sha1"/>
+        <word name="snsPublish"/>
+        <word name="updateGitlabCommitStatus"/>
+        <word name="warnError"/>
+        <word name="withAWS"/>
+        <word name="podTemplate"/>
+    </keywords>
+
+</scheme>
+
+<scheme name="agent">
+
+    <block start="/^\s*(docker)\s+((\{))/" end="/(\})/" scheme="agent-docker"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(kubernetes)\s+((\{))/" end="/(\})/" scheme="agent-kubernetes"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <block start="/^\s*(node)\s+((\{))/" end="/(\})/" scheme="agent-node"
+        region01="ConfigurationMethod"
+        region02="def:PairStart" region10="def:PairEnd"
+        region03="SymbolStrong"  region11="SymbolStrong"/>
+
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="agent-keywords"/>
+    </inherit>
+
+</scheme>
+
+<scheme name="agent-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="node"/>
+        <word name="label"/>
+        <word name="customerWorkspace"/>
+        <word name="docker"/>
+        <word name="dockerfile"/>
+        <word name="kubernetes"/>
+    </keywords>
+</scheme>
+
+<scheme name="agent-docker">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="agent-docker-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="agent-docker-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="image"/>
+        <word name="args"/>
+        <word name="label"/>
+        <word name="alwaysPull"/>
+        <word name="registryUrl"/>
+        <word name="registryCredentialsId"/>
+    </keywords>
+</scheme>
+
+<scheme name="agent-kubernetes">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="agent-kubernetes-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="agent-kubernetes-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="label"/>
+        <word name="cloud"/>
+        <word name="defaultContainer"/>
+        <word name="yaml"/>
+        <word name="yamlFile"/>
+    </keywords>
+</scheme>
+
+<scheme name="agent-node">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="agent-node-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="agent-node-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="label"/>
+        <word name="customWorkspace"/>
+    </keywords>
+</scheme>
+
+<scheme name="tool">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="tool-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="tool-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="maven"/>
+        <word name="jdk"/>
+        <word name="nodejs"/>
+    </keywords>
+</scheme>
+
+<scheme name="options">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="options-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="options-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="buildDiscarder"/>
+        <word name="timestamps"/>
+        <word name="skipStagesAfterUnstable"/>
+        <word name="skipDefaultCheckout"/>
+        <word name="preserveStashes"/>
+        <word name="parallelsAlwaysFailFast"/>
+        <word name="disableResume"/>
+        <word name="disableConcurrentBuilds"/>
+        <word name="retry"/>
+        <word name="timeout"/>
+        <word name="lock"/>
+        <word name="ansiColor"/>
+    </keywords>
+</scheme>
+
+<scheme name="parameters">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="parameters-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="parameters-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="choice"/>
+        <word name="booleanParam"/>
+        <word name="string"/>
+    </keywords>
+</scheme>
+
+<scheme name="triggers">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="triggers-keywords"/>
+    </inherit>
+</scheme>
+
+<scheme name="triggers-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="cron"/>
+        <word name="upstream"/>
+        <word name="pollSCM"/>
+        <word name="bitbucketPush"/>
+    </keywords>
+</scheme>
+
+<scheme name="environment">
+
+    <regexp match="/^\s*([\w_-]+)\s*(=)/" region1="Variable" region2="Symbol"/>
+
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="environment-keywords"/>
+    </inherit>
+
+</scheme>
+
+<scheme name="environment-keywords">
+    <keywords region="ConfigurationMethod" ignorecase="no">
+        <word name="credentials"/>
+    </keywords>
+    <keywords region="OtherMethod" ignorecase="no">
+        <word name="pwd"/>
+    </keywords>
+</scheme>
+
+<scheme name="when">
+    <inherit scheme="groovy">
+        <virtual scheme="keywords" subst-scheme="when-keywords"/>
+        <virtual scheme="groovy" subst-scheme="when"/>
+    </inherit>
+</scheme>
+
+<scheme name="when-keywords">
+    <keywords region="ConditionMethod" ignorecase="no">
+        <word name="branch"/>
+        <word name="buildingTag"/>
+        <word name="changelog"/>
+        <word name="changeset"/>
+        <word name="changeRequest"/>
+        <word name="environment"/>
+        <word name="equals"/>
+        <word name="expression"/>
+        <word name="tag"/>
+        <word name="not"/>
+        <word name="allOf"/>
+        <word name="anyOf"/>
+        <word name="triggeredBy"/>
+    </keywords>
+</scheme>
+
+</type>
+</hrc>
+
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
+   - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+   - This program is free software; you can redistribute it and/or
+   - modify it under the terms of the GNU General Public License
+   - as published by the Free Software Foundation; either version 2
+   - of the License, or (at your option) any later version.
+   - This program is distributed in the hope that it will be useful,
+   - but WITHOUT ANY WARRANTY; without even the implied warranty of
+   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   - GNU General Public License for more details.
+   - You should have received a copy of the GNU General Public License
+   - along with this program; If not, see <http://www.gnu.org/licenses/>.
+   - ***** END LICENSE BLOCK ***** -->

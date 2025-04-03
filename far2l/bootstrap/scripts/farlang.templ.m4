@@ -693,7 +693,7 @@ AltF9
 "Video"
 "Tryb"
 "Video"
-"Відео""
+"Відео"
 "Відэа"
 
 AltF10
@@ -1544,15 +1544,15 @@ upd:"Groups of file masks"
 "Суполкі масак файлаў"
 
 MaskGroupBottomTitle
-"Ins Del F4 F7 Ctrl+Вверх/Вниз Ctrl+R"
-"Ins Del F4 F7 Ctrl+Up/Down Ctrl+R"
-"Ins Del F4 F7 Ctrl+Nahoru/Dolů Ctrl+R"
-"Ins Del F4 F7 Ctrl+Hoch/Runter Ctrl+R"
-"Ins Del F4 F7 Ctrl+Felfelé/Lefelé Ctrl+R"
-"Ins Del F4 F7 Ctrl+Wgórę/Wdół Ctrl+R"
-"Ins Del F4 F7 Ctrl+Arriba/Abajo Ctrl+R"
-"Ins Del F4 F7 Ctrl+Вгору/Вниз Ctrl+R"
-"Ins Del F4 F7 Ctrl+Уверх/Уніз Ctrl+R""
+"Ins Del Enter/F4 F3 F7 Ctrl+Вверх/Вниз Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Up/Down Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Nahoru/Dolů Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Strg+Hoch/Runter Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Felfelé/Lefelé Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Wgórę/Wdół Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Arriba/Abajo Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Вгору/Вниз Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Уверх/Уніз Ctrl+R"
 
 MaskGroupName
 "&Имя:"
@@ -12971,15 +12971,15 @@ l:
 "Афарбоўка файлаў"
 
 HighlightBottom
-"+ - Пробел Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Space Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Пробел Ins Del Enter/F4 F3 F5 Ctrl+Вверх/Вниз Ctrl+R Ctrl+M"
+"+ - Space Ins Del Enter/F4 F3 F5  Ctrl+Up/Down Ctrl+R Ctrl+M"
 "+ - Mezera Ins Del Enter/F4 F3 F5 Ctrl+Nahoru/Dolů Ctrl+M"
-"+ - Leer Einf Entf Enter/F4 F3 F5 Strg+Up/Down Strg+R Strg+M"
+"+ - Leer Einf Entf Enter/F4 F3 F5 Strg+Hoch/Runter Strg+R Strg+M"
 "+ - Szóköz Ins Del Enter/F4 F3 F5 Ctrl+Fel/Le Ctrl+R Ctrl+M"
-"+ - Spacja Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Space Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Пробіл Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
-"+ - Прабел Ins Del Enter/F4 F3 F5 Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Spacja Ins Del Enter/F4 F3 F5 Ctrl+Wgórę/Wdół Ctrl+R Ctrl+M"
+"+ - Space Ins Del Enter/F4 F3 F5  Ctrl+Arriba/Abajo Ctrl+R Ctrl+M"
+"+ - Пробіл Ins Del Enter/F4 F3 F5 Ctrl+Вгору/Вниз Ctrl+R Ctrl+M"
+"+ - Прабел Ins Del Enter/F4 F3 F5 Ctrl+Уверх/Уніз Ctrl+R Ctrl+M"
 
 HighlightUpperSortGroup
 "Верхняя группа сортировки"
@@ -13046,6 +13046,83 @@ HighlightAskRestore
 "Desea restablecer resaltado por defecto?"
 "Ви хочете відновити забарвлення файлів за замовчуванням?"
 "Вы жадаеце узнавіць прадвызначаную афарбоўку файлаў?"
+
+HighlightViewTitle
+"Раскраска файлов - раскрытие групп масок"
+"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+
+HighlightViewName
+"== Раскраска файлов - Имя:"
+"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+
+HighlightViewMarker
+"== Раскраска файлов - Маркер:"
+"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+
+HighlightViewMasksEmpty
+"== Раскраска файлов - строка масок пуста"
+"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+
+HighlightViewMasksBeforeExpand
+"== Раскраска файлов - маски до раскрытия групп масок:"
+"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+
+HighlightViewMasksCountExpandedGroups
+"== Число корректно раскрытых групп внутри масок:"
+"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+
+HighlightViewMasksAfterExpand
+"== Раскраска файлов - маски после раскрытия всех групп масок:"
+"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
 
 HighlightEditTitle
 l:
@@ -16731,6 +16808,28 @@ upd:"(multiple values)"
 "(valores múltiples)"
 "(кілька значень)"
 "(некалькі значэнняў)"
+
+SetAttrOwnerGroupShowId
+"Показывать U&id / Gid"
+"Show Ui&d / Gid"
+"&Zobrazit Uid / Gid"
+"Ui&d / Gid anzeigen"
+"Megjelenítése Ui&d / Gid"
+"Pokaż &Uid / Gid"
+"Mostrar Uid / Gid"
+"Показувати U&id / Gid"
+"Паказваць U&id / Gid"
+
+SetAttrOwnerOriginal
+"Исходное"
+"Original"
+"Originál"
+"Original"
+"Eredeti"
+"Oryginalny"
+"Original"
+"Вихідне"
+"Першасны"
 
 SetAttrModification
 "Время последней &записи:"

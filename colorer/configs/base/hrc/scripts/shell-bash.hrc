@@ -373,21 +373,20 @@
 
 <scheme name="variable_array">
     <!-- hash key -->
-    <block start="/(\[)/" end="/\M((\]))/" scheme="parameter_expansion" region="String"
-                                  region13="Symbol"
-        region00="VariableStrong" region11="VariableStrong"
-        region01="PairStart"      region12="PairEnd"/>
+    <block start="/(\[)/" end="/(\])/" scheme="parameter_expansion" region="String"
+        region00="VariableStrong" region10="VariableStrong"
+        region01="PairStart"      region11="PairEnd"/>
     <!-- variable ${VAR:...}, ${VAR:...:...} -->
-    <block start="/\](?{VariablePrefix}\:([?=+-])?!)/" end="/\M\}|$/"
+    <block start="/\]?#1(?{VariablePrefix}\:([?=+-])?!)/" end="/\M\}|$/"
         scheme="variable_expansion_substring"/>
     <!-- ${VAR@...} -->
-    <regexp match="/\](?{VariablePrefix}@[UuLQEPAKak])/"/>
+    <regexp match="/\]?#1(?{VariablePrefix}@[UuLQEPAKak])/"/>
     <!-- ${VAR^...} ${VAR^^...} ${VAR,...} ${VAR,,...}
          ${VAR:-...}, ${VAR+...} etc., ${VAR#...}, ${VAR%%...} etc. -->
-    <block start="/\]\m(?{VariablePrefix}\^{1,2}|,{1,2}|#{1,2}|%{1,2}|:?[?=+-])/" end="/\M\}|$/"
+    <block start="/\]?#1\m(?{VariablePrefix}\^{1,2}|,{1,2}|#{1,2}|%{1,2}|:?[?=+-])/" end="/\M\}|$/"
         region="String" scheme="parameter_expansion"/>
     <!-- ${VAR/.../...} ${VAR//.../...} etc. -->
-    <block start="/\](?{VariablePrefix}\/[#%/]?)/" end="/\M\}|$/"
+    <block start="/\]?#1(?{VariablePrefix}\/[#%/]?)/" end="/\M\}|$/"
         scheme="variable_expansion_replacement"/>
 </scheme>
 
@@ -400,22 +399,22 @@
         region01="PairStart"      region11="PairEnd"
         scheme="variable_expansion_substring"/>
     <!-- ${!VAR} -->
-    <block start="/((\$\{))(?{VariablePrefix}!)\M((%specvar-strict;)|[\w_]+)(\})?=/"
+    <block start="/((\$\{))(?{VariablePrefix}!)\M((%specvar-strict;)|[\w_]+)(\}|$)/"
         end="/(\}|$)/"
         region02="VariableStrong" region10="VariableStrong"
         region01="PairStart"      region11="PairEnd"
         scheme="variable_names"/>
     <!-- ${!prefix*} ${!prefix@} -->
-    <block start="/((\$\{))(?{VariablePrefix}!)\M((%specvar-strict;)|[\w_]+)([*@]|\[[*@]\])?=/"
+    <block start="/((\$\{))(?{VariablePrefix}!)\M((%specvar-strict;)|[\w_]+)([*@]|\[[*@]\])(\}|$)/"
         end="/(?{VariablePrefix}[*@]|\[[*@]\])(\}|$)/"
         region02="VariableStrong" region10="VariableStrong"
         region01="PairStart"      region11="PairEnd"
         scheme="variable_names"/>
-    <!-- ${VAR@...} -->
-    <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(@[UuLQEPAKak])?=/"
-        end="/(?{VariablePrefix}@[UuLQEPAKak])(\}|$)/"
+    <!-- ${VAR@...} ${!VAR@...} -->
+    <block start="/((\$\{))(?{VariablePrefix}!)?\M((%specvar-strict;)|[\w_]+)@[^\}]+(\}|$)/"
+        end="/(?{VariablePrefix}@)((?{VariablePrefix}[UuLQEPAKak])|(?{Error}[^\}]+))(\}|$)/"
         region02="VariableStrong" region10="VariableStrong"
-        region01="PairStart"      region11="PairEnd"
+        region01="PairStart"      region12="PairEnd"
         scheme="variable_names"/>
     <!-- ${VAR^...} ${VAR^^...} ${VAR,...} ${VAR,,...} -->
     <block start="/((\$\{))\M((%specvar-strict;)|[\w_]+)(?{VariablePrefix}\^{1,2}|,{1,2})/"
@@ -460,24 +459,24 @@
 
 <scheme name="variable_assignment_array_hash">
     <!-- hash key -->
-    <block start="/(\[)/" end="/\M((\]))(=)?/" scheme="parameter_expansion" region="String"
-                                  region13="Symbol"
+    <block start="/(\[)/" end="/((\]))\M=?/" scheme="parameter_expansion" region="String"
         region00="VariableStrong" region11="VariableStrong"
         region01="PairStart"      region12="PairEnd"/>
     <!-- hash value -->
-    <block start="/\]=\m/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"/>
+    <block start="/\]?#1=/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"
+        region00="Symbol"/>
 </scheme>
 
 <scheme name="variable_assignment_array">
     <!-- variable name -->
     <block start="/\M%var;/" end="/\M(\+?\=\()/" scheme="variable_names"/>
     <!-- array elements [key]=value ... -->
-    <block start="/(\+?\=)((\())\s*(\[)?=/" end="/\M((\)))/" scheme="variable_assignment_array_hash"
+    <block start="/(\+?\=)((\())\s*(\[)?=/" end="/((\)))/" scheme="variable_assignment_array_hash"
         region01="Symbol"
         region02="Symbol"    region11="Symbol"
         region03="PairStart" region12="PairEnd"/>
     <!-- array elements value ... -->
-    <block start="/(\+?\=)((\())/" end="/\M((\)))/" scheme="parameter_expansion" region="String"
+    <block start="/(\+?\=)((\())/" end="/((\)))/" scheme="parameter_expansion" region="String"
         region01="Symbol"
         region02="Symbol"    region11="Symbol"
         region03="PairStart" region12="PairEnd"/>
@@ -492,7 +491,7 @@
 
 <scheme name="variable_assignments">
     <!-- whole array assignment -->
-    <block start="/\s*\M(%var;)\+?\=\(/" end="/\)/" scheme="variable_assignment_array"/>
+    <block start="/\s*\M(%var;)\+?\=\(/" end="//" scheme="variable_assignment_array"/>
     <!-- element array assignment -->
     <block start="/\s*\M(%var;)\[.*\]=/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignment_array_element"/>
     <inherit scheme="shell-posix:variable_assignments">
@@ -523,17 +522,19 @@
 <scheme name="select">
     <inherit scheme="comments"/>
     <!-- select VAR ... done -->
-    <block start="/\b(select)\b\s*/" end="/\s*(?{Error}[^;#]*?)(\M(?{SymbolStrong};)|\bin\b|\s+|#|$)/"
-        scheme="script_words.maybe-variable" region01="CommandReserved"/>
+    <block start="/~\b(select)\b\s*/" end="/\M\s+|;|#|$/" scheme="script_words.maybe-variable"
+        region01="CommandReserved"/>
     <!-- in ... -->
-    <block start="/\s*\b(in)\b/" end="/(;|#|$)/" scheme="script_words"
-        region01="CommandReserved" region11="SymbolStrong"/>
+    <block start="/\s+\b(in)\b/" end="/\M;|#|$/" scheme="script_words"
+        region01="CommandReserved" region10="Error"/>
     <!-- do ... done -->
-    <block start="/\s*\b(do)\b/" end="/\s*\M\b(done)\b/" scheme="script"
-        region01="CommandReserved" region11="CommandReserved"/>
+    <block start="/(^|\s*(?{SymbolStrong};))\s*\b(do)\b/" end="/\s*\M\bdone\b/" scheme="script"
+        region02="CommandReserved"/>
+    <!-- don't mark semicolons as errors -->
+    <regexp match="/;/" region="SymbolStrong" priority="low"/>
     <!-- anything else is an error -->
-    <block start="/(done)?!\s*\m/" end="/\M(%cmdbreak;)/" scheme="def:empty"
-        region="Error" region11="SymbolStrong"/>
+    <block start="/(done)?!\s*\m\S/" end="/\M%cmdbreak;/" scheme="def:empty"
+        region="Error"/>
 </scheme>
 
 <scheme name="shell-arithmetic">

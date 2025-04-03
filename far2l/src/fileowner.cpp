@@ -88,6 +88,50 @@ bool WINAPI GetFileGroup(const wchar_t *Computer, const wchar_t *Name, FARString
 	return false;
 }
 
+// make "id: name"
+void MakeFileOwnerGroupIDShowStr(unsigned long id, const char *sname, FARString &snameid, unsigned int id_minchars)
+{
+	snameid.Format(L"%*lu: %s", id_minchars, id, sname);
+}
+
+// from "id: name" try return only name
+const wchar_t *FileOwnerGroupIDShowNameSanitize(const wchar_t *str)
+{
+	const wchar_t *str_name_only;
+	str_name_only = wcschr(str, ':');
+	if (!str_name_only || *(str_name_only+1)!=' ')
+		return str;
+	return str_name_only+2;
+}
+
+// in strOwner return "uname", in strOwnerIDShow return "uid: uname"
+bool WINAPI GetFileOwnerIDShow(const wchar_t *Computer, const wchar_t *Name,
+		FARString &strOwner, FARString &strOwnerIDShow, unsigned int id_minchars)
+{
+	struct stat s{};
+	if (sdc_stat(Wide2MB(Name).c_str(), &s) == 0) {
+		const char *sz = OwnerNameByID(s.st_uid);
+		strOwner = sz;
+		MakeFileOwnerGroupIDShowStr(s.st_uid, sz, strOwnerIDShow, id_minchars);
+		return true;
+	}
+	return false;
+}
+
+// in strGroup return "gname", in strGroupIDShow return "gid: gname"
+bool WINAPI GetFileGroupIDShow(const wchar_t *Computer, const wchar_t *Name,
+		FARString &strGroup, FARString &strGroupIDShow, unsigned int id_minchars)
+{
+	struct stat s{};
+	if (sdc_stat(Wide2MB(Name).c_str(), &s) == 0) {
+		const char *sz = GroupNameByID(s.st_gid);
+		strGroup = sz;
+		MakeFileOwnerGroupIDShowStr(s.st_gid, sz, strGroupIDShow, id_minchars);
+		return true;
+	}
+	return false;
+}
+
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner)
 {
 	struct passwd *p = getpwnam(Wide2MB(Owner).c_str());

@@ -159,13 +159,13 @@
 
 <scheme name="string-array-body">
     <inherit scheme="escape_newline"/>
-    <block start="/(\[?#1|\s*(?{Symbol},)|^)\s*((&quot;))(.*&quot;)?=/" end="/(&quot;|$)\M(?{Symbol},)?/" scheme="string-with-var"
+    <block start="/(\[?#1|\s*(?{Symbol},)|^)\s*((&quot;))(.*&quot;)?=/" end="/(&quot;|$)\M,?/" scheme="string-with-var"
         region="String"
         region02="def:PairStart" region10="def:PairEnd"
         region03="Symbol"        region11="Symbol"/>
     <!-- skip some free space -->
     <regexp match="/\s+\M\]/"/>
-    <regexp match="/\s*,?\s*\M%escape;$/"/>
+    <regexp match="/\s*(?{Symbol},)?\s*\M%escape;$/"/>
     <!-- everything else except closing bracket is an error -->
     <block start="/(\])?!/" end="/\M(\]|$)/" scheme="def:empty" region="Error"/>
 </scheme>
@@ -422,7 +422,6 @@
 </hrc>
 
 <!-- ***** BEGIN LICENSE BLOCK *****
-   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
    - Copyright (C) Konstantin Kushnir <chpock@gmail.com>
    - This program is free software; you can redistribute it and/or
    - modify it under the terms of the GNU General Public License

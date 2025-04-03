@@ -196,6 +196,7 @@
 	WINPORT_DECL_DEF(GetCPInfo, BOOL, (UINT CodePage, LPCPINFO lpCPInfo))
 	WINPORT_DECL_DEF(GetCPInfoEx, BOOL, (UINT codepage, DWORD dwFlags, LPCPINFOEX cpinfo))
 	WINPORT_DECL_DEF(EnumSystemCodePages, BOOL, (CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD flags))
+	WINPORT_DECL_DEF(MatchDecomposedUTF8, BOOL, (int flags, const char *s1, size_t l1, const char *s2, size_t l2))
 
 	//clipboard
 	WINPORT_DECL_DEF(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat))

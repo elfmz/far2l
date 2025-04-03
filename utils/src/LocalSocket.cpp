@@ -8,6 +8,7 @@
 #endif
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -171,8 +172,16 @@ LocalSocketServer::LocalSocketServer(Kind sock_kind, const std::string &server, 
 
 	unlink(sa.sun_path);
 
+#ifdef __linux__
+	fchmod(sock, S_IRUSR | S_IWUSR);
+#endif
+
 	if (bind(sock, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		throw LocalSocketBindError();
+
+#ifndef __linux__
+	chmod(server.c_str(), S_IRUSR | S_IWUSR);
+#endif
 
 	if (sock_kind == STREAM) {
 		listen(sock, backlog);

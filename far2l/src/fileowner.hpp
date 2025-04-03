@@ -67,5 +67,16 @@ typedef CachedFileLookupT<gid_t, &GroupNameByID> CachedFileGroupLookup;
 bool WINAPI GetFileOwner(const wchar_t *Computer, const wchar_t *Name, FARString &strOwner);
 bool WINAPI GetFileGroup(const wchar_t *Computer, const wchar_t *Name, FARString &strGroup);
 
+// make "id: name"
+void MakeFileOwnerGroupIDShowStr(unsigned long id, const char *sname, FARString &snameid, unsigned int id_minchars = 0);
+// from "id: name" try return only name
+const wchar_t *FileOwnerGroupIDShowNameSanitize(const wchar_t *str);
+// in strOwnerIDShow return "uid: uname"
+bool WINAPI GetFileOwnerIDShow(const wchar_t *Computer, const wchar_t *Name,
+		FARString &strOwner, FARString &strOwnerIDShow, unsigned int id_minchars = 0);
+// in strGroupIDShow return "gid: gname"
+bool WINAPI GetFileGroupIDShow(const wchar_t *Computer, const wchar_t *Name,
+		FARString &strGroup, FARString &strGroupIDShow, unsigned int id_minchars = 0);
+
 bool SetOwner(LPCWSTR Object, LPCWSTR Owner);
 bool SetGroup(LPCWSTR Object, LPCWSTR Group);

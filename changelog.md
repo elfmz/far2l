@@ -3,6 +3,9 @@
 Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
 
 ## Master (current development)
+* Editor: Display of various non-printable characters on **F5** (ShwSpc)
+
+## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`
 * _New:_ Horizontal panels layout (toggle horizontal-vertical by **Ctrl+,**)
 * _New:_ Groups of file masks
@@ -10,6 +13,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Customize Size column in panels (all by dialog or **Ctrl+Alt+D**, symlinks by **Ctrl+Alt+L**)
 * More customize dirs/files markers in panels (by dialog or **Ctrl+Alt+M** and **Ctrl+Alt+N**)
 * _New:_ Link item in File menu (in addition to the usual **Alt+F6**)
+* File attributes dialog (by **Ctrl+A**): ability to show "uname"/"gname" or "uid: uname"/"gid: gname"
 * _New:_ Chattr / chflags with all flags for single file (in File menu or by **Ctrl+Alt+A**)
 * _New:_ Python-subplugin: copy/paste files via clipboard - wx ONLY version - with support for gnome clipboard types, works with gnome files/nautilus
 * _New:_ At 1st run detect Russian locale
@@ -17,7 +21,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ Far colors moved to farcolors.ini
 * Help actualization and improvements
 * Info panel: New EditorConfig block
-* _colorer plugin_: Update colorer schemes to v1.2.0.57
+* _colorer plugin_: Update colorer schemes to v1.2.0.62
 * _colorer plugin_: Update colorer library to v1.4.1-24.01.2025
 * _Inside plugin_: Add PE format, add png, ogg, m4a and Mach-O support
 * _multiarc plugin_: Removed PCRE library dependencies

@@ -137,8 +137,12 @@ void AbbreviateString(std::string &path, size_t needed_length)
 		needed_length = 1;
 	}
 	if (len > needed_length) {
+		const auto ellipsis = L"…";
+		std::wstring wpath = StrMB2Wide(path);
+		len = wpath.size();
 		size_t delta = len - (needed_length - 1);
-		path.replace((path.size() - delta) / 2, delta, "…");//"...");
+		wpath.replace((len - delta) / 2, delta, ellipsis);
+		StrWide2MB(wpath, path);
 	}
 }
 

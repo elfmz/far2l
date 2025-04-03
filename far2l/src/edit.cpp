@@ -374,8 +374,38 @@ void Edit::FastShow()
 	size_t OutStrCells = 0;
 	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i) {
 		auto wc = Str[i];
-		if (wc == L' ' && Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
-			wc = L'\xB7';
+		if (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
+			switch(wc) {
+				case 0x0020: //space
+					wc = L'\xB7'; // ·
+					break;
+				case 0x00A0: //no-break space
+					wc = L'\xB0'; // °
+					break;
+				case 0x00AD: //soft hyphen
+					wc = L'\xAC'; // ¬
+					break;
+				case 0x2028: //line separator
+					wc = L'\x2424'; // ␤
+					break;
+				case 0x2029: //paragraph separator
+					wc = L'\xB6'; // ¶
+					break;
+				case 0x2000 ... 0x200A: //other spaces
+				case 0x202F: case 0x205F:
+				case 0x180E: case 0x3000:
+					wc = L'\x2420'; // ␠
+					break;
+				case 0x200B ... 0x200D: //zero-width
+				case 0x2060: case 0xFEFF:
+					wc = L'\x2422'; // ␢
+					break;
+				case 0x200E ... 0x200F: //text direction marks and shaping controls
+				case 0x202A ... 0x202E:
+				case 0x2066 ... 0x206F:
+					wc = L'\x2194'; // ↔
+					break;
+			}
 		}
 
 		if (wc == L'\t') {

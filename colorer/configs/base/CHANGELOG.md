@@ -24,6 +24,10 @@
 - [smarty] fixed working with nested brackets
 - [smarty] literal block - text only
 - [shell-posix] fix variable assignments with line continuations
+- [shell-bash] fix indirect expansion+transformation
+- [shell-posix] fix unhighlighted areas after updating colorer from 1.3.3 to 1.4.0
+- [shell-bash] fix unhighlighted areas after updating colorer from 1.3.3 to 1.4.0
+- [dockerfile] fix unhighlighted areas after updating colorer from 1.3.3 to 1.4.0
 
 ### Changed
 - Simplified catalog.xml.
@@ -35,6 +39,9 @@
 - [groovy] add .gradle as groovy
 - Use the new shell-posix schema for shell scripts by default
 - [json] highlight JSON object keys
+- rename lib/default.hrc to lib/def.hrc
+- move 'default' type implementation from proto.hrc to base/default.hrc
+- [shell-posix] allow to include shell-posix scheme as subscheme enclosed in quotes
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.
@@ -72,6 +79,7 @@
 - [hcl] add a new schema for HashiCorp HCL
 - [terraform] add a new schema for HashiCorp Terraform
 - [dockerfile] add a new schema for Dockerfile
+- [jenkinsfile] add a new schema for Jenkins configuration (Jenkinsfile)
 
 ## [1.2.0] - 2021-09-12
 

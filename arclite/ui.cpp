@@ -171,14 +171,14 @@ void ProgressMonitor::update_ui(bool force)
 {
 	update_time();
 
-	if (time_elapsed() > 2000) {
-		if (!priority_changed && initial_priority != -1) {
+	if (!priority_changed && time_elapsed() > 2) {
+		if (initial_priority != -1) {
 			_SetPriorityClass(_GetCurrentProcess(), _map_priority(initial_priority));
 			priority_changed = true;
 		}
 	}
 
-	if (time_elapsed() > 60 && !sleep_disabled) {
+	if (!sleep_disabled && time_elapsed() > 60) {
 		sleep_disabled = true;
 	}
 
@@ -2728,6 +2728,9 @@ private:
 		bool is_zip = arc_type == c_zip;
 		bool is_tar = arc_type == c_tar;
 
+		bool is_repack_7z = repack_arc_type == c_7z;
+		bool is_repack_zip = repack_arc_type == c_zip;
+
 		update_level_list();
 		update_method_list(bSetDefaultMedthod);
 
@@ -2736,11 +2739,13 @@ private:
 			enable(i, ((is_7z || is_zip) && is_compressed) || is_tar);
 		}
 		enable(solid_ctrl_id, is_7z && is_compressed);
+
 		enable(encrypt_ctrl_id, is_7z || is_zip);
 		bool encrypt = get_check(encrypt_ctrl_id);
 		for (int i = encrypt_ctrl_id + 1; i <= password_visible_ctrl_id; i++) {
 			enable(i, encrypt && (is_7z || is_zip));
 		}
+
 		enable(encrypt_header_ctrl_id, is_7z && encrypt);
 		bool show_password = get_check(show_password_ctrl_id);
 		for (int i = password_ctrl_id - 1; i <= password_verify_ctrl_id; i++) {

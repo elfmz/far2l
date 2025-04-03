@@ -276,7 +276,7 @@ public:
 	}
 	static std::unique_ptr<Archives> open(const OpenOptions &options);
 	void close();
-	bool open(IInStream *in_stream, const ArcType &type, const bool allow_tail = false);
+	bool open(IInStream *in_stream, const ArcType &type, const bool allow_tail = false, const bool show_progress = true);
 	void reopen();
 	bool is_open() const { return in_arc; }
 	bool updatable() const

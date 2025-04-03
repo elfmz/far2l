@@ -688,7 +688,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 	do {
 		--Pos;
-	} while (Pos > 0 && CharClasses(Str[Pos]).Xxxfix());
+	} while (Pos > 0 && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
 
 	return Pos;
 }
@@ -2103,7 +2103,6 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 		if (Pos >= StrSize)
 			TabPos+= Pos - Index;
 	}
-
 	return TabPos;
 }
 
@@ -2124,13 +2123,13 @@ int Edit::CellPosToReal(int Pos)
 
 			CellPos = NewCellPos;
 		} else {
-			CellPos+= CharClasses(Str[Index]).FullWidth() ? 2 : 1;
+			CharClasses cc(Str[Index]);
+			CellPos+= cc.FullWidth() ? 2 : cc.Xxxfix() ? 0 : 1;
 			while (Index + 1 < StrSize && CharClasses(Str[Index + 1]).Xxxfix()) {
 				Index++;
 			}
 		}
 	}
-
 	return Index;
 }
 

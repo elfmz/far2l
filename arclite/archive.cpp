@@ -492,8 +492,14 @@ void ArcAPI::load_libs(const std::wstring &path)
 #endif
 				}
 			}
-			else {
+			else { /// p7zip ?
+#ifdef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
 				arc_lib.version = get_module_version(arc_lib.module_path);
+#else
+				fprintf(stderr, "ArcAPI::load_libs() skipped %s with (VIRTUAL_DESTRUCTOR_IN_IUNKNOWN???)\n", s2.c_str());
+				dlclose(arc_lib.h_module);
+				continue;
+#endif
 			}
 
 			Func_GetHashers getHashers = reinterpret_cast<Func_GetHashers>(

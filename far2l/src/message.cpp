@@ -585,8 +585,13 @@ Messager &FN_NOINLINE ExMessager::AddDupWrap(const wchar_t *v)
 		return AddDup(v);
 
 	FARString fs = v;
-	for(size_t pos = 0; pos < maxlen; pos+=MAX_WIDTH_MESSAGE)
-		AddDup( fs.SubStr(pos, pos+MAX_WIDTH_MESSAGE).CPtr() );
+	for(size_t chars_pos = 0, chars_len, cells_n; chars_pos < maxlen; chars_pos += chars_len) {
+		cells_n = MAX_WIDTH_MESSAGE;
+		chars_len = StrSizeOfCells(&v[chars_pos], maxlen - chars_pos, cells_n, false);
+		if (cells_n <= 0)
+			break;
+		AddDup( fs.SubStr(chars_pos, chars_len).CPtr() );
+	}
 	return *this;
 }
 

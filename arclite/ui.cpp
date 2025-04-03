@@ -2728,9 +2728,6 @@ private:
 		bool is_zip = arc_type == c_zip;
 		bool is_tar = arc_type == c_tar;
 
-		bool is_repack_7z = repack_arc_type == c_7z;
-		bool is_repack_zip = repack_arc_type == c_zip;
-
 		update_level_list();
 		update_method_list(bSetDefaultMedthod);
 

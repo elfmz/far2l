@@ -639,6 +639,8 @@ struct Options
 	FARString strTimeSeparator;
 	FARString strDecimalSeparator;
 
+	DWORD OwnerGroupShowId;
+
 	bool IsFirstStart;
 
 	std::vector<std::wstring> CmdLineStrings;

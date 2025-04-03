@@ -627,8 +627,6 @@ public:
 			*processedSize = static_cast<UInt32>(bytes_to_write);
 		}
 
-		fprintf(stderr, "AcmRelayStream want [Writed] %lu and notify!\n", bytes_to_write );
-
 		cv.notify_all();
 		return S_OK;
 		COM_ERROR_HANDLER_END

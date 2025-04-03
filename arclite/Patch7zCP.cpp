@@ -899,7 +899,7 @@ static bool patch_7z_dll()
 	for (size_t i = 0; i < libs.size(); ++i) {
 		if (!get_faddrs(libs[i].h_module))
 			continue;
-//		if (patch_plt(libs[i].h_module))
+//		if (patch_plt(libs[i].h_module)) // You might crash.
 //			return true;
 		if (patch_addr(libs[i].h_module))
 			return true;

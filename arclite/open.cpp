@@ -662,6 +662,7 @@ private:
 	UInt64 total_bytes;
 	UInt64 completed_files;
 	UInt64 completed_bytes;
+	bool bShowProgress;
 
 	void do_update_ui() override
 	{
@@ -683,14 +684,15 @@ private:
 	}
 
 public:
-	ArchiveOpener(std::shared_ptr<Archive> archive)
+	ArchiveOpener(std::shared_ptr<Archive> archive, bool bShowProgress = true)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_OPEN)),
 		  archive(archive),
 		  volume_file_info(archive->arc_info),
 		  total_files(0),
 		  total_bytes(0),
 		  completed_files(0),
-		  completed_bytes(0)
+		  completed_bytes(0),
+		  bShowProgress(bShowProgress)
 	{
 	}
 
@@ -709,7 +711,9 @@ public:
 		if (bytes)
 			total_bytes = *bytes;
 
-		update_ui();
+		if (bShowProgress)
+			update_ui();
+
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -723,7 +727,9 @@ public:
 		if (bytes)
 			completed_bytes = *bytes;
 
-		update_ui();
+		if (bShowProgress)
+			update_ui();
+
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -774,7 +780,10 @@ public:
 		ComObject<IInStream> file_stream(new ArchiveOpenStream(file_path));
 		file_stream.detach(inStream);
 		//    CriticalSectionLock lock(GetSync());
-		update_ui();
+
+		if (bShowProgress)
+			update_ui();
+
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -864,10 +873,10 @@ HRESULT Archive::copy_prologue(IOutStream *out_stream)
 	return res;
 }
 
-bool Archive::open(IInStream *stream, const ArcType &type, const bool allow_tail)
+bool Archive::open(IInStream *stream, const ArcType &type, const bool allow_tail, const bool show_progress)
 {
 	ArcAPI::create_in_archive(type, in_arc.ref());
-	ComObject<IArchiveOpenCallback> opener(new ArchiveOpener(shared_from_this()));
+	ComObject<IArchiveOpenCallback> opener(new ArchiveOpener(shared_from_this(), show_progress));
 
 	if (allow_tail && ArcAPI::formats().at(type).Flags_PreArc()) {
 		ComObject<IArchiveAllowTail> allowTail;
@@ -1146,7 +1155,7 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			std::future<bool> future = promise.get_future();
 
 			std::thread extract_thread([&]() {
-				bool opened = archive->open(stream, c_tar, false);
+				bool opened = archive->open(stream, c_tar, false, false);
 				if (!opened) {
 					mem_stream->FinishWriting();
 				}

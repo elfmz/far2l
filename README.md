@@ -82,8 +82,8 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 | **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (\*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
 | **Typical<br>use case:** | **Servers**,<br>embedded<br>(\*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
-| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories:</sup> | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
-| Community [PPA](#community_bins): | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` |
+| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
+| Community [PPA](#community_bins)<br><sup>(packages names):</sup> | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` |
 
 <sub><a name="downgrade"></a>_Note_: When running far2l automatically downgrade
 if its components are not installed (or system libs are not available):
@@ -179,7 +179,7 @@ See also [Community packages & binaries](#community_bins)
 * `libsmbclient-dev` (_optional_ - needed for **NetRocks/SMB**)
 * `libnfs-dev` (_optional_ - needed for **NetRocks/NFS**)
 * `libneon27-dev` (or later, _optional_ - needed for **NetRocks/WebDAV**)
-* [AWS SDK S3](https://github.com/aws/aws-sdk-cpp) (_optional_ - needed for **NetRocks/AWS**)
+* [AWS SDK S3](https://github.com/aws/aws-sdk-cpp) (_optional_ - needed for **NetRocks/AWS S3**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
 * `libicu-dev` (_optional_ - needed if used non-default ICU_MODE, see `-DICU_MODE` command line option)
@@ -370,27 +370,28 @@ You can import the project into your favourite IDE like QtCreator, CodeLite, or 
 
 <a name="terminals"></a>
 ## Compatible Terminals and SSH clients
-Supporting extended far2l keyboard shortcuts and clipboard access
-
- * **kovidgoyal's kitty** (Linux/BSD, macOS): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
- * **Alacritty** (Linux/BSD, macOS, Windows): https://github.com/alacritty/alacritty & https://alacritty.org/ (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support) [in Windows in system must be conpty.dll: https://github.com/alacritty/alacritty/issues/8360]
- * **Rio Terminal** (Linux/BSD, macOS, Windows): https://github.com/raphamorim/rio & https://raphamorim.io/rio/ (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
- * **Ghostty** (Linux, macOS): https://github.com/ghostty-org/ghostty & https://ghostty.org/ (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
- * **Wez's Terminal Emulator** (Linux/BSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (TTY|k backend: keys in Linux/BSD by kovidgoyal's kitty keyboard protocol; TTY|w backend: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
- * **iTerm2** (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (TTY|a backend: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
- * **foot** (Linux Wayland only): https://codeberg.org/dnkl/foot (TTY|k backend: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
- * **Windows Terminal** (TTY|w backend: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
-
- * _Original PuTTY_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
-   * **putty4far2l** (Windows ssh-client): https://github.com/ivanshatsky/putty4far2l/releases & https://github.com/unxed/putty4far2l (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
-   * **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
-   * **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (TTY|F backend: keys and clipboard by FAR2L TTY extensions support)
-   * **PuTTY 0.82+**: since 0.82 in vanilla PuTTY you can set keyboard settings `Xterm 216+` and `xterm-style bitmap` (see: https://github.com/elfmz/far2l/issues/2630 ),
-but vanilla PuTTY can not transfer clipboard.
 
 _Note_: to full transfer extended keyboard shortcuts and the clipboard to/from the **remote far2l**
 one of the best way to initiate the connection **inside local far2l-GUI**
-(see details in build-in help section **UI backends**).
+(see details about _TTY|F backend_ in build-in help section **UI backends**).
+
+Terminals/SSH clients with support extended far2l keyboard shortcuts and clipboard access:
+
+ * **kovidgoyal's kitty** (Linux/BSD, macOS): https://github.com/kovidgoyal/kitty & https://sw.kovidgoyal.net/kitty (_TTY|k backend_: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l and kitty for clipboard support)
+ * **Alacritty** (Linux/BSD, macOS, Windows): https://github.com/alacritty/alacritty & https://alacritty.org/ (_TTY|k backend_: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support) [in Windows in system must be conpty.dll: https://github.com/alacritty/alacritty/issues/8360]
+ * **Rio Terminal** (Linux/BSD, macOS, Windows): https://github.com/raphamorim/rio & https://raphamorim.io/rio/ (_TTY|k backend_: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
+ * **Ghostty** (Linux, macOS): https://github.com/ghostty-org/ghostty & https://ghostty.org/ (_TTY|k backend_: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
+ * **Wez's Terminal Emulator** (Linux/BSD, Windows): https://github.com/wez/wezterm & https://wezfurlong.org/wezterm (_TTY|k backend_: keys in Linux/BSD by kovidgoyal's kitty keyboard protocol; _TTY|w backend_: keys in Windows by win32-input-mode, enabled by default; turn on OSC 52 for clipboard support) [kitty keyboard protocol not supported in macOS & Windows]
+ * **iTerm2** (macOS): https://gitlab.com/gnachman/iterm2 & https://iterm2.com (_TTY|a backend_: keys by iTerm2 "raw keyboard" protocol; turn on OSC 52 for clipboard support)
+ * **foot** (Linux Wayland only): https://codeberg.org/dnkl/foot (_TTY|k backend_: keys by kovidgoyal's kitty keyboard protocol; turn on OSC 52 in far2l for clipboard support)
+ * **Windows Terminal** (_TTY|w backend_: keys by win32-input-mode; turn on OSC 52 for clipboard support; has mouse bug: https://github.com/microsoft/terminal/issues/15083 )
+
+ * _Original PuTTY_ does _not correctly send some keyboard shortcuts_. Please use putty forks with _special far2l TTY extensions support (fluent keypresses, clipboard sharing etc)_:
+    + **putty4far2l** (Windows ssh-client): https://github.com/ivanshatsky/putty4far2l/releases & https://github.com/unxed/putty4far2l (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
+    + **cyd01's KiTTY** (Windows ssh-client): https://github.com/cyd01/KiTTY & https://www.9bis.net/kitty (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
+    + **putty-nd** (Windows ssh-client): https://sourceforge.net/projects/putty-nd & https://github.com/noodle1983/putty-nd (_TTY|F backend_: keys and clipboard by FAR2L TTY extensions support)
+    + **PuTTY 0.82+**: since 0.82 in vanilla PuTTY you can set keyboard settings `Xterm 216+` and `xterm-style bitmap` (see: https://github.com/elfmz/far2l/issues/2630 ),
+but vanilla PuTTY can not transfer clipboard.
 
 <a name="useful3party"></a>
 ## Useful 3rd-party extras

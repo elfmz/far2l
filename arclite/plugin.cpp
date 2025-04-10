@@ -1600,11 +1600,11 @@ SHAREDSYMBOL HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 	try {
 		if (!info->FileName) {
 
-			if (!g_options.handle_create)
+			if (!g_options.handle_create) {
 				FAIL(E_INVALIDARG);
+			}
 
-			const ArcLibs &arc_libs = ArcAPI::libs();
-			if (!arc_libs.size()) {
+			if (!ArcAPI::libs().size()) {
 				FAIL(E_INVALIDARG);
 			}
 

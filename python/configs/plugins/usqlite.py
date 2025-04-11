@@ -53,7 +53,7 @@ class SqlData:
         self.parent = None
 
     def GetCurrentPanelItem(self):
-        return self.parent.GetCurrentPanelItem()
+        return self.parent.panel.GetCurrentPanelItem()
 
 class SqlDataHandler(SqlData):
     def __init__(self, parent, conn, tablename):

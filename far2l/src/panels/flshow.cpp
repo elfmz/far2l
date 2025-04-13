@@ -587,18 +587,19 @@ int FileList::ConvertName(FARString &strDest, const wchar_t *SrcName, int MaxLen
 			&& (SrcName[0] != L'.' || SrcName[2]) && !wcschr(DotPtr + 1, L' ')) {
 		int DotLength = StrLength(DotPtr + 1);
 		int NameLength = DotLength ? (int)(DotPtr - SrcName) : SrcLength;
+		int VisualNameLength = NameLength - (SrcLength - SrcVisualLength);
 		int DotPos = MaxLength - Max(DotLength, 3);
 
-		if (DotPos <= NameLength)
-			DotPos = NameLength + 1;
+		if (DotPos <= VisualNameLength)
+			DotPos = VisualNameLength + 1;
 
 		strDest.Copy(SrcName, NameLength);
 		if (DotPos > 0 && NameLength > 0 && SrcName[NameLength - 1] == L' ') {
 			strDest.Append(L'.');
 			DotPos--;
 		}
-		if (DotPos > NameLength) {
-			strDest.Append(L' ', DotPos - NameLength);
+		if (DotPos > VisualNameLength) {
+			strDest.Append(L' ', DotPos - VisualNameLength);
 		}
 		strDest.Append(DotPtr + 1, DotLength);
 	} else {

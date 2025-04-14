@@ -47,10 +47,9 @@
 #  define RAW_ALTGR    0xffea
 #  define RAW_RCTRL    0xffe4
 #  define RAW_RSHIFT   0xffe2
-#  define RAW_NUMPAD_STAR    0xffaa
-#  define RAW_NUMPAD_PLUS    0xffab
-#  define RAW_NUMPAD_MINUS   0xffad
-#  define RAW_NUMPAD_DIVIDE  0xffaf
+#  define RAW_NUMPAD_STAR   0xffaa
+#  define RAW_NUMPAD_MINUS  0xffad
+#  define RAW_NUMPAD_PLUS   0xffab
 # endif
 #endif
 
@@ -587,9 +586,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		case RAW_NUMPAD_MINUS:
 			Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT; break;
 		case RAW_NUMPAD_PLUS:
-			Event.KeyEvent.wVirtualKeyCode = VK_ADD;      break;
-		case RAW_NUMPAD_DIVIDE:
-			Event.KeyEvent.wVirtualKeyCode = VK_DIVIDE;   break;
+			Event.KeyEvent.wVirtualKeyCode = VK_ADD; break;
 	}
 #endif
 

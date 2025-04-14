@@ -4,7 +4,6 @@ Only significant user-side changes are listed here (for all changes see history 
 
 ## Master (current development)
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
-* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`

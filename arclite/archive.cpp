@@ -496,7 +496,7 @@ void ArcAPI::load_libs(const std::wstring &path)
 #ifdef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
 				arc_lib.version = get_module_version(arc_lib.module_path);
 #else
-				fprintf(stderr, "ArcAPI::load_libs() skipped %s with (VIRTUAL_DESTRUCTOR_IN_IUNKNOWN???)\n", s2.c_str());
+				fprintf(stderr, "ArcAPI::load_libs() skipped %s with (VIRTUAL_DESTRUCTOR_IN_IUNKNOWN?)\n", s2.c_str());
 				dlclose(arc_lib.h_module);
 				continue;
 #endif

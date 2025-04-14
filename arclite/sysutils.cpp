@@ -853,7 +853,12 @@ std::wstring format_file_time(const FILETIME &file_time)
 	CHECK_SYS(WINPORT_FileTimeToLocalFileTime(&file_time, &local_ft));
 	SYSTEMTIME st;
 	CHECK_SYS(WINPORT_FileTimeToSystemTime(&local_ft, &st));
-	wchar_t date_time_str[64];
+	wchar_t DateSeparator;
+	wchar_t TimeSeparator;
+	wchar_t DecimalSeparator;
+	wchar_t tempbuff[64];
+	int iDateFormat;
+	int n;
 
 	//  Buffer<wchar_t> buf(1024);
 	//  CHECK_SYS(GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, nullptr, buf.data(),
@@ -861,8 +866,39 @@ std::wstring format_file_time(const FILETIME &file_time)
 	//  CHECK_SYS(GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, nullptr, buf.data(),
 	//  static_cast<int>(buf.size()))); std::wstring time_str = buf.data(); return date_str + L' ' + time_str;
 
-	swprintf(date_time_str, 64, L"%02d-%02d-%02d - %02d:%02d:%02d", st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
-	return std::wstring(date_time_str);
+	DateSeparator = Far::g_fsf.GetDateSeparator();
+	TimeSeparator = Far::g_fsf.GetTimeSeparator();
+	DecimalSeparator = Far::g_fsf.GetDecimalSeparator();
+
+	iDateFormat = Far::g_fsf.GetDateFormat();
+
+	switch (iDateFormat) {
+		case 0:
+			n = swprintf(tempbuff, 16, L"%02d%c%02d%c%04d", st.wMonth, DateSeparator, st.wDay, DateSeparator,
+					st.wYear);
+			break;
+		case 1:
+			n = swprintf(tempbuff, 16, L"%02d%c%02d%c%04d", st.wDay, DateSeparator, st.wMonth, DateSeparator,
+					st.wYear);
+			break;
+		default:
+			n = swprintf(tempbuff, 16, L"%04d%c%02d%c%02d", st.wYear, DateSeparator, st.wMonth, DateSeparator,
+					st.wDay);
+			break;
+	}
+
+	tempbuff[n++] = 32;
+
+	if (st.wMilliseconds) {
+		n += swprintf(tempbuff + n, 16, L"%02d%c%02d%c%02d%c%03d", st.wHour, TimeSeparator, st.wMinute, TimeSeparator,
+					st.wSecond, DecimalSeparator, st.wMilliseconds);
+	}
+	else {
+		n += swprintf(tempbuff + n, 16, L"%02d%c%02d%c%02d", st.wHour, TimeSeparator, st.wMinute, TimeSeparator,
+					st.wSecond);
+	}
+
+	return std::wstring(tempbuff, n);
 }
 
 std::wstring upcase(const std::wstring &str)

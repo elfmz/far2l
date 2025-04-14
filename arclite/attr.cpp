@@ -72,18 +72,32 @@ static std::wstring format_filetime_prop(const PropVariant &prop)
 	if (!prop.is_filetime())
 		return std::wstring();
 	FILETIME prop_file_time = prop.get_filetime();
-	FILETIME local_file_time;
-	if (!WINPORT_FileTimeToLocalFileTime(&prop_file_time, &local_file_time))
-		return std::wstring();
-	SYSTEMTIME sys_time;
-	if (!WINPORT_FileTimeToSystemTime(&local_file_time, &sys_time))
-		return std::wstring();
-	wchar_t buf[64];
+
+//	FILETIME local_file_time;
+//	if (!WINPORT_FileTimeToLocalFileTime(&prop_file_time, &local_file_time))
+//		return std::wstring();
+//	SYSTEMTIME sys_time;
+//	if (!WINPORT_FileTimeToSystemTime(&local_file_time, &sys_time))
+//		return std::wstring();
+//	wchar_t buf[64];
+
+//	FILETIME local_ft;
+//	CHECK_SYS(WINPORT_FileTimeToLocalFileTime(&file_time, &local_ft));
+//	SYSTEMTIME st;
+//	CHECK_SYS(WINPORT_FileTimeToSystemTime(&local_ft, &st));
+//	wchar_t date_time_str[64];
+
 
 #if 1
-	swprintf(buf, 64, L"%02d.%02d.%d %02d:%02d:%02d", sys_time.wDay, sys_time.wMonth, sys_time.wYear, sys_time.wHour,
-			sys_time.wMinute, sys_time.wSecond);
-	return std::wstring(buf);
+//	swprintf(buf, 64, L"%02d.%02d.%d %02d:%02d:%02d", sys_time.wDay, sys_time.wMonth, sys_time.wYear, sys_time.wHour,
+//			sys_time.wMinute, sys_time.wSecond);
+//	return std::wstring(buf);
+
+	return format_file_time(prop_file_time);
+
+//std::wstring format_file_time(const FILETIME &file_time)
+
+
 #else
 	if (GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &sys_time, nullptr, buf, ARRAYSIZE(buf)) == 0)
 		return std::wstring();

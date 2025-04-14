@@ -171,14 +171,14 @@ void ProgressMonitor::update_ui(bool force)
 {
 	update_time();
 
-	if (!priority_changed && time_elapsed() > 2) {
+	if (!priority_changed && time_elapsed() > 2000) {
 		if (initial_priority != -1) {
 			_SetPriorityClass(_GetCurrentProcess(), _map_priority(initial_priority));
 			priority_changed = true;
 		}
 	}
 
-	if (!sleep_disabled && time_elapsed() > 60) {
+	if (!sleep_disabled && time_elapsed() > 30000) {
 		sleep_disabled = true;
 	}
 
@@ -2789,7 +2789,6 @@ private:
 		enable(symlinks_paths_ctrl_id + 1, bStoreSymlinks);
 
 		bool bUseExport = get_check(use_export_settings_ctrl_id);
-		enable(use_export_settings_ctrl_id + 1, bUseExport);
 		enable(exp_options_ctrl_id, bUseExport);
 
 		enable(move_files_ctrl_id, !get_check(enable_filter_ctrl_id));
@@ -3678,9 +3677,7 @@ public:
 
 		use_export_settings_ctrl_id =
 				check_box(Far::get_msg(MSG_UPDATE_DLG_USE_EXPORT), m_options.use_export_settings);
-		spacer(2);
-		button(Far::get_msg(MSG_UPDATE_DLG_EXPORT_SETTINGS),
-				m_options.use_export_settings ? DIF_BTNNOCLOSE : DIF_BTNNOCLOSE | DIF_DISABLE);
+
 		new_line();
 
 		move_files_ctrl_id = check_box(Far::get_msg(MSG_UPDATE_DLG_MOVE_FILES), m_options.move_files);

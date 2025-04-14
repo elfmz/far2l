@@ -566,6 +566,10 @@ unsigned Dialog::button(const std::wstring &text, uint32_t flags)
 		client_xs = x - c_x_frame;
 	di.y2 = y;
 	di.flags = flags;
+
+	if (flags & DIF_DEFAULT)
+		di.def_button = TRUE;
+
 	di.text_idx = new_value(text);
 	return new_item(di);
 }
@@ -669,6 +673,7 @@ intptr_t Dialog::show()
 		dlg_item->Y2 = items[i].y2;
 		dlg_item->Flags = items[i].flags;
 		dlg_item->Param.Selected = items[i].selected;
+		dlg_item->DefaultButton = items[i].def_button;
 
 		if (items[i].history_idx)
 			dlg_item->Param.History = get_value(items[i].history_idx);

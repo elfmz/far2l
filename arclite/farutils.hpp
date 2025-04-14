@@ -116,6 +116,7 @@ struct DialogItem
 	size_t y2{};
 	uint32_t flags{};
 	int selected{};
+	int def_button{};
 	unsigned history_idx{};
 	unsigned mask_idx{};
 	unsigned text_idx{};

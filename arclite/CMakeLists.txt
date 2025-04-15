@@ -2,29 +2,29 @@
 project(arclite)
 
 set(SOURCES
-    archive.cpp
-	attr.cpp
-	cmdline.cpp
-	common.cpp
-    headers.cpp
-	delete.cpp
-    extract.cpp
-	farutils.cpp
-    plugin.cpp
-	msearch.cpp
-	open.cpp
-	options.cpp
-	Patch7zCP.cpp
-	pathutils.cpp
-	rsrc.cpp
-	sfx.cpp
-	SimpleXML.cpp
-	strutils.cpp
-	sysutils.cpp
-	ui.cpp
-	update.cpp
-	test.cpp
-    MyWindows.cpp
+    src/archive.cpp
+	src/attr.cpp
+	src/cmdline.cpp
+	src/common.cpp
+    src/headers.cpp
+	src/delete.cpp
+    src/extract.cpp
+	src/farutils.cpp
+    src/plugin.cpp
+	src/msearch.cpp
+	src/open.cpp
+	src/options.cpp
+	src/Patch7zCP.cpp
+	src/pathutils.cpp
+	src/rsrc.cpp
+	src/sfx.cpp
+	src/SimpleXML.cpp
+	src/strutils.cpp
+	src/sysutils.cpp
+	src/ui.cpp
+	src/update.cpp
+	src/test.cpp
+    src/MyWindows.cpp
 )
 
 #set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
@@ -42,7 +42,7 @@ target_include_directories(arclite PRIVATE
     ../far2l/src/base
 )
 
-target_precompile_headers(arclite PRIVATE headers.hpp)
+target_precompile_headers(arclite PRIVATE src/headers.hpp)
 set_target_properties(arclite
     PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/arclite/plug"

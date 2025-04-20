@@ -4,6 +4,7 @@ Only significant user-side changes are listed here (for all changes see history 
 
 ## Master (current development)
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
+* _Temporary panel plugin_: Show file groups
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`

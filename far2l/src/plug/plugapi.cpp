@@ -2100,6 +2100,17 @@ int WINAPI farGetFileOwner(const wchar_t *Computer, const wchar_t *Name, wchar_t
 	return static_cast<int>(strOwner.GetLength() + 1);
 }
 
+int WINAPI farGetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size)
+{
+	FARString strGroup;
+	/*int Ret=*/GetFileGroup(Computer, Name, strGroup);
+
+	if (Group && Size)
+		far_wcsncpy(Group, strGroup, Size);
+
+	return static_cast<int>(strGroup.GetLength() + 1);
+}
+
 int WINAPI farConvertPath(CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, int DestSize)
 {
 	if (Src && *Src) {

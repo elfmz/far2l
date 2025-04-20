@@ -1470,6 +1470,7 @@ namespace oldfar
 	typedef void (WINAPI *FARSTDQSORTEX)(void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *,void *userparam),void *userparam);
 	typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (__cdecl *fcmp)(const void *, const void *));
 	typedef int (WINAPI *FARSTDGETFILEOWNER)(const char *Computer,const char *Name,char *Owner);
+	typedef int (WINAPI *FARSTDGETFILEGROUP)(const char *Computer,const char *Name,char *Group);
 	typedef int (WINAPI *FARSTDGETNUMBEROFLINKS)(const char *Name);
 	typedef int (WINAPI *FARSTDATOI)(const char *s);
 	typedef int64_t(WINAPI *FARSTDATOI64)(const char *s);
@@ -1664,6 +1665,8 @@ namespace oldfar
 		FARSTRSIZEOFCELLS          StrSizeOfCells;
 		FARAPIVT_ENUM_BACKGROUND   VTEnumBackground;
 		FARAPIVT_LOGEXPORT         VTLogExport;
+
+		FARSTDGETFILEGROUP         GetFileGroup;
 	} FARSTANDARDFUNCTIONS;
 
 	struct PluginStartupInfo

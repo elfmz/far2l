@@ -230,6 +230,7 @@
 "Allowed KE&X algorithms:"
 "All&owed HMAC client->server:"
 "Allowe&d HMAC server->client:"
+"Proxy command:"
 "OpenSS&H config files:"
 "(Default config files)"
 "(Don't use config files)"

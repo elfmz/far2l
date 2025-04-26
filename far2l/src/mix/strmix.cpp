@@ -354,7 +354,7 @@ wchar_t *WINAPI RemoveTrailingSpaces(wchar_t *Str)
 	return Str;
 }
 
-FARString &WINAPI RemoveTrailingSpaces(FARString &strStr)
+FARString &WINAPI RemoveTrailingSpaces(FARString &strStr, bool keep_escaping)
 {
 	if (strStr.IsEmpty())
 		return strStr;
@@ -364,6 +364,9 @@ FARString &WINAPI RemoveTrailingSpaces(FARString &strStr)
 
 	for (; ChPtr >= Str && (IsSpace(*ChPtr) || IsEol(*ChPtr)); ChPtr--)
 		;
+
+	if (keep_escaping && *ChPtr=='\\') // taking into account last escaping sybmol
+		ChPtr++;
 
 	strStr.Truncate(ChPtr < Str ? 0 : ChPtr - Str + 1);
 	return strStr;

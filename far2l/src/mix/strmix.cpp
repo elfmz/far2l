@@ -361,12 +361,21 @@ FARString &WINAPI RemoveTrailingSpaces(FARString &strStr, bool keep_escaping)
 
 	const wchar_t *Str = strStr;
 	const wchar_t *ChPtr = Str + strStr.GetLength() - 1;
+	bool b = false;
 
 	for (; ChPtr >= Str && (IsSpace(*ChPtr) || IsEol(*ChPtr)); ChPtr--)
-		;
+		b = true; // trailing space deteted
 
-	if (keep_escaping && *ChPtr=='\\') // taking into account last escaping sybmol
-		ChPtr++;
+	if (!b) // no trailing spaces - no need truncate
+	  return strStr;
+
+	if (keep_escaping && ChPtr >= Str && *ChPtr == L'\\') { // taking into account last escaping symbol
+		b = true;
+		for (const auto *p = ChPtr - 1; (p >= Str && *p == L'\\'); --p)
+			b = !b;
+		if (b) // revert last symbol only if odd number of symbols '\\'
+			ChPtr++;
+	}
 
 	strStr.Truncate(ChPtr < Str ? 0 : ChPtr - Str + 1);
 	return strStr;

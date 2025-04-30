@@ -54,7 +54,9 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 but some of them (**Alt**+**F1**, **Alt**+**F2**, **Alt**+**F7**, **Ctrl**+arrows, etc.)
 usually exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. and in terminal emulators.
 To work with these keys in far2l you need to _release keyboard shortcuts globally_
-in the environment settings (see [#2326](https://github.com/elfmz/far2l/issues/2326))
+in the environment settings (see [#2326](https://github.com/elfmz/far2l/issues/2326),
+[#2731](https://github.com/elfmz/far2l/issues/2731),
+under GNOME you can use `dconf-editor org.gnome.desktop.wm.keybindings` to view and change global keybindings)
 or use far2l lifehacks:
 _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively handle hotkeys option in the Input settings_
 (see details in buil-in far2l help).</sub>

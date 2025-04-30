@@ -153,7 +153,10 @@ when it starts, far2l switches to #TTY|X# without i.
 
 
  #Keyboard shortcuts are exclusively captured by desktop environment and terminals#
-    Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings.
+    Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc.
+are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc.
+To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings
+(under GNOME you can use #dconf-editor org.gnome.desktop.wm.keybindings# to view and change global keybindings).
     Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
     Also you can use FAR2L lifehacks:
         - ~Sticky controls~@MiscCmd@ via #Ctrl-Space# or #Alt-Space#;

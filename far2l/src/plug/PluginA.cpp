@@ -367,6 +367,7 @@ CreatePluginStartupInfoA(PluginA *pPlugin, oldfar::PluginStartupInfo *PSI, oldfa
 		StandardFunctions.FarInputRecordToKey = InputRecordToKeyA;
 		StandardFunctions.XLat = XlatA;
 		StandardFunctions.GetFileOwner = GetFileOwnerA;
+		StandardFunctions.GetFileGroup = GetFileGroupA;
 		StandardFunctions.GetNumberOfLinks = GetNumberOfLinksA;
 		StandardFunctions.FarRecursiveSearch = FarRecursiveSearchA;
 		StandardFunctions.MkTemp = FarMkTempA;

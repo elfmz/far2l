@@ -233,6 +233,7 @@ enum LanguageID
 	MSFTPAllowedKexAlgorithms,
 	MSFTPAllowedHMAC_CS,
 	MSFTPAllowedHMAC_SC,
+	MSFTPProxyCommand,
 	MSFTPOpenSSHConfigs,
 	MSFTPCfgFilesDefault,
 	MSFTPCfgFilesNone,

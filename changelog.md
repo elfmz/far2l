@@ -4,6 +4,8 @@ Only significant user-side changes are listed here (for all changes see history 
 
 ## Master (current development)
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
+* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
+* _Temporary panel plugin_: Show file groups
 * Several bugfixes
 
 ## 2.6.5 beta (2025-03-30)

@@ -4234,3 +4234,11 @@ int WINAPI GetFileOwnerA(const char *Computer, const char *Name, char *Owner)
 	strOwner.GetCharString(Owner, oldfar::NM);
 	return Ret;
 }
+
+int WINAPI GetFileGroupA(const char *Computer, const char *Name, char *Group)
+{
+	FARString strComputer(Computer), strName(Name), strGroup;
+	int Ret = GetFileGroup(strComputer, strName, strGroup);
+	strGroup.GetCharString(Group, oldfar::NM);
+	return Ret;
+}

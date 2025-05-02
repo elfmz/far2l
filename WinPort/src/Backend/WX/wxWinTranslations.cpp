@@ -47,6 +47,9 @@
 #  define RAW_ALTGR    0xffea
 #  define RAW_RCTRL    0xffe4
 #  define RAW_RSHIFT   0xffe2
+#  define RAW_NUMPAD_STAR   0xffaa
+#  define RAW_NUMPAD_MINUS  0xffad
+#  define RAW_NUMPAD_PLUS   0xffab
 # endif
 #endif
 
@@ -546,6 +549,8 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	}
 #endif
 
+	auto raw_key_code = event.GetRawKeyCode();
+
 #ifdef __linux__
 	// Recent KDEs put into keycode non-latin characters in case of
 	// non-latin input layout configured as first in the list of layouts.
@@ -554,7 +559,6 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	// GetKeyCode() served well for a long time til this started to happen.
 	// See https://github.com/elfmz/far2l/issues/1180
 	if (key_code > 0x100) {
-		auto raw_key_code = event.GetRawKeyCode();
 		if (raw_key_code > 0x1f && raw_key_code <= 0x7f) {
 			key_code = raw_key_code;
 		}
@@ -574,6 +578,15 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
 	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
 		Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
+	}
+
+	switch (raw_key_code) {
+		case RAW_NUMPAD_STAR:
+			Event.KeyEvent.wVirtualKeyCode = VK_MULTIPLY; break;
+		case RAW_NUMPAD_MINUS:
+			Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT; break;
+		case RAW_NUMPAD_PLUS:
+			Event.KeyEvent.wVirtualKeyCode = VK_ADD; break;
 	}
 #endif
 

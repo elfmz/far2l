@@ -113,6 +113,14 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 		}
 	}
 
+	const std::string &proxy_command = protocol_options.GetString("ProxyCommand");
+	if (!proxy_command.empty()) {
+        int rc = ssh_options_set(ssh, SSH_OPTIONS_PROXYCOMMAND, proxy_command.c_str());
+		if (rc != SSH_OK) {
+			fprintf(stderr, "ProxyCommand set error %u '%s'\n", rc, ssh_get_error(ssh));
+		}
+	}
+
 	ssh_options_set(ssh, SSH_OPTIONS_HOST, host.c_str());
 	if (port > 0)
 		ssh_options_set(ssh, SSH_OPTIONS_PORT, &port);

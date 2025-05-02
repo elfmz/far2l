@@ -72,7 +72,7 @@ void UnquoteExternal(FARString &strStr);
 wchar_t *WINAPI RemoveLeadingSpaces(wchar_t *Str);
 FARString &WINAPI RemoveLeadingSpaces(FARString &strStr);
 wchar_t *WINAPI RemoveTrailingSpaces(wchar_t *Str);
-FARString &WINAPI RemoveTrailingSpaces(FARString &strStr);
+FARString &WINAPI RemoveTrailingSpaces(FARString &strStr, bool keep_escaping=false);
 wchar_t *WINAPI RemoveExternalSpaces(wchar_t *Str);
 FARString &WINAPI RemoveExternalSpaces(FARString &strStr);
 FARString &WINAPI RemoveUnprintableCharacters(FARString &strStr);

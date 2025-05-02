@@ -192,7 +192,7 @@ void InfoList::DisplayObject()
 
 	/* #1 - computer name/user name */
 
-	{
+	{	/*
 		GotoXY(X1 + 2, CurY++);
 		PrintText(Msg::InfoCompName);
 		PrintInfo(CachedComputerName());
@@ -200,6 +200,13 @@ void InfoList::DisplayObject()
 		GotoXY(X1 + 2, CurY++);
 		PrintText(Msg::InfoUserName);
 		PrintInfo(CachedUserName());
+		*/
+
+		GotoXY(X1 + 2, CurY++);
+		strTitle.Format(L"%ls / %ls", Msg::InfoCompName.CPtr(), Msg::InfoUserName.CPtr());
+		PrintText(strTitle);
+		strTitle = CachedComputerName() + " / " + CachedUserName();
+		PrintInfo(strTitle);
 	}
 
 	/* #2 - disk / plugin info */
@@ -261,9 +268,11 @@ void InfoList::DisplayObject()
 			PrintText(Msg::InfoDiskCurDir);
 			PrintInfo(strCurDir);
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoDiskRealDir);
-			PrintInfo(strRealDir);
+			if ( strRealDir != strCurDir ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoDiskRealDir);
+				PrintInfo(strRealDir);
+			}
 
 			if (b_info) {
 				GotoXY(X1 + 2, CurY++);
@@ -355,25 +364,35 @@ void InfoList::DisplayObject()
 			OpenPluginInfo Info;
 			AnotherPanel->GetOpenPluginInfo(&Info);
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoPluginHostFile);
-			PrintInfo(Info.HostFile);
+			if (Info.HostFile != nullptr && *Info.HostFile != L'\0' ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoPluginHostFile);
+				PrintInfo(Info.HostFile);
+			}
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoPluginCurDir);
-			PrintInfo(Info.CurDir);
+			if (Info.CurDir != nullptr && *Info.CurDir != L'\0' ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoPluginCurDir);
+				PrintInfo(Info.CurDir);
+			}
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoPluginPanelTitle);
-			PrintInfo(Info.PanelTitle);
+			if (Info.PanelTitle != nullptr && *Info.PanelTitle != L'\0' ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoPluginPanelTitle);
+				PrintInfo(Info.PanelTitle);
+			}
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoPluginFormat);
-			PrintInfo(Info.Format);
+			if (Info.Format != nullptr && *Info.Format != L'\0' ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoPluginFormat);
+				PrintInfo(Info.Format);
+			}
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoPluginShortcutData);
-			PrintInfo(Info.ShortcutData);
+			if (Info.ShortcutData != nullptr && *Info.ShortcutData != L'\0' ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoPluginShortcutData);
+				PrintInfo(Info.ShortcutData);
+			}
 		}
 	}
 
@@ -460,10 +479,12 @@ void InfoList::DisplayObject()
 			InsertCommas(si.totalswap, strOutStr);
 			PrintInfo(strOutStr);
 
-			GotoXY(X1 + 2, CurY++);
-			PrintText(Msg::InfoPageFileFree);
-			InsertCommas(si.freeswap, strOutStr);
-			PrintInfo(strOutStr);
+			if (si.totalswap != 0 ) {
+				GotoXY(X1 + 2, CurY++);
+				PrintText(Msg::InfoPageFileFree);
+				InsertCommas(si.freeswap, strOutStr);
+				PrintInfo(strOutStr);
+			}
 		}
 #endif
 	}
@@ -697,10 +718,12 @@ void InfoList::ShowEditorConfig(int &YPos)
 		DrawTitle(L"EditorConfig", ILSS_EdCfgINFO, YPos++);
 		if (SectionState[ILSS_EdCfgINFO].Show) {
 			// print .editorconfig nearest dir
-			str.Truncate(EdCfg.pos_trim_dir_nearest);
-			GotoXY(X1 + 2, YPos++);
-			PrintText(Msg::InfoEdCfgNearestDir);
-			PrintInfo(str);
+			if (EdCfg.pos_trim_dir_nearest != EdCfg.pos_trim_dir_root) {
+				str.Truncate(EdCfg.pos_trim_dir_nearest);
+				GotoXY(X1 + 2, YPos++);
+				PrintText(Msg::InfoEdCfgNearestDir);
+				PrintInfo(str);
+			}
 			// print .editorconfig root dir
 			str.Truncate(EdCfg.pos_trim_dir_root);
 			GotoXY(X1 + 2, YPos++);

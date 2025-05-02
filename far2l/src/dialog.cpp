@@ -999,9 +999,9 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 				for (J = 0; J < Length; J++) {
 					if (ListItems[J].Flags & LIF_SELECTED) {
 						if (ItemFlags & (DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND))
-							HiText2Str(CurItem->strData, ListItems[J].Text);
+							HiText2Str(CurItem->strData, NullToEmpty(ListItems[J].Text));
 						else
-							CurItem->strData = ListItems[J].Text;
+							CurItem->strData = NullToEmpty(ListItems[J].Text);
 
 						break;
 					}

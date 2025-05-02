@@ -64,6 +64,7 @@ int WINAPI farIsAlpha(wchar_t Ch);
 int WINAPI farIsAlphaNum(wchar_t Ch);
 
 int WINAPI farGetFileOwner(const wchar_t *Computer, const wchar_t *Name, wchar_t *Owner, int Size);
+int WINAPI farGetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size);
 
 int WINAPI farConvertPath(CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, int DestSize);
 

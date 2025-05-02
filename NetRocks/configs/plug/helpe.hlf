@@ -149,6 +149,8 @@ $^#SFTP:// SCP:// protocols specific options#
 
  #Allowed HMAC server->client# if non-empty then forces using only specified HMAC server->client algorithms. Beside of restricting other algorithms this option can be used to allow using some deprecated algorithm e.g. hmac-sha1 if server doesn't support modern ones.
 
+ #Proxy command# if non-empty then executes this command to proxy ssh traffic.
+
  #OpenSSH config files# allows to specify which OpenSSH config files to use for this connection. By default ~~/.ssh/config and /etc/ssh/ssh_config are used. Note that libssh version prior 0.9.0 always parses default config files regardless of this option (so you can only add extra configs), but since version 0.9.0 it's possible to disable/override default config files parsing. To specify more than one file - use colon to separate their paths.
 
  ~Contents~@Contents@

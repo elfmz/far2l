@@ -10,6 +10,7 @@ Temporary panel plugin class implementation
 TmpPanel::TmpPanel(const wchar_t* pHostFile)
 {
 	LastOwnersRead = FALSE;
+	LastGroupsRead = FALSE;
 	LastLinksRead = FALSE;
 	UpdateNotNeeded = FALSE;
 	TmpPanelItem = NULL;
@@ -43,7 +44,7 @@ int TmpPanel::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int O
 	int Size = Info.Control(this, FCTL_GETCOLUMNTYPES, 0, 0);
 	wchar_t *ColumnTypes = new wchar_t[Size];
 	Info.Control(this, FCTL_GETCOLUMNTYPES, Size, (LONG_PTR)ColumnTypes);
-	UpdateItems(IsOwnersDisplayed(ColumnTypes), IsLinksDisplayed(ColumnTypes));
+	UpdateItems(IsOwnersDisplayed(ColumnTypes), IsGroupsDisplayed(ColumnTypes), IsLinksDisplayed(ColumnTypes));
 	delete[] ColumnTypes;
 	*pPanelItem = TmpPanelItem;
 	*pItemsNumber = TmpItemsNumber;
@@ -328,6 +329,10 @@ void TmpPanel::RemoveEmptyItems()
 				free((void *)CurItem->Owner);
 				CurItem->Owner = NULL;
 			}
+			if (CurItem->Group) {
+				free((void *)CurItem->Group);
+				CurItem->Group = NULL;
+			}
 			if (CurItem->FindData.lpwszFileName) {
 				free((wchar_t *)CurItem->FindData.lpwszFileName);
 				CurItem->FindData.lpwszFileName = NULL;
@@ -350,7 +355,7 @@ void TmpPanel::RemoveEmptyItems()
 	}
 }
 
-void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
+void TmpPanel::UpdateItems(int ShowOwners, int ShowGroups, int ShowLinks)
 {
 	if (UpdateNotNeeded || TmpItemsNumber == 0) {
 		UpdateNotNeeded = FALSE;
@@ -360,6 +365,7 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 	const wchar_t *MsgItems[] = {GetMsg(MTempPanel), GetMsg(MTempUpdate)};
 	Info.Message(Info.ModuleNumber, 0, NULL, MsgItems, ARRAYSIZE(MsgItems), 0);
 	LastOwnersRead = ShowOwners;
+	LastGroupsRead = ShowGroups;
 	LastLinksRead = ShowLinks;
 	struct PluginPanelItem *CurItem = TmpPanelItem;
 
@@ -431,7 +437,7 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 
 	RemoveEmptyItems();
 
-	if (ShowOwners || ShowLinks) {
+	if (ShowOwners || ShowGroups || ShowLinks) {
 		struct PluginPanelItem *CurItem = TmpPanelItem;
 		for (int i = 0; i < TmpItemsNumber; i++, CurItem++) {
 			if (ShowOwners) {
@@ -442,6 +448,15 @@ void TmpPanel::UpdateItems(int ShowOwners, int ShowLinks)
 				}
 				if (FSF.GetFileOwner(NULL, CurItem->FindData.lpwszFileName, Owner,80))
 					CurItem->Owner = wcsdup(Owner);
+			}
+			if (ShowGroups) {
+				wchar_t Group[80];
+				if (CurItem->Group) {
+					free((void *)CurItem->Group);
+					CurItem->Group = NULL;
+				}
+				if (FSF.GetFileGroup(NULL, CurItem->FindData.lpwszFileName, Group,80))
+					CurItem->Group = wcsdup(Group);
 			}
 			if (ShowLinks)
 				CurItem->NumberOfLinks = FSF.GetNumberOfLinks(CurItem->FindData.lpwszFileName);
@@ -459,12 +474,13 @@ int TmpPanel::ProcessEvent(int Event, void *)
 		wchar_t *ColumnTypes = new wchar_t[Size];
 		Info.Control(this, FCTL_GETCOLUMNTYPES, Size, (LONG_PTR)ColumnTypes);
 		int UpdateOwners = IsOwnersDisplayed(ColumnTypes) && !LastOwnersRead;
+		int UpdateGroups = IsGroupsDisplayed(ColumnTypes) && !LastGroupsRead;
 		int UpdateLinks = IsLinksDisplayed(ColumnTypes) && !LastLinksRead;
 		delete[] ColumnTypes;
 
 
-		if (UpdateOwners || UpdateLinks) {
-			UpdateItems(UpdateOwners, UpdateLinks);
+		if (UpdateOwners || UpdateGroups || UpdateLinks) {
+			UpdateItems(UpdateOwners, UpdateGroups, UpdateLinks);
 
 			Info.Control(this, FCTL_UPDATEPANEL, TRUE, 0);
 			Info.Control(this, FCTL_REDRAWPANEL, 0, 0);
@@ -749,6 +765,15 @@ int TmpPanel::IsOwnersDisplayed(LPCTSTR ColumnTypes)
 {
 	for (int i = 0; ColumnTypes[i]; i++)
 		if (ColumnTypes[i] == L'O' && (i == 0 || ColumnTypes[i - 1] == L',')
+				&& (ColumnTypes[i + 1] == L',' || ColumnTypes[i + 1] == 0))
+			return (TRUE);
+	return (FALSE);
+}
+
+int TmpPanel::IsGroupsDisplayed(LPCTSTR ColumnTypes)
+{
+	for (int i = 0; ColumnTypes[i]; i++)
+		if (ColumnTypes[i] == L'U' && (i == 0 || ColumnTypes[i - 1] == L',')
 				&& (ColumnTypes[i + 1] == L',' || ColumnTypes[i + 1] == 0))
 			return (TRUE);
 	return (FALSE);

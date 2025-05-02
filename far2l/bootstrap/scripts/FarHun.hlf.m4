@@ -3457,6 +3457,7 @@ jelenik meg);
 
     O[L]       - a fájl tulajdonosa
                  ahol:  L - tartománynév mutatva (domain);
+    U          - file group
 
     LN         - hardlinkek száma
 

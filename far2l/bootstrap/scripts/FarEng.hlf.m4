@@ -3859,6 +3859,7 @@ characters, delimited with commas. Allowed column types are:
 
     O[L]       - file owner
                  where: L - show domain name;
+    U          - file group
 
     LN         - number of hard links
 

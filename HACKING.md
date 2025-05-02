@@ -81,6 +81,10 @@ far2l asks plugin if it can exit now. If plugin has some background tasks pendin
 * `int GetLinkTargetW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, wchar_t *Target, size_t TargetSize, int OpMode);`
 far2l uses this to resolve symlink destination when user selects plugin's item that has FILE_ATTRIBUTE_REPARSE_POINT. Target is displayed in status field as for local symlinks.
 
+* `int GetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size);`
+* `int GetFileGroupA(const char *Computer, const char *Name, char *Group);`
+to obtain file group
+
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
 * `DM_GETDEFAULTCOLOR`

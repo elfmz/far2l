@@ -4167,6 +4167,7 @@ int Dialog::SelectFromComboBox(DialogItemEx *CurItem,
 //			EditX2 = EditX1 + 20;
 
 		SetDropDownOpened(TRUE);	// Установим флаг "открытия" комбобокса.
+		DlgProc((HANDLE)this, DN_DROPDOWNOPENED, FocusPos, 1);
 		SetComboBoxPos(CurItem);
 		// Перед отрисовкой спросим об изменении цветовых атрибутов
 		uint64_t RealColors[VMENU_COLOR_COUNT];
@@ -4257,6 +4258,7 @@ int Dialog::SelectFromComboBox(DialogItemEx *CurItem,
 		ComboBox->SetSelectPos(OriginalPos, 0);		//????
 
 	SetDropDownOpened(FALSE);						// Установим флаг "закрытия" комбобокса.
+	DlgProc((HANDLE)this, DN_DROPDOWNOPENED, FocusPos, 0);
 
 	if (Dest < 0) {
 		Redraw();
@@ -4303,13 +4305,15 @@ BOOL Dialog::SelectFromEditHistory(DialogItemEx *CurItem, DlgEdit *EditLine, con
 				VMENU_ALWAYSSCROLLBAR | VMENU_COMBOBOX | VMENU_NOTCHANGE);
 		HistoryMenu.SetFlags(VMENU_SHOWAMPERSAND);
 		HistoryMenu.SetBoxType(SHORT_SINGLE_BOX);
-		SetDropDownOpened(TRUE);	// Установим флаг "открытия" комбобокса.
 		// запомним (для прорисовки)
 		CurItem->ListPtr = &HistoryMenu;
+		SetDropDownOpened(TRUE);	// Установим флаг "открытия" комбобокса.
+		DlgProc((HANDLE)this, DN_DROPDOWNOPENED, FocusPos, 1);
 		ret = DlgHist.Select(HistoryMenu, Opt.Dialogs.CBoxMaxHeight, this, strStr);
+		SetDropDownOpened(FALSE);	// Установим флаг "закрытия" комбобокса.
+		DlgProc((HANDLE)this, DN_DROPDOWNOPENED, FocusPos, 0);
 		// забудим (не нужен)
 		CurItem->ListPtr = nullptr;
-		SetDropDownOpened(FALSE);	// Установим флаг "закрытия" комбобокса.
 	}
 
 	if (ret > 0) {

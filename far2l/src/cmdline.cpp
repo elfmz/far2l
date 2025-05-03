@@ -65,19 +65,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "CachedCreds.hpp"
 #include "exitcode.hpp"
+#include "GitTools.hpp"
 #include "vtlog.h"
 #include "vtshell.h"
 #include "vtcompletor.h"
 #include "Environment.h"
 #include "WideMB.h"
 #include <limits>
-
-#if defined(USELIBGIT2)
-#	include <git2.hpp>
-
-static git2::environment GitEnvironment;
-#endif // USELIBGIT2
-
 
 CommandLine::CommandLine()
 	:
@@ -1041,26 +1035,4 @@ CmdLineVisibleScope::~CmdLineVisibleScope()
 	if (cp) {
 		cp->UpdateCmdLineVisibility();
 	}
-}
-
-FARString CommandLine::GetGitBranchName(FARString const& path)
-{
-#if defined(USELIBGIT2)
-	auto repo = git2::repository::try_open(GitEnvironment, std::filesystem::path{path.CPtr(), path.CEnd()});
-
-	if (!repo)
-		return {};
-
-	auto head = repo->try_get_head();
-	if (!head)
-		return {};
-
-	auto result = FARString{};
-	result.Append("{");
-	result.Append(head->shorthand_cstr());
-	result.Append("} ");
-	return result;
-#else // !USELIBGIT2
-	return {};
-#endif // USELIBGIT2
 }

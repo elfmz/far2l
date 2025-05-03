@@ -140,8 +140,6 @@ public:
 
 	void RedrawWithoutComboBoxMark();
 
-	static FARString GetGitBranchName(FARString const& path);
-
 	const CHAR_INFO *GetBackgroundScreen(int &W, int &H);
 };
 

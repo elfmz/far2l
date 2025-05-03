@@ -20,6 +20,7 @@ FARString GetGitBranchName(FARString const& path)
 	auto head = repo->try_get_head();
 	if (!head)
 		return {};
+
 	auto const branchName = head->shorthand_cstr();
 #else // !USELIBGIT2
 	std::string branchName;

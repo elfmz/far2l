@@ -953,7 +953,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 						ItemFlags&= ~DIF_MASKEDIT;
 					}
 				}
-			} else
+			} else {
 
 				/*
 					"мини-редактор"
@@ -961,12 +961,13 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 					имеющие этот флаг группируются в редактор с возможностью
 					вставки и удаления строк
 				*/
-				if (!(ItemFlags & DIF_EDITOR) && CurItem->Type != DI_COMBOBOX) {
+				if (!(ItemFlags & DIF_EDITOR)) {
 					DialogEdit->SetEditBeyondEnd(FALSE);
 
 					if (!DialogMode.Check(DMODE_INITOBJECTS))
 						DialogEdit->SetClearFlag(1);
 				}
+			}
 
 			if (CurItem->Type == DI_COMBOBOX)
 				DialogEdit->SetClearFlag(1);

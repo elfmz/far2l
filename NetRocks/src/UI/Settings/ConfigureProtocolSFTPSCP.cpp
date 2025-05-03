@@ -22,6 +22,7 @@
 | Allowed KEX algorithms:      [EDIT.......................] |
 | Allowed HMAC client->server: [EDIT.......................] |
 | Allowed HMAC server->client: [EDIT.......................] |
+| Proxy command:               [EDIT.......................] |
 | OpenSSH config files: [COMBOBOX Config file              ] |  (Default), (None), ...
 | [ ] Enable TCP_NODELAY option                              |
 | [ ] Enable TCP_QUICKACK option                             |
@@ -44,6 +45,7 @@ class ProtocolOptionsSFTPSCP : protected BaseDialog
 	int _i_allowed_kex = -1;
 	int _i_allowed_hmac_cs = -1;
 	int _i_allowed_hmac_sc = -1;
+	int _i_proxy_command = -1;
 	int _i_openssh_configs = -1;
 	int _i_tcp_nodelay = -1, _i_tcp_quickack = -1;
 	int _i_ignore_time_and_mode_errors = -1;
@@ -226,6 +228,10 @@ public:
 		_i_allowed_hmac_sc = _di.AddAtLine(DI_EDIT, 34,62, 0, "");
 
 		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,33, 0, MSFTPProxyCommand);
+		_i_proxy_command = _di.AddAtLine(DI_EDIT, 34,62, 0, "");
+
+		_di.NextLine();
 		_i_tcp_nodelay = _di.AddAtLine(DI_CHECKBOX, 5,60, 0, MSFTPTCPNodelay);
 
 		_di.NextLine();
@@ -307,6 +313,7 @@ public:
 		TextToDialogControl(_i_allowed_kex, sc.GetString("KexAlgorithms"));
 		TextToDialogControl(_i_allowed_hmac_cs, sc.GetString("HmacCS"));
 		TextToDialogControl(_i_allowed_hmac_sc, sc.GetString("HmacSC"));
+		TextToDialogControl(_i_proxy_command, sc.GetString("ProxyCommand"));
 
 	//	SetCheckedDialogControl(_i_enable_sandbox, sc.GetInt("Sandbox", 0) != 0);
 		if (Show(L"ProtocolOptionsSFTPSCP", 6, 2) == _i_ok) {
@@ -369,6 +376,9 @@ public:
 
 			TextFromDialogControl(_i_allowed_hmac_sc, str);
 			sc.SetString("HmacSC", str);
+
+			TextFromDialogControl(_i_proxy_command, str);
+			sc.SetString("ProxyCommand", str);
 
 	//		sc.SetInt("Sandbox", IsCheckedDialogControl(_i_enable_sandbox) ? 1 : 0);
 			options = sc.Serialize();

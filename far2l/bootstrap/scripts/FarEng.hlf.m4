@@ -153,11 +153,14 @@ when it starts, far2l switches to #TTY|X# without i.
 
 
  #Keyboard shortcuts are exclusively captured by desktop environment and terminals#
-    Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc. are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc. To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings.
+    Some keyboard shortcuts #Alt-F1#, #Alt-F2#, #Alt-F7#, #Ctrl-arrows# etc.
+are exclusively used in desktop environment GNOME, KDE, Xfce, macOS etc.
+To work with these keys in FAR2L, you need to release keyboard shortcuts in the environment settings
+(under GNOME you can use #dconf-editor org.gnome.desktop.wm.keybindings# to view and change global keybindings).
     Terminal emulators also do not often pass some of the key combinations to applications, or do not distinguish pressing various combinations of modifiers (#Ctrl#, #Alt# etc.).
     Also you can use FAR2L lifehacks:
         - ~Sticky controls~@MiscCmd@ via #Ctrl-Space# or #Alt-Space#;
-        - Exclusively handle hotkeys option in the ~Input settings~@InputSettings@ (only in GUI backend mode).
+        - Exclusively handle hotkeys option in the ~Input settings~@InputSettings@ (only in GUI backend mode under X11).
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -923,7 +926,7 @@ virtually pressed until next non-control key press:
     Another way to achieve working hotkeys may be changing settings
 of desktop environment or external applications (in order to release needed hotkey combinations)
 or using exclusive handle hotkeys option
-in the ~Input Settings~@InputSettings@ (only in GUI backend mode).
+in the ~Input Settings~@InputSettings@ (only in GUI backend mode under X11).
 
 @SpecCmd
 $ #Special commands#
@@ -2651,7 +2654,8 @@ to latin and vice-verse, that subsequentially used in #fast file find by Alt+FIL
   This options allows to choose control keys using which in hotkey combination
 will cause FAR2L to capture keyboard input exclusively, thus preventing other
 application from interfering with FAR2L hotkeys that contains such control key.
-Note that this options works only in GUI backend mode.
+Note that this options works only in GUI backend mode under X11
+(does not work under Wayland / xWayland).
 
 
 @DialogSettings
@@ -3855,6 +3859,7 @@ characters, delimited with commas. Allowed column types are:
 
     O[L]       - file owner
                  where: L - show domain name;
+    U          - file group
 
     LN         - number of hard links
 

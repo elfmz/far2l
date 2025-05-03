@@ -88,7 +88,7 @@ public:
     {
     }
 
-    repository(git_repository* impl)
+    explicit repository(git_repository* impl)
         : impl_(impl)
     {
     }

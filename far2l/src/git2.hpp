@@ -118,6 +118,21 @@ public:
         if (rc)
             return std::nullopt;
 
+        return repository{ impl };
+    }
+
+    static std::optional<repository> try_discover(environment& env, std::filesystem::path const& path)
+    {
+        return try_discover(env, path.c_str());
+    }
+
+    static std::optional<repository> try_discover(environment& env, char const* path)
+    {
+        git_repository* impl;
+
+        auto const rc = git_repository_open_ext(&impl, path, GIT_REPOSITORY_OPEN_CROSS_FS, nullptr);
+        if (rc)
+            return std::nullopt;
 
         return repository{ impl };
     }

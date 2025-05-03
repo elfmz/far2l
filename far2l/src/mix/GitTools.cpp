@@ -10,7 +10,7 @@ static git2::environment GitEnvironment;
 FARString GetGitBranchName(FARString const& path)
 {
 #if defined(USELIBGIT2)
-	auto repo = git2::repository::try_open(GitEnvironment, std::filesystem::path{path.CPtr(), path.CEnd()});
+	auto repo = git2::repository::try_discover(GitEnvironment, std::filesystem::path{path.CPtr(), path.CEnd()});
 
 	if (!repo)
 		return {};

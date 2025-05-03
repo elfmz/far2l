@@ -225,6 +225,15 @@ else()
     target_compile_definitions(far2l PRIVATE -DUSEUCD)
 endif()
 
+find_package(Libgit2)
+if (TARGET libgit2)
+    message(STATUS "Building with libgit2")
+    target_compile_definitions(far2l PRIVATE -DUSELIBGIT2)
+    target_link_libraries(far2l
+        PRIVATE libgit2::libgit2
+    )
+endif()
+
 target_compile_definitions(far2l PRIVATE -DUNICODE)
 
 target_include_directories(far2l PRIVATE

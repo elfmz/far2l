@@ -118,9 +118,6 @@ public:
         if (rc)
             return std::nullopt;
 
-        //     auto r = repo{ impl };
-        // auto or = std::optional{std::move(r)};
-        // return or;
 
         return repository{ impl };
     }

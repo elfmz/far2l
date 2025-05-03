@@ -172,6 +172,7 @@ src/mix/StrCells.cpp
 src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
+src/mix/GitTools.cpp
 )
 
 # Option to disable building macro subsystem completely
@@ -180,6 +181,8 @@ option(FAR2MACRO "Use Far 2 macro engine" ON)
 # Option to keep TVar implementation even if Far2 marco subsystem is not used
 # (as it may be needed by alternative macro subsystem implementations)
 option(FAR2TVAR  "Use Far 2 TVar" ON)
+
+option(USELIBGIT2 "Use libgit2 library for the $z prompt variable" OFF)
 
 if(FAR2MACRO)
     list(APPEND SOURCES src/macro/chgmmode.cpp)
@@ -223,6 +226,18 @@ else()
     message(STATUS "Building with libuchardet")
     find_package(Uchardet REQUIRED)
     target_compile_definitions(far2l PRIVATE -DUSEUCD)
+endif()
+
+if(USELIBGIT2)
+    message(STATUS "Use libgit2 library for the $z prompt variable")
+    find_package(Libgit2 REQUIRED)
+
+    target_compile_definitions(far2l PRIVATE -DUSELIBGIT2)
+    target_link_libraries(far2l
+        PRIVATE libgit2::libgit2
+    )
+else()
+    message(STATUS "Use Git commandline tool for the $z prompt variable")
 endif()
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)

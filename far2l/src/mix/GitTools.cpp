@@ -5,6 +5,8 @@
 #	include <git2.hpp>
 
 static git2::environment GitEnvironment;
+#else
+#	include <sys/stat.h>
 #endif // USELIBGIT2
 
 FARString GetGitBranchName(FARString const& path)
@@ -18,13 +20,25 @@ FARString GetGitBranchName(FARString const& path)
 	auto head = repo->try_get_head();
 	if (!head)
 		return {};
+	auto const branchName = head->shorthand_cstr();
+#else // !USELIBGIT2
+	std::string branchName;
+
+	std::string cmd = "git -C \"";
+	cmd+= EscapeCmdStr(path.GetMB());
+	cmd+= "\" rev-parse --abbrev-ref HEAD";
+
+	if (!POpen(branchName, cmd.c_str()))
+		return {};
+
+	StrTrim(branchName, " \t\r\n");
+	if (branchName.empty())
+		return {};
+#endif // USELIBGIT2
 
 	auto result = FARString{};
 	result.Append("{");
-	result.Append(head->shorthand_cstr());
+	result.Append(branchName);
 	result.Append("} ");
 	return result;
-#else // !USELIBGIT2
-	return {};
-#endif // USELIBGIT2
 }

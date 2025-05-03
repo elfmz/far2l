@@ -17,8 +17,9 @@ class TmpPanel
 private:
 	void RemoveDups();
 	void RemoveEmptyItems();
-	void UpdateItems(int ShowOwners, int ShowLinks);
+	void UpdateItems(int ShowOwners, int ShowGroups, int ShowLinks);
 	int IsOwnersDisplayed(LPCTSTR ColumnTypes);
+	int IsGroupsDisplayed(LPCTSTR ColumnTypes);
 	int IsLinksDisplayed(LPCTSTR ColumnTypes);
 	void ProcessRemoveKey();
 	void ProcessSaveListKey();
@@ -31,6 +32,7 @@ private:
 	PluginPanelItem *TmpPanelItem;
 	int TmpItemsNumber;
 	int LastOwnersRead;
+	int LastGroupsRead;
 	int LastLinksRead;
 	int UpdateNotNeeded;
 	wchar_t* HostFile;

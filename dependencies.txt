@@ -14,3 +14,5 @@ libssh-dev
 
 python3-dev
 python3-cffi
+
+libgit2-dev

@@ -182,6 +182,8 @@ option(FAR2MACRO "Use Far 2 macro engine" ON)
 # (as it may be needed by alternative macro subsystem implementations)
 option(FAR2TVAR  "Use Far 2 TVar" ON)
 
+option(USELIBGIT2 "Use libgit2 for the $z propmpt variable" OFF)
+
 if(FAR2MACRO)
     list(APPEND SOURCES src/macro/chgmmode.cpp)
     list(APPEND SOURCES src/macro/macro.cpp)
@@ -226,13 +228,16 @@ else()
     target_compile_definitions(far2l PRIVATE -DUSEUCD)
 endif()
 
-find_package(Libgit2)
-if (TARGET libgit2)
-    message(STATUS "Building with libgit2")
+if(USELIBGIT2)
+    message(STATUS "Use libgit2 library for the $z prompt variable")
+    find_package(Libgit2 REQUIRED)
+
     target_compile_definitions(far2l PRIVATE -DUSELIBGIT2)
     target_link_libraries(far2l
         PRIVATE libgit2::libgit2
     )
+else()
+    message(STATUS "Use Git commandline tool for the $z prompt variable")
 endif()
 
 target_compile_definitions(far2l PRIVATE -DUNICODE)

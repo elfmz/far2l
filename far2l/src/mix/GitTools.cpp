@@ -23,12 +23,11 @@ FARString GetGitBranchName(FARString const& path)
 
 	auto const branchName = head->shorthand_cstr();
 #else // !USELIBGIT2
-	std::string branchName;
-
 	std::string cmd = "git -C \"";
 	cmd+= EscapeCmdStr(path.GetMB());
 	cmd+= "\" rev-parse --abbrev-ref HEAD";
 
+	std::string branchName;
 	if (!POpen(branchName, cmd.c_str()))
 		return {};
 

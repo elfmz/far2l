@@ -113,7 +113,7 @@ public:
         return try_open(env, path.c_str());
     }
 
-    static std::optional<repository> try_open(environment& env, char const* path)
+    static std::optional<repository> try_open(environment& /*env*/, char const* path)
     {
         git_repository* impl;
 
@@ -129,7 +129,7 @@ public:
         return try_discover(env, path.c_str());
     }
 
-    static std::optional<repository> try_discover(environment& env, char const* path)
+    static std::optional<repository> try_discover(environment& /*env*/, char const* path)
     {
         git_repository* impl;
 

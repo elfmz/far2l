@@ -1,13 +1,13 @@
 #pragma once
 
+#include <git2.h>
+
 #include <filesystem>
 #include <optional>
 #include <string_view>
 #include <utility>
 
 #include <cassert>
-
-#include <git2.h>
 
 namespace git2
 {

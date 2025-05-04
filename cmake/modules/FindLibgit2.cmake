@@ -36,6 +36,7 @@ if (LIBGIT2_INCLUDE_DIR AND LIBGIT2_LIBRARIES)
 	add_library(libgit2 INTERFACE IMPORTED)
 	target_link_libraries(libgit2 INTERFACE ${LIBGIT2_LIBRARIES})
 	target_include_directories(libgit2 INTERFACE ${LIBGIT2_INCLUDE_DIR})
+	target_compile_definitions(libgit2 INTERFACE ${LIBGIT2_DEFINITIONS})
 
 	add_library(libgit2::libgit2 ALIAS libgit2)
 endif()

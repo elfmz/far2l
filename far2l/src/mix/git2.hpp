@@ -28,7 +28,7 @@ private:
     {
         auto const rc = git_libgit2_init();
         if (rc < 0)
-            throw std::runtime_error("Failed to initialize the libgi2 library");
+            throw std::runtime_error("Failed to initialize the libgit2 library");
     }
 };
 

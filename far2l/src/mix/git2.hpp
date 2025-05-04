@@ -71,7 +71,10 @@ private:
     void close()
     {
         if (impl_)
+        {
             git_reference_free(impl_);
+            impl_ = nullptr;
+        }
     }
 };
 
@@ -155,7 +158,10 @@ private:
     void close()
     {
         if (impl_)
+        {
             git_repository_free(impl_);
+            impl_ = nullptr;
+        }
     }
 };
 } // namespace git2

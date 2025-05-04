@@ -6,18 +6,30 @@
 #include <optional>
 #include <string_view>
 #include <utility>
+#include <stdexcept>
 
 #include <cassert>
 
 namespace git2
 {
-struct environment
+class environment
 {
+public:
     environment(environment &&) = delete;
 
-    environment() { git_libgit2_init(); }
+    environment(const environment &) { init(); }
+
+    environment() { init(); }
 
     ~environment() { git_libgit2_shutdown(); }
+
+private:
+    void init()
+    {
+        auto const rc = git_libgit2_init();
+        if (rc < 0)
+            throw std::runtime_error("Failed to initialize the libgi2 library");
+    }
 };
 
 class reference

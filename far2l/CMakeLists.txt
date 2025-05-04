@@ -182,7 +182,7 @@ option(FAR2MACRO "Use Far 2 macro engine" ON)
 # (as it may be needed by alternative macro subsystem implementations)
 option(FAR2TVAR  "Use Far 2 TVar" ON)
 
-option(USELIBGIT2 "Use libgit2 for the $z propmpt variable" OFF)
+option(USELIBGIT2 "Use libgit2 library for the $z prompt variable" OFF)
 
 if(FAR2MACRO)
     list(APPEND SOURCES src/macro/chgmmode.cpp)

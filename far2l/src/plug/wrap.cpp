@@ -1861,6 +1861,9 @@ LONG_PTR WINAPI DlgProcA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			Msg = oldfar::DN_KEY;
 			Param2 = KeyToOldKey((DWORD)Param2);
 			break;
+		case DN_DROPDOWNOPENED:
+			Msg = oldfar::DN_DROPDOWNOPENED;
+			break;
 	}
 
 	return CurrentDlgProc(hDlg, Msg, Param1, Param2);

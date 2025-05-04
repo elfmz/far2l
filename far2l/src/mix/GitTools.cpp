@@ -5,8 +5,6 @@
 #	include <git2.hpp>
 
 static git2::environment GitEnvironment;
-#else
-#	include <sys/stat.h>
 #endif // USELIBGIT2
 
 FARString GetGitBranchName(FARString const& path)

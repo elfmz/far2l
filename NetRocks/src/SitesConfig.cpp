@@ -428,7 +428,7 @@ bool SitesConfig::Export(const std::string &fs_path, const std::string &site)
 	KeyFileHelper kfh(fs_path, false);
 	const std::vector<std::string> &keys = EnumKeys(site);
 	for (const auto &key : keys) {
-		std::string s = GetString(site, key.c_str());
+		std::string s = GetString(site, key);
 		if (key == "Password") {
 			StringDeobfuscate(s);
 			kfh.SetString(site, "PasswordPlain", s.c_str());
@@ -560,12 +560,12 @@ void SitesConfig::SetPassword(const std::string &site, const std::string &value)
 
 std::string SitesConfig::GetProtocolOptions(const std::string &site, const std::string &protocol)
 {
-	return GetString(site, std::string("Options_").append(protocol).c_str());
+	return GetString(site, std::string("Options_").append(protocol));
 }
 
 void SitesConfig::SetProtocolOptions(const std::string &site, const std::string &protocol, const std::string &options)
 {
-	SetString(site, std::string("Options_").append(protocol).c_str(), options.c_str());
+	SetString(site, std::string("Options_").append(protocol), options.c_str());
 }
 
 bool SitesConfig::Transfer(SitesConfig &dst, const std::string &site, bool mv)

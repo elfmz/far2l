@@ -128,7 +128,7 @@ XferKind ConfirmXfer::Ask(XferOverwriteAction &default_xoa, std::string &destina
 	}
 
 	if (_xk == XK_MOVE && (_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD)
-	 && destination.find("/") == std::string::npos) {
+	 && destination.find('/') == std::string::npos) {
 		return XK_RENAME;
 	}
 
@@ -166,14 +166,14 @@ LONG_PTR ConfirmXfer::DlgProc(int msg, int param1, LONG_PTR param2)
 			}
 
 			if (_xk == XK_MOVE && (_xd == XD_DOWNLOAD || _xd == XD_CROSSLOAD)) {
-				if (destination.find("/") == std::string::npos) {
-					if (_prev_destination.find("/") != std::string::npos
+				if (destination.find('/') == std::string::npos) {
+					if (_prev_destination.find('/') != std::string::npos
 					 || _prev_destination.empty()) {
 						TextToDialogControl(_i_dblbox, MXferRenameTitle);
 						TextToDialogControl(_i_text, MXferRenameText);
 						TextToDialogControl(_i_proceed, MProceedRename);
 					}
-				} else if (_prev_destination.find("/") == std::string::npos
+				} else if (_prev_destination.find('/') == std::string::npos
 					 || _prev_destination.empty()) {
 					TextToDialogControl(_i_dblbox, MXferMoveDownloadTitle);
 					TextToDialogControl(_i_text, MXferMoveDownloadText);

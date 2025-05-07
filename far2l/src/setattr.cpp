@@ -1042,8 +1042,6 @@ ListPwGrEnt::ListPwGrEnt(bool bGroups, int SelCount)
 
 bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 {
-	std::vector<FARString> SelectedNames;
-
 	SudoClientRegion scr;
 
 	ChangePriority ChPriority(ChangePriority::NORMAL);

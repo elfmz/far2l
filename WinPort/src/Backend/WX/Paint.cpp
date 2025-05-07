@@ -378,7 +378,6 @@ void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
 		return;
 	}
 
-	wxString tmp;
 	_line.resize(cw);
 	ApplyFont(dc);
 

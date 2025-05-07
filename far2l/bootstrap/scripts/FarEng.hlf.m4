@@ -2797,6 +2797,7 @@ code words:
      $q - the = character
      $s - space
      $t - current time in HH:MM:SS format
+     $z - the Git branch name surrounded by '{' and '} '; an empty string otherwise
      $$ - the $ character
      $+ - the depth of the folders stack
 

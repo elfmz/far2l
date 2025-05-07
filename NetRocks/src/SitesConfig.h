@@ -65,7 +65,7 @@ public:
 	bool Export(const std::string &fs_path, const std::string &site);
 
 	inline std::vector<std::string> EnumSites() { return EnumSections(); }
-	inline void RemoveSite(const std::string &site) { RemoveSection(site.c_str()); }
+	inline void RemoveSite(const std::string &site) { RemoveSection(site); }
 
 	std::string GetProtocol(const std::string &site);
 	void SetProtocol(const std::string &site, const std::string &value);

@@ -1,6 +1,4 @@
-cmake_minimum_required (VERSION 3.5.0)
-
-add_custom_target(bootstrap 
+add_custom_target(bootstrap
     DEPENDS farlang.templ lang.inc
 )
 

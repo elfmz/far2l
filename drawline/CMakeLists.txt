@@ -23,6 +23,5 @@ set_target_properties(drawline
 
 
 add_custom_command(TARGET drawline POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/drawline"
 )

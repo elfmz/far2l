@@ -222,5 +222,4 @@ set_target_properties(multiarc
         SUFFIX ".far-plug-mb")
 
 add_custom_command(TARGET multiarc POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/multiarc")

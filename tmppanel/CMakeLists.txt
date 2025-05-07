@@ -25,6 +25,5 @@ set_target_properties(tmppanel
         SUFFIX ".far-plug-wide")
 
 add_custom_command(TARGET tmppanel POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/tmppanel"
 )

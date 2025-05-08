@@ -23,6 +23,46 @@ When logging string values, special characters (such as newlines, tabs, quotes) 
 
 Both macros take a boolean parameter `to_file` as their first argument, which determines the output destination of the log entry. If `to_file` is `true`, the log is appended to `far2l_debug.log` in the user’s home directory (using `$HOME` or, if unavailable, `/tmp` as a fallback). Otherwise, the log is printed to standard error via `std::clog`.
 
+Output example:
+
+```
+/-----[PID:38000, TID:1]-----[2025-05-08 00:44:18,764]-----
+|[/home/testuser/far2l/far2l/src/cmdline.cpp:191] in ProcessTabCompletion()
+|=> strStr = sha
+|=> possibilities
+|   |=> possibilities[0] = sha1sum
+|   |=> possibilities[1] = sha224sum
+|   |=> possibilities[2] = sha256sum
+|   |=> possibilities[3] = sha384sum
+|   |=> possibilities[4] = sha512sum
+|   \=> possibilities[5] = shasum
+
+
+/-----[PID:38000, TID:1]-----[2025-05-08 00:46:28,450]-----
+|[/home/testuser/far2l/far2l/src/copy.cpp:2803] in ShellCopyFile()
+|=> SrcName = .editorconfig
+|=> strDestName = /home/testuser/foobar/.editorconfig
+
+
+/-----[PID:38000, TID:1]-----[2025-05-08 00:46:28,450]-----
+|[/home/testuser/far2l/far2l/src/copy.cpp:2781] in PieceWrite()
+|=> Data =
+|             00 01 02 03 04 05 06 07 | 08 09 0a 0b 0c 0d 0e 0f  | ASCII
+|   -------------------------------------------------------------+-----------------
+|   00000000  72 6f 6f 74 20 3d 20 74 | 72 75 65 0a 0a 5b 2a 5d  | root = true..[*]
+|   00000010  0a 63 68 61 72 73 65 74 | 20 3d 20 75 74 66 2d 38  | .charset = utf-8
+|   00000020  0a 65 6e 64 5f 6f 66 5f | 6c 69 6e 65 20 3d 20 6c  | .end_of_line = l
+|   00000030  66 0a 69 6e 64 65 6e 74 | 5f 73 74 79 6c 65 20 3d  | f.indent_style =
+|   00000040  20 74 61 62 0a 69 6e 64 | 65 6e 74 5f 73 69 7a 65  |  tab.indent_size
+|   00000050  20 3d 20 34 0a 0a 5b 2a | 2e 79 6d 6c 5d 0a 69 6e  |  = 4..[*.yml].in
+|   00000060  64 65 6e 74 5f 73 74 79 | 6c 65 20 3d 20 73 70 61  | dent_style = spa
+|   00000070  63 65 0a 69 6e 64 65 6e | 74 5f 73 69 7a 65 20 3d  | ce.indent_size =
+|   00000080  20 32 0a 0a 5b 43 4d 61 | 6b 65 4c 69 73 74 73 2e  |  2..[CMakeLists.
+|   00000090  74 78 74 5d 0a 69 6e 64 | 65 6e 74 5f 73 74 79 6c  | txt].indent_styl
+|   000000a0  65 20 3d 20 73 70 61 63 | 65 0a                    | e = space.      
+```
+
+
 ## 1. DUMPV macro
 
 Logs simple variables.

@@ -3,6 +3,7 @@
 Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
 
 ## Master (current development)
+* _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
 * _Temporary panel plugin_: Show file groups

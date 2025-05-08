@@ -256,7 +256,8 @@ extern "C" void WinPortHelp()
 struct ArgOptions
 {
 	DWORD nodetect = NODETECT_NONE;
-	bool tty = false, far2l_tty = false, notty = false, norgb = false;
+	bool tty = false, far2l_tty = false, notty = false;
+	bool norgb = getenv("TERM") != nullptr && strcmp(getenv("TERM"), "screen.xterm-256color") == 0; // If in GNU Screen, default "norgb = true" to avoid unusable colours
 	bool mortal = false;
 	bool x11 = false;
 	bool wayland = false;

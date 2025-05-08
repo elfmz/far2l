@@ -2495,12 +2495,15 @@ private:
 		std::wstring ext;
 		bool create_sfx = get_check(create_sfx_ctrl_id);
 		bool enable_volumes = get_check(enable_volumes_ctrl_id);
+
 		if (ArcAPI::formats().count(arc_type))
 			ext = ArcAPI::formats().at(arc_type).default_extension();
+
 		if (create_sfx && arc_type == c_7z)
 			ext += c_sfx_ext;
 		else if (enable_volumes)
 			ext += c_volume_ext;
+
 //		fprintf(stderr, " +++ get_default_ext() = \"%S\"\n", ext.c_str());
 		return ext;
 	}

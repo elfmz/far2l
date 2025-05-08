@@ -26,7 +26,10 @@ OpenOptions::OpenOptions()
 	: detect(false), open_ex(true), open_password_len(nullptr), recursive_panel(false), delete_on_close('\0')
 {}
 
-class DataRelayStream : public IInStream, public ISequentialOutStream, public ComBase {
+template<bool UseVirtualDestructor>
+class DataRelayStream : public IInStream<UseVirtualDestructor>,
+						public ISequentialOutStream<UseVirtualDestructor>,
+						public ComBase<UseVirtualDestructor> {
 private:
 	uint8_t *buffer;
 	size_t buffer_size;
@@ -267,11 +270,14 @@ public:
 	}
 };
 
-class SimpleRelExtractor : public IArchiveExtractCallback, public ICryptoGetTextPassword, public ComBase, public ProgressMonitor
+template<bool UseVirtualDestructor>
+class SimpleRelExtractor : public IArchiveExtractCallback<UseVirtualDestructor>,
+							public ICryptoGetTextPassword<UseVirtualDestructor>,
+							public ComBase<UseVirtualDestructor>, public ProgressMonitor
 {
 private:
-	std::shared_ptr<Archive> archive;
-	ComObject<ISequentialOutStream> mem_stream;
+	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
+	ComObject<ISequentialOutStream<UseVirtualDestructor>> mem_stream;
 	UInt64 total_files;
 	UInt64 total_bytes;
 	UInt64 completed_files;
@@ -289,7 +295,8 @@ private:
 	}
 
 public:
-	SimpleRelExtractor(std::shared_ptr<Archive> archive, ISequentialOutStream *stream = nullptr, size_t sizetotal = 0xFFFFFFFFFFFFFFFF)
+	SimpleRelExtractor(std::shared_ptr<Archive<UseVirtualDestructor>> archive, 
+						ISequentialOutStream<UseVirtualDestructor> *stream = nullptr, size_t sizetotal = 0xFFFFFFFFFFFFFFFF)
 	: ProgressMonitor(Far::get_msg(MSG_PROGRESS_OPEN)),
 	archive(archive),
 	mem_stream(stream),
@@ -324,7 +331,7 @@ public:
 	}
 
 	STDMETHODIMP
-	GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode) noexcept override
+	GetStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **outStream, Int32 askExtractMode) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		if (mem_stream) {
@@ -415,14 +422,15 @@ public:
 	}
 };
 
-class ArchiveSubStream : public IInStream, private ComBase
+template<bool UseVirtualDestructor>
+class ArchiveSubStream : public IInStream<UseVirtualDestructor>, private ComBase<UseVirtualDestructor>
 {
 private:
-	ComObject<IInStream> base_stream;
+	ComObject<IInStream<UseVirtualDestructor>> base_stream;
 	size_t start_offset;
 
 public:
-	ArchiveSubStream(IInStream *stream, size_t offset) : base_stream(stream), start_offset(offset)
+	ArchiveSubStream(IInStream<UseVirtualDestructor> *stream, size_t offset) : base_stream(stream), start_offset(offset)
 	{
 		base_stream->Seek(static_cast<Int64>(start_offset), STREAM_SEEK_SET, nullptr);
 	}
@@ -449,7 +457,8 @@ public:
 	}
 };
 
-class ArchiveOpenStream : public IInStream, private ComBase, private File
+template<bool UseVirtualDestructor>
+class ArchiveOpenStream : public IInStream<UseVirtualDestructor>, private ComBase<UseVirtualDestructor>, private File
 {
 private:
 	bool device_file;
@@ -647,15 +656,16 @@ public:
 	}
 };
 
+template<bool UseVirtualDestructor>
 class ArchiveOpener
-	: public IArchiveOpenCallback,
-	  public IArchiveOpenVolumeCallback,
-	  public ICryptoGetTextPassword,
-	  public ComBase,
+	: public IArchiveOpenCallback<UseVirtualDestructor>,
+	  public IArchiveOpenVolumeCallback<UseVirtualDestructor>,
+	  public ICryptoGetTextPassword<UseVirtualDestructor>,
+	  public ComBase<UseVirtualDestructor>,
 	  public ProgressMonitor
 {
 private:
-	std::shared_ptr<Archive> archive;
+	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
 	FindData volume_file_info;
 
 	UInt64 total_files;
@@ -684,7 +694,7 @@ private:
 	}
 
 public:
-	ArchiveOpener(std::shared_ptr<Archive> archive, bool bShowProgress = true)
+	ArchiveOpener(std::shared_ptr<Archive<UseVirtualDestructor>> archive, bool bShowProgress = true)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_OPEN)),
 		  archive(archive),
 		  volume_file_info(archive->arc_info),
@@ -766,7 +776,7 @@ public:
 		COM_ERROR_HANDLER_END
 	}
 
-	STDMETHODIMP GetStream(const wchar_t *name, IInStream **inStream) noexcept override
+	STDMETHODIMP GetStream(const wchar_t *name, IInStream<UseVirtualDestructor> **inStream) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		std::wstring file_path = add_trailing_slash(archive->arc_dir()) + name;
@@ -777,7 +787,7 @@ public:
 			return S_FALSE;
 		archive->volume_names.insert(name);
 		volume_file_info = find_data;
-		ComObject<IInStream> file_stream(new ArchiveOpenStream(file_path));
+		ComObject<IInStream<UseVirtualDestructor>> file_stream(new ArchiveOpenStream<UseVirtualDestructor>(file_path));
 		file_stream.detach(inStream);
 		//    CriticalSectionLock lock(GetSync());
 
@@ -809,7 +819,8 @@ public:
 	}
 };
 
-bool Archive::get_stream(UInt32 index, IInStream **stream)
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_stream(UInt32 index, IInStream<UseVirtualDestructor> **stream)
 {
 	UInt32 num_indices = 0;
 
@@ -821,14 +832,14 @@ bool Archive::get_stream(UInt32 index, IInStream **stream)
 		return false;
 	}
 
-	ComObject<IInArchiveGetStream> get_stream;
+	ComObject<IInArchiveGetStream<UseVirtualDestructor>> get_stream;
 	if (in_arc->QueryInterface((REFIID)IID_IInArchiveGetStream, reinterpret_cast<void **>(&get_stream))
 					!= S_OK
 			|| !get_stream) {
 		return false;
 	}
 
-	ComObject<ISequentialInStream> seq_stream;
+	ComObject<ISequentialInStream<UseVirtualDestructor>> seq_stream;
 	if (get_stream->GetStream(index, seq_stream.ref()) != S_OK || !seq_stream) {
 		return false;
 	}
@@ -841,7 +852,8 @@ bool Archive::get_stream(UInt32 index, IInStream **stream)
 	return true;
 }
 
-HRESULT Archive::copy_prologue(IOutStream *out_stream)
+template<bool UseVirtualDestructor>
+HRESULT Archive<UseVirtualDestructor>::copy_prologue(IOutStream<UseVirtualDestructor> *out_stream)
 {
 	auto prologue_size = arc_chain.back().sig_pos;
 	if (prologue_size <= 0)
@@ -873,13 +885,14 @@ HRESULT Archive::copy_prologue(IOutStream *out_stream)
 	return res;
 }
 
-bool Archive::open(IInStream *stream, const ArcType &type, const bool allow_tail, const bool show_progress)
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::open(IInStream<UseVirtualDestructor> *stream, const ArcType &type, const bool allow_tail, const bool show_progress)
 {
-	ArcAPI::create_in_archive(type, in_arc.ref());
-	ComObject<IArchiveOpenCallback> opener(new ArchiveOpener(shared_from_this(), show_progress));
+	ArcAPI::create_in_archive(type, (void **)in_arc.ref());
+	ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(this->shared_from_this(), show_progress));
 
 	if (allow_tail && ArcAPI::formats().at(type).Flags_PreArc()) {
-		ComObject<IArchiveAllowTail> allowTail;
+		ComObject<IArchiveAllowTail<UseVirtualDestructor>> allowTail;
 		in_arc->QueryInterface((REFIID)IID_IArchiveAllowTail, (void **)&allowTail);
 
 		if (allowTail)
@@ -924,8 +937,9 @@ static Byte zip_LOCAL_sig[] = {0x50, 0x4B, 0x03, 0x04};
 static const std::string zip_EOCD_sig = "\x50\x4B\x05\x06";
 static const UInt32 check_size = 16 * 1024, min_LOCAL = 30, min_EOCD = 22;
 //
+template<bool UseVirtualDestructor>
 static bool accepted_signature(size_t pos, const SigData &sig, const Byte *buffer, size_t size,
-		IInStream *stream, int eof_i)
+		IInStream<UseVirtualDestructor> *stream, int eof_i)
 {
 	if (!pos || sig.signature.size() != sizeof(zip_LOCAL_sig)
 			|| !std::equal(zip_LOCAL_sig, zip_LOCAL_sig + sizeof(zip_LOCAL_sig), buffer + pos))
@@ -970,8 +984,9 @@ static bool accepted_signature(size_t pos, const SigData &sig, const Byte *buffe
 	return true;
 }
 
-ArcEntries Archive::detect(Byte *buffer, UInt32 size, bool eof, const std::wstring &file_ext,
-		const ArcTypes &arc_types, IInStream *stream)
+template<bool UseVirtualDestructor>
+ArcEntries Archive<UseVirtualDestructor>::detect(Byte *buffer, UInt32 size, bool eof, const std::wstring &file_ext,
+		const ArcTypes &arc_types, IInStream<UseVirtualDestructor> *stream)
 {
 	ArcEntries arc_entries;
 	std::set<ArcType> found_types;
@@ -1034,7 +1049,8 @@ ArcEntries Archive::detect(Byte *buffer, UInt32 size, bool eof, const std::wstri
 	return arc_entries;
 }
 
-UInt64 Archive::get_physize()
+template<bool UseVirtualDestructor>
+UInt64 Archive<UseVirtualDestructor>::get_physize()
 {
 	UInt64 physize = 0;
 	PropVariant prop;
@@ -1044,7 +1060,8 @@ UInt64 Archive::get_physize()
 	return physize;
 }
 
-UInt64 Archive::archive_filesize()
+template<bool UseVirtualDestructor>
+UInt64 Archive<UseVirtualDestructor>::archive_filesize()
 {
 	auto arc_size = arc_info.size();
 #if 0
@@ -1058,10 +1075,11 @@ UInt64 Archive::archive_filesize()
 	return arc_size;
 }
 
-UInt64 Archive::get_skip_header(IInStream *stream, const ArcType &type)
+template<bool UseVirtualDestructor>
+UInt64 Archive<UseVirtualDestructor>::get_skip_header(IInStream<UseVirtualDestructor> *stream, const ArcType &type)
 {
 	if (ArcAPI::formats().at(type).Flags_PreArc()) {
-		ComObject<IArchiveAllowTail> allowTail;
+		ComObject<IArchiveAllowTail<UseVirtualDestructor>> allowTail;
 		in_arc->QueryInterface((REFIID)IID_IArchiveAllowTail, (void **)&allowTail);
 		if (allowTail)
 			allowTail->AllowTail(TRUE);
@@ -1069,7 +1087,7 @@ UInt64 Archive::get_skip_header(IInStream *stream, const ArcType &type)
 
 	auto res = stream->Seek(0, STREAM_SEEK_SET, nullptr);
 	if (S_OK == res) {
-		const UInt64 max_check_start_position = max_check_size;
+		const UInt64 max_check_start_position = ArchiveGlobals::max_check_size;
 		res = in_arc->Open(stream, &max_check_start_position, nullptr);
 		if (res == S_OK) {
 			auto physize = get_physize();
@@ -1080,19 +1098,20 @@ UInt64 Archive::get_skip_header(IInStream *stream, const ArcType &type)
 	return 0;
 }
 
-void Archive::open(const OpenOptions &options, Archives &archives)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<UseVirtualDestructor> &archives)
 {
 	bool bExStream = false;
 	size_t parent_idx = -1;
 	if (!archives.empty())
 		parent_idx = archives.size() - 1;
 
-	ArchiveOpenStream *stream_impl = nullptr;
-	ComObject<IInStream> stream;
+	ArchiveOpenStream<UseVirtualDestructor> *stream_impl = nullptr;
+	ComObject<IInStream<UseVirtualDestructor>> stream;
 	FindData arc_info{};
 
 	if (parent_idx == (size_t)-1) {
-		stream_impl = new ArchiveOpenStream(options.arc_path);
+		stream_impl = new ArchiveOpenStream<UseVirtualDestructor>(options.arc_path);
 		stream = stream_impl;
 		arc_info = stream_impl->get_info();
 	} else {
@@ -1134,11 +1153,12 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			if (ef.is_dir()) return;
 			size_t fsize = ef.size();
 
-			ComObject<DataRelayStream> mem_stream(new DataRelayStream((size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
-//			ComObject<DataRelayStream> mem_stream(new DataRelayStream(32, 64, fsize));
-			ComObject<IArchiveExtractCallback> extractor(new SimpleRelExtractor(archives[parent_idx], mem_stream, fsize));
+			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
+						(size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
+//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(32, 64, fsize));
+			ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new SimpleRelExtractor<UseVirtualDestructor>(archives[parent_idx], mem_stream, fsize));
 
-			const auto archive = std::make_shared<Archive>();
+			const auto archive = std::make_shared<Archive<UseVirtualDestructor>>();
 
 			if (options.open_password_len && *options.open_password_len == -'A')
 				archive->m_open_password = *options.open_password_len;
@@ -1189,7 +1209,7 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 
 	}
 
-	Buffer<unsigned char> buffer(max_check_size);
+	Buffer<unsigned char> buffer(ArchiveGlobals::max_check_size);
 	UInt32 size;
 	CHECK_COM(stream->Read(buffer.data(), static_cast<UInt32>(buffer.size()), &size));
 
@@ -1199,7 +1219,7 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 
 	UInt64 skip_header = 0;
 	bool first_open = true;
-	ArcEntries arc_entries = detect(buffer.data(), size, size < max_check_size,
+	ArcEntries arc_entries = detect(buffer.data(), size, size < ArchiveGlobals::max_check_size,
 			extract_file_ext(arc_info.cFileName), options.arc_types, stream);
 
 	for (ArcEntries::const_iterator arc_entry = arc_entries.cbegin(); arc_entry != arc_entries.cend();
@@ -1237,7 +1257,7 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 			}
 		} else if (arc_entry->sig_pos >= skip_header) {
 			archive->arc_info.set_size(arc_info.size() - arc_entry->sig_pos);
-			ComObject<IInStream> substream(new ArchiveSubStream(stream, arc_entry->sig_pos));
+			ComObject<IInStream<UseVirtualDestructor>> substream(new ArchiveSubStream<UseVirtualDestructor>(stream, arc_entry->sig_pos));
 			opened = archive->open(substream, arc_entry->type);
 			if (archive->m_open_password && options.open_password_len)
 				*options.open_password_len = archive->m_open_password;
@@ -1268,10 +1288,11 @@ void Archive::open(const OpenOptions &options, Archives &archives)
 		stream_impl->CacheHeader(nullptr, 0);
 }
 
-std::unique_ptr<Archives> Archive::open(const OpenOptions &options)
+template<bool UseVirtualDestructor>
+std::unique_ptr<Archives<UseVirtualDestructor>> Archive<UseVirtualDestructor>::open(const OpenOptions &options)
 {
 	//  auto archives = std::make_unique<Archives>();
-	std::unique_ptr<Archives> archives(new Archives());
+	std::unique_ptr<Archives<UseVirtualDestructor>> archives(new Archives<UseVirtualDestructor>());
 
 	open(options, *archives);
 	if (!options.detect && !archives->empty())
@@ -1279,16 +1300,17 @@ std::unique_ptr<Archives> Archive::open(const OpenOptions &options)
 	return archives;
 }
 
-void Archive::reopen()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::reopen()
 {
 	assert(!in_arc);
 	volume_names.clear();
-	ArchiveOpenStream *stream_impl = new ArchiveOpenStream(arc_path);
-	ComObject<IInStream> stream(stream_impl);
+	ArchiveOpenStream<UseVirtualDestructor> *stream_impl = new ArchiveOpenStream<UseVirtualDestructor>(arc_path);
+	ComObject<IInStream<UseVirtualDestructor>> stream(stream_impl);
 	arc_info = stream_impl->get_info();
 	ArcChain::const_iterator arc_entry = arc_chain.begin();
 	if (arc_entry->sig_pos > 0) {
-		auto opened = open(new ArchiveSubStream(stream, arc_entry->sig_pos), arc_entry->type);
+		auto opened = open(new ArchiveSubStream<UseVirtualDestructor>(stream, arc_entry->sig_pos), arc_entry->type);
 		if (opened)
 			base_stream = stream;
 		else
@@ -1301,7 +1323,7 @@ void Archive::reopen()
 	while (arc_entry != arc_chain.end()) {
 		UInt32 main_file;
 		CHECK(get_main_file(main_file));
-		ComObject<IInStream> sub_stream;
+		ComObject<IInStream<UseVirtualDestructor>> sub_stream;
 		CHECK(get_stream(main_file, sub_stream.ref()));
 		arc_info = get_file_info(main_file);
 		sub_stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr);
@@ -1310,7 +1332,8 @@ void Archive::reopen()
 	}
 }
 
-void Archive::close()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::close()
 {
 	base_stream = nullptr;
 	if (in_arc) {
@@ -1320,3 +1343,6 @@ void Archive::close()
 	file_list.clear();
 	file_list_index.clear();
 }
+
+template class Archive<true>;
+template class Archive<false>;

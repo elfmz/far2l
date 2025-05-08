@@ -8,15 +8,16 @@
 #include "ui.hpp"
 #include "archive.hpp"
 
+template<bool UseVirtualDestructor>
 class ArchiveTester
-	: public IArchiveExtractCallback,
-	  public ICryptoGetTextPassword,
-	  public ComBase,
+	: public IArchiveExtractCallback<UseVirtualDestructor>,
+	  public ICryptoGetTextPassword<UseVirtualDestructor>,
+	  public ComBase<UseVirtualDestructor>,
 	  public ProgressMonitor
 {
 private:
 	UInt32 src_dir_index;
-	std::shared_ptr<Archive> archive;
+	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
 
 	std::wstring file_path;
 	UInt64 completed;
@@ -44,7 +45,7 @@ private:
 	}
 
 public:
-	ArchiveTester(UInt32 src_dir_index, std::shared_ptr<Archive> archive)
+	ArchiveTester(UInt32 src_dir_index, std::shared_ptr<Archive<UseVirtualDestructor>> archive)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_TEST)),
 		  src_dir_index(src_dir_index),
 		  archive(archive),
@@ -66,6 +67,7 @@ public:
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP SetCompleted(const UInt64 *completeValue) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
@@ -78,7 +80,7 @@ public:
 	}
 
 	STDMETHODIMP
-	GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode) noexcept override
+	GetStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **outStream, Int32 askExtractMode) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		const ArcFileInfo &file_info = archive->file_list[index];
@@ -94,12 +96,14 @@ public:
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP PrepareOperation(Int32 askExtractMode) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP SetOperationResult(Int32 resultEOperationResult) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
@@ -138,7 +142,8 @@ public:
 	}
 };
 
-void Archive::prepare_test(UInt32 file_index, std::list<UInt32> &indices)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::prepare_test(UInt32 file_index, std::list<UInt32> &indices)
 {
 	const ArcFileInfo &file_info = file_list[file_index];
 	if (file_info.is_dir) {
@@ -151,7 +156,8 @@ void Archive::prepare_test(UInt32 file_index, std::list<UInt32> &indices)
 	}
 }
 
-void Archive::test(UInt32 src_dir_index, const std::vector<UInt32> &src_indices)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::test(UInt32 src_dir_index, const std::vector<UInt32> &src_indices)
 {
 	DisableSleepMode dsm;
 
@@ -166,6 +172,9 @@ void Archive::test(UInt32 src_dir_index, const std::vector<UInt32> &src_indices)
 			std::back_insert_iterator<std::vector<UInt32>>(indices));
 	std::sort(indices.begin(), indices.end());
 
-	ComObject<IArchiveExtractCallback> tester(new ArchiveTester(src_dir_index, shared_from_this()));
+	ComObject<IArchiveExtractCallback<UseVirtualDestructor>> tester(new ArchiveTester<UseVirtualDestructor>(src_dir_index, this->shared_from_this()));
 	COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 1, tester));
 }
+
+template class Archive<true>;
+template class Archive<false>;

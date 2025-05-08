@@ -363,7 +363,8 @@ static const PropInfo *find_prop_info(PROPID prop_id)
 		return c_prop_info + (prop_id - kpidPath);
 }
 
-AttrList Archive::get_attr_list(UInt32 item_index)
+template<bool UseVirtualDestructor>
+AttrList Archive<UseVirtualDestructor>::get_attr_list(UInt32 item_index)
 {
 	AttrList attr_list;
 	if (item_index >= m_num_indices)	// fake index
@@ -411,7 +412,8 @@ AttrList Archive::get_attr_list(UInt32 item_index)
 	return attr_list;
 }
 
-void Archive::load_arc_attr()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::load_arc_attr()
 {
 	arc_attr.clear();
 
@@ -517,7 +519,8 @@ void Archive::load_arc_attr()
 	}
 }
 
-void Archive::load_update_props()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::load_update_props()
 {
 	if (m_update_props_defined)
 		return;
@@ -574,3 +577,6 @@ void Archive::load_update_props()
 
 	m_update_props_defined = true;
 }
+
+template class Archive<true>;
+template class Archive<false>;

@@ -5,9 +5,9 @@
 
 enum TriState
 {
-	triTrue,
-	triFalse,
-	triUndef,
+	triFalse = 0,
+	triTrue = 1,
+	triUndef = 2,
 };
 
 typedef std::vector<unsigned char> ByteVector;

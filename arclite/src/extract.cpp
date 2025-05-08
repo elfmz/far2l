@@ -150,6 +150,7 @@ public:
 	}
 };
 
+template<bool UseVirtualDestructor>
 class FileWriteCache
 {
 private:
@@ -165,7 +166,7 @@ private:
 		size_t buffer_size{};
 	};
 
-	std::shared_ptr<Archive> archive;
+	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
 	unsigned char *buffer;
 	size_t buffer_size;
 	size_t commit_size{};
@@ -391,7 +392,7 @@ private:
 	}
 
 public:
-	FileWriteCache(std::shared_ptr<Archive> archive, std::shared_ptr<bool> ignore_errors,
+	FileWriteCache(std::shared_ptr<Archive<UseVirtualDestructor>> archive, std::shared_ptr<bool> ignore_errors,
 			std::shared_ptr<bool> extract_access_rights,std::shared_ptr<bool> extract_owners_groups,std::shared_ptr<bool> extract_attributes,
 			std::shared_ptr<ErrorLog> error_log, std::shared_ptr<ExtractProgress> progress)
 		: archive(archive),
@@ -448,13 +449,14 @@ public:
 	}
 };
 
-class CachedFileExtractStream : public ISequentialOutStream, public ComBase
+template<bool UseVirtualDestructor>
+class CachedFileExtractStream : public ISequentialOutStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
-	std::shared_ptr<FileWriteCache> cache;
+	std::shared_ptr<FileWriteCache<UseVirtualDestructor>> cache;
 
 public:
-	CachedFileExtractStream(std::shared_ptr<FileWriteCache> cache) : cache(cache) {}
+	CachedFileExtractStream(std::shared_ptr<FileWriteCache<UseVirtualDestructor>> cache) : cache(cache) {}
 
 	UNKNOWN_IMPL_BEGIN
 	UNKNOWN_IMPL_ITF(ISequentialOutStream)
@@ -473,25 +475,27 @@ public:
 	}
 };
 
-class ArchiveExtractor : public IArchiveExtractCallback, public ICryptoGetTextPassword, public ComBase
+template<bool UseVirtualDestructor>
+class ArchiveExtractor : public IArchiveExtractCallback<UseVirtualDestructor>, 
+						 public ICryptoGetTextPassword<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
 	std::wstring file_path;
 	ArcFileInfo file_info;
 	UInt32 src_dir_index;
 	std::wstring dst_dir;
-	std::shared_ptr<Archive> archive;
+	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
 	std::shared_ptr<OverwriteAction> overwrite_action;
 	std::shared_ptr<bool> ignore_errors;
 	std::shared_ptr<ErrorLog> error_log;
-	std::shared_ptr<FileWriteCache> cache;
+	std::shared_ptr<FileWriteCache<UseVirtualDestructor>> cache;
 	std::shared_ptr<ExtractProgress> progress;
 	std::shared_ptr<std::set<UInt32>> skipped_indices;
 
 public:
-	ArchiveExtractor(UInt32 src_dir_index, const std::wstring &dst_dir, std::shared_ptr<Archive> archive,
+	ArchiveExtractor(UInt32 src_dir_index, const std::wstring &dst_dir, std::shared_ptr<Archive<UseVirtualDestructor>> archive,
 			std::shared_ptr<OverwriteAction> overwrite_action, std::shared_ptr<bool> ignore_errors,
-			std::shared_ptr<ErrorLog> error_log, std::shared_ptr<FileWriteCache> cache,
+			std::shared_ptr<ErrorLog> error_log, std::shared_ptr<FileWriteCache<UseVirtualDestructor>> cache,
 			std::shared_ptr<ExtractProgress> progress, std::shared_ptr<std::set<UInt32>> skipped_indices)
 		: src_dir_index(src_dir_index),
 		  dst_dir(dst_dir),
@@ -529,7 +533,7 @@ public:
 	}
 
 	STDMETHODIMP
-	GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode) noexcept override
+	GetStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **outStream, Int32 askExtractMode) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		*outStream = nullptr;
@@ -599,7 +603,7 @@ public:
 
 		progress->update_extract_file(file_path);
 		cache->store_file(file_path, index, overwrite);
-		ComObject<ISequentialOutStream> out_stream(new CachedFileExtractStream(cache));
+		ComObject<ISequentialOutStream<UseVirtualDestructor>> out_stream(new CachedFileExtractStream<UseVirtualDestructor>(cache));
 		out_stream.detach(outStream);
 
 		return S_OK;
@@ -681,7 +685,8 @@ public:
 	}
 };
 
-void Archive::prepare_dst_dir(const std::wstring &path)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::prepare_dst_dir(const std::wstring &path)
 {
 	if (!is_root_path(path)) {
 		prepare_dst_dir(extract_file_path(path));
@@ -689,10 +694,11 @@ void Archive::prepare_dst_dir(const std::wstring &path)
 	}
 }
 
+template<bool UseVirtualDestructor>
 class PrepareExtract : public ProgressMonitor
 {
 private:
-	Archive &archive;
+	Archive<UseVirtualDestructor> &archive;
 	std::list<UInt32> &indices;
 	Far::FileFilter *filter;
 	bool &ignore_errors;
@@ -782,7 +788,7 @@ private:
 	}
 
 public:
-	PrepareExtract(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive &archive,
+	PrepareExtract(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive,
 			std::list<UInt32> &indices, Far::FileFilter *filter, bool &ignore_errors, ErrorLog &error_log)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_CREATE_DIRS), false),
 		  archive(archive),
@@ -795,10 +801,11 @@ public:
 	}
 };
 
+template<bool UseVirtualDestructor>
 class SetDirAttr : public ProgressMonitor
 {
 private:
-	Archive &archive;
+	Archive<UseVirtualDestructor> &archive;
 	bool &ignore_errors;
 	bool &extract_access_rights;
 	bool &extract_owners_groups;
@@ -879,7 +886,7 @@ private:
 	}
 
 public:
-	SetDirAttr(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive &archive,
+	SetDirAttr(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive,
 			bool &ignore_errors, bool &extract_access_rights, bool &extract_owners_groups, bool &extract_attributes, ErrorLog &error_log)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_SET_ATTR), false),
 		  archive(archive),
@@ -893,14 +900,16 @@ public:
 	}
 };
 
-class SimpleExtractor : public IArchiveExtractCallback, public ICryptoGetTextPassword, public ComBase
+template<bool UseVirtualDestructor>
+class SimpleExtractor : public IArchiveExtractCallback<UseVirtualDestructor>,
+						public ICryptoGetTextPassword<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
-	std::shared_ptr<Archive> archive;
-	ComObject<ISequentialOutStream> mem_stream;
+	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
+	ComObject<ISequentialOutStream<UseVirtualDestructor>> mem_stream;
 
 public:
-	SimpleExtractor(std::shared_ptr<Archive> archive, ISequentialOutStream* stream = nullptr)
+	SimpleExtractor(std::shared_ptr<Archive<UseVirtualDestructor>> archive, ISequentialOutStream<UseVirtualDestructor> *stream = nullptr)
 	:	archive(archive),
 		mem_stream(stream)
 	{}
@@ -928,7 +937,7 @@ public:
 	}
 
 	STDMETHODIMP
-	GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode) noexcept override
+	GetStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **outStream, Int32 askExtractMode) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		if (mem_stream) {
@@ -1021,7 +1030,8 @@ public:
 	}
 };
 
-void Archive::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indices,
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indices,
 		const ExtractOptions &options, std::shared_ptr<ErrorLog> error_log,
 		std::vector<UInt32> *extracted_indices)
 {
@@ -1046,12 +1056,12 @@ void Archive::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indic
 	std::sort(indices.begin(), indices.end());
 
 	const auto progress = std::make_shared<ExtractProgress>(arc_path);
-	const auto cache = std::make_shared<FileWriteCache>(shared_from_this(), ignore_errors, 
+	const auto cache = std::make_shared<FileWriteCache<UseVirtualDestructor>>(this->shared_from_this(), ignore_errors, 
 							extract_access_rights, extract_owners_groups, extract_attributes, error_log, progress);
 	const auto skipped_indices = extracted_indices ? std::make_shared<std::set<UInt32>>() : nullptr;
 
-	ComObject<IArchiveExtractCallback> extractor(new ArchiveExtractor(src_dir_index, options.dst_dir,
-			shared_from_this(), overwrite_action, ignore_errors, 
+	ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new ArchiveExtractor<UseVirtualDestructor>(src_dir_index, options.dst_dir,
+			this->shared_from_this(), overwrite_action, ignore_errors, 
 			error_log, cache, progress,
 			skipped_indices));
 
@@ -1063,7 +1073,7 @@ void Archive::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indic
 	if (ex_stream && !bCommStream) {
 		ex_stream->Seek(0, STREAM_CTL_RESET, nullptr);
 		UInt32 indices2[2] = { 0, 0 };
-		ComObject<IArchiveExtractCallback> extractor2(new SimpleExtractor(parent, ex_out_stream));
+		ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor2(new SimpleExtractor<UseVirtualDestructor>(parent, ex_out_stream));
 
 		std::promise<int> promise;
 		std::future<int> future = promise.get_future();
@@ -1104,10 +1114,14 @@ void Archive::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indic
 	}
 }
 
-void Archive::delete_archive()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::delete_archive()
 {
 	File::delete_file_nt(arc_path);
 	std::for_each(volume_names.begin(), volume_names.end(), [&](const std::wstring &volume_name) {
 		File::delete_file_nt(add_trailing_slash(arc_dir()) + volume_name);
 	});
 }
+
+template class Archive<true>;
+template class Archive<false>;

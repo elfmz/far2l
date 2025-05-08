@@ -28,6 +28,7 @@ extern const ArcType c_xfat;
 
 extern const wchar_t *c_method_copy;	// pseudo method
 
+extern const wchar_t *c_method_default;
 extern const wchar_t *c_method_lzma;	 // standard 7z methods
 extern const wchar_t *c_method_lzma2;	 //
 extern const wchar_t *c_method_ppmd;	 //
@@ -50,7 +51,7 @@ extern const UInt64 c_min_volume_size;
 extern const wchar_t *c_sfx_ext;
 extern const wchar_t *c_volume_ext;
 
-struct ICompressCodecsInfo;
+///struct ICompressCodecsInfo;
 
 struct ArcLib
 {
@@ -68,10 +69,9 @@ struct ArcLib
 	Func_CreateEncoder CreateEncoder;
 	Func_GetIsArc GetIsArc;
 	Func_GetModuleProp GetModuleProp;
-//  typedef HRESULT (WINAPI *Func_GetModuleProp)(PROPID propID, PROPVARIANT *value);
 
-
-	ComObject<IHashers> ComHashers;
+//	ComObject<IHashers> ComHashers;
+	void* ComHashers; // Указатель на объект
 
 	HRESULT get_prop(UInt32 index, PROPID prop_id, PROPVARIANT *prop) const;
 	HRESULT get_bool_prop(UInt32 index, PROPID prop_id, bool &value) const;
@@ -162,12 +162,14 @@ public:
 	uintptr_t find_by_name(const std::wstring &name) const;
 };
 
+template<bool UseVirtualDestructor>
 class MyCompressCodecsInfo;
 
 class ArcAPI
 {
 private:
 	ArcLibs arc_libs;
+	bool bUseVirtualDestructor;
 	size_t n_base_format_libs;
 	size_t n_format_libs;
 	ArcCodecs arc_codecs;
@@ -176,7 +178,7 @@ private:
 	ArcFormats arc_formats;
 	SfxModules sfx_modules;
 	static ArcAPI *arc_api;
-	ArcAPI() { n_base_format_libs = n_format_libs = n_7z_codecs = 0; }
+	ArcAPI() { n_base_format_libs = n_format_libs = n_7z_codecs = 0; bUseVirtualDestructor = false; }
 	~ArcAPI();
 	void load_libs(const std::wstring &path);
 	void load_codecs(const std::wstring &path);
@@ -190,10 +192,15 @@ public:
 	static const ArcCodecs &codecs() { return get()->arc_codecs; }
 	static size_t Count7zCodecs() { return get()->n_7z_codecs; }
 	static const ArcHashers &hashers() { return get()->arc_hashers; }
+	static const bool have_virt_destructor() { return get()->bUseVirtualDestructor; }
 
 	static const SfxModules &sfx() { return get()->sfx_modules; }
-	static void create_in_archive(const ArcType &arc_type, IInArchive **in_arc);
-	static void create_out_archive(const ArcType &format, IOutArchive **out_arc);
+
+//	static void create_in_archive(const ArcType &arc_type, IInArchive **in_arc);
+//	static void create_out_archive(const ArcType &format, IOutArchive **out_arc);
+	static void create_in_archive(const ArcType &arc_type, void **in_arc);
+	static void create_out_archive(const ArcType &format, void **out_arc);
+
 	static void free();
 	static void reload();
 
@@ -240,30 +247,45 @@ public:
 	std::wstring to_string() const;
 };
 
+template<bool UseVirtualDestructor>
 class Archive;
-typedef std::vector<std::shared_ptr<Archive>> Archives;
 
-class Archive : public std::enable_shared_from_this<Archive>
+//typedef std::vector<std::shared_ptr<Archive>> Archives;
+
+template<bool UseVirtualDestructor>
+using Archives = std::vector<std::shared_ptr<Archive<UseVirtualDestructor>>>;
+
+//using ArchivesVariant = std::variant<std::unique_ptr<Archives<true>>, std::unique_ptr<Archives<false>>>;
+
+//class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
+//class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
+
+namespace ArchiveGlobals {
+    extern unsigned max_check_size;
+}
+
+template<bool UseVirtualDestructor>
+class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
 {
-	// open
 private:
-	ComObject<IInArchive> in_arc;
+	ComObject<IInArchive<UseVirtualDestructor>> in_arc;
 	UInt32 error_flags, warning_flags, flags;
 	std::wstring error_text, warning_text;
-	IInStream *base_stream;
-	IInStream *ex_stream;
-	ISequentialOutStream *ex_out_stream;
+	IInStream<UseVirtualDestructor> *base_stream;
+	IInStream<UseVirtualDestructor> *ex_stream;
+	ISequentialOutStream<UseVirtualDestructor> *ex_out_stream;
 
 	UInt64 get_physize();
 	UInt64 archive_filesize();
-	UInt64 get_skip_header(IInStream *stream, const ArcType &type);
+	UInt64 get_skip_header(IInStream<UseVirtualDestructor> *stream, const ArcType &type);
 	static ArcEntries detect(Byte *buffer, UInt32 size, bool eof, const std::wstring &file_ext,
-			const ArcTypes &arc_types, IInStream *stream);
-	static void open(const OpenOptions &options, Archives &archives);
+			const ArcTypes &arc_types, IInStream<UseVirtualDestructor> *stream);
+	static void open(const OpenOptions &options, Archives<UseVirtualDestructor> &archives);
 
 public:
-	std::shared_ptr<Archive> parent;
-	static unsigned max_check_size;
+	//using std::enable_shared_from_this<Archive<UseVirtualDestructor>>::shared_from_this;
+	std::shared_ptr<Archive<UseVirtualDestructor>> parent;
+//	static unsigned max_check_size;
 	std::wstring arc_path;
 	FindData arc_info;
 	std::set<std::wstring> volume_names;
@@ -274,9 +296,11 @@ public:
 		std::wstring name = extract_file_name(arc_path);
 		return name.empty() ? arc_path : name;
 	}
-	static std::unique_ptr<Archives> open(const OpenOptions &options);
+
+	static std::unique_ptr<Archives<UseVirtualDestructor>> open(const OpenOptions &options);
+
 	void close();
-	bool open(IInStream *in_stream, const ArcType &type, const bool allow_tail = false, const bool show_progress = true);
+	bool open(IInStream<UseVirtualDestructor> *in_stream, const ArcType &type, const bool allow_tail = false, const bool show_progress = true);
 	void reopen();
 	bool is_open() const { return in_arc; }
 	bool updatable() const
@@ -288,7 +312,7 @@ public:
 		return arc_chain.size() == 1 && arc_chain.back().type == c_7z && arc_chain.back().sig_pos == 0;
 	}
 
-	HRESULT copy_prologue(IOutStream *out_stream);
+	HRESULT copy_prologue(IOutStream<UseVirtualDestructor> *out_stream);
 
 	// archive contents
 public:
@@ -299,7 +323,7 @@ public:
 	void make_index();
 	UInt32 find_dir(const std::wstring &dir);
 	FileIndexRange get_dir_list(UInt32 dir_index);
-	bool get_stream(UInt32 index, IInStream **stream);
+	bool get_stream(UInt32 index, IInStream<UseVirtualDestructor> **stream);
 	std::wstring get_path(UInt32 index);
 	FindData get_file_info(UInt32 index);
 	bool get_main_file(UInt32 &index) const;
@@ -341,7 +365,7 @@ public:
 	// create & update archive
 private:
 	std::wstring get_temp_file_name() const;
-	void set_properties(IOutArchive *out_arc, const UpdateOptions &options);
+	void set_properties(IOutArchive<UseVirtualDestructor> *out_arc, const UpdateOptions &options);
 
 public:
 	unsigned m_level;
@@ -368,6 +392,7 @@ private:
 public:
 	void delete_files(const std::vector<UInt32> &src_indices);
 
+	// attributes
 	// attributes
 private:
 	void load_arc_attr();

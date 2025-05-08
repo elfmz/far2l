@@ -62,6 +62,7 @@ struct CompressionMethod
 };
 
 const CompressionMethod c_methods[] = {
+		{MSG_COMPRESSION_METHOD_DEFAULT,		c_method_default,		CMF_7ZIP | CMF_ZIP},
 		{MSG_COMPRESSION_METHOD_LZMA,		c_method_lzma,		CMF_7ZIP | CMF_ZIP},
 		{MSG_COMPRESSION_METHOD_LZMA2,		c_method_lzma2,		CMF_7ZIP },
 		{MSG_COMPRESSION_METHOD_PPMD,		c_method_ppmd,		CMF_7ZIP | CMF_ZIP},
@@ -74,6 +75,7 @@ const CompressionMethod c_methods[] = {
 };
 
 const CompressionMethod c_tar_methods[] = {
+		{MSG_COMPRESSION_METHOD_DEFAULT,	c_method_default,	1},
 		{MSG_COMPRESSION_TAR_METHOD_GNU,	c_tar_method_gnu,	1},
 		{MSG_COMPRESSION_TAR_METHOD_PAX,	c_tar_method_pax,	1},
 		{MSG_COMPRESSION_TAR_METHOD_POSIX,	c_tar_method_posix,	1},
@@ -874,6 +876,7 @@ private:
 
 	int ok_ctrl_id;
 	int cancel_ctrl_id;
+	int reset_ctrl_id;
 
 	void write_controls(const ExportOptions &options)
 	{
@@ -885,7 +888,7 @@ private:
 		SetDateTime(ftLastAccessDate_ctrl_id, m_options.ftLastAccessTime, 2, 1);
 		SetDateTime(ftLastWriteDate_ctrl_id, m_options.ftLastWriteTime, 2, 1);
 
-		set_check(export_creation_time_ctrl_id, m_options.export_creation_time);
+		set_check3(export_creation_time_ctrl_id, m_options.export_creation_time);
 		set_check(custom_creation_time_ctrl_id, m_options.custom_creation_time);
 		set_check(current_creation_time_ctrl_id, m_options.current_creation_time);
 		enable(custom_creation_time_ctrl_id, m_options.export_creation_time && bCreationTime);
@@ -897,7 +900,7 @@ private:
 		enable(ftCreationTime_ctrl_id, bCustomEdit);
 		enable(ftCreationClear_ctrl_id, bCustomEdit);
 
-		set_check(export_last_access_time_ctrl_id, m_options.export_last_access_time);
+		set_check3(export_last_access_time_ctrl_id, m_options.export_last_access_time);
 		set_check(custom_last_access_time_ctrl_id, m_options.custom_last_access_time);
 		set_check(current_last_access_time_ctrl_id, m_options.current_last_access_time);
 		enable(custom_last_access_time_ctrl_id, m_options.export_last_access_time && bLastAccessTime);
@@ -909,7 +912,7 @@ private:
 		enable(ftLastAccessTime_ctrl_id, bCustomEdit);
 		enable(ftLastAccessClear_ctrl_id, bCustomEdit);
 
-		set_check(export_last_write_time_ctrl_id, m_options.export_last_write_time);
+		set_check3(export_last_write_time_ctrl_id, m_options.export_last_write_time);
 		set_check(custom_last_write_time_ctrl_id, m_options.custom_last_write_time);
 		set_check(current_last_write_time_ctrl_id, m_options.current_last_write_time);
 		enable(custom_last_write_time_ctrl_id, m_options.export_last_write_time && bLastWriteTime);
@@ -935,7 +938,7 @@ private:
 		swprintf(strName, 32, L"%S",
 				is_valid_username_or_groupname(m_options.Group.c_str(), m_options.Group.length())
 						? m_options.Group.c_str()
-						: L"user");
+						: L"group");
 		set_text_silent(Group_ctrl_id, strName);
 		set_check(export_group_name_ctrl_id, m_options.export_group_name);
 		set_check(custom_group_name_ctrl_id, m_options.custom_group_name);
@@ -1099,10 +1102,17 @@ private:
 
 			case DN_BTNCLICK: {
 
+				if (param1 == reset_ctrl_id) {
+					ExportOptions def_options;
+					write_controls(def_options);
+					break;
+				}
+
+
 				if (param1 == export_creation_time_ctrl_id) {
 					DisableEvents de(*this);
-					bool bEnable = get_check(export_creation_time_ctrl_id);
-					m_options.export_creation_time = bEnable;
+					m_options.export_creation_time = get_check3(export_creation_time_ctrl_id);
+					bool bEnable = (m_options.export_creation_time == triTrue);
 					enable(custom_creation_time_ctrl_id, bEnable);
 					bool bCustom = get_check(custom_creation_time_ctrl_id);
 					enable(current_creation_time_ctrl_id, bEnable && bCustom);
@@ -1114,8 +1124,8 @@ private:
 				}
 				if (param1 == export_last_access_time_ctrl_id) {
 					DisableEvents de(*this);
-					bool bEnable = get_check(export_last_access_time_ctrl_id);
-					m_options.export_last_access_time = bEnable;
+					m_options.export_last_access_time = get_check3(export_last_access_time_ctrl_id);
+					bool bEnable = (m_options.export_last_access_time == triTrue);
 					enable(custom_last_access_time_ctrl_id, bEnable);
 					bool bCustom = get_check(custom_last_access_time_ctrl_id);
 					enable(current_last_access_time_ctrl_id, bEnable && bCustom);
@@ -1127,8 +1137,8 @@ private:
 				}
 				if (param1 == export_last_write_time_ctrl_id) {
 					DisableEvents de(*this);
-					bool bEnable = get_check(export_last_write_time_ctrl_id);
-					m_options.export_last_write_time = bEnable;
+					m_options.export_last_write_time = get_check3(export_last_write_time_ctrl_id);
+					bool bEnable = (m_options.export_last_write_time == triTrue);
 					enable(custom_last_write_time_ctrl_id, bEnable);
 					bool bCustom = get_check(custom_last_write_time_ctrl_id);
 					enable(current_last_write_time_ctrl_id, bEnable && bCustom);
@@ -1635,7 +1645,7 @@ public:
 		ftClearBtState[0] = ftClearBtState[1] = ftClearBtState[2] = 0;
 
 		export_creation_time_ctrl_id =
-				check_box(*label_text++, m_options.export_creation_time, bCreationTime ? 0 : DIF_DISABLE);
+				check_box3(*label_text++, m_options.export_creation_time, bCreationTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_creation_time_ctrl_id = check_box(L"", m_options.custom_creation_time,
 				bCreationTime && m_options.export_creation_time ? 0 : DIF_DISABLE);
@@ -1656,7 +1666,7 @@ public:
 		}
 		new_line();
 
-		export_last_access_time_ctrl_id = check_box(*label_text++, m_options.export_last_access_time,
+		export_last_access_time_ctrl_id = check_box3(*label_text++, m_options.export_last_access_time,
 				bLastAccessTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_last_access_time_ctrl_id = check_box(L"", m_options.custom_last_access_time,
@@ -1679,7 +1689,7 @@ public:
 		new_line();
 
 		export_last_write_time_ctrl_id =
-				check_box(*label_text++, m_options.export_last_write_time, bLastWriteTime ? 0 : DIF_DISABLE);
+				check_box3(*label_text++, m_options.export_last_write_time, bLastWriteTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_last_write_time_ctrl_id = check_box(L"", m_options.custom_last_write_time,
 				bLastWriteTime && m_options.export_last_write_time ? 0 : DIF_DISABLE);
@@ -1825,6 +1835,7 @@ public:
 
 		ok_ctrl_id = def_button(Far::get_msg(MSG_BUTTON_OK), DIF_CENTERGROUP);
 		cancel_ctrl_id = button(Far::get_msg(MSG_BUTTON_CANCEL), DIF_CENTERGROUP);
+		reset_ctrl_id = button(Far::get_msg(MSG_BUTTON_RESET), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
 		new_line();
 
 		intptr_t item = Far::Dialog::show();
@@ -2511,14 +2522,17 @@ private:
 		size_t pos = file_name.find_last_of(L'.');
 		if (pos == std::wstring::npos || pos == 0)
 			return false;
+
 		std::wstring ext = file_name.substr(pos);
 		if (StrCmpI(ext.c_str(), c_sfx_ext) == 0 || StrCmpI(ext.c_str(), c_volume_ext) == 0) {
 			pos = file_name.find_last_of(L'.', pos - 1);
 			if (pos != std::wstring::npos && pos != 0)
 				ext = file_name.substr(pos);
 		}
+
 		if (StrCmpI(old_ext.c_str(), ext.c_str()) != 0)
 			return false;
+
 		pos = arc_path.find_last_of(ext) - (ext.size() - 1);
 		arc_path.replace(pos, ext.size(), new_ext);
 		set_text(arc_path_ctrl_id, arc_path);
@@ -2645,11 +2659,10 @@ private:
 		}
 
 		if (bSetDefaultMedthod) {
-
 			if (arc_type == c_7z)
-				method_sel = 1;
+				method_sel = 0;
 			else if (arc_type == c_zip)
-				method_sel = 3;
+				method_sel = 0;
 			else
 				method_sel = 0;
 		} else {

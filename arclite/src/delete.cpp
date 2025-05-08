@@ -57,7 +57,8 @@ public:
 	}
 };
 
-class ArchiveFileDeleterStream : public IOutStream, public ComBase, private File
+template<bool UseVirtualDestructor>
+class ArchiveFileDeleterStream : public IOutStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>, private File
 {
 private:
 	std::shared_ptr<ProgressMonitor> progress;
@@ -116,7 +117,8 @@ public:
 	using File::copy_ctime_from;
 };
 
-class ArchiveFileDeleter : public IArchiveUpdateCallback, public ComBase
+template<bool UseVirtualDestructor>
+class ArchiveFileDeleter : public IArchiveUpdateCallback<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
 	std::vector<UInt32> new_indices;
@@ -167,7 +169,7 @@ public:
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
-	STDMETHODIMP GetStream(UInt32 index, ISequentialInStream **inStream) noexcept override
+	STDMETHODIMP GetStream(UInt32 index, ISequentialInStream<UseVirtualDestructor> **inStream) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		*inStream = nullptr;
@@ -182,7 +184,8 @@ public:
 	}
 };
 
-void Archive::enum_deleted_indices(UInt32 file_index, std::vector<UInt32> &indices)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::enum_deleted_indices(UInt32 file_index, std::vector<UInt32> &indices)
 {
 	const ArcFileInfo &file_info = file_list[file_index];
 	indices.push_back(file_index);
@@ -194,7 +197,8 @@ void Archive::enum_deleted_indices(UInt32 file_index, std::vector<UInt32> &indic
 	}
 }
 
-void Archive::delete_files(const std::vector<UInt32> &src_indices)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::delete_files(const std::vector<UInt32> &src_indices)
 {
 	std::vector<UInt32> deleted_indices;
 	deleted_indices.reserve(file_list.size());
@@ -215,13 +219,13 @@ void Archive::delete_files(const std::vector<UInt32> &src_indices)
 
 	std::wstring temp_arc_name = get_temp_file_name();
 	try {
-		ComObject<IOutArchive> out_arc;
+		ComObject<IOutArchive<UseVirtualDestructor>> out_arc;
 		CHECK_COM(in_arc->QueryInterface((REFIID)(IID_IOutArchive), reinterpret_cast<void **>(&out_arc)));
 
 		const auto progress = std::make_shared<ArchiveFileDeleterProgress>();
-		ComObject<ArchiveFileDeleter> deleter(new ArchiveFileDeleter(new_indices, progress));
-		ComObject<ArchiveFileDeleterStream> update_stream(
-				new ArchiveFileDeleterStream(temp_arc_name, progress));
+		ComObject<ArchiveFileDeleter<UseVirtualDestructor>> deleter(new ArchiveFileDeleter<UseVirtualDestructor>(new_indices, progress));
+		ComObject<ArchiveFileDeleterStream<UseVirtualDestructor>> update_stream(
+				new ArchiveFileDeleterStream<UseVirtualDestructor>(temp_arc_name, progress));
 
 		COM_ERROR_CHECK(copy_prologue(update_stream));
 		COM_ERROR_CHECK(

@@ -37,14 +37,16 @@ extern Error g_com_error;
 		}                                                                                                    \
 	} while (false)
 
-class ComBase : public IUnknown
+
+template<bool UseVirtualDestructor>
+class ComBase : public IUnknownTemplate<UseVirtualDestructor>
 {
 protected:
-	ULONG ref_cnt;
+    ULONG ref_cnt;
 
 public:
-	ComBase() : ref_cnt(0) {}
-	virtual ~ComBase() {}
+    ComBase() : ref_cnt(0) {}
+    virtual ~ComBase() {} // Всегда виртуальный деструктор в ComBase
 };
 
 #define UNKNOWN_DECL                                                                                         \
@@ -58,14 +60,14 @@ public:
 
 #define UNKNOWN_IMPL_ITF(iid)                                                                                \
 	if (riid == IID_##iid) {                                                                                 \
-		*object = static_cast<iid *>(this);                                                                  \
+		*object = static_cast<iid<UseVirtualDestructor>*>(this);                                             \
 		AddRef();                                                                                            \
 		return S_OK;                                                                                         \
 	}
 
 #define UNKNOWN_IMPL_END                                                                                     \
 	if (riid == IID_IUnknown) {                                                                              \
-		*object = static_cast<IUnknown *>(static_cast<ComBase *>(this));                                     \
+        *object = static_cast<IUnknownTemplate<UseVirtualDestructor> *>(static_cast<ComBase<UseVirtualDestructor> *>(this));\
 		AddRef();                                                                                            \
 		return S_OK;                                                                                         \
 	}                                                                                                        \
@@ -74,15 +76,15 @@ public:
 	}                                                                                                        \
 	STDMETHOD_(ULONG, AddRef)() override                                                                     \
 	{                                                                                                        \
-		return ++ref_cnt;                                                                                    \
+		return ++ComBase<UseVirtualDestructor>::ref_cnt;                                                     \
 	}                                                                                                        \
 	STDMETHOD_(ULONG, Release)() override                                                                    \
 	{                                                                                                        \
-		if (--ref_cnt == 0) {                                                                                \
+		if (--ComBase<UseVirtualDestructor>::ref_cnt == 0) {                                                 \
 			delete this;                                                                                     \
 			return 0;                                                                                        \
 		} else                                                                                               \
-			return ref_cnt;                                                                                  \
+			return ComBase<UseVirtualDestructor>::ref_cnt;                                                   \
 	}
 
 #define UNKNOWN_IMPL                                                                                         \

@@ -208,83 +208,65 @@ bool CommandData::TimeCheck(RarTime &ftm,RarTime &ftc,RarTime &fta)
 {
   bool FilterOR=false;
 
-  if (FileMtimeBefore.IsSet()) { // Filter present.
-    if (ftm>=FileMtimeBefore) { // Condition not matched.
+  if (FileMtimeBefore.IsSet()) // Filter present.
+    if (ftm>=FileMtimeBefore) // Condition not matched.
       if (FileMtimeBeforeOR) 
         FilterOR=true; // Not matched OR filter is present.
       else
         return true; // Exclude file in AND mode.
-    }
-    else {  // Condition matched.
+    else  // Condition matched.
       if (FileMtimeBeforeOR) 
         return false; // Include file in OR mode.
-    }
-  }
 
-  if (FileMtimeAfter.IsSet()) { // Filter present.
-    if (ftm<FileMtimeAfter) { // Condition not matched.
+  if (FileMtimeAfter.IsSet()) // Filter present.
+    if (ftm<FileMtimeAfter) // Condition not matched.
       if (FileMtimeAfterOR) 
         FilterOR=true; // Not matched OR filter is present.
       else
         return true; // Exclude file in AND mode.
-    }
-    else {  // Condition matched.
+    else  // Condition matched.
       if (FileMtimeAfterOR) 
         return false; // Include file in OR mode.
-    }
-  }
 
-  if (FileCtimeBefore.IsSet()) { // Filter present.
-    if (ftc>=FileCtimeBefore) { // Condition not matched.
+  if (FileCtimeBefore.IsSet()) // Filter present.
+    if (ftc>=FileCtimeBefore) // Condition not matched.
       if (FileCtimeBeforeOR) 
         FilterOR=true; // Not matched OR filter is present.
       else
         return true; // Exclude file in AND mode.
-    }
-    else {  // Condition matched.
+    else  // Condition matched.
       if (FileCtimeBeforeOR) 
         return false; // Include file in OR mode.
-    }
-  }
 
-  if (FileCtimeAfter.IsSet()) { // Filter present.
-    if (ftc<FileCtimeAfter) { // Condition not matched.
+  if (FileCtimeAfter.IsSet()) // Filter present.
+    if (ftc<FileCtimeAfter) // Condition not matched.
       if (FileCtimeAfterOR) 
         FilterOR=true; // Not matched OR filter is present.
       else
         return true; // Exclude file in AND mode.
-    }
-    else {  // Condition matched.
+    else  // Condition matched.
       if (FileCtimeAfterOR) 
         return false; // Include file in OR mode.
-    }
-  }
 
-  if (FileAtimeBefore.IsSet()) { // Filter present.
-    if (fta>=FileAtimeBefore) { // Condition not matched.
+  if (FileAtimeBefore.IsSet()) // Filter present.
+    if (fta>=FileAtimeBefore) // Condition not matched.
       if (FileAtimeBeforeOR) 
         FilterOR=true; // Not matched OR filter is present.
       else
         return true; // Exclude file in AND mode.
-    }
-    else {  // Condition matched.
+    else  // Condition matched.
       if (FileAtimeBeforeOR) 
         return false; // Include file in OR mode.
-    }
-  }
 
-  if (FileAtimeAfter.IsSet()) { // Filter present.
-    if (fta<FileAtimeAfter) { // Condition not matched.
+  if (FileAtimeAfter.IsSet()) // Filter present.
+    if (fta<FileAtimeAfter) // Condition not matched.
       if (FileAtimeAfterOR) 
         FilterOR=true; // Not matched OR filter is present.
       else
         return true; // Exclude file in AND mode.
-    }
-    else {  // Condition matched.
+    else  // Condition matched.
       if (FileAtimeAfterOR) 
         return false; // Include file in OR mode.
-    }
-  }
 
   return FilterOR; // Exclude if all OR filters are not matched.
 }
@@ -320,10 +302,10 @@ int CommandData::IsProcessFile(FileHeader &FileHead,bool *ExactMatch,int MatchTy
 #ifndef SFX_MODULE
   if (TimeCheck(FileHead.mtime,FileHead.ctime,FileHead.atime))
     return 0;
-  if (( (FileHead.FileAttr & ExclFileAttr)!=0) || (FileHead.Dir && ExclDir) )
+  if ((FileHead.FileAttr & ExclFileAttr)!=0 || FileHead.Dir && ExclDir)
     return 0;
   if (InclAttrSet && (FileHead.FileAttr & InclFileAttr)==0 &&
-      (!FileHead.Dir || !InclDir) )
+      (!FileHead.Dir || !InclDir))
     return 0;
   if (!Dir && SizeCheck(FileHead.UnpSize))
     return 0;

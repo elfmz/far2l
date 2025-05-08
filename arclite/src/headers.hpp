@@ -39,6 +39,10 @@
 #include <future>
 #include <condition_variable>
 
+//#include <variant>
+//#include <functional> // Для std::function (если используется)
+//#include <visit>
+
 #include <sys/resource.h>
 
 /*
@@ -71,16 +75,6 @@ WARNING_DISABLE_CLANG("-Weverything")
 
 #define HELLO_I_AM_FROM_ARCLITE 1
 #define EXTERNAL_CODECS			1
-
-/*
-	virtual destructor in IUnknown:
-	- no  : 7-Zip (Windows)
-	- no  : 7-Zip (Linux) (v23) in default mode
-	- yes : p7zip
-	- yes : 7-Zip (Linux) before v23
-	- yes : 7-Zip (Linux) (v23), if Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN is defined
-*/
-//	#define Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN 1
 
 #include "7z/h/CPP/7zip/Archive/IArchive.h"
 #include "7z/h/CPP/7zip/IPassword.h"

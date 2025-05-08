@@ -81,8 +81,8 @@ typedef struct
 #endif
 
 
-#define SUCCEEDED(hr) ((HRESULT)(hr) >= 0)
-#define FAILED(hr)    ((HRESULT)(hr) < 0)
+//#define SUCCEEDED(hr) ((HRESULT)(hr) >= 0)
+//#define FAILED(hr)    ((HRESULT)(hr) < 0)
 
 typedef ULONG PROPID;
 typedef LONG SCODE;
@@ -186,17 +186,29 @@ Z7_PURE_INTERFACES_BEGIN
 
 //DEFINE_GUID(IID_IUnknown,0x00000000, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 
-struct IUnknown
+template<bool UseVirtualDestructor>
+struct IUnknownTemplate
 {
-  STDMETHOD(QueryInterface) (REFIID iid, void **outObject) =0;
-  STDMETHOD_(ULONG, AddRef)() =0;
-  STDMETHOD_(ULONG, Release)() =0;
- #ifdef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
-  virtual ~IUnknown() {}
- #endif
+	STDMETHOD(QueryInterface)(REFIID iid, void** outObject) = 0;
+	STDMETHOD_(ULONG, AddRef)() = 0;
+	STDMETHOD_(ULONG, Release)() = 0;
+
+    // NOTHING
 };
 
-typedef IUnknown *LPUNKNOWN;
+// Специализация для случая UseVirtualDestructor == true
+template<>
+struct IUnknownTemplate<true>
+{
+	STDMETHOD(QueryInterface)(REFIID iid, void** outObject) = 0;
+	STDMETHOD_(ULONG, AddRef)() = 0;
+	STDMETHOD_(ULONG, Release)() = 0;
+
+	virtual ~IUnknownTemplate() {}
+};
+
+
+//typedef IUnknown *LPUNKNOWN;
 
 Z7_PURE_INTERFACES_END
 

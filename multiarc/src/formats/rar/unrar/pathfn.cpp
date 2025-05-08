@@ -514,8 +514,8 @@ void MakeNameUsable(std::wstring &Name,bool Extended)
 {
   for (size_t I=0;I<Name.size();I++)
   {
-    if ( (wcschr(Extended ? L"?*<>|\"":L"?*",Name[I])!=NULL) || 
-        (Extended && (uint)Name[I]<32) )
+    if (wcschr(Extended ? L"?*<>|\"":L"?*",Name[I])!=NULL || 
+        Extended && (uint)Name[I]<32)
       Name[I]='_';
 #ifdef _UNIX
     // We were asked to apply Windows-like conversion in Linux in case
@@ -537,8 +537,8 @@ void MakeNameUsable(std::wstring &Name,bool Extended)
       // conversion at the end of file name would never be invoked here.
       // While converting dots, we preserve "." and ".." path components,
       // such as when specifying ".." in the destination path.
-      if ( IsPathDiv(Name[I+1]) && (Name[I]==' ' || Name[I]=='.' && I>0 &&
-          !IsPathDiv(Name[I-1]) && ( (Name[I-1]!='.' || I>1) && !IsPathDiv(Name[I-2]))))
+      if (IsPathDiv(Name[I+1]) && (Name[I]==' ' || Name[I]=='.' && I>0 &&
+          !IsPathDiv(Name[I-1]) && (Name[I-1]!='.' || I>1 && !IsPathDiv(Name[I-2]))))
         Name[I]='_';
     }
 #else
@@ -865,12 +865,11 @@ static void GenArcName(std::wstring &ArcName,const std::wstring &GenerateMask,ui
 
   int WeekDay=rlt.wDay==0 ? 6:rlt.wDay-1;
   int StartWeekDay=rlt.yDay-WeekDay;
-  if (StartWeekDay<0) {
+  if (StartWeekDay<0)
     if (StartWeekDay<=-4)
       StartWeekDay+=IsLeapYear(rlt.Year-1) ? 366:365;
     else
       StartWeekDay=0;
-  }
   int CurWeek=StartWeekDay/7+1;
   if (StartWeekDay%7>=4)
     CurWeek++;

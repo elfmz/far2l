@@ -620,8 +620,6 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 		hResult = reinterpret_cast<HANDLE>(pDup);
 	}
 
-	fprintf(stderr, "OpenFilePlugin -> exit \n" );
-
 	return hResult;
 }
 

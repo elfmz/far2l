@@ -258,15 +258,15 @@ public:
 };
 
 ExportOptions::ExportOptions() : 
-	export_creation_time(false),
+	export_creation_time(triUndef),
 	custom_creation_time(false),
 	current_creation_time(false),
     ftCreationTime( {0,0} ),
-	export_last_access_time(false),
+	export_last_access_time(triUndef),
 	custom_last_access_time(false),
 	current_last_access_time(false),
     ftLastAccessTime( {0,0} ),
-	export_last_write_time(true),
+	export_last_write_time(triUndef),
 	custom_last_write_time(false),
 	current_last_write_time(false),
     ftLastWriteTime( {0,0} ),
@@ -371,15 +371,15 @@ static void load_export_options(OptionsKey &key, ExportOptions &export_options)
 //	fprintf(stderr, "load_export_options()\n");
 	ExportOptions def_export_options;
 #define GET_VALUE(name, type) export_options.name = key.get_##type(L"export." L## #name, def_export_options.name)
-	GET_VALUE(export_creation_time, bool);
+	GET_VALUE(export_creation_time, int);
 	GET_VALUE(custom_creation_time, bool);
 	GET_VALUE(current_creation_time, bool);
 	GET_VALUE(ftCreationTime, filetime);
-	GET_VALUE(export_last_access_time, bool);
+	GET_VALUE(export_last_access_time, int);
 	GET_VALUE(custom_last_access_time, bool);
 	GET_VALUE(current_last_access_time, bool);
 	GET_VALUE(ftLastAccessTime, filetime);
-	GET_VALUE(export_last_write_time, bool);
+	GET_VALUE(export_last_write_time, int);
 	GET_VALUE(custom_last_write_time, bool);
 	GET_VALUE(current_last_write_time, bool);
 	GET_VALUE(ftLastWriteTime, filetime);
@@ -415,15 +415,15 @@ static void save_export_options(OptionsKey &key, const ExportOptions &export_opt
 
 	ExportOptions def_export_options;
 #define SET_VALUE(name, type) key.set_##type(L"export." L## #name, export_options.name, def_export_options.name)
-	SET_VALUE(export_creation_time, bool);
+	SET_VALUE(export_creation_time, int);
 	SET_VALUE(custom_creation_time, bool);
 	SET_VALUE(current_creation_time, bool);
 	SET_VALUE(ftCreationTime, filetime);
-	SET_VALUE(export_last_access_time, bool);
+	SET_VALUE(export_last_access_time, int);
 	SET_VALUE(custom_last_access_time, bool);
 	SET_VALUE(current_last_access_time, bool);
 	SET_VALUE(ftLastAccessTime, filetime);
-	SET_VALUE(export_last_write_time, bool);
+	SET_VALUE(export_last_write_time, int);
 	SET_VALUE(custom_last_write_time, bool);
 	SET_VALUE(current_last_write_time, bool);
 	SET_VALUE(ftLastWriteTime, filetime);

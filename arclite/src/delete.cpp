@@ -242,3 +242,6 @@ void Archive<UseVirtualDestructor>::delete_files(const std::vector<UInt32> &src_
 
 	reopen();
 }
+
+template class Archive<true>;
+template class Archive<false>;

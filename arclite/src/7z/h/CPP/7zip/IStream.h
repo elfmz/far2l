@@ -16,8 +16,7 @@ Z7_PURE_INTERFACES_BEGIN
   { Z7_IFACE_COM7_PURE(i) };
 
 #define Z7_IFACE_CONSTR_STREAM(i, n) \
-        Z7_IFACE_CONSTR_STREAM_SUB(i, IUnknown, n)
-
+        Z7_IFACE_CONSTR_STREAM_SUB(i, IUnknownTemplate, n)
 
 /*
 ISequentialInStream::Read()
@@ -49,6 +48,7 @@ ISequentialInStream::Read()
 Z7_IFACE_CONSTR_STREAM(ISequentialInStream, 0x01)
 
 
+
 /*
 ISequentialOutStream::Write()
   The requirement for caller: (processedSize != NULL).
@@ -68,6 +68,7 @@ ISequentialOutStream::Write()
 #define Z7_IFACEM_ISequentialOutStream(x) \
   x(Write(const void *data, UInt32 size, UInt32 *processedSize))
 Z7_IFACE_CONSTR_STREAM(ISequentialOutStream, 0x02)
+
 
 
 #ifdef _WIN32
@@ -205,6 +206,7 @@ inputs:
   x(SetRestriction(UInt64 begin, UInt64 end)) \
 
 Z7_IFACE_CONSTR_STREAM(IStreamSetRestriction, 0x10)
+
 
 Z7_PURE_INTERFACES_END
 #endif

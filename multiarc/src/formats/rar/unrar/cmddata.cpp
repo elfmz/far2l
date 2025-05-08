@@ -125,15 +125,15 @@ void CommandData::ParseArg(const wchar *Arg)
         bool FolderArg=IsDriveDiv(EndChar) || IsPathDiv(EndChar);
 
         // 2024.01.05: We were asked to support exotic d:. and d:.. paths.
-        if (IsDriveLetter(Arg) && Arg[2]=='.' && ((Arg[3]==0 || Arg[3]=='.') && Arg[4]==0) )
+        if (IsDriveLetter(Arg) && Arg[2]=='.' && (Arg[3]==0 || Arg[3]=='.' && Arg[4]==0))
           FolderArg=true;
 
         // 2024.01.06: FindFile::FastFind check below fails in Windows 10 if
         // "." or ".." points at disk root. So we enforce it for "." and ".."
         // optionally preceded with some path like "..\..".
         size_t L=Length;
-        if ( (L>0 && Arg[L-1]=='.' && (L==1 || L>=2) && IsPathDiv(Arg[L-2])) ||
-            (Arg[L-2]=='.' && (L==2 || L>=3) && IsPathDiv(Arg[L-3])) )
+        if (L>0 && Arg[L-1]=='.' && (L==1 || L>=2 && (IsPathDiv(Arg[L-2]) ||
+            Arg[L-2]=='.' && (L==2 || L>=3 && IsPathDiv(Arg[L-3])))))
           FolderArg=true;
 
         wchar CmdChar=toupperw(Command[0]);
@@ -650,7 +650,7 @@ void CommandData::ProcessSwitch(const wchar *Switch)
             // archives created by future versions with higher PACK_MAX_DICTþ
             uint Flags;
             if ((Size=Archive::GetWinSize(Size,Flags))==0 ||
-                (Size<=0x100000000ULL && !IsPow2(Size)) )
+                Size<=0x100000000ULL && !IsPow2(Size))
               BadSwitch(Switch);
             else
               if (SetDictLimit)
@@ -904,12 +904,11 @@ void CommandData::ProcessSwitch(const wchar *Switch)
                   AlreadyBad=true;
                   break;
               };
-              if (!AlreadyBad) {
-                if (Switch[3]==0) {
+              if (!AlreadyBad)
+                if (Switch[3]==0)
                   CommentCharset=FilelistCharset=ErrlogCharset=RedirectCharset=rch;
-				}
-                else {
-                  for (uint I=3;Switch[I]!=0 && !AlreadyBad;I++) {
+                else
+                  for (uint I=3;Switch[I]!=0 && !AlreadyBad;I++)
                     switch(toupperw(Switch[I]))
                     {
                       case 'C':
@@ -926,9 +925,6 @@ void CommandData::ProcessSwitch(const wchar *Switch)
                         AlreadyBad=true;
                         break;
                     }
-				  }
-				}
-			  }
               // Set it immediately when parsing the command line, so it also
               // affects messages issued while parsing the command line.
               SetConsoleRedirectCharset(RedirectCharset);
@@ -1037,7 +1033,7 @@ void CommandData::ProcessCommand()
 #ifndef SFX_MODULE
 
   const wchar *SingleCharCommands=L"FUADPXETK";
-  if ( (Command[0]!=0 && Command[1]!=0 && wcschr(SingleCharCommands,Command[0])!=NULL) || ArcName.empty() )
+  if (Command[0]!=0 && Command[1]!=0 && wcschr(SingleCharCommands,Command[0])!=NULL || ArcName.empty())
     OutHelp(Command.empty() ? RARX_SUCCESS:RARX_USERERROR); // Return 'success' for 'rar' without parameters.
 
   size_t ExtPos=GetExtPos(ArcName);

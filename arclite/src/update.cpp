@@ -103,6 +103,7 @@ public:
 		file_completed = 0;
 		update_ui();
 	}
+
 	void on_read_file(unsigned size)
 	{
 		if (silent) return;
@@ -111,6 +112,7 @@ public:
 		total_data_read += size;
 		update_ui();
 	}
+
 	void on_write_archive(unsigned size)
 	{
 		if (silent) return;
@@ -118,6 +120,7 @@ public:
 		total_data_written += size;
 		update_ui();
 	}
+
 	void on_total_update(UInt64 total_value)
 	{
 		if (silent) return;
@@ -125,6 +128,7 @@ public:
 		total = total_value;
 		update_ui();
 	}
+
 	void on_completed_update(UInt64 completed_value)
 	{
 		if (silent) return;
@@ -153,7 +157,8 @@ DWORD translate_seek_method(UInt32 seek_origin)
 	return method;
 }
 
-class UpdateStream : public IOutStream
+template<bool UseVirtualDestructor>
+class UpdateStream : public IOutStream<UseVirtualDestructor>
 {
 protected:
 	std::shared_ptr<ArchiveUpdateProgress> progress;
@@ -164,15 +169,16 @@ public:
 	virtual void clean_files() noexcept = 0;
 };
 
-class SimpleUpdateStream : public UpdateStream, public ComBase, private File
+template<bool UseVirtualDestructor>
+class SimpleUpdateStream : public UpdateStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>, private File
 {
 public:
 	SimpleUpdateStream(const std::wstring &file_path, std::shared_ptr<ArchiveUpdateProgress> progress)
-		: UpdateStream(progress)
+		: UpdateStream<UseVirtualDestructor>(progress)
 	{
 		RETRY_OR_IGNORE_BEGIN
 		open(file_path, GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, 0);
-		RETRY_END(*progress)
+		RETRY_END(*this->progress)
 	}
 
 	UNKNOWN_IMPL_BEGIN
@@ -188,8 +194,8 @@ public:
 		unsigned size_written;
 		RETRY_OR_IGNORE_BEGIN
 		size_written = static_cast<unsigned>(write(data, size));
-		RETRY_END(*progress)
-		progress->on_write_archive(size_written);
+		RETRY_END(*this->progress)
+		this->progress->on_write_archive(size_written);
 
 		if (processedSize)
 			*processedSize = size_written;
@@ -209,13 +215,14 @@ public:
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP SetSize(UInt64 newSize) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		RETRY_OR_IGNORE_BEGIN
 		set_pos(newSize, FILE_BEGIN);
 		set_end();
-		RETRY_END(*progress)
+		RETRY_END(*this->progress)
 
 		return S_OK;
 		COM_ERROR_HANDLER_END
@@ -230,7 +237,8 @@ public:
 	using File::copy_ctime_from;
 };
 
-class SfxUpdateStream : public UpdateStream, public ComBase, private File
+template<bool UseVirtualDestructor>
+class SfxUpdateStream : public UpdateStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>, private File
 {
 private:
 	UInt64 start_offset;
@@ -238,7 +246,7 @@ private:
 public:
 	SfxUpdateStream(const std::wstring &file_path, const SfxOptions &sfx_options,
 			std::shared_ptr<ArchiveUpdateProgress> progress)
-		: UpdateStream(progress)
+		: UpdateStream<UseVirtualDestructor>(progress)
 	{
 		RETRY_OR_IGNORE_BEGIN
 		try {
@@ -249,7 +257,7 @@ public:
 			File::delete_file_nt(file_path);
 			throw;
 		}
-		RETRY_END(*progress)
+		RETRY_END(*this->progress)
 	}
 
 	UNKNOWN_IMPL_BEGIN
@@ -265,8 +273,8 @@ public:
 		unsigned size_written;
 		RETRY_OR_IGNORE_BEGIN
 		size_written = static_cast<unsigned>(write(data, size));
-		RETRY_END(*progress)
-		progress->on_write_archive(size_written);
+		RETRY_END(*this->progress)
+		this->progress->on_write_archive(size_written);
 		if (processedSize)
 			*processedSize = size_written;
 		return S_OK;
@@ -290,13 +298,14 @@ public:
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
+
 	STDMETHODIMP SetSize(UInt64 newSize) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		RETRY_OR_IGNORE_BEGIN
 		set_pos(newSize + start_offset);
 		set_end();
-		RETRY_END(*progress)
+		RETRY_END(*this->progress)
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -308,7 +317,8 @@ public:
 	}
 };
 
-class MultiVolumeUpdateStream : public UpdateStream, public ComBase
+template<bool UseVirtualDestructor>
+class MultiVolumeUpdateStream : public UpdateStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
 	std::wstring file_path;
@@ -341,7 +351,7 @@ private:
 public:
 	MultiVolumeUpdateStream(const std::wstring &file_path, UInt64 volume_size,
 			std::shared_ptr<ArchiveUpdateProgress> progress)
-		: UpdateStream(progress),
+		: UpdateStream<UseVirtualDestructor>(progress),
 		  file_path(file_path),
 		  volume_size(volume_size),
 		  stream_pos(0),
@@ -351,7 +361,7 @@ public:
 	{
 		RETRY_OR_IGNORE_BEGIN
 		volume.open(get_volume_path(0), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, 0);
-		RETRY_END(*progress)
+		RETRY_END(*this->progress)
 	}
 
 	UNKNOWN_IMPL_BEGIN
@@ -374,7 +384,7 @@ public:
 						0);
 				volume.set_pos(volume_size);
 				volume.set_end();
-				RETRY_END(*progress)
+				RETRY_END(*this->progress)
 			}
 			if (last_volume_idx < volume_idx) {
 				last_volume_idx += 1;
@@ -382,11 +392,11 @@ public:
 				RETRY_OR_IGNORE_BEGIN
 				volume.open(get_volume_path(last_volume_idx), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS,
 						0);
-				RETRY_END(*progress)
+				RETRY_END(*this->progress)
 			} else {
 				RETRY_OR_IGNORE_BEGIN
 				volume.open(get_volume_path(volume_idx), GENERIC_WRITE, FILE_SHARE_READ, OPEN_EXISTING, 0);
-				RETRY_END(*progress)
+				RETRY_END(*this->progress)
 			}
 			volume.set_pos(seek_stream_pos - volume_idx * volume_size);
 			stream_pos = seek_stream_pos;
@@ -402,12 +412,12 @@ public:
 					RETRY_OR_IGNORE_BEGIN
 					volume.open(get_volume_path(volume_idx), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS,
 							0);
-					RETRY_END(*progress)
+					RETRY_END(*this->progress)
 				} else {
 					RETRY_OR_IGNORE_BEGIN
 					volume.open(get_volume_path(volume_idx), GENERIC_WRITE, FILE_SHARE_READ, OPEN_EXISTING,
 							0);
-					RETRY_END(*progress)
+					RETRY_END(*this->progress)
 				}
 				next_volume = false;
 			}
@@ -422,7 +432,7 @@ public:
 			RETRY_OR_IGNORE_BEGIN
 			write_size = static_cast<unsigned>(
 					volume.write(reinterpret_cast<const unsigned char *>(data) + data_off, write_size));
-			RETRY_END(*progress)
+			RETRY_END(*this->progress)
 			CHECK(write_size != 0);
 			data_off += write_size;
 			stream_pos += write_size;
@@ -430,7 +440,7 @@ public:
 			if (stream_size < stream_pos)
 				stream_size = stream_pos;
 		} while (data_off < size);
-		progress->on_write_archive(size);
+		this->progress->on_write_archive(size);
 		if (processedSize)
 			*processedSize = size;
 		return S_OK;
@@ -477,7 +487,7 @@ public:
 			volume.open(get_volume_path(last_volume_idx), GENERIC_WRITE, FILE_SHARE_READ, CREATE_ALWAYS, 0);
 			volume.set_pos(volume_size);
 			volume.set_end();
-			RETRY_END(*progress)
+			RETRY_END(*this->progress)
 		}
 		RETRY_OR_IGNORE_BEGIN
 		if (last_volume_idx < volume_idx) {
@@ -489,7 +499,7 @@ public:
 		}
 		volume.set_pos(newSize - volume_idx * volume_size);
 		volume.set_end();
-		RETRY_END(*progress)
+		RETRY_END(*this->progress)
 
 		for (UInt64 extra_idx = volume_idx + 1; extra_idx <= last_volume_idx; extra_idx++) {
 			File::delete_file(get_volume_path(extra_idx));
@@ -511,7 +521,8 @@ public:
 	}
 };
 
-class FileReadStream : public IInStream, public IStreamGetSize, public ComBase, private File
+template<bool UseVirtualDestructor>
+class FileReadStream : public IInStream<UseVirtualDestructor>, public IStreamGetSize<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>, private File
 {
 private:
 	std::shared_ptr<ArchiveUpdateProgress> progress;
@@ -546,7 +557,7 @@ public:
 		if (processedSize)
 			*processedSize = 0;
 		unsigned size_read = static_cast<unsigned>(read(data, size));
-		progress->on_read_file(size_read);
+		this->progress->on_read_file(size_read);
 		if (processedSize)
 			*processedSize = size_read;
 		return S_OK;
@@ -578,7 +589,9 @@ public:
 	}
 };
 
-class AcmRelayStream : public ISequentialOutStream, public ISequentialInStream, public ComBase {
+template<bool UseVirtualDestructor>
+class AcmRelayStream : public ISequentialOutStream<UseVirtualDestructor>, 
+						public ISequentialInStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor> {
 private:
 	std::vector<BYTE> buffer;
 	size_t buffer_capacity;
@@ -671,11 +684,12 @@ struct FileIndexInfo
 };
 typedef std::map<UInt32, FileIndexInfo> FileIndexMap;
 
+template<bool UseVirtualDestructor>
 class PrepareUpdate : private ProgressMonitor
 {
 private:
 	std::wstring src_dir;
-	Archive &archive;
+	Archive<UseVirtualDestructor> &archive;
 	FileIndexMap &file_index_map;
 	UInt32 &new_index;
 	bool &ignore_errors;
@@ -845,7 +859,7 @@ private:
 
 public:
 	PrepareUpdate(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
-			UInt32 dst_dir_index, Archive &archive, FileIndexMap &file_index_map, UInt32 &new_index,
+			UInt32 dst_dir_index, Archive<UseVirtualDestructor> &archive, FileIndexMap &file_index_map, UInt32 &new_index,
 			OverwriteAction overwrite_action, bool &ignore_errors, ErrorLog &error_log,
 			Far::FileFilter *filter, bool &skipped_files, bool skip_symlinks, bool dereference_symlinks)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_SCAN_DIRS), false),
@@ -873,7 +887,9 @@ public:
 	}
 };
 
-class ArchiveUpdater : public IArchiveUpdateCallback, public ICryptoGetTextPassword2, public ComBase
+template<bool UseVirtualDestructor>
+class ArchiveUpdater : public IArchiveUpdateCallback<UseVirtualDestructor>,
+						public ICryptoGetTextPassword2<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
 	std::wstring src_dir;
@@ -885,7 +901,7 @@ private:
 	bool dereference_symlinks;
 	std::shared_ptr<ErrorLog> error_log;
 	std::shared_ptr<ArchiveUpdateProgress> progress;
-	ComObject<ISequentialInStream> mem_stream;
+	ComObject<ISequentialInStream<UseVirtualDestructor>> mem_stream;
     bool use_mem_stream = false;
 	FILETIME crft;
 
@@ -893,7 +909,7 @@ public:
 	ArchiveUpdater(const std::wstring &src_dir, const std::wstring &dst_dir, UInt32 num_indices,
 			std::shared_ptr<FileIndexMap> file_index_map, const UpdateOptions &options,
 			std::shared_ptr<bool> ignore_errors, bool dereference_symlinks, std::shared_ptr<ErrorLog> error_log,
-			std::shared_ptr<ArchiveUpdateProgress> progress, ISequentialInStream* stream = nullptr, 
+			std::shared_ptr<ArchiveUpdateProgress> progress, ISequentialInStream<UseVirtualDestructor> *stream = nullptr, 
 			bool use_mem_stream = false)
 		: src_dir(src_dir),
 		  dst_dir(dst_dir),
@@ -904,7 +920,8 @@ public:
 		  dereference_symlinks(dereference_symlinks),
 		  error_log(error_log),
 		  progress(progress),
-		  mem_stream(stream), use_mem_stream(use_mem_stream)
+		  mem_stream(stream),
+		  use_mem_stream(use_mem_stream)
 	{
 		WINPORT(GetSystemTimeAsFileTime)(&crft);
 	}
@@ -915,7 +932,7 @@ public:
 	UNKNOWN_IMPL_ITF(ICryptoGetTextPassword2)
 	UNKNOWN_IMPL_END
 
-	void SetMemoryStream(ISequentialInStream* stream) {
+	void SetMemoryStream(ISequentialInStream<UseVirtualDestructor>* stream) {
 		mem_stream = stream;
 		use_mem_stream = true;
 	}
@@ -924,7 +941,7 @@ public:
 	{
 		CriticalSectionLock lock(GetSync());
 		COM_ERROR_HANDLER_BEGIN
-		progress->on_total_update(total);
+		this->progress->on_total_update(total);
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -934,7 +951,7 @@ public:
 		CriticalSectionLock lock(GetSync());
 		COM_ERROR_HANDLER_BEGIN
 		if (completeValue)
-			progress->on_completed_update(*completeValue);
+			this->progress->on_completed_update(*completeValue);
 		return S_OK;
 		COM_ERROR_HANDLER_END
 	}
@@ -1016,7 +1033,7 @@ public:
 				prop = file_index_info.find_data.size();
 				break;
 			case kpidCTime:
-				if (options.use_export_settings) {
+				if (options.use_export_settings && options.export_options.export_creation_time != triUndef) {
 					if (options.export_options.export_creation_time) {
 						if (options.export_options.custom_creation_time) {
 							if (options.export_options.current_creation_time)
@@ -1032,7 +1049,7 @@ public:
 					prop = file_index_info.find_data.ftCreationTime;
 				break;
 			case kpidATime:
-				if (options.use_export_settings) {
+				if (options.use_export_settings && options.export_options.export_last_access_time != triUndef) {
 					if (options.export_options.export_last_access_time) {
 						if (options.export_options.custom_last_access_time) {
 							if (options.export_options.current_last_access_time)
@@ -1048,7 +1065,7 @@ public:
 					prop = file_index_info.find_data.ftLastAccessTime;
 				break;
 			case kpidMTime:
-				if (options.use_export_settings) {
+				if (options.use_export_settings && options.export_options.export_last_write_time != triUndef) {
 					if (options.export_options.export_last_write_time) {
 						if (options.export_options.custom_last_write_time) {
 							if (options.export_options.current_last_write_time)
@@ -1247,7 +1264,7 @@ public:
 		COM_ERROR_HANDLER_END
 	}
 
-	STDMETHODIMP GetStream(UInt32 index, ISequentialInStream **inStream) noexcept override
+	STDMETHODIMP GetStream(UInt32 index, ISequentialInStream<UseVirtualDestructor> **inStream) noexcept override
 	{
 		COM_ERROR_HANDLER_BEGIN
 		*inStream = nullptr;
@@ -1267,13 +1284,13 @@ public:
 
 		std::wstring file_path = add_trailing_slash(add_trailing_slash(src_dir) + file_index_info.rel_path)
 				+ file_index_info.find_data.cFileName;
-		progress->on_open_file(file_path, file_index_info.find_data.size());
+		this->progress->on_open_file(file_path, file_index_info.find_data.size());
 
-		ComObject<ISequentialInStream> stream;
+		ComObject<ISequentialInStream<UseVirtualDestructor>> stream;
 		RETRY_OR_IGNORE_BEGIN
-		stream = new FileReadStream(file_path, options.open_shared, progress, options.dereference_symlinks, file_index_info.find_data.dwFileAttributes);
+		stream = new FileReadStream<UseVirtualDestructor>(file_path, options.open_shared, progress, options.dereference_symlinks, file_index_info.find_data.dwFileAttributes);
 
-		RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
+		RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *this->progress)
 		if (error_ignored)
 			return S_FALSE;
 
@@ -1309,17 +1326,23 @@ public:
 	}
 };
 
-void Archive::set_properties(IOutArchive *out_arc, const UpdateOptions &options)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::set_properties(IOutArchive<UseVirtualDestructor> *out_arc, const UpdateOptions &options)
 {
-	ComObject<ISetProperties> set_props;
+	ComObject<ISetProperties<UseVirtualDestructor>> set_props;
 	if ( SUCCEEDED(out_arc->QueryInterface((REFIID)IID_ISetProperties, reinterpret_cast<void **>(&set_props))) ) {
 		static ExternalCodec defopts{L"", 1, 9, 0, 1, 3, 5, 7, 9, false};
 		defopts.reset();
 //		fprintf(stderr, " +++ Archive::set_properties +++\n");
 
 		std::wstring method;
+		bool ignore_method = false;
+
 		if (options.arc_type == c_7z || options.arc_type == c_zip || options.arc_type == c_tar) {
-			method = options.method;
+			if (options.method == c_method_default)
+				ignore_method = true;
+			else
+				method = options.method;
 		} else if (ArcAPI::formats().count(options.arc_type)) {
 			method = ArcAPI::formats().at(options.arc_type).name;
 		}
@@ -1340,10 +1363,7 @@ void Archive::set_properties(IOutArchive *out_arc, const UpdateOptions &options)
 			PropVariant var;
 			if (!v.empty()) {
 				wchar_t *endptr = nullptr;
-//				UInt64 v64 = _wtou64(v.c_str());
-//		        UINT64 v64 = _wcstoui64(v.c_str(), &endptr, 10);
 		        UINT64 v64 = wcstoull(v.c_str(), &endptr, 10);
-//				*value = strtoull(curpos, endptr, 10);
 
 				if (endptr && !*endptr) {
 					if (v64 <= UINT_MAX)
@@ -1359,7 +1379,6 @@ void Archive::set_properties(IOutArchive *out_arc, const UpdateOptions &options)
 		auto adv = options.advanced;
 		//	adv.clear();
 
-		bool ignore_method = false;
 		if (!adv.empty() && adv[0] == L'-') {
 			adv.erase(0, 1);
 			if (!adv.empty() && adv[0] == L'-') {
@@ -1497,39 +1516,48 @@ void Archive::set_properties(IOutArchive *out_arc, const UpdateOptions &options)
 			values.push_back(level);
 		}
 
-		if (options.multithreading) {
-			names.push_back(L"mt");
-			if (!options.threads_num)
-				values.push_back(L"on");
-			else
-				values.push_back(options.threads_num);
-		}
-		else {
-			names.push_back(L"mt");
-			values.push_back(L"off");
+		if (options.arc_type == c_7z || options.arc_type == c_zip) {
+			if (options.multithreading) {
+				names.push_back(L"mt");
+				if (!options.threads_num)
+					values.push_back(L"on");
+				else
+					values.push_back(options.threads_num);
+			}
+			else {
+				names.push_back(L"mt");
+				values.push_back(L"off");
+			}
 		}
 
 		if (options.arc_type == c_tar || options.arc_type == c_7z || options.arc_type == c_zip || options.arc_type == c_wim) {
 			if (options.use_export_settings) {
+				if (options.export_options.export_last_write_time != triUndef) {
+					names.push_back(L"tm");
 
-				names.push_back(L"tm");
-				names.push_back(L"tc");
-				names.push_back(L"ta");
+					if (options.export_options.export_last_write_time)
+						values.push_back(L"on");
+					else
+						values.push_back(L"off");
+				}
 
-				if (options.export_options.export_last_write_time)
-					values.push_back(L"on");
-				else
-					values.push_back(L"off");
+				if (options.export_options.export_creation_time != triUndef) {
+					names.push_back(L"tc");
 
-				if (options.export_options.export_creation_time)
-					values.push_back(L"on");
-				else
-					values.push_back(L"off");
+					if (options.export_options.export_creation_time)
+						values.push_back(L"on");
+					else
+						values.push_back(L"off");
+				}
 
-				if (options.export_options.export_last_access_time)
-					values.push_back(L"on");
-				else
-					values.push_back(L"off");
+				if (options.export_options.export_last_access_time != triUndef) {
+					names.push_back(L"ta");
+
+					if (options.export_options.export_last_access_time)
+						values.push_back(L"on");
+					else
+						values.push_back(L"off");
+				}
 			}
 		}
 
@@ -1698,7 +1726,8 @@ public:
 	}
 };
 
-void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
 		UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
 {
 	DisableSleepMode dsm;
@@ -1712,8 +1741,8 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 		const auto tar_file_index_map = std::make_shared<FileIndexMap>();
 		const auto arc_file_index_map = std::make_shared<FileIndexMap>();
 
-		ComObject<IOutArchive> out_tar;
-		ArcAPI::create_out_archive(options.arc_type, out_tar.ref());
+		ComObject<IOutArchive<UseVirtualDestructor>> out_tar;
+		ArcAPI::create_out_archive(options.arc_type, (void **)out_tar.ref());
 		set_properties(out_tar, options);
 
 		std::wstring tar_filename = extract_file_name(options.arc_path);
@@ -1732,20 +1761,20 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 		new_index2++;
 		repack_options.arc_type = options.repack_arc_type;
 
-		ComObject<IOutArchive> out_arc;
-		ArcAPI::create_out_archive(repack_options.arc_type, out_arc.ref());
+		ComObject<IOutArchive<UseVirtualDestructor>> out_arc;
+		ArcAPI::create_out_archive(repack_options.arc_type, (void **)out_arc.ref());
 		set_properties(out_arc, repack_options);
 
 		const auto progress = std::make_shared<ArchiveUpdateProgress>(true, repack_options.arc_path);
 		const auto progress2 = std::make_shared<ArchiveUpdateProgress>(true, repack_options.arc_path, true);
 
-		PrepareUpdate(src_dir, file_names, c_root_index, *this, *tar_file_index_map, new_index, oaOverwrite,
+		PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, c_root_index, *this, *tar_file_index_map, new_index, oaOverwrite,
 				*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
 
-		ComObject<IArchiveUpdateCallback> tar_updater(new ArchiveUpdater(src_dir, std::wstring(), 0, tar_file_index_map,
+		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> tar_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, tar_file_index_map,
 				options, ignore_errors, options.dereference_symlinks, error_log, progress));
 
-		ComObject<AcmRelayStream> mem_stream(new AcmRelayStream(((size_t)g_options.relay_buffer_size) << 20));
+		ComObject<AcmRelayStream<UseVirtualDestructor>> mem_stream(new AcmRelayStream<UseVirtualDestructor>(((size_t)g_options.relay_buffer_size) << 20));
 
 		std::promise<int> promise;
 		std::future<int> future = promise.get_future();
@@ -1756,16 +1785,16 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 			promise.set_value(errc);
 		});
 
-		ComObject<IArchiveUpdateCallback> arc_updater(new ArchiveUpdater(src_dir, std::wstring(), 0, arc_file_index_map,
+		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> arc_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, arc_file_index_map,
 				repack_options, ignore_errors, repack_options.dereference_symlinks, error_log, progress, mem_stream, true));
 
-		UpdateStream *arc_wstream_impl;
+		UpdateStream<UseVirtualDestructor> *arc_wstream_impl;
 		if (options.enable_volumes)
-			arc_wstream_impl = new MultiVolumeUpdateStream(repack_options.arc_path, parse_size_string(repack_options.volume_size), progress2);
+			arc_wstream_impl = new MultiVolumeUpdateStream<UseVirtualDestructor>(repack_options.arc_path, parse_size_string(repack_options.volume_size), progress2);
 		else
-			arc_wstream_impl = new SimpleUpdateStream(repack_options.arc_path, progress2);
+			arc_wstream_impl = new SimpleUpdateStream<UseVirtualDestructor>(repack_options.arc_path, progress2);
 
-		ComObject<IOutStream> arc_update_stream(arc_wstream_impl);
+		ComObject<IOutStream<UseVirtualDestructor>> arc_update_stream(arc_wstream_impl);
 		int errc = out_arc->UpdateItems(arc_update_stream, new_index2, arc_updater);
 
 		mem_stream->FinishWriting();
@@ -1787,20 +1816,20 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 	bool skipped_files = false;
 	const auto file_index_map = std::make_shared<FileIndexMap>();
 
-	PrepareUpdate(src_dir, file_names, c_root_index, *this, *file_index_map, new_index, oaOverwrite,
+	PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, c_root_index, *this, *file_index_map, new_index, oaOverwrite,
 			*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
 
-	ComObject<IOutArchive> out_arc;
-	ArcAPI::create_out_archive(options.arc_type, out_arc.ref());
+	ComObject<IOutArchive<UseVirtualDestructor>> out_arc;
+	ArcAPI::create_out_archive(options.arc_type, (void **)out_arc.ref());
 
 	set_properties(out_arc, options);
 
 	const auto progress = std::make_shared<ArchiveUpdateProgress>(true, options.arc_path);
-	ComObject<IArchiveUpdateCallback> updater(new ArchiveUpdater(src_dir, std::wstring(), 0, file_index_map,
+	ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, file_index_map,
 			options, ignore_errors, options.dereference_symlinks, error_log, progress));
 
 	prepare_dst_dir(extract_file_path(options.arc_path));
-	UpdateStream *stream_impl;
+	UpdateStream<UseVirtualDestructor> *stream_impl;
 
 	if (options.arc_type == c_tar && options.repack && options.enable_volumes) {
 		if (extract_file_ext(options.arc_path) == L".001") {
@@ -1809,14 +1838,14 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 	}
 
 	if (options.enable_volumes && !(options.arc_type == c_tar && options.repack)) {
-		stream_impl = new MultiVolumeUpdateStream(options.arc_path, parse_size_string(options.volume_size),progress);
+		stream_impl = new MultiVolumeUpdateStream<UseVirtualDestructor>(options.arc_path, parse_size_string(options.volume_size),progress);
 	}
 	else if (options.create_sfx && options.arc_type == c_7z)
-		stream_impl = new SfxUpdateStream(options.arc_path, options.sfx_options, progress);
+		stream_impl = new SfxUpdateStream<UseVirtualDestructor>(options.arc_path, options.sfx_options, progress);
 	else
-		stream_impl = new SimpleUpdateStream(options.arc_path, progress);
+		stream_impl = new SimpleUpdateStream<UseVirtualDestructor>(options.arc_path, progress);
 
-	ComObject<IOutStream> update_stream(stream_impl);
+	ComObject<IOutStream<UseVirtualDestructor>> update_stream(stream_impl);
 
 	try {
 		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, new_index, updater));
@@ -1829,7 +1858,8 @@ void Archive::create(const std::wstring &src_dir, const std::vector<std::wstring
 		DeleteSrcFiles(src_dir, file_names, *ignore_errors, *error_log);
 }
 
-void Archive::update(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::update(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
 		const std::wstring &dst_dir, const UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
 {
 	DisableSleepMode dsm;
@@ -1839,19 +1869,19 @@ void Archive::update(const std::wstring &src_dir, const std::vector<std::wstring
 	bool skipped_files = false;
 
 	const auto file_index_map = std::make_shared<FileIndexMap>();
-	PrepareUpdate(src_dir, file_names, find_dir(dst_dir), *this, *file_index_map, new_index,
+	PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, find_dir(dst_dir), *this, *file_index_map, new_index,
 			options.overwrite, *ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
 
 	std::wstring temp_arc_name = get_temp_file_name();
 	try {
-		ComObject<IOutArchive> out_arc;
+		ComObject<IOutArchive<UseVirtualDestructor>> out_arc;
 		CHECK_COM(in_arc->QueryInterface((REFIID)IID_IOutArchive, reinterpret_cast<void **>(&out_arc)));
 		set_properties(out_arc, options);
 
 		const auto progress = std::make_shared<ArchiveUpdateProgress>(false, arc_path);
-		ComObject<IArchiveUpdateCallback> updater(new ArchiveUpdater(src_dir, dst_dir, m_num_indices,
+		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, dst_dir, m_num_indices,
 				file_index_map, options, ignore_errors, options.dereference_symlinks, error_log, progress));
-		ComObject<SimpleUpdateStream> update_stream(new SimpleUpdateStream(temp_arc_name, progress));
+		ComObject<SimpleUpdateStream<UseVirtualDestructor>> update_stream(new SimpleUpdateStream<UseVirtualDestructor>(temp_arc_name, progress));
 
 		COM_ERROR_CHECK(copy_prologue(update_stream));
 		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, new_index, updater));
@@ -1871,7 +1901,8 @@ void Archive::update(const std::wstring &src_dir, const std::vector<std::wstring
 		DeleteSrcFiles(src_dir, file_names, *ignore_errors, *error_log);
 }
 
-void Archive::create_dir(const std::wstring &dir_name, const std::wstring &dst_dir)
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::create_dir(const std::wstring &dir_name, const std::wstring &dst_dir)
 {
 	DisableSleepMode dsm;
 
@@ -1900,16 +1931,16 @@ void Archive::create_dir(const std::wstring &dir_name, const std::wstring &dst_d
 
 	std::wstring temp_arc_name = get_temp_file_name();
 	try {
-		ComObject<IOutArchive> out_arc;
+		ComObject<IOutArchive<UseVirtualDestructor>> out_arc;
 		CHECK_COM(in_arc->QueryInterface((REFIID)IID_IOutArchive, reinterpret_cast<void **>(&out_arc)));
 
 		const auto error_log = std::make_shared<ErrorLog>();
 		const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
 
 		const auto progress = std::make_shared<ArchiveUpdateProgress>(false, arc_path);
-		ComObject<IArchiveUpdateCallback> updater(new ArchiveUpdater(std::wstring(), dst_dir, m_num_indices,
+		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(std::wstring(), dst_dir, m_num_indices,
 				file_index_map, options, ignore_errors, true, error_log, progress));
-		ComObject<IOutStream> update_stream(new SimpleUpdateStream(temp_arc_name, progress));
+		ComObject<IOutStream<UseVirtualDestructor>> update_stream(new SimpleUpdateStream<UseVirtualDestructor>(temp_arc_name, progress));
 
 		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, m_num_indices + 1, updater));
 		close();
@@ -1922,3 +1953,6 @@ void Archive::create_dir(const std::wstring &dir_name, const std::wstring &dst_d
 
 	reopen();
 }
+
+template class Archive<true>;
+template class Archive<false>;

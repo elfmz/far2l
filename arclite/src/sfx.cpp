@@ -109,11 +109,40 @@ void attach_sfx_module(const std::wstring &file_path, const SfxOptions &sfx_opti
 		options.arc_path = file_path;
 		options.detect = false;
 		options.arc_types.push_back(c_7z);
-		std::unique_ptr<Archives> archives(Archive::open(options));
-		if (archives->empty())
-			FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
-		if (!archives->front()->is_pure_7z())
-			FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+#if 1
+		if (ArcAPI::have_virt_destructor()) {
+			std::unique_ptr<Archives<true>> archives(Archive<true>::open(options));
+			if (archives->empty())
+				FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+			if (!archives->front()->is_pure_7z())
+				FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+		}
+		else {
+			std::unique_ptr<Archives<false>> archives(Archive<false>::open(options));
+			if (archives->empty())
+				FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+			if (!archives->front()->is_pure_7z())
+				FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+		}
+#else
+		ArchivesVariant archives;
+
+		if (ArcAPI::have_virt_destructor()) {
+			archives = Archive<true>::open(options);
+		} else {
+			archives = Archive<false>::open(options);
+		}
+
+		std::visit([](auto&& archives) {
+		    if (archives->empty()) {
+		        FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+		    }
+			if (!archives->front()->is_pure_7z()) {
+				FAIL_MSG(Far::get_msg(MSG_ERROR_SFX_CONVERT));
+		    }
+		}, archives);
+#endif
+
 	}
 
 	FindData file_data = File::get_find_data(file_path);

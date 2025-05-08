@@ -39,7 +39,6 @@ void CryptData::DecryptBlock(byte *Buf,size_t Size)
     case CRYPT_RAR50:
       rin.blockDecrypt(Buf,Size,Buf);
       break;
-	case CRYPT_NONE: break;
   }
 }
 
@@ -82,7 +81,6 @@ bool CryptData::SetCryptKeys(bool Encrypt,CRYPT_METHOD Method,
     case CRYPT_RAR50:
       Success=SetKey50(Encrypt,Password,PwdW,Salt,InitV,Lg2Cnt,HashKey,PswCheck);
       break;
-	case CRYPT_NONE: break;
   }
   cleandata(PwdA,sizeof(PwdA));
   cleandata(PwdW,sizeof(PwdW));

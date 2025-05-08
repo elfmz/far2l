@@ -9,13 +9,12 @@
 
 Z7_PURE_INTERFACES_BEGIN
 
-
 #define Z7_IFACE_CONSTR_ARCHIVE_SUB(i, base, n) \
   Z7_DECL_IFACE_7ZIP_SUB(i, base, 6, n) \
   { Z7_IFACE_COM7_PURE(i) };
 
 #define Z7_IFACE_CONSTR_ARCHIVE(i, n) \
-  Z7_IFACE_CONSTR_ARCHIVE_SUB(i, IUnknown, n)
+  Z7_IFACE_CONSTR_ARCHIVE_SUB(i, IUnknownTemplate, n)
 
 /*
 How the function in 7-Zip returns object for output parameter via pointer
@@ -180,6 +179,8 @@ namespace NArchive
 
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveOpenCallback, 0x10)
 
+
+
 /*
 IArchiveExtractCallback::
 
@@ -231,13 +232,23 @@ SetOperationResult()
 
 // INTERFACE_IProgress(x)
 
+//template<bool UseVirtualDestructor>
+//x(GetStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **outStream, Int32 askExtractMode))
+
+/**
+#define Z7_IFACEM_IArchiveExtractCallback(x)
+  x(GetStream(UInt32 index, ISequentialOutStream<true> **outStream, Int32 askExtractMode))
+  x(PrepareOperation(Int32 askExtractMode))
+  x(SetOperationResult(Int32 opRes))
+  template<bool UseVirtualDestructor>
+**/
+
 #define Z7_IFACEM_IArchiveExtractCallback(x) \
-  x(GetStream(UInt32 index, ISequentialOutStream **outStream, Int32 askExtractMode)) \
+  x(GetStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **outStream, Int32 askExtractMode)) \
   x(PrepareOperation(Int32 askExtractMode)) \
   x(SetOperationResult(Int32 opRes)) \
 
 Z7_IFACE_CONSTR_ARCHIVE_SUB(IArchiveExtractCallback, IProgress, 0x20)
-
 
 
 /*
@@ -255,24 +266,23 @@ before v23:
   x(ReportExtractResult(UInt32 indexType, UInt32 index, Int32 opRes))
 Z7_IFACE_CONSTR_ARCHIVE_SUB(IArchiveExtractCallbackMessage, IProgress, 0x21)
 */
+
 #define Z7_IFACEM_IArchiveExtractCallbackMessage2(x) \
   x(ReportExtractResult(UInt32 indexType, UInt32 index, Int32 opRes))
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveExtractCallbackMessage2, 0x22)
 
 #define Z7_IFACEM_IArchiveOpenVolumeCallback(x) \
   x(GetProperty(PROPID propID, PROPVARIANT *value)) \
-  x(GetStream(const wchar_t *name, IInStream **inStream))
+  x(GetStream(const wchar_t *name, IInStream<UseVirtualDestructor> **inStream))
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveOpenVolumeCallback, 0x30)
 
-
 #define Z7_IFACEM_IInArchiveGetStream(x) \
-  x(GetStream(UInt32 index, ISequentialInStream **stream))
+  x(GetStream(UInt32 index, ISequentialInStream<UseVirtualDestructor> **stream))
 Z7_IFACE_CONSTR_ARCHIVE(IInArchiveGetStream, 0x40)
 
 #define Z7_IFACEM_IArchiveOpenSetSubArchiveName(x) \
   x(SetSubArchiveName(const wchar_t *name))
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveOpenSetSubArchiveName, 0x50)
-
 
 /*
 IInArchive::Open
@@ -314,11 +324,11 @@ Notes:
 #endif
 
 #define Z7_IFACEM_IInArchive(x) \
-  x(Open(IInStream *stream, const UInt64 *maxCheckStartPosition, IArchiveOpenCallback *openCallback)) \
+  x(Open(IInStream<UseVirtualDestructor> *stream, const UInt64 *maxCheckStartPosition, IArchiveOpenCallback<UseVirtualDestructor> *openCallback)) \
   x(Close()) \
   x(GetNumberOfItems(UInt32 *numItems)) \
   x(GetProperty(UInt32 index, PROPID propID, PROPVARIANT *value)) \
-  x(Extract(const UInt32 *indices, UInt32 numItems, Int32 testMode, IArchiveExtractCallback *extractCallback)) \
+  x(Extract(const UInt32 *indices, UInt32 numItems, Int32 testMode, IArchiveExtractCallback<UseVirtualDestructor> *extractCallback)) \
   x(GetArchiveProperty(PROPID propID, PROPVARIANT *value)) \
   x(GetNumberOfProperties(UInt32 *numProps)) \
   x(GetPropertyInfo(UInt32 index, BSTR *name, PROPID *propID, VARTYPE *varType)) \
@@ -377,7 +387,7 @@ Z7_IFACE_CONSTR_ARCHIVE(IArchiveGetRawProps, 0x70)
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveGetRootProps, 0x71)
 
 #define Z7_IFACEM_IArchiveOpenSeq(x) \
-  x(OpenSeq(ISequentialInStream *stream)) \
+  x(OpenSeq(ISequentialInStream<UseVirtualDestructor> *stream)) \
 
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveOpenSeq, 0x61)
 
@@ -445,15 +455,16 @@ SetOperationResult()
 #define Z7_IFACEM_IArchiveUpdateCallback(x) \
   x(GetUpdateItemInfo(UInt32 index, Int32 *newData, Int32 *newProps, UInt32 *indexInArchive)) \
   x(GetProperty(UInt32 index, PROPID propID, PROPVARIANT *value)) \
-  x(GetStream(UInt32 index, ISequentialInStream **inStream)) \
+  x(GetStream(UInt32 index, ISequentialInStream<UseVirtualDestructor> **inStream)) \
   x(SetOperationResult(Int32 operationResult)) \
 
 Z7_IFACE_CONSTR_ARCHIVE_SUB(IArchiveUpdateCallback, IProgress, 0x80)
 
+
 // INTERFACE_IArchiveUpdateCallback(x)
 #define Z7_IFACEM_IArchiveUpdateCallback2(x) \
   x(GetVolumeSize(UInt32 index, UInt64 *size)) \
-  x(GetVolumeStream(UInt32 index, ISequentialOutStream **volumeStream)) \
+  x(GetVolumeStream(UInt32 index, ISequentialOutStream<UseVirtualDestructor> **volumeStream)) \
 
 Z7_IFACE_CONSTR_ARCHIVE_SUB(IArchiveUpdateCallback2, IArchiveUpdateCallback, 0x82)
 
@@ -484,7 +495,7 @@ IArchiveUpdateCallbackFile::ReportOperation
 */
 
 #define Z7_IFACEM_IArchiveUpdateCallbackFile(x) \
-  x(GetStream2(UInt32 index, ISequentialInStream **inStream, UInt32 notifyOp)) \
+  x(GetStream2(UInt32 index, ISequentialInStream<UseVirtualDestructor> **inStream, UInt32 notifyOp)) \
   x(ReportOperation(UInt32 indexType, UInt32 index, UInt32 notifyOp)) \
 
 Z7_IFACE_CONSTR_ARCHIVE(IArchiveUpdateCallbackFile, 0x83)
@@ -528,7 +539,7 @@ UpdateItems()
 
 
 #define Z7_IFACEM_IOutArchive(x) \
-  x(UpdateItems(ISequentialOutStream *outStream, UInt32 numItems, IArchiveUpdateCallback *updateCallback)) \
+  x(UpdateItems(ISequentialOutStream<UseVirtualDestructor> *outStream, UInt32 numItems, IArchiveUpdateCallback<UseVirtualDestructor> *updateCallback)) \
   x(GetFileTimeType(UInt32 *type))
 
 Z7_IFACE_CONSTR_ARCHIVE(IOutArchive, 0xA0)
@@ -662,6 +673,7 @@ BSTR AllocBstrFromAscii(const char *s) throw();
 #define IMP_IInArchive_ArcProps_WITH_NAME \
   IMP_IInArchive_GetProp_WITH_NAME(GetNumberOfArchiveProperties, GetArchivePropertyInfo, kArcProps)
 
+
 #define IMP_IInArchive_ArcProps_NO_Table \
   Z7_COM7F_IMF(CHandler::GetNumberOfArchiveProperties(UInt32 *numProps)) \
     { *numProps = 0; return S_OK; } \
@@ -716,10 +728,12 @@ extern "C"
   typedef HRESULT (WINAPI *Func_SetLargePageMode)();
   // typedef HRESULT (WINAPI *Func_SetClientVersion)(UInt32 version);
 
-  typedef IOutArchive * (*Func_CreateOutArchive)();
-  typedef IInArchive * (*Func_CreateInArchive)();
-}
+//  typedef IOutArchive * (*Func_CreateOutArchive)();
+//  typedef IInArchive * (*Func_CreateInArchive)();
 
+  typedef void *(*Func_CreateOutArchive)();
+  typedef void *(*Func_CreateInArchive)();
+}
 
 /*
   if there is no time in archive, external MTime of archive

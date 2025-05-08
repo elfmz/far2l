@@ -152,7 +152,7 @@ bool StringList::Search(const std::wstring &Str,bool CaseSensitive)
   while (GetString(&CurStr))
   {
     if (CurStr!=NULL)
-      if ( (CaseSensitive && Str!=CurStr) || (!CaseSensitive && wcsicomp(Str,CurStr) != 0) )
+      if (CaseSensitive && Str!=CurStr || !CaseSensitive && wcsicomp(Str,CurStr)!=0)
         continue;
     Found=true;
     break;

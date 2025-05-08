@@ -15,6 +15,7 @@
 #define k_7zip_GUID_Data3_Encoder 0x2791
 #define k_7zip_GUID_Data3_Hasher  0x2792
 
+#if 0
 #define Z7_DECL_IFACE_7ZIP_SUB(i, _base, groupId, subId) \
   Z7_DEFINE_GUID(IID_ ## i, \
     k_7zip_GUID_Data1, \
@@ -25,6 +26,21 @@
  
 #define Z7_DECL_IFACE_7ZIP(i,           groupId, subId) \
     Z7_DECL_IFACE_7ZIP_SUB(i, IUnknown, groupId, subId)
+#endif
+
+//#define Z7_DECL_IFACE_7ZIP_SUB(i, base, groupId, subId)
+
+#define Z7_DECL_IFACE_7ZIP_SUB(i, base, groupId, subId) \
+  Z7_DEFINE_GUID(IID_ ## i, \
+    k_7zip_GUID_Data1, \
+    k_7zip_GUID_Data2, \
+    k_7zip_GUID_Data3_Common, \
+    0, 0, 0, (groupId), 0, (subId), 0, 0); \
+    template<bool UseVirtualDestructor> \
+    struct Z7_DECLSPEC_NOVTABLE i: public base<UseVirtualDestructor>
+
+#define Z7_DECL_IFACE_7ZIP(i, groupId, subId) \
+    Z7_DECL_IFACE_7ZIP_SUB(i, IUnknownTemplate, groupId, subId)
 
 
 #ifdef COM_DECLSPEC_NOTHROW
@@ -63,7 +79,6 @@
 #define Z7_IFACE_COM7_PURE(name)          Z7_IFACEM_ ## name(Z7_COM7F_PURE)
 #define Z7_IFACE_COM7_IMP(name)           Z7_IFACEM_ ## name(Z7_COM7F_IMP)
 #define Z7_IFACE_COM7_IMP_NONFINAL(name)  Z7_IFACEM_ ## name(Z7_COM7F_IMP_NONFINAL)
-
 
 #define Z7_IFACE_DECL_PURE(name) \
     DECLARE_INTERFACE(name) \

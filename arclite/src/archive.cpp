@@ -9,14 +9,13 @@
 #include "archive.hpp"
 #include "options.hpp"
 
+const wchar_t *c_method_default = L"Default";
 const wchar_t *c_method_copy = L"Copy";
-
 const wchar_t *c_method_lzma = L"LZMA";
 const wchar_t *c_method_lzma2 = L"LZMA2";
 const wchar_t *c_method_ppmd = L"PPMD";
 const wchar_t *c_method_deflate = L"Deflate";
 const wchar_t *c_method_deflate64 = L"Deflate64";
-
 const wchar_t *c_method_bzip2 = L"BZip2";
 const wchar_t *c_method_delta = L"Delta";
 const wchar_t *c_method_bcj = L"BCJ";
@@ -68,7 +67,9 @@ const UInt64 c_min_volume_size = 16 * 1024;
 const wchar_t *c_sfx_ext = L".exe";
 const wchar_t *c_volume_ext = L".001";
 
-unsigned Archive::max_check_size;
+namespace ArchiveGlobals {
+    unsigned max_check_size = 0;
+}
 
 HRESULT ArcLib::get_prop(UInt32 index, PROPID prop_id, PROPVARIANT *prop) const
 {
@@ -266,7 +267,9 @@ static bool GetCoderInfo(Func_GetMethodProperty getMethodProperty, UInt32 index,
 	return info.DecoderIsAssigned || info.EncoderIsAssigned;
 }
 
-class MyCompressCodecsInfo : public ICompressCodecsInfo, public IHashers, private ComBase
+template<bool UseVirtualDestructor>
+class MyCompressCodecsInfo : public ICompressCodecsInfo<UseVirtualDestructor>, 
+							 public IHashers<UseVirtualDestructor>, private ComBase<UseVirtualDestructor>
 {
 private:
 	const ArcLibs &libs_;
@@ -279,15 +282,18 @@ public:
 		: libs_(libs)
 	{
 		for (size_t ilib = 0; ilib < 1; ++ilib) {	 // 7z.dll only
-			if (ilib == skip_lib_index)
+			if (ilib == skip_lib_index) {
 				continue;
+			}
 			const auto &arc_lib = libs[ilib];
+
 			if ((arc_lib.CreateObject || arc_lib.CreateDecoder || arc_lib.CreateEncoder)
 					&& arc_lib.GetMethodProperty) {
 				UInt32 numMethods = 1;
 				bool ok = true;
 				if (arc_lib.GetNumberOfMethods)
 					ok = S_OK == arc_lib.GetNumberOfMethods(&numMethods);
+
 				for (UInt32 i = 0; ok && i < numMethods; ++i) {
 					CDllCodecInfo info;
 					info.LibIndex = static_cast<UInt32>(ilib);
@@ -297,8 +303,10 @@ public:
 					}
 				}
 			}
+
 			if (arc_lib.ComHashers) {
-				UInt32 numHashers = arc_lib.ComHashers->GetNumHashers();
+			    IHashers<UseVirtualDestructor> *_ComHashers = static_cast<IHashers<UseVirtualDestructor>*>(arc_lib.ComHashers);
+				UInt32 numHashers = _ComHashers->GetNumHashers();
 				for (UInt32 i = 0; i < numHashers; ++i) {
 					CDllHasherInfo info;
 					info.LibIndex = static_cast<UInt32>(ilib);
@@ -307,6 +315,7 @@ public:
 				}
 			}
 		}
+
 		for (const auto &codec : codecs) {
 			if (codec.LibIndex != skip_lib_index)
 				codecs_.push_back(codec);
@@ -328,14 +337,26 @@ public:
 	{
 		const CDllHasherInfo &hi = hashers_[index];
 		const auto &lib = libs_[hi.LibIndex];
-		return lib.ComHashers->GetHasherProp(hi.HasherIndex, propID, value);
+
+		if (!lib.ComHashers) {
+			return E_FAIL;
+		}
+
+        auto* hashers = static_cast<IHashers<UseVirtualDestructor>*>(lib.ComHashers);
+        return hashers->GetHasherProp(hi.HasherIndex, propID, value);
 	}
 
-	STDMETHODIMP CreateHasher(UInt32 index, IHasher **hasher) noexcept override
+	STDMETHODIMP CreateHasher(UInt32 index, IHasher<UseVirtualDestructor> **hasher) noexcept override
 	{
-		const CDllHasherInfo &hi = hashers_[index];
-		const auto &lib = libs_[hi.LibIndex];
-		return lib.ComHashers->CreateHasher(hi.HasherIndex, hasher);
+	    const CDllHasherInfo &hi = hashers_[index];
+	    const auto &lib = libs_[hi.LibIndex];
+
+	    if (!lib.ComHashers || !hasher) {
+	        return E_FAIL;
+	    }
+
+	    auto* hashers = static_cast<IHashers<UseVirtualDestructor>*>(lib.ComHashers);
+	    return hashers->CreateHasher(hi.HasherIndex, hasher);
 	}
 
 	STDMETHODIMP GetNumMethods(UInt32 *numMethods) noexcept override
@@ -430,7 +451,6 @@ void ArcAPI::load_libs(const std::wstring &path)
 	std::wstring dir = extract_file_path(path);
 
 	fprintf(stderr, "ArcAPI::load_libs( %S )\n", path.c_str());
-//	fprintf(stderr, "dir = %S\n", dir.c_str());
 
 	bool more;
 	while (file_enum.next_nt(more) && more) {
@@ -438,8 +458,9 @@ void ArcAPI::load_libs(const std::wstring &path)
 		arc_lib.module_path = add_trailing_slash(dir) + file_enum.data().cFileName;
 
 		const std::string s2(arc_lib.module_path.begin(), arc_lib.module_path.end());
+
 		arc_lib.h_module = dlopen(s2.c_str(), RTLD_LAZY);
-//		arc_lib.h_module = dlopen(s2.c_str(), RTLD_NOW);
+		//arc_lib.h_module = dlopen(s2.c_str(), RTLD_NOW);
 
 		if (arc_lib.h_module == nullptr) {
 			continue;
@@ -470,6 +491,7 @@ void ArcAPI::load_libs(const std::wstring &path)
 
 		if (arc_lib.CreateObject && ((arc_lib.GetNumberOfFormats && arc_lib.GetHandlerProperty2)
 						|| arc_lib.GetHandlerProperty)) {
+			bool bUseVD =  true;
 			if (arc_lib.GetModuleProp) {
 				PropVariant prop;
 				if (arc_lib.GetModuleProp(NModulePropID::kVersion, prop.ref()) == S_OK && prop.is_uint()) {
@@ -477,37 +499,42 @@ void ArcAPI::load_libs(const std::wstring &path)
 				}
 				if (arc_lib.GetModuleProp(NModulePropID::kInterfaceType, prop.ref()) == S_OK && prop.is_uint()) {
 					uint32_t haveVirtDestructor = prop.get_uint();
-#ifdef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
-						if (!haveVirtDestructor) {
-							fprintf(stderr, "ArcAPI::load_libs() skipped %s without VIRTUAL_DESTRUCTOR_IN_IUNKNOWN\n", s2.c_str());
-							dlclose(arc_lib.h_module);
-							continue;
-						}
-#else
-						if (haveVirtDestructor) {
-							fprintf(stderr, "ArcAPI::load_libs() skipped %s with VIRTUAL_DESTRUCTOR_IN_IUNKNOWN\n", s2.c_str());
-							dlclose(arc_lib.h_module);
-							continue;
-						}
-#endif
+					fprintf(stderr, "ArcAPI::load_libs() %s kInterfaceType = %u\n", s2.c_str(), haveVirtDestructor);
+					bUseVD = haveVirtDestructor ? true : false;
 				}
 			}
 			else { /// p7zip ?
-#ifdef Z7_USE_VIRTUAL_DESTRUCTOR_IN_IUNKNOWN
 				arc_lib.version = get_module_version(arc_lib.module_path);
-#else
-				fprintf(stderr, "ArcAPI::load_libs() skipped %s with (VIRTUAL_DESTRUCTOR_IN_IUNKNOWN?)\n", s2.c_str());
-				dlclose(arc_lib.h_module);
-				continue;
-#endif
+				fprintf(stderr, "ArcAPI::load_libs() %s no GetModuleProp - p7zip ? bUseVD =  true\n", s2.c_str());
+			}
+
+			if (arc_libs.empty()) { // set interface type
+				bUseVirtualDestructor = bUseVD;
+			}
+			else { // check interface type
+				if (bUseVirtualDestructor != bUseVD) {
+					fprintf(stderr, "ArcAPI::load_libs() SKIP %s (Non-compliance with the previously established interface.)\n", s2.c_str());
+					dlclose(arc_lib.h_module);
+					continue;
+				}
 			}
 
 			Func_GetHashers getHashers = reinterpret_cast<Func_GetHashers>(
 					reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetHashers")));
 			if (getHashers) {
-				IHashers *hashers = nullptr;
-				if (S_OK == getHashers(&hashers) && hashers)
-					arc_lib.ComHashers = hashers;
+
+				if (bUseVirtualDestructor) {
+					IHashers<true>* hashers = nullptr;
+
+					if (S_OK == getHashers(reinterpret_cast<void**>(&hashers)) && hashers) {
+						arc_lib.ComHashers = static_cast<void*>(hashers);
+					}
+				} else {
+					IHashers<false>* hashers = nullptr;
+					if (S_OK == getHashers(reinterpret_cast<void**>(&hashers)) && hashers) {
+						arc_lib.ComHashers = static_cast<void*>(hashers);
+					}
+				}
 			}
 			arc_libs.push_back(arc_lib);
 		} else {
@@ -542,7 +569,6 @@ void ArcAPI::load_codecs(const std::wstring &path)
 						return;
 
 				fprintf(stderr, "Adding codec %S \n", info.Name.c_str());
-
 				arc_codecs.push_back(info);
 			}
 		}
@@ -550,12 +576,24 @@ void ArcAPI::load_codecs(const std::wstring &path)
 
 	const auto &add_hashers = [this](ArcLib &arc_lib, size_t lib_index) {
 		if (arc_lib.ComHashers) {
-			UInt32 numHashers = arc_lib.ComHashers->GetNumHashers();
-			for (UInt32 i = 0; i < numHashers; i++) {
-				CDllHasherInfo info;
-				info.LibIndex = static_cast<UInt32>(lib_index);
-				info.HasherIndex = i;
-				arc_hashers.push_back(info);
+			if (bUseVirtualDestructor) {
+				auto* hashers = static_cast<IHashers<true>*>(arc_lib.ComHashers);
+				UInt32 numHashers = hashers->GetNumHashers();
+				for (UInt32 i = 0; i < numHashers; i++) {
+					CDllHasherInfo info;
+					info.LibIndex = static_cast<UInt32>(lib_index);
+					info.HasherIndex = i;
+					arc_hashers.push_back(info);
+				}
+			} else {
+				auto* hashers = static_cast<IHashers<false>*>(arc_lib.ComHashers);
+				UInt32 numHashers = hashers->GetNumHashers();
+				for (UInt32 i = 0; i < numHashers; i++) {
+					CDllHasherInfo info;
+					info.LibIndex = static_cast<UInt32>(lib_index);
+					info.HasherIndex = i;
+					arc_hashers.push_back(info);
+				}
 			}
 		}
 	};
@@ -589,6 +627,37 @@ void ArcAPI::load_codecs(const std::wstring &path)
 				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetNumberOfMethods")));
 		arc_lib.GetMethodProperty = reinterpret_cast<Func_GetMethodProperty>(
 				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetMethodProperty")));
+		arc_lib.GetModuleProp = reinterpret_cast<Func_GetModuleProp>(
+				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetModuleProp")));
+
+		{
+			bool bUseVD =  true;
+
+			fprintf(stderr, "ArcAPI::load_codecs %s have GetModuleProp\n", s2.c_str() );
+
+			if (arc_lib.GetModuleProp) {
+				PropVariant prop;
+				if (arc_lib.GetModuleProp(NModulePropID::kVersion, prop.ref()) == S_OK && prop.is_uint()) {
+					arc_lib.version = prop.get_uint();
+				}
+				if (arc_lib.GetModuleProp(NModulePropID::kInterfaceType, prop.ref()) == S_OK && prop.is_uint()) {
+					uint32_t haveVirtDestructor = prop.get_uint();
+					fprintf(stderr, "ArcAPI::load_codecs %s kInterfaceType = %u\n", s2.c_str(), haveVirtDestructor);
+					bUseVD = haveVirtDestructor ? true : false;
+				}
+			}
+			else { /// p7zip codec ?
+				arc_lib.version = get_module_version(arc_lib.module_path);
+				fprintf(stderr, "ArcAPI::load_codecs %s no GetModuleProp - p7zip ? bUseVD =  true\n", s2.c_str());
+			}
+
+			if (bUseVirtualDestructor != bUseVD) {
+				fprintf(stderr, "ArcAPI::load_codecs SKIP %s (Non-compliance with the previously established interface.)\n", s2.c_str());
+				dlclose(arc_lib.h_module);
+				continue;
+			}
+		}
+
 		arc_lib.GetNumberOfFormats = nullptr;
 		arc_lib.GetHandlerProperty = nullptr;
 		arc_lib.GetHandlerProperty2 = nullptr;
@@ -601,11 +670,18 @@ void ArcAPI::load_codecs(const std::wstring &path)
 		Func_GetHashers getHashers = reinterpret_cast<Func_GetHashers>(
 				reinterpret_cast<void *>(dlsym(arc_lib.h_module, "GetHashers")));
 		if (getHashers) {
-			IHashers *hashers = nullptr;
-			if (S_OK == getHashers(&hashers) && hashers) {
-				arc_lib.ComHashers = hashers;
-				add_hashers(arc_lib, arc_libs.size());
+			if (bUseVirtualDestructor) {
+				IHashers<true>* hashers = nullptr;
+				if (S_OK == getHashers(reinterpret_cast<void**>(&hashers)) && hashers) {
+					arc_lib.ComHashers = static_cast<void*>(hashers);
+				}
+			} else {
+				IHashers<false>* hashers = nullptr;
+				if (S_OK == getHashers(reinterpret_cast<void**>(&hashers)) && hashers) {
+					arc_lib.ComHashers = static_cast<void*>(hashers);
+				}
 			}
+			add_hashers(arc_lib, arc_libs.size());
 		}
 		if (n_start_codecs < arc_codecs.size() || n_start_hashers < arc_hashers.size())
 			arc_libs.push_back(arc_lib);
@@ -615,7 +691,6 @@ void ArcAPI::load_codecs(const std::wstring &path)
 
 	n_7z_codecs = 0;
 	if (arc_codecs.size() > 0) {
-
 		std::sort(arc_codecs.begin(), arc_codecs.end(), [&](const CDllCodecInfo &a, const CDllCodecInfo &b) {
 			bool a_is_zip = (a.CodecId & 0xffffff00U) == 0x040100;
 			bool b_is_zip = (b.CodecId & 0xffffff00U) == 0x040100;
@@ -632,13 +707,25 @@ void ArcAPI::load_codecs(const std::wstring &path)
 	}
 	for (size_t i = 0; i < n_format_libs; ++i) {
 		if (arc_libs[i].SetCodecs) {
-			auto compressinfo = new MyCompressCodecsInfo(arc_libs, arc_codecs, arc_hashers, i);
-			UInt32 nm = 0, nh = compressinfo->GetNumHashers();
-			compressinfo->GetNumMethods(&nm);
-			if (nm > 0 || nh > 0) {
-				arc_libs[i].SetCodecs(compressinfo);
-			} else {
-				delete compressinfo;
+			if (bUseVirtualDestructor) {
+				auto compressinfo = new MyCompressCodecsInfo<true>(arc_libs, arc_codecs, arc_hashers, i);
+				UInt32 nm = 0, nh = compressinfo->GetNumHashers();
+				compressinfo->GetNumMethods(&nm);
+				if (nm > 0 || nh > 0) {
+					arc_libs[i].SetCodecs(compressinfo);
+				} else {
+					delete compressinfo;
+				}
+			}
+			else {
+				auto compressinfo = new MyCompressCodecsInfo<false>(arc_libs, arc_codecs, arc_hashers, i);
+				UInt32 nm = 0, nh = compressinfo->GetNumHashers();
+				compressinfo->GetNumMethods(&nm);
+				if (nm > 0 || nh > 0) {
+					arc_libs[i].SetCodecs(compressinfo);
+				} else {
+					delete compressinfo;
+				}
 			}
 		}
 	}
@@ -712,12 +799,12 @@ void ArcAPI::find_sfx_modules(const std::wstring &path)
 			continue;
 		std::string sig(buffer.data(), sz);
 
-		if (sig == "MZ") {
+//		if (sig == "MZ") {
 			//  fprintf(stderr, " MZ ???? \n");
-		      continue;
-		}
-
+//		      continue;
+//		}
 //		fprintf(stderr, "ArcAPI::find_sfx_modules: Added sfx!\n");
+
 		sfx_modules.push_back(sfx_module);
 	}
 }
@@ -751,29 +838,57 @@ void ArcAPI::load()
 
 	std::wstring _7zip_path = dll_path; // First, let's check in the plugin directory.
 
-	load_libs(_7zip_path + L"*.so");
+	load_libs(_7zip_path + L"*7z*.so");
+#if defined(__APPLE__)
+	load_libs(_7zip_path + L"*7z*.dylib");
+#endif
 	find_sfx_modules(_7zip_path + L"*.sfx");
 
+	const std::vector<std::wstring> search_paths = {
+		L"/usr/lib/7zip/",
+		L"/usr/local/lib/7zip/",
+		L"/usr/lib/p7zip/",
+		L"/usr/local/lib/p7zip/",
+#if defined(__APPLE__)
+		L"/opt/homebrew/lib/7zip/",       // macOS Homebrew
+		L"/opt/homebrew/lib/p7zip/",       // macOS Homebrew
+		L"/opt/homebrew/lib/",       // macOS Homebrew
+#endif
+		L"/usr/libexec/7zip/",
+		L"/usr/libexec/p7zip/",
+		L"/usr/libexec/",
+#if 1
+		L"/usr/lib64/7zip/",
+		L"/usr/local/lib64/7zip/",
+		L"/usr/lib64/p7zip/",
+		L"/usr/local/lib64/p7zip/",
+		L"/usr/lib32/7zip/",
+		L"/usr/local/lib32/7zip/",
+		L"/usr/lib32/p7zip/",
+		L"/usr/local/lib32/p7zip/",
+		L"/usr/lib64/",
+		L"/usr/lib/",
+		L"/usr/lib32/",
+#endif
+	};
+
 	if (arc_libs.empty()) {
-		_7zip_path = g_options.preferred_7zip_path; // Then we'll check in the directory from the settings.
-		load_libs(_7zip_path + L"*.so");
-		if (sfx_modules.empty())
-			find_sfx_modules(_7zip_path + L"*.sfx");
-	}
 
-	if (arc_libs.empty()) { // And then we'll check the standard paths for 7-Zip.
-		_7zip_path = L"/usr/lib/7zip/";
-		load_libs(_7zip_path + L"*.so");
-		if (sfx_modules.empty())
-			find_sfx_modules(_7zip_path + L"*.sfx");
+		for (const auto& wstr_path : search_paths) {
+			_7zip_path = wstr_path;
 
-		if (arc_libs.empty()) {
-			_7zip_path = L"/usr/local/lib/7zip/";
-			load_libs(_7zip_path + L"*.so");
-			if (sfx_modules.empty())
+			load_libs(_7zip_path + L"*7z*.so");
+#if defined(__APPLE__)
+			load_libs(_7zip_path + L"*7z*.dylib");
+#endif
+			if (sfx_modules.empty()) {
 				find_sfx_modules(_7zip_path + L"*.sfx");
+			}
+
+			if (!arc_libs.empty())
+				break;
 		}
-	}
+    }
 
 	n_base_format_libs = n_format_libs = arc_libs.size();
 	load_libs(_7zip_path + L"Formats/*.format");
@@ -864,14 +979,16 @@ void ArcAPI::load()
 	}
 }
 
-void ArcAPI::create_in_archive(const ArcType &arc_type, IInArchive **in_arc)
+//void ArcAPI::create_in_archive(const ArcType &arc_type, IInArchive **in_arc)
+void ArcAPI::create_in_archive(const ArcType &arc_type, void **in_arc)
 {
 	CHECK_COM(libs()[formats().at(arc_type).lib_index]
 					.CreateObject(reinterpret_cast<const GUID *>(arc_type.data()), &IID_IInArchive,
 							reinterpret_cast<void **>(in_arc)));
 }
 
-void ArcAPI::create_out_archive(const ArcType &arc_type, IOutArchive **out_arc)
+//void ArcAPI::create_out_archive(const ArcType &arc_type, IOutArchive **out_arc)
+void ArcAPI::create_out_archive(const ArcType &arc_type, void **out_arc)
 {
 	CHECK_COM(libs()[formats().at(arc_type).lib_index]
 					.CreateObject(reinterpret_cast<const GUID *>(arc_type.data()), &IID_IOutArchive,
@@ -886,7 +1003,8 @@ void ArcAPI::free()
 	}
 }
 
-std::wstring Archive::get_default_name() const
+template<bool UseVirtualDestructor>
+std::wstring Archive<UseVirtualDestructor>::get_default_name() const
 {
 	std::wstring name = arc_name();
 	std::wstring ext = extract_file_ext(name);
@@ -906,7 +1024,8 @@ std::wstring Archive::get_default_name() const
 	return name;
 }
 
-std::wstring Archive::get_temp_file_name() const
+template<bool UseVirtualDestructor>
+std::wstring Archive<UseVirtualDestructor>::get_temp_file_name() const
 {
 	GUID guid;
 	CoCreateGuid(&guid);
@@ -926,14 +1045,8 @@ bool ArcFileInfo::operator<(const ArcFileInfo &file_info) const
 		return parent < file_info.parent;
 }
 
-//bool Archive::is_()
-//{
-
-
-
-//}
-
-void Archive::make_index()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::make_index()
 {
 	m_num_indices = 0;
 	in_arc->GetNumberOfItems(&m_num_indices);
@@ -1015,7 +1128,7 @@ void Archive::make_index()
 						dir_parents.pop();
 					}
 				} else if (dir_info.name != L".") {
-					std::pair<DirList::iterator, bool> ins_pos = dir_list.insert(dir_info);
+					std::pair<typename DirList::iterator, bool> ins_pos = dir_list.insert(dir_info);
 					if (ins_pos.second)
 						dir_index++;
 					dir_parents.push(dir_info.parent);
@@ -1029,7 +1142,7 @@ void Archive::make_index()
 		if (file_info.is_dir) {
 			dir_info.index = dir_index;
 			dir_info.name = file_info.name;
-			std::pair<DirList::iterator, bool> ins_pos = dir_list.insert(dir_info);
+			std::pair<typename DirList::iterator, bool> ins_pos = dir_list.insert(dir_info);
 			if (ins_pos.second) {
 				dir_index++;
 				dir_index_map[dir_info.index] = i;
@@ -1078,7 +1191,8 @@ void Archive::make_index()
 	load_arc_attr();
 }
 
-UInt32 Archive::find_dir(const std::wstring &path)
+template<bool UseVirtualDestructor>
+UInt32 Archive<UseVirtualDestructor>::find_dir(const std::wstring &path)
 {
 	if (file_list.empty())
 		make_index();
@@ -1108,7 +1222,8 @@ UInt32 Archive::find_dir(const std::wstring &path)
 	return dir_info.parent;
 }
 
-FileIndexRange Archive::get_dir_list(UInt32 dir_index)
+template<bool UseVirtualDestructor>
+FileIndexRange Archive<UseVirtualDestructor>::get_dir_list(UInt32 dir_index)
 {
 	if (file_list.empty())
 		make_index();
@@ -1125,7 +1240,8 @@ FileIndexRange Archive::get_dir_list(UInt32 dir_index)
 	return index_range;
 }
 
-std::wstring Archive::get_path(UInt32 index)
+template<bool UseVirtualDestructor>
+std::wstring Archive<UseVirtualDestructor>::get_path(UInt32 index)
 {
 	if (file_list.empty())
 		make_index();
@@ -1139,7 +1255,8 @@ std::wstring Archive::get_path(UInt32 index)
 	return file_path;
 }
 
-FindData Archive::get_file_info(UInt32 index)
+template<bool UseVirtualDestructor>
+FindData Archive<UseVirtualDestructor>::get_file_info(UInt32 index)
 {
 	if (file_list.empty())
 		make_index();
@@ -1155,7 +1272,8 @@ FindData Archive::get_file_info(UInt32 index)
 	return file_info;
 }
 
-bool Archive::get_main_file(UInt32 &index) const
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index) const
 {
 	PropVariant prop;
 	if (in_arc->GetArchiveProperty(kpidMainSubfile, prop.ref()) != S_OK || prop.vt != VT_UI4)
@@ -1186,7 +1304,8 @@ constexpr DWORD c_valid_import_attributes =
 		FILE_ATTRIBUTE_PINNED |
 		FILE_ATTRIBUTE_UNPINNED;
 
-DWORD Archive::get_links(UInt32 index) const
+template<bool UseVirtualDestructor>
+DWORD Archive<UseVirtualDestructor>::get_links(UInt32 index) const
 {
 	PropVariant prop;
 	DWORD n = 1;
@@ -1261,7 +1380,8 @@ S_ISSOCK(st_mode m) /* socket */
 #endif
 }
 
-DWORD Archive::get_attr(UInt32 index, DWORD *posixattr) const
+template<bool UseVirtualDestructor>
+DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) const
 {
 	PropVariant prop;
 	DWORD attr = 0, _posixattr = 0;
@@ -1290,7 +1410,8 @@ DWORD Archive::get_attr(UInt32 index, DWORD *posixattr) const
 	return attr;
 }
 
-std::wstring Archive::get_user(UInt32 index) const
+template<bool UseVirtualDestructor>
+std::wstring Archive<UseVirtualDestructor>::get_user(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1303,7 +1424,8 @@ std::wstring Archive::get_user(UInt32 index) const
 	}
 }
 
-std::wstring Archive::get_group(UInt32 index) const
+template<bool UseVirtualDestructor>
+std::wstring Archive<UseVirtualDestructor>::get_group(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1316,7 +1438,8 @@ std::wstring Archive::get_group(UInt32 index) const
 	}
 }
 
-bool Archive::get_encrypted(UInt32 index) const
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_encrypted(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1328,7 +1451,8 @@ bool Archive::get_encrypted(UInt32 index) const
 		return false;
 }
 
-UInt64 Archive::get_size(UInt32 index) const
+template<bool UseVirtualDestructor>
+UInt64 Archive<UseVirtualDestructor>::get_size(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1340,7 +1464,8 @@ UInt64 Archive::get_size(UInt32 index) const
 		return 0;
 }
 
-UInt64 Archive::get_psize(UInt32 index) const
+template<bool UseVirtualDestructor>
+UInt64 Archive<UseVirtualDestructor>::get_psize(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1352,7 +1477,8 @@ UInt64 Archive::get_psize(UInt32 index) const
 		return 0;
 }
 
-UInt64 Archive::get_offset(UInt32 index) const
+template<bool UseVirtualDestructor>
+UInt64 Archive<UseVirtualDestructor>::get_offset(UInt32 index) const
 {
 	PropVariant prop;
 	if (index < m_num_indices)
@@ -1363,7 +1489,8 @@ UInt64 Archive::get_offset(UInt32 index) const
 
 static constexpr FILETIME nullftime = {0, 0};
 
-FILETIME Archive::get_ctime(UInt32 index) const
+template<bool UseVirtualDestructor>
+FILETIME Archive<UseVirtualDestructor>::get_ctime(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices) {
@@ -1380,7 +1507,8 @@ FILETIME Archive::get_ctime(UInt32 index) const
 //	return arc_info.ftCreationTime;
 }
 
-FILETIME Archive::get_mtime(UInt32 index) const
+template<bool UseVirtualDestructor>
+FILETIME Archive<UseVirtualDestructor>::get_mtime(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices) {
@@ -1395,7 +1523,8 @@ FILETIME Archive::get_mtime(UInt32 index) const
 	}
 }
 
-FILETIME Archive::get_atime(UInt32 index) const
+template<bool UseVirtualDestructor>
+FILETIME Archive<UseVirtualDestructor>::get_atime(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices) {
@@ -1410,7 +1539,8 @@ FILETIME Archive::get_atime(UInt32 index) const
 	}
 }
 
-unsigned Archive::get_crc(UInt32 index) const
+template<bool UseVirtualDestructor>
+unsigned Archive<UseVirtualDestructor>::get_crc(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1421,7 +1551,8 @@ unsigned Archive::get_crc(UInt32 index) const
 		return 0;
 }
 
-bool Archive::get_anti(UInt32 index) const
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_anti(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1432,7 +1563,8 @@ bool Archive::get_anti(UInt32 index) const
 		return false;
 }
 
-bool Archive::get_isaltstream(UInt32 index) const
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_isaltstream(UInt32 index) const
 {
 	PropVariant prop;
 	if (index >= m_num_indices)
@@ -1443,7 +1575,8 @@ bool Archive::get_isaltstream(UInt32 index) const
 		return false;
 }
 
-void Archive::read_open_results()
+template<bool UseVirtualDestructor>
+void Archive<UseVirtualDestructor>::read_open_results()
 {
 	PropVariant prop;
 
@@ -1542,7 +1675,8 @@ static std::list<std::wstring> flags2texts(UInt32 flags)
 	return texts;
 }
 
-std::list<std::wstring> Archive::get_open_errors() const
+template<bool UseVirtualDestructor>
+std::list<std::wstring> Archive<UseVirtualDestructor>::get_open_errors() const
 {
 	auto errors = flags2texts(error_flags);
 	if (!error_text.empty())
@@ -1550,10 +1684,14 @@ std::list<std::wstring> Archive::get_open_errors() const
 	return errors;
 }
 
-std::list<std::wstring> Archive::get_open_warnings() const
+template<bool UseVirtualDestructor>
+std::list<std::wstring> Archive<UseVirtualDestructor>::get_open_warnings() const
 {
 	auto warnings = flags2texts(warning_flags);
 	if (!warning_text.empty())
 		warnings.emplace_back(warning_text);
 	return warnings;
 }
+
+template class Archive<true>;
+template class Archive<false>;

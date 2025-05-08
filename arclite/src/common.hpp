@@ -208,15 +208,15 @@ struct SfxOptions
 
 struct ExportOptions
 {
-	bool export_creation_time;
+	TriState export_creation_time;
 	bool custom_creation_time;
 	bool current_creation_time;
     FILETIME ftCreationTime;
-	bool export_last_access_time;
+	TriState export_last_access_time;
 	bool custom_last_access_time;
 	bool current_last_access_time;
     FILETIME ftLastAccessTime;
-	bool export_last_write_time;
+	TriState export_last_write_time;
 	bool custom_last_write_time;
 	bool current_last_write_time;
     FILETIME ftLastWriteTime;

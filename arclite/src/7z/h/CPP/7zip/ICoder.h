@@ -25,15 +25,15 @@ Z7_IFACE_CONSTR_CODER(ICompressProgressInfo, 0x04)
   */
 
 #define Z7_IFACEM_ICompressCoder(x) \
-  x(Code(ISequentialInStream *inStream, ISequentialOutStream *outStream, \
+  x(Code(ISequentialInStream<UseVirtualDestructor> *inStream, ISequentialOutStream<UseVirtualDestructor> *outStream, \
       const UInt64 *inSize, const UInt64 *outSize, \
-      ICompressProgressInfo *progress))
+      ICompressProgressInfo<UseVirtualDestructor> *progress))
 Z7_IFACE_CONSTR_CODER(ICompressCoder, 0x05)
 
 #define Z7_IFACEM_ICompressCoder2(x) \
-  x(Code(ISequentialInStream * const *inStreams, const UInt64  *const *inSizes, UInt32 numInStreams, \
-      ISequentialOutStream *const *outStreams, const UInt64 *const *outSizes, UInt32 numOutStreams, \
-      ICompressProgressInfo *progress))
+  x(Code(ISequentialInStream<UseVirtualDestructor> * const *inStreams, const UInt64  *const *inSizes, UInt32 numInStreams, \
+      ISequentialOutStream<UseVirtualDestructor> *const *outStreams, const UInt64 *const *outSizes, UInt32 numOutStreams, \
+      ICompressProgressInfo<UseVirtualDestructor> *progress))
 Z7_IFACE_CONSTR_CODER(ICompressCoder2, 0x18)
 
 /*
@@ -191,9 +191,8 @@ Z7_IFACE_CONSTR_CODER(ICompressSetDecoderProperties2, 0x22)
     E_OUTOFMEMORY : memory allocation error
   */
 
-
 #define Z7_IFACEM_ICompressWriteCoderProperties(x) \
-  x(WriteCoderProperties(ISequentialOutStream *outStream))
+  x(WriteCoderProperties(ISequentialOutStream<UseVirtualDestructor> *outStream))
 Z7_IFACE_CONSTR_CODER(ICompressWriteCoderProperties, 0x23)
 
 #define Z7_IFACEM_ICompressGetInStreamProcessedSize(x) \
@@ -218,6 +217,7 @@ Z7_IFACE_CONSTR_CODER(ICompressGetInStreamProcessedSize2, 0x27)
 #define Z7_IFACEM_ICompressSetMemLimit(x) \
   x(SetMemLimit(UInt64 memUsage))
 Z7_IFACE_CONSTR_CODER(ICompressSetMemLimit, 0x28)
+
 
 
 /*
@@ -252,12 +252,12 @@ Z7_IFACE_CONSTR_CODER(ICompressGetSubStreamSize, 0x30)
   */
 
 #define Z7_IFACEM_ICompressSetInStream(x) \
-  x(SetInStream(ISequentialInStream *inStream)) \
+  x(SetInStream(ISequentialInStream<UseVirtualDestructor> *inStream)) \
   x(ReleaseInStream())
 Z7_IFACE_CONSTR_CODER(ICompressSetInStream, 0x31)
 
 #define Z7_IFACEM_ICompressSetOutStream(x) \
-  x(SetOutStream(ISequentialOutStream *outStream)) \
+  x(SetOutStream(ISequentialOutStream<UseVirtualDestructor> *outStream)) \
   x(ReleaseOutStream())
 Z7_IFACE_CONSTR_CODER(ICompressSetOutStream, 0x32)
 
@@ -288,7 +288,7 @@ Z7_IFACE_CONSTR_CODER(ICompressInitEncoder, 0x36)
      Call this function only for stream version of encoder. */
 
 #define Z7_IFACEM_ICompressSetInStream2(x) \
-  x(SetInStream2(UInt32 streamIndex, ISequentialInStream *inStream)) \
+  x(SetInStream2(UInt32 streamIndex, ISequentialInStream<UseVirtualDestructor> *inStream)) \
   x(ReleaseInStream2(UInt32 streamIndex))
 Z7_IFACE_CONSTR_CODER(ICompressSetInStream2, 0x37)
 
@@ -370,7 +370,7 @@ Z7_IFACE_CONSTR_CODER(ICompressFilter, 0x40)
 Z7_IFACE_CONSTR_CODER(ICompressCodecsInfo, 0x60)
 
 #define Z7_IFACEM_ISetCompressCodecsInfo(x) \
-  x(SetCompressCodecsInfo(ICompressCodecsInfo *compressCodecsInfo))
+  x(SetCompressCodecsInfo(ICompressCodecsInfo<UseVirtualDestructor> *compressCodecsInfo))
 Z7_IFACE_CONSTR_CODER(ISetCompressCodecsInfo, 0x61)
 
 #define Z7_IFACEM_ICryptoProperties(x) \
@@ -457,8 +457,9 @@ Z7_IFACE_CONSTR_CODER(IHasher, 0xC0)
 #define Z7_IFACEM_IHashers(x) \
   x##2(UInt32, GetNumHashers()) \
   x(GetHasherProp(UInt32 index, PROPID propID, PROPVARIANT *value)) \
-  x(CreateHasher(UInt32 index, IHasher **hasher))
+  x(CreateHasher(UInt32 index, IHasher<UseVirtualDestructor> **hasher))
 Z7_IFACE_CONSTR_CODER(IHashers, 0xC1)
+
 
 extern "C"
 {
@@ -467,11 +468,19 @@ extern "C"
   typedef HRESULT (WINAPI *Func_CreateDecoder)(UInt32 index, const GUID *iid, void **outObject);
   typedef HRESULT (WINAPI *Func_CreateEncoder)(UInt32 index, const GUID *iid, void **outObject);
 
-  typedef HRESULT (WINAPI *Func_GetHashers)(IHashers **hashers);
+//  typedef HRESULT (WINAPI *Func_GetHashers)(IHashers **hashers);
+  typedef HRESULT (WINAPI *Func_GetHashers)(void **hashers);
   
-  typedef HRESULT (WINAPI *Func_SetCodecs)(ICompressCodecsInfo *compressCodecsInfo);
+//  typedef HRESULT (WINAPI *Func_SetCodecs)(ICompressCodecsInfo *compressCodecsInfo);
+  typedef HRESULT (WINAPI *Func_SetCodecs)(void *compressCodecsInfo);
   typedef HRESULT (WINAPI *Func_GetModuleProp)(PROPID propID, PROPVARIANT *value);
 }
+
+#if 0
+
+<UseVirtualDestructor>
+
+#endif
 
 Z7_PURE_INTERFACES_END
 #endif

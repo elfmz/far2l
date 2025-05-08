@@ -356,6 +356,15 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 	out = "\x1B[";
 
+	// According to the spec, the keycode should always be "unshifted", meaning it should contain the value
+	// that this key would generate if Shift were not pressed. However, we have no knowledge of the user's
+	// keyboard layout here, so the unshifted value for an arbitrary key cannot be reliably determined.
+	// Therefore, if a symbol key is pressed together with Shift, and its lowercase variant can be
+	// automatically determined, we use that. If it's not a symbol key, we simply use 0,
+	// as it's unclear why the "unshifted" value would be needed in real-world applications:
+	// for consistently working shortcuts, it's more reasonable to use the "base-layout-key" field instead.
+	if (shifted && (keycode != tolower(shifted))) { keycode = 0; }
+
 	// adding keycode
 	out += std::to_string(keycode);
 

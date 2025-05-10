@@ -14,6 +14,7 @@
      Vadim V. Lopushansky <pult@ukr.net>
      Timur Safin <timur@lanit.ru> completed Delphi4/5 support
      Vadim Zenko <vzhome@nm.ru>
+     Karagy added support for object
     ]]></contributors>
    </annotation>
 
@@ -119,54 +120,73 @@
             <word name="nil"/>
             <word name="null"/>
          </keywords>
-         <keywords ignorecase="yes" region="pType">
+
 <!-- Types -->
+         <keywords ignorecase="yes" region="pType">
             <word name="AnsiChar"/>
             <word name="AnsiString"/>
             <word name="Boolean"/>
             <word name="Byte"/>
             <word name="ByteBool"/>
             <word name="Cardinal"/>
+            <word name="Char"/>
             <word name="Comp"/>
             <word name="Currency"/>
+            <word name="Double"/>
             <word name="DWord"/>
+            <word name="Extended"/>
             <word name="Integer"/>
+            <word name="Int8"/>
+            <word name="Int16"/>
+            <word name="Int32"/>
+            <word name="Int64"/>
             <word name="LongBool"/>
             <word name="LongInt"/>
             <word name="LongWord"/>
+            <word name="NativeInt"/>
+            <word name="NativeUInt"/>
             <word name="OleVariant"/>
             <word name="OpenString"/>
             <word name="PAnsiChar"/>
             <word name="PWideChar"/>
+            <word name="Real"/>
             <word name="ShortInt"/>
             <word name="ShortString"/>
+            <word name="Single"/>
             <word name="SmallInt"/>
+            <word name="String"/>
             <word name="TDateTime"/>
+            <word name="Text"/>
             <word name="TextFile"/>
+
+            <word name="UInt"/>
+            <word name="UInt8"/>
+            <word name="UInt16"/>
+            <word name="UInt32"/>
+            <word name="UInt64"/>
+
             <word name="Variant"/>
             <word name="WideChar"/>
             <word name="WideString"/>
             <word name="Word"/>
             <word name="WordBool"/>
-            <word name="byte"/>
-            <word name="char"/>
-            <word name="double"/>
-            <word name="extended"/>
-            <word name="int64"/>
-            <word name="real"/>
-            <word name="single"/>
-            <word name="string"/>
-            <word name="text"/>
-            <word name="UINT"/>
          </keywords>
+
 
          <!-- .Net  -->
          <keywords ignorecase="yes" region="pNetUnsafeType">
             <word name="PChar"/>
             <word name="Pointer"/>
-            <word name="real48"/>
+            <word name="Real48"/>
          </keywords>
 
+         <inherit scheme="non-ASCII"/>
+
+      </scheme>
+
+      <scheme name="non-ASCII" if="non-ascii-as-errors">
+         <!-- Highlights non-ASCII characters in identifiers. -->
+         <regexp match="/[^\x00-\x7F]+/" region="Error"/>
       </scheme>
 
       <scheme name="pasProperty">
@@ -199,7 +219,6 @@
       <scheme name="pasClass">
          <inherit scheme="pascal"/>
          <keywords ignorecase="yes" region="pWord">
-
             <word name="private"/>
             <word name="protected"/>
             <word name="public"/>
@@ -222,6 +241,34 @@
          </keywords>
       </scheme>
 
+      <!-- object definition keywords -->
+      <scheme name="pasObject">
+         <inherit scheme="pascal"/>
+         <keywords ignorecase="yes" region="pWord">
+            <word name="private"/>
+            <word name="protected"/>
+            <word name="public"/>
+            <!--word name="published"/-->
+
+            <!-- word name="dynamic"/-->
+            <!--word name="override"/-->
+            <word name="reintroduce"/>
+            <word name="virtual"/>
+
+            <word name="default"/>
+            <!--word name="message"/-->
+
+            <!-- .Net -->
+            <word name="strict"/>
+            <!--word name="helper"/-->
+            <word name="sealed"/>
+            <word name="final"/>
+            <!--word name="static"/-->
+         </keywords>
+
+         <regexp match="/(published|dynamic|override|message|helper|static)/" region="Error"/>
+      </scheme>
+
       <scheme name="pasRecord">
          <inherit scheme="pascalwocase"/>
          <!-- .Net -->
@@ -237,17 +284,19 @@
       <scheme name="pascalwocase">
 <!-- paired -->
          <block start="/\b((packed\s+?)??record)\b/i" end="/\b(end)\b/i" scheme="pasRecord" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
-         <block start="/\b(begin|package|library|implementation|object)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region01="PairStart" region10="pWord2" region11="PairEnd"/>
+         <block start="/\b(begin|package|library|implementation)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region01="PairStart" region10="pWord2" region11="PairEnd"/>
 <!--
   VADIM:
   a COM-интерфейсы, значит, в паскале никогда не сущесвовали.
   не согласен.
 -->
          <block start="/\=\s*(interface|dispinterface) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
-         <block start="/\b(class) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pasClass" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(class)  \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pasClass"  region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(object) \s*\M (\(|\/|\{|$)/ix" end="/\b(end)\b/i" scheme="pasObject" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
 
          <!-- .Net  -->
-         <block start="/\b(class\s+?(sealed|helper)) \s*\M /ix" end="/\b(end)\b/i" scheme="pasClass" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(class \s+?(abstract|sealed|helper)) \s*\M /ix" end="/\b(end)\b/i" scheme="pasClass"  region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
+         <block start="/\b(object\s+?(abstract|sealed       )) \s*\M /ix" end="/\b(end)\b/i" scheme="pasObject" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
 
          <block start="/\b(try)\b/i" end="/\b(end)\b/i" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>
          <block start="/\b(repeat)\b/ix" end="/\b(until)\b/ix" scheme="pascal" region00="pWord2" region10="pWord2" region01="PairStart" region11="PairEnd"/>

@@ -1440,6 +1440,14 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	// Do not enqueue completely empty events
+	bool empty_event = (
+		!ir.Event.KeyEvent.wVirtualKeyCode &&
+		!ir.Event.KeyEvent.wVirtualScanCode &&
+		!ir.Event.KeyEvent.uChar.UnicodeChar &&
+		!ir.Event.KeyEvent.dwControlKeyState
+	);
+
 	// We can not trust OnKeyDown Unicode character value for Alt+letter due to wx issue #23421,
 	// so let's fall back to OnChar value for such key combinations.
 
@@ -1451,7 +1459,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
-		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
+		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) && !empty_event))
 	{
 		wxConsoleInputShim::Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;

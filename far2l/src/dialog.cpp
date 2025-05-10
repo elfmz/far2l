@@ -1052,7 +1052,7 @@ const wchar_t *Dialog::GetDialogTitle()
 			const wchar_t *Ptr = CurItem->strData;
 
 			for (; *Ptr; Ptr++)
-				if (IsAlpha(*Ptr) || iswdigit(*Ptr))
+				if (!IsSpace(*Ptr) && !IsEol(*Ptr))
 					return (Ptr);
 		} else if (CurItem->Type == DI_LISTBOX && !I)
 			CurItemList = CurItem;

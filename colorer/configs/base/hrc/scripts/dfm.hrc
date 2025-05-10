@@ -40,6 +40,7 @@ With help of:
             <word name="inline"/>
             <word name="end"/>
          </keywords>
+         <regexp match="/[^\x00-\x7F]+/" region="Error"/>
       </scheme>
 
    </type>

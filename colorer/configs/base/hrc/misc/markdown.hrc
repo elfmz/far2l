@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="markdown">
 <annotation><documentation><![CDATA[
 
-markdown.hrc by Roman Kuzmin, aka NightRoman, 2024-05-29
+markdown.hrc by Roman Kuzmin (nightroman), 2025-05-09
 
 * Use markdown2 for extensions.
 * Opened spans are always colored.
@@ -21,6 +21,10 @@ Inline HTML
 * ALLCAPS tags are treated separately, not affecting markdown, see #6: https://github.github.com/gfm/#html-block
 * Other HTML is treated as XML and should be well formed.
 
+Inline JavaScript
+
+* <% %> marks Obsidian Templater blocks.
+
 ]]></documentation></annotation>
 
 <region name="Anchor"        parent="def:LabelStrong"    description="{#Anchor}"/>
@@ -32,6 +36,7 @@ Inline HTML
 <region name="ListText"      parent="def:Number"         description="List item text (* Text, + Text, - Text)."/>
 <region name="QuoteText"     parent="def:Prefix"         description="Blockquote text (> Text, >> Text, ...)."/>
 <region name="StrongText"    parent="def:StringEdge"     description="Strong text (**Text**, __Text__)."/>
+<region name="Text"          parent="def:Text"           description="Basic text or some unknown items."/>
 <region name="Wrap"          parent="def:LabelStrong"    description="Paragraph wraps (2+ end spaces)."/>
 
 <region name="ShownMark"     parent="def:Keyword"        description="Markup transformed and shown in HTML."/>
@@ -45,6 +50,9 @@ Inline HTML
 <region name="LinkMark"      parent="BlindMark"          description="[]() or [][] or []"/>
 <region name="QuoteMark"     parent="BlindMark"          description=">, >>, ..."/>
 <region name="Reference"     parent="BlindMark"          description="[Ref]: Address 'Title'"/>
+
+<region name="TemplateStart" parent="def:InsertionStart"/>
+<region name="TemplateEnd" parent="def:InsertionEnd"/>
 
 <region name="start" parent="def:PairStart"/>
 <region name="end" parent="def:PairEnd"/>
@@ -85,12 +93,12 @@ Inline HTML
   <regexp match="/(?{Escape}\\([\!\&quot;\#\$\%\&amp;\'\(\)\*\+\,\-\.\/\:\;\&lt;\=\&gt;\?\@\[\\\]\^\_\`\{\|\}\~]|$))/"/>
 </scheme>
 <scheme name="CodeSpan">
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}`+)/" end="/(?{end}\y{start})|%LEnd;/"/>
 </scheme>
 
 <scheme name="PCodeSpan">
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}`+)/" end="/(?{end}\y{start})|%PEnd;/"/>
 </scheme>
 
@@ -109,6 +117,18 @@ Inline HTML
 <scheme name="PLinkSpan">
   <block scheme="Link" region="LinkText" priority="low"
   start="/(?{start}(?{LinkMark}!?\[))/" end="/(?{end}(?{LinkMark}\](?:\([^)]*\)| ?\[[^\]]*\])?))|%PEnd;/"/>
+</scheme>
+
+<scheme name="Template2">
+  <inherit scheme="jScript:jScript"/>
+  <regexp match="/(?{Text}\w+)/"/>
+</scheme>
+
+<scheme name="Template">
+  <block scheme="Template2"
+    start="/(?{start}(?{TemplateStart}&lt;%(?:\*|_\*?|-\*?)?))/"
+    end="/(?{end}(?{TemplateEnd}[_\-]?%&gt;))/"
+  />
 </scheme>
 
 <scheme name="Html">
@@ -132,6 +152,7 @@ Inline HTML
   <inherit scheme="Escape"/>
   <inherit scheme="CodeSpan"/>
   <inherit scheme="LinkSpan"/>
+  <inherit scheme="Template"/>
   <inherit scheme="Html"/>
 </scheme>
 
@@ -182,7 +203,7 @@ Inline HTML
 <scheme name="Quote">
   <inherit scheme="Wrap"/>
   <inherit scheme="Escape"/>
-  <inherit scheme="def:empty"/>
+  <inherit scheme="Template"/>
 </scheme>
 
 <scheme name="Text">
@@ -205,21 +226,21 @@ Inline HTML
   <regexp match="/(?{HeadMark}#+\s*)$/"/>
 
   <inherit scheme="EmSpan">
-    <virtual scheme="Wrap" subst-scheme="def:empty"/>
+    <virtual scheme="Wrap" subst-scheme="Template"/>
   </inherit>
   <inherit scheme="StrongSpan">
-    <virtual scheme="Wrap" subst-scheme="def:empty"/>
+    <virtual scheme="Wrap" subst-scheme="Template"/>
   </inherit>
 </scheme>
 
 <scheme name="Item3">
-  <block scheme="def:empty" region="QuoteText"
+  <block scheme="Template" region="QuoteText"
   start="/(?{start}%s12;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,3}%Fence;|%i11;%Quote;)/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}%x12;%FenceMark;)/" end="/(?{end}%x12;(?{FenceMark}\y{FenceMark})\s*$)/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}^ {16,}|\t{4,})/" end="/(?{end})\M%i15;\S/"/>
 
   <block scheme="Text" region="ListText"
@@ -238,13 +259,13 @@ Inline HTML
 </scheme>
 
 <scheme name="Item2">
-  <block scheme="def:empty" region="QuoteText"
+  <block scheme="Template" region="QuoteText"
   start="/(?{start}%s8;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;{,2}%Fence;|%i7;%Quote;)/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}%x8;%FenceMark;)/" end="/(?{end}%x8;(?{FenceMark}\y{FenceMark})\s*$)/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}^ {12,}|\t{3,})/" end="/(?{end})\M%i11;\S/"/>
 
   <block scheme="List3"
@@ -263,13 +284,13 @@ Inline HTML
 </scheme>
 
 <scheme name="Item">
-  <block scheme="def:empty" region="QuoteText"
+  <block scheme="Template" region="QuoteText"
   start="/(?{start}%s4;%QuoteMark;)/" end="/(?{end})\M(?:%Top;|^\s+%List1;|%x4;%Fence;|%i3;%Quote;)/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}%x4;%FenceMark;)/" end="/(?{end}%x4;(?{FenceMark}\y{FenceMark})\s*$)/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}^ {8,}|\t{2,})/" end="/(?{end})\M%i7;\S/"/>
 
   <block scheme="List2"
@@ -299,10 +320,10 @@ Inline HTML
   <block scheme="Head" region="HeadText"
   start="/^(?{HeadMark}#{1,3})(?{def:Outlined}.*)?=/" end="/$/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}^ {4,}|\t+)\S.*/" end="/(?{end})\M%i3;\S/"/>
 
-  <block scheme="def:empty" region="Code"
+  <block scheme="Template" region="Code"
   start="/(?{start}^%FenceMark;).*$/" end="/(?{end}^(?{FenceMark}\y{FenceMark}))\s*$/"/>
 
   <regexp match="/^(?{def:Outlined}(?{Reference}%Ref;.*))/"/>

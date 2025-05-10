@@ -136,8 +136,11 @@
     </prototype>
     <prototype name="pascal" group="main" description="Pascal">
         <location link="base/pascal.hrc" />
-        <filename>/\.(\~?pas|dpr|dpk|inc|int|pp)$/i</filename>
+        <filename>/\.(\~?pas|dpr|dpk|inc|int|pp|lpr)$/i</filename>
         <firstline>/^(\{|\/\/|resourcestring|program|library|unit|package)/i</firstline>
+        <parameters>
+            <param name="non-ascii-as-errors" value="false" description="non-ASCII characters in identifiers as error" />
+        </parameters>
     </prototype>
     <prototype name="csharp" group="main" description="C#">
         <location link="base/csharp.hrc" />
@@ -437,7 +440,7 @@
     <!--  xml types  -->
     <prototype name="xml" group="xml" description="xml">
         <location link="xml/xml.hrc" />
-        <filename>/\.(xml|\w*proj|gi2|gpr|ui)$/i</filename>
+        <filename>/\.(xml|\w*proj|gi2|gpr|ui|xaml)$/i</filename>
         <filename>/\.(wxs|fb2)$/i</filename>
         <firstline>/^&lt;\?xml | &lt;\!DOCTYPE | xmlns /x</firstline>
         <firstline>/^\s*&lt;\w+&gt;\s*/</firstline> <!-- (\s+\w+\s*=\*([&quot;&apos;]).+?\2)*\s* -->
@@ -754,7 +757,7 @@
 
     <prototype name="delphiform" group="scripts" description="Delphi form">
         <location link="scripts/dfm.hrc" />
-        <filename>/\.dfm$/i</filename>
+        <filename>/\.(dfm|lfm)$/i</filename>
     </prototype>
     <prototype name="pnuts" group="scripts" description="Java: Pnuts">
         <location link="scripts/pnuts.hrc" />

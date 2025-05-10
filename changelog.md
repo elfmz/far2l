@@ -8,6 +8,8 @@ Only significant user-side changes are listed here (for all changes see history 
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
 * _Temporary panel plugin_: Show file groups
 * Several bugfixes
+* _colorer plugin_: Update colorer schemes to v1.2.0.68
+* _colorer plugin_: Update colorer library to v1.4.1-10.05.2025
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`

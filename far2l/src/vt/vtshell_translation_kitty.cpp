@@ -250,7 +250,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_OEM_3:      base = '`'; break;
 		// ...digits...
 		case VK_OEM_MINUS:  base = '-'; break;
-		case VK_OEM_PLUS:   base = '-'; break;
+		case VK_OEM_PLUS:   base = '+'; break;
 
 		// second row
 		// ...letters...

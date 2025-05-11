@@ -108,9 +108,9 @@ class FarEditorSet
   int editorInput(const INPUT_RECORD* ir);
 
   /** Get the description of HRD, or parameter name if description=null */
-  const UnicodeString* getHRDescription(const UnicodeString& name, UnicodeString _hrdClass);
+  const UnicodeString* getHRDescription(const UnicodeString& name, const UnicodeString& _hrdClass);
   /** Shows dialog with HRD scheme selection */
-  const UnicodeString* chooseHRDName(const UnicodeString* current, UnicodeString _hrdClass);
+  const UnicodeString* chooseHRDName(const UnicodeString* current, const UnicodeString& _hrdClass);
 
   /** Reads all registry settings into variables */
   void ReadSettings();
@@ -191,13 +191,13 @@ class FarEditorSet
   // set list of values to combobox
   void setCrossValueListToCombobox(FileType* type, HANDLE hDlg);
   void setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg);
-  void setYNListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param);
-  void setTFListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param);
-  void setCustomListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param);
+  void setYNListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setTFListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setCustomListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param);
 
   FileType* getCurrentTypeInDialog(HANDLE hDlg);
 
-  const UnicodeString* getParamDefValue(FileType* type, UnicodeString param);
+  const UnicodeString* getParamDefValue(FileType* type, const UnicodeString& param);
 
   void SaveChangedValueParam(HANDLE hDlg);
 

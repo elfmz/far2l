@@ -98,8 +98,7 @@ void FarEditor::reloadTypeSettings()
   maxLineLength = def->getParamValueInt(DMaxLen, 0);
   newfore = def->getParamValueInt(DDefFore, -1);
   newback = def->getParamValueInt(DDefBack, -1);
-  const UnicodeString* value;
-  value = def->getParamValue(DFullback);
+  const UnicodeString* value = def->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)) {
     fullBackground = false;

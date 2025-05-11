@@ -66,7 +66,7 @@ class FarEditor : public LineSource
    */
   FarEditor(PluginStartupInfo* inf, ParserFactory* pf);
   /** Drops this editor */
-  ~FarEditor() override;
+  ~FarEditor() override = default;
 
   void endJob(size_t lno) override;
   /**

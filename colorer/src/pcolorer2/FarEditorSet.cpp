@@ -44,7 +44,7 @@ const UnicodeString DAutodetect("autodetect");
 FarEditorSet::FarEditorSet()
 {
   settingsIni = InMyConfig("plugins/colorer/config.ini");
-  struct stat s;
+  struct stat s{};
   if (stat(settingsIni.c_str(), &s) == -1) {
     SetDefaultSettings();
   }
@@ -658,7 +658,7 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
 
   int result =
       Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
-                GetMsg(mSelectHRD), 0, L"hrd", nullptr, nullptr, menuElements, nodes.size());
+                GetMsg(mSelectHRD), nullptr, L"hrd", nullptr, nullptr, menuElements, nodes.size());
   delete[] menuElements;
 
   if (result == -1) {
@@ -881,7 +881,7 @@ FarEditor* FarEditorSet::addCurrentEditor()
     ReloadBase();
   }
 
-  EditorInfo ei;
+  EditorInfo ei{};
   Info.EditorControl(ECTL_GETINFO, &ei);
 
   FarEditor* editor = new FarEditor(&Info, parserFactory.get());

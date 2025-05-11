@@ -35,8 +35,6 @@ FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf) : info(inf), par
   errorOutliner = std::make_unique<Outliner>(baseEditor.get(), def_Error);
 }
 
-FarEditor::~FarEditor() {}
-
 void FarEditor::endJob(size_t lno)
 {
   ret_str.reset();
@@ -48,12 +46,10 @@ UnicodeString* FarEditor::getLine(size_t lno)
     return ret_str.get();
   }
 
-  EditorGetString es;
   int len = 0;
   ret_strNumber = lno;
 
-  es.StringNumber = lno;
-  es.StringText = nullptr;
+  EditorGetString es {(int) lno};
 
   if (info->EditorControl(ECTL_GETSTRING, &es)) {
     len = es.StringLength;
@@ -236,7 +232,6 @@ void FarEditor::setRegionMapper(RegionMapper* rs)
 
 void FarEditor::matchPair()
 {
-  EditorSetPosition esp;
   enterHandler();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
@@ -245,11 +240,7 @@ void FarEditor::matchPair()
     return;
   }
 
-  esp.CurTabPos = -1;
-  esp.LeftPos = -1;
-  esp.Overtype = -1;
-  esp.TopScreenLine = -1;
-  esp.CurLine = pm->eline;
+  EditorSetPosition esp {pm->eline, 0, -1, -1, -1, -1};
 
   if (!pm->topPosition) {
     esp.CurPos = pm->end->start;
@@ -272,12 +263,11 @@ void FarEditor::matchPair()
 
 void FarEditor::selectPair()
 {
-  EditorSelect es;
   int X1, X2, Y1, Y2;
   enterHandler();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
-  if ((pm == nullptr) || (pm->eline == -1)) {
+  if (pm == nullptr || pm->eline == -1) {
     baseEditor->releasePairMatch(pm);
     return;
   }
@@ -295,12 +285,7 @@ void FarEditor::selectPair()
     Y1 = pm->eline;
   }
 
-  es.BlockType = BTYPE_STREAM;
-  es.BlockStartLine = Y1;
-  es.BlockStartPos = X1;
-  es.BlockHeight = Y2 - Y1 + 1;
-  es.BlockWidth = X2 - X1 + 1;
-
+  EditorSelect es {BTYPE_STREAM, Y1, X1, X2 - X1 + 1, Y2 - Y1 + 1};
   info->EditorControl(ECTL_SELECT, &es);
 
   baseEditor->releasePairMatch(pm);
@@ -308,12 +293,11 @@ void FarEditor::selectPair()
 
 void FarEditor::selectBlock()
 {
-  EditorSelect es;
   int X1, X2, Y1, Y2;
   enterHandler();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
-  if ((pm == nullptr) || (pm->eline == -1)) {
+  if (pm == nullptr || pm->eline == -1) {
     baseEditor->releasePairMatch(pm);
     return;
   }
@@ -331,12 +315,7 @@ void FarEditor::selectBlock()
     Y1 = pm->eline;
   }
 
-  es.BlockType = BTYPE_STREAM;
-  es.BlockStartLine = Y1;
-  es.BlockStartPos = X1;
-  es.BlockHeight = Y2 - Y1 + 1;
-  es.BlockWidth = X2 - X1 + 1;
-
+  EditorSelect es {BTYPE_STREAM, Y1, X1, X2 - X1 + 1, Y2 - Y1 + 1};
   info->EditorControl(ECTL_SELECT, &es);
 
   baseEditor->releasePairMatch(pm);
@@ -344,11 +323,10 @@ void FarEditor::selectBlock()
 
 void FarEditor::selectRegion()
 {
-  EditorSelect es;
-  EditorGetString egs;
   enterHandler();
-  egs.StringNumber = ei.CurLine;
+  EditorGetString egs {ei.CurLine};
   info->EditorControl(ECTL_GETSTRING, &egs);
+
   if (cursorRegion != nullptr) {
     int end = cursorRegion->end;
 
@@ -357,11 +335,8 @@ void FarEditor::selectRegion()
     }
 
     if (end - cursorRegion->start > 0) {
-      es.BlockType = BTYPE_STREAM;
-      es.BlockStartLine = ei.CurLine;
-      es.BlockStartPos = cursorRegion->start;
-      es.BlockHeight = 1;
-      es.BlockWidth = end - cursorRegion->start;
+      EditorSelect es {BTYPE_STREAM, cursorRegion->start, cursorRegion->end,
+                       end - cursorRegion->start, 1};
       info->EditorControl(ECTL_SELECT, &es);
     }
   }
@@ -410,7 +385,6 @@ void FarEditor::locateFunction()
     UnicodeString funcname(curLine, sword + 1, eword - sword - 1);
     COLORER_LOG_DEBUG("FC] Letter %", funcname);
     baseEditor->validate(-1, false);
-    EditorSetPosition esp;
     OutlineItem* item_found = nullptr;
     OutlineItem* item_last = nullptr;
     int items_num = structOutliner->itemCount();
@@ -441,10 +415,12 @@ void FarEditor::locateFunction()
       break;
     }
 
-    esp.CurTabPos = esp.LeftPos = esp.Overtype = esp.TopScreenLine = -1;
-    esp.CurLine = item_found->lno;
-    esp.CurPos = item_found->pos;
-    esp.TopScreenLine = esp.CurLine - ei.WindowSizeY / 2;
+    EditorSetPosition esp {(int) item_found->lno,
+                           item_found->pos,
+                           -1,
+                           (int) item_found->lno - ei.WindowSizeY / 2,
+                           -1,
+                           -1};
 
     if (esp.TopScreenLine < 0) {
       esp.TopScreenLine = 0;
@@ -522,9 +498,8 @@ int FarEditor::editorEvent(int event, void* param)
   }
 
   // hack against tabs in FAR's editor
-  EditorConvertPos ecp {}, ecp_cl {};
-  ecp.StringNumber = -1;
-  ecp.SrcPos = ei.CurPos;
+  EditorConvertPos ecp {-1, ei.CurPos};
+  EditorConvertPos ecp_cl {};
   info->EditorControl(ECTL_REALTOTAB, &ecp);
   cursorRegion.reset();
 

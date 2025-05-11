@@ -400,9 +400,12 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// automatically determined, we use that. If it's not a symbol key, we simply use 0,
 	// as it's unclear why the "unshifted" value would be needed in real-world applications:
 	// for consistently working shortcuts, it's more reasonable to use the "base-layout-key" field instead.
+	// See also: https://github.com/elfmz/far2l/issues/2743
 	if (shifted && (keycode != tolower(shifted))) { keycode = 0; }
-	// UPD: base-layout-key also can not be trusted in our implementation for now because of
+	// UPD: base-layout-key also can not be trusted in our implementation
+	// for non-latin keypresses w/o modifiers (except Shift) because of IM usage, see
 	// https://github.com/wxWidgets/wxWidgets/issues/25379
+	// But hot keys w/o modifiers is nonsence, so not a problem actually
 
 	// avoid sending base char if it is equal to keycode
 	if (base == keycode) { base = 0; }

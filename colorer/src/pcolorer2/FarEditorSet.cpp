@@ -141,7 +141,7 @@ void FarEditorSet::openMenu()
   }
 }
 
-int FarEditorSet::getCountFileTypeAndGroup()
+int FarEditorSet::getCountFileTypeAndGroup() const
 {
   int num = 0;
   UnicodeString group;
@@ -164,7 +164,7 @@ int FarEditorSet::getCountFileTypeAndGroup()
   return num;
 }
 
-FileType* FarEditorSet::getFileTypeByIndex(int idx)
+FileType* FarEditorSet::getFileTypeByIndex(int idx) const
 {
   FileType* type = nullptr;
   UnicodeString group;
@@ -185,7 +185,7 @@ FileType* FarEditorSet::getFileTypeByIndex(int idx)
   return type;
 }
 
-void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType)
+void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, const FileType* CurFileType) const
 {
   UnicodeString group = DAutodetect;
   FileType* type = nullptr;
@@ -350,7 +350,7 @@ void FarEditorSet::chooseType()
 }
 
 const UnicodeString* FarEditorSet::getHRDescription(const UnicodeString& name,
-                                                    const UnicodeString& _hrdClass)
+                                                    const UnicodeString& _hrdClass) const
 {
   const UnicodeString* descr = nullptr;
   if (parserFactory) {
@@ -381,7 +381,8 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
           return true;
         }
         case IDX_HRD_SELECT_TM: {
-          fes->sTempHrdNameTm = std::make_unique<UnicodeString>(*fes->chooseHRDName(fes->sTempHrdNameTm.get(), DRgb));
+          fes->sTempHrdNameTm =
+              std::make_unique<UnicodeString>(*fes->chooseHRDName(fes->sTempHrdNameTm.get(), DRgb));
 
           const UnicodeString* descr = fes->getHRDescription(*fes->sTempHrdNameTm, DRgb);
           Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, IDX_HRD_SELECT_TM,
@@ -629,7 +630,7 @@ void FarEditorSet::configure(bool fromEditor)
 }
 
 const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
-                                                 const UnicodeString& _hrdClass)
+                                                 const UnicodeString& _hrdClass) const
 {
   if (parserFactory == nullptr) {
     return current;
@@ -637,7 +638,7 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
 
   std::vector<const HrdNode*> nodes = parserFactory->enumHrdInstances(_hrdClass);
   std::vector<const UnicodeString*> names;
-  FarMenuItem* menuElements = new FarMenuItem[nodes.size()];
+  auto* menuElements = new FarMenuItem[nodes.size()];
   memset(menuElements, 0, sizeof(FarMenuItem) * nodes.size());
   int i = 0;
   for (const auto node : nodes) {
@@ -648,9 +649,8 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
     if (!descr->length()) {
       descr = name;
     }
-    // names.push_back(name);
 
-    menuElements[i].Text = (wchar_t*) descr->getWChars();
+    menuElements[i].Text = descr->getWChars();
 
     if (current->equals(name)) {
       menuElements[i].Selected = 1;
@@ -1027,7 +1027,7 @@ void FarEditorSet::ReadSettings()
   Opt.ChangeBgEditor = !!kfh.GetInt(cRegChangeBgEditor, cChangeBgEditor);
 }
 
-void FarEditorSet::SetDefaultSettings()
+void FarEditorSet::SetDefaultSettings() const
 {
   KeyFileHelper kfh(settingsIni);
   kfh.SetInt(cSectionName, cRegEnabled, cEnabledDefault);
@@ -1044,7 +1044,7 @@ void FarEditorSet::SetDefaultSettings()
   kfh.SetString(cSectionName, cRegUserHrcPath, cUserHrcPathDefault);
 }
 
-void FarEditorSet::SaveSettings()
+void FarEditorSet::SaveSettings() const
 {
   KeyFileHelper kfh(settingsIni);
   kfh.SetInt(cSectionName, cRegEnabled, Opt.rEnabled);
@@ -1066,45 +1066,39 @@ bool FarEditorSet::checkConsoleExtendedColors()
   return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
 }
 
-bool FarEditorSet::SetBgEditor()
+bool FarEditorSet::SetBgEditor() const
 {
   if (Opt.rEnabled && Opt.ChangeBgEditor && !useExtendedColors) {
-    FarSetColors fsc;
-    uint64_t c;
 
     const StyledRegion* def_text =
         StyledRegion::cast(regionMapper->getRegionDefine(UnicodeString("def:Text")));
-    c = (def_text->back << 4) + def_text->fore;
+    uint64_t c = (def_text->back << 4) + def_text->fore;
 
-    fsc.Flags = FCLR_REDRAW;
-    fsc.ColorCount = 1;
-    fsc.StartIndex = COL_EDITORTEXT;
-    fsc.Colors = &c;
+    FarSetColors fsc {FCLR_REDRAW, COL_EDITORTEXT, 1, &c};
     return !!Info.AdvControl(Info.ModuleNumber, ACTL_SETARRAYCOLOR, &fsc, nullptr);
   }
   return false;
 }
 
-UnicodeString FarEditorSet::getParamDefValue(FileType* type, const UnicodeString& param) const
+UnicodeString FarEditorSet::getParamDefValue(const FileType* type, const UnicodeString& param) const
 {
   const UnicodeString* value = type->getParamDefaultValue(param);
   if (value == nullptr)
     value = defaultType->getParamValue(param);
   ASSERT_MSG(value != nullptr, "no value for '%ls'", param.getWChars());
-  UnicodeString p ("<default-");
+  UnicodeString p("<default-");
   p.append(*value);
   p.append(">");
   return p;
 }
 
-FarList* FarEditorSet::buildHrcList()
+FarList* FarEditorSet::buildHrcList() const
 {
-  int num = getCountFileTypeAndGroup();
+  const int num = getCountFileTypeAndGroup();
   UnicodeString group;
-  FileType* type = nullptr;
+  const FileType* type = nullptr;
 
-  FarListItem* hrcList = new FarListItem[num];
-  memset(hrcList, 0, sizeof(FarListItem) * (num));
+  auto* hrcList = new FarListItem[num]{};
 
   auto& hrcParser = parserFactory->getHrcLibrary();
   for (int idx = 0, i = 0;; idx++, i++) {
@@ -1127,19 +1121,15 @@ FarList* FarEditorSet::buildHrcList()
   }
 
   hrcList[1].Flags = LIF_SELECTED;
-  FarList* ListItems = new FarList;
-  ListItems->Items = hrcList;
-  ListItems->ItemsNumber = num;
-
+  auto* ListItems = new FarList {num, hrcList};
   return ListItems;
 }
 
-FarList* FarEditorSet::buildParamsList(FileType* type)
+FarList* FarEditorSet::buildParamsList(const FileType* type) const
 {
   // max count params
-  size_t size = type->getParamCount() + defaultType->getParamCount();
-  FarListItem* fparam = new FarListItem[size];
-  memset(fparam, 0, sizeof(FarListItem) * (size));
+  const size_t size = type->getParamCount() + defaultType->getParamCount();
+  auto* fparam = new FarListItem[size] {};
 
   int count = 0;
   std::vector<UnicodeString> params = defaultType->enumParams();
@@ -1154,13 +1144,11 @@ FarList* FarEditorSet::buildParamsList(FileType* type)
   }
 
   fparam[0].Flags = LIF_SELECTED;
-  FarList* lparam = new FarList;
-  lparam->Items = fparam;
-  lparam->ItemsNumber = count;
+  auto* lparam = new FarList {count, fparam};
   return lparam;
 }
 
-void FarEditorSet::ChangeParamValueListType(HANDLE hDlg, bool dropdownlist)
+void FarEditorSet::ChangeParamValueListType(HANDLE hDlg, const bool dropdownlist)
 {
   struct FarDialogItem* DialogItem =
       (FarDialogItem*) malloc(Info.SendDlgMessage(hDlg, DM_GETDLGITEM, IDX_CH_PARAM_VALUE_LIST, 0));
@@ -1175,7 +1163,7 @@ void FarEditorSet::ChangeParamValueListType(HANDLE hDlg, bool dropdownlist)
   free(DialogItem);
 }
 
-void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
+void FarEditorSet::setCrossValueListToCombobox(const FileType* type, HANDLE hDlg)
 {
   const UnicodeString* value = type->getParamUserValue(DShowCross);
   const UnicodeString def_value = getParamDefValue(type, DShowCross);
@@ -1211,7 +1199,7 @@ void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
 }
 
-void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
+void FarEditorSet::setCrossPosValueListToCombobox(const FileType* type, const HANDLE hDlg)
 {
   const UnicodeString* value = type->getParamUserValue(DCrossZorder);
   const UnicodeString def_value = getParamDefValue(type, DCrossZorder);
@@ -1239,7 +1227,7 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
 }
 
-void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
+void FarEditorSet::setYNListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString def_value = getParamDefValue(type, param);
@@ -1267,7 +1255,7 @@ void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const U
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
 }
 
-void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
+void FarEditorSet::setTFListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString def_value = getParamDefValue(type, param);
@@ -1295,7 +1283,7 @@ void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const U
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
 }
 
-void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
+void FarEditorSet::setCustomListValueToCombobox(const FileType* type, HANDLE hDlg,
                                                 const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
@@ -1315,7 +1303,7 @@ void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
   }
 }
 
-FileType* FarEditorSet::getCurrentTypeInDialog(HANDLE hDlg)
+FileType* FarEditorSet::getCurrentTypeInDialog(HANDLE hDlg) const
 {
   int k = (int) Info.SendDlgMessage(hDlg, DM_LISTGETCURPOS, IDX_CH_SCHEMAS, 0);
   return getFileTypeByIndex(k);
@@ -1326,7 +1314,7 @@ void FarEditorSet::OnChangeHrc(HANDLE hDlg)
   if (menuid != -1) {
     SaveChangedValueParam(hDlg);
   }
-  FileType* type = getCurrentTypeInDialog(hDlg);
+  const FileType* type = getCurrentTypeInDialog(hDlg);
   FarList* List = buildParamsList(type);
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_LIST, (LONG_PTR) List);
   for (int i = 0; i < List->ItemsNumber; i++) {
@@ -1410,7 +1398,8 @@ void FarEditorSet::OnSaveHrcParams(HANDLE hDlg)
   p.writeUserProfile();
 }
 
-LONG_PTR WINAPI SettingHrcDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+LONG_PTR WINAPI SettingHrcDialogProc(HANDLE hDlg, const int Msg, const int Param1,
+                                     const LONG_PTR Param2)
 {
   FarEditorSet* fes = (FarEditorSet*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 

@@ -53,7 +53,7 @@ void FarHrcSettings::readProfile()
   delete path;
 }
 
-void FarHrcSettings::readXML(UnicodeString* file)
+void FarHrcSettings::readXML(const UnicodeString* file)
 {
   XmlInputSource config(*file);
   XmlReader xml_parser(config);

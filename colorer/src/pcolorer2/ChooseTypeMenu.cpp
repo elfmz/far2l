@@ -157,10 +157,10 @@ void ChooseTypeMenu::DelFromFavorites(size_t index)
   f->setParamValue(DFavorite, &DFalse);
 }
 
-size_t ChooseTypeMenu::AddItemInGroup(FileType* fType)
+size_t ChooseTypeMenu::AddItemInGroup(const FileType* fType)
 {
   size_t i;
-  auto group = fType->getGroup();
+  const auto& group = fType->getGroup();
   for (i = favorite_idx; i < ItemCount &&
        !((Item[i].Flags & MIF_SEPARATOR) && (group.compare(UnicodeString(Item[i].Text)) == 0));
        i++);

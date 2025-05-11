@@ -124,9 +124,9 @@ class FarEditorSet
   int editorInput(const INPUT_RECORD* ir);
 
   /** Get the description of HRD, or parameter name if description=null */
-  const UnicodeString* getHRDescription(const UnicodeString& name, const UnicodeString& _hrdClass);
+  const UnicodeString* getHRDescription(const UnicodeString& name, const UnicodeString& _hrdClass) const;
   /** Shows dialog with HRD scheme selection */
-  const UnicodeString* chooseHRDName(const UnicodeString* current, const UnicodeString& _hrdClass);
+  const UnicodeString* chooseHRDName(const UnicodeString* current, const UnicodeString& _hrdClass) const;
 
   /** Reads all registry settings into variables */
   void ReadSettings();
@@ -140,7 +140,7 @@ class FarEditorSet
   UnicodeString* GetUserHrdPath() { return &Opt.userHrdPath; }
   bool GetPluginStatus() { return Opt.rEnabled; }
 
-  bool SetBgEditor();
+  bool SetBgEditor() const;
 
   std::unique_ptr<UnicodeString> sTempHrdName;
   std::unique_ptr<UnicodeString> sTempHrdNameTm;
@@ -177,8 +177,8 @@ class FarEditorSet
   /** Applies the current settings for editors*/
   void ApplySettingsToEditors();
   /** writes the default settings in the registry*/
-  void SetDefaultSettings();
-  void SaveSettings();
+  void SetDefaultSettings() const;
+  void SaveSettings() const;
 
   /** Kills all currently opened editors*/
   void dropAllEditors(bool clean);
@@ -192,28 +192,28 @@ class FarEditorSet
   bool useExtendedColors =false;
 
   static void showExceptionMessage(const UnicodeString* message);
-  int getCountFileTypeAndGroup();
-  FileType* getFileTypeByIndex(int idx);
-  void FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType);
+  int getCountFileTypeAndGroup() const;
+  FileType* getFileTypeByIndex(int idx) const;
+  void FillTypeMenu(ChooseTypeMenu* Menu, const FileType* CurFileType) const;
   UnicodeString* getCurrentFileName();
 
   // FarList for dialog objects
-  FarList* buildHrcList();
-  FarList* buildParamsList(FileType* type);
+  FarList* buildHrcList() const;
+  FarList* buildParamsList(const FileType* type) const;
   // filetype "default"
   FileType* defaultType = nullptr;
   // change combobox type
   void ChangeParamValueListType(HANDLE hDlg, bool dropdownlist);
   // set list of values to combobox
-  void setCrossValueListToCombobox(FileType* type, HANDLE hDlg);
-  void setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg);
-  void setYNListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param);
-  void setTFListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param);
-  void setCustomListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setCrossValueListToCombobox(const FileType* type, HANDLE hDlg);
+  void setCrossPosValueListToCombobox(const FileType* type, HANDLE hDlg);
+  void setYNListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setTFListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setCustomListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param);
 
-  FileType* getCurrentTypeInDialog(HANDLE hDlg);
+  FileType* getCurrentTypeInDialog(HANDLE hDlg) const;
 
-  UnicodeString getParamDefValue(FileType* type, const UnicodeString& param) const;
+  UnicodeString getParamDefValue(const FileType* type, const UnicodeString& param) const;
 
   void SaveChangedValueParam(HANDLE hDlg);
 

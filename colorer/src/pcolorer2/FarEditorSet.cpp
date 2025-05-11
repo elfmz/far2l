@@ -1085,15 +1085,15 @@ bool FarEditorSet::SetBgEditor()
   return false;
 }
 
-const UnicodeString* FarEditorSet::getParamDefValue(FileType* type, const UnicodeString& param)
+UnicodeString FarEditorSet::getParamDefValue(FileType* type, const UnicodeString& param) const
 {
   const UnicodeString* value = type->getParamDefaultValue(param);
   if (value == nullptr)
     value = defaultType->getParamValue(param);
   ASSERT_MSG(value != nullptr, "no value for '%ls'", param.getWChars());
-  UnicodeString* p = new UnicodeString("<default-");
-  p->append(*value);
-  p->append(">");
+  UnicodeString p ("<default-");
+  p.append(*value);
+  p.append(">");
   return p;
 }
 
@@ -1178,14 +1178,14 @@ void FarEditorSet::ChangeParamValueListType(HANDLE hDlg, bool dropdownlist)
 void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
 {
   const UnicodeString* value = type->getParamUserValue(DShowCross);
-  const UnicodeString* def_value = getParamDefValue(type, DShowCross);
+  const UnicodeString def_value = getParamDefValue(type, DShowCross);
 
   std::array<FarListItem, 5> fcross {};
   fcross[0].Text = DNone.getWChars();
   fcross[1].Text = DVertical.getWChars();
   fcross[2].Text = DHorizontal.getWChars();
   fcross[3].Text = DBoth.getWChars();
-  fcross[4].Text = def_value->getWChars();
+  fcross[4].Text = def_value.getWChars();
   FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 4;
@@ -1209,18 +1209,17 @@ void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
-  delete def_value;
 }
 
 void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
 {
   const UnicodeString* value = type->getParamUserValue(DCrossZorder);
-  const UnicodeString* def_value = getParamDefValue(type, DCrossZorder);
+  const UnicodeString def_value = getParamDefValue(type, DCrossZorder);
 
   std::array<FarListItem, 3> fcross {};
   fcross[0].Text = DBottom.getWChars();
   fcross[1].Text = DTop.getWChars();
-  fcross[2].Text = def_value->getWChars();
+  fcross[2].Text = def_value.getWChars();
   FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 2;
@@ -1238,18 +1237,17 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
-  delete def_value;
 }
 
 void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
-  const UnicodeString* def_value = getParamDefValue(type, param);
+  const UnicodeString def_value = getParamDefValue(type, param);
 
   std::array<FarListItem, 3> fcross {};
   fcross[0].Text = DNo.getWChars();
   fcross[1].Text = DYes.getWChars();
-  fcross[2].Text = def_value->getWChars();
+  fcross[2].Text = def_value.getWChars();
   FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 2;
@@ -1267,18 +1265,17 @@ void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const U
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
-  delete def_value;
 }
 
 void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
-  const UnicodeString* def_value = getParamDefValue(type, param);
+  const UnicodeString def_value = getParamDefValue(type, param);
 
   std::array<FarListItem, 3> fcross {};
   fcross[0].Text = DFalse.getWChars();
   fcross[1].Text = DTrue.getWChars();
-  fcross[2].Text = def_value->getWChars();
+  fcross[2].Text = def_value.getWChars();
   FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 2;
@@ -1296,17 +1293,16 @@ void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const U
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
-  delete def_value;
 }
 
 void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
                                                 const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
-  const UnicodeString* def_value = getParamDefValue(type, param);
+  const UnicodeString def_value = getParamDefValue(type, param);
 
   std::array<FarListItem, 1> fcross {};
-  fcross[0].Text = def_value->getWChars();
+  fcross[0].Text = def_value.getWChars();
   FarList lcross {fcross.size(), fcross.data()};
 
   fcross[0].Flags = LIF_SELECTED;
@@ -1317,7 +1313,6 @@ void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
     Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, IDX_CH_PARAM_VALUE_LIST,
                         (LONG_PTR) value->getWChars());
   }
-  delete def_value;
 }
 
 FileType* FarEditorSet::getCurrentTypeInDialog(HANDLE hDlg)
@@ -1354,15 +1349,14 @@ void FarEditorSet::SaveChangedValueParam(HANDLE hDlg)
       trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_CH_PARAM_VALUE_LIST, 0)));
   FileType* type = getCurrentTypeInDialog(hDlg);
   const UnicodeString* value = type->getParamUserValue(p);
-  const UnicodeString* def_value = getParamDefValue(type, p);
-  if (v.compare(*def_value) == 0) {
+  const UnicodeString def_value = getParamDefValue(type, p);
+  if (v.compare(def_value) == 0) {
     if (value != nullptr)
       type->setParamValue(p, nullptr);
   }
   else if (value == nullptr || v.compare(*value) != 0) {  // changed
     addParamAndValue(type, p, v);
   }
-  delete def_value;
 }
 
 void FarEditorSet::OnChangeParam(HANDLE hDlg, int idx)

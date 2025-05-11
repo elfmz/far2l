@@ -213,7 +213,7 @@ class FarEditorSet
 
   FileType* getCurrentTypeInDialog(HANDLE hDlg);
 
-  const UnicodeString* getParamDefValue(FileType* type, const UnicodeString& param);
+  UnicodeString getParamDefValue(FileType* type, const UnicodeString& param) const;
 
   void SaveChangedValueParam(HANDLE hDlg);
 

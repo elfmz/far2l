@@ -180,10 +180,10 @@ class FarEditor : public LineSource
   void reloadTypeSettings();
   void enterHandler();
   color convert(const StyledRegion* rd) const;
-  bool foreDefault(color col) const;
-  bool backDefault(color col) const;
+  bool foreDefault(const color& col) const;
+  bool backDefault(const color& col) const;
   void showOutliner(Outliner* outliner);
-  void addFARColor(int lno, int s, int e, color col, bool add_style = true) const;
+  void addFARColor(int lno, int s, int e, const color& col, bool add_style = true) const;
   const wchar_t* GetMsg(int msg) const;
 };
 #endif

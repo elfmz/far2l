@@ -321,7 +321,7 @@ void FarEditorSet::chooseType()
         if (res != -1) {
           KeyAssignDlgData[2].PtrData =
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, 2, 0));
-          auto ftype = menu.GetFileType(i);
+          const auto ftype = menu.GetFileType(i);
           auto param_name = UnicodeString(DHotkey);
           auto hotkey = UnicodeString(KeyAssignDlgData[2].PtrData);
           addParamAndValue(ftype, param_name, hotkey);
@@ -332,9 +332,8 @@ void FarEditorSet::chooseType()
       }
       else {
         if (i == 0) {
-          UnicodeString* s = getCurrentFileName();
-          fe->chooseFileType(s);
-          delete s;
+          const auto s = getCurrentFileName();
+          fe->chooseFileType(s.get());
           break;
         }
         fe->setFileType(menu.GetFileType(i));
@@ -528,14 +527,14 @@ void FarEditorSet::configure(bool fromEditor)
     sTempHrdName = std::make_unique<UnicodeString>(Opt.hrdName);
 
     descr = getHRDescription(*sTempHrdName, DConsole);
-    fdi[IDX_HRD_SELECT].PtrData = (wchar_t*) descr->getWChars();
+    fdi[IDX_HRD_SELECT].PtrData = descr->getWChars();
 
     const UnicodeString* descr2 = nullptr;
     sTempHrdNameTm = std::make_unique<UnicodeString>(Opt.hrdNameTm);
     descr2 = getHRDescription(*sTempHrdNameTm, DRgb);
 
     fdi[IDX_HRD_TM].PtrData = GetMsg(mHRDNameTrueMod);
-    fdi[IDX_HRD_SELECT_TM].PtrData = (wchar_t*) descr2->getWChars();
+    fdi[IDX_HRD_SELECT_TM].PtrData = descr2->getWChars();
     fdi[IDX_CHANGE_BG].PtrData = GetMsg(mChangeBackgroundEditor);
     fdi[IDX_CHANGE_BG].Param.Selected = Opt.ChangeBgEditor;
     fdi[IDX_RELOAD_ALL].PtrData = GetMsg(mReloadAll);
@@ -684,7 +683,7 @@ int FarEditorSet::editorInput(const INPUT_RECORD* ir)
 int FarEditorSet::editorEvent(int Event, void* Param)
 {
   // check whether all the editors cleaned
-  if (!Opt.rEnabled && farEditorInstances.size() && Event == EE_GOTFOCUS) {
+  if (!Opt.rEnabled && !farEditorInstances.empty() && Event == EE_GOTFOCUS) {
     dropCurrentEditor(true);
     return 0;
   }
@@ -719,7 +718,6 @@ int FarEditorSet::editorEvent(int Event, void* Param)
       case EE_CLOSE: {
         auto it = farEditorInstances.find(*((int*) Param));
         if (it != farEditorInstances.end()) {
-          delete it->second;
           farEditorInstances.erase(it);
         }
         return 0;
@@ -886,11 +884,10 @@ FarEditor* FarEditorSet::addCurrentEditor()
   EditorInfo ei {};
   Info.EditorControl(ECTL_GETINFO, &ei);
 
-  FarEditor* editor = new FarEditor(&Info, parserFactory.get());
+  auto* editor = new FarEditor(&Info, parserFactory.get());
   farEditorInstances.emplace(ei.EditorID, editor);
-  UnicodeString* s = getCurrentFileName();
-  editor->chooseFileType(s);
-  delete s;
+  const auto s = getCurrentFileName();
+  editor->chooseFileType(s.get());
   editor->setTrueMod(useExtendedColors);
   editor->setRegionMapper(regionMapper.get());
   editor->setDrawCross(Opt.drawCross);
@@ -901,7 +898,7 @@ FarEditor* FarEditorSet::addCurrentEditor()
   return editor;
 }
 
-UnicodeString* FarEditorSet::getCurrentFileName()
+uUnicodeString FarEditorSet::getCurrentFileName()
 {
   LPWSTR FileName = nullptr;
   size_t FileNameSize = Info.EditorControl(ECTL_GETFILENAME, nullptr);
@@ -912,9 +909,9 @@ UnicodeString* FarEditorSet::getCurrentFileName()
   }
 
   UnicodeString fnpath(FileName);
-  int slash_idx = fnpath.lastIndexOf('/');
+  const int slash_idx = fnpath.lastIndexOf('/');
 
-  UnicodeString* s = new UnicodeString(fnpath, slash_idx + 1);
+  auto s = std::make_unique<UnicodeString>(fnpath, slash_idx + 1);
   delete[] FileName;
   return s;
 }
@@ -925,7 +922,7 @@ FarEditor* FarEditorSet::getCurrentEditor()
   Info.EditorControl(ECTL_GETINFO, &ei);
   auto if_editor = farEditorInstances.find(ei.EditorID);
   if (if_editor != farEditorInstances.end()) {
-    return if_editor->second;
+    return if_editor->second.get();
   }
   return nullptr;
 }
@@ -976,7 +973,6 @@ void FarEditorSet::dropCurrentEditor(bool clean)
     if (clean) {
       it->second->cleanEditor();
     }
-    delete it->second;
     farEditorInstances.erase(it);
     Info.EditorControl(ECTL_REDRAW, nullptr);
   }
@@ -988,9 +984,6 @@ void FarEditorSet::dropAllEditors(bool clean)
     // мы не имеем доступа к другим редакторам, кроме текущего
     dropCurrentEditor(clean);
   }
-  for (auto fe = farEditorInstances.begin(); fe != farEditorInstances.end(); ++fe) {
-    delete fe->second;
-  }
 
   farEditorInstances.clear();
 }
@@ -998,11 +991,11 @@ void FarEditorSet::dropAllEditors(bool clean)
 void FarEditorSet::ReadSettings()
 {
   KeyFileReadSection kfh(settingsIni, cSectionName);
-  std::wstring hrdName = kfh.GetString(cRegHrdName, cHrdNameDefault);
-  std::wstring hrdNameTm = kfh.GetString(cRegHrdNameTm, cHrdNameTmDefault);
-  std::wstring catalogPath = kfh.GetString(cRegCatalog, cCatalogDefault);
-  std::wstring userHrdPath = kfh.GetString(cRegUserHrdPath, cUserHrdPathDefault);
-  std::wstring userHrcPath = kfh.GetString(cRegUserHrcPath, cUserHrcPathDefault);
+  const std::wstring hrdName = kfh.GetString(cRegHrdName, cHrdNameDefault);
+  const std::wstring hrdNameTm = kfh.GetString(cRegHrdNameTm, cHrdNameTmDefault);
+  const std::wstring catalogPath = kfh.GetString(cRegCatalog, cCatalogDefault);
+  const std::wstring userHrdPath = kfh.GetString(cRegUserHrdPath, cUserHrdPathDefault);
+  const std::wstring userHrcPath = kfh.GetString(cRegUserHrcPath, cUserHrcPathDefault);
 
   Opt.hrdName = UnicodeString(hrdName.c_str());
   Opt.hrdNameTm = UnicodeString(hrdNameTm.c_str());

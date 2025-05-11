@@ -1261,7 +1261,7 @@ color FarEditor::convert(const StyledRegion* rd) const
   }
 }
 
-bool FarEditor::foreDefault(color col) const
+bool FarEditor::foreDefault(const color& col) const
 {
   if (TrueMod)
     return col.fg == rdBackground->fore;
@@ -1269,7 +1269,7 @@ bool FarEditor::foreDefault(color col) const
     return col.cfg == rdBackground->fore;
 }
 
-bool FarEditor::backDefault(color col) const
+bool FarEditor::backDefault(const color& col) const
 {
   if (TrueMod)
     return col.bk == rdBackground->back;
@@ -1277,7 +1277,7 @@ bool FarEditor::backDefault(color col) const
     return col.cbk == rdBackground->back;
 }
 
-void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style) const
+void FarEditor::addFARColor(int lno, int s, int e, const color& col, bool add_style) const
 {
   if (TrueMod) {
     EditorTrueColor ec {};

@@ -25,7 +25,6 @@ const UnicodeString DFirstLineBytes("firstlinebytes");
 
 FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf) : info(inf), parserFactory(pf)
 {
-  info->EditorControl(ECTL_GETINFO, &ei);
   UnicodeString dso("def:Outlined");
   UnicodeString dse("def:Error");
   baseEditor = std::make_unique<BaseEditor>(parserFactory, this);
@@ -37,31 +36,25 @@ FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf) : info(inf), par
 
 void FarEditor::endJob(size_t lno)
 {
+  (void) lno;
   ret_str.reset();
 }
 
 UnicodeString* FarEditor::getLine(size_t lno)
 {
-  if (ret_strNumber == lno && ret_str != nullptr) {
-    return ret_str.get();
-  }
-
-  int len = 0;
-  ret_strNumber = lno;
-
   EditorGetString es {(int) lno};
 
+  int len = 0;
   if (info->EditorControl(ECTL_GETSTRING, &es)) {
     len = es.StringLength;
+    if (len > maxLineLength && maxLineLength > 0) {
+      len = maxLineLength;
+    }
+    ret_str = std::make_unique<UnicodeString>((char*) es.StringText, len * sizeof(wchar_t),
+                                              Encodings::ENC_UTF32);
+    return ret_str.get();
   }
-
-  if (len > maxLineLength && maxLineLength > 0) {
-    len = maxLineLength;
-  }
-
-  ret_str = std::make_unique<UnicodeString>((char*) es.StringText, len * sizeof(wchar_t),
-                                            Encodings::ENC_UTF32);
-  return ret_str.get();
+  return nullptr;
 }
 
 void FarEditor::chooseFileType(const UnicodeString* fname)
@@ -230,9 +223,9 @@ void FarEditor::setRegionMapper(RegionMapper* rs)
     vertCrossColor.concolor = 0x0E;
 }
 
-void FarEditor::matchPair()
+void FarEditor::matchPair() const
 {
-  enterHandler();
+  const auto ei = getEditorInfo();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
   if ((pm == nullptr) || (pm->eline == -1)) {
@@ -261,10 +254,10 @@ void FarEditor::matchPair()
   baseEditor->releasePairMatch(pm);
 }
 
-void FarEditor::selectPair()
+void FarEditor::selectPair() const
 {
   int X1, X2, Y1, Y2;
-  enterHandler();
+  const auto ei = getEditorInfo();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
   if (pm == nullptr || pm->eline == -1) {
@@ -291,10 +284,10 @@ void FarEditor::selectPair()
   baseEditor->releasePairMatch(pm);
 }
 
-void FarEditor::selectBlock()
+void FarEditor::selectBlock() const
 {
   int X1, X2, Y1, Y2;
-  enterHandler();
+  const auto ei = getEditorInfo();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
   if (pm == nullptr || pm->eline == -1) {
@@ -321,9 +314,9 @@ void FarEditor::selectBlock()
   baseEditor->releasePairMatch(pm);
 }
 
-void FarEditor::selectRegion()
+void FarEditor::selectRegion() const
 {
-  enterHandler();
+  const auto ei = getEditorInfo();
   EditorGetString egs {ei.CurLine};
   info->EditorControl(ECTL_GETSTRING, &egs);
 
@@ -357,7 +350,7 @@ void FarEditor::listErrors()
 void FarEditor::locateFunction()
 {
   // extract word
-  enterHandler();
+  auto ei = getEditorInfo();
   UnicodeString& curLine = *getLine(ei.CurLine);
   int cpos = ei.CurPos;
   int sword = cpos;
@@ -438,7 +431,7 @@ void FarEditor::locateFunction()
 
 void FarEditor::updateHighlighting()
 {
-  enterHandler();
+  const auto ei = getEditorInfo();
   baseEditor->validate(ei.TopScreenLine, true);
 }
 
@@ -468,7 +461,7 @@ int FarEditor::editorEvent(int event, void* param)
     return 0;
   }
 
-  enterHandler();
+  const auto ei = getEditorInfo();
   WindowSizeX = ei.WindowSizeX;
   WindowSizeY = ei.WindowSizeY;
 
@@ -520,7 +513,7 @@ int FarEditor::editorEvent(int event, void* param)
 
     // clean line in far editor
     addFARColor(lno, -1, 0, color());
-    EditorGetString egs{lno};
+    EditorGetString egs {lno};
     info->EditorControl(ECTL_GETSTRING, &egs);
     int llen = egs.StringLength;
 
@@ -779,7 +772,7 @@ int FarEditor::editorEvent(int event, void* param)
 void FarEditor::showOutliner(Outliner* outliner)
 {
   FarMenuItem* menu;
-  EditorSetPosition esp{};
+  EditorSetPosition esp {};
   bool moved = false;
   int code = 0;
   const int FILTER_SIZE = 40;
@@ -860,6 +853,7 @@ void FarEditor::showOutliner(Outliner* outliner)
   }
 
   menu = new FarMenuItem[items_num];
+  const auto ei_curr = getEditorInfo();
 
   while (!stopMenu) {
     int i;
@@ -869,7 +863,7 @@ void FarEditor::showOutliner(Outliner* outliner)
     int selectedItem = 0;
     std::vector<int> treeStack;
 
-    enterHandler();
+    auto ei = getEditorInfo();
     for (i = 0; i < items_num; i++) {
       OutlineItem* item = outliner->getItem(i);
 
@@ -1197,12 +1191,12 @@ void FarEditor::showOutliner(Outliner* outliner)
 
   if (!moved) {
     // restoring position
-    esp.CurLine = ei.CurLine;
-    esp.CurPos = ei.CurPos;
-    esp.CurTabPos = ei.CurTabPos;
-    esp.TopScreenLine = ei.TopScreenLine;
-    esp.LeftPos = ei.LeftPos;
-    esp.Overtype = ei.Overtype;
+    esp.CurLine = ei_curr.CurLine;
+    esp.CurPos = ei_curr.CurPos;
+    esp.CurTabPos = ei_curr.CurTabPos;
+    esp.TopScreenLine = ei_curr.TopScreenLine;
+    esp.LeftPos = ei_curr.LeftPos;
+    esp.Overtype = ei_curr.Overtype;
     info->EditorControl(ECTL_SETPOSITION, &esp);
   }
 
@@ -1212,15 +1206,16 @@ void FarEditor::showOutliner(Outliner* outliner)
   }
 }
 
-void FarEditor::enterHandler()
+EditorInfo FarEditor::getEditorInfo() const
 {
+  EditorInfo ei {};
   info->EditorControl(ECTL_GETINFO, &ei);
-  ret_strNumber = -1;
+  return ei;
 }
 
 color FarEditor::convert(const StyledRegion* rd) const
 {
-  color col;
+  color col{};
 
   if (rdBackground == nullptr)
     return col;
@@ -1346,7 +1341,7 @@ const wchar_t* FarEditor::GetMsg(int msg) const
 void FarEditor::cleanEditor()
 {
   color col;
-  enterHandler();
+  const auto ei = getEditorInfo();
   for (int i = 0; i < ei.TotalLines; i++) {
     addFARColor(i, -1, 0, col);
   }

@@ -103,16 +103,16 @@ class FarEditor : public LineSource
 
   /** Editor action: pair matching.
    */
-  void matchPair();
+  void matchPair() const;
   /** Editor action: pair selection.
    */
-  void selectPair();
+  void selectPair() const;
   /** Editor action: pair selection with current block.
    */
-  void selectBlock();
+  void selectBlock() const;
   /** Editor action: Selection of current region under cursor.
    */
-  void selectRegion();
+  void selectRegion() const;
   /** Editor action: Lists functional region.
    */
   void listFunctions();
@@ -136,7 +136,7 @@ class FarEditor : public LineSource
   void cleanEditor();
 
  private:
-  EditorInfo ei {};
+
   PluginStartupInfo* info;
 
   ParserFactory* parserFactory;
@@ -166,7 +166,6 @@ class FarEditor : public LineSource
   int blockTopPosition = -1;
 
   std::unique_ptr<UnicodeString> ret_str;
-  size_t ret_strNumber = -1;
 
   int newfore = -1;
   int newback = -1;
@@ -178,7 +177,7 @@ class FarEditor : public LineSource
   std::unique_ptr<Outliner> errorOutliner;
 
   void reloadTypeSettings();
-  void enterHandler();
+  EditorInfo getEditorInfo() const;
   color convert(const StyledRegion* rd) const;
   bool foreDefault(const color& col) const;
   bool backDefault(const color& col) const;

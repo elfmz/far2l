@@ -195,7 +195,7 @@ class FarEditorSet
   int getCountFileTypeAndGroup() const;
   FileType* getFileTypeByIndex(int idx) const;
   void FillTypeMenu(ChooseTypeMenu* Menu, const FileType* CurFileType) const;
-  UnicodeString* getCurrentFileName();
+  static uUnicodeString getCurrentFileName();
 
   // FarList for dialog objects
   FarList* buildHrcList() const;
@@ -217,7 +217,7 @@ class FarEditorSet
 
   void SaveChangedValueParam(HANDLE hDlg);
 
-  std::unordered_map<intptr_t, FarEditor*> farEditorInstances;
+  std::unordered_map<intptr_t, std::unique_ptr<FarEditor>> farEditorInstances;
   std::unique_ptr<ParserFactory> parserFactory;
   std::unique_ptr<StyledHRDMapper> regionMapper;
 

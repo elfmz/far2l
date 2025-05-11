@@ -58,6 +58,17 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	const char *legacy;
 	bool nolegacy = false;
 
+	// If key code is VK_NONAME, it is IME event. Just send text, as specified in
+	// https://github.com/kovidgoyal/kitty/issues/8620#issuecomment-2869675283
+	if (KeyEvent.wVirtualKeyCode == VK_NONAME) {
+		if (KeyEvent.bKeyDown) {
+			fprintf(stderr, "kitty kb: probably IME event keydown, sending as text\n");
+			return Wide2MB(&KeyEvent.uChar.UnicodeChar);
+		} else {
+			fprintf(stderr, "kitty kb: probably IME event keyup, ignoring\n");
+			return "";
+		}
+	}
 
 	// initialization
 
@@ -212,21 +223,16 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 	// generating shifted value
 
-	// Fixme: (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
-	// Fixme: is workaround for far2l wx backend as it is not sending Shift state for Char events.
-	// Fixme: See "ir.Event.KeyEvent.wVirtualKeyCode = VK_NONAME;"
-	// Fixme: and below in wxMain.cpp: dwControlKeyState not set
-	if (shift || (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))) {
+	if (shift) {
 		shifted = KeyEvent.uChar.UnicodeChar;
 	}
 
 
-	// generating key code and base key code
+	// generating key code and base layout key code
 	keycode = towlower(KeyEvent.uChar.UnicodeChar);
 
-	// Here we get VK_NONAME as wVirtualKeyCode for all Russian chars
-	// if using wx backend in some setups, so "base key" field
-	// can not be set correctly in such cases.
+	// Here we get VK_NONAME as wVirtualKeyCode for IME events,
+	// so "base layout key" field can not be set correctly in such cases.
 	// See also:
 	// https://github.com/wxWidgets/wxWidgets/issues/25379
 

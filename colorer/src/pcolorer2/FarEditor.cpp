@@ -933,7 +933,7 @@ void FarEditor::showOutliner(Outliner* outliner)
             labelLength = 110;
           }
 
-          wcsncpy(menuItem + si, (const wchar_t*) item->token->getWChars(), labelLength);
+          wcsncpy(menuItem + si, item->token->getWChars(), labelLength);
           menuItem[si + labelLength] = 0;
         }
         else {
@@ -944,7 +944,7 @@ void FarEditor::showOutliner(Outliner* outliner)
             labelLength = 110;
           }
 
-          wcsncpy(menuItem, (const wchar_t*) line->getWChars(), labelLength);
+          wcsncpy(menuItem, line->getWChars(), labelLength);
           menuItem[labelLength] = 0;
         }
 
@@ -984,7 +984,7 @@ void FarEditor::showOutliner(Outliner* outliner)
         break;
       }
 
-      wcsncpy(prefix, (const wchar_t*) menu[0].Text + auto_ptr, plen);
+      wcsncpy(prefix, menu[0].Text + auto_ptr, plen);
       prefix[plen] = 0;
 
       for (int j = 1; j < menu_size; j++) {

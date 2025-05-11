@@ -196,7 +196,7 @@ void ChooseTypeMenu::RefreshItemCaption(size_t index)
 UnicodeString* ChooseTypeMenu::GenerateName(const FileType* fType)
 {
   const UnicodeString* v;
-  v = ((FileType*) fType)->getParamValue(DHotkey);
+  v = fType->getParamValue(DHotkey);
   auto* s = new UnicodeString;
   if (v != nullptr && v->length()) {
     s->append("&").append(*v);

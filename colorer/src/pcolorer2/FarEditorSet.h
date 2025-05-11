@@ -3,12 +3,10 @@
 
 #include <colorer/handlers/LineRegionsSupport.h>
 #include <colorer/handlers/StyledHRDMapper.h>
-#include <colorer/viewer/TextConsoleViewer.h>
 #include <unordered_map>
 #include "ChooseTypeMenu.h"
 #include "FarEditor.h"
 #include "pcolorer.h"
-#include "tools.h"
 
 // registry keys
 extern const char cRegEnabled[];
@@ -128,16 +126,16 @@ class FarEditorSet
 
   bool SetBgEditor();
 
-  UnicodeString* sTempHrdName;
-  UnicodeString* sTempHrdNameTm;
+  UnicodeString* sTempHrdName = nullptr;
+  UnicodeString* sTempHrdNameTm = nullptr;
 
   /** Shows hrc configuration dialog */
   void configureHrc();
   void OnChangeHrc(HANDLE hDlg);
   void OnChangeParam(HANDLE hDlg, int idx);
   void OnSaveHrcParams(HANDLE hDlg);
-  bool dialogFirstFocus;
-  int menuid;
+  bool dialogFirstFocus = false;
+  int menuid = -1;
 
   bool checkConsoleExtendedColors();
   void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value,
@@ -175,7 +173,7 @@ class FarEditorSet
   /** Enables plugin processing*/
   void enableColorer(bool fromEditor);
 
-  bool useExtendedColors {false};
+  bool useExtendedColors =false;
 
   static void showExceptionMessage(const UnicodeString* message);
   int getCountFileTypeAndGroup();
@@ -212,25 +210,25 @@ class FarEditorSet
   UnicodeString hrdName;
 
   /** registry settings */
-  bool rEnabled;  // status plugin
-  int drawCross;
-  bool drawPairs;
-  bool drawSyntax;
-  bool oldOutline;
-  bool TrueModOn;
-  bool ChangeBgEditor;
-  UnicodeString* sHrdName;
-  UnicodeString* sHrdNameTm;
-  UnicodeString* sCatalogPath;
-  UnicodeString* sUserHrdPath;
-  UnicodeString* sUserHrcPath;
+  bool rEnabled = false;  // status plugin
+  int drawCross = false;
+  bool drawPairs = false;
+  bool drawSyntax = false;
+  bool oldOutline = false;
+  bool TrueModOn = false;
+  bool ChangeBgEditor = false;
+  UnicodeString* sHrdName = nullptr;
+  UnicodeString* sHrdNameTm = nullptr;
+  UnicodeString* sCatalogPath = nullptr;
+  UnicodeString* sUserHrdPath = nullptr;
+  UnicodeString* sUserHrcPath = nullptr;
 
   /** UNC path */
   std::unique_ptr<UnicodeString> sCatalogPathExp;
   std::unique_ptr<UnicodeString> sUserHrdPathExp;
   std::unique_ptr<UnicodeString> sUserHrcPathExp;
 
-  int viewFirst;  // 0 - init;  1 - first run view; 2 - first run editor
+  int viewFirst = 0;  // 0 - init;  1 - first run view; 2 - first run editor
   std::string settingsIni;
 };
 

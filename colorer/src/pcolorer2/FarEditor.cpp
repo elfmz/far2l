@@ -211,9 +211,9 @@ void FarEditor::setOutlineStyle(bool oldStyle)
   this->oldOutline = oldStyle;
 }
 
-void FarEditor::setTrueMod(bool _TrueMod)
+void FarEditor::setTrueMod(bool true_mod)
 {
-  this->TrueMod = _TrueMod;
+  this->TrueMod = true_mod;
 }
 
 void FarEditor::setRegionMapper(RegionMapper* rs)
@@ -520,8 +520,7 @@ int FarEditor::editorEvent(int event, void* param)
 
     // clean line in far editor
     addFARColor(lno, -1, 0, color());
-    EditorGetString egs;
-    egs.StringNumber = lno;
+    EditorGetString egs{lno};
     info->EditorControl(ECTL_GETSTRING, &egs);
     int llen = egs.StringLength;
 
@@ -780,7 +779,7 @@ int FarEditor::editorEvent(int event, void* param)
 void FarEditor::showOutliner(Outliner* outliner)
 {
   FarMenuItem* menu;
-  EditorSetPosition esp;
+  EditorSetPosition esp{};
   bool moved = false;
   int code = 0;
   const int FILTER_SIZE = 40;
@@ -885,7 +884,7 @@ void FarEditor::showOutliner(Outliner* outliner)
           continue;
         }
 
-        wchar_t* menuItem = new wchar_t[255];
+        auto menuItem = new wchar_t[255];
 
         if (!oldOutline) {
           int si = swprintf(menuItem, 255, L"%4ld ", item->lno + 1);
@@ -1219,7 +1218,7 @@ void FarEditor::enterHandler()
   ret_strNumber = -1;
 }
 
-color FarEditor::convert(const StyledRegion* rd)
+color FarEditor::convert(const StyledRegion* rd) const
 {
   color col;
 
@@ -1262,7 +1261,7 @@ color FarEditor::convert(const StyledRegion* rd)
   }
 }
 
-bool FarEditor::foreDefault(color col)
+bool FarEditor::foreDefault(color col) const
 {
   if (TrueMod)
     return col.fg == rdBackground->fore;
@@ -1270,7 +1269,7 @@ bool FarEditor::foreDefault(color col)
     return col.cfg == rdBackground->fore;
 }
 
-bool FarEditor::backDefault(color col)
+bool FarEditor::backDefault(color col) const
 {
   if (TrueMod)
     return col.bk == rdBackground->back;
@@ -1278,7 +1277,7 @@ bool FarEditor::backDefault(color col)
     return col.cbk == rdBackground->back;
 }
 
-void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style)
+void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style) const
 {
   if (TrueMod) {
     EditorTrueColor ec {};
@@ -1339,7 +1338,7 @@ void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style)
   }
 }
 
-const wchar_t* FarEditor::GetMsg(int msg)
+const wchar_t* FarEditor::GetMsg(int msg) const
 {
   return (info->GetMsg(info->ModuleNumber, msg));
 }

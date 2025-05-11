@@ -1,4 +1,6 @@
 #include "CerrLogger.h"
+#include <iostream>
+#include <locale>
 #include "FarEditorSet.h"
 #include "pcolorer.h"
 
@@ -25,10 +27,10 @@ void CerrLogger::log(Logger::LogLevel level, const char* /*filename_in*/, int /*
   std::cerr << message << '\n';
 }
 
-Logger::LogLevel CerrLogger::getLogLevel(const std::string& log_level)
+Logger::LogLevel CerrLogger::getLogLevel(const std::string_view log_level)
 {
   int i = 0;
-  for (auto it : LogLevelStr) {
+  for (const auto it : LogLevelStr) {
     if (log_level == it) {
       return static_cast<Logger::LogLevel>(i);
     }

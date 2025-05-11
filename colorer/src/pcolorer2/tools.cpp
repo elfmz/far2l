@@ -14,8 +14,7 @@ wchar_t* rtrim(wchar_t* str)
 
 wchar_t* ltrim(wchar_t* str)
 {
-  while (iswspace(*(str++)))
-    ;
+  while (iswspace(*(str++)));
 
   return str - 1;
 }

@@ -1,8 +1,8 @@
-#include "pcolorer.h"
-#include "FarEditorSet.h"
 #include "CerrLogger.h"
+#include "FarEditorSet.h"
+#include "pcolorer.h"
 
-const char *CerrLogger::LogLevelStr[] {"off",  "error", "warning", "info", "debug", "trace"};
+const char* CerrLogger::LogLevelStr[] {"off", "error", "warning", "info", "debug", "trace"};
 
 CerrLogger::CerrLogger()
 {
@@ -13,7 +13,7 @@ CerrLogger::CerrLogger()
 }
 
 void CerrLogger::log(Logger::LogLevel level, const char* /*filename_in*/, int /*line_in*/,
-         const char* /*funcname_in*/, const char* message)
+                     const char* /*funcname_in*/, const char* message)
 {
   if (level > current_level) {
     return;

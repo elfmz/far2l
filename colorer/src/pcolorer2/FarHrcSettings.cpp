@@ -27,7 +27,7 @@ void FarHrcSettings::loadUserHrd(const UnicodeString* filename)
   std::list<XMLNode> nodes;
   xml_parser.getNodes(nodes);
 
-  if (nodes.begin()->name !=  catTagHrdSets) {
+  if (nodes.begin()->name != catTagHrdSets) {
     throw Exception("main '<hrd-sets>' block not found");
   }
   for (const auto& node : nodes.begin()->children) {
@@ -64,7 +64,7 @@ void FarHrcSettings::readXML(UnicodeString* file)
   std::list<XMLNode> nodes;
   xml_parser.getNodes(nodes);
 
-  if (nodes.begin()->name !=  u"hrc-settings") {
+  if (nodes.begin()->name != u"hrc-settings") {
     throw FarHrcSettingsException("main '<hrc-settings>' block not found");
   }
 

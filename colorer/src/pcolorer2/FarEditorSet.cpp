@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <utils.h>
 #include "FarHrcSettings.h"
+#include "tools.h"
 
 const std::string cSectionName = "Settings";
 // registry keys
@@ -39,27 +40,6 @@ const UnicodeString Ddefault("<default>");
 const UnicodeString DAutodetect("autodetect");
 
 FarEditorSet::FarEditorSet()
-    : sTempHrdName(nullptr),
-      sTempHrdNameTm(nullptr),
-      dialogFirstFocus(false),
-      menuid(-1),
-      parserFactory(nullptr),
-      regionMapper(nullptr),
-      hrdClass(""),
-      hrdName(""),
-      rEnabled(false),
-      drawCross(false),
-      drawPairs(false),
-      drawSyntax(false),
-      oldOutline(false),
-      TrueModOn(false),
-      ChangeBgEditor(false),
-      sHrdName(nullptr),
-      sHrdNameTm(nullptr),
-      sCatalogPath(nullptr),
-      sUserHrdPath(nullptr),
-      sUserHrcPath(nullptr),
-      viewFirst(0)
 {
   settingsIni = InMyConfig("plugins/colorer/config.ini");
   struct stat s;

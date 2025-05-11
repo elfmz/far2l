@@ -38,15 +38,6 @@ const UnicodeString DRgb("rgb");
 const UnicodeString Ddefault("<default>");
 const UnicodeString DAutodetect("autodetect");
 
-int _snwprintf_s(wchar_t* string, size_t sizeInWords, size_t count, const wchar_t* format, ...)
-{
-  va_list arglist;
-  va_start(arglist, format);
-  int result = vswprintf(string, count, format, arglist);
-  va_end(arglist);
-  return result;
-}
-
 FarEditorSet::FarEditorSet()
     : sTempHrdName(nullptr),
       sTempHrdNameTm(nullptr),

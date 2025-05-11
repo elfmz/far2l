@@ -4,6 +4,7 @@
 #include <farkeys.h>
 #include <sys/stat.h>
 #include <utils.h>
+#include <array>
 #include "FarHrcSettings.h"
 #include "tools.h"
 
@@ -44,7 +45,7 @@ const UnicodeString DAutodetect("autodetect");
 FarEditorSet::FarEditorSet()
 {
   settingsIni = InMyConfig("plugins/colorer/config.ini");
-  struct stat s{};
+  struct stat s {};
   if (stat(settingsIni.c_str(), &s) == -1) {
     SetDefaultSettings();
   }
@@ -64,11 +65,10 @@ FarEditorSet::~FarEditorSet()
 
 void FarEditorSet::openMenu()
 {
-  int iMenuItems[] = {mListTypes,  mMatchPair,    mSelectBlock,    mSelectPair, mListFunctions,
-                      mFindErrors, mSelectRegion, mLocateFunction, -1,          mUpdateHighlight,
-                      mReloadBase, mConfigure};
-  FarMenuItem menuElements[sizeof(iMenuItems) / sizeof(iMenuItems[0])];
-  memset(menuElements, 0, sizeof(menuElements));
+  std::array<int, 12> iMenuItems {
+      mListTypes,    mMatchPair,      mSelectBlock, mSelectPair,      mListFunctions, mFindErrors,
+      mSelectRegion, mLocateFunction, -1,           mUpdateHighlight, mReloadBase,    mConfigure};
+  FarMenuItem menuElements[iMenuItems.size()] {};
 
   try {
     if (!rEnabled) {
@@ -85,7 +85,7 @@ void FarEditorSet::openMenu()
       return;
     }
 
-    for (int i = sizeof(iMenuItems) / sizeof(iMenuItems[0]) - 1; i >= 0; i--) {
+    for (int i = iMenuItems.size() - 1; i >= 0; i--) {
       if (iMenuItems[i] == -1) {
         menuElements[i].Separator = 1;
       }
@@ -100,9 +100,8 @@ void FarEditorSet::openMenu()
     if (!editor) {
       throw Exception("Can't find current editor in array.");
     }
-    int res =
-        Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, GetMsg(mName), nullptr, L"menu",
-                  nullptr, nullptr, menuElements, sizeof(iMenuItems) / sizeof(iMenuItems[0]));
+    int res = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, GetMsg(mName), nullptr,
+                        L"menu", nullptr, nullptr, menuElements, iMenuItems.size());
     switch (res) {
       case 0:
         chooseType();
@@ -306,11 +305,12 @@ void FarEditorSet::chooseType()
           continue;
         }
 
-        const int KeyAssignDlgDataCount = 3;
-        FarDialogItem KeyAssignDlgData[KeyAssignDlgDataCount] = {
-            {DI_DOUBLEBOX,  3, 1, 30, 4, 0, {}, 0, 0, GetMsg(mKeyAssignDialogTitle), 0},
-            {     DI_TEXT, -1, 2,  0, 2, 0, {}, 0, 0,   GetMsg(mKeyAssignTextTitle), 0},
-            {     DI_EDIT,  5, 3, 28, 3, 0, {}, 0, 0,                           L"", 0},
+        std::array<FarDialogItem, 3> KeyAssignDlgData {
+            {
+             {DI_DOUBLEBOX, 3, 1, 30, 4, 0, {}, 0, 0, GetMsg(mKeyAssignDialogTitle), 0},
+             {DI_TEXT, -1, 2, 0, 2, 0, {}, 0, 0, GetMsg(mKeyAssignTextTitle), 0},
+             {DI_EDIT, 5, 3, 28, 3, 0, {}, 0, 0, L"", 0},
+             }
         };
 
         const UnicodeString* v = menu.GetFileType(i)->getParamValue(DHotkey);
@@ -319,8 +319,8 @@ void FarEditorSet::chooseType()
         }
 
         HANDLE hDlg =
-            Info.DialogInit(Info.ModuleNumber, -1, -1, 34, 6, L"keyassign", KeyAssignDlgData,
-                            KeyAssignDlgDataCount, 0, 0, KeyDialogProc, (LONG_PTR) this);
+            Info.DialogInit(Info.ModuleNumber, -1, -1, 34, 6, L"keyassign", KeyAssignDlgData.data(),
+                            KeyAssignDlgData.size(), 0, 0, KeyDialogProc, (LONG_PTR) this);
         int res = Info.DialogRun(hDlg);
 
         if (res != -1) {
@@ -451,48 +451,64 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
 void FarEditorSet::configure(bool fromEditor)
 {
   try {
-    const int fdiCount = 25;
-    FarDialogItem fdi[fdiCount] = {
-        {DI_DOUBLEBOX,3,  1,55, 22,0,                       {},0,    0,L"", 0                                                                                         }, //  IDX_BOX,
-        { DI_CHECKBOX,  5,  2,  0,  0,  TRUE,                       {},          0,    0, L"", 0}, //  IDX_DISABLED,
-        { DI_CHECKBOX,  5,  3,  0,  0, FALSE,                       {}, DIF_3STATE,    0, L"", 0}, //  IDX_CROSS,
-        { DI_CHECKBOX,  5,  4,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_PAIRS,
-        { DI_CHECKBOX,  5,  5,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_SYNTAX,
-        { DI_CHECKBOX,  5,  6,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_OLDOUTLINE,
-        { DI_CHECKBOX,  5,  7,  0,  0,  TRUE,                       {},          0,    0, L"", 0}, //  IDX_CHANGE_BG,
-        {     DI_TEXT,  5,  8,  0,  8, FALSE,                       {},          0,    0, L"", 0}, //  IDX_HRD,
-        {   DI_BUTTON, 20,  8,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_HRD_SELECT,
-        {     DI_TEXT,  5,  9,  0,  9, FALSE,                       {},          0,    0, L"", 0}, //  IDX_CATALOG,
-        {     DI_EDIT,
-         6, 10,
-         52,  5,
-         FALSE, {(DWORD_PTR) L"catalog"},
-         DIF_HISTORY,    0,
-         L"", 0                                                                                 }, //  IDX_CATALOG_EDIT
-        {     DI_TEXT,  5, 11,  0, 11, FALSE,                       {},          0,    0, L"", 0}, //  IDX_USERHRC,
-        {     DI_EDIT,
-         6, 12,
-         52,  5,
-         FALSE, {(DWORD_PTR) L"userhrc"},
-         DIF_HISTORY,    0,
-         L"", 0                                                                                 }, //  IDX_USERHRC_EDIT
-        {     DI_TEXT,  5, 13,  0, 13, FALSE,                       {},          0,    0, L"", 0}, //  IDX_USERHRD,
-        {     DI_EDIT,
-         6, 14,
-         52,  5,
-         FALSE, {(DWORD_PTR) L"userhrd"},
-         DIF_HISTORY,    0,
-         L"", 0                                                                                 }, //  IDX_USERHRD_EDIT
-        {DI_SINGLEBOX,  4, 16, 54, 16,  TRUE,                       {},          0,    0, L"", 0}, //  IDX_TM_BOX,
-        { DI_CHECKBOX,  5, 17,  0,  0,  TRUE,                       {},          0,    0, L"", 0}, //  IDX_TRUEMOD,
-        {     DI_TEXT, 20, 17,  0, 17,  TRUE,                       {},          0,    0, L"", 0}, //  IDX_TMMESSAGE,
-        {     DI_TEXT,  5, 18,  0, 18, FALSE,                       {},          0,    0, L"", 0}, //  IDX_HRD_TM,
-        {   DI_BUTTON, 20, 18,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_HRD_SELECT_TM,
-        {DI_SINGLEBOX,  4, 19, 54, 19,  TRUE,                       {},          0,    0, L"", 0}, //  IDX_TM_BOX_OFF,
-        {   DI_BUTTON,  5, 20,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_RELOAD_ALL,
-        {   DI_BUTTON, 30, 20,  0,  0, FALSE,                       {},          0,    0, L"", 0}, //  IDX_HRC_SETTING,
-        {   DI_BUTTON, 35, 21,  0,  0, FALSE,                       {},          0, TRUE, L"", 0}, //  IDX_OK,
-        {   DI_BUTTON, 45, 21,  0,  0, FALSE,                       {},          0,    0, L"", 0}  //  IDX_CANCEL,
+    std::array<FarDialogItem, 25> fdi {
+        {
+         {DI_DOUBLEBOX, 3, 1, 55, 22, 0, {}, 0, 0, L"", 0},            //  IDX_BOX,
+            {DI_CHECKBOX, 5, 2, 0, 0, TRUE, {}, 0, 0, L"", 0},            //  IDX_DISABLED,
+            {DI_CHECKBOX, 5, 3, 0, 0, FALSE, {}, DIF_3STATE, 0, L"", 0},  //  IDX_CROSS,
+            {DI_CHECKBOX, 5, 4, 0, 0, FALSE, {}, 0, 0, L"", 0},           //  IDX_PAIRS,
+            {DI_CHECKBOX, 5, 5, 0, 0, FALSE, {}, 0, 0, L"", 0},           //  IDX_SYNTAX,
+            {DI_CHECKBOX, 5, 6, 0, 0, FALSE, {}, 0, 0, L"", 0},           //  IDX_OLDOUTLINE,
+            {DI_CHECKBOX, 5, 7, 0, 0, TRUE, {}, 0, 0, L"", 0},            //  IDX_CHANGE_BG,
+            {DI_TEXT, 5, 8, 0, 8, FALSE, {}, 0, 0, L"", 0},               //  IDX_HRD,
+            {DI_BUTTON, 20, 8, 0, 0, FALSE, {}, 0, 0, L"", 0},            //  IDX_HRD_SELECT,
+            {DI_TEXT, 5, 9, 0, 9, FALSE, {}, 0, 0, L"", 0},               //  IDX_CATALOG,
+            {DI_EDIT,
+             6,
+             10,
+             52,
+             5,
+             FALSE,
+             {(DWORD_PTR) L"catalog"},
+             DIF_HISTORY,
+             0,
+             L"",
+             0},                                               //  IDX_CATALOG_EDIT
+            {DI_TEXT, 5, 11, 0, 11, FALSE, {}, 0, 0, L"", 0},  //  IDX_USERHRC,
+            {DI_EDIT,
+             6,
+             12,
+             52,
+             5,
+             FALSE,
+             {(DWORD_PTR) L"userhrc"},
+             DIF_HISTORY,
+             0,
+             L"",
+             0},                                               //  IDX_USERHRC_EDIT
+            {DI_TEXT, 5, 13, 0, 13, FALSE, {}, 0, 0, L"", 0},  //  IDX_USERHRD,
+            {DI_EDIT,
+             6,
+             14,
+             52,
+             5,
+             FALSE,
+             {(DWORD_PTR) L"userhrd"},
+             DIF_HISTORY,
+             0,
+             L"",
+             0},                                                    //  IDX_USERHRD_EDIT
+            {DI_SINGLEBOX, 4, 16, 54, 16, TRUE, {}, 0, 0, L"", 0},  //  IDX_TM_BOX,
+            {DI_CHECKBOX, 5, 17, 0, 0, TRUE, {}, 0, 0, L"", 0},     //  IDX_TRUEMOD,
+            {DI_TEXT, 20, 17, 0, 17, TRUE, {}, 0, 0, L"", 0},       //  IDX_TMMESSAGE,
+            {DI_TEXT, 5, 18, 0, 18, FALSE, {}, 0, 0, L"", 0},       //  IDX_HRD_TM,
+            {DI_BUTTON, 20, 18, 0, 0, FALSE, {}, 0, 0, L"", 0},     //  IDX_HRD_SELECT_TM,
+            {DI_SINGLEBOX, 4, 19, 54, 19, TRUE, {}, 0, 0, L"", 0},  //  IDX_TM_BOX_OFF,
+            {DI_BUTTON, 5, 20, 0, 0, FALSE, {}, 0, 0, L"", 0},      //  IDX_RELOAD_ALL,
+            {DI_BUTTON, 30, 20, 0, 0, FALSE, {}, 0, 0, L"", 0},     //  IDX_HRC_SETTING,
+            {DI_BUTTON, 35, 21, 0, 0, FALSE, {}, 0, TRUE, L"", 0},  //  IDX_OK,
+            {DI_BUTTON, 45, 21, 0, 0, FALSE, {}, 0, 0, L"", 0}      //  IDX_CANCEL,
+        }
     };  // type, x1, y1, x2, y2, focus, sel, fl, def, data, maxlen
 
     fdi[IDX_BOX].PtrData = GetMsg(mSetup);
@@ -544,8 +560,8 @@ void FarEditorSet::configure(bool fromEditor)
     /*
      * Dialog activation
      */
-    HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 58, 24, L"config", fdi, fdiCount, 0, 0,
-                                  SettingDialogProc, (LONG_PTR) this);
+    HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 58, 24, L"config", fdi.data(),
+                                  fdi.size(), 0, 0, SettingDialogProc, (LONG_PTR) this);
     int i = Info.DialogRun(hDlg);
 
     if (i == IDX_OK) {
@@ -881,7 +897,7 @@ FarEditor* FarEditorSet::addCurrentEditor()
     ReloadBase();
   }
 
-  EditorInfo ei{};
+  EditorInfo ei {};
   Info.EditorControl(ECTL_GETINFO, &ei);
 
   FarEditor* editor = new FarEditor(&Info, parserFactory.get());
@@ -1188,17 +1204,13 @@ void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
   const UnicodeString* value = type->getParamUserValue(DShowCross);
   const UnicodeString* def_value = getParamDefValue(type, DShowCross);
 
-  int count = 5;
-  FarListItem* fcross = new FarListItem[count];
-  memset(fcross, 0, sizeof(FarListItem) * (count));
+  std::array<FarListItem, 5> fcross {};
   fcross[0].Text = DNone.getWChars();
   fcross[1].Text = DVertical.getWChars();
   fcross[2].Text = DHorizontal.getWChars();
   fcross[3].Text = DBoth.getWChars();
   fcross[4].Text = def_value->getWChars();
-  FarList* lcross = new FarList;
-  lcross->Items = fcross;
-  lcross->ItemsNumber = count;
+  FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 4;
   if ((value == nullptr) || !value->length()) {
@@ -1220,10 +1232,8 @@ void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
   }
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
-  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) lcross);
+  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
   delete def_value;
-  delete[] fcross;
-  delete lcross;
 }
 
 void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
@@ -1231,15 +1241,11 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
   const UnicodeString* value = type->getParamUserValue(DCrossZorder);
   const UnicodeString* def_value = getParamDefValue(type, DCrossZorder);
 
-  int count = 3;
-  FarListItem* fcross = new FarListItem[count];
-  memset(fcross, 0, sizeof(FarListItem) * (count));
+  std::array<FarListItem, 3> fcross {};
   fcross[0].Text = DBottom.getWChars();
   fcross[1].Text = DTop.getWChars();
   fcross[2].Text = def_value->getWChars();
-  FarList* lcross = new FarList;
-  lcross->Items = fcross;
-  lcross->ItemsNumber = count;
+  FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 2;
   if ((value == nullptr) || !value->length()) {
@@ -1255,10 +1261,8 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
   }
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
-  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) lcross);
+  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
   delete def_value;
-  delete[] fcross;
-  delete lcross;
 }
 
 void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
@@ -1266,15 +1270,11 @@ void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const U
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString* def_value = getParamDefValue(type, param);
 
-  int count = 3;
-  FarListItem* fcross = new FarListItem[count];
-  memset(fcross, 0, sizeof(FarListItem) * (count));
+  std::array<FarListItem, 3> fcross {};
   fcross[0].Text = DNo.getWChars();
   fcross[1].Text = DYes.getWChars();
   fcross[2].Text = def_value->getWChars();
-  FarList* lcross = new FarList;
-  lcross->Items = fcross;
-  lcross->ItemsNumber = count;
+  FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 2;
   if ((value == nullptr) || !value->length()) {
@@ -1290,10 +1290,8 @@ void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const U
   }
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
-  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) lcross);
+  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
   delete def_value;
-  delete[] fcross;
-  delete lcross;
 }
 
 void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
@@ -1301,15 +1299,11 @@ void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const U
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString* def_value = getParamDefValue(type, param);
 
-  int count = 3;
-  FarListItem* fcross = new FarListItem[count];
-  memset(fcross, 0, sizeof(FarListItem) * (count));
+  std::array<FarListItem, 3> fcross {};
   fcross[0].Text = DFalse.getWChars();
   fcross[1].Text = DTrue.getWChars();
   fcross[2].Text = def_value->getWChars();
-  FarList* lcross = new FarList;
-  lcross->Items = fcross;
-  lcross->ItemsNumber = count;
+  FarList lcross {fcross.size(), fcross.data()};
 
   int ret = 2;
   if ((value == nullptr) || !value->length()) {
@@ -1325,10 +1319,8 @@ void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const U
   }
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
-  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) lcross);
+  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
   delete def_value;
-  delete[] fcross;
-  delete lcross;
 }
 
 void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
@@ -1337,25 +1329,19 @@ void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString* def_value = getParamDefValue(type, param);
 
-  int count = 1;
-  FarListItem* fcross = new FarListItem[count];
-  memset(fcross, 0, sizeof(FarListItem) * (count));
+  std::array<FarListItem, 1> fcross {};
   fcross[0].Text = def_value->getWChars();
-  FarList* lcross = new FarList;
-  lcross->Items = fcross;
-  lcross->ItemsNumber = count;
+  FarList lcross {fcross.size(), fcross.data()};
 
   fcross[0].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, false);
-  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) lcross);
+  Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) &lcross);
 
   if (value) {
     Info.SendDlgMessage(hDlg, DM_SETTEXTPTR, IDX_CH_PARAM_VALUE_LIST,
                         (LONG_PTR) value->getWChars());
   }
   delete def_value;
-  delete[] fcross;
-  delete lcross;
 }
 
 FileType* FarEditorSet::getCurrentTypeInDialog(HANDLE hDlg)
@@ -1382,8 +1368,7 @@ void FarEditorSet::OnChangeHrc(HANDLE hDlg)
 
 void FarEditorSet::SaveChangedValueParam(HANDLE hDlg)
 {
-  FarListGetItem List;
-  List.ItemIndex = menuid;
+  FarListGetItem List {menuid};
   Info.SendDlgMessage(hDlg, DM_LISTGETITEM, IDX_CH_PARAM_LIST, (LONG_PTR) &List);
 
   // param name
@@ -1410,8 +1395,7 @@ void FarEditorSet::OnChangeParam(HANDLE hDlg, int idx)
     SaveChangedValueParam(hDlg);
   }
   FileType* type = getCurrentTypeInDialog(hDlg);
-  FarListGetItem List {};
-  List.ItemIndex = idx;
+  FarListGetItem List {idx};
   Info.SendDlgMessage(hDlg, DM_LISTGETITEM, IDX_CH_PARAM_LIST, (LONG_PTR) &List);
 
   menuid = idx;
@@ -1501,17 +1485,18 @@ void FarEditorSet::configureHrc()
   if (!rEnabled)
     return;
 
-  const int fdiCount = 9;
-  FarDialogItem fdi[fdiCount] = {
-      {DI_DOUBLEBOX,  2,  1, 56, 21,     0, {}, 0,    0, L"", 0}, //  IDX_CH_BOX,
-      {     DI_TEXT,  3,  3,  0,  3, FALSE, {}, 0,    0, L"", 0}, //  IDX_CH_CAPTIONLIST,
-      { DI_COMBOBOX, 10,  3, 54,  2, FALSE, {}, 0,    0, L"", 0}, //  IDX_CH_SCHEMAS,
-      {  DI_LISTBOX,  3,  4, 30, 17,  TRUE, {}, 0,    0, L"", 0}, //  IDX_CH_PARAM_LIST,
-      {     DI_TEXT, 32,  5,  0,  5, FALSE, {}, 0,    0, L"", 0}, //  IDX_CH_PARAM_VALUE_CAPTION
-      { DI_COMBOBOX, 32,  6, 54,  6, FALSE, {}, 0,    0, L"", 0}, //  IDX_CH_PARAM_VALUE_LIST
-      {     DI_EDIT,  4, 18, 54, 18, FALSE, {}, 0,    0, L"", 0}, //  IDX_CH_DESCRIPTION,
-      {   DI_BUTTON, 37, 20,  0,  0, FALSE, {}, 0, TRUE, L"", 0}, //  IDX_OK,
-      {   DI_BUTTON, 45, 20,  0,  0, FALSE, {}, 0,    0, L"", 0}  //  IDX_CANCEL,
+  std::array<FarDialogItem, 9> fdi {
+      {
+       {DI_DOUBLEBOX, 2, 1, 56, 21, 0, {}, 0, 0, L"", 0},      //  IDX_CH_BOX,
+          {DI_TEXT, 3, 3, 0, 3, FALSE, {}, 0, 0, L"", 0},         //  IDX_CH_CAPTIONLIST,
+          {DI_COMBOBOX, 10, 3, 54, 2, FALSE, {}, 0, 0, L"", 0},   //  IDX_CH_SCHEMAS,
+          {DI_LISTBOX, 3, 4, 30, 17, TRUE, {}, 0, 0, L"", 0},     //  IDX_CH_PARAM_LIST,
+          {DI_TEXT, 32, 5, 0, 5, FALSE, {}, 0, 0, L"", 0},        //  IDX_CH_PARAM_VALUE_CAPTION
+          {DI_COMBOBOX, 32, 6, 54, 6, FALSE, {}, 0, 0, L"", 0},   //  IDX_CH_PARAM_VALUE_LIST
+          {DI_EDIT, 4, 18, 54, 18, FALSE, {}, 0, 0, L"", 0},      //  IDX_CH_DESCRIPTION,
+          {DI_BUTTON, 37, 20, 0, 0, FALSE, {}, 0, TRUE, L"", 0},  //  IDX_OK,
+          {DI_BUTTON, 45, 20, 0, 0, FALSE, {}, 0, 0, L"", 0}      //  IDX_CANCEL,
+      }
   };  // type, x1, y1, x2, y2, focus, sel, fl, def, data, maxlen
 
   fdi[IDX_CH_BOX].PtrData = GetMsg(mUserHrcSettingDialog);
@@ -1529,14 +1514,12 @@ void FarEditorSet::configureHrc()
   fdi[IDX_CH_PARAM_VALUE_LIST].Flags = DIF_LISTWRAPMODE;
 
   dialogFirstFocus = true;
-  HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 59, 23, L"confighrc", fdi, fdiCount, 0,
-                                0, SettingHrcDialogProc, (LONG_PTR) this);
+  HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 59, 23, L"confighrc", fdi.data(),
+                                fdi.size(), 0, 0, SettingHrcDialogProc, (LONG_PTR) this);
   Info.DialogRun(hDlg);
 
   for (int idx = 0; idx < l->ItemsNumber; idx++) {
-    if (l->Items[idx].Text) {
-      delete[] l->Items[idx].Text;
-    }
+    delete[] l->Items[idx].Text;
   }
   delete[] l->Items;
   delete l;

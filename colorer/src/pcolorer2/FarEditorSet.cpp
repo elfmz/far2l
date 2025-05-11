@@ -110,7 +110,7 @@ void FarEditorSet::openMenu()
       }
 
       return;
-    };
+    }
 
     for (int i = sizeof(iMenuItems) / sizeof(iMenuItems[0]) - 1; i >= 0; i--) {
       if (iMenuItems[i] == -1) {
@@ -119,7 +119,7 @@ void FarEditorSet::openMenu()
       else {
         menuElements[i].Text = GetMsg(iMenuItems[i]);
       }
-    };
+    }
 
     menuElements[0].Selected = 1;
 
@@ -164,14 +164,14 @@ void FarEditorSet::openMenu()
       case 11:
         configure(true);
         break;
-    };
+    }
   } catch (Exception& e) {
     COLORER_LOG_ERROR("%", e.what());
     UnicodeString msg("openMenu: ");
     msg.append(e.what());
     showExceptionMessage(&msg);
     disableColorer();
-  };
+  }
 }
 
 int FarEditorSet::getCountFileTypeAndGroup()
@@ -193,7 +193,7 @@ int FarEditorSet::getCountFileTypeAndGroup()
     }
 
     group = type->getGroup();
-  };
+  }
   return num;
 }
 
@@ -213,7 +213,7 @@ FileType* FarEditorSet::getFileTypeByIndex(int idx)
       idx--;
     }
     group = type->getGroup();
-  };
+  }
 
   return (FileType*) type;
 }
@@ -238,7 +238,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType)
     if (group.compare(type->getGroup()) != 0) {
       Menu->AddGroup(UStr::to_stdwstr(type->getGroup()).c_str());
       group = type->getGroup();
-    };
+    }
 
     int i;
     const UnicodeString* v;
@@ -250,7 +250,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType)
     if (type == CurFileType) {
       Menu->SetSelected(i);
     }
-  };
+  }
 }
 
 inline wchar_t __cdecl Upper(wchar_t Ch)
@@ -401,7 +401,6 @@ const UnicodeString* FarEditorSet::getHRDescription(const UnicodeString& name,
 LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
   FarEditorSet* fes = (FarEditorSet*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-  ;
 
   switch (Msg) {
     case DN_BTNCLICK:
@@ -683,7 +682,7 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
       menuElements[i].Selected = 1;
     }
     i++;
-  };
+  }
 
   int result =
       Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
@@ -890,7 +889,7 @@ void FarEditorSet::ReloadBase()
     } catch (ParserFactoryException& e) {
       COLORER_LOG_ERROR("%", e.what());
       regionMapper = parserFactory->createStyledMapper(&hrdClass, nullptr);
-    };
+    }
     // устанавливаем фон редактора при каждой перезагрузке схем.
     SetBgEditor();
   } catch (Exception& e) {
@@ -1141,7 +1140,6 @@ const UnicodeString* FarEditorSet::getParamDefValue(FileType* type, UnicodeStrin
 FarList* FarEditorSet::buildHrcList()
 {
   int num = getCountFileTypeAndGroup();
-  ;
   UnicodeString group;
   FileType* type = nullptr;
 
@@ -1159,7 +1157,7 @@ FarList* FarEditorSet::buildHrcList()
     if (group.compare(type->getGroup()) != 0) {
       hrcList[i].Flags = LIF_SEPARATOR;
       i++;
-    };
+    }
 
     group = type->getGroup();
 
@@ -1251,7 +1249,7 @@ void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
     else if (value->equals(&DBoth)) {
       ret = 3;
     }
-  };
+  }
   fcross[ret].Flags = LIF_SELECTED;
   ChangeParamValueListType(hDlg, true);
   Info.SendDlgMessage(hDlg, DM_LISTSET, IDX_CH_PARAM_VALUE_LIST, (LONG_PTR) lcross);
@@ -1493,7 +1491,6 @@ void FarEditorSet::OnSaveHrcParams(HANDLE hDlg)
 LONG_PTR WINAPI SettingHrcDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
   FarEditorSet* fes = (FarEditorSet*) Info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-  ;
 
   switch (Msg) {
     case DN_GOTFOCUS: {

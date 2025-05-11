@@ -110,22 +110,22 @@ void FarEditor::reloadTypeSettings()
     if (value->equals(&DNone)) {
       showHorizontalCross = false;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DVertical)) {
       showHorizontalCross = false;
       showVerticalCross = true;
-    };
+    }
 
     if (value->equals(&DHorizontal)) {
       showHorizontalCross = true;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DBoth)) {
       showHorizontalCross = true;
       showVerticalCross = true;
-    };
+    }
   }
 
   value = def->getParamValue(DCrossZorder);
@@ -151,22 +151,22 @@ void FarEditor::reloadTypeSettings()
     if (value->equals(&DNone)) {
       showHorizontalCross = false;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DVertical)) {
       showHorizontalCross = false;
       showVerticalCross = true;
-    };
+    }
 
     if (value->equals(&DHorizontal)) {
       showHorizontalCross = true;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DBoth)) {
       showHorizontalCross = true;
       showVerticalCross = true;
-    };
+    }
   }
 
   value = ftype->getParamValue(DCrossZorder);
@@ -265,7 +265,7 @@ void FarEditor::matchPair()
     if (esp.TopScreenLine < 0) {
       esp.TopScreenLine = 0;
     }
-  };
+  }
 
   info->EditorControl(ECTL_SETPOSITION, &esp);
   baseEditor->releasePairMatch(pm);
@@ -294,7 +294,7 @@ void FarEditor::selectPair()
     X1 = pm->end->end;
     Y2 = pm->sline;
     Y1 = pm->eline;
-  };
+  }
 
   es.BlockType = BTYPE_STREAM;
   es.BlockStartLine = Y1;
@@ -330,7 +330,7 @@ void FarEditor::selectBlock()
     X1 = pm->end->start;
     Y2 = pm->sline;
     Y1 = pm->eline;
-  };
+  }
 
   es.BlockType = BTYPE_STREAM;
   es.BlockStartLine = Y1;
@@ -364,7 +364,7 @@ void FarEditor::selectRegion()
       es.BlockHeight = 1;
       es.BlockWidth = end - cursorRegion->start;
       info->EditorControl(ECTL_SELECT, &es);
-    };
+    }
   }
 }
 
@@ -455,7 +455,7 @@ void FarEditor::locateFunction()
     info->EditorControl(ECTL_REDRAW, nullptr);
     info->EditorControl(ECTL_GETINFO, &ei);
     return;
-  };
+  }
 
   const wchar_t* msg[2] = {GetMsg(mNothingFound), GetMsg(mGotcha)};
   info->Message(info->ModuleNumber, 0, nullptr, msg, 2, 1);
@@ -481,7 +481,7 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
   }
   else if (ir->EventType == KEY_EVENT) {
     idleCount = 0;
-  };
+  }
 
   return 0;
 }
@@ -513,7 +513,7 @@ int FarEditor::editorEvent(int event, void* param)
     }
 
     baseEditor->modifyEvent(ml);
-  };
+  }
 
   prevLinePosition = ei.CurLine;
   blockTopPosition = -1;
@@ -568,7 +568,7 @@ int FarEditor::editorEvent(int event, void* param)
         col.concolor |= 0x10000;
       }
       addFARColor(lno, ecp_cl.DestPos, ecp_cl.DestPos + 1, col);
-    };
+    }
 
     bool vertCrossDone = false;
 
@@ -608,7 +608,7 @@ int FarEditor::editorEvent(int event, void* param)
                 col.bk = horzCrossColor.bk;
               }
             }
-          };
+          }
           if (!col.concolor) {
             continue;
           }
@@ -626,7 +626,7 @@ int FarEditor::editorEvent(int event, void* param)
 
           if (lno == ei.CurLine && (l1->start <= ei.CurPos) && (ei.CurPos <= lend)) {
             cursorRegion = std::make_unique<LineRegion>(*l1);
-          };
+          }
 
           // column
           if (showVerticalCross && crossZOrder == 0 && l1->start <= ecp_cl.DestPos &&
@@ -660,10 +660,10 @@ int FarEditor::editorEvent(int event, void* param)
             }
             addFARColor(lno, ecp_cl.DestPos, ecp_cl.DestPos + 1, col);
             vertCrossDone = true;
-          };
-        };
-      };
-    };
+          }
+        }
+      }
+    }
     if (showVerticalCross && !vertCrossDone) {
       ecp_cl.StringNumber = lno;
       ecp_cl.SrcPos = ecp.DestPos;
@@ -672,8 +672,8 @@ int FarEditor::editorEvent(int event, void* param)
         vertCrossColor.concolor |= 0x10000;
       }
       addFARColor(lno, ecp_cl.DestPos, ecp_cl.DestPos + 1, vertCrossColor);
-    };
-  };
+    }
+  }
 
   /// pair brackets
   PairMatch* pm = nullptr;
@@ -703,7 +703,7 @@ int FarEditor::editorEvent(int event, void* param)
           col.bk = horzCrossColor.bk;
         }
       }
-    };
+    }
     //
     addFARColor(ei.CurLine, pm->start->start, pm->start->end, col);
 
@@ -733,7 +733,7 @@ int FarEditor::editorEvent(int event, void* param)
 
       col.concolor |= 0x10000;
       addFARColor(pm->sline, ei.CurPos, ei.CurPos + 1, col);
-    };
+    }
     //
     if (pm->eline != -1) {
       col = convert(pm->end->styled());
@@ -757,7 +757,7 @@ int FarEditor::editorEvent(int event, void* param)
             col.bk = horzCrossColor.bk;
           }
         }
-      };
+      }
       //
       addFARColor(pm->eline, pm->end->start, pm->end->end, col);
       ecp.StringNumber = pm->eline;
@@ -788,18 +788,17 @@ int FarEditor::editorEvent(int event, void* param)
 
         col.concolor |= 0x10000;
         addFARColor(pm->eline, ecp.DestPos, ecp.DestPos + 1, col);
-      };
-      //
-    };
+      }
+    }
 
     baseEditor->releasePairMatch(pm);
-  };
+  }
 
   if (param != EEREDRAW_ALL) {
     inRedraw = true;
     info->EditorControl(ECTL_REDRAW, nullptr);
     inRedraw = false;
-  };
+  }
 
   return true;
 }
@@ -920,7 +919,7 @@ void FarEditor::showOutliner(Outliner* outliner)
           for (int lIdx = 0; lIdx < treeLevel; lIdx++) {
             menuItem[si++] = ' ';
             menuItem[si++] = ' ';
-          };
+          }
 
           auto region = item->region->getName();
 
@@ -958,7 +957,7 @@ void FarEditor::showOutliner(Outliner* outliner)
         }
 
         menu_size++;
-      };
+      }
     }
 
     if (selectedItem > 0) {

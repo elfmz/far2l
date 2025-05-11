@@ -43,7 +43,7 @@ UnicodeString* GetConfigPath(const UnicodeString& sub)
 const wchar_t* GetMsg(int msg)
 {
   return (Info.GetMsg(Info.ModuleNumber, msg));
-};
+}
 
 /**
   Plugin initialization and creation of editor set support class.

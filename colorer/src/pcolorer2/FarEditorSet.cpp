@@ -215,7 +215,7 @@ FileType* FarEditorSet::getFileTypeByIndex(int idx)
     group = type->getGroup();
   }
 
-  return (FileType*) type;
+  return type;
 }
 
 void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType)
@@ -242,7 +242,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType)
 
     int i;
     const UnicodeString* v;
-    v = ((FileType*) type)->getParamValue(DFavorite);
+    v = type->getParamValue(DFavorite);
     if (v && v->equals(&DTrue))
       i = Menu->AddFavorite(type);
     else
@@ -341,7 +341,7 @@ void FarEditorSet::chooseType()
         };
 
         const UnicodeString* v;
-        v = ((FileType*) menu.GetFileType(i))->getParamValue(DHotkey);
+        v = menu.GetFileType(i)->getParamValue(DHotkey);
         if (v && v->length()) {
           KeyAssignDlgData[2].PtrData = v->getWChars();
         }
@@ -1217,7 +1217,7 @@ void FarEditorSet::ChangeParamValueListType(HANDLE hDlg, bool dropdownlist)
 
 void FarEditorSet::setCrossValueListToCombobox(FileType* type, HANDLE hDlg)
 {
-  const UnicodeString* value = ((FileType*) type)->getParamUserValue(DShowCross);
+  const UnicodeString* value = type->getParamUserValue(DShowCross);
   const UnicodeString* def_value = getParamDefValue(type, DShowCross);
 
   int count = 5;
@@ -1423,7 +1423,7 @@ void FarEditorSet::SaveChangedValueParam(HANDLE hDlg)
   UnicodeString v(
       trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_CH_PARAM_VALUE_LIST, 0)));
   FileType* type = getCurrentTypeInDialog(hDlg);
-  const UnicodeString* value = ((FileType*) type)->getParamUserValue(p);
+  const UnicodeString* value = type->getParamUserValue(p);
   const UnicodeString* def_value = getParamDefValue(type, p);
   if (v.compare(*def_value) == 0) {
     if (value != nullptr)

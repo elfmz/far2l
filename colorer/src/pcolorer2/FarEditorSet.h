@@ -84,6 +84,22 @@ enum {
 LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 LONG_PTR WINAPI SettingHrcDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 
+struct Options
+{
+  bool rEnabled;
+  bool drawPairs;
+  bool drawSyntax;
+  bool oldOutline;
+  bool TrueModOn;
+  bool ChangeBgEditor;
+  int drawCross;
+  UnicodeString hrdName;
+  UnicodeString hrdNameTm;
+  UnicodeString catalogPath;
+  UnicodeString userHrdPath;
+  UnicodeString userHrcPath;
+};
+
 /**
  * FAR Editors container.
  * Manages all library resources and creates FarEditor class instances.
@@ -120,14 +136,14 @@ class FarEditorSet
   enum HRC_MODE { HRCM_CONSOLE, HRCM_RGB, HRCM_BOTH };
   bool TestLoadBase(const wchar_t* catalogPath, const wchar_t* userHrdPath,
                     const wchar_t* userHrcPath, const int full, const HRC_MODE hrc_mode);
-  UnicodeString* GetCatalogPath() { return sCatalogPath; }
-  UnicodeString* GetUserHrdPath() { return sUserHrdPath; }
-  bool GetPluginStatus() { return rEnabled; }
+  UnicodeString* GetCatalogPath() { return &Opt.catalogPath; }
+  UnicodeString* GetUserHrdPath() { return &Opt.userHrdPath; }
+  bool GetPluginStatus() { return Opt.rEnabled; }
 
   bool SetBgEditor();
 
-  UnicodeString* sTempHrdName = nullptr;
-  UnicodeString* sTempHrdNameTm = nullptr;
+  std::unique_ptr<UnicodeString> sTempHrdName;
+  std::unique_ptr<UnicodeString> sTempHrdNameTm;
 
   /** Shows hrc configuration dialog */
   void configureHrc();
@@ -210,18 +226,7 @@ class FarEditorSet
   UnicodeString hrdName;
 
   /** registry settings */
-  bool rEnabled = false;  // status plugin
-  int drawCross = false;
-  bool drawPairs = false;
-  bool drawSyntax = false;
-  bool oldOutline = false;
-  bool TrueModOn = false;
-  bool ChangeBgEditor = false;
-  UnicodeString* sHrdName = nullptr;
-  UnicodeString* sHrdNameTm = nullptr;
-  UnicodeString* sCatalogPath = nullptr;
-  UnicodeString* sUserHrdPath = nullptr;
-  UnicodeString* sUserHrcPath = nullptr;
+  Options Opt{};
 
   /** UNC path */
   std::unique_ptr<UnicodeString> sCatalogPathExp;

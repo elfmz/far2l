@@ -1,7 +1,7 @@
 #include "pcolorer.h"
 #include <utils.h>
-#include "FarEditorSet.h"
 #include "CerrLogger.h"
+#include "FarEditorSet.h"
 
 FarEditorSet* editorSet = nullptr;
 bool inEventProcess = false;

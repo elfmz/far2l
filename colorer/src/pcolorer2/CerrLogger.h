@@ -4,11 +4,12 @@
 #include <ctime>
 #include <iostream>
 #include <locale>
+#include <colorer/common/Logger.h>
 
 class CerrLogger : public Logger
 {
  public:
-  static const char *LogLevelStr[];
+  static const char* LogLevelStr[];
 
   CerrLogger();
 

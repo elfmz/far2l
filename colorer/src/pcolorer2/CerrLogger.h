@@ -1,9 +1,6 @@
 #ifndef SIMPLELOGGER_H
 #define SIMPLELOGGER_H
 
-#include <ctime>
-#include <iostream>
-#include <locale>
 #include <colorer/common/Logger.h>
 
 class CerrLogger : public Logger
@@ -17,9 +14,11 @@ class CerrLogger : public Logger
 
   void log(Logger::LogLevel level, const char* /*filename_in*/, int /*line_in*/,
            const char* /*funcname_in*/, const char* message) override;
-  Logger::LogLevel getLogLevel(const std::string& log_level);
+  Logger::LogLevel getLogLevel(std::string_view log_level);
 
-  void flush() override {}
+  void flush() override {
+    // no need, because we are working with the console.
+  };
 
  private:
   Logger::LogLevel current_level = Logger::LOG_OFF;

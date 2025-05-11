@@ -153,12 +153,9 @@ class FarEditor : public LineSource
   color vertCrossColor {};
 
   bool drawPairs = true;
-  ;
   bool drawSyntax = true;
-  ;
   bool oldOutline = false;
   bool TrueMod = true;
-  ;
 
   int WindowSizeX = 0;
   int WindowSizeY = 0;

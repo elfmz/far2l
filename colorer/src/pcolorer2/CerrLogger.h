@@ -19,7 +19,7 @@ class CerrLogger : public Logger
            const char* /*funcname_in*/, const char* message) override;
   Logger::LogLevel getLogLevel(const std::string& log_level);
 
-  void flush() override {};
+  void flush() override {}
 
  private:
   Logger::LogLevel current_level = Logger::LOG_OFF;

@@ -2,8 +2,6 @@
 #define _PCOLORER_H_
 
 #include <farplug-wide.h>
-#include <farcolor.h>
-#include <farkeys.h>
 #include "colorer/strings/legacy/UnicodeString.h"
 
 extern PluginStartupInfo Info;

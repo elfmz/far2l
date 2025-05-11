@@ -1,5 +1,7 @@
 #include "FarEditorSet.h"
 #include <KeyFileHelper.h>
+#include <farcolor.h>
+#include <farkeys.h>
 #include <sys/stat.h>
 #include <utils.h>
 #include "FarHrcSettings.h"
@@ -212,8 +214,7 @@ void FarEditorSet::FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType)
     }
 
     int i;
-    const UnicodeString* v;
-    v = type->getParamValue(DFavorite);
+    const UnicodeString* v = type->getParamValue(DFavorite);
     if (v && v->equals(&DTrue))
       i = Menu->AddFavorite(type);
     else
@@ -275,9 +276,10 @@ void FarEditorSet::chooseType()
   wchar_t bottom[20];
   swprintf(bottom, 20, GetMsg(mTotalTypes), parserFactory->getHrcLibrary().getFileTypesCount());
   int BreakKeys[4] = {VK_INSERT, VK_DELETE, VK_F4, 0};
-  int BreakCode, i;
+  int BreakCode;
   while (true) {
-    i = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT | FMENU_USEEXT,
+    int i =
+        Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT | FMENU_USEEXT,
                   GetMsg(mSelectSyntax), bottom, L"filetypechoose", BreakKeys, &BreakCode,
                   (const struct FarMenuItem*) menu.getItems(), menu.getItemsCount());
 
@@ -311,8 +313,7 @@ void FarEditorSet::chooseType()
             {     DI_EDIT,  5, 3, 28, 3, 0, {}, 0, 0,                           L"", 0},
         };
 
-        const UnicodeString* v;
-        v = menu.GetFileType(i)->getParamValue(DHotkey);
+        const UnicodeString* v = menu.GetFileType(i)->getParamValue(DHotkey);
         if (v && v->length()) {
           KeyAssignDlgData[2].PtrData = v->getWChars();
         }
@@ -354,7 +355,7 @@ void FarEditorSet::chooseType()
 }
 
 const UnicodeString* FarEditorSet::getHRDescription(const UnicodeString& name,
-                                                    UnicodeString _hrdClass)
+                                                    const UnicodeString& _hrdClass)
 {
   const UnicodeString* descr = nullptr;
   if (parserFactory) {
@@ -626,7 +627,7 @@ void FarEditorSet::configure(bool fromEditor)
 }
 
 const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
-                                                 UnicodeString _hrdClass)
+                                                 const UnicodeString& _hrdClass)
 {
   if (parserFactory == nullptr) {
     return current;
@@ -905,10 +906,7 @@ UnicodeString* FarEditorSet::getCurrentFileName()
 
   if (FileNameSize) {
     FileName = new wchar_t[FileNameSize];
-
-    if (FileName) {
-      Info.EditorControl(ECTL_GETFILENAME, FileName);
-    }
+    Info.EditorControl(ECTL_GETFILENAME, FileName);
   }
 
   UnicodeString fnpath(FileName);
@@ -1095,10 +1093,9 @@ bool FarEditorSet::SetBgEditor()
   return false;
 }
 
-const UnicodeString* FarEditorSet::getParamDefValue(FileType* type, UnicodeString param)
+const UnicodeString* FarEditorSet::getParamDefValue(FileType* type, const UnicodeString& param)
 {
-  const UnicodeString* value;
-  value = type->getParamDefaultValue(param);
+  const UnicodeString* value = type->getParamDefaultValue(param);
   if (value == nullptr)
     value = defaultType->getParamValue(param);
   ASSERT_MSG(value != nullptr, "no value for '%ls'", param.getWChars());
@@ -1264,7 +1261,7 @@ void FarEditorSet::setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg)
   delete lcross;
 }
 
-void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param)
+void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString* def_value = getParamDefValue(type, param);
@@ -1299,7 +1296,7 @@ void FarEditorSet::setYNListValueToCombobox(FileType* type, HANDLE hDlg, Unicode
   delete lcross;
 }
 
-void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param)
+void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString* def_value = getParamDefValue(type, param);
@@ -1334,7 +1331,8 @@ void FarEditorSet::setTFListValueToCombobox(FileType* type, HANDLE hDlg, Unicode
   delete lcross;
 }
 
-void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param)
+void FarEditorSet::setCustomListValueToCombobox(FileType* type, HANDLE hDlg,
+                                                const UnicodeString& param)
 {
   const UnicodeString* value = type->getParamUserValue(param);
   const UnicodeString* def_value = getParamDefValue(type, param);
@@ -1419,8 +1417,7 @@ void FarEditorSet::OnChangeParam(HANDLE hDlg, int idx)
   menuid = idx;
   UnicodeString p(List.Item.Text);
 
-  const UnicodeString* value;
-  value = type->getParamDescription(p);
+  const UnicodeString* value = type->getParamDescription(p);
   if (value == nullptr) {
     value = defaultType->getParamDescription(p);
   }

@@ -48,11 +48,11 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, unsigned char keypad)
 {
 	std::string out;
-	int shifted = 0;
-	int modifiers = 0;
+	unsigned int shifted = 0;
+	unsigned int modifiers = 0;
 	char suffix = 'u';
-	int keycode = 0;
-	int base = 0;
+	unsigned int keycode = 0;
+	unsigned int base = 0;
 	bool skipped = false;
 	bool kitty;
 	const char *legacy;
@@ -396,12 +396,20 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// According to the spec, the keycode should always be "unshifted", meaning it should contain the value
 	// that this key would generate if Shift were not pressed. However, we have no knowledge of the user's
 	// keyboard layout here, so the unshifted value for an arbitrary key cannot be reliably determined.
-	// Therefore, if a symbol key is pressed together with Shift, and its lowercase variant can be
-	// automatically determined, we use that. If it's not a symbol key, we simply use 0,
-	// as it's unclear why the "unshifted" value would be needed in real-world applications:
+	// Therefore, if a char key is pressed together with Shift, and we can get its lowercase variant
+	// with towlower(), we do. If it's not a char key, we can not detect unshifted value here
+	// so we use special value 57610 (meaning "unknown", explained below).
+	// Also it's unclear why the "unshifted" value would be needed in real-world applications:
 	// for consistently working shortcuts, it's more reasonable to use the "base-layout-key" field instead.
+	// As for 57610, it is just one more value from Unicode PUA. I took the largest value
+	// used in the spec (57454) and added twice the number of values ​​used in the spec (78*2=156),
+	// so there would be no collisions in case spec is extended. We can't just use 0 here,
+	// since the spec requires unicode key code value to always be specified.
 	// See also: https://github.com/elfmz/far2l/issues/2743
-	if (shifted && (keycode != tolower(shifted))) { keycode = 0; }
+	if (shifted && (shifted == keycode)) {
+		fprintf(stderr, "kitty kb: unshifted key code undetectable, using 57610\n");
+		keycode = 57610;
+	}
 	// UPD: base-layout-key also can not be trusted in our implementation
 	// for non-latin keypresses w/o modifiers (except Shift) because of IM usage, see
 	// https://github.com/wxWidgets/wxWidgets/issues/25379

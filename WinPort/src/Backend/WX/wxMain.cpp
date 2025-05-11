@@ -1440,13 +1440,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
-	// Do not enqueue completely empty events
-	bool empty_event = (
-		!ir.Event.KeyEvent.wVirtualKeyCode &&
-		!ir.Event.KeyEvent.wVirtualScanCode &&
-		!ir.Event.KeyEvent.uChar.UnicodeChar &&
-		!ir.Event.KeyEvent.dwControlKeyState
-	);
+	// Do not enqueue empty events
+	// This is needed to fix https://github.com/elfmz/far2l/issues/2744
+	bool empty_event = !event.GetKeyCode() && !uni;
 
 	// We can not trust OnKeyDown Unicode character value for Alt+letter due to wx issue #23421,
 	// so let's fall back to OnChar value for such key combinations.

@@ -434,10 +434,10 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRD_EDIT, 0));
           wchar_t* userhrc =
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRC_EDIT, 0));
-          bool trumod = Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0) &&
-              fes->checkConsoleAnnotationAvailable();
+          bool truemod = Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0) &&
+              fes->checkConsoleExtendedColors();
           fes->TestLoadBase(catalog, userhrd, userhrc, true,
-                            trumod ? FarEditorSet::HRCM_BOTH : FarEditorSet::HRCM_CONSOLE);
+                            truemod ? FarEditorSet::HRCM_BOTH : FarEditorSet::HRCM_CONSOLE);
           Info.SendDlgMessage(hDlg, DM_SHOWDIALOG, true, 0);
           return true;
         }
@@ -453,7 +453,7 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
           const wchar_t* userhrc =
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRC_EDIT, 0));
           bool trumod = Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0) &&
-              fes->checkConsoleAnnotationAvailable();
+              fes->checkConsoleExtendedColors();
           int k = (int) Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_ENABLED, 0);
 
           if (fes->GetCatalogPath()->compare(UnicodeString(temp)) ||
@@ -565,7 +565,7 @@ void FarEditorSet::configure(bool fromEditor)
     fdi[IDX_CANCEL].PtrData = GetMsg(mCancel);
     fdi[IDX_TM_BOX].PtrData = GetMsg(mTrueModSetting);
 
-    if (!checkConsoleAnnotationAvailable() && fromEditor) {
+    if (!checkConsoleExtendedColors()) {
       fdi[IDX_HRD_SELECT_TM].Flags = DIF_DISABLE;
       fdi[IDX_TRUEMOD].Flags = DIF_DISABLE;
       fdi[IDX_TMMESSAGE].PtrData = GetMsg(mNoFarTM);
@@ -864,8 +864,8 @@ void FarEditorSet::ReloadBase()
   dropAllEditors(true);
   regionMapper = nullptr;
 
-  consoleAnnotationAvailable = checkConsoleAnnotationAvailable() && TrueModOn;
-  if (consoleAnnotationAvailable) {
+  useExtendedColors = checkConsoleExtendedColors() && TrueModOn;
+  if (useExtendedColors) {
     hrdClass = DRgb;
     hrdName = *sHrdNameTm;
   }
@@ -918,7 +918,7 @@ FarEditor* FarEditorSet::addCurrentEditor()
   UnicodeString* s = getCurrentFileName();
   editor->chooseFileType(s);
   delete s;
-  editor->setTrueMod(consoleAnnotationAvailable);
+  editor->setTrueMod(useExtendedColors);
   editor->setRegionMapper(regionMapper.get());
   editor->setDrawCross(drawCross);
   editor->setDrawPairs(drawPairs);
@@ -989,7 +989,7 @@ void FarEditorSet::disableColorer()
 void FarEditorSet::ApplySettingsToEditors()
 {
   for (auto fe = farEditorInstances.begin(); fe != farEditorInstances.end(); ++fe) {
-    fe->second->setTrueMod(consoleAnnotationAvailable);
+    fe->second->setTrueMod(useExtendedColors);
     fe->second->setDrawCross(drawCross);
     fe->second->setDrawPairs(drawPairs);
     fe->second->setDrawSyntax(drawSyntax);
@@ -1101,14 +1101,14 @@ void FarEditorSet::SaveSettings()
   kfh.SetString(cSectionName, cRegUserHrcPath, sUserHrcPath->getWChars());
 }
 
-bool FarEditorSet::checkConsoleAnnotationAvailable()
+bool FarEditorSet::checkConsoleExtendedColors()
 {
-  return WINPORT(GetConsoleColorPalette)(NULL) >= 24;
+  return WINPORT(GetConsoleColorPalette)(nullptr) >= 8;
 }
 
 bool FarEditorSet::SetBgEditor()
 {
-  if (rEnabled && ChangeBgEditor && !consoleAnnotationAvailable) {
+  if (rEnabled && ChangeBgEditor && !useExtendedColors) {
     FarSetColors fsc;
     uint64_t c;
 

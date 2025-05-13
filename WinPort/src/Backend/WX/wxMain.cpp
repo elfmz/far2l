@@ -1440,6 +1440,10 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	// Do not enqueue empty events
+	// This is needed to fix https://github.com/elfmz/far2l/issues/2744
+	bool empty_event = !event.GetKeyCode() && !uni;
+
 	// We can not trust OnKeyDown Unicode character value for Alt+letter due to wx issue #23421,
 	// so let's fall back to OnChar value for such key combinations.
 
@@ -1451,7 +1455,7 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
-		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
+		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) && !empty_event))
 	{
 		wxConsoleInputShim::Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;

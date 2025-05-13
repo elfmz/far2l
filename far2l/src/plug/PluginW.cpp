@@ -252,16 +252,16 @@ bool PluginW::SaveToCache()
 	kfh.SetString(GetSettingsName(), "ID", m_strModuleID.c_str());
 
 	for (int i = 0; i < Info.DiskMenuStringsNumber; i++) {
-		kfh.SetString(GetSettingsName(), StrPrintf(FmtDiskMenuStringD, i).c_str(), Info.DiskMenuStrings[i]);
+		kfh.SetString(GetSettingsName(), StrPrintf(FmtDiskMenuStringD, i), Info.DiskMenuStrings[i]);
 	}
 
 	for (int i = 0; i < Info.PluginMenuStringsNumber; i++) {
-		kfh.SetString(GetSettingsName(), StrPrintf(FmtPluginMenuStringD, i).c_str(),
+		kfh.SetString(GetSettingsName(), StrPrintf(FmtPluginMenuStringD, i),
 				Info.PluginMenuStrings[i]);
 	}
 
 	for (int i = 0; i < Info.PluginConfigStringsNumber; i++) {
-		kfh.SetString(GetSettingsName(), StrPrintf(FmtPluginConfigStringD, i).c_str(),
+		kfh.SetString(GetSettingsName(), StrPrintf(FmtPluginConfigStringD, i),
 				Info.PluginConfigStrings[i]);
 	}
 

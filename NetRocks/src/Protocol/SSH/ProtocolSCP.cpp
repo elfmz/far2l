@@ -307,7 +307,7 @@ class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
 				return false;
 			}
 
-			std::string line = _cmd.output.substr(0, p), filename;
+			std::string line = _cmd.output.substr(0, p);
 			while (p < _cmd.output.size() && (_cmd.output[p] == '\r' || _cmd.output[p] == '\n')) {
 				++p;
 			}

@@ -406,11 +406,15 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// so there would be no collisions in case spec is extended. We can't just use 0 here,
 	// since the spec requires unicode key code value to always be specified.
 	// See also: https://github.com/elfmz/far2l/issues/2743
+	// UPD: switching back to using shifted value in this case, as recommended by spec author here:
+	// https://github.com/kovidgoyal/kitty/issues/8620#issuecomment-2878530117
+	/*
 	if (shifted && (shifted == keycode)) {
 		fprintf(stderr, "kitty kb: unshifted key code undetectable, using 57610\n");
 		keycode = 57610;
 	}
-	// UPD: base-layout-key also can not be trusted in our implementation
+	*/
+	// base-layout-key also can not be trusted in our implementation
 	// for non-latin keypresses w/o modifiers (except Shift) because of IM usage, see
 	// https://github.com/wxWidgets/wxWidgets/issues/25379
 	// But hot keys w/o modifiers is nonsence, so not a problem actually

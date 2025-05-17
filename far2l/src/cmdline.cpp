@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "CachedCreds.hpp"
 #include "exitcode.hpp"
+#include "GitTools.hpp"
 #include "vtlog.h"
 #include "vtshell.h"
 #include "vtcompletor.h"
@@ -770,6 +771,11 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 					case L'N':		// Host name
 					{
 						strDestStr+= CachedComputerName();
+						break;
+					}
+					case L'Z':		// Git Branch
+					{
+						strDestStr+= GetGitBranchName(strCurDir);
 						break;
 					}
 				}

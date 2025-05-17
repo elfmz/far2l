@@ -11,8 +11,8 @@ bool POpen(std::string &result, const char *command)
 		return false;
 	}
 
-	char buf[0x400] = { };
-	while (fgets(buf, sizeof(buf)-1, f)) {
+	char buf[0x400];
+	while (fgets(buf, sizeof(buf), f)) {
 		result+= buf;
 	}
 	pclose(f);

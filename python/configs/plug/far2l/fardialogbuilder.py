@@ -182,7 +182,7 @@ class RADIOBUTTON(Element):
 class COMBOBOX(Element):
     dit = "DI_COMBOBOX"
 
-    def __init__(self, varname, selected, *items, **kwargs):
+    def __init__(self, varname, selected, items, **kwargs):
         if "width" in kwargs:
             width = kwargs.pop("width")
         else:
@@ -220,7 +220,7 @@ class COMBOBOX(Element):
 class LISTBOX(Element):
     dit = "DI_LISTBOX"
 
-    def __init__(self, varname, selected, *items, **kwargs):
+    def __init__(self, varname, selected, items, **kwargs):
         if "height" in kwargs:
             height = kwargs.pop("height")
         else:

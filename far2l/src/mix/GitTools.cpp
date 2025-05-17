@@ -15,9 +15,11 @@ FARString GetGitBranchName(FARString const &path)
 {
     try {
 #if defined(USELIBGIT2)
-        auto pathStr = std::wstring_view{path.CPtr(), static_cast<size_t>(path.CEnd() - path.CPtr())};
-        auto pathStrUtf8 = Utf8Conv.to_bytes(pathStr.begin(), pathStr.end());
-        auto repo = git2::repository::try_discover(GitEnvironment, std::filesystem::path{pathStrUtf8});
+        auto pathStrView = std::wstring_view{path.CPtr(), static_cast<size_t>(path.CEnd() - path.CPtr())};
+        auto pathStrUtf8 = Utf8Conv.to_bytes(pathStrView.begin(), pathStrView.end());
+        auto path = std::filesystem::path{std::move(pathStrUtf8)};
+
+        auto repo = git2::repository::try_discover(GitEnvironment, path);
 
         if (!repo)
             return {};

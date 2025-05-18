@@ -320,6 +320,8 @@ else()
                                        "${CMAKE_CURRENT_SOURCE_DIR}/DE/io.github.elfmz.far2l.metainfo.xml.in"
                                COMMENT "Generating DE/io.github.elfmz.far2l.metainfo.xml"
                                VERBATIM)
+            add_custom_target(Far2lMetainfo DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml")
+            add_dependencies(far2l Far2lMetainfo)
             install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml"
                     DESTINATION "share/metainfo"
                     COMPONENT desktop)

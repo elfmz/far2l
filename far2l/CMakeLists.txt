@@ -310,11 +310,14 @@ else()
                         ERROR_QUIET)
 
         if(PYTHON_MARKDOWN_STATUS EQUAL 0)
-            add_custom_command(TARGET far2l POST_BUILD
+            add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml"
                                COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/DE/generate_metainfo.py"
                                        "${CMAKE_SOURCE_DIR}/changelog.md"
                                        "${CMAKE_CURRENT_SOURCE_DIR}/DE/io.github.elfmz.far2l.metainfo.xml.in"
                                        "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml"
+                               DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/DE/generate_metainfo.py"
+                                       "${CMAKE_SOURCE_DIR}/changelog.md"
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/DE/io.github.elfmz.far2l.metainfo.xml.in"
                                COMMENT "Generating DE/io.github.elfmz.far2l.metainfo.xml"
                                VERBATIM)
             install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml"

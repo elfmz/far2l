@@ -219,7 +219,7 @@ void OpXfer::Rename(const std::set<std::string> &items)
 		return;
 
 	std::string new_path;
-	size_t star = _dst_dir.find("*"); // its actually name or wildcard
+	size_t star = _dst_dir.find('*'); // its actually name or wildcard
 
 	for (const auto &original_path : items) {
 			const std::string &original_name = original_path.substr(_base_dir.size());

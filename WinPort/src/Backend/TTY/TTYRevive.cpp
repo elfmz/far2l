@@ -142,8 +142,6 @@ public:
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 {
-	std::string ipc_path = InMyTemp("TTY/");
-
 	instances.clear();
 
 	const std::string &tty_dir = InMyTemp("TTY");

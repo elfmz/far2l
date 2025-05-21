@@ -637,8 +637,8 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
 
   std::vector<const HrdNode*> nodes = parserFactory->enumHrdInstances(_hrdClass);
   std::vector<const UnicodeString*> names;
-  auto* menuElements = new FarMenuItem[nodes.size()];
-  memset(menuElements, 0, sizeof(FarMenuItem) * nodes.size());
+  std::vector<FarMenuItem> menuElements;
+  menuElements.resize(nodes.size());
   int i = 0;
   for (const auto node : nodes) {
     const UnicodeString* name = &node->hrd_name;
@@ -657,10 +657,9 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
     i++;
   }
 
-  int result =
+  const int result =
       Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
-                GetMsg(mSelectHRD), nullptr, L"hrd", nullptr, nullptr, menuElements, nodes.size());
-  delete[] menuElements;
+                GetMsg(mSelectHRD), nullptr, L"hrd", nullptr, nullptr, menuElements.data(), menuElements.size());
 
   if (result == -1) {
     return current;
@@ -909,10 +908,10 @@ uUnicodeString FarEditorSet::getCurrentFileName()
   }
 
   UnicodeString fnpath(FileName);
+  delete[] FileName;
   const int slash_idx = fnpath.lastIndexOf('/');
 
   auto s = std::make_unique<UnicodeString>(fnpath, slash_idx + 1);
-  delete[] FileName;
   return s;
 }
 

@@ -13,7 +13,7 @@ std::unique_ptr<CerrLogger> logger;
 
 SHAREDSYMBOL void PluginModuleOpen(const char* path)
 {
-  UnicodeString module(path);
+  const UnicodeString module(path);
   int pos = module.lastIndexOf('/');
   pos = module.lastIndexOf('/', 0, pos);
   PluginPath = new UnicodeString(UnicodeString(module, 0, pos));
@@ -24,8 +24,8 @@ SHAREDSYMBOL void PluginModuleOpen(const char* path)
 
 UnicodeString* GetConfigPath(const UnicodeString& sub)
 {
-  struct stat s;
-  UnicodeString* path = new UnicodeString(*PluginPath);
+  struct stat s{};
+  auto* path = new UnicodeString(*PluginPath);
   path->append(sub);
   if (stat(path->getChars(), &s) == -1) {
     std::wstring str(path->getWChars());

@@ -139,7 +139,7 @@ class FarEditorSet
   bool dialogFirstFocus;
   int menuid;
 
-  bool checkConsoleAnnotationAvailable();
+  bool checkConsoleExtendedColors();
   void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value,
                         const FileType* def_filetype = nullptr);
 
@@ -175,7 +175,7 @@ class FarEditorSet
   /** Enables plugin processing*/
   void enableColorer(bool fromEditor);
 
-  bool consoleAnnotationAvailable;
+  bool useExtendedColors {false};
 
   static void showExceptionMessage(const UnicodeString* message);
   int getCountFileTypeAndGroup();

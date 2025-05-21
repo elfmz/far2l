@@ -48,20 +48,31 @@ https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, unsigned char keypad)
 {
 	std::string out;
-	int shifted = 0;
-	int modifiers = 0;
+	unsigned int shifted = 0;
+	unsigned int modifiers = 0;
 	char suffix = 'u';
-	int keycode = 0;
-	int base = 0;
+	unsigned int keycode = 0;
+	unsigned int base = 0;
 	bool skipped = false;
 	bool kitty;
 	const char *legacy;
 	bool nolegacy = false;
 
+	// If key code is VK_NONAME, it is IME event. Just send text, as specified in
+	// https://github.com/kovidgoyal/kitty/issues/8620#issuecomment-2869675283
+	if (KeyEvent.wVirtualKeyCode == VK_NONAME) {
+		if (KeyEvent.bKeyDown) {
+			fprintf(stderr, "kitty kb: probably IME event keydown, sending as text\n");
+			return Wide2MB(&KeyEvent.uChar.UnicodeChar);
+		} else {
+			fprintf(stderr, "kitty kb: probably IME event keyup, ignoring\n");
+			return "";
+		}
+	}
 
 	// initialization
 
-	//fprintf(stderr, "Generating kitty sequence\n");
+	//fprintf(stderr, "kitty kb: generating ESC sequence\n");
 
 	const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 	const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
@@ -81,8 +92,6 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		!(ctrl|alt)
 	);
 
-	//fprintf(stderr, "disabm = %i\n", disambiguate);
-
 	// if mode 8 is not set, we should not report releases of some keys
 	// see https://github.com/kovidgoyal/kitty/issues/8212
 
@@ -91,6 +100,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		((KeyEvent.wVirtualKeyCode == VK_TAB)    && !(ctrl|alt|shift)) ||
 		((KeyEvent.wVirtualKeyCode == VK_BACK)   && !(ctrl|alt|shift))
 	)) {
+		fprintf(stderr, "kitty kb: not reporting key release\n");
 		return "";
 	}
 
@@ -133,7 +143,6 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) // keypad Enter
 		))
 	);
-	//fprintf(stderr, "(1) kitty = %i\n", kitty);
 
 	if ((flags & 1) && !kitty) {
 
@@ -157,7 +166,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 		if (!kitty && KeyEvent.bKeyDown && legacy && legacy[0] && legacy[1]) { // [1] check for debug only
 
-			//fprintf(stderr, "Legacy fallback: %s\n", legacy + 1);
+			fprintf(stderr, "kitty kb: legacy fallback ESC %s\n", legacy + 1);
 			return legacy;
 		}
 
@@ -166,9 +175,9 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		// see "Prefer using legacy code" below
 
 	}
-	//fprintf(stderr, "(2) kitty = %i, is_text_key = %i\n", kitty, is_text_key);
 
 	if (!kitty) {
+		fprintf(stderr, "kitty kb: generated nothing (legacy generation should be used instead)\n");
 		return "";
 	}
 
@@ -186,7 +195,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			(KeyEvent.wVirtualKeyCode == VK_RMENU) ||
 			(KeyEvent.wVirtualKeyCode == VK_LWIN) ||
 			(KeyEvent.wVirtualKeyCode == VK_RWIN)
-		) { return ""; }
+		) {
+			fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
+			return "";
+		}
 	}
 
 
@@ -211,24 +223,58 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 	// generating shifted value
 
-	// Fixme: (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
-	// Fixme: is workaround for far2l wx backend as it is not sending Shift state for Char events.
-	// Fixme: See "ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;"
-	// Fixme: and below in wxMain.cpp: dwControlKeyState not set
-	if (shift || (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))) {
+	if (shift) {
 		shifted = KeyEvent.uChar.UnicodeChar;
 	}
 
 
-	// generating key code and base key code
+	// generating key code and base layout key code
 	keycode = towlower(KeyEvent.uChar.UnicodeChar);
-	if ((KeyEvent.wVirtualKeyCode >= 'A') && (KeyEvent.wVirtualKeyCode <= 'Z')) {
+
+	// Here we get VK_NONAME as wVirtualKeyCode for IME events,
+	// so "base layout key" field can not be set correctly in such cases.
+	// See also:
+	// https://github.com/wxWidgets/wxWidgets/issues/25379
+
+	if (
+		((KeyEvent.wVirtualKeyCode >= 'A') && (KeyEvent.wVirtualKeyCode <= 'Z')) ||
+		((KeyEvent.wVirtualKeyCode >= '0') && (KeyEvent.wVirtualKeyCode <= '9'))
+	) {
+
 		base = towlower(KeyEvent.wVirtualKeyCode);
 
-		if (ctrl) {
+		if (ctrl /* some legacy workaround, leaving behavior unchanged */ && isalpha(base)) {
 			// Fixme: workaround for far2l wx sending unicode char with ctrl in wrong kb layout
+			// See also: https://github.com/wxWidgets/wxWidgets/issues/25384
 			keycode = base;
 		}
+	}
+
+	switch (KeyEvent.wVirtualKeyCode) {
+
+		// top row
+		case VK_OEM_3:      base = '`'; break;
+		// ...digits...
+		case VK_OEM_MINUS:  base = '-'; break;
+		case VK_OEM_PLUS:   base = '+'; break;
+
+		// second row
+		// ...letters...
+		case VK_OEM_4:      base = '['; break;
+		case VK_OEM_6:      base = ']'; break;
+
+		// third row
+		// ...letters...
+		case VK_OEM_1:      base = ';'; break;
+		case VK_OEM_7:      base = '\''; break;
+		case VK_OEM_5:      base = '\\'; break;
+
+		// forth row
+		case 0xE1:          base = '/'; break;
+		// ...letters...
+		case VK_OEM_COMMA:  base = ','; break;
+		case VK_OEM_PERIOD: base = '.'; break;
+		case VK_OEM_2:      base = '/'; break;
 	}
 
 	// Fixme: workaround for far2l tty backend
@@ -283,6 +329,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_MENU:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
+				fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
 				return "";
 			}
 
@@ -300,6 +347,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_CONTROL:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
+				fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
 				return "";
 			}
 
@@ -317,6 +365,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_SHIFT:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
+				fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
 				return "";
 			}
 
@@ -333,23 +382,47 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 	}
 
+
 	// Prefer using legacy code for all cases then kitty generation and legacy generation
 	// in theory should be equal — to avoid bugs in new code affecting apps using legacy encoding.
 	// So fall back to legacy if this is a non-CSIu function key,
 	// flag 8 is not enabled and legacy generation is possible.
 	if ((suffix != 'u') && KeyEvent.bKeyDown && !nolegacy && legacy && legacy[1] && !(flags & 8)) {
-		//fprintf(stderr, "Function non-CSIu key, falling back to legacy generation\n");
+		fprintf(stderr, "kitty kb: function non-CSIu key, falling back to legacy generation\n");
 		return legacy;
 	}
+
+
+	// According to the spec, the keycode should always be "unshifted", meaning it should contain the value
+	// that this key would generate if Shift were not pressed. However, we have no knowledge of the user's
+	// keyboard layout here, so the unshifted value for an arbitrary key cannot be reliably determined.
+	// Therefore, if a char key is pressed together with Shift, and we can get its lowercase variant
+	// with towlower(), we do. If it's not a char key, we can not detect unshifted value here
+	// so we use special value 57610 (meaning "unknown", explained below).
+	// Also it's unclear why the "unshifted" value would be needed in real-world applications:
+	// for consistently working shortcuts, it's more reasonable to use the "base-layout-key" field instead.
+	// As for 57610, it is just one more value from Unicode PUA. I took the largest value
+	// used in the spec (57454) and added twice the number of values ​​used in the spec (78*2=156),
+	// so there would be no collisions in case spec is extended. We can't just use 0 here,
+	// since the spec requires unicode key code value to always be specified.
+	// See also: https://github.com/elfmz/far2l/issues/2743
+	if (shifted && (shifted == keycode)) {
+		fprintf(stderr, "kitty kb: unshifted key code undetectable, using 57610\n");
+		keycode = 57610;
+	}
+	// UPD: base-layout-key also can not be trusted in our implementation
+	// for non-latin keypresses w/o modifiers (except Shift) because of IM usage, see
+	// https://github.com/wxWidgets/wxWidgets/issues/25379
+	// But hot keys w/o modifiers is nonsence, so not a problem actually
 
 	// avoid sending base char if it is equal to keycode
 	if (base == keycode) { base = 0; }
 
-
 	// check if we can finally generate escape sequence for this key
-	if (!keycode)
+	if (!keycode && !shifted) { // one of two should present in any case
+		fprintf(stderr, "kitty kb: no keycode and no shifted keycode, generating nothing\n");
 		return "";
-
+	}
 
 	// generate final escape sequence
 	// CSI unicode-key-code:shifted-key:base-layout-key ; modifiers:event-type ; text-as-codepoints u
@@ -395,7 +468,6 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 
 	out+= suffix;
 
-	//fprintf(stderr, "Generated as kitty\n");
-
+	fprintf(stderr, "kitty kb: generated ESC%s\n", out.c_str() + 1);
 	return out;
 }

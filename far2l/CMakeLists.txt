@@ -172,6 +172,7 @@ src/mix/StrCells.cpp
 src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
+src/mix/GitTools.cpp
 )
 
 # Option to disable building macro subsystem completely

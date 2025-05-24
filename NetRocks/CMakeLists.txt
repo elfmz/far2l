@@ -102,11 +102,18 @@ set_target_properties(NetRocks-SHELL
     SUFFIX ".broker")
 target_compile_options(NetRocks-SHELL PUBLIC -DNETROCKS_PROTOCOL)
 
-add_custom_command(TARGET NetRocks-SHELL POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/SHELL/Helpers
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/SHELL/Helpers "${INSTALL_DIR}/Plugins/NetRocks/plug/SHELL"
+# copy resource files
+set(CURRENT_TARGET "NetRocks-SHELL")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/SHELL/Helpers
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/SHELL/Helpers/*"
 )
-
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/Protocol/SHELL/Helpers
+        "${INSTALL_DIR}/Plugins/NetRocks/plug/SHELL/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})
 
 if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_SFTP")
@@ -238,6 +245,15 @@ set_target_properties(NetRocks
         PREFIX ""
         SUFFIX ".far-plug-wide")
 
-add_custom_command(TARGET NetRocks POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/NetRocks")
+# copy resource files
+set(CURRENT_TARGET "NetRocks")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
+)
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${INSTALL_DIR}/Plugins/${CURRENT_TARGET}/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})

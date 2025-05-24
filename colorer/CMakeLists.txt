@@ -64,11 +64,6 @@ set_target_properties(colorer
         PREFIX ""
         SUFFIX ".far-plug-wide")
 
-add_custom_command(TARGET colorer POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/colorer"
-)
-
 add_subdirectory("${LIBCOLORER_TREE}" "${CMAKE_BINARY_DIR}/Colorer-library/src")
 
 set_target_properties(colorer PROPERTIES
@@ -76,3 +71,16 @@ set_target_properties(colorer PROPERTIES
     CXX_STANDARD_REQUIRED YES
     CXX_EXTENSIONS YES
 )
+
+# copy resource files
+set(CURRENT_TARGET "colorer")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
+)
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${INSTALL_DIR}/Plugins/${CURRENT_TARGET}/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})

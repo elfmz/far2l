@@ -154,11 +154,15 @@ struct ReviveClientFiles
 	{
 	}
 
+	~ReviveClientFiles()
+	{
+		unlink(ipc_path_clnt.c_str());
+	}
+
 	void DiscardDeadInstance()
 	{
 		unlink(ipc_path.c_str());
 		unlink(info_file.c_str());
-		unlink(ipc_path_clnt.c_str());
 	}
 };
 

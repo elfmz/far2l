@@ -150,8 +150,7 @@ struct ReviveClientFiles
 		:
 		info_file(InMyTempFmt("TTY/srv-%lu.info", srv_pid)),
 		ipc_path(InMyTempFmt("TTY/srv-%lu.ipc", srv_pid)),
-		ipc_path_clnt(InMyTempFmt("TTY/clnt-%lu.ipc", (unsigned long)getpid())),
-		_us_ipc_path_clnt(ipc_path_clnt)
+		ipc_path_clnt(InMyTempFmt("TTY/clnt-%lu.ipc", (unsigned long)getpid()))
 	{
 	}
 
@@ -159,16 +158,12 @@ struct ReviveClientFiles
 	{
 		unlink(ipc_path.c_str());
 		unlink(info_file.c_str());
+		unlink(ipc_path_clnt.c_str());
 	}
-
-private:
-	UnlinkScope _us_ipc_path_clnt;
 };
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 {
-	std::string ipc_path = InMyTemp("TTY/");
-
 	instances.clear();
 
 	const std::string &tty_dir = InMyTemp("TTY");

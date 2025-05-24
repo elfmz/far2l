@@ -774,7 +774,7 @@ virtually pressed until next non-control key press:
     Another way to achieve working hotkeys may be changing settings
 of desktop environment or external applications (in order to release needed hotkey combinations)
 or using exclusive handle hotkeys option
-in the ~Input Settings~@InputSettings@ (only in GUI backend mode).
+in the ~Input Settings~@InputSettings@ (only in GUI backend mode under X11).
 
 
 @SpecCmd
@@ -2433,6 +2433,7 @@ jeleníthet meg.
      $q - = karakter
      $s - szóköz
      $t - az aktuális idő óó:pp:mm formátumban
+     $z - A Git ág neve, amelyet '{' és '}' jelek vesznek körül; egyébként üres string
      $$ - $ karakter
 
    Alapértelmezett a #$p$g# formátum - az aktuális az elérési útvonal.
@@ -3457,6 +3458,7 @@ jelenik meg);
 
     O[L]       - a fájl tulajdonosa
                  ahol:  L - tartománynév mutatva (domain);
+    U          - file group
 
     LN         - hardlinkek száma
 

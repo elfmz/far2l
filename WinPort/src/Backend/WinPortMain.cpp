@@ -241,8 +241,8 @@ extern "C" void WinPortHelp()
 			"\t--norgb - don't use true (24-bit) colors\n"
 			"\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n"
 			"\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n"
-			"\t--x11 - force GUI backend to run on X11\n"
-			"\t--wayland - force GUI backend to run on Wayland\n"
+			"\t--x11 - force GUI backend to run on X11/Xwayland (force make GDK_BACKEND=x11)\n"
+			"\t--wayland - force GUI backend to run on Wayland (force make GDK_BACKEND=wayland)\n"
 			"\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n"
 			"\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n"
 			"\t--maximize - force maximize window upon launch (only for GUI backend)\n"
@@ -256,7 +256,8 @@ extern "C" void WinPortHelp()
 struct ArgOptions
 {
 	DWORD nodetect = NODETECT_NONE;
-	bool tty = false, far2l_tty = false, notty = false, norgb = false;
+	bool tty = false, far2l_tty = false, notty = false;
+	bool norgb = getenv("TERM") != nullptr && strcmp(getenv("TERM"), "screen.xterm-256color") == 0; // If in GNU Screen, default "norgb = true" to avoid unusable colours
 	bool mortal = false;
 	bool x11 = false;
 	bool wayland = false;

@@ -1861,6 +1861,9 @@ LONG_PTR WINAPI DlgProcA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 			Msg = oldfar::DN_KEY;
 			Param2 = KeyToOldKey((DWORD)Param2);
 			break;
+		case DN_DROPDOWNOPENED:
+			Msg = oldfar::DN_DROPDOWNOPENED;
+			break;
 	}
 
 	return CurrentDlgProc(hDlg, Msg, Param1, Param2);
@@ -4232,5 +4235,13 @@ int WINAPI GetFileOwnerA(const char *Computer, const char *Name, char *Owner)
 	FARString strComputer(Computer), strName(Name), strOwner;
 	int Ret = GetFileOwner(strComputer, strName, strOwner);
 	strOwner.GetCharString(Owner, oldfar::NM);
+	return Ret;
+}
+
+int WINAPI GetFileGroupA(const char *Computer, const char *Name, char *Group)
+{
+	FARString strComputer(Computer), strName(Name), strGroup;
+	int Ret = GetFileGroup(strComputer, strName, strGroup);
+	strGroup.GetCharString(Group, oldfar::NM);
 	return Ret;
 }

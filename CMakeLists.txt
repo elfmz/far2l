@@ -1,4 +1,5 @@
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+include(${CMAKE_SOURCE_DIR}/cmake/FuncCopyResources.cmake)
 
 cmake_minimum_required (VERSION 3.5.0)
 
@@ -488,10 +489,6 @@ if (DEFINED PYTHON AND PYTHON)
         DESTINATION "lib/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
         COMPONENT base FILES_MATCHING
         PATTERN "*")
-    install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/plugins"
-        DESTINATION "lib/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
-        COMPONENT base FILES_MATCHING
-        PATTERN "*")
 else()
     message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
     install(CODE "
@@ -542,6 +539,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIO
     PATTERN "far2l_ttyx.broker"
     PATTERN "plug/*.far-plug-*"
     PATTERN "plug/*.broker"
+    PATTERN "python/plugins" EXCLUDE
 )
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
@@ -550,7 +548,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
     PATTERN "far2l_*" EXCLUDE
     PATTERN "*.far-plug-*" EXCLUDE
     PATTERN "*.broker" EXCLUDE
-    PATTERN "python/plug/python" EXCLUDE
+    PATTERN "python/plug/far2l" EXCLUDE
     PATTERN "*"
 )
 

@@ -81,6 +81,10 @@ far2l asks plugin if it can exit now. If plugin has some background tasks pendin
 * `int GetLinkTargetW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, wchar_t *Target, size_t TargetSize, int OpMode);`
 far2l uses this to resolve symlink destination when user selects plugin's item that has FILE_ATTRIBUTE_REPARSE_POINT. Target is displayed in status field as for local symlinks.
 
+* `int GetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size);`
+* `int GetFileGroupA(const char *Computer, const char *Name, char *Group);`
+to obtain file group
+
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
 * `DM_GETDEFAULTCOLOR`
@@ -90,6 +94,7 @@ far2l uses this to resolve symlink destination when user selects plugin's item t
 * `ECTL_ADDTRUECOLOR` - applies coloring to editor like ECTL_ADDCOLOR does but allows to specify 24 RGB color using EditorTrueColor structure.
 * `ECTL_GETTRUECOLOR` - retrieves coloring of editor like ECTL_GETCOLOR does but gets 24 RGB color using EditorTrueColor structure.
 * `DN_KEY` - Param2 retrives bitmasked state of the keys KEY_SHIFT, KEY_ALT and KEY_CTRL when Param1 equals to -1.
+* `DN_DROPDOWNOPENED` - Param2 = 1 - open, 0 - closed.
 
 Note that all true-color capable messages extend but don't replace 'base' 16 palette colors. This is done intentionally as far2l may run in terminal that doesn't support true color palette, and in such case 24bit colors will be ignored and base palette attributes will be used instead.
 

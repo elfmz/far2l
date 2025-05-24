@@ -1003,7 +1003,12 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 		return hDlg;
 
 	// ФИЧА! нельзя указывать отрицательные X2 и Y2
-	if (X2 < 0 || Y2 < 0)
+	if (X1 < 0 && X2 == 0)
+		X2 = 1;
+	if (Y1 < 0 && Y2 == 0)
+		Y2 = 1;
+	const auto checkCoord = [](int first, int second) { return second >= 0 && ((first < 0) ? (second > 0) : (first <= second)); };
+	if (!checkCoord(X1, X2) || !checkCoord(Y1, Y2))
 		return hDlg;
 
 	{
@@ -2098,6 +2103,17 @@ int WINAPI farGetFileOwner(const wchar_t *Computer, const wchar_t *Name, wchar_t
 		far_wcsncpy(Owner, strOwner, Size);
 
 	return static_cast<int>(strOwner.GetLength() + 1);
+}
+
+int WINAPI farGetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size)
+{
+	FARString strGroup;
+	/*int Ret=*/GetFileGroup(Computer, Name, strGroup);
+
+	if (Group && Size)
+		far_wcsncpy(Group, strGroup, Size);
+
+	return static_cast<int>(strGroup.GetLength() + 1);
 }
 
 int WINAPI farConvertPath(CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, int DestSize)

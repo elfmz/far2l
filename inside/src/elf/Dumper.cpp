@@ -12,7 +12,7 @@ namespace CommandsELF
 {
 	void Query(const char *section, const std::string &command, const std::string &name, const std::string &result_file)
 	{
-		const std::string &cmd = Commands::Get(section, command.c_str());
+		const std::string &cmd = Commands::Get(section, command);
 		if (cmd.empty()) {
 			fprintf(stderr,
 				"CommandsELF::Query('%s', '%s'): no command\n", section, command.c_str());
@@ -26,7 +26,7 @@ namespace CommandsELF
 
 	void Store(const char *section, const std::string &command, const std::string &name, const std::string &result_file)
 	{
-		const std::string &cmd = Commands::Get(section, command.c_str());
+		const std::string &cmd = Commands::Get(section, command);
 		if (cmd.empty()) {
 			fprintf(stderr,
 				"CommandsELF::Store('%s', '%s'): no command\n", section, command.c_str());
@@ -38,7 +38,7 @@ namespace CommandsELF
 
 	void Clear(const char *section, const std::string &command, const std::string &name)
 	{
-		const std::string &cmd = Commands::Get(section, command.c_str());
+		const std::string &cmd = Commands::Get(section, command);
 		if (cmd.empty()) {
 			fprintf(stderr,
 				"CommandsELF::Clear('%s', '%s'): no command\n", section, command.c_str());

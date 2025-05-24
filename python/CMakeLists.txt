@@ -58,6 +58,6 @@ add_custom_command(
 
 add_custom_command(
     TARGET python POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/plugins
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/plugins" "${INSTALL_DIR}/Plugins/python/plug/plugins"
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
 )

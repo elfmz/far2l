@@ -1,5 +1,3 @@
-cmake_minimum_required (VERSION 3.5.0)
-
 find_package(Git QUIET)
 execute_process(COMMAND "${GIT_EXECUTABLE}" status
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"

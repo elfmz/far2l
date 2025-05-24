@@ -78,7 +78,7 @@ typedef int(WINAPI *PLUGINPROCESSSYNCHROEVENTW)(int Event, void *Param);
 typedef int(WINAPI *PLUGINPROCESSMACROFUNCW)
 	(const wchar_t *Name, const FarMacroValue *Params, int nParams, FarMacroValue **Results, int *nResults);
 #endif
-typedef int(WINAPI *PLUGINANALYSEW)(const AnalyseData *pData);
+typedef HANDLE(WINAPI *PLUGINANALYSEW)(const AnalyseInfo *pData);
 typedef int(WINAPI *PLUGINGETCUSTOMDATAW)(const wchar_t *FilePath, wchar_t **CustomData);
 typedef void(WINAPI *PLUGINFREECUSTOMDATAW)(wchar_t *CustomData);
 
@@ -189,7 +189,7 @@ public:
 	bool SetStartupInfo(bool &bUnloaded);
 	bool CheckMinFarVersion(bool &bUnloaded);
 
-	int Analyse(const AnalyseData *pData);
+	HANDLE Analyse(const AnalyseInfo *pData);
 
 	HANDLE OpenPlugin(int OpenFrom, INT_PTR Item);
 	HANDLE OpenFilePlugin(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode);

@@ -137,7 +137,7 @@ typedef const wchar_t *LPCWSTR;
 typedef wchar_t *LPWSTR;
 typedef wchar_t *PWSTR;
 
-#define LPCTSTR LPCWSTR
+//#define LPCTSTR LPCWSTR
 #define LPTSTR LPWSTR
 
 typedef wchar_t WCHAR;
@@ -159,9 +159,20 @@ typedef SHORT *PSHORT;
 typedef LONGLONG *PLONGLONG;
 typedef ULONGLONG *PULONGLONG;
 
-#define TCHAR WCHAR 
-
+//#define TCHAR WCHAR 
 #define CONST const
+
+//typedef const CHAR *LPCSTR;
+//typedef CHAR TCHAR;
+typedef WCHAR TCHAR;
+typedef const TCHAR *LPCTSTR;
+
+//typedef wchar_t WCHAR;
+typedef WCHAR OLECHAR;
+//typedef const WCHAR *LPCWSTR;
+typedef OLECHAR *BSTR;
+typedef const OLECHAR *LPCOLESTR;
+typedef OLECHAR *LPOLESTR;
 
 typedef int BOOL;
 typedef UCHAR BOOLEAN;
@@ -176,7 +187,6 @@ typedef ULONG LCID;         // winnt
 typedef PULONG PLCID;       // winnt
 typedef USHORT LANGID;      // winnt
 
-
 typedef HANDLE HKEY;
 typedef struct _OVERLAPPED *LPOVERLAPPED;
 typedef HKEY *PHKEY;
@@ -187,6 +197,16 @@ typedef ACCESS_MASK REGSAM;
 
 typedef int HRESULT;
 
+typedef ULONG PROPID;
+typedef LONG SCODE;
+
+typedef int EXECUTION_STATE;
+
+#define ES_AWAYMODE_REQUIRED    0x00000040
+#define ES_CONTINUOUS           0x80000000
+#define ES_DISPLAY_REQUIRED     0x00000002
+#define ES_SYSTEM_REQUIRED      0x00000001
+#define ES_USER_PRESENT         0x00000004
 
 #ifndef _T
 # define _T(x) L##x
@@ -248,6 +268,14 @@ typedef struct _FILETIME {
 #endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 
+typedef struct _WIN32_FILE_ATTRIBUTE_DATA {
+  DWORD    dwFileAttributes;
+  FILETIME ftCreationTime;
+  FILETIME ftLastAccessTime;
+  FILETIME ftLastWriteTime;
+  DWORD64  nFileSize;
+} WIN32_FILE_ATTRIBUTE_DATA, *LPWIN32_FILE_ATTRIBUTE_DATA;
+
 typedef union _LARGE_INTEGER {
 #if defined(__BYTE_ORDER__) && (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
     struct {
@@ -297,7 +325,19 @@ typedef union _ULARGE_INTEGER {
 typedef ULARGE_INTEGER *PULARGE_INTEGER;
 
 typedef struct _SECURITY_ATTRIBUTES *LPSECURITY_ATTRIBUTES;
+typedef ULONGLONG DWORDLONG, *PDWORDLONG;
 
+typedef struct _MEMORYSTATUSEX {
+  DWORD     dwLength;
+  DWORD     dwMemoryLoad;
+  DWORDLONG ullTotalPhys;
+  DWORDLONG ullAvailPhys;
+  DWORDLONG ullTotalPageFile;
+  DWORDLONG ullAvailPageFile;
+  DWORDLONG ullTotalVirtual;
+  DWORDLONG ullAvailVirtual;
+  DWORDLONG ullAvailExtendedVirtual;
+} MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
 
 typedef struct _SYSTEMTIME {
     WORD wYear;
@@ -344,6 +384,16 @@ typedef struct _WIN32_FIND_DATAW {
     WCHAR cFileName[ MAX_NAME ];
 } WIN32_FIND_DATAW, *PWIN32_FIND_DATAW, *LPWIN32_FIND_DATAW, WIN32_FIND_DATA, *PWIN32_FIND_DATA, *LPWIN32_FIND_DATA;
 
+typedef struct _BY_HANDLE_FILE_INFORMATION {
+  DWORD    dwFileAttributes;
+  FILETIME ftCreationTime;
+  FILETIME ftLastAccessTime;
+  FILETIME ftLastWriteTime;
+  DWORD    dwVolumeSerialNumber;
+  DWORD64  nFileSize;
+  DWORD    nNumberOfLinks;
+  DWORD64  nFileIndex;
+} BY_HANDLE_FILE_INFORMATION, *PBY_HANDLE_FILE_INFORMATION, *LPBY_HANDLE_FILE_INFORMATION;
 
 //////////////////
 
@@ -955,6 +1005,7 @@ typedef void *HMODULE;
 #define FILE_SHARE_READ                 0x00000001
 #define FILE_SHARE_WRITE                0x00000002
 #define FILE_SHARE_DELETE               0x00000004
+
 #define FILE_ATTRIBUTE_READONLY             0x00000001
 #define FILE_ATTRIBUTE_HIDDEN               0x00000002
 #define FILE_ATTRIBUTE_SYSTEM               0x00000004
@@ -970,8 +1021,12 @@ typedef void *HMODULE;
 #define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED  0x00002000
 #define FILE_ATTRIBUTE_ENCRYPTED            0x00004000
 #define FILE_ATTRIBUTE_INTEGRITY_STREAM     0x00008000
-#define FILE_ATTRIBUTE_VIRTUAL              0x00010000
+#define FILE_ATTRIBUTE_VIRTUAL              0x00010000 // ======
 #define FILE_ATTRIBUTE_NO_SCRUB_DATA        0x00020000
+#define FILE_ATTRIBUTE_EA                   0x00040000
+#define FILE_ATTRIBUTE_PINNED               0x00080000
+#define FILE_ATTRIBUTE_UNPINNED             0x00100000
+
 #define FILE_ATTRIBUTE_BROKEN               0x00200000
 #define FILE_ATTRIBUTE_EXECUTABLE           0x00400000
 #define FILE_ATTRIBUTE_DEVICE_CHAR          0x00800000
@@ -1498,6 +1553,19 @@ typedef BOOL (*WINPORT_HANDLER_ROUTINE)(  DWORD CtrlType );
 
 #ifndef OCCASIONAL_WINDOWS_H
 #define HINSTANCE HANDLE
+
+#define THREAD_BASE_PRIORITY_LOWRT  15  // value that gets a thread to LowRealtime-1
+#define THREAD_BASE_PRIORITY_MAX    2   // maximum thread base priority boost
+#define THREAD_BASE_PRIORITY_MIN    (-2)  // minimum thread base priority boost
+#define THREAD_BASE_PRIORITY_IDLE   (-15) // value that gets a thread to idle
+
+#define THREAD_PRIORITY_NORMAL          0
+#define THREAD_PRIORITY_HIGHEST         THREAD_BASE_PRIORITY_MAX
+#define THREAD_PRIORITY_ABOVE_NORMAL    (THREAD_PRIORITY_HIGHEST-1)
+#define THREAD_PRIORITY_ERROR_RETURN    (MAXLONG)
+
+#define THREAD_PRIORITY_TIME_CRITICAL   THREAD_BASE_PRIORITY_LOWRT
+#define THREAD_PRIORITY_IDLE            THREAD_BASE_PRIORITY_IDLE
 
 typedef WINPORT_HANDLER_ROUTINE PHANDLER_ROUTINE;
 typedef WINPORT_THREAD_START_ROUTINE LPTHREAD_START_ROUTINE, PTHREAD_START_ROUTINE;

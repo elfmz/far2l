@@ -357,8 +357,15 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 			if (!WinPortTesting())
 				FlushInputBuffer();
 
-			if (Flags & MSG_KILLSAVESCREEN)
+
+			if (Flags & MSG_ASYNC) {
+				Dlg.SetDialogMode(DMODE_ASYNC);
+			}
+
+			if (Flags & MSG_KILLSAVESCREEN) {
+
 				SendDlgMessage((HANDLE)&Dlg, DM_KILLSAVESCREEN, 0, 0);
+			}
 
 			Dlg.Process();
 			RetCode = Dlg.GetExitCode();
@@ -464,8 +471,12 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 static int ShowMessage(DWORD Flags, int Buttons, const wchar_t *Title, const wchar_t *const *Items,
 		int ItemsNumber, INT_PTR PluginNumber)
 {
-	return InterThreadCall<int, 0>(
-			std::bind(ShowMessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
+	if (Flags & MSG_ASYNC) {
+		return ShowMessageSynched(Flags, Buttons, Title, Items, ItemsNumber, PluginNumber);
+	}
+	else {
+		return InterThreadCall<int, 0>(std::bind(ShowMessageSynched, Flags, Buttons, Title, Items, ItemsNumber, PluginNumber));
+	}
 }
 
 FN_NOINLINE Messager::Messager(FarLangMsg title)
@@ -593,6 +604,7 @@ Messager &FN_NOINLINE ExMessager::AddMultiline(const wchar_t *v, const wchar_t *
 		AddDup(current_line.c_str());
 	return *this;
 }
+
 
 ///////////////////////////////////
 

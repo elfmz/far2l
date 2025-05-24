@@ -29,6 +29,10 @@ class Plugin(PluginVFS):
         return True
 
     def GetOpenPluginInfo(self, OpenInfo):
+        # dangeling refs
+        self._Root = self.s2f(self.Root)
+        self._label = self.s2f(self.label)
+        # /dangeling refs
         Info = self.ffi.cast("struct OpenPluginInfo *", OpenInfo)
         Info.Flags = (
             self.ffic.OPIF_USEFILTER
@@ -38,9 +42,9 @@ class Plugin(PluginVFS):
             | self.ffic.OPIF_SHOWNAMESONLY
         )
         Info.HostFile = self.ffi.NULL
-        Info.CurDir = self.s2f(self.Root)
-        Info.Format = self.s2f(self.label)
-        Info.PanelTitle = self.s2f(self.label)
+        Info.CurDir = self._Root
+        Info.Format = self._label
+        Info.PanelTitle = self._label
 
     def GetFindData(self, PanelItem, ItemsNumber, OpMode):
         log.debug(
@@ -57,10 +61,7 @@ class Plugin(PluginVFS):
     def SetDirectory(self, Dir, OpMode):
         if OpMode & self.ffic.OPM_FIND:
             return 0
-        if self.f2s(Dir) == "":
-            self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
-        else:
-            self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, Dir)
+        self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
         return 1
 
     def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):

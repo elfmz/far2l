@@ -92,10 +92,10 @@ class Plugin(PluginBase):
                         RADIOBUTTON("vr3", "p3", flags=self.ffic.BSTATE_CHECKED),
                     ),
                     LISTBOX(
-                        "vlist", 1, "element A", "element B", "element C", "element D"
+                        "vlist", 1, ["element A", "element B", "element C", "element D"]
                     ),
                     COMBOBOX(
-                        "vcombo", 2, "element A", "element B", "element C", "element D"
+                        "vcombo", 2, ["element A", "element B", "element C", "element D"]
                     ),
                     VSizer(
                         CHECKBOX("vc1", "c1"),

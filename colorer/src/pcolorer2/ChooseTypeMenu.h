@@ -13,7 +13,7 @@ class ChooseTypeMenu
   [[nodiscard]] size_t getItemsCount() const { return ItemCount; }
 
   size_t AddItem(const FileType* fType, size_t PosAdd = 0x7FFFFFFF);
-  size_t AddItemInGroup(FileType* fType);
+  size_t AddItemInGroup(const FileType* fType);
   size_t AddGroup(const wchar_t* Text);
   void SetSelected(size_t index);
   [[nodiscard]] size_t GetNext(size_t index) const;

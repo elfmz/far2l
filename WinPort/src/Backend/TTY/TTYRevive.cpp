@@ -145,16 +145,24 @@ struct ReviveClientFiles
 	std::string info_file;
 	std::string ipc_path;
 	std::string ipc_path_clnt;
-	UnlinkScope us_ipc_path_clnt;
 
 	ReviveClientFiles(unsigned long srv_pid)
 		:
 		info_file(InMyTempFmt("TTY/srv-%lu.info", srv_pid)),
 		ipc_path(InMyTempFmt("TTY/srv-%lu.ipc", srv_pid)),
 		ipc_path_clnt(InMyTempFmt("TTY/clnt-%lu.ipc", (unsigned long)getpid())),
-		us_ipc_path_clnt(ipc_path_clnt)
+		_us_ipc_path_clnt(ipc_path_clnt)
 	{
 	}
+
+	void DiscardDeadInstance()
+	{
+		unlink(ipc_path.c_str());
+		unlink(info_file.c_str());
+	}
+
+private:
+	UnlinkScope _us_ipc_path_clnt;
 };
 
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
@@ -184,8 +192,7 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 
 				} catch (LocalSocketConnectError &e) {
 					fprintf(stderr, "TTYRevivableEnum: %s - discarding %lu\n", e.what(), (unsigned long)pid);
-					unlink(rcf.ipc_path.c_str());
-					unlink(rcf.info_file.c_str());
+					rcf.DiscardDeadInstance();
 
 				} catch (std::exception &e) {
 					fprintf(stderr, "TTYRevivableEnum: %s\n", e.what());
@@ -252,8 +259,7 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 
 	} catch (LocalSocketConnectError &e) {
 		fprintf(stderr, "TTYRevive: %s - discarding %lu\n", e.what(), (unsigned long)pid);
-		unlink(rcf.ipc_path.c_str());
-		unlink(rcf.info_file.c_str());
+		rcf.DiscardDeadInstance();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYRevive: %s\n", e.what());

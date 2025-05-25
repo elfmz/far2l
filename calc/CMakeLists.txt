@@ -46,9 +46,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE ../WinPort)
 target_include_directories(${PROJECT_NAME} PRIVATE ../far2l/far2sdk)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS NO
+    # CXX_STANDARD 11
+    # CXX_STANDARD_REQUIRED YES
+    # CXX_EXTENSIONS NO
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
     PREFIX ""
     SUFFIX ".far-plug-wide")

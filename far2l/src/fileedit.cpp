@@ -1058,7 +1058,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 
 				if (apiGetFileAttributes(strFullFileName) == INVALID_FILE_ATTRIBUTES)		// а сам файл то еще на месте?
 				{
-					if (!CheckShortcutFolder(&strFullFileNameTemp, FALSE))
+					if (!CheckShortcutFolder(strFullFileNameTemp, false))
 						return FALSE;
 
 					strFullFileNameTemp+= L"/.";	// для вваливания внутрь :-)

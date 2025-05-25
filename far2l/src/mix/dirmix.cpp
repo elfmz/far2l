@@ -151,11 +151,11 @@ TESTFOLDERCONST TestFolder(const wchar_t *Path)
 	TestPath может быть пустым, тогда просто исполним ProcessPluginEvent()
 
 */
-int CheckShortcutFolder(FARString *pTestPath, int IsHostFile, BOOL Silent)
+int CheckShortcutFolder(FARString &strTestPath, bool IsHostFile, bool Silent)
 {
-	if (pTestPath && !pTestPath->IsEmpty() && apiGetFileAttributes(*pTestPath) == INVALID_FILE_ATTRIBUTES) {
-		int FoundPath = 0;
-		FARString strTarget = *pTestPath;
+	if (!strTestPath.IsEmpty() && apiGetFileAttributes(strTestPath) == INVALID_FILE_ATTRIBUTES) {
+		bool FoundPath = false;
+		FARString strTarget = strTestPath;
 		TruncPathStr(strTarget, ScrX - 16);
 
 		if (IsHostFile) {
@@ -170,26 +170,15 @@ int CheckShortcutFolder(FARString *pTestPath, int IsHostFile, BOOL Silent)
 			if (Silent
 					|| !Message(MSG_WARNING | MSG_ERRORTYPE, 2, Msg::Error, strTarget, Msg::NeedNearPath,
 							Msg::HYes, Msg::HNo)) {
-				FARString strTestPathTemp = *pTestPath;
+				FARString strTemp = strTestPath;
 
-				for (;;) {
-					if (!CutToSlash(strTestPathTemp, true))
-						break;
+				for (; CutToSlash(strTemp, false); CutToSlash(strTemp, true)) {
+					if (apiGetFileAttributes(strTemp) != INVALID_FILE_ATTRIBUTES) {
+						int ChkFld = TestFolder(strTemp);
 
-					if (apiGetFileAttributes(strTestPathTemp) != INVALID_FILE_ATTRIBUTES) {
-						int ChkFld = TestFolder(strTestPathTemp);
-
-						if (ChkFld > TSTFLD_ERROR && ChkFld < TSTFLD_NOTFOUND) {
-							if (!(pTestPath->At(0) == GOOD_SLASH && pTestPath->At(1) == GOOD_SLASH
-										&& !strTestPathTemp.At(1))) {
-								*pTestPath = strTestPathTemp;
-
-								if (pTestPath->GetLength() == 2)	// для случая "C:", иначе попадем в текущий каталог диска C:
-									AddEndSlash(*pTestPath);
-
-								FoundPath = 1;
-							}
-
+						if (ChkFld > TSTFLD_ERROR && ChkFld < TSTFLD_NOTFOUND) { // == TSTFLD_NOTACCESS || == TSTFLD_EMPTY || == TSTFLD_NOTEMPTY
+							strTestPath = strTemp;
+							FoundPath = true;
 							break;
 						}
 					}

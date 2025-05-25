@@ -83,7 +83,7 @@ static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
 	}
 
 	if (strSrc != L"/") {
-		CheckShortcutFolder(&strSrc, FALSE, TRUE);
+		CheckShortcutFolder(strSrc, false, true);
 	}
 
 	// ConvertNameToFull(strSrc,strSrc);

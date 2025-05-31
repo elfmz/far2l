@@ -124,10 +124,10 @@ class Plugin(PluginBase):
                 ),
                 HSizer(
                     LISTBOX(
-                        "vlist", 1, "listbox A", "listbox B", "listbox C", "listbox D"
+                        "vlist", 1, ["listbox A", "listbox B", "listbox C", "listbox D"]
                     ),
                     COMBOBOX(
-                        "vcombo", 2, "combo A", "combo B", "combo C", "combo D"
+                        "vcombo", 2, ["combo A", "combo B", "combo C", "combo D"]
                     ),
                     VSizer(
                         CHECKBOX("vc1", "cb1"),

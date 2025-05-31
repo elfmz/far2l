@@ -3,6 +3,12 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 
+def show_clipboard():
+    clipboard = Gdk.Display().get_default().get_clipboard()
+    print("Clipboard:")
+    print('str:', clipboard.get_formats().to_string())
+#show_clipboard()
+
 clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 for mime in (
     "text/plain",

@@ -46,14 +46,22 @@ target_include_directories(${PROJECT_NAME} PRIVATE ../WinPort)
 target_include_directories(${PROJECT_NAME} PRIVATE ../far2l/far2sdk)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 11
-    CXX_STANDARD_REQUIRED YES
-    CXX_EXTENSIONS NO
+    # CXX_STANDARD 11
+    # CXX_STANDARD_REQUIRED YES
+    # CXX_EXTENSIONS NO
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
     PREFIX ""
     SUFFIX ".far-plug-wide")
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug")
-
+# copy resource files
+set(CURRENT_TARGET "calc")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
+)
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${INSTALL_DIR}/Plugins/${CURRENT_TARGET}/plug"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})

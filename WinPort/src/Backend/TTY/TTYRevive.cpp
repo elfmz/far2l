@@ -140,6 +140,32 @@ public:
 	inline uint64_t Feats() const { return _feats; }
 };
 
+struct ReviveClientFiles
+{
+	std::string info_file;
+	std::string ipc_path;
+	std::string ipc_path_clnt;
+
+	ReviveClientFiles(unsigned long srv_pid)
+		:
+		info_file(InMyTempFmt("TTY/srv-%lu.info", srv_pid)),
+		ipc_path(InMyTempFmt("TTY/srv-%lu.ipc", srv_pid)),
+		ipc_path_clnt(InMyTempFmt("TTY/clnt-%lu.ipc", (unsigned long)getpid()))
+	{
+	}
+
+	~ReviveClientFiles()
+	{
+		unlink(ipc_path_clnt.c_str());
+	}
+
+	void DiscardDeadInstance()
+	{
+		unlink(ipc_path.c_str());
+		unlink(info_file.c_str());
+	}
+};
+
 void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 {
 	instances.clear();
@@ -157,11 +183,19 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 			unsigned long pid = 0;
 			sscanf(de->d_name, "srv-%lu.info", &pid);
 			if (pid > 1) {
-				std::string info_file = tty_dir;
-				info_file+= '/';
-				info_file+= de->d_name;
-				TTYInfoReader info_reader(info_file);
-				instances.emplace_back(TTYRevivableInstance{info_reader.Text(), (pid_t)pid});
+				ReviveClientFiles rcf(pid);
+				try {
+					TTYInfoReader info_reader(rcf.info_file);
+					LocalSocketClient sock(LocalSocket::DATAGRAM, rcf.ipc_path, rcf.ipc_path_clnt);
+					instances.emplace_back(TTYRevivableInstance{info_reader.Text(), (pid_t)pid});
+
+				} catch (LocalSocketConnectError &e) {
+					fprintf(stderr, "TTYRevivableEnum: %s - discarding %lu\n", e.what(), (unsigned long)pid);
+					rcf.DiscardDeadInstance();
+
+				} catch (std::exception &e) {
+					fprintf(stderr, "TTYRevivableEnum: %s\n", e.what());
+				}
 			}
 		}
 	}
@@ -171,11 +205,7 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 
 int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 {
-	const std::string &info_file = InMyTempFmt("TTY/srv-%lu.info", (unsigned long)pid);
-	const std::string &ipc_path = InMyTempFmt("TTY/srv-%lu.ipc", (unsigned long)pid);
-	const std::string &ipc_path_clnt = InMyTempFmt("TTY/clnt-%lu.ipc", (unsigned long)getpid());
-
-	UnlinkScope us_ipc_path_clnt(ipc_path_clnt);
+	ReviveClientFiles rcf(pid);
 
 	int notify_pipe[2];
 	if (pipe_cloexec(notify_pipe) == -1) {
@@ -184,8 +214,8 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 	}
 
 	try {
-		TTYInfoReader info_reader(info_file);
-		LocalSocketClient sock(LocalSocket::DATAGRAM, ipc_path, ipc_path_clnt);
+		TTYInfoReader info_reader(rcf.info_file);
+		LocalSocketClient sock(LocalSocket::DATAGRAM, rcf.ipc_path, rcf.ipc_path_clnt);
 
 		// if peer and we have common extended feats - let him know we understood that
 		const uint64_t intersected_feats = (info_reader.Feats() & TTY_INFO_FEAT_XENV);
@@ -228,8 +258,7 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 
 	} catch (LocalSocketConnectError &e) {
 		fprintf(stderr, "TTYRevive: %s - discarding %lu\n", e.what(), (unsigned long)pid);
-		unlink(ipc_path.c_str());
-		unlink(info_file.c_str());
+		rcf.DiscardDeadInstance();
 
 	} catch (std::exception &e) {
 		fprintf(stderr, "TTYRevive: %s\n", e.what());

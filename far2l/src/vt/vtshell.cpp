@@ -820,13 +820,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (_win32_input_mode_expected) {
-				return StrPrintf("\x1B[%i;%i;%i;%i;%i;%i_",
-						 KeyEvent.wVirtualKeyCode,
-						 KeyEvent.wVirtualScanCode,
-						 KeyEvent.uChar.UnicodeChar,
-						 KeyEvent.bKeyDown,
-						 KeyEvent.dwControlKeyState,
-						 KeyEvent.wRepeatCount);
+
+				std::string result = StrPrintf("\x1B[%i;%i;%i;%i;%i;%i_",
+				                KeyEvent.wVirtualKeyCode,
+				                KeyEvent.wVirtualScanCode,
+				                KeyEvent.uChar.UnicodeChar,
+				                KeyEvent.bKeyDown,
+				                KeyEvent.dwControlKeyState,
+				                KeyEvent.wRepeatCount);
+
+				fprintf(stderr, "win32-input-mode: generated ESC%s\n", result.c_str() + 1); // пропускаем \x1B
+
+				return result;
 			}
 
 			if (!KeyEvent.bKeyDown)

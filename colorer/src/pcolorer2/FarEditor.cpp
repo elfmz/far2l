@@ -25,7 +25,6 @@ const UnicodeString DFirstLineBytes("firstlinebytes");
 
 FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf) : info(inf), parserFactory(pf)
 {
-  info->EditorControl(ECTL_GETINFO, &ei);
   UnicodeString dso("def:Outlined");
   UnicodeString dse("def:Error");
   baseEditor = std::make_unique<BaseEditor>(parserFactory, this);
@@ -35,37 +34,27 @@ FarEditor::FarEditor(PluginStartupInfo* inf, ParserFactory* pf) : info(inf), par
   errorOutliner = std::make_unique<Outliner>(baseEditor.get(), def_Error);
 }
 
-FarEditor::~FarEditor() {}
-
 void FarEditor::endJob(size_t lno)
 {
+  (void) lno;
   ret_str.reset();
 }
 
 UnicodeString* FarEditor::getLine(size_t lno)
 {
-  if (ret_strNumber == lno && ret_str != nullptr) {
-    return ret_str.get();
-  }
+  EditorGetString es {(int) lno};
 
-  EditorGetString es;
   int len = 0;
-  ret_strNumber = lno;
-
-  es.StringNumber = lno;
-  es.StringText = nullptr;
-
   if (info->EditorControl(ECTL_GETSTRING, &es)) {
     len = es.StringLength;
+    if (len > maxLineLength && maxLineLength > 0) {
+      len = maxLineLength;
+    }
+    ret_str = std::make_unique<UnicodeString>((char*) es.StringText, len * sizeof(wchar_t),
+                                              Encodings::ENC_UTF32);
+    return ret_str.get();
   }
-
-  if (len > maxLineLength && maxLineLength > 0) {
-    len = maxLineLength;
-  }
-
-  ret_str = std::make_unique<UnicodeString>((char*) es.StringText, len * sizeof(wchar_t),
-                                            Encodings::ENC_UTF32);
-  return ret_str.get();
+  return nullptr;
 }
 
 void FarEditor::chooseFileType(const UnicodeString* fname)
@@ -98,8 +87,7 @@ void FarEditor::reloadTypeSettings()
   maxLineLength = def->getParamValueInt(DMaxLen, 0);
   newfore = def->getParamValueInt(DDefFore, -1);
   newback = def->getParamValueInt(DDefBack, -1);
-  const UnicodeString* value;
-  value = def->getParamValue(DFullback);
+  const UnicodeString* value = def->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)) {
     fullBackground = false;
@@ -110,22 +98,22 @@ void FarEditor::reloadTypeSettings()
     if (value->equals(&DNone)) {
       showHorizontalCross = false;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DVertical)) {
       showHorizontalCross = false;
       showVerticalCross = true;
-    };
+    }
 
     if (value->equals(&DHorizontal)) {
       showHorizontalCross = true;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DBoth)) {
       showHorizontalCross = true;
       showVerticalCross = true;
-    };
+    }
   }
 
   value = def->getParamValue(DCrossZorder);
@@ -151,22 +139,22 @@ void FarEditor::reloadTypeSettings()
     if (value->equals(&DNone)) {
       showHorizontalCross = false;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DVertical)) {
       showHorizontalCross = false;
       showVerticalCross = true;
-    };
+    }
 
     if (value->equals(&DHorizontal)) {
       showHorizontalCross = true;
       showVerticalCross = false;
-    };
+    }
 
     if (value->equals(&DBoth)) {
       showHorizontalCross = true;
       showVerticalCross = true;
-    };
+    }
   }
 
   value = ftype->getParamValue(DCrossZorder);
@@ -216,9 +204,9 @@ void FarEditor::setOutlineStyle(bool oldStyle)
   this->oldOutline = oldStyle;
 }
 
-void FarEditor::setTrueMod(bool _TrueMod)
+void FarEditor::setTrueMod(bool true_mod)
 {
-  this->TrueMod = _TrueMod;
+  this->TrueMod = true_mod;
 }
 
 void FarEditor::setRegionMapper(RegionMapper* rs)
@@ -235,10 +223,9 @@ void FarEditor::setRegionMapper(RegionMapper* rs)
     vertCrossColor.concolor = 0x0E;
 }
 
-void FarEditor::matchPair()
+void FarEditor::matchPair() const
 {
-  EditorSetPosition esp;
-  enterHandler();
+  const auto ei = getEditorInfo();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
   if ((pm == nullptr) || (pm->eline == -1)) {
@@ -246,11 +233,7 @@ void FarEditor::matchPair()
     return;
   }
 
-  esp.CurTabPos = -1;
-  esp.LeftPos = -1;
-  esp.Overtype = -1;
-  esp.TopScreenLine = -1;
-  esp.CurLine = pm->eline;
+  EditorSetPosition esp {pm->eline, 0, -1, -1, -1, -1};
 
   if (!pm->topPosition) {
     esp.CurPos = pm->end->start;
@@ -265,20 +248,19 @@ void FarEditor::matchPair()
     if (esp.TopScreenLine < 0) {
       esp.TopScreenLine = 0;
     }
-  };
+  }
 
   info->EditorControl(ECTL_SETPOSITION, &esp);
   baseEditor->releasePairMatch(pm);
 }
 
-void FarEditor::selectPair()
+void FarEditor::selectPair() const
 {
-  EditorSelect es;
   int X1, X2, Y1, Y2;
-  enterHandler();
+  const auto ei = getEditorInfo();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
-  if ((pm == nullptr) || (pm->eline == -1)) {
+  if (pm == nullptr || pm->eline == -1) {
     baseEditor->releasePairMatch(pm);
     return;
   }
@@ -294,27 +276,21 @@ void FarEditor::selectPair()
     X1 = pm->end->end;
     Y2 = pm->sline;
     Y1 = pm->eline;
-  };
+  }
 
-  es.BlockType = BTYPE_STREAM;
-  es.BlockStartLine = Y1;
-  es.BlockStartPos = X1;
-  es.BlockHeight = Y2 - Y1 + 1;
-  es.BlockWidth = X2 - X1 + 1;
-
+  EditorSelect es {BTYPE_STREAM, Y1, X1, X2 - X1 + 1, Y2 - Y1 + 1};
   info->EditorControl(ECTL_SELECT, &es);
 
   baseEditor->releasePairMatch(pm);
 }
 
-void FarEditor::selectBlock()
+void FarEditor::selectBlock() const
 {
-  EditorSelect es;
   int X1, X2, Y1, Y2;
-  enterHandler();
+  const auto ei = getEditorInfo();
   PairMatch* pm = baseEditor->searchGlobalPair(ei.CurLine, ei.CurPos);
 
-  if ((pm == nullptr) || (pm->eline == -1)) {
+  if (pm == nullptr || pm->eline == -1) {
     baseEditor->releasePairMatch(pm);
     return;
   }
@@ -330,26 +306,20 @@ void FarEditor::selectBlock()
     X1 = pm->end->start;
     Y2 = pm->sline;
     Y1 = pm->eline;
-  };
+  }
 
-  es.BlockType = BTYPE_STREAM;
-  es.BlockStartLine = Y1;
-  es.BlockStartPos = X1;
-  es.BlockHeight = Y2 - Y1 + 1;
-  es.BlockWidth = X2 - X1 + 1;
-
+  EditorSelect es {BTYPE_STREAM, Y1, X1, X2 - X1 + 1, Y2 - Y1 + 1};
   info->EditorControl(ECTL_SELECT, &es);
 
   baseEditor->releasePairMatch(pm);
 }
 
-void FarEditor::selectRegion()
+void FarEditor::selectRegion() const
 {
-  EditorSelect es;
-  EditorGetString egs;
-  enterHandler();
-  egs.StringNumber = ei.CurLine;
+  const auto ei = getEditorInfo();
+  EditorGetString egs {ei.CurLine};
   info->EditorControl(ECTL_GETSTRING, &egs);
+
   if (cursorRegion != nullptr) {
     int end = cursorRegion->end;
 
@@ -358,13 +328,10 @@ void FarEditor::selectRegion()
     }
 
     if (end - cursorRegion->start > 0) {
-      es.BlockType = BTYPE_STREAM;
-      es.BlockStartLine = ei.CurLine;
-      es.BlockStartPos = cursorRegion->start;
-      es.BlockHeight = 1;
-      es.BlockWidth = end - cursorRegion->start;
+      EditorSelect es {BTYPE_STREAM, cursorRegion->start, cursorRegion->end,
+                       end - cursorRegion->start, 1};
       info->EditorControl(ECTL_SELECT, &es);
-    };
+    }
   }
 }
 
@@ -383,7 +350,7 @@ void FarEditor::listErrors()
 void FarEditor::locateFunction()
 {
   // extract word
-  enterHandler();
+  auto ei = getEditorInfo();
   UnicodeString& curLine = *getLine(ei.CurLine);
   int cpos = ei.CurPos;
   int sword = cpos;
@@ -411,7 +378,6 @@ void FarEditor::locateFunction()
     UnicodeString funcname(curLine, sword + 1, eword - sword - 1);
     COLORER_LOG_DEBUG("FC] Letter %", funcname);
     baseEditor->validate(-1, false);
-    EditorSetPosition esp;
     OutlineItem* item_found = nullptr;
     OutlineItem* item_last = nullptr;
     int items_num = structOutliner->itemCount();
@@ -442,10 +408,12 @@ void FarEditor::locateFunction()
       break;
     }
 
-    esp.CurTabPos = esp.LeftPos = esp.Overtype = esp.TopScreenLine = -1;
-    esp.CurLine = item_found->lno;
-    esp.CurPos = item_found->pos;
-    esp.TopScreenLine = esp.CurLine - ei.WindowSizeY / 2;
+    EditorSetPosition esp {(int) item_found->lno,
+                           item_found->pos,
+                           -1,
+                           (int) item_found->lno - ei.WindowSizeY / 2,
+                           -1,
+                           -1};
 
     if (esp.TopScreenLine < 0) {
       esp.TopScreenLine = 0;
@@ -455,7 +423,7 @@ void FarEditor::locateFunction()
     info->EditorControl(ECTL_REDRAW, nullptr);
     info->EditorControl(ECTL_GETINFO, &ei);
     return;
-  };
+  }
 
   const wchar_t* msg[2] = {GetMsg(mNothingFound), GetMsg(mGotcha)};
   info->Message(info->ModuleNumber, 0, nullptr, msg, 2, 1);
@@ -463,7 +431,7 @@ void FarEditor::locateFunction()
 
 void FarEditor::updateHighlighting()
 {
-  enterHandler();
+  const auto ei = getEditorInfo();
   baseEditor->validate(ei.TopScreenLine, true);
 }
 
@@ -481,7 +449,7 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
   }
   else if (ir->EventType == KEY_EVENT) {
     idleCount = 0;
-  };
+  }
 
   return 0;
 }
@@ -493,7 +461,7 @@ int FarEditor::editorEvent(int event, void* param)
     return 0;
   }
 
-  enterHandler();
+  const auto ei = getEditorInfo();
   WindowSizeX = ei.WindowSizeX;
   WindowSizeY = ei.WindowSizeY;
 
@@ -513,7 +481,7 @@ int FarEditor::editorEvent(int event, void* param)
     }
 
     baseEditor->modifyEvent(ml);
-  };
+  }
 
   prevLinePosition = ei.CurLine;
   blockTopPosition = -1;
@@ -523,9 +491,8 @@ int FarEditor::editorEvent(int event, void* param)
   }
 
   // hack against tabs in FAR's editor
-  EditorConvertPos ecp {}, ecp_cl {};
-  ecp.StringNumber = -1;
-  ecp.SrcPos = ei.CurPos;
+  EditorConvertPos ecp {-1, ei.CurPos};
+  EditorConvertPos ecp_cl {};
   info->EditorControl(ECTL_REALTOTAB, &ecp);
   cursorRegion.reset();
 
@@ -546,16 +513,15 @@ int FarEditor::editorEvent(int event, void* param)
 
     // clean line in far editor
     addFARColor(lno, -1, 0, color());
-    EditorGetString egs;
-    egs.StringNumber = lno;
+    EditorGetString egs {lno};
     info->EditorControl(ECTL_GETSTRING, &egs);
     int llen = egs.StringLength;
 
     // fills back
-    if (lno == ei.CurLine && showHorizontalCross){
+    if (lno == ei.CurLine && showHorizontalCross) {
       addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, horzCrossColor);
     }
-    else{
+    else {
       addFARColor(lno, 0, ei.LeftPos + ei.WindowSizeX, convert(nullptr));
     }
 
@@ -568,7 +534,7 @@ int FarEditor::editorEvent(int event, void* param)
         col.concolor |= 0x10000;
       }
       addFARColor(lno, ecp_cl.DestPos, ecp_cl.DestPos + 1, col);
-    };
+    }
 
     bool vertCrossDone = false;
 
@@ -608,16 +574,16 @@ int FarEditor::editorEvent(int event, void* param)
                 col.bk = horzCrossColor.bk;
               }
             }
-          };
+          }
           if (!col.concolor) {
             continue;
           }
           //
           int lend = l1->end;
 
-          if (lend == -1){
+          if (lend == -1) {
             if (fullBackground) {
-              addFARColor(lno, llen, ei.LeftPos+ei.WindowSizeX * 2, col, false);
+              addFARColor(lno, llen, ei.LeftPos + ei.WindowSizeX * 2, col, false);
             }
             lend = llen;
           }
@@ -626,7 +592,7 @@ int FarEditor::editorEvent(int event, void* param)
 
           if (lno == ei.CurLine && (l1->start <= ei.CurPos) && (ei.CurPos <= lend)) {
             cursorRegion = std::make_unique<LineRegion>(*l1);
-          };
+          }
 
           // column
           if (showVerticalCross && crossZOrder == 0 && l1->start <= ecp_cl.DestPos &&
@@ -660,10 +626,10 @@ int FarEditor::editorEvent(int event, void* param)
             }
             addFARColor(lno, ecp_cl.DestPos, ecp_cl.DestPos + 1, col);
             vertCrossDone = true;
-          };
-        };
-      };
-    };
+          }
+        }
+      }
+    }
     if (showVerticalCross && !vertCrossDone) {
       ecp_cl.StringNumber = lno;
       ecp_cl.SrcPos = ecp.DestPos;
@@ -672,8 +638,8 @@ int FarEditor::editorEvent(int event, void* param)
         vertCrossColor.concolor |= 0x10000;
       }
       addFARColor(lno, ecp_cl.DestPos, ecp_cl.DestPos + 1, vertCrossColor);
-    };
-  };
+    }
+  }
 
   /// pair brackets
   PairMatch* pm = nullptr;
@@ -703,7 +669,7 @@ int FarEditor::editorEvent(int event, void* param)
           col.bk = horzCrossColor.bk;
         }
       }
-    };
+    }
     //
     addFARColor(ei.CurLine, pm->start->start, pm->start->end, col);
 
@@ -733,7 +699,7 @@ int FarEditor::editorEvent(int event, void* param)
 
       col.concolor |= 0x10000;
       addFARColor(pm->sline, ei.CurPos, ei.CurPos + 1, col);
-    };
+    }
     //
     if (pm->eline != -1) {
       col = convert(pm->end->styled());
@@ -757,7 +723,7 @@ int FarEditor::editorEvent(int event, void* param)
             col.bk = horzCrossColor.bk;
           }
         }
-      };
+      }
       //
       addFARColor(pm->eline, pm->end->start, pm->end->end, col);
       ecp.StringNumber = pm->eline;
@@ -788,18 +754,17 @@ int FarEditor::editorEvent(int event, void* param)
 
         col.concolor |= 0x10000;
         addFARColor(pm->eline, ecp.DestPos, ecp.DestPos + 1, col);
-      };
-      //
-    };
+      }
+    }
 
     baseEditor->releasePairMatch(pm);
-  };
+  }
 
   if (param != EEREDRAW_ALL) {
     inRedraw = true;
     info->EditorControl(ECTL_REDRAW, nullptr);
     inRedraw = false;
-  };
+  }
 
   return true;
 }
@@ -807,7 +772,7 @@ int FarEditor::editorEvent(int event, void* param)
 void FarEditor::showOutliner(Outliner* outliner)
 {
   FarMenuItem* menu;
-  EditorSetPosition esp;
+  EditorSetPosition esp {};
   bool moved = false;
   int code = 0;
   const int FILTER_SIZE = 40;
@@ -888,6 +853,7 @@ void FarEditor::showOutliner(Outliner* outliner)
   }
 
   menu = new FarMenuItem[items_num];
+  const auto ei_curr = getEditorInfo();
 
   while (!stopMenu) {
     int i;
@@ -897,7 +863,7 @@ void FarEditor::showOutliner(Outliner* outliner)
     int selectedItem = 0;
     std::vector<int> treeStack;
 
-    enterHandler();
+    auto ei = getEditorInfo();
     for (i = 0; i < items_num; i++) {
       OutlineItem* item = outliner->getItem(i);
 
@@ -912,7 +878,7 @@ void FarEditor::showOutliner(Outliner* outliner)
           continue;
         }
 
-        wchar_t* menuItem = new wchar_t[255];
+        auto menuItem = new wchar_t[255];
 
         if (!oldOutline) {
           int si = swprintf(menuItem, 255, L"%4ld ", item->lno + 1);
@@ -920,7 +886,7 @@ void FarEditor::showOutliner(Outliner* outliner)
           for (int lIdx = 0; lIdx < treeLevel; lIdx++) {
             menuItem[si++] = ' ';
             menuItem[si++] = ' ';
-          };
+          }
 
           auto region = item->region->getName();
 
@@ -934,7 +900,7 @@ void FarEditor::showOutliner(Outliner* outliner)
             labelLength = 110;
           }
 
-          wcsncpy(menuItem + si, (const wchar_t*) item->token->getWChars(), labelLength);
+          wcsncpy(menuItem + si, item->token->getWChars(), labelLength);
           menuItem[si + labelLength] = 0;
         }
         else {
@@ -945,7 +911,7 @@ void FarEditor::showOutliner(Outliner* outliner)
             labelLength = 110;
           }
 
-          wcsncpy(menuItem, (const wchar_t*) line->getWChars(), labelLength);
+          wcsncpy(menuItem, line->getWChars(), labelLength);
           menuItem[labelLength] = 0;
         }
 
@@ -958,7 +924,7 @@ void FarEditor::showOutliner(Outliner* outliner)
         }
 
         menu_size++;
-      };
+      }
     }
 
     if (selectedItem > 0) {
@@ -985,7 +951,7 @@ void FarEditor::showOutliner(Outliner* outliner)
         break;
       }
 
-      wcsncpy(prefix, (const wchar_t*) menu[0].Text + auto_ptr, plen);
+      wcsncpy(prefix, menu[0].Text + auto_ptr, plen);
       prefix[plen] = 0;
 
       for (int j = 1; j < menu_size; j++) {
@@ -1225,12 +1191,12 @@ void FarEditor::showOutliner(Outliner* outliner)
 
   if (!moved) {
     // restoring position
-    esp.CurLine = ei.CurLine;
-    esp.CurPos = ei.CurPos;
-    esp.CurTabPos = ei.CurTabPos;
-    esp.TopScreenLine = ei.TopScreenLine;
-    esp.LeftPos = ei.LeftPos;
-    esp.Overtype = ei.Overtype;
+    esp.CurLine = ei_curr.CurLine;
+    esp.CurPos = ei_curr.CurPos;
+    esp.CurTabPos = ei_curr.CurTabPos;
+    esp.TopScreenLine = ei_curr.TopScreenLine;
+    esp.LeftPos = ei_curr.LeftPos;
+    esp.Overtype = ei_curr.Overtype;
     info->EditorControl(ECTL_SETPOSITION, &esp);
   }
 
@@ -1240,15 +1206,16 @@ void FarEditor::showOutliner(Outliner* outliner)
   }
 }
 
-void FarEditor::enterHandler()
+EditorInfo FarEditor::getEditorInfo() const
 {
+  EditorInfo ei {};
   info->EditorControl(ECTL_GETINFO, &ei);
-  ret_strNumber = -1;
+  return ei;
 }
 
-color FarEditor::convert(const StyledRegion* rd)
+color FarEditor::convert(const StyledRegion* rd) const
 {
-  color col;
+  color col{};
 
   if (rdBackground == nullptr)
     return col;
@@ -1289,7 +1256,7 @@ color FarEditor::convert(const StyledRegion* rd)
   }
 }
 
-bool FarEditor::foreDefault(color col)
+bool FarEditor::foreDefault(const color& col) const
 {
   if (TrueMod)
     return col.fg == rdBackground->fore;
@@ -1297,7 +1264,7 @@ bool FarEditor::foreDefault(color col)
     return col.cfg == rdBackground->fore;
 }
 
-bool FarEditor::backDefault(color col)
+bool FarEditor::backDefault(const color& col) const
 {
   if (TrueMod)
     return col.bk == rdBackground->back;
@@ -1305,7 +1272,7 @@ bool FarEditor::backDefault(color col)
     return col.cbk == rdBackground->back;
 }
 
-void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style)
+void FarEditor::addFARColor(int lno, int s, int e, const color& col, bool add_style) const
 {
   if (TrueMod) {
     EditorTrueColor ec {};
@@ -1366,7 +1333,7 @@ void FarEditor::addFARColor(int lno, int s, int e, color col, bool add_style)
   }
 }
 
-const wchar_t* FarEditor::GetMsg(int msg)
+const wchar_t* FarEditor::GetMsg(int msg) const
 {
   return (info->GetMsg(info->ModuleNumber, msg));
 }
@@ -1374,9 +1341,9 @@ const wchar_t* FarEditor::GetMsg(int msg)
 void FarEditor::cleanEditor()
 {
   color col;
-  enterHandler();
-  for (int i=0; i<ei.TotalLines; i++){
-    addFARColor(i, -1,0, col);
+  const auto ei = getEditorInfo();
+  for (int i = 0; i < ei.TotalLines; i++) {
+    addFARColor(i, -1, 0, col);
   }
 }
 

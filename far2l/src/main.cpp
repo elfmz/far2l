@@ -179,6 +179,25 @@ static void UpdatePathOptions(const FARString &strDestName, bool IsActivePanel)
 	}
 }
 
+static void Write_FAR2L_CWD()
+{
+	const char *far2l_cwd = getenv("FAR2L_CWD");
+	if (far2l_cwd && *far2l_cwd) {
+		int fd = open(far2l_cwd, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+		if (fd != -1) {
+			FARString cur_dir;
+			if (apiGetCurrentDirectory(cur_dir)) {
+				const auto &cwd = cur_dir.GetMB();
+				if (write(fd, cwd.c_str(), cwd.size()) == -1) {
+					perror("write cwd");
+				}
+			}
+			close(fd);
+		}
+	}
+}
+
+
 static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARString strDestName2,
 		int StartLine, int StartChar, bool cfgNeedSave)
 {
@@ -333,6 +352,7 @@ static int MainProcess(FARString strEditViewArg, FARString strDestName1, FARStri
 			}
 
 			FrameManager->EnterMainLoop();
+			Write_FAR2L_CWD();
 		}
 
 		// очистим за собой!

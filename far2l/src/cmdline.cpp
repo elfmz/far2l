@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "CachedCreds.hpp"
 #include "exitcode.hpp"
+#include "GitTools.hpp"
 #include "vtlog.h"
 #include "vtshell.h"
 #include "vtcompletor.h"
@@ -233,7 +234,7 @@ void CommandLine::ChangeDirFromHistory(bool PluginPath, int SelectType, FARStrin
 		Panel = CtrlObject->Cp()->GetAnotherPanel(Panel);
 
 	if (!PluginPath || !CtrlObject->Plugins.ProcessCommandLine(strDir, Panel)) {
-		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(&strDir, FALSE)) {
+		if (Panel->GetMode() == PLUGIN_PANEL || CheckShortcutFolder(strDir, false)) {
 			Panel->SetCurDir(strDir, PluginPath ? FALSE : TRUE);
 			//fprintf(stderr, "=== ChangeDirFromHistory():\n  strDir=\"%ls\"\n  strFile=\"%ls\"\n", strDir.CPtr(), strFile.CPtr());
 			if ( !strFile.IsEmpty() && !strFile.Contains(LGOOD_SLASH) ) // only local file, not in another directory
@@ -770,6 +771,11 @@ void CommandLine::GetPrompt(FARString &strDestStr)
 					case L'N':		// Host name
 					{
 						strDestStr+= CachedComputerName();
+						break;
+					}
+					case L'Z':		// Git Branch
+					{
+						strDestStr+= GetGitBranchName(strCurDir);
 						break;
 					}
 				}

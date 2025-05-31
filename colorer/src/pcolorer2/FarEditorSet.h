@@ -3,12 +3,10 @@
 
 #include <colorer/handlers/LineRegionsSupport.h>
 #include <colorer/handlers/StyledHRDMapper.h>
-#include <colorer/viewer/TextConsoleViewer.h>
 #include <unordered_map>
 #include "ChooseTypeMenu.h"
 #include "FarEditor.h"
 #include "pcolorer.h"
-#include "tools.h"
 
 // registry keys
 extern const char cRegEnabled[];
@@ -86,6 +84,22 @@ enum {
 LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 LONG_PTR WINAPI SettingHrcDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 
+struct Options
+{
+  bool rEnabled;
+  bool drawPairs;
+  bool drawSyntax;
+  bool oldOutline;
+  bool TrueModOn;
+  bool ChangeBgEditor;
+  int drawCross;
+  UnicodeString hrdName;
+  UnicodeString hrdNameTm;
+  UnicodeString catalogPath;
+  UnicodeString userHrdPath;
+  UnicodeString userHrcPath;
+};
+
 /**
  * FAR Editors container.
  * Manages all library resources and creates FarEditor class instances.
@@ -110,9 +124,9 @@ class FarEditorSet
   int editorInput(const INPUT_RECORD* ir);
 
   /** Get the description of HRD, or parameter name if description=null */
-  const UnicodeString* getHRDescription(const UnicodeString& name, UnicodeString _hrdClass);
+  const UnicodeString* getHRDescription(const UnicodeString& name, const UnicodeString& _hrdClass) const;
   /** Shows dialog with HRD scheme selection */
-  const UnicodeString* chooseHRDName(const UnicodeString* current, UnicodeString _hrdClass);
+  const UnicodeString* chooseHRDName(const UnicodeString* current, const UnicodeString& _hrdClass) const;
 
   /** Reads all registry settings into variables */
   void ReadSettings();
@@ -122,22 +136,22 @@ class FarEditorSet
   enum HRC_MODE { HRCM_CONSOLE, HRCM_RGB, HRCM_BOTH };
   bool TestLoadBase(const wchar_t* catalogPath, const wchar_t* userHrdPath,
                     const wchar_t* userHrcPath, const int full, const HRC_MODE hrc_mode);
-  UnicodeString* GetCatalogPath() { return sCatalogPath; }
-  UnicodeString* GetUserHrdPath() { return sUserHrdPath; }
-  bool GetPluginStatus() { return rEnabled; }
+  UnicodeString* GetCatalogPath() { return &Opt.catalogPath; }
+  UnicodeString* GetUserHrdPath() { return &Opt.userHrdPath; }
+  bool GetPluginStatus() { return Opt.rEnabled; }
 
-  bool SetBgEditor();
+  bool SetBgEditor() const;
 
-  UnicodeString* sTempHrdName;
-  UnicodeString* sTempHrdNameTm;
+  std::unique_ptr<UnicodeString> sTempHrdName;
+  std::unique_ptr<UnicodeString> sTempHrdNameTm;
 
   /** Shows hrc configuration dialog */
   void configureHrc();
   void OnChangeHrc(HANDLE hDlg);
   void OnChangeParam(HANDLE hDlg, int idx);
   void OnSaveHrcParams(HANDLE hDlg);
-  bool dialogFirstFocus;
-  int menuid;
+  bool dialogFirstFocus = false;
+  int menuid = -1;
 
   bool checkConsoleExtendedColors();
   void addParamAndValue(FileType* filetype, const UnicodeString& name, const UnicodeString& value,
@@ -163,8 +177,8 @@ class FarEditorSet
   /** Applies the current settings for editors*/
   void ApplySettingsToEditors();
   /** writes the default settings in the registry*/
-  void SetDefaultSettings();
-  void SaveSettings();
+  void SetDefaultSettings() const;
+  void SaveSettings() const;
 
   /** Kills all currently opened editors*/
   void dropAllEditors(bool clean);
@@ -175,35 +189,35 @@ class FarEditorSet
   /** Enables plugin processing*/
   void enableColorer(bool fromEditor);
 
-  bool useExtendedColors {false};
+  bool useExtendedColors =false;
 
   static void showExceptionMessage(const UnicodeString* message);
-  int getCountFileTypeAndGroup();
-  FileType* getFileTypeByIndex(int idx);
-  void FillTypeMenu(ChooseTypeMenu* Menu, FileType* CurFileType);
-  UnicodeString* getCurrentFileName();
+  int getCountFileTypeAndGroup() const;
+  FileType* getFileTypeByIndex(int idx) const;
+  void FillTypeMenu(ChooseTypeMenu* Menu, const FileType* CurFileType) const;
+  static uUnicodeString getCurrentFileName();
 
   // FarList for dialog objects
-  FarList* buildHrcList();
-  FarList* buildParamsList(FileType* type);
+  FarList* buildHrcList() const;
+  FarList* buildParamsList(const FileType* type) const;
   // filetype "default"
   FileType* defaultType = nullptr;
   // change combobox type
   void ChangeParamValueListType(HANDLE hDlg, bool dropdownlist);
   // set list of values to combobox
-  void setCrossValueListToCombobox(FileType* type, HANDLE hDlg);
-  void setCrossPosValueListToCombobox(FileType* type, HANDLE hDlg);
-  void setYNListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param);
-  void setTFListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param);
-  void setCustomListValueToCombobox(FileType* type, HANDLE hDlg, UnicodeString param);
+  void setCrossValueListToCombobox(const FileType* type, HANDLE hDlg);
+  void setCrossPosValueListToCombobox(const FileType* type, HANDLE hDlg);
+  void setYNListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setTFListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param);
+  void setCustomListValueToCombobox(const FileType* type, HANDLE hDlg, const UnicodeString& param);
 
-  FileType* getCurrentTypeInDialog(HANDLE hDlg);
+  FileType* getCurrentTypeInDialog(HANDLE hDlg) const;
 
-  const UnicodeString* getParamDefValue(FileType* type, UnicodeString param);
+  UnicodeString getParamDefValue(const FileType* type, const UnicodeString& param) const;
 
   void SaveChangedValueParam(HANDLE hDlg);
 
-  std::unordered_map<intptr_t, FarEditor*> farEditorInstances;
+  std::unordered_map<intptr_t, std::unique_ptr<FarEditor>> farEditorInstances;
   std::unique_ptr<ParserFactory> parserFactory;
   std::unique_ptr<StyledHRDMapper> regionMapper;
 
@@ -212,25 +226,14 @@ class FarEditorSet
   UnicodeString hrdName;
 
   /** registry settings */
-  bool rEnabled;  // status plugin
-  int drawCross;
-  bool drawPairs;
-  bool drawSyntax;
-  bool oldOutline;
-  bool TrueModOn;
-  bool ChangeBgEditor;
-  UnicodeString* sHrdName;
-  UnicodeString* sHrdNameTm;
-  UnicodeString* sCatalogPath;
-  UnicodeString* sUserHrdPath;
-  UnicodeString* sUserHrcPath;
+  Options Opt{};
 
   /** UNC path */
   std::unique_ptr<UnicodeString> sCatalogPathExp;
   std::unique_ptr<UnicodeString> sUserHrdPathExp;
   std::unique_ptr<UnicodeString> sUserHrcPathExp;
 
-  int viewFirst;  // 0 - init;  1 - first run view; 2 - first run editor
+  int viewFirst = 0;  // 0 - init;  1 - first run view; 2 - first run editor
   std::string settingsIni;
 };
 

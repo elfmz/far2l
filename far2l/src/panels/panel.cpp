@@ -1406,7 +1406,7 @@ int Panel::SetCurPath()
 			int Result = TestFolder(strCurDir);
 
 			if (Result == TSTFLD_NOTFOUND) {
-				if (CheckShortcutFolder(&strCurDir, FALSE, TRUE) && FarChDir(strCurDir)) {
+				if (CheckShortcutFolder(strCurDir, false, true) && FarChDir(strCurDir)) {
 					SetCurDir(strCurDir, TRUE);
 					return TRUE;
 				}
@@ -2014,23 +2014,18 @@ bool Panel::ExecShortcutFolder(int Pos)
 
 		switch (GetType()) {
 			case TREE_PANEL:
-				if (AnotherPanel->GetType() == FILE_PANEL)
-					SrcPanel = AnotherPanel;
-				break;
-
 			case QVIEW_PANEL:
-			case INFO_PANEL: {
+			case INFO_PANEL:
 				if (AnotherPanel->GetType() == FILE_PANEL)
 					SrcPanel = AnotherPanel;
 				break;
-			}
 		}
 
 		int CheckFullScreen = SrcPanel->IsFullScreen();
 
 		if (!strPluginModule.IsEmpty()) {
 			if (!strPluginFile.IsEmpty()) {
-				switch (CheckShortcutFolder(&strPluginFile, TRUE)) {
+				switch (CheckShortcutFolder(strPluginFile, true)) {
 					case 0:
 						// return FALSE;
 					case -1:
@@ -2038,8 +2033,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 				}
 
 				/* Своеобразное решение BugZ#50 */
-				FARString strRealDir;
-				strRealDir = strPluginFile;
+				FARString strRealDir = strPluginFile;
 
 				if (CutToSlash(strRealDir)) {
 					SrcPanel->SetCurDir(strRealDir, TRUE);
@@ -2056,12 +2050,8 @@ bool Panel::ExecShortcutFolder(int Pos)
 
 				SrcPanel->Show();
 			} else {
-				switch (CheckShortcutFolder(nullptr, TRUE)) {
-					case 0:
-						// return FALSE;
-					case -1:
-						return true;
-				}
+				if (CtrlObject->Cp()->ActivePanel->ProcessPluginEvent(FE_CLOSE, nullptr))
+					return true;
 
 				for (int I = 0; I < CtrlObject->Plugins.GetPluginsCount(); I++) {
 					Plugin *pPlugin = CtrlObject->Plugins.GetPlugin(I);
@@ -2096,7 +2086,7 @@ bool Panel::ExecShortcutFolder(int Pos)
 			return true;
 		}
 
-		switch (CheckShortcutFolder(&strShortcutFolder, FALSE)) {
+		switch (CheckShortcutFolder(strShortcutFolder, false)) {
 			case 0:
 				// return FALSE;
 			case -1:

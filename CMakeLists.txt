@@ -1,4 +1,5 @@
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
+include(${CMAKE_SOURCE_DIR}/cmake/FuncCopyResources.cmake)
 
 cmake_minimum_required (VERSION 3.5.0)
 

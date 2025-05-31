@@ -14,8 +14,7 @@ wchar_t* rtrim(wchar_t* str)
 
 wchar_t* ltrim(wchar_t* str)
 {
-  while (iswspace(*(str++)))
-    ;
+  while (iswspace(*(str++)));
 
   return str - 1;
 }
@@ -29,17 +28,17 @@ wchar_t* trim(wchar_t* str)
   Function converts a path in the UNC path.
   Source path can be framed by quotes, be a relative, or contain environment variables
 */
-wchar_t* PathToFull(const wchar_t* path, bool unc)
+wchar_t* PathToFull(const wchar_t* path, const bool unc)
 {
   std::wstring new_path(path);
   if (new_path.empty()) {
     return nullptr;
   }
   // we remove quotes, if they are present, focusing on the first character
-  // if he quote it away and the first and last character.
+  // if he quotes it away and the first and last character.
   // If the first character quote, but the latter does not - well, it's not our
-  // problem, and so and so error
-  if (new_path.size() > 1 && new_path.front() == L'"' && new_path.back() == '"') {
+  // problem, and so-and-so error
+  if (new_path.size() > 1 && new_path.front() == L'"' && new_path.back() == L'"') {
     new_path = new_path.substr(1, new_path.size() - 2);
   }
 
@@ -60,7 +59,7 @@ wchar_t* PathToFull(const wchar_t* path, bool unc)
   ASSERT(p <= new_path.size());
   // new_path.resize(p);
 
-  wchar_t* out = new wchar_t[p];
+  auto* out = new wchar_t[p];
   wmemcpy(out, &new_path[0], p);
 
   if (unc) {

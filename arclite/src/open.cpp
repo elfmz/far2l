@@ -1171,26 +1171,65 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 			stream = mem_stream;
 
-			std::promise<bool> promise;
-			std::future<bool> future = promise.get_future();
+			std::promise<int> promise;
+			std::future<int> future = promise.get_future();
+			std::promise<int> promise2;
+			std::future<int> future2 = promise2.get_future();
 
 			std::thread extract_thread([&]() {
-				bool opened = archive->open(stream, c_tar, false, false);
-				if (!opened) {
-					mem_stream->FinishWriting();
-				}
-				else {
-					mem_stream->FinishReading();
-				}
-				promise.set_value(opened);
+
+				int errc = archives[parent_idx]->in_arc->Extract(indices, 1, 0, extractor);
+				promise.set_value(errc);
 			});
 
-			int errc = archives[parent_idx]->in_arc->Extract(indices, 1, 0, extractor);
+			ArcAPI::create_in_archive(c_tar, (void **)archive->in_arc.ref());
+			ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(archive, false));
 
-			(void)errc;
-			mem_stream->FinishWriting();
+			std::thread open_thread([&]() {
+
+				const UInt64 max_check_start_position = 0;
+				int errc = archive->in_arc->Open(stream, &max_check_start_position, opener);
+				promise2.set_value(errc);
+			});
+
+			bool thread1_done = false;
+			bool thread2_done = false;
+			int errc1;// = future.get(); // extract
+			int errc2;// = future2.get(); // open
+
+			while (!thread1_done || !thread2_done) {
+				Far::g_fsf.DispatchInterThreadCalls();
+
+				if (!thread1_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+					thread1_done = true;
+					mem_stream->FinishWriting();
+					errc1 = future.get();
+				}
+
+				if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+					errc2 = future2.get(); // open
+					thread2_done = true;
+					HRESULT res = errc2;
+					if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
+						res = S_FALSE;
+					if (FAILED(res))
+						mem_stream->FinishWriting();
+					else
+						mem_stream->FinishReading();
+				}
+
+			    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			}
+
+			open_thread.join();
 			extract_thread.join();
-			bool opened = future.get();
+
+			HRESULT res = errc2;
+			if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
+				res = S_FALSE;
+			COM_ERROR_CHECK(res);
+			(void)errc1;
+			bool opened = (res == S_OK);
 
 			if (opened) {
 				bool bFullSize = mem_stream->GetFullSize();

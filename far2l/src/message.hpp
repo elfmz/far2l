@@ -49,9 +49,9 @@ enum
 	MSG_KEEPBACKGROUND = 0x00000004,
 	MSG_LEFTALIGN      = 0x00000010,
 	MSG_KILLSAVESCREEN = 0x00000020,
-	MSG_DISPLAYNOTIFY  = 0x00000080,
-	MSG_ASYNC          = 0x00000100
+	MSG_DISPLAYNOTIFY  = 0x00000080
 };
+
 
 struct Messager : protected std::vector<const wchar_t *>
 {

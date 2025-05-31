@@ -162,7 +162,6 @@ FAR_INLINE_CONSTANT FARMESSAGEFLAGS
 	FMSG_COLOURS             = 0x00000040,
 #endif // END FAR_USE_INTERNALS
 	FMSG_DISPLAYNOTIFY       = 0x00000080,
-	FMSG_ASYNC               = 0x00000100,
 
 	FMSG_MB_OK               = 0x00010000,
 	FMSG_MB_OKCANCEL         = 0x00020000,
@@ -2195,9 +2194,6 @@ typedef struct FarStandardFunctions
 	FARESETFILEOWNER		   ESetFileOwner;
 	FAROWNERNAMEBYID		   OwnerNameByID;
 	FARGROUPNAMEBYID		   GroupNameByID;
-	FARREADLINK				   ReadLink;
-	FARSDCLSTAT				   sdc_lstat;
-	FARSDCSYMLINK			   sdc_symlink;
 	FARGETFINDDATA			   GetFindData;
 	FARGETDATEFORMAT		   GetDateFormat;
 	FARGETDATESEPARATOR		   GetDateSeparator;

@@ -10,6 +10,8 @@
 #include "options.hpp"
 #include "error.hpp"
 
+#include "sudo.h"
+
 ExtractOptions::ExtractOptions()
 	: ignore_errors(false),
 	  overwrite(oaOverwrite),
@@ -304,7 +306,8 @@ private:
 						char *symlinkaddr = file.getsymlink();
 						symlinkaddr[slsize] = 0;
 						fprintf(stderr, "CREATE SYMLINK To %S -> %S \n", StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str() );
-						int res	= Far::g_fsf.sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
+//						int res	= Far::g_fsf.sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
+						int res	= sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
 						if (!res) {}
 					}
 				}
@@ -1075,26 +1078,70 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 		UInt32 indices2[2] = { 0, 0 };
 		ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor2(new SimpleExtractor<UseVirtualDestructor>(parent, ex_out_stream));
 
-		std::promise<int> promise;
-		std::future<int> future = promise.get_future();
+		std::promise<int> promise1;
+		std::future<int> future1 = promise1.get_future();
+		std::promise<int> promise2;
+		std::future<int> future2 = promise2.get_future();
 
-		std::thread ex_thread([&]() {
+		std::thread ex_thread1([&]() {
 			int errc = parent->in_arc->Extract(indices2, 1, 0, extractor2);
 			ex_stream->Seek(0, STREAM_CTL_FINISH, nullptr);
-			promise.set_value(errc);
+			promise1.set_value(errc);
 		});
 
-		int errc1 = in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor);
-		ex_stream->Seek(0, STREAM_CTL_FINISH, nullptr);
-		ex_thread.join();
-		int errc2 = future.get();
+		std::thread ex_thread2([this, &indices, &extractor, &promise2]() {
+			int errc = in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor);
+			ex_stream->Seek(0, STREAM_CTL_FINISH, nullptr);
+			promise2.set_value(errc);
+		});
 
-		COM_ERROR_CHECK(errc1);
-		(void)errc2;
-		//COM_ERROR_CHECK(errc2);
+		bool thread1_done = false;
+		bool thread2_done = false;
+
+		while (!thread1_done || !thread2_done) {
+			Far::g_fsf.DispatchInterThreadCalls();
+
+			if (!thread1_done && future1.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+				thread1_done = true;
+
+			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+				thread2_done = true;
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	    }
+
+		ex_thread1.join();
+		ex_thread2.join();
+		int errc1 = future1.get();
+		int errc2 = future2.get();
+
+//		COM_ERROR_CHECK(errc1);
+		COM_ERROR_CHECK(errc2);
+
+		(void)errc1;
 	}
 	else {
-		COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor));
+		std::promise<int> promise2;
+		std::future<int> future2 = promise2.get_future();
+		std::thread ex_thread2([this, &indices, &extractor, &promise2]() {
+			int errc = in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor);
+			promise2.set_value(errc);
+		});
+
+		bool thread2_done = false;
+		while (!thread2_done) {
+			Far::g_fsf.DispatchInterThreadCalls();
+
+			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+				thread2_done = true;
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	    }
+
+		ex_thread2.join();
+		int errc2 = future2.get();
+		COM_ERROR_CHECK(errc2);
+//		COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 0, extractor));
 	}
 
 	cache->finalize();

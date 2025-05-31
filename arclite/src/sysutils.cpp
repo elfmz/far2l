@@ -4,6 +4,8 @@
 #include "farutils.hpp"
 #include "sysutils.hpp"
 
+#include "sudo.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)
 #endif
@@ -335,7 +337,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 		symlinkRWptr = 0;
 
 		if (flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) {
-			symlinksize = Far::g_fsf.ReadLink(Wide2MB(file_path.c_str()).c_str(), symlinkaddr, PATH_MAX);
+			symlinksize = sdc_readlink(Wide2MB(file_path.c_str()).c_str(), symlinkaddr, PATH_MAX);
 			if ((intptr_t)symlinksize <= 0) {
 				return false;
 			}

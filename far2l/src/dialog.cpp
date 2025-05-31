@@ -6386,17 +6386,10 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 	Некоторые сообщения эта функция обрабатывает сама, не передавая управление
 	обработчику диалога.
 */
-
 LONG_PTR WINAPI SendDlgMessage(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if (!hDlg)
 		return 0;
-
-	Dialog *Dlg = (Dialog *)hDlg;
-
-	if (Dlg->CheckDialogMode(DMODE_ASYNC)) {
-		return SendDlgMessageSynched(hDlg, Msg, Param1, Param2);
-	}
 
 	return InterThreadCall<LONG_PTR, 0>(std::bind(SendDlgMessageSynched, hDlg, Msg, Param1, Param2));
 }

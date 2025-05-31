@@ -16,6 +16,8 @@
 #include <sys/sysmacros.h>	  // major / minor
 #endif
 
+#include "sudo.h"
+
 static std::wstring format_time(UInt64 t)
 {
 	UInt64 s = t % 60;
@@ -724,7 +726,7 @@ private:
 				return false;
 			if (!dereference_symlinks) {
 				struct stat s{};
-				BOOL r = Far::g_fsf.sdc_lstat((add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
+				BOOL r = sdc_lstat( StrWide2MB(add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
 				if (r) {
 					WINPORT(FileTime_UnixToWin32)(s.st_ctim, &src_find_data.ftCreationTime);
 					WINPORT(FileTime_UnixToWin32)(s.st_atim, &src_find_data.ftLastAccessTime);
@@ -1153,7 +1155,7 @@ public:
 				if (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT && !dereference_symlinks) {
 					char symlinkaddr[PATH_MAX];
 					std::wstring fpath = add_trailing_slash(add_trailing_slash(src_dir) + file_index_info.rel_path) + file_index_info.find_data.cFileName;
-					size_t r = Far::g_fsf.ReadLink(Wide2MB(fpath.c_str()).c_str(), symlinkaddr, PATH_MAX);
+					size_t r = sdc_readlink(Wide2MB(fpath.c_str()).c_str(), symlinkaddr, PATH_MAX);
 					if ((intptr_t)r <= 0 || r >= PATH_MAX)
 						break;
 					symlinkaddr[r] = 0;
@@ -1776,13 +1778,15 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 
 		ComObject<AcmRelayStream<UseVirtualDestructor>> mem_stream(new AcmRelayStream<UseVirtualDestructor>(((size_t)g_options.relay_buffer_size) << 20));
 
-		std::promise<int> promise;
-		std::future<int> future = promise.get_future();
+		std::promise<int> promise1;
+		std::future<int> future1 = promise1.get_future();
+		std::promise<int> promise2;
+		std::future<int> future2 = promise2.get_future();
 
 		std::thread tar_thread([&]() {
 			int errc = out_tar->UpdateItems(mem_stream, new_index, tar_updater);
 			mem_stream->FinishWriting();
-			promise.set_value(errc);
+			promise1.set_value(errc);
 		});
 
 		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> arc_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, arc_file_index_map,
@@ -1795,16 +1799,36 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 			arc_wstream_impl = new SimpleUpdateStream<UseVirtualDestructor>(repack_options.arc_path, progress2);
 
 		ComObject<IOutStream<UseVirtualDestructor>> arc_update_stream(arc_wstream_impl);
-		int errc = out_arc->UpdateItems(arc_update_stream, new_index2, arc_updater);
 
-		mem_stream->FinishWriting();
+		std::thread arc_thread([&]() {
+			int errc = out_arc->UpdateItems(arc_update_stream, new_index2, arc_updater);
+			promise2.set_value(errc);
+		});
+
+		bool thread1_done = false;
+		bool thread2_done = false;
+
+		while (!thread1_done || !thread2_done) {
+			Far::g_fsf.DispatchInterThreadCalls();
+
+			if (!thread1_done && future1.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+				thread1_done = true;
+
+			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+				thread2_done = true;
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+
 		tar_thread.join();
-		int errc2 = future.get();
+		arc_thread.join();
+
+		int errc1 = future1.get(); // out_tar->UpdateItems
+		int errc2 = future2.get(); // out_arc->UpdateItems
 
 		try {
-			COM_ERROR_CHECK(errc);
+			COM_ERROR_CHECK(errc1);
 			COM_ERROR_CHECK(errc2);
-			//(void)errc2;
 		} catch (...) {
 			arc_wstream_impl->clean_files();
 			throw;
@@ -1847,8 +1871,30 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 
 	ComObject<IOutStream<UseVirtualDestructor>> update_stream(stream_impl);
 
+	std::promise<int> promise;
+	std::future<int> future = promise.get_future();
+
+	std::thread arc_thread([&]() {
+		int errc = out_arc->UpdateItems(update_stream, new_index, updater);
+		promise.set_value(errc);
+	});
+
+	bool thread_done = false;
+
+	while (!thread_done) {
+		Far::g_fsf.DispatchInterThreadCalls();
+
+		if (!thread_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+			thread_done = true;
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+
+	arc_thread.join();
+	int errc1 = future.get();
+
 	try {
-		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, new_index, updater));
+		COM_ERROR_CHECK(errc1);
 	} catch (...) {
 		stream_impl->clean_files();
 		throw;
@@ -1884,7 +1930,28 @@ void Archive<UseVirtualDestructor>::update(const std::wstring &src_dir, const st
 		ComObject<SimpleUpdateStream<UseVirtualDestructor>> update_stream(new SimpleUpdateStream<UseVirtualDestructor>(temp_arc_name, progress));
 
 		COM_ERROR_CHECK(copy_prologue(update_stream));
-		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, new_index, updater));
+
+		std::promise<int> promise;
+		std::future<int> future = promise.get_future();
+
+		std::thread arc_thread([&]() {
+			int errc = out_arc->UpdateItems(update_stream, new_index, updater);
+			promise.set_value(errc);
+		});
+
+		bool thread_done = false;
+		while (!thread_done) {
+			Far::g_fsf.DispatchInterThreadCalls();
+			if (!thread_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+				thread_done = true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+
+		arc_thread.join();
+		int errc1 = future.get();
+
+		COM_ERROR_CHECK(errc1);
+//		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, new_index, updater));
 		update_stream->copy_ctime_from(arc_path);
 
 		close();

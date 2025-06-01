@@ -224,7 +224,7 @@ private:
 			}
 		}
 
-//		fprintf(stderr, "FileWriteCache::create_file( ) %S \n", file_path.c_str() );
+//		fprintf(stderr, "FileWriteCache::create_file( ) %ls \n", file_path.c_str() );
 		if (current_rec.overwrite == oaAppend) {
 			file.open(file_path, access, shares, OPEN_EXISTING, attrib);
 		} else {
@@ -305,7 +305,7 @@ private:
 							slsize = PATH_MAX - 1;
 						char *symlinkaddr = file.getsymlink();
 						symlinkaddr[slsize] = 0;
-						fprintf(stderr, "CREATE SYMLINK To %S -> %S \n", StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str() );
+						fprintf(stderr, "CREATE SYMLINK To %ls -> %ls \n", StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str() );
 //						int res	= Far::g_fsf.sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
 						int res	= sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
 						if (!res) {}
@@ -331,7 +331,7 @@ private:
 							int res = Far::g_fsf.ESetFileGroup(current_rec.file_path.c_str(), group.c_str(), *ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
 							if (res != SETATTR_RET_OK) FAIL(res);
 						}
-//						fprintf(stderr, "[!!!] owner and group set to: = %S %S\n", owner.c_str(), group.c_str() );
+//						fprintf(stderr, "[!!!] owner and group set to: = %ls %ls\n", owner.c_str(), group.c_str() );
 					}
 					//	File::set_attr_nt(current_rec.file_path, attr);
 					//	File::set_attr_posix(current_rec.file_path, posixattr);
@@ -874,7 +874,7 @@ private:
 						int res = Far::g_fsf.ESetFileGroup(file_path.c_str(), group.c_str(), ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
 						if (res != SETATTR_RET_OK) FAIL(res);
 					}
-//					fprintf(stderr, "[!!!] owner and group set to: = [%S](%lu) [%S](%lu)\n", owner.c_str(), owner.size(), group.c_str(), group.size() );
+//					fprintf(stderr, "[!!!] owner and group set to: = [%ls](%lu) [%ls](%lu)\n", owner.c_str(), owner.size(), group.c_str(), group.size() );
 				}
 ///					File::set_attr_nt(file_path, archive.get_attr(file_index));
 ///					File::set_attr_nt(file_path, attr);

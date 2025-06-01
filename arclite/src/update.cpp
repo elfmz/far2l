@@ -772,7 +772,7 @@ private:
 		file_info.parent = dst_dir_index;
 		file_info.name = src_find_data.cFileName;
 
-///		fprintf(stderr, "File add %S isdir = %u\n", file_info.name.c_str(), file_info.is_dir );
+///		fprintf(stderr, "File add %ls isdir = %u\n", file_info.name.c_str(), file_info.is_dir );
 
 		FileIndexRange fi_range = std::equal_range(archive.file_list_index.begin(),
 				archive.file_list_index.end(), -1, [&](UInt32 left, UInt32 right) -> bool {
@@ -1739,6 +1739,13 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 
 		UInt32 new_index = 0, new_index2 = 0;
 		bool skipped_files = false;
+
+		if (options.enable_volumes) {
+			if (extract_file_ext(options.arc_path) == L".001") {
+				removeExtension(options.arc_path);
+			}
+		}
+
 		UpdateOptions repack_options = options;
 		const auto tar_file_index_map = std::make_shared<FileIndexMap>();
 		const auto arc_file_index_map = std::make_shared<FileIndexMap>();
@@ -1833,6 +1840,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 			arc_wstream_impl->clean_files();
 			throw;
 		}
+
 		return;
 	}
 
@@ -1855,13 +1863,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 	prepare_dst_dir(extract_file_path(options.arc_path));
 	UpdateStream<UseVirtualDestructor> *stream_impl;
 
-	if (options.arc_type == c_tar && options.repack && options.enable_volumes) {
-		if (extract_file_ext(options.arc_path) == L".001") {
-			removeExtension(options.arc_path);
-		}
-	}
-
-	if (options.enable_volumes && !(options.arc_type == c_tar && options.repack)) {
+	if (options.enable_volumes) {
 		stream_impl = new MultiVolumeUpdateStream<UseVirtualDestructor>(options.arc_path, parse_size_string(options.volume_size),progress);
 	}
 	else if (options.create_sfx && options.arc_type == c_7z)
@@ -1988,7 +1990,7 @@ void Archive<UseVirtualDestructor>::create_dir(const std::wstring &dir_name, con
 
 	UpdateOptions options;
 	options.arc_type = arc_chain.back().type;
-	load_update_props();
+	load_update_props(options.arc_type);
 	options.level = m_level;
 	options.method = m_method;
 	options.solid = m_solid;

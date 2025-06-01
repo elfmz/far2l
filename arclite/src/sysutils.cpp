@@ -323,7 +323,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 	close();
 	m_file_path = file_path;
 
-//	fprintf(stderr, "FILE open_nt() %S\n", file_path.c_str() );
+//	fprintf(stderr, "FILE open_nt() %ls\n", file_path.c_str() );
 	if ((flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) || (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT)) {
 //		fprintf(stderr, "symlink allocate(%u)\n", PATH_MAX );
 		if (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT) {
@@ -356,7 +356,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 
 void File::close() noexcept
 {
-//	fprintf(stderr, "file close() %S\n", m_file_path.c_str() );
+//	fprintf(stderr, "file close() %ls\n", m_file_path.c_str() );
 
 	if (symlinkaddr) {
 		//fprintf(stderr, "file close() free symlink\n" );
@@ -486,7 +486,7 @@ bool File::set_time_nt(const FILETIME &ctime, const FILETIME &atime, const FILET
 
 bool File::copy_ctime_from(const std::wstring &source_file) noexcept
 {
-//	fprintf(stderr, "copy_ctime_from %S\n", source_file.c_str());
+//	fprintf(stderr, "copy_ctime_from %ls\n", source_file.c_str());
 	WIN32_FILE_ATTRIBUTE_DATA fa;
 	if (!attributes_ex(source_file, &fa))
 		return false;
@@ -551,7 +551,7 @@ bool File::set_end_nt() noexcept
 
 BY_HANDLE_FILE_INFORMATION File::get_info()
 {
-	//fprintf(stderr, "get_info() %S\n", m_file_path.c_str());
+	//fprintf(stderr, "get_info() %ls\n", m_file_path.c_str());
 	BY_HANDLE_FILE_INFORMATION info;
 	CHECK_FILE(get_info_nt(info), m_file_path);
 	return info;
@@ -582,7 +582,7 @@ DWORD File::attributes(const std::wstring &file_path) noexcept
 bool File::attributes_ex(const std::wstring &file_path, WIN32_FILE_ATTRIBUTE_DATA *ex_attrs) noexcept
 {
 	static int have_attributes_ex = 0;
-	//fprintf(stderr, " (!) File::attributes_ex %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::attributes_ex %ls\n", file_path.c_str());
 
 #if 0
   static BOOL (WINAPI *pfGetFileAttributesExW)(LPCWSTR pname, GET_FILEEX_INFO_LEVELS level, LPVOID pinfo) = nullptr;
@@ -624,13 +624,13 @@ void File::set_attr(const std::wstring &file_path, DWORD attr)
 
 bool File::set_attr_nt(const std::wstring &file_path, DWORD attr) noexcept
 {
-	//fprintf(stderr, " (!) File::set_attr_nt %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::set_attr_nt %ls\n", file_path.c_str());
 	return WINPORT_SetFileAttributes(long_path_norm(file_path).c_str(), attr) != 0;
 }
 
 bool File::set_attr_posix(const std::wstring &file_path, DWORD attr) noexcept
 {
-	//fprintf(stderr, " (!) File::set_attr_posix %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::set_attr_posix %ls\n", file_path.c_str());
 	//  const auto system_functions = Far::get_system_functions();
 	//  if (system_functions)
 	//    return system_functions->SetFileAttributes(long_path_norm(file_path).c_str(), attr) != 0;
@@ -652,7 +652,7 @@ bool File::delete_file_nt(const std::wstring &file_path) noexcept
 
 void File::create_dir(const std::wstring &file_path)
 {
-	//fprintf(stderr, " (!) File::create_dir %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::create_dir %ls\n", file_path.c_str());
 	//  CHECK_FILE(create_dir_nt(file_path), file_path);
 
 	create_dir_nt(file_path);
@@ -660,7 +660,7 @@ void File::create_dir(const std::wstring &file_path)
 
 bool File::create_dir_nt(const std::wstring &file_path) noexcept
 {
-	//fprintf(stderr, "file remove_dir_nt %S\n", file_path.c_str() );
+	//fprintf(stderr, "file remove_dir_nt %ls\n", file_path.c_str() );
 	return WINPORT_CreateDirectory(long_path_norm(file_path).c_str(), nullptr) != 0;
 }
 
@@ -671,7 +671,7 @@ void File::remove_dir(const std::wstring &file_path)
 
 bool File::remove_dir_nt(const std::wstring &file_path) noexcept
 {
-	//fprintf(stderr, " (!) File::remove_dir_nt %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::remove_dir_nt %ls\n", file_path.c_str());
 	return WINPORT_RemoveDirectory(long_path_norm(file_path).c_str()) != 0;
 }
 
@@ -682,7 +682,7 @@ void File::move_file(const std::wstring &file_path, const std::wstring &new_path
 
 bool File::move_file_nt(const std::wstring &file_path, const std::wstring &new_path, DWORD flags) noexcept
 {
-	//fprintf(stderr, " (!) File::move_file_nt %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::move_file_nt %ls\n", file_path.c_str());
 	return WINPORT_MoveFileEx(long_path_norm(file_path).c_str(), long_path_norm(new_path).c_str(), flags) != 0;
 }
 
@@ -695,7 +695,7 @@ FindData File::get_find_data(const std::wstring &file_path)
 
 bool File::get_find_data_nt(const std::wstring &file_path, FindData &find_data) noexcept
 {
-	//fprintf(stderr, " (!) File::get_find_data_nt %S\n", file_path.c_str());
+	//fprintf(stderr, " (!) File::get_find_data_nt %ls\n", file_path.c_str());
 	if (!Far::g_fsf.GetFindData(file_path.c_str(), &find_data)) {
 		return false;
 	}
@@ -748,7 +748,7 @@ int FileEnum::far_emum_cb(const FAR_FIND_DATA &item)
 
 	std::wcsncpy(fdata.cFileName, null_to_empty(item.lpwszFileName),
 			sizeof(fdata.cFileName) / sizeof(fdata.cFileName[0]));
-	//fprintf(stderr, "FileEnum::far_emum_cb %S\n", fdata.cFileName);
+	//fprintf(stderr, "FileEnum::far_emum_cb %ls\n", fdata.cFileName);
 	++n_far_items;
 	return TRUE;
 }

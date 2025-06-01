@@ -891,9 +891,9 @@ private:
 		set_check3(export_creation_time_ctrl_id, m_options.export_creation_time);
 		set_check(custom_creation_time_ctrl_id, m_options.custom_creation_time);
 		set_check(current_creation_time_ctrl_id, m_options.current_creation_time);
-		enable(custom_creation_time_ctrl_id, m_options.export_creation_time && bCreationTime);
+		enable(custom_creation_time_ctrl_id, m_options.export_creation_time == triTrue && bCreationTime);
 		bool bExportCustom =
-				(m_options.export_creation_time && m_options.custom_creation_time && bCreationTime);
+				(m_options.export_creation_time == triTrue && m_options.custom_creation_time && bCreationTime);
 		bool bCustomEdit = (!m_options.current_creation_time && bExportCustom);
 		enable(current_creation_time_ctrl_id, bExportCustom);
 		enable(ftCreationDate_ctrl_id, bCustomEdit);
@@ -903,9 +903,9 @@ private:
 		set_check3(export_last_access_time_ctrl_id, m_options.export_last_access_time);
 		set_check(custom_last_access_time_ctrl_id, m_options.custom_last_access_time);
 		set_check(current_last_access_time_ctrl_id, m_options.current_last_access_time);
-		enable(custom_last_access_time_ctrl_id, m_options.export_last_access_time && bLastAccessTime);
+		enable(custom_last_access_time_ctrl_id, m_options.export_last_access_time == triTrue && bLastAccessTime);
 		bExportCustom =
-				(m_options.export_last_access_time && m_options.custom_last_access_time && bLastAccessTime);
+				(m_options.export_last_access_time == triTrue && m_options.custom_last_access_time && bLastAccessTime);
 		bCustomEdit = (!m_options.current_last_access_time && bExportCustom);
 		enable(current_last_access_time_ctrl_id, bExportCustom);
 		enable(ftLastAccessDate_ctrl_id, bCustomEdit);
@@ -915,16 +915,16 @@ private:
 		set_check3(export_last_write_time_ctrl_id, m_options.export_last_write_time);
 		set_check(custom_last_write_time_ctrl_id, m_options.custom_last_write_time);
 		set_check(current_last_write_time_ctrl_id, m_options.current_last_write_time);
-		enable(custom_last_write_time_ctrl_id, m_options.export_last_write_time && bLastWriteTime);
+		enable(custom_last_write_time_ctrl_id, m_options.export_last_write_time == triTrue && bLastWriteTime);
 		bExportCustom =
-				(m_options.export_last_write_time && m_options.custom_last_write_time && bLastWriteTime);
+				(m_options.export_last_write_time == triTrue && m_options.custom_last_write_time && bLastWriteTime);
 		bCustomEdit = (!m_options.current_last_write_time && bExportCustom);
 		enable(current_last_write_time_ctrl_id, bExportCustom);
 		enable(ftLastWriteDate_ctrl_id, bCustomEdit);
 		enable(ftLastWriteTime_ctrl_id, bCustomEdit);
 		enable(ftLastWriteClear_ctrl_id, bCustomEdit);
 
-		swprintf(strName, 32, L"%S",
+		swprintf(strName, 32, L"%ls",
 				is_valid_username_or_groupname(m_options.Owner.c_str(), m_options.Owner.length())
 						? m_options.Owner.c_str()
 						: L"user");
@@ -935,7 +935,7 @@ private:
 		enable(custom_user_name_ctrl_id, m_options.export_user_name && bUsersGroups);
 		enable(Owner_ctrl_id, bExportCustom);
 
-		swprintf(strName, 32, L"%S",
+		swprintf(strName, 32, L"%ls",
 				is_valid_username_or_groupname(m_options.Group.c_str(), m_options.Group.length())
 						? m_options.Group.c_str()
 						: L"group");
@@ -1648,10 +1648,10 @@ public:
 				check_box3(*label_text++, m_options.export_creation_time, bCreationTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_creation_time_ctrl_id = check_box(L"", m_options.custom_creation_time,
-				bCreationTime && m_options.export_creation_time ? 0 : DIF_DISABLE);
+				bCreationTime && m_options.export_creation_time == triTrue ? 0 : DIF_DISABLE);
 		{
 			bool bExportCustom =
-					(m_options.export_creation_time && m_options.custom_creation_time && bCreationTime);
+					(m_options.export_creation_time == triTrue && m_options.custom_creation_time && bCreationTime);
 			bool bCustomEdit = (!m_options.current_creation_time && bExportCustom && bCreationTime);
 			wchar_t strDate[32], strTime[32];
 			FillDateTime(m_options.ftCreationTime, strDate, strTime);
@@ -1670,9 +1670,9 @@ public:
 				bLastAccessTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_last_access_time_ctrl_id = check_box(L"", m_options.custom_last_access_time,
-				bLastAccessTime && m_options.export_last_access_time ? 0 : DIF_DISABLE);
+				bLastAccessTime && m_options.export_last_access_time == triTrue ? 0 : DIF_DISABLE);
 		{
-			bool bExportCustom = (m_options.export_last_access_time && m_options.custom_last_access_time
+			bool bExportCustom = (m_options.export_last_access_time == triTrue && m_options.custom_last_access_time
 					&& bLastAccessTime);
 			bool bCustomEdit = (!m_options.current_last_access_time && bExportCustom && bLastAccessTime);
 			wchar_t strDate[32], strTime[32];
@@ -1692,10 +1692,10 @@ public:
 				check_box3(*label_text++, m_options.export_last_write_time, bLastWriteTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_last_write_time_ctrl_id = check_box(L"", m_options.custom_last_write_time,
-				bLastWriteTime && m_options.export_last_write_time ? 0 : DIF_DISABLE);
+				bLastWriteTime && m_options.export_last_write_time == triTrue ? 0 : DIF_DISABLE);
 		{
 			bool bExportCustom =
-					(m_options.export_last_write_time && m_options.custom_last_write_time && bLastWriteTime);
+					(m_options.export_last_write_time == triTrue && m_options.custom_last_write_time && bLastWriteTime);
 			bool bCustomEdit = (!m_options.current_last_write_time && bExportCustom && bLastWriteTime);
 			wchar_t strDate[32], strTime[32];
 			FillDateTime(m_options.ftLastWriteTime, strDate, strTime);
@@ -1714,7 +1714,7 @@ public:
 
 		{
 			wchar_t strName[40];
-			swprintf(strName, 32, L"%S",
+			swprintf(strName, 32, L"%ls",
 					is_valid_username_or_groupname(m_options.Owner.c_str(), m_options.Owner.length())
 							? m_options.Owner.c_str()
 							: L"user");
@@ -1728,7 +1728,7 @@ public:
 					bExportCustom ? DIF_SELECTONENTRY : DIF_SELECTONENTRY | DIF_DISABLE);	 // 32
 			new_line();
 
-			swprintf(strName, 32, L"%S",
+			swprintf(strName, 32, L"%ls",
 					is_valid_username_or_groupname(m_options.Group.c_str(), m_options.Group.length())
 							? m_options.Group.c_str()
 							: L"group");
@@ -2504,7 +2504,7 @@ private:
 		else if (enable_volumes)
 			ext += c_volume_ext;
 
-//		fprintf(stderr, " +++ get_default_ext() = \"%S\"\n", ext.c_str());
+//		fprintf(stderr, " +++ get_default_ext() = \"%ls\"\n", ext.c_str());
 		return ext;
 	}
 
@@ -3304,36 +3304,26 @@ private:
 				g_options.update_append_ext = options.append_ext;
 				g_options.update_move_files = options.move_files;
 
-				/// TODO: 
-
 			} else {
 				g_options.update_overwrite = options.overwrite;
 			}
 
 			g_options.update_export_options = options.export_options;
 			g_options.update_use_export_settings = options.use_export_settings;
-
 			g_options.update_level = options.level;
 			g_options.update_levels = options.levels;
 			g_options.update_method = options.method;
-
 			g_options.update_multithreading = options.multithreading;
 			g_options.update_process_priority = options.process_priority;
 			g_options.update_threads_num = options.threads_num;
-
 			g_options.update_solid = options.solid;
 			g_options.update_advanced = options.advanced;
 			g_options.update_encrypt = options.encrypt;
-
 			g_options.update_show_password = options.show_password;
 			g_options.update_ignore_errors = options.ignore_errors;
-
 			g_options.update_skip_symlinks = options.skip_symlinks;
 			g_options.update_symlink_fix_path_mode = options.symlink_fix_path_mode;
-
 			g_options.update_dereference_symlinks = options.dereference_symlinks;
-
-			// TODO
 
 			g_options.save();
 			Far::info_dlg(c_update_params_saved_dialog_guid, Far::get_msg(MSG_UPDATE_DLG_TITLE),

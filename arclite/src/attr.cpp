@@ -520,7 +520,7 @@ void Archive<UseVirtualDestructor>::load_arc_attr()
 }
 
 template<bool UseVirtualDestructor>
-void Archive<UseVirtualDestructor>::load_update_props()
+void Archive<UseVirtualDestructor>::load_update_props(const ArcType &arc_type)
 {
 	if (m_update_props_defined)
 		return;
@@ -538,8 +538,12 @@ void Archive<UseVirtualDestructor>::load_update_props()
 
 	m_level = (unsigned)-1;
 	m_method.clear();
-	if ((in_arc->GetArchiveProperty(kpidMethod, prop.ref()) == S_OK && prop.is_str())
-			|| (in_arc->GetProperty(0, kpidMethod, prop.ref()) == S_OK && prop.is_str())) {
+
+	if (UInt32 NumberOfItems;
+		(in_arc->GetArchiveProperty(kpidMethod, prop.ref()) == S_OK && prop.is_str()) ||
+		(in_arc->GetNumberOfItems(&NumberOfItems) && NumberOfItems && in_arc->GetProperty(0, kpidMethod, prop.ref()) == S_OK && prop.is_str())
+		) {
+
 		std::list<std::wstring> m_list = split(prop.get_str(), L' ');
 
 		static const wchar_t *known_methods[] = {c_method_lzma, c_method_lzma2, c_method_ppmd,
@@ -568,6 +572,9 @@ void Archive<UseVirtualDestructor>::load_update_props()
 			if (!m_method.empty())
 				break;
 		}
+	}
+	else if (arc_type == c_zip) {
+		m_method = c_method_deflate;
 	}
 
 	if (m_level == (unsigned)-1)

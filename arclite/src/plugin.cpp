@@ -992,7 +992,7 @@ struct PanelItem
 //		fprintf(stderr, " +++ put_files( )\n");
 //		fprintf(stderr, " +++ ====================================================\n");
 //		for (int i = 0; i < items_number; ++i) {
-//			fprintf(stderr, " item %i %S \n", i, panel_items[i].FindData.lpwszFileName);
+//			fprintf(stderr, " item %i %ls \n", i, panel_items[i].FindData.lpwszFileName);
 //		}
 
 		bool new_arc = !archive->is_open();
@@ -1049,7 +1049,7 @@ struct PanelItem
 					FAIL_MSG(Far::get_msg(MSG_ERROR_UPDATE_UNSUPPORTED_FOR_SINGLEFILEARCHIVE));
 				}
 			}
-			archive->load_update_props();
+			archive->load_update_props(options.arc_type);
 			options.method = archive->m_method;
 			options.solid = archive->m_solid;
 			options.encrypt = archive->m_encrypted;
@@ -1339,7 +1339,7 @@ struct PanelItem
 			archive->make_index();
 
 			options.arc_type = archive->arc_chain.back().type;
-			archive->load_update_props();
+			archive->load_update_props(options.arc_type);
 			if (!cmd.level_defined)
 				options.level = archive->m_level;
 			if (!cmd.method_defined)
@@ -1601,7 +1601,7 @@ SHAREDSYMBOL HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 //	fprintf(stderr, "==== TREAD [%ld] \n", pthread_self());
 
 //	fprintf(stderr, " +++ info->StructSize = %lu\n", info->StructSize);
-//	fprintf(stderr, " +++ info->FileName   = %S\n", info->FileName);
+//	fprintf(stderr, " +++ info->FileName   = %ls\n", info->FileName);
 //	fprintf(stderr, " +++ info->Buffer     = %lx\n", (long)info->Buffer);
 //	fprintf(stderr, " +++ info->BufferSize = %lu\n", info->BufferSize);
 //	fprintf(stderr, " +++ info->Instance   = %lx\n", (long)info->Instance);
@@ -1961,7 +1961,7 @@ SHAREDSYMBOL int WINAPI SetDirectoryW(HANDLE hPlugin, const wchar_t *Dir, int Op
 {
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
-//	fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %S )         >>>>>>>>>>>\n", Dir );
+//	fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %ls )         >>>>>>>>>>>\n", Dir );
 	if (ArcAPI::have_virt_destructor())
 		reinterpret_cast<Plugin<true> *>(hPlugin)->set_dir(Dir);
 	else

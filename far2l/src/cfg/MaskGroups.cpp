@@ -72,15 +72,17 @@ static void ApplyDefaultMaskGroups()
                      L"*.mht,*.mhtml,*.nfo,*.odc,*.odc,*.odf,*.odf,*.odg,*.odg,*.odi,*.odi,*.odm,*.odm,*.odp,*.odp,*.ods,*.ods,*.odt,*.odt,*.otf,*.otf,*.otg,"
 					 L"*.otg,*.oth,*.oth,*.oti,*.oti,*.otp,*.otp,*.ots,*.ots,*.ott,*.ott,*.pdf,*.pip,*.pps,*.ppt,*.ppt,*.pptx,*.rst,*.rtf,*.sdc,*.sdc,*.srt,"
 					 L"*.stc,*.stc,*.sti,*.sti,*.stw,*.stw,*.sxc,*.sxc,*.sxi,*.sxi,*.sxw,*.sxw,*.tex,*.txt,*.wiz,*.wpd,*.wri,*.xlk,*.xls,*.xlsb,*.xlsm,*.xlsx,"
-					 L"*.xlsx,*.xlt,*.xltm,*.xslm,*pptx,NEWS,read.me,readme*"},
+					 L"*.xlsx,*.xlt,*.xltm,*.xslm,NEWS,read.me,readme*"},
 
-		{ L"src",    L"*.applescript,*.as,*.asa,*.asax,*.asm,*.awk,*.bas,*.bash,*.bsh,*.c,*.c++,*.cabal,*.cc,*.cfg,*.cgi,*.clj,*.conf,*.config,*.cp,*.cpp,"
+		{ L"src",    L"*.applescript,*.as,*.asa,*.asax,*.asm,*.awk,*.bas,*.bash,*.bsh,*.c,*.c++,*.cabal,*.cc,*.cgi,*.clj,*.cp,*.cpp,"
 					 L"*.cr,*.cs,*.css,*.csx,*.cxx,*.d,*.dart,*.def,*.di,*.diff,*.dot,*.dpr,*.el,*.elc,*.elm,*.epp,*.erl,*.ex,*.exs,*.fish,*.frag,*.fragment,"
 					 L"*.fragmentshader,*.fs,*.fsh,*.fsi,*.fsx,*.fx,*.geom,*.glsl,*.go,*.gradle,*.groovy,*.gv,*.gvy,*.h,*.h,*.h++,*.hh,*.hlsl,*.hpp,*.hs,*.htc,"
-					 L"*.hxx,*.inc,*.inf,*.ini,*.inl,*.ipp,*.ipynb,*.jam,*.java,*.jl,*.js,*.jsm,*.json,*.kt,*.kts,*.less,*.lisp,*.ll,*.ltx,*.lua,*.m,*.manifest,"
+					 L"*.hxx,*.inc,*.inl,*.ipp,*.ipynb,*.jam,*.java,*.jl,*.js,*.jsm,*.kt,*.kts,*.less,*.lisp,*.ll,*.ltx,*.lua,*.m,*.m4"
 					 L"*.matlab,*.mir,*.ml,*.mli,*.mn,*.nb,*.p,*.pas,*.patch,*.perl,*.php,*.pixel,*.pl,*.pm,*.pod,*.pp,*.prf,*.ps1,*.psd1,*.psm1,*.purs,*.py,"
-					 L"*.qml,*.r,*.r,*.rb,*.reg,*.rs,*.sample,*.sass,*.sbt,*.scala,*.scss,*.sh,*.sln,*.sql,*.src,*.swift,*.t,*.tcl,*.td,*.tex,*.ts,*.tsx,*.vb,"
-					 L"*.vcxproj.*,*.vert,*.vertex,*.vertexshader,*.vs,*.vsh,*.wsdl,*.xaml,*.xhtml,*.xml,*.xsd,*.xsl,*.xslt,*.zsh,PKGBUILD"},
+					 L"*.qml,*.r,*.r,*.rb,*.reg,*.rs,*.sample,*.sass,*.sbt,*.scala,*.scss,*.sh,*.sql,*.src,*.swift,*.t,*.tcl,*.td,*.tex,*.ts,*.tsx,*.vb,"
+					 L"*.vert,*.vertex,*.vertexshader,*.vs,*.vsh,*.wsdl,*.xaml,*.xhtml,*.zsh,PKGBUILD"},
+
+		{ L"cfg",    L"*.cfg,*.cmake,*.conf,*.config,*.fm[li],*.hlf,*.hrc,*.hrd,*.inf,*.ini,*.json,*.manifest,*.reg,*.sln,*.toml,*.vcxproj,*.vcxproj.*,*.xml,*.xsd,*.xsl,*.xslt,*.yaml,*.yml"},
 
 		{ L"3d",     L"*.3d,*.3df,*.3dm,*.3ds,*.3dxml,*.amf,*.asymptote,*.blend,*.collada,*.dds,*.dgn,*.drawings,*.dwf,*.dwg,*.dxf,*.flt,*.fvrml,*.gltf,*.hdr,"
 					 L"*.hsf,*.iges,*.imml,*.ipa,*.jt,*.ktx,*.ma,*.mb,*.opengex,*.ply,*.pov-ray,*.prc,*.sdkmesh,*.skp,*.step,*.stl,*.u3d,*.vrml,*.x,*.x3d,"

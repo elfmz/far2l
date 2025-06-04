@@ -40,28 +40,58 @@ static void ApplyDefaultMaskGroups()
 {
 	static const std::pair<const wchar_t*, const wchar_t*> Sets[]
 	{
-		{ L"arc",    L"*.rar,*.zip,*.[zj],*.[7bglx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*.bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,"
-				     L"*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.tbz2,*.zoo,*.zst,*.hqx,*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,"
-				     L"*.x2,*.rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz" },
-		{ L"temp",   L"*.cache,*.temp,*.tmp,*.bak,*.old,*.backup,*.back,temp,temp.*,temporary*" },
+		{ L"arc",    L"*.777,*.[bg]zip,*.[bxg7]z,*.[lw]sz,*.[zj],*.a[0-9][0-9],*.ac[bei],*.ain,*.ar[cj],*.boa,*.bs[2a],*.bz2,*.cab,*.chz,*.cpio,*.cue,*.ddi,"
+				     L"*.deb,*.grp,*.h[ay]p,*.ha,*.hpk,*.hqx,*.ice,*.imp,*.iso,*.jar,*.lha,*.lim,*.lzh,*.msi,*.nrg,*.pa[ck],*.qpr,*.r[0-9][0-9],*.rar,*.rk,"
+				     L"*.rkv,*.rpm,*.rpm,*.sea,*.sit,*.sqz,*.t[agbx]z,*.tar,*.uc2,*.ufa,*.x2,*.zip,*.zoo,*.zst"},
+
+		{ L"temp",   L"*.back,*.backup,*.bak,*.cache,*.old,*.temp,*.tmp,temp,temp.*,temporary*"},
+
 		{ L"tmp",    L"<temp>" },
-		{ L"exec",   L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com,*.elf,*.run,*.AppImage,*.apk,*.rb" },
-		{ L"shared", L"*.dll,*.so,*.dll.*,*.so.*,*.obj,*.o,*.a,*.lib,*.sys,*.pyo,*.vim" },
-		{ L"sound",  L"*.aif,*.cda,*.mid,*.midi,*.mp3,*.mpa,*.ogg,*.wma,*.flac,*.wav,*.ape,*.wv,*.voc,*.669,*.digi,*.amf,*.ams,*.dbm,*.dmf,*.dsm,*.gdm,"
-				     L"*.imf,*.it,*.itg,*.itp,*.j2b,*.mdl,*.med,*.mo3,*.mod,*.mt2,*.mtm,*.okt,*.plm,*.psm,*.ptm,*.s3m,*.sfx,*.stm,*.stp,*.uax,*.ult,*.xm"},
-		{ L"snd",    L"<sound>" },
-		{ L"pic",    L"*.avif,*.jpg,*.jpeg,*.jpeg2000,*.ico,*.gif,*.png,*.webp,*.tga,*.bmp,*.pcx,*.tiff,*.tif,*.psd,*.eps,*.indd,*.svg,*.ai,*.cpt,*.kra,"
-					 L"*.pdn,*.psp,*.xcf,*.sai,*.cgm,*.mpo,*.pns,*.jps" },
-		{ L"video",  L"*.mkv,*.webm,*.mpg,*.mp2,*.mpeg,*.mpe,*.mpv,*.mp4,*.m4p,*.m4v,*.avi,*.wmv,*.mov,*.qt,*.flv,*.swf,*.avchd,*.3gp,*.vob" },
-		{ L"media",  L"<sound>,<video>" },
-		{ L"doc",    L"*.docx,*.odt,*.pdf,*.rtf,*.tex,*.wpd,*.htm,*.html,*.key,*.odp,*.pps,*.ppt,*.pptx,*.ods,*.xls,*.xlsm,*.xlsx,*.srt,*.nfo,*.rst,*.man,"
-                     L"read.me,readme*,*.txt,*.chm,*.hlp,*.doc,*.md,NEWS" },
-		{ L"src",    L"*.c,*.cpp,*.c++,*.h,*.hpp,*.h++,*.asm,*.inc,*.src,*.css,*.glsl,*.lua,*.java,*.php,*.go,*.perl,*.r,*.bas,*.pas,*.jsm,*.qml,"
-					 L"*.js,*.kt,*.sample,*.vs,*.fs,*.fx,*.hlsl,*.fsh,*.vsh,*.pixel,*.vertex,*.fragmentshader,*.fragment,*.vertexshader,"
-					 L"*.ml,*.frag,*.geom,*.vert,*.rs,*.ts,*.jam,*.tcl,*.swift" },
-		{ L"3d",     L"*.ma,*.mb,*.opengex,*.ply,*.pov-ray,*.prc,*.step,*.skp,*.stl,*.u3d,*.vrml,*.xaml,*.xgl,*.xvl,*.xvrml,*.x3d,*.3d,*.3df,*.3dm,*.3ds,"
-					 L"*.3dxml,*.x3d,*.dds,*.sdkmesh,*.x,*.hdr,*.ktx,*.amf,*.asymptote,*.blend,*.collada,*.dgn,*.dwf,*.dwg,*.dxf,*.drawings,*.flt,*.fvrml,"
-					 L"*.gltf,*.hsf,*.iges,*.imml,*.ipa,*.jt"},
+
+		{ L"exec",   L"*.AppImage,*.apk,*.bat,*.cmd,*.com,*.elf,*.exe,*.pl,*.rb,*.run,*.sh"},
+
+		{ L"shared", L"*.a,*.dll,*.dll.*,*.lib,*.o,*.obj,*.pyo,*.so,*.so.*,*.sys,*.vim"},
+
+		{ L"sound",  L"*.669,*.aac,*.ac3,*.aif,*.aiff,*.amf,*.amr,*.ams,*.ape,*.as,*.asf,*.au,*.au,*.cda,*.cda,*.cmf,*.dbm,*.digi,*.dmf,*.dsm,*.fla,*.flac,"
+				     L"*.gdm,*.gmd,*.gsm,*.hmi,*.hmp,*.hmz,*.iff,*.imf,*.it,*.itg,*.itp,*.itz,*.j2b,*.kar,*.la,*.lap,*.lqt,*.m3u,*.m3u8,*.m4a,*.mac,*.mdl,"
+					 L"*.mdz,*.med,*.mid,*.midi,*.mids,*.miz,*.mmf,*.mo3,*.mod,*.mp1,*.mp2,*.mp3,*.mpa,*.mpc,*.mss,*.mt2,*.mtm,*.mus,*.ogg,*.okt,*.plm,*.pls,"
+					 L"*.psm,*.ptm,*.ra,*.ram,*.rm,*.rmi,*.rmj,*.rmm,*.rmx,*.rns,*.rnx,*.rv,*.s3m,*.s3z,*.sfx,*.snd,*.speex,*.stm,*.stp,*.stz,*.tap,*.tta,"
+					 L"*.uax,*.ult,*.voc,*.wav,*.wma,*.wv,*.xm,*.xmi,*.xmz"},
+
+		{ L"snd",    L"<sound>"},
+
+		{ L"pic",    L"*.ai,*.ani,*.avif,*.bmp,*.bw,*.cdr,*.cel,*.cgm,*.cmx,*.cpt,*.cur,*.dcx,*.dds,*.dib,*.emf,*.eps,*.flc,*.fli,*.fpx,*.gif,*.icl,*.ico,"
+					 L"*.iff,*.indd,*.j2k,*.jp2,*.jpc,*.jpe,*.jpeg,*.jpeg2000,*.jpg,*.jps,*.kra,*.lbm,*.mng,*.mpo,*.pbm,*.pcx,*.pdn,*.pgm,*.pic,*.png,*.pns,"
+					 L"*.ppm,*.psd,*.psp,*.ras,*.rgb,*.rle,*.sai,*.sgi,*.spr,*.svg,*.tga,*.tif,*.tiff,*.wbmp,*.webp,*.wmf,*.xbm,*.xcf,*.xpm"},
+		{ L"video",  L"*.3g2,*.3gp,*.asf,*.avchd,*.avi,*.divx,*.enc,*.flv,*.ifo,*.m1v,*.m2ts,*.m2v,*.m4p,*.m4v,*.mkv,*.mov,*.mp2,*.mp4,*.mpe,*.mpeg,*.mpg,"
+					 L"*.mpv,*.mts,*.ogm,*.qt,*.ra,*.ram,*.rmvb,*.swf,*.ts,*.vob,*.vob,*.webm,*.wm,*.wmv"},
+
+		{ L"media",  L"<sound>,<video>"},
+
+		{ L"doc",    L"*.chm,*.csv,*.djvu,*.doc,*.docx,*.dot,*.dot,*.epub,*.fb2,*.fb2.zip,*.hlp,*.hta,*.htm,*.html,*.htz,*.key,*.lex,*.log,*.man,*.mcw,*.md,"
+                     L"*.mht,*.mhtml,*.nfo,*.odc,*.odc,*.odf,*.odf,*.odg,*.odg,*.odi,*.odi,*.odm,*.odm,*.odp,*.odp,*.ods,*.ods,*.odt,*.odt,*.otf,*.otf,*.otg,"
+					 L"*.otg,*.oth,*.oth,*.oti,*.oti,*.otp,*.otp,*.ots,*.ots,*.ott,*.ott,*.pdf,*.pip,*.pps,*.ppt,*.ppt,*.pptx,*.rst,*.rtf,*.sdc,*.sdc,*.srt,"
+					 L"*.stc,*.stc,*.sti,*.sti,*.stw,*.stw,*.sxc,*.sxc,*.sxi,*.sxi,*.sxw,*.sxw,*.tex,*.txt,*.wiz,*.wpd,*.wri,*.xlk,*.xls,*.xlsb,*.xlsm,*.xlsx,"
+					 L"*.xlsx,*.xlt,*.xltm,*.xslm,NEWS,read.me,readme*"},
+
+		{ L"src",    L"<build>,<cfg>,<code>"},
+
+		{ L"build",	 L"*.gradle,makefile,*.cmake,*.make,makefile*,*.sln,*.mak,*.mk,*.in,*.mpp,*.mpt,*.mpw,*.mpx,*.mpd,*.mpp,*.vcxproj*,*.vcproj,*.project,*.prj,"
+					 L"*.pro,*.dsp,*.cue,CMakeLists.txt"},
+
+		{ L"cfg",    L"*.cfg,*.conf,*.config,*.fm[li],*.hlf,*.hrc,*.hrd,*.inf,*.ini,*.json,*.manifest,*.reg,*.sln,*.toml,*.xml,*.xsd,*.xsl,*.xslt,*.yaml,*.yml"},
+
+		{ L"code",	 L"*.applescript,*.as,*.asa,*.asax,*.asm,*.awk,*.bas,*.bash,*.bsh,*.c,*.c++,*.cabal,*.cc,*.cgi,*.clj,*.cp,*.cpp,"
+					 L"*.cr,*.cs,*.css,*.csx,*.cxx,*.d,*.dart,*.def,*.di,*.diff,*.dot,*.dpr,*.el,*.elc,*.elm,*.epp,*.erl,*.ex,*.exs,*.fish,*.frag,*.fragment,"
+					 L"*.fragmentshader,*.fs,*.fsh,*.fsi,*.fsx,*.fx,*.geom,*.glsl,*.go,*.groovy,*.gv,*.gvy,*.h,*.h,*.h++,*.hh,*.hlsl,*.hpp,*.hs,*.htc,"
+					 L"*.hxx,*.inc,*.inl,*.ipp,*.ipynb,*.jam,*.java,*.jl,*.js,*.jsm,*.kt,*.kts,*.less,*.lisp,*.ll,*.ltx,*.lua,*.m,*.m4"
+					 L"*.matlab,*.mir,*.ml,*.mli,*.mn,*.nb,*.p,*.pas,*.patch,*.perl,*.php,*.pixel,*.pl,*.pm,*.pod,*.pp,*.prf,*.ps1,*.psd1,*.psm1,*.purs,*.py,"
+					 L"*.qml,*.r,*.r,*.rb,*.reg,*.rs,*.sample,*.sass,*.sbt,*.scala,*.scss,*.sh,*.sql,*.src,*.swift,*.t,*.tcl,*.td,*.tex,*.ts,*.tsx,*.vb,"
+					 L"*.vert,*.vertex,*.vertexshader,*.vs,*.vsh,*.wsdl,*.xaml,*.xhtml,*.zsh,PKGBUILD"},
+
+		{ L"3d",     L"*.3d,*.3df,*.3dm,*.3ds,*.3dxml,*.amf,*.asymptote,*.blend,*.collada,*.dds,*.dgn,*.drawings,*.dwf,*.dwg,*.dxf,*.flt,*.fvrml,*.gltf,*.hdr,"
+					 L"*.hsf,*.iges,*.imml,*.ipa,*.jt,*.ktx,*.ma,*.mb,*.opengex,*.ply,*.pov-ray,*.prc,*.sdkmesh,*.skp,*.step,*.stl,*.u3d,*.vrml,*.x,*.x3d,"
+					 L"*.x3d,*.xaml,*.xgl,*.xvl,*.xvrml"},
 	};
 
 	ConfigWriter cfg_writer;
@@ -342,7 +372,7 @@ void MaskGroupsSettings()
 
 				case KEY_CTRLUP:
 				case KEY_CTRLDOWN: {
-					if (bFilter) 
+					if (bFilter)
 						break;
 					if (MenuPos < MasksMenu.GetItemCount() && !(Key == KEY_CTRLUP && !MenuPos)
 							&& !(Key == KEY_CTRLDOWN && MenuPos == (MasksMenu.GetItemCount() - 1))) {

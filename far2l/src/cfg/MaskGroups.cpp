@@ -74,15 +74,20 @@ static void ApplyDefaultMaskGroups()
 					 L"*.stc,*.stc,*.sti,*.sti,*.stw,*.stw,*.sxc,*.sxc,*.sxi,*.sxi,*.sxw,*.sxw,*.tex,*.txt,*.wiz,*.wpd,*.wri,*.xlk,*.xls,*.xlsb,*.xlsm,*.xlsx,"
 					 L"*.xlsx,*.xlt,*.xltm,*.xslm,NEWS,read.me,readme*"},
 
-		{ L"src",    L"*.applescript,*.as,*.asa,*.asax,*.asm,*.awk,*.bas,*.bash,*.bsh,*.c,*.c++,*.cabal,*.cc,*.cgi,*.clj,*.cp,*.cpp,"
+		{ L"src",    L"<build>,<cfg>,<code>"},
+
+		{ L"build",	 L"*.gradle,makefile,*.cmake,*.make,makefile*,*.sln,*.mak,*.mk,*.in,*.mpp,*.mpt,*.mpw,*.mpx,*.mpd,*.mpp,*.vcxproj*,*.vcproj,*.project,*.prj,"
+					 L"*.pro,*.dsp,*.cue,CMakeLists.txt"},
+
+		{ L"cfg",    L"*.cfg,*.conf,*.config,*.fm[li],*.hlf,*.hrc,*.hrd,*.inf,*.ini,*.json,*.manifest,*.reg,*.sln,*.toml,*.xml,*.xsd,*.xsl,*.xslt,*.yaml,*.yml"},
+
+		{ L"code",	 L"*.applescript,*.as,*.asa,*.asax,*.asm,*.awk,*.bas,*.bash,*.bsh,*.c,*.c++,*.cabal,*.cc,*.cgi,*.clj,*.cp,*.cpp,"
 					 L"*.cr,*.cs,*.css,*.csx,*.cxx,*.d,*.dart,*.def,*.di,*.diff,*.dot,*.dpr,*.el,*.elc,*.elm,*.epp,*.erl,*.ex,*.exs,*.fish,*.frag,*.fragment,"
-					 L"*.fragmentshader,*.fs,*.fsh,*.fsi,*.fsx,*.fx,*.geom,*.glsl,*.go,*.gradle,*.groovy,*.gv,*.gvy,*.h,*.h,*.h++,*.hh,*.hlsl,*.hpp,*.hs,*.htc,"
+					 L"*.fragmentshader,*.fs,*.fsh,*.fsi,*.fsx,*.fx,*.geom,*.glsl,*.go,*.groovy,*.gv,*.gvy,*.h,*.h,*.h++,*.hh,*.hlsl,*.hpp,*.hs,*.htc,"
 					 L"*.hxx,*.inc,*.inl,*.ipp,*.ipynb,*.jam,*.java,*.jl,*.js,*.jsm,*.kt,*.kts,*.less,*.lisp,*.ll,*.ltx,*.lua,*.m,*.m4"
 					 L"*.matlab,*.mir,*.ml,*.mli,*.mn,*.nb,*.p,*.pas,*.patch,*.perl,*.php,*.pixel,*.pl,*.pm,*.pod,*.pp,*.prf,*.ps1,*.psd1,*.psm1,*.purs,*.py,"
 					 L"*.qml,*.r,*.r,*.rb,*.reg,*.rs,*.sample,*.sass,*.sbt,*.scala,*.scss,*.sh,*.sql,*.src,*.swift,*.t,*.tcl,*.td,*.tex,*.ts,*.tsx,*.vb,"
 					 L"*.vert,*.vertex,*.vertexshader,*.vs,*.vsh,*.wsdl,*.xaml,*.xhtml,*.zsh,PKGBUILD"},
-
-		{ L"cfg",    L"*.cfg,*.cmake,*.conf,*.config,*.fm[li],*.hlf,*.hrc,*.hrd,*.inf,*.ini,*.json,*.manifest,*.reg,*.sln,*.toml,*.vcxproj,*.vcxproj.*,*.xml,*.xsd,*.xsl,*.xslt,*.yaml,*.yml"},
 
 		{ L"3d",     L"*.3d,*.3df,*.3dm,*.3ds,*.3dxml,*.amf,*.asymptote,*.blend,*.collada,*.dds,*.dgn,*.drawings,*.dwf,*.dwg,*.dxf,*.flt,*.fvrml,*.gltf,*.hdr,"
 					 L"*.hsf,*.iges,*.imml,*.ipa,*.jt,*.ktx,*.ma,*.mb,*.opengex,*.ply,*.pov-ray,*.prc,*.sdkmesh,*.skp,*.step,*.stl,*.u3d,*.vrml,*.x,*.x3d,"

@@ -713,6 +713,13 @@ int KeyMacro::LoadMacros(BOOL InitedRAM, BOOL LoadAll)
 
 int KeyMacro::ProcessKey(FarKey Key)
 {
+
+	if (Opt.Macro.KeyMacroCtrlShiftDot == KEY_CTRLSHIFTDOT) { // default setting
+		if (Key == (KEY_CTRL | KEY_SHIFT | '>')) {
+			Key = KEY_CTRL | KEY_SHIFT | KEY_DOT;
+		}
+	}
+
 	if (InternalInput || Key == KEY_IDLE || Key == KEY_NONE || !FrameManager->GetCurrentFrame())
 		return FALSE;
 

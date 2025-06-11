@@ -1451,6 +1451,7 @@ You may return to background'ed command from ~Screens switching menu~@ScrSwitch@
   Надіслати у фон команду, що виконується в терміналі       #Ctrl+Alt+Z#
 
   See also: ~pseudo-commands~@SpecCmd@
+  також ~Команда операційної системи~@OSCommands@
 
 @UIBackends
 $ #Режими інтерфейсу#
@@ -3489,7 +3490,7 @@ $ #Налаштування редактора#
 
   #Використовувати файли налаштувань .editorconfig#
  Processing .editorconfig parameters
- (see https://editorconfig.org for details)
+ (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
 
  #Блокувати# При відкритті на редагування файлу,
  #редагування# має атрибут "тільки для читання",

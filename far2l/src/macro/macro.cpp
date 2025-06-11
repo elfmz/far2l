@@ -711,14 +711,21 @@ int KeyMacro::LoadMacros(BOOL InitedRAM, BOOL LoadAll)
 	return ErrCount ? FALSE : TRUE;
 }
 
-int KeyMacro::ProcessKey(FarKey Key)
+bool KeyMacro::ProcessKey(FarKey Key)
 {
 	if (InternalInput || Key == KEY_IDLE || Key == KEY_NONE || !FrameManager->GetCurrentFrame())
-		return FALSE;
+		return false;
+
+	FARString textKey;
+	if (!KeyToText(Key, textKey) || textKey.IsEmpty())
+		return false;
+
+	const bool ctrldot = (textKey == Opt.Macro.strKeyMacroCtrlDot);
+	const bool ctrlshiftdot = (textKey == Opt.Macro.strKeyMacroCtrlShiftDot);
 
 	if (Recording)																			// Идет запись?
 	{
-		if (Key == Opt.Macro.KeyMacroCtrlDot || Key == Opt.Macro.KeyMacroCtrlShiftDot)		// признак конца записи?
+		if (ctrldot || ctrlshiftdot)		// признак конца записи?
 		{
 			_KEYMACRO(CleverSysLog Clev(L"MACRO End record..."));
 			DWORD MacroKey;
@@ -735,7 +742,7 @@ int KeyMacro::ProcessKey(FarKey Key)
 			// добавим проверку на удаление
 			// если удаляем, то не нужно выдавать диалог настройки.
 			// if (MacroKey != (DWORD)-1 && (Key==KEY_CTRLSHIFTDOT || Recording==2) && RecBufferSize)
-			if (MacroKey != KEY_INVALID && Key == Opt.Macro.KeyMacroCtrlShiftDot && RecBufferSize) {
+			if (MacroKey != KEY_INVALID && ctrlshiftdot && RecBufferSize) {
 				if (!GetMacroSettings(MacroKey, Flags))
 					MacroKey = KEY_INVALID;
 			}
@@ -762,7 +769,7 @@ int KeyMacro::ProcessKey(FarKey Key)
 
 						if (!NewMacroLIB) {
 							WaitInFastFind++;
-							return FALSE;
+							return false;
 						}
 
 						MacroLIB = NewMacroLIB;
@@ -822,17 +829,17 @@ int KeyMacro::ProcessKey(FarKey Key)
 			if (Opt.AutoSaveSetup)
 				SaveMacros(FALSE);	// записать только изменения!
 
-			return TRUE;
+			return true;
 		} else												// процесс записи продолжается.
 		{
 			if (Key >= KEY_NONE && Key <= KEY_END_SKEY)		// специальные клавиши прокинем
-				return FALSE;
+				return false;
 
 			RecBuffer = (DWORD *)realloc(RecBuffer, sizeof(*RecBuffer) * (RecBufferSize + 3));
 
 			if (!RecBuffer) {
 				RecBufferSize = 0;
-				return FALSE;
+				return false;
 			}
 
 			if (ReturnAltValue)		// "подтасовка" фактов ;-)
@@ -842,18 +849,18 @@ int KeyMacro::ProcessKey(FarKey Key)
 				RecBuffer[RecBufferSize++] = MCODE_OP_KEYS;
 
 			RecBuffer[RecBufferSize++] = Key;
-			return FALSE;
+			return false;
 		}
-	} else if (Key == Opt.Macro.KeyMacroCtrlDot || Key == Opt.Macro.KeyMacroCtrlShiftDot)		// Начало записи?
+	} else if (ctrldot || ctrlshiftdot)		// Начало записи?
 	{
 		_KEYMACRO(CleverSysLog Clev(L"MACRO Begin record..."));
 
 		// Полиция 18
 		if (Opt.Policies.DisabledOptions & FFPOL_CREATEMACRO)
-			return FALSE;
+			return false;
 
 		// if(CtrlObject->Plugins.CheckFlags(PSIF_ENTERTOOPENPLUGIN))
-		//	return FALSE;
+		//	return false;
 
 		if (LockScr)
 			delete LockScr;
@@ -864,7 +871,7 @@ int KeyMacro::ProcessKey(FarKey Key)
 		// тип записи - с вызовом диалога настроек или...
 		// В зависимости от того, КАК НАЧАЛИ писать макрос, различаем общий режим (Ctrl-.
 		// с передачей плагину кеев) или специальный (Ctrl-Shift-. - без передачи клавиш плагину)
-		Recording = (Key == Opt.Macro.KeyMacroCtrlDot) ? MACROMODE_RECORDING_COMMON : MACROMODE_RECORDING;
+		Recording = ctrldot ? MACROMODE_RECORDING_COMMON : MACROMODE_RECORDING;
 
 		if (RecBuffer)
 			free(RecBuffer);
@@ -875,7 +882,7 @@ int KeyMacro::ProcessKey(FarKey Key)
 		ScrBuf.ResetShadow();
 		ScrBuf.Flush();
 		WaitInFastFind--;
-		return TRUE;
+		return true;
 	} else {
 		if (Work.Executing == MACROMODE_NOMACRO)	// Это еще не режим исполнения?
 		{
@@ -903,7 +910,7 @@ int KeyMacro::ProcessKey(FarKey Key)
 						_FARKEY_ToName(MacroLIB[I].Key)));
 
 				if (!CheckAll(Mode, CurFlags))
-					return FALSE;
+					return false;
 
 				// Скопируем текущее исполнение в MacroWORK
 				// PostNewMacro(MacroLIB+I);
@@ -924,11 +931,11 @@ int KeyMacro::ProcessKey(FarKey Key)
 				IsRedrawEditor = CtrlObject->Plugins.CheckFlags(PSIF_ENTERTOOPENPLUGIN) ? FALSE : TRUE;
 				_KEYMACRO(SysLog(L"**** Start Of Execute Macro ****"));
 				_KEYMACRO(SysLog(1));
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 }
 

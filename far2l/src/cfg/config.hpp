@@ -380,8 +380,8 @@ struct MacroOptions
 {
 	int MacroReuseRules;			// Правило на счет повторно использования забинденных клавиш
 	DWORD DisableMacro;				// параметры /m или /ma или /m....
-	DWORD KeyMacroCtrlDot;			// аля KEY_CTRLDOT
-	DWORD KeyMacroCtrlShiftDot;		// аля KEY_CTRLSHIFTDOT
+	FARString strKeyMacroCtrlDot;		// аля KEY_CTRLDOT
+	FARString strKeyMacroCtrlShiftDot;	// аля KEY_CTRLSHIFTDOT
 	int CallPluginRules;			// 0 - блокировать макросы при вызове плагина, 1 - разрешить макросы (ахтунг!)
 	FARString strMacroCONVFMT;		// формат преобразования double в строку
 	FARString strDateFormat;		// Для $Date

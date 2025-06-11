@@ -259,7 +259,7 @@ public:
 	~KeyMacro();
 
 public:
-	int ProcessKey(FarKey Key);
+	bool ProcessKey(FarKey Key);
 	FarKey GetKey();
 	FarKey PeekKey();
 	bool IsOpCode(DWORD p);

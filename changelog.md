@@ -3,13 +3,16 @@
 Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
 
 ## Master (current development)
+* _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
+* _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
+* _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
-* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
+* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * _Temporary panel plugin_: Show file groups
-* Several bugfixes
 * _colorer plugin_: Update colorer schemes to v1.2.0.68
 * _colorer plugin_: Update colorer library to v1.4.1-10.05.2025
+* Several bugfixes
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`

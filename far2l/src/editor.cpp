@@ -2211,7 +2211,7 @@ int Editor::ProcessKey(FarKey Key)
 			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
 				BeginVBlockMarking();
 
-			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_next->RealPosToCell(CurLine->m_prev->GetLength()))
+			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_next->RealPosToCell(CurLine->m_next->GetLength()))
 				return TRUE;
 
 			Pasting++;

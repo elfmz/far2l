@@ -163,6 +163,14 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
         - Exclusively handle hotkeys option in the ~Input settings~@InputSettings@ (only in GUI backend mode under X11).
 
 
+ #Special key mapping in macOS#
+    - keys #Option# map to #Alt# (left) и #Grey# (right);
+    - far2l-GUI only: both keys #Command# act as Left #Ctrl#, both keys #Ctrl# act as Right #Ctrl#;
+    - #Clear# key on the numeric keypad toggles NumLock mode;
+    - numpad #0# functions as #Insert# when NumLock is off;
+    - on external Windows keyboards, macOS swaps #Alt# and #Win# keys to match Mac layout logic.
+
+
  #macOS workaround# if far2l in macOS regularly asks permission to folders
     After command #sudo codesign --force --deep --sign - /Applications/far2l.app# it is enough to confirm permission only once.
 
@@ -1574,6 +1582,7 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
   Send currently running command to the background          #Ctrl+Alt+Z#
 
   See also: ~pseudo-commands~@SpecCmd@
+  See also ~Operating system commands~@OSCommands@
 
 @UIBackends
 $ #UI Backends#
@@ -3588,7 +3597,7 @@ $ #Settings dialog: editor#
                           котором стоит курсор.
 
   #Use .editorconfig#       Processing .editorconfig parameters
-  #settings files#          (see https://editorconfig.org for details)
+  #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
 
   #Lock editing of#         When a file with the Read-only attribute
   #read-only files#         is opened for editing, the editor also
@@ -3817,7 +3826,12 @@ change the view mode settings. First, it offers to select the desired mode from
 the list. In this list "Brief mode" item corresponds to brief panel mode
 (#LeftCtrl-1#), "Medium" corresponds to medium panel mode (#LeftCtrl-2#) and so
 on. The last item, "Alternative full", corresponds to view mode called with
-#LeftCtrl-0#. After selecting the mode, you may change the following settings:
+#LeftCtrl-0#.
+    #Enter# or #F4#      - edit selected mode
+    #Ctrl+Enter#       - apply selected mode to active panel
+    #Ctrl+Shift+Enter# - apply selected mode to passive panel
+
+    After selecting the mode, you may change the following settings:
 
   - #Column types# - column types are encoded as one or several
 characters, delimited with commas. Allowed column types are:

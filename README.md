@@ -43,9 +43,11 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * See also (in external documents):
     * [Change log](changelog.md)
     * [Releases](https://github.com/elfmz/far2l/releases)
+    * [Python plugin readme](python/configs/plugins/read-en.txt)
     * [Notes on porting and FAR Plugin API changes](HACKING.md)
     * [Coding style](CODESTYLE.md)
     * [Testing](testing/README.md)
+    * [DUMPER](DUMPER.md)
 
 <a name="gstarted"></a>
 ## Getting Started
@@ -84,7 +86,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 | **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (\*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
 | **Typical<br>use case:** | **Servers**,<br>embedded<br>(\*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
-| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
+| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | Install `far2l` with<br><sup>`--no-install-recommends`<br>and use `far2l` due to<br>[auto downgrade](#downgrade)<br>(since _2.6.5~ds-3_ /<br>Ubuntu 25.10+)</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
 | Community [PPA](#community_bins)<br><sup>(packages names):</sup> | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` |
 
 <sub><a name="downgrade"></a>_Note_: When running far2l automatically downgrade
@@ -111,14 +113,19 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
 <a name="debian"></a>
 #### Debian/Ubuntu binaries from the official repositories
 
+* **GUI** backend (Debian since far2l _2.6.4_ / Ubuntu 25.04+)
+    ```sh
+    apt install far2l-wx
+    ```
+
 * **TTY X/Xi** backends only (Debian / Ubuntu 23.10+)
     ```sh
     apt install far2l
     ```
 
-* **GUI** backend (Debian since far2l _2.6.4_ / Ubuntu 25.04+)
+* **TTY** backends only – do not install X11 dependencies and dependencies used in the NetRocks plugin (Debian since far2l _2.6.5~ds-3_ / Ubuntu 25.10+)
     ```sh
-    apt install far2l-wx
+    apt install --no-install-recommends far2l
     ```
 
 <sub>**Debian** has far2 in **sid-unstable** / **13 trixie-testing** / **12 bookworm-backports**; **Ubuntu** since **23.10**.
@@ -248,7 +255,7 @@ By default far2l uses pre-generated "hardcoded" UNICODE characters properties. B
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 but you must have installed additional packages within yours system:
-`python3-dev`,
+`python3-dev` and
 `python3-cffi`.
 
 
@@ -442,8 +449,9 @@ but vanilla PuTTY can not transfer clipboard.
             sudo apt remove far2l*                      # required if any far2l was installed
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository --remove ppa:far2l-team/ppa
+            #sudo apt install far2l-wx  # (!) use if you need plain+TTY|Xi+GUI backends
             #sudo apt install far2l     # (!) use if you need plain+TTY|Xi backends
-            #sudo apt install far2l-wx  # (!) use if you need plain+GUI backends
+            #sudo apt install --no-install-recommends far2l  # (!) use only since 2.6.5~ds-3 in 25.10 if you need only plain backend
             ```
 
     </details>
@@ -459,9 +467,6 @@ but vanilla PuTTY can not transfer clipboard.
 
 ## Notes on porting and FAR Plugin API changes
  * See [HACKING.md](HACKING.md)
-
-## Testing
- * See [testing/README.md](testing/README.md)
 
 ## Known issues:
 * Only valid translations are English, Russian, Ukrainian and Belarussian (interface only), all other languages require deep correction.

@@ -17427,7 +17427,7 @@ SetColorMenu
 "&Menu"
 "&Menú"
 "&Меню"
-"Меню"
+"&Меню"
 
 SetColorHMenu
 "&Горизонтальное меню"
@@ -17518,26 +17518,26 @@ SetDefaultColors
 "&Ужыць прадвызначаныя колеры"
 
 SetDefaultColorsRGB
-"&Установить стандартные цвета (RGB)"
-"Set de&fault colors (RGB)"
-"N&astavit výchozí barvy (RGB)"
-"Setze Standard&farben (RGB)"
-"Alapért. s&zínek (RGB)"
-"&Ustaw kolory domyślne (RGB)"
-"Poner colores prede&terminados (RGB)"
-"&Встановити стандартні кольори (RGB)"
-"&Ужыць прадвызначаныя колеры (RGB)"
+"Установить стандартные &цвета (RGB)"
+"Set default colors (&RGB)"
+"Nastavit výchozí &barvy (RGB)"
+"Setze Standardfarben (&RGB)"
+"Alapért. színek (&RGB)"
+"Ustaw kolory domyślne (&RGB)"
+"Poner colores predeterminados (&RGB)"
+"Встановити &стандартні кольори (RGB)"
+"У&жыць прадвызначаныя колеры (RGB)"
 
 SetBW
-"Чёрно-бел&ый режим"
-"&Black and white mode"
-"Černo&bílý mód"
-"Schwarz && &Weiß"
-"Fekete-fe&hér mód"
-"&Tryb czarno-biały"
-"Modo &blanco y negro"
-"Чорно-біл&ий режим"
-"Чорна-бел&ы рэжым"
+"&Тёмная тема"
+"Dark m&ode"
+"&Tmavý mód"
+"Dunkelmod&us"
+"Sötét mó&d"
+"&Tryb ciemny"
+"Modo &oscuro"
+"&Темна тема"
+"&Цёмная тэма"
 
 Palette
 "П&алитра"
@@ -19969,6 +19969,17 @@ l:
 "Editar modo de paneles"
 "Режими панелі"
 "Становішча панэляў"
+
+EditPanelModesBottom
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Strg+Enter Strg+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
 
 EditPanelModesBrief
 l:

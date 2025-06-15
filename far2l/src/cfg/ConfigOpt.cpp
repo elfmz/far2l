@@ -456,6 +456,8 @@ const ConfigOpt g_cfg_opts[] {
 	{false, NSecKeyMacros, "DateFormat", &Opt.Macro.strDateFormat, L"%a %b %d %H:%M:%S %Z %Y"},
 	{false, NSecKeyMacros, "CONVFMT", &Opt.Macro.strMacroCONVFMT, L"%.6g"},
 	{false, NSecKeyMacros, "CallPluginRules", &Opt.Macro.CallPluginRules, 0},
+	{true,  NSecKeyMacros, "KeyRecordCtrlDot", &Opt.Macro.strKeyMacroCtrlDot, szCtrlDot},
+	{true,  NSecKeyMacros, "KeyRecordCtrlShiftDot", &Opt.Macro.strKeyMacroCtrlShiftDot, szCtrlShiftDot},
 
 	{false, NSecPolicies, "ShowHiddenDrives", &Opt.Policies.ShowHiddenDrives, 1},
 	{false, NSecPolicies, "DisabledOptions", &Opt.Policies.DisabledOptions, 0},
@@ -717,13 +719,11 @@ void ConfigOptLoad()
 	if (Opt.ViOpt.TabSize < 1 || Opt.ViOpt.TabSize > 512)
 		Opt.ViOpt.TabSize = 8;
 
-	cfg_reader.SelectSection(NSecKeyMacros);
+	if (KeyNameToKey(Opt.Macro.strKeyMacroCtrlDot) == KEY_INVALID)
+		Opt.Macro.strKeyMacroCtrlDot = szCtrlDot;
 
-	FARString strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlDot", szCtrlDot);
-	Opt.Macro.KeyMacroCtrlDot = KeyNameToKey(strKeyNameFromReg, KEY_CTRLDOT);
-
-	strKeyNameFromReg = cfg_reader.GetString("KeyRecordCtrlShiftDot", szCtrlShiftDot);
-	Opt.Macro.KeyMacroCtrlShiftDot = KeyNameToKey(strKeyNameFromReg, KEY_CTRLSHIFTDOT);
+	if (KeyNameToKey(Opt.Macro.strKeyMacroCtrlShiftDot) == KEY_INVALID)
+		Opt.Macro.strKeyMacroCtrlShiftDot = szCtrlShiftDot;
 
 	Opt.EdOpt.strWordDiv = Opt.strWordDiv;
 	FileList::ReadPanelModes(cfg_reader);

@@ -451,6 +451,11 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 	TPointerArray<PluginHandle> items;
 	FARString strFullName;
 
+	AnalyseInfo AInfo;
+	OpenAnalyseInfo oainfo;
+
+	fprintf(stderr, "OpenFilePlugin -> start \n" );
+
 	if (Name) {
 		ConvertNameToFull(Name, strFullName);
 		Name = strFullName;
@@ -468,7 +473,9 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 	std::unique_ptr<SafeMMap> smm;
 
 	for (int i = 0; i < PluginsCount; i++) {
+
 		pPlugin = PluginsData[i];
+
 		if (pDesiredPlugin != nullptr && pDesiredPlugin != pPlugin)
 			continue;
 
@@ -511,13 +518,24 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 				handle->pPlugin = pPlugin;
 			}
 		} else {
-			AnalyseData AData;
-			AData.lpwszFileName = Name;
-			AData.pBuffer = smm ? (const unsigned char *)smm->View() : nullptr;
-			AData.dwBufferSize = smm ? (DWORD)smm->Length() : 0;
-			AData.OpMode = OpMode;
+//			AnalyseInfo AInfo;
 
-			if (pPlugin->Analyse(&AData)) {
+			AInfo.StructSize = sizeof(AnalyseInfo);
+			AInfo.FileName = Name;
+//			AInfo.Buffer = smm ? (const unsigned char *)smm->View() : NULL;
+			AInfo.Buffer = smm ? (unsigned char *)smm->View() : NULL;
+			AInfo.BufferSize = smm ? (DWORD)smm->Length() : 0;
+			AInfo.OpMode = OpMode;
+			AInfo.Instance = 0;
+
+			HANDLE hhandle = pPlugin->Analyse(&AInfo);
+			oainfo.Handle = hhandle;
+			oainfo.Info = &AInfo;
+
+			fprintf(stderr, "hhandle = pPlugin->Analyse(&AInfo);     = %llX\n", (long long unsigned int)hhandle);
+
+			if (hhandle != INVALID_HANDLE_VALUE) {
+				fprintf(stderr, "Add plugin item...  \n" );
 				PluginHandle *handle = items.addItem();
 				handle->pPlugin = pPlugin;
 				handle->hPlugin = INVALID_HANDLE_VALUE;
@@ -529,6 +547,7 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 	}
 
 	if (items.getCount() && (hResult != (HANDLE)-2)) {
+
 		bool OnlyOne = (items.getCount() == 1)
 				&& !(Name && Opt.PluginConfirm.OpenFilePlugin && Opt.PluginConfirm.StandardAssociation
 						&& Opt.PluginConfirm.EvenIfOnlyOnePlugin);
@@ -574,7 +593,9 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 		}
 
 		if (pResult && pResult->hPlugin == INVALID_HANDLE_VALUE) {
-			HANDLE h = pResult->pPlugin->OpenPlugin(OPEN_ANALYSE, 0);
+
+			oainfo.StructSize = sizeof(OpenAnalyseInfo);
+			HANDLE h = pResult->pPlugin->OpenPlugin(OPEN_ANALYSE, (INT_PTR)&oainfo);
 
 			if (h != INVALID_HANDLE_VALUE)
 				pResult->hPlugin = h;
@@ -945,11 +966,14 @@ int PluginManager::PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int Item
 
 void PluginManager::GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *Info)
 {
+//	fprintf(stderr, " [GetOpenPluginInfo];\n");
+
 	if (!Info)
 		return;
 
 	memset(Info, 0, sizeof(*Info));
 	PluginHandle *ph = (PluginHandle *)hPlugin;
+
 	ph->pPlugin->GetOpenPluginInfo(ph->hPlugin, Info);
 
 	if (!Info->CurDir)	// хмм...
@@ -958,6 +982,8 @@ void PluginManager::GetOpenPluginInfo(HANDLE hPlugin, OpenPluginInfo *Info)
 	if ((Info->Flags & OPIF_REALNAMES) && (CtrlObject->Cp()->ActivePanel->GetPluginHandle() == hPlugin)
 			&& *Info->CurDir && !IsNetworkServerPath(Info->CurDir))
 		apiSetCurrentDirectory(Info->CurDir, false);
+
+//	fprintf(stderr, " [GetOpenPluginInfo] OK;\n");
 }
 
 int PluginManager::ProcessKey(HANDLE hPlugin, int Key, unsigned int ControlState)
@@ -1463,6 +1489,8 @@ bool PluginManager::GetDiskMenuItem(Plugin *pPlugin, int PluginItem, bool &ItemP
 
 int PluginManager::UseFarCommand(HANDLE hPlugin, int CommandType)
 {
+	fprintf(stderr, " GetOpenPluginInfo far cmd\n");
+
 	OpenPluginInfo Info;
 	GetOpenPluginInfo(hPlugin, &Info);
 

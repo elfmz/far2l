@@ -3826,7 +3826,12 @@ change the view mode settings. First, it offers to select the desired mode from
 the list. In this list "Brief mode" item corresponds to brief panel mode
 (#LeftCtrl-1#), "Medium" corresponds to medium panel mode (#LeftCtrl-2#) and so
 on. The last item, "Alternative full", corresponds to view mode called with
-#LeftCtrl-0#. After selecting the mode, you may change the following settings:
+#LeftCtrl-0#.
+    #Enter# or #F4#      - edit selected mode
+    #Ctrl+Enter#       - apply selected mode to active panel
+    #Ctrl+Shift+Enter# - apply selected mode to passive panel
+
+    After selecting the mode, you may change the following settings:
 
   - #Column types# - column types are encoded as one or several
 characters, delimited with commas. Allowed column types are:

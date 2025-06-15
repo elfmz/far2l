@@ -3175,7 +3175,7 @@ a belső szerkesztőben.
 
 
   #Use .editorconfig#       Processing .editorconfig parameters
-  #settings files#          (see https://editorconfig.org for details)
+  #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
 
   #Írásra megnyitott fáj-#  Lehetővé teszi a más programokban írásra
   #lok szerkeszthetők#      ^<wrap>megnyitott fájlok szerkesztését. Ez a

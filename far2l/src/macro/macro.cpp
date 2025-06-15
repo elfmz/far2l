@@ -715,7 +715,7 @@ bool KeyMacro::ProcessKey(FarKey Key)
 {
 
 	// fix for https://github.com/elfmz/far2l/issues/2767
-	if (Opt.Macro.KeyMacroCtrlShiftDot == KEY_CTRLSHIFTDOT) { // default setting
+	if (Opt.Macro.strKeyMacroCtrlShiftDot == L"CtrlShift.") { // default setting
 		if (Key == (KEY_CTRL | KEY_SHIFT | '>')) {
 			Key = KEY_CTRL | KEY_SHIFT | KEY_DOT;
 		}

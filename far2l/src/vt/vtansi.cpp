@@ -1266,6 +1266,7 @@ struct VTAnsiContext
 				ParseOSCPalette(es_argv[0], os_cmd_arg.c_str(), os_cmd_arg.size());
 
 			} else {
+				_crds.reset(); // prevent clipboard dialog miss repaints
 				vt_shell->OnOSCommand(es_argv[0], os_cmd_arg);
 			}
 		}

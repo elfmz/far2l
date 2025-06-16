@@ -365,7 +365,7 @@ bool KeyToKeyLayoutCompare(FarKey Key, FarKey CompareKey)
 	//	Key = KeyToVKey[Key&0xFFFF]&0xFF;
 	//	CompareKey = KeyToVKey[CompareKey&0xFFFF]&0xFF;
 
-	return (Key && (Key == CompareKey || Xlator(0).Transcode((wchar_t)Key) == (wchar_t)CompareKey));
+	return (Key && (Key == CompareKey || XlatOneChar((wchar_t)Key) == (wchar_t)CompareKey));
 }
 
 // Должно вернуть клавишный Eng эквивалент Key
@@ -374,7 +374,7 @@ FarKey KeyToKeyLayout(FarKey Key)
 	_KEYMACRO(CleverSysLog Clev(L"KeyToKeyLayout()"));
 	_KEYMACRO(SysLog(L"Param: Key=%08X", Key));
 	if (uint32_t(Key) > 0x7f) {
-		return Xlator(0).Transcode(Key);
+		return XlatOneChar(Key);
 	}
 	return Key;
 	/*
@@ -486,7 +486,7 @@ static DWORD KeyMsClick2ButtonState(DWORD Key, DWORD &Event)
 	return 0;
 }
 
-DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bool AllowSynchro)
+static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bool AllowSynchro)
 {
 	_KEYMACRO(CleverSysLog Clev(L"GetInputRecord()"));
 	static int LastEventIdle = FALSE;
@@ -1274,6 +1274,18 @@ DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bo
 	}
 	return (CalcKey);
 }
+
+DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bool AllowSynchro)
+{
+	DWORD out = GetInputRecordInner(rec, ExcludeMacro, ProcessMouse, AllowSynchro);
+	if ((out & (KEY_CTRL | KEY_ALT | KEY_RCTRL | KEY_RALT)) == 0) { // && out < 0xffff
+		if ( (out & KEY_MASKF) != 0 && (out & KEY_MASKF) < 0xffff) {
+			XlatTrackKeypress(out);
+		}
+	}
+	return out;
+}
+
 
 DWORD PeekInputRecord(INPUT_RECORD *rec, bool ExcludeMacro)
 {

@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtshell.h"
 #include "ConfigRW.hpp"
 #include "AllXLats.hpp"
+#include "xlat.hpp"
 
 Options Opt = {0};
 
@@ -587,6 +588,7 @@ void InputSettings()
 			Opt.XLat.XLat = xlats[SelectedXLat];
 		}
 		ApplyConsoleTweaks();
+		XlatReinit();
 	}
 }
 

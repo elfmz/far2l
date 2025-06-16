@@ -164,7 +164,7 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
 
 
  #Special key mapping in macOS#
-    - keys #Option# map to #Alt# (left) и #Grey# (right);
+    - keys #Option# map to #Alt#;
     - far2l-GUI only: both keys #Command# act as Left #Ctrl#, both keys #Ctrl# act as Right #Ctrl#;
     - #Clear# key on the numeric keypad toggles NumLock mode;
     - numpad #0# functions as #Insert# when NumLock is off;

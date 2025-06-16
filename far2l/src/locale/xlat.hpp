@@ -38,29 +38,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
-class Xlator
-{
-	std::wstring _latin, _local;
-	struct Rules : std::vector<std::pair<wchar_t, wchar_t>>
-	{
-		void InitFromValue(const std::wstring &v);
+// invoke after configs could be changed, otherwise configs re-read each 10 seconds
+void XlatReinit();
 
-	} _after_latin, _after_local, _after_other;
+// invoke on each key press, to hint which keyboard layout in effect right now
+void XlatTrackKeypress(wchar_t Key);
 
-	size_t _min_len_table{0};
-	enum
-	{
-		UNKNOWN,
-		LATIN,
-		LOCAL,
-	} _cur_lang{UNKNOWN};
+// transocde single character from one layout to another
+wchar_t XlatOneChar(wchar_t Chr);
 
-	void InitFromValues(KeyFileValues &kfv);
-
-public:
-	Xlator(DWORD flags);
-	bool Valid() const { return _min_len_table != 0; }
-	wchar_t Transcode(wchar_t chr);
-};
-
+// transocde substring from one layout to another
 wchar_t *WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags);

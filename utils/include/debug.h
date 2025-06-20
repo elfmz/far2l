@@ -28,6 +28,7 @@
 #include <bitset>
 #include <iterator>
 #include <algorithm>
+#include <array>
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:

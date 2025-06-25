@@ -255,25 +255,8 @@ AWSFile S3Repository::GetFileInfo(const std::string &path)
     Path localPath(path);
 
     if (IsFolder(localPath) || localPath.key().empty()) {
-        Aws::S3::Model::ListObjectsV2Request request;
-        request.SetBucket(localPath.bucket());
-        request.SetPrefix(localPath.keyWithSlash());
-
-        auto outcome = _client->ListObjectsV2(request);
-        if (outcome.IsSuccess()) {
-            auto result = AWSFile(ExtractFileName(localPath.key()), false);
-            const auto& contents = outcome.GetResult().GetContents();
-            for (const auto& object : contents) {
-                result.size += object.GetSize();
-                result.UpdateModification(object.GetLastModified());
-            }
-            return result;
-
-        } else {
-            throw ConstructProtocolError(outcome.GetError(), "Access denied");
-        }
+        return AWSFile(ExtractFileName(localPath.key()), false); // No modification date or size for folders
     }
-		
     Aws::S3::Model::HeadObjectRequest request;
 	request.SetBucket(localPath.bucket());
 	request.SetKey(localPath.key());

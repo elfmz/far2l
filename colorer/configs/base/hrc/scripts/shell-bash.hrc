@@ -164,6 +164,9 @@
     <block start="/\b(function)\b\s*(?{Error}.*?)\M(%cmdbreak;)/" end="/\M%cmdbreak;/" scheme="def:empty"
         region00="def:Outlined" region01="CommandReserved"/>
 
+    <!-- variable assignments (append) -->
+    <block start="/\b\M(%var;)\+\=\(?!/" end="/\M%cmdbreak;/" scheme="variable_assignments_append_only"/>
+
     <inherit scheme="shell-posix:script_control">
         <virtual scheme="shell-posix:variables" subst-scheme="variables"/>
         <virtual scheme="shell-posix:variable_assignments" subst-scheme="variable_assignments"/>
@@ -190,7 +193,7 @@
         region01="CommandBuiltin"/>
 
     <!-- readonly -aAfp name[=word]... -->
-    <block start="/\b(readonly)\b(\s+-[aAfp]+)*/" end="/\M%cmdbreak;/" scheme="cmd-parameter-variable-assignments"
+    <block start="/\b(readonly)\b(\s+-[aAfp]+)*/" end="/\M%cmdbreak;/" scheme="readonly"
         region01="CommandBuiltin"/>
 
     <!-- declare/local/typeset -aAfFgiIlnrtux -p name[=word]... -->
@@ -489,11 +492,38 @@
     <block start="/\M\[/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignment_array_hash"/>
 </scheme>
 
+<!-- variable_assignments_append is split into 2 schemes variable_assignments_append
+     and variable_assignments_append_caught. This was done to allow turning off this
+     hightlighting in scheme variable_assignments. For example, this is necessary
+     for the 'readonly' command, in which it is impossible to modify the variable.
+-->
+
+<scheme name="variable_assignments_append_caught">
+    <!-- variable name -->
+    <block start="/\M%var;/" end="/\+=/" scheme="variable_names" region10="Symbol"/>
+    <!-- expression -->
+    <block start="/=?#1/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="parameter_expansion" region="String"/>
+</scheme>
+
+<scheme name="variable_assignments_append">
+    <block start="/\s*\M(%var;)\+\=/" end="//" scheme="variable_assignments_append_caught"/>
+</scheme>
+
+<scheme name="variable_assignments_append_only">
+    <inherit scheme="variable_assignments_append"/>
+    <inherit scheme="shell-posix:escape_newline"/>
+    <!-- skip whitespace -->
+    <regexp match="/\s+/"/>
+    <!-- anything else is an error -->
+    <block start="//" end="/\M%cmdbreak;/" scheme="cmd-error"/>
+</scheme>
+
 <scheme name="variable_assignments">
     <!-- whole array assignment -->
     <block start="/\s*\M(%var;)\+?\=\(/" end="//" scheme="variable_assignment_array"/>
     <!-- element array assignment -->
     <block start="/\s*\M(%var;)\[.*\]=/" end="/\M[\s\);&amp;&lt;&gt;|]|$/" scheme="variable_assignment_array_element"/>
+    <inherit scheme="variable_assignments_append"/>
     <inherit scheme="shell-posix:variable_assignments">
         <virtual scheme="shell-posix:variable_assignments_caught" subst-scheme="variable_assignments_caught"/>
     </inherit>
@@ -516,6 +546,7 @@
         <virtual scheme="shell-posix:redirections_start" subst-scheme="redirections_start"/>
         <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
         <virtual scheme="shell-posix:evaluations" subst-scheme="evaluations"/>
+        <virtual scheme="shell-posix:script_control" subst-scheme="script_control"/>
     </inherit>
 </scheme>
 
@@ -591,6 +622,7 @@
         <symb name="&amp;&amp;"/> <symb name="||"/>
         <symb name="&amp;"/>      <symb name="^"/>
         <symb name="|"/>
+        <symb name="("/>          <symb name=")"/>
     </keywords>
 </scheme>
 
@@ -649,6 +681,12 @@
         <virtual scheme="shell-posix:script_words" subst-scheme="script_words"/>
         <virtual scheme="shell-posix:variable_assignments" subst-scheme="variable_assignments"/>
         <virtual scheme="shell-posix:variable_names" subst-scheme="variable_names"/>
+    </inherit>
+</scheme>
+
+<scheme name="readonly">
+    <inherit scheme="cmd-parameter-variable-assignments">
+        <virtual scheme="variable_assignments_append" subst-scheme="def:empty"/>
     </inherit>
 </scheme>
 

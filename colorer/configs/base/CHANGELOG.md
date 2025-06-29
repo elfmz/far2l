@@ -28,6 +28,10 @@
 - [shell-posix] fix unhighlighted areas after updating colorer from 1.3.3 to 1.4.0
 - [shell-bash] fix unhighlighted areas after updating colorer from 1.3.3 to 1.4.0
 - [dockerfile] fix unhighlighted areas after updating colorer from 1.3.3 to 1.4.0
+- [blue.hrd] fix colors for cross
+- [json] fix comments in json
+- [shell-posix] recognize line continuation after "while; do...done" / "for; do...done" blocks
+- [shell-bash] recornize bash-specific syntax in for loops, recornize an append operator
 
 ### Changed
 - Simplified catalog.xml.
@@ -42,6 +46,9 @@
 - rename lib/default.hrc to lib/def.hrc
 - move 'default' type implementation from proto.hrc to base/default.hrc
 - [shell-posix] allow to include shell-posix scheme as subscheme enclosed in quotes
+- Add *.xaml to xml prototype
+- Add *.lpr to pascal prototype
+- Add *.lfm to delphiform prototype
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.
@@ -80,6 +87,16 @@
 - [terraform] add a new schema for HashiCorp Terraform
 - [dockerfile] add a new schema for Dockerfile
 - [jenkinsfile] add a new schema for Jenkins configuration (Jenkinsfile)
+- [markdown] add Obsidian Templater blocks
+- [pascal] add 'object' to highlight
+- [pascal] add some types
+- [pascal] highlight noAscii symbols
+- [pascal] add abstract and sealed for object; type NativeInt, NativeUint
+- [c] add format string length modifiers since C99
+- [navy-mirror.hrd] add colors for cross
+- [farmenu] Add optional @ before Lua and PowerShellFar prefixes
+- [farmenu] Support luas: in addition to lua:
+- [powershell] Add to outlined: #requires and top level process|begin|end|dynamicparam|clean blocks.
 
 ## [1.2.0] - 2021-09-12
 

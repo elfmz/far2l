@@ -37,6 +37,17 @@ bool get_os_release_PrettyName(FARString &fsPrettyName)
 	return false;
 }
 
+static FARString AboutEditTitle(bool b_hide_empty = false)
+{
+	FARString title (Msg::MenuAboutFar);
+	title+= L" - far:about";
+	if (b_hide_empty) {
+		title+= L" *";
+	}
+	RemoveChar(title, L'&');
+	return title;
+}
+
 void FarAbout(PluginManager &Plugins)
 {
 	static bool b_hide_empty = true;
@@ -46,14 +57,7 @@ void FarAbout(PluginManager &Plugins)
 	mi.Flags = b_hide_empty ? LIF_HIDDEN : 0;
 	mis.Flags = LIF_SEPARATOR;
 
-	FARString title (Msg::MenuAboutFar);
-	title+= L" - far:about";
-	if (b_hide_empty) {
-		title+= L" *";
-	}
-	RemoveChar(title, L'&');
-
-	VMenu ListAbout(title, nullptr, 0, ScrY-4);
+	VMenu ListAbout(AboutEditTitle(b_hide_empty), nullptr, 0, ScrY-4);
 	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);
@@ -359,7 +363,6 @@ void FarAbout(PluginManager &Plugins)
 								mip = ListAbout.GetItemPtr(i);
 								mip->Flags &= ~LIF_HIDDEN;
 							}
-							ListAbout.SetTitle(L"far:about");
 						}
 						else {
 							b_hide_empty = true;
@@ -368,9 +371,9 @@ void FarAbout(PluginManager &Plugins)
 								if (mip->strName.Ends(L": "))
 									mip->Flags |= LIF_HIDDEN;
 							}
-							ListAbout.SetTitle(L"far:about *");
 						}
 					}
+					ListAbout.SetTitle(AboutEditTitle(b_hide_empty));
 					ListAbout.Show();
 					break;
 				default:

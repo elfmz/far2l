@@ -46,7 +46,14 @@ void FarAbout(PluginManager &Plugins)
 	mi.Flags = b_hide_empty ? LIF_HIDDEN : 0;
 	mis.Flags = LIF_SEPARATOR;
 
-	VMenu ListAbout(b_hide_empty ? L"far:about *" : L"far:about", nullptr, 0, ScrY-4);
+	FARString title (Msg::MenuAboutFar);
+	title+= L" - far:about";
+	if (b_hide_empty) {
+		title+= L" *";
+	}
+	RemoveChar(title, L'&');
+
+	VMenu ListAbout(title, nullptr, 0, ScrY-4);
 	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
 	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
 	//ListAbout.SetFlags(VMENU_WRAPMODE);

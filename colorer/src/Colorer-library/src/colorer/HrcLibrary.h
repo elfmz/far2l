@@ -8,35 +8,40 @@
 #include "colorer/xml/XmlInputSource.h"
 
 /** Informs application about internal HRC parsing problems.
-    @ingroup colorer
-*/
+ */
 class HrcLibraryException : public Exception
 {
  public:
-  explicit HrcLibraryException(const UnicodeString& msg) noexcept
-      : Exception("[HrcLibraryException] " + msg)
-  {
-  }
+  explicit HrcLibraryException(const UnicodeString& msg) noexcept : Exception("[HrcLibraryException] " + msg) {}
 };
 
-/** Abstract template of HrcLibrary class implementation.
-    Defines basic operations of loading and accessing
-    HRC information.
-    @ingroup colorer
+/** HrcLibrary class.
+    Defines basic operations of loading and accessing HRC information.
 */
 class HrcLibrary
 {
  public:
   HrcLibrary();
 
-  /** Loads HRC from specified InputSource stream.
-      Referred HRC file can contain prototypes and
-      real types definitions. If it contains just prototype definition,
-      real type load must be performed before using with #loadType() method
-      @param is InputSource stream of HRC file
-  */
+  /** Loads the contents of the HRC file from the passed XmlInputSource.
+   * All the elements included in the file are fully loaded: prototype, package, type.
+   * If the file does not contain a type definition, then before further use of this type,
+   * it must be loaded using the #loadFileType() method.
+   * @param is XmlInputSource stream of HRC file
+   */
   void loadSource(XmlInputSource* is);
+
+  /** Loads the contents of the HRC file from the passed XmlInputSource.
+   * Only the prototype and common/external packages are loaded.
+   * If the file does not contain a type definition, then before further use of this type,
+   * it must be loaded using the #loadFileType() method.
+   * @param is XmlInputSource stream of HRC file
+   */
+  void loadProtoTypes(XmlInputSource* is);
+
   void loadFileType(FileType* filetype);
+
+  void loadHrcSettings(const XmlInputSource& is);
 
   /** Enumerates sequentially all prototypes
       @param index index of type.
@@ -58,8 +63,7 @@ class HrcLibrary
       @param typeNo Sequential number of type, if more than one type
                     satisfy these input parameters.
   */
-  FileType* chooseFileType(const UnicodeString* fileName, const UnicodeString* firstLine,
-                           int typeNo = 0);
+  FileType* chooseFileType(const UnicodeString* fileName, const UnicodeString* firstLine, int typeNo = 0);
 
   size_t getFileTypesCount();
 

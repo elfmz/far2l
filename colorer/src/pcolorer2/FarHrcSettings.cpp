@@ -8,7 +8,7 @@
 void FarHrcSettings::loadUserHrc(const UnicodeString* filename)
 {
   if (filename && !filename->isEmpty()) {
-    parserFactory->loadHrcPath(*filename);
+    parserFactory->loadHrcPath(filename);
   }
 }
 

@@ -516,6 +516,7 @@ static FARString ConfigOptEditTitle(bool hide_unchanged = false)
 	if (hide_unchanged) {
 		title+= L" *";
 	}
+	RemoveChar(title, L'&');
 	return title;
 }
 

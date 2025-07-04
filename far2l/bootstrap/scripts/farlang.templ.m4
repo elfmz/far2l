@@ -14857,7 +14857,7 @@ MenuProcessList
 "Futó p&rogramok      Ctrl+W"
 "Lista za&dań               Ctrl+W"
 "Lista de &tareas       Ctrl+W"
-"Список &завдань           Ctrl+W"
+"Список &завдань            Ctrl+W"
 "Спіс &задачаў              Ctrl+W"
 
 MenuFarConfig

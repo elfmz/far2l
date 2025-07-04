@@ -6,6 +6,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
 * _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
 * _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
+* _New:_ Separate icons for WX versions of far2l and far2ledit
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))

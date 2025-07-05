@@ -10,6 +10,8 @@ $^#FarColorer#
 
     ~Plugin's menus~@menu@
 
+    ~Logging~@log
+
     ~Colorer base`s settings~@customize@
 
     ~Schemes settings~@confighrc@
@@ -119,6 +121,19 @@ coloring.
 Values of the form <default-znach.> shows that the parameter is "znach." It is set
 in the system (non-user) settings of the scheme or scheme is taken from default.
     Save all the changes occurs after clicking "OK" button.
+
+@log
+$^#Logging#
+
+  The plugin implements the ability to log work into the common logging mechanism far2l - sdterr.
+  Logging is disabled by default.
+  Enabling logging
+
+      export FAR2L_STDERR=somefile.log
+      export COLORER_VERBOSE=debug
+      far2l
+
+  The following logging levels are supported: off, error, warning, info, debug, trace
 
 @add
 $# Outliner

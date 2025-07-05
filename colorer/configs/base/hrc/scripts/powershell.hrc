@@ -7,7 +7,7 @@ xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hr
 <type name="powershell">
 <annotation><documentation><![CDATA[
 
-powershell.hrc by Roman Kuzmin, aka nightroman, 2024-04-18
+powershell.hrc by Roman Kuzmin, aka nightroman, 2025-06-17
 visual.hrd is recommended as optimized for powershell.hrc
 
 Regex syntax in strings after regex operators, [regex], and <#regex#>
@@ -88,7 +88,7 @@ SQL syntax in here-strings after <#sql#>
     <inherit scheme="def:empty"/>
 </scheme>
 <scheme name="comment">
-    <regexp match="/(?{Directive}%s-rem;#requires)(?{Comment}.*)/i"/>
+    <regexp match="/(?{def:Outlined}(?{Directive}%s-rem;#requires))(?{Comment}.*)/i"/>
     <regexp match="/(?{Comment}%s-rem;(?{def:Outlined}#{3}#?!.*))/"/>
     <block scheme="_comment" region="Comment" start="/%s-rem;#+/" end="/$/"/>
     <block scheme="_comment" region="Comment" start="/(?{start}%s-rem;&lt;#)/" end="/(?{end}#&gt;)\s*/"/>
@@ -1029,13 +1029,29 @@ SQL syntax in here-strings after <#sql#>
     start="/(?{start}(?{Keyword}param))%token;?!/i" end="/(?{end}\))?#1/"/>
 
     <block scheme="statement-block"
-    start="/(?{start}(?{Keyword}process|begin|end|dynamicparam))%token;?!/i" end="/(?{end}\})?#1/"/>
+    start="/(?{start}(?{Keyword}process|begin|end|dynamicparam|clean))%token;?!/i" end="/(?{end}\})?#1/"/>
+
+    <inherit scheme="statement-list"/>
+</scheme>
+
+<scheme name="script-file">
+    <inherit scheme="base">
+        <virtual scheme="def:empty" subst-scheme="help"/>
+    </inherit>
+
+    <inherit scheme="cmdlet-binding"/>
+
+    <block scheme="param"
+    start="/(?{start}(?{def:Outlined}(?{Keyword}param)))%token;?!/i" end="/(?{end}\))?#1/"/>
+
+    <block scheme="statement-block"
+    start="/(?{start}(?{def:Outlined}(?{Keyword}process|begin|end|dynamicparam|clean)))%token;?!/i" end="/(?{end}\})?#1/"/>
 
     <inherit scheme="statement-list"/>
 </scheme>
 
 <scheme name="powershell">
-    <inherit scheme="script-block"/>
+    <inherit scheme="script-file"/>
 </scheme>
 </type>
 </hrc>

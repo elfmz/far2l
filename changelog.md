@@ -10,7 +10,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * _Temporary panel plugin_: Show file groups
-* _colorer plugin_: Update colorer schemes to v1.2.0.68
+* _colorer plugin_: Update colorer schemes to v1.2.0.76
 * _colorer plugin_: Update colorer library to v1.4.1-10.05.2025
 * Several bugfixes
 

@@ -511,10 +511,12 @@ public:
 
 static FARString ConfigOptEditTitle(bool hide_unchanged = false)
 {
-	FARString title = L"far:config";
+	FARString title (Msg::MenuFarConfig);
+	title+= L" - far:config";
 	if (hide_unchanged) {
 		title+= L" *";
 	}
+	RemoveChar(title, L'&');
 	return title;
 }
 

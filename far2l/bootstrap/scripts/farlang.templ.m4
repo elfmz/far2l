@@ -14857,8 +14857,30 @@ MenuProcessList
 "Futó p&rogramok      Ctrl+W"
 "Lista za&dań               Ctrl+W"
 "Lista de &tareas       Ctrl+W"
-"Список & завдань           Ctrl+W"
+"Список &завдань            Ctrl+W"
 "Спіс &задачаў              Ctrl+W"
+
+MenuFarConfig
+"Список &настроек"
+"S&ettings list"
+"&Seznam nastavení"
+"Liste &der Einstellungen"
+"Beállítások listá&ja"
+"&Lista ustawień"
+"Lista de confi&guraciones"
+"Список нала&штувань"
+"Спіс настро&ек"
+
+MenuAboutFar
+"Сведения &о FAR"
+"&About FAR"
+"Informace o &FAR"
+"Über &FAR"
+"Információk a &FAR"
+"Informac&je o FAR"
+"Acerca del &FAR"
+"Інформа&ція про FAR"
+"З&весткі аб FAR"
 
 MenuSystemSettings
 l:

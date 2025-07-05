@@ -146,7 +146,7 @@
    />
   </scheme>
 
-  <entity name='format' value='[\-\+\#0\x20]*?[\d\*]*(?{}\.[\d\*]+)?(h|l|L|ll|I|I32|I64)?[SsCcsuidopxXnEefgGaAZ]'/>
+  <entity name='format' value='[\-\+\#0\x20]*?[\d\*]*(?{}\.[\d\*]+)?(h|l|L|ll|I|I32|I64|hh|j|t|z)?[SsCcsuidopxXnEefgGaAZ]'/>
   <scheme name="StringContent">
    <regexp match="/\\\\$/" region="def:Error"/>
 	 <regexp match="/((\%)[\dA-Z_]{2,}(\%))(%format;|%)?!/" region1="def:Var" region2="def:PairStart" region3="def:PairEnd"/>

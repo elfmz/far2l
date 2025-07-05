@@ -18,7 +18,12 @@
 
     <import type="def"/>
 
+    <scheme name="jsonCommentInternal">
+    </scheme>
+
     <scheme name="jsonComment">
+        <block start="/\/\//" end="/\M(&lt;\/scr|$)/i" scheme="jsonComment" region="Comment"/>
+        <block start="/\/\*/" end="/\*\//"             scheme="jsonComment" region="Comment" region00="PairStart" region10="PairEnd"/>
     </scheme>
 
     <scheme name='jsonQuote'>
@@ -49,6 +54,7 @@
 
     <scheme name="Object">
         <regexp match="/\s+/"/>
+        <inherit scheme="jsonComment"/>
         <!-- object value -->
         <block start="/:/" end="/\M,|\}/" region00="SymbolStrong" scheme="json"/>
         <!-- object key -->
@@ -101,8 +107,7 @@
 
         <regexp match="/\s+/"/>
 
-        <block start="/\/\//" end="/\M(&lt;\/scr|$)/i" scheme="jsonComment" region="Comment"/>
-        <block start="/\/\*/" end="/\*\//"             scheme="jsonComment" region="Comment" region00="PairStart" region10="PairEnd"/>
+        <inherit scheme="jsonComment"/>
 
         <block start="/(\{)/" end="/(\})/" scheme="Object"
             region00="SymbolStrong" region10="SymbolStrong"

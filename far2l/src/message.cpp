@@ -95,9 +95,8 @@ LONG_PTR WINAPI MsgDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, const wchar_t *const *Items,
 		int ItemsNumber, INT_PTR PluginNumber)
 {
-	FARString strTempStr;
 	int X1, Y1, X2, Y2;
-	int Length, BtnLength, J;
+	int Length, BtnLength;
 	DWORD I, MaxLength, StrCount;
 	BOOL ErrorSets = FALSE;
 	wchar_t *PtrStr;
@@ -231,14 +230,14 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 		ItemsNumber++;
 	}
 
-	for (J = 0; J < ItemsNumber - (EmptyText ? 1 : 0); ++J, ++I) {
+	for (int J = 0; J < ItemsNumber - (EmptyText ? 1 : 0); ++J, ++I) {
 		Str[I] = Items[J];
 	}
 
 	StrCount+= CountErrorLine;
 	MessageX1 = X1 = (ScrX - MaxLength) / 2 - 4;
 	MessageX2 = X2 = X1 + MaxLength + 9;
-	Y1 = (int(ScrY) - int(StrCount)) / 2 - 2;
+	Y1 = (int(ScrY) - int(StrCount) - 1) / 2 - 2;
 
 	if (Y1 < 0)
 		Y1 = 0;

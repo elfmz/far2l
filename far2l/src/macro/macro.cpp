@@ -713,6 +713,14 @@ int KeyMacro::LoadMacros(BOOL InitedRAM, BOOL LoadAll)
 
 bool KeyMacro::ProcessKey(FarKey Key)
 {
+
+	// fix for https://github.com/elfmz/far2l/issues/2767
+	if (Opt.Macro.strKeyMacroCtrlShiftDot == L"CtrlShift.") { // default setting
+		if (Key == (KEY_CTRL | KEY_SHIFT | '>')) {
+			Key = KEY_CTRL | KEY_SHIFT | KEY_DOT;
+		}
+	}
+
 	if (InternalInput || Key == KEY_IDLE || Key == KEY_NONE || !FrameManager->GetCurrentFrame())
 		return false;
 

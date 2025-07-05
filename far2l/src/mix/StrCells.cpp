@@ -37,7 +37,7 @@ size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 	size_t i = 0, g = 0;
 	for (; g < ng && i < n; ++g) {
 		for (; i < n; ++i) {
-			if (!CharClasses(pwz[i]).Prefix()) {
+			if (!CharClasses(pwz[i]).Xxxfix()) {
 				break;
 			}
 		}

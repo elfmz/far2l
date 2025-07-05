@@ -567,7 +567,6 @@ void Text(const WCHAR *Str, size_t Length)
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		} else if (cc.Xxxfix()) {
-			--nCells;
 			++Skipped;
 		}
 		i+= nG;
@@ -618,7 +617,6 @@ void TextEx(const WCHAR *Str, size_t Length)
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		} else	if (cc.Xxxfix()) {
-			--nCells;
 			++Skipped;
 		}
 		i+= nG;

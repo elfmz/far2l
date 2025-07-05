@@ -56,6 +56,9 @@ $^#FarColorer's settings#
      The choice does not work if the plugin is disabled.
 
   #---------------------------Custom Settings-------------------------#
+  The following four parameters are used to configure the basic library of schemes and styles
+  used in the plug-in. For more information, see ~Configuring the Schema and Style database~@customize@
+
   #catalog.xml file#
      Full file path sets default catalog file for FarColorer.
      If this field is empty FarColorer trying to find the file automatically
@@ -90,7 +93,7 @@ $^#FarColorer's settings#
      Closes dialog and save settings.
 
 @customize
-$^#Настройка базы схем и стилей#
+$^#Colorer base`s settings#
     FarColorer comes with a basic library of HRC schemas and HRD styles, the root file of which is catalog.xml .
     To change the set and behavior of HRC schemes and HRD styles, the file path parameters are used in the plugin settings dialog.,
     as well as the ~Schema Settings~@confighrc dialog.
@@ -101,7 +104,7 @@ $^#Настройка базы схем и стилей#
     1. Read the value of the "catalog.xml file"
         - if filled in, then use the specified file as catalog.xml
         - otherwise we will use catalog.xml supplied with the plugin
-    2. We're reading hrcsettings.xml included in the plug-in delivery
+    2. Read the hrcsettings.xml included in the plugin delivery
     3. Read the value of the "Custom schemas folder (hrc)"
         - if this file is filled in, then we process the file as a set of hrd-sets (an outdated method, for backward compatibility)
         - if this folder is filled in, then we load everything from it *.hrd files
@@ -110,8 +113,8 @@ $^#Настройка базы схем и стилей#
         - if this folder is filled in, then we load everything from it *.hrc files
     5. Read the value of the "Custom schemas settings file (hrcsettings)" (custom hrcsettings.xml)
         - if it is filled in, then load it.
-    	- if it is not filled in, check the environment variable COLORER_HRC_SETTINGS with the path to the file.
-     6. Читаем настройки схем из настроек плагина в far2l
+        - if it is not filled in, check the environment variable COLORER_HRC_SETTINGS with the path to the file.
+     6. Read the scheme settings from the plugin settings in far2l
 
 @confighrc
 $^#Schemes settings#

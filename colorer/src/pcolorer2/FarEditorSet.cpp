@@ -22,6 +22,7 @@ const char cRegTrueMod[] = "TrueMod";
 const char cRegChangeBgEditor[] = "ChangeBgEditor";
 const char cRegUserHrdPath[] = "UserHrdPath";
 const char cRegUserHrcPath[] = "UserHrcPath";
+const char cRegUserHrcSettingsPath[] = "UserHrcSettingsPath";
 
 // values of registry keys by default
 const bool cEnabledDefault = true;
@@ -36,6 +37,7 @@ const bool cTrueMod = true;
 const bool cChangeBgEditor = false;
 const wchar_t cUserHrdPathDefault[] = L"";
 const wchar_t cUserHrcPathDefault[] = L"";
+const wchar_t cUserHrcSettingsPathDefault[] = L"";
 
 const UnicodeString DConsole("console");
 const UnicodeString DRgb("rgb");
@@ -396,9 +398,11 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRD_EDIT, 0));
           const wchar_t* userhrc =
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRC_EDIT, 0));
+          const wchar_t* userhrc_settings = trim((wchar_t*) Info.SendDlgMessage(
+              hDlg, DM_GETCONSTTEXTPTR, IDX_USER_HRC_SETTINGS_EDIT, 0));
           bool trumod = Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0) &&
               fes->checkConsoleExtendedColors();
-          fes->TestLoadBase(catalog, userhrd, userhrc, true,
+          fes->TestLoadBase(catalog, userhrd, userhrc, userhrc_settings, true,
                             trumod ? FarEditorSet::HRCM_BOTH : FarEditorSet::HRCM_CONSOLE);
           Info.SendDlgMessage(hDlg, DM_SHOWDIALOG, true, 0);
           return true;
@@ -414,6 +418,8 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRD_EDIT, 0));
           const wchar_t* userhrc =
               trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRC_EDIT, 0));
+          const wchar_t* userhrc_settings = trim((wchar_t*) Info.SendDlgMessage(
+              hDlg, DM_GETCONSTTEXTPTR, IDX_USER_HRC_SETTINGS_EDIT, 0));
           bool trumod = Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_TRUEMOD, 0) &&
               fes->checkConsoleExtendedColors();
           int k = (int) Info.SendDlgMessage(hDlg, DM_GETCHECK, IDX_ENABLED, 0);
@@ -422,7 +428,7 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
               fes->GetUserHrdPath()->compare(UnicodeString(userhrd)) ||
               (!fes->GetPluginStatus() && k) || (trumod == true))
           {
-            if (fes->TestLoadBase(temp, userhrd, userhrc, false,
+            if (fes->TestLoadBase(temp, userhrd, userhrc, userhrc_settings, false,
                                   trumod ? FarEditorSet::HRCM_BOTH : FarEditorSet::HRCM_CONSOLE))
             {
               return false;
@@ -442,9 +448,9 @@ LONG_PTR WINAPI SettingDialogProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Par
 void FarEditorSet::configure(bool fromEditor)
 {
   try {
-    std::array<FarDialogItem, 25> fdi {
+    std::array<FarDialogItem, 27> fdi {
         {
-         {DI_DOUBLEBOX, 3, 1, 55, 22, 0, {}, 0, 0, L"", 0},            //  IDX_BOX,
+         {DI_DOUBLEBOX, 3, 1, 55, 24, 0, {}, 0, 0, L"", 0},            //  IDX_BOX,
             {DI_CHECKBOX, 5, 2, 0, 0, TRUE, {}, 0, 0, L"", 0},            //  IDX_DISABLED,
             {DI_CHECKBOX, 5, 3, 0, 0, FALSE, {}, DIF_3STATE, 0, L"", 0},  //  IDX_CROSS,
             {DI_CHECKBOX, 5, 4, 0, 0, FALSE, {}, 0, 0, L"", 0},           //  IDX_PAIRS,
@@ -488,17 +494,29 @@ void FarEditorSet::configure(bool fromEditor)
              DIF_HISTORY,
              0,
              L"",
-             0},                                                    //  IDX_USERHRD_EDIT
-            {DI_SINGLEBOX, 4, 16, 54, 16, TRUE, {}, 0, 0, L"", 0},  //  IDX_TM_BOX,
-            {DI_CHECKBOX, 5, 17, 0, 0, TRUE, {}, 0, 0, L"", 0},     //  IDX_TRUEMOD,
-            {DI_TEXT, 20, 17, 0, 17, TRUE, {}, 0, 0, L"", 0},       //  IDX_TMMESSAGE,
-            {DI_TEXT, 5, 18, 0, 18, FALSE, {}, 0, 0, L"", 0},       //  IDX_HRD_TM,
-            {DI_BUTTON, 20, 18, 0, 0, FALSE, {}, 0, 0, L"", 0},     //  IDX_HRD_SELECT_TM,
-            {DI_SINGLEBOX, 4, 19, 54, 19, TRUE, {}, 0, 0, L"", 0},  //  IDX_TM_BOX_OFF,
-            {DI_BUTTON, 5, 20, 0, 0, FALSE, {}, 0, 0, L"", 0},      //  IDX_RELOAD_ALL,
-            {DI_BUTTON, 30, 20, 0, 0, FALSE, {}, 0, 0, L"", 0},     //  IDX_HRC_SETTING,
-            {DI_BUTTON, 35, 21, 0, 0, FALSE, {}, 0, TRUE, L"", 0},  //  IDX_OK,
-            {DI_BUTTON, 45, 21, 0, 0, FALSE, {}, 0, 0, L"", 0}      //  IDX_CANCEL,
+             0},                                               //  IDX_USERHRD_EDIT
+            {DI_TEXT, 5, 15, 0, 15, FALSE, {}, 0, 0, L"", 0},  //  IDX_USER_HRC_SETTINGS,
+            {DI_EDIT,
+             6,
+             16,
+             52,
+             5,
+             FALSE,
+             {(DWORD_PTR) L"userhrcset"},
+             DIF_HISTORY,
+             0,
+             L"",
+             0},                                                    //  IDX_USER_HRC_SETTINGS_EDIT
+            {DI_SINGLEBOX, 4, 18, 54, 18, TRUE, {}, 0, 0, L"", 0},  //  IDX_TM_BOX,
+            {DI_CHECKBOX, 5, 19, 0, 0, TRUE, {}, 0, 0, L"", 0},     //  IDX_TRUEMOD,
+            {DI_TEXT, 20, 19, 0, 19, TRUE, {}, 0, 0, L"", 0},       //  IDX_TMMESSAGE,
+            {DI_TEXT, 5, 20, 0, 20, FALSE, {}, 0, 0, L"", 0},       //  IDX_HRD_TM,
+            {DI_BUTTON, 20, 20, 0, 0, FALSE, {}, 0, 0, L"", 0},     //  IDX_HRD_SELECT_TM,
+            {DI_SINGLEBOX, 4, 21, 54, 21, TRUE, {}, 0, 0, L"", 0},  //  IDX_TM_BOX_OFF,
+            {DI_BUTTON, 5, 22, 0, 0, FALSE, {}, 0, 0, L"", 0},      //  IDX_RELOAD_ALL,
+            {DI_BUTTON, 30, 22, 0, 0, FALSE, {}, 0, 0, L"", 0},     //  IDX_HRC_SETTING,
+            {DI_BUTTON, 35, 23, 0, 0, FALSE, {}, 0, TRUE, L"", 0},  //  IDX_OK,
+            {DI_BUTTON, 45, 23, 0, 0, FALSE, {}, 0, 0, L"", 0}      //  IDX_CANCEL,
         }
     };  // type, x1, y1, x2, y2, focus, sel, fl, def, data, maxlen
 
@@ -521,6 +539,8 @@ void FarEditorSet::configure(bool fromEditor)
     fdi[IDX_USERHRC_EDIT].PtrData = Opt.userHrcPath.getWChars();
     fdi[IDX_USERHRD].PtrData = GetMsg(mUserHrdFile);
     fdi[IDX_USERHRD_EDIT].PtrData = Opt.userHrdPath.getWChars();
+    fdi[IDX_USER_HRC_SETTINGS].PtrData = GetMsg(mUserHrcSettings);
+    fdi[IDX_USER_HRC_SETTINGS_EDIT].PtrData = Opt.userHrcSettingsPath.getWChars();
     fdi[IDX_HRD].PtrData = GetMsg(mHRDName);
 
     const UnicodeString* descr = nullptr;
@@ -551,7 +571,7 @@ void FarEditorSet::configure(bool fromEditor)
     /*
      * Dialog activation
      */
-    HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 58, 24, L"config", fdi.data(),
+    HANDLE hDlg = Info.DialogInit(Info.ModuleNumber, -1, -1, 58, 26, L"config", fdi.data(),
                                   fdi.size(), 0, 0, SettingDialogProc, (LONG_PTR) this);
     int i = Info.DialogRun(hDlg);
 
@@ -562,12 +582,15 @@ void FarEditorSet::configure(bool fromEditor)
           trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRD_EDIT, 0));
       fdi[IDX_USERHRC_EDIT].PtrData =
           trim((wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USERHRC_EDIT, 0));
+      fdi[IDX_USER_HRC_SETTINGS_EDIT].PtrData = trim(
+          (wchar_t*) Info.SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, IDX_USER_HRC_SETTINGS_EDIT, 0));
       // check whether or not to reload the base
       int k = false;
 
       if (Opt.catalogPath.compare(UnicodeString(fdi[IDX_CATALOG_EDIT].PtrData)) ||
           Opt.userHrdPath.compare(UnicodeString(fdi[IDX_USERHRD_EDIT].PtrData)) ||
           Opt.userHrcPath.compare(UnicodeString(fdi[IDX_USERHRC_EDIT].PtrData)) ||
+          Opt.userHrcSettingsPath.compare(UnicodeString(fdi[IDX_USER_HRC_SETTINGS_EDIT].PtrData)) ||
           Opt.hrdName.compare(*sTempHrdName) || Opt.hrdNameTm.compare(*sTempHrdNameTm))
       {
         k = true;
@@ -586,6 +609,7 @@ void FarEditorSet::configure(bool fromEditor)
       Opt.catalogPath = UnicodeString(fdi[IDX_CATALOG_EDIT].PtrData);
       Opt.userHrdPath = UnicodeString(fdi[IDX_USERHRD_EDIT].PtrData);
       Opt.userHrcPath = UnicodeString(fdi[IDX_USERHRC_EDIT].PtrData);
+      Opt.userHrcSettingsPath = UnicodeString(fdi[IDX_USER_HRC_SETTINGS_EDIT].PtrData);
 
       // if the plugin has been enable, and we will disable
       if (Opt.rEnabled && !fdi[IDX_ENABLED].Param.Selected) {
@@ -657,9 +681,9 @@ const UnicodeString* FarEditorSet::chooseHRDName(const UnicodeString* current,
     i++;
   }
 
-  const int result =
-      Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
-                GetMsg(mSelectHRD), nullptr, L"hrd", nullptr, nullptr, menuElements.data(), menuElements.size());
+  const int result = Info.Menu(Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
+                               GetMsg(mSelectHRD), nullptr, L"hrd", nullptr, nullptr,
+                               menuElements.data(), menuElements.size());
 
   if (result == -1) {
     return current;
@@ -735,7 +759,8 @@ int FarEditorSet::editorEvent(int Event, void* Param)
 }
 
 bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userHrdPath,
-                                const wchar_t* userHrcPath, const int full, const HRC_MODE hrc_mode)
+                                const wchar_t* userHrcPath, const wchar_t* userHrcSettingsPath,
+                                const int full, const HRC_MODE hrc_mode)
 {
   bool res = true;
   const wchar_t* marr[2] = {GetMsg(mName), GetMsg(mReloading)};
@@ -748,6 +773,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
   UnicodeString* catalogPathS = PathToFullS(catalogPath, false);
   UnicodeString* userHrdPathS = PathToFullS(userHrdPath, false);
   UnicodeString* userHrcPathS = PathToFullS(userHrcPath, false);
+  UnicodeString* userHrcSettingsPathS = PathToFullS(userHrcSettingsPath, false);
 
   UnicodeString* tpath;
   if (!catalogPathS || !catalogPathS->length()) {
@@ -760,7 +786,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
   try {
     parserFactoryLocal = std::make_unique<ParserFactory>();
     FarHrcSettings p(this, parserFactoryLocal.get());
-    p.applySettings(tpath, userHrdPathS, userHrcPathS, nullptr);
+    p.applySettings(tpath, userHrdPathS, userHrcPathS, userHrcSettingsPathS);
     delete tpath;
 
     if (hrc_mode == HRCM_CONSOLE || hrc_mode == HRCM_BOTH) {
@@ -842,7 +868,8 @@ void FarEditorSet::ReloadBase()
   try {
     parserFactory = std::make_unique<ParserFactory>();
     FarHrcSettings p(this, parserFactory.get());
-    p.applySettings(sCatalogPathExp.get(), sUserHrdPathExp.get(), sUserHrcPathExp.get(), nullptr);
+    p.applySettings(sCatalogPathExp.get(), sUserHrdPathExp.get(), sUserHrcPathExp.get(),
+                    sUserHrcSettingsPathExp.get());
 
     HrcLibrary& hrcLibrary = parserFactory->getHrcLibrary();
     defaultType = hrcLibrary.getFileType("default");
@@ -987,6 +1014,8 @@ void FarEditorSet::ReadSettings()
   const std::wstring catalogPath = kfh.GetString(cRegCatalog, cCatalogDefault);
   const std::wstring userHrdPath = kfh.GetString(cRegUserHrdPath, cUserHrdPathDefault);
   const std::wstring userHrcPath = kfh.GetString(cRegUserHrcPath, cUserHrcPathDefault);
+  const std::wstring userHrcSettingsPath =
+      kfh.GetString(cRegUserHrcSettingsPath, cUserHrcSettingsPathDefault);
 
   Opt.hrdName = UnicodeString(hrdName.c_str());
   Opt.hrdNameTm = UnicodeString(hrdNameTm.c_str());
@@ -1000,6 +1029,8 @@ void FarEditorSet::ReadSettings()
   sUserHrdPathExp.reset(PathToFullS(userHrdPath.c_str(), false));
   Opt.userHrcPath = UnicodeString(userHrcPath.c_str());
   sUserHrcPathExp.reset(PathToFullS(userHrcPath.c_str(), false));
+  Opt.userHrcSettingsPath = UnicodeString(userHrcSettingsPath.c_str());
+  sUserHrcSettingsPathExp.reset(PathToFullS(userHrcSettingsPath.c_str(), false));
 
   // two '!' disable "VS C++ Compiler Warning (level 3) C4800" and slightly faster code
   Opt.rEnabled = !!kfh.GetInt(cRegEnabled, cEnabledDefault);
@@ -1043,6 +1074,7 @@ void FarEditorSet::SaveSettings() const
   kfh.SetInt(cSectionName, cRegChangeBgEditor, Opt.ChangeBgEditor);
   kfh.SetString(cSectionName, cRegUserHrdPath, Opt.userHrdPath.getWChars());
   kfh.SetString(cSectionName, cRegUserHrcPath, Opt.userHrcPath.getWChars());
+  kfh.SetString(cSectionName, cRegUserHrcSettingsPath, Opt.userHrcSettingsPath.getWChars());
 }
 
 bool FarEditorSet::checkConsoleExtendedColors()
@@ -1053,7 +1085,6 @@ bool FarEditorSet::checkConsoleExtendedColors()
 bool FarEditorSet::SetBgEditor() const
 {
   if (Opt.rEnabled && Opt.ChangeBgEditor && !useExtendedColors) {
-
     const StyledRegion* def_text =
         StyledRegion::cast(regionMapper->getRegionDefine(UnicodeString("def:Text")));
     uint64_t c = (def_text->back << 4) + def_text->fore;
@@ -1082,7 +1113,7 @@ FarList* FarEditorSet::buildHrcList() const
   UnicodeString group;
   const FileType* type = nullptr;
 
-  auto* hrcList = new FarListItem[num]{};
+  auto* hrcList = new FarListItem[num] {};
 
   auto& hrcParser = parserFactory->getHrcLibrary();
   for (int idx = 0, i = 0;; idx++, i++) {

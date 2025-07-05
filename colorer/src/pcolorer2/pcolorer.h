@@ -54,6 +54,7 @@ enum {
   mNoFarTM,
   mUserHrdFile,
   mUserHrcFile,
+  mUserHrcSettings,
   mUserHrcSetting,
   mUserHrcSettingDialog,
   mListSyntax,

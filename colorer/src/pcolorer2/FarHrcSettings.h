@@ -24,16 +24,11 @@ class FarHrcSettings
 
  public:
   FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _parserFactory);
-  void readXML(const UnicodeString* file);
   void readProfile();
   void readUserProfile(const FileType* def_filetype = nullptr);
   void writeUserProfile();
-  void loadUserHrc(const UnicodeString* filename);
-  void loadUserHrd(const UnicodeString* filename);
 
  private:
-  void UpdatePrototype(const XMLNode& elem);
-
   FarEditorSet* farEditorSet;
   ParserFactory* parserFactory;
   std::string profileIni;

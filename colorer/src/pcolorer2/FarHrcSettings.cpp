@@ -12,22 +12,35 @@ FarHrcSettings::FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _pars
 {
 }
 
-void FarHrcSettings::readProfile()
+void FarHrcSettings::applySettings(const UnicodeString* catalog_xml, const UnicodeString* user_hrd,
+                                   const UnicodeString* user_hrc,
+                                   const UnicodeString* user_hrc_settings)
+{
+  parserFactory->loadCatalog(catalog_xml);
+  readSystemHrcSettings();
+  parserFactory->loadHrdPath(user_hrd);
+  parserFactory->loadHrcPath(user_hrc);
+  parserFactory->loadHrcSettings(user_hrc_settings, true);
+  readUserProfile();
+}
+
+void FarHrcSettings::readSystemHrcSettings()
 {
   UnicodeString* path = GetConfigPath(FarProfileXml);
-  parserFactory->loadHrcSettings(path,false);
+  parserFactory->loadHrcSettings(path, false);
   delete path;
 }
 
-void FarHrcSettings::readUserProfile(const FileType* def_filetype)
+void FarHrcSettings::readUserProfile()
 {
   KeyFileReadHelper kfh(profileIni);
   const auto& sections = kfh.EnumSections();
 
-  auto& hrcParser = parserFactory->getHrcLibrary();
+  auto& hrcLibrary = parserFactory->getHrcLibrary();
+  auto def_filetype = hrcLibrary.getFileType("default");
   for (const auto& s : sections) {
     UnicodeString ssk(s.c_str());
-    FileType* type = hrcParser.getFileType(&ssk);
+    FileType* type = hrcLibrary.getFileType(&ssk);
     if (type == nullptr) {
       continue;
     }

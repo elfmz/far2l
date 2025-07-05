@@ -24,8 +24,9 @@ class FarHrcSettings
 
  public:
   FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _parserFactory);
-  void readProfile();
-  void readUserProfile(const FileType* def_filetype = nullptr);
+  void applySettings(const UnicodeString* catalog_xml, const UnicodeString* user_hrd, const UnicodeString* user_hrc, const UnicodeString* user_hrc_settings);
+  void readSystemHrcSettings();
+  void readUserProfile();
   void writeUserProfile();
 
  private:

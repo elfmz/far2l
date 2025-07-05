@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "history.hpp"
 #include "message.hpp"
 #include "config.hpp"
+#include "ConfigOptEdit.hpp"
 #include "ConfigOptSaveLoad.hpp"
 #include "usermenu.hpp"
 #include "datetime.hpp"
@@ -143,6 +144,9 @@ enum enumCommandsMenu
 	MENU_COMMANDS_PLUGINCOMMANDS,
 	MENU_COMMANDS_WINDOWSLIST,
 	MENU_COMMANDS_PROCESSLIST,
+	MENU_COMMANDS_SEPARATOR4,
+	MENU_COMMANDS_FARCONFIG,
+	MENU_COMMANDS_ABOUTFAR,
 	MENU_COMMANDS_HOTPLUGLIST
 };
 
@@ -272,7 +276,10 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{L"",                       LIF_SEPARATOR, 0         },
 		{Msg::MenuPluginCommands,   0,             KEY_F11   },
 		{Msg::MenuWindowsList,      0,             KEY_F12   },
-		{Msg::MenuProcessList,      0,             KEY_CTRLW }
+		{Msg::MenuProcessList,      0,             KEY_CTRLW },
+		{L"",                       LIF_SEPARATOR, 0         },
+		{Msg::MenuFarConfig,        0,             0         },
+		{Msg::MenuAboutFar,         0,             0         }
 	};
 	MenuDataEx OptionsMenu[] = {
 		{Msg::MenuSystemSettings,         LIF_SELECTED,  0          },
@@ -548,6 +555,13 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 					break;
 				case MENU_COMMANDS_PROCESSLIST:		// Task list
 					ShowProcessList();
+					break;
+				case MENU_COMMANDS_FARCONFIG:		// far:config
+					ConfigOptEdit();
+					break;
+				case MENU_COMMANDS_ABOUTFAR:		// far:about
+					void FarAbout(PluginManager &Plugins);
+					FarAbout(CtrlObject->Plugins);
 					break;
 				case MENU_COMMANDS_HOTPLUGLIST:		// HotPlug list
 													//					ShowHotplugDevice();

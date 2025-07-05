@@ -1,9 +1,6 @@
 #include "FarHrcSettings.h"
 #include <KeyFileHelper.h>
-#include <colorer/base/XmlTagDefs.h>
-#include <colorer/xml/XmlReader.h>
 #include <utils.h>
-#include "colorer/parsers/CatalogParser.h"
 
 FarHrcSettings::FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _parserFactory)
     : farEditorSet(_farEditorSet),
@@ -26,9 +23,8 @@ void FarHrcSettings::applySettings(const UnicodeString* catalog_xml, const Unico
 
 void FarHrcSettings::readSystemHrcSettings()
 {
-  UnicodeString* path = GetConfigPath(FarProfileXml);
-  parserFactory->loadHrcSettings(path, false);
-  delete path;
+  auto path = GetConfigPath(FarProfileXml);
+  parserFactory->loadHrcSettings(path.get(), false);
 }
 
 void FarHrcSettings::readUserProfile()

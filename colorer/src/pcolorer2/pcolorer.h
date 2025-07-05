@@ -2,7 +2,7 @@
 #define _PCOLORER_H_
 
 #include <farplug-wide.h>
-#include "colorer/strings/legacy/UnicodeString.h"
+#include "colorer/Common.h"
 
 extern PluginStartupInfo Info;
 extern FarStandardFunctions FSF;
@@ -66,7 +66,7 @@ enum {
   mKeyAssignTextTitle
 };
 
-UnicodeString* GetConfigPath(const UnicodeString& sub);
+uUnicodeString GetConfigPath(const UnicodeString& sub);
 
 #endif
 

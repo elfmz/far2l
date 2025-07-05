@@ -770,24 +770,23 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
   std::unique_ptr<ParserFactory> parserFactoryLocal;
   std::unique_ptr<StyledHRDMapper> regionMapperLocal;
 
-  UnicodeString* catalogPathS = PathToFullS(catalogPath, false);
-  UnicodeString* userHrdPathS = PathToFullS(userHrdPath, false);
-  UnicodeString* userHrcPathS = PathToFullS(userHrcPath, false);
-  UnicodeString* userHrcSettingsPathS = PathToFullS(userHrcSettingsPath, false);
+  auto catalogPathS = PathToFullS(catalogPath, false);
+  auto userHrdPathS = PathToFullS(userHrdPath, false);
+  auto userHrcPathS = PathToFullS(userHrcPath, false);
+  auto userHrcSettingsPathS = PathToFullS(userHrcSettingsPath, false);
 
-  UnicodeString* tpath;
+  uUnicodeString tpath;
   if (!catalogPathS || !catalogPathS->length()) {
     tpath = GetConfigPath(UnicodeString(FarCatalogXml));
   }
   else {
-    tpath = catalogPathS;
+    tpath.reset(catalogPathS.get());
   }
 
   try {
     parserFactoryLocal = std::make_unique<ParserFactory>();
     FarHrcSettings p(this, parserFactoryLocal.get());
-    p.applySettings(tpath, userHrdPathS, userHrcPathS, userHrcSettingsPathS);
-    delete tpath;
+    p.applySettings(tpath.get(), userHrdPathS.get(), userHrcPathS.get(), userHrcSettingsPathS.get());
 
     if (hrc_mode == HRCM_CONSOLE || hrc_mode == HRCM_BOTH) {
       try {
@@ -1020,17 +1019,17 @@ void FarEditorSet::ReadSettings()
   Opt.hrdName = UnicodeString(hrdName.c_str());
   Opt.hrdNameTm = UnicodeString(hrdNameTm.c_str());
   Opt.catalogPath = UnicodeString(catalogPath.c_str());
-  sCatalogPathExp.reset(PathToFullS(catalogPath.c_str(), false));
+  sCatalogPathExp = PathToFullS(catalogPath.c_str(), false);
   if (!sCatalogPathExp || !sCatalogPathExp->length()) {
-    sCatalogPathExp.reset(GetConfigPath(UnicodeString(FarCatalogXml)));
+    sCatalogPathExp = GetConfigPath(UnicodeString(FarCatalogXml));
   }
 
   Opt.userHrdPath = UnicodeString(userHrdPath.c_str());
-  sUserHrdPathExp.reset(PathToFullS(userHrdPath.c_str(), false));
+  sUserHrdPathExp = PathToFullS(userHrdPath.c_str(), false);
   Opt.userHrcPath = UnicodeString(userHrcPath.c_str());
-  sUserHrcPathExp.reset(PathToFullS(userHrcPath.c_str(), false));
+  sUserHrcPathExp = PathToFullS(userHrcPath.c_str(), false);
   Opt.userHrcSettingsPath = UnicodeString(userHrcSettingsPath.c_str());
-  sUserHrcSettingsPathExp.reset(PathToFullS(userHrcSettingsPath.c_str(), false));
+  sUserHrcSettingsPathExp = PathToFullS(userHrcSettingsPath.c_str(), false);
 
   // two '!' disable "VS C++ Compiler Warning (level 3) C4800" and slightly faster code
   Opt.rEnabled = !!kfh.GetInt(cRegEnabled, cEnabledDefault);

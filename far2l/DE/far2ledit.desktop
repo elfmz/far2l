@@ -9,5 +9,5 @@ TryExec=far2ledit
 Terminal=false
 MimeType=text/plain;
 Categories=Utility;TextEditor;
-Icon=far2ledit
+Icon=far2ledit-wx
 Keywords=editor;console;text;

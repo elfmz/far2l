@@ -2283,7 +2283,7 @@ static bool msgBoxFunc(const TMacroFunction *)
 	FARString TempBuf = title;
 	TempBuf+= L"\n";
 	TempBuf+= text;
-	TVar Result = FarMessageFn(-1, Flags, nullptr, (const wchar_t *const *)TempBuf.CPtr(), 0, 0) + 1;
+	TVar Result = (int)FarMessageFn(-1, Flags, nullptr, (const wchar_t *const *)TempBuf.CPtr(), 0, 0) + 1;
 	VMStack.Push(Result);
 	return true;
 }

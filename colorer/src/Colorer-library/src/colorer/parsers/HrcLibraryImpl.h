@@ -11,10 +11,8 @@
 class FileType;
 
 /** Implementation of HrcLibrary.
-    Reads and mantains HRC database of syntax rules,
-    used by TextParser implementations to make
+    Reads and maintains HRC database of syntax rules, used by TextParser implementations to make
     realtime text syntax parsing.
-    @ingroup colorer_parsers
 */
 class HrcLibrary::Impl
 {
@@ -22,8 +20,12 @@ class HrcLibrary::Impl
   Impl();
   ~Impl();
 
-  void loadSource(XmlInputSource* is);
+  // типы загрузки hrc файла: полная, только прототипы и внешние пакеты, только типы
+  enum class LoadType { FULL, PROTOTYPE, TYPE };
+
+  void loadSource(XmlInputSource* input_source, LoadType load_type);
   void loadFileType(FileType* filetype);
+  void loadHrcSettings(const XmlInputSource& is);
   FileType* getFileType(const UnicodeString* name);
   FileType* enumerateFileTypes(unsigned int index) const;
   FileType* chooseFileType(const UnicodeString* fileName, const UnicodeString* firstLine, int typeNo = 0);
@@ -50,6 +52,7 @@ class HrcLibrary::Impl
 
   FileType* current_parse_type = nullptr;
   XmlInputSource* current_input_source = nullptr;
+  LoadType current_load_type = LoadType::FULL;
   bool structureChanged = false;
   bool updateStarted = false;
 
@@ -58,10 +61,10 @@ class HrcLibrary::Impl
   void parseHRC(const XmlInputSource& is);
   void parseHrcBlock(const XMLNode& elem);
   void addPrototype(const XMLNode& elem);
-  void parsePrototypeBlock(const XMLNode& elem, FileType* current_parse_prototype);
-  void addPrototypeLocation(const XMLNode& elem, FileType* current_parse_prototype);
-  void addPrototypeDetectParam(const XMLNode& elem, FileType* current_parse_prototype);
-  void addPrototypeParameters(const XMLNode& elem, FileType* current_parse_prototype);
+  void parsePrototypeBlock(const XMLNode& elem, FileType* current_parse_prototype) const;
+  void addPrototypeLocation(const XMLNode& elem, FileType* current_parse_prototype) const;
+  void addPrototypeDetectParam(const XMLNode& elem, FileType* current_parse_prototype) const;
+  void addPrototypeParameters(const XMLNode& elem, FileType* current_parse_prototype) const;
   void addType(const XMLNode& elem);
   void parseTypeBlock(const XMLNode& elem);
   void addTypeRegion(const XMLNode& elem);
@@ -91,8 +94,11 @@ class HrcLibrary::Impl
   uUnicodeString useEntities(const UnicodeString* name);
   const Region* getNCRegion(const XMLNode* elem, const UnicodeString& tag);
   const Region* getNCRegion(const UnicodeString* name, bool logErrors);
-  void loopSchemeKeywords(const XMLNode& elem, const SchemeImpl* scheme,
-                          const std::unique_ptr<SchemeNodeKeywords>& scheme_node, const Region* region);
+  void loopSchemeKeywords(const XMLNode& elem, const SchemeImpl* scheme, const SchemeNodeKeywords* scheme_node,
+                          const Region* region);
+
+  void updatePrototype(const XMLNode& elem);
+  void updatePrototypeParams(const XMLNode& node, FileType* current_parse_prototype);
 };
 
-#endif // COLORER_HRCLIBRARYIMPL_H
+#endif  // COLORER_HRCLIBRARYIMPL_H

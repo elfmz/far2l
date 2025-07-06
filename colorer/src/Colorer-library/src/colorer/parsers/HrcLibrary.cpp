@@ -5,7 +5,12 @@ HrcLibrary::HrcLibrary() : pimpl(spimpl::make_unique_impl<Impl>()) {}
 
 void HrcLibrary::loadSource(XmlInputSource* is)
 {
-  pimpl->loadSource(is);
+  pimpl->loadSource(is, Impl::LoadType::FULL);
+}
+
+void HrcLibrary::loadProtoTypes(XmlInputSource* is)
+{
+  pimpl->loadSource(is, Impl::LoadType::PROTOTYPE);
 }
 
 FileType* HrcLibrary::enumerateFileTypes(unsigned int index)
@@ -51,4 +56,9 @@ const Region* HrcLibrary::getRegion(const UnicodeString* name)
 void HrcLibrary::loadFileType(FileType* filetype)
 {
   pimpl->loadFileType(filetype);
+}
+
+void HrcLibrary::loadHrcSettings(const XmlInputSource& is)
+{
+  pimpl->loadHrcSettings(is);
 }

@@ -69,12 +69,12 @@ wchar_t* PathToFull(const wchar_t* path, const bool unc)
   return out;
 }
 
-UnicodeString* PathToFullS(const wchar_t* path, bool unc)
+uUnicodeString PathToFullS(const wchar_t* path, bool unc)
 {
-  UnicodeString* spath = nullptr;
+  uUnicodeString spath;
   wchar_t* t = PathToFull(path, unc);
   if (t) {
-    spath = new UnicodeString(t);
+    spath = std::make_unique<UnicodeString>(t);
   }
   delete[] t;
   return spath;

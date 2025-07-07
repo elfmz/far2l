@@ -162,8 +162,12 @@ SSHConnection::SSHConnection(const std::string &host, unsigned int port, const s
 	int ssh_verbosity = SSH_LOG_NOLOG;
 	if (g_netrocks_verbosity == 2) {
 		ssh_verbosity = SSH_LOG_WARNING;
-	} else if (g_netrocks_verbosity > 2) {
+	} else if (g_netrocks_verbosity == 3) {
 		ssh_verbosity = SSH_LOG_PROTOCOL;
+	} else if (g_netrocks_verbosity == 4) {
+		ssh_verbosity = SSH_LOG_PACKET;
+	} else if (g_netrocks_verbosity > 4) {
+		ssh_verbosity = SSH_LOG_FUNCTIONS;
 	}
 	ssh_options_set(ssh, SSH_OPTIONS_LOG_VERBOSITY, &ssh_verbosity);
 

@@ -14,6 +14,12 @@ if [ -x ~/.config/far2l/trash.sh ]; then
 . ~/.config/far2l/trash.sh
 fi
 
+if command -v trash put "$1" 2>"$2"; then
+	trash put "$1" 2>"$2"
+
+if command -v trashу put "$1" 2>"$2"; then
+	trashу put "$1" 2>"$2"
+
 if command -v kioclient >/dev/null 2>&1; then
 	kioclient move "$1" trash:/ 2>"$2"
 

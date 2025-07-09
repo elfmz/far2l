@@ -78,7 +78,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 [terminal emulators](#terminals), which provide clipboard access and has their advanced keyboard-protocols).
 
 
-| Mode<br>(UI Backends) | TTY<br>(plain far2l) | TTY\|X | TTY\|Xi | GUI |
+| Mode<br>(UI Backends) | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY<br>(plain far2l) | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY\|X | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY\|Xi | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l-wx.svg) GUI (WX) |
 | ---: | --- | --- | --- | --- |
 | **Works:** | in **console**<br>and in any<br>**terminal** | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **Desktop<br>environment**<br><sub>(X11<br>or Wayland<br>or macOS)<br>via wxWidgets</sub> |
 | **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |

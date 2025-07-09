@@ -8,8 +8,8 @@
 
 <!-- hack for < > used in xml for xpath 1-2 -->
 
-<package name="xpath-lt.internal.hack"/>
-<package name="xpath-xml-lt.internal.hack"/>
+<package name="xpath-lt.internal.hack" global="no"/>
+<package name="xpath-xml-lt.internal.hack" global="no"/>
 
 <type name="xpath-lt.internal.hack">
     <entity name="lt" value="&lt;"/>

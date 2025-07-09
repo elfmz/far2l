@@ -16,10 +16,10 @@
 
    
 <package name="perl-vars-ex">
-  <location link="perl-vars.pkg.hrc"/>
+  <location link="perl-vars.pkg.hrc" global="no"/>
 </package>
 <package name="perl-vars">
-  <location link="perl-vars.pkg.hrc"/>
+  <location link="perl-vars.pkg.hrc" global="no"/>
 </package>
 
 

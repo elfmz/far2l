@@ -1,43 +1,6 @@
 #include "FarHrcSettings.h"
 #include <KeyFileHelper.h>
-#include <colorer/base/XmlTagDefs.h>
-#include <colorer/xml/XmlReader.h>
 #include <utils.h>
-#include "colorer/parsers/CatalogParser.h"
-
-void FarHrcSettings::loadUserHrc(const UnicodeString* filename)
-{
-  if (filename && !filename->isEmpty()) {
-    parserFactory->loadHrcPath(*filename);
-  }
-}
-
-void FarHrcSettings::loadUserHrd(const UnicodeString* filename)
-{
-  if (!filename || filename->isEmpty()) {
-    return;
-  }
-
-  XmlInputSource config(*filename);
-  XmlReader xml_parser(config);
-  if (!xml_parser.parse()) {
-    throw ParserFactoryException(UnicodeString("Error reading ").append(*filename));
-  }
-
-  std::list<XMLNode> nodes;
-  xml_parser.getNodes(nodes);
-
-  if (nodes.begin()->name != catTagHrdSets) {
-    throw Exception("main '<hrd-sets>' block not found");
-  }
-  for (const auto& node : nodes.begin()->children) {
-    if (node.name == catTagHrd) {
-      auto hrd = CatalogParser::parseHRDSetsChild(node);
-      if (hrd)
-        parserFactory->addHrd(std::move(hrd));
-    }
-  }
-}
 
 FarHrcSettings::FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _parserFactory)
     : farEditorSet(_farEditorSet),
@@ -46,79 +9,34 @@ FarHrcSettings::FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _pars
 {
 }
 
-void FarHrcSettings::readProfile()
+void FarHrcSettings::applySettings(const UnicodeString* catalog_xml, const UnicodeString* user_hrd,
+                                   const UnicodeString* user_hrc,
+                                   const UnicodeString* user_hrc_settings)
 {
-  UnicodeString* path = GetConfigPath(FarProfileXml);
-  readXML(path);
-  delete path;
+  parserFactory->loadCatalog(catalog_xml);
+  readSystemHrcSettings();
+  parserFactory->loadHrdPath(user_hrd);
+  parserFactory->loadHrcPath(user_hrc);
+  parserFactory->loadHrcSettings(user_hrc_settings, true);
+  readUserProfile();
 }
 
-void FarHrcSettings::readXML(const UnicodeString* file)
+void FarHrcSettings::readSystemHrcSettings()
 {
-  XmlInputSource config(*file);
-  XmlReader xml_parser(config);
-  if (!xml_parser.parse()) {
-    throw ParserFactoryException("Error reading hrcsettings.xml.");
-  }
-
-  std::list<XMLNode> nodes;
-  xml_parser.getNodes(nodes);
-
-  if (nodes.begin()->name != u"hrc-settings") {
-    throw FarHrcSettingsException("main '<hrc-settings>' block not found");
-  }
-
-  for (const auto& node : nodes.begin()->children) {
-    if (node.name == hrcTagPrototype) {
-      UpdatePrototype(node);
-    }
-  }
+  auto path = GetConfigPath(FarProfileXml);
+  parserFactory->loadHrcSettings(path.get(), false);
 }
 
-void FarHrcSettings::UpdatePrototype(const XMLNode& elem)
-{
-  const auto& typeName = elem.getAttrValue(hrcPrototypeAttrName);
-  if (typeName.isEmpty()) {
-    return;
-  }
-  auto& hrcLibrary = parserFactory->getHrcLibrary();
-  auto* type = hrcLibrary.getFileType(typeName);
-  if (type == nullptr) {
-    return;
-  }
-
-  for (const auto& node : elem.children) {
-    if (node.name == hrcTagParam) {
-      const auto& name = node.getAttrValue(hrcParamAttrName);
-      const auto& value = node.getAttrValue(hrcParamAttrValue);
-      const auto& descr = node.getAttrValue(hrcParamAttrDescription);
-
-      if (name.isEmpty()) {
-        continue;
-      }
-
-      if (type->getParamValue(name) == nullptr) {
-        type->addParam(name, value);
-      }
-      else {
-        type->setParamDefaultValue(name, &value);
-      }
-      if (descr != nullptr) {
-        type->setParamDescription(name, &descr);
-      }
-    }
-  }
-}
-
-void FarHrcSettings::readUserProfile(const FileType* def_filetype)
+void FarHrcSettings::readUserProfile()
 {
   KeyFileReadHelper kfh(profileIni);
   const auto& sections = kfh.EnumSections();
 
-  auto& hrcParser = parserFactory->getHrcLibrary();
+  auto& hrcLibrary = parserFactory->getHrcLibrary();
+  auto def_filetype = hrcLibrary.getFileType("default");
   for (const auto& s : sections) {
     UnicodeString ssk(s.c_str());
-    FileType* type = hrcParser.getFileType(&ssk);
+    FileType* type = hrcLibrary.getFileType(&ssk);
     if (type == nullptr) {
       continue;
     }

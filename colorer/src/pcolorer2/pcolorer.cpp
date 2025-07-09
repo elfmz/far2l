@@ -22,10 +22,10 @@ SHAREDSYMBOL void PluginModuleOpen(const char* path)
   Log::registerLogger(*logger);
 }
 
-UnicodeString* GetConfigPath(const UnicodeString& sub)
+uUnicodeString GetConfigPath(const UnicodeString& sub)
 {
   struct stat s{};
-  auto* path = new UnicodeString(*PluginPath);
+  auto path = std::make_unique<UnicodeString>(*PluginPath);
   path->append(sub);
   if (stat(path->getChars(), &s) == -1) {
     std::wstring str(path->getWChars());

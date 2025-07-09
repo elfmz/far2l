@@ -38,7 +38,7 @@ UNICODE_LITERAL(catHrdAttrDescription, u"description")
       <param name="" value="" description=""/>
     </parameters>
   </prototype>
-  <package name="" group="" description="">
+  <package name="" group="" description="" global="">
     <annotation/>
     <location link=""/>
   </package>
@@ -85,6 +85,7 @@ UNICODE_LITERAL(hrcTagPackage, u"package")
 UNICODE_LITERAL(hrcPackageAttrName, u"name")
 UNICODE_LITERAL(hrcPackageAttrDescription, u"description")
 UNICODE_LITERAL(hrcPackageAttrGroup, u"group")
+UNICODE_LITERAL(hrcPackageAttrGlobal, u"global")
 UNICODE_LITERAL(hrcTagType, u"type")
 UNICODE_LITERAL(hrcTypeAttrName, u"name")
 UNICODE_LITERAL(hrcTagImport, u"import")
@@ -151,5 +152,6 @@ UNICODE_LITERAL(hrdAssignAttrEText, u"etext")
  */
 UNICODE_LITERAL(value_low, u"low")
 UNICODE_LITERAL(value_yes, u"yes")
+UNICODE_LITERAL(value_no, u"no")
 
 #endif  // COLORER_XMLTAGDEFS_H

@@ -148,7 +148,7 @@ void ShowTitle(int OpenFrom)
 			/* blank the next chars... */
 			setmem(&Title[nRest + TITLE_PREFIX_LEN], ' ',
 					sizeof(Title) / sizeof(Title[0]) - nRest - TITLE_PREFIX_LEN - 1);
-			Title[sizeof(Title) / sizeof(Title[0])] = '\0';
+			Title[sizeof(Title) / sizeof(Title[0]) - 1] = '\0';
 			apiText(0, 0, iViewerStatusColor, Title);
 			apiText(0, 0, iViewerStatusColor, NULL);
 		}

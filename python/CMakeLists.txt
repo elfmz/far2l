@@ -51,13 +51,19 @@ add_custom_command(
     DEPENDS ../WinPort/WinCompat.h
     DEPENDS ../WinPort/WinPort.h
     DEPENDS ../WinPort/WinPortDecl.h
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs/plug/far2l" "${INSTALL_DIR}/Plugins/python/plug/far2l"
     COMMAND "${CMAKE_SOURCE_DIR}/python/src/build.sh" "${CMAKE_C_COMPILER} ${CMAKE_C_FLAGS}" "${CMAKE_SOURCE_DIR}" "${INSTALL_DIR}"
     COMMAND cat "${CMAKE_SOURCE_DIR}/python/src/far2lcffidefs.h" >> "${INSTALL_DIR}/Plugins/python/plug/far2l/far2lcffi.h"
 )
 
-add_custom_command(
-    TARGET python POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/configs" "${INSTALL_DIR}/Plugins/python"
+# copy resource files
+set(CURRENT_TARGET "python")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
 )
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${INSTALL_DIR}/Plugins/${CURRENT_TARGET}/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})

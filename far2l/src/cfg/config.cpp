@@ -114,7 +114,7 @@ static void ApplySudoConfiguration()
 			Wide2MB(Msg::SudoConfirm).c_str());
 }
 
-static void AddHistorySettings(DialogBuilder &Builder, FarLangMsg MTitle, int *OptEnabled, int *OptCount)
+static DialogItemEx *AddHistorySettings(DialogBuilder &Builder, FarLangMsg MTitle, int *OptEnabled, int *OptCount)
 {
 	DialogItemEx *EnabledCheckBox = Builder.AddCheckbox(MTitle, OptEnabled);
 	DialogItemEx *CountEdit = Builder.AddIntEditField(OptCount, 6);
@@ -123,6 +123,7 @@ static void AddHistorySettings(DialogBuilder &Builder, FarLangMsg MTitle, int *O
 	CountText->Indent(4);
 	Builder.LinkFlags(EnabledCheckBox, CountEdit, DIF_DISABLE);
 	Builder.LinkFlags(EnabledCheckBox, CountText, DIF_DISABLE);
+	return EnabledCheckBox;
 }
 
 void SanitizeHistoryCounts()
@@ -935,7 +936,32 @@ void CmdlineSettings()
 	};
 
 	DialogBuilder Builder(Msg::ConfigCmdlineTitle, L"CmdlineSettings");
-	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
+
+	DialogItemEx *CmdHistCheckBox =
+			AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
+
+	int cmdHist_optAssSys = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTWINASS);
+	DialogItemEx *CmdHistOptAssSys = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptAssSys, &cmdHist_optAssSys);
+	CmdHistOptAssSys->Indent(4);
+	Builder.LinkFlags(CmdHistCheckBox, CmdHistOptAssSys, DIF_DISABLE);
+
+	int cmdHist_optAssFar = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTFARASS);
+	DialogItemEx *CmdHistOptAssFar = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptAssFar, &cmdHist_optAssFar);
+	CmdHistOptAssFar->Indent(4);
+	Builder.LinkFlags(CmdHistCheckBox, CmdHistOptAssFar, DIF_DISABLE);
+
+	int cmdHist_optExecPanel = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTPANEL);
+	DialogItemEx *CmdHistOptExecPanel = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptExecPanel, &cmdHist_optExecPanel);
+	CmdHistOptExecPanel->Indent(4);
+	Builder.LinkFlags(CmdHistCheckBox, CmdHistOptExecPanel, DIF_DISABLE);
+
+	int cmdHist_optExecCmdLine = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTCMDLINE);
+	DialogItemEx *CmdHistOptExecCmdLine = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptExecCmdLine, &cmdHist_optExecCmdLine);
+	CmdHistOptExecCmdLine->Indent(4);
+	Builder.LinkFlags(CmdHistCheckBox, CmdHistOptExecCmdLine, DIF_DISABLE);
+
+	Builder.AddSeparator();
+
 	Builder.AddCheckbox(Msg::ConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
 	Builder.AddCheckbox(Msg::ConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
 	Builder.AddCheckbox(Msg::ConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
@@ -963,6 +989,12 @@ void CmdlineSettings()
 	FARString oldShell = FARString(Opt.CmdLine.strShell);
 
 	if (Builder.ShowDialog()) {
+		Opt.ExcludeCmdHistory
+			= (cmdHist_optAssSys ? 0 : EXCLUDECMDHISTORY_NOTWINASS)
+			| (cmdHist_optAssFar ? 0 : EXCLUDECMDHISTORY_NOTFARASS)
+			| (cmdHist_optExecPanel ? 0 : EXCLUDECMDHISTORY_NOTPANEL)
+			| (cmdHist_optExecCmdLine ? 0 : EXCLUDECMDHISTORY_NOTCMDLINE);
+
 		SanitizeHistoryCounts();
 
 		CtrlObject->CmdLine->SetPersistentBlocks(Opt.CmdLine.EditBlock);

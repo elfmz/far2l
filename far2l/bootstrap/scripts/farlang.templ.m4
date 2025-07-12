@@ -1978,6 +1978,50 @@ ConfigSaveHistory
 "Зберігати &історію команд"
 "Захоўваць г&історыю камандаў"
 
+ConfigSaveHistoryOptAssSys
+"Файлы, открытые на основе системных типов (xdg-open)"
+"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+upd:"Files opened via system types (xdg-open)"
+
+ConfigSaveHistoryOptAssFar
+"Файлы, открытые через ассоциации типов far2l"
+"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+upd:"Files opened via far2l associations"
+
+ConfigSaveHistoryOptExecPanel
+"Исполняемые файлы, запущенные из панелей"
+"Executable files launched from panels"
+upd:"Executable files launched from panels"
+upd:"Executable files launched from panels"
+upd:"Executable files launched from panels"
+upd:"Executable files launched from panels"
+upd:"Executable files launched from panels"
+upd:"Executable files launched from panels"
+upd:"Executable files launched from panels"
+
+ConfigSaveHistoryOptExecCmdLine
+"Команды, набранные в командной строке"
+"Commands typed in the command line"
+upd:"Commands typed in the command line"
+upd:"Commands typed in the command line"
+upd:"Commands typed in the command line"
+upd:"Commands typed in the command line"
+upd:"Commands typed in the command line"
+upd:"Commands typed in the command line"
+upd:"Commands typed in the command line"
+
 ConfigSaveFoldersHistory
 "Сохранять историю п&апок"
 "Save &folders history"

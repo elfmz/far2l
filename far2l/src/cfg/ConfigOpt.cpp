@@ -331,7 +331,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "OnlyFilesSize", &Opt.OnlyFilesSize, 0},
 	{false, NSecSystem, "UsePrintManager", &Opt.UsePrintManager, 1},
 
-	{false, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
+	{true, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
 
 	{true,  NSecSystem, "FolderInfo", &Opt.InfoPanel.strFolderInfoFiles, L"DirInfo,File_Id.diz,Descript.ion,ReadMe.*,Read.Me"},
 

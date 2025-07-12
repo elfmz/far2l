@@ -1978,6 +1978,61 @@ ConfigSaveHistory
 "Зберігати &історію команд"
 "Захоўваць г&історыю камандаў"
 
+ConfigSaveHistoryOpt
+"Действия, заносимые в историю команд:"
+"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+
+ConfigSaveHistoryOptAssSys
+"Панели: файлы по сист&емным типам (xdg-open)"
+"Panels: files via s&ystem types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+
+ConfigSaveHistoryOptAssFar
+"Панели: файлы по ассоциациям &типов far2l"
+"Panels: files via &far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+
+ConfigSaveHistoryOptExecPanel
+"Панели: испол&няемые файлы"
+"Panels: e&xecutable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+
+ConfigSaveHistoryOptExecCmdLine
+"&Командная строка: любая набранная команда"
+"&Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+
 ConfigSaveFoldersHistory
 "Сохранять историю п&апок"
 "Save &folders history"

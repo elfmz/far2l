@@ -868,8 +868,30 @@ void AutoCompleteSettings()
 	Builder.AddText(Msg::ConfigAutoCompleteExceptions);
 	Builder.AddEditField(&Opt.AutoComplete.Exceptions, 47);
 
+	Builder.AddSeparator();
+
+	Builder.AddText(Msg::ConfigSaveHistoryOpt);
+	int cmdHist_optAssSys = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTWINASS);
+	DialogItemEx *CmdHistOptAssSys = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptAssSys, &cmdHist_optAssSys);
+	CmdHistOptAssSys->Indent(4);
+	int cmdHist_optAssFar = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTFARASS);
+	DialogItemEx *CmdHistOptAssFar = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptAssFar, &cmdHist_optAssFar);
+	CmdHistOptAssFar->Indent(4);
+	int cmdHist_optExecPanel = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTPANEL);
+	DialogItemEx *CmdHistOptExecPanel = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptExecPanel, &cmdHist_optExecPanel);
+	CmdHistOptExecPanel->Indent(4);
+	int cmdHist_optExecCmdLine = !(Opt.ExcludeCmdHistory & EXCLUDECMDHISTORY_NOTCMDLINE);
+	DialogItemEx *CmdHistOptExecCmdLine = Builder.AddCheckbox(Msg::ConfigSaveHistoryOptExecCmdLine, &cmdHist_optExecCmdLine);
+	CmdHistOptExecCmdLine->Indent(4);
+
 	Builder.AddOKCancel();
-	Builder.ShowDialog();
+	if (Builder.ShowDialog()) {
+		Opt.ExcludeCmdHistory
+			= (cmdHist_optAssSys ? 0 : EXCLUDECMDHISTORY_NOTWINASS)
+			| (cmdHist_optAssFar ? 0 : EXCLUDECMDHISTORY_NOTFARASS)
+			| (cmdHist_optExecPanel ? 0 : EXCLUDECMDHISTORY_NOTPANEL)
+			| (cmdHist_optExecCmdLine ? 0 : EXCLUDECMDHISTORY_NOTCMDLINE);
+	}
 }
 
 void InfoPanelSettings()

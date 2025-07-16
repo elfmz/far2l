@@ -36,6 +36,6 @@ elif command -v osascript >/dev/null 2>&1; then
 	osascript -e "tell application \"Finder\" to delete POSIX file \"$1\"" 2>"$2"
 
 else
-	echo 'No command-line trash tool available' >"$2"
+	echo 'No command-line trash tool available (see supported tools in the $FARHOME/trash.sh)' >"$2"
 	exit 1
 fi

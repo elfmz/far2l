@@ -2086,6 +2086,8 @@ respective option in the ~system settings dialog~@SystemSettings@.
 
     Remove duplicates method can be chosen in the ~system settings dialog~@SystemSettings@.
 
+    Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
+
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -2454,6 +2456,7 @@ input without viewer or editor screens in the background.
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
 Commands history list may be activated by #Alt-F8#.
   This option can also be found in the ~Command line settings~@CmdlineSettings@ dialog.
+  Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
   #Save folders history#
   Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR2L.
@@ -2721,6 +2724,7 @@ $ #Settings dialog: command line#
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
   This option can also be found in the ~System settings~@SystemSettings@ dialog.
+  Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
   #Persistent blocks#
   Do not remove block selection after moving the cursor in command line.
@@ -2768,12 +2772,19 @@ $ #Settings dialog: AutoComplete & History#
   #Append first matched item#
   The first matched item is append immediately after symbols in the command line.
 
-  #Exceptions wildcards# also affect which commands are stored in far2l history.
+  #Exceptions wildcards# also affect which commands are stored in far2l ~commands history~@History@.
   For example, adding #" *"# (mandatory in quotes) excludes from adding in history
   commands that start with a space (similar to the bash #$HISTCONTROL=ignorespace#).
   Info: in far2l history work like bash #$HISTCONTROL#
    with options #ignoredups# (lines which match the previous line are not saved)
    and #erasedups# (all previous lines matching the current line are removed from the history).
+
+  Actions recorded in ~commands history~@History@:
+    - Panels: files via system types (xdg-open);
+    - Panels: files via ~far2l associations~@FileAssoc@;
+    - Panels: executable files;
+    - Command line: any typed command.
+  Remove duplicates method can be chosen in the ~system settings dialog~@SystemSettings@.
 
 @InfoPanelSettings
 $ #Information Panel settings#

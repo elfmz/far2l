@@ -1750,6 +1750,8 @@ $ #Parancs előzmények#
 
     Remove duplicates method can be chosen in the ~Rendszer beállítások~@SystemSettings@.
 
+    Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
+
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -2370,6 +2372,7 @@ $ #Settings dialog: command line#
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
   This option can also be found in the ~System settings~@SystemSettings@ dialog.
+  Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
   #Persistent blocks#
   Do not remove block selection after moving the cursor in command line.

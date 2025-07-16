@@ -17,6 +17,15 @@ fi
 if command -v kioclient >/dev/null 2>&1; then
 	kioclient move "$1" trash:/ 2>"$2"
 
+elif command -v trash-put >/dev/null 2>&1; then
+	trash-put "$1" 2>"$2"
+
+elif command -v trash >/dev/null 2>&1; then
+	trash put "$1" 2>"$2"
+
+elif command -v trashу >/dev/null 2>&1; then
+	trashу put "$1" 2>"$2" 
+
 elif command -v gio >/dev/null 2>&1; then
 	gio trash -f -- "$1" 2>"$2"
 

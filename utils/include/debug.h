@@ -55,7 +55,7 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 namespace Dumper {
 
 	// ****************************************************************************************************
-	// Вспомогательные переменные, функции и структуры
+	// Helper variables, functions, and structures
 	// ****************************************************************************************************
 
 	inline std::mutex g_log_output_mutex;
@@ -135,7 +135,7 @@ namespace Dumper {
 	}
 
 
-	// Метафункция для проверки на этапе компиляции: является ли тип T контейнером?
+	// Compile-time metafunction that determines if T is a container
 
 	template <typename T, typename = void>
 	struct is_container : std::false_type { };
@@ -150,7 +150,7 @@ namespace Dumper {
 	inline constexpr bool is_container_v = is_container<T>::value;
 
 	// ****************************************************************************************************
-	// Форматирование имён/значений переменных с учётом уровня их возможной вложенности при отображении контейнеров
+	// Formatting variable names/values according to their nesting level when displaying containers
 	// ****************************************************************************************************
 
 	constexpr std::size_t MAX_INDENT_LEVEL = 32;
@@ -209,7 +209,7 @@ namespace Dumper {
 
 
 	// ****************************************************************************************************
-	// DumpValue() - главная реализация-"диспетчер", обрабатывающая основные типы
+	// DumpValue() – the main dispatcher implementation handling the basic types
 	// ****************************************************************************************************
 
 	template <typename T>
@@ -288,7 +288,7 @@ namespace Dumper {
 
 
 	// ****************************************************************************************************
-	// Поддержка статических массивов char[], unsigned char[] и wchar_t[]
+	// Support for char[], unsigned char[], and wchar_t[] static arrays
 	// ****************************************************************************************************
 
 	template <typename CharT, std::size_t N>
@@ -314,7 +314,7 @@ namespace Dumper {
 
 
 	// ****************************************************************************************************
-	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DSTRBUF + DUMP
+	// Support for string buffers specified as (pointer, length) via DSTRBUF + DUMP macros
 	// ****************************************************************************************************
 
 	template <typename T>
@@ -350,7 +350,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
+	// Support for binary buffers specified as (pointer, byte count) via DBINBUF + DUMP macros
 	// ****************************************************************************************************
 
 	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
@@ -432,7 +432,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка итерируемых STL контейнеров и статических массивов: через макросы DCONT + DUMP
+	// Support for iterable STL containers and static arrays via DCONT + DUMP macros
 	// ****************************************************************************************************
 
 	template <typename ContainerT, typename = std::enable_if_t<is_container_v<ContainerT>>>
@@ -474,7 +474,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...
+	// Support for flags (bitmasks, etc.) via DFLAGS + DUMP; use Dumper::FlagsAs::... as the second argument
 	// ****************************************************************************************************
 
 	enum class FlagsAs
@@ -569,7 +569,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Вспомогательный код для работы с логом
+	// Helper code for logging
 	// ****************************************************************************************************
 
 
@@ -605,7 +605,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Бэкенд для макроса DUMP: аргументы заключаются в дополнительные макросы DVV, DBUF, DCONT, DMSG...
+	// Backend for the DUMP macro: arguments must be wrapped in helper macros (DVV, DBUF, DCONT, DMSG...)
 	// ****************************************************************************************************
 
 	template<std::size_t... I, typename NameValueTupleT>
@@ -631,7 +631,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Бэкенд для макроса DUMPV: поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений)
+	// Backend for the DUMPV macro: only simple variables support (no function calls, macros, or complex expressions)
 	// ****************************************************************************************************
 
 	template <std::size_t... I, typename ValuesTupleT>

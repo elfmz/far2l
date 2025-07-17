@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <string>
 #include <type_traits>
-#include <codecvt>
 #include <string_view>
 #include <unistd.h>
 #include <iomanip>
@@ -29,6 +28,7 @@
 #include <iterator>
 #include <algorithm>
 #include <array>
+#include "WideMB.h"
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -230,14 +230,11 @@ namespace Dumper {
 					  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char>) {
 			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value), indent_info);
 
-		} else if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::wstring> ||
-							 std::is_convertible_v<T, const wchar_t*>) {
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-			try {
-				DumpValue(log_stream, var_name, conv.to_bytes(value), indent_info);
-			} catch (const std::range_error& e) {
-				LogVarWithIndentation(log_stream, var_name, std::string("[conversion error: ") + e.what() + "]", indent_info);
-			}
+		} else if constexpr (std::is_same_v<std::remove_const_t<std::remove_reference_t<T>>, std::wstring>) {
+			DumpValue(log_stream, var_name, StrWide2MB(value), indent_info);
+
+		} else if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+			DumpValue(log_stream, var_name, Wide2MB(value), indent_info);
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
 							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||

@@ -622,7 +622,7 @@ namespace Dumper {
 		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
 
 		std::ostringstream log_stream;
-		log_stream << CreateLogHeader(func_name, location);
+		log_stream << CreateLogHeader(func_name, location) << std::boolalpha;
 
 		auto args_tuple = std::forward_as_tuple(args...);
 		constexpr std::size_t pair_count = sizeof...(args) / 2;
@@ -683,7 +683,7 @@ namespace Dumper {
 		const Ts&... var_values)
 	{
 		std::ostringstream log_stream;
-		log_stream << CreateLogHeader(func_name, location);
+		log_stream << CreateLogHeader(func_name, location) << std::boolalpha;
 
 		constexpr auto var_values_count = sizeof...(var_values);
 		std::vector<std::string> var_names;

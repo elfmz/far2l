@@ -182,10 +182,10 @@ static Xlator &GetXlator()
 		s_xlator.emplace();
 		s_xlator_time = now;
 	} else if (now - s_xlator_time > 10) {
-		s_xlator.value().Reinit();
+		s_xlator->Reinit();
 		s_xlator_time = now;
 	}
-	return s_xlator.value();
+	return *s_xlator;
 }
 
 void XlatReinit()

@@ -14916,7 +14916,7 @@ MenuProcessList
 "Спіс &задачаў              Ctrl+W"
 
 MenuFarConfig
-"Список настро&ек"
+"Редактор конфигура&ции"
 "S&ettings list"
 "&Seznam nastavení"
 "Liste der Einstellun&gen"
@@ -14927,7 +14927,7 @@ MenuFarConfig
 "Спіс настро&ек"
 
 MenuAboutFar
-"Сведения о &FAR"
+"Св&едения о FAR"
 "A&bout FAR"
 "Informace o &FAR"
 "Ü&ber FAR"

@@ -13,6 +13,8 @@ src/APIRegistry.cpp
 src/APIStringCodepages.cpp
 src/APIStringMap.cpp
 src/APITime.cpp
+src/APIThread.cpp
+src/APIMemory.cpp
 src/ConsoleBuffer.cpp
 src/ConsoleInput.cpp
 src/ConsoleOutput.cpp

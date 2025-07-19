@@ -211,7 +211,7 @@ LONG_PTR WINAPI PluginClass::PutDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 			case PDI_SAVEBTN: {
 				KeyFileHelper kfh(INI_LOCATION);
 				kfh.SetString(INI_SECTION, "DefaultFormat", pdd->ArcFormat.c_str());
-				kfh.SetString(INI_SECTION, "AddSwitches", GetDialogControlText(hDlg, PDI_SWITCHESEDT));
+				kfh.SetString(pdd->ArcFormat.c_str(), "AddSwitches", GetDialogControlText(hDlg, PDI_SWITCHESEDT));
 
 				// Info.SendDlgMessage(hDlg, DM_GETTEXTPTR, PDI_SWITCHESEDT, (LONG_PTR)Buffer);
 				// Info.SendDlgMessage(hDlg, DM_ADDHISTORY, PDI_SWITCHESEDT, (LONG_PTR)Buffer);

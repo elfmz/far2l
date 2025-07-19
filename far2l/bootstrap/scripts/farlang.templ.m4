@@ -14917,14 +14917,14 @@ MenuProcessList
 
 MenuFarConfig
 "Редактор конфигура&ции"
-"S&ettings list"
-"&Seznam nastavení"
-"Liste der Einstellun&gen"
-"Beállítások listá&ja"
-"Lista ustawi&eń"
-"Lista de confi&guraciones"
-"Список нала&штувань"
-"Спіс настро&ек"
+"Configuration &editor"
+"Ko&nfigurační editor"
+"Konfi&gurationseditor"
+"Konfi&gurációszerkesztő"
+"&Edytor konfiguracji"
+"Editor de confi&guración"
+"Р&едактор конфігурації"
+"Р&эдактар канфігурацыі"
 
 MenuAboutFar
 "Св&едения о FAR"

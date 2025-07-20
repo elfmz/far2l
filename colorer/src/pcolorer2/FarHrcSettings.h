@@ -4,7 +4,6 @@
 #include <colorer/ParserFactory.h>
 #include <string>
 #include "FarEditorSet.h"
-#include "colorer/xml/XMLNode.h"
 
 const char FarCatalogXml[] = "/base/catalog.xml";
 const char FarProfileXml[] = "/plug/hrcsettings.xml";
@@ -24,16 +23,13 @@ class FarHrcSettings
 
  public:
   FarHrcSettings(FarEditorSet* _farEditorSet, ParserFactory* _parserFactory);
-  void readXML(const UnicodeString* file);
-  void readProfile();
-  void readUserProfile(const FileType* def_filetype = nullptr);
+  void applySettings(const UnicodeString* catalog_xml, const UnicodeString* user_hrd,
+                     const UnicodeString* user_hrc, const UnicodeString* user_hrc_settings);
+  void readSystemHrcSettings();
+  void readUserProfile();
   void writeUserProfile();
-  void loadUserHrc(const UnicodeString* filename);
-  void loadUserHrd(const UnicodeString* filename);
 
  private:
-  void UpdatePrototype(const XMLNode& elem);
-
   FarEditorSet* farEditorSet;
   ParserFactory* parserFactory;
   std::string profileIni;

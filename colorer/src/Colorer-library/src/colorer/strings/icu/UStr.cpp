@@ -28,6 +28,11 @@ std::string UStr::to_stdstr(const uUnicodeString& str)
 #ifdef _WINDOWS
 // wchar_t and UChar are the same size
 
+UnicodeString UStr::to_unistr(const std::wstring& str)
+{
+  return {str.c_str()};
+}
+
 std::wstring UStr::to_stdwstr(const uUnicodeString& str)
 {
   return to_stdwstr(str.get());

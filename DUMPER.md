@@ -41,6 +41,7 @@ Output example:
 /-----[PID:38000, TID:1]-----[2025-05-08 00:46:28,450]-----
 |[/home/testuser/far2l/far2l/src/copy.cpp:2803] in ShellCopyFile()
 |=> SrcName = .editorconfig
+|=> SrcData.dwUnixMode = 100644 (rw-r--r--)
 |=> strDestName = /home/testuser/foobar/.editorconfig
 
 
@@ -211,7 +212,7 @@ DUMP(true,
 
 Wraps containers or static arrays.
 
-Use to log the contents of static arrays and iterable containers (i.e. containers that provide both `begin()` and `end()` methods) in a detailed and structured way.
+Use to log the contents of static arrays and iterable containers (i.e. containers that provide both `begin()` and `end()` methods) when you need to limit the number of displayed elements; for a complete container dump, prefer the simpler DVV macro.
 
 **Syntax:**
 

@@ -35,13 +35,6 @@
 		</appinfo>
 	</annotation>
 
-	<package name="cmake-dict">
-		<location link="cmake.ent.hrc"/>
-	</package>
-	<package name="cmake-auto">
-		<location link="cmake-auto.ent.hrc"/>
-	</package>
-
 	<type name="cmake">
 		<region name="cmake_function_names" parent="def:Function"/>
 		<region name="cmake_parameters" parent="def:Parameter"/>

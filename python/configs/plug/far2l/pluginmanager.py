@@ -76,7 +76,7 @@ class PluginManager:
                 ini.read_file(fp)
                 if ini.has_section('autoload'):
                     for name in ini.options('autoload'):
-                        self.pluginInstall(name)
+                        self.pluginInstall(name, ini.get('autoload', name)=='open')
 
     @handle_error
     def pluginRemove(self, name):
@@ -95,8 +95,8 @@ class PluginManager:
         log.error("install plugin: {0} - not installed".format(name))
 
     @handle_error
-    def pluginInstall(self, name):
-        log.debug("install plugin: {0}".format(name))
+    def pluginInstall(self, name, autorun=False):
+        log.debug(f"install plugin: {name} autorun:{autorun}")
         for i in range(len(self.plugins)):
             if self.plugins[i].Plugin.name == name:
                 log.error("install plugin: {0} - allready installed".format(name))
@@ -111,6 +111,10 @@ class PluginManager:
             self.plugins.append(plugin)
             for i in range(len(self.plugins)):
                 self.plugins[i].Plugin.number = i
+            if autorun:
+                plugin = plugin.Plugin(self, self.info, ffi, ffic)
+                hplugin = id(plugin)
+                self.openplugins[hplugin] = plugin
         else:
             log.error("install plugin: {0} - not a far2l python plugin".format(name))
             del sys.modules[name]
@@ -295,13 +299,14 @@ class PluginManager:
                     )
             elif linesplit[0] == "load":
                 if len(linesplit) > 1:
-                    self.pluginInstall(linesplit[1])
+                    line = line.split()
+                    self.pluginInstall(line[1], len(line) >2 and line[2] == 'open')
                 else:
-                    log.debug("missing plugin name in py:load <plugin name>")
+                    log.debug("missing plugin name in py:load <plugin name> [open]")
                     self.Message(
                         [
                             "Usage is:",
-                            "py:load <plugin name>",
+                            "py:load <plugin name> [open]",
                         ]
                     )
             else:

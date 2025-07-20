@@ -1978,6 +1978,61 @@ ConfigSaveHistory
 "Зберігати &історію команд"
 "Захоўваць г&історыю камандаў"
 
+ConfigSaveHistoryOpt
+"Действия, заносимые в историю команд:"
+"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+upd:"Actions recorded in commands history:"
+
+ConfigSaveHistoryOptAssSys
+"Панели: файлы по сист&емным типам (xdg-open)"
+"Panels: files via s&ystem types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+upd:"Panels: files via system types (xdg-open)"
+
+ConfigSaveHistoryOptAssFar
+"Панели: файлы по ассоциациям &типов far2l"
+"Panels: files via &far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+upd:"Panels: files via far2l associations"
+
+ConfigSaveHistoryOptExecPanel
+"Панели: испол&няемые файлы"
+"Panels: e&xecutable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+upd:"Panels: executable files"
+
+ConfigSaveHistoryOptExecCmdLine
+"&Командная строка: любая набранная команда"
+"&Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+upd:"Command line: any typed command"
+
 ConfigSaveFoldersHistory
 "Сохранять историю п&апок"
 "Save &folders history"
@@ -14857,8 +14912,30 @@ MenuProcessList
 "Futó p&rogramok      Ctrl+W"
 "Lista za&dań               Ctrl+W"
 "Lista de &tareas       Ctrl+W"
-"Список & завдань           Ctrl+W"
+"Список &завдань            Ctrl+W"
 "Спіс &задачаў              Ctrl+W"
+
+MenuFarConfig
+"Редактор конфигура&ции"
+"Configuration &editor"
+"Ko&nfigurační editor"
+"Konfi&gurationseditor"
+"Konfi&gurációszerkesztő"
+"&Edytor konfiguracji"
+"Editor de confi&guración"
+"Р&едактор конфігурації"
+"Р&эдактар канфігурацыі"
+
+MenuAboutFar
+"Св&едения о FAR"
+"A&bout FAR"
+"Informace o &FAR"
+"Ü&ber FAR"
+"Információk a &FAR"
+"Info&rmacje o FAR"
+"Acerca del &FAR"
+"Інформа&ція про FAR"
+"З&весткі аб FAR"
 
 MenuSystemSettings
 l:
@@ -17427,7 +17504,7 @@ SetColorMenu
 "&Menu"
 "&Menú"
 "&Меню"
-"Меню"
+"&Меню"
 
 SetColorHMenu
 "&Горизонтальное меню"
@@ -17518,26 +17595,26 @@ SetDefaultColors
 "&Ужыць прадвызначаныя колеры"
 
 SetDefaultColorsRGB
-"&Установить стандартные цвета (RGB)"
-"Set de&fault colors (RGB)"
-"N&astavit výchozí barvy (RGB)"
-"Setze Standard&farben (RGB)"
-"Alapért. s&zínek (RGB)"
-"&Ustaw kolory domyślne (RGB)"
-"Poner colores prede&terminados (RGB)"
-"&Встановити стандартні кольори (RGB)"
-"&Ужыць прадвызначаныя колеры (RGB)"
+"Установить стандартные &цвета (RGB)"
+"Set default colors (&RGB)"
+"Nastavit výchozí &barvy (RGB)"
+"Setze Standardfarben (&RGB)"
+"Alapért. színek (&RGB)"
+"Ustaw kolory domyślne (&RGB)"
+"Poner colores predeterminados (&RGB)"
+"Встановити &стандартні кольори (RGB)"
+"У&жыць прадвызначаныя колеры (RGB)"
 
 SetBW
-"Чёрно-бел&ый режим"
-"&Black and white mode"
-"Černo&bílý mód"
-"Schwarz && &Weiß"
-"Fekete-fe&hér mód"
-"&Tryb czarno-biały"
-"Modo &blanco y negro"
-"Чорно-біл&ий режим"
-"Чорна-бел&ы рэжым"
+"&Тёмная тема"
+"Dark m&ode"
+"&Tmavý mód"
+"Dunkelmod&us"
+"Sötét mó&d"
+"&Tryb ciemny"
+"Modo &oscuro"
+"&Темна тема"
+"&Цёмная тэма"
 
 Palette
 "П&алитра"
@@ -19969,6 +20046,17 @@ l:
 "Editar modo de paneles"
 "Режими панелі"
 "Становішча панэляў"
+
+EditPanelModesBottom
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Strg+Enter Strg+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
+"Enter/F4 Ctrl+Enter Ctrl+Shift+Enter"
 
 EditPanelModesBrief
 l:

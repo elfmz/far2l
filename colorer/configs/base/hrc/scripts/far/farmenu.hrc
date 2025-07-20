@@ -46,8 +46,8 @@
 
  <inherit scheme="farsymb"/>
 
- <block start="/^\s+(?{def:KeywordStrong}lua:)/" end="/$/" scheme="lua:lua"/>
- <block start="/^\s+(?{def:KeywordStrong}v?ps:)/" end="/$/" scheme="powershell:powershell"/>
+ <block start="/^\s+(?{def:KeywordStrong}@?luas?:)/" end="/$/" scheme="lua:lua"/>
+ <block start="/^\s+(?{def:KeywordStrong}@?v?ps:)/" end="/$/" scheme="powershell:powershell"/>
 
  <block start="/&quot;/" end="/&quot;/" scheme="str" region="def:String"/>
 

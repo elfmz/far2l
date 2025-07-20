@@ -16,10 +16,10 @@ class Plugin(PluginBase):
         return 0
 
     def ProcessEditorInput(self, Rec):
-        rec = ffi.cast("INPUT_RECORD *", Rec)
+        rec = self.ffi.cast("INPUT_RECORD *", Rec)
 
         if (
-            rec.EventType != ffic.KEY_EVENT
+            rec.EventType != self.ffic.KEY_EVENT
             or not rec.Event.KeyEvent.bKeyDown
             or (rec.Event.KeyEvent.wVirtualKeyCode != self.ffic.VK_TAB)
             or (rec.Event.KeyEvent.dwControlKeyState & (

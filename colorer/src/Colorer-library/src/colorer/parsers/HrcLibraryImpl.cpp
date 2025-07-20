@@ -32,21 +32,30 @@ HrcLibrary::Impl::~Impl()
   }
 }
 
-void HrcLibrary::Impl::loadSource(XmlInputSource* is)
+void HrcLibrary::Impl::loadSource(XmlInputSource* input_source, const LoadType load_type)
 {
-  if (!is) {
+  if (!input_source) {
     throw HrcLibraryException("Can't open stream - 'null' is bad stream.");
   }
 
-  XmlInputSource* istemp = current_input_source;
-  current_input_source = is;
+  // Сохраняем текущий контекст парсинга файла, т.к. у нас рекурсивное использование
+  XmlInputSource* temp_is = current_input_source;
+  LoadType temp_lt = current_load_type;
+  current_input_source = input_source;
+  current_load_type = load_type;
+
   try {
-    parseHRC(*is);
+    parseHRC(*input_source);
   } catch (Exception&) {
-    current_input_source = istemp;
+    // восстанавливаем контекст
+    current_input_source = temp_is;
+    current_load_type = temp_lt;
     throw;
   }
-  current_input_source = istemp;
+
+  // восстанавливаем контекст
+  current_input_source = temp_is;
+  current_load_type = temp_lt;
 }
 
 void HrcLibrary::Impl::unloadFileType(const FileType* filetype)
@@ -75,9 +84,12 @@ void HrcLibrary::Impl::unloadFileType(const FileType* filetype)
 void HrcLibrary::Impl::loadFileType(FileType* filetype)
 {
   auto* thisType = filetype;
+  // проверяем статус загрузки указанного типа
   if (thisType == nullptr || filetype->pimpl->type_loading || thisType->pimpl->input_source_loading ||
       thisType->pimpl->load_broken)
   {
+    // если он уже в процессе загрузки, то выходим
+    // ошибку не возвращаем, почему ? TODO проверить
     return;
   }
 
@@ -85,7 +97,8 @@ void HrcLibrary::Impl::loadFileType(FileType* filetype)
 
   const auto& input_source = thisType->pimpl->inputSource;
   try {
-    loadSource(input_source.get());
+    // загружаем только сам тип, все остальное уже у нас есть
+    loadSource(input_source.get(), LoadType::TYPE);
   } catch (InputSourceException& e) {
     COLORER_LOG_ERROR("Can't open source stream: %", e.what());
     thisType->pimpl->load_broken = true;
@@ -101,6 +114,25 @@ void HrcLibrary::Impl::loadFileType(FileType* filetype)
   }
 
   thisType->pimpl->input_source_loading = false;
+}
+
+void HrcLibrary::Impl::loadHrcSettings(const XmlInputSource& is)
+{
+  XmlReader xml_parser(is);
+  if (!xml_parser.parse()) {
+    throw HrcLibraryException("Error reading " + is.getPath());
+  }
+  std::list<XMLNode> nodes;
+  xml_parser.getNodes(nodes);
+
+  if (nodes.begin()->name != u"hrc-settings") {
+    throw HrcLibraryException("main '<hrc-settings>' block not found");
+  }
+  for (const auto& node : nodes.begin()->children) {
+    if (node.name == hrcTagPrototype) {
+      updatePrototype(node);
+    }
+  }
 }
 
 FileType* HrcLibrary::Impl::chooseFileType(const UnicodeString* fileName, const UnicodeString* firstLine, int typeNo)
@@ -210,14 +242,17 @@ void HrcLibrary::Impl::parseHRC(const XmlInputSource& is)
 void HrcLibrary::Impl::parseHrcBlock(const XMLNode& elem)
 {
   for (const auto& node : elem.children) {
-    if (node.name == hrcTagPrototype || node.name == hrcTagPackage) {
+    if (node.name == hrcTagPrototype) {
+      addPrototype(node);
+    }
+    else if (node.name == hrcTagPackage) {
       addPrototype(node);
     }
     else if (node.name == hrcTagType) {
       addType(node);
     }
     else if (node.name == hrcTagAnnotation) {
-      // not read annotation
+      // do not read annotation
     }
     else {
       COLORER_LOG_WARN("Unused element '%'. Current file %.", node.name, current_input_source->getPath());
@@ -227,6 +262,23 @@ void HrcLibrary::Impl::parseHrcBlock(const XMLNode& elem)
 
 void HrcLibrary::Impl::addPrototype(const XMLNode& elem)
 {
+  const auto& global_package = elem.getAttrValue(hrcPackageAttrGlobal);
+  const bool is_global_package = global_package.isEmpty() || global_package.compare(value_yes) == 0;
+
+  if (elem.name == hrcTagPrototype && current_load_type == LoadType::TYPE) {
+    // прототип не загружаем на стадии загрузки типов
+    return;
+  }
+  if (elem.name == hrcTagPackage &&
+      (
+          // глобальный пакет не загружаем на стадии загрузки типов
+          (is_global_package && current_load_type == LoadType::TYPE) ||
+          // внутренний пакет не загружаем на стадии загрузки прототипов
+          (!is_global_package && current_load_type == LoadType::PROTOTYPE)))
+  {
+    return;
+  }
+
   auto typeName = elem.getAttrValue(hrcPrototypeAttrName);
 
   if (typeName.isEmpty()) {
@@ -258,7 +310,7 @@ void HrcLibrary::Impl::addPrototype(const XMLNode& elem)
   }
 }
 
-void HrcLibrary::Impl::parsePrototypeBlock(const XMLNode& elem, FileType* current_parse_prototype)
+void HrcLibrary::Impl::parsePrototypeBlock(const XMLNode& elem, FileType* current_parse_prototype) const
 {
   for (const auto& node : elem.children) {
     if (node.name == hrcTagLocation) {
@@ -280,9 +332,15 @@ void HrcLibrary::Impl::parsePrototypeBlock(const XMLNode& elem, FileType* curren
                        current_parse_prototype->pimpl->name, current_input_source->getPath());
     }
   }
+  // Если после загрузки блока prototype у нас не заполнена ссылка на файл с определением типа
+  // значит он должен быть описан в текущем файле. Но если это не так на самом деле, то это не критичная проблема.
+  // Это позволяет в одном hrc файле хранить и prototype и type.
+  if (current_parse_prototype->pimpl->inputSource == nullptr) {
+    current_parse_prototype->pimpl->inputSource = std::make_unique<XmlInputSource>(current_input_source->getPath());
+  }
 }
 
-void HrcLibrary::Impl::addPrototypeLocation(const XMLNode& elem, FileType* current_parse_prototype)
+void HrcLibrary::Impl::addPrototypeLocation(const XMLNode& elem, FileType* current_parse_prototype) const
 {
   const auto& locationLink = elem.getAttrValue(hrcLocationAttrLink);
   if (locationLink.isEmpty()) {
@@ -292,7 +350,7 @@ void HrcLibrary::Impl::addPrototypeLocation(const XMLNode& elem, FileType* curre
   current_parse_prototype->pimpl->inputSource = current_input_source->createRelative(locationLink);
 }
 
-void HrcLibrary::Impl::addPrototypeDetectParam(const XMLNode& elem, FileType* current_parse_prototype)
+void HrcLibrary::Impl::addPrototypeDetectParam(const XMLNode& elem, FileType* current_parse_prototype) const
 {
   if (elem.text.isEmpty()) {
     COLORER_LOG_WARN("Bad '%' element in prototype '%'", elem.name, current_parse_prototype->pimpl->name);
@@ -332,7 +390,7 @@ void HrcLibrary::Impl::addPrototypeDetectParam(const XMLNode& elem, FileType* cu
   current_parse_prototype->pimpl->chooserVector.emplace_back(ctype, prior, matchRE.release());
 }
 
-void HrcLibrary::Impl::addPrototypeParameters(const XMLNode& elem, FileType* current_parse_prototype)
+void HrcLibrary::Impl::addPrototypeParameters(const XMLNode& elem, FileType* current_parse_prototype) const
 {
   for (const auto& node : elem.children) {
     if (node.name == hrcTagParam) {
@@ -357,6 +415,10 @@ void HrcLibrary::Impl::addPrototypeParameters(const XMLNode& elem, FileType* cur
 
 void HrcLibrary::Impl::addType(const XMLNode& elem)
 {
+  if (current_load_type == LoadType::PROTOTYPE) {
+    // тип загружаем на всех стадиях, кроме стадии загрузки прототипа
+    return;
+  }
   const auto& typeName = elem.getAttrValue(hrcTypeAttrName);
 
   if (typeName.isEmpty()) {
@@ -709,7 +771,7 @@ void HrcLibrary::Impl::parseSchemeKeywords(SchemeImpl* scheme, const XMLNode& el
   scheme_node->kwList = std::make_unique<KeywordList>(count);
   scheme_node->kwList->matchCase = UnicodeString(value_yes).compare(ignorecase_string) != 0;
 
-  loopSchemeKeywords(elem, scheme, scheme_node, region);
+  loopSchemeKeywords(elem, scheme, scheme_node.get(), region);
   scheme_node->kwList->firstChar->freeze();
 
   // TODO unique keywords in list
@@ -719,14 +781,79 @@ void HrcLibrary::Impl::parseSchemeKeywords(SchemeImpl* scheme, const XMLNode& el
 }
 
 void HrcLibrary::Impl::loopSchemeKeywords(const XMLNode& elem, const SchemeImpl* scheme,
-                                          const std::unique_ptr<SchemeNodeKeywords>& scheme_node, const Region* region)
+                                          const SchemeNodeKeywords* scheme_node, const Region* region)
 {
   for (const auto& node : elem.children) {
     if (node.name == hrcTagWord) {
-      addSchemeKeyword(node, scheme, scheme_node.get(), region, KeywordInfo::KeywordType::KT_WORD);
+      addSchemeKeyword(node, scheme, scheme_node, region, KeywordInfo::KeywordType::KT_WORD);
     }
     else if (node.name == hrcTagSymb) {
-      addSchemeKeyword(node, scheme, scheme_node.get(), region, KeywordInfo::KeywordType::KT_SYMB);
+      addSchemeKeyword(node, scheme, scheme_node, region, KeywordInfo::KeywordType::KT_SYMB);
+    }
+  }
+}
+
+void HrcLibrary::Impl::updatePrototype(const XMLNode& elem)
+{
+  const auto& typeName = elem.getAttrValue(hrcPrototypeAttrName);
+  if (typeName.isEmpty()) {
+    return;
+  }
+
+  const auto current_parse_prototype = getFileType(&typeName);
+  if (!current_parse_prototype) {
+    COLORER_LOG_WARN("Prototype '%' not found. Skipped.", typeName);
+    return;
+  }
+
+  bool cleaned_detect_param = false;
+  for (const auto& node : elem.children) {
+    if (node.name == hrcTagParametrs) {
+      for (const auto& node2 : node.children) {
+        updatePrototypeParams(node2, current_parse_prototype);
+      }
+    }
+    else if (node.name == hrcTagParam) {
+      // for backward compatibility
+      updatePrototypeParams(node, current_parse_prototype);
+    }
+    else if (node.name == hrcTagFilename || node.name == hrcTagFirstline) {
+      if (!cleaned_detect_param) {
+        // rewrite all detect params
+        current_parse_prototype->pimpl->chooserVector.clear();
+        cleaned_detect_param = true;
+      }
+      addPrototypeDetectParam(node, current_parse_prototype);
+    }
+  }
+}
+
+void HrcLibrary::Impl::updatePrototypeParams(const XMLNode& node, FileType* current_parse_prototype)
+{
+  if (node.name == hrcTagParam) {
+    const auto& name = node.getAttrValue(hrcParamAttrName);
+
+    if (name.isEmpty()) {
+      return;
+    }
+
+    const auto& value = node.getAttrValue(hrcParamAttrValue);
+    const auto& descr = node.getAttrValue(hrcParamAttrDescription);
+
+    if (current_parse_prototype->getParamValue(name) == nullptr) {
+      // параметр еще не задан для прототипа
+      // загружаем параметры приложения, добавляем атрибут и значение
+      current_parse_prototype->addParam(name, value);
+    }
+    else {
+      // параметр уже задан для прототипа
+      // сохраняем как значение по умолчанию
+      current_parse_prototype->setParamDefaultValue(name, &value);
+    }
+
+    if (!descr.isEmpty()) {
+      // обновляем описание параметра, если задано
+      current_parse_prototype->setParamDescription(name, &descr);
     }
   }
 }
@@ -873,7 +1000,7 @@ void HrcLibrary::Impl::updateLinks()
       }
       FileType* old_parseType = current_parse_type;
       current_parse_type = scheme->fileType;
-      for (auto& snode : scheme->nodes) {
+      for (const auto& snode : scheme->nodes) {
         if (snode->type == SchemeNode::SchemeNodeType::SNT_BLOCK) {
           auto* snode_block = static_cast<SchemeNodeBlock*>(snode.get());
 

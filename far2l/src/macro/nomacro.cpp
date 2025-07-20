@@ -16,7 +16,7 @@ nomacro.hpp
 
 KeyMacro::KeyMacro() {}
 KeyMacro::~KeyMacro() {}
-int KeyMacro::ProcessKey(FarKey Key) { return 0; }
+bool KeyMacro::ProcessKey(FarKey Key) { return false; }
 FarKey KeyMacro::GetKey() { return 0; }
 FarKey KeyMacro::PeekKey() { return 0; }
 bool KeyMacro::CheckWaitKeyFunc() { return false; }

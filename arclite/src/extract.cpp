@@ -388,7 +388,7 @@ private:
 			//      PAGE_READWRITE));
 			commit_size = new_size;
 		}
-		std::memcpy(buffer + buffer_pos, data, size);
+		memcpy(buffer + buffer_pos, data, size);
 		rec.buffer_size += size;
 		buffer_pos += size;
 		progress->update_cache_stored(size);

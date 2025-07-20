@@ -564,7 +564,7 @@ public:
 			if (size_read > size)
 				size_read = size;
 			device_pos += size_read;
-			std::memcpy(data, aligned_buffer + aligned_offset, size_read);
+			memcpy(data, aligned_buffer + aligned_offset, size_read);
 		} else {
 			size_read = 0;
 			if (cached_size) {
@@ -572,7 +572,7 @@ public:
 				if (cur_pos < cached_size) {
 					UInt32 off = static_cast<UInt32>(cur_pos);
 					UInt32 siz = std::min(size, cached_size - off);
-					std::memcpy(data, cached_header + off, siz);
+					memcpy(data, cached_header + off, siz);
 					size -= (size_read = siz);
 					data = static_cast<void *>(static_cast<Byte *>(data) + siz);
 					set_pos(static_cast<Int64>(siz), FILE_CURRENT);
@@ -1256,10 +1256,14 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		stream_impl->CacheHeader(buffer.data(), size);
 	}
 
+//	fprintf(stderr,"size = %lu ArchiveGlobals::max_check_size = %lu\n", size, ArchiveGlobals::max_check_size);
+
 	UInt64 skip_header = 0;
 	bool first_open = true;
 	ArcEntries arc_entries = detect(buffer.data(), size, size < ArchiveGlobals::max_check_size,
 			extract_file_ext(arc_info.cFileName), options.arc_types, stream);
+
+//	fprintf(stderr,"arc_entries.size = %lu\n", arc_entries.size());
 
 	for (ArcEntries::const_iterator arc_entry = arc_entries.cbegin(); arc_entry != arc_entries.cend();
 			++arc_entry) {
@@ -1276,8 +1280,10 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 		bool opened = false, have_tail = false;
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
-		if (!arc_entry->sig_pos) {
 
+		fprintf(stderr,"arc_entry->sig_pos = %lu \n", arc_entry->sig_pos);
+
+		if (!arc_entry->sig_pos) {
 			opened = archive->open(stream, arc_entry->type);
 			if (archive->m_open_password && options.open_password_len)
 				*options.open_password_len = archive->m_open_password;
@@ -1305,6 +1311,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		}
 
 		if (opened) {
+
 			if (parent_idx != (size_t)-1) {
 				archive->parent = archives[parent_idx];
 				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),
@@ -1315,13 +1322,16 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			archives.push_back(archive);
 			open(options, archives);
 
-			if ((!options.detect && !have_tail) || bExStream)
+			if ((!options.detect && !have_tail) || bExStream) {
 				break;
+			}
 
 			skip_header = arc_entry->sig_pos + std::min(archive->arc_info.size(), archive->get_physize());
 		}
 		first_open = false;
 	}
+
+//	fprintf(stderr,"========== archives size = %lu\n", archives.size());
 
 	if (stream_impl)
 		stream_impl->CacheHeader(nullptr, 0);

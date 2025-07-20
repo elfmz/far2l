@@ -854,7 +854,7 @@ void ArcAPI::load()
 			find_sfx_modules(_7zip_path + L"*.sfx");
 	}
 
-	const std::vector<std::wstring> search_paths = {
+	static const std::vector<std::wstring> search_paths = {
 		L"/usr/lib/7zip/",
 		L"/usr/local/lib/7zip/",
 		L"/usr/lib/p7zip/",

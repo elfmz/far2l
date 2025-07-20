@@ -32,6 +32,7 @@ bool update_dialog(bool new_arc, bool multifile, UpdateOptions &options, UpdateP
 
 struct PluginSettings
 {
+	bool plugin_enabled;
 	bool handle_create;
 	bool handle_commands;
 	bool own_panel_view_mode;

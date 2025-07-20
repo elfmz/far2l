@@ -153,6 +153,7 @@
 "Show &log"
 
 // Settings dialog
+"Enable Arclite plugin"
 "Handle archive creation (Shift-F&1)"
 "Handle archive commands (Ctrl-PgDn, Shift-F&2)"
 "Use o&wn panel view mode"

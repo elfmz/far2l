@@ -425,7 +425,7 @@ void Edit::FastShow()
 					break;
 				}
 				OutStrCells+= 2;
-			} else if (i == RealLeftPos || !cc.Xxxfix())
+			} else if (!cc.Xxxfix())
 				OutStrCells++;
 
 			OutStr.emplace_back(wc ? wc : L' ');

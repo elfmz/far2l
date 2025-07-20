@@ -1,8 +1,10 @@
 #include "colorer/parsers/ParserFactoryImpl.h"
 #include "colorer/base/BaseNames.h"
+#include "colorer/base/XmlTagDefs.h"
 #include "colorer/parsers/CatalogParser.h"
 #include "colorer/parsers/HrcLibraryImpl.h"
 #include "colorer/utils/Environment.h"
+#include "colorer/xml/XmlReader.h"
 
 ParserFactory::Impl::Impl()
 {
@@ -31,45 +33,178 @@ void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
     base_catalog_path = colorer::Environment::normalizePath(catalog_path);
   }
 
-  parseCatalog(*base_catalog_path);
+  readCatalog(*base_catalog_path);
   COLORER_LOG_DEBUG("start load hrc files");
+  // загружаем hrc файлы, прописанные в hrc-sets
+  // это могут быть: относительные пути, полные пути, пути до папки с файлами
   for (const auto& location : hrc_locations) {
-    loadHrcPath(location);
+    loadHrcPath(&location, base_catalog_path.get());
   }
 
   COLORER_LOG_DEBUG("end load hrc files");
 }
 
-void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
+void ParserFactory::Impl::loadHrcPath(const UnicodeString* location, const UnicodeString* base_path) const
 {
+  if (!location) {
+    return;
+  }
+
   try {
-    COLORER_LOG_DEBUG("try load '%'", location);
-    if (XmlInputSource::isFsURI(*base_catalog_path, &location)) {
-      auto files = colorer::Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
-      for (const auto& file : files) {
-        loadHrc(file, nullptr);
+    COLORER_LOG_DEBUG("try load '%'", *location);
+    if (XmlInputSource::isFileSystemURI(*location, base_path)) {
+      // путь к обычному файлу/папке
+      UnicodeString full_path;
+      if (colorer::Environment::isRegularFile(base_path, location, full_path)) {
+        // файл
+        loadHrc(full_path, nullptr);
+      }
+      else {
+        // папка с файлами
+        auto files = colorer::Environment::getFilesFromPath(full_path);
+        for (auto const& file : files) {
+          // загружаем файлы только с расширением hrc, кроме ent.hrc
+          if (file.endsWith(u".hrc") && !file.endsWith(u".ent.hrc")) {
+            loadHrc(file, nullptr);
+          }
+        }
       }
     }
     else {
-      loadHrc(location, base_catalog_path.get());
+      // путь до специального файла, например архив
+      loadHrc(*location, base_path);
     }
   } catch (const Exception& e) {
     COLORER_LOG_ERROR("%", e.what());
   }
 }
 
+void ParserFactory::Impl::loadHrcSettings(const UnicodeString* location, const bool user_defined) const
+{
+  uUnicodeString path;
+  if (!user_defined && (!location || location->isEmpty())) {
+    // hrcsetting уровня приложения загружается по фиксированному пути
+    return;
+  }
+  if (!location || location->isEmpty()) {
+    COLORER_LOG_DEBUG("loadHrcSettings for empty path");
+
+    const auto env = colorer::Environment::getOSEnv("COLORER_HRC_SETTINGS");
+    if (!env || env->isEmpty()) {
+      COLORER_LOG_DEBUG("The path to hrcsettings config not specified, skipped.");
+      return;
+    }
+    path = colorer::Environment::normalizePath(env.get());
+  }
+  else {
+    COLORER_LOG_DEBUG("loadHrcSettings for %", *location);
+    path = colorer::Environment::normalizePath(location);
+  }
+
+  const XmlInputSource config(*path.get());
+  hrc_library->loadHrcSettings(config);
+}
+
+void ParserFactory::Impl::loadHrdPath(const UnicodeString* location)
+{
+  if (!location) {
+    return;
+  }
+
+  COLORER_LOG_DEBUG("start load hrd files");
+  try {
+    COLORER_LOG_DEBUG("try load '%'", *location);
+    if (XmlInputSource::isFileSystemURI(*location, nullptr)) {
+      // путь к обычному файлу/папке
+      UnicodeString full_path;
+      if (colorer::Environment::isRegularFile(nullptr, location, full_path)) {
+        // файл, обрабатываем как hrd-sets
+        loadHrdSets(full_path);
+      }
+      else {
+        // папка с файлами
+        auto files = colorer::Environment::getFilesFromPath(*location);
+        for (auto const& file : files) {
+          // загружаем файлы только с расширением hrd
+          if (file.endsWith(u".hrd")) {
+            loadHrd(file);
+          }
+        }
+      }
+    }
+  } catch (const Exception& e) {
+    COLORER_LOG_ERROR("%", e.what());
+  }
+  COLORER_LOG_DEBUG("end load hrc files");
+}
+
 void ParserFactory::Impl::loadHrc(const UnicodeString& hrc_path, const UnicodeString* base_path) const
 {
-  XmlInputSource dfis(hrc_path, base_path);
+  XmlInputSource file_input_source(hrc_path, base_path);
   try {
-    hrc_library->loadSource(&dfis);
+    // Загружаем только описания прототипов
+    hrc_library->loadProtoTypes(&file_input_source);
   } catch (Exception& e) {
-    COLORER_LOG_ERROR("Can't load hrc: %", dfis.getPath());
+    COLORER_LOG_ERROR("Can't load hrc: %", file_input_source.getPath());
     COLORER_LOG_ERROR("%", e.what());
   }
 }
 
-void ParserFactory::Impl::parseCatalog(const UnicodeString& catalog_path)
+void ParserFactory::Impl::loadHrd(const UnicodeString& hrd_path)
+{
+  const XmlInputSource config(hrd_path);
+  XmlReader xml_parser(config);
+  if (!xml_parser.parse()) {
+    throw ParserFactoryException(UnicodeString("Error reading ").append(hrd_path));
+  }
+
+  std::list<XMLNode> nodes;
+  xml_parser.getNodes(nodes);
+
+  auto elem = nodes.begin();
+  if (elem->name != catTagHrd) {
+    throw Exception("main '<hrd>' block not found");
+  }
+  const auto& hrd_class = elem->getAttrValue(catHrdAttrClass);
+  const auto& hrd_name = elem->getAttrValue(catHrdAttrName);
+  if (hrd_class.isEmpty() || hrd_name.isEmpty()) {
+    COLORER_LOG_WARN("found HRD with empty class/name in '%'. skip this record.", hrd_path);
+    return;
+  }
+  const auto& xhrd_desc = elem->getAttrValue(catHrdAttrDescription);
+
+  auto hrd_node = std::make_unique<HrdNode>();
+  hrd_node->hrd_class = UnicodeString(hrd_class);
+  hrd_node->hrd_name = UnicodeString(hrd_name);
+  hrd_node->hrd_description = UnicodeString(xhrd_desc);
+  hrd_node->hrd_location.push_back(hrd_path);
+  addHrd(std::move(hrd_node));
+}
+
+void ParserFactory::Impl::loadHrdSets(const UnicodeString& hrd_path)
+{
+  const XmlInputSource config(hrd_path);
+  XmlReader xml_parser(config);
+  if (!xml_parser.parse()) {
+    throw ParserFactoryException(UnicodeString("Error reading ").append(hrd_path));
+  }
+
+  std::list<XMLNode> nodes;
+  xml_parser.getNodes(nodes);
+
+  if (nodes.begin()->name != catTagHrdSets) {
+    throw Exception("main '<hrd-sets>' block not found");
+  }
+  for (const auto& node : nodes.begin()->children) {
+    if (node.name == catTagHrd) {
+      auto hrd = CatalogParser::parseHRDSetsChild(node);
+      if (hrd)
+        addHrd(std::move(hrd));
+    }
+  }
+}
+
+void ParserFactory::Impl::readCatalog(const UnicodeString& catalog_path)
 {
   CatalogParser catalog_parser;
   catalog_parser.parse(&catalog_path);
@@ -84,8 +219,7 @@ void ParserFactory::Impl::parseCatalog(const UnicodeString& catalog_path)
   }
 }
 
-[[maybe_unused]]
-std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses()
+std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses() const
 {
   std::vector<UnicodeString> result;
   result.reserve(hrd_nodes.size());
@@ -95,7 +229,7 @@ std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses()
   return result;
 }
 
-std::vector<const HrdNode*> ParserFactory::Impl::enumHrdInstances(const UnicodeString& classID)
+std::vector<const HrdNode*> ParserFactory::Impl::enumHrdInstances(const UnicodeString& classID) const
 {
   auto hash = hrd_nodes.find(classID);
   std::vector<const HrdNode*> result;
@@ -150,7 +284,7 @@ std::unique_ptr<StyledHRDMapper> ParserFactory::Impl::createStyledMapper(const U
 
 std::unique_ptr<TextHRDMapper> ParserFactory::Impl::createTextMapper(const UnicodeString* nameID)
 {
-  UnicodeString class_id = UnicodeString(HrdClassText);
+  auto class_id = UnicodeString(HrdClassText);
 
   auto mapper = std::make_unique<TextHRDMapper>();
   fillMapper(class_id, nameID, *mapper);
@@ -178,7 +312,7 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
   auto hrd_node = getHrdNode(classID, *name_id);
 
   for (const auto& idx : hrd_node.hrd_location) {
-    if (idx.length() != 0) {
+    if (!idx.isEmpty()) {
       try {
         XmlInputSource dfis(idx, base_catalog_path.get());
         mapper.loadRegionMappings(dfis);

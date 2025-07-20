@@ -1750,6 +1750,8 @@ $ #Parancs előzmények#
 
     Remove duplicates method can be chosen in the ~Rendszer beállítások~@SystemSettings@.
 
+    Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
+
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -2370,6 +2372,7 @@ $ #Settings dialog: command line#
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
   This option can also be found in the ~System settings~@SystemSettings@ dialog.
+  Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
   #Persistent blocks#
   Do not remove block selection after moving the cursor in command line.
@@ -3175,7 +3178,7 @@ a belső szerkesztőben.
 
 
   #Use .editorconfig#       Processing .editorconfig parameters
-  #settings files#          (see https://editorconfig.org for details)
+  #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
 
   #Írásra megnyitott fáj-#  Lehetővé teszi a más programokban írásra
   #lok szerkeszthetők#      ^<wrap>megnyitott fájlok szerkesztését. Ez a
@@ -3417,6 +3420,9 @@ kívánt nézetet a felkínált listából, ahol a "Rövid mód" megfelel a fáj
 "Rövid" módjának (#BalCtrl-1#), a "Közepes mód" megfelel a fájlpanelek
 "Közepes" módjának (#BalCtrl-2#) és így tovább az utolsó elemig, a
 #BalCtrl-0#-val meghívható "Alternatív teljes" nézet módig bezárólag.
+    #Enter# or #F4#      - edit selected mode
+    #Ctrl+Enter#       - apply selected mode to active panel
+    #Ctrl+Shift+Enter# - apply selected mode to passive panel
 
     Ha választottunk, a párbeszédablakban a következő jellemzőket állíthatjuk
 be:

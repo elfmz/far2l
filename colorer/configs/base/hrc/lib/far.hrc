@@ -9,10 +9,10 @@
  >
 
  
-<package name="far.macro.string.internal"/>
-<package name="far.macro.string-quot.internal"/>
-<package name="far.macro.string-xml-noquot.internal"/>
-<package name="far.macro.string-xml-noapos.internal"/>
+<package name="far.macro.string.internal" global="no"/>
+<package name="far.macro.string-quot.internal" global="no"/>
+<package name="far.macro.string-xml-noquot.internal" global="no"/>
+<package name="far.macro.string-xml-noapos.internal" global="no"/>
 
 
 <!-- win-registry -->

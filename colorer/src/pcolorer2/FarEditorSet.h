@@ -57,6 +57,8 @@ enum {
   IDX_USERHRC_EDIT,
   IDX_USERHRD,
   IDX_USERHRD_EDIT,
+  IDX_USER_HRC_SETTINGS,
+  IDX_USER_HRC_SETTINGS_EDIT,
   IDX_TM_BOX,
   IDX_TRUEMOD,
   IDX_TMMESSAGE,
@@ -98,6 +100,7 @@ struct Options
   UnicodeString catalogPath;
   UnicodeString userHrdPath;
   UnicodeString userHrcPath;
+  UnicodeString userHrcSettingsPath;
 };
 
 /**
@@ -135,7 +138,8 @@ class FarEditorSet
    */
   enum HRC_MODE { HRCM_CONSOLE, HRCM_RGB, HRCM_BOTH };
   bool TestLoadBase(const wchar_t* catalogPath, const wchar_t* userHrdPath,
-                    const wchar_t* userHrcPath, const int full, const HRC_MODE hrc_mode);
+                    const wchar_t* userHrcPath, const wchar_t* userHrcSettingsPath, const int full,
+                    const HRC_MODE hrc_mode);
   UnicodeString* GetCatalogPath() { return &Opt.catalogPath; }
   UnicodeString* GetUserHrdPath() { return &Opt.userHrdPath; }
   bool GetPluginStatus() { return Opt.rEnabled; }
@@ -232,6 +236,7 @@ class FarEditorSet
   std::unique_ptr<UnicodeString> sCatalogPathExp;
   std::unique_ptr<UnicodeString> sUserHrdPathExp;
   std::unique_ptr<UnicodeString> sUserHrcPathExp;
+  std::unique_ptr<UnicodeString> sUserHrcSettingsPathExp;
 
   int viewFirst = 0;  // 0 - init;  1 - first run view; 2 - first run editor
   std::string settingsIni;

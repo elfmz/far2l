@@ -551,7 +551,7 @@ void Text(const WCHAR *Str, size_t Length)
 		BufPtr = HeapBuffer;
 	}
 
-	int nCells = 0;
+	int nCells = 0, Skipped = 0;
 	std::wstring wstr;
 	for (size_t i = 0; i < Length; ++nCells) {
 		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
@@ -562,14 +562,17 @@ void Text(const WCHAR *Str, size_t Length)
 			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
 		}
 		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (CharClasses(Str[i]).FullWidth()) {
+		CharClasses cc(Str[i]);
+		if (cc.FullWidth()) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
+		} else if (cc.Xxxfix()) {
+			++Skipped;
 		}
 		i+= nG;
 	}
 
-	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
+	ScrBuf.Write(CurX, CurY, BufPtr, nCells + Skipped);
 	if (HeapBuffer) {
 		delete[] HeapBuffer;
 	}
@@ -593,7 +596,7 @@ void TextEx(const WCHAR *Str, size_t Length)
 		BufPtr = HeapBuffer;
 	}
 
-	int nCells = 0;
+	int nCells = 0, Skipped = 0;
 	std::wstring wstr;
 	for (size_t i = 0; i < Length; ++nCells) {
 
@@ -609,15 +612,17 @@ void TextEx(const WCHAR *Str, size_t Length)
 		}
 
 //		CI_SET_ATTR(BufPtr[nCells], CurColor);
-
-		if (CharClasses(Str[i]).FullWidth()) {
+		CharClasses cc(Str[i]);
+		if (cc.FullWidth()) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
+		} else	if (cc.Xxxfix()) {
+			++Skipped;
 		}
 		i+= nG;
 	}
 
-	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
+	ScrBuf.Write(CurX, CurY, BufPtr, nCells + Skipped);
 	if (HeapBuffer) {
 		delete[] HeapBuffer;
 	}

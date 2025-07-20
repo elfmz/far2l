@@ -1451,6 +1451,7 @@ You may return to background'ed command from ~Screens switching menu~@ScrSwitch@
   Надіслати у фон команду, що виконується в терміналі       #Ctrl+Alt+Z#
 
   See also: ~pseudo-commands~@SpecCmd@
+  також ~Команда операційної системи~@OSCommands@
 
 @UIBackends
 $ #Режими інтерфейсу#
@@ -1948,6 +1949,8 @@ $ #Історія команд#
 
  Remove duplicates method can be chosen in the ~діалогу системних параметрів~@SystemSettings@.
 
+ Actions recorded in commands history are configured in the ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
+
  For automatic exclusion from history, see ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -2319,6 +2322,7 @@ FAR2L очікував на введення з командного рядка 
  Викликає збереження ~історії команд~@History@ перед завершенням та її відновлення після запуску FAR2L.
  Щоб переглянути вміст історії команд, натисніть #Alt-F8#.
  Ця опція також доступна в діалозі ~Налаштування командного рядка~@CmdlineSettings@.
+ Actions recorded in commands history are configured in the ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
 
  #Зберігати історію папок#
 Викликає збереження ~історії папок~@HistoryFolders@ перед завершенням та її відновлення після запуску FAR2L.
@@ -2594,8 +2598,9 @@ $ #Налаштування командного рядка#
  #Зберігати історію команд#
  Викликає збереження ~історії команд~@History@ перед завершенням та її відновлення після запуску FAR2L.
  Ця опція також доступна в діалозі ~Системні параметри~@SystemSettings@.
+ Actions recorded in commands history are configured in the ~діалогу Налаштування автозавершення та історії~@AutoCompleteSettings@.
 
- # Постійні блоки #
+ #Постійні блоки#
  Не знімати виділення під час переміщення у командному рядку.
 
  #Del видаляє блоки#
@@ -2641,12 +2646,19 @@ $ #Налаштування автозавершення та історії#
   #Підставляти перший відповідний варіант#
   The first matched item is append immediately after symbols in the command line.
 
-  #Шаблони винятковий# also affect which commands are stored in far2l history.
+  #Шаблони винятковий# also affect which commands are stored in far2l ~commands history~@History@.
   For example, adding #" *"# (mandatory in quotes) excludes from adding in history
   commands that start with a space (similar to the bash #$HISTCONTROL=ignorespace#).
   Info: in far2l history work like bash #$HISTCONTROL#
    with options #ignoredups# (lines which match the previous line are not saved)
    and #erasedups# (all previous lines matching the current line are removed from the history).
+
+  Actions recorded in ~commands history~@History@:
+    - Panels: files via system types (xdg-open);
+    - Panels: files via ~far2l associations~@FileAssoc@;
+    - Panels: executable files;
+    - Command line: any typed command.
+  Remove duplicates method can be chosen in the ~діалогу системних параметрів~@SystemSettings@.
 
 @InfoPanelSettings
 $ #Налаштування інформаційної панелі#
@@ -3489,7 +3501,7 @@ $ #Налаштування редактора#
 
   #Використовувати файли налаштувань .editorconfig#
  Processing .editorconfig parameters
- (see https://editorconfig.org for details)
+ (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
 
  #Блокувати# При відкритті на редагування файлу,
  #редагування# має атрибут "тільки для читання",
@@ -3733,7 +3745,12 @@ $ #Налаштування режимів перегляду панелі фа�
 режим зі списку. У цьому списку режим 0 відповідає режиму перегляду,
 викликається по #ЛівийCtrl-0# (альтернативний повний), режим 1 відповідає
 короткому режиму (#ЛівийCtrl-1#), режим 2 відповідає середньому режиму
-(#ЛівийCtrl-2#) і так далі. Після вибору режиму з'являється діалог, у якому
+(#ЛівийCtrl-2#) і так далі.
+    #Enter# or #F4#      - edit selected mode
+    #Ctrl+Enter#       - apply selected mode to active panel
+    #Ctrl+Shift+Enter# - apply selected mode to passive panel
+
+    Після вибору режиму з'являється діалог, у якому
 можна змінити такі параметри:
 
  - #Типи колонок# - типи колонок кодуються за допомогою однієї

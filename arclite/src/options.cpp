@@ -300,70 +300,90 @@ SfxOptions::SfxOptions() : replace_icon(false), replace_version(false), append_i
 Options g_options;
 
 Options::Options()
-	: handle_create(true),
-	  handle_commands(true),
-	  preferred_7zip_path(L"/usr/lib/7zip/"),
-	  plugin_prefix(L"arc"),
-	  max_check_size(1 << 20),
-	  relay_buffer_size(32),
-	  max_arc_cache_size(64),
-	  extract_ignore_errors(false),
-	  extract_access_rights(true),
-	  extract_owners_groups(false),
-	  extract_attributes(false),
-	  extract_overwrite(oaAsk),
-	  extract_separate_dir(triUndef),
-	  extract_open_dir(false),
-	  update_arc_format_name(L"7z"),
-	  update_arc_repack_format_name(L"xz"),
-	  update_level(5),
-	  update_levels(L"7z=7;zip=5;bzip2=9;xz=5;wim=0;tar=0;gzip=5"),
-	  update_method(L"LZMA2"),
-	  update_multithreading(true),
-	  update_process_priority(2),
-	  update_threads_num(0),
-	  update_repack(false),
-	  update_solid(false),
-	  update_encrypt(false),
-	  update_show_password(false),
-	  update_encrypt_header(triUndef),
-	  update_create_sfx(false),
-	  update_sfx_options(),
-	  update_export_options(),
-	  update_use_export_settings(false),
-	  update_enable_volumes(false),
-	  update_volume_size(),
-	  update_skip_symlinks(false),
-	  update_symlink_fix_path_mode(0),
-	  update_dereference_symlinks(false),
-	  update_move_files(false),
-	  update_ignore_errors(false),
-	  update_overwrite(oaAsk),
-	  update_append_ext(false),
-	  confirm_esc_interrupt_operation(true),
-	  own_panel_view_mode(true),
-	  panel_view_mode(2),
-	  panel_sort_mode(SM_NAME),
-	  panel_reverse_sort(false),
-	  use_include_masks(false),
-	  include_masks(L"*.zip,*.rar,*.[7bgx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-"
+	: plugin_enabled(false),
+	handle_create(true),
+	handle_commands(true),
+	preferred_7zip_path(L"/usr/lib/7zip/"),
+	plugin_prefix(L"arc"),
+	max_check_size(1 << 20),
+	relay_buffer_size(32),
+	max_arc_cache_size(64),
+	extract_ignore_errors(false),
+	extract_access_rights(true),
+	extract_owners_groups(false),
+	extract_attributes(false),
+	extract_overwrite(oaAsk),
+	extract_separate_dir(triUndef),
+	extract_open_dir(false),
+	update_arc_format_name(L"7z"),
+	update_arc_repack_format_name(L"xz"),
+	update_level(5),
+	update_levels(L"7z=7;zip=5;bzip2=9;xz=5;wim=0;tar=0;gzip=5"),
+	update_method(L"LZMA2"),
+	update_multithreading(true),
+	update_process_priority(2),
+	update_threads_num(0),
+	update_repack(false),
+	update_solid(false),
+	update_encrypt(false),
+	update_show_password(false),
+	update_encrypt_header(triUndef),
+	update_create_sfx(false),
+	update_sfx_options(),
+	update_export_options(),
+	update_use_export_settings(false),
+	update_enable_volumes(false),
+	update_volume_size(),
+	update_skip_symlinks(false),
+	update_symlink_fix_path_mode(0),
+	update_dereference_symlinks(false),
+	update_move_files(false),
+	update_ignore_errors(false),
+	update_overwrite(oaAsk),
+	update_append_ext(false),
+	confirm_esc_interrupt_operation(true),
+	own_panel_view_mode(true),
+	panel_view_mode(2),
+	panel_sort_mode(SM_NAME),
+	panel_reverse_sort(false),
+	use_include_masks(false),
+
+#if 0
+	include_masks(L"*.zip,*.z01,*.zipx,*.j[ar],*.xp[i],*.apk,*.appx,*.[7btr]z*,*.t[btx][2z],"
+					L"*.r[0-9][0-9],*.a[rjz],*.lzh*,*.lh[a],*.cab,*.nsis,*.lzma*,*.xz,*.tzst,*.zst,*.lpi[mg],*.simg,*.ap[fhs],*.img,"
+					L"*.vh[dxi],*.avhdx,*.b64,*.obj,*.ext[234],*.vmdk,*.qcow[2c]?,*.gpt,*.mbr,*.ihex,*.hx[swrq],*.lit,*.te,*.scap,*.uefif,"
+					L"*.squashfs,*.cramfs,*.apm,*.mslz,*.flv,*.swf,*.ntfs,*.fat,*.exe,*.dll,*.sys,*.elf,*.macho,*.udf,*.iso,*.xar,*.pkg,*.xip,"
+					L"*.mub,*.hf[sx],*.dmg,*.msi,*.msp,*.001,*.rp[m],"
+					L"*.de[b],*.udeb,*.lib,*.cpio,*.tar,*.gzi[p],*.tgz,*.tpz";
+
+#endif
+
+	include_masks(L"*.zip,*.rar,*.[7bgx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-"
 					L"9],*.bz2,*.cab,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.zoo,*.hqx,"
 					L"*.sit,*.ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.[ah]pk,*.ddi,*.x2,*."
 					L"rkv,*.[lw]sz,*.h[ay]p,*.lim,*.sqz,*.chz,*.aa[br]"),
-	  use_exclude_masks(false),
-	  exclude_masks(),
-	  pgdn_masks(false),
-	  use_enabled_formats(false),
-	  enabled_formats(),
-	  use_disabled_formats(false),
-	  disabled_formats(),
-	  pgdn_formats(false),
-	  patchCP(false),
-	  oemCP(Patch7zCP::GetDefCP_OEM()),
-	  ansiCP(Patch7zCP::GetDefCP_ANSI()),
-	  correct_name_mode(0x12),
-	  qs_by_default(false),
-	  strict_case(true)
+
+//include_masks(L"*.7z,*.a00,*.a09,*.a[arjz],*.ac[bei],*.apk,*.appx,*.ap[fhs],*.avhdx,*.b64,*.bzip2?,*.bz2,"
+//                    L"*.cab,*.cramfs,*.cpio,*.dmg,*.dll,*.ddi,*.de[b],*.elf,*.exe,*.fat,*.flv,*.gpt,*.gzi[p],*.ha,"
+//                    L"*.hf[sx],*.hx[swrq],*.ihex,*.img,*.iso,*.jar,*.lha,*.lh[a],*.lib,*.lpi[mg],*.lzma*,*.mub,"
+//                    L"*.macho,*.msi,*.msp,*.mslz,*.nsis,*.obj,*.pkg,*.qcow[2c]?,*.r[0-9][0-9],*.rpm,*.rz,*.simg,"
+//                    L"*.squashfs,*.scap,*.sys,*.tar,*.te,*.tgz,*.tpz,*.t[btx][2z],*.tzst,*.udf,*.uefif,*.udef,"
+//                    L"*.vh[dxi],*.vmdk,*.wim,*.xar,*.xip,*.xz,*.z,*.z01,*.zoo,*.zst,*.zip,*.zipx");
+
+	use_exclude_masks(false),
+	exclude_masks(),
+	pgdn_masks(false),
+	use_enabled_formats(false),
+	enabled_formats(),
+	use_disabled_formats(false),
+	disabled_formats(),
+	pgdn_formats(false),
+	patchCP(false),
+	oemCP(Patch7zCP::GetDefCP_OEM()),
+	ansiCP(Patch7zCP::GetDefCP_ANSI()),
+	correct_name_mode(0x12),
+	qs_by_default(false),
+	strict_case(true)
 {}
 
 static void load_export_options(OptionsKey &key, ExportOptions &export_options)
@@ -521,6 +541,7 @@ bool Options::load()
 #define GET_VALUE_XML(name, type)                                                                            \
 	if (!loaded_from_xml.name)                                                                               \
 	GET_VALUE(name, type)
+	GET_VALUE(plugin_enabled, bool);
 	GET_VALUE(handle_create, bool);
 	GET_VALUE(handle_commands, bool);
 	GET_VALUE(preferred_7zip_path, str);
@@ -601,6 +622,7 @@ void Options::save() const
 #define SET_VALUE_XML(name, type)                                                                            \
 	if (!loaded_from_xml.name)                                                                               \
 	SET_VALUE(name, type)
+	SET_VALUE(plugin_enabled, bool);
 	SET_VALUE(handle_create, bool);
 	SET_VALUE(handle_commands, bool);
 	SET_VALUE(preferred_7zip_path, str);
@@ -678,27 +700,27 @@ static std::wstring get_profile_key_name(const std::wstring &name)
 
 ProfileOptions::ProfileOptions()
 	: arc_type(c_7z),
-	  repack_arc_type(c_xz),
-	  level(5),
-	  method(),
-	  multithreading(true),
-	  process_priority(2),
-	  threads_num(0),
-	  repack(),
-	  solid(false),
-	  password(),
-	  encrypt(false),
-	  encrypt_header(triUndef),
-	  create_sfx(false),
-	  use_export_settings(false),
-	  enable_volumes(false),
-	  volume_size(),
-	  skip_symlinks(false),
-	  symlink_fix_path_mode(0),
-	  dereference_symlinks(false),
-	  move_files(false),
-	  ignore_errors(false),
-	  advanced()
+	repack_arc_type(c_xz),
+	level(5),
+	method(),
+	multithreading(true),
+	process_priority(2),
+	threads_num(0),
+	repack(),
+	solid(false),
+	password(),
+	encrypt(false),
+	encrypt_header(triUndef),
+	create_sfx(false),
+	use_export_settings(false),
+	enable_volumes(false),
+	volume_size(),
+	skip_symlinks(false),
+	symlink_fix_path_mode(0),
+	dereference_symlinks(false),
+	move_files(false),
+	ignore_errors(false),
+	advanced()
 {}
 
 UpdateOptions::UpdateOptions()

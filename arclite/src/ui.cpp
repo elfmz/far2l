@@ -3988,37 +3988,80 @@ private:
 
 	PluginSettings &settings;
 
+	int plugin_enabled_ctrl_id{};
 	int handle_create_ctrl_id{};
 	int handle_commands_ctrl_id{};
 	int own_panel_view_mode_ctrl_id{};
 	int oemCP_ctrl_id{};
 	int ansiCP_ctrl_id{};
+	int oemCPl_ctrl_id{};
+	int ansiCPl_ctrl_id{};
 	int patchCPs_ctrl_id{};
+	int include_masks_ctrl_id{};
 	int use_include_masks_ctrl_id{};
 	int edit_include_masks_ctrl_id{};
-	int include_masks_ctrl_id{};
+	int include_masks_label_ctrl_id{};
 	int use_exclude_masks_ctrl_id{};
 	int edit_exclude_masks_ctrl_id{};
 	int pgdn_masks_ctrl_id{};
 	int exclude_masks_ctrl_id{};
+	int exclude_masks_label_ctrl_id{};
 	int generate_masks_ctrl_id{};
 	int default_masks_ctrl_id{};
 	int use_enabled_formats_ctrl_id{};
 	int edit_enabled_formats_ctrl_id{};
+	int enabled_formats_label_ctrl_id{};
 	int enabled_formats_ctrl_id{};
 	int use_disabled_formats_ctrl_id{};
 	int edit_disabled_formats_ctrl_id{};
 	int disabled_formats_ctrl_id{};
+	int disabled_formats_label_ctrl_id{};
 	int pgdn_formats_ctrl_id{};
+
 	int lib_info_ctrl_id{};
 	int ok_ctrl_id{};
 	int cancel_ctrl_id{};
 	int reload_ctrl_id{};
 	int edit_path_ctrl_id{};
 
+	void set_control_state(void)
+	{
+		bool bPluginEnabled = get_check(plugin_enabled_ctrl_id);
+		DisableEvents de(*this);
+		enable(handle_create_ctrl_id, bPluginEnabled);
+		enable(handle_commands_ctrl_id, bPluginEnabled);
+		enable(own_panel_view_mode_ctrl_id, bPluginEnabled);
+		enable(oemCP_ctrl_id, bPluginEnabled);
+		enable(ansiCP_ctrl_id, bPluginEnabled);
+		enable(patchCPs_ctrl_id, bPluginEnabled);
+		enable(use_include_masks_ctrl_id, bPluginEnabled);
+		enable(use_exclude_masks_ctrl_id, bPluginEnabled);
+		enable(pgdn_masks_ctrl_id, bPluginEnabled);
+		enable(generate_masks_ctrl_id, bPluginEnabled);
+		enable(default_masks_ctrl_id, bPluginEnabled);
+		enable(use_enabled_formats_ctrl_id, bPluginEnabled);
+		enable(use_disabled_formats_ctrl_id, bPluginEnabled);
+		enable(pgdn_formats_ctrl_id, bPluginEnabled);
+		enable(oemCPl_ctrl_id, bPluginEnabled);
+		enable(ansiCPl_ctrl_id, bPluginEnabled);
+		enable(include_masks_label_ctrl_id, bPluginEnabled);
+		enable(exclude_masks_label_ctrl_id, bPluginEnabled);
+		enable(enabled_formats_label_ctrl_id , bPluginEnabled);
+		enable(disabled_formats_label_ctrl_id , bPluginEnabled);
+		enable(include_masks_ctrl_id, settings.use_include_masks && bPluginEnabled);
+		enable(edit_include_masks_ctrl_id, settings.use_include_masks && !settings.include_masks.empty() && bPluginEnabled);
+		enable(exclude_masks_ctrl_id, settings.use_exclude_masks && bPluginEnabled);
+		enable(edit_exclude_masks_ctrl_id, settings.use_exclude_masks && !settings.exclude_masks.empty() && bPluginEnabled);
+		enable(enabled_formats_ctrl_id, settings.use_enabled_formats && bPluginEnabled);
+		enable(edit_enabled_formats_ctrl_id, settings.use_enabled_formats && bPluginEnabled);
+		enable(disabled_formats_ctrl_id, settings.use_disabled_formats && bPluginEnabled);
+		enable(edit_disabled_formats_ctrl_id, settings.use_disabled_formats && bPluginEnabled);
+	}
+
 	intptr_t dialog_proc(intptr_t msg, intptr_t param1, void *param2) override
 	{
 		if ((msg == DN_CLOSE) && (param1 >= 0) && (param1 != cancel_ctrl_id)) {
+			settings.plugin_enabled = get_check(plugin_enabled_ctrl_id);
 			settings.handle_create = get_check(handle_create_ctrl_id);
 			settings.handle_commands = get_check(handle_commands_ctrl_id);
 			settings.own_panel_view_mode = get_check(own_panel_view_mode_ctrl_id);
@@ -4037,14 +4080,9 @@ private:
 			settings.pgdn_formats = get_check(pgdn_formats_ctrl_id);
 			settings.preferred_7zip_path = add_trailing_slash(get_text(edit_path_ctrl_id));
 		} else if (msg == DN_INITDIALOG) {
-			enable(include_masks_ctrl_id, settings.use_include_masks);
-			enable(edit_include_masks_ctrl_id, settings.use_include_masks && !settings.include_masks.empty());
-			enable(exclude_masks_ctrl_id, settings.use_exclude_masks);
-			enable(edit_exclude_masks_ctrl_id, settings.use_exclude_masks && !settings.exclude_masks.empty());
-			enable(enabled_formats_ctrl_id, settings.use_enabled_formats);
-			enable(edit_enabled_formats_ctrl_id, settings.use_enabled_formats);
-			enable(disabled_formats_ctrl_id, settings.use_disabled_formats);
-			enable(edit_disabled_formats_ctrl_id, settings.use_disabled_formats);
+			set_control_state();
+		} else if (msg == DN_BTNCLICK && param1 == plugin_enabled_ctrl_id) {
+			set_control_state();
 		} else if (msg == DN_BTNCLICK && param1 == use_include_masks_ctrl_id) {
 			enable(include_masks_ctrl_id, param2 != nullptr);
 			enable(edit_include_masks_ctrl_id, param2 != nullptr);
@@ -4160,9 +4198,12 @@ public:
 
 	bool show()
 	{
+		std::wstring box0 = Far::get_msg(MSG_SETTINGS_DLG_PLUGIN_ENABLED);
 		std::wstring box1 = Far::get_msg(MSG_SETTINGS_DLG_HANDLE_CREATE);
 		std::wstring box2 = Far::get_msg(MSG_SETTINGS_DLG_HANDLE_COMMANDS);
 		std::wstring box3 = Far::get_msg(MSG_SETTINGS_DLG_OWN_PANEL_VIEW_MODE);
+		plugin_enabled_ctrl_id = check_box(box0, settings.plugin_enabled);
+		new_line();
 		handle_create_ctrl_id = check_box(box1, settings.handle_create);
 		new_line();
 		handle_commands_ctrl_id = check_box(box2, settings.handle_commands);
@@ -4174,25 +4215,25 @@ public:
 		std::wstring label1 = Far::get_msg(MSG_SETTINGS_DLG_OEM_CODEPAGE);
 		std::wstring label2 = Far::get_msg(MSG_SETTINGS_DLG_ANSI_CODEPAGE);
 		std::wstring label3 = Far::get_msg(MSG_SETTINGS_DLG_PATCH_CODEPAGE);
-		label(label1);
+		oemCPl_ctrl_id = label(label1);
 		std::wstring tmp1 = settings.oemCP ? uint_to_str(settings.oemCP) : std::wstring();
 		oemCP_ctrl_id = edit_box(tmp1, 5);
 		auto total = llen(label1, 5) + llen(label2, 5) + llen(label3, 4);
 		auto width =
-				std::max(std::max(std::max(std::max(llen(box1, 4), llen(box2, 4)), llen(box3, 4)), total + 2),
-						size_t(c_client_xs));
+				std::max(std::max(std::max(std::max(std::max(llen(box0, 4), llen(box1, 4)), llen(box2, 4)), llen(box3, 4)), total + 2),
+				size_t(c_client_xs) );
 		auto space = (width - total) / 2;
 		pad(llen(label1, 5) + space);
-		label(label2);
+		ansiCPl_ctrl_id = label(label2);
 		std::wstring tmp2 = settings.ansiCP ? uint_to_str(settings.ansiCP) : std::wstring();
 		ansiCP_ctrl_id = edit_box(tmp2, 5);
+
 		pad(width - llen(label3, 4));
 		patchCPs_ctrl_id = check_box(label3, settings.patchCP);
 		new_line();
 		separator();
 		new_line();
-
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_INCLUDE_MASKS));
+		include_masks_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_INCLUDE_MASKS));
 		spacer(1);
 		use_include_masks_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_include_masks);
@@ -4201,7 +4242,7 @@ public:
 		new_line();
 		include_masks_ctrl_id = edit_box(settings.include_masks, width);
 		new_line();
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_EXCLUDE_MASKS));
+		exclude_masks_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_EXCLUDE_MASKS));
 		spacer(1);
 		use_exclude_masks_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_exclude_masks);
@@ -4219,7 +4260,7 @@ public:
 		separator();
 		new_line();
 
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_ENABLED_FORMATS));
+		enabled_formats_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_ENABLED_FORMATS));
 		spacer(1);
 		use_enabled_formats_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_enabled_formats);
@@ -4228,7 +4269,7 @@ public:
 		new_line();
 		enabled_formats_ctrl_id = edit_box(settings.enabled_formats, width);
 		new_line();
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_DISABLED_FORMATS));
+		disabled_formats_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_DISABLED_FORMATS));
 		spacer(1);
 		use_disabled_formats_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_disabled_formats);

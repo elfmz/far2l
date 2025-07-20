@@ -183,6 +183,14 @@ typedef void (*Z7_void_Function)(void);
   #define Z7_ATTRIB_NO_VECTORIZE
 #endif
 
+#if defined(Z7_MSC_VER_ORIGINAL) && (Z7_MSC_VER_ORIGINAL >= 1920)
+  #define Z7_PRAGMA_OPTIMIZE_FOR_CODE_SIZE _Pragma("optimize ( \"s\", on )")
+  #define Z7_PRAGMA_OPTIMIZE_DEFAULT       _Pragma("optimize ( \"\", on )")
+#else
+  #define Z7_PRAGMA_OPTIMIZE_FOR_CODE_SIZE
+  #define Z7_PRAGMA_OPTIMIZE_DEFAULT
+#endif
+
 #if defined(MY_CPU_X86_OR_AMD64) && ( \
        defined(__clang__) && (__clang_major__ >= 4) \
     || defined(__GNUC__) && (__GNUC__ >= 5))

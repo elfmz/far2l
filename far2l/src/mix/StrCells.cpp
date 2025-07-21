@@ -11,7 +11,7 @@ size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 		CharClasses cc(pwz[i]);
 		if (cc.FullWidth()) {
 			out+= 2;
-		} else if ((i == nw - 1 || !cc.Prefix()) && (i == 0 || !cc.Suffix())) {
+		} else if ((i == nw - 1 || !cc.Prefix()) && !cc.Suffix() ) {
 			++out;
 		}
 	}
@@ -25,7 +25,7 @@ size_t StrZCellsCount(const wchar_t *pwz)
 		CharClasses cc(pwz[i]);
 		if (cc.FullWidth()) {
 			out+= 2;
-		} else if ((pwz[i + 1] == 0 || !cc.Prefix()) && (i == 0 || !cc.Suffix())) {
+		} else if ((pwz[i + 1] == 0 || !cc.Prefix()) && !cc.Suffix() ) {
 			++out;
 		}
 	}

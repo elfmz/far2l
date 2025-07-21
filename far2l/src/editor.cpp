@@ -391,8 +391,10 @@ void Editor::ShowEditor(int CurLineOnly)
 				// CurPtr->SetTables(UseDecodeTable ? &TableSet:nullptr);
 				//_D(SysLog(L"Setleftpos 3 to %i",LeftPos));
 				CurPtr->SetLeftPos(LeftPos);
-				CurPtr->SetCellCurPos(CurPos);
-				CurPtr->FastShow();
+				if (CurPtr != CurLine) {
+					CurPtr->SetCellCurPos(CurPos);
+					CurPtr->FastShow();
+				}
 				CurPtr->SetEditBeyondEnd(EdOpt.CursorBeyondEOL);
 				CurPtr = CurPtr->m_next;
 			} else {

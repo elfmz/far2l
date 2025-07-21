@@ -150,6 +150,9 @@
 	WINPORT_DECL_DEF(FindNextFile, BOOL, (HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData))
 	WINPORT_DECL_DEF(FindClose, BOOL, (HANDLE hFindFile))
 
+	WINPORT_DECL_DEF(GetTempFileName, UINT,( LPCWSTR path, LPCWSTR prefix, UINT unique, LPWSTR buffer ))
+	WINPORT_DECL_DEF(GetFullPathName, DWORD, (LPCTSTR lpFileName, DWORD nBufferLength, LPTSTR lpBuffer, LPTSTR *lpFilePart))
+
 #if 0
 // not implemented
 	WINPORT_DECL_DEF(GetDriveType, UINT, (LPCWSTR lpRootPathName))
@@ -220,3 +223,10 @@
 	WINPORT_DECL_DEF(VkKeyScan, SHORT, (WCHAR ch))
 	WINPORT_DECL_DEF(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState, 
 		LPWSTR pwszBuff, int cchBuff, UINT wFlags, HKL dwhkl))
+
+	//mem
+	WINPORT_DECL_DEF(GlobalMemoryStatusEx, BOOL, (LPMEMORYSTATUSEX lpBuffer))
+
+	// thread
+	WINPORT_DECL_DEF(SetThreadExecutionState, EXECUTION_STATE, (EXECUTION_STATE es))
+	WINPORT_DECL_DEF(SetThreadPriority, BOOL, (int nPriority))

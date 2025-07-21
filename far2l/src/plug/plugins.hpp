@@ -235,7 +235,7 @@ public:
 	// api functions
 
 public:
-	Plugin *Analyse(const AnalyseData *pData);
+	Plugin *Analyse(const AnalyseInfo *pData);
 
 	HANDLE OpenPlugin(Plugin *pPlugin, int OpenFrom, INT_PTR Item);
 	HANDLE OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPLUGINTYPE Type,

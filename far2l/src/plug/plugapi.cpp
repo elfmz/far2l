@@ -807,6 +807,12 @@ INT_PTR WINAPI FarAdvControl(INT_PTR ModuleNumber, int Command, void *Param1, vo
 	return InterThreadCall<LONG_PTR, 0>(std::bind(FarAdvControlSynched, ModuleNumber, Command, Param1, Param2));
 }
 
+INT_PTR WINAPI FarAdvControlAsync(INT_PTR ModuleNumber, int Command, void *Param1, void *Param2)
+{
+//	fprintf(stderr, "FarAdvControlAsync( ) - %ld\n", pthread_self());
+	return FarAdvControlSynched(ModuleNumber, Command, Param1, Param2);
+}
+
 static int FarMenuFnSynched(INT_PTR PluginNumber, int X, int Y, int MaxHeight, DWORD Flags,
 		const wchar_t *Title, const wchar_t *Bottom, const wchar_t *HelpTopic, const int *BreakKeys,
 		int *BreakCode, const FarMenuItem *Item, int ItemsNumber)
@@ -1124,7 +1130,7 @@ const wchar_t *FarGetMsgFn(INT_PTR PluginHandle, FarLangMsgID MsgId)
 	return pPlugin->GetMsg(MsgId);
 }
 
-static int FarMessageFnSynched(INT_PTR PluginNumber, DWORD Flags, const wchar_t *HelpTopic,
+static intptr_t FarMessageFnSynched(INT_PTR PluginNumber, DWORD Flags, const wchar_t *HelpTopic,
 		const wchar_t *const *Items, int ItemsNumber, int ButtonsNumber)
 {
 	if (FrameManager->ManagerIsDown())
@@ -1205,11 +1211,13 @@ static int FarMessageFnSynched(INT_PTR PluginNumber, DWORD Flags, const wchar_t 
 	return m.Show(Flags, ButtonsNumber, PluginNumber);
 }
 
-int WINAPI FarMessageFn(INT_PTR PluginNumber, DWORD Flags, const wchar_t *HelpTopic,
+intptr_t WINAPI FarMessageFn(INT_PTR PluginNumber, DWORD Flags, const wchar_t *HelpTopic,
 		const wchar_t *const *Items, int ItemsNumber, int ButtonsNumber)
 {
-	return InterThreadCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items,
-			ItemsNumber, ButtonsNumber));
+//	if (Flags & MSG_ASYNC) {
+//		return FarMessageFnSynched(PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber);
+//	}
+	return InterThreadCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber));
 }
 
 static int FarControlSynched(HANDLE hPlugin, int Command, int Param1, LONG_PTR Param2)

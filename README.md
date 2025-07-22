@@ -6,7 +6,10 @@ Works also on macOS and BSD (but latter not tested on regular manner)
 BETA VERSION.   
 **Use on your own risk!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator, Python (optional scripting support)
+Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator, Python (optional scripting support),
+arclite <sub>(now as experimental version which partially more effective then multiarc;
+arclite disabled by default, to enable manually turn on
+F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -135,7 +138,7 @@ https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com
 <sub>_Note_: binaries in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
-<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with pythons subplugins.</sub>
+<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with python subplugins.</sub>
 
 <details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
 

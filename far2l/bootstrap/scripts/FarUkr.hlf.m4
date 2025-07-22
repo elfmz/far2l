@@ -141,12 +141,19 @@ $ # FAR2L: параметри командного рядка
  #--notty#
 Не використовувати термінальний режим, якщо неможливо використовувати ~GUI режим~@UIBackends@.
 
- #--nodetect#
+ #--nodetect#=[x|xi][f][w][a][k]
  За промовчанням far2l намагається на запуску визначити, чи не працює він у терміналі іншого
 far2l. У цьому випадку far2l автоматично використовує режим TTY із розширеннями терміналу far2l. В
 у разі відсутності таких розширень терміналу - far2l перевіряє наявність доступу до X11 сесії та
 використовує її для поліпшення можливостей інтерфейсу, якщо зібрати з опцією TTYX.
-Цей ключ вимикає всю перераховану функціональність, запобігаючи автовизначенню наявності
+  Specifying parameters allows you to disable only individual ~extensions~@UIBackends@:
+   - f  - disabling detection and use of far2l terminal extensions;
+   - x  - disabling detection and use of X11 (clipboard and keys);
+   - xi - disabling detection and use of keys via X11;
+   - a  - disabling detection and use of apple iTerm2 mode;
+   - k  - disabling detection and use of kovidgoyal's kitty mode;
+   - w  - disabling detection and use of win32 mode.
+  Цей ключ без параметрів вимикає всю перераховану функціональність, запобігаючи автовизначенню наявності
 розширень і дозволяє використовувати лише базові можливості звичайного термінала в TTY режимі.
 
  #--mortal#
@@ -814,7 +821,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
 @FarConfig
 $ #Configuration editor#
- Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+ Starts with the #Редактор конфігурації# command in the ~Меню команд~@CmdMenu@
+or ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
 
  Allows to view and edit all Far Manager’s options.
 
@@ -1451,7 +1459,7 @@ You may return to background'ed command from ~Screens switching menu~@ScrSwitch@
   Надіслати у фон команду, що виконується в терміналі       #Ctrl+Alt+Z#
 
   See also: ~pseudo-commands~@SpecCmd@
-  також ~Команда операційної системи~@OSCommands@
+            ~Команда операційної системи~@OSCommands@
 
 @UIBackends
 $ #Режими інтерфейсу#
@@ -2140,7 +2148,7 @@ $ #Асоціації файлів#
 різноманітні дії для запуску, редагування та перегляду файлів, заданих
 ~маскою~@FileMasks@.
 
- Ви можете додати нові асоціації за допомогою команди #Асоціації файлів
+ Ви можете додати нові асоціації за допомогою команди #Асоціації файлі# в
 ~Меню команд~@CmdMenu@.
 
  Ви можете задати кілька асоціацій для одного типу файлів та вибирати
@@ -2163,9 +2171,8 @@ $ #Асоціації файлів#
 FAR2L намагається використовувати асоціації Windows для запуску цього типу
 файлів.
 
-    See also:
-      ~Special commands~@SpecCmd@.
-      common ~menu~@MenuCmd@ keyboard commands.
+    See also: ~Special commands~@SpecCmd@.
+              common ~menu~@MenuCmd@ keyboard commands.
 
 @FileAssocModify
 $ #Налаштування асоціації файлів#
@@ -4272,8 +4279,8 @@ $ # Застосувати команду
 черги, а команда 'tar --remove-files -cvjf !.!.tar.bz2 !.!' перенесе всі зазначені файли в
 однойменні TAR/BZIP2-архіви.
 
- See also ~Special commands~@SpecCmd@
- також ~Команда операційної системи~@OSCommands@
+ See also: ~Special commands~@SpecCmd@
+           ~Команда операційної системи~@OSCommands@
 
 
 @OSCommands

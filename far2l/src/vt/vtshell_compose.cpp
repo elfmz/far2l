@@ -142,6 +142,16 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	}
 	content+= VT_ComposeMarkerCommand(start_marker);
 	content+= '\n';
+
+	// Формируем и отправляем в лог единую строку с путем и командой.
+	// Промпт будет вида: /home/user> ls -la
+	std::string prompt_and_cmd = cd;
+	prompt_and_cmd += "> ";
+	prompt_and_cmd += cmd;
+
+	content+= "printf '\\033_far2l_log-this-line:%s\\033\\' '";
+	content+= EscapeEscapes(prompt_and_cmd);
+	content+= "'\n";
 	if (strcmp(cmd, "exit")==0) {
 		content+= StrPrintf(
 			"echo \"%ls%ls%ls\"\n",  Msg::VTStop.CPtr(),

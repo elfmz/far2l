@@ -244,14 +244,10 @@ struct VTAnsiState
 #define SI	'\x0F'          // Shift In
 #define ST	'\x9c'
 
-#define MAX_ARG 32					// max number of args in an escape sequence
-
 
 #define FIRST_SG '_'
 #define LAST_SG  '~'
 
-
-#define BUFFER_SIZE 2048
 
 // DEC Special Graphics Character Set from
 // http://vt100.net/docs/vt220-rm/table2-4.html
@@ -312,6 +308,8 @@ struct VTAnsiContext
 	std::string os_cmd_arg;		// text parameter for Operating System Command
 	int   screen_top = -1;		// initial window top when cleared
 	TCHAR blank_character = L' ';
+
+	std::vector<CHAR_INFO> current_logical_line; // Буфер для текущей логической строки
 
 	int   chars_in_buffer;
 	WCHAR char_buffer[BUFFER_SIZE];
@@ -441,73 +439,73 @@ struct VTAnsiContext
 // Adds a character in the buffer.
 //-----------------------------------------------------------------------------
 
+//-----------------------------------------------------------------------------
+//   PushBuffer( WCHAR c )
+// Adds a character in the buffer and to the logical line.
+//-----------------------------------------------------------------------------
 	void PushBuffer( WCHAR c )
 	{
-		CONSOLE_SCREEN_BUFFER_INFO csbi;
 		prev_char = c;
+		HANDLE con_hnd = vt_shell->ConsoleHandle();
 
-		if (c == '\n') {
-			HANDLE con_hnd = vt_shell->ConsoleHandle();
-			if (ansi_state.crm)
-				char_buffer[chars_in_buffer++] = c;
+		// Символ \r (возврат каретки) не добавляется в логическую строку,
+		// но всегда обрабатывается на экране для перемещения курсора.
+		if (c == '\r') {
 			FlushBuffer();
-			// Avoid writing the newline if wrap has already occurred.
-			WINPORT(GetConsoleScreenBufferInfo)( con_hnd, &csbi );
-			if (ansi_state.crm) {
-				// If we're displaying controls, then the only way we can be on the left
-				// margin is if wrap occurred.
-				if (csbi.dwCursorPosition.X != 0)
-					WriteConsoleIfEnabled( L"\n", 1);
-			} else {
-				LPCWSTR nl = L"\n";
-				if (wrapped) {
-					// It's wrapped, but was anything more written? Look at the current
-					// row, checking that each character is space in current attributes.
-					// If it's all blank we can drop the newline. If the cursor isn't
-					// already at the margin, then it was spaces or tabs that caused the
-					// wrap, which can be ignored and overwritten.
-					CHAR_INFO blank;
-					PCHAR_INFO row;
-					row = (PCHAR_INFO)malloc( csbi.dwSize.X * sizeof(CHAR_INFO) );
-					if (row != NULL) {
-						COORD s, c;
-						SMALL_RECT r;
-						s.X = csbi.dwSize.X;
-						s.Y = 1;
-						c.X = c.Y = 0;
-						r.Left = 0;
-						r.Right = s.X - 1;
-						r.Top = r.Bottom = csbi.dwCursorPosition.Y;
-						WINPORT(ReadConsoleOutput)( con_hnd, row, s, c, &r );
-						CI_SET_WCATTR(blank, blank_character, csbi.wAttributes);
-						while (*(PDWORD)&row[c.X] == *(PDWORD)&blank)
-							if (++c.X == s.X) {
-								nl = (csbi.dwCursorPosition.X == 0) ? NULL : L"\r";
-								break;
-							}
-						free( row );
-					}
-					wrapped = false;
-				}
-				if (nl)
-					WriteConsoleIfEnabled( nl, 1);
-			}
-		} else {
-			switch (CurrentCharsetSelection()) {
-				case '2':// TODO or not TODO???
+			WriteConsoleIfEnabled(L"\r", 1);
+			return;
 
-				case '0':
-					if (c >= FIRST_SG && c <= LAST_SG)
-						c = DECSpecialGraphicsCharset[c - FIRST_SG];
-				break;
-
-				case '1': // TODO or not TODO???
-				default: ;
-			}
-			char_buffer[chars_in_buffer] = c;
-			if (++chars_in_buffer == BUFFER_SIZE)
-				FlushBuffer();
 		}
+		// Обработка управляющих символов
+		if (c == '\n') {
+			FlushBuffer(); // Выводим на экран всё, что накопилось до '\n'
+
+			// Теперь, когда строка завершена, добавляем её в историю.
+			VTLog::AddLogicalLine(con_hnd, current_logical_line);
+			current_logical_line.clear();
+
+			// Избегаем двойного перевода строки, если она уже была перенесена автоматически.
+			CONSOLE_SCREEN_BUFFER_INFO csbi;
+			WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &csbi);
+			if (!wrapped || csbi.dwCursorPosition.X != 0) {
+				WriteConsoleIfEnabled(L"\n", 1);
+			}
+			wrapped = false;
+			return;
+		}
+
+		if (c == '\b') {
+			FlushBuffer(); // Сначала выводим то, что было до Backspace
+			// Удаляем последний символ из нашего логического буфера
+			if (!current_logical_line.empty()) {
+				current_logical_line.pop_back();
+			}
+			// И отправляем Backspace в консоль
+			WriteConsoleIfEnabled(L"\b", 1);
+			return;
+		}
+
+		// Если это обычный печатный символ
+		switch (CurrentCharsetSelection()) {
+			case '2': // TODO or not TODO???
+			case '0':
+				if (c >= FIRST_SG && c <= LAST_SG)
+					c = DECSpecialGraphicsCharset[c - FIRST_SG];
+				break;
+			case '1': // TODO or not TODO???
+			default:;
+		}
+
+		// Добавляем символ и его атрибуты в наш логический буфер
+		CHAR_INFO ci;
+		ci.Char.UnicodeChar = c;
+		ci.Attributes = ansi_state.font_state.ToConsoleAttributes();
+		current_logical_line.push_back(ci);
+
+		// И также добавляем в буфер для вывода на консоль
+		char_buffer[chars_in_buffer] = c;
+		if (++chars_in_buffer == BUFFER_SIZE)
+			FlushBuffer();
 	}
 
 //-----------------------------------------------------------------------------
@@ -1306,6 +1304,22 @@ struct VTAnsiContext
 					}
 				}
 
+			} else if (StrStartsWith(os_cmd_arg, "far2l_log-this-line:"))  {
+				// Получили нашу специальную команду - добавляем её payload в лог
+				const std::string& line_to_log = os_cmd_arg.substr(strlen("far2l_log-this-line:"));
+				const std::wstring wline_to_log = StrMB2Wide(line_to_log);
+				const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+
+				std::vector<CHAR_INFO> log_line_vec;
+				log_line_vec.reserve(wline_to_log.size());
+				for (const auto wc : wline_to_log) {
+					CHAR_INFO ci;
+					ci.Char.UnicodeChar = wc;
+					ci.Attributes = attributes;
+					log_line_vec.push_back(ci);
+				}
+				VTLog::AddLogicalLine(vt_shell->ConsoleHandle(), log_line_vec);
+
 			} else if (os_cmd_arg == "pop-attr")  {
 				if (!_attr_stack.empty()) {
 					blank_character = _attr_stack.back().blank_character;
@@ -1392,6 +1406,9 @@ struct VTAnsiContext
 		es_argc = 0;
 		memset(es_argv, 0, sizeof(es_argv));
 		os_cmd_arg.clear();
+
+        current_logical_line.clear();
+		
 		//memset(Pt_arg, 0, sizeof(Pt_arg)); Pt_len = 0;
 		charset_selection[0] = charset_selection[1] = L'B';
 		charset_shifted = false;

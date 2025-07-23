@@ -652,6 +652,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 					if (!_start_marker.empty() && _start_marker == &str[6]) {
 						_start_marker.clear();
 						_vta.EnableOutput();
+						VTLog::Resume();
 					}
 					else if (!_exit_marker.empty()
 						&& strncmp(&str[6], _exit_marker.c_str(), _exit_marker.size()) == 0)
@@ -928,6 +929,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	bool ExecuteCommandBegin(const char *cd, const char *cmd, bool force_sudo) // return false on failure
 	{
+		VTLog::Pause();
+
 		_cce.reset(new VT_ComposeCommandExec(cd, cmd, force_sudo, _start_marker));
 		if (!_cce->Created()) {
 			const std::string &error_str =
@@ -978,6 +981,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	void ExecuteCommandEnd()
 	{
+		if (!_start_marker.empty()) { // Возобновляем лог, только если команда по-настоящему не стартовала
+			VTLog::Resume();
+		}
 		_vta.EnableOutput(); // just in case start marker didnt arrive
 
 		struct stat s;
@@ -996,6 +1002,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				}
 			}
 		}
+		VTLog::ConsoleJoined(_console_handle); // Открепляем лог от временного ID, делая его частью общей истории
 	}
 
 	public:
@@ -1121,6 +1128,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_mouse.reset();
 		// cleanup also NetRocks per-session identifier
 		_host_id.clear();
+		//VTLog::Reset(_console_handle);
 		return true;
 	}
 

@@ -780,7 +780,7 @@ bool FarEditorSet::TestLoadBase(const wchar_t* catalogPath, const wchar_t* userH
     tpath = GetConfigPath(UnicodeString(FarCatalogXml));
   }
   else {
-    tpath.reset(catalogPathS.get());
+    tpath = std::make_unique<UnicodeString>(*catalogPathS.get());
   }
 
   try {

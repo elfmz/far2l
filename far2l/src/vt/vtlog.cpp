@@ -143,7 +143,7 @@ namespace VTLog
 	public:
 		void Add(HANDLE con_hnd, const std::vector<CHAR_INFO>& line)
 		{
-			if (_pause_cnt != 0 || line.empty()) {
+			if (_pause_cnt != 0) {
 				return;
 			}
 
@@ -188,10 +188,6 @@ namespace VTLog
 
 		void Reset(HANDLE con_hnd)
 		{
-			// Никогда не очищаем общую историю (которая хранится с меткой NULL)
-			if (con_hnd == NULL)
-				return;
-
 			std::lock_guard<std::mutex> lock(_mutex);
 			_logical_lines.remove_if([con_hnd](const auto& val) {
 				return val.first == con_hnd;

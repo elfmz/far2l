@@ -739,6 +739,17 @@ struct VTAnsiContext
 		DWORD len   = (Info.srWindow.Bottom - Info.srWindow.Top + 1) * Info.dwSize.X;
 		FillBlank( len, Pos );
 		// Not technically correct, but perhaps expected.
+
+		// Добавляем в лог пустые строки в количестве, равном высоте окна,
+		// чтобы имитировать очистку экрана.
+		const int window_height = Info.srWindow.Bottom - Info.srWindow.Top + 1;
+		if (window_height > 0) {
+			const std::vector<CHAR_INFO> empty_line; // Создаем пустую "логическую строку"
+			for (int i = 0; i < window_height; ++i) {
+				VTLog::AddLogicalLine(con_hnd, empty_line);
+			}
+		}
+
 		WINPORT(SetConsoleCursorPosition)( con_hnd, Pos );
 	}
 

@@ -226,7 +226,7 @@ typedef std::vector<ArcFileInfo> FileList;
 const UInt32 c_root_index = -1;
 const UInt32 c_dup_index = -2;
 
-void	SetFARAttributes(DWORD &attr, DWORD &posixattr);
+DWORD	SetFARAttributes(DWORD attr, DWORD posixattr);
 
 typedef std::vector<UInt32> FileIndex;
 typedef std::pair<FileIndex::const_iterator, FileIndex::const_iterator> FileIndexRange;

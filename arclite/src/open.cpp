@@ -107,11 +107,14 @@ public:
 			}
 			case STREAM_SEEK_SET: {
 				if (offset < 0) {
-					fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
+//					fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
+					fprintf(stderr, "DataRelayStream: Error: neg offset %" PRId64 "\n", offset);
+
 					return E_INVALIDARG;
 				}
 				if ((UInt64)offset < write_pos && (write_pos - (UInt64)offset) > buffer_size ) {
-					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %li\n", offset);
+//					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %lli\n", (int64_t)offset);
+					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %" PRId64 "\n", offset);
 					return E_INVALIDARG;
 				}
 				read_pos = offset;
@@ -129,7 +132,7 @@ public:
 					new_offset = 0;
 
 				if ((UInt64)new_offset < write_pos && (write_pos - (UInt64)new_offset) > buffer_size ) {
-					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %li\n", offset);
+					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %" PRId64 "\n", offset);
 					return E_INVALIDARG;
 				}
 
@@ -1281,7 +1284,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		bool opened = false, have_tail = false;
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
 
-		fprintf(stderr,"arc_entry->sig_pos = %lu \n", arc_entry->sig_pos);
+		fprintf(stderr,"arc_entry->sig_pos = %zu \n", arc_entry->sig_pos);
 
 		if (!arc_entry->sig_pos) {
 			opened = archive->open(stream, arc_entry->type);

@@ -931,7 +931,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		VTLog::Pause();
 
-		_cce.reset(new VT_ComposeCommandExec(cd, cmd, force_sudo, _start_marker));
+		FARString strPrompt;
+		if (CtrlObject && CtrlObject->CmdLine)
+			CtrlObject->CmdLine->GetPrompt(strPrompt);
+		else
+			strPrompt = L"> ";
+
+		_cce.reset(new VT_ComposeCommandExec(strPrompt.GetMB().c_str(), cd, cmd, force_sudo, _start_marker));
+		
 		if (!_cce->Created()) {
 			const std::string &error_str =
 				StrPrintf("Far2l::VT: error %u creating: '%s'\n",

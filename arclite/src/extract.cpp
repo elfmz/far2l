@@ -317,16 +317,17 @@ private:
 						if (res != SETATTR_RET_OK) FAIL(res);
 					}
 
-					if (*extract_owners_groups) {
-						std::wstring owner, group;
+					if (*extract_owners_groups && current_rec.file_id < archive->m_num_indices) {
+						std::wstring &owner = archive->file_list[current_rec.file_id].owner, 
+									 &group = archive->file_list[current_rec.file_id].group;
 
-						owner = archive->get_user(current_rec.file_id);
+//						owner = archive->get_user(current_rec.file_id);
 						if (owner.size()) {
 							int res = Far::g_fsf.ESetFileOwner(current_rec.file_path.c_str(), owner.c_str(), *ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
 							if (res != SETATTR_RET_OK) FAIL(res);
 						}
 
-						group = archive->get_group(current_rec.file_id);
+//						group = archive->get_group(current_rec.file_id);
 						if (group.size()) {
 							int res = Far::g_fsf.ESetFileGroup(current_rec.file_path.c_str(), group.c_str(), *ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
 							if (res != SETATTR_RET_OK) FAIL(res);
@@ -735,11 +736,11 @@ private:
 				memset(&filter_data, 0, sizeof(PluginPanelItem));
 
 				DWORD attr = 0, posixattr = 0;
-				attr = archive.get_attr(file_index, &posixattr );
-				SetFARAttributes(attr, posixattr);
+				attr = archive.get_attr(file_index, &posixattr);
+				DWORD farattr = SetFARAttributes(attr, posixattr);
 
 				if (archive.get_encrypted(file_index))
-					attr |= FILE_ATTRIBUTE_ENCRYPTED;
+					farattr |= FILE_ATTRIBUTE_ENCRYPTED;
 
 				{
 					uint32_t n = archive.get_links(file_index);
@@ -748,7 +749,7 @@ private:
 						attr |= FILE_ATTRIBUTE_HARDLINKS;
 				}
 
-				filter_data.FindData.dwFileAttributes = attr;
+				filter_data.FindData.dwFileAttributes = farattr;
 				filter_data.FindData.dwUnixMode = posixattr;
 				filter_data.FindData.nFileSize = archive.get_size(file_index);
 				filter_data.FindData.nPhysicalSize = archive.get_psize(file_index);
@@ -1039,6 +1040,8 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 		std::vector<UInt32> *extracted_indices)
 {
 	DisableSleepMode dsm;
+
+//	fprintf(stderr, ">>> Archive::extract():\n" )
 
 	const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
 	const auto overwrite_action = std::make_shared<OverwriteAction>(options.overwrite);

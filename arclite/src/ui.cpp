@@ -2691,7 +2691,7 @@ private:
 		else if (arc_type == c_zip)
 			fff = CMF_ZIP;
 
-		FarListItem listitems[ilbs];
+		FarListItem listitems[16];
 		FarList farlist = {(int)ilbs, listitems};
 
 		for (size_t i = 0; i < cn; i++) {

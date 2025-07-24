@@ -606,7 +606,8 @@ private:
 
 public:
 	AcmRelayStream(size_t capacity = 1024 * 1024 * 16) 
-		: buffer(capacity), buffer_capacity(capacity) {}
+		: buffer(capacity), buffer_capacity(capacity) {
+	}
 
 	UNKNOWN_IMPL_BEGIN
 	UNKNOWN_IMPL_ITF(ISequentialOutStream)
@@ -772,7 +773,7 @@ private:
 		file_info.parent = dst_dir_index;
 		file_info.name = src_find_data.cFileName;
 
-///		fprintf(stderr, "File add %ls isdir = %u\n", file_info.name.c_str(), file_info.is_dir );
+//		fprintf(stderr, "File add %ls isdir = %u\n", file_info.name.c_str(), file_info.is_dir );
 
 		FileIndexRange fi_range = std::equal_range(archive.file_list_index.begin(),
 				archive.file_list_index.end(), -1, [&](UInt32 left, UInt32 right) -> bool {
@@ -1734,6 +1735,8 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 {
 	DisableSleepMode dsm;
 	const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
+
+//	fprintf(stderr, "Archive::create( )\n" );
 
 	if (options.arc_type == c_tar && options.repack) {
 

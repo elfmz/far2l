@@ -1330,29 +1330,32 @@ DWORD Archive<UseVirtualDestructor>::get_links(UInt32 index) const
 	return n;
 }
 
-void	SetFARAttributes(DWORD &attr, DWORD &posixattr)
+DWORD	SetFARAttributes(DWORD attr, DWORD posixattr)
 {
-		DWORD farattr = 0;
-		if (posixattr) {
-			switch (posixattr & S_IFMT) {
-				case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
-				case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
-				#ifndef _WIN32
-				case S_IFLNK: farattr = FILE_ATTRIBUTE_REPARSE_POINT; break;
-				case S_IFSOCK: farattr = FILE_ATTRIBUTE_DEVICE_SOCK; break;
-				#endif
-				case S_IFCHR: farattr = FILE_ATTRIBUTE_DEVICE_CHAR; break;
-				case S_IFBLK: farattr = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
-				case S_IFIFO: farattr = FILE_ATTRIBUTE_DEVICE_FIFO; break;
-				default: farattr = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
-			}
-
-			if ((posixattr & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
-				farattr |= FILE_ATTRIBUTE_EXECUTABLE;
-
-			if ((posixattr & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
-				farattr |= FILE_ATTRIBUTE_READONLY;
+	DWORD farattr = 0;
+	if (posixattr) {
+		switch (posixattr & S_IFMT) {
+			case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
+			case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
+			#ifndef _WIN32
+			case S_IFLNK: farattr = FILE_ATTRIBUTE_REPARSE_POINT; break;
+			case S_IFSOCK: farattr = FILE_ATTRIBUTE_DEVICE_SOCK; break;
+			#endif
+			case S_IFCHR: farattr = FILE_ATTRIBUTE_DEVICE_CHAR; break;
+			case S_IFBLK: farattr = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
+			case S_IFIFO: farattr = FILE_ATTRIBUTE_DEVICE_FIFO; break;
+			default: farattr = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
 		}
+
+		if ((posixattr & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
+			farattr |= FILE_ATTRIBUTE_EXECUTABLE;
+
+		if ((posixattr & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
+			farattr |= FILE_ATTRIBUTE_READONLY;
+	}
+
+	return farattr;
+
 #if 0
 
 #define S_IFMT   0170000  /* type of file mask */

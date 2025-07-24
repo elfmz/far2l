@@ -39,6 +39,9 @@
 #include <future>
 #include <condition_variable>
 
+//#include <cinttypes>
+#include <inttypes.h>
+
 //#include <variant>
 //#include <functional> // Для std::function (если используется)
 //#include <visit>

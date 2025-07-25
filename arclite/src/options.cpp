@@ -221,10 +221,10 @@ public:
 			return def_value;
 	}
 
-	void set_int(const wchar_t *name, uintptr_t value, uintptr_t def_value)
-	{
-		set(name, (UInt64)value);
-	}
+//	void set_int(const wchar_t *name, uintptr_t value, uintptr_t def_value)
+//	{
+//		set(name, (UInt64)value);
+//	}
 
 	void set_int64(const wchar_t *name, uint64_t value, uint64_t def_value)
 	{

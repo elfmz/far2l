@@ -930,69 +930,87 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				$ 12.07.2000 SVS
 				! Wrap - трехпозиционный
 			*/
-			if (VM.Wrap && OutPtr > XX2 - X1) {
-				/*
-					$ 11.07.2000 tran
-					+ warp are now WORD-WRAP
-				*/
-				int64_t SavePos = vtell();
-				WCHAR TmpChar = 0;
+			if (VM.Wrap) {
 
-				if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
-					vseek(SavePos, SEEK_SET);
+				int StrVisualLen;
 
-					if (VM.WordWrap) {
-						if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
-							int64_t SavePtr = OutPtr;
-
-							/*
-								$ 18.07.2000 tran
-								добавил в качестве wordwrap разделителей , ; > )
-							*/
-							while (OutPtr) {
-								Ch2 = *rString.Chars((size_t)OutPtr);
-
-								if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
-									break;
-
-								OutPtr--;
-							}
-
-							Ch2 = *rString.Chars((size_t)OutPtr);
-
-							if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
-								OutPtr++;
-							else
-								while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
-									OutPtr++;
-
-							if (OutPtr < SavePtr && OutPtr) {
-								vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
-											rString.Chars((size_t)SavePtr)),
-										SEEK_CUR);
-							} else
-								OutPtr = SavePtr;
-						}
-
-						/*
-							$ 13.09.2000 tran
-							remove space at WWrap
-						*/
-
-						if (IsSpace(Ch)) {
-							int64_t lastpos;
-							for (;;) {
-								lastpos = vtell();
-								if (!vgetc(Ch) || !IsSpace(Ch))
-									break;
-							}
-							vseek(lastpos, SEEK_SET);
-						}
-
-					}	// wwrap
+				if (VM.Processed)
+				{
+					// Для режима ANSI используем принтер, который умеет пропускать ESC-последовательности
+					AnsiEsc::Printer AnsiPrinter(0);
+					if (IsUnicodeOrUtfCodePage(VM.CodePage))
+						AnsiPrinter.EnableBOMSkip();
+					StrVisualLen = AnsiPrinter.Length(rString.Chars(), OutPtr);
+				}
+				else
+				{
+					// Для обычного режима используем CalcStrSize, чтобы корректно обработать знаки табуляции
+					StrVisualLen = CalcStrSize(rString.Chars(), OutPtr);
 				}
 
-				break;
+				if (StrVisualLen > XX2 - X1) {
+					/*
+						$ 11.07.2000 tran
+						+ warp are now WORD-WRAP
+					*/
+					int64_t SavePos = vtell();
+					WCHAR TmpChar = 0;
+
+					if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
+						vseek(SavePos, SEEK_SET);
+
+						if (VM.WordWrap) {
+							if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
+								int64_t SavePtr = OutPtr;
+
+								/*
+									$ 18.07.2000 tran
+									добавил в качестве wordwrap разделителей , ; > )
+								*/
+								while (OutPtr) {
+									Ch2 = *rString.Chars((size_t)OutPtr);
+
+									if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
+										break;
+
+									OutPtr--;
+								}
+
+								Ch2 = *rString.Chars((size_t)OutPtr);
+
+								if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
+									OutPtr++;
+								else
+									while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
+										OutPtr++;
+
+								if (OutPtr < SavePtr && OutPtr) {
+									vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
+												rString.Chars((size_t)SavePtr)),
+											SEEK_CUR);
+								} else
+									OutPtr = SavePtr;
+							}
+
+							/*
+								$ 13.09.2000 tran
+								remove space at WWrap
+							*/
+
+							if (IsSpace(Ch)) {
+								int64_t lastpos;
+								for (;;) {
+									lastpos = vtell();
+									if (!vgetc(Ch) || !IsSpace(Ch))
+										break;
+								}
+								vseek(lastpos, SEEK_SET);
+							}
+
+						}	// wwrap
+						break;
+					}
+				}
 			}
 
 			if (SelectSize > 0 && SelectPos == vtell()) {

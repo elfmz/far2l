@@ -1415,6 +1415,10 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 		_posixattr = prop.get_uint();
 	}
 
+	if (in_arc->GetProperty(index, kpidSymLink, prop.ref()) == S_OK && prop.is_str()) {
+		_posixattr |= S_IFLNK;
+	}
+
 	if (posixattr) *posixattr = _posixattr;
 
 	if (file_list[index].is_dir)

@@ -316,6 +316,8 @@ struct VTAnsiContext
 	WCHAR prev_char;
 	bool  wrapped;
 
+	bool  line_was_reset_by_cr = false;
+
 	bool  charset_shifted = false;
 	WCHAR charset_selection[2] = {L'B', L'B'};
 	WCHAR &CurrentCharsetSelection()
@@ -452,6 +454,7 @@ struct VTAnsiContext
 		// но всегда обрабатывается на экране для перемещения курсора.
 		if (c == '\r') {
 			FlushBuffer();
+			line_was_reset_by_cr = true;
 			WriteConsoleIfEnabled(L"\r", 1);
 			return;
 
@@ -494,6 +497,11 @@ struct VTAnsiContext
 				break;
 			case '1': // TODO or not TODO???
 			default:;
+		}
+
+		if (line_was_reset_by_cr) {
+			current_logical_line.clear();
+			line_was_reset_by_cr = false;
 		}
 
 		// Добавляем символ и его атрибуты в наш логический буфер
@@ -1408,6 +1416,8 @@ struct VTAnsiContext
 		ansi_state = STATE();
 		prev_char = 0;
 		wrapped = false;
+
+		line_was_reset_by_cr = false;
 
 		state = 1;
 		prefix = 0;

@@ -1414,7 +1414,7 @@ int Edit::ProcessCtrlQ()
 	EditOutDisabled--;
 	*/
 	CHAR ch = rec.Event.KeyEvent.uChar.UnicodeChar;
-	if( rec.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED |RIGHT_CTRL_PRESSED ))
+	if( rec.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED |RIGHT_CTRL_PRESSED ) && ch >= 0x40 && ch <= 0x70  )
 		ch -= 0x40; // convert to binary
 	return InsertKey(ch);
 }

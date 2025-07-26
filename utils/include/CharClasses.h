@@ -17,10 +17,10 @@ class CharClasses
 
 	static constexpr size_t UNICODE_SIZE = 0x110000;
 	static constexpr size_t SHIFT = 8;
-	static constexpr size_t BLOCK_SIZE = 1 << SHIFT;
-	static constexpr size_t BLOCK_COUNT = (UNICODE_SIZE + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	static constexpr size_t CHAR_BLOCK_SIZE = 1 << SHIFT;
+	static constexpr size_t BLOCK_COUNT = (UNICODE_SIZE + CHAR_BLOCK_SIZE - 1) / CHAR_BLOCK_SIZE;
 
-	using Block = std::array<uint8_t, BLOCK_SIZE>;
+	using Block = std::array<uint8_t, CHAR_BLOCK_SIZE>;
 	static std::array<std::shared_ptr<Block>, BLOCK_COUNT> blocks;
 
 	enum CharFlags : uint8_t {
@@ -50,7 +50,7 @@ class CharClasses
 			return;
 		initialized = true;
 
-		for (wchar_t ch = 0; ch < UNICODE_SIZE; ++ch) {
+		for (uint32_t ch = 0; ch < UNICODE_SIZE; ++ch) {
 			uint8_t flags = 0;
 			CharClasses cc(ch);
 			if (cc.Prefix())     flags |= IS_PREFIX;
@@ -58,7 +58,7 @@ class CharClasses
 			if (cc.FullWidth())  flags |= IS_FULLWIDTH;
 			if (flags) {
 				size_t high = ch >> SHIFT;
-				size_t low = ch & (BLOCK_SIZE - 1);
+				size_t low = ch & (CHAR_BLOCK_SIZE - 1);
 				if (!blocks[high])
 					blocks[high] = std::make_shared<Block>();
 				(*blocks[high])[low] = flags;
@@ -77,7 +77,7 @@ class CharClasses
 		}
 /*
 		size_t block_count = dedupMap.size();;
-		size_t total_bytes = block_count * BLOCK_SIZE * sizeof(uint8_t);
+		size_t total_bytes = block_count * CHAR_BLOCK_SIZE * sizeof(uint8_t);
 		fprintf(stderr, "[CharClasses] Allocated blocks: %zu" 
 						", total bytes: %zu\n", block_count, total_bytes );
 */
@@ -87,7 +87,7 @@ class CharClasses
 		if (!initialized) InitCharFlags();
 
 		size_t high = c >> SHIFT;
-		size_t low = c & (BLOCK_SIZE - 1);
+		size_t low = c & (CHAR_BLOCK_SIZE - 1);
 		auto& block = blocks[high];
 		return block ? (*block)[low] : 0;
 	}

@@ -554,6 +554,14 @@ struct VTAnsiContext
 			if (_enabled == enable)
 				return;
 
+			// Если мы выключаем альтернативный буфер, значит, полноэкранное
+			// приложение завершилось. Любая частично сформированная строка
+			// в нашем внутреннем буфере - это мусор от его интерфейса.
+			// Очистим её, чтобы она не попала в лог.
+			if (!enable) {
+				_ctx.current_logical_line.clear();
+			}
+
 			SavedScreenBuffer tmp;
 //			HANDLE con_hnd = vt_shell->ConsoleHandle();
 			if (!WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &tmp.info)) {

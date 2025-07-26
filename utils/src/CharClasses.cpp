@@ -3,6 +3,9 @@
 #include <wchar.h>
 #include "../include/CharClasses.h"
 
+std::array<uint8_t, CharClasses::UNICODE_SIZE> CharClasses::charFlags = {};
+bool CharClasses::initialized = false;
+
 bool CharClasses::FullWidth()
 {
 	switch (_c) {

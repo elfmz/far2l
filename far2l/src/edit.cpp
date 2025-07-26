@@ -417,15 +417,14 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			CharClasses cc(wc);
-			if (cc.FullWidth()) {
+			if (CharClasses::IsFullWidth(wc)) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
 					break;
 				}
 				OutStrCells+= 2;
-			} else if (!cc.Xxxfix())
+			} else if (!CharClasses::IsXxxfix(wc))
 				OutStrCells++;
 
 			OutStr.emplace_back(wc ? wc : L' ');
@@ -672,11 +671,11 @@ int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 		if (Pos < LimitPos)
 			do {
 				Pos++;
-			} while (Pos < LimitPos && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
+			} while (Pos < LimitPos && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
 	} else
 		do {
 			Pos++;
-		} while (Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
+		} while (Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
 
 	return Pos;
 }
@@ -688,7 +687,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 	do {
 		--Pos;
-	} while (Pos > 0 && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
+	} while (Pos > 0 && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
 
 	return Pos;
 }
@@ -2091,10 +2090,9 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 			}
 			// Обрабатываем все остальные символы
 			else {
-				CharClasses cc(Str[Index]);
-				if (cc.FullWidth()) {
+				if (CharClasses::IsFullWidth(Str[Index])) {
 					TabPos+= 2;
-				} else if (!cc.Xxxfix()) {
+				} else if (!CharClasses::IsXxxfix(Str[Index])) {
 					TabPos++;
 				}
 			}
@@ -2123,9 +2121,8 @@ int Edit::CellPosToReal(int Pos)
 
 			CellPos = NewCellPos;
 		} else {
-			CharClasses cc(Str[Index]);
-			CellPos+= cc.FullWidth() ? 2 : cc.Xxxfix() ? 0 : 1;
-			while (Index + 1 < StrSize && CharClasses(Str[Index + 1]).Xxxfix()) {
+			CellPos+= CharClasses::IsFullWidth(Str[Index]) ? 2 : CharClasses::IsXxxfix(Str[Index]) ? 0 : 1;
+			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
 				Index++;
 			}
 		}
@@ -2136,10 +2133,10 @@ int Edit::CellPosToReal(int Pos)
 void Edit::SanitizeSelectionRange()
 {
 	if (SelEnd >= SelStart && SelStart >= 0) {
-		while (SelStart > 0 && CharClasses(Str[SelStart]).Xxxfix())
+		while (SelStart > 0 && CharClasses::IsXxxfix(Str[SelStart]))
 			--SelStart;
 
-		while (SelEnd < StrSize && CharClasses(Str[SelEnd]).Xxxfix())
+		while (SelEnd < StrSize && CharClasses::IsXxxfix(Str[SelEnd]))
 			++SelEnd;
 	}
 

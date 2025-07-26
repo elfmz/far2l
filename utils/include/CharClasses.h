@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <wchar.h>
 #include <array>
+#include <memory>
 #include <unordered_map>
 
 class CharClasses

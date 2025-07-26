@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
 #include <cwctype>
+#include "codepage.hpp"
 
 static int Recurse = 0;
 
@@ -2064,17 +2065,19 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 	// Инциализируем результирующую длину предыдущим значением
 	int TabPos = PrevLength;
 
-	// Если предыдущая позиция за концом строки, то табов там точно нет и
-	// вычислять особо ничего не надо, иначе производим вычисление
-	if (PrevPos >= StrSize)
-		TabPos+= Pos - PrevPos;
+	bool bNoWideCodePage = IsFixedSingleCharCodePage(m_codepage);
+
+	if (PrevPos >= StrSize // Если предыдущая позиция за концом строки, то табов там точно нет
+			|| (bNoWideCodePage && TabSize == 1))	// или не многобайтовая кодировка и размер таба 1
+		TabPos+= Pos - PrevPos;						// вычислять особо ничего не надо
+	// иначе производим вычисление
 	else {
 		// Начинаем вычисление с предыдущей позиции
 		int Index = PrevPos;
 
 		// Проходим по всем символам до позиции поиска, если она ещё в пределах строки,
 		// либо до конца строки, если позиция поиска за пределами строки
-		for (; Index < Min(Pos, StrSize); Index++)
+		for (; Index < Min(Pos, StrSize); Index++) {
 
 			// Обрабатываем табы
 			if (Str[Index] == L'\t' && TabExpandMode != EXPAND_ALLTABS) {
@@ -2090,6 +2093,8 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 				TabPos+= TabSize - (TabPos % TabSize);
 			}
 			// Обрабатываем все остальные символы
+			else if (bNoWideCodePage)
+				TabPos++; // для однобайтовых кодировок всегда сдвиг на 1
 			else {
 				CharClasses cc(Str[Index]);
 				if (cc.FullWidth()) {
@@ -2098,6 +2103,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 					TabPos++;
 				}
 			}
+		}
 
 		// Если позиция находится за пределами строки, то там точно нет табов и всё просто
 		if (Pos >= StrSize)
@@ -2108,6 +2114,12 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 int Edit::CellPosToReal(int Pos)
 {
+	bool bNoWideCodePage = IsFixedSingleCharCodePage(m_codepage);
+
+	if (bNoWideCodePage												// не многобайтовая кодировка
+			&& (TabExpandMode == EXPAND_ALLTABS || TabSize == 1))	//   и все табы уже развернуты или размер таба 1
+		return Pos;													// - нечего вычислять - всегда соответствие 1:1
+
 	int Index = 0;
 	for (int CellPos = 0; CellPos < Pos; Index++) {
 		if (Index >= StrSize) {
@@ -2122,6 +2134,8 @@ int Edit::CellPosToReal(int Pos)
 				break;
 
 			CellPos = NewCellPos;
+		} else if (bNoWideCodePage) {
+			CellPos += 1; // для однобайтовых кодировок всегда сдвиг на 1
 		} else {
 			CharClasses cc(Str[Index]);
 			CellPos+= cc.FullWidth() ? 2 : cc.Xxxfix() ? 0 : 1;

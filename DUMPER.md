@@ -41,7 +41,7 @@ Output example:
 /-----[PID:38000, TID:1]-----[2025-05-08 00:46:28,450]-----
 |[/home/testuser/far2l/far2l/src/copy.cpp:2803] in ShellCopyFile()
 |=> SrcName = .editorconfig
-|=> SrcData.dwUnixMode = 100644 (rw-r--r--)
+|=> SrcData.dwUnixMode = 100644 (-rw-r--r--)
 |=> strDestName = /home/testuser/foobar/.editorconfig
 
 

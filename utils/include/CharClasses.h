@@ -15,6 +15,7 @@ class CharClasses
 	int32_t _prop_BLOCK{-1};
 #endif
 
+	static constexpr wchar_t ASCII_MAX = 0x7F;
 	static constexpr size_t UNICODE_SIZE = 0x110000;
 	static constexpr size_t SHIFT = 8;
 	static constexpr size_t CHAR_BLOCK_SIZE = 1 << SHIFT;
@@ -44,6 +45,18 @@ class CharClasses
 			return *a == *b;
 		}
 	};
+
+	static inline uint8_t Get(wchar_t c) {
+		if (!initialized) InitCharFlags();
+
+		size_t high = c >> SHIFT;
+		size_t low = c & (CHAR_BLOCK_SIZE - 1);
+		auto& block = blocks[high];
+		return block ? (*block)[low] : 0;
+	}
+
+public:
+	inline CharClasses(wchar_t c) : _c(c) {}
 
 	static void InitCharFlags() {
 		if (initialized)
@@ -83,18 +96,6 @@ class CharClasses
 */
 	}
 
-	static inline uint8_t Get(wchar_t c) {
-		if (!initialized) InitCharFlags();
-
-		size_t high = c >> SHIFT;
-		size_t low = c & (CHAR_BLOCK_SIZE - 1);
-		auto& block = blocks[high];
-		return block ? (*block)[low] : 0;
-	}
-
-public:
-	inline CharClasses(wchar_t c) : _c(c) {}
-
 	bool FullWidth();
 	bool Prefix();
 	bool Suffix();
@@ -103,9 +104,21 @@ public:
 		return Prefix() || Suffix();
 	}
 
-	static inline bool IsFullWidth(wchar_t c) { return Get(c) & IS_FULLWIDTH; }
-	static inline bool IsPrefix(wchar_t c)    { return Get(c) & IS_PREFIX; }
-	static inline bool IsSuffix(wchar_t c)    { return Get(c) & IS_SUFFIX; }
-	static inline bool IsXxxfix(wchar_t c)    { return Get(c) & (IS_PREFIX | IS_SUFFIX); }
+	static inline bool IsFullWidth(wchar_t c) {
+		if (c <= ASCII_MAX) return false;
+		return Get(c) & IS_FULLWIDTH;
+	}
+	static inline bool IsPrefix(wchar_t c) {
+		if (c <= ASCII_MAX) return false;
+		return Get(c) & IS_PREFIX;
+	}
+	static inline bool IsSuffix(wchar_t c) {
+		if (c <= ASCII_MAX) return false;
+		return Get(c) & IS_SUFFIX;
+	}
+	static inline bool IsXxxfix(wchar_t c) {
+		if (c <= ASCII_MAX) return false;
+		return Get(c) & (IS_PREFIX | IS_SUFFIX);
+	}
 
 };

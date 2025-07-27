@@ -516,6 +516,8 @@ namespace Dumper {
 
 	inline std::string DecodeFileAttributes(unsigned long int flags)
 	{
+		if (flags == 0xFFFFFFFF) return "INVALID_FILE_ATTRIBUTES";
+
 		constexpr unsigned long int f_attr[] = {
 			0x00000001, 0x00000002, 0x00000004, 0x00000010, 0x00000020, 0x00000040, 0x00000080, 0x00000100,
 			0x00000200, 0x00000400, 0x00000800, 0x00001000, 0x00002000, 0x00004000, 0x00008000, 0x00010000,
@@ -531,22 +533,29 @@ namespace Dumper {
 	}
 
 
-	inline std::string DecodeUnixMode(unsigned long int flags)
+	inline std::string DecodeUnixMode(mode_t flags)
 	{
 		std::ostringstream result;
-		result << std::oct << flags << " ("
+
+		char file_type_char = '?';
+		if (S_ISREG(flags)) file_type_char = '-';
+		else if (S_ISDIR(flags)) file_type_char = 'd';
+		else if (S_ISLNK(flags)) file_type_char = 'l';
+		else if (S_ISBLK(flags)) file_type_char = 'b';
+		else if (S_ISCHR(flags)) file_type_char = 'c';
+		else if (S_ISFIFO(flags)) file_type_char = 'p';
+		else if (S_ISSOCK(flags)) file_type_char = 's';
+
+		result << std::oct << flags << " (" << file_type_char
 			<< ((flags & S_IRUSR) ? "r" : "-")
 			<< ((flags & S_IWUSR) ? "w" : "-")
-			<< ((flags & S_IXUSR) ? "x" : "-")
+			<< ((flags & S_IXUSR) ? ((flags & S_ISUID) ? "s" : "x") : ((flags & S_ISUID) ? "S" : "-"))
 			<< ((flags & S_IRGRP) ? "r" : "-")
 			<< ((flags & S_IWGRP) ? "w" : "-")
-			<< ((flags & S_IXGRP) ? "x" : "-")
+			<< ((flags & S_IXGRP) ? ((flags & S_ISGID) ? "s" : "x") : ((flags & S_ISGID) ? "S" : "-"))
 			<< ((flags & S_IROTH) ? "r" : "-")
 			<< ((flags & S_IWOTH) ? "w" : "-")
-			<< ((flags & S_IXOTH) ? "x" : "-");
-		if(flags & S_ISUID) result << " suid";
-		if(flags & S_ISGID) result << " sgid";
-		if(flags & S_ISVTX) result << " sticky";
+			<< ((flags & S_IXOTH) ? ((flags & S_ISVTX) ? "t" : "x") : ((flags & S_ISVTX) ? "T" : "-"));
 		result << ")";
 		return result.str();
 	}
@@ -560,7 +569,7 @@ namespace Dumper {
 			decoded = DecodeFileAttributes(df.value);
 			break;
 		case FlagsAs::UNIX_MODE:
-			decoded = DecodeUnixMode(df.value);
+			decoded = DecodeUnixMode(static_cast<mode_t>(df.value));
 			break;
 		default:
 			decoded = "[not implemented]";

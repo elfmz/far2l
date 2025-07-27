@@ -930,87 +930,100 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				$ 12.07.2000 SVS
 				! Wrap - трехпозиционный
 			*/
-			if (VM.Wrap) {
+			if (VM.Wrap && CalcStrSize(rString.Chars(), OutPtr) > XX2 - X1) {
+				/*
+					$ 11.07.2000 tran
+					+ warp are now WORD-WRAP
+				*/
+				int64_t SavePos = vtell();
+				WCHAR TmpChar = 0;
 
-				int StrVisualLen;
+				if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
+					vseek(SavePos, SEEK_SET);
 
-				if (VM.Processed)
-				{
-					// Для режима ANSI используем принтер, который умеет пропускать ESC-последовательности
-					AnsiEsc::Printer AnsiPrinter(0);
-					if (IsUnicodeOrUtfCodePage(VM.CodePage))
-						AnsiPrinter.EnableBOMSkip();
-					StrVisualLen = AnsiPrinter.Length(rString.Chars(), OutPtr);
-				}
-				else
-				{
-					// Для обычного режима используем CalcStrSize, чтобы корректно обработать знаки табуляции
-					StrVisualLen = CalcStrSize(rString.Chars(), OutPtr);
-				}
-
-				if (StrVisualLen > XX2 - X1) {
-					/*
-						$ 11.07.2000 tran
-						+ warp are now WORD-WRAP
-					*/
-					int64_t SavePos = vtell();
-					WCHAR TmpChar = 0;
-
-					if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
-						vseek(SavePos, SEEK_SET);
-
-						if (VM.WordWrap) {
-							if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
-								int64_t SavePtr = OutPtr;
-
-								/*
-									$ 18.07.2000 tran
-									добавил в качестве wordwrap разделителей , ; > )
-								*/
-								while (OutPtr) {
-									Ch2 = *rString.Chars((size_t)OutPtr);
-
-									if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
-										break;
-
-									OutPtr--;
-								}
-
-								Ch2 = *rString.Chars((size_t)OutPtr);
-
-								if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
-									OutPtr++;
-								else
-									while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
-										OutPtr++;
-
-								if (OutPtr < SavePtr && OutPtr) {
-									vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
-												rString.Chars((size_t)SavePtr)),
-											SEEK_CUR);
-								} else
-									OutPtr = SavePtr;
-							}
+					if (VM.WordWrap) {
+						if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
+							int64_t SavePtr = OutPtr;
 
 							/*
-								$ 13.09.2000 tran
-								remove space at WWrap
+								$ 18.07.2000 tran
+								добавил в качестве wordwrap разделителей , ; > )
 							*/
+							while (OutPtr) {
+								Ch2 = *rString.Chars((size_t)OutPtr);
 
-							if (IsSpace(Ch)) {
-								int64_t lastpos;
-								for (;;) {
-									lastpos = vtell();
-									if (!vgetc(Ch) || !IsSpace(Ch))
-										break;
-								}
-								vseek(lastpos, SEEK_SET);
+								if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
+									break;
+
+								OutPtr--;
 							}
 
-						}	// wwrap
-						break;
+							Ch2 = *rString.Chars((size_t)OutPtr);
+
+							if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
+								OutPtr++;
+							else
+								while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
+									OutPtr++;
+
+							if (OutPtr < SavePtr && OutPtr) {
+								vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
+											rString.Chars((size_t)SavePtr)),
+										SEEK_CUR);
+							} else
+								OutPtr = SavePtr;
+						}
+
+						/*
+							$ 13.09.2000 tran
+							remove space at WWrap
+						*/
+
+						if (IsSpace(Ch)) {
+							int64_t lastpos;
+							for (;;) {
+								lastpos = vtell();
+								if (!vgetc(Ch) || !IsSpace(Ch))
+									break;
+							}
+							vseek(lastpos, SEEK_SET);
+						}
+
+					}	// wwrap
+				}
+
+				if (OutPtr > 0)
+				{
+					const wchar_t* p = rString.Chars(OutPtr - 1); // Указатель на символ перед точкой разрыва
+					const wchar_t* start = rString.Chars();
+
+					// Ищем начало последней ESC-последовательности
+					const wchar_t* esc_start = p;
+					while (esc_start > start && *esc_start != L'\x1B') {
+						esc_start--;
+					}
+
+					// Если нашли и это действительно начало последовательности
+					if (*esc_start == L'\x1B' && esc_start[1] == L'[')
+					{
+						// Проверим, не находится ли точка разрыва ВНУТРИ этой последовательности
+						const wchar_t* esc_end = wcschr(esc_start, L'm');
+						if (!esc_end || p < esc_end) // Если конца нет или мы внутри
+						{
+							// Точка разрыва внутри последовательности!
+							// Откатываем точку разрыва до начала этой последовательности.
+							int64_t old_OutPtr = OutPtr;
+							OutPtr = esc_start - start;
+							if (OutPtr < 0) OutPtr = 0;
+
+							// Возвращаем указатель в файле на место, чтобы последовательность
+							// была прочитана заново на следующей строке.
+							vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars(OutPtr), rString.Chars(old_OutPtr)), SEEK_CUR);
+						}
 					}
 				}
+
+				break;
 			}
 
 			if (SelectSize > 0 && SelectPos == vtell()) {
@@ -1024,6 +1037,27 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 
 			if (!vgetc(Ch))
 				break;
+
+			// Если это начало ANSI ESC-последовательности, прочитаем и пропустим её целиком
+			if (Ch == L'\x1B') {
+				wchar_t NextCh;
+				int64_t pre_esc_pos = vtell();
+				if (vgetc(NextCh) && NextCh == L'[') {
+					// Это CSI-последовательность. Будем читать до 'm'.
+					rString.SetChar(size_t(OutPtr++), Ch);
+					rString.SetChar(size_t(OutPtr++), NextCh);
+					while(vgetc(Ch) && OutPtr < StrSize - 1) {
+						rString.SetChar(size_t(OutPtr++), Ch);
+						if (iswalpha(Ch)) { // Обычно 'm', но могут быть и другие
+							break;
+						}
+					}
+					continue; // Переходим к следующей итерации главного цикла
+				} else {
+					// Это не CSI, возвращаем указатель файла обратно
+					vseek(pre_esc_pos, SEEK_SET);
+				}
+			}
 
 			if (MaxSize > 0) {
 				if (VM.CodePage == CP_UTF8) {
@@ -2177,22 +2211,39 @@ void Viewer::Up()
 
 int Viewer::CalcStrSize(const wchar_t *Str, int Length)
 {
-	int Size, I;
+    int Size = 0;
+    for (int I = 0; I < Length; ) {
+        // Пропускаем ANSI CSI последовательности (цвет и т.п.)
+        if (Str[I] == L'\x1B' && (I + 1 < Length) && Str[I+1] == L'[') {
+            int J = I + 2;
+            while (J < Length && (iswdigit(Str[J]) || Str[J] == L';')) {
+                J++;
+            }
+            if (J < Length && iswalpha(Str[J])) { // Ищем любую букву, обычно 'm'
+                I = J + 1;
+                continue;
+            }
+        }
 
-	for (Size = 0, I = 0; I < Length; I++)
-		switch (Str[I]) {
-			case L'\t':
-				Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
-				break;
-			case L'\n':
-			case L'\r':
-				break;
-			default:
-				Size++;
-				break;
-		}
-
-	return (Size);
+        switch (Str[I]) {
+            case L'\t':
+                Size += ViOpt.TabSize - (Size % ViOpt.TabSize);
+                break;
+            case L'\n':
+            case L'\r':
+                break;
+            default:
+                // Учитываем двухширинные символы
+                CharClasses cc(Str[I]);
+                if (cc.FullWidth())
+                    Size += 2;
+                else if (!cc.Xxxfix())
+                    Size++;
+                break;
+        }
+        I++;
+    }
+    return Size;
 }
 
 int Viewer::GetStrBytesNum(const wchar_t *Str, int Length)

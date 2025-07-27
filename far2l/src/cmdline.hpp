@@ -84,8 +84,8 @@ private:
 	int ProcessKeyIfVisible(FarKey Key);
 
 public:
-	void GetPrompt(FARString &strDestStr);
 	CommandLine();
+	void GetPrompt(FARString &strDestStr);
 	virtual ~CommandLine();
 	void SetVisible(bool Visible);
 

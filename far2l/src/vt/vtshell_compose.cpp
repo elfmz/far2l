@@ -85,7 +85,7 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 static std::atomic<bool> s_shown_tip_exit{false};
 static std::atomic<unsigned int> s_vt_script_id{0};
 
-VT_ComposeCommandExec::VT_ComposeCommandExec(const char *prompt, const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
 	if (!need_sudo) {
 		need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
@@ -96,12 +96,12 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const char *prompt, const char *cd,
 	const auto &name = StrPrintf("vtcmd/%x_%u", (unsigned int)getpid(), id);
 	_cmd_script = InMyTemp(name.c_str());
 	_pwd_file = _cmd_script + pwd_file_ext;
-	Create(prompt, cd, cmd, need_sudo, start_marker);
+	Create(cd, cmd, need_sudo, start_marker);
 	if (!_created) {
 		Cleanup();
 		_cmd_script = InMyCache(name.c_str());
 		_pwd_file = _cmd_script + pwd_file_ext;
-		Create(prompt, cd, cmd, need_sudo, start_marker);
+		Create(cd, cmd, need_sudo, start_marker);
 	}
 }
 
@@ -132,7 +132,7 @@ std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 	return buf;
 }
 
-void VT_ComposeCommandExec::Create(const char *prompt, const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
 {
 	std::string content;
 	content+= "trap \"printf ''\" INT\n"; // need marker to be printed even after Ctrl+C pressed
@@ -142,15 +142,6 @@ void VT_ComposeCommandExec::Create(const char *prompt, const char *cd, const cha
 	}
 	content+= VT_ComposeMarkerCommand(start_marker);
 	content+= '\n';
-
-	// Используем переданный, уже готовый промпт
-	std::string prompt_and_cmd = prompt;
-	prompt_and_cmd += cmd;
-
-	content+= "printf '\\033_far2l_log-this-line:%s\\033\\' '";
-	content+= EscapeEscapes(prompt_and_cmd);
-	content+= "'\n";
-
 	if (strcmp(cmd, "exit")==0) {
 		content+= StrPrintf(
 			"echo \"%ls%ls%ls\"\n",  Msg::VTStop.CPtr(),

@@ -7,7 +7,7 @@ std::string VT_ComposeMarkerCommand(const std::string &marker);
 
 struct VT_ComposeCommandExec
 {
-	VT_ComposeCommandExec(const char *prompt, const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker);
+	VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker);
 	~VT_ComposeCommandExec();
 
 	inline bool Created() const { return _created; }
@@ -21,6 +21,6 @@ private:
 	std::string _pwd_file;
 	bool _created = false;
 
-	void Create(const char *prompt, const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker);
+	void Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker);
 	void Cleanup();
 };

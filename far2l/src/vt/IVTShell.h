@@ -25,4 +25,6 @@ struct IVTShell
 	virtual void OnKeypadChange(unsigned char keypad)                   = 0;
 	virtual void OnTerminalResized()                                    = 0;
 	virtual HANDLE ConsoleHandle()                                      = 0;
+
+	virtual bool IsInteractiveAppRunning() = 0;
 };

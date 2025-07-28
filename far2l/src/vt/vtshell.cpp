@@ -101,8 +101,12 @@ const char *GetSystemShell()
 	return env_shell;
 }
 
+class VTAnsi; 
+
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
+	bool _interactive_app_running{false};
+
 	HANDLE _console_handle = NULL;
 	std::atomic<bool> _console_switch_requested{false};
 	std::atomic<bool> _console_kill_requested{false};
@@ -492,10 +496,24 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		CLK_VIEW_AUTOCLOSE
 	};
 
-	static int sShowConsoleLog(ConsoleLogKind kind)
+	static int sShowConsoleLog(ConsoleLogKind kind, VTAnsi* vta)
 	{
 		if (!CtrlObject || !CtrlObject->CmdLine)
 			return 0;
+
+		std::string log_path;
+		if (vta) {
+			// Создаем файл лога ПЕРЕД показом диалога
+			log_path = VTLog::GetAsFile(nullptr, true, false, nullptr);
+			int fd = open(log_path.c_str(), O_WRONLY | O_TRUNC);
+			if (fd != -1) {
+				std::string s;
+				vta->DumpLogicalLines(s, true); // true - всегда цветной
+				if (write(fd, s.c_str(), s.size()) != (ssize_t)s.size())
+					perror("sShowConsoleLog write");
+				close(fd);
+			}
+		}
 
 		ScrBuf.FillBuf();
 		CtrlObject->CmdLine->SaveBackground();
@@ -528,7 +546,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			return;
 
 		DeliverPendingWindowInfo();
-		InterThreadCall<int>(std::bind(sShowConsoleLog, kind));
+		InterThreadCall<int>(std::bind(sShowConsoleLog, kind, &_vta));
 
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
@@ -822,12 +840,12 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (_win32_input_mode_expected) {
 
 				std::string result = StrPrintf("\x1B[%i;%i;%i;%i;%i;%i_",
-				                KeyEvent.wVirtualKeyCode,
-				                KeyEvent.wVirtualScanCode,
-				                KeyEvent.uChar.UnicodeChar,
-				                KeyEvent.bKeyDown,
-				                KeyEvent.dwControlKeyState,
-				                KeyEvent.wRepeatCount);
+					KeyEvent.wVirtualKeyCode,
+					KeyEvent.wVirtualScanCode,
+					KeyEvent.uChar.UnicodeChar,
+					KeyEvent.bKeyDown,
+					KeyEvent.dwControlKeyState,
+					KeyEvent.wRepeatCount);
 
 				fprintf(stderr, "win32-input-mode: generated ESC%s\n", result.c_str() + 1); // пропускаем \x1B
 
@@ -1001,7 +1019,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	public:
 	VTShell() : _vta(this), _input_reader(this), _output_reader(this),
 		_fd_out(-1), _fd_in(-1), _pipes_fallback_in(-1), _pipes_fallback_out(-1),
-		_leader_pid(-1), _keypad(0)
+		_leader_pid(-1), _keypad(0), _interactive_app_running(false)
 	{
 		memset(&_last_window_info_ir, 0, sizeof(_last_window_info_ir));
 		if (!Startup())
@@ -1016,6 +1034,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		CheckedCloseFD(_pipes_fallback_in);
 		CheckedCloseFD(_pipes_fallback_out);
 	}
+
+	bool IsInteractiveAppRunning() override { return _interactive_app_running; }
 
 	virtual HANDLE ConsoleHandle()
 	{
@@ -1034,6 +1054,21 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		_may_notify = may_notify;
 
+		if (CtrlObject && CtrlObject->CmdLine) {
+			// Создаем FARString для получения приглашения
+			FARString prompt_far_str;
+			CtrlObject->CmdLine->GetPrompt(prompt_far_str);
+
+			// Преобразуем FARString в std::wstring
+			std::wstring prompt_str = prompt_far_str.CPtr();
+
+			// Формируем полную строку "приглашение + команда"
+			std::wstring full_command_line = prompt_str + StrMB2Wide(cmd);
+
+			// Добавляем эту строку в наш логический лог
+			_vta.AddToLogicalLines(full_command_line);
+		}
+
 		char cd[MAX_PATH + 1] = {'.', 0};
 		if (!sdc_getcwd(cd, MAX_PATH)) {
 			perror("getcwd");
@@ -1048,7 +1083,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			_exit_code = -1;
 		}
 
-		return ExecuteCommandCommonTail(may_bgnd);
+		_interactive_app_running = true;
+		bool completed = ExecuteCommandCommonTail(may_bgnd);
+		_interactive_app_running = false;
+		return completed;
 	}
 
 	bool ExecuteCommandContinue()
@@ -1208,7 +1246,8 @@ int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_not
 		g_vt.reset(new VTShell);
 	}
 
-	return VTShell_ExecuteCommonTail(g_vt->ExecuteCommand(cmd, need_sudo, may_bgnd, may_notify));
+	bool completed = g_vt->ExecuteCommand(cmd, need_sudo, may_bgnd, may_notify);
+	return VTShell_ExecuteCommonTail(completed);
 }
 
 int VTShell_Switch(size_t index)
@@ -1264,3 +1303,4 @@ size_t VTShell_Count()
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	return g_vts.size();
 }
+

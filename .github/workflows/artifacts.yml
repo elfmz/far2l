@@ -4,6 +4,7 @@ on:
   push:
     branches:
         - master
+        - staging
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

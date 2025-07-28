@@ -992,35 +992,44 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 					}	// wwrap
 				}
 
-				if (OutPtr > 0)
+				if (OutPtr > 0 && VM.Processed) // Проверяем только в режиме обработки ANSI
 				{
-					const wchar_t* p = rString.Chars(OutPtr - 1); // Указатель на символ перед точкой разрыва
-					const wchar_t* start = rString.Chars();
+				    const wchar_t* p = rString.Chars(OutPtr - 1); // Указатель на символ перед точкой разрыва
+				    const wchar_t* start = rString.Chars();
 
-					// Ищем начало последней ESC-последовательности
-					const wchar_t* esc_start = p;
-					while (esc_start > start && *esc_start != L'\x1B') {
-						esc_start--;
-					}
+				    // Ищем начало последней ESC-последовательности
+				    const wchar_t* esc_start = p;
+				    while (esc_start > start && *esc_start != L'\x1B') {
+				        esc_start--;
+				    }
 
-					// Если нашли и это действительно начало последовательности
-					if (*esc_start == L'\x1B' && esc_start[1] == L'[')
-					{
-						// Проверим, не находится ли точка разрыва ВНУТРИ этой последовательности
-						const wchar_t* esc_end = wcschr(esc_start, L'm');
-						if (!esc_end || p < esc_end) // Если конца нет или мы внутри
-						{
-							// Точка разрыва внутри последовательности!
-							// Откатываем точку разрыва до начала этой последовательности.
-							int64_t old_OutPtr = OutPtr;
-							OutPtr = esc_start - start;
-							if (OutPtr < 0) OutPtr = 0;
+				    // Если нашли и это действительно начало CSI-последовательности (\e[...)
+				    if (*esc_start == L'\x1B' && (esc_start + 1 <= p) && esc_start[1] == L'[')
+				    {
+				        // Теперь ищем конец этой последовательности.
+				        // Конец - это любая буква от 'A' до 'z'.
+				        const wchar_t* esc_end = esc_start + 2; // Пропускаем \x1B[
+				        while (esc_end <= p && (*esc_end == L';' || iswdigit(*esc_end))) {
+				            esc_end++;
+				        }
 
-							// Возвращаем указатель в файле на место, чтобы последовательность
-							// была прочитана заново на следующей строке.
-							vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars(OutPtr), rString.Chars(old_OutPtr)), SEEK_CUR);
-						}
-					}
+				        // Условие, что мы внутри последовательности:
+				        // 1. Конечная буква еще не найдена в просмотренном фрагменте (esc_end > p).
+				        // 2. Или конечная буква найдена, но точка разрыва p находится перед ней.
+				        // iswalpha проверяет, является ли символ буквой.
+				        if (esc_end > p || !iswalpha(*esc_end))
+				        {
+				            // Точка разрыва действительно внутри последовательности!
+				            // Откатываем точку разрыва до начала этой последовательности.
+				            int64_t old_OutPtr = OutPtr;
+				            OutPtr = esc_start - start;
+				            if (OutPtr < 0) OutPtr = 0;
+
+				            // Возвращаем указатель в файле, чтобы последовательность
+				            // была прочитана заново на следующей строке.
+				            vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars(OutPtr), rString.Chars(old_OutPtr)), SEEK_CUR);
+				        }
+				    }
 				}
 
 				break;

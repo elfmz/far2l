@@ -450,7 +450,7 @@ void ArcAPI::load_libs(const std::wstring &path)
 	FileEnum file_enum(path);
 	std::wstring dir = extract_file_path(path);
 
-	fprintf(stderr, "ArcAPI::load_libs( %S )\n", path.c_str());
+	fprintf(stderr, "ArcAPI::load_libs( %ls )\n", path.c_str());
 
 	bool more;
 	while (file_enum.next_nt(more) && more) {
@@ -545,7 +545,7 @@ void ArcAPI::load_libs(const std::wstring &path)
 
 void ArcAPI::load_codecs(const std::wstring &path)
 {
-	fprintf(stderr, "ArcAPI::load_codecs( %S )\n", path.c_str());
+	fprintf(stderr, "ArcAPI::load_codecs( %ls )\n", path.c_str());
 
 	if (n_base_format_libs <= 0) {
 		return;
@@ -568,7 +568,7 @@ void ArcAPI::load_codecs(const std::wstring &path)
 					if (codec.Name == info.Name)
 						return;
 
-				fprintf(stderr, "Adding codec %S \n", info.Name.c_str());
+				fprintf(stderr, "Adding codec %ls \n", info.Name.c_str());
 				arc_codecs.push_back(info);
 			}
 		}
@@ -783,7 +783,7 @@ bool SfxModule::install_config() const
 void ArcAPI::find_sfx_modules(const std::wstring &path)
 {
 	FileEnum file_enum(path);
-	fprintf(stderr, " ArcAPI::find_sfx_modules: %S ... \n", path.c_str());
+	fprintf(stderr, " ArcAPI::find_sfx_modules: %ls ... \n", path.c_str());
 
 	std::wstring dir = extract_file_path(path);
 	bool more;
@@ -832,9 +832,9 @@ void ArcAPI::load()
 	auto dll_path = add_trailing_slash(Far::get_plugin_module_path());
 
 	fprintf(stderr, "==== ArcAPI::load() {\n");
-	fprintf(stderr, "get_plugin_module_path() = %S\n", (Far::get_plugin_module_path()).c_str());
-	fprintf(stderr, "dll_path = %S\n", dll_path.c_str());
-	fprintf(stderr, "dll_path = %S + *.so\n", dll_path.c_str());
+	fprintf(stderr, "get_plugin_module_path() = %ls\n", (Far::get_plugin_module_path()).c_str());
+	fprintf(stderr, "dll_path = %ls\n", dll_path.c_str());
+	fprintf(stderr, "dll_path = %ls + *.so\n", dll_path.c_str());
 
 	std::wstring _7zip_path = g_options.preferred_7zip_path;
 
@@ -854,7 +854,7 @@ void ArcAPI::load()
 			find_sfx_modules(_7zip_path + L"*.sfx");
 	}
 
-	const std::vector<std::wstring> search_paths = {
+	static const std::vector<std::wstring> search_paths = {
 		L"/usr/lib/7zip/",
 		L"/usr/local/lib/7zip/",
 		L"/usr/lib/p7zip/",
@@ -931,7 +931,7 @@ void ArcAPI::load()
 			if (arc_lib.get_bool_prop(idx, NArchive::NHandlerPropID::kUpdate, format.updatable) != S_OK)
 				format.updatable = false;
 
-			fprintf(stderr, "Format %S updatable = %u\n", format.name.c_str(), format.updatable);
+			fprintf(stderr, "Format %ls updatable = %u\n", format.name.c_str(), format.updatable);
 
 			std::wstring extension_list_str;
 			arc_lib.get_string_prop(idx, NArchive::NHandlerPropID::kExtension, extension_list_str);
@@ -1109,7 +1109,7 @@ void Archive<UseVirtualDestructor>::make_index()
 			name_pos--;
 		file_info.name.assign(path.data() + name_pos, name_end_pos - name_pos);
 
-//		fprintf(stderr, " path = %S name = %S\n", path.c_str(), file_info.name.c_str() );
+//		fprintf(stderr, " path = %ls name = %ls\n", path.c_str(), file_info.name.c_str() );
 		// =======================================================================================================================================
 
 		if (in_arc->GetProperty(i, kpidUser, prop.ref()) == S_OK && prop.is_str())

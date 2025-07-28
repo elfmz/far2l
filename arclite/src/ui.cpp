@@ -891,9 +891,9 @@ private:
 		set_check3(export_creation_time_ctrl_id, m_options.export_creation_time);
 		set_check(custom_creation_time_ctrl_id, m_options.custom_creation_time);
 		set_check(current_creation_time_ctrl_id, m_options.current_creation_time);
-		enable(custom_creation_time_ctrl_id, m_options.export_creation_time && bCreationTime);
+		enable(custom_creation_time_ctrl_id, m_options.export_creation_time == triTrue && bCreationTime);
 		bool bExportCustom =
-				(m_options.export_creation_time && m_options.custom_creation_time && bCreationTime);
+				(m_options.export_creation_time == triTrue && m_options.custom_creation_time && bCreationTime);
 		bool bCustomEdit = (!m_options.current_creation_time && bExportCustom);
 		enable(current_creation_time_ctrl_id, bExportCustom);
 		enable(ftCreationDate_ctrl_id, bCustomEdit);
@@ -903,9 +903,9 @@ private:
 		set_check3(export_last_access_time_ctrl_id, m_options.export_last_access_time);
 		set_check(custom_last_access_time_ctrl_id, m_options.custom_last_access_time);
 		set_check(current_last_access_time_ctrl_id, m_options.current_last_access_time);
-		enable(custom_last_access_time_ctrl_id, m_options.export_last_access_time && bLastAccessTime);
+		enable(custom_last_access_time_ctrl_id, m_options.export_last_access_time == triTrue && bLastAccessTime);
 		bExportCustom =
-				(m_options.export_last_access_time && m_options.custom_last_access_time && bLastAccessTime);
+				(m_options.export_last_access_time == triTrue && m_options.custom_last_access_time && bLastAccessTime);
 		bCustomEdit = (!m_options.current_last_access_time && bExportCustom);
 		enable(current_last_access_time_ctrl_id, bExportCustom);
 		enable(ftLastAccessDate_ctrl_id, bCustomEdit);
@@ -915,16 +915,16 @@ private:
 		set_check3(export_last_write_time_ctrl_id, m_options.export_last_write_time);
 		set_check(custom_last_write_time_ctrl_id, m_options.custom_last_write_time);
 		set_check(current_last_write_time_ctrl_id, m_options.current_last_write_time);
-		enable(custom_last_write_time_ctrl_id, m_options.export_last_write_time && bLastWriteTime);
+		enable(custom_last_write_time_ctrl_id, m_options.export_last_write_time == triTrue && bLastWriteTime);
 		bExportCustom =
-				(m_options.export_last_write_time && m_options.custom_last_write_time && bLastWriteTime);
+				(m_options.export_last_write_time == triTrue && m_options.custom_last_write_time && bLastWriteTime);
 		bCustomEdit = (!m_options.current_last_write_time && bExportCustom);
 		enable(current_last_write_time_ctrl_id, bExportCustom);
 		enable(ftLastWriteDate_ctrl_id, bCustomEdit);
 		enable(ftLastWriteTime_ctrl_id, bCustomEdit);
 		enable(ftLastWriteClear_ctrl_id, bCustomEdit);
 
-		swprintf(strName, 32, L"%S",
+		swprintf(strName, 32, L"%ls",
 				is_valid_username_or_groupname(m_options.Owner.c_str(), m_options.Owner.length())
 						? m_options.Owner.c_str()
 						: L"user");
@@ -935,7 +935,7 @@ private:
 		enable(custom_user_name_ctrl_id, m_options.export_user_name && bUsersGroups);
 		enable(Owner_ctrl_id, bExportCustom);
 
-		swprintf(strName, 32, L"%S",
+		swprintf(strName, 32, L"%ls",
 				is_valid_username_or_groupname(m_options.Group.c_str(), m_options.Group.length())
 						? m_options.Group.c_str()
 						: L"group");
@@ -1648,10 +1648,10 @@ public:
 				check_box3(*label_text++, m_options.export_creation_time, bCreationTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_creation_time_ctrl_id = check_box(L"", m_options.custom_creation_time,
-				bCreationTime && m_options.export_creation_time ? 0 : DIF_DISABLE);
+				bCreationTime && m_options.export_creation_time == triTrue ? 0 : DIF_DISABLE);
 		{
 			bool bExportCustom =
-					(m_options.export_creation_time && m_options.custom_creation_time && bCreationTime);
+					(m_options.export_creation_time == triTrue && m_options.custom_creation_time && bCreationTime);
 			bool bCustomEdit = (!m_options.current_creation_time && bExportCustom && bCreationTime);
 			wchar_t strDate[32], strTime[32];
 			FillDateTime(m_options.ftCreationTime, strDate, strTime);
@@ -1670,9 +1670,9 @@ public:
 				bLastAccessTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_last_access_time_ctrl_id = check_box(L"", m_options.custom_last_access_time,
-				bLastAccessTime && m_options.export_last_access_time ? 0 : DIF_DISABLE);
+				bLastAccessTime && m_options.export_last_access_time == triTrue ? 0 : DIF_DISABLE);
 		{
-			bool bExportCustom = (m_options.export_last_access_time && m_options.custom_last_access_time
+			bool bExportCustom = (m_options.export_last_access_time == triTrue && m_options.custom_last_access_time
 					&& bLastAccessTime);
 			bool bCustomEdit = (!m_options.current_last_access_time && bExportCustom && bLastAccessTime);
 			wchar_t strDate[32], strTime[32];
@@ -1692,10 +1692,10 @@ public:
 				check_box3(*label_text++, m_options.export_last_write_time, bLastWriteTime ? 0 : DIF_DISABLE);
 		pad(label_len);
 		custom_last_write_time_ctrl_id = check_box(L"", m_options.custom_last_write_time,
-				bLastWriteTime && m_options.export_last_write_time ? 0 : DIF_DISABLE);
+				bLastWriteTime && m_options.export_last_write_time == triTrue ? 0 : DIF_DISABLE);
 		{
 			bool bExportCustom =
-					(m_options.export_last_write_time && m_options.custom_last_write_time && bLastWriteTime);
+					(m_options.export_last_write_time == triTrue && m_options.custom_last_write_time && bLastWriteTime);
 			bool bCustomEdit = (!m_options.current_last_write_time && bExportCustom && bLastWriteTime);
 			wchar_t strDate[32], strTime[32];
 			FillDateTime(m_options.ftLastWriteTime, strDate, strTime);
@@ -1714,7 +1714,7 @@ public:
 
 		{
 			wchar_t strName[40];
-			swprintf(strName, 32, L"%S",
+			swprintf(strName, 32, L"%ls",
 					is_valid_username_or_groupname(m_options.Owner.c_str(), m_options.Owner.length())
 							? m_options.Owner.c_str()
 							: L"user");
@@ -1728,7 +1728,7 @@ public:
 					bExportCustom ? DIF_SELECTONENTRY : DIF_SELECTONENTRY | DIF_DISABLE);	 // 32
 			new_line();
 
-			swprintf(strName, 32, L"%S",
+			swprintf(strName, 32, L"%ls",
 					is_valid_username_or_groupname(m_options.Group.c_str(), m_options.Group.length())
 							? m_options.Group.c_str()
 							: L"group");
@@ -2504,7 +2504,7 @@ private:
 		else if (enable_volumes)
 			ext += c_volume_ext;
 
-//		fprintf(stderr, " +++ get_default_ext() = \"%S\"\n", ext.c_str());
+//		fprintf(stderr, " +++ get_default_ext() = \"%ls\"\n", ext.c_str());
 		return ext;
 	}
 
@@ -3304,36 +3304,26 @@ private:
 				g_options.update_append_ext = options.append_ext;
 				g_options.update_move_files = options.move_files;
 
-				/// TODO: 
-
 			} else {
 				g_options.update_overwrite = options.overwrite;
 			}
 
 			g_options.update_export_options = options.export_options;
 			g_options.update_use_export_settings = options.use_export_settings;
-
 			g_options.update_level = options.level;
 			g_options.update_levels = options.levels;
 			g_options.update_method = options.method;
-
 			g_options.update_multithreading = options.multithreading;
 			g_options.update_process_priority = options.process_priority;
 			g_options.update_threads_num = options.threads_num;
-
 			g_options.update_solid = options.solid;
 			g_options.update_advanced = options.advanced;
 			g_options.update_encrypt = options.encrypt;
-
 			g_options.update_show_password = options.show_password;
 			g_options.update_ignore_errors = options.ignore_errors;
-
 			g_options.update_skip_symlinks = options.skip_symlinks;
 			g_options.update_symlink_fix_path_mode = options.symlink_fix_path_mode;
-
 			g_options.update_dereference_symlinks = options.dereference_symlinks;
-
-			// TODO
 
 			g_options.save();
 			Far::info_dlg(c_update_params_saved_dialog_guid, Far::get_msg(MSG_UPDATE_DLG_TITLE),
@@ -3998,37 +3988,80 @@ private:
 
 	PluginSettings &settings;
 
+	int plugin_enabled_ctrl_id{};
 	int handle_create_ctrl_id{};
 	int handle_commands_ctrl_id{};
 	int own_panel_view_mode_ctrl_id{};
 	int oemCP_ctrl_id{};
 	int ansiCP_ctrl_id{};
+	int oemCPl_ctrl_id{};
+	int ansiCPl_ctrl_id{};
 	int patchCPs_ctrl_id{};
+	int include_masks_ctrl_id{};
 	int use_include_masks_ctrl_id{};
 	int edit_include_masks_ctrl_id{};
-	int include_masks_ctrl_id{};
+	int include_masks_label_ctrl_id{};
 	int use_exclude_masks_ctrl_id{};
 	int edit_exclude_masks_ctrl_id{};
 	int pgdn_masks_ctrl_id{};
 	int exclude_masks_ctrl_id{};
+	int exclude_masks_label_ctrl_id{};
 	int generate_masks_ctrl_id{};
 	int default_masks_ctrl_id{};
 	int use_enabled_formats_ctrl_id{};
 	int edit_enabled_formats_ctrl_id{};
+	int enabled_formats_label_ctrl_id{};
 	int enabled_formats_ctrl_id{};
 	int use_disabled_formats_ctrl_id{};
 	int edit_disabled_formats_ctrl_id{};
 	int disabled_formats_ctrl_id{};
+	int disabled_formats_label_ctrl_id{};
 	int pgdn_formats_ctrl_id{};
+
 	int lib_info_ctrl_id{};
 	int ok_ctrl_id{};
 	int cancel_ctrl_id{};
 	int reload_ctrl_id{};
 	int edit_path_ctrl_id{};
 
+	void set_control_state(void)
+	{
+		bool bPluginEnabled = get_check(plugin_enabled_ctrl_id);
+		DisableEvents de(*this);
+		enable(handle_create_ctrl_id, bPluginEnabled);
+		enable(handle_commands_ctrl_id, bPluginEnabled);
+		enable(own_panel_view_mode_ctrl_id, bPluginEnabled);
+		enable(oemCP_ctrl_id, bPluginEnabled);
+		enable(ansiCP_ctrl_id, bPluginEnabled);
+		enable(patchCPs_ctrl_id, bPluginEnabled);
+		enable(use_include_masks_ctrl_id, bPluginEnabled);
+		enable(use_exclude_masks_ctrl_id, bPluginEnabled);
+		enable(pgdn_masks_ctrl_id, bPluginEnabled);
+		enable(generate_masks_ctrl_id, bPluginEnabled);
+		enable(default_masks_ctrl_id, bPluginEnabled);
+		enable(use_enabled_formats_ctrl_id, bPluginEnabled);
+		enable(use_disabled_formats_ctrl_id, bPluginEnabled);
+		enable(pgdn_formats_ctrl_id, bPluginEnabled);
+		enable(oemCPl_ctrl_id, bPluginEnabled);
+		enable(ansiCPl_ctrl_id, bPluginEnabled);
+		enable(include_masks_label_ctrl_id, bPluginEnabled);
+		enable(exclude_masks_label_ctrl_id, bPluginEnabled);
+		enable(enabled_formats_label_ctrl_id , bPluginEnabled);
+		enable(disabled_formats_label_ctrl_id , bPluginEnabled);
+		enable(include_masks_ctrl_id, settings.use_include_masks && bPluginEnabled);
+		enable(edit_include_masks_ctrl_id, settings.use_include_masks && !settings.include_masks.empty() && bPluginEnabled);
+		enable(exclude_masks_ctrl_id, settings.use_exclude_masks && bPluginEnabled);
+		enable(edit_exclude_masks_ctrl_id, settings.use_exclude_masks && !settings.exclude_masks.empty() && bPluginEnabled);
+		enable(enabled_formats_ctrl_id, settings.use_enabled_formats && bPluginEnabled);
+		enable(edit_enabled_formats_ctrl_id, settings.use_enabled_formats && bPluginEnabled);
+		enable(disabled_formats_ctrl_id, settings.use_disabled_formats && bPluginEnabled);
+		enable(edit_disabled_formats_ctrl_id, settings.use_disabled_formats && bPluginEnabled);
+	}
+
 	intptr_t dialog_proc(intptr_t msg, intptr_t param1, void *param2) override
 	{
 		if ((msg == DN_CLOSE) && (param1 >= 0) && (param1 != cancel_ctrl_id)) {
+			settings.plugin_enabled = get_check(plugin_enabled_ctrl_id);
 			settings.handle_create = get_check(handle_create_ctrl_id);
 			settings.handle_commands = get_check(handle_commands_ctrl_id);
 			settings.own_panel_view_mode = get_check(own_panel_view_mode_ctrl_id);
@@ -4047,14 +4080,9 @@ private:
 			settings.pgdn_formats = get_check(pgdn_formats_ctrl_id);
 			settings.preferred_7zip_path = add_trailing_slash(get_text(edit_path_ctrl_id));
 		} else if (msg == DN_INITDIALOG) {
-			enable(include_masks_ctrl_id, settings.use_include_masks);
-			enable(edit_include_masks_ctrl_id, settings.use_include_masks && !settings.include_masks.empty());
-			enable(exclude_masks_ctrl_id, settings.use_exclude_masks);
-			enable(edit_exclude_masks_ctrl_id, settings.use_exclude_masks && !settings.exclude_masks.empty());
-			enable(enabled_formats_ctrl_id, settings.use_enabled_formats);
-			enable(edit_enabled_formats_ctrl_id, settings.use_enabled_formats);
-			enable(disabled_formats_ctrl_id, settings.use_disabled_formats);
-			enable(edit_disabled_formats_ctrl_id, settings.use_disabled_formats);
+			set_control_state();
+		} else if (msg == DN_BTNCLICK && param1 == plugin_enabled_ctrl_id) {
+			set_control_state();
 		} else if (msg == DN_BTNCLICK && param1 == use_include_masks_ctrl_id) {
 			enable(include_masks_ctrl_id, param2 != nullptr);
 			enable(edit_include_masks_ctrl_id, param2 != nullptr);
@@ -4170,9 +4198,12 @@ public:
 
 	bool show()
 	{
+		std::wstring box0 = Far::get_msg(MSG_SETTINGS_DLG_PLUGIN_ENABLED);
 		std::wstring box1 = Far::get_msg(MSG_SETTINGS_DLG_HANDLE_CREATE);
 		std::wstring box2 = Far::get_msg(MSG_SETTINGS_DLG_HANDLE_COMMANDS);
 		std::wstring box3 = Far::get_msg(MSG_SETTINGS_DLG_OWN_PANEL_VIEW_MODE);
+		plugin_enabled_ctrl_id = check_box(box0, settings.plugin_enabled);
+		new_line();
 		handle_create_ctrl_id = check_box(box1, settings.handle_create);
 		new_line();
 		handle_commands_ctrl_id = check_box(box2, settings.handle_commands);
@@ -4184,25 +4215,25 @@ public:
 		std::wstring label1 = Far::get_msg(MSG_SETTINGS_DLG_OEM_CODEPAGE);
 		std::wstring label2 = Far::get_msg(MSG_SETTINGS_DLG_ANSI_CODEPAGE);
 		std::wstring label3 = Far::get_msg(MSG_SETTINGS_DLG_PATCH_CODEPAGE);
-		label(label1);
+		oemCPl_ctrl_id = label(label1);
 		std::wstring tmp1 = settings.oemCP ? uint_to_str(settings.oemCP) : std::wstring();
 		oemCP_ctrl_id = edit_box(tmp1, 5);
 		auto total = llen(label1, 5) + llen(label2, 5) + llen(label3, 4);
 		auto width =
-				std::max(std::max(std::max(std::max(llen(box1, 4), llen(box2, 4)), llen(box3, 4)), total + 2),
-						size_t(c_client_xs));
+				std::max(std::max(std::max(std::max(std::max(llen(box0, 4), llen(box1, 4)), llen(box2, 4)), llen(box3, 4)), total + 2),
+				size_t(c_client_xs) );
 		auto space = (width - total) / 2;
 		pad(llen(label1, 5) + space);
-		label(label2);
+		ansiCPl_ctrl_id = label(label2);
 		std::wstring tmp2 = settings.ansiCP ? uint_to_str(settings.ansiCP) : std::wstring();
 		ansiCP_ctrl_id = edit_box(tmp2, 5);
+
 		pad(width - llen(label3, 4));
 		patchCPs_ctrl_id = check_box(label3, settings.patchCP);
 		new_line();
 		separator();
 		new_line();
-
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_INCLUDE_MASKS));
+		include_masks_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_INCLUDE_MASKS));
 		spacer(1);
 		use_include_masks_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_include_masks);
@@ -4211,7 +4242,7 @@ public:
 		new_line();
 		include_masks_ctrl_id = edit_box(settings.include_masks, width);
 		new_line();
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_EXCLUDE_MASKS));
+		exclude_masks_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_EXCLUDE_MASKS));
 		spacer(1);
 		use_exclude_masks_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_exclude_masks);
@@ -4229,7 +4260,7 @@ public:
 		separator();
 		new_line();
 
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_ENABLED_FORMATS));
+		enabled_formats_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_ENABLED_FORMATS));
 		spacer(1);
 		use_enabled_formats_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_enabled_formats);
@@ -4238,7 +4269,7 @@ public:
 		new_line();
 		enabled_formats_ctrl_id = edit_box(settings.enabled_formats, width);
 		new_line();
-		label(Far::get_msg(MSG_SETTINGS_DLG_USE_DISABLED_FORMATS));
+		disabled_formats_label_ctrl_id = label(Far::get_msg(MSG_SETTINGS_DLG_USE_DISABLED_FORMATS));
 		spacer(1);
 		use_disabled_formats_ctrl_id =
 				check_box(Far::get_msg(MSG_SETTINGS_DLG_ACTIVE), settings.use_disabled_formats);

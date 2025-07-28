@@ -282,7 +282,7 @@ public:
 std::wstring get_absolute_path(const std::wstring &rel_path);
 INT_PTR control(HANDLE h_panel, FILE_CONTROL_COMMANDS command, int param1 = 0, void *param2 = nullptr);
 INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, int param1 = 0, void *param2 = nullptr);
-INT_PTR adv_control_async(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2 = nullptr);
+//INT_PTR adv_control_async(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2 = nullptr);
 bool match_masks(const std::wstring &file_name, const std::wstring &masks);
 bool get_color(PaletteColors color_id, UInt64 &color);
 bool panel_go_to_dir(HANDLE h_panel, const std::wstring &dir);

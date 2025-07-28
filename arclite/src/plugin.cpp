@@ -992,7 +992,7 @@ struct PanelItem
 //		fprintf(stderr, " +++ put_files( )\n");
 //		fprintf(stderr, " +++ ====================================================\n");
 //		for (int i = 0; i < items_number; ++i) {
-//			fprintf(stderr, " item %i %S \n", i, panel_items[i].FindData.lpwszFileName);
+//			fprintf(stderr, " item %i %ls \n", i, panel_items[i].FindData.lpwszFileName);
 //		}
 
 		bool new_arc = !archive->is_open();
@@ -1049,7 +1049,7 @@ struct PanelItem
 					FAIL_MSG(Far::get_msg(MSG_ERROR_UPDATE_UNSUPPORTED_FOR_SINGLEFILEARCHIVE));
 				}
 			}
-			archive->load_update_props();
+			archive->load_update_props(options.arc_type);
 			options.method = archive->m_method;
 			options.solid = archive->m_solid;
 			options.encrypt = archive->m_encrypted;
@@ -1339,7 +1339,7 @@ struct PanelItem
 			archive->make_index();
 
 			options.arc_type = archive->arc_chain.back().type;
-			archive->load_update_props();
+			archive->load_update_props(options.arc_type);
 			if (!cmd.level_defined)
 				options.level = archive->m_level;
 			if (!cmd.method_defined)
@@ -1507,6 +1507,8 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 {
 	GUARD(g_detect_next_time = triUndef);
 
+//	fprintf(stderr, "**********Analyse open ********************\n");
+
 	OpenOptions options;
 	options.arc_path = info->FileName;
 	bool pgdn = (info->OpMode & OPM_PGDN) != 0;
@@ -1601,11 +1603,16 @@ SHAREDSYMBOL HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 //	fprintf(stderr, "==== TREAD [%ld] \n", pthread_self());
 
 //	fprintf(stderr, " +++ info->StructSize = %lu\n", info->StructSize);
-//	fprintf(stderr, " +++ info->FileName   = %S\n", info->FileName);
+//	fprintf(stderr, " +++ info->FileName   = %ls\n", info->FileName);
 //	fprintf(stderr, " +++ info->Buffer     = %lx\n", (long)info->Buffer);
 //	fprintf(stderr, " +++ info->BufferSize = %lu\n", info->BufferSize);
 //	fprintf(stderr, " +++ info->Instance   = %lx\n", (long)info->Instance);
 //	fprintf(stderr, " +++ info->OpMode     = %u\n", info->OpMode);
+
+//	fprintf(stderr, "**********AnalyseW ********************\n");
+
+	if (!g_options.plugin_enabled)
+		return INVALID_HANDLE_VALUE;
 
 	try {
 		if (!info->FileName) {
@@ -1657,6 +1664,11 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Data)
 	bool delayed_analyse_open = false;
 	FAR_ERROR_HANDLER_BEGIN
 
+//	fprintf(stderr, "**********OpenPluginW ********************\n");
+
+	if (!g_options.plugin_enabled)
+		return INVALID_HANDLE_VALUE;
+
 	if (OpenFrom == OPEN_PLUGINSMENU) {
 		Far::MenuItems menu_items;
 		unsigned open_menu_id = menu_items.add(Far::get_msg(MSG_MENU_OPEN));
@@ -1672,6 +1684,12 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Data)
 		if (item == open_menu_id || item == detect_menu_id) {
 			OpenOptions options;
 			options.detect = item == detect_menu_id;
+
+//			fprintf(stderr, "OpenFrom == OPEN_PLUGINSMENU !!!\n");
+
+//			fprintf(stderr, "detect_menu_id = %u item = %u\n", detect_menu_id, item );
+//			fprintf(stderr, "Option detect = %u\n", options.detect );
+
 			PanelInfo panel_info;
 			if (!Far::get_panel_info(PANEL_ACTIVE, panel_info)) {
 				return INVALID_HANDLE_VALUE;
@@ -1961,7 +1979,7 @@ SHAREDSYMBOL int WINAPI SetDirectoryW(HANDLE hPlugin, const wchar_t *Dir, int Op
 {
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
-//	fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %S )         >>>>>>>>>>>\n", Dir );
+//	fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %ls )         >>>>>>>>>>>\n", Dir );
 	if (ArcAPI::have_virt_destructor())
 		reinterpret_cast<Plugin<true> *>(hPlugin)->set_dir(Dir);
 	else
@@ -2142,6 +2160,7 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 	FAR_ERROR_HANDLER_BEGIN
 	PluginSettings settings;
 
+	settings.plugin_enabled = g_options.plugin_enabled;
 	settings.handle_create = g_options.handle_create;
 	settings.handle_commands = g_options.handle_commands;
 	settings.own_panel_view_mode = g_options.own_panel_view_mode;
@@ -2161,6 +2180,7 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 	settings.preferred_7zip_path = g_options.preferred_7zip_path;
 
 	if (settings_dialog(settings)) {
+		g_options.plugin_enabled = settings.plugin_enabled;
 		g_options.handle_create = settings.handle_create;
 		g_options.handle_commands = settings.handle_commands;
 		g_options.own_panel_view_mode = settings.own_panel_view_mode;

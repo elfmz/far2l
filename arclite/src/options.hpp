@@ -42,6 +42,7 @@ struct ExternalCodec
 
 struct Options
 {
+	bool plugin_enabled;
 	bool handle_create;
 	bool handle_commands;
 	std::wstring preferred_7zip_path;

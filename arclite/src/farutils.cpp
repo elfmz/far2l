@@ -38,7 +38,7 @@ std::wstring get_msg(int id)
 unsigned get_optimal_msg_width()
 {
 	SMALL_RECT console_rect;
-	if (adv_control_async(ACTL_GETFARRECT, 0, &console_rect)) {
+	if (adv_control(ACTL_GETFARRECT, 0, &console_rect)) {
 		unsigned con_width = console_rect.Right - console_rect.Left + 1;
 		if (con_width >= 80)
 			return con_width - 20;
@@ -48,7 +48,7 @@ unsigned get_optimal_msg_width()
 
 intptr_t message(const GUID &id, const std::wstring &msg, int button_cnt, FARMESSAGEFLAGS flags)
 {
-	return g_far.Message(g_far.ModuleNumber, flags | FMSG_ALLINONE | FMSG_ASYNC, {},
+	return g_far.Message(g_far.ModuleNumber, flags | FMSG_ALLINONE, {},
 			reinterpret_cast<const wchar_t *const *>(msg.c_str()), 0, button_cnt);
 }
 
@@ -907,10 +907,10 @@ INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2)
 	return g_far.AdvControl(g_far.ModuleNumber, command, (void *)(size_t)param1, param2);
 }
 
-INT_PTR adv_control_async(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2)
-{
-	return g_far.AdvControlAsync(g_far.ModuleNumber, command, (void *)(size_t)param1, param2);
-}
+//INT_PTR adv_control_async(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2)
+//{
+//	return g_far.AdvControlAsync(g_far.ModuleNumber, command, (void *)(size_t)param1, param2);
+//}
 
 bool match_masks(const std::wstring &file_name, const std::wstring &masks)
 {

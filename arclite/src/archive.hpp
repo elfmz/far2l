@@ -376,7 +376,7 @@ public:
 	int m_open_password;
 	bool m_update_props_defined;
 	bool m_has_crc;
-	void load_update_props();
+	void load_update_props(const ArcType& arc_type);
 
 public:
 	void create(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,

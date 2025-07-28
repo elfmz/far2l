@@ -529,6 +529,12 @@ struct VTAnsiContext
 					WriteConsoleIfEnabled( nl, 1);
 			}
 		} else {
+
+		    // Если активен режим псевдографики, подменяем символ
+		    if (CurrentCharsetSelection() == '0' && c >= FIRST_SG && c <= LAST_SG) {
+		        c = DECSpecialGraphicsCharset[c - FIRST_SG];
+		    }
+
 			// Сначала обрабатываем логический буфер
 			if (!output_disabled && !in_alternative_buffer) {
 				if (c == '\b') {

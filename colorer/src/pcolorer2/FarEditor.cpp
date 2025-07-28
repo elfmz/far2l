@@ -1229,10 +1229,10 @@ color FarEditor::convert(const StyledRegion* rd) const
       col.bk = rd->back;
     }
 
-    if (rd == nullptr || !rd->fore)
+    if (rd == nullptr || !rd->isForeSet)
       col.fg = fore;
 
-    if (rd == nullptr || !rd->back)
+    if (rd == nullptr || !rd->isBackSet)
       col.bk = back;
 
     if (rd != nullptr)
@@ -1246,10 +1246,10 @@ color FarEditor::convert(const StyledRegion* rd) const
       col.cbk = rd->back;
     }
 
-    if (rd == nullptr || !rd->fore)
+    if (rd == nullptr || !rd->isForeSet)
       col.cfg = fore;
 
-    if (rd == nullptr || !rd->back)
+    if (rd == nullptr || !rd->isBackSet)
       col.cbk = back;
 
     return col;

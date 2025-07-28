@@ -1919,7 +1919,9 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 
 				wchar_t CheckMark[2] = {L' ', 0}; // checkmark placeholder
 				if (Item[I]->Flags & LIF_CHECKED) {
-					CheckMark[0] = wchar_t((Item[I]->Flags & 0xFFFF) ? Item[I]->Flags & 0xFFFF : 0x221A);
+					CheckMark[0] = wchar_t((Item[I]->Flags & 0xFFFF)
+						? Item[I]->Flags & 0xFFFF
+						: (Opt.NoGraphics ? 0x002A /*L'*'*/ : 0x221A /*L'√'*/));
 				}
 
 				uint64_t Col;

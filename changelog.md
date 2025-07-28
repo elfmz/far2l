@@ -3,13 +3,21 @@
 Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
 
 ## Master (current development)
+* _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
+* _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
+* _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
+* _New:_ Separate icons for WX versions of far2l and far2ledit
+* _New:_ far:config as "Configuration editor" and far:about as "About FAR" in Commands menu
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
+* _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
-* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
+* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
+* Actions recorded in commands history are configured in the AutoComplete & History dialog
 * _Temporary panel plugin_: Show file groups
+* _colorer plugin_: Update colorer schemes to v1.2.0.76
+* _colorer plugin_: Update colorer library to v1.5.0-29.06.2025
+* _colorer plugin_: Added features for easier modification of the set and behavior of the user's hrc/hrd files, without editing the supplied base set.
 * Several bugfixes
-* _colorer plugin_: Update colorer schemes to v1.2.0.68
-* _colorer plugin_: Update colorer library to v1.4.1-10.05.2025
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`

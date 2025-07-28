@@ -369,6 +369,11 @@ bool UnicodeString::startsWith(const UnicodeString& str, int32_t pos) const
   return true;
 }
 
+bool UnicodeString::endsWith(const UnicodeString& str) const
+{
+  return this->startsWith(str, len - str.length());
+}
+
 size_t UnicodeString::hashCode() const
 {
   size_t hc = 0;

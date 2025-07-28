@@ -17,6 +17,15 @@ fi
 if command -v kioclient >/dev/null 2>&1; then
 	kioclient move "$1" trash:/ 2>"$2"
 
+elif command -v trash-put >/dev/null 2>&1; then
+	trash-put "$1" 2>"$2"
+
+elif command -v trash >/dev/null 2>&1; then
+	trash put "$1" 2>"$2"
+
+elif command -v trashу >/dev/null 2>&1; then
+	trashу put "$1" 2>"$2" 
+
 elif command -v gio >/dev/null 2>&1; then
 	gio trash -f -- "$1" 2>"$2"
 
@@ -27,6 +36,6 @@ elif command -v osascript >/dev/null 2>&1; then
 	osascript -e "tell application \"Finder\" to delete POSIX file \"$1\"" 2>"$2"
 
 else
-	echo 'No command-line trash tool available' >"$2"
+	echo 'No command-line trash tool available (see supported tools in the $FARHOME/trash.sh)' >"$2"
 	exit 1
 fi

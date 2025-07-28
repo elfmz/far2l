@@ -21,5 +21,10 @@ void MacInit()
 	} else {
 		fprintf(stderr, "MacInit: no lang\n");
 	}
+	//avoid Ctrl-Q handling by cocoa
+	CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
+							 CFSTR(""),
+							 kCFPreferencesCurrentApplication);
+	CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 }
 

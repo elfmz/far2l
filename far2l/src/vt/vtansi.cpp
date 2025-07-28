@@ -2209,7 +2209,7 @@ static void EncodeLineForDump(std::string &out, const std::vector<CHAR_INFO> &Ch
 			out+= "\033[";
 			if ( attr_prev == (DWORD64)-1
 			|| (attr_prev&FOREGROUND_INTENSITY) != (attr_now&FOREGROUND_INTENSITY)) {
-				out+= (attr_now&FOREGROUND_INTENSITY) ? "1;" : "22;";
+				out+= (attr_now&FOREGROUND_INTENSITY) ? "1:" : "22:";
 			}
 			if ( attr_prev == (DWORD64)-1 || (tc_fore_prev && !tc_fore_now)
 			|| (attr_prev&(FOREGROUND_INTENSITY|FOREGROUND_RGB)) != (attr_now&(FOREGROUND_INTENSITY|FOREGROUND_RGB))) {
@@ -2226,12 +2226,12 @@ static void EncodeLineForDump(std::string &out, const std::vector<CHAR_INFO> &Ch
 
 			if (tc_fore_now && (!tc_fore_prev || GET_RGB_FORE(attr_prev) != GET_RGB_FORE(attr_now))) {
 				const DWORD rgb = GET_RGB_FORE(attr_now);
-				out+= StrPrintf("38;2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
+				out+= StrPrintf("38:2:%u:%u:%u:", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 			}
 
 			if (tc_back_now && (!tc_back_prev || GET_RGB_BACK(attr_prev) != GET_RGB_BACK(attr_now))) {
 				const DWORD rgb = GET_RGB_BACK(attr_now);
-				out+= StrPrintf("48;2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
+				out+= StrPrintf("48:2:%u:%u:%u:", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 			}
 
 			if (out.back() == ':') {

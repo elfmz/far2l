@@ -2215,13 +2215,13 @@ static void EncodeLineForDump(std::string &out, const std::vector<CHAR_INFO> &Ch
 			|| (attr_prev&(FOREGROUND_INTENSITY|FOREGROUND_RGB)) != (attr_now&(FOREGROUND_INTENSITY|FOREGROUND_RGB))) {
 				out+= (attr_now&FOREGROUND_INTENSITY) ? '9' : '3';
 				out+= '0' + TranslateForegroundColor(attr_now);
-				out+= ';';
+				out+= ':';
 			}
 			if ( attr_prev == (DWORD64)-1 || (tc_back_prev && !tc_back_now)
 			|| (attr_prev&(BACKGROUND_INTENSITY|BACKGROUND_RGB)) != (attr_now&(BACKGROUND_INTENSITY|BACKGROUND_RGB))) {
 				out+= (attr_now&BACKGROUND_INTENSITY) ? "10" : "4";
 				out+= '0' + TranslateBackgroundColor(attr_now);
-				out+= ';';
+				out+= ':';
 			}
 
 			if (tc_fore_now && (!tc_fore_prev || GET_RGB_FORE(attr_prev) != GET_RGB_FORE(attr_now))) {
@@ -2234,7 +2234,7 @@ static void EncodeLineForDump(std::string &out, const std::vector<CHAR_INFO> &Ch
 				out+= StrPrintf("48;2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 			}
 
-			if (out.back() == ';') {
+			if (out.back() == ':') {
 				out.back() = 'm';
 				attr_prev = attr_now;
 

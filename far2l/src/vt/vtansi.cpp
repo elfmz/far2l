@@ -311,6 +311,14 @@ struct VTAnsiContext
 	std::list<std::vector<CHAR_INFO>>::iterator _logical_cursor_line;
 	// Позиция курсора (колонка) в текущей логической строке
 	size_t _logical_cursor_col;
+
+	// Альтернативный логический буфер
+	// Нужен, чтоб работало сохранения в лог экрана интерактивных апп, как mc,
+	// в процессе их работы
+	std::list<std::vector<CHAR_INFO>> _alt_logical_lines;
+	std::list<std::vector<CHAR_INFO>>::iterator _alt_logical_cursor_line;
+	size_t _alt_logical_cursor_col;
+
 	// Максимальное количество строк в истории логического буфера
 	static const size_t MAX_LOGICAL_LINES = 4096;
 
@@ -349,6 +357,11 @@ struct VTAnsiContext
 
 	void SyncLogicalCursor()
 	{
+		// Получаем ссылки на текущий активный буфер и курсор в самом начале
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		auto& current_cursor_col = GetCurrentCursorCol();
+
 		CONSOLE_SCREEN_BUFFER_INFO Info;
 		WINPORT(GetConsoleScreenBufferInfo)( vt_shell->ConsoleHandle(), &Info );
 
@@ -356,16 +369,31 @@ struct VTAnsiContext
 		int lines_from_visible_bottom = Info.srWindow.Bottom - Info.dwCursorPosition.Y;
 		if (lines_from_visible_bottom < 0) lines_from_visible_bottom = 0;
 
-		// Находим соответствующую логическую строку, отсчитывая от конца
-		if ((size_t)lines_from_visible_bottom < _logical_lines.size()) {
-			_logical_cursor_line = std::prev(_logical_lines.end(), lines_from_visible_bottom + 1);
+		// Находим соответствующую логическую строку в ТЕКУЩЕМ буфере, отсчитывая от конца
+		if ((size_t)lines_from_visible_bottom < current_buffer.size()) {
+			current_cursor_line = std::prev(current_buffer.end(), lines_from_visible_bottom + 1);
 		} else {
-			// Этого не должно происходить в нормальной ситуации, но для страховки
-			// ставим курсор на последнюю доступную строку
-			_logical_cursor_line = std::prev(_logical_lines.end());
+			// Если что-то пошло не так, ставим курсор на последнюю доступную строку ТЕКУЩЕГО буфера
+			if (!current_buffer.empty()) {
+				current_cursor_line = std::prev(current_buffer.end());
+			} else {
+				// Если буфер пуст, создаем одну строку и ставим курсор на нее
+				current_buffer.emplace_back();
+				current_cursor_line = current_buffer.begin();
+			}
 		}
 
-		_logical_cursor_col = Info.dwCursorPosition.X;
+		current_cursor_col = Info.dwCursorPosition.X;
+	}
+
+	std::list<std::vector<CHAR_INFO>>& GetCurrentBuffer() {
+		return in_alternative_buffer ? _alt_logical_lines : _logical_lines;
+	}
+	std::list<std::vector<CHAR_INFO>>::iterator& GetCurrentCursorLine() {
+		return in_alternative_buffer ? _alt_logical_cursor_line : _logical_cursor_line;
+	}
+	size_t& GetCurrentCursorCol() {
+		return in_alternative_buffer ? _alt_logical_cursor_col : _logical_cursor_col;
 	}
 
 // ========== Print Buffer functions
@@ -481,16 +509,20 @@ struct VTAnsiContext
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
 		prev_char = c;
 
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		auto& current_cursor_col = GetCurrentCursorCol();
+
 		if (c == '\n') {
-			if (!output_disabled && !in_alternative_buffer) {
-				if (std::next(_logical_cursor_line) == _logical_lines.end()) {
-					_logical_lines.emplace_back();
-					if (_logical_lines.size() > MAX_LOGICAL_LINES) {
-						_logical_lines.pop_front();
+			if (!output_disabled) {
+				if (std::next(current_cursor_line) == current_buffer.end()) {
+					current_buffer.emplace_back();
+					if (current_buffer.size() > MAX_LOGICAL_LINES) {
+						current_buffer.pop_front();
 					}
 				}
-				_logical_cursor_line++;
-				_logical_cursor_col = 0;
+				current_cursor_line++;
+				current_cursor_col = 0;
 			}
 
 			// Оригинальная логика для физического вывода \n
@@ -529,12 +561,18 @@ struct VTAnsiContext
 					WriteConsoleIfEnabled( nl, 1);
 			}
 		} else {
+
+			// Если активен режим псевдографики, подменяем символ
+			if (CurrentCharsetSelection() == '0' && c >= FIRST_SG && c <= LAST_SG) {
+				c = DECSpecialGraphicsCharset[c - FIRST_SG];
+			}
+
 			// Сначала обрабатываем логический буфер
-			if (!output_disabled && !in_alternative_buffer) {
+			if (!output_disabled) {
 				if (c == '\b') {
-					if (_logical_cursor_col > 0) _logical_cursor_col--;
+					if (current_cursor_col > 0) current_cursor_col--;
 				} else if (c == '\r') {
-					_logical_cursor_col = 0;
+					current_cursor_col = 0;
 				} else {
 					// Это печатный символ. Записываем его в логический буфер.
 					WCHAR effective_char = c;
@@ -548,11 +586,11 @@ struct VTAnsiContext
 						default: ;
 					}
 
-					if (_logical_cursor_line->size() <= _logical_cursor_col) {
-						_logical_cursor_line->resize(_logical_cursor_col + 1, { L' ', ansi_state.font_state.ToConsoleAttributes() });
+					if (current_cursor_line->size() <= current_cursor_col) {
+						current_cursor_line->resize(current_cursor_col + 1, { L' ', ansi_state.font_state.ToConsoleAttributes() });
 					}
-					CI_SET_WCATTR((*_logical_cursor_line)[_logical_cursor_col], effective_char, ansi_state.font_state.ToConsoleAttributes());
-					_logical_cursor_col++;
+					CI_SET_WCATTR((*current_cursor_line)[current_cursor_col], effective_char, ansi_state.font_state.ToConsoleAttributes());
+					current_cursor_col++;
 				}
 			}
 
@@ -663,14 +701,18 @@ struct VTAnsiContext
 
 			std::swap(tmp, _other);
 
-		    _ctx.in_alternative_buffer = enable;
-		    fprintf(stderr, "Alternative buffer toggled: %s\n", enable ? "ON" : "OFF");
+			_ctx.in_alternative_buffer = enable;
+			fprintf(stderr, "Alternative buffer toggled: %s\n", enable ? "ON" : "OFF");
 
 			if (enable) {
-				VTLog::Pause();
+				_ctx._alt_logical_lines.clear();
+				_ctx._alt_logical_lines.emplace_back();
+				_ctx._alt_logical_cursor_line = _ctx._alt_logical_lines.begin();
+				_ctx._alt_logical_cursor_col = 0;
 			} else {
-				VTLog::Resume();
+				_ctx._alt_logical_lines.clear();
 			}
+
 			_enabled = enable;
 		}
 
@@ -832,6 +874,11 @@ struct VTAnsiContext
 		CHAR_INFO  CharInfo;
 		DWORD      mode;
 		HANDLE con_hnd = vt_shell->ConsoleHandle();
+
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		auto& current_cursor_col = GetCurrentCursorCol();
+
 		if (prefix == '[') {
 			if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 				for (i = 0; i < es_argc; ++i) {
@@ -941,154 +988,222 @@ struct VTAnsiContext
 			case 'J':
 				if (es_argc == 0) es_argv[es_argc++] = 0; // ESC[J == ESC[0J
 				if (es_argc != 1) return;
-				switch (es_argv[0]) {
-				case 0:		// ESC[0J erase from cursor to end of display
-					len = (Info.srWindow.Bottom - Info.dwCursorPosition.Y) * Info.dwSize.X + Info.dwSize.X - Info.dwCursorPosition.X;
-					FillBlank( len, Info.dwCursorPosition );
-					return;
 
-				case 1:		// ESC[1J erase from start to cursor.
-					Pos.X = 0;
-					Pos.Y = Info.srWindow.Top;
-					len   = (Info.dwCursorPosition.Y - Info.srWindow.Top) * Info.dwSize.X + Info.dwCursorPosition.X + 1;
-					FillBlank( len, Pos );
-					return;
+				{
+					const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+					CHAR_INFO blank_char_with_color;
+					CI_SET_WCATTR(blank_char_with_color, L' ', attributes);
 
-				case 2:		// ESC[2J Clear screen and home cursor
-					ClearScreenAndHomeCursor(Info); // Физическая очистка экрана
+					switch (es_argv[0]) {
+					case 0:		// ESC[0J erase from cursor to end of display
+						len = (Info.srWindow.Bottom - Info.dwCursorPosition.Y) * Info.dwSize.X + Info.dwSize.X - Info.dwCursorPosition.X;
+						FillBlank( len, Info.dwCursorPosition );
 
-					if (in_alternative_buffer) { return; }
+						if (!output_disabled) {
+							for (size_t i = current_cursor_col; i < (size_t)Info.dwSize.X; ++i) {
+								if (current_cursor_line->size() <= i) current_cursor_line->resize(i + 1);
+								(*current_cursor_line)[i] = blank_char_with_color;
+							}
+							for (auto it = std::next(current_cursor_line); it != current_buffer.end(); ++it) {
+								it->assign(Info.dwSize.X, blank_char_with_color);
+							}
+						}
 
-					if (vt_shell->IsInteractiveAppRunning()) {
-						// ИНТЕРАКТИВНЫЙ РЕЖИМ (less/git):
-						// Очищаем содержимое видимой части лога, НЕ удаляя сами строки из истории.
-						SHORT screen_height = Info.srWindow.Bottom - Info.srWindow.Top + 1;
-						if (screen_height <= 0) screen_height = 24; // Безопасное значение по умолчанию
+						return;
 
-						// Итератор на начало видимой области (отсчитываем N строк от конца)
-						auto top_visible_line_it = _logical_lines.end();
-						if ((size_t)screen_height <= _logical_lines.size()) {
-							top_visible_line_it = std::prev(_logical_lines.end(), screen_height);
+					case 1:		// ESC[1J erase from start to cursor.
+						Pos.X = 0;
+						Pos.Y = Info.srWindow.Top;
+						len   = (Info.dwCursorPosition.Y - Info.srWindow.Top) * Info.dwSize.X + Info.dwCursorPosition.X + 1;
+						FillBlank( len, Pos );
+
+						if (!output_disabled) {
+							for (auto it = current_buffer.begin(); it != current_cursor_line; ++it) {
+								it->assign(Info.dwSize.X, blank_char_with_color);
+							}
+							for (size_t i = 0; i <= current_cursor_col; ++i) {
+								if (current_cursor_line->size() <= i) current_cursor_line->resize(i + 1);
+								(*current_cursor_line)[i] = blank_char_with_color;
+							}
+						}
+
+						return;
+
+					case 2:		// ESC[2J Clear screen and home cursor
+						ClearScreenAndHomeCursor(Info); // Физическая очистка экрана
+
+						if (in_alternative_buffer) {
+							current_buffer.clear();
+							current_buffer.emplace_back();
+							current_cursor_line = current_buffer.begin();
+							current_cursor_col = 0;
+						}
+
+						if (vt_shell->IsInteractiveAppRunning()) {
+							// ИНТЕРАКТИВНЫЙ РЕЖИМ (less/git):
+							// Очищаем содержимое видимой части лога, НЕ удаляя сами строки из истории.
+							SHORT screen_height = Info.srWindow.Bottom - Info.srWindow.Top + 1;
+							if (screen_height <= 0) screen_height = 24; // Безопасное значение по умолчанию
+
+							SHORT screen_width = Info.srWindow.Right - Info.srWindow.Left + 1;
+							if (screen_width <= 0) screen_width = 80;
+
+							// Создаем "пробел" с текущим цветом фона
+							CHAR_INFO blank_char_with_color;
+							const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+							CI_SET_WCATTR(blank_char_with_color, L' ', attributes);
+
+							// Итератор на начало видимой области (отсчитываем N строк от конца)
+							auto top_visible_line_it = current_buffer.end();
+							if ((size_t)screen_height <= current_buffer.size()) {
+								top_visible_line_it = std::prev(current_buffer.end(), screen_height);
+							} else {
+								top_visible_line_it = current_buffer.begin();
+							}
+
+							// Очищаем и ЗАПОЛНЯЕМ видимые строки "цветными пробелами"
+							for (auto it = top_visible_line_it; it != current_buffer.end(); ++it) {
+								it->assign(screen_width, blank_char_with_color);
+							}
+
+							// Устанавливаем логический курсор в начало очищенной области (левый верхний угол)
+							current_cursor_line = top_visible_line_it;
+							current_cursor_col = 0;
+
 						} else {
-							top_visible_line_it = _logical_lines.begin();
-						}
+							// ОБЫЧНЫЙ РЕЖИМ (команда 'clear'):
+							// Добавляем пустые строки, чтобы отделить старый вывод от нового.
+							SHORT screen_height = Info.srWindow.Bottom - Info.srWindow.Top + 1;
+							if (screen_height <= 0) screen_height = 24;
+							for (SHORT i = 0; i < screen_height; ++i) {
+								current_buffer.emplace_back();
+							}
 
-						// Очищаем содержимое всех видимых строк
-						for (auto it = top_visible_line_it; it != _logical_lines.end(); ++it) {
-							it->clear();
+							while (current_buffer.size() > MAX_LOGICAL_LINES) {
+								current_buffer.pop_front();
+							}
+							current_cursor_line = std::prev(current_buffer.end(), screen_height);
+							current_cursor_col = 0;
 						}
+						return;
 
-						// Устанавливаем логический курсор в начало очищенной области (левый верхний угол)
-						_logical_cursor_line = top_visible_line_it;
-						_logical_cursor_col = 0;
-
-					} else {
-						// ОБЫЧНЫЙ РЕЖИМ (команда 'clear'):
-						// Добавляем пустые строки, чтобы отделить старый вывод от нового.
-						SHORT screen_height = Info.srWindow.Bottom - Info.srWindow.Top + 1;
-						if (screen_height <= 0) screen_height = 24;
-						for (SHORT i = 0; i < screen_height; ++i) {
-							_logical_lines.emplace_back();
-						}
-
-						while (_logical_lines.size() > MAX_LOGICAL_LINES) {
-							_logical_lines.pop_front();
-						}
-						_logical_cursor_line = std::prev(_logical_lines.end(), screen_height);
-						_logical_cursor_col = 0;
+					default:
+						return;
 					}
-					return;
-
-				default:
-					return;
 				}
 
-			case 'K':
-				if (es_argc == 0) es_argv[es_argc++] = 0; // ESC[K == ESC[0K
-				if (es_argc != 1) return;
-				switch (es_argv[0]) {
-				case 0:		// ESC[0K Clear to end of line
-					if (!in_alternative_buffer) {
-						if (_logical_cursor_col < _logical_cursor_line->size()) {
-							_logical_cursor_line->resize(_logical_cursor_col);
+				case 'K':
+					if (es_argc == 0) es_argv[es_argc++] = 0; // ESC[K == ESC[0K
+					if (es_argc != 1) return;
+
+					if (!output_disabled) {
+						auto& current_cursor_line = GetCurrentCursorLine();
+						auto& current_cursor_col = GetCurrentCursorCol();
+						SHORT screen_width = Info.dwSize.X;
+
+						// Создаем "пробел" с текущим цветом фона
+						CHAR_INFO blank_char_with_color;
+						const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+						CI_SET_WCATTR(blank_char_with_color, L' ', attributes);
+
+						switch (es_argv[0]) {
+						case 0:		// ESC[0K Clear to end of line
+							if (current_cursor_col < current_cursor_line->size()) {
+								current_cursor_line->resize(current_cursor_col);
+							}
+
+							if ((size_t)screen_width > current_cursor_col)
+								current_cursor_line->insert(current_cursor_line->end(), screen_width - current_cursor_col, blank_char_with_color);
+
+							break;
+
+						case 1:		// ESC[1K Clear from start of line to cursor
+							// Заменяем символы до курсора на цветные пробелы
+							for (size_t i = 0; i <= current_cursor_col && i < current_cursor_line->size(); ++i) {
+								(*current_cursor_line)[i] = blank_char_with_color;
+							}
+							break;
+
+						case 2:		// ESC[2K Clear whole line.
+							// Заполняем всю строку цветными пробелами
+							current_cursor_line->assign(screen_width, blank_char_with_color);
+							break;
 						}
 					}
-					len = Info.dwSize.X - Info.dwCursorPosition.X;
-					FillBlank( len, Info.dwCursorPosition );
-					return;
 
-				case 1:		// ESC[1K Clear from start of line to cursor
-					if (!in_alternative_buffer) {
-						for (size_t i = 0; i <= _logical_cursor_col && i < _logical_cursor_line->size(); ++i) {
-							CI_SET_WCATTR((*_logical_cursor_line)[i], L' ', ansi_state.font_state.ToConsoleAttributes());
-						}
+					// Физическая очистка остается без изменений
+					switch (es_argv[0]) {
+					case 0:		// ESC[0K Clear to end of line
+						len = Info.dwSize.X - Info.dwCursorPosition.X;
+						FillBlank( len, Info.dwCursorPosition );
+						return;
+					case 1:		// ESC[1K Clear from start of line to cursor
+						Pos.X = 0; Pos.Y = Info.dwCursorPosition.Y;
+						FillBlank( Info.dwCursorPosition.X + 1, Pos );
+						return;
+					case 2:		// ESC[2K Clear whole line.
+						Pos.X = 0; Pos.Y = Info.dwCursorPosition.Y;
+						FillBlank( Info.dwSize.X, Pos );
+						return;
+					default:
+						return;
 					}
-					Pos.X = 0;
-					Pos.Y = Info.dwCursorPosition.Y;
-					FillBlank( Info.dwCursorPosition.X + 1, Pos );
-					return;
 
-				case 2:		// ESC[2K Clear whole line.
-					if (!in_alternative_buffer) {
-						_logical_cursor_line->clear();
-						_logical_cursor_col = 0; // После очистки всей строки курсор логически в начале
-					}
-					Pos.X = 0;
-					Pos.Y = Info.dwCursorPosition.Y;
-					FillBlank( Info.dwSize.X, Pos );
-					return;
-
-				default:
-					return;
-				}
-
-			case 'X':                 // ESC[#X Erase # characters.
-				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[X == ESC[1X
-				if (es_argc != 1) return;
-				FillBlank( es_argv[0], Info.dwCursorPosition );
-				return;
-
-			case 'L':                 // ESC[#L Insert # blank lines.
-				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[L == ESC[1L
+			case 'X': // Erase # characters.
+				if (es_argc == 0) es_argv[es_argc++] = 1;
 				if (es_argc != 1) return;
 				{
-					if (!in_alternative_buffer) {
-
-						for (int j = 0; j < es_argv[0]; ++j) {
-							_logical_cursor_line = _logical_lines.insert(_logical_cursor_line, std::vector<CHAR_INFO>());
-						}
-						while (_logical_lines.size() > MAX_LOGICAL_LINES) {
-							_logical_lines.pop_front();
+					const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+					if (!output_disabled) {
+						CHAR_INFO blank_char_with_color;
+						CI_SET_WCATTR(blank_char_with_color, L' ', attributes);
+						for (size_t i = 0; i < (size_t)es_argv[0]; ++i) {
+							size_t pos = current_cursor_col + i;
+							if (current_cursor_line->size() <= pos) current_cursor_line->resize(pos + 1);
+							(*current_cursor_line)[pos] = blank_char_with_color;
 						}
 					}
-
-					LimitByScrollRegion(Info.srWindow); //fprintf(stderr, "!!!scroll 1\n");
-
-					Rect.Left   = Info.srWindow.Left	= 0;
-					Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
-					Rect.Top    = Info.dwCursorPosition.Y;
-					Rect.Bottom = Info.srWindow.Bottom;
-
-					Pos.X = 0;
-					Pos.Y = Info.dwCursorPosition.Y + es_argv[0];
-					CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
-					WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Info.srWindow, Pos, &CharInfo );
-					// Technically should home the cursor, but perhaps not expeclted.
+					DWORD written;
+					WINPORT(FillConsoleOutputAttribute)(con_hnd, attributes, es_argv[0], Info.dwCursorPosition, &written);
+					WINPORT(FillConsoleOutputCharacter)(con_hnd, L' ', es_argv[0], Info.dwCursorPosition, &written);
 				}
 				return;
+
+				case 'L': // Insert # blank lines.
+					if (es_argc == 0) es_argv[es_argc++] = 1;
+					if (es_argc != 1) return;
+					{
+						const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+						if (!output_disabled) {
+							std::vector<CHAR_INFO> blank_line(Info.dwSize.X, { L' ', attributes });
+							for (int i = 0; i < es_argv[0]; ++i) {
+								current_cursor_line = current_buffer.insert(current_cursor_line, blank_line);
+							}
+							while (current_buffer.size() > MAX_LOGICAL_LINES) {
+								current_buffer.pop_front();
+							}
+						}
+						Rect = {0, Info.dwCursorPosition.Y, (SHORT)(Info.dwSize.X - 1), Info.srWindow.Bottom};
+						LimitByScrollRegion(Rect);
+						Pos = {0, (SHORT)(Info.dwCursorPosition.Y + es_argv[0])};
+						CHAR_INFO CharInfo;
+						CI_SET_WCATTR(CharInfo, L' ', attributes);
+						WINPORT(ScrollConsoleScreenBuffer)(con_hnd, &Rect, NULL, Pos, &CharInfo);
+					}
+					return;
 
 				case 'S':                 // ESC[#S Scroll up
 					if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[S == ESC[1S
 					if (es_argc != 1) return;
 
-					if (!in_alternative_buffer && !output_disabled) {
+					if (!output_disabled) {
 						for (int j = 0; j < es_argv[0]; ++j) {
 							// Удаляем верхнюю строку, которая "ушла" за экран
-							if (!_logical_lines.empty()) {
-								_logical_lines.pop_front();
+							if (!current_buffer.empty()) {
+								current_buffer.pop_front();
 							}
 							// Добавляем новую пустую строку в конец
-							_logical_lines.emplace_back();
+							current_buffer.emplace_back();
 						}
 					}
 
@@ -1101,7 +1216,7 @@ struct VTAnsiContext
 						Rect.Right  = (Info.dwSize.X - 1);
 						Rect.Top    = Pos.Y + es_argv[0];
 						Rect.Bottom = Info.srWindow.Bottom;
-						CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
+						CI_SET_WCATTR(CharInfo, blank_character, ansi_state.font_state.ToConsoleAttributes());
 						WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Info.srWindow, Pos, &CharInfo );
 					}
 					return;
@@ -1109,78 +1224,99 @@ struct VTAnsiContext
 			case 'T':                 // ESC[#T Scroll down
 				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[T == ESC[1T
 				if (es_argc != 1) return;
-				/*while (es_argv[0]--)*/ {
-					LimitByScrollRegion(Info.srWindow); //fprintf(stderr, "!!!scroll 3\n");
-
-					Rect.Left   = Info.srWindow.Left = 0;
-					Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
-					Rect.Top    = Info.srWindow.Top;
-					Rect.Bottom = Info.srWindow.Bottom - es_argv[0];
-
-					Pos.X = 0;
-					Pos.Y = Rect.Top + es_argv[0];
-
-					CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
-					WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Info.srWindow, Pos, &CharInfo );
-				}
-				return;
-
-
-			case 'M':                 // ESC[#M Delete # lines.
-				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[M == ESC[1M
-				if (es_argc != 1) return;
 				{
-				    if (!in_alternative_buffer) {
-				        for (int j = 0; j < es_argv[0] && _logical_cursor_line != _logical_lines.end(); ++j) {
-				            _logical_cursor_line = _logical_lines.erase(_logical_cursor_line);
-				        }
-				        if (_logical_cursor_line == _logical_lines.end()) {
-				            // Если удалили до конца, курсор должен быть на новой последней строке
-				            _logical_lines.emplace_back();
-				            _logical_cursor_line = std::prev(_logical_lines.end());
-				        }
+					if (!output_disabled) {
+						const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+						std::vector<CHAR_INFO> blank_line(Info.dwSize.X, { L' ', attributes });
+						for (int i = 0; i < es_argv[0]; ++i) {
+							if (!current_buffer.empty()) {
+								current_buffer.pop_back();
+							}
+							current_buffer.emplace_front(blank_line);
+						}
+						while (current_buffer.size() > MAX_LOGICAL_LINES) {
+							current_buffer.pop_back();
+						}
 					}
 
-					LimitByScrollRegion(Info.srWindow);
-					//fprintf(stderr, "!!!scroll 4 srWindow[%d %d %d %d] by %d\n", Info.srWindow.Left, Info.srWindow.Top, Info.srWindow.Right, Info.srWindow.Bottom, es_argv[0]);
+					/*while (es_argv[0]--)*/ {
+						LimitByScrollRegion(Info.srWindow); //fprintf(stderr, "!!!scroll 3\n");
 
-					Rect.Left   = Info.srWindow.Left	= 0;
-					Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
-					Rect.Bottom = Info.srWindow.Bottom;
-					Rect.Top    = Info.dwCursorPosition.Y;
-					Pos.X = 0;
-					Pos.Y = Rect.Top - es_argv[0];
-					CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
+						Rect.Left   = Info.srWindow.Left = 0;
+						Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
+						Rect.Top    = Info.srWindow.Top;
+						Rect.Bottom = Info.srWindow.Bottom - es_argv[0];
 
-					WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Rect, Pos, &CharInfo );
+						Pos.X = 0;
+						Pos.Y = Rect.Top + es_argv[0];
+
+						CI_SET_WCATTR(CharInfo, blank_character, ansi_state.font_state.ToConsoleAttributes());
+						WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Info.srWindow, Pos, &CharInfo );
+					}
 				}
-				// Technically should home the cursor, but perhaps not expected.
 				return;
 
-			case 'P':                 // ESC[#P Delete # characters.
-				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[P == ESC[1P
+			case 'M': // Delete # lines.
+				if (es_argc == 0) es_argv[es_argc++] = 1;
 				if (es_argc != 1) return;
-				Rect.Left   = Info.srWindow.Left	= Info.dwCursorPosition.X; Rect.Left+= es_argv[0];
-				Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
-				Pos.X	    = Info.dwCursorPosition.X;
-				Pos.Y	    =
-					Rect.Top    =
-						Rect.Bottom = Info.dwCursorPosition.Y;
-				CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
-				WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Info.srWindow, Pos, &CharInfo );
+				{
+					if (!output_disabled) {
+						for (int i = 0; i < es_argv[0] && current_cursor_line != current_buffer.end(); ++i) {
+							current_cursor_line = current_buffer.erase(current_cursor_line);
+						}
+						if (current_cursor_line == current_buffer.end() && !current_buffer.empty()) {
+							current_cursor_line = std::prev(current_buffer.end());
+						}
+					}
+					const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+					Rect = {(SHORT)0, (SHORT)(Info.dwCursorPosition.Y + es_argv[0]), (SHORT)(Info.dwSize.X - 1), Info.srWindow.Bottom};
+					LimitByScrollRegion(Rect);
+					Pos = {0, Info.dwCursorPosition.Y};
+					CHAR_INFO CharInfo;
+					CI_SET_WCATTR(CharInfo, L' ', attributes);
+					WINPORT(ScrollConsoleScreenBuffer)(con_hnd, &Rect, NULL, Pos, &CharInfo);
+				}
 				return;
 
-			case '@':                 // ESC[#@ Insert # blank characters.
-				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[@ == ESC[1@
+			case 'P': // Delete # characters.
+				if (es_argc == 0) es_argv[es_argc++] = 1;
 				if (es_argc != 1) return;
-				Rect.Left   = Info.srWindow.Left	= Info.dwCursorPosition.X;
-				Rect.Right  = Info.srWindow.Right = (Info.dwSize.X - 1);
-				Pos.X	    = Info.dwCursorPosition.X + es_argv[0];
-				Pos.Y	    =
-					Rect.Top    =
-						Rect.Bottom = Info.dwCursorPosition.Y;
-				CI_SET_WCATTR(CharInfo, blank_character, Info.wAttributes);
-				WINPORT(ScrollConsoleScreenBuffer)( con_hnd, &Rect, &Info.srWindow, Pos, &CharInfo );
+				{
+					if (!output_disabled) {
+						if (current_cursor_col < current_cursor_line->size()) {
+							current_cursor_line->erase(current_cursor_line->begin() + current_cursor_col, 
+								current_cursor_line->begin() + std::min(current_cursor_line->size(), current_cursor_col + (size_t)es_argv[0]));
+						}
+					}
+					const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+					Rect = {Info.dwCursorPosition.X, Info.dwCursorPosition.Y, (SHORT)(Info.dwSize.X - 1), Info.dwCursorPosition.Y};
+					Pos = { (SHORT)(Info.dwCursorPosition.X - es_argv[0]), Info.dwCursorPosition.Y };
+					CHAR_INFO CharInfo;
+					CI_SET_WCATTR(CharInfo, L' ', attributes);
+					WINPORT(ScrollConsoleScreenBuffer)(con_hnd, &Rect, &Rect, Pos, &CharInfo);
+				}
+				return;
+
+			case '@': // Insert # blank characters.
+				if (es_argc == 0) es_argv[es_argc++] = 1;
+				if (es_argc != 1) return;
+				{
+					const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+					if (!output_disabled) {
+						CHAR_INFO blank_char_with_color;
+						CI_SET_WCATTR(blank_char_with_color, L' ', attributes);
+						if (current_cursor_col < current_cursor_line->size()) {
+							current_cursor_line->insert(current_cursor_line->begin() + current_cursor_col, es_argv[0], blank_char_with_color);
+						} else {
+							current_cursor_line->insert(current_cursor_line->end(), es_argv[0], blank_char_with_color);
+						}
+					}
+					Rect = {Info.dwCursorPosition.X, Info.dwCursorPosition.Y, (SHORT)(Info.dwSize.X - 1 - es_argv[0]), Info.dwCursorPosition.Y};
+					Pos = {(SHORT)(Info.dwCursorPosition.X + es_argv[0]), Info.dwCursorPosition.Y};
+					CHAR_INFO CharInfo;
+					CI_SET_WCATTR(CharInfo, L' ', attributes);
+					WINPORT(ScrollConsoleScreenBuffer)(con_hnd, &Rect, NULL, Pos, &CharInfo);
+				}
 				return;
 
 			case 'k':                 // ESC[#k
@@ -1277,10 +1413,46 @@ struct VTAnsiContext
 				if (es_argc == 1)
 					es_argv[es_argc++] = 1; // ESC[#H == ESC[#;1H
 				if (es_argc > 2) return;
+
+				if (!output_disabled) {
+					auto& current_buffer = GetCurrentBuffer();
+					auto& current_cursor_line = GetCurrentCursorLine();
+					auto& current_cursor_col = GetCurrentCursorCol();
+
+					CONSOLE_SCREEN_BUFFER_INFO csbi;
+					WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &csbi);
+
+					SHORT target_row = es_argv[0] - 1; // 0-based
+					SHORT target_col = es_argv[1] - 1; // 0-based
+					if (target_row < 0) target_row = 0;
+					if (target_col < 0) target_col = 0;
+
+					// Вычисляем, какая логическая строка соответствует target_row на экране.
+					// Мы отсчитываем от КОНЦА нашего буфера.
+					SHORT screen_height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+					int lines_from_bottom = screen_height - 1 - target_row;
+
+					if (lines_from_bottom < 0) lines_from_bottom = 0;
+
+					// Убедимся, что у нас достаточно строк в буфере
+					while ((int)current_buffer.size() < screen_height) {
+						current_buffer.emplace_back();
+					}
+
+					if ((size_t)lines_from_bottom < current_buffer.size()) {
+						current_cursor_line = std::prev(current_buffer.end(), lines_from_bottom + 1);
+					} else {
+						current_cursor_line = current_buffer.begin();
+					}
+
+					current_cursor_col = target_col;
+				}
+
+				// Физическое позиционирование
 				Pos.X = es_argv[1] - 1;
 				if (Pos.X < 0) Pos.X = 0;
 				if (Pos.X > (Info.dwSize.X - 1)) Pos.X = (Info.dwSize.X - 1);
-				Pos.Y = es_argv[0] - 1;
+				Pos.Y = es_argv[0] - 1 + Info.srWindow.Top; // Позиция относительно окна, а не буфера
 				if (Pos.Y < Info.srWindow.Top) Pos.Y = Info.srWindow.Top;
 				if (Pos.Y > Info.srWindow.Bottom) Pos.Y = Info.srWindow.Bottom;
 				WINPORT(SetConsoleCursorPosition)( con_hnd, Pos );
@@ -1494,51 +1666,60 @@ struct VTAnsiContext
 		FlushBuffer();
 	}
 
-void ReverseIndex()
-{
-	FlushBuffer();
+	void ReverseIndex()
+	{
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		//auto& current_cursor_col = GetCurrentCursorCol();
 
-	if (!output_disabled && !in_alternative_buffer) {
-		// Вставляем пустую строку в самое начало списка
-		_logical_lines.emplace_front();
-		// Удаляем последнюю строку, которая "ушла" за экран
-		_logical_lines.pop_back();
+		FlushBuffer();
 
-		// Курсор после этой операции должен быть на самой верхней строке
-		_logical_cursor_line = _logical_lines.begin();
+		if (!output_disabled) {
+			// Вставляем пустую строку в самое начало списка
+			current_buffer.emplace_front();
+			// Удаляем последнюю строку, которая "ушла" за экран
+			current_buffer.pop_back();
+
+			// Курсор после этой операции должен быть на самой верхней строке
+			current_cursor_line = current_buffer.begin();
+		}
+
+		// Оригинальная логика для физического экрана остается без изменений
+		HANDLE con_hnd = vt_shell->ConsoleHandle();
+		CONSOLE_SCREEN_BUFFER_INFO info;
+		WINPORT(GetConsoleScreenBufferInfo)( con_hnd, &info );
+		SHORT scroll_top = 0, scroll_bottom = 0x7fff;
+		WINPORT(GetConsoleScrollRegion)(con_hnd, &scroll_top, &scroll_bottom);
+
+		if (scroll_top < info.srWindow.Top) scroll_top = info.srWindow.Top;
+		if (scroll_bottom < info.srWindow.Top) scroll_bottom = info.srWindow.Top;
+		if (scroll_top > info.srWindow.Bottom) scroll_top = info.srWindow.Bottom;
+		if (scroll_bottom > info.srWindow.Bottom) scroll_bottom = info.srWindow.Bottom;
+
+		if (info.dwCursorPosition.Y != scroll_top) {
+			info.dwCursorPosition.Y--;
+			WINPORT(SetConsoleCursorPosition)(con_hnd, info.dwCursorPosition);
+			return;
+		}
+
+		if (scroll_top >= scroll_bottom)
+			return;
+
+		SMALL_RECT Rect = {info.srWindow.Left, scroll_top, info.srWindow.Right, (SHORT)(scroll_bottom - 1) };
+		COORD Pos = {0, (SHORT) (scroll_top + 1) };
+		CHAR_INFO CharInfo;
+		CI_SET_WCATTR(CharInfo, blank_character, info.wAttributes);
+		WINPORT(ScrollConsoleScreenBuffer)(con_hnd, &Rect, NULL, Pos, &CharInfo);
 	}
-
-	// Оригинальная логика для физического экрана остается без изменений
-	HANDLE con_hnd = vt_shell->ConsoleHandle();
-	CONSOLE_SCREEN_BUFFER_INFO info;
-	WINPORT(GetConsoleScreenBufferInfo)( con_hnd, &info );
-	SHORT scroll_top = 0, scroll_bottom = 0x7fff;
-	WINPORT(GetConsoleScrollRegion)(con_hnd, &scroll_top, &scroll_bottom);
-
-	if (scroll_top < info.srWindow.Top) scroll_top = info.srWindow.Top;
-	if (scroll_bottom < info.srWindow.Top) scroll_bottom = info.srWindow.Top;
-	if (scroll_top > info.srWindow.Bottom) scroll_top = info.srWindow.Bottom;
-	if (scroll_bottom > info.srWindow.Bottom) scroll_bottom = info.srWindow.Bottom;
-
-	if (info.dwCursorPosition.Y != scroll_top) {
-		info.dwCursorPosition.Y--;
-		WINPORT(SetConsoleCursorPosition)(con_hnd, info.dwCursorPosition);
-		return;
-	}
-
-	if (scroll_top >= scroll_bottom)
-		return;
-
-	SMALL_RECT Rect = {info.srWindow.Left, scroll_top, info.srWindow.Right, (SHORT)(scroll_bottom - 1) };
-	COORD Pos = {0, (SHORT) (scroll_top + 1) };
-	CHAR_INFO CharInfo;
-	CI_SET_WCATTR(CharInfo, blank_character, info.wAttributes);
-	WINPORT(ScrollConsoleScreenBuffer)(con_hnd, &Rect, NULL, Pos, &CharInfo);
-}
 
 	void ResetTerminal()
 	{
 		fprintf(stderr, "ANSI: ResetTerminal\n");
+
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		auto& current_cursor_col = GetCurrentCursorCol();
+
 		WINPORT(SetConsoleScrollRegion)(vt_shell->ConsoleHandle(), 0, MAXSHORT);
 
 		chars_in_buffer = 0;
@@ -1560,14 +1741,14 @@ void ReverseIndex()
 		charset_shifted = false;
 		screen_top = -1;
 
-		if (!_logical_lines.empty()) {
-			_logical_cursor_line = std::prev(_logical_lines.end());
+		if (!current_buffer.empty()) {
+			current_cursor_line = std::prev(current_buffer.end());
 		} else {
 			// На всякий случай, если буфер оказался пуст
-			_logical_lines.emplace_back();
-			_logical_cursor_line = _logical_lines.begin();
+			current_buffer.emplace_back();
+			current_cursor_line = current_buffer.begin();
 		}
-		_logical_cursor_col = 0;
+		current_cursor_col = 0;
 
 	}
 
@@ -1601,6 +1782,10 @@ void ReverseIndex()
 	{
 		DWORD   i;
 		LPCWSTR s;
+
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		auto& current_cursor_col = GetCurrentCursorCol();
 
 		_crds.emplace(vt_shell->ConsoleHandle());
 
@@ -1653,10 +1838,18 @@ void ReverseIndex()
 						case '8': RestoreCursor(); break;
 						case 'c':
 							ClearScreenAndHomeCursor();
-						    _logical_lines.clear();
-						    _logical_lines.emplace_back();
-						    _logical_cursor_line = _logical_lines.begin();
-						    _logical_cursor_col = 0;
+							if (!output_disabled) {
+								const WORD attributes = ansi_state.font_state.ToConsoleAttributes();
+								CHAR_INFO blank_char_with_color;
+								CONSOLE_SCREEN_BUFFER_INFO LocalInfo;
+								WINPORT(GetConsoleScreenBufferInfo)(vt_shell->ConsoleHandle(), &LocalInfo);
+								CI_SET_WCATTR(blank_char_with_color, L' ', attributes);
+								for (auto& line : GetCurrentBuffer()) {
+									line.assign(LocalInfo.dwSize.X, blank_char_with_color);
+								}
+								GetCurrentCursorLine() = GetCurrentBuffer().begin();
+								GetCurrentCursorCol() = 0;
+							}
 							break;
 						default: /*fprintf(stderr, "VTAnsi: state=2 *s=0x%x '%lc'\n", (unsigned int)*s, *s) */ ;
 					}
@@ -1775,9 +1968,13 @@ void ReverseIndex()
 	VTAnsiContext()
 		: alternative_screen_buffer(*this)
 	{
-		_logical_lines.emplace_back();
-		_logical_cursor_line = _logical_lines.begin();
-		_logical_cursor_col = 0;
+		auto& current_buffer = GetCurrentBuffer();
+		auto& current_cursor_line = GetCurrentCursorLine();
+		auto& current_cursor_col = GetCurrentCursorCol();
+
+		current_buffer.emplace_back();
+		current_cursor_line = current_buffer.begin();
+		current_cursor_col = 0;
 	}
 };
 
@@ -1932,8 +2129,11 @@ std::string VTAnsi::GetTitle()
 
 void VTAnsi::AddToLogicalLines(const std::wstring& str)
 {
-	if (_ctx->in_alternative_buffer) return;
 	if (_ctx->output_disabled) return; // Не добавляем ничего, если вывод отключен
+
+	// Получаем ссылки на буфер и курсор через _ctx
+	auto& current_buffer = _ctx->GetCurrentBuffer();
+	//auto& current_cursor_line = _ctx->GetCurrentCursorLine();
 
 	// Получаем текущие атрибуты текста (цвет и т.д.)
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -1950,16 +2150,16 @@ void VTAnsi::AddToLogicalLines(const std::wstring& str)
 
 	// Вставляем новую строку в буфер ПЕРЕД последней строкой
 	// (последняя строка - это обычно пустая строка, где сейчас курсор)
-	if (!_ctx->_logical_lines.empty()) {
-		auto it = std::prev(_ctx->_logical_lines.end());
-		_ctx->_logical_lines.insert(it, new_line_chars);
+	if (!current_buffer.empty()) {
+		auto it = std::prev(current_buffer.end());
+		current_buffer.insert(it, new_line_chars);
 	} else {
-		_ctx->_logical_lines.push_back(new_line_chars);
+		current_buffer.push_back(new_line_chars);
 	}
 
 	// Контролируем размер буфера
-	if (_ctx->_logical_lines.size() > _ctx->MAX_LOGICAL_LINES) {
-		_ctx->_logical_lines.pop_front();
+	if (current_buffer.size() > _ctx->MAX_LOGICAL_LINES) {
+		current_buffer.pop_front();
 	}
 }
 
@@ -2061,7 +2261,12 @@ void VTAnsi::DumpLogicalLines(std::string &s, bool colored) const
 {
 	s.clear();
 	bool first_line = true;
-	for (const auto &line : _ctx->_logical_lines) {
+
+	const auto& buffer_to_dump = _ctx->in_alternative_buffer
+		? _ctx->_alt_logical_lines
+		: _ctx->_logical_lines;
+
+	for (const auto &line : buffer_to_dump) {
 		if (!first_line) {
 			s += NATIVE_EOL;
 		}

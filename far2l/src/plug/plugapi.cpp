@@ -1214,9 +1214,9 @@ static intptr_t FarMessageFnSynched(INT_PTR PluginNumber, DWORD Flags, const wch
 intptr_t WINAPI FarMessageFn(INT_PTR PluginNumber, DWORD Flags, const wchar_t *HelpTopic,
 		const wchar_t *const *Items, int ItemsNumber, int ButtonsNumber)
 {
-	if (Flags & MSG_ASYNC) {
-		return FarMessageFnSynched(PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber);
-	}
+//	if (Flags & MSG_ASYNC) {
+//		return FarMessageFnSynched(PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber);
+//	}
 	return InterThreadCall<int, -1>(std::bind(FarMessageFnSynched, PluginNumber, Flags, HelpTopic, Items, ItemsNumber, ButtonsNumber));
 }
 

@@ -930,107 +930,87 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				$ 12.07.2000 SVS
 				! Wrap - трехпозиционный
 			*/
-			if (VM.Wrap && CalcStrSize(rString.Chars(), OutPtr) > XX2 - X1) {
-				/*
-					$ 11.07.2000 tran
-					+ warp are now WORD-WRAP
-				*/
-				int64_t SavePos = vtell();
-				WCHAR TmpChar = 0;
+			if (VM.Wrap) {
 
-				if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
-					vseek(SavePos, SEEK_SET);
+				int StrVisualLen;
 
-					if (VM.WordWrap) {
-						if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
-							int64_t SavePtr = OutPtr;
+				if (VM.Processed)
+				{
+					// Для режима ANSI используем принтер, который умеет пропускать ESC-последовательности
+					AnsiEsc::Printer AnsiPrinter(0);
+					if (IsUnicodeOrUtfCodePage(VM.CodePage))
+						AnsiPrinter.EnableBOMSkip();
+					StrVisualLen = AnsiPrinter.Length(rString.Chars(), OutPtr);
+				}
+				else
+				{
+					// Для обычного режима используем CalcStrSize, чтобы корректно обработать знаки табуляции
+					StrVisualLen = CalcStrSize(rString.Chars(), OutPtr);
+				}
 
-							/*
-								$ 18.07.2000 tran
-								добавил в качестве wordwrap разделителей , ; > )
-							*/
-							while (OutPtr) {
+				if (StrVisualLen > XX2 - X1) {
+					/*
+						$ 11.07.2000 tran
+						+ warp are now WORD-WRAP
+					*/
+					int64_t SavePos = vtell();
+					WCHAR TmpChar = 0;
+
+					if (vgetc(Ch) && Ch != CRSym && (Ch != L'\r' || (vgetc(TmpChar) && TmpChar != CRSym))) {
+						vseek(SavePos, SEEK_SET);
+
+						if (VM.WordWrap) {
+							if (!IsSpace(Ch) && !IsSpace(*rString.Chars((size_t)OutPtr))) {
+								int64_t SavePtr = OutPtr;
+
+								/*
+									$ 18.07.2000 tran
+									добавил в качестве wordwrap разделителей , ; > )
+								*/
+								while (OutPtr) {
+									Ch2 = *rString.Chars((size_t)OutPtr);
+
+									if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
+										break;
+
+									OutPtr--;
+								}
+
 								Ch2 = *rString.Chars((size_t)OutPtr);
 
-								if (IsSpace(Ch2) || Ch2 == L',' || Ch2 == L';' || Ch2 == L'>' || Ch2 == L')')
-									break;
-
-								OutPtr--;
-							}
-
-							Ch2 = *rString.Chars((size_t)OutPtr);
-
-							if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
-								OutPtr++;
-							else
-								while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
+								if (Ch2 == L',' || Ch2 == L';' || Ch2 == L')' || Ch2 == L'>')
 									OutPtr++;
+								else
+									while (OutPtr <= SavePtr && IsSpace(*rString.Chars((size_t)OutPtr)))
+										OutPtr++;
 
-							if (OutPtr < SavePtr && OutPtr) {
-								vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
-											rString.Chars((size_t)SavePtr)),
-										SEEK_CUR);
-							} else
-								OutPtr = SavePtr;
-						}
-
-						/*
-							$ 13.09.2000 tran
-							remove space at WWrap
-						*/
-
-						if (IsSpace(Ch)) {
-							int64_t lastpos;
-							for (;;) {
-								lastpos = vtell();
-								if (!vgetc(Ch) || !IsSpace(Ch))
-									break;
+								if (OutPtr < SavePtr && OutPtr) {
+									vseek(-CalcCodeUnitsDistance(VM.CodePage, rString.Chars((size_t)OutPtr),
+												rString.Chars((size_t)SavePtr)),
+											SEEK_CUR);
+								} else
+									OutPtr = SavePtr;
 							}
-							vseek(lastpos, SEEK_SET);
-						}
 
-					}	// wwrap
-				}
+							/*
+								$ 13.09.2000 tran
+								remove space at WWrap
+							*/
 
-				if (OutPtr > 0 && VM.Processed) // Проверяем только в режиме обработки ANSI
-				{
-					const wchar_t* const buffer_start = rString.Chars();
-					const wchar_t* const break_point = buffer_start + OutPtr;
-
-					// Ищем НАЗАД от точки разрыва до ближайшего символа ESC.
-					const wchar_t* p_esc = break_point - 1;
-					while (p_esc >= buffer_start && *p_esc != L'\x1B')
-					{
-						p_esc--;
-					}
-
-					// Если нашли ESC и это начало CSI-последовательности (\e[).
-					if (p_esc >= buffer_start && (p_esc + 1 < break_point) && p_esc[1] == L'[')
-					{
-						// Сканируем ВПЕРЕД от начала последовательности, чтобы проверить,
-						// была ли она завершена ДО нашей точки разрыва.
-						const wchar_t* p_end = p_esc + 2;
-						bool is_terminated = false;
-						while (p_end < break_point)
-						{
-							if (iswalpha(*p_end))
-							{
-								is_terminated = true;
-								break;
+							if (IsSpace(Ch)) {
+								int64_t lastpos;
+								for (;;) {
+									lastpos = vtell();
+									if (!vgetc(Ch) || !IsSpace(Ch))
+										break;
+								}
+								vseek(lastpos, SEEK_SET);
 							}
-							p_end++;
-						}
 
-						// Если последовательность НЕ была завершена до точки разрыва,
-						// значит, мы находимся внутри неё.
-						if (!is_terminated)
-						{
-							OutPtr = p_esc - buffer_start;
-						}
+						}	// wwrap
+						break;
 					}
 				}
-
-				break;
 			}
 
 			if (SelectSize > 0 && SelectPos == vtell()) {
@@ -1044,27 +1024,6 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 
 			if (!vgetc(Ch))
 				break;
-
-			// Если это начало ANSI ESC-последовательности, прочитаем и пропустим её целиком
-			if (Ch == L'\x1B') {
-				wchar_t NextCh;
-				int64_t pre_esc_pos = vtell();
-				if (vgetc(NextCh) && NextCh == L'[') {
-					// Это CSI-последовательность. Будем читать до 'm'.
-					rString.SetChar(size_t(OutPtr++), Ch);
-					rString.SetChar(size_t(OutPtr++), NextCh);
-					while(vgetc(Ch) && OutPtr < StrSize - 1) {
-						rString.SetChar(size_t(OutPtr++), Ch);
-						if (iswalpha(Ch)) { // Обычно 'm', но могут быть и другие
-							break;
-						}
-					}
-					continue; // Переходим к следующей итерации главного цикла
-				} else {
-					// Это не CSI, возвращаем указатель файла обратно
-					vseek(pre_esc_pos, SEEK_SET);
-				}
-			}
 
 			if (MaxSize > 0) {
 				if (VM.CodePage == CP_UTF8) {
@@ -2218,39 +2177,22 @@ void Viewer::Up()
 
 int Viewer::CalcStrSize(const wchar_t *Str, int Length)
 {
-    int Size = 0;
-    for (int I = 0; I < Length; ) {
-        // Пропускаем ANSI CSI последовательности (цвет и т.п.)
-        if (Str[I] == L'\x1B' && (I + 1 < Length) && Str[I+1] == L'[') {
-            int J = I + 2;
-            while (J < Length && (iswdigit(Str[J]) || Str[J] == L';')) {
-                J++;
-            }
-            if (J < Length && iswalpha(Str[J])) { // Ищем любую букву, обычно 'm'
-                I = J + 1;
-                continue;
-            }
-        }
+	int Size, I;
 
-        switch (Str[I]) {
-            case L'\t':
-                Size += ViOpt.TabSize - (Size % ViOpt.TabSize);
-                break;
-            case L'\n':
-            case L'\r':
-                break;
-            default:
-                // Учитываем двухширинные символы
-                CharClasses cc(Str[I]);
-                if (cc.FullWidth())
-                    Size += 2;
-                else if (!cc.Xxxfix())
-                    Size++;
-                break;
-        }
-        I++;
-    }
-    return Size;
+	for (Size = 0, I = 0; I < Length; I++)
+		switch (Str[I]) {
+			case L'\t':
+				Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
+				break;
+			case L'\n':
+			case L'\r':
+				break;
+			default:
+				Size++;
+				break;
+		}
+
+	return (Size);
 }
 
 int Viewer::GetStrBytesNum(const wchar_t *Str, int Length)

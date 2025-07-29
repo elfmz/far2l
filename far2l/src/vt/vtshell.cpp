@@ -105,8 +105,6 @@ class VTAnsi;
 
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
-	bool _interactive_app_running{false};
-
 	HANDLE _console_handle = NULL;
 	std::atomic<bool> _console_switch_requested{false};
 	std::atomic<bool> _console_kill_requested{false};
@@ -120,6 +118,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	pid_t _leader_pid;
 	std::string _slavename;
 	std::atomic<unsigned char> _keypad{0};
+	bool _interactive_app_running{false};
 	std::atomic<bool> _bracketed_paste_expected{false};
 	std::atomic<bool> _win32_input_mode_expected{false};
 	std::atomic<bool> _focus_change_expected{false};

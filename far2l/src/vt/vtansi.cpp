@@ -1783,10 +1783,6 @@ struct VTAnsiContext
 		DWORD   i;
 		LPCWSTR s;
 
-		auto& current_buffer = GetCurrentBuffer();
-		auto& current_cursor_line = GetCurrentCursorLine();
-		auto& current_cursor_col = GetCurrentCursorCol();
-
 		_crds.emplace(vt_shell->ConsoleHandle());
 
 		for (i = nNumberOfBytesToWrite, s = (LPCWSTR)lpBuffer; i > 0; i--, s++) {

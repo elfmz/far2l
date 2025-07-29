@@ -574,6 +574,9 @@ void ViewConsoleHistory(HANDLE con_hnd, bool modal, bool autoclose)
 	FileViewer *Viewer = new (std::nothrow) FileViewer(tfh,
 		!modal, TRUE, TRUE, -1, nullptr, nullptr, FALSE, CP_UTF8);
 	Viewer->SetDynamicallyBorn(!modal);
+	Viewer->GetViewer()->SetWrapMode(1);         // Включаем режим сворачивания строк (Wrap)
+	Viewer->GetViewer()->SetWrapType(1);         // Включаем перенос по словам (Word Wrap)
+	Viewer->GetViewer()->SetShowScrollbar(1);    // Включаем скроллбар
 	Viewer->ProcessKey(KEY_END); // scroll to the end
 	if (autoclose)
 		Viewer->SetAutoClose(true);

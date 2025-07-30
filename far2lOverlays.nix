@@ -46,7 +46,7 @@
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.6.5-3b604892";  # Change that version if you need to build a package vith other version namr
+        version = "2.6.5-3b604892";  # Change that version if you need to build a package with other version name
 
         src = prev.fetchFromGitHub {
           owner = "elfmz";

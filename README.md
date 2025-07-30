@@ -351,14 +351,14 @@ emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
 
-#### Installing on [NixOS](https://nixos.org/)
+#### Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS
 
 To install system-wide, add the `far2l` package to your [`configuration.nix`](https://nixos.org/manual/nixos/stable/index.html#sec-changing-config) `environment.systemPackages` list. To run the application on-demand without affecting the system state, execute `nix-shell -p far2l --command far2l`. These use a package version from your current [channel](https://wiki.nixos.org/wiki/Channel_branches).
 
 The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/fa/far2l/package.nix), it tells which Git revision from Far2l repo to fetch, with what dependencies to build it, and how to patch its references to other software to make it run in isolated fashion independently from other versions available in the system.
 
 
-#### Custom Building and Installing on [NixOS](https://nixos.org/) from scratch
+#### Custom Building and Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS from scratch
 
 1) Copy [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to your Nix configuration folder
 2) Add it as import to 'configuration.nix'

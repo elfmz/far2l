@@ -28,6 +28,7 @@
         <location link="rare/gen/yml.hrc" />
         <filename weight='2'>/\.xml$/ix</filename>
         <firstline weight='4'>/&lt;!DOCTYPE\s+yml_catalog\b/</firstline>
+        <firstline weight='4'>/&lt;yml_catalog\b/</firstline>
     </prototype>
 
 

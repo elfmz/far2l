@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd"[
+<!ENTITY helm-functions SYSTEM "helm-tpl.ent.hrc">
+]>
+
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        Helm Charts (tpl)
+
+        Based on:
+            https://github.com/helm/helm/blob/main/pkg/engine/funcs.go
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="helm-tpl" group="misc" description="Helm Charts (tpl)">
+            <location link="misc/helm-tpl.hrc"/>
+            <filename>/^_.+\.tpl$/i</filename>
+            <filename weight="3">/^_helpers\.tpl$/i</filename>
+            <!-- Set the weight slightly higher than the default (1).
+            The "Smarty PHP Templates" highlighting scheme also looks for '{' on the first
+            line and can trigger for this file type. But here we specify a more
+            exact match. -->
+            <firstline weight="2">/^\s*\{\{/x</firstline>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="helm-tpl">
+
+<region name="Function" parent="go-template-sprig:Function"/>
+<region name="FunctionBoolean" parent="go-template-sprig:FunctionBoolean"/>
+
+<!-- for testing -->
+<region name="Test" parent="def:URL"/>
+<region name="Test2" parent="def:TODO"/>
+
+<scheme name="helm-tpl">
+    <inherit scheme="go-template-sprig:go-template-native-sprig">
+        <virtual scheme="go-template-sprig:function-name" subst-scheme="function-name"/>
+    </inherit>
+</scheme>
+
+<scheme name="helm-tpl-embed">
+    <inherit scheme="go-template-sprig:go-template-sprig">
+        <virtual scheme="go-template-sprig:function-name" subst-scheme="function-name"/>
+    </inherit>
+</scheme>
+
+<scheme name="function-name">
+
+    <keywords region="Function" ignorecase="no">
+        &helm-functions;
+    </keywords>
+
+    <inherit scheme="go-template-sprig:function-name"/>
+
+</scheme>
+
+</type>
+</hrc>
+<!--
+Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

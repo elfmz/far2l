@@ -1517,6 +1517,10 @@ int Edit::InsertKey(FarKey Key)
 
 			PrevCurPos = CurPos;
 			Str[CurPos++] = Key;
+
+			wchar_t ch = static_cast<wchar_t>(Key);
+			CheckForSpecialWidthChars(&ch, 1);
+
 			changed = true;
 		} else if (Flags.Check(FEDITLINE_OVERTYPE)) {
 			if (CurPos < StrSize) {
@@ -1602,6 +1606,25 @@ void Edit::SetEOL(const wchar_t *EOL)
 const wchar_t *Edit::GetEOL()
 {
 	return EOL_TYPE_CHARS[EndType];
+}
+
+void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
+{
+	if (HasSpecialWidthChars) return;
+
+	if (!CheckStr) {
+		CheckStr = Str;
+		Length = StrSize;
+	}
+
+	for (int i = 0; i < Length; ++i) {
+		auto wc = CheckStr[i];
+		if (wc == L'\t' || CharClasses::IsFullWidth(wc)
+						|| CharClasses::IsXxxfix(wc) ) {
+			HasSpecialWidthChars = true;
+			return;
+		}
+	}
 }
 
 /*
@@ -1695,6 +1718,7 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 
 		PrevCurPos = CurPos;
 		CurPos = StrSize;
+		CheckForSpecialWidthChars();
 	}
 
 	Changed();
@@ -1844,6 +1868,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 			if (TabExpandMode == EXPAND_ALLTABS)
 				ExpandTabs();
 
+			CheckForSpecialWidthChars(Str, Length);
 			Changed();
 		}
 		/*else
@@ -2054,20 +2079,19 @@ int Edit::RealPosToCell(int Pos)
 
 int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 {
-	// Корректировка табов
-	bool bCorrectPos = CorrectPos && *CorrectPos;
-
-	if (CorrectPos)
-		*CorrectPos = 0;
-
 	// Инциализируем результирующую длину предыдущим значением
 	int TabPos = PrevLength;
 
 	// Если предыдущая позиция за концом строки, то табов там точно нет и
 	// вычислять особо ничего не надо, иначе производим вычисление
-	if (PrevPos >= StrSize)
+	if (PrevPos >= StrSize || !HasSpecialWidthChars)
 		TabPos+= Pos - PrevPos;
 	else {
+		// Корректировка табов
+		bool bCorrectPos = CorrectPos && *CorrectPos;
+		if (CorrectPos)
+			*CorrectPos = 0;
+
 		// Начинаем вычисление с предыдущей позиции
 		int Index = PrevPos;
 
@@ -2106,6 +2130,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 int Edit::CellPosToReal(int Pos)
 {
+	if (!HasSpecialWidthChars) return Pos;
 	int Index = 0;
 	for (int CellPos = 0; CellPos < Pos; Index++) {
 		if (Index >= StrSize) {
@@ -2132,7 +2157,7 @@ int Edit::CellPosToReal(int Pos)
 
 void Edit::SanitizeSelectionRange()
 {
-	if (SelEnd >= SelStart && SelStart >= 0) {
+	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
 		while (SelStart > 0 && CharClasses::IsXxxfix(Str[SelStart]))
 			--SelStart;
 

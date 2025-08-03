@@ -175,7 +175,7 @@ private:
 	Callback m_Callback;
 
 	std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
-
+	bool HasSpecialWidthChars;
 private:
 	virtual void DisplayObject();
 	int InsertKey(FarKey Key);
@@ -196,6 +196,7 @@ private:
 	int RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos);
 	void SanitizeSelectionRange();
 	inline const wchar_t *WordDiv() { return strWordDiv->CPtr(); };
+	void CheckForSpecialWidthChars(const wchar_t *CheckStr = nullptr, int Length = 0);
 
 protected:
 	int CalcRTrimmedStrSize() const;

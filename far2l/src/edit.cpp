@@ -205,6 +205,8 @@ DWORD Edit::SetCodePage(UINT codepage)
 			free(Str);
 			Str = encoded;
 			StrSize = length2;
+			HasSpecialWidthChars = false;
+			CheckForSpecialWidthChars();
 		}
 
 		m_codepage = codepage;
@@ -1718,6 +1720,8 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 
 		PrevCurPos = CurPos;
 		CurPos = StrSize;
+
+		HasSpecialWidthChars=false;
 		CheckForSpecialWidthChars();
 	}
 
@@ -2079,6 +2083,11 @@ int Edit::RealPosToCell(int Pos)
 
 int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 {
+	// Корректировка табов
+	bool bCorrectPos = CorrectPos && *CorrectPos;
+	if (CorrectPos)
+		*CorrectPos = 0;
+
 	// Инциализируем результирующую длину предыдущим значением
 	int TabPos = PrevLength;
 
@@ -2087,11 +2096,6 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 	if (PrevPos >= StrSize || !HasSpecialWidthChars)
 		TabPos+= Pos - PrevPos;
 	else {
-		// Корректировка табов
-		bool bCorrectPos = CorrectPos && *CorrectPos;
-		if (CorrectPos)
-			*CorrectPos = 0;
-
 		// Начинаем вычисление с предыдущей позиции
 		int Index = PrevPos;
 

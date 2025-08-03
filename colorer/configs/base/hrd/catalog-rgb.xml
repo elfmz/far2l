@@ -43,3 +43,6 @@
         <hrd class="rgb" name="visual" description="Visual by Roman Kuzmin">
             <location link="&hrd;/rgb/contrib/visual-rgb.hrd"/>
         </hrd>
+        <hrd class="rgb" name="violet" description="Violet by Kate tempergate">
+            <location link="&hrd;/rgb/violet.hrd"/>
+        </hrd>

@@ -14,7 +14,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * Actions recorded in commands history are configured in the AutoComplete & History dialog
 * _Temporary panel plugin_: Show file groups
-* _colorer plugin_: Update colorer schemes to v1.2.0.76
+* _colorer plugin_: Update colorer schemes to v1.2.0.90
 * _colorer plugin_: Update colorer library to v1.5.0-29.06.2025
 * _colorer plugin_: Added features for easier modification of the set and behavior of the user's hrc/hrd files, without editing the supplied base set.
 * Several bugfixes

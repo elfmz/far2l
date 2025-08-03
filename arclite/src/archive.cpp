@@ -1399,8 +1399,11 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 	PropVariant prop;
 	DWORD attr = 0, _posixattr = 0;
 
-	if (index >= m_num_indices)
+	if (index >= m_num_indices) {
+
+		fprintf(stderr, "get_attr() - overdrive\n");
 		return FILE_ATTRIBUTE_DIRECTORY;
+	}
 
 	if (in_arc->GetProperty(index, kpidAttrib, prop.ref()) == S_OK && prop.is_uint()) {
 		attr = static_cast<DWORD>(prop.get_uint());
@@ -1416,7 +1419,9 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 	}
 
 	if (in_arc->GetProperty(index, kpidSymLink, prop.ref()) == S_OK && prop.is_str()) {
-		_posixattr |= S_IFLNK;
+		if (prop.vt == VT_BSTR && SysStringLen(prop.bstrVal) ) {
+			_posixattr |= S_IFLNK;
+		}
 	}
 
 	if (posixattr) *posixattr = _posixattr;

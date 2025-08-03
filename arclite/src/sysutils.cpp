@@ -4,8 +4,6 @@
 #include "farutils.hpp"
 #include "sysutils.hpp"
 
-#include "sudo.h"
-
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)
 #endif
@@ -283,12 +281,6 @@ std::wstring get_current_directory()
 	return std::wstring(buf.data(), size);
 }
 
-#define CHECK_FILE(code, path)                                                                               \
-	do {                                                                                                     \
-		if (!(code))                                                                                         \
-			throw Error(HRESULT_FROM_WIN32(WINPORT_GetLastError()), path, __FILE__, __LINE__);               \
-	} while (false)
-
 File::File() noexcept {
 	h_file = INVALID_HANDLE_VALUE;
 	is_symlink = false;
@@ -323,10 +315,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 	close();
 	m_file_path = file_path;
 
-//	fprintf(stderr, "FILE open_nt() %ls\n", file_path.c_str() );
-
 	if ((flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) || (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT)) {
-//		fprintf(stderr, "symlink allocate(%u)\n", PATH_MAX );
 		if (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT) {
 		}
 
@@ -357,10 +346,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 
 void File::close() noexcept
 {
-	fprintf(stderr, "file close() %ls\n", m_file_path.c_str() );
-
 	if (symlinkaddr) {
-		//fprintf(stderr, "file close() free symlink\n" );
 		free(symlinkaddr);
 		symlinkaddr = NULL;
 	}
@@ -481,13 +467,11 @@ void File::set_time(const FILETIME &ctime, const FILETIME &atime, const FILETIME
 bool File::set_time_nt(const FILETIME &ctime, const FILETIME &atime, const FILETIME &mtime) noexcept
 {
 	if (is_symlink) return true;
-//	fprintf(stderr, "WINPORT_SetFileTime %p\n", h_file);
 	return WINPORT_SetFileTime(h_file, &ctime, &atime, &mtime) != 0;
 };
 
 bool File::copy_ctime_from(const std::wstring &source_file) noexcept
 {
-//	fprintf(stderr, "copy_ctime_from %ls\n", source_file.c_str());
 	WIN32_FILE_ATTRIBUTE_DATA fa;
 	if (!attributes_ex(source_file, &fa))
 		return false;
@@ -507,7 +491,6 @@ bool File::set_pos_nt(int64_t offset, DWORD method, UInt64 *new_pos) noexcept
 	LARGE_INTEGER distance_to_move, new_file_pointer;
 	distance_to_move.QuadPart = offset;
 
-	//fprintf(stderr, "file set pos %lu mothod %u\n", *new_pos, method );
 	if (is_symlink) {
 		switch(method) {
 		case FILE_BEGIN: 
@@ -542,7 +525,6 @@ void File::set_end()
 
 bool File::set_end_nt() noexcept
 {
-	//fprintf(stderr, "file set end( )\n" );
 	if (is_symlink) {
 		symlinkRWptr = symlinksize;
 		return true;
@@ -552,7 +534,6 @@ bool File::set_end_nt() noexcept
 
 BY_HANDLE_FILE_INFORMATION File::get_info()
 {
-	//fprintf(stderr, "get_info() %ls\n", m_file_path.c_str());
 	BY_HANDLE_FILE_INFORMATION info;
 	CHECK_FILE(get_info_nt(info), m_file_path);
 	return info;
@@ -560,7 +541,6 @@ BY_HANDLE_FILE_INFORMATION File::get_info()
 
 bool File::get_info_nt(BY_HANDLE_FILE_INFORMATION &info) noexcept
 {
-	//fprintf(stderr, "file get info_nt(   )\n" );
 	if (is_symlink) return true;
 
 	info.dwFileAttributes = 0;
@@ -695,7 +675,6 @@ FindData File::get_find_data(const std::wstring &file_path)
 
 bool File::get_find_data_nt(const std::wstring &file_path, FindData &find_data) noexcept
 {
-	//fprintf(stderr, " (!) File::get_find_data_nt %ls\n", file_path.c_str());
 	if (!Far::g_fsf.GetFindData(file_path.c_str(), &find_data)) {
 		return false;
 	}
@@ -708,7 +687,6 @@ bool File::get_find_data_nt(const std::wstring &file_path, FindData &find_data) 
 FileEnum::FileEnum(const std::wstring &file_mask) noexcept
 	: file_mask(file_mask), h_find(INVALID_HANDLE_VALUE)
 {
-//	fprintf(stderr, " FileEnum::FileEnum -> %ls \n", file_mask.c_str());
 	n_far_items = -1;
 }
 

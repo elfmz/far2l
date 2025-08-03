@@ -48,6 +48,7 @@ class CharClasses
 
 	static inline uint8_t Get(wchar_t c) {
 		if (!initialized) InitCharFlags();
+		if (static_cast<uint32_t>(c) >= UNICODE_SIZE) return 0;
 
 		size_t high = c >> SHIFT;
 		size_t low = c & (CHAR_BLOCK_SIZE - 1);

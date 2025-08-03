@@ -1284,7 +1284,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		bool opened = false, have_tail = false;
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
 
-		fprintf(stderr,"arc_entry->sig_pos = %zu \n", arc_entry->sig_pos);
+//		fprintf(stderr,"arc_entry->sig_pos = %zu \n", arc_entry->sig_pos);
 
 		if (!arc_entry->sig_pos) {
 			opened = archive->open(stream, arc_entry->type);

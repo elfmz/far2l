@@ -454,8 +454,6 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 	AnalyseInfo AInfo;
 	OpenAnalyseInfo oainfo;
 
-	fprintf(stderr, "OpenFilePlugin -> start \n" );
-
 	if (Name) {
 		ConvertNameToFull(Name, strFullName);
 		Name = strFullName;
@@ -532,10 +530,9 @@ HANDLE PluginManager::OpenFilePlugin(const wchar_t *Name, int OpMode, OPENFILEPL
 			oainfo.Handle = hhandle;
 			oainfo.Info = &AInfo;
 
-			fprintf(stderr, "hhandle = pPlugin->Analyse(&AInfo);     = %llX\n", (long long unsigned int)hhandle);
+//			fprintf(stderr, "hhandle = pPlugin->Analyse(&AInfo);     = %llX\n", (long long unsigned int)hhandle);
 
 			if (hhandle != INVALID_HANDLE_VALUE) {
-				fprintf(stderr, "Add plugin item...  \n" );
 				PluginHandle *handle = items.addItem();
 				handle->pPlugin = pPlugin;
 				handle->hPlugin = INVALID_HANDLE_VALUE;
@@ -1489,8 +1486,6 @@ bool PluginManager::GetDiskMenuItem(Plugin *pPlugin, int PluginItem, bool &ItemP
 
 int PluginManager::UseFarCommand(HANDLE hPlugin, int CommandType)
 {
-	fprintf(stderr, " GetOpenPluginInfo far cmd\n");
-
 	OpenPluginInfo Info;
 	GetOpenPluginInfo(hPlugin, &Info);
 

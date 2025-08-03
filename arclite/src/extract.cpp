@@ -10,8 +10,6 @@
 #include "options.hpp"
 #include "error.hpp"
 
-#include "sudo.h"
-
 ExtractOptions::ExtractOptions()
 	: ignore_errors(false),
 	  overwrite(oaOverwrite),
@@ -152,32 +150,22 @@ public:
 	}
 };
 
-template<bool UseVirtualDestructor>
-class FileWriteCache
-{
+template <bool UseVirtualDestructor>
+class FileWriteCache {
 private:
 	static constexpr size_t c_min_cache_size = 10 * 1024 * 1024;
 	static constexpr size_t c_max_cache_size = 100 * 1024 * 1024;
+	static constexpr size_t c_block_size = 1 * 1024 * 1024; // Write block size
 
-	struct CacheRecord
-	{
+	struct CacheRecord {
 		std::wstring file_path;
-		UInt32 file_id{};
-		OverwriteAction overwrite{OverwriteAction::oaAsk};
-		size_t buffer_pos{};
-		size_t buffer_size{};
+		UInt32 file_id {};
+		OverwriteAction overwrite { OverwriteAction::oaAsk };
+		size_t buffer_pos {};
+		size_t buffer_size {};
 	};
 
 	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
-	unsigned char *buffer;
-	size_t buffer_size;
-	size_t commit_size{};
-	size_t buffer_pos{};
-	std::list<CacheRecord> cache_records;
-	File file;
-	CacheRecord current_rec;
-	bool continue_file{};
-	bool error_state{};
 	std::shared_ptr<bool> ignore_errors;
 	std::shared_ptr<bool> extract_access_rights;
 	std::shared_ptr<bool> extract_owners_groups;
@@ -185,9 +173,29 @@ private:
 	std::shared_ptr<ErrorLog> error_log;
 	std::shared_ptr<ExtractProgress> progress;
 
+	unsigned char* buffer;
+	size_t buffer_size;
+	size_t commit_size {};
+	size_t buffer_pos {};
+
+	std::list<CacheRecord> cache_records;
+	File file;
+	CacheRecord current_rec;
+	bool continue_file {};
+	bool error_state {};
+
+	std::unique_ptr<std::thread> worker_thread;
+	mutable std::mutex io_mutex;
+	std::condition_variable worker_cv;
+	bool worker_data_ready = false;
+	bool worker_data_processed = true;
+	std::atomic<bool> stop_worker_flag { false };
+	std::atomic<bool> worker_started { false };
+	std::atomic<bool> finalize_called { false };
+
 	size_t get_max_cache_size() const
 	{
-		MEMORYSTATUSEX mem_st{sizeof(mem_st)};
+		MEMORYSTATUSEX mem_st { sizeof(mem_st) };
 		WINPORT_GlobalMemoryStatusEx(&mem_st);
 		auto size = static_cast<size_t>(mem_st.ullAvailPhys);
 		if (size < c_min_cache_size)
@@ -196,199 +204,282 @@ private:
 			size = c_max_cache_size;
 		return size;
 	}
-	// create new file
+
 	void create_file()
 	{
+		//fprintf(stderr, "FWC: create_file( %ls ) [TID: %lu]\n", file_path.c_str(), static_cast<unsigned long>(pthread_self()));
 		std::wstring file_path;
-
 		if (current_rec.overwrite == oaRename)
 			file_path = auto_rename(current_rec.file_path);
 		else
 			file_path = current_rec.file_path;
 
 		if (current_rec.overwrite == oaOverwrite || current_rec.overwrite == oaOverwriteCase
-				|| current_rec.overwrite == oaAppend)
+			|| current_rec.overwrite == oaAppend) {
 			File::set_attr_nt(file_path, FILE_ATTRIBUTE_NORMAL);
+		}
 
 		RETRY_OR_IGNORE_BEGIN
 		const DWORD access = FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES;
 		const DWORD shares = FILE_SHARE_READ;
 		DWORD attrib = FILE_ATTRIBUTE_TEMPORARY;
 		DWORD attr, posixattr = 0;
-		attr = archive->get_attr(current_rec.file_id, &posixattr );
+		attr = archive->get_attr(current_rec.file_id, &posixattr);
 		(void)attr;
-
-		if ((posixattr & S_IFMT) == S_IFLNK) { // extract reparse point
-			if (archive->get_size(current_rec.file_id) <= PATH_MAX) {
+		if ((posixattr & S_IFMT) == S_IFLNK) {
+			if (archive->get_size(current_rec.file_id) <= PATH_MAX)
 				attrib |= FILE_FLAG_CREATE_REPARSE_POINT;
-			}
 		}
-
-//		fprintf(stderr, "FileWriteCache::create_file( ) %ls \n", file_path.c_str() );
+		bool opened = false;
 		if (current_rec.overwrite == oaAppend) {
-			file.open(file_path, access, shares, OPEN_EXISTING, attrib);
+			opened = file.open_nt(file_path, access, shares, OPEN_EXISTING, attrib);
 		} else {
-			bool opened = current_rec.overwrite != oaOverwriteCase
-					&& file.open_nt(file_path, access, shares, CREATE_ALWAYS, attrib);
+			opened = current_rec.overwrite != oaOverwriteCase
+				&& file.open_nt(file_path, access, shares, CREATE_ALWAYS, attrib);
 			if (!opened) {
-				File::delete_file_nt(file_path);	// sometimes can help
-				file.open(file_path, access, shares, CREATE_ALWAYS, attrib);
+				File::delete_file_nt(file_path);
+				opened = file.open_nt(file_path, access, shares, CREATE_ALWAYS, attrib);
 			}
 		}
-
+		CHECK_FILE(opened, file_path);
 		RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
+
 		if (error_ignored)
 			error_state = true;
 		progress->update_cache_file(current_rec.file_path);
 	}
-	// allocate file
+
 	void allocate_file()
 	{
+		// fprintf(stderr, "FWC: allocate_file() [TID: %lu]\n", static_cast<unsigned
+		// long>(pthread_self()));
 		if (error_state)
 			return;
 		if (archive->get_size(current_rec.file_id) == 0)
 			return;
+
 		UInt64 size;
 		if (current_rec.overwrite == oaAppend)
 			size = file.size();
 		else
 			size = 0;
+
 		RETRY_OR_IGNORE_BEGIN
 		file.set_pos(size + archive->get_size(current_rec.file_id), FILE_BEGIN);
 		file.set_end();
 		file.set_pos(size, FILE_BEGIN);
 		RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
+
 		if (error_ignored)
 			error_state = true;
 	}
-	// write file using 1 MB blocks
+
 	void write_file()
 	{
+		//fprintf(stderr, "FWC: write_file() START [TID: %lu], size=%zu, pos=%zu\n", static_cast<unsigned long>(pthread_self()),
+		//					current_rec.buffer_size, current_rec.buffer_pos);
 		if (error_state)
 			return;
-		const unsigned c_block_size = 1 * 1024 * 1024;
+
 		size_t pos = 0;
 		while (pos < current_rec.buffer_size) {
-			DWORD size;
-			if (pos + c_block_size > current_rec.buffer_size)
-				size = static_cast<DWORD>(current_rec.buffer_size - pos);
-			else
-				size = c_block_size;
+			DWORD size = static_cast<DWORD>(std::min(c_block_size, current_rec.buffer_size - pos));
 			size_t size_written = 0;
+
 			RETRY_OR_IGNORE_BEGIN
+			if (current_rec.buffer_pos + pos + size > buffer_size)
+				FAIL(E_FAIL); // Overflow ?
+
 			size_written = file.write(buffer + current_rec.buffer_pos + pos, size);
 			RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
+
 			if (error_ignored) {
 				error_state = true;
 				return;
 			}
+
 			pos += size_written;
 			progress->update_cache_written(size_written);
 		}
+		//fprintf(stderr, "FWC: write_file() END [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 	}
 
 	void close_file()
 	{
-		if (file.is_open()) {
-			if (!error_state) {
-				RETRY_OR_IGNORE_BEGIN
-				file.set_end();	   // ensure end of file is set correctly
+		//fprintf(stderr, "FWC: close_file() [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+		if (!file.is_open())
+			return;
 
-				DWORD attr, posixattr = 0;
-				attr = archive->get_attr(current_rec.file_id, &posixattr );
-				(void)attr;
-
-				if ((posixattr & S_IFMT) == S_IFLNK) { // extract reparse point
-					size_t slsize = file.getsymlinksize();
-					if (slsize) {
-						if (slsize >= PATH_MAX)
-							slsize = PATH_MAX - 1;
-						char *symlinkaddr = file.getsymlink();
-						symlinkaddr[slsize] = 0;
-						fprintf(stderr, "CREATE SYMLINK To %ls -> %ls \n", StrMB2Wide(symlinkaddr).c_str(), current_rec.file_path.c_str() );
-//						int res	= Far::g_fsf.sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
-						int res	= sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
-						if (!res) {}
-					}
-				}
-				else {
-					if (*extract_access_rights && posixattr) {
-						int res = Far::g_fsf.ESetFileMode(current_rec.file_path.c_str(), posixattr, *ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-						if (res != SETATTR_RET_OK) FAIL(res);
-					}
-
-					if (*extract_owners_groups && current_rec.file_id < archive->m_num_indices) {
-						std::wstring &owner = archive->file_list[current_rec.file_id].owner, 
-									 &group = archive->file_list[current_rec.file_id].group;
-
-//						owner = archive->get_user(current_rec.file_id);
-						if (owner.size()) {
-							int res = Far::g_fsf.ESetFileOwner(current_rec.file_path.c_str(), owner.c_str(), *ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-							if (res != SETATTR_RET_OK) FAIL(res);
-						}
-
-//						group = archive->get_group(current_rec.file_id);
-						if (group.size()) {
-							int res = Far::g_fsf.ESetFileGroup(current_rec.file_path.c_str(), group.c_str(), *ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-							if (res != SETATTR_RET_OK) FAIL(res);
-						}
-//						fprintf(stderr, "[!!!] owner and group set to: = %ls %ls\n", owner.c_str(), group.c_str() );
-					}
-					//	File::set_attr_nt(current_rec.file_path, attr);
-					//	File::set_attr_posix(current_rec.file_path, posixattr);
-
-					file.set_time_nt(archive->get_ctime(current_rec.file_id),
-							archive->get_atime(current_rec.file_id), archive->get_mtime(current_rec.file_id));
-				}
-				IGNORE_END(*ignore_errors, *error_log, *progress)
-				if (error_ignored)
-					error_state = true;
-			}
+		if (error_state) {
 			file.close();
-			//if (error_state)
-			//	File::delete_file_nt(current_rec.file_path);
+			return;
 		}
+
+		RETRY_OR_IGNORE_BEGIN
+		file.set_end();
+
+		DWORD attr, posixattr = 0;
+		attr = archive->get_attr(current_rec.file_id, &posixattr);
+		(void)attr;
+
+		if ((posixattr & S_IFMT) == S_IFLNK) {
+			size_t slsize = file.getsymlinksize();
+			if (slsize) {
+				if (slsize >= PATH_MAX)
+					slsize = PATH_MAX - 1;
+				char* symlinkaddr = file.getsymlink();
+				symlinkaddr[slsize] = 0;
+				int res = sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
+				if (!res) {
+				}
+			}
+		} else {
+			if (*extract_access_rights && posixattr) {
+				int res = Far::g_fsf.ESetFileMode(current_rec.file_path.c_str(), posixattr,
+					*ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
+				if (res != SETATTR_RET_OK) {
+					FAIL(res);
+				}
+			}
+			if (*extract_owners_groups && current_rec.file_id < archive->m_num_indices) {
+				std::wstring &owner = archive->file_list[current_rec.file_id].owner,
+							 &group = archive->file_list[current_rec.file_id].group;
+				if (owner.size()) {
+					int res = Far::g_fsf.ESetFileOwner(current_rec.file_path.c_str(), owner.c_str(),
+						*ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
+					if (res != SETATTR_RET_OK)
+						FAIL(res);
+				}
+				if (group.size()) {
+					int res = Far::g_fsf.ESetFileGroup(current_rec.file_path.c_str(), group.c_str(),
+						*ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
+					if (res != SETATTR_RET_OK)
+						FAIL(res);
+				}
+			}
+			file.set_time_nt(archive->get_ctime(current_rec.file_id),
+				archive->get_atime(current_rec.file_id), archive->get_mtime(current_rec.file_id));
+		}
+		IGNORE_END(*ignore_errors, *error_log, *progress)
+
+		if (error_ignored)
+			error_state = true;
+
+		file.close();
 	}
-	void write()
+
+	void perform_write()
 	{
-		std::for_each(cache_records.begin(), cache_records.end(), [&](const CacheRecord &rec) {
+		//fprintf(stderr, "FWC: perform_write() START [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+		for (const auto& rec : cache_records) {
 			if (continue_file) {
 				continue_file = false;
 				current_rec = rec;
 			} else {
 				close_file();
-				error_state = false;	// reset error flag on each file
+				error_state = false;
 				current_rec = rec;
 				create_file();
 				allocate_file();
 			}
 			write_file();
-		});
+		}
+
 		// leave only last file record in cache
 		if (!cache_records.empty()) {
 			current_rec = cache_records.back();
 			current_rec.buffer_pos = 0;
 			current_rec.buffer_size = 0;
 			cache_records.assign(1, current_rec);
-			continue_file = true;	 // last file is not written in its entirety (possibly)
+			continue_file = true;
 		}
 		buffer_pos = 0;
 		progress->reset_cache_stats();
+		//fprintf(stderr, "FWC: perform_write() END [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 	}
-	void store(const unsigned char *data, size_t size)
+
+	void worker_thread_func()
 	{
+		SudoRegionGuard sudo_guard;
+		//fprintf(stderr, "FWC: WorkerThread Started [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+		while (!stop_worker_flag.load()) {
+			std::unique_lock<std::mutex> lock(io_mutex);
+			worker_cv.wait(lock, [this] {
+				return worker_data_ready || stop_worker_flag.load();
+			});
+
+			if (stop_worker_flag.load()) {
+				//fprintf(stderr, "FWC: WorkerThread - Stop flag set, exiting loop [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+				break;
+			}
+
+			if (worker_data_ready) {
+				lock.unlock();
+				perform_write();
+				{
+					std::lock_guard<std::mutex> lock2(io_mutex);
+					worker_data_ready = false;
+					worker_data_processed = true;
+				}
+				worker_cv.notify_one();
+				//fprintf(stderr, "FWC: WorkerThread Batch Processed [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+			}
+		}
+		//fprintf(stderr, "FWC: WorkerThread Stopped [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+	}
+
+	void write()
+	{
+		//fprintf(stderr, "FWC: write() [TID: %lu] - Initiating flush\n", static_cast<unsigned long>(pthread_self()));
+		if (!worker_thread) {
+			//fprintf(stderr, "FWC: write() - Creating WorkerThread [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+			worker_thread = std::make_unique<std::thread>(&FileWriteCache::worker_thread_func, this);
+			worker_started.store(true);
+		}
+
+		{
+			std::unique_lock<std::mutex> lock(io_mutex);
+			worker_cv.wait(lock, [this] {
+				return worker_data_processed || stop_worker_flag.load();
+			});
+
+			if (stop_worker_flag.load()) {
+				//fprintf(stderr, "FWC: write() - Worker stopped unexpectedly before send [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+				return;
+			}
+
+			worker_data_ready = true;
+			worker_data_processed = false;
+		}
+		worker_cv.notify_one();
+
+		{
+			std::unique_lock<std::mutex> lock(io_mutex);
+			worker_cv.wait(lock, [this] {
+				return worker_data_processed || stop_worker_flag.load();
+			});
+			if (stop_worker_flag.load()) {
+				//fprintf(stderr, "FWC: write() - Worker stopped while waiting for completion [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+			} else {
+				//fprintf(stderr, "FWC: write() [TID: %lu] - Flush completed by worker\n", static_cast<unsigned long>(pthread_self()));
+			}
+		}
+	}
+
+	void store(const unsigned char* data, size_t size)
+	{
+		//fprintf(stderr, "FWC: store() [TID: %lu], size=%zu, buffer_pos=%zu\n", static_cast<unsigned long>(pthread_self()), size, buffer_pos);
 		assert(!cache_records.empty());
 		assert(size <= buffer_size);
-		if (buffer_pos + size > buffer_size) {
+
+		if (buffer_pos + size > buffer_size)
 			write();
-		}
-		CacheRecord &rec = cache_records.back();
+
+		CacheRecord& rec = cache_records.back();
 		size_t new_size = buffer_pos + size;
-		if (new_size > commit_size) {
-			//      CHECK_SYS(VirtualAlloc(buffer + commit_size, new_size - commit_size, MEM_COMMIT,
-			//      PAGE_READWRITE));
+		if (new_size > commit_size)
 			commit_size = new_size;
-		}
+
 		memcpy(buffer + buffer_pos, data, size);
 		rec.buffer_size += size;
 		buffer_pos += size;
@@ -396,30 +487,49 @@ private:
 	}
 
 public:
-	FileWriteCache(std::shared_ptr<Archive<UseVirtualDestructor>> archive, std::shared_ptr<bool> ignore_errors,
-			std::shared_ptr<bool> extract_access_rights,std::shared_ptr<bool> extract_owners_groups,std::shared_ptr<bool> extract_attributes,
-			std::shared_ptr<ErrorLog> error_log, std::shared_ptr<ExtractProgress> progress)
-		: archive(archive),
-		  buffer_size(get_max_cache_size()),
-		  ignore_errors(ignore_errors),
-		  extract_access_rights(extract_access_rights),
-		  extract_owners_groups(extract_owners_groups),
-		  extract_attributes(extract_attributes),
-		  error_log(error_log),
-		  progress(progress)
+	FileWriteCache(std::shared_ptr<Archive<UseVirtualDestructor>> archive,
+		std::shared_ptr<bool> ignore_errors, std::shared_ptr<bool> extract_access_rights,
+		std::shared_ptr<bool> extract_owners_groups, std::shared_ptr<bool> extract_attributes,
+		std::shared_ptr<ErrorLog> error_log, std::shared_ptr<ExtractProgress> progress)
+		: archive(archive)
+		, ignore_errors(ignore_errors)
+		, extract_access_rights(extract_access_rights)
+		, extract_owners_groups(extract_owners_groups)
+		, extract_attributes(extract_attributes)
+		, error_log(error_log)
+		, progress(progress)
+		, buffer_size(get_max_cache_size())
 	{
 		progress->set_cache_total(buffer_size);
-		//    buffer = reinterpret_cast<unsigned char*>(VirtualAlloc(nullptr, buffer_size, MEM_RESERVE,
-		//    PAGE_NOACCESS));
-		buffer = (unsigned char *)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE,
-				MAP_PRIVATE /*|MAP_NORESERVE*/ | MAP_ANONYMOUS, -1, 0);
-		if (!buffer) {
+		//fprintf(stderr, "FWC:: Constructor (TID: %lu)\n", static_cast<unsigned long>(pthread_self()));
+		buffer = (unsigned char*)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
+			-1, 0);
+		if (!buffer)
 			FAIL(E_OUTOFMEMORY);
-		}
+		worker_thread = nullptr;
 	}
+
 	~FileWriteCache()
 	{
-		//   VirtualFree(buffer, 0, MEM_RELEASE);
+		//fprintf(stderr, "FWC:: Destructor (TID: %lu)\n", static_cast<unsigned long>(pthread_self()));
+		if (worker_started.load()) {
+			if (!stop_worker_flag.load()) {
+				//fprintf(stderr, "FWC:: Destructor - finalize not called or incomplete, stopping worker [TID: %lu]\n", pthread_self());
+				stop_worker_flag.store(true);
+				worker_cv.notify_all();
+			}
+
+			if (worker_thread && worker_thread->joinable()) {
+				//fprintf(stderr, "FWC:: Destructor - Joining worker thread [TID: %lu]\n", pthread_self());
+				try {
+					worker_thread->join();
+					//fprintf(stderr, "FWC:: Destructor - Worker thread joined [TID: %lu]\n", pthread_self());
+				} catch (...) {
+					//fprintf(stderr, "FWC:: Destructor - Exception during worker join [TID: %lu]\n", pthread_self());
+				}
+			}
+		}
+
 		if (buffer)
 			munmap(buffer, buffer_size);
 
@@ -428,8 +538,10 @@ public:
 			File::delete_file_nt(current_rec.file_path);
 		}
 	}
-	void store_file(const std::wstring &file_path, UInt32 file_id, OverwriteAction overwrite_action)
+
+	void store_file(const std::wstring& file_path, UInt32 file_id, OverwriteAction overwrite_action)
 	{
+		//fprintf(stderr, "FWC: store_file( %ls ) [TID: %lu]\n", file_path.c_str(), static_cast<unsigned long>(pthread_self()));
 		CacheRecord rec;
 		rec.file_path = file_path;
 		rec.file_id = file_id;
@@ -437,19 +549,61 @@ public:
 		rec.buffer_pos = buffer_pos;
 		rec.buffer_size = 0;
 		cache_records.push_back(rec);
+		progress->update_cache_file(file_path);
 	}
-	void store_data(const unsigned char *data, size_t size)
+
+	void store_data(const unsigned char* data, size_t size)
 	{
+		//fprintf(stderr, "FWC: store_data() [TID: %lu], size=%zu\n", static_cast<unsigned long>(pthread_self()), size);
 		unsigned full_buffer_cnt = static_cast<unsigned>(size / buffer_size);
-		for (unsigned i = 0; i < full_buffer_cnt; i++) {
+		for (unsigned i = 0; i < full_buffer_cnt; i++)
 			store(data + i * buffer_size, buffer_size);
-		}
 		store(data + full_buffer_cnt * buffer_size, size % buffer_size);
 	}
+
 	void finalize()
 	{
-		write();
-		close_file();
+		//fprintf(stderr, "FWC::finalize() [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+		if (finalize_called.exchange(true)) {
+			//fprintf(stderr, "FWC::finalize() - Already called, skipping. [TID: %lu]\n", pthread_self());
+			return;
+		}
+
+		if (worker_started.load()) {
+			//fprintf(stderr, "FWC::finalize() - Worker was started, stopping it. [TID: %lu]\n", pthread_self());
+			stop_worker_flag.store(true);
+			worker_cv.notify_all();
+
+			//fprintf(stderr, "FWC::finalize() - Waiting for worker thread to join... [TID: %lu]\n", pthread_self());
+			if (worker_thread && worker_thread->joinable()) {
+				try {
+					worker_thread->join();
+					//fprintf(stderr, "FWC::finalize() - Worker thread joined. [TID: %lu]\n", pthread_self());
+				} catch (...) {
+					//fprintf(stderr, "FWC::finalize() - Exception during worker join. [TID: %lu]\n", pthread_self());
+				}
+			} else {
+				//fprintf(stderr, "FWC::finalize() - Worker thread was not joinable. [TID: %lu]\n", pthread_self());
+			}
+		}
+		// else {
+		//	 fprintf(stderr, "FWC::finalize() - Worker was not started. [TID:
+		//	 %lu]\n", ...);
+		// }
+
+		bool has_remaining_data = !cache_records.empty()
+			&& (cache_records.size() > 1 || cache_records.front().buffer_size > 0
+				|| (cache_records.size() == 1 && cache_records.front().buffer_size > 0));
+
+		if (has_remaining_data) {
+			//fprintf(stderr, "FWC::finalize() - Writing remaining data synchronously. [TID: %lu]\n", pthread_self());
+			perform_write();
+			close_file();
+		} else {
+			//fprintf(stderr, "FWC::finalize() - No remaining data to write. [TID: %lu]\n", pthread_self());
+			close_file();
+		}
+		//fprintf(stderr, "FWC::finalize() - Completed. [TID: %lu]\n", pthread_self());
 	}
 };
 
@@ -875,7 +1029,7 @@ private:
 						int res = Far::g_fsf.ESetFileGroup(file_path.c_str(), group.c_str(), ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
 						if (res != SETATTR_RET_OK) FAIL(res);
 					}
-//					fprintf(stderr, "[!!!] owner and group set to: = [%ls](%lu) [%ls](%lu)\n", owner.c_str(), owner.size(), group.c_str(), group.size() );
+					//fprintf(stderr, "[!!!] owner and group set to: = [%ls](%lu) [%ls](%lu)\n", owner.c_str(), owner.size(), group.c_str(), group.size() );
 				}
 ///					File::set_attr_nt(file_path, archive.get_attr(file_index));
 ///					File::set_attr_nt(file_path, attr);
@@ -887,6 +1041,7 @@ private:
 				RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
 			}
 		});
+
 	}
 
 public:
@@ -1041,7 +1196,7 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 {
 	DisableSleepMode dsm;
 
-//	fprintf(stderr, ">>> Archive::extract():\n" )
+	fprintf(stderr, ">>> Archive::extract():\n" );
 
 	const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
 	const auto overwrite_action = std::make_shared<OverwriteAction>(options.overwrite);

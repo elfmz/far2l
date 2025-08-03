@@ -33,6 +33,7 @@
 #include <optional>
 #include <cmath>
 #include <cstring>
+#include <queue>
 
 #include <thread>
 #include <mutex>
@@ -47,6 +48,7 @@
 //#include <visit>
 
 #include <sys/resource.h>
+
 
 /*
  */
@@ -73,6 +75,7 @@ WARNING_DISABLE_CLANG("-Weverything")
 #include <StringConfig.h>
 #include <CriticalSections.hpp>
 #include <InterThreadCall.hpp>
+#include "sudo.h"
 
 #include "locale.hpp"
 

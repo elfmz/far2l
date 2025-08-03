@@ -1,8 +1,6 @@
 /*
   custom buid far2l package with python and arclite enabled, where you could personally select revisions
-  Also added some postinstall fixes, for example for linking p7zip 7z.so. 
-
-  after install run '$FARHOME/setup-arclite.sh' in far window
+  Also added some postinstall fixes, for example for linking p7zip 7z.so
 */
 {
   config,
@@ -131,24 +129,13 @@
             wrapProgram $out/bin/far2l \
               --prefix PATH : ${prev.lib.makeBinPath archiveTools}
 
-            # Create a script to modify arclite.ini
-            cat > $out/share/far2l/setup-arclite.sh << 'EOF'
-            #!/usr/bin/env bash
-            arclite_ini="$HOME/.config/far2l/plugins/arclite/arclite.ini"
-            mkdir -p "$(dirname "$arclite_ini")"
-            if [ -f "$arclite_ini" ]; then
-              if grep -q "^preferred_7zip_path=" "$arclite_ini"; then
-                sed -i "s|^preferred_7zip_path=.*|preferred_7zip_path=${pkgs.p7zip.lib}/lib/p7zip/|" "$arclite_ini"
-              else
-                echo "preferred_7zip_path=${pkgs.p7zip.lib}/lib/p7zip/" >> "$arclite_ini"
-              fi
-            else
-              echo "preferred_7zip_path=${pkgs.p7zip.lib}/lib/p7zip/" > "$arclite_ini"
-            fi
+            # link p7z lib to far pluggin arclite home
+            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7z $out/lib/far2l/Plugins/arclite/plug/7z
+            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7za $out/lib/far2l/Plugins/arclite/plug/7za
+            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7zCon.sfx $out/lib/far2l/Plugins/arclite/plug/7zCon.sfx
+            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7z.so $out/lib/far2l/Plugins/arclite/plug/7z.so
+            ln -s ${pkgs.p7zip.lib}/lib/p7zip/Codecs $out/lib/far2l/Plugins/arclite/plug/Codecs
 
-            EOF
-
-            chmod +x $out/share/far2l/setup-arclite.sh
 
           '';
 

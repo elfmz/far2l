@@ -364,7 +364,6 @@ The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/Ni
 2) Add it as import to 'configuration.nix'
 3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
 4) update with 'nixos-rebuild switch'
-5) in far windows run '$FARHOME/setup-arclite.sh' on a first run
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.

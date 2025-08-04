@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Changed
+- License has been changed to LGPL 2.1 for the resulting hrc files with the specified license 'MPL 1.1/GPL 2.0/LGPL 2.1'.
+- Simplified catalog.xml.
+- Use new xsd schema for catalog.xml.
+- Common.jar rename to common.zip
+- reformat proto.hrc and included files; changed namespace.
+- Tweak visual.hrd xml CData markup
+- remove obsolete from visual-rgb.hrd
+- [groovy] add .gradle as groovy
+- Use the new shell-posix schema for shell scripts by default
+- [json] highlight JSON object keys
+- rename lib/default.hrc to lib/def.hrc
+- move 'default' type implementation from proto.hrc to base/default.hrc
+- [shell-posix] allow to include shell-posix scheme as subscheme enclosed in quotes
+- Add *.xaml to xml prototype
+- Add *.lpr to pascal prototype
+- Add *.lfm to delphiform prototype
+  
 ### Fixed
 - [calcset] update hrc for latest file structure.
 - [picasm] fix typo  sndwf -> andwf
@@ -32,23 +50,9 @@
 - [json] fix comments in json
 - [shell-posix] recognize line continuation after "while; do...done" / "for; do...done" blocks
 - [shell-bash] recornize bash-specific syntax in for loops, recornize an append operator
-
-### Changed
-- Simplified catalog.xml.
-- Use new xsd schema for catalog.xml.
-- Common.jar rename to common.zip
-- reformat proto.hrc and included files; changed namespace.
-- Tweak visual.hrd xml CData markup
-- remove obsolete from visual-rgb.hrd
-- [groovy] add .gradle as groovy
-- Use the new shell-posix schema for shell scripts by default
-- [json] highlight JSON object keys
-- rename lib/default.hrc to lib/def.hrc
-- move 'default' type implementation from proto.hrc to base/default.hrc
-- [shell-posix] allow to include shell-posix scheme as subscheme enclosed in quotes
-- Add *.xaml to xml prototype
-- Add *.lpr to pascal prototype
-- Add *.lfm to delphiform prototype
+- [black.hrd] fix colors for cross
+- [yml] fix error in generated scheme; update scheme to 2.4.0
+- [verilog] add define, include, timescale support
 
 ### Added
 - New package type of base - all packed. Hrc and hrd files in one archive. Directory 'auto' not in archive.
@@ -97,6 +101,15 @@
 - [farmenu] Add optional @ before Lua and PowerShellFar prefixes
 - [farmenu] Support luas: in addition to lua:
 - [powershell] Add to outlined: #requires and top level process|begin|end|dynamicparam|clean blocks.
+- [AviSynth] Add block comments support
+- [go-template] add a new schema for Go template
+- [go-template-sprig] add a new schema for Go template with Sprig functions
+- [helm-tpl] add a new schema for Helm templates
+- [helm-text] add a new schema for text files used in Helm Charts
+- [hrc] add new attribute global for packages
+- [hrd] add attributes for hrd element
+- [far2l.hrd] add rgb style from far2l
+- [hrd] add new rgb style "Violet by Kate tempergate"
 
 ## [1.2.0] - 2021-09-12
 

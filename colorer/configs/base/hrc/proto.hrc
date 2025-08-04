@@ -11,7 +11,7 @@
     <!ENTITY rare-scripts-protos SYSTEM "rare.scripts.ent.hrc">
     <!ENTITY rare-gen-protos SYSTEM "rare.gen.ent.hrc">
     <!-- auto -->
-    <!ENTITY php-proto-gen SYSTEM "php-prot.ent.hrc">
+    <!ENTITY php-proto-gen SYSTEM "php-prot-gen.ent.hrc">
 ]>
 
 <hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
@@ -666,7 +666,7 @@
         <filename>/\.pr[oif]$/i</filename>
     </prototype>
     <prototype name="cmake" group="scripts" description="CMake script">
-        <location link="scripts/cmake/cmake.hrc" />
+        <location link="scripts/gen/cmake/cmake.hrc" />
         <filename>/(\.cmake)$/i</filename>
         <filename weight="3">/(^CMakeLists\.txt)$/i</filename>
         <firstline weight="2">/^cmake_minimum_required/xi</firstline>
@@ -1091,6 +1091,31 @@
         <location link="misc/mediawiki.hrc" />
         <filename>/\.(mw|mediawiki)$/i</filename>
     </prototype>
+    <prototype name="go-template" group="misc" description="Go Template">
+        <location link="misc/go-template.hrc"/>
+        <filename>/\.go\.tm?pl$/i</filename>
+        <filename>/\.gtpl$/i</filename>
+    </prototype>
+    <prototype name="go-template-sprig" group="misc" description="Go Template (with Sprig)">
+        <location link="misc/go-template-sprig.hrc"/>
+    </prototype>
+    <prototype name="helm-tpl" group="misc" description="Helm Charts (tpl)">
+        <location link="misc/helm-tpl.hrc"/>
+        <filename>/^_.+\.tpl$/i</filename>
+        <!-- Set the weight slightly higher than the default (1).
+        The "Smarty PHP Templates" highlighting scheme also looks for '{' on the first
+        line and can trigger for this file type. But here we specify a more
+        exact match. -->
+        <firstline weight="2">/^\s*\{\{/x</firstline>
+    </prototype>
+    <prototype name="helm-text" group="misc" description="Helm Charts (text)">
+        <location link="misc/helm-text.hrc"/>
+        <!-- Set the weight slightly lower than the default (2) to not catch notes.txt
+        files by default, but catch only files which match by firstline also. -->
+        <filename weight="1">/^NOTES.txt$/i</filename>
+        <firstline weight="2">/^.*\{\{/x</firstline>
+    </prototype>
+
     <prototype name="text" group="other" description="plain text">
         <location link="misc/text.hrc" />
         <filename>/(read\.?me|\.txt$|\.rus|\.nfo|\.log|.*install.*|.*ChangeLog.*|AUTHORS|COPYING|FAQ|LICENSE|TODO$)/i</filename>

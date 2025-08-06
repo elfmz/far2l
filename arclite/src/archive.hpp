@@ -13,8 +13,13 @@ extern const ArcType c_rar;
 extern const ArcType c_split;
 extern const ArcType c_wim;
 extern const ArcType c_tar;
+extern const ArcType c_xar;
+extern const ArcType c_ar;
+extern const ArcType c_rpm;
+extern const ArcType c_cpio;
 extern const ArcType c_SWFc;
 extern const ArcType c_dmg;
+
 //
 extern const ArcType c_hfs;
 extern const ArcType c_fat;

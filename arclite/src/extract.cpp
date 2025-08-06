@@ -970,6 +970,7 @@ private:
 	bool &extract_attributes;
 	ErrorLog &error_log;
 	const std::wstring *m_file_path{};
+	FILETIME crft;
 
 	void do_update_ui() override
 	{
@@ -1031,12 +1032,42 @@ private:
 					}
 					//fprintf(stderr, "[!!!] owner and group set to: = [%ls](%lu) [%ls](%lu)\n", owner.c_str(), owner.size(), group.c_str(), group.size() );
 				}
+
+				{
+					FILETIME AccessTime = archive.get_atime(file_index),
+							 ModifyTime = archive.get_mtime(file_index);
+
+					if (AccessTime.dwHighDateTime || AccessTime.dwLowDateTime ||
+						ModifyTime.dwHighDateTime || ModifyTime.dwLowDateTime) {
+
+						if (!AccessTime.dwHighDateTime && !AccessTime.dwLowDateTime)
+							AccessTime = crft;
+
+						if (!ModifyTime.dwHighDateTime && !ModifyTime.dwLowDateTime)
+							ModifyTime = crft;
+
+						const std::string &mb_name = Wide2MB(file_path.c_str());
+						struct stat s{};
+						if (sdc_stat(mb_name.c_str(), &s) != 0)
+							memset(&s, 0, sizeof(s));
+
+						WINPORT(FileTime_Win32ToUnix)(&AccessTime, &s.st_atim);
+						WINPORT(FileTime_Win32ToUnix)(&ModifyTime, &s.st_mtim);
+
+						struct timespec times[2] = {s.st_atim, s.st_mtim};
+						if (sdc_utimens(mb_name.c_str(), times) != 0)
+							FAIL(errno);
+					}
+				}
+
+				///File::set_attr(file_path, FILE_ATTRIBUTE_NORMAL);
+//				File file(file_path, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS);
+				///File::set_attr_nt(file_path, archive.get_attr(file_index));
+//				file.set_time_nt(archive.get_ctime(file_index), archive.get_atime(file_index), archive.get_mtime(file_index));
 ///					File::set_attr_nt(file_path, archive.get_attr(file_index));
 ///					File::set_attr_nt(file_path, attr);
 //					File::set_attr_posix(file_path, posixattr);
 
-					//          file.set_time_nt(archive.get_ctime(file_index), archive.get_atime(file_index),
-					//          archive.get_mtime(file_index));
 				}
 				RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
 			}
@@ -1055,6 +1086,7 @@ public:
 		  extract_attributes(extract_attributes),
 		  error_log(error_log)
 	{
+		WINPORT(GetSystemTimeAsFileTime)(&crft);
 		set_dir_attr(index_range, parent_dir);
 	}
 };

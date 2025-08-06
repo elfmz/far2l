@@ -41,6 +41,10 @@ DEFINE_ARC_ID(rar, "\x03")
 DEFINE_ARC_ID(split, "\xEA")
 DEFINE_ARC_ID(wim, "\xE6")
 DEFINE_ARC_ID(tar, "\xEE")
+DEFINE_ARC_ID(xar, "\xE1")
+DEFINE_ARC_ID(ar, "\xEC")
+DEFINE_ARC_ID(rpm, "\xEB")
+DEFINE_ARC_ID(cpio, "\xED")
 DEFINE_ARC_ID(SWFc, "\xD8")
 DEFINE_ARC_ID(dmg, "\xE4")
 DEFINE_ARC_ID(hfs, "\xE3")	  // HFS
@@ -1048,7 +1052,8 @@ bool ArcFileInfo::operator<(const ArcFileInfo &file_info) const
 {
 	if (parent == file_info.parent)
 		if (is_dir == file_info.is_dir) {
-			return StrCmpI(name.c_str(), file_info.name.c_str()) < 0;
+//			return StrCmpI(name.c_str(), file_info.name.c_str()) < 0;
+			return StrCmp(name.c_str(), file_info.name.c_str()) < 0;
 		} else
 			return is_dir;
 	else
@@ -1071,7 +1076,8 @@ void Archive<UseVirtualDestructor>::make_index()
 		bool operator<(const DirInfo &dir_info) const
 		{
 			if (parent == dir_info.parent) {
-				return StrCmpI(name.c_str(), dir_info.name.c_str()) < 0;
+//				return StrCmpI(name.c_str(), dir_info.name.c_str()) < 0;
+				return StrCmp(name.c_str(), dir_info.name.c_str()) < 0;
 			} else
 				return parent < dir_info.parent;
 		}

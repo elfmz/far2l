@@ -4,6 +4,8 @@
 #include "farutils.hpp"
 #include "sysutils.hpp"
 
+#include "Environment.h"
+
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)
 #endif
@@ -247,12 +249,21 @@ size_t ExpandEnvironmentStringsW(const wchar_t *input, wchar_t *output, size_t o
 	return (out_ptr - output);
 }
 
+
 std::wstring expand_env_vars(const std::wstring &str)
 {
-//	Buffer<wchar_t> buf(1024);
+#if 1
+	std::string new_path_mb;
+	StrWide2MB(str, new_path_mb);
+	Environment::ExpandString(new_path_mb, true);
+	std::wstring result;
+	StrMB2Wide(new_path_mb, result);
+	return result;
+#else
 	Buffer<wchar_t> buf(MAX_PATH);
 	unsigned size = ExpandEnvironmentStringsW(str.c_str(), buf.data(), static_cast<DWORD>(buf.size()));
 	return std::wstring(buf.data(), size);
+#endif
 }
 
 std::wstring get_full_path_name(const std::wstring &path)

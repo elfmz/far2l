@@ -1201,12 +1201,8 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			if (ef.is_dir()) return;
 			size_t fsize = ef.size();
 
-//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
-//						(size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
-
 			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
-						1, 2, fsize));
-
+						(size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
 //			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(32, 64, fsize));
 			ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new SimpleRelExtractor<UseVirtualDestructor>(archives[parent_idx], mem_stream, fsize));
 

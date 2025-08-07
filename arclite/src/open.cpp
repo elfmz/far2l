@@ -1176,16 +1176,17 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			return;
 		}
 
+		const ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
+
+		if (!bMainFile && !ArcAPI::is_single_file_format(pArcType)) {
+			if (num_indices > 1) {
+				return;
+			}
+		}
+
 		if (!bInArcStream) {
-			const ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
 
 			if (!options.open_ex) return;
-
-			if (!bMainFile && !ArcAPI::is_single_file_format(pArcType)) {
-				if (num_indices > 1) {
-					return;
-				}
-			}
 
 			uint32_t open_index = 0;
 
@@ -1315,7 +1316,6 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			}
 			return;
 		}
-
 	}
 
 	Buffer<unsigned char> buffer(ArchiveGlobals::max_check_size);

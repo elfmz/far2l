@@ -331,7 +331,7 @@ public:
 	bool get_stream(UInt32 index, IInStream<UseVirtualDestructor> **stream);
 	std::wstring get_path(UInt32 index);
 	FindData get_file_info(UInt32 index);
-	bool get_main_file(UInt32 &index) const;
+	bool get_main_file(UInt32 &index);
 	DWORD get_attr(UInt32 index, DWORD *posixattr ) const;
 	DWORD get_links(UInt32 index) const;
 

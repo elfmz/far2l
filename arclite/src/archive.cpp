@@ -1138,6 +1138,7 @@ void Archive<UseVirtualDestructor>::make_index()
 				end_pos++;
 			if (end_pos != begin_pos) {
 				dir_info.name = path.substr(begin_pos, end_pos - begin_pos);
+
 				if (dir_info.name == L"..") {
 					if (!dir_parents.empty()) {
 						dir_info.parent = dir_parents.top();
@@ -1173,6 +1174,7 @@ void Archive<UseVirtualDestructor>::make_index()
 		file_list.push_back(file_info);
 	}
 
+
 	// add directories that not present in archive index
 	file_list.reserve(file_list.size() + dir_list.size() - dir_index_map.size());
 	dir_index = m_num_indices;
@@ -1187,6 +1189,7 @@ void Archive<UseVirtualDestructor>::make_index()
 			file_list.push_back(file_info);
 		}
 	});
+
 
 	// fix parent references
 	std::for_each(file_list.begin(), file_list.end(), [&](ArcFileInfo &item) {
@@ -1289,13 +1292,50 @@ FindData Archive<UseVirtualDestructor>::get_file_info(UInt32 index)
 }
 
 template<bool UseVirtualDestructor>
-bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index) const
+bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 {
 	PropVariant prop;
-	if (in_arc->GetArchiveProperty(kpidMainSubfile, prop.ref()) != S_OK || prop.vt != VT_UI4)
+
+	if (in_arc->GetArchiveProperty(kpidMainSubfile, prop.ref()) == S_OK && prop.is_uint()) {
+		index = prop.get_uint();
+		return true;
+	}
+
+	UInt32 num_indices = 0;
+	in_arc->GetNumberOfItems(&num_indices);
+	if (!num_indices) {
 		return false;
-	index = prop.ulVal;
-	return true;
+	}
+
+	const ArcType &rArcType = arc_chain.back().type;
+	std::wstring ext = extract_file_ext(arc_path);
+
+	if (file_list.empty())
+		make_index();
+
+	if (rArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 1024) {
+		bool debbin = false;
+		UInt32 iindex = 0xFFFFFFFF;
+	    for (UInt32 ii = 0; ii < num_indices; ++ii) {
+			if (file_list[ii].is_dir) continue;
+			std::wstring _name = file_list[ii].name;
+			removeExtension(_name);
+			if (!StrCmp(_name.c_str(), L"data.tar")) {
+				iindex = ii;
+				if (debbin) break;
+			}
+			if (!StrCmp(file_list[ii].name.c_str(), L"debian-binary")) {
+				debbin = true;
+				if (iindex != 0xFFFFFFFF) break;
+			}
+		}
+		if (iindex != 0xFFFFFFFF && debbin) {
+			index = iindex;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 constexpr DWORD c_valid_import_attributes = 
@@ -1406,8 +1446,6 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 	DWORD attr = 0, _posixattr = 0;
 
 	if (index >= m_num_indices) {
-
-		fprintf(stderr, "get_attr() - overdrive\n");
 		return FILE_ATTRIBUTE_DIRECTORY;
 	}
 

@@ -1176,24 +1176,24 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			return;
 		}
 
-		if (bMainFile) {
-			if (parent_idx > 0 && !bInArcStream ) {
-				return;
-			}
-		}
-		else {
-			ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
+		if (!bInArcStream) {
+			const ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
 
 			if (!options.open_ex) return;
-			uint32_t open_index = 0;
-			if (open_index >= num_indices) // not exist
-				return;
 
-			if (!ArcAPI::is_single_file_format(pArcType)) {
+			if (!bMainFile && !ArcAPI::is_single_file_format(pArcType)) {
 				if (num_indices > 1) {
 					return;
 				}
 			}
+
+			uint32_t open_index = 0;
+
+			if (bMainFile)
+				open_index = main_file_index;
+
+			if (open_index >= num_indices) // not exist
+				return;
 
 			UInt32 indices[2] = { open_index, 0 };
 
@@ -1203,7 +1203,9 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
 						(size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
-//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(32, 64, fsize));
+
+//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(4, 8, fsize));
+
 			ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new SimpleRelExtractor<UseVirtualDestructor>(archives[parent_idx], mem_stream, fsize));
 
 			const auto archive = std::make_shared<Archive<UseVirtualDestructor>>();

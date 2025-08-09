@@ -13,8 +13,13 @@ extern const ArcType c_rar;
 extern const ArcType c_split;
 extern const ArcType c_wim;
 extern const ArcType c_tar;
+extern const ArcType c_xar;
+extern const ArcType c_ar;
+extern const ArcType c_rpm;
+extern const ArcType c_cpio;
 extern const ArcType c_SWFc;
 extern const ArcType c_dmg;
+
 //
 extern const ArcType c_hfs;
 extern const ArcType c_fat;
@@ -226,7 +231,7 @@ typedef std::vector<ArcFileInfo> FileList;
 const UInt32 c_root_index = -1;
 const UInt32 c_dup_index = -2;
 
-void	SetFARAttributes(DWORD &attr, DWORD &posixattr);
+DWORD	SetFARAttributes(DWORD attr, DWORD posixattr);
 
 typedef std::vector<UInt32> FileIndex;
 typedef std::pair<FileIndex::const_iterator, FileIndex::const_iterator> FileIndexRange;
@@ -326,7 +331,7 @@ public:
 	bool get_stream(UInt32 index, IInStream<UseVirtualDestructor> **stream);
 	std::wstring get_path(UInt32 index);
 	FindData get_file_info(UInt32 index);
-	bool get_main_file(UInt32 &index) const;
+	bool get_main_file(UInt32 &index);
 	DWORD get_attr(UInt32 index, DWORD *posixattr ) const;
 	DWORD get_links(UInt32 index) const;
 

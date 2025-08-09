@@ -4,6 +4,9 @@
 #include <map>
 #include "IVTShell.h"
 
+#define FOREGROUND_RGB (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE)
+#define BACKGROUND_RGB (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)
+
 struct VTAnsiContext;
 
 class VTAnsi
@@ -40,6 +43,8 @@ class VTAnsi
 	void OnDetached();
 	void OnReattached();
 	std::string GetTitle();
+	void AddToLogicalLines(const std::wstring& str);
+	void DumpLogicalLines(std::string &s, bool colored) const;
 };
 
 class VTAnsiSuspend

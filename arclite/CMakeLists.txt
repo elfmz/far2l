@@ -50,6 +50,15 @@ set_target_properties(arclite
         PREFIX ""
         SUFFIX ".far-plug-wide")
 
-add_custom_command(TARGET arclite POST_BUILD
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/configs
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/configs "${INSTALL_DIR}/Plugins/arclite")
+# copy resource files
+set(CURRENT_TARGET "arclite")
+file(GLOB_RECURSE RESOURCE_FILES
+		RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
+		"${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
+)
+setup_target_auxiliary_files(${CURRENT_TARGET}
+		RESOURCE_FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/configs
+		"${INSTALL_DIR}/Plugins/${CURRENT_TARGET}/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})

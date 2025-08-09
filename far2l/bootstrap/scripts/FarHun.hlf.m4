@@ -804,7 +804,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
 @FarConfig
 $ #Configuration editor#
- Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+ Starts with the #Konfigurációszerkesztő# command in the ~Parancsok menü~@CmdMenu@
+or ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
 
  Allows to view and edit all Far Manager’s options.
 

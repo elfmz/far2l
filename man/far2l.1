@@ -82,7 +82,8 @@ don't fallback to TTY backend if GUI backend failed
 don't use true (24-bit) colors
 .TP
 \fB\-\-nodetect\fP, \fB\-\-nodetect\fP=[x|xi][f][w][a][k]
-don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes
+don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes;
+this switch without parameters disables all this functionality, forcing plain terminal mode for TTY backend.
 .TP
 \fB\-\-mortal\fP
 terminate instead of going to background on getting SIGHUP (default if in Linux TTY)

@@ -1413,7 +1413,10 @@ int Edit::ProcessCtrlQ()
 		Flags.Clear(FEDITLINE_CLEARFLAG);
 	EditOutDisabled--;
 	*/
-	return InsertKey(rec.Event.KeyEvent.uChar.AsciiChar);
+	CHAR ch = rec.Event.KeyEvent.uChar.UnicodeChar;
+	if( rec.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED |RIGHT_CTRL_PRESSED ) && ch >= 'A' && ch <= 'Z'  )
+		ch -= ('A' - 1); // convert to binary
+	return InsertKey(ch);
 }
 
 int Edit::ProcessInsPlainText(const wchar_t *str)

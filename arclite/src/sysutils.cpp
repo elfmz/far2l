@@ -4,7 +4,7 @@
 #include "farutils.hpp"
 #include "sysutils.hpp"
 
-#include "sudo.h"
+#include "Environment.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)
@@ -72,7 +72,7 @@ void CoCreateGuid(GUID *guid)
 void StringFromGUID2A(GUID *guid, char *str, uint32_t size)
 {
 	char *_bytes = (char *)guid;
-	sprintf(str, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", _bytes[0] & 0xff,
+	snprintf(str, size, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x", _bytes[0] & 0xff,
 			_bytes[1] & 0xff, _bytes[2] & 0xff, _bytes[3] & 0xff, _bytes[4] & 0xff, _bytes[5] & 0xff,
 			_bytes[6] & 0xff, _bytes[7] & 0xff, _bytes[8] & 0xff, _bytes[9] & 0xff, _bytes[10] & 0xff,
 			_bytes[11] & 0xff, _bytes[12] & 0xff, _bytes[13] & 0xff, _bytes[14] & 0xff, _bytes[15] & 0xff);
@@ -249,12 +249,21 @@ size_t ExpandEnvironmentStringsW(const wchar_t *input, wchar_t *output, size_t o
 	return (out_ptr - output);
 }
 
+
 std::wstring expand_env_vars(const std::wstring &str)
 {
-//	Buffer<wchar_t> buf(1024);
+#if 1
+	std::string new_path_mb;
+	StrWide2MB(str, new_path_mb);
+	Environment::ExpandString(new_path_mb, true);
+	std::wstring result;
+	StrMB2Wide(new_path_mb, result);
+	return result;
+#else
 	Buffer<wchar_t> buf(MAX_PATH);
 	unsigned size = ExpandEnvironmentStringsW(str.c_str(), buf.data(), static_cast<DWORD>(buf.size()));
 	return std::wstring(buf.data(), size);
+#endif
 }
 
 std::wstring get_full_path_name(const std::wstring &path)
@@ -282,12 +291,6 @@ std::wstring get_current_directory()
 	CHECK_SYS(size);
 	return std::wstring(buf.data(), size);
 }
-
-#define CHECK_FILE(code, path)                                                                               \
-	do {                                                                                                     \
-		if (!(code))                                                                                         \
-			throw Error(HRESULT_FROM_WIN32(WINPORT_GetLastError()), path, __FILE__, __LINE__);               \
-	} while (false)
 
 File::File() noexcept {
 	h_file = INVALID_HANDLE_VALUE;
@@ -323,9 +326,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 	close();
 	m_file_path = file_path;
 
-//	fprintf(stderr, "FILE open_nt() %ls\n", file_path.c_str() );
 	if ((flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) || (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT)) {
-//		fprintf(stderr, "symlink allocate(%u)\n", PATH_MAX );
 		if (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT) {
 		}
 
@@ -356,10 +357,7 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 
 void File::close() noexcept
 {
-//	fprintf(stderr, "file close() %ls\n", m_file_path.c_str() );
-
 	if (symlinkaddr) {
-		//fprintf(stderr, "file close() free symlink\n" );
 		free(symlinkaddr);
 		symlinkaddr = NULL;
 	}
@@ -480,18 +478,17 @@ void File::set_time(const FILETIME &ctime, const FILETIME &atime, const FILETIME
 bool File::set_time_nt(const FILETIME &ctime, const FILETIME &atime, const FILETIME &mtime) noexcept
 {
 	if (is_symlink) return true;
-//	fprintf(stderr, "WINPORT_SetFileTime %p\n", h_file);
 	return WINPORT_SetFileTime(h_file, &ctime, &atime, &mtime) != 0;
 };
 
 bool File::copy_ctime_from(const std::wstring &source_file) noexcept
 {
-//	fprintf(stderr, "copy_ctime_from %ls\n", source_file.c_str());
 	WIN32_FILE_ATTRIBUTE_DATA fa;
 	if (!attributes_ex(source_file, &fa))
 		return false;
-	FILETIME dummy{};
-	return set_time_nt(fa.ftCreationTime, dummy, dummy);
+	FILETIME crft;
+	WINPORT(GetSystemTimeAsFileTime)(&crft);
+	return set_time_nt(fa.ftCreationTime, crft, crft);
 }
 
 UInt64 File::set_pos(int64_t offset, DWORD method)
@@ -506,7 +503,6 @@ bool File::set_pos_nt(int64_t offset, DWORD method, UInt64 *new_pos) noexcept
 	LARGE_INTEGER distance_to_move, new_file_pointer;
 	distance_to_move.QuadPart = offset;
 
-	//fprintf(stderr, "file set pos %lu mothod %u\n", *new_pos, method );
 	if (is_symlink) {
 		switch(method) {
 		case FILE_BEGIN: 
@@ -541,7 +537,6 @@ void File::set_end()
 
 bool File::set_end_nt() noexcept
 {
-	//fprintf(stderr, "file set end( )\n" );
 	if (is_symlink) {
 		symlinkRWptr = symlinksize;
 		return true;
@@ -551,7 +546,6 @@ bool File::set_end_nt() noexcept
 
 BY_HANDLE_FILE_INFORMATION File::get_info()
 {
-	//fprintf(stderr, "get_info() %ls\n", m_file_path.c_str());
 	BY_HANDLE_FILE_INFORMATION info;
 	CHECK_FILE(get_info_nt(info), m_file_path);
 	return info;
@@ -559,8 +553,6 @@ BY_HANDLE_FILE_INFORMATION File::get_info()
 
 bool File::get_info_nt(BY_HANDLE_FILE_INFORMATION &info) noexcept
 {
-	//fprintf(stderr, "file get info_nt(   )\n" );
-
 	if (is_symlink) return true;
 
 	info.dwFileAttributes = 0;
@@ -695,7 +687,6 @@ FindData File::get_find_data(const std::wstring &file_path)
 
 bool File::get_find_data_nt(const std::wstring &file_path, FindData &find_data) noexcept
 {
-	//fprintf(stderr, " (!) File::get_find_data_nt %ls\n", file_path.c_str());
 	if (!Far::g_fsf.GetFindData(file_path.c_str(), &find_data)) {
 		return false;
 	}
@@ -719,11 +710,12 @@ FileEnum::~FileEnum()
 
 bool FileEnum::next()
 {
-	bool more;
-	//fprintf(stderr, " FileEnum::next() ->\n");
+	bool more = false;
+
 	next_nt(more);
-	//  if (!next_nt(more))
-	//    throw Error(HRESULT_FROM_WIN32(WINPORT_GetLastError()), file_mask, __FILE__, __LINE__);
+
+//	if (!next_nt(more))
+//		throw Error(HRESULT_FROM_WIN32(WINPORT_GetLastError()), file_mask, __FILE__, __LINE__);
 	return more;
 }
 
@@ -748,7 +740,7 @@ int FileEnum::far_emum_cb(const FAR_FIND_DATA &item)
 
 	std::wcsncpy(fdata.cFileName, null_to_empty(item.lpwszFileName),
 			sizeof(fdata.cFileName) / sizeof(fdata.cFileName[0]));
-	//fprintf(stderr, "FileEnum::far_emum_cb %ls\n", fdata.cFileName);
+
 	++n_far_items;
 	return TRUE;
 }
@@ -782,6 +774,7 @@ bool FileEnum::next_nt(bool &more) noexcept
 								n_far_items = 0;
 								Far::g_fsf.FarRecursiveSearch(long_path(dir).c_str(), msk.c_str(), find_cb,
 										FRS_NONE, this);
+
 								continue;
 							}
 #endif
@@ -791,7 +784,7 @@ bool FileEnum::next_nt(bool &more) noexcept
 					return false;
 				}
 			}
-		} 
+		}
 		else {
 			if (!WINPORT_FindNextFile(h_find, &find_data)) {
 				if (WINPORT_GetLastError() == ERROR_NO_MORE_FILES) {
@@ -808,6 +801,7 @@ bool FileEnum::next_nt(bool &more) noexcept
 							|| ((find_data.cFileName[1] == L'.') && (find_data.cFileName[2] == 0))))
 				continue;
 		}
+
 		auto mask_dot_pos = file_mask.find_last_of(L'.');	 // avoid found "name.ext_" using mask "*.ext"
 		if (mask_dot_pos != std::wstring::npos
 				&& file_mask.find_first_of(L'*', mask_dot_pos) == std::wstring::npos) {
@@ -816,6 +810,7 @@ bool FileEnum::next_nt(bool &more) noexcept
 					&& std::wcslen(last_dot_in_fname) > file_mask.size() - mask_dot_pos)
 				continue;
 		}
+
 		more = true;
 		return true;
 	}

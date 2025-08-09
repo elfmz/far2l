@@ -418,6 +418,7 @@ Dialog::Dialog(const std::wstring &title, const GUID *guid, unsigned width, cons
 	  guid(guid),
 	  events_enabled(true)
 {
+	(void)guid;
 	frame(title);
 }
 

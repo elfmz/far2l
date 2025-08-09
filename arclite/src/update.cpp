@@ -16,8 +16,6 @@
 #include <sys/sysmacros.h>	  // major / minor
 #endif
 
-#include "sudo.h"
-
 static std::wstring format_time(UInt64 t)
 {
 	UInt64 s = t % 60;
@@ -373,6 +371,7 @@ public:
 
 	STDMETHODIMP Write(const void *data, UInt32 size, UInt32 *processedSize) noexcept override
 	{
+		SudoRegionGuard sudo_guard;
 		COM_ERROR_HANDLER_BEGIN
 		if (processedSize)
 			*processedSize = 0;
@@ -477,6 +476,7 @@ public:
 
 	STDMETHODIMP SetSize(UInt64 newSize) noexcept override
 	{
+		SudoRegionGuard sudo_guard;
 		COM_ERROR_HANDLER_BEGIN
 		if (stream_size == newSize)
 			return S_OK;
@@ -538,6 +538,7 @@ public:
 		  dereference_symlinks(dereference_symlinks),
 		  fileattr(fileattr)
 	{
+		SudoRegionGuard sudo_guard;
 		uint32_t flags = FILE_FLAG_SEQUENTIAL_SCAN;
 		if (!dereference_symlinks) {
 			if (fileattr & FILE_ATTRIBUTE_REPARSE_POINT) {
@@ -595,18 +596,40 @@ template<bool UseVirtualDestructor>
 class AcmRelayStream : public ISequentialOutStream<UseVirtualDestructor>, 
 						public ISequentialInStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor> {
 private:
-	std::vector<BYTE> buffer;
-	size_t buffer_capacity;
+	static constexpr size_t c_min_buff_size = 10 * 1024 * 1024;
+	static constexpr size_t c_max_buff_size = 100 * 1024 * 1024;
+	uint8_t *buffer;
+	size_t buffer_size;
 	size_t read_pos = 0;
 	size_t write_pos = 0;
 	size_t data_size = 0;
 	bool writing_finished = false;
+	bool reading_finished = false;
 	std::mutex mtx;
 	std::condition_variable cv;
 
 public:
-	AcmRelayStream(size_t capacity = 1024 * 1024 * 16) 
-		: buffer(capacity), buffer_capacity(capacity) {}
+	AcmRelayStream(size_t capacity = 16)
+		: buffer(nullptr), buffer_size(capacity << 20) {
+
+		if (buffer_size < c_min_buff_size)
+			buffer_size = c_min_buff_size;
+
+		if (buffer_size > c_max_buff_size)
+			buffer_size = c_max_buff_size;
+
+		buffer = (unsigned char *)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE,
+				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+		if (!buffer) {
+			FAIL(E_OUTOFMEMORY);
+		}
+	}
+
+	~AcmRelayStream() {
+		if (buffer)
+			munmap(buffer, buffer_size);
+	}
 
 	UNKNOWN_IMPL_BEGIN
 	UNKNOWN_IMPL_ITF(ISequentialOutStream)
@@ -618,24 +641,25 @@ public:
 		COM_ERROR_HANDLER_BEGIN
 
 		cv.wait(lock, [this, size]() {
-			return (buffer_capacity - data_size) >= size || writing_finished;
+			return ( (buffer_size - data_size) >= size) || writing_finished || reading_finished;
 		});
 
-		if (writing_finished) {
+		if (writing_finished || reading_finished) {
 			if (processedSize) {
 				*processedSize = 0;
 			}
+			//	return E_ABORT;
 			return S_OK;
 		}
 
-		size_t bytes_to_write = std::min(size, static_cast<UInt32>(buffer_capacity - data_size));
-		size_t first_chunk = std::min(bytes_to_write, buffer_capacity - write_pos);
-		memcpy(buffer.data() + write_pos, data, first_chunk);
+		size_t bytes_to_write = std::min(size, static_cast<UInt32>(buffer_size - data_size));
+		size_t first_chunk = std::min(bytes_to_write, buffer_size - write_pos);
+		memcpy(buffer + write_pos, data, first_chunk);
 		if (first_chunk < bytes_to_write) {
-			memcpy(buffer.data(), (BYTE*)data + first_chunk, bytes_to_write - first_chunk);
+			memcpy(buffer, (BYTE*)data + first_chunk, bytes_to_write - first_chunk);
 		}
 
-		write_pos = (write_pos + bytes_to_write) % buffer_capacity;
+		write_pos = (write_pos + bytes_to_write) % buffer_size;
 		data_size += bytes_to_write;
 
 		if (processedSize) {
@@ -654,13 +678,13 @@ public:
 		cv.wait(lock, [this]() { return data_size > 0 || writing_finished; });
 
 		size_t bytes_to_read = std::min(size, static_cast<UInt32>(data_size));
-		size_t first_chunk = std::min(bytes_to_read, buffer_capacity - read_pos);
-		memcpy(data, buffer.data() + read_pos, first_chunk);
+		size_t first_chunk = std::min(bytes_to_read, buffer_size - read_pos);
+		memcpy(data, buffer + read_pos, first_chunk);
 		if (first_chunk < bytes_to_read) {
-			memcpy((BYTE*)data + first_chunk, buffer.data(), bytes_to_read - first_chunk);
+			memcpy((BYTE*)data + first_chunk, buffer, bytes_to_read - first_chunk);
 		}
 
-		read_pos = (read_pos + bytes_to_read) % buffer_capacity;
+		read_pos = (read_pos + bytes_to_read) % buffer_size;
 		data_size -= bytes_to_read;
 
 		if (processedSize) {
@@ -677,6 +701,13 @@ public:
 		writing_finished = true;
 		cv.notify_all();
 	}
+
+	void FinishReading() {
+		std::unique_lock<std::mutex> lock(mtx);
+		reading_finished = true;
+		cv.notify_all();
+	}
+
 };
 
 struct FileIndexInfo
@@ -771,8 +802,6 @@ private:
 		file_info.is_dir = src_find_data.is_dir();
 		file_info.parent = dst_dir_index;
 		file_info.name = src_find_data.cFileName;
-
-///		fprintf(stderr, "File add %ls isdir = %u\n", file_info.name.c_str(), file_info.is_dir );
 
 		FileIndexRange fi_range = std::equal_range(archive.file_list_index.begin(),
 				archive.file_list_index.end(), -1, [&](UInt32 left, UInt32 right) -> bool {
@@ -1029,7 +1058,7 @@ public:
 				break;
 			case kpidSize:
 				if (use_mem_stream) {
-					prop = (UInt64)1ull;
+					prop = (UInt64)100ull;
 					break;
 				}
 				prop = file_index_info.find_data.size();
@@ -1120,7 +1149,7 @@ public:
 						if (options.use_export_settings && !options.export_options.export_unix_mode)
 							unixmode = 0;
 						else
-							unixmode |= S_IFREG;
+							unixmode |= file_index_info.find_data.dwUnixMode & 0xF000;
 					}
 					else {
 						unixmode |= S_IFLNK;
@@ -1130,7 +1159,7 @@ public:
 					if (options.use_export_settings && !options.export_options.export_unix_mode)
 						unixmode = 0;
 					else
-						unixmode |= S_IFREG;
+						unixmode |= file_index_info.find_data.dwUnixMode & 0xF000;
 				}
 
 				prop = static_cast<UInt32>( attributes | (unixmode << 16) );
@@ -1735,6 +1764,8 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 	DisableSleepMode dsm;
 	const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
 
+	fprintf(stderr, ">>> Archive::create():\n" );
+
 	if (options.arc_type == c_tar && options.repack) {
 
 		UInt32 new_index = 0, new_index2 = 0;
@@ -1783,7 +1814,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> tar_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, tar_file_index_map,
 				options, ignore_errors, options.dereference_symlinks, error_log, progress));
 
-		ComObject<AcmRelayStream<UseVirtualDestructor>> mem_stream(new AcmRelayStream<UseVirtualDestructor>(((size_t)g_options.relay_buffer_size) << 20));
+		ComObject<AcmRelayStream<UseVirtualDestructor>> mem_stream(new AcmRelayStream<UseVirtualDestructor>( (size_t)g_options.relay_buffer_size ));
 
 		std::promise<int> promise1;
 		std::future<int> future1 = promise1.get_future();
@@ -1797,7 +1828,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 		});
 
 		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> arc_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, arc_file_index_map,
-				repack_options, ignore_errors, repack_options.dereference_symlinks, error_log, progress, mem_stream, true));
+				repack_options, ignore_errors, repack_options.dereference_symlinks, error_log, progress2, mem_stream, true));
 
 		UpdateStream<UseVirtualDestructor> *arc_wstream_impl;
 		if (options.enable_volumes)
@@ -1810,6 +1841,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 		std::thread arc_thread([&]() {
 			int errc = out_arc->UpdateItems(arc_update_stream, new_index2, arc_updater);
 			promise2.set_value(errc);
+			mem_stream->FinishReading();
 		});
 
 		bool thread1_done = false;

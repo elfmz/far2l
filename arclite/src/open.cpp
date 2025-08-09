@@ -107,11 +107,14 @@ public:
 			}
 			case STREAM_SEEK_SET: {
 				if (offset < 0) {
-					fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
+//					fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
+					fprintf(stderr, "DataRelayStream: Error: neg offset %" PRId64 "\n", offset);
+
 					return E_INVALIDARG;
 				}
 				if ((UInt64)offset < write_pos && (write_pos - (UInt64)offset) > buffer_size ) {
-					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %li\n", offset);
+//					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %lli\n", (int64_t)offset);
+					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %" PRId64 "\n", offset);
 					return E_INVALIDARG;
 				}
 				read_pos = offset;
@@ -129,7 +132,7 @@ public:
 					new_offset = 0;
 
 				if ((UInt64)new_offset < write_pos && (write_pos - (UInt64)new_offset) > buffer_size ) {
-					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %li\n", offset);
+					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %" PRId64 "\n", offset);
 					return E_INVALIDARG;
 				}
 
@@ -195,6 +198,47 @@ public:
 
 		read_pos += available;
 		data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+
+		if (processedSize) {
+			*processedSize = static_cast<UInt32>(available);
+		}
+		cv.notify_all();
+
+		return S_OK;
+		COM_ERROR_HANDLER_END
+	}
+
+	int32_t Peek(void *data, UInt32 size, UInt32 *processedSize) noexcept {
+//	int32_t Peek(void *data, UInt32 size, UInt32 *processedSize) {
+		std::unique_lock<std::mutex> lock(mtx);
+		COM_ERROR_HANDLER_BEGIN
+
+		if (writing_finished && data_size == 0) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			return S_OK;
+		}
+
+		cv.wait(lock, [this, size] {
+			return (data_size >= size) || writing_finished;
+		});
+
+		if (writing_finished && data_size == 0) {
+			if (processedSize) {
+				*processedSize = 0;
+			}
+			return S_OK;
+		}
+
+		size_t available = std::min<size_t>(size, data_size);
+		size_t read_ptr = (read_pos % buffer_size);
+
+		size_t firstChunk = std::min(available, buffer_size - read_ptr);
+		memcpy(data, buffer + read_ptr, firstChunk);
+		if (firstChunk < available) {
+			memcpy(static_cast<BYTE*>(data) + firstChunk, buffer, available - firstChunk);
+		}
 
 		if (processedSize) {
 			*processedSize = static_cast<UInt32>(available);
@@ -412,9 +456,13 @@ public:
 		CriticalSectionLock lock(GetSync());
 		COM_ERROR_HANDLER_BEGIN
 		if (archive->m_password.empty()) {
+#if 1
 			ProgressSuspend ps(*this);
 			if (!password_dialog(archive->m_password, archive->arc_path))
 				FAIL(E_ABORT);
+#else
+			FAIL(E_ABORT);
+#endif
 		}
 		BStr(archive->m_password).detach(password);
 		return S_OK;
@@ -1128,24 +1176,25 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			return;
 		}
 
-		if (bMainFile) {
-			if (parent_idx > 0 && !bInArcStream ) {
+		const ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
+
+		if (!bMainFile && !ArcAPI::is_single_file_format(pArcType)) {
+			if (num_indices > 1) {
 				return;
 			}
 		}
-		else {
-			ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
+
+		if (!bInArcStream) {
 
 			if (!options.open_ex) return;
+
 			uint32_t open_index = 0;
+
+			if (bMainFile)
+				open_index = main_file_index;
+
 			if (open_index >= num_indices) // not exist
 				return;
-
-			if (!ArcAPI::is_single_file_format(pArcType)) {
-				if (num_indices > 1) {
-					return;
-				}
-			}
 
 			UInt32 indices[2] = { open_index, 0 };
 
@@ -1155,7 +1204,9 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
 						(size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
-//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(32, 64, fsize));
+
+//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(4, 8, fsize));
+
 			ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new SimpleRelExtractor<UseVirtualDestructor>(archives[parent_idx], mem_stream, fsize));
 
 			const auto archive = std::make_shared<Archive<UseVirtualDestructor>>();
@@ -1182,14 +1233,34 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 				promise.set_value(errc);
 			});
 
-			ArcAPI::create_in_archive(c_tar, (void **)archive->in_arc.ref());
-			ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(archive, false));
+			ArcEntry arc_entry(c_tar, 0, 2);
 
 			std::thread open_thread([&]() {
+
+				uint8_t buffer[8192];
+				UInt32 size = 0;
+				int32_t hr = mem_stream->Peek(buffer, 8192, &size);
+				if (!size || hr != S_OK) {
+					promise2.set_value(hr);
+					return;
+				}
+
+				ArcTypes e_arc_types = {c_tar, c_xar, c_ar, c_cpio};
+				ArcEntries arc_entries = detect(buffer, size, true,
+													extract_file_ext(ef.cFileName), e_arc_types, stream);
+				if (arc_entries.empty()) {
+					promise2.set_value(hr);
+					return;
+				}
+
+				arc_entry = arc_entries.front();
+				ArcAPI::create_in_archive(arc_entry.type, (void **)archive->in_arc.ref());
+				ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(archive, false));
 
 				const UInt64 max_check_start_position = 0;
 				int errc = archive->in_arc->Open(stream, &max_check_start_position, opener);
 				promise2.set_value(errc);
+
 			});
 
 			bool thread1_done = false;
@@ -1233,19 +1304,18 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 			if (opened) {
 				bool bFullSize = mem_stream->GetFullSize();
-				ArcEntry tarentry(c_tar, 0, 2 + bFullSize);
+				arc_entry.flags = 2 + bFullSize;
 				archive->ex_stream = stream;
 				archive->ex_out_stream = mem_stream;
 				archive->flags = 2 + bFullSize;
 				archive->parent = archives[parent_idx];
 				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),
 				archives[parent_idx]->arc_chain.end());
-				archive->arc_chain.push_back(tarentry);
+				archive->arc_chain.push_back(arc_entry);
 				archives.push_back(archive);
 			}
 			return;
 		}
-
 	}
 
 	Buffer<unsigned char> buffer(ArchiveGlobals::max_check_size);
@@ -1281,7 +1351,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		bool opened = false, have_tail = false;
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
 
-		fprintf(stderr,"arc_entry->sig_pos = %lu \n", arc_entry->sig_pos);
+//		fprintf(stderr,"arc_entry->sig_pos = %zu \n", arc_entry->sig_pos);
 
 		if (!arc_entry->sig_pos) {
 			opened = archive->open(stream, arc_entry->type);

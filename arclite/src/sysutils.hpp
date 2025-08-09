@@ -14,6 +14,12 @@
 
 #define _IDLE_PRIORITY_CLASS 19
 
+#define CHECK_FILE(code, path)                                                                               \
+	do {                                                                                                     \
+		if (!(code))                                                                                         \
+			throw Error(HRESULT_FROM_WIN32(WINPORT_GetLastError()), path, __FILE__, __LINE__);               \
+	} while (false)
+
 int _map_priority(int user_priority);
 pid_t _GetCurrentProcess(void);
 int _GetPriorityClass(pid_t pid);
@@ -262,12 +268,45 @@ private:
 public:
 	DisableSleepMode() { 
 //		saved_state = WINPORT_SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED); 
-		}
+	}
 	~DisableSleepMode()
 	{
 		if (saved_state) {
 //			WINPORT_SetThreadExecutionState(saved_state);
 		}
+	}
+};
+
+class SudoRegionGuard {
+private:
+	bool active;
+public:
+	SudoRegionGuard() : active(true) {
+		sudo_client_region_enter();
+	}
+	~SudoRegionGuard() {
+		if (active) {
+			sudo_client_region_leave();
+		}
+	}
+	SudoRegionGuard(const SudoRegionGuard&) = delete;
+	SudoRegionGuard& operator=(const SudoRegionGuard&) = delete;
+	SudoRegionGuard(SudoRegionGuard&& other) noexcept : active(other.active) {
+		other.active = false;
+	}
+	SudoRegionGuard& operator=(SudoRegionGuard&& other) noexcept {
+		if (this != &other) {
+			if (active) {
+				fprintf(stderr, "WARNING: SudoRegionGuard assigned while active! Forcing leave.\n");
+				sudo_client_region_leave();
+			}
+			active = other.active;
+			other.active = false;
+		}
+		return *this;
+	}
+	void release() {
+		active = false;
 	}
 };
 

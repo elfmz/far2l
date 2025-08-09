@@ -207,12 +207,13 @@ private:
 
 	void create_file()
 	{
-		//fprintf(stderr, "FWC: create_file( %ls ) [TID: %lu]\n", file_path.c_str(), static_cast<unsigned long>(pthread_self()));
 		std::wstring file_path;
 		if (current_rec.overwrite == oaRename)
 			file_path = auto_rename(current_rec.file_path);
 		else
 			file_path = current_rec.file_path;
+
+		//fprintf(stderr, "FWC: create_file( %ls ) [TID: %lu]\n", file_path.c_str(), static_cast<unsigned long>(pthread_self()));
 
 		if (current_rec.overwrite == oaOverwrite || current_rec.overwrite == oaOverwriteCase
 			|| current_rec.overwrite == oaAppend) {
@@ -251,8 +252,7 @@ private:
 
 	void allocate_file()
 	{
-		// fprintf(stderr, "FWC: allocate_file() [TID: %lu]\n", static_cast<unsigned
-		// long>(pthread_self()));
+		//fprintf(stderr, "FWC: allocate_file() [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 		if (error_state)
 			return;
 		if (archive->get_size(current_rec.file_id) == 0)
@@ -880,10 +880,10 @@ private:
 
 	void prepare_extract(const FileIndexRange &index_range, const std::wstring &parent_dir)
 	{
+		//fprintf(stderr, "prepare_extract()\n" );
 		const auto cmode = static_cast<int>(g_options.correct_name_mode);
 		std::for_each(index_range.first, index_range.second, [&](UInt32 file_index) {
 			const ArcFileInfo &file_info = archive.file_list[file_index];
-			bool bSkip = false;
 
 			if (filter) {
 				PluginPanelItem filter_data;
@@ -892,6 +892,18 @@ private:
 				DWORD attr = 0, posixattr = 0;
 				attr = archive.get_attr(file_index, &posixattr);
 				DWORD farattr = SetFARAttributes(attr, posixattr);
+
+				if (file_info.name.length()) {
+					if (file_info.name[0] == L'.') {
+						if (file_info.name.length() == 1) { // skip .
+							return;
+						}
+						farattr |= FILE_ATTRIBUTE_HIDDEN;
+					}
+				}
+				else { // no name ?
+					farattr |= FILE_ATTRIBUTE_HIDDEN;
+				}
 
 				if (archive.get_encrypted(file_index))
 					farattr |= FILE_ATTRIBUTE_ENCRYPTED;
@@ -903,7 +915,7 @@ private:
 						attr |= FILE_ATTRIBUTE_HARDLINKS;
 				}
 
-				filter_data.FindData.dwFileAttributes = farattr;
+				filter_data.FindData.dwFileAttributes = attr | farattr;
 				filter_data.FindData.dwUnixMode = posixattr;
 				filter_data.FindData.nFileSize = archive.get_size(file_index);
 				filter_data.FindData.nPhysicalSize = archive.get_psize(file_index);
@@ -917,29 +929,28 @@ private:
 				filter_data.Group = const_cast<wchar_t *>(file_info.group.c_str());
 				filter_data.Description = const_cast<wchar_t *>(file_info.desc.c_str());
 
-				if (!filter->match(filter_data))
-					bSkip = true;
+				if (!filter->match(filter_data)) {
+					return;
+				}
 			}
 
-			if (!bSkip) {
-				if (file_info.is_dir) {
-					std::wstring dir_path = add_trailing_slash(parent_dir) + correct_filename(file_info.name, cmode, file_info.is_altstream);
-					update_progress(dir_path);
+			if (file_info.is_dir) {
+				std::wstring dir_path = add_trailing_slash(parent_dir) + correct_filename(file_info.name, cmode, file_info.is_altstream);
+				update_progress(dir_path);
 
-					RETRY_OR_IGNORE_BEGIN
-					try {
-						File::create_dir(dir_path);
-					} catch (const Error &e) {
-						if (e.code != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
-							throw;
-					}
-					RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
-
-					FileIndexRange dir_list = archive.get_dir_list(file_index);
-					prepare_extract(dir_list, dir_path);
-				} else {
-					indices.push_back(file_index);
+				RETRY_OR_IGNORE_BEGIN
+				try {
+					File::create_dir(dir_path);
+				} catch (const Error &e) {
+					if (e.code != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
+						throw;
 				}
+				RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
+
+				FileIndexRange dir_list = archive.get_dir_list(file_index);
+				prepare_extract(dir_list, dir_path);
+			} else {
+				indices.push_back(file_index);
 			}
 
 		});
@@ -955,6 +966,9 @@ public:
 		  ignore_errors(ignore_errors),
 		  error_log(error_log)
 	{
+		if (filter)
+			filter->start();
+
 		prepare_extract(index_range, parent_dir);
 	}
 };
@@ -964,6 +978,7 @@ class SetDirAttr : public ProgressMonitor
 {
 private:
 	Archive<UseVirtualDestructor> &archive;
+	Far::FileFilter *filter;
 	bool &ignore_errors;
 	bool &extract_access_rights;
 	bool &extract_owners_groups;
@@ -997,19 +1012,68 @@ private:
 					+ correct_filename(file_info.name, cmode, file_info.is_altstream);
 			update_progress(file_path);
 
-			if (file_info.is_dir) {
-				FileIndexRange dir_list = archive.get_dir_list(file_index);
-				set_dir_attr(dir_list, file_path);
-				RETRY_OR_IGNORE_BEGIN
-				if (archive.get_anti(file_index)) {
-					if (File::exists(file_path)) {
-						File::remove_dir(file_path);
-					}
-				} else {
+			if (!file_info.is_dir)
+				return;
 
+			FileIndexRange dir_list = archive.get_dir_list(file_index);
+			set_dir_attr(dir_list, file_path);
+			RETRY_OR_IGNORE_BEGIN
+
+			if (archive.get_anti(file_index)) {
+				if (File::exists(file_path)) {
+					File::remove_dir(file_path);
+				}
+			} else {
+
+				const ArcFileInfo &file_info = archive.file_list[file_index];
 				DWORD attr = 0, posixattr = 0;
-				attr = archive.get_attr(file_index, &posixattr );
-				(void)attr;
+				attr = archive.get_attr(file_index, &posixattr);
+
+				if (filter) {
+					PluginPanelItem filter_data;
+					memset(&filter_data, 0, sizeof(PluginPanelItem));
+					DWORD farattr = SetFARAttributes(attr, posixattr);
+
+					if (file_info.name.length()) {
+						if (file_info.name[0] == L'.') {
+							if (file_info.name.length() == 1) { // skip .
+								return;
+							}
+							farattr |= FILE_ATTRIBUTE_HIDDEN;
+						}
+					}
+					else { // no name ?
+						farattr |= FILE_ATTRIBUTE_HIDDEN;
+					}
+
+					if (archive.get_encrypted(file_index))
+						farattr |= FILE_ATTRIBUTE_ENCRYPTED;
+
+					{
+						uint32_t n = archive.get_links(file_index);
+						filter_data.NumberOfLinks = n;
+						if (n > 1)
+							attr |= FILE_ATTRIBUTE_HARDLINKS;
+					}
+
+					filter_data.FindData.dwFileAttributes = attr | farattr;
+					filter_data.FindData.dwUnixMode = posixattr;
+					filter_data.FindData.nFileSize = archive.get_size(file_index);
+					filter_data.FindData.nPhysicalSize = archive.get_psize(file_index);
+					filter_data.FindData.ftCreationTime = archive.get_ctime(file_index);
+					filter_data.FindData.ftLastAccessTime = archive.get_atime(file_index);
+					filter_data.FindData.ftLastWriteTime = archive.get_mtime(file_index);
+					filter_data.FindData.lpwszFileName = const_cast<wchar_t *>(file_info.name.c_str());
+
+					filter_data.CRC32 = archive.get_crc(file_index);
+					filter_data.Owner = const_cast<wchar_t *>(file_info.owner.c_str());
+					filter_data.Group = const_cast<wchar_t *>(file_info.group.c_str());
+					filter_data.Description = const_cast<wchar_t *>(file_info.desc.c_str());
+
+					if (!filter->match(filter_data)) {
+						return;
+					}
+				}
 
 				if (extract_access_rights && posixattr) {
 					int res = Far::g_fsf.ESetFileMode(file_path.c_str(), posixattr, ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
@@ -1064,22 +1128,21 @@ private:
 //				File file(file_path, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS);
 				///File::set_attr_nt(file_path, archive.get_attr(file_index));
 //				file.set_time_nt(archive.get_ctime(file_index), archive.get_atime(file_index), archive.get_mtime(file_index));
-///					File::set_attr_nt(file_path, archive.get_attr(file_index));
-///					File::set_attr_nt(file_path, attr);
-//					File::set_attr_posix(file_path, posixattr);
-
-				}
-				RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
+///				File::set_attr_nt(file_path, archive.get_attr(file_index));
+///				File::set_attr_nt(file_path, attr);
+//				File::set_attr_posix(file_path, posixattr);
 			}
+			RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
 		});
 
 	}
 
 public:
-	SetDirAttr(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive,
+	SetDirAttr(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive, Far::FileFilter *filter,
 			bool &ignore_errors, bool &extract_access_rights, bool &extract_owners_groups, bool &extract_attributes, ErrorLog &error_log)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_SET_ATTR), false),
 		  archive(archive),
+		  filter(filter),
 		  ignore_errors(ignore_errors),
 		  extract_access_rights(extract_access_rights),
 		  extract_owners_groups(extract_owners_groups),
@@ -1087,6 +1150,8 @@ public:
 		  error_log(error_log)
 	{
 		WINPORT(GetSystemTimeAsFileTime)(&crft);
+		if (filter)
+			filter->start();
 		set_dir_attr(index_range, parent_dir);
 	}
 };
@@ -1337,7 +1402,7 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 	cache->finalize();
 	progress->clean();
 
-	SetDirAttr(FileIndexRange(src_indices.begin(), src_indices.end()), options.dst_dir, *this, *ignore_errors,
+	SetDirAttr(FileIndexRange(src_indices.begin(), src_indices.end()), options.dst_dir, *this, options.filter.get(), *ignore_errors,
 			*extract_access_rights, *extract_owners_groups, *extract_attributes, *error_log);
 
 	if (extracted_indices) {

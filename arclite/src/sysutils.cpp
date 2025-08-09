@@ -486,8 +486,9 @@ bool File::copy_ctime_from(const std::wstring &source_file) noexcept
 	WIN32_FILE_ATTRIBUTE_DATA fa;
 	if (!attributes_ex(source_file, &fa))
 		return false;
-	FILETIME dummy{};
-	return set_time_nt(fa.ftCreationTime, dummy, dummy);
+	FILETIME crft;
+	WINPORT(GetSystemTimeAsFileTime)(&crft);
+	return set_time_nt(fa.ftCreationTime, crft, crft);
 }
 
 UInt64 File::set_pos(int64_t offset, DWORD method)

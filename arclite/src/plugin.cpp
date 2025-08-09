@@ -415,12 +415,6 @@ struct PanelItem
 
 		std::for_each(dir_list.first, dir_list.second, [&](UInt32 file_index) {
 			ArcFileInfo &file_info = archive->file_list[file_index];
-#if 0
-			if (file_info.name.length() == 1 && file_info.name[0] == L'.') {
-				--size;
-				return;
-			}
-#endif
 			DWORD attr = 0, posixattr = 0, farattr = 0;
 			attr = archive->get_attr(file_index, &posixattr);
 
@@ -446,6 +440,21 @@ struct PanelItem
 					farattr |= FILE_ATTRIBUTE_READONLY;
 			}
 
+#if 1
+			if (file_info.name.length()) {
+				if (file_info.name[0] == L'.') {
+					if (file_info.name.length() == 1) {
+						--size;
+						return;
+					}
+					farattr |= FILE_ATTRIBUTE_HIDDEN;
+				}
+			}
+			else { // no name ?
+				file_info.name = L".[NO NAME]";
+				farattr |= FILE_ATTRIBUTE_HIDDEN;
+			}
+#endif
 			if (archive->get_encrypted(file_index))
 				farattr |= FILE_ATTRIBUTE_ENCRYPTED;
 

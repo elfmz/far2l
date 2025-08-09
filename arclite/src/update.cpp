@@ -803,8 +803,6 @@ private:
 		file_info.parent = dst_dir_index;
 		file_info.name = src_find_data.cFileName;
 
-///		fprintf(stderr, "File add %ls isdir = %u\n", file_info.name.c_str(), file_info.is_dir );
-
 		FileIndexRange fi_range = std::equal_range(archive.file_list_index.begin(),
 				archive.file_list_index.end(), -1, [&](UInt32 left, UInt32 right) -> bool {
 					const ArcFileInfo &fi_left = left == (UInt32)-1 ? file_info : archive.file_list[left];
@@ -1151,7 +1149,7 @@ public:
 						if (options.use_export_settings && !options.export_options.export_unix_mode)
 							unixmode = 0;
 						else
-							unixmode |= S_IFREG;
+							unixmode |= file_index_info.find_data.dwUnixMode & 0xF000;
 					}
 					else {
 						unixmode |= S_IFLNK;
@@ -1161,7 +1159,7 @@ public:
 					if (options.use_export_settings && !options.export_options.export_unix_mode)
 						unixmode = 0;
 					else
-						unixmode |= S_IFREG;
+						unixmode |= file_index_info.find_data.dwUnixMode & 0xF000;
 				}
 
 				prop = static_cast<UInt32>( attributes | (unixmode << 16) );

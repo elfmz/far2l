@@ -4024,6 +4024,8 @@ private:
 	int reload_ctrl_id{};
 	int edit_path_ctrl_id{};
 
+	bool _7zlib_status = false;
+
 	void set_control_state(void)
 	{
 		bool bPluginEnabled = get_check(plugin_enabled_ctrl_id);
@@ -4146,6 +4148,36 @@ private:
 			if (g_options.patchCP) {
 				Patch7zCP::SetCP(static_cast<UINT>(g_options.oemCP), static_cast<UINT>(g_options.ansiCP), true);
 			}
+			_7zlib_status = !ArcAPI::libs().empty();
+		}
+		else if (msg == DN_CTLCOLORDLGITEM && param1 == lib_info_ctrl_id) {
+			FarDialogItem dlg_item;
+			if (send_message(DM_GETDLGITEMSHORT, param1, &dlg_item)) {
+				UInt64 color[4];
+				if (!_7zlib_status) {
+					Far::get_color(COL_WARNDIALOGDEFAULTBUTTON, color[0]);
+					Far::get_color(COL_WARNDIALOGSELECTEDDEFAULTBUTTON, color[1]);
+					Far::get_color(COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON, color[2]);
+					Far::get_color(COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON, color[3]);
+				}
+				else {
+					Far::get_color(COL_DIALOGDEFAULTBUTTON, color[0]);
+					Far::get_color(COL_DIALOGSELECTEDDEFAULTBUTTON, color[1]);
+					Far::get_color(COL_DIALOGHIGHLIGHTDEFAULTBUTTON, color[2]);
+					Far::get_color(COL_DIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON, color[3]);
+				}
+
+				uint64_t *ItemColor = reinterpret_cast<uint64_t *>(param2);
+				if (dlg_item.Focus) {
+					ItemColor[0] = color[1];
+					ItemColor[1] = color[3];
+				}
+				else {
+					ItemColor[0] = color[0];
+					ItemColor[1] = color[2];
+				}
+			}
+
 		}
 		return default_dialog_proc(msg, param1, param2);
 	}
@@ -4194,7 +4226,9 @@ public:
 	SettingsDialog(PluginSettings &settings)
 		: Far::Dialog(Far::get_msg(MSG_PLUGIN_NAME), &c_settings_dialog_guid, c_client_xs, L"Config"),
 		  settings(settings)
-	{}
+	{
+		_7zlib_status = !ArcAPI::libs().empty();
+	}
 
 	bool show()
 	{

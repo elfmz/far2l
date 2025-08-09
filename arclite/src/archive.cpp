@@ -467,6 +467,7 @@ void ArcAPI::load_libs(const std::wstring &path)
 		//arc_lib.h_module = dlopen(s2.c_str(), RTLD_NOW);
 
 		if (arc_lib.h_module == nullptr) {
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s nullptr - cannot open(%d)\n", path.c_str(), s2.c_str(), errno);
 			continue;
 		}
 
@@ -540,8 +541,11 @@ void ArcAPI::load_libs(const std::wstring &path)
 					}
 				}
 			}
+
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s OK\n", path.c_str(), s2.c_str());
 			arc_libs.push_back(arc_lib);
 		} else {
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s FAIL\n", path.c_str(), s2.c_str());
 			dlclose(arc_lib.h_module);
 		}
 	}
@@ -1379,6 +1383,7 @@ DWORD Archive<UseVirtualDestructor>::get_links(UInt32 index) const
 DWORD	SetFARAttributes(DWORD attr, DWORD posixattr)
 {
 	DWORD farattr = 0;
+
 	if (posixattr) {
 		switch (posixattr & S_IFMT) {
 			case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
@@ -1409,6 +1414,7 @@ DWORD	SetFARAttributes(DWORD attr, DWORD posixattr)
 #define S_IFCHR  0020000  /* character special */
 #define S_IFDIR  0040000  /* directory */
 #define S_IFBLK  0060000  /* block special */
+
 #define S_IFREG  0100000  /* regular */
 #define S_IFLNK  0120000  /* symbolic link */
 #define S_IFSOCK 0140000  /* socket */
@@ -1446,7 +1452,10 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 	DWORD attr = 0, _posixattr = 0;
 
 	if (index >= m_num_indices) {
-		return FILE_ATTRIBUTE_DIRECTORY;
+		attr = FILE_ATTRIBUTE_DIRECTORY;
+		if (posixattr)
+			*posixattr = _posixattr;
+		return attr;
 	}
 
 	if (in_arc->GetProperty(index, kpidAttrib, prop.ref()) == S_OK && prop.is_uint()) {

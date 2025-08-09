@@ -354,23 +354,19 @@ emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
 
-#### Installing and Building on [NixOS](https://nixos.org/)
+#### Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS
 
 To install system-wide, add the `far2l` package to your [`configuration.nix`](https://nixos.org/manual/nixos/stable/index.html#sec-changing-config) `environment.systemPackages` list. To run the application on-demand without affecting the system state, execute `nix-shell -p far2l --command far2l`. These use a package version from your current [channel](https://wiki.nixos.org/wiki/Channel_branches).
 
 The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/fa/far2l/package.nix), it tells which Git revision from Far2l repo to fetch, with what dependencies to build it, and how to patch its references to other software to make it run in isolated fashion independently from other versions available in the system.
 
-You can build and run `far2l` package for any revision:
-* Directly from GitHub (`NixOS/nixpkgs` repo, or your own fork and branch):
- ``` sh
-nix-shell -I nixpkgs=https://github.com/<fork>/nixpkgs/archive/<revision-or-branch>.tar.gz -p far2l --command far2l
- ```
-* From a locally cloned working directory of the repo:
-``` sh
-nix-shell -I nixpkgs=/path/to/nixpkgs -p far2l --command far2l
-```
 
-To advance the package to a new Far2l revision, edit the `fetchFromGitHub` set attributes `rev` (revision hash) and `sha256` (revision content hash). **Important!** If you leave the old content hash, the old cached content for that hash might be used without attempting to download the new revision. If you're not expecting the build to break, the easiest would be to make a fork, push the change, and build straight from github.
+#### Custom Building and Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS from scratch
+
+1) Copy [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to your Nix configuration folder
+2) Add it as import to 'configuration.nix'
+3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
+4) update with 'nixos-rebuild switch'
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.

@@ -81,9 +81,6 @@ add_executable (NetRocks-SHELL
     src/Protocol/ShellParseUtils.cpp
 )
 
-# get rid of warning: dynamic exception specifications are deprecated in C++11
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-
 target_link_libraries(NetRocks-FILE utils)
 target_include_directories(NetRocks-FILE PRIVATE src)
 set_target_properties(NetRocks-FILE
@@ -127,6 +124,8 @@ if (LIBSSH_FOUND AND ((NOT DEFINED NR_SFTP) OR NR_SFTP))
     )
     target_link_libraries(NetRocks-SFTP utils ${LIBSSH_LIBRARIES})
     target_include_directories(NetRocks-SFTP PRIVATE src ${LIBSSH_INCLUDE_DIRS})
+    # all ssh_scp_* functions are deprecated. It is recommended to use SFTP. Warnings are disabled
+    target_compile_options(NetRocks-SFTP PUBLIC -Wno-deprecated-declarations)
     set_target_properties(NetRocks-SFTP
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"

@@ -44,7 +44,7 @@ void SSHChannelDeleter(ssh_channel res)
 static std::string GetSSHPubkeyHash(ssh_session ssh)
 {
 	ssh_key pub_key = {};
-	int rc = ssh_get_publickey(ssh, &pub_key);
+	int rc = ssh_get_server_publickey(ssh, &pub_key);
 	if (rc != SSH_OK)
 		throw ProtocolError("Pubkey", ssh_get_error(ssh), rc);
 

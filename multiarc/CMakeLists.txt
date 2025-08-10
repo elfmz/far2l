@@ -206,7 +206,7 @@ else()
     # hide rar warnings in release build
     if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
         set_source_files_properties(${RAR_FILES} PROPERTIES COMPILE_FLAGS
-            "-Wno-parentheses -Wno-switch -Wno-unused-variable -Wno-unused-but-set-variable -Wno-sign-compare -Wno-class-memaccess -Wno-catch-value -Wno-misleading-indentation")
+            "-Wno-unknown-warning-option -Wno-parentheses -Wno-switch -Wno-unused-variable -Wno-unused-but-set-variable -Wno-sign-compare -Wno-class-memaccess -Wno-catch-value -Wno-misleading-indentation -Wno-missing-braces")
     endif()
 endif()
 

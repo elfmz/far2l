@@ -124,7 +124,17 @@
             <virtual scheme="xml:Reference" subst-scheme="def:empty"/>
          </inherit>
       </scheme>
-      <scheme name="hrd-Attributes"/>
+      <scheme name="hrd-Attributes">
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(class)\M([\s\=]|$)/x"
+                scheme="xmlschema:NMTOKEN-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(name)\M([\s\=]|$)/x"
+                scheme="xmlschema:NMTOKEN-AttributeContent"/>
+         <block end="/[&#34;']?#1/" region02="Attribute.name"
+                start="/(\s?#1|^)(description)\M([\s\=]|$)/x"
+                scheme="xmlschema:string-AttributeContent"/>
+      </scheme>
       <scheme name="hrd-elementContent">
          <inherit scheme="_hrc_int_elementContent">
             <virtual scheme="xml:element" subst-scheme="hrd-content"/>

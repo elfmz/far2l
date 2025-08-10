@@ -305,11 +305,18 @@ to avoid attempt to use GUI mode.
   #--notty#
   Don't fallback to TTY backend if ~GUI backend~@UIBackends@ was failed to initialize.
 
-  #--nodetect#
+  #--nodetect#=[x|xi][f][w][a][k]
   By default far2l tries to detect if it runs inside of terminal of another far2l and in such case
 it uses TTY backend with far2l extensions. In case of far2l extensions unavailable far2l checks for
 availability of X11 session and uses it to improve user experience if compiled with TTYX/TTYXI option.
-This switch disables all this functionality, forcing plain terminal mode for TTY backend.
+  Specifying parameters allows you to disable only individual ~extensions~@UIBackends@:
+   - f  - disabling detection and use of far2l terminal extensions;
+   - x  - disabling detection and use of X11 (clipboard and keys);
+   - xi - disabling detection and use of keys via X11;
+   - a  - disabling detection and use of apple iTerm2 mode;
+   - k  - disabling detection and use of kovidgoyal's kitty mode;
+   - w  - disabling detection and use of win32 mode.
+  This switch without parameters disables all this functionality, forcing plain terminal mode for TTY backend.
 
   #--mortal#
   This argument applies only to far2l that runs with TTY backend. By default when terminal closed
@@ -963,7 +970,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
 @FarConfig
 $ #Configuration editor#
- Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+ Starts with the #Configuration editor# command in the ~Commands menu~@CmdMenu@
+or ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
 
  Allows to view and edit all Far Manager’s options.
 
@@ -1097,10 +1105,8 @@ in filenames and in editor).
     #Shift-F9#    - settings of the selected plugin.
     #Alt-Shift-F9# - open ~"Plugins configuration"~@PluginsConfig@ menu.
 
-    See also:
- 
-    ~Plugins support~@Plugins@.
-    Common ~menu~@MenuCmd@ keyboard commands.
+    See also: ~Plugins support~@Plugins@.
+              Common ~menu~@MenuCmd@ keyboard commands.
 
 @PluginsConfig
 $ #Plugins configuration#
@@ -1581,8 +1587,8 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
 
   Send currently running command to the background          #Ctrl+Alt+Z#
 
-  See also: ~pseudo-commands~@SpecCmd@
-  See also ~Operating system commands~@OSCommands@
+  See also: ~Pseudo-commands~@SpecCmd@
+            ~Operating system commands~@OSCommands@
 
 @UIBackends
 $ #UI Backends#
@@ -2297,7 +2303,7 @@ is on, FAR2L tries to use OS association to execute this file type;
 
     See also:
       ~Special commands~@SpecCmd@.
-      common ~menu~@MenuCmd@ keyboard commands.
+      Common ~menu~@MenuCmd@ keyboard commands.
 
 
 @FileAssocModify
@@ -4336,8 +4342,8 @@ as in ~File associations~@FileAssoc@ should be used to denote the file name.
 at a time, and the command 'tar --remove-files -cvjf !.!.tar.bz2 !.!' will move all selected files
 into TAR/BZIP2 archives with the same names.
 
-    See also ~Special commands~@SpecCmd@
-    See also ~Operating system commands~@OSCommands@
+    See also: ~Special commands~@SpecCmd@
+              ~Operating system commands~@OSCommands@
 
 @OSCommands
 $ #Operating system commands#

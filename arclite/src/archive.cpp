@@ -41,6 +41,10 @@ DEFINE_ARC_ID(rar, "\x03")
 DEFINE_ARC_ID(split, "\xEA")
 DEFINE_ARC_ID(wim, "\xE6")
 DEFINE_ARC_ID(tar, "\xEE")
+DEFINE_ARC_ID(xar, "\xE1")
+DEFINE_ARC_ID(ar, "\xEC")
+DEFINE_ARC_ID(rpm, "\xEB")
+DEFINE_ARC_ID(cpio, "\xED")
 DEFINE_ARC_ID(SWFc, "\xD8")
 DEFINE_ARC_ID(dmg, "\xE4")
 DEFINE_ARC_ID(hfs, "\xE3")	  // HFS
@@ -463,6 +467,7 @@ void ArcAPI::load_libs(const std::wstring &path)
 		//arc_lib.h_module = dlopen(s2.c_str(), RTLD_NOW);
 
 		if (arc_lib.h_module == nullptr) {
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s nullptr - cannot open(%d)\n", path.c_str(), s2.c_str(), errno);
 			continue;
 		}
 
@@ -536,8 +541,11 @@ void ArcAPI::load_libs(const std::wstring &path)
 					}
 				}
 			}
+
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s OK\n", path.c_str(), s2.c_str());
 			arc_libs.push_back(arc_lib);
 		} else {
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s FAIL\n", path.c_str(), s2.c_str());
 			dlclose(arc_lib.h_module);
 		}
 	}
@@ -1048,7 +1056,8 @@ bool ArcFileInfo::operator<(const ArcFileInfo &file_info) const
 {
 	if (parent == file_info.parent)
 		if (is_dir == file_info.is_dir) {
-			return StrCmpI(name.c_str(), file_info.name.c_str()) < 0;
+//			return StrCmpI(name.c_str(), file_info.name.c_str()) < 0;
+			return StrCmp(name.c_str(), file_info.name.c_str()) < 0;
 		} else
 			return is_dir;
 	else
@@ -1071,7 +1080,8 @@ void Archive<UseVirtualDestructor>::make_index()
 		bool operator<(const DirInfo &dir_info) const
 		{
 			if (parent == dir_info.parent) {
-				return StrCmpI(name.c_str(), dir_info.name.c_str()) < 0;
+//				return StrCmpI(name.c_str(), dir_info.name.c_str()) < 0;
+				return StrCmp(name.c_str(), dir_info.name.c_str()) < 0;
 			} else
 				return parent < dir_info.parent;
 		}
@@ -1132,6 +1142,7 @@ void Archive<UseVirtualDestructor>::make_index()
 				end_pos++;
 			if (end_pos != begin_pos) {
 				dir_info.name = path.substr(begin_pos, end_pos - begin_pos);
+
 				if (dir_info.name == L"..") {
 					if (!dir_parents.empty()) {
 						dir_info.parent = dir_parents.top();
@@ -1167,6 +1178,7 @@ void Archive<UseVirtualDestructor>::make_index()
 		file_list.push_back(file_info);
 	}
 
+
 	// add directories that not present in archive index
 	file_list.reserve(file_list.size() + dir_list.size() - dir_index_map.size());
 	dir_index = m_num_indices;
@@ -1181,6 +1193,7 @@ void Archive<UseVirtualDestructor>::make_index()
 			file_list.push_back(file_info);
 		}
 	});
+
 
 	// fix parent references
 	std::for_each(file_list.begin(), file_list.end(), [&](ArcFileInfo &item) {
@@ -1283,13 +1296,50 @@ FindData Archive<UseVirtualDestructor>::get_file_info(UInt32 index)
 }
 
 template<bool UseVirtualDestructor>
-bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index) const
+bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 {
 	PropVariant prop;
-	if (in_arc->GetArchiveProperty(kpidMainSubfile, prop.ref()) != S_OK || prop.vt != VT_UI4)
+
+	if (in_arc->GetArchiveProperty(kpidMainSubfile, prop.ref()) == S_OK && prop.is_uint()) {
+		index = prop.get_uint();
+		return true;
+	}
+
+	UInt32 num_indices = 0;
+	in_arc->GetNumberOfItems(&num_indices);
+	if (!num_indices) {
 		return false;
-	index = prop.ulVal;
-	return true;
+	}
+
+	const ArcType &rArcType = arc_chain.back().type;
+	std::wstring ext = extract_file_ext(arc_path);
+
+	if (file_list.empty())
+		make_index();
+
+	if (rArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 1024) {
+		bool debbin = false;
+		UInt32 iindex = 0xFFFFFFFF;
+	    for (UInt32 ii = 0; ii < num_indices; ++ii) {
+			if (file_list[ii].is_dir) continue;
+			std::wstring _name = file_list[ii].name;
+			removeExtension(_name);
+			if (!StrCmp(_name.c_str(), L"data.tar")) {
+				iindex = ii;
+				if (debbin) break;
+			}
+			if (!StrCmp(file_list[ii].name.c_str(), L"debian-binary")) {
+				debbin = true;
+				if (iindex != 0xFFFFFFFF) break;
+			}
+		}
+		if (iindex != 0xFFFFFFFF && debbin) {
+			index = iindex;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 constexpr DWORD c_valid_import_attributes = 
@@ -1330,29 +1380,33 @@ DWORD Archive<UseVirtualDestructor>::get_links(UInt32 index) const
 	return n;
 }
 
-void	SetFARAttributes(DWORD &attr, DWORD &posixattr)
+DWORD	SetFARAttributes(DWORD attr, DWORD posixattr)
 {
-		DWORD farattr = 0;
-		if (posixattr) {
-			switch (posixattr & S_IFMT) {
-				case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
-				case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
-				#ifndef _WIN32
-				case S_IFLNK: farattr = FILE_ATTRIBUTE_REPARSE_POINT; break;
-				case S_IFSOCK: farattr = FILE_ATTRIBUTE_DEVICE_SOCK; break;
-				#endif
-				case S_IFCHR: farattr = FILE_ATTRIBUTE_DEVICE_CHAR; break;
-				case S_IFBLK: farattr = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
-				case S_IFIFO: farattr = FILE_ATTRIBUTE_DEVICE_FIFO; break;
-				default: farattr = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
-			}
+	DWORD farattr = 0;
 
-			if ((posixattr & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
-				farattr |= FILE_ATTRIBUTE_EXECUTABLE;
-
-			if ((posixattr & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
-				farattr |= FILE_ATTRIBUTE_READONLY;
+	if (posixattr) {
+		switch (posixattr & S_IFMT) {
+			case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
+			case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
+			#ifndef _WIN32
+			case S_IFLNK: farattr = FILE_ATTRIBUTE_REPARSE_POINT; break;
+			case S_IFSOCK: farattr = FILE_ATTRIBUTE_DEVICE_SOCK; break;
+			#endif
+			case S_IFCHR: farattr = FILE_ATTRIBUTE_DEVICE_CHAR; break;
+			case S_IFBLK: farattr = FILE_ATTRIBUTE_DEVICE_BLOCK; break;
+			case S_IFIFO: farattr = FILE_ATTRIBUTE_DEVICE_FIFO; break;
+			default: farattr = FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_BROKEN;
 		}
+
+		if ((posixattr & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
+			farattr |= FILE_ATTRIBUTE_EXECUTABLE;
+
+		if ((posixattr & (S_IWUSR | S_IWGRP | S_IWOTH)) == 0)
+			farattr |= FILE_ATTRIBUTE_READONLY;
+	}
+
+	return farattr;
+
 #if 0
 
 #define S_IFMT   0170000  /* type of file mask */
@@ -1360,6 +1414,7 @@ void	SetFARAttributes(DWORD &attr, DWORD &posixattr)
 #define S_IFCHR  0020000  /* character special */
 #define S_IFDIR  0040000  /* directory */
 #define S_IFBLK  0060000  /* block special */
+
 #define S_IFREG  0100000  /* regular */
 #define S_IFLNK  0120000  /* symbolic link */
 #define S_IFSOCK 0140000  /* socket */
@@ -1396,8 +1451,12 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 	PropVariant prop;
 	DWORD attr = 0, _posixattr = 0;
 
-	if (index >= m_num_indices)
-		return FILE_ATTRIBUTE_DIRECTORY;
+	if (index >= m_num_indices) {
+		attr = FILE_ATTRIBUTE_DIRECTORY;
+		if (posixattr)
+			*posixattr = _posixattr;
+		return attr;
+	}
 
 	if (in_arc->GetProperty(index, kpidAttrib, prop.ref()) == S_OK && prop.is_uint()) {
 		attr = static_cast<DWORD>(prop.get_uint());
@@ -1410,6 +1469,12 @@ DWORD Archive<UseVirtualDestructor>::get_attr(UInt32 index, DWORD *posixattr) co
 
 	if (in_arc->GetProperty(index, kpidPosixAttrib, prop.ref()) == S_OK && prop.is_uint()) {
 		_posixattr = prop.get_uint();
+	}
+
+	if (in_arc->GetProperty(index, kpidSymLink, prop.ref()) == S_OK && prop.is_str()) {
+		if (prop.vt == VT_BSTR && SysStringLen(prop.bstrVal) ) {
+			_posixattr |= S_IFLNK;
+		}
 	}
 
 	if (posixattr) *posixattr = _posixattr;

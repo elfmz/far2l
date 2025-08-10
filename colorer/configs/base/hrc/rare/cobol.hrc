@@ -78,6 +78,7 @@
          <!-- Sequence number area and Identification area -->
          <regexp match="/^\M(.{0,6}).{0,66}(.*)$/" region1="SeqNum" region2="Comment"/>
       </scheme>
+
       <scheme name="cobolcore">
          <!-- Compiler options -->
          <regexp match="/~\ *(PROCESS|(\*)?CBL|CONTROL).*$/i" region0="Directive"/>
@@ -125,7 +126,6 @@
             <symb name="&lt;"/>
             <symb name="&gt;"/>
          </keywords>
-
          <keywords ignorecase="yes" region="Keyword" worddiv="%worddiv;">
             <word name="ACCEPT"/>
             <word name="ACCESS"/>
@@ -601,18 +601,21 @@
       </scheme>
    </type>
 </hrc>
-<!-- ***** BEGIN LICENSE BLOCK *****
-   - Copyright (C) 1999-2009 Cail Lomecb <irusskih at gmail dot com>.
-   - Copyright (C)  Alexey Matiushkin
-   - Copyright (C)  Pavel Pleva
-   - This program is free software; you can redistribute it and/or
-   - modify it under the terms of the GNU General Public License
-   - as published by the Free Software Foundation; either version 2
-   - of the License, or (at your option) any later version.
-   - This program is distributed in the hope that it will be useful,
-   - but WITHOUT ANY WARRANTY; without even the implied warranty of
-   - MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   - GNU General Public License for more details.
-   - You should have received a copy of the GNU General Public License
-   - along with this program; If not, see <http://www.gnu.org/licenses/>.
-   - ***** END LICENSE BLOCK ***** -->
+<!--
+Copyright (C) 1999-2005 Igor Russkih <irusskih@gmail.com>
+Copyright (C) Pavel Pleva
+Copyright (C) Alexey Matiushkin
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

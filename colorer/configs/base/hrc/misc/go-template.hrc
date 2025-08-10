@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5"
+     xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xinc="http://www.w3.org/2001/XInclude"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+<annotation>
+    <documentation>
+        Go Template
+
+        Based on:
+            https://pkg.go.dev/text/template#section-documentation
+
+        Home: https://github.com/chpock/ck.colorer-schemes
+        Send requests there for bug fixes and features.
+    </documentation>
+    <contributors><![CDATA[
+        Konstantin Kushnir <chpock@gmail.com>
+    ]]></contributors>
+
+    <appinfo>
+        <prototype name="go-template" group="misc" description="Go Template">
+            <location link="misc/go-template.hrc"/>
+            <filename>/\.go\.tm?pl$/i</filename>
+            <filename>/\.gtpl$/i</filename>
+        </prototype>
+    </appinfo>
+</annotation>
+
+<type name="go-template">
+
+<region name="Comment" parent="def:Comment"/>
+
+<region name="Insertion" parent="def:Insertion"/>
+
+<region name="Control" parent="def:Keyword"/>
+
+<region name="FunctionName" parent="def:ClassKeyword"/>
+<region name="FunctionKeyword" parent="def:KeywordStrong"/>
+
+<region name="String" parent="def:String"/>
+<region name="StringEdge" parent="def:StringEdge"/>
+<region name="StringContent" parent="def:StringContent"/>
+
+<region name="Symbol" parent="def:Symbol"/>
+<region name="SymbolStrong" parent="def:SymbolStrong"/>
+<region name="Operator" parent="def:Operator"/>
+<region name="Function" parent="def:FunctionKeyword"/>
+<region name="FunctionBoolean" parent="def:InterfaceKeyword"/>
+
+<region name="Error" parent="def:Error"/>
+
+<region name="Variable" parent="def:Var"/>
+<region name="VariableStrong" parent="def:VarStrong"/>
+<region name="Constant" parent="def:Constant"/>
+<region name="Boolean" parent="def:BooleanConstant"/>
+<region name="Field" parent="def:StructKeyword"/>
+
+<!-- for testing -->
+<region name="Test" parent="def:URL"/>
+<region name="Test2" parent="def:TODO"/>
+
+<!--
+    argument can start with:
+         - digit     - number
+         - -/+digit  - number
+         - .digit    - float
+         - -/+.digit - float
+         - `         - raw string
+         - "         - string
+         - '         - character
+         - .         - dot/field (standalone dot is possible)
+         - $         - variable (empty variable name is possible)
+         - (         - group
+-->
+
+<entity name="argument-start" value="(
+    [+-]?\d|
+    [+-]?\.\d|
+    [`&quot;&apos;\.\$\(]
+)"/>
+
+<!--
+    pipeline can start with:
+         - argument
+         - a-zA-Z    - function/control structure
+-->
+
+<entity name="pipeline-start" value="(
+    %argument-start;|
+    [a-zA-Z]
+)"/>
+
+<entity name="pipeline-end" value="((((^|\s+)-)|\s*)\}\}|\))"/>
+
+<entity name="literal-integer" value="
+    (?{def:NumberDec}[+-])?(
+        ((?{def:NumberBin}0)(?{def:NumberSuffix}[bB])(?{def:NumberBin}([01]|_[01])+))|
+        ((?{def:NumberOct}0)(?{def:NumberSuffix}[oO])(?{def:NumberOct}([0-7]|_[0-7])+))|
+        ((?{def:NumberHex}0)(?{def:NumberSuffix}[xX])(?{def:NumberHex}([\da-fA-F]|_[\da-fA-F])+))|
+        (?{def:NumberDec}\d(\d|_\d)*)
+    )(?{def:NumberSuffix}
+        (
+            (([+-])?(
+                (\d(\d|_\d)*\.(\d(\d|_\d)*)?([eE][+-]?\d(\d|_\d)*)?)|
+                (\d(\d|_\d)*[eE][+-]?\d(\d|_\d)*)|
+                (\.\d(\d|_\d)*([eE][+-]?\d(\d|_\d)*)?)|
+                ((0)([xX])(
+                    (
+                        (_?[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*\.([\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)?)|
+                        (_?[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)|
+                        (\.[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)
+                    )
+                    ([pP][+-]?\d(\d|_\d)*)
+                ))
+            ))|
+            (([+-])?(
+                ((0)([bB])(([01]|_[01])+))|
+                ((0)([oO])(([0-7]|_[0-7])+))|
+                ((0)([xX])(([\da-fA-F]|_[\da-fA-F])+))|
+                (\d(\d|_\d)*)
+            ))
+        )?i
+    )?
+"/>
+
+<entity name="literal-float" value="
+    (?{def:NumberFloat}[+-])?(
+        (?{def:NumberFloat}\d(\d|_\d)*\.(\d(\d|_\d)*)?([eE][+-]?\d(\d|_\d)*)?)|
+        (?{def:NumberFloat}\d(\d|_\d)*[eE][+-]?\d(\d|_\d)*)|
+        (?{def:NumberFloat}\.\d(\d|_\d)*([eE][+-]?\d(\d|_\d)*)?)|
+        ((?{def:NumberFloat}0)(?{def:NumberSuffix}[xX])(?{def:NumberFloat}
+            (
+                (_?[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*\.([\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)?)|
+                (_?[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)|
+                (\.[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)
+            )
+            ([pP][+-]?\d(\d|_\d)*)
+        ))
+    )(?{def:NumberSuffix}
+        (
+            (([+-])?(
+                (\d(\d|_\d)*\.(\d(\d|_\d)*)?([eE][+-]?\d(\d|_\d)*)?)|
+                (\d(\d|_\d)*[eE][+-]?\d(\d|_\d)*)|
+                (\.\d(\d|_\d)*([eE][+-]?\d(\d|_\d)*)?)|
+                ((0)([xX])(
+                    (
+                        (_?[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*\.([\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)?)|
+                        (_?[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)|
+                        (\.[\da-fA-F]([\da-fA-F]|_[\da-fA-F])*)
+                    )
+                    ([pP][+-]?\d(\d|_\d)*)
+                ))
+            ))|
+            (([+-])?(
+                ((0)([bB])(([01]|_[01])+))|
+                ((0)([oO])(([0-7]|_[0-7])+))|
+                ((0)([xX])(([\da-fA-F]|_[\da-fA-F])+))|
+                (\d(\d|_\d)*)
+            ))
+        )?i
+    )?
+"/>
+
+<scheme name="go-template">
+    <block start="/((\{\{))(-(\s+|$))?/" end="/((^|\s?#1)-)?((\}\}))/" scheme="action" region="Insertion"
+        region01="def:PairStart" region13="def:PairEnd"
+        region02="SymbolStrong"  region14="SymbolStrong"
+        region03="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="go-template-native">
+    <block start="/((\{\{))(-(\s+|$))?/" end="/((^|\s?#1)-)?((\}\}))/" scheme="action"
+        region01="def:PairStart" region13="def:PairEnd"
+        region02="SymbolStrong"  region14="SymbolStrong"
+        region03="Symbol"        region10="Symbol"/>
+</scheme>
+
+<scheme name="comments">
+    <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"
+        region00="def:PairStart" region10="def:PairEnd"/>
+</scheme>
+
+<scheme name="error">
+    <block start="/((((^|\s?#1)-)?\}\})|\))?!\S/" end="/\M(%pipeline-end;|\/\*)/" scheme="def:empty" region="Error"/>
+    <!-- do not allow '()' here unless it is a closing bracket -->
+    <regexp match="/[\(\)]/" region="Error" priority="low"/>
+</scheme>
+
+<scheme name="action">
+
+    <inherit scheme="comments"/>
+
+    <!-- special case for 'range $key, $val := ...' -->
+    <!-- allow the first veriable as plain variable or empty variable name -->
+    <!-- TODO: comments between "range" and the first variable are not allowed at the moment -->
+    <block start="/(range)\s+\M\$([a-zA-Z_][a-zA-Z0-9_]*)?,/" end="/\M%pipeline-end;/x" scheme="action-range-pipeline" region01="Control"/>
+
+    <!-- control keywords with a pipeline as argument-->
+    <block start="/(if|else\s+if|range|with|else\s+with)(\s|$)?=/" end="/\M%pipeline-end;/x" scheme="pipeline" region01="Control"/>
+
+    <!-- control keywords with a name + a pipeline as argument-->
+    <block start="/(template|block)(\s|$)?=/" end="/\M%pipeline-end;/x" scheme="action-name-pipeline" region01="Control"/>
+
+    <!-- control keyword 'define' defines a function -->
+    <block start="/(define)(\s|$)?=/" end="/\M%pipeline-end;/x" scheme="action-function" region01="FunctionKeyword"/>
+
+    <!-- simple control keywords -->
+    <block start="/(end|else|break|continue)(\s|\}|\)|$)?=/" end="/\M%pipeline-end;/x" scheme="error" region01="Control"/>
+
+    <!-- start pipeline -->
+    <block start="/\M%pipeline-start;/x" end="/\M%pipeline-end;/x" scheme="pipeline"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="action-function">
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <block start="/[`&quot;]?=/" end="/\M%pipeline-end;/x" scheme="action-function-name"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="action-function-name">
+
+    <!-- function name as string literal -->
+    <block start="/~(&quot;)/" end="/(&quot;)/" scheme="string-literal" region="FunctionName"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+
+    <!-- function name as raw string literal -->
+    <block start="/~(`)/" end="/(`)/" scheme="def:empty" region="FunctionName"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="action-name-pipeline">
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- raw string literals -->
+    <block start="/`?=/" end="/\M%pipeline-end;/x" scheme="raw-string-literal-pipeline"/>
+    <!-- raw string literals -->
+    <block start="/&quot;?=/" end="/\M%pipeline-end;/x" scheme="string-literal-pipeline"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="action-range-pipeline">
+
+    <!-- the first variable -->
+    <regexp match="/~(\$)([a-zA-Z_][a-zA-Z0-9_]*)?/" region1="VariableStrong" region2="Variable"/>
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- the second variable + pipeline -->
+    <block start="/(,)/" end="/\M%pipeline-end;/x" scheme="pipeline" region01="Symbol"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="rune-literal">
+
+    <!-- escaped char -->
+    <regexp match="/~\\(
+        ([abfnrtv`&apos;\\])|
+        (x[\da-fA-F]{2})|
+        (u[\da-fA-F]{4})|
+        (U[\da-fA-F]{8})|
+        ([0-7]{3})
+    )/x" region="StringContent"/>
+
+    <!-- unrecognized escape is an error -->
+    <regexp match="/~\\./" region="Error"/>
+
+    <!-- exactly one characters at the beginning of the scheme -->
+    <regexp match="/~./" region="StringContent"/>
+
+    <!-- anything else is an error -->
+    <regexp match="/[^&apos;\)\}]+/" region="Error" priority="low"/>
+
+</scheme>
+
+<scheme name="string-literal">
+
+    <!-- escaped char -->
+    <regexp match="/\\(
+        ([abfnrtv`&quot;\\])|
+        (x[\da-fA-F]{2})|
+        (u[\da-fA-F]{4})|
+        (U[\da-fA-F]{8})|
+        ([0-7]{3})
+    )/x" region="StringContent"/>
+
+</scheme>
+
+<scheme name="fields">
+    <regexp match="/(\.)([a-zA-Z_][a-zA-Z0-9_]*)/" region1="VariableStrong" region2="Field"/>
+    <!-- anything unknown is an error -->
+    <regexp match="/\S+/" region="Error" priority="low"/>
+</scheme>
+
+<scheme name="variable-with-fields">
+    <!-- variable name -->
+    <regexp match="/[a-zA-Z_][a-zA-Z0-9_]*/" region="Variable"/>
+    <!-- fields -->
+    <inherit scheme="fields"/>
+</scheme>
+
+<scheme name="arguments">
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- rune literals -->
+    <block start="/(^|\s?#1)((&apos;))/" end="/((&apos;))/" scheme="rune-literal"
+        region01="def:PairStart" region11="def:PairEnd"
+        region02="StringEdge"    region12="StringEdge"/>
+
+    <!-- raw string literals -->
+    <block start="/(^|\s?#1)(`)/" end="/((`))/" scheme="def:empty" region="String"
+        region01="def:PairStart" region11="def:PairEnd"
+        region02="StringEdge"    region12="StringEdge"/>
+
+    <!-- string literals -->
+    <block start="/(^|\s?#1)(&quot;)/" end="/((&quot;))/" scheme="string-literal" region="String"
+        region01="def:PairStart" region11="def:PairEnd"
+        region02="StringEdge"    region12="StringEdge"/>
+
+    <!-- variable use -->
+    <!-- allow variable name/empty variable name (dollar followed by space, ')', '}')/field symbol after dollar symbol -->
+    <block start="/(^|\s?#1)(\$)([a-zA-Z_\.\s\)\}]|$)?=/" end="//" scheme="variable-with-fields" region02="VariableStrong"/>
+
+    <!-- floating-point literals -->
+    <regexp match="/(^|\s?#1)%literal-float;/x"/>
+
+    <!-- integer literals -->
+    <regexp match="/(^|\s?#1)%literal-integer;/x"/>
+
+    <keywords region="Boolean" ignorecase="no">
+        <word name="true"/> <word name="false"/>
+    </keywords>
+
+    <keywords region="Constant" ignorecase="no">
+        <word name="nil"/>
+    </keywords>
+
+    <!-- group -->
+    <block start="/(^|\s?#1)((\())/" end="/(\))/" scheme="pipeline"
+        region01="def:PairStart" region11="def:PairEnd"
+        region02="SymbolStrong"  region10="SymbolStrong"/>
+
+    <!-- fields -->
+    <!-- match this after numbers to not catch float numbers like .1 -->
+    <!-- catch standalone dot, do not allow stadalone dot after a group -->
+    <regexp match="/(^|\s?#1)(\.)([\s\}\)]|$)?=/" region2="VariableStrong"/>
+    <!-- other fields -->
+    <!-- allow a field after a group, i.e. (...).Field1.Field2 -->
+    <!-- allow a field name after dot symbol -->
+    <block start="/(^|[\s\)]?#1)\M\.[a-zA-Z_]/" end="//" scheme="fields"/>
+
+    <!-- next pipeline -->
+    <block start="/(^|\s?#1)\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="pipeline">
+
+    <!-- we don't expect pipe symbols here -->
+    <regexp match="/\s*((\s*\|)+)\s*/" region1="Error"/>
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- rune literals -->
+    <block start="/&apos;?=/" end="/\M%pipeline-end;/x" scheme="rune-literal-pipeline-next"/>
+    <!-- raw string literals -->
+    <block start="/`?=/" end="/\M%pipeline-end;/x" scheme="raw-string-literal-pipeline-next"/>
+    <!-- string literals -->
+    <block start="/&quot;?=/" end="/\M%pipeline-end;/x" scheme="string-literal-pipeline-next"/>
+
+    <!-- initialize/set/use variables -->
+    <!-- allow variable name/empty variable name (dollar followed by space, ')', '}')/field after dollar symbol -->
+    <block start="/(\$([a-zA-Z_\.\s\)\}]|$))?=/" end="/\M%pipeline-end;/x" scheme="pipeline-variable"/>
+
+    <!-- floating-point literals -->
+    <block start="/%literal-float;(?{Error}[^\s\}\)]*)/x" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- integer literals -->
+    <block start="/%literal-integer;(?{Error}[^\s\}\)]*)/x" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- match this after numbers to not catch float numbers like .1 -->
+    <!-- use field -->
+    <block start="/\.?=/" end="/\M%pipeline-end;/x" scheme="pipeline-field"/>
+
+    <!-- booleans -->
+    <block start="/(true|false)\b/" end="/\M%pipeline-end;/x" scheme="pipeline-next" region00="Boolean"/>
+
+    <!-- constants -->
+    <block start="/(nil)\b/" end="/\M%pipeline-end;/x" scheme="pipeline-next" region00="Constant"/>
+
+    <!-- group -->
+    <block start="/\(?=/" end="/\M%pipeline-end;/x" scheme="pipeline-group"/>
+
+    <!-- function call -->
+    <block start="/[a-zA-Z]?=/" end="/\M%pipeline-end;/x" scheme="pipeline-function"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="function-name">
+
+    <keywords region="Function" ignorecase="no">
+        <word name="call"/>
+        <word name="html"/>
+        <word name="index"/>
+        <word name="slice"/>
+        <word name="js"/>
+        <word name="len"/>
+        <word name="print"/>
+        <word name="printf"/>
+        <word name="println"/>
+        <word name="urlquery"/>
+    </keywords>
+
+    <keywords region="FunctionBoolean" ignorecase="no">
+        <word name="and"/>
+        <word name="not"/>
+        <word name="or"/>
+        <word name="eq"/> <word name="ne"/>
+        <word name="lt"/> <word name="gt"/>
+        <word name="le"/> <word name="ge"/>
+    </keywords>
+
+    <!-- anything unknown is an error -->
+    <regexp match="/\S+/" region="Error" priority="low"/>
+
+</scheme>
+
+<scheme name="pipeline-function">
+
+    <block start="/~\M[\w-]+/" end="/~[\w-]+\m\b/" scheme="function-name"/>
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- start arguments -->
+    <block start="/\M%argument-start;/x" end="/\M%pipeline-end;/x" scheme="arguments"/>
+
+    <!-- next pipeline -->
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="pipeline-field">
+
+    <!-- catch standalone dot -->
+    <regexp match="/~\.([\s\}\)]|$)?=/" region="VariableStrong"/>
+    <!-- fields -->
+    <block start="/~\M\.[a-zA-Z_]/" end="/\b/" scheme="fields"/>
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- start arguments (when a field is a method) -->
+    <block start="/\M%argument-start;/x" end="/\M%pipeline-end;/x" scheme="arguments"/>
+
+    <!-- next pipeline -->
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="pipeline-variable">
+
+    <block start="/~(\$)/" end="//" scheme="variable-with-fields" region01="VariableStrong"/>
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- initialize/set variable -->
+    <block start="/(:?\=)/" end="/\M%pipeline-end;/x" region01="Symbol" scheme="pipeline"/>
+
+    <!-- next pipeline -->
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="pipeline-group">
+
+    <block start="/~(\()/" end="/(\))/" scheme="pipeline"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="SymbolStrong"  region10="SymbolStrong"/>
+
+    <!-- access to group result by a field -->
+    <block start="/\)?#1\.?=/" end="/\M%pipeline-end;/x" scheme="pipeline-field"/>
+
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+
+    <!-- next pipeline -->
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="string-literal-pipeline-next">
+
+    <block start="/~(&quot;)/" end="/(&quot;)/" scheme="string-literal" region="String"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="string-literal-pipeline">
+
+    <block start="/~(&quot;)/" end="/(&quot;)/" scheme="string-literal" region="String"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+
+    <!-- start pipeline -->
+    <block start="/\M%pipeline-start;/x" end="/\M%pipeline-end;/x" scheme="pipeline"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="rune-literal-pipeline-next">
+
+    <block start="/~(&apos;)/" end="/((&apos;))|$|[\)\}]?=/" scheme="rune-literal"
+        region01="def:PairStart" region12="def:PairEnd"
+        region00="StringEdge"    region11="StringEdge"/>
+
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="raw-string-literal-pipeline-next">
+
+    <block start="/~(`)/" end="/(`)/" scheme="def:empty" region="String"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+
+    <block start="/\M\|/" end="/\M%pipeline-end;/x" scheme="pipeline-next"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="raw-string-literal-pipeline">
+
+    <block start="/~(`)/" end="/(`)/" scheme="def:empty" region="String"
+        region01="def:PairStart" region11="def:PairEnd"
+        region00="StringEdge"    region10="StringEdge"/>
+
+    <!-- start pipeline -->
+    <block start="/\M%pipeline-start;/x" end="/\M%pipeline-end;/x" scheme="pipeline"/>
+
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+
+</scheme>
+
+<scheme name="pipeline-next">
+    <!-- allow comments here -->
+    <inherit scheme="comments"/>
+    <!-- switch to the next pipeline -->
+    <block start="/\|/" end="/\M%pipeline-end;/x" region00="Control" scheme="pipeline"/>
+    <!-- anything unknown is an error -->
+    <inherit scheme="error"/>
+</scheme>
+
+
+</type>
+</hrc>
+<!--
+Copyright (C) Konstantin Kushnir <chpock@gmail.com>
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

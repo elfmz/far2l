@@ -8,15 +8,20 @@ Only significant user-side changes are listed here (for all changes see history 
 * _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
 * _New:_ Separate icons for WX versions of far2l and far2ledit
 * _New:_ far:config as "Configuration editor" and far:about as "About FAR" in Commands menu
-* _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
-* _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * Actions recorded in commands history are configured in the AutoComplete & History dialog
+* _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
+* _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
 * _Temporary panel plugin_: Show file groups
-* _colorer plugin_: Update colorer schemes to v1.2.0.76
+* _colorer plugin_: Update colorer schemes to v1.2.0.90
 * _colorer plugin_: Update colorer library to v1.5.0-29.06.2025
 * _colorer plugin_: Added features for easier modification of the set and behavior of the user's hrc/hrd files, without editing the supplied base set.
+* _python plugin_: fixes and new subplugin **uedreplace**
+* _arclite plugin_: New plugin for archives processing
+  (now as experimental version which partially more effective then multiarc;
+  arclite disabled by default, to enable manually turn on
+  F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)
 * Several bugfixes
 
 ## 2.6.5 beta (2025-03-30)

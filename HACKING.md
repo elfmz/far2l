@@ -84,6 +84,7 @@ far2l uses this to resolve symlink destination when user selects plugin's item t
 * `int GetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size);`
 * `int GetFileGroupA(const char *Computer, const char *Name, char *Group);`
 to obtain file group
+* See several additional with arclie in farplug-wide.h in [3b60489](https://github.com/elfmz/far2l/commit/3b6048914bd025a61b24cf6ed237f0e0da2e364c)
 
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item

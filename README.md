@@ -6,7 +6,10 @@ Works also on macOS and BSD (but latter not tested on regular manner)
 BETA VERSION.   
 **Use on your own risk!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator, Python (optional scripting support)
+Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator, Python (optional scripting support),
+arclite <sub>(now as experimental version which partially more effective then multiarc;
+arclite disabled by default, to enable manually turn on
+F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -135,7 +138,7 @@ https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com
 <sub>_Note_: binaries in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
-<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with pythons subplugins.</sub>
+<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with python subplugins.</sub>
 
 <details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
 
@@ -351,23 +354,19 @@ emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
 
-#### Installing and Building on [NixOS](https://nixos.org/)
+#### Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS
 
 To install system-wide, add the `far2l` package to your [`configuration.nix`](https://nixos.org/manual/nixos/stable/index.html#sec-changing-config) `environment.systemPackages` list. To run the application on-demand without affecting the system state, execute `nix-shell -p far2l --command far2l`. These use a package version from your current [channel](https://wiki.nixos.org/wiki/Channel_branches).
 
 The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/fa/far2l/package.nix), it tells which Git revision from Far2l repo to fetch, with what dependencies to build it, and how to patch its references to other software to make it run in isolated fashion independently from other versions available in the system.
 
-You can build and run `far2l` package for any revision:
-* Directly from GitHub (`NixOS/nixpkgs` repo, or your own fork and branch):
- ``` sh
-nix-shell -I nixpkgs=https://github.com/<fork>/nixpkgs/archive/<revision-or-branch>.tar.gz -p far2l --command far2l
- ```
-* From a locally cloned working directory of the repo:
-``` sh
-nix-shell -I nixpkgs=/path/to/nixpkgs -p far2l --command far2l
-```
 
-To advance the package to a new Far2l revision, edit the `fetchFromGitHub` set attributes `rev` (revision hash) and `sha256` (revision content hash). **Important!** If you leave the old content hash, the old cached content for that hash might be used without attempting to download the new revision. If you're not expecting the build to break, the easiest would be to make a fork, push the change, and build straight from github.
+#### Custom Building and Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS from scratch
+
+1) Copy [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to your Nix configuration folder
+2) Add it as import to 'configuration.nix'
+3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
+4) update with 'nixos-rebuild switch'
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.

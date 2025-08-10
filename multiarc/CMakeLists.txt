@@ -101,8 +101,7 @@ if("${UNRAR}" STREQUAL "lib")
         src/formats/rar/rarmainstub.cpp
     )
 elseif(UNRAR)
-    set(SOURCES
-        ${SOURCES}
+    set(RAR_FILES
         src/formats/rar/rar.cpp
         src/formats/rar/unrar/scantree.cpp
         src/formats/rar/unrar/sha1.cpp
@@ -155,6 +154,7 @@ elseif(UNRAR)
         src/formats/rar/unrar/rarpch.cpp
         src/formats/rar/unrar/rar.cpp
     )
+    set(SOURCES ${SOURCES} ${RAR_FILES})
 endif()
 
 set(SOURCES
@@ -203,6 +203,11 @@ else()
     message(STATUS "Using bundled unrar sources")
     target_include_directories(multiarc PRIVATE src/formats/rar/unrar)
     target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
+    # hide rar warnings in release build
+    if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
+        set_source_files_properties(${RAR_FILES} PROPERTIES COMPILE_FLAGS
+            "-Wno-parentheses -Wno-switch -Wno-unused-variable -Wno-unused-but-set-variable -Wno-sign-compare -Wno-class-memaccess -Wno-catch-value -Wno-misleading-indentation")
+    endif()
 endif()
 
 target_include_directories(multiarc PRIVATE src)

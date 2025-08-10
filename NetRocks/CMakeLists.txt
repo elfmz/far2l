@@ -142,6 +142,7 @@ if (LIBSMBCLIENT_FOUND AND ((NOT DEFINED NR_SMB) OR NR_SMB))
     )
     target_link_libraries(NetRocks-SMB utils ${LIBSMBCLIENT_LIBRARIES})
     target_include_directories(NetRocks-SMB PRIVATE src ${LIBSMBCLIENT_INCLUDE_DIRS})
+    target_compile_options(NetRocks-SMB PUBLIC -Wno-deprecated-declarations)
     set_target_properties(NetRocks-SMB
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/NetRocks/plug"

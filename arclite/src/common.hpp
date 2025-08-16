@@ -147,6 +147,7 @@ struct OpenOptions
 	std::wstring arc_path;
 	bool detect;
 	bool open_ex;
+	bool nochain;
 	ArcTypes arc_types;
 	std::wstring password;
 	int *open_password_len;

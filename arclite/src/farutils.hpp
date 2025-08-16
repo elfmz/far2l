@@ -286,6 +286,7 @@ INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, int param1 = 0, void *par
 bool match_masks(const std::wstring &file_name, const std::wstring &masks);
 bool get_color(PaletteColors color_id, UInt64 &color);
 bool panel_go_to_dir(HANDLE h_panel, const std::wstring &dir);
+bool panel_set_file(HANDLE h_panel, const std::wstring &file_name);
 bool panel_go_to_file(HANDLE h_panel, const std::wstring &file_path);
 void panel_go_to_part(HANDLE h_panek, const int part_idx);
 DWORD get_lang_id();

@@ -1234,10 +1234,14 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			}
 		}
 		if (entry_index == 0xFFFFFFFF && !ArcAPI::is_single_file_format(pArcType)) {
+#if 0
 			if (num_indices > 1) {
 				//fprintf(stderr,"Archive::open(): no entry_index & nultifile format - STOP!\n");
 				return;
 			}
+#else
+			return;
+#endif
 		}
 		if (entry_index == 0xFFFFFFFF) {
 			entry_index = 0;
@@ -1493,7 +1497,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			if (parent_idx != (size_t)-1) {
 				archives[parent_idx]->m_chain_file_index = entry_index;
 				archive->parent = archives[parent_idx];
-				FindData ef = archives[parent_idx]->get_file_info(entry_index);
+//				FindData ef = archives[parent_idx]->get_file_info(entry_index);
 //				archive->arc_path = extract_file_name(ef.cFileName);
 				archive->arc_path = options.arc_path;
 				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),

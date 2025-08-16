@@ -207,7 +207,7 @@ public:
 
 	static bool is_single_file_format(const ArcType &arc_ty)
 	{
-		return arc_ty == c_bzip2 || arc_ty == c_gzip || arc_ty == c_xz || arc_ty == c_SWFc;
+		return arc_ty == c_bzip2 || arc_ty == c_gzip || arc_ty == c_xz || arc_ty == c_SWFc || arc_ty == c_zstd;
 	}
 };
 

@@ -1270,9 +1270,8 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 				archive->m_open_password = *options.open_password_len;
 
 			//		archive->flags = 2 + bFullSize;
-//			archive->arc_file = extract_file_name(ef.cFileName);
-//			archive->arc_path = options.arc_path;
-			archive->arc_path = extract_file_name(ef.cFileName);
+			archive->arc_path = options.arc_path;
+//			archive->arc_path = extract_file_name(ef.cFileName);
 			archive->arc_info = arc_info;
 			archive->m_password = options.password;
 			archives[parent_idx]->m_chain_file_index = open_index;
@@ -1495,7 +1494,8 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 				archives[parent_idx]->m_chain_file_index = entry_index;
 				archive->parent = archives[parent_idx];
 				FindData ef = archives[parent_idx]->get_file_info(entry_index);
-				archive->arc_path = extract_file_name(ef.cFileName);
+//				archive->arc_path = extract_file_name(ef.cFileName);
+				archive->arc_path = options.arc_path;
 				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),
 						archives[parent_idx]->arc_chain.end());
 			}

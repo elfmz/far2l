@@ -282,12 +282,15 @@ struct PanelItem
 
 		try {
 			OpenOptions open_options;
-			open_options.arc_path = this->archive->arc_path;
+//			open_options.arc_path = this->archive->arc_path;
+			open_options.arc_path = i.file_name;
 			open_options.detect = false;
 			open_options.open_ex = true;
 			open_options.nochain = true;
 			open_options.password = this->archive->m_password;
 			open_options.arc_types = ArcAPI::formats().get_arc_types();
+
+//				archive->arc_path = extract_file_name(ef.cFileName);
 
 			Archive<UseVirtualDestructor>::open(open_options, *archives, index);
 //			if (archives->empty())
@@ -2320,7 +2323,7 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 
 
 //	if ( (Key == VK_PRIOR && (ControlState & PKF_CONTROL)) || (Key == VK_LEFT && (ControlState & (PKF_CONTROL | PKF_ALT))) ) {
-	if ( (Key == VK_LEFT && (ControlState & (PKF_CONTROL | PKF_ALT))) ) {
+	if ( Key == VK_LEFT && (ControlState == (PKF_CONTROL | PKF_ALT)) ) {
 //		fprintf(stderr, "*********ProcessKeyW  handle ctrl + pgup  ********************\n");
 
 		bool bRez;
@@ -2338,7 +2341,7 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 		}
 	}
 
-	if ( (Key == VK_RIGHT && (ControlState & (PKF_CONTROL | PKF_ALT))) ) {
+	if ( Key == VK_RIGHT && (ControlState == (PKF_CONTROL | PKF_ALT)) ) {
 
 		Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
 		bool bRez;

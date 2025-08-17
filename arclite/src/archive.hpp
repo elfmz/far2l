@@ -19,8 +19,9 @@ extern const ArcType c_rpm;
 extern const ArcType c_cpio;
 extern const ArcType c_SWFc;
 extern const ArcType c_dmg;
+extern const ArcType c_sqfs;
+extern const ArcType c_zstd;
 
-//
 extern const ArcType c_hfs;
 extern const ArcType c_fat;
 extern const ArcType c_ntfs;
@@ -48,9 +49,6 @@ extern const wchar_t *c_tar_method_gnu;
 extern const wchar_t *c_tar_method_pax;
 extern const wchar_t *c_tar_method_posix;
 
-///gnu, pax, posix.
-///LZMA, LZMA2, PPMd, BZip2, Deflate, Delta, BCJ, BCJ2, Copy. 
-
 extern const UInt64 c_min_volume_size;
 
 extern const wchar_t *c_sfx_ext;
@@ -75,8 +73,8 @@ struct ArcLib
 	Func_GetIsArc GetIsArc;
 	Func_GetModuleProp GetModuleProp;
 
-//	ComObject<IHashers> ComHashers;
-	void* ComHashers; // Указатель на объект
+	//	ComObject<IHashers> ComHashers;
+	void* ComHashers;
 
 	HRESULT get_prop(UInt32 index, PROPID prop_id, PROPVARIANT *prop) const;
 	HRESULT get_bool_prop(UInt32 index, PROPID prop_id, bool &value) const;
@@ -201,8 +199,6 @@ public:
 
 	static const SfxModules &sfx() { return get()->sfx_modules; }
 
-//	static void create_in_archive(const ArcType &arc_type, IInArchive **in_arc);
-//	static void create_out_archive(const ArcType &format, IOutArchive **out_arc);
 	static void create_in_archive(const ArcType &arc_type, void **in_arc);
 	static void create_out_archive(const ArcType &format, void **out_arc);
 
@@ -211,7 +207,7 @@ public:
 
 	static bool is_single_file_format(const ArcType &arc_ty)
 	{
-		return arc_ty == c_bzip2 || arc_ty == c_gzip || arc_ty == c_xz || arc_ty == c_SWFc;
+		return arc_ty == c_bzip2 || arc_ty == c_gzip || arc_ty == c_xz || arc_ty == c_SWFc || arc_ty == c_zstd;
 	}
 };
 
@@ -261,7 +257,6 @@ template<bool UseVirtualDestructor>
 using Archives = std::vector<std::shared_ptr<Archive<UseVirtualDestructor>>>;
 
 //using ArchivesVariant = std::variant<std::unique_ptr<Archives<true>>, std::unique_ptr<Archives<false>>>;
-
 //class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
 //class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
 
@@ -285,13 +280,13 @@ private:
 	UInt64 get_skip_header(IInStream<UseVirtualDestructor> *stream, const ArcType &type);
 	static ArcEntries detect(Byte *buffer, UInt32 size, bool eof, const std::wstring &file_ext,
 			const ArcTypes &arc_types, IInStream<UseVirtualDestructor> *stream);
-	static void open(const OpenOptions &options, Archives<UseVirtualDestructor> &archives);
 
 public:
 	//using std::enable_shared_from_this<Archive<UseVirtualDestructor>>::shared_from_this;
+	//static unsigned max_check_size;
 	std::shared_ptr<Archive<UseVirtualDestructor>> parent;
-//	static unsigned max_check_size;
 	std::wstring arc_path;
+//	std::wstring arc_file;
 	FindData arc_info;
 	std::set<std::wstring> volume_names;
 	ArcChain arc_chain;
@@ -302,6 +297,7 @@ public:
 		return name.empty() ? arc_path : name;
 	}
 
+	static void open(const OpenOptions &options, Archives<UseVirtualDestructor> &archives, UInt32 pfindex = 0xFFFFFFFF);
 	static std::unique_ptr<Archives<UseVirtualDestructor>> open(const OpenOptions &options);
 
 	void close();
@@ -322,7 +318,7 @@ public:
 	// archive contents
 public:
 	UInt32 m_num_indices;
-	UInt32 m_parent_file_index;
+	UInt32 m_chain_file_index;
 	FileList file_list;
 	FileIndex file_list_index;
 	void make_index();
@@ -412,7 +408,7 @@ public:
 		  ex_stream(nullptr),
 		  ex_out_stream(nullptr),
 		  m_num_indices(0),
-		  m_parent_file_index(0xFFFFFFFF),
+		  m_chain_file_index(0xFFFFFFFF),
 		  m_level(0),
 		  m_solid(false),
 		  m_encrypted(false),
@@ -421,5 +417,8 @@ public:
 		  m_has_crc(false)
 	{
 		flags = error_flags = warning_flags = 0;
+	}
+	~Archive() {
+		//fprintf(stderr, "~Archive() Archive destruction..\n" );
 	}
 };

@@ -192,7 +192,7 @@ intptr_t editor(const std::wstring &file_name, const std::wstring &title, uint32
 void update_panel(HANDLE h_panel, const bool keep_selection, const bool reset_pos)
 {
 	g_far.Control(h_panel, FCTL_UPDATEPANEL, keep_selection ? 1 : 0, 0);
-	PanelRedrawInfo ri;
+	PanelRedrawInfo ri = {0, 0};
 	g_far.Control(h_panel, FCTL_REDRAWPANEL, 0, reset_pos ? (LONG_PTR)&ri : 0);
 }
 
@@ -418,7 +418,7 @@ Dialog::Dialog(const std::wstring &title, const GUID *guid, unsigned width, cons
 	  guid(guid),
 	  events_enabled(true)
 {
-	(void)guid;
+	(void)this->guid;
 	frame(title);
 }
 
@@ -926,7 +926,7 @@ bool get_color(PaletteColors color_id, UInt64 &color)
 void panel_go_to_part(HANDLE h_panel, const int pidx)
 {
 	//	PanelRedrawInfo panel_ri = { sizeof(PanelRedrawInfo) };
-	PanelRedrawInfo panel_ri;
+	PanelRedrawInfo panel_ri = {0, 0};
 	if (pidx >= 0) {
 		g_far.Control(h_panel, FCTL_UPDATEPANEL, 0, 0);
 		//		PanelInfo panel_info{ sizeof(PanelInfo) };
@@ -962,19 +962,22 @@ bool panel_go_to_file(HANDLE h_panel, const std::wstring &file_path)
 	std::wstring dir = extract_file_path(file_path);
 
 	// we don't want to call FCTL_SETPANELDIRECTORY unless needed to not lose previous selection
-	if (upcase(Far::get_panel_dir(h_panel)) != upcase(extract_file_path(file_path))) {
-		if (!g_far.Control(h_panel, FCTL_SETPANELDIR, 0, (LONG_PTR)dir.c_str()))
+	//	if (upcase(Far::get_panel_dir(h_panel)) != upcase(extract_file_path(file_path))) {
+	if (Far::get_panel_dir(h_panel) != extract_file_path(file_path)) {
+		if (!g_far.Control(h_panel, FCTL_SETPANELDIR, 0, (LONG_PTR)dir.c_str())) {
 			return false;
+		}
 	} else {
 		g_far.Control(h_panel, FCTL_UPDATEPANEL, 1, 0);
 	}
 
 	//  PanelInfo panel_info = {sizeof(PanelInfo)};
 	PanelInfo panel_info;
-	if (!g_far.Control(h_panel, FCTL_GETPANELINFO, 0, (LONG_PTR)&panel_info))
+	if (!g_far.Control(h_panel, FCTL_GETPANELINFO, 0, (LONG_PTR)&panel_info)) {
 		return false;
+	}
 
-	std::wstring file_name = upcase(extract_file_name(file_path));
+	std::wstring file_name = extract_file_name(file_path);
 	//  PanelRedrawInfo panel_ri = { sizeof(PanelRedrawInfo) };
 	PanelRedrawInfo panel_ri;
 	Buffer<unsigned char> buf(0x1000);
@@ -983,17 +986,51 @@ bool panel_go_to_file(HANDLE h_panel, const std::wstring &file_path)
 	for (i = 0; i < panel_info.ItemsNumber; i++) {
 		get_panel_item(h_panel, FCTL_GETPANELITEM, i, buf);
 		const PluginPanelItem *panel_item = reinterpret_cast<const PluginPanelItem *>(buf.data());
-		if (file_name == upcase(panel_item->FindData.lpwszFileName)) {
+		if (file_name == panel_item->FindData.lpwszFileName) {
 			panel_ri.CurrentItem = i;
 			break;
 		}
 	}
 
-	if (i == panel_info.ItemsNumber)
+	if (i == panel_info.ItemsNumber) {
 		return false;
+	}
 
-	if (!g_far.Control(h_panel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&panel_ri))
+	if (!g_far.Control(h_panel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&panel_ri)) {
 		return false;
+	}
+
+	return true;
+}
+
+bool panel_set_file(HANDLE h_panel, const std::wstring &file_name)
+{
+	//  PanelInfo panel_info = {sizeof(PanelInfo)};
+	PanelInfo panel_info;
+	if (!g_far.Control(h_panel, FCTL_GETPANELINFO, 0, (LONG_PTR)&panel_info)) {
+		return false;
+	}
+	//  PanelRedrawInfo panel_ri = { sizeof(PanelRedrawInfo) };
+	PanelRedrawInfo panel_ri;
+	Buffer<unsigned char> buf(0x1000);
+
+	int i;
+	for (i = 0; i < panel_info.ItemsNumber; i++) {
+		get_panel_item(h_panel, FCTL_GETPANELITEM, i, buf);
+		const PluginPanelItem *panel_item = reinterpret_cast<const PluginPanelItem *>(buf.data());
+		if (file_name == panel_item->FindData.lpwszFileName) {
+			panel_ri.CurrentItem = i;
+			break;
+		}
+	}
+
+	if (i == panel_info.ItemsNumber) {
+		return false;
+	}
+
+	if (!g_far.Control(h_panel, FCTL_REDRAWPANEL, 0, (LONG_PTR)&panel_ri)) {
+		return false;
+	}
 
 	return true;
 }

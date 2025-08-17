@@ -108,6 +108,8 @@ void attach_sfx_module(const std::wstring &file_path, const SfxOptions &sfx_opti
 		OpenOptions options;
 		options.arc_path = file_path;
 		options.detect = false;
+		options.open_ex = false;
+		options.nochain = true;
 		options.arc_types.push_back(c_7z);
 #if 1
 		if (ArcAPI::have_virt_destructor()) {

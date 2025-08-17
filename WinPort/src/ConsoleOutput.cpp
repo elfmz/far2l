@@ -408,14 +408,13 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 
 	switch (sm.kind) {
 		case SequenceModifier::SM_WRITE_STR: {
-			CharClasses cc(*sm.str);
-			if (cc.Prefix()) {
+			if (CharClasses::IsPrefix(*sm.str)) {
 				out = 0;
 				CI_SET_WCHAR(ch, *sm.str);
 				// surrogate pairs not used for UTF32, so dont need to do special tricks to keep it,
 				// so let following normal character to overwrite abnormal surrogate pair prefixx
 
-			} else if (_prev_pos.X >= 0 && cc.Suffix()) {
+			} else if (_prev_pos.X >= 0 && CharClasses::IsSuffix(*sm.str)) {
 				out = 0;
 				if (!_buf.Read(ch, _prev_pos)) {
 					return false;
@@ -435,7 +434,7 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 
 			} else {
 				CI_SET_WCHAR(ch, *sm.str);
-				if (cc.FullWidth()) {
+				if (CharClasses::IsFullWidth(*sm.str)) {
 //					fprintf(stderr, "IsCharFullWidth: %lc [0x%llx]\n",
 //						(WCHAR)ch.Char.UnicodeChar, (unsigned long long)ch.Char.UnicodeChar);
 					out = 2;

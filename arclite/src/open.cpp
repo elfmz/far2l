@@ -23,7 +23,7 @@
 #endif
 
 OpenOptions::OpenOptions()
-	: detect(false), open_ex(true), open_password_len(nullptr), recursive_panel(false), delete_on_close('\0')
+	: detect(false), open_ex(true), nochain(false), open_password_len(nullptr), recursive_panel(false), delete_on_close('\0')
 {}
 
 template<bool UseVirtualDestructor>
@@ -45,9 +45,8 @@ private:
 	std::condition_variable cv;
 
 public:
-    DataRelayStream(size_t initial_capacity = 32, size_t max_size = 64, size_t filesize = 0xFFFFFFFFFFFFFFFF)
-	:	buffer_size(initial_capacity << 20),
-		buffer_max_size(max_size << 20),
+    DataRelayStream(size_t max_size = 64, size_t filesize = 0xFFFFFFFFFFFFFFFF)
+	:	buffer_max_size(max_size << 20),
 		file_size(filesize) {
 
 		if (!filesize) { // unknown size ?
@@ -55,8 +54,11 @@ public:
 			buffer_size = buffer_max_size;
 		}
 		else {
+			if (file_size < 32768)
+				file_size = 32768;
+
 			uintptr_t pagesize = sysconf(_SC_PAGESIZE);
-			size_t aligned_size = (filesize + pagesize - 1) & ~(pagesize - 1);
+			size_t aligned_size = (file_size + pagesize - 1) & ~(pagesize - 1);
 
 			if (aligned_size > buffer_max_size)
 				buffer_size = buffer_max_size;
@@ -70,6 +72,7 @@ public:
 		if (!buffer) {
 			FAIL(E_OUTOFMEMORY);
 		}
+
 	}
 
 	~DataRelayStream() {
@@ -83,6 +86,8 @@ public:
 	UNKNOWN_IMPL_END
 
 	STDMETHODIMP Seek(Int64 offset, UInt32 seekOrigin, UInt64 *newPosition) noexcept override {
+		//fprintf(stderr, "DataRelayStream: Seek: offset %" PRId64 " from %X\n", offset, seekOrigin );
+
 		std::unique_lock<std::mutex> lock(mtx);
 		COM_ERROR_HANDLER_BEGIN
 
@@ -107,13 +112,12 @@ public:
 			}
 			case STREAM_SEEK_SET: {
 				if (offset < 0) {
-//					fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
+					//fprintf(stderr, "DataRelayStream: Error: neg offset %li\n", offset);
 					fprintf(stderr, "DataRelayStream: Error: neg offset %" PRId64 "\n", offset);
-
 					return E_INVALIDARG;
 				}
 				if ((UInt64)offset < write_pos && (write_pos - (UInt64)offset) > buffer_size ) {
-//					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %lli\n", (int64_t)offset);
+					//fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %lli\n", (int64_t)offset);
 					fprintf(stderr, "DataRelayStream: Error: offset out of buffer range %" PRId64 "\n", offset);
 					return E_INVALIDARG;
 				}
@@ -147,8 +151,16 @@ public:
 				break;
 			}
 			case STREAM_SEEK_END: {
+				Int64 new_offset = (file_size != 0xFFFFFFFFFFFFFFFF) ? (Int64)file_size + offset : file_size;
+
+				if (file_size < buffer_size) {
+					read_pos = new_offset;
+					data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+					cv.notify_all();
+				}
+
 				if (newPosition) {
-					*newPosition = file_size;
+					*newPosition = new_offset;
 				}
 				break;
 			}
@@ -159,6 +171,7 @@ public:
 	}
 
 	STDMETHODIMP Read(void *data, UInt32 size, UInt32 *processedSize) noexcept override {
+		//fprintf(stderr, "DataRelayStream: Read: %lu bytes from pos %" PRId64 "\n", size, read_pos );
 		std::unique_lock<std::mutex> lock(mtx);
 		COM_ERROR_HANDLER_BEGIN
 
@@ -209,7 +222,8 @@ public:
 	}
 
 	int32_t Peek(void *data, UInt32 size, UInt32 *processedSize) noexcept {
-//	int32_t Peek(void *data, UInt32 size, UInt32 *processedSize) {
+		//fprintf(stderr, "DataRelayStream: Peek: %lu bytes from pos %" PRId64 "\n", size, read_pos );
+
 		std::unique_lock<std::mutex> lock(mtx);
 		COM_ERROR_HANDLER_BEGIN
 
@@ -250,6 +264,12 @@ public:
 	}
 
 	STDMETHODIMP Write(const void *data, UInt32 size, UInt32 *processedSize) noexcept override {
+		//fprintf(stderr, "DataRelayStream: Write: size %lu, read_pos %lu \n", size, read_pos );
+
+		if (buffer_size < size) {
+			size = buffer_size;
+		}
+
 		std::unique_lock<std::mutex> lock(mtx);
 		COM_ERROR_HANDLER_BEGIN
 
@@ -977,6 +997,36 @@ static void prioritize(std::list<ArcEntry> &arc_entries, const ArcType &first, c
 	}
 }
 
+static void prioritizeALL(std::list<ArcEntry>& arc_entries, const ArcType& to_move, const ArcType& before_this) {
+	std::vector<ArcEntry> entries_to_move;
+
+	auto it = arc_entries.begin();
+	while (it != arc_entries.end()) {
+		if (it->type == to_move) {
+			entries_to_move.push_back(std::move(*it));
+			it = arc_entries.erase(it);
+		} else {
+			++it;
+		}
+	}
+
+	if (entries_to_move.empty()) {
+		return;
+	}
+
+	auto insert_pos = arc_entries.end();
+	for (auto it2 = arc_entries.begin(); it2 != arc_entries.end(); ++it2) {
+		if (it2->type == before_this) {
+			insert_pos = it2;
+			break;
+		}
+	}
+
+	for (auto rit = entries_to_move.rbegin(); rit != entries_to_move.rend(); ++rit) {
+		arc_entries.insert(insert_pos, std::move(*rit));
+	}
+}
+
 //??? filter multi-volume .zip archives to avoid wrong opening.
 //??? if someone can find better solution - welcome...
 //
@@ -1094,6 +1144,8 @@ ArcEntries Archive<UseVirtualDestructor>::detect(Byte *buffer, UInt32 size, bool
 	// special case: Dmg must go before HFS
 	prioritize(arc_entries, c_dmg, c_hfs);
 
+	prioritizeALL(arc_entries, c_sqfs, c_zstd);
+
 	return arc_entries;
 }
 
@@ -1147,9 +1199,8 @@ UInt64 Archive<UseVirtualDestructor>::get_skip_header(IInStream<UseVirtualDestru
 }
 
 template<bool UseVirtualDestructor>
-void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<UseVirtualDestructor> &archives)
+void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<UseVirtualDestructor> &archives, UInt32 entry_index)
 {
-	bool bExStream = false;
 	size_t parent_idx = -1;
 	if (!archives.empty())
 		parent_idx = archives.size() - 1;
@@ -1163,63 +1214,73 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		stream = stream_impl;
 		arc_info = stream_impl->get_info();
 	} else {
-		if (parent_idx > 0 && archives[parent_idx]->flags & 1) {
-			return;
-		}
-
-		UInt32 main_file_index = 0, num_indices = 0;
-		bool bMainFile = archives[parent_idx]->get_main_file(main_file_index);
-		bool bInArcStream = archives[parent_idx]->get_stream(main_file_index, stream.ref());
-		archives[parent_idx]->in_arc->GetNumberOfItems(&num_indices);
-
-		if (!num_indices) {
+		if (parent_idx > 0 && archives[parent_idx]->flags == 2) {
+			//fprintf(stderr,"Archive::open(): > on Sequential Stream(partial seek) - STOP\n");
 			return;
 		}
 
 		const ArcType &pArcType = archives[parent_idx]->arc_chain.back().type;
-
-		if (!bMainFile && !ArcAPI::is_single_file_format(pArcType)) {
-			if (num_indices > 1) {
-				return;
+		UInt32 main_file_index = 0, num_indices = 0;
+		archives[parent_idx]->in_arc->GetNumberOfItems(&num_indices);
+		if (!num_indices) {
+			return;
+		}
+		if (entry_index >= num_indices) {
+			entry_index = 0xFFFFFFFF;
+		}
+		if (archives[parent_idx]->get_main_file(main_file_index)) {
+			if (entry_index == 0xFFFFFFFF) {
+				entry_index = main_file_index;
 			}
 		}
+		if (entry_index == 0xFFFFFFFF && !ArcAPI::is_single_file_format(pArcType)) {
+#if 0
+			if (num_indices > 1) {
+				//fprintf(stderr,"Archive::open(): no entry_index & nultifile format - STOP!\n");
+				return;
+			}
+#else
+			return;
+#endif
+		}
+		if (entry_index == 0xFFFFFFFF) {
+			entry_index = 0;
+		}
+
+		bool bInArcStream = archives[parent_idx]->get_stream(entry_index, stream.ref());
+		//archives[parent_idx]->m_chain_file_index = entry_index;
 
 		if (!bInArcStream) {
-
-			if (!options.open_ex) return;
-
 			uint32_t open_index = 0;
 
-			if (bMainFile)
-				open_index = main_file_index;
-
-			if (open_index >= num_indices) // not exist
-				return;
-
-			UInt32 indices[2] = { open_index, 0 };
-
-			FindData ef = archives[parent_idx]->get_file_info(open_index);
+			UInt32 indices[2] = { entry_index, 0 };
+			FindData ef = archives[parent_idx]->get_file_info(entry_index);
 			if (ef.is_dir()) return;
+
 			size_t fsize = ef.size();
+			if (pArcType == c_gzip) { // Do not rely on gzip size data.
+				fsize = 0;
+			}
 
+			bool exFullSize = (fsize && fsize <= ((size_t)g_options.max_arc_cache_size) << 20);
 			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
-						(size_t)g_options.relay_buffer_size, (size_t)g_options.max_arc_cache_size, fsize));
+						(size_t)g_options.max_arc_cache_size, fsize));
 
-//			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(4, 8, fsize));
-
+			//ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(4, 8, fsize));
 			ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new SimpleRelExtractor<UseVirtualDestructor>(archives[parent_idx], mem_stream, fsize));
 
 			const auto archive = std::make_shared<Archive<UseVirtualDestructor>>();
-
 			if (options.open_password_len && *options.open_password_len == -'A')
 				archive->m_open_password = *options.open_password_len;
 
+			//		archive->flags = 2 + bFullSize;
 			archive->arc_path = options.arc_path;
+//			archive->arc_path = extract_file_name(ef.cFileName);
 			archive->arc_info = arc_info;
 			archive->m_password = options.password;
-			if (parent_idx != (size_t)-1)
-				archive->volume_names = archives[parent_idx]->volume_names;
-
+			archives[parent_idx]->m_chain_file_index = open_index;
+			archive->parent = archives[parent_idx];
+			archive->volume_names = archives[parent_idx]->volume_names;
 			stream = mem_stream;
 
 			std::promise<int> promise;
@@ -1228,93 +1289,110 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			std::future<int> future2 = promise2.get_future();
 
 			std::thread extract_thread([&]() {
-
 				int errc = archives[parent_idx]->in_arc->Extract(indices, 1, 0, extractor);
 				promise.set_value(errc);
 			});
 
-			ArcEntry arc_entry(c_tar, 0, 2);
+			if (!exFullSize) {
 
-			std::thread open_thread([&]() {
+				ArcEntry arc_entry(c_tar, 0, 2);
+				std::thread open_thread([&]() {
 
-				uint8_t buffer[8192];
-				UInt32 size = 0;
-				int32_t hr = mem_stream->Peek(buffer, 8192, &size);
-				if (!size || hr != S_OK) {
-					promise2.set_value(hr);
-					return;
-				}
+					uint8_t buffer[32768];
+					UInt32 size = 0;
+					int32_t hr = mem_stream->Peek(buffer, sizeof(buffer), &size);
+					if (!size || hr != S_OK) {
+						promise2.set_value(hr);
+						return;
+					}
 
-				ArcTypes e_arc_types = {c_tar, c_xar, c_ar, c_cpio};
-				ArcEntries arc_entries = detect(buffer, size, true,
-													extract_file_ext(ef.cFileName), e_arc_types, stream);
-				if (arc_entries.empty()) {
-					promise2.set_value(hr);
-					return;
-				}
+					ArcTypes e_arc_types = {c_tar, c_xar, c_ar, c_cpio};
+					ArcEntries arc_entries = detect(buffer, size, true,
+												extract_file_ext(ef.cFileName), e_arc_types, stream);
+					if (arc_entries.empty()) {
+						promise2.set_value(hr);
+						return;
+					}
 
-				arc_entry = arc_entries.front();
-				ArcAPI::create_in_archive(arc_entry.type, (void **)archive->in_arc.ref());
-				ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(archive, false));
+					arc_entry = arc_entries.front();
+					ArcAPI::create_in_archive(arc_entry.type, (void **)archive->in_arc.ref());
+					ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(archive, false));
+					const UInt64 max_check_start_position = 0;
+					int errc = archive->in_arc->Open(stream, &max_check_start_position, opener);
+					promise2.set_value(errc);
+				});
 
-				const UInt64 max_check_start_position = 0;
-				int errc = archive->in_arc->Open(stream, &max_check_start_position, opener);
-				promise2.set_value(errc);
+				bool thread1_done = false;
+				bool thread2_done = false;
+				int errc1;// = future.get(); // extract
+				int errc2;// = future2.get(); // open
 
-			});
+				while (!thread1_done || !thread2_done) {
+					Far::g_fsf.DispatchInterThreadCalls();
 
-			bool thread1_done = false;
-			bool thread2_done = false;
-			int errc1;// = future.get(); // extract
-			int errc2;// = future2.get(); // open
-
-			while (!thread1_done || !thread2_done) {
-				Far::g_fsf.DispatchInterThreadCalls();
-
-				if (!thread1_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-					thread1_done = true;
-					mem_stream->FinishWriting();
-					errc1 = future.get();
-				}
-
-				if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-					errc2 = future2.get(); // open
-					thread2_done = true;
-					HRESULT res = errc2;
-					if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
-						res = S_FALSE;
-					if (FAILED(res))
+					if (!thread1_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) { // extract
+						thread1_done = true;
 						mem_stream->FinishWriting();
-					else
-						mem_stream->FinishReading();
+						errc1 = future.get();
+					}
+
+					if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready) { // open
+						errc2 = future2.get(); // open
+						thread2_done = true;
+						HRESULT res = errc2;
+						if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
+							res = S_FALSE;
+						if (FAILED(res))
+							mem_stream->FinishWriting();
+						else
+							mem_stream->FinishReading();
+					}
+				    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				}
 
-			    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				open_thread.join();
+				extract_thread.join();
+
+				HRESULT res = errc2;
+				if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
+					res = S_FALSE;
+
+				//fprintf(stderr,"ex res = %i S_OK = %i\n", res, S_OK );
+				COM_ERROR_CHECK(res);
+				//fprintf(stderr,"ex errc1 = %i S_OK = %i archive->in_arc = %p\n", errc1, S_OK, (void *)archive->in_arc );
+				(void)errc1;
+				bool opened = (res == S_OK);
+
+				//if (opened) {
+				if (opened && archive->is_open()) {
+				//if (archive->is_open()) {
+					bool bFullSize = mem_stream->GetFullSize();
+					arc_entry.flags = 2 + bFullSize;
+					archive->ex_stream = stream;
+					archive->ex_out_stream = mem_stream;
+					archive->flags = 2 + bFullSize;
+					archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(), archives[parent_idx]->arc_chain.end());
+					archive->arc_chain.push_back(arc_entry);
+					archives.push_back(archive);
+				}
+				return;
+			} // !exFullSize
+			else {
+				bool thread1_done = false;
+				int errc1;// = future.get(); // extract
+				while (!thread1_done) {
+					Far::g_fsf.DispatchInterThreadCalls();
+					if (!thread1_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) { // extract
+						thread1_done = true;
+						mem_stream->FinishWriting();
+						errc1 = future.get();
+					}
+				    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+				}
+				extract_thread.join();
+				HRESULT res = errc1;
+				COM_ERROR_CHECK(res);
 			}
-
-			open_thread.join();
-			extract_thread.join();
-
-			HRESULT res = errc2;
-			if (res == HRESULT_FROM_WIN32(ERROR_INVALID_DATA))	  // unfriendly eDecode
-				res = S_FALSE;
-			COM_ERROR_CHECK(res);
-			(void)errc1;
-			bool opened = (res == S_OK);
-
-			if (opened) {
-				bool bFullSize = mem_stream->GetFullSize();
-				arc_entry.flags = 2 + bFullSize;
-				archive->ex_stream = stream;
-				archive->ex_out_stream = mem_stream;
-				archive->flags = 2 + bFullSize;
-				archive->parent = archives[parent_idx];
-				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),
-				archives[parent_idx]->arc_chain.end());
-				archive->arc_chain.push_back(arc_entry);
-				archives.push_back(archive);
-			}
-			return;
 		}
 	}
 
@@ -1326,32 +1404,67 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		stream_impl->CacheHeader(buffer.data(), size);
 	}
 
-//	fprintf(stderr,"size = %lu ArchiveGlobals::max_check_size = %lu\n", size, ArchiveGlobals::max_check_size);
-
 	UInt64 skip_header = 0;
 	bool first_open = true;
 	ArcEntries arc_entries = detect(buffer.data(), size, size < ArchiveGlobals::max_check_size,
 			extract_file_ext(arc_info.cFileName), options.arc_types, stream);
 
-//	fprintf(stderr,"arc_entries.size = %lu\n", arc_entries.size());
+#if 0
+    fprintf(stderr, "Total arc_entries list: %lu\n", static_cast<unsigned long>(arc_entries.size()));
+    unsigned int entry_index = 0;
+    for (const ArcEntry& entry : arc_entries) {
+        entry_index++;
+        const auto& format_info = ArcAPI::formats().at(entry.type);
+        fprintf(stderr, "  [%u] ArcEntry:\n", entry_index);
+        fprintf(stderr, "      Type (GUID): "); // GUID
+        for (size_t i = 0; i < entry.type.size(); ++i) {
+             fprintf(stderr, "%02X", static_cast<unsigned char>(entry.type[i]));
+        }
+        fprintf(stderr, "\n");
+        fprintf(stderr, "      Signature Position: %zu\n", entry.sig_pos);
+        fprintf(stderr, "      Flags: %zu\n", entry.flags);
+
+        fprintf(stderr, "      Format Name: %ls\n", format_info.name.c_str());
+        fprintf(stderr, "      Default Extension: %ls\n", format_info.default_extension().c_str());
+
+        if (!format_info.Signatures.empty()) {
+            fprintf(stderr, "      Signatures:\n");
+            for(const auto& sig_data : format_info.Signatures) {
+//                fprintf(stderr, "        - Offset: %d, Signature: ", sig_data.offset);
+                // sig hex
+                for (size_t i = 0; i < sig_data.size(); ++i) {
+                    fprintf(stderr, "%02X ", static_cast<unsigned char>(sig_data[i]));
+                }
+                fprintf(stderr, "\n");
+            }
+        } else {
+             fprintf(stderr, "      Signatures: (none listed)\n");
+        }
+        fprintf(stderr, "  --------------------------------------------------------\n");
+    }
+    fprintf(stderr, "========== End of arc_entries list ==========\n");
+#endif
 
 	for (ArcEntries::const_iterator arc_entry = arc_entries.cbegin(); arc_entry != arc_entries.cend();
 			++arc_entry) {
+
 		const auto archive = std::make_shared<Archive>();
 		if (options.open_password_len && *options.open_password_len == -'A')
 			archive->m_open_password = *options.open_password_len;
 		archive->arc_path = options.arc_path;
 		archive->arc_info = arc_info;
 		archive->m_password = options.password;
-		if (parent_idx != (size_t)-1)
+		if (parent_idx != (size_t)-1) {
 			archive->volume_names = archives[parent_idx]->volume_names;
+		}
 
-		const auto &format = ArcAPI::formats().at(arc_entry->type);
+		const ArcFormat &format = ArcAPI::formats().at(arc_entry->type);
 
 		bool opened = false, have_tail = false;
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
 
-//		fprintf(stderr,"arc_entry->sig_pos = %zu \n", arc_entry->sig_pos);
+		//fprintf(stderr,"arc_entry->sig_pos = %zu %ls\n", arc_entry->sig_pos, ArcAPI::formats().at(arc_entry->type).default_extension().c_str());
+		//fprintf(stderr,"format.name = %ls\n", format.name.c_str());
 
 		if (!arc_entry->sig_pos) {
 			opened = archive->open(stream, arc_entry->type);
@@ -1381,18 +1494,22 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		}
 
 		if (opened) {
-
 			if (parent_idx != (size_t)-1) {
+				archives[parent_idx]->m_chain_file_index = entry_index;
 				archive->parent = archives[parent_idx];
+//				FindData ef = archives[parent_idx]->get_file_info(entry_index);
+//				archive->arc_path = extract_file_name(ef.cFileName);
+				archive->arc_path = options.arc_path;
 				archive->arc_chain.assign(archives[parent_idx]->arc_chain.begin(),
 						archives[parent_idx]->arc_chain.end());
 			}
 			archive->arc_chain.push_back(*arc_entry);
-
 			archives.push_back(archive);
-			open(options, archives);
 
-			if ((!options.detect && !have_tail) || bExStream) {
+			if (!options.nochain) {
+				open(options, archives);
+			}
+			if (!options.detect && !have_tail) {
 				break;
 			}
 
@@ -1401,8 +1518,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		first_open = false;
 	}
 
-//	fprintf(stderr,"========== archives size = %lu\n", archives.size());
-
+	//fprintf(stderr,"========== archives size = %lu\n", archives.size());
 	if (stream_impl)
 		stream_impl->CacheHeader(nullptr, 0);
 }
@@ -1454,6 +1570,7 @@ void Archive<UseVirtualDestructor>::reopen()
 template<bool UseVirtualDestructor>
 void Archive<UseVirtualDestructor>::close()
 {
+	//fprintf(stderr,"Archive<UseVirtualDestructor>::close()\n");
 	base_stream = nullptr;
 	if (in_arc) {
 		in_arc->Close();

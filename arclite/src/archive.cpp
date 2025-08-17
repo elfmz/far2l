@@ -35,6 +35,7 @@ DEFINE_ARC_ID(zip, "\x01")
 DEFINE_ARC_ID(bzip2, "\x02")
 DEFINE_ARC_ID(gzip, "\xEF")
 DEFINE_ARC_ID(xz, "\x0C")
+
 DEFINE_ARC_ID(iso, "\xE7")
 DEFINE_ARC_ID(udf, "\xE0")
 DEFINE_ARC_ID(rar, "\x03")
@@ -48,13 +49,14 @@ DEFINE_ARC_ID(cpio, "\xED")
 DEFINE_ARC_ID(SWFc, "\xD8")
 DEFINE_ARC_ID(dmg, "\xE4")
 DEFINE_ARC_ID(hfs, "\xE3")	  // HFS
+DEFINE_ARC_ID(zstd, "\x0E")
 
 DEFINE_ARC_ID(fat, "\xDA")	   // FAT
 DEFINE_ARC_ID(ntfs, "\xD9")	   // NTFS
 DEFINE_ARC_ID(ext4, "\xC7")	   // Ext[234]
 DEFINE_ARC_ID(apfs, "\xC3")	   // APFS
-// DEFINE_ARC_ID(uefi, "\xD1") // UEFi
-// DEFINE_ARC_ID(sqfs, "\xD2") // SquashFS
+DEFINE_ARC_ID(uefi, "\xD1") // UEFi
+DEFINE_ARC_ID(sqfs, "\xD2") // SquashFS
 
 DEFINE_ARC_ID(mbr, "\xDB")	  // MBR
 DEFINE_ARC_ID(gpt, "\xCB")	  // GPT
@@ -1317,25 +1319,17 @@ bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 	if (file_list.empty())
 		make_index();
 
-	if (rArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 1024) {
-		bool debbin = false;
-		UInt32 iindex = 0xFFFFFFFF;
+	if (rArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 32) {
+//		UInt32 iindex = 0xFFFFFFFF;
 	    for (UInt32 ii = 0; ii < num_indices; ++ii) {
 			if (file_list[ii].is_dir) continue;
 			std::wstring _name = file_list[ii].name;
 			removeExtension(_name);
 			if (!StrCmp(_name.c_str(), L"data.tar")) {
-				iindex = ii;
-				if (debbin) break;
+				index = ii;
+				return true;
+				break;
 			}
-			if (!StrCmp(file_list[ii].name.c_str(), L"debian-binary")) {
-				debbin = true;
-				if (iindex != 0xFFFFFFFF) break;
-			}
-		}
-		if (iindex != 0xFFFFFFFF && debbin) {
-			index = iindex;
-			return true;
 		}
 	}
 

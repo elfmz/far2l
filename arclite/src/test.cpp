@@ -173,7 +173,28 @@ void Archive<UseVirtualDestructor>::test(UInt32 src_dir_index, const std::vector
 	std::sort(indices.begin(), indices.end());
 
 	ComObject<IArchiveExtractCallback<UseVirtualDestructor>> tester(new ArchiveTester<UseVirtualDestructor>(src_dir_index, this->shared_from_this()));
-	COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 1, tester));
+
+	std::promise<int> promise;
+	std::future<int> future = promise.get_future();
+	std::thread test_thread([this, &indices, &tester, &promise]() {
+		int errc = in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 1, tester);
+		promise.set_value(errc);
+	});
+
+	bool test_thread_done = false;
+	while (!test_thread_done) {
+		Far::g_fsf.DispatchInterThreadCalls();
+
+		if (!test_thread_done && future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+			test_thread_done = true;
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+	test_thread.join();
+	int errc = future.get();
+	COM_ERROR_CHECK(errc);
+//	COM_ERROR_CHECK(in_arc->Extract(indices.data(), static_cast<UInt32>(indices.size()), 1, tester));
 }
 
 template class Archive<true>;

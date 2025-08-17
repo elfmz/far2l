@@ -27,7 +27,6 @@ static const wchar_t ext_EXT4[] = L".ext4";
 static const wchar_t ext_EXTn[] = L".ext";
 static const wchar_t ext_HFS[] = L".hfs";
 static const wchar_t ext_APFS[] = L".apfs";
-
 static const wchar_t ext_TAR[] = L".tar";
 
 template<bool UseVirtualDestructor>
@@ -36,7 +35,6 @@ class Plugin
 private:
 	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
 
-	std::wstring current_dir;
 	std::wstring extract_dir;
 	std::wstring created_dir;
 	std::wstring host_file;
@@ -48,17 +46,37 @@ private:
 	bool need_close_panel;
 
 public:
+	std::wstring current_dir;
 	char part_mode{'\0'};	 // '\0' 'm'br, 'g'pt
 	int part_idx{-1};		 // -1 or partition index
 	std::unique_ptr<Plugin<UseVirtualDestructor>> partition;
+	std::unique_ptr<Plugin<UseVirtualDestructor>> child;
+    Plugin<UseVirtualDestructor>* parent;
+
+    Plugin<UseVirtualDestructor>* get_tail() {
+        Plugin<UseVirtualDestructor>* current = this;
+        while (current->child) {
+            current = current->child.get();
+        }
+        return current;
+    }
+	Archive<UseVirtualDestructor> *get_archive() {return archive.get();}
 
 	bool recursive_panel{false};
 	char del_on_close{'\0'};
 
 public:
 	Plugin(bool real_file = true)
-		: archive(new Archive<UseVirtualDestructor>()), real_archive_file(real_file), need_close_panel(false)
-	{}
+		: archive(new Archive<UseVirtualDestructor>()), real_archive_file(real_file), need_close_panel(false),
+      child(nullptr),
+      parent(nullptr)
+	{
+		//fprintf(stderr, "Plugin() CONSTRUCT\n" );
+	}
+
+	~Plugin() {
+		//fprintf(stderr, "~Plugin() DESTROY\n" );
+	}
 
 	static Plugin *open(const Archives<UseVirtualDestructor> &archives, bool real_file = true)
 	{
@@ -81,6 +99,7 @@ public:
 		std::unique_ptr<Plugin<UseVirtualDestructor>> plugin(new Plugin<UseVirtualDestructor>(real_file));
 
 		plugin->archive = archives[format_idx];
+
 		if (!plugin->archive->arc_chain.empty()) {
 			const auto &type = plugin->archive->arc_chain.back().type;
 			if (type == c_mbr)
@@ -214,6 +233,95 @@ struct PanelItem
 };
 ***/
 
+	bool level_up(void)
+	{
+		if (!archive->is_open())
+			FAIL(E_ABORT);
+
+		if (archive->arc_chain.size() < 2) {
+			return false;
+		}
+
+		archive->close();
+		archive = archive->parent;
+		set_dir(L"/");
+
+		if (archive->m_chain_file_index != 0xFFFFFFFF) {
+			const std::wstring &cfpath = archive->get_path(archive->m_chain_file_index);
+			set_dir(extract_file_path(cfpath));
+			Far::update_panel(PANEL_ACTIVE, false, true);
+			Far::panel_set_file(PANEL_ACTIVE, extract_file_name(cfpath));
+		}
+
+		return true;
+	}
+
+	bool level_down(const Far::PanelItem &i)
+	{
+		if (!archive->is_open())
+			FAIL(E_ABORT);
+
+		const uint32_t index = static_cast<UInt32>(reinterpret_cast<uintptr_t>(i.user_data));
+
+		if (i.file_name == L"..")
+			return false;
+		if (index >= archive->file_list.size()) { // not exist
+			return false;
+		}
+
+		const ArcFileInfo& file_info = archive->file_list[index];
+		if (file_info.is_dir) { // Directory
+			return false;
+		}
+
+		//auto archives = std::make_unique<Archives<UseVirtualDestructor>>();
+		std::unique_ptr<Archives<UseVirtualDestructor>> archives(new Archives<UseVirtualDestructor>());
+		archives->push_back(this->archive);
+
+		const auto error_log = std::make_shared<ErrorLog>();
+
+		try {
+			OpenOptions open_options;
+//			open_options.arc_path = this->archive->arc_path;
+			open_options.arc_path = i.file_name;
+			open_options.detect = false;
+			open_options.open_ex = true;
+			open_options.nochain = true;
+			open_options.password = this->archive->m_password;
+			open_options.arc_types = ArcAPI::formats().get_arc_types();
+
+//				archive->arc_path = extract_file_name(ef.cFileName);
+
+			Archive<UseVirtualDestructor>::open(open_options, *archives, index);
+//			if (archives->empty())
+//				throw Error(Far::get_msg(MSG_ERROR_NOT_ARCHIVE), arc_list[i], __FILE__, __LINE__);
+
+		} catch (const Error &error) {
+//			if (error.code == E_ABORT)
+//				throw;
+//			error_log->push_back(error);
+			return false;
+		}
+
+		if (archives->size() > 1) {
+			std::shared_ptr<Archive<UseVirtualDestructor>> new_archive = archives->back();
+
+		std::unique_ptr<Plugin<UseVirtualDestructor>> new_plugin(new Plugin<UseVirtualDestructor>(false));
+		new_plugin->archive = new_archive;
+		new_plugin->parent = this;
+		this->child = std::move(new_plugin);
+
+		Far::update_panel(PANEL_ACTIVE, false, true);
+        return true;
+		} else {
+
+		/// ERR
+		return false;
+		}
+
+		return true;
+	}
+
 	bool set_partition(const Far::PanelItem &i)
 	{
 		if (!part_mode || !current_dir.empty()) {
@@ -344,6 +452,7 @@ struct PanelItem
 	{
 		if (!archive->is_open())
 			FAIL(E_ABORT);
+
 		std::wstring new_dir;
 		if (dir.empty() || dir == L"/")
 			new_dir.assign(dir);
@@ -395,8 +504,9 @@ struct PanelItem
 
 	void list(PluginPanelItem **panel_items, int *items_number)
 	{
-		if (!archive->is_open())
+		if (!archive->is_open()) {
 			FAIL(E_ABORT);
+		}
 
 		if (part_mode && !current_dir.empty()) {	// partition sub panel
 			if (partition)
@@ -695,6 +805,7 @@ struct PanelItem
 				open_options.arc_path = arc_list[i];
 				open_options.detect = false;
 				open_options.open_ex = true;
+				open_options.nochain = false;
 				open_options.password = options.password;
 				open_options.arc_types = ArcAPI::formats().get_arc_types();
 				archives = Archive<UseVirtualDestructor>::open(open_options);
@@ -798,7 +909,8 @@ struct PanelItem
 		OpenOptions open_options;
 		open_options.arc_path = arch_name;
 		open_options.detect = false;
-		open_options.open_ex = false; /// !!!!!!!!!!!!!!!!!!!!!
+		open_options.open_ex = false;
+		open_options.nochain = true;
 		open_options.password = options.password;
 		open_options.arc_types = ArcAPI::formats().get_arc_types();
 		archives = Archive<UseVirtualDestructor>::open(open_options);
@@ -835,6 +947,7 @@ struct PanelItem
 		open_options.arc_path = arch_name;
 		open_options.detect = false;
 		open_options.open_ex = true;
+		open_options.nochain = false;
 		open_options.password = options.password;
 		open_options.arc_types = ArcAPI::formats().get_arc_types();
 		archives = Archive<UseVirtualDestructor>::open(open_options);
@@ -943,6 +1056,7 @@ struct PanelItem
 				open_options.arc_path = arc_list[i];
 				open_options.detect = false;
 				open_options.open_ex = false; // !
+				open_options.nochain = true;
 				open_options.arc_types = ArcAPI::formats().get_arc_types();
 				archives = Archive<UseVirtualDestructor>::open(open_options);
 				if (archives->empty())
@@ -1339,7 +1453,8 @@ struct PanelItem
 			OpenOptions open_options;
 			open_options.arc_path = options.arc_path;
 			open_options.detect = false;
-			open_options.open_ex = false; // !!!
+			open_options.open_ex = false;
+			open_options.nochain = true;
 			open_options.password = options.password;
 			open_options.arc_types = ArcAPI::formats().get_arc_types();
 			const auto archives = Archive<UseVirtualDestructor>::open(open_options);
@@ -1491,6 +1606,12 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const PluginStartupInfo *info)
 	if (!g_options.load())
 		g_options.save();
 
+	if (g_options.max_arc_cache_size < 4)
+		g_options.max_arc_cache_size = 4;
+
+//	if (g_options.max_arc_cache_size > 1024)
+//		g_options.max_arc_cache_size = 1024;
+
 	g_profiles.load();
 
 	g_plugin_prefix = g_options.plugin_prefix;
@@ -1521,7 +1642,7 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 {
 	GUARD(g_detect_next_time = triUndef);
 
-//	fprintf(stderr, "**********Analyse open ********************\n");
+	fprintf(stderr, "**********Analyse open ********************\n");
 
 	OpenOptions options;
 	options.arc_path = info->FileName;
@@ -1529,13 +1650,14 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 
 	options.arc_types = ArcAPI::formats().get_arc_types();
 	options.open_ex = !pgdn;
+	options.nochain = false;
 
 	if (g_detect_next_time == triUndef) {
 
 		options.detect = false;
 		if (!g_options.handle_commands)
 			FAIL(E_INVALIDARG);
-#if 1
+
 		if (!pgdn || g_options.pgdn_masks) {
 			if (g_options.use_include_masks
 					&& !Far::match_masks(extract_file_name(info->FileName), g_options.include_masks))
@@ -1576,7 +1698,6 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 			if (options.arc_types.empty())
 				FAIL(E_INVALIDARG);
 		}
-#endif
 
 	} else {
 		options.detect = g_detect_next_time == triTrue;
@@ -1613,7 +1734,7 @@ SHAREDSYMBOL HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 	// HANDLE WINAPI AnalyseW(const AnalyseData* info) {
 	// CriticalSectionLock lock(GetExportSync());
 
-//	fprintf(stderr, " +++ AnalyseW( ) +++\n");
+	fprintf(stderr, " +++ AnalyseW( ) +++\n");
 //	fprintf(stderr, "==== TREAD [%ld] \n", pthread_self());
 
 //	fprintf(stderr, " +++ info->StructSize = %lu\n", info->StructSize);
@@ -1661,7 +1782,7 @@ SHAREDSYMBOL HANDLE WINAPI AnalyseW(const AnalyseInfo *info)
 
 SHAREDSYMBOL void WINAPI CloseAnalyseW(const CloseAnalyseInfo *info)
 {
-//	fprintf(stderr, " +++ CloseAnalyseW +++\n");
+	fprintf(stderr, " +++ CloseAnalyseW +++\n");
 	// CriticalSectionLock lock(GetExportSync());
 	if (info->Handle != INVALID_HANDLE_VALUE) {
 		if (ArcAPI::have_virt_destructor())
@@ -1678,7 +1799,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Data)
 	bool delayed_analyse_open = false;
 	FAR_ERROR_HANDLER_BEGIN
 
-//	fprintf(stderr, "**********OpenPluginW ********************\n");
+	fprintf(stderr, "**********OpenPluginW ********************\n");
 
 	if (!g_options.plugin_enabled)
 		return INVALID_HANDLE_VALUE;
@@ -1959,16 +2080,16 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Data)
 SHAREDSYMBOL void WINAPI ClosePluginW(HANDLE hPlugin)
 {
 	// CriticalSectionLock lock(GetExportSync());
-//	fprintf(stderr, " +++ ClosePluginW +++\n");
+	fprintf(stderr, " +++ ClosePluginW +++\n");
 	FAR_ERROR_HANDLER_BEGIN
 	if (ArcAPI::have_virt_destructor()) {
 		Plugin<true> *plugin = reinterpret_cast<Plugin<true> *>(hPlugin);
-		IGNORE_ERRORS(plugin->close());
+		IGNORE_ERRORS(plugin->get_tail()->close());
 		delete plugin;
 	}
 	else {
 		Plugin<false> *plugin = reinterpret_cast<Plugin<false> *>(hPlugin);
-		IGNORE_ERRORS(plugin->close());
+		IGNORE_ERRORS(plugin->get_tail()->close());
 		delete plugin;
 	}
 	FAR_ERROR_HANDLER_END(return, return, true)
@@ -1981,9 +2102,9 @@ SHAREDSYMBOL void WINAPI GetOpenPluginInfoW(HANDLE hPlugin, struct OpenPluginInf
 	FAR_ERROR_HANDLER_BEGIN
 
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->info(Info);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->info(Info);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->info(Info);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->info(Info);
 
 	FAR_ERROR_HANDLER_END(return, return, false)
 }
@@ -1994,12 +2115,12 @@ SHAREDSYMBOL int WINAPI SetDirectoryW(HANDLE hPlugin, const wchar_t *Dir, int Op
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
 
-//	fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %ls )         >>>>>>>>>>>\n", Dir );
+	//fprintf(stderr, " +++ <<<<<<<<<<< SetDirectoryW( %ls ) OpMode = %i        >>>>>>>>>>>\n", Dir,  OpMode);
 
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->set_dir(Dir);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->set_dir(Dir);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->set_dir(Dir);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->set_dir(Dir);
 
 	return TRUE;
 	FAR_ERROR_HANDLER_END(return FALSE, return FALSE, (OpMode & (OPM_SILENT | OPM_FIND)) != 0)
@@ -2009,11 +2130,13 @@ SHAREDSYMBOL int WINAPI GetFindDataW(HANDLE hPlugin, struct PluginPanelItem **pP
 {
 	// CriticalSectionLock lock(GetExportSync());
 
+//	fprintf(stderr, "**********GetFindDataW  ********************\n");
+
 	FAR_ERROR_HANDLER_BEGIN
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->list(pPanelItem, pItemsNumber);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->list(pPanelItem, pItemsNumber);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->list(pPanelItem, pItemsNumber);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->list(pPanelItem, pItemsNumber);
 	return TRUE;
 	FAR_ERROR_HANDLER_END(return FALSE, return FALSE, (OpMode & (OPM_SILENT | OPM_FIND)) != 0)
 }
@@ -2034,9 +2157,9 @@ SHAREDSYMBOL int WINAPI GetFilesW(HANDLE hPlugin, struct PluginPanelItem *PanelI
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->get_files(PanelItem, ItemsNumber, Move, DestPath, OpMode);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->get_files(PanelItem, ItemsNumber, Move, DestPath, OpMode);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->get_files(PanelItem, ItemsNumber, Move, DestPath, OpMode);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->get_files(PanelItem, ItemsNumber, Move, DestPath, OpMode);
 
 	return 1;
 	FAR_ERROR_HANDLER_END(return 0, return -1, (OpMode & (OPM_FIND | OPM_QUICKVIEW)) != 0)
@@ -2048,9 +2171,9 @@ SHAREDSYMBOL int WINAPI PutFilesW(HANDLE hPlugin, struct PluginPanelItem *PanelI
 {
 	FAR_ERROR_HANDLER_BEGIN
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->put_files(PanelItem, ItemsNumber, Move, SrcPath, OpMode);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->put_files(PanelItem, ItemsNumber, Move, SrcPath, OpMode);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->put_files(PanelItem, ItemsNumber, Move, SrcPath, OpMode);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->put_files(PanelItem, ItemsNumber, Move, SrcPath, OpMode);
 
 	return 2;
 	FAR_ERROR_HANDLER_END(return 0, return -1, (OpMode & OPM_FIND) != 0)
@@ -2063,9 +2186,9 @@ DeleteFilesW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, int ItemsNumber,
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->delete_files(PanelItem, ItemsNumber, OpMode);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->delete_files(PanelItem, ItemsNumber, OpMode);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->delete_files(PanelItem, ItemsNumber, OpMode);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->delete_files(PanelItem, ItemsNumber, OpMode);
 
 	return TRUE;
 	FAR_ERROR_HANDLER_END(return FALSE, return FALSE, (OpMode & OPM_SILENT) != 0)
@@ -2077,9 +2200,9 @@ SHAREDSYMBOL int WINAPI MakeDirectoryW(HANDLE hPlugin, const wchar_t **Name, int
 	// CriticalSectionLock lock(GetExportSync());
 	FAR_ERROR_HANDLER_BEGIN
 	if (ArcAPI::have_virt_destructor())
-		reinterpret_cast<Plugin<true> *>(hPlugin)->create_dir(Name, OpMode);
+		reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->create_dir(Name, OpMode);
 	else
-		reinterpret_cast<Plugin<false> *>(hPlugin)->create_dir(Name, OpMode);
+		reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->create_dir(Name, OpMode);
 
 	return 1;
 	FAR_ERROR_HANDLER_END(return -1, return -1, (OpMode & OPM_SILENT) != 0)
@@ -2099,11 +2222,10 @@ ProcessHostFileW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, int ItemsNum
 	intptr_t item = Far::menu(c_arccmd_menu_guid, Far::get_msg(MSG_PLUGIN_NAME), menu_items);
 
 	if (item == 0) {
-
 		if (ArcAPI::have_virt_destructor())
-			reinterpret_cast<Plugin<true> *>(hPlugin)->test_files(PanelItem, ItemsNumber, OpMode);
+			reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->test_files(PanelItem, ItemsNumber, OpMode);
 		else
-			reinterpret_cast<Plugin<false> *>(hPlugin)->test_files(PanelItem, ItemsNumber, OpMode);
+			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->test_files(PanelItem, ItemsNumber, OpMode);
 
 		//    if (info->OpMode == OPM_NONE)
 		if (OpMode == OPM_NONE)
@@ -2117,6 +2239,64 @@ ProcessHostFileW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, int ItemsNum
 	FAR_ERROR_HANDLER_END(return FALSE, return FALSE, (OpMode & OPM_SILENT) != 0)
 }
 
+template<bool UseVirtualDestructor>
+static bool set_partition(Plugin<UseVirtualDestructor> *hPlugin, const Far::PanelItem &i)
+{
+	if (!hPlugin->part_mode && hPlugin->parent && i.file_name == L".." && hPlugin->current_dir.empty()) {
+		if (!hPlugin->get_archive()->is_open())
+			FAIL(E_ABORT);
+
+		//if (hPlugin->archive->arc_chain.size() < 2) {
+		//	return false;
+		//}
+		hPlugin = hPlugin->parent;
+		hPlugin->child.reset();
+		hPlugin->set_dir(L"/");
+
+		if (hPlugin->get_archive()->m_chain_file_index != 0xFFFFFFFF) {
+			const std::wstring &cfpath = hPlugin->get_archive()->get_path(hPlugin->get_archive()->m_chain_file_index);
+
+			hPlugin->set_dir(extract_file_path(cfpath));
+			Far::update_panel(PANEL_ACTIVE, false, true);
+			Far::panel_set_file(PANEL_ACTIVE, extract_file_name(cfpath));
+			Far::update_panel(PANEL_ACTIVE, false, false);
+		}
+		return true;
+	}
+
+	bool bRez = hPlugin->set_partition(i);
+
+	if (bRez) {
+		Far::update_panel(PANEL_ACTIVE, false, true);
+	}
+
+	return bRez;
+}
+
+template<bool UseVirtualDestructor>
+static bool level_up(Plugin<UseVirtualDestructor> *hPlugin)
+{
+	if (!hPlugin->part_mode && hPlugin->parent) {
+		if (!hPlugin->get_archive()->is_open())
+			FAIL(E_ABORT);
+
+		hPlugin = hPlugin->parent;
+		hPlugin->child.reset();
+		hPlugin->set_dir(L"/");
+
+		if (hPlugin->get_archive()->m_chain_file_index != 0xFFFFFFFF) {
+			const std::wstring &cfpath = hPlugin->get_archive()->get_path(hPlugin->get_archive()->m_chain_file_index);
+			hPlugin->set_dir(extract_file_path(cfpath));
+			Far::update_panel(PANEL_ACTIVE, false, true);
+			Far::panel_set_file(PANEL_ACTIVE, extract_file_name(cfpath));
+			Far::update_panel(PANEL_ACTIVE, false, false);
+		}
+		return true;
+	}
+
+	return hPlugin->level_up();
+}
+
 SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned int ControlState)
 {
 	// CriticalSectionLock lock(GetExportSync());
@@ -2126,38 +2306,90 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
     // Ctrl+A
 	if (Key == 'A' && ControlState == PKF_CONTROL) {
 		if (ArcAPI::have_virt_destructor())
-			reinterpret_cast<Plugin<true> *>(hPlugin)->show_attr();
+			reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->show_attr();
 		else
-			reinterpret_cast<Plugin<false> *>(hPlugin)->show_attr();
+			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->show_attr();
 		return TRUE;
 	}
     // Ctrl+A
     // Alt+F6
 	if (Key == VK_F6 && ControlState == PKF_ALT) {
 		if (ArcAPI::have_virt_destructor())
-			reinterpret_cast<Plugin<true> *>(hPlugin)->extract();
+			reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->extract();
 		else
-			reinterpret_cast<Plugin<false> *>(hPlugin)->extract();
+			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->extract();
 		return TRUE;
 	}
 
-	if ( (Key == VK_RETURN && !(ControlState & PKF_CONTROL)) || (Key == VK_RETURN && (ControlState & PKF_CONTROL)) ) {
+
+//	if ( (Key == VK_PRIOR && (ControlState & PKF_CONTROL)) || (Key == VK_LEFT && (ControlState & (PKF_CONTROL | PKF_ALT))) ) {
+	if ( Key == VK_LEFT && (ControlState == (PKF_CONTROL | PKF_ALT)) ) {
+//		fprintf(stderr, "*********ProcessKeyW  handle ctrl + pgup  ********************\n");
+
+		bool bRez;
+		if (ArcAPI::have_virt_destructor())
+			bRez = level_up(reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail());
+		else
+			bRez = level_up(reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail());
+
+		if (bRez) {
+			Far::update_panel(PANEL_ACTIVE, false, false);
+			return TRUE;
+		}
+		else {
+			return FALSE;
+		}
+	}
+
+	if ( Key == VK_RIGHT && (ControlState == (PKF_CONTROL | PKF_ALT)) ) {
 
 		Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
 		bool bRez;
 
 		if (ArcAPI::have_virt_destructor())
-			bRez = reinterpret_cast<Plugin<true> *>(hPlugin)->set_partition(panel_item);
+			bRez = reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->level_down(panel_item);
 		else
-			bRez = reinterpret_cast<Plugin<false> *>(hPlugin)->set_partition(panel_item);
+			bRez = reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->level_down(panel_item);
 
 		if (bRez) {
 			Far::update_panel(PANEL_ACTIVE, false, true);
 			return TRUE;
 		}
 		else {
+			return FALSE;
 		}
 	}
+
+	if ( Key == VK_RETURN && (!ControlState || (ControlState & PKF_CONTROL)) ) {
+
+		Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
+		bool bRez = false;
+
+//		if (ArcAPI::have_virt_destructor())
+//			bRez = reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->set_partition(panel_item);
+//		else
+//			bRez = reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->set_partition(panel_item);
+
+		if (ArcAPI::have_virt_destructor())
+			bRez = reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->level_down(panel_item);
+		else
+			bRez = reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->level_down(panel_item);
+
+		if (bRez) {
+			Far::update_panel(PANEL_ACTIVE, false, true);
+			return TRUE;
+		}
+
+		if (!bRez) {
+			if (ArcAPI::have_virt_destructor())
+				bRez = set_partition(reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail(), panel_item);
+			else
+				bRez = set_partition(reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail(), panel_item);
+		}
+
+		return bRez;
+	}
+
 
 #if 0
 	if (Key == 'Z' && ControlState == PKF_CONTROL) {

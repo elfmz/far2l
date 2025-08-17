@@ -290,6 +290,8 @@ private:
 			if (current_rec.buffer_pos + pos + size > buffer_size)
 				FAIL(E_FAIL); // Overflow ?
 
+			//FAIL(E_FAIL); // TEST FAIL
+
 			size_written = file.write(buffer + current_rec.buffer_pos + pos, size);
 			RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
 
@@ -301,7 +303,6 @@ private:
 			pos += size_written;
 			progress->update_cache_written(size_written);
 		}
-		//fprintf(stderr, "FWC: write_file() END [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 	}
 
 	void close_file()
@@ -395,13 +396,14 @@ private:
 		}
 		buffer_pos = 0;
 		progress->reset_cache_stats();
-		//fprintf(stderr, "FWC: perform_write() END [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 	}
 
 	void worker_thread_func()
 	{
 		SudoRegionGuard sudo_guard;
 		//fprintf(stderr, "FWC: WorkerThread Started [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+		try {
+
 		while (!stop_worker_flag.load()) {
 			std::unique_lock<std::mutex> lock(io_mutex);
 			worker_cv.wait(lock, [this] {
@@ -424,6 +426,17 @@ private:
 				worker_cv.notify_one();
 				//fprintf(stderr, "FWC: WorkerThread Batch Processed [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 			}
+		}
+
+		} catch (const std::exception& e) {
+		//fprintf(stderr, "FWC: WorkerThread catch1 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+        stop_worker_flag.store(true);
+        worker_cv.notify_one();
+		} catch (...) {
+		//error_state = true;
+		//fprintf(stderr, "FWC: WorkerThread catch2 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+        stop_worker_flag.store(true);
+        worker_cv.notify_one();
 		}
 		//fprintf(stderr, "FWC: WorkerThread Stopped [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 	}
@@ -460,6 +473,7 @@ private:
 			});
 			if (stop_worker_flag.load()) {
 				//fprintf(stderr, "FWC: write() - Worker stopped while waiting for completion [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+				throw E_ABORT;
 			} else {
 				//fprintf(stderr, "FWC: write() [TID: %lu] - Flush completed by worker\n", static_cast<unsigned long>(pthread_self()));
 			}
@@ -501,7 +515,6 @@ public:
 		, buffer_size(get_max_cache_size())
 	{
 		progress->set_cache_total(buffer_size);
-		//fprintf(stderr, "FWC:: Constructor (TID: %lu)\n", static_cast<unsigned long>(pthread_self()));
 		buffer = (unsigned char*)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
 			-1, 0);
 		if (!buffer)
@@ -511,7 +524,6 @@ public:
 
 	~FileWriteCache()
 	{
-		//fprintf(stderr, "FWC:: Destructor (TID: %lu)\n", static_cast<unsigned long>(pthread_self()));
 		if (worker_started.load()) {
 			if (!stop_worker_flag.load()) {
 				//fprintf(stderr, "FWC:: Destructor - finalize not called or incomplete, stopping worker [TID: %lu]\n", pthread_self());
@@ -556,8 +568,10 @@ public:
 	{
 		//fprintf(stderr, "FWC: store_data() [TID: %lu], size=%zu\n", static_cast<unsigned long>(pthread_self()), size);
 		unsigned full_buffer_cnt = static_cast<unsigned>(size / buffer_size);
+
 		for (unsigned i = 0; i < full_buffer_cnt; i++)
 			store(data + i * buffer_size, buffer_size);
+
 		store(data + full_buffer_cnt * buffer_size, size % buffer_size);
 	}
 
@@ -586,10 +600,6 @@ public:
 				//fprintf(stderr, "FWC::finalize() - Worker thread was not joinable. [TID: %lu]\n", pthread_self());
 			}
 		}
-		// else {
-		//	 fprintf(stderr, "FWC::finalize() - Worker was not started. [TID:
-		//	 %lu]\n", ...);
-		// }
 
 		bool has_remaining_data = !cache_records.empty()
 			&& (cache_records.size() > 1 || cache_records.front().buffer_size > 0
@@ -603,7 +613,6 @@ public:
 			//fprintf(stderr, "FWC::finalize() - No remaining data to write. [TID: %lu]\n", pthread_self());
 			close_file();
 		}
-		//fprintf(stderr, "FWC::finalize() - Completed. [TID: %lu]\n", pthread_self());
 	}
 };
 
@@ -1323,12 +1332,12 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 			error_log, cache, progress,
 			skipped_indices));
 
-	UInt64 bCommStream = 0;
+	UInt64 bFullSizeStream = 0;
 	if (ex_stream) {
-		ex_stream->Seek(0, STREAM_CTL_GETFULLSIZE, &bCommStream);
+		ex_stream->Seek(0, STREAM_CTL_GETFULLSIZE, &bFullSizeStream);
 	}
 
-	if (ex_stream && !bCommStream) {
+	if (ex_stream && !bFullSizeStream) {
 		ex_stream->Seek(0, STREAM_CTL_RESET, nullptr);
 		UInt32 indices2[2] = { 0, 0 };
 		ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor2(new SimpleExtractor<UseVirtualDestructor>(parent, ex_out_stream));

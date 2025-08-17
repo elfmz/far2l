@@ -1,6 +1,8 @@
 # far2l changelog
 
-Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
+Only significant user-side changes are listed here
+(for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)
+or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
 * _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
@@ -71,6 +73,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * Several bugfixes
 
 ## 2.6.3 beta (2024-07-26)
+* Panels resize by **Ctrl+(Shift+)Down** allows to hide command line, subsequently allowing fast file find without pressing **Alt**
 * Several bugfixes
 
 ## 2.6.2 beta (2024-07-16)
@@ -85,7 +88,6 @@ Only significant user-side changes are listed here (for all changes see history 
 
 ## 2.6.1 beta (2024-04-14)
 ## 2.6.0 beta (2024-02-19)
-## 2.5.3 beta (2023-11-05)
 ## 2.5.3 beta (2023-11-05)
 ## 2.5.2 beta (2023-08-15)
 ## 2.5.1 beta (2023-05-28)

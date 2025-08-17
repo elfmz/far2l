@@ -1837,7 +1837,7 @@ void PluginManager::BackgroundTaskStarted(const wchar_t *Info)
 		fprintf(stderr, "PluginManager::BackgroundTaskStarted('%ls') - count=%d\n", Info, ir.first->second);
 	}
 
-	InterThreadCallAsync(std::bind(OnBackgroundTasksChangedSynched));
+	InterThreadCallAsync([] { OnBackgroundTasksChangedSynched(); });
 }
 
 void PluginManager::BackgroundTaskFinished(const wchar_t *Info)
@@ -1856,7 +1856,7 @@ void PluginManager::BackgroundTaskFinished(const wchar_t *Info)
 			BgTasks.erase(it);
 	}
 
-	InterThreadCallAsync(std::bind(OnBackgroundTasksChangedSynched));
+	InterThreadCallAsync([] { OnBackgroundTasksChangedSynched(); });
 }
 
 bool PluginManager::HasBackgroundTasks()

@@ -39,8 +39,9 @@ static WINPORTDECL winportvar = {
 static void python_log(const char *function, unsigned int line, const char *format, ...)
 {
     va_list args;
-    char *xformat = (char *)alloca(strlen(format) + strlen(function) + 64);
-    sprintf(xformat, "[PYTHON %lu]: %s@%u%s%s",
+    auto str_size = strlen(format) + strlen(function) + 64;
+    char *xformat = (char *)alloca(str_size);
+    snprintf(xformat, str_size, "[PYTHON %lu]: %s@%u%s%s",
         (unsigned long)GetProcessUptimeMSec(), function, line, (*format != '\n') ? " - " : "", format);
 
     va_start(args, format);
@@ -367,7 +368,7 @@ public:
 } *g_python_holder = nullptr;
 
 #include <time.h>
-extern "C"
+
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
 #if defined(PYPLUGIN_MEASURE_STARTUP) && defined(PYPLUGIN_DEBUGLOG)

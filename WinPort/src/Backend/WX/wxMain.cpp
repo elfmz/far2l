@@ -961,7 +961,7 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 		} break;
 		
 		case A_THROTTLE: {
-			auto fn = std::bind(&ProcessAllEvents);
+			auto fn = [] { return ProcessAllEvents(); };
 			CallInMain<int>(fn);
 			std::lock_guard<std::mutex> lock(_refresh_rects);
 			_refresh_rects_throttle = WINPORT(GetTickCount)();

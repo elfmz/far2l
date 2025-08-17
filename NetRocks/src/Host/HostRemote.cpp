@@ -250,7 +250,7 @@ void HostRemote::ReInitialize()
 	_timeadjust = sc_options.GetInt("TimeAdjust", 0);
 
 	char keep_alive_arg[32];
-	sprintf(keep_alive_arg, "%d", sc_options.GetInt("KeepAlive", 0));
+	snprintf(keep_alive_arg, sizeof(keep_alive_arg), "%d", sc_options.GetInt("KeepAlive", 0));
 
 	std::string work_path = broker_path;
 	TranslateInstallPath_Lib2Share(work_path);

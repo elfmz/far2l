@@ -1650,7 +1650,7 @@ static HANDLE analyse_open(const AnalyseInfo *info, bool from_analyse)
 
 	options.arc_types = ArcAPI::formats().get_arc_types();
 	options.open_ex = !pgdn;
-	options.nochain = false;
+	options.nochain = pgdn;
 
 	if (g_detect_next_time == triUndef) {
 
@@ -2323,7 +2323,7 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 
 
 //	if ( (Key == VK_PRIOR && (ControlState & PKF_CONTROL)) || (Key == VK_LEFT && (ControlState & (PKF_CONTROL | PKF_ALT))) ) {
-	if ( Key == VK_LEFT && (ControlState == (PKF_CONTROL | PKF_ALT)) ) {
+	if ( Key == VK_LEFT && (ControlState == (PKF_CONTROL | PKF_ALT) || ControlState == (PKF_CONTROL | PKF_SHIFT)) ) {
 //		fprintf(stderr, "*********ProcessKeyW  handle ctrl + pgup  ********************\n");
 
 		bool bRez;
@@ -2341,7 +2341,7 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 		}
 	}
 
-	if ( Key == VK_RIGHT && (ControlState == (PKF_CONTROL | PKF_ALT)) ) {
+	if ( Key == VK_RIGHT && (ControlState == (PKF_CONTROL | PKF_ALT) || ControlState == (PKF_CONTROL | PKF_SHIFT)) ) {
 
 		Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
 		bool bRez;

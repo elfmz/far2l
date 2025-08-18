@@ -1313,13 +1313,14 @@ bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 		return false;
 	}
 
-	const ArcType &rArcType = arc_chain.back().type;
+//	const ArcType &rArcType = arc_chain.back().type;
+	const ArcType &lArcType = arc_chain.front().type;
 	std::wstring ext = extract_file_ext(arc_path);
 
 	if (file_list.empty())
 		make_index();
 
-	if (rArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 32) {
+	if (lArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 32) {
 //		UInt32 iindex = 0xFFFFFFFF;
 	    for (UInt32 ii = 0; ii < num_indices; ++ii) {
 			if (file_list[ii].is_dir) continue;

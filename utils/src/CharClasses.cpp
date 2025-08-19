@@ -3,6 +3,9 @@
 #include <wchar.h>
 #include "../include/CharClasses.h"
 
+std::array<std::shared_ptr<CharClasses::Block>, CharClasses::BLOCK_COUNT> CharClasses::blocks;
+bool CharClasses::initialized = false;
+
 bool CharClasses::FullWidth()
 {
 	switch (_c) {

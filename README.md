@@ -6,7 +6,9 @@ Works also on macOS and BSD (but latter not tested on regular manner)
 BETA VERSION.   
 **Use on your own risk!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator, Python (optional scripting support),
+Plug-ins that are currently working: NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3 <sub>optional compilation if AWSSDK installed</sub>),
+colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator,
+Python (optional scripting support),
 arclite <sub>(now as experimental version which partially more effective then multiarc;
 arclite disabled by default, to enable manually turn on
 F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>.
@@ -131,16 +133,19 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
     apt install --no-install-recommends far2l
     ```
 
-<sub>**Debian** has far2 in **sid-unstable** / **13 trixie-testing** / **12 bookworm-backports**; **Ubuntu** since **23.10**.
+<sub>**Debian** has far2l in **sid (unstable)** / **14 forky (testing)** / **13 trixie** / **12 bookworm-backports**; **Ubuntu** since **23.10**.
 Details about versions in the official repositories see in
 https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com/search?keywords=far2l </sub>
 
-<sub>_Note_: binaries in official repositories may be very outdated,
+<sub>_Note_: packages in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
-<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with python subplugins.</sub>
+<sub>_Note_: since far2l 2.6.4 Debian/Ubuntu packages build with python subplugins.</sub>
 
-<details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
+<sub>_Note_: in some old Debian/Ubuntu you can obtain far2l packages corresponding to the latest distributions via backport mechanism
+(see info in [Debian Backports](https://backports.debian.org/Instructions/) and [Ubuntu Backports](https://help.ubuntu.com/community/UbuntuBackports)).</sub>
+
+<details><summary><sub>Manually building backport of official packages for other old Debian/Ubuntu system [<i>click to expand/collapse</i>]</sub></summary>
 
 <sub>A simple sid back port should be as easy as (build your own binary deb from the official source deb package,
 required install [dependencies](#required-dependencies)):</sub>
@@ -194,6 +199,7 @@ See also [Community packages & binaries](#community_bins)
 * [AWS SDK S3](https://github.com/aws/aws-sdk-cpp) (_optional_ - needed for **NetRocks/AWS S3**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
+* `7zip` or `p7zip-full` in old distributions (_optional_ - not needed for building, but dynamically used for archives processing via **multiarc** and **arclite**)
 * `libicu-dev` (_optional_ - needed if used non-default ICU_MODE, see `-DICU_MODE` command line option)
 * `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
@@ -267,7 +273,11 @@ To control how RAR archives will be handled in multiarc:
  `-DUNRAR=lib` use libunrar and unrar utility, also build requires libunrar-dev to be installed
  `-DUNRAR=NO` dont use special unrar code, rar archives will be handled by libarchive unless its also disabled
 
-There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
+There're also options to toggle other plugins build in same way:
+`-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
+`-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
+`-DFILECASE=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`
+(see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 
 #### macOS build
 

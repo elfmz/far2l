@@ -54,6 +54,21 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 namespace Dumper {
 
+	struct DumperConfig {
+		static constexpr bool WRITE_LOG_TO_FILE = true;
+		static constexpr char LOG_FILENAME[] = "far2l_debug.log";
+
+		static constexpr bool ENABLE_PID_TID = true;
+		static constexpr bool ENABLE_TIMESTAMP = true;
+		static constexpr bool ENABLE_LOCATION = true;
+
+		static constexpr size_t HEXDUMP_BYTES_PER_LINE = 16;
+		static constexpr size_t HEXDUMP_MAX_LENGTH = 1024 * 1024;
+
+		static constexpr std::size_t CONTAINERS_MAX_INDENT_LEVEL = 32;
+	};
+
+
 	// ****************************************************************************************************
 	// Helper variables, functions, and structures
 	// ****************************************************************************************************
@@ -89,7 +104,7 @@ namespace Dumper {
 				case '\f': table[i] = "\\f"; break;
 				case '\x1B': table[i] = "\\e"; break;
 				default:
-					std::snprintf(buf, sizeof(buf), "\\x{%02x}", character_code);
+					std::snprintf(buf, sizeof(buf), "\\x{%02X}", character_code);
 					table[i] = buf;
 					break;
 				}
@@ -120,6 +135,7 @@ namespace Dumper {
 		std::call_once(s_flag, [] {
 			const char *env_home = std::getenv("HOME");
 			s_home = (env_home != nullptr) ? std::string(env_home) : std::string("/tmp");
+			s_home += "/";
 		});
 		return s_home;
 	}
@@ -153,11 +169,9 @@ namespace Dumper {
 	// Formatting variable names/values according to their nesting level when displaying containers
 	// ****************************************************************************************************
 
-	constexpr std::size_t MAX_INDENT_LEVEL = 32;
-
 	struct IndentInfo
 	{
-		std::bitset<MAX_INDENT_LEVEL> levels;
+		std::bitset<DumperConfig::CONTAINERS_MAX_INDENT_LEVEL> levels;
 		int cur_level;
 
 		IndentInfo() : levels(), cur_level(0) {}
@@ -183,7 +197,7 @@ namespace Dumper {
 		IndentInfo CreateChild(bool current_branch_has_next_elements) const
 		{
 			auto child = *this;
-			if (cur_level < static_cast<int>(MAX_INDENT_LEVEL)) {
+			if (cur_level < static_cast<int>(DumperConfig::CONTAINERS_MAX_INDENT_LEVEL)) {
 				child.levels.set(cur_level, current_branch_has_next_elements);
 				++child.cur_level;
 			}
@@ -279,7 +293,7 @@ namespace Dumper {
 		std::ostringstream& log_stream,
 		std::string_view var_name,
 		const std::pair<FirstT, SecondT>& value,
-		const IndentInfo& indent_info)
+		const IndentInfo& indent_info = IndentInfo())
 	{
 		LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
 		DumpValue(log_stream, std::string(var_name)+".first", value.first, indent_info.CreateChild(true));
@@ -353,9 +367,10 @@ namespace Dumper {
 	// Support for binary buffers specified as (pointer, byte count) via DBINBUF + DUMP macros
 	// ****************************************************************************************************
 
-	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
-					std::string_view line_prefix, size_t bytes_per_line = 16)
+	inline std::string CreateHexDump(const std::uint8_t* data, size_t length)
 	{
+		constexpr std::string_view line_prefix = "|   ";
+		constexpr auto bytes_per_line = DumperConfig::HEXDUMP_BYTES_PER_LINE;
 		auto separator_pos = bytes_per_line / 2;
 		std::ostringstream result;
 		result << std::hex << std::setfill('0');
@@ -415,20 +430,26 @@ namespace Dumper {
 			return;
 		}
 
-		constexpr size_t MAX_LENGTH = 1024 * 1024;
-		size_t effective_length = (bin_buf_wrapper.length > MAX_LENGTH)
-									  ? MAX_LENGTH : bin_buf_wrapper.length;
+		size_t effective_length;
+		if constexpr (DumperConfig::HEXDUMP_MAX_LENGTH == 0) {
+			effective_length = bin_buf_wrapper.length;
+		} else {
+			effective_length = std::min(DumperConfig::HEXDUMP_MAX_LENGTH, bin_buf_wrapper.length);
+		}
 
-		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
-											effective_length, "|   ");
+		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data), effective_length);
 
 		log_stream << "|=> " << var_name << " =\n";
 		log_stream << hexDump;
 
-		if (bin_buf_wrapper.length > MAX_LENGTH) {
-			log_stream << "|   Output truncated to " << effective_length
-					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)\n";
+		if constexpr (DumperConfig::HEXDUMP_MAX_LENGTH != 0) {
+			if (bin_buf_wrapper.length > DumperConfig::HEXDUMP_MAX_LENGTH) {
+				log_stream << "|   Output truncated to " << effective_length
+						   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)\n";
+			}
 		}
+
+
 	}
 
 	// ****************************************************************************************************
@@ -584,37 +605,58 @@ namespace Dumper {
 
 	inline std::string CreateLogHeader(std::string_view func_name, std::string_view location)
 	{
-		auto current_time = std::chrono::system_clock::now();
-		auto current_time_t = std::chrono::system_clock::to_time_t(current_time);
-		std::tm local_time{};
-		localtime_r(&current_time_t, &local_time);
-		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
-
 		std::ostringstream header_stream;
-		header_stream << "\n/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
-		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----\n";
-		header_stream << "|[" << location << "] in " << func_name << "()\n";
+		header_stream << "\n";
+
+		if constexpr (DumperConfig::ENABLE_PID_TID || DumperConfig::ENABLE_TIMESTAMP || DumperConfig::ENABLE_LOCATION) {
+			header_stream << "/-----";
+		}
+
+		if constexpr (DumperConfig::ENABLE_PID_TID) {
+			header_stream << "[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----";
+		}
+
+		if constexpr (DumperConfig::ENABLE_TIMESTAMP) {
+			auto current_time = std::chrono::system_clock::now();
+			auto current_time_t = std::chrono::system_clock::to_time_t(current_time);
+			std::tm local_time{};
+			localtime_r(&current_time_t, &local_time);
+			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
+			header_stream << "[" << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----";
+		}
+
+		if constexpr (DumperConfig::ENABLE_PID_TID || DumperConfig::ENABLE_TIMESTAMP) {
+			header_stream << "\n";
+		}
+
+		if constexpr (DumperConfig::ENABLE_LOCATION) {
+			if constexpr (DumperConfig::ENABLE_PID_TID || DumperConfig::ENABLE_TIMESTAMP) {
+				header_stream << "|";
+			}
+			header_stream << "[" << location << "] in " << func_name << "()\n";
+		}
+
 		return header_stream.str();
 	}
 
 
-	inline void FlushLog(std::ostringstream& log_stream, bool to_file)
+	inline void FlushLog(std::ostringstream& log_stream)
 	{
 		std::string log_entry = log_stream.str();
 		std::lock_guard<std::mutex> lock(g_log_output_mutex);
 
-		if (to_file) {
-			std::ofstream log_file(GetHomeDir() + "/far2l_debug.log", std::ios::app);
+		if constexpr (DumperConfig::WRITE_LOG_TO_FILE) {
+			std::ofstream log_file(GetHomeDir() + DumperConfig::LOG_FILENAME, std::ios::app);
 			if (log_file) {
 				log_file << log_entry << std::endl;
 			}
 		} else {
-			std::clog << log_entry << std::endl;
+			std::cerr << log_entry << std::endl;
 		}
 	}
 
 	// ****************************************************************************************************
-	// Backend for the DUMP macro: arguments must be wrapped in helper macros (DVV, DBUF, DCONT, DMSG...)
+	// Backend for the DUMP macro: arguments must be wrapped in helper macros (DVV, DBINBUF, DCONT, DMSG...)
 	// ****************************************************************************************************
 
 	template<std::size_t... I, typename NameValueTupleT>
@@ -626,7 +668,7 @@ namespace Dumper {
 
 
 	template<typename... Args>
-	void Dump(bool to_file, std::string_view func_name, std::string_view location, const Args&... args)
+	void Dump(std::string_view func_name, std::string_view location, const Args&... args)
 	{
 		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
 
@@ -636,7 +678,7 @@ namespace Dumper {
 		auto args_tuple = std::forward_as_tuple(args...);
 		constexpr std::size_t pair_count = sizeof...(args) / 2;
 		ProcessPairs(args_tuple, log_stream, std::make_index_sequence<pair_count>{});
-		FlushLog(log_stream, to_file);
+		FlushLog(log_stream);
 	}
 
 	// ****************************************************************************************************
@@ -677,15 +719,14 @@ namespace Dumper {
 	inline void ReportDumpVError(std::ostringstream &log_stream)
 	{
 		const std::string error_message =
-			"dumpv: Only simple variables are allowed as arguments. "
+			"Only simple variables are allowed as arguments. "
 			"Function calls or complex expressions with internal commas are not supported.";
-		DumpValue(log_stream, "ERROR", error_message);
+		DumpValue(log_stream, "[DUMPV ERROR]", error_message);
 	}
 
 
 	template<typename... Ts>
 	void DumpV(
-		bool to_file,
 		std::string_view func_name,
 		std::string_view location,
 		const char *var_names_str,
@@ -704,7 +745,7 @@ namespace Dumper {
 			ReportDumpVError(log_stream);
 		}
 
-		FlushLog(log_stream, to_file);
+		FlushLog(log_stream);
 	}
 
 } // end namespace Dumper
@@ -713,11 +754,11 @@ namespace Dumper {
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
-#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, __VA_ARGS__); }
-#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
+#define DUMP(...) { Dumper::Dump(__func__, LOCATION, __VA_ARGS__); }
+#define DUMPV(...) { Dumper::DumpV(__func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(expr) #expr, expr
-#define DMSG(msg) "msg", std::string(msg)
+#define DMSG(msg) "[DMSG]", std::string(msg)
 #define DBINBUF(ptr,length) #ptr, Dumper::BinBufWrapper(ptr,length)
 #define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)

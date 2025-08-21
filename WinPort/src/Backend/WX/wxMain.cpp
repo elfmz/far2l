@@ -1421,7 +1421,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
 		& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
 
-	if (event.GetKeyCode() == WXK_RETURN && dwMods == LEFT_ALT_PRESSED && _prev_key_code == WXK_ALT) {
+	if (event.GetKeyCode() == WXK_RETURN && dwMods == LEFT_ALT_PRESSED
+		&& (_prev_key_code == WXK_ALT || _prev_key_code == WXK_RETURN)) {
+
 		_resize_pending = RP_INSTANT;
 		//fprintf(stderr, "RP_INSTANT\n");
 		_frame->ShowFullScreen(!_frame->IsFullScreen());

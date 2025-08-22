@@ -204,6 +204,22 @@ add_subdirectory (WinPort)
 add_subdirectory (utils)
 add_subdirectory (far2l)
 
+# DUMPER backtrace support for far2l in Debug builds
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND DUMPER_STACKTRACE_SUPPORT)
+    target_compile_options(far2l
+        PRIVATE
+            $<$<CONFIG:Debug>:-g>
+            $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
+            $<$<CONFIG:Debug>:-fvisibility=default>
+    )
+
+    target_link_options(far2l
+        PRIVATE
+            $<$<AND:$<CONFIG:Debug>,$<NOT:$<PLATFORM_ID:Darwin>>>:-rdynamic>
+            $<$<AND:$<CONFIG:Debug>,$<PLATFORM_ID:Darwin>>:-Wl,-export_dynamic>
+    )
+endif()
+
 if (NOT ${USEWX})
     message(STATUS "Building without GUI/wxWidgets backend due to USEWX=${USEWX}")
 else()

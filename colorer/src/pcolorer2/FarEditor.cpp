@@ -85,8 +85,8 @@ void FarEditor::reloadTypeSettings()
 
   int backparse = def->getParamValueInt(DBackparse, 2000);
   maxLineLength = def->getParamValueInt(DMaxLen, 0);
-  newfore = def->getParamValueInt(DDefFore, -1);
-  newback = def->getParamValueInt(DDefBack, -1);
+  newfore = def->getParamValueHex(DDefFore, -1);
+  newback = def->getParamValueHex(DDefBack, -1);
   const UnicodeString* value = def->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)) {
@@ -125,8 +125,8 @@ void FarEditor::reloadTypeSettings()
   // installs custom file properties
   backparse = ftype->getParamValueInt(DBackparse, backparse);
   maxLineLength = ftype->getParamValueInt(DMaxLen, maxLineLength);
-  newfore = ftype->getParamValueInt(DDefFore, newfore);
-  newback = ftype->getParamValueInt(DDefBack, newback);
+  newfore = ftype->getParamValueHex(DDefFore, newfore);
+  newback = ftype->getParamValueHex(DDefBack, newback);
   value = ftype->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)) {

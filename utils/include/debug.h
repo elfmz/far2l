@@ -207,11 +207,7 @@ namespace Dumper {
 
 		StackTrace()
 		{
-#ifdef HAS_BACKTRACE
 			CaptureStackTrace();
-#else
-			frames.emplace_back("[stack trace not available on this platform]");
-#endif
 		}
 
 	private:
@@ -456,6 +452,7 @@ namespace Dumper {
 
 		void CaptureStackTrace()
 		{
+#ifdef HAS_BACKTRACE
 			static_assert(DumperConfig::STACKTRACE_MAX_FRAMES <= 0x7fffffff, "STACKTRACE_MAX_FRAMES too large for backtrace()");
 
 			void* raw_frames[DumperConfig::STACKTRACE_MAX_FRAMES];
@@ -481,6 +478,9 @@ namespace Dumper {
 			if constexpr (DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS) {
 				GenerateCmdlineToolCommands(per_module_addrs);
 			}
+#else
+			frames.emplace_back("[stack trace not available on this platform]");
+#endif
 		}
 	};
 

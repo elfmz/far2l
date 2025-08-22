@@ -439,12 +439,21 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
 {
   if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
     if (baseEditor->haveInvalidLine()) {
+      auto invalid_line1 = baseEditor->getInvalidLine();
       idleCount++;
       if (idleCount > 10) {
         idleCount = 10;
       }
-      baseEditor->idleJob(idleCount * idleCount * 100);
-      info->EditorControl(ECTL_REDRAW, nullptr);
+      baseEditor->idleJob(idleCount * 10);
+      auto invalid_line2 = baseEditor->getInvalidLine();
+
+      EditorInfo ei = getEditorInfo();
+      if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
+          (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
+           invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
+      {
+        info->EditorControl(ECTL_REDRAW, nullptr);
+      }
     }
   }
   else if (ir->EventType == KEY_EVENT) {
@@ -1215,7 +1224,7 @@ EditorInfo FarEditor::getEditorInfo() const
 
 color FarEditor::convert(const StyledRegion* rd) const
 {
-  color col{};
+  color col {};
 
   if (rdBackground == nullptr)
     return col;

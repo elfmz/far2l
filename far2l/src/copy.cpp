@@ -2800,7 +2800,7 @@ static dev_t GetRDev(FARString SrcName)
 
 int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, FARString &strDestName,
 		int Append)
-{
+{	DUMP(DSTACKTRACE());
 	OrigScrX = ScrX;
 	OrigScrY = ScrY;
 

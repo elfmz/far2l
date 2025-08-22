@@ -310,3 +310,30 @@ Here is the full list:
 
 	Sets the maximum available nesting depth for displaying hierarchical container structures.
 
+* `STACKTRACE_SHOW_ADDRESSES`
+
+	Controls whether memory addresses are displayed in stack trace output. When enabled, each frame shows the absolute address, module base address, symbol address, and calculated offsets.
+
+* `STACKTRACE_DEMANGLE_NAMES`
+
+	Enables demangling of C++ function names in stack traces. When enabled, mangled symbol names (like `_ZN7Dumper9DumpValueE`) are converted to human-readable function signatures. Requires compiler support for `abi::__cxa_demangle`. When disabled or unavailable, raw mangled names are displayed.
+
+* `STACKTRACE_ADJUST_RETURN_ADDRESSES`
+
+	Specifies the strategy for adjusting return addresses to improve symbol resolution accuracy. Return addresses typically point to the instruction after a function call, but for debugging purposes, the call instruction itself is often more meaningful. Available strategies:
+
+        Off: Use original addresses without modification.
+        PreferAdjusted: Try adjusted addresses first, fall back to original if dladdr() fails.
+        PreferOriginal: Try original addresses first, fall back to adjusted if dladdr() fails.
+
+* `STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS`
+
+	Generates command-line invocations for external debugging tools (like addr2line) that can be used to obtain detailed source location information. When enabled, the stack trace output includes ready-to-use shell commands for each module, grouped by binary file. These commands can be copied and executed to resolve addresses to source file names and line numbers.
+
+* `STACKTRACE_MAX_FRAMES`
+
+	Sets the maximum number of stack frames to capture using `backtrace()`. This limits memory usage and prevents extremely deep call stacks from overwhelming the output. The actual number of frames displayed may be less due to the `STACKTRACE_SKIP_FRAMES` setting.
+
+* `STACKTRACE_SKIP_FRAMES`
+
+	Specifies the number of initial stack frames to skip when generating a stack trace. This is useful for excluding internal logging functions from the trace output. Default value: 2.

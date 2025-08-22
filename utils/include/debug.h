@@ -28,7 +28,27 @@
 #include <iterator>
 #include <algorithm>
 #include <array>
+#include <map>
+#include <dlfcn.h>
 #include "WideMB.h"
+
+// Platform-specific includes for stack trace functionality
+#if !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) && !defined(__ANDROID__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+# include <execinfo.h>
+# define HAS_BACKTRACE
+#endif
+
+#if defined(__has_include)
+# if __has_include(<cxxabi.h>)
+#   include <cxxabi.h>
+#   define HAS_CXX_DEMANGLE
+# endif
+#else
+# if defined(__GLIBCXX__) || defined(__GLIBCPP__) || ((defined(__GNUC__) || defined(__clang__)) && !defined(__APPLE__))
+#   include <cxxabi.h>
+#   define HAS_CXX_DEMANGLE
+# endif
+#endif
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -66,6 +86,15 @@ namespace Dumper {
 		static constexpr size_t HEXDUMP_MAX_LENGTH = 1024 * 1024;
 
 		static constexpr std::size_t CONTAINERS_MAX_INDENT_LEVEL = 32;
+
+		enum class AdjustStrategy { Off, PreferAdjusted, PreferOriginal };
+
+		static constexpr bool STACKTRACE_SHOW_ADDRESSES = true;
+		static constexpr bool STACKTRACE_DEMANGLE_NAMES = true;
+		static constexpr AdjustStrategy STACKTRACE_ADJUST_RETURN_ADDRESSES = AdjustStrategy::Off;
+		static constexpr bool STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS = true;
+		static constexpr size_t STACKTRACE_MAX_FRAMES = 64;
+		static constexpr size_t STACKTRACE_SKIP_FRAMES = 2;
 	};
 
 
@@ -164,6 +193,298 @@ namespace Dumper {
 
 	template <typename T>
 	inline constexpr bool is_container_v = is_container<T>::value;
+
+
+
+	// ****************************************************************************************************
+	// Stack trace support functionality
+	// ****************************************************************************************************
+
+	struct StackTrace
+	{
+		std::vector<std::string> frames;
+		std::vector<std::string> cmdline_tool_invocations;
+
+		StackTrace()
+		{
+#ifdef HAS_BACKTRACE
+			CaptureStackTrace();
+#else
+			frames.emplace_back("[stack trace not available on this platform]");
+#endif
+		}
+
+	private:
+
+		struct DlAddrResult
+		{
+			int dladdr_ret = 0;
+			Dl_info info = {};
+			const void* used_address = nullptr;
+			bool used_adjusted = false;
+		};
+
+
+		struct FrameInfo
+		{
+			uintptr_t original_address;
+			uintptr_t used_address;
+			bool used_adjusted;
+			std::string module_shortname;
+			std::string module_fullname;
+			uintptr_t module_base;
+			std::string func_name;
+			uintptr_t symbol_addr;
+			bool dladdr_success;
+		};
+
+
+
+		static std::string DemangleName(const char* mangled_name)
+		{
+			if (!mangled_name || !*mangled_name) return "[unknown-function]";
+#ifdef HAS_CXX_DEMANGLE
+			try {
+				int status = 0;
+				char* demangled = abi::__cxa_demangle(mangled_name, nullptr, nullptr, &status);
+				std::string res = (status == 0 && demangled) ? demangled : mangled_name;
+				std::free(demangled);
+				return res;
+			} catch(...) {
+				return std::string(mangled_name);
+			}
+#else
+			return std::string(mangled_name);
+#endif
+		}
+
+
+		static std::string HexAddr(uintptr_t v)
+		{
+			std::ostringstream os;
+			os << "0x" << std::hex << v;
+			return os.str();
+		}
+
+
+		static bool TryAdjustReturnAddress(const void* in, const void*& out)
+		{
+			out = in;
+			if (in == nullptr) return false;
+
+			auto original = reinterpret_cast<uintptr_t>(in);
+			uintptr_t adjusted = original;
+
+#if defined(__arm__) && !defined(__aarch64__)
+			if (original & 1u) {
+				adjusted = original & ~uintptr_t(1);
+			}
+#elif defined(__aarch64__)
+			if (original > 4) {
+				adjusted = original - 4;
+			}
+#elif defined(__x86_64__) || defined(__i386__) || defined(_M_X64) || defined(_M_IX86)
+			if (original > 1) {
+				adjusted = original - 1;
+			}
+#endif
+
+			if (adjusted != original && adjusted != 0) {
+				out = reinterpret_cast<const void*>(adjusted);
+				return true;
+			}
+			return false;
+		}
+
+
+		static DlAddrResult SymbolicateWithAdjustStrategy(const void* original, DumperConfig::AdjustStrategy strategy)
+		{
+			DlAddrResult result;
+			result.used_address = original;
+			result.used_adjusted = false;
+
+			auto TryDlAddr = [&](const void* addr) -> int {
+				Dl_info info_local;
+				int dladdr_ret = dladdr(addr, &info_local);
+				if (dladdr_ret) {
+					result.dladdr_ret = dladdr_ret;
+					result.info = info_local;
+					result.used_address = addr;
+				}
+				return dladdr_ret;
+			};
+
+			if (strategy == DumperConfig::AdjustStrategy::Off) {
+				TryDlAddr(original);
+				return result;
+			}
+
+			const void* adjusted = nullptr;
+			bool has_adjusted = TryAdjustReturnAddress(original, adjusted);
+
+			if (strategy == DumperConfig::AdjustStrategy::PreferAdjusted) {
+				if (has_adjusted) {
+					if (TryDlAddr(adjusted)) { result.used_adjusted = true; return result; }
+				}
+				TryDlAddr(original);
+				return result;
+			}
+
+			if (TryDlAddr(original)) { return result; }
+			if (has_adjusted) {
+				if (TryDlAddr(adjusted)) { result.used_adjusted = true; return result; }
+			}
+			return result;
+		}
+
+
+
+		static void PopulateFrameInfoOnSuccess(FrameInfo& frame_info, const DlAddrResult& dladdr_result)
+		{
+			if (dladdr_result.info.dli_fname && dladdr_result.info.dli_fname[0]) {
+				frame_info.module_fullname = dladdr_result.info.dli_fname;
+				auto last_slash_pos = frame_info.module_fullname.find_last_of("/");				
+				frame_info.module_shortname = (last_slash_pos == std::string::npos)
+												  ? frame_info.module_fullname
+												  : frame_info.module_fullname.substr(last_slash_pos + 1);
+
+			} else {
+				frame_info.module_shortname = "[unknown-module]";
+			}
+
+
+			frame_info.module_base = reinterpret_cast<uintptr_t>(dladdr_result.info.dli_fbase);
+
+
+			if (dladdr_result.info.dli_sname && dladdr_result.info.dli_sname[0]) {
+				frame_info.func_name = DumperConfig::STACKTRACE_DEMANGLE_NAMES
+										   ? DemangleName(dladdr_result.info.dli_sname)
+										   : dladdr_result.info.dli_sname;
+			} else {
+				frame_info.func_name = "[unknown-function]";
+			}
+
+			frame_info.symbol_addr = reinterpret_cast<uintptr_t>(dladdr_result.info.dli_saddr);
+		}
+
+
+		static void PopulateFrameInfoOnFailure(FrameInfo& frame_info)
+		{
+			frame_info.module_shortname = "[unknown-module]";
+			frame_info.func_name = "[unknown-function]";
+		}
+
+
+		static FrameInfo ProcessFrame(const void* raw_addr)
+		{
+			FrameInfo frame_info;
+			frame_info.original_address = reinterpret_cast<uintptr_t>(raw_addr);
+
+			auto dladdr_result = SymbolicateWithAdjustStrategy(raw_addr, DumperConfig::STACKTRACE_ADJUST_RETURN_ADDRESSES);
+
+			frame_info.used_address = reinterpret_cast<uintptr_t>(dladdr_result.used_address);
+			frame_info.used_adjusted = dladdr_result.used_adjusted;
+			frame_info.dladdr_success = dladdr_result.dladdr_ret != 0;
+
+			if (frame_info.dladdr_success) {
+				PopulateFrameInfoOnSuccess(frame_info, dladdr_result);
+			} else {
+				PopulateFrameInfoOnFailure(frame_info);
+			}
+			return frame_info;
+		}
+
+
+		static uintptr_t CalculateOffset(uintptr_t address, uintptr_t base)
+		{
+			return (address >= base) ? (address - base) : 0;
+		}
+
+
+		static std::string FormatFrame(const FrameInfo& frame_info)
+		{
+			std::string result = frame_info.module_shortname + " :: " + frame_info.func_name;
+
+			if constexpr (DumperConfig::STACKTRACE_SHOW_ADDRESSES) {
+				result += " :: abs=" + HexAddr(frame_info.original_address);
+
+				if (frame_info.used_adjusted) {
+					result += " (*adjusted: " + HexAddr(frame_info.used_address) + ")";
+				}
+
+				if (frame_info.module_base) {
+					uintptr_t off_mod = CalculateOffset(frame_info.original_address, frame_info.module_base);
+					result += ", mod_base=" + HexAddr(frame_info.module_base)
+								 + ", +off_mod=" + HexAddr(off_mod);
+				}
+
+				if (frame_info.symbol_addr) {
+					uintptr_t off_sym = CalculateOffset(frame_info.original_address, frame_info.symbol_addr);
+					result += ", sym_addr=" + HexAddr(frame_info.symbol_addr);
+					result += ", +off_sym=" + HexAddr(off_sym);
+				}
+			}
+			return result;
+		}
+
+
+		static void CollectCmdlineToolData(const FrameInfo& info, std::map<std::string, std::vector<uintptr_t>>& per_module_addrs)
+		{
+			if (!info.module_fullname.empty() && info.module_base) {
+				uintptr_t relative_address = info.original_address - info.module_base;
+				per_module_addrs[info.module_fullname].push_back(relative_address);
+			}
+		}
+
+
+		void GenerateCmdlineToolCommands(const std::map<std::string, std::vector<uintptr_t>>& per_module_addrs)
+		{
+			for (const auto& [module_path, addresses] : per_module_addrs) {
+				if (addresses.empty()) continue;
+
+				std::ostringstream cmdline_stream;
+				cmdline_stream << "addr2line -e '" << module_path << "' -f -C";
+
+				for (uintptr_t addr : addresses) {
+					cmdline_stream << " " << HexAddr(addr);
+				}
+
+				cmdline_tool_invocations.emplace_back(cmdline_stream.str());
+			}
+		}
+
+
+		void CaptureStackTrace()
+		{
+			static_assert(DumperConfig::STACKTRACE_MAX_FRAMES <= 0x7fffffff, "STACKTRACE_MAX_FRAMES too large for backtrace()");
+
+			void* raw_frames[DumperConfig::STACKTRACE_MAX_FRAMES];
+			auto frame_count = static_cast<size_t>(backtrace(raw_frames, DumperConfig::STACKTRACE_MAX_FRAMES));
+
+			if (frame_count <= DumperConfig::STACKTRACE_SKIP_FRAMES) {
+				frames.emplace_back("[no stack frames available]");
+				return;
+			}
+
+			frames.reserve(frame_count - DumperConfig::STACKTRACE_SKIP_FRAMES);
+			std::map<std::string, std::vector<uintptr_t>> per_module_addrs;
+
+			for (size_t i = DumperConfig::STACKTRACE_SKIP_FRAMES; i < frame_count; ++i) {
+				FrameInfo frame_info = ProcessFrame(raw_frames[i]);
+				frames.emplace_back(FormatFrame(frame_info));
+
+				if constexpr (DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS) {
+					CollectCmdlineToolData(frame_info, per_module_addrs);
+				}
+			}
+
+			if constexpr (DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS) {
+				GenerateCmdlineToolCommands(per_module_addrs);
+			}
+		}
+	};
+
+
 
 	// ****************************************************************************************************
 	// Formatting variable names/values according to their nesting level when displaying containers
@@ -598,6 +919,26 @@ namespace Dumper {
 		log_stream << "|=> " << var_name << " = " << decoded << '\n';
 	}
 
+
+	// ****************************************************************************************************
+	// Support for [STACKTRACE]
+	// ****************************************************************************************************
+
+
+	inline void DumpValue(
+		std::ostringstream& log_stream,
+		std::string_view var_name,
+		const StackTrace& stack_trace,
+		const IndentInfo& indent_info = IndentInfo())
+	{
+		LogVarWithIndentation(log_stream, "[STACKTRACE]", nullptr, indent_info, false);
+		DumpValue(log_stream, "[FRAMES]", stack_trace.frames, indent_info.CreateChild(DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS));
+		if constexpr (DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS) {
+			DumpValue(log_stream, "[CMDLINE TOOL]", stack_trace.cmdline_tool_invocations, indent_info.CreateChild(false));
+		}
+	}
+
+
 	// ****************************************************************************************************
 	// Helper code for logging
 	// ****************************************************************************************************
@@ -763,3 +1104,4 @@ namespace Dumper {
 #define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)
 #define DFLAGS(var, treat_as) #var, Dumper::FlagsWrapper(var, treat_as)
+#define DSTACKTRACE() "[STACKTRACE]", Dumper::StackTrace()

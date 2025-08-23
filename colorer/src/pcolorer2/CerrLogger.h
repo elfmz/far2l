@@ -20,6 +20,8 @@ class CerrLogger : public Logger
     // no need, because we are working with the console.
   };
 
+  LogLevel getCurrentLogLevel() override { return current_level; }
+
  private:
   Logger::LogLevel current_level = Logger::LOG_OFF;
 };

@@ -76,6 +76,7 @@ class FileType
   */
   [[nodiscard]] const UnicodeString* getParamValue(const UnicodeString& name) const;
   [[nodiscard]] int getParamValueInt(const UnicodeString& name, int def_value = 0) const;
+  [[nodiscard]] int getParamValueHex(const UnicodeString& name, int def_value = 0) const;
 
   /** Returns parameter's default value of this file type.
       Default values are the values, explicitly pointed with

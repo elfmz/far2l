@@ -230,7 +230,7 @@ void CharacterClass::clearRange(wchar s, wchar e)
 
 void CharacterClass::addCategory(ECharCategory cat)
 {
-  if (!cat || cat >= CHAR_CATEGORY_LAST) return;
+  if (cat == CHAR_CATEGORY_Cn || cat >= CHAR_CATEGORY_LAST) return;
   for (int i = 0; i < 0x100; i++) {
     unsigned short pos = arr_idxCharCategoryIdx[(int(cat) - 1) * 0x100 + i];
     if (!pos) continue;
@@ -259,7 +259,7 @@ void CharacterClass::addCategory(const char* cat)
 
 void CharacterClass::clearCategory(ECharCategory cat)
 {
-  if (!cat || cat >= CHAR_CATEGORY_LAST) return;
+  if (cat == CHAR_CATEGORY_Cn || cat >= CHAR_CATEGORY_LAST) return;
   for (int i = 0; i < 0x100; i++) {
     unsigned short pos = arr_idxCharCategoryIdx[(int(cat) - 1) * 0x100 + i];
     if (!pos) continue;

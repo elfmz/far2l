@@ -39,13 +39,13 @@
     </prototype>
 
     <prototype name="calcset" group="scripts.far" description="calc's defines">
-        <location link="scripts/far/gen/calcset.hrc" />
+        <location link="scripts/gen/far/calcset.hrc" />
         <filename>/calcset\.csr$/i</filename>
     </prototype>
 
 
     <prototype name="esc" group="scripts.far" description="[ESC] Editor's settings changer">
-        <location link="scripts/far/gen/esc.hrc" />
+        <location link="scripts/gen/far/esc.hrc" />
         <filename weight='3'>/^esc(_\w+)?\.xml$/i</filename>
     </prototype>
 

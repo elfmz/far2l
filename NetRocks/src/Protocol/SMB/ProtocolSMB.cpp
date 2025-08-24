@@ -70,6 +70,7 @@ ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 //	smbc_setOptionUseCCache(_conn->ctx, false);
 //	smbc_setOptionNoAutoAnonymousLogin(_conn->ctx, !password.empty());
 
+	// The function is Deprecated. But to work with SMBv1, you have to use it.
 	if (smbc_init(&ProtocolSMB_AuthFn, 0) < 0){
 //		smbc_free_context(_conn->ctx, 1);
 //		_conn->ctx = nullptr;

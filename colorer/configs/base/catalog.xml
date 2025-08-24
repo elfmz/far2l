@@ -3,7 +3,6 @@
     <!ENTITY hrd "hrd">
     <!ENTITY catalog-console SYSTEM "hrd/catalog-console.xml">
     <!ENTITY catalog-rgb SYSTEM "hrd/catalog-rgb.xml">
-    <!ENTITY catalog-text SYSTEM "hrd/catalog-text.xml">
 ]>
 <catalog xmlns="http://colorer.github.io/schema/v1/catalog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://colorer.github.io/schema/v1/catalog https://colorer.github.io/schema/v1/catalog.xsd">
     <hrc-sets>
@@ -13,6 +12,5 @@
     <hrd-sets>
         &catalog-console;
         &catalog-rgb;
-        &catalog-text;
     </hrd-sets>
 </catalog>

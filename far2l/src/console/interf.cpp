@@ -551,7 +551,7 @@ void Text(const WCHAR *Str, size_t Length)
 		BufPtr = HeapBuffer;
 	}
 
-	int nCells = 0;
+	int nCells = 0, Skipped = 0;
 	std::wstring wstr;
 	for (size_t i = 0; i < Length; ++nCells) {
 		const size_t nG = StrSizeOfCell(&Str[i], Length - i);
@@ -562,14 +562,16 @@ void Text(const WCHAR *Str, size_t Length)
 			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
 		}
 		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (CharClasses(Str[i]).FullWidth()) {
+		if (CharClasses::IsFullWidth(Str[i])) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
+		} else if (CharClasses::IsXxxfix(Str[i])) {
+			++Skipped;
 		}
 		i+= nG;
 	}
 
-	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
+	ScrBuf.Write(CurX, CurY, BufPtr, nCells + Skipped);
 	if (HeapBuffer) {
 		delete[] HeapBuffer;
 	}
@@ -593,7 +595,7 @@ void TextEx(const WCHAR *Str, size_t Length)
 		BufPtr = HeapBuffer;
 	}
 
-	int nCells = 0;
+	int nCells = 0, Skipped = 0;
 	std::wstring wstr;
 	for (size_t i = 0; i < Length; ++nCells) {
 
@@ -609,15 +611,16 @@ void TextEx(const WCHAR *Str, size_t Length)
 		}
 
 //		CI_SET_ATTR(BufPtr[nCells], CurColor);
-
-		if (CharClasses(Str[i]).FullWidth()) {
+		if (CharClasses::IsFullWidth(Str[i])) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
+		} else	if (CharClasses::IsXxxfix(Str[i])) {
+			++Skipped;
 		}
 		i+= nG;
 	}
 
-	ScrBuf.Write(CurX, CurY, BufPtr, nCells);
+	ScrBuf.Write(CurX, CurY, BufPtr, nCells + Skipped);
 	if (HeapBuffer) {
 		delete[] HeapBuffer;
 	}
@@ -1163,10 +1166,9 @@ int HiStrCellsCount(const wchar_t *Str)
 
 				Length+= Count / 2;
 			} else {
-				CharClasses cc(*Str);
-				if (cc.FullWidth())
+				if (CharClasses::IsFullWidth(*Str))
 					Length+= 2;
-				else if (!cc.Xxxfix())
+				else if (!CharClasses::IsXxxfix(*Str))
 					Length+= 1;
 				Str++;
 			}
@@ -1207,10 +1209,9 @@ int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp)
 				}
 			}
 
-			CharClasses cc(*Str);
-			if (cc.FullWidth())
+			if (CharClasses::IsFullWidth(*Str))
 				VisPos+= 2;
-			else if (!cc.Xxxfix())
+			else if (!CharClasses::IsXxxfix(*Str))
 				VisPos+= 1;
 			Str++;
 			RealPos++;
@@ -1245,7 +1246,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 					return Pos - 2;
 				}
 
-				if (Pos > 1 && CharClasses(Str[Pos - 1]).FullWidth())
+				if (Pos > 1 && CharClasses::IsFullWidth(Str[Pos - 1]))
 					return Pos - 2;
 
 				return Pos - 1;
@@ -1265,7 +1266,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 
 				return Pos + 2;
 			} else {
-				return CharClasses(*Str).FullWidth() ? Pos + 2 : Pos + 1;
+				return CharClasses::IsFullWidth(*Str) ? Pos + 2 : Pos + 1;
 			}
 		}
 	}

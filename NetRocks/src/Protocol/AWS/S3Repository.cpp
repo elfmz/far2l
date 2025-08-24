@@ -162,22 +162,33 @@ ProtocolError S3Repository::ConstructProtocolError(const Aws::Client::AWSError<A
 std::vector<AWSFile> S3Repository::ListBuckets()
 {
     Aws::S3::Model::ListBucketsRequest request;
-    auto outcome = _client->ListBuckets();
-    if (outcome.IsSuccess()) {
-        const auto& buckets = outcome.GetResult().GetBuckets();
-        std::vector<AWSFile> ls;
-        for (const auto& bucket : buckets) {
-            ls.push_back(AWSFile(bucket.GetName(), false, bucket.GetCreationDate(), 0));
+    Aws::String continuationToken;
+    std::vector<AWSFile> ls;
+
+    // ListBuckets only returns the first 1000 buckets, so we need to handle pagination using continuation tokens.
+    do {
+        if (!continuationToken.empty()) {
+            request.SetContinuationToken(continuationToken);
         }
-        return ls;
-    } else {
-        throw ConstructProtocolError(outcome.GetError(), "List buckets");
-    }
+        auto outcome = _client->ListBuckets(request);
+        if (outcome.IsSuccess()) {
+            const auto& buckets = outcome.GetResult().GetBuckets();
+            for (const auto& bucket : buckets) {
+                ls.push_back(AWSFile(bucket.GetName(), false, bucket.GetCreationDate(), 0));
+            }
+            continuationToken = outcome.GetResult().GetContinuationToken();
+        } else {
+            throw ConstructProtocolError(outcome.GetError(), "List buckets");
+        }
+    } while (!continuationToken.empty());
+
+    return ls;
 }
 
 std::vector<AWSFile> S3Repository::ListFolder(const std::string &path)
 {
     Aws::S3::Model::ListObjectsV2Request request;
+    Aws::String continuationToken;
     size_t prefixLen = 0;
 
     auto localPath = Path(path);
@@ -187,46 +198,42 @@ std::vector<AWSFile> S3Repository::ListFolder(const std::string &path)
         prefixLen = localPath.keyWithSlash().length();
     }
 
-    auto outcome = _client->ListObjectsV2(request);
+    request.SetDelimiter("/"); // Group common prefixes (directories)
 
-    if (outcome.IsSuccess()) {
-        const auto& contents = outcome.GetResult().GetContents();
+    std::vector<AWSFile> ls;
+    // ListObjectsV2 only returns the first 1000 objects, so we need to handle pagination using continuation tokens.
+    do {
+        if (!continuationToken.empty()) {
+            request.SetContinuationToken(continuationToken);
+        }
 
-        std::vector<AWSFile> ls;
-        std::map<Aws::String, AWSFile> folders;
-        for (const auto& object : contents) {
-            Aws::String key = object.GetKey().substr(prefixLen);
-            size_t last_slash_pos = key.find_last_of("/");
-            if (last_slash_pos == std::string::npos) {
+        auto outcome = _client->ListObjectsV2(request);
+
+        if (outcome.IsSuccess()) {
+            const auto& contents = outcome.GetResult().GetContents();  // Get the "files" under the prefix.
+
+            for (const auto& object : contents) {
+                Aws::String key = object.GetKey().substr(prefixLen);
                 ls.push_back(AWSFile(key, true, object.GetLastModified(), object.GetSize()));
-            } else {
-                size_t pos = key.find('/');
-                if (pos != Aws::String::npos) {
-                    auto dir = key.substr(0, pos);
-                    auto result = folders.emplace( 
-                        dir, 
-                        AWSFile(dir, false, object.GetLastModified(), object.GetSize())
-                    );
+            }
 
-                    if (!result.second) {
-                        result.first->second.size += object.GetSize();
-                        result.first->second.UpdateModification(object.GetLastModified());
-                    }
+            auto commonPrefixes = outcome.GetResult().GetCommonPrefixes(); // Get the "directories" under the prefix.
+            for (const auto& prefix : commonPrefixes) {
+                Aws::String dir = prefix.GetPrefix().substr(prefixLen);
+                dir.erase(dir.size() - 1); // Remove trailing slash
+                if (!dir.empty()) {
+                    ls.push_back(AWSFile(dir, false, Aws::Utils::DateTime(), 0));
                 }
             }
 
+            continuationToken = outcome.GetResult().GetNextContinuationToken();
+
+        } else {
+            throw ConstructProtocolError(outcome.GetError(), "List dir");
         }
+    } while (!continuationToken.empty());
 
-        for (const auto& pair : folders) {
-            ls.push_back(pair.second);
-        }
-
-        return ls;
-
-    } else {
-        throw ConstructProtocolError(outcome.GetError(), "List dir");
-    }
-
+    return ls;
 }
 
 bool S3Repository::IsFolder(const Path& localPath) {
@@ -248,25 +255,8 @@ AWSFile S3Repository::GetFileInfo(const std::string &path)
     Path localPath(path);
 
     if (IsFolder(localPath) || localPath.key().empty()) {
-        Aws::S3::Model::ListObjectsV2Request request;
-        request.SetBucket(localPath.bucket());
-        request.SetPrefix(localPath.keyWithSlash());
-
-        auto outcome = _client->ListObjectsV2(request);
-        if (outcome.IsSuccess()) {
-            auto result = AWSFile(ExtractFileName(localPath.key()), false);
-            const auto& contents = outcome.GetResult().GetContents();
-            for (const auto& object : contents) {
-                result.size += object.GetSize();
-                result.UpdateModification(object.GetLastModified());
-            }
-            return result;
-
-        } else {
-            throw ConstructProtocolError(outcome.GetError(), "Access denied");
-        }
+        return AWSFile(ExtractFileName(localPath.key()), false); // No modification date or size for folders
     }
-		
     Aws::S3::Model::HeadObjectRequest request;
 	request.SetBucket(localPath.bucket());
 	request.SetKey(localPath.key());

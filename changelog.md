@@ -1,15 +1,32 @@
 # far2l changelog
 
-Only significant user-side changes are listed here (for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)).
+Only significant user-side changes are listed here
+(for all changes see history of [Commits](https://github.com/elfmz/far2l/commits/master/) and [Pull requests](https://github.com/elfmz/far2l/pulls?q=is%3Apr+is%3Aclosed)
+or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
-* _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
+* _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
+* _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
+* _New:_ '$z' command prompt variable that returns the "{current git branch} " string; an empty string otherwise
+* _New:_ Separate icons for WX versions of far2l and far2ledit
+* _New:_ far:config as "Configuration editor" and far:about as "About FAR" in Commands menu
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
-* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only
+* Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
+* Actions recorded in commands history are configured in the AutoComplete & History dialog
+* _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
+* _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
 * _Temporary panel plugin_: Show file groups
+* _colorer plugin_: Update colorer schemes to v1.2.0.90
+* _colorer plugin_: Update colorer library to v1.5.0-22.08.2025
+* _colorer plugin_: Added features for easier modification of the set and behavior of the user's hrc/hrd files, without editing the supplied base set.
+* _colorer plugin_: Improved performance around logging
+* _colorer plugin_: Fix read default-back/default-fore params
+* _python plugin_: fixes and new subplugin **uedreplace**
+* _arclite plugin_: New plugin for archives processing
+  (now as experimental version which partially more effective then multiarc;
+  arclite disabled by default, to enable manually turn on
+  F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)
 * Several bugfixes
-* _colorer plugin_: Update colorer schemes to v1.2.0.68
-* _colorer plugin_: Update colorer library to v1.4.1-10.05.2025
 
 ## 2.6.5 beta (2025-03-30)
 * _New:_ Different desktop files for launch WX (GUI) `--notty` and TTY `--tty`
@@ -58,6 +75,7 @@ Only significant user-side changes are listed here (for all changes see history 
 * Several bugfixes
 
 ## 2.6.3 beta (2024-07-26)
+* Panels resize by **Ctrl+(Shift+)Down** allows to hide command line, subsequently allowing fast file find without pressing **Alt**
 * Several bugfixes
 
 ## 2.6.2 beta (2024-07-16)
@@ -72,7 +90,6 @@ Only significant user-side changes are listed here (for all changes see history 
 
 ## 2.6.1 beta (2024-04-14)
 ## 2.6.0 beta (2024-02-19)
-## 2.5.3 beta (2023-11-05)
 ## 2.5.3 beta (2023-11-05)
 ## 2.5.2 beta (2023-08-15)
 ## 2.5.1 beta (2023-05-28)

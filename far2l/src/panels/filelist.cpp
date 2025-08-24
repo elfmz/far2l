@@ -85,8 +85,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CachedCreds.hpp"
 #include "MountInfo.h"
 
-extern PanelViewSettings ViewSettingsArray[];
-extern size_t SizeViewSettingsArray;
+extern std::vector<PanelViewSettings> ViewSettingsArray;
 
 static int _cdecl SortList(const void *el1, const void *el2);
 
@@ -2525,10 +2524,10 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 			}
 
 			PopPlugin(TRUE);
-			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			/*Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
 			if (AnotherPanel->GetType() == INFO_PANEL)
-				AnotherPanel->Redraw();
+				AnotherPanel->Redraw();*/
 		} else {
 			if (!dot2Present && CurFile < ListData.Count() && !PluginsList.Empty()) {
 				PluginsListItem *Last = *PluginsList.Last();
@@ -2595,6 +2594,10 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 		*/
 		else if (SetDirectorySuccess)
 			CurFile = CurTopFile = 0;
+
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+		if (AnotherPanel->GetType() == INFO_PANEL)
+			AnotherPanel->Redraw();
 
 		return SetDirectorySuccess;
 	} else {
@@ -2950,7 +2953,7 @@ void FileList::MoveToMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 void FileList::SetViewMode(int ViewMode)
 {
-	if ((DWORD)ViewMode > (DWORD)SizeViewSettingsArray)
+	if ((size_t)ViewMode >= ViewSettingsArray.size())
 		ViewMode = VIEW_0;
 
 	int CurFullScreen = IsFullScreen();

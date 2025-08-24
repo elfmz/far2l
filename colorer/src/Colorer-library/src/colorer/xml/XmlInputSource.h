@@ -21,7 +21,7 @@ class XmlInputSource
   [[nodiscard]]
   UnicodeString& getPath() const;
 
-  static bool isFsURI(const UnicodeString& path, const UnicodeString* base);
+  static bool isFileSystemURI(const UnicodeString& path, const UnicodeString* base);
 
  private:
   std::unique_ptr<LibXmlInputSource> xml_input_source;

@@ -961,7 +961,7 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 		} break;
 		
 		case A_THROTTLE: {
-			auto fn = std::bind(&ProcessAllEvents);
+			auto fn = [] { return ProcessAllEvents(); };
 			CallInMain<int>(fn);
 			std::lock_guard<std::mutex> lock(_refresh_rects);
 			_refresh_rects_throttle = WINPORT(GetTickCount)();
@@ -1388,6 +1388,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 #endif
 	_stolen_key = 0;
 
+	int _prev_key_code = _key_tracker.LastKeydown().GetKeyCode();
+
 	_key_tracker.OnKeyDown(event, now);
 	if (_key_tracker.Composing()) {
 		fprintf(stderr, " COMPOSING\n");
@@ -1419,7 +1421,9 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
 		& (LEFT_ALT_PRESSED | SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED));
 
-	if (event.GetKeyCode() == WXK_RETURN && dwMods == LEFT_ALT_PRESSED) {
+	if (event.GetKeyCode() == WXK_RETURN && dwMods == LEFT_ALT_PRESSED
+		&& (_prev_key_code == WXK_ALT || _prev_key_code == WXK_RETURN)) {
+
 		_resize_pending = RP_INSTANT;
 		//fprintf(stderr, "RP_INSTANT\n");
 		_frame->ShowFullScreen(!_frame->IsFullScreen());

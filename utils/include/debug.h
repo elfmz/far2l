@@ -10,7 +10,6 @@
 #include <cstdlib>
 #include <string>
 #include <type_traits>
-#include <codecvt>
 #include <string_view>
 #include <unistd.h>
 #include <iomanip>
@@ -28,6 +27,8 @@
 #include <bitset>
 #include <iterator>
 #include <algorithm>
+#include <array>
+#include "WideMB.h"
 
 
 /** This ABORT_* / ASSERT_* have following distinctions comparing to abort/assert:
@@ -53,8 +54,23 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 namespace Dumper {
 
+	struct DumperConfig {
+		static constexpr bool WRITE_LOG_TO_FILE = true;
+		static constexpr char LOG_FILENAME[] = "far2l_debug.log";
+
+		static constexpr bool ENABLE_PID_TID = true;
+		static constexpr bool ENABLE_TIMESTAMP = true;
+		static constexpr bool ENABLE_LOCATION = true;
+
+		static constexpr size_t HEXDUMP_BYTES_PER_LINE = 16;
+		static constexpr size_t HEXDUMP_MAX_LENGTH = 1024 * 1024;
+
+		static constexpr std::size_t CONTAINERS_MAX_INDENT_LEVEL = 32;
+	};
+
+
 	// ****************************************************************************************************
-	// Вспомогательные переменные, функции и структуры
+	// Helper variables, functions, and structures
 	// ****************************************************************************************************
 
 	inline std::mutex g_log_output_mutex;
@@ -88,7 +104,7 @@ namespace Dumper {
 				case '\f': table[i] = "\\f"; break;
 				case '\x1B': table[i] = "\\e"; break;
 				default:
-					std::snprintf(buf, sizeof(buf), "\\x{%02x}", character_code);
+					std::snprintf(buf, sizeof(buf), "\\x{%02X}", character_code);
 					table[i] = buf;
 					break;
 				}
@@ -119,6 +135,7 @@ namespace Dumper {
 		std::call_once(s_flag, [] {
 			const char *env_home = std::getenv("HOME");
 			s_home = (env_home != nullptr) ? std::string(env_home) : std::string("/tmp");
+			s_home += "/";
 		});
 		return s_home;
 	}
@@ -134,7 +151,7 @@ namespace Dumper {
 	}
 
 
-	// Метафункция для проверки на этапе компиляции: является ли тип T контейнером?
+	// Compile-time metafunction that determines if T is a container
 
 	template <typename T, typename = void>
 	struct is_container : std::false_type { };
@@ -149,14 +166,12 @@ namespace Dumper {
 	inline constexpr bool is_container_v = is_container<T>::value;
 
 	// ****************************************************************************************************
-	// Форматирование имён/значений переменных с учётом уровня их возможной вложенности при отображении контейнеров
+	// Formatting variable names/values according to their nesting level when displaying containers
 	// ****************************************************************************************************
-
-	constexpr std::size_t MAX_INDENT_LEVEL = 32;
 
 	struct IndentInfo
 	{
-		std::bitset<MAX_INDENT_LEVEL> levels;
+		std::bitset<DumperConfig::CONTAINERS_MAX_INDENT_LEVEL> levels;
 		int cur_level;
 
 		IndentInfo() : levels(), cur_level(0) {}
@@ -182,7 +197,7 @@ namespace Dumper {
 		IndentInfo CreateChild(bool current_branch_has_next_elements) const
 		{
 			auto child = *this;
-			if (cur_level < static_cast<int>(MAX_INDENT_LEVEL)) {
+			if (cur_level < static_cast<int>(DumperConfig::CONTAINERS_MAX_INDENT_LEVEL)) {
 				child.levels.set(cur_level, current_branch_has_next_elements);
 				++child.cur_level;
 			}
@@ -208,7 +223,7 @@ namespace Dumper {
 
 
 	// ****************************************************************************************************
-	// DumpValue() - главная реализация-"диспетчер", обрабатывающая основные типы
+	// DumpValue() – the main dispatcher implementation handling the basic types
 	// ****************************************************************************************************
 
 	template <typename T>
@@ -229,14 +244,11 @@ namespace Dumper {
 					  std::is_same_v<std::remove_cv_t<std::remove_pointer_t<T>>, unsigned char>) {
 			DumpValue(log_stream, var_name, reinterpret_cast<const char*>(value), indent_info);
 
-		} else if constexpr (std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::wstring> ||
-							 std::is_convertible_v<T, const wchar_t*>) {
-			std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
-			try {
-				DumpValue(log_stream, var_name, conv.to_bytes(value), indent_info);
-			} catch (const std::range_error& e) {
-				LogVarWithIndentation(log_stream, var_name, std::string("[conversion error: ") + e.what() + "]", indent_info);
-			}
+		} else if constexpr (std::is_same_v<std::remove_const_t<std::remove_reference_t<T>>, std::wstring>) {
+			DumpValue(log_stream, var_name, StrWide2MB(value), indent_info);
+
+		} else if constexpr (std::is_convertible_v<T, const wchar_t*>) {
+			DumpValue(log_stream, var_name, Wide2MB(value), indent_info);
 
 		} else if constexpr (std::is_same_v<std::remove_cv_t<T>, char> ||
 							 std::is_same_v<std::remove_cv_t<T>, unsigned char> ||
@@ -281,7 +293,7 @@ namespace Dumper {
 		std::ostringstream& log_stream,
 		std::string_view var_name,
 		const std::pair<FirstT, SecondT>& value,
-		const IndentInfo& indent_info)
+		const IndentInfo& indent_info = IndentInfo())
 	{
 		LogVarWithIndentation(log_stream, var_name, nullptr, indent_info, false);
 		DumpValue(log_stream, std::string(var_name)+".first", value.first, indent_info.CreateChild(true));
@@ -290,7 +302,7 @@ namespace Dumper {
 
 
 	// ****************************************************************************************************
-	// Поддержка статических массивов char[], unsigned char[] и wchar_t[]
+	// Support for char[], unsigned char[], and wchar_t[] static arrays
 	// ****************************************************************************************************
 
 	template <typename CharT, std::size_t N>
@@ -316,7 +328,7 @@ namespace Dumper {
 
 
 	// ****************************************************************************************************
-	// Поддержка строковых буферов, доступных по паре (указатель, размер): через макросы DSTRBUF + DUMP
+	// Support for string buffers specified as (pointer, length) via DSTRBUF + DUMP macros
 	// ****************************************************************************************************
 
 	template <typename T>
@@ -352,12 +364,13 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка бинарных буферов, доступных по паре (указатель, размер в байтах): через макросы DBINBUF + DUMP
+	// Support for binary buffers specified as (pointer, byte count) via DBINBUF + DUMP macros
 	// ****************************************************************************************************
 
-	inline std::string CreateHexDump(const std::uint8_t* data, size_t length,
-					std::string_view line_prefix, size_t bytes_per_line = 16)
+	inline std::string CreateHexDump(const std::uint8_t* data, size_t length)
 	{
+		constexpr std::string_view line_prefix = "|   ";
+		constexpr auto bytes_per_line = DumperConfig::HEXDUMP_BYTES_PER_LINE;
 		auto separator_pos = bytes_per_line / 2;
 		std::ostringstream result;
 		result << std::hex << std::setfill('0');
@@ -417,24 +430,30 @@ namespace Dumper {
 			return;
 		}
 
-		constexpr size_t MAX_LENGTH = 1024 * 1024;
-		size_t effective_length = (bin_buf_wrapper.length > MAX_LENGTH)
-									  ? MAX_LENGTH : bin_buf_wrapper.length;
+		size_t effective_length;
+		if constexpr (DumperConfig::HEXDUMP_MAX_LENGTH == 0) {
+			effective_length = bin_buf_wrapper.length;
+		} else {
+			effective_length = std::min(DumperConfig::HEXDUMP_MAX_LENGTH, bin_buf_wrapper.length);
+		}
 
-		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data),
-											effective_length, "|   ");
+		std::string hexDump = CreateHexDump(reinterpret_cast<const uint8_t*>(bin_buf_wrapper.data), effective_length);
 
 		log_stream << "|=> " << var_name << " =\n";
 		log_stream << hexDump;
 
-		if (bin_buf_wrapper.length > MAX_LENGTH) {
-			log_stream << "|   Output truncated to " << effective_length
-					   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)\n";
+		if constexpr (DumperConfig::HEXDUMP_MAX_LENGTH != 0) {
+			if (bin_buf_wrapper.length > DumperConfig::HEXDUMP_MAX_LENGTH) {
+				log_stream << "|   Output truncated to " << effective_length
+						   << " bytes (full length: " << bin_buf_wrapper.length << " bytes)\n";
+			}
 		}
+
+
 	}
 
 	// ****************************************************************************************************
-	// Поддержка итерируемых STL контейнеров и статических массивов: через макросы DCONT + DUMP
+	// Support for iterable STL containers and static arrays via DCONT + DUMP macros
 	// ****************************************************************************************************
 
 	template <typename ContainerT, typename = std::enable_if_t<is_container_v<ContainerT>>>
@@ -476,7 +495,7 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Поддержка флагов (битовые маски, etc): через макросы DFLAGS + DUMP; второй аргумент - Dumper::FlagsAs::...
+	// Support for flags (bitmasks, etc.) via DFLAGS + DUMP; use Dumper::FlagsAs::... as the second argument
 	// ****************************************************************************************************
 
 	enum class FlagsAs
@@ -518,6 +537,8 @@ namespace Dumper {
 
 	inline std::string DecodeFileAttributes(unsigned long int flags)
 	{
+		if (flags == 0xFFFFFFFF) return "INVALID_FILE_ATTRIBUTES";
+
 		constexpr unsigned long int f_attr[] = {
 			0x00000001, 0x00000002, 0x00000004, 0x00000010, 0x00000020, 0x00000040, 0x00000080, 0x00000100,
 			0x00000200, 0x00000400, 0x00000800, 0x00001000, 0x00002000, 0x00004000, 0x00008000, 0x00010000,
@@ -533,22 +554,29 @@ namespace Dumper {
 	}
 
 
-	inline std::string DecodeUnixMode(unsigned long int flags)
+	inline std::string DecodeUnixMode(mode_t flags)
 	{
 		std::ostringstream result;
-		result << std::oct << flags << " ("
+
+		char file_type_char = '?';
+		if (S_ISREG(flags)) file_type_char = '-';
+		else if (S_ISDIR(flags)) file_type_char = 'd';
+		else if (S_ISLNK(flags)) file_type_char = 'l';
+		else if (S_ISBLK(flags)) file_type_char = 'b';
+		else if (S_ISCHR(flags)) file_type_char = 'c';
+		else if (S_ISFIFO(flags)) file_type_char = 'p';
+		else if (S_ISSOCK(flags)) file_type_char = 's';
+
+		result << std::oct << flags << " (" << file_type_char
 			<< ((flags & S_IRUSR) ? "r" : "-")
 			<< ((flags & S_IWUSR) ? "w" : "-")
-			<< ((flags & S_IXUSR) ? "x" : "-")
+			<< ((flags & S_IXUSR) ? ((flags & S_ISUID) ? "s" : "x") : ((flags & S_ISUID) ? "S" : "-"))
 			<< ((flags & S_IRGRP) ? "r" : "-")
 			<< ((flags & S_IWGRP) ? "w" : "-")
-			<< ((flags & S_IXGRP) ? "x" : "-")
+			<< ((flags & S_IXGRP) ? ((flags & S_ISGID) ? "s" : "x") : ((flags & S_ISGID) ? "S" : "-"))
 			<< ((flags & S_IROTH) ? "r" : "-")
 			<< ((flags & S_IWOTH) ? "w" : "-")
-			<< ((flags & S_IXOTH) ? "x" : "-");
-		if(flags & S_ISUID) result << " suid";
-		if(flags & S_ISGID) result << " sgid";
-		if(flags & S_ISVTX) result << " sticky";
+			<< ((flags & S_IXOTH) ? ((flags & S_ISVTX) ? "t" : "x") : ((flags & S_ISVTX) ? "T" : "-"));
 		result << ")";
 		return result.str();
 	}
@@ -562,7 +590,7 @@ namespace Dumper {
 			decoded = DecodeFileAttributes(df.value);
 			break;
 		case FlagsAs::UNIX_MODE:
-			decoded = DecodeUnixMode(df.value);
+			decoded = DecodeUnixMode(static_cast<mode_t>(df.value));
 			break;
 		default:
 			decoded = "[not implemented]";
@@ -571,43 +599,64 @@ namespace Dumper {
 	}
 
 	// ****************************************************************************************************
-	// Вспомогательный код для работы с логом
+	// Helper code for logging
 	// ****************************************************************************************************
 
 
 	inline std::string CreateLogHeader(std::string_view func_name, std::string_view location)
 	{
-		auto current_time = std::chrono::system_clock::now();
-		auto current_time_t = std::chrono::system_clock::to_time_t(current_time);
-		std::tm local_time{};
-		localtime_r(&current_time_t, &local_time);
-		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
-
 		std::ostringstream header_stream;
-		header_stream << "\n/-----[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----[";
-		header_stream << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----\n";
-		header_stream << "|[" << location << "] in " << func_name << "()\n";
+		header_stream << "\n";
+
+		if constexpr (DumperConfig::ENABLE_PID_TID || DumperConfig::ENABLE_TIMESTAMP || DumperConfig::ENABLE_LOCATION) {
+			header_stream << "/-----";
+		}
+
+		if constexpr (DumperConfig::ENABLE_PID_TID) {
+			header_stream << "[PID:" << getpid() << ", TID:" << GetNiceThreadId() << "]-----";
+		}
+
+		if constexpr (DumperConfig::ENABLE_TIMESTAMP) {
+			auto current_time = std::chrono::system_clock::now();
+			auto current_time_t = std::chrono::system_clock::to_time_t(current_time);
+			std::tm local_time{};
+			localtime_r(&current_time_t, &local_time);
+			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(current_time.time_since_epoch()) % 1000;
+			header_stream << "[" << std::put_time(&local_time, "%Y-%m-%d %H:%M:%S") << ',' << ms.count() << "]-----";
+		}
+
+		if constexpr (DumperConfig::ENABLE_PID_TID || DumperConfig::ENABLE_TIMESTAMP) {
+			header_stream << "\n";
+		}
+
+		if constexpr (DumperConfig::ENABLE_LOCATION) {
+			if constexpr (DumperConfig::ENABLE_PID_TID || DumperConfig::ENABLE_TIMESTAMP) {
+				header_stream << "|";
+			}
+			header_stream << "[" << location << "] in " << func_name << "()\n";
+		}
+
 		return header_stream.str();
 	}
 
 
-	inline void FlushLog(std::ostringstream& log_stream, bool to_file)
+	inline void FlushLog(std::ostringstream& log_stream)
 	{
 		std::string log_entry = log_stream.str();
 		std::lock_guard<std::mutex> lock(g_log_output_mutex);
 
-		if (to_file) {
-			std::ofstream log_file(GetHomeDir() + "/far2l_debug.log", std::ios::app);
+		if constexpr (DumperConfig::WRITE_LOG_TO_FILE) {
+			std::ofstream log_file(GetHomeDir() + DumperConfig::LOG_FILENAME, std::ios::app);
 			if (log_file) {
 				log_file << log_entry << std::endl;
 			}
 		} else {
-			std::clog << log_entry << std::endl;
+			std::cerr << log_entry << std::endl;
 		}
 	}
 
 	// ****************************************************************************************************
-	// Бэкенд для макроса DUMP: аргументы заключаются в дополнительные макросы DVV, DBUF, DCONT, DMSG...
+	// Backend for the DUMP macro: arguments must be wrapped in helper macros (DVV, DBINBUF, DCONT, DMSG...)
 	// ****************************************************************************************************
 
 	template<std::size_t... I, typename NameValueTupleT>
@@ -619,21 +668,21 @@ namespace Dumper {
 
 
 	template<typename... Args>
-	void Dump(bool to_file, std::string_view func_name, std::string_view location, const Args&... args)
+	void Dump(std::string_view func_name, std::string_view location, const Args&... args)
 	{
 		static_assert(sizeof...(args) % 2 == 0, "Dump() expects arguments in pairs: name and value.");
 
 		std::ostringstream log_stream;
-		log_stream << CreateLogHeader(func_name, location);
+		log_stream << CreateLogHeader(func_name, location) << std::boolalpha;
 
 		auto args_tuple = std::forward_as_tuple(args...);
 		constexpr std::size_t pair_count = sizeof...(args) / 2;
 		ProcessPairs(args_tuple, log_stream, std::make_index_sequence<pair_count>{});
-		FlushLog(log_stream, to_file);
+		FlushLog(log_stream);
 	}
 
 	// ****************************************************************************************************
-	// Бэкенд для макроса DUMPV: поддержка дампинга только переменных (без вызовов функций, макросов и сложных выражений)
+	// Backend for the DUMPV macro: only simple variables support (no function calls, macros, or complex expressions)
 	// ****************************************************************************************************
 
 	template <std::size_t... I, typename ValuesTupleT>
@@ -670,22 +719,21 @@ namespace Dumper {
 	inline void ReportDumpVError(std::ostringstream &log_stream)
 	{
 		const std::string error_message =
-			"dumpv: Only simple variables are allowed as arguments. "
+			"Only simple variables are allowed as arguments. "
 			"Function calls or complex expressions with internal commas are not supported.";
-		DumpValue(log_stream, "ERROR", error_message);
+		DumpValue(log_stream, "[DUMPV ERROR]", error_message);
 	}
 
 
 	template<typename... Ts>
 	void DumpV(
-		bool to_file,
 		std::string_view func_name,
 		std::string_view location,
 		const char *var_names_str,
 		const Ts&... var_values)
 	{
 		std::ostringstream log_stream;
-		log_stream << CreateLogHeader(func_name, location);
+		log_stream << CreateLogHeader(func_name, location) << std::boolalpha;
 
 		constexpr auto var_values_count = sizeof...(var_values);
 		std::vector<std::string> var_names;
@@ -697,7 +745,7 @@ namespace Dumper {
 			ReportDumpVError(log_stream);
 		}
 
-		FlushLog(log_stream, to_file);
+		FlushLog(log_stream);
 	}
 
 } // end namespace Dumper
@@ -706,11 +754,11 @@ namespace Dumper {
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
 #define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
 
-#define DUMP(to_file, ...) { Dumper::Dump(to_file, __func__, LOCATION, __VA_ARGS__); }
-#define DUMPV(to_file, ...) { Dumper::DumpV(to_file, __func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
+#define DUMP(...) { Dumper::Dump(__func__, LOCATION, __VA_ARGS__); }
+#define DUMPV(...) { Dumper::DumpV(__func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(expr) #expr, expr
-#define DMSG(msg) "msg", std::string(msg)
+#define DMSG(msg) "[DMSG]", std::string(msg)
 #define DBINBUF(ptr,length) #ptr, Dumper::BinBufWrapper(ptr,length)
 #define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)

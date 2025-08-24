@@ -31,7 +31,7 @@ elseif("${ICU_MODE}" STREQUAL "runtime")
     if(NOT ICU_FOUND)
         message(FATAL_ERROR "${ColorRed}ICUUC not found but required by ICU_MODE=${ICU_MODE}${ColorNormal}")
     endif()
-    message(STATUS "Using runtime ICUUC dependency due to ICU_MODE=${ICU_MODE}, ICU_LIBRARIES=${ICU_LIBRARIES}")
+    message(STATUS "Using runtime ICUUC dependency due to ICU_MODE=${ICU_MODE}, ICU_LIBRARIES=${ICU_LIBRARIES}, ICU_INICLUDE_DIRS=${ICU_INCLUDE_DIRS}")
     set(CHAR_CLASSES_CPP src/CharClassesICU.cpp)
 
 else()
@@ -86,6 +86,11 @@ target_include_directories(utils PRIVATE include)
 if("${ICU_MODE}" STREQUAL "build")
     add_dependencies(utils utils_icu)
 elseif("${ICU_MODE}" STREQUAL "runtime")
+    if (APPLE)
+        target_include_directories(utils PRIVATE
+         "$<BUILD_INTERFACE:/opt/homebrew/include>"
+        )
+    endif ()
     target_link_libraries(utils ${ICU_LIBRARIES})
 endif()
 

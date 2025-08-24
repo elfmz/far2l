@@ -2138,9 +2138,8 @@ bool Panel::FindPartNameXLat(const wchar_t *Name, int Next, int Direct, int Excl
 	const size_t NameLen = wcslen(Name);
 	StackHeapArray<wchar_t, 0x200> NameXlat(NameLen + 1);
 
-	Xlator xlt(0);
 	for (size_t i = 0; i < NameLen; ++i) {
-		NameXlat[i] = xlt.Transcode(Name[i]);
+		NameXlat[i] = XlatOneChar(Name[i]);
 		NameXlat[i + 1] = 0;
 		if (!FindPartName(NameXlat.Get(), Next, Direct, ExcludeSets)) {
 			NameXlat[i] = Name[i];

@@ -787,7 +787,7 @@ static void ParseListingItemPlain(const char *CurFormat, const char *CurStr, str
 		}
 		switch (*CurFormat) {
 			case '*':
-				if (isspace(*CurStr) || !CurStr)
+				if (isspace(*CurStr) || !*CurStr)
 					CurStr--;
 				else
 					while (/*CurStr[0] && */ CurStr[1]	/*&& !isspace(CurStr[0]) */

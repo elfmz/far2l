@@ -611,6 +611,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	}
 
 #ifdef __WXOSX__
+	(void) raw_key_code;
 	if (Event.KeyEvent.wVirtualKeyCode == VK_CLEAR && KeyDown)
 		s_toggle_numlock = !s_toggle_numlock;
 #endif

@@ -163,6 +163,14 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
         - Exclusively handle hotkeys option in the ~Input settings~@InputSettings@ (only in GUI backend mode under X11).
 
 
+ #Special key mapping in macOS#
+    - The #Option# key maps to #Alt#;
+    - far2l-GUI only: both keys #Command# act as Left #Ctrl#, both keys #Ctrl# act as Right #Ctrl#;
+    - #Clear# key on the numeric keypad toggles NumLock mode;
+    - numpad #0# functions as #Insert# when NumLock is off;
+    - on external Windows keyboards, macOS swaps #Alt# and #Win# keys to match Mac layout logic.
+
+
  #macOS workaround# if far2l in macOS regularly asks permission to folders
     After command #sudo codesign --force --deep --sign - /Applications/far2l.app# it is enough to confirm permission only once.
 
@@ -297,11 +305,18 @@ to avoid attempt to use GUI mode.
   #--notty#
   Don't fallback to TTY backend if ~GUI backend~@UIBackends@ was failed to initialize.
 
-  #--nodetect#
+  #--nodetect#=[x|xi][f][w][a][k]
   By default far2l tries to detect if it runs inside of terminal of another far2l and in such case
 it uses TTY backend with far2l extensions. In case of far2l extensions unavailable far2l checks for
 availability of X11 session and uses it to improve user experience if compiled with TTYX/TTYXI option.
-This switch disables all this functionality, forcing plain terminal mode for TTY backend.
+  Specifying parameters allows you to disable only individual ~extensions~@UIBackends@:
+   - f  - disabling detection and use of far2l terminal extensions;
+   - x  - disabling detection and use of X11 (clipboard and keys);
+   - xi - disabling detection and use of keys via X11;
+   - a  - disabling detection and use of apple iTerm2 mode;
+   - k  - disabling detection and use of kovidgoyal's kitty mode;
+   - w  - disabling detection and use of win32 mode.
+  This switch without parameters disables all this functionality, forcing plain terminal mode for TTY backend.
 
   #--mortal#
   This argument applies only to far2l that runs with TTY backend. By default when terminal closed
@@ -955,7 +970,8 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
 
 @FarConfig
 $ #Configuration editor#
- Starts with the ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
+ Starts with the #Configuration editor# command in the ~Commands menu~@CmdMenu@
+or ~pseudo-command~@SpecCmd@ #far:config# in the far2l internal command line.
 
  Allows to view and edit all Far Manager’s options.
 
@@ -1089,10 +1105,8 @@ in filenames and in editor).
     #Shift-F9#    - settings of the selected plugin.
     #Alt-Shift-F9# - open ~"Plugins configuration"~@PluginsConfig@ menu.
 
-    See also:
- 
-    ~Plugins support~@Plugins@.
-    Common ~menu~@MenuCmd@ keyboard commands.
+    See also: ~Plugins support~@Plugins@.
+              Common ~menu~@MenuCmd@ keyboard commands.
 
 @PluginsConfig
 $ #Plugins configuration#
@@ -1573,7 +1587,8 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
 
   Send currently running command to the background          #Ctrl+Alt+Z#
 
-  See also: ~pseudo-commands~@SpecCmd@
+  See also: ~Pseudo-commands~@SpecCmd@
+            ~Operating system commands~@OSCommands@
 
 @UIBackends
 $ #UI Backends#
@@ -2077,6 +2092,8 @@ respective option in the ~system settings dialog~@SystemSettings@.
 
     Remove duplicates method can be chosen in the ~system settings dialog~@SystemSettings@.
 
+    Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
+
     For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
@@ -2286,7 +2303,7 @@ is on, FAR2L tries to use OS association to execute this file type;
 
     See also:
       ~Special commands~@SpecCmd@.
-      common ~menu~@MenuCmd@ keyboard commands.
+      Common ~menu~@MenuCmd@ keyboard commands.
 
 
 @FileAssocModify
@@ -2445,6 +2462,7 @@ input without viewer or editor screens in the background.
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
 Commands history list may be activated by #Alt-F8#.
   This option can also be found in the ~Command line settings~@CmdlineSettings@ dialog.
+  Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
   #Save folders history#
   Forces saving ~folders history~@HistoryFolders@ before exit and restoring after starting FAR2L.
@@ -2712,6 +2730,7 @@ $ #Settings dialog: command line#
   #Save commands history#
   Forces saving ~commands history~@History@ before exit and restoring after starting FAR2L.
   This option can also be found in the ~System settings~@SystemSettings@ dialog.
+  Actions recorded in commands history are configured in the ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
   #Persistent blocks#
   Do not remove block selection after moving the cursor in command line.
@@ -2759,12 +2778,19 @@ $ #Settings dialog: AutoComplete & History#
   #Append first matched item#
   The first matched item is append immediately after symbols in the command line.
 
-  #Exceptions wildcards# also affect which commands are stored in far2l history.
+  #Exceptions wildcards# also affect which commands are stored in far2l ~commands history~@History@.
   For example, adding #" *"# (mandatory in quotes) excludes from adding in history
   commands that start with a space (similar to the bash #$HISTCONTROL=ignorespace#).
   Info: in far2l history work like bash #$HISTCONTROL#
    with options #ignoredups# (lines which match the previous line are not saved)
    and #erasedups# (all previous lines matching the current line are removed from the history).
+
+  Actions recorded in ~commands history~@History@:
+    - Panels: files via system types (xdg-open);
+    - Panels: files via ~far2l associations~@FileAssoc@;
+    - Panels: executable files;
+    - Command line: any typed command.
+  Remove duplicates method can be chosen in the ~system settings dialog~@SystemSettings@.
 
 @InfoPanelSettings
 $ #Information Panel settings#
@@ -3588,7 +3614,7 @@ $ #Settings dialog: editor#
                           котором стоит курсор.
 
   #Use .editorconfig#       Processing .editorconfig parameters
-  #settings files#          (see https://editorconfig.org for details)
+  #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
 
   #Lock editing of#         When a file with the Read-only attribute
   #read-only files#         is opened for editing, the editor also
@@ -3817,7 +3843,12 @@ change the view mode settings. First, it offers to select the desired mode from
 the list. In this list "Brief mode" item corresponds to brief panel mode
 (#LeftCtrl-1#), "Medium" corresponds to medium panel mode (#LeftCtrl-2#) and so
 on. The last item, "Alternative full", corresponds to view mode called with
-#LeftCtrl-0#. After selecting the mode, you may change the following settings:
+#LeftCtrl-0#.
+    #Enter# or #F4#      - edit selected mode
+    #Ctrl+Enter#       - apply selected mode to active panel
+    #Ctrl+Shift+Enter# - apply selected mode to passive panel
+
+    After selecting the mode, you may change the following settings:
 
   - #Column types# - column types are encoded as one or several
 characters, delimited with commas. Allowed column types are:
@@ -4311,8 +4342,8 @@ as in ~File associations~@FileAssoc@ should be used to denote the file name.
 at a time, and the command 'tar --remove-files -cvjf !.!.tar.bz2 !.!' will move all selected files
 into TAR/BZIP2 archives with the same names.
 
-    See also ~Special commands~@SpecCmd@
-    See also ~Operating system commands~@OSCommands@
+    See also: ~Special commands~@SpecCmd@
+              ~Operating system commands~@OSCommands@
 
 @OSCommands
 $ #Operating system commands#

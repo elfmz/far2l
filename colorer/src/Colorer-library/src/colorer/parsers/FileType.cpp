@@ -2,8 +2,7 @@
 #include "colorer/parsers/FileTypeImpl.h"
 
 FileType::FileType(UnicodeString name, UnicodeString group, UnicodeString description)
-    : pimpl(
-          spimpl::make_unique_impl<Impl>(std::move(name), std::move(group), std::move(description)))
+    : pimpl(spimpl::make_unique_impl<Impl>(std::move(name), std::move(group), std::move(description)))
 {
 }
 
@@ -50,6 +49,11 @@ const UnicodeString* FileType::getParamDefaultValue(const UnicodeString& name) c
 int FileType::getParamValueInt(const UnicodeString& name, const int def_value) const
 {
   return pimpl->getParamValueInt(name, def_value);
+}
+
+int FileType::getParamValueHex(const UnicodeString& name, int def_value) const
+{
+  return pimpl->getParamValueHex(name, def_value);
 }
 
 void FileType::addParam(const UnicodeString& name, const UnicodeString* value)

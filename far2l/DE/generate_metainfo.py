@@ -1,16 +1,34 @@
 #!/usr/bin/env python3
 
-import markdown
 import re
 import sys
 import xml.etree.ElementTree as ET
 
+import markdown
+from markdown.inlinepatterns import LINK_RE, LinkInlineProcessor
+
 [changelog_file, xml_template_file, xml_output_file] = sys.argv[1:]
+
+
+class StripLinksInlineProcessor(LinkInlineProcessor):
+    def handleMatch(self, m, data):
+        node, start, end = super().handleMatch(m, data)
+        if node is not None:
+            node = node.text
+        return node, start, end
+
 
 with open(changelog_file) as fp:
     md_text = fp.read()
 
-html_content = markdown.markdown(md_text)
+md = markdown.Markdown()
+md.inlinePatterns.register(
+    StripLinksInlineProcessor(LINK_RE, md),
+    name="link",
+    priority=160,
+)
+
+html_content = md.convert(md_text)
 html_root = ET.fromstring(f"<root>{html_content}</root>")
 release_re = re.compile(r"(?P<version>[\d.]+) (?P<type>[a-z]+) \((?P<date>\d{4}-\d{2}-\d{2})\)")
 

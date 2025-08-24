@@ -102,6 +102,7 @@ class UnicodeString
 
   /** Tests, if string starts with specified @c str substring at position @c pos */
   bool startsWith(const UnicodeString& str, int32_t pos = 0) const;
+  bool endsWith(const UnicodeString& text) const;
 
   UnicodeString& findAndReplace(const UnicodeString& pattern, const UnicodeString& newstring);
   /** Internal hashcode of string

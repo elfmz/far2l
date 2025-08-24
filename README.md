@@ -6,7 +6,12 @@ Works also on macOS and BSD (but latter not tested on regular manner)
 BETA VERSION.   
 **Use on your own risk!**
 
-Plug-ins that are currently working: NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV), colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator, Python (optional scripting support)
+Plug-ins that are currently working: NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV/AWS S3 <sub>optional compilation if AWSSDK installed</sub>),
+colorer, multiarc, tmppanel, Advanced compare, filecase, inside, align, autowrap, drawline, editcase, editorcomp, incsrch, SimpleIndent, Calculator,
+Python (optional scripting support),
+arclite <sub>(now as experimental version which partially more effective then multiarc;
+arclite disabled by default, to enable manually turn on
+F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -43,9 +48,11 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * See also (in external documents):
     * [Change log](changelog.md)
     * [Releases](https://github.com/elfmz/far2l/releases)
+    * [Python plugin readme](python/configs/plugins/read-en.txt)
     * [Notes on porting and FAR Plugin API changes](HACKING.md)
     * [Coding style](CODESTYLE.md)
     * [Testing](testing/README.md)
+    * [DUMPER](DUMPER.md)
 
 <a name="gstarted"></a>
 ## Getting Started
@@ -76,7 +83,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 [terminal emulators](#terminals), which provide clipboard access and has their advanced keyboard-protocols).
 
 
-| Mode<br>(UI Backends) | TTY<br>(plain far2l) | TTY\|X | TTY\|Xi | GUI |
+| Mode<br>(UI Backends) | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY<br>(plain far2l) | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY\|X | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l.svg) TTY\|Xi | ![icon](far2l/DE/icons/hicolor/24x24/apps/far2l-wx.svg) GUI (WX) |
 | ---: | --- | --- | --- | --- |
 | **Works:** | in **console**<br>and in any<br>**terminal** | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **Desktop<br>environment**<br><sub>(X11<br>or Wayland<br>or macOS)<br>via wxWidgets</sub> |
 | **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |
@@ -84,7 +91,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 | **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (\*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
 | **Typical<br>use case:** | **Servers**,<br>embedded<br>(\*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
-| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | _none_<br><sup>(use `far2l` due to<br>[auto downgrade](#downgrade))</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
+| [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | Install `far2l` with<br><sup>`--no-install-recommends`<br>and use `far2l` due to<br>[auto downgrade](#downgrade)<br>(since _2.6.5~ds-3_ /<br>Ubuntu 25.10+)</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
 | Community [PPA](#community_bins)<br><sup>(packages names):</sup> | `far2l` | `far2l-ttyx` | `far2l-ttyx` | `far2l-gui` |
 
 <sub><a name="downgrade"></a>_Note_: When running far2l automatically downgrade
@@ -111,26 +118,34 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
 <a name="debian"></a>
 #### Debian/Ubuntu binaries from the official repositories
 
-* **TTY X/Xi** backends only (Debian / Ubuntu 23.10+)
-    ```sh
-    apt install far2l
-    ```
-
 * **GUI** backend (Debian since far2l _2.6.4_ / Ubuntu 25.04+)
     ```sh
     apt install far2l-wx
     ```
 
-<sub>**Debian** has far2 in **sid-unstable** / **13 trixie-testing** / **12 bookworm-backports**; **Ubuntu** since **23.10**.
+* **TTY X/Xi** backends only (Debian / Ubuntu 23.10+)
+    ```sh
+    apt install far2l
+    ```
+
+* **TTY** backends only – do not install X11 dependencies and dependencies used in the NetRocks plugin (Debian since far2l _2.6.5~ds-3_ / Ubuntu 25.10+)
+    ```sh
+    apt install --no-install-recommends far2l
+    ```
+
+<sub>**Debian** has far2l in **sid (unstable)** / **14 forky (testing)** / **13 trixie** / **12 bookworm-backports**; **Ubuntu** since **23.10**.
 Details about versions in the official repositories see in
 https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com/search?keywords=far2l </sub>
 
-<sub>_Note_: binaries in official repositories may be very outdated,
+<sub>_Note_: packages in official repositories may be very outdated,
 actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
-<sub>_Note_: Since far2l 2.6.4 Debian/Ubuntu packages build with pythons subplugins.</sub>
+<sub>_Note_: since far2l 2.6.4 Debian/Ubuntu packages build with python subplugins.</sub>
 
-<details><summary>Backport official packages for old Debian/Ubuntu system <sub>[<i>click to expand/collapse</i>]</sub></summary>
+<sub>_Note_: in some old Debian/Ubuntu you can obtain far2l packages corresponding to the latest distributions via backport mechanism
+(see info in [Debian Backports](https://backports.debian.org/Instructions/) and [Ubuntu Backports](https://help.ubuntu.com/community/UbuntuBackports)).</sub>
+
+<details><summary><sub>Manually building backport of official packages for other old Debian/Ubuntu system [<i>click to expand/collapse</i>]</sub></summary>
 
 <sub>A simple sid back port should be as easy as (build your own binary deb from the official source deb package,
 required install [dependencies](#required-dependencies)):</sub>
@@ -184,6 +199,7 @@ See also [Community packages & binaries](#community_bins)
 * [AWS SDK S3](https://github.com/aws/aws-sdk-cpp) (_optional_ - needed for **NetRocks/AWS S3**)
 * `libarchive-dev` (_optional_ - needed for better archives support in **multiarc**)
 * `libunrar-dev` (_optional_ - needed for RAR archives support in **multiarc**, see `-DUNRAR` command line option)
+* `7zip` or `p7zip-full` in old distributions (_optional_ - not needed for building, but dynamically used for archives processing via **multiarc** and **arclite**)
 * `libicu-dev` (_optional_ - needed if used non-default ICU_MODE, see `-DICU_MODE` command line option)
 * `python3-dev` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
 * `python3-cffi` (_optional_ - needed for **python plugins** support, see `-DPYTHON` command line option)
@@ -248,7 +264,7 @@ By default far2l uses pre-generated "hardcoded" UNICODE characters properties. B
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 but you must have installed additional packages within yours system:
-`python3-dev`,
+`python3-dev` and
 `python3-cffi`.
 
 
@@ -257,7 +273,11 @@ To control how RAR archives will be handled in multiarc:
  `-DUNRAR=lib` use libunrar and unrar utility, also build requires libunrar-dev to be installed
  `-DUNRAR=NO` dont use special unrar code, rar archives will be handled by libarchive unless its also disabled
 
-There're also options to toggle other plugins build in same way: ALIGN AUTOWRAP CALC COLORER COMPARE DRAWLINE EDITCASE EDITORCOMP FARFTP FILECASE INCSRCH INSIDE MULTIARC NETROCKS SIMPLEINDENT TMPPANEL
+There're also options to toggle other plugins build in same way:
+`-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
+`-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
+`-DFILECASE=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`
+(see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 
 #### macOS build
 
@@ -344,23 +364,19 @@ emerge -avn net-libs/neon net-libs/libssh net-fs/libnfs net-fs/samba
 ```
 After installing, follow Clone and Build section above.
 
-#### Installing and Building on [NixOS](https://nixos.org/)
+#### Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS
 
-To install system-wide, add the `far2l` package to your [`configuration.nix`](https://nixos.org/manual/nixos/stable/index.html#sec-changing-config) `environment.systemPackages` list. To run the application on-demand without affecting the system state, execute `nix-shell -p far2l --command far2l`. These use a package version from your current [channel](https://wiki.nixos.org/wiki/Nix_channels).
+To install system-wide, add the `far2l` package to your [`configuration.nix`](https://nixos.org/manual/nixos/stable/index.html#sec-changing-config) `environment.systemPackages` list. To run the application on-demand without affecting the system state, execute `nix-shell -p far2l --command far2l`. These use a package version from your current [channel](https://wiki.nixos.org/wiki/Channel_branches).
 
-The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/NixOS/nixpkgs/blob/master/pkgs/applications/misc/far2l/default.nix), it tells which Git revision from Far2l repo to fetch, with what dependencies to build it, and how to patch its references to other software to make it run in isolated fashion independently from other versions available in the system.
+The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/NixOS/nixpkgs/blob/nixos-unstable/pkgs/by-name/fa/far2l/package.nix), it tells which Git revision from Far2l repo to fetch, with what dependencies to build it, and how to patch its references to other software to make it run in isolated fashion independently from other versions available in the system.
 
-You can build and run `far2l` package for any revision:
-* Directly from GitHub (`NixOS/nixpkgs` repo, or your own fork and branch):
- ``` sh
-nix-shell -I nixpkgs=https://github.com/<fork>/nixpkgs/archive/<revision-or-branch>.tar.gz -p far2l --command far2l
- ```
-* From a locally cloned working directory of the repo:
-``` sh
-nix-shell -I nixpkgs=/path/to/nixpkgs -p far2l --command far2l
-```
 
-To advance the package to a new Far2l revision, edit the `fetchFromGitHub` set attributes `rev` (revision hash) and `sha256` (revision content hash). **Important!** If you leave the old content hash, the old cached content for that hash might be used without attempting to download the new revision. If you're not expecting the build to break, the easiest would be to make a fork, push the change, and build straight from github.
+#### Custom Building and Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS from scratch
+
+1) Copy [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to your Nix configuration folder
+2) Add it as import to 'configuration.nix'
+3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
+4) update with 'nixos-rebuild switch'
 
 #### IDE Setup
 You can import the project into your favourite IDE like QtCreator, CodeLite, or any other, which supports cmake or which cmake is able to generate projects for.
@@ -442,8 +458,9 @@ but vanilla PuTTY can not transfer clipboard.
             sudo apt remove far2l*                      # required if any far2l was installed
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository --remove ppa:far2l-team/ppa
+            #sudo apt install far2l-wx  # (!) use if you need plain+TTY|Xi+GUI backends
             #sudo apt install far2l     # (!) use if you need plain+TTY|Xi backends
-            #sudo apt install far2l-wx  # (!) use if you need plain+GUI backends
+            #sudo apt install --no-install-recommends far2l  # (!) use only since 2.6.5~ds-3 in 25.10 if you need only plain backend
             ```
 
     </details>
@@ -459,9 +476,6 @@ but vanilla PuTTY can not transfer clipboard.
 
 ## Notes on porting and FAR Plugin API changes
  * See [HACKING.md](HACKING.md)
-
-## Testing
- * See [testing/README.md](testing/README.md)
 
 ## Known issues:
 * Only valid translations are English, Russian, Ukrainian and Belarussian (interface only), all other languages require deep correction.

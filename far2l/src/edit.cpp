@@ -205,6 +205,8 @@ DWORD Edit::SetCodePage(UINT codepage)
 			free(Str);
 			Str = encoded;
 			StrSize = length2;
+			HasSpecialWidthChars = false;
+			CheckForSpecialWidthChars();
 		}
 
 		m_codepage = codepage;
@@ -417,15 +419,14 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			CharClasses cc(wc);
-			if (cc.FullWidth()) {
+			if (CharClasses::IsFullWidth(wc)) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
 					break;
 				}
 				OutStrCells+= 2;
-			} else if (i == RealLeftPos || !cc.Xxxfix())
+			} else if (!CharClasses::IsXxxfix(wc))
 				OutStrCells++;
 
 			OutStr.emplace_back(wc ? wc : L' ');
@@ -672,11 +673,11 @@ int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 		if (Pos < LimitPos)
 			do {
 				Pos++;
-			} while (Pos < LimitPos && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
+			} while (Pos < LimitPos && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
 	} else
 		do {
 			Pos++;
-		} while (Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
+		} while (Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
 
 	return Pos;
 }
@@ -688,7 +689,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 	do {
 		--Pos;
-	} while (Pos > 0 && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
+	} while (Pos > 0 && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
 
 	return Pos;
 }
@@ -1413,7 +1414,10 @@ int Edit::ProcessCtrlQ()
 		Flags.Clear(FEDITLINE_CLEARFLAG);
 	EditOutDisabled--;
 	*/
-	return InsertKey(rec.Event.KeyEvent.uChar.AsciiChar);
+	CHAR ch = rec.Event.KeyEvent.uChar.UnicodeChar;
+	if( rec.Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED |RIGHT_CTRL_PRESSED ) && ch >= 'A' && ch <= 'Z'  )
+		ch -= ('A' - 1); // convert to binary
+	return InsertKey(ch);
 }
 
 int Edit::ProcessInsPlainText(const wchar_t *str)
@@ -1518,6 +1522,10 @@ int Edit::InsertKey(FarKey Key)
 
 			PrevCurPos = CurPos;
 			Str[CurPos++] = Key;
+
+			wchar_t ch = static_cast<wchar_t>(Key);
+			CheckForSpecialWidthChars(&ch, 1);
+
 			changed = true;
 		} else if (Flags.Check(FEDITLINE_OVERTYPE)) {
 			if (CurPos < StrSize) {
@@ -1603,6 +1611,25 @@ void Edit::SetEOL(const wchar_t *EOL)
 const wchar_t *Edit::GetEOL()
 {
 	return EOL_TYPE_CHARS[EndType];
+}
+
+void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
+{
+	if (HasSpecialWidthChars) return;
+
+	if (!CheckStr) {
+		CheckStr = Str;
+		Length = StrSize;
+	}
+
+	for (int i = 0; i < Length; ++i) {
+		auto wc = CheckStr[i];
+		if (wc == L'\t' || CharClasses::IsFullWidth(wc)
+						|| CharClasses::IsXxxfix(wc) ) {
+			HasSpecialWidthChars = true;
+			return;
+		}
+	}
 }
 
 /*
@@ -1696,6 +1723,9 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 
 		PrevCurPos = CurPos;
 		CurPos = StrSize;
+
+		HasSpecialWidthChars=false;
+		CheckForSpecialWidthChars();
 	}
 
 	Changed();
@@ -1845,6 +1875,7 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 			if (TabExpandMode == EXPAND_ALLTABS)
 				ExpandTabs();
 
+			CheckForSpecialWidthChars(Str, Length);
 			Changed();
 		}
 		/*else
@@ -2057,7 +2088,6 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 {
 	// Корректировка табов
 	bool bCorrectPos = CorrectPos && *CorrectPos;
-
 	if (CorrectPos)
 		*CorrectPos = 0;
 
@@ -2066,7 +2096,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 	// Если предыдущая позиция за концом строки, то табов там точно нет и
 	// вычислять особо ничего не надо, иначе производим вычисление
-	if (PrevPos >= StrSize)
+	if (PrevPos >= StrSize || !HasSpecialWidthChars)
 		TabPos+= Pos - PrevPos;
 	else {
 		// Начинаем вычисление с предыдущей позиции
@@ -2091,10 +2121,9 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 			}
 			// Обрабатываем все остальные символы
 			else {
-				CharClasses cc(Str[Index]);
-				if (cc.FullWidth()) {
+				if (CharClasses::IsFullWidth(Str[Index])) {
 					TabPos+= 2;
-				} else if (!cc.Xxxfix()) {
+				} else if (!CharClasses::IsXxxfix(Str[Index])) {
 					TabPos++;
 				}
 			}
@@ -2108,6 +2137,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 int Edit::CellPosToReal(int Pos)
 {
+	if (!HasSpecialWidthChars) return Pos;
 	int Index = 0;
 	for (int CellPos = 0; CellPos < Pos; Index++) {
 		if (Index >= StrSize) {
@@ -2123,9 +2153,8 @@ int Edit::CellPosToReal(int Pos)
 
 			CellPos = NewCellPos;
 		} else {
-			CharClasses cc(Str[Index]);
-			CellPos+= cc.FullWidth() ? 2 : cc.Xxxfix() ? 0 : 1;
-			while (Index + 1 < StrSize && CharClasses(Str[Index + 1]).Xxxfix()) {
+			CellPos+= CharClasses::IsFullWidth(Str[Index]) ? 2 : CharClasses::IsXxxfix(Str[Index]) ? 0 : 1;
+			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
 				Index++;
 			}
 		}
@@ -2135,11 +2164,11 @@ int Edit::CellPosToReal(int Pos)
 
 void Edit::SanitizeSelectionRange()
 {
-	if (SelEnd >= SelStart && SelStart >= 0) {
-		while (SelStart > 0 && CharClasses(Str[SelStart]).Xxxfix())
+	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
+		while (SelStart > 0 && CharClasses::IsXxxfix(Str[SelStart]))
 			--SelStart;
 
-		while (SelEnd < StrSize && CharClasses(Str[SelEnd]).Xxxfix())
+		while (SelEnd < StrSize && CharClasses::IsXxxfix(Str[SelEnd]))
 			++SelEnd;
 	}
 

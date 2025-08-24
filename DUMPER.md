@@ -6,12 +6,14 @@ This tool is designed to assist far2l developers by producing detailed debug pri
 
 There are two main entry points:
 
-- `DUMPV(to_file, ...)`
-- `DUMP(to_file, ...)`
+- `DUMPV(...)`
+- `DUMP(...)`
 
 Each of these macros logs the values of variables along with their names, but they differ in how arguments are provided.
 
-Every log entry is automatically prefixed with a header containing:
+Every log entry is automatically prefixed with a customizable header (see 
+[section 4](#4-configuration-options) for configuration details) which by default contains:
+
 
 - process ID,
 - thread ID,
@@ -19,11 +21,23 @@ Every log entry is automatically prefixed with a header containing:
 - source file and line number,
 - the calling function’s name.
 
-When logging string values, special characters (such as newlines, tabs, quotes) are automatically escaped to ensure clarity and unambiguity in the log.
+The logger supports various data types, including primitives, strings, wide strings, pointers, containers, pairs, and custom buffers. For containers, nested structures are displayed with tree-like indentation.
 
-Both macros take a boolean parameter `to_file` as their first argument, which determines the output destination of the log entry. If `to_file` is `true`, the log is appended to `far2l_debug.log` in the user’s home directory (using `$HOME` or, if unavailable, `/tmp` as a fallback). Otherwise, the log is printed to standard error via `std::clog`.
+When dumping containers, elements are enumerated using sequential indices (e.g., container[0], container[1]), even for non-indexable types like std::list or std::set. These indices are fictional and serve only for display purposes and navigation in the log structure. The actual traversal is performed using iterators (begin() to end()), ensuring compatibility with all iterable containers.
 
-Output example:
+When logging string values, special characters (such as newlines, tabs, quotes) are automatically escaped to ensure clarity and unambiguity. Note that character escaping via hexadecimal codes uses the C++23 style syntax: `\x{NN}`.
+
+The output destination can be either a file or standard error stream, and is configured by options `WRITE_LOG_TO_FILE` and `LOG_FILENAME`. See [section 4](#4-configuration-options) for more details.
+
+For example, inserting these debug statements at appropriate points in the source code:
+
+```cpp
+DUMPV(strStr, possibilities);
+DUMP(DVV(SrcName), DFLAGS(SrcData.dwFileAttributes,Dumper::FlagsAs::FILE_ATTRIBUTES), DVV(strDestName));
+DUMP(DBINBUF(Data, Size));
+```
+
+will produce log output like this:
 
 ```
 /-----[PID:38000, TID:1]-----[2025-05-08 00:44:18,764]-----
@@ -40,8 +54,9 @@ Output example:
 
 /-----[PID:38000, TID:1]-----[2025-05-08 00:46:28,450]-----
 |[/home/testuser/far2l/far2l/src/copy.cpp:2803] in ShellCopyFile()
-|=> SrcName = .editorconfig
-|=> strDestName = /home/testuser/foobar/.editorconfig
+|=> SrcName = /home/testuser/far2l/far2l/bootstrap/unmount.sh
+|=> SrcData.dwFileAttributes = ARCHIVE, EXECUTABLE
+|=> strDestName = /home/testuser/foobar/unmount.sh
 
 
 /-----[PID:38000, TID:1]-----[2025-05-08 00:46:28,450]-----
@@ -49,17 +64,11 @@ Output example:
 |=> Data =
 |             00 01 02 03 04 05 06 07 | 08 09 0a 0b 0c 0d 0e 0f  | ASCII
 |   -------------------------------------------------------------+-----------------
-|   00000000  72 6f 6f 74 20 3d 20 74 | 72 75 65 0a 0a 5b 2a 5d  | root = true..[*]
-|   00000010  0a 63 68 61 72 73 65 74 | 20 3d 20 75 74 66 2d 38  | .charset = utf-8
-|   00000020  0a 65 6e 64 5f 6f 66 5f | 6c 69 6e 65 20 3d 20 6c  | .end_of_line = l
-|   00000030  66 0a 69 6e 64 65 6e 74 | 5f 73 74 79 6c 65 20 3d  | f.indent_style =
-|   00000040  20 74 61 62 0a 69 6e 64 | 65 6e 74 5f 73 69 7a 65  |  tab.indent_size
-|   00000050  20 3d 20 34 0a 0a 5b 2a | 2e 79 6d 6c 5d 0a 69 6e  |  = 4..[*.yml].in
-|   00000060  64 65 6e 74 5f 73 74 79 | 6c 65 20 3d 20 73 70 61  | dent_style = spa
-|   00000070  63 65 0a 69 6e 64 65 6e | 74 5f 73 69 7a 65 20 3d  | ce.indent_size =
-|   00000080  20 32 0a 0a 5b 43 4d 61 | 6b 65 4c 69 73 74 73 2e  |  2..[CMakeLists.
-|   00000090  74 78 74 5d 0a 69 6e 64 | 65 6e 74 5f 73 74 79 6c  | txt].indent_styl
-|   000000a0  65 20 3d 20 73 70 61 63 | 65 0a                    | e = space.      
+|   00000000  23 21 2f 62 69 6e 2f 73 | 68 0a 69 66 20 5b 20 22  | #!/bin/sh.if [ "
+|   00000010  24 32 22 20 3d 20 27 66 | 6f 72 63 65 27 20 5d 3b  | $2" = 'force' ];
+|   00000020  20 74 68 65 6e 0a 09 73 | 75 64 6f 20 75 6d 6f 75  |  then..sudo umou
+|   00000030  6e 74 20 2d 66 20 22 24 | 31 22 0a 65 6c 73 65 0a  | nt -f "$1".else.
+|   00000040  09 75 6d 6f 75 6e 74 20 | 22 24 31 22 0a 66 69 0a  | .umount "$1".fi.
 ```
 
 
@@ -71,22 +80,22 @@ Use it for quickly logging a list of plain variables. It automatically extracts 
 
 > **Warning**
 > 
-> Function calls or complex expressions with internal commas are not supported.
+> Function calls or complex expressions with internal commas are not supported. If parsing fails, an error message is logged instead.
 
 **Syntax:**
 
 ```cpp
-DUMPV(to_file, var1, var2, ...);
+DUMPV(var1, var2, ...);
 ```
 
 **Usage:**
 
 ```cpp
-int i = 42;
-double d = 3.1415;
-std::string s = "FAR2L is a Linux port of FAR Manager";
+int answer = 42;
+double pi = 3.14;
+std::string name = "FAR2L";
 
-DUMPV(true, i, d, s);
+DUMPV(answer, pi, name);
 ```
 
 ## 2. DUMP macro
@@ -98,7 +107,7 @@ Use when working with types that need special handling. It requires you to wrap 
 **Syntax:**
 
 ```cpp
-DUMP(to_file, HELPER_MACRO1(expr1), HELPER_MACRO2(expr2), ...);
+DUMP(HELPER_MACRO1(expr1), HELPER_MACRO2(expr2), ...);
 ```
 
 **Usage:**
@@ -107,7 +116,7 @@ DUMP(to_file, HELPER_MACRO1(expr1), HELPER_MACRO2(expr2), ...);
 FARString fs = "The quick brown fox jumps over the lazy dog.";
 std::vector<int> primes {2, 3, 5, 7, 11, 13, 17};
 
-DUMP(true, DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes, 0));
+DUMP(DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes, 4));
 ```
 
 
@@ -126,13 +135,16 @@ DVV(expr)
 **Usage:**
 
 ```cpp
-DUMP(true, DVV(RightAlign && SrcVisualLength > MaxLength));
+std::string str = "Pack my box with five dozen liquor jugs.";
+int x = 2, y = 3, z = 4;
+
+DUMP(DVV(str), DVV(str.find('o', 10)), DVV(x + y < z));
 ```
 
 
 ### 3.2. DMSG
 
-Wraps custom text messages.
+Wraps a custom text message.
 
 **Syntax:**
 
@@ -143,7 +155,7 @@ DMSG(msg)
 **Usage:**
 
 ```cpp
-DUMP(true, DMSG("Operation completed successfully!"));
+DUMP(DMSG("Operation completed successfully!"));
 ```
 
 ### 3.3. DSTRBUF
@@ -168,7 +180,7 @@ Accepts two arguments:
 ```cpp
 WINPORT_DECL(WriteConsole, BOOL, (HANDLE hConsoleOutput, const WCHAR *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved))
 {
-	DUMP(true, DSTRBUF(lpBuffer, nNumberOfCharsToWrite));
+	DUMP(DSTRBUF(lpBuffer, nNumberOfCharsToWrite));
 	// ...
 }
 ```
@@ -178,6 +190,8 @@ WINPORT_DECL(WriteConsole, BOOL, (HANDLE hConsoleOutput, const WCHAR *lpBuffer, 
 Wraps binary buffers.
 
 Use to log the contents of a binary buffer — a memory region defined by a pointer and its length in bytes. The macro produces a hexadecimal dump, which is especially useful for inspecting raw binary data.
+
+The output consists of byte offsets, hexadecimal representation, and ASCII interpretation ('.' for non-printable).
 
 **Syntax:**
 
@@ -202,8 +216,7 @@ struct Header {
 Header hdr = { 0xDEADBEEF, 0x0102, 0x000F };
 const wchar_t *wch = L"The quick brown fox jumps over the lazy dog.";
 
-DUMP(true,
-	DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
+DUMP(DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
 	DBINBUF(&hdr, sizeof(hdr)));
 ```
 
@@ -211,7 +224,7 @@ DUMP(true,
 
 Wraps containers or static arrays.
 
-Use to log the contents of static arrays and iterable containers (i.e. containers that provide both `begin()` and `end()` methods) in a detailed and structured way.
+Use to log the contents of static arrays and iterable containers (i.e. containers that provide both `begin()` and `end()` methods) when you need to limit the number of displayed elements. For a complete container dump, prefer the simpler DVV macro.
 
 **Syntax:**
 
@@ -227,18 +240,15 @@ Accepts two arguments:
 **Usage:**
 
 ```cpp
-std::vector<std::string> possibilities;
-
-if (vtc.GetPossibilities(cmd, possibilities) && !possibilities.empty()) {
-	DUMP(true, DCONT(possibilities, 0));
-}
+std::list<std::string> FAR2L = {"Linux", "fork", "of", "FAR Manager"};
+DUMP(DCONT(FAR2L, 2));
 ```
 
 ### 3.6. DFLAGS
 
-Wraps integers representing bit masks or flag sets.
+Wraps integers representing bit masks or flag sets. 
 
-This macro is designed to help log values that represent bit masks or flag sets (for example, file attributes or Unix permission bits) by decoding these numeric flag values into human-readable strings.
+Use for decoding numeric values (such as file attributes or Unix permission bits) into human-readable strings.
 
 **Syntax:**
 
@@ -254,13 +264,49 @@ Accepts two arguments:
 **Usage:**
 
 ```cpp
-int ShellCopy::ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData,
-	FARString &strDestName, int Append)
-
-// ...
-     
-DUMP(true,
-	 DVV(SrcData.strFileName),
-	 DFLAGS(SrcData.dwFileAttributes, Dumper::FlagsAs::FILE_ATTRIBUTES),
-	 DFLAGS(SrcData.dwUnixMode, Dumper::FlagsAs::UNIX_MODE));
+mode_t mode = S_IFDIR | 0755;
+DUMP(DFLAGS(mode, Dumper::FlagsAs::UNIX_MODE));
 ```
+
+## 4. Configuration Options
+
+The dumper behavior can be customized through the `DumperConfig` structure located at the beginning of `debug.h`.
+
+> **Note**
+> 
+> All configuration options are compile-time constants and cannot be changed at runtime. Any modifications require recompilation of the affected code.
+
+Here is the full list:
+
+* `WRITE_LOG_TO_FILE`
+
+	Specifies the output destination for log entries. If set to `true`, logs are appended to a file determined by the `LOG_FILENAME` option. If set to `false`, logs are directed to `std::cerr`.
+
+* `LOG_FILENAME`
+
+	Specifies the filename for log output when `WRITE_LOG_TO_FILE` is enabled. The file is created with default permissions (subject to the process's umask) in the user's home directory (determined by the `$HOME` environment variable), or, if unavailable, `/tmp` as a fallback. Default value: `far2l_debug.log`.
+
+* `ENABLE_PID_TID`
+
+	Allows process and thread IDs in log entry headers, formatted as `[PID:12345, TID:1]`. Thread IDs are sequential numbers assigned by the debugging system starting from 1. Each thread receives its unique number upon the first logging call made from that thread.
+
+* `ENABLE_TIMESTAMP`
+
+	Allows timestamps in log entry headers, formatted as: `[YYYY-MM-DD HH:MM:SS,mmm]` with local time and millisecond precision.
+
+* `ENABLE_LOCATION`
+
+	Allows source code location in log entry headers. When enabled, the file path, line number, and calling function name are recorded in the format `[/path/to/file.cpp:123] in FunctionName()`.
+
+* `HEXDUMP_BYTES_PER_LINE`
+
+	Specifies how many bytes are displayed per line in hexadecimal dumps (via the `DBINBUF` macro). The default value is 16.
+
+* `HEXDUMP_MAX_LENGTH`
+
+	Sets the maximum number of bytes to display in a single hexadecimal dump (via the `DBINBUF` macro). This prevents extremely large buffers from overwhelming the log output. When a buffer exceeds this limit, only the first `HEXDUMP_MAX_LENGTH` bytes are displayed, followed by a truncation notice showing both the displayed length and the original buffer size. Set to `0` to disable length limiting entirely. Default: 1MB.
+
+* `CONTAINERS_MAX_INDENT_LEVEL`
+
+	Sets the maximum available nesting depth for displaying hierarchical container structures.
+

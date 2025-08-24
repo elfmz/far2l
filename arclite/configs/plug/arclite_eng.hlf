@@ -4,15 +4,40 @@
 
 @Contents
 $ #Arclite#
-	Archive management based on 7z.dll from ~7-Zip~@http://7-zip.org@ project.
+	Archive management based on 7z.so from 7-Zip project: ~7-zip.org~@http://7-zip.org@.
 
-	~Plugin duscussion~@https://forum.farmanager.com/viewtopic.php?t=5637@
+	Discussion of Arclite by far2l: ~github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
+	Original plugin discussion: ~forum.farmanager.com/viewtopic.php?t=5637~@https://forum.farmanager.com/viewtopic.php?t=5637@
+
+	~Features of far2l and capabilities added during porting~@ArcliteInFar2l@
 
 	~Extract archive~@Extract@
 	~Create and update archive~@Update@
 	~Plugin settings~@Config@
 	~Self-extracting archive options~@SfxOptions@
 	~Command line parameters~@Prefix@
+
+
+@ArcliteInFar2l
+$ #Features of far2l and capabilities added during porting#
+	Arclite requires the presence of compatible #7z.so# in the system
+(both versions from the modern 7zip package and the old p7zip are supported),
+and #7z.dylib# is also searched for in macOS.
+	For some versions of 7z.so, a dynamic patch works (it disabled by default in ~Plugin settings~@Config@),
+allowing correct understanding of non-ASCII characters in file names in ZIP archives of the old format (not Unicode).
+
+	Arclite can open block devices in /dev/ via 7zip, reads FAT, XFAT, NTFS, EXT, HFS, APFS, MBR/GPT/APM
+(be careful with currently mounted partitions and with large partitions).
+
+	Working with nested archive chains (*.tar.gz, *.iso and similar):
+	  - nested archives are unpacked directly into memory whenever possible (marker #@@# in the Arclite title near the archive type;
+the memory limit is changed via the parameter max_arc_cache_size in ~~/.config/far2l/plugins/arclite/arclite.ini);
+	  - from the panels press #Enter# or #Ctrl+PgDn# to go down to the nesting level automatically determined by Arclite;
+	  - use #F11# -> Arclite -> Open (format menu)
+to open such an archive with manual selection of the nesting level via the menu
+(for simple archives without nesting, this menu is not displayed and the archive is openы immediately);
+	  - #Ctrl+Alt+Left#  or #Ctrl+Shift+Left#  - go up one level in the nested archives chain;
+	  - #Ctrl+Alt+Right# or #Ctrl+Shift+Right# - go down one level in the nested archives chain.
 
 
 @Extract

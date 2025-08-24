@@ -2524,10 +2524,10 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 			}
 
 			PopPlugin(TRUE);
-			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			/*Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
 
 			if (AnotherPanel->GetType() == INFO_PANEL)
-				AnotherPanel->Redraw();
+				AnotherPanel->Redraw();*/
 		} else {
 			if (!dot2Present && CurFile < ListData.Count() && !PluginsList.Empty()) {
 				PluginsListItem *Last = *PluginsList.Last();
@@ -2594,6 +2594,10 @@ BOOL FileList::ChangeDir(const wchar_t *NewDir, BOOL IsUpdated)
 		*/
 		else if (SetDirectorySuccess)
 			CurFile = CurTopFile = 0;
+
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+		if (AnotherPanel->GetType() == INFO_PANEL)
+			AnotherPanel->Redraw();
 
 		return SetDirectorySuccess;
 	} else {

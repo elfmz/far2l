@@ -180,6 +180,7 @@ struct CodeXLAT
 	int EnableForFastFileFind = 1;
 	int EnableForDialogs      = 1;
 	DWORD Flags               = XLAT_SWITCHKEYBLAYOUT;
+	int LastLanguage          = 0; // 0=Unknown, 1=Latin, 2=Local
 
 	/*
 		$ 25.11.2000 IS

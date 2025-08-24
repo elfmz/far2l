@@ -513,8 +513,6 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 
 		while (!ChDisk.Done()) {
 			FarKey Key;
-			INPUT_RECORD ir;
-
 			/*if(Events.DeviceArchivalEvent.Signaled() || Events.DeviceRemoveEvent.Signaled() || Events.MediaArchivalEvent.Signaled() || Events.MediaRemoveEvent.Signaled())
 			{
 				Key=KEY_CTRLR;
@@ -523,21 +521,28 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 			{
 				{	// очередная фигня
 					ChangeMacroMode MacroMode(MACRO_DISKS);
-					Key = ChDisk.ReadInput(&ir);
+					Key = ChDisk.ReadInput();
 				}
 			}
 			int SelPos = ChDisk.GetSelectPos();
 			PanelMenuItem *item = (PanelMenuItem *)ChDisk.GetUserData(nullptr, 0);
 
-			// fixes https://github.com/elfmz/far2l/issues/2632
-			switch (ir.Event.KeyEvent.wVirtualKeyCode) {
-				case VK_OEM_2:       // "/?" key
-				case VK_OEM_PERIOD:  // "." key, for Russian kb layout compatibility
-					SetLocation_Directory(L"/");
-					return -1;
-				case VK_OEM_3:       // "`~" key
-					SetLocation_Directory(StrMB2Wide(GetMyHome()).c_str());
-					return -1;
+			// Поддержка xlat для / и ~
+			wchar_t key_char = Key & 0xFFFF;
+			wchar_t translated_char = XlatOneChar(key_char);
+
+			// Обрабатываем переход в домашний каталог по клавише ~/` (ё/Ё в русской раскладке)
+			if (key_char == L'~' || key_char == L'`' || translated_char == L'~' || translated_char == L'`')
+			{
+				SetLocation_Directory(StrMB2Wide(GetMyHome()).c_str());
+				return -1;
+			}
+
+			// Обрабатываем переход в корень по клавише / (. в русской раскладке)
+			if (key_char == L'/' || translated_char == L'/')
+			{
+				SetLocation_Directory(L"/");
+				return -1;
 			}
 
 			switch (Key) {

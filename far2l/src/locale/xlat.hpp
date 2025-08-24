@@ -38,6 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <vector>
 
+// Explicitly init xlator state from loaded config. MUST be called after ConfigOptLoad().
+void XlatInit();
+
 // invoke after configs could be changed, otherwise configs re-read each 10 seconds
 void XlatReinit();
 

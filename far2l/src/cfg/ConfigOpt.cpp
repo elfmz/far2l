@@ -65,12 +65,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtshell.h"
 #include "ConfigRW.hpp"
 #include "AllXLats.hpp"
+#include "xlat.hpp"
 #include "ConfigOpt.hpp"
 #include "ConfigOptSaveLoad.hpp"
 #include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
 #include "MaskGroups.hpp"
-
 
 void SanitizeHistoryCounts();
 void SanitizeIndentationCounts();
@@ -245,12 +245,6 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecNotifications, "OnConsole", &Opt.NotifOpt.OnConsole, 1},
 	{true,  NSecNotifications, "OnlyIfBackground", &Opt.NotifOpt.OnlyIfBackground, 1},
 
-	{false, NSecXLat, "Flags", &Opt.XLat.Flags, (DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE},
-	{true,  NSecXLat, "EnableForFastFileFind", &Opt.XLat.EnableForFastFileFind, 1},
-	{true,  NSecXLat, "EnableForDialogs", &Opt.XLat.EnableForDialogs, 1},
-	{true,  NSecXLat, "WordDivForXlat", &Opt.XLat.strWordDivForXlat, WordDivForXlat0},
-	{true,  NSecXLat, "XLat", &Opt.XLat.XLat, L"ru:qwerty-йцукен"},
-
 	{true,  NSecSavedHistory, NParamHistoryCount, &Opt.HistoryCount, 512},
 	{true,  NSecSavedFolderHistory, NParamHistoryCount, &Opt.FoldersHistoryCount, 512},
 	{true,  NSecSavedViewHistory, NParamHistoryCount, &Opt.ViewHistoryCount, 512},
@@ -330,6 +324,13 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "ScanJunction", &Opt.ScanJunction, 1},
 	{true,  NSecSystem, "OnlyFilesSize", &Opt.OnlyFilesSize, 0},
 	{false, NSecSystem, "UsePrintManager", &Opt.UsePrintManager, 1},
+
+	{false, NSecSystem, "XLatFlags", &Opt.XLat.Flags, (DWORD)XLAT_SWITCHKEYBLAYOUT|XLAT_CONVERTALLCMDLINE},
+	{true,  NSecSystem, "XLatEnableForFastFileFind", &Opt.XLat.EnableForFastFileFind, 1},
+	{true,  NSecSystem, "XLatEnableForDialogs", &Opt.XLat.EnableForDialogs, 1},
+	{true,  NSecSystem, "XLatWordDivForXlat", &Opt.XLat.strWordDivForXlat, WordDivForXlat0},
+	{true,  NSecSystem, "XLatLayout", &Opt.XLat.XLat, L"ru:qwerty-йцукен"},
+	{true,  NSecSystem, "XLatLastLanguage", &Opt.XLat.LastLanguage, 0},
 
 	{true, NSecSystem, "ExcludeCmdHistory", &Opt.ExcludeCmdHistory, 0}, //AN
 
@@ -729,6 +730,8 @@ void ConfigOptLoad()
 	FileList::ReadPanelModes(cfg_reader);
 
 	SanitizeXlat();
+
+	XlatInit();
 
 	ZeroFill(Opt.FindOpt.OutColumnTypes);
 	ZeroFill(Opt.FindOpt.OutColumnWidths);

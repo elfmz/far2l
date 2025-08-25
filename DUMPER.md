@@ -371,7 +371,7 @@ Here is the full list:
 	- PreferSymtab: Try .symtab first; if lookup fails or .symtab is absent, fall back to .dynsym.
 
 
-* `SHOW_SYMBOL_SOURCE`
+* `STACKTRACE_SHOW_SYMBOL_SOURCE`
 
 	When true, append a source tag indicating whether symbols were resolved via the dynamic symbol table (dynsym) or the full symbol table (symtab); when false, omit the tag.
 

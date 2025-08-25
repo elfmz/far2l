@@ -21,7 +21,7 @@ Igor Pavlov : Public domain */
         #if !defined(__AES__)
           #define ATTRIB_AES __attribute__((__target__("aes")))
         #endif
-      #if defined(__clang__) && (__clang_major__ >= 8) \
+      #if defined(__clang__) && (__clang_major__ >= 9) \
           || defined(__GNUC__) && (__GNUC__ >= 8)
         #define USE_INTEL_VAES
         #if !defined(__AES__) || !defined(__VAES__) || !defined(__AVX__) || !defined(__AVX2__)

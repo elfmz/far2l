@@ -222,7 +222,7 @@ static WRes MyCreateDir(const UInt16 *name)
   CBuf buf;
   WRes res;
   Buf_Init(&buf);
-  RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM));
+  RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM))
 
   res =
   #ifdef _WIN32
@@ -245,7 +245,7 @@ static WRes OutFile_OpenUtf16(CSzFile *p, const UInt16 *name)
   CBuf buf;
   WRes res;
   Buf_Init(&buf);
-  RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM));
+  RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM))
   res = OutFile_Open(p, (const char *)buf.data);
   Buf_Free(&buf, &g_Alloc);
   return res;
@@ -284,7 +284,6 @@ static SRes PrintString(const UInt16 *s)
   CBuf buf;
   SRes res;
   Buf_Init(&buf);
-
   res = Utf16_To_Char(&buf, s
       #ifndef MY_USE_UTF8
       , CP_OEMCP
@@ -722,7 +721,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
             {
               CBuf buf;
               Buf_Init(&buf);
-              RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM));
+              RINOK(Utf16_To_Char(&buf, name MY_FILE_CODE_PAGE_PARAM))
               std::string utf8_path((const char *)buf.data);
               Buf_Free(&buf, &g_Alloc);
               dir2ti[utf8_path] = ti;

@@ -506,8 +506,8 @@ void Z7_FASTCALL
     && (  (defined(__GNUC__) && (__GNUC__ >= 4)) \
        || (defined(__clang__) && (__clang_major__ >= 4)))
 
-  #define SWAP2_64_VAR(v)  asm ("rev16 %x0,%x0" : "+r" (v));
-  #define SWAP4_64_VAR(v)  asm ("rev32 %x0,%x0" : "+r" (v));
+  #define SWAP2_64_VAR(v)  __asm__ __volatile__ ("rev16 %x0,%x0" : "+r" (v));
+  #define SWAP4_64_VAR(v)  __asm__ __volatile__ ("rev32 %x0,%x0" : "+r" (v));
 
 #else  // is not ARM64-GNU
 
@@ -593,9 +593,9 @@ SwapBytes4_64(CSwapUInt32 *items, const CSwapUInt32 *lim)
        || (defined(__clang__) && (__clang_major__ >= 4)))
 
 #ifdef MY_CPU_64BIT
-  #define SWAP2_32_VAR(v)  asm ("rev16 %w0,%w0" : "+r" (v));
+  #define SWAP2_32_VAR(v)  __asm__ __volatile__ ("rev16 %w0,%w0" : "+r" (v));
 #else
-  #define SWAP2_32_VAR(v)  asm ("rev16 %0,%0" : "+r" (v)); // for clang/gcc
+  #define SWAP2_32_VAR(v)  __asm__ __volatile__ ("rev16 %0,%0" : "+r" (v)); // for clang/gcc
     // asm ("rev16 %r0,%r0" : "+r" (a));  // for gcc
 #endif
 

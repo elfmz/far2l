@@ -268,6 +268,37 @@ mode_t mode = S_IFDIR | 0755;
 DUMP(DFLAGS(mode, Dumper::FlagsAs::UNIX_MODE));
 ```
 
+### 3.7. DSTACKTRACE
+
+Captures and logs a stack trace at the point of invocation.
+
+Use when you need to understand the call flow leading to a particular code location. The macro captures the current execution context and displays it as a sequence of function calls with associated memory addresses and module information. Stack trace resolution quality depends on platform capabilities and available debug symbols.
+
+**Syntax:**
+
+```cpp
+DSTACKTRACE()
+```
+
+
+**Usage:**
+
+```cpp
+DUMP(DSTACKTRACE());
+```
+
+The stack trace output includes:
+
+- Frames section. Each frame shows module short name, function name (demangled if available), and associated memory addresses.
+- Command-line tool section. Ready-to-use shell commands for external debugging tools like addr2line, grouped by module.
+
+This functionality is highly configurable through various compile-time options described in [section 4](#4-configuration-options).
+
+> **Warning: Experimental Feature**
+> 
+> Stack trace support is experimental, has limited platform availability (guaranteed on Linux), and is fully functional only in debug builds — release/stripped binaries may lack symbol information.
+
+
 ## 4. Configuration Options
 
 The dumper behavior can be customized through the `DumperConfig` structure located at the beginning of `debug.h`.
@@ -310,3 +341,48 @@ Here is the full list:
 
 	Sets the maximum available nesting depth for displaying hierarchical container structures.
 
+* `STACKTRACE_SHOW_ADDRESSES`
+
+	Controls whether memory addresses are displayed in stack trace output. When enabled, each frame shows the absolute address, module base address, symbol address, and calculated offsets.
+
+* `STACKTRACE_DEMANGLE_NAMES`
+
+	Enables demangling of C++ function names in stack traces. When enabled, mangled symbol names (like `_ZN7Dumper9DumpValueE`) are converted to human-readable function signatures. Requires compiler support for `abi::__cxa_demangle`. When disabled or unavailable, raw mangled names are displayed.
+
+* `STACKTRACE_RETADDR_ADJUSTMENT`
+
+	Specifies the strategy for adjusting return addresses to improve symbol resolution accuracy. Return addresses typically point to the instruction after a function call, but for debugging purposes, the call instruction itself is often more meaningful.
+
+	Available strategies:
+
+	- Off: Use original addresses without modification.
+	- PreferAdjusted: Try adjusted addresses first, fall back to original if dladdr() fails.
+	- PreferOriginal: Try original addresses first, fall back to adjusted if dladdr() fails.
+
+* `STACKTRACE_SYMBOL_RESOLUTION`
+
+    Specifies the strategy for resolving symbol names from instruction addresses when producing stack traces. Resolution may use the dynamic symbol table (as provided by dladdr()) or the full symbol table (by directly parsing the ELF .symtab/.strtab sections from the binary).
+
+    Available strategies:
+
+	- OnlyDynsym: Resolve only from .dynsym. Fast and consistent with runtime-visible symbols; will not find local or non-exported symbols.
+	- OnlySymtab: Resolve only from .symtab. Returns the most complete symbol names (including local/non-exported) but requires .symtab to be present; will fail in stripped/release binaries.
+	- PreferDynsym: Try .dynsym first; if lookup fails, fall back to .symtab.
+	- PreferSymtab: Try .symtab first; if lookup fails or .symtab is absent, fall back to .dynsym.
+
+
+* `SHOW_SYMBOL_SOURCE`
+
+	When true, append a source tag indicating whether symbols were resolved via the dynamic symbol table (dynsym) or the full symbol table (symtab); when false, omit the tag.
+
+* `STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS`
+
+	Generates command-line invocations for external debugging tools (like addr2line) that can be used to obtain detailed source location information. When enabled, the stack trace output includes ready-to-use shell commands for each module, grouped by binary file. These commands can be copied and executed to resolve addresses to source file names and line numbers.
+
+* `STACKTRACE_MAX_FRAMES`
+
+	Sets the maximum number of stack frames to capture using `backtrace()`. This limits memory usage and prevents extremely deep call stacks from overwhelming the output. The actual number of frames displayed may be less due to the `STACKTRACE_SKIP_FRAMES` setting.
+
+* `STACKTRACE_SKIP_FRAMES`
+
+	Specifies the number of initial stack frames to skip when generating a stack trace. This is useful for excluding internal logging functions from the trace output. Default value: 2.

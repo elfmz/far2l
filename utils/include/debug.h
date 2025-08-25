@@ -114,7 +114,7 @@ namespace Dumper {
 		static constexpr bool STACKTRACE_DEMANGLE_NAMES = true;
 		static constexpr AdjustmentStrategy STACKTRACE_RETADDR_ADJUSTMENT = AdjustmentStrategy::Off;
 		static constexpr ResolutionStrategy STACKTRACE_SYMBOL_RESOLUTION = ResolutionStrategy::PreferDynsym;
-		static constexpr bool SHOW_SYMBOL_SOURCE = true;
+		static constexpr bool STACKTRACE_SHOW_SYMBOL_SOURCE = true;
 		static constexpr bool STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS = true;
 		static constexpr size_t STACKTRACE_MAX_FRAMES = 64;
 		static constexpr size_t STACKTRACE_SKIP_FRAMES = 2;
@@ -503,7 +503,7 @@ namespace Dumper {
 			result << (frameinfo.func_name.empty() ? "[unknown-function]" : frameinfo.func_name.c_str());
 			result << "  ";
 
-			if constexpr (DumperConfig::SHOW_SYMBOL_SOURCE) {
+			if constexpr (DumperConfig::STACKTRACE_SHOW_SYMBOL_SOURCE) {
 				if (frameinfo.found_in_symtab) {
 					result << " [symtab]";
 				} else if (!frameinfo.func_name.empty()) {

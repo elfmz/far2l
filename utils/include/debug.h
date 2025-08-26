@@ -34,23 +34,8 @@
 #include <fcntl.h>
 
 #if defined(__linux__)
-#  include <elf.h>
 #  define HAS_ELF_ENHANCEMENT
-#endif
-
-#if defined(HAS_ELF_ENHANCEMENT) && !defined(ELF_PSEUDO_TYPES_DEFINED)
-#  if defined(__LP64__) || defined(_LP64)
-typedef Elf64_Ehdr Elf_Ehdr;
-typedef Elf64_Phdr Elf_Phdr;
-typedef Elf64_Shdr Elf_Shdr;
-typedef Elf64_Sym  Elf_Sym;
-#  else
-typedef Elf32_Ehdr Elf_Ehdr;
-typedef Elf32_Phdr Elf_Phdr;
-typedef Elf32_Shdr Elf_Shdr;
-typedef Elf32_Sym  Elf_Sym;
-#  endif
-#  define ELF_PSEUDO_TYPES_DEFINED
+# include "LookupDebugSymbol.h"
 #endif
 
 // Platform-specific includes for stack trace functionality
@@ -359,66 +344,19 @@ namespace Dumper {
 
 
 #ifdef HAS_ELF_ENHANCEMENT
-		struct FileData : std::vector<char>
-		{
-			FileData(const char *file, size_t offset, size_t size) : std::vector<char>(size)
-			{
-				int fd = open(file, O_RDONLY);
-				if (fd != -1) {
-					pread(fd, data(), size, offset);
-					close(fd);
-				}
-			}
-		};
-
-
 		static bool TrySymtabResolve(DlAddrResult dladdr_result, FrameInfo &frameinfo_out)
 		{
 			if (!dladdr_result.dladdr_success || !dladdr_result.info.dli_fname) {
 				return false;
 			}
-
-			const char *fname = dladdr_result.info.dli_fname;
-			const void *raw_addr = dladdr_result.used_address;
-			void *module_base = dladdr_result.info.dli_fbase;
-
-			unsigned long offset = (const char *)raw_addr - (const char *)module_base;
-			unsigned long base_addr = 0;
-			const Elf_Ehdr *eh = (const Elf_Ehdr *)module_base;
-			for (int i = 0; i < (int)eh->e_phnum; ++i) {
-				const Elf_Phdr *ph = (const Elf_Phdr *)
-				((const char *)module_base + eh->e_phoff + i * eh->e_phentsize);
-				if (ph->p_type == PT_LOAD) {
-					base_addr = ph->p_vaddr;
-					break;
-				}
+			LookupDebugSymbol lds(dladdr_result.info.dli_fname, dladdr_result.info.dli_fbase, dladdr_result.used_address);
+			if (lds.name.empty()) {
+				return false;
 			}
 
-
-			FileData shtab(fname, eh->e_shoff, eh->e_shnum * eh->e_shentsize);
-			for (int i = 0; i < (int)eh->e_shnum; ++i) {
-				const Elf_Shdr *sh = (const Elf_Shdr *)&shtab[i * eh->e_shentsize];
-				if (sh->sh_type == SHT_SYMTAB && sh->sh_link < eh->e_shnum) {
-					FileData syms(fname, sh->sh_offset, sh->sh_size);
-					size_t syms_count = sh->sh_size / sh->sh_entsize;
-					for (size_t s = 0; s < syms_count; ++s) {
-						const Elf_Sym *sym = (const Elf_Sym *)&syms[s * sh->sh_entsize];
-						if (offset >= sym->st_value - base_addr && offset < sym->st_value + sym->st_size - base_addr
-							&& (sym->st_info == STT_FUNC || sym->st_info == STT_OBJECT || sym->st_info == STT_TLS) ) {
-							const Elf_Shdr *strtab_sh = (const Elf_Shdr *)&shtab[sh->sh_link * eh->e_shentsize];
-							FileData strtab(fname, strtab_sh->sh_offset, strtab_sh->sh_size);
-							strtab.emplace_back(0); //ensure 0-terminated
-							if (sym->st_name < strtab.size() && strtab[sym->st_name] != '$') {
-								frameinfo_out.found_in_symtab = true;
-								frameinfo_out.func_name = &strtab[sym->st_name];
-								return true;
-							}
-						}
-					}
-				}
-			}
-
-			return false;
+			frameinfo_out.found_in_symtab = true;
+			frameinfo_out.func_name.swap(lds.name);
+			return true;
 		}
 #endif
 

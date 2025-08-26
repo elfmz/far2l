@@ -323,6 +323,11 @@ extern "C" {
 		return TRUE;
 	}
 
+	WINPORT_DECL(ReadConsoleInputBacktrace, DWORD,(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength))
+	{
+		return ChooseConIn(hConsoleInput)->GetBacktrace(lpBuffer, nLength);
+	}
+
 	WINPORT_DECL(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, DWORD Flags))
 	{
 		std::vector<INPUT_RECORD> backlog;

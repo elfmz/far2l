@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x0C
+#define FAR2L_BACKEND_ABI_VERSION	0x0D
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
@@ -119,6 +119,8 @@ public:
 
 	virtual unsigned int RaiseRequestorPriority() = 0;
 	virtual void LowerRequestorPriority(unsigned int released_priority) = 0;
+
+	virtual DWORD GetBacktrace(INPUT_RECORD *data, DWORD size) = 0;
 };
 
 class ConsoleInputPriority

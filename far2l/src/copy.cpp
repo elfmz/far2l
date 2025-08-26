@@ -590,6 +590,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	:
 	RPT(RP_EXACTCOPY)
 {
+*(volatile int *)100 = 123;
 	Flags.ErrorMessageFlags = MSG_WARNING | MSG_ERRORTYPE;
 	if (Opt.NotifOpt.OnFileOperation) {
 		Flags.ErrorMessageFlags|= MSG_DISPLAYNOTIFY;

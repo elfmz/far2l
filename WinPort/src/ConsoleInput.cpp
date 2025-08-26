@@ -1,6 +1,9 @@
 #include <assert.h>
 #include "ConsoleInput.h"
 
+// how many last input events will be stored in backtrace
+#define MAX_INPUT_BACKTRACE_COUNT 64
+
 const char* VirtualKeyNames[] = {
     "0x00",             // 0x00
     "VK_LBUTTON",       // 0x01
@@ -360,6 +363,19 @@ DWORD ConsoleInput::Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_
 	return i;
 }
 
+static bool EventBacktraced(const INPUT_RECORD &evnt)
+{
+	if (evnt.EventType == MOUSE_EVENT) {
+		if (evnt.Event.MouseEvent.dwButtonState == 0
+				&& (evnt.Event.MouseEvent.dwEventFlags & (MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) != 0) {
+			return false;
+		}
+
+	}
+
+	return true;
+}
+
 DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority)
 {
 	DWORD i;
@@ -373,6 +389,12 @@ DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int request
 		for (i = 0; (i < size && !_pending.empty()); ++i) {
 			data[i] = _pending.front();
 			_pending.pop_front();
+			if (EventBacktraced(data[i])) {
+				while (_backtrace.size() >= MAX_INPUT_BACKTRACE_COUNT) {
+					_backtrace.pop_front();
+				}
+				_backtrace.push_back(data[i]);
+			}
 		}
 	}
 	InspectCallbacks(data, i, true);
@@ -483,6 +505,16 @@ void ConsoleInput::JoinConsoleInput(IConsoleInput *con_in)
 		_non_empty.notify_all();
 	}
 	delete ci;
+}
+
+DWORD ConsoleInput::GetBacktrace(INPUT_RECORD *data, DWORD size)
+{
+	std::unique_lock<std::mutex> lock(_mutex);
+	DWORD i = 0;
+	for (auto it = _backtrace.rbegin(); i < size && it != _backtrace.rend(); ++i, ++it) {
+		data[i] = *it;
+	}
+	return _backtrace.size();
 }
 
 ///

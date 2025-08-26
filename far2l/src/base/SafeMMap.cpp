@@ -132,6 +132,8 @@ static std::string GetSymbolString(const void *lookup_addr)
 	LookupDebugSymbol lds(dli.dli_fname, dli.dli_fbase, lookup_addr);
 	if (!lds.name.empty()) {
 		out+= StrPrintf(" \t<%s +0x%lx>", lds.name.c_str(), lds.offset);
+	} else if (dli.dli_sname && dli.dli_saddr) {
+		out+= StrPrintf(" \t<%s +0x%lx>", dli.dli_sname, (unsigned long)lookup_addr - (unsigned long)dli.dli_saddr);
 	}
 	return out;
 }
@@ -206,7 +208,7 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 					break;
 
 				case FOCUS_EVENT:
-					s = StrPrintf(" FOCUS: %s\n", ibt.Event.FocusEvent.bSetFocus ? "SET" : "UNSET");
+					s = StrPrintf(" FOCUS: %s\n", ibt.Event.FocusEvent.bSetFocus ? "set" : "unset");
 					break;
 
 				case MOUSE_EVENT:
@@ -225,6 +227,10 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 
 				case CALLBACK_EVENT:
 					s = StrPrintf(" CALLBACK: %s\n", GetSymbolString((void *)ibt.Event.CallbackEvent.Function).c_str());
+					break;
+
+				case BRACKETED_PASTE_EVENT:
+					s = StrPrintf(" BRACKETED_PASTE: %s\n", ibt.Event.BracketedPaste.bStartPaste ? "start" : "stop");
 					break;
 
 				default:

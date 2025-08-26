@@ -32,10 +32,16 @@ class CharClasses
 	static bool initialized;
 
 	struct BlockHasher { //FNV-1a hash
+		static constexpr std::size_t fnv_offset_basis =
+			(SIZE_MAX == UINT64_MAX) ? 0xcbf29ce484222325ULL : 0x811c9dc5UL;
+
+		static constexpr std::size_t fnv_prime =
+			(SIZE_MAX == UINT64_MAX) ? 0x100000001b3ULL : 0x01000193UL;
+
 		std::size_t operator()(const std::shared_ptr<Block>& b) const {
-			std::size_t hash = 0xcbf29ce484222325;
+			std::size_t hash = fnv_offset_basis;
 			for (uint8_t v : *b)
-				hash = (hash ^ v) * 0x100000001b3;
+				hash = (hash ^ v) * fnv_prime;
 			return hash;
 		}
 	};

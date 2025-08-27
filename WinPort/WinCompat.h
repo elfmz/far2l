@@ -568,8 +568,6 @@ typedef struct _INPUT_RECORD {
     } Event;
 } INPUT_RECORD, *PINPUT_RECORD;
 
-
-
 #define FOREGROUND_BLUE      0x0001 // text color contains blue.
 #define FOREGROUND_GREEN     0x0002 // text color contains green.
 #define FOREGROUND_RED       0x0004 // text color contains red.

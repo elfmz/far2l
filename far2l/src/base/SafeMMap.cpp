@@ -151,11 +151,11 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 		void *bt[16];
 		unsigned bt_count = sizeof(bt) / sizeof(bt[0]);
 		bt_count = backtrace(bt, bt_count);
-		FDWriteStr(fd, "Raw backtrace:\n");
+		FDWriteStr(fd, " 👉 RAW BACKTRACE \n");
 		// first write raw addresses in signal-safe manner
 		for (unsigned i = 0; i < bt_count; ++i) {
-			char bt_line[] = " 0000000000000000\n";
-			SignalSafeLToA((unsigned long)bt[i], bt_line, 16);
+			char bt_line[] = "0000000000000000\n";
+			SignalSafeLToA((unsigned long)bt[i], bt_line, 15);
 			FDWriteStr(fd, bt_line);
 		}
 
@@ -163,81 +163,38 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 
 		// now try collect symbolicated backtrace, note that
 		// this part may stuck in case some libc lock is held
-		FDWriteStr(fd, "Symbolicated backtrace:\n");
+		FDWriteStr(fd, " 👉 SYMBOLICATED BACKTRACE \n");
 		for (unsigned i = 0; i < bt_count; ++i) {
 			std::string s = GetSymbolString(bt[i]);
 			if (!s.empty()) {
-				s.insert(0, StrPrintf(" %02u: ", i));
+				s.insert(0, StrPrintf("%02u: ", i));
 				s+= '\n';
 				FDWriteStr(fd, s.c_str());
 			}
 		}
 #endif // #ifdef HAS_BACKTRACE
-		FDWriteStr(fd, "Stack page symbols:\n");
+		FDWriteStr(fd, " 👉 SYMBOLICATED STACK PAGE \n");
 		void **stk = (void **)&ctx;
 		for (unsigned int i = 0; i < 0x1000 && ((uintptr_t(&stk[i]) ^ uintptr_t(stk)) < 0x1000); ++i) {
 			std::string s = GetSymbolString(stk[i]);
 			if (!s.empty()) {
-				s.insert(0, StrPrintf(" %03x: ", i));
+				s.insert(0, StrPrintf("%03x: ", i));
 				s+= '\n';
 				FDWriteStr(fd, s.c_str());
 			}
 		}
 
-		std::vector<INPUT_RECORD> input_backtrace(8);
+		std::vector<char> input_backtrace(4096);
 		for (;;) {
 			const DWORD limit = input_backtrace.size();
-			const DWORD cnt = WINPORT(ReadConsoleInputBacktrace)(NULL, input_backtrace.data(), limit);
-			input_backtrace.resize(cnt);
-			if (cnt <= limit) {
+			const DWORD written = WINPORT(ReadConsoleInputBacktrace)(NULL, input_backtrace.data(), limit);
+			input_backtrace.resize(written);
+			if (written < limit) {
 				break;
 			}
 		}
-		FDWriteStr(fd, "Input backtrace:\n");
-		for (const auto &ibt : input_backtrace) {
-			std::string s;
-			switch (ibt.EventType) {
-				case KEY_EVENT:
-					s = StrPrintf(" KEY_%s: vkc=%u vsc=%u ctl=0x%x uch=%u '%lc'\n",
-						ibt.Event.KeyEvent.bKeyDown ? "DOWN" : "UP",
-						ibt.Event.KeyEvent.wVirtualKeyCode, ibt.Event.KeyEvent.wVirtualScanCode,
-						ibt.Event.KeyEvent.dwControlKeyState,
-						(unsigned int)ibt.Event.KeyEvent.uChar.UnicodeChar,
-						(ibt.Event.KeyEvent.uChar.UnicodeChar >= 0x20 && WCHAR_IS_VALID(ibt.Event.KeyEvent.uChar.UnicodeChar))
-							? ibt.Event.KeyEvent.uChar.UnicodeChar : WCHAR_REPLACEMENT);
-					break;
-
-				case FOCUS_EVENT:
-					s = StrPrintf(" FOCUS: %s\n", ibt.Event.FocusEvent.bSetFocus ? "set" : "unset");
-					break;
-
-				case MOUSE_EVENT:
-					s = StrPrintf(" MOUSE: btn=0x%x ctl=0x%x flg=0x%x pos={%d.%d}\n",
-						ibt.Event.MouseEvent.dwButtonState,
-						ibt.Event.MouseEvent.dwControlKeyState,
-						ibt.Event.MouseEvent.dwEventFlags,
-						(int)ibt.Event.MouseEvent.dwMousePosition.X, (int)ibt.Event.MouseEvent.dwMousePosition.Y);
-					break;
-
-				case WINDOW_BUFFER_SIZE_EVENT:
-					s = StrPrintf(" WINSIZE: %d.%d dmg=%d\n",
-						ibt.Event.WindowBufferSizeEvent.dwSize.X, ibt.Event.WindowBufferSizeEvent.dwSize.Y,
-						ibt.Event.WindowBufferSizeEvent.bDamaged);
-					break;
-
-				case CALLBACK_EVENT:
-					s = StrPrintf(" CALLBACK: %s\n", GetSymbolString((void *)ibt.Event.CallbackEvent.Function).c_str());
-					break;
-
-				case BRACKETED_PASTE_EVENT:
-					s = StrPrintf(" BRACKETED_PASTE: %s\n", ibt.Event.BracketedPaste.bStartPaste ? "start" : "stop");
-					break;
-
-				default:
-					s = StrPrintf(" OTHER: type=0x%x\n", ibt.EventType);
-			}
-			FDWriteStr(fd, s.c_str());
-		}
+		FDWriteStr(fd, " 👉 INPUT BACKTRACE \n");
+		FDWriteStr(fd, input_backtrace.data());
 	}
 
 	FDWriteSignalInfo(STDERR_FILENO, num, info, ctx);

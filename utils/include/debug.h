@@ -670,6 +670,7 @@ namespace Dumper {
 
 		} else if constexpr (is_container_v<T>) {
 			LogVarWithIndentation(log_stream, var_name, 0, indent_info, false);
+			std::string vn = std::string( (var_name.size() >= 2 && var_name.front() == '{' && var_name.back() == '}') ? "" : var_name );
 			std::size_t index = 0;
 			auto it_begin = std::begin(value);
 			auto it_end   = std::end(value);
@@ -677,7 +678,7 @@ namespace Dumper {
 				auto curr = it++;
 				bool is_last = (it == it_end);
 				auto child_indent_info = indent_info.CreateChild(!is_last);
-				auto item_name = std::string(var_name) + "[" + std::to_string(index++) + "]";
+				auto item_name = vn + "[" + std::to_string(index++) + "]";
 				DumpValue(log_stream, item_name, *curr, child_indent_info);
 			}
 
@@ -1009,10 +1010,10 @@ namespace Dumper {
 		const StackTrace& stack_trace,
 		const IndentInfo& indent_info = IndentInfo())
 	{
-		LogVarWithIndentation(log_stream, "[STACKTRACE]", 0, indent_info, false);
-		DumpValue(log_stream, "[FRAMES]", stack_trace.frames, indent_info.CreateChild(DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS));
+		LogVarWithIndentation(log_stream, "{STACKTRACE}", 0, indent_info, false);
+		DumpValue(log_stream, "{FRAMES}", stack_trace.frames, indent_info.CreateChild(DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS));
 		if constexpr (DumperConfig::STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS) {
-			DumpValue(log_stream, "[CMDLINE TOOL]", stack_trace.cmdline_tool_invocations, indent_info.CreateChild(false));
+			DumpValue(log_stream, "{CMDLINE TOOL}", stack_trace.cmdline_tool_invocations, indent_info.CreateChild(false));
 		}
 	}
 
@@ -1142,7 +1143,7 @@ namespace Dumper {
 		const std::string error_message =
 			"Only simple variables are allowed as arguments. "
 			"Function calls or complex expressions with internal commas are not supported.";
-		DumpValue(log_stream, "[DUMPV ERROR]", error_message);
+		DumpValue(log_stream, "{DUMPV ERROR}", error_message);
 	}
 
 
@@ -1179,9 +1180,9 @@ namespace Dumper {
 #define DUMPV(...) { Dumper::DumpV(__func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
 
 #define DVV(expr) #expr, expr
-#define DMSG(msg) "[DMSG]", std::string(msg)
+#define DMSG(msg) "{DMSG}", std::string(msg)
 #define DBINBUF(ptr,length) #ptr, Dumper::BinBufWrapper(ptr,length)
 #define DSTRBUF(ptr,length) #ptr, Dumper::StrBufWrapper(ptr,length)
 #define DCONT(container,max_elements) #container, Dumper::ContainerWrapper(container,max_elements)
 #define DFLAGS(var, treat_as) #var, Dumper::FlagsWrapper(var, treat_as)
-#define DSTACKTRACE() "[STACKTRACE]", Dumper::StackTrace()
+#define DSTACKTRACE() "{STACKTRACE}", Dumper::StackTrace()

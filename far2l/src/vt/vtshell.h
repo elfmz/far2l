@@ -22,3 +22,7 @@ void VTShell_Enum(VTInfos &vts);
 int VTShell_Switch(size_t index);
 
 const char *GetSystemShell();
+
+class VTShell;
+
+class VTAnsi; // Forward declaration

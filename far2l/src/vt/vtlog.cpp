@@ -9,17 +9,27 @@
 #include <WideMB.h>
 
 #include "vtlog.h"
+#include "vtansi.h"
 
 #include "vtshell.h"
 #include "ctrlobj.hpp"
 #include "cmdline.hpp"
 
 
-#define FOREGROUND_RGB (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE)
-#define BACKGROUND_RGB (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)
-
 namespace VTLog
 {
+	static VTAnsi* g_current_vta = nullptr;
+
+	void SetCurrentVTA(VTAnsi* vta)
+	{
+		g_current_vta = vta;
+	}
+
+	VTAnsi* GetCurrentVTA()
+	{
+		return g_current_vta;
+	}
+
 	struct DumpState
 	{
 		DumpState() : nonempty(false) {}
@@ -125,126 +135,29 @@ namespace VTLog
 		}
 	}
 
-	
-	static class Lines
-	{
-		std::mutex _mutex;
-		std::list< std::pair<HANDLE, std::string> > _memories;
-		
-	public:
-		void Add(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
-		{
-			const size_t limit = (size_t)std::max(Opt.CmdLine.VTLogLimit, 2);
-			std::lock_guard<std::mutex> lock(_mutex);
-			// a little hustling to reduce reallocations
-			if (_memories.size() >= limit) {
-				while (_memories.size() > limit) {
-					_memories.pop_front();
-				}
-				_memories.splice(_memories.end(), _memories, _memories.begin());
-			} else {
-				_memories.emplace_back();
-			}
-			auto &last = _memories.back();
-			last.first = con_hnd;
-			last.second.clear();
-			if (Width) {
-				EncodeLine(last.second, Width, Chars, true);
-			}
-		}
-		
-		void DumpToFile(HANDLE con_hnd, int fd, DumpState &ds, bool colored)
-		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			for (auto m : _memories) {
-				if (m.first == con_hnd && (ds.nonempty || !m.second.empty())) {
-					ds.nonempty = true;
-					if (!colored) {
-						for (;;) {
-							size_t i = m.second.find('\033');
-							if (i == std::string::npos) break;
-							size_t j = m.second.find('m', i + 1);
-							if (j == std::string::npos) break;
-							m.second.erase(i, j + 1 - i);
-						}
-					}
-					m.second+= NATIVE_EOL;
-					if (write(fd, m.second.c_str(), m.second.size()) != (int)m.second.size())
-						perror("VTLog: WriteToFile");
-				}
-			}
-		}
-		
-		void Reset(HANDLE con_hnd)
-		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			for (auto it = _memories.begin(); it != _memories.end();) {
-				if (it->first == con_hnd) {
-					it = _memories.erase(it);
-				} else {
-					++it;
-				}
-			}
-		}
-
-		void ConsoleJoined(HANDLE con_hnd)
-		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			size_t remain = _memories.size();
-			for (auto it = _memories.begin(); remain; --remain) {
-				if (it->first == con_hnd) {
-					auto next = it;
-					++next;
-					it->first = NULL;
-					_memories.splice(_memories.end(), _memories, it);
-					it = next;
-				} else {
-					++it;
-				}
-			}
-		}
-
-	} g_lines;
-
-	static unsigned int g_pause_cnt = 0;
-
-	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
-	{
-		if (g_pause_cnt == 0) {
-			g_lines.Add(hConsole, ActualLineWidth(Width, Chars), Chars);
-		}
-	}
 
 	void Pause()
 	{
-		__sync_add_and_fetch(&g_pause_cnt, 1);
 	}
 
 	void Resume()
 	{
-		if (__sync_sub_and_fetch(&g_pause_cnt, 1) < 0) {
-			ABORT();
-		}
 	}
 	
 	void Start()
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, OnConsoleScroll, NULL);
 	}
 
 	void Stop()
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, NULL, NULL);
 	}
 
 	void ConsoleJoined(HANDLE con_hnd)
 	{
-		g_lines.ConsoleJoined(con_hnd);
 	}
 	
 	void Reset(HANDLE con_hnd)
 	{
-		g_lines.Reset(con_hnd);
 	}
 	
 	static void AppendScreenLine(const CHAR_INFO *line, unsigned int width, std::string &s, DumpState &ds, bool colored)
@@ -292,37 +205,47 @@ namespace VTLog
 		if (wanted_path && *wanted_path) {
 			path = wanted_path;
 		} else {
+			// ... (код генерации имени файла)
 			SYSTEMTIME st;
 			WINPORT(GetLocalTime)(&st);
 			path = InMyTempFmt("farvt_%u-%u-%u_%u-%u-%u.%s",
-				 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
-				 colored ? "ans" : "log");
+				st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
+				colored ? "ans" : "log");
 		}
-				
+
 		int fd = open(path.c_str(), O_CREAT | O_TRUNC | O_RDWR | O_CLOEXEC, 0600);
 		if (fd==-1) {
 			fprintf(stderr, "VTLog: errno %u creating '%s'\n", errno, path.c_str() );
 			return std::string();
 		}
-			
-		DumpState ds;
-		g_lines.DumpToFile(con_hnd, fd, ds, colored);
-		if (append_screen_lines) {
+
+		VTAnsi* vta = GetCurrentVTA();
+		if (vta) {
 			std::string s;
+			// ВЫЗЫВАЕМ ПУБЛИЧНЫЙ МЕТОД, ПРОБЛЕМЫ РЕШЕНЫ
+			vta->DumpLogicalLines(s, colored);
+
+			if (!s.empty()) {
+				if (write(fd, s.c_str(), s.size()) != (ssize_t)s.size())
+					perror("VTLog: write");
+			}
+		} else if (append_screen_lines) {
+			// Старый механизм на случай, если VTA неактивен
+			std::string s;
+			DumpState ds;
 			if (!con_hnd && !VTShell_Busy()) {
 				AppendSavedScreenLines(s, ds, colored);
 			} else {
 				AppendActiveScreenLines(con_hnd, s, ds, colored);
 			}
 			if (!s.empty()) {
-				if (write(fd, s.c_str(), s.size()) != (int)s.size())
+				if (write(fd, s.c_str(), s.size()) != (ssize_t)s.size())
 					perror("VTLog: write");				
 			}
 		}
+
 		close(fd);
 		return path;
 	}
 }
-
-
 

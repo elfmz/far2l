@@ -31,7 +31,7 @@
 	WINPORT_DECL_DEF(GetNumberOfConsoleInputEvents,BOOL,(HANDLE hConsoleInput, LPDWORD lpcNumberOfEvents))
 	WINPORT_DECL_DEF(PeekConsoleInput,BOOL,(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead))
 	WINPORT_DECL_DEF(ReadConsoleInput,BOOL,(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsRead))
-	WINPORT_DECL_DEF(ReadConsoleInputBacktrace, DWORD,(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength))
+	WINPORT_DECL_DEF(ReadConsoleInputBacktrace, DWORD,(HANDLE hConsoleInput, CHAR *lpBuffer, DWORD nLength))
 	WINPORT_DECL_DEF(WriteConsoleInput,BOOL,(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten))
 
 	WINPORT_DECL_DEF(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, DWORD Flags))

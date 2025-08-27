@@ -323,7 +323,7 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(ReadConsoleInputBacktrace, DWORD,(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength))
+	WINPORT_DECL(ReadConsoleInputBacktrace, DWORD,(HANDLE hConsoleInput, CHAR *lpBuffer, DWORD nLength))
 	{
 		return ChooseConIn(hConsoleInput)->GetBacktrace(lpBuffer, nLength);
 	}

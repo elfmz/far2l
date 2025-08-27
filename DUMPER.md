@@ -290,13 +290,13 @@ DUMP(DSTACKTRACE());
 The stack trace output includes:
 
 - Frames section. Each frame shows module short name, function name (demangled if available), and associated memory addresses.
-- Command-line tool section. Ready-to-use shell commands for external debugging tools like addr2line, grouped by module.
+- Command-line tool section. Ready-to-use shell commands for external debugging tools like addr2line/atos, grouped by module.
 
 This functionality is highly configurable through various compile-time options described in [section 4](#4-configuration-options).
 
 > **Warning: Experimental Feature**
 > 
-> Stack trace support is experimental, has limited platform availability (guaranteed on Linux), and is fully functional only in debug builds — release/stripped binaries may lack symbol information.
+> Stack trace support is experimental, has limited platform availability (guaranteed on Linux and MacOS), and is fully functional only in debug builds — release/stripped binaries may lack symbol information.
 
 
 ## 4. Configuration Options
@@ -377,7 +377,7 @@ Here is the full list:
 
 * `STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS`
 
-	Generates command-line invocations for external debugging tools (like addr2line) that can be used to obtain detailed source location information. When enabled, the stack trace output includes ready-to-use shell commands for each module, grouped by binary file. These commands can be copied and executed to resolve addresses to source file names and line numbers.
+	Generates command-line invocations for external debugging tools (like addr2line/atos) that can be used to obtain detailed source location information. When enabled, the stack trace output includes ready-to-use shell commands for each module, grouped by binary file. These commands can be copied and executed to resolve addresses to source file names and line numbers.
 
 * `STACKTRACE_MAX_FRAMES`
 

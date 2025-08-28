@@ -527,6 +527,24 @@ int Panel::ChangeDiskMenu(int Pos, int FirstCall)
 			int SelPos = ChDisk.GetSelectPos();
 			PanelMenuItem *item = (PanelMenuItem *)ChDisk.GetUserData(nullptr, 0);
 
+			// Поддержка xlat для / и ~
+			wchar_t key_char = Key & 0xFFFF;
+			wchar_t translated_char = XlatOneChar(key_char);
+
+			// Обрабатываем переход в домашний каталог по клавише ~/` (ё/Ё в русской раскладке)
+			if (key_char == L'~' || key_char == L'`' || translated_char == L'~' || translated_char == L'`')
+			{
+				SetLocation_Directory(StrMB2Wide(GetMyHome()).c_str());
+				return -1;
+			}
+
+			// Обрабатываем переход в корень по клавише / (. в русской раскладке)
+			if (key_char == L'/' || translated_char == L'/')
+			{
+				SetLocation_Directory(L"/");
+				return -1;
+			}
+
 			switch (Key) {
 				// Shift-Enter в меню выбора дисков вызывает проводник для данного диска
 				case KEY_SHIFTNUMENTER:

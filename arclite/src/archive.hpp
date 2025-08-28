@@ -26,7 +26,7 @@ extern const ArcType c_zstd;
 
 extern const ArcType c_lzh;
 extern const ArcType c_lzma;
-extern const ArcType с_lzma86;
+extern const ArcType c_lzma86;
 extern const ArcType c_cab;
 extern const ArcType c_z;
 

@@ -8,12 +8,13 @@
 #define SILENT
 #endif
 
+
 #include <new>
 #include <string>
 #include <vector>
 #include <deque>
 #include <memory> // For automatic pointers.
-
+#include <algorithm>
 
 #ifdef _WIN_ALL
 
@@ -57,6 +58,9 @@
 #include <wincrypt.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <Sddl.h>
+#include <ntsecapi.h>
+
 
 // For WMI requests.
 #include <comdef.h>
@@ -133,6 +137,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stddef.h> // Needed for ptrdiff_t in some UnRAR source builds.
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -170,7 +175,7 @@
 #define SAVE_LINKS
 #endif
 
-#if defined(__linux) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__linux) || defined(__FreeBSD__)
 #include <sys/time.h>
 #define USE_LUTIMES
 #endif

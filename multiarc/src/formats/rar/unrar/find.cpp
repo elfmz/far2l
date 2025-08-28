@@ -190,7 +190,7 @@ HANDLE FindFile::Win32Find(HANDLE hFind,const std::wstring &Mask,FindData *fd)
   {
     fd->Name=Mask;
     SetName(fd->Name,FindData.cFileName);
-    fd->Size=FindData.nFileSize;
+    fd->Size=INT32TO64(FindData.nFileSizeHigh,FindData.nFileSizeLow);
     fd->FileAttr=FindData.dwFileAttributes;
     fd->ftCreationTime=FindData.ftCreationTime;
     fd->ftLastAccessTime=FindData.ftLastAccessTime;

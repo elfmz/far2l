@@ -56,6 +56,8 @@ class FileType::Impl
   const UnicodeString* getParamDescription(const UnicodeString& param_name) const;
   [[nodiscard]]
   int getParamValueInt(const UnicodeString& param_name, int def) const;
+  [[nodiscard]]
+  int getParamValueHex(const UnicodeString& param_name, int def_value = 0) const;
 
   void setParamValue(const UnicodeString& param_name, const UnicodeString* value);
   void setParamDefaultValue(const UnicodeString& param_name, const UnicodeString* value);

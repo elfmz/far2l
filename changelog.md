@@ -17,9 +17,12 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
 * _Temporary panel plugin_: Show file groups
 * _colorer plugin_: Update colorer schemes to v1.2.0.90
-* _colorer plugin_: Update colorer library to v1.5.0-29.06.2025
+* _colorer plugin_: Update colorer library to v1.5.0-22.08.2025
 * _colorer plugin_: Added features for easier modification of the set and behavior of the user's hrc/hrd files, without editing the supplied base set.
+* _colorer plugin_: Improved performance around logging
+* _colorer plugin_: Fix read default-back/default-fore params
 * _python plugin_: fixes and new subplugin **uedreplace**
+* _multiarc plugin_: Update bundled 7z sources to 2501
 * _arclite plugin_: New plugin for archives processing
   (now as experimental version which partially more effective then multiarc;
   arclite disabled by default, to enable manually turn on

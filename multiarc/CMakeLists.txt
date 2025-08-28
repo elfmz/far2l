@@ -157,6 +157,7 @@ elseif(UNRAR)
         src/formats/rar/unrar/rdwrfn.cpp
         src/formats/rar/unrar/rarpch.cpp
         src/formats/rar/unrar/rar.cpp
+        src/formats/rar/unrar/largepage.cpp
     )
     set(SOURCES ${SOURCES} ${RAR_FILES})
 endif()

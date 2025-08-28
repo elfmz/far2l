@@ -39,6 +39,12 @@ DEFINE_ARC_ID(xz, "\x0C")
 DEFINE_ARC_ID(iso, "\xE7")
 DEFINE_ARC_ID(udf, "\xE0")
 DEFINE_ARC_ID(rar, "\x03")
+DEFINE_ARC_ID(rar5, "\xCC")
+DEFINE_ARC_ID(arj, "\x04")
+DEFINE_ARC_ID(lzh, "\x06")
+DEFINE_ARC_ID(cab, "\x08")
+DEFINE_ARC_ID(z, "\x05")
+
 DEFINE_ARC_ID(split, "\xEA")
 DEFINE_ARC_ID(wim, "\xE6")
 DEFINE_ARC_ID(tar, "\xEE")
@@ -50,6 +56,33 @@ DEFINE_ARC_ID(SWFc, "\xD8")
 DEFINE_ARC_ID(dmg, "\xE4")
 DEFINE_ARC_ID(hfs, "\xE3")	  // HFS
 DEFINE_ARC_ID(zstd, "\x0E")
+DEFINE_ARC_ID(lzma, "\x0A")
+DEFINE_ARC_ID(lzma86, "\x0B")
+DEFINE_ARC_ID(elf, "\xDE")
+DEFINE_ARC_ID(pe, "\xCF")
+DEFINE_ARC_ID(macho, "\xDF")
+DEFINE_ARC_ID(chm, "\xCE")
+DEFINE_ARC_ID(compound, "\xE5")
+DEFINE_ARC_ID(vdi, "\xC9")
+DEFINE_ARC_ID(vhd, "\xDC")
+DEFINE_ARC_ID(vmdk, "\xC8")
+DEFINE_ARC_ID(vdx, "\xC4")
+DEFINE_ARC_ID(qcow, "\xCA")
+DEFINE_ARC_ID(swf, "\xD7")
+DEFINE_ARC_ID(flv, "\xD6")
+DEFINE_ARC_ID(lp, "\xC1")
+DEFINE_ARC_ID(ihex, "\xCD")
+DEFINE_ARC_ID(mslz, "\xD5")
+DEFINE_ARC_ID(nud, "\xE2")
+DEFINE_ARC_ID(uefif, "\xD1")
+DEFINE_ARC_ID(uefic, "\xD0")
+DEFINE_ARC_ID(avb, "\xC0")
+DEFINE_ARC_ID(Base64, "\xC5")
+DEFINE_ARC_ID(CramFS, "\xD3")
+DEFINE_ARC_ID(LVM, "\xBF")
+DEFINE_ARC_ID(Mub, "\xE2")
+DEFINE_ARC_ID(Ppmd, "\x0D")
+DEFINE_ARC_ID(Sparse, "\xC2")
 
 DEFINE_ARC_ID(fat, "\xDA")	   // FAT
 DEFINE_ARC_ID(ntfs, "\xD9")	   // NTFS
@@ -60,6 +93,7 @@ DEFINE_ARC_ID(sqfs, "\xD2") // SquashFS
 
 DEFINE_ARC_ID(mbr, "\xDB")	  // MBR
 DEFINE_ARC_ID(gpt, "\xCB")	  // GPT
+DEFINE_ARC_ID(apm, "\xD4")	  // APM
 
 #undef DEFINE_ARC_ID
 
@@ -465,11 +499,30 @@ void ArcAPI::load_libs(const std::wstring &path)
 
 		const std::string s2(arc_lib.module_path.begin(), arc_lib.module_path.end());
 
+		fprintf(stderr, "ArcAPI::load_libs() Try to open %s\n", s2.c_str());
+
 		arc_lib.h_module = dlopen(s2.c_str(), RTLD_LAZY);
 		//arc_lib.h_module = dlopen(s2.c_str(), RTLD_NOW);
 
 		if (arc_lib.h_module == nullptr) {
 			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s nullptr - cannot open(%d)\n", path.c_str(), s2.c_str(), errno);
+			continue;
+		}
+
+		fprintf(stderr, "ArcAPI::load_libs() Opened %s, Handle = %p \n", s2.c_str(), arc_lib.h_module );
+
+		bool is_duplicate_handle = false;
+		for (const auto& existing_lib : arc_libs) {
+			if (existing_lib.h_module == arc_lib.h_module) {
+					fprintf(stderr, "ArcAPI::load_libs: SKIP %s - Handle %p already exists in arc_libs (duplicate dlopen)\n",
+					s2.c_str(), arc_lib.h_module);
+				is_duplicate_handle = true;
+				break;
+			}
+		}
+
+		if (is_duplicate_handle) {
+			dlclose(arc_lib.h_module);
 			continue;
 		}
 
@@ -506,13 +559,13 @@ void ArcAPI::load_libs(const std::wstring &path)
 				}
 				if (arc_lib.GetModuleProp(NModulePropID::kInterfaceType, prop.ref()) == S_OK && prop.is_uint()) {
 					uint32_t haveVirtDestructor = prop.get_uint();
-					fprintf(stderr, "ArcAPI::load_libs() %s kInterfaceType = %u\n", s2.c_str(), haveVirtDestructor);
+					fprintf(stderr, "ArcAPI::load_libs() %s - PASSED kInterfaceType = %u\n", s2.c_str(), haveVirtDestructor);
 					bUseVD = haveVirtDestructor ? true : false;
 				}
 			}
 			else { /// p7zip ?
 				arc_lib.version = get_module_version(arc_lib.module_path);
-				fprintf(stderr, "ArcAPI::load_libs() %s no GetModuleProp - p7zip ? bUseVD =  true\n", s2.c_str());
+				fprintf(stderr, "ArcAPI::load_libs() %s - PASSED but no GetModuleProp - p7zip ? bUseVD =  true\n", s2.c_str());
 			}
 
 			if (arc_libs.empty()) { // set interface type
@@ -544,10 +597,10 @@ void ArcAPI::load_libs(const std::wstring &path)
 				}
 			}
 
-			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s OK\n", path.c_str(), s2.c_str());
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) ADDED %s - OK\n", path.c_str(), s2.c_str());
 			arc_libs.push_back(arc_lib);
 		} else {
-			fprintf(stderr, "ArcAPI::load_libs( %ls ) %s FAIL\n", path.c_str(), s2.c_str());
+			fprintf(stderr, "ArcAPI::load_libs( %ls ) SKIP %s - FAIL\n", path.c_str(), s2.c_str());
 			dlclose(arc_lib.h_module);
 		}
 	}
@@ -558,6 +611,7 @@ void ArcAPI::load_codecs(const std::wstring &path)
 	fprintf(stderr, "ArcAPI::load_codecs( %ls )\n", path.c_str());
 
 	if (n_base_format_libs <= 0) {
+		fprintf(stderr, "ArcAPI::load_codecs: No base format libs loaded, skipping.\n");
 		return;
 	}
 
@@ -572,8 +626,12 @@ void ArcAPI::load_codecs(const std::wstring &path)
 				CDllCodecInfo info;
 				info.LibIndex = static_cast<UInt32>(lib_index);
 				info.CodecIndex = i;
-				if (!GetCoderInfo(arc_lib.GetMethodProperty, i, info))
+				if (!GetCoderInfo(arc_lib.GetMethodProperty, i, info)) {
+					fprintf(stderr, "ArcAPI::load_codecs: SKIP codec from lib '%ls' (index %zu), method %u - GetCoderInfo failed\n",
+									arc_lib.module_path.c_str(), lib_index, i);
 					return;
+				}
+
 				for (const auto &codec : arc_codecs)
 					if (codec.Name == info.Name)
 						return;
@@ -581,6 +639,10 @@ void ArcAPI::load_codecs(const std::wstring &path)
 				fprintf(stderr, "Adding codec %ls \n", info.Name.c_str());
 				arc_codecs.push_back(info);
 			}
+		}
+		else {
+			fprintf(stderr, "ArcAPI::load_codecs: SKIP lib '%ls' (index %zu) - Does not provide codec methods\n",
+				arc_lib.module_path.c_str(), lib_index);
 		}
 	};
 
@@ -594,6 +656,8 @@ void ArcAPI::load_codecs(const std::wstring &path)
 					info.LibIndex = static_cast<UInt32>(lib_index);
 					info.HasherIndex = i;
 					arc_hashers.push_back(info);
+					fprintf(stderr, "ArcAPI::load_codecs: Adding hasher index %u from lib '%ls' (index %zu, VD=true)\n",
+						i, arc_lib.module_path.c_str(), lib_index);
 				}
 			} else {
 				auto* hashers = static_cast<IHashers<false>*>(arc_lib.ComHashers);
@@ -603,6 +667,8 @@ void ArcAPI::load_codecs(const std::wstring &path)
 					info.LibIndex = static_cast<UInt32>(lib_index);
 					info.HasherIndex = i;
 					arc_hashers.push_back(info);
+					fprintf(stderr, "ArcAPI::load_codecs: Adding hasher index %u from lib '%ls' (index %zu, VD=false)\n",
+						i, arc_lib.module_path.c_str(), lib_index);
 				}
 			}
 		}
@@ -837,6 +903,7 @@ static bool ParseSignatures(const Byte *data, size_t size, std::vector<ByteVecto
 	return true;
 }
 
+
 void ArcAPI::load()
 {
 	auto dll_path = add_trailing_slash(Far::get_plugin_module_path());
@@ -934,14 +1001,22 @@ void ArcAPI::load()
 			ArcFormat format;
 
 			if (arc_lib.get_bytes_prop(idx, NArchive::NHandlerPropID::kClassID, format.ClassID) != S_OK) {
+				fprintf(stderr, "    [Format %u] FAILED: cannot read ClassID\n", idx);
 				continue;
 			}
 
 			arc_lib.get_string_prop(idx, NArchive::NHandlerPropID::kName, format.name);
+			if (format.name.empty()) {
+				fprintf(stderr, "    [Format %u] WARNING: empty name\n", idx);
+			}
 			if (arc_lib.get_bool_prop(idx, NArchive::NHandlerPropID::kUpdate, format.updatable) != S_OK)
 				format.updatable = false;
 
 			fprintf(stderr, "Format %ls updatable = %u\n", format.name.c_str(), format.updatable);
+			fprintf(stderr, "      ClassID: ");
+			for (size_t j = 0; j < 16; ++j) {
+				fprintf(stderr, "%02X", static_cast<unsigned char>(format.ClassID[j]));
+			}
 
 			std::wstring extension_list_str;
 			arc_lib.get_string_prop(idx, NArchive::NHandlerPropID::kExtension, extension_list_str);
@@ -950,12 +1025,21 @@ void ArcAPI::load()
 			arc_lib.get_string_prop(idx, NArchive::NHandlerPropID::kAddExtension, add_extension_list_str);
 			std::list<std::wstring> add_extension_list = split(add_extension_list_str, L' ');
 			auto add_ext_iter = add_extension_list.cbegin();
+
+			fprintf(stderr, "\n");
+			fprintf(stderr, "      Extensions: ");
+			for (const auto& ext : format.extension_list) {
+				fprintf(stderr, " %ls ", ext.c_str());
+			}
+			fprintf(stderr, "\n");
+
 			for (auto ext_iter = format.extension_list.begin(); ext_iter != format.extension_list.end();
 					++ext_iter) {
 				ext_iter->insert(0, 1, L'.');
 				if (add_ext_iter != add_extension_list.cend()) {
 					if (*add_ext_iter != L"*") {
 						format.nested_ext_mapping[upcase(*ext_iter)] = *add_ext_iter;
+						fprintf(stderr, "      NestedExt[%ls] -> %ls\n", ext_iter->c_str(), add_ext_iter->c_str());
 					}
 					++add_ext_iter;
 				}
@@ -988,8 +1072,51 @@ void ArcAPI::load()
 					!= S_OK)
 				format.SignatureOffset = 0;
 
-			if (arc_lib.GetIsArc)
+			if (arc_lib.GetIsArc) {
 				arc_lib.GetIsArc(idx, &format.IsArc);
+			}
+
+			if (format.Signatures.empty()) {
+				fprintf(stderr, "      Signatures: (none)\n");
+			} else {
+				fprintf(stderr, "      Signatures (%zu):\n", format.Signatures.size());
+				for (const auto& s : format.Signatures) {
+					fprintf(stderr, "        ");
+					for (size_t j = 0; j < s.size(); ++j) {
+						fprintf(stderr, "%02X ", static_cast<unsigned char>(s[j]));
+					}
+					bool is_text = true;
+					for (size_t j = 0; j < s.size(); ++j) {
+						unsigned char c = s[j];
+						if (c < 0x20 || c > 0x7E) { is_text = false; break; }
+					}
+					if (is_text) {
+						fprintf(stderr, " ('");
+						for (size_t j = 0; j < s.size(); ++j) {
+							fprintf(stderr, "%c", s[j]);
+						}
+						fprintf(stderr, "')");
+					}
+					fprintf(stderr, "\n");
+				}
+			}
+
+			if (format.SignatureOffset != 0) {
+				fprintf(stderr, "      SignatureOffset: %u\n", (unsigned int)format.SignatureOffset);
+			}
+
+			fprintf(stderr, "      Flags: 0x%02X (", format.Flags);
+			if (format.Flags & NArcInfoFlags::kKeepName)     fprintf(stderr, "KeepName ");
+			if (format.Flags & NArcInfoFlags::kAltStreams)   fprintf(stderr, "AltStreams ");
+			if (format.Flags & NArcInfoFlags::kNtSecure)     fprintf(stderr, "NtSecure ");
+			if (format.Flags & 0x01)                         fprintf(stderr, "Container ");
+			if (format.Flags & NArcInfoFlags::kByExtOnlyOpen) fprintf(stderr, "ByExtOnlyOpen ");
+			fprintf(stderr, ")\n");
+
+			fprintf(stderr, "      Updatable: %s\n", format.updatable ? "yes" : "no");
+			fprintf(stderr, "      IsArc(): %s\n", format.IsArc ? "true" : "false");
+			fprintf(stderr, "      LibIndex: %d, FormatIndex: %u\n", format.lib_index, format.FormatIndex);
+			fprintf(stderr, "      ------------------------------\n");
 
 			ArcFormats::const_iterator existing_format = arc_formats.find(format.ClassID);
 			if (existing_format == arc_formats.end()
@@ -998,6 +1125,8 @@ void ArcAPI::load()
 		}
 	}
 }
+
+
 
 //void ArcAPI::create_in_archive(const ArcType &arc_type, IInArchive **in_arc)
 void ArcAPI::create_in_archive(const ArcType &arc_type, void **in_arc)
@@ -1313,13 +1442,14 @@ bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 		return false;
 	}
 
-	const ArcType &rArcType = arc_chain.back().type;
+//	const ArcType &rArcType = arc_chain.back().type;
+	const ArcType &lArcType = arc_chain.front().type;
 	std::wstring ext = extract_file_ext(arc_path);
 
 	if (file_list.empty())
 		make_index();
 
-	if (rArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 32) {
+	if (lArcType == c_ar && !StrCmpI(ext.c_str(), L".deb" ) && num_indices < 32) {
 //		UInt32 iindex = 0xFFFFFFFF;
 	    for (UInt32 ii = 0; ii < num_indices; ++ii) {
 			if (file_list[ii].is_dir) continue;

@@ -76,6 +76,7 @@ set(SOURCES
     src/EnsureDir.cpp
     src/RandomString.cpp
     src/MakePTYAndFork.cpp
+    src/LookupDebugSymbol.cpp
     ${CHAR_CLASSES_CPP}
 )
 

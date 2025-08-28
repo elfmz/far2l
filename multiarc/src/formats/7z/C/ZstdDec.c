@@ -528,13 +528,13 @@ static void Print_Predef(unsigned predefAccuracy,
           0
     );
   if (memcmp(table, checkTable, sizeof(UInt32) << predefAccuracy) != 0)
-    _exit(1);
+    exit(1);
   for (i = 0; i < (1u << predefAccuracy); i++)
   {
     const UInt32 v = table[i];
     const unsigned state = (unsigned)(GET_FSE_REC_STATE(v));
     if (state & 0xf)
-      _exit(1);
+      exit(1);
     if (i != 0)
     {
       printf(",");

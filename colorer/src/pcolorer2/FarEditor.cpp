@@ -85,8 +85,8 @@ void FarEditor::reloadTypeSettings()
 
   int backparse = def->getParamValueInt(DBackparse, 2000);
   maxLineLength = def->getParamValueInt(DMaxLen, 0);
-  newfore = def->getParamValueInt(DDefFore, -1);
-  newback = def->getParamValueInt(DDefBack, -1);
+  newfore = def->getParamValueHex(DDefFore, -1);
+  newback = def->getParamValueHex(DDefBack, -1);
   const UnicodeString* value = def->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)) {
@@ -125,8 +125,8 @@ void FarEditor::reloadTypeSettings()
   // installs custom file properties
   backparse = ftype->getParamValueInt(DBackparse, backparse);
   maxLineLength = ftype->getParamValueInt(DMaxLen, maxLineLength);
-  newfore = ftype->getParamValueInt(DDefFore, newfore);
-  newback = ftype->getParamValueInt(DDefBack, newback);
+  newfore = ftype->getParamValueHex(DDefFore, newfore);
+  newback = ftype->getParamValueHex(DDefBack, newback);
   value = ftype->getParamValue(DFullback);
 
   if (value != nullptr && value->equals(&DNo)) {
@@ -439,12 +439,21 @@ int FarEditor::editorInput(const INPUT_RECORD* ir)
 {
   if (ir->EventType == KEY_EVENT && ir->Event.KeyEvent.wVirtualKeyCode == 0) {
     if (baseEditor->haveInvalidLine()) {
+      auto invalid_line1 = baseEditor->getInvalidLine();
       idleCount++;
       if (idleCount > 10) {
         idleCount = 10;
       }
-      baseEditor->idleJob(idleCount * idleCount * 100);
-      info->EditorControl(ECTL_REDRAW, nullptr);
+      baseEditor->idleJob(idleCount * 10);
+      auto invalid_line2 = baseEditor->getInvalidLine();
+
+      EditorInfo ei = getEditorInfo();
+      if ((invalid_line1 < ei.TopScreenLine && invalid_line2 >= ei.TopScreenLine) ||
+          (invalid_line1 < ei.TopScreenLine + ei.WindowSizeY &&
+           invalid_line2 >= ei.TopScreenLine + ei.WindowSizeY))
+      {
+        info->EditorControl(ECTL_REDRAW, nullptr);
+      }
     }
   }
   else if (ir->EventType == KEY_EVENT) {
@@ -1215,7 +1224,7 @@ EditorInfo FarEditor::getEditorInfo() const
 
 color FarEditor::convert(const StyledRegion* rd) const
 {
-  color col{};
+  color col {};
 
   if (rdBackground == nullptr)
     return col;

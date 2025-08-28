@@ -93,6 +93,23 @@ int FileType::Impl::getParamValueInt(const UnicodeString& param_name, const int 
   return val;
 }
 
+int FileType::Impl::getParamValueHex(const UnicodeString& param_name, int def_value) const
+{
+  int val = def_value;
+  const auto* param_value = getParamValue(param_name);
+  if (param_value && param_value->length() > 0) {
+    unsigned int converted = 0;
+    bool result = UStr::HexToUInt(*param_value, &converted);
+    if (result) {
+      val = (int) converted;
+    }
+    else {
+      COLORER_LOG_ERROR("Error convert param '%' with value '%' to hex number", param_name, param_value);
+    }
+  }
+  return val;
+}
+
 const UnicodeString* FileType::Impl::getParamDefaultValue(const UnicodeString& param_name) const
 {
   const auto tp = paramsHash.find(param_name);

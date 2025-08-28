@@ -28,8 +28,8 @@ struct ArchiveType
 };
 
 const ArchiveType c_archive_types[] = {
-		{MSG_COMPRESSION_ARCHIVE_7Z,	 c_7z },
-		{MSG_COMPRESSION_ARCHIVE_ZIP, c_zip},
+	{MSG_COMPRESSION_ARCHIVE_7Z, c_7z },
+	{MSG_COMPRESSION_ARCHIVE_ZIP, c_zip},
 };
 
 struct CompressionLevel
@@ -40,12 +40,12 @@ struct CompressionLevel
 };
 
 const CompressionLevel c_levels[] = {
-		{MSG_COMPRESSION_LEVEL_STORE,	  0},
-		{MSG_COMPRESSION_LEVEL_FASTEST, 1},
-		{MSG_COMPRESSION_LEVEL_FAST,	 3},
-		{MSG_COMPRESSION_LEVEL_NORMAL,  5},
-		{MSG_COMPRESSION_LEVEL_MAXIMUM, 7},
-		{MSG_COMPRESSION_LEVEL_ULTRA,	  9},
+	{MSG_COMPRESSION_LEVEL_STORE,   0},
+	{MSG_COMPRESSION_LEVEL_FASTEST, 1},
+	{MSG_COMPRESSION_LEVEL_FAST,	3},
+	{MSG_COMPRESSION_LEVEL_NORMAL,  5},
+	{MSG_COMPRESSION_LEVEL_MAXIMUM, 7},
+	{MSG_COMPRESSION_LEVEL_ULTRA,	9},
 };
 
 enum
@@ -62,23 +62,23 @@ struct CompressionMethod
 };
 
 const CompressionMethod c_methods[] = {
-		{MSG_COMPRESSION_METHOD_DEFAULT,		c_method_default,		CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_LZMA,		c_method_lzma,		CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_LZMA2,		c_method_lzma2,		CMF_7ZIP },
-		{MSG_COMPRESSION_METHOD_PPMD,		c_method_ppmd,		CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_DEFLATE,	c_method_deflate,	CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_DEFLATE64,	c_method_deflate64,	CMF_ZIP	},
-		{MSG_COMPRESSION_METHOD_BZIP2,		c_method_bzip2,		CMF_7ZIP | CMF_ZIP},
-		{MSG_COMPRESSION_METHOD_DELTA,		c_method_delta,		CMF_7ZIP },
-		{MSG_COMPRESSION_METHOD_BCJ,		c_method_bcj,		CMF_7ZIP },
-		{MSG_COMPRESSION_METHOD_BCJ2,		c_method_bcj2,		CMF_7ZIP },
+	{MSG_COMPRESSION_METHOD_DEFAULT,	c_method_default,	CMF_7ZIP | CMF_ZIP},
+	{MSG_COMPRESSION_METHOD_LZMA,		c_method_lzma,		CMF_7ZIP | CMF_ZIP},
+	{MSG_COMPRESSION_METHOD_LZMA2,		c_method_lzma2,		CMF_7ZIP },
+	{MSG_COMPRESSION_METHOD_PPMD,		c_method_ppmd,		CMF_7ZIP | CMF_ZIP},
+	{MSG_COMPRESSION_METHOD_DEFLATE,	c_method_deflate,	CMF_7ZIP | CMF_ZIP},
+	{MSG_COMPRESSION_METHOD_DEFLATE64,	c_method_deflate64,	CMF_ZIP	},
+	{MSG_COMPRESSION_METHOD_BZIP2,		c_method_bzip2,		CMF_7ZIP | CMF_ZIP},
+	{MSG_COMPRESSION_METHOD_DELTA,		c_method_delta,		CMF_7ZIP },
+	{MSG_COMPRESSION_METHOD_BCJ,		c_method_bcj,		CMF_7ZIP },
+	{MSG_COMPRESSION_METHOD_BCJ2,		c_method_bcj2,		CMF_7ZIP },
 };
 
 const CompressionMethod c_tar_methods[] = {
-		{MSG_COMPRESSION_METHOD_DEFAULT,	c_method_default,	1},
-		{MSG_COMPRESSION_TAR_METHOD_GNU,	c_tar_method_gnu,	1},
-		{MSG_COMPRESSION_TAR_METHOD_PAX,	c_tar_method_pax,	1},
-		{MSG_COMPRESSION_TAR_METHOD_POSIX,	c_tar_method_posix,	1},
+	{MSG_COMPRESSION_METHOD_DEFAULT,	c_method_default,	1},
+	{MSG_COMPRESSION_TAR_METHOD_GNU,	c_tar_method_gnu,	1},
+	{MSG_COMPRESSION_TAR_METHOD_PAX,	c_tar_method_pax,	1},
+	{MSG_COMPRESSION_TAR_METHOD_POSIX,	c_tar_method_posix,	1},
 };
 
 enum TBPFLAG
@@ -2691,7 +2691,7 @@ private:
 		else if (arc_type == c_zip)
 			fff = CMF_ZIP;
 
-		FarListItem listitems[16];
+		FarListItem listitems[128];
 		FarList farlist = {(int)ilbs, listitems};
 
 		for (size_t i = 0; i < cn; i++) {
@@ -2714,20 +2714,44 @@ private:
 		if (arc_type != c_tar) {
 			const auto &codecs = ArcAPI::codecs();
 
-			for (size_t i = cn; i < cn + ArcAPI::Count7zCodecs(); i++) {
+			static std::unordered_set<std::wstring> static_method_names;
+			static bool smn_initialized = false;
+			if (!smn_initialized) {
+				for (size_t sm_i = 0; sm_i < ARRAYSIZE(c_methods); sm_i++) {
+					static_method_names.insert(std::wstring(c_methods[sm_i].value));
+				}
+				smn_initialized = true;
+			}
 
-				listitems[i].Flags = 0;
+			int codec_items_added = 0;
 
-				if (method_sel == i && def_method_sel != method_sel) {
-					listitems[i].Flags |= LIF_SELECTED;
-					def_method_sel = method_sel;
-				} else if (def_method_sel == 0xFFFFFFFF) {
-					def_method_sel = i;
+			for (size_t codec_index = 0; codec_index < ArcAPI::Count7zCodecs(); codec_index++) {
+				const std::wstring &codec_name = codecs[codec_index].Name;
+				if (static_method_names.find(codec_name) != static_method_names.end()) {
+					// fprintf(stderr, "SKIP duplicate codec: %ls\n", codec_name.c_str());
+					continue;
 				}
 
-				listitems[i].Text = codecs[i - cn].Name.c_str();
-				listitems[i].Reserved[0] = (DWORD)i;
+				size_t list_index = cn + codec_items_added;
+				if (list_index >= ARRAYSIZE(listitems)) {
+					fprintf(stderr, "ERROR: Too many items for FarListItem array! Skipping codec '%ls'.\n", codec_name.c_str());
+					break;
+				}
+
+				listitems[list_index].Flags = 0;
+				if (method_sel == cn + codec_index && def_method_sel != method_sel) {
+					listitems[list_index].Flags |= LIF_SELECTED;
+					def_method_sel = method_sel;
+				} else if (def_method_sel == 0xFFFFFFFF) {
+					def_method_sel = cn + codec_index;
+				}
+
+				listitems[list_index].Text = codec_name.c_str();
+				listitems[list_index].Reserved[0] = (DWORD)(cn + codec_index);
+				codec_items_added++;
 			}
+
+			farlist.ItemsNumber = cn + codec_items_added;
 		}
 
 		send_message(DM_LISTSET, method_ctrl_id, &farlist);

@@ -1003,6 +1003,40 @@ bool panel_go_to_file(HANDLE h_panel, const std::wstring &file_path)
 	return true;
 }
 
+/**
+struct PanelRedrawInfo
+{
+	int CurrentItem;
+	int TopPanelItem;
+};
+
+enum PANELINFOTYPE
+{
+	PTYPE_FILEPANEL,
+	PTYPE_TREEPANEL,
+	PTYPE_QVIEWPANEL,
+	PTYPE_INFOPANEL
+};
+
+struct PanelInfo
+{
+	int PanelType;
+	int Plugin;
+	RECT PanelRect;
+	int ItemsNumber;
+	int SelectedItemsNumber;
+	int CurrentItem;
+	int TopPanelItem;
+	int Visible;
+	int Focus;
+	int ViewMode;
+	int SortMode;
+	DWORD Flags;
+	DWORD Reserved;
+};
+
+**/
+
 bool panel_set_file(HANDLE h_panel, const std::wstring &file_name)
 {
 	//  PanelInfo panel_info = {sizeof(PanelInfo)};

@@ -34,6 +34,7 @@
 #include <cmath>
 #include <cstring>
 #include <queue>
+#include <unordered_set>
 
 #include <thread>
 #include <mutex>

@@ -60,6 +60,14 @@ public:
         }
         return current;
     }
+	Plugin<UseVirtualDestructor>* get_root() {
+		Plugin<UseVirtualDestructor>* current = this;
+		while (current->parent) {
+			current = current->parent;
+		}
+		return current;
+	}
+
 	Archive<UseVirtualDestructor> *get_archive() {return archive.get();}
 
 	bool recursive_panel{false};
@@ -788,8 +796,8 @@ struct PanelItem
 			}
 			size_t size() const override { return panel_info.SelectedItemsNumber; }
 		};
-		PluginPanelItems pp_items(this);
-		auto dst = extract_file_path(archive->arc_path);
+		PluginPanelItems pp_items(this->get_root());
+		auto dst = extract_file_path(archive->get_root()->arc_path);
 		extract(pp_items, dst, false, OPM_NONE);
 	}
 

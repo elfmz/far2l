@@ -1241,7 +1241,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		stream_impl = new ArchiveOpenStream<UseVirtualDestructor>(options.arc_path);
 		stream = stream_impl;
 		arc_info = stream_impl->get_info();
-		fprintf(stderr,"Root archive info: name='%ls', size=%lu", arc_info.cFileName, arc_info.size());
+		fprintf(stderr,"Root archive info: name='%ls', size=%lu\n", arc_info.cFileName, arc_info.size());
 	} else {
 		if (parent_idx > 0 && archives[parent_idx]->flags == 2) {
 			fprintf(stderr,"Parent is a sequential stream (partial seek) - STOPPING\n");
@@ -1255,8 +1255,8 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			return;
 		}
 		if (entry_index >= num_indices && entry_index != 0xFFFFFFFF) {
-			entry_index = 0xFFFFFFFF;
 			fprintf(stderr,"Provided entry_index (%u) out of range, setting to 0xFFFFFFFF\n", entry_index);
+			entry_index = 0xFFFFFFFF;
 		}
 		if (archives[parent_idx]->get_main_file(main_file_index)) {
 			fprintf(stderr, "Parent archive reports main file index: %u\n", main_file_index);
@@ -1291,7 +1291,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			FindData ef = archives[parent_idx]->get_file_info(entry_index);
 			fprintf(stderr, "Entry file info: name='%ls', size=%lu, is_dir=%s\n", ef.cFileName, ef.size(), ef.is_dir() ? "true" : "false");
 			if (ef.is_dir()) {
-				fprintf(stderr, "Entry is a directory - STOPPING");
+				fprintf(stderr, "Entry is a directory - STOPPING\n");
 				return;
 			}
 
@@ -1301,7 +1301,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			}
 			fprintf(stderr,"entry filename = %ls\n" , ef.cFileName);
 			bool exFullSize = (fsize && fsize <= ((size_t)g_options.max_arc_cache_size) << 20);
-			fprintf(stderr,"fsize = %zu, g_options.max_arc_cache_size = %zu MB, exFullSize = %s",
+			fprintf(stderr,"fsize = %zu, g_options.max_arc_cache_size = %zu MB, exFullSize = %s\n",
 						  fsize, (size_t)g_options.max_arc_cache_size, exFullSize ? "true" : "false");
 
 			ComObject<DataRelayStream<UseVirtualDestructor>> mem_stream(new DataRelayStream<UseVirtualDestructor>(
@@ -1345,10 +1345,10 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 					uint8_t buffer[32768];
 					UInt32 size = 0;
-					fprintf(stderr,"Peeking 32KB from extracted stream...");
+					fprintf(stderr,"Peeking 32KB from extracted stream...\n");
 					int32_t hr = mem_stream->Peek(buffer, sizeof(buffer), &size);
 					if (!size || hr != S_OK) {
-						fprintf(stderr,"Peek failed or no data: size=%u, hr=0x%X", size, hr);
+						fprintf(stderr,"Peek failed or no data: size=%u, hr=0x%X\n", size, hr);
 						promise2.set_value(hr);
 						return;
 					}
@@ -1368,7 +1368,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 					const UInt64 max_check_start_position = 0;
 					int errc = archive->in_arc->Open(stream, &max_check_start_position, opener);
 					promise2.set_value(errc);
-					fprintf(stderr,"archive->in_arc->Open() finished with code: 0x%X", errc);
+					fprintf(stderr,"archive->in_arc->Open() finished with code: 0x%X\n", errc);
 				});
 
 				bool thread1_done = false;

@@ -312,7 +312,7 @@ cd far2l
 ```
  * Install needed dependencies with MacPorts:
 ``` sh
-sudo port install cmake pkgconfig wxWidgets-3.2 libssh openssl libxml2 uchardet neon
+sudo port install cmake pkgconfig wxWidgets-3.2 libssh openssl libxml2 uchardet neon samba4
 export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig
 ```
  * OR if you prefer to use brew packages, then:

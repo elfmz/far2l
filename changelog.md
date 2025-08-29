@@ -15,6 +15,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Actions recorded in commands history are configured in the AutoComplete & History dialog
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option
 * _NetRocks plugin_: Fix AWS S3 1000 files limit via pagination
+* _NetRocks plugin_: Enable smb protocol in macOS builds
 * _Temporary panel plugin_: Show file groups
 * _colorer plugin_: Update colorer schemes to v1.2.0.90
 * _colorer plugin_: Update colorer library to v1.5.0-22.08.2025

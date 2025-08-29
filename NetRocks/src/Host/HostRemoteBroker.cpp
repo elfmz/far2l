@@ -390,6 +390,10 @@ public:
 
 };
 
+void handle_sigquit(int) {
+	_exit(0);  // fast exit, no crash report
+}
+
 extern "C" int main(int argc, char *argv[])
 {
 	if (argc != 4) {
@@ -401,6 +405,7 @@ extern "C" int main(int argc, char *argv[])
 	//survive terminal death
 	signal(SIGHUP, SIG_IGN);
 	//signal(SIGTERM, SIG_IGN);
+	signal(SIGQUIT, handle_sigquit);
 
 	fprintf(stderr, "%d: HostRemoteBrokerMain: BEGIN\n", getpid());
 	try {

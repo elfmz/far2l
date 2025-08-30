@@ -4565,6 +4565,11 @@ The numbers are assigned to the groups in order of opening parentheses
 sequence in regular expression. #$0# means the whole found sequence.
 #$*# is replaced with '*' character.
 
+    Both #\n# and #\r# are interpreted as line breaks, depending on
+the end-of-line style used in the file. They behave the same way.
+
+    #\t# is replaced with tab character (0x09).
+
 
 @ElevationDlg
 $ #Запрос привилегий администратора#

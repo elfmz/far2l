@@ -1,7 +1,13 @@
 #include <assert.h>
 #include "ConsoleInput.h"
+#include "WinPort.h"
+#include <UtfDefines.h>
+#include <utils.h>
 
-const char* VirtualKeyNames[] = {
+#define MAX_INPUT_BACKTRACE_SECONDS 10 // how max old events can be kept in backtrace
+#define MAX_INPUT_BACKTRACE_CONUT   10 // how many events can be kept in backtrace regardless of their age
+
+static const char* VirtualKeyNames[] = {
     "0x00",             // 0x00
     "VK_LBUTTON",       // 0x01
     "VK_RBUTTON",       // 0x02
@@ -260,40 +266,60 @@ const char* VirtualKeyNames[] = {
     "0xFF"              // 0xFF
 };
 
-char* FormatKeyState(uint16_t state) {
+static const char *FormatKeyName(unsigned vk)
+{
+	if (vk >= ARRAYSIZE(VirtualKeyNames)) {
+		return "?";
+	}
+	return VirtualKeyNames[vk];
+}
 
-	static char buffer[21];
+struct FormatControlKey
+{
+	char str[24];
 
-	buffer[0]  = state & NUMLOCK_ON         ? 'N' : 'n';
-	buffer[1]  = state & CAPSLOCK_ON        ? 'C' : 'c';
-	buffer[2]  = state & SCROLLLOCK_ON      ? 'S' : 's';
-	buffer[3]  = ' ';
+	FormatControlKey(uint16_t state)
+	{
+		str[0]  = state & NUMLOCK_ON         ? 'N' : 'n';
+		str[1]  = state & CAPSLOCK_ON        ? 'C' : 'c';
+		str[2]  = state & SCROLLLOCK_ON      ? 'S' : 's';
+		str[3]  = ' ';
 
-	buffer[4]  = state & ENHANCED_KEY       ? 'E' : 'e';
-	buffer[5]  = ' ';
+		str[4]  = state & ENHANCED_KEY       ? 'E' : 'e';
+		str[5]  = ' ';
 
-	buffer[6]  = state & LEFT_ALT_PRESSED   ? 'L' : 'l';
-	buffer[7]  = state & LEFT_ALT_PRESSED   ? 'A' : 'a';
-	buffer[8]  = ' ';
+		str[6]  = state & LEFT_ALT_PRESSED   ? 'L' : 'l';
+		str[7]  = state & LEFT_ALT_PRESSED   ? 'A' : 'a';
+		str[8]  = ' ';
 
-	buffer[9]  = state & LEFT_CTRL_PRESSED  ? 'L' : 'l';
-	buffer[10] = state & LEFT_CTRL_PRESSED  ? 'C' : 'c';
-	buffer[11] = ' ';
+		str[9]  = state & LEFT_CTRL_PRESSED  ? 'L' : 'l';
+		str[10] = state & LEFT_CTRL_PRESSED  ? 'C' : 'c';
+		str[11] = ' ';
 
-	buffer[12] = state & SHIFT_PRESSED      ? 'S' : 's';
-	buffer[13] = state & SHIFT_PRESSED      ? 'H' : 'h';
-	buffer[14] = ' ';
+		str[12] = state & SHIFT_PRESSED      ? 'S' : 's';
+		str[13] = state & SHIFT_PRESSED      ? 'H' : 'h';
+		str[14] = ' ';
 
-	buffer[15] = state & RIGHT_ALT_PRESSED  ? 'R' : 'r';
-	buffer[16] = state & RIGHT_ALT_PRESSED  ? 'A' : 'a';
-	buffer[17] = ' ';
+		str[15] = state & RIGHT_ALT_PRESSED  ? 'R' : 'r';
+		str[16] = state & RIGHT_ALT_PRESSED  ? 'A' : 'a';
+		str[17] = ' ';
 
-	buffer[18] = state & RIGHT_CTRL_PRESSED ? 'R' : 'r';
-	buffer[19] = state & RIGHT_CTRL_PRESSED ? 'C' : 'c';
+		str[18] = state & RIGHT_CTRL_PRESSED ? 'R' : 'r';
+		str[19] = state & RIGHT_CTRL_PRESSED ? 'C' : 'c';
 
-	buffer[20] = '\0';
+		str[20] = '\0';
+	}
+};
 
-	return buffer;
+static wchar_t FormatUnicodeChar(wchar_t uni)
+{
+	if (uni < 0x1f || !WCHAR_IS_VALID(uni)) {
+		return L'?';
+	}
+	if (WCHAR_IS_COMBINING(uni)) {
+		return L'!';
+	}
+	return uni;
 }
 
 
@@ -302,11 +328,11 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 	if (size) {
 		for (DWORD i = 0; i < size; ++i) {
 			if (data[i].EventType == KEY_EVENT) {
-				const auto uni = data[i].Event.KeyEvent.uChar.UnicodeChar;
+				const auto kn = FormatKeyName(data[i].Event.KeyEvent.wVirtualKeyCode);
+				FormatControlKey ks(data[i].Event.KeyEvent.dwControlKeyState);
+				const auto uc = FormatUnicodeChar(data[i].Event.KeyEvent.uChar.UnicodeChar);
 				fprintf(stderr, "ConsoleInput::Enqueue: %s %s \"%lc\" %s, %x %x %x %x\n",
-					FormatKeyState(data[i].Event.KeyEvent.dwControlKeyState),
-					data[i].Event.KeyEvent.wVirtualKeyCode < sizeof(VirtualKeyNames) / sizeof(const char*) ? VirtualKeyNames[data[i].Event.KeyEvent.wVirtualKeyCode] : "0x00",
-					(uni && (uni > 0x1f)) ? uni : L'?',
+					ks.str, kn, uc,
 					data[i].Event.KeyEvent.bKeyDown ? "DOWN" : "UP",
 
 					data[i].Event.KeyEvent.dwControlKeyState,
@@ -314,7 +340,7 @@ void ConsoleInput::Enqueue(const INPUT_RECORD *data, DWORD size)
 					data[i].Event.KeyEvent.uChar.UnicodeChar,
 
 					data[i].Event.KeyEvent.wVirtualScanCode
-					);
+				);
 			}
 		}
 
@@ -360,10 +386,24 @@ DWORD ConsoleInput::Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_
 	return i;
 }
 
+static bool EventBacktraced(const INPUT_RECORD &evnt)
+{
+	if (evnt.EventType == MOUSE_EVENT) {
+		if (evnt.Event.MouseEvent.dwButtonState == 0
+				&& (evnt.Event.MouseEvent.dwEventFlags & (MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) != 0) {
+			return false;
+		}
+
+	}
+
+	return true;
+}
+
 DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority)
 {
 	DWORD i;
 	{
+		clock_t now = GetProcessUptimeMSec();
 		std::unique_lock<std::mutex> lock(_mutex);
 		if (requestor_priority < CurrentPriority()) {
 			// fprintf(stderr,"%s: requestor_priority %u < %u\n", __FUNCTION__, requestor_priority, CurrentPriority());
@@ -373,6 +413,15 @@ DWORD ConsoleInput::Dequeue(INPUT_RECORD *data, DWORD size, unsigned int request
 		for (i = 0; (i < size && !_pending.empty()); ++i) {
 			data[i] = _pending.front();
 			_pending.pop_front();
+			if (EventBacktraced(data[i])) {
+				while (_backtrace.size() > MAX_INPUT_BACKTRACE_CONUT
+						&& now - _backtrace.front().first > MAX_INPUT_BACKTRACE_SECONDS * 1000) {
+					_backtrace.pop_front();
+				}
+				auto &back = _backtrace.emplace_back();
+				back.first = now;
+				back.second = data[i];
+			}
 		}
 	}
 	InspectCallbacks(data, i, true);
@@ -483,6 +532,75 @@ void ConsoleInput::JoinConsoleInput(IConsoleInput *con_in)
 		_non_empty.notify_all();
 	}
 	delete ci;
+}
+
+DWORD ConsoleInput::GetBacktrace(CHAR *buf, DWORD size)
+{
+	std::string s;
+	const clock_t now = GetProcessUptimeMSec();
+	std::unique_lock<std::mutex> lock(_mutex);
+	DWORD i = 0;
+	for (auto it = _backtrace.rbegin(); i < size && it != _backtrace.rend(); ++i, ++it) {
+		switch (it->second.EventType) {
+			case KEY_EVENT: {
+				const auto kn = FormatKeyName(it->second.Event.KeyEvent.wVirtualKeyCode);
+				FormatControlKey ks(it->second.Event.KeyEvent.dwControlKeyState);
+				const auto uc = FormatUnicodeChar(it->second.Event.KeyEvent.uChar.UnicodeChar);
+				s+= StrPrintf("%04u KEY_%s: vkc=%u vsc=%u ctl=0x%x wc=%u %s %s '%lc'\n", (unsigned int)(now - it->first),
+						it->second.Event.KeyEvent.bKeyDown ? "DOWN" : "UP",
+						(unsigned int)it->second.Event.KeyEvent.wVirtualKeyCode,
+						(unsigned int)it->second.Event.KeyEvent.wVirtualScanCode,
+						(unsigned int)it->second.Event.KeyEvent.dwControlKeyState,
+						(unsigned int)it->second.Event.KeyEvent.uChar.UnicodeChar,
+						ks.str, kn, uc);
+				} break;
+
+				case FOCUS_EVENT:
+					s+= StrPrintf("%04u FOCUS: %s\n", (unsigned int)(now - it->first),
+						it->second.Event.FocusEvent.bSetFocus ? "set" : "unset");
+					break;
+
+				case MOUSE_EVENT:
+					s+= StrPrintf("%04u MOUSE: btn=0x%x ctl=0x%x flg=0x%x pos={%d.%d}\n", (unsigned int)(now - it->first),
+						it->second.Event.MouseEvent.dwButtonState,
+						it->second.Event.MouseEvent.dwControlKeyState,
+						it->second.Event.MouseEvent.dwEventFlags,
+						(int)it->second.Event.MouseEvent.dwMousePosition.X, (int)it->second.Event.MouseEvent.dwMousePosition.Y);
+					break;
+
+				case WINDOW_BUFFER_SIZE_EVENT:
+					s+= StrPrintf("%04u WINSIZE: sz={%d.%d} dmg=%d\n", (unsigned int)(now - it->first),
+						(int)it->second.Event.WindowBufferSizeEvent.dwSize.X, (int)it->second.Event.WindowBufferSizeEvent.dwSize.Y,
+						it->second.Event.WindowBufferSizeEvent.bDamaged);
+					break;
+
+				case CALLBACK_EVENT:
+					s+= StrPrintf("%04u CALLBACK: fn=%p ctx=%p\n", (unsigned int)(now - it->first),
+						it->second.Event.CallbackEvent.Function,
+						it->second.Event.CallbackEvent.Context);
+					break;
+
+				case BRACKETED_PASTE_EVENT:
+					s+= StrPrintf("%04u BRACKETED_PASTE: %s\n", (unsigned int)(now - it->first),
+						it->second.Event.BracketedPaste.bStartPaste ? "start" : "stop");
+					break;
+
+				case NOOP_EVENT:
+					s+= StrPrintf("%04u NOOP\n", (unsigned int)(now - it->first));
+					break;
+
+				default:
+					s+= StrPrintf("%04u OTHER: type=0x%x\n", (unsigned int)(now - it->first), it->second.EventType);
+			}
+	}
+	if (size) {
+		if (size > s.size() + 1) {
+			size = s.size() + 1;
+		}
+		memcpy(buf, s.c_str(), size);
+		buf[size - 1] = 0;
+	}
+	return s.size() + 1;
 }
 
 ///

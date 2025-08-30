@@ -5,7 +5,7 @@
 */
 
 #define TO_WCHAR(encIdx, c) (arr_Encodings[0x100 * (encIdx) + (unsigned char)(c)])
-#define TO_CHAR(encIdx, c) ((char)(arr_revEncodings[ (8<<(16-7)) + (arr_revEncodings[(encIdx<<(16-7)) + ((c)>>7)] << 7) + ((c) & (0xFFFF>>(16-7)))]))
+#define TO_CHAR(encIdx, c) ((char)(arr_revEncodings[ (8<<(16-7)) + (arr_revEncodings[((encIdx)<<(16-7)) + ((c)>>7)] << 7) + ((c) & (0xFFFF>>(16-7)))]))
 
 static const char defEncoding[16] = "CP1251";
 static const int defEncodingIdx = 4;

@@ -91,6 +91,7 @@ class Logger
   virtual void log(LogLevel level, const char* filename_in, int line_in, const char* funcname_in,
                    const char* message) = 0;
   virtual void flush() = 0;
+  virtual LogLevel getCurrentLogLevel() = 0;
 };
 
 class Log
@@ -116,12 +117,11 @@ class Log
     }
   }
 
- private:
   static Logger* logger;
 };
 
 #define COLORER_LOGGER_PRINTF(level, ...) \
-  Log::log(level, __FILE__, __LINE__, static_cast<const char*>(__FUNCTION__), __VA_ARGS__)
+  if (Log::logger && level <= Log::logger->getCurrentLogLevel()) Log::log(level, __FILE__, __LINE__, static_cast<const char*>(__FUNCTION__), __VA_ARGS__)
 #define COLORER_LOG_ERROR(...) COLORER_LOGGER_PRINTF(Logger::LogLevel::LOG_ERROR, __VA_ARGS__)
 #define COLORER_LOG_WARN(...) COLORER_LOGGER_PRINTF(Logger::LogLevel::LOG_WARN, __VA_ARGS__)
 #define COLORER_LOG_INFO(...) COLORER_LOGGER_PRINTF(Logger::LogLevel::LOG_INFO, __VA_ARGS__)

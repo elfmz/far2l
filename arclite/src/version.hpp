@@ -1,7 +1,7 @@
 // #include <farversion.hpp>
 
 #define PLUGIN_BUILD 348
-#define PLUGIN_DESC		L"Archive support for Far Manager (based on 7-Zip project)"
+#define PLUGIN_DESC		L"Archive support for far2l fork of Far Manager (based on 7-Zip project)"
 #define PLUGIN_NAME		L"ArcLite"
 #define PLUGIN_FILENAME L"arclite.far-plug-wide"
 #define PLUGIN_AUTHOR	FARCOMPANYNAME

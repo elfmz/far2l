@@ -2137,6 +2137,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 int Edit::CellPosToReal(int Pos)
 {
+	if (Pos < 0) return 0;
 	if (!HasSpecialWidthChars) return Pos;
 	int Index = 0;
 	for (int CellPos = 0; CellPos < Pos; Index++) {

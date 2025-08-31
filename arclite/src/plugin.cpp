@@ -314,18 +314,16 @@ struct PanelItem
 
 		if (archives->size() > 1) {
 			std::shared_ptr<Archive<UseVirtualDestructor>> new_archive = archives->back();
-
-		std::unique_ptr<Plugin<UseVirtualDestructor>> new_plugin(new Plugin<UseVirtualDestructor>(false));
-		new_plugin->archive = new_archive;
-		new_plugin->parent = this;
-		this->child = std::move(new_plugin);
-
-		Far::update_panel(PANEL_ACTIVE, false, true);
-        return true;
+			std::unique_ptr<Plugin<UseVirtualDestructor>> new_plugin(new Plugin<UseVirtualDestructor>(false));
+			new_plugin->archive = new_archive;
+			new_plugin->parent = this;
+			this->child = std::move(new_plugin);
+			Far::update_panel(PANEL_ACTIVE, false, true);
+	        return true;
 		} else {
 
 		/// ERR
-		return false;
+			return false;
 		}
 
 		return true;
@@ -2341,7 +2339,6 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 	}
 
 
-//	if ( (Key == VK_PRIOR && (ControlState & PKF_CONTROL)) || (Key == VK_LEFT && (ControlState & (PKF_CONTROL | PKF_ALT))) ) {
 	if ( Key == VK_LEFT &&
 			(ControlState == (PKF_CONTROL | PKF_ALT) || ControlState == (PKF_CONTROL | PKF_SHIFT)) ) {
 //		fprintf(stderr, "*********ProcessKeyW  handle ctrl + alt + left  ********************\n");
@@ -2353,11 +2350,11 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 			bRez = level_up(reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail());
 
 		if (bRez) {
-			Far::update_panel(PANEL_ACTIVE, false, false);
 			PanelInfo panel_info2;
 			Far::get_panel_info(PANEL_PASSIVE, panel_info2);
-			if (panel_info2.PanelType == PTYPE_INFOPANEL)
+			if (panel_info2.PanelType == PTYPE_INFOPANEL) {
 				Far::update_panel(PANEL_PASSIVE, true, false); // for update Info panel
+			}
 			return TRUE;
 		}
 		else {
@@ -2377,11 +2374,11 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 			bRez = reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->level_down(panel_item);
 
 		if (bRez) {
-			Far::update_panel(PANEL_ACTIVE, false, true);
 			PanelInfo panel_info2;
 			Far::get_panel_info(PANEL_PASSIVE, panel_info2);
-			if (panel_info2.PanelType == PTYPE_INFOPANEL)
+			if (panel_info2.PanelType == PTYPE_INFOPANEL) {
 				Far::update_panel(PANEL_PASSIVE, true, false); // for update Info panel
+			}
 			return TRUE;
 		}
 		else {
@@ -2393,11 +2390,6 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 
 		Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
 		bool bRez = false;
-
-//		if (ArcAPI::have_virt_destructor())
-//			bRez = reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->set_partition(panel_item);
-//		else
-//			bRez = reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->set_partition(panel_item);
 
 		if (ArcAPI::have_virt_destructor())
 			bRez = reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->level_down(panel_item);
@@ -2412,11 +2404,11 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 		}
 
 		if (bRez) {
-			Far::update_panel(PANEL_ACTIVE, false, true);
 			PanelInfo panel_info2;
 			Far::get_panel_info(PANEL_PASSIVE, panel_info2);
-			if (panel_info2.PanelType == PTYPE_INFOPANEL)
+			if (panel_info2.PanelType == PTYPE_INFOPANEL) {
 				Far::update_panel(PANEL_PASSIVE, true, false); // for update Info panel
+			}
 			return TRUE;
 		}
 

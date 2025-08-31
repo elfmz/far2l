@@ -869,14 +869,14 @@ int FileList::ProcessKey(FarKey Key)
 
 	FileListItem *CurPtr = nullptr;
 	int N;
-	int CmdLength = CtrlObject->CmdLine->GetLength();
+	bool CmdIsNotEmpty = CtrlObject->CmdLine->IsNotEmpty();
 	SudoClientRegion sdc_rgn;
 
 	if (IsVisible()) {
 		if (!InternalProcessKey)
 			if ((!(Key == KEY_ENTER || Key == KEY_NUMENTER)
 						&& !(Key == KEY_SHIFTENTER || Key == KEY_SHIFTNUMENTER))
-					|| !CmdLength)
+					|| !CmdIsNotEmpty)
 				if (SendKeyToPlugin(Key))
 					return TRUE;
 	} else {
@@ -948,7 +948,7 @@ int FileList::ProcessKey(FarKey Key)
 		[*] В панели с одной колонкой Shift-Left/Right аналогично нажатию
 		Shift-PgUp/PgDn.
 	*/
-	if (Columns == 1 && !CmdLength) {
+	if (Columns == 1 && !CmdIsNotEmpty) {
 		if (Key == KEY_SHIFTLEFT || Key == KEY_SHIFTNUMPAD4)
 			Key = KEY_SHIFTPGUP;
 		else if (Key == KEY_SHIFTRIGHT || Key == KEY_SHIFTNUMPAD6)
@@ -1041,7 +1041,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_ALTSHIFTINS:
 		case KEY_ALTSHIFTNUMPAD0:
 		case KEY_ALTSHIFTC:		// копировать полные имена
-			if ((Key == KEY_CTRLC || Key == KEY_CTRLNUMPAD0 || Key == KEY_CTRLINS) && (CmdLength > 0)) {
+			if ((Key == KEY_CTRLC || Key == KEY_CTRLNUMPAD0 || Key == KEY_CTRLINS) && CmdIsNotEmpty) {
 				return FALSE;
 			}
 			// if (FileCount>0 && SetCurPath()) // ?????
@@ -1322,7 +1322,7 @@ int FileList::ProcessKey(FarKey Key)
 			if (ListData.IsEmpty())
 				break;
 
-			if (CmdLength) {
+			if (CmdIsNotEmpty) {
 				CtrlObject->CmdLine->ProcessKey(Key);
 				return TRUE;
 			}
@@ -1909,7 +1909,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_LEFT:
 		case KEY_NUMPAD4:
 
-			if ((Columns == 1 && Opt.ShellRightLeftArrowsRule == 1) || Columns > 1 || !CmdLength) {
+			if ((Columns == 1 && Opt.ShellRightLeftArrowsRule == 1) || Columns > 1 || !CmdIsNotEmpty) {
 				if (CurTopFile >= Height && CurFile - CurTopFile < Height)
 					CurTopFile-= Height;
 
@@ -1921,7 +1921,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_RIGHT:
 		case KEY_NUMPAD6:
 
-			if ((Columns == 1 && Opt.ShellRightLeftArrowsRule == 1) || Columns > 1 || !CmdLength) {
+			if ((Columns == 1 && Opt.ShellRightLeftArrowsRule == 1) || Columns > 1 || !CmdIsNotEmpty) {
 				if (CurFile + Height < ListData.Count() && CurFile - CurTopFile >= (Columns - 1) * (Height))
 					CurTopFile+= Height;
 

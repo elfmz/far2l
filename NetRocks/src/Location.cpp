@@ -29,25 +29,25 @@ bool Location::FromString(const std::string &standalone_config, const std::strin
 	path.absolute = false;
 
 	std::string directory;
-
-	if (str.size() > 2 && str[0] == '<') {
+	size_t lt_pos = str.find('<');
+	if (lt_pos != std::string::npos) {
 		server_kind = SK_SITE;
 
-		size_t p = str.find('>', 1);
-		if (p == std::string::npos) {
+		size_t gt_pos = str.find('>', lt_pos);
+		if (gt_pos == std::string::npos) {
 			return false;
 		}
-		server = str.substr(1, p - 1);
+		server = str.substr(lt_pos + 1, gt_pos - lt_pos - 1);
 		if (server.empty()) {
 			return false;
 		}
 
-		if (p == str.size() - 1) {
+		if (gt_pos == str.size() - 1) {
 			SiteSpecification ss(standalone_config, server);
 			directory = SitesConfig(ss.sites_cfg_location).GetDirectory(ss.site);
 
-		} else if (p < str.size() + 2) {
-			directory = str.substr(p + 2);
+		} else if (gt_pos < str.size() + 2) {
+			directory = str.substr(gt_pos + 2);
 		}
 
 	} else {

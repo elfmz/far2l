@@ -170,6 +170,7 @@ struct ExtractOptions
 	std::shared_ptr<Far::FileFilter> filter;
 	bool delete_archive;
 	bool disable_delete_archive;
+	TriState double_buffering;
 	TriState open_dir;
 	ExtractOptions();
 };

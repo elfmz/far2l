@@ -1192,8 +1192,19 @@ public:
 				}
 			}
 			break;
+
+			case kpidHardLink: {
+				///prop = L"HARD link path";
+			}
+			break;
+
+			case kpidINode: {
+			}
+			break;
+
 			case kpidNtReparse: {
 			}
+
 			break;
 			case kpidUserId:
 				if (options.use_export_settings) {

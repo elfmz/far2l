@@ -10,6 +10,8 @@ extern const ArcType c_xz;
 extern const ArcType c_iso;
 extern const ArcType c_udf;
 extern const ArcType c_rar;
+extern const ArcType c_rar5;
+extern const ArcType c_arj;
 extern const ArcType c_split;
 extern const ArcType c_wim;
 extern const ArcType c_tar;
@@ -22,6 +24,38 @@ extern const ArcType c_dmg;
 extern const ArcType c_sqfs;
 extern const ArcType c_zstd;
 
+extern const ArcType c_lzh;
+extern const ArcType c_lzma;
+extern const ArcType c_lzma86;
+extern const ArcType c_cab;
+extern const ArcType c_z;
+
+extern const ArcType c_elf;
+extern const ArcType c_pe;
+extern const ArcType c_macho;
+extern const ArcType c_chm;
+extern const ArcType c_compound;
+extern const ArcType c_vdi;
+extern const ArcType c_vhd;
+extern const ArcType c_vmdk;
+extern const ArcType c_vdx;
+extern const ArcType c_qcow;
+extern const ArcType c_swf;
+extern const ArcType c_flv;
+extern const ArcType c_lp;
+extern const ArcType c_ihex;
+extern const ArcType c_mslz;
+extern const ArcType c_nud;
+extern const ArcType c_uefif;
+extern const ArcType c_uefic;
+extern const ArcType c_avb;
+extern const ArcType c_Base64;
+extern const ArcType c_CramFS;
+extern const ArcType c_LVM;
+extern const ArcType c_Mub;
+extern const ArcType c_Ppmd;
+extern const ArcType c_Sparse;
+
 extern const ArcType c_hfs;
 extern const ArcType c_fat;
 extern const ArcType c_ntfs;
@@ -29,6 +63,7 @@ extern const ArcType c_ext4;
 extern const ArcType c_apfs;
 extern const ArcType c_mbr;
 extern const ArcType c_gpt;
+extern const ArcType c_apm;
 //
 extern const ArcType c_xfat;
 
@@ -285,8 +320,16 @@ public:
 	//using std::enable_shared_from_this<Archive<UseVirtualDestructor>>::shared_from_this;
 	//static unsigned max_check_size;
 	std::shared_ptr<Archive<UseVirtualDestructor>> parent;
+
+	Archive<UseVirtualDestructor>* get_root() {
+		auto current = this->shared_from_this();
+		while (current->parent) {
+			current = current->parent;
+		}
+		return current.get();
+	}
+
 	std::wstring arc_path;
-//	std::wstring arc_file;
 	FindData arc_info;
 	std::set<std::wstring> volume_names;
 	ArcChain arc_chain;

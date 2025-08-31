@@ -804,7 +804,7 @@ int TreeList::ProcessKey(FarKey Key)
 		}
 		case KEY_NUMENTER:
 		case KEY_ENTER: {
-			if (!ModalMode && CtrlObject->CmdLine->GetLength() > 0)
+			if (!ModalMode && CtrlObject->CmdLine->IsNotEmpty())
 				break;
 
 			ProcessEnter();

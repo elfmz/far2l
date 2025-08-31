@@ -290,7 +290,7 @@ DUMP(DSTACKTRACE());
 The stack trace output includes:
 
 - Frames section. Each frame shows module short name, function name (demangled if available), and associated memory addresses.
-- Command-line tool section. Ready-to-use shell commands for external debugging tools like addr2line/atos, grouped by module.
+- Command-line tool section. Ready-to-use shell commands for external debugging tools like addr2line/atos, grouped by consecutive frames within the same module.
 
 This functionality is highly configurable through various compile-time options described in [section 4](#4-configuration-options).
 
@@ -341,9 +341,9 @@ Here is the full list:
 
 	Sets the maximum available nesting depth for displaying hierarchical container structures.
 
-* `STACKTRACE_SHOW_ADDRESSES`
+* `STACKTRACE_SHOW_ADDRESSES_ALWAYS`
 
-	Controls whether memory addresses are displayed in stack trace output. When enabled, each frame shows the absolute address, module base address, symbol address, and calculated offsets.
+	Controls whether the full breakdown of memory addresses (effective address, module base, symbol address, and related offsets) is always displayed in the stack trace output. When false, this information is only shown for frames where the function name could not be resolved.
 
 * `STACKTRACE_DEMANGLE_NAMES`
 
@@ -373,11 +373,11 @@ Here is the full list:
 
 * `STACKTRACE_SHOW_SYMBOL_SOURCE`
 
-	When true, append a source tag indicating whether symbols were resolved via the dynamic symbol table (dynsym) or the full symbol table (symtab); when false, omit the tag.
+	When true, append a source tag indicating whether symbols were resolved via the dynamic symbol table (.dynsym) or the full symbol table (.symtab); when false, omit the tag.
 
 * `STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS`
 
-	Generates command-line invocations for external debugging tools (like addr2line/atos) that can be used to obtain detailed source location information. When enabled, the stack trace output includes ready-to-use shell commands for each module, grouped by binary file. These commands can be copied and executed to resolve addresses to source file names and line numbers.
+	Generates command-line invocations for external debugging tools (like addr2line/atos) that can be used to obtain detailed source location information. When enabled, the stack trace output includes ready-to-use shell commands, grouped by consecutive frames within the same module. These commands can be copied and executed to resolve addresses to source file names and line numbers.
 
 * `STACKTRACE_MAX_FRAMES`
 

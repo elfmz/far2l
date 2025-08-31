@@ -3442,6 +3442,11 @@ BOOL Editor::Search(int Next)
 
 			int SearchLength = 0;
 			FARString strReplaceStrCurrent(ReplaceMode ? strReplaceStr : L"");
+			if (Regexp) {
+				ReplaceStrings(strReplaceStrCurrent, L"\\r", L"\r");
+				ReplaceStrings(strReplaceStrCurrent, L"\\n", L"\r");
+				ReplaceStrings(strReplaceStrCurrent, L"\\t", L"\t");
+			}
 
 			if (CurPtr->Search(strSearchStr, strReplaceStrCurrent, CurPos, Case, WholeWords, ReverseSearch,
 						Regexp, &SearchLength)) {
@@ -3501,6 +3506,8 @@ BOOL Editor::Search(int Next)
 								strQReplaceStr = strReplaceStrCurrent;
 						InsertQuote(strQSearchStr);
 						InsertQuote(strQReplaceStr);
+						ReplaceStrings(strQReplaceStr, L"\r", L"\x2424"); // ␤
+						ReplaceStrings(strQReplaceStr, L"\t", L"\x2192"); // →
 						PreRedrawItem pitem = PreRedraw.Pop();
 						MsgCode = Message(0, 4, Msg::EditReplaceTitle, Msg::EditAskReplace, strQSearchStr,
 								Msg::EditAskReplaceWith, strQReplaceStr, Msg::EditReplace,

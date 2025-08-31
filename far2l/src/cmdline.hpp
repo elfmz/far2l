@@ -102,7 +102,7 @@ public:
 	BOOL SetCurDir(const wchar_t *CurDir);
 
 	void GetString(FARString &strStr) { CmdStr.GetString(strStr); };
-	int GetLength() { return CmdStr.GetLength(); };
+	bool IsNotEmpty() const { return CmdStr.CalcRTrimmedStrSize() > 0; };
 	void SetString(const wchar_t *Str, BOOL Redraw = TRUE);
 	void InsertString(const wchar_t *Str);
 

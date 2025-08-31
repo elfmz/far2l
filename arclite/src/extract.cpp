@@ -17,6 +17,7 @@ ExtractOptions::ExtractOptions()
 	  separate_dir(triFalse),
 	  delete_archive(false),
 	  disable_delete_archive(false),
+      double_buffering(triUndef),
 	  open_dir(triFalse)
 {}
 
@@ -55,6 +56,7 @@ private:
 	UInt64 cache_written;
 	UInt64 cache_total;
 	std::wstring cache_file_path;
+	bool bDoubleBuffering;
 
 	void do_update_ui() override
 	{
@@ -87,20 +89,21 @@ private:
 		st << fit_str(cache_file_path, c_width) << L'\n';
 		st << L"(" << format_data_size(cache_stored, get_size_suffixes()) << L" - "
 		   << format_data_size(cache_written, get_size_suffixes()) << L") / "
-		   << format_data_size(cache_total, get_size_suffixes()) << L'\n';
+		   << format_data_size(cache_total, get_size_suffixes()) << (bDoubleBuffering ? L"x2" : L"") << L'\n';
 		st << get_progress_bar_str(c_width, cache_written_percent, cache_stored_percent) << L'\n';
 		progress_text = st.str();
 	}
 
 public:
-	ExtractProgress(const std::wstring &arc_path)
+	ExtractProgress(const std::wstring &arc_path, bool bDoubleBuffering = false)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_EXTRACT)),
 		  arc_path(arc_path),
 		  extract_completed(0),
 		  extract_total(0),
 		  cache_stored(0),
 		  cache_written(0),
-		  cache_total(0)
+		  cache_total(0),
+		  bDoubleBuffering(bDoubleBuffering)
 	{}
 
 	void update_extract_file(const std::wstring &file_path)
@@ -153,8 +156,8 @@ public:
 template <bool UseVirtualDestructor>
 class FileWriteCache {
 private:
-	static constexpr size_t c_min_cache_size = 10 * 1024 * 1024;
-	static constexpr size_t c_max_cache_size = 100 * 1024 * 1024;
+	static constexpr size_t c_min_cache_size = 32 * 1024 * 1024; // x2 for double buffer
+	static constexpr size_t c_max_cache_size = 128 * 1024 * 1024; // x2 for double buffer
 	static constexpr size_t c_block_size = 1 * 1024 * 1024; // Write block size
 
 	struct CacheRecord {
@@ -163,6 +166,7 @@ private:
 		OverwriteAction overwrite { OverwriteAction::oaAsk };
 		size_t buffer_pos {};
 		size_t buffer_size {};
+		bool continue_file {};
 	};
 
 	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
@@ -172,16 +176,19 @@ private:
 	std::shared_ptr<bool> extract_attributes;
 	std::shared_ptr<ErrorLog> error_log;
 	std::shared_ptr<ExtractProgress> progress;
+	bool bDouble_buffering = true;
 
-	unsigned char* buffer;
+	unsigned char* _buffer;
+	unsigned char* buffer[2];
 	size_t buffer_size;
 	size_t commit_size {};
 	size_t buffer_pos {};
+	uint32_t cbi = 0;
+	uint32_t wbi = 0;
 
-	std::list<CacheRecord> cache_records;
+	std::list<CacheRecord> cache_records[2];
 	File file;
 	CacheRecord current_rec;
-	bool continue_file {};
 	bool error_state {};
 
 	std::unique_ptr<std::thread> worker_thread;
@@ -192,17 +199,27 @@ private:
 	std::atomic<bool> stop_worker_flag { false };
 	std::atomic<bool> worker_started { false };
 	std::atomic<bool> finalize_called { false };
+	std::atomic<bool> worker_has_unfinished_work { false };
 
 	size_t get_max_cache_size() const
 	{
 		MEMORYSTATUSEX mem_st { sizeof(mem_st) };
 		WINPORT_GlobalMemoryStatusEx(&mem_st);
+
 		auto size = static_cast<size_t>(mem_st.ullAvailPhys);
-		if (size < c_min_cache_size)
-			size = c_min_cache_size;
-		if (size > c_max_cache_size)
-			size = c_max_cache_size;
-		return size;
+
+		if (bDouble_buffering) {
+			if (size >= c_max_cache_size * 2 ) {
+				return c_max_cache_size;
+			}
+		}
+		else {
+			if (size >= c_max_cache_size) {
+				return c_max_cache_size;
+			}
+		}
+
+		return c_min_cache_size;
 	}
 
 	void create_file()
@@ -277,9 +294,11 @@ private:
 	void write_file()
 	{
 		//fprintf(stderr, "FWC: write_file() START [TID: %lu], size=%zu, pos=%zu\n", static_cast<unsigned long>(pthread_self()),
-		//					current_rec.buffer_size, current_rec.buffer_pos);
+		//							current_rec.buffer_size, current_rec.buffer_pos);
 		if (error_state)
 			return;
+
+		//fprintf(stderr, "FWC: write_file() current_rec.buffer_size = %zu\n", current_rec.buffer_size );
 
 		size_t pos = 0;
 		while (pos < current_rec.buffer_size) {
@@ -287,12 +306,13 @@ private:
 			size_t size_written = 0;
 
 			RETRY_OR_IGNORE_BEGIN
-			if (current_rec.buffer_pos + pos + size > buffer_size)
-				FAIL(E_FAIL); // Overflow ?
+			if (current_rec.buffer_pos + pos + size > buffer_size * 2)
+				FAIL(E_FAIL);
 
 			//FAIL(E_FAIL); // TEST FAIL
+			//fprintf(stderr, "FWC: file.write pos=%zu current_rec.buffer_size =%zu\n", pos, current_rec.buffer_size );
 
-			size_written = file.write(buffer + current_rec.buffer_pos + pos, size);
+			size_written = file.write(buffer[wbi] + current_rec.buffer_pos + pos, size);
 			RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
 
 			if (error_ignored) {
@@ -303,6 +323,9 @@ private:
 			pos += size_written;
 			progress->update_cache_written(size_written);
 		}
+
+		//fprintf(stderr, "FWC: write_file() EXIT [TID: %lu], size=%zu, pos=%zu\n", static_cast<unsigned long>(pthread_self()),
+		//					current_rec.buffer_size, current_rec.buffer_pos);
 	}
 
 	void close_file()
@@ -372,9 +395,9 @@ private:
 	void perform_write()
 	{
 		//fprintf(stderr, "FWC: perform_write() START [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
-		for (const auto& rec : cache_records) {
-			if (continue_file) {
-				continue_file = false;
+
+		for (const auto &rec : cache_records[wbi]) {
+			if (rec.continue_file) {
 				current_rec = rec;
 			} else {
 				close_file();
@@ -387,14 +410,18 @@ private:
 		}
 
 		// leave only last file record in cache
-		if (!cache_records.empty()) {
-			current_rec = cache_records.back();
-			current_rec.buffer_pos = 0;
-			current_rec.buffer_size = 0;
-			cache_records.assign(1, current_rec);
-			continue_file = true;
+
+		if (!bDouble_buffering) {
+			if (!cache_records[wbi].empty()) {
+				current_rec = cache_records[wbi].back();
+				current_rec.buffer_pos = 0;
+				current_rec.buffer_size = 0;
+				current_rec.continue_file = true;
+				cache_records[wbi].assign(1, current_rec);
+			}
+			buffer_pos = 0;
 		}
-		buffer_pos = 0;
+
 		progress->reset_cache_stats();
 	}
 
@@ -406,6 +433,7 @@ private:
 
 		while (!stop_worker_flag.load()) {
 			std::unique_lock<std::mutex> lock(io_mutex);
+			//fprintf(stderr, "FWC: WorkerThread Wait return worker_data_ready || stop_worker_flag.load(); [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 			worker_cv.wait(lock, [this] {
 				return worker_data_ready || stop_worker_flag.load();
 			});
@@ -415,13 +443,19 @@ private:
 				break;
 			}
 
+			//fprintf(stderr, "FWC: WorkerThread worker_data_ready>?? [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 			if (worker_data_ready) {
+				//fprintf(stderr, "FWC: WorkerThread unlock & write [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+                worker_has_unfinished_work.store(true);
 				lock.unlock();
 				perform_write();
 				{
+					//fprintf(stderr, "FWC: WorkerThread worker_data_processed = true; [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 					std::lock_guard<std::mutex> lock2(io_mutex);
 					worker_data_ready = false;
 					worker_data_processed = true;
+					wbi = 0xFFFFFFFF;
+                    worker_has_unfinished_work.store(false);
 				}
 				worker_cv.notify_one();
 				//fprintf(stderr, "FWC: WorkerThread Batch Processed [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
@@ -429,16 +463,21 @@ private:
 		}
 
 		} catch (const std::exception& e) {
-		//fprintf(stderr, "FWC: WorkerThread catch1 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
-        stop_worker_flag.store(true);
-        worker_cv.notify_one();
+			//fprintf(stderr, "FWC: WorkerThread catch1 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+			stop_worker_flag.store(true);
+	        worker_has_unfinished_work.store(false);
+			worker_cv.notify_one();
 		} catch (...) {
 		//error_state = true;
-		//fprintf(stderr, "FWC: WorkerThread catch2 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
-        stop_worker_flag.store(true);
-        worker_cv.notify_one();
+			//fprintf(stderr, "FWC: WorkerThread catch2 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+			stop_worker_flag.store(true);
+	        worker_has_unfinished_work.store(false);
+			worker_cv.notify_one();
 		}
 		//fprintf(stderr, "FWC: WorkerThread Stopped [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+
+		stop_worker_flag.store(true);
+        worker_has_unfinished_work.store(false);
 	}
 
 	void write()
@@ -452,21 +491,39 @@ private:
 
 		{
 			std::unique_lock<std::mutex> lock(io_mutex);
-			worker_cv.wait(lock, [this] {
-				return worker_data_processed || stop_worker_flag.load();
-			});
-
+			//fprintf(stderr, "FWC: write() !worker_data_processed ? [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+			if (!worker_data_processed) { /// wait for writer 
+				//fprintf(stderr, "FWC: write() wait worker_data_processed || stop_worker_flag.load(); [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+				worker_cv.wait(lock, [this] {
+					return worker_data_processed || stop_worker_flag.load();
+				});
+			}
 			if (stop_worker_flag.load()) {
 				//fprintf(stderr, "FWC: write() - Worker stopped unexpectedly before send [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
+				throw E_ABORT;
 				return;
 			}
 
 			worker_data_ready = true;
 			worker_data_processed = false;
+			wbi = cbi;
+
+			if (bDouble_buffering) {
+				cbi ^= 1;
+				// leave only last file record in cache
+				if (!cache_records[wbi].empty()) {
+					CacheRecord last_rec = cache_records[wbi].back();
+					last_rec.buffer_pos = 0;
+					last_rec.buffer_size = 0;
+					last_rec.continue_file = true;
+					cache_records[cbi].assign(1, last_rec);
+				}
+				buffer_pos = 0;
+			}
 		}
 		worker_cv.notify_one();
 
-		{
+		if (!bDouble_buffering) {
 			std::unique_lock<std::mutex> lock(io_mutex);
 			worker_cv.wait(lock, [this] {
 				return worker_data_processed || stop_worker_flag.load();
@@ -483,18 +540,15 @@ private:
 	void store(const unsigned char* data, size_t size)
 	{
 		//fprintf(stderr, "FWC: store() [TID: %lu], size=%zu, buffer_pos=%zu\n", static_cast<unsigned long>(pthread_self()), size, buffer_pos);
-		assert(!cache_records.empty());
+		assert(!cache_records[cbi].empty());
 		assert(size <= buffer_size);
 
-		if (buffer_pos + size > buffer_size)
+		if (buffer_pos + size > buffer_size) {
 			write();
+		}
 
-		CacheRecord& rec = cache_records.back();
-		size_t new_size = buffer_pos + size;
-		if (new_size > commit_size)
-			commit_size = new_size;
-
-		memcpy(buffer + buffer_pos, data, size);
+		CacheRecord &rec = cache_records[cbi].back();
+		memcpy(buffer[cbi] + buffer_pos, data, size);
 		rec.buffer_size += size;
 		buffer_pos += size;
 		progress->update_cache_stored(size);
@@ -504,7 +558,8 @@ public:
 	FileWriteCache(std::shared_ptr<Archive<UseVirtualDestructor>> archive,
 		std::shared_ptr<bool> ignore_errors, std::shared_ptr<bool> extract_access_rights,
 		std::shared_ptr<bool> extract_owners_groups, std::shared_ptr<bool> extract_attributes,
-		std::shared_ptr<ErrorLog> error_log, std::shared_ptr<ExtractProgress> progress)
+		std::shared_ptr<ErrorLog> error_log, std::shared_ptr<ExtractProgress> progress,
+		bool double_buffering = false )
 		: archive(archive)
 		, ignore_errors(ignore_errors)
 		, extract_access_rights(extract_access_rights)
@@ -512,13 +567,17 @@ public:
 		, extract_attributes(extract_attributes)
 		, error_log(error_log)
 		, progress(progress)
+		, bDouble_buffering(double_buffering)
 		, buffer_size(get_max_cache_size())
 	{
 		progress->set_cache_total(buffer_size);
-		buffer = (unsigned char*)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
-			-1, 0);
-		if (!buffer)
+		_buffer = (unsigned char *)mmap(NULL, buffer_size * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (!_buffer) {
 			FAIL(E_OUTOFMEMORY);
+		}
+		buffer[0] = _buffer;
+		buffer[1] = _buffer + buffer_size;
+
 		worker_thread = nullptr;
 	}
 
@@ -542,8 +601,9 @@ public:
 			}
 		}
 
-		if (buffer)
-			munmap(buffer, buffer_size);
+		if (_buffer) {
+			munmap(_buffer, buffer_size);
+		}
 
 		if (file.is_open()) {
 			file.close();
@@ -560,7 +620,8 @@ public:
 		rec.overwrite = overwrite_action;
 		rec.buffer_pos = buffer_pos;
 		rec.buffer_size = 0;
-		cache_records.push_back(rec);
+		rec.continue_file = false;
+		cache_records[cbi].push_back(rec);
 		progress->update_cache_file(file_path);
 	}
 
@@ -573,6 +634,11 @@ public:
 			store(data + i * buffer_size, buffer_size);
 
 		store(data + full_buffer_cnt * buffer_size, size % buffer_size);
+	}
+
+	bool has_background_work() const {
+	    return worker_started.load(std::memory_order_acquire) && 
+	           worker_has_unfinished_work.load(std::memory_order_acquire);
 	}
 
 	void finalize()
@@ -601,9 +667,11 @@ public:
 			}
 		}
 
-		bool has_remaining_data = !cache_records.empty()
-			&& (cache_records.size() > 1 || cache_records.front().buffer_size > 0
-				|| (cache_records.size() == 1 && cache_records.front().buffer_size > 0));
+		wbi = cbi;
+
+		bool has_remaining_data = !cache_records[wbi].empty()
+			&& (cache_records[wbi].size() > 1 || cache_records[wbi].front().buffer_size > 0
+				|| (cache_records[wbi].size() == 1 && cache_records[wbi].front().buffer_size > 0));
 
 		if (has_remaining_data) {
 			//fprintf(stderr, "FWC::finalize() - Writing remaining data synchronously. [TID: %lu]\n", pthread_self());
@@ -1322,9 +1390,27 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 			std::back_insert_iterator<std::vector<UInt32>>(indices));
 	std::sort(indices.begin(), indices.end());
 
-	const auto progress = std::make_shared<ExtractProgress>(arc_path);
+//	bool bDoubleBuffering = true;
+
+	bool bDoubleBuffering = (options.double_buffering == triTrue);
+	if (options.double_buffering == triUndef) {
+
+		struct stat src_stat, dst_stat;
+		const std::string src_path_mb = StrWide2MB(get_root()->arc_path);
+		const std::string dst_path_mb = StrWide2MB(options.dst_dir);
+
+		if (sdc_stat(src_path_mb.c_str(), &src_stat) == 0 &&
+			sdc_stat(dst_path_mb.c_str(), &dst_stat) == 0 ) {
+
+			bDoubleBuffering = (src_stat.st_dev != dst_stat.st_dev);
+		}
+	}
+
+//	bDoubleBuffering = false;
+
+	const auto progress = std::make_shared<ExtractProgress>(arc_path, bDoubleBuffering);
 	const auto cache = std::make_shared<FileWriteCache<UseVirtualDestructor>>(this->shared_from_this(), ignore_errors, 
-							extract_access_rights, extract_owners_groups, extract_attributes, error_log, progress);
+							extract_access_rights, extract_owners_groups, extract_attributes, error_log, progress, bDoubleBuffering);
 	const auto skipped_indices = extracted_indices ? std::make_shared<std::set<UInt32>>() : nullptr;
 
 	ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new ArchiveExtractor<UseVirtualDestructor>(src_dir_index, options.dst_dir,
@@ -1361,15 +1447,27 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 
 		bool thread1_done = false;
 		bool thread2_done = false;
+		bool cache_finished = false;
 
-		while (!thread1_done || !thread2_done) {
+		while (!thread1_done || !thread2_done || !cache_finished) {
 			Far::g_fsf.DispatchInterThreadCalls();
 
-			if (!thread1_done && future1.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+			if (!thread1_done && future1.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 				thread1_done = true;
+			}
 
-			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 				thread2_done = true;
+			}
+
+			if (thread2_done) {
+				if (cache) {
+					cache_finished = !cache->has_background_work();
+				}
+				else {
+					cache_finished = true;
+				}
+			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	    }
@@ -1393,11 +1491,23 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 		});
 
 		bool thread2_done = false;
-		while (!thread2_done) {
+		bool cache_finished = false;
+
+		while (!thread2_done || !cache_finished) {
 			Far::g_fsf.DispatchInterThreadCalls();
 
-			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+			if (!thread2_done && future2.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 				thread2_done = true;
+			}
+
+			if (thread2_done) {
+				if (cache) {
+					cache_finished = !cache->has_background_work();
+				}
+				else {
+					cache_finished = true;
+				}
+			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	    }

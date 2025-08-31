@@ -1155,7 +1155,7 @@ TVar KeyMacro::FARPseudoVariable(DWORD Flags, DWORD CheckCode, DWORD &Err)
 							&& !(CurMMode == MACRO_INFOPANEL || CurMMode == MACRO_QVIEWPANEL
 									|| CurMMode == MACRO_TREEPANEL)) {
 						if (CheckCode == MCODE_C_EMPTY)
-							Cond = CtrlObject->CmdLine->GetLength() ? 0 : 1;
+							Cond = CtrlObject->CmdLine->IsNotEmpty() ? 0 : 1;
 						else
 							Cond = CtrlObject->CmdLine->VMProcess(CheckCode);
 					} else {
@@ -6464,10 +6464,10 @@ BOOL KeyMacro::CheckInsidePlugin(DWORD CurFlags)
 	return TRUE;
 }
 
-BOOL KeyMacro::CheckCmdLine(int CmdLength, DWORD CurFlags)
+BOOL KeyMacro::CheckCmdLine(bool CmdIsNotEmpty, DWORD CurFlags)
 {
-	if (((CurFlags & MFLAGS_EMPTYCOMMANDLINE) && CmdLength)
-			|| ((CurFlags & MFLAGS_NOTEMPTYCOMMANDLINE) && CmdLength == 0))
+	if (((CurFlags & MFLAGS_EMPTYCOMMANDLINE) && CmdIsNotEmpty)
+			|| ((CurFlags & MFLAGS_NOTEMPTYCOMMANDLINE) && !CmdIsNotEmpty))
 		return FALSE;
 
 	return TRUE;
@@ -6521,7 +6521,7 @@ BOOL KeyMacro::CheckAll(int /*CheckMode*/, DWORD CurFlags)
 
 	// проверка на пусто/не пусто в ком.строке (а в редакторе? :-)
 	if (CurFlags & (MFLAGS_EMPTYCOMMANDLINE | MFLAGS_NOTEMPTYCOMMANDLINE))
-		if (CtrlObject->CmdLine && !CheckCmdLine(CtrlObject->CmdLine->GetLength(), CurFlags))
+		if (CtrlObject->CmdLine && !CheckCmdLine(CtrlObject->CmdLine->IsNotEmpty(), CurFlags))
 			return FALSE;
 
 	FilePanels *Cp = CtrlObject->Cp();

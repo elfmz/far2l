@@ -24,6 +24,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _colorer plugin_: Fix read default-back/default-fore params
 * _python plugin_: fixes and new subplugin **uedreplace**
 * _multiarc plugin_: Update bundled 7z sources to 2501
+* _multiarc plugin_: Update bundled unrar sources to 7.13
 * _arclite plugin_: New plugin for archives processing
   (now as experimental version which partially more effective then multiarc;
   arclite disabled by default, to enable manually turn on

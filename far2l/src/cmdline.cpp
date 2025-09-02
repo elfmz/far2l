@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtcompletor.h"
 #include "Environment.h"
 #include "WideMB.h"
+#include "clipboard.hpp"
 #include <limits>
 
 CommandLine::CommandLine()
@@ -581,6 +582,38 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 
 			if (Key == KEY_CTRLD)
 				Key = KEY_RIGHT;
+
+			if (Key == KEY_CTRLV || Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0) {
+				wchar_t *ClipText = PasteFromClipboard();
+				if (ClipText && wcschr(ClipText, L'\n') && wcschr(ClipText, L'\n')[1] != L'\0') {
+					CmdStr.GetString(strStr);
+					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + ClipText + strStr.SubStr(CmdStr.GetCurPos());
+					if (Opt.CmdLine.AskOnMultilinePaste) {
+						ExMessager em;
+						em.AddMultiline(Msg::MultilinePaste);
+						em.AddMultiline(strToExec);
+						em.AddDup(L"\2");
+						em.AddMultiline(Msg::MultilinePasteWarn);
+						em.AddDup(Msg::HCancel);
+						em.AddDup(Msg::HExecute);
+						em.AddDup(Msg::HExecuteNoAsk);
+
+						int res = em.Show(MSG_LEFTALIGN, 3);
+						if (res == 1) {
+							ExecString(strToExec);
+						}
+						else if (res ==2) {
+							Opt.CmdLine.AskOnMultilinePaste = false;
+							ExecString(strToExec);
+						}
+						break;
+					}
+					else {
+						ExecString(strToExec);
+						break;
+					}
+				}
+			}
 
 			if (!CmdStr.ProcessKey(Key))
 				break;

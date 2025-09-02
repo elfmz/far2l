@@ -291,6 +291,7 @@ struct CommandLineOptions
 	int VTLogLimit;
 	FARString strPromptFormat;
 	FARString strShell;
+	bool AskOnMultilinePaste;
 };
 
 struct NowellOptions

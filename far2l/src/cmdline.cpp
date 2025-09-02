@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtcompletor.h"
 #include "Environment.h"
 #include "WideMB.h"
+#include "clipboard.hpp"
 #include <limits>
 
 CommandLine::CommandLine()
@@ -437,6 +438,44 @@ int CommandLine::ProcessKey(FarKey Key)
 
 }
 
+void FlattenMultilineCommand(wchar_t* str) {
+	if (!str) return;
+
+	wchar_t* src = str;
+	wchar_t* dst = str;
+
+	while (*src) {
+		// CrLf -> Lf
+		if (*src == L'\r' && src[1] == L'\n') {
+			src++;
+		}
+
+		if (*src == L'\\' && src[1] == L'\n') {
+			// backslash + newline -> space
+			*dst++ = L' ';
+			src += 2;
+		}
+		else if ((*src == L'|' || *src == L'&') && src[1] == L'\n') {
+			// operator + newline -> operator + space
+			*dst++ = *src++;
+			*dst++ = L' ';
+			src++;
+		}
+		else if (*src == L'\n') {
+			// newlines -> ;
+			while (src[1] == L'\n' || (src[0] == L'\n' && src[1] == L'\r')) {
+				src++;
+			}
+			*dst++ = L';';
+			++src;
+		}
+		else {
+			*dst++ = *src++;
+		}
+	}
+	*dst = 0;
+}
+
 int CommandLine::ProcessKeyIfVisible(FarKey Key)
 { // this handles key events only when CmdLine is visible
 	switch (Key) {
@@ -581,6 +620,12 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 
 			if (Key == KEY_CTRLD)
 				Key = KEY_RIGHT;
+
+			if (Key == KEY_CTRLV || Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0) {
+				wchar_t *ClipText = PasteFromClipboard();
+				FlattenMultilineCommand(ClipText);
+				CopyToClipboard(ClipText);
+			}
 
 			if (!CmdStr.ProcessKey(Key))
 				break;

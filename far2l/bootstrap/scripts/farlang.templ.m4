@@ -295,6 +295,28 @@ HAbort
 "Перер&вати"
 "Перап&ыніць"
 
+HExecute
+"&Выполнить"
+"&Execute"
+"&Vykonat"
+"&Ausführen"
+"&Végrehajtás"
+"&Wykonać"
+"&Ejecutar"
+"&Виконати"
+"&Выканаць"
+
+HExecuteNoAsk
+"Выполнить &и больше не спрашивать в этой сессии"
+"Execute &and don’t ask again this session"
+"Spustit &a už se neptat v této relaci"
+"Ausführen &und in dieser Sitzung nicht mehr fragen"
+"Végrehajtás, &ne kérdezze újra a munkamenetben"
+"Wykonaj &i nie pytaj więcej w tej sesji"
+"Ejecutar y &no preguntar más en esta sesión"
+"Виконати &і більше не питати в цій сесії"
+"Выканаць &і больш не пытаць у гэтай сесіі"
+
 HIgnore
 "&Игнорировать"
 "&Ignore"
@@ -461,6 +483,28 @@ upd:"Background terminal commands [F3]"
 upd:"Background terminal commands [F3]"
 "Фонові команди терміналу [F3]"
 "Фонавыя каманды тэрмінала [F3]"
+
+MultilinePaste
+"Вставка нескольких строк"
+"Multiline paste"
+"Vložení více řádků"
+"Mehrzeilen-Einfügen"
+"Többsoros beillesztés"
+"Wklejanie wielowierszowe"
+"Pegar múltiple"
+"Вставка багаторядкового тексту"
+"Устаўка шматрадковага тэксту"
+
+MultilinePasteWarn
+"Вставка многострочных команд сразу запустит их,\n обернув текущим содержанием командной строки."
+"Pasting multiline commands will immediately run them,\n wrapping with the current command line content."
+"Vložení víceradkových příkazů je ihned spustí\n a obalí aktuálním obsahem příkazového řádku."
+"Das Einfügen mehrzeiliger Befehle führt sie sofort aus\n und umschließt sie mit dem aktuellen Inhalt der Befehlszeile."
+"A többsoros parancsok beillesztése azonnal lefut,\n a parancssor aktuális tartalmával körbevéve."
+"Wklejenie wielowierszowych poleceń natychmiast je uruchomi,\n obejmując bieżącą zawartością wiersza poleceń."
+"Pegar comandos multilínea los ejecutará de inmediato,\n envolviéndolos con el contenido actual de la línea de comandos."
+"Вставка багаторядкових команд одразу їх запустить,\n обгорнувши поточним вмістом командного рядка."
+"Устаўка шматрадковых каманд адразу іх выканае,\n абгарнуўшы бягучым зместам каманднага радка."
 
 F1
 l:

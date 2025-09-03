@@ -4015,8 +4015,8 @@ unsigned Dialog::ChangeFocus(unsigned CurFocusPos, int Step, int SkipGroup)
 		}
 
 		if (IsItemFocusable(Item[CurFocusPos])) {
-			//move straight to selected radio when SkipGroup is true
-			if (Item[CurFocusPos]->Type == DI_RADIOBUTTON && !(SkipGroup && Item[CurFocusPos]->Selected)) {
+			//skip selected radio when SkipGroup is true
+			if (Item[CurFocusPos]->Type == DI_RADIOBUTTON && SkipGroup && Item[CurFocusPos]->Selected) {
 				continue;
 			} else {
 				break;

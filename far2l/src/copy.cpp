@@ -2988,7 +2988,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcN
 	DialogDataEx WarnCopyDlgData[] = {
 		{DI_DOUBLEBOX, 3, 1,  WARN_DLG_WIDTH - 4, WARN_DLG_HEIGHT - 2, {}, 0, Msg::Warning},
 		{DI_TEXT,      5, 2,  WARN_DLG_WIDTH - 6, 2,  {}, DIF_CENTERTEXT, Msg::CopyFileExist},
-		{DI_EDIT,      5, 3,  WARN_DLG_WIDTH - 6, 3,  {}, DIF_READONLY, (wchar_t *)DestName},
+		{DI_EDIT,      5, 3,  WARN_DLG_WIDTH - 6, 3,  {}, DIF_READONLY | DIF_FOCUS, (wchar_t *)DestName},
 		{DI_TEXT,      3, 4,  0,                  4,  {}, DIF_SEPARATOR, L""},
 		{DI_BUTTON,    5, 5,  WARN_DLG_WIDTH - 6, 5,  {}, DIF_BTNNOCLOSE | DIF_NOBRACKETS, L""},
 		{DI_BUTTON,    5, 6,  WARN_DLG_WIDTH - 6, 6,  {}, DIF_BTNNOCLOSE | DIF_NOBRACKETS, L""},

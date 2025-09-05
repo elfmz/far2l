@@ -274,7 +274,7 @@ public:
 	int GetCellCurPos();
 	void SetCellCurPos(int NewPos);
 	int GetLeftPos() { return (LeftPos); }
-	void SetLeftPos(int NewPos) { LeftPos = NewPos; }
+	virtual void SetLeftPos(int NewPos) { LeftPos = NewPos; }
 	void SetPasswordMode(int Mode) { Flags.Change(FEDITLINE_PASSWORDMODE, Mode); };
 	void SetMaxLength(int Length) { MaxLength = Length; };
 
@@ -357,6 +357,7 @@ public:
 			History *iHistory = 0, FarList *iList = 0, DWORD iFlags = 0);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual int ProcessKey(FarKey Key);
+	virtual void SetLeftPos(int NewPos);
 	virtual void FastShow();
 	virtual void Show();
 	virtual void Changed(bool DelBlock = false);

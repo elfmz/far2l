@@ -121,6 +121,7 @@ public:
 	void SetObjectColor(uint64_t Color, uint64_t SelColor = 0xf, uint64_t ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED));
 	long GetObjectColor();
 	int GetObjectColorUnChanged();
+	void SetOverflowArrowsColor(uint64_t Color);
 
 	void FastShow();
 	int GetLeftPos();

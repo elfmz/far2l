@@ -2676,9 +2676,27 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 	pList(iList),
 	Selection(false),
 	SelectionStart(-1),
+	OverflowArrowsColor(0),
 	ECFlags(iFlags)
 {
 	ACState = ECFlags.Check(EC_ENABLEAUTOCOMPLETE) != FALSE;
+}
+
+void EditControl::ShowArrows()
+{
+	if (OverflowArrowsColor > 0) { 
+		if (StrSize > LeftPos + X2 - X1 + 1 && CurPos != LeftPos + X2 - X1) {
+			GotoXY(X2, Y1);
+			SetColor(OverflowArrowsColor);
+			BoxText(0xbb);
+		}
+
+		if (LeftPos > 0 && CurPos != LeftPos) {
+			GotoXY(X1, Y1);
+			SetColor(OverflowArrowsColor);
+			BoxText(0xab);
+		}
+	}
 }
 
 void EditControl::Show()
@@ -2687,6 +2705,13 @@ void EditControl::Show()
 		SetLeftPos(0);
 	}
 	Edit::Show();
+	ShowArrows();
+}
+
+void EditControl::FastShow()
+{
+	Edit::FastShow();
+	ShowArrows();
 }
 
 void EditControl::Changed(bool DelBlock)
@@ -2978,6 +3003,22 @@ void EditControl::AutoComplete(bool Manual, bool DelBlock)
 	}
 }
 
+int EditControl::ProcessKey(FarKey Key)
+{
+	int ret_code = Edit::ProcessKey(Key);
+	if ( ret_code && OverflowArrowsColor > 0) {
+		if (StrSize > LeftPos + X2 - X1 + 1 && CurPos == LeftPos + X2 - X1) {
+			SetCellCurPos(CurPos + 1);
+			ProcessKey(KEY_LEFT);
+		}
+
+		if (LeftPos > 0 && CurPos == LeftPos) {
+			SetCellCurPos(CurPos - 1);
+			ProcessKey(KEY_RIGHT);
+		}
+	}
+	return ret_code;
+}
 int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	if (Edit::ProcessMouse(MouseEvent)) {
@@ -2999,6 +3040,16 @@ int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			}
 		}
 		Selection = false;
+
+		if (OverflowArrowsColor > 0) {
+			if (StrSize > LeftPos + X2 - X1 + 1 && CurPos == LeftPos + X2 - X1) {
+				ProcessKey(KEY_RIGHT);
+			}
+
+			if (LeftPos > 0 && CurPos == LeftPos) {
+				ProcessKey(KEY_LEFT);
+			}
+		}
 		return TRUE;
 	}
 	return FALSE;

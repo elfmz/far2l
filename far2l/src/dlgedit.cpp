@@ -471,6 +471,17 @@ int DlgEdit::GetObjectColorUnChanged()
 		return lineEdit->GetObjectColorUnChanged();
 }
 
+void DlgEdit::SetOverflowArrowsColor(uint64_t Color)
+{
+#if defined(PROJECT_DI_MEMOEDIT)
+
+	if (Type == DLGEDIT_MULTILINE)
+		multiEdit->SetOverflowArrowsColor(Color);
+	else
+#endif
+		lineEdit->SetOverflowArrowsColor(Color);
+}
+
 void DlgEdit::FastShow()
 {
 #if defined(PROJECT_DI_MEMOEDIT)

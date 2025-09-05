@@ -2682,10 +2682,21 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 	ACState = ECFlags.Check(EC_ENABLEAUTOCOMPLETE) != FALSE;
 }
 
+void EditControl::SetLeftPos(int NewPos)
+{ 
+	if (OverflowArrowsColor > 0) { 
+//avoid right overflow arrow disappearance on dialog redraw resetting left position to 0
+		if (StrSize > LeftPos + X2 - X1 && NewPos < LeftPos) {
+			NewPos = std::max(NewPos, CurPos - X2 + X1 + 1);
+		}
+	}
+	Edit::SetLeftPos(NewPos);
+}
+
 void EditControl::ShowArrows()
 {
 	if (OverflowArrowsColor > 0) { 
-		if (StrSize > LeftPos + X2 - X1 + 1 && CurPos != LeftPos + X2 - X1) {
+		if (StrSize > LeftPos + X2 - X1 && CurPos != LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
 			BoxText(0xbb);
@@ -3007,14 +3018,14 @@ int EditControl::ProcessKey(FarKey Key)
 {
 	int ret_code = Edit::ProcessKey(Key);
 	if ( ret_code && OverflowArrowsColor > 0) {
-		if (StrSize > LeftPos + X2 - X1 + 1 && CurPos == LeftPos + X2 - X1) {
+		if (StrSize > LeftPos + X2 - X1 && CurPos == LeftPos + X2 - X1) {
 			SetCellCurPos(CurPos + 1);
-			ProcessKey(KEY_LEFT);
+			Edit::ProcessKey(KEY_LEFT);
 		}
 
 		if (LeftPos > 0 && CurPos == LeftPos) {
 			SetCellCurPos(CurPos - 1);
-			ProcessKey(KEY_RIGHT);
+			Edit::ProcessKey(KEY_RIGHT);
 		}
 	}
 	return ret_code;
@@ -3042,7 +3053,7 @@ int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		Selection = false;
 
 		if (OverflowArrowsColor > 0) {
-			if (StrSize > LeftPos + X2 - X1 + 1 && CurPos == LeftPos + X2 - X1) {
+			if (StrSize > LeftPos + X2 - X1 && CurPos == LeftPos + X2 - X1) {
 				ProcessKey(KEY_RIGHT);
 			}
 

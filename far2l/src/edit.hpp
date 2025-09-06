@@ -357,7 +357,6 @@ public:
 			History *iHistory = 0, FarList *iList = 0, DWORD iFlags = 0);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
 	virtual int ProcessKey(FarKey Key);
-	virtual void SetLeftPos(int NewPos);
 	virtual void FastShow();
 	virtual void Show();
 	virtual void Changed(bool DelBlock = false);

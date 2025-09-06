@@ -3011,7 +3011,7 @@ void EditControl::AutoComplete(bool Manual, bool DelBlock)
 int EditControl::ProcessKey(FarKey Key)
 {
 	int ret_code = Edit::ProcessKey(Key);
-	if ( ret_code && OverflowArrowsColor > 0) {
+	if ( ret_code && OverflowArrowsColor > 0 && !Recurse) {
 		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) == LeftPos + X2 - X1) {
 			CurPos = CalcPosFwd();
 			Edit::ProcessKey(KEY_LEFT);

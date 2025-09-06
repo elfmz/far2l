@@ -274,7 +274,7 @@ public:
 	int GetCellCurPos();
 	void SetCellCurPos(int NewPos);
 	int GetLeftPos() { return (LeftPos); }
-	virtual void SetLeftPos(int NewPos) { LeftPos = NewPos; }
+	void SetLeftPos(int NewPos) { LeftPos = NewPos; }
 	void SetPasswordMode(int Mode) { Flags.Change(FEDITLINE_PASSWORDMODE, Mode); };
 	void SetMaxLength(int Length) { MaxLength = Length; };
 

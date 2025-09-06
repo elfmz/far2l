@@ -2682,21 +2682,10 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 	ACState = ECFlags.Check(EC_ENABLEAUTOCOMPLETE) != FALSE;
 }
 
-void EditControl::SetLeftPos(int NewPos)
-{ 
-	if (OverflowArrowsColor > 0) { 
-//avoid right overflow arrow disappearance on dialog redraw resetting left position to 0
-		if (StrSize > LeftPos + X2 - X1 && NewPos < LeftPos) {
-			NewPos = std::max(NewPos, CurPos - X2 + X1 + 1);
-		}
-	}
-	Edit::SetLeftPos(NewPos);
-}
-
 void EditControl::ShowArrows()
 {
 	if (OverflowArrowsColor > 0) { 
-		if (StrSize > LeftPos + X2 - X1 && CurPos != LeftPos + X2 - X1) {
+		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) != LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
 			BoxText(0xbb);
@@ -2713,14 +2702,19 @@ void EditControl::ShowArrows()
 void EditControl::Show()
 {
 	if (X2 - X1 + 1 > StrSize) {
-		SetLeftPos(0);
-	}
+		Edit::SetLeftPos(0);
+	} 
+
 	Edit::Show();
 	ShowArrows();
 }
 
 void EditControl::FastShow()
 {
+	if ( OverflowArrowsColor > 0 &&  RealPosToCell(StrSize) > LeftPos + X2 - X1 ) {
+		//avoid right overflow arrow disappearance on dialog redraw resetting left position to 0
+		Edit::SetLeftPos(std::max(LeftPos, RealPosToCell(CurPos) - X2 + X1 + 1));
+	}
 	Edit::FastShow();
 	ShowArrows();
 }
@@ -3018,13 +3012,13 @@ int EditControl::ProcessKey(FarKey Key)
 {
 	int ret_code = Edit::ProcessKey(Key);
 	if ( ret_code && OverflowArrowsColor > 0) {
-		if (StrSize > LeftPos + X2 - X1 && CurPos == LeftPos + X2 - X1) {
-			SetCellCurPos(CurPos + 1);
+		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) == LeftPos + X2 - X1) {
+			CurPos = CalcPosFwd();
 			Edit::ProcessKey(KEY_LEFT);
 		}
 
 		if (LeftPos > 0 && CurPos == LeftPos) {
-			SetCellCurPos(CurPos - 1);
+			CurPos = CalcPosBwd();
 			Edit::ProcessKey(KEY_RIGHT);
 		}
 	}
@@ -3053,7 +3047,7 @@ int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		Selection = false;
 
 		if (OverflowArrowsColor > 0) {
-			if (StrSize > LeftPos + X2 - X1 && CurPos == LeftPos + X2 - X1) {
+			if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) == LeftPos + X2 - X1) {
 				ProcessKey(KEY_RIGHT);
 			}
 

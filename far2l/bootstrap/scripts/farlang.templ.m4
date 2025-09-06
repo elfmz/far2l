@@ -3132,9 +3132,20 @@ ConfigDialogsMouseButton
 "Dial&og schließen wenn Mausklick ausserhalb"
 "&Egérkattintás a párb.ablakon kívül: bezárja"
 "&Kliknięcie myszy poza oknem zamyka je"
-"Click en ratón afuera del diálogo lo cierra"
+"&Click en ratón afuera del diálogo lo cierra"
 "Клік миши &поза діалогом закриває діалог"
-"Пстрычка мышы за межамі гутаркі зачыне гутарку"
+"Пстрычка &мышы за межамі гутаркі зачыне гутарку"
+
+ConfigDialogsShowArrowsInEdit
+"Показывать &символы » « при переполнении поля ввода"
+"&Show » « symbols when edit text overflows"
+"&Zobrazit symboly » « při přetečení textu pole"
+"» « &Symbole bei Überlauf des Eingabefelds anzeigen"
+"» « &jelek mutatása, ha a beviteli mező túlcsordul"
+"&Pokazywać symbole » « przy przepełnieniu pola edycji"
+"Mostrar &símbolos » « al desbordar el texto del cuadro de edición"
+"Показувати &символи » « при переповненні поля вводу"
+"&Паказваць сімвалы » « пры перапаўненні поля ўводу"
 
 ConfigVMenuTitle
 l:

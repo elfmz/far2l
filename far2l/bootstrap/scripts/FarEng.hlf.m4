@@ -2711,6 +2711,12 @@ $ #Settings dialog: dialogs#
                           This option allows to switch off this
                           functionality.
 
+  #Show » « symbols when#   When the text in an edit field is too long
+  #edit text overflows#     to fit entirely, the » « markers appear at
+                          the edges of the field to indicate hidden
+                          content. This option allows you to enable or
+                          disable showing these markers.
+
    See also the list of ~macro keys~@KeyMacroDialogList@, available in dialogs.
 
 @VMenuSettings

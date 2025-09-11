@@ -426,7 +426,6 @@ but vanilla PuTTY can not transfer clipboard.
     + **sqlplugin** (far2l sql db (sqlite, etc..) plugin): https://github.com/VPROFi/sqlplugin
     + **processplugin** (far2l processes plugin): https://github.com/VPROFi/processes
     + **far-gvfs (gvfspanel)** (far2l plugin to work with Gnome VFS): https://github.com/cycleg/far-gvfs
-    + **hexitor** (far2l hex editor plugin backported from FAR3): https://github.com/m32/far2lhexitor
 
  * **far2m** is fork with FAR3 macro system (Lua) and extended plugins: https://github.com/shmuz/far2m
 

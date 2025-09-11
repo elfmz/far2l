@@ -1,0 +1,46 @@
+﻿.Language=Russian,Russian (Русский)
+.PluginContents=Hexitor
+
+@Contents
+
+  #Навигация#
+  Перемещение по байтам:         #Up, Down, Left, Rigth#
+  Перемещение по словам:         #Ctrl-Left, Ctrl-Rigth#
+  В начало строки:               #Home#
+  В конец строки:                #End#
+  В начало файла:                #Ctrl-Home#
+  В конец файла:                 #Ctrl-End#
+  Страницу вверх:                #PageUp#
+  Страницу вниз:                 #PageDown#
+  Сместить вверх:                #Ctrl-Up, Mouse Wheel up#
+  Сместить вниз:                 #Ctrl-Down, Mouse Wheel down#
+  Переключение hex/text:         #Tab#
+
+  #Редактирование#
+  В режиме hex:                  #[0-9A-Fa-f]#
+  В режиме text:                 #Любые символы#
+  Вставка из буфера обмена:      #Ctrl-V, Shift-Ins#
+  Отмена:                        #Ctrl-Z#
+  Повтор:                        #Ctrl-Y, Ctrl-Shift-Z#
+
+  #Поиск#
+  Поиск:                         #F7, Ctrl-F#
+  Поиск (следующий):             #Shift-F7#
+  Поиск (предыдущий):            #Alt-F7#
+
+  #Прочие функции#
+  Помощь:                        #F1#
+  Сохранить файл:                #F2, Ctrl-S#
+  Сохранить файл как:            #Shift-F2#
+  Переключение режимов RW/RO:    #F4#
+  Переход:                       #F5#
+  Переключение кодовой страницы: #F8#
+  Настройки:                     #F9, Alt-Shift-F9#
+  Выход:                         #Esc, F10#
+
+
+^* * *
+
+^Исходные коды и обновления для данного модуля можно найти на странице проекта:
+
+^~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@

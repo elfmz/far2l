@@ -232,7 +232,10 @@ else()
         endif()
 
     elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        if (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wx-config")
+        if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
+            message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
+
+        elseif (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wx-config")
             # MacPorts
             set(wxWidgets_CONFIG_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wx-config")
             set(wxWidgets_wxrc_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wxrc")

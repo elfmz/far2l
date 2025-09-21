@@ -56,8 +56,8 @@ namespace VTLog
 			}
 			--x;
 			const auto &ci = Chars[x];
-			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & (BACKGROUND_RGB|EXPLICIT_LINE_WRAP)) != 0) {
-				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_WRAP) != 0 || x != Width - 1);
+			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & (BACKGROUND_RGB|EXPLICIT_LINE_BREAK)) != 0) {
+				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0 || x != Width - 1);
 			}
 		}
 	}

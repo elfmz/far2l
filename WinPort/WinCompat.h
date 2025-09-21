@@ -578,7 +578,7 @@ typedef struct _INPUT_RECORD {
 #define BACKGROUND_INTENSITY 0x0080 // background color is intensified.
 #define FOREGROUND_TRUECOLOR    0x0100 // Use 24 bit RGB colors set by SET_RGB_FORE
 #define BACKGROUND_TRUECOLOR    0x0200 // Use 24 bit RGB colors set by SET_RGB_BACK
-#define EXPLICIT_LINE_WRAP         0x0400 // Application wrote '\r' at this character, marking it as true end of line
+#define EXPLICIT_LINE_BREAK        0x0400 // Don't concatenate next line if this char is last in current line when lines recomposed due to screen resize or VT history rendering
 #define COMMON_LVB_REVERSE_VIDEO   0x4000 // Reverse fore/back ground attribute.
 #define COMMON_LVB_UNDERSCORE      0x8000 // Underscore.
 #define COMMON_LVB_STRIKEOUT       0x2000 // Striekout.

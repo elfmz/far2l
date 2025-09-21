@@ -269,6 +269,7 @@ struct DialogsOptions
 	int MouseButton;		// Отключение восприятия правой/левой кнопки мыши как команд закрытия окна диалога
 	int DelRemovesBlocks;
 	int CBoxMaxHeight;		// максимальный размер открываемого списка (по умолчанию=8)
+	bool ShowArrowsInEdit;	// show arrows on text overflow in edit controls
 };
 
 struct VMenuOptions

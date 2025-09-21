@@ -317,7 +317,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 					if (I == StrCount) {
 						StrSeparator = true;
 					}
-				} else if (StrLength(CPtrStr) > X2 - X1 - 9) {
+				} else if (StrZCellsCount(CPtrStr) > X2 - X1 - 9) {
 					PtrMsgDlg->Type = DI_EDIT;
 					PtrMsgDlg->Flags|= DIF_READONLY | DIF_BTNNOCLOSE | DIF_SELECTONENTRY;
 					PtrMsgDlg->X1 = 5;

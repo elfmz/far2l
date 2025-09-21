@@ -572,7 +572,7 @@ void ConsoleOutput::DenoteExplicitLineWrap(COORD pos)
 		pos.X--;
 	}
 	if (_buf.Read(ch, pos)) {
-		ch.Attributes|= EXPLICIT_LINE_WRAP;
+		ch.Attributes|= EXPLICIT_LINE_BREAK;
 		_buf.Write(ch, pos);
 	}
 }

@@ -13,7 +13,6 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 	CHAR_INFO fill_ci{};
 	CI_SET_WCATTR(fill_ci, L' ', attributes);
 	ConsoleChars new_chars(size_t(height) * width, fill_ci);
-	std::vector<bool> implicit_linewraps;
 	if (_width && !_console_chars.empty()) {
 		size_t nc_cursor_offset = (size_t)-1;
 		ConsoleChars unwrapped_chars;
@@ -21,25 +20,22 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 			size_t w = _width;
 			for (;w > 0; --w) {
 				const auto &ci = _console_chars[_width * y + (w - 1)];
-				if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & EXPLICIT_LINE_WRAP) != 0
-						|| ((ci.Attributes ^ attributes) & (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)) != 0) {
+				if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
 					break;
 				}
 			}
 			if (w > 0) {
+				if (w > 1) for (auto x = w - 1; x--; ) {
+					_console_chars[_width * y + x].Attributes &= ~EXPLICIT_LINE_BREAK;
+				}
 				auto line_begin = _console_chars.begin() + y * _width;
 				unwrapped_chars.insert(unwrapped_chars.end(), line_begin, line_begin + w);
-				if (w != _width) {
-					implicit_linewraps.resize(unwrapped_chars.size());
-					implicit_linewraps.back() = true;
-				}
 				if ((size_t)cursor_pos.Y == y) {
 					int cx = ((size_t)cursor_pos.X < w) ? cursor_pos.X : w - 1;
 					nc_cursor_offset = unwrapped_chars.size() - w + cx;
 				}
 			}
 		}
-		implicit_linewraps.resize(new_chars.size());
 		bool cursor_pos_adjusted = false;
 		size_t y = 0;
 		for (size_t x = 0, i = 0; i != unwrapped_chars.size(); ++i) {
@@ -56,7 +52,7 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 				cursor_pos.Y = y;
 				cursor_pos_adjusted = true;
 			}
-			if ( (ci.Attributes & EXPLICIT_LINE_WRAP) != 0 || implicit_linewraps[i]) {
+			if ( (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
 				x = 0;
 				++y;
 			} else {

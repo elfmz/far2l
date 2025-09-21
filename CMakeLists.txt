@@ -526,6 +526,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED OPENWITH OR OPENWITH)
+    message(STATUS "OPENWITH plugin enabled")
+    add_subdirectory (OpenWith)
+else()
+    message(STATUS "${ColorRed}OPENWITH plugin disabled due to OPENWITH=${OPENWITH}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/OpenWith/plug/OpenWith.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 ##############################
 # common install directives
 

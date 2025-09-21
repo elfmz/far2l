@@ -1,0 +1,133 @@
+.Language=English,English
+.PluginContents=OpenWith
+
+@Contents
+$^#OpenWith plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2025 spnethw#
+$^#Contents#
+ The #OpenWith# plugin provides a context-aware menu to open the currently selected file with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. The plugin is cross-platform and uses native OS mechanisms on Linux/BSD and macOS to provide accurate and relevant application choices.
+
+ After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application.
+
+   ~Configuration Dialog~@ConfigurationDialog@
+
+   ~Information Dialog (F3)~@InformationDialog@
+
+
+@ConfigurationDialog
+$^#OpenWith plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2025 spnethw#
+$^#Configuration Dialog#
+ The configuration dialog allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
+
+ #1. GENERAL SETTINGS#
+
+ #-# Use external terminal for console apps
+   If checked, applications that require a terminal (e.g., TUI programs) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal.
+
+ #-# Don't wait for command completion
+   If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications.
+
+
+ #2. PLATFORM-SPECIFIC SETTINGS#
+
+ #2.1. Linux/BSD Settings#
+
+ These settings fine-tune how the plugin discovers applications and determines file types according to the XDG Freedesktop.org specifications.
+
+ #-# Use `xdg-mime` tool
+   Use `xdg-mime query filetype` command to determine the file's MIME type. This is the standard XDG utility, which primarily relies on a database that maps filename patterns (e.g., *.pdf) to MIME types. While it may also perform content analysis as a fallback, its primary reliance on filenames makes it very fast but susceptible to being misled by files with incorrect or missing extensions.
+
+ #-# Use `file` tool
+   Use `file --mime-type` command for MIME type detection. This utility determines the file type by inspecting its binary content and matching it against a database of "magic numbers" (unique file signatures). This method is very reliable and is not deceived by incorrect file extensions, but it can be slightly slower as it requires reading the file's contents.
+
+ #-# Use extension-based fallback
+   As a last resort, guess the MIME type based on the file's extension from a built-in static map. This is less reliable but can be useful on systems with incomplete MIME databases.
+
+ #-# Use mimeinfo.cache
+   Speed up application lookups by using the mimeinfo.cache files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., image/png) to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
+
+ #-# Filter by OnlyShowIn/NotShowIn
+   Respect the `OnlyShowIn` and `NotShowIn` keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE).
+
+ #-# Validate TryExec field
+   Before showing an application, check if the executable specified in its .desktop file's `TryExec` key exists and is runnable. This helps hide applications that are declared but not properly installed.
+
+
+ #2.2. macOS Settings#
+
+ There are no platform-specific settings for macOS. The plugin uses the native Launch Services framework, which does not require external configuration.
+
+   ~Contents~@Contents@
+
+
+@InformationDialog
+$^#OpenWith plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2025 spnethw#
+$^#Information Dialog (F3)#
+ The information dialog, accessible by pressing #F3# in the application selection menu, displays detailed technical information about the file, the highlighted application, and the exact command that will be used to launch it.
+
+ #1. COMMON FIELDS#
+
+ #-# Filepath
+   The full, absolute path to the selected file.
+
+ #-# MIME type
+   The MIME type of the file as determined by the plugin.
+
+ #-# Launch command
+   The final command line that will be executed if you press Enter.
+
+
+ #2. PLATFORM-SPECIFIC INFORMATION FIELDS#
+
+ #2.1. Linux/BSD Application Details#
+
+ This section displays detailed information parsed from the application's .desktop file. These files are a Freedesktop.org standard, acting as shortcuts and metadata containers for applications, describing how they should be named, displayed, and executed.
+
+ #-# Desktop file
+   The full path to the .desktop file (an INI-style text file) that defines this application.
+
+ #-# Name
+   The human-readable application name, intended for display in menus.
+
+ #-# GenericName
+   A more general description of the application's category (e.g., "Text Editor", "Web Browser").
+
+ #-# Comment
+   A longer description of the application, often used as a tooltip.
+
+ #-# Categories
+   A semicolon-separated list of categories used by the desktop environment to organize applications in menus.
+
+ #-# Exec
+   The command-line template used to launch the application. It may contain special placeholders (field codes), such as %f for a single file path, %U for a list of URLs, or %% for a literal percent sign.
+
+ #-# TryExec
+   A path to an executable. The desktop environment can check if this file exists and is executable before displaying the entry. This is used to hide menu entries for applications that are not correctly installed.
+
+ #-# Terminal
+   A boolean value (true or false) indicating whether the application must be run in a terminal window.
+
+
+ #2.2. macOS Application Details#
+
+ #-# Full path
+   The full path to the application bundle (e.g., `/Applications/TextEdit.app`).
+
+ #-# Name
+   The application's display name from its bundle information.
+
+ #-# Executable file
+   The name of the main executable file inside the application bundle.
+
+ #-# Version
+   The user-visible version string of the application (e.g., "1.14").
+
+ #-# Bundle version
+   The internal build or bundle version (e.g., "329").
+
+   ~Contents~@Contents@

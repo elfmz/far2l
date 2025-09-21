@@ -140,8 +140,11 @@ void ConsoleOutput::SetCursor(COORD pos)
 	SMALL_RECT area[2];
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		if (_cursor.pos.X == pos.X && _cursor.pos.Y == pos.Y)
+		if (_cursor.pos.Y != pos.Y || pos.X < _cursor.pos.X) {
+			DenoteExplicitLineWrap(_cursor.pos);
+		} else if (_cursor.pos.X == pos.X && _cursor.pos.Y == pos.Y) {
 			return;
+		}
 
 		SetUpdateCellArea(area[0], _cursor.pos);
 		_cursor.pos = pos;
@@ -204,13 +207,7 @@ void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		_scroll_region = {0, MAXSHORT};
-		_buf.SetSize(width, height, _attributes);
-		if (_cursor.pos.X >= (int)width && width > 0) {
-			_cursor.pos.X = width - 1;
-		}
-		if (_cursor.pos.Y >= (int)height && height > 0) {
-			_cursor.pos.Y = height - 1;
-		}
+		_buf.SetSize(width, height, _attributes, _cursor.pos);
 	}
 	if (_backend)
 		_backend->OnConsoleOutputResized();
@@ -514,6 +511,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					pos.X--;
 				}
 			} else if (sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\r' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
+				DenoteExplicitLineWrap(pos);
 				pos.X = 0;
 
 			} else if ( sm.kind==SequenceModifier::SM_WRITE_STR && *sm.str==L'\n' && (_mode&ENABLE_PROCESSED_OUTPUT)!=0) {
@@ -565,6 +563,18 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 		}
 	}
 	return rv;
+}
+
+void ConsoleOutput::DenoteExplicitLineWrap(COORD pos)
+{
+	CHAR_INFO ch;
+	if (pos.X > 0) {
+		pos.X--;
+	}
+	if (_buf.Read(ch, pos)) {
+		ch.Attributes|= EXPLICIT_LINE_WRAP;
+		_buf.Write(ch, pos);
+	}
 }
 
 size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
@@ -857,7 +867,7 @@ void ConsoleOutput::JoinConsoleOutput(IConsoleOutput *con_out)
 		std::lock_guard<std::mutex> lock(_mutex);
 		_buf.GetSize(w, h);
 		CopyFrom(*co);
-		_buf.SetSize(w, h, _attributes);
+		_buf.SetSize(w, h, _attributes, _cursor.pos);
 		LockedChangeIdUpdate();
 	}
 	if (_backend) {

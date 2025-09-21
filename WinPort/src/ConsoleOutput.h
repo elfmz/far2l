@@ -62,6 +62,7 @@ class ConsoleOutput : public IConsoleOutput
 
 	SHORT ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area);
 	size_t ModifySequenceAt(SequenceModifier &sm, COORD &pos);
+	void DenoteExplicitLineWrap(COORD pos);
 	void ScrollOutputOnOverflow(SMALL_RECT &area);
 
 	virtual const WCHAR *LockedGetTitle();

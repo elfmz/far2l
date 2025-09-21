@@ -925,9 +925,9 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		std::string new_path_mb;
 		StrWide2MB(Filename, new_path_mb);
 		Environment::ExpandString(new_path_mb, true);
-		std::wstring result;
-		StrMB2Wide(new_path_mb, result);
-		return result;
+		FARString result(new_path_mb);
+		UnEscapeSpace(result);
+		return result.GetWide();
 	};
 
 	StrTrim(str_command);

@@ -2684,8 +2684,8 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 
 void EditControl::ShowArrows()
 {
-	if (OverflowArrowsColor > 0) { 
-		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) != LeftPos + X2 - X1) {
+	if (OverflowArrowsColor > 0 && !(Mask && *Mask)) {
+		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 + 1 && RealPosToCell(CurPos) != LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
 			BoxText(0xbb);
@@ -2711,7 +2711,7 @@ void EditControl::Show()
 
 void EditControl::FastShow()
 {
-	if ( OverflowArrowsColor > 0 &&  RealPosToCell(StrSize) > LeftPos + X2 - X1 ) {
+	if ( OverflowArrowsColor > 0 && !(Mask && *Mask) &&  RealPosToCell(StrSize) > LeftPos + X2 - X1 ) {
 		//avoid right overflow arrow disappearance on dialog redraw resetting left position to 0
 		Edit::SetLeftPos(std::max(LeftPos, RealPosToCell(CurPos) - X2 + X1 + 1));
 	}
@@ -3011,7 +3011,7 @@ void EditControl::AutoComplete(bool Manual, bool DelBlock)
 int EditControl::ProcessKey(FarKey Key)
 {
 	int ret_code = Edit::ProcessKey(Key);
-	if ( ret_code && OverflowArrowsColor > 0 && !Recurse) {
+	if ( ret_code && OverflowArrowsColor > 0 && !(Mask && *Mask) && !Recurse) {
 		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) == LeftPos + X2 - X1) {
 			CurPos = CalcPosFwd();
 			Edit::ProcessKey(KEY_LEFT);
@@ -3046,7 +3046,7 @@ int EditControl::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 		Selection = false;
 
-		if (OverflowArrowsColor > 0) {
+		if (OverflowArrowsColor > 0 && !(Mask && *Mask)) {
 			if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) == LeftPos + X2 - X1) {
 				ProcessKey(KEY_RIGHT);
 			}

@@ -205,10 +205,9 @@ void DialogItemExToDialogItemEx(DialogItemEx *pSrc, DialogItemEx *pDest)
 	pDest->SelStart = pSrc->SelStart;
 	pDest->SelEnd = pSrc->SelEnd;
 
-	pDest->customItemColor[0] = pSrc->customItemColor[0];
-	pDest->customItemColor[1] = pSrc->customItemColor[1];
-	pDest->customItemColor[2] = pSrc->customItemColor[2];
-	pDest->customItemColor[3] = pSrc->customItemColor[3];
+	std::copy(pSrc->customItemColor,
+		pSrc->customItemColor + DLG_ITEM_MAX_CUST_COLORS,
+		pDest->customItemColor);
 }
 
 void ConvertItemSmall(FarDialogItem *Item, DialogItemEx *Data)
@@ -364,10 +363,9 @@ void DataToItemEx(const DialogDataEx *Data, DialogItemEx *Item, int Count)
 		Item[i].X2 = Data[i].X2;
 		Item[i].Y2 = Data[i].Y2;
 
-		Item[i].customItemColor[0] = 0;
-		Item[i].customItemColor[1] = 0;
-		Item[i].customItemColor[2] = 0;
-		Item[i].customItemColor[3] = 0;
+		std::fill(std::begin(Item[i].customItemColor),
+			std::end(Item[i].customItemColor),
+			0);
 
 		if (Item[i].X2 < Item[i].X1)
 			Item[i].X2 = Item[i].X1;
@@ -1629,6 +1627,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : Focus? COL_WARNDIALOGEDITSELECTED : COL_WARNDIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGTEXT);
+					// HiText
+					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON);
 				}
 				else
 				{
@@ -1640,6 +1640,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED :  Focus? COL_DIALOGEDITSELECTED : COL_DIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGTEXT);
+					// HiText
+					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGHIGHLIGHTDEFAULTBUTTON);
 				}
 			}
 			else
@@ -1654,6 +1656,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : COL_WARNDIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGTEXT);
+					// HiText
+					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON);
 				}
 				else
 				{
@@ -1665,6 +1669,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem ? COL_DIALOGEDITDISABLED : COL_DIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGTEXT);
+					// HiText
+					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGHIGHLIGHTDEFAULTBUTTON);
 				}
 			}
 			break;
@@ -1786,7 +1792,7 @@ void Dialog::ShowDialog(unsigned ID)
 	int X, Y;
 //	size_t I, DrawItemCount;
 	unsigned I, DrawItemCount;
-	uint64_t ItemColor[4];
+	uint64_t ItemColor[DLG_ITEM_MAX_CUST_COLORS];
 
 	// Если не разрешена отрисовка, то вываливаем.
 	if (IsEnableRedraw ||							// разрешена прорисовка ?
@@ -1813,7 +1819,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 		if (!DialogMode.Check(DMODE_NODRAWPANEL)) {
 
-			uint64_t Color[4];
+			uint64_t Color[DLG_ITEM_MAX_CUST_COLORS];
 
 			Color[0] = FarColorToReal(DialogMode.Check(DMODE_WARNINGSTYLE) ? COL_WARNDIALOGTEXT:COL_DIALOGTEXT);
 			DlgProc((HANDLE)this, DN_CTLCOLORDIALOG, 0, (LONG_PTR)Color);
@@ -1879,7 +1885,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 		CtlColorDlgItem(I, CurItem, ItemColor);
 
-		for (size_t g = 0; g < 4; g++)
+		for (size_t g = 0; g < DLG_ITEM_MAX_CUST_COLORS; g++)
 			if (CurItem->customItemColor[g])
 				ItemColor[g] = CurItem->customItemColor[g];
 
@@ -2236,7 +2242,12 @@ void Dialog::ShowDialog(unsigned ID)
 
 //				EditPtr->SetObjectColor(Attr & 0xFF, HIBYTE(LOWORD(Attr)), LOBYTE(HIWORD(Attr)));
 				EditPtr->SetObjectColor(ItemColor[0],ItemColor[1],ItemColor[2]);
-
+				if (Opt.Dialogs.ShowArrowsInEdit) {
+					EditPtr->SetOverflowArrowsColor(ItemColor[4]);
+				}
+				else {
+					EditPtr->SetOverflowArrowsColor(0);
+				}
 				if (CurItem->Focus) {
 					// Отключение мигающего курсора при перемещении диалога
 					if (!DialogMode.Check(DMODE_DRAGGED))

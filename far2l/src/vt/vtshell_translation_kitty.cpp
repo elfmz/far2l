@@ -104,6 +104,11 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		return "";
 	}
 
+	if (!(flags & 2) && !KeyEvent.bKeyDown) {
+		fprintf(stderr, "kitty kb: not reporting key release\n");
+		return "";
+	}
+
 	// Get legacy representation. We will fall back to in some cases
 	legacy = VT_TranslateSpecialKey(
 		KeyEvent.wVirtualKeyCode, ctrl, alt, shift, keypad, KeyEvent.uChar.UnicodeChar);
@@ -209,15 +214,13 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	if (ctrl)  modifiers |= 4;
 	modifiers++; // bit mask + 1 as spec requres
 
-	if ((flags & 8) || !is_text_key) {
-		if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) {
-			modifiers |= 64;
-			nolegacy = true;
-		}
-		if (KeyEvent.dwControlKeyState & NUMLOCK_ON) {
-			modifiers |= 128;
-			nolegacy = true;
-		}
+	if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) {
+		modifiers |= 64;
+		nolegacy = true;
+	}
+	if (KeyEvent.dwControlKeyState & NUMLOCK_ON) {
+		modifiers |= 128;
+		nolegacy = true;
 	}
 
 

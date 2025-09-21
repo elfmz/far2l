@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "frame.hpp"
 #include <farplug-wide.h>
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include "vmenu.hpp"
 #include "chgmmode.hpp"
@@ -46,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class History;
 
+constexpr size_t DLG_ITEM_MAX_CUST_COLORS = 5;
 // Флаги текущего режима диалога
 enum DIALOG_MODES
 {
@@ -128,7 +131,7 @@ struct DialogItemEx
 	FARString strMask;
 
 //	std::unique_ptr<DialogItemTrueColors> TrueColors;
-	uint64_t customItemColor[4];
+	uint64_t customItemColor[DLG_ITEM_MAX_CUST_COLORS];
 
 	DWORD Flags;
 	int DefaultButton;
@@ -153,10 +156,7 @@ struct DialogItemEx
 	void Clear()
 	{
 //		TrueColors.reset();
-		customItemColor[0] = 0;
-		customItemColor[1] = 0;
-		customItemColor[2] = 0;
-		customItemColor[3] = 0;
+		std::fill(std::begin(customItemColor), std::end(customItemColor), 0);
 		Type = 0;
 		X1 = 0;
 		Y1 = 0;
@@ -189,10 +189,10 @@ struct DialogItemEx
 		X2 = Other.X2;
 		Y1 = Other.Y1;
 		Y2 = Other.Y2;
-		customItemColor[0] = Other.customItemColor[0];
-		customItemColor[1] = Other.customItemColor[1];
-		customItemColor[2] = Other.customItemColor[2];
-		customItemColor[3] = Other.customItemColor[3];
+
+		std::copy(Other.customItemColor,
+			Other.customItemColor + DLG_ITEM_MAX_CUST_COLORS,
+			customItemColor);
 
 		Focus = Other.Focus;
 		Reserved = Other.Reserved;

@@ -99,7 +99,7 @@ void History::AddToHistoryExtra(const wchar_t *Str, const wchar_t *Extra, int Ty
 	if (!EnableAdd)
 		return;
 
-	if (!IsAllowedForHistory(Str)) {
+	if (TypeHistory == HISTORYTYPE_CMD && !IsAllowedForHistory(Str)) {
 		fprintf(stderr, "AddToHistory - disallowed: '%ls'\n", Str);
 		return;
 	}
@@ -1041,7 +1041,7 @@ bool History::GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str)
 	for (HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem;
 			HistoryItem = HistoryList.Prev(HistoryItem)) {
 		if (!StrCmpNI(Str, HistoryItem->strName, Length) && StrCmp(Str, HistoryItem->strName)
-				&& IsAllowedForHistory(HistoryItem->strName.CPtr())
+				&& (TypeHistory != HISTORYTYPE_CMD || IsAllowedForHistory(HistoryItem->strName.CPtr()))
 				&& HistoryMenu.FindItem(0, HistoryItem->strName.CPtr(), LIFIND_EXACTMATCH | LIFIND_KEEPAMPERSAND) < 0) { // after #2241 history may have duplicate names
 			HistoryMenu.AddItem(HistoryItem->strName);
 		}

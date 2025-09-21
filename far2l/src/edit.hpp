@@ -334,6 +334,7 @@ class EditControl : public Edit
 	FarList *pList;
 	bool Selection;
 	int SelectionStart;
+	uint64_t OverflowArrowsColor;
 	BitFlags ECFlags;
 	bool ACState;
 
@@ -342,6 +343,7 @@ class EditControl : public Edit
 	bool AutoCompleteProc(bool Manual, bool DelBlock, FarKey &BackKey);
 	void PopulateCompletionMenu(VMenu &ComplMenu, const FARString &strFilter);
 	void RemoveSelectedCompletionMenuItem(VMenu &ComplMenu);
+	virtual void ShowArrows();
 
 public:
 	enum ECFLAGS
@@ -354,6 +356,8 @@ public:
 	EditControl(ScreenObject *pOwner = nullptr, Callback *aCallback = nullptr, bool bAllocateData = true,
 			History *iHistory = 0, FarList *iList = 0, DWORD iFlags = 0);
 	virtual int ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent);
+	virtual int ProcessKey(FarKey Key);
+	virtual void FastShow();
 	virtual void Show();
 	virtual void Changed(bool DelBlock = false);
 	void SetCallbackState(bool Enable) { m_Callback.Active = Enable; }
@@ -363,4 +367,5 @@ public:
 	void DisableAC(bool Permanent = false);
 	void RevertAC() { ACState ? EnableAC() : DisableAC(); }
 	void ShowCustomCompletionList(const std::vector<std::string> &list);
+	void SetOverflowArrowsColor(uint64_t Color) { OverflowArrowsColor = Color; }
 };

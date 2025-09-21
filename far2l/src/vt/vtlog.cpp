@@ -46,16 +46,18 @@ namespace VTLog
 	}
 
 
-	static unsigned int ActualLineWidth(unsigned int Width, const CHAR_INFO *Chars)
+	// rv.first: actual line width
+	// rv.second: if line actually ended or subject for tail-merging with following line(s)
+	static std::pair<unsigned int, bool> ActualLineWidth(unsigned int Width, const CHAR_INFO *Chars)
 	{
-		for (;;) {
-			if (!Width)
-				return 0;
-
-			--Width;
-			const auto &CI = Chars[Width];
-			if ((CI.Char.UnicodeChar && CI.Char.UnicodeChar != L' ') || (CI.Attributes & BACKGROUND_RGB) != 0) {
-				return Width + 1;
+		for (auto x = Width;;) {
+			if (x == 0) {
+				return std::pair<unsigned int, bool>(0, true);
+			}
+			--x;
+			const auto &ci = Chars[x];
+			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & (BACKGROUND_RGB|EXPLICIT_LINE_BREAK)) != 0) {
+				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0 || x != Width - 1);
 			}
 		}
 	}
@@ -72,35 +74,35 @@ namespace VTLog
 				const bool tc_fore_prev = (attr_prev & FOREGROUND_TRUECOLOR) != 0;
 
 				const size_t out_len_before_attr = out.size();
-				out+= "\033[";
-				if ( attr_prev == (DWORD64)-1
-				|| (attr_prev&FOREGROUND_INTENSITY) != (attr_now&FOREGROUND_INTENSITY)) {
-					out+= (attr_now&FOREGROUND_INTENSITY) ? "1;" : "22;";
+				out += "\033[";
+				if (attr_prev == (DWORD64)-1
+					|| (attr_prev & FOREGROUND_INTENSITY) != (attr_now & FOREGROUND_INTENSITY)) {
+					out += (attr_now & FOREGROUND_INTENSITY) ? "1:" : "22:";
 				}
-				if ( attr_prev == (DWORD64)-1 || (tc_fore_prev && !tc_fore_now)
-				|| (attr_prev&(FOREGROUND_INTENSITY|FOREGROUND_RGB)) != (attr_now&(FOREGROUND_INTENSITY|FOREGROUND_RGB))) {
-					out+= (attr_now&FOREGROUND_INTENSITY) ? '9' : '3';
-					out+= '0' + TranslateForegroundColor(attr_now);
-					out+= ';';
+				if (attr_prev == (DWORD64)-1 || (tc_fore_prev && !tc_fore_now)
+					|| (attr_prev & (FOREGROUND_INTENSITY | FOREGROUND_RGB)) != (attr_now & (FOREGROUND_INTENSITY | FOREGROUND_RGB))) {
+					out += (attr_now & FOREGROUND_INTENSITY) ? '9' : '3';
+					out += '0' + TranslateForegroundColor(attr_now);
+					out += ':';
 				}
-				if ( attr_prev == (DWORD64)-1 || (tc_back_prev && !tc_back_now)
-				|| (attr_prev&(BACKGROUND_INTENSITY|BACKGROUND_RGB)) != (attr_now&(BACKGROUND_INTENSITY|BACKGROUND_RGB))) {
-					out+= (attr_now&BACKGROUND_INTENSITY) ? "10" : "4";
-					out+= '0' + TranslateBackgroundColor(attr_now);
-					out+= ';';
+				if (attr_prev == (DWORD64)-1 || (tc_back_prev && !tc_back_now)
+					|| (attr_prev & (BACKGROUND_INTENSITY | BACKGROUND_RGB)) != (attr_now & (BACKGROUND_INTENSITY | BACKGROUND_RGB))) {
+					out += (attr_now & BACKGROUND_INTENSITY) ? "10" : "4";
+					out += '0' + TranslateBackgroundColor(attr_now);
+					out += ':';
 				}
 
 				if (tc_fore_now && (!tc_fore_prev || GET_RGB_FORE(attr_prev) != GET_RGB_FORE(attr_now))) {
 					const DWORD rgb = GET_RGB_FORE(attr_now);
-					out+= StrPrintf("38;2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
+					out += StrPrintf("38:2:%u:%u:%u:", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 				}
 
 				if (tc_back_now && (!tc_back_prev || GET_RGB_BACK(attr_prev) != GET_RGB_BACK(attr_now))) {
 					const DWORD rgb = GET_RGB_BACK(attr_now);
-					out+= StrPrintf("48;2;%u;%u;%u;", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
+					out += StrPrintf("48:2:%u:%u:%u:", rgb & 0xff, (rgb >> 8) & 0xff, (rgb >> 16) & 0xff);
 				}
 
-				if (out.back() == ';') {
+				if (out.back() == ':') {
 					out.back() = 'm';
 					attr_prev = attr_now;
 
@@ -130,12 +132,10 @@ namespace VTLog
 	{
 		std::mutex _mutex;
 		std::list< std::pair<HANDLE, std::string> > _memories;
-		
-	public:
-		void Add(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
+
+		void AddInner(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
 		{
 			const size_t limit = (size_t)std::max(Opt.CmdLine.VTLogLimit, 2);
-			std::lock_guard<std::mutex> lock(_mutex);
 			// a little hustling to reduce reallocations
 			if (_memories.size() >= limit) {
 				while (_memories.size() > limit) {
@@ -153,6 +153,23 @@ namespace VTLog
 			}
 		}
 		
+	public:
+		void Add(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
+		{
+			std::lock_guard<std::mutex> lock(_mutex);
+			AddInner(con_hnd, Width, Chars);
+		}
+
+		void Append(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
+		{
+			std::lock_guard<std::mutex> lock(_mutex);
+			if (_memories.empty()) {
+				AddInner(con_hnd, Width, Chars);
+			} else if (Width) {
+				EncodeLine(_memories.back().second, Width, Chars, true);
+			}
+		}
+
 		void DumpToFile(HANDLE con_hnd, int fd, DumpState &ds, bool colored)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
@@ -211,7 +228,12 @@ namespace VTLog
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
 		if (g_pause_cnt == 0) {
-			g_lines.Add(hConsole, ActualLineWidth(Width, Chars), Chars);
+			auto width_eol = ActualLineWidth(Width, Chars);
+			if (width_eol.second) {
+				g_lines.Add(hConsole, width_eol.first, Chars);
+			} else {
+				g_lines.Append(hConsole, width_eol.first, Chars);
+			}
 		}
 	}
 
@@ -249,11 +271,13 @@ namespace VTLog
 	
 	static void AppendScreenLine(const CHAR_INFO *line, unsigned int width, std::string &s, DumpState &ds, bool colored)
 	{
-		width = ActualLineWidth(width, line);
-		if (width || ds.nonempty) {
+		auto width_eol = ActualLineWidth(width, line);
+		if (width_eol.first || ds.nonempty) {
 			ds.nonempty = true;
-			EncodeLine(s, width, line, colored);
-			s+= NATIVE_EOL;
+			EncodeLine(s, width_eol.first, line, colored);
+			if (width_eol.second) {
+				s+= NATIVE_EOL;
+			}
 		}
 	}
 

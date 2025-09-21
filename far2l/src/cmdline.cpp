@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtcompletor.h"
 #include "Environment.h"
 #include "WideMB.h"
+#include "clipboard.hpp"
 #include <limits>
 
 CommandLine::CommandLine()
@@ -352,7 +353,7 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 	CmdStr.Select(-1, 0);
 	CmdStr.Show();
 	CmdStr.GetString(strStr);
-	RemoveTrailingSpaces(strStr, true); // RemoveTrailingSpaces and taking into account last escaping sybmol
+	RemoveTrailingSpaces(strStr, true); // RemoveTrailingSpaces and taking into account last escaping symbol
 
 	if (strStr.IsEmpty())
 		return FALSE;
@@ -581,6 +582,38 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 
 			if (Key == KEY_CTRLD)
 				Key = KEY_RIGHT;
+
+			if (Key == KEY_CTRLV || Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0) {
+				wchar_t *ClipText = PasteFromClipboard();
+				if (ClipText && wcschr(ClipText, L'\n') && wcschr(ClipText, L'\n')[1] != L'\0') {
+					CmdStr.GetString(strStr);
+					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + ClipText + strStr.SubStr(CmdStr.GetCurPos());
+					if (Opt.CmdLine.AskOnMultilinePaste) {
+						ExMessager em;
+						em.AddMultiline(Msg::MultilinePaste);
+						em.AddMultiline(strToExec);
+						em.AddDup(L"\2");
+						em.AddMultiline(Msg::MultilinePasteWarn);
+						em.AddDup(Msg::HCancel);
+						em.AddDup(Msg::HExecute);
+						em.AddDup(Msg::HExecuteNoAsk);
+
+						int res = em.Show(MSG_LEFTALIGN, 3);
+						if (res == 1) {
+							ExecString(strToExec);
+						}
+						else if (res ==2) {
+							Opt.CmdLine.AskOnMultilinePaste = false;
+							ExecString(strToExec);
+						}
+						break;
+					}
+					else {
+						ExecString(strToExec);
+						break;
+					}
+				}
+			}
 
 			if (!CmdStr.ProcessKey(Key))
 				break;
@@ -925,9 +958,9 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 		std::string new_path_mb;
 		StrWide2MB(Filename, new_path_mb);
 		Environment::ExpandString(new_path_mb, true);
-		std::wstring result;
-		StrMB2Wide(new_path_mb, result);
-		return result;
+		FARString result(new_path_mb);
+		UnEscapeSpace(result);
+		return result.GetWide();
 	};
 
 	StrTrim(str_command);

@@ -529,6 +529,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED HEXITOR OR HEXITOR)
+    message(STATUS "HEXITOR plugin enabled")
+    add_subdirectory (hexitor)
+else()
+    message(STATUS "${ColorRed}HEXITOR plugin disabled due to HEXITOR=${HEXITOR}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/hexitor/plug/hexitor.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED OPENWITH OR OPENWITH)
     message(STATUS "OPENWITH plugin enabled")
     add_subdirectory (OpenWith)

@@ -1,0 +1,47 @@
+.Language=English,English
+.PluginContents=Hexitor
+.Options CtrlColorChar=|
+
+@Contents
+
+  #Navigation#
+  Navigating bytes:              #Up, Down, Left, Rigth#
+  Navigating words:              #Ctrl-Left, Ctrl-Rigth#
+  Begin of string:               #Home#
+  Ehe end of string:             #End#
+  Begin of file:                 #Ctrl-Home#
+  Ehe end of file:               #Ctrl-End#
+  Page up:                       #PageUp#
+  Page down:                     #PageDown#
+  Shift up:                      #Ctrl-Up, Mouse Wheel up#
+  Shift down:                    #Ctrl-Down, Mouse Wheel down#
+  Switching hex/text mode:       #Tab#
+
+  #Edit#
+  In the hex mode:               #[0-9A-Fa-f]#
+  In the text mode:              #Any symbols#
+  Paste from clipboard:          #Ctrl-V, Shift-Ins#
+  Undo:                          #Ctrl-Z#
+  Redo:                          #Ctrl-Y, Ctrl-Shift-Z#
+
+  #Find#
+  Find:                          #F7, Ctrl-F#
+  Find (next):                   #Shift-F7#
+  Find (previous):               #Alt-F7#
+
+  #Other features#
+  Help:                          #F1#
+  Save file:                     #F2, Ctrl-S#
+  Save file as:                  #Shift-F2#
+  Switch RW/RO modes:            #F4#
+  Goto:                          #F5#
+  Switching the code page:       #F8#
+  Options:                       #F9, Alt-Shift-F9#
+  Exit:                          #Esc, F10#
+
+
+^* * *
+
+^Source code and updates you can get at project page:
+
+^~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@

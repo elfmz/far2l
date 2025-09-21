@@ -1,0 +1,47 @@
+﻿.Language=Polish,Polish (Polski)
+.PluginContents=Edytor Hex (szesnastkowy)
+.Options CtrlColorChar=|
+
+
+@Contents
+  #Nawigacja#
+  Przechodzenie po bajtach:      #Góra, Dół, Lewo, Prawo#
+  Przechodzenie po DWORD:        #Ctrl-Lewo, Ctrl-Prawo#
+  Początek tekstu:               #Home#
+  Koniec tekstu:                 #End#
+  Początek pliku:                #Ctrl-Home#
+  Koniec pliku:                  #Ctrl-End#
+  Strona wyżej:                  #PageUp#
+  Strona niżej:                  #PageDown#
+  Shift up:                      #Ctrl-Góra, puszczenie rolki myszy#
+  Shift down:                    #Ctrl-Dół, naciśnięcie rolki myszy#
+  Przełączanie trybu hex/tekst:  #Tab#
+
+  #Edycja#
+  W trybie szesnastkowym:        #[0-9A-Fa-f]#
+  W trybie tekstowym:            #Dowolne znaki#
+  Wklej ze schowka:              #Ctrl-V, Shift-Ins#
+  Cofnij:                        #Ctrl-Z#
+  Ponów                          #Ctrl-Y, Ctrl-Shift-Z#
+
+  #Wyszukiwanie#
+  Znajdź:                        #F7, Ctrl-F#
+  Znajdź (następne):             #Shift-F7#
+  Znajdź (poprzednie):           #Alt-F7#
+
+  #Inne funkcje#
+  Pomoc:                         #F1#
+  Zapisz plik:                   #F2, Ctrl-S#
+  Zapisz plik jako:              #Shift-F2#
+  Przełącz tryby edycja/odczyt:  #F4#
+  Idź do:                        #F5#
+  Przełączenie strony kodowej:   #F8#
+  Opcje:                         #F9, Alt-Shift-F9#
+  Wyjście:                       #Esc, F10#
+
+
+^* * *
+
+^Kod źródłowy i aktualizacje można znaleźć na stronie projektu:
+
+^~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@

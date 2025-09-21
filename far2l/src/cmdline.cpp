@@ -352,7 +352,7 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 	CmdStr.Select(-1, 0);
 	CmdStr.Show();
 	CmdStr.GetString(strStr);
-	RemoveTrailingSpaces(strStr, true); // RemoveTrailingSpaces and taking into account last escaping sybmol
+	RemoveTrailingSpaces(strStr, true); // RemoveTrailingSpaces and taking into account last escaping symbol
 
 	if (strStr.IsEmpty())
 		return FALSE;

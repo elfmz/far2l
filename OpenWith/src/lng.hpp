@@ -16,13 +16,14 @@ enum LanguageID
 	MDetails,
 	MLaunchCommand,
 	MPathname,
-	MDesktopFile,
 	MMimeType,
+	MDesktopFile,
 	MFilterByShowIn,
 	MValidateTryExec,
 	MUseMimeinfoCache,
 	MUseExtensionBasedFallback,
 	MUseXdgMimeTool,
 	MUseFileTool,
-	MClose
+	MClose,
+	MLaunch
 };

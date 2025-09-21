@@ -43,6 +43,9 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 			if (ofs >= new_chars.size()) {
 				--y;
 				ofs-= width;
+				if (scroll_callback.pfn) {
+					scroll_callback.pfn(scroll_callback.context, con_handle, width, &new_chars[0]);
+				}
 				memmove(&new_chars[0], &new_chars[width], (new_chars.size() - width) * sizeof(CHAR_INFO));
 				std::fill(new_chars.end() - width, new_chars.end(), fill_ci);
 			}
@@ -63,15 +66,6 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 				}
 			}
 			new_chars[ofs] = ci;
-		}
-		if (y + 1 < new_chars.size() / width) {
-			size_t empty_lines = new_chars.size() / width - (y + 1);
-			memmove(&new_chars[empty_lines * width], &new_chars[0], (new_chars.size() - empty_lines * width) * sizeof(CHAR_INFO));
-			std::fill(new_chars.begin(), new_chars.begin() + empty_lines * width, fill_ci);
-			y+= empty_lines;
-			if (cursor_pos_adjusted) {
-				cursor_pos.Y+= empty_lines;
-			}
 		}
 		if (!cursor_pos_adjusted) {
 			cursor_pos.X = 0;

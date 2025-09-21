@@ -9,7 +9,6 @@
 
 class ConsoleOutput : public IConsoleOutput
 {
-	HANDLE _con_handle{NULL};
 	std::mutex _mutex;
 	ConsoleBuffer _buf;
 	std::vector<CHAR_INFO> _temp_chars;
@@ -32,11 +31,6 @@ class ConsoleOutput : public IConsoleOutput
 		UCHAR height;
 		bool visible;
 	} _cursor;
-	
-	struct {
-		PCONSOLE_SCROLL_CALLBACK pfn;
-		PVOID context;
-	} _scroll_callback;
 	
 	struct {
 		USHORT top;

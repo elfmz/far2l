@@ -74,7 +74,7 @@ ConsoleOutput::ConsoleOutput() :
 {
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
 	MB2Wide(APP_BASENAME, _title);
-	_scroll_callback.pfn = NULL;
+	_buf.scroll_callback.pfn = NULL;
 	_cursor.height = 15;
 	_cursor.visible = true;
 	_scroll_region.top = 0;
@@ -89,7 +89,7 @@ void ConsoleOutput::CopyFrom(const ConsoleOutput &co)
 	_attributes = co._attributes;
 	_cursor = co._cursor;
 	_title = co._title;
-	_scroll_callback = co._scroll_callback;
+	_buf.scroll_callback = co._buf.scroll_callback;
 	_scroll_region = co._scroll_region;
 	_buf = co._buf;
 	_prev_pos = co._prev_pos;
@@ -368,11 +368,11 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 	
 	COORD tmp_pos = {0, 0};
 	
-	if (_scroll_callback.pfn && _scroll_region.top == 0) {
+	if (_buf.scroll_callback.pfn && _scroll_region.top == 0) {
 		COORD line_size = {(SHORT)width, 1};
 		SMALL_RECT line_rect = {0, 0, (SHORT)(width - 1), 0};
 		_buf.Read(&_temp_chars[0], line_size, tmp_pos, line_rect);
-		_scroll_callback.pfn(_scroll_callback.context, _con_handle, width, &_temp_chars[0]);
+		_buf.scroll_callback.pfn(_buf.scroll_callback.context, _buf.con_handle, width, &_temp_chars[0]);
 	}
 	
 	COORD tmp_size = {(SHORT)width, (SHORT)(height - 1 - _scroll_region.top)};
@@ -731,8 +731,8 @@ void ConsoleOutput::GetScrollRegion(SHORT &top, SHORT &bottom)
 void ConsoleOutput::SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
-	_scroll_callback.pfn = pCallback;
-	_scroll_callback.context = pContext;
+	_buf.scroll_callback.pfn = pCallback;
+	_buf.scroll_callback.context = pContext;
 }
 
 
@@ -857,7 +857,7 @@ IConsoleOutput *ConsoleOutput::ForkConsoleOutput(HANDLE con_handle)
 	ConsoleOutput *co = new ConsoleOutput;
 	std::lock_guard<std::mutex> lock(_mutex);
 	co->CopyFrom(*this);
-	co->_con_handle = con_handle;
+	co->_buf.con_handle = con_handle;
 	return co;
 }
 

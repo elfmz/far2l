@@ -141,7 +141,9 @@ void ConsoleOutput::SetCursor(COORD pos)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_cursor.pos.Y != pos.Y || pos.X < _cursor.pos.X) {
-			DenoteExplicitLineWrap(_cursor.pos);
+			if ((_mode&ENABLE_PROCESSED_OUTPUT) != 0) {
+				DenoteExplicitLineWrap(_cursor.pos);
+			}
 		} else if (_cursor.pos.X == pos.X && _cursor.pos.Y == pos.Y) {
 			return;
 		}

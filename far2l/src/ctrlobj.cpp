@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileowner.hpp"
 #include "dirmix.hpp"
 #include "console.hpp"
+#include "scrbuf.hpp"
 
 #include "farversion.h"
 
@@ -250,6 +251,7 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 			if (!Lines[i].IsEmpty()) {
 				GotoXY(0, ScrY - (Lines.size() - i + 2));
 				Text(Lines[i]);
+				ScrBuf.SetExplicitLineBreak(ScrY - (Lines.size() - i + 2));
 			}
 		}
 		SetColor(SavedColor);

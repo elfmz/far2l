@@ -78,6 +78,7 @@ public:
 	void FillBuf();
 	void Read(int X1, int Y1, int X2, int Y2, CHAR_INFO *Text, int MaxTextLength);
 	void Write(int X, int Y, const CHAR_INFO *Text, int TextLength);
+	void SetExplicitLineBreak(int Y);
 	void RestoreMacroChar();
 	void RestoreElevationChar();
 

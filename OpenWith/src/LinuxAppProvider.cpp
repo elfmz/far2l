@@ -38,7 +38,7 @@ void LinuxAppProvider::LoadPlatformSettings()
 	_filter_by_show_in = kfh.GetInt("FilterByShowIn", 0) != 0;
 	_validate_try_exec = kfh.GetInt("ValidateTryExec", 0) != 0;
 	_use_mimeinfo_cache = kfh.GetInt("UseMimeinfoCache", 1) != 0;
-	_use_extension_based_fallback = kfh.GetInt("UseExtensionBasedFallback", 0) != 0;
+	_use_extension_based_fallback = kfh.GetInt("UseExtensionBasedFallback", 1) != 0;
 	_use_xdg_mime_tool = kfh.GetInt("UseXdgMimeTool", 1) != 0;
 	_use_file_tool = kfh.GetInt("UseFileTool", 1) != 0;
 }

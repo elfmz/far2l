@@ -232,7 +232,10 @@ else()
         endif()
 
     elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-        if (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wx-config")
+        if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
+            message(STATUS "Using pre-defined wx config: ${wxWidgets_CONFIG_EXECUTABLE}")
+
+        elseif (EXISTS "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wx-config")
             # MacPorts
             set(wxWidgets_CONFIG_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wx-config")
             set(wxWidgets_wxrc_EXECUTABLE "/opt/local/Library/Frameworks/wxWidgets.framework/Versions/wxWidgets/3.2/bin/wxrc")
@@ -533,6 +536,16 @@ else()
     message(STATUS "${ColorRed}HEXITOR plugin disabled due to HEXITOR=${HEXITOR}${ColorNormal}")
     install(CODE "
         execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/hexitor/plug/hexitor.far-plug-wide)
+        " COMPONENT system)
+endif()
+
+if (NOT DEFINED OPENWITH OR OPENWITH)
+    message(STATUS "OPENWITH plugin enabled")
+    add_subdirectory (OpenWith)
+else()
+    message(STATUS "${ColorRed}OPENWITH plugin disabled due to OPENWITH=${OPENWITH}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/OpenWith/plug/OpenWith.far-plug-wide)
         " COMPONENT system)
 endif()
 

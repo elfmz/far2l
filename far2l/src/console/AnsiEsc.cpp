@@ -279,11 +279,11 @@ const wchar_t *Parser::Parse(const wchar_t *str)
 	if (str[0] == 033 && str[1] == '[') {
 		int a = 0;
 		for (size_t i = 2; str[i]; ++i) {
-			if (str[i] == ';'
+			if (str[i] == ';' || str[i] == ':'
 					|| (str[i] >= L'a' && str[i] <= L'z')
 					|| (str[i] >= L'A' && str[i] <= L'Z')) {
 				args.push_back(a);
-				if (str[i] != ';') {
+				if (str[i] != ';' && str[i] != ':') {
 					suffix = str[i];
 					return &str[i + 1];
 				}

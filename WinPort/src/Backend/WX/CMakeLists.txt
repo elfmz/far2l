@@ -69,7 +69,7 @@ if(CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(far2l_gui "${CMAKE_THREAD_LIBS_INIT}")
 endif()
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_CXX_COMPILER} MATCHES "Clang")
     set_property (TARGET far2l_gui APPEND_STRING PROPERTY COMPILE_FLAGS "-fobjc-arc")
 endif()
 

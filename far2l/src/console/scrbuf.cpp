@@ -153,14 +153,24 @@ void ScreenBuf::Write(int X, int Y, const CHAR_INFO *Text, int TextLength)
 		return;
 	}
 
-	if (X + TextLength >= BufX)
+	if (X + TextLength >= BufX) {
 		TextLength = BufX - X;	//??
+		if (TextLength == 0) {
+			return;
+		}
+	}
 
 	CHAR_INFO *PtrBuf = Buf + Y * BufX + X;
-
+	int LastNonSpace = 0;
 	for (int i = 0; i < TextLength; i++) {
 		SetVidChar(PtrBuf[i], Text[i].Char.UnicodeChar);
 		PtrBuf[i].Attributes = Text[i].Attributes;
+		if ((Text[i].Char.UnicodeChar != ' ' && Text[i].Char.UnicodeChar != 0)) {
+			LastNonSpace = i;
+		}
+	}
+	if (LastNonSpace > 0) {
+		PtrBuf[LastNonSpace].Attributes |= EXPLICIT_LINE_BREAK;
 	}
 
 	SBFlags.Clear(SBFLAGS_FLUSHED);

@@ -663,7 +663,7 @@ struct VTAnsiContext
 
 		DWORD fg = (DWORD)-1, bk = (DWORD)-1;
 		if (cmd == 4) {
-			if (pos + 2 == args_size && args[pos] == ';' && args[pos + 1] == '?') {
+			if (pos + 2 == args_size && (args[pos] == ';' || args[pos] == ':') && args[pos + 1] == '?') {
 				// not a set color but request current color
 				fg = bk = (DWORD)-2;
 				WINPORT(OverrideConsoleColor)(vt_shell->ConsoleHandle(),
@@ -678,7 +678,7 @@ struct VTAnsiContext
 //				abort();
 				return;
 			}
-			if (pos + 2 >= args_size || args[pos] != ';' || args[pos + 1] != '#') {
+			if (pos + 2 >= args_size || (args[pos] != ';' && args[pos] != ':') || args[pos + 1] != '#') {
 				fprintf(stderr, "%s(%d): bad args='%s'\n", __FUNCTION__, cmd, args);
 				return;
 			}
@@ -689,7 +689,7 @@ struct VTAnsiContext
 				return;
 			}
 			fg = bk = BGR2RGB(fg);
-			if (pos + 2 < args_size && args[pos] == ';' && args[pos + 1] == '#') {
+			if (pos + 2 < args_size && (args[pos] == ';' || args[pos] == ':') && args[pos + 1] == '#') {
 				pos+= 2;
 				saved_pos = pos;
 				bk = HexToULong(args, args_size, &pos);
@@ -1488,13 +1488,12 @@ struct VTAnsiContext
 					es_argc = 0;
 					es_argv[0] = *s - '0';
 					state = 4;
-				} else if (*s == ';') {
+				} else if (*s == ';' || *s == ':') {
 					es_argc = 1;
 					es_argv[0] = 0;
 					es_argv[1] = 0;
 					state = 4;
-				} else if (*s == ':') {
-					// ignore it
+//				} else if (*s == ':') { // ignore it
 				} else if (*s >= '\x3b' && *s <= '\x3f') {
 					prefix2 = *s;
 				} else if (*s >= '\x20' && *s <= '\x2f') {
@@ -1510,7 +1509,7 @@ struct VTAnsiContext
 			} else if (state == 4) {
 				if (is_digit( *s )) {
 					es_argv[es_argc] = 10 * es_argv[es_argc] + (*s - '0');
-				} else if (*s == ';') {
+				} else if (*s == ';' || *s == ':') {
 					if (es_argc < MAX_ARG-1) es_argc++;
 					es_argv[es_argc] = 0;
 					if (prefix == ']')

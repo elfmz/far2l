@@ -32,30 +32,53 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-typedef struct rgbcolor_s
-{
-	union {
-		struct {
-			uint8_t r;
-			uint8_t g;
-			uint8_t b;
-			uint8_t a;
-		};
-		uint32_t rgba;
-	};
+#include <stdint.h>
+
+typedef struct rgbcolor_s {
+    union {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        struct {
+            uint8_t r;
+            uint8_t g;
+            uint8_t b;
+            uint8_t a;
+        };
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        struct {
+            uint8_t a;
+            uint8_t b;
+            uint8_t g;
+            uint8_t r;
+        };
+#else
+#   error "Unsupported endianness"
+#endif
+        uint32_t rgba;
+    };
 } rgbcolor_t;
 
-typedef struct hsvcolor_s
-{
-	union {
-		struct {
-			uint8_t h;
-			uint8_t s;
-			uint8_t v;
-			uint8_t a;
-		};
-		uint32_t hsva;
-	};
+
+typedef struct hsvcolor_s {
+    union {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        struct {
+            uint8_t h;
+            uint8_t s;
+            uint8_t v;
+            uint8_t a;
+        };
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        struct {
+            uint8_t a;
+            uint8_t v;
+            uint8_t s;
+            uint8_t h;
+        };
+#else
+#   error "Unsupported endianness"
+#endif
+        uint32_t hsva;
+    };
 } hsvcolor_t;
 
 #ifndef RGB

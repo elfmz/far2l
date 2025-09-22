@@ -131,7 +131,6 @@ public:
 	void SaveBackground(int X1, int Y1, int X2, int Y2);
 	void SaveBackground();
 	void ShowBackground(bool showanyway = false);
-	void CorrectRealScreenCoord();
 	void LockUpdatePanel(int Mode) { Flags.Change(FCMDOBJ_LOCKUPDATEPANEL, Mode); };
 
 	void EnableAC() { return CmdStr.EnableAC(); }

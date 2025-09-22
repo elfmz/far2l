@@ -133,8 +133,10 @@ namespace VTLog
 		std::mutex _mutex;
 		std::list< std::pair<HANDLE, std::string> > _memories;
 
-		void AddInner(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
+	public:
+		void Add(HANDLE con_hnd, const CHAR_INFO *Chars, unsigned int Width, bool EOL)
 		{
+			std::lock_guard<std::mutex> lock(_mutex);
 			const size_t limit = (size_t)std::max(Opt.CmdLine.VTLogLimit, 2);
 			// a little hustling to reduce reallocations
 			if (_memories.size() >= limit) {
@@ -151,22 +153,8 @@ namespace VTLog
 			if (Width) {
 				EncodeLine(last.second, Width, Chars, true);
 			}
-		}
-		
-	public:
-		void Add(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
-		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			AddInner(con_hnd, Width, Chars);
-		}
-
-		void Append(HANDLE con_hnd, unsigned int Width, const CHAR_INFO *Chars)
-		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			if (_memories.empty()) {
-				AddInner(con_hnd, Width, Chars);
-			} else if (Width) {
-				EncodeLine(_memories.back().second, Width, Chars, true);
+			if (EOL) {
+				last.second+= NATIVE_EOL;
 			}
 		}
 
@@ -185,7 +173,7 @@ namespace VTLog
 							m.second.erase(i, j + 1 - i);
 						}
 					}
-					m.second+= NATIVE_EOL;
+					//m.second+= NATIVE_EOL;
 					if (write(fd, m.second.c_str(), m.second.size()) != (int)m.second.size())
 						perror("VTLog: WriteToFile");
 				}
@@ -229,11 +217,7 @@ namespace VTLog
 	{
 		if (g_pause_cnt == 0) {
 			auto width_eol = ActualLineWidth(Width, Chars);
-			if (width_eol.second) {
-				g_lines.Add(hConsole, width_eol.first, Chars);
-			} else {
-				g_lines.Append(hConsole, width_eol.first, Chars);
-			}
+			g_lines.Add(hConsole, Chars, width_eol.first, width_eol.second);
 		}
 	}
 

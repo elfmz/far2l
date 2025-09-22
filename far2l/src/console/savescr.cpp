@@ -82,13 +82,13 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 	fprintf(stderr, "*** SaveScreen::RestoreArea %d %d %d %d %d %d\n", X1, Y1, X2, Y2, vWidth, vHeight);
 	PutText(X1, Y1, X2, Y2, ScreenBuf.data());
 	if (vWidth > 0 && vWidth > X2 + 1 - X1) {
-		SetScreen(X2, Y1, X1 + vWidth - 1, Y2, L' ', 0);
+		SetScreen(X2 + 1, Y1, X1 + vWidth - 1, Y2, L' ', 0);
 	}
 	if (vHeight > 0 && vHeight > Y2 + 1 - Y1) {
-		SetScreen(X1, Y2, X2, Y1 + vHeight - 1, L' ', 0);
+		SetScreen(X1 + 1, Y2, X2, Y1 + vHeight - 1, L' ', 0);
 	}
 	if (vWidth > 0 && vWidth > X2 + 1 - X1 && vHeight > 0 && vHeight > Y2 + 1 - Y1) {
-		SetScreen(X2, Y2, X1 + vWidth - 1, Y1 + vHeight - 1, L' ', 0);
+		SetScreen(X2 + 1, Y2 + 1, X1 + vWidth - 1, Y1 + vHeight - 1, L' ', 0);
 	}
 
 	if (RestoreCursor) {

@@ -1010,6 +1010,11 @@ int WINAPI FarInputBoxA(const char *Title, const char *Prompt, const char *Histo
 	return ret;
 }
 
+int WINAPI FarColorDialogA(const int flags, uint64_t *c)
+{
+	return (int)GetColorDialog(c, true);
+}
+
 int WINAPI FarMessageFnA(INT_PTR PluginNumber, DWORD Flags, const char *HelpTopic, const char *const *Items,
 		int ItemsNumber, int ButtonsNumber)
 {

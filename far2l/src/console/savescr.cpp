@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
+#include <assert.h>
 #include "savescr.hpp"
 #include "colors.hpp"
 #include "syslog.hpp"
@@ -60,31 +60,27 @@ SaveScreen::SaveScreen(int X1, int Y1, int X2, int Y2)
 
 SaveScreen::~SaveScreen()
 {
-	if (!ScreenBuf)
-		return;
+	if (!ScreenBuf.empty())
+		RestoreArea();
 
 	_OT(SysLog(L"[%p] SaveScreen::~SaveScreen()", this));
-	RestoreArea();
-	delete[] ScreenBuf;
 }
 
 void SaveScreen::Discard()
 {
-	if (!ScreenBuf)
-		return;
-
-	delete[] ScreenBuf;
-	ScreenBuf = nullptr;
+	ScreenBuf.clear();
+	X2 = X1;
+	Y2 = Y1;
 }
 
 void SaveScreen::RestoreArea(int RestoreCursor)
 {
-	if (!ScreenBuf) {
+	if (ScreenBuf.empty()) {
 		fprintf(stderr, "SaveScreen::RestoreArea: no ScreenBuf\n");
 		return;
 	}
 	fprintf(stderr, "*** SaveScreen::RestoreArea %d %d %d %d %d %d\n", X1, Y1, X2, Y2, vWidth, vHeight);
-	PutText(X1, Y1, X2, Y2, ScreenBuf);
+	PutText(X1, Y1, X2, Y2, ScreenBuf.data());
 	if (vWidth > 0 && vWidth > X2 + 1 - X1) {
 		SetScreen(X2, Y1, X1 + vWidth - 1, Y2, L' ', 0);
 	}
@@ -101,40 +97,41 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 	}
 }
 
-void SaveScreen::SaveArea(int X1, int Y1, int X2, int Y2)
+void SaveScreen::SaveArea(int nX1, int nY1, int nX2, int nY2)
 {
-	SaveScreen::X1 = X1;
-	SaveScreen::Y1 = Y1;
-	SaveScreen::X2 = X2;
-	SaveScreen::Y2 = Y2;
+	assert(nX2 >= nX1);
+	assert(nY2 >= nY1);
+	X1 = nX1;
+	Y1 = nY1;
+	X2 = nX2;
+	Y2 = nY2;
 	vWidth = vHeight = -1;
 
-	ScreenBuf = new (std::nothrow) CHAR_INFO[ScreenBufCharCount()];
-
-	if (!ScreenBuf)
-		return;
-
-	GetText(X1, Y1, X2, Y2, ScreenBuf, ScreenBufCharCount() * sizeof(CHAR_INFO));
+	ScreenBuf.resize((X2 - X1 + 1) * (Y2 - Y1 + 1));
+	GetText(X1, Y1, X2, Y2, ScreenBuf.data(), ScreenBuf.size() * sizeof(CHAR_INFO));
 	GetCursorPos(CurPosX, CurPosY);
 	GetCursorType(CurVisible, CurSize);
 }
 
 void SaveScreen::SaveArea()
 {
-	if (!ScreenBuf)
-		return;
-
-	GetText(X1, Y1, X2, Y2, ScreenBuf, ScreenBufCharCount() * sizeof(CHAR_INFO));
-	GetCursorPos(CurPosX, CurPosY);
-	GetCursorType(CurVisible, CurSize);
+	if (vWidth > 0) {
+		X2 = X1 + vWidth - 1;
+		vWidth = -1;
+	}
+	if (vHeight > 0) {
+		Y2 = Y1 + vHeight - 1;
+		vHeight = -1;
+	}
+	SaveArea(X1, Y1, X2, Y2);
 }
 
 void SaveScreen::AppendArea(SaveScreen *NewArea)
 {
-	CHAR_INFO *Buf = ScreenBuf, *NewBuf = NewArea->ScreenBuf;
-
-	if (!Buf || !NewBuf)
+	if (ScreenBuf.empty() || NewArea->ScreenBuf.empty())
 		return;
+
+	CHAR_INFO *Buf = ScreenBuf.data(), *NewBuf = NewArea->ScreenBuf.data();
 
 	for (int X = X1; X <= X2; X++)
 		if (X >= NewArea->X1 && X <= NewArea->X2)
@@ -148,26 +145,6 @@ void SaveScreen::VirtualResize(int W, int H)
 {
 	vWidth = W;
 	vHeight = H;
-}
-
-int SaveScreen::ScreenBufCharCount()
-{
-	return (X2 - X1 + 1) * (Y2 - Y1 + 1);
-}
-
-void SaveScreen::CharCopy(PCHAR_INFO ToBuffer, PCHAR_INFO FromBuffer, int Count)
-{
-	memcpy(ToBuffer, FromBuffer, Count * sizeof(CHAR_INFO));
-}
-
-void SaveScreen::CleanupBuffer(PCHAR_INFO Buffer, size_t BufSize)
-{
-	uint64_t Attr = FarColorToReal(COL_COMMANDLINEUSERSCREEN);
-
-	for (size_t i = 0; i < BufSize; i++) {
-		Buffer[i].Attributes = Attr;
-		Buffer[i].Char.UnicodeChar = L' ';
-	}
 }
 
 void SaveScreen::DumpBuffer(const wchar_t *Title)

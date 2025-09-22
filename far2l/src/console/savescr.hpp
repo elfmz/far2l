@@ -50,7 +50,7 @@ private:
 	void CharCopy(PCHAR_INFO ToBuffer, PCHAR_INFO FromBuffer, int Count);
 
 public:
-	int X1, Y1, X2, Y2;
+	int X1, Y1, X2, Y2, vWidth = -1, vHeight = -1;
 
 	SaveScreen();
 	SaveScreen(int X1, int Y1, int X2, int Y2);
@@ -58,14 +58,13 @@ public:
 
 public:
 	CHAR_INFO *GetBufferAddress() { return ScreenBuf; };
-	void CorrectRealScreenCoord();
 	void SaveArea(int X1, int Y1, int X2, int Y2);
 	void SaveArea();
 	void RestoreArea(int RestoreCursor = TRUE);
 	void Discard();
 	void AppendArea(SaveScreen *NewArea);
 	/*$ 18.05.2001 OT */
-	void Resize(int ScrX, int ScrY, DWORD Corner, bool SyncWithConsole);
+	void VirtualResize(int W, int H);
 
 	void DumpBuffer(const wchar_t *Title);
 };

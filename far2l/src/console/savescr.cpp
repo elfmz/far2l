@@ -83,8 +83,17 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 		fprintf(stderr, "SaveScreen::RestoreArea: no ScreenBuf\n");
 		return;
 	}
-
+	fprintf(stderr, "*** SaveScreen::RestoreArea %d %d %d %d %d %d\n", X1, Y1, X2, Y2, vWidth, vHeight);
 	PutText(X1, Y1, X2, Y2, ScreenBuf);
+	if (vWidth > 0 && vWidth > X2 + 1 - X1) {
+		SetScreen(X2, Y1, X1 + vWidth - 1, Y2, L' ', 0);
+	}
+	if (vHeight > 0 && vHeight > Y2 + 1 - Y1) {
+		SetScreen(X1, Y2, X2, Y1 + vHeight - 1, L' ', 0);
+	}
+	if (vWidth > 0 && vWidth > X2 + 1 - X1 && vHeight > 0 && vHeight > Y2 + 1 - Y1) {
+		SetScreen(X2, Y2, X1 + vWidth - 1, Y1 + vHeight - 1, L' ', 0);
+	}
 
 	if (RestoreCursor) {
 		SetCursorType(CurVisible, CurSize);
@@ -98,6 +107,7 @@ void SaveScreen::SaveArea(int X1, int Y1, int X2, int Y2)
 	SaveScreen::Y1 = Y1;
 	SaveScreen::X2 = X2;
 	SaveScreen::Y2 = Y2;
+	vWidth = vHeight = -1;
 
 	ScreenBuf = new (std::nothrow) CHAR_INFO[ScreenBufCharCount()];
 
@@ -119,21 +129,6 @@ void SaveScreen::SaveArea()
 	GetCursorType(CurVisible, CurSize);
 }
 
-void SaveScreen::CorrectRealScreenCoord()
-{
-	if (X1 < 0)
-		X1 = 0;
-
-	if (Y1 < 0)
-		Y1 = 0;
-
-	if (X2 >= ScrX)
-		X2 = ScrX;
-
-	if (Y2 >= ScrY)
-		Y2 = ScrY;
-}
-
 void SaveScreen::AppendArea(SaveScreen *NewArea)
 {
 	CHAR_INFO *Buf = ScreenBuf, *NewBuf = NewArea->ScreenBuf;
@@ -149,119 +144,10 @@ void SaveScreen::AppendArea(SaveScreen *NewArea)
 							NewBuf[X - NewArea->X1 + (NewArea->X2 - NewArea->X1 + 1) * (Y - NewArea->Y1)];
 }
 
-void SaveScreen::Resize(int NewX, int NewY, DWORD Corner, bool SyncWithConsole)
-//	Corner definition:
-//	0 --- 1
-//	|     |
-//	2 --- 3
+void SaveScreen::VirtualResize(int W, int H)
 {
-	int OWi = X2 - X1 + 1, OHe = Y2 - Y1 + 1, iY = 0;
-
-	if (OWi == NewX && OHe == NewY) {
-		return;
-	}
-
-	int NX1, NX2, NY1, NY2;
-	NX1 = NX2 = NY1 = NY2 = 0;
-	PCHAR_INFO NewBuf = new CHAR_INFO[size_t(NewX) * NewY];
-	CleanupBuffer(NewBuf, size_t(NewX) * NewY);
-	int NewWidth = Min(OWi, NewX);
-	int NewHeight = Min(OHe, NewY);
-	int iYReal;
-	int ToIndex = 0;
-	int FromIndex = 0;
-
-	if (Corner & 2) {
-		NY2 = Y1 + NewY - 1;
-		NY1 = NY2 - NewY + 1;
-	} else {
-		NY1 = Y1;
-		NY2 = NY1 + NewY - 1;
-	}
-
-	if (Corner & 1) {
-		NX2 = X1 + NewX - 1;
-		NX1 = NX2 - NewX + 1;
-	} else {
-		NX1 = X1;
-		NX2 = NX1 + NewX - 1;
-	}
-
-	for (iY = 0; iY < NewHeight; iY++) {
-		if (Corner & 2) {
-			if (OHe > NewY) {
-				iYReal = OHe - NewY + iY;
-				FromIndex = iYReal * OWi;
-				ToIndex = iY * NewX;
-			} else {
-				iYReal = NewY - OHe + iY;
-				ToIndex = iYReal * NewX;
-				FromIndex = iY * OWi;
-			}
-		}
-
-		if (Corner & 1) {
-			if (OWi > NewX) {
-				FromIndex+= OWi - NewX;
-			} else {
-				ToIndex+= NewX - OWi;
-			}
-		}
-
-		CharCopy(&NewBuf[ToIndex], &ScreenBuf[FromIndex], NewWidth);
-	}
-
-	// achtung, experimental
-	if ((Corner & 2) && SyncWithConsole) {
-		Console.ResetPosition();
-		if (NewY != OHe) {
-			COORD Size = {(SHORT)Max(NewX, OWi), (SHORT)abs(OHe - NewY)};
-			COORD Coord = {0, 0};
-			PCHAR_INFO Tmp = new CHAR_INFO[Size.X * Size.Y];
-			if (NewY > OHe) {
-				SMALL_RECT ReadRegion = {0, 0, (SHORT)(NewX - 1), (SHORT)(NewY - OHe - 1)};
-				Console.ReadOutput(*Tmp, Size, Coord, ReadRegion);
-				for (int i = 0; i < Size.Y; i++) {
-					CharCopy(&NewBuf[i * Size.X], &Tmp[i * Size.X], Size.X);
-				}
-			} else {
-				SMALL_RECT WriteRegion = {0, (SHORT)(NewY - OHe), (SHORT)(NewX - 1), (SHORT)(-1)};
-				for (int i = 0; i < Size.Y; i++) {
-					CharCopy(&Tmp[i * Size.X], &ScreenBuf[i * OWi], Size.X);
-				}
-				Console.WriteOutput(*Tmp, Size, Coord, WriteRegion);
-			}
-			delete[] Tmp;
-		}
-
-		if (NewX != OWi) {
-			COORD Size = {(SHORT)abs(NewX - OWi), (SHORT)Max(NewY, OHe)};
-			COORD Coord = {0, 0};
-			PCHAR_INFO Tmp = new CHAR_INFO[Size.X * Size.Y];
-			if (NewX > OWi) {
-				SMALL_RECT ReadRegion = {(SHORT)OWi, 0, (SHORT)(NewX - 1), (SHORT)(NewY - 1)};
-				Console.ReadOutput(*Tmp, Size, Coord, ReadRegion);
-				for (int i = 0; i < Size.Y; i++) {
-					CharCopy(&NewBuf[i * NewX + OWi], &Tmp[i * Size.X], Size.X);
-				}
-			} else {
-				SMALL_RECT WriteRegion = {(SHORT)NewX, (SHORT)(NewY - OHe), (SHORT)(OWi - 1),
-						(SHORT)(NewY - 1)};
-				for (int i = 0; i < Size.Y; i++) {
-					CharCopy(&Tmp[i * Size.X], &ScreenBuf[i * OWi + NewX], Size.X);
-				}
-				Console.WriteOutput(*Tmp, Size, Coord, WriteRegion);
-			}
-			delete[] Tmp;
-		}
-	}
-
-	delete[] ScreenBuf;
-	ScreenBuf = NewBuf;
-	X1 = NX1;
-	Y1 = NY1;
-	X2 = NX2;
-	Y2 = NY2;
+	vWidth = W;
+	vHeight = H;
 }
 
 int SaveScreen::ScreenBufCharCount()

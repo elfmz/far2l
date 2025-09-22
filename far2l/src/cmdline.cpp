@@ -920,13 +920,6 @@ void CommandLine::ShowBackground(bool showanyway)
 		fprintf(stderr, "CommandLine::ShowBackground: no BackgroundScreen\n");
 }
 
-void CommandLine::CorrectRealScreenCoord()
-{
-	if (BackgroundScreen) {
-		BackgroundScreen->CorrectRealScreenCoord();
-	}
-}
-
 void CommandLine::Show()
 {
 	if (IsVisible())
@@ -935,7 +928,7 @@ void CommandLine::Show()
 
 void CommandLine::ResizeConsole()
 {
-	BackgroundScreen->Resize(ScrX + 1, ScrY + 1, 2, FALSE);
+	BackgroundScreen->VirtualResize(ScrX + 1, ScrY + 1);
 	//	this->DisplayObject();
 }
 

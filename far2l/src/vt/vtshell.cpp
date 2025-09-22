@@ -131,6 +131,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	unsigned int _exit_code;
 	bool _may_notify{false};
 	std::atomic<bool> _allow_osc_clipset{false};
+	std::atomic<bool> _alternate_mode{false};
 	std::string _init_user_profile;
 
 	int ExecLeaderProcess()
@@ -366,6 +367,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			UpdateTerminalSize(_fd_out);
 		if (_far2l_exts)
 			_far2l_exts->OnTerminalResized();
+	}
+
+	virtual void OnScreenModeChanged(bool alternate_mode)
+	{
+		_alternate_mode = alternate_mode;
 	}
 
 	virtual void OnInputResized(const INPUT_RECORD &ir) //called from worker thread
@@ -1022,6 +1028,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _console_handle;
 	}
 
+	bool IsAlternateMode() const
+	{
+		return _alternate_mode;
+	}
+
 	bool ExecuteCommand(const char *cmd, bool force_sudo, bool may_bgnd, bool may_notify)
 	{
 		ASSERT(!_console_handle);
@@ -1241,9 +1252,16 @@ void VTShell_Shutdown()
 	g_vt.reset();
 }
 
-bool VTShell_Busy()
+VT_State VTShell_State()
 {
-	return g_vt_busy != 0;
+	if (g_vt_busy == 0) {
+		return VTS_IDLE;
+	}
+	std::lock_guard<std::mutex> lock(g_vts_mutex);
+	if (!g_vt) {
+		return VTS_IDLE;
+	}
+	return g_vt->IsAlternateMode() ? VTS_ALTERNATE_SCREEN : VTS_NORMAL_SCREEN;
 }
 
 void VTShell_Enum(VTInfos &vts)

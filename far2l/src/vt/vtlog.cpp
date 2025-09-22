@@ -211,28 +211,14 @@ namespace VTLog
 
 	} g_lines;
 
-	static unsigned int g_pause_cnt = 0;
-
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
-		if (g_pause_cnt == 0) {
+		if (VTShell_State() == VTS_NORMAL_SCREEN) {
 			auto width_eol = ActualLineWidth(Width, Chars);
 			g_lines.Add(hConsole, Chars, width_eol.first, width_eol.second);
 		}
 	}
 
-	void Pause()
-	{
-		__sync_add_and_fetch(&g_pause_cnt, 1);
-	}
-
-	void Resume()
-	{
-		if (__sync_sub_and_fetch(&g_pause_cnt, 1) < 0) {
-			ABORT();
-		}
-	}
-	
 	void Start()
 	{
 		WINPORT(SetConsoleScrollCallback) (NULL, OnConsoleScroll, NULL);
@@ -253,13 +239,13 @@ namespace VTLog
 		g_lines.Reset(con_hnd);
 	}
 	
-	static void AppendScreenLine(const CHAR_INFO *line, unsigned int width, std::string &s, DumpState &ds, bool colored)
+	static void AppendScreenLine(const CHAR_INFO *line, unsigned int width, std::string &s, DumpState &ds, bool colored, bool no_line_recompose)
 	{
 		auto width_eol = ActualLineWidth(width, line);
 		if (width_eol.first || ds.nonempty) {
 			ds.nonempty = true;
 			EncodeLine(s, width_eol.first, line, colored);
-			if (width_eol.second) {
+			if (width_eol.second || no_line_recompose) {
 				s+= NATIVE_EOL;
 			}
 		}
@@ -272,9 +258,15 @@ namespace VTLog
 			std::vector<CHAR_INFO> line(csbi.dwSize.X);
 			COORD buf_pos = { }, buf_size = {csbi.dwSize.X, 1};
 			SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
+			// alternate VT screen mode typically used by rich UI terminal apps like MC
+			// which need identical screen copy without line recomposition
+			const bool no_line_recompose = (VTShell_State() == VTS_ALTERNATE_SCREEN);
+			if (no_line_recompose && !s.empty() && !strchr(NATIVE_EOL, s.back())) {
+				s+= NATIVE_EOL;
+			}
 			for (rc.Top = rc.Bottom = 0; rc.Top < csbi.dwSize.Y; rc.Top = ++rc.Bottom) {
 				if (WINPORT(ReadConsoleOutput)(con_hnd, &line[0], buf_size, buf_pos, &rc)) {
-					AppendScreenLine(&line[0], (unsigned int)csbi.dwSize.X, s, ds, colored);
+					AppendScreenLine(&line[0], (unsigned int)csbi.dwSize.X, s, ds, colored, no_line_recompose);
 				}
 			}
 		}		
@@ -287,7 +279,7 @@ namespace VTLog
 			const CHAR_INFO *ci = CtrlObject->CmdLine->GetBackgroundScreen(w, h);
 			if (ci && w > 0 && h > 0) {
 				while (h--) {
-					AppendScreenLine(ci, (unsigned int)w, s, ds, colored);
+					AppendScreenLine(ci, (unsigned int)w, s, ds, colored, false);
 					ci+= w;
 				}
 			}
@@ -317,14 +309,15 @@ namespace VTLog
 		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {
 			std::string s;
-			if (!con_hnd && !VTShell_Busy()) {
+			if (!con_hnd && VTShell_State() == VTS_IDLE) {
 				AppendSavedScreenLines(s, ds, colored);
 			} else {
 				AppendActiveScreenLines(con_hnd, s, ds, colored);
 			}
 			if (!s.empty()) {
-				if (write(fd, s.c_str(), s.size()) != (int)s.size())
+				if (write(fd, s.c_str(), s.size()) != (int)s.size()) {
 					perror("VTLog: write");				
+				}
 			}
 		}
 		close(fd);

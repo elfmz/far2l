@@ -549,7 +549,6 @@ struct VTAnsiContext
 				return;
 
 			SavedScreenBuffer tmp;
-//			HANDLE con_hnd = vt_shell->ConsoleHandle();
 			if (!WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &tmp.info)) {
 				fprintf(stderr, "AlternativeScreenBuffer: csbi failed\n");
 				return;
@@ -609,12 +608,6 @@ struct VTAnsiContext
 			}
 
 			std::swap(tmp, _other);
-
-			if (enable) {
-				VTLog::Pause();
-			} else {
-				VTLog::Resume();
-			}
 			_enabled = enable;
 		}
 
@@ -702,11 +695,21 @@ struct VTAnsiContext
 		orig_palette.emplace(index, std::make_pair(fg, bk));
 	}
 
-#define FillBlank( len, Pos )  { \
-	DWORD NumberOfCharsWritten; \
-	WINPORT(FillConsoleOutputCharacter)( con_hnd, blank_character, len, Pos, &NumberOfCharsWritten );\
-	WINPORT(FillConsoleOutputAttribute)( con_hnd, Info.wAttributes, len, Pos, &NumberOfCharsWritten );\
-}
+	static void FillBlankLine(HANDLE con_hnd, COORD pos, DWORD len, WCHAR blank_character, DWORD attrs)
+	{
+		DWORD dw;
+		WINPORT(FillConsoleOutputCharacter)( con_hnd, blank_character, len, pos, &dw);
+		if (len > 0) {
+			if (blank_character && blank_character != ' ') {
+				auto last_pos = pos;
+				last_pos.X+= len - 1;
+				WINPORT(FillConsoleOutputAttribute)( con_hnd, attrs, len - 1, pos, &dw);
+				WINPORT(FillConsoleOutputAttribute)( con_hnd, attrs | EXPLICIT_LINE_BREAK, 1, last_pos, &dw);
+			} else {
+				WINPORT(FillConsoleOutputAttribute)( con_hnd, attrs, len, pos, &dw);
+			}
+		}
+	}
 
 	void ClearScreenAndHomeCursor(CONSOLE_SCREEN_BUFFER_INFO &Info)
 	{
@@ -739,7 +742,7 @@ struct VTAnsiContext
 		Pos.X = 0;
 		Pos.Y = Info.srWindow.Top;
 		DWORD len   = (Info.srWindow.Bottom - Info.srWindow.Top + 1) * Info.dwSize.X;
-		FillBlank( len, Pos );
+		FillBlankLine(con_hnd, Pos, len, blank_character, Info.wAttributes);
 		// Not technically correct, but perhaps expected.
 		WINPORT(SetConsoleCursorPosition)( con_hnd, Pos );
 	}
@@ -799,6 +802,7 @@ struct VTAnsiContext
 
 	//				case 47: case 1047:
 	//					alternative_screen_buffer.Toggle(suffix == 'h');
+	//					vt_shell->OnScreenModeChanged(suffix == 'h');
 	//					break;
 
 					case 1004:
@@ -814,6 +818,7 @@ struct VTAnsiContext
 
 					case 1049:
 						alternative_screen_buffer.Toggle(con_hnd, suffix == 'h');
+						vt_shell->OnScreenModeChanged(suffix == 'h');
 						break;
 
 					case 25:
@@ -888,14 +893,14 @@ struct VTAnsiContext
 				switch (es_argv[0]) {
 				case 0:		// ESC[0J erase from cursor to end of display
 					len = (Info.srWindow.Bottom - Info.dwCursorPosition.Y) * Info.dwSize.X + Info.dwSize.X - Info.dwCursorPosition.X;
-					FillBlank( len, Info.dwCursorPosition );
+					FillBlankLine(con_hnd, Info.dwCursorPosition, len, blank_character, Info.wAttributes);
 					return;
 
 				case 1:		// ESC[1J erase from start to cursor.
 					Pos.X = 0;
 					Pos.Y = Info.srWindow.Top;
 					len   = (Info.dwCursorPosition.Y - Info.srWindow.Top) * Info.dwSize.X + Info.dwCursorPosition.X + 1;
-					FillBlank( len, Pos );
+					FillBlankLine(con_hnd, Pos, len, blank_character, Info.wAttributes);
 					return;
 
 				case 2:		// ESC[2J Clear screen and home cursor
@@ -912,19 +917,19 @@ struct VTAnsiContext
 				switch (es_argv[0]) {
 				case 0:		// ESC[0K Clear to end of line
 					len = Info.dwSize.X - Info.dwCursorPosition.X;
-					FillBlank( len, Info.dwCursorPosition );
+					FillBlankLine(con_hnd, Info.dwCursorPosition, len, blank_character, Info.wAttributes);
 					return;
 
 				case 1:		// ESC[1K Clear from start of line to cursor
 					Pos.X = 0;
 					Pos.Y = Info.dwCursorPosition.Y;
-					FillBlank( Info.dwCursorPosition.X + 1, Pos );
+					FillBlankLine(con_hnd, Pos, Info.dwCursorPosition.X + 1, blank_character, Info.wAttributes);
 					return;
 
 				case 2:		// ESC[2K Clear whole line.
 					Pos.X = 0;
 					Pos.Y = Info.dwCursorPosition.Y;
-					FillBlank( Info.dwSize.X, Pos );
+					FillBlankLine(con_hnd, Pos, Info.dwSize.X, blank_character, Info.wAttributes);
 					return;
 
 				default:
@@ -934,7 +939,7 @@ struct VTAnsiContext
 			case 'X':                 // ESC[#X Erase # characters.
 				if (es_argc == 0) es_argv[es_argc++] = 1; // ESC[X == ESC[1X
 				if (es_argc != 1) return;
-				FillBlank( es_argv[0], Info.dwCursorPosition );
+				FillBlankLine(con_hnd, Info.dwCursorPosition, es_argv[0], blank_character, Info.wAttributes);
 				return;
 
 			case 'L':                 // ESC[#L Insert # blank lines.
@@ -1669,6 +1674,7 @@ void VTAnsi::OnStop()
 	_incomplete.tail.clear();
 	_ctx->orig_palette.clear();
 	_ctx->alternative_screen_buffer.Reset(con_hnd);
+	_ctx->vt_shell->OnScreenModeChanged(false);
 	//_ctx->saved_state.ApplyToConsole(con_hnd, false);
 	_ctx->ResetTerminal();
 	_ctx->ansi_state.font_state.FromConsoleAttributes(_ctx->saved_state.csbi.wAttributes);

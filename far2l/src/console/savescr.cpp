@@ -85,7 +85,7 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 		SetScreen(X2 + 1, Y1, X1 + vWidth - 1, Y2, L' ', 0);
 	}
 	if (vHeight > 0 && vHeight > Y2 + 1 - Y1) {
-		SetScreen(X1 + 1, Y2, X2, Y1 + vHeight - 1, L' ', 0);
+		SetScreen(X1, Y2 + 1, X2, Y1 + vHeight - 1, L' ', 0);
 	}
 	if (vWidth > 0 && vWidth > X2 + 1 - X1 && vHeight > 0 && vHeight > Y2 + 1 - Y1) {
 		SetScreen(X2 + 1, Y2 + 1, X1 + vWidth - 1, Y1 + vHeight - 1, L' ', 0);
@@ -99,6 +99,8 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 
 void SaveScreen::SaveArea(int nX1, int nY1, int nX2, int nY2)
 {
+	fprintf(stderr, "*** SaveScreen::SaveArea %d %d %d %d\n", nX1, nY1, nX2, nY2);
+
 	assert(nX2 >= nX1);
 	assert(nY2 >= nY1);
 	X1 = nX1;

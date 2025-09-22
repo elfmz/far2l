@@ -37,12 +37,29 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 			}
 		}
 		bool cursor_pos_adjusted = false;
-		size_t y = 0;
-		for (size_t x = 0, i = 0; i != unwrapped_chars.size(); ++i) {
+		size_t x, y;
+		for (size_t i = x = y = 0; i != unwrapped_chars.size(); ++i) {
 			size_t ofs = y * width + x;
 			if (ofs >= new_chars.size()) {
-				--y;
+				if (nc_cursor_offset != (size_t)-1) {
+					if (nc_cursor_offset >= width) {
+						nc_cursor_offset-= width;
+					} else {
+						nc_cursor_offset = 0;
+					}
+				} else if (cursor_pos.Y > 0) {
+					cursor_pos.Y--;
+				} else {
+					fprintf(stderr, "ConsoleBuffer: cursor underflow\n");
+				}
 				ofs-= width;
+				--y;
+				if (nc_cursor_offset != (size_t)-1 && ofs == nc_cursor_offset) {
+					nc_cursor_offset = (size_t)-1;
+					cursor_pos.Y = y;
+					cursor_pos.X = x;
+					cursor_pos_adjusted = true;
+				}
 				if (scroll_callback.pfn) {
 					scroll_callback.pfn(scroll_callback.context, con_handle, width, &new_chars[0]);
 				}
@@ -50,11 +67,6 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 				std::fill(new_chars.end() - width, new_chars.end(), fill_ci);
 			}
 			auto ci = unwrapped_chars[i];
-			if (!cursor_pos_adjusted && nc_cursor_offset == ofs) {
-				cursor_pos.X = x;
-				cursor_pos.Y = y;
-				cursor_pos_adjusted = true;
-			}
 			if ( (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
 				x = 0;
 				++y;
@@ -67,21 +79,20 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 			}
 			new_chars[ofs] = ci;
 		}
-		if (!cursor_pos_adjusted) {
-			cursor_pos.X = 0;
-			cursor_pos.Y = y;
+
+		if (!cursor_pos_adjusted) { // put it at beginning of 1st free line
+			if (x > 0) {
+				x = 0;
+				++y;
+			}
+			cursor_pos.X = (x < width) ? x : width;
+			cursor_pos.Y = (y < height) ? y : height;
+			fprintf(stderr, "ConsoleBuffer: cursor defaulted at %d.%d screen %u.%u \n", cursor_pos.X, cursor_pos.Y, width, height);
 		}
 	}
 
 	_console_chars.swap(new_chars);
 	_width = width;
-
-	if (cursor_pos.X >= (int)width && width > 0) {
-		cursor_pos.X = width - 1;
-	}
-	if (cursor_pos.Y >= (int)(_console_chars.size() / width) && _console_chars.size() >= width) {
-		cursor_pos.Y = _console_chars.size() / width;
-	}
 }
 
 void ConsoleBuffer::GetSize(unsigned int &width, unsigned int &height)

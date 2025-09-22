@@ -480,6 +480,11 @@ public:
         return Size(4 + t.length(), 1);
     }
 
+    void makeItem(Dialog *dlg, int& no) override {
+        Element::makeItem(dlg, no);
+        dlg->fdi[no-1].Param.Selected = selected ? 1:0;
+    };
+
 	void write(Screen& scr) override {
 		std::wstring t(text);
 		t.erase(std::remove(t.begin(), t.end(), '&'), t.end());

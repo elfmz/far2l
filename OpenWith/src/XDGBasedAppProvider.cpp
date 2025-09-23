@@ -1,6 +1,7 @@
 #if defined (__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 
-#include "LinuxAppProvider.hpp"
+#include "AppProvider.hpp"
+#include "XDGBasedAppProvider.hpp"
 #include "lng.hpp"
 #include "KeyFileHelper.h"
 #include "WideMB.h"
@@ -10,6 +11,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <cctype>
 #include <algorithm>
 #include <cstring>
@@ -19,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <map>
-#include <numeric>
+
 
 #define INI_LOCATION_LINUX InMyConfig("plugins/openwith/config.ini")
 #define INI_SECTION_LINUX  "Settings.Linux"
@@ -27,12 +29,12 @@
 // ****************************** Public API  ******************************
 
 
-LinuxAppProvider::LinuxAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
+XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
 {
 }
 
 
-void LinuxAppProvider::LoadPlatformSettings()
+void XDGBasedAppProvider::LoadPlatformSettings()
 {
 	KeyFileReadSection kfh(INI_LOCATION_LINUX, INI_SECTION_LINUX);
 	_filter_by_show_in = kfh.GetInt("FilterByShowIn", 0) != 0;
@@ -44,7 +46,7 @@ void LinuxAppProvider::LoadPlatformSettings()
 }
 
 
-void LinuxAppProvider::SavePlatformSettings()
+void XDGBasedAppProvider::SavePlatformSettings()
 {
 	KeyFileHelper kfh(INI_LOCATION_LINUX);
 	kfh.SetInt(INI_SECTION_LINUX, "FilterByShowIn", _filter_by_show_in);
@@ -57,7 +59,7 @@ void LinuxAppProvider::SavePlatformSettings()
 }
 
 
-std::vector<ProviderSetting> LinuxAppProvider::GetPlatformSettings()
+std::vector<ProviderSetting> XDGBasedAppProvider::GetPlatformSettings()
 {
 	return {
 		{ L"UseXdgMimeTool", m_GetMsg(MUseXdgMimeTool), _use_xdg_mime_tool },
@@ -70,7 +72,7 @@ std::vector<ProviderSetting> LinuxAppProvider::GetPlatformSettings()
 }
 
 
-void LinuxAppProvider::SetPlatformSettings(const std::vector<ProviderSetting>& settings)
+void XDGBasedAppProvider::SetPlatformSettings(const std::vector<ProviderSetting>& settings)
 {
 	for (const auto& s : settings)
 	{
@@ -84,7 +86,7 @@ void LinuxAppProvider::SetPlatformSettings(const std::vector<ProviderSetting>& s
 }
 
 
-std::vector<CandidateInfo> LinuxAppProvider::GetAppCandidates(const std::wstring& pathname)
+std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::wstring& pathname)
 {
 	_desktop_entry_cache.clear();
 
@@ -274,7 +276,7 @@ std::vector<CandidateInfo> LinuxAppProvider::GetAppCandidates(const std::wstring
 }
 
 
-std::string LinuxAppProvider::GetBaseName(const std::string& path)
+std::string XDGBasedAppProvider::GetBaseName(const std::string& path)
 {
 	size_t pos = path.find_last_of('/');
 	if (pos == std::string::npos) {
@@ -285,7 +287,7 @@ std::string LinuxAppProvider::GetBaseName(const std::string& path)
 
 
 
-std::wstring LinuxAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::wstring& pathname)
+std::wstring XDGBasedAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::wstring& pathname)
 {
 	std::string desktop_file_name = StrWide2MB(candidate.id);
 
@@ -348,7 +350,7 @@ std::wstring LinuxAppProvider::ConstructCommandLine(const CandidateInfo& candida
 }
 
 
-std::vector<Field> LinuxAppProvider::GetCandidateDetails(const CandidateInfo& candidate)
+std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo& candidate)
 {
 	std::vector<Field> details;
 	std::string desktop_file_name = StrWide2MB(candidate.id);
@@ -383,7 +385,7 @@ std::vector<Field> LinuxAppProvider::GetCandidateDetails(const CandidateInfo& ca
 
 
 
-std::wstring LinuxAppProvider::GetMimeType(const std::wstring& pathname)
+std::wstring XDGBasedAppProvider::GetMimeType(const std::wstring& pathname)
 {
 	std::vector<std::string> mime_types;
 	std::unordered_set<std::string> seen;
@@ -412,7 +414,7 @@ std::wstring LinuxAppProvider::GetMimeType(const std::wstring& pathname)
 // ****************************** Private implementation ******************************
 
 
-const std::optional<DesktopEntry>& LinuxAppProvider::GetCachedDesktopEntry(const std::string& desktop_file,
+const std::optional<DesktopEntry>& XDGBasedAppProvider::GetCachedDesktopEntry(const std::string& desktop_file,
 																		   const std::vector<std::string>& search_paths,
 																		   std::map<std::string, std::optional<DesktopEntry>>& cache)
 {
@@ -433,7 +435,7 @@ const std::optional<DesktopEntry>& LinuxAppProvider::GetCachedDesktopEntry(const
 
 
 // Parses mimeinfo.cache file format: [MIME Cache] section with mime/type=app1.desktop;app2.desktop;
-void LinuxAppProvider::ParseMimeinfoCache(const std::string& path, std::unordered_map<std::string, std::vector<std::string>>& mime_cache)
+void XDGBasedAppProvider::ParseMimeinfoCache(const std::string& path, std::unordered_map<std::string, std::vector<std::string>>& mime_cache)
 {
 	std::ifstream file(path);
 	if (!file.is_open()) return;
@@ -473,7 +475,7 @@ void LinuxAppProvider::ParseMimeinfoCache(const std::string& path, std::unordere
 
 
 // Safe environment variable access with optional default value
-std::string LinuxAppProvider::GetEnv(const char* var, const char* default_val)
+std::string XDGBasedAppProvider::GetEnv(const char* var, const char* default_val)
 {
 	const char* val = getenv(var);
 	return val ? val : default_val;
@@ -481,7 +483,7 @@ std::string LinuxAppProvider::GetEnv(const char* var, const char* default_val)
 
 
 // String splitting utility with trimming of individual tokens
-std::vector<std::string> LinuxAppProvider::SplitString(const std::string& str, char delimiter)
+std::vector<std::string> XDGBasedAppProvider::SplitString(const std::string& str, char delimiter)
 {
 	if (str.empty()) return {};
 
@@ -499,7 +501,7 @@ std::vector<std::string> LinuxAppProvider::SplitString(const std::string& str, c
 
 
 // Checks if executable exists and is runnable (absolute path or in $PATH)
-bool LinuxAppProvider::CheckExecutable(const std::string& path)
+bool XDGBasedAppProvider::CheckExecutable(const std::string& path)
 {
 	if (path.find('/') != std::string::npos) {
 		// If it's a path, check directly.
@@ -512,7 +514,7 @@ bool LinuxAppProvider::CheckExecutable(const std::string& path)
 
 
 // Returns XDG-compliant search paths for .desktop files, ordered by priority.
-std::vector<std::string> LinuxAppProvider::GetDesktopFileSearchPaths()
+std::vector<std::string> XDGBasedAppProvider::GetDesktopFileSearchPaths()
 {
 	std::vector<std::string> paths;
 	std::unordered_set<std::string> seen_paths;
@@ -548,7 +550,7 @@ std::vector<std::string> LinuxAppProvider::GetDesktopFileSearchPaths()
 
 
 // Returns XDG-compliant search paths for mimeapps.list files, ordered by priority.
-std::vector<std::string> LinuxAppProvider::GetMimeappsListSearchPaths()
+std::vector<std::string> XDGBasedAppProvider::GetMimeappsListSearchPaths()
 {
 	std::vector<std::string> paths;
 	std::unordered_set<std::string> seen_paths;
@@ -595,7 +597,7 @@ std::vector<std::string> LinuxAppProvider::GetMimeappsListSearchPaths()
 
 
 // Parses single mimeapps.list file, extracting Default/Added/Removed associations
-void LinuxAppProvider::ParseMimeappsList(const std::string& path, MimeAssociation& associations)
+void XDGBasedAppProvider::ParseMimeappsList(const std::string& path, MimeAssociation& associations)
 {
 	std::ifstream file(path);
 	if (!file.is_open()) return;
@@ -640,7 +642,7 @@ void LinuxAppProvider::ParseMimeappsList(const std::string& path, MimeAssociatio
 
 // Combines multiple mimeapps.list files into a single association structure.
 // The order of paths is important, from high priority to low.
-LinuxAppProvider::MimeAssociation LinuxAppProvider::ParseMimeappsLists(const std::vector<std::string>& paths)
+XDGBasedAppProvider::MimeAssociation XDGBasedAppProvider::ParseMimeappsLists(const std::vector<std::string>& paths)
 {
 	MimeAssociation associations;
 	for (const auto& path : paths) {
@@ -650,7 +652,7 @@ LinuxAppProvider::MimeAssociation LinuxAppProvider::ParseMimeappsLists(const std
 }
 
 
-std::string LinuxAppProvider::EscapePathForShell(const std::string& path)
+std::string XDGBasedAppProvider::EscapePathForShell(const std::string& path)
 {
 	std::string escaped_path;
 	escaped_path.reserve(path.size() + 2);
@@ -667,7 +669,7 @@ std::string LinuxAppProvider::EscapePathForShell(const std::string& path)
 }
 
 
-std::string LinuxAppProvider::Trim(std::string str)
+std::string XDGBasedAppProvider::Trim(std::string str)
 {
 	str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) { return !std::isspace(ch); }));
 	str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), str.end());
@@ -675,14 +677,14 @@ std::string LinuxAppProvider::Trim(std::string str)
 }
 
 
-std::string LinuxAppProvider::RunCommandAndCaptureOutput(const std::string& cmd)
+std::string XDGBasedAppProvider::RunCommandAndCaptureOutput(const std::string& cmd)
 {
 	std::string result;
 	return POpen(result, cmd.c_str()) ? Trim(result) : "";
 }
 
 
-std::string LinuxAppProvider::GetDefaultApp(const std::string& mime_type)
+std::string XDGBasedAppProvider::GetDefaultApp(const std::string& mime_type)
 {
 	if (mime_type.empty()) return "";
 	std::string escaped_mime = EscapePathForShell(mime_type);
@@ -691,7 +693,7 @@ std::string LinuxAppProvider::GetDefaultApp(const std::string& mime_type)
 }
 
 
-bool LinuxAppProvider::IsValidDir(const std::string& path)
+bool XDGBasedAppProvider::IsValidDir(const std::string& path)
 {
 	struct stat buffer;
 	if (stat(path.c_str(), &buffer) != 0) return false;
@@ -699,7 +701,7 @@ bool LinuxAppProvider::IsValidDir(const std::string& path)
 }
 
 
-bool LinuxAppProvider::IsReadableFile(const std::string &path) {
+bool XDGBasedAppProvider::IsReadableFile(const std::string &path) {
 	struct stat st;
 	if (stat(path.c_str(), &st) != 0) return false;
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))) return false;
@@ -710,7 +712,7 @@ bool LinuxAppProvider::IsReadableFile(const std::string &path) {
 }
 
 
-std::string LinuxAppProvider::MimeTypeFromXdgMimeTool(const std::string& pathname)
+std::string XDGBasedAppProvider::MimeTypeFromXdgMimeTool(const std::string& pathname)
 {
 	std::string result;
 	if (_use_xdg_mime_tool) {
@@ -721,7 +723,7 @@ std::string LinuxAppProvider::MimeTypeFromXdgMimeTool(const std::string& pathnam
 }
 
 
-std::string LinuxAppProvider::MimeTypeFromFileTool(const std::string& pathname)
+std::string XDGBasedAppProvider::MimeTypeFromFileTool(const std::string& pathname)
 {
 	std::string result;
 	if(_use_file_tool) {
@@ -732,7 +734,7 @@ std::string LinuxAppProvider::MimeTypeFromFileTool(const std::string& pathname)
 }
 
 
-std::string LinuxAppProvider::MimeTypeByExtension(const std::string& pathname)
+std::string XDGBasedAppProvider::MimeTypeByExtension(const std::string& pathname)
 {
 	// A static map for common file extensions as a last-resort fallback.
 	static const std::unordered_map<std::string, std::string> ext_to_type_map = {
@@ -784,7 +786,7 @@ std::string LinuxAppProvider::MimeTypeByExtension(const std::string& pathname)
 
 
 // Collects and prioritizes MIME types for a file using multiple detection methods.
-std::vector<std::string> LinuxAppProvider::CollectAndPrioritizeMimeTypes(const std::string& pathname)
+std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(const std::string& pathname)
 {
 	std::vector<std::string> mime_types;
 	std::unordered_set<std::string> seen;
@@ -839,7 +841,7 @@ std::vector<std::string> LinuxAppProvider::CollectAndPrioritizeMimeTypes(const s
 }
 
 
-bool LinuxAppProvider::IsDesktopWhitespace(char c)
+bool XDGBasedAppProvider::IsDesktopWhitespace(char c)
 {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
 }
@@ -847,7 +849,7 @@ bool LinuxAppProvider::IsDesktopWhitespace(char c)
 
 // Tokenizes the Exec= line according to the Desktop Entry Specification's rules
 // for quoting and escaping. It is not a full shell parser.
-std::vector<Token> LinuxAppProvider::TokenizeDesktopExec(const std::string& str)
+std::vector<Token> XDGBasedAppProvider::TokenizeDesktopExec(const std::string& str)
 {
 	std::vector<Token> tokens;
 	std::string cur;
@@ -914,7 +916,7 @@ std::vector<Token> LinuxAppProvider::TokenizeDesktopExec(const std::string& str)
 
 
 // Processes escape sequences (\n, \t, \\, etc.) in a token's text.
-std::string LinuxAppProvider::UndoEscapes(const Token& token)
+std::string XDGBasedAppProvider::UndoEscapes(const Token& token)
 {
 	std::string result;
 	result.reserve(token.text.size());
@@ -951,7 +953,7 @@ std::string LinuxAppProvider::UndoEscapes(const Token& token)
 
 
 // Expands XDG Desktop Entry field codes (%f, %F, %u, %U, %c, etc.).
-bool LinuxAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
+bool XDGBasedAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
 										const std::string& pathname,
 										const std::string& unescaped,
 										std::vector<std::string>& out_args)
@@ -991,7 +993,7 @@ bool LinuxAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
 
 
 // Escapes a single command-line argument for safe execution by the shell.
-std::string LinuxAppProvider::EscapeArg(const std::string& arg)
+std::string XDGBasedAppProvider::EscapeArg(const std::string& arg)
 {
 	std::string out;
 	out.push_back('"');
@@ -1011,7 +1013,7 @@ std::string LinuxAppProvider::EscapeArg(const std::string& arg)
 
 // Retrieves a localized string value (e.g., Name[en_US]) from a map of key-value pairs,
 // following the locale resolution logic based on LC_*, LANG environment variables.
-std::string LinuxAppProvider::GetLocalizedValue(const std::unordered_map<std::string, std::string>& values,
+std::string XDGBasedAppProvider::GetLocalizedValue(const std::unordered_map<std::string, std::string>& values,
 												const std::string& key)
 {
 	const char* env_vars[] = {"LC_ALL", "LC_MESSAGES", "LANG"};
@@ -1045,7 +1047,7 @@ std::string LinuxAppProvider::GetLocalizedValue(const std::unordered_map<std::st
 
 
 // Parses a .desktop file according to the Desktop Entry Specification.
-std::optional<DesktopEntry> LinuxAppProvider::ParseDesktopFile(const std::string& path)
+std::optional<DesktopEntry> XDGBasedAppProvider::ParseDesktopFile(const std::string& path)
 {
 	std::ifstream file(path);
 	if (!file.is_open()) {
@@ -1118,7 +1120,7 @@ std::optional<DesktopEntry> LinuxAppProvider::ParseDesktopFile(const std::string
 }
 
 
-CandidateInfo LinuxAppProvider::ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry)
+CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry)
 {
 	CandidateInfo candidate;
 	candidate.terminal = desktop_entry.terminal;

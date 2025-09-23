@@ -521,10 +521,10 @@ IConsoleInput *ConsoleInput::ForkConsoleInput(HANDLE con_handle)
 	return new ConsoleInput;
 }
 
-void ConsoleInput::JoinConsoleInput(IConsoleInput *con_in)
+void ConsoleInput::ReleaseConsoleInput(IConsoleInput *con_in, bool join)
 {
 	ConsoleInput *ci = (ConsoleInput *)con_in;
-	if (!ci->_pending.empty()) {
+	if (join && !ci->_pending.empty()) {
 		std::unique_lock<std::mutex> lock(_mutex);
 		for (const auto &evnt : ci->_pending) {
 			_pending.emplace_back(evnt);

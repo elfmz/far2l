@@ -782,7 +782,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 
 				Text(x, y, ColorF, Msg::HighlightExample1, filenameexamplelen);
 				x += filenameexamplelen;
-				ColorF &= (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE));
+				ColorF &= (0xFFFFFFFFFFFFFFFF ^ (IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK | COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE));
 				Text(L' ', ColorF, freespace-(ng + prews));
 
 				x += (freespace - (ng + prews));

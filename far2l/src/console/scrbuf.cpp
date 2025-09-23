@@ -181,14 +181,13 @@ void ScreenBuf::SetExplicitLineBreak(int Y)
 	int LastNonSpace = 0;
 	CHAR_INFO *PtrBuf = Buf + Y * BufX;
 	for (int i = 0; i < BufX; i++) {
-		if ((PtrBuf[i].Char.UnicodeChar != ' ' && PtrBuf[i].Char.UnicodeChar != 0)) {
+		if ((PtrBuf[i].Char.UnicodeChar != ' ' && PtrBuf[i].Char.UnicodeChar != 0)
+				|| (i != 0 && (PtrBuf[i].Attributes & BACKGROUND_RGB) != (PtrBuf[i - 1].Attributes & BACKGROUND_RGB))) {
 			LastNonSpace = i;
 		}
-		PtrBuf[LastNonSpace].Attributes &= ~EXPLICIT_LINE_BREAK;
+		PtrBuf[i].Attributes &= ~EXPLICIT_LINE_BREAK;
 	}
-	if (LastNonSpace > 0) {
-		PtrBuf[LastNonSpace].Attributes |= EXPLICIT_LINE_BREAK;
-	}
+	PtrBuf[LastNonSpace].Attributes |= EXPLICIT_LINE_BREAK;
 }
 
 /*
@@ -215,8 +214,7 @@ void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 
 	for (I = 0; I < Height; I++) {
 		CHAR_INFO *DstBuf = Buf + (Y1 + I) * BufX + X1;
-		CHAR_INFO *SrcBuf = ss ? ss->GetBufferAddress()
-			+ ((Y1 + I) - ss->Y1) * (ss->X2 + 1 - ss->X1) + (X1 - ss->X1) : DstBuf;
+		const CHAR_INFO *SrcBuf = ss ? &ss->Read(X1, Y1 + I) : DstBuf;
 
 		for (J = 0; J < Width; J++, ++DstBuf, ++SrcBuf) {
 

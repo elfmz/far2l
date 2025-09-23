@@ -17,16 +17,28 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 		size_t nc_cursor_offset = (size_t)-1;
 		ConsoleChars unwrapped_chars;
 		for (size_t y = 0, ymax = _console_chars.size() / _width; y < ymax; ++y) {
+			// need to skip unrelevant spaces at the line ending, for that -
+			// loop from end to begin until first meaningful character, which can be:
+			//  - any non space character
+			//  - any space character with EXPLICIT_LINE_BREAK or IMPORTANT_LINE_CHAR attribute set
+			//  - any space character which causes background color change
 			size_t w = _width;
-			for (;w > 0; --w) {
+			for (const CHAR_INFO *prev_ci = nullptr; w > 0; --w) {
 				const auto &ci = _console_chars[_width * y + (w - 1)];
-				if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
+				if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ')
+						|| (ci.Attributes & (EXPLICIT_LINE_BREAK | IMPORTANT_LINE_CHAR)) != 0
+						|| (prev_ci && (ci.Attributes & BACKGROUND_RGB) != (prev_ci->Attributes & BACKGROUND_RGB)))  {
 					break;
 				}
+				prev_ci = &ci;
 			}
 			if (w > 0) {
+				// mark characters before unrelevant space tail as important, so spaces there will not be considered
+				// unrelevant and skipped if currently collected whole line will be wrapped again in future
+				// also remove redundant EXPLICIT_LINE_BREAK markings in the middle of string
 				if (w > 1) for (auto x = w - 1; x--; ) {
 					_console_chars[_width * y + x].Attributes &= ~EXPLICIT_LINE_BREAK;
+					_console_chars[_width * y + x].Attributes |= IMPORTANT_LINE_CHAR;
 				}
 				auto line_begin = _console_chars.begin() + y * _width;
 				unwrapped_chars.insert(unwrapped_chars.end(), line_begin, line_begin + w);

@@ -1,6 +1,14 @@
 	///console API
-	WINPORT_DECL_DEF(ForkConsole,HANDLE,())
-	WINPORT_DECL_DEF(JoinConsole,VOID,(HANDLE hConsole))
+
+
+	/// Forked consoles are extension of WinPort, allowing to implement non-interactive virtual terminal
+	/// or to save/restore content of console, while using usual screen resize recomposition logic.
+	// Clones given console into new non-interactive one and returns handle of new console.
+	WINPORT_DECL_DEF(ForkConsole,HANDLE,(HANDLE hParentConsole))
+	// Copy state (output and pending input) of previously cloned non-interactive console into giren parent and delete cloned console
+	WINPORT_DECL_DEF(JoinConsole,VOID,(HANDLE hParentConsole, HANDLE hConsole))
+	// Just delete cloned console, losing its state
+	WINPORT_DECL_DEF(DiscardConsole,VOID,(HANDLE hConsole))
 
 	WINPORT_DECL_DEF(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput))
 	WINPORT_DECL_DEF(SetConsoleWindowInfo,BOOL,(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow))

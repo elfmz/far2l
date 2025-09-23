@@ -530,93 +530,24 @@ struct VTAnsiContext
 
 	class AlternativeScreenBuffer
 	{
-		VTAnsiContext &_ctx;
-		bool _enabled = false;
-		struct SavedScreenBuffer : std::vector<CHAR_INFO>
+		HANDLE _preserved_con_hnd{NULL};
+
+	public:
+		void Toggle(HANDLE con_hnd, bool activate)
 		{
-			CONSOLE_SCREEN_BUFFER_INFO info;
-			bool valid = false;
-		} _other;
-
-		public:
-		AlternativeScreenBuffer(VTAnsiContext &ctx) : _ctx(ctx)
-		{
-		}
-
-		void Toggle(HANDLE con_hnd, bool enable)
-		{
-			if (_enabled == enable)
-				return;
-
-			SavedScreenBuffer tmp;
-			if (!WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &tmp.info)) {
-				fprintf(stderr, "AlternativeScreenBuffer: csbi failed\n");
-				return;
-			}
-			if (tmp.info.dwSize.Y > 0 && tmp.info.dwSize.X > 0) {
-				tmp.resize((size_t)tmp.info.dwSize.Y * (size_t)tmp.info.dwSize.X);
-				COORD origin = {0, 0};
-				WINPORT(ReadConsoleOutput)(con_hnd, &tmp[0], tmp.info.dwSize, origin, &tmp.info.srWindow);
-			}
-			tmp.valid = true;
-
-			if (_other.valid) {
-	//			WINPORT(SetConsoleWindowInfo)(con_hnd, TRUE, &_other.info.srWindow);
-				COORD origin = {0, 0}, curpos = _other.info.dwCursorPosition;
-				SMALL_RECT outrect = _other.info.srWindow;
-				if (tmp.info.dwSize.Y < _other.info.dwSize.Y)
-					origin.Y = _other.info.dwSize.Y - tmp.info.dwSize.Y;
-				if (curpos.X >= tmp.info.dwSize.X)
-					curpos.X = (tmp.info.dwSize.X > 0) ? tmp.info.dwSize.X - 1 : 0;
-				if (curpos.X >= tmp.info.dwSize.X)
-					curpos.Y = (tmp.info.dwSize.Y > 0) ? tmp.info.dwSize.Y - 1 : 0;
-
-				WINPORT(WriteConsoleOutput)(con_hnd, &_other[0], _other.info.dwSize, origin, &outrect);
-
-				// if new screen bigger than saved - fill oversize with emptiness
-				if (tmp.info.dwSize.Y > _other.info.dwSize.Y) {
-					COORD pos = {0, 0};
-					for (pos.Y = _other.info.dwSize.Y + 1; pos.Y <= tmp.info.dwSize.Y; ++pos.Y) {
-						DWORD written = 0;
-						WINPORT(FillConsoleOutputCharacter)(con_hnd, ' ', tmp.info.dwSize.X, pos, &written);
-					}
+			if (activate) {
+				if (!_preserved_con_hnd) {
+					_preserved_con_hnd = WINPORT(ForkConsole)(con_hnd);
+				} else {
+					fprintf(stderr, "AlternativeScreenBuffer: already active\n");
 				}
-
-				if (tmp.info.dwSize.X > _other.info.dwSize.X) {
-					COORD pos = { SHORT(tmp.info.srWindow.Left + _other.info.dwSize.X + 1), 0};
-					for (pos.Y = 0; pos.Y <= tmp.info.dwSize.Y; ++pos.Y) {
-						DWORD written = 0;
-						WINPORT(FillConsoleOutputCharacter)(con_hnd, ' ', tmp.info.dwSize.X - _other.info.dwSize.X, pos, &written);
-					}
-				}
-
-				WINPORT(SetConsoleCursorPosition)(con_hnd, curpos);
-				WINPORT(SetConsoleTextAttribute)(con_hnd, _other.info.wAttributes);
-				_ctx.ansi_state.font_state.FromConsoleAttributes(_other.info.wAttributes);
-	//			fprintf(stderr, "AlternativeScreenBuffer: %d {%d, %d}\n", enable, _other.info.dwCursorPosition.X, _other.info.dwCursorPosition.Y);
+			} else if (_preserved_con_hnd) {
+				WINPORT(JoinConsole)(con_hnd, _preserved_con_hnd);
+				_preserved_con_hnd = NULL;
 			} else {
-				COORD zero_pos = {};
-				DWORD written = 0;
-				WINPORT(FillConsoleOutputCharacter)(con_hnd, ' ',
-					(DWORD)tmp.info.dwSize.Y * (DWORD)tmp.info.dwSize.X, zero_pos, &written);
-				WINPORT(FillConsoleOutputAttribute)(con_hnd, _ctx.saved_state.csbi.wAttributes,
-					(DWORD)tmp.info.dwSize.Y * (DWORD)tmp.info.dwSize.X, zero_pos, &written);
-				WINPORT(SetConsoleCursorPosition)(con_hnd, zero_pos);
-				WINPORT(SetConsoleTextAttribute)(con_hnd, _ctx.saved_state.csbi.wAttributes);
-				_ctx.ansi_state.font_state.FromConsoleAttributes(_ctx.saved_state.csbi.wAttributes);
-	//			fprintf(stderr, "AlternativeScreenBuffer: %d XXX %x\n", enable, saved_state.DefaultAttributes());
+				fprintf(stderr, "AlternativeScreenBuffer: not active\n");
 			}
-
-			std::swap(tmp, _other);
-			_enabled = enable;
 		}
-
-		void Reset(HANDLE con_hnd)
-		{
-			Toggle(con_hnd, false);
-			_other.valid = false;
-		}
-
 	} alternative_screen_buffer;
 
 	void LimitByScrollRegion(SMALL_RECT &rect)
@@ -1598,7 +1529,6 @@ struct VTAnsiContext
 	}
 
 	VTAnsiContext()
-		: alternative_screen_buffer(*this)
 	{
 	}
 };
@@ -1612,14 +1542,11 @@ VTAnsi::VTAnsi(IVTShell *vtsh)
 	_ctx->saved_state.InitFromConsole(_ctx->vt_shell->ConsoleHandle());
 	_ctx->ansi_state.font_state.FromConsoleAttributes(_ctx->saved_state.csbi.wAttributes);
 
-	VTLog::Start();
-
 //	get_state();
 }
 
 VTAnsi::~VTAnsi()
 {
-	VTLog::Stop();
 	HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
 	_ctx->saved_state.ApplyToConsole(con_hnd);
 	WINPORT(FlushConsoleInputBuffer)(con_hnd);
@@ -1673,7 +1600,7 @@ void VTAnsi::OnStop()
 	RevertConsoleState(con_hnd);
 	_incomplete.tail.clear();
 	_ctx->orig_palette.clear();
-	_ctx->alternative_screen_buffer.Reset(con_hnd);
+	_ctx->alternative_screen_buffer.Toggle(con_hnd, false);
 	_ctx->vt_shell->OnScreenModeChanged(false);
 	//_ctx->saved_state.ApplyToConsole(con_hnd, false);
 	_ctx->ResetTerminal();

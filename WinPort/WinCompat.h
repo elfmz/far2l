@@ -579,9 +579,13 @@ typedef struct _INPUT_RECORD {
 #define FOREGROUND_TRUECOLOR    0x0100 // Use 24 bit RGB colors set by SET_RGB_FORE
 #define BACKGROUND_TRUECOLOR    0x0200 // Use 24 bit RGB colors set by SET_RGB_BACK
 #define EXPLICIT_LINE_BREAK        0x0400 // Don't concatenate next line if this char is last in current line when lines recomposed due to screen resize or VT history rendering
+#define IMPORTANT_LINE_CHAR        0x0800 // Dont skip this character when recomposing even if its a space, application dont need to set this flag - its managed by WinPort internally
 #define COMMON_LVB_REVERSE_VIDEO   0x4000 // Reverse fore/back ground attribute.
 #define COMMON_LVB_UNDERSCORE      0x8000 // Underscore.
 #define COMMON_LVB_STRIKEOUT       0x2000 // Striekout.
+
+#define FOREGROUND_RGB (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE)
+#define BACKGROUND_RGB (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)
 
 // Constants below not implemented and their bit values are reserved and must be zero-inited
 // #define COMMON_LVB_GRID_HORIZONTAL

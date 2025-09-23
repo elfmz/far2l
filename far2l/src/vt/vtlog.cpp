@@ -14,10 +14,6 @@
 #include "ctrlobj.hpp"
 #include "cmdline.hpp"
 
-
-#define FOREGROUND_RGB (FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE)
-#define BACKGROUND_RGB (BACKGROUND_RED|BACKGROUND_GREEN|BACKGROUND_BLUE)
-
 namespace VTLog
 {
 	struct DumpState
@@ -50,15 +46,20 @@ namespace VTLog
 	// rv.second: if line actually ended or subject for tail-merging with following line(s)
 	static std::pair<unsigned int, bool> ActualLineWidth(unsigned int Width, const CHAR_INFO *Chars)
 	{
+		const CHAR_INFO *prev_ci = nullptr;
 		for (auto x = Width;;) {
 			if (x == 0) {
 				return std::pair<unsigned int, bool>(0, true);
 			}
 			--x;
 			const auto &ci = Chars[x];
-			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ') || (ci.Attributes & (BACKGROUND_RGB|EXPLICIT_LINE_BREAK)) != 0) {
+			// essentially same condition logic as applied in ConsoleBuffer::SetSize
+			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ')
+					|| (ci.Attributes & (IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK)) != 0
+					|| (prev_ci && (ci.Attributes & BACKGROUND_RGB) != (prev_ci->Attributes & BACKGROUND_RGB)))  {
 				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0 || x != Width - 1);
 			}
+			prev_ci = &ci;
 		}
 	}
 
@@ -213,9 +214,11 @@ namespace VTLog
 
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
+		auto width_eol = ActualLineWidth(Width, Chars);
 		if (VTShell_State() == VTS_NORMAL_SCREEN) {
-			auto width_eol = ActualLineWidth(Width, Chars);
 			g_lines.Add(hConsole, Chars, width_eol.first, width_eol.second);
+		} else if (hConsole && CtrlObject && CtrlObject->CmdLine && hConsole == CtrlObject->CmdLine->GetBackgroundConsole()) {
+			g_lines.Add(NULL, Chars, width_eol.first, width_eol.second);
 		}
 	}
 
@@ -251,7 +254,7 @@ namespace VTLog
 		}
 	}
 
-	static void AppendActiveScreenLines(HANDLE con_hnd, std::string &s, DumpState &ds, bool colored)
+	static void AppendConsoleScreenLines(HANDLE con_hnd, std::string &s, DumpState &ds, bool colored)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
 		if (WINPORT(GetConsoleScreenBufferInfo)(con_hnd, &csbi) && csbi.dwSize.X > 0 && csbi.dwSize.Y > 0) {
@@ -270,20 +273,6 @@ namespace VTLog
 				}
 			}
 		}		
-	}
-
-	static void AppendSavedScreenLines(std::string &s, DumpState &ds, bool colored)
-	{
-		if (CtrlObject->CmdLine) {
-			int w = 0, h = 0;
-			const CHAR_INFO *ci = CtrlObject->CmdLine->GetBackgroundScreen(w, h);
-			if (ci && w > 0 && h > 0) {
-				while (h--) {
-					AppendScreenLine(ci, (unsigned int)w, s, ds, colored, false);
-					ci+= w;
-				}
-			}
-		}
 	}
 
 	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines, const char *wanted_path)
@@ -309,10 +298,10 @@ namespace VTLog
 		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {
 			std::string s;
-			if (!con_hnd && VTShell_State() == VTS_IDLE) {
-				AppendSavedScreenLines(s, ds, colored);
-			} else {
-				AppendActiveScreenLines(con_hnd, s, ds, colored);
+			if (con_hnd || VTShell_State() != VTS_IDLE) {
+				AppendConsoleScreenLines(con_hnd, s, ds, colored);
+			} else if (CtrlObject->CmdLine) {
+				AppendConsoleScreenLines(CtrlObject->CmdLine->GetBackgroundConsole(), s, ds, colored);
 			}
 			if (!s.empty()) {
 				if (write(fd, s.c_str(), s.size()) != (int)s.size()) {

@@ -53,8 +53,11 @@ public:
 	void SavePlatformSettings() override;
 
 private:
+	// RankedCandidate holds a non-owning pointer to a DesktopEntry object.
+	// The DesktopEntry object itself is owned by the _desktop_entry_cache map
+	// and its lifetime is guaranteed to exceed the lifetime of this pointer.
 	struct RankedCandidate {
-		DesktopEntry entry;
+		const DesktopEntry* entry = nullptr;
 		int rank = 0;
 
 		bool operator<(const RankedCandidate& other) const {

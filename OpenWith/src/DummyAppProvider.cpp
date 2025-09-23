@@ -1,3 +1,4 @@
+#include "AppProvider.hpp"
 #include "DummyAppProvider.hpp"
 #include "common.hpp"
 #include <string>

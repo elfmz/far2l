@@ -37,10 +37,10 @@ struct DesktopEntry
 };
 
 
-class LinuxAppProvider : public AppProvider
+class XDGBasedAppProvider : public AppProvider
 {
 public:
-	explicit LinuxAppProvider(TMsgGetter msg_getter);
+	explicit XDGBasedAppProvider(TMsgGetter msg_getter);
 	std::vector<CandidateInfo> GetAppCandidates(const std::wstring& pathname) override;
 	std::wstring ConstructCommandLine(const CandidateInfo& candidate, const std::wstring& pathname) override;
 	std::wstring GetMimeType(const std::wstring& pathname) override;

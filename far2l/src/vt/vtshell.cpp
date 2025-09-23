@@ -1066,7 +1066,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		StopIOReaders();
 		VTLog::ConsoleJoined(_console_handle);
-		WINPORT(JoinConsole)(_console_handle);
+		WINPORT(JoinConsole)(NULL, _console_handle);
 		_console_handle = NULL;
 		OnTerminalResized();
 		_vta.OnReattached();
@@ -1098,7 +1098,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (may_bgnd) {
 				_vta.OnDetached();
 				DeliverPendingWindowInfo();
-				_console_handle = WINPORT(ForkConsole)();//CommandTerminated
+				_console_handle = WINPORT(ForkConsole)(NULL);//CommandTerminated
 				PrintNoticeOnPrimaryConsole(Msg::CommandBackgrounded);
 				StartIOReaders();
 				return false;

@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x0D
+#define FAR2L_BACKEND_ABI_VERSION	0x0E
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
@@ -107,7 +107,7 @@ protected:
 
 public:
 	virtual IConsoleInput *ForkConsoleInput(HANDLE con_handle) = 0;
-	virtual void JoinConsoleInput(IConsoleInput *con_in) = 0;
+	virtual void ReleaseConsoleInput(IConsoleInput *con_in, bool join) = 0;
 
 	virtual void Enqueue(const INPUT_RECORD *data, DWORD size) = 0;
 	virtual DWORD Peek(INPUT_RECORD *data, DWORD size, unsigned int requestor_priority = 0) = 0;
@@ -161,7 +161,7 @@ public:
 	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1) = 0;
 
 	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle) = 0;
-	virtual void JoinConsoleOutput(IConsoleOutput *con_out) = 0;
+	virtual void ReleaseConsoleOutput(IConsoleOutput *con_out, bool join) = 0;
 
 	virtual void SetBackend(IConsoleOutputBackend *listener) = 0;
 

@@ -75,31 +75,20 @@ void SaveScreen::Discard()
 
 void SaveScreen::RestoreArea(int RestoreCursor)
 {
-	if (ScreenBuf.empty()) {
-		fprintf(stderr, "SaveScreen::RestoreArea: no ScreenBuf\n");
-		return;
-	}
-	fprintf(stderr, "*** SaveScreen::RestoreArea %d %d %d %d %d %d\n", X1, Y1, X2, Y2, vWidth, vHeight);
-	PutText(X1, Y1, X2, Y2, ScreenBuf.data());
-	if (vWidth > 0 && vWidth > X2 + 1 - X1) {
-		SetScreen(X2 + 1, Y1, X1 + vWidth - 1, Y2, L' ', 0);
-	}
-	if (vHeight > 0 && vHeight > Y2 + 1 - Y1) {
-		SetScreen(X1, Y2 + 1, X2, Y1 + vHeight - 1, L' ', 0);
-	}
-	if (vWidth > 0 && vWidth > X2 + 1 - X1 && vHeight > 0 && vHeight > Y2 + 1 - Y1) {
-		SetScreen(X2 + 1, Y2 + 1, X1 + vWidth - 1, Y1 + vHeight - 1, L' ', 0);
-	}
+	fprintf(stderr, "SaveScreen::RestoreArea %d %d %d %d %s\n", X1, Y1, X2, Y2, ScreenBuf.empty() ? "EMPTY" : "");
+	if (!ScreenBuf.empty()) {
+		PutText(X1, Y1, X2, Y2, ScreenBuf.data());
 
-	if (RestoreCursor) {
-		SetCursorType(CurVisible, CurSize);
-		MoveCursor(CurPosX, CurPosY);
+		if (RestoreCursor) {
+			SetCursorType(CurVisible, CurSize);
+			MoveCursor(CurPosX, CurPosY);
+		}
 	}
 }
 
 void SaveScreen::SaveArea(int nX1, int nY1, int nX2, int nY2)
 {
-	fprintf(stderr, "*** SaveScreen::SaveArea %d %d %d %d\n", nX1, nY1, nX2, nY2);
+	fprintf(stderr, "SaveScreen::SaveArea %d %d %d %d\n", nX1, nY1, nX2, nY2);
 
 	assert(nX2 >= nX1);
 	assert(nY2 >= nY1);
@@ -107,25 +96,11 @@ void SaveScreen::SaveArea(int nX1, int nY1, int nX2, int nY2)
 	Y1 = nY1;
 	X2 = nX2;
 	Y2 = nY2;
-	vWidth = vHeight = -1;
 
 	ScreenBuf.resize((X2 - X1 + 1) * (Y2 - Y1 + 1));
 	GetText(X1, Y1, X2, Y2, ScreenBuf.data(), ScreenBuf.size() * sizeof(CHAR_INFO));
 	GetCursorPos(CurPosX, CurPosY);
 	GetCursorType(CurVisible, CurSize);
-}
-
-void SaveScreen::SaveArea()
-{
-	if (vWidth > 0) {
-		X2 = X1 + vWidth - 1;
-		vWidth = -1;
-	}
-	if (vHeight > 0) {
-		Y2 = Y1 + vHeight - 1;
-		vHeight = -1;
-	}
-	SaveArea(X1, Y1, X2, Y2);
 }
 
 void SaveScreen::AppendArea(SaveScreen *NewArea)
@@ -143,13 +118,13 @@ void SaveScreen::AppendArea(SaveScreen *NewArea)
 							NewBuf[X - NewArea->X1 + (NewArea->X2 - NewArea->X1 + 1) * (Y - NewArea->Y1)];
 }
 
-void SaveScreen::VirtualResize(int W, int H)
+const CHAR_INFO &SaveScreen::Read(int X, int Y) const
 {
-	vWidth = W;
-	vHeight = H;
-}
+	if (X < X1 || X > X2 || Y < Y1 || Y > Y2 || ScreenBuf.empty()) {
+		fprintf(stderr, "SaveScreen::Read(%d, %d) - out of bounds: %d %d %d %d\n", X, Y, X1, Y1, X2, Y2);
+		static const CHAR_INFO s_dummy_out{};
+		return s_dummy_out;
+	}
 
-void SaveScreen::DumpBuffer(const wchar_t *Title)
-{
-	SaveScreenDumpBuffer(Title, GetBufferAddress(), X1, Y1, X2, Y2, nullptr);
+	return ScreenBuf[ size_t(Y - Y1) * size_t(X2 - X1 + 1) + size_t(X - X1) ];
 }

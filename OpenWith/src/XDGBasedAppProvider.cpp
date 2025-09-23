@@ -812,7 +812,8 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 		}
 
 		// Add base types for structured MIME types (e.g., application/xml+svg -> application/xml).
-		for (const auto& mime : mime_types) {
+		std::vector<std::string> base_types = mime_types;
+		for (const auto& mime : base_types) {
 			size_t plus_pos = mime.find('+');
 			if (plus_pos != std::string::npos) {
 				add_unique(mime.substr(0, plus_pos));
@@ -820,7 +821,7 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 		}
 
 		// Add generic fallback MIME types (e.g., image/jpeg -> image/*, text/plain for any text/*).
-		for (const auto& mime : mime_types) {
+		for (const auto& mime : base_types) {
 			if (mime.rfind("text/", 0) == 0) {
 				add_unique("text/plain");
 			}

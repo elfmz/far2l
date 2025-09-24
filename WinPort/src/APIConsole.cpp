@@ -74,7 +74,7 @@ extern "C" {
 				IConsoleOutput *shadow_out = g_winport_con_out->ForkConsoleOutput(NULL);
 				shadow_out = s_shadow_out.exchange(shadow_out);
 				if (shadow_out) {
-					g_winport_con_out->JoinConsoleOutput(shadow_out);
+					g_winport_con_out->ReleaseConsoleOutput(shadow_out, true);
 				}
 			} catch (...) {
 				fprintf(stderr, "%s: exception\n", __FUNCTION__);
@@ -91,40 +91,51 @@ extern "C" {
 			while (s_shadow_usecnt != 0) {
 				usleep(1);
 			}
-			g_winport_con_out->JoinConsoleOutput(shadow_out);
+			g_winport_con_out->ReleaseConsoleOutput(shadow_out, true);
 			g_winport_con_out->RepaintsDeferFinish(true);
 		} else {
 			fprintf(stderr, "%s: called while not frozen\n", __FUNCTION__);
 		}
 	}
 
-	WINPORT_DECL(ForkConsole,HANDLE,())
-	{
-		ForkedConsole *fc = NULL;
-		try {
-			fc = new ForkedConsole;
-			fc->con_in = g_winport_con_in->ForkConsoleInput(fc);
-			fc->con_out = g_winport_con_out->ForkConsoleOutput(fc);
-
-		} catch(...) {
-			WINPORT(JoinConsole)(fc);
-			fc = NULL;
-		}
-		return fc;
-	}
-
-	WINPORT_DECL(JoinConsole,VOID,(HANDLE hConsole))
+	static void ReleaseForkedConsole(HANDLE hParentConsole, HANDLE hConsole, bool join)
 	{
 		if (hConsole) {
 			ForkedConsole *fc = (ForkedConsole *)hConsole;
 			ASSERT(fc->magic == FORKED_CONSOLE_MAGIC);
 			fc->magic^= 0x0f0f0f0f0f0f0f0f;
-			if (fc->con_in)
-				g_winport_con_in->JoinConsoleInput(fc->con_in);
-			if (fc->con_out)
-				g_winport_con_out->JoinConsoleOutput(fc->con_out);
+			if (fc->con_in) {
+				ChooseConIn(hParentConsole)->ReleaseConsoleInput(fc->con_in, join);
+			}
+			if (fc->con_out) {
+				ChooseConOut(hParentConsole)->ReleaseConsoleOutput(fc->con_out, join);
+			}
 			delete fc;
 		}
+	}
+
+	WINPORT_DECL(ForkConsole,HANDLE,(HANDLE hParentConsole))
+	{
+		ForkedConsole *fc = NULL;
+		try {
+			fc = new ForkedConsole;
+			fc->con_in = ChooseConIn(hParentConsole)->ForkConsoleInput(fc);
+			fc->con_out = ChooseConOut(hParentConsole)->ForkConsoleOutput(fc);
+		} catch (...) {
+			ReleaseForkedConsole(hParentConsole, fc, true);
+			fc = NULL;
+		}
+		return fc;
+	}
+
+	WINPORT_DECL(JoinConsole,VOID,(HANDLE hParentConsole, HANDLE hConsole))
+	{
+		ReleaseForkedConsole(hParentConsole, hConsole, true);
+	}
+
+	WINPORT_DECL(DiscardConsole,VOID,(HANDLE hConsole))
+	{
+		ReleaseForkedConsole(NULL, hConsole, false);
 	}
 	
 	WINPORT_DECL(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput))

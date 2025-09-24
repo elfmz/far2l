@@ -2242,7 +2242,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 //				EditPtr->SetObjectColor(Attr & 0xFF, HIBYTE(LOWORD(Attr)), LOBYTE(HIWORD(Attr)));
 				EditPtr->SetObjectColor(ItemColor[0],ItemColor[1],ItemColor[2]);
-				if (Opt.Dialogs.ShowArrowsInEdit) {
+				if (Opt.Dialogs.ShowArrowsInEdit && CurItem->Type != DI_FIXEDIT) {
 					EditPtr->SetOverflowArrowsColor(ItemColor[4]);
 				}
 				else {

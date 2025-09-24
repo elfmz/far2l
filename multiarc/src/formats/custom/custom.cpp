@@ -424,11 +424,6 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
 	//                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,
 	//                              FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, NULL);
 
-	DWORD ConsoleMode;
-
-	WINPORT(GetConsoleMode)(NULL, &ConsoleMode);
-	WINPORT(SetConsoleMode)
-	(NULL, ENABLE_PROCESSED_INPUT | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_MOUSE_INPUT);
 	WCHAR SaveTitle[512]{};
 
 	WINPORT(GetConsoleTitle)(NULL, SaveTitle, ARRAYSIZE(SaveTitle) - 1);
@@ -493,7 +488,6 @@ BOOL WINAPI _export CUSTOM_OpenArchive(const char *Name, int *Type, bool Silent)
 	// fprintf(stderr, "OutData: '%s'\n", OutData);
 
 	WINPORT(SetConsoleTitle)(NULL, SaveTitle);
-	WINPORT(SetConsoleMode)(NULL, ConsoleMode);
 
 	sdc_remove(TempName);
 	FillFormat(Values);

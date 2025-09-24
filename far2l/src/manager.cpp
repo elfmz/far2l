@@ -407,7 +407,7 @@ public:
 			ReplaceStrings(mi.strName, L"&", L"&&", -1);
 			mi.strName.Insert(0, FrameMenuNumTextPrefix(GetItemCount() - 1) );
 			mi.SetSelect(GetItemCount() == FramePos);
-			if (vt.done)
+			if (vt.exited)
 				mi.SetCheck(vt.exit_code ? L'!' : L'#');
 
 			AddItem(&mi);

@@ -3,7 +3,6 @@
 #include <RandomString.h>
 #include <crc64.h>
 #include <fcntl.h>
-#include <SavedScreen.h>
 #include "Backend.h"
 #include "SudoAskpassImpl.h"
 #include "WinPort.h"
@@ -24,16 +23,20 @@ class SudoAskpassScreen
 			ir.EventType = WINDOW_BUFFER_SIZE_EVENT;
 			ir.Event.WindowBufferSizeEvent.dwSize.X = w;
 			ir.Event.WindowBufferSizeEvent.dwSize.Y = h;
+			fprintf(stderr, "FinalScreenUpdater: %d %d\n",
+				ir.Event.WindowBufferSizeEvent.dwSize.X, ir.Event.WindowBufferSizeEvent.dwSize.Y);
 		}
 
 		~FinalScreenUpdater()
 		{
 			ir.Event.WindowBufferSizeEvent.bDamaged = TRUE;
+			fprintf(stderr, "~FinalScreenUpdater: %d %d\n",
+				ir.Event.WindowBufferSizeEvent.dwSize.X, ir.Event.WindowBufferSizeEvent.dwSize.Y);
 			g_winport_con_in->Enqueue(&ir, 1);
 		}
 	} _fsu;
 
-	SavedScreen _ss;
+	ConsoleForkScope _ss;
 	unsigned int _width = 0, _height = 0;
 	std::string _title, _text, _key_hint;
 	std::wstring _input;
@@ -123,7 +126,7 @@ class SudoAskpassScreen
 		while (g_winport_con_in->Dequeue(&ir, 1, _cip)) {
 			switch (ir.EventType) {
 				case WINDOW_BUFFER_SIZE_EVENT:
-					_ss.Restore();
+					_ss.Show();
 					_fsu.ir = ir;
 					_need_repaint = true;
 					break;
@@ -277,6 +280,7 @@ public:
 		_password_expected(password_expected)
 	{
 		_input.reserve(64);// to help secure cleanup in d-tor
+		_ss.Fork();
 		Repaint();
 	}
 

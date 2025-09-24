@@ -91,9 +91,7 @@ CommandLine::CommandLine()
 
 CommandLine::~CommandLine()
 {
-	if (BackgroundConsole) {
-		WINPORT(JoinConsole)(NULL, BackgroundConsole);
-	}
+	BackgroundConsole.Discard(); // dont show it
 }
 
 void CommandLine::SetVisible(bool Visible)
@@ -208,7 +206,7 @@ void CommandLine::ProcessTabCompletion()
 
 std::string CommandLine::GetConsoleLog(HANDLE con_hnd, bool colored)
 {
-	bool vtshell_busy = VTShell_State() != VTS_IDLE;
+	bool vtshell_busy = VTShell_Busy();
 	if (!vtshell_busy) {
 		++ProcessShowClock;
 		ShowBackground();
@@ -892,40 +890,33 @@ void CommandLine::ShowViewEditHistory()
 
 void CommandLine::SaveBackground()
 {
-	fprintf(stderr, "CommandLine::SaveBackground: %s\n", BackgroundConsole ? "override" : "prev");
-	if (BackgroundConsole) {
-		WINPORT(DiscardConsole)(BackgroundConsole);
-	}
+	fprintf(stderr, "CommandLine::SaveBackground\n");
 	ScrBuf.Flush();
-	BackgroundConsole = WINPORT(ForkConsole)(NULL);
+	BackgroundConsole.Fork(NULL);
+	if (BackgroundConsole) {
+		DWORD mode = 0; // set ENABLE_PROCESSED_OUTPUT to enable lines recomposing
+		if (WINPORT(GetConsoleMode)(BackgroundConsole.Handle(), &mode)) {
+			WINPORT(SetConsoleMode)(BackgroundConsole.Handle(), mode | ENABLE_PROCESSED_OUTPUT);
+		}
+	}
 }
 
 void CommandLine::ShowBackground(bool showanyway)
 {
-	if (!IsVisible() && !showanyway)
+	if ((!IsVisible() && !showanyway) || !BackgroundConsole) {
+		fprintf(stderr, "CommandLine::ShowBackground - skip\n");
 		return;
-
-	if (BackgroundConsole) {
-		WINPORT(JoinConsole)(NULL, BackgroundConsole);
-		BackgroundConsole = WINPORT(ForkConsole)(NULL);
-		ScrBuf.FillBuf();
-		fprintf(stderr, "CommandLine::ShowBackground: done\n");
-	} else {
-		fprintf(stderr, " CommandLine::ShowBackground: no BackgroundConsole\n");
 	}
+
+	fprintf(stderr, "CommandLine::ShowBackground\n");
+	BackgroundConsole.Show();
+	ScrBuf.FillBuf();
 }
 
 void CommandLine::Show()
 {
 	if (IsVisible())
 		ScreenObject::Show();
-}
-
-void CommandLine::ResizeConsole()
-{
-	if (BackgroundConsole) {
-		WINPORT(SetConsoleScreenBufferSize)(BackgroundConsole, COORD{ SHORT(ScrX + 1), SHORT(ScrY + 1) } );
-	}
 }
 
 void CommandLine::RedrawWithoutComboBoxMark()
@@ -1035,7 +1026,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 
 HANDLE CommandLine::GetBackgroundConsole()
 {
-	return BackgroundConsole;
+	return BackgroundConsole.Handle();
 }
 
 CmdLineVisibleScope::CmdLineVisibleScope()

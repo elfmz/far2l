@@ -64,6 +64,7 @@ class ConsoleOutput : public IConsoleOutput
 	virtual void Unlock();
 	void SetUpdateCellArea(SMALL_RECT &area, COORD pos);
 	void CopyFrom(const ConsoleOutput &co);
+	void SetSizeInner(unsigned int width, unsigned int height);
 
 public:
 	ConsoleOutput();

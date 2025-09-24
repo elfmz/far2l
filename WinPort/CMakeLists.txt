@@ -21,7 +21,6 @@ src/ConsoleOutput.cpp
 src/WinPortHandle.cpp
 src/CustomPanic.cpp
 src/PathHelpers.cpp
-src/SavedScreen.cpp
 src/sudo/sudo_common.cpp
 src/sudo/sudo_client.cpp
 src/sudo/sudo_client_api.cpp

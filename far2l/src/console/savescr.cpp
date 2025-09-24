@@ -32,7 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-#include <assert.h>
 #include "savescr.hpp"
 #include "colors.hpp"
 #include "syslog.hpp"
@@ -88,10 +87,12 @@ void SaveScreen::RestoreArea(int RestoreCursor)
 
 void SaveScreen::SaveArea(int nX1, int nY1, int nX2, int nY2)
 {
-	fprintf(stderr, "SaveScreen::SaveArea %d %d %d %d\n", nX1, nY1, nX2, nY2);
+	if (nX2 < nX1 || nY2 < nY1) {
+		fprintf(stderr, "SaveScreen::SaveArea %d %d %d %d - BAD\n", nX1, nY1, nX2, nY2);
+		return;
+	}
 
-	assert(nX2 >= nX1);
-	assert(nY2 >= nY1);
+	fprintf(stderr, "SaveScreen::SaveArea %d %d %d %d\n", nX1, nY1, nX2, nY2);
 	X1 = nX1;
 	Y1 = nY1;
 	X2 = nX2;

@@ -3,7 +3,6 @@
 #include <utils.h>
 #include <UtfConvert.hpp>
 #include <fcntl.h>
-#include "../WinPort/src/SavedScreen.h"
 #include "../WinPort/FarTTY.h"
 
 #include "VTFar2lExtensios.h"
@@ -270,7 +269,8 @@ char VTFar2lExtensios::ClipboardAuthorize(std::string client_id)
 	int choice;
 
 	{
-		SavedScreen saved_scr;
+		ConsoleForkScope saved_scr;
+		saved_scr.Fork();
 		ScrBuf.FillBuf();
 		do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
 			choice = Message(MSG_KEEPBACKGROUND, 5,

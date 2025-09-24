@@ -3,9 +3,8 @@ project(OpenWith)
 set(SOURCES
 src/OpenWith.cpp
 src/AppProvider.cpp
-src/BSDAppProvider.cpp
 src/DummyAppProvider.cpp
-src/LinuxAppProvider.cpp
+src/XDGBasedAppProvider.cpp
 )
 
 if(APPLE)

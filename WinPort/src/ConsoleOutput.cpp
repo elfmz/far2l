@@ -866,16 +866,23 @@ void ConsoleOutput::ReleaseConsoleOutput(IConsoleOutput *con_out, bool join)
 {
 	ConsoleOutput *co = (ConsoleOutput *)con_out;
 	if (join) {
-		unsigned int w = 0, h = 0;
+		SMALL_RECT screen_rect;
+		bool repaint_defered = false;
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
+			unsigned int w, h;
 			_buf.GetSize(w, h);
 			CopyFrom(*co);
 			_buf.SetSize(w, h, _attributes, _cursor.pos);
-			LockedChangeIdUpdate();
+			screen_rect = SMALL_RECT{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
+			if (_repaint_defer) {
+				repaint_defered = true;
+				_deferred_repaints.Add(&screen_rect, 1);
+			} else {
+				LockedChangeIdUpdate();
+			}
 		}
-		if (_backend) {
-			SMALL_RECT screen_rect{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
+		if (!repaint_defered && _backend) {
 			_backend->OnConsoleOutputUpdated(&screen_rect, 1);
 		}
 	}

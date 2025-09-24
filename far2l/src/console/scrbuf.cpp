@@ -44,6 +44,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "console.hpp"
 #include "savescr.hpp"
 
+#include <new>
+
 enum
 {
 	SBFLAGS_FLUSHED        = 0x00000001,
@@ -106,17 +108,40 @@ void ScreenBuf::AllocBuf(int X, int Y)
 	if (X == BufX && Y == BufY)
 		return;
 
-	if (Buf)
+	if (Buf) {
 		delete[] Buf;
+		Buf = nullptr;
+	}
 
-	if (Shadow)
+	if (Shadow) {
 		delete[] Shadow;
+		Shadow = nullptr;
+	}
+
+	if (X <= 0 || Y <= 0) {
+		BufX = 0;
+		BufY = 0;
+		return;
+	}
 
 	unsigned Cnt = X * Y;
-	Buf = new CHAR_INFO[Cnt]();
-	Shadow = new CHAR_INFO[Cnt]();
+	Buf = new (std::nothrow) CHAR_INFO[Cnt]();
+	Shadow = new (std::nothrow) CHAR_INFO[Cnt]();
+
+	if (!Buf || !Shadow) {
+		fprintf(stderr, "FATAL: Failed to allocate screen buffer (%d x %d)\n", X, Y);
+		delete[] Buf;
+		delete[] Shadow;
+		Buf = nullptr;
+		Shadow = nullptr;
+		BufX = 0;
+		BufY = 0;
+		abort();
+	}
+
 	BufX = X;
 	BufY = Y;
+	ResetShadow();
 }
 
 /*
@@ -125,6 +150,8 @@ void ScreenBuf::AllocBuf(int X, int Y)
 void ScreenBuf::FillBuf()
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf || !Shadow)
+		return;
 	COORD BufferSize = {BufX, BufY}, BufferCoord = {0, 0};
 	SMALL_RECT ReadRegion = {0, 0, (SHORT)(BufX - 1), (SHORT)(BufY - 1)};
 	Console.ReadOutput(*Buf, BufferSize, BufferCoord, ReadRegion);
@@ -149,13 +176,13 @@ void ScreenBuf::Write(int X, int Y, const CHAR_INFO *Text, int TextLength)
 		X = 0;
 	}
 
-	if (X >= BufX || Y >= BufY || !TextLength || Y < 0) {
+	if (!Buf || X >= BufX || Y >= BufY || !TextLength || Y < 0) {
 		return;
 	}
 
 	if (X + TextLength >= BufX) {
 		TextLength = BufX - X;	//??
-		if (TextLength == 0) {
+		if (TextLength <= 0) {
 			return;
 		}
 	}
@@ -178,6 +205,9 @@ void ScreenBuf::Write(int X, int Y, const CHAR_INFO *Text, int TextLength)
 
 void ScreenBuf::SetExplicitLineBreak(int Y)
 {
+	if (!Buf || Y < 0 || Y >= BufY)
+		return;
+
 	int LastNonSpace = 0;
 	CHAR_INFO *PtrBuf = Buf + Y * BufX;
 	for (int i = 0; i < BufX; i++) {
@@ -196,27 +226,31 @@ void ScreenBuf::SetExplicitLineBreak(int Y)
 void ScreenBuf::Read(int X1, int Y1, int X2, int Y2, CHAR_INFO *Text, int MaxTextLength)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
 	int Width = X2 - X1 + 1;
 	int Height = Y2 - Y1 + 1;
-	int I, Idx;
 
-	for (Idx = I = 0; I < Height; I++, Idx+= Width)
+	for (int I = 0, Idx = 0; I < Height; I++, Idx+= Width)
 		memcpy(Text + Idx, Buf + (Y1 + I) * BufX + X1,
-				Min((int)sizeof(CHAR_INFO) * Width, (int)MaxTextLength));
+				Min((int)sizeof(CHAR_INFO) * Width, MaxTextLength));
 }
 
 void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
 	int Width = X2 - X1 + 1;
 	int Height = Y2 - Y1 + 1;
-	int I, J;
 
-	for (I = 0; I < Height; I++) {
+	for (int I = 0; I < Height; I++) {
 		CHAR_INFO *DstBuf = Buf + (Y1 + I) * BufX + X1;
 		const CHAR_INFO *SrcBuf = ss ? &ss->Read(X1, Y1 + I) : DstBuf;
 
-		for (J = 0; J < Width; J++, ++DstBuf, ++SrcBuf) {
+		for (int J = 0; J < Width; J++, ++DstBuf, ++SrcBuf) {
 
 			union {
 				uint64_t attr64;
@@ -258,14 +292,16 @@ void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 void ScreenBuf::ApplyColorMask(int X1, int Y1, int X2, int Y2, DWORD64 ColorMask)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
 	int Width = X2 - X1 + 1;
 	int Height = Y2 - Y1 + 1;
-	int I, J;
 
-	for (I = 0; I < Height; I++) {
+	for (int I = 0; I < Height; I++) {
 		CHAR_INFO *PtrBuf = Buf + (Y1 + I) * BufX + X1;
 
-		for (J = 0; J < Width; J++, ++PtrBuf) {
+		for (int J = 0; J < Width; J++, ++PtrBuf) {
 			if (!(PtrBuf->Attributes&= ~ColorMask))
 				PtrBuf->Attributes = 0x08;
 		}
@@ -287,6 +323,9 @@ void ScreenBuf::ApplyColorMask(int X1, int Y1, int X2, int Y2, DWORD64 ColorMask
 void ScreenBuf::ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
 	if (X1 <= ScrX && Y1 <= ScrY && X2 >= 0 && Y2 >= 0) {
 		X1 = Max(0, X1);
 		X2 = Min(static_cast<int>(ScrX), X2);
@@ -295,15 +334,12 @@ void ScreenBuf::ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color)
 
 		int Width = X2 - X1 + 1;
 		int Height = Y2 - Y1 + 1;
-		int I, J;
 
-		for (I = 0; I < Height; I++) {
+		for (int I = 0; I < Height; I++) {
 			CHAR_INFO *PtrBuf = Buf + (Y1 + I) * BufX + X1;
 
-			for (J = 0; J < Width; J++, ++PtrBuf)
+			for (int J = 0; J < Width; J++, ++PtrBuf)
 				PtrBuf->Attributes = Color;
-
-			// Buf[K+J].Attributes=Color;
 		}
 
 #ifdef DIRECT_SCREEN_OUT
@@ -323,6 +359,9 @@ void ScreenBuf::ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color)
 void ScreenBuf::ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color, DWORD64 ExceptColor)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
 	if (X1 <= ScrX && Y1 <= ScrY && X2 >= 0 && Y2 >= 0) {
 		X1 = Max(0, X1);
 		X2 = Min(static_cast<int>(ScrX), X2);
@@ -354,15 +393,18 @@ void ScreenBuf::ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color, DWORD6
 void ScreenBuf::FillRect(int X1, int Y1, int X2, int Y2, WCHAR Ch, DWORD64 Color)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
 	int Width = X2 - X1 + 1;
 	int Height = Y2 - Y1 + 1;
-	int I, J;
-	CHAR_INFO CI, *PtrBuf;
+	CHAR_INFO CI;
 	CI.Attributes = Color;
 	SetVidChar(CI, Ch);
 
-	for (I = 0; I < Height; I++) {
-		for (PtrBuf = Buf + (Y1 + I) * BufX + X1, J = 0; J < Width; J++, ++PtrBuf)
+	for (int I = 0; I < Height; I++) {
+		CHAR_INFO *PtrBuf = Buf + (Y1 + I) * BufX + X1;
+		for (int J = 0; J < Width; J++, ++PtrBuf)
 			*PtrBuf = CI;
 	}
 
@@ -385,6 +427,9 @@ void ScreenBuf::Flush()
 	ConsoleRepaintsDeferScope crds(NULL);
 
 	CriticalSectionLock Lock(CS);
+
+	if (!Buf || !Shadow)
+		return;
 
 	if (!LockCount) {
 		if (CtrlObject && (CtrlObject->Macro.IsRecording() || CtrlObject->Macro.IsExecuting())) {
@@ -488,7 +533,7 @@ void ScreenBuf::Flush()
 			Buf[0] = MacroChar;
 		}
 
-		if (ElevationCharUsed) {
+		if (ElevationCharUsed && BufX > 0 && BufY > 0) {
 			Buf[BufX * BufY - 1] = ElevationChar;
 		}
 
@@ -585,6 +630,8 @@ void ScreenBuf::RestoreElevationChar()
 void ScreenBuf::Scroll(int Num)
 {
 	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
 
 	if (Num > 0 && Num < BufY)
 		memmove(Buf, Buf + Num * BufX, (BufY - Num) * BufX * sizeof(CHAR_INFO));

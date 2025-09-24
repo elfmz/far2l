@@ -80,14 +80,23 @@ private:
 		std::unordered_map<std::string, std::unordered_set<std::string>> removed;
 	};
 
-	// Custom hash function to allow using std::pair as a key in std::unordered_map.
-	struct PairHash
+	// A key for the unique_candidates map
+	struct AppUniqueKey
 	{
-		template <class T1, class T2>
-		std::size_t operator() (const std::pair<T1, T2>& p) const {
-			auto h1 = std::hash<T1>{}(p.first);
-			auto h2 = std::hash<T2>{}(p.second);
-			// A simple way to combine two hashes.
+		std::string_view name;
+		std::string_view exec;
+
+		[[nodiscard]] bool operator==(const AppUniqueKey& other) const {
+			return name == other.name && exec == other.exec;
+		}
+	};
+
+	// Custom hash function for AppUniqueKey
+	struct AppUniqueKeyHash
+	{
+		std::size_t operator()(const AppUniqueKey& k) const {
+			const auto h1 = std::hash<std::string_view>{}(k.name);
+			const auto h2 = std::hash<std::string_view>{}(k.exec);
 			return h1 ^ (h2 << 1);
 		}
 	};
@@ -97,9 +106,8 @@ private:
 	struct CandidateSearchContext
 	{
 		// Stores unique candidates to avoid duplicates in the final list.
-		// The key is a pair of {AppName, ExecutableString} to distinguish different applications
-		// that might have the same name (e.g., different versions).
-		std::unordered_map<std::pair<std::string_view, std::string_view>, RankedCandidate, PairHash> unique_candidates;
+		// The key distinguishes different applications that might have the same name.
+		std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKeyHash> unique_candidates;
 		const std::vector<std::string>& prioritized_mimes;
 		const MimeAssociation& associations;
 		const std::vector<std::string>& desktop_paths;

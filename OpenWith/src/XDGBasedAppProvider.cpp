@@ -337,9 +337,9 @@ void XDGBasedAppProvider::FindCandidatesFromCache(CandidateSearchContext& contex
 				auto it_removed = context.associations.removed.find(mime);
 				if (it_removed != context.associations.removed.end() && it_removed->second.count(app_desktop_file)) continue;
 
-				auto it_rank = app_best_rank.find(app_desktop_file);
-				if (it_rank == app_best_rank.end() || mime_rank_base > it_rank->second) {
-					app_best_rank[app_desktop_file] = mime_rank_base;
+				auto [it, inserted] = app_best_rank.try_emplace(app_desktop_file, mime_rank_base);
+				if (!inserted && mime_rank_base > it->second) {
+					it->second = mime_rank_base;
 				}
 			}
 		}
@@ -441,7 +441,7 @@ void XDGBasedAppProvider::AddOrUpdateCandidate(CandidateSearchContext& context, 
 	// A unique key to identify an application. Some apps (e.g., text editors) might have
 	// multiple .desktop files (e.g., for different profiles) that point to the same
 	// executable but have different names. This ensures they are treated as distinct entries.
-	std::pair<std::string_view, std::string_view> unique_key(entry.name, entry.exec);
+	AppUniqueKey unique_key{entry.name, entry.exec};
 
 	auto [it, inserted] = context.unique_candidates.try_emplace(unique_key, RankedCandidate{&entry, rank});
 

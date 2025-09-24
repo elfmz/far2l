@@ -141,7 +141,7 @@ void ScreenBuf::AllocBuf(int X, int Y)
 
 	BufX = X;
 	BufY = Y;
-	ResetShadow();
+	//ResetShadow();
 }
 
 /*

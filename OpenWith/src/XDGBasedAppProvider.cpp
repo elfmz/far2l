@@ -89,193 +89,44 @@ void XDGBasedAppProvider::SetPlatformSettings(const std::vector<ProviderSetting>
 std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::wstring& pathname)
 {
 	_desktop_entry_cache.clear();
-
-	std::string narrow_pathname = StrWide2MB(pathname);
-	// Collect and prioritize MIME types, from most specific to generic fallbacks.
-	std::vector<std::string> prioritized_mimes = CollectAndPrioritizeMimeTypes(narrow_pathname);
-
+	std::vector<std::string> prioritized_mimes = CollectAndPrioritizeMimeTypes(StrWide2MB(pathname));
 	auto desktop_paths = GetDesktopFileSearchPaths();
 	auto mimeapps_paths = GetMimeappsListSearchPaths();
-	// Parse all mimeapps.list files to get default, added, and removed associations.
 	auto associations = ParseMimeappsLists(mimeapps_paths);
 	std::string top_default_app = GetDefaultApp(prioritized_mimes.empty() ? "" : prioritized_mimes[0]);
-
-	// Use a map to store unique candidates, preventing duplicates. The key is a combination
-	// of the application name and exec command to distinguish different apps with the same name.
-	std::map<std::pair<std::string_view, std::string_view>, RankedCandidate> unique_candidates;
-
-	const int total_mimes = prioritized_mimes.size();
-	// Get current desktop environment for filtering based on OnlyShowIn/NotShowIn.
 	std::string current_desktop_env = _filter_by_show_in ? GetEnv("XDG_CURRENT_DESKTOP") : "";
 
-	// Helper lambda to add or update a candidate in the unique_candidates map.
-	// A higher rank overwrites a lower one for the same application.
-	auto add_or_update_candidate = [&](const DesktopEntry& entry, int rank) {
-		// The key's string_views safely point to the data within 'entry',
-		// which is a stable object within _desktop_entry_cache.
-		std::pair<std::string_view, std::string_view> unique_key(entry.name, entry.exec);
-		auto it = unique_candidates.find(unique_key);
+	CandidateSearchContext context(prioritized_mimes, associations, desktop_paths, current_desktop_env);
 
-		if (it == unique_candidates.end() || rank > it->second.rank) {
-			RankedCandidate candidate;
-			candidate.entry = &entry;
-			candidate.rank = rank;
-			unique_candidates[unique_key] = candidate;
-		}
-	};
+	FindCandidatesFromMimeLists(context, top_default_app);
 
-	// Helper lambda to process a single application (.desktop file).
-	// It handles caching, validation (TryExec), and desktop environment filtering.
-	auto process_app = [&](const std::string& app_desktop_file, int rank) {
-		if (app_desktop_file.empty()) return;
-
-		const auto& entry_opt = GetCachedDesktopEntry(app_desktop_file, desktop_paths, _desktop_entry_cache);
-		if (!entry_opt) {
-			return;
-		}
-		const DesktopEntry& entry = *entry_opt;
-
-		// If ValidateTryExec is enabled, check if the executable specified in TryExec exists.
-		if (_validate_try_exec && !entry.try_exec.empty() && !CheckExecutable(entry.try_exec)) {
-			return;
-		}
-
-		// Filter applications based on the current desktop environment if the option is enabled.
-		if (_filter_by_show_in && !current_desktop_env.empty()) {
-			if (!entry.only_show_in.empty()) {
-				bool found = false;
-				for (const auto& desktop : SplitString(entry.only_show_in, ';')) {
-					if (desktop == current_desktop_env) { found = true; break; }
-				}
-				if (!found) return;
-			}
-			if (!entry.not_show_in.empty()) {
-				bool found = false;
-				for (const auto& desktop : SplitString(entry.not_show_in, ';')) {
-					if (desktop == current_desktop_env) { found = true; break; }
-				}
-				if (found) return;
-			}
-		}
-		add_or_update_candidate(entry, rank);
-	};
-
-	// Phase 1: Process explicit MIME associations from mimeapps.list files.
-	// The ranking gives higher priority to more specific MIME types and to default apps.
-	for (int i = 0; i < total_mimes; ++i) {
-		const auto& mime = prioritized_mimes[i];
-		// Base rank depends on the MIME type's position in the prioritized list.
-		int mime_rank_base = (total_mimes - i) * 100;
-		auto is_removed = [&](const std::string& app_desktop_file) {
-			return associations.removed.count(mime) && associations.removed.at(mime).count(app_desktop_file);
-		};
-		// The top default app (from xdg-mime query) gets the highest rank.
-		if (!top_default_app.empty() && !is_removed(top_default_app)) {
-			process_app(top_default_app, mime_rank_base + 10000);
-		}
-		// Apps from [Default Applications] section get a high rank.
-		if (associations.defaults.count(mime)) {
-			const auto& app = associations.defaults.at(mime);
-			if (!is_removed(app)) {
-				process_app(app, mime_rank_base + 5000);
-			}
-		}
-		// Apps from [Added Associations] section get a medium rank.
-		if (associations.added.count(mime)) {
-			for (const auto& app : associations.added.at(mime)) {
-				if (!is_removed(app)) {
-					process_app(app, mime_rank_base + 2000);
-				}
-			}
-		}
-	}
-
-	// Phase 2 & 3: Process candidates from mimeinfo.cache or via a full scan of .desktop directories.
 	std::unordered_map<std::string, std::vector<std::string>> mime_cache;
-	bool cacheFileFound = false;
+
+	bool cache_file_found = false;
+
 	if (_use_mimeinfo_cache) {
 		for (const auto& dir : desktop_paths) {
 			std::string cache_path = dir + "/mimeinfo.cache";
 			if (IsReadableFile(cache_path)) {
 				ParseMimeinfoCache(cache_path, mime_cache);
-				cacheFileFound = true;
+				cache_file_found = true;
 			}
 		}
 	}
 
-	if (cacheFileFound) {
-		// Phase 2: If mimeinfo.cache exists, use it for faster lookups.
-		std::map<std::string, int> app_best_rank;
-		for (int i = 0; i < total_mimes; ++i) {
-			const auto& mime = prioritized_mimes[i];
-			if (mime_cache.count(mime)) {
-				int mime_rank_base = (total_mimes - i) * 100;
-				for (const auto& app_desktop_file : mime_cache.at(mime)) {
-					if (app_desktop_file.empty()) continue;
-					if (associations.removed.count(mime) && associations.removed.at(mime).count(app_desktop_file)) continue;
-
-					auto it = app_best_rank.find(app_desktop_file);
-					if (it == app_best_rank.end() || mime_rank_base > it->second) {
-						app_best_rank[app_desktop_file] = mime_rank_base;
-					}
-				}
-			}
-		}
-
-		for (const auto& [app_desktop_file, rank] : app_best_rank) {
-			process_app(app_desktop_file, rank);
-		}
+	if (cache_file_found) {
+		FindCandidatesFromCache(context, mime_cache);
 	} else {
-		// Phase 3: Fallback to a full scan of all .desktop file directories.
-		// This is slower but necessary if no cache is available.
-		for (const auto& dir : desktop_paths) {
-			DIR* dp = opendir(dir.c_str());
-			if (!dp) continue;
-			struct dirent* ep;
-			while ((ep = readdir(dp))) {
-				std::string filename = ep->d_name;
-				if (filename.size() <= 8 || filename.substr(filename.size() - 8) != ".desktop") {
-					continue;
-				}
-
-				const auto& desktop_entry_opt = GetCachedDesktopEntry(filename, desktop_paths, _desktop_entry_cache);
-				if (!desktop_entry_opt) continue;
-
-				const DesktopEntry& entry = *desktop_entry_opt;
-
-				// Check if the application's MimeType list matches any of the file's MIME types.
-				std::vector<std::string> entry_mimes = SplitString(entry.mimetype, ';');
-				int best_rank = -1;
-				for (int i = 0; i < total_mimes; ++i) {
-					const auto& mime = prioritized_mimes[i];
-					bool matched = false;
-					for (const auto& entry_mime : entry_mimes) {
-						if (entry_mime.empty()) continue;
-						if (mime == entry_mime) { matched = true; break; }
-					}
-					if (matched) {
-						if (associations.removed.count(mime) && associations.removed.at(mime).count(filename)) continue;
-						best_rank = (total_mimes - i) * 100;
-						break;
-					}
-				}
-				if (best_rank != -1) {
-					process_app(filename, best_rank);
-				}
-			}
-			closedir(dp);
-		}
+		FindCandidatesByFullScan(context);
 	}
 
-	// Phase 4: Sort the collected unique candidates by rank in descending order.
 	std::vector<RankedCandidate> sorted_candidates;
-	sorted_candidates.reserve(unique_candidates.size());
-	for (auto& [key, ranked_candidate] : unique_candidates) {
+	sorted_candidates.reserve(context.unique_candidates.size());
+	for (auto& [key, ranked_candidate] : context.unique_candidates) {
 		sorted_candidates.push_back(ranked_candidate);
 	}
 	std::sort(sorted_candidates.begin(), sorted_candidates.end());
 
-	// Convert the sorted RankedCandidate structs to the final CandidateInfo format.
 	std::vector<CandidateInfo> result;
 	result.reserve(sorted_candidates.size());
 	for (const auto& ranked_candidate : sorted_candidates) {
@@ -284,17 +135,6 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::wstr
 
 	return result;
 }
-
-
-std::string XDGBasedAppProvider::GetBaseName(const std::string& path)
-{
-	size_t pos = path.find_last_of('/');
-	if (pos == std::string::npos) {
-		return path;
-	}
-	return path.substr(pos + 1);
-}
-
 
 
 std::wstring XDGBasedAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::wstring& pathname)
@@ -394,7 +234,6 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 }
 
 
-
 std::wstring XDGBasedAppProvider::GetMimeType(const std::wstring& pathname)
 {
 	std::vector<std::string> mime_types;
@@ -423,13 +262,176 @@ std::wstring XDGBasedAppProvider::GetMimeType(const std::wstring& pathname)
 
 // ****************************** Private implementation ******************************
 
+void XDGBasedAppProvider::AddOrUpdateCandidate(CandidateSearchContext& context, const DesktopEntry& entry, int rank)
+{
+	std::pair<std::string_view, std::string_view> unique_key(entry.name, entry.exec);
+
+	auto [it, inserted] = context.unique_candidates.try_emplace(unique_key, RankedCandidate{&entry, rank});
+
+	if (!inserted && rank > it->second.rank) {
+		it->second.rank = rank;
+		it->second.entry = &entry;
+	}
+}
+
+
+void XDGBasedAppProvider::ProcessApp(CandidateSearchContext& context, const std::string& app_desktop_file, int rank)
+{
+	if (app_desktop_file.empty()) return;
+
+	const auto& entry_opt = GetCachedDesktopEntry(app_desktop_file, context.desktop_paths, _desktop_entry_cache);
+	if (!entry_opt) {
+		return;
+	}
+	const DesktopEntry& entry = *entry_opt;
+
+	if (_validate_try_exec && !entry.try_exec.empty() && !CheckExecutable(entry.try_exec)) {
+		return;
+	}
+
+	if (_filter_by_show_in && !context.current_desktop_env.empty()) {
+		if (!entry.only_show_in.empty()) {
+			bool found = false;
+			for (const auto& desktop : SplitString(entry.only_show_in, ';')) {
+				if (desktop == context.current_desktop_env) { found = true; break; }
+			}
+			if (!found) return;
+		}
+		if (!entry.not_show_in.empty()) {
+			bool found = false;
+			for (const auto& desktop : SplitString(entry.not_show_in, ';')) {
+				if (desktop == context.current_desktop_env) { found = true; break; }
+			}
+			if (found) return;
+		}
+	}
+	AddOrUpdateCandidate(context, entry, rank);
+}
+
+
+void XDGBasedAppProvider::FindCandidatesFromMimeLists(CandidateSearchContext& context, const std::string& top_default_app)
+{
+	const int total_mimes = context.prioritized_mimes.size();
+	for (int i = 0; i < total_mimes; ++i) {
+		const auto& mime = context.prioritized_mimes[i];
+		int mime_rank_base = (total_mimes - i) * 100;
+
+		auto is_removed = [&](const std::string& app_desktop_file) {
+			auto it = context.associations.removed.find(mime);
+			return it != context.associations.removed.end() && it->second.count(app_desktop_file);
+		};
+
+		if (!top_default_app.empty() && !is_removed(top_default_app)) {
+			ProcessApp(context, top_default_app, mime_rank_base + 10000);
+		}
+
+		auto it_defaults = context.associations.defaults.find(mime);
+		if (it_defaults != context.associations.defaults.end()) {
+			if (!is_removed(it_defaults->second)) {
+				ProcessApp(context, it_defaults->second, mime_rank_base + 5000);
+			}
+		}
+
+		auto it_added = context.associations.added.find(mime);
+		if (it_added != context.associations.added.end()) {
+			for (const auto& app : it_added->second) {
+				if (!is_removed(app)) {
+					ProcessApp(context, app, mime_rank_base + 2000);
+				}
+			}
+		}
+	}
+}
+
+
+void XDGBasedAppProvider::FindCandidatesFromCache(CandidateSearchContext& context, const std::unordered_map<std::string, std::vector<std::string>>& mime_cache)
+{
+	const int total_mimes = context.prioritized_mimes.size();
+	std::map<std::string, int> app_best_rank;
+
+	for (int i = 0; i < total_mimes; ++i) {
+		const auto& mime = context.prioritized_mimes[i];
+		auto it_cache = mime_cache.find(mime);
+		if (it_cache != mime_cache.end()) {
+			int mime_rank_base = (total_mimes - i) * 100;
+			for (const auto& app_desktop_file : it_cache->second) {
+				if (app_desktop_file.empty()) continue;
+				auto it_removed = context.associations.removed.find(mime);
+				if (it_removed != context.associations.removed.end() && it_removed->second.count(app_desktop_file)) continue;
+
+				auto it_rank = app_best_rank.find(app_desktop_file);
+				if (it_rank == app_best_rank.end() || mime_rank_base > it_rank->second) {
+					app_best_rank[app_desktop_file] = mime_rank_base;
+				}
+			}
+		}
+	}
+
+	for (const auto& [app_desktop_file, rank] : app_best_rank) {
+		ProcessApp(context, app_desktop_file, rank);
+	}
+}
+
+
+void XDGBasedAppProvider::FindCandidatesByFullScan(CandidateSearchContext& context)
+{
+	const int total_mimes = context.prioritized_mimes.size();
+	for (const auto& dir : context.desktop_paths) {
+		DIR* dp = opendir(dir.c_str());
+		if (!dp) continue;
+		struct dirent* ep;
+		while ((ep = readdir(dp))) {
+			std::string filename = ep->d_name;
+			if (filename.size() <= 8 || filename.substr(filename.size() - 8) != ".desktop") {
+				continue;
+			}
+
+			const auto& desktop_entry_opt = GetCachedDesktopEntry(filename, context.desktop_paths, _desktop_entry_cache);
+			if (!desktop_entry_opt) continue;
+			const DesktopEntry& entry = *desktop_entry_opt;
+
+			std::vector<std::string> entry_mimes = SplitString(entry.mimetype, ';');
+			int best_rank = -1;
+			for (int i = 0; i < total_mimes; ++i) {
+				const auto& mime = context.prioritized_mimes[i];
+				bool matched = false;
+				for (const auto& entry_mime : entry_mimes) {
+					if (entry_mime.empty()) continue;
+					if (mime == entry_mime) { matched = true; break; }
+				}
+				if (matched) {
+					auto it_removed = context.associations.removed.find(mime);
+					if (it_removed != context.associations.removed.end() && it_removed->second.count(filename)) continue;
+					best_rank = (total_mimes - i) * 100;
+					break;
+				}
+			}
+			if (best_rank != -1) {
+				ProcessApp(context, filename, best_rank);
+			}
+		}
+		closedir(dp);
+	}
+}
+
+
+std::string XDGBasedAppProvider::GetBaseName(const std::string& path)
+{
+	size_t pos = path.find_last_of('/');
+	if (pos == std::string::npos) {
+		return path;
+	}
+	return path.substr(pos + 1);
+}
+
 
 const std::optional<DesktopEntry>& XDGBasedAppProvider::GetCachedDesktopEntry(const std::string& desktop_file,
 																		   const std::vector<std::string>& search_paths,
 																		   std::map<std::string, std::optional<DesktopEntry>>& cache)
 {
-	auto it = cache.find(desktop_file);
-	if (it != cache.end()) return it->second;
+	if (auto it = cache.find(desktop_file); it != cache.end()) {
+		return it->second;
+	}
 
 	// Search for the .desktop file in the prioritized list of directories.
 	// The first one found is used, implementing the XDG override mechanism.

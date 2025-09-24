@@ -927,13 +927,15 @@ int Manager::ProcessKey(DWORD Key)
 					return TRUE;
 				}
 				case KEY_F12: {
-					int TypeFrame = FrameManager->GetCurrentFrame()->GetType();
+					auto CurFrame=FrameManager->GetCurrentFrame();
+					int TypeFrame=CurFrame->GetType();
 
-					if (TypeFrame != MODALTYPE_HELP && TypeFrame != MODALTYPE_DIALOG) {
-						DeactivateFrame(FrameMenu(), 0);
-						//_MANAGER(SysLog(-1));
+					if ((TypeFrame != MODALTYPE_HELP && TypeFrame != MODALTYPE_DIALOG) || CurFrame->GetCanLoseFocus())
+					{
+						DeactivateFrame(FrameMenu(),0);
 						return TRUE;
 					}
+
 					break;	// отдадим F12 дальше по цепочке
 				}
 

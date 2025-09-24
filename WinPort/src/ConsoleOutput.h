@@ -123,7 +123,7 @@ public:
 	virtual void RepaintsDeferFinish(bool force);
 
 	virtual IConsoleOutput *ForkConsoleOutput(HANDLE con_handle);
-	virtual void JoinConsoleOutput(IConsoleOutput *con_out);
+	virtual void ReleaseConsoleOutput(IConsoleOutput *con_out, bool join);
 
 	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1);
 	virtual const char *BackendInfo(int entity);

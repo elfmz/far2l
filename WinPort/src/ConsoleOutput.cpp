@@ -89,9 +89,10 @@ void ConsoleOutput::CopyFrom(const ConsoleOutput &co)
 	_attributes = co._attributes;
 	_cursor = co._cursor;
 	_title = co._title;
-	_buf.scroll_callback = co._buf.scroll_callback;
 	_scroll_region = co._scroll_region;
+	auto my_con_handle = _buf.con_handle;
 	_buf = co._buf;
+	_buf.con_handle = my_con_handle;
 	_prev_pos = co._prev_pos;
 }
 
@@ -861,20 +862,22 @@ IConsoleOutput *ConsoleOutput::ForkConsoleOutput(HANDLE con_handle)
 	return co;
 }
 
-void ConsoleOutput::JoinConsoleOutput(IConsoleOutput *con_out)
+void ConsoleOutput::ReleaseConsoleOutput(IConsoleOutput *con_out, bool join)
 {
 	ConsoleOutput *co = (ConsoleOutput *)con_out;
-	unsigned int w = 0, h = 0;
-	{
-		std::lock_guard<std::mutex> lock(_mutex);
-		_buf.GetSize(w, h);
-		CopyFrom(*co);
-		_buf.SetSize(w, h, _attributes, _cursor.pos);
-		LockedChangeIdUpdate();
-	}
-	if (_backend) {
-		SMALL_RECT screen_rect{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
-		_backend->OnConsoleOutputUpdated(&screen_rect, 1);
+	if (join) {
+		unsigned int w = 0, h = 0;
+		{
+			std::lock_guard<std::mutex> lock(_mutex);
+			_buf.GetSize(w, h);
+			CopyFrom(*co);
+			_buf.SetSize(w, h, _attributes, _cursor.pos);
+			LockedChangeIdUpdate();
+		}
+		if (_backend) {
+			SMALL_RECT screen_rect{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
+			_backend->OnConsoleOutputUpdated(&screen_rect, 1);
+		}
 	}
 	delete co;
 }

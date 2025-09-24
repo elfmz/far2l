@@ -607,7 +607,7 @@ void TextEx(const WCHAR *Str, size_t Length)
 			CI_SET_ATTR(BufPtr[nCells], CurColor);
 		} else {
 			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
-			CI_SET_ATTR(BufPtr[nCells], CurColor & (0xFFFFFFFFFFFFFFFF ^ (COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE)) );
+			CI_SET_ATTR(BufPtr[nCells], CurColor & (0xFFFFFFFFFFFFFFFF ^ (IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK | COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE)) );
 		}
 
 //		CI_SET_ATTR(BufPtr[nCells], CurColor);

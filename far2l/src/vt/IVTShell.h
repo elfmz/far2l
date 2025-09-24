@@ -24,5 +24,6 @@ struct IVTShell
 	virtual void InjectInput(const char *str)                           = 0;
 	virtual void OnKeypadChange(unsigned char keypad)                   = 0;
 	virtual void OnTerminalResized()                                    = 0;
+	virtual void OnScreenModeChanged(bool alternate_mode)               = 0;
 	virtual HANDLE ConsoleHandle()                                      = 0;
 };

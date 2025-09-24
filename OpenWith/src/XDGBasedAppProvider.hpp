@@ -71,7 +71,38 @@ private:
 		std::unordered_map<std::string, std::unordered_set<std::string>> removed;
 	};
 
+	struct PairHash {
+		template <class T1, class T2>
+		std::size_t operator() (const std::pair<T1, T2>& p) const {
+			auto h1 = std::hash<T1>{}(p.first);
+			auto h2 = std::hash<T2>{}(p.second);
+			return h1 ^ (h2 << 1);
+		}
+	};
+
+	struct CandidateSearchContext {
+		std::unordered_map<std::pair<std::string_view, std::string_view>, RankedCandidate, PairHash> unique_candidates;
+		const std::vector<std::string>& prioritized_mimes;
+		const MimeAssociation& associations;
+		const std::vector<std::string>& desktop_paths;
+		const std::string& current_desktop_env;
+
+		CandidateSearchContext(
+			const std::vector<std::string>& mimes,
+			const MimeAssociation& assocs,
+			const std::vector<std::string>& paths,
+			const std::string& env)
+			: prioritized_mimes(mimes), associations(assocs), desktop_paths(paths), current_desktop_env(env) {}
+	};
+
+	void AddOrUpdateCandidate(CandidateSearchContext& context, const DesktopEntry& entry, int rank);
+	void ProcessApp(CandidateSearchContext& context, const std::string& app_desktop_file, int rank);
+	void FindCandidatesFromMimeLists(CandidateSearchContext& context, const std::string& top_default_app);
+	void FindCandidatesFromCache(CandidateSearchContext& context, const std::unordered_map<std::string, std::vector<std::string>>& mime_cache);
+	void FindCandidatesByFullScan(CandidateSearchContext& context);
+
 	std::map<std::string, std::optional<DesktopEntry>> _desktop_entry_cache;
+
 
 	bool _filter_by_show_in = false;
 	bool _validate_try_exec = false;

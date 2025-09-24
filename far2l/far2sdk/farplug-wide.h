@@ -2235,7 +2235,6 @@ struct PluginStartupInfo
 	FARAPIADVCONTROL       AdvControl;
 	FARAPIADVCONTROL       AdvControlAsync;
 	FARAPIINPUTBOX         InputBox;
-	FARAPICOLORDIALOG      ColorDialog;
 	FARAPIDIALOGINIT       DialogInit;
 	FARAPIDIALOGRUN        DialogRun;
 	FARAPIDIALOGFREE       DialogFree;
@@ -2247,6 +2246,7 @@ struct PluginStartupInfo
 	FARAPIPLUGINSCONTROL   PluginsControl;
 	FARAPIFILEFILTERCONTROL FileFilterControl;
 	FARAPIREGEXPCONTROL    RegExpControl;
+	FARAPICOLORDIALOG      ColorDialog;
 };
 
 

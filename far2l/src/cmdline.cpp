@@ -908,7 +908,12 @@ void CommandLine::ShowBackground(bool showanyway)
 	}
 
 	fprintf(stderr, "CommandLine::ShowBackground\n");
+	DWORD mode = 0; // set ENABLE_PROCESSED_OUTPUT to enable lines recomposing for merged content of forked console
+	if (WINPORT(GetConsoleMode)(NULL, &mode)) {
+		WINPORT(SetConsoleMode)(NULL, mode | ENABLE_PROCESSED_OUTPUT);
+	}
 	BackgroundConsole.Show();
+	WINPORT(SetConsoleMode)(NULL, mode);
 	ScrBuf.FillBuf();
 }
 

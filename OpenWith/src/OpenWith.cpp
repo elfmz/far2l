@@ -40,7 +40,11 @@ private:
 				[](const Field& x, const Field& y){ return x.label.size() < y.label.size(); })->label.size();
 		};
 
-		auto max_di_text_length = static_cast<int>(std::max(launch_command.label.size(), std::max(max_in(file_info), max_in(application_info))));
+		auto max_di_text_length = static_cast<int>(std::max({
+			launch_command.label.size(),
+			max_in(file_info),
+			max_in(application_info)
+		}));
 
 		// Calculate coordinates for dialog items to right-align all text labels.
 		int di_text_X2 = max_di_text_length + 4;

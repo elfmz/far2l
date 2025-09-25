@@ -897,7 +897,6 @@ void CommandLine::SaveBackground()
 	if (WINPORT(GetConsoleMode)(BackgroundConsole.Handle(), &mode)) {
 		WINPORT(SetConsoleMode)(BackgroundConsole.Handle(), mode | ENABLE_PROCESSED_OUTPUT);
 	}
-	WINPORT(SetConsoleMode)(NULL, mode);
 }
 
 void CommandLine::ShowBackground(bool showanyway)

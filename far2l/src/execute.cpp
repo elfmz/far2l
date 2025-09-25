@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "chgmmode.hpp"
 #include "vtshell.h"
+#include "vtlog.h"
 #include "InterThreadCall.hpp"
 #include "ScopeHelpers.h"
 #include <set>
@@ -261,6 +262,7 @@ public:
 		}
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);
 		ScrBuf.Flush();
+		VTLog::Register(NULL); // enable logging
 		if (cmd_str) {
 			const std::wstring &ws = MB2Wide(cmd_str);
 			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &_dw, NULL);
@@ -274,6 +276,7 @@ public:
 		WINPORT(SetConsoleMode)(NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
 		WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &_dw, NULL);
 		WINPORT(SetConsoleMode)(NULL, _saved_mode);
+		VTLog::Unregister(NULL); // disable logging
 		ScrBuf.FillBuf();
 		if (CtrlObject && CtrlObject->CmdLine) {
 			CtrlObject->CmdLine->SaveBackground();

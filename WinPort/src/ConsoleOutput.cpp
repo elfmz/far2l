@@ -86,6 +86,7 @@ ConsoleOutput::ConsoleOutput() :
 void ConsoleOutput::CopyFrom(const ConsoleOutput &co)
 {
 	_attributes = co._attributes;
+	_mode = co._mode;
 	_cursor = co._cursor;
 	_title = co._title;
 	_scroll_region = co._scroll_region;
@@ -865,7 +866,6 @@ IConsoleOutput *ConsoleOutput::ForkConsoleOutput(HANDLE con_handle)
 {
 	ConsoleOutput *co = new ConsoleOutput;
 	std::lock_guard<std::mutex> lock(_mutex);
-	co->_mode = _mode;
 	co->CopyFrom(*this);
 	co->_buf.con_handle = con_handle;
 	return co;

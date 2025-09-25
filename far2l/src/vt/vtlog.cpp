@@ -225,14 +225,14 @@ namespace VTLog
 		}
 	}
 
-	void Start()
+	void Register(HANDLE con_hnd)
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, OnConsoleScroll, NULL);
+		WINPORT(SetConsoleScrollCallback) (con_hnd, OnConsoleScroll, NULL);
 	}
 
-	void Stop()
+	void Unregister(HANDLE con_hnd)
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, NULL, NULL);
+		WINPORT(SetConsoleScrollCallback) (con_hnd, NULL, NULL);
 	}
 
 	void ConsoleJoined(HANDLE con_hnd)

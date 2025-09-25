@@ -5,8 +5,8 @@
 	/// or to save/restore content of console, while using usual screen resize recomposition logic.
 	// Clones given console into new non-interactive one and returns handle of new console.
 	WINPORT_DECL_DEF(ForkConsole,HANDLE,(HANDLE hParentConsole))
-	// Copy state: output buffer, pending input events, except mode which is unchanged for parent
-	// of previously cloned non-interactive console into given parent and delete cloned console
+	// Copy state: output buffer, pending input events of previously cloned
+	// non-interactive console into given parent and delete cloned console
 	WINPORT_DECL_DEF(JoinConsole,VOID,(HANDLE hParentConsole, HANDLE hConsole))
 	// Just delete cloned console, losing its state
 	WINPORT_DECL_DEF(DiscardConsole,VOID,(HANDLE hConsole))

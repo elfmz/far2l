@@ -892,11 +892,11 @@ void CommandLine::SaveBackground()
 {
 	fprintf(stderr, "CommandLine::SaveBackground\n");
 	ScrBuf.Flush();
-	DWORD mode = 0; // set ENABLE_PROCESSED_OUTPUT to enable lines recomposing for forked console
-	if (WINPORT(GetConsoleMode)(NULL, &mode)) {
-		WINPORT(SetConsoleMode)(NULL, mode | ENABLE_PROCESSED_OUTPUT);
-	}
 	BackgroundConsole.Fork(NULL);
+	DWORD mode = 0; // set ENABLE_PROCESSED_OUTPUT to enable lines recomposing for forked console
+	if (WINPORT(GetConsoleMode)(BackgroundConsole.Handle(), &mode)) {
+		WINPORT(SetConsoleMode)(BackgroundConsole.Handle(), mode | ENABLE_PROCESSED_OUTPUT);
+	}
 	WINPORT(SetConsoleMode)(NULL, mode);
 }
 
@@ -908,10 +908,8 @@ void CommandLine::ShowBackground(bool showanyway)
 	}
 
 	fprintf(stderr, "CommandLine::ShowBackground\n");
-	DWORD mode = 0; // set ENABLE_PROCESSED_OUTPUT to enable lines recomposing for merged content of forked console
-	if (WINPORT(GetConsoleMode)(NULL, &mode)) {
-		WINPORT(SetConsoleMode)(NULL, mode | ENABLE_PROCESSED_OUTPUT);
-	}
+	DWORD mode = 0; // keep own mode - dont derive it from forked console
+	WINPORT(GetConsoleMode)(NULL, &mode);
 	BackgroundConsole.Show();
 	WINPORT(SetConsoleMode)(NULL, mode);
 	ScrBuf.FillBuf();

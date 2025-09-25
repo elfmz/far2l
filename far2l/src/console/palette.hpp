@@ -44,10 +44,10 @@ class Palette : NonCopyable
 public:
 
 	union {
-		rgbcolor_t palbuff[32];
+		uint32_t palbuff[32];
 		struct {
-			rgbcolor_t background[16];
-			rgbcolor_t foreground[16];
+			uint32_t background[16];
+			uint32_t foreground[16];
 		};
 	};
 
@@ -65,7 +65,7 @@ public:
 	void ResetToDefault() noexcept;
 //	bool GammaChanged;
 
-	const rgbcolor_t &operator[](size_t const Index) const
+	const uint32_t &operator[](size_t const Index) const
 	{
 		return palbuff[Index];
 	}

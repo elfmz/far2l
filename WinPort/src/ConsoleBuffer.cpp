@@ -119,7 +119,8 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 				memmove(&new_chars[0], &new_chars[width], (new_chars.size() - width) * sizeof(CHAR_INFO));
 				std::fill(new_chars.end() - width, new_chars.end(), fill_ci);
 			}
-			auto ci = unwrapped_chars[i];
+			const auto &ci = unwrapped_chars[i];
+			new_chars[ofs] = ci;
 			if ( (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
 				x = 0;
 				++y;
@@ -130,16 +131,23 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 					++y;
 				}
 			}
-			new_chars[ofs] = ci;
 		}
 
 		if (!cursor_pos_adjusted) { // put it at beginning of 1st free line
 			if (x > 0) {
 				x = 0;
 				++y;
+			} else if (x > width) {
+				x = width;
 			}
-			cursor_pos.X = (x < width) ? x : width;
-			cursor_pos.Y = (y < height) ? y : height;
+			while (y && y >= height && width) { // ensure at least one free line is there at the bottom
+				if (scroll_callback.pfn) {
+					scroll_callback.pfn(scroll_callback.context, con_handle, width, &new_chars[0]);
+				}
+				memmove(&new_chars[0], &new_chars[width], (new_chars.size() - width) * sizeof(CHAR_INFO));
+				std::fill(new_chars.end() - width, new_chars.end(), fill_ci);
+				--y;
+			}
 			fprintf(stderr, "ConsoleBuffer: cursor defaulted at %d.%d screen %u.%u \n", cursor_pos.X, cursor_pos.Y, width, height);
 		}
 	}

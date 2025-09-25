@@ -1857,6 +1857,11 @@ typedef int (WINAPI *FARAPIINPUTBOX)(
 	DWORD Flags
 );
 
+typedef int (WINAPI *FARAPICOLORDIALOG)(
+	int Flags,
+	uint64_t *Color
+);
+
 typedef int (WINAPI *FARAPIPLUGINSCONTROL)(
 	HANDLE hHandle,
 	int Command,
@@ -2241,6 +2246,7 @@ struct PluginStartupInfo
 	FARAPIPLUGINSCONTROL   PluginsControl;
 	FARAPIFILEFILTERCONTROL FileFilterControl;
 	FARAPIREGEXPCONTROL    RegExpControl;
+	FARAPICOLORDIALOG      ColorDialog;
 };
 
 

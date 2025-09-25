@@ -1463,6 +1463,11 @@ namespace oldfar
 		DWORD Flags
 	);
 
+	typedef int (WINAPI *FARAPICOLORDIALOG)(
+		int Flags,
+		uint64_t *Color
+	);
+
 // <C&C++>
 	typedef int (WINAPIV *FARSTDSPRINTF)(char *Buffer,const char *Format,...);
 	typedef int (WINAPIV *FARSTDSNPRINTF)(char *Buffer,size_t Sizebuf,const char *Format,...);
@@ -1700,6 +1705,7 @@ namespace oldfar
 		FARAPISHOWHELP         ShowHelp;
 		FARAPIADVCONTROL       AdvControl;
 		FARAPIINPUTBOX         InputBox;
+		FARAPICOLORDIALOG      ColorDialog;
 		FARAPIDIALOGEX         DialogEx;
 		FARAPISENDDLGMESSAGE   SendDlgMessage;
 		FARAPIDEFDLGPROC       DefDlgProc;

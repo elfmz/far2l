@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "vtshell.h"
 #include "vtlog.h"
+#include "pick_color.hpp"
 
 #include "farversion.h"
 
@@ -157,6 +158,17 @@ int WINAPI FarInputBox(const wchar_t *Title, const wchar_t *Prompt, const wchar_
 {
 	return InterThreadCall<int, 0>(std::bind(FarInputBoxSynched, Title, Prompt, HistoryName, SrcText,
 			DestText, DestLength, HelpTopic, Flags));
+}
+
+static int FarColorDialogSynched(const int flags, uint64_t *c)
+{
+	return (int)GetColorDialog(c, true);
+}
+
+int WINAPI FarColorDialog(const int flags, uint64_t *c)
+{
+	return InterThreadCall<int, 0>(std::bind(FarColorDialogSynched, flags, c));
+	return 0;
 }
 
 /* Функция вывода помощи */

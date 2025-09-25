@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "InterThreadCall.hpp"
 #include "vtshell.h"
 #include "vtlog.h"
+#include "pick_color.hpp"
 
 #include "farversion.h"
 
@@ -157,6 +158,17 @@ int WINAPI FarInputBox(const wchar_t *Title, const wchar_t *Prompt, const wchar_
 {
 	return InterThreadCall<int, 0>(std::bind(FarInputBoxSynched, Title, Prompt, HistoryName, SrcText,
 			DestText, DestLength, HelpTopic, Flags));
+}
+
+static int FarColorDialogSynched(const int flags, uint64_t *c)
+{
+	return (int)GetColorDialog(c, true);
+}
+
+int WINAPI FarColorDialog(const int flags, uint64_t *c)
+{
+	return InterThreadCall<int, 0>(std::bind(FarColorDialogSynched, flags, c));
+	return 0;
 }
 
 /* Функция вывода помощи */
@@ -1053,6 +1065,12 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 			Запомним номер плагина - сейчас в основном для формирования HelpTopic
 		*/
 		FarDialog->SetPluginNumber(PluginNumber);
+
+		if (Flags & FDLG_NONMODAL) {
+			FarDialog->SetCanLoseFocus(true);
+			FarDialog->SetDynamicallyBorn(true);
+			FarDialog->Process();
+		}
 	}
 	return hDlg;
 }
@@ -1069,6 +1087,9 @@ static int FarDialogRunSynched(HANDLE hDlg)
 
 	{
 		Dialog *FarDialog = (Dialog *)hDlg;
+		if (FarDialog->GetCanLoseFocus()) {
+			return -1;
+		}
 		LockBottomFrame lbf;	// временно отменим прорисовку фрейма
 		// CtrlObject->Plugins.Flags.Clear(PSIF_DIALOG);
 		FarDialog->Process();
@@ -1086,7 +1107,10 @@ static bool FarDialogFreeSynched(HANDLE hDlg)
 		return false;
 
 	Dialog *FarDialog = (Dialog *)hDlg;
-	delete FarDialog;
+	if (!FarDialog->GetCanLoseFocus()) {
+		delete FarDialog;
+		return true;
+	}
 	return true;
 }
 

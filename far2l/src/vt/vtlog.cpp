@@ -212,24 +212,27 @@ namespace VTLog
 
 	} g_lines;
 
+
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
-		auto width_eol = ActualLineWidth(Width, Chars);
-		if (VTShell_State() == VTS_NORMAL_SCREEN) {
+		auto state = VTShell_LookupState(hConsole);
+//std::wstring s;
+//for (auto i = 0; i < Width; ++i)s+= Chars[i].Char.UnicodeChar;
+//fprintf(stderr, " : %p %d '%ls'\n", hConsole, state, s.c_str());
+		if (state != VT_INVALID && state != VT_ALTERNATE_SCREEN) {
+			auto width_eol = ActualLineWidth(Width, Chars);
 			g_lines.Add(hConsole, Chars, width_eol.first, width_eol.second);
-		} else if (hConsole && CtrlObject && CtrlObject->CmdLine && hConsole == CtrlObject->CmdLine->GetBackgroundConsole()) {
-			g_lines.Add(NULL, Chars, width_eol.first, width_eol.second);
 		}
 	}
 
-	void Start()
+	void Register(HANDLE con_hnd)
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, OnConsoleScroll, NULL);
+		WINPORT(SetConsoleScrollCallback) (con_hnd, OnConsoleScroll, NULL);
 	}
 
-	void Stop()
+	void Unregister(HANDLE con_hnd)
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, NULL, NULL);
+		WINPORT(SetConsoleScrollCallback) (con_hnd, NULL, NULL);
 	}
 
 	void ConsoleJoined(HANDLE con_hnd)
@@ -263,7 +266,7 @@ namespace VTLog
 			SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
 			// alternate VT screen mode typically used by rich UI terminal apps like MC
 			// which need identical screen copy without line recomposition
-			const bool no_line_recompose = (VTShell_State() == VTS_ALTERNATE_SCREEN);
+			const bool no_line_recompose = (VTShell_LookupState(con_hnd) == VT_ALTERNATE_SCREEN);
 			if (no_line_recompose && !s.empty() && !strchr(NATIVE_EOL, s.back())) {
 				s+= NATIVE_EOL;
 			}
@@ -298,7 +301,7 @@ namespace VTLog
 		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {
 			std::string s;
-			if (con_hnd || VTShell_State() != VTS_IDLE) {
+			if (con_hnd || VTShell_Busy()) {
 				AppendConsoleScreenLines(con_hnd, s, ds, colored);
 			} else if (CtrlObject->CmdLine) {
 				AppendConsoleScreenLines(CtrlObject->CmdLine->GetBackgroundConsole(), s, ds, colored);

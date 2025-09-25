@@ -424,6 +424,7 @@ public:
 	int Done() { return DialogMode.Check(DMODE_ENDLOOP); }
 	void ClearDone();
 	virtual void SetExitCode(int Code);
+	virtual void OnChangeFocus(int focus);
 
 	void CloseDialog();
 

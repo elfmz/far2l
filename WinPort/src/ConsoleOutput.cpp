@@ -69,7 +69,7 @@ void ConsoleOutput::DeferredRepaints::Add(const SMALL_RECT *areas, size_t cnt)
 
 ConsoleOutput::ConsoleOutput() :
 	_backend(NULL),
-	_mode(ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS),
+	_mode(ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS),
 	_attributes(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED)
 {
 	memset(&_cursor.pos, 0, sizeof(_cursor.pos));	
@@ -85,8 +85,8 @@ ConsoleOutput::ConsoleOutput() :
 
 void ConsoleOutput::CopyFrom(const ConsoleOutput &co)
 {
-	_mode = co._mode;
 	_attributes = co._attributes;
+	_mode = co._mode;
 	_cursor = co._cursor;
 	_title = co._title;
 	_scroll_region = co._scroll_region;
@@ -204,13 +204,22 @@ COORD ConsoleOutput::GetCursor(UCHAR &height, bool &visible)
 	return _cursor.pos;
 }
 
+void ConsoleOutput::SetSizeInner(unsigned int width, unsigned int height)
+{
+	_scroll_region = {0, MAXSHORT};
+	if (_mode & ENABLE_PROCESSED_OUTPUT) {
+		_buf.SetSizeRecomposing(width, height, _attributes, _cursor.pos);
+	} else {
+		_buf.SetSizeSimple(width, height, _attributes, _cursor.pos);
+	}
+}
+
 void ConsoleOutput::SetSize(unsigned int width, unsigned int height)
 {
 	ApplyConsoleSizeLimits(width, height);
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
-		_scroll_region = {0, MAXSHORT};
-		_buf.SetSize(width, height, _attributes, _cursor.pos);
+		SetSizeInner(width, height);
 	}
 	if (_backend)
 		_backend->OnConsoleOutputResized();
@@ -873,7 +882,7 @@ void ConsoleOutput::ReleaseConsoleOutput(IConsoleOutput *con_out, bool join)
 			unsigned int w, h;
 			_buf.GetSize(w, h);
 			CopyFrom(*co);
-			_buf.SetSize(w, h, _attributes, _cursor.pos);
+			SetSizeInner(w, h);
 			screen_rect = SMALL_RECT{0, 0, SHORT(w ? w - 1 : 0), SHORT(h ? h - 1 : 0)};
 			if (_repaint_defer) {
 				repaint_defered = true;

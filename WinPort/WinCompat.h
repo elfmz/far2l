@@ -1310,8 +1310,9 @@ typedef BOOL (*CODEPAGE_ENUMPROCW)(LPWSTR);
 // Output Mode flags:
 //
 typedef LONG NTSTATUS;
-#define ENABLE_PROCESSED_OUTPUT    0x0001
-#define ENABLE_WRAP_AT_EOL_OUTPUT  0x0002
+// unlike MS SDK, here output mode values differ from input as WinPort has same handle for console input and output
+#define ENABLE_PROCESSED_OUTPUT    0x1000
+#define ENABLE_WRAP_AT_EOL_OUTPUT  0x2000
 
 #define STATUS_WAIT_0                    ((NTSTATUS)0x00000000L)    // winnt
 #define STATUS_ABANDONED_WAIT_0          ((NTSTATUS)0x00000080L)    // winnt

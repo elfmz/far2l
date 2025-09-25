@@ -40,6 +40,7 @@ bool settings::std_cursor_size = false;
 FarColor settings::clr_active = FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY | BACKGROUND_BLUE;
 FarColor settings::clr_updated = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY | BACKGROUND_BLUE;
 FarColor settings::clr_offset = FOREGROUND_BLUE | FOREGROUND_GREEN | BACKGROUND_BLUE;
+void *settings::Dialog = nullptr;
 
 const char* param_add_to_panel_menu = "add_to_panel_menu";
 const char* param_add_to_editor_menu = "add_to_editor_menu";
@@ -135,6 +136,9 @@ void settings::configure()
 	fardialog::DlgVSizer vbox1(vbox1c);
 	fardialog::Dialog dlg(&_PSI, _PSI.GetMsg(_PSI.ModuleNumber, ps_title), _PSI.GetMsg(_PSI.ModuleNumber, ps_helptopic), 0, &settings::dlg_proc, 0);
 	dlg.buildFDI(&vbox1);
+
+	settings::Dialog = &dlg;
+
 	const HANDLE hDlg = dlg.DialogInit();
 	const intptr_t rc = _PSI.DialogRun(hDlg);
 	if (rc >= 0 && rc == dlg.getID("bn_ok") ) {
@@ -146,7 +150,6 @@ void settings::configure()
 		move_inside_byte = dlg.GetCheck(dlg.getID("move_ib")) != 0;
 		std_cursor_size = dlg.GetCheck(dlg.getID("std_csize")) != 0;
 		show_dword_seps = dlg.GetCheck(dlg.getID("show_dd")) != 0;
-		// TODO: Implement color selection dialog
 		save();
 	}
 	_PSI.DialogFree(hDlg);
@@ -155,19 +158,17 @@ void settings::configure()
 
 LONG_PTR WINAPI settings::dlg_proc(HANDLE dlg, int Msg, int Param1, LONG_PTR Param2)
 {
-/*
-	// TODO pick_color inaccessibile for plugins ?
 	if (Msg == DN_BTNCLICK) {
-		FarColor* fc = nullptr;
-		if (Param1 == settings::DCID_BTN_COLOR_OFFSET)
+		FarColor *fc = nullptr;
+		fardialog::Dialog *dlg = static_cast<fardialog::Dialog*>(settings::Dialog);
+		if (Param1 == dlg->getID("clr_offset"))
 			fc = &settings::clr_offset;
-		else if (Param1 == settings::DCID_BTN_COLOR_ACTIVE)
+		else if (Param1 == dlg->getID("clr_active"))
 			fc = &settings::clr_active;
-		else if (Param1 == settings::DCID_BTN_COLOR_UPDATE)
+		else if (Param1 == dlg->getID("clr_updated"))
 			fc = &settings::clr_updated;
 		if (fc)
-			GetColorDialog(fc);
+			_PSI.ColorDialog(0, fc);
 	}
-*/
 	return _PSI.DefDlgProc(dlg, Msg, Param1, Param2);
 }

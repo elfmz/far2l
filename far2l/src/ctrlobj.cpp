@@ -52,7 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include "console.hpp"
 #include "scrbuf.hpp"
-#include "vt/vtlog.h"
 
 #include "farversion.h"
 
@@ -86,7 +85,6 @@ ControlObject::ControlObject()
 			&Opt.SaveViewHistory, true);
 	FolderHistory->SetAddMode(true, 2, true);
 	ViewHistory->SetAddMode(true, 1, true);
-	VTLog::Start();
 }
 
 void ControlObject::Init()
@@ -152,7 +150,6 @@ void ControlObject::CreateFilePanels()
 
 ControlObject::~ControlObject()
 {
-	VTLog::Stop();
 	if (CriticalInternalError)
 		return;
 

@@ -62,6 +62,9 @@ public:
 	ScreenBuf();
 	~ScreenBuf();
 
+    ScreenBuf(const ScreenBuf&) = delete;
+    ScreenBuf& operator=(const ScreenBuf&) = delete;
+
 public:
 	void AllocBuf(int X, int Y);
 	void Lock();

@@ -4541,21 +4541,28 @@ void Dialog::Process()
 	InitDialog();
 
 	if (ExitCode == -1) {
-		clock_t btm = 0;
-		long save = 0;
 		DialogMode.Set(DMODE_BEGINLOOP);
 
-		if (1 == ++s_in_dialog) {
-			btm = GetProcessUptimeMSec();
-			save = WaitUserTime;
-			WaitUserTime = -1;
+		if (GetCanLoseFocus()) {
+			FrameManager->InsertFrame(this);
+			FrameManager->Commit();
 		}
+		else {
+			clock_t btm = 0;
+			long save = 0;
 
-		FrameManager->ExecuteModal(this);
-		save+= (GetProcessUptimeMSec() - btm);
+			if (1 == ++s_in_dialog) {
+				btm = GetProcessUptimeMSec();
+				save = WaitUserTime;
+				WaitUserTime = -1;
+			}
 
-		if (0 == --s_in_dialog)
-			WaitUserTime = save;
+			FrameManager->ExecuteModal(this);
+			save+= (GetProcessUptimeMSec() - btm);
+
+			if (0 == --s_in_dialog)
+				WaitUserTime = save;
+		}
 	}
 
 	if (pSaveItemEx)
@@ -4626,6 +4633,13 @@ void Dialog::SetExitCode(int Code)
 	ExitCode = Code;
 	DialogMode.Set(DMODE_ENDLOOP);
 	// CloseDialog();
+}
+
+void Dialog::OnChangeFocus(int focus)
+{
+	Frame::OnChangeFocus(focus);
+	if (GetCanLoseFocus())
+		DlgProc(this, focus ? DN_GOTFOCUS : DN_KILLFOCUS, -1, 0);
 }
 
 /*

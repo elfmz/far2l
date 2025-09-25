@@ -1065,6 +1065,12 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 			Запомним номер плагина - сейчас в основном для формирования HelpTopic
 		*/
 		FarDialog->SetPluginNumber(PluginNumber);
+
+		if (Flags & FDLG_NONMODAL) {
+			FarDialog->SetCanLoseFocus(true);
+			FarDialog->SetDynamicallyBorn(true);
+			FarDialog->Process();
+		}
 	}
 	return hDlg;
 }
@@ -1081,6 +1087,9 @@ static int FarDialogRunSynched(HANDLE hDlg)
 
 	{
 		Dialog *FarDialog = (Dialog *)hDlg;
+		if (FarDialog->GetCanLoseFocus()) {
+			return -1;
+		}
 		LockBottomFrame lbf;	// временно отменим прорисовку фрейма
 		// CtrlObject->Plugins.Flags.Clear(PSIF_DIALOG);
 		FarDialog->Process();
@@ -1098,7 +1107,10 @@ static bool FarDialogFreeSynched(HANDLE hDlg)
 		return false;
 
 	Dialog *FarDialog = (Dialog *)hDlg;
-	delete FarDialog;
+	if (!FarDialog->GetCanLoseFocus()) {
+		delete FarDialog;
+		return true;
+	}
 	return true;
 }
 

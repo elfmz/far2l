@@ -38,10 +38,10 @@ $^#Configuration Dialog#
  These settings fine-tune how the plugin discovers applications and determines file types according to the XDG Freedesktop.org specifications.
 
  #-# Use `xdg-mime` tool
-   Use `xdg-mime query filetype` command to determine the file's MIME type. This is the standard XDG utility, which primarily relies on a database that maps filename patterns (e.g., *.pdf) to MIME types. While it may also perform content analysis as a fallback, its primary reliance on filenames makes it very fast but susceptible to being misled by files with incorrect or missing extensions.
+   Determine the MIME type of the selected file by invoking the `xdg-mime query filetype` command. This is the standard XDG utility, which primarily relies on a database that maps filename patterns (e.g., *.pdf) to MIME types. While it may also perform content analysis as a fallback, its primary reliance on filenames makes it very fast but susceptible to being misled by files with incorrect or missing extensions.
 
  #-# Use `file` tool
-   Use `file --mime-type` command for MIME type detection. This utility determines the file type by inspecting its binary content and matching it against a database of "magic numbers" (unique file signatures). This method is very reliable and is not deceived by incorrect file extensions, but it can be slightly slower as it requires reading the file's contents.
+   Determine the MIME type of the selected file by invoking the `file --mime-type` command. The utility inspects the file's binary content and matches it against a database of "magic numbers" (unique file signatures). This method is very reliable and is not deceived by incorrect file extensions, but it can be slightly slower as it requires reading the file's contents.
 
  #-# Use extension-based fallback
    As a last resort, guess the MIME type based on the file's extension from a built-in static map. This is less reliable but can be useful on systems with incomplete MIME databases.

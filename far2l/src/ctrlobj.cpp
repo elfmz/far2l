@@ -246,7 +246,8 @@ void ControlObject::ShowStartupBanner(LPCWSTR EmergencyMsg)
 		const auto SavedColor = GetColor();
 		for (size_t i = 0, y = 0; i < Lines.size(); ++i, ++y) {
 			if (i >= ConsoleHintsIndex) {
-				SetFarColor(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);		// COL_HELPBOXTITLE
+				DWORD64 attr = FarColorToReal(Lines[i].Begins(L' ') ? COL_HELPTEXT : COL_HELPTOPIC);
+				SetColor(attr | IMPORTANT_LINE_CHAR);		// COL_HELPBOXTITLE
 			}
 			for (const wchar_t *str = Lines[i].CPtr();;) {
 				const auto piece = std::min(size_t(wcslen(str)), size_t(ScrX + 1));

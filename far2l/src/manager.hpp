@@ -89,7 +89,6 @@ private:
 	void StartupMainloop();
 	Frame *FrameMenu();		//    вместо void SelectFrame(); // show window menu (F12)
 
-	BOOL Commit();			// завершает транзакцию по изменениям в очереди и стеке фреймов
 	// Она в цикле вызывает себя, пока хотябы один из указателей отличен от nullptr
 	// Функции, "подмастерья начальника" - Commit'a
 	// Иногда вызываются не только из него и из других мест
@@ -151,6 +150,7 @@ public:
 	BOOL ExitAll();
 	BOOL IsAnyFrameModified(int Activate);
 
+	BOOL Commit();			// завершает транзакцию по изменениям в очереди и стеке фреймов
 	int GetFrameCount() { return (FrameCount); };
 	int GetFrameCountByType(int Type);
 

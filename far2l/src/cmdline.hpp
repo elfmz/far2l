@@ -58,7 +58,7 @@ class CommandLine : public ScreenObject
 {
 private:
 	EditControl CmdStr;
-	HANDLE BackgroundConsole = NULL;
+	ConsoleForkScope BackgroundConsole;
 	FARString strCurDir;
 	FARString strLastCmdStr;
 	FARString strLastCompletionCmdStr;
@@ -95,7 +95,6 @@ public:
 	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 
 	virtual void Show();
-	virtual void ResizeConsole();
 
 	std::string GetConsoleLog(HANDLE con_hnd, bool colored);
 	int GetCurDir(FARString &strCurDir);

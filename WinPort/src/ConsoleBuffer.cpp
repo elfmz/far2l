@@ -5,7 +5,48 @@ ConsoleBuffer::ConsoleBuffer() : _width(0)
 {
 }
 
-void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos)
+void ConsoleBuffer::SetSizeSimple(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos)
+{
+	if (width==_width && (width*height)==_console_chars.size() )
+		return;
+
+	unsigned int prev_height = _width ? (SHORT)(_console_chars.size() / _width) : (SHORT)0;
+	CHAR_INFO fill_ci{};
+	CI_SET_WCATTR(fill_ci, L' ', attributes);
+	ConsoleChars new_chars(size_t(height) * width, fill_ci);
+	if (!new_chars.empty() && !_console_chars.empty()) {
+		size_t y_offset = (prev_height > height) ? prev_height - height : 0;
+		for (unsigned int y = y_offset; y < prev_height; ++y) {
+			size_t last_elb = (size_t)-1;
+			for (unsigned int x = 0; x < _width; ++x) {
+				auto &ci = _console_chars[y * _width + x];
+				if ( (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
+					last_elb = x;
+					ci.Attributes&= ~EXPLICIT_LINE_BREAK;
+				}
+				if (x < width) {
+					new_chars[(y - y_offset) * width + x] = ci;
+				}
+			}
+			if (last_elb != (size_t)-1 && y < prev_height) {
+				if (last_elb >= width) {
+					last_elb = width - 1;
+				}
+				new_chars[(y - y_offset) * width + last_elb].Attributes|= EXPLICIT_LINE_BREAK;
+			}
+		}
+	}
+	_console_chars.swap(new_chars);
+	_width = width;
+	if ((size_t)cursor_pos.X >= _width) {
+		cursor_pos.X = _width - 1;
+	}
+	if ((size_t)cursor_pos.Y >= (_console_chars.size() / _width)) {
+		cursor_pos.Y = (_console_chars.size() / _width) - 1;
+	}
+}
+
+void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos)
 {
 	if (width==_width && (width*height)==_console_chars.size() )
 		return;
@@ -105,6 +146,12 @@ void ConsoleBuffer::SetSize(unsigned int width, unsigned int height, uint64_t at
 
 	_console_chars.swap(new_chars);
 	_width = width;
+	if ((size_t)cursor_pos.X >= _width) {
+		cursor_pos.X = _width - 1;
+	}
+	if ((size_t)cursor_pos.Y >= (_console_chars.size() / _width)) {
+		cursor_pos.Y = (_console_chars.size() / _width) - 1;
+	}
 }
 
 void ConsoleBuffer::GetSize(unsigned int &width, unsigned int &height)

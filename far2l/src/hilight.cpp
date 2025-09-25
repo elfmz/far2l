@@ -503,36 +503,42 @@ public:
 	void *DoNow()
 	{
 		for (size_t FCnt = 0; FCnt < _FileCount; ++FCnt) {
-			FileListItem &fli = *_FileItem[FCnt];
-			HighlightDataColor Colors = DefaultStartingColors;
-			ApplyStartColors(&Colors);
+		    if (!_FileItem[FCnt])   // проверка на null
+		        continue;
 
-			for (size_t i = 0; i < _HiData.getCount(); i++) {
-				const FileFilterParams *CurHiData = _HiData.getConstItem(i);
-				if (CurHiData->GetFlags(FFFT_CUSTOM) & FFF_DISABLED)
-					continue;
+		    FileListItem &fli = *_FileItem[FCnt];
+		    HighlightDataColor Colors = DefaultStartingColors;
+		    ApplyStartColors(&Colors);
 
-				if (_UseAttrHighlighting && CurHiData->GetMask(nullptr))
-					continue;
+		    for (size_t i = 0; i < _HiData.getCount(); i++) {
+		        const FileFilterParams *CurHiData = _HiData.getConstItem(i);
+		        if (!CurHiData)      // проверка на null
+		            continue;
 
-				if (CurHiData->FileInFilter(fli, _CurrentTime)) {
-					HighlightDataColor TempColors;
-					CurHiData->GetColors(&TempColors);
-					ApplyColors(&Colors, &TempColors);
+		        if (CurHiData->GetFlags(FFFT_CUSTOM) & FFF_DISABLED)
+		            continue;
 
-					if (!CurHiData->GetContinueProcessing())
-						break;
-				}
-			}
+		        if (_UseAttrHighlighting && CurHiData->GetMask(nullptr))
+		            continue;
 
-			if (Colors.MarkLen) {
-				size_t ncells = StrCellsCount( Colors.Mark, Colors.MarkLen );
+		        if (CurHiData->FileInFilter(fli, _CurrentTime)) {
+		            HighlightDataColor TempColors;
+		            CurHiData->GetColors(&TempColors);
+		            ApplyColors(&Colors, &TempColors);
 
-				if (ncells > _MarkLM && ncells <= Opt.MaxFilenameIndentation)
-					_MarkLM = ncells;
-			}
+		            if (!CurHiData->GetContinueProcessing())
+		                break;
+		        }
+		    }
 
-			fli.ColorsPtr = PooledHighlightDataColor(Colors);
+		    if (Colors.MarkLen) {
+		        size_t ncells = StrCellsCount(Colors.Mark, Colors.MarkLen);
+
+		        if (ncells > _MarkLM && ncells <= Opt.MaxFilenameIndentation)
+		            _MarkLM = ncells;
+		    }
+
+		    fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
 
 		return (void *)_MarkLM;

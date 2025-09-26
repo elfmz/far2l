@@ -67,7 +67,7 @@ ColorsInit[]
 	{"Panel.Title",                                 F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTITLE,
 	{"Panel.Title.Selected",                        F_BLACK | B_CYAN,         }, // COL_PANELSELECTEDTITLE,
 	{"Panel.Title.Column",                          F_YELLOW | B_BLUE,        }, // COL_PANELCOLUMNTITLE,
-	{"Panel.Info.Tota",                            F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTOTALINFO,
+	{"Panel.Info.Tota",                             F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTOTALINFO,
 	{"Panel.Info.Selected",                         F_YELLOW | B_CYAN,        }, // COL_PANELSELECTEDINFO,
 	{"Dialog.Text",                                 F_BLACK | B_LIGHTGRAY,    }, // COL_DIALOGTEXT,
 	{"Dialog.Text.Highlight",                       F_YELLOW | B_LIGHTGRAY,   }, // COL_DIALOGHIGHLIGHTTEXT,
@@ -195,6 +195,18 @@ ColorsInit[]
 	{"WarnDialog.DefaultButton.Selected",           F_BLACK | B_LIGHTGRAY,    }, // COL_WARNDIALOGSELECTEDDEFAULTBUTTON,
 	{"WarnDialog.DefaultButton.Highlight",          F_YELLOW | B_RED,         }, // COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON,
 	{"WarnDialog.DefaultButton.Highlight.Selected", F_YELLOW | B_LIGHTGRAY,   }, // COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
+	{"Dialog.OverflowArrow",                        F_YELLOW | B_CYAN,        }, // COL_DIALOGOVERFLOWARROW,
+	{"WarnDialog.OverflowArrow",                    F_YELLOW | B_RED,         }, // COL_WARNDIALOGOVERFLOWARROW,
+	{"Dialog.List",                                 F_DARKGRAY | B_LIGHTGRAY, }, // COL_DIALOGLISTPREFIX,
+	{"Dialog.List.Selected",                        F_LIGHTGRAY | B_BLACK,    }, // COL_DIALOGLISTSELPREFIX,
+	{"Dialog.Combo",                                F_DARKGRAY | B_CYAN,      }, // COL_DIALOGCOMBOPREFIX,
+	{"Dialog.Combo.Selected",                       F_DARKGRAY | B_RED,       }, // COL_DIALOGCOMBOSELPREFIX,
+	{"WarnDialog.List",                             F_BLACK | B_LIGHTGRAY,    }, // COL_WARNDIALOGLISTPREFIX,
+	{"WarnDialog.List.Selected",                    F_DARKGRAY | B_RED,       }, // COL_WARNDIALOGLISTSELPREFIX,
+	{"WarnDialog.Combo",                            F_DARKGRAY | B_CYAN,      }, // COL_WARNDIALOGCOMBOPREFIX,
+	{"WarnDialog.Combo.Selected",                   F_LIGHTGRAY | B_BLACK,    }, // COL_WARNDIALOGCOMBOSELPREFIX,
+	{"Menu.Prefix",                                 F_DARKGRAY | B_CYAN,      }, // COL_MENUPREFIX,
+	{"Menu.Prefix.Selected",                        F_LIGHTGRAY | B_BLACK,    }, // COL_MENUSELPREFIX,
 };
 
 static_assert(ARRAYSIZE(ColorsInit) == COL_LASTPALETTECOLOR);

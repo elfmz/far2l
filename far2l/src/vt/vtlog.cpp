@@ -316,6 +316,3 @@ namespace VTLog
 		return path;
 	}
 }
-
-
-

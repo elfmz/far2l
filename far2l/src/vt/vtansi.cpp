@@ -533,6 +533,12 @@ struct VTAnsiContext
 		HANDLE _preserved_con_hnd{NULL};
 
 	public:
+		~AlternativeScreenBuffer()
+		{
+			if (_preserved_con_hnd) {
+				WINPORT(DiscardConsole)(_preserved_con_hnd);
+			}
+		}
 		void Toggle(HANDLE con_hnd, bool activate)
 		{
 			if (activate) {

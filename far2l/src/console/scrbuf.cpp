@@ -251,26 +251,10 @@ void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 		const CHAR_INFO *SrcBuf = ss ? &ss->Read(X1, Y1 + I) : DstBuf;
 
 		for (int J = 0; J < Width; J++, ++DstBuf, ++SrcBuf) {
-
-			union {
-				uint64_t attr64;
-				uint8_t attr[8];
-			};
-
-			attr64 = SrcBuf->Attributes;
-			attr64 &= 0xFFFFFFFFFFFFFF07;
-
-			attr[7] >>= 1;
-			attr[6] >>= 1;
-			attr[5] >>= 1;
-			attr[4] >>= 1;
-			attr[3] >>= 1;
-			attr[2] >>= 1;
-
-			if (!attr[0])
-				attr[0] = 8;
-
-			DstBuf->Attributes = attr64;
+			uint64_t attr = SrcBuf->Attributes;
+			uint8_t cc = attr & 0x07;
+			DstBuf->Attributes = ((attr & 0xFEFEFEFEFEFE0000ULL) >> 1) |
+									(attr & 0x000000000000FF00ULL) | (cc ? cc : 8);
 		}
 	}
 

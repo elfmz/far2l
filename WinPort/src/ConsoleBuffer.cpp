@@ -54,7 +54,7 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 	CHAR_INFO fill_ci{};
 	CI_SET_WCATTR(fill_ci, L' ', attributes);
 	ConsoleChars new_chars(size_t(height) * width, fill_ci);
-	if (_width && !_console_chars.empty()) {
+	if (_width && !_console_chars.empty() && !new_chars.empty()) {
 		size_t nc_cursor_offset = (size_t)-1;
 		ConsoleChars unwrapped_chars;
 		for (size_t y = 0, ymax = _console_chars.size() / _width; y < ymax; ++y) {
@@ -84,7 +84,7 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 				auto line_begin = _console_chars.begin() + y * _width;
 				unwrapped_chars.insert(unwrapped_chars.end(), line_begin, line_begin + w);
 				if ((size_t)cursor_pos.Y == y) {
-					int cx = ((size_t)cursor_pos.X < w) ? cursor_pos.X : w - 1;
+					int cx = ((size_t)cursor_pos.X < w) ? cursor_pos.X : (w ? w - 1 : 0);
 					nc_cursor_offset = unwrapped_chars.size() - w + cx;
 				}
 			}
@@ -137,10 +137,8 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 			if (x > 0) {
 				x = 0;
 				++y;
-			} else if (x > width) {
-				x = width;
 			}
-			while (y && y >= height && width) { // ensure at least one free line is there at the bottom
+			while (y && y >= height) { // ensure at least one free line is there at the bottom
 				if (scroll_callback.pfn) {
 					scroll_callback.pfn(scroll_callback.context, con_handle, width, &new_chars[0]);
 				}
@@ -148,6 +146,8 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 				std::fill(new_chars.end() - width, new_chars.end(), fill_ci);
 				--y;
 			}
+			cursor_pos.X = 0;
+			cursor_pos.Y = y;
 			fprintf(stderr, "ConsoleBuffer: cursor defaulted at %d.%d screen %u.%u \n", cursor_pos.X, cursor_pos.Y, width, height);
 		}
 	}

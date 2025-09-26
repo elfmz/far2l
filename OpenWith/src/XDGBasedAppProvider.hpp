@@ -94,7 +94,7 @@ private:
 	// Custom hash function for AppUniqueKey
 	struct AppUniqueKeyHash
 	{
-		std::size_t operator()(const AppUniqueKey& k) const {
+		size_t operator()(const AppUniqueKey& k) const {
 			const auto h1 = std::hash<std::string_view>{}(k.name);
 			const auto h2 = std::hash<std::string_view>{}(k.exec);
 			return h1 ^ (h2 << 1);
@@ -121,16 +121,6 @@ private:
 			: prioritized_mimes(mimes), associations(assocs), desktop_paths(paths), current_desktop_env(env) {}
 	};
 
-
-	// Represents a single token from the Exec= command line, preserving quoting info.
-	struct ExecToken
-	{
-		std::string text;
-		bool quoted;
-		bool single_quoted;
-	};
-
-
 	// Searching and ranking candidates logic
 	void FindCandidatesFromMimeLists(CandidateSearchContext& context, const std::string& global_default_app);
 	void FindCandidatesFromCache(CandidateSearchContext& context, const std::unordered_map<std::string, std::vector<std::string>>& mime_cache);
@@ -153,11 +143,10 @@ private:
 	static std::string GetLocalizedValue(const std::unordered_map<std::string, std::string>& values, const std::string& base_key);
 
 	// Command line constructing
-	static std::vector<ExecToken> TokenizeDesktopExec(const std::string& str);
+	static std::string UnescapeGeneralString(const std::string& raw_str);
+	static std::vector<std::string> TokenizeExecString(const std::string& exec_str);
 	static bool ExpandFieldCodes(const DesktopEntry& candidate, const std::string& pathname, const std::string& unescaped, std::vector<std::string>& out_args);
-	static std::string UndoEscapes(const ExecToken& token);
 	static std::string EscapeArg(const std::string& arg);
-	static bool IsDesktopWhitespace(char c);
 
 	// Paths and the system environment helpers
 	static std::vector<std::string> GetDesktopFileSearchPaths();

@@ -131,7 +131,7 @@ private:
 			flags = s_NoWaitForCommandCompletion ? EF_NOWAIT : 0;
 		}
 		if (s_FSF.Execute(cmd.c_str(), flags) == -1) {
-			ShowError(GetMsg(MError), GetMsg(MCannotExecute));
+			ShowError(GetMsg(MError), { GetMsg(MCannotExecute) });
 		}
 	}
 
@@ -143,12 +143,12 @@ private:
 		auto candidates = provider->GetAppCandidates(pathname);
 
 		if (candidates.empty()) {
-			ShowError(GetMsg(MError), GetMsg(MNoAppsFound));
+			ShowError(GetMsg(MError), { GetMsg(MNoAppsFound) , provider->GetMimeType(pathname) });
 			return;
 		}
 
 		std::vector<FarMenuItem> menu_items(candidates.size());
-		for (std::size_t i = 0; i < candidates.size(); ++i) {
+		for (size_t i = 0; i < candidates.size(); ++i) {
 			menu_items[i].Text = candidates[i].name.c_str();
 		}
 
@@ -203,15 +203,19 @@ private:
 		kfh.SetInt(INI_SECTION, "UseExternalTerminal", s_UseExternalTerminal);
 		kfh.SetInt(INI_SECTION, "NoWaitForCommandCompletion", s_NoWaitForCommandCompletion);
 		if (!kfh.Save()) {
-			ShowError(GetMsg(MError), GetMsg(MSaveConfigError));
+			ShowError(GetMsg(MError), { GetMsg(MSaveConfigError) });
 		}
 	}
 
 
-	static void ShowError(const wchar_t *title, const wchar_t *text)
+	static void ShowError(const wchar_t *title, const std::vector<std::wstring>& text)
 	{
-		const wchar_t *items[] = { title, text, GetMsg(MOk) };
-		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items, ARRAYSIZE(items), 1);
+		std::vector<const wchar_t*> items;
+		items.reserve(text.size() + 2);
+		items.push_back(title);
+		for (const auto &line : text) items.push_back(line.c_str());
+		items.push_back(GetMsg(MOk));
+		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items.data(), items.size(), 1);
 	}
 
 

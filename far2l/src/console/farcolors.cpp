@@ -261,8 +261,10 @@ void FarColors::ResetToDefaultIndexRGB( uint8_t *indexes ) noexcept {
 	for(size_t i = 0; i < SIZE_ARRAY_FARCOLORS; i++) {
 		uint8_t color = indexes[i];
 
-		colors[i] = ((uint64_t)Palette::FARPalette[16 + (color & 0xF)].rgba << 16);
-		colors[i] += ((uint64_t)Palette::FARPalette[color >> 4].rgba << 40);
+		uint32_t c = Palette::FARPalette[16 + (color & 0x0F)];
+		colors[i] = ((uint64_t)(c & 0x00ffffff) << 16);
+		uint32_t c2 = Palette::FARPalette[color >> 4];
+		colors[i] += ((uint64_t)(c2 & 0x00ffffff) << 40);
 
 		colors[i] += FOREGROUND_TRUECOLOR + BACKGROUND_TRUECOLOR;
 		colors[i] += color;

@@ -433,16 +433,17 @@ struct ExecuteStruct
 	{
 		INT_PTR nResult;
 		HANDLE hResult;
-		BOOL bResult;
 	};
+
+	BOOL bResult;
 
 	union
 	{
 		INT_PTR nDefaultResult;
 		HANDLE hDefaultResult;
-		BOOL bDefaultResult;
 	};
 
+	BOOL bDefaultResult;
 	bool bUnloaded;
 };
 
@@ -459,6 +460,7 @@ struct ExecuteStruct
 		es.bUnloaded = false;                                                                                  \
 		es.nResult = 0;                                                                                        \
 		es.nResult = (INT_PTR)function;                                                                        \
+		es.bResult = (BOOL)es.nResult;                                                                         \
 	}
 
 bool PluginA::SetStartupInfo(bool &bUnloaded)

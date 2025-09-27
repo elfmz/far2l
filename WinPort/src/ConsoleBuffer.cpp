@@ -122,6 +122,12 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 			const auto &ci = unwrapped_chars[i];
 			new_chars[ofs] = ci;
 			if ( (ci.Attributes & EXPLICIT_LINE_BREAK) != 0) {
+				const DWORD64 rendering_attrs = ci.Attributes & (~(IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK));
+				for (;x < width; ++x) { // derive rendering attributes to all remain chars in line
+					auto &nci = new_chars[y * width + x];
+					nci.Attributes&= (IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK);
+					nci.Attributes|= rendering_attrs;
+				}
 				x = 0;
 				++y;
 			} else {

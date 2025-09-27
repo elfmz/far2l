@@ -162,22 +162,19 @@ std::wstring XDGBasedAppProvider::ConstructCommandLine(const CandidateInfo& cand
 	const DesktopEntry& desktop_entry = it->second.value();
 
 	std::string exec_mb = desktop_entry.exec;
-	if (exec_mb.empty()) return std::wstring();
+	if (exec_mb.empty()) return L"";
 
-	// Tokenize the Exec field respecting shell quoting rules.
-	std::vector<XDGBasedAppProvider::ExecToken> tokens = TokenizeDesktopExec(exec_mb);
+	std::vector<std::string> tokens = TokenizeExecString(exec_mb);
 	if (tokens.empty()) {
-		return std::wstring();
+		return L"";
 	}
 
 	std::vector<std::string> args;
 	args.reserve(tokens.size());
 	bool has_field_code = false;
 
-	// Check if any tokens contain XDG field codes (e.g., %f, %U).
-	for (const XDGBasedAppProvider::ExecToken& t : tokens) {
-		std::string unescaped = UndoEscapes(t);
-		if (unescaped.find('%') != std::string::npos) {
+	for (const std::string& t : tokens) {
+		if (t.find('%') != std::string::npos) {
 			has_field_code = true;
 			break;
 		}
@@ -185,14 +182,14 @@ std::wstring XDGBasedAppProvider::ConstructCommandLine(const CandidateInfo& cand
 
 	std::string pathname_mb = StrWide2MB(pathname);
 
-	// Process each token, expanding field codes and handling escapes.
-	for (const XDGBasedAppProvider::ExecToken& t : tokens) {
-		std::string unescaped = UndoEscapes(t);
+	for (const std::string& token : tokens) {
 		std::vector<std::string> expanded;
-		if (!ExpandFieldCodes(desktop_entry, pathname_mb, unescaped, expanded)) {
-			return std::wstring(); // Return empty on invalid field code.
+		if (!ExpandFieldCodes(desktop_entry, pathname_mb, token, expanded)) {
+			return L""; // error in field code (e.g. %)
 		}
-		for (auto &a : expanded) args.push_back(std::move(a));
+		for (auto& a : expanded) {
+			args.push_back(std::move(a));
+		}
 	}
 
 	// According to the spec, if no field codes are present, the file path must be appended.
@@ -201,7 +198,7 @@ std::wstring XDGBasedAppProvider::ConstructCommandLine(const CandidateInfo& cand
 	}
 
 	if (args.empty()) {
-		return std::wstring();
+		return L"";
 	}
 
 	// Build the final command line with proper shell escaping for each argument.
@@ -270,6 +267,9 @@ std::wstring XDGBasedAppProvider::GetMimeType(const std::wstring& pathname)
 
 	std::string result;
 	for (auto& m : mime_types) { result += m; result += ';'; }
+	if (result.empty()) {
+		result = "(none)";
+	}
 	return StrMB2Wide(result);
 }
 
@@ -544,34 +544,174 @@ std::string XDGBasedAppProvider::MimeTypeByExtension(const std::string& pathname
 	// A static map for common file extensions as a last-resort fallback.
 	// This is not comprehensive but covers many common cases if other tools fail.
 	static const std::unordered_map<std::string, std::string> s_ext_to_type_map = {
-		{".sh",  "text/x-shellscript"},
-		{".bash","text/x-shellscript"},
-		{".csh", "text/x-shellscript"},
-		{".py",  "text/x-python"},
-		{".pl",  "text/x-perl"},
-		{".rb",  "text/x-ruby"},
-		{".js",  "text/javascript"},
-		{".html","text/html"},
-		{".htm", "text/html"},
-		{".xml", "application/xml"},
-		{".pdf", "application/pdf"},
-		{".exe", "application/x-ms-dos-executable"},
-		{".bin", "application/x-executable"},
-		{".elf", "application/x-executable"},
-		{".txt", "text/plain"},
-		{".conf","text/plain"},
-		{".cfg", "text/plain"},
-		{".md",  "text/markdown"},
-		{".jpg", "image/jpeg"},
-		{".jpeg","image/jpeg"},
-		{".png", "image/png"},
-		{".gif", "image/gif"},
-		{".doc", "application/msword"},
-		{".odt", "application/vnd.oasis.opendocument.text"},
-		{".zip", "application/zip"},
-		{".tar", "application/x-tar"},
-		{".gz",  "application/gzip"}
+
+		// Shell / scripts / source code
+
+		{".sh",    "application/x-shellscript"},
+		{".bash",  "application/x-shellscript"},
+		{".csh",   "application/x-csh"},
+		{".zsh",   "application/x-shellscript"},
+		{".ps1",   "application/x-powershell"},
+		{".py",    "text/x-python"},
+		{".pyw",   "text/x-python"},
+		{".pl",    "text/x-perl"},
+		{".pm",    "text/x-perl"},
+		{".rb",    "text/x-ruby"},
+		{".php",   "application/x-php"},
+		{".phps",  "application/x-php"},
+		{".js",    "application/javascript"},
+		{".mjs",   "application/javascript"},
+		{".java",  "text/x-java-source"},
+		{".c",     "text/x-csrc"},
+		{".h",     "text/x-chdr"},
+		{".cpp",   "text/x-c++src"},
+		{".cc",    "text/x-c++src"},
+		{".cxx",   "text/x-c++src"},
+		{".hpp",   "text/x-c++hdr"},
+		{".go",    "text/x-go"},
+		{".rs",    "text/rust"},
+		{".swift", "text/x-swift"},
+
+		// Plain text / markup / data
+
+		{".txt",   "text/plain"},
+		{".md",    "text/markdown"},
+		{".markdown","text/markdown"},
+		{".rtf",   "application/rtf"},
+		{".tex",   "application/x-tex"},
+		{".csv",   "text/csv"},
+		{".tsv",   "text/tab-separated-values"},
+		{".log",   "text/plain"},
+		{".json",  "application/json"},
+		{".yaml",  "text/yaml"},
+		{".yml",   "text/yaml"},
+		{".xml",   "application/xml"},
+		{".html",  "text/html"},
+		{".htm",   "text/html"},
+		{".xhtml", "application/xhtml+xml"},
+		{".ics",   "text/calendar"},
+
+		// Office / documents
+
+		{".pdf",   "application/pdf"},
+		{".doc",   "application/msword"},
+		{".docx",  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+		{".xls",   "application/vnd.ms-excel"},
+		{".xlsx",  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+		{".ppt",   "application/vnd.ms-powerpoint"},
+		{".pptx",  "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+		{".odt",   "application/vnd.oasis.opendocument.text"},
+		{".ods",   "application/vnd.oasis.opendocument.spreadsheet"},
+		{".odp",   "application/vnd.oasis.opendocument.presentation"},
+		{".epub",  "application/epub+zip"},
+		{".rtf",   "application/rtf"},
+
+		// Images
+
+		{".jpg",   "image/jpeg"},
+		{".jpeg",  "image/jpeg"},
+		{".jpe",   "image/jpeg"},
+		{".png",   "image/png"},
+		{".gif",   "image/gif"},
+		{".webp",  "image/webp"},
+		{".svg",   "image/svg+xml"},
+		{".ico",   "image/vnd.microsoft.icon"},
+		{".bmp",   "image/bmp"},
+		{".tif",   "image/tiff"},
+		{".tiff",  "image/tiff"},
+		{".heic",  "image/heic"},
+		{".avif",  "image/avif"},
+		{".apng",  "image/apng"},
+
+		// Audio
+
+		{".mp3",   "audio/mpeg"},
+		{".m4a",   "audio/mp4"},
+		{".aac",   "audio/aac"},
+		{".ogg",   "audio/ogg"},
+		{".oga",   "audio/ogg"},
+		{".opus",  "audio/opus"},
+		{".wav",   "audio/x-wav"},
+		{".flac",  "audio/flac"},
+		{".mid",   "audio/midi"},
+		{".midi",  "audio/midi"},
+		{".weba",  "audio/webm"},
+
+		// Video
+
+		{".mp4",   "video/mp4"},
+		{".m4v",   "video/mp4"},
+		{".mov",   "video/quicktime"},
+		{".mkv",   "video/x-matroska"},
+		{".webm",  "video/webm"},
+		{".ogv",   "video/ogg"},
+		{".avi",   "video/x-msvideo"},
+		{".flv",   "video/x-flv"},
+		{".wmv",   "video/x-ms-wmv"},
+		{".3gp",   "video/3gpp"},
+		{".3g2",   "video/3gpp2"},
+		{".ts",    "video/mp2t"},
+
+		// Archives / compressed
+
+		{".zip",   "application/zip"},
+		{".tar",   "application/x-tar"},
+		{".gz",    "application/gzip"},
+		{".tgz",   "application/gzip"},
+		{".bz",    "application/x-bzip"},
+		{".bz2",   "application/x-bzip2"},
+		{".xz",    "application/x-xz"},
+		{".7z",    "application/x-7z-compressed"},
+		{".rar",   "application/vnd.rar"},
+		{".jar",   "application/java-archive"},
+
+		// Executables / binaries
+
+		{".exe",   "application/x-ms-dos-executable"},
+		{".dll",   "application/x-msdownload"},
+		{".so",    "application/x-sharedlib"},
+		{".elf",   "application/x-executable"},
+		{".bin",   "application/octet-stream"},
+		{".class", "application/java-vm"},
+
+		// Fonts
+
+		{".ttf",   "font/ttf"},
+		{".otf",   "font/otf"},
+		{".woff",  "font/woff"},
+		{".woff2", "font/woff2"},
+		{".eot",   "application/vnd.ms-fontobject"},
+
+		// PostScript / vector
+
+		{".ps",    "application/postscript"},
+		{".eps",   "application/postscript"},
+		{".ai",    "application/postscript"},
+
+		// Disk images / containers
+
+		{".iso",   "application/x-iso9660-image"},
+		{".img",   "application/octet-stream"},
+		{".dmg",   "application/x-apple-diskimage"},
+
+		// Web / misc
+
+		{".css",   "text/css"},
+		{".map",   "application/json"},
+		{".wasm",  "application/wasm"},
+		{".jsonld","application/ld+json"},
+		{".webmanifest","application/manifest+json"},
+
+		// CAD / specialized
+
+		{".dxf",   "image/vnd.dxf"},
+		{".dwg",   "application/acad"},
+
+		// Mail / office miscellany
+
+		{".msg",   "application/vnd.ms-outlook"}
 	};
+
 
 	std::string result;
 
@@ -588,7 +728,6 @@ std::string XDGBasedAppProvider::MimeTypeByExtension(const std::string& pathname
 	}
 	return result;
 }
-
 
 
 // ****************************** Parsing XDG files and data ******************************
@@ -825,68 +964,89 @@ std::string XDGBasedAppProvider::GetLocalizedValue(const std::unordered_map<std:
 // ****************************** Command line constructing ******************************
 
 
-// Tokenizes the Exec= line according to the Desktop Entry Specification's rules.
-// This is not a full shell parser, but handles quoting and basic backslash escapes.
-std::vector<XDGBasedAppProvider::ExecToken> XDGBasedAppProvider::TokenizeDesktopExec(const std::string& str)
+// Performs the first-pass un-escaping for a raw string from a .desktop file.
+// This handles general GKeyFile-style escape sequences like '\\' -> '\', '\s' -> ' ', etc.
+std::string XDGBasedAppProvider::UnescapeGeneralString(const std::string& raw_str)
 {
-	std::vector<XDGBasedAppProvider::ExecToken> tokens;
-	std::string cur;
-	bool in_double_quotes = false;
-	bool in_single_quotes = false;
-	bool cur_quoted = false;
-	bool cur_single_quoted = false;
-	bool prev_backslash = false;
+	std::string result;
+	result.reserve(raw_str.length());
 
-	for (size_t i = 0; i < str.size(); ++i) {
-		char c = str[i];
-
-		if (prev_backslash) {
-			cur.push_back('\\');
-			cur.push_back(c);
-			prev_backslash = false;
-			continue;
-		}
-
-		if (c == '\\') {
-			prev_backslash = true;
-			continue;
-		}
-
-		if (c == '"' && !in_single_quotes) {
-			in_double_quotes = !in_double_quotes;
-			cur_quoted = true;
-			continue;
-		}
-
-		if (c == '\'' && !in_double_quotes) {
-			in_single_quotes = !in_single_quotes;
-			cur_single_quoted = true;
-			continue;
-		}
-
-		if (!in_double_quotes && !in_single_quotes && IsDesktopWhitespace(c)) {
-			if (!cur.empty() || cur_quoted || cur_single_quoted) {
-				tokens.push_back({cur, cur_quoted, cur_single_quoted});
-				cur.clear();
-				cur_quoted = false;
-				cur_single_quoted = false;
+	for (size_t i = 0; i < raw_str.length(); ++i) {
+		if (raw_str[i] == '\\') {
+			if (i + 1 < raw_str.length()) {
+				i++; // Move to the character after the backslash
+				switch (raw_str[i]) {
+				case 's': result += ' '; break;
+				case 'n': result += '\n'; break;
+				case 't': result += '\t'; break;
+				case 'r': result += '\r'; break;
+				case '\\': result += '\\'; break;
+				default:
+					// For unknown escape sequences, the backslash is dropped
+					// and the character is preserved.
+					result += raw_str[i];
+					break;
+				}
+			} else {
+				// A trailing backslash at the end of the string is treated as a literal.
+				result += '\\';
 			}
-			continue;
+		} else {
+			result += raw_str[i];
 		}
+	}
+	return result;
+}
 
-		cur.push_back(c);
+
+std::vector<std::string> XDGBasedAppProvider::TokenizeExecString(const std::string& exec_str)
+{
+	// Pass 1: Handle general GKeyFile string escapes.
+	const std::string unescaped_str = UnescapeGeneralString(exec_str);
+
+	// Pass 2: Tokenize the result.
+	std::vector<std::string> tokens;
+	std::string current_token;
+	bool in_quotes = false;
+
+	for (size_t i = 0; i < unescaped_str.length(); ++i) {
+		char c = unescaped_str[i];
+
+		if (in_quotes) {
+			if (c == '"') {
+				in_quotes = false; // end of quoted section
+			} else if (c == '\\') {
+				// Handle escaped characters inside a quoted section.
+				if (i + 1 < unescaped_str.length()) {
+					// The spec mentions `\"`, `\``, `\$`, and `\\`.
+					// A robust implementation simply un-escapes the next character.
+					current_token += unescaped_str[++i];
+				} else {
+					// A trailing backslash is treated as a literal.
+					current_token += c;
+				}
+			} else {
+				current_token += c;
+			}
+		} else { // not in a quoted section
+			if (isspace(c)) { // use isspace for both ' ' and '\t'
+				// A whitespace character separates arguments.
+				if (!current_token.empty()) {
+					tokens.push_back(current_token);
+					current_token.clear();
+				}
+			} else if (c == '"') {
+				in_quotes = true; // start of a quoted section
+			} else {
+				// Append regular character to the current token.
+				current_token += c;
+			}
+		}
 	}
 
-	if (prev_backslash) {
-		cur.push_back('\\');
-	}
-
-	if (!cur.empty() || cur_quoted || cur_single_quoted) {
-		// Detect unclosed quotes as a parsing error.
-		if ((cur_quoted && in_double_quotes) || (cur_single_quoted && in_single_quotes)) {
-			return {};
-		}
-		tokens.push_back({cur, cur_quoted, cur_single_quoted});
+	// Add the final token if the string didn't end with a separator.
+	if (!current_token.empty()) {
+		tokens.push_back(current_token);
 	}
 
 	return tokens;
@@ -933,43 +1093,6 @@ bool XDGBasedAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
 }
 
 
-// Processes escape sequences (\n, \t, \\, etc.) in a ExecToken's text.
-std::string XDGBasedAppProvider::UndoEscapes(const XDGBasedAppProvider::ExecToken& token)
-{
-	std::string result;
-	result.reserve(token.text.size());
-
-	for (size_t i = 0; i < token.text.size(); ++i) {
-		if (token.text[i] == '\\' && i + 1 < token.text.size()) {
-			char next = token.text[i + 1];
-			switch (next) {
-			case '"': case '\'': case '`': case '$': case '\\':
-				result.push_back(next);
-				break;
-			case 'n':
-				result.push_back('\n');
-				break;
-			case 't':
-				result.push_back('\t');
-				break;
-			case 'r':
-				result.push_back('\r');
-				break;
-			default: // Unrecognized escape sequences are kept literally.
-				result.push_back('\\');
-				result.push_back(next);
-				break;
-			}
-			++i;
-		} else {
-			result.push_back(token.text[i]);
-		}
-	}
-
-	return result;
-}
-
-
 // Escapes a single command-line argument for safe execution by the shell.
 // This wraps the argument in double quotes and escapes special characters.
 std::string XDGBasedAppProvider::EscapeArg(const std::string& arg)
@@ -988,13 +1111,6 @@ std::string XDGBasedAppProvider::EscapeArg(const std::string& arg)
 	out.push_back('"');
 	return out;
 }
-
-
-bool XDGBasedAppProvider::IsDesktopWhitespace(char c)
-{
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
-}
-
 
 
 // ****************************** Paths and the System environment helpers ******************************

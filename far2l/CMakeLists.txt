@@ -173,6 +173,7 @@ src/mix/ChunkedData.cpp
 src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 src/mix/GitTools.cpp
+src/shoco/shoco.c
 )
 
 # Option to disable building macro subsystem completely
@@ -244,6 +245,7 @@ target_include_directories(far2l PRIVATE
     src/macro
     src/plug
     src/vt
+    src/shoco
     ${CMAKE_CURRENT_BINARY_DIR}
     ${UCHARDET_INCLUDE_DIRS}
     ../WinPort)

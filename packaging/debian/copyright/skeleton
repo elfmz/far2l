@@ -72,6 +72,10 @@ Files: far2l/src/vt/vtansi.cpp
 Copyright: 2005-2014 Jason Hood
 License: ANSICON
 
+Files: far2l/src/shoco/*
+Copyright: 2014-2015 Christian Schramm
+License: MIT
+
 Files: multiarc/src/formats/rar/unrar/*
 Copyright: 2009-2020 Alexander L. Roshal
 License: UnRAR

@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "farcolors.hpp"
 
-#define SIZE_ARRAY_FARCOLORS 147
+#define SIZE_ARRAY_FARCOLORS 159
 
 class FarColors : NonCopyable
 {
@@ -53,11 +53,11 @@ public:
 	static void InitFarColors( ) noexcept;
 	static void SaveFarColors( ) noexcept;
 
-	void Set() noexcept { 
+	void Set() noexcept {
 		memcpy(setcolors, colors, sizeof(setcolors[0]) * SIZE_ARRAY_FARCOLORS);
 	}
 
-	static void Set(uint64_t *colors) noexcept { 
+	static void Set(uint64_t *colors) noexcept {
 		memcpy(setcolors, colors, sizeof(setcolors[0]) * SIZE_ARRAY_FARCOLORS);
 	}
 

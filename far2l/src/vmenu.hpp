@@ -62,6 +62,8 @@ enum
 	VMenuColorArrowsDisabled = 12,		// '<' & '>' Disabled
 	VMenuColorGrayed         = 13,		// "серый"
 	VMenuColorSelGrayed      = 14,		// выбранный "серый"
+	VmenuColorPrefix         = 15,      // префикс пункта меню
+	VmenuColorSelPrefix      = 16,      // выбранный префикс пункта меню
 
 	VMENU_COLOR_COUNT,					// всегда последняя - размерность массива
 };

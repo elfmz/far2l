@@ -2410,23 +2410,23 @@ ConfigShowSortMode
 
 ConfigPanelHighlightMarksButton
 "Раскраска файлов - Маркировка"
-"Highlight files - Marking"   
-"Zvýrazňovat soubory - Označení"  
+"Highlight files - Marking"
+"Zvýrazňovat soubory - Označení"
 "Dateien markieren - Markierung"
-"Fájlok kiemelése - Jelzés"    
+"Fájlok kiemelése - Jelzés"
 "Wyróżniaj pliki - Cechowanie"
-"Resaltar archivos - Marcado"   
+"Resaltar archivos - Marcado"
 "Розфарбовка файлів - Маркування"
 "Размалёўка файлаў - Маркіроўка"
 
 ConfigPanelHighlightMarksTitle
 "Настройки панели - Раскраска файлов - Маркировка"
-"Panel settings - Highlight files - Marking"   
-"Nastavení panelů - Zvýrazňovat soubory - Označení"  
+"Panel settings - Highlight files - Marking"
+"Nastavení panelů - Zvýrazňovat soubory - Označení"
 "Panels einrichten - Dateien markieren - Markierung"
-"Panel beállítások - Fájlok kiemelése - Jelzés"    
+"Panel beállítások - Fájlok kiemelése - Jelzés"
 "Ustawienia panelu - Wyróżniaj pliki - Cechowanie"
-"Configuración de paneles - Resaltar archivos - Marcado"   
+"Configuración de paneles - Resaltar archivos - Marcado"
 "Налаштування панели - Розфарбовка файлів - Маркування"
 "Налады стужкі - Размалёўка файлаў - Маркіроўка"
 
@@ -18036,6 +18036,17 @@ upd:"Selected highlighted default button"
 "Вибрана кнопка за замовчуванням"
 "Абраная афарбаваная прадвызначаная кнопка"
 
+SetColorDialogOverflowArrow
+"Стрелка переполнения"
+"Overflow Arrow"
+"Šipka přetečení"
+"Überlaufpfeil"
+"Túlcsordulás nyíl"
+"Strzałka przepełnienia"
+"Flecha de desbordamiento"
+"Стрілка переповнення"
+"Стрелка перапоўнення"
+
 SetColorDialogListBoxControl
 "Список"
 "List box"
@@ -18345,6 +18356,50 @@ SetColorMenuArrowsDisabled
 "Deshabilitar indicadores de cadena largos"
 "Блоковані індикатори довгих рядків"
 "Забароненыя паказальнікі доўгіх радкоў"
+
+SetColorMenuPrefix
+"Префикс"
+"Prefix"
+"Předpona"
+"Präfix"
+"Előtag"
+"Prefiks"
+"Prefijo"
+"Префікс"
+"Прафікс"
+
+SetColorMenuPrefixSelected
+"Выбранный префикс"
+"Selected prefix"
+"Vybraný prefix"
+"Ausgewähltes Präfix"
+"Kiválasztott előtag"
+"Wybrany prefiks"
+"Prefijo seleccionado"
+"Обраний префікс"
+"Абраны прафікс"
+
+SetColorDialogListPrefix
+"Префикс"
+"Prefix"
+"Předpona"
+"Präfix"
+"Előtag"
+"Prefiks"
+"Prefijo"
+"Префікс"
+"Прафікс"
+
+SetColorDialogListPrefixSelected
+"Выбранный префикс"
+"Selected prefix"
+"Vybraný prefix"
+"Ausgewähltes Präfix"
+"Kiválasztott előtag"
+"Wybrany prefiks"
+"Prefijo seleccionado"
+"Обраний префікс"
+"Абраны прафікс"
 
 SetColorHMenuNormal
 l:

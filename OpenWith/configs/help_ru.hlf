@@ -14,6 +14,7 @@ $^#Содержание#
 
    ~Информационный диалог (F3)~@InformationDialog@
 
+   ~Советы по использованию и полезности~@Tips@
 
 @ConfigurationDialog
 $^#Плагин OpenWith#
@@ -129,3 +130,28 @@ $^#Информационный диалог (F3)#
    Внутренняя версия сборки или пакета (например, "329").
 
    ~Содержание~@Contents@
+
+@Tips
+$^#Плагин OpenWith#
+$^#Version 1.0#
+$^#Copyright (C) 2025 spnethw#
+$^#Советы по использованию и полезности#
+ Для быстрого вызова можно макросом задействовать, например, клавишу "#≣ Menu#"/"#Apps#":
+
+ В #far2l# поместите в файл #~~/.config/far2l/settings/key_macros.ini# следующие строки:
+ #[KeyMacros/Shell/Apps]#
+ #Description=OpenWith Plugin for current file#
+ #DisableOutput=0x1#
+ #Sequence=F11 O#
+
+ В #far2m# в каталоге #~~/.config/far2m/Macros/scripts/#
+следующие строки:
+ #Macro {#
+ # description="OpenWith plugin for current file";#
+ # area="Shell"; key="Apps";#
+ # action=function() Plugin.Menu(0x93CDEF19) end;#
+ #}#
+ либо поместите в отдельный файл с расширением #.lua#,
+либо добавьте в любой существующий файл с другими макросами.
+
+ После повторного запуска far2l/far2m макрос станет доступен для использования.

@@ -14,6 +14,7 @@ $^#Contents#
 
    ~Information Dialog (F3)~@InformationDialog@
 
+   ~Tips for use and usefulness~@Tips@
 
 @ConfigurationDialog
 $^#OpenWith plugin#
@@ -131,3 +132,27 @@ $^#Information Dialog (F3)#
    The internal build or bundle version (e.g., "329").
 
    ~Contents~@Contents@
+
+@Tips
+$^#OpenWith plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2025 spnethw#
+$^#Tips for use and usefulness#
+    For a quick access, you can use a macro, for example, to access via "#≣ Menu#"/"#Apps#" key:
+
+    In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines:
+ #[KeyMacros/Shell/Apps]#
+ #Description=OpenWith Plugin for current file#
+ #DisableOutput=0x1#
+ #Sequence=F11 O#
+
+    In #far2m# in the #~~/.config/far2m/Macros/scripts/# directory the following lines:
+ #Macro {#
+ # description="OpenWith plugin for current file";#
+ # area="Shell"; key="Apps";#
+ # action=function() Plugin.Menu(0x93CDEF19) end;#
+ #}#
+ either place it in a separate file with the #.lua# extension,
+or add it to any existing file with other macros.
+
+    After restarting far2l/far2m the macro will be available for use.

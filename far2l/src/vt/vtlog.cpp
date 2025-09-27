@@ -182,7 +182,7 @@ namespace VTLog
 				_memories.pop_front();
 			}
 
-			fprintf(stderr, "VTLog count=%lu size=%lu\n", (unsigned long)_memories.size(), (unsigned long)_memories_size);
+//			fprintf(stderr, "VTLog count=%lu size=%lu\n", (unsigned long)_memories.size(), (unsigned long)_memories_size);
 		}
 
 		void DumpToFile(HANDLE con_hnd, int fd, DumpState &ds, bool colored)

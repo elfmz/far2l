@@ -16,6 +16,8 @@ $^#Contents#
 
    ~Tips for use and usefulness~@Tips@
 
+   ~Troubleshooting~@Troubleshooting@
+
 @ConfigurationDialog
 $^#OpenWith plugin#
 $^#Version 1.0#
@@ -26,7 +28,7 @@ $^#Configuration Dialog#
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., TUI programs) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal.
+   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal.
 
  #-# Don't wait for command completion
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications.
@@ -36,16 +38,16 @@ $^#Configuration Dialog#
 
  #2.1. Linux/BSD Settings#
 
- These settings fine-tune how the plugin discovers applications and determines file types according to the XDG Freedesktop.org specifications.
+ These settings fine-tune how the plugin identifies file types and discovers applications, following the XDG specifications. The plugin gathers a list of potential MIME types for a file from all enabled sources. This list is then prioritized, and applications are ranked based on how well they match the most specific MIME types. This allows for more flexible and accurate associations than relying on a single detection method.
 
  #-# Use `xdg-mime` tool
-   Determine the MIME type of the selected file by invoking the `xdg-mime query filetype` command. This is the standard XDG utility, which primarily relies on a database that maps filename patterns (e.g., *.pdf) to MIME types. While it may also perform content analysis as a fallback, its primary reliance on filenames makes it very fast but susceptible to being misled by files with incorrect or missing extensions.
+   Determine the MIME type of the selected file by invoking the `xdg-mime query filetype` command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the MimeType= entries in .desktop files. Although the utility can also inspect file contents, it primarily relies on filenames, making it susceptible to errors for files with wrong or missing extensions.
 
  #-# Use `file` tool
-   Determine the MIME type of the selected file by invoking the `file --mime-type` command. The utility inspects the file's binary content and matches it against a database of "magic numbers" (unique file signatures). This method is very reliable and is not deceived by incorrect file extensions, but it can be slightly slower as it requires reading the file's contents.
+   Determine the MIME type of the selected file by invoking the `file --mime-type` command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and is not deceived by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents, and the MIME type names it produces may occasionally differ from the official IANA names or those in the shared-mime-info database, potentially leading to fewer application matches.
 
  #-# Use extension-based fallback
-   As a last resort, guess the MIME type based on the file's extension from a built-in static map. This is less reliable but can be useful on systems with incomplete MIME databases.
+   As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
 
  #-# Use mimeinfo.cache
    Speed up application lookups by using the mimeinfo.cache files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., image/png) to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
@@ -59,7 +61,7 @@ $^#Configuration Dialog#
 
  #2.2. macOS Settings#
 
- There are no platform-specific settings for macOS. The plugin uses the native Launch Services framework, which does not require external configuration.
+ There are no platform‑specific settings for macOS. The plugin uses the native Launch Services framework and requires no additional configuration. Launch Services centrally and automatically manages application‑to‑document bindings and maintains a database of installed apps and their Uniform Type Identifiers (UTIs); this database is updated when applications are installed or removed.
 
    ~Contents~@Contents@
 
@@ -156,3 +158,34 @@ $^#Tips for use and usefulness#
 or add it to any existing file with other macros.
 
     After restarting far2l/far2m the macro will be available for use.
+
+   ~Contents~@Contents@
+
+@Troubleshooting
+$^#OpenWith plugin#
+$^#Version 1.0#
+$^#Copyright (C) 2025 spnethw#
+$^#Troubleshooting#
+
+ #Why doesn't my favorite app appear in the list (Linux/BSD)?#
+
+ This can happen for several reasons:
+
+ #-# Incorrect .desktop file: The application's .desktop file might be missing, located in a non-standard directory, or have an incorrect `MimeType=` entry.
+ #-# MIME type mismatch: The MIME type detected for the file might not be listed in the application's .desktop file. Check the "MIME type" field in the F3 dialog and compare it with the `MimeType=` line in the app's .desktop file.
+ #-# Association is missing: The application is not registered as a handler for this MIME type in any of the mimeapps.list files. You can often fix this using your desktop environment's settings ("Default Applications").
+ #-# Filtering options: The "Filter by OnlyShowIn/NotShowIn" or "Validate TryExec" options might be hiding the application. Try disabling them to see if it appears.
+ #-# Outdated cache: The system's application or MIME database cache might be out of date. Run appropriate commands in your terminal to regenerate them (for example, "sudo update-mime-database /usr/share/mime" and "sudo update-desktop-database /usr/share/applications").
+
+ #Why is an unexpected MIME type detected for my file?#
+
+ The plugin builds a list of all possible MIME types from every enabled source (xdg-mime, file, extension map). xdg-mime, being the most integrated tool, usually provides the most relevant type, which gets the highest priority. If an incorrect type appears first, it's likely due to a misconfiguration in the system's shared-mime-info database. For diagnosis, you can try disabling the xdg-mime, file and extension map options one by one in the plugin's settings to see how the resulting MIME type list changes.
+
+ #An application is in the list, but it fails to launch.#
+
+ This usually means the `Exec=` line in the application's .desktop file is incorrect or contains field codes that the plugin does not support.
+ #-# Press F3 to open the Information Dialog and examine the "Launch command".
+ #-# Copy this command and try to run it manually in a terminal. The error message will often reveal the problem.
+ #-# Check the application's .desktop file for correctness according to the Freedesktop.org specification.
+
+   ~Contents~@Contents@

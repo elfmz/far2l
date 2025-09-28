@@ -587,6 +587,7 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 				if (ClipText && wcschr(ClipText, L'\n') && wcschr(ClipText, L'\n')[1] != L'\0') {
 					CmdStr.GetString(strStr);
 					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + ClipText + strStr.SubStr(CmdStr.GetCurPos());
+					RemoveTrailingSpaces(strToExec);
 					if (Opt.CmdLine.AskOnMultilinePaste) {
 						ExMessager em;
 						em.AddMultiline(Msg::MultilinePaste);

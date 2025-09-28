@@ -58,7 +58,7 @@ namespace VTLog
 			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ')
 					|| (ci.Attributes & (IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK)) != 0
 					|| (prev_ci && (ci.Attributes & BACKGROUND_RGB) != (prev_ci->Attributes & BACKGROUND_RGB)))  {
-				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0 || x != Width - 1);
+				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0); //  || x != Width - 1
 			}
 			prev_ci = &ci;
 		}

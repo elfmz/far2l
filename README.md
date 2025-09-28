@@ -450,8 +450,8 @@ but vanilla PuTTY can not transfer clipboard.
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository ppa:far2l-team/ppa
             #sudo apt install far2l-gui  # (!) use if you need plain+GUI backends
-            #sudo apt install far2l-ttyx # (!) use if you need plain+TTY|Xi backends
-            #sudo apt install far2l      # (!) use if you need only plain backend
+            #sudo apt install --no-install-recommends far2l-ttyx # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install --no-install-recommends far2l      # (!) use if you need only plain backend
             ```
 
         - Disconnection PPA and **return to official [Ubuntu](#debian) repository**

@@ -187,42 +187,56 @@ namespace VTLog
 
 		void DumpToFile(HANDLE con_hnd, int fd, DumpState &ds, bool colored)
 		{
-			std::lock_guard<std::mutex> lock(_mutex);
-			std::string s;
-			for (auto m : _memories) {
-				if (m.first == con_hnd && (ds.nonempty || !m.second.empty())) {
-					if ((m.second[0] & FLAG_IS_COMPRESSED) == 0) { // uncompressed
-						s.assign((char *)&m.second[1], m.second.size() - 1);
-					} else for (s.resize(m.second.size() * 2);; s.resize(s.size() * 3 / 2 + 32)) {
-						size_t sz = shoco_decompress(&m.second[1], m.second.size() - 1, s.data(), s.size());
-						if (sz <= s.size()) {
-							while (sz != 0 && !s[sz - 1]) {
-								--sz;
-							}
-							s.resize(sz);
-							break;
-						}
-					}
+		    std::lock_guard<std::mutex> lock(_mutex);
 
-					ds.nonempty = true;
-					if (!colored) {
-						for (;;) {
-							size_t i = s.find('\033');
-							if (i == std::string::npos) break;
-							size_t j = s.find('m', i + 1);
-							if (j == std::string::npos) break;
-							s.erase(i, j + 1 - i);
-						}
-					}
+		    for (auto &m : _memories) {
+		        if (m.first != con_hnd) continue;
+		        if (!ds.nonempty && m.second.empty()) continue;
 
-					if ((m.second[0] & FLAG_HAS_EOL) != 0) {
-						s+= NATIVE_EOL;
-					}
+		        std::string s;
 
-					if (write(fd, s.c_str(), s.size()) != (int)s.size())
-						perror("VTLog: WriteToFile");
-				}
-			}
+		        if (m.second.size() > 1) {
+		            const bool is_compressed = (m.second[0] & FLAG_IS_COMPRESSED) != 0;
+		            if (!is_compressed) {
+		                s.assign(reinterpret_cast<const char*>(&m.second[1]), m.second.size() - 1);
+		            } else {
+		                // декомпрессия с безопасным расширением буфера
+		                s.resize(m.second.size() * 2);
+		                while (true) {
+		                    size_t sz = shoco_decompress(&m.second[1], m.second.size() - 1, s.data(), s.size());
+		                    if (sz <= s.size()) {
+		                        s.resize(sz);
+		                        // удалить завершающие нули
+		                        while (!s.empty() && s.back() == '\0') s.pop_back();
+		                        break;
+		                    }
+		                    s.resize(s.size() * 3 / 2 + 32);
+		                }
+		            }
+		        }
+
+		        ds.nonempty = true;
+
+		        // удалить escape-последовательности, если не нужны цвета
+		        if (!colored) {
+		            size_t pos = 0;
+		            while ((pos = s.find('\033', pos)) != std::string::npos) {
+		                size_t end = s.find('m', pos + 1);
+		                if (end == std::string::npos) break;
+		                s.erase(pos, end + 1 - pos);
+		            }
+		        }
+
+		        if (!s.empty() && (m.second[0] & FLAG_HAS_EOL) != 0) {
+		            s += NATIVE_EOL;
+		        }
+
+		        if (!s.empty()) {
+		            if (write(fd, s.c_str(), s.size()) != (ssize_t)s.size()) {
+		                perror("VTLog: WriteToFile");
+		            }
+		        }
+		    }
 		}
 		
 		void Reset(HANDLE con_hnd)

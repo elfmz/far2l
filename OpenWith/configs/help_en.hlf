@@ -6,7 +6,7 @@ $^#OpenWith plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
 $^#Contents#
- The #OpenWith# plugin provides a context-aware menu to open the currently selected file with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. The plugin is cross-platform and uses native OS mechanisms on Linux/BSD and macOS to provide accurate and relevant application choices.
+ The #OpenWith# plugin provides a context-aware menu to open the currently selected file with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
  After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application.
 
@@ -41,7 +41,7 @@ $^#Configuration Dialog#
  These settings fine-tune how the plugin identifies file types and discovers applications, following the XDG specifications. The plugin gathers a list of potential MIME types for a file from all enabled sources. This list is then prioritized, and applications are ranked based on how well they match the most specific MIME types. This allows for more flexible and accurate associations than relying on a single detection method.
 
  #-# Use `xdg-mime` tool
-   Determine the MIME type of the selected file by invoking the `xdg-mime query filetype` command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the MimeType= entries in .desktop files. Although the utility can also inspect file contents, it primarily relies on filenames, making it susceptible to errors for files with wrong or missing extensions.
+   Determine the MIME type of the selected file by invoking the `xdg-mime query filetype` command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the `MimeType=` entries in .desktop files. Although the utility can also inspect file contents, it primarily relies on filenames, making it susceptible to errors for files with wrong or missing extensions.
 
  #-# Use `file` tool
    Determine the MIME type of the selected file by invoking the `file --mime-type` command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and is not deceived by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents, and the MIME type names it produces may occasionally differ from the official IANA names or those in the shared-mime-info database, potentially leading to fewer application matches.
@@ -155,7 +155,7 @@ $^#Tips for use and usefulness#
  # action=function() Plugin.Menu(0x93CDEF19) end;#
  #}#
  either place it in a separate file with the #.lua# extension,
-or add it to any existing file with other macros.
+ or add it to any existing file with other macros.
 
     After restarting far2l/far2m the macro will be available for use.
 

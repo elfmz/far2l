@@ -475,7 +475,6 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 	bool is_readable_file = IsReadableFile(pathname);
 
 	if (is_valid_dir || is_readable_file) {
-		std::string escaped_path = EscapePathForShell(pathname);
 
 		// Primary methods for MIME detection.
 		add_unique(MimeTypeFromXdgMimeTool(pathname));
@@ -1103,10 +1102,8 @@ std::string XDGBasedAppProvider::EscapeArg(const std::string& arg)
 		// Escape characters that have special meaning inside double quotes in shell.
 		if (c == '\\' || c == '"' || c == '$' || c == '`') {
 			out.push_back('\\');
-			out.push_back(c);
-		} else {
-			out.push_back(c);
 		}
+		out.push_back(c);
 	}
 	out.push_back('"');
 	return out;
@@ -1212,13 +1209,47 @@ std::string XDGBasedAppProvider::GetDefaultApp(const std::string& mime_type)
 // Checks if an executable exists and is runnable.
 bool XDGBasedAppProvider::CheckExecutable(const std::string& path)
 {
+	if (path.empty()) {
+		return false;
+	}
+
+	// If the path contains a slash, it's an absolute or relative path.
+	// In that case we do not search $PATH, but check it directly.
 	if (path.find('/') != std::string::npos) {
-		// If it's a relative or absolute path, check directly for execute permission.
 		return access(path.c_str(), X_OK) == 0;
 	}
-	// If it's just a command name, use `which` to check if it's in the $PATH.
-	std::string which_cmd = "which " + EscapePathForShell(path) + " >/dev/null 2>&1";
-	return system(which_cmd.c_str()) == 0;
+
+	// Otherwise, it's a command name and we must find it in $PATH.
+	const char* path_env = getenv("PATH");
+	if (!path_env) {
+		// If $PATH is not set, search is impossible.
+		return false;
+	}
+
+	std::string path_env_str(path_env);
+	if (path_env_str.empty()) {
+		return false;
+	}
+
+	std::istringstream path_stream(path_env_str);
+	std::string dir;
+
+	while (std::getline(path_stream, dir, ':')) {
+		// Skip empty components in $PATH for safety,
+		// to avoid checking the current working directory.
+		if (dir.empty()) {
+			continue;
+		}
+
+		std::string full_path = dir + '/' + path;
+		if (access(full_path.c_str(), X_OK) == 0) {
+			// File found and has execute permission.
+			return true;
+		}
+	}
+
+	// Command not found in any of the $PATH directories.
+	return false;
 }
 
 

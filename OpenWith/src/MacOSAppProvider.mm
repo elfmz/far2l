@@ -46,6 +46,18 @@ static MacCandidateTempInfo AppBundleToTempInfo(NSURL *appURL) {
     return c;
 }
 
+static std::wstring EscapeForShell(const std::wstring& arg) {
+    std::wstring out;
+    out.push_back(L'"');
+    for (wchar_t c : arg) {
+        if (c == L'\\' || c == L'"' || c == L'$' || c == L'`') {
+            out.push_back(L'\\');
+        }
+        out.push_back(c);
+    }
+    out.push_back(L'"');
+    return out;
+}
 
 std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::wstring &pathname) {
     std::vector<CandidateInfo> result;
@@ -99,7 +111,7 @@ std::wstring MacOSAppProvider::ConstructCommandLine(const CandidateInfo &candida
     if (candidate.id.empty() || pathname.empty()) 
         return L"";
 
-    std::wstring cmd = L"open -a \"" + candidate.id + L"\" \"" + pathname + L"\"";
+    std::wstring cmd = L"open -a " + EscapeForShell(candidate.id) + L" " + EscapeForShell(pathname);
     return cmd;
 }
 

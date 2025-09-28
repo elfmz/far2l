@@ -67,7 +67,7 @@ ColorsInit[]
 	{"Panel.Title",                                 F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTITLE,
 	{"Panel.Title.Selected",                        F_BLACK | B_CYAN,         }, // COL_PANELSELECTEDTITLE,
 	{"Panel.Title.Column",                          F_YELLOW | B_BLUE,        }, // COL_PANELCOLUMNTITLE,
-	{"Panel.Info.Tota",                             F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTOTALINFO,
+	{"Panel.Info.Total",                            F_LIGHTCYAN | B_BLUE,     }, // COL_PANELTOTALINFO,
 	{"Panel.Info.Selected",                         F_YELLOW | B_CYAN,        }, // COL_PANELSELECTEDINFO,
 	{"Dialog.Text",                                 F_BLACK | B_LIGHTGRAY,    }, // COL_DIALOGTEXT,
 	{"Dialog.Text.Highlight",                       F_YELLOW | B_LIGHTGRAY,   }, // COL_DIALOGHIGHLIGHTTEXT,
@@ -248,9 +248,9 @@ bool FarColors::Load(KeyFileHelper &kfh) noexcept {
 	if (!kfh.HasSection(FARCOLORS_SECTION)) return false;
 
 	for (size_t i = 0; i < SIZE_ARRAY_FARCOLORS; i++) {
-		const std::string &expstr = kfh.GetString(FARCOLORS_SECTION, ColorsInit[i].name, FARCOLORS_DEFCOLOR);
+		const std::string &expstr = kfh.GetString(FARCOLORS_SECTION, ColorsInit[i].name);
 
-		uint64_t color = ExprToFarColor(expstr.c_str(), expstr.size());
+		uint64_t color = expstr.empty() ? DefaultColorsIndex16[i] : ExprToFarColor(expstr.c_str(), expstr.size());
 
 //		if (rez)
 		FARColors.colors[i] = color;

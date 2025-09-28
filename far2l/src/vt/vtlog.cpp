@@ -190,8 +190,10 @@ namespace VTLog
 			std::lock_guard<std::mutex> lock(_mutex);
 			std::string s;
 			for (auto m : _memories) {
-				if (m.first == con_hnd && (ds.nonempty || !m.second.empty())) {
-					if ((m.second[0] & FLAG_IS_COMPRESSED) == 0) { // uncompressed
+				if (m.first == con_hnd && (ds.nonempty || m.second.size() > 1)) {
+					if (m.second.size() <= 1) {
+						s.clear();
+					} else if ((m.second[0] & FLAG_IS_COMPRESSED) == 0) { // uncompressed
 						s.assign((char *)&m.second[1], m.second.size() - 1);
 					} else for (s.resize(m.second.size() * 2);; s.resize(s.size() * 3 / 2 + 32)) {
 						size_t sz = shoco_decompress(&m.second[1], m.second.size() - 1, s.data(), s.size());

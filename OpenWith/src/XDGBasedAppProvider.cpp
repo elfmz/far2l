@@ -475,7 +475,6 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 	bool is_readable_file = IsReadableFile(pathname);
 
 	if (is_valid_dir || is_readable_file) {
-		std::string escaped_path = EscapePathForShell(pathname);
 
 		// Primary methods for MIME detection.
 		add_unique(MimeTypeFromXdgMimeTool(pathname));
@@ -1103,10 +1102,8 @@ std::string XDGBasedAppProvider::EscapeArg(const std::string& arg)
 		// Escape characters that have special meaning inside double quotes in shell.
 		if (c == '\\' || c == '"' || c == '$' || c == '`') {
 			out.push_back('\\');
-			out.push_back(c);
-		} else {
-			out.push_back(c);
 		}
+		out.push_back(c);
 	}
 	out.push_back('"');
 	return out;

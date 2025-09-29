@@ -778,7 +778,7 @@ bool get_faddrs(void *handle)
 
 static bool patch_plt(void *handle)
 {
-#if defined(__APPLE__)
+#if defined(__APPLE__) || defined(__UCLIBC__)
 	return false;
 #else
 	struct link_map *map;

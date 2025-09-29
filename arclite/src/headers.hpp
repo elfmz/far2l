@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "PlatformConstants.h"
 #include "compiler.hpp"

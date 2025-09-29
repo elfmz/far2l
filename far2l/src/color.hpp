@@ -32,61 +32,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <stdint.h>
-
-typedef struct rgbcolor_s {
-    union {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-        struct {
-            uint8_t r;
-            uint8_t g;
-            uint8_t b;
-            uint8_t a;
-        };
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-        struct {
-            uint8_t a;
-            uint8_t b;
-            uint8_t g;
-            uint8_t r;
-        };
-#else
-#   error "Unsupported endianness"
-#endif
-        uint32_t rgba;
-    };
-} rgbcolor_t;
-
-
-typedef struct hsvcolor_s {
-    union {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-        struct {
-            uint8_t h;
-            uint8_t s;
-            uint8_t v;
-            uint8_t a;
-        };
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-        struct {
-            uint8_t a;
-            uint8_t v;
-            uint8_t s;
-            uint8_t h;
-        };
-#else
-#   error "Unsupported endianness"
-#endif
-        uint32_t hsva;
-    };
-} hsvcolor_t;
-
 #ifndef RGB
 #define RGB(r, g, b)   ((uint32_t)(((uint32_t)(r) | ((uint32_t)(g) << 8)) | (((uint32_t)(uint8_t)(b)) << 16)))
-
 #define GetRValue(rgb) ((uint8_t)(rgb))
 #define GetGValue(rgb) ((uint8_t)((rgb) >> 8))
 #define GetBValue(rgb) ((uint8_t)((rgb) >> 16))
+#define HSV RGB
+#define GetHValue GetRValue
+#define GetSValue GetGValue
+#define GetVValue GetBValue
 #endif
 
 #ifndef RGBA
@@ -98,5 +52,5 @@ typedef struct hsvcolor_s {
 #define ATTR_RGBBACK_NEGF(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
 #define ATTR_RGBBACK_NEGF2(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
 
-rgbcolor_t HSV_2_RGB(hsvcolor_t hsv);
-hsvcolor_t RGB_2_HSV(rgbcolor_t rgb);
+uint32_t HSV_2_RGB(uint32_t hsv);
+uint32_t RGB_2_HSV(uint32_t rgb);

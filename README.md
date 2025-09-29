@@ -12,7 +12,7 @@ Python (optional scripting support),
 arclite <sub>(now as experimental version which partially more effective then multiarc;
 arclite disabled by default, to enable manually turn on
 F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>,
-hexitor.
+hexitor, OpenWith.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -277,7 +277,8 @@ To control how RAR archives will be handled in multiarc:
 There're also options to toggle other plugins build in same way:
 `-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
 `-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
-`-DFILECASE=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`, `-DHEXITOR=no`
+`-DFILECASE=no`, `-DHEXITOR=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
+`-DOPENWITH=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 
 #### macOS build
@@ -449,8 +450,8 @@ but vanilla PuTTY can not transfer clipboard.
             sudo apt install software-properties-common # required if add-apt-repository not installed
             sudo add-apt-repository ppa:far2l-team/ppa
             #sudo apt install far2l-gui  # (!) use if you need plain+GUI backends
-            #sudo apt install far2l-ttyx # (!) use if you need plain+TTY|Xi backends
-            #sudo apt install far2l      # (!) use if you need only plain backend
+            #sudo apt install --no-install-recommends far2l-ttyx # (!) use if you need plain+TTY|Xi backends
+            #sudo apt install --no-install-recommends far2l      # (!) use if you need only plain backend
             ```
 
         - Disconnection PPA and **return to official [Ubuntu](#debian) repository**

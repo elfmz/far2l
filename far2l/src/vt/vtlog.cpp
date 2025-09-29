@@ -9,6 +9,7 @@
 #include <WideMB.h>
 
 #include "vtlog.h"
+#include "shoco.h"
 
 #include "vtshell.h"
 #include "ctrlobj.hpp"
@@ -57,7 +58,7 @@ namespace VTLog
 			if ((ci.Char.UnicodeChar && ci.Char.UnicodeChar != L' ')
 					|| (ci.Attributes & (IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK)) != 0
 					|| (prev_ci && (ci.Attributes & BACKGROUND_RGB) != (prev_ci->Attributes & BACKGROUND_RGB)))  {
-				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0 || x != Width - 1);
+				return std::pair<unsigned int, bool>(x + 1, (ci.Attributes & EXPLICIT_LINE_BREAK) != 0); //  || x != Width - 1
 			}
 			prev_ci = &ci;
 		}
@@ -132,50 +133,95 @@ namespace VTLog
 	static class Lines
 	{
 		std::mutex _mutex;
-		std::list< std::pair<HANDLE, std::string> > _memories;
+		struct Memories : std::list< std::pair<HANDLE, std::vector<char> > > {} _memories;
+		size_t _memories_size{0}; // size in bytes of memory occupied by _memories
+		std::string _encoded_line;
+		std::vector<char> _compressed_line;
+		enum
+		{
+			FLAG_HAS_EOL = 0x01,
+			FLAG_IS_COMPRESSED = 0x80
+		};
 
 	public:
 		void Add(HANDLE con_hnd, const CHAR_INFO *Chars, unsigned int Width, bool EOL)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
-			const size_t limit = (size_t)std::max(Opt.CmdLine.VTLogLimit, 2);
-			// a little hustling to reduce reallocations
-			if (_memories.size() >= limit) {
-				while (_memories.size() > limit) {
-					_memories.pop_front();
-				}
-				_memories.splice(_memories.end(), _memories, _memories.begin());
+			if (!_memories.empty() && _memories.back().first == con_hnd && _memories.back().second[0] == 0) {
+				_encoded_line.assign((char *)&_memories.back().second[1], _memories.back().second.size() - 1);
+				_memories_size-= sizeof(Memories::value_type) + _memories.back().second.size();
+				_memories.pop_back();
 			} else {
-				_memories.emplace_back();
+				_encoded_line.clear();
 			}
-			auto &last = _memories.back();
-			last.first = con_hnd;
-			last.second.clear();
 			if (Width) {
-				EncodeLine(last.second, Width, Chars, true);
+				EncodeLine(_encoded_line, Width, Chars, true);
 			}
-			if (EOL) {
-				last.second+= NATIVE_EOL;
+
+			_compressed_line.resize(_encoded_line.size() + 1);
+			_compressed_line[0] = EOL ? FLAG_HAS_EOL : 0;
+			if (!_encoded_line.empty()) {
+				if (EOL) {
+					size_t sz = shoco_compress(_encoded_line.c_str(), _encoded_line.size(), &_compressed_line[1], _compressed_line.size() - 1);
+					if (sz < _compressed_line.size() - 1) {
+						_compressed_line[0] |= FLAG_IS_COMPRESSED;
+						_compressed_line.resize(sz + 1);
+					}
+				}
+				if (!(_compressed_line[0] & FLAG_IS_COMPRESSED)) { // compression inefficient - store uncompressed
+					memcpy(&_compressed_line[1], _encoded_line.c_str(), _encoded_line.size());
+				}
 			}
+
+			const size_t limit = size_t(std::max(Opt.CmdLine.VTLogLimit, 1)) * 1024;
+
+			_memories_size+= sizeof(Memories::value_type) + _compressed_line.size();
+			_memories.emplace_back(con_hnd, _compressed_line);
+			while (_memories_size > limit && !_memories.empty()) {
+				_memories_size-= sizeof(Memories::value_type) + _memories.front().second.size();
+				_memories.pop_front();
+			}
+
+//			fprintf(stderr, "VTLog count=%lu size=%lu\n", (unsigned long)_memories.size(), (unsigned long)_memories_size);
 		}
 
 		void DumpToFile(HANDLE con_hnd, int fd, DumpState &ds, bool colored)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
+			std::string s;
 			for (auto m : _memories) {
-				if (m.first == con_hnd && (ds.nonempty || !m.second.empty())) {
+				if (m.first == con_hnd && (ds.nonempty || m.second.size() > 1)) {
+					if (m.second.size() <= 1) {
+						s.clear();
+					} else if ((m.second[0] & FLAG_IS_COMPRESSED) == 0) { // uncompressed
+						s.assign((char *)&m.second[1], m.second.size() - 1);
+					} else for (s.resize(m.second.size() * 2);; s.resize(s.size() * 3 / 2 + 32)) {
+						size_t sz = shoco_decompress(&m.second[1], m.second.size() - 1, s.data(), s.size());
+						if (sz <= s.size()) {
+							while (sz != 0 && !s[sz - 1]) {
+								--sz;
+							}
+							s.resize(sz);
+							break;
+						}
+					}
+
 					ds.nonempty = true;
 					if (!colored) {
 						for (;;) {
-							size_t i = m.second.find('\033');
+							size_t i = s.find('\033');
 							if (i == std::string::npos) break;
-							size_t j = m.second.find('m', i + 1);
+							size_t j = s.find('m', i + 1);
 							if (j == std::string::npos) break;
-							m.second.erase(i, j + 1 - i);
+							s.erase(i, j + 1 - i);
 						}
 					}
-					//m.second+= NATIVE_EOL;
-					if (write(fd, m.second.c_str(), m.second.size()) != (int)m.second.size())
+
+					if ((m.second[0] & FLAG_HAS_EOL) != 0) {
+						s+= NATIVE_EOL;
+					}
+
+					if (write(fd, s.c_str(), s.size()) != (int)s.size())
 						perror("VTLog: WriteToFile");
 				}
 			}
@@ -186,6 +232,7 @@ namespace VTLog
 			std::lock_guard<std::mutex> lock(_mutex);
 			for (auto it = _memories.begin(); it != _memories.end();) {
 				if (it->first == con_hnd) {
+					_memories_size-= sizeof(Memories::value_type) + it->second.size();
 					it = _memories.erase(it);
 				} else {
 					++it;
@@ -212,24 +259,27 @@ namespace VTLog
 
 	} g_lines;
 
+
 	void OnConsoleScroll(PVOID pContext, HANDLE hConsole, unsigned int Width, CHAR_INFO *Chars)
 	{
-		auto width_eol = ActualLineWidth(Width, Chars);
-		if (VTShell_State() == VTS_NORMAL_SCREEN) {
+		auto state = VTShell_LookupState(hConsole);
+//std::wstring s;
+//for (auto i = 0; i < Width; ++i)s+= Chars[i].Char.UnicodeChar;
+//fprintf(stderr, " : %p %d '%ls'\n", hConsole, state, s.c_str());
+		if (state != VT_INVALID && state != VT_ALTERNATE_SCREEN) {
+			auto width_eol = ActualLineWidth(Width, Chars);
 			g_lines.Add(hConsole, Chars, width_eol.first, width_eol.second);
-		} else if (hConsole && CtrlObject && CtrlObject->CmdLine && hConsole == CtrlObject->CmdLine->GetBackgroundConsole()) {
-			g_lines.Add(NULL, Chars, width_eol.first, width_eol.second);
 		}
 	}
 
-	void Start()
+	void Register(HANDLE con_hnd)
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, OnConsoleScroll, NULL);
+		WINPORT(SetConsoleScrollCallback) (con_hnd, OnConsoleScroll, NULL);
 	}
 
-	void Stop()
+	void Unregister(HANDLE con_hnd)
 	{
-		WINPORT(SetConsoleScrollCallback) (NULL, NULL, NULL);
+		WINPORT(SetConsoleScrollCallback) (con_hnd, NULL, NULL);
 	}
 
 	void ConsoleJoined(HANDLE con_hnd)
@@ -263,7 +313,7 @@ namespace VTLog
 			SMALL_RECT rc = {0, 0, (SHORT) (csbi.dwSize.X - 1), 0};
 			// alternate VT screen mode typically used by rich UI terminal apps like MC
 			// which need identical screen copy without line recomposition
-			const bool no_line_recompose = (VTShell_State() == VTS_ALTERNATE_SCREEN);
+			const bool no_line_recompose = (VTShell_LookupState(con_hnd) == VT_ALTERNATE_SCREEN);
 			if (no_line_recompose && !s.empty() && !strchr(NATIVE_EOL, s.back())) {
 				s+= NATIVE_EOL;
 			}
@@ -298,7 +348,7 @@ namespace VTLog
 		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {
 			std::string s;
-			if (con_hnd || VTShell_State() != VTS_IDLE) {
+			if (con_hnd || VTShell_Busy()) {
 				AppendConsoleScreenLines(con_hnd, s, ds, colored);
 			} else if (CtrlObject->CmdLine) {
 				AppendConsoleScreenLines(CtrlObject->CmdLine->GetBackgroundConsole(), s, ds, colored);
@@ -313,6 +363,3 @@ namespace VTLog
 		return path;
 	}
 }
-
-
-

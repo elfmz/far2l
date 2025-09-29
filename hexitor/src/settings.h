@@ -56,4 +56,5 @@ public:
 	static FarColor clr_active;			///< Highlight color for active position
 	static FarColor clr_updated;			///< Highlight color for updated position
 	static FarColor clr_offset;			///< Highlight color for offset and separators
+	static void *Dialog;
 };

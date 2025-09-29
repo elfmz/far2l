@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <KeyFileHelper.h>
 #include <fileowner.hpp>
+#include "pick_color.hpp"
 
 #include "datetime.hpp"
 
@@ -576,6 +577,7 @@ void CreatePluginStartupInfo(Plugin *pPlugin, PluginStartupInfo *PSI, FarStandar
 		StartupInfo.SendDlgMessage = FarSendDlgMessage;
 		StartupInfo.DefDlgProc = FarDefDlgProc;
 		StartupInfo.InputBox = FarInputBox;
+		StartupInfo.ColorDialog = FarColorDialog;
 		StartupInfo.PluginsControl = farPluginsControl;
 		StartupInfo.FileFilterControl = farFileFilterControl;
 		StartupInfo.RegExpControl = farRegExpControl;
@@ -599,16 +601,17 @@ struct ExecuteStruct
 	{
 		INT_PTR nResult;
 		HANDLE hResult;
-		BOOL bResult;
 	};
+
+	BOOL bResult;
 
 	union
 	{
 		INT_PTR nDefaultResult;
 		HANDLE hDefaultResult;
-		BOOL bDefaultResult;
 	};
 
+	BOOL bDefaultResult;
 	bool bUnloaded;
 };
 
@@ -625,6 +628,7 @@ struct ExecuteStruct
 		es.bUnloaded = false;                                                                                  \
 		es.nResult = 0;                                                                                        \
 		es.nResult = (INT_PTR)function;                                                                        \
+		es.bResult = (BOOL)es.nResult;                                                                         \
 	}
 
 bool PluginW::SetStartupInfo(bool &bUnloaded)

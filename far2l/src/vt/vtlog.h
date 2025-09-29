@@ -3,8 +3,8 @@
 
 namespace VTLog
 {
-	void Start();
-	void Stop();
+	void Register(HANDLE con_hnd);
+	void Unregister(HANDLE con_hnd);
 
 	void ConsoleJoined(HANDLE con_hnd);
 

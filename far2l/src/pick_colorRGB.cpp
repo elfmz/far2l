@@ -61,80 +61,82 @@ uint32_t g_tempcolorsRGB[20] = {
 		0x48533A, 0x637350, 0x48533A, 0x637350
 };
 
-rgbcolor_t HSV_2_RGB(const hsvcolor_t hsv)
+uint32_t HSV_2_RGB(const uint32_t hsv)
 {
-	rgbcolor_t rgb;
 	uint8_t region, remainder, p, q, t;
+	uint8_t h = GetHValue(hsv),
+			s = GetSValue(hsv),
+			v = GetVValue(hsv);
+	uint8_t r, g, b;
 
-	if (hsv.s == 0) {
-
-		rgb.r = hsv.v;
-		rgb.g = hsv.v;
-		rgb.b = hsv.v;
-		return rgb;
+	if (s == 0) {
+		return RGB(v, v, v);
 	}
 
-	region = hsv.h / 43;
-	remainder = (hsv.h - (region * 43)) * 6; 
+	region = h / 43;
+	remainder = (h - (region * 43)) * 6;
 
-	p = (hsv.v * (255 - hsv.s)) >> 8;
-	q = (hsv.v * (255 - ((hsv.s * remainder) >> 8))) >> 8;
-	t = (hsv.v * (255 - ((hsv.s * (255 - remainder)) >> 8))) >> 8;
+	p = (v * (255 - s)) >> 8;
+	q = (v * (255 - ((s * remainder) >> 8))) >> 8;
+	t = (v * (255 - ((s * (255 - remainder)) >> 8))) >> 8;
 
 	switch (region)
 	{
 		case 0:
-			rgb.r = hsv.v; rgb.g = t; rgb.b = p;
+			r = v; g = t; b = p;
 			break;
 		case 1:
-			rgb.r = q; rgb.g = hsv.v; rgb.b = p;
+			r = q; g = v; b = p;
 			break;
 		case 2:
-			rgb.r = p; rgb.g = hsv.v; rgb.b = t;
+			r = p; g = v; b = t;
 			break;
 		case 3:
-			rgb.r = p; rgb.g = q; rgb.b = hsv.v;
+			r = p; g = q; b = v;
 			break;
 		case 4:
-			rgb.r = t; rgb.g = p; rgb.b = hsv.v;
+			r = t; g = p; b = v;
 			break;
 		default:
-			rgb.r = hsv.v; rgb.g = p; rgb.b = q;
+			r = v; g = p; b = q;
 			break;
 	}
 
-	return rgb;
+	return RGB(r, g, b);
 }
 
-hsvcolor_t RGB_2_HSV(const rgbcolor_t rgb)
+uint32_t RGB_2_HSV(const uint32_t rgb)
 {
-	hsvcolor_t hsv;
 	uint8_t rgbMin, rgbMax;
+	uint8_t r = GetRValue(rgb),
+			g = GetGValue(rgb),
+			b = GetBValue(rgb);
+	uint8_t h, s, v;
 
-	rgbMin = rgb.r < rgb.g ? (rgb.r < rgb.b ? rgb.r : rgb.b) : (rgb.g < rgb.b ? rgb.g : rgb.b);
-	rgbMax = rgb.r > rgb.g ? (rgb.r > rgb.b ? rgb.r : rgb.b) : (rgb.g > rgb.b ? rgb.g : rgb.b);
+	rgbMin = r < g ? (r < b ? r : b) : (g < b ? g : b);
+	rgbMax = r > g ? (r > b ? r : b) : (g > b ? g : b);
 
-	hsv.v = rgbMax;
-	if (hsv.v == 0) {
-		hsv.h = 0;
-		hsv.s = 0;
-		return hsv;
+	v = rgbMax;
+	if (v == 0) {
+		h = 0;
+		s = 0;
+		return HSV(0,0,0);
 	}
 
-	hsv.s = 255 * uint32_t(rgbMax - rgbMin) / hsv.v;
-	if (hsv.s == 0) {
-		hsv.h = 0;
-		return hsv;
+	s = 255 * uint32_t(rgbMax - rgbMin) / v;
+	if (s == 0) {
+		h = 0;
+		return HSV(h, s, v);
 	}
 
-	if (rgbMax == rgb.r)
-		hsv.h = 0 + 43 * (rgb.g - rgb.b) / (rgbMax - rgbMin);
-	else if (rgbMax == rgb.g)
-		hsv.h = 85 + 43 * (rgb.b - rgb.r) / (rgbMax - rgbMin);
+	if (rgbMax == r)
+		h = 0 + 43 * (g - b) / (rgbMax - rgbMin);
+	else if (rgbMax == g)
+		h = 85 + 43 * (b - r) / (rgbMax - rgbMin);
 	else
-		hsv.h = 171 + 43 * (rgb.r - rgb.g) / (rgbMax - rgbMin);
+		h = 171 + 43 * (r - g) / (rgbMax - rgbMin);
 
-	return hsv;
+	return HSV(h, s, v);
 }
 
 enum enumSetColorDialog
@@ -192,18 +194,10 @@ struct pick_colorRGB_s
 
 	union {
 		struct {
-			union {
-				uint32_t hsv;
-				uint8_t hsvbuff[4];
-				hsvcolor_t hsvt;
-			};
-			union {
-				uint32_t rgb;
-				uint8_t rgbbuff[4];
-				rgbcolor_t rgbt;
-			};
+			uint32_t hsv;
+			uint32_t rgb;
 		};
-		uint8_t hsvrgbbuff[8];
+		uint64_t hsvrgb64;
 	};
 
 	uint32_t hsvrgbfocus;
@@ -250,7 +244,7 @@ struct pick_colorRGB_s
 	{
 		for (size_t i = 0; i < 8; i++) {
 			if ((i & 3) == 3) continue;
-			swprintf(wsRGBHSV + i * 8, 8, L"%3u", hsvrgbbuff[i]);
+			swprintf(wsRGBHSV + i * 8, 8, L"%3u", (hsvrgb64 >> (i * 8)) & 0xFF );
 		}
 	}
 };
@@ -258,8 +252,9 @@ struct pick_colorRGB_s
 void pick_colorRGB_s::update_table_index(void)
 {
 	if (mode < 2) {
-		uint32_t y = 12 - (hsvbuff[1 + mode] / 20);
-		index = y > 11 ? 11 * 64 + (hsvbuff[0 + mode] >> 2) : y * 64 + (hsvbuff[0 + mode] >> 2);
+		uint32_t y = 12 - (((hsv >> ((1 + mode) * 8)) & 0xFF) / 20);
+		index = y > 11 ? 11 * 64 + (((hsv >> (mode * 8)) & 0xFF) >> 2) : 
+				y * 64 + (((hsv >> (mode * 8)) & 0xFF)>> 2);
 	}
 }
 
@@ -277,9 +272,9 @@ void pick_colorRGB_s::draw_table_colorindex(wchar_t ch)
 void pick_colorRGB_s::on_update_hsvrgb(uint32_t upfl)
 {
 	if (upfl)
-		hsvt = RGB_2_HSV(rgbt);
+		hsv = RGB_2_HSV(rgb);
 	else
-		rgbt = HSV_2_RGB(hsvt);
+		rgb = HSV_2_RGB(hsv);
 
 	if (mode < 2) {
 		if (mode == 1) {
@@ -376,46 +371,44 @@ void pick_colorRGB_s::draw_tempcolors_vbuff(void)
 
 void pick_colorRGB_s::draw_controls_vbuff(void)
 {
-	union {
-		rgbcolor_t rgbt;
-		uint64_t rgb;
-	};
-	hsvcolor_t hsv = hsvt;
+	uint64_t rgb;
+	uint8_t h = GetHValue(hsv),
+			s = GetSValue(hsv),
+			v = GetVValue(hsv);
 
-	hsv.v = 255;
-	(mode & 1) ? (hsv.h = 0, hsv.s = 255) : hsv.s = 0;
+	v = 255;
+	(mode & 1) ? (h = 0, s = 255) : s = 0;
 	for (size_t i = 0; i < 64; i++) {
 		CHAR_INFO *const vbuff = control1vbuff;
-		rgbt = HSV_2_RGB(hsv);
+		rgb = HSV_2_RGB(HSV(h,s,v));
 		vbuff[i].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 		vbuff[i].Char.UnicodeChar = 32;
-		(mode & 1) ? hsv.h += 4 : hsv.s += 4;
+		(mode & 1) ? h += 4 : s += 4;
 	}
 
-	uint32_t dotpos = (mode & 1) ? hsvt.h >> 2 : hsvt.s >> 2;
+	uint32_t dotpos = (mode & 1) ? GetHValue(hsv) >> 2 : GetSValue(hsv) >> 2;
 	control1vbuff[dotpos].Char.UnicodeChar = L'\x2022'; // DOT
 
-	hsv = hsvt;
-	hsv.v = 0;
+	h = GetHValue(hsv),
+	s = GetSValue(hsv),
+	v = 0;
+
 	for (size_t i = 0; i < 64; i++) {
 		CHAR_INFO *const vbuff = control2vbuff;
-		rgbt = HSV_2_RGB(hsv);
+		rgb = HSV_2_RGB(HSV(h,s,v));
 		vbuff[i].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 		vbuff[i].Char.UnicodeChar = 32;
-		hsv.v += 4;
+		v += 4;
 	}
 
-	control2vbuff[hsvt.v >> 2].Char.UnicodeChar = L'\x2022'; // DOT
+	control2vbuff[GetVValue(hsv) >> 2].Char.UnicodeChar = L'\x2022'; // DOT
 }
 
 void pick_colorRGB_s::draw_table_vbuff(void)
 {
 	CHAR_INFO *const vbuff = tablevbuff;
-	hsvcolor_t hsv;
-	union {
-		rgbcolor_t rgbt;
-		uint64_t rgb;
-	};
+	uint64_t rgb;
+	uint8_t h, s, v;
 
 	if (bTableColorPreview) {
 		for (size_t i = 0; i < 768; i++) {
@@ -432,11 +425,11 @@ void pick_colorRGB_s::draw_table_vbuff(void)
 
 	if (mode == 2) {
 		for (size_t y = 0; y < 6; y++) {
-			hsv.s = y < 3 ? (y + 1) * 85 : 255;
-			hsv.v = y > 2 ? 255 - (y - 2) * 64 : 255;
+			s = y < 3 ? (y + 1) * 85 : 255;
+			v = y > 2 ? 255 - (y - 2) * 64 : 255;
 			for (size_t x = 0; x < 16; x++) {
-				hsv.h = x << 4;
-				rgbt = HSV_2_RGB(hsv);
+				h = x << 4;
+				rgb = HSV_2_RGB(HSV(h,s,v));
 				const uint64_t attr = ATTR_RGBBACK_NEGF2(rgb);
 				for (size_t x2 = 0; x2 < 4; x2++)
 					for (size_t y2 = 0; y2 < 2; y2++) {
@@ -449,18 +442,20 @@ void pick_colorRGB_s::draw_table_vbuff(void)
 		return;
 	}
 
-	hsv = hsvt;
-	hsv.v = 255;
-	if (!mode) hsv.s = 255;
+	h = GetHValue(hsv),
+	s = GetSValue(hsv),
+	v = 255;
+
+	if (!mode) s = 255;
 	for (size_t y = 0; y < 12; y++) {
-		(!mode) ? hsv.h = 0 : hsv.s = 0;
+		(!mode) ? h = 0 : s = 0;
 		for (size_t x = 0; x < 64; x++) {
-			rgbt = HSV_2_RGB(hsv);
+			rgb = HSV_2_RGB(HSV(h,s,v));
 			vbuff[y * 64 + x].Attributes = ATTR_RGBBACK_NEGF2(rgb);
 			vbuff[y * 64 + x].Char.UnicodeChar = 32;
-			(!mode) ? hsv.h += 4 : hsv.s += 4;
+			(!mode) ? h += 4 : s += 4;
 		}
-		(!mode) ? hsv.s -= 20 : hsv.v -= 20;
+		(!mode) ? s -= 20 : v -= 20;
 	}
 
 	vbuff[index].Char.UnicodeChar = L'\x2022'; // DOT
@@ -482,9 +477,9 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 	};
 
 	auto update_controls_cursor = [=]() {
-		COORD coord = {(colorState->mode == 1) ? int16_t(colorState->hsvt.h >> 2) : int16_t(colorState->hsvt.s >> 2), 0};
+		COORD coord = {(colorState->mode == 1) ? int16_t(GetHValue(colorState->hsv) >> 2) : int16_t(GetSValue(colorState->hsv) >> 2), 0};
 		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PCRGB_COLOR_CONTROL1, (LONG_PTR)&coord);
-		coord = {int16_t(colorState->hsvt.v >> 2), 0 };
+		coord = {int16_t(GetVValue(colorState->hsv) >> 2), 0 };
 		SendDlgMessage(hDlg, DM_SETCURSORPOS, ID_PCRGB_COLOR_CONTROL2, (LONG_PTR)&coord);
 	};
 
@@ -503,16 +498,20 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 		newindex %= (mode < 2) ? 768 : 96;
 
 		if (mode < 2 ) {
-			colorState->hsvbuff[0 + mode] = (newindex & 63) << 2;
-			colorState->hsvbuff[1 + mode] = 255 - ((newindex >> 6) * 20);
+			colorState->hsv &= ~(0xFF << (8 * mode));
+			colorState->hsv |= (((newindex & 63) << 2) << (8 * mode));
+			colorState->hsv &= ~(0xFF << (8 * (1 + mode)));
+			colorState->hsv |= ((255 - ((newindex >> 6) * 20)) << (8 * (1 + mode)));
 			on_update_hsvrgb(0);
 		}
 		else {
 			colorState->draw_table_colorindex(32);
 			size_t y = newindex >> 4, x = newindex & 15;
-			colorState->hsvt.s = y < 3 ? (y + 1) * 85 : 255;
-			colorState->hsvt.v = y > 2 ? 255 - (y - 2) * 64 : 255;
-			colorState->hsvt.h = x << 4;
+			uint8_t h, s, v;
+			s = y < 3 ? (y + 1) * 85 : 255,
+			v = y > 2 ? 255 - (y - 2) * 64 : 255;
+			h = x << 4,
+			colorState->hsv = HSV(h, s, v);
 			colorState->index = newindex;
 			on_update_hsvrgb(0);
 		}
@@ -624,8 +623,11 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 				uint32_t id = (mouseY - irect.Top) + 1;
 				if (mouseB == 1 && (!mhon || mhon == id)) {
 					uint8_t val = (mouseX - irect.Left) << 2;
+					uint32_t p = (mode & 1) ? id & 2 : id;
+					p <<= 3;
 					if (val >= 252) val = 255;
-					colorState->hsvbuff[(mode & 1) ? id & 2 : id] = val;
+					colorState->hsv &= ~(((uint32_t)0xFF) << p);
+					colorState->hsv |= (((uint32_t)val) << p);
 					on_update_hsvrgb(0);
 					mhon = id;
 				}
@@ -700,17 +702,22 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 
 		if (Param1 >= ID_PCRGB_COLOR_HUE && Param1 <= ID_PCRGB_COLOR_BLUE) {
 			const uint32_t id = Param1 - ID_PCRGB_COLOR_HUE;
+			uint8_t val = (colorState->hsvrgb64 >> (id * 8)) & 0xFF;
 
 			if (mouseX < 5) {
-				if (colorState->hsvrgbbuff[id] <= 0)
+				if (val <= 0)
 					break;
-				colorState->hsvrgbbuff[id] --;
+				val--;
+				colorState->hsvrgb64 &= ~(((uint64_t)0xFF) << (id * 8));
+				colorState->hsvrgb64 |= (((uint64_t)val) << (id * 8));
 				on_update_hsvrgb(uint32_t(id > 3));
 			}
 			else if (mouseX > 9) {
-				if (colorState->hsvrgbbuff[id] >= 255)
+				if (val >= 255)
 					break;
-				colorState->hsvrgbbuff[id] ++;
+				val ++;
+				colorState->hsvrgb64 &= ~(((uint64_t)0xFF) << (id * 8));
+				colorState->hsvrgb64 |= (((uint64_t)val) << (id * 8));
 				on_update_hsvrgb(uint32_t(id > 3));
 			}
 			break;
@@ -723,6 +730,8 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 		if (Param1 >= ID_PCRGB_COLOR_CONTROL1 && Param1 <= ID_PCRGB_COLOR_CONTROL2) {
 			uint32_t id = Param1 - ID_PCRGB_COLOR_CONTROL1 + 1;
 			if (mode & 1) id &= 2;
+			uint8_t val = (colorState->hsvrgb64 >> (id * 8)) & 0xFF;
+
 			switch(Param2) {
 			case KEY_DOWN:
 			case KEY_NUMPAD2:
@@ -732,10 +741,13 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 			case KEY_LEFT:
 			case KEY_NUMPAD4:
 			case KEY_MSWHEEL_LEFT: {
-				if (colorState->hsvbuff[id] < 4)
-					colorState->hsvbuff[id] = 0;
+				if (val < 4)
+					val = 0;
 				else
-					colorState->hsvbuff[id] -= 4;
+					val -= 4;
+
+				colorState->hsvrgb64 &= ~(((uint64_t)0xFF) << (id * 8));
+				colorState->hsvrgb64 |= (((uint64_t)val) << (id * 8));
 				on_update_hsvrgb(0);
 			}
 			break;
@@ -747,10 +759,13 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 			case KEY_RIGHT:
 			case KEY_NUMPAD6:
 			case KEY_MSWHEEL_RIGHT: {
-				if (colorState->hsvbuff[id] > 251)
-					colorState->hsvbuff[id] = 255;
+				if (val > 251)
+					val = 255;
 				else
-					colorState->hsvbuff[id] += 4;
+					val += 4;
+
+				colorState->hsvrgb64 &= ~(((uint64_t)0xFF) << (id * 8));
+				colorState->hsvrgb64 |= (((uint64_t)val) << (id * 8));
 				on_update_hsvrgb(0);
 			}
 			break;
@@ -760,22 +775,30 @@ static LONG_PTR WINAPI PickColorRGBDlgProc(HANDLE hDlg, int Msg, int Param1, LON
 
 		if (Param1 >= ID_PCRGB_COLOR_HUE && Param1 <= ID_PCRGB_COLOR_BLUE) {
 			const uint32_t id = Param1 - ID_PCRGB_COLOR_HUE;
+			uint8_t val = (colorState->hsvrgb64 >> (id * 8)) & 0xFF;
+
 			switch(Param2) {
 			case KEY_LEFT:
 			case KEY_NUMPAD4:
 			case KEY_MSWHEEL_LEFT: {
-				if (colorState->hsvrgbbuff[id] <= 0)
+				if (val <= 0)
 					break;
-				colorState->hsvrgbbuff[id] --;
+
+				val --;
+				colorState->hsvrgb64 &= ~(((uint64_t)0xFF) << (id * 8));
+				colorState->hsvrgb64 |= (((uint64_t)val) << (id * 8));
 				on_update_hsvrgb(uint32_t(id > 3));
 			}
 			break;
 			case KEY_RIGHT:
 			case KEY_NUMPAD6:
 			case KEY_MSWHEEL_RIGHT: {
-				if (colorState->hsvrgbbuff[id] >= 255)
+				if (val >= 255)
 					break;
-				colorState->hsvrgbbuff[id] ++;
+
+				val ++;
+				colorState->hsvrgb64 &= ~(((uint64_t)0xFF) << (id * 8));
+				colorState->hsvrgb64 |= (((uint64_t)val) << (id * 8));
 				on_update_hsvrgb(uint32_t(id > 3));
 			}
 			break;

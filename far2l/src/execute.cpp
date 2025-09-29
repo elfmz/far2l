@@ -64,6 +64,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "chgmmode.hpp"
 #include "vtshell.h"
+#include "vtlog.h"
 #include "InterThreadCall.hpp"
 #include "ScopeHelpers.h"
 #include <set>
@@ -251,6 +252,9 @@ class FarExecuteScope
 public:
 	FarExecuteScope(const char *cmd_str)
 	{
+		WINPORT(GetConsoleMode)(NULL, &_saved_mode); // enable processed output so ShowBackground will do line recomposition as needed
+		WINPORT(SetConsoleMode) (NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+			| ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE | ENABLE_ECHO_INPUT);
 		ProcessShowClock++;
 		if (CtrlObject && CtrlObject->CmdLine) {
 			CtrlObject->CmdLine->ShowBackground(true);
@@ -258,9 +262,7 @@ public:
 		}
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);
 		ScrBuf.Flush();
-		WINPORT(GetConsoleMode)(NULL, &_saved_mode);
-		WINPORT(SetConsoleMode) (NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
-			| ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_INSERT_MODE | ENABLE_ECHO_INPUT);	// ENABLE_QUICK_EDIT_MODE
+		VTLog::Register(NULL); // enable logging
 		if (cmd_str) {
 			const std::wstring &ws = MB2Wide(cmd_str);
 			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &_dw, NULL);
@@ -274,6 +276,7 @@ public:
 		WINPORT(SetConsoleMode)(NULL, _saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
 		WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &_dw, NULL);
 		WINPORT(SetConsoleMode)(NULL, _saved_mode);
+		VTLog::Unregister(NULL); // disable logging
 		ScrBuf.FillBuf();
 		if (CtrlObject && CtrlObject->CmdLine) {
 			CtrlObject->CmdLine->SaveBackground();

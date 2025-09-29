@@ -27,7 +27,8 @@ public:
 
 	ConsoleBuffer(); 
 
-	void SetSize(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos);
+	void SetSizeSimple(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos);
+	void SetSizeRecomposing(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos);
 	void GetSize(unsigned int &width, unsigned int &height);
 	inline unsigned int GetWidth() const { return _width; }
 

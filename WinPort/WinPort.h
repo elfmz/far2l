@@ -157,4 +157,51 @@ struct ConsoleRepaintsDeferScope
 	}
 };
 
+class ConsoleForkScope
+{
+	HANDLE _parent{NULL}, _handle{NULL};
+
+	ConsoleForkScope(const ConsoleForkScope &) = delete;
+	ConsoleForkScope &operator =(const ConsoleForkScope &) = delete;
+
+public:
+	ConsoleForkScope() = default;
+
+	~ConsoleForkScope()
+	{
+		if (_handle) {
+			WINPORT(JoinConsole)(_parent, _handle);
+		}
+	}
+
+	void Fork(HANDLE parent = NULL)
+	{
+		if (_handle) {
+			WINPORT(DiscardConsole)(_handle);
+		}
+		_handle = WINPORT(ForkConsole)(parent);
+		_parent = parent;
+	}
+
+	void Show()
+	{
+		HANDLE prev_handle = _handle;
+		if (prev_handle) {
+			_handle = WINPORT(ForkConsole)(prev_handle);
+			WINPORT(JoinConsole)(_parent, prev_handle);
+		}
+	}
+
+	void Discard()
+	{
+		if (_handle) {
+			WINPORT(DiscardConsole)(_handle);
+			_handle = NULL;
+		}
+	}
+
+	HANDLE Handle() const { return _handle; }
+	operator bool() const { return _handle != NULL; }
+};
+
 #endif

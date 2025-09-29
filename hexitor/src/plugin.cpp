@@ -102,8 +102,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPluginW(int openFrom, INT_PTR item)
 	}
 
 	if (!file_name.empty()) {
-		editor ed;
-		ed.edit(file_name.c_str(), file_offset);
+		CreateEditor(file_name.c_str(), file_offset);
 	}
 
 	return INVALID_HANDLE_VALUE;

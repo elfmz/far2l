@@ -798,6 +798,12 @@ bool editor::edkey_handle(int key)
 	bool alt_pressed = (kb_state == keybar_ctl::st_alt);
 	if (ctrl_pressed || alt_pressed)
 		return false;
+	
+	if( key & KEY_CTRLMASK )
+		return false;
+	key &= KEY_MASKF;
+	if( !key )
+		return false;
 
 	if (_cursor_iha) {
 		unsigned char key_code = 0;

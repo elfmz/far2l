@@ -178,7 +178,7 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 	if (!update_buffer(_view_offset))
 		return false;
 
-	_dialog = _PSI.DialogInit(
+	HANDLE hDlg = _PSI.DialogInit(
 		_PSI.ModuleNumber,
 		0,
 		0,
@@ -188,31 +188,21 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 		dlg_items,
 		sizeof(dlg_items) / sizeof(dlg_items[0]),
 		0,
-		FDLG_NODRAWSHADOW | FDLG_NODRAWPANEL,
+		FDLG_NODRAWSHADOW | FDLG_NODRAWPANEL | FDLG_NONMODAL,
 		(FARWINDOWPROC)&editor::dlg_proc,
 		(LONG_PTR)this);
-	const bool rc = (_PSI.DialogRun(_dialog) > 0);
 
-	//Save last position to history
-	if (settings::save_file_pos)
-		history().save_last_position(_file.name(), _view_offset, _cursor_offset);
-
-	_PSI.DialogFree(_dialog);
-	return rc;
+	return hDlg != INVALID_HANDLE_VALUE;
 }
 
 //###
 
 LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {
-	editor* instance = nullptr;
-	if (msg != DN_INITDIALOG)
-		instance = reinterpret_cast<editor*>(_PSI.SendDlgMessage(dlg, DM_GETDLGDATA, 0, (LONG_PTR)nullptr));
-	else {
-		instance = reinterpret_cast<editor*>(param2);
-		_PSI.SendDlgMessage(dlg, DM_SETDLGDATA, 0, (LONG_PTR)instance);
-	}
-	assert(instance);
+	editor* instance = reinterpret_cast<editor*>(_PSI.SendDlgMessage(dlg, DM_GETDLGDATA, 0, (LONG_PTR)nullptr));
+	if( !instance )
+		return _PSI.DefDlgProc(dlg, msg, param1, param2);
+	instance->_dialog = dlg;
 
 	if (msg == DN_INITDIALOG) {
 		DWORD cursor_size = MAKELONG(1, 100);
@@ -223,8 +213,8 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 		}
 		_PSI.SendDlgMessage(dlg, DM_SETCURSORSIZE, ID_EDITOR, (LONG_PTR)(cursor_size));
 		_PSI.SendDlgMessage(dlg, DM_SETFOCUS, ID_EDITOR, 0);
-		instance->update_screen();
 		instance->move_far_cursor();
+		instance->update_screen();
 		return 1;
 	}
 	else if (msg == DN_KILLFOCUS) {
@@ -243,6 +233,12 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 	} else if (msg == DN_MOUSECLICK || msg == DN_MOUSEEVENT){
 		instance->move_handle_mouse(msg, param1, (MOUSE_EVENT_RECORD *)param2);
 		return 1;
+	} else if( msg == DN_CLOSE) {
+		//Save last position to history
+		if (settings::save_file_pos)
+			history().save_last_position(instance->_file.name(), instance->_view_offset, instance->_cursor_offset);
+        delete instance;
+        _PSI.SendDlgMessage(dlg, DM_SETDLGDATA, 0, 0);
 	}
 	//return instance->on_ctl_input(param1, *reinterpret_cast<const INPUT_RECORD*>(param2)) ? 1 : 0;
 
@@ -1262,8 +1258,9 @@ bool editor::update_buffer(const UINT64 offset)
 
 void editor::update_screen()
 {
+    _PSI.SendDlgMessage(_dialog, DM_ENABLEREDRAW, FALSE, 0);
 	_hexeditor.update(_view_offset, _ori_data, _upd_data, _cursor_offset, _cursor_iha);
-	_PSI.SendDlgMessage(_dialog, DM_REDRAW, 0, (LONG_PTR)nullptr);
+    _PSI.SendDlgMessage(_dialog, DM_ENABLEREDRAW, TRUE, 0);
 }
 
 //###
@@ -1282,4 +1279,10 @@ DWORD CALLBACK editor::copy_progress_routine(LARGE_INTEGER, LARGE_INTEGER total_
 	return interrupted ? PROGRESS_CANCEL : PROGRESS_CONTINUE;
 }
 
+void CreateEditor(const wchar_t *file_name, const UINT64 offset)
+{
+	editor* ed = new editor();
+	if (!ed->edit(file_name, offset))
+		delete ed;
+}
 //#############################################################################

@@ -198,11 +198,10 @@ struct VTAnsiState
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	CONSOLE_CURSOR_INFO cci;
 	DWORD mode;
-	WORD attr;
 	SHORT scroll_top;
 	SHORT scroll_bottom;
 
-	VTAnsiState() : mode(0), attr(0), scroll_top(0), scroll_bottom(0)
+	VTAnsiState() : mode(0), scroll_top(0), scroll_bottom(0)
 	{
 		memset(&csbi, 0, sizeof(csbi));
 		memset(&cci, 0, sizeof(cci));
@@ -533,6 +532,12 @@ struct VTAnsiContext
 		HANDLE _preserved_con_hnd{NULL};
 
 	public:
+		~AlternativeScreenBuffer()
+		{
+			if (_preserved_con_hnd) {
+				WINPORT(DiscardConsole)(_preserved_con_hnd);
+			}
+		}
 		void Toggle(HANDLE con_hnd, bool activate)
 		{
 			if (activate) {
@@ -626,7 +631,7 @@ struct VTAnsiContext
 		orig_palette.emplace(index, std::make_pair(fg, bk));
 	}
 
-	static void FillBlankLine(HANDLE con_hnd, COORD pos, DWORD len, WCHAR blank_character, DWORD attrs)
+	static void FillBlankLine(HANDLE con_hnd, COORD pos, DWORD len, WCHAR blank_character, DWORD64 attrs)
 	{
 		DWORD dw;
 		WINPORT(FillConsoleOutputCharacter)( con_hnd, blank_character, len, pos, &dw);
@@ -760,8 +765,9 @@ struct VTAnsiContext
 
 					case 7:
 						mode = ENABLE_PROCESSED_OUTPUT | ENABLE_WINDOW_INPUT | ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT;
-						if (suffix == 'h')
+						if (suffix == 'h') {
 							mode |= ENABLE_WRAP_AT_EOL_OUTPUT;
+						}
 						WINPORT(SetConsoleMode)( con_hnd, mode );
 						break;
 
@@ -1210,11 +1216,11 @@ struct VTAnsiContext
 
 	struct AttrStackEntry
 	{
-		AttrStackEntry(TCHAR blank_character_, WORD attributes_ )
+		AttrStackEntry(TCHAR blank_character_, DWORD64 attributes_ )
 			: blank_character(blank_character_), attributes(attributes_) {}
 
 		TCHAR blank_character;
-		WORD attributes;
+		DWORD64 attributes;
 	};
 
 	struct AttrStack : std::vector<AttrStackEntry > {} _attr_stack;

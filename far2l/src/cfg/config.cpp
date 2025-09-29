@@ -964,7 +964,7 @@ void CmdlineSettings()
 	Builder.AddCheckbox(Msg::ConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
 	Builder.AddCheckbox(Msg::ConfigCmdlineSplitter, &Opt.CmdLine.Splitter);
 
-	DialogItemEx *LimitEdit = Builder.AddIntEditField(&Opt.CmdLine.VTLogLimit, 6);
+	DialogItemEx *LimitEdit = Builder.AddIntEditField(&Opt.CmdLine.VTLogLimit, 8);
 	Builder.AddTextBefore(LimitEdit, Msg::ConfigCmdlineVTLogLimit);
 
 	Builder.AddText(Msg::ConfigCmdlineWaitKeypress);

@@ -146,7 +146,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecCmdline, "AutoComplete", &Opt.CmdLine.AutoComplete, 1},
 	{true,  NSecCmdline, "Splitter", &Opt.CmdLine.Splitter, 1},
 	{true,  NSecCmdline, "WaitKeypress", &Opt.CmdLine.WaitKeypress, 1},
-	{true,  NSecCmdline, "VTLogLimit", &Opt.CmdLine.VTLogLimit, 5000},
+	{true,  NSecCmdline, "VTLogLimitKB", &Opt.CmdLine.VTLogLimit, 1024},
 	{false, NSecCmdline, "AskOnMultilinePaste", &Opt.CmdLine.AskOnMultilinePaste, 1},
 
 	{true,  NSecInterface, "Mouse", &Opt.Mouse, 1},

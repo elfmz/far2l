@@ -98,7 +98,8 @@ static void print_help(const char *self)
 			"  ppath - path to a folder (or a file or an archive or command with prefix)\n"
 			"          for the passive panel\n\n"
 			"The following switches may be used in the command line:\n\n"
-			" -h   This help.\n"
+			" -h   This help and exit.\n"
+			" --version  Displays the current version and exit.\n"
 			" -a   Disable display of characters with codes 0 - 31 and 255.\n"
 			" -ag  Disable display of pseudographics with codes > 127.\n"
 			" -an  Disable display of pseudographics characters completely.\n"
@@ -799,12 +800,16 @@ int _cdecl main(int argc, char *argv[])
 				return libexec(argv[2], argv[3], argv[4], argc - 5, argv + 5);
 			}
 		}
-		if (argc > 1
-				&& (strncasecmp(argv[1], "--h", 3) == 0 || strncasecmp(argv[1], "-h", 2) == 0
+		if (argc > 1) {
+			if ((strncasecmp(argv[1], "--h", 3) == 0 || strncasecmp(argv[1], "-h", 2) == 0
 						/*|| strcasecmp(argv[1], "/h") == 0*/ || strcasecmp(argv[1], "-?") == 0)) {
-
-			print_help(name);
-			return 0;
+				print_help(name);
+				return 0;
+			}
+			if (strncasecmp(argv[1], "--version", 9) == 0) {
+				printf("FAR2L Version: %s\n", FAR_BUILD);
+				return 0;
+			}
 		}
 	}
 

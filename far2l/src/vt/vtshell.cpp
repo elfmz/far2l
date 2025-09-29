@@ -33,7 +33,6 @@
 #include "vtshell_compose.h"
 #include "vtshell_ioreaders.h"
 #include "vtshell_mouse.h"
-#include "../WinPort/src/SavedScreen.h"
 #define __USE_BSD
 #include <termios.h>
 #include "farcolors.hpp"
@@ -703,7 +702,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			{
 				VTAnsiSuspend vta_suspend(_vta); // preserve console state
 				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
-				SavedScreen saved_scr;
+				ConsoleForkScope saved_scr;
+				saved_scr.Fork();
 				ScrBuf.FillBuf();
 				int choice;
 				do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
@@ -1028,11 +1028,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _console_handle;
 	}
 
-	bool IsAlternateMode() const
-	{
-		return _alternate_mode;
-	}
-
 	bool ExecuteCommand(const char *cmd, bool force_sudo, bool may_bgnd, bool may_notify)
 	{
 		ASSERT(!_console_handle);
@@ -1053,12 +1048,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		VT_ComposeMarker(_start_marker);
 		VT_ComposeMarker(_exit_marker);
 		_exit_marker+= ':';
-
 		_vta.OnStart();
 		if (!ExecuteCommandBegin(cd, cmd, force_sudo)) {
 			_exit_code = -1;
 		}
-
 		return ExecuteCommandCommonTail(may_bgnd);
 	}
 
@@ -1160,9 +1153,14 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		return _vta.GetTitle();
 	}
 
-	bool IsDone()
+	bool IsExited() const
 	{
 		return _exit_marker.empty();
+	}
+
+	bool IsAlternateMode() const
+	{
+		return _alternate_mode;
 	}
 };
 
@@ -1211,7 +1209,6 @@ int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_not
 		fprintf(stderr, "%s('%s') - not owner\n", __FUNCTION__, cmd);
 		return -1;
 	}
-
 	if (g_vt && !g_vt->CheckLeaderAlive()) {
 		g_vt.reset();
 	}
@@ -1252,29 +1249,46 @@ void VTShell_Shutdown()
 	g_vt.reset();
 }
 
-VT_State VTShell_State()
+bool VTShell_Busy()
 {
-	if (g_vt_busy == 0) {
-		return VTS_IDLE;
-	}
-	std::lock_guard<std::mutex> lock(g_vts_mutex);
-	if (!g_vt) {
-		return VTS_IDLE;
-	}
-	return g_vt->IsAlternateMode() ? VTS_ALTERNATE_SCREEN : VTS_NORMAL_SCREEN;
+	return (g_vt_busy != 0);
 }
 
 void VTShell_Enum(VTInfos &vts)
 {
 	std::lock_guard<std::mutex> lock(g_vts_mutex);
 	for (const auto &vt : g_vts) {
-		vts.emplace_back();
-		auto &vti = vts.back();
+		auto &vti = vts.emplace_back();
 		vti.con_hnd = vt->ConsoleHandle();
 		vti.title = vt->GetTitle();
-		vti.done = vt->IsDone();
+		vti.exited = vt->IsExited();
 		vti.exit_code = vt->CommandExitCode();
 	}
+}
+
+static VTState VTShell_StateOf(VTShell &vt)
+{
+	if (vt.IsExited()) {
+		return VT_EXITED;
+	}
+	if (vt.IsAlternateMode()) {
+		return VT_ALTERNATE_SCREEN;
+	}
+	return VT_NORMAL_SCREEN;
+}
+
+VTState VTShell_LookupState(HANDLE hConsole)
+{
+	std::lock_guard<std::mutex> lock(g_vts_mutex);
+	if (g_vt && hConsole == g_vt->ConsoleHandle()) {
+		return VTShell_StateOf(*g_vt);
+	}
+	for (const auto &vt : g_vts) {
+		if (hConsole == vt->ConsoleHandle()) {
+			return VTShell_StateOf(*vt);
+		}
+	}
+	return VT_INVALID;
 }
 
 size_t VTShell_Count()

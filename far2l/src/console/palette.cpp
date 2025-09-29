@@ -54,56 +54,48 @@ void Palette::ResetToDefault( ) noexcept
 
 		switch (i) {
 			case FOREGROUND_INTENSITY: {
-				foreground[i].r =
-					foreground[i].g =
-						foreground[i].b = 0x80;
+				foreground[i] =RGB(0x80, 0x80, 0x80);
 			} break;
 
 			case (FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_RED): {
-				foreground[i].r =
-					foreground[i].g =
-						foreground[i].b = 0xc0;
+				foreground[i] = RGB(0xc0, 0xc0, 0xc0);
 			} break;
 
 			// tweaked blue to make it more readable on dark background
 			case FOREGROUND_BLUE: {
-				foreground[i].r = 0;
-				foreground[i].g = 0x28;
-				foreground[i].b = 0xa0;
+				foreground[i] = RGB(0, 0x28, 0xa0);
 			} break;
 
 			case (FOREGROUND_BLUE|FOREGROUND_INTENSITY): {
-				foreground[i].r = 0;
-				foreground[i].g = 0x55;
-				foreground[i].b = 0xff;
+				foreground[i] = RGB(0, 0x55, 0xff);
 			} break;
 
 			default: {
+				uint8_t r, g, b;
 				const unsigned char lvl = (i & FOREGROUND_INTENSITY) ? 0xff : 0xa0;
-				foreground[i].r = (i & FOREGROUND_RED) ? lvl : 0;
-				foreground[i].g = (i & FOREGROUND_GREEN) ? lvl : 0;
-				foreground[i].b = (i & FOREGROUND_BLUE) ? lvl : 0;
+				r = (i & FOREGROUND_RED) ? lvl : 0;
+				g = (i & FOREGROUND_GREEN) ? lvl : 0;
+				b = (i & FOREGROUND_BLUE) ? lvl : 0;
+				foreground[i] = RGB(r,g,b);
 			}
 		}
 
 		switch (i) {
 			case (BACKGROUND_INTENSITY >> 4): {
-				background[i].r =
-					background[i].g =
-						background[i].b = 0x80;
+				background[i] = RGB(0x80, 0x80, 0x80);
 			} break;
 
 			case (BACKGROUND_BLUE|BACKGROUND_GREEN|BACKGROUND_RED) >> 4: {
-				background[i].r =
-					background[i].g =
-						background[i].b = 0xc0;
+				background[i] =RGB(0xc0, 0xc0, 0xc0);
 			} break;
 
 			default: {
+				uint8_t r, g, b;
 				const unsigned char lvl = (i & (BACKGROUND_INTENSITY>>4)) ? 0xff : 0x80;
-				background[i].r = (i & (BACKGROUND_RED>>4)) ? lvl : 0;
-				background[i].g = (i & (BACKGROUND_GREEN>>4)) ? lvl : 0;
-				background[i].b = (i & (BACKGROUND_BLUE>>4)) ? lvl : 0;
+				r = (i & (BACKGROUND_RED>>4)) ? lvl : 0;
+				g = (i & (BACKGROUND_GREEN>>4)) ? lvl : 0;
+				b = (i & (BACKGROUND_BLUE>>4)) ? lvl : 0;
+				background[i] = RGB(r,g,b);
 			}
 		}
 	}
@@ -128,7 +120,7 @@ void Palette::InitFarPalette( ) noexcept
 	return;
 }
 
-static bool LoadPaletteEntry(KeyFileHelper &kfh, const char *section, const char *name, rgbcolor_t &result)
+static bool LoadPaletteEntry(KeyFileHelper &kfh, const char *section, const char *name, uint32_t &result)
 {
 	const std::string &str = kfh.GetString(section, name, "#000000");
 	if (str.empty() || str[0] != '#') {
@@ -138,9 +130,8 @@ static bool LoadPaletteEntry(KeyFileHelper &kfh, const char *section, const char
 
 	unsigned int value = 0;
 	sscanf(str.c_str(), "#%x", &value);
-	result.r = (value & 0xff0000) >> 16;
-	result.g = (value & 0x00ff00) >> 8;
-	result.b = (value & 0x0000ff);
+
+	result = RGB_2_BGR(value);
 	return true;
 }
 
@@ -167,10 +158,10 @@ bool Palette::Save(KeyFileHelper &kfh) noexcept
 	for (int i = 0; i < 16; ++i) {
 		snprintf(name, sizeof(name), "%d", i);
 
-		snprintf(value, sizeof(value), "#%02X%02X%02X", foreground[i].r, foreground[i].g, foreground[i].b);
+		snprintf(value, sizeof(value), "#%02X%02X%02X", GetRValue(foreground[i]), GetGValue(foreground[i]), GetBValue(foreground[i]));
 		kfh.SetString("foreground", name, value);
 
-		snprintf(value, sizeof(value), "#%02X%02X%02X", background[i].r, background[i].g, background[i].b);
+		snprintf(value, sizeof(value), "#%02X%02X%02X", GetRValue(background[i]), GetGValue(background[i]), GetBValue(background[i]));
 		kfh.SetString("background", name, value);
 	}
 	return true;

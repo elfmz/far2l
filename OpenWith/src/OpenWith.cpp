@@ -25,9 +25,10 @@ private:
 	static bool s_UseExternalTerminal;
 	static bool s_NoWaitForCommandCompletion;
 
-
-	static void ShowDetailsDialogImpl(const std::vector<Field>& file_info, const std::vector<Field>& application_info,
-								  const Field& launch_command)
+	// return true if exit by button "Launch", false otherwise
+	static bool ShowDetailsDialogImpl(const std::vector<Field>& file_info,
+										const std::vector<Field>& application_info,
+										const Field& launch_command)
 	{
 		constexpr int DIALOG_WIDTH = 70;
 		int dialog_height = file_info.size() + application_info.size() + 9;
@@ -39,7 +40,11 @@ private:
 				[](const Field& x, const Field& y){ return x.label.size() < y.label.size(); })->label.size();
 		};
 
-		auto max_di_text_length = static_cast<int>(std::max(launch_command.label.size(), std::max(max_in(file_info), max_in(application_info))));
+		auto max_di_text_length = static_cast<int>(std::max({
+			launch_command.label.size(),
+			max_in(file_info),
+			max_in(application_info)
+		}));
 
 		// Calculate coordinates for dialog items to right-align all text labels.
 		int di_text_X2 = max_di_text_length + 4;
@@ -55,7 +60,7 @@ private:
 		for (auto &field : file_info) {
 			int di_text_X1 = di_text_X2 - field.label.size() + 1;
 			di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, field.label.c_str(), 0 });
-			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY, 0,  field.content.c_str(), 0});
+			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  field.content.c_str(), 0});
 			++cur_line;
 		}
 
@@ -65,7 +70,7 @@ private:
 		for (auto &field : application_info) {
 			int di_text_X1 = di_text_X2 - field.label.size() + 1;
 			di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, field.label.c_str(), 0 });
-			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY, 0,  field.content.c_str(), 0});
+			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  field.content.c_str(), 0});
 			++cur_line;
 		}
 
@@ -74,7 +79,7 @@ private:
 
 		int di_text_X1 = di_text_X2 - launch_command.label.size() + 1;
 		di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, launch_command.label.c_str(), 0 });
-		di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY, 0,  launch_command.content.c_str(), 0});
+		di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  launch_command.content.c_str(), 0});
 		++cur_line;
 
 		di.push_back({ DI_TEXT, 5,  cur_line,  0,  cur_line, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
@@ -84,17 +89,22 @@ private:
 
 		di.back().DefaultButton = TRUE;
 
+		di.push_back({ DI_BUTTON, 0,  cur_line,  0,  cur_line, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
+
 		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, DIALOG_WIDTH, dialog_height, L"InformationDialog",
 										di.data(), static_cast<int>(di.size()), 0, 0, nullptr, 0);
 		if (dlg != INVALID_HANDLE_VALUE) {
-			s_Info.DialogRun(dlg);
+			int exitCode = s_Info.DialogRun(dlg);
 			s_Info.DialogFree(dlg);
+			return (exitCode == (int)di.size() - 1); // last element is button "Launch"
 		}
+		return false;
 	}
 
 	// A wrapper function that gathers all necessary details and calls the dialog implementation.
-	static void ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app,
-								  const std::wstring& pathname, const std::wstring& cmd)
+	// return true if exit by button "Launch", false otherwise
+	static bool ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app,
+									const std::wstring& pathname, const std::wstring& cmd)
 	{
 		std::vector<Field> file_info = {
 			{ GetMsg(MPathname), pathname },
@@ -105,7 +115,7 @@ private:
 
 		Field launch_command { GetMsg(MLaunchCommand), cmd.c_str() };
 
-		ShowDetailsDialogImpl(file_info, application_info, launch_command);
+		return ShowDetailsDialogImpl(file_info, application_info, launch_command);
 	}
 
 
@@ -121,7 +131,7 @@ private:
 			flags = s_NoWaitForCommandCompletion ? EF_NOWAIT : 0;
 		}
 		if (s_FSF.Execute(cmd.c_str(), flags) == -1) {
-			ShowError(GetMsg(MError), GetMsg(MCannotExecute));
+			ShowError(GetMsg(MError), { GetMsg(MCannotExecute) });
 		}
 	}
 
@@ -133,12 +143,12 @@ private:
 		auto candidates = provider->GetAppCandidates(pathname);
 
 		if (candidates.empty()) {
-			ShowError(GetMsg(MError), GetMsg(MNoAppsFound));
+			ShowError(GetMsg(MError), { GetMsg(MNoAppsFound) , provider->GetMimeType(pathname) });
 			return;
 		}
 
 		std::vector<FarMenuItem> menu_items(candidates.size());
-		for (std::size_t i = 0; i < candidates.size(); ++i) {
+		for (size_t i = 0; i < candidates.size(); ++i) {
 			menu_items[i].Text = candidates[i].name.c_str();
 		}
 
@@ -166,7 +176,11 @@ private:
 
 			// BreakCode corresponds to the index in the BreakKeys array. 0 means the first key (VK_F3) was pressed.
 			if (BreakCode == 0) { // F3
-				ShowDetailsDialog(provider.get(), selected_app, pathname, cmd);
+				if (ShowDetailsDialog(provider.get(), selected_app, pathname, cmd)) {
+					// if dialog closed by Launch button do launch and close
+					LaunchApplication(selected_app, cmd);
+					break;
+				}
 			} else { // Enter
 				LaunchApplication(selected_app, cmd);
 				break;
@@ -189,15 +203,19 @@ private:
 		kfh.SetInt(INI_SECTION, "UseExternalTerminal", s_UseExternalTerminal);
 		kfh.SetInt(INI_SECTION, "NoWaitForCommandCompletion", s_NoWaitForCommandCompletion);
 		if (!kfh.Save()) {
-			ShowError(GetMsg(MError), GetMsg(MSaveConfigError));
+			ShowError(GetMsg(MError), { GetMsg(MSaveConfigError) });
 		}
 	}
 
 
-	static void ShowError(const wchar_t *title, const wchar_t *text)
+	static void ShowError(const wchar_t *title, const std::vector<std::wstring>& text)
 	{
-		const wchar_t *items[] = { title, text, GetMsg(MOk) };
-		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items, ARRAYSIZE(items), 1);
+		std::vector<const wchar_t*> items;
+		items.reserve(text.size() + 2);
+		items.push_back(title);
+		for (const auto &line : text) items.push_back(line.c_str());
+		items.push_back(GetMsg(MOk));
+		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items.data(), items.size(), 1);
 	}
 
 
@@ -222,7 +240,7 @@ public:
 		info->PluginMenuStrings = menuStr;
 		info->PluginMenuStringsNumber = ARRAYSIZE(menuStr);
 		static const wchar_t *configStr[1];
-		configStr[0] = GetMsg(MConfigTitle);
+		configStr[0] = GetMsg(MPluginTitle);
 		info->PluginConfigStrings = configStr;
 		info->PluginConfigStringsNumber = ARRAYSIZE(configStr);
 		info->CommandPrefix = nullptr;

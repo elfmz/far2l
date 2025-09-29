@@ -579,7 +579,7 @@ typedef struct _INPUT_RECORD {
 #define FOREGROUND_TRUECOLOR    0x0100 // Use 24 bit RGB colors set by SET_RGB_FORE
 #define BACKGROUND_TRUECOLOR    0x0200 // Use 24 bit RGB colors set by SET_RGB_BACK
 #define EXPLICIT_LINE_BREAK        0x0400 // Don't concatenate next line if this char is last in current line when lines recomposed due to screen resize or VT history rendering
-#define IMPORTANT_LINE_CHAR        0x0800 // Dont skip this character when recomposing even if its a space, application dont need to set this flag - its managed by WinPort internally
+#define IMPORTANT_LINE_CHAR        0x0800 // Dont skip this character when recomposing even if its a space, application typically dont need to set this flag - its managed by WinPort internally
 #define COMMON_LVB_REVERSE_VIDEO   0x4000 // Reverse fore/back ground attribute.
 #define COMMON_LVB_UNDERSCORE      0x8000 // Underscore.
 #define COMMON_LVB_STRIKEOUT       0x2000 // Striekout.
@@ -1310,8 +1310,9 @@ typedef BOOL (*CODEPAGE_ENUMPROCW)(LPWSTR);
 // Output Mode flags:
 //
 typedef LONG NTSTATUS;
-#define ENABLE_PROCESSED_OUTPUT    0x0001
-#define ENABLE_WRAP_AT_EOL_OUTPUT  0x0002
+// unlike MS SDK, here output mode values differ from input as WinPort has same handle for console input and output
+#define ENABLE_PROCESSED_OUTPUT    0x1000
+#define ENABLE_WRAP_AT_EOL_OUTPUT  0x2000
 
 #define STATUS_WAIT_0                    ((NTSTATUS)0x00000000L)    // winnt
 #define STATUS_ABANDONED_WAIT_0          ((NTSTATUS)0x00000080L)    // winnt

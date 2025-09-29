@@ -183,3 +183,5 @@ private:
 	vector<BYTE>	_search_seq;	///< Search sequence
 	bool			_search_fwd;	///< Search direction flag (true = forward, false = backward)
 };
+
+void CreateEditor(const wchar_t *file_name, const UINT64 offset);

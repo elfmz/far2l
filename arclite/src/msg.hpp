@@ -1,4 +1,4 @@
-﻿enum
+enum
 {
 	MSG_LANG,
 	MSG_PLUGIN_NAME,

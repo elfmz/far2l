@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #define E_PENDING -2147483638
 

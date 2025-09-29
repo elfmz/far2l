@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #if 0
 struct ExternalCodec {

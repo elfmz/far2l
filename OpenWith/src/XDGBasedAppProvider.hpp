@@ -159,6 +159,8 @@ private:
 	std::string MimeTypeFromXdgMimeTool(const std::string& escaped_pathname);
 	std::string MimeTypeFromFileTool(const std::string& escaped_pathname);
 	std::string MimeTypeByExtension(const std::string& escaped_pathname);
+	static std::vector<std::string> GetMimeDatabaseSearchPaths();
+	static std::unordered_map<std::string, std::string> LoadMimeAliases();
 
 	// Parsing XDG files and data
 	static const std::optional<DesktopEntry>& GetCachedDesktopEntry(const std::string& desktop_file, const std::vector<std::string>& search_paths, std::map<std::string, std::optional<DesktopEntry>>& cache);
@@ -213,6 +215,7 @@ private:
 	bool _use_extension_based_fallback;
 	bool _use_xdg_mime_tool;
 	bool _use_file_tool;
+	bool _load_mimetype_aliases;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

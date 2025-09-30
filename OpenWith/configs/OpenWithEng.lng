@@ -21,6 +21,7 @@
 "Use &extension-based fallback"
 "Use `&xdg-mime` tool"
 "Use `&file` tool"
+"Load MIME type &aliases"
 "&Close"
 "&Launch"
 "Source: "

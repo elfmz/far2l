@@ -1628,6 +1628,8 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		// which is what it is.
 		// We also check the timestamp. If the OnChar timestamp doesn't match the
 		// last KeyDown timestamp, it's another strong signal that they are unrelated.
+		//
+		// See also: https://github.com/wxWidgets/wxWidgets/issues/25379
 
 		const wxKeyEvent& last_keydown = _key_tracker.LastKeydown();
 		if (event.GetKeyCode() == 0 || event.GetTimestamp() != last_keydown.GetTimestamp())

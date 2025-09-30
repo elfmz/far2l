@@ -94,6 +94,9 @@ $^#Information Dialog (F3)#
  #-# Desktop file
    The full path to the .desktop file (an INI-style text file) that defines this application.
 
+ #-# Source
+   This field indicates the origin of the association, explaining why the application was suggested for the file. It clarifies whether the match came from a high-priority system default (via xdg-mime), a user preference in a mimeapps.list file, an indexed lookup in mimeinfo.cache, or a comprehensive fallback scan of all .desktop files. This information is useful for troubleshooting application associations.
+
  #-# Name
    The human-readable application name, intended for display in menus.
 

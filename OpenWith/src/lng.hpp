@@ -25,5 +25,9 @@ enum LanguageID
 	MUseXdgMimeTool,
 	MUseFileTool,
 	MClose,
-	MLaunch
+	MLaunch,
+	MSource,
+	MFullScanFor,
+	MFor,
+	MIn,
 };

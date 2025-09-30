@@ -24,6 +24,7 @@ enum LanguageID
 	MUseExtensionBasedFallback,
 	MUseXdgMimeTool,
 	MUseFileTool,
+	MLoadMimeTypeAliases,
 	MClose,
 	MLaunch,
 	MSource,

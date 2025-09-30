@@ -36,6 +36,7 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true },
 		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true },
 		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, true },
+		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true },
 		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true },
 		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false },
 		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false }
@@ -533,6 +534,37 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 			add_unique(MimeTypeByExtension(pathname));
 		}
 
+		if (_load_mimetype_aliases) {
+			// Load all alias definitions from XDG paths.
+			auto aliases = LoadMimeAliases();
+
+			// Create a forward map for efficient lookup: alias_mime -> canonical_mime.
+			std::unordered_map<std::string, std::string> alias_to_canonical_map = aliases;
+
+			// Create a reverse map for efficient lookup: canonical_mime -> [list_of_aliases].
+			std::unordered_map<std::string, std::vector<std::string>> canonical_to_aliases_map;
+			for (const auto& [alias, canonical] : aliases) {
+				canonical_to_aliases_map[canonical].push_back(alias);
+			}
+
+			// Iterate over a copy of the initially found types to safely modify the original `mime_types` vector.
+			auto initially_found_types = mime_types;
+			for (const auto& mime : initially_found_types) {
+				// 1. If the current mime is a canonical type, add all its corresponding aliases.
+				auto it_aliases = canonical_to_aliases_map.find(mime);
+				if (it_aliases != canonical_to_aliases_map.end()) {
+					for (const auto& alias : it_aliases->second) {
+						add_unique(alias);
+					}
+				}
+				// 2. If the current mime is an alias, add its canonical type.
+				auto it_canonical = alias_to_canonical_map.find(mime);
+				if (it_canonical != alias_to_canonical_map.end()) {
+					add_unique(it_canonical->second);
+				}
+			}
+		}
+
 		// Add base types for structured MIME types (e.g., image/svg+xml -> application/xml).
 		// This allows an app associated with a generic structured syntax (like XML or ZIP)
 		// to be suggested as a candidate for a more specific file type.
@@ -789,6 +821,62 @@ std::string XDGBasedAppProvider::MimeTypeByExtension(const std::string& pathname
 	}
 	return result;
 }
+
+
+std::vector<std::string> XDGBasedAppProvider::GetMimeDatabaseSearchPaths()
+{
+	std::vector<std::string> paths;
+	std::unordered_set<std::string> seen_paths;
+
+	auto add_path = [&](const std::string& p) {
+		if (!p.empty() && seen_paths.insert(p).second) {
+			paths.push_back(p);
+		}
+	};
+
+	std::string xdg_data_home = XDGBasedAppProvider::GetEnv("XDG_DATA_HOME", "");
+	if (!xdg_data_home.empty()) {
+		add_path(xdg_data_home + "/mime");
+	} else {
+		add_path(XDGBasedAppProvider::GetEnv("HOME", "") + "/.local/share/mime");
+	}
+
+	std::string xdg_data_dirs = XDGBasedAppProvider::GetEnv("XDG_DATA_DIRS", "/usr/local/share:/usr/share");
+	for (const auto& dir : XDGBasedAppProvider::SplitString(xdg_data_dirs, ':')) {
+		add_path(dir + "/mime");
+	}
+	return paths;
+}
+
+
+std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeAliases()
+{
+	std::unordered_map<std::string, std::string> alias_to_canonical_map;
+	auto mime_paths = GetMimeDatabaseSearchPaths();
+
+	// Iterate paths from high priority (user) to low priority (system).
+	for (const auto& path : mime_paths) {
+		std::string alias_file_path = path + "/aliases";
+		std::ifstream file(alias_file_path);
+		if (!file.is_open()) continue;
+
+		std::string line;
+		while (std::getline(file, line)) {
+			line = XDGBasedAppProvider::Trim(line);
+			if (line.empty() || line[0] == '#') continue;
+
+			std::stringstream ss(line);
+			std::string alias_mime, canonical_mime;
+			if (ss >> alias_mime >> canonical_mime) {
+				// Use try_emplace to ensure that only the first-encountered alias
+				// (from the highest-priority file) is inserted.
+				alias_to_canonical_map.try_emplace(alias_mime, canonical_mime);
+			}
+		}
+	}
+	return alias_to_canonical_map;
+}
+
 
 
 // ****************************** Parsing XDG files and data ******************************

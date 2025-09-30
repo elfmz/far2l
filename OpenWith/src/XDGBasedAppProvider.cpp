@@ -535,29 +535,46 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 		}
 
 		if (_load_mimetype_aliases) {
-			// Load all alias definitions from XDG paths.
-			auto aliases = LoadMimeAliases();
+			// Load all alias definitions from XDG paths into a forward map (alias -> canonical).
+			auto alias_to_canonical_map = LoadMimeAliases();
 
-			// Create a forward map for efficient lookup: alias_mime -> canonical_mime.
-			std::unordered_map<std::string, std::string> alias_to_canonical_map = aliases;
-
-			// Create a reverse map for efficient lookup: canonical_mime -> [list_of_aliases].
+			// Create a reverse map (canonical -> list_of_aliases) for reverse lookups.
 			std::unordered_map<std::string, std::vector<std::string>> canonical_to_aliases_map;
-			for (const auto& [alias, canonical] : aliases) {
+			for (const auto& [alias, canonical] : alias_to_canonical_map) {
 				canonical_to_aliases_map[canonical].push_back(alias);
 			}
 
-			// Iterate over a copy of the initially found types to safely modify the original `mime_types` vector.
+			// Iterate over a copy of initially found types to safely modify the original `mime_types` vector.
 			auto initially_found_types = mime_types;
 			for (const auto& mime : initially_found_types) {
-				// 1. If the current mime is a canonical type, add all its corresponding aliases.
+				// --- Block 1: Smart reverse lookup (canonical -> alias) ---
+				// Find aliases for the current canonical MIME type, but filter them to avoid incorrect associations (e.g., image/* -> text/*).
 				auto it_aliases = canonical_to_aliases_map.find(mime);
 				if (it_aliases != canonical_to_aliases_map.end()) {
-					for (const auto& alias : it_aliases->second) {
-						add_unique(alias);
+					size_t canonical_slash_pos = mime.find('/');
+					// Proceed only if the canonical MIME type has a valid format (e.g., "type/subtype").
+					if (canonical_slash_pos != std::string::npos) {
+						// Use string_view to avoid memory allocations from substr().
+						std::string_view canonical_major_type(mime.data(), canonical_slash_pos);
+
+						for (const auto& alias : it_aliases->second) {
+							size_t alias_slash_pos = alias.find('/');
+							if (alias_slash_pos != std::string::npos) {
+								std::string_view alias_major_type(alias.data(), alias_slash_pos);
+
+								// Add the alias ONLY if its major type matches the canonical one.
+								// This prevents adding, for example, "text/ico" for "image/vnd.microsoft.icon",
+								// but allows adding "image/x-icon".
+								if (alias_major_type == canonical_major_type) {
+									add_unique(alias);
+								}
+							}
+						}
 					}
 				}
-				// 2. If the current mime is an alias, add its canonical type.
+
+				// --- Block 2: Standard forward lookup (alias -> canonical) ---
+				// If the current MIME type is an alias, add its canonical type. This is the standard behavior.
 				auto it_canonical = alias_to_canonical_map.find(mime);
 				if (it_canonical != alias_to_canonical_map.end()) {
 					add_unique(it_canonical->second);

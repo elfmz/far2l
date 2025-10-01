@@ -49,6 +49,9 @@ $^#Configuration Dialog#
  #-# Use extension-based fallback
    As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
 
+ #-# Load MIME type aliases
+   Enables loading MIME type associations from system `aliases` files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., linking "application/x-deb" to "application/vnd.debian.binary-package").
+
  #-# Use mimeinfo.cache
    Speed up application lookups by using the mimeinfo.cache files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., image/png) to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
 
@@ -93,6 +96,9 @@ $^#Information Dialog (F3)#
 
  #-# Desktop file
    The full path to the .desktop file (an INI-style text file) that defines this application.
+
+ #-# Source
+   This field indicates the origin of the association, explaining why the application was suggested for the file. It clarifies whether the match came from a high-priority system default (via xdg-mime), a user preference in a mimeapps.list file, an indexed lookup in mimeinfo.cache, or a comprehensive fallback scan of all .desktop files. This information is useful for troubleshooting application associations.
 
  #-# Name
    The human-readable application name, intended for display in menus.

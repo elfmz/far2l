@@ -1887,7 +1887,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				else
 					GotoXY(X1, Y);
 
-				FARString strMenuLine, strMenuPrefix;
+				FARString strMenuLine;
 
 				int ShowPos =
 						HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
@@ -1938,7 +1938,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				// для сохранения оригинальной строки!!!
 				ReplaceTabsBySpaces(strMenuLine, 1);
 				if (strMItemPtrPrefixLen) {
-					SetColor(VMenu::Colors[Item[I]->Flags & LIF_SELECTED ? VMenuColorSelGrayed : VMenuColorGrayed]);
+					SetColor(VMenu::Colors[Item[I]->Flags & LIF_SELECTED ? VmenuColorSelPrefix : VmenuColorPrefix]);
 					FARString strPrefix(strMItemPtr, std::min(strMItemPtrPrefixLen, MaxLineWidth));
 					Text(strPrefix);
 					strMItemPtr.Remove(0, strPrefix.GetLength());
@@ -2358,6 +2358,8 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 							COL_DIALOGLISTARROWSDISABLED,		// Arrow Disabled
 							COL_DIALOGLISTGRAY,					// "серый"
 							COL_DIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
+							COL_DIALOGLISTPREFIX,               // префикс пункта меню
+							COL_DIALOGLISTSELPREFIX,            // выбранный префикс пункта меню
 					},
 						{
 								// VMENU_COMBOBOX
@@ -2376,6 +2378,8 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 								COL_DIALOGCOMBOARROWSDISABLED,			// Arrow Disabled
 								COL_DIALOGCOMBOGRAY,					// "серый"
 								COL_DIALOGCOMBOSELECTEDGRAYTEXT,		// выбранный "серый"
+								COL_DIALOGCOMBOPREFIX,                  // префикс пункта меню
+								COL_DIALOGCOMBOSELPREFIX,               // выбранный префикс пункта меню
 						},
 						{
 								// VMenu
@@ -2394,6 +2398,8 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 								COL_MENUARROWSDISABLED,			// Arrow Disabled
 								COL_MENUGRAYTEXT,				// "серый"
 								COL_MENUSELECTEDGRAYTEXT,		// выбранный "серый"
+								COL_MENUPREFIX,                 // префикс пункта меню
+								COL_MENUSELPREFIX,              // выбранный префикс пункта меню
 						}},
 
 				// == VMENU_WARNDIALOG
@@ -2414,6 +2420,8 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 							COL_WARNDIALOGLISTARROWSDISABLED,		// Arrow Disabled
 							COL_WARNDIALOGLISTGRAY,					// "серый"
 							COL_WARNDIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
+							COL_WARNDIALOGLISTPREFIX,               // префикс пункта меню
+							COL_WARNDIALOGLISTSELPREFIX,            // выбранный префикс пункта меню
 					},
 						{
 								// VMENU_COMBOBOX
@@ -2432,6 +2440,8 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 								COL_WARNDIALOGCOMBOARROWSDISABLED,			// Arrow Disabled
 								COL_WARNDIALOGCOMBOGRAY,					// "серый"
 								COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,		// выбранный "серый"
+								COL_WARNDIALOGCOMBOPREFIX,                  // префикс пункта меню
+								COL_WARNDIALOGCOMBOSELPREFIX,               // выбранный префикс пункта меню
 						},
 						{
 								// VMenu
@@ -2450,6 +2460,8 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 								COL_MENUARROWSDISABLED,			// Arrow Disabled
 								COL_MENUGRAYTEXT,				// "серый"
 								COL_MENUSELECTEDGRAYTEXT,		// выбранный "серый"
+								COL_MENUPREFIX,                 // префикс пункта меню
+								COL_MENUSELPREFIX,              // выбранный префикс пункта меню
 						}}};
 		int TypeMenu = CheckFlags(VMENU_LISTBOX) ? 0 : (CheckFlags(VMENU_COMBOBOX) ? 1 : 2);
 		int StyleMenu = CheckFlags(VMENU_WARNDIALOG) ? 1 : 0;

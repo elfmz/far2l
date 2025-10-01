@@ -1616,10 +1616,34 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
-		// we can not determine correct VirtualKeyCode value here because of
-		// https://github.com/wxWidgets/wxWidgets/issues/25379
-		WORD temp_key_code = wxKeyCode2WinKeyCode(_key_tracker.LastKeydown().GetKeyCode());
-		ir.Event.KeyEvent.wVirtualKeyCode = temp_key_code ? temp_key_code : VK_NONAME;
+
+		// Heuristic to detect events from an Input Method Editor (like IBus).
+		// Such events often come with a KeyCode of 0, as they don't map to a single
+		// physical key press. They might also arrive out of sync with KeyDown events.
+		// Previous code tried to associate every OnChar with the last KeyDown,
+		// which breaks with IBus's asynchronous event stream.
+		//
+		// If we detect a likely IME event, we revert to the old, safer behavior
+		// of using VK_NONAME. This treats the event as pure character input,
+		// which is what it is.
+		// We also check the timestamp. If the OnChar timestamp doesn't match the
+		// last KeyDown timestamp, it's another strong signal that they are unrelated.
+		//
+		// See also: https://github.com/wxWidgets/wxWidgets/issues/25379
+
+		const wxKeyEvent& last_keydown = _key_tracker.LastKeydown();
+		if (event.GetKeyCode() == 0 || event.GetTimestamp() != last_keydown.GetTimestamp())
+		{
+			// Likely an IME-generated event or a desynchronized event. Use the safe fallback.
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_NONAME;
+		}
+		else
+		{
+			// The event seems to be a direct result of a key press.
+			// Use the new logic to get a more precise virtual key code.
+			ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(last_keydown.GetKeyCode());
+		}
+		
 		if (event.GetUnicodeKey() <= 0x7f) { 
 			if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
 				wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);

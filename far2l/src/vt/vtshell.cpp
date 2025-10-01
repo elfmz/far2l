@@ -697,7 +697,29 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	void OnOSC_ClipboardSet(std::string &str)
 	{
-		StrTrim(str, "; \t");
+		// OSC 52 format is: <clipboard_selector>;<data>
+		// We expect 'c' for system clipboard.
+		// A '?' as data is a query request. For security reasons, we do not
+		// implement reading the clipboard, but we must ignore the request
+		// gracefully instead of erasing the clipboard.
+
+		// remove "c;" prefix if any
+		size_t pos = str.rfind(';');
+		if (pos == std::string::npos) {
+			// Malformed command, ignore.
+			return;
+		}
+
+		std::string payload = str.substr(pos + 1);
+		StrTrim(payload, " \t"); // Trim whitespace from payload
+
+		if (payload == "?") {
+			// It's a query request. Intentionally not supported for security.
+			// Just ignore it to prevent erasing the clipboard.
+			fprintf(stderr, "VT: OSC 52 clipboard read request ('?') ignored for security reasons.\n");
+			return;
+		}
+
 		if (!_allow_osc_clipset) {
 			{
 				VTAnsiSuspend vta_suspend(_vta); // preserve console state
@@ -725,15 +747,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			OnTerminalResized(); // window could resize during dialog box processing
 		}
 
-		// remove "c;" prefix if any
-		size_t pos = str.rfind(';');
-		if (pos != std::string::npos) {
-			str.erase(0, pos + 1);
-		}
-
 		std::vector<unsigned char> plain;
-		base64_decode(plain, str);
+		base64_decode(plain, payload); // Use payload instead of the original str
 		{ // release no more needed memory
+			std::string().swap(payload);
 			std::string().swap(str);
 		}
 		std::wstring ws;

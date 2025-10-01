@@ -1770,7 +1770,7 @@ int Viewer::ProcessKey(FarKey Key)
 			if (ViewFile.Opened()) {
 				FilePos = 0;
 				Show();
-				//				LastSelPos=FilePos;
+				LastSelPos=FilePos;
 			}
 
 			return TRUE;

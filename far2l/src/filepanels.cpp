@@ -1045,7 +1045,6 @@ void FilePanels::DisplayObject()
 {
 	// if ( !Focus )
 	// return;
-	ConsoleRepaintsDeferScope crds(NULL); // prevent flickering due to ShowBackground
 	_OT(SysLog(L"[%p] FilePanels::Redraw() {%d, %d - %d, %d}", this, X1, Y1, X2, Y2));
 	CtrlObject->CmdLine->ShowBackground( (bool)(Opt.PanelsDisposition) );
 
@@ -1098,7 +1097,6 @@ void FilePanels::DisplayObject()
 		}
 	}
 #endif
-	ScrBuf.Flush();
 }
 
 int FilePanels::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)

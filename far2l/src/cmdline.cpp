@@ -908,11 +908,7 @@ void CommandLine::ShowBackground(bool showanyway)
 	}
 
 	fprintf(stderr, "CommandLine::ShowBackground\n");
-	DWORD mode = 0; // keep own mode - dont derive it from forked console
-	WINPORT(GetConsoleMode)(NULL, &mode);
-	BackgroundConsole.Show();
-	WINPORT(SetConsoleMode)(NULL, mode);
-	ScrBuf.FillBuf();
+	ScrBuf.FillBufWithRecompose(BackgroundConsole.Handle());
 }
 
 void CommandLine::Show()

@@ -7,5 +7,6 @@ Exec=far2l --tty
 TryExec=far2l
 Terminal=true
 Categories=Utility;FileManager;System;FileTools;
+MimeType=inode/directory;
 Icon=far2l
 StartupNotify=true

@@ -27,7 +27,6 @@ static const wchar_t ext_EXT4[] = L".ext4";
 static const wchar_t ext_EXTn[] = L".ext";
 static const wchar_t ext_HFS[] = L".hfs";
 static const wchar_t ext_APFS[] = L".apfs";
-static const wchar_t ext_TAR[] = L".tar";
 
 template<bool UseVirtualDestructor>
 class Plugin
@@ -49,8 +48,8 @@ private:
 public:
 	std::wstring current_dir;
 	char part_mode{'\0'};	 // '\0' 'm'br, 'g'pt
-	int part_idx{-1};		 // -1 or partition index
-	std::unique_ptr<Plugin<UseVirtualDestructor>> partition;
+//	int part_idx{-1};		 // -1 or partition index
+//	std::unique_ptr<Plugin<UseVirtualDestructor>> partition;
 	std::unique_ptr<Plugin<UseVirtualDestructor>> child;
     Plugin<UseVirtualDestructor>* parent;
 
@@ -201,46 +200,6 @@ public:
 		if (ext)
 			name = std::to_wstring(f_index) + (part_mode == 'm' ? L".mbr" : L".gpt") + ext;
 	}
-	//
-	bool part_index_to_item(const UInt32 index, Far::PanelItem &i)
-	{
-		if (!part_mode)
-			return false;
-
-		i.file_size = archive->get_size(index);
-		if (!i.file_size)
-			return false;
-		i.pack_size = archive->get_psize(index);
-		if (i.file_size != i.pack_size)
-			return false;
-
-		i.file_attributes = archive->get_attr(index, NULL);
-		i.file_name = archive->get_path(index);
-		correct_part_root_name(i.file_name, index, i.file_attributes, i.file_size, i.pack_size);
-
-		i.creation_time = {0, 0};		//
-		i.last_access_time = {0, 0};	//
-		i.last_write_time = {0, 0};		//
-		i.alt_file_name.clear();		// not used in set_partition()
-
-		i.user_data = (void *)(uintptr_t)(index);
-		return true;
-	}
-
-/***
-struct PanelItem
-{
-	uintptr_t file_attributes;
-	FILETIME creation_time;
-	FILETIME last_access_time;
-	FILETIME last_write_time;
-	UInt64 file_size;
-	UInt64 pack_size;
-	std::wstring file_name;
-	std::wstring alt_file_name;
-	void *user_data;
-};
-***/
 
 	bool level_up(void)
 	{
@@ -329,88 +288,8 @@ struct PanelItem
 		return true;
 	}
 
-	bool set_partition(const Far::PanelItem &i)
-	{
-		if (!part_mode || !current_dir.empty()) {
-			return false;
-		}
-
-		if (i.file_attributes & FILE_ATTRIBUTE_DIRECTORY) {
-			return false;
-		}
-
-		if (!i.file_size || i.file_size != i.pack_size) {
-			return false;
-		}
-
-		const auto index = (UInt32)(size_t)i.user_data;
-		const auto off = archive->get_offset(index);
-
-		if (off == ~0ULL) {
-			fprintf(stderr, "set_partition() invalid offset %lluu return false\n", ~0ULL );
-			return false;
-		}
-
-		const ArcType *p_type = nullptr;
-		if (str_end_with(i.file_name, ext_FAT))
-			p_type = &c_fat;
-		else if (str_end_with(i.file_name, ext_ExFAT))
-			p_type = &c_xfat;
-		else if (str_end_with(i.file_name, ext_NTFS))
-			p_type = &c_ntfs;
-		else if (str_end_with(i.file_name, ext_APFS))
-			p_type = &c_apfs;
-		else if (str_end_with(i.file_name, ext_HFS))
-			p_type = &c_hfs;
-		else if (str_end_with(i.file_name, ext_EXT2))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_EXT3))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_EXT4))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_EXTn))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_TAR))
-			p_type = &c_tar;
-		else {
-			return false;
-		}
-
-		part_idx = -1;
-		partition = nullptr;
-		ComObject<IInStream<UseVirtualDestructor>> sub_stream;
-		if (!archive->get_stream(index, sub_stream.ref()))
-			return false;
-
-		auto part_archive = std::make_shared<Archive<UseVirtualDestructor>>();
-		if (!part_archive->open(sub_stream, *p_type, true))
-			return false;
-
-		part_idx = index;
-		current_dir = std::to_wstring(index);
-
-		part_archive->parent = archive;
-		part_archive->arc_path = archive->arc_path + L":" + current_dir;
-		part_archive->arc_info = archive->arc_info;
-		part_archive->arc_chain = archive->arc_chain;
-		part_archive->arc_chain.emplace_back(*p_type, off);
-
-		//		partition = std::make_unique<Plugin>(false);
-		partition.reset(new Plugin<UseVirtualDestructor>(false));
-		partition->archive = part_archive;
-		partition->host_file = host_file;
-
-		return true;
-	}
-
 	void info(OpenPluginInfo *opi)
 	{
-		if (part_mode && !current_dir.empty() && partition) {
-			partition->info(opi);
-			opi->CurDir = current_dir.c_str();
-			return;
-		}
-
 		opi->StructSize = sizeof(OpenPluginInfo);
 		opi->Flags = OPIF_ADDDOTS | OPIF_SHORTCUT | OPIF_USEHIGHLIGHTING | OPIF_USESORTGROUPS | OPIF_USEFILTER
 				| (recursive_panel ? OPIF_RECURSIVEPANEL : 0)
@@ -484,38 +363,7 @@ struct PanelItem
 		if (new_dir == L"/")
 			new_dir.clear();
 
-		if (!part_mode) {
-			archive->find_dir(new_dir);
-			current_dir = std::move(new_dir);
-			return;
-		}
-
-		// all code below for partition mode
-		//
-		if (new_dir.empty()) {	  // root level
-			const auto pidx = part_idx;
-			part_idx = -1;
-			partition = nullptr;
-			current_dir = std::move(new_dir);
-			Far::panel_go_to_part(PANEL_ACTIVE, pidx);
-			return;
-		}
-
-		if (new_dir[0] != '/' || !isdigit(new_dir[1]))
-			FAIL(E_ABORT);
-		const auto new_idx = _wtoi(new_dir.c_str() + 1);
-		if (new_idx != part_idx) {
-			Far::PanelItem p_item;
-			if (!part_index_to_item((UInt32)new_idx, p_item) || !set_partition(p_item))
-				FAIL(E_ABORT);
-		}
-
-		std::wstring new_subdir;
-		const auto pos = new_dir.find(L'/', 1);
-		if (pos != std::wstring::npos)
-			new_subdir = new_dir.substr(pos);
-
-		partition->set_dir(new_subdir);
+		archive->find_dir(new_dir);
 		current_dir = std::move(new_dir);
 		return;
 	}
@@ -523,12 +371,6 @@ struct PanelItem
 	void list(PluginPanelItem **panel_items, int *items_number)
 	{
 		if (!archive->is_open()) {
-			FAIL(E_ABORT);
-		}
-
-		if (part_mode && !current_dir.empty()) {	// partition sub panel
-			if (partition)
-				return partition->list(panel_items, items_number);
 			FAIL(E_ABORT);
 		}
 
@@ -755,12 +597,6 @@ struct PanelItem
 	void get_files(const PluginPanelItem *panel_items, intptr_t items_number, int move,
 			const wchar_t **dest_path, OPERATION_MODES op_mode)
 	{
-
-		if (part_mode && !current_dir.empty() && partition) {
-			partition->get_files(panel_items, items_number, move, dest_path, op_mode);
-			return;
-		}
-
 		class PluginPanelItems : public PluginPanelItemAccessor
 		{
 		private:
@@ -2260,7 +2096,7 @@ ProcessHostFileW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, int ItemsNum
 template<bool UseVirtualDestructor>
 static bool set_partition(Plugin<UseVirtualDestructor> *hPlugin, const Far::PanelItem &i)
 {
-	if (!hPlugin->part_mode && hPlugin->parent && i.file_name == L".." && hPlugin->current_dir.empty()) {
+	if (hPlugin->parent && i.file_name == L".." && hPlugin->current_dir.empty()) {
 		if (!hPlugin->get_archive()->is_open())
 			FAIL(E_ABORT);
 
@@ -2282,13 +2118,7 @@ static bool set_partition(Plugin<UseVirtualDestructor> *hPlugin, const Far::Pane
 		return true;
 	}
 
-	bool bRez = hPlugin->set_partition(i);
-
-	if (bRez) {
-		Far::update_panel(PANEL_ACTIVE, false, true);
-	}
-
-	return bRez;
+	return false;
 }
 
 template<bool UseVirtualDestructor>

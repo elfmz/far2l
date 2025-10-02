@@ -71,44 +71,22 @@ static std::wstring format_filetime_prop(const PropVariant &prop)
 {
 	if (!prop.is_filetime())
 		return std::wstring();
-	FILETIME prop_file_time = prop.get_filetime();
 
-//	FILETIME local_file_time;
-//	if (!WINPORT_FileTimeToLocalFileTime(&prop_file_time, &local_file_time))
-//		return std::wstring();
-//	SYSTEMTIME sys_time;
-//	if (!WINPORT_FileTimeToSystemTime(&local_file_time, &sys_time))
-//		return std::wstring();
-//	wchar_t buf[64];
+	union {
+		FILETIME ft;
+		uint64_t t64;
+	};
 
-//	FILETIME local_ft;
-//	CHECK_SYS(WINPORT_FileTimeToLocalFileTime(&file_time, &local_ft));
-//	SYSTEMTIME st;
-//	CHECK_SYS(WINPORT_FileTimeToSystemTime(&local_ft, &st));
-//	wchar_t date_time_str[64];
+//	if (t64 > 0x23F4449128B48000) {
+//	}
 
-
-#if 1
-//	swprintf(buf, 64, L"%02d.%02d.%d %02d:%02d:%02d", sys_time.wDay, sys_time.wMonth, sys_time.wYear, sys_time.wHour,
-//			sys_time.wMinute, sys_time.wSecond);
-//	return std::wstring(buf);
-
-	return format_file_time(prop_file_time);
-
-//std::wstring format_file_time(const FILETIME &file_time)
-
-
+	ft = prop.get_filetime();
+#if IS_BIG_ENDIAN
+		return format_file_time(FILETIME{ft.dwLowDateTime,ft.dwHighDateTime});
 #else
-	if (GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &sys_time, nullptr, buf, ARRAYSIZE(buf)) == 0)
-		return std::wstring();
-
-	std::wstring date_time(buf);
-	if (GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &sys_time, nullptr, buf, ARRAYSIZE(buf)) == 0)
-		return std::wstring();
-
-	date_time = date_time + L" " + buf;
-	return date_time;
+	return format_file_time(ft);
 #endif
+
 }
 
 static std::wstring format_crc_prop(const PropVariant &prop)
@@ -226,133 +204,110 @@ struct PropInfo
 };
 
 static PropInfo c_prop_info[] = {
-		{kpidPath,				   MSG_KPID_PATH,				  nullptr				 },
-		{kpidName,				   MSG_KPID_NAME,				  nullptr				 },
-		{kpidExtension,				MSG_KPID_EXTENSION,				nullptr				   },
-		{kpidIsDir,				  MSG_KPID_ISDIR,				  nullptr				 },
-		{kpidSize,				   MSG_KPID_SIZE,				  format_size_prop		  },
-		{kpidPackSize,				MSG_KPID_PACKSIZE,			   format_size_prop		   },
-		{kpidAttrib,				 MSG_KPID_ATTRIB,				  format_attrib_prop		},
-		{kpidCTime,				   MSG_KPID_CTIME,				   format_filetime_prop	   },
-		{kpidATime,					MSG_KPID_ATIME,					format_filetime_prop	},
-		{kpidMTime,				   MSG_KPID_MTIME,				   format_filetime_prop	   },
-		{kpidSolid,					MSG_KPID_SOLID,					nullptr				   },
-
-		{kpidCommented,			  MSG_KPID_COMMENTED,			  nullptr				 },
-
-		{kpidEncrypted,				MSG_KPID_ENCRYPTED,				nullptr				   },
-		{kpidSplitBefore,			MSG_KPID_SPLITBEFORE,			  nullptr				 },
-		{kpidSplitAfter,			 MSG_KPID_SPLITAFTER,			  nullptr				 },
-		{kpidDictionarySize,		 MSG_KPID_DICTIONARYSIZE,		  format_size_prop		  },
-		{kpidCRC,				   MSG_KPID_CRC,					format_crc_prop		   },
-		{kpidType,					 MSG_KPID_TYPE,					nullptr				   },
-		{kpidIsAnti,				 MSG_KPID_ISANTI,				  nullptr				 },
-		{kpidMethod,				 MSG_KPID_METHOD,				  nullptr				 },
-
-		{kpidHostOS,				 MSG_KPID_HOSTOS,				  nullptr				 },
-		{kpidFileSystem,			 MSG_KPID_FILESYSTEM,			  nullptr				 },
-
-		{kpidUser,				   MSG_KPID_USER,				  nullptr				 },
-		{kpidGroup,					MSG_KPID_GROUP,					nullptr				   },
-		{kpidBlock,					MSG_KPID_BLOCK,					nullptr				   },
-
-		{kpidComment,				MSG_KPID_COMMENT,				  nullptr				 },
-
-		{kpidPosition,			   MSG_KPID_POSITION,			  nullptr				 },
-		{kpidPrefix,				 MSG_KPID_PREFIX,				  nullptr				 },
-		{kpidNumSubDirs,			 MSG_KPID_NUMSUBDIRS,			  nullptr				 },
-		{kpidNumSubFiles,			  MSG_KPID_NUMSUBFILES,			nullptr				   },
-		{kpidUnpackVer,				MSG_KPID_UNPACKVER,				nullptr				   },
-		{kpidVolume,				   MSG_KPID_VOLUME,				nullptr				   },
-		{kpidIsVolume,			   MSG_KPID_ISVOLUME,			  nullptr				 },
-		{kpidOffset,				 MSG_KPID_OFFSET,				  nullptr				 },
-
-		{kpidLinks,					MSG_KPID_LINKS,					nullptr				   },
-
-		{kpidNumBlocks,			  MSG_KPID_NUMBLOCKS,			  nullptr				 },
-		{kpidNumVolumes,			 MSG_KPID_NUMVOLUMES,			  nullptr				 },
-		{kpidTimeType,			   MSG_KPID_TIMETYPE,			  nullptr				 },
-
-		{kpidBit64,					MSG_KPID_BIT64,					nullptr				   },
-		{kpidBigEndian,			  MSG_KPID_BIGENDIAN,			  nullptr				 },
-		{kpidCpu,				   MSG_KPID_CPU,					nullptr				   },
-
-		{kpidPhySize,				MSG_KPID_PHYSIZE,				  format_size_prop		  },
-		{kpidHeadersSize,			  MSG_KPID_HEADERSSIZE,			format_size_prop		},
-		{kpidChecksum,			  MSG_KPID_CHECKSUM,				 nullptr					},
-
-		{kpidCharacts,			   MSG_KPID_CHARACTS,			  nullptr				 },
-
-		{kpidVa,					 MSG_KPID_VA,					  nullptr				 },
-		{kpidId,					MSG_KPID_ID,					  nullptr				 },
-		{kpidShortName,				MSG_KPID_SHORTNAME,				nullptr				   },
-
-		{kpidCreatorApp,			 MSG_KPID_CREATORAPP,			  nullptr				 },
-		{kpidSectorSize,			 MSG_KPID_SECTORSIZE,			  format_size_prop		  },
-		{kpidPosixAttrib,			  MSG_KPID_POSIXATTRIB,			format_posix_attrib_prop},
-
-		{kpidSymLink,				  MSG_KPID_LINK,					 nullptr					},
-
-		{kpidError,				   MSG_KPID_ERROR,				   nullptr				  },
-		{kpidTotalSize,				MSG_KPID_TOTALSIZE,				format_size_prop		},
-		{kpidFreeSpace,				MSG_KPID_FREESPACE,				format_size_prop		},
-		{kpidClusterSize,			  MSG_KPID_CLUSTERSIZE,			format_size_prop		},
-
-		{kpidVolumeName,			 MSG_KPID_VOLUMENAME,			  nullptr				 },
-		{kpidLocalName,				MSG_KPID_LOCALNAME,				nullptr				   },
-		{kpidProvider,			   MSG_KPID_PROVIDER,			  nullptr				 },
-		{kpidNtSecure,			   MSG_KPID_NTSECURE,			  nullptr				 },
-		{kpidIsAltStream,			  MSG_KPID_ISALTSTREAM,			nullptr				   },
-		{kpidIsAux,				  MSG_KPID_ISAUX,				  nullptr				 },
-		{kpidIsDeleted,				MSG_KPID_ISDELETED,				nullptr				   },
-		{kpidIsTree,				   MSG_KPID_ISTREE,				nullptr				   },
-
-		{kpidSha1,				   MSG_KPID_SHA1,				  nullptr				 },
-		{kpidSha256,				 MSG_KPID_SHA256,				  nullptr				 },
-
-		{kpidErrorType,				MSG_KPID_ERRORTYPE,				nullptr				   },
-		{kpidNumErrors,			  MSG_KPID_NUMERRORS,			  nullptr				 },
-		{kpidErrorFlags,			 MSG_KPID_ERRORFLAGS,			  nullptr				 },
-		{kpidWarningFlags,		   MSG_KPID_WARNINGFLAGS,		  nullptr				 },
-		{kpidWarning,				  MSG_KPID_WARNING,				nullptr				   },
-		{kpidNumStreams,			   MSG_KPID_NUMSTREAMS,			nullptr				   },
-		{kpidNumAltStreams,			MSG_KPID_NUMALTSTREAMS,			nullptr				   },
-		{kpidAltStreamsSize,		 MSG_KPID_ALTSTREAMSSIZE,		  format_size_prop		  },
-		{kpidVirtualSize,			  MSG_KPID_VIRTUALSIZE,			format_size_prop		},
-		{kpidUnpackSize,			 MSG_KPID_UNPACKSIZE,			  format_size_prop		  },
-		{kpidTotalPhySize,		   MSG_KPID_TOTALPHYSIZE,		  format_size_prop		  },
-		{kpidVolumeIndex,			  MSG_KPID_VOLUMEINDEX,			nullptr				   },
-		{kpidSubType,				MSG_KPID_SUBTYPE,				  nullptr				 },
-
-		{kpidShortComment,		   MSG_KPID_SHORTCOMMENT,		  nullptr				 },
-		{kpidCodePage,			   MSG_KPID_CODEPAGE,			  nullptr				 },
-		{kpidIsNotArcType,		   MSG_KPID_ISNOTARCTYPE,		  nullptr				 },
-		{kpidPhySizeCantBeDetected, MSG_KPID_PHYSIZECANTBEDETECTED, nullptr				   },
-		{kpidZerosTailIsAllowed,	MSG_KPID_ZEROSTAILISALLOWED,	  nullptr				 },
-		{kpidTailSize,			   MSG_KPID_TAILSIZE,			  format_size_prop		  },
-		{kpidEmbeddedStubSize,	   MSG_KPID_EMBEDDEDSTUBSIZE,	  format_size_prop		  },
-
-		{kpidNtReparse,				MSG_KPID_NTREPARSE,				nullptr				   },
-		{kpidHardLink,				 MSG_KPID_HARDLINK,				nullptr				   },
-		{kpidINode,					MSG_KPID_INODE,					nullptr				   },
-
-		{kpidStreamId,				 MSG_KPID_STREAMID,				nullptr				   },
-		{kpidReadOnly,			   MSG_KPID_READONLY,			  nullptr				 },
-		{kpidOutName,				  MSG_KPID_OUTNAME,				nullptr				   },
-		{kpidCopyLink,			   MSG_KPID_COPYLINK,			  nullptr				 },
-		{kpidArcFileName,			  MSG_KPID_ARCFILENAME,			nullptr				   },
-		{kpidIsHash,				 MSG_KPID_ISHASH,				  nullptr				 },
-		{kpidChangeTime,			 MSG_KPID_METADATA_CHANGED,		nullptr				   },
-
-		{kpidUserId,				 MSG_KPID_USER_ID,			   nullptr				  },
-		{kpidGroupId,			   MSG_KPID_GROUP_ID,			  nullptr				 },
-		{kpidDeviceMajor,			  MSG_KPID_DEVICE_MAJOR,			 nullptr					},
-		{kpidDeviceMinor,			 MSG_KPID_DEVICE_MINOR,			nullptr				   },
-
-		//  { kpidDevMajor, MSG_KPID_DEV_MAJOR, nullptr },
-		{kpidDeviceMajor,			  MSG_KPID_DEV_MAJOR,			  nullptr				 },
-		//  { kpidDevMinor, MSG_KPID_DEV_MINOR, nullptr }
-		{kpidDeviceMinor,			  MSG_KPID_DEV_MINOR,			  nullptr				 }
+	{ kpidPath,					MSG_KPID_PATH,					nullptr },
+	{ kpidName,					MSG_KPID_NAME,					nullptr },
+	{ kpidExtension,			MSG_KPID_EXTENSION,				nullptr },
+	{ kpidIsDir,				MSG_KPID_ISDIR,					nullptr },
+	{ kpidSize,					MSG_KPID_SIZE,					format_size_prop },
+	{ kpidPackSize,				MSG_KPID_PACKSIZE,				format_size_prop },
+	{ kpidAttrib,				MSG_KPID_ATTRIB,				format_attrib_prop },
+	{ kpidCTime,				MSG_KPID_CTIME,					format_filetime_prop },
+	{ kpidATime,				MSG_KPID_ATIME,					format_filetime_prop },
+	{ kpidMTime,				MSG_KPID_MTIME,					format_filetime_prop },
+	{ kpidSolid,				MSG_KPID_SOLID,					nullptr },
+	{ kpidCommented,			MSG_KPID_COMMENTED,				nullptr },
+	{ kpidEncrypted,			MSG_KPID_ENCRYPTED,				nullptr },
+	{ kpidSplitBefore,			MSG_KPID_SPLITBEFORE,			nullptr },
+	{ kpidSplitAfter,			MSG_KPID_SPLITAFTER,			nullptr },
+	{ kpidDictionarySize,		MSG_KPID_DICTIONARYSIZE,		format_size_prop },
+	{ kpidCRC,					MSG_KPID_CRC,					format_crc_prop },
+	{ kpidType,					MSG_KPID_TYPE,					nullptr },
+	{ kpidIsAnti,				MSG_KPID_ISANTI,				nullptr },
+	{ kpidMethod,				MSG_KPID_METHOD,				nullptr },
+	{ kpidHostOS,				MSG_KPID_HOSTOS,				nullptr },
+	{ kpidFileSystem,			MSG_KPID_FILESYSTEM,			nullptr },
+	{ kpidUser,					MSG_KPID_USER,					nullptr },
+	{ kpidGroup,				MSG_KPID_GROUP,					nullptr },
+	{ kpidBlock,				MSG_KPID_BLOCK,					nullptr },
+	{ kpidComment,				MSG_KPID_COMMENT,				nullptr },
+	{ kpidPosition,				MSG_KPID_POSITION,				nullptr },
+	{ kpidPrefix,				MSG_KPID_PREFIX,				nullptr },
+	{ kpidNumSubDirs,			MSG_KPID_NUMSUBDIRS,			nullptr },
+	{ kpidNumSubFiles,			MSG_KPID_NUMSUBFILES,			nullptr },
+	{ kpidUnpackVer,			MSG_KPID_UNPACKVER,				nullptr },
+	{ kpidVolume,				MSG_KPID_VOLUME,				nullptr },
+	{ kpidIsVolume,				MSG_KPID_ISVOLUME,				nullptr },
+	{ kpidOffset,				MSG_KPID_OFFSET,				nullptr },
+	{ kpidLinks,				MSG_KPID_LINKS,					nullptr },
+	{ kpidNumBlocks,			MSG_KPID_NUMBLOCKS,				nullptr },
+	{ kpidNumVolumes,			MSG_KPID_NUMVOLUMES,			nullptr },
+	{ kpidTimeType,				MSG_KPID_TIMETYPE,				nullptr },
+	{ kpidBit64,				MSG_KPID_BIT64,					nullptr },
+	{ kpidBigEndian,			MSG_KPID_BIGENDIAN,				nullptr },
+	{ kpidCpu,					MSG_KPID_CPU,					nullptr },
+	{ kpidPhySize,				MSG_KPID_PHYSIZE,				format_size_prop },
+	{ kpidHeadersSize,			MSG_KPID_HEADERSSIZE,			format_size_prop },
+	{ kpidChecksum,				MSG_KPID_CHECKSUM,				nullptr },
+	{ kpidCharacts,				MSG_KPID_CHARACTS,				nullptr },
+	{ kpidVa,					MSG_KPID_VA,					nullptr },
+	{ kpidId,					MSG_KPID_ID,					nullptr },
+	{ kpidShortName,			MSG_KPID_SHORTNAME,				nullptr },
+	{ kpidCreatorApp,			MSG_KPID_CREATORAPP,			nullptr },
+	{ kpidSectorSize,			MSG_KPID_SECTORSIZE,			format_size_prop },
+	{ kpidPosixAttrib,			MSG_KPID_POSIXATTRIB,			format_posix_attrib_prop },
+	{ kpidSymLink,				MSG_KPID_LINK,					nullptr },
+	{ kpidError,				MSG_KPID_ERROR,					nullptr },
+	{ kpidTotalSize,			MSG_KPID_TOTALSIZE,				format_size_prop },
+	{ kpidFreeSpace,			MSG_KPID_FREESPACE,				format_size_prop },
+	{ kpidClusterSize,			MSG_KPID_CLUSTERSIZE,			format_size_prop },
+	{ kpidVolumeName,			MSG_KPID_VOLUMENAME,			nullptr },
+	{ kpidLocalName,			MSG_KPID_LOCALNAME,				nullptr },
+	{ kpidProvider,				MSG_KPID_PROVIDER,				nullptr },
+	{ kpidNtSecure,				MSG_KPID_NTSECURE,				nullptr },
+	{ kpidIsAltStream,			MSG_KPID_ISALTSTREAM,			nullptr },
+	{ kpidIsAux,				MSG_KPID_ISAUX,					nullptr },
+	{ kpidIsDeleted,			MSG_KPID_ISDELETED,				nullptr },
+	{ kpidIsTree,				MSG_KPID_ISTREE,				nullptr },
+	{ kpidSha1,					MSG_KPID_SHA1,					nullptr },
+	{ kpidSha256,				MSG_KPID_SHA256,				nullptr },
+	{ kpidErrorType,			MSG_KPID_ERRORTYPE,				nullptr },
+	{ kpidNumErrors,			MSG_KPID_NUMERRORS,				nullptr },
+	{ kpidErrorFlags,			MSG_KPID_ERRORFLAGS,			nullptr },
+	{ kpidWarningFlags,			MSG_KPID_WARNINGFLAGS,			nullptr },
+	{ kpidWarning,				MSG_KPID_WARNING,				nullptr },
+	{ kpidNumStreams,			MSG_KPID_NUMSTREAMS,			nullptr },
+	{ kpidNumAltStreams,		MSG_KPID_NUMALTSTREAMS,			nullptr },
+	{ kpidAltStreamsSize,		MSG_KPID_ALTSTREAMSSIZE,		format_size_prop },
+	{ kpidVirtualSize,			MSG_KPID_VIRTUALSIZE,			format_size_prop },
+	{ kpidUnpackSize,			MSG_KPID_UNPACKSIZE,			format_size_prop },
+	{ kpidTotalPhySize,			MSG_KPID_TOTALPHYSIZE,			format_size_prop },
+	{ kpidVolumeIndex,			MSG_KPID_VOLUMEINDEX,			nullptr },
+	{ kpidSubType,				MSG_KPID_SUBTYPE,				nullptr },
+	{ kpidShortComment,			MSG_KPID_SHORTCOMMENT,			nullptr },
+	{ kpidCodePage,				MSG_KPID_CODEPAGE,				nullptr },
+	{ kpidIsNotArcType,			MSG_KPID_ISNOTARCTYPE,			nullptr },
+	{ kpidPhySizeCantBeDetected,MSG_KPID_PHYSIZECANTBEDETECTED,	nullptr },
+	{ kpidZerosTailIsAllowed,	MSG_KPID_ZEROSTAILISALLOWED,	nullptr },
+	{ kpidTailSize,				MSG_KPID_TAILSIZE,				format_size_prop },
+	{ kpidEmbeddedStubSize,		MSG_KPID_EMBEDDEDSTUBSIZE,		format_size_prop },
+	{ kpidNtReparse,			MSG_KPID_NTREPARSE,				nullptr },
+	{ kpidHardLink,				MSG_KPID_HARDLINK,				nullptr },
+	{ kpidINode,				MSG_KPID_INODE,					nullptr },
+	{ kpidStreamId,				MSG_KPID_STREAMID,				nullptr },
+	{ kpidReadOnly,				MSG_KPID_READONLY,				nullptr },
+	{ kpidOutName,				MSG_KPID_OUTNAME,				nullptr },
+	{ kpidCopyLink,				MSG_KPID_COPYLINK,				nullptr },
+	{ kpidArcFileName,			MSG_KPID_ARCFILENAME,			nullptr },
+	{ kpidIsHash,				MSG_KPID_ISHASH,				nullptr },
+	{ kpidChangeTime,			MSG_KPID_METADATA_CHANGED,		nullptr },
+	{ kpidUserId,				MSG_KPID_USER_ID,				nullptr },
+	{ kpidGroupId,				MSG_KPID_GROUP_ID,				nullptr },
+	{ kpidDeviceMajor,			MSG_KPID_DEVICE_MAJOR,			nullptr },
+	{ kpidDeviceMinor,			MSG_KPID_DEVICE_MINOR,			nullptr },
+	//  { kpidDevMajor, MSG_KPID_DEV_MAJOR, nullptr },
+	{kpidDeviceMajor,			MSG_KPID_DEV_MAJOR,				nullptr },
+	//  { kpidDevMinor, MSG_KPID_DEV_MINOR, nullptr }
+	{kpidDeviceMinor,			MSG_KPID_DEV_MINOR,				nullptr }
 };
 
 static const PropInfo *find_prop_info(PROPID prop_id)
@@ -408,6 +363,53 @@ AttrList Archive<UseVirtualDestructor>::get_attr_list(UInt32 item_index)
 		if (!attr.value.empty())
 			attr_list.push_back(attr);
 	}
+
+//	ComObject<ISequentialInStream<UseVirtualDestructor>> mem_stream;
+
+  ComObject<IArchiveGetRawProps<UseVirtualDestructor>> raw_props;
+  if (FAILED(in_arc->QueryInterface(IID_IArchiveGetRawProps, reinterpret_cast<void**>(&raw_props))) || !raw_props)
+    return attr_list;
+
+  UInt32 num_raw_props;
+  CHECK_COM(raw_props->GetNumRawProps(&num_raw_props));
+
+/**
+  for (unsigned i = 0; i != num_raw_props; ++i)
+  {
+    Attr attr;
+    BStr name;
+    PROPID prop_id;
+    CHECK_COM(raw_props->GetRawPropInfo(i, name.ref(), &prop_id));
+
+    const void *data;
+    UInt32 data_size;
+    UInt32 prop_type;
+    CHECK_COM(raw_props->GetRawProp(item_index, prop_id, &data, &data_size, &prop_type));
+    if (prop_type != NPropDataType::kRaw)
+      continue;
+
+    switch (const auto prop_info = find_and_handle_prop_info(prop_id, name, attr); prop_info->prop_id)
+    {
+    case kpidNtSecure:
+      attr.value = decode_nt_security_decriptor(data);
+      attr.ignore_value_length = true; // SDDL string can be very long, no point in stretching the dialog to accommodate it
+      break;
+
+    case kpidNtReparse:
+      attr.value = decode_nt_reparse_buffer(data);
+      break;
+
+    default:
+      attr.value.append(std::to_wstring(data_size).append(L" "s).append(Far::get_msg(MSG_SUFFIX_SIZE_B)));
+      break;
+    }
+
+    attr_list.push_back(attr);
+  }
+
+  return attr_list;
+**/
+
 
 	return attr_list;
 }

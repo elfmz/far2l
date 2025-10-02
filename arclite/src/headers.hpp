@@ -102,6 +102,20 @@ WARNING_DISABLE_CLANG("-Weverything")
 	#define	FN_INLINE __attribute__((always_inline)) inline
 #endif
 
+#ifndef IS_BIG_ENDIAN
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	#define IS_BIG_ENDIAN 1
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+	#define IS_BIG_ENDIAN 1
+#elif defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || \
+		defined(__AARCH64EB__) || defined(_MIPSEB) || defined(__MIPSEB) || \
+		defined(__MIPSEB__)
+	#define IS_BIG_ENDIAN 1
+#else
+	#define IS_BIG_ENDIAN 0
+#endif
+#endif
+
 WARNING_POP()
 
 extern GUID IID_IUnknown;

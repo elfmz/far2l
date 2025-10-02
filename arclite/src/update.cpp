@@ -1063,54 +1063,72 @@ public:
 				}
 				prop = file_index_info.find_data.size();
 				break;
-			case kpidCTime:
+			case kpidCTime: {
+				const FILETIME *ptime = &file_index_info.find_data.ftCreationTime;
 				if (options.use_export_settings && options.export_options.export_creation_time != triUndef) {
 					if (options.export_options.export_creation_time) {
 						if (options.export_options.custom_creation_time) {
 							if (options.export_options.current_creation_time)
-								prop = crft;
+								ptime = &crft;
 							else
-								prop = options.export_options.ftCreationTime;
+								ptime = &options.export_options.ftCreationTime;
 						}
 						else
-							prop = file_index_info.find_data.ftCreationTime;
+							ptime = &file_index_info.find_data.ftCreationTime;
 					}
 				}
-				else
-					prop = file_index_info.find_data.ftCreationTime;
-				break;
-			case kpidATime:
+#if IS_BIG_ENDIAN
+				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
+#else
+				prop = *ptime;
+#endif
+			}
+			break;
+			case kpidATime: {
+				const FILETIME *ptime = &file_index_info.find_data.ftLastAccessTime;
 				if (options.use_export_settings && options.export_options.export_last_access_time != triUndef) {
 					if (options.export_options.export_last_access_time) {
 						if (options.export_options.custom_last_access_time) {
 							if (options.export_options.current_last_access_time)
-								prop = crft;
+								ptime = &crft;
 							else
-								prop = options.export_options.ftLastAccessTime;
+								ptime = &options.export_options.ftLastAccessTime;
 						}
 						else
-							prop = file_index_info.find_data.ftLastAccessTime;
+							ptime = &file_index_info.find_data.ftLastAccessTime;
 					}
 				}
-				else
-					prop = file_index_info.find_data.ftLastAccessTime;
-				break;
-			case kpidMTime:
+#if IS_BIG_ENDIAN
+				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
+#else
+				prop = *ptime;
+#endif
+			}
+			break;
+			case kpidMTime: {
+				const FILETIME *ptime = &file_index_info.find_data.ftLastWriteTime;
 				if (options.use_export_settings && options.export_options.export_last_write_time != triUndef) {
 					if (options.export_options.export_last_write_time) {
 						if (options.export_options.custom_last_write_time) {
 							if (options.export_options.current_last_write_time)
-								prop = crft;
+								ptime = &crft;
 							else
-								prop = options.export_options.ftLastWriteTime;
+								ptime = &options.export_options.ftLastWriteTime;
 						}
 						else
-							prop = file_index_info.find_data.ftLastWriteTime;
+							ptime = &file_index_info.find_data.ftLastWriteTime;
 					}
 				}
-				else
-					prop = file_index_info.find_data.ftLastWriteTime;
-				break;
+#if IS_BIG_ENDIAN
+				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
+#else
+				prop = *ptime;
+#endif
+			}
+			break;
+			case kpidChangeTime: {
+			}
+			break;
 			case kpidAttrib: {
 				uint32_t attributes = 0;
 				uint32_t unixmode = 0;

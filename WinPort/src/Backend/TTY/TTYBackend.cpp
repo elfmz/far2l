@@ -377,16 +377,15 @@ void TTYBackend::WriterThread()
 			AsyncEvent ae{};
 			do {
 				std::unique_lock<std::mutex> lock(_async_mutex);
-				if (!_ae.HasAny()) {
-					_async_cond.wait(lock);
-				}
 				if (_ae.HasAny()) {
 					std::swap(ae, _ae);
-					if (ae.palette) {
-						_async_cond.notify_all();
-					}
 					break;
 				}
+				if (_ae_idle_wait_confirm != _ae_idle_wait_request) {
+					_ae_idle_wait_confirm = _ae_idle_wait_request;
+					_ae_idle_wait_cond.notify_all();
+				}
+				_async_cond.wait(lock);
 			} while (!_exiting && !_deadio);
 
 			if (ae.palette) {
@@ -429,7 +428,12 @@ void TTYBackend::WriterThread()
 	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
-	_deadio = true;
+
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_deadio = true;
+		_ae_idle_wait_cond.notify_all();
+	}
 
 	if (gone_background) {
 		OnSigHup(SIGHUP);
@@ -778,10 +782,7 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 		if (override_default_palette != ((tweaks & CONSOLE_TTY_PALETTE_OVERRIDE) != 0)) {
 			std::unique_lock<std::mutex> lock(_async_mutex);
 			_ae.palette = true;
-			_async_cond.notify_all();
-			while (_ae.palette) {
-				_async_cond.wait(lock);
-			}
+			WaitForOutputIdleOrDead(lock);
 		}
 	}
 
@@ -840,10 +841,7 @@ void TTYBackend::OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *Colo
 	if (palette_changed) {
 		std::unique_lock<std::mutex> lock(_async_mutex);
 		_ae.palette = true;
-		_async_cond.notify_all();
-		while (_ae.palette) {
-			_async_cond.wait(lock);
-		}
+		WaitForOutputIdleOrDead(lock);
 	}
 }
 
@@ -865,11 +863,7 @@ bool TTYBackend::OnConsoleSetBasePalette(void *pbuff)
 
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_ae.palette = true;
-	_async_cond.notify_all();
-	while (_ae.palette) {
-		_async_cond.wait(lock);
-	}
-
+	WaitForOutputIdleOrDead(lock);
 	return true;
 }
 
@@ -884,6 +878,25 @@ void TTYBackend::OnConsoleSaveWindowState()
 void TTYBackend::OnConsoleSetCursorBlinkTime(DWORD interval)
 {
 
+}
+
+void TTYBackend::WaitForOutputIdleOrDead(std::unique_lock<std::mutex> &lock)
+{
+	if (!_deadio) {
+		do {
+			++_ae_idle_wait_request;
+		} while (_ae_idle_wait_request == _ae_idle_wait_confirm);
+		do {
+			_async_cond.notify_all();
+			_ae_idle_wait_cond.wait(lock);
+		} while (!_deadio && _ae_idle_wait_request != _ae_idle_wait_confirm);
+	}
+}
+
+void TTYBackend::OnConsoleOutputFlushDrawing()
+{
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	WaitForOutputIdleOrDead(lock);
 }
 
 void TTYBackend::OnConsoleSetMaximized(bool maximized)

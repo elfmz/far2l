@@ -861,8 +861,7 @@ void WinPortPanel::OnIdle( wxIdleEvent& event )
 	}
 
 	// first finalize any still pending repaints
-	wxCommandEvent cmd_evnt;
-	OnRefreshSync(cmd_evnt);
+	RefreshInner(false);
 }
 
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
@@ -1041,12 +1040,12 @@ void WinPortPanel::OnSetMaximizedSync( wxCommandEvent& event )
 	_frame->Maximize(e->cookie);
 }
 
-void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
+void WinPortPanel::RefreshInner( bool force_update )
 {
 	std::vector<SMALL_RECT> refresh_rects;
 	{
 		std::lock_guard<std::mutex> lock(_refresh_rects);
-		if (_refresh_rects.empty())
+		if (_refresh_rects.empty() && !force_update)
 			return;
 
 		refresh_rects.swap(_refresh_rects);	
@@ -1071,6 +1070,14 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 			Update();
 		}
 	}
+	if (force_update) {
+		Update();
+	}
+}
+
+void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
+{
+	RefreshInner( false );
 }
 
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
@@ -1112,8 +1119,7 @@ void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 	}
 
 	// first finalize any still pending repaints
-	OnRefreshSync( event );
-	Update();
+	RefreshInner(true);
 
 	const std::wstring &title = g_winport_con_out->GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
@@ -2072,6 +2078,12 @@ void WinPortPanel::OnConsoleSetCursorBlinkTimeSync( wxCommandEvent& event )
 
 	_periodic_timer->Stop();
 	_periodic_timer->Start(g_TIMER_PERIOD);
+}
+
+void WinPortPanel::OnConsoleOutputFlushDrawing()
+{
+	auto fn = std::bind(&WinPortPanel::RefreshInner, this, true);
+	CallInMainNoRet(fn);
 }
 
 void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)

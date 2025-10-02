@@ -27,7 +27,6 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::mutex _palette_mtx;
 	TTYBasePalette _palette;
 	bool _override_default_palette = false;
-	std::condition_variable _palette_changed_cond;
 
 	enum {
 		FKS_UNKNOWN,
@@ -99,6 +98,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		}
 	} _ae{};
 
+	unsigned int _ae_idle_wait_request{0}, _ae_idle_wait_confirm{0};
+	std::condition_variable _ae_idle_wait_cond;
+
 	std::string _osc52clip;
 
 	ClipboardBackendSetter _clipboard_backend_setter;
@@ -110,6 +112,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchFar2lInteract(TTYOutput &tty_out);
 	void DispatchOSC52ClipSet(TTYOutput &tty_out);
 	void DispatchPalette(TTYOutput &tty_out);
+	void WaitForOutputIdleOrDead(std::unique_lock<std::mutex> &lock);
 
 	void DetachNotifyPipe();
 
@@ -141,6 +144,7 @@ protected:
 	virtual bool OnConsoleSetBasePalette(void *pbuff);
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
+	virtual void OnConsoleOutputFlushDrawing();
 	const char *OnConsoleBackendInfo(int entity);
 
 	// ITTYInputSpecialSequenceHandler

@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "dirmix.hpp"
 #include "interf.hpp"
+#include "scrbuf.hpp"
 
 FilePanels::FilePanels()
 	:
@@ -1096,8 +1097,8 @@ void FilePanels::DisplayObject()
 			LeftPanel->Show();
 		}
 	}
-
 #endif
+	ScrBuf.Flush();
 }
 
 int FilePanels::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)

@@ -163,6 +163,25 @@ void ScreenBuf::FillBuf()
 	CurY = CursorPosition.Y;
 }
 
+void ScreenBuf::FillBufWithRecompose(HANDLE Console)
+{
+	COORD BufferSize = {BufX, BufY};
+	SMALL_RECT ReadRegion = {0, 0, (SHORT)(BufX - 1), (SHORT)(BufY - 1)};
+	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	if (WINPORT(GetConsoleScreenBufferInfo)(Console, &csbi) && (csbi.dwSize.X != BufX || csbi.dwSize.Y != BufY)) {
+		// in case size different - fork&resize original console to enable lines recompisition to its job
+		HANDLE TmpConsole = WINPORT(ForkConsole)(Console);
+		if (TmpConsole) {
+			if (WINPORT(SetConsoleScreenBufferSize)(TmpConsole, BufferSize)) {
+				WINPORT(ReadConsoleOutput)(TmpConsole, Buf, BufferSize, COORD{0,0}, &ReadRegion);
+				WINPORT(DiscardConsole)(TmpConsole);
+				return;
+			}
+		}
+	}
+	WINPORT(ReadConsoleOutput)(Console, Buf, BufferSize, COORD{0,0}, &ReadRegion);
+}
+
 /*
 	Записать Text в виртуальный буфер
 */

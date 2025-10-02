@@ -120,6 +120,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void CheckForResizePending();
 	void CheckPutText2CLip();
 	void SetInitialSize();
+	void RefreshInner( bool force_update );
 	void OnInitialized( wxCommandEvent& event );
 	void CheckForUnfreeze(bool force);
 	void OnTimerPeriodic(wxTimerEvent& event);	
@@ -170,6 +171,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual bool OnConsoleSetBasePalette(void *pbuff);
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
+	virtual void OnConsoleOutputFlushDrawing();
 	virtual const char *OnConsoleBackendInfo(int entity);
 
 public:

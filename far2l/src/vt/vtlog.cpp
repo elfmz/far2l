@@ -147,7 +147,9 @@ namespace VTLog
 		void Add(HANDLE con_hnd, const CHAR_INFO *Chars, unsigned int Width, bool EOL)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
-			if (!_memories.empty() && _memories.back().first == con_hnd && _memories.back().second[0] == 0) {
+			// attach to tail of last non-empty non-EOLed string if there is such one
+			if (!_memories.empty() && _memories.back().first == con_hnd
+					&& !_memories.back().second.empty() && _memories.back().second[0] == 0) {
 				_encoded_line.assign((char *)&_memories.back().second[1], _memories.back().second.size() - 1);
 				_memories_size-= sizeof(Memories::value_type) + _memories.back().second.size();
 				_memories.pop_back();
@@ -158,11 +160,14 @@ namespace VTLog
 				EncodeLine(_encoded_line, Width, Chars, true);
 			}
 
-			_compressed_line.resize(_encoded_line.size() + 1);
-			_compressed_line[0] = EOL ? FLAG_HAS_EOL : 0;
-			if (!_encoded_line.empty()) {
+			if (_encoded_line.empty() && EOL) {
+				_compressed_line.clear(); // optimization for storing empty lines
+			} else {
+				_compressed_line.resize(_encoded_line.size() + 1);
+				_compressed_line[0] = EOL ? FLAG_HAS_EOL : 0;
 				if (EOL) {
-					size_t sz = shoco_compress(_encoded_line.c_str(), _encoded_line.size(), &_compressed_line[1], _compressed_line.size() - 1);
+					const size_t sz = shoco_compress(_encoded_line.c_str(),
+						_encoded_line.size(), &_compressed_line[1], _compressed_line.size() - 1);
 					if (sz < _compressed_line.size() - 1) {
 						_compressed_line[0] |= FLAG_IS_COMPRESSED;
 						_compressed_line.resize(sz + 1);
@@ -217,7 +222,8 @@ namespace VTLog
 						}
 					}
 
-					if ((m.second[0] & FLAG_HAS_EOL) != 0) {
+					// empty means empty line terminated with EOL
+					if (m.second.empty() || (m.second[0] & FLAG_HAS_EOL) != 0) {
 						s+= NATIVE_EOL;
 					}
 
@@ -354,8 +360,17 @@ namespace VTLog
 				AppendConsoleScreenLines(CtrlObject->CmdLine->GetBackgroundConsole(), s, ds, colored);
 			}
 			if (!s.empty()) {
+				for (;;) { // remove excessive empty lines at the end
+					if (StrEndsBy(s, "\n\n")) {
+						s.pop_back();
+					} else if (StrEndsBy(s, "\n\x1b[m\n")) {
+						s.resize(s.size() - 4);
+					} else {
+						break;
+					}
+				}
 				if (write(fd, s.c_str(), s.size()) != (int)s.size()) {
-					perror("VTLog: write");				
+					perror("VTLog: write");
 				}
 			}
 		}

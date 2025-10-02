@@ -1627,8 +1627,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : Focus? COL_WARNDIALOGEDITSELECTED : COL_WARNDIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGTEXT);
-					// HiText
-					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON);
+					// Overflow arrow
+					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGOVERFLOWARROW);
 				}
 				else
 				{
@@ -1640,8 +1640,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED :  Focus? COL_DIALOGEDITSELECTED : COL_DIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGTEXT);
-					// HiText
-					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGHIGHLIGHTDEFAULTBUTTON);
+					// Overflow arrow
+					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGOVERFLOWARROW);
 				}
 			}
 			else
@@ -1656,8 +1656,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : COL_WARNDIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGTEXT);
-					// HiText
-					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON);
+					// Overflow arrow
+					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGOVERFLOWARROW);
 				}
 				else
 				{
@@ -1669,8 +1669,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 					Color[2] = FarColorToReal(DisabledItem ? COL_DIALOGEDITDISABLED : COL_DIALOGEDITUNCHANGED);
 					// History
 					Color[3] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGTEXT);
-					// HiText
-					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGHIGHLIGHTDEFAULTBUTTON);
+					// Overflow arrow
+					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGOVERFLOWARROW);
 				}
 			}
 			break;

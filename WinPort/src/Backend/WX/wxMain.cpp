@@ -861,8 +861,7 @@ void WinPortPanel::OnIdle( wxIdleEvent& event )
 	}
 
 	// first finalize any still pending repaints
-	wxCommandEvent cmd_evnt;
-	OnRefreshSync(cmd_evnt);
+	RefreshInner(false);
 }
 
 void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
@@ -1041,12 +1040,12 @@ void WinPortPanel::OnSetMaximizedSync( wxCommandEvent& event )
 	_frame->Maximize(e->cookie);
 }
 
-void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
+void WinPortPanel::RefreshInner( bool force_update )
 {
 	std::vector<SMALL_RECT> refresh_rects;
 	{
 		std::lock_guard<std::mutex> lock(_refresh_rects);
-		if (_refresh_rects.empty())
+		if (_refresh_rects.empty() && !force_update)
 			return;
 
 		refresh_rects.swap(_refresh_rects);	
@@ -1071,6 +1070,14 @@ void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
 			Update();
 		}
 	}
+	if (force_update) {
+		Update();
+	}
+}
+
+void WinPortPanel::OnRefreshSync( wxCommandEvent& event )
+{
+	RefreshInner( false );
 }
 
 void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
@@ -1112,8 +1119,7 @@ void WinPortPanel::OnTitleChangedSync( wxCommandEvent& event )
 	}
 
 	// first finalize any still pending repaints
-	OnRefreshSync( event );
-	Update();
+	RefreshInner(true);
 
 	const std::wstring &title = g_winport_con_out->GetTitle();
 	wxGetApp().SetAppDisplayName(title.c_str());
@@ -1616,10 +1622,34 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
-		// we can not determine correct VirtualKeyCode value here because of
-		// https://github.com/wxWidgets/wxWidgets/issues/25379
-		WORD temp_key_code = wxKeyCode2WinKeyCode(_key_tracker.LastKeydown().GetKeyCode());
-		ir.Event.KeyEvent.wVirtualKeyCode = temp_key_code ? temp_key_code : VK_NONAME;
+
+		// Heuristic to detect events from an Input Method Editor (like IBus).
+		// Such events often come with a KeyCode of 0, as they don't map to a single
+		// physical key press. They might also arrive out of sync with KeyDown events.
+		// Previous code tried to associate every OnChar with the last KeyDown,
+		// which breaks with IBus's asynchronous event stream.
+		//
+		// If we detect a likely IME event, we revert to the old, safer behavior
+		// of using VK_NONAME. This treats the event as pure character input,
+		// which is what it is.
+		// We also check the timestamp. If the OnChar timestamp doesn't match the
+		// last KeyDown timestamp, it's another strong signal that they are unrelated.
+		//
+		// See also: https://github.com/wxWidgets/wxWidgets/issues/25379
+
+		const wxKeyEvent& last_keydown = _key_tracker.LastKeydown();
+		if (event.GetKeyCode() == 0 || event.GetTimestamp() != last_keydown.GetTimestamp())
+		{
+			// Likely an IME-generated event or a desynchronized event. Use the safe fallback.
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_NONAME;
+		}
+		else
+		{
+			// The event seems to be a direct result of a key press.
+			// Use the new logic to get a more precise virtual key code.
+			ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(last_keydown.GetKeyCode());
+		}
+		
 		if (event.GetUnicodeKey() <= 0x7f) { 
 			if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
 				wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
@@ -2048,6 +2078,12 @@ void WinPortPanel::OnConsoleSetCursorBlinkTimeSync( wxCommandEvent& event )
 
 	_periodic_timer->Stop();
 	_periodic_timer->Start(g_TIMER_PERIOD);
+}
+
+void WinPortPanel::OnConsoleOutputFlushDrawing()
+{
+	auto fn = std::bind(&WinPortPanel::RefreshInner, this, true);
+	CallInMainNoRet(fn);
 }
 
 void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)

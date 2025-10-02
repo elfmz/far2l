@@ -817,9 +817,18 @@ void ConsoleOutput::OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 
 void ConsoleOutput::RepaintsDeferStart()
 {
-	std::lock_guard<std::mutex> lock(_mutex);
-	++_repaint_defer;
-	ASSERT(_repaint_defer > 0);
+	unsigned short repaint_defer;
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		repaint_defer = ++_repaint_defer;
+	}
+	if (repaint_defer == 1) {
+		if (_backend) {
+			_backend->OnConsoleOutputFlushDrawing();
+		}
+	} else {
+		ASSERT(repaint_defer > 0);
+	}
 }
 
 void ConsoleOutput::RepaintsDeferFinish(bool force)

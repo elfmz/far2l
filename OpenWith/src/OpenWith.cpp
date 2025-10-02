@@ -30,7 +30,7 @@ private:
 										const std::vector<Field>& application_info,
 										const Field& launch_command)
 	{
-		constexpr int DIALOG_WIDTH = 70;
+		constexpr int DIALOG_WIDTH = 80;
 		int dialog_height = file_info.size() + application_info.size() + 9;
 
 		// Helper lambda to find the maximum label length in a vector of Fields for alignment.

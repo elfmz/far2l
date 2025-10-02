@@ -49,9 +49,21 @@ public:
 
 private:
 
+	// Constants for the tiered ranking system.
+	struct Ranking
+	{
+		// A multiplier for MIME type specificity. Must be greater than the max source rank.
+		static constexpr int SPECIFICITY_MULTIPLIER = 100;
+
+		// Ranks for association sources, from highest to lowest.
+		static constexpr int SOURCE_RANK_GLOBAL_DEFAULT = 5;
+		static constexpr int SOURCE_RANK_MIMEAPPS_DEFAULT = 4;
+		static constexpr int SOURCE_RANK_MIMEAPPS_ADDED = 3;
+		static constexpr int SOURCE_RANK_CACHE_OR_SCAN = 2;
+	};
+
 	// A single-source-of-truth definition for a platform-specific setting.
 	struct PlatformSettingDefinition {
-
 		std::string key;
 		LanguageID  display_name_id;
 		bool XDGBasedAppProvider::* member_variable;
@@ -60,22 +72,35 @@ private:
 
 	// Holds a non-owning pointer to a cached DesktopEntry and its calculated rank.
 	// The operator< is overloaded to sort candidates in descending order of rank.
-	struct RankedCandidate {
+	struct RankedCandidate
+	{
 		const DesktopEntry* entry = nullptr;
 		int rank = 0;
+		std::string source_info;
 
 		bool operator<(const RankedCandidate& other) const {
-			return rank > other.rank;
+			if (rank != other.rank) {
+				// Primary sort: descending by rank.
+				return rank > other.rank;
+			}
+			// Secondary sort: ascending by name for stability when ranks are equal.
+			return entry && other.entry && entry->name < other.entry->name;
 		}
 	};
 
 	// Represents the combined associations from all parsed mimeapps.list files.
 	struct MimeAssociation
 	{
+		struct AssociationSource
+		{
+			std::string desktop_file;
+			std::string source_path;
+		};
+
 		// MIME type -> default application (.desktop file
-		std::unordered_map<std::string, std::string> defaults;
+		std::unordered_map<std::string, AssociationSource> defaults;
 		// MIME type -> list of additionally associated applications
-		std::unordered_map<std::string, std::vector<std::string>> added;
+		std::unordered_map<std::string, std::vector<AssociationSource>> added;
 		// MIME type -> set of applications that should not be associated
 		std::unordered_map<std::string, std::unordered_set<std::string>> removed;
 	};
@@ -122,24 +147,27 @@ private:
 	};
 
 	// Searching and ranking candidates logic
-	void FindCandidatesFromMimeLists(CandidateSearchContext& context, const std::string& global_default_app);
-	void FindCandidatesFromCache(CandidateSearchContext& context, const std::unordered_map<std::string, std::vector<std::string>>& mime_cache);
+	void FindCandidatesFromMimeLists(CandidateSearchContext& context);
+	void FindCandidatesFromCache(CandidateSearchContext& context, const std::unordered_map<std::string, std::vector<MimeAssociation::AssociationSource>>& mime_cache);
 	void FindCandidatesByFullScan(CandidateSearchContext& context);
-	void ValidateAndRegisterCandidate(CandidateSearchContext& context, const std::string& app_desktop_file, int rank);
-	void AddOrUpdateCandidate(CandidateSearchContext& context, const DesktopEntry& entry, int rank);
+	void ValidateAndRegisterCandidate(CandidateSearchContext& context, const std::string& app_desktop_file, int rank, const std::string& source_info);
+	void AddOrUpdateCandidate(CandidateSearchContext& context, const DesktopEntry& entry, int rank, const std::string& source_info);
+	static bool IsAssociationRemoved(const MimeAssociation& associations, const std::string& mime_type, const std::string& app_desktop_file);
 
 	// MIME types detection
 	std::vector<std::string> CollectAndPrioritizeMimeTypes(const std::string& pathname);
 	std::string MimeTypeFromXdgMimeTool(const std::string& escaped_pathname);
 	std::string MimeTypeFromFileTool(const std::string& escaped_pathname);
 	std::string MimeTypeByExtension(const std::string& escaped_pathname);
+	static std::vector<std::string> GetMimeDatabaseSearchPaths();
+	static std::unordered_map<std::string, std::string> LoadMimeAliases();
 
 	// Parsing XDG files and data
 	static const std::optional<DesktopEntry>& GetCachedDesktopEntry(const std::string& desktop_file, const std::vector<std::string>& search_paths, std::map<std::string, std::optional<DesktopEntry>>& cache);
 	static std::optional<DesktopEntry> ParseDesktopFile(const std::string& path);
 	static void ParseMimeappsList(const std::string& path, MimeAssociation& associations);
 	static MimeAssociation ParseMimeappsLists(const std::vector<std::string>& paths);
-	static void ParseMimeinfoCache(const std::string& path, std::unordered_map<std::string, std::vector<std::string>>& mime_cache);
+	void ParseMimeinfoCache(const std::string& path, std::unordered_map<std::string, std::vector<MimeAssociation::AssociationSource>>& mime_cache);
 	static std::string GetLocalizedValue(const std::unordered_map<std::string, std::string>& values, const std::string& base_key);
 
 	// Command line constructing
@@ -165,9 +193,20 @@ private:
 	static std::string RunCommandAndCaptureOutput(const std::string& cmd);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 
-	// This cache owns all DesktopEntry objects for the duration of a GetAppCandidates call.
+
+	// WARNING: This cache is a std::map on purpose.
+	// It owns all DesktopEntry objects for the duration of a GetAppCandidates call.
 	// RankedCandidate pointers will point to the entries stored here.
+	// This is safe ONLY because std::map guarantees pointer/reference stability on insertion,
+	// meaning that pointers to existing elements are not invalidated when new elements are added.
+	// DO NOT change this to std::unordered_map.
+	// An unordered_map may rehash on insertion, which would invalidate all existing pointers
+	// stored in RankedCandidate instances, leading to dangling pointers and undefined behavior.
 	std::map<std::string, std::optional<DesktopEntry>> _desktop_entry_cache;
+
+	// This cache maps a candidate's ID to its source info string from the last GetAppCandidates call.
+	// It's used by GetCandidateDetails to display where the association came from (e.g., mimeapps.list).
+	std::map<std::wstring, std::string> _last_candidates_source_info;
 
 	// Platform-specific settings.
 	bool _filter_by_show_in;
@@ -176,6 +215,7 @@ private:
 	bool _use_extension_based_fallback;
 	bool _use_xdg_mime_tool;
 	bool _use_file_tool;
+	bool _load_mimetype_aliases;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

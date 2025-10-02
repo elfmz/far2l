@@ -44,6 +44,7 @@ public:
 	virtual bool OnConsoleSetBasePalette(void *pbuff) = 0;
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
+	virtual void OnConsoleOutputFlushDrawing() = 0;
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
 };
 

@@ -59,7 +59,7 @@ static VMenu *MenuToRedraw1 = nullptr, *MenuToRedraw2 = nullptr, *MenuToRedraw3 
 
 // 0,1 - dialog,warn List
 // 2,3 - dialog,warn Combobox
-static int ListPaletteItems[4][13] = {
+static int ListPaletteItems[4][15] = {
 	// Listbox
 	{
 		// normal
@@ -71,6 +71,8 @@ static int ListPaletteItems[4][13] = {
 		COL_DIALOGLISTARROWSDISABLED,		// Arrow disabled
 		COL_DIALOGLISTGRAY,					// "серый"
 		COL_DIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
+		COL_DIALOGLISTPREFIX,               // префикс пункта меню
+		COL_DIALOGLISTSELPREFIX,            // выбранный префикс пункта меню
 	},
 	{
 		// warn
@@ -82,6 +84,8 @@ static int ListPaletteItems[4][13] = {
 		COL_WARNDIALOGLISTARROWSDISABLED,		// Arrow disabled
 		COL_WARNDIALOGLISTGRAY,					// "серый"
 		COL_WARNDIALOGLISTSELECTEDGRAYTEXT,		// выбранный "серый"
+		COL_WARNDIALOGLISTPREFIX,               // префикс пункта меню
+		COL_WARNDIALOGLISTSELPREFIX,            // выбранный префикс пункта меню
 	},
 	// Combobox
 	{
@@ -94,6 +98,8 @@ static int ListPaletteItems[4][13] = {
 		COL_DIALOGCOMBOARROWSDISABLED,		// Arrow disabled
 		COL_DIALOGCOMBOGRAY,				// "серый"
 		COL_DIALOGCOMBOSELECTEDGRAYTEXT,	// выбранный "серый"
+		COL_DIALOGCOMBOPREFIX,              // префикс пункта меню
+		COL_DIALOGCOMBOSELPREFIX,           // выбранный префикс пункта меню
 	},
 	{
 		// warn
@@ -105,6 +111,8 @@ static int ListPaletteItems[4][13] = {
 		COL_WARNDIALOGCOMBOARROWSDISABLED,		// Arrow disabled
 		COL_WARNDIALOGCOMBOGRAY,				// "серый"
 		COL_WARNDIALOGCOMBOSELECTEDGRAYTEXT,	// выбранный "серый"
+		COL_WARNDIALOGCOMBOPREFIX,              // префикс пункта меню
+		COL_WARNDIALOGCOMBOSELPREFIX,           // выбранный префикс пункта меню
 	},
 };
 
@@ -168,6 +176,7 @@ void SetColors()
 		{(const wchar_t *)Msg::SetColorDialogSelectedDefaultButton,            0,            0},
 		{(const wchar_t *)Msg::SetColorDialogHighlightedDefaultButton,         0,            0},
 		{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedDefaultButton, 0,            0},
+		{(const wchar_t *)Msg::SetColorDialogOverflowArrow,                    0,            0},
 		{(const wchar_t *)Msg::SetColorDialogListBoxControl,                   0,            0},
 		{(const wchar_t *)Msg::SetColorDialogComboBoxControl,                  0,            0}
 	};
@@ -190,6 +199,7 @@ void SetColors()
 		COL_DIALOGSELECTEDDEFAULTBUTTON,
 		COL_DIALOGHIGHLIGHTDEFAULTBUTTON,
 		COL_DIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
+		COL_DIALOGOVERFLOWARROW,
 		0,
 		2,
 	};
@@ -212,6 +222,7 @@ void SetColors()
 		{(const wchar_t *)Msg::SetColorDialogSelectedDefaultButton,            0,            0},
 		{(const wchar_t *)Msg::SetColorDialogHighlightedDefaultButton,         0,            0},
 		{(const wchar_t *)Msg::SetColorDialogSelectedHighlightedDefaultButton, 0,            0},
+		{(const wchar_t *)Msg::SetColorDialogOverflowArrow,                    0,            0},
 		{(const wchar_t *)Msg::SetColorDialogListBoxControl,                   0,            0},
 		{(const wchar_t *)Msg::SetColorDialogComboBoxControl,                  0,            0}
 	};
@@ -234,6 +245,7 @@ void SetColors()
 		COL_WARNDIALOGSELECTEDDEFAULTBUTTON,
 		COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON,
 		COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
+		COL_WARNDIALOGOVERFLOWARROW,
 		1,
 		3,
 	};
@@ -250,7 +262,10 @@ void SetColors()
 		{(const wchar_t *)Msg::SetColorMenuArrowsSelected,      0,            0},
 		{(const wchar_t *)Msg::SetColorMenuArrowsDisabled,      0,            0},
 		{(const wchar_t *)Msg::SetColorMenuGrayed,              0,            0},
-		{(const wchar_t *)Msg::SetColorMenuSelectedGrayed,      0,            0}
+		{(const wchar_t *)Msg::SetColorMenuSelectedGrayed,      0,            0},
+		{(const wchar_t *)Msg::SetColorMenuPrefix,              0,            0},
+		{(const wchar_t *)Msg::SetColorMenuPrefixSelected,      0,            0}
+
 	};
 	int MenuPaletteItems[] = {
 		COL_MENUTEXT, COL_MENUSELECTEDTEXT, COL_MENUHIGHLIGHT, COL_MENUSELECTEDHIGHLIGHT,
@@ -260,6 +275,8 @@ void SetColors()
 		COL_MENUARROWSDISABLED,
 		COL_MENUGRAYTEXT,				// "серый"
 		COL_MENUSELECTEDGRAYTEXT,		// выбранный "серый"
+		COL_MENUPREFIX,                 // префикс пункта меню
+		COL_MENUSELPREFIX,              // выбранный префикс пункта меню
 	};
 	MenuDataEx HMenuItems[] = {
 		{(const wchar_t *)Msg::SetColorHMenuNormal,              LIF_SELECTED, 0},
@@ -415,7 +432,9 @@ static void SetItemColors(MenuDataEx *Items, int *PaletteItems, int Size, int Ty
 		{Msg::SetColorDialogListArrowsSelected,    0,            0},
 		{Msg::SetColorDialogListArrowsDisabled,    0,            0},
 		{Msg::SetColorDialogListGrayed,            0,            0},
-		{Msg::SetColorDialogSelectedListGrayed,    0,            0}
+		{Msg::SetColorDialogSelectedListGrayed,    0,            0},
+		{Msg::SetColorDialogListPrefix,            0,            0},
+		{Msg::SetColorDialogListPrefixSelected,    0,            0}
 	};
 
 	int ItemsCode;

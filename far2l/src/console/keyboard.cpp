@@ -85,7 +85,7 @@ static MOUSE_EVENT_RECORD lastMOUSE_EVENT_RECORD;
 static int ShiftPressedLast = FALSE, AltPressedLast = FALSE, CtrlPressedLast = FALSE;
 static BOOL IsKeyCASPressed = FALSE;	// CtrlAltShift - нажато или нет?
 
-static int RightShiftPressedLast = FALSE, RightAltPressedLast = FALSE, RightCtrlPressedLast = FALSE;
+static int /*RightShiftPressedLast = FALSE,*/ RightAltPressedLast = FALSE, RightCtrlPressedLast = FALSE;
 static BOOL IsKeyRCASPressed = FALSE;	// Right CtrlAltShift - нажато или нет?
 
 static clock_t PressedLastTime, KeyPressedLastTime;
@@ -491,7 +491,6 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 	_KEYMACRO(CleverSysLog Clev(L"GetInputRecord()"));
 	static int LastEventIdle = FALSE;
 	DWORD CalcKey;
-	DWORD ReadKey = 0;
 	int NotMacros = FALSE;
 	static int LastMsClickMacroKey = 0;
 	static clock_t sLastIdleDelivered = 0;
@@ -787,7 +786,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 			$ 28.04.2001 VVM
 			+ Не только обработаем сами смену фокуса, но и передадим дальше
 		*/
-		ShiftPressed = RightShiftPressedLast = ShiftPressedLast = FALSE;
+		ShiftPressed = /*RightShiftPressedLast =*/ ShiftPressedLast = FALSE;
 		CtrlPressed = CtrlPressedLast = RightCtrlPressedLast = FALSE;
 		AltPressed = AltPressedLast = RightAltPressedLast = FALSE;
 		MouseButtonState = 0;
@@ -991,7 +990,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 		else
 			ShiftPressed = (CtrlState & SHIFT_PRESSED);
 
-		if ((KeyCode == VK_F16 && ReadKey == VK_F16) || !KeyCode)
+		if (!KeyCode)
 			return (KEY_NONE);
 
 		if (!rec->Event.KeyEvent.bKeyDown
@@ -1000,13 +999,13 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 			uint32_t Key{std::numeric_limits<uint32_t>::max()};
 
 			if (ShiftPressedLast && KeyCode == VK_SHIFT) {
-				if (ShiftPressedLast) {
+				//if (ShiftPressedLast) {
 					Key = KEY_SHIFT;
 					//// // _SVS(SysLog(L"ShiftPressedLast, Key=KEY_SHIFT"));
-				} else if (RightShiftPressedLast) {
+				/*} else if (RightShiftPressedLast) {
 					Key = KEY_RSHIFT;
 					//// // _SVS(SysLog(L"RightShiftPressedLast, Key=KEY_RSHIFT"));
-				}
+				}*/
 			}
 
 			if (KeyCode == VK_CONTROL) {
@@ -1046,7 +1045,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 				return (Key);
 		}
 
-		ShiftPressedLast = RightShiftPressedLast = FALSE;
+		ShiftPressedLast = /*RightShiftPressedLast =*/ FALSE;
 		CtrlPressedLast = RightCtrlPressedLast = FALSE;
 		AltPressedLast = RightAltPressedLast = FALSE;
 		ShiftPressedLast = (KeyCode == VK_SHIFT && rec->Event.KeyEvent.bKeyDown)
@@ -1256,11 +1255,6 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 			}
 		}
 	}
-
-	int GrayKey = (CalcKey == KEY_ADD || CalcKey == KEY_SUBTRACT || CalcKey == KEY_MULTIPLY);
-
-	if (ReadKey && !GrayKey)
-		CalcKey = ReadKey;
 
 	{
 		_KEYMACRO(SysLog(L"[%d] CALL CtrlObject->Macro.ProcessKey(%ls)", __LINE__, _FARKEY_ToName(CalcKey)));

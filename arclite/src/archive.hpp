@@ -29,6 +29,9 @@ extern const ArcType c_lzma;
 extern const ArcType c_lzma86;
 extern const ArcType c_cab;
 extern const ArcType c_z;
+extern const ArcType c_lz4;
+extern const ArcType c_lz5;
+extern const ArcType c_lizard;
 
 extern const ArcType c_elf;
 extern const ArcType c_pe;
@@ -126,10 +129,11 @@ struct ArcFormat
 	std::map<std::wstring, std::wstring> nested_ext_mapping;
 	std::wstring default_extension() const;
 
-	UInt32 Flags{};
-	bool NewInterface{};
+	UInt32 Flags = 0;
+	UInt32 TimeFlags = 0;
+	bool NewInterface = false;
 
-	UInt32 SignatureOffset{};
+	UInt32 SignatureOffset = 0;
 	std::vector<ByteVector> Signatures;
 
 	int lib_index{-1};
@@ -240,9 +244,21 @@ public:
 	static void free();
 	static void reload();
 
-	static bool is_single_file_format(const ArcType &arc_ty)
-	{
-		return arc_ty == c_bzip2 || arc_ty == c_gzip || arc_ty == c_xz || arc_ty == c_SWFc || arc_ty == c_zstd;
+	static bool is_single_file_format(const ArcType &arc_ty) {
+		return	arc_ty == c_bzip2 ||
+				arc_ty == c_gzip ||
+				arc_ty == c_xz ||
+				arc_ty == c_SWFc ||
+				arc_ty == c_zstd ||
+				arc_ty == c_z ||
+				arc_ty == c_lzma ||
+				arc_ty == c_lzma86 ||
+				arc_ty == c_lz4 ||
+				arc_ty == c_lz5 ||
+				arc_ty == c_lizard ||
+				arc_ty == c_Base64 ||
+				arc_ty == c_Ppmd ||
+				arc_ty == c_mslz;
 	}
 };
 
@@ -383,6 +399,7 @@ public:
 	FILETIME get_ctime(UInt32 index) const;
 	FILETIME get_mtime(UInt32 index) const;
 	FILETIME get_atime(UInt32 index) const;
+	FILETIME get_chtime(UInt32 index) const;
 	unsigned get_crc(UInt32 index) const;
 	bool get_anti(UInt32 index) const;
 	bool get_isaltstream(UInt32 index) const;

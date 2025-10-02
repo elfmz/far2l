@@ -52,5 +52,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ATTR_RGBBACK_NEGF(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
 #define ATTR_RGBBACK_NEGF2(rgb) (((((rgb & 0x0000FF00) >> 7) + (rgb & 0x000000FF) + ((rgb & 0x00FF0000) >> 16)) < 475 ? 0x000000FFFFFF000F : 0) + (((uint64_t)rgb << 40) | (BACKGROUND_TRUECOLOR + FOREGROUND_TRUECOLOR)))
 
+#ifndef IS_BIG_ENDIAN
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	#define IS_BIG_ENDIAN 1
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+	#define IS_BIG_ENDIAN 1
+#elif defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || \
+		defined(__AARCH64EB__) || defined(_MIPSEB) || defined(__MIPSEB) || \
+		defined(__MIPSEB__)
+	#define IS_BIG_ENDIAN 1
+#else
+	#define IS_BIG_ENDIAN 0
+#endif
+#endif
+
 uint32_t HSV_2_RGB(uint32_t hsv);
 uint32_t RGB_2_HSV(uint32_t rgb);

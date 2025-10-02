@@ -25,10 +25,17 @@ const wchar_t *c_tar_method_gnu = L"gnu";
 const wchar_t *c_tar_method_pax = L"pax";
 const wchar_t *c_tar_method_posix = L"posix";
 
+#if IS_BIG_ENDIAN
+#define DEFINE_ARC_ID(name, v)                                                                               \
+	static constexpr unsigned char c_guid_##name[] =                                                         \
+			"\x23\x17\x0F\x69\x40\xC1\x27\x8A\x10\x00\x00\x01\x10" v "\x00\x00";                             \
+	const ArcType c_##name(c_guid_##name, c_guid_##name + 16);
+#else
 #define DEFINE_ARC_ID(name, v)                                                                               \
 	static constexpr unsigned char c_guid_##name[] =                                                         \
 			"\x69\x0F\x17\x23\xC1\x40\x8A\x27\x10\x00\x00\x01\x10" v "\x00\x00";                             \
 	const ArcType c_##name(c_guid_##name, c_guid_##name + 16);
+#endif
 
 DEFINE_ARC_ID(7z, "\x07")
 DEFINE_ARC_ID(zip, "\x01")
@@ -44,6 +51,9 @@ DEFINE_ARC_ID(arj, "\x04")
 DEFINE_ARC_ID(lzh, "\x06")
 DEFINE_ARC_ID(cab, "\x08")
 DEFINE_ARC_ID(z, "\x05")
+DEFINE_ARC_ID(lz4, "\x0f")
+DEFINE_ARC_ID(lz5, "\x10")
+DEFINE_ARC_ID(lizard, "\x11")
 
 DEFINE_ARC_ID(split, "\xEA")
 DEFINE_ARC_ID(wim, "\xE6")
@@ -1059,6 +1069,11 @@ void ArcAPI::load()
 					format.Flags |= NArcInfoFlags::kNtSecure;
 			}
 
+			UInt32 timeFlags = 0;
+			if (arc_lib.get_uint_prop(idx, NArchive::NHandlerPropID::kTimeFlags, timeFlags) == S_OK) {
+				format.TimeFlags = timeFlags;
+			}
+
 			ByteVector sig;
 			arc_lib.get_bytes_prop(idx, NArchive::NHandlerPropID::kSignature, sig);
 			if (!sig.empty())
@@ -1422,6 +1437,7 @@ FindData Archive<UseVirtualDestructor>::get_file_info(UInt32 index)
 	file_info.ftCreationTime = get_ctime(index);
 	file_info.ftLastWriteTime = get_mtime(index);
 	file_info.ftLastAccessTime = get_atime(index);
+	//file_info.ftChangeTime = get_chtime(index);
 
 	return file_info;
 }
@@ -1692,50 +1708,108 @@ template<bool UseVirtualDestructor>
 FILETIME Archive<UseVirtualDestructor>::get_ctime(UInt32 index) const
 {
 	PropVariant prop;
+	union {
+		FILETIME ft;
+		uint64_t t64;
+	};
+
 	if (index >= m_num_indices) {
-//		return arc_info.ftCreationTime;
 		return nullftime;
 	}
 
-	if (in_arc->GetProperty(index, kpidCTime, prop.ref()) == S_OK) {
-		if (prop.is_filetime())
-			return prop.get_filetime();
+	if (in_arc->GetProperty(index, kpidCTime, prop.ref()) == S_OK && prop.is_filetime()) {
+		ft = prop.get_filetime();
+#if IS_BIG_ENDIAN
+		//if (t64 > 0x23F4449128B48000)
+		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
+#else
+		return ft;
+#endif
 	}
 
 	return nullftime;
-//	return arc_info.ftCreationTime;
+	//return arc_info.ftCreationTime;
 }
 
 template<bool UseVirtualDestructor>
 FILETIME Archive<UseVirtualDestructor>::get_mtime(UInt32 index) const
 {
 	PropVariant prop;
+	union {
+		FILETIME ft;
+		uint64_t t64;
+	};
+
 	if (index >= m_num_indices) {
-//		return arc_info.ftLastWriteTime;
 		return nullftime;
 	}
-	else if (in_arc->GetProperty(index, kpidMTime, prop.ref()) == S_OK && prop.is_filetime())
-		return prop.get_filetime();
-	else {
-//		return arc_info.ftLastWriteTime;
-		return nullftime;
+
+	if (in_arc->GetProperty(index, kpidMTime, prop.ref()) == S_OK && prop.is_filetime()) {
+		ft = prop.get_filetime();
+#if IS_BIG_ENDIAN
+		//if (t64 > 0x23F4449128B48000)
+		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
+#else
+		return ft;
+#endif
 	}
+
+	return nullftime;
+	//return arc_info.ftLastWriteTime;
 }
 
 template<bool UseVirtualDestructor>
 FILETIME Archive<UseVirtualDestructor>::get_atime(UInt32 index) const
 {
 	PropVariant prop;
+	union {
+		FILETIME ft;
+		uint64_t t64;
+	};
+
 	if (index >= m_num_indices) {
-//		return arc_info.ftLastAccessTime;
 		return nullftime;
 	}
-	else if (in_arc->GetProperty(index, kpidATime, prop.ref()) == S_OK && prop.is_filetime())
-		return prop.get_filetime();
-	else {
-//		return arc_info.ftLastAccessTime;
+
+	if (in_arc->GetProperty(index, kpidATime, prop.ref()) == S_OK && prop.is_filetime()) {
+		ft = prop.get_filetime();
+#if IS_BIG_ENDIAN
+		//if (t64 > 0x23F4449128B48000)
+		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
+#else
+		return ft;
+#endif
+	}
+
+	return nullftime;
+	//return arc_info.ftLastAccessTime;
+}
+
+template<bool UseVirtualDestructor>
+FILETIME Archive<UseVirtualDestructor>::get_chtime(UInt32 index) const
+{
+	PropVariant prop;
+	union {
+		FILETIME ft;
+		uint64_t t64;
+	};
+
+	if (index >= m_num_indices) {
 		return nullftime;
 	}
+
+	if (in_arc->GetProperty(index, kpidChangeTime, prop.ref()) == S_OK && prop.is_filetime()) {
+		ft = prop.get_filetime();
+#if IS_BIG_ENDIAN
+		//if (t64 > 0x23F4449128B48000)
+		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
+#else
+		return ft;
+#endif
+	}
+
+	return nullftime;
+	//return arc_info.ftLastAccessTime;
 }
 
 template<bool UseVirtualDestructor>

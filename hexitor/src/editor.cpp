@@ -483,6 +483,7 @@ bool editor::move_handle_key(int key)
 				update_buffer(_view_offset + 0x10);
 			break;
 
+		case KEY_MSWHEEL_UP:
 		case KEY_NUMPAD8:
 		case KEY_UP:
 			if (ctrl_pressed) {
@@ -504,6 +505,7 @@ bool editor::move_handle_key(int key)
 			}
 			break;
 
+		case KEY_MSWHEEL_DOWN:
 		case KEY_NUMPAD2:
 		case KEY_DOWN:
 			if (ctrl_pressed) {
@@ -582,7 +584,7 @@ bool editor::move_handle_mouse(int msg, int ctrl, MOUSE_EVENT_RECORD *rec)
 		//Mouse click on fake button?
 		const WORD btn_id = _keybar.get_button(rec->dwMousePosition.X);
 		if (btn_id > 0)
-			event_handled = sckey_handle(VK_F1 + btn_id - 1);
+			event_handled = sckey_handle(KEY_F1 + btn_id - 1);
 	}
 	else if( ctrl == ID_EDITOR ){
 		if (msg == DN_MOUSECLICK) {

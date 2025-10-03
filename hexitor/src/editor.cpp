@@ -25,6 +25,7 @@
 #include "settings.h"
 #include "history.h"
 #include "version.h"
+#include "hex_ctl.h" // For CP_UTF8
 #include <farkeys.h>
 
 #define MIN_WIDTH		80		//Minimum width width size of main edit window
@@ -829,6 +830,7 @@ bool editor::edkey_handle(int key)
 		const BYTE old_val = get_current_value(_cursor_offset);
 		const BYTE new_val = _cursor_fbp ? ((old_val & 0x0f) | (key_code << 4)) : ((old_val & 0xf0) | key_code);
 		update_data(_cursor_offset, new_val);
+		move_right(true);
 	}
 	else {
 		if (key < ' ')
@@ -845,19 +847,40 @@ bool editor::edkey_handle(int key)
 		}
 		const wchar_t key_value = static_cast<wchar_t>(key);
 
-		if (_hexeditor.get_codepage() == CP_UTF16LE) {
-			update_data(_cursor_offset, LOBYTE(key_value));
-			if (_cursor_offset + 1 < _file.size())
-				update_data(_cursor_offset + 1, HIBYTE(key_value));
+		if (_hexeditor.get_codepage() == CP_UTF8) {
+			vector<BYTE> utf8_seq;
+			const int req = WideCharToMultiByte(CP_UTF8, 0, &key_value, 1, nullptr, 0, nullptr, nullptr);
+			if (req > 0) {
+				utf8_seq.resize(req);
+				WideCharToMultiByte(CP_UTF8, 0, &key_value, 1, reinterpret_cast<LPSTR>(&utf8_seq.front()), req, nullptr, nullptr);
+			}
+
+			for (const auto& b : utf8_seq) {
+				if (_cursor_offset >= _file.size()) break; // Stop if we hit end of file
+				update_data(_cursor_offset, b);
+				_cursor_offset++;
+			}
+			_cursor_fbp = true;
+			// move_right is not needed here as we manually advanced the cursor
 		}
 		else {
-			BYTE new_val;
-			WideCharToMultiByte(_hexeditor.get_codepage(), 0, &key_value, 1, reinterpret_cast<LPSTR>(&new_val), 1, nullptr, nullptr);
-			update_data(_cursor_offset, new_val);
+			if (_hexeditor.get_codepage() == CP_UTF16LE) {
+				update_data(_cursor_offset, LOBYTE(key_value));
+				if (_cursor_offset + 1 < _file.size())
+					update_data(_cursor_offset + 1, HIBYTE(key_value));
+			}
+			else {
+				BYTE new_val;
+				WideCharToMultiByte(_hexeditor.get_codepage(), 0, &key_value, 1, reinterpret_cast<LPSTR>(&new_val), 1, nullptr, nullptr);
+				update_data(_cursor_offset, new_val);
+			}
+			move_right(true);
 		}
 	}
 
-	move_right(true);
+	if (_cursor_offset >= _view_offset + _hexeditor.showed_data_size())
+		update_buffer(_view_offset + 0x10);
+
 	move_far_cursor();
 	update_screen();
 

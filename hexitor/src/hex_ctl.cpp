@@ -152,7 +152,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 				else if (col % 2 == 0) {
 					map<UINT64, BYTE>::const_iterator itup2 = upd_data.find(current_offset_abs + 1);
 					const BYTE val_second = (itup2 != upd_data.end() ? itup2->second : row * 16 + col + 1 < ori_data.size() ? ori_data[row * 16 + col + 1] : 0);
-					write(row, 64 + col / 2, (uint64_t)MAKEWORD(val, val_second));
+					write(row, 64 + col / 2, (wchar_t)MAKEWORD(val, val_second));
 				}
 				if (itup != upd_data.end()) {
 					write(row, 64 + col / (_codepage == CP_UTF16LE ? 2 : 1), settings::clr_updated);

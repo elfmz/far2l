@@ -43,7 +43,7 @@ private:
 	void fill_u8() noexcept;
 
 	//Far dialog's callback
-	static intptr_t WINAPI dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, void* param2);
+	static intptr_t WINAPI dlg_proc(HANDLE dlg, intptr_t msg, int param1, void* param2);
 
 private:
 	HANDLE			_dialog;		///< Dialog window handle

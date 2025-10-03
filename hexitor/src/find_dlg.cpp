@@ -126,7 +126,7 @@ void find_dlg::fill_u16()
 }
 
 
-intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, void* param2)
+intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, int param1, void* param2)
 {
 	find_dlg* instance = nullptr;
 	if (msg != DN_INITDIALOG)
@@ -151,7 +151,7 @@ intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, vo
 		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_U8_EDIT, (LONG_PTR)MAX_SEQ_SIZE);
 		return 1;
 	}
-	else if (msg == DN_CLOSE && param1 >= 0 && param1 != DLGID_BTN_CANCEL && instance->_seq.empty()) {
+	else if (msg == DN_CLOSE && param1 >= 0 && param1 != DLGID_BTN_CANCEL && param1 != -1 && instance->_seq.empty()) {
 		const wchar_t* err_msg[] = { _PSI.GetMsg(_PSI.ModuleNumber, ps_find_title), _PSI.GetMsg(_PSI.ModuleNumber, ps_find_empty) };
 		_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, sizeof(err_msg) / sizeof(err_msg[0]), 0);
 		return 0;

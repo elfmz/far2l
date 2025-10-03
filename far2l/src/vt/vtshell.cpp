@@ -724,8 +724,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			{
 				VTAnsiSuspend vta_suspend(_vta); // preserve console state
 				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
-				ConsoleForkScope saved_scr;
-				saved_scr.Fork();
+				ConsoleForkScope saved_scr(NULL);
 				ScrBuf.FillBuf();
 				int choice;
 				do { // prevent quick thoughtless tap Enter or Space or Esc in dialog

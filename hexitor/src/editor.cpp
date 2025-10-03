@@ -584,8 +584,11 @@ bool editor::move_handle_mouse(int msg, int ctrl, MOUSE_EVENT_RECORD *rec)
 	if( ctrl == ID_KEYBAR && msg == DN_MOUSECLICK){
 		//Mouse click on fake button?
 		const WORD btn_id = _keybar.get_button(rec->dwMousePosition.X);
-		if (btn_id > 0)
+		if (btn_id > 0){
 			event_handled = sckey_handle(KEY_F1 + btn_id - 1);
+			if( btn_id == 10 )
+				return true; // dont process further, dialog is destroyed
+		}
 	}
 	else if( ctrl == ID_EDITOR ){
 		if (msg == DN_MOUSECLICK) {

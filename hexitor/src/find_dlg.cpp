@@ -18,16 +18,13 @@
 
 #include "find_dlg.h"
 #include "string_rc.h"
+#include "hex_ctl.h" // For CP_UTF8
 
 static constexpr size_t MAX_SEQ_SIZE = 128;
 //
 static constexpr intptr_t //Dialog item ids
-DLGID_HEX_EDIT = 2, DLGID_ANS_EDIT = 4, DLGID_OEM_EDIT = 6, DLGID_UTF_EDIT = 8, DLGID_BTN_CANCEL = 13;
-//
-static const wchar_t HHist[]{ L"HexitorFindHex"  };
-static const wchar_t aHist[]{ L"HexitorFindAnsi" };
-static const wchar_t oHist[]{ L"HexitorFindOem"  };
-static const wchar_t uHist[]{ L"HexitorFindUtf"  };
+DLGID_HEX_EDIT = 2, DLGID_ANS_EDIT = 4, DLGID_OEM_EDIT = 6, DLGID_U16_EDIT = 8, DLGID_U8_EDIT = 10, DLGID_BTN_CANCEL = 15;
+
 //
 bool find_dlg::show(vector<unsigned char>& seq, bool& forward_search)
 {
@@ -42,7 +39,7 @@ bool find_dlg::show(vector<unsigned char>& seq, bool& forward_search)
 	#define FDLG_NONE 0
 
 	FarDialogItem dlg_items[] = {
-	/*  0 */ { DI_DOUBLEBOX, 3,  1, 56, 13, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_title) },
+	/*  0 */ { DI_DOUBLEBOX, 3,  1, 56, 15, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_title) },
 	/*  1 */ { DI_TEXT,      5,  2, 11,  2, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&Hex:" },
 	/*  2 */ { DI_FIXEDIT,  12,  2, 54,  2, 0, (DWORD_PTR)mask_edit.c_str(), 0, DIF_MASKEDIT | DIF_HISTORY },
 	/*  3 */ { DI_TEXT,      5,  4, 11,  4, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&ANSI:" },
@@ -51,16 +48,18 @@ bool find_dlg::show(vector<unsigned char>& seq, bool& forward_search)
 	/*  6 */ { DI_EDIT,     12,  6, 54,  6, 0, (DWORD_PTR)nullptr, LIF_NONE | DIF_HISTORY},
 	/*  7 */ { DI_TEXT,      5,  8, 11,  8, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&UTF16:" },
 	/*  8 */ { DI_EDIT,     12,  8, 54,  8, 0, (DWORD_PTR)nullptr, LIF_NONE | DIF_HISTORY},
-	/*  9 */ { DI_TEXT,      0,  9,  0,  9, 0, (DWORD_PTR)nullptr, DIF_SEPARATOR },
-	/* 10 */ { DI_CHECKBOX, 12, 10, 54, 10, f, (DWORD_PTR)nullptr, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_backward) },
+	/*  9 */ { DI_TEXT,      5, 10, 11, 10, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"UTF-&8:" },
+	/* 10 */ { DI_EDIT,     12, 10, 54, 10, 0, (DWORD_PTR)nullptr, LIF_NONE | DIF_HISTORY},
 	/* 11 */ { DI_TEXT,      0, 11,  0, 11, 0, (DWORD_PTR)nullptr, DIF_SEPARATOR },
-	/* 12 */ { DI_BUTTON,    0, 12,  0, 12, 0, (DWORD_PTR)nullptr, DIF_CENTERGROUP | DIF_DEFAULT, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_ok) },
-	/* 13 */ { DI_BUTTON,    0, 12,  0, 12, 0, (DWORD_PTR)nullptr, DIF_CENTERGROUP, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_cancel) }
+	/* 12 */ { DI_CHECKBOX, 12, 12, 54, 12, f, (DWORD_PTR)nullptr, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_backward) },
+	/* 13 */ { DI_TEXT,      0, 13,  0, 13, 0, (DWORD_PTR)nullptr, DIF_SEPARATOR },
+	/* 14 */ { DI_BUTTON,    0, 14,  0, 14, 0, (DWORD_PTR)nullptr, DIF_CENTERGROUP | DIF_DEFAULT, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_ok) },
+	/* 15 */ { DI_BUTTON,    0, 14,  0, 14, 0, (DWORD_PTR)nullptr, DIF_CENTERGROUP, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_cancel) }
 	};
 
 	_dialog = _PSI.DialogInit(
 		_PSI.ModuleNumber,
-		-1, -1, 60, 15,
+		-1, -1, 60, 17,
 		nullptr,
 		dlg_items,
 		_countof(dlg_items),
@@ -72,7 +71,7 @@ bool find_dlg::show(vector<unsigned char>& seq, bool& forward_search)
 	const intptr_t rc = _PSI.DialogRun(_dialog);
 	if (rc >= 0 && rc != DLGID_BTN_CANCEL) {
 		_seq.swap(seq);
-		forward_search = !(_PSI.SendDlgMessage(_dialog, DM_GETCHECK, 10, (LONG_PTR)nullptr) == BSTATE_CHECKED);
+		forward_search = !(_PSI.SendDlgMessage(_dialog, DM_GETCHECK, 12, (LONG_PTR)nullptr) == BSTATE_CHECKED);
 		_PSI.DialogFree(_dialog);
 		return true;
 	}
@@ -106,6 +105,7 @@ void find_dlg::fill_mb(const UINT cp, const uintptr_t item_id) noexcept
 //
 void find_dlg::fill_ans() noexcept { fill_mb(CP_ACP,   DLGID_ANS_EDIT); }
 void find_dlg::fill_oem() noexcept { fill_mb(CP_OEMCP, DLGID_OEM_EDIT); }
+void find_dlg::fill_u8()  noexcept { fill_mb(CP_UTF8,  DLGID_U8_EDIT); }
 
 
 void find_dlg::fill_u16()
@@ -120,7 +120,7 @@ void find_dlg::fill_u16()
 		item_data.PtrLength = (len + 1) / 2;
 		item_data.PtrData = (wchar_t*)&_seq.front();
 	}
-	_PSI.SendDlgMessage(_dialog, DM_SETTEXT, DLGID_UTF_EDIT, (LONG_PTR)&item_data);
+	_PSI.SendDlgMessage(_dialog, DM_SETTEXT, DLGID_U16_EDIT, (LONG_PTR)&item_data);
 	if (padded)
 		_seq.pop_back();
 }
@@ -143,10 +143,12 @@ intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, vo
 		instance->fill_ans();
 		instance->fill_oem();
 		instance->fill_u16();
+		instance->fill_u8();
 		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_HEX_EDIT, (LONG_PTR)(MAX_SEQ_SIZE * 3));
 		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_ANS_EDIT, (LONG_PTR)MAX_SEQ_SIZE);
 		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_OEM_EDIT, (LONG_PTR)MAX_SEQ_SIZE);
-		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_UTF_EDIT, (LONG_PTR)(MAX_SEQ_SIZE / 2));
+		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_U16_EDIT, (LONG_PTR)(MAX_SEQ_SIZE / 2));
+		_PSI.SendDlgMessage(dlg, DM_SETMAXTEXTLENGTH, DLGID_U8_EDIT, (LONG_PTR)MAX_SEQ_SIZE);
 		return 1;
 	}
 	else if (msg == DN_CLOSE && param1 >= 0 && param1 != DLGID_BTN_CANCEL && instance->_seq.empty()) {
@@ -175,6 +177,7 @@ intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, vo
 			instance->fill_ans();
 			instance->fill_oem();
 			instance->fill_u16();
+			instance->fill_u8();
 		}
 		else if (param1 == DLGID_ANS_EDIT) {
 			instance->_seq.resize(val_len);
@@ -183,6 +186,7 @@ intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, vo
 			instance->fill_hex();
 			instance->fill_oem();
 			instance->fill_u16();
+			instance->fill_u8();
 		}
 		else if (param1 == DLGID_OEM_EDIT) {
 			instance->_seq.resize(val_len);
@@ -191,14 +195,31 @@ intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, vo
 			instance->fill_hex();
 			instance->fill_ans();
 			instance->fill_u16();
+			instance->fill_u8();
 		}
-		else if (param1 == DLGID_UTF_EDIT) {
+		else if (param1 == DLGID_U16_EDIT) {
 			instance->_seq.resize(val_len * 2);
 			if (val_len)
 				memcpy(&instance->_seq.front(), val, val_len * 2);
 			instance->fill_hex();
 			instance->fill_ans();
 			instance->fill_oem();
+			instance->fill_u8();
+		}
+		else if (param1 == DLGID_U8_EDIT) {
+			if (val_len == 0) {
+				instance->_seq.clear();
+			} else {
+				// First call to get the required buffer size
+				const int required_size = WideCharToMultiByte(CP_UTF8, 0, val, (int)val_len, nullptr, 0, nullptr, nullptr);
+				instance->_seq.resize(required_size);
+				// Second call to perform the conversion
+				WideCharToMultiByte(CP_UTF8, 0, val, (int)val_len, (LPSTR)&instance->_seq.front(), required_size, nullptr, nullptr);
+			}
+			instance->fill_hex();
+			instance->fill_ans();
+			instance->fill_oem();
+			instance->fill_u16();
 		}
 		instance->_can_update = true;
 

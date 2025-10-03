@@ -138,6 +138,10 @@ void settings::configure()
 	dlg.buildFDI(&vbox1);
 
 	settings::Dialog = &dlg;
+	FarColor save_clr_active = settings::clr_active;
+	FarColor save_clr_updated = settings::clr_updated;
+	FarColor save_clr_offset = settings::clr_offset;
+
 
 	const HANDLE hDlg = dlg.DialogInit();
 	const intptr_t rc = _PSI.DialogRun(hDlg);
@@ -151,6 +155,10 @@ void settings::configure()
 		std_cursor_size = dlg.GetCheck(dlg.getID("std_csize")) != 0;
 		show_dword_seps = dlg.GetCheck(dlg.getID("show_dd")) != 0;
 		save();
+	} else {
+		settings::clr_active = save_clr_active;
+		settings::clr_updated = save_clr_updated;
+		settings::clr_offset = save_clr_offset;
 	}
 	_PSI.DialogFree(hDlg);
 }
@@ -167,8 +175,10 @@ LONG_PTR WINAPI settings::dlg_proc(HANDLE dlg, int Msg, int Param1, LONG_PTR Par
 			fc = &settings::clr_active;
 		else if (Param1 == dlg->getID("clr_updated"))
 			fc = &settings::clr_updated;
-		if (fc)
+		if (fc){
 			_PSI.ColorDialog(0, fc);
+			return 1;
+		}
 	}
 	return _PSI.DefDlgProc(dlg, Msg, Param1, Param2);
 }

@@ -56,7 +56,6 @@ double SaveConsoleTitle::Changed(void)
 //------------------------------------------------------------------------
 int WINAPI CheckForKeyPressed(WORD *Codes, int NumCodes)
 {
-	WORD KeyCode = VK_ESCAPE;
 	return WINPORT(CheckForKeyPress)(NULL, Codes, NumCodes, CFKP_KEEP_OTHER_EVENTS);
 }
 //------------------------------------------------------------------------

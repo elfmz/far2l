@@ -65,12 +65,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtshell.h"
 #include "ConfigRW.hpp"
 #include "AllXLats.hpp"
+#include "xlat.hpp"
 #include "ConfigOpt.hpp"
 #include "ConfigOptSaveLoad.hpp"
 #include "pick_color256.hpp"
 #include "pick_colorRGB.hpp"
 #include "MaskGroups.hpp"
-
 
 void SanitizeHistoryCounts();
 void SanitizeIndentationCounts();
@@ -252,6 +252,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecXLat, "EnableForDialogs", &Opt.XLat.EnableForDialogs, 1},
 	{true,  NSecXLat, "WordDivForXlat", &Opt.XLat.strWordDivForXlat, WordDivForXlat0},
 	{true,  NSecXLat, "XLat", &Opt.XLat.XLat, L"ru:qwerty-йцукен"},
+	{true,  NSecXLat, "LastLanguage", &Opt.XLat.LastLanguage, 0},
 
 	{true,  NSecSavedHistory, NParamHistoryCount, &Opt.HistoryCount, 512},
 	{true,  NSecSavedFolderHistory, NParamHistoryCount, &Opt.FoldersHistoryCount, 512},
@@ -731,6 +732,8 @@ void ConfigOptLoad()
 	FileList::ReadPanelModes(cfg_reader);
 
 	SanitizeXlat();
+
+	XlatInit();
 
 	ZeroFill(Opt.FindOpt.OutColumnTypes);
 	ZeroFill(Opt.FindOpt.OutColumnWidths);

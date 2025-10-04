@@ -44,8 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "headers.hpp"
-
-
 #include "ConfigRW.hpp"
 #include "config.hpp"
 #include "xlat.hpp"
@@ -53,9 +51,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dirmix.hpp"
 #include <optional>
 
-
 class Xlator
 {
+public:
+	enum Language
+	{
+		UNKNOWN,
+		LATIN,
+		LOCAL,
+	};
+
+private:
 	std::wstring _latin, _local;
 	struct Rules : std::vector<std::pair<wchar_t, wchar_t>>
 	{
@@ -64,45 +70,38 @@ class Xlator
 			clear();
 			for (size_t i = 0; i + 1 < v.size();) {
 				emplace_back(std::make_pair(v[i], v[i + 1]));
-				for (i+= 2; i < v.size() && v[i] == ' '; ++i) {
-				}
+				for (i+= 2; i < v.size() && v[i] == ' '; ++i) {}
 			}
 		}
 
 	} _after_latin, _after_local, _after_other;
 
 	size_t _min_len_table{0};
-	enum
-	{
-		UNKNOWN,
-		LATIN,
-		LOCAL,
-	} _cur_lang{UNKNOWN};
+	Language _cur_lang{UNKNOWN};
 
 	void InitFromValues(KeyFileValues &kfv)
 	{
 		_latin = kfv.GetString("Latin", L"");
 		_local = kfv.GetString("Local", L"");
-
 		_after_latin.InitFromValue(kfv.GetString("AfterLatin", L""));
 		_after_local.InitFromValue(kfv.GetString("AfterLocal", L""));
 		_after_other.InitFromValue(kfv.GetString("AfterOther", L""));
-
 		_min_len_table = std::min(_local.size(), _latin.size());
 	}
 
 public:
-	Xlator()
-	{
+	Xlator() {
 		Reinit();
 	}
 
-	void Reinit()
-	{
+	void SetInitialLanguage(Language lang) {
+		_cur_lang = lang;
+	}
+
+	void Reinit() {
 		KeyFileReadSection xlat_local(InMyConfig("xlats.ini"), Opt.XLat.XLat.GetMB());
 		if (xlat_local.SectionLoaded()) {
 			InitFromValues(xlat_local);
-
 		} else {
 			KeyFileReadSection xlat_global(GetHelperPathName("xlats.ini"), Opt.XLat.XLat.GetMB());
 			if (xlat_global.SectionLoaded()) {
@@ -113,64 +112,54 @@ public:
 
 	bool Valid() const { return _min_len_table != 0; }
 
-	void TrackKeypress(wchar_t chr)
-	{
-		for (size_t i = 0; i < _min_len_table; i++) {
-			// символ из латиницы?
-			if (chr == _latin[i]) {
-				_cur_lang = LATIN; // pred - english
-				break;
+	void TrackKeypress(wchar_t chr) {
+	    // Если мы уже знаем, что используется локальная раскладка,
+	    // то больше ничего делать не нужно. Состояние "липкое".
+	    if (_cur_lang == LOCAL)
+	        return;
 
-			} else if (chr == _local[i]) { // символ из русской?
-				_cur_lang = LOCAL; // pred - local
-				break;
-			}
-		}
+	    // Ищем символ только в локальной таблице.
+	    for (size_t i = 0; i < _min_len_table; i++) {
+	        // Нашли! Устанавливаем состояние и сохраняем его в конфиг.
+	        if (chr == _local[i]) {
+	            _cur_lang = LOCAL;
+	            Opt.XLat.LastLanguage = _cur_lang;
+	            break;
+	        }
+	    }
 	}
 
-	wchar_t Transcode(wchar_t chr)
-	{
-		// chr_old - пред символ
-		// цикл по просмотру Chr в таблицах
-		// <= _min_len_table так как длина настоящая а начальный индекс 1
-		for (size_t i = 0; i < _min_len_table; i++) {
-			// символ из латиницы?
-			if (chr == _latin[i]) {
-				_cur_lang = LATIN; // pred - english
-				return _local[i];
-
-			} else if (chr == _local[i]) { // символ из русской?
-				_cur_lang = LOCAL; // pred - local
-				return _latin[i];
-			}
-		}
+	wchar_t Transcode(wchar_t chr) {
+	    for (size_t i = 0; i < _min_len_table; i++) {
+	        // Символ из латиницы?
+	        if (chr == _latin[i]) {
+	            _cur_lang = LATIN; // Обновляем временное состояние для правил AfterLatin
+	            return _local[i];
+	        }
+	        // Символ из локальной раскладки?
+	        else if (chr == _local[i]) {
+	            // Это главный сигнал. Обновляем и временное, и персистентное состояние.
+	            if (_cur_lang != LOCAL) {
+	                _cur_lang = LOCAL;
+	                Opt.XLat.LastLanguage = _cur_lang;
+	            }
+	            return _latin[i];
+	        }
+	    }
 
 		// особые случаи...
-		const Rules *rules;
-		switch (_cur_lang) {
-			case LATIN:
-				rules = &_after_latin;
-				break;
-
-			case LOCAL:
-				rules = &_after_local;
-				break;
-
-			default:
-				rules = &_after_other;
-		}
-
-		for (const auto &rule : *rules) {
-			if (chr == rule.first) {
-				return rule.second;
-			}
-		}
-
-		return chr;
+	    const Rules *rules;
+	    switch (_cur_lang) {
+	        case LATIN: rules = &_after_latin; break;
+	        case LOCAL: rules = &_after_local; break;
+	        default:    rules = &_after_other;
+	    }
+	    for (const auto &rule : *rules) {
+	        if (chr == rule.first) return rule.second;
+	    }
+	    return chr;
 	}
 };
-
-///////////////
 
 static time_t s_xlator_time = 0;
 static std::optional<Xlator> s_xlator;
@@ -188,6 +177,11 @@ static Xlator &GetXlator()
 	return *s_xlator;
 }
 
+void XlatInit()
+{
+	GetXlator().SetInitialLanguage((Xlator::Language)Opt.XLat.LastLanguage);
+}
+
 void XlatReinit()
 {
 	s_xlator.reset();
@@ -200,26 +194,16 @@ wchar_t XlatOneChar(wchar_t Chr)
 
 wchar_t* WINAPI Xlat(wchar_t *Line, int StartPos, int EndPos, DWORD Flags) // Flags accepted but not yet implemented
 {
-	if (!Line || !*Line)
-		return nullptr;
-
+	if (!Line || !*Line) return nullptr;
 	int Length = StrLength(Line);
 	EndPos = (EndPos == -1) ? Length : Min(EndPos, Length);
 	StartPos = Max(StartPos, 0);
-
-	if (StartPos > EndPos || StartPos >= Length) {
-		return Line;
-	}
-
+	if (StartPos > EndPos || StartPos >= Length) return Line;
 	Xlator &xlator = GetXlator();
-	if (!xlator.Valid()) {
-		return Line;
-	}
-
+	if (!xlator.Valid()) return Line;
 	for (int j=StartPos; j < EndPos; j++) {
 		Line[j] = xlator.Transcode(Line[j]);
 	}
-
 	return Line;
 }
 

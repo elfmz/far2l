@@ -17,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -1228,7 +1229,37 @@ std::vector<std::string> XDGBasedAppProvider::TokenizeExecString(const std::stri
 }
 
 
-// Expands XDG Desktop Entry field codes (%f, %F, %u, %U, %c, etc.).
+// Converts absolute local filepath to a file:// URI.
+// This function implements percent-encoding according to RFC 3986.
+// It ensures that all characters except for the "unreserved" set and
+// the filepath separator '/' are encoded. This implementation is locale-independent.
+std::string XDGBasedAppProvider::PathToUri(const std::string& absolute_local_filepath)
+{
+	std::stringstream uri_stream;
+	uri_stream << "file://";
+	// Use std::uppercase for hex values to comply with the RFC 3986 recommendation.
+	uri_stream << std::hex << std::uppercase << std::setfill('0');
+
+	for (const unsigned char c : absolute_local_filepath) {
+		// Perform a locale-independent check for unreserved characters (RFC 3986)
+		// plus the path separator '/'.
+		if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+			|| c == '-' || c == '_' || c == '.' || c == '~' || c == '/')
+		{
+			uri_stream << c;
+		} else {
+			// Percent-encode all other characters.
+			// setw(2) ensures a leading zero for single-digit hex values (e.g., %0F).
+			uri_stream << '%' << std::setw(2) << static_cast<int>(c);
+		}
+	}
+	return uri_stream.str();
+}
+
+
+// Expands XDG Desktop Entry field codes (%f, %u, %c, etc.).
+// This function correctly distinguishes between field codes that expect a local
+// file path (%f, %F) and those that expect a URI (%u, %U).
 bool XDGBasedAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
 										   const std::string& pathname,
 										   const std::string& unescaped,
@@ -1238,26 +1269,29 @@ bool XDGBasedAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
 	for (size_t i = 0; i < unescaped.size(); ++i) {
 		char c = unescaped[i];
 		if (c == '%') {
-			if (i + 1 >= unescaped.size()) return false; // Dangling % is an error.
+			if (i + 1 >= unescaped.size()) return false; // Dangling '%' is an error.
 			char code = unescaped[i + 1];
 			++i;
 			switch (code) {
-			case 'f': case 'F': // A single file path. %F is for multiple files, but we handle one.
-			case 'u': case 'U': // A single URI. %U is for multiple URIs.
-				cur += pathname; // For our purposes, path and URI are treated the same.
+			case 'f': case 'F': // %f, %F expect a local path.
+				cur += pathname;
 				break;
-			case 'c': // The application's name (Name= key).
+			case 'u': case 'U': // %u, %U expect a URI.
+				cur += PathToUri(pathname); // Convert the local path to a file:// URI.
+				break;
+			case 'c': // The application's name (from the Name= key).
 				cur += candidate.name;
 				break;
-			case '%': // A literal % character.
+			case '%': // A literal '%' character.
 				cur.push_back('%');
 				break;
-			// Deprecated or unused field codes are silently ignored as per the spec.
+			// Deprecated and unused field codes are silently ignored
 			case 'n': case 'd': case 'D': case 't': case 'T': case 'v': case 'm':
 			case 'k': case 'i':
 				break;
 			default:
-				return false; // Any other field code is invalid.
+				// Any other field code is invalid.
+				return false;
 			}
 		} else {
 			cur.push_back(c);
@@ -1269,21 +1303,48 @@ bool XDGBasedAppProvider::ExpandFieldCodes(const DesktopEntry& candidate,
 
 
 // Escapes a single command-line argument for safe execution by the shell.
-// This wraps the argument in double quotes and escapes special characters.
+// This function uses the most robust method for shell escaping: enclosing the
+// argument in single quotes. Any literal single quotes within the argument are
+// handled using the standard `'\''` sequence.
+// An optimization is included to avoid quoting arguments that are already safe,
+// improving command line readability. The safety check is locale-independent.
 std::string XDGBasedAppProvider::EscapeArg(const std::string& arg)
 {
-	std::string out;
-	out.push_back('"');
-	for (char c : arg) {
-		// Escape characters that have special meaning inside double quotes in shell.
-		if (c == '\\' || c == '"' || c == '$' || c == '`') {
-			out.push_back('\\');
-		}
-		out.push_back(c);
+	if (arg.empty()) {
+		return "''"; // An empty string is represented as '' in the shell.
 	}
-	out.push_back('"');
+
+	bool is_safe = true;
+	for (const unsigned char c : arg) {
+		// Perform a locale-independent check for 7-bit ASCII characters.
+		if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+			  || c == '/' || c == '.' || c == '_' || c == '-'))
+		{
+			is_safe = false;
+			break;
+		}
+	}
+
+	if (is_safe) {
+		return arg;
+	}
+
+	std::string out;
+	out.push_back('\'');
+	for (const unsigned char uc : arg) {
+		if (uc == '\'') {
+			// A single quote cannot be escaped inside a single-quoted string.
+			// The standard method is to end the string (''), add an escaped quote (\'),
+			// and start a new string (''). For example, "it's" becomes 'it'\''s'.
+			out.append("'\\''");
+		} else {
+			out.push_back(static_cast<char>(uc));
+		}
+	}
+	out.push_back('\'');
 	return out;
 }
+
 
 
 // ****************************** Paths and the System environment helpers ******************************

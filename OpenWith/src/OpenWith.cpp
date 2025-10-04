@@ -2,6 +2,7 @@
 #include "farplug-wide.h"
 #include "KeyFileHelper.h"
 #include "WinCompat.h"
+#include "WinPort.h"
 #include "lng.hpp"
 #include "common.hpp"
 #include "utils.h"
@@ -30,7 +31,13 @@ private:
 										const std::vector<Field>& application_info,
 										const Field& launch_command)
 	{
-		constexpr int DIALOG_WIDTH = 80;
+		constexpr int MIN_DIALOG_WIDTH = 40;
+		constexpr int DESIRED_DIALOG_WIDTH = 90;
+
+		auto screen_width = GetScrX();
+		int hi = std::max(MIN_DIALOG_WIDTH, screen_width - 4);
+		int dialog_width = std::clamp(DESIRED_DIALOG_WIDTH, MIN_DIALOG_WIDTH, hi);
+
 		int dialog_height = file_info.size() + application_info.size() + 9;
 
 		// Helper lambda to find the maximum label length in a vector of Fields for alignment.
@@ -49,11 +56,11 @@ private:
 		// Calculate coordinates for dialog items to right-align all text labels.
 		int di_text_X2 = max_di_text_length + 4;
 		int di_edit_X1 = max_di_text_length + 6;
-		int di_edit_X2 = DIALOG_WIDTH - 6;
+		int di_edit_X2 = dialog_width - 6;
 
 		std::vector<FarDialogItem> di;
 
-		di.push_back({ DI_DOUBLEBOX, 3,  1, DIALOG_WIDTH - 4,  dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MDetails), 0 });
+		di.push_back({ DI_DOUBLEBOX, 3,  1, dialog_width - 4,  dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MDetails), 0 });
 
 		int cur_line = 2;
 
@@ -91,7 +98,7 @@ private:
 
 		di.push_back({ DI_BUTTON, 0,  cur_line,  0,  cur_line, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
 
-		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, DIALOG_WIDTH, dialog_height, L"InformationDialog",
+		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, dialog_width, dialog_height, L"InformationDialog",
 										di.data(), static_cast<int>(di.size()), 0, 0, nullptr, 0);
 		if (dlg != INVALID_HANDLE_VALUE) {
 			int exitCode = s_Info.DialogRun(dlg);
@@ -216,6 +223,15 @@ private:
 		for (const auto &line : text) items.push_back(line.c_str());
 		items.push_back(GetMsg(MOk));
 		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items.data(), items.size(), 1);
+	}
+
+
+	static int GetScrX(void)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenBufferInfo;
+		if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &ConsoleScreenBufferInfo))
+			return ConsoleScreenBufferInfo.dwSize.X;
+		return 0;
 	}
 
 

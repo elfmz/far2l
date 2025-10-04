@@ -67,9 +67,9 @@ void settings::load()
 	show_dword_seps = kfr.GetInt(param_show_dword_seps, 0) != 0;
 	move_inside_byte = kfr.GetInt(param_move_inside_byte, 0) != 0;
 	std_cursor_size = kfr.GetInt(param_std_cursor_size, 0) != 0;
-	clr_active = static_cast<FarColor>(kfr.GetInt(param_clr_active, 0));
-	clr_updated = static_cast<FarColor>(kfr.GetInt(param_clr_updated, 0));
-	clr_offset = static_cast<FarColor>(kfr.GetInt(param_clr_offset, 0));
+	clr_active = static_cast<FarColor>(kfr.GetULL(param_clr_active, 0));
+	clr_updated = static_cast<FarColor>(kfr.GetULL(param_clr_updated, 0));
+	clr_offset = static_cast<FarColor>(kfr.GetULL(param_clr_offset, 0));
 }
 
 
@@ -84,9 +84,9 @@ void settings::save()
 	kfh.SetInt(INI_SECTION, param_show_dword_seps, show_dword_seps ? 1 : 0);
 	kfh.SetInt(INI_SECTION, param_move_inside_byte, move_inside_byte ? 1 : 0);
 	kfh.SetInt(INI_SECTION, param_std_cursor_size, std_cursor_size ? 1 : 0);
-	kfh.SetInt(INI_SECTION, param_clr_active, clr_active);
-	kfh.SetInt(INI_SECTION, param_clr_updated, clr_updated);
-	kfh.SetInt(INI_SECTION, param_clr_offset, clr_offset);
+	kfh.SetULL(INI_SECTION, param_clr_active, clr_active);
+	kfh.SetULL(INI_SECTION, param_clr_updated, clr_updated);
+	kfh.SetULL(INI_SECTION, param_clr_offset, clr_offset);
 }
 
 void settings::configure()

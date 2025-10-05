@@ -168,15 +168,55 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 	}
 
 	//Highlight cursor position
-	const COORD pos_hex = cursor_from_offset(offset, cursor, true);
-	write(pos_hex.Y, pos_hex.X + 0, settings::clr_active);
-	write(pos_hex.Y, pos_hex.X + 1, settings::clr_active);
-	if (_codepage == CP_UTF16LE && !hex_area) {
-		write(pos_hex.Y, pos_hex.X + 3, settings::clr_active);
-		write(pos_hex.Y, pos_hex.X + 4, settings::clr_active);
+	if (!hex_area && _codepage == CP_UTF8)
+	{
+		// UTF-8 multi-byte character highlighting
+		UINT64 start_char_offset = cursor;
+		size_t rel_offset = static_cast<size_t>(start_char_offset - offset);
+
+		// Find the beginning of the character by moving backwards
+		while (rel_offset > 0 && (ori_data[rel_offset] & 0xC0) == 0x80) {
+			start_char_offset--;
+			rel_offset--;
+		}
+
+		// Determine character length
+		BYTE first_byte = (start_char_offset >= offset) ? ori_data[rel_offset] : 0;
+		if (upd_data.count(start_char_offset)) {
+			first_byte = upd_data.at(start_char_offset);
+		}
+		
+		int char_len = 1;
+		if ((first_byte & 0xE0) == 0xC0) char_len = 2;
+		else if ((first_byte & 0xF0) == 0xE0) char_len = 3;
+		else if ((first_byte & 0xF8) == 0xF0) char_len = 4;
+
+		// Highlight all bytes of the character in the hex area
+		for (int i = 0; i < char_len; ++i) {
+			if (start_char_offset + i < offset + ori_data.size()) {
+				const COORD pos_hex_byte = cursor_from_offset(offset, start_char_offset + i, true);
+				write(pos_hex_byte.Y, pos_hex_byte.X + 0, settings::clr_active);
+				write(pos_hex_byte.Y, pos_hex_byte.X + 1, settings::clr_active);
+			}
+		}
+
+		// Highlight the character in the text area
+		const COORD pos_txt = cursor_from_offset(offset, cursor, false);
+		write(pos_txt.Y, pos_txt.X, settings::clr_active);
 	}
-	const COORD pos_txt = cursor_from_offset(offset, cursor, false);
-	write(pos_txt.Y, pos_txt.X, settings::clr_active);
+	else
+	{
+		// Standard single-byte highlighting
+		const COORD pos_hex = cursor_from_offset(offset, cursor, true);
+		write(pos_hex.Y, pos_hex.X + 0, settings::clr_active);
+		write(pos_hex.Y, pos_hex.X + 1, settings::clr_active);
+		if (_codepage == CP_UTF16LE && !hex_area) {
+			write(pos_hex.Y, pos_hex.X + 3, settings::clr_active);
+			write(pos_hex.Y, pos_hex.X + 4, settings::clr_active);
+		}
+		const COORD pos_txt = cursor_from_offset(offset, cursor, false);
+		write(pos_txt.Y, pos_txt.X, settings::clr_active);
+	}
 }
 
 

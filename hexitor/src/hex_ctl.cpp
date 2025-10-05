@@ -175,7 +175,8 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 		size_t rel_offset = static_cast<size_t>(start_char_offset - offset);
 
 		// Find the beginning of the character by moving backwards
-		while (rel_offset > 0 && (ori_data[rel_offset] & 0xC0) == 0x80) {
+		int limit = 6; // Sane limit for backward search
+		while (rel_offset > 0 && limit-- > 0 && (ori_data[rel_offset] & 0xC0) == 0x80) {
 			start_char_offset--;
 			rel_offset--;
 		}
@@ -186,10 +187,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 			first_byte = upd_data.at(start_char_offset);
 		}
 		
-		int char_len = 1;
-		if ((first_byte & 0xE0) == 0xC0) char_len = 2;
-		else if ((first_byte & 0xF0) == 0xE0) char_len = 3;
-		else if ((first_byte & 0xF8) == 0xF0) char_len = 4;
+		int char_len = get_utf8_char_len(first_byte);
 
 		// Highlight all bytes of the character in the hex area
 		for (int i = 0; i < char_len; ++i) {

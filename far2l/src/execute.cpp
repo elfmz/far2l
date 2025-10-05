@@ -264,7 +264,13 @@ public:
 		ScrBuf.Flush();
 		VTLog::Register(NULL); // enable logging
 		if (cmd_str) {
-			const std::wstring &ws = MB2Wide(cmd_str);
+			std::wstring ws = MB2Wide(cmd_str);
+			size_t pos = 0;
+			while ((pos = ws.find('\n', pos)) != std::string::npos) {
+				ws.insert(pos, 1, '\r');
+				pos += 2;
+			}
+
 			WINPORT(WriteConsole)(NULL, ws.c_str(), ws.size(), &_dw, NULL);
 			WINPORT(WriteConsole)(NULL, &eol[0], ARRAYSIZE(eol), &_dw, NULL);
 		}

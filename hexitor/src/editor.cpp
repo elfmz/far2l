@@ -28,24 +28,16 @@
 #include "hex_ctl.h" // For CP_UTF8
 #include <farkeys.h>
 #include <algorithm> // for std::max
-
-// Helper to get the length of a UTF-8 character from its first byte
-static int get_utf8_char_len(BYTE b)
-{
-	if ((b & 0x80) == 0) return 1;
-	if ((b & 0xE0) == 0xC0) return 2;
-	if ((b & 0xF0) == 0xE0) return 3;
-	if ((b & 0xF8) == 0xF0) return 4;
-	return 1; // Invalid start byte, treat as 1 byte
-}
+#include <UtfConvert.hpp> // For UtfConverter
 
 // Helper to find the start of the previous UTF-8 character
 UINT64 find_prev_utf8_start(const editor* ed, UINT64 current_offset)
 {
 	if (current_offset == 0) return 0;
 	UINT64 offset = current_offset - 1;
+	int limit = 6; // Sane limit for backward search
 	// Move backwards until we find a byte that is NOT a continuation byte (10xxxxxx)
-	while (offset > 0) {
+	while (offset > 0 && limit-- > 0) {
 		BYTE b = ed->get_current_value(offset);
 		if ((b & 0xC0) != 0x80) {
 			break; // Found the start of a character
@@ -903,17 +895,11 @@ bool editor::edkey_handle(int key)
 		const wchar_t key_value = static_cast<wchar_t>(key);
 
 		if (_hexeditor.get_codepage() == CP_UTF8) {
-
 			// Get length of the character we are about to replace
 			const int old_len = get_utf8_char_len(get_current_value(_cursor_offset));
 
 			// Get bytes of the new character
-			vector<BYTE> utf8_seq;
-			const int req = WideCharToMultiByte(CP_UTF8, 0, &key_value, 1, nullptr, 0, nullptr, nullptr);
-			if (req > 0) {
-				utf8_seq.resize(req);
-				WideCharToMultiByte(CP_UTF8, 0, &key_value, 1, reinterpret_cast<LPSTR>(&utf8_seq.front()), req, nullptr, nullptr);
-			}
+			UtfConverter<wchar_t, uint8_t, false> utf8_seq(&key_value, 1);
 			const int new_len = utf8_seq.size();
 
 			// Determine loop boundary to handle both expansion and contraction

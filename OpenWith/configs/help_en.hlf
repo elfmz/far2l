@@ -10,7 +10,7 @@ $^#Contents#
 
  After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application.
 
-   ~Configuration Dialog~@ConfigurationDialog@
+   ~Configuration Dialog (F9)~@ConfigurationDialog@
 
    ~Information Dialog (F3)~@InformationDialog@
 
@@ -23,7 +23,7 @@ $^#OpenWith plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
 $^#Configuration Dialog#
- The configuration dialog allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
+ The configuration dialog, accessible by pressing #F9# in the application selection menu, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
 
  #1. GENERAL SETTINGS#
 
@@ -173,7 +173,7 @@ $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
 $^#Troubleshooting#
 
- #Why doesn't my favorite app appear in the list (Linux/BSD)?#
+ #Why doesn't my favorite app appear in the list?#
 
  This can happen for several reasons:
 

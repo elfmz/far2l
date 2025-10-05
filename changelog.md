@@ -31,7 +31,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   (now as experimental version which partially more effective then multiarc;
   arclite disabled by default, to enable manually turn on
   F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)
-* _hexitor plugin_: Hex editor (ported from far3)
+* _hexitor plugin_: Hex editor (ported from far3) + preliminary support for viewing and editing UTF-8 characters
 * _OpenWith plugin_: New plugin provides a context-aware menu to open the currently selected file with an appropriate application
 * Several bugfixes
 

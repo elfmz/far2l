@@ -2,6 +2,7 @@
 #include "farplug-wide.h"
 #include "KeyFileHelper.h"
 #include "WinCompat.h"
+#include "WinPort.h"
 #include "lng.hpp"
 #include "common.hpp"
 #include "utils.h"
@@ -30,7 +31,12 @@ private:
 										const std::vector<Field>& application_info,
 										const Field& launch_command)
 	{
-		constexpr int DIALOG_WIDTH = 80;
+		constexpr int MIN_DIALOG_WIDTH = 40;
+		constexpr int DESIRED_DIALOG_WIDTH = 90;
+
+		int max_dialog_width = std::max(MIN_DIALOG_WIDTH, GetScreenWidth() - 4);
+		int dialog_width = std::clamp(DESIRED_DIALOG_WIDTH, MIN_DIALOG_WIDTH, max_dialog_width);
+
 		int dialog_height = file_info.size() + application_info.size() + 9;
 
 		// Helper lambda to find the maximum label length in a vector of Fields for alignment.
@@ -49,11 +55,11 @@ private:
 		// Calculate coordinates for dialog items to right-align all text labels.
 		int di_text_X2 = max_di_text_length + 4;
 		int di_edit_X1 = max_di_text_length + 6;
-		int di_edit_X2 = DIALOG_WIDTH - 6;
+		int di_edit_X2 = dialog_width - 6;
 
 		std::vector<FarDialogItem> di;
 
-		di.push_back({ DI_DOUBLEBOX, 3,  1, DIALOG_WIDTH - 4,  dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MDetails), 0 });
+		di.push_back({ DI_DOUBLEBOX, 3,  1, dialog_width - 4,  dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MDetails), 0 });
 
 		int cur_line = 2;
 
@@ -91,7 +97,7 @@ private:
 
 		di.push_back({ DI_BUTTON, 0,  cur_line,  0,  cur_line, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
 
-		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, DIALOG_WIDTH, dialog_height, L"InformationDialog",
+		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, dialog_width, dialog_height, L"InformationDialog",
 										di.data(), static_cast<int>(di.size()), 0, 0, nullptr, 0);
 		if (dlg != INVALID_HANDLE_VALUE) {
 			int exitCode = s_Info.DialogRun(dlg);
@@ -100,6 +106,7 @@ private:
 		}
 		return false;
 	}
+
 
 	// A wrapper function that gathers all necessary details and calls the dialog implementation.
 	// return true if exit by button "Launch", false otherwise
@@ -138,31 +145,31 @@ private:
 
 	static void ProcessFile(const std::wstring &pathname)
 	{
-		// The factory method creates an appropriate provider for the current OS (Linux, macOS, etc.).
 		auto provider = AppProvider::CreateAppProvider(&OpenWithPlugin::GetMsg);
 		auto candidates = provider->GetAppCandidates(pathname);
 
-		if (candidates.empty()) {
-			ShowError(GetMsg(MError), { GetMsg(MNoAppsFound) , provider->GetMimeType(pathname) });
-			return;
-		}
-
-		std::vector<FarMenuItem> menu_items(candidates.size());
-		for (size_t i = 0; i < candidates.size(); ++i) {
-			menu_items[i].Text = candidates[i].name.c_str();
-		}
-
 		int BreakCode = -1;
-		const int BreakKeys[] = {VK_F3, 0};
+		const int BreakKeys[] = {VK_F3, VK_F9, 0};
 		int active_idx = 0;
 
-		// This loop re-displays the menu, allowing the user to press F3 for details 
-		// and then return to the same menu without starting over.
 		while(true) {
+			if (candidates.empty()) {
+				ShowError(GetMsg(MError), { GetMsg(MNoAppsFound) , provider->GetMimeType(pathname) });
+				break;
+			}
+
+			// Declare menu_items inside the loop. This is critical for memory safety.
+			// It ensures that the pointers in `menu_items[i].Text` are always valid,
+			// as they won't outlive the `candidates` vector they point to.
+			std::vector<FarMenuItem> menu_items(candidates.size());
+			for (size_t i = 0; i < candidates.size(); ++i) {
+				menu_items[i].Text = candidates[i].name.c_str();
+			}
+
 			menu_items[active_idx].Selected = true;
 
 			int selected_idx = s_Info.Menu(s_Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_SHOWAMPERSAND | FMENU_CHANGECONSOLETITLE,
-							GetMsg(MChooseApplication), L"F3 Ctrl+Alt+F", L"Contents", BreakKeys, &BreakCode, menu_items.data(), menu_items.size());
+										   GetMsg(MChooseApplication), L"F3 F9 Ctrl+Alt+F", L"Contents", BreakKeys, &BreakCode, menu_items.data(), menu_items.size());
 
 			if (selected_idx == -1) {
 				break; // User cancelled the menu (e.g., with Esc).
@@ -171,17 +178,27 @@ private:
 			menu_items[active_idx].Selected = false;
 			active_idx = selected_idx;
 
-			const auto& selected_app = candidates[selected_idx];
-			std::wstring cmd = provider->ConstructCommandLine(selected_app, pathname);
-
-			// BreakCode corresponds to the index in the BreakKeys array. 0 means the first key (VK_F3) was pressed.
-			if (BreakCode == 0) { // F3
+			if (BreakCode == 0) { // F3 for Details
+				const auto& selected_app = candidates[selected_idx];
+				std::wstring cmd = provider->ConstructCommandLine(selected_app, pathname);
 				if (ShowDetailsDialog(provider.get(), selected_app, pathname, cmd)) {
-					// if dialog closed by Launch button do launch and close
 					LaunchApplication(selected_app, cmd);
 					break;
 				}
-			} else { // Enter
+			} else if (BreakCode == 1) { // F9 for Options
+				const auto configure_result = ConfigureImpl();
+				if (configure_result.settings_saved) {
+					// Optimization: The expensive candidate list regeneration is performed
+					// ONLY if a relevant setting was actually changed.
+					if (configure_result.refresh_needed) {
+						provider->LoadPlatformSettings();
+						candidates = provider->GetAppCandidates(pathname);
+						active_idx = 0; // Reset selection to the top of the new list
+					}
+				}
+			} else { // Enter to launch
+				const auto& selected_app = candidates[selected_idx];
+				std::wstring cmd = provider->ConstructCommandLine(selected_app, pathname);
 				LaunchApplication(selected_app, cmd);
 				break;
 			}
@@ -216,6 +233,15 @@ private:
 		for (const auto &line : text) items.push_back(line.c_str());
 		items.push_back(GetMsg(MOk));
 		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items.data(), items.size(), 1);
+	}
+
+
+	static int GetScreenWidth()
+	{
+		CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenBufferInfo;
+		if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &ConsoleScreenBufferInfo))
+			return ConsoleScreenBufferInfo.dwSize.X;
+		return 0;
 	}
 
 
@@ -305,14 +331,26 @@ public:
 	}
 
 
-	static int Configure(int itemNumber)
+	// A structure to hold detailed results from the configuration dialog.
+	// This allows communicating more than just a simple success/failure status.
+	struct ConfigureResult
+	{
+		bool settings_saved = false;  // True if the user clicked "Ok" and settings were saved.
+		bool refresh_needed = false; // True if a setting affecting the candidate list was changed.
+	};
+
+
+	// The core implementation of the configuration logic.
+	// It's a helper function that returns a detailed result, allowing for optimization.
+	static ConfigureResult ConfigureImpl()
 	{
 		LoadOptions();
 
-		// Create a provider instance to fetch platform-specific settings for the dialog.
 		auto provider = AppProvider::CreateAppProvider(&OpenWithPlugin::GetMsg);
 		provider->LoadPlatformSettings();
-		std::vector<ProviderSetting> platform_settings = provider->GetPlatformSettings();
+		// Store the state of platform-specific settings *before* showing the dialog.
+		// This is crucial for detecting changes later.
+		std::vector<ProviderSetting> old_platform_settings = provider->GetPlatformSettings();
 
 		std::vector<FarDialogItem> di;
 		int y = 1;
@@ -320,9 +358,9 @@ public:
 		di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, TRUE, { s_UseExternalTerminal }, 0, 0, GetMsg(MUseExternalTerminal), 0 });
 		di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, 0, { s_NoWaitForCommandCompletion },  0, 0, GetMsg(MNoWaitForCommandCompletion), 0});
 
-		if (!platform_settings.empty()) {
+		if (!old_platform_settings.empty()) {
 			di.push_back({ DI_TEXT, 5, ++y, 0, 0, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
-			for (const auto& setting : platform_settings) {
+			for (const auto& setting : old_platform_settings) {
 				di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, FALSE, { setting.value }, 0, 0, setting.display_name.c_str(), 0 });
 			}
 		}
@@ -338,33 +376,58 @@ public:
 		di.insert(di.begin(), { DI_DOUBLEBOX, 3, 1, dialog_width - 4, dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MConfigTitle), 0 });
 
 		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, dialog_width, dialog_height, L"ConfigurationDialog", di.data(), di.size(), 0, 0, nullptr, 0);
-		if (dlg == INVALID_HANDLE_VALUE) return FALSE;
+		if (dlg == INVALID_HANDLE_VALUE) {
+			return {}; // Return a default (all false) result on dialog initialization failure.
+		}
 
 		int exitCode = s_Info.DialogRun(dlg);
+		ConfigureResult result;
 
 		// The index of the 'OK' button is determined by its position in the 'di' vector.
-		if (exitCode == (int)di.size() - 2) { // OK
+		if (exitCode == (int)di.size() - 2) { // OK was clicked
+			result.settings_saved = true;
 
-			// Retrieve new settings values from the dialog controls.
+			// Save platform-independent settings
 			s_UseExternalTerminal = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
 			s_NoWaitForCommandCompletion = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
 			SaveOptions();
 
-			if (!platform_settings.empty()) {
+			if (!old_platform_settings.empty()) {
 				std::vector<ProviderSetting> new_settings;
-				// The first platform-specific checkbox is at index 4 (0:box, 1:check, 2:check, 3:sep).
-				int first_platform_item_idx = 4;
-				for (size_t i = 0; i < platform_settings.size(); ++i) {
+				int first_platform_item_idx = 4; // Index of the first platform-specific checkbox
+				bool list_needs_refresh = false;
+
+				for (size_t i = 0; i < old_platform_settings.size(); ++i) {
 					bool new_value = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, first_platform_item_idx + i, 0) == BSTATE_CHECKED);
-					new_settings.push_back({ platform_settings[i].internal_key, platform_settings[i].display_name, new_value });
+					// If any platform-specific setting has changed, the candidate list must be regenerated.
+					if (old_platform_settings[i].value != new_value) {
+						list_needs_refresh = true;
+					}
+					new_settings.push_back({ old_platform_settings[i].internal_key, old_platform_settings[i].display_name, new_value });
 				}
 				provider->SetPlatformSettings(new_settings);
 				provider->SavePlatformSettings();
+
+				if (list_needs_refresh) {
+					result.refresh_needed = true;
+				}
 			}
 		}
+
 		s_Info.DialogFree(dlg);
-		return TRUE;
+		return result;
 	}
+
+
+	// The public Configure function called by far2l.
+	// It acts as a simple wrapper around the core implementation, returning only
+	// the TRUE/FALSE value required by the API.
+	static int Configure(int itemNumber)
+	{
+		return ConfigureImpl().settings_saved;
+	}
+
+
 
 
 	static void Exit() {}

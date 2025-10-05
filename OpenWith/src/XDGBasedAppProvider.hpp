@@ -174,6 +174,7 @@ private:
 	static std::string UnescapeGeneralString(const std::string& raw_str);
 	static std::vector<std::string> TokenizeExecString(const std::string& exec_str);
 	static bool ExpandFieldCodes(const DesktopEntry& candidate, const std::string& pathname, const std::string& unescaped, std::vector<std::string>& out_args);
+	static std::string PathToUri(const std::string& path);
 	static std::string EscapeArg(const std::string& arg);
 
 	// Paths and the system environment helpers

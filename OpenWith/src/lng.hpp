@@ -30,5 +30,5 @@ enum LanguageID
 	MSource,
 	MFullScanFor,
 	MFor,
-	MIn,
+	MIn
 };

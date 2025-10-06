@@ -195,3 +195,36 @@ jobs:
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: |
           cmake --build _build --config $BUILD_TYPE -j$(sysctl -n hw.logicalcpu)
+
+  macos15-arm64-clang16:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
+    runs-on: macos-15
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install far2l dependencies
+        # libx11, openssl is already installed
+        run: brew bundle -v
+
+      - name: Relink 'keg-only' packages
+        run: brew link libarchive --force
+
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(sysctl -n hw.logicalcpu)

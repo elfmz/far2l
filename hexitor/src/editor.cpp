@@ -27,6 +27,25 @@
 #include "version.h"
 #include "hex_ctl.h" // For CP_UTF8
 #include <farkeys.h>
+#include <algorithm> // for std::max
+#include <UtfConvert.hpp> // For UtfConverter
+
+// Helper to find the start of the previous UTF-8 character
+UINT64 find_prev_utf8_start(const editor* ed, UINT64 current_offset)
+{
+	if (current_offset == 0) return 0;
+	UINT64 offset = current_offset - 1;
+	int limit = 6; // Sane limit for backward search
+	// Move backwards until we find a byte that is NOT a continuation byte (10xxxxxx)
+	while (offset > 0 && limit-- > 0) {
+		BYTE b = ed->get_current_value(offset);
+		if ((b & 0xC0) != 0x80) {
+			break; // Found the start of a character
+		}
+		offset--;
+	}
+	return offset;
+}
 
 #define MIN_WIDTH		80		//Minimum width width size of main edit window
 #define MIN_HEIGHT	3		//Minimum height width size of main edit window
@@ -448,22 +467,28 @@ bool editor::move_handle_key(int key)
 				}
 			}
 			else {
-				if (_cursor_offset && !_cursor_iha)
+				if (!_cursor_iha && _hexeditor.get_codepage() == CP_UTF8) {
+					// Move to the beginning of the previous UTF-8 character
+					_cursor_offset = find_prev_utf8_start(this, _cursor_offset);
 					_cursor_fbp = true;
-				if (_cursor_offset || (_cursor_iha && !_cursor_fbp)) {
-					bool cursor_moved = false;
-					if (_cursor_iha) {
-						if (settings::move_inside_byte) {
-							cursor_moved = _cursor_fbp;
-							_cursor_fbp = !_cursor_fbp;
+				} else { // Original logic for other modes
+					if (_cursor_offset && !_cursor_iha)
+						_cursor_fbp = true;
+					if (_cursor_offset || (_cursor_iha && !_cursor_fbp)) {
+						bool cursor_moved = false;
+						if (_cursor_iha) {
+							if (settings::move_inside_byte) {
+								cursor_moved = _cursor_fbp;
+								_cursor_fbp = !_cursor_fbp;
+							}
+							else {
+								cursor_moved = true;
+								_cursor_fbp = true;
+							}
 						}
-						else {
-							cursor_moved = true;
-							_cursor_fbp = true;
-						}
+						if (!_cursor_iha || cursor_moved)
+							_cursor_offset -= (_hexeditor.get_codepage() == CP_UTF16LE && !_cursor_iha ? 2 : 1);
 					}
-					if (!_cursor_iha || cursor_moved)
-						_cursor_offset -= (_hexeditor.get_codepage() == CP_UTF16LE && !_cursor_iha ? 2 : 1);
 				}
 			}
 			if (_cursor_offset < _view_offset)
@@ -472,13 +497,26 @@ bool editor::move_handle_key(int key)
 
 		case KEY_NUMPAD6:
 		case KEY_RIGHT:
-			if (!ctrl_pressed)
-				move_right(false);
-			else {
+			if (ctrl_pressed) {
 				_cursor_fbp = true;
 				_cursor_offset = _cursor_offset + 0x4 - (_cursor_offset % 0x4);
 				if (_cursor_offset >= _file.size())
 					_cursor_offset = _file.size() - 1;
+			} else {
+				if (!_cursor_iha && _hexeditor.get_codepage() == CP_UTF8) {
+					// Move to the beginning of the next UTF-8 character
+					if (_cursor_offset < _file.size()) {
+						int len = get_utf8_char_len(get_current_value(_cursor_offset));
+						if (_cursor_offset + len < _file.size()) {
+							_cursor_offset += len;
+						} else {
+							_cursor_offset = _file.size() -1;
+						}
+						_cursor_fbp = true;
+					}
+				} else { // Original logic for other modes
+					move_right(false);
+				}
 			}
 			if (_cursor_offset >= _view_offset + _hexeditor.showed_data_size())
 				update_buffer(_view_offset + 0x10);
@@ -805,6 +843,10 @@ bool editor::edkey_handle(int key)
 	if (ctrl_pressed || alt_pressed)
 		return false;
 	
+	if (key == KEY_DEL || key == KEY_NUMDEL) {
+		// Disable DELETE key for now
+		return true; // Event handled, do nothing
+	}
 	if( key & KEY_CTRLMASK )
 		return false;
 	key &= KEY_MASKF;
@@ -853,20 +895,35 @@ bool editor::edkey_handle(int key)
 		const wchar_t key_value = static_cast<wchar_t>(key);
 
 		if (_hexeditor.get_codepage() == CP_UTF8) {
-			vector<BYTE> utf8_seq;
-			const int req = WideCharToMultiByte(CP_UTF8, 0, &key_value, 1, nullptr, 0, nullptr, nullptr);
-			if (req > 0) {
-				utf8_seq.resize(req);
-				WideCharToMultiByte(CP_UTF8, 0, &key_value, 1, reinterpret_cast<LPSTR>(&utf8_seq.front()), req, nullptr, nullptr);
+			// Get length of the character we are about to replace
+			const int old_len = get_utf8_char_len(get_current_value(_cursor_offset));
+
+			// Get bytes of the new character
+			UtfConverter<wchar_t, uint8_t, false> utf8_seq(&key_value, 1);
+			const int new_len = utf8_seq.size();
+
+			// Determine loop boundary to handle both expansion and contraction
+			const int loop_len = std::max(old_len, new_len);
+
+			// Overwrite bytes
+			for (int i = 0; i < loop_len; ++i) {
+				if (_cursor_offset + i >= _file.size()) break; // End of file check
+
+				if (i < new_len) {
+					// Write new character's byte
+					update_data(_cursor_offset + i, utf8_seq[i]);
+				} else {
+					// New char is shorter, pad with null bytes
+					update_data(_cursor_offset + i, 0x00);
+				}
 			}
 
-			for (const auto& b : utf8_seq) {
-				if (_cursor_offset >= _file.size()) break; // Stop if we hit end of file
-				update_data(_cursor_offset, b);
-				_cursor_offset++;
+			// Advance cursor by the length of the *new* character for continuous typing
+			_cursor_offset += new_len;
+			if (_cursor_offset >= _file.size()) {
+				_cursor_offset = _file.size() - 1;
 			}
 			_cursor_fbp = true;
-			// move_right is not needed here as we manually advanced the cursor
 		}
 		else {
 			if (_hexeditor.get_codepage() == CP_UTF16LE) {
@@ -1240,11 +1297,11 @@ BYTE editor::get_current_value(const UINT64 offset) const
 	BYTE val = 0;
 
 	if (offset < _file.size()) {
-		map<UINT64, BYTE>::const_iterator itup = _upd_data.find(_cursor_offset);
+		map<UINT64, BYTE>::const_iterator itup = _upd_data.find(offset); // Corrected: use offset, not _cursor_offset
 		if (itup != _upd_data.end())
 			val = itup->second;
 		else {
-			if (offset >= _view_offset && offset < _view_offset + _hexeditor.showed_data_size())
+			if (offset >= _view_offset && offset < _view_offset + _ori_data.size()) // Corrected: use _ori_data.size()
 				val = _ori_data[static_cast<size_t>(offset - _view_offset)];
 			else {
 				//Read from file

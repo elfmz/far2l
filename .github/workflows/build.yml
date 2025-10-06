@@ -20,6 +20,8 @@ on:
       - 'dependencies-minimal.txt'
       - 'dependencies.txt'
       - 'Dockerfile'
+      - 'DUMPER.md'
+      - 'far2lOverlays.nix'
       - 'HACKING.md'
       - 'LICENSE.txt'
       - 'README.md'

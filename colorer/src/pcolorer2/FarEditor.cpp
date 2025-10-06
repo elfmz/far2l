@@ -328,8 +328,7 @@ void FarEditor::selectRegion() const
     }
 
     if (end - cursorRegion->start > 0) {
-      EditorSelect es {BTYPE_STREAM, cursorRegion->start, cursorRegion->end,
-                       end - cursorRegion->start, 1};
+      EditorSelect es {BTYPE_STREAM, ei.CurLine, cursorRegion->start, end - cursorRegion->start, 1};
       info->EditorControl(ECTL_SELECT, &es);
     }
   }

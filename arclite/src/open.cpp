@@ -1373,8 +1373,8 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 				bool thread1_done = false;
 				bool thread2_done = false;
-				int errc1;// = future.get(); // extract
-				int errc2;// = future2.get(); // open
+				int errc1 = 0;// = future.get(); // extract
+				int errc2 = 0;// = future2.get(); // open
 
 				while (!thread1_done || !thread2_done) {
 					Far::g_fsf.DispatchInterThreadCalls();
@@ -1431,7 +1431,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			else {
 				fprintf(stderr,"exFullSize = true ?\n" );
 				bool thread1_done = false;
-				int errc1;// = future.get(); // extract
+				int errc1 = 0;// = future.get(); // extract
 
 				fprintf(stderr,"wait loop..\n" );
 

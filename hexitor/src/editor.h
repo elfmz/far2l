@@ -39,6 +39,13 @@ public:
 	 */
 	bool edit(const wchar_t* file_name, const UINT64 file_offset = 0);
 
+	/**
+	 * Get current byte value (original or updated)
+	 * \param offset value offset
+	 * \return byte value
+	 */
+	BYTE get_current_value(const UINT64 offset) const;
+
 private:
 	/**
 	 * Window resize handler.
@@ -127,13 +134,6 @@ private:
 	 * \param force_dlg true to force show find initial dialog
 	 */
 	void find(const bool forward, const bool force_dlg);
-
-	/**
-	 * Get current byte value (original or updated)
-	 * \param offset value offset
-	 * \return byte value
-	 */
-	BYTE get_current_value(const UINT64 offset) const;
 
 	/**
 	 * Update internal view buffer

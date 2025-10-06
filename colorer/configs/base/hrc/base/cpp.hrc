@@ -509,7 +509,7 @@
     region3="cFunc"/>-->
 
   <regexp><![CDATA[
-    /^ \M \s* (typedef)?!
+    /^ \M \s* (typedef)?! (return)?!
     (\w[\w_*&<>~,:]+ \s [\s\w_*&<>~\",:]*?)?
 
     (?{c:FuncOutline}
@@ -517,6 +517,7 @@
     )
 
     (\sfor)?~4 (\sif)?~3 (\swhile)?~6 (\sswitch)?~7 (\scatch)?~6
+    (printf)?~6 (constexpr)?~9 (\s<<)?~3
     \s* \( [^;]* ($|\{)/x  
   ]]></regexp>
 <!--

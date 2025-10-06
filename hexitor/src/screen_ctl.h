@@ -20,6 +20,9 @@
 #pragma once
 
 #include "common.h"
+#include "UtfDefines.h"
+
+#define WCharSanitize(wc) (((wc) && WCHAR_IS_VALID(wc) && !WCHAR_IS_COMBINING(wc)) ? (wc) : WCHAR_REPLACEMENT)
 
 static constexpr size_t MIN_WIDTH_SIZE = 80;		//Minimal width size of the screen control
 static constexpr size_t MIN_HEIGHT_SIZE = 1;		//Minimal height size of the screen control
@@ -95,8 +98,9 @@ protected:
 		assert(row * _width + col + len <= _buffer.size());
 
 		const size_t start_pos = row * _width + col;
-		for (size_t i = 0; i < len; ++i)
-			_buffer[start_pos + i].Char.UnicodeChar = val[i];
+		for (size_t i = 0; i < len; ++i) {
+			_buffer[start_pos + i].Char.UnicodeChar = WCharSanitize(val[i]);
+		}
 	}
 
 	/**
@@ -109,7 +113,7 @@ protected:
 	{
 		assert(row < _height);
 		assert(col < _width);
-		_buffer[row * _width + col].Char.UnicodeChar = val;
+		_buffer[row * _width + col].Char.UnicodeChar = WCharSanitize(val);
 	}
 
 	/**

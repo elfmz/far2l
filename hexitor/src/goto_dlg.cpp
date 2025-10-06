@@ -23,7 +23,6 @@
 static const wchar_t* _hex_mask = L"0xHHHHHHHHHHHH";
 static const wchar_t* _percent_mask = L"99";
 
-static const wchar_t AHist[]{ L"HexitorGotoAddr" };
 
 LONG_PTR WINAPI goto_dlg::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param2)
 {

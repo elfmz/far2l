@@ -110,8 +110,7 @@ static inline auto msg_box(const FARMESSAGEFLAGS f, const wchar_t* (&msgs)[N]) {
 editor::editor()
 :	_cursor_offset(0), _cursor_fbp(true), _cursor_iha(true),
 	_view_offset(0),
-	_undo_pos(string::npos),
-	_search_fwd(true)
+	_undo_pos(string::npos)
 {
 }
 

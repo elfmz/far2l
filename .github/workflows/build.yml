@@ -35,15 +35,15 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  ubuntu-low-compiler:
+  different-compiler:
     if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc7, clang7 ]
+        compiler: [ gcc7, clang7, gcc15 ]
 
-    name: ubuntu-${{ matrix.compiler }}
+    name: ${{ matrix.compiler }}
 
     steps:
       - name: Checkout source

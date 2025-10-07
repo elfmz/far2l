@@ -77,19 +77,17 @@ struct EditorCacheParams
 
 struct EditorUndoData
 {
-	int Type;
-	int StrPos;
-	int StrNum;
-	wchar_t EOL[10];
-	int Length;
-	wchar_t *Str;
+	int Type {0};
+	int StrPos {0};
+	int StrNum {0};
+	wchar_t EOL[10]{0};
+	int Length {0};
+	wchar_t *Str {nullptr};
 
-	EditorUndoData() { memset(this, 0, sizeof(*this)); }
+	EditorUndoData() = default;
 	~EditorUndoData()
 	{
-		if (Str) {
-			delete[] Str;
-		}
+	    delete[] Str;
 	}
 	EditorUndoData(const EditorUndoData& src) : EditorUndoData()
 	{
@@ -114,9 +112,7 @@ struct EditorUndoData
 		this->Length = Length;
 		far_wcsncpy(EOL, Eol ? Eol : L"", ARRAYSIZE(EOL) - 1);
 
-		if (this->Str) {
-			delete[] this->Str;
-		}
+	    delete[] this->Str;
 
 		if (Str) {
 			this->Str = new wchar_t[Length + 1];

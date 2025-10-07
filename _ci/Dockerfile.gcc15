@@ -1,0 +1,18 @@
+# Image for the test build far2l with gcc/g++ 15
+# run build from root of project
+
+FROM gcc:15
+
+SHELL ["/bin/bash", "-xeuo", "pipefail", "-c"]
+
+WORKDIR /code
+
+RUN --mount=type=bind,source=.,target=/code/far2l \
+<<EOT
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends cmake make libuchardet-dev libxml2-dev libwxgtk3.2-dev \
+     libx11-dev libxi-dev libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev libarchive-dev python3-dev python3-cffi
+    mkdir build
+    cmake -S far2l -B build -Wno-dev -DCMAKE_BUILD_TYPE=Release -DPYTHON=yes
+    cmake --build build -j$(nproc --all)
+EOT

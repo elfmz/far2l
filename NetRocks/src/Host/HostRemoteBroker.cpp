@@ -394,7 +394,7 @@ void handle_sigquit(int) {
 	_exit(0);  // fast exit, no crash report
 }
 
-extern "C" int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	if (argc != 4) {
 		fprintf(stderr, "Its a NetRocks protocol broker and must be started by NetRocks only\n");

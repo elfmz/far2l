@@ -48,12 +48,5 @@ private:
 private:
 	HANDLE			_dialog;		///< Dialog window handle
 	vector<unsigned char>	_seq;
-	intptr_t	_id_ed_hex;
-	intptr_t	_id_ed_ansi;
-	intptr_t	_id_ed_oem;
-	intptr_t	_id_ed_uni;
-	intptr_t	_id_ed_utf8;
-	intptr_t	_id_backward;
-	intptr_t	_id_btn_cancel;
 	bool		_can_update;
 };

@@ -52,6 +52,8 @@
 		</scheme>
 
 		<scheme name="Strings">
+			<regexp match="/(\\&#34;).*(\\&#34;)/" region="def:StringContent" region1="def:PairStart" region2="def:PairEnd"/>
+
 			<block start="/(?{def:StringEdge}[Ll]?&#34;)/" end="/(?{def:StringEdge}&#34;)/" scheme="StringContent" region="def:String" inner-region="yes"
 				region00="def:PairStart" region10="def:PairEnd" />
 

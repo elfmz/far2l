@@ -45,22 +45,22 @@ bool find_dlg::show(vector<unsigned char>& seq, bool& forward_search)
 	#define FDLG_NONE 0
 
 	FarDialogItem dlg_items[] = {
-	/*  0 */ { DI_DOUBLEBOX, 3,  1, 56, 15, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_title) },
-	/*  1 */ { DI_TEXT,      5,  2, 11,  2, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&Hex:" },
-	/*  2 */ { DI_FIXEDIT,  12,  2, 54,  2, 0, (DWORD_PTR)mask_edit.c_str(), DIF_MASKEDIT },
-	/*  3 */ { DI_TEXT,      5,  4, 11,  4, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&ANSI:" },
-	/*  4 */ { DI_EDIT,     12,  4, 54,  4, 0, (DWORD_PTR)aHist, LIF_NONE | DIF_HISTORY},
-	/*  5 */ { DI_TEXT,      5,  6, 11,  6, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&OEM:" },
-	/*  6 */ { DI_EDIT,     12,  6, 54,  6, 0, (DWORD_PTR)oHist, LIF_NONE | DIF_HISTORY},
-	/*  7 */ { DI_TEXT,      5,  8, 11,  8, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"&UTF16:" },
-	/*  8 */ { DI_EDIT,     12,  8, 54,  8, 0, (DWORD_PTR)u16Hist, LIF_NONE | DIF_HISTORY},
-	/*  9 */ { DI_TEXT,      5, 10, 11, 10, 0, (DWORD_PTR)nullptr, LIF_NONE, 0, L"UTF-&8:" },
-	/* 10 */ { DI_EDIT,     12, 10, 54, 10, 0, (DWORD_PTR)u8Hist, LIF_NONE | DIF_HISTORY},
-	/* 11 */ { DI_TEXT,      0, 11,  0, 11, 0, (DWORD_PTR)nullptr, DIF_SEPARATOR },
-	/* 12 */ { DI_CHECKBOX, 12, 12, 54, 12, f, (DWORD_PTR)nullptr, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_backward) },
-	/* 13 */ { DI_TEXT,      0, 13,  0, 13, 0, (DWORD_PTR)nullptr, DIF_SEPARATOR },
-	/* 14 */ { DI_BUTTON,    0, 14,  0, 14, 0, (DWORD_PTR)nullptr, DIF_CENTERGROUP | DIF_DEFAULT, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_ok) },
-	/* 15 */ { DI_BUTTON,    0, 14,  0, 14, 0, (DWORD_PTR)nullptr, DIF_CENTERGROUP, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_cancel) }
+	/*  0 */ { DI_DOUBLEBOX, 3,  1, 56, 15, 0, {(DWORD_PTR)nullptr}, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_title) },
+	/*  1 */ { DI_TEXT,      5,  2, 11,  2, 0, {(DWORD_PTR)nullptr}, LIF_NONE, 0, L"&Hex:" },
+	/*  2 */ { DI_FIXEDIT,  12,  2, 54,  2, 0, {(DWORD_PTR)mask_edit.c_str()}, DIF_MASKEDIT },
+	/*  3 */ { DI_TEXT,      5,  4, 11,  4, 0, {(DWORD_PTR)nullptr}, LIF_NONE, 0, L"&ANSI:" },
+	/*  4 */ { DI_EDIT,     12,  4, 54,  4, 0, {(DWORD_PTR)aHist}, LIF_NONE | DIF_HISTORY},
+	/*  5 */ { DI_TEXT,      5,  6, 11,  6, 0, {(DWORD_PTR)nullptr}, LIF_NONE, 0, L"&OEM:" },
+	/*  6 */ { DI_EDIT,     12,  6, 54,  6, 0, {(DWORD_PTR)oHist}, LIF_NONE | DIF_HISTORY},
+	/*  7 */ { DI_TEXT,      5,  8, 11,  8, 0, {(DWORD_PTR)nullptr}, LIF_NONE, 0, L"&UTF16:" },
+	/*  8 */ { DI_EDIT,     12,  8, 54,  8, 0, {(DWORD_PTR)u16Hist}, LIF_NONE | DIF_HISTORY},
+	/*  9 */ { DI_TEXT,      5, 10, 11, 10, 0, {(DWORD_PTR)nullptr}, LIF_NONE, 0, L"UTF-&8:" },
+	/* 10 */ { DI_EDIT,     12, 10, 54, 10, 0, {(DWORD_PTR)u8Hist}, LIF_NONE | DIF_HISTORY},
+	/* 11 */ { DI_TEXT,      0, 11,  0, 11, 0, {(DWORD_PTR)nullptr}, DIF_SEPARATOR },
+	/* 12 */ { DI_CHECKBOX, 12, 12, 54, 12, f, {(DWORD_PTR)nullptr}, LIF_NONE, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_find_backward) },
+	/* 13 */ { DI_TEXT,      0, 13,  0, 13, 0, {(DWORD_PTR)nullptr}, DIF_SEPARATOR },
+	/* 14 */ { DI_BUTTON,    0, 14,  0, 14, 0, {(DWORD_PTR)nullptr}, DIF_CENTERGROUP | DIF_DEFAULT, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_ok) },
+	/* 15 */ { DI_BUTTON,    0, 14,  0, 14, 0, {(DWORD_PTR)nullptr}, DIF_CENTERGROUP, 0, _PSI.GetMsg(_PSI.ModuleNumber, ps_cancel) }
 	};
 
 	_dialog = _PSI.DialogInit(

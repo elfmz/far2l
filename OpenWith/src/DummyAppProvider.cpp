@@ -9,21 +9,21 @@ DummyAppProvider::DummyAppProvider(TMsgGetter msg_getter) : AppProvider(std::mov
 }
 
 
-std::vector<CandidateInfo> DummyAppProvider::GetAppCandidates(const std::wstring& pathname)
+std::vector<CandidateInfo> DummyAppProvider::GetAppCandidates(const std::vector<std::wstring>& pathnames)
 {
 	return {};
 }
 
 
-std::wstring DummyAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::wstring& pathname)
+std::vector<std::wstring> DummyAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames)
 {
-	return L"";
+	return {};
 }
 
 
-std::wstring DummyAppProvider::GetMimeType(const std::wstring& pathname)
+std::vector<std::wstring> DummyAppProvider::GetMimeTypes(const std::vector<std::wstring>& pathnames)
 {
-	return L"application/octet-stream";
+	return {L"application/octet-stream"};
 }
 
 

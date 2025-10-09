@@ -64,6 +64,7 @@ namespace OpenWith {
 		}
 
 		PanelInfo pi = {};
+
 		if (!s_Info.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi)) {
 			return INVALID_HANDLE_VALUE;
 		}
@@ -74,42 +75,40 @@ namespace OpenWith {
 
 		std::vector<std::wstring> selected_pathnames;
 
-		// First, get the panel's directory path.
+		// Query the required buffer size for the panel's directory path.
 		int dir_size = s_Info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0, 0);
 		if (dir_size <= 0) {
 			return INVALID_HANDLE_VALUE;
 		}
+
+		// Then, retrieve the path itself.
 		auto dir_buf = std::make_unique<wchar_t[]>(dir_size);
 		if (!s_Info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, dir_size, (LONG_PTR)dir_buf.get())) {
 			return INVALID_HANDLE_VALUE;
 		}
+
 		std::wstring base_path(dir_buf.get());
+		// Ensure the base path ends with a separator.
 		if (!base_path.empty() && base_path.back() != L'/') {
 			base_path += L'/';
 		}
 
-		// If files are selected, iterate through them.
+		// This single block handles both selected files and the file under the cursor.
+		// If no items are selected, pi.SelectedItemsNumber will be 1,
+		// and FCTL_GETSELECTEDPANELITEM will return the item under the cursor.
 		if (pi.SelectedItemsNumber > 0) {
 			selected_pathnames.reserve(pi.SelectedItemsNumber);
 			for (size_t i = 0; i < pi.SelectedItemsNumber; ++i) {
+				// Query the buffer size for the selected panel item.
 				int itemSize = s_Info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
 				if (itemSize <= 0) continue;
 
 				auto item_buf = std::make_unique<unsigned char[]>(itemSize);
 				PluginPanelItem* pi_item = reinterpret_cast<PluginPanelItem*>(item_buf.get());
 
+				// Retrieve the panel item data.
 				if (s_Info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)pi_item) && pi_item->FindData.lpwszFileName) {
-					selected_pathnames.push_back(base_path + pi_item->FindData.lpwszFileName);
-				}
-			}
-		}
-		// Otherwise, use the current file under the cursor.
-		else if (pi.CurrentItem >= 0 && pi.CurrentItem < pi.ItemsNumber) {
-			int itemSize = s_Info.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, pi.CurrentItem, 0);
-			if (itemSize > 0) {
-				auto item_buf = std::make_unique<unsigned char[]>(itemSize);
-				PluginPanelItem* pi_item = reinterpret_cast<PluginPanelItem*>(item_buf.get());
-				if (s_Info.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, pi.CurrentItem, (LONG_PTR)pi_item) && pi_item->FindData.lpwszFileName) {
+					// Construct the full path and add it to the list.
 					selected_pathnames.push_back(base_path + pi_item->FindData.lpwszFileName);
 				}
 			}
@@ -119,6 +118,7 @@ namespace OpenWith {
 			ProcessFiles(selected_pathnames);
 		}
 
+		// The plugin doesn't create its own panel, so it returns INVALID_HANDLE_VALUE.
 		return INVALID_HANDLE_VALUE;
 	}
 

@@ -261,7 +261,7 @@ public:
 	}
 
 	STDMETHODIMP Write(const void *data, UInt32 size, UInt32 *processedSize) noexcept override {
-//		fprintf(stderr, "DataRelayStream: Write: size %u, read_pos %lu \n", size, read_pos );
+//		fprintf(stderr, "DataRelayStream: Write: size %u, read_pos %" PRIu64 "\n", size, read_pos );
 
 		if (buffer_size < size) {
 			size = buffer_size;
@@ -691,19 +691,19 @@ public:
 			DWORD method;
 			switch (seekOrigin) {
 				case STREAM_SEEK_SET:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_SET > %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_SET > %" PRId64 "\n", offset );
 					method = FILE_BEGIN;
 					break;
 				case STREAM_SEEK_CUR:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_CUR +> %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_CUR > %" PRId64 "\n", offset );
 					method = FILE_CURRENT;
 					break;
 				case STREAM_SEEK_END:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_END < %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_END < %" PRId64 "\n", offset );
 					method = FILE_END;
 					break;
 				default: {
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_UNKNOWN > %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_UNKNOWN > %" PRId64 "\n", offset );
 					FAIL(E_INVALIDARG);
 				}
 			}
@@ -1241,7 +1241,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		stream_impl = new ArchiveOpenStream<UseVirtualDestructor>(options.arc_path);
 		stream = stream_impl;
 		arc_info = stream_impl->get_info();
-		fprintf(stderr,"Root archive info: name='%ls', size=%lu\n", arc_info.cFileName, arc_info.size());
+		fprintf(stderr,"Root archive info: name='%ls', size=%" PRIu64 "\n", arc_info.cFileName, arc_info.size());
 	} else {
 		if (parent_idx > 0 && archives[parent_idx]->flags == 2) {
 			fprintf(stderr,"Parent is a sequential stream (partial seek) - STOPPING\n");
@@ -1289,7 +1289,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 			UInt32 indices[2] = { entry_index, 0 };
 			FindData ef = archives[parent_idx]->get_file_info(entry_index);
-			fprintf(stderr, "Entry file info: name='%ls', size=%lu, is_dir=%s\n", ef.cFileName, ef.size(), ef.is_dir() ? "true" : "false");
+			fprintf(stderr, "Entry file info: name='%ls', size=%" PRIu64 ", is_dir=%s\n", ef.cFileName, ef.size(), ef.is_dir() ? "true" : "false");
 			if (ef.is_dir()) {
 				fprintf(stderr, "Entry is a directory - STOPPING\n");
 				return;

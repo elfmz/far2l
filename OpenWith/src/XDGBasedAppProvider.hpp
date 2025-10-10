@@ -223,6 +223,8 @@ private:
 	bool _use_file_tool;
 	bool _load_mimetype_aliases;
 	bool _load_mimetype_subclasses;
+	bool _resolve_structured_suffixes;
+	bool _use_generic_mime_fallbacks;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

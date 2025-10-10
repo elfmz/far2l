@@ -6,7 +6,7 @@ $^#OpenWith plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
 $^#Contents#
- The #OpenWith# plugin provides a context-aware menu to open the currently selected file with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
+ The #OpenWith# plugin provides a context-aware menu to open the currently selected file(s) with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
  After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application.
 
@@ -28,10 +28,13 @@ $^#Configuration Dialog#
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal.
+   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal. Note: when multiple files are selected, this option being unchecked will cause all terminal-based applications to be hidden from the list. This is because far2l's integrated terminal cannot manage multiple concurrent application instances.
 
  #-# Don't wait for command completion
-   If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications.
+   If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications. It may also be ignored when multiple files are opened with an application that does not support receiving them in a single command; in this case, an asynchronous launch is forced to prevent the UI from blocking.
+
+ #-# Clear selection if command executed
+   When this option is enabled the selection on the panel is cleared after exiting the menu if any menu command has been executed.
 
 
  #2. PLATFORM-SPECIFIC SETTINGS#
@@ -79,7 +82,7 @@ $^#Information Dialog (F3)#
  #1. COMMON FIELDS#
 
  #-# Filepath
-   The full, absolute path to the selected file.
+   The full, absolute path to the selected file. If multiple files are selected, this field will instead show a count of the selected files.
 
  #-# MIME type
    The MIME type of the file as determined by the plugin.
@@ -98,7 +101,7 @@ $^#Information Dialog (F3)#
    The full path to the .desktop file (an INI-style text file) that defines this application.
 
  #-# Source
-   This field indicates the origin of the association, explaining why the application was suggested for the file. It clarifies whether the match came from a high-priority system default (via xdg-mime), a user preference in a mimeapps.list file, an indexed lookup in mimeinfo.cache, or a comprehensive fallback scan of all .desktop files. This information is useful for troubleshooting application associations.
+   This field indicates the origin of the association, explaining why the application was suggested for the file. It clarifies whether the match came from a high-priority system default (via xdg-mime), a user preference in a mimeapps.list file, an indexed lookup in mimeinfo.cache, or a comprehensive fallback scan of all .desktop files. This information is useful for troubleshooting application associations. Note: this field is not displayed when multiple files are selected, as the association source can be different for each file.
 
  #-# Name
    The human-readable application name, intended for display in menus.
@@ -124,19 +127,19 @@ $^#Information Dialog (F3)#
 
  #2.2. macOS Application Details#
 
- #-# Full path
-   The full path to the application bundle (e.g., `/Applications/TextEdit.app`).
-
  #-# Name
    The application's display name from its bundle information.
 
- #-# Executable file
+ #-# Location
+   The full path to the application bundle (e.g., `/Applications/TextEdit.app`).
+
+ #-# Executable
    The name of the main executable file inside the application bundle.
 
  #-# Version
    The user-visible version string of the application (e.g., "1.14").
 
- #-# Bundle version
+ #-# Build Version
    The internal build or bundle version (e.g., "329").
 
    ~Contents~@Contents@
@@ -173,25 +176,35 @@ $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
 $^#Troubleshooting#
 
+ #Why is the list empty when I select multiple files?#
+
+ This is a core feature of the algorithm: the plugin looks for applications that are registered as handlers for #every# selected file type (this is called "intersection" mode).
+ Example: If you select an archive (`.zip`) and an image (`.jpg`), the list will likely be empty, as applications that can handle both archives and images are rare.
+ Solution: Please process files of different categories in separate operations. This algorithm is most effective for batch-processing files of the same kind.
+
+
+ #How does ranking work? Why is app X listed above app Y?#
+
+ The order in the list is determined by a rank calculated for each application. A higher rank means a more relevant application. The rank depends on two factors:
+ 1. MIME Type Specificity (Primary Factor): An association with a more specific type (e.g., `text/x-c++src`) is always prioritized over a generic one (e.g., `text/plain`).
+ 2. Association Source (Secondary Factor): Sources are prioritized from highest to lowest: the global default (`xdg-mime query default`), the `[Default Applications]` section in `mimeapps.list`, the `[Added Associations]` section, and finally, the `mimeinfo.cache` or the data from `.desktop` files themselves.
+ Therefore, an application set as the system default for a very specific file type will always be at the top of the list.
+
+
  #Why doesn't my favorite app appear in the list?#
 
- This can happen for several reasons:
+ If an application doesn't appear even for a single file, check the following:
+ #-# Missing `.desktop` file: Ensure that a `.desktop` file for the application exists in one of the standard directories (`~~/.local/share/applications`, `/usr/share/applications`, etc.).
+ #-# Incorrect Association: Check that the correct MIME type is listed in the `MimeType=` key of the `.desktop` file, or that an association is defined in `~~/.config/mimeapps.list`.
+ #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
+ #-# Outdated Cache: Run `update-desktop-database` and `update-mime-database` in your terminal to refresh the system caches.
 
- #-# Incorrect .desktop file: The application's .desktop file might be missing, located in a non-standard directory, or have an incorrect `MimeType=` entry.
- #-# MIME type mismatch: The MIME type detected for the file might not be listed in the application's .desktop file. Check the "MIME type" field in the F3 dialog and compare it with the `MimeType=` line in the app's .desktop file.
- #-# Association is missing: The application is not registered as a handler for this MIME type in any of the mimeapps.list files. You can often fix this using your desktop environment's settings ("Default Applications").
- #-# Filtering options: The "Filter by OnlyShowIn/NotShowIn" or "Validate TryExec" options might be hiding the application. Try disabling them to see if it appears.
- #-# Outdated cache: The system's application or MIME database cache might be out of date. Run appropriate commands in your terminal to regenerate them (for example, "sudo update-mime-database /usr/share/mime" and "sudo update-desktop-database /usr/share/applications").
-
- #Why is an unexpected MIME type detected for my file?#
-
- The plugin builds a list of all possible MIME types from every enabled source (xdg-mime, file, extension map). xdg-mime, being the most integrated tool, usually provides the most relevant type, which gets the highest priority. If an incorrect type appears first, it's likely due to a misconfiguration in the system's shared-mime-info database. For diagnosis, you can try disabling the xdg-mime, file and extension map options one by one in the plugin's settings to see how the resulting MIME type list changes.
 
  #An application is in the list, but it fails to launch.#
 
- This usually means the `Exec=` line in the application's .desktop file is incorrect or contains field codes that the plugin does not support.
- #-# Press F3 to open the Information Dialog and examine the "Launch command".
- #-# Copy this command and try to run it manually in a terminal. The error message will often reveal the problem.
- #-# Check the application's .desktop file for correctness according to the Freedesktop.org specification.
+ This almost always indicates an error in the `Exec=` line of the `.desktop` file. Press F3 to view the command the plugin is trying to execute and check it for common mistakes:
+ #-# Incorrect Field Codes: The plugin supports standard codes (`%f`, `%F`, `%u`, `%U`). Some applications might use deprecated or non-standard codes that will not work.
+ #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped.
+ #-# Program not in `$PATH`: If `Exec=` contains just a program name, it must be located in one of the directories listed in the `$PATH` environment variable.
 
    ~Contents~@Contents@

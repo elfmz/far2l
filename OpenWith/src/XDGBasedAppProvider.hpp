@@ -37,9 +37,9 @@ class XDGBasedAppProvider : public AppProvider
 public:
 
 	explicit XDGBasedAppProvider(TMsgGetter msg_getter);
-	std::vector<CandidateInfo> GetAppCandidates(const std::wstring& pathname) override;
-	std::wstring ConstructCommandLine(const CandidateInfo& candidate, const std::wstring& pathname) override;
-	std::wstring GetMimeType(const std::wstring& pathname) override;
+	std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& pathnames) override;
+	std::vector<std::wstring> ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames) override;
+	std::vector<std::wstring> GetMimeTypes(const std::vector<std::wstring>& pathnames) override;
 	std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) override;
 
 	std::vector<ProviderSetting> GetPlatformSettings() override;
@@ -97,7 +97,7 @@ private:
 			std::string source_path;
 		};
 
-		// MIME type -> default application (.desktop file
+		// MIME type -> default application (.desktop file)
 		std::unordered_map<std::string, AssociationSource> defaults;
 		// MIME type -> list of additionally associated applications
 		std::unordered_map<std::string, std::vector<AssociationSource>> added;
@@ -105,7 +105,8 @@ private:
 		std::unordered_map<std::string, std::unordered_set<std::string>> removed;
 	};
 
-	// A key for the unique_candidates map
+	// A key for the unique_candidates map to distinguish between different applications
+	// that might have the same name but different Exec commands.
 	struct AppUniqueKey
 	{
 		std::string_view name;
@@ -116,7 +117,7 @@ private:
 		}
 	};
 
-	// Custom hash function for AppUniqueKey
+	// Custom hash function for AppUniqueKey.
 	struct AppUniqueKeyHash
 	{
 		size_t operator()(const AppUniqueKey& k) const {
@@ -147,6 +148,9 @@ private:
 	};
 
 	// Searching and ranking candidates logic
+
+
+	std::vector<RankedCandidate> GetCandidatesForSingleFile(const std::wstring& pathname, const std::vector<std::string>& desktop_paths, const MimeAssociation& associations, const std::string& current_desktop_env);
 	void FindCandidatesFromMimeLists(CandidateSearchContext& context);
 	void FindCandidatesFromCache(CandidateSearchContext& context, const std::unordered_map<std::string, std::vector<MimeAssociation::AssociationSource>>& mime_cache);
 	void FindCandidatesByFullScan(CandidateSearchContext& context);
@@ -223,6 +227,22 @@ private:
 
 	// A pre-calculated lookup map for efficient updates in SetPlatformSettings.
 	std::map<std::wstring, bool XDGBasedAppProvider::*> _key_to_member_map;
+
+	// RAII helper to manage the lifecycle of the MIME alias cache.
+	struct AliasCacheManager {
+		XDGBasedAppProvider& provider;
+		AliasCacheManager(XDGBasedAppProvider& p) : provider(p) {
+			if (provider._load_mimetype_aliases) {
+				provider._operation_scoped_aliases = provider.LoadMimeAliases();
+			}
+		}
+		~AliasCacheManager() {
+			provider._operation_scoped_aliases.reset();
+		}
+	};
+
+	// A cache for MIME type aliases, scoped to a single GetAppCandidates call.
+	std::optional<std::unordered_map<std::string, std::string>> _operation_scoped_aliases;
 };
 
 #endif

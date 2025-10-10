@@ -30,5 +30,13 @@ enum LanguageID
 	MSource,
 	MFullScanFor,
 	MFor,
-	MIn
+	MIn,
+	MFilesSelected,
+	MAndMore,
+	MAppName,
+	MFullPath,
+	MExecutableFile,
+	MVersion,
+	MBundleVersion,
+	MClearSelection
 };

@@ -38,5 +38,6 @@ enum LanguageID
 	MExecutableFile,
 	MVersion,
 	MBundleVersion,
-	MClearSelection
+	MClearSelection,
+	MLoadMimeTypeSubclasses
 };

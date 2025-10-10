@@ -39,6 +39,8 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, true },
 		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true },
 		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true },
+		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true },
+		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true },
 		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true },
 		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false },
 		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false }
@@ -778,41 +780,44 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 			}
 		}
 
+		if (_resolve_structured_suffixes) {
+			// --- Step 3: Add base types for structured syntaxes (e.g., +xml, +zip) ---
+			// This is a reliable fallback that works even if the subclass hierarchy is incomplete in the system's MIME database.
 
-		// --- Step 3: Add base types for structured syntaxes (e.g., +xml, +zip) ---
-		// This is a reliable fallback that works even if the subclass hierarchy is incomplete in the system's MIME database.
+			static const std::map<std::string, std::string> suffix_to_base_mime = {
+				{"xml", "application/xml"},
+				{"zip", "application/zip"},
+				{"json", "application/json"},
+				{"gzip", "application/gzip"}
+			};
 
-		static const std::map<std::string, std::string> suffix_to_base_mime = {
-			{"xml", "application/xml"},
-			{"zip", "application/zip"},
-			{"json", "application/json"},
-			{"gzip", "application/gzip"}
-		};
-
-		// Iterate over a copy, as `add_unique` modifies the original vector.
-		auto obtained_types_before_suffix_check = mime_types;
-		for (const auto& mime : obtained_types_before_suffix_check) {
-			size_t plus_pos = mime.rfind('+');
-			if (plus_pos != std::string::npos && plus_pos < mime.length() - 1) {
-				std::string suffix = mime.substr(plus_pos + 1);
-				auto it = suffix_to_base_mime.find(suffix);
-				if (it != suffix_to_base_mime.end()) {
-					add_unique(it->second);
+			// Iterate over a copy, as `add_unique` modifies the original vector.
+			auto obtained_types_before_suffix_check = mime_types;
+			for (const auto& mime : obtained_types_before_suffix_check) {
+				size_t plus_pos = mime.rfind('+');
+				if (plus_pos != std::string::npos && plus_pos < mime.length() - 1) {
+					std::string suffix = mime.substr(plus_pos + 1);
+					auto it = suffix_to_base_mime.find(suffix);
+					if (it != suffix_to_base_mime.end()) {
+						add_unique(it->second);
+					}
 				}
 			}
 		}
 
-		// --- Step 4: Add generic fallback MIME types ---
-		auto obtained_types_before_fallback = mime_types;
-		for (const auto& mime : obtained_types_before_fallback) {
-			// text/plain is a safe fallback for any text/* type.
-			if (mime.rfind("text/", 0) == 0) {
-				add_unique("text/plain");
-			}
-			// Add wildcard for the major type (e.g., image/jpeg -> image/*)
-			size_t slash_pos = mime.find('/');
-			if (slash_pos != std::string::npos) {
-				add_unique(mime.substr(0, slash_pos) + "/*");
+		if (_use_generic_mime_fallbacks) {
+			// --- Step 4: Add generic fallback MIME types ---
+			auto obtained_types_before_fallback = mime_types;
+			for (const auto& mime : obtained_types_before_fallback) {
+				// text/plain is a safe fallback for any text/* type.
+				if (mime.rfind("text/", 0) == 0) {
+					add_unique("text/plain");
+				}
+				// Add wildcard for the major type (e.g., image/jpeg -> image/*)
+				size_t slash_pos = mime.find('/');
+				if (slash_pos != std::string::npos) {
+					add_unique(mime.substr(0, slash_pos) + "/*");
+				}
 			}
 		}
 

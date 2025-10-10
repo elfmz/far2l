@@ -36,3 +36,6 @@
 "Version: "
 "Build Version: "
 "C&lear selection if command executed"
+"Load MIME type su&bclasses"
+"&Resolve structured MIME suffixes"
+"Search for apps for &generic MIME types"

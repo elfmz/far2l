@@ -53,7 +53,18 @@ $^#Configuration Dialog#
    As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
 
  #-# Load MIME type aliases
-   Enables loading MIME type associations from system `aliases` files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., linking "application/x-deb" to "application/vnd.debian.binary-package").
+   Enables loading MIME type associations from system `aliases` files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., linking "application/x-deb" to "application/vnd.debian.binary-package", or "image/ico" to "image/vnd.microsoft.icon").
+
+ #-# Load MIME type subclasses
+   Enables loading the MIME type inheritance hierarchy from system `subclasses` files. This helps find applications that can handle a file's more general, parent type. This option is essential for formats whose internal structure is not obvious from the MIME type's name.
+   For example, a Microsoft Word file (.docx), which has the MIME type application/vnd.openxmlformats-officedocument.wordprocessingml.document, is structurally a ZIP archive (application/zip). With this option enabled, archive managers will be suggested for a .docx file in addition to word processors.
+   While this may sometimes offer less specific applications, it significantly broadens the range of available tools for a given file.
+
+ #-# Resolve structured MIME suffixes
+   Many file formats use a more general format as their foundation, indicating this with a suffix in their MIME type (e.g., +xml or +json). For instance, an SVG vector image has the MIME type image/svg+xml. With this option enabled, the plugin will suggest not only graphics editors but also any text or XML editors registered for application/xml. This provides the ability to edit the file's internal structure. Disable the option to see only applications designed to work directly with the final format (in this case, with SVG images).
+
+ #-# Search for apps for generic MIME types (type/*, text/plain)
+   When enabled, the plugin searches for applications associated not only with the file's specific MIME type but also with its generic variants. For example, for a file with the type text/x-c++src, editors registered for text/plain will also be suggested. This increases the number of available applications but may add "noise" from less relevant programs. Disabling this option is useful if you want the list to contain only specialized applications that precisely match the file type.
 
  #-# Use mimeinfo.cache
    Speed up application lookups by using the mimeinfo.cache files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., image/png) to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
@@ -153,13 +164,13 @@ $^#Tips for use and usefulness#
 
     In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines:
  #[KeyMacros/Shell/Apps]#
- #Description=OpenWith Plugin for current file#
+ #Description=OpenWith Plugin for selected file(s)#
  #DisableOutput=0x1#
  #Sequence=F11 O#
 
     In #far2m# in the #~~/.config/far2m/Macros/scripts/# directory the following lines:
  #Macro {#
- # description="OpenWith plugin for current file";#
+ # description="OpenWith plugin for selected file(s)";#
  # area="Shell"; key="Apps";#
  # action=function() Plugin.Menu(0x93CDEF19) end;#
  #}#

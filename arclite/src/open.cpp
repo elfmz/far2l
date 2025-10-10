@@ -31,12 +31,12 @@ class DataRelayStream : public IInStream<UseVirtualDestructor>,
 						public ISequentialOutStream<UseVirtualDestructor>,
 						public ComBase<UseVirtualDestructor> {
 private:
+	UInt64 file_size;
+	UInt64 read_pos = 0;
+	UInt64 write_pos = 0;
 	uint8_t *buffer;
 	size_t buffer_size;
 	size_t buffer_max_size;
-	size_t file_size;
-	size_t read_pos = 0;
-	size_t write_pos = 0;
 	size_t data_size = 0;
 	bool full_size = true;
 	bool writing_finished = false;
@@ -45,7 +45,7 @@ private:
 	std::condition_variable cv;
 
 public:
-    DataRelayStream(size_t max_size = 64, size_t filesize = 0xFFFFFFFFFFFFFFFF)
+    DataRelayStream(size_t max_size = 64, UInt64 filesize = 0xFFFFFFFFFFFFFFFF)
 	:	buffer_max_size(max_size << 20),
 		file_size(filesize) {
 
@@ -119,7 +119,7 @@ public:
 					return E_INVALIDARG;
 				}
 				read_pos = offset;
-				data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+				data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 				cv.notify_all();
 
 				if (newPosition) {
@@ -138,7 +138,7 @@ public:
 				}
 
 				read_pos = new_offset;
-				data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+				data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 				cv.notify_all();
 
 				if (newPosition) {
@@ -152,7 +152,7 @@ public:
 
 				if (file_size < buffer_size) {
 					read_pos = new_offset;
-					data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+					data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 					cv.notify_all();
 				}
 
@@ -198,7 +198,7 @@ public:
 		}
 
 		size_t available = std::min<size_t>(size, data_size);
-		size_t read_ptr = (read_pos % buffer_size);
+		size_t read_ptr = (size_t)(read_pos % buffer_size);
 
 		size_t firstChunk = std::min(available, buffer_size - read_ptr);
 		memcpy(data, buffer + read_ptr, firstChunk);
@@ -243,7 +243,7 @@ public:
 		}
 
 		size_t available = std::min<size_t>(size, data_size);
-		size_t read_ptr = (read_pos % buffer_size);
+		size_t read_ptr = (size_t)(read_pos % buffer_size);
 
 		size_t firstChunk = std::min(available, buffer_size - read_ptr);
 		memcpy(data, buffer + read_ptr, firstChunk);
@@ -296,7 +296,7 @@ public:
 			return E_ABORT;
 		}
 
-		size_t write_ptr = (write_pos % buffer_size);
+		size_t write_ptr = (size_t)(write_pos % buffer_size);
 		size_t bytesToWrite = std::min<size_t>(size, buffer_size - data_size);
 		size_t firstChunk = std::min(bytesToWrite, buffer_size - write_ptr);
 
@@ -306,7 +306,7 @@ public:
 		}
 
 		write_pos += bytesToWrite;
-		data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+		data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 		if (write_pos > buffer_size) {
 			full_size = false;
 		}

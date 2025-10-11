@@ -42,7 +42,7 @@ int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 	int out;
 	for (out = 0; *str && limit != 0; ++str, --limit) {
 		if (!ShouldSkip(*str)) {
-			if (CharClasses::IsFullWidth(*str))
+			if (CharClasses::IsFullWidth(str))
 				out+= 2;
 			else if (!CharClasses::IsXxxfix(*str))
 				++out;
@@ -57,7 +57,7 @@ void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 
 	for(; skip_len > 0 && *str; ++str) {
 		if (!ShouldSkip(*str)) {
-			if (CharClasses::IsFullWidth(*str))
+			if (CharClasses::IsFullWidth(str))
 				skip_len-= 2;
 			else if (!CharClasses::IsXxxfix(*str))
 				skip_len--;

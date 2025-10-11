@@ -419,7 +419,7 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			if (CharClasses::IsFullWidth(wc)) {
+			if (CharClasses::IsFullWidth(&Str[i])) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
@@ -2121,7 +2121,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 			}
 			// Обрабатываем все остальные символы
 			else {
-				if (CharClasses::IsFullWidth(Str[Index])) {
+				if (CharClasses::IsFullWidth(&Str[Index])) {
 					TabPos+= 2;
 				} else if (!CharClasses::IsXxxfix(Str[Index])) {
 					TabPos++;
@@ -2154,7 +2154,7 @@ int Edit::CellPosToReal(int Pos)
 
 			CellPos = NewCellPos;
 		} else {
-			CellPos+= CharClasses::IsFullWidth(Str[Index]) ? 2 : CharClasses::IsXxxfix(Str[Index]) ? 0 : 1;
+			CellPos+= CharClasses::IsFullWidth(&Str[Index]) ? 2 : CharClasses::IsXxxfix(Str[Index]) ? 0 : 1;
 			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
 				Index++;
 			}

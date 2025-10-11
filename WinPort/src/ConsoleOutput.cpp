@@ -443,7 +443,7 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 
 			} else {
 				CI_SET_WCHAR(ch, *sm.str);
-				if (CharClasses::IsFullWidth(*sm.str)) {
+				if (CharClasses::IsFullWidth(sm.str)) {
 //					fprintf(stderr, "IsCharFullWidth: %lc [0x%llx]\n",
 //						(WCHAR)ch.Char.UnicodeChar, (unsigned long long)ch.Char.UnicodeChar);
 					out = 2;

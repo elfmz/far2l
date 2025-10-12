@@ -165,6 +165,7 @@ private:
 	std::string MimeTypeByExtension(const std::string& escaped_pathname);
 	static std::vector<std::string> GetMimeDatabaseSearchPaths();
 	static std::unordered_map<std::string, std::string> LoadMimeAliases();
+	static std::unordered_map<std::string, std::string> LoadMimeSubclasses();
 
 	// Parsing XDG files and data
 	static const std::optional<DesktopEntry>& GetCachedDesktopEntry(const std::string& desktop_file, const std::vector<std::string>& search_paths, std::map<std::string, std::optional<DesktopEntry>>& cache);
@@ -221,6 +222,9 @@ private:
 	bool _use_xdg_mime_tool;
 	bool _use_file_tool;
 	bool _load_mimetype_aliases;
+	bool _load_mimetype_subclasses;
+	bool _resolve_structured_suffixes;
+	bool _use_generic_mime_fallbacks;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;
@@ -228,21 +232,28 @@ private:
 	// A pre-calculated lookup map for efficient updates in SetPlatformSettings.
 	std::map<std::wstring, bool XDGBasedAppProvider::*> _key_to_member_map;
 
-	// RAII helper to manage the lifecycle of the MIME alias cache.
-	struct AliasCacheManager {
+	// RAII helper to manage the lifecycle of operation-scoped MIME caches.
+	struct XdgMimeCacheManager {
 		XDGBasedAppProvider& provider;
-		AliasCacheManager(XDGBasedAppProvider& p) : provider(p) {
+		XdgMimeCacheManager(XDGBasedAppProvider& p) : provider(p) {
 			if (provider._load_mimetype_aliases) {
 				provider._operation_scoped_aliases = provider.LoadMimeAliases();
 			}
+			if (provider._load_mimetype_subclasses) {
+				provider._operation_scoped_subclasses = provider.LoadMimeSubclasses();
+			}
 		}
-		~AliasCacheManager() {
+		~XdgMimeCacheManager() {
 			provider._operation_scoped_aliases.reset();
+			provider._operation_scoped_subclasses.reset();
 		}
 	};
 
 	// A cache for MIME type aliases, scoped to a single GetAppCandidates call.
 	std::optional<std::unordered_map<std::string, std::string>> _operation_scoped_aliases;
+
+	// A cache for the MIME subclass hierarchy, scoped to a single GetAppCandidates call.
+	std::optional<std::unordered_map<std::string, std::string>> _operation_scoped_subclasses;
 };
 
 #endif

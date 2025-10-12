@@ -19,9 +19,14 @@ if(APPLE)
     target_link_libraries(${PROJECT_NAME}
         "-framework Cocoa"
         "-framework CoreServices"
-        "-framework UniformTypeIdentifiers"
     )
-    target_compile_options(${PROJECT_NAME} PRIVATE "-fobjc-arc")
+    # macOS 11
+    if(${CMAKE_SYSTEM_VERSION} VERSION_GREATER_EQUAL 20.1.0)
+        target_link_libraries(${PROJECT_NAME} "-framework UniformTypeIdentifiers")
+    endif()
+    if(${CMAKE_CXX_COMPILER} MATCHES "Clang")
+        target_compile_options(${PROJECT_NAME} PRIVATE "-fobjc-arc")
+    endif()
 endif()
 
 target_compile_definitions(OpenWith PRIVATE)

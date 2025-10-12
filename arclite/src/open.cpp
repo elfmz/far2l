@@ -31,12 +31,12 @@ class DataRelayStream : public IInStream<UseVirtualDestructor>,
 						public ISequentialOutStream<UseVirtualDestructor>,
 						public ComBase<UseVirtualDestructor> {
 private:
+	UInt64 file_size;
+	UInt64 read_pos = 0;
+	UInt64 write_pos = 0;
 	uint8_t *buffer;
 	size_t buffer_size;
 	size_t buffer_max_size;
-	size_t file_size;
-	size_t read_pos = 0;
-	size_t write_pos = 0;
 	size_t data_size = 0;
 	bool full_size = true;
 	bool writing_finished = false;
@@ -45,7 +45,7 @@ private:
 	std::condition_variable cv;
 
 public:
-    DataRelayStream(size_t max_size = 64, size_t filesize = 0xFFFFFFFFFFFFFFFF)
+    DataRelayStream(size_t max_size = 64, UInt64 filesize = 0xFFFFFFFFFFFFFFFF)
 	:	buffer_max_size(max_size << 20),
 		file_size(filesize) {
 
@@ -119,7 +119,7 @@ public:
 					return E_INVALIDARG;
 				}
 				read_pos = offset;
-				data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+				data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 				cv.notify_all();
 
 				if (newPosition) {
@@ -138,7 +138,7 @@ public:
 				}
 
 				read_pos = new_offset;
-				data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+				data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 				cv.notify_all();
 
 				if (newPosition) {
@@ -152,7 +152,7 @@ public:
 
 				if (file_size < buffer_size) {
 					read_pos = new_offset;
-					data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+					data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 					cv.notify_all();
 				}
 
@@ -198,7 +198,7 @@ public:
 		}
 
 		size_t available = std::min<size_t>(size, data_size);
-		size_t read_ptr = (read_pos % buffer_size);
+		size_t read_ptr = (size_t)(read_pos % buffer_size);
 
 		size_t firstChunk = std::min(available, buffer_size - read_ptr);
 		memcpy(data, buffer + read_ptr, firstChunk);
@@ -243,7 +243,7 @@ public:
 		}
 
 		size_t available = std::min<size_t>(size, data_size);
-		size_t read_ptr = (read_pos % buffer_size);
+		size_t read_ptr = (size_t)(read_pos % buffer_size);
 
 		size_t firstChunk = std::min(available, buffer_size - read_ptr);
 		memcpy(data, buffer + read_ptr, firstChunk);
@@ -261,7 +261,7 @@ public:
 	}
 
 	STDMETHODIMP Write(const void *data, UInt32 size, UInt32 *processedSize) noexcept override {
-//		fprintf(stderr, "DataRelayStream: Write: size %u, read_pos %lu \n", size, read_pos );
+//		fprintf(stderr, "DataRelayStream: Write: size %u, read_pos %" PRIu64 "\n", size, read_pos );
 
 		if (buffer_size < size) {
 			size = buffer_size;
@@ -296,7 +296,7 @@ public:
 			return E_ABORT;
 		}
 
-		size_t write_ptr = (write_pos % buffer_size);
+		size_t write_ptr = (size_t)(write_pos % buffer_size);
 		size_t bytesToWrite = std::min<size_t>(size, buffer_size - data_size);
 		size_t firstChunk = std::min(bytesToWrite, buffer_size - write_ptr);
 
@@ -306,7 +306,7 @@ public:
 		}
 
 		write_pos += bytesToWrite;
-		data_size = (write_pos > read_pos) ? (write_pos - read_pos) : 0;
+		data_size = (write_pos > read_pos) ? (size_t)(write_pos - read_pos) : 0;
 		if (write_pos > buffer_size) {
 			full_size = false;
 		}
@@ -691,19 +691,19 @@ public:
 			DWORD method;
 			switch (seekOrigin) {
 				case STREAM_SEEK_SET:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_SET > %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_SET > %" PRId64 "\n", offset );
 					method = FILE_BEGIN;
 					break;
 				case STREAM_SEEK_CUR:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_CUR +> %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_CUR > %" PRId64 "\n", offset );
 					method = FILE_CURRENT;
 					break;
 				case STREAM_SEEK_END:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_END < %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_END < %" PRId64 "\n", offset );
 					method = FILE_END;
 					break;
 				default: {
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_UNKNOWN > %li \n", offset );
+//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_UNKNOWN > %" PRId64 "\n", offset );
 					FAIL(E_INVALIDARG);
 				}
 			}
@@ -1241,7 +1241,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		stream_impl = new ArchiveOpenStream<UseVirtualDestructor>(options.arc_path);
 		stream = stream_impl;
 		arc_info = stream_impl->get_info();
-		fprintf(stderr,"Root archive info: name='%ls', size=%lu\n", arc_info.cFileName, arc_info.size());
+		fprintf(stderr,"Root archive info: name='%ls', size=%" PRIu64 "\n", arc_info.cFileName, arc_info.size());
 	} else {
 		if (parent_idx > 0 && archives[parent_idx]->flags == 2) {
 			fprintf(stderr,"Parent is a sequential stream (partial seek) - STOPPING\n");
@@ -1289,7 +1289,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 
 			UInt32 indices[2] = { entry_index, 0 };
 			FindData ef = archives[parent_idx]->get_file_info(entry_index);
-			fprintf(stderr, "Entry file info: name='%ls', size=%lu, is_dir=%s\n", ef.cFileName, ef.size(), ef.is_dir() ? "true" : "false");
+			fprintf(stderr, "Entry file info: name='%ls', size=%" PRIu64 ", is_dir=%s\n", ef.cFileName, ef.size(), ef.is_dir() ? "true" : "false");
 			if (ef.is_dir()) {
 				fprintf(stderr, "Entry is a directory - STOPPING\n");
 				return;

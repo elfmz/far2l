@@ -1,7 +1,11 @@
 #if defined(__APPLE__)
 
+#include <AvailabilityMacros.h>
+
 #import <Cocoa/Cocoa.h>
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#endif
 #include "MacOSAppProvider.hpp"
 #include "lng.hpp"
 #include "WideMB.h"
@@ -146,7 +150,11 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
         } else {
             // Cache miss: Query the system for the application lists.
             defaultAppURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:fileURL];
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
             allAppURLs = [[NSWorkspace sharedWorkspace] URLsForApplicationsToOpenURL:fileURL];
+#else
+            allAppURLs = defaultAppURL ? @[defaultAppURL] : @[];
+#endif
             // Store the results in the cache for subsequent files of the same type.
             uti_cache[uti] = {defaultAppURL, allAppURLs};
         }
@@ -312,7 +320,7 @@ std::vector<std::wstring> MacOSAppProvider::GetMimeTypes(const std::vector<std::
         std::wstring result;
 
         // Use the appropriate API based on the target macOS version.
-#if __MAC_OS_X_VERSION_MAX_ALLOWED >= 110000 // UTType is available on macOS 11.0+
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000 // UTType is available on macOS 11.0+
         // Modern approach for macOS 11.0 and later, converting a UTI to a MIME type.
         UTType *type = [UTType typeWithIdentifier:uti];
         if (type) {
@@ -321,6 +329,7 @@ std::vector<std::wstring> MacOSAppProvider::GetMimeTypes(const std::vector<std::
         }
 #else
         // Legacy approach for older macOS versions.
+#ifdef __clang__
         CFStringRef mimeType = UTTypeCopyPreferredTagWithClass((__bridge CFStringRef)uti,
                                                                kUTTagClassMIMEType);
         if (mimeType) {
@@ -328,6 +337,14 @@ std::vector<std::wstring> MacOSAppProvider::GetMimeTypes(const std::vector<std::
             NSString *mimeStr = (__bridge_transfer NSString *)mimeType;
             result = StrMB2Wide([mimeStr UTF8String]);
         }
+#else // gcc does not support ARC.
+        CFStringRef mimeType = UTTypeCopyPreferredTagWithClass((CFStringRef)uti,
+                                                               kUTTagClassMIMEType);
+        if (mimeType) {
+            NSString *mimeStr = [(NSString *)mimeType autorelease];
+            result = StrMB2Wide([mimeStr UTF8String]);
+        }
+#endif
 #endif
         unique_mimes.insert(result.empty() ? fallback_mime : result);
     }

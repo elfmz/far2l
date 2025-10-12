@@ -113,7 +113,11 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
     // This dramatically speeds up processing when many files of the same type are selected.
     struct AppListCacheEntry {
         NSURL* default_app;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000 && defined(__clang__)
         NSArray<NSURL *>* all_apps;
+#else
+        NSArray *all_apps;
+#endif
     };
     
     // Custom hash and equality functors are required for using NSString* as a key in std::unordered_map.
@@ -139,7 +143,11 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
         if (error || !uti) continue;
 
         NSURL* defaultAppURL;
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 101000 && defined(__clang__)
         NSArray<NSURL *>* allAppURLs;
+#else
+        NSArray *allAppURLs;
+#endif
 
         // Check if the application list for this UTI is already in our cache.
         auto cache_it = uti_cache.find(uti);
@@ -152,11 +160,24 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
             defaultAppURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:fileURL];
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
             allAppURLs = [[NSWorkspace sharedWorkspace] URLsForApplicationsToOpenURL:fileURL];
-#else
+#elif MAC_OS_X_VERSION_MAX_ALLOWED >= 1080 && defined(__clang__)
             allAppURLs = defaultAppURL ? @[defaultAppURL] : @[];
+#else
+            if (defaultAppURL) {
+                allAppURLs = [NSArray arrayWithObject:defaultAppURL];
+            } else {
+                allAppURLs = [NSArray array];
+            }
 #endif
             // Store the results in the cache for subsequent files of the same type.
+#ifdef __clang__
             uti_cache[uti] = {defaultAppURL, allAppURLs};
+#else
+            AppListCacheEntry entry;
+            entry.default_app = defaultAppURL;
+            entry.all_apps = allAppURLs;
+            uti_cache[uti] = entry;
+#endif
         }
 
         // A temporary set to ensure we process each application only once per file.
@@ -172,7 +193,12 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
         }
 
         // Process all other compatible applications.
+#ifdef __clang__
         for (NSURL *appURL in allAppURLs) {
+#else
+        for (NSUInteger i = 0; i < [allAppURLs count]; i++) {
+            NSURL *appURL = [allAppURLs objectAtIndex:i];
+#endif
             MacCandidateTempInfo info = AppBundleToTempInfo(appURL);
             if (processed_apps_for_this_file.count(info.id)) {
                 continue;

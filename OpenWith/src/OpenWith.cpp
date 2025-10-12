@@ -98,7 +98,7 @@ namespace OpenWith {
 		// and FCTL_GETSELECTEDPANELITEM will return the item under the cursor.
 		if (pi.SelectedItemsNumber > 0) {
 			selected_pathnames.reserve(pi.SelectedItemsNumber);
-			for (size_t i = 0; i < pi.SelectedItemsNumber; ++i) {
+			for (int i = 0; i < pi.SelectedItemsNumber; ++i) {
 				// Query the buffer size for the selected panel item.
 				int itemSize = s_Info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
 				if (itemSize <= 0) continue;

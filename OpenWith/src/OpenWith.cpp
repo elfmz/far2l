@@ -193,6 +193,7 @@ namespace OpenWith {
 		int exitCode = s_Info.DialogRun(dlg);
 		ConfigureResult result;
 
+		// The index of the 'OK' button is determined by its position in the 'di' vector.
 		if (exitCode == (int)di.size() - 2) { // OK was clicked
 			result.settings_saved = true;
 			// Save platform-independent settings

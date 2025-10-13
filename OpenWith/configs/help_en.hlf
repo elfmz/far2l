@@ -22,7 +22,7 @@ $^#Contents#
 $^#OpenWith plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
-$^#Configuration Dialog#
+$^#Configuration Dialog (F9)#
  The configuration dialog, accessible by pressing #F9# in the application selection menu, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
 
  #1. GENERAL SETTINGS#
@@ -200,7 +200,7 @@ $^#Troubleshooting#
  Solution: Please process files of different categories in separate operations. This algorithm is most effective for batch-processing files of the same kind.
 
 
- #How does ranking work? Why is app X listed above app Y?#
+ #How does ranking work? Why is app X listed above app Y? (Linux/BSD)#
 
  The order in the list is determined by a rank calculated for each application. A higher rank means a more relevant application. The rank depends on two factors:
  1. MIME Type Specificity (Primary Factor): An association with a more specific type (e.g., `text/x-c++src`) is always prioritized over a generic one (e.g., `text/plain`).
@@ -208,7 +208,7 @@ $^#Troubleshooting#
  Therefore, an application set as the system default for a very specific file type will always be at the top of the list.
 
 
- #Why doesn't my favorite app appear in the list?#
+ #Why doesn't my favorite app appear in the list? (Linux/BSD)#
 
  If an application doesn't appear even for a single file, check the following:
  #-# Missing `.desktop` file: Ensure that a `.desktop` file for the application exists in one of the standard directories (`~~/.local/share/applications`, `/usr/share/applications`, etc.).
@@ -217,7 +217,7 @@ $^#Troubleshooting#
  #-# Outdated Cache: Run `update-desktop-database` and `update-mime-database` in your terminal to refresh the system caches.
 
 
- #An application is in the list, but it fails to launch.#
+ #An application is in the list, but it fails to launch. (Linux/BSD)#
 
  This almost always indicates an error in the `Exec=` line of the `.desktop` file. Press F3 to view the command the plugin is trying to execute and check it for common mistakes:
  #-# Incorrect Field Codes: The plugin supports standard codes (`%f`, `%F`, `%u`, `%U`). Some applications might use deprecated or non-standard codes that will not work.

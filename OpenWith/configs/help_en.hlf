@@ -8,7 +8,7 @@ $^#Copyright (C) 2025 spnethw#
 $^#Contents#
  The #OpenWith# plugin provides a context-aware menu to open the currently selected file(s) with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
- After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application.
+ After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application. The #F9# key opens the configuration dialog to fine-tune the plugin's behavior, which is divided into general and platform-specific settings. Modifying options that affect application discovery or filtering logic will cause the list of applications in the menu to update immediately.
 
    ~Configuration Dialog (F9)~@ConfigurationDialog@
 

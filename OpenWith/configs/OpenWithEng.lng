@@ -39,3 +39,8 @@
 "Load MIME type su&bclasses"
 "&Resolve structured MIME suffixes"
 "Search for apps for &generic MIME types"
+"Co&nfirm opening if file count exceeds:"
+"OpenWith: Confirm launch"
+"Are you sure you want to open"
+"files with application"
+"Show universal &handlers for all files"

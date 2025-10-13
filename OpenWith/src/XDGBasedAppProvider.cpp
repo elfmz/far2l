@@ -41,6 +41,7 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true },
 		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true },
 		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true },
+		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true },
 		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true },
 		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false },
 		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false }
@@ -821,9 +822,11 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 			}
 		}
 
-		// --- Step 5: Add the ultimate fallback for any binary data ---
-		if (is_readable_file) {
-			add_unique("application/octet-stream");
+		if (_show_universal_handlers) {
+			// --- Step 5: Add the ultimate fallback for any binary data ---
+			if (is_readable_file) {
+				add_unique("application/octet-stream");
+			}
 		}
 	}
 

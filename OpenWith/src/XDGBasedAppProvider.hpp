@@ -215,16 +215,17 @@ private:
 	std::map<std::wstring, std::string> _last_candidates_source_info;
 
 	// Platform-specific settings.
-	bool _filter_by_show_in;
-	bool _validate_try_exec;
-	bool _use_mimeinfo_cache;
-	bool _use_extension_based_fallback;
 	bool _use_xdg_mime_tool;
 	bool _use_file_tool;
+	bool _use_extension_based_fallback;
 	bool _load_mimetype_aliases;
 	bool _load_mimetype_subclasses;
 	bool _resolve_structured_suffixes;
 	bool _use_generic_mime_fallbacks;
+	bool _show_universal_handlers;
+	bool _use_mimeinfo_cache;
+	bool _filter_by_show_in;
+	bool _validate_try_exec;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

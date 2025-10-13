@@ -36,6 +36,9 @@ $^#Configuration Dialog#
  #-# Clear selection if command executed
    When this option is enabled the selection on the panel is cleared after exiting the menu if any menu command has been executed.
 
+ #-# Confirm opening if file count exceeds...
+   When this option is enabled, the plugin will prompt for confirmation before launching an application if the number of selected files exceeds the threshold specified in the adjacent input field. This acts as a safeguard against accidentally launching a process with a large number of files, which could be resource-intensive or slow. If you decline the confirmation, you will be returned to the previous screen (either the application selection menu or the information dialog), allowing you to reconsider your action.
+
 
  #2. PLATFORM-SPECIFIC SETTINGS#
 
@@ -65,6 +68,9 @@ $^#Configuration Dialog#
 
  #-# Search for apps for generic MIME types (type/*, text/plain)
    When enabled, the plugin searches for applications associated not only with the file's specific MIME type but also with its generic variants. For example, for a file with the type text/x-c++src, editors registered for text/plain will also be suggested. This increases the number of available applications but may add "noise" from less relevant programs. Disabling this option is useful if you want the list to contain only specialized applications that precisely match the file type.
+
+ #-# Show universal handlers for all files
+   When enabled, this option adds the generic MIME type `application/octet-stream` as a last-resort fallback for any file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. Disable this option to reduce clutter in the application list and see only programs specifically registered for the file's detected type. If disabled, the list may be empty for files without a clear association.
 
  #-# Use mimeinfo.cache
    Speed up application lookups by using the mimeinfo.cache files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., image/png) to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.

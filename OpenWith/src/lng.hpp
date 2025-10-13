@@ -41,5 +41,10 @@ enum LanguageID
 	MClearSelection,
 	MLoadMimeTypeSubclasses,
 	MResolveStructuredSuffixes,
-	MUseGenericMimeFallbacks
+	MUseGenericMimeFallbacks,
+	MConfirmLaunchOption,
+	MConfirmLaunchTitle,
+	MConfirmLaunchMessageBegin,
+	MConfirmLaunchMessageEnd,
+	MShowUniversalHandlers
 };

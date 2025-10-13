@@ -414,6 +414,18 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 {
 	CHAR_INFO ch;
 	SHORT out = 1;
+	bool needs_trailing_blank = false;
+
+	auto readPrevChar = [&](CHAR_INFO &prev_char) -> bool {
+		return _prev_pos.X >= 0 && _buf.Read(prev_char, _prev_pos);
+	};
+
+	auto extractString = [&](const CHAR_INFO &ci) -> std::wstring {
+		if (CI_USING_COMPOSITE_CHAR(ci))
+			return WINPORT(CompositeCharLookup)(ci.Char.UnicodeChar);
+		else
+			return std::wstring(1,ci.Char.UnicodeChar);
+	};
 
 	switch (sm.kind) {
 		case SequenceModifier::SM_WRITE_STR: {
@@ -423,29 +435,39 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 				// surrogate pairs not used for UTF32, so dont need to do special tricks to keep it,
 				// so let following normal character to overwrite abnormal surrogate pair prefixx
 
-			} else if (_prev_pos.X >= 0 && CharClasses::IsSuffix(*sm.str)) {
+			} else if (CharClasses::IsSuffix(*sm.str)) {
 				out = 0;
-				if (!_buf.Read(ch, _prev_pos)) {
+				if (*sm.str == CharClasses::VARIATION_SELECTOR_16) {
+					// The previous character should be rendered as an image
+					out = 1;
+					needs_trailing_blank=true;
+				}
+				if (!readPrevChar(ch)) {
 					return false;
 				}
 				pos = _prev_pos;
-				std::wstring tmp;
-				if (CI_USING_COMPOSITE_CHAR(ch)) {
-					tmp = WINPORT(CompositeCharLookup)(ch.Char.UnicodeChar);
-				} else {
-					tmp = ch.Char.UnicodeChar;
-				}
+				std::wstring tmp  = extractString(ch);
 				tmp+= *sm.str;
 				CI_SET_COMPOSITE(ch, tmp.c_str());
-
 			} else if (*sm.str == L'\t' && (_mode & ENABLE_PROCESSED_OUTPUT) != 0) {
 				 CI_SET_WCHAR(ch, L' ');
-
 			} else {
+				CHAR_INFO prev_ch;
+				if (readPrevChar(prev_ch)) {
+					std::wstring prev_str  = extractString(prev_ch);
+					if (!prev_str.empty() && prev_str.back() == CharClasses::ZERO_WIDTH_JOINER) {
+						// The previous character ended with ZWJ, merge current into it
+						prev_str += *sm.str;
+						CI_SET_COMPOSITE(prev_ch, prev_str.c_str());
+						_buf.Write(prev_ch, _prev_pos);
+						AffectArea(area, _prev_pos.X, _prev_pos.Y);
+						
+						return 0;
+					}
+				}
 				CI_SET_WCHAR(ch, *sm.str);
-				if (CharClasses::IsFullWidth(sm.str)) {
-//					fprintf(stderr, "IsCharFullWidth: %lc [0x%llx]\n",
-//						(WCHAR)ch.Char.UnicodeChar, (unsigned long long)ch.Char.UnicodeChar);
+				if (CharClasses::IsFullWidth(*sm.str)) {
+					needs_trailing_blank=true;
 					out = 2;
 				}
 			}
@@ -470,7 +492,7 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 	
 	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {
 		AffectArea(area, pos.X, pos.Y);
-		if (out == 2) {
+		if (needs_trailing_blank) {
 			CI_SET_WCHAR(ch, 0);
 			pos.X++;
 			if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {

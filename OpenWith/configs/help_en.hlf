@@ -81,6 +81,9 @@ $^#Configuration Dialog (F9)#
  #-# Validate TryExec field
    Before showing an application, check if the executable specified in its .desktop file's `TryExec` key exists and is runnable. This helps hide applications that are declared but not properly installed.
 
+ #-# Disable ranking (sort alphabetically)
+   When enabled, this option overrides the complex ranking system and sorts the application list strictly in alphabetical order. This can be useful for users who prefer a simple, predictable list rather than one prioritized by MIME type specificity and association source.
+
 
  #2.2. macOS Settings#
 

@@ -46,5 +46,6 @@ enum LanguageID
 	MConfirmLaunchTitle,
 	MConfirmLaunchMessageBegin,
 	MConfirmLaunchMessageEnd,
-	MShowUniversalHandlers
+	MShowUniversalHandlers,
+	MSortAlphabetically
 };

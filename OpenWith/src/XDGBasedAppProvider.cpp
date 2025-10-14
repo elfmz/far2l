@@ -44,7 +44,8 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true },
 		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true },
 		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false },
-		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false }
+		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false },
+		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false }
 	};
 
 	// Pre-calculate the lookup map for SetPlatformSettings.
@@ -202,8 +203,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		finalists.push_back(pair.second);
 	}
 
-	// Sort the finalists based on their score (desc) and name (asc for stability).
-	std::sort(finalists.begin(), finalists.end());
+	SortFinalCandidates(finalists);
 
 	// Step 5: Build the final list in the format required by the UI.
 	std::vector<CandidateInfo> result;
@@ -267,7 +267,8 @@ std::vector<XDGBasedAppProvider::RankedCandidate> XDGBasedAppProvider::GetCandid
 	for (const auto& [key, ranked_candidate] : context.unique_candidates) {
 		sorted_candidates.push_back(ranked_candidate);
 	}
-	std::sort(sorted_candidates.begin(), sorted_candidates.end());
+
+	SortFinalCandidates(sorted_candidates);
 
 	return sorted_candidates;
 }
@@ -680,6 +681,21 @@ bool XDGBasedAppProvider::IsAssociationRemoved(const MimeAssociation& associatio
 	}
 
 	return false;
+}
+
+
+void XDGBasedAppProvider::SortFinalCandidates(std::vector<RankedCandidate>& candidates) const
+{
+	if (_sort_alphabetically) {
+		// Sort candidates based on their name only
+		std::sort(candidates.begin(), candidates.end(), [](const RankedCandidate& a, const RankedCandidate& b) {
+			if (!a.entry || !b.entry) return b.entry != nullptr;
+			return a.entry->name < b.entry->name;
+		});
+	} else {
+		// Use the standard ranking defined in the < operator
+		std::sort(candidates.begin(), candidates.end());
+	}
 }
 
 

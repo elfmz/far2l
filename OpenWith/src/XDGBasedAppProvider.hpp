@@ -157,6 +157,7 @@ private:
 	void ValidateAndRegisterCandidate(CandidateSearchContext& context, const std::string& app_desktop_file, int rank, const std::string& source_info);
 	void AddOrUpdateCandidate(CandidateSearchContext& context, const DesktopEntry& entry, int rank, const std::string& source_info);
 	static bool IsAssociationRemoved(const MimeAssociation& associations, const std::string& mime_type, const std::string& app_desktop_file);
+	void SortFinalCandidates(std::vector<RankedCandidate>& candidates) const;
 
 	// MIME types detection
 	std::vector<std::string> CollectAndPrioritizeMimeTypes(const std::string& pathname);
@@ -226,6 +227,7 @@ private:
 	bool _use_mimeinfo_cache;
 	bool _filter_by_show_in;
 	bool _validate_try_exec;
+	bool _sort_alphabetically;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

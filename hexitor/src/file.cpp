@@ -142,25 +142,53 @@ DWORD file::save_as(const wchar_t* file_name, const map<UINT64, BYTE>& upd_data,
 	//assert(wcsicmp(file_name, _name.c_str()) != 0);
 
 	DWORD rc = ERROR_SUCCESS;
-	// TODO implement save as
-	rc = ERROR_ACCESS_DENIED;
 	/*
 	if (!CopyFileEx(_name.c_str(), file_name, progress_routine, data, nullptr, 0))
 		rc = GetLastError();
 	*/
-
-	if (rc == ERROR_SUCCESS) {
-		file new_instance;
-		rc = new_instance.open(file_name);
-		if (rc == ERROR_SUCCESS) {
-			close();
-			_handle = new_instance._handle;
-			_size = new_instance._size;
-			_name = new_instance._name;
-			_rw_mode = new_instance._rw_mode;
-			new_instance._handle = INVALID_HANDLE_VALUE;
-			rc = save(upd_data);
+	LARGE_INTEGER file_size;
+	if( !GetFileSizeEx(_handle, &file_size) )
+		return GetLastError();
+	HANDLE fo = CreateFile(file_name, GENERIC_WRITE,
+						FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS,	//&sa
+						FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+	if( fo == INVALID_HANDLE_VALUE )
+		return GetLastError();
+	SetFilePointer(_handle, 0, NULL, FILE_BEGIN);
+	LARGE_INTEGER copied = {0};
+	unsigned char buf[4096];
+	DWORD nb=0;
+	while( (rc == ERROR_SUCCESS) && (copied.QuadPart < file_size.QuadPart) ){
+		if( progress_routine && progress_routine({}, copied, {}, {}, 0, 0, nullptr, nullptr, data) == PROGRESS_CANCEL ){
+			rc = ERROR_WRITE_FAULT;
+			break;
 		}
+		if( ReadFile(_handle, buf, sizeof(buf), &nb, NULL) )
+		{
+			if( WriteFile(fo, buf, nb, &nb, NULL) )
+				copied.QuadPart += nb;
+			else
+				rc = GetLastError();
+		}
+		else
+			rc = GetLastError();
+	};
+	CloseHandle(fo);
+	if( rc != ERROR_SUCCESS ){
+		DeleteFile(file_name);
+		return rc;
+	}
+
+	file new_instance;
+	rc = new_instance.open(file_name);
+	if (rc == ERROR_SUCCESS) {
+		close();
+		_handle = new_instance._handle;
+		_size = new_instance._size;
+		_name = new_instance._name;
+		_rw_mode = new_instance._rw_mode;
+		new_instance._handle = INVALID_HANDLE_VALUE;
+		rc = save(upd_data);
 	}
 
 	return rc;

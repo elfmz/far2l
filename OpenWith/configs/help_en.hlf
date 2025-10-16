@@ -8,7 +8,7 @@ $^#Copyright (C) 2025 spnethw#
 $^#Contents#
  The #OpenWith# plugin provides a context-aware menu to open the currently selected file(s) with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
- After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application. The #F9# key opens the configuration dialog to fine-tune the plugin's behavior, which is divided into general and platform-specific settings. Modifying options that affect application discovery or filtering logic will cause the list of applications in the menu to update immediately.
+ After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application. The #F9# key opens the configuration dialog to fine-tune the plugin's behavior, which is divided into general and platform-specific settings. Modifying options that affect application discovery, filtering, or ranking logic will cause the list of applications in the menu to update immediately.
 
    ~Configuration Dialog (F9)~@ConfigurationDialog@
 
@@ -79,10 +79,11 @@ $^#Configuration Dialog (F9)#
    Respect the `OnlyShowIn` and `NotShowIn` keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE).
 
  #-# Validate TryExec field
-   Before showing an application, check if the executable specified in its .desktop file's `TryExec` key exists and is runnable. This helps hide applications that are declared but not properly installed.
+   Before showing an application, check if the executable specified in its .desktop file's `TryExec` key exists and is runnable. This helps hide applications that are declared but not properly installed or have broken shortcuts. However, this validation can slow down the appearance of the application menu. If the `TryExec` value is a simple command name (e.g., "gedit"), the plugin has to search for it in all directories listed in the `$PATH` environment variable, which involves multiple disk access operations for each application being checked. You can safely disable this option to improve performance if you are confident that your system's desktop entries are well-maintained and do not point to non-existent executables.
 
  #-# Disable ranking (sort alphabetically)
    When enabled, this option overrides the complex ranking system and sorts the application list strictly in alphabetical order. This can be useful for users who prefer a simple, predictable list rather than one prioritized by MIME type specificity and association source.
+   For a detailed explanation of the logic this option overrides, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
 
 
  #2.2. macOS Settings#
@@ -143,6 +144,12 @@ $^#Information Dialog (F3)#
 
  #-# Terminal
    A boolean value (true or false) indicating whether the application must be run in a terminal window.
+
+ #-# OnlyShowIn
+   A semicolon-separated list of desktop environment identifiers (e.g., "GNOME;KDE;"). If this key is present, the application entry should only be shown in the specified environments. This allows developers to tailor visibility for desktop-specific tools.
+
+ #-# NotShowIn
+   A semicolon-separated list of desktop environment identifiers. If this key is present, the application entry should be hidden in the specified environments. This is the inverse of OnlyShowIn and is useful for hiding applications that do not integrate well with certain desktops.
 
 
  #2.2. macOS Application Details#
@@ -209,6 +216,7 @@ $^#Troubleshooting#
  1. MIME Type Specificity (Primary Factor): An association with a more specific type (e.g., `text/x-c++src`) is always prioritized over a generic one (e.g., `text/plain`).
  2. Association Source (Secondary Factor): Sources are prioritized from highest to lowest: the global default (`xdg-mime query default`), the `[Default Applications]` section in `mimeapps.list`, the `[Added Associations]` section, and finally, the `mimeinfo.cache` or the data from `.desktop` files themselves.
  Therefore, an application set as the system default for a very specific file type will always be at the top of the list.
+ If you prefer a simple, predictable list over this complex logic, you can disable it with the "Disable ranking (sort alphabetically)" option in the ~configuration dialog~@ConfigurationDialog@.
 
 
  #Why doesn't my favorite app appear in the list? (Linux/BSD)#

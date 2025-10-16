@@ -437,6 +437,13 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 	if (!entry.mimetype.empty()) {
 		details.push_back({L"MimeType =", StrMB2Wide(entry.mimetype)});
 	}
+	if (!entry.not_show_in.empty()) {
+		details.push_back({L"NotShowIn =", StrMB2Wide(entry.not_show_in)});
+	}
+	if (!entry.only_show_in.empty()) {
+		details.push_back({L"OnlyShowIn =", StrMB2Wide(entry.only_show_in)});
+	}
+
 	return details;
 }
 

@@ -28,7 +28,7 @@ $^#Configuration Dialog (F9)#
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal. Note: when multiple files are selected, this option being unchecked will cause all terminal-based applications to be hidden from the list. This is because far2l's integrated terminal cannot manage multiple concurrent application instances.
+   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal. Note: when multiple files are selected and this option is unchecked, the plugin applies a "smart" filter. Because far2l's built-in terminal cannot manage multiple concurrent instances, the plugin will hide those terminal applications that require a separate launch for each file. Applications that can accept the entire list of files in a single command will remain in the list.
 
  #-# Don't wait for command completion
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications. It may also be ignored when multiple files are opened with an application that does not support receiving them in a single command; in this case, an asynchronous launch is forced to prevent the UI from blocking.
@@ -223,7 +223,7 @@ $^#Troubleshooting#
 
  If an application doesn't appear even for a single file, check the following:
  #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories ("~~/.local/share/applications", "/usr/share/applications", etc.).
- #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType=" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
+ #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
  #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
  #-# Outdated Cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
 

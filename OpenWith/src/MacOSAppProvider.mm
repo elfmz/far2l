@@ -255,6 +255,7 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
         final_c.id = candidate.info.id;
         final_c.terminal = false;
         final_c.name = candidate.info.name;
+        final_c.multi_file_aware = true;
 
         // If an app name is duplicated, append its version string to make it unique in the UI.
         if (name_counts[candidate.info.name] > 1 && !candidate.info.info.empty()) {

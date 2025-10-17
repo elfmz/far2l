@@ -125,7 +125,7 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 	fs.Format(L"    ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs.Format(L" Win size in char cells: %ux%u", ScrX, ScrY );
+	fs.Format(L" Win size in char cells: %ux%u", ScrX+1, ScrY+1 );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 	fs.Format(L"                  Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;

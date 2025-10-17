@@ -1855,6 +1855,12 @@ CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const Desk
 	// The ID is the basename of the .desktop file (e.g., "firefox.desktop").
 	// This is used for lookups and to handle overrides correctly.
 	candidate.id = StrMB2Wide(GetBaseName(desktop_entry.desktop_file));
+
+	const std::string& exec = desktop_entry.exec;
+	bool has_multi_file_code = (exec.find("%F") != std::string::npos || exec.find("%U") != std::string::npos);
+	bool has_single_file_code = (exec.find("%f") != std::string::npos || exec.find("%u") != std::string::npos);
+	candidate.multi_file_aware = has_multi_file_code || (!has_multi_file_code && !has_single_file_code);
+
 	return candidate;
 }
 

@@ -438,7 +438,7 @@ namespace OpenWith {
 			if (pathnames.size() > 1 && !s_UseExternalTerminal) {
 				candidates.erase(
 					std::remove_if(candidates.begin(), candidates.end(),
-								   [](const CandidateInfo& c){ return c.terminal; }),
+								   [](const CandidateInfo& c) { return c.terminal && !c.multi_file_aware; }),
 					candidates.end());
 			}
 		};

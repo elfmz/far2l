@@ -36,6 +36,7 @@ enum LanguageID
 	MDetails,
 
 	MPathname,
+	MFilesSelected,
 	MMimeType,
 	MLaunchCommand,
 	MClose,
@@ -43,6 +44,9 @@ enum LanguageID
 
 	MDesktopFile,
 	MSource,
+	MFullScanFor,
+	MFor,
+	MIn,
 
 	MAppName,
 	MFullPath,
@@ -50,12 +54,6 @@ enum LanguageID
 	MVersion,
 	MBundleVersion,
 
-	MFullScanFor,
-	MFor,
-	MIn,
-	MFilesSelected,
-
 	MConfirmLaunchTitle,
-	MConfirmLaunchMessageBegin,
-	MConfirmLaunchMessageEnd,
+	MConfirmLaunchMessage
 };

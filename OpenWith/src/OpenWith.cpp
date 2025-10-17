@@ -373,17 +373,13 @@ namespace OpenWith {
 			return true;
 		}
 
-		std::wstringstream ss;
-		ss << GetMsg(MConfirmLaunchMessageBegin)
-		   << L" " << pathnames.size() << L" "
-		   << GetMsg(MConfirmLaunchMessageEnd)
-		   << L" '" << app.name << L"'?";
+		wchar_t message[255] = {};
 
-		const std::wstring message = ss.str();
+		s_FSF.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MConfirmLaunchMessage), pathnames.size(), app.name.c_str());
 
 		const wchar_t* items[] = {
 			GetMsg(MConfirmLaunchTitle),
-			message.c_str(),
+			message,
 		};
 
 		int res = s_Info.Message(s_Info.ModuleNumber, FMSG_MB_YESNO, nullptr, items, ARRAYSIZE(items), 2);

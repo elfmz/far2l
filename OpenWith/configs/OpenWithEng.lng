@@ -34,6 +34,7 @@
 "OpenWith: Details"
 
 "&Filepath:"
+"files selected: "
 "&MIME type:"
 "L&aunch command:"
 "&Close"
@@ -41,6 +42,9 @@
 
 "&Desktop file:"
 "&Source:"
+"full scan for "
+" for "
+" in "
 
 "Name: "
 "Location: "
@@ -48,11 +52,5 @@
 "Version: "
 "Build Version: "
 
-"full scan for "
-" for "
-" in "
-"files selected: "
-
 "OpenWith: confirm launch"
-"Are you sure you want to open"
-"files with application"
+"Are you sure you want to open %zu files with application '%ls'?"

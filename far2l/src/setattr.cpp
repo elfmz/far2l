@@ -1341,7 +1341,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 			const PFILETIME TimeValues[] = {&FindData.ftUnixAccessTime, &FindData.ftUnixModificationTime,
 					&FindData.ftUnixStatusChangeTime};
 
-			if (DlgParam.Plugin || (!DlgParam.Plugin && apiGetFindDataEx(strSelName, FindData))) {
+			if (DlgParam.Plugin || apiGetFindDataEx(strSelName, FindData)) {
 				for (size_t i = 0; i < ARRAYSIZE(Dates); i++) {
 					ConvertDate(*TimeValues[i], AttrDlg[Dates[i]].strData, AttrDlg[Times[i]].strData, 12,
 							FALSE, FALSE, 2, TRUE);
@@ -1442,7 +1442,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 				}
 			} else {
 				// BUGBUG, copy-paste
-				if (!FolderPresent && (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+				if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 					FolderPresent = true;
 					AttrDlg[SA_SEPARATOR4].Flags&= ~DIF_HIDDEN;
 					AttrDlg[SA_CHECKBOX_SUBFOLDERS].Flags&= ~(DIF_DISABLE | DIF_HIDDEN);

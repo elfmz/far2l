@@ -1846,6 +1846,51 @@ std::string XDGBasedAppProvider::RunCommandAndCaptureOutput(const std::string& c
 }
 
 
+// Searches the Exec string for any field code characters specified in 'codes_to_find'.
+// This function correctly handles escaped '%%' sequences according to the XDG specification.
+bool XDGBasedAppProvider::HasFieldCode(const std::string& exec, const std::string& codes_to_find)
+{
+	size_t pos = 0;
+	// Find the next occurrence of '%' starting from the current position.
+	while ((pos = exec.find('%', pos)) != std::string::npos) {
+		// Ensure there is a character following the '%'. A trailing '%' is not a field code.
+		if (pos + 1 >= exec.size()) {
+			break;
+		}
+
+		const char next_char = exec[pos + 1];
+
+		// If the character following '%' is not one of the codes we are looking for,
+		// it might be '%%' or another irrelevant code. Skip it and continue searching.
+		if (codes_to_find.find(next_char) == std::string::npos) {
+			pos++;
+			continue;
+		}
+
+		// A potential field code (e.g., %F) has been found. Now, we must check if it's escaped.
+		// Count the number of consecutive '%' characters immediately preceding our find.
+		size_t preceding_percents = 0;
+		size_t check_pos = pos;
+		while (check_pos > 0 && exec[check_pos - 1] == '%') {
+			preceding_percents++;
+			check_pos--;
+		}
+
+		// If the number of preceding '%' is even (0, 2, 4...), the current '%' is not escaped
+		// and thus starts a valid field code (e.g., %F, %%%F).
+		if (preceding_percents % 2 == 0) {
+			return true;
+		}
+
+		// If the number is odd, the current '%' is part of an escaped sequence (e.g., %%F, %%%%F).
+		// We must ignore it and continue the search from the next character.
+		pos++;
+	}
+
+	return false;
+}
+
+
 CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry)
 {
 	CandidateInfo candidate;
@@ -1857,8 +1902,10 @@ CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const Desk
 	candidate.id = StrMB2Wide(GetBaseName(desktop_entry.desktop_file));
 
 	const std::string& exec = desktop_entry.exec;
-	bool has_multi_file_code = (exec.find("%F") != std::string::npos || exec.find("%U") != std::string::npos);
-	bool has_single_file_code = (exec.find("%f") != std::string::npos || exec.find("%u") != std::string::npos);
+
+	// Correctly check for multi-file and single-file field codes, respecting '%%' escapes.
+	bool has_multi_file_code = HasFieldCode(exec, "FU");
+	bool has_single_file_code = HasFieldCode(exec, "fu");
 	candidate.multi_file_aware = has_multi_file_code || (!has_multi_file_code && !has_single_file_code);
 
 	return candidate;

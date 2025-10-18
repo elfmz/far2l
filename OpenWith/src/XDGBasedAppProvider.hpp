@@ -198,6 +198,7 @@ private:
 	static bool IsValidDir(const std::string& path);
 	static bool IsReadableFile(const std::string &path);
 	static std::string RunCommandAndCaptureOutput(const std::string& cmd);
+	static bool HasFieldCode(const std::string& exec, const std::string& codes_to_find);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 
 

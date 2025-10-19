@@ -58,7 +58,6 @@ bool goto_dlg::show(const UINT64 file_size, UINT64& offset)
 	_file_size = file_size;
 
 	fardialog::DlgMASKED maskoff("tb_mask", nullptr, _hex_mask, DIF_HISTORY | DIF_MASKEDIT);
-	// TODO manage history in aHist
 	fardialog::DlgRADIOBUTTON radiohex("rb_hex", _PSI.GetMsg(_PSI.ModuleNumber, ps_goto_hex), DIF_GROUP, true);
 	fardialog::DlgRADIOBUTTON radioper("rb_percent", _PSI.GetMsg(_PSI.ModuleNumber, ps_goto_percent), 0, false);
 	fardialog::DlgHLine hline0;

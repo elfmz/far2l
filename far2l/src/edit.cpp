@@ -375,6 +375,7 @@ void Edit::FastShow()
 
 	OutStr.clear();
 	size_t OutStrCells = 0;
+	bool joining = false;
 	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i) {
 		auto wc = Str[i];
 		if (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
@@ -420,15 +421,20 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			if (CharClasses::IsFullWidth(wc)) {
+			if (wc == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsFullWidth(&Str[i])) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
 					break;
 				}
-				OutStrCells+= 2;
-			} else if (!CharClasses::IsXxxfix(wc))
-				OutStrCells++;
+				if (!joining) OutStrCells+= 2;
+				joining = false;
+			} else if (!CharClasses::IsXxxfix(wc)) {
+				if (!joining) OutStrCells++;
+				joining = false;
+			}
 
 			OutStr.emplace_back(wc ? wc : L' ');
 		}
@@ -669,15 +675,37 @@ int Edit::CalcRTrimmedStrSize() const
 
 int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 {
+	bool joining = false;
 	if (LimitPos != -1) {
-		if (Pos < LimitPos)
-			do {
-				Pos++;
-			} while (Pos < LimitPos && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
-	} else
-		do {
-			Pos++;
-		} while (Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
+		if (Pos < LimitPos) {
+			++Pos;
+			// Skip combining marks and ZWJ sequences
+			for ( ; Pos < LimitPos && Pos < StrSize; ++Pos) {
+				if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
+					joining = true;
+				} else if (CharClasses::IsXxxfix(Str[Pos])) {
+					continue;
+				} else if (joining) {
+					joining = false;
+				} else {
+					break;
+				}
+			}
+		}
+	} else {
+		++Pos;
+		for ( ; Pos < StrSize; ++Pos) {
+			if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsXxxfix(Str[Pos])) {
+				continue;
+			} else if (joining) {
+				joining = false;
+			} else {
+				break;
+			}
+		}
+	}
 
 	return Pos;
 }
@@ -687,9 +715,18 @@ int Edit::CalcPosBwdTo(int Pos) const
 	if (Pos <= 0)
 		return 0;
 
-	do {
-		--Pos;
-	} while (Pos > 0 && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
+	--Pos;
+	for ( ; Pos > 0 && Pos < StrSize; --Pos) {
+		if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
+			continue;
+		} else if (CharClasses::IsXxxfix(Str[Pos])) {
+			continue;
+		} else if (Str[Pos - 1] == CharClasses::ZERO_WIDTH_JOINER) {
+			continue;
+		} else {
+			break;
+		}
+	}
 
 	return Pos;
 }
@@ -2102,7 +2139,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 	else {
 		// Начинаем вычисление с предыдущей позиции
 		int Index = PrevPos;
-
+		bool joining = false;
 		// Проходим по всем символам до позиции поиска, если она ещё в пределах строки,
 		// либо до конца строки, если позиция поиска за пределами строки
 		for (; Index < Min(Pos, StrSize); Index++)
@@ -2119,14 +2156,24 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 				// Расчитываем длину таба с учётом настроек и текущей позиции в строке
 				TabPos+= TabSize - (TabPos % TabSize);
+				joining = false;
 			}
 			// Обрабатываем все остальные символы
 			else {
-				if (CharClasses::IsFullWidth(Str[Index])) {
-					TabPos+= 2;
-				} else if (!CharClasses::IsXxxfix(Str[Index])) {
-					TabPos++;
+				if (Str[Index] == CharClasses::ZERO_WIDTH_JOINER)
+				{
+					joining = true;
+					continue;
 				}
+				if (CharClasses::IsXxxfix(Str[Index]))
+					continue;
+				if (joining)
+				{
+					joining = false;
+					continue;
+				}
+
+				TabPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
 			}
 
 		// Если позиция находится за пределами строки, то там точно нет табов и всё просто
@@ -2141,7 +2188,8 @@ int Edit::CellPosToReal(int Pos)
 	if (Pos < 0) return 0;
 	if (!HasSpecialWidthChars) return Pos;
 	int Index = 0;
-	for (int CellPos = 0; CellPos < Pos; Index++) {
+	bool joining = false;
+	for (int CellPos = 0; CellPos < Pos || joining; Index++) {
 		if (Index >= StrSize) {
 			Index+= Pos - CellPos;
 			break;
@@ -2154,9 +2202,24 @@ int Edit::CellPosToReal(int Pos)
 				break;
 
 			CellPos = NewCellPos;
+			joining = false;
 		} else {
-			CellPos+= CharClasses::IsFullWidth(Str[Index]) ? 2 : CharClasses::IsXxxfix(Str[Index]) ? 0 : 1;
-			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
+			if (Str[Index] == CharClasses::ZERO_WIDTH_JOINER)
+			{
+				joining = true;
+				continue;
+			}
+
+			if (CharClasses::IsXxxfix(Str[Index]))
+				continue;
+
+			if (!joining)
+				CellPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
+
+			joining = false;
+			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) { 
+				if (Str[Index + 1] == CharClasses::ZERO_WIDTH_JOINER)
+					joining = true;
 				Index++;
 			}
 		}
@@ -2167,11 +2230,31 @@ int Edit::CellPosToReal(int Pos)
 void Edit::SanitizeSelectionRange()
 {
 	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
-		while (SelStart > 0 && CharClasses::IsXxxfix(Str[SelStart]))
-			--SelStart;
+		bool joining = false;
+		for ( ; SelStart > 0; SelStart--) {
+			if (Str[SelStart] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsXxxfix(Str[SelStart])) {
+				continue;
+			} else if (joining) {
+				joining = false;
+			} else {
+				break;
+			}
+		}
 
-		while (SelEnd < StrSize && CharClasses::IsXxxfix(Str[SelEnd]))
-			++SelEnd;
+		joining = false;
+		for ( ; SelEnd < StrSize; SelEnd++) {
+			if (Str[SelEnd] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsXxxfix(Str[SelEnd])) {
+				continue;
+			} else if (joining) {
+				joining = false;
+			} else {
+				break;
+			}
+		}
 	}
 
 	/*

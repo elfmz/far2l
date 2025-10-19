@@ -63,6 +63,8 @@ class CharClasses
 	}
 
 public:
+	static constexpr wchar_t VARIATION_SELECTOR_16 = 0xFE0F;
+	static constexpr wchar_t ZERO_WIDTH_JOINER = 0x200D;
 	inline CharClasses(wchar_t c) : _c(c) {}
 
 	static void InitCharFlags() {
@@ -111,6 +113,18 @@ public:
 		return Prefix() || Suffix();
 	}
 
+	static inline bool IsFullWidth(const wchar_t* p) {
+		if (!p || *p <= ASCII_MAX) return false;
+		//Variation Selector-16 indicates that the previous character should be rendered as an image
+		if (*(p + 1) == VARIATION_SELECTOR_16) return true;
+		return Get(*p) & IS_FULLWIDTH;
+	}
+	static inline bool IsFullWidth(const wchar_t* p, size_t n) {
+		if (!p || *p <= ASCII_MAX) return false;
+		//Variation Selector-16 indicates that the previous character should be rendered as an image
+		if (n > 1 && *(p + 1) == VARIATION_SELECTOR_16) return true;
+		return Get(*p) & IS_FULLWIDTH;
+	}
 	static inline bool IsFullWidth(wchar_t c) {
 		if (c <= ASCII_MAX) return false;
 		return Get(c) & IS_FULLWIDTH;

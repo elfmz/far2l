@@ -157,6 +157,7 @@ private:
 	void ValidateAndRegisterCandidate(CandidateSearchContext& context, const std::string& app_desktop_file, int rank, const std::string& source_info);
 	void AddOrUpdateCandidate(CandidateSearchContext& context, const DesktopEntry& entry, int rank, const std::string& source_info);
 	static bool IsAssociationRemoved(const MimeAssociation& associations, const std::string& mime_type, const std::string& app_desktop_file);
+	void SortFinalCandidates(std::vector<RankedCandidate>& candidates) const;
 
 	// MIME types detection
 	std::vector<std::string> CollectAndPrioritizeMimeTypes(const std::string& pathname);
@@ -197,6 +198,7 @@ private:
 	static bool IsValidDir(const std::string& path);
 	static bool IsReadableFile(const std::string &path);
 	static std::string RunCommandAndCaptureOutput(const std::string& cmd);
+	static bool HasFieldCode(const std::string& exec, const std::string& codes_to_find);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 
 
@@ -215,16 +217,18 @@ private:
 	std::map<std::wstring, std::string> _last_candidates_source_info;
 
 	// Platform-specific settings.
-	bool _filter_by_show_in;
-	bool _validate_try_exec;
-	bool _use_mimeinfo_cache;
-	bool _use_extension_based_fallback;
 	bool _use_xdg_mime_tool;
 	bool _use_file_tool;
+	bool _use_extension_based_fallback;
 	bool _load_mimetype_aliases;
 	bool _load_mimetype_subclasses;
 	bool _resolve_structured_suffixes;
 	bool _use_generic_mime_fallbacks;
+	bool _show_universal_handlers;
+	bool _use_mimeinfo_cache;
+	bool _filter_by_show_in;
+	bool _validate_try_exec;
+	bool _sort_alphabetically;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

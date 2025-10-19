@@ -8,7 +8,7 @@ $^#Copyright (C) 2025 spnethw#
 $^#Contents#
  The #OpenWith# plugin provides a context-aware menu to open the currently selected file(s) with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
- After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application.
+ After invoking the plugin on a file, a menu is displayed with a list of suitable applications. The user can then select an application to launch, or press #F3# to view detailed information about the file and the selected application. The #F9# key opens the configuration dialog to fine-tune the plugin's behavior, which is divided into general and platform-specific settings. Modifying options that affect application discovery, filtering, or ranking logic will cause the list of applications in the menu to update immediately.
 
    ~Configuration Dialog (F9)~@ConfigurationDialog@
 
@@ -22,19 +22,22 @@ $^#Contents#
 $^#OpenWith plugin#
 $^#Version 1.0#
 $^#Copyright (C) 2025 spnethw#
-$^#Configuration Dialog#
+$^#Configuration Dialog (F9)#
  The configuration dialog, accessible by pressing #F9# in the application selection menu, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
 
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's integrated terminal. Note: when multiple files are selected, this option being unchecked will cause all terminal-based applications to be hidden from the list. This is because far2l's integrated terminal cannot manage multiple concurrent application instances.
+   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal. Note: when multiple files are selected and this option is unchecked, the plugin applies a "smart" filter. Because far2l's built-in terminal cannot manage multiple concurrent instances, the plugin will hide those terminal applications that require a separate launch for each file. Applications that can accept the entire list of files in a single command will remain in the list.
 
  #-# Don't wait for command completion
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications. It may also be ignored when multiple files are opened with an application that does not support receiving them in a single command; in this case, an asynchronous launch is forced to prevent the UI from blocking.
 
  #-# Clear selection if command executed
    When this option is enabled the selection on the panel is cleared after exiting the menu if any menu command has been executed.
+
+ #-# Confirm opening if file count exceeds...
+   When this option is enabled, the plugin will prompt for confirmation before launching an application if the number of selected files exceeds the threshold specified in the adjacent input field. This acts as a safeguard against accidentally launching a process with a large number of files, which could be resource-intensive or slow. If you decline the confirmation, you will be returned to the previous screen (either the application selection menu or the information dialog), allowing you to reconsider your action.
 
 
  #2. PLATFORM-SPECIFIC SETTINGS#
@@ -44,36 +47,43 @@ $^#Configuration Dialog#
  These settings fine-tune how the plugin identifies file types and discovers applications, following the XDG specifications. The plugin gathers a list of potential MIME types for a file from all enabled sources. This list is then prioritized, and applications are ranked based on how well they match the most specific MIME types. This allows for more flexible and accurate associations than relying on a single detection method.
 
  #-# Use `xdg-mime` tool
-   Determine the MIME type of the selected file by invoking the `xdg-mime query filetype` command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the `MimeType=` entries in .desktop files. Although the utility can also inspect file contents, it primarily relies on filenames, making it susceptible to errors for files with wrong or missing extensions.
+   Determine the MIME type of the selected file by invoking the 'xdg-mime query filetype' command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the "MimeType" entries in .desktop files. Although the utility can also inspect file contents, it primarily relies on filenames, making it susceptible to errors for files with wrong or missing extensions.
 
  #-# Use `file` tool
-   Determine the MIME type of the selected file by invoking the `file --mime-type` command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and is not deceived by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents, and the MIME type names it produces may occasionally differ from the official IANA names or those in the shared-mime-info database, potentially leading to fewer application matches.
+   Determine the MIME type of the selected file by invoking the 'file --mime-type' command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and is not deceived by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents, and the MIME type names it produces may occasionally differ from the official IANA names or those in the shared-mime-info database, potentially leading to fewer application matches.
 
  #-# Use extension-based fallback
    As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
 
  #-# Load MIME type aliases
-   Enables loading MIME type associations from system `aliases` files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., linking "application/x-deb" to "application/vnd.debian.binary-package", or "image/ico" to "image/vnd.microsoft.icon").
+   Enables loading MIME type associations from system "aliases" files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., linking "application/x-deb" to "application/vnd.debian.binary-package", or "image/ico" to "image/vnd.microsoft.icon").
 
  #-# Load MIME type subclasses
-   Enables loading the MIME type inheritance hierarchy from system `subclasses` files. This helps find applications that can handle a file's more general, parent type. This option is essential for formats whose internal structure is not obvious from the MIME type's name.
-   For example, a Microsoft Word file (.docx), which has the MIME type application/vnd.openxmlformats-officedocument.wordprocessingml.document, is structurally a ZIP archive (application/zip). With this option enabled, archive managers will be suggested for a .docx file in addition to word processors.
+   Enables loading the MIME type inheritance hierarchy from system "subclasses" files. This helps find applications that can handle a file's more general, parent type. This option is essential for formats whose internal structure is not obvious from the MIME type's name.
+   For example, a Microsoft Word file (.docx), which has the MIME type "application/vnd.openxmlformats-officedocument.wordprocessingml.document", is structurally a ZIP archive ("application/zip"). With this option enabled, archive managers will be suggested for a .docx file in addition to word processors.
    While this may sometimes offer less specific applications, it significantly broadens the range of available tools for a given file.
 
  #-# Resolve structured MIME suffixes
-   Many file formats use a more general format as their foundation, indicating this with a suffix in their MIME type (e.g., +xml or +json). For instance, an SVG vector image has the MIME type image/svg+xml. With this option enabled, the plugin will suggest not only graphics editors but also any text or XML editors registered for application/xml. This provides the ability to edit the file's internal structure. Disable the option to see only applications designed to work directly with the final format (in this case, with SVG images).
+   Many file formats use a more general format as their foundation, indicating this with a suffix in their MIME type (e.g., +xml or +json). For instance, an SVG vector image has the MIME type "image/svg+xml". With this option enabled, the plugin will suggest not only graphics editors but also any text or XML editors registered for "application/xml". This provides the ability to edit the file's internal structure. Disable the option to see only applications designed to work directly with the final format (in this case, with SVG images).
 
- #-# Search for apps for generic MIME types (type/*, text/plain)
-   When enabled, the plugin searches for applications associated not only with the file's specific MIME type but also with its generic variants. For example, for a file with the type text/x-c++src, editors registered for text/plain will also be suggested. This increases the number of available applications but may add "noise" from less relevant programs. Disabling this option is useful if you want the list to contain only specialized applications that precisely match the file type.
+ #-# Search for apps for generic MIME types ("type/*", "text/plain")
+   When enabled, the plugin searches for applications associated not only with the file's specific MIME type but also with its generic variants. For example, for a file with the type "text/x-c++src", editors registered for "text/plain" will also be suggested. This increases the number of available applications but may add "noise" from less relevant programs. Disabling this option is useful if you want the list to contain only specialized applications that precisely match the file type.
+
+ #-# Show universal handlers for all files
+   When enabled, this option adds the generic MIME type "application/octet-stream" as a last-resort fallback for any file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. Disable this option to reduce clutter in the application list and see only programs specifically registered for the file's detected type. If disabled, the list may be empty for files without a clear association.
 
  #-# Use mimeinfo.cache
-   Speed up application lookups by using the mimeinfo.cache files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., image/png) to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
+   Speed up application lookups by using the "mimeinfo.cache" files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., "image/png") to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
 
  #-# Filter by OnlyShowIn/NotShowIn
-   Respect the `OnlyShowIn` and `NotShowIn` keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE).
+   Respect the "OnlyShowIn" and "NotShowIn" keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE).
 
  #-# Validate TryExec field
-   Before showing an application, check if the executable specified in its .desktop file's `TryExec` key exists and is runnable. This helps hide applications that are declared but not properly installed.
+   Before showing an application, check if the executable specified in its .desktop file's "TryExec" key exists and is runnable. This helps hide applications that are declared but not properly installed or have broken shortcuts. However, this validation can slow down the appearance of the application menu. If the "TryExec" value is a simple command name (e.g., "gedit"), the plugin has to search for it in all directories listed in the "$PATH" environment variable, which involves multiple disk access operations for each application being checked. You can safely disable this option to improve performance if you are confident that your system's desktop entries are well-maintained and do not point to non-existent executables.
+
+ #-# Disable ranking (sort alphabetically)
+   When enabled, this option overrides the complex ranking system and sorts the application list strictly in alphabetical order. This can be useful for users who prefer a simple, predictable list rather than one prioritized by MIME type specificity and association source.
+   For a detailed explanation of the logic this option overrides, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
 
 
  #2.2. macOS Settings#
@@ -112,7 +122,7 @@ $^#Information Dialog (F3)#
    The full path to the .desktop file (an INI-style text file) that defines this application.
 
  #-# Source
-   This field indicates the origin of the association, explaining why the application was suggested for the file. It clarifies whether the match came from a high-priority system default (via xdg-mime), a user preference in a mimeapps.list file, an indexed lookup in mimeinfo.cache, or a comprehensive fallback scan of all .desktop files. This information is useful for troubleshooting application associations. Note: this field is not displayed when multiple files are selected, as the association source can be different for each file.
+   This field indicates the origin of the association, explaining why the application was suggested for the file. It clarifies whether the match came from a high-priority system default (via xdg-mime), a user preference in a "mimeapps.list" file, an indexed lookup in "mimeinfo.cache", or a comprehensive fallback scan of all .desktop files. This information is useful for troubleshooting application associations. Note: this field is not displayed when multiple files are selected, as the association source can be different for each file.
 
  #-# Name
    The human-readable application name, intended for display in menus.
@@ -135,6 +145,12 @@ $^#Information Dialog (F3)#
  #-# Terminal
    A boolean value (true or false) indicating whether the application must be run in a terminal window.
 
+ #-# OnlyShowIn
+   A semicolon-separated list of desktop environment identifiers (e.g., "GNOME;KDE;"). If this key is present, the application entry should only be shown in the specified environments. This allows developers to tailor visibility for desktop-specific tools.
+
+ #-# NotShowIn
+   A semicolon-separated list of desktop environment identifiers. If this key is present, the application entry should be hidden in the specified environments. This is the inverse of OnlyShowIn and is useful for hiding applications that do not integrate well with certain desktops.
+
 
  #2.2. macOS Application Details#
 
@@ -142,7 +158,7 @@ $^#Information Dialog (F3)#
    The application's display name from its bundle information.
 
  #-# Location
-   The full path to the application bundle (e.g., `/Applications/TextEdit.app`).
+   The full path to the application bundle (e.g., "/Applications/TextEdit.app").
 
  #-# Executable
    The name of the main executable file inside the application bundle.
@@ -190,32 +206,33 @@ $^#Troubleshooting#
  #Why is the list empty when I select multiple files?#
 
  This is a core feature of the algorithm: the plugin looks for applications that are registered as handlers for #every# selected file type (this is called "intersection" mode).
- Example: If you select an archive (`.zip`) and an image (`.jpg`), the list will likely be empty, as applications that can handle both archives and images are rare.
+ Example: If you select an archive (".zip") and an image (".jpg"), the list will likely be empty, as applications that can handle both archives and images are rare.
  Solution: Please process files of different categories in separate operations. This algorithm is most effective for batch-processing files of the same kind.
 
 
- #How does ranking work? Why is app X listed above app Y?#
+ #How does ranking work? Why is app X listed above app Y? (Linux/BSD)#
 
  The order in the list is determined by a rank calculated for each application. A higher rank means a more relevant application. The rank depends on two factors:
- 1. MIME Type Specificity (Primary Factor): An association with a more specific type (e.g., `text/x-c++src`) is always prioritized over a generic one (e.g., `text/plain`).
- 2. Association Source (Secondary Factor): Sources are prioritized from highest to lowest: the global default (`xdg-mime query default`), the `[Default Applications]` section in `mimeapps.list`, the `[Added Associations]` section, and finally, the `mimeinfo.cache` or the data from `.desktop` files themselves.
+ 1. MIME Type Specificity (Primary Factor): An association with a more specific type (e.g., "text/x-c++src") is always prioritized over a generic one (e.g., "text/plain").
+ 2. Association Source (Secondary Factor): Sources are prioritized from highest to lowest: the global default ('xdg-mime query default'), the "[Default Applications]" section in "mimeapps.list", the "[Added Associations]" section, and finally, the "mimeinfo.cache" or the data from .desktop files themselves.
  Therefore, an application set as the system default for a very specific file type will always be at the top of the list.
+ If you prefer a simple, predictable list over this complex logic, you can disable it with the "Disable ranking (sort alphabetically)" option in the ~configuration dialog~@ConfigurationDialog@.
 
 
- #Why doesn't my favorite app appear in the list?#
+ #Why doesn't my favorite app appear in the list? (Linux/BSD)#
 
  If an application doesn't appear even for a single file, check the following:
- #-# Missing `.desktop` file: Ensure that a `.desktop` file for the application exists in one of the standard directories (`~~/.local/share/applications`, `/usr/share/applications`, etc.).
- #-# Incorrect Association: Check that the correct MIME type is listed in the `MimeType=` key of the `.desktop` file, or that an association is defined in `~~/.config/mimeapps.list`.
+ #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories ("~~/.local/share/applications", "/usr/share/applications", etc.).
+ #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
  #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
- #-# Outdated Cache: Run `update-desktop-database` and `update-mime-database` in your terminal to refresh the system caches.
+ #-# Outdated Cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
 
 
- #An application is in the list, but it fails to launch.#
+ #An application is in the list, but it fails to launch. (Linux/BSD)#
 
- This almost always indicates an error in the `Exec=` line of the `.desktop` file. Press F3 to view the command the plugin is trying to execute and check it for common mistakes:
- #-# Incorrect Field Codes: The plugin supports standard codes (`%f`, `%F`, `%u`, `%U`). Some applications might use deprecated or non-standard codes that will not work.
+ This almost always indicates an error in the "Exec" line of the .desktop file. Press F3 to view the command the plugin is trying to execute and check it for common mistakes:
+ #-# Incorrect Field Codes: The plugin supports standard codes ("%f", "%F", "%u", "%U"). Some applications might use deprecated or non-standard codes that will not work.
  #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped.
- #-# Program not in `$PATH`: If `Exec=` contains just a program name, it must be located in one of the directories listed in the `$PATH` environment variable.
+ #-# Program not in "$PATH": If "Exec" contains just a program name, it must be located in one of the directories listed in the "$PATH" environment variable.
 
    ~Contents~@Contents@

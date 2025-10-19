@@ -12,6 +12,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 #define INI_LOCATION InMyConfig("plugins/openwith/config.ini")
 #define INI_SECTION  "Settings"
@@ -159,6 +160,15 @@ namespace OpenWith {
 		di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, 0, { s_NoWaitForCommandCompletion },  0, 0, GetMsg(MNoWaitForCommandCompletion), 0});
 		di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, 0, { s_ClearSelection },  0, 0, GetMsg(MClearSelection), 0});
 
+		wchar_t threshold_str[16];
+		swprintf(threshold_str, 15, L"%d", s_ConfirmLaunchThreshold);
+		const wchar_t* confirm_label = GetMsg(MConfirmLaunchOption);
+		size_t confirm_label_width = s_FSF.StrCellsCount(confirm_label, wcslen(confirm_label));
+
+		y++;
+		di.push_back({ DI_CHECKBOX, 5, y, 0, 0, 0,  { s_ConfirmLaunch }, 0, 0, confirm_label, 0 });
+		di.push_back({ DI_FIXEDIT, (int)(confirm_label_width + 11), y, (int)(confirm_label_width + 14), 0, FALSE, {(DWORD_PTR)L"9999"}, DIF_MASKEDIT, 0, threshold_str, 0});
+
 		if (!old_platform_settings.empty()) {
 			di.push_back({ DI_TEXT, 5, ++y, 0, 0, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
 			for (const auto& setting : old_platform_settings) {
@@ -191,12 +201,16 @@ namespace OpenWith {
 			s_UseExternalTerminal = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
 			s_NoWaitForCommandCompletion = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
 			s_ClearSelection = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
+			s_ConfirmLaunch = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
+			const wchar_t* threshold_val_str = (const wchar_t*)s_Info.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 5, 0);
+			s_ConfirmLaunchThreshold = wcstol(threshold_val_str, NULL, 10);
+
 			SaveOptions();
 
 			bool platform_settings_changed = false;
 			if (!old_platform_settings.empty()) {
 				std::vector<ProviderSetting> new_settings;
-				int first_platform_item_idx = 5; // Index of the first platform-specific checkbox
+				int first_platform_item_idx = 7; // Index of the first platform-specific checkbox
 
 				for (size_t i = 0; i < old_platform_settings.size(); ++i) {
 					bool new_value = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, first_platform_item_idx + i, 0) == BSTATE_CHECKED);
@@ -306,8 +320,9 @@ namespace OpenWith {
 	// For a single file, it shows the full path. For multiple files, it shows a count.
 	// It also removes ambiguous information (like association source) for multi-file selections.
 	bool OpenWithPlugin::ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app,
-								  const std::vector<std::wstring>& pathnames,
-								  const std::vector<std::wstring>& cmds)
+										   const std::vector<std::wstring>& pathnames,
+										   const std::vector<std::wstring>& cmds,
+										   const std::vector<std::wstring>& unique_mimes)
 	{
 		// Helper lambda to join a vector of wstrings into a single wstring.
 		auto join_strings = [](const std::vector<std::wstring>& vec, const std::wstring& delimiter) -> std::wstring {
@@ -330,8 +345,7 @@ namespace OpenWith {
 			file_info.push_back({ GetMsg(MPathname), count_msg });
 		}
 
-		// Get unique MIME types for all files and join them for display.
-		std::vector<std::wstring> unique_mimes = provider->GetMimeTypes(pathnames);
+		// Use the pre-fetched mime types instead of re-calculating them.
 		file_info.push_back({ GetMsg(MMimeType), join_strings(unique_mimes, L"; ") });
 
 		std::wstring all_cmds = join_strings(cmds, L"; ");
@@ -352,6 +366,26 @@ namespace OpenWith {
 		return ShowDetailsDialogImpl(file_info, application_info, launch_command);
 	}
 
+
+	// Returns true if the user confirms or no confirmation is needed, false otherwise.
+	bool OpenWithPlugin::AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& pathnames)
+	{
+		if (!s_ConfirmLaunch || pathnames.size() <= static_cast<size_t>(s_ConfirmLaunchThreshold)) {
+			return true;
+		}
+
+		wchar_t message[255] = {};
+
+		s_FSF.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MConfirmLaunchMessage), pathnames.size(), app.name.c_str());
+
+		const wchar_t* items[] = {
+			GetMsg(MConfirmLaunchTitle),
+			message,
+		};
+
+		int res = s_Info.Message(s_Info.ModuleNumber, FMSG_MB_YESNO, nullptr, items, ARRAYSIZE(items), 2);
+		return (res == 0);
+	}
 
 
 	// Executes one or more command lines to launch the application.
@@ -391,21 +425,38 @@ namespace OpenWith {
 			return;
 		}
 
+		// Get a platform-specific application provider.
 		auto provider = AppProvider::CreateAppProvider(&OpenWithPlugin::GetMsg);
+
+		// A cache for MIME types. It will be populated (lazily)
+		// only if the user presses F3 or if no apps are found.
+		std::optional<std::vector<std::wstring>> unique_mimes_cache;
+
+		// Helper lambda to lazily get or populate the MIME types cache.
+		// It's called only when the MIME info is actually needed.
+		auto get_unique_mimes = [&]() -> const std::vector<std::wstring>& {
+			// Check if the cache is already populated.
+			if (!unique_mimes_cache.has_value()) {
+				// If not, populate it by calling the expensive provider function.
+				unique_mimes_cache = provider->GetMimeTypes(pathnames);
+			}
+			// Return a const reference to the cached vector.
+			return unique_mimes_cache.value();
+		};
+
 		std::vector<CandidateInfo> candidates;
 
-		// This lambda encapsulates the logic for fetching and filtering application candidates.
+		// Lambda to fetch and filter application candidates.
 		auto update_candidates = [&]() {
 			// Fetch the raw list of candidates from the platform-specific provider.
 			candidates = provider->GetAppCandidates(pathnames);
 
-			// When multiple files are selected and the internal far2l console is used,
-			// we must filter out terminal-based applications because the internal console
-			// cannot handle multiple concurrent instances.
+			// When multiple files are selected and the internal far2l console is used, we must filter out terminal-based applications
+			// because the internal console cannot handle multiple concurrent instances.
 			if (pathnames.size() > 1 && !s_UseExternalTerminal) {
 				candidates.erase(
 					std::remove_if(candidates.begin(), candidates.end(),
-								   [](const CandidateInfo& c){ return c.terminal; }),
+								   [](const CandidateInfo& c) { return c.terminal && !c.multi_file_aware; }),
 					candidates.end());
 			}
 		};
@@ -428,10 +479,13 @@ namespace OpenWith {
 			return result;
 		};
 
+		// Main application selection menu loop.
 		while(true) {
 			if (candidates.empty()) {
 				std::vector<std::wstring> error_lines = { GetMsg(MNoAppsFound) };
-				auto unique_mimes = provider->GetMimeTypes(pathnames);
+
+				// Get the MIME types (lazily) only now that we need them for the error message.
+				const auto& unique_mimes = get_unique_mimes();
 
 				auto generate_mime_info_string = [&]() -> std::wstring {
 					if (unique_mimes.empty()) {
@@ -454,7 +508,7 @@ namespace OpenWith {
 				error_lines.push_back(generate_mime_info_string());
 
 				ShowError(GetMsg(MError), error_lines);
-				break;
+				return;	// No application candidates; exit the plugin entirely
 			}
 
 			std::vector<FarMenuItem> menu_items(candidates.size());
@@ -464,11 +518,12 @@ namespace OpenWith {
 
 			menu_items[active_idx].Selected = true;
 
+			// Display the menu and get the user's selection.
 			int selected_idx = s_Info.Menu(s_Info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_SHOWAMPERSAND | FMENU_CHANGECONSOLETITLE,
 										   GetMsg(MChooseApplication), L"F3 F9 Ctrl+Alt+F", L"Contents", BreakKeys, &BreakCode, menu_items.data(), menu_items.size());
 
 			if (selected_idx == -1) {
-				break; // User cancelled the menu (e.g., with Esc).
+				return; // User cancelled the menu (e.g., with Esc); exit the plugin entirely
 			}
 
 			menu_items[active_idx].Selected = false;
@@ -477,31 +532,48 @@ namespace OpenWith {
 
 			if (BreakCode == 0) { // F3 for Details
 				std::vector<std::wstring> cmds = provider->ConstructCommandLine(selected_app, pathnames);
-				if (ShowDetailsDialog(provider.get(), selected_app, pathnames, cmds)) {
-					LaunchApplication(selected_app, cmds);
-					break;
+				// Repeat until user either launches the application or closes the dialog to go back.
+				while (true) {
+					// Get MIME types (lazily) and pass them to the details dialog.
+					bool wants_to_launch = ShowDetailsDialog(provider.get(), selected_app, pathnames, cmds, get_unique_mimes());
+					if (!wants_to_launch) {
+						// User clicked "Close", break the inner loop to return to the main menu.
+						break;
+					}
+
+					// User clicked "Launch", so ask for confirmation if needed.
+					if (AskForLaunchConfirmation(selected_app, pathnames)) {
+						// Confirmation was given. Launch the application and exit the plugin entirely.
+						LaunchApplication(selected_app, cmds);
+						return;
+					}
 				}
-			} else if (BreakCode == 1) { // F9 for Options
+
+			} else if (BreakCode == 1) { // F9 for Options.
 				const auto configure_result = ConfigureImpl();
-				// Check if settings were saved AND if a refresh is required. A refresh is needed
-				// if any setting that affects the candidate list (e.g., s_UseExternalTerminal
-				// or any platform-specific option) has been changed.
+
+				// Check if settings were saved AND if a refresh is required. A refresh is needed if any setting that affects
+				// the candidate list (e.g., s_UseExternalTerminal or any platform-specific option) has been changed.
 				if (configure_result.settings_saved && configure_result.refresh_needed) {
-					// The provider needs to reload its own settings from the config file,
-					// as they might have been changed in the configuration dialog.
+					// The provider needs to reload its own settings from the config file.
 					provider->LoadPlatformSettings();
 
 					// Re-run the candidate fetch and filter logic to update the menu.
 					update_candidates();
 
-					// Reset the active menu item to the first one, as the list may have
-					// changed in size or order, preventing out-of-bounds access.
+					// Reset the active menu item to the first one, as the list may have changed.
 					active_idx = 0;
+
+					// Invalidate the mime cache, as settings affecting it might have changed.
+					unique_mimes_cache.reset();
 				}
-			} else { // Enter to launch
-				std::vector<std::wstring> cmds = provider->ConstructCommandLine(selected_app, pathnames);
-				LaunchApplication(selected_app, cmds);
-				break;
+
+			} else { // Enter to launch.
+				if (AskForLaunchConfirmation(selected_app, pathnames)) {
+					std::vector<std::wstring> cmds = provider->ConstructCommandLine(selected_app, pathnames);
+					LaunchApplication(selected_app, cmds);
+					return; // Exit the plugin after a successful launch.
+				}
 			}
 		}
 	}
@@ -513,6 +585,10 @@ namespace OpenWith {
 		s_UseExternalTerminal = kfh.GetInt("UseExternalTerminal", 0) != 0;
 		s_NoWaitForCommandCompletion = kfh.GetInt("NoWaitForCommandCompletion", 1) != 0;
 		s_ClearSelection = kfh.GetInt("ClearSelection", 0) != 0;
+		s_ConfirmLaunch = kfh.GetInt("ConfirmLaunch", 1) != 0;
+
+		s_ConfirmLaunchThreshold = kfh.GetInt("ConfirmLaunchThreshold", 10);
+		s_ConfirmLaunchThreshold = std::clamp(s_ConfirmLaunchThreshold, 1, 9999);
 	}
 
 
@@ -522,6 +598,11 @@ namespace OpenWith {
 		kfh.SetInt(INI_SECTION, "UseExternalTerminal", s_UseExternalTerminal);
 		kfh.SetInt(INI_SECTION, "NoWaitForCommandCompletion", s_NoWaitForCommandCompletion);
 		kfh.SetInt(INI_SECTION, "ClearSelection", s_ClearSelection);
+		kfh.SetInt(INI_SECTION, "ConfirmLaunch", s_ConfirmLaunch);
+
+		s_ConfirmLaunchThreshold = std::clamp(s_ConfirmLaunchThreshold, 1, 9999);
+		kfh.SetInt(INI_SECTION, "ConfirmLaunchThreshold", s_ConfirmLaunchThreshold);
+
 		if (!kfh.Save()) {
 			ShowError(GetMsg(MError), { GetMsg(MSaveConfigError) });
 		}
@@ -554,6 +635,8 @@ namespace OpenWith {
 	bool OpenWithPlugin::s_UseExternalTerminal = false;
 	bool OpenWithPlugin::s_NoWaitForCommandCompletion = true;
 	bool OpenWithPlugin::s_ClearSelection = false;
+	bool OpenWithPlugin::s_ConfirmLaunch = true;
+	int OpenWithPlugin::s_ConfirmLaunchThreshold = 10;
 
 
 	// Plugin entry points

@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <set>
 
 #define INI_LOCATION_LINUX InMyConfig("plugins/openwith/config.ini")
 #define INI_SECTION_LINUX  "Settings.Linux"
@@ -137,18 +138,63 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 	}
 
 
-	// --- Iterative Filtering Logic for Multiple Files ---
+	// --- Refactored Caching Logic for Multiple Files ---
 
-	// Step 1: Establish a baseline set of candidates from the first file.
-	auto candidates_for_first_file = GetCandidatesForSingleFile(pathnames[0], desktop_paths, associations, current_desktop_env);
+	// Step 1: Group N files into K unique "MIME profiles".
+	// This is the "slow" part with N external calls.
 
-	// If no application can open the very first file, then no common application exists.
+	// Maps every pathname to its calculated RawMimeSet.
+	// Used in Step 3 for O(1) profile lookup per file.
+	std::unordered_map<std::wstring, RawMimeSet> path_to_profile;
+	path_to_profile.reserve(pathnames.size()); // Pre-allocate buckets
+
+	// Holds the K unique RawMimeSet profiles found across all N files.
+	// Used in Step 2 to iterate K times.
+	std::set<RawMimeSet> unique_profiles;
+
+
+	for (const auto& w_pathname : pathnames) {
+		std::string path_mb = StrWide2MB(w_pathname);
+		RawMimeSet raw_set = GetRawMimeSet(path_mb); // N calls to external tools
+
+		// Map this path to its profile.
+		path_to_profile.try_emplace(w_pathname, raw_set);
+
+		// Add the profile to the set of unique profiles.
+		// std::set::insert will automatically handle duplicates.
+		unique_profiles.insert(raw_set);
+	}
+
+	// Step 2: Gather candidates K times, not N times.
+	// (K = unique_profiles.size())
+
+	// This cache holds the expensive results.
+	// Key: The unique RawMimeSet profile.
+	// Value: The list of candidates for that profile.
+	std::map<RawMimeSet, std::vector<RankedCandidate>> candidate_cache;
+
+	for (const auto& raw_set : unique_profiles) {
+		// We call K times, using the pre-calculated profile.
+
+		// 1. Expand the raw profile into a full list of prioritized MIME types
+		auto prioritized_mimes = ExpandAndPrioritizeMimeTypes(raw_set);
+
+		// 2. Find candidates using that list
+		candidate_cache[raw_set] = FindCandidatesForMimeList(prioritized_mimes, desktop_paths, associations, current_desktop_env);
+	}
+
+	// Step 3: Iterative Intersection using the K-sized cache.
+
+	// Step 3a: Establish a baseline set from the *first* file's profile.
+	// We can safely use operator[] as pathnames[0] is guaranteed to be in the map.
+	RawMimeSet& base_profile = path_to_profile[pathnames[0]];
+	std::vector<RankedCandidate>& candidates_for_first_file = candidate_cache[base_profile];
+
 	if (candidates_for_first_file.empty()) {
 		return {};
 	}
 
-	// Step 2: Convert the baseline into a hash map for efficient lookups and modifications.
-	// The key (AppUniqueKey) identifies a logical application, while the value (RankedCandidate) holds its data.
+	// Step 3b: Convert the baseline into a hash map for efficient lookups.
 	std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKeyHash> final_candidates;
 	final_candidates.reserve(candidates_for_first_file.size());
 	for (const auto& candidate : candidates_for_first_file) {
@@ -157,12 +203,23 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		}
 	}
 
-	// Step 3: Iteratively intersect the master candidate list with candidates from each subsequent file.
+	// Step 3c: Iteratively intersect with candidates from each subsequent file.
 	for (size_t i = 1; i < pathnames.size(); ++i) {
-		auto candidates_for_current_file = GetCandidatesForSingleFile(pathnames[i], desktop_paths, associations, current_desktop_env);
+
+		// Get the profile for the current file (O(1) average lookup).
+		RawMimeSet& current_profile = path_to_profile[pathnames[i]];
+
+		// Optimization: If the current file has the same profile as the
+		// previous one that triggered an intersection, skip it.
+		if (current_profile == base_profile) {
+			continue;
+		}
+
+		// Get the *cached* list of candidates for this new profile.
+		// (O(log K) lookup, which is fast).
+		std::vector<RankedCandidate>& candidates_for_current_file = candidate_cache[current_profile];
 
 		// For efficient intersection, create a lookup map of candidates for the current file.
-		// We store a pointer to the candidate to access its rank.
 		std::unordered_map<AppUniqueKey, const RankedCandidate*, AppUniqueKeyHash> current_file_candidates_map;
 		current_file_candidates_map.reserve(candidates_for_current_file.size());
 		for (const auto& candidate : candidates_for_current_file) {
@@ -171,26 +228,28 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 			}
 		}
 
-		// Iterate through our master list (`final_candidates`) and remove any app that cannot handle the current file.
+		// Iterate through our master list (`final_candidates`) and remove any app
+		// that cannot handle the current file's profile.
 		for (auto it = final_candidates.begin(); it != final_candidates.end(); ) {
 			auto find_it = current_file_candidates_map.find(it->first);
 
 			if (find_it == current_file_candidates_map.end()) {
-				// This app is not in the list for the current file, so remove it from the master list.
+				// This app is not in the list for the current file, so remove it.
 				it = final_candidates.erase(it);
 			} else {
-				// The app is a valid candidate so far. Now, check if this file provides a better rank.
+				// The app is valid. Update its rank if this file provides a better one.
 				const RankedCandidate* current_candidate_ptr = find_it->second;
 				if (current_candidate_ptr->rank > it->second.rank) {
-					// Update the master entry with the higher rank to ensure the best association is preserved.
 					it->second.rank = current_candidate_ptr->rank;
-					// it->second.source_info = current_candidate_ptr->source_info;
 				}
 				++it;
 			}
 		}
 
-		// Early exit optimization: if at any point the common set becomes empty, we can stop processing.
+		// Update the base_profile for the next loop's optimization check.
+		base_profile = current_profile;
+
+		// Early exit optimization.
 		if (final_candidates.empty()) {
 			return {};
 		}
@@ -212,22 +271,17 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		result.push_back(ConvertDesktopEntryToCandidateInfo(*finalist.entry));
 	}
 
-	// Source info is ambiguous for multiple files and was already cleared at the beginning.
+	// Source info is ambiguous for multiple files and was already cleared.
 	return result;
 }
 
 
-// Finds candidate applications for a single file using pre-fetched system configuration data.
-// This is the core logic that is called iteratively by GetAppCandidates.
-std::vector<XDGBasedAppProvider::RankedCandidate> XDGBasedAppProvider::GetCandidatesForSingleFile(
-	const std::wstring& pathname,
+std::vector<XDGBasedAppProvider::RankedCandidate> XDGBasedAppProvider::FindCandidatesForMimeList(
+	const std::vector<std::string>& prioritized_mimes,
 	const std::vector<std::string>& desktop_paths,
 	const MimeAssociation& associations,
 	const std::string& current_desktop_env)
 {
-	// NOTE: This function MUST NOT clear any member caches like _desktop_entry_cache.
-
-	auto prioritized_mimes = CollectAndPrioritizeMimeTypes(StrWide2MB(pathname));
 	CandidateSearchContext context(prioritized_mimes, associations, desktop_paths, current_desktop_env);
 
 	// Check for a global default app using 'xdg-mime query default'.
@@ -271,6 +325,29 @@ std::vector<XDGBasedAppProvider::RankedCandidate> XDGBasedAppProvider::GetCandid
 	SortFinalCandidates(sorted_candidates);
 
 	return sorted_candidates;
+}
+
+
+// This function is a simple pipeline:
+// 1. Detect raw MIME profile.
+// 2. Expand profile into a full list of MIME types.
+// 3. Find candidates for that list.
+std::vector<XDGBasedAppProvider::RankedCandidate> XDGBasedAppProvider::GetCandidatesForSingleFile(
+	const std::wstring& pathname,
+	const std::vector<std::string>& desktop_paths,
+	const MimeAssociation& associations,
+	const std::string& current_desktop_env)
+{
+	// NOTE: This function MUST NOT clear any member caches like _desktop_entry_cache.
+
+	// Step 1: Detect the raw MIME profile (executes external tools)
+	RawMimeSet raw_set = GetRawMimeSet(StrWide2MB(pathname));
+
+	// Step 2: Expand the profile into a prioritized list (no external I/O)
+	auto prioritized_mimes = ExpandAndPrioritizeMimeTypes(raw_set);
+
+	// Step 3: Find candidates based on the prioritized list
+	return FindCandidatesForMimeList(prioritized_mimes, desktop_paths, associations, current_desktop_env);
 }
 
 
@@ -708,10 +785,38 @@ void XDGBasedAppProvider::SortFinalCandidates(std::vector<RankedCandidate>& cand
 
 // ****************************** MIME types detection ******************************
 
-// Collects and prioritizes MIME types for a file using multiple detection methods.
+
+// Gathers the "raw" MIME types from all enabled detection methods for a single file.
+XDGBasedAppProvider::RawMimeSet XDGBasedAppProvider::GetRawMimeSet(const std::string& pathname_mb)
+{
+	RawMimeSet raw_set;
+
+	raw_set.is_readable_file = IsReadableFile(pathname_mb);
+
+	if (!raw_set.is_readable_file) {
+		raw_set.is_dir = IsValidDir(pathname_mb);
+	}
+
+	// Only run detection tools if the path is a file or directory
+	if (raw_set.is_dir || raw_set.is_readable_file)
+	{
+		raw_set.xdg_mime = MimeTypeFromXdgMimeTool(pathname_mb);
+		raw_set.file_mime = MimeTypeFromFileTool(pathname_mb);
+
+		// Extension fallback only makes sense for files
+		if (raw_set.is_readable_file) {
+			raw_set.ext_mime = MimeTypeByExtension(pathname_mb);
+		}
+	}
+
+	return raw_set;
+}
+
+
+// Expands and prioritizes MIME types for a file using multiple detection methods.
 // This function builds a comprehensive list including parents from the subclass hierarchy,
 // aliases, and structured syntax base types (e.g., +xml), plus generic fallbacks.
-std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(const std::string& pathname)
+std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const RawMimeSet& raw_set)
 {
 	std::vector<std::string> mime_types;
 	std::unordered_set<std::string> seen;
@@ -724,17 +829,13 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 		}
 	};
 
-	bool is_valid_dir = IsValidDir(pathname);
-	bool is_readable_file = IsReadableFile(pathname);
-
-	if (is_valid_dir || is_readable_file) {
+	// Use the pre-calculated boolean flags from the RawMimeSet
+	if (raw_set.is_dir || raw_set.is_readable_file) {
 		// --- Step 1: Initial, most specific MIME type detection ---
-		// Use external tools and file extension to get the starting set of MIME types.
-		add_unique(MimeTypeFromXdgMimeTool(pathname));
-		add_unique(MimeTypeFromFileTool(pathname));
-		if (is_readable_file) {
-			add_unique(MimeTypeByExtension(pathname));
-		}
+		// Use the pre-detected types from the RawMimeSet
+		add_unique(raw_set.xdg_mime);
+		add_unique(raw_set.file_mime);
+		add_unique(raw_set.ext_mime); // This will be empty if it was a directory
 
 		// --- Step 2: Iteratively expand the MIME type list with parents and aliases ---
 		// This single loop robustly handles complex cases, such as finding parents of aliases
@@ -847,7 +948,8 @@ std::vector<std::string> XDGBasedAppProvider::CollectAndPrioritizeMimeTypes(cons
 
 		if (_show_universal_handlers) {
 			// --- Step 5: Add the ultimate fallback for any binary data ---
-			if (is_readable_file) {
+			// Use the pre-calculated flag
+			if (raw_set.is_readable_file) {
 				add_unique("application/octet-stream");
 			}
 		}

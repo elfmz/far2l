@@ -470,7 +470,7 @@ bool DizList::Flush(const wchar_t *Path, const wchar_t *DizName)
 					if (lpDizText) {
 						int BytesCount = WINPORT(WideCharToMultiByte)(CodePage, 0, DizData[I].DizText,
 								DizData[I].DizLength + 1, lpDizText, Size, nullptr, nullptr);
-						if (BytesCount && BytesCount - 1) {
+						if (BytesCount > 1) {
 							if (Cache.Write(lpDizText, BytesCount - 1)) {
 								EmptyDiz = false;
 							} else {

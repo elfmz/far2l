@@ -644,7 +644,7 @@ void TreeList::PR_MsgReadTree()
 	TreeList::MsgReadTree(preRedrawItem.Param.Flags, FirstCall);
 }
 
-int TreeList::MsgReadTree(int TreeCount, int &FirstCall)
+int TreeList::MsgReadTree(int TreeCount, int FirstCall)
 {
 	/*
 		$ 24.09.2001 VVM
@@ -866,8 +866,7 @@ int TreeList::ProcessKey(FarKey Key)
 					if (PutCode == 1 || PutCode == 2)
 						AnotherPanel->SetPluginModified();
 
-					if (ItemList)
-						delete[] ItemList;
+					delete[] ItemList;
 
 					if (Move)
 						ReadSubTree(ListData[CurFile]->strName);

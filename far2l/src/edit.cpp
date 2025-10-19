@@ -109,7 +109,8 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 	SelStart(-1),
 	SelEnd(0),
 	CursorSize(-1),
-	CursorPos(0)
+	CursorPos(0),
+	HasSpecialWidthChars(false)
 {
 	m_Callback.Active = true;
 	m_Callback.m_Callback = nullptr;
@@ -587,13 +588,12 @@ int64_t Edit::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 					switch (iParam) {
 						case 0:		// return FirstLine
 						case 2:		// return LastLine
+						case 4:		// return block type (0=nothing 1=stream, 2=column)
 							return IsSelection() ? 1 : 0;
 						case 1:		// return FirstPos
 							return IsSelection() ? SelStart + 1 : 0;
 						case 3:		// return LastPos
 							return IsSelection() ? SelEnd : 0;
-						case 4:		// return block type (0=nothing 1=stream, 2=column)
-							return IsSelection() ? 1 : 0;
 					}
 
 					break;
@@ -1360,6 +1360,7 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTSPACE:
 			Key = KEY_SPACE;
+			[[fallthrough]];
 		default: {
 			//			_D(SysLog(L"Key=0x%08X",Key));
 			if (Key == KEY_ENTER || !IS_KEY_NORMAL(Key))	// KEY_NUMENTER,KEY_IDLE,KEY_NONE covered by !IS_KEY_NORMAL
@@ -2419,11 +2420,13 @@ void Edit::ApplyColor()
 			Если предыдущая позиция больше текущей, то производим вычисление
 			с начала строки (с учётом корректировки относительно табов)
 		*/
-		else if (EndPos < Pos) {
+		/*else if (EndPos < Pos) {
 			RealEnd = RealPosToCell(0, 0, EndPos, &CorrectPos);
 			EndPos+= CorrectPos;
 			End = RealEnd - LeftPos;
-		}
+		}*/
+		// ^^^ закомментировано, т.к. данное условие всегда ложно - лишняя проверка в цикле.
+
 		/*
 			Для оптимизации делаем вычисление относительно предыдущей позиции (с учётом
 			корректировки относительно табов)
@@ -2958,6 +2961,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 									ComplMenu.ProcessInput();
 									break;
 								}
+								[[fallthrough]];
 							}
 
 							// всё остальное закрывает список и идёт владельцу

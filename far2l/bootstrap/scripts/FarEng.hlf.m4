@@ -203,9 +203,8 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
 You can run #far2l --tty --nodetect# to force not use others clipboard options.
     - Menu(#F9#)->Options->Interface settings->#Override base colors palette#
 (shown in the dialog only if FAR2L run in TTY/TTY|X mode) allows far2l to adjust terminal palette colors.
-If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts
-sequence in terminal after exit from far2l.
-
+If your terminal doesn't support OSC4 sequence you may turn it off to avoid ascii artifacts in terminal
+after far2l exiting.
 
  #Full-functional work with the system clipboard in a plain terminal version FAR2L TTY#
     To interact with the system clipboard you must not forget to enable #OSC 52# in both the #FAR2L settings#
@@ -575,7 +574,7 @@ active panel. The following sort modes are available:
 
   #Remarks on the numeric sort#
 
-    FAR2L supports two soring modes. The following example shows
+    FAR2L supports two sorting modes. The following example shows
 how the files are sorted:
 
     Numeric sort                 String sort
@@ -1426,7 +1425,7 @@ $ #Menus: commands menu#
    #History#              Display the previous commands.
                         See ~History~@History@ for more info.
 
-   #Video mode#           Switch between screen line modes.
+   #Video mode#           Switch between full-screen and windowed modes.
 
    #Find folder#          Search for a folder in the folders
                         tree. See ~Find folder~@FindFolder@ for more info.
@@ -4376,12 +4375,12 @@ $ #Regular expressions#
     #s# - ^<wrap>consider the whole text as one line, '.' matches any character;
     #m# - ^<wrap>consider the whole text as multiple lines. ^ and $ match the
     beginning and the end of any "inner" string;
-    #x# - ^<wrap>ignore space characters (unscreened ones, i.e. without slash before).
+    #x# - ^<wrap>ignore space characters (unscreened ones, i.e. without backslash before).
 This is useful to outline the complex expressions.
 
     #regexp# - the sequence of characters and metacharacters. The characters are
 letters and digits, any other symbol becomes character when screened, i.e.
-prepended the slash #\#.
+prepended the backslash #\#.
 
     Pay attention that all slashes and backslashes in regular expression must
 be prepended with the symbol #\# to differ from other special symbols or with
@@ -4890,7 +4889,7 @@ $ #Macros: Common#
 
 @KeyMacroQViewList
 $ #Macros: Quick view panel#
-    Below are the macro key combinations active in the quick view panel.
+    Below are the macro key combinations active for the quick view panel.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4898,7 +4897,7 @@ $ #Macros: Quick view panel#
 
 @KeyMacroMainMenuList
 $ #Macros: Main menu#
-    Below are the macro key combinations active in the main menu.
+    Below are the macro key combinations active for the main menu.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4906,7 +4905,7 @@ $ #Macros: Main menu#
 
 @KeyMacroTreeList
 $ #Macros: Tree panel#
-    Below are the macro key combinations active in the tree panel.
+    Below are the macro key combinations active for the tree panel.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4922,7 +4921,7 @@ $ #Macros: Dialogs#
 
 @KeyMacroInfoList
 $ #Macros: Info panel#
-    Below are the macro key combinations active in the info panel.
+    Below are the macro key combinations active for the info panel.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4930,7 +4929,7 @@ $ #Macros: Info panel#
 
 @KeyMacroDisksList
 $ #Macros: Location menu#
-    Below are the macro key combinations active in the location menu.
+    Below are the macro key combinations active for the location menu.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4938,7 +4937,7 @@ $ #Macros: Location menu#
 
 @KeyMacroUserMenuList
 $ #Macros: User menu#
-    Below are the macro key combinations active in the user menu.
+    Below are the macro key combinations active for the user menu.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4946,7 +4945,7 @@ $ #Macros: User menu#
 
 @KeyMacroShellList
 $ #Macros: Panels#
-    Below are the macro key combinations active in the file panels.
+    Below are the macro key combinations active for the file panels.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4954,7 +4953,7 @@ $ #Macros: Panels#
 
 @KeyMacroSearchList
 $ #Macros: Fast find in panels#
-    Below are the macro key combinations active in the fast find of file panels.
+    Below are the macro key combinations active for the fast find mode in file panels.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4962,7 +4961,7 @@ $ #Macros: Fast find in panels#
 
 @KeyMacroFindFolderList
 $ #Macros: Find folder#
-    Below are the macro key combinations active in the find folder dialog.
+    Below are the macro key combinations active for the find folder dialog.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
@@ -4992,7 +4991,7 @@ $ #Macros: Other menus#
 
 @KeyMacroHelpList
 $ #Macros: Help file#
-    Below are the macro key combinations active in the help file.
+    Below are the macro key combinations active for the help file.
     The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>

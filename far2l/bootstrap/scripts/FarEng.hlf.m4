@@ -136,7 +136,8 @@ $ # FAR2L features - Getting Started#
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
         - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries
 (to access clipboard and to get state of all keyboard modifiers), #almost perfect UX#;
-        - #TTY|X#: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
+        - #TTY|X#: works in terminal mode, uses X11 to access clipboard and to get state of keyboard modifiers.
+It provides better UX than plain TTY, but still some key combinations may be inaccessible;
         - #TTY#: plain terminal mode, no X11 dependencies, #UX with some restrictions#
 (works fully when running in the terminal emulators,
 which provide clipboard access and has their advanced keyboard-protocols, see list below).
@@ -168,7 +169,7 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
     - far2l-GUI only: both keys #Command# act as Left #Ctrl#, both keys #Ctrl# act as Right #Ctrl#;
     - #Clear# key on the numeric keypad toggles NumLock mode;
     - numpad #0# functions as #Insert# when NumLock is off;
-    - on external Windows keyboards, macOS swaps #Alt# and #Win# keys to match Mac layout logic.
+    - on external Windows keyboards, macOS swaps #Alt# and #Win# keys to match Mac layout logic (assuming the key closest to the spacebar on the left is #Command#, like on a MacBook keyboard).
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -202,7 +203,8 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
 You can run #far2l --tty --nodetect# to force not use others clipboard options.
     - Menu(#F9#)->Options->Interface settings->#Override base colors palette#
 (shown in the dialog only if FAR2L run in TTY/TTY|X mode) allows far2l to adjust terminal palette colors.
-If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts sequence in terminal after exit from far2l.
+If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts
+sequence in terminal after exit from far2l.
 
 
  #Full-functional work with the system clipboard in a plain terminal version FAR2L TTY#
@@ -237,7 +239,7 @@ for clipboard need turn on OSC 52)
     - #iTerm2# (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
 (~TTY|a backend~@UIBackends@: keys by iTerm2 "raw keyboard" protocol;
 for clipboard need turn on OSC 52)
-    - #Windows Terminal#
+    - #Windows Terminal# [in win11 is installed by default, in win10 it needs to be installed]
 (~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
   Original PuTTY does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
@@ -261,16 +263,16 @@ but vanilla PuTTY can not transfer clipboard.
         - #settings/colors.ini# - ~files highlighting and sort groups~@Highlight@
         - #settings/farcolors.ini# - interface colors (configurable via F9->~Options~@OptMenu@->Colors)
         - #settings/key_macros.ini# - ~keyboard macro commands~@KeyMacro@
-        - #settings/user_menu.ini# - main ~user menu~@UserMenu@ (the format is different from local user FarMenu.ini)
-        - #settings/associations.ini# - ~file associations~@FileAssoc@
-        - #settings/bookmarks.ini# - ~bookmarks~@Bookmarks@ to fast access to frequently used directories by RCtrl-0...9 or Ctrl-Alt-0...9
+        - #settings/user_menu.ini# - main ~user menu~@UserMenu@ (configurable via F9->Commands->Edit user menu; the format is different from local user FarMenu.ini)
+        - #settings/associations.ini# - ~file associations~@FileAssoc@ (configurable via F9->Commands->File associations)
+        - #settings/bookmarks.ini# - ~bookmarks~@Bookmarks@ to fast access to frequently used directories by RCtrl-0...9 or Ctrl-Alt-0...9 (configurable via F9->Commands->Folder bookmarks)
         - #favorites# - additional items in ~location menu~@DriveDlg@ by Alt-F1/F2
         - #cp# - forced setting of OEM and ANSI encodings (see ~ANSI and OEM codepage setting~@CodePagesSet@)
         - #plugins# - plugins
             - #plugins/state.ini# - plugins cache
             - #plugins/NetRocks/sites.cfg# - NetRocks sites
             - #plugins/multiarc/custom.ini# - customization by extend command line archivers
-        - #clipboard# - bash-script (must be chmod +x) for workaround to access to clipboard if other FAR2L tools do not work
+        - #clipboard# - bash-script (must be chmod +x) for workaround to access to clipboard if other built-in FAR2L tools do not work
 
 
     See also:
@@ -573,12 +575,10 @@ active panel. The following sort modes are available:
 
   #Remarks on the numeric sort#
 
-    The sorting algorithm which is used by the operating system to sort file
-lists was changed in Windows XP. A numeric, not a string sort is used. FAR2L also
-allows to use a numeric sort as in Windows XP - leading zeros in a file name
-are ignored. The following example shows how the files are sorted:
+    FAR2L supports two soring modes. The following example shows
+how the files are sorted:
 
-    Numeric sort (Windows XP)    String sort (Windows 2000)
+    Numeric sort                 String sort
 
     Ie4_01                       Ie4_01
     Ie4_128                      Ie4_128
@@ -710,12 +710,12 @@ editor, depending upon the file type and ~external editor settings~@EditorSettin
   ~Copy~@CopyFiles@                                                            #F5#
 
     Copies files and folders. If you wish to create the destination folder
-before copying, terminate the name with a backslash.
+before copying, terminate the name with a slash.
 
   ~Rename or move~@CopyFiles@                                                  #F6#
 
     Moves or renames files and folders. If you wish to create the destination
-folder before moving, terminate the name with a backslash.
+folder before moving, terminate the name with a slash.
 
   ~Create new folder~@MakeFolder@                                               #F7#
 
@@ -1034,7 +1034,7 @@ editor and viewer (see TechInfo##33).
 
 @Plugins
 $ #Plugins support#
-    External DLL modules (plugins) may be used to implement new FAR2L commands
+    External modules (plugins) may be used to implement new FAR2L commands
 and emulate file systems. For example, archives support, FTP client, temporary
 panel and network browser are plugins that emulate file systems.
 
@@ -1230,7 +1230,7 @@ $ #Panels: info panel#
  2. ^<wrap>Information about the current directory and its file system.
     ^<wrap>File system type, total space and space available to unprivileged user, filesystem id, the current
 directory and its resolved path (including symbolic links), mount point of the current directory's file system,
-maximum filename length, and mount options.
+maximum allowed filename length for the given FS type, and flags with which the filesystem is mounted.
 
  3. ^<wrap>Memory information.
     ^<wrap>Memory load percentage (100% means all of available memory is used), total usable main memory size,
@@ -1276,7 +1276,6 @@ as well.
     For folders, the quick view panel displays total size, total compressed
 size, number of files and subfolders in the folder, current disk cluster size,
 real files size, including files slack (sum of the unused cluster parts).
-Compressed size has meaning for NTFS drives only.
 
     When viewing reparse points, the path to the source folder is also displayed.
 
@@ -1427,7 +1426,7 @@ $ #Menus: commands menu#
    #History#              Display the previous commands.
                         See ~History~@History@ for more info.
 
-   #Video mode#           Switch between 25 and 50 lines on the screen.
+   #Video mode#           Switch between screen line modes.
 
    #Find folder#          Search for a folder in the folders
                         tree. See ~Find folder~@FindFolder@ for more info.
@@ -1706,13 +1705,7 @@ containing hexadecimal sequence of the specified bytes. In this case #Case#
 options are disabled and their values doesn't affect the search process.
 
     The #Using code page# dropdown list allows you to select a specific
-    code page to be used for the text search. If you select #All code pages#,
-    FAR2L will use all standard and #Favorite# code pages for the search (the
-    list of #Favorite# code pages can be configured in the code page selection
-    menu of the editor or viewer). If the list of code pages for the #All code#
-    #pages# option is excessive, you can use #Ins# and #Space# to select only
-    the necessary code pages from the list of standard and #Favorite# pages
-    for your search.
+code page to be used for the text search.
 
     If the option #Search in archives# is set, FAR2L also performs the search in
 archives with known formats. However, using this option significantly decreases
@@ -1798,14 +1791,11 @@ Allowed column types are:
 
     A          - file attributes
     Z          - file descriptions
-
-    O[L]       - file owner
-                 where: L - show domain name;
+    O          - file owner
 
     LN         - number of hard links
 
     F          - number of streams
-
 
     Windows file attributes have the following indications:
        #R#         - Read only
@@ -1837,9 +1827,6 @@ Allowed column types are:
        #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
        #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
 
-    The "Sparse" attribute applies only to files and is shown instead of 'L'. The
-"Encrypted" attribute is shown instead of 'C' as a file/folder can not have both
-attributes ("Compressed" and "Encrypted") set at the same time.
     By default the size of the attributes column is 6 characters. To display
 the additional 'T', 'I', 'O' and 'V' attributes it is necessary to manually
 set the size of the column to 10 characters.
@@ -2012,12 +1999,6 @@ rule sets.
                    #[ ]# - exclusion attribute - the file must
                          not have this attribute.
                    #[?]# - ignore this attribute.
-
-                   The #Compressed#, #Encrypted#, #Not indexed#,
-                   #Sparse#, #Temporary# and #Offline# attributes
-                   are used only on disks with the NTFS file system.
-                   #Virtual# attribute is not used in Windows
-                   2000/XP/2003.
 
 
     To quickly disable one or several conditions, uncheck the corresponding
@@ -2559,7 +2540,7 @@ $ #Settings dialog: panel#
   #information#             at the bottom line of file panel.
 
   #Show free size#          Enable display of the current disk free
-                          size.
+                            size.
 
   #Show scrollbar#          Enable display of file and ~tree panel~@TreePanel@
   #in Panels#               scrollbars.
@@ -2642,6 +2623,8 @@ to your clipboard may be potentially unsafe.
 are inaccessible.
 
   #Override base colors palette# (*TTY-backend only)
+  If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts
+sequence in terminal after exit from far2l.
 
   #FAR window title#
   Information displayed in the console window title. Can contain any text
@@ -2886,7 +2869,7 @@ $ #Viewer: control keys#
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
     #Alt-F9#             Toggles the size of the FAR2L console window
-    #F9,Alt-Shift-F9#    Call ~Viewer settings~@EditorSettings@ dialog
+    #F9,Alt-Shift-F9#    Call ~Viewer settings~@ViewerSettings@ dialog
     #Numpad5,F3,F10,Esc# Quit
     #Ctrl-F10#           Position to the current file.
     #F11#                Call "~Plugin commands~@Plugins@" menu
@@ -2917,19 +2900,19 @@ $ #Viewer: control keys#
        text to be located.
 
 
-    3. The current version of FAR2L has a limitation on the maximum
+    2. The current version of FAR2L has a limitation on the maximum
        number of columns in the internal viewer - the number
        cannot exceed 2048. If a file contains a line that does not
        fit in this number of columns, it will be split into several
        lines, even if the word wrap mode is turned off.
 
-    4. FAR2L ~searches~@ViewerSearch@ the first occurrence of the string (#F7#) from
+    3. FAR2L ~searches~@ViewerSearch@ the first occurrence of the string (#F7#) from
        the beginning of the area currently displayed.
 
-    5. For automatic scrolling of a dynamically updating file,
+    4. For automatic scrolling of a dynamically updating file,
        position the "cursor" to the end of the file (End key).
 
-    6. Pressing Alt+PgUp/PgDn smoothly increases scrolling speed, futher releasing
+    5. Pressing Alt+PgUp/PgDn smoothly increases scrolling speed, futher releasing
        Alt while keeping PgUp/PgDn will continue scrolling with selected speed boost.
        Speed boost dismissed by releasing all keys for long time or pressing any other key.
 
@@ -3043,7 +3026,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Del#                     ^<wrap>Delete char (also may delete block, depending upon ~Editor settings~@EditorSettings@).
    #BS#                      Delete char left
    #Ctrl-Y#                  Delete line
-   #Ctrl-K#                  Delete to end of line
+   #Ctrl-K, Alt-D#           Delete to end of line
    #Ctrl-BS#                 Delete word left
    #Ctrl-T, Ctrl-Del#        Delete word right
 
@@ -3060,8 +3043,8 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Ctrl-Ins, Ctrl-C#        Copy block to clipboard
    #Ctrl-<Gray +>#           Append block to clipboard
    #Ctrl-D#                  Delete block
-   #Ctrl-P#                  ^<wrap>Copy block to current cursor position (in persistent blocks mode only)
-   #Ctrl-M#                  ^<wrap>Move block to current cursor position (in persistent blocks mode only)
+   #Ctrl-P#                  ^<wrap>Copy block to current cursor position (in persistent blocks mode only, clipboard is not modified)
+   #Ctrl-M#                  ^<wrap>Move block to current cursor position (in persistent blocks mode only, clipboard is not modified)
    #Alt-U#                   Shift block left
    #Alt-I#                   Shift block right
    #Shift-Tab#               Shift block left by Tab or by indent size (processed by SimpleIndent plugin)
@@ -3262,12 +3245,12 @@ $ #Code pages menu#
     The menu has two modes: full mode with visible #Other# section and brief
 mode with hidden #Other# section. The modes can be switched by pressing #Ctrl-H#.
 
-#Ins# moves a code page from #Other# to #Favorites#; #Del# moves it back.
+	#Ins# moves a code page from #Other# to #Favorites#; #Del# moves it back.
 The #F4# key allows you to change the display names for #Favorite# and #Other#
 code pages (code pages with a changed name are marked with a #*# symbol before
 the name).
 
-    Диалог ~Изменение имени кодовой страницы~@EditCodePageNameDlg@
+    ~Change code page name~@EditCodePageNameDlg@ Dialog
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -3455,9 +3438,6 @@ will not be analyzed, and only file attributes will be taken into account.
 in the ~Panel settings~@PanelSettings@ dialog
 or may be switched by #Ctrl-Alt-M# in panels.
 
-    The Compressed, Encrypted, Not indexed, Sparse, Temporary attributes and
-Symbolic links are valid for NTFS drives only.
-
 
 @NotificationsSettings
 $ #Notifications settings#
@@ -3604,9 +3584,9 @@ $ #Settings dialog: editor#
 
   #Show scrollbar#          Show scrollbar.
 
-  #Pick up the word#        При вызове диалога поиска/замены в строку
-                          поиска будет подставляться слово, на
-                          котором стоит курсор.
+  #Pick up the word#        When the search/replace dialog is invoked,
+                          the word under the cursor will be inserted
+                          into the search string.
 
   #Use .editorconfig#       Processing .editorconfig parameters
   #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
@@ -3925,14 +3905,6 @@ the file panel will be displayed in multicolumn form.
        #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
        #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
 
-    The attributes are displayed in the following order - RSHALCTIOV. The
-"Sparse" attribute applies only to files and is shown instead of 'L'. The
-"Encrypted" attribute is shown instead of 'C' as a file/folder can not
-have both attributes ("Compressed" and "Encrypted") set at the same time.
-By default the size of the attributes column is 6 characters. To display
-the additional 'T', 'I', 'O' and 'V' attributes it is necessary to manually
-set the size of the column to 10 characters.
-
   - #Column widths# - used to change width of panel columns.
 If the width is equal to 0, the default value will be used. If the width of
 the Name, Description or Owner column is 0, it will be calculated
@@ -4182,7 +4154,7 @@ target file. If not, the original file will be copied with the symlink's name.
 their target files.
 
     If you wish to create the destination folder before copying, terminate the
-name with backslash. Also in the Copy dialog you may press #F10# to select a
+name with slash. Also in the Copy dialog you may press #F10# to select a
 folder from the active file panel tree or #Alt-F10# to select from the passive
 file panel tree. #Shift-F10# allows to open the tree for the path entered in
 the input line (if several paths are entered, only the first one is taken into
@@ -4261,7 +4233,7 @@ $ #Hard and Symbolic link#
 
     #Hard links#
 
-A #hard link# is an additional directory entry for the given file. When a
+	A #hard link# is an additional directory entry for the given file. When a
 hard link is created, the file is not copied, but receives one more name
 or location, while its previous name and location remain intact. From the
 moment of its creation, a hard link is indistinguishable from the original
@@ -4403,12 +4375,12 @@ $ #Regular expressions#
     #s# - ^<wrap>consider the whole text as one line, '.' matches any character;
     #m# - ^<wrap>consider the whole text as multiple lines. ^ and $ match the
     beginning and the end of any "inner" string;
-    #x# - ^<wrap>ignore space characters (unscreened ones, i.e. without backslash before).
+    #x# - ^<wrap>ignore space characters (unscreened ones, i.e. without slash before).
 This is useful to outline the complex expressions.
 
     #regexp# - the sequence of characters and metacharacters. The characters are
 letters and digits, any other symbol becomes character when screened, i.e.
-prepended the backslash #\#.
+prepended the slash #\#.
 
     Pay attention that all slashes and backslashes in regular expression must
 be prepended with the symbol #\# to differ from other special symbols or with
@@ -4566,7 +4538,7 @@ the end-of-line style used in the file. They behave the same way.
 
 
 @ElevationDlg
-$ #Запрос привилегий администратора#
+$ #Request administrator privileges#
 
 
 @KeyMacro
@@ -4745,7 +4717,7 @@ usually does as a reaction to this combination.
     ~hotkey assignment~@KeyMacroSetting@ dialog will appear, where the hotkey that
     will be used to execute the recorded sequence can be set.
 
-    Воспроизведение макроса сопровождается отображением в левом верхнем углу экрана символа '\2FP\-'.
+    Playing the macro will display the symbol '\2FP\-' in the upper left corner of the screen.
 
 
 @KeyMacroDelete
@@ -4996,7 +4968,7 @@ $ #Macros: Find folder#
 <!Macro:FindFolder!>
 
 @KeyMacroEditList
-$ #Макросы: Редактор#
+$ #Macros: Editor#
     Macro-commands available in the editor are listed below. Descriptions are read from the config file.
 
 <!Macro:Common!>

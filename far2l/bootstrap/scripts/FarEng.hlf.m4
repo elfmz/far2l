@@ -1791,7 +1791,8 @@ Allowed column types are:
     A          - file attributes
     Z          - file descriptions
 
-    O          - file owner
+    O[L]       - file owner
+                 where: L - show domain name (Windows legacy);
     U          - file group
 
     LN         - number of hard links
@@ -3865,7 +3866,8 @@ characters, delimited with commas. Allowed column types are:
     A          - file attributes
     Z          - file descriptions
 
-    O          - file owner
+    O[L]       - file owner
+                 where: L - show domain name (Windows legacy);
     U          - file group
 
     LN         - number of hard links

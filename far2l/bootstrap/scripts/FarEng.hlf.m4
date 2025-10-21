@@ -383,7 +383,7 @@ active panel, the second path - to the passive one:
   - ^<wrap>if a file is specified, FAR2L will change to the folder where it
 resides and place the cursor on the file, if it exists;
   - ^<wrap>when prefixes specified (simultaneous use with common paths allowed)
-passive command executes first (passive panel activates temporary). Односимвольные префиксы игнорируются.
+passive command executes first (passive panel activates temporary). Single-character prefixes are ignored.
   Example: far ma:Far20.7z "macro:post MsgBox(\\"FAR2L\\",\\"Successfully started\\")"
 
 
@@ -562,9 +562,9 @@ active panel. The following sort modes are available:
   Sort files by description                                 #Ctrl-F10#
   Sort files by file owner                                  #Ctrl-F11#
 
-  Клавиша #+# устанавливает прямую сортировку.
-  Клавиша #-# устанавливает обратную сортировку.
-  Клавиша #*# меняет сортировку на обратную.
+  Pressing #+# sets direct sort order.
+  Pressing #-# sets reverse sort order.
+  Pressing #*# toggles the sort order.
 
   Use group sorting                                        #Shift-F11#
   Show selected files first                                #Shift-F12#
@@ -1705,15 +1705,14 @@ containing hexadecimal sequence of the specified bytes. In this case #Case#
 #sensitive#, #Whole words#, #Using code page# and #Search for folders#
 options are disabled and their values doesn't affect the search process.
 
-    Выпадающий список #Используя кодовую страницу# позволяет выбрать конкретную
-кодовую страницу, применяемую для поиска текста. Если в выпадающем списке выбрать
-пункт #Все кодовые страницы#, то FAR2L будет использовать для поиска все стандартные
-и #Любимые# кодовые страницы (список #Любимых# кодовых страниц можно настроить в
-меню выбора кодовой страницы редактора или программы просмотра). Если перечень
-кодовых страниц, поиск по которым производится при выборе пункта #Все кодовые#
-#страницы#, является для вас избыточным, то вы можете, при помощи клавиш #Ins# и
-#Space#, выбрать из списка стандартных и #Любимых# кодовых страниц только те кодовые
-страницы, по которым вам необходимо осуществлять поиск.
+    The #Using code page# dropdown list allows you to select a specific
+    code page to be used for the text search. If you select #All code pages#,
+    FAR2L will use all standard and #Favorite# code pages for the search (the
+    list of #Favorite# code pages can be configured in the code page selection
+    menu of the editor or viewer). If the list of code pages for the #All code#
+    #pages# option is excessive, you can use #Ins# and #Space# to select only
+    the necessary code pages from the list of standard and #Favorite# pages
+    for your search.
 
     If the option #Search in archives# is set, FAR2L also performs the search in
 archives with known formats. However, using this option significantly decreases
@@ -1770,7 +1769,7 @@ file will be ignored even if the required sequence exists there.
     P - for petabytes;
     E - for exabytes.
 
-  - #Column types# - позволяет задавать формат вывода результатов поиска.
+  - #Column types# - allows you to set the output format for search results.
 Column types are encoded as one or several characters, delimited with commas.
 Allowed column types are:
 
@@ -1845,30 +1844,29 @@ attributes ("Compressed" and "Encrypted") set at the same time.
 the additional 'T', 'I', 'O' and 'V' attributes it is necessary to manually
 set the size of the column to 10 characters.
 
-    #Ширина колонок# - позволяет изменить ширину колонок результатов поиска.
-Если ширина равна 0, то используется значение по умолчанию.
+    #Column widths# - allows you to change the width of the search result columns.
+If the width is 0, the default value is used.
 
-    Для использования 12-часового формата времени надо увеличить
-на единицу стандартную ширину колонки времени файла или колонки
-времени и даты файла. После дальнейшего увеличения в этих колонках
-также будут показаны секунды и миллисекунды.
+    To use a 12-hour time format, you need to increase the standard width
+of the file time column or the file time and date column by one.
+Further increasing these columns will also show seconds and milliseconds.
 
-    Для показа года в 4-х символьном формате нужно увеличить ширину
-колонки даты на 2.
+    To show the year in a 4-digit format, you need to increase the width of
+the date column by 2.
 
-    В отличии от режимов панелей, результат поиска может содержать только
-одну колонку. Имя файла присутствует всегда - добавляется последней колонкой
-автоматически.
+    Unlike panel modes, the search result can contain only one of each
+column type. The file name is always present - it is automatically added as
+the last column.
 
-    При указании колонок, отвечающих за показ ссылок и потоков (G, LN, и F) время
-поиска увеличивается.
+    When specifying columns responsible for showing links and streams (G, LN, and F),
+the search time increases.
 
-    Чтобы в результатах поиска отображать только имена файловых объектов без
-дополнительных атрибутов, оставьте поле "Типы колонок" пустым.
+    To display only the names of file objects in the search results without
+additional attributes, leave the "Column types" field empty.
 
-    По умолчанию значения колонок равны:
-    "Типы колонок"   - D,S,A
-    "Ширина колонок" - 14,13,0
+    By default, the column values are:
+    "Column types"   - D,S,A
+    "Column widths"  - 14,13,0
 
 
 @FindFileResult
@@ -2918,15 +2916,6 @@ $ #Viewer: control keys#
     1. Also to call search dialog you may just start typing the
        text to be located.
 
-    2. !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
-
-       When the viewer opens a file, it permits the file to be
-       deleted by other processes. If such a deletion happens,
-       the file is actually deleted from the directory only after
-       the viewer is closed, but any operations on the deleted
-       file fail - this is a Windows feature.
-
-       !! Windows legacy end !!
 
     3. The current version of FAR2L has a limitation on the maximum
        number of columns in the internal viewer - the number
@@ -3273,10 +3262,10 @@ $ #Code pages menu#
     The menu has two modes: full mode with visible #Other# section and brief
 mode with hidden #Other# section. The modes can be switched by pressing #Ctrl-H#.
 
-    #Ins# keypress moves codepage from #Other# to #Favorites#, #Del# moves the
-codepage back. Клавиша #F4# позволяет изменять отображаемые
-имена для #любимых# и #прочих# кодовых страниц (кодовые страницы для которых было
-изменено имя помечаются символом #*# перед именем).
+#Ins# moves a code page from #Other# to #Favorites#; #Del# moves it back.
+The #F4# key allows you to change the display names for #Favorite# and #Other#
+code pages (code pages with a changed name are marked with a #*# symbol before
+the name).
 
     Диалог ~Изменение имени кодовой страницы~@EditCodePageNameDlg@
 
@@ -3289,21 +3278,21 @@ $ #ANSI and OEM codepage setting#
   or, if its absence, by environment variable #LC_CTYPE#
 
 @EditCodePageNameDlg
-$ #Изменение имени кодовой страницы#
-    Диалог #Изменение имени кодовой страницы# позволяет изменить отображаемое имя для
-#любимых# и #прочих# кодовых страниц.
+$ #Changing the code page name#
+    The #Changing the code page name# dialog allows you to change the display
+name for #Favorite# and #Other# code pages.
 
-    Примечания:
+    Notes:
 
-    - ^<wrap>Если ввести пустое имя кодовой страницы, то после подтверждения ввода
-отображаемое имя кодовой страницы примет значение по умолчанию, то есть имя полученное
-от системы.
-    - ^<wrap>Так же отображаемое имя кодовой страницы принимает значение по умолчанию
-после нажатия кнопки #Сбросить#.
+    - ^<wrap>If you enter an empty code page name, after confirming the input,
+the display name of the code page will be reset to its default value, i.e.,
+the name obtained from the system.
+    - ^<wrap>The display name of the code page is also reset to its default
+value after pressing the #Reset# button.
 
 @DriveDlg
 $ #Location menu#
-    This menu allows to change the current location of a panel, unmount mountpoint 
+    This menu allows to change the current location of a panel, unmount mountpoint
 or open a new ~plugin~@Plugins@ panel.
 
     Select the item and press Enter to change the location to specified filesystem path
@@ -3960,8 +3949,8 @@ to the display of seconds and milliseconds.
 
     To display years in 4-digits format increase the date column width by 2.
 
-    При указании колонок, отвечающих за показ ссылок, потоков и владельцев (G, LN, F и O) время
-отображения содержимого каталога увеличивается.
+    When specifying columns that display links, streams, and owners (G, LN, F, and O),
+    the time it takes to display the directory contents increases.
 
   - #Status line column types# and #Status line column widths# -
 similar to "Column types" and "Column widths", but for panel status line.
@@ -4272,12 +4261,11 @@ $ #Hard and Symbolic link#
 
     #Hard links#
 
-    A #hard link# is an additional directory entry for the given file. When a
-hard link is created, the file is not copied itself, but receives one more name
-or location, while its previous name and location remain intact. Since the
+A #hard link# is an additional directory entry for the given file. When a
+hard link is created, the file is not copied, but receives one more name
+or location, while its previous name and location remain intact. From the
 moment of its creation, a hard link is indistinguishable from the original
-entry. The only difference is that short file names are not created for hard
-links, and so they cannot be seen from DOS programs.
+entry.
 
     When the file size or date changes, all of the corresponding directory
 entries are updated automatically. When a file is deleted, it is not deleted
@@ -4690,7 +4678,7 @@ and changing templates of what should be included into additional columns.
     #$f# - percents space free of total
     #$a# - percents space available of total
     #$N# - filesystem name
-    #$D# - device from which filesystem is mounted 
+    #$D# - device from which filesystem is mounted
     #$S# - filesystem status, single character that can be
        ! - for readonly FS
        ? - for erroring/unresponsive FS
@@ -4877,132 +4865,132 @@ documentation.
     ~https://api.farmanager.com/ru/macro/~@https://api.farmanager.com/ru/macro/@
 
 @KeyMacroList
-$ #Макросы: Список установленных макросов#
-    Ниже приведен список разделов, в которых можно узнать какие ~макросы~@KeyMacro@ 
-действуют в текущей сессии Far Manager.
+$ #Macros: List of defined macros#
+    Below is a list of sections where you can find out which ~macros~@KeyMacro@
+are active in the current Far Manager session.
 
-  ~Список переменных~@KeyMacroVarList@
-  ~Список констант~@KeyMacroConstList@
+  ~List of variables~@KeyMacroVarList@
+  ~List of constants~@KeyMacroConstList@
 
-  ~Общие макросы#~@KeyMacroCommonList@
+  ~Common macros~@KeyMacroCommonList@
 
-  ~Панели~@KeyMacroShellList@
-  ~Панель быстрого просмотра~@KeyMacroQViewList@
-  ~Панель папок~@KeyMacroTreeList@
-  ~Информационная панель~@KeyMacroInfoList@
+  ~Panels~@KeyMacroShellList@
+  ~Quick view panel~@KeyMacroQViewList@
+  ~Tree panel~@KeyMacroTreeList@
+  ~Info panel~@KeyMacroInfoList@
 
-  ~Быстрый поиск в панелях~@KeyMacroSearchList@
-  ~Поиск папки~@KeyMacroFindFolderList@
+  ~Fast find in panels~@KeyMacroSearchList@
+  ~Find folder~@KeyMacroFindFolderList@
 
-  ~Диалоги~@KeyMacroDialogList@
+  ~Dialogs~@KeyMacroDialogList@
 
-  ~Главное меню~@KeyMacroMainMenuList@
-  ~Меню выбора дисков~@KeyMacroDisksList@
-  ~Меню пользователя~@KeyMacroUserMenuList@
-  ~Прочие меню~@KeyMacroMenuList@
-  
-  ~Программа просмотра~@KeyMacroViewerList@
-  ~Редактор~@KeyMacroEditList@
-  
-  ~Файл помощи#~@KeyMacroHelpList@
-  
-  ~Остальные области~@KeyMacroOtherList@
+  ~Main menu~@KeyMacroMainMenuList@
+  ~Location menu~@KeyMacroDisksList@
+  ~User menu~@KeyMacroUserMenuList@
+  ~Other menus~@KeyMacroMenuList@
+
+  ~Viewer~@KeyMacroViewerList@
+  ~Editor~@KeyMacroEditList@
+
+  ~Help file~@KeyMacroHelpList@
+
+  ~Other areas~@KeyMacroOtherList@
 
 @KeyMacroVarList
-$ #Макросы: Список переменных#
-    Ниже приведен список переменных, которые можно использовать в макросах.
+$ #Macros: List of variables#
+    Below is a list of variables that can be used in macros.
 
 <!Macro:Vars!>
 
 @KeyMacroConstList
-$ #Макросы: Список констант#
-    Ниже приведен список констант, которые можно использовать в макросах.
+$ #Macros: List of constants#
+    Below is a list of constants that can be used in macros.
 
 <!Macro:Consts!>
 
 @KeyMacroCommonList
-$ #Макросы: Общие#
-    Ниже приведены комбинации макроклавиш, действующих везде.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Common#
+    Below are the macro key combinations that are active everywhere.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 
 @KeyMacroQViewList
-$ #Макросы: Панель быстрого просмотра#
-    Ниже приведены комбинации макроклавиш, действующих в панели быстрого просмотра.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Quick view panel#
+    Below are the macro key combinations active in the quick view panel.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Qview!>
 
 @KeyMacroMainMenuList
-$ #Макросы: Главное меню#
-    Ниже приведены комбинации макроклавиш, действующих в главном меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Main menu#
+    Below are the macro key combinations active in the main menu.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:MainMenu!>
 
 @KeyMacroTreeList
-$ #Макросы: Панель папок#
-    Ниже приведены комбинации макроклавиш, действующих в панели папок.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Tree panel#
+    Below are the macro key combinations active in the tree panel.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Tree!>
 
 @KeyMacroDialogList
-$ #Макросы: Диалоги#
-    Ниже приведены комбинации макроклавиш, действующих в диалогах.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Dialogs#
+    Below are the macro key combinations active in dialogs.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Dialog!>
 
 @KeyMacroInfoList
-$ #Макросы: Информационная панель#
-    Ниже приведены комбинации макроклавиш, действующих в информационной панели.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Info panel#
+    Below are the macro key combinations active in the info panel.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Info!>
 
 @KeyMacroDisksList
-$ #Макросы: Меню выбора дисков#
-    Ниже приведены комбинации макроклавиш, действующих в меню выбора дисков.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Location menu#
+    Below are the macro key combinations active in the location menu.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Disks!>
 
 @KeyMacroUserMenuList
-$ #Макросы: Меню пользователя#
-    Ниже приведены комбинации макроклавиш, действующих в пользовательском меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: User menu#
+    Below are the macro key combinations active in the user menu.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:UserMenu!>
 
 @KeyMacroShellList
-$ #Макросы: Панели#
-    Ниже приведены комбинации макроклавиш, действующих в файловых панелях.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Panels#
+    Below are the macro key combinations active in the file panels.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Shell!>
 
 @KeyMacroSearchList
-$ #Макросы: Быстрый поиск в панелях#
-    Ниже приведены комбинации макроклавиш, действующих в быстром поиске файловых панелей.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Fast find in panels#
+    Below are the macro key combinations active in the fast find of file panels.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Search!>
 
 @KeyMacroFindFolderList
-$ #Макросы: Поиск папки#
-    Ниже приведены комбинации макроклавиш, действующих в поиске папки.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Find folder#
+    Below are the macro key combinations active in the find folder dialog.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:FindFolder!>
@@ -5015,32 +5003,32 @@ $ #Макросы: Редактор#
 <!Macro:Editor!>
 
 @KeyMacroViewerList
-$ #Макросы: Программа просмотра#
-    Macro-commands available in the viewer are listed below. Descriptions are read from the config file.
+$ #Macros: Viewer#
+    Macro commands available in the viewer are listed below. The description for each is read from the config file.
 
 <!Macro:Common!>
 <!Macro:Viewer!>
 
 @KeyMacroMenuList
-$ #Макросы: Прочие меню#
-    Ниже приведены комбинации макроклавиш, действующих в прочих меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Other menus#
+    Below are the macro key combinations active in other menus.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Menu!>
 
 @KeyMacroHelpList
-$ #Макросы: Файл помощи#
-    Ниже приведены комбинации макроклавиш, действующих в файле помощи.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Help file#
+    Below are the macro key combinations active in the help file.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Help!>
 
 @KeyMacroOtherList
-$ #Макросы: Остальные области#
-    Ниже приведены комбинации макроклавиш, действующих в других областях: копировании текста с экрана, вертикальных меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Other areas#
+    Below are the macro key combinations active in other areas: screen text copying, vertical menus.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Other!>

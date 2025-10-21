@@ -2542,7 +2542,7 @@ $ #Settings dialog: panel#
   #information#             at the bottom line of file panel.
 
   #Show free size#          Enable display of the current disk free
-                            size.
+                          size.
 
   #Show scrollbar#          Enable display of file and ~tree panel~@TreePanel@
   #in Panels#               scrollbars.

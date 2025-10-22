@@ -1703,8 +1703,16 @@ containing hexadecimal sequence of the specified bytes. In this case #Case#
 #sensitive#, #Whole words#, #Using code page# and #Search for folders#
 options are disabled and their values doesn't affect the search process.
 
-    The #Using code page# dropdown list allows you to select a specific
-code page to be used for the text search.
+    The drop-down list #Using code page# allows you to select a specific  
+code page to be used for text search. If you select the item
+#Standard code pages# in the drop-down list, FAR2L will use all
+standard and #Favorite# code pages for the search (the list of #Favorite#
+code pages can be configured in the code page selection menu of the
+editor or viewer).
+    If the list of code pages searched when selecting
+#Standard code pages# is excessive for your needs, you can use the
+#Ins# and #Space# keys to choose only those standard and #Favorite#
+code pages from the list that you want to include in the search.
 
     If the option #Search in archives# is set, FAR2L also performs the search in
 archives with known formats. However, using this option significantly decreases

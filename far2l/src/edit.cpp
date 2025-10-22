@@ -110,7 +110,8 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 	SelEnd(0),
 	CursorSize(-1),
 	CursorPos(0),
-	HasSpecialWidthChars(false)
+	HasSpecialWidthChars(false),
+	m_bWordWrapState(false)
 {
 	m_Callback.Active = true;
 	m_Callback.m_Callback = nullptr;
@@ -311,6 +312,10 @@ int Edit::GetNextCursorPos(int Position, int Where)
 
 void Edit::FastShow()
 {
+	if (Flags.Check(FEDITLINE_EDITORMODE)) {
+		fprintf(stderr, "WORDWRAP_FASTSHOW: === FastShow for '%.*ls' ===\n", StrSize > 20 ? 20 : StrSize, Str);
+		fprintf(stderr, "WORDWRAP_FASTSHOW: IN:  LeftPos=%d, CurPos=%d, StrSize=%d, ObjWidth=%d\n", LeftPos, CurPos, StrSize, ObjWidth);
+	}
 	int EditLength = ObjWidth;
 
 	if (!Flags.Check(FEDITLINE_EDITBEYONDEND) && CurPos > StrSize && StrSize >= 0)
@@ -335,6 +340,10 @@ void Edit::FastShow()
 	*/
 	int RealLeftPos = -1;
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX)) {
+		if (Flags.Check(FEDITLINE_EDITORMODE)) {
+			fprintf(stderr, "WORDWRAP_FASTSHOW_IF: Checking if (%d - %d > %d - 1) which is %s\n",
+				CellCurPos, LeftPos, EditLength, (CellCurPos - LeftPos > EditLength - 1) ? "TRUE" : "FALSE");
+		}
 		if (CellCurPos - LeftPos > EditLength - 1) {
 			/*
 				tricky left pos shifting to
@@ -357,6 +366,9 @@ void Edit::FastShow()
 
 	if (RealLeftPos == -1)
 		RealLeftPos = CellPosToReal(LeftPos);
+	if (Flags.Check(FEDITLINE_EDITORMODE)) {
+		fprintf(stderr, "WORDWRAP_FASTSHOW: OUT: LeftPos=%d, RealLeftPos=%d\n", LeftPos, RealLeftPos);
+	}
 
 	GotoXY(X1, Y1);
 	int CellSelStart = (SelStart == -1) ? -1 : RealPosToCell(SelStart);
@@ -1584,6 +1596,104 @@ int Edit::InsertKey(FarKey Key)
 	return TRUE;
 }
 
+int Edit::GetVisualLineCount() const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty())
+		return 1;
+	return m_WrapBreaks.size();
+}
+
+void Edit::GetVisualLine(int line, int& start, int& end) const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty() || line < 0)
+	{
+		start = 0;
+		end = StrSize;
+		return;
+	}
+
+	if (static_cast<size_t>(line) < m_WrapBreaks.size())
+	{
+		start = m_WrapBreaks[line];
+		if (static_cast<size_t>(line + 1) < m_WrapBreaks.size())
+			end = m_WrapBreaks[line + 1];
+		else
+			end = StrSize;
+	}
+	else
+	{
+		start = StrSize;
+		end = StrSize;
+	}
+}
+
+void Edit::RecalculateWordWrap(int Width, int TabSize)
+{
+	fprintf(stderr, "WORDWRAP_DEBUG: Edit::RecalculateWordWrap(Width=%d, TabSize=%d) called. m_bWordWrapState=%d\n", Width, TabSize, m_bWordWrapState);
+	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: In Edit::RecalculateWordWrap. My ObjWidth is %d\n", ObjWidth);
+	m_WrapBreaks.clear();
+	fprintf(stderr, "WORDWRAP_DIAG: RecalculateWordWrap begins. this=%p. Passed Width=%d. this->ObjWidth=%d. m_bWordWrapState=%d\n", this, Width, this->ObjWidth, m_bWordWrapState);
+	if (!m_bWordWrapState || Width <= 1)
+	{
+		fprintf(stderr, "WORDWRAP_DEBUG: Edit::RecalculateWordWrap: Bailing out due to invalid state or width.\n");
+		return;
+	}
+
+	fprintf(stderr, "WORDWRAP_DEBUG: Edit::RecalculateWordWrap for line '%.*ls'...\n", StrSize, Str);
+	m_WrapBreaks.push_back(0);
+
+	int CurrentStart = 0;
+	while (CurrentStart < StrSize)
+	{
+		int CurrentPos = CurrentStart;
+		int CurrentX = 0;
+		int LastBreakPos = -1; // Position *after* a space, where the new line would start.
+
+		int ForceBreakPos = -1;
+
+		while (CurrentPos < StrSize)
+		{
+			int CharWidth = 1;
+			if (Str[CurrentPos] == L'\t') {
+				CharWidth = TabSize - (CurrentX % TabSize);
+			} else if (CharClasses::IsFullWidth(&Str[CurrentPos])) {
+				CharWidth = 2;
+			}
+
+			if (CurrentX + CharWidth > Width)
+			{
+//				fprintf(stderr, "WORDWRAP: Pos %d (char '%.1ls') exceeds Width %d. LastBreakPos=%d\n", CurrentPos, &Str[CurrentPos], Width, LastBreakPos);
+				ForceBreakPos = (CurrentPos > CurrentStart) ? CurrentPos : CurrentStart + 1;
+				break;
+			}
+
+			CurrentX += CharWidth;
+
+			if (Str[CurrentPos] == L' ') {
+				LastBreakPos = CurrentPos + 1;
+			}
+
+			CurrentPos++;
+		}
+
+		if (ForceBreakPos == -1) // Didn't exceed width, so we are done with this line
+		{
+//			fprintf(stderr, "WORDWRAP: Reached end of string without exceeding width.\n");
+			break;
+		}
+
+		int NextStart = (LastBreakPos != -1) ? LastBreakPos : ForceBreakPos;
+
+//		fprintf(stderr, "WORDWRAP: Adding break at pos %d\n", NextStart);
+		m_WrapBreaks.push_back(NextStart);
+		CurrentStart = NextStart;
+	}
+
+	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: Recalculation finished for line '%.*ls'. m_WrapBreaks has %zu elements: ", StrSize > 20 ? 20 : StrSize, Str, m_WrapBreaks.size());
+	//for(size_t i = 0; i < m_WrapBreaks.size(); ++i) { fprintf(stderr, "%d ", m_WrapBreaks[i]); }
+	//fprintf(stderr, "\n");
+}
+
 void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
 	this->Color = Color;
@@ -1679,6 +1789,8 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 */
 void Edit::SetBinaryString(const wchar_t *Str, int Length)
 {
+	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: SetBinaryString called. m_bWordWrapState=%d, ObjWidth=%d\n", m_bWordWrapState, ObjWidth);
+
 	if (Flags.Check(FEDITLINE_READONLY))
 		return;
 
@@ -1766,6 +1878,17 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		CheckForSpecialWidthChars();
 	}
 
+	if (m_bWordWrapState) {
+		int Width = ObjWidth;
+		if (Flags.Check(FEDITLINE_EDITORMODE)) { // Corresponds to editor.cpp's EdOpt.ShowScrollBar
+			// This logic is a bit of a guess, assuming FEDITLINE_EDITORMODE is a good proxy.
+			// In editor.cpp, XX2 is calculated based on NumLastLine > Y2-Y1+1. We don't have that here.
+			// Let's assume for now if it's in editor mode, scrollbar might be there.
+			// A better solution would be to pass this info down.
+			// For now, let's just use ObjWidth as it is passed down correctly.
+		}
+		RecalculateWordWrap(Width, TabSize);
+	}
 	Changed();
 }
 
@@ -2217,7 +2340,7 @@ int Edit::CellPosToReal(int Pos)
 				CellPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
 
 			joining = false;
-			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) { 
+			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
 				if (Str[Index + 1] == CharClasses::ZERO_WIDTH_JOINER)
 					joining = true;
 				Index++;
@@ -2773,7 +2896,7 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 
 void EditControl::ShowArrows()
 {
-	if (OverflowArrowsColor > 0) { 
+	if (OverflowArrowsColor > 0) {
 		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) != LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
@@ -2792,7 +2915,7 @@ void EditControl::Show()
 {
 	if (X2 - X1 + 1 > StrSize) {
 		Edit::SetLeftPos(0);
-	} 
+	}
 
 	Edit::Show();
 	ShowArrows();

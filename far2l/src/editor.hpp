@@ -236,13 +236,19 @@ private:
 	Edit *TopList;
 	Edit *EndList;
 	Edit *TopScreen;
+	int m_CurVisualLineInLogicalLine;
+	Edit *m_TopScreenLogicalLine;
+	int m_TopScreenVisualLine;
 	Edit *CurLine;
 	Edit *LastGetLine;
 	int LastGetLineNumber;
 	bool SaveTabSettings;
+	bool m_bWordWrap;
 
 private:
+	int FindVisualLine(Edit* line, int Pos);
 	virtual void DisplayObject();
+	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);
 	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
 	void InsertString();
@@ -342,6 +348,8 @@ public:
 	void SetTabSize(int NewSize);
 	int GetTabSize() const { return EdOpt.TabSize; }
 
+	void SetWordWrap(int NewMode);
+	int GetWordWrap() const { return m_bWordWrap; }
 	void SetConvertTabs(int NewMode);
 	int GetConvertTabs() const { return EdOpt.ExpandTabs; }
 
@@ -416,6 +424,8 @@ public:
 	void GetCursorType(bool &Visible, DWORD &Size);
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
+
+	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
 };
 
 #define POSCACHE_EDIT_PARAM4_PACK(VALUE, CP, EXPAND_TABS, TAB_SIZE)                                            \

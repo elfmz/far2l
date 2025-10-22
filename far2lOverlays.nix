@@ -43,7 +43,6 @@ in
           description = "7z format plugin from ip7z/7zip";
           homepage = "https://github.com/ip7z/7zip";
           license = licenses.lgpl21Plus;
-          platforms = platforms.linux;
         };
       };
     })

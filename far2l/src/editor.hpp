@@ -244,6 +244,7 @@ private:
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;
+	int m_WrapMaxVisibleLineLength;
 
 private:
 	int FindVisualLine(Edit* line, int Pos);

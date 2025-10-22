@@ -545,11 +545,15 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() before m_editor->SetPosition(). Editor will be set to (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before calling m_editor->SetPosition. Editor X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBar=%d, TitleBar=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
 	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() before m_editor->SetPosition(). Editor will be set to (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before calling m_editor->SetPosition. Editor X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBar=%d, TitleBar=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
+	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	m_editor->SetStartPos(StartLine, StartChar);
 	int UserBreak;
 	if (m_editor && m_editor->TopList) {
 		//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() after m_editor->SetPosition(). The ObjWidth of the FIRST line (TopList) is %d\n", m_editor->TopList->ObjWidth);
 	}
+	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() after m_editor->SetPosition(). Editor internal geometry: X1=%d, Y1=%d, X2=%d, Y2=%d\n", m_editor->X1, m_editor->Y1, m_editor->X2, m_editor->Y2);
 	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() after m_editor->SetPosition(). Editor internal geometry: X1=%d, Y1=%d, X2=%d, Y2=%d\n", m_editor->X1, m_editor->Y1, m_editor->X2, m_editor->Y2);
 
 	/*

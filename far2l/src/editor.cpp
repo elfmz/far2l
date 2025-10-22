@@ -117,6 +117,7 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	EdOpt = Opt.EdOpt;
 	m_bWordWrap = EdOpt.WordWrap;
 	fprintf(stderr, "WORDWRAP: Editor::Editor() m_bWordWrap initialized to %d\n", m_bWordWrap);
+	m_WrapMaxVisibleLineLength = 0;
 	SetOwner(pOwner);
 
 	if (DialogUsed)
@@ -382,6 +383,24 @@ void Editor::ShowEditor(int CurLineOnly)
 				fprintf(stderr, "WORDWRAP: ShowEditor() initializing m_TopScreenLogicalLine\n");
 			}
 
+		// In Word Wrap mode, we need to calculate the maximum length of all lines
+		// that will be visible on the screen. This value is then reported to plugins
+		// via ECTL_GETINFO as WindowSizeX.
+		// This "tricks" plugins (like Colorer) into thinking the window is wide enough
+		// to hold the longest visible line, thus preventing them from prematurely
+		// stopping their parsing and ensuring that entire wrapped lines are highlighted correctly.
+		m_WrapMaxVisibleLineLength = 0;
+		Edit *ScanPtr = m_TopScreenLogicalLine;
+		int LinesToScan = Y2 - Y1 + 1;
+		while (ScanPtr && LinesToScan > 0)
+		{
+			if (ScanPtr->GetLength() > m_WrapMaxVisibleLineLength)
+			{
+				m_WrapMaxVisibleLineLength = ScanPtr->GetLength();
+			}
+			LinesToScan -= ScanPtr->GetVisualLineCount();
+			ScanPtr = ScanPtr->m_next;
+		}
 			if (!ScrBuf.GetLockCount()) {
 			if (Flags.Check(FEDITOR_JUSTMODIFIED)) {
 				Flags.Clear(FEDITOR_JUSTMODIFIED);
@@ -425,57 +444,134 @@ void Editor::ShowEditor(int CurLineOnly)
 			// Create a temporary Edit object for rendering this visual line
 			Edit ShowString(this, nullptr, false);
 			ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
-			ShowString.SetCurPos(0); // <-- THE FIX!
+			ShowString.SetCurPos(0);
 			//fprintf(stderr, "WORDWRAP_DIAG: ShowEditor render loop Y=%d. XX2=%d\n", Y, XX2);
-			ShowString.SetPosition(X1, Y, XX2, Y);
-			ShowString.SetLeftPos(LeftPos);
-			ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
-			ShowString.SetTabSize(EdOpt.TabSize);
 
-			// Copy selection info if it intersects with this visual line
-			int SelStart, SelEnd;
-			CurLogicalLine->GetSelection(SelStart, SelEnd);
-			if (SelStart != -1)
+			ShowString.SetPosition(X1, Y, XX2, Y);
+
+			bool background_filled = false;
+			// Special handling for entirely empty visual lines (which could be the only visual line of an empty logical line)
+			if (m_bWordWrap && VisualLineStart == VisualLineEnd) 
 			{
-				int ShowSelStart = SelStart - VisualLineStart;
-				int ShowSelEnd = (SelEnd == -1) ? -1 : SelEnd - VisualLineStart;
-				if ( (ShowSelStart >= 0 || ShowSelEnd > 0) && (ShowSelStart < (VisualLineEnd - VisualLineStart)) )
+				ColorItem current_ci;
+				// Check for an encompassing color item, typically the background color specified by the plugin
+				for (size_t i = 0; CurLogicalLine->GetColor(&current_ci, i); ++i)
 				{
-					if (ShowSelStart < 0) ShowSelStart = 0;
-					if (ShowSelEnd > (VisualLineEnd - VisualLineStart)) ShowSelEnd = -1;
-					ShowString.Select(ShowSelStart, ShowSelEnd);
+					// If a large covering item is found (StartPos <= 0 AND EndPos covers the whole logical line, OR the {-1, -1} marker is used)
+					if ((current_ci.StartPos <= 0 && current_ci.EndPos >= CurLogicalLine->GetLength() - 1) 
+						|| (current_ci.StartPos == -1 && current_ci.EndPos == -1) )
+					{
+						// Apply background coloring directly to the screen buffer.
+						SetScreen(X1, Y, XX2, Y, L' ', current_ci.Color);
+						background_filled = true;
+						break; 
+					}
 				}
 			}
-
+			
 			// Copy color info
 			ColorItem ci;
+			// We use a large relative index hint to force Edit::ApplyColor to fill up to XX2.
+			const int FULL_LINE_END_POS_HINT = 10000; 
+
 			for (size_t i = 0; CurLogicalLine->GetColor(&ci, i); ++i)
 			{
-				if (ci.StartPos < VisualLineEnd && ci.EndPos >= VisualLineStart)
+				if (Y == Y1 && i == 0) {
+					fprintf(stderr, "WORDWRAP_COLOR: Line %p has %zu color items (Logical Line %d) before render.\n", CurLogicalLine, CurLogicalLine->ColorList.size(), CalcDistance(TopList, CurLogicalLine, -1));
+				}
+				
+				if ((ci.StartPos == -1 && ci.EndPos == -1) || (ci.StartPos < VisualLineEnd && ci.EndPos >= VisualLineStart))
 				{
 					ColorItem new_ci = ci;
-					new_ci.StartPos -= VisualLineStart;
-					new_ci.EndPos -= VisualLineStart;
-					if (new_ci.StartPos < 0) new_ci.StartPos = 0;
-					if (new_ci.EndPos >= (VisualLineEnd - VisualLineStart)) new_ci.EndPos = (VisualLineEnd - VisualLineStart) - 1;
-					ShowString.AddColor(&new_ci);
+
+					fprintf(stderr, "WORDWRAP_COLOR_COPY: L%d: Checking ColorItem {StartPos=%d, EndPos=%d, Color=0x%llx} against VisualLine=[%d, %d)\n", 
+						CalcDistance(TopList, CurLogicalLine, -1), ci.StartPos, ci.EndPos, ci.Color, VisualLineStart, VisualLineEnd);
+					fprintf(stderr, "WORDWRAP_COLOR_COPY:   LOGICAL -> VISUAL: VisualLineStart=%d, VisualLineEnd=%d. Logic check: %s\n", VisualLineStart, VisualLineEnd, 
+						(ci.StartPos != -1 || ci.EndPos != -1) ? "CLAMPING" : "PRESERVING");
+
+					bool is_full_visual_line_coverage = false;
+
+					if (ci.StartPos != -1 || ci.EndPos != -1) // Standard color item
+					{
+						if (m_bWordWrap) 
+						{
+							// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
+							if (ci.StartPos <= VisualLineStart && ci.EndPos >= VisualLineEnd - 1)
+							{
+								is_full_visual_line_coverage = true;
+							}
+						}
+
+						new_ci.StartPos -= VisualLineStart;
+						new_ci.EndPos -= VisualLineStart;
+						
+						fprintf(stderr, "WORDWRAP_COLOR_COPY:   Range before clamping: {StartPos=%d, EndPos=%d}\n", new_ci.StartPos, new_ci.EndPos);
+						
+						if (new_ci.StartPos < 0) new_ci.StartPos = 0;
+
+						if (m_bWordWrap && is_full_visual_line_coverage)
+						{
+							// Force EndPos large to cause DrawColor/ApplyColor to fill to the screen edge (via its internal clamping to X2).
+							new_ci.EndPos = FULL_LINE_END_POS_HINT;
+							fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Full Coverage detected] Forcing EndPos=%d\n", new_ci.EndPos);
+						}
+						else if (new_ci.EndPos >= (VisualLineEnd - VisualLineStart)) 
+						{
+							new_ci.EndPos = (VisualLineEnd - VisualLineStart) - 1;
+						}
+					}
+					else // Special case for {-1, -1} background element
+					{
+						if (m_bWordWrap) 
+						{
+							new_ci.StartPos = 0;
+							new_ci.EndPos = FULL_LINE_END_POS_HINT;
+							fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Background Marker -1,-1] Forcing EndPos=%d\n", new_ci.EndPos);
+						}
+					}
+					
+					fprintf(stderr, "WORDWRAP_COLOR_COPY:   FINAL range (relative to visual sub-string): {StartPos=%d, EndPos=%d}. Raw condition check: %s\n", 
+						new_ci.StartPos, new_ci.EndPos, 
+						(new_ci.StartPos <= new_ci.EndPos ? "PASSED" : "FAILED"));
+
+					if (new_ci.StartPos <= new_ci.EndPos)
+					{
+						fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> PASSED. Adding adjusted {StartPos=%d, EndPos=%d} (Y=%d)\n", new_ci.StartPos, new_ci.EndPos, Y);
+						ShowString.AddColor(&new_ci);
+					}
+					else if (new_ci.StartPos == -1 && new_ci.EndPos == -1) // Note: this case should now be covered by the {-1, -1} block above, but keep redundant logging check
+					{
+						fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> PASSED. Adding raw BACKGROUND {-1, -1} (Y=%d)\n", Y);
+						ShowString.AddColor(&new_ci);
+					}
+					else
+					{
+						fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> SKIPPED (invalid range after adjustment).\n");
+					}
+				}
+				else
+				{
+					fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> FILTERED OUT by main condition.\n");
 				}
 			}
 
-			if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+			if (!background_filled) // Only draw normally if we didn't manually fill the background
 			{
-				int CurPos = CurLine->GetCurPos();
-				int VisualCurPos = CurPos - VisualLineStart;
-				if (VisualCurPos < 0) VisualCurPos = 0;
-				if (VisualCurPos > (VisualLineEnd - VisualLineStart)) VisualCurPos = (VisualLineEnd - VisualLineStart);
+				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+				{
+					int CurPos = CurLine->GetCurPos();
+					int VisualCurPos = CurPos - VisualLineStart;
+					if (VisualCurPos < 0) VisualCurPos = 0;
+					if (VisualCurPos > (VisualLineEnd - VisualLineStart)) VisualCurPos = (VisualLineEnd - VisualLineStart);
 
-				fprintf(stderr, "WORDWRAP_DEBUG: Rendering cursor. LogicalLine==CurLine && VisualLine==m_CurVisual. CurPos=%d maps to VisualCurPos=%d for visual line [%d, %d]\n", CurPos, VisualCurPos, VisualLineStart, VisualLineEnd);
-				ShowString.SetCurPos(VisualCurPos);
-				ShowString.Show();
-			}
-			else
-			{
-				ShowString.FastShow();
+					fprintf(stderr, "WORDWRAP_DEBUG: Rendering cursor. LogicalLine==CurLine && VisualLine==m_CurVisual. CurPos=%d maps to VisualCurPos=%d for visual line [%d, %d]\n", CurPos, VisualCurPos, VisualLineStart, VisualLineEnd);
+					ShowString.SetCurPos(VisualCurPos);
+					ShowString.Show();
+				}
+				else
+				{
+					ShowString.FastShow();
+				}
 			}
 
 			// Advance to the next visual line
@@ -5601,6 +5697,19 @@ int Editor::EditorControl(int Command, void *Param)
 			EditorInfo *Info = (EditorInfo *)Param;
 
 			if (Info) {
+
+				// Temporary logging to observe what we report to plugins
+				if (m_bWordWrap) {
+					int topScreenNum = CalcDistance(TopList, TopScreen, -1);
+					int curLineNum = CalcDistance(TopList, CurLine, -1);
+					int distance = CalcDistance(TopScreen, CurLine, -1);
+					fprintf(stderr, "WORDWRAP_COLOR_INFO: ECTL_GETINFO call (m_bWordWrap=%d)\n", m_bWordWrap);
+					fprintf(stderr, "WORDWRAP_COLOR_INFO:   Internal state: TopLogical=%d, TopVisual=%d\n",
+							CalcDistance(TopList, m_TopScreenLogicalLine, -1), m_TopScreenVisualLine);
+					fprintf(stderr, "WORDWRAP_COLOR_INFO:   Legacy state:   TopScreen=%d, CurLine=%d, NumLine=%d, Distance=%d\n",
+							topScreenNum, curLineNum, NumLine, distance);
+				}
+
 				Info->EditorID = Editor::EditorID;
 				Info->WindowSizeX = ObjWidth;
 				Info->WindowSizeY = Y2 - Y1 + 1;
@@ -5608,7 +5717,9 @@ int Editor::EditorControl(int Command, void *Param)
 				Info->CurLine = NumLine;
 				Info->CurPos = CurLine->GetCurPos();
 				Info->CurTabPos = CurLine->GetCellCurPos();
-				Info->TopScreenLine = NumLine - CalcDistance(TopScreen, CurLine, -1);
+				Info->TopScreenLine = m_bWordWrap
+					? CalcDistance(TopList, m_TopScreenLogicalLine, -1)
+					: NumLine - CalcDistance(TopScreen, CurLine, -1);
 				Info->LeftPos = CurLine->GetLeftPos();
 				Info->Overtype = Flags.Check(FEDITOR_OVERTYPE);
 				Info->BlockType = VBlockStart ? BTYPE_COLUMN : BlockStart ? BTYPE_STREAM : BTYPE_NONE;
@@ -5648,6 +5759,22 @@ int Editor::EditorControl(int Command, void *Param)
 				Info->CurState|= !Flags.Check(FEDITOR_MODIFIED) ? ECSTATE_SAVED : 0;
 				Info->CurState|= Flags.Check(FEDITOR_MODIFIED | FEDITOR_WASCHANGED) ? ECSTATE_MODIFIED : 0;
 				Info->CodePage = m_codepage;
+				if (m_bWordWrap)
+				{
+					// For plugins (e.g., Colorer) to correctly process long lines that are wrapped,
+					// we must report a window width that is large enough to contain the entire
+					// longest line currently visible. This prevents the plugin from optimizing
+					// away the analysis of the "unseen" part of the line, which in word-wrap mode
+					// is actually visible on subsequent visual lines.
+					// We add a small margin just in case.
+					Info->WindowSizeX = m_WrapMaxVisibleLineLength + 32;
+				}
+
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_COLOR_INFO:   Reporting to plugin: TopScreenLine=%d (calc: %d - %d), WindowSizeX=%d, WindowSizeY=%d\n",
+							Info->TopScreenLine, NumLine, CalcDistance(TopScreen, CurLine, -1), Info->WindowSizeX, Info->WindowSizeY);
+				}
+
 				return TRUE;
 			}
 
@@ -5876,6 +6003,11 @@ int Editor::EditorControl(int Command, void *Param)
 		case ECTL_ADDCOLOR: {
 			if (Param) {
 				const EditorColor *col = (EditorColor *)Param;
+				if (col->StartPos == -1 && col->EndPos == -1) {
+					fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR [BACKGROUND] received for StringNumber=%d, Color=0x%llx, Attr=0x%llx\n", col->StringNumber, col->Color, col->Color & 0xFFFF);
+				} else {
+					fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR [SYNTAX] received for StringNumber=%d, StartPos=%d, EndPos=%d, Color=0x%llx, Attr=0x%llx\n", col->StringNumber, col->StartPos, col->EndPos, col->Color, col->Color & 0xFFFF);
+				}
 				_ECTLLOG(SysLog(L"EditorColor{"));
 				_ECTLLOG(SysLog(L"  StringNumber=%d", col->StringNumber));
 				_ECTLLOG(SysLog(L"  ColorItem   =%d (0x%08X)", col->ColorItem, col->ColorItem));
@@ -5894,6 +6026,10 @@ int Editor::EditorControl(int Command, void *Param)
 					return FALSE;
 				}
 
+if (!col->Color)
+fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR with Color=0 detected! Triggering DeleteColor with StartPos=%d\n", newcol.StartPos);
+if (!col->Color)
+fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR with Color=0 detected! Triggering DeleteColor with StartPos=%d\n", newcol.StartPos);
 				if (!col->Color)
 					return (CurPtr->DeleteColor(newcol.StartPos));
 
@@ -7058,13 +7194,11 @@ void Editor::SetDialogParent(DWORD Sets) {}
 
 void Editor::SetPosition(int X1, int Y1, int X2, int Y2)
 {
-	//fprintf(stderr, "WORDWRAP_TRACE: ---> Editor::SetPosition(X1=%d, X2=%d)\n", X1, X2);
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: Editor::SetPosition(X1=%d, Y1=%d, X2=%d, Y2=%d) called. Propagating to all existing Edit objects.\n", X1, Y1, X2, Y2);
-
+	fprintf(stderr, "WORDWRAP_DIAG: Editor::SetPosition(X1=%d, Y1=%d, X2=%d, Y2=%d) called. this=%p\n", X1, Y1, X2, Y2, this);
 	ScreenObject::SetPosition(X1,Y1,X2,Y2);
+	fprintf(stderr, "WORDWRAP_DIAG: Editor::SetPosition after ScreenObject call. New ObjWidth=%d\n", ObjWidth);
 	for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
 	{
-		//fprintf(stderr, "WORDWRAP_DEBUG: Editor::SetPosition inner cycle\n");
 		CurPtr->SetPosition(X1,Y1,X2,Y2);
 	}
 }

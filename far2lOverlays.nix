@@ -146,7 +146,6 @@ in
           homepage = "https://github.com/elfmz/far2l";
           license = licenses.gpl2Only;
           maintainers = with maintainers; [ tempergate ];
-          platforms = platforms.linux;
         };
       };
     })

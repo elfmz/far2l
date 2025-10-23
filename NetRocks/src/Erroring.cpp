@@ -21,7 +21,6 @@ unsigned char InitNetrocksVerbosity()
 
 unsigned char g_netrocks_verbosity = InitNetrocksVerbosity();
 
-__attribute__((format(printf, 5, 6)))
 void NetrocksLog(const int threshold, const char* file, const int line, const char* caller, const char* fmt, ...)
 {
 	if (g_netrocks_verbosity <= threshold) {

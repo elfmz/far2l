@@ -4690,6 +4690,11 @@ void Editor::DeleteBlock()
 		}
 	}
 
+	if (m_bWordWrap)
+	{
+		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		fprintf(stderr, "WORDWRAP_SYNC: Editor::DeleteBlock resynced visual line to %d for CurPos %d\n", m_CurVisualLineInLogicalLine, CurLine->GetCurPos());
+	}
 	AddUndoData(UNDO_END);
 	BlockStart = nullptr;
 }
@@ -5357,6 +5362,11 @@ void Editor::DeleteVBlock()
 		delete[] TmpStr;
 	}
 
+	if (m_bWordWrap)
+	{
+		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		fprintf(stderr, "WORDWRAP_SYNC: Editor::DeleteVBlock resynced visual line to %d for CurPos %d\n", m_CurVisualLineInLogicalLine, CurLine->GetCurPos());
+	}
 	AddUndoData(UNDO_END);
 	VBlockStart = nullptr;
 }

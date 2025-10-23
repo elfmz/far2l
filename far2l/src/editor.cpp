@@ -330,7 +330,7 @@ void Editor::DisplayObject()
 
 void Editor::ShowEditor(int CurLineOnly)
 {
-	int local_XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
+	//int local_XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
 	//fprintf(stderr, "WORDWRAP_DIAG: ShowEditor enter. X2=%d, EdOpt.ShowScrollBar=%d. Calculated local_XX2=%d\n", X2, EdOpt.ShowScrollBar, local_XX2);
 	// Re-assign to member XX2 to see what's going on before the loop
 	if (NumLastLine > (Y2 - Y1) + 1)
@@ -2989,9 +2989,16 @@ int Editor::ProcessKey(FarKey Key)
 				if (((!EdOpt.CursorBeyondEOL && (Key == KEY_RIGHT || Key == KEY_NUMPAD6))
 							|| Key == KEY_CTRLRIGHT || Key == KEY_CTRLNUMPAD6)
 						&& CurLine->GetCurPos() >= CurLine->GetLength() && CurLine->m_next) {
+
 					Pasting++;
-					ProcessKey(KEY_HOME);
-					ProcessKey(KEY_DOWN);
+					if (m_bWordWrap) {
+						// Fixes Ctrl+Right at the end of logical line in Word Wrap mode
+						ProcessKey(KEY_DOWN);
+						ProcessKey(KEY_HOME);
+					} else {
+						ProcessKey(KEY_HOME);
+						ProcessKey(KEY_DOWN);
+					}
 					Pasting--;
 
 					if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
@@ -3109,6 +3116,12 @@ int Editor::ProcessKey(FarKey Key)
 				CurLine->ObjWidth = XX2 - X1 + 1;
 
 				if (CurLine->ProcessKey(Key)) {
+					if (m_bWordWrap)
+					{
+						m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+						fprintf(stderr, "WORDWRAP_SYNC: After ProcessKey, synchronized m_CurVisualLineInLogicalLine to %d for CurPos %d\n", m_CurVisualLineInLogicalLine, CurLine->GetCurPos());
+					}
+
 					int SelStart, SelEnd;
 
 					/*
@@ -3194,7 +3207,7 @@ int Editor::ProcessKey(FarKey Key)
 					}
 
 					// </Bug 794>
-					ShowEditor(LeftPos == CurLine->GetLeftPos());
+					ShowEditor(m_bWordWrap ? FALSE : (LeftPos == CurLine->GetLeftPos()));
 					return TRUE;
 				} else if (!SkipCheckUndo)
 					delete[] CmpStr;
@@ -5757,9 +5770,9 @@ int Editor::EditorControl(int Command, void *Param)
 
 				// Temporary logging to observe what we report to plugins
 				if (m_bWordWrap) {
-					int topScreenNum = CalcDistance(TopList, TopScreen, -1);
-					int curLineNum = CalcDistance(TopList, CurLine, -1);
-					int distance = CalcDistance(TopScreen, CurLine, -1);
+					//int topScreenNum = CalcDistance(TopList, TopScreen, -1);
+					//int curLineNum = CalcDistance(TopList, CurLine, -1);
+					//int distance = CalcDistance(TopScreen, CurLine, -1);
 					//fprintf(stderr, "WORDWRAP_COLOR_INFO: ECTL_GETINFO call (m_bWordWrap=%d)\n", m_bWordWrap);
 					//fprintf(stderr, "WORDWRAP_COLOR_INFO:   Internal state: TopLogical=%d, TopVisual=%d\n",
 					//		CalcDistance(TopList, m_TopScreenLogicalLine, -1), m_TopScreenVisualLine);

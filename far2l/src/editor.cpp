@@ -3430,6 +3430,83 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		ProcessPasteEvent();
 	}
 
+	if (m_bWordWrap && (MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+	{
+		fprintf(stderr, "\nWORDWRAP_MOUSE: === Mouse Click Event ===\n");
+		fprintf(stderr, "WORDWRAP_MOUSE: Mouse Coords: (X=%d, Y=%d)\n", MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y);
+		fprintf(stderr, "WORDWRAP_MOUSE: Editor Area: (X1=%d, Y1=%d)-(X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
+
+		// 1. Транслируем Y в пару (логическая строка, визуальная строка)
+		Edit* TargetLogicalLine = m_TopScreenLogicalLine;
+		int TargetVisualLine = m_TopScreenVisualLine;
+		int screenY = Y1;
+
+		while (screenY < MouseEvent->dwMousePosition.Y && TargetLogicalLine)
+		{
+			TargetVisualLine++;
+			if (TargetVisualLine >= TargetLogicalLine->GetVisualLineCount())
+			{
+				TargetLogicalLine = TargetLogicalLine->m_next;
+				TargetVisualLine = 0;
+			}
+			screenY++;
+		}
+
+		fprintf(stderr, "WORDWRAP_MOUSE: Y-translation result: Found target screen line %d.\n", screenY);
+
+		if (TargetLogicalLine)
+		{
+			int targetLineNum = CalcDistance(TopList, TargetLogicalLine, -1);
+			fprintf(stderr, "WORDWRAP_MOUSE: --> Corresponds to Logical Line %d, Visual Line %d\n", targetLineNum, TargetVisualLine);
+
+			// 2. Устанавливаем новые вертикальные координаты курсора
+			CurLine = TargetLogicalLine;
+			NumLine = targetLineNum;
+			m_CurVisualLineInLogicalLine = TargetVisualLine;
+
+			// 3. Транслируем X в позицию в строке (CurPos)
+			int visualLineStart, visualLineEnd;
+			CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, visualLineStart, visualLineEnd);
+
+			int mouseCellPos = MouseEvent->dwMousePosition.X - X1;
+			int targetCellPos = mouseCellPos; // В режиме переноса LeftPos всегда 0 для отрисовки
+
+			fprintf(stderr, "WORDWRAP_MOUSE: X-translation start: Visual line content is [%d, %d). Mouse cell pos relative to window is %d.\n", visualLineStart, visualLineEnd, mouseCellPos);
+
+			int newCurPos = CurLine->CellPosToReal(visualLineStart + targetCellPos);
+			fprintf(stderr, "WORDWRAP_MOUSE: --> Calculated initial real pos = %d\n", newCurPos);
+
+			// 4. Ограничиваем позицию границами визуальной строки
+			if (newCurPos > visualLineEnd && visualLineEnd < CurLine->GetLength())
+			{
+				newCurPos = visualLineEnd;
+				fprintf(stderr, "WORDWRAP_MOUSE: --> Clamped to end of visual line: %d\n", newCurPos);
+			}
+
+			if (newCurPos > CurLine->GetLength())
+			{
+				newCurPos = CurLine->GetLength();
+				fprintf(stderr, "WORDWRAP_MOUSE: --> Clamped to end of logical line: %d\n", newCurPos);
+			}
+
+			CurLine->SetCurPos(newCurPos);
+			MaxRightPos = CurLine->GetCellCurPos(); // Для корректной навигации вверх/вниз после клика
+
+			fprintf(stderr, "WORDWRAP_MOUSE: Final state: CurPos=%d, MaxRightPos=%d\n", CurLine->GetCurPos(), MaxRightPos);
+
+			Show();
+			return TRUE;
+		}
+		else
+		{
+			fprintf(stderr, "WORDWRAP_MOUSE: Y-translation result: Clicked below the last line of text.\n");
+			// Кликнули ниже текста, перемещаемся в конец файла
+			GoToLine(NumLastLine - 1);
+			CurLine->ProcessKey(KEY_END);
+			Show();
+			return TRUE;
+		}
+	}
 	if (CurLine->ProcessMouse(MouseEvent)) {
 		if (HostFileEditor)
 			HostFileEditor->ShowStatus();

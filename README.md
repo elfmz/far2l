@@ -116,7 +116,7 @@ OSC 52 in many terminals is implemented only for the copy mode, and paste from t
 <sub>_Note about use Wayland and OSC 52 under Wayland:
 X|xi in `--tty` works incorrectly. You need fully disable it to use OSC 52 for propper clipboard integration;
 you need to run `far2l --tty --nodetect=x`, than OSC 52 setting option will appear in `Interface Settings`, and you could enable it, as it described in a chapter above.
-Clipboard in `wx-gui` is working correctly. 
+Clipboard in `wx-gui` is working correctly. </sub>
 
 <a name="inst_run"></a>
 ## Installing, Running

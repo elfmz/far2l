@@ -15,13 +15,13 @@ void NetrocksLog(const int threshold, const char* file, const int line, const ch
 	constexpr const char* file = __FILE__; \
 	const char* short_file = file; \
 	for (const char* p = file; *p; ++p) if (*p == '/' || *p == '\\') short_file = p + 1; \
-	NetrocksLog(threshold, short_file, __LINE__, __func__, fmt __VA_OPT__(, ) __VA_ARGS__); \
+	NetrocksLog(threshold, short_file, __LINE__, __func__, fmt, ##__VA_ARGS__); \
 } while(0)
 
-#define NR_ERR(fmt, ...)  NR_LOG(0, fmt __VA_OPT__(, ) __VA_ARGS__)
-#define NR_WARN(fmt, ...) NR_LOG(1, fmt __VA_OPT__(, ) __VA_ARGS__)
-#define NR_DBG(fmt, ...)  NR_LOG(2, fmt __VA_OPT__(, ) __VA_ARGS__)
-#define NR_VDBG(fmt, ...) NR_LOG(3, fmt __VA_OPT__(, ) __VA_ARGS__)
+#define NR_ERR(fmt, ...)  NR_LOG(0, fmt, ##__VA_ARGS__)
+#define NR_WARN(fmt, ...) NR_LOG(1, fmt, ##__VA_ARGS__)
+#define NR_DBG(fmt, ...)  NR_LOG(2, fmt, ##__VA_ARGS__)
+#define NR_VDBG(fmt, ...) NR_LOG(3, fmt, ##__VA_ARGS__)
 
 
 struct ProtocolError : std::runtime_error

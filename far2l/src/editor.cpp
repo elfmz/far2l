@@ -454,9 +454,11 @@ void Editor::ShowEditor(int CurLineOnly)
 			ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 			ShowString.SetTabSize(EdOpt.TabSize);
 
+			fprintf(stderr, "WORDWRAP_SEL_TRACE: -- Y=%d: VisualLineRange=[%d, %d) --\n", Y, VisualLineStart, VisualLineEnd);
 			// Map stream selection to the visual sub-line
 			int SelStart, SelEnd;
 			CurLogicalLine->GetSelection(SelStart, SelEnd);
+			fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Logical selection is [%d, %d]\n", Y, SelStart, SelEnd);
 
 			if (SelStart != -1)
 			{
@@ -465,6 +467,7 @@ void Editor::ShowEditor(int CurLineOnly)
 				// 1. Calculate selection range relative to ShowString's internal string (0 to StringLength)
 				int ShowSelStart = SelStart - VisualLineStart;
 				int ShowSelEnd = (SelEnd == -1) ? -1 : SelEnd - VisualLineStart;
+				fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Calculated relative selection: ShowSelStart=%d, ShowSelEnd=%d\n", Y, ShowSelStart, ShowSelEnd);
 
 				// 2. Clamp Start: if selection starts before this visual line, force relative start to 0
 				if (ShowSelStart < 0)
@@ -476,10 +479,11 @@ void Editor::ShowEditor(int CurLineOnly)
 					ShowSelEnd = StringLength;
 
 				// 4. Set selection on ShowString if the resulting range has an overlap
-				if (ShowSelStart < StringLength || ShowSelEnd == -1)
+				if (ShowSelStart < StringLength || SelEnd == -1)
 				{
-					if (ShowSelEnd == -1)
+					if (SelEnd == -1) // Use original logical SelEnd to decide
 					{
+						fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Condition (SelEnd == -1) is TRUE. Selecting entire visual line.\n", Y);
 						// Propagate end-of-string selection marker if the logical selection went to EOL.
 						ShowString.Select(ShowSelStart, -1);
 					}

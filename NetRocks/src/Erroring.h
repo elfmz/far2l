@@ -9,6 +9,7 @@
 
 extern unsigned char g_netrocks_verbosity;
 
+__attribute__((format(printf, 5, 6)))
 void NetrocksLog(const int threshold, const char* file, const int line, const char* caller, const char* fmt, ...);
 
 #define NR_LOG(threshold, fmt, ...) do { \

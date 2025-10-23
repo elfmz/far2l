@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include "Erroring.h"
 
 unsigned char InitNetrocksVerbosity()
@@ -20,6 +21,22 @@ unsigned char InitNetrocksVerbosity()
 
 unsigned char g_netrocks_verbosity = InitNetrocksVerbosity();
 
+void NetrocksLog(const int threshold, const char* file, const int line, const char* caller, const char* fmt, ...)
+{
+	if (g_netrocks_verbosity > threshold)
+	{
+		std::time_t now = std::time(nullptr);
+		std::tm* timeinfo = std::localtime(&now);
+		char timestamp[20];
+		std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", timeinfo);
+		va_list args;
+		va_start(args, fmt);
+		std::fprintf(stderr, "%s [%s:%d %s] ", timestamp, file, line, caller);
+		std::vfprintf(stderr, fmt, args);
+		std::fprintf(stderr, "\n");
+		va_end(args);
+	}
+}
 
 static std::string FormatProtocolError(const char *msg, const char *info = nullptr, int err = 0)
 {

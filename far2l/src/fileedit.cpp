@@ -545,10 +545,8 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() before m_editor->SetPosition(). Editor will be set to (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before calling m_editor->SetPosition. Editor X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBar=%d, TitleBar=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
 	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() before m_editor->SetPosition(). Editor will be set to (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before calling m_editor->SetPosition. Editor X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBar=%d, TitleBar=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
-	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	m_editor->SetStartPos(StartLine, StartChar);
+
 	int UserBreak;
 	if (m_editor && m_editor->TopList) {
 		//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() after m_editor->SetPosition(). The ObjWidth of the FIRST line (TopList) is %d\n", m_editor->TopList->ObjWidth);
@@ -671,7 +669,8 @@ void FileEditor::InitKeyBar()
 	EditKeyBar.ReadRegGroup(L"Editor", Opt.strLanguage);
 	EditKeyBar.SetAllRegGroup();
 	EditKeyBar.Refresh(true);
-	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+	// Этот вызов здесь НЕ НУЖЕН и вызывает двойной пересчет переносов
+	// m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	SetKeyBar(&EditKeyBar);
 }
 
@@ -2081,9 +2080,12 @@ void FileEditor::SetScreenPosition()
 	if (Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		SetPosition(0, 0, ScrX, ScrY);
 	}
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::SetScreenPosition() called. New position: (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
+	fprintf(stderr, "WORDWRAP_WIDTH_TRACE: ---> FileEditor::SetScreenPosition() called. Current position: (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
 	if (m_editor) {
-		m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+		int newY1 = Y1 + (TitleBarVisible ? 1 : 0);
+		int newY2 = Y2 - (KeyBarVisible ? 1 : 0);
+		fprintf(stderr, "WORDWRAP_WIDTH_TRACE: FileEditor::SetScreenPosition() will call m_editor->SetPosition(%d, %d, %d, %d)\n", X1, newY1, X2, newY2);
+		m_editor->SetPosition(X1, newY1, X2, newY2);
 	}
 }
 

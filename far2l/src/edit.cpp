@@ -2503,17 +2503,17 @@ void Edit::DeleteBlock()
 void Edit::AddColor(const ColorItem *col)
 {
 	ColorList.emplace_back(*col);
-	fprintf(stderr, "WORDWRAP_COLOR: Edit::AddColor called for line %p. Adding {StartPos=%d, EndPos=%d, Color=0x%llx}. List size is now %zu\n",
-		this, col->StartPos, col->EndPos, col->Color, ColorList.size());
+	//fprintf(stderr, "WORDWRAP_COLOR: Edit::AddColor called for line %p. Adding {StartPos=%d, EndPos=%d, Color=0x%llx}. List size is now %zu\n",
+	//	this, col->StartPos, col->EndPos, col->Color, ColorList.size());
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	fprintf(stderr, "WORDWRAP_COLOR: Edit::DeleteColor called for line %p with ColorPos=%d\n", this, ColorPos);
+	//fprintf(stderr, "WORDWRAP_COLOR: Edit::DeleteColor called for line %p with ColorPos=%d\n", this, ColorPos);
 
-	fprintf(stderr, "WORDWRAP_COLOR: ---> Before deletion, ColorList has %zu items:\n", ColorList.size());
+	//fprintf(stderr, "WORDWRAP_COLOR: ---> Before deletion, ColorList has %zu items:\n", ColorList.size());
 	for (const auto& item : ColorList) {
-		fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
+		//fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
 	}
 
 	size_t Dest, Src;
@@ -2526,11 +2526,11 @@ size_t Edit::DeleteColor(int ColorPos)
 			++Dest;
 		}
 
-	fprintf(stderr, "WORDWRAP_COLOR: ---> After deletion loop, ColorList will have %zu items:\n", Dest);
+	//fprintf(stderr, "WORDWRAP_COLOR: ---> After deletion loop, ColorList will have %zu items:\n", Dest);
 	for (size_t i = 0; i < Dest; ++i) {
 		// В этот момент ColorList еще не урезан, так что мы можем посмотреть на будущие элементы
 		const auto& item = ColorList[i];
-		fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
+		//fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
 	}
 	const size_t DelCount = ColorList.size() - Dest;
 	ColorList.resize(Dest);
@@ -2549,14 +2549,17 @@ bool Edit::GetColor(ColorItem *col, int Item)
 
 void Edit::ApplyColor()
 {
-fprintf(stderr, "WORDWRAP_APPLYCOLOR: === ApplyColor called for Edit obj %p, Str='%.*ls...', StrSize=%d, LeftPos=%d, X1=%d, X2=%d\n",
-this, StrSize > 40 ? 40 : StrSize, Str, StrSize, LeftPos, X1, X2);
+	//fprintf(stderr, "WORDWRAP_APPLYCOLOR: === ApplyColor called for Edit obj %p, Str='%.*ls...', StrSize=%d, LeftPos=%d, X1=%d, X2=%d\n",
+	//	this, StrSize > 40 ? 40 : StrSize, Str, StrSize, LeftPos, X1, X2);
+
 	// Для оптимизации сохраняем вычисленные позиции между итерациями цикла
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
 	// Обрабатываем элементы ракраски
 	for (auto &CurItem : ColorList) {
-fprintf(stderr, "WORDWRAP_APPLYCOLOR: Processing ColorItem: StartPos=%d, EndPos=%d, Color=0x%llx\n", CurItem.StartPos, CurItem.EndPos, CurItem.Color);
+
+		//fprintf(stderr, "WORDWRAP_APPLYCOLOR: Processing ColorItem: StartPos=%d, EndPos=%d, Color=0x%llx\n", CurItem.StartPos, CurItem.EndPos, CurItem.Color);
+
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
 			continue;
@@ -2681,12 +2684,12 @@ fprintf(stderr, "WORDWRAP_APPLYCOLOR: Processing ColorItem: StartPos=%d, EndPos=
 			Length-= CorrectPos;
 
 		// Раскрашиваем элемент, если есть что раскрашивать
-		fprintf(stderr, "WORDWRAP_APPLYCOLOR: Calculating final screen coordinates. Screen Width: %d-%d. Calculated Range: Start=%d, End=%d (Length=%d)\n", X1, X2, Start, End, Length);
+		//fprintf(stderr, "WORDWRAP_APPLYCOLOR: Calculating final screen coordinates. Screen Width: %d-%d. Calculated Range: Start=%d, End=%d (Length=%d)\n", X1, X2, Start, End, Length);
 		if (CurItem.StartPos == -1 && CurItem.EndPos == -1)
 		{
 			// Это чисто исследовательский вывод, чтобы понять, что нам делать, если Colorer использует этот паттерн.
 			// В рабочем коде здесь будет логика заливки до X2.
-			fprintf(stderr, "WORDWRAP_APPLYCOLOR: WARNING: Found {-1,-1} item. This range is ambiguous without full width context.\n");
+			//fprintf(stderr, "WORDWRAP_APPLYCOLOR: WARNING: Found {-1,-1} item. This range is ambiguous without full width context.\n");
 		}
 
 		if (Length > 0) {

@@ -129,6 +129,7 @@ void keybar_ctl::set_labels()
 			set_label( 8, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_codepage));
 			set_label( 9, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_setup));
 			set_label(10, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_exit));
+			set_label(12, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_screen));
 			break;
 		case st_alt:
 			set_label(7, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_prev));

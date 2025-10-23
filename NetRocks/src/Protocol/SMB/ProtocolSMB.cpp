@@ -88,7 +88,7 @@ ProtocolSMB::ProtocolSMB(const std::string &host, unsigned int port,
 
 ProtocolSMB::~ProtocolSMB()
 {
-	NR_DBG("");
+	NR_DBG("*");
 }
 
 std::string ProtocolSMB::RootedPath(const std::string &path)
@@ -235,7 +235,7 @@ void ProtocolSMB::Rename(const std::string &path_old, const std::string &path_ne
 
 void ProtocolSMB::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
-	NR_DBG("path: %s, atime: %d, mtime: %d", path.c_str(), access_time.tv_sec, modification_time.tv_sec);
+	NR_DBG("path: %s, atime: %ld, mtime: %ld", path.c_str(), access_time.tv_sec, modification_time.tv_sec);
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
 	times[0].tv_usec = suseconds_t(access_time.tv_nsec / 1000);
@@ -301,7 +301,7 @@ public:
 
 	virtual ~SMBDirectoryEnumer()
 	{
-		NR_DBG("");
+		NR_DBG("*");
 		if (_dir != -1) {
 			smbc_closedir(_dir);
 		}
@@ -448,7 +448,7 @@ public:
 	SMBFileIO(std::shared_ptr<ProtocolSMB> protocol, const std::string &path, int flags, mode_t mode, unsigned long long resume_pos)
 		: _protocol(protocol)
 	{
-		NR_DBG("");
+		NR_DBG("*");
 		_file = smbc_open(protocol->RootedPath(path).c_str(), flags, mode);
 		if (_file == -1) {
 			NR_ERR("smbc_open failed, %d: %s", errno, strerror(errno));
@@ -468,7 +468,7 @@ public:
 
 	virtual ~SMBFileIO()
 	{
-		NR_DBG("");
+		NR_DBG("*");
 		if (_file != -1) {
 			smbc_close(_file);
 		}
@@ -476,7 +476,7 @@ public:
 
 	virtual size_t Read(void *buf, size_t len)
 	{
-		NR_DBG("");
+		NR_DBG("*");
 		const ssize_t rc = smbc_read(_file, buf, len);
 		if (rc < 0) {
 			NR_ERR("smbc_read failed, %d: %s", errno, strerror(errno));
@@ -489,7 +489,7 @@ public:
 
 	virtual void Write(const void *buf, size_t len)
 	{
-		NR_DBG("");
+		NR_DBG("*");
 		if (len > 0) for (;;) {
 			const ssize_t rc = smbc_write(_file, buf, len);
 			if (rc <= 0) {
@@ -507,19 +507,19 @@ public:
 	virtual void WriteComplete()
 	{
 		// what?
-		NR_DBG("");
+		NR_DBG("*");
 	}
 };
 
 
 std::shared_ptr<IFileReader> ProtocolSMB::FileGet(const std::string &path, unsigned long long resume_pos)
 {
-	NR_DBG("");
+	NR_DBG("*");
 	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_RDONLY, 0, resume_pos);
 }
 
 std::shared_ptr<IFileWriter> ProtocolSMB::FilePut(const std::string &path, mode_t mode, unsigned long long size_hint, unsigned long long resume_pos)
 {
-	NR_DBG("");
+	NR_DBG("*");
 	return std::make_shared<SMBFileIO>(shared_from_this(), path, O_WRONLY | O_CREAT | (resume_pos ? 0 : O_TRUNC), mode, resume_pos);
 }

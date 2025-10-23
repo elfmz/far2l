@@ -336,15 +336,12 @@ void Editor::ShowEditor(int CurLineOnly)
 	//int local_XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
 	//fprintf(stderr, "WORDWRAP_DIAG: ShowEditor enter. X2=%d, EdOpt.ShowScrollBar=%d. Calculated local_XX2=%d\n", X2, EdOpt.ShowScrollBar, local_XX2);
 	// Re-assign to member XX2 to see what's going on before the loop
-	if (NumLastLine > (Y2 - Y1) + 1)
-		XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
-	else
-		XX2 = X2;
-	fprintf(stderr, "WORDWRAP_DIAG: ShowEditor right before render loop. Final XX2=%d, Editor X2=%d\n", XX2, X2);
+	int render_width;
 	if (m_bWordWrap)
 	{
 		// In word wrap mode, the scrollbar makes no sense for now.
 		XX2 = X2;
+		render_width = X2 - X1 + 1;
 	}
 	else
 	{
@@ -352,7 +349,9 @@ void Editor::ShowEditor(int CurLineOnly)
 			XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
 		else
 			XX2 = X2;
+		render_width = XX2 - X1 + 1;
 	}
+	fprintf(stderr, "WORDWRAP_WIDTH_TRACE: ShowEditor calculated render_width=%d. X1=%d, X2=%d, XX2=%d, ScrollBar=%d, NumLines=%d, Height=%d\n", render_width, X1, X2, XX2, EdOpt.ShowScrollBar, NumLastLine, Y2-Y1+1);
 	fprintf(stderr, "WORDWRAP_DIAG: ShowEditor right before render loop. Final XX2=%d\n", XX2);
 	fprintf(stderr, "WORDWRAP_TRACE: ---> Editor::ShowEditor()\n");
 	fprintf(stderr, "WORDWRAP_DEBUG: ShowEditor(CurLineOnly=%d) entered. m_bWordWrap=%d. CurPos=%d\n", CurLineOnly, m_bWordWrap, CurLine ? CurLine->GetCurPos() : -1);
@@ -482,7 +481,7 @@ void Editor::ShowEditor(int CurLineOnly)
 					ShowSelEnd = StringLength;
 
 				// 4. Set selection on ShowString if the resulting range has an overlap
-				if (ShowSelStart < StringLength || SelEnd == -1)
+				if (ShowSelStart < StringLength || SelEnd == -1 || (SelStart == SelEnd && CurLogicalLine->GetLength() == 0))
 				{
 					if (SelEnd == -1) // Use original logical SelEnd to decide
 					{
@@ -493,6 +492,13 @@ void Editor::ShowEditor(int CurLineOnly)
 					else if (ShowSelEnd > ShowSelStart)
 					{
 						ShowString.Select(ShowSelStart, ShowSelEnd);
+					}
+					// Special case for selection on an empty logical line (like [0,0])
+					// which should be rendered as a full-line selection.
+					else if (SelStart == SelEnd && CurLogicalLine->GetLength() == 0)
+					{
+						fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Empty line full selection case triggered. SelStart=%d, SelEnd=%d, StrLen=%d\n", Y, SelStart, SelEnd, CurLogicalLine->GetLength());
+						ShowString.Select(0, -1);
 					}
 				}
 			}
@@ -7358,30 +7364,13 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	fprintf(stderr, "WORDWRAP_DIAG: CreateString begins. Editor->ObjWidth=%d\n", ObjWidth);
 	fprintf(stderr, "WORDWRAP_TRACE: ---> Editor::CreateString()\n");
 	Edit *pEdit = new (std::nothrow) Edit(this, nullptr, lpwszStr ? false : true);
-	if (pEdit) {
-		fprintf(stderr, "WORDWRAP_DIAG: In CreateString, after `new Edit`. pEdit->ObjWidth=%d\n", pEdit->ObjWidth);
-	}
-	if (pEdit) {
-		fprintf(stderr, "WORDWRAP_DIAG: CreateString: Editor->m_bWordWrap=%d, new Edit->m_bWordWrapState=%d\n", m_bWordWrap, pEdit->GetWordWrap());
-	}
-	if (pEdit) {
-		//fprintf(stderr, "WORDWRAP_RACE_DEBUG: Editor::CreateString() called. Parent Editor's ObjWidth is %d. Created new Edit object with initial ObjWidth=%d\n", this->ObjWidth, pEdit->ObjWidth);
-	}
+
 	if (pEdit) {
 		pEdit->SetPosition(X1, Y1, X2, Y2);
 		pEdit->SetWordWrap(m_bWordWrap);
-	}
-	if (pEdit) {
-		fprintf(stderr, "WORDWRAP_DIAG: In CreateString, after pEdit->SetPosition. pEdit->ObjWidth=%d\n", pEdit->ObjWidth);
-	}
-	if (pEdit) {
-		fprintf(stderr, "WORDWRAP_DIAG: In CreateString, after `pEdit->SetPosition`. pEdit->ObjWidth=%d\n", pEdit->ObjWidth);
-	}
 
-	if (pEdit) {
 		pEdit->m_next = nullptr;
 		pEdit->m_prev = nullptr;
 		pEdit->SetTabSize(EdOpt.TabSize);
@@ -7389,10 +7378,12 @@ Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 		pEdit->SetConvertTabs(EdOpt.ExpandTabs);
 		pEdit->SetCodePage(m_codepage);
 
-		if (lpwszStr)
+		if (lpwszStr) {
 			pEdit->SetBinaryString(lpwszStr, nLength);
+		}
 
 		pEdit->SetCurPos(0);
+
 		pEdit->SetObjectColor(FarColorToReal(COL_EDITORTEXT), FarColorToReal(COL_EDITORSELECTEDTEXT));
 		pEdit->SetEditorMode(TRUE);
 		pEdit->SetWordDiv(EdOpt.strWordDiv);
@@ -7603,13 +7594,27 @@ void Editor::SetDialogParent(DWORD Sets) {}
 
 void Editor::SetPosition(int X1, int Y1, int X2, int Y2)
 {
-	fprintf(stderr, "WORDWRAP_DIAG: Editor::SetPosition(X1=%d, Y1=%d, X2=%d, Y2=%d) called. this=%p\n", X1, Y1, X2, Y2, this);
+	fprintf(stderr, "WORDWRAP_WIDTH_TRACE: ---> Editor::SetPosition(X1=%d, Y1=%d, X2=%d, Y2=%d) called. this=%p\n", X1, Y1, X2, Y2, this);
 	ScreenObject::SetPosition(X1,Y1,X2,Y2);
-	fprintf(stderr, "WORDWRAP_DIAG: Editor::SetPosition after ScreenObject call. New ObjWidth=%d\n", ObjWidth);
+	fprintf(stderr, "WORDWRAP_WIDTH_TRACE: Editor::SetPosition after ScreenObject call. New ObjWidth=%d\n", ObjWidth);
+
+	int RecalcWidth;
+	if (m_bWordWrap) {
+		RecalcWidth = X2 - X1 + 1;
+	} else {
+		// Mimic ShowEditor's logic for XX2
+		int real_XX2 = (NumLastLine > (Y2 - Y1) + 1) ? X2 - (EdOpt.ShowScrollBar ? 1 : 0) : X2;
+		RecalcWidth = real_XX2 - X1 + 1;
+	}
+	fprintf(stderr, "WORDWRAP_WIDTH_TRACE: Editor::SetPosition will use RecalcWidth=%d for all lines.\n", RecalcWidth);
+
 	for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
 	{
 		CurPtr->SetPosition(X1,Y1,X2,Y2);
-		CurPtr->RecalculateWordWrap(X2 - X1, EdOpt.TabSize);
+		if (m_bWordWrap) // Only re-wrap if mode is on
+		{
+			CurPtr->RecalculateWordWrap(RecalcWidth, EdOpt.TabSize);
+		}
 	}
 }
 

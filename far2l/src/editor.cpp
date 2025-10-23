@@ -444,63 +444,102 @@ void Editor::ShowEditor(int CurLineOnly)
 			// Create a temporary Edit object for rendering this visual line
 			Edit ShowString(this, nullptr, false);
 			ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
-			ShowString.SetCurPos(0); // <-- THE FIX!
+			ShowString.SetCurPos(0);
 			//fprintf(stderr, "WORDWRAP_DIAG: ShowEditor render loop Y=%d. XX2=%d\n", Y, XX2);
+
 			ShowString.SetPosition(X1, Y, XX2, Y);
-			ShowString.SetObjectColor(CurLogicalLine->GetObjectColor(), CurLogicalLine->SelColor, CurLogicalLine->ColorUnChanged);
-			ShowString.SetLeftPos(LeftPos);
+
+			ShowString.SetObjectColor(CurLogicalLine->Color, CurLogicalLine->SelColor, CurLogicalLine->ColorUnChanged);
+			ShowString.SetLeftPos(0);
 			ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 			ShowString.SetTabSize(EdOpt.TabSize);
 
-			// Copy selection info if it intersects with this visual line
+			// Map stream selection to the visual sub-line
 			int SelStart, SelEnd;
 			CurLogicalLine->GetSelection(SelStart, SelEnd);
+
 			if (SelStart != -1)
 			{
+				int StringLength = VisualLineEnd - VisualLineStart;
+
+				// 1. Calculate selection range relative to ShowString's internal string (0 to StringLength)
 				int ShowSelStart = SelStart - VisualLineStart;
 				int ShowSelEnd = (SelEnd == -1) ? -1 : SelEnd - VisualLineStart;
-				if ( (ShowSelStart >= 0 || ShowSelEnd > 0) && (ShowSelStart < (VisualLineEnd - VisualLineStart)) )
+
+				// 2. Clamp Start: if selection starts before this visual line, force relative start to 0
+				if (ShowSelStart < 0)
+					ShowSelStart = 0;
+
+				// 3. Clamp End: if selection ends after this visual line (and not at EOL/SelEnd=-1),
+				//    force relative end to StringLength.
+				if (ShowSelEnd != -1 && ShowSelEnd > StringLength)
+					ShowSelEnd = StringLength;
+
+				// 4. Set selection on ShowString if the resulting range has an overlap
+				if (ShowSelStart < StringLength || ShowSelEnd == -1)
 				{
-					if (ShowSelStart < 0) ShowSelStart = 0;
-					if (ShowSelEnd > (VisualLineEnd - VisualLineStart)) ShowSelEnd = -1;
-					ShowString.Select(ShowSelStart, ShowSelEnd);
+					if (ShowSelEnd == -1)
+					{
+						// Propagate end-of-string selection marker if the logical selection went to EOL.
+						ShowString.Select(ShowSelStart, -1);
+					}
+					else if (ShowSelEnd > ShowSelStart)
+					{
+						ShowString.Select(ShowSelStart, ShowSelEnd);
+					}
+				}
+			}
+			// Debugging log for selection state
+			int dbg_s, dbg_e;
+			ShowString.GetSelection(dbg_s, dbg_e);
+			fprintf(stderr, "WORDWRAP_DEBUG_SEL: Render Y=%d, LogLine=%d. ShowString Selection: [%d, %d]. Logical Visual Range: [%d, %d)\n", Y, CalcDistance(TopList, CurLogicalLine, -1), dbg_s, dbg_e, VisualLineStart, VisualLineEnd);
+			bool background_filled = false;
+			// Special handling for entirely empty visual lines (which could be the only visual line of an empty logical line)
+			if (m_bWordWrap && VisualLineStart == VisualLineEnd)
+			{
+				ColorItem current_ci;
+				// Check for an encompassing color item, typically the background color specified by the plugin
+				for (size_t i = 0; CurLogicalLine->GetColor(&current_ci, i); ++i)
+				{
+					// If a large covering item is found (StartPos <= 0 AND EndPos covers the whole logical line, OR the {-1, -1} marker is used)
+					if ((current_ci.StartPos <= 0 && current_ci.EndPos >= CurLogicalLine->GetLength() - 1)
+						|| (current_ci.StartPos == -1 && current_ci.EndPos == -1) )
+					{
+						// Apply background coloring directly to the screen buffer.
+						SetScreen(X1, Y, XX2, Y, L' ', current_ci.Color);
+						background_filled = true;
+						break;
+					}
 				}
 			}
 
-
-
-			
 			// Copy color info
 			ColorItem ci;
 			// We use a large relative index hint to force Edit::ApplyColor to fill up to XX2.
-			const int FULL_LINE_END_POS_HINT = 10000; 
+			const int FULL_LINE_END_POS_HINT = 10000;
 
 			for (size_t i = 0; CurLogicalLine->GetColor(&ci, i); ++i)
 			{
 				if (Y == Y1 && i == 0) {
 					fprintf(stderr, "WORDWRAP_COLOR: Line %p has %zu color items (Logical Line %d) before render.\n", CurLogicalLine, CurLogicalLine->ColorList.size(), CalcDistance(TopList, CurLogicalLine, -1));
 				}
-				
+
 				if ((ci.StartPos == -1 && ci.EndPos == -1) || (ci.StartPos < VisualLineEnd && ci.EndPos >= VisualLineStart))
 				{
 					ColorItem new_ci = ci;
 
-					fprintf(stderr, "WORDWRAP_COLOR_COPY: L%d: Checking ColorItem {StartPos=%d, EndPos=%d, Color=0x%llx} against VisualLine=[%d, %d)\n", 
+					fprintf(stderr, "WORDWRAP_COLOR_COPY: L%d: Checking ColorItem {StartPos=%d, EndPos=%d, Color=0x%llx} against VisualLine=[%d, %d)\n",
 						CalcDistance(TopList, CurLogicalLine, -1), ci.StartPos, ci.EndPos, ci.Color, VisualLineStart, VisualLineEnd);
-					fprintf(stderr, "WORDWRAP_COLOR_COPY:   LOGICAL -> VISUAL: VisualLineStart=%d, VisualLineEnd=%d. Logic check: %s\n", VisualLineStart, VisualLineEnd, 
+					fprintf(stderr, "WORDWRAP_COLOR_COPY:   LOGICAL -> VISUAL: VisualLineStart=%d, VisualLineEnd=%d. Logic check: %s\n", VisualLineStart, VisualLineEnd,
 						(ci.StartPos != -1 || ci.EndPos != -1) ? "CLAMPING" : "PRESERVING");
 
 					bool is_full_visual_line_coverage = false;
 
-
-
-
 					if (ci.StartPos != -1 || ci.EndPos != -1) // Standard color item
 					{
-						if (m_bWordWrap) 
+						if (m_bWordWrap)
 						{
-							// Heuristic for colorer: if the color covers the entire content of the visible portion,
-							// assume it's a background fill.
+							// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
 							if (ci.StartPos <= VisualLineStart && ci.EndPos >= VisualLineEnd - 1)
 							{
 								is_full_visual_line_coverage = true;
@@ -509,9 +548,9 @@ void Editor::ShowEditor(int CurLineOnly)
 
 						new_ci.StartPos -= VisualLineStart;
 						new_ci.EndPos -= VisualLineStart;
-						
+
 						fprintf(stderr, "WORDWRAP_COLOR_COPY:   Range before clamping: {StartPos=%d, EndPos=%d}\n", new_ci.StartPos, new_ci.EndPos);
-						
+
 						if (new_ci.StartPos < 0) new_ci.StartPos = 0;
 
 						if (m_bWordWrap && is_full_visual_line_coverage)
@@ -520,27 +559,23 @@ void Editor::ShowEditor(int CurLineOnly)
 							new_ci.EndPos = FULL_LINE_END_POS_HINT;
 							fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Full Coverage detected] Forcing EndPos=%d\n", new_ci.EndPos);
 						}
-						else if (new_ci.EndPos >= (VisualLineEnd - VisualLineStart)) 
+						else if (new_ci.EndPos >= (VisualLineEnd - VisualLineStart))
 						{
 							new_ci.EndPos = (VisualLineEnd - VisualLineStart) - 1;
 						}
 					}
 					else // Special case for {-1, -1} background element
 					{
-						if (m_bWordWrap) 
+						if (m_bWordWrap)
 						{
 							new_ci.StartPos = 0;
 							new_ci.EndPos = FULL_LINE_END_POS_HINT;
 							fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Background Marker -1,-1] Forcing EndPos=%d\n", new_ci.EndPos);
 						}
-					}					
+					}
 
-
-
-
-					
-					fprintf(stderr, "WORDWRAP_COLOR_COPY:   FINAL range (relative to visual sub-string): {StartPos=%d, EndPos=%d}. Raw condition check: %s\n", 
-						new_ci.StartPos, new_ci.EndPos, 
+					fprintf(stderr, "WORDWRAP_COLOR_COPY:   FINAL range (relative to visual sub-string): {StartPos=%d, EndPos=%d}. Raw condition check: %s\n",
+						new_ci.StartPos, new_ci.EndPos,
 						(new_ci.StartPos <= new_ci.EndPos ? "PASSED" : "FAILED"));
 
 					if (new_ci.StartPos <= new_ci.EndPos)
@@ -562,25 +597,25 @@ void Editor::ShowEditor(int CurLineOnly)
 				{
 					fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> FILTERED OUT by main condition.\n");
 				}
-			}			
-			
-
-
-
-			if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
-			{
-				int CurPos = CurLine->GetCurPos();
-				int VisualCurPos = CurPos - VisualLineStart;
-				if (VisualCurPos < 0) VisualCurPos = 0;
-				if (VisualCurPos > (VisualLineEnd - VisualLineStart)) VisualCurPos = (VisualLineEnd - VisualLineStart);
-
-				fprintf(stderr, "WORDWRAP_DEBUG: Rendering cursor. LogicalLine==CurLine && VisualLine==m_CurVisual. CurPos=%d maps to VisualCurPos=%d for visual line [%d, %d]\n", CurPos, VisualCurPos, VisualLineStart, VisualLineEnd);
-				ShowString.SetCurPos(VisualCurPos);
-				ShowString.Show();
 			}
-			else
+
+			if (!background_filled) // Only draw normally if we didn't manually fill the background
 			{
-				ShowString.FastShow();
+				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+				{
+					int CurPos = CurLine->GetCurPos();
+					int VisualCurPos = CurPos - VisualLineStart;
+					if (VisualCurPos < 0) VisualCurPos = 0;
+					if (VisualCurPos > (VisualLineEnd - VisualLineStart)) VisualCurPos = (VisualLineEnd - VisualLineStart);
+
+					fprintf(stderr, "WORDWRAP_DEBUG: Rendering cursor. LogicalLine==CurLine && VisualLine==m_CurVisual. CurPos=%d maps to VisualCurPos=%d for visual line [%d, %d]\n", CurPos, VisualCurPos, VisualLineStart, VisualLineEnd);
+					ShowString.SetCurPos(VisualCurPos);
+					ShowString.Show();
+				}
+				else
+				{
+					ShowString.FastShow();
+				}
 			}
 
 			// Advance to the next visual line

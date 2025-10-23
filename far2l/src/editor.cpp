@@ -617,6 +617,19 @@ void Editor::ShowEditor(int CurLineOnly)
 					ShowString.FastShow();
 				}
 			}
+			else if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+			{
+				// This is the cursor line, but it was empty and the background was drawn by SetScreen.
+				// The regular Show()/FastShow() path was skipped, so we need to position the cursor manually.
+				ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+				if (ShowString.Flags.Check(FEDITLINE_OVERTYPE)) {
+					::SetCursorType(1, Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
+				} else {
+					::SetCursorType(1, Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+				}
+				// For an empty line, cursor is always at the beginning.
+				MoveCursor(X1, Y);
+			}
 
 			// Advance to the next visual line
 			CurVisualLine++;

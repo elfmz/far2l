@@ -107,7 +107,10 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	CurLine(nullptr),
 	LastGetLine(nullptr),
 	LastGetLineNumber(0),
-	SaveTabSettings(false)
+	SaveTabSettings(false),
+	m_bSelectionInProgress(false),
+	m_SelectionStartLine(nullptr),
+	m_SelectionStartPos(0)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
 	_KEYMACRO(SysLog(1));
@@ -3430,16 +3433,138 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		ProcessPasteEvent();
 	}
 
-	if (m_bWordWrap && (MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+	if (m_bWordWrap && (MouseEvent->dwButtonState & 3 || m_bSelectionInProgress))
 	{
-		fprintf(stderr, "\nWORDWRAP_MOUSE: === Mouse Click Event ===\n");
-		fprintf(stderr, "WORDWRAP_MOUSE: Mouse Coords: (X=%d, Y=%d)\n", MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y);
-		fprintf(stderr, "WORDWRAP_MOUSE: Editor Area: (X1=%d, Y1=%d)-(X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
+		// --- MOUSE DRAG LOGIC ---
+		if (!m_bSelectionInProgress && (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+		{
+			// START of selection
+			fprintf(stderr, "\nWORDWRAP_MOUSE_DRAG: === Start Selection ===\n");
+			UnmarkBlock();
+			m_bSelectionInProgress = true;
+
+			// Translate Y to (LogicalLine, VisualLine)
+			Edit* TargetLogicalLine = m_TopScreenLogicalLine;
+			int TargetVisualLine = m_TopScreenVisualLine;
+			int screenY = Y1;
+			while (screenY < MouseEvent->dwMousePosition.Y && TargetLogicalLine) {
+				TargetVisualLine++;
+				if (TargetVisualLine >= TargetLogicalLine->GetVisualLineCount()) {
+					TargetLogicalLine = TargetLogicalLine->m_next;
+					TargetVisualLine = 0;
+				}
+				screenY++;
+			}
+
+			if (TargetLogicalLine) {
+				m_SelectionStartLine = TargetLogicalLine;
+				int visualLineStart, visualLineEnd;
+				m_SelectionStartLine->GetVisualLine(TargetVisualLine, visualLineStart, visualLineEnd);
+				int newCurPos = m_SelectionStartLine->CellPosToReal(visualLineStart + (MouseEvent->dwMousePosition.X - X1));
+				if (newCurPos > visualLineEnd && visualLineEnd < m_SelectionStartLine->GetLength()) newCurPos = visualLineEnd;
+				if (newCurPos > m_SelectionStartLine->GetLength()) newCurPos = m_SelectionStartLine->GetLength();
+				m_SelectionStartPos = newCurPos;
+
+				fprintf(stderr, "WORDWRAP_MOUSE_DRAG: Selection started at Line %d, Pos %d\n", CalcDistance(TopList, m_SelectionStartLine, -1), m_SelectionStartPos);
+			}
+		}
+		else if (m_bSelectionInProgress && (MouseEvent->dwEventFlags & MOUSE_MOVED) && (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED))
+		{
+			// DRAGGING
+			// Translate Y to (LogicalLine, VisualLine)
+			Edit* TargetLogicalLine = m_TopScreenLogicalLine;
+			int TargetVisualLine = m_TopScreenVisualLine;
+			int screenY = Y1;
+			while (screenY < MouseEvent->dwMousePosition.Y && TargetLogicalLine) {
+				TargetVisualLine++;
+				if (TargetVisualLine >= TargetLogicalLine->GetVisualLineCount()) {
+					TargetLogicalLine = TargetLogicalLine->m_next;
+					TargetVisualLine = 0;
+				}
+				screenY++;
+			}
+			if (TargetLogicalLine)
+			{
+				int visualLineStart, visualLineEnd;
+				TargetLogicalLine->GetVisualLine(TargetVisualLine, visualLineStart, visualLineEnd);
+				int newCurPos = TargetLogicalLine->CellPosToReal(visualLineStart + (MouseEvent->dwMousePosition.X - X1));
+				if (newCurPos > visualLineEnd && visualLineEnd < TargetLogicalLine->GetLength()) newCurPos = visualLineEnd;
+				if (newCurPos > TargetLogicalLine->GetLength()) newCurPos = TargetLogicalLine->GetLength();
+				fprintf(stderr, "WORDWRAP_MOUSE_DRAG: Dragging to Line %d, Pos %d\n", CalcDistance(TopList, TargetLogicalLine, -1), newCurPos);
+
+				// --- APPLY SELECTION ---
+				Edit *StartLine, *EndLine;
+				int StartPos, EndPos;
+
+				int StartLineNum = CalcDistance(TopList, m_SelectionStartLine, -1);
+				int EndLineNum = CalcDistance(TopList, TargetLogicalLine, -1);
+
+				if (StartLineNum < EndLineNum || (StartLineNum == EndLineNum && m_SelectionStartPos <= newCurPos))
+				{
+					StartLine = m_SelectionStartLine;
+					StartPos = m_SelectionStartPos;
+					EndLine = TargetLogicalLine;
+					EndPos = newCurPos;
+				}
+				else
+				{
+					StartLine = TargetLogicalLine;
+					StartPos = newCurPos;
+					EndLine = m_SelectionStartLine;
+					EndPos = m_SelectionStartPos;
+				}
+
+				UnmarkBlock();
+				BlockStart = StartLine;
+				BlockStartLine = CalcDistance(TopList, StartLine, -1);
+
+				if (StartLine == EndLine)
+				{
+					StartLine->Select(StartPos, EndPos);
+				}
+				else
+				{
+					StartLine->Select(StartPos, -1);
+					Edit* Current = StartLine->m_next;
+					while (Current && Current != EndLine)
+					{
+						Current->Select(0, -1);
+						Current = Current->m_next;
+					}
+					if (EndLine)
+					{
+						EndLine->Select(0, EndPos);
+					}
+				}
+				Show();
+			}
+			// Empty block, handled above
+		}
+		else if (m_bSelectionInProgress && !(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED))
+		{
+			// END of selection
+			fprintf(stderr, "WORDWRAP_MOUSE_DRAG: === End Selection ===\n\n");
+			m_bSelectionInProgress = false;
+		}
+
+
+		// --- SINGLE CLICK LOGIC (if not starting a drag) ---
+		if (!m_bSelectionInProgress && (MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+		{
+			fprintf(stderr, "\nWORDWRAP_MOUSE: === Mouse Click Event ===\n");
+			fprintf(stderr, "WORDWRAP_MOUSE: Mouse Coords: (X=%d, Y=%d)\n", MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y);
+		}
 
 		// 1. Транслируем Y в пару (логическая строка, визуальная строка)
 		Edit* TargetLogicalLine = m_TopScreenLogicalLine;
 		int TargetVisualLine = m_TopScreenVisualLine;
 		int screenY = Y1;
+		fprintf(stderr, "WORDWRAP_MOUSE: Editor Area: (X1=%d, Y1=%d)-(X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
+
+		// 1. Транслируем Y в пару (логическая строка, визуальная строка)
+		TargetLogicalLine = m_TopScreenLogicalLine;
+		TargetVisualLine = m_TopScreenVisualLine;
+		screenY = Y1;
 
 		while (screenY < MouseEvent->dwMousePosition.Y && TargetLogicalLine)
 		{
@@ -3506,6 +3631,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			Show();
 			return TRUE;
 		}
+		return TRUE; // In word wrap mode, we've handled it.
 	}
 	if (CurLine->ProcessMouse(MouseEvent)) {
 		if (HostFileEditor)

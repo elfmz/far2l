@@ -521,17 +521,17 @@ void Editor::ShowEditor(int CurLineOnly)
 			for (size_t i = 0; CurLogicalLine->GetColor(&ci, i); ++i)
 			{
 				if (Y == Y1 && i == 0) {
-					fprintf(stderr, "WORDWRAP_COLOR: Line %p has %zu color items (Logical Line %d) before render.\n", CurLogicalLine, CurLogicalLine->ColorList.size(), CalcDistance(TopList, CurLogicalLine, -1));
+					//fprintf(stderr, "WORDWRAP_COLOR: Line %p has %zu color items (Logical Line %d) before render.\n", CurLogicalLine, CurLogicalLine->ColorList.size(), CalcDistance(TopList, CurLogicalLine, -1));
 				}
 
 				if ((ci.StartPos == -1 && ci.EndPos == -1) || (ci.StartPos < VisualLineEnd && ci.EndPos >= VisualLineStart))
 				{
 					ColorItem new_ci = ci;
 
-					fprintf(stderr, "WORDWRAP_COLOR_COPY: L%d: Checking ColorItem {StartPos=%d, EndPos=%d, Color=0x%llx} against VisualLine=[%d, %d)\n",
-						CalcDistance(TopList, CurLogicalLine, -1), ci.StartPos, ci.EndPos, ci.Color, VisualLineStart, VisualLineEnd);
-					fprintf(stderr, "WORDWRAP_COLOR_COPY:   LOGICAL -> VISUAL: VisualLineStart=%d, VisualLineEnd=%d. Logic check: %s\n", VisualLineStart, VisualLineEnd,
-						(ci.StartPos != -1 || ci.EndPos != -1) ? "CLAMPING" : "PRESERVING");
+					//fprintf(stderr, "WORDWRAP_COLOR_COPY: L%d: Checking ColorItem {StartPos=%d, EndPos=%d, Color=0x%llx} against VisualLine=[%d, %d)\n",
+					//	CalcDistance(TopList, CurLogicalLine, -1), ci.StartPos, ci.EndPos, ci.Color, VisualLineStart, VisualLineEnd);
+					//fprintf(stderr, "WORDWRAP_COLOR_COPY:   LOGICAL -> VISUAL: VisualLineStart=%d, VisualLineEnd=%d. Logic check: %s\n", VisualLineStart, VisualLineEnd,
+					//	(ci.StartPos != -1 || ci.EndPos != -1) ? "CLAMPING" : "PRESERVING");
 
 					bool is_full_visual_line_coverage = false;
 
@@ -549,7 +549,7 @@ void Editor::ShowEditor(int CurLineOnly)
 						new_ci.StartPos -= VisualLineStart;
 						new_ci.EndPos -= VisualLineStart;
 
-						fprintf(stderr, "WORDWRAP_COLOR_COPY:   Range before clamping: {StartPos=%d, EndPos=%d}\n", new_ci.StartPos, new_ci.EndPos);
+						//fprintf(stderr, "WORDWRAP_COLOR_COPY:   Range before clamping: {StartPos=%d, EndPos=%d}\n", new_ci.StartPos, new_ci.EndPos);
 
 						if (new_ci.StartPos < 0) new_ci.StartPos = 0;
 
@@ -557,7 +557,7 @@ void Editor::ShowEditor(int CurLineOnly)
 						{
 							// Force EndPos large to cause DrawColor/ApplyColor to fill to the screen edge (via its internal clamping to X2).
 							new_ci.EndPos = FULL_LINE_END_POS_HINT;
-							fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Full Coverage detected] Forcing EndPos=%d\n", new_ci.EndPos);
+							//fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Full Coverage detected] Forcing EndPos=%d\n", new_ci.EndPos);
 						}
 						else if (new_ci.EndPos >= (VisualLineEnd - VisualLineStart))
 						{
@@ -570,32 +570,32 @@ void Editor::ShowEditor(int CurLineOnly)
 						{
 							new_ci.StartPos = 0;
 							new_ci.EndPos = FULL_LINE_END_POS_HINT;
-							fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Background Marker -1,-1] Forcing EndPos=%d\n", new_ci.EndPos);
+							//fprintf(stderr, "WORDWRAP_COLOR_COPY:   [WordWrap Background Marker -1,-1] Forcing EndPos=%d\n", new_ci.EndPos);
 						}
 					}
 
-					fprintf(stderr, "WORDWRAP_COLOR_COPY:   FINAL range (relative to visual sub-string): {StartPos=%d, EndPos=%d}. Raw condition check: %s\n",
-						new_ci.StartPos, new_ci.EndPos,
-						(new_ci.StartPos <= new_ci.EndPos ? "PASSED" : "FAILED"));
+					//fprintf(stderr, "WORDWRAP_COLOR_COPY:   FINAL range (relative to visual sub-string): {StartPos=%d, EndPos=%d}. Raw condition check: %s\n",
+					//	new_ci.StartPos, new_ci.EndPos,
+					//	(new_ci.StartPos <= new_ci.EndPos ? "PASSED" : "FAILED"));
 
 					if (new_ci.StartPos <= new_ci.EndPos)
 					{
-						fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> PASSED. Adding adjusted {StartPos=%d, EndPos=%d} (Y=%d)\n", new_ci.StartPos, new_ci.EndPos, Y);
+						//fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> PASSED. Adding adjusted {StartPos=%d, EndPos=%d} (Y=%d)\n", new_ci.StartPos, new_ci.EndPos, Y);
 						ShowString.AddColor(&new_ci);
 					}
 					else if (new_ci.StartPos == -1 && new_ci.EndPos == -1) // Note: this case should now be covered by the {-1, -1} block above, but keep redundant logging check
 					{
-						fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> PASSED. Adding raw BACKGROUND {-1, -1} (Y=%d)\n", Y);
+						//fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> PASSED. Adding raw BACKGROUND {-1, -1} (Y=%d)\n", Y);
 						ShowString.AddColor(&new_ci);
 					}
 					else
 					{
-						fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> SKIPPED (invalid range after adjustment).\n");
+						//fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> SKIPPED (invalid range after adjustment).\n");
 					}
 				}
 				else
 				{
-					fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> FILTERED OUT by main condition.\n");
+					//fprintf(stderr, "WORDWRAP_COLOR_COPY: ---> FILTERED OUT by main condition.\n");
 				}
 			}
 
@@ -5747,11 +5747,11 @@ int Editor::EditorControl(int Command, void *Param)
 					int topScreenNum = CalcDistance(TopList, TopScreen, -1);
 					int curLineNum = CalcDistance(TopList, CurLine, -1);
 					int distance = CalcDistance(TopScreen, CurLine, -1);
-					fprintf(stderr, "WORDWRAP_COLOR_INFO: ECTL_GETINFO call (m_bWordWrap=%d)\n", m_bWordWrap);
-					fprintf(stderr, "WORDWRAP_COLOR_INFO:   Internal state: TopLogical=%d, TopVisual=%d\n",
-							CalcDistance(TopList, m_TopScreenLogicalLine, -1), m_TopScreenVisualLine);
-					fprintf(stderr, "WORDWRAP_COLOR_INFO:   Legacy state:   TopScreen=%d, CurLine=%d, NumLine=%d, Distance=%d\n",
-							topScreenNum, curLineNum, NumLine, distance);
+					//fprintf(stderr, "WORDWRAP_COLOR_INFO: ECTL_GETINFO call (m_bWordWrap=%d)\n", m_bWordWrap);
+					//fprintf(stderr, "WORDWRAP_COLOR_INFO:   Internal state: TopLogical=%d, TopVisual=%d\n",
+					//		CalcDistance(TopList, m_TopScreenLogicalLine, -1), m_TopScreenVisualLine);
+					//fprintf(stderr, "WORDWRAP_COLOR_INFO:   Legacy state:   TopScreen=%d, CurLine=%d, NumLine=%d, Distance=%d\n",
+					//		topScreenNum, curLineNum, NumLine, distance);
 				}
 
 				Info->EditorID = Editor::EditorID;
@@ -5815,8 +5815,8 @@ int Editor::EditorControl(int Command, void *Param)
 				}
 
 				if (m_bWordWrap) {
-					fprintf(stderr, "WORDWRAP_COLOR_INFO:   Reporting to plugin: TopScreenLine=%d (calc: %d - %d), WindowSizeX=%d, WindowSizeY=%d\n",
-							Info->TopScreenLine, NumLine, CalcDistance(TopScreen, CurLine, -1), Info->WindowSizeX, Info->WindowSizeY);
+					//fprintf(stderr, "WORDWRAP_COLOR_INFO:   Reporting to plugin: TopScreenLine=%d (calc: %d - %d), WindowSizeX=%d, WindowSizeY=%d\n",
+					//		Info->TopScreenLine, NumLine, CalcDistance(TopScreen, CurLine, -1), Info->WindowSizeX, Info->WindowSizeY);
 				}
 
 				return TRUE;
@@ -6048,9 +6048,9 @@ int Editor::EditorControl(int Command, void *Param)
 			if (Param) {
 				const EditorColor *col = (EditorColor *)Param;
 				if (col->StartPos == -1 && col->EndPos == -1) {
-					fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR [BACKGROUND] received for StringNumber=%d, Color=0x%llx, Attr=0x%llx\n", col->StringNumber, col->Color, col->Color & 0xFFFF);
+					//fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR [BACKGROUND] received for StringNumber=%d, Color=0x%llx, Attr=0x%llx\n", col->StringNumber, col->Color, col->Color & 0xFFFF);
 				} else {
-					fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR [SYNTAX] received for StringNumber=%d, StartPos=%d, EndPos=%d, Color=0x%llx, Attr=0x%llx\n", col->StringNumber, col->StartPos, col->EndPos, col->Color, col->Color & 0xFFFF);
+					//fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR [SYNTAX] received for StringNumber=%d, StartPos=%d, EndPos=%d, Color=0x%llx, Attr=0x%llx\n", col->StringNumber, col->StartPos, col->EndPos, col->Color, col->Color & 0xFFFF);
 				}
 				_ECTLLOG(SysLog(L"EditorColor{"));
 				_ECTLLOG(SysLog(L"  StringNumber=%d", col->StringNumber));
@@ -6070,10 +6070,11 @@ int Editor::EditorControl(int Command, void *Param)
 					return FALSE;
 				}
 
-if (!col->Color)
-fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR with Color=0 detected! Triggering DeleteColor with StartPos=%d\n", newcol.StartPos);
-if (!col->Color)
-fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR with Color=0 detected! Triggering DeleteColor with StartPos=%d\n", newcol.StartPos);
+				//if (!col->Color)
+				//	fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR with Color=0 detected! Triggering DeleteColor with StartPos=%d\n", newcol.StartPos);
+				//if (!col->Color)
+				//	fprintf(stderr, "WORDWRAP_COLOR: ECTL_ADDCOLOR with Color=0 detected! Triggering DeleteColor with StartPos=%d\n", newcol.StartPos);
+
 				if (!col->Color)
 					return (CurPtr->DeleteColor(newcol.StartPos));
 
@@ -7244,6 +7245,7 @@ void Editor::SetPosition(int X1, int Y1, int X2, int Y2)
 	for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
 	{
 		CurPtr->SetPosition(X1,Y1,X2,Y2);
+		CurPtr->RecalculateWordWrap(X2 - X1, EdOpt.TabSize);
 	}
 }
 

@@ -1271,6 +1271,10 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
+			if (m_bWordWrapState)
+			{
+				RecalculateWordWrap(ObjWidth, TabSize);
+			}
 			Changed(true);
 			Show();
 			return TRUE;
@@ -2036,6 +2040,10 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 			if (TabExpandMode == EXPAND_ALLTABS)
 				ExpandTabs();
 
+			if (m_bWordWrapState)
+			{
+				RecalculateWordWrap(ObjWidth, TabSize);
+			}
 			CheckForSpecialWidthChars(Str, Length);
 			Changed();
 		}
@@ -2529,7 +2537,7 @@ size_t Edit::DeleteColor(int ColorPos)
 	//fprintf(stderr, "WORDWRAP_COLOR: ---> After deletion loop, ColorList will have %zu items:\n", Dest);
 	for (size_t i = 0; i < Dest; ++i) {
 		// В этот момент ColorList еще не урезан, так что мы можем посмотреть на будущие элементы
-		const auto& item = ColorList[i];
+		//const auto& item = ColorList[i];
 		//fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
 	}
 	const size_t DelCount = ColorList.size() - Dest;

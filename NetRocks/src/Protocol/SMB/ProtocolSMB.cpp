@@ -235,7 +235,7 @@ void ProtocolSMB::Rename(const std::string &path_old, const std::string &path_ne
 
 void ProtocolSMB::SetTimes(const std::string &path, const timespec &access_time, const timespec &modification_time)
 {
-	NR_DBG("path: %s, atime: %ld, mtime: %ld", path.c_str(), access_time.tv_sec, modification_time.tv_sec);
+	NR_DBG("path: %s, atime: %jd, mtime: %jd", path.c_str(), (intmax_t)(access_time.tv_sec), (intmax_t)(modification_time.tv_sec));
 	struct timeval times[2] = {};
 	times[0].tv_sec = access_time.tv_sec;
 	times[0].tv_usec = suseconds_t(access_time.tv_nsec / 1000);

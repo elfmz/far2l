@@ -2730,6 +2730,11 @@ int Editor::ProcessKey(FarKey Key)
 
 			return TRUE;
 		}
+
+		case KEY_CTRLSHIFTUP:
+		case KEY_CTRLSHIFTDOWN:
+			return TRUE;
+
 		case KEY_ALTSHIFTLEFT:
 		case KEY_ALTSHIFTNUMPAD4:
 		case KEY_ALTLEFT: {

@@ -1622,93 +1622,121 @@ int Editor::ProcessKey(FarKey Key)
 		}
 		case KEY_CTRLSHIFTLEFT:
 		case KEY_CTRLSHIFTNUMPAD4: {
-			_SVS(CleverSysLog SL(L"case KEY_CTRLSHIFTLEFT"));
-			_SVS(SysLog(L"[%d] Pasting=%d, SelEnd=%d", __LINE__, Pasting, SelEnd));
 			{
-				int SkipSpace = TRUE;
-				Pasting++;
-				Lock();
-				int CurPos;
-
-				for (;;) {
-					const wchar_t *Str;
-					int Length;
-					CurLine->GetBinaryString(&Str, nullptr, Length);
-					/*
-						$ 12.11.2002 DJ
-						обеспечим корректную работу Ctrl-Shift-Left за концом строки
-					*/
-					CurPos = CurLine->GetCurPos();
-
-					if (CurPos > Length) {
-						int SelStartPos = CurPos;
-						CurLine->ProcessKey(KEY_END);
-						CurPos = CurLine->GetCurPos();
-
-						if (CurLine->SelStart >= 0) {
-							if (!SelAtBeginning)
-								CurLine->Select(CurLine->SelStart, CurPos);
-							else
-								CurLine->Select(CurPos, CurLine->SelEnd);
-						} else
-							CurLine->Select(CurPos, SelStartPos);
+				if (CurLine->GetCurPos() == 0)
+				{
+					if (CurLine->m_prev)
+					{
+						fprintf(stderr, "WORDWRAP_FIX_CTRL_SHIFT_EOL: At BOL, jumping to previous line.\n");
+						ProcessKey(KEY_SHIFTLEFT);
+						Show();
 					}
-
-					if (!CurPos)
-						break;
-
-					if (IsSpace(Str[CurPos - 1]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos - 1])) {
-						if (SkipSpace) {
-							ProcessKey(KEY_SHIFTLEFT);
-							continue;
-						} else
-							break;
-					}
-
-					SkipSpace = FALSE;
-					ProcessKey(KEY_SHIFTLEFT);
+					return TRUE;
 				}
 
-				Pasting--;
-				Unlock();
-				Show();
+				_SVS(CleverSysLog SL(L"case KEY_CTRLSHIFTLEFT"));
+				_SVS(SysLog(L"[%d] Pasting=%d, SelEnd=%d", __LINE__, Pasting, SelEnd));
+				{
+					int SkipSpace = TRUE;
+					Pasting++;
+					Lock();
+					int CurPos;
+
+					for (;;) {
+						const wchar_t *Str;
+						int Length;
+						CurLine->GetBinaryString(&Str, nullptr, Length);
+						CurPos = CurLine->GetCurPos();
+
+						if (CurPos > Length) {
+							int SelStartPos = CurPos;
+							CurLine->ProcessKey(KEY_END);
+							CurPos = CurLine->GetCurPos();
+
+							if (CurLine->SelStart >= 0) {
+								if (!SelAtBeginning)
+									CurLine->Select(CurLine->SelStart, CurPos);
+								else
+									CurLine->Select(CurPos, CurLine->SelEnd);
+							} else
+								CurLine->Select(CurPos, SelStartPos);
+						}
+
+						if (!CurPos)
+						{
+							fprintf(stderr, "WORDWRAP_FIX_CTRL_SHIFT_EOL: Word jump hit BOL, stopping.\n");
+							break;
+						}
+
+						if (IsSpace(Str[CurPos - 1]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos - 1])) {
+							if (SkipSpace) {
+								ProcessKey(KEY_SHIFTLEFT);
+								continue;
+							} else
+								break;
+						}
+
+						SkipSpace = FALSE;
+						ProcessKey(KEY_SHIFTLEFT);
+					}
+
+					Pasting--;
+					Unlock();
+					Show();
+				}
 			}
 			return TRUE;
 		}
 		case KEY_CTRLSHIFTRIGHT:
 		case KEY_CTRLSHIFTNUMPAD6: {
-			_SVS(CleverSysLog SL(L"case KEY_CTRLSHIFTRIGHT"));
-			_SVS(SysLog(L"[%d] Pasting=%d, SelEnd=%d", __LINE__, Pasting, SelEnd));
 			{
-				int SkipSpace = TRUE;
-				Pasting++;
-				Lock();
-				int CurPos;
-
-				for (;;) {
-					const wchar_t *Str;
-					int Length;
-					CurLine->GetBinaryString(&Str, nullptr, Length);
-					CurPos = CurLine->GetCurPos();
-
-					if (CurPos >= Length)
-						break;
-
-					if (IsSpace(Str[CurPos]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos])) {
-						if (SkipSpace) {
-							ProcessKey(KEY_SHIFTRIGHT);
-							continue;
-						} else
-							break;
+				if (CurLine->GetCurPos() >= CurLine->GetLength())
+				{
+					if (CurLine->m_next)
+					{
+						fprintf(stderr, "WORDWRAP_FIX_CTRL_SHIFT_EOL: At EOL, jumping to next line.\n");
+						ProcessKey(KEY_SHIFTRIGHT);
+						Show();
 					}
-
-					SkipSpace = FALSE;
-					ProcessKey(KEY_SHIFTRIGHT);
+					return TRUE;
 				}
 
-				Pasting--;
-				Unlock();
-				Show();
+				_SVS(CleverSysLog SL(L"case KEY_CTRLSHIFTRIGHT"));
+				_SVS(SysLog(L"[%d] Pasting=%d, SelEnd=%d", __LINE__, Pasting, SelEnd));
+				{
+					int SkipSpace = TRUE;
+					Pasting++;
+					Lock();
+					int CurPos;
+
+					for (;;) {
+						const wchar_t *Str;
+						int Length;
+						CurLine->GetBinaryString(&Str, nullptr, Length);
+						CurPos = CurLine->GetCurPos();
+
+						if (CurPos >= Length)
+						{
+							fprintf(stderr, "WORDWRAP_FIX_CTRL_SHIFT_EOL: Word jump hit EOL, stopping.\n");
+							break;
+						}
+
+						if (IsSpace(Str[CurPos]) || IsWordDiv(EdOpt.strWordDiv, Str[CurPos])) {
+							if (SkipSpace) {
+								ProcessKey(KEY_SHIFTRIGHT);
+								continue;
+							} else
+								break;
+						}
+
+						SkipSpace = FALSE;
+						ProcessKey(KEY_SHIFTRIGHT);
+					}
+
+					Pasting--;
+					Unlock();
+					Show();
+				}
 			}
 			return TRUE;
 		}

@@ -244,14 +244,14 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 		return 1;
 	}
 	else if (msg == DN_KEY){
-		if( param1 == -1) 
+		if( param1 == -1){
 			instance->set_keys_state((int)param2);
-		else if( param1 == ID_EDITOR)
-			instance->handle_key_down((int)param2);
-		return 1;
+			return 1;
+		} else if( param1 == ID_EDITOR)
+			return instance->handle_key_down((int)param2);
+		return 0;
 	} else if (msg == DN_MOUSECLICK || msg == DN_MOUSEEVENT){
-		instance->move_handle_mouse(msg, param1, (MOUSE_EVENT_RECORD *)param2);
-		return 1;
+		return instance->move_handle_mouse(msg, param1, (MOUSE_EVENT_RECORD *)param2);
 	} else if( msg == DN_CLOSE) {
 		//Save last position to history
 		if (settings::save_file_pos)
@@ -793,6 +793,26 @@ bool editor::sckey_handle(const int key)
 				even_handled = true;
 				settings::configure();
 				update_screen();
+			}
+			break;
+
+		case KEY_TAB:
+			if ((ctrl_pressed && !alt_pressed && !shift_pressed)) {
+				int KeyArray[] = {KEY_CTRLTAB};
+				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
+				even_handled = true;
+			} else if ((!ctrl_pressed && !alt_pressed && shift_pressed)) {
+				int KeyArray[] = {KEY_CTRLSHIFTTAB};
+				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
+				even_handled = true;
+			}
+			break;
+
+		case KEY_F12:
+			if ((!ctrl_pressed && !alt_pressed && !shift_pressed)) {
+				int KeyArray[] = {KEY_F12};
+				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
+				even_handled = true;
 			}
 			break;
 

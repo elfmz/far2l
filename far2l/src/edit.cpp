@@ -2360,6 +2360,9 @@ int Edit::CellPosToReal(int Pos)
 
 void Edit::SanitizeSelectionRange()
 {
+	fprintf(stderr, "WORDWRAP_SANITIZE_DIAG: --- SanitizeSelectionRange Entered ---\n");
+	fprintf(stderr, "WORDWRAP_SANITIZE_DIAG:   this=%p, initial state: SelStart=%d, SelEnd=%d\n", this, SelStart, SelEnd);
+
 	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
 		bool joining = false;
 		for ( ; SelStart > 0; SelStart--) {
@@ -2406,10 +2409,20 @@ void Edit::SanitizeSelectionRange()
 
 void Edit::Select(int Start, int End)
 {
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG: ===== Enter Edit::Select =====\n");
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   this=%p\n", this);
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   Input params: Start=%d, End=%d\n", Start, End);
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   Internal state BEFORE: this->SelStart=%d, this->SelEnd=%d\n", this->SelStart, this->SelEnd);
+
 	SelStart = Start;
 	SelEnd = End;
 
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   State after assignment, BEFORE Sanitize: this->SelStart=%d, this->SelEnd=%d\n", this->SelStart, this->SelEnd);
+
 	SanitizeSelectionRange();
+
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   Internal state AFTER Sanitize:  this->SelStart=%d, this->SelEnd=%d\n", this->SelStart, this->SelEnd);
+	fprintf(stderr, "WORDWRAP_SELECT_DIAG: ============================\n");
 }
 
 void Edit::AddSelect(int Start, int End)
@@ -2428,6 +2441,7 @@ void Edit::AddSelect(int Start, int End)
 
 void Edit::GetSelection(int &Start, int &End)
 {
+	fprintf(stderr, "WORDWRAP_B2T_DIAG:   [Enter GetSelection]    this=%p, internal SelStart=%d, SelEnd=%d\n", this, this->SelStart, this->SelEnd);
 	/*
 		$ 17.09.2002 SKV
 		Мало того, что это нарушение правил OO design'а,
@@ -2452,6 +2466,7 @@ void Edit::GetSelection(int &Start, int &End)
 
 void Edit::GetRealSelection(int &Start, int &End)
 {
+	fprintf(stderr, "WORDWRAP_B2T_DIAG:   [Enter GetRealSelection] this=%p, internal SelStart=%d, SelEnd=%d\n", this, this->SelStart, this->SelEnd);
 	Start = SelStart;
 	End = SelEnd;
 }

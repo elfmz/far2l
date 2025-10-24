@@ -1496,6 +1496,32 @@ int Editor::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTHOME:
 		case KEY_SHIFTNUMPAD7: {
+
+			if (m_bWordWrap)
+			{
+				fprintf(stderr, "WORDWRAP_HOME_END_V3: [enter] KEY_SHIFTHOME in Word Wrap mode.\n");
+				int start, end;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
+				fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Will select towards start: %d.\n", start, end, CurLine->GetCurPos(), start);
+				
+				Pasting++;
+				Lock();
+				while(CurLine->GetCurPos() > start)
+				{
+					int oldPos = CurLine->GetCurPos();
+					ProcessKey(KEY_SHIFTLEFT);
+					if (oldPos == CurLine->GetCurPos()) {
+						 fprintf(stderr, "WORDWRAP_HOME_END_V3:   WARNING: SHIFTLEFT did not move cursor at pos %d. Breaking loop.\n", oldPos);
+						 break;
+					}
+				}
+				Pasting--;
+				Unlock();
+				fprintf(stderr, "WORDWRAP_HOME_END_V3:   [exit] Finished SHIFTHOME selection. New CurPos=%d.\n", CurLine->GetCurPos());
+				Show();
+				return TRUE;
+			}
+			
 			Pasting++;
 			Lock();
 
@@ -1518,6 +1544,39 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_SHIFTEND:
 		case KEY_SHIFTNUMPAD1: {
 			{
+
+				if (m_bWordWrap)
+				{
+					fprintf(stderr, "WORDWRAP_HOME_END_V3: [enter] KEY_SHIFTEND in Word Wrap mode.\n");
+					int start, end;
+					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
+					fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Will select towards end: %d.\n", start, end, CurLine->GetCurPos(), end);
+
+					Pasting++;
+					Lock();
+					int initialLength = CurLine->GetLength();
+
+					int targetPos = end;
+					if (targetPos > start && targetPos < CurLine->GetLength() && CurLine->GetStringAddr()[targetPos - 1] == L' ')
+					{
+					    targetPos--;
+					}
+					while(CurLine->GetCurPos() < targetPos)					
+					{
+						int oldPos = CurLine->GetCurPos();
+						ProcessKey(KEY_SHIFTRIGHT);
+						if (oldPos == CurLine->GetCurPos()) {
+							fprintf(stderr, "WORDWRAP_HOME_END_V3:   WARNING: SHIFTRIGHT did not move cursor at pos %d. Breaking loop.\n", oldPos);
+							break;
+						}
+					}
+					Pasting--;
+					Unlock();
+					fprintf(stderr, "WORDWRAP_HOME_END_V3:   [exit] Finished SHIFTEND selection. New CurPos=%d.\n", CurLine->GetCurPos());
+					Show();
+					return TRUE;
+				}
+				
 				int LeftPos = CurLine->GetLeftPos();
 				Pasting++;
 				Lock();
@@ -3204,6 +3263,52 @@ int Editor::ProcessKey(FarKey Key)
 
 			return TRUE;
 		}
+
+		case KEY_HOME:
+		case KEY_NUMPAD7:
+		{
+			if (m_bWordWrap)
+			{
+				fprintf(stderr, "WORDWRAP_HOME_END_V3: [enter] KEY_HOME in Word Wrap mode.\n");
+				int start, end;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
+				fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Moving to start: %d.\n", start, end, CurLine->GetCurPos(), start);
+				CurLine->SetCurPos(start);
+				Show();
+				return TRUE;
+			}
+			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
+			fprintf(stderr, "WORDWRAP_HOME_END_V3: KEY_HOME in non-WW mode, falling through to default.\n");
+			break;
+		}
+
+		case KEY_END:
+		case KEY_NUMPAD1:
+		{
+			if (m_bWordWrap)
+			{
+				fprintf(stderr, "WORDWRAP_HOME_END_V3: [enter] KEY_END in Word Wrap mode.\n");
+				int start, end;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
+				fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Moving to end: %d.\n", start, end, CurLine->GetCurPos(), end);
+		
+				int targetPos = end;
+				// Если мы не в конце логической строки, и символ перед точкой переноса - пробел,
+				// то ставим курсор перед этим пробелом, чтобы не прыгать на следующую строку.
+				if (targetPos > start && targetPos < CurLine->GetLength() && CurLine->GetStringAddr()[targetPos - 1] == L' ')
+				{
+				    targetPos--;
+				}
+				CurLine->SetCurPos(targetPos);
+				
+				Show();
+				return TRUE;
+			}
+			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
+			fprintf(stderr, "WORDWRAP_HOME_END_V3: KEY_END in non-WW mode, falling through to default.\n");
+			break;
+		}		
+		
 		default: {
 			{
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL

@@ -7688,17 +7688,48 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 
 			if (pp->Line >= pp->ScreenLine) {
 				Lock();
-				GoToLine(pp->Line - pp->ScreenLine);
-				TopScreen = CurLine;
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_CACHE: Restoring position in Word Wrap mode.\n");
+					fprintf(stderr, "WORDWRAP_CACHE:   Cache params: Line=%d, ScreenLine=%d, LinePos=%d, LeftPos=%d\n", pp->Line, pp->ScreenLine, pp->LinePos, pp->LeftPos);
 
-				for (int I = 0; I < pp->ScreenLine; I++)
-					ProcessKey(KEY_DOWN);
+					GoToLine(pp->Line);
 
-				if (translateTabs)
-					CurLine->SetCurPos(pp->LinePos);
-				else
-					CurLine->SetCellCurPos(pp->LinePos);
-				CurLine->SetLeftPos(pp->LeftPos);
+					if (translateTabs)
+						CurLine->SetCurPos(pp->LinePos);
+					else
+						CurLine->SetCellCurPos(pp->LinePos);
+
+					m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+					fprintf(stderr, "WORDWRAP_CACHE:   Target logical line %d, pos %d. Calculated visual line: %d\n", NumLine, CurLine->GetCurPos(), m_CurVisualLineInLogicalLine);
+
+					m_TopScreenLogicalLine = CurLine;
+					m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
+					fprintf(stderr, "WORDWRAP_CACHE:   Initial TopScreen set to cursor position: L:%d, V:%d\n", CalcDistance(TopList, m_TopScreenLogicalLine, -1), m_TopScreenVisualLine);
+
+					for (int i = 0; i < pp->ScreenLine; i++) {
+						if (m_TopScreenVisualLine > 0) {
+							m_TopScreenVisualLine--;
+						} else if (m_TopScreenLogicalLine->m_prev) {
+							m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
+							m_TopScreenVisualLine = m_TopScreenLogicalLine->GetVisualLineCount() - 1;
+						} else {
+							break;
+						}
+					}
+					fprintf(stderr, "WORDWRAP_CACHE:   Final TopScreen after scrolling back %d lines: L:%d, V:%d\n", pp->ScreenLine, CalcDistance(TopList, m_TopScreenLogicalLine, -1), m_TopScreenVisualLine);
+				} else {
+					GoToLine(pp->Line - pp->ScreenLine);
+					TopScreen = CurLine;
+					for (int I = 0; I < pp->ScreenLine; I++)
+						ProcessKey(KEY_DOWN);
+
+					if (translateTabs)
+						CurLine->SetCurPos(pp->LinePos);
+					else
+						CurLine->SetCellCurPos(pp->LinePos);
+
+					CurLine->SetLeftPos(pp->LeftPos);
+				}
 				Unlock();
 			}
 		}

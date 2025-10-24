@@ -445,7 +445,7 @@ int TreeList::ReadTree()
 	int FirstCall = TRUE, AscAbort = FALSE;
 	TreeStartTime = GetProcessUptimeMSec();
 	RefreshFrameManager frref(ScrX, ScrY, TreeStartTime, FALSE);	// DontRedrawFrame);
-	ScTree.SetFindPath(strRoot, L"*", FSCANTREE_NOFILES | FSCANTREE_NODEVICES);
+	ScTree.SetFindPath(strRoot, L"*", FSCANTREE_NOFILES | FSCANTREE_NODEVICES, Opt.Tree.ExclSubTreeMask);
 	LastScrX = ScrX;
 	LastScrY = ScrY;
 	wakeful W;
@@ -1564,7 +1564,7 @@ void TreeList::ReadSubTree(const wchar_t *Path)
 	ConvertNameToFull(Path, strDirName);
 	AddTreeName(strDirName);
 	int FirstCall = TRUE, AscAbort = FALSE;
-	ScTree.SetFindPath(strDirName, L"*", 0);
+	ScTree.SetFindPath(strDirName, L"*", 0, Opt.Tree.ExclSubTreeMask);
 	LastScrX = ScrX;
 	LastScrY = ScrY;
 

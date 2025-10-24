@@ -13,6 +13,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _New:_ far:config as "Configuration editor" and far:about as "About FAR" in Commands menu
 * _New:_ support (and warning) for pasting and executing multiline text in command line
 * Editor: Display of various non-printable characters on **F5** (ShwSpc)
+* Tree panel: Option to exlude subtrees from scanning by mask, defaults to hidden folders (.*)
 * Workaround for wxWigets Numeric Keypad regression in wxWidgets 3.2.7 only ([#2721](https://github.com/elfmz/far2l/issues/2721))
 * Actions recorded in commands history are configured in the AutoComplete & History dialog
 * _NetRocks plugin_: Add support of libssh SSH_OPTIONS_PROXYCOMMAND option

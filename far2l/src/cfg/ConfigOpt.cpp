@@ -354,6 +354,7 @@ const ConfigOpt g_cfg_opts[] {
 	{false, NSecPanelTree, "RemovableDisk", &Opt.Tree.RemovableDisk, 2},
 	{false, NSecPanelTree, "NetPath", &Opt.Tree.NetPath, 2},
 	{true,  NSecPanelTree, "AutoChangeFolder", &Opt.Tree.AutoChangeFolder, 0}, // ???
+	{true,  NSecPanelTree, "ExclSubTreeMask", &Opt.Tree.ExclSubTreeMask, L".*"},
 
 	{true,  NSecLanguage, "Help", &Opt.strHelpLanguage, L"English"},
 	{true,  NSecLanguage, "Main", &Opt.strLanguage, L"English"},

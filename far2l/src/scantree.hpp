@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <list>
 #include <WinCompat.h>
 #include "FARString.hpp"
+#include "FileMasksProcessor.hpp"
 
 enum
 {
@@ -76,7 +77,7 @@ class ScanTree
 	BitFlags Flags;
 	std::wstring strFindPath;
 	std::wstring strFindMask;
-
+	FileMasksProcessor fmpExclSubTree;
 	struct ScanDir
 	{
 		std::unique_ptr<FindFile> Enumer;
@@ -99,7 +100,7 @@ public:
 
 	// 3-й параметр - флаги из старшего слова
 	void
-	SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags = FSCANTREE_FILESFIRST);
+	SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags = FSCANTREE_FILESFIRST, const wchar_t *ExcludeSubDirMask = nullptr);
 	bool GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName);
 
 	void SkipDir();

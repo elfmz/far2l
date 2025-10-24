@@ -796,20 +796,8 @@ bool editor::sckey_handle(const int key)
 			}
 			break;
 
-		case KEY_TAB:
-			if (ctrl_pressed && !alt_pressed && shift_pressed) {
-				int KeyArray[] = {KEY_CTRLSHIFTTAB};
-				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
-				even_handled = true;
-			} else if (ctrl_pressed && !alt_pressed && !shift_pressed) {
-				int KeyArray[] = {KEY_CTRLTAB};
-				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
-				even_handled = true;
-			}
-			break;
-
 		case KEY_F12:
-			if ((!ctrl_pressed && !alt_pressed && !shift_pressed)) {
+			if (!ctrl_pressed && !alt_pressed && !shift_pressed) {
 				int KeyArray[] = {KEY_F12};
 				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
 				even_handled = true;

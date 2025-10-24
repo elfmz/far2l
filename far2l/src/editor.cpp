@@ -445,9 +445,10 @@ void Editor::ShowEditor(int CurLineOnly)
 
 			// Create a temporary Edit object for rendering this visual line
 			Edit ShowString(this, nullptr, false);
+			fprintf(stderr, "WORDWRAP_STATE_CHECK: Y=%d: Checking ShowString state AT CREATION. m_bWordWrapState=%d\n", Y, ShowString.GetWordWrap());
+
 			ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
 			ShowString.SetCurPos(0);
-			//fprintf(stderr, "WORDWRAP_DIAG: ShowEditor render loop Y=%d. XX2=%d\n", Y, XX2);
 
 			ShowString.SetPosition(X1, Y, XX2, Y);
 
@@ -503,14 +504,41 @@ void Editor::ShowEditor(int CurLineOnly)
 				}
 			}
 			// Debugging log for selection state
-			int dbg_s, dbg_e;
-			ShowString.GetSelection(dbg_s, dbg_e);
-			fprintf(stderr, "WORDWRAP_DEBUG_SEL: Render Y=%d, LogLine=%d. ShowString Selection: [%d, %d]. Logical Visual Range: [%d, %d)\n", Y, CalcDistance(TopList, CurLogicalLine, -1), dbg_s, dbg_e, VisualLineStart, VisualLineEnd);
+			int dbg_s, db_e;
+			ShowString.GetSelection(dbg_s, db_e);
+			fprintf(stderr, "WORDWRAP_DEBUG_SEL: Render Y=%d, LogLine=%d. ShowString Selection: [%d, %d]. Logical Visual Range: [%d, %d)\n", Y, CalcDistance(TopList, CurLogicalLine, -1), dbg_s, db_e, VisualLineStart, VisualLineEnd);
+
+			fprintf(stderr, "WORDWRAP_STATE_CHECK: Y=%d: Checking ShowString state BEFORE empty-line logic. m_bWordWrapState=%d\n", Y, ShowString.GetWordWrap());
+
+			// --- Специальная отрисовка для выделенных пустых строк ---
+			if (m_bWordWrap && CurLogicalLine->GetLength() == 0)
+			{
+				int RealSelStart, RealSelEnd;
+				CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
+				fprintf(stderr, "WORDWRAP_EMPTY_SEL: Y=%d, LogLine=%d is empty. RealSel=[%d, %d]\n", Y, CalcDistance(TopList, CurLogicalLine, -1), RealSelStart, RealSelEnd);
+
+				// Условие, что строка "полностью выделена" (т.е. выделение перешло на следующую строку)
+				if (RealSelStart == 0 && RealSelEnd == -1)
+				{
+					fprintf(stderr, "WORDWRAP_EMPTY_SEL: ---> Condition MET. Modifying ShowString to draw fake selection.\n");
+					ShowString.SetString(L" ");
+					ShowString.Select(0, -1);
+					fprintf(stderr, "WORDWRAP_EMPTY_SEL: ---> ShowString now contains ' ' and is fully selected.\n");
+				}
+				else
+				{
+					fprintf(stderr, "WORDWRAP_EMPTY_SEL: ---> Condition NOT met. Drawing as a normal empty line.\n");
+				}
+			}
+
+			fprintf(stderr, "WORDWRAP_STATE_CHECK: Y=%d: Checking ShowString state AFTER empty-line logic. m_bWordWrapState=%d\n", Y, ShowString.GetWordWrap());
+
 			bool background_filled = false;
-			// Special handling for entirely empty visual lines (which could be the only visual line of an empty logical line)
+			// Special handling for syntax highlighting on empty visual lines
 			if (m_bWordWrap && VisualLineStart == VisualLineEnd)
 			{
 				ColorItem current_ci;
+
 				// Check for an encompassing color item, typically the background color specified by the plugin
 				for (size_t i = 0; CurLogicalLine->GetColor(&current_ci, i); ++i)
 				{
@@ -518,6 +546,7 @@ void Editor::ShowEditor(int CurLineOnly)
 					if ((current_ci.StartPos <= 0 && current_ci.EndPos >= CurLogicalLine->GetLength() - 1)
 						|| (current_ci.StartPos == -1 && current_ci.EndPos == -1) )
 					{
+						fprintf(stderr, "WORDWRAP_BG_FILL_TRACE: Y=%d: Background fill triggered by ColorItem {StartPos=%d, EndPos=%d, Color=0x%llx}\n", Y, current_ci.StartPos, current_ci.EndPos, current_ci.Color);
 						// Apply background coloring directly to the screen buffer.
 						SetScreen(X1, Y, XX2, Y, L' ', current_ci.Color);
 						background_filled = true;
@@ -612,9 +641,19 @@ void Editor::ShowEditor(int CurLineOnly)
 				}
 			}
 
+			fprintf(stderr, "WORDWRAP_BG_FILL_TRACE: Y=%d: Final check before render block. background_filled = %d\n", Y, background_filled);
+
+			fprintf(stderr, "WORDWRAP_RENDER_PATH: Y=%d: Checking 'if (!background_filled)'. background_filled=%d\n", Y, background_filled);
 			if (!background_filled) // Only draw normally if we didn't manually fill the background
 			{
+				fprintf(stderr, "WORDWRAP_RENDER_PATH: Y=%d: ---> Entering NORMAL render path for ShowString.\n", Y);
+				int final_sel_start, final_sel_end;
+				ShowString.GetRealSelection(final_sel_start, final_sel_end);
+				fprintf(stderr, "WORDWRAP_RENDER_TRACE: Y=%d: PRE-RENDER DUMP. ShowString: Content='%.*ls', Len=%d, Sel=[%d,%d], m_bWordWrapState=%d, ObjWidth=%d\n",
+					Y, ShowString.GetLength(), ShowString.GetStringAddr(), ShowString.GetLength(), final_sel_start, final_sel_end, ShowString.GetWordWrap(), ShowString.ObjWidth);
+
 				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+
 				{
 					int CurPos = CurLine->GetCurPos();
 					int VisualCurPos = CurPos - VisualLineStart;
@@ -630,18 +669,35 @@ void Editor::ShowEditor(int CurLineOnly)
 					ShowString.FastShow();
 				}
 			}
-			else if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+			else // This 'else' corresponds to 'if (!background_filled)'
 			{
-				// This is the cursor line, but it was empty and the background was drawn by SetScreen.
-				// The regular Show()/FastShow() path was skipped, so we need to position the cursor manually.
-				ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
-				if (ShowString.Flags.Check(FEDITLINE_OVERTYPE)) {
-					::SetCursorType(1, Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
-				} else {
-					::SetCursorType(1, Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+				// Even if background was filled, we might need to draw our fake selection cursor on top of it.
+				if (m_bWordWrap && CurLogicalLine->GetLength() == 0)
+				{
+					int RealSelStart, RealSelEnd;
+					CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
+					if (RealSelStart == 0 && RealSelEnd == -1)
+					{
+						fprintf(stderr, "WORDWRAP_OVERRIDE_DRAW: Y=%d: Drawing fake selection OVER plugin background.\n", Y);
+						// Draw a single selected space directly to the screen buffer
+						SetScreen(X1, Y, X1, Y, L' ', FarColorToReal(COL_EDITORSELECTEDTEXT));
+					}
 				}
-				// For an empty line, cursor is always at the beginning.
-				MoveCursor(X1, Y);
+
+				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+				{
+					fprintf(stderr, "WORDWRAP_RENDER_PATH: Y=%d: ---> Entering BACKGROUND_FILLED cursor positioning path.\n", Y);
+					// This is the cursor line, but it was empty and the background was drawn by SetScreen.
+					// The regular Show()/FastShow() path was skipped, so we need to position the cursor manually.
+					ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+					if (ShowString.Flags.Check(FEDITLINE_OVERTYPE)) {
+						::SetCursorType(1, Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
+					} else {
+						::SetCursorType(1, Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+					}
+					// For an empty line, cursor is always at the beginning.
+					MoveCursor(X1, Y);
+				}
 			}
 
 			// Advance to the next visual line

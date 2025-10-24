@@ -1120,9 +1120,10 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				Show();
 				return (TRUE);
 			}
-			case KEY_ALTW: {
-				m_editor->SetWordWrap(!m_editor->GetWordWrap());
-				fprintf(stderr, "WORDWRAP: KEY_ALTW toggled WordWrap to %d\n", m_editor->GetWordWrap());
+		case KEY_ALTW: {
+			fprintf(stderr, "WORDWRAP_SYNC_TRACE: FileEditor::ProcessKey(KEY_ALTW) caught. Will call m_editor->SetWordWrap(%d)\n", !m_editor->GetWordWrap());
+			m_editor->SetWordWrap(!m_editor->GetWordWrap());
+			fprintf(stderr, "WORDWRAP: KEY_ALTW toggled WordWrap to %d\n", m_editor->GetWordWrap());
 				m_editor->Show();
 				ChangeEditKeyBar();
 				ShowStatus();

@@ -445,7 +445,7 @@ void Editor::ShowEditor(int CurLineOnly)
 
 			// Create a temporary Edit object for rendering this visual line
 			Edit ShowString(this, nullptr, false);
-			fprintf(stderr, "WORDWRAP_STATE_CHECK: Y=%d: Checking ShowString state AT CREATION. m_bWordWrapState=%d\n", Y, ShowString.GetWordWrap());
+			fprintf(stderr, "WORDWRAP_STATE_CHECK: [CONFIRMATION #1] Y=%d: Created temporary ShowString object %p. Initial m_bWordWrapState=%d\n", Y, &ShowString, ShowString.GetWordWrap());
 
 			ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
 			ShowString.SetCurPos(0);
@@ -470,36 +470,40 @@ void Editor::ShowEditor(int CurLineOnly)
 				// 1. Calculate selection range relative to ShowString's internal string (0 to StringLength)
 				int ShowSelStart = SelStart - VisualLineStart;
 				int ShowSelEnd = (SelEnd == -1) ? -1 : SelEnd - VisualLineStart;
-				fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Calculated relative selection: ShowSelStart=%d, ShowSelEnd=%d\n", Y, ShowSelStart, ShowSelEnd);
 
-				// 2. Clamp Start: if selection starts before this visual line, force relative start to 0
-				if (ShowSelStart < 0)
-					ShowSelStart = 0;
+				// 2. Clamp Start & End
+				if (ShowSelStart < 0) ShowSelStart = 0;
+				if (ShowSelEnd != -1 && ShowSelEnd > StringLength) ShowSelEnd = StringLength;
 
-				// 3. Clamp End: if selection ends after this visual line (and not at EOL/SelEnd=-1),
-				//    force relative end to StringLength.
-				if (ShowSelEnd != -1 && ShowSelEnd > StringLength)
-					ShowSelEnd = StringLength;
-
-				// 4. Set selection on ShowString if the resulting range has an overlap
+				// 4. Set selection on ShowString if there is an overlap
 				if (ShowSelStart < StringLength || SelEnd == -1 || (SelStart == SelEnd && CurLogicalLine->GetLength() == 0))
 				{
-					if (SelEnd == -1) // Use original logical SelEnd to decide
+					int TargetSelStart = -1, TargetSelEnd = 0;
+
+					if (SelEnd == -1)
 					{
-						fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Condition (SelEnd == -1) is TRUE. Selecting entire visual line.\n", Y);
-						// Propagate end-of-string selection marker if the logical selection went to EOL.
-						ShowString.Select(ShowSelStart, -1);
+						TargetSelStart = ShowSelStart;
+						TargetSelEnd = -1;
 					}
 					else if (ShowSelEnd > ShowSelStart)
 					{
-						ShowString.Select(ShowSelStart, ShowSelEnd);
+						TargetSelStart = ShowSelStart;
+						TargetSelEnd = ShowSelEnd;
 					}
-					// Special case for selection on an empty logical line (like [0,0])
-					// which should be rendered as a full-line selection.
 					else if (SelStart == SelEnd && CurLogicalLine->GetLength() == 0)
 					{
-						fprintf(stderr, "WORDWRAP_SEL_TRACE: Y=%d: Empty line full selection case triggered. SelStart=%d, SelEnd=%d, StrLen=%d\n", Y, SelStart, SelEnd, CurLogicalLine->GetLength());
-						ShowString.Select(0, -1);
+						TargetSelStart = 0;
+						TargetSelEnd = -1;
+					}
+
+					if (TargetSelStart != -1)
+					{
+						fprintf(stderr, "WORDWRAP_SHOWSTRING_TRACE: [CONFIRMATION #2] Y=%d: Calling ShowString.Select() with parameters: Start=%d, End=%d\n", Y, TargetSelStart, TargetSelEnd);
+						ShowString.Select(TargetSelStart, TargetSelEnd);
+
+						int DbgGetSelStart, DbgGetSelEnd;
+						ShowString.GetSelection(DbgGetSelStart, DbgGetSelEnd);
+						fprintf(stderr, "WORDWRAP_SHOWSTRING_TRACE: [CONFIRMATION #3] Y=%d: Immediately after, ShowString.GetSelection() returns: Start=%d, End=%d. (State was m_bWordWrapState=%d)\n", Y, DbgGetSelStart, DbgGetSelEnd, ShowString.GetWordWrap());
 					}
 				}
 			}
@@ -1712,45 +1716,74 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_SHIFTNUMPAD2: {
 			if (m_bWordWrap)
 			{
-				// Check if we are moving to a new visual line within the same logical line
-				if (m_CurVisualLineInLogicalLine + 1 < CurLine->GetVisualLineCount())
+				fprintf(stderr, "WORDWRAP_FIX: Entered UNIFIED Shift+Down handler. L:%d, V:%d. SelFirst=%d, SelAtBeginning=%d\n", NumLine, m_CurVisualLineInLogicalLine, SelFirst, SelAtBeginning);
+
+				if (!CurLine->m_next && (m_CurVisualLineInLogicalLine + 1 >= CurLine->GetVisualLineCount()))
 				{
-					const int OldPos = CurLine->GetCurPos();
-					int OldSelStart, OldSelEnd;
-					CurLine->GetRealSelection(OldSelStart, OldSelEnd);
-
-					Down(); // Move cursor to next visual line (stays on same logical line)
-
-					// Now, simply adjust the selection on this single line
-					if (SelFirst)
-					{
-						BlockStart = CurLine;
-						BlockStartLine = NumLine;
-						CurLine->Select(OldPos, CurLine->GetCurPos());
-					}
-					else if (SelAtBeginning)
-					{
-						// Moving the start of the selection down, shrinking it
-						CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
-					}
-					else
-					{
-						// Moving the end of the selection down, extending it
-						CurLine->Select(OldSelStart, CurLine->GetCurPos());
-					}
+					// We are on the very last visual line of the very last logical line. Do nothing.
 					Show();
 					return TRUE;
 				}
-				// If we fall through, we are crossing to a different logical line,
-				// so the original logic below is mostly applicable.
-			}
-			if (!CurLine->m_next)
-				return TRUE;
 
+				const int OldPos = CurLine->GetCurPos();
+				Edit* OldLine = CurLine;
+				int OldSelStart, OldSelEnd;
+				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
+
+				fprintf(stderr, "WORDWRAP_FIX: State before Down(): OldLine=%p(L:%d), OldPos=%d, OldSel=[%d, %d]\n", OldLine, NumLine, OldPos, OldSelStart, OldSelEnd);
+
+				Down();
+
+				fprintf(stderr, "WORDWRAP_FIX: State after Down():  NewLine=%p(L:%d), NewPos=%d\n", CurLine, NumLine, CurLine->GetCurPos());
+
+				if (OldLine == CurLine)
+				{
+					fprintf(stderr, "WORDWRAP_FIX: Path: Same logical line.\n");
+					// Moved within the same logical line.
+					if (SelFirst) {
+						BlockStart = CurLine;
+						BlockStartLine = NumLine;
+						CurLine->Select(OldPos, CurLine->GetCurPos());
+					} else if (SelAtBeginning) {
+						CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
+					} else {
+						CurLine->Select(OldSelStart, CurLine->GetCurPos());
+					}
+				}
+				else // Crossed a logical line boundary
+				{
+					fprintf(stderr, "WORDWRAP_FIX: Path: Crossed logical line boundary.\n");
+					if (SelFirst) {
+						BlockStart = OldLine;
+						BlockStartLine = NumLine - 1;
+						OldLine->Select(OldPos, -1);
+						CurLine->Select(0, CurLine->GetCurPos());
+					} else if (SelAtBeginning) {
+						BlockStart = CurLine;
+						BlockStartLine = NumLine;
+						OldLine->Select(-1, 0); // Deselect the old line
+						CurLine->Select(CurLine->GetCurPos(), OldSelEnd); // This assumes OldSelEnd is on the new line, which is not true. Should be empty.
+					} else {
+						OldLine->Select(OldSelStart, -1);
+						CurLine->Select(0, CurLine->GetCurPos());
+					}
+				}
+
+				Show();
+				return TRUE;
+			}
+
+			if (m_bWordWrap) {
+				fprintf(stderr, "WORDWRAP_SHIFTDOWN: Original real cursor position on line %d is %d\n", NumLine, CurPos);
+			}
 			CurPos = CurLine->RealPosToCell(CurPos);
+			if (m_bWordWrap) {
+				fprintf(stderr, "WORDWRAP_SHIFTDOWN: Converted to cell position: %d\n", CurPos);
+			}
 
 			if (SelAtBeginning)		// Снимаем выделение
 			{
+				if (m_bWordWrap) fprintf(stderr, "WORDWRAP_SHIFTDOWN_DIAG: non-WW path: SelAtBeginning branch\n");
 				if (SelEnd == -1) {
 					CurLine->Select(-1, 0);
 					BlockStart = CurLine->m_next;
@@ -1760,6 +1793,9 @@ int Editor::ProcessKey(FarKey Key)
 				}
 
 				CurLine->m_next->GetRealSelection(SelStart, SelEnd);
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_SHIFTDOWN (SelAtBeginning): Next line initial selection is [%d, %d]\n", SelStart, SelEnd);
+				}
 
 				if (SelStart != -1)
 					SelStart = CurLine->m_next->RealPosToCell(SelStart);
@@ -1798,8 +1834,20 @@ int Editor::ProcessKey(FarKey Key)
 			} else		// расширяем выделение
 			{
 				CurLine->Select(SelStart, -1);
+				if (m_bWordWrap) {
+					int DbgSelStart, DbgSelEnd; CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
+					fprintf(stderr, "WORDWRAP_SHIFTDOWN_DIAG: non-WW path: Old line (%d) selection set to [%d, %d]\n", NumLine, DbgSelStart, DbgSelEnd);
+				}
 				SelStart = CurLine->m_next->CellPosToReal(0);
 				SelEnd = CurLine->m_next->CellPosToReal(CurPos);
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_SHIFTDOWN_DIAG: non-WW path: New line (%d) calculated real selection as [%d, %d] based on cell pos %d\n", NumLine+1, SelStart, SelEnd, CurPos);
+				}
+				if (m_bWordWrap) {
+					int OldSelStart = 0; // In this branch, SelStart is overwritten, so we can't get the old value easily. For logging, 0 is a reasonable assumption.
+					fprintf(stderr, "WORDWRAP_SHIFTDOWN (Extending): Old line selection becomes [%d, -1]. New line selection will be from cell 0 to cell %d.\n", OldSelStart, CurPos);
+					fprintf(stderr, "WORDWRAP_SHIFTDOWN (Extending): New line real selection calculated as [%d, %d].\n", SelStart, SelEnd);
+				}
 			}
 
 			if (!EdOpt.CursorBeyondEOL && SelEnd > CurLine->m_next->GetLength()) {
@@ -1814,7 +1862,12 @@ int Editor::ProcessKey(FarKey Key)
 			//				CurLine->m_next->Select(-1,0);
 			//			else
 			CurLine->m_next->Select(SelStart, SelEnd);
+			if (m_bWordWrap) {
+				int DbgSelStart, DbgSelEnd; CurLine->m_next->GetRealSelection(DbgSelStart, DbgSelEnd);
+				fprintf(stderr, "WORDWRAP_SHIFTDOWN_DIAG: non-WW path: New line (%d) final selection set to [%d, %d]\n", NumLine + 1, DbgSelStart, DbgSelEnd);
+			}
 			Down();
+			if (m_bWordWrap) fprintf(stderr, "WORDWRAP_SHIFTDOWN_DIAG: non-WW path: After Down(), new NumLine=%d, new CurPos=%d\n", NumLine, CurLine->GetCurPos());
 			Show();
 			return TRUE;
 		}
@@ -3891,6 +3944,14 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 
 void Editor::InsertString()
 {
+	if (m_bWordWrap) {
+		const wchar_t* str_addr;
+		int str_len;
+		CurLine->GetBinaryString(&str_addr, nullptr, str_len);
+		fprintf(stderr, "WORDWRAP_TRUNCATE_TRACE: ==> Editor::InsertString() called.\n");
+		fprintf(stderr, "WORDWRAP_TRUNCATE_TRACE:     Line content (first 100): '%.100ls'\n", str_addr);
+		fprintf(stderr, "WORDWRAP_TRUNCATE_TRACE:     CurPos=%d, StrLen=%d\n", CurLine->GetCurPos(), str_len);
+	}
 	if (Flags.Check(FEDITOR_LOCKMODE))
 		return;
 
@@ -4050,7 +4111,22 @@ void Editor::InsertString()
 	if (CurLine == EndList)
 		EndList = NewString;
 
-	Down();
+	if (m_bWordWrap)
+	{
+		// In WW mode, Down() tries to navigate visually, which is wrong here.
+		// We need the simple logical "move to next line" behavior.
+		CurLine = CurLine->m_next;
+		NumLine++;
+		m_CurVisualLineInLogicalLine = 0;
+		// The auto-indent logic below will handle setting the correct CurPos,
+		// but we must start at 0 before that.
+		CurLine->SetCurPos(0);
+		fprintf(stderr, "WORDWRAP_FIX: In InsertString, manually moved to next logical line. New L:%d V:%d\n", NumLine, m_CurVisualLineInLogicalLine);
+	}
+	else
+	{
+		Down();
+	}
 
 	if (IndentPos > 0) {
 		int OrgIndentPos = IndentPos;
@@ -4130,6 +4206,7 @@ void Editor::InsertString()
 
 void Editor::Down()
 {
+	fprintf(stderr, "WORDWRAP_DOWN: Entered. L:%d, V:%d, WW=%d\n", NumLine, m_CurVisualLineInLogicalLine, m_bWordWrap);
  	if (m_bWordWrap)
 	{
 		// Defensively re-synchronize the current visual line with the cursor's actual position.
@@ -4781,10 +4858,16 @@ void Editor::Paste(const wchar_t *Src)
 		int oldAutoIndent = EdOpt.AutoIndent;
 
 		for (int I = 0; ClipText[I];) {
+			if (m_bWordWrap) {
+				fprintf(stderr, "WORDWRAP_PASTE_CHAIN: ==> Editor::Paste loop iteration. NumLine=%d, CurPos=%d, StrLen=%d\n", NumLine, CurLine->GetCurPos(), CurLine->GetLength());
+			}
 			if (ClipText[I] == L'\n' || ClipText[I] == L'\r') {
 				CurLine->Select(StartPos, -1);
 				StartPos = 0;
 				EdOpt.AutoIndent = FALSE;
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_PASTE_CHAIN:     About to simulate KEY_ENTER. CurPos before split is %d.\n", CurLine->GetCurPos());
+				}
 				ProcessKey(KEY_ENTER);
 
 				if (ClipText[I] == L'\r' && ClipText[I + 1] == L'\n')
@@ -4822,7 +4905,13 @@ void Editor::Paste(const wchar_t *Src)
 					CurPos = CurLine->GetCurPos();
 					// EOL? - CurLine->GetEOL() GlobalEOL ""
 					AddUndoData(UNDO_EDIT, Str, CurLine->GetEOL(), NumLine, CurPos, Length);
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_PASTE_CHAIN:     About to InsertBinaryString with %d chars: '%.*ls...'\n", Pos - I, 20, &ClipText[I]);
+				}
 					CurLine->InsertBinaryString(&ClipText[I], Pos - I);
+				if (m_bWordWrap) {
+					fprintf(stderr, "WORDWRAP_PASTE_CHAIN:     After InsertBinaryString. New CurPos=%d, new StrLen=%d\n", CurLine->GetCurPos(), CurLine->GetLength());
+				}
 				}
 
 				I = Pos;
@@ -4874,6 +4963,7 @@ void Editor::Copy(int Append)
 
 wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 {
+	fprintf(stderr, "WORDWRAP_FLAG_CHECK: In Block2Text, this->m_bWordWrap is %d\n", this->m_bWordWrap);
 	size_t DataSize = 0;
 
 	if (ptrInitData)
@@ -4909,16 +4999,31 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 		*CopyData = 0;
 	}
 
-	for (Edit *Ptr = BlockStart; Ptr; Ptr = Ptr->m_next) {
+
+	int line_in_block = 0;
+	for (Edit *Ptr = BlockStart; Ptr; Ptr = Ptr->m_next, ++line_in_block) {
+		int RealStartSel, RealEndSel;
 		Ptr->GetSelection(StartSel, EndSel);
-		if (StartSel == -1)
+		Ptr->GetRealSelection(RealStartSel, RealEndSel);
+
+		fprintf(stderr, "WORDWRAP_B2T_DIAG: ===== Line %d in block (Edit obj %p, m_bWordWrapState=%d) =====\n", line_in_block, Ptr, Ptr->GetWordWrap());
+		fprintf(stderr, "WORDWRAP_B2T_DIAG:   GetSelection()    -> StartSel=%d, EndSel=%d\n", StartSel, EndSel);
+		fprintf(stderr, "WORDWRAP_B2T_DIAG:   GetRealSelection()-> RealStartSel=%d, RealEndSel=%d\n", RealStartSel, RealEndSel);
+		fprintf(stderr, "WORDWRAP_B2T_DIAG:   Str->GetLength()  -> %d\n", Ptr->GetLength());
+
+
+		if (StartSel == -1) {
+			fprintf(stderr, "WORDWRAP_B2T_DIAG: End of selection block found. Breaking loop.\n");
 			break;
+		}
 
 		int Length;
 		if (EndSel == -1)
 			Length = Ptr->GetLength() - StartSel;
 		else
 			Length = EndSel - StartSel;
+
+		fprintf(stderr, "WORDWRAP_B2T_DIAG:   Calculated copy Length = %d\n", Length);
 
 		Ptr->GetSelString(CopyData + DataSize, Length + 1);
 		DataSize+= Length;
@@ -4929,6 +5034,7 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 		}
 	}
 
+	fprintf(stderr, "WORDWRAP_B2T_DEBUG: Final Block2Text result before returning:\n--BEGIN--\n%ls\n--END--\n", CopyData);
 	return CopyData;
 }
 
@@ -7259,7 +7365,8 @@ void Editor::SetTabSize(int NewSize)
 
 void Editor::SetWordWrap(int NewMode)
 {
-	fprintf(stderr, "WORDWRAP_DIAG: Editor::SetWordWrap called with NewMode=%d. Current m_bWordWrap=%d. this=%p\n", NewMode, m_bWordWrap, this);
+	fprintf(stderr, "WORDWRAP_SYNC_TRACE: ===== Editor::SetWordWrap =====\n");
+	fprintf(stderr, "WORDWRAP_SYNC_TRACE:   Input NewMode=%d. Current Editor->m_bWordWrap=%d. this=%p\n", NewMode, m_bWordWrap, this);
 	m_TopScreenLogicalLine = TopScreen;
 	m_TopScreenVisualLine = 0;
 
@@ -7271,13 +7378,18 @@ void Editor::SetWordWrap(int NewMode)
 		if (EdOpt.ShowScrollBar)
 			Width--;
 
+		fprintf(stderr, "WORDWRAP_SYNC_TRACE:   Starting loop to update all Edit objects...\n");
 		Edit *CurPtr = TopList;
+		int line_idx = 0;
 		while (CurPtr)
 		{
+			fprintf(stderr, "WORDWRAP_SYNC_TRACE:     Line %d: Calling CurPtr->SetWordWrap(%d) for Edit obj %p\n", line_idx, m_bWordWrap, CurPtr);
 			CurPtr->SetWordWrap(m_bWordWrap);
 			CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
 			CurPtr = CurPtr->m_next;
+			line_idx++;
 		}
+		fprintf(stderr, "WORDWRAP_SYNC_TRACE:   Loop finished. %d lines updated.\n", line_idx);
 	}
 }
 
@@ -7420,7 +7532,8 @@ void Editor::PR_EditorShowMsg()
 
 Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 {
-	fprintf(stderr, "WORDWRAP_TRACE: ---> Editor::CreateString()\n");
+	fprintf(stderr, "WORDWRAP_SYNC_TRACE: ===== Editor::CreateString =====\n");
+	fprintf(stderr, "WORDWRAP_SYNC_TRACE:   Creating new Edit object. Current Editor->m_bWordWrap is %d.\n", this->m_bWordWrap);
 	Edit *pEdit = new (std::nothrow) Edit(this, nullptr, lpwszStr ? false : true);
 
 	if (pEdit) {

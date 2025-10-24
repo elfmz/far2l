@@ -1407,6 +1407,11 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD9:
 		case KEY_CTRLSHIFTHOME:
 		case KEY_CTRLSHIFTNUMPAD7: {
+{
+int DbgSelStart, DbgSelEnd;
+CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
+fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+Home/PgUp family) entered. CurLine=%d, SelStart=%d, SelEnd=%d\n", NumLine, DbgSelStart, DbgSelEnd);
+}
 			Lock();
 			Pasting++;
 
@@ -1426,6 +1431,11 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD3:
 		case KEY_CTRLSHIFTEND:
 		case KEY_CTRLSHIFTNUMPAD1: {
+{
+int DbgSelStart, DbgSelEnd;
+CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
+fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entered. CurLine=%d, SelStart=%d, SelEnd=%d\n", NumLine, DbgSelStart, DbgSelEnd);
+}
 			Lock();
 			Pasting++;
 
@@ -1503,7 +1513,7 @@ int Editor::ProcessKey(FarKey Key)
 				int start, end;
 				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
 				fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Will select towards start: %d.\n", start, end, CurLine->GetCurPos(), start);
-				
+
 				Pasting++;
 				Lock();
 				while(CurLine->GetCurPos() > start)
@@ -1521,7 +1531,7 @@ int Editor::ProcessKey(FarKey Key)
 				Show();
 				return TRUE;
 			}
-			
+
 			Pasting++;
 			Lock();
 
@@ -1561,7 +1571,7 @@ int Editor::ProcessKey(FarKey Key)
 					{
 					    targetPos--;
 					}
-					while(CurLine->GetCurPos() < targetPos)					
+					while(CurLine->GetCurPos() < targetPos)
 					{
 						int oldPos = CurLine->GetCurPos();
 						ProcessKey(KEY_SHIFTRIGHT);
@@ -1576,7 +1586,7 @@ int Editor::ProcessKey(FarKey Key)
 					Show();
 					return TRUE;
 				}
-				
+
 				int LeftPos = CurLine->GetLeftPos();
 				Pasting++;
 				Lock();
@@ -1801,6 +1811,7 @@ int Editor::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTDOWN:
 		case KEY_SHIFTNUMPAD2: {
+			fprintf(stderr, "WORDWRAP_B2T_FIX: [Enter KEY_SHIFTDOWN] SelStart=%d, SelEnd=%d, SelAtBeginning=%d, SelFirst=%d, BlockStartLine=%d, NumLine=%d\n", SelStart, SelEnd, SelAtBeginning, SelFirst, BlockStartLine, NumLine);
 			if (m_bWordWrap)
 			{
 				fprintf(stderr, "WORDWRAP_FIX: Entered UNIFIED Shift+Down handler. L:%d, V:%d. SelFirst=%d, SelAtBeginning=%d\n", NumLine, m_CurVisualLineInLogicalLine, SelFirst, SelAtBeginning);
@@ -1823,6 +1834,8 @@ int Editor::ProcessKey(FarKey Key)
 
 				fprintf(stderr, "WORDWRAP_FIX: State after Down():  NewLine=%p(L:%d), NewPos=%d\n", CurLine, NumLine, CurLine->GetCurPos());
 
+				fprintf(stderr, "WORDWRAP_B2T_FIX: SHIFTDOWN. BlockStartLine=%d, NumLine=%d (OldLine)\n", BlockStartLine, NumLine - 1);
+
 				if (OldLine == CurLine)
 				{
 					fprintf(stderr, "WORDWRAP_FIX: Path: Same logical line.\n");
@@ -1841,16 +1854,22 @@ int Editor::ProcessKey(FarKey Key)
 				{
 					fprintf(stderr, "WORDWRAP_FIX: Path: Crossed logical line boundary.\n");
 					if (SelFirst) {
+						fprintf(stderr, "WORDWRAP_FIX: Path: Crossed logical line boundary. 1\n");
 						BlockStart = OldLine;
 						BlockStartLine = NumLine - 1;
 						OldLine->Select(OldPos, -1);
 						CurLine->Select(0, CurLine->GetCurPos());
 					} else if (SelAtBeginning) {
+						fprintf(stderr, "WORDWRAP_FIX: Path: Crossed logical line boundary. 2\n");
+						fprintf(stderr, "WORDWRAP_LOG_SDOWN: Shrinking (SelAtBeginning). OldPos=%d, OldSel=[%d, %d]\n",
+							OldPos, OldSelStart, OldSelEnd);
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
 						OldLine->Select(-1, 0); // Deselect the old line
-						CurLine->Select(CurLine->GetCurPos(), OldSelEnd); // This assumes OldSelEnd is on the new line, which is not true. Should be empty.
+						
+						//CurLine->Select(CurLine->GetCurPos(), OldSelEnd); // This assumes OldSelEnd is on the new line, which is not true. Should be empty.
 					} else {
+						fprintf(stderr, "WORDWRAP_FIX: Path: Crossed logical line boundary. 3\n");
 						OldLine->Select(OldSelStart, -1);
 						CurLine->Select(0, CurLine->GetCurPos());
 					}
@@ -1960,6 +1979,7 @@ int Editor::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTUP:
 		case KEY_SHIFTNUMPAD8: {
+			fprintf(stderr, "WORDWRAP_B2T_FIX: [Enter KEY_SHIFTUP]\n");
 			if (m_bWordWrap)
 			{
 				UnmarkEmptyBlock();
@@ -3291,7 +3311,7 @@ int Editor::ProcessKey(FarKey Key)
 				int start, end;
 				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
 				fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Moving to end: %d.\n", start, end, CurLine->GetCurPos(), end);
-		
+
 				int targetPos = end;
 				// Если мы не в конце логической строки, и символ перед точкой переноса - пробел,
 				// то ставим курсор перед этим пробелом, чтобы не прыгать на следующую строку.
@@ -3300,15 +3320,15 @@ int Editor::ProcessKey(FarKey Key)
 				    targetPos--;
 				}
 				CurLine->SetCurPos(targetPos);
-				
+
 				Show();
 				return TRUE;
 			}
 			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
 			fprintf(stderr, "WORDWRAP_HOME_END_V3: KEY_END in non-WW mode, falling through to default.\n");
 			break;
-		}		
-		
+		}
+
 		default: {
 			{
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL
@@ -4052,13 +4072,26 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 
 	if (DelPtr->m_next)
 		DelPtr->m_next->m_prev = DelPtr->m_prev;
-
+ 
+	/*
 	if (DelPtr == TopScreen) {
 		if (TopScreen->m_next)
 			TopScreen = TopScreen->m_next;
 		else
 			TopScreen = TopScreen->m_prev;
 	}
+	*/
+
+	if (m_bWordWrap && DelPtr == m_TopScreenLogicalLine) {
+		if (m_TopScreenLogicalLine->m_next) {
+			m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_next;
+		} else {
+			m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
+		}
+		m_TopScreenVisualLine = 0;
+		fprintf(stderr, "WORDWRAP_DELETE_FIX: Deleted m_TopScreenLogicalLine (%p) at L:%d. New TopLogical is %p.\n", DelPtr, UndoLine, m_TopScreenLogicalLine);
+	}
+
 
 	if (DelPtr == TopList)
 		TopList = TopList->m_next;

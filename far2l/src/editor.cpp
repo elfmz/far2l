@@ -3299,7 +3299,7 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 			}
 			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
 			fprintf(stderr, "WORDWRAP_HOME_END_V3: KEY_HOME in non-WW mode, falling through to default.\n");
-			break;
+			//break;
 		}
 
 		case KEY_END:
@@ -3326,7 +3326,7 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 			}
 			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
 			fprintf(stderr, "WORDWRAP_HOME_END_V3: KEY_END in non-WW mode, falling through to default.\n");
-			break;
+			//break;
 		}
 
 		default: {

@@ -595,6 +595,7 @@ void TreeList::GetRoot()
 	FARString strPanelDir;
 	Panel *RootPanel = GetRootPanel();
 	RootPanel->GetCurDir(strPanelDir);
+	DeleteEndSlash(strPanelDir, true);
 	strRoot = strPanelDir;
 }
 
@@ -624,7 +625,7 @@ void TreeList::SyncDir()
 	FARString strPanelDir;
 	Panel *AnotherPanel = GetRootPanel();
 	AnotherPanel->GetCurDir(strPanelDir);
-
+	DeleteEndSlash(strPanelDir, true);
 	if (!strPanelDir.IsEmpty()) {
 		if (AnotherPanel->GetType() == FILE_PANEL) {
 			if (!SetDirPosition(strPanelDir)) {

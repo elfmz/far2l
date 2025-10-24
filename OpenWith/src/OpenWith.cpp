@@ -70,6 +70,11 @@ namespace OpenWith {
 			return INVALID_HANDLE_VALUE;
 		}
 
+		if (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES)) {
+			ShowError(GetMsg(MError), {GetMsg(MNotRealNames)});
+			return INVALID_HANDLE_VALUE;
+		}
+
 		if (pi.PanelType != PTYPE_FILEPANEL || pi.ItemsNumber <= 0) {
 			return INVALID_HANDLE_VALUE;
 		}
@@ -349,18 +354,7 @@ namespace OpenWith {
 		file_info.push_back({ GetMsg(MMimeType), join_strings(unique_mimes, L"; ") });
 
 		std::wstring all_cmds = join_strings(cmds, L"; ");
-
 		std::vector<Field> application_info = provider->GetCandidateDetails(app);
-		if (pathnames.size() > 1) {
-			// For multiple files, "Source" is ambiguous and should be removed.
-			const wchar_t* source_msg = GetMsg(MSource);
-			application_info.erase(
-				std::remove_if(application_info.begin(), application_info.end(),
-							   [source_msg](const Field& f){ return f.label == source_msg; }),
-				application_info.end()
-				);
-		}
-
 		Field launch_command { GetMsg(MLaunchCommand), all_cmds.c_str() };
 
 		return ShowDetailsDialogImpl(file_info, application_info, launch_command);

@@ -2977,6 +2977,10 @@ case KEY_CTRLNUMPAD3: {
 		case KEY_ALTSHIFTPGUP:
 		case KEY_ALTSHIFTNUMPAD9:
 		case KEY_ALTPGUP: {
+
+			if (m_bWordWrap)
+				return TRUE;
+
 			Pasting++;
 			Lock();
 
@@ -2991,6 +2995,10 @@ case KEY_CTRLNUMPAD3: {
 		case KEY_ALTSHIFTPGDN:
 		case KEY_ALTSHIFTNUMPAD3:
 		case KEY_ALTPGDN: {
+
+			if (m_bWordWrap)
+				return TRUE;
+
 			Pasting++;
 			Lock();
 

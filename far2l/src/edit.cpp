@@ -1622,6 +1622,8 @@ void Edit::GetVisualLine(int line, int& start, int& end) const
 
 void Edit::RecalculateWordWrap(int Width, int TabSize)
 {
+    Width--; // save last column for cursor
+
 	m_WrapBreaks.clear();
 	if (!m_bWordWrapState || Width <= 1)
 	{

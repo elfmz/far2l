@@ -136,7 +136,8 @@ $ # FAR2L features - Getting Started#
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
         - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries
 (to access clipboard and to get state of all keyboard modifiers), #almost perfect UX#;
-        - #TTY|X#: works in terminal mode, uses X11 to access clipboard, all keyboard works via terminal;
+        - #TTY|X#: works in terminal mode, uses X11 to access clipboard and to get state of keyboard modifiers.
+It provides better UX than plain TTY, but still some key combinations may be inaccessible;
         - #TTY#: plain terminal mode, no X11 dependencies, #UX with some restrictions#
 (works fully when running in the terminal emulators,
 which provide clipboard access and has their advanced keyboard-protocols, see list below).
@@ -168,7 +169,7 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
     - far2l-GUI only: both keys #Command# act as Left #Ctrl#, both keys #Ctrl# act as Right #Ctrl#;
     - #Clear# key on the numeric keypad toggles NumLock mode;
     - numpad #0# functions as #Insert# when NumLock is off;
-    - on external Windows keyboards, macOS swaps #Alt# and #Win# keys to match Mac layout logic.
+    - on external Windows keyboards, macOS swaps #Alt# and #Win# keys to match Mac layout logic (assuming the key closest to the spacebar on the left is #Command#, like on a MacBook keyboard).
 
 
  #macOS workaround# if far2l in macOS regularly asks permission to folders
@@ -202,8 +203,8 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
 You can run #far2l --tty --nodetect# to force not use others clipboard options.
     - Menu(#F9#)->Options->Interface settings->#Override base colors palette#
 (shown in the dialog only if FAR2L run in TTY/TTY|X mode) allows far2l to adjust terminal palette colors.
-If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts sequence in terminal after exit from far2l.
-
+If your terminal doesn't support OSC4 sequence you may turn it off to avoid ascii artifacts in terminal
+after far2l exiting.
 
  #Full-functional work with the system clipboard in a plain terminal version FAR2L TTY#
     To interact with the system clipboard you must not forget to enable #OSC 52# in both the #FAR2L settings#
@@ -237,7 +238,7 @@ for clipboard need turn on OSC 52)
     - #iTerm2# (macOS): ~https://gitlab.com/gnachman/iterm2~@https://gitlab.com/gnachman/iterm2@ & ~https://iterm2.com~@https://iterm2.com@
 (~TTY|a backend~@UIBackends@: keys by iTerm2 "raw keyboard" protocol;
 for clipboard need turn on OSC 52)
-    - #Windows Terminal#
+    - #Windows Terminal# [in win11 is installed by default, in win10 it needs to be installed]
 (~TTY|w backend~@UIBackends@: keys by win32-input-mode; for clipboard need turn on OSC 52; has mouse bug: ~https://github.com/microsoft/terminal/issues/15083~@https://github.com/microsoft/terminal/issues/15083@)
 
   Original PuTTY does not correctly send some keyboard shortcuts. Please use putty forks with special far2l TTY extensions support (fluent keypresses, clipboard sharing etc):
@@ -261,16 +262,16 @@ but vanilla PuTTY can not transfer clipboard.
         - #settings/colors.ini# - ~files highlighting and sort groups~@Highlight@
         - #settings/farcolors.ini# - interface colors (configurable via F9->~Options~@OptMenu@->Colors)
         - #settings/key_macros.ini# - ~keyboard macro commands~@KeyMacro@
-        - #settings/user_menu.ini# - main ~user menu~@UserMenu@ (the format is different from local user FarMenu.ini)
-        - #settings/associations.ini# - ~file associations~@FileAssoc@
-        - #settings/bookmarks.ini# - ~bookmarks~@Bookmarks@ to fast access to frequently used directories by RCtrl-0...9 or Ctrl-Alt-0...9
+        - #settings/user_menu.ini# - main ~user menu~@UserMenu@ (configurable via F9->Commands->Edit user menu; the format is different from local user FarMenu.ini)
+        - #settings/associations.ini# - ~file associations~@FileAssoc@ (configurable via F9->Commands->File associations)
+        - #settings/bookmarks.ini# - ~bookmarks~@Bookmarks@ to fast access to frequently used directories by RCtrl-0...9 or Ctrl-Alt-0...9 (configurable via F9->Commands->Folder bookmarks)
         - #favorites# - additional items in ~location menu~@DriveDlg@ by Alt-F1/F2
         - #cp# - forced setting of OEM and ANSI encodings (see ~ANSI and OEM codepage setting~@CodePagesSet@)
         - #plugins# - plugins
             - #plugins/state.ini# - plugins cache
             - #plugins/NetRocks/sites.cfg# - NetRocks sites
             - #plugins/multiarc/custom.ini# - customization by extend command line archivers
-        - #clipboard# - bash-script (must be chmod +x) for workaround to access to clipboard if other FAR2L tools do not work
+        - #clipboard# - bash-script (must be chmod +x) for workaround to access to clipboard if other built-in FAR2L tools do not work
 
 
     See also:
@@ -383,7 +384,7 @@ active panel, the second path - to the passive one:
   - ^<wrap>if a file is specified, FAR2L will change to the folder where it
 resides and place the cursor on the file, if it exists;
   - ^<wrap>when prefixes specified (simultaneous use with common paths allowed)
-passive command executes first (passive panel activates temporary). Односимвольные префиксы игнорируются.
+passive command executes first (passive panel activates temporary). Single-character prefixes are ignored.
   Example: far ma:Far20.7z "macro:post MsgBox(\\"FAR2L\\",\\"Successfully started\\")"
 
 
@@ -562,9 +563,9 @@ active panel. The following sort modes are available:
   Sort files by description                                 #Ctrl-F10#
   Sort files by file owner                                  #Ctrl-F11#
 
-  Клавиша #+# устанавливает прямую сортировку.
-  Клавиша #-# устанавливает обратную сортировку.
-  Клавиша #*# меняет сортировку на обратную.
+  Pressing #+# sets direct sort order.
+  Pressing #-# sets reverse sort order.
+  Pressing #*# toggles the sort order.
 
   Use group sorting                                        #Shift-F11#
   Show selected files first                                #Shift-F12#
@@ -573,12 +574,10 @@ active panel. The following sort modes are available:
 
   #Remarks on the numeric sort#
 
-    The sorting algorithm which is used by the operating system to sort file
-lists was changed in Windows XP. A numeric, not a string sort is used. FAR2L also
-allows to use a numeric sort as in Windows XP - leading zeros in a file name
-are ignored. The following example shows how the files are sorted:
+    FAR2L supports two sorting modes. The following example shows
+how the files are sorted:
 
-    Numeric sort (Windows XP)    String sort (Windows 2000)
+    Numeric sort                 String sort
 
     Ie4_01                       Ie4_01
     Ie4_128                      Ie4_128
@@ -710,12 +709,12 @@ editor, depending upon the file type and ~external editor settings~@EditorSettin
   ~Copy~@CopyFiles@                                                            #F5#
 
     Copies files and folders. If you wish to create the destination folder
-before copying, terminate the name with a backslash.
+before copying, terminate the name with a slash.
 
   ~Rename or move~@CopyFiles@                                                  #F6#
 
     Moves or renames files and folders. If you wish to create the destination
-folder before moving, terminate the name with a backslash.
+folder before moving, terminate the name with a slash.
 
   ~Create new folder~@MakeFolder@                                               #F7#
 
@@ -1034,7 +1033,7 @@ editor and viewer (see TechInfo##33).
 
 @Plugins
 $ #Plugins support#
-    External DLL modules (plugins) may be used to implement new FAR2L commands
+    External modules (plugins) may be used to implement new FAR2L commands
 and emulate file systems. For example, archives support, FTP client, temporary
 panel and network browser are plugins that emulate file systems.
 
@@ -1230,7 +1229,7 @@ $ #Panels: info panel#
  2. ^<wrap>Information about the current directory and its file system.
     ^<wrap>File system type, total space and space available to unprivileged user, filesystem id, the current
 directory and its resolved path (including symbolic links), mount point of the current directory's file system,
-maximum filename length, and mount options.
+maximum allowed filename length for the given FS type, and flags with which the filesystem is mounted.
 
  3. ^<wrap>Memory information.
     ^<wrap>Memory load percentage (100% means all of available memory is used), total usable main memory size,
@@ -1276,7 +1275,6 @@ as well.
     For folders, the quick view panel displays total size, total compressed
 size, number of files and subfolders in the folder, current disk cluster size,
 real files size, including files slack (sum of the unused cluster parts).
-Compressed size has meaning for NTFS drives only.
 
     When viewing reparse points, the path to the source folder is also displayed.
 
@@ -1427,7 +1425,7 @@ $ #Menus: commands menu#
    #History#              Display the previous commands.
                         See ~History~@History@ for more info.
 
-   #Video mode#           Switch between 25 and 50 lines on the screen.
+   #Video mode#           Switch between full-screen and windowed modes.
 
    #Find folder#          Search for a folder in the folders
                         tree. See ~Find folder~@FindFolder@ for more info.
@@ -1705,15 +1703,16 @@ containing hexadecimal sequence of the specified bytes. In this case #Case#
 #sensitive#, #Whole words#, #Using code page# and #Search for folders#
 options are disabled and their values doesn't affect the search process.
 
-    Выпадающий список #Используя кодовую страницу# позволяет выбрать конкретную
-кодовую страницу, применяемую для поиска текста. Если в выпадающем списке выбрать
-пункт #Все кодовые страницы#, то FAR2L будет использовать для поиска все стандартные
-и #Любимые# кодовые страницы (список #Любимых# кодовых страниц можно настроить в
-меню выбора кодовой страницы редактора или программы просмотра). Если перечень
-кодовых страниц, поиск по которым производится при выборе пункта #Все кодовые#
-#страницы#, является для вас избыточным, то вы можете, при помощи клавиш #Ins# и
-#Space#, выбрать из списка стандартных и #Любимых# кодовых страниц только те кодовые
-страницы, по которым вам необходимо осуществлять поиск.
+    The drop-down list #Using code page# allows you to select a specific  
+code page to be used for text search. If you select the item
+#Standard code pages# in the drop-down list, FAR2L will use all
+standard and #Favorite# code pages for the search (the list of #Favorite#
+code pages can be configured in the code page selection menu of the
+editor or viewer).
+    If the list of code pages searched when selecting
+#Standard code pages# is excessive for your needs, you can use the
+#Ins# and #Space# keys to choose only those standard and #Favorite#
+code pages from the list that you want to include in the search.
 
     If the option #Search in archives# is set, FAR2L also performs the search in
 archives with known formats. However, using this option significantly decreases
@@ -1770,7 +1769,7 @@ file will be ignored even if the required sequence exists there.
     P - for petabytes;
     E - for exabytes.
 
-  - #Column types# - позволяет задавать формат вывода результатов поиска.
+  - #Column types# - allows you to set the output format for search results.
 Column types are encoded as one or several characters, delimited with commas.
 Allowed column types are:
 
@@ -1801,12 +1800,12 @@ Allowed column types are:
     Z          - file descriptions
 
     O[L]       - file owner
-                 where: L - show domain name;
+                 where: L - show domain name (Windows legacy);
+    U          - file group
 
     LN         - number of hard links
 
     F          - number of streams
-
 
     Windows file attributes have the following indications:
        #R#         - Read only
@@ -1838,37 +1837,33 @@ Allowed column types are:
        #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
        #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
 
-    The "Sparse" attribute applies only to files and is shown instead of 'L'. The
-"Encrypted" attribute is shown instead of 'C' as a file/folder can not have both
-attributes ("Compressed" and "Encrypted") set at the same time.
     By default the size of the attributes column is 6 characters. To display
 the additional 'T', 'I', 'O' and 'V' attributes it is necessary to manually
 set the size of the column to 10 characters.
 
-    #Ширина колонок# - позволяет изменить ширину колонок результатов поиска.
-Если ширина равна 0, то используется значение по умолчанию.
+    #Column widths# - allows you to change the width of the search result columns.
+If the width is 0, the default value is used.
 
-    Для использования 12-часового формата времени надо увеличить
-на единицу стандартную ширину колонки времени файла или колонки
-времени и даты файла. После дальнейшего увеличения в этих колонках
-также будут показаны секунды и миллисекунды.
+    To use a 12-hour time format, you need to increase the standard width
+of the file time column or the file time and date column by one.
+Further increasing these columns will also show seconds and milliseconds.
 
-    Для показа года в 4-х символьном формате нужно увеличить ширину
-колонки даты на 2.
+    To show the year in a 4-digit format, you need to increase the width of
+the date column by 2.
 
-    В отличии от режимов панелей, результат поиска может содержать только
-одну колонку. Имя файла присутствует всегда - добавляется последней колонкой
-автоматически.
+    Unlike panel modes, the search result can contain only one of each
+column type. The file name is always present - it is automatically added as
+the last column.
 
-    При указании колонок, отвечающих за показ ссылок и потоков (G, LN, и F) время
-поиска увеличивается.
+    When specifying columns responsible for showing links and streams (G, LN, and F),
+the search time increases.
 
-    Чтобы в результатах поиска отображать только имена файловых объектов без
-дополнительных атрибутов, оставьте поле "Типы колонок" пустым.
+    To display only the names of file objects in the search results without
+additional attributes, leave the "Column types" field empty.
 
-    По умолчанию значения колонок равны:
-    "Типы колонок"   - D,S,A
-    "Ширина колонок" - 14,13,0
+    By default, the column values are:
+    "Column types"   - D,S,A
+    "Column widths"  - 14,13,0
 
 
 @FindFileResult
@@ -2014,12 +2009,6 @@ rule sets.
                    #[ ]# - exclusion attribute - the file must
                          not have this attribute.
                    #[?]# - ignore this attribute.
-
-                   The #Compressed#, #Encrypted#, #Not indexed#,
-                   #Sparse#, #Temporary# and #Offline# attributes
-                   are used only on disks with the NTFS file system.
-                   #Virtual# attribute is not used in Windows
-                   2000/XP/2003.
 
 
     To quickly disable one or several conditions, uncheck the corresponding
@@ -2644,6 +2633,8 @@ to your clipboard may be potentially unsafe.
 are inaccessible.
 
   #Override base colors palette# (*TTY-backend only)
+  If your terminal doesn't support OSC4 sequence you may turn it off to avoid show artifacts
+sequence in terminal after exit from far2l.
 
   #FAR window title#
   Information displayed in the console window title. Can contain any text
@@ -2888,7 +2879,7 @@ $ #Viewer: control keys#
     #Shift-F8#           Select code page
     #Alt-F8#             ~Change current position~@ViewerGotoPos@
     #Alt-F9#             Toggles the size of the FAR2L console window
-    #F9,Alt-Shift-F9#    Call ~Viewer settings~@EditorSettings@ dialog
+    #F9,Alt-Shift-F9#    Call ~Viewer settings~@ViewerSettings@ dialog
     #Numpad5,F3,F10,Esc# Quit
     #Ctrl-F10#           Position to the current file.
     #F11#                Call "~Plugin commands~@Plugins@" menu
@@ -2918,29 +2909,20 @@ $ #Viewer: control keys#
     1. Also to call search dialog you may just start typing the
        text to be located.
 
-    2. !! Windows legacy (not relevant on Linux/*BSD/Mac) !!
 
-       When the viewer opens a file, it permits the file to be
-       deleted by other processes. If such a deletion happens,
-       the file is actually deleted from the directory only after
-       the viewer is closed, but any operations on the deleted
-       file fail - this is a Windows feature.
-
-       !! Windows legacy end !!
-
-    3. The current version of FAR2L has a limitation on the maximum
+    2. The current version of FAR2L has a limitation on the maximum
        number of columns in the internal viewer - the number
        cannot exceed 2048. If a file contains a line that does not
        fit in this number of columns, it will be split into several
        lines, even if the word wrap mode is turned off.
 
-    4. FAR2L ~searches~@ViewerSearch@ the first occurrence of the string (#F7#) from
+    3. FAR2L ~searches~@ViewerSearch@ the first occurrence of the string (#F7#) from
        the beginning of the area currently displayed.
 
-    5. For automatic scrolling of a dynamically updating file,
+    4. For automatic scrolling of a dynamically updating file,
        position the "cursor" to the end of the file (End key).
 
-    6. Pressing Alt+PgUp/PgDn smoothly increases scrolling speed, futher releasing
+    5. Pressing Alt+PgUp/PgDn smoothly increases scrolling speed, futher releasing
        Alt while keeping PgUp/PgDn will continue scrolling with selected speed boost.
        Speed boost dismissed by releasing all keys for long time or pressing any other key.
 
@@ -3054,7 +3036,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Del#                     ^<wrap>Delete char (also may delete block, depending upon ~Editor settings~@EditorSettings@).
    #BS#                      Delete char left
    #Ctrl-Y#                  Delete line
-   #Ctrl-K#                  Delete to end of line
+   #Ctrl-K, Alt-D#           Delete to end of line
    #Ctrl-BS#                 Delete word left
    #Ctrl-T, Ctrl-Del#        Delete word right
 
@@ -3071,8 +3053,8 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Ctrl-Ins, Ctrl-C#        Copy block to clipboard
    #Ctrl-<Gray +>#           Append block to clipboard
    #Ctrl-D#                  Delete block
-   #Ctrl-P#                  ^<wrap>Copy block to current cursor position (in persistent blocks mode only)
-   #Ctrl-M#                  ^<wrap>Move block to current cursor position (in persistent blocks mode only)
+   #Ctrl-P#                  ^<wrap>Copy block to current cursor position (in persistent blocks mode only, clipboard is not modified)
+   #Ctrl-M#                  ^<wrap>Move block to current cursor position (in persistent blocks mode only, clipboard is not modified)
    #Alt-U#                   Shift block left
    #Alt-I#                   Shift block right
    #Shift-Tab#               Shift block left by Tab or by indent size (processed by SimpleIndent plugin)
@@ -3273,12 +3255,12 @@ $ #Code pages menu#
     The menu has two modes: full mode with visible #Other# section and brief
 mode with hidden #Other# section. The modes can be switched by pressing #Ctrl-H#.
 
-    #Ins# keypress moves codepage from #Other# to #Favorites#, #Del# moves the
-codepage back. Клавиша #F4# позволяет изменять отображаемые
-имена для #любимых# и #прочих# кодовых страниц (кодовые страницы для которых было
-изменено имя помечаются символом #*# перед именем).
+	#Ins# moves a code page from #Other# to #Favorites#; #Del# moves it back.
+The #F4# key allows you to change the display names for #Favorite# and #Other#
+code pages (code pages with a changed name are marked with a #*# symbol before
+the name).
 
-    Диалог ~Изменение имени кодовой страницы~@EditCodePageNameDlg@
+    ~Change code page name~@EditCodePageNameDlg@ Dialog
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
 
@@ -3289,21 +3271,21 @@ $ #ANSI and OEM codepage setting#
   or, if its absence, by environment variable #LC_CTYPE#
 
 @EditCodePageNameDlg
-$ #Изменение имени кодовой страницы#
-    Диалог #Изменение имени кодовой страницы# позволяет изменить отображаемое имя для
-#любимых# и #прочих# кодовых страниц.
+$ #Changing the code page name#
+    The #Changing the code page name# dialog allows you to change the display
+name for #Favorite# and #Other# code pages.
 
-    Примечания:
+    Notes:
 
-    - ^<wrap>Если ввести пустое имя кодовой страницы, то после подтверждения ввода
-отображаемое имя кодовой страницы примет значение по умолчанию, то есть имя полученное
-от системы.
-    - ^<wrap>Так же отображаемое имя кодовой страницы принимает значение по умолчанию
-после нажатия кнопки #Сбросить#.
+    - ^<wrap>If you enter an empty code page name, after confirming the input,
+the display name of the code page will be reset to its default value, i.e.,
+the name obtained from the system.
+    - ^<wrap>The display name of the code page is also reset to its default
+value after pressing the #Reset# button.
 
 @DriveDlg
 $ #Location menu#
-    This menu allows to change the current location of a panel, unmount mountpoint 
+    This menu allows to change the current location of a panel, unmount mountpoint
 or open a new ~plugin~@Plugins@ panel.
 
     Select the item and press Enter to change the location to specified filesystem path
@@ -3466,9 +3448,6 @@ will not be analyzed, and only file attributes will be taken into account.
 in the ~Panel settings~@PanelSettings@ dialog
 or may be switched by #Ctrl-Alt-M# in panels.
 
-    The Compressed, Encrypted, Not indexed, Sparse, Temporary attributes and
-Symbolic links are valid for NTFS drives only.
-
 
 @NotificationsSettings
 $ #Notifications settings#
@@ -3615,9 +3594,9 @@ $ #Settings dialog: editor#
 
   #Show scrollbar#          Show scrollbar.
 
-  #Pick up the word#        При вызове диалога поиска/замены в строку
-                          поиска будет подставляться слово, на
-                          котором стоит курсор.
+  #Pick up the word#        When the search/replace dialog is invoked,
+                          the word under the cursor will be inserted
+                          into the search string.
 
   #Use .editorconfig#       Processing .editorconfig parameters
   #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)
@@ -3896,7 +3875,7 @@ characters, delimited with commas. Allowed column types are:
     Z          - file descriptions
 
     O[L]       - file owner
-                 where: L - show domain name;
+                 where: L - show domain name (Windows legacy);
     U          - file group
 
     LN         - number of hard links
@@ -3936,14 +3915,6 @@ the file panel will be displayed in multicolumn form.
        #s# or #S#    - setuid/setgid also executable (#s#) or not executable (#S#)
        #t# or #T#    - sticky also executable (#t#) or not executable (#T#)
 
-    The attributes are displayed in the following order - RSHALCTIOV. The
-"Sparse" attribute applies only to files and is shown instead of 'L'. The
-"Encrypted" attribute is shown instead of 'C' as a file/folder can not
-have both attributes ("Compressed" and "Encrypted") set at the same time.
-By default the size of the attributes column is 6 characters. To display
-the additional 'T', 'I', 'O' and 'V' attributes it is necessary to manually
-set the size of the column to 10 characters.
-
   - #Column widths# - used to change width of panel columns.
 If the width is equal to 0, the default value will be used. If the width of
 the Name, Description or Owner column is 0, it will be calculated
@@ -3960,8 +3931,8 @@ to the display of seconds and milliseconds.
 
     To display years in 4-digits format increase the date column width by 2.
 
-    При указании колонок, отвечающих за показ ссылок, потоков и владельцев (G, LN, F и O) время
-отображения содержимого каталога увеличивается.
+    When specifying columns that display links, streams, and owners (G, LN, F, and O),
+    the time it takes to display the directory contents increases.
 
   - #Status line column types# and #Status line column widths# -
 similar to "Column types" and "Column widths", but for panel status line.
@@ -4193,7 +4164,7 @@ target file. If not, the original file will be copied with the symlink's name.
 their target files.
 
     If you wish to create the destination folder before copying, terminate the
-name with backslash. Also in the Copy dialog you may press #F10# to select a
+name with slash. Also in the Copy dialog you may press #F10# to select a
 folder from the active file panel tree or #Alt-F10# to select from the passive
 file panel tree. #Shift-F10# allows to open the tree for the path entered in
 the input line (if several paths are entered, only the first one is taken into
@@ -4272,12 +4243,11 @@ $ #Hard and Symbolic link#
 
     #Hard links#
 
-    A #hard link# is an additional directory entry for the given file. When a
-hard link is created, the file is not copied itself, but receives one more name
-or location, while its previous name and location remain intact. Since the
+	A #hard link# is an additional directory entry for the given file. When a
+hard link is created, the file is not copied, but receives one more name
+or location, while its previous name and location remain intact. From the
 moment of its creation, a hard link is indistinguishable from the original
-entry. The only difference is that short file names are not created for hard
-links, and so they cannot be seen from DOS programs.
+entry.
 
     When the file size or date changes, all of the corresponding directory
 entries are updated automatically. When a file is deleted, it is not deleted
@@ -4578,7 +4548,7 @@ the end-of-line style used in the file. They behave the same way.
 
 
 @ElevationDlg
-$ #Запрос привилегий администратора#
+$ #Request administrator privileges#
 
 
 @KeyMacro
@@ -4690,7 +4660,7 @@ and changing templates of what should be included into additional columns.
     #$f# - percents space free of total
     #$a# - percents space available of total
     #$N# - filesystem name
-    #$D# - device from which filesystem is mounted 
+    #$D# - device from which filesystem is mounted
     #$S# - filesystem status, single character that can be
        ! - for readonly FS
        ? - for erroring/unresponsive FS
@@ -4757,7 +4727,7 @@ usually does as a reaction to this combination.
     ~hotkey assignment~@KeyMacroSetting@ dialog will appear, where the hotkey that
     will be used to execute the recorded sequence can be set.
 
-    Воспроизведение макроса сопровождается отображением в левом верхнем углу экрана символа '\2FP\-'.
+    Playing the macro will display the symbol '\2FP\-' in the upper left corner of the screen.
 
 
 @KeyMacroDelete
@@ -4877,170 +4847,170 @@ documentation.
     ~https://api.farmanager.com/ru/macro/~@https://api.farmanager.com/ru/macro/@
 
 @KeyMacroList
-$ #Макросы: Список установленных макросов#
-    Ниже приведен список разделов, в которых можно узнать какие ~макросы~@KeyMacro@ 
-действуют в текущей сессии Far Manager.
+$ #Macros: List of defined macros#
+    Below is a list of sections where you can find out which ~macros~@KeyMacro@
+are active in the current Far Manager session.
 
-  ~Список переменных~@KeyMacroVarList@
-  ~Список констант~@KeyMacroConstList@
+  ~List of variables~@KeyMacroVarList@
+  ~List of constants~@KeyMacroConstList@
 
-  ~Общие макросы#~@KeyMacroCommonList@
+  ~Common macros~@KeyMacroCommonList@
 
-  ~Панели~@KeyMacroShellList@
-  ~Панель быстрого просмотра~@KeyMacroQViewList@
-  ~Панель папок~@KeyMacroTreeList@
-  ~Информационная панель~@KeyMacroInfoList@
+  ~Panels~@KeyMacroShellList@
+  ~Quick view panel~@KeyMacroQViewList@
+  ~Tree panel~@KeyMacroTreeList@
+  ~Info panel~@KeyMacroInfoList@
 
-  ~Быстрый поиск в панелях~@KeyMacroSearchList@
-  ~Поиск папки~@KeyMacroFindFolderList@
+  ~Fast find in panels~@KeyMacroSearchList@
+  ~Find folder~@KeyMacroFindFolderList@
 
-  ~Диалоги~@KeyMacroDialogList@
+  ~Dialogs~@KeyMacroDialogList@
 
-  ~Главное меню~@KeyMacroMainMenuList@
-  ~Меню выбора дисков~@KeyMacroDisksList@
-  ~Меню пользователя~@KeyMacroUserMenuList@
-  ~Прочие меню~@KeyMacroMenuList@
-  
-  ~Программа просмотра~@KeyMacroViewerList@
-  ~Редактор~@KeyMacroEditList@
-  
-  ~Файл помощи#~@KeyMacroHelpList@
-  
-  ~Остальные области~@KeyMacroOtherList@
+  ~Main menu~@KeyMacroMainMenuList@
+  ~Location menu~@KeyMacroDisksList@
+  ~User menu~@KeyMacroUserMenuList@
+  ~Other menus~@KeyMacroMenuList@
+
+  ~Viewer~@KeyMacroViewerList@
+  ~Editor~@KeyMacroEditList@
+
+  ~Help file~@KeyMacroHelpList@
+
+  ~Other areas~@KeyMacroOtherList@
 
 @KeyMacroVarList
-$ #Макросы: Список переменных#
-    Ниже приведен список переменных, которые можно использовать в макросах.
+$ #Macros: List of variables#
+    Below is a list of variables that can be used in macros.
 
 <!Macro:Vars!>
 
 @KeyMacroConstList
-$ #Макросы: Список констант#
-    Ниже приведен список констант, которые можно использовать в макросах.
+$ #Macros: List of constants#
+    Below is a list of constants that can be used in macros.
 
 <!Macro:Consts!>
 
 @KeyMacroCommonList
-$ #Макросы: Общие#
-    Ниже приведены комбинации макроклавиш, действующих везде.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Common#
+    Below are the macro key combinations that are active everywhere.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 
 @KeyMacroQViewList
-$ #Макросы: Панель быстрого просмотра#
-    Ниже приведены комбинации макроклавиш, действующих в панели быстрого просмотра.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Quick view panel#
+    Below are the macro key combinations active for the quick view panel.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Qview!>
 
 @KeyMacroMainMenuList
-$ #Макросы: Главное меню#
-    Ниже приведены комбинации макроклавиш, действующих в главном меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Main menu#
+    Below are the macro key combinations active for the main menu.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:MainMenu!>
 
 @KeyMacroTreeList
-$ #Макросы: Панель папок#
-    Ниже приведены комбинации макроклавиш, действующих в панели папок.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Tree panel#
+    Below are the macro key combinations active for the tree panel.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Tree!>
 
 @KeyMacroDialogList
-$ #Макросы: Диалоги#
-    Ниже приведены комбинации макроклавиш, действующих в диалогах.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Dialogs#
+    Below are the macro key combinations active in dialogs.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Dialog!>
 
 @KeyMacroInfoList
-$ #Макросы: Информационная панель#
-    Ниже приведены комбинации макроклавиш, действующих в информационной панели.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Info panel#
+    Below are the macro key combinations active for the info panel.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Info!>
 
 @KeyMacroDisksList
-$ #Макросы: Меню выбора дисков#
-    Ниже приведены комбинации макроклавиш, действующих в меню выбора дисков.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Location menu#
+    Below are the macro key combinations active for the location menu.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Disks!>
 
 @KeyMacroUserMenuList
-$ #Макросы: Меню пользователя#
-    Ниже приведены комбинации макроклавиш, действующих в пользовательском меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: User menu#
+    Below are the macro key combinations active for the user menu.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:UserMenu!>
 
 @KeyMacroShellList
-$ #Макросы: Панели#
-    Ниже приведены комбинации макроклавиш, действующих в файловых панелях.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Panels#
+    Below are the macro key combinations active for the file panels.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Shell!>
 
 @KeyMacroSearchList
-$ #Макросы: Быстрый поиск в панелях#
-    Ниже приведены комбинации макроклавиш, действующих в быстром поиске файловых панелей.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Fast find in panels#
+    Below are the macro key combinations active for the fast find mode in file panels.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Search!>
 
 @KeyMacroFindFolderList
-$ #Макросы: Поиск папки#
-    Ниже приведены комбинации макроклавиш, действующих в поиске папки.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Find folder#
+    Below are the macro key combinations active for the find folder dialog.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:FindFolder!>
 
 @KeyMacroEditList
-$ #Макросы: Редактор#
+$ #Macros: Editor#
     Macro-commands available in the editor are listed below. Descriptions are read from the config file.
 
 <!Macro:Common!>
 <!Macro:Editor!>
 
 @KeyMacroViewerList
-$ #Макросы: Программа просмотра#
-    Macro-commands available in the viewer are listed below. Descriptions are read from the config file.
+$ #Macros: Viewer#
+    Macro commands available in the viewer are listed below. The description for each is read from the config file.
 
 <!Macro:Common!>
 <!Macro:Viewer!>
 
 @KeyMacroMenuList
-$ #Макросы: Прочие меню#
-    Ниже приведены комбинации макроклавиш, действующих в прочих меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Other menus#
+    Below are the macro key combinations active in other menus.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Menu!>
 
 @KeyMacroHelpList
-$ #Макросы: Файл помощи#
-    Ниже приведены комбинации макроклавиш, действующих в файле помощи.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Help file#
+    Below are the macro key combinations active for the help file.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Help!>
 
 @KeyMacroOtherList
-$ #Макросы: Остальные области#
-    Ниже приведены комбинации макроклавиш, действующих в других областях: копировании текста с экрана, вертикальных меню.
-    Описание для каждой макроклавиши берется из файла конфигурации (поле Description).
+$ #Macros: Other areas#
+    Below are the macro key combinations active in other areas: screen text copying, vertical menus.
+    The description for each macro key is taken from the configuration file (Description field).
 
 <!Macro:Common!>
 <!Macro:Other!>

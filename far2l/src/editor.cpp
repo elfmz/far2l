@@ -1764,6 +1764,9 @@ int Editor::ProcessKey(FarKey Key)
 				return TRUE;
 			}
 
+			if (!CurLine->m_next)
+				return TRUE;
+
 			CurPos = CurLine->RealPosToCell(CurPos);
 
 			if (SelAtBeginning)		// Снимаем выделение
@@ -3801,14 +3804,12 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 	if (DelPtr->m_next)
 		DelPtr->m_next->m_prev = DelPtr->m_prev;
 
-	/*
 	if (DelPtr == TopScreen) {
 		if (TopScreen->m_next)
 			TopScreen = TopScreen->m_next;
 		else
 			TopScreen = TopScreen->m_prev;
 	}
-	*/
 
 	if (m_bWordWrap && DelPtr == m_TopScreenLogicalLine) {
 		if (m_TopScreenLogicalLine->m_next) {

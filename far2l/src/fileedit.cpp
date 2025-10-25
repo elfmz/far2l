@@ -379,8 +379,6 @@ FileEditor::~FileEditor()
 void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t *Title, DWORD InitFlags,
 		int StartLine, int StartChar, const wchar_t *PluginData, int OpenModeExstFile)
 {
-	fprintf(stderr, "WORDWRAP_TRACE: ---> FileEditor::Init()\n");
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() started. Initial position: (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
 	SudoClientRegion sdc_rgn;
 	class SmartLock
 	{
@@ -432,7 +430,6 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 			(InitFlags & FFILEEDIT_SAVETOSAVEAS) == FFILEEDIT_SAVETOSAVEAS || BlankFileName != 0);
 
 	if (!*Name) {
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() setting editor position. X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBarVisible=%d, TitleBarVisible=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
 		ExitCode = XC_OPEN_ERROR;
 		return;
 	}
@@ -541,18 +538,10 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 		}
 	}
 
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() before m_editor->SetPosition(). Editor X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBar=%d, TitleBar=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() before m_editor->SetPosition(). Editor will be set to (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before calling m_editor->SetPosition. Editor X1=%d, Y1=%d, X2=%d, Y2=%d. KeyBar=%d, TitleBar=%d\n", X1, Y1, X2, Y2, KeyBarVisible, TitleBarVisible);
 	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	m_editor->SetStartPos(StartLine, StartChar);
 
 	int UserBreak;
-	if (m_editor && m_editor->TopList) {
-		//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() after m_editor->SetPosition(). The ObjWidth of the FIRST line (TopList) is %d\n", m_editor->TopList->ObjWidth);
-	}
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() after m_editor->SetPosition(). Editor internal geometry: X1=%d, Y1=%d, X2=%d, Y2=%d\n", m_editor->X1, m_editor->Y1, m_editor->X2, m_editor->Y2);
-	fprintf(stderr, "WORDWRAP_DEBUG: FileEditor::Init() after m_editor->SetPosition(). Editor internal geometry: X1=%d, Y1=%d, X2=%d, Y2=%d\n", m_editor->X1, m_editor->Y1, m_editor->X2, m_editor->Y2);
 
 	/*
 		$ 06.07.2001 IS
@@ -571,7 +560,6 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	if (Flags.Check(FFILEEDIT_LOCKED))
 		m_editor->Flags.Set(FEDITOR_LOCKMODE);
 
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before LoadFile(). m_editor->GetWordWrap()=%d, m_editor->ObjWidth=%d\n", m_editor->GetWordWrap(), m_editor->ObjWidth);
 	if (!LoadFile(strFullFileName, UserBreak)) {
 		if (BlankFileName) {
 			Flags.Clear(FFILEEDIT_OPENFAILED);	// AY: ну так как редактор мы открываем то видимо надо и сбросить ошибку открытия
@@ -604,9 +592,6 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 
 		m_editor->SetCodePage(m_codepage);
 	}
-
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before ReWrap(). m_editor's dimensions are X1=%d, X2=%d, giving ObjWidth=%d\n", m_editor->X1, m_editor->X2, m_editor->ObjWidth);
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: FileEditor::Init() just before calling ReWrap(). m_editor->ObjWidth is %d\n", m_editor->ObjWidth);
 
 	CtrlObject->Plugins.CurEditor = this;	//&FEdit;
 	CtrlObject->Plugins.ProcessEditorEvent(EE_READ, nullptr);
@@ -761,9 +746,6 @@ static void EditorConfigOrgConflictMessage(const FARString &value, const struct 
 
 int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 {
-	if (Key == KEY_ALTW) {
-		fprintf(stderr, "WORDWRAP_DIAG: KEY_ALTW pressed. Editor::m_bWordWrap will be toggled from %d to %d.\n", m_editor->GetWordWrap(), !m_editor->GetWordWrap());
-	}
 	SudoClientRegion sdc_rgn;
 	if (Key != KEY_F4 && Key != KEY_IDLE)
 		F4KeyOnly = false;
@@ -1122,9 +1104,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 			}
 		case KEY_F3:
 		case KEY_ALTW: {
-			fprintf(stderr, "WORDWRAP_SYNC_TRACE: FileEditor::ProcessKey(KEY_ALTW) caught. Will call m_editor->SetWordWrap(%d)\n", !m_editor->GetWordWrap());
 			m_editor->SetWordWrap(!m_editor->GetWordWrap());
-			fprintf(stderr, "WORDWRAP: KEY_ALTW toggled WordWrap to %d\n", m_editor->GetWordWrap());
 				m_editor->Show();
 				ChangeEditKeyBar();
 				ShowStatus();
@@ -1364,7 +1344,6 @@ int FileEditor::ProcessQuitKey(int FirstSave, BOOL NeedQuestion)
 // сюды плавно переносить код из Editor::ReadFile()
 int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 {
-	fprintf(stderr, "WORDWRAP_TRACE: ---> FileEditor::LoadFile()\n");
 	SudoClientRegion sdc_rgn;
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	if (Opt.EdOpt.UseEditorConfigOrg) {
@@ -1582,9 +1561,6 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 	EditorGetFileAttributes(Name);
 	strLoadedFileName = Name;
 	ChangeEditKeyBar();
-	if (m_editor && m_editor->EndList) {
-		//fprintf(stderr, "WORDWRAP_RACE_DEBUG: At the end of FileEditor::LoadFile. The ObjWidth of the LAST line (EndList) is %d\n", m_editor->EndList->ObjWidth);
-	}
 	return TRUE;
 }
 
@@ -2082,11 +2058,9 @@ void FileEditor::SetScreenPosition()
 	if (Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		SetPosition(0, 0, ScrX, ScrY);
 	}
-	fprintf(stderr, "WORDWRAP_WIDTH_TRACE: ---> FileEditor::SetScreenPosition() called. Current position: (X1=%d, Y1=%d, X2=%d, Y2=%d)\n", X1, Y1, X2, Y2);
 	if (m_editor) {
 		int newY1 = Y1 + (TitleBarVisible ? 1 : 0);
 		int newY2 = Y2 - (KeyBarVisible ? 1 : 0);
-		fprintf(stderr, "WORDWRAP_WIDTH_TRACE: FileEditor::SetScreenPosition() will call m_editor->SetPosition(%d, %d, %d, %d)\n", X1, newY1, X2, newY2);
 		m_editor->SetPosition(X1, newY1, X2, newY2);
 	}
 }
@@ -2320,11 +2294,6 @@ void FileEditor::ShowStatus()
 	if (m_editor->GetWordWrap())
 	{
 		strWrapMode = L"WW ";
-		fprintf(stderr, "WORDWRAP: ShowStatus() WordWrap is ON\n");
-	}
-	else
-	{
-		fprintf(stderr, "WORDWRAP: ShowStatus() WordWrap is OFF\n");
 	}
 	FARString strTabMode;
 	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
@@ -2418,7 +2387,6 @@ void FileEditor::GetEditorOptions(EditorOptions &EdOpt)
 {
 	EdOpt = m_editor->EdOpt;
 	EdOpt.WordWrap = m_editor->GetWordWrap();
-	fprintf(stderr, "WORDWRAP: GetEditorOptions() read WordWrap as %d\n", EdOpt.WordWrap);
 	EdOpt.ShowTitleBar = TitleBarVisible;
 	EdOpt.ShowKeyBar = KeyBarVisible;
 }
@@ -2438,9 +2406,7 @@ void FileEditor::SetEditorOptions(EditorOptions &EdOpt)
 	m_editor->SetShowScrollBar(EdOpt.ShowScrollBar);
 	m_editor->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 	m_editor->SetSearchPickUpWord(EdOpt.SearchPickUpWord);
-	fprintf(stderr, "WORDWRAP_DIAG: SetEditorOptions begins. EdOpt.WordWrap=%d. Editor's current WordWrap is %d.\n", EdOpt.WordWrap, m_editor->GetWordWrap());
 	m_editor->SetWordWrap(EdOpt.WordWrap);
-	fprintf(stderr, "WORDWRAP: SetEditorOptions() applied WordWrap as %d\n", EdOpt.WordWrap);
 	TitleBarVisible = EdOpt.ShowTitleBar;
 	KeyBarVisible = EdOpt.ShowKeyBar;
 	// m_editor->SetBSLikeDel(EdOpt.BSLikeDel);

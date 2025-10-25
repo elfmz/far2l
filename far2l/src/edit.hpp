@@ -306,8 +306,7 @@ public:
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
 	void SetWordWrap(int Wrap) {
 		m_bWordWrapState = (Wrap != 0);
-			fprintf(stderr, "WORDWRAP_DIAG: Edit::SetWordWrap called with %d. this=%p. Resulting m_bWordWrapState=%d\n", Wrap, this, m_bWordWrapState);
-	}
+		}
 	bool GetWordWrap() const { return m_bWordWrapState; }
 	void SetEditorMode(int Mode) { Flags.Change(FEDITLINE_EDITORMODE, Mode); };
 	void ExpandTabs();

@@ -312,10 +312,6 @@ int Edit::GetNextCursorPos(int Position, int Where)
 
 void Edit::FastShow()
 {
-	if (Flags.Check(FEDITLINE_EDITORMODE)) {
-		fprintf(stderr, "WORDWRAP_FASTSHOW: === FastShow for '%.*ls' ===\n", StrSize > 20 ? 20 : StrSize, Str);
-		fprintf(stderr, "WORDWRAP_FASTSHOW: IN:  LeftPos=%d, CurPos=%d, StrSize=%d, ObjWidth=%d\n", LeftPos, CurPos, StrSize, ObjWidth);
-	}
 	int EditLength = ObjWidth;
 
 	if (!Flags.Check(FEDITLINE_EDITBEYONDEND) && CurPos > StrSize && StrSize >= 0)
@@ -340,10 +336,6 @@ void Edit::FastShow()
 	*/
 	int RealLeftPos = -1;
 	if (!Flags.Check(FEDITLINE_DROPDOWNBOX)) {
-		if (Flags.Check(FEDITLINE_EDITORMODE)) {
-			fprintf(stderr, "WORDWRAP_FASTSHOW_IF: Checking if (%d - %d > %d - 1) which is %s\n",
-				CellCurPos, LeftPos, EditLength, (CellCurPos - LeftPos > EditLength - 1) ? "TRUE" : "FALSE");
-		}
 		if (CellCurPos - LeftPos > EditLength - 1) {
 			/*
 				tricky left pos shifting to
@@ -366,9 +358,6 @@ void Edit::FastShow()
 
 	if (RealLeftPos == -1)
 		RealLeftPos = CellPosToReal(LeftPos);
-	if (Flags.Check(FEDITLINE_EDITORMODE)) {
-		fprintf(stderr, "WORDWRAP_FASTSHOW: OUT: LeftPos=%d, RealLeftPos=%d\n", LeftPos, RealLeftPos);
-	}
 
 	GotoXY(X1, Y1);
 	int CellSelStart = (SelStart == -1) ? -1 : RealPosToCell(SelStart);
@@ -1633,17 +1622,12 @@ void Edit::GetVisualLine(int line, int& start, int& end) const
 
 void Edit::RecalculateWordWrap(int Width, int TabSize)
 {
-	fprintf(stderr, "WORDWRAP_DEBUG: Edit::RecalculateWordWrap(Width=%d, TabSize=%d) called. m_bWordWrapState=%d\n", Width, TabSize, m_bWordWrapState);
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: In Edit::RecalculateWordWrap. My ObjWidth is %d\n", ObjWidth);
 	m_WrapBreaks.clear();
-	fprintf(stderr, "WORDWRAP_DIAG: RecalculateWordWrap begins. this=%p. Passed Width=%d. this->ObjWidth=%d. m_bWordWrapState=%d\n", this, Width, this->ObjWidth, m_bWordWrapState);
 	if (!m_bWordWrapState || Width <= 1)
 	{
-		fprintf(stderr, "WORDWRAP_DEBUG: Edit::RecalculateWordWrap: Bailing out due to invalid state or width.\n");
 		return;
 	}
 
-	fprintf(stderr, "WORDWRAP_DEBUG: Edit::RecalculateWordWrap for line '%.*ls'...\n", StrSize, Str);
 	m_WrapBreaks.push_back(0);
 
 	int CurrentStart = 0;
@@ -1666,7 +1650,6 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 
 			if (CurrentX + CharWidth > Width)
 			{
-//				fprintf(stderr, "WORDWRAP: Pos %d (char '%.1ls') exceeds Width %d. LastBreakPos=%d\n", CurrentPos, &Str[CurrentPos], Width, LastBreakPos);
 				ForceBreakPos = (CurrentPos > CurrentStart) ? CurrentPos : CurrentStart + 1;
 				break;
 			}
@@ -1682,20 +1665,14 @@ void Edit::RecalculateWordWrap(int Width, int TabSize)
 
 		if (ForceBreakPos == -1) // Didn't exceed width, so we are done with this line
 		{
-//			fprintf(stderr, "WORDWRAP: Reached end of string without exceeding width.\n");
 			break;
 		}
 
 		int NextStart = (LastBreakPos != -1) ? LastBreakPos : ForceBreakPos;
 
-//		fprintf(stderr, "WORDWRAP: Adding break at pos %d\n", NextStart);
 		m_WrapBreaks.push_back(NextStart);
 		CurrentStart = NextStart;
 	}
-
-	//fprintf(stderr, "WORDWRAP_RACE_DEBUG: Recalculation finished for line '%.*ls'. m_WrapBreaks has %zu elements: ", StrSize > 20 ? 20 : StrSize, Str, m_WrapBreaks.size());
-	//for(size_t i = 0; i < m_WrapBreaks.size(); ++i) { fprintf(stderr, "%d ", m_WrapBreaks[i]); }
-	//fprintf(stderr, "\n");
 }
 
 void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
@@ -1793,8 +1770,6 @@ void Edit::CheckForSpecialWidthChars(const wchar_t *CheckStr, int Length)
 */
 void Edit::SetBinaryString(const wchar_t *Str, int Length)
 {
-	fprintf(stderr, "WORDWRAP_DIAG: SetBinaryString begins. this=%p. Passed Length=%d. ObjWidth=%d. m_bWordWrapState=%d\n", this, Length, ObjWidth, m_bWordWrapState);
-
 	if (Flags.Check(FEDITLINE_READONLY))
 		return;
 
@@ -2360,9 +2335,6 @@ int Edit::CellPosToReal(int Pos)
 
 void Edit::SanitizeSelectionRange()
 {
-	fprintf(stderr, "WORDWRAP_SANITIZE_DIAG: --- SanitizeSelectionRange Entered ---\n");
-	fprintf(stderr, "WORDWRAP_SANITIZE_DIAG:   this=%p, initial state: SelStart=%d, SelEnd=%d\n", this, SelStart, SelEnd);
-
 	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
 		bool joining = false;
 		for ( ; SelStart > 0; SelStart--) {
@@ -2409,20 +2381,10 @@ void Edit::SanitizeSelectionRange()
 
 void Edit::Select(int Start, int End)
 {
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG: ===== Enter Edit::Select =====\n");
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   this=%p\n", this);
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   Input params: Start=%d, End=%d\n", Start, End);
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   Internal state BEFORE: this->SelStart=%d, this->SelEnd=%d\n", this->SelStart, this->SelEnd);
-
 	SelStart = Start;
 	SelEnd = End;
 
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   State after assignment, BEFORE Sanitize: this->SelStart=%d, this->SelEnd=%d\n", this->SelStart, this->SelEnd);
-
 	SanitizeSelectionRange();
-
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG:   Internal state AFTER Sanitize:  this->SelStart=%d, this->SelEnd=%d\n", this->SelStart, this->SelEnd);
-	fprintf(stderr, "WORDWRAP_SELECT_DIAG: ============================\n");
 }
 
 void Edit::AddSelect(int Start, int End)
@@ -2441,7 +2403,6 @@ void Edit::AddSelect(int Start, int End)
 
 void Edit::GetSelection(int &Start, int &End)
 {
-	fprintf(stderr, "WORDWRAP_B2T_DIAG:   [Enter GetSelection]    this=%p, internal SelStart=%d, SelEnd=%d\n", this, this->SelStart, this->SelEnd);
 	/*
 		$ 17.09.2002 SKV
 		Мало того, что это нарушение правил OO design'а,
@@ -2466,7 +2427,6 @@ void Edit::GetSelection(int &Start, int &End)
 
 void Edit::GetRealSelection(int &Start, int &End)
 {
-	fprintf(stderr, "WORDWRAP_B2T_DIAG:   [Enter GetRealSelection] this=%p, internal SelStart=%d, SelEnd=%d\n", this, this->SelStart, this->SelEnd);
 	Start = SelStart;
 	End = SelEnd;
 }
@@ -2526,19 +2486,10 @@ void Edit::DeleteBlock()
 void Edit::AddColor(const ColorItem *col)
 {
 	ColorList.emplace_back(*col);
-	//fprintf(stderr, "WORDWRAP_COLOR: Edit::AddColor called for line %p. Adding {StartPos=%d, EndPos=%d, Color=0x%llx}. List size is now %zu\n",
-	//	this, col->StartPos, col->EndPos, col->Color, ColorList.size());
 }
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	//fprintf(stderr, "WORDWRAP_COLOR: Edit::DeleteColor called for line %p with ColorPos=%d\n", this, ColorPos);
-
-	//fprintf(stderr, "WORDWRAP_COLOR: ---> Before deletion, ColorList has %zu items:\n", ColorList.size());
-	for (const auto& item : ColorList) {
-		//fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
-	}
-
 	size_t Dest, Src;
 
 	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
@@ -2549,12 +2500,6 @@ size_t Edit::DeleteColor(int ColorPos)
 			++Dest;
 		}
 
-	//fprintf(stderr, "WORDWRAP_COLOR: ---> After deletion loop, ColorList will have %zu items:\n", Dest);
-	for (size_t i = 0; i < Dest; ++i) {
-		// В этот момент ColorList еще не урезан, так что мы можем посмотреть на будущие элементы
-		//const auto& item = ColorList[i];
-		//fprintf(stderr, "WORDWRAP_COLOR:      {StartPos=%d, EndPos=%d, Color=0x%llx}\n", item.StartPos, item.EndPos, item.Color);
-	}
 	const size_t DelCount = ColorList.size() - Dest;
 	ColorList.resize(Dest);
 
@@ -2572,16 +2517,11 @@ bool Edit::GetColor(ColorItem *col, int Item)
 
 void Edit::ApplyColor()
 {
-	//fprintf(stderr, "WORDWRAP_APPLYCOLOR: === ApplyColor called for Edit obj %p, Str='%.*ls...', StrSize=%d, LeftPos=%d, X1=%d, X2=%d\n",
-	//	this, StrSize > 40 ? 40 : StrSize, Str, StrSize, LeftPos, X1, X2);
-
 	// Для оптимизации сохраняем вычисленные позиции между итерациями цикла
 	int Pos = INT_MIN, TabPos = INT_MIN, TabEditorPos = INT_MIN;
 
 	// Обрабатываем элементы ракраски
 	for (auto &CurItem : ColorList) {
-
-		//fprintf(stderr, "WORDWRAP_APPLYCOLOR: Processing ColorItem: StartPos=%d, EndPos=%d, Color=0x%llx\n", CurItem.StartPos, CurItem.EndPos, CurItem.Color);
 
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
@@ -2705,15 +2645,6 @@ void Edit::ApplyColor()
 
 		if (Length < X2)
 			Length-= CorrectPos;
-
-		// Раскрашиваем элемент, если есть что раскрашивать
-		//fprintf(stderr, "WORDWRAP_APPLYCOLOR: Calculating final screen coordinates. Screen Width: %d-%d. Calculated Range: Start=%d, End=%d (Length=%d)\n", X1, X2, Start, End, Length);
-		if (CurItem.StartPos == -1 && CurItem.EndPos == -1)
-		{
-			// Это чисто исследовательский вывод, чтобы понять, что нам делать, если Colorer использует этот паттерн.
-			// В рабочем коде здесь будет логика заливки до X2.
-			//fprintf(stderr, "WORDWRAP_APPLYCOLOR: WARNING: Found {-1,-1} item. This range is ambiguous without full width context.\n");
-		}
 
 		if (Length > 0) {
 			ScrBuf.ApplyColor(Start, Y1, Start + Length - 1, Y1, Attr, SelColor );

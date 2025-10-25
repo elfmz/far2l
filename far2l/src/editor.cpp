@@ -335,6 +335,10 @@ void Editor::DisplayObject()
 
 void Editor::ShowEditor(int CurLineOnly)
 {
+	if (m_bWordWrap && CurLine)
+	{
+		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+	}
 	//int local_XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
 	//fprintf(stderr, "WORDWRAP_DIAG: ShowEditor enter. X2=%d, EdOpt.ShowScrollBar=%d. Calculated local_XX2=%d\n", X2, EdOpt.ShowScrollBar, local_XX2);
 	// Re-assign to member XX2 to see what's going on before the loop
@@ -3536,7 +3540,7 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 
 					if (m_bWordWrap)
 					{
-						int Width = X2 - X1;
+						int Width = X2 - X1 + 1;
 						if (EdOpt.ShowScrollBar) Width--;
 						CurLine->RecalculateWordWrap(Width, EdOpt.TabSize);
 					}
@@ -3785,7 +3789,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			return TRUE;
 		}
 	}
-	
+
     if (CurLine->ProcessMouse(MouseEvent)) {
 		if (HostFileEditor)
 			HostFileEditor->ShowStatus();

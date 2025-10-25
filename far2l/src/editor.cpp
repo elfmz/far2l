@@ -4985,6 +4985,16 @@ void Editor::Paste(const wchar_t *Src)
 
 	if (IsDeleteClipText)
 		free(ClipText);
+
+
+	if (m_bWordWrap) {
+		// Пересчитываем визуальную линию курсора на основе реальной позиции
+		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		fprintf(stderr, "WORDWRAP_FIX: After paste, recalculated m_CurVisualLineInLogicalLine to %d\n", m_CurVisualLineInLogicalLine);
+
+		// Полная перерисовка редактора для обновления отображения
+		Show();
+	}
 }
 
 void Editor::Copy(int Append)

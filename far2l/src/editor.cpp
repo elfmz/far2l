@@ -3261,7 +3261,17 @@ case KEY_CTRLNUMPAD3: {
 				return TRUE;
 			}
 		}
-
+		case KEY_CTRLRIGHT:
+		case KEY_CTRLNUMPAD6: {
+			if (m_bWordWrap)
+			{
+				if (CurLine->GetCurPos() >= CurLine->GetLength() && !CurLine->m_next)
+				{
+					 // В режиме переноса в конце файла ничего не делаем, иначе артефакты
+					return TRUE;
+				}
+			}
+		}
 		default: {
 			{
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL

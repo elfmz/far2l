@@ -156,6 +156,38 @@ Editor::~Editor()
 	_KEYMACRO(SysLog(-1));
 	_KEYMACRO(SysLog(L"Editor::~Editor()"));
 }
+void Editor::AdjustScreenPosition()
+{
+	if (!m_bWordWrap)
+		return;
+
+	// Ensure m_CurVisualLineInLogicalLine is up to date
+	m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+
+	// First, place the current visual line at the top of the screen
+	m_TopScreenLogicalLine = CurLine;
+	m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
+
+	// Then, scroll up by half the screen height to center it
+	int HalfScreen = (Y2 - Y1 + 1) / 2;
+	for (int i = 0; i < HalfScreen; ++i)
+	{
+		if (m_TopScreenVisualLine > 0)
+		{
+			m_TopScreenVisualLine--;
+		}
+		else if (m_TopScreenLogicalLine->m_prev)
+		{
+			m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
+			m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
+		}
+		else
+		{
+			// Reached the top of the file, can't scroll up further
+			break;
+		}
+	}
+}
 
 int Editor::FindVisualLine(Edit* line, int Pos)
 {
@@ -329,6 +361,32 @@ void Editor::ShowEditor(int CurLineOnly)
 	if (m_bWordWrap && CurLine)
 	{
 		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+	}
+	if (m_bWordWrap && CurLine)
+	{
+		// Проверяем, видим ли мы курсор на экране
+		bool is_cursor_visible = false;
+		Edit* scan_line = m_TopScreenLogicalLine;
+		int scan_vis_line = m_TopScreenVisualLine;
+		for (int i = 0; i < (Y2 - Y1 + 1) && scan_line; ++i)
+		{
+			if (scan_line == CurLine && scan_vis_line == m_CurVisualLineInLogicalLine)
+			{
+				is_cursor_visible = true;
+				break;
+			}
+			scan_vis_line++;
+			if (scan_vis_line >= scan_line->GetVisualLineCount())
+			{
+				scan_line = scan_line->m_next;
+				scan_vis_line = 0;
+			}
+		}
+
+		if (!is_cursor_visible)
+		{
+			AdjustScreenPosition();
+		}
 	}
 	// Re-assign to member XX2 to see what's going on before the loop
 	if (m_bWordWrap)

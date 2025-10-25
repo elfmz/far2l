@@ -57,6 +57,7 @@ enum plugin_string {
 	ps_fn_codepage,
 	ps_fn_setup,
 	ps_fn_exit,
+	ps_fn_screen,
 
 	ps_sav_title,
 	ps_sav_file,

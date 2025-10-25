@@ -8,6 +8,7 @@ enum LanguageID
 	MOk,
 	MCancel,
 	MError,
+	MNotRealNames,
 	MSaveConfigError,
 	MNoAppsFound,
 	MAndMore,
@@ -32,6 +33,7 @@ enum LanguageID
 	MFilterByShowIn,
 	MValidateTryExec,
 	MSortAlphabetically,
+	MTreatUrlsAsPaths,
 
 	MDetails,
 

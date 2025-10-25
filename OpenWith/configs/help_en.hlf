@@ -85,6 +85,9 @@ $^#Configuration Dialog (F9)#
    When enabled, this option overrides the complex ranking system and sorts the application list strictly in alphabetical order. This can be useful for users who prefer a simple, predictable list rather than one prioritized by MIME type specificity and association source.
    For a detailed explanation of the logic this option overrides, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
 
+ #-# Pass plain paths instead of file:// URIs
+   This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the %u and %U field codes. Both methods are valid. By default, the plugin generates file:// URIs as this is a more explicit format. However, some applications are designed to receive plain paths even when using %u or %U. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
+
 
  #2.2. macOS Settings#
 
@@ -234,5 +237,6 @@ $^#Troubleshooting#
  #-# Incorrect Field Codes: The plugin supports standard codes ("%f", "%F", "%u", "%U"). Some applications might use deprecated or non-standard codes that will not work.
  #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped.
  #-# Program not in "$PATH": If "Exec" contains just a program name, it must be located in one of the directories listed in the "$PATH" environment variable.
+ #-# Incorrect Path Format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the %u or %U field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
 
    ~Contents~@Contents@

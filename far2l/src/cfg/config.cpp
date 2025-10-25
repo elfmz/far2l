@@ -313,7 +313,7 @@ void PanelSettings()
 		else if (clicked_id == ChangeSizeColumnStyleID)
 			DirectoryNameSettings();
 		else
-			break;		
+			break;
 	}
 }
 
@@ -661,7 +661,7 @@ void InterfaceSettings()
 		DecimalSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DecimalSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(DecimalSeparatorEdit, Msg::ConfigDecimalSeparator);
-        
+
 		Builder.ColumnBreak();
 		int DateTimeDefaultID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeDefault, DateTimeDefaultID);
@@ -1143,6 +1143,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditConfigScrollbar, &EdOpt.ShowScrollBar);
 	Builder.AddCheckbox(Msg::EditConfigPickUpWord, &EdOpt.SearchPickUpWord);
 	Builder.AddCheckbox(Msg::EditShowTitleBar, &EdOpt.ShowTitleBar);
+	Builder.AddCheckbox(Msg::EditWordWrap, &EdOpt.WordWrap);
 	Builder.EndColumns();
 
 	if (!Local) {

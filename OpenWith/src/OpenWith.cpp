@@ -435,7 +435,7 @@ namespace OpenWith {
 				unique_mimes_cache = provider->GetMimeTypes(pathnames);
 			}
 			// Return a const reference to the cached vector.
-			return unique_mimes_cache.value();
+			return *unique_mimes_cache;
 		};
 
 		std::vector<CandidateInfo> candidates;

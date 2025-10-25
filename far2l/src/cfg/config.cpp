@@ -270,7 +270,6 @@ void PanelSettings()
 		//ChangeSizeColumnStyleItem->Flags = DIF_CENTERGROUP;
 		ChangeSizeColumnStyleItem->Indent(1);
 
-		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 		Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
 		Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
 		Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
@@ -284,6 +283,11 @@ void PanelSettings()
 		AutoUpdateText->Indent(4);
 		Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
 		Builder.AddCheckbox(Msg::ConfigClassicHotkeyLinkResolving, &Opt.ClassicHotkeyLinkResolving);
+
+		Builder.AddSeparator(Msg::ConfigTreeOptions);
+		Builder.AddText(Msg::ConfigExclSubTreeMask);
+		Builder.AddEditField(&Opt.Tree.ExclSubTreeMask, 35);
+		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 
 		Builder.AddSeparator();
 		Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);

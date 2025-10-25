@@ -281,6 +281,7 @@ private:
 
 	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
 			int StrPos = 0, int Length = -1);
+	void AdjustScreenPosition();
 	void Undo(int redo);
 	void SelectAll();
 	// void SetStringsTable();

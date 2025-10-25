@@ -210,7 +210,6 @@ private:
 	int VBlockSizeY;
 
 	int MaxRightPos;
-	int m_WordWrapMaxRightPos;
 
 	int XX2;	// scrollbar
 
@@ -220,6 +219,7 @@ private:
 		Новая переменная для поиска "Whole words"
 	*/
 	int LastSearchCase, LastSearchWholeWords, LastSearchReverse, LastSearchSelFound, LastSearchRegexp;
+	int m_WordWrapMaxRightPos;
 
 	UINT m_codepage;	// BUGBUG
 

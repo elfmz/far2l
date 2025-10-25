@@ -465,6 +465,9 @@ void Editor::ShowEditor(int CurLineOnly)
 			ShowString.SetLeftPos(0);
 			ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 			ShowString.SetTabSize(EdOpt.TabSize);
+			ShowString.SetEditorMode(true); // F5 needs this
+			ShowString.SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
+			fprintf(stderr, "WORDWRAP_F5: Y=%d, ShowWhiteSpace flag for ShowString is %d\n", Y, ShowString.Flags.Check(FEDITLINE_SHOWWHITESPACE));
 
 			fprintf(stderr, "WORDWRAP_SEL_TRACE: -- Y=%d: VisualLineRange=[%d, %d) --\n", Y, VisualLineStart, VisualLineEnd);
 			// Map stream selection to the visual sub-line

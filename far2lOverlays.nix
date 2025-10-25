@@ -1,63 +1,69 @@
 /*
   custom buid far2l package with python and arclite enabled, where you could personally select revisions
-  Also added some postinstall fixes, for example for linking p7zip 7z.so
+  Also added some postinstall fixes, for example for linking 7z custom build 7z.so
 */
 {
   config,
   inputs,
   pkgs,
   stdenv,
+  lib,
   ...
 }:
+let
+  fetchFromGitHub = pkgs.fetchFromGitHub;
+in
 {
-  environment.systemPackages = [
-    pkgs.far2l
-  ];
-
   nixpkgs.overlays = [
     (final: prev: {
-      #Modified p7zip package with shared library support
-      p7zip =
-        let
-          baseP7zip = prev.p7zip.override { enableUnfree = true; };
-        in
-        baseP7zip.overrideAttrs (oldAttrs: {
-          buildPhase = ''
-            runHook preBuild
-            make $buildFlags
+      # Modified 7zip package with shared library support
+      _7z-far = prev.stdenv.mkDerivation rec {
+        pname = "_7z-far";
+        version = "25.01";
 
-            # Corrected: Build 7z.so using top-level make target
-            make bin/7z.so
-            runHook postBuild
-          '';
+        src = fetchFromGitHub {
+          owner = "ip7z";
+          repo = "7zip";
+          rev = "5e96a8279489832924056b1fa82f29d5837c9469";
+          sha256 = "sha256-uGair9iRO4eOBWPqLmEAvUTUCeZ3PDX2s01/waYLTwY=";
+        };
 
-          installPhase = ''
-            runHook preInstall
-            make install $makeFlags
+        nativeBuildInputs = [ prev.gcc ];
 
-            # Corrected: Install from top-level bin directory
-            install -Dm755 bin/7z.so $out/lib/p7zip/7z.so
-            runHook postInstall
-          '';
-        });
+        buildPhase = ''
+          make -C CPP/7zip/Bundles/Format7zF -f ../../cmpl_gcc.mak
+        '';
 
+        installPhase = ''
+          mkdir -p $out/lib
+          cp -r CPP/7zip/Bundles/Format7zF/b/g/* $out/lib/
+        '';
+
+        meta = with lib; {
+          description = "7z format plugin from ip7z/7zip";
+          homepage = "https://github.com/ip7z/7zip";
+          license = licenses.lgpl21Plus;
+        };
+      };
+    })
+
+    (final: prev: {
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.6.5-3b604892";  # Change that version if you need to build a package with other version name
+        version = "2.6.5";
 
-        src = prev.fetchFromGitHub {
+        src = fetchFromGitHub {
           owner = "elfmz";
           repo = "far2l";
-          rev = "3b60489";    # Version revision you could change
-          sha256 = "sha256-nlCgrPXhsBV5PIHDI/+TdinEslY6Xh6CwtKpPQFOTCA="; # Hash sha256 depending on your revision
+          rev = "c35f8e4239da30439763c1ede49d926e1c000b26";
+          sha256 = "sha256-Skp7zAFYj5qthladxi5Doz1dFM+zquP2dOiGCLsXRhs=";
         };
 
         nativeBuildInputs = [
           prev.cmake
           prev.ninja
           prev.pkg-config
-          prev.m4
           prev.perl
           prev.makeWrapper
           prev.python3
@@ -75,14 +81,12 @@
           prev.libssh
           prev.libnfs
           prev.neon
-          final.p7zip # Use our custom-built p7zip with shared library
+          final._7z-far
         ]
-        ++ prev.lib.optional (!prev.stdenv.hostPlatform.isDarwin) prev.samba
+        ++ lib.optional (!prev.stdenv.hostPlatform.isDarwin) prev.samba
         ++ (with prev.python3Packages; [
           python
           cffi
-          debugpy
-          pcpp
         ]);
 
         postPatch = ''
@@ -101,8 +105,8 @@
           "-DUSEUCD=ON"
           "-DCOLORER=ON"
           "-DMULTIARC=ON"
-          "-DNETROCKS=ON" # Keep NetRocks without S3
-          "-DAWS_S3=OFF" # Explicitly disable S3
+          "-DNETROCKS=ON"
+          "-DAWS_S3=OFF"
           "-DPYTHON=ON"
           "-DARCLITE=ON"
         ];
@@ -121,25 +125,22 @@
               gzip
               bzip2
               gnutar
-              final.p7zip
             ];
           in
           ''
-            # Warp archivers pathes to program bin
+            # Wrap archivers paths to program bin
             wrapProgram $out/bin/far2l \
-              --prefix PATH : ${prev.lib.makeBinPath archiveTools}
+              --prefix PATH : ${lib.makeBinPath archiveTools}
 
-            # link p7z lib to far pluggin arclite home
-            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7z $out/lib/far2l/Plugins/arclite/plug/7z
-            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7za $out/lib/far2l/Plugins/arclite/plug/7za
-            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7zCon.sfx $out/lib/far2l/Plugins/arclite/plug/7zCon.sfx
-            ln -s ${pkgs.p7zip.lib}/lib/p7zip/7z.so $out/lib/far2l/Plugins/arclite/plug/7z.so
-            ln -s ${pkgs.p7zip.lib}/lib/p7zip/Codecs $out/lib/far2l/Plugins/arclite/plug/Codecs
-
-
+            # Link p7z lib to far plugin arclite home
+            echo "Linking 7zzz libraries..."
+            mkdir -p $out/lib/far2l/Plugins/arclite/plug/
+            for file in ${final._7z-far}/lib/*; do
+              ln -sf "$file" "$out/lib/far2l/Plugins/arclite/plug/"
+            done
           '';
 
-        meta = with prev.lib; {
+        meta = with lib; {
           description = "Linux port of FAR Manager v2 with ArchLite support";
           homepage = "https://github.com/elfmz/far2l";
           license = licenses.gpl2Only;
@@ -149,4 +150,8 @@
     })
   ];
 
+  environment.systemPackages = with pkgs; [
+    far2l
+  ];
 }
+

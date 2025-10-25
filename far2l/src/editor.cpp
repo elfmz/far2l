@@ -2437,76 +2437,76 @@ int Editor::ProcessKey(FarKey Key)
 			}
 			return TRUE;
 		}
-		case KEY_CTRLHOME:
-		case KEY_CTRLNUMPAD7:
-		case KEY_CTRLPGUP:
-		case KEY_CTRLNUMPAD9: {
-			{
-				Flags.Set(FEDITOR_NEWUNDO);
-				int StartPos = CurLine->GetCellCurPos();
-				NumLine = 0;
-				CurLine = TopList;
-				m_CurVisualLineInLogicalLine = 0;
-				TopScreen = CurLine;
-				if (m_bWordWrap) {
-					m_TopScreenLogicalLine = TopScreen;
-					m_TopScreenVisualLine = 0;
-				}
-
-				if (Key == KEY_CTRLHOME || Key == KEY_CTRLNUMPAD7)
-					CurLine->SetCurPos(0);
-				else
-					CurLine->SetCellCurPos(StartPos);
-
-				Show();
-			}
-			return TRUE;
+case KEY_CTRLHOME:
+case KEY_CTRLNUMPAD7:
+case KEY_CTRLPGUP:
+case KEY_CTRLNUMPAD9: {
+	{
+		Flags.Set(FEDITOR_NEWUNDO);
+		int StartPos = CurLine->GetCellCurPos();
+		NumLine = 0;
+		CurLine = TopList;
+		TopScreen = CurLine;
+		if (m_bWordWrap) {
+			m_CurVisualLineInLogicalLine = 0;
+			m_TopScreenLogicalLine = TopScreen;
+			m_TopScreenVisualLine = 0;
 		}
-		case KEY_CTRLEND:
-		case KEY_CTRLNUMPAD1:
-		case KEY_CTRLPGDN:
-		case KEY_CTRLNUMPAD3: {
-			{
-				Flags.Set(FEDITOR_NEWUNDO);
-				int StartPos = CurLine->GetCellCurPos();
-				NumLine = NumLastLine - 1;
-				CurLine = EndList;
-				m_CurVisualLineInLogicalLine = std::max(0, CurLine->GetVisualLineCount() - 1);
 
-				CurLine->SetLeftPos(0);
+		if (Key == KEY_CTRLHOME || Key == KEY_CTRLNUMPAD7)
+			CurLine->SetCurPos(0);
+		else
+			CurLine->SetCellCurPos(StartPos);
 
-				if (Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1) {
-					CurLine->SetCurPos(CurLine->GetLength());
-				} else {
-					CurLine->SetCellCurPos(StartPos);
-				}
+		Show();
+	}
+	return TRUE;
+}
+case KEY_CTRLEND:
+case KEY_CTRLNUMPAD1:
+case KEY_CTRLPGDN:
+case KEY_CTRLNUMPAD3: {
+	{
+		Flags.Set(FEDITOR_NEWUNDO);
+		int StartPos = CurLine->GetCellCurPos();
+		NumLine = NumLastLine - 1;
+		CurLine = EndList;
 
-				if (m_bWordWrap) {
-					m_TopScreenLogicalLine = CurLine;
-					m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
-					for (int i = 0; i < Y2 - Y1 && m_TopScreenVisualLine > 0; ++i) {
-						m_TopScreenVisualLine--;
-					}
-					for (int i = 0; i < Y2 - Y1 && m_TopScreenVisualLine == 0 && m_TopScreenLogicalLine->m_prev; ++i) {
-						m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-						m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
-					}
-				} else {
-					for (TopScreen = CurLine, I = Y1; I < Y2 && TopScreen->m_prev; I++) {
-						TopScreen->SetPosition(X1, I, XX2, I);
-						TopScreen = TopScreen->m_prev;
-					}
-				}
+		CurLine->SetLeftPos(0);
 
-
-				if (Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1) {
-					CurLine->FastShow();
-				}
-
-				Show();
-			}
-			return TRUE;
+		if (Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1) {
+			CurLine->SetCurPos(CurLine->GetLength());
+		} else {
+			CurLine->SetCellCurPos(StartPos);
 		}
+
+		if (m_bWordWrap) {
+			m_CurVisualLineInLogicalLine = std::max(0, CurLine->GetVisualLineCount() - 1);
+			m_TopScreenLogicalLine = CurLine;
+			m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
+			for (int i = 0; i < Y2 - Y1 && m_TopScreenVisualLine > 0; ++i) {
+				m_TopScreenVisualLine--;
+			}
+			for (int i = 0; i < Y2 - Y1 && m_TopScreenVisualLine == 0 && m_TopScreenLogicalLine->m_prev; ++i) {
+				m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
+				m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
+			}
+		} else {
+			for (TopScreen = CurLine, I = Y1; I < Y2 && TopScreen->m_prev; I++) {
+				TopScreen->SetPosition(X1, I, XX2, I);
+				TopScreen = TopScreen->m_prev;
+			}
+		}
+
+
+		if (Key == KEY_CTRLEND || Key == KEY_CTRLNUMPAD1) {
+			CurLine->FastShow();
+		}
+
+		Show();
+	}
+	return TRUE;
+}
 		case KEY_NUMENTER:
 		case KEY_ENTER: {
 			if (Pasting || !ShiftPressed || CtrlObject->Macro.IsExecuting()) {
@@ -7232,12 +7232,12 @@ void Editor::SetTabSize(int NewSize)
 
 void Editor::SetWordWrap(int NewMode)
 {
-	m_TopScreenLogicalLine = TopScreen;
-	m_TopScreenVisualLine = 0;
-
 	if ((NewMode != 0) != m_bWordWrap)
 	{
 		m_bWordWrap = (NewMode != 0);
+		m_TopScreenLogicalLine = TopScreen;
+		m_TopScreenVisualLine = 0;
+
 
 		int Width = ObjWidth;
 		if (EdOpt.ShowScrollBar)

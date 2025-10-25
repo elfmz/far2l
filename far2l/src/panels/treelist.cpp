@@ -972,6 +972,15 @@ int TreeList::ProcessKey(FarKey Key)
 
 			return TRUE;
 		}
+		case KEY_LEFT:
+		{
+			LevelUp();
+
+			if (Opt.Tree.AutoChangeFolder && !ModalMode)
+				ProcessKey(KEY_ENTER);
+
+			return TRUE;
+		}
 		case KEY_SUBTRACT:		// OFM: Gray+/Gray- navigation
 		{
 			CurFile = GetPrevNavPos();
@@ -1081,6 +1090,19 @@ int TreeList::GetPrevNavPos()
 	}
 
 	return PrevPos;
+}
+
+void TreeList::LevelUp()
+{
+	int CurDepth = ListData[CurFile]->Depth;
+
+	for (int I = CurFile - 1; I >= 0; --I)
+		if (ListData[I]->Depth == CurDepth - 1) {
+			CurFile = I;
+			break;
+		}
+
+	DisplayTree(TRUE);
 }
 
 void TreeList::Up(int Count)

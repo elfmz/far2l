@@ -1215,7 +1215,7 @@ operations.
     You can find a folder quickly with the help of #speed search# action. Hold
 the Alt key and type the folder name until you point to the right folder.
 Pressing #Ctrl-Enter# keys simultaneously will select the next match.
-
+    Key #Left# navigates one level up.
     #Gray +# and #Gray -# keys move up and down the tree to the next branch
 on the same level.
 

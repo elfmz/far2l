@@ -210,6 +210,7 @@ private:
 	int VBlockSizeY;
 
 	int MaxRightPos;
+	int m_WordWrapMaxRightPos;
 
 	int XX2;	// scrollbar
 

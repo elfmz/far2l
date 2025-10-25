@@ -92,6 +92,7 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	VBlockStart(nullptr),
 	MaxRightPos(0),
 	LastSearchCase(GlobalSearchCase),
+	m_WordWrapMaxRightPos(0),
 	LastSearchWholeWords(GlobalSearchWholeWords),
 	LastSearchReverse(GlobalSearchReverse),
 	LastSearchSelFound(Opt.EdOpt.SearchSelFound),
@@ -158,6 +159,30 @@ Editor::~Editor()
 	_KEYMACRO(SysLog(-1));
 	_KEYMACRO(SysLog(L"Editor::~Editor()"));
 }
+
+int Editor::FindVisualLine(Edit* line, int Pos)
+{
+	if (!m_bWordWrap || !line) return 0;
+
+	for (int i = 0; i < line->GetVisualLineCount(); ++i) {
+		int start, end;
+		line->GetVisualLine(i, start, end);
+		if (Pos >= start && Pos < end) {
+			fprintf(stderr, "WORDWRAP: FindVisualLine for Pos=%d found in visual line %d [%d, %d)\n", Pos, i, start, end);
+			return i;
+		}
+	}
+
+	if (Pos == line->GetLength()) {
+		int last_line = std::max(0, line->GetVisualLineCount() - 1);
+		fprintf(stderr, "WORDWRAP: FindVisualLine for Pos=%d (EOL) returning last visual line %d\n", Pos, last_line);
+		return last_line;
+	}
+
+	fprintf(stderr, "WORDWRAP: FindVisualLine: Pos %d not found in any visual line range, returning last.\n", Pos);
+	return std::max(0, line->GetVisualLineCount() - 1);
+}
+
 void Editor::UpdateCursorPosition(int horizontal_cell_pos)
 {
 	fprintf(stderr, "WORDWRAP: UpdateCursorPosition called with horiz_cell_pos=%d for L:%d, V:%d\n", horizontal_cell_pos, NumLine, m_CurVisualLineInLogicalLine);
@@ -183,28 +208,6 @@ void Editor::UpdateCursorPosition(int horizontal_cell_pos)
 
 	CurLine->SetCurPos(new_pos);
 	fprintf(stderr, "WORDWRAP: ... final CurPos set to %d\n", new_pos);
-}
-int Editor::FindVisualLine(Edit* line, int Pos)
-{
-	if (!m_bWordWrap || !line) return 0;
-
-	for (int i = 0; i < line->GetVisualLineCount(); ++i) {
-		int start, end;
-		line->GetVisualLine(i, start, end);
-		if (Pos >= start && Pos < end) {
-			fprintf(stderr, "WORDWRAP: FindVisualLine for Pos=%d found in visual line %d [%d, %d)\n", Pos, i, start, end);
-			return i;
-		}
-	}
-
-	if (Pos == line->GetLength()) {
-		int last_line = std::max(0, line->GetVisualLineCount() - 1);
-		fprintf(stderr, "WORDWRAP: FindVisualLine for Pos=%d (EOL) returning last visual line %d\n", Pos, last_line);
-		return last_line;
-	}
-
-	fprintf(stderr, "WORDWRAP: FindVisualLine: Pos %d not found in any visual line range, returning last.\n", Pos);
-	return std::max(0, line->GetVisualLineCount() - 1);
 }
 
 void Editor::FreeAllocatedData(bool FreeUndo)
@@ -2246,6 +2249,13 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
+				if (m_bWordWrap) {
+					int v_start_pos, v_end_pos;
+					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+					fprintf(stderr, "WORDWRAP_MAXRIGHT: KEY_LEFT updated m_WordWrapMaxRightPos to %d\n", m_WordWrapMaxRightPos);
+				}
 			} else { // Original logic
 				if (!CurPos && CurLine->m_prev) {
 					Up();
@@ -2278,6 +2288,13 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
+				if (m_bWordWrap) {
+					int v_start_pos, v_end_pos;
+					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+					fprintf(stderr, "WORDWRAP_MAXRIGHT: KEY_RIGHT updated m_WordWrapMaxRightPos to %d\n", m_WordWrapMaxRightPos);
+				}
 			} else {
 				// Original logic for non-word-wrap
 				if (CurLine->GetCurPos() >= CurLine->GetLength() && CurLine->m_next && !EdOpt.CursorBeyondEOL)
@@ -2431,6 +2448,7 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 				Flags.Set(FEDITOR_NEWUNDO);
 				if (m_bWordWrap) {
 					Up();
+					UpdateCursorPosition(m_WordWrapMaxRightPos);
 					Show();
 					fprintf(stderr, "WORDWRAP_DEBUG: ProcessKey(KEY_UP) after Up() and Show(). CurPos=%d\n", CurLine->GetCurPos());
 				} else {
@@ -2459,6 +2477,7 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 				Flags.Set(FEDITOR_NEWUNDO);
 				if (m_bWordWrap) {
 					Down();
+					UpdateCursorPosition(m_WordWrapMaxRightPos);
 					Show();
 					fprintf(stderr, "WORDWRAP_DEBUG: ProcessKey(KEY_DOWN) after Down() and Show(). CurPos=%d\n", CurLine->GetCurPos());
 				} else {
@@ -3301,6 +3320,8 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 				fprintf(stderr, "WORDWRAP_HOME_END_V3:   Visual line is [%d, %d]. Current CurPos=%d. Moving to start: %d.\n", start, end, CurLine->GetCurPos(), start);
 				CurLine->SetCurPos(start);
 				Show();
+				m_WordWrapMaxRightPos = 0;
+				fprintf(stderr, "WORDWRAP_MAXRIGHT: KEY_HOME updated m_WordWrapMaxRightPos to 0\n");
 				return TRUE;
 			}
 			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
@@ -3328,6 +3349,13 @@ fprintf(stderr, "WORDWRAP_B2T_FIX: ProcessKey(Ctrl+Shift+End/PgDn family) entere
 				CurLine->SetCurPos(targetPos);
 
 				Show();
+				if (m_bWordWrap) {
+					int v_start_pos, v_end_pos;
+					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+					fprintf(stderr, "WORDWRAP_MAXRIGHT: KEY_END updated m_WordWrapMaxRightPos to %d\n", m_WordWrapMaxRightPos);
+				}
 				return TRUE;
 			}
 			// If not word wrap, fall through to default to delegate to Edit::ProcessKey
@@ -3754,6 +3782,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			int targetCellPos = mouseCellPos; // В режиме переноса LeftPos всегда 0 для отрисовки
 
 			fprintf(stderr, "WORDWRAP_MOUSE: X-translation start: Visual line content is [%d, %d). Mouse cell pos relative to window is %d.\n", visualLineStart, visualLineEnd, mouseCellPos);
+			m_WordWrapMaxRightPos = targetCellPos;
+			fprintf(stderr, "WORDWRAP_MAXRIGHT: MOUSE_CLICK updated m_WordWrapMaxRightPos to %d\n", m_WordWrapMaxRightPos);
 
 			int newCurPos = CurLine->CellPosToReal(visualLineStart + targetCellPos);
 			fprintf(stderr, "WORDWRAP_MOUSE: --> Calculated initial real pos = %d\n", newCurPos);

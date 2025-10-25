@@ -381,7 +381,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			LinesToScan -= ScanPtr->GetVisualLineCount();
 			ScanPtr = ScanPtr->m_next;
 		}
-		
+
 		if (!ScrBuf.GetLockCount()) {
 			if (Flags.Check(FEDITOR_JUSTMODIFIED)) {
 				Flags.Clear(FEDITOR_JUSTMODIFIED);
@@ -7651,19 +7651,18 @@ void Editor::SetPosition(int X1, int Y1, int X2, int Y2)
 {
 	ScreenObject::SetPosition(X1,Y1,X2,Y2);
 
-	int RecalcWidth;
-	if (m_bWordWrap) {
-		RecalcWidth = X2 - X1 + 1;
-	} else {
-		// Mimic ShowEditor's logic for XX2
-		int real_XX2 = (NumLastLine > (Y2 - Y1) + 1) ? X2 - (EdOpt.ShowScrollBar ? 1 : 0) : X2;
-		RecalcWidth = real_XX2 - X1 + 1;
-	}
-
 	for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
 	{
 		CurPtr->SetPosition(X1,Y1,X2,Y2);
-		if (m_bWordWrap) // Only re-wrap if mode is on
+	}
+
+	if (m_bWordWrap)
+	{
+		int RecalcWidth = X2 - X1 + 1;
+		if (EdOpt.ShowScrollBar) // Consistent with ShowEditor logic
+			RecalcWidth--;
+
+		for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
 		{
 			CurPtr->RecalculateWordWrap(RecalcWidth, EdOpt.TabSize);
 		}

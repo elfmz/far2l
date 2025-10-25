@@ -4685,22 +4685,54 @@ BOOL Editor::Search(int Next)
 					$ 15.04.2003 VVM
 					Отступим на четверть и проверим на перекрытие диалогом замены
 				*/
-				int FromTop = (ScrY - 2) / 4;
+				if (m_bWordWrap)
+				{
+					fprintf(stderr, "WORDWRAP_SEARCH: Search successful on line %d. Found at pos %d.\n", NewNumLine, CurPtr->GetCurPos());
+					int foundVisualLine = FindVisualLine(CurPtr, CurPtr->GetCurPos());
+					fprintf(stderr, "WORDWRAP_SEARCH: Corresponds to visual line %d.\n", foundVisualLine);
 
-				if (FromTop < 0 || FromTop >= ((ScrY - 5) / 2 - 2))
-					FromTop = 0;
+					int FromTop = (Y2 - Y1 + 1) / 4;
+					fprintf(stderr, "WORDWRAP_SEARCH: Scrolling back %d visual lines from target to position it on screen.\n", FromTop);
 
-				TmpPtr = CurLine = CurPtr;
+					Edit* newTopLogical = CurPtr;
+					int newTopVisual = foundVisualLine;
 
-				for (int i = 0; i < FromTop; i++) {
-					if (TmpPtr->m_prev)
-						TmpPtr = TmpPtr->m_prev;
-					else
-						break;
+					for (int i = 0; i < FromTop; ++i) {
+						if (newTopVisual > 0) {
+							newTopVisual--;
+						} else if (newTopLogical->m_prev) {
+							newTopLogical = newTopLogical->m_prev;
+							newTopVisual = newTopLogical->GetVisualLineCount() - 1;
+						} else {
+							break; // Reached top of file
+						}
+					}
+					fprintf(stderr, "WORDWRAP_SEARCH: New top of screen will be logical line %d, visual line %d.\n", CalcDistance(TopList, newTopLogical, -1), newTopVisual);
+
+					m_TopScreenLogicalLine = newTopLogical;
+					m_TopScreenVisualLine = newTopVisual;
+					CurLine = CurPtr;
+					NumLine = NewNumLine;
 				}
+				else
+				{
+					int FromTop = (ScrY - 2) / 4;
 
-				TopScreen = TmpPtr;
-				NumLine = NewNumLine;
+					if (FromTop < 0 || FromTop >= ((ScrY - 5) / 2 - 2))
+						FromTop = 0;
+
+					TmpPtr = CurLine = CurPtr;
+
+					for (int i = 0; i < FromTop; i++) {
+						if (TmpPtr->m_prev)
+							TmpPtr = TmpPtr->m_prev;
+						else
+							break;
+					}
+
+					TopScreen = TmpPtr;
+					NumLine = NewNumLine;
+				}
 				int LeftPos = CurPtr->GetLeftPos();
 				int CellCurPos = CurPtr->GetCellCurPos();
 

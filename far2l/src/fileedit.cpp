@@ -1120,6 +1120,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				Show();
 				return (TRUE);
 			}
+		case KEY_F3:
 		case KEY_ALTW: {
 			fprintf(stderr, "WORDWRAP_SYNC_TRACE: FileEditor::ProcessKey(KEY_ALTW) caught. Will call m_editor->SetWordWrap(%d)\n", !m_editor->GetWordWrap());
 			m_editor->SetWordWrap(!m_editor->GetWordWrap());

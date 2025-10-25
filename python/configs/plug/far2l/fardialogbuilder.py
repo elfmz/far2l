@@ -1,4 +1,3 @@
-#!/usr/bin/env vpython3
 import io
 import logging
 from . import fardialogsizer as sizer

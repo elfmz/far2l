@@ -1,4 +1,3 @@
-#!/usr/bin/env vpython3
 import random
 import logging
 from far2l.plugin import PluginBase

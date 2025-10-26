@@ -3596,8 +3596,19 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				ProcessKey(KEY_CTRLDOWN);
 			}
 		} else {
-			while (IsMouseButtonPressed())
-				GoToLine((NumLastLine - 1) * (MouseY - Y1) / (Y2 - Y1));
+			if (m_bWordWrap) {
+				while (IsMouseButtonPressed()) {
+					int TotalVisualLines = GetTotalVisualLines();
+					if (TotalVisualLines > 1) {
+						int TargetVisualLine = (TotalVisualLines - 1) * (MouseY - Y1) / (Y2 - Y1);
+						GoToVisualLine(TargetVisualLine);
+						Show(); // Force redraw after jumping
+					}
+				}
+			} else {
+				while (IsMouseButtonPressed())
+					GoToLine((NumLastLine - 1) * (MouseY - Y1) / (Y2 - Y1));
+			}
 		}
 
 		return TRUE;
@@ -3785,6 +3796,56 @@ int Editor::CalcDistance(Edit *From, Edit *To, int MaxDist)
 	}
 
 	return (Distance);
+}
+void Editor::GoToVisualLine(int VisualLine)
+{
+	if (VisualLine < 0) VisualLine = 0;
+
+	Edit* target_logical = TopList;
+	int logical_line_num = 0;
+	int visual_lines_so_far = 0;
+
+	while (target_logical)
+	{
+		int visual_lines_in_current = target_logical->GetVisualLineCount();
+		if (visual_lines_so_far + visual_lines_in_current > VisualLine)
+		{
+			// The target is in this logical line
+			CurLine = target_logical;
+			NumLine = logical_line_num;
+			m_CurVisualLineInLogicalLine = VisualLine - visual_lines_so_far;
+			CurLine->SetCurPos(0); // Move to start of logical line first
+			UpdateCursorPosition(0); // Then to start of visual line
+			AdjustScreenPosition(); // Center the view
+			return;
+		}
+		visual_lines_so_far += visual_lines_in_current;
+		logical_line_num++;
+		target_logical = target_logical->m_next;
+	}
+
+	// If we are here, it means VisualLine is out of bounds (too large). Go to the very end.
+	ProcessKey(KEY_CTRLEND);
+}
+int Editor::GetTotalVisualLines()
+{
+	int total = 0;
+	for (Edit* line = TopList; line; line = line->m_next) {
+		total += line->GetVisualLineCount();
+	}
+	return total;
+}
+
+int Editor::GetTopVisualLine()
+{
+	int top_pos = 0;
+	// This can be slow for large files, but it's the simplest correct implementation.
+	// We can optimize with caching later if needed.
+	for (Edit* line = TopList; line && line != m_TopScreenLogicalLine; line = line->m_next) {
+		top_pos += line->GetVisualLineCount();
+	}
+	top_pos += m_TopScreenVisualLine;
+	return top_pos;
 }
 
 void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine)
@@ -7793,12 +7854,30 @@ void Editor::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnC
 
 void Editor::DrawScrollbar()
 {
-	if (EdOpt.ShowScrollBar) {
+	if (EdOpt.ShowScrollBar)
+	{
 		SetFarColor(COL_EDITORSCROLLBAR);
-		XX2 = X2
-				- (ScrollBarEx(X2, Y1, Y2 - Y1 + 1, NumLine - CalcDistance(TopScreen, CurLine, -1),
-							NumLastLine)
-								? 1
-								: 0);
+		if (m_bWordWrap)
+		{
+			int TotalVisualLines = GetTotalVisualLines();
+			// If file is empty, TotalVisualLines can be 0, which breaks scrollbar logic.
+			// ScrollBarEx expects total > 0.
+			if (TotalVisualLines == 0 && TopList && TopList->m_next == nullptr && TopList->GetLength() == 0)
+			{
+				TotalVisualLines = 1; // Treat empty file as 1 visual line for scrollbar purposes.
+			}
+
+			int TopVisualLine = GetTopVisualLine();
+			XX2 = X2 - (ScrollBarEx(X2, Y1, Y2 - Y1 + 1, TopVisualLine, TotalVisualLines) ? 1 : 0);
+		}
+		else
+		{
+			XX2 = X2 - (ScrollBarEx(X2, Y1, Y2 - Y1 + 1, NumLine - CalcDistance(TopScreen, CurLine, -1), NumLastLine) ? 1 : 0);
+		}
+	}
+	else
+	{
+		// Ensure XX2 is set even if scrollbar is off, especially for word wrap calculations
+		XX2 = X2;
 	}
 }

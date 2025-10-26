@@ -281,7 +281,7 @@ bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
 	bool Ret = false;
 	size_t len = StrLength(Path);
 
-	while (len && IsSlash(Path[--len])) {
+	while (len > 1 && IsSlash(Path[--len])) {
 		Ret = true;
 		Path[len] = L'\0';
 
@@ -295,7 +295,7 @@ bool DeleteEndSlash(wchar_t *Path, bool AllEndSlash)
 bool DeleteEndSlash(std::wstring &strPath, bool AllEndSlash)
 {
 	bool out = false;
-	while (!strPath.empty() && IsSlash(strPath.back())) {
+	while (strPath.size() > 1 && IsSlash(strPath.back())) {
 		out = true;
 		strPath.pop_back();
 		if (!AllEndSlash)
@@ -308,7 +308,7 @@ bool DeleteEndSlash(FARString &strPath, bool AllEndSlash)
 {
 	size_t LenToSlash = strPath.GetLength();
 
-	while (LenToSlash != 0 && IsSlash(strPath.At(LenToSlash - 1))) {
+	while (LenToSlash > 1 && IsSlash(strPath.At(LenToSlash - 1))) {
 		--LenToSlash;
 		if (!AllEndSlash)
 			break;

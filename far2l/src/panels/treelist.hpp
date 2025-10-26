@@ -93,6 +93,7 @@ private:
 	virtual void DisplayObject();
 	void DisplayTree(int Fast);
 	void DisplayTreeName(const wchar_t *Name, int Pos);
+	void LevelUp();
 	void Up(int Count);
 	void Down(int Count);
 	void Scroll(int Count);

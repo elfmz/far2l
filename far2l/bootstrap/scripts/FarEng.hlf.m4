@@ -1214,7 +1214,7 @@ operations.
     You can find a folder quickly with the help of #speed search# action. Hold
 the Alt key and type the folder name until you point to the right folder.
 Pressing #Ctrl-Enter# keys simultaneously will select the next match.
-
+    Key #Left# navigates one level up.
     #Gray +# and #Gray -# keys move up and down the tree to the next branch
 on the same level.
 
@@ -2498,12 +2498,6 @@ $ #Settings dialog: panel#
   #in Size column#          also open from panel by #Ctrl-Alt-D#.
 
 
-  #Auto change folder#      If checked, cursor moves in the ~tree panel~@TreePanel@
-                          will cause a folder change in the other
-                          panel. If it is not checked, you must press
-                          #Enter# to change the folder from the tree
-                          panel.
-
   #Select folders#          Enable to select folders, using #Gray +#
                           and #Gray *#. Otherwise these keys will
                           select files only.
@@ -2541,6 +2535,17 @@ $ #Settings dialog: panel#
   #Classic hotkey link#     Expand ~symbolic links~@HardSymLink@ when using certain
   #resolving#               keyboard shortcuts. See ~Panel control commands~@PanelCmd@ and
                           ~Command line commands~@CmdLineCmd@ for details.
+
+  #Auto change folder#      If checked, cursor moves in the ~tree panel~@TreePanel@
+                          will cause a folder change in the other
+                          panel. If it is not checked, you must press
+                          #Enter# to change the folder from the tree
+                          panel.
+
+  #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
+  #scanning exclusions#     from automatic scanning. Use this to skip folders
+                          like .git or .mvn during tree expansion.
+                          #Example:# .git;.mvn;.svn;node_modules
 
   #Show column titles#      Enable display of ~file panel~@FilePanel@ column titles.
 

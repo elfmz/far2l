@@ -2232,8 +2232,19 @@ ConfigHighlight
 "&Розфарбовка файлів"
 "&Размалёўка файлаў"
 
+ConfigTreeOptions
+"Параметры дерева каталогов"
+"Tree panel options"
+"Možnosti stromu adresářů"
+"Optionen der Baumansicht"
+"Könyvtárfa beállításai"
+"Opcje drzewa katalogów"
+"Opciones del panel de árbol"
+"Параметри дерева тек"
+"Налады дрэва каталогаў"
+
 ConfigAutoChange
-"&Автосмена папки"
+"&Автосмена каталога"
 "&Auto change folder"
 "&Automaticky měnit adresář"
 "Ordner &automatisch wechseln (Baumansicht)"
@@ -2242,6 +2253,17 @@ ConfigAutoChange
 "&Auto cambiar directorio"
 "&Автозміна теки"
 "&Самастойная змена каталога"
+
+ConfigExclSubTreeMask
+"Маска искл&ючений сканирования подкаталогов"
+"Mask for s&ubtree scanning exclusions"
+"Maska pro v&yloučení při prohledávání podadresářů"
+"Mas&ke für Ausschlüsse bei Unterverzeichnis-Scan"
+"&Maszk az alkönyvtárak vizsgálatának kizárásához"
+"Maska wykluczeń podczas skanowania &podkatalogów"
+"Máscara de e&xclusión al escanear subárboles"
+"Маска викл&ючень сканування підтек"
+"Маска выкл&ючэнняў пры сканаванні падкаталёгаў"
 
 ConfigSelectFolders
 "Пометка &папок"

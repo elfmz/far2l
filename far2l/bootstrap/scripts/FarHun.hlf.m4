@@ -1069,7 +1069,7 @@ a mappákkat kezelni.
 nyomva az Alt billentyűt és addig írjuk be a keresett mappa nevét, amíg rá nem
 áll a sávkurzor. A #Ctrl-Enter# lenyomásával a további találatokon
 lépkedhetünk.
-
+    A #Balra# nyíl egy szinttel feljebb lép.
     A #Szürke +# és a #Szürke -# billentyűkkel fel-le mozoghatunk ugyanannak
 a szintnek a mappáin.
 
@@ -2178,11 +2178,6 @@ $ #Beállítások: panel beállítások#
   #in Size column#          also open from panel by #Ctrl-Alt-D#.
 
 
-  #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
-  #mappaváltás#             a kurzor mozgatására a másik panel is
-                          ^<wrap>mappát vált. Ha nincs engedélyezve,
-a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
-
   #A mappák is#             A #Szürke +# és a #Szürke *# nem csak a
   #kijelölhetők#            fájlokat, hanem a mappákat is kijelöli.
                           ^<wrap>Kikapcsolt opciónál csak a fájlok kapnak
@@ -2219,6 +2214,16 @@ opciót kikapcsolni.
   #Classic hotkey link#     Expand ~symbolic links~@HardSymLink@ when using certain
   #resolving#               keyboard shortcuts. See ~Panel control commands~@PanelCmd@ and
                           ~Command line commands~@CmdLineCmd@ for details.
+
+  #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
+  #mappaváltás#             a kurzor mozgatására a másik panel is
+                          ^<wrap>mappát vált. Ha nincs engedélyezve,
+a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
+
+  #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
+  #scanning exclusions#     from automatic scanning. Use this to skip folders
+                          like .git or .mvn during tree expansion.
+                          #Example:# .git;.mvn;.svn;node_modules
 
   #Oszlopnevek mutatva#     ^<wrap>Megjeleníti a ~fájlpanelek~@FilePanel@
 oszlopainak neveit.

@@ -103,6 +103,18 @@ protected:
 		}
 	}
 
+	void write_bounded(const size_t row, const size_t col, const wchar_t* val, size_t len)
+	{
+		if (row >= _height || col >= _width) {
+			return;
+		}
+		if (col + len > _width) {
+			len = _width - col;
+		}
+
+		write(row, col, val, len);
+	}
+
 	/**
 	 * Write symbol to character buffer
 	 * \param row position (row)
@@ -116,6 +128,15 @@ protected:
 		_buffer[row * _width + col].Char.UnicodeChar = WCharSanitize(val);
 	}
 
+	void write_bounded(const size_t row, const size_t col, const wchar_t val)
+	{
+		if (row >= _height || col >= _width) {
+			return;
+		}
+		write(row, col, val);
+	}
+
+
 	/**
 	 * Write color attribute to character buffer
 	 * \param row position (row)
@@ -128,6 +149,15 @@ protected:
 		assert(col < _width);
 		_buffer[row * _width + col].Attributes = val;
 	}
+
+	void write_bounded(const size_t row, const size_t col, const FarColor& val)
+	{
+		if (row >= _height || col >= _width) {
+			return;
+		}
+		write(row, col, val);
+	}
+
 
 protected:
 	typedef vector<FAR_CHAR_INFO> screen_buf;

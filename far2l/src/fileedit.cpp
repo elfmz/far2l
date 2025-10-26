@@ -2182,6 +2182,8 @@ void FileEditor::SetEditKeyBarStatefulLabels()
 	EditKeyBar.Change(KBL_MAIN, m_editor->GetShowWhiteSpace() ? Msg::EditF5Hide : Msg::EditF5, 4);
 
 	EditKeyBar.Change(KBL_CTRL, m_editor->GetConvertTabs() ? Msg::EditCtrlF5 : Msg::EditCtrlF5Spaces, 4);
+
+	EditKeyBar.Change(KBL_MAIN, m_editor->GetWordWrap() ? Msg::ViewF2Unwrap : Msg::ViewShiftF2, 2);
 }
 
 void FileEditor::ChangeEditKeyBar()

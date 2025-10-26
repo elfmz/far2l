@@ -5,6 +5,8 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+
+## 2.7.0 beta (2025-10-26)
 * Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.
 * _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
 * _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))

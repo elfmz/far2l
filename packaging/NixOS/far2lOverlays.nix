@@ -19,7 +19,7 @@ in
       # Modified 7zip package with shared library support
       _7z-far = prev.stdenv.mkDerivation rec {
         pname = "_7z-far";
-        version = "25.01";
+        version = "2.7.0";
 
         src = fetchFromGitHub {
           owner = "ip7z";
@@ -51,7 +51,7 @@ in
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.6.5";
+        version = "2.7.0";
 
         src = fetchFromGitHub {
           owner = "elfmz";

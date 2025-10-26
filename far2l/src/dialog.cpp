@@ -3012,6 +3012,9 @@ int Dialog::ProcessKey(FarKey Key)
 			}
 			break;
 
+		case KEY_CTRLTAB:
+		case KEY_CTRLSHIFTTAB:
+		case KEY_F12:
 		case KEY_F11: {
 			if (!CheckDialogMode(DMODE_NOPLUGINS)) {
 				return FrameManager->ProcessKey(Key);

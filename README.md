@@ -105,7 +105,7 @@ for **TTY|X**: `far2l --tty --nodetect=xi`;
 for plain **TTY**: `far2l --tty --nodetect=x`
 (see details via `far2l --help`).</sub>
 
-<sub>_Note about use OSC 52 in TTY/TTY|X_:
+<sub>_Note_: Using OSC 52 in TTY/TTY|X_:
 to interact with the system clipboard you must **not forget to enable OSC 52**
 in both the **FAR2L settings** (`Options`⇒`Interface settings`⇒`Use OSC52 to set clipboard data`,
 which shown in the dialog only if far2l run in TTY/TTY|X mode and all other options for clipboard access are unavailable;
@@ -113,6 +113,10 @@ you can run `far2l --tty --nodetect` to force not use others clipboard options),
 and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 is disabled in some terminals for security reasons;
 OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).</sub>
 
+<sub>_Note_: Using **TTY** under **Wayland** and **OSC 52** under Wayland:
+**TTY X|xi** in `--tty` works incorrectly. You need fully disable it to use OSC 52 for propper clipboard integration;
+you need to run `far2l --tty --nodetect=x`, than OSC 52 setting option will appear in `Interface Settings`, and you could enable it, as it described in a chapter above.
+Clipboard in `wx-gui` is working correctly. </sub>
 
 <a name="inst_run"></a>
 ## Installing, Running
@@ -375,9 +379,9 @@ The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/Ni
 
 #### Custom Building and Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS from scratch
 
-1) Copy [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to your Nix configuration folder
+1) Copy [packaging/NixOS/far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/packaging/NixOS/far2lOverlays.nix) to your Nix configuration folder
 2) Add it as import to 'configuration.nix'
-3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
+3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/packaging/NixOS/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
 4) update with 'nixos-rebuild switch'
 
 #### IDE Setup

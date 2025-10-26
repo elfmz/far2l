@@ -153,11 +153,11 @@ void keybar_ctl::set_label(const size_t num, const wchar_t* label)
 	const size_t pos = get_btn_pos(num);
 
 	if (label)
-		write(0, pos, label, wcslen(label));
+		write_bounded(0, pos, label, wcslen(label));
 	else {
 		//Clear old value
 		for (size_t i = pos; i < pos + BTN_LABEL_LEN && i < _width; ++i)
-			write(0, i, L' ');
+			write_bounded(0, i, L' ');
 	}
 }
 

@@ -29,6 +29,7 @@ else (LIBSMBCLIENT_LIBRARIES AND LIBSMBCLIENT_INCLUDE_DIRS)
     PATH_SUFFIXES
       samba-4.0
       samba4
+      samba3
   )
 
   find_library(SMBCLIENT_LIBRARY
@@ -37,6 +38,7 @@ else (LIBSMBCLIENT_LIBRARIES AND LIBSMBCLIENT_INCLUDE_DIRS)
     PATH_SUFFIXES
       samba-4.0
       samba4
+      samba3
   )
 
   if (SMBCLIENT_LIBRARY)

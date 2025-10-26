@@ -19,7 +19,7 @@ in
       # Modified 7zip package with shared library support
       _7z-far = prev.stdenv.mkDerivation rec {
         pname = "_7z-far";
-        version = "2.7.0";
+        version = "25.01";
 
         src = fetchFromGitHub {
           owner = "ip7z";

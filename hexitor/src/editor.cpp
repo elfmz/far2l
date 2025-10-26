@@ -126,9 +126,6 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 	const size_t wnd_width = max(far_wnd_size.Right - far_wnd_size.Left + 1, MIN_WIDTH);
 	const size_t wnd_heigth = max(far_wnd_size.Bottom - far_wnd_size.Top + 1, MIN_HEIGHT);
 
-	if( wnd_width < MIN_WIDTH || wnd_heigth < MIN_HEIGHT )
-		return false;
-
 	//Open edited file
 	const DWORD open_status = _file.open(file_name);
 	if (open_status != ERROR_SUCCESS) {

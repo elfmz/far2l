@@ -19,7 +19,7 @@ in
       # Modified 7zip package with shared library support
       _7z-far = prev.stdenv.mkDerivation rec {
         pname = "_7z-far";
-        version = "2.7.0";
+        version = "25.01";
 
         src = fetchFromGitHub {
           owner = "ip7z";
@@ -56,8 +56,8 @@ in
         src = fetchFromGitHub {
           owner = "elfmz";
           repo = "far2l";
-          rev = "c35f8e4239da30439763c1ede49d926e1c000b26";
-          sha256 = "sha256-Skp7zAFYj5qthladxi5Doz1dFM+zquP2dOiGCLsXRhs=";
+          rev = "b4f641c8c99c62e37e5505302ddc8364b132bdd8";
+          sha256 = "sha256-LdZp8NyUGtny3IzqRWFMVsIWKuzN8RRnaGDZgSbK7Kw=";
         };
 
         nativeBuildInputs = [

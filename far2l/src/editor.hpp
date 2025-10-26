@@ -253,6 +253,8 @@ private:
 
 private:
 	int FindVisualLine(Edit* line, int Pos);
+int GetTotalVisualLines();
+int GetTopVisualLine();
 	virtual void DisplayObject();
 	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);
@@ -264,6 +266,7 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
+void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 

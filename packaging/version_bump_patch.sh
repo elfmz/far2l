@@ -21,4 +21,7 @@ git commit -m "Bump version to $NEW_VERSION"
 git tag $NEW_TAG
 
 sed -i "/${NEW_VERSION} beta/i ## Master (current development)\n" ../changelog.md
+
+sed -i 's/^\([[:space:]]*\)version = ".*";/\1version = "'${NEW_VERSION}'";/' ./NixOS/far2lOverlays.nix
+
 git commit ../changelog.md -m "Start a new changelog entry"

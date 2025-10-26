@@ -5,6 +5,7 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Word wrap in editor (like in Windows Notepad or HTML textareas). Toggled by F3 or Alt+W
 
 ## 2.7.0 beta (2025-10-26)
 * Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.

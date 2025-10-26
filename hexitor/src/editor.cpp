@@ -47,7 +47,7 @@ UINT64 find_prev_utf8_start(const editor* ed, UINT64 current_offset)
 	return offset;
 }
 
-#define MIN_WIDTH		80		//Minimum width width size of main edit window
+#define MIN_WIDTH		100		//Minimum width width size of main edit window
 #define MIN_HEIGHT	3		//Minimum height width size of main edit window
 
 #define ID_TITLE		0		//Id of the fake title control
@@ -120,6 +120,12 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 {
 	assert(file_name && *file_name);
 
+	//Create edit window
+	SMALL_RECT far_wnd_size = { 0, 0, MIN_WIDTH, MIN_HEIGHT };
+	_PSI.AdvControl(_PSI.ModuleNumber, ACTL_GETFARRECT, &far_wnd_size, 0);
+	const size_t wnd_width = max(far_wnd_size.Right - far_wnd_size.Left + 1, MIN_WIDTH);
+	const size_t wnd_heigth = max(far_wnd_size.Bottom - far_wnd_size.Top + 1, MIN_HEIGHT);
+
 	//Open edited file
 	const DWORD open_status = _file.open(file_name);
 	if (open_status != ERROR_SUCCESS) {
@@ -140,12 +146,6 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 
 	//Prepare undo buffer
 	_undo.reserve(1024);
-
-	//Create edit window
-	SMALL_RECT far_wnd_size = { 0, 0, MIN_WIDTH, MIN_HEIGHT };
-	_PSI.AdvControl(_PSI.ModuleNumber, ACTL_GETFARRECT, &far_wnd_size, 0);
-	const size_t wnd_width = max(far_wnd_size.Right - far_wnd_size.Left + 1, MIN_WIDTH);
-	const size_t wnd_heigth = max(far_wnd_size.Bottom - far_wnd_size.Top + 1, MIN_HEIGHT);
 
 	//Allocate screen buffers
 	_statusbar.resize(wnd_width);
@@ -268,6 +268,9 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 
 void editor::on_resize(const COORD& coord)
 {
+	if( coord.X < MIN_WIDTH || coord.Y < MIN_HEIGHT )
+		return;
+
 	_PSI.SendDlgMessage(_dialog, DM_ENABLEREDRAW, FALSE, (LONG_PTR)nullptr);
 
 	//Resize screen controls

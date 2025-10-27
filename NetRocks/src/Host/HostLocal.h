@@ -14,6 +14,7 @@ public:
 	virtual ~HostLocal();
 
 	virtual std::string SiteName();
+	virtual std::string SiteURL();
 	virtual void GetIdentity(Identity &identity);
 
 

@@ -2393,6 +2393,7 @@ struct OpenPluginInfo
 	DWORD                 Flags;
 	const wchar_t           *HostFile;
 	const wchar_t           *CurDir;
+	const wchar_t           *CurURL;
 	const wchar_t           *Format;
 	const wchar_t           *PanelTitle;
 	const struct InfoPanelLine *InfoLines;

@@ -1835,6 +1835,7 @@ namespace oldfar
 		DWORD                 Flags;
 		const char           *HostFile;
 		const char           *CurDir;
+		const char           *CurURL;
 		const char           *Format;
 		const char           *PanelTitle;
 		const struct InfoPanelLine *InfoLines;

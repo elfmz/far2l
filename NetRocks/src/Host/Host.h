@@ -17,6 +17,7 @@ struct IHost : IProtocol
 	};
 
 	virtual std::string SiteName() = 0; // MT-safe, human-readable site's name
+	virtual std::string SiteURL() = 0; // MT-safe, site's URL
 	virtual void GetIdentity(Identity &identity) = 0; // MT-safe, returns connection host identity details
 
 	virtual std::shared_ptr<IHost> Clone() = 0; // MT-safe, creates clone of this host that will init automatically with same creds

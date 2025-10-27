@@ -43,6 +43,12 @@
 
 ^* * *
 
+After F5, use the 0x prefix if you're specifying a hexadecimal offset,
+or the % suffix if you're specifying a percentage offset.
+Otherwise, the offset is taken as a decimal number.
+
+^* * *
+
 ^Source code and updates you can get at project page:
   
 ^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@

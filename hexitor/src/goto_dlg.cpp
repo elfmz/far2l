@@ -58,19 +58,14 @@ bool goto_dlg::show(const UINT64 file_size, UINT64& offset)
 	_file_size = file_size;
 
 	fardialog::DlgMASKED maskoff("tb_mask", nullptr, _hex_mask, DIF_HISTORY | DIF_MASKEDIT);
-	fardialog::DlgRADIOBUTTON radiohex("rb_hex", _PSI.GetMsg(_PSI.ModuleNumber, ps_goto_hex), DIF_GROUP, true);
-	fardialog::DlgRADIOBUTTON radioper("rb_percent", _PSI.GetMsg(_PSI.ModuleNumber, ps_goto_percent), 0, false);
 	fardialog::DlgHLine hline0;
 	fardialog::DlgBUTTON button1("bn_ok", _PSI.GetMsg(_PSI.ModuleNumber, ps_ok), DIF_CENTERGROUP | DIF_DEFAULT, 0, 1);
 	fardialog::DlgBUTTON button2("bn_cancel", _PSI.GetMsg(_PSI.ModuleNumber, ps_cancel), DIF_CENTERGROUP);
 
-	std::vector<fardialog::Window*> hbox1c = {&radiohex, &radioper};
-	fardialog::DlgHSizer hbox1(hbox1c);
 	std::vector<fardialog::Window*> hbox2c = {&button1, &button2};
 	fardialog::DlgHSizer hbox2(hbox2c);
 	std::vector<fardialog::Window*> vbox1c = {
 		&maskoff,
-		&hbox1,
 		&hline0,
 		&hbox2
 	};

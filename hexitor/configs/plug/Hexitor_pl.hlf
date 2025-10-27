@@ -42,6 +42,11 @@
 
 
 ^* * *
+Po F5 użyj prefixu 0x jeżeli podajesz przesunięcie szesnastkowo lub
+suffixu % jeżeli podajesz przesunięcie procentowo. Inaczej przesunięcie
+jest brane jako liczba dziesiętna
+
+^* * *
 
 ^Kod źródłowy i aktualizacje można znaleźć na stronie projektu:
 

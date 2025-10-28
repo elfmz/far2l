@@ -3620,9 +3620,6 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	if (m_bWordWrap)
 	{
-		MouseEvent->dwButtonState, MouseEvent->dwEventFlags,
-		MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y);
-
 		// scroll up/down by dragging
 		if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
 			while (IsMouseButtonPressed() && MouseY < Y1) ProcessKey(KEY_UP);

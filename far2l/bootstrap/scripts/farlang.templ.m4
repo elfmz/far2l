@@ -2254,6 +2254,17 @@ ConfigAutoChange
 "&Автозміна теки"
 "&Самастойная змена каталога"
 
+ConfigDefaultTreeScanDepth
+"&Глубина сканирования"
+"Scanning de&pth"
+"&Hloubka skenování"
+"&Tiefe scannen"
+"Mél&ység vizsgálat"
+"Głę&bokość skanowania"
+"Prof&undidad de escaneo"
+"Г&либина сканування"
+"Гл&ыбіня сканавання"
+
 ConfigExclSubTreeMask
 "Маска искл&ючений сканирования подкаталогов"
 "Mask for s&ubtree scanning exclusions"

@@ -1070,6 +1070,8 @@ nyomva az Alt billentyűt és addig írjuk be a keresett mappa nevét, amíg rá
 áll a sávkurzor. A #Ctrl-Enter# lenyomásával a további találatokon
 lépkedhetünk.
     A #Balra# nyíl egy szinttel feljebb lép.
+    A #Jobb nyíl# kibontja a faágat, amely a létrehozáskor a beállított kizárási maszk
+vagy a meghatározott beolvasási mélység szerint lett összecsukva.
     A #Szürke +# és a #Szürke -# billentyűkkel fel-le mozoghatunk ugyanannak
 a szintnek a mappáin.
 
@@ -2219,6 +2221,9 @@ opciót kikapcsolni.
   #mappaváltás#             a kurzor mozgatására a másik panel is
                           ^<wrap>mappát vált. Ha nincs engedélyezve,
 a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
+
+  #Scanning depth#          Sets the maximum depth for recursive catalogue scanning 
+                          while building the tree.
 
   #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
   #scanning exclusions#     from automatic scanning. Use this to skip folders

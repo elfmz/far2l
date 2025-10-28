@@ -3659,7 +3659,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		ProcessPasteEvent();
 	}
 
-	if (m_bWordWrap && (MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+	if (m_bWordWrap && (MouseEvent->dwButtonState & 3) /*& !(MouseEvent->dwEventFlags & MOUSE_MOVED)*/)
 	{
 		// 1. Транслируем Y в пару (логическая строка, визуальная строка)
 		Edit* TargetLogicalLine = m_TopScreenLogicalLine;
@@ -3724,23 +3724,25 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 	}
 
-    if (CurLine->ProcessMouse(MouseEvent)) {
-		if (HostFileEditor)
-			HostFileEditor->ShowStatus();
+	if (!m_bWordWrap) {
+	    if (CurLine->ProcessMouse(MouseEvent)) {
+			if (HostFileEditor)
+				HostFileEditor->ShowStatus();
 
-		if (VBlockStart)
-			Show();
-		else {
-			if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-				CtrlObject->Plugins.CurEditor = HostFileEditor;		// this;
-				_SYS_EE_REDRAW(
-						SysLog(L"Editor::ProcessMouse[%08d] ProcessEditorEvent(EE_REDRAW,EEREDRAW_LINE)",
-								__LINE__));
-				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW, EEREDRAW_LINE);
+			if (VBlockStart)
+				Show();
+			else {
+				if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
+					CtrlObject->Plugins.CurEditor = HostFileEditor;		// this;
+					_SYS_EE_REDRAW(
+							SysLog(L"Editor::ProcessMouse[%08d] ProcessEditorEvent(EE_REDRAW,EEREDRAW_LINE)",
+									__LINE__));
+					CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW, EEREDRAW_LINE);
+				}
 			}
-		}
 
-		return TRUE;
+			return TRUE;
+		}
 	}
 
 	if (!(MouseEvent->dwButtonState & 3))

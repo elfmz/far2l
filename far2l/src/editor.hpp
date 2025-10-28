@@ -246,10 +246,7 @@ private:
 	bool SaveTabSettings;
 	bool m_bWordWrap;
 	int m_WrapMaxVisibleLineLength;
-	// For mouse selection in word wrap mode
-	bool m_bSelectionInProgress;
-	Edit* m_SelectionStartLine;
-	int m_SelectionStartPos;
+	bool m_MouseButtonIsHeld;
 
 private:
 	int FindVisualLine(Edit* line, int Pos);

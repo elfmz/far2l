@@ -109,9 +109,7 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	LastGetLine(nullptr),
 	LastGetLineNumber(0),
 	SaveTabSettings(false),
-	m_bSelectionInProgress(false),
-	m_SelectionStartLine(nullptr),
-	m_SelectionStartPos(0)
+	m_MouseButtonIsHeld(false)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
 	_KEYMACRO(SysLog(1));
@@ -3565,6 +3563,8 @@ case KEY_CTRLNUMPAD3: {
 
 int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
+	m_MouseButtonIsHeld = MouseEvent->dwButtonState & 3;
+
 	// Shift + Mouse click -> adhoc quick edit
 	if ((MouseEvent->dwControlKeyState & SHIFT_PRESSED) != 0 && (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0
 			&& (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
@@ -3599,7 +3599,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					if (TotalVisualLines > 1) {
 						int TargetVisualLine = (TotalVisualLines - 1) * (MouseY - Y1) / (Y2 - Y1);
 						GoToVisualLine(TargetVisualLine);
-						Show(); // Force redraw after jumping
+						Show();
 					}
 				}
 			} else {
@@ -3607,269 +3607,155 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					GoToLine((NumLastLine - 1) * (MouseY - Y1) / (Y2 - Y1));
 			}
 		}
-
 		return TRUE;
 	}
 
-
-	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED
-			&& (MouseEvent->dwEventFlags & (DOUBLE_CLICK | MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED))
-					== 0) {
-		ProcessPasteEvent();
-	}
-
+	// --- Логика позиционирования курсора ---
+	// Для обычного режима это делает CurLine->ProcessMouse.
+	// Для Word Wrap мы делаем это здесь, потому что Editor знает о визуальных строках, а Edit - нет.
 	if (m_bWordWrap)
 	{
-		// scroll up/down by dragging
-		if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
-			while (IsMouseButtonPressed() && MouseY < Y1) ProcessKey(KEY_UP);
-			return TRUE;
-		}
-		if (MouseEvent->dwMousePosition.Y > Y2 && (MouseEvent->dwButtonState & 3)) {
-			while (IsMouseButtonPressed() && MouseY > Y2) ProcessKey(KEY_DOWN);
-			return TRUE;
-		}
-
-		if (MouseEvent->dwMousePosition.X < X1 || MouseEvent->dwMousePosition.X > X2
-				|| MouseEvent->dwMousePosition.Y < Y1 || MouseEvent->dwMousePosition.Y > Y2)
+		if (MouseEvent->dwMousePosition.X >= X1 && MouseEvent->dwMousePosition.X <= XX2
+				&& MouseEvent->dwMousePosition.Y >= Y1 && MouseEvent->dwMousePosition.Y <= Y2)
 		{
-			if (!(MouseEvent->dwButtonState & 3))
-				m_bSelectionInProgress = false;
-			return FALSE;
-		}
-
-		// --- Coordinate translation ---
-		Edit* TargetLogicalLine = m_TopScreenLogicalLine;
-		int TargetVisualLine = m_TopScreenVisualLine;
-		int screenY = Y1;
-
-		while (screenY < MouseEvent->dwMousePosition.Y && TargetLogicalLine)
-		{
-			TargetVisualLine++;
-			if (TargetVisualLine >= TargetLogicalLine->GetVisualLineCount())
+			if(MouseEvent->dwButtonState & 3) // Только если кнопка нажата
 			{
-				TargetLogicalLine = TargetLogicalLine->m_next;
-				TargetVisualLine = 0;
-			}
-			screenY++;
-		}
+				Edit* TargetLogicalLine = m_TopScreenLogicalLine;
+				int TargetVisualLine = m_TopScreenVisualLine;
+				int screenY = Y1;
 
-		int TargetPos;
-		if (TargetLogicalLine)
-		{
-			int visualLineStart, visualLineEnd;
-			TargetLogicalLine->GetVisualLine(TargetVisualLine, visualLineStart, visualLineEnd);
-			int mouseCellPos = MouseEvent->dwMousePosition.X - X1;
-			int visualLineStartCell = TargetLogicalLine->RealPosToCell(visualLineStart);
-			TargetPos = TargetLogicalLine->CellPosToReal(visualLineStartCell + mouseCellPos);
-			if (TargetPos > visualLineEnd && visualLineEnd < TargetLogicalLine->GetLength()) TargetPos = visualLineEnd;
-			if (TargetPos > TargetLogicalLine->GetLength()) TargetPos = TargetLogicalLine->GetLength();
-		}
-		else
-		{
-			TargetLogicalLine = EndList;
-			TargetPos = EndList ? EndList->GetLength() : 0;
-		}
-
-		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
-		{
-			static int EditorPrevDoubleClick = 0;
-			static COORD EditorPrevPosition = {0, 0};
-
-			if (WINPORT(GetTickCount)() - EditorPrevDoubleClick <= WINPORT(GetDoubleClickTime)()
-					&& MouseEvent->dwEventFlags != MOUSE_MOVED
-					&& EditorPrevPosition.X == MouseEvent->dwMousePosition.X
-					&& EditorPrevPosition.Y == MouseEvent->dwMousePosition.Y)
-			{
-				CurLine->Select(0, CurLine->StrSize);
-				if (CurLine->IsSelection()) {
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					BlockStart = CurLine;
-					BlockStartLine = NumLine;
-				}
-				EditorPrevDoubleClick = 0;
-				EditorPrevPosition = {0, 0};
-				m_bSelectionInProgress = false;
-			}
-			else if (MouseEvent->dwEventFlags == DOUBLE_CLICK)
-			{
-				CurLine = TargetLogicalLine;
-				NumLine = CalcDistance(TopList, CurLine, -1);
-				CurLine->SetCurPos(TargetPos);
-				m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, TargetPos);
-				ProcessKey(KEY_OP_SELWORD);
-				EditorPrevDoubleClick = WINPORT(GetTickCount)();
-				EditorPrevPosition = MouseEvent->dwMousePosition;
-				m_bSelectionInProgress = false;
-			}
-			else if (!(MouseEvent->dwEventFlags & MOUSE_MOVED) && !m_bSelectionInProgress) // Start of a click/drag
-			{
-				m_bSelectionInProgress = true;
-				m_SelectionStartLine = TargetLogicalLine;
-				m_SelectionStartPos = TargetPos;
-				CurLine = TargetLogicalLine;
-				NumLine = CalcDistance(TopList, CurLine, -1);
-				CurLine->SetCurPos(TargetPos);
-				m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, TargetPos);
-				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(m_SelectionStartPos);
-				UnmarkBlock();
-				EditorPrevDoubleClick = 0;
-			}
-			else if (m_bSelectionInProgress) // Dragging
-			{
-				CurLine = TargetLogicalLine;
-				NumLine = CalcDistance(TopList, CurLine, -1);
-				CurLine->SetCurPos(TargetPos);
-				m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, TargetPos);
-
-				/*
-
-				// Selecting text via mouse drag is not stable and disabled for now
-
-				Edit *SelStartLine = m_SelectionStartLine;
-				int SelStartPos = m_SelectionStartPos;
-				Edit *SelEndLine = CurLine;
-				int SelEndPos = CurLine->GetCurPos();
-
-				int StartLineNum = CalcDistance(TopList, SelStartLine, -1);
-				int EndLineNum = NumLine;
-
-				if (StartLineNum > EndLineNum || (StartLineNum == EndLineNum && SelStartPos > SelEndPos)) {
-					std::swap(SelStartLine, SelEndLine);
-					std::swap(SelStartPos, SelEndPos);
-				}
-
-				UnmarkBlock();
-				Flags.Set(FEDITOR_MARKINGBLOCK);
-				BlockStart = SelStartLine;
-				BlockStartLine = CalcDistance(TopList, BlockStart, -1);
-
-				for (Edit *p = TopList; p; p = p->m_next) {
-					int p_num = CalcDistance(TopList, p, -1);
-					int s_num = CalcDistance(TopList, SelStartLine, -1);
-					int e_num = CalcDistance(TopList, SelEndLine, -1);
-
-					if (p_num < s_num || p_num > e_num) {
-						p->Select(-1, 0);
-					} else if (p == SelStartLine && p == SelEndLine) {
-						p->Select(SelStartPos, SelEndPos);
-					} else if (p == SelStartLine) {
-						p->Select(SelStartPos, -1);
-					} else if (p == SelEndLine) {
-						p->Select(0, SelEndPos);
-					} else {
-						p->Select(0, -1);
+				while (screenY < MouseEvent->dwMousePosition.Y && TargetLogicalLine)
+				{
+					TargetVisualLine++;
+					if (TargetVisualLine >= TargetLogicalLine->GetVisualLineCount()) {
+						TargetLogicalLine = TargetLogicalLine->m_next;
+						TargetVisualLine = 0;
 					}
+					screenY++;
 				}
-				*/
+
+				if (TargetLogicalLine)
+				{
+					CurLine = TargetLogicalLine;
+					NumLine = CalcDistance(TopList, CurLine, -1);
+					m_CurVisualLineInLogicalLine = TargetVisualLine;
+
+					int visualLineStart, visualLineEnd;
+					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, visualLineStart, visualLineEnd);
+					
+					// В режиме переноса LeftPos всегда 0. Координата X мыши сразу дает позицию в ячейках от левого края.
+					int mouseCellPos = MouseEvent->dwMousePosition.X - X1;
+					
+					// Позиция в ячейках от начала логической строки
+					int targetCellPos = CurLine->RealPosToCell(visualLineStart) + mouseCellPos;
+
+					int newCurPos = CurLine->CellPosToReal(targetCellPos);
+
+					if (newCurPos > visualLineEnd && visualLineEnd < CurLine->GetLength())
+						newCurPos = visualLineEnd;
+					
+					if (newCurPos > CurLine->GetLength())
+						newCurPos = CurLine->GetLength();
+					
+					CurLine->SetCurPos(newCurPos);
+					m_WordWrapMaxRightPos = mouseCellPos;
+					MaxRightPos = CurLine->GetCellCurPos();
+
+					Show();
+				}
 			}
 		}
-		else
-		{
-			m_bSelectionInProgress = false;
-		}
-
-		Show();
-		return TRUE;
 	}
-	else // Original non-word-wrap logic
+	else
 	{
-		Edit *NewPtr;
-		int NewDist, Dist;
-
-		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
-			static int EditorPrevDoubleClick = 0;
-			static COORD EditorPrevPosition = {0, 0};
-
-			if (WINPORT(GetTickCount)() - EditorPrevDoubleClick <= WINPORT(GetDoubleClickTime)()
-					&& MouseEvent->dwEventFlags != MOUSE_MOVED
-					&& EditorPrevPosition.X == MouseEvent->dwMousePosition.X
-					&& EditorPrevPosition.Y == MouseEvent->dwMousePosition.Y) {
-				CurLine->Select(0, CurLine->StrSize);
-
-				if (CurLine->IsSelection()) {
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					BlockStart = CurLine;
-					BlockStartLine = NumLine;
-				}
-
-				EditorPrevDoubleClick = 0;
-				EditorPrevPosition.X = 0;
-				EditorPrevPosition.Y = 0;
-			}
-
-			if (MouseEvent->dwEventFlags == DOUBLE_CLICK) {
-				Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
-
-				if (BlockStart || VBlockStart)
-					UnmarkBlock();
-
-				ProcessKey(KEY_OP_SELWORD);
-				EditorPrevDoubleClick = WINPORT(GetTickCount)();
-				EditorPrevPosition = MouseEvent->dwMousePosition;
-			} else {
-				EditorPrevDoubleClick = 0;
-				EditorPrevPosition.X = 0;
-				EditorPrevPosition.Y = 0;
-			}
-
-			Show();
-		}
-
+		// Оригинальная логика для режима без переносов
 		if (CurLine->ProcessMouse(MouseEvent)) {
 			if (HostFileEditor)
 				HostFileEditor->ShowStatus();
-
-			if (VBlockStart)
-				Show();
-			else {
-				if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-					CtrlObject->Plugins.CurEditor = HostFileEditor;
-					CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW, EEREDRAW_LINE);
-				}
+			
+			if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
+				CtrlObject->Plugins.CurEditor = HostFileEditor;
+				CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW, EEREDRAW_LINE);
 			}
-
 			return TRUE;
 		}
+	}
 
-		if (!(MouseEvent->dwButtonState & 3))
+
+	// --- Общая логика для обоих режимов ---
+
+	if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+		static int EditorPrevDoubleClick = 0;
+		static COORD EditorPrevPosition = {0, 0};
+
+		if (WINPORT(GetTickCount)() - EditorPrevDoubleClick <= WINPORT(GetDoubleClickTime)()
+				&& MouseEvent->dwEventFlags != MOUSE_MOVED
+				&& EditorPrevPosition.X == MouseEvent->dwMousePosition.X
+				&& EditorPrevPosition.Y == MouseEvent->dwMousePosition.Y) {
+			CurLine->Select(0, CurLine->StrSize);
+
+			if (CurLine->IsSelection()) {
+				Flags.Set(FEDITOR_MARKINGBLOCK);
+				BlockStart = CurLine;
+				BlockStartLine = NumLine;
+			}
+			EditorPrevDoubleClick = 0;
+		}
+
+		if (MouseEvent->dwEventFlags == DOUBLE_CLICK) {
+			if (BlockStart || VBlockStart) UnmarkBlock();
+			ProcessKey(KEY_OP_SELWORD);
+			EditorPrevDoubleClick = WINPORT(GetTickCount)();
+			EditorPrevPosition = MouseEvent->dwMousePosition;
+		} else {
+			EditorPrevDoubleClick = 0;
+		}
+		Show();
+	}
+	
+	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED
+			&& (MouseEvent->dwEventFlags & (DOUBLE_CLICK | MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) == 0) {
+		ProcessPasteEvent();
+	}
+
+	if (!(MouseEvent->dwButtonState & 3))
+		return FALSE;
+
+	// scroll up
+	if (MouseEvent->dwMousePosition.Y < Y1) {
+		while (IsMouseButtonPressed() && MouseY < Y1)
+			ProcessKey(KEY_UP);
+		return TRUE;
+	}
+
+	// scroll down
+	if (MouseEvent->dwMousePosition.Y > Y2) {
+		while (IsMouseButtonPressed() && MouseY > Y2)
+			ProcessKey(KEY_DOWN);
+		return TRUE;
+	}
+
+	// Эта часть кода больше не нужна в режиме Word Wrap, т.к. мы уже обработали клик,
+	// но она нужна для старого режима, если CurLine->ProcessMouse не сработал.
+	if (!m_bWordWrap)
+	{
+		if (MouseEvent->dwMousePosition.X < X1 || MouseEvent->dwMousePosition.X > X2)
 			return FALSE;
 
-		// scroll up
-		if (MouseEvent->dwMousePosition.Y == Y1 - 1) {
-			while (IsMouseButtonPressed() && MouseY == Y1 - 1)
-				ProcessKey(KEY_UP);
-
-			return TRUE;
-		}
-
-		// scroll down
-		if (MouseEvent->dwMousePosition.Y == Y2 + 1) {
-			while (IsMouseButtonPressed() && MouseY == Y2 + 1)
-				ProcessKey(KEY_DOWN);
-
-			return TRUE;
-		}
-
-		NewDist = MouseEvent->dwMousePosition.Y - Y1;
-		NewPtr = TopScreen;
-
+		int NewDist = MouseEvent->dwMousePosition.Y - Y1;
+		Edit* NewPtr = TopScreen;
 		while (NewDist-- && NewPtr->m_next)
 			NewPtr = NewPtr->m_next;
 
-		Dist = CalcDistance(TopScreen, NewPtr, -1) - CalcDistance(TopScreen, CurLine, -1);
-
-		if (Dist > 0)
-			while (Dist--)
-				Down();
-		else
-			while (Dist++)
-				Up();
+		int Dist = CalcDistance(TopScreen, NewPtr, -1) - CalcDistance(TopScreen, CurLine, -1);
+		if (Dist > 0) while (Dist--) Down();
+		else while (Dist++) Up();
 
 		CurLine->ProcessMouse(MouseEvent);
 		Show();
-		return TRUE;
 	}
+
+	return TRUE;
 }
 
 int Editor::CalcDistance(Edit *From, Edit *To, int MaxDist)
@@ -7455,6 +7341,8 @@ void Editor::SetTabSize(int NewSize)
 
 void Editor::SetWordWrap(int NewMode)
 {
+	if (m_MouseButtonIsHeld) return;
+	
 	if ((NewMode != 0) != m_bWordWrap)
 	{
 		m_bWordWrap = (NewMode != 0);

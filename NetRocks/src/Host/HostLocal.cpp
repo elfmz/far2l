@@ -55,16 +55,6 @@ std::string HostLocal::SiteName()
 #endif
 }
 
-std::string HostLocal::SiteURL()
-{
-#ifdef NETROCKS_PROTOCOL
-	return std::string();
-#else
-	return G.GetMsgMB(MHostLocalName);
-#endif
-}
-
-
 void HostLocal::GetIdentity(Identity &identity)
 {
 	identity = Identity();

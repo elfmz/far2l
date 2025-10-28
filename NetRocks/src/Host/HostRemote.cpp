@@ -179,26 +179,6 @@ std::string HostRemote::SiteName()
 	return out;
 }
 
-std::string HostRemote::SiteURL()
-{
-	const auto *pi = ProtocolInfoLookup(_identity.protocol.c_str());
-
-	std::unique_lock<std::mutex> locker(_mutex);
-	std::string out = _identity.protocol;
-	out+= "://";
-	if (!_identity.username.empty()) {
-		out+= _identity.username;
-		out+= "@";
-	}
-	out+= _identity.host;
-	if (_identity.port && pi &&
-	 pi->default_port != -1 && pi->default_port != (int)_identity.port) {
-		out+= StrPrintf(":%u", _identity.port);
-	}
-
-	return out;
-}
-
 void HostRemote::GetIdentity(Identity &identity)
 {
 	std::unique_lock<std::mutex> locker(_mutex);

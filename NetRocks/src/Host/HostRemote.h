@@ -64,7 +64,6 @@ public:
 	virtual std::shared_ptr<IHost> Clone();
 
 	virtual std::string SiteName();
-	virtual std::string SiteURL();
 	virtual void GetIdentity(Identity &identity);
 
 	virtual void ReInitialize();

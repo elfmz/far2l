@@ -124,8 +124,21 @@ void PluginImpl::UpdatePathInfo()
 	if (_remote) {
 		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
 		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
-		tmp = StrMB2Wide(_remote->SiteURL()) + L"/" + StrMB2Wide(_location.ToString(false));
+		// make up URL string start
+		IHost::Identity identity;
+		_remote->GetIdentity(identity);
+		tmp = StrMB2Wide(StrPrintf("%s://", identity.protocol.c_str()));
+		if (!identity.username.empty()) {
+			tmp += StrMB2Wide(StrPrintf("%s@", identity.username.c_str()));
+		}
+		tmp += StrMB2Wide(identity.host);
+		const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
+		if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
+			tmp += StrMB2Wide(StrPrintf(":%u", identity.port));
+		}
+		tmp += L"/" + StrMB2Wide(_location.ToString(false));
 		wcsncpy(_cur_URL, tmp.c_str(), ARRAYSIZE(_cur_URL) - 1 );
+		// make up URL string end
 		tmp = _cur_dir;
 
 	} else {

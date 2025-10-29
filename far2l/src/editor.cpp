@@ -407,6 +407,35 @@ void Editor::ShowEditor(int CurLineOnly)
 
 	if (m_bWordWrap)
 	{
+		// Centralized correction logic to prevent scrolling past the end of the file.
+		int ScreenHeight = Y2 - Y1 + 1;
+		int LinesBelow = GetVisualLinesBelow(m_TopScreenLogicalLine, m_TopScreenVisualLine);
+
+		if (LinesBelow < ScreenHeight)
+		{
+			int ScrollUpCount = ScreenHeight - LinesBelow;
+			for (int i = 0; i < ScrollUpCount; ++i)
+			{
+				if (m_TopScreenVisualLine > 0)
+				{
+					m_TopScreenVisualLine--;
+				}
+				else if (m_TopScreenLogicalLine && m_TopScreenLogicalLine->m_prev)
+				{
+					m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
+					m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
+				}
+				else
+				{
+					// Reached the top of the file, can't scroll up further.
+					break;
+				}
+			}
+		}
+	}
+
+	if (m_bWordWrap)
+	{
 		int render_width = X2 - X1;
 		if (EdOpt.ShowScrollBar)
 			render_width--;
@@ -3818,6 +3847,21 @@ int Editor::GetTopVisualLine()
 	}
 	top_pos += m_TopScreenVisualLine;
 	return top_pos;
+}
+
+int Editor::GetVisualLinesBelow(Edit* startLine, int startVisual)
+{
+	if (!startLine) return 0;
+	int count = 0;
+	count += startLine->GetVisualLineCount() - startVisual;
+
+	Edit* line = startLine->m_next;
+	while (line)
+	{
+		count += line->GetVisualLineCount();
+		line = line->m_next;
+	}
+	return count;
 }
 
 void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine)

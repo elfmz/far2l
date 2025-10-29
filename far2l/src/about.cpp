@@ -192,8 +192,10 @@ void FarAbout(PluginManager &Plugins)
 	static const char * const env_vars[] = {
 		"HOSTNAME", "USER",
 		"FARSETTINGS", "FAR2L_ARGS",
-		"XDG_SESSION_TYPE",
 		"TERM", "COLORTERM",
+		"XDG_SESSION_TYPE",
+		"XDG_SESSION_DESKTOP",
+		"XDG_CURRENT_DESKTOP",
 		"GDK_BACKEND", "DESKTOP_SESSION",
 		"WSL_DISTRO_NAME", "WSL2_GUI_APPS_ENABLED",
 		"DISPLAY", "WAYLAND_DISPLAY",

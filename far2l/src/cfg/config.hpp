@@ -358,6 +358,7 @@ struct TreeOptions
 	int MinTreeCount;		// Минимальное количество папок для сохранения дерева в файле.
 	int AutoChangeFolder;	// автосмена папок при перемещении по дереву
 	DWORD TreeFileAttr;		// файловые атрибуты для файлов-деревях
+	FARString ExclSubTreeMask;
 };
 
 struct CopyMoveOptions

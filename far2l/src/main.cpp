@@ -87,7 +87,7 @@ int DirectRT = 0;
 
 static void print_help(const char *self)
 {
-	bool is_far2ledit = strstr(self, "far2ledit") != NULL;
+	bool is_far2ledit = strstr(self, "edit") != NULL;
 	printf("FAR2L Version: %s\n"
 			"FAR2L - two-panel file manager, with built-in terminal and other usefulness'es\n"
 			"Usage: %s [switches] [-cd apath [-cd ppath]]\n"
@@ -457,7 +457,10 @@ int FarAppMain(int argc, char **argv)
 	}
 
 	// run by symlink in editor mode
-	bool is_far2ledit = strstr(argv[0], "far2ledit") != NULL;
+	// The name can be "far2ledit" or "editor" (when far2ledit is chosen
+	// as the default editor in Debian-based systems).
+	// See https://github.com/elfmz/far2l/pull/3022.
+	bool is_far2ledit = strstr(argv[0], "edit") != NULL;
 	if (is_far2ledit) {
 		Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
 		if (argc > 1) {

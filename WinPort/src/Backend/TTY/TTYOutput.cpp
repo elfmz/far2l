@@ -581,17 +581,6 @@ void TTYOutput::SendKittyImage(const ConsoleImage* img)
 {
     if (!img || img->pixel_data.empty()) return;
 
-    // --- ОТЛАДОЧНЫЙ БЛОК ДЛЯ ЗАПИСИ В ФАЙЛ ---
-    static bool is_first_run = true;
-    const char* log_path = "/home/unxed/send.log"; // Используем твой домашний каталог
-    FILE* f_log = fopen(log_path, is_first_run ? "w" : "a");
-    if (!f_log) {
-        fprintf(stderr, "!!!!!!!!!!!!!!! FAILED TO OPEN %s !!!!!!!!!!!!!!!\n", log_path);
-        return;
-    }
-    is_first_run = false;
-    // --- КОНЕЦ ОТЛАДОЧНОГО БЛОКА ---
-
     std::string base64_data;
     base64_encode(base64_data, img->pixel_data.data(), img->pixel_data.size());
 
@@ -601,8 +590,7 @@ void TTYOutput::SendKittyImage(const ConsoleImage* img)
     char buf[64];
     int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img->grid_origin.Y, img->grid_origin.X);
     
-    // Пишем в лог и в терминал
-    fwrite(buf, 1, len, f_log);
+    // Пишем в терминал
     Write(buf, len);
 
     // 2. Отправляем в терминал по Kitty-протоколу по частям (chunks).
@@ -638,17 +626,11 @@ void TTYOutput::SendKittyImage(const ConsoleImage* img)
         kitty_chunk_cmd.append(base64_data, offset, chunk_len);
         kitty_chunk_cmd += ESC "\\";
         
-        // Пишем весь чанк в лог и в терминал
-        fwrite(kitty_chunk_cmd.c_str(), 1, kitty_chunk_cmd.length(), f_log);
+        // Пишем весь чанк в терминал
         Write(kitty_chunk_cmd.c_str(), kitty_chunk_cmd.length());
         
         offset += chunk_len;
     }
-
-    // --- Снова отладочный блок ---
-    fflush(f_log);
-    fclose(f_log);
-    // --- Конец ---
 }
 
 void TTYOutput::DeleteKittyImage(uint32_t id)

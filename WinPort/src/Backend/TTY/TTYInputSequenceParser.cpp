@@ -315,50 +315,52 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	*/
 
 
-    // Handle Kitty graphics response: ESC _G i=<id>;OK ESC \
-    // For now, just ignore it
-    if (l > 1 && s[0] == '_' && s[1] == 'G') {
-        
-        // Ждем как минимум "_Gi="
-        if (l < 4) 
-            return TTY_PARSED_WANTMORE;
+	/*
+		Handle Kitty graphics response: ESC _G i=<id>;OK ESC \
+		For now, just ignore it
+	*/
+	if (l > 1 && s[0] == '_' && s[1] == 'G') {
 
-        if (s[2] == 'i' && s[3] == '=') {
-            size_t semicolon_pos = 0;
-            for (size_t i = 4; i < l; ++i) {
-                if (s[i] == ';') {
-                    semicolon_pos = i;
-                    break;
-                }
-                if (s[i] < '0' || s[i] > '9') {
-                    // Мусор вместо ID, это не наш ответ.
-                    fprintf(stderr, "TTYInput: Invalid char in Kitty response ID. Not a graphics response.\n");
-                    return TTY_PARSED_BADSEQUENCE; // Считаем последовательность плохой
-                }
-            }
+		// Ждем как минимум "_Gi="
+		if (l < 4) 
+			return TTY_PARSED_WANTMORE;
 
-            if (semicolon_pos > 0) {
-                // Мы нашли ';'. Теперь ищем "OK\"
-                if (l > semicolon_pos + 3) {
-                    if (s[semicolon_pos + 1] == 'O' && s[semicolon_pos + 2] == 'K' && s[semicolon_pos + 3] == '\\') {
-                        fprintf(stderr, "TTYInput: Parsed and ignored Kitty graphics OK response.\n");
-                        return semicolon_pos + 4; // Успешно распознано и "съедено"
-                    } else {
-                        // После ';' идет что-то не то
-                        fprintf(stderr, "TTYInput: Garbage after semicolon in Kitty response.\n");
-                        return TTY_PARSED_BADSEQUENCE;
-                    }
-                } else {
-                    // Последовательность оборвалась после ';', ждем "OK\"
-                    return TTY_PARSED_WANTMORE;
-                }
-            } else {
-                // Последовательность оборвалась на середине ID, ждем ';'
-                return TTY_PARSED_WANTMORE;
-            }
-        }
-        // Это какая-то другая команда _G, которую мы не знаем.
-    }
+		if (s[2] == 'i' && s[3] == '=') {
+			size_t semicolon_pos = 0;
+			for (size_t i = 4; i < l; ++i) {
+				if (s[i] == ';') {
+					semicolon_pos = i;
+					break;
+				}
+				if (s[i] < '0' || s[i] > '9') {
+					// Мусор вместо ID, это не наш ответ.
+					fprintf(stderr, "TTYInput: Invalid char in Kitty response ID. Not a graphics response.\n");
+					return TTY_PARSED_BADSEQUENCE; // Считаем последовательность плохой
+				}
+			}
+
+			if (semicolon_pos > 0) {
+				// Мы нашли ';'. Теперь ищем "OK\"
+				if (l > semicolon_pos + 3) {
+					if (s[semicolon_pos + 1] == 'O' && s[semicolon_pos + 2] == 'K' && s[semicolon_pos + 3] == '\\') {
+						fprintf(stderr, "TTYInput: Parsed and ignored Kitty graphics OK response.\n");
+						return semicolon_pos + 4; // Успешно распознано и "съедено"
+					} else {
+						// После ';' идет что-то не то
+						fprintf(stderr, "TTYInput: Garbage after semicolon in Kitty response.\n");
+						return TTY_PARSED_BADSEQUENCE;
+					}
+				} else {
+					// Последовательность оборвалась после ';', ждем "OK\"
+					return TTY_PARSED_WANTMORE;
+				}
+			} else {
+				// Последовательность оборвалась на середине ID, ждем ';'
+				return TTY_PARSED_WANTMORE;
+			}
+		}
+		// Это какая-то другая команда _G, которую мы не знаем.
+	}
 
 
 	if (l > 1 && s[0] == '[' && (s[1] == 'I' || s[1] == 'O')) { // focus

@@ -7366,9 +7366,16 @@ void Editor::SetWordWrap(int NewMode)
 	if ((NewMode != 0) != m_bWordWrap)
 	{
 		m_bWordWrap = (NewMode != 0);
-		m_TopScreenLogicalLine = TopScreen;
-		m_TopScreenVisualLine = 0;
 
+		if (m_bWordWrap) // Turning ON
+		{
+			m_TopScreenLogicalLine = TopScreen;
+			m_TopScreenVisualLine = 0;
+		}
+		else // Turning OFF
+		{
+			TopScreen = m_TopScreenLogicalLine;
+		}
 
 		int Width = ObjWidth;
 		if (EdOpt.ShowScrollBar)

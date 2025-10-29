@@ -588,7 +588,7 @@ void TTYOutput::SendKittyImage(const ConsoleImage* img)
     
     // 1. Команда перемещения курсора
     char buf[64];
-    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img->grid_origin.Y, img->grid_origin.X);
+    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img->grid_origin.Y + 1, img->grid_origin.X + 1);
     
     // Пишем в терминал
     Write(buf, len);

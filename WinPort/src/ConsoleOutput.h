@@ -133,4 +133,5 @@ public:
 	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
 	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
 	virtual DWORD OnGetConsoleGraphicsCaps();
+	virtual double OnGetConsoleCellAspectRatio();
 };

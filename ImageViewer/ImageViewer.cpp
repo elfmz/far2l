@@ -6,8 +6,8 @@
 #include <cwctype>
 #include <farkeys.h>
 #include <memory>
-#include <cstdio>  // Для popen, pclose, fread
-#include <utils.h> // Для Wide2MB, POpen
+#include <cstdio>
+#include <utils.h>
 
 // Глобальные переменные для FAR API
 PluginStartupInfo g_far;
@@ -39,7 +39,10 @@ bool IsImageFile(const wchar_t* FileName) {
     return false;
 }
 
-HCONSOLEIMAGE LoadAndScaleImage(const wchar_t* path_name, int target_w_cells, int target_h_cells) {
+HCONSOLEIMAGE LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int target_h_cells) {
+    fprintf(stderr, "\n--- ImageViewer: Starting image processing for '%ls' ---\n", path_name);
+    fprintf(stderr, "Target cell grid size: %dx%d\n", target_w_cells, target_h_cells);
+
     // 1. Получаем оригинальные размеры картинки
     std::string cmd = "identify -format \"%w %h\" \"";
     cmd += Wide2MB(path_name);
@@ -47,71 +50,72 @@ HCONSOLEIMAGE LoadAndScaleImage(const wchar_t* path_name, int target_w_cells, in
 
     std::string dims_str;
     if (!POpen(dims_str, cmd.c_str())) {
-        fprintf(stderr, "ImageViewer: ImageMagick 'identify' failed for '%ls'\n", path_name);
+        fprintf(stderr, "ERROR: ImageMagick 'identify' failed.\n");
         return nullptr;
     }
 
     int orig_w = 0, orig_h = 0;
     if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
-        fprintf(stderr, "ImageViewer: Failed to parse original dimensions. Got: '%s'\n", dims_str.c_str());
+        fprintf(stderr, "ERROR: Failed to parse original dimensions. Got: '%s'\n", dims_str.c_str());
         return nullptr;
     }
+    fprintf(stderr, "Original image size: %dx%d pixels\n", orig_w, orig_h);
 
-    // 2. Вычисляем целевые размеры в пикселях
-    // TODO: Получить реальные размеры шрифта из API, когда они будут доступны.
-    // Пока используем типичные значения.
-    int font_w = 8, font_h = 16;
-    int target_w_px = target_w_cells * font_w;
-    int target_h_px = target_h_cells * font_h;
-
-    // 3. Рассчитываем пропорции и итоговый размер отмасштабированной картинки
-    double img_aspect = (double)orig_w / orig_h;
-    double target_aspect = (double)target_w_px / target_h_px;
-
-    int scaled_w = target_w_px;
-    int scaled_h = target_h_px;
-
-    if (img_aspect > target_aspect) { // Картинка шире, чем область
-        scaled_h = (int)(target_w_px / img_aspect);
-    } else { // Картинка выше, чем область
-        scaled_w = (int)(target_h_px * img_aspect);
+    // 2. Получаем соотношение сторон ячейки терминала
+    double cell_aspect_ratio = WINPORT(GetConsoleCellAspectRatio)();
+    if (cell_aspect_ratio == 0.0) {
+        cell_aspect_ratio = 0.5; // Default for typical fonts like 8x16
+        fprintf(stderr, "GetConsoleCellAspectRatio returned 0.0, using default: %f\n", cell_aspect_ratio);
+    } else {
+        fprintf(stderr, "GetConsoleCellAspectRatio returned: %f\n", cell_aspect_ratio);
     }
 
-    // 4. Запрашиваем у imagemagick уже отмасштабированную картинку
+    // 3. Вычисляем итоговое соотношение сторон целевой области в пикселях
+    double target_pixel_aspect = ((double)target_w_cells / (double)target_h_cells) * cell_aspect_ratio;
+    fprintf(stderr, "Target pixel aspect ratio for the cell grid is %f\n", target_pixel_aspect);
+
+    // 4. Вычисляем размер холста, который будет иметь нужные пропорции,
+    //    но при этом будет не меньше оригинальной картинки, чтобы избежать апскейла.
+    double img_aspect = (double)orig_w / orig_h;
+    int canvas_w, canvas_h;
+
+    if (img_aspect > target_pixel_aspect) {
+        // Изображение "шире" целевой области. Ширина холста = ширина картинки.
+        canvas_w = orig_w;
+        canvas_h = (int)(orig_w / target_pixel_aspect);
+    } else {
+        // Изображение "выше" или такое же по пропорциям. Высота холста = высота картинки.
+        canvas_h = orig_h;
+        canvas_w = (int)(orig_h * target_pixel_aspect);
+    }
+    fprintf(stderr, "Calculated canvas size for letterboxing: %dx%d pixels\n", canvas_w, canvas_h);
+
+    // 5. Формируем команду для imagemagick: без ресайза, только центрирование и добавление полей.
     cmd = "convert \"";
     cmd += Wide2MB(path_name);
-    cmd += "\" -resize ";
-    cmd += std::to_string(scaled_w) + "x" + std::to_string(scaled_h) + "! "; // '!' - игнорировать пропорции, т.к. мы их уже посчитали
-    cmd += "-depth 8 rgba:-";
+    cmd += "\" -background black -gravity center -extent " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
+    cmd += " -depth 8 rgba:-";
+    
+    fprintf(stderr, "Executing ImageMagick: %s\n", cmd.c_str());
 
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
-        fprintf(stderr, "ImageViewer: ImageMagick 'convert' failed for '%ls'\n", path_name);
+        fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
         return nullptr;
     }
 
-    std::vector<uint8_t> scaled_pixel_data(scaled_w * scaled_h * 4);
-    size_t bytes_read = fread(scaled_pixel_data.data(), 1, scaled_pixel_data.size(), pipe);
+    std::vector<uint8_t> final_pixel_data(canvas_w * canvas_h * 4);
+    size_t bytes_read = fread(final_pixel_data.data(), 1, final_pixel_data.size(), pipe);
     pclose(pipe);
-    if (bytes_read != scaled_pixel_data.size()) {
-        fprintf(stderr, "ImageViewer: Failed to read scaled pixel data for '%ls'\n", path_name);
+
+    if (bytes_read != final_pixel_data.size()) {
+        fprintf(stderr, "ERROR: Failed to read final pixel data from ImageMagick.\n");
         return nullptr;
     }
 
-    // 5. Создаем финальный буфер (холст) и центрируем на нем картинку (letterboxing)
-    std::vector<uint8_t> final_buffer(target_w_px * target_h_px * 4, 0); // Заполняем черным цветом (RGBA=0,0,0,0 - прозрачный черный)
-    for(size_t i = 0; i < final_buffer.size() / 4; ++i) final_buffer[i*4+3] = 255; // Делаем фон непрозрачным черным (RGBA=0,0,0,255)
-
-    int x_offset = (target_w_px - scaled_w) / 2;
-    int y_offset = (target_h_px - scaled_h) / 2;
-
-    for (int y = 0; y < scaled_h; ++y) {
-        uint8_t* dest_row = &final_buffer[((y_offset + y) * target_w_px + x_offset) * 4];
-        uint8_t* src_row = &scaled_pixel_data[y * scaled_w * 4];
-        memcpy(dest_row, src_row, scaled_w * 4);
-    }
-
-    return WINPORT(CreateConsoleImageFromBuffer)(final_buffer.data(), target_w_px, target_h_px, 0);
+    // 6. Создаем ConsoleImage с готовым битмапом.
+    fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
+    return WINPORT(CreateConsoleImageFromBuffer)(final_pixel_data.data(), canvas_w, canvas_h, 0);
 }
 
 
@@ -140,7 +144,7 @@ void ShowImage(const wchar_t* FileName) {
     }
 }
 
-// --- Диалоговая процедура для нашего "окна" просмотра ---
+// --- Диалоговая процедура ---
 
 LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
@@ -155,16 +159,17 @@ LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
             SMALL_RECT Rect;
             g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
             int target_w_cells = Rect.Right > 1 ? Rect.Right - 1 : 1;
-            int target_h_cells = Rect.Bottom > 1 ? Rect.Bottom - 1 : 1;
+            int target_h_cells = Rect.Bottom > 3 ? Rect.Bottom - 3 : 1;
 
-            initData->imageHandle = LoadAndScaleImage(initData->fileName.c_str(), target_w_cells, target_h_cells);
+            initData->imageHandle = LoadAndLetterboxImage(initData->fileName.c_str(), target_w_cells, target_h_cells);
 
             if (initData->imageHandle) {
                 ConsoleImage* img = static_cast<ConsoleImage*>(initData->imageHandle);
                 img->grid_origin.X = 1;
                 img->grid_origin.Y = 1;
-                // grid_size теперь не нужен, т.к. битмап уже правильного размера
-                img->grid_size = {0, 0};
+                // Указываем WX-бэкенду, на сколько ячеек растянуть наш подготовленный битмап
+                img->grid_size.X = target_w_cells;
+                img->grid_size.Y = target_h_cells; 
 
                 WINPORT(DisplayConsoleImage)(initData->imageHandle);
             } else {
@@ -232,9 +237,6 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 
             if (wcscmp(ppi->FindData.lpwszFileName, L"..") != 0 && !(ppi->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 	        {
-                PanelInfo pinfo = {};
-                g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pinfo);
-
                 std::wstring fn = ppi->FindData.lpwszFileName;
 
 	            if (IsImageFile(fn.c_str())) {

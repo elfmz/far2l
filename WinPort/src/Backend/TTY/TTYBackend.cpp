@@ -371,6 +371,7 @@ void TTYBackend::WriterThread()
 	try {
 		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
 		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
+		tty_out.RequestCellSize();
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -1168,6 +1169,14 @@ void TTYBackend::OnInputBroken()
 	_far2l_interacts_sent.clear();
 }
 
+void TTYBackend::OnGetCellSize(unsigned int w, unsigned int h)
+{
+	fprintf(stderr, "TTYBackend: Received cell size: %u x %u pixels\n", w, h);
+	_cell_width_px = w;
+	_cell_height_px = h;
+	_cell_size_known = true;
+}
+
 DWORD TTYBackend::QueryControlKeys()
 {
 	DWORD out = 0;
@@ -1351,6 +1360,16 @@ static void OnSigHup(int signo)
 	}
 }
 
+double TTYBackend::OnGetConsoleCellAspectRatio()
+{
+	if (!_cell_size_known || _cell_height_px == 0) {
+		fprintf(stderr, "TTYBackend: Cell aspect ratio requested but not known.\n");
+		return 0.0;
+	}
+	double ratio = (double)_cell_width_px / _cell_height_px;
+	fprintf(stderr, "TTYBackend: Reporting cell aspect ratio: %f (%u/%u)\n", ratio, _cell_width_px.load(), _cell_height_px.load());
+	return ratio;
+}
 
 HCONSOLEIMAGE TTYBackend::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags)
 {

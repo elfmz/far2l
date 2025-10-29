@@ -2175,6 +2175,22 @@ DWORD WinPortPanel::OnGetConsoleGraphicsCaps()
 	return 0xFFFFFFFF; // WX backend supports everything
 }
 
+double WinPortPanel::OnGetConsoleCellAspectRatio()
+{
+    unsigned int font_w = _paint_context.FontWidth();
+    unsigned int font_h = _paint_context.FontHeight();
+
+    if (font_h == 0) {
+        fprintf(stderr, "WinPortPanel: OnGetConsoleCellAspectRatio - ERROR, font height is 0. Returning 0.0 to fallback.\n");
+        return 0.0;
+    }
+
+    double ratio = (double)font_w / (double)font_h;
+    fprintf(stderr, "WinPortPanel: OnGetConsoleCellAspectRatio calculated: width=%u, height=%u, ratio=%f\n", font_w, font_h, ratio);
+    
+    return ratio;
+}
+
 HCONSOLEIMAGE WinPortPanel::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags)
 {
     if (!buffer || width == 0 || height == 0) {
@@ -2196,27 +2212,44 @@ bool WinPortPanel::OnDisplayConsoleImage(HCONSOLEIMAGE h_image)
 
     ConsoleImage* img = static_cast<ConsoleImage*>(h_image);
     if (img->pixel_data.empty() || img->width == 0 || img->height == 0) {
+        fprintf(stderr, "wxMain: OnDisplayConsoleImage - Invalid image data received.\n");
         return false;
     }
 
+    // 1. Создаем wxImage из RGBA-буфера, который нам прислал плагин.
     size_t num_pixels = img->width * img->height;
     unsigned char* rgb_data = new unsigned char[num_pixels * 3];
     unsigned char* alpha_data = new unsigned char[num_pixels];
-
     for (size_t i = 0; i < num_pixels; ++i) {
         rgb_data[i * 3 + 0] = img->pixel_data[i * 4 + 0];
         rgb_data[i * 3 + 1] = img->pixel_data[i * 4 + 1];
         rgb_data[i * 3 + 2] = img->pixel_data[i * 4 + 2];
         alpha_data[i]       = img->pixel_data[i * 4 + 3];
     }
-
     wxImage wx_img(img->width, img->height, rgb_data, alpha_data, false);
     if (!wx_img.IsOk()) {
+        fprintf(stderr, "wxMain: OnDisplayConsoleImage - Failed to create wxImage.\n");
         delete[] rgb_data;
         delete[] alpha_data;
         return false;
     }
 
+    // 2. Вычисляем целевой размер в пикселях на основе grid_size.
+    // Если grid_size не задан, используем размер пришедшего битмапа.
+    int target_w_px = (img->grid_size.X > 0) ? (img->grid_size.X * _paint_context.FontWidth()) : img->width;
+    int target_h_px = (img->grid_size.Y > 0) ? (img->grid_size.Y * _paint_context.FontHeight()) : img->height;
+    
+    fprintf(stderr, "wxMain: OnDisplayConsoleImage - img px: %dx%d, grid cells: %dx%d, final target px: %dx%d\n",
+            img->width, img->height, img->grid_size.X, img->grid_size.Y, target_w_px, target_h_px);
+
+    // 3. Растягиваем/сжимаем wxImage до целевого размера, если они не совпадают.
+    // Это и есть реализация поведения в стиле Kitty.
+    if (wx_img.GetWidth() != target_w_px || wx_img.GetHeight() != target_h_px) {
+        fprintf(stderr, "wxMain: Stretching image from %dx%d to %dx%d.\n", wx_img.GetWidth(), wx_img.GetHeight(), target_w_px, target_h_px);
+        wx_img.Rescale(target_w_px, target_h_px, wxIMAGE_QUALITY_BILINEAR);
+    }
+
+    // 4. Сохраняем итоговый, уже растянутый, битмап.
     {
         std::lock_guard<std::mutex> lock(m_images_mutex);
         if (m_images.count(h_image)) {

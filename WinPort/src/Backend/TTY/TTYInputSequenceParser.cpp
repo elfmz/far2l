@@ -356,6 +356,28 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		}
 	}
 
+	if (l > 5 && s[0] == '[' && s[1] == '6' && s[2] == ';') { // Response to ESC [ 16 t
+		unsigned int h=0, w=0;
+		if (sscanf(s, "[6;%u;%ut", &h, &w) == 2) {
+			_handler->OnGetCellSize(w, h);
+			// find 't'
+			for (size_t i = 3; i < l; ++i) {
+				if (s[i] == 't') return i + 1;
+			}
+		}
+	}
+
+	if (l > 5 && s[0] == '[' && s[1] == '6' && s[2] == ';') { // Response to ESC [ 16 t
+		unsigned int h=0, w=0;
+		if (sscanf(s, "[6;%u;%ut", &h, &w) == 2) {
+			_handler->OnGetCellSize(w, h);
+			// find 't'
+			for (size_t i = 3; i < l; ++i) {
+				if (s[i] == 't') return i + 1;
+			}
+		}
+	}
+
 	if (l > 5 && s[0] == ']' && s[1] == '1' && s[2] == '3' && s[3] == '3' && s[4] == '7' && s[5] == ';') {
 		r = TryParseAsITerm2EscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
@@ -688,7 +710,7 @@ void TTYInputSequenceParser::ParseWinDoubleBuffer(bool idle)
 		_win32_accumulate = true;
 		return;
 	}
-	
+
 	if (_win_double_buffer.size() > 2 && _win_double_buffer.back() >= '@' && _win_double_buffer.back() <= '~') {
 		// end of sequence, whatever is it
 		_win32_accumulate = false;

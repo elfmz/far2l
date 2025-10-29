@@ -534,6 +534,11 @@ extern "C" {
 		return ChooseConOut(NULL)->OnGetConsoleGraphicsCaps();
 	}
 
+	WINPORT_DECL(GetConsoleCellAspectRatio, double, ())
+	{
+		return ChooseConOut(NULL)->OnGetConsoleCellAspectRatio();
+	}
+
 	static struct {
 		struct Cmp
 		{

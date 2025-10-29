@@ -68,6 +68,10 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::atomic<bool> _flush_input_queue{false};
 	std::atomic<bool> _focused{true}; // assume starting focused
 
+	std::atomic<unsigned int> _cell_width_px{0};
+	std::atomic<unsigned int> _cell_height_px{0};
+	std::atomic<bool> _cell_size_known{false};
+
 	struct BI : std::mutex { std::string flavor; } _backend_info;
 
 	struct Far2lInteractData
@@ -150,6 +154,7 @@ protected:
 	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
 	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
 	virtual DWORD OnGetConsoleGraphicsCaps();
+	virtual double OnGetConsoleCellAspectRatio();
 	const char *OnConsoleBackendInfo(int entity);
 
 	// ITTYInputSpecialSequenceHandler
@@ -159,6 +164,7 @@ protected:
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();
+	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 
 	DWORD QueryControlKeys();
 

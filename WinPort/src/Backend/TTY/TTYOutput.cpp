@@ -570,6 +570,13 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 	Write(request.c_str(), request.size());
 }
 
+void TTYOutput::RequestCellSize()
+{
+	// Запрос размера ячейки в пикселях. Ответ: ESC [ 6 ; height ; width t
+	Format(ESC "[16t");
+	fprintf(stderr, "TTYOutput: Sent cell size request (ESC[16t).\n");
+}
+
 // iTerm2 cmd+v workaround
 void TTYOutput::CheckiTerm2Hack() {
 	if (_iterm2_cmd_state) {

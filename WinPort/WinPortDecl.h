@@ -83,6 +83,7 @@
 	WINPORT_DECL_DEF(DisplayConsoleImage, BOOL, (HCONSOLEIMAGE h_image))
 	WINPORT_DECL_DEF(DeleteConsoleImage, BOOL, (HCONSOLEIMAGE h_image, DWORD action_flags))
 	WINPORT_DECL_DEF(GetConsoleGraphicsCaps, DWORD, ())
+	WINPORT_DECL_DEF(GetConsoleCellAspectRatio, double, ())
 #ifdef WINPORT_REGISTRY
 	///registry API
 	WINPORT_DECL_DEF(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult))

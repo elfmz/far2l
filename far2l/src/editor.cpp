@@ -2102,7 +2102,7 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLC:
 		case KEY_CTRLINS:
 		case KEY_CTRLNUMPAD0: {
-			if (/*!EdOpt.PersistentBlocks && */ !BlockStart && !VBlockStart) {
+			if (/*!EdOpt.PersistentBlocks && */ !BlockStart && !VBlockStart && !CurLine->IsSelection()) {
 				BlockStart = CurLine;
 				BlockStartLine = NumLine;
 				CurLine->AddSelect(0, -1);

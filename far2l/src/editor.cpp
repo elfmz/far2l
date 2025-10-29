@@ -3705,7 +3705,11 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(v_start);
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
-				UnmarkBlock(); // Снимаем любое предыдущее выделение при новом клике
+				// Снимаем любое предыдущее выделение при новом клике.
+		        // UnmarkBlock() должен вызываться только при первом клике, а не при каждом движении
+        		if (!(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+					UnmarkBlock();
+				}
 				Show();
 			}
 		}

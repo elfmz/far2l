@@ -966,3 +966,4 @@ bool ConsoleOutput::OnDisplayConsoleImage(HCONSOLEIMAGE h_image) {
 return _backend->OnDisplayConsoleImage(h_image); }
 bool ConsoleOutput::OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags) { return _backend->OnDeleteConsoleImage(h_image, action_flags); }
 DWORD ConsoleOutput::OnGetConsoleGraphicsCaps() { return _backend->OnGetConsoleGraphicsCaps(); }
+double ConsoleOutput::OnGetConsoleCellAspectRatio() { return _backend->OnGetConsoleCellAspectRatio(); }

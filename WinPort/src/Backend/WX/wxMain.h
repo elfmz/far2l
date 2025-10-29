@@ -180,6 +180,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
 	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
 	virtual DWORD OnGetConsoleGraphicsCaps();
+	virtual double OnGetConsoleCellAspectRatio();
 	virtual const char *OnConsoleBackendInfo(int entity);
 
 public:

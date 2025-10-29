@@ -50,6 +50,7 @@ public:
 	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image) = 0;
 	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags) = 0;
 	virtual DWORD OnGetConsoleGraphicsCaps() = 0;
+	virtual double OnGetConsoleCellAspectRatio() = 0;
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
 };
 
@@ -228,6 +229,8 @@ public:
 	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image) = 0;
 	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags) = 0;
 	virtual DWORD OnGetConsoleGraphicsCaps() = 0;
+	virtual double OnGetConsoleCellAspectRatio() = 0;
+
 	virtual const char *BackendInfo(int entity) = 0;
 
 	inline std::wstring GetTitle()

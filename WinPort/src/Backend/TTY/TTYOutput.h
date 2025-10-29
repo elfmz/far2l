@@ -73,6 +73,7 @@ public:
 
 	void SendFar2lInteract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
+	void RequestCellSize();
 
 	void CheckiTerm2Hack();
 };

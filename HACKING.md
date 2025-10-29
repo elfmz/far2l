@@ -87,6 +87,9 @@ far2l uses this to resolve symlink destination when user selects plugin's item t
 to obtain file group
 * See several additional with arclie in farplug-wide.h in [3b60489](https://github.com/elfmz/far2l/commit/3b6048914bd025a61b24cf6ed237f0e0da2e364c)
 
+### Added following entries to 	struct OpenPluginInfo:
+* `CurURL` pointer to retrieve URL path from plugin. Not always useful, but for network-related plugins it allows to provide URLs useful in external utilites.
+
 ### Added following dialog messages:
 * `DM_SETREADONLY` - changes readonly-ness of selected dialog edit control item
 * `DM_GETDEFAULTCOLOR`

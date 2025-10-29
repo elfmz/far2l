@@ -355,6 +355,8 @@ const ConfigOpt g_cfg_opts[] {
 	{false, NSecPanelTree, "NetPath", &Opt.Tree.NetPath, 2},
 	{true,  NSecPanelTree, "AutoChangeFolder", &Opt.Tree.AutoChangeFolder, 0}, // ???
 	{true,  NSecPanelTree, "ExclSubTreeMask", &Opt.Tree.ExclSubTreeMask, L".*"},
+	{true,  NSecPanelTree, "ScanDepthEnabled", &Opt.Tree.ScanDepthEnabled, 1},
+	{true,  NSecPanelTree, "DefaultScanDepth", &Opt.Tree.DefaultScanDepth, 4},
 
 	{true,  NSecLanguage, "Help", &Opt.strHelpLanguage, L"English"},
 	{true,  NSecLanguage, "Main", &Opt.strLanguage, L"English"},

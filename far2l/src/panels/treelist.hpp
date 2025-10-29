@@ -33,6 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <memory>
 #include <vector>
 #include "FARString.hpp"
 #include "panel.hpp"
@@ -50,6 +51,7 @@ struct TreeItem
 	struct LastT : std::vector<bool>
 	{
 	} Last;
+	bool Expandable;
 	int Depth;	// уровень вложенности
 
 	TreeItem() { Clear(); }
@@ -60,6 +62,7 @@ struct TreeItem
 		for (LastT::iterator i = Last.begin(); i != Last.end(); ++i) {
 			*i = false;
 		}
+		Expandable = false;
 		Depth = 0;
 	}
 };
@@ -75,7 +78,7 @@ class TreeList : public Panel
 {
 private:
 	int PrevMacroMode;
-	TreeItem **ListData;
+	std::vector<std::unique_ptr<TreeItem>> ListData;
 	FARString strRoot;
 	long TreeCount;
 	long WorkDir;
@@ -101,6 +104,8 @@ private:
 	bool FillLastData();
 	UINT CountSlash(const wchar_t *Str);
 	int SetDirPosition(const wchar_t *NewDir);
+	void SortAndDeduplicate();
+ 	bool ExpandDirectory(const wchar_t *Path);
 	void GetRoot();
 	Panel *GetRootPanel();
 	void SyncDir();

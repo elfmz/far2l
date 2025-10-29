@@ -79,8 +79,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cache.hpp"
 #include "filestr.hpp"
 #include "wakeful.hpp"
+#include <algorithm>
 
-static int _cdecl SortList(const void *el1, const void *el2);
 static int _cdecl SortCacheList(const void *el1, const void *el2);
 static int StaticSortNumeric;
 static int StaticSortCaseSensitive;
@@ -172,7 +172,6 @@ static struct TreeListCache
 TreeList::TreeList(int IsPanel)
 	:
 	PrevMacroMode(-1),
-	ListData(nullptr),
 	TreeCount(0),
 	WorkDir(0),
 	GetSelPosition(0),
@@ -190,13 +189,6 @@ TreeList::TreeList(int IsPanel)
 
 TreeList::~TreeList()
 {
-	if (ListData) {
-		for (long i = 0; i < TreeCount; i++)
-			delete ListData[i];
-
-		free(ListData);
-	}
-
 	if (SaveListData)
 		delete[] SaveListData;
 
@@ -231,9 +223,7 @@ void TreeList::DisplayObject()
 			if (RootNumeric != NumericSort || RootCaseSensitiveSort != CaseSensitiveSort) {
 				NumericSort = RootNumeric;
 				CaseSensitiveSort = RootCaseSensitiveSort;
-				StaticSortNumeric = NumericSort;
-				StaticSortCaseSensitive = CaseSensitiveSort;
-				far_qsort(ListData, TreeCount, sizeof(*ListData), SortList);
+				SortAndDeduplicate();
 				FillLastData();
 				SyncDir();
 			}
@@ -290,7 +280,7 @@ void TreeList::DisplayTree(int Fast)
 		Text(L" ");
 
 		if (J < TreeCount && Flags.Check(FTREELIST_TREEISPREPARED)) {
-			CurPtr = ListData[J];
+			CurPtr = ListData[J].get();
 
 			if (!J) {
 				DisplayTreeName(strRoot.CPtr(), J);
@@ -302,6 +292,10 @@ void TreeList::DisplayTree(int Fast)
 				}
 
 				strOutStr+= TreeLineSymbol[CurPtr->Last[CurPtr->Depth - 1] ? 2 : 3];
+				if (CurPtr->Expandable)
+					strOutStr += L'\x25B9'; //▹
+				else
+					strOutStr += L' ';
 				BoxText(strOutStr);
 				const wchar_t *ChPtr = LastSlash(CurPtr->strName);
 
@@ -387,7 +381,7 @@ void TreeList::Update(int Mode)
 
 	if (RetFromReadTree && TreeCount > 0 && (!(Mode & UPDATE_KEEP_SELECTION) || LastTreeCount != TreeCount)) {
 		SyncDir();
-		TreeItem *CurPtr = ListData[CurFile];
+		TreeItem *CurPtr = ListData[CurFile].get();
 
 		if (apiGetFileAttributes(CurPtr->strName) == INVALID_FILE_ATTRIBUTES) {
 			DelTreeName(CurPtr->strName);
@@ -417,21 +411,10 @@ int TreeList::ReadTree()
 	FlushCache();
 	GetRoot();
 
-	if (ListData) {
-		for (long i = 0; i < TreeCount; i++)
-			delete ListData[i];
-
-		free(ListData);
-	}
-
 	TreeCount = 0;
-
-	if (!(ListData = (TreeItem **)malloc((TreeCount + 256 + 1) * sizeof(TreeItem *)))) {
-		RestoreState();
-		return FALSE;
-	}
-
-	ListData[0] = new TreeItem;
+	ListData.clear();
+	ListData.reserve(256);
+	ListData.emplace_back(std::make_unique<TreeItem>());
 	ListData[0]->Clear();
 	ListData[0]->strName = strRoot;
 	SaveScreen SaveScrTree;
@@ -445,6 +428,10 @@ int TreeList::ReadTree()
 	int FirstCall = TRUE, AscAbort = FALSE;
 	TreeStartTime = GetProcessUptimeMSec();
 	RefreshFrameManager frref(ScrX, ScrY, TreeStartTime, FALSE);	// DontRedrawFrame);
+
+	if (Opt.Tree.ScanDepthEnabled)
+		ScTree.SetMaxDepth(Opt.Tree.DefaultScanDepth);
+
 	ScTree.SetFindPath(strRoot, L"*", FSCANTREE_NOFILES | FSCANTREE_NODEVICES, Opt.Tree.ExclSubTreeMask);
 	LastScrX = ScrX;
 	LastScrY = ScrY;
@@ -461,43 +448,27 @@ int TreeList::ReadTree()
 		if (AscAbort)
 			break;
 
-		if (!(TreeCount & 255)) {
-			TreeItem **TmpListData =
-					(TreeItem **)realloc(ListData, (TreeCount + 256 + 1) * sizeof(TreeItem *));
-
-			if (!TmpListData) {
-				AscAbort = TRUE;
-				break;
-			}
-
-			ListData = TmpListData;
-		}
-
 		if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			continue;
 
-		ListData[TreeCount] = new TreeItem;
-		ListData[TreeCount]->Clear();
-		ListData[TreeCount]->strName = strFullName;
-		TreeCount++;
+		auto item = std::make_unique<TreeItem>();
+		item->Clear();
+		item->strName = strFullName;
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_PINNED)
+			item->Expandable = true;
+		ListData.emplace_back(std::move(item));
+		TreeCount = static_cast<long>(ListData.size());
 	}
 
 	if (AscAbort && !Flags.Check(FTREELIST_ISPANEL)) {
-		if (ListData) {
-			for (long i = 0; i < TreeCount; i++)
-				delete ListData[i];
-
-			free(ListData);
-		}
-
-		ListData = nullptr;
+		ListData.clear();
 		TreeCount = 0;
 		RestoreState();
 		return FALSE;
 	}
 
 	StaticSortNumeric = NumericSort = StaticSortCaseSensitive = CaseSensitiveSort = FALSE;
-	far_qsort(ListData, TreeCount, sizeof(*ListData), SortList);
+	SortAndDeduplicate();
 
 	if (!FillLastData())
 		return FALSE;
@@ -716,6 +687,87 @@ bool TreeList::FillLastData()
 		}
 	}
 
+	return true;
+}
+
+bool TreeList::ExpandDirectory(const wchar_t *Path)
+{
+	if (!Path || !*Path)
+		return false;
+
+	ChangePriority ChPriority(ChangePriority::NORMAL);
+	TPreRedrawFuncGuard preRedrawFuncGuard(TreeList::PR_MsgReadTree);
+	ScanTree ScTree(FALSE);
+	FAR_FIND_DATA_EX fdata;
+	FARString strDirName;
+	FARString strFullName;
+	DWORD FileAttr = apiGetFileAttributes(Path);
+
+	if (FileAttr == INVALID_FILE_ATTRIBUTES || !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
+		return false;
+
+	const size_t originalSize = ListData.size();
+	int Count = 0;
+	int FirstCall = TRUE;
+	bool AscAbort = false;
+
+	ConvertNameToFull(Path, strDirName);
+	AddTreeName(strDirName);
+
+	if (Opt.Tree.ScanDepthEnabled)
+	    ScTree.SetMaxDepth(Opt.Tree.DefaultScanDepth);
+
+	ScTree.SetFindPath(strDirName, L"*", 0, Opt.Tree.ExclSubTreeMask);
+	LastScrX = ScrX;
+	LastScrY = ScrY;
+
+	while (ScTree.GetNextName(&fdata, strFullName)) {
+		if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			continue;
+
+		TreeList::MsgReadTree(Count + 1, FirstCall);
+
+		if (CheckForEscSilent()) {
+			AscAbort = ConfirmAbortOp();
+			FirstCall = TRUE;
+		}
+
+		if (AscAbort)
+			break;
+
+		AddTreeName(strFullName);
+
+		auto item = std::make_unique<TreeItem>();
+		item->Clear();
+		item->strName = strFullName;
+		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_PINNED)
+			item->Expandable = true;
+		ListData.emplace_back(std::move(item));
+
+		++Count;
+	}
+
+	if (!ModalMode) {	// Перерисуем другую панель - удалим следы сообщений :)
+		Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+		AnotherPanel->Redraw();
+	}
+
+	if (AscAbort)
+		return false;
+
+	SortAndDeduplicate();
+
+	if (!FillLastData()) {
+		ListData.resize(originalSize);
+		TreeCount = static_cast<long>(ListData.size());
+		FillLastData();
+		return false;
+	}
+
+	if (ListData.size() == originalSize)
+		return true;
+
+	SaveTreeFile();
 	return true;
 }
 
@@ -979,6 +1031,19 @@ int TreeList::ProcessKey(FarKey Key)
 			if (Opt.Tree.AutoChangeFolder && !ModalMode)
 				ProcessKey(KEY_ENTER);
 
+			return TRUE;
+		}
+		case KEY_RIGHT:
+		{
+			if (TreeCount <= 0)
+				return TRUE;
+
+			const FARString currentDir = ListData[CurFile]->strName;
+			if (ExpandDirectory(currentDir.CPtr()))
+				ListData[CurFile]->Expandable = false;
+			//SyncDir();
+			Redraw();
+			DisplayTree(TRUE);
 			return TRUE;
 		}
 		case KEY_SUBTRACT:		// OFM: Gray+/Gray- navigation
@@ -1311,7 +1376,7 @@ void TreeList::ProcessEnter()
 {
 	TreeItem *CurPtr;
 	DWORD Attr;
-	CurPtr = ListData[CurFile];
+	CurPtr = ListData[CurFile].get();
 
 	if ((Attr = apiGetFileAttributes(CurPtr->strName)) != INVALID_FILE_ATTRIBUTES
 			&& (Attr & FILE_ATTRIBUTE_DIRECTORY)) {
@@ -1347,14 +1412,7 @@ int TreeList::ReadTreeFile()
 		}
 	}
 
-	if (ListData) {
-		for (long i = 0; i < TreeCount; i++)
-			delete ListData[i];
-
-		free(ListData);
-	}
-
-	ListData = nullptr;
+	ListData.clear();
 	TreeCount = 0;
 	{
 		FARString strLastDirName;
@@ -1379,32 +1437,14 @@ int TreeList::ReadTreeFile()
 				strDirName.Truncate(RootLength);
 			}
 
-			if (!(TreeCount & 255)) {
-				TreeItem **TmpListData =
-						(TreeItem **)realloc(ListData, (TreeCount + 256 + 1) * sizeof(TreeItem *));
+			if (!(TreeCount & 255))
+				ListData.reserve(TreeCount + 256);
 
-				if (!TmpListData) {
-					if (ListData) {
-						for (long i = 0; i < TreeCount; i++)
-							delete ListData[i];
-
-						free(ListData);
-					}
-
-					ListData = nullptr;
-					TreeCount = 0;
-					TreeFile.Close();
-					// RestoreState();
-					return FALSE;
-				}
-
-				ListData = TmpListData;
-			}
-
-			ListData[TreeCount] = new TreeItem;
-			ListData[TreeCount]->Clear();
-			ListData[TreeCount]->strName = strDirName;
-			TreeCount++;
+			auto item = std::make_unique<TreeItem>();
+			item->Clear();
+			item->strName = strDirName;
+			ListData.emplace_back(std::move(item));
+			TreeCount = static_cast<long>(ListData.size());
 		}
 	}
 
@@ -1415,6 +1455,7 @@ int TreeList::ReadTreeFile()
 
 	NumericSort = FALSE;
 	CaseSensitiveSort = FALSE;
+	SortAndDeduplicate();
 	far_qsort(TreeCache.ListName, TreeCache.TreeCount, sizeof(wchar_t *), SortCacheList);
 	return FillLastData();
 }
@@ -1587,6 +1628,10 @@ void TreeList::ReadSubTree(const wchar_t *Path)
 	ConvertNameToFull(Path, strDirName);
 	AddTreeName(strDirName);
 	int FirstCall = TRUE, AscAbort = FALSE;
+
+	if (Opt.Tree.ScanDepthEnabled)
+		ScTree.SetMaxDepth(Opt.Tree.DefaultScanDepth);
+
 	ScTree.SetFindPath(strDirName, L"*", 0, Opt.Tree.ExclSubTreeMask);
 	LastScrX = ScrX;
 	LastScrY = ScrY;
@@ -1765,12 +1810,6 @@ int TreeList::GetFileName(FARString &strName, int Pos, DWORD &FileAttr)
 	return TRUE;
 }
 
-int _cdecl SortList(const void *el1, const void *el2)
-{
-	return TreeCmp(((TreeItem **)el1)[0]->strName, ((TreeItem **)el2)[0]->strName, StaticSortNumeric,
-			StaticSortCaseSensitive);
-}
-
 int _cdecl SortCacheList(const void *el1, const void *el2)
 {
 	return TreeCmp(*(wchar_t **)el1, *(wchar_t **)el2, StaticSortNumeric, 0);
@@ -1784,6 +1823,10 @@ int TreeCmp(const wchar_t *Str1, const wchar_t *Str2, int Numeric, int CaseSensi
 		{NumStrCmpN, NumStrCmpNI}
 	};
 	CMPFUNC cmpfunc = funcs[Numeric ? 1 : 0][CaseSensitive ? 0 : 1];
+
+	if (!Numeric) { //comparing full paths right away
+		return cmpfunc(Str1, -1, Str2, -1);
+	}
 
 	if (*Str1 == GOOD_SLASH && *Str2 == GOOD_SLASH) {
 		Str1++;
@@ -1906,7 +1949,7 @@ void TreeList::SetTitle()
 	if (GetFocus()) {
 		FARString strTitleDir(L"{");
 
-		const wchar_t *Ptr = ListData ? ListData[CurFile]->strName.CPtr() : L"";
+		const wchar_t *Ptr = ListData.empty() ? L"" : ListData[CurFile]->strName.CPtr();
 
 		if (*Ptr) {
 			strTitleDir+= Ptr;
@@ -1999,7 +2042,7 @@ const void *TreeList::GetItem(int Index)
 	if (Index >= (int)TreeCount)
 		return nullptr;
 
-	return ListData[Index];
+	return ListData[Index].get();
 }
 
 int TreeList::GetCurrentPos()
@@ -2034,20 +2077,13 @@ bool TreeList::SaveState()
 
 bool TreeList::RestoreState()
 {
-	if (ListData) {
-		for (long i = 0; i < TreeCount; i++)
-			delete ListData[i];
-
-		free(ListData);
-	}
-
+	ListData.clear();
 	TreeCount = WorkDir = 0;
-	ListData = nullptr;
 
-	if (SaveTreeCount > 0 && (ListData = (TreeItem **)malloc(SaveTreeCount * sizeof(TreeItem *)))) {
+	if (SaveTreeCount > 0) {
+		ListData.reserve(SaveTreeCount);
 		for (int i = 0; i < SaveTreeCount; i++) {
-			ListData[i] = new TreeItem;
-			*ListData[i] = SaveListData[i];
+			ListData.emplace_back(std::make_unique<TreeItem>(SaveListData[i]));
 		}
 
 		TreeCount = SaveTreeCount;
@@ -2058,4 +2094,39 @@ bool TreeList::RestoreState()
 	}
 
 	return false;
+}
+
+void TreeList::SortAndDeduplicate()
+{
+	StaticSortNumeric = NumericSort;
+	StaticSortCaseSensitive = CaseSensitiveSort;
+
+	std::sort(ListData.begin(), ListData.end(),
+		[](const std::unique_ptr<TreeItem> &a, const std::unique_ptr<TreeItem> &b) {
+			return TreeCmp(a->strName, b->strName, StaticSortNumeric, StaticSortCaseSensitive) < 0;
+		});
+
+	auto unique_end = std::unique(ListData.begin(), ListData.end(),
+		[](const std::unique_ptr<TreeItem> &a, const std::unique_ptr<TreeItem> &b) {
+			return TreeCmp(a->strName, b->strName, StaticSortNumeric, StaticSortCaseSensitive) == 0;
+		});
+
+	ListData.erase(unique_end, ListData.end());
+	TreeCount = static_cast<long>(ListData.size());
+
+	if (TreeCount <= 0) {
+		CurFile = CurTopFile = 0;
+		return;
+	}
+
+	if (CurFile >= TreeCount)
+		CurFile = TreeCount - 1;
+
+	if (CurTopFile >= TreeCount)
+		CurTopFile = TreeCount - 1;
+
+	if (CurTopFile < 0)
+		CurTopFile = 0;
+
+	CorrectPosition();
 }

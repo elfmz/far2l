@@ -1352,6 +1352,25 @@ static void OnSigHup(int signo)
 }
 
 
+HCONSOLEIMAGE TTYBackend::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags)
+{
+	return nullptr;
+}
+
+bool TTYBackend::OnDisplayConsoleImage(HCONSOLEIMAGE h_image)
+{
+	return false;
+}
+
+bool TTYBackend::OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags)
+{
+	return false;
+}
+
+DWORD TTYBackend::OnGetConsoleGraphicsCaps()
+{
+	return 0;
+}
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
 	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, norgb, nodetect, far2l_tty, esc_expiration, notify_pipe, result);

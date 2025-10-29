@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <atomic>
 #include <mutex>
+#include <map>
+#include "../WinPortGraphics.h"
 
 #ifdef __APPLE__
 # include "Mac/dockicon.h"
@@ -77,7 +79,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 
 	wxDECLARE_EVENT_TABLE();
 	KeyTracker _key_tracker;
-	
+
 	ConsolePaintContext _paint_context;
 	WinPortFrame *_frame;
 	DWORD _refresh_rects_throttle;
@@ -93,6 +95,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	struct BI : std::vector<std::string> {} _backend_info;
 
 	wxTimer* _periodic_timer{nullptr};
+	std::map<HCONSOLEIMAGE, wxBitmap*> m_images;
+	std::mutex m_images_mutex;
 	unsigned int _timer_idling_counter{0};
 	std::atomic<unsigned int> _last_title_ticks{0};
 	wxSize _initial_size{};
@@ -112,7 +116,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
 	wchar_t _stolen_key{0};
-	
+
 	unsigned int _pending_refreshes{0};
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 
@@ -123,7 +127,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void RefreshInner( bool force_update );
 	void OnInitialized( wxCommandEvent& event );
 	void CheckForUnfreeze(bool force);
-	void OnTimerPeriodic(wxTimerEvent& event);	
+	void OnTimerPeriodic(wxTimerEvent& event);
 	void OnWindowMovedSync( wxCommandEvent& event );
 	void OnRefreshSync( wxCommandEvent& event );
 	void OnConsoleResizedSync( wxCommandEvent& event );
@@ -172,6 +176,10 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
+	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags);
+	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
+	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
+	virtual DWORD OnGetConsoleGraphicsCaps();
 	virtual const char *OnConsoleBackendInfo(int entity);
 
 public:

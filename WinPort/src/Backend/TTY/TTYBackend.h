@@ -1,6 +1,6 @@
 #pragma once
-//#define __USE_BSD 
-#include <termios.h> 
+//#define __USE_BSD
+#include <termios.h>
 #include <mutex>
 #include <atomic>
 #include <memory>
@@ -13,6 +13,7 @@
 #include "IFar2lInteractor.h"
 #include "TTYXGlue.h"
 #include "OSC52ClipboardBackend.h"
+#include "../WinPortGraphics.h"
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInteractor, IOSC52Interactor
 {
@@ -145,6 +146,10 @@ protected:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
+	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags);
+	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
+	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
+	virtual DWORD OnGetConsoleGraphicsCaps();
 	const char *OnConsoleBackendInfo(int entity);
 
 	// ITTYInputSpecialSequenceHandler

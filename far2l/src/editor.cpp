@@ -3673,7 +3673,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					int visualLineStart, visualLineEnd;
 					TargetLine->GetVisualLine(m_CurVisualLineInLogicalLine, visualLineStart, visualLineEnd);
 					int mouseCellPos = MouseEvent->dwMousePosition.X - X1;
-					TargetPos = TargetLine->CellPosToReal(visualLineStart + mouseCellPos);
+					int visualLineStartCell = TargetLine->RealPosToCell(visualLineStart);
+					TargetPos = TargetLine->CellPosToReal(visualLineStartCell + mouseCellPos);
 					if (TargetPos > visualLineEnd && visualLineEnd < TargetLine->GetLength()) TargetPos = visualLineEnd;
 					if (TargetPos > TargetLine->GetLength()) TargetPos = TargetLine->GetLength();
 				}

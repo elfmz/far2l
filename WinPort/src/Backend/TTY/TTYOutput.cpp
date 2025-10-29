@@ -577,6 +577,86 @@ void TTYOutput::RequestCellSize()
 	fprintf(stderr, "TTYOutput: Sent cell size request (ESC[16t).\n");
 }
 
+void TTYOutput::SendKittyImage(const ConsoleImage* img)
+{
+    if (!img || img->pixel_data.empty()) return;
+
+    // --- ОТЛАДОЧНЫЙ БЛОК ДЛЯ ЗАПИСИ В ФАЙЛ ---
+    static bool is_first_run = true;
+    const char* log_path = "/home/unxed/send.log"; // Используем твой домашний каталог
+    FILE* f_log = fopen(log_path, is_first_run ? "w" : "a");
+    if (!f_log) {
+        fprintf(stderr, "!!!!!!!!!!!!!!! FAILED TO OPEN %s !!!!!!!!!!!!!!!\n", log_path);
+        return;
+    }
+    is_first_run = false;
+    // --- КОНЕЦ ОТЛАДОЧНОГО БЛОКА ---
+
+    std::string base64_data;
+    base64_encode(base64_data, img->pixel_data.data(), img->pixel_data.size());
+
+    // --- Используем ОДИН механизм вывода: собираем все в строку и пишем через Write. ---
+    
+    // 1. Команда перемещения курсора
+    char buf[64];
+    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img->grid_origin.Y, img->grid_origin.X);
+    
+    // Пишем в лог и в терминал
+    fwrite(buf, 1, len, f_log);
+    Write(buf, len);
+
+    // 2. Отправляем в терминал по Kitty-протоколу по частям (chunks).
+    const size_t CHUNK_SIZE = 4096;
+    size_t offset = 0;
+
+    while (offset < base64_data.length()) {
+        size_t chunk_len = std::min(CHUNK_SIZE, base64_data.length() - offset);
+        bool more_to_follow = (offset + chunk_len < base64_data.length());
+        
+        std::string kitty_chunk_cmd;
+
+        if (offset == 0) {
+            kitty_chunk_cmd += ESC "_Ga=T,f=32,t=d,s=";
+            kitty_chunk_cmd += std::to_string(img->width);
+            kitty_chunk_cmd += ",v=";
+            kitty_chunk_cmd += std::to_string(img->height);
+            kitty_chunk_cmd += ",c=";
+            kitty_chunk_cmd += std::to_string(img->grid_size.X);
+            kitty_chunk_cmd += ",r=";
+            kitty_chunk_cmd += std::to_string(img->grid_size.Y);
+            kitty_chunk_cmd += ",i=";
+            kitty_chunk_cmd += std::to_string(img->id);
+            kitty_chunk_cmd += ",m=";
+            kitty_chunk_cmd += (more_to_follow ? "1" : "0");
+            kitty_chunk_cmd += ";";
+        } else {
+            kitty_chunk_cmd += ESC "_Gm=";
+            kitty_chunk_cmd += (more_to_follow ? "1" : "0");
+            kitty_chunk_cmd += ";";
+        }
+        
+        kitty_chunk_cmd.append(base64_data, offset, chunk_len);
+        kitty_chunk_cmd += ESC "\\";
+        
+        // Пишем весь чанк в лог и в терминал
+        fwrite(kitty_chunk_cmd.c_str(), 1, kitty_chunk_cmd.length(), f_log);
+        Write(kitty_chunk_cmd.c_str(), kitty_chunk_cmd.length());
+        
+        offset += chunk_len;
+    }
+
+    // --- Снова отладочный блок ---
+    fflush(f_log);
+    fclose(f_log);
+    // --- Конец ---
+}
+
+void TTYOutput::DeleteKittyImage(uint32_t id)
+{
+	// a=d (delete), d=I (by ID)
+	Format(ESC "_Ga=d,d=I,i=%u" ESC "\\", id);
+}
+
 // iTerm2 cmd+v workaround
 void TTYOutput::CheckiTerm2Hack() {
 	if (_iterm2_cmd_state) {

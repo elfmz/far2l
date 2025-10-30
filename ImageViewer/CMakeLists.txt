@@ -2,7 +2,7 @@
 project(ImageViewer)
 
 set(SOURCES
-src/ImageViewer.cpp 
+ImageViewer.cpp 
 )
 
 add_library (ImageViewer MODULE ${SOURCES})

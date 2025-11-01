@@ -224,8 +224,7 @@ int _MakePath1(DWORD Key, FARString &strPathName, const wchar_t *Param2, int esc
 					if (NeedRealName && SrcPanel->GetType() == FILE_PANEL
 							&& SrcPanel->GetMode() != PLUGIN_PANEL) {
 						FileList *SrcFilePanel = (FileList *)SrcPanel;
-						SrcFilePanel->CreateFullPathName(strPathName, FILE_ATTRIBUTE_DIRECTORY, strPathName,
-								true);
+						SrcFilePanel->CreateFullPathName(strPathName, strPathName, true);
 					}
 
 					AddEndSlash(strPathName);

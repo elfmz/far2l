@@ -390,7 +390,6 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanel, "CaseSensitiveCompareSelect", &Opt.PanelCaseSensitiveCompareSelect, 1},
 	{true,  NSecPanel, "ReverseSort", &Opt.ReverseSort, 1},
 	{false, NSecPanel, "RightClickRule", &Opt.PanelRightClickRule, 2},
-	{false, NSecPanel, "CtrlFRule", &Opt.PanelCtrlFRule, 1},
 	{false, NSecPanel, "CtrlAltShiftRule", &Opt.PanelCtrlAltShiftRule, 0},
 	{false, NSecPanel, "RememberLogicalDrives", &Opt.RememberLogicalDrives, 0},
 	{true,  NSecPanel, "AutoUpdateLimit", &Opt.AutoUpdateLimit, 0},

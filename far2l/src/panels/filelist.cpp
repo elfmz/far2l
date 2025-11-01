@@ -1090,6 +1090,7 @@ int FileList::ProcessKey(FarKey Key)
 		{
 			if (!ListData.IsEmpty() && SetCurPath()) {
 				FARString strFileName;
+				bool localPath = true;
 
 				if (Key == KEY_CTRLSHIFTENTER || Key == KEY_CTRLSHIFTNUMENTER) {
 					_MakePath1(Key, strFileName, L" ");
@@ -1113,43 +1114,13 @@ int FileList::ProcessKey(FarKey Key)
 					}
 
 					if (Key == KEY_CTRLF || Key == KEY_CTRLALTF) {
+						// full paths aren't needed to be prefixed with ./
+						localPath = false;
 						if (PanelMode != PLUGIN_PANEL) {
 							CreateFullPathName(CurPtr->strName, CurPtr->FileAttr, strFileName,
 									Key == KEY_CTRLALTF);
-							EnsurePathHasParentPrefix(strFileName);
 						} else {
-							// paths from plugins are not related to host's filesystem thus no need to prefix with ./
-							OpenPluginInfo Info = {0};
-							CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
-							FARString strFullName;
-							if (Info.CurURL && Info.CurURL[0]) {
-								strFullName = Info.CurURL;
-							} else if (Info.CurDir && Info.CurDir[0]) {
-								strFullName = Info.CurDir;
-							} else {
-								//fprintf(stderr, "Both CurDir and CurURL are empty or null\n");
-							}
-
-							if (!strFullName.IsEmpty())
-								AddEndSlash(strFullName);
-
-							if (Opt.PanelCtrlFRule) {
-								/*
-									$ 13.10.2000 tran
-									по Ctrl-f имя должно отвечать условиям на панели
-								*/
-								if (ViewSettings.FileLowerCase
-										&& !(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
-									strFileName.Lower();
-
-								if (ViewSettings.FileUpperToLowerCase)
-									if (!(CurPtr->FileAttr & FILE_ATTRIBUTE_DIRECTORY)
-											&& !IsCaseMixed(strFileName))
-										strFileName.Lower();
-							}
-
-							strFullName+= strFileName;
-							strFileName = strFullName;
+							PluginGetURL(CurPtr->strName, CurPtr->FileAttr, strFileName);
 						}
 					}
 
@@ -1158,6 +1129,10 @@ int FileList::ProcessKey(FarKey Key)
 
 					if (Opt.QuotedName & QUOTEDNAME_INSERT)
 						EscapeSpace(strFileName);
+
+					if (localPath) {
+						EnsurePathHasParentPrefix(strFileName);
+					}
 
 					strFileName+= L" ";
 				}
@@ -3816,6 +3791,42 @@ void FileList::CopyNames(bool FullPathName, bool RealName)
 	CopyToClipboard(CopyData);
 	free(CopyData);
 }
+
+FARString &FileList::PluginGetURL(const wchar_t *Name, DWORD FileAttr, FARString &strDest)
+{
+	OpenPluginInfo Info = {0};
+	FARString strFileName = Name;
+	CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
+	if (Info.CurURL && Info.CurURL[0]) {
+		strDest = Info.CurURL;
+	} else if (Info.CurDir && Info.CurDir[0]) {
+		strDest = Info.CurDir;
+	} else {
+		//fprintf(stderr, "Both CurDir and CurURL are empty or null\n");
+	}
+
+	if (!strDest.IsEmpty())
+		AddEndSlash(strDest);
+
+	if (Opt.PanelCtrlFRule) {
+		/*
+			$ 13.10.2000 tran
+			по Ctrl-f имя должно отвечать условиям на панели
+		*/
+		if (ViewSettings.FileLowerCase
+				&& !(FileAttr & FILE_ATTRIBUTE_DIRECTORY))
+			strFileName.Lower();
+
+		if (ViewSettings.FileUpperToLowerCase)
+			if (!(FileAttr & FILE_ATTRIBUTE_DIRECTORY)
+					&& !IsCaseMixed(strFileName))
+				strFileName.Lower();
+	}
+
+	strDest += strFileName;
+	return strDest;
+}
+
 
 FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, bool RealName)
 {

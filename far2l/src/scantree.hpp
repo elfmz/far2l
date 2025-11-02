@@ -75,6 +75,7 @@ public:
 class ScanTree
 {
 	BitFlags Flags;
+	int MaxDepth = -1;
 	std::wstring strFindPath;
 	std::wstring strFindMask;
 	FileMasksProcessor fmpExclSubTree;
@@ -91,7 +92,7 @@ class ScanTree
 	};
 	std::list<ScanDir> ScanDirStack;
 
-	void CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata);
+	void CheckForEnterSubdir(FAR_FIND_DATA_EX *fdata);
 	void StartEnumSubdir();
 	void LeaveSubdir();
 
@@ -101,6 +102,7 @@ public:
 	// 3-й параметр - флаги из старшего слова
 	void
 	SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags = FSCANTREE_FILESFIRST, const wchar_t *ExcludeSubDirMask = nullptr);
+	inline void SetMaxDepth(int depth) { MaxDepth = depth;}
 	bool GetNextName(FAR_FIND_DATA_EX *fdata, FARString &strFullName);
 
 	void SkipDir();

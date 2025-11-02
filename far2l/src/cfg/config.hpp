@@ -358,6 +358,8 @@ struct TreeOptions
 	int AutoChangeFolder;	// автосмена папок при перемещении по дереву
 	DWORD TreeFileAttr;		// файловые атрибуты для файлов-деревях
 	FARString ExclSubTreeMask;
+	bool ScanDepthEnabled;
+	int DefaultScanDepth;
 };
 
 struct CopyMoveOptions

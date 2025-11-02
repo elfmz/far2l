@@ -1215,6 +1215,8 @@ operations.
 the Alt key and type the folder name until you point to the right folder.
 Pressing #Ctrl-Enter# keys simultaneously will select the next match.
     Key #Left# navigates one level up.
+    Key #Right# expands a tree branch that was collapsed during construction
+according to the configured exclusion mask or scanning depth.
     #Gray +# and #Gray -# keys move up and down the tree to the next branch
 on the same level.
 
@@ -2541,6 +2543,9 @@ $ #Settings dialog: panel#
                           panel. If it is not checked, you must press
                           #Enter# to change the folder from the tree
                           panel.
+
+  #Scanning depth#          Sets the maximum depth for recursive catalogue scanning
+                          while building the tree. 
 
   #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
   #scanning exclusions#     from automatic scanning. Use this to skip folders

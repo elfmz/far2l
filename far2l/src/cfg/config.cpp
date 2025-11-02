@@ -256,6 +256,7 @@ void PanelSettings()
 	for (;;) {
 		DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
 		BOOL AutoUpdate = (Opt.AutoUpdateLimit);
+		BOOL TreeScanDepthEnabled = (Opt.Tree.ScanDepthEnabled);
 
 		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 
@@ -285,6 +286,12 @@ void PanelSettings()
 		Builder.AddCheckbox(Msg::ConfigClassicHotkeyLinkResolving, &Opt.ClassicHotkeyLinkResolving);
 
 		Builder.AddSeparator(Msg::ConfigTreeOptions);
+		Builder.StartColumns();
+		DialogItemEx *TreeScanDepthSwitch = Builder.AddCheckbox(Msg::ConfigDefaultTreeScanDepth, &TreeScanDepthEnabled);
+		Builder.ColumnBreak();
+		DialogItemEx *DefaultScanDepth = Builder.AddIntEditField((int *)&Opt.Tree.DefaultScanDepth, 12);
+		Builder.LinkFlags(TreeScanDepthSwitch, DefaultScanDepth, DIF_DISABLE, false);
+		Builder.EndColumns();
 		Builder.AddText(Msg::ConfigExclSubTreeMask);
 		Builder.AddEditField(&Opt.Tree.ExclSubTreeMask, 35);
 		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);

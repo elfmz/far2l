@@ -16,14 +16,15 @@ on:
       - '.gitignore'
       - '.travis.yml'
       - 'Brewfile'
+      - 'changelog.md'
       - 'CODESTYLE.md'
       - 'dependencies-minimal.txt'
       - 'dependencies.txt'
       - 'Dockerfile'
       - 'DUMPER.md'
-      - 'far2lOverlays.nix'
       - 'HACKING.md'
       - 'LICENSE.txt'
+      - 'packaging/**'
       - 'README.md'
   # run on pull request to master
   pull_request:

@@ -99,16 +99,18 @@ bool keybar_ctl::update(const bool rw_mode, const bool initialize, const int key
 
 WORD keybar_ctl::get_button(const SHORT x_coord) const
 {
-	WORD btn_id = 0;
 	const size_t btn_width = get_btn_width();
 
-	for (WORD i = 1; btn_id == 0 && i <= 12; ++i) {
+	for (WORD i = 1; i < 12; ++i) {
 		const size_t btn_pos = get_btn_pos(i, false);
 		if (x_coord >= static_cast<SHORT>(btn_pos) && x_coord <= static_cast<SHORT>(btn_pos + btn_width))
-			btn_id = i;
+			return i;
 	}
+	// last button use all space and may be more wide than others
+	if (x_coord >= static_cast<SHORT>( get_btn_pos(12, false) ))
+		return 12;
 
-	return btn_id;
+	return 0; // no buttons found
 }
 
 

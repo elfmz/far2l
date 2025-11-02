@@ -1113,20 +1113,22 @@ int FileList::ProcessKey(FarKey Key)
 					}
 
 					if (Key == KEY_CTRLF || Key == KEY_CTRLALTF) {
-						OpenPluginInfo Info = {0};
-
-						if (PanelMode == PLUGIN_PANEL) {
-							CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
-						}
-
-						if (PanelMode != PLUGIN_PANEL)
+						if (PanelMode != PLUGIN_PANEL) {
 							CreateFullPathName(CurPtr->strName, CurPtr->FileAttr, strFileName,
 									Key == KEY_CTRLALTF);
-						else {
-							FARString strFullName = Info.CurDir;
-
-							if (Opt.PanelCtrlFRule && ViewSettings.FolderUpperCase)
-								strFullName.Upper();
+							EnsurePathHasParentPrefix(strFileName);
+						} else {
+							// paths from plugins are not related to host's filesystem thus no need to prefix with ./
+							OpenPluginInfo Info = {0};
+							CtrlObject->Plugins.GetOpenPluginInfo(hPlugin, &Info);
+							FARString strFullName;
+							if (Info.CurURL && Info.CurURL[0]) {
+								strFullName = Info.CurURL;
+							} else if (Info.CurDir && Info.CurDir[0]) {
+								strFullName = Info.CurDir;
+							} else {
+								//fprintf(stderr, "Both CurDir and CurURL are empty or null\n");
+							}
 
 							if (!strFullName.IsEmpty())
 								AddEndSlash(strFullName);
@@ -1158,7 +1160,6 @@ int FileList::ProcessKey(FarKey Key)
 						EscapeSpace(strFileName);
 
 					strFileName+= L" ";
-					EnsurePathHasParentPrefix(strFileName);
 				}
 
 				CtrlObject->CmdLine->InsertString(strFileName);

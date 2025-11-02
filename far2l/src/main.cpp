@@ -460,7 +460,8 @@ int FarAppMain(int argc, char **argv)
 	// The name can be "far2ledit" or "editor" (when far2ledit is chosen
 	// as the default editor in Debian-based systems).
 	// See https://github.com/elfmz/far2l/pull/3022.
-	bool is_far2ledit = strstr(argv[0], "edit") != NULL;
+	const char *argv0_lastslash = strrchr(argv[0], '/');
+	bool is_far2ledit = strstr(argv0_lastslash ? argv0_lastslash + 1 : argv[0], "edit") != NULL;
 	if (is_far2ledit) {
 		Opt.OnlyEditorViewerUsed = Options::ONLY_EDITOR;
 		if (argc > 1) {

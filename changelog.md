@@ -5,6 +5,7 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Word wrap in editor (like in Windows Notepad or HTML textareas). Toggled by F3 or Alt+W
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
   Option to set the maximum recursive scanning depth (default: 4). 
   Right Arrow expands excluded subtrees, and Left Arrow now navigates one level up.

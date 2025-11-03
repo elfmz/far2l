@@ -1214,9 +1214,10 @@ operations.
     You can find a folder quickly with the help of #speed search# action. Hold
 the Alt key and type the folder name until you point to the right folder.
 Pressing #Ctrl-Enter# keys simultaneously will select the next match.
-    Key #Left# navigates one level up.
+    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
+    Keys #Ctrl+Number# expand all branches up to the selected depth level.
     #Gray +# and #Gray -# keys move up and down the tree to the next branch
 on the same level.
 

@@ -8,7 +8,8 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Word wrap in editor (like in Windows Notepad or HTML textareas). Toggled by F3 or Alt+W
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
   Option to set the maximum recursive scanning depth (default: 4). 
-  Right Arrow expands excluded subtrees, and Left Arrow now navigates one level up.
+  Right Arrow expands excluded subtrees, and Left Arrow collapses subtree in focus, if it's alreayd collapsed - navigates one level up.
+  Ctrl+Number expands all branches to the chosen depth.
 
 ## 2.7.0 beta (2025-10-26)
 * Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.

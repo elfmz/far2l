@@ -106,8 +106,7 @@ private:
 	void Collapse();
 	void Expand();
 	void LevelUp();
-	void Up(int Count);
-	void Down(int Count);
+	void MoveBy(int delta);
 	void Scroll(int Count);
 	void CorrectPosition();
 	bool FillLastData();
@@ -131,8 +130,14 @@ private:
 	bool SaveState();
 	bool RestoreState();
 	bool isHidden(int idx);
+	void Unhide(int idx);
 	void ExpandTreeToLevel(int level);
 	void RebuildVisibleList();
+	int VisibleCount();
+	int ToVisibleIndex(int realIdx);
+	int FromVisibleIndex(int visIdx);
+	int GetVisibleHeight() const;
+
 
 
 private:

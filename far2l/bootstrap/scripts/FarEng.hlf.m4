@@ -1214,12 +1214,15 @@ operations.
     You can find a folder quickly with the help of #speed search# action. Hold
 the Alt key and type the folder name until you point to the right folder.
 Pressing #Ctrl-Enter# keys simultaneously will select the next match.
+
+    #Gray +# and #Gray -# keys move up and down the tree to the next branch
+on the same level.
+
     Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
+
     Keys #Ctrl+Number# expand all branches up to the selected depth level.
-    #Gray +# and #Gray -# keys move up and down the tree to the next branch
-on the same level.
 
     See also the list of ~macro keys~@KeyMacroTreeList@, available in the folder tree panel.
 
@@ -1914,6 +1917,12 @@ the folder.
 
     #Gray +# and #Gray -# should move up and down the tree to the next branch
 on the same level.
+
+    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
+    Key #Right# expands a tree branch that was collapsed during construction
+according to the configured exclusion mask or scanning depth.
+
+    Keys #Ctrl+Number# expand all branches up to the selected depth level.
 
     #F5# allows to maximize the window, pressing #F5# again will restore the
 window to the previous size.
@@ -3003,7 +3012,7 @@ $ #Editor#
 can be used to open the internal editor or any of the user defined external
 editors which are defined in the ~Editor settings~@EditorSettings@ dialog.
 
-    #Creating files using the editor#
+  #Creating files using the editor#
 
     If a nonexistent file name is entered after pressing the #Shift-F4# hotkey
 then a ~new file~@FileOpenCreate@ will be created.
@@ -3019,6 +3028,20 @@ will be shown.
 
     3. ^<wrap>The UTF-8 encoding is used by default when creating new files, this
 behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
+
+  #Title bar items#
+   - File path
+   - #*# (file modified) or empty
+   - #-# (file modification is locked) or empty         (toggled via #Ctrl-L#)
+   - #"# (during processing #Ctrl-Q#) or empty
+   - #WW# (WordWrap mode) or empty                      (toggled via #F3# or #Alt-W# or in the ~Editor settings~@EditorSettings@ dialog)
+   - #Tn# (not expand Tab) or #Sn# (expand Tab to spaces) (toggled via #Shift-F5# and #Ctrl-F5# or in the ~Editor settings~@EditorSettings@ dialog)
+   - #LF# or #CR# or #CRLF#: format of the line break       (toggled via #Shift-F2#)
+   - Codepage                                         (toggled via #F8# or #Shift-F8#)
+   - Line current/all lines
+   - Column current
+   - Code of character under cursor
+   - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
 
   #Control keys#
 
@@ -3055,8 +3078,8 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
 
    #Shift-Cursor keys#       Select block
    #Ctrl-Shift-Cursor keys#  Select block by words
-   #Alt-Cursor keys#         Select vertical block
-   #Alt-Shift-Cursor keys#   Select vertical block (use NumLock cursor keys)
+   #Alt-Cursor keys#         Select vertical block (only when unwrap mode)
+   #Alt-Shift-Cursor keys#   Select vertical block (use NumLock cursor keys, only when unwrap mode)
    #Ctrl-A#                  Select all text
    #Ctrl-U#                  Deselect block
    #Shift-Ins, Ctrl-V#       Paste block from clipboard
@@ -3076,6 +3099,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F1#                      Help
    #F2#                      Save file
    #Shift-F2#                ~Save file as...~@FileSaveAs@
+   #F3# or #Alt-W#             Toggle line wrap/unwrap
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width

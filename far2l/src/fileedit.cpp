@@ -540,6 +540,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 
 	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	m_editor->SetStartPos(StartLine, StartChar);
+
 	int UserBreak;
 
 	/*
@@ -653,7 +654,8 @@ void FileEditor::InitKeyBar()
 	EditKeyBar.ReadRegGroup(L"Editor", Opt.strLanguage);
 	EditKeyBar.SetAllRegGroup();
 	EditKeyBar.Refresh(true);
-	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+	// Этот вызов здесь НЕ НУЖЕН и вызывает двойной пересчет переносов
+	// m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
 	SetKeyBar(&EditKeyBar);
 }
 
@@ -1099,6 +1101,14 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				TitleBarVisible = !TitleBarVisible;
 				Show();
 				return (TRUE);
+			}
+		case KEY_F3:
+		case KEY_ALTW: {
+			m_editor->SetWordWrap(!m_editor->GetWordWrap());
+				m_editor->Show();
+				ChangeEditKeyBar();
+				ShowStatus();
+				return TRUE;
 			}
 			case KEY_F5:
 				m_editor->SetShowWhiteSpace(m_editor->GetShowWhiteSpace() ? 0 : 1);
@@ -2048,6 +2058,11 @@ void FileEditor::SetScreenPosition()
 	if (Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		SetPosition(0, 0, ScrX, ScrY);
 	}
+	if (m_editor) {
+		int newY1 = Y1 + (TitleBarVisible ? 1 : 0);
+		int newY2 = Y2 - (KeyBarVisible ? 1 : 0);
+		m_editor->SetPosition(X1, newY1, X2, newY2);
+	}
 }
 
 /*
@@ -2099,6 +2114,7 @@ BOOL FileEditor::isTemporary()
 {
 	return (!GetDynamicallyBorn());
 }
+
 
 void FileEditor::ResizeConsole()
 {
@@ -2166,6 +2182,8 @@ void FileEditor::SetEditKeyBarStatefulLabels()
 	EditKeyBar.Change(KBL_MAIN, m_editor->GetShowWhiteSpace() ? Msg::EditF5Hide : Msg::EditF5, 4);
 
 	EditKeyBar.Change(KBL_CTRL, m_editor->GetConvertTabs() ? Msg::EditCtrlF5 : Msg::EditCtrlF5Spaces, 4);
+
+	EditKeyBar.Change(KBL_MAIN, m_editor->GetWordWrap() ? Msg::ViewF2Unwrap : Msg::ViewShiftF2, 2);
 }
 
 void FileEditor::ChangeEditKeyBar()
@@ -2274,15 +2292,21 @@ void FileEditor::ShowStatus()
 		}
 	}
 
+	FARString strWrapMode;
+	if (m_editor->GetWordWrap())
+	{
+		strWrapMode = L"WW ";
+	}
 	FARString strTabMode;
 	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
+
 	FARString str_codepage;
 	ShortReadableCodepageName(m_codepage,str_codepage);
 	FormatString FString;
 	FString << fmt::Cells() << fmt::LeftAlign()
 			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*' : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-' : L' ')
-			<< (m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"' : L' ') << strTabMode << L' '
+			<< (m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"' : L' ') << strWrapMode << strTabMode << L' '
 			<< fmt::Expand(5) << EOLName(m_editor->GlobalEOL) << L' ' << fmt::Expand(5) << str_codepage << L' '
 			<< fmt::Expand(7) << Msg::EditStatusLine << L' '
 			<< fmt::Expand(12) << strLineStr << L' ' //SizeLineStr
@@ -2364,6 +2388,7 @@ BOOL FileEditor::UpdateFileList()
 void FileEditor::GetEditorOptions(EditorOptions &EdOpt)
 {
 	EdOpt = m_editor->EdOpt;
+	EdOpt.WordWrap = m_editor->GetWordWrap();
 	EdOpt.ShowTitleBar = TitleBarVisible;
 	EdOpt.ShowKeyBar = KeyBarVisible;
 }
@@ -2383,6 +2408,7 @@ void FileEditor::SetEditorOptions(EditorOptions &EdOpt)
 	m_editor->SetShowScrollBar(EdOpt.ShowScrollBar);
 	m_editor->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 	m_editor->SetSearchPickUpWord(EdOpt.SearchPickUpWord);
+	m_editor->SetWordWrap(EdOpt.WordWrap);
 	TitleBarVisible = EdOpt.ShowTitleBar;
 	KeyBarVisible = EdOpt.ShowKeyBar;
 	// m_editor->SetBSLikeDel(EdOpt.BSLikeDel);

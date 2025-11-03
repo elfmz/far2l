@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FilesSuggestor.hpp"
 #include <memory>
 #include <vector>
+#include <vector>
 
 // Младший байт (маска 0xFF) юзается классом ScreenObject!!!
 enum FLAGS_CLASS_EDITLINE
@@ -176,6 +177,8 @@ private:
 
 	std::unique_ptr<MenuFilesSuggestor> m_pSuggestor;
 	bool HasSpecialWidthChars;
+	bool m_bWordWrapState;
+	std::vector<int> m_WrapBreaks;
 private:
 	virtual void DisplayObject();
 	int InsertKey(FarKey Key);
@@ -187,6 +190,7 @@ private:
 	int KeyMatchedMask(FarKey Key);
 
 	int ProcessCtrlQ();
+	void RecalculateWordWrap(int Width, int TabSize);
 	int ProcessInsDate(const wchar_t *Str);
 	int ProcessInsPlainText(const wchar_t *Str);
 
@@ -207,6 +211,8 @@ protected:
 	inline int CalcPosFwd(int LimitPos = -1) const { return CalcPosFwdTo(CurPos, LimitPos); }
 	inline int CalcPosBwd() const { return CalcPosBwdTo(CurPos); }
 
+	int GetVisualLineCount() const;
+	void GetVisualLine(int line, int& start, int& end) const;
 public:
 	Edit(ScreenObject *pOwner = nullptr, Callback *aCallback = nullptr, bool bAllocateData = true);
 	virtual ~Edit();
@@ -298,6 +304,10 @@ public:
 	BOOL IsSelection() { return SelStart == -1 && !SelEnd ? FALSE : TRUE; };
 	void GetRealSelection(int &Start, int &End);
 	void SetEditBeyondEnd(int Mode) { Flags.Change(FEDITLINE_EDITBEYONDEND, Mode); };
+	void SetWordWrap(int Wrap) {
+		m_bWordWrapState = (Wrap != 0);
+		}
+	bool GetWordWrap() const { return m_bWordWrapState; }
 	void SetEditorMode(int Mode) { Flags.Change(FEDITLINE_EDITORMODE, Mode); };
 	void ExpandTabs();
 

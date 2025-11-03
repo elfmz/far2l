@@ -427,7 +427,6 @@ void TreeList::Update(int Mode)
 
 int TreeList::ReadTree(int depth)
 {
-DUMP(DSTACKTRACE())
 	ChangePriority ChPriority(ChangePriority::NORMAL);
 	// SaveScreen SaveScr;
 	TPreRedrawFuncGuard preRedrawFuncGuard(TreeList::PR_MsgReadTree);

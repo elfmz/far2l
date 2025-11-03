@@ -1069,9 +1069,10 @@ a mappákkat kezelni.
 nyomva az Alt billentyűt és addig írjuk be a keresett mappa nevét, amíg rá nem
 áll a sávkurzor. A #Ctrl-Enter# lenyomásával a további találatokon
 lépkedhetünk.
-    A #Balra# nyíl egy szinttel feljebb lép.
+    A #Balra nyíl# osszecsukja az aktuálisan kijelölt ágat. Ha az ág már össze van csukva, egy szinttel feljebb lép.
     A #Jobb nyíl# kibontja a faágat, amely a létrehozáskor a beállított kizárási maszk
 vagy a meghatározott beolvasási mélység szerint lett összecsukva.
+    #Ctrl + Szám# — Kibontja az összes ágat a megadott mélységi szintig.
     A #Szürke +# és a #Szürke -# billentyűkkel fel-le mozoghatunk ugyanannak
 a szintnek a mappáin.
 

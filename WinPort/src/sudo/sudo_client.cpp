@@ -15,7 +15,7 @@
 #include "sudo_askpass_ipc.h"
 #include "../../WinCompat.h"
 
-namespace Sudo 
+namespace Sudo
 {
 	std::string g_sudo_title = "SUDO request";
 	std::string g_sudo_prompt = "Enter password";
@@ -25,14 +25,14 @@ namespace Sudo
 	static std::unique_ptr<LocalSocketServer> s_uds;
 	static std::string g_curdir_override;
 	static struct ListOfStrings : std::list<std::string> {} g_recent_curdirs;
-	
+
 	static std::string g_sudo_app, g_askpass_app;
-	
+
 	enum ModifyState
 	{
 		MODIFY_UNDEFINED = 0,
 		MODIFY_ALLOWED,
-		MODIFY_DENIED		
+		MODIFY_DENIED
 	};
 	struct ThreadRegionCounter
 	{
@@ -41,7 +41,7 @@ namespace Sudo
 		ModifyState modify;
 		bool cancelled;
 	};
-	
+
 	thread_local ThreadRegionCounter thread_client_region_counter = { 0, 0, MODIFY_UNDEFINED, false };
 	static int global_client_region_counter = 0;
 	static SudoClientMode client_mode = SCM_DISABLE;
@@ -49,7 +49,7 @@ namespace Sudo
 	static time_t client_password_timestamp = 0;
 	static bool client_drop_pending = false;
 
-	
+
 	enum {
 		RECENT_CURDIRS_LIMIT = 4
 	};
@@ -58,7 +58,7 @@ namespace Sudo
 	{
 		s_uds.reset();
 	}
-	
+
 	static bool ClientInitSequence()
 	{
 		try {
@@ -69,7 +69,7 @@ namespace Sudo
 
 			if (bt.IsFailed() || cmd!=SUDO_CMD_PING)
 				throw std::runtime_error("ping failed");
-				
+
 			std::string cwd = g_curdir_override;
 			if (cwd.empty()) {
 				char buf[PATH_MAX + 1] = {0};
@@ -86,12 +86,12 @@ namespace Sudo
 				} else {
 					bt.RecvStr(cwd);
 				}
-				
+
 				bt.RecvPOD(cmd);
-			
+
 				if (bt.IsFailed() || cmd!=SUDO_CMD_CHDIR)
 					throw std::runtime_error("chdir failed");
-					
+
 				fprintf(stderr, "Sudo::ClientInitSequence: chdir='%s' -> %d\n", g_curdir_override.c_str(), r);
 			}
 
@@ -100,13 +100,13 @@ namespace Sudo
 			CloseClientConnection();
 			return false;
 		}
-		
-		
+
+
 		return true;
 	}
-	
 
-	
+
+
 	static bool ClientConfirm()
 	{
 		return SudoAskpassRequestConfirmation() == SAR_OK;
@@ -115,7 +115,7 @@ namespace Sudo
 	static int LaunchDispatcher(const std::string &ipc)
 	{
 		struct stat s = {0};
-		
+
 		if (g_sudo_app.empty() || stat(g_sudo_app.c_str(), &s)==-1) {
 			throw std::runtime_error("g_sudo_app not configured");
 		}
@@ -173,7 +173,7 @@ namespace Sudo
 		PutZombieUnderControl(r);
 		return leash[0];
 	}
-	
+
 	static bool OpenClientConnection()
 	{
 		std::string ipc = InMyTempFmt("sudo/%u", getpid());
@@ -207,15 +207,15 @@ namespace Sudo
 		client_drop_pending = false;
 		CloseClientConnection();
 	}
-	
+
 	/////////////////////////////////////////////////////////////////////
-	
+
 	void ClientCurDirOverrideReset()
 	{
 		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		g_curdir_override.clear();
 	}
-	
+
 	void ClientCurDirOverrideSet(const char *path)
 	{
 		//fprintf(stderr, "ClientCurDirOverride: %s\n", path);
@@ -227,7 +227,7 @@ namespace Sudo
 				g_recent_curdirs.pop_front();
 		}
 	}
-	
+
 	bool ClientCurDirOverrideSetIfRecent(const char *path)
 	{
 		std::string str = path;
@@ -235,17 +235,17 @@ namespace Sudo
 		if (client_mode == SCM_DISABLE)
 			return false;
 
-		ListOfStrings::iterator i = 
+		ListOfStrings::iterator i =
 			std::find(g_recent_curdirs.begin(), g_recent_curdirs.end(), str);
 		if (i == g_recent_curdirs.end())
 			return false;
-		
+
 		g_curdir_override.swap(str);
 		g_recent_curdirs.erase(i);
 		g_recent_curdirs.push_back(g_curdir_override);
 		return true;
 	}
-	
+
 	bool ClientCurDirOverrideQuery(char *path, size_t size)
 	{
 		std::lock_guard<std::mutex> lock(s_uds_mutex);
@@ -253,11 +253,11 @@ namespace Sudo
 			errno = ERANGE;
 			return false;
 		}
-		
+
 		strcpy(path, g_curdir_override.c_str() );
 		return true;
 	}
-	
+
 	ClientReconstructCurDir::ClientReconstructCurDir(const char * &path)
 		: _free_ptr(nullptr), _initial_path(path), _path(path)
 	{
@@ -266,7 +266,7 @@ namespace Sudo
 			if (!g_curdir_override.empty()) {
 				std::string str = g_curdir_override;
 				if (strcmp(path, ".")==0 || strcmp(path, "./")==0) {
-					
+
 				} else if (strcmp(path, "..")==0 || strcmp(path, "../")==0) {
 					size_t p = str.rfind('/');
 					if (p!=std::string::npos)
@@ -283,18 +283,18 @@ namespace Sudo
 			}
 		}
 	}
-	
+
 	ClientReconstructCurDir::~ClientReconstructCurDir()
 	{
 		_path = _initial_path;
 		free(_free_ptr);
 	}
-	
+
 /////////////////////////
 	extern "C" {
-		
-		
-		void sudo_client_configure(SudoClientMode mode, int password_expiration, 
+
+
+		void sudo_client_configure(SudoClientMode mode, int password_expiration,
 			const char *sudo_app, const char *askpass_app,
 			const char *sudo_title, const char *sudo_prompt, const char *sudo_confirm)
 		{
@@ -320,15 +320,15 @@ namespace Sudo
 				CloseClientConnection();
 			}
 		}
-		
-		
+
+
 		__attribute__ ((visibility("default"))) void sudo_client_region_enter()
 		{
 			std::lock_guard<std::mutex> lock(s_uds_mutex);
 			global_client_region_counter++;
 			thread_client_region_counter.count++;
 		}
-		
+
 		__attribute__ ((visibility("default"))) void sudo_client_region_leave()
 		{
 			std::lock_guard<std::mutex> lock(s_uds_mutex);
@@ -337,7 +337,7 @@ namespace Sudo
 
 			global_client_region_counter--;
 			thread_client_region_counter.count--;
-			
+
 			if (!thread_client_region_counter.count) {
 				thread_client_region_counter.cancelled = false;
 				thread_client_region_counter.modify = MODIFY_UNDEFINED;
@@ -345,7 +345,7 @@ namespace Sudo
 
 			CheckForCloseClientConnection();
 		}
-		
+
 		 __attribute__ ((visibility("default"))) void sudo_silent_query_region_enter()
 		{
 			thread_client_region_counter.silent_query++;
@@ -357,14 +357,14 @@ namespace Sudo
 		}
 
 	}
-	
+
 
 	bool IsSudoRegionActive()
 	{
 		std::lock_guard<std::mutex> lock(s_uds_mutex);
 		return (s_uds && thread_client_region_counter.count);
 	}
-	
+
 	bool TouchClientConnection(bool want_modify)
 	{
 		if (!thread_client_region_counter.count || thread_client_region_counter.cancelled) {
@@ -395,7 +395,7 @@ namespace Sudo
 
 		} else if (want_modify && client_mode == SCM_CONFIRM_MODIFY ) {
 			if (thread_client_region_counter.modify == MODIFY_UNDEFINED) {
-				thread_client_region_counter.modify = 
+				thread_client_region_counter.modify =
 					ClientConfirm() ? MODIFY_ALLOWED : MODIFY_DENIED;
 			}
 			return (thread_client_region_counter.modify == MODIFY_ALLOWED);
@@ -405,9 +405,9 @@ namespace Sudo
 	}
 
 
-	ClientTransaction::ClientTransaction(SudoCommand cmd) : 
+	ClientTransaction::ClientTransaction(SudoCommand cmd) :
 		std::lock_guard<std::mutex>(s_uds_mutex),
-		BaseTransaction(*s_uds), 
+		BaseTransaction(*s_uds),
 		_cmd(cmd)
 	{
 		try {
@@ -417,7 +417,7 @@ namespace Sudo
 			throw;
 		}
 	}
-	
+
 	ClientTransaction::~ClientTransaction()
 	{
 		try {//should catch all cuz in d-tor
@@ -430,14 +430,14 @@ namespace Sudo
 			CloseClientConnection();
 		}
 	}
-	
+
 	void ClientTransaction::NewTransaction(SudoCommand cmd)
 	{
 		Finalize();
 		_cmd = cmd;
 		SendPOD(_cmd);
 	}
-	
+
 	void ClientTransaction::Finalize()
 	{
 		SudoCommand reply;

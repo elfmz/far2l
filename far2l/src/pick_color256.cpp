@@ -233,7 +233,7 @@ void pick_color256_s::update_table_index(void)
 {
 	if (mode < 2) {
 		uint32_t y = 12 - (((hsv >> ((1 + mode) << 3)) & 0xFF) / 20);
-		index = y > 11 ? 11 * 64 + (((hsv >> (mode << 3)) & 0xFF) >> 2) : 
+		index = y > 11 ? 11 * 64 + (((hsv >> (mode << 3)) & 0xFF) >> 2) :
 				y * 64 + (((hsv >> (mode << 3)) & 0xFF) >> 2);
 	}
 }

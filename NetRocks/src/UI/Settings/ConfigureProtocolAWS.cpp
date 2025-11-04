@@ -19,7 +19,7 @@
 |----------------------------------------------|
 | [  OK    ]    [ Cancel ]                     |
  ==============================================
-    6                     29       38 
+    6                     29       38
 */
 
 class ProtocolOptionsAWS : protected BaseDialog
@@ -44,7 +44,7 @@ class ProtocolOptionsAWS : protected BaseDialog
 
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
-		if (msg == DN_INITDIALOG 
+		if (msg == DN_INITDIALOG
 		 || (msg == DN_BTNCLICK)) {
 			UpdateEnableds();
 		}

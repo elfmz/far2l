@@ -247,7 +247,7 @@ static int wxKeyCode2WinScanCode(int code, int code_raw)
 
 static int IsEnhancedKey(int code, int code_raw)
 {
-	
+
 	// As defined in MS docs https://learn.microsoft.com/en-us/windows/console/key-event-record-str
 	// Enhanced keys for the IBM® 101- and 102-key keyboards are the
 	// INS, DEL, HOME, END, PAGE UP, PAGE DOWN,
@@ -265,7 +265,7 @@ static int IsEnhancedKey(int code, int code_raw)
 		|| code==WXK_RAW_CONTROL
 #endif
 		) return true;
-	
+
 #if defined (__WXGTK__)
 	if (code_raw == RAW_ALTGR || code_raw == RAW_CONTEXT || code_raw == RAW_RCTRL) return true;
 #endif
@@ -470,7 +470,7 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 	Display *display = XOpenDisplay(NULL);
 
 	if (!display) {
-		return 0;	
+		return 0;
 	}
 
 	char keycodes[] = "evdev";
@@ -489,7 +489,7 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 
 	if (!xkb) {
 		XCloseDisplay(display);
-		return 0;	
+		return 0;
 	}
 
 	XkbGetControls(display, XkbGroupsWrapMask, xkb);
@@ -523,7 +523,7 @@ static int X11KeyCodeLookupUncached(wxUint32 keyflags)
 
 	XkbFreeKeyboard(xkb, 0, True);
 	XCloseDisplay(display);
-	
+
 	return key_code;
 }
 

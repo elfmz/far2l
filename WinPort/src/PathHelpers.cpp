@@ -1,7 +1,7 @@
 #include <set>
 #include <string>
 #include <list>
-#include <locale> 
+#include <locale>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -20,26 +20,26 @@
 /*
 std::u16string ToUTF16(const char *pc)
 {
-	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert; 
-	return convert.from_bytes(pc); 
+	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+	return convert.from_bytes(pc);
 }
 
 std::u16string ToUTF16(const std::string &s)
 {
-	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert; 
-	return convert.from_bytes(s.c_str()); 
+	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+	return convert.from_bytes(s.c_str());
 }
 
 std::wstring ToWide(const std::string &s)
 {
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>,wchar_t> convert; 
-	return convert.from_bytes(s.c_str()); 
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>,wchar_t> convert;
+	return convert.from_bytes(s.c_str());
 }
 
 std::string FromUTF16(const char16_t *s)
 {
-	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert; 
-	return convert.to_bytes(s); 
+	std::wstring_convert<std::codecvt_utf8_utf16<char16_t>,char16_t> convert;
+	return convert.to_bytes(s);
 }
 
 std::string FromUTF16(const wchar_t *pw)
@@ -67,13 +67,13 @@ void RectifyPath(std::string &s)
 		char buf[MAX_PATH + 1];
 		char *dir = sdc_getcwd(buf, ARRAYSIZE(buf) - 1);
 		buf[ARRAYSIZE(buf) - 1] = 0;
-		
+
 		if (dir)
 			s.insert(0, dir);
 		else
 			s.insert(s.begin(), '.');
 	}
-	
+
 }
 
 std::string ConsumeWinPath(const wchar_t *pw)

@@ -4,20 +4,20 @@
  * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
-/* 
+/*
  * Copyright (c) 2006-2010, Tomasz Sowa
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *  * Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
- *    
+ *
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *    
+ *
  *  * Neither the name Tomasz Sowa nor the names of contributors to this
  *    project may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -95,8 +95,8 @@ public:
 	/*!
 		this method returns true if a character 'c' is a character
 		which can be in a name
-		
-		if 'can_be_digit' is true that means when the 'c' is a digit this 
+
+		if 'can_be_digit' is true that means when the 'c' is a digit this
 		method returns true otherwise it returns false
 	*/
 	static bool CorrectCharacter(int c, bool can_be_digit)
@@ -128,7 +128,7 @@ public:
 		for(++i ; i!=name.end() ; ++i)
 			if( !CorrectCharacter(*i, true) )
 				return false;
-		
+
 	return true;
 	}
 
@@ -203,7 +203,7 @@ public:
 
 		Misc::AssignString(str_tmp1, name);
 		Misc::AssignString(str_tmp2, value);
-		
+
 	return Add(str_tmp1, str_tmp2, param);
 	}
 
@@ -259,7 +259,7 @@ public:
 
 		if( i == table.end() )
 			return err_unknown_object;
-	
+
 		i->second.value = value;
 		i->second.param = param;
 
@@ -282,7 +282,7 @@ public:
 
 		Misc::AssignString(str_tmp1, name);
 		Misc::AssignString(str_tmp2, value);
-		
+
 	return EditValue(str_tmp1, str_tmp2, param);
 	}
 
@@ -300,15 +300,15 @@ public:
 		Iterator old_i = table.find(old_name);
 		if( old_i == table.end() )
 			return err_unknown_object;
-		
+
 		if( old_name == new_name )
 			// the new name is the same as the old one
 			// we treat it as a normal situation
 			return err_ok;
 
 		ErrorCode err = Add(new_name, old_i->second.value, old_i->second.param);
-		
-		if( err == err_ok ) 
+
+		if( err == err_ok )
 		{
 			old_i = table.find(old_name);
 			TTMATH_ASSERT( old_i != table.end() )
@@ -378,8 +378,8 @@ public:
 		Misc::AssignString(str_tmp1, name);
 
 	return Delete(str_tmp1);
-	}	
-		
+	}
+
 #endif
 
 
@@ -593,10 +593,10 @@ private:
 
 /*!
 	objects of the class History are used to keep values in functions
-	which take a lot of time during calculating, for instance in the 
+	which take a lot of time during calculating, for instance in the
 	function Factorial(x)
 
-	it means that when we're calculating e.g. Factorial(1000) and the 
+	it means that when we're calculating e.g. Factorial(1000) and the
 	Factorial finds that we have calculated it before, the value (result)
 	is taken from the history
 */
@@ -625,7 +625,7 @@ class History
 	typename buffer_type::size_type buffer_max_size;
 
 public:
-	
+
 	/*!
 		default constructor
 		default max size of the History's container is 15 items
@@ -781,7 +781,7 @@ struct CGamma
 	/*!
 		this method prepares some coefficients: factorials and Bernoulli numbers
 		stored in 'fact' and 'bern' objects
-		
+
 		how many values should be depends on the size of the mantissa - if
 		the mantissa is larger then we must calculate more values
 		    for a mantissa which consists of 256 bits (8 words on a 32bit platform)

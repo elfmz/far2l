@@ -60,7 +60,7 @@ void BackgroundTasksList()
 	}
 }
 
-/*                                               
+/*
 345                                            50
  ============== Confirm exit FAR ===========================
 | Exiting FAR will disrupt %u pending background tasks.     |
@@ -68,7 +68,7 @@ void BackgroundTasksList()
 |-----------------------------------------------------------|
 |   [Background Tasks ] [    Ok   ]      [    Cancel    ]   |
  ===========================================================
-    6                     29       38            
+    6                     29       38
 */
 
 ConfirmExitFAR::ConfirmExitFAR(size_t background_ops_count)

@@ -47,7 +47,7 @@ namespace Sudo
 	{
 		LocalSocket &_sock;
 		bool _failed;
-		
+
 	public:
 		BaseTransaction(LocalSocket &sock);
 		void SendBuf(const void *buf, size_t len);
@@ -63,30 +63,30 @@ namespace Sudo
 		int RecvInt();
 		inline int RecvFD() { return _sock.RecvFD(); }
 		inline void RecvErrno() { errno = RecvInt(); }
-		
+
 		inline bool IsFailed() const { return _failed; }
 	};
 
 	class ClientTransaction : protected std::lock_guard<std::mutex>, public BaseTransaction
 	{
 		SudoCommand _cmd;
-		
+
 		void Finalize();
 		public:
 		ClientTransaction(SudoCommand cmd);
 		~ClientTransaction();
-		
+
 		void NewTransaction(SudoCommand cmd);
 	};
 
 	bool TouchClientConnection(bool want_modify);
 	bool IsSudoRegionActive();
-	
+
 	void ClientCurDirOverrideReset();
 	void ClientCurDirOverrideSet(const char *path);
 	bool ClientCurDirOverrideSetIfRecent(const char *path);
 	bool ClientCurDirOverrideQuery(char *path, size_t size);
-	
+
 	class ClientReconstructCurDir
 	{
 		char *_free_ptr;

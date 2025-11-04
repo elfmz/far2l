@@ -5,7 +5,7 @@
 class ZombieControl : std::set<pid_t>
 {
 	std::mutex _mutex;
-	
+
 public:
 	void Pud(pid_t pid)
 	{
@@ -15,7 +15,7 @@ public:
 			int r;
 			if (waitpid(*i, &r, WNOHANG)==*i)
 				 i = erase(i);
-			else 
+			else
 				++i;
 		}
 	}

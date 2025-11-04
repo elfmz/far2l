@@ -25,7 +25,7 @@ public:
 	} scroll_callback;
 	HANDLE con_handle{NULL};
 
-	ConsoleBuffer(); 
+	ConsoleBuffer();
 
 	void SetSizeSimple(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos);
 	void SetSizeRecomposing(unsigned int width, unsigned int height, uint64_t attributes, COORD &cursor_pos);

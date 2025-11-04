@@ -777,29 +777,29 @@ void InterfaceSettings()
 			std::string format_decimal = nl_langinfo(RADIXCHAR/*DECIMAL_POINT*/);
 			if (format_date=="%D") { // %D Equivalent to %m/%d/%y
 				DateFormatIndex = 0;
-				strTimeSeparator = "/";
+				strDateSeparator = "/";
 				pos_date_2 = 0; // for not error in message
 			}
-			if (format_date=="%F") { // %F Equivalent to %Y-%m-%d
+			else if (format_date=="%F") { // %F Equivalent to %Y-%m-%d
 				DateFormatIndex = 2;
-				strTimeSeparator = "-";
+				strDateSeparator = "-";
 				pos_date_2 = 0; // for not error in message
 			}
 			else if (format_date.length() >= 8) {
-				std::vector<const char*> codes_day = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
+				static std::vector<const char*> codes_day = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
 				for (const auto &code : codes_day) {
 					pos_day = format_date.find(code);
 					if (pos_day != std::string::npos)
 						break;
 				}
-				std::vector<const char*> codes_month = {
+				static std::vector<const char*> codes_month = {
 					"%m", "%B", "%b", "%h", "%Em", "%EB", "%Eb", "%Eh", "%Om", "%OB", "%Ob", "%Oh" };
 				for (const auto &code : codes_month) {
 					pos_month = format_date.find(code);
 					if (pos_month != std::string::npos)
 						break;
 				}
-				std::vector<const char*> codes_year = {
+				static std::vector<const char*> codes_year = {
 					"%Y", "%y", "%G", "%g", "%EY", "%Ey", "%EG", "%Eg", "%OY", "%Oy", "%OG", "%Og" };
 				for (const auto &code : codes_year) {
 					pos_year = format_date.find(code);
@@ -808,15 +808,13 @@ void InterfaceSettings()
 				}
 				if (pos_day != std::string::npos && pos_month != std::string::npos && pos_year != std::string::npos) {
 					if (pos_day < pos_month && pos_month < pos_year) // day-month-year
-					{ DateFormatIndex = 1; pos_date_2 = pos_month; }
+					{ DateFormatIndex = 1; pos_date_2 = pos_month; strDateSeparator = format_date[pos_date_2-1]; }
 					else if (pos_year < pos_month && pos_month < pos_day) // year-month-day
-					{ DateFormatIndex = 2; pos_date_2 = pos_month; }
+					{ DateFormatIndex = 2; pos_date_2 = pos_month; strDateSeparator = format_date[pos_date_2-1]; }
 					else if (pos_month < pos_day  && pos_month < pos_year) // month-day-year
-					{ DateFormatIndex = 0; pos_date_2 = pos_day; }
+					{ DateFormatIndex = 0; pos_date_2 = pos_day;   strDateSeparator = format_date[pos_date_2-1]; }
 				}
 			}
-			if (pos_date_2 != std::string::npos)
-				strDateSeparator = format_date[pos_date_2-1];
 
 			if (format_time=="%T") { // %T The time in 24-hour notation (%H:%M:%S).
 				strTimeSeparator = ":";

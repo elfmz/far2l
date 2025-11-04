@@ -482,7 +482,7 @@ public:
 		int rc = (flags & O_CREAT)
 			? nfs_creat(_nfs->ctx, path.c_str(), mode & (~O_CREAT), &_file)
 			: nfs_open(_nfs->ctx, path.c_str(), flags, &_file);
-		
+
 		if (rc != 0 || _file == nullptr) {
 			_file = nullptr;
 			throw ProtocolError("Failed to open file", rc);

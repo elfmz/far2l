@@ -100,7 +100,7 @@ public:
 /*
 		size_t block_count = dedupMap.size();;
 		size_t total_bytes = block_count * CHAR_BLOCK_SIZE * sizeof(uint8_t);
-		fprintf(stderr, "[CharClasses] Allocated blocks: %zu" 
+		fprintf(stderr, "[CharClasses] Allocated blocks: %zu"
 						", total bytes: %zu\n", block_count, total_bytes );
 */
 	}

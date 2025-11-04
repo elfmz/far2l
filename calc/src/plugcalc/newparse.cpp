@@ -116,17 +116,17 @@ CalcParser::~CalcParser()
 
 bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 {
-	static struct 
+	static struct
 	{
 		string name;
 		int priority;
-	} builtin_ops[] = 
+	} builtin_ops[] =
 	{
 		// should be lower-case!
 
 		{ L"_lor", 1 },
 		{ L"_land", 1 },
-		
+
 		{ L"_or", 2 },
 		{ L"_xor", 3 },
 		{ L"_and", 4 },
@@ -144,16 +144,16 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 		{ L"_div", 9 },
 		{ L"_mul", 9 },
 		{ L"_pow", 10 },
-		
+
 		{ L"", -1 },
 	};
-	
+
 	static struct
 	{
 		void *f;
 		const wchar_t *name;
 		int num_args;
-	} builtin_funcs[] = 
+	} builtin_funcs[] =
 	{
 		// should be lower-case!
 
@@ -181,7 +181,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 		{ (void *)SArg::_numer, L"_numer", 1 },
 		{ (void *)SArg::_denom, L"_denom", 1 },
 		{ (void *)SArg::_gcd,   L"_gcd", 2 },
-		
+
 		// Functional operators
 		{ (void *)SArg::to_int64, L"_int64", 1 },
 		{ (void *)SArg::to_uint64, L"_uint64", 1 },
@@ -193,7 +193,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 		{ (void *)SArg::to_byte, L"_byte", 1 },
 		{ (void *)SArg::to_double, L"_double", 1 },
 		{ (void *)SArg::to_float, L"_float", 1 },
-		
+
 		{ NULL, L"", 0 }
 	};
 
@@ -304,7 +304,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 	allUnaryOpTable.add(L"+", &mybase::operator_unary_plus);
 	allUnaryOpTable.add(L"_lnot", &mybase::operator_logical_not);
 	allUnaryOpTable.add(L"_not", &builtin_unary_not);
-	
+
 	if (add_user_ops_and_funcs)
 	{
 		op = Ops;
@@ -323,7 +323,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 		{
 			// check for num. args
 			if (wcsstr(op->mean, L"op1"))
-			{	
+			{
 				CalcParser *opparser = new CalcParser();
 				if (wcsstr(op->mean, L"op0"))
 					opparser->add_argument(L"op0", 0);
@@ -349,7 +349,7 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 			}
 			op = op->next;
 		}
-	
+
 		// add named constants
 		PSyntax consts = Consts;
 		CalcParser parser;
@@ -402,8 +402,8 @@ bool CalcParser::AddAll(bool add_user_ops_and_funcs)
 					delete p;
 				}
 			}
-			
-			
+
+
 			func = func->next;
 		}
 	}
@@ -461,7 +461,7 @@ SArg CalcParser::Parse(const wchar_t* str, bool case_sensitive)
 		}
 
 		if (!parse(str))
-		{ 
+		{
 			// error
 			SArg res = 0;
 			set_error_id(PARSER_ERROR_UNEXPECTED);
@@ -469,7 +469,7 @@ SArg CalcParser::Parse(const wchar_t* str, bool case_sensitive)
 		}
 		SArg res = eval();
 		return res;
-	} 
+	}
 	catch(CALC_ERROR exc)
 	{
 		math_error = exc;
@@ -511,7 +511,7 @@ bool CalcParser::parse_number(SArg *value, const wchar_t *curpos, wchar_t **endp
 			tmp = tmp->next;
 			continue;
 		}
-		
+
 #ifdef USE_CREGEXP
 		sm_res = tmp->re->Parse(curpos, &sm);
 		sm_num = sm.CurMatch - 1;
@@ -535,7 +535,7 @@ bool CalcParser::parse_number(SArg *value, const wchar_t *curpos, wchar_t **endp
 				const wchar_t *start = curpos;
 				int sm_begini, sm_leni;
 				wchar_t arg[10] = {0};
-				
+
 				SArg r = 0;
 				if (sm_num > 1)
 				{
@@ -609,7 +609,7 @@ bool CalcParser::parse_number(SArg *value, const wchar_t *curpos, wchar_t **endp
 						SArg *args = new SArg [sm_num];
 						CalcParser parser;
 						int cm;
-						
+
 						for (cm = 1; cm < sm_num; cm++)
 						{
 #ifdef USE_CREGEXP
@@ -624,12 +624,12 @@ bool CalcParser::parse_number(SArg *value, const wchar_t *curpos, wchar_t **endp
 							if (sm_begini >= 0 && sm_begini + sm_leni <= (int)wcslen(curpos))
 							{
 								start = curpos + sm_begini;
-								
+
 								wchar_t saved_end = start[sm_leni];
 								*((wchar_t *)start + sm_leni) = '\0';
 
 								res = tmpbig.FromString(start, from_convs[base], (const wchar_t**)&tmpend) == 0;
-								
+
 								*((wchar_t *)start + sm_leni) = saved_end;
 
 								args[cm - 1] = SArg(tmpbig);
@@ -661,8 +661,8 @@ bool CalcParser::parse_number(SArg *value, const wchar_t *curpos, wchar_t **endp
 					*value = r;
 					*endptr = (wchar_t *)curpos + sm_end;
 					max_match = sm_end - sm_begin;
-					
-#if 0				
+
+#if 0
 					// don't solve regexp collisions?
 					if (max_match > 0)
 						break;
@@ -769,7 +769,7 @@ bool CalcParser::ProcessAddons()
 	}
 	else
 		addons.resize(num);
-	
+
 	tmp = Addons;
 	for (num = 0; tmp; num++)
 	{
@@ -812,7 +812,7 @@ bool CalcParser::ProcessAddons()
 #endif
 			a.parts.resize(a.parts.size() + 1);
 			CalcAddonPart &part = a.parts[a.parts.size() - 1];
-			
+
 			part.expr = a.expr.substr(sm_start[1], sm_len[1]);
 			part.expr = ReplaceDelims(part.expr.c_str());
 			a.expr.erase(sm_start[0], sm_len[0]);
@@ -824,7 +824,7 @@ bool CalcParser::ProcessAddons()
 			CalcAddonPart &part = a.parts[i];
 			part.Parse();
 		}
-		
+
 		tmp = tmp->next;
 	}
 
@@ -903,7 +903,7 @@ bool CalcParser::InitTables(int rep_fraction_max_start, int rep_fraction_max_per
 	}
 	rep_fraction_thr = Big(L"1e-150");
 	rep_fraction_thr2 = Big(L"1e-200");
-	
+
 	CalcParser::rep_fraction_max_start = rep_fraction_max_start;
 	CalcParser::rep_fraction_max_period = rep_fraction_max_period;
 	CalcParser::cont_fraction_max = cont_fraction_max;
@@ -916,7 +916,7 @@ bool CalcParser::ProcessData(PSgmlEl BaseRc, bool case_sensitive)
 	PSgmlEl Base, El, Set;
 	wchar_t lang_name[32] = {0};
 
-	if (DialogData) 
+	if (DialogData)
 		delete DialogData;
 	DialogData = 0;
 	DialogsNum = 0;
@@ -1001,7 +1001,7 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 	for (; El; El = El->next())
 	{
 		param = El->getname();
-		if (!param) 
+		if (!param)
 			continue;
 
 		if (wcscasecmp(param, L"dialog") || !El->GetChrParam(lang_name))
@@ -1014,7 +1014,7 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 			dd = dd1;
 		}
 
-		if (!dd) 
+		if (!dd)
 			DialogData = dd = dd1;
 		wcscpy(dd->Name, El->GetChrParam(lang_name));
 		DialogsNum++;
@@ -1023,7 +1023,7 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 		for (tmp = El->child(); tmp; tmp = tmp->next())
 		{
 			if (!tmp->getname() || (wcscasecmp(tmp->getname(), L"text") && wcscasecmp(tmp->getname(), L"field")) ||
-				!tmp->GetChrParam(lang_name)) 
+				!tmp->GetChrParam(lang_name))
 				continue;
 			de1 = new SDialogElem;
 			if (de)
@@ -1031,13 +1031,13 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 				de->Next = de1;
 				de = de1;
 			}
-			if (!de) 
+			if (!de)
 				dd->Elem = de = de1;
 
 			wcscpy(de->Name, tmp->GetChrParam(lang_name));
-			if (!wcscasecmp(tmp->getname(), L"text")) 
+			if (!wcscasecmp(tmp->getname(), L"text"))
 				de->Type = 0;
-			else 
+			else
 				de->Type = 1;
 			de->input = NULL;
 			de->scale = 1;
@@ -1046,7 +1046,7 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 			wchar_t *scale = tmp->GetChrParam(L"scale");
 			wchar_t *input = tmp->GetChrParam(L"input");
 			wchar_t *output = tmp->GetChrParam(L"output");
-			
+
 			if (input != NULL && output != NULL)
 			{
 				PSyntax nxt = new SSyntax;
@@ -1057,19 +1057,19 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 				wcscpy(nxt->mean, output);
 				if (!case_sensitive)
 					xxx_wcslwr(nxt->mean);
-				
+
 				PSyntax adn = Addons;
 				int idx = 0;
 				while (adn)
 				{
 					idx++;
-					if (!adn->next) 
+					if (!adn->next)
 						break;
 					adn = adn->next;
 				}
-				if (!Addons) 
+				if (!Addons)
 					Addons = nxt;
-				else 
+				else
 					adn->next = nxt;
 				de->addon_idx = idx;
 
@@ -1120,7 +1120,7 @@ void CalcParser::FillDialogData(PSgmlEl Base, bool case_sensitive, const wchar_t
 
 				}
 			}
-				
+
 			dd->num++;
 		}
 	}
@@ -1154,7 +1154,7 @@ bool CalcParser::AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_se
 	wchar_t *name = Ch->GetChrParam(L"Syntax");
 	wchar_t *val = Ch->GetChrParam(L"Mean");
 	wchar_t *name_set = set->GetChrParam(L"name");
-	
+
 	snt = syntax;
 	while(snt)
 	{
@@ -1186,7 +1186,7 @@ bool CalcParser::AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_se
 				const wchar_t *fmt;
 				int radix;
 				int flags;
-			} addon_formats[] = 
+			} addon_formats[] =
 			{
 				{ L"dec", 10, 0 },
 				{ L"hex", 16, 0 },
@@ -1220,7 +1220,7 @@ bool CalcParser::AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_se
 		}
 
 	}
-	
+
 	if (name != NULL)
 	{
 		wcscpy(nxt->name, name);
@@ -1238,9 +1238,9 @@ bool CalcParser::AddLexem(PSyntax &syntax, PSgmlEl Ch, PSgmlEl set, bool case_se
 
 	//DelSpaces(nxt->mean);
 
-	if (!syntax) 
+	if (!syntax)
 		syntax = nxt;
-	else 
+	else
 		snt->next = nxt;
 
 	return true;
@@ -1251,7 +1251,7 @@ bool CalcParser::SetVar(wchar_t *name, SArg value)
 	PVars snt, newv;
 	bool fnd = false;
 	snt = Vars;
-	
+
 	while(snt)
 	{
 		if (!wcscasecmp(name,snt->name))
@@ -1260,7 +1260,7 @@ bool CalcParser::SetVar(wchar_t *name, SArg value)
 			break;
 		}
 
-		if (!snt->next) 
+		if (!snt->next)
 			break;
 		snt = (PVars)snt->next;
 	}
@@ -1271,9 +1271,9 @@ bool CalcParser::SetVar(wchar_t *name, SArg value)
 		newv->name = new wchar_t[wcslen(name)+1];
 		newv->value = value;
 		wcscpy(newv->name,name);
-		if (!Vars) 
+		if (!Vars)
 			Vars = newv;
-		else 
+		else
 			snt->next = newv;
 
 		return true;
@@ -1314,9 +1314,9 @@ bool CalcParser::SetDelims(wchar_t decimal, wchar_t args, wchar_t digit)
 int limit_number(int num_lim, const SArg & val, int radix)
 {
 	// XXX: This is ugly, I know...
-	static const Big e10[8] = { Big(L"1e10"), Big(L"1e100"), Big(L"1e1000"), Big(L"1e10000"), Big(L"1e100000"), 
+	static const Big e10[8] = { Big(L"1e10"), Big(L"1e100"), Big(L"1e1000"), Big(L"1e10000"), Big(L"1e100000"),
 								Big(L"1e1000000"), Big(L"1e10000000"), Big(L"1e100000000") };
-	static const Big e_10[8] = { Big(L"1e-10"), Big(L"1e-100"), Big(L"1e-1000"), Big(L"1e-10000"), Big(L"1e-100000"), 
+	static const Big e_10[8] = { Big(L"1e-10"), Big(L"1e-100"), Big(L"1e-1000"), Big(L"1e-10000"), Big(L"1e-100000"),
 								Big(L"1e-1000000"), Big(L"1e-10000000"), Big(L"1e-100000000") };
 	Big b = val.GetBig();
 	if (b < 0)
@@ -1326,7 +1326,7 @@ int limit_number(int num_lim, const SArg & val, int radix)
 	{
 		for (int i = 1; (b >= e10[i] || b <= e_10[i]) && i < 9; i++)
 			num_lim--;
-	} 
+	}
 	else if (radix != CALC_RADIX_EXPONENTIAL)
 		num_lim += 10;
 	return num_lim;
@@ -1338,14 +1338,14 @@ void print_repeating_decimal(std::wstring & s, SArg val, int num_lim, bool group
 	Big b = val.GetBig();
 	Big period;
 	BigInt bi;
-	
+
 	unsigned i, j;
 	// calculate number of digits in a period (i)
 
 	for (i = 0; i < CalcParser::rep_fraction_coefs.size(); i++)
 	{
 		period = b * CalcParser::rep_fraction_coefs[i];
-		
+
 		CalcParser::RoundUp(period);
 		period.ToInt(bi);
 
@@ -1357,7 +1357,7 @@ void print_repeating_decimal(std::wstring & s, SArg val, int num_lim, bool group
 			(period - bi).ToString(ss, 10, false, 250, -1);
 		}
 #endif
-		
+
 		if (ttmath::Abs(period - bi) < CalcParser::rep_fraction_thr)
 			break;
 	}
@@ -1372,7 +1372,7 @@ void print_repeating_decimal(std::wstring & s, SArg val, int num_lim, bool group
 	}
 	i++;
 	j--;
-	
+
 	if ((int)i <= CalcParser::rep_fraction_max_period && ttmath::Abs(b) > CalcParser::rep_fraction_thr)
 	{
 		ttmath::Conv conv = CalcParser::to_convs[10];
@@ -1476,7 +1476,7 @@ void print_continued_decimal(std::wstring & s, SArg val, int num_lim, bool group
 			b.exponent.AddOne();
 		}
 	}
-#endif	
+#endif
 
 	for (int i = 0; i < CalcParser::cont_fraction_max; i++)
 	{
@@ -1506,9 +1506,9 @@ void print_continued_decimal(std::wstring & s, SArg val, int num_lim, bool group
 
 		if (b < CalcParser::rep_fraction_thr)
 			break;
-		
+
 		b = b1 / b;
-		
+
 	}
 
 	s += L"]";
@@ -1593,7 +1593,7 @@ void CalcParser::GetFraction(Big b, BigInt *numer, BigInt *denom)
 			num = nnum;
 		}
 	}
-	
+
 	*numer = num;
 	*denom = den;
 }
@@ -1603,7 +1603,7 @@ void print_string(std::wstring & s, SArg val, int radix, int num_lim, bool appen
 	static const wchar_t *str_suffixes[17] = { 0, 0, L"b", 0, 0, 0, 0, 0, L"o", 0, 0, 0, 0, 0, 0, 0, L"h" };
 
 	num_lim = limit_number(num_lim, val, radix);
-	
+
 	if (radix == CALC_RADIX_EXPONENTIAL)			// decimal-exponential
 		val.GetBig().ToString(s, 10, true, 0, num_lim, true, CalcParser::delim_decimal);
 	else if (radix == CALC_RADIX_REPEATING)		// repeating decimal (decimal periodic fractions)
@@ -1633,7 +1633,7 @@ void print_string(std::wstring & s, SArg val, int radix, int num_lim, bool appen
 				return;
 			}
 		}
-		
+
 		ttmath::Conv conv = CalcParser::to_convs[10];
 		conv.scient_from  = num_lim;
 		conv.round        = num_lim;
@@ -1643,8 +1643,8 @@ void print_string(std::wstring & s, SArg val, int radix, int num_lim, bool appen
 	}
 	else
 	{
-		if (!val.IsFixedLength() || !pad_zeroes || !val.Print(s, radix, 
-					(wchar_t)CalcParser::to_convs[radix].group_digits, 
+		if (!val.IsFixedLength() || !pad_zeroes || !val.Print(s, radix,
+					(wchar_t)CalcParser::to_convs[radix].group_digits,
 					group_delim ? (wchar_t)CalcParser::to_convs[radix].group : 0))
 		{
 			ttmath::Conv conv = CalcParser::to_convs[radix];
@@ -1665,10 +1665,10 @@ wchar_t *convertToString(const SArg & val, int type_idx, int num_lim, bool appen
 	//static const wchar_t *pad_string = L"0000000000000000000000000000000000000000000000000000000000000000";
 	wchar_t *str = NULL;
 	std::wstring s;
-	
+
 	if (num_lim == 0)
 		num_lim = calc_edit_length;
-	
+
 	if (type_idx == CALC_CONV_ENTER)
 	{
 		val.GetBig().ToString(s, 10, false, num_lim, num_lim, true, CalcParser::delim_decimal);
@@ -1733,7 +1733,7 @@ wchar_t *convertToString(const SArg & val, int type_idx, int num_lim, bool appen
 				}
 				Res = 0;
 			}
-			
+
 			print_string(s, Res, addon.radix, num_lim, append_suffix, pad_zeroes, addon_delim);
 
 			out_expr.insert(addon.parts[i].str_pos + sum_len, s);

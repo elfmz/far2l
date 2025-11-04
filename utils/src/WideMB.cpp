@@ -197,24 +197,24 @@ std::wstring MB2Wide(const char *src)
 	return dst;
 }
 
-void StrWide2MB(const std::wstring &src, std::string &dst, bool append) 
+void StrWide2MB(const std::wstring &src, std::string &dst, bool append)
 {
 	Wide2MB(src.c_str(), src.size(), dst, append);
 }
 
-std::string StrWide2MB(const std::wstring &src) 
+std::string StrWide2MB(const std::wstring &src)
 {
 	std::string dst;
 	Wide2MB(src.c_str(), src.size(), dst, true);
 	return dst;
 }
 
-void StrMB2Wide(const std::string &src, std::wstring &dst, bool append) 
+void StrMB2Wide(const std::string &src, std::wstring &dst, bool append)
 {
 	MB2Wide(src.c_str(), src.size(), dst, append);
 }
 
-std::wstring StrMB2Wide(const std::string &src) 
+std::wstring StrMB2Wide(const std::string &src)
 {
 	std::wstring dst;
 	MB2Wide(src.c_str(), src.size(), dst, true);

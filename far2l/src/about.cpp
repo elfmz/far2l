@@ -339,7 +339,7 @@ void FarAbout(PluginManager &Plugins)
 			mi.strName.Format(L"%ls      CommandPrefix: \"%ls\"", fs.CPtr(), fsCommandPrefix.CPtr());
 			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 		}
-		
+
 	}
 
 	ListAbout.SetPosition(-1, -1, 0, 0);

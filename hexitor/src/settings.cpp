@@ -94,7 +94,7 @@ void settings::configure()
 	fardialog::DlgCHECKBOX checkbox0("add_pm", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_add_pm), add_to_panel_menu);
 	fardialog::DlgCHECKBOX checkbox1("add_em", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_add_em), add_to_editor_menu);
 	fardialog::DlgCHECKBOX checkbox2("add_vm", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_add_vm), add_to_viewer_menu);
-	
+
 	fardialog::DlgTEXT text1(nullptr, _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_prefix));
 	fardialog::DlgEDIT edit1("prefix", 10);
 	fardialog::DlgHLine hline1;

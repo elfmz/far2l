@@ -2,10 +2,10 @@
 #include <aws/s3/model/GetObjectRequest.h>
 
 AWSFileReader::AWSFileReader(
-        std::shared_ptr<Aws::S3::S3Client> client, 
-        const std::string& backet, 
-        const std::string& key, 
-        unsigned long long position, 
+        std::shared_ptr<Aws::S3::S3Client> client,
+        const std::string& backet,
+        const std::string& key,
+        unsigned long long position,
         unsigned long long size
     ): _client(client), _backet(backet), _key(key), _position(position), _size(size)
 {
@@ -32,7 +32,7 @@ size_t AWSFileReader::Read(void *buf, size_t len)
     return bytesRead;
 }
 
-size_t AWSFileReader::Download(std::string backet, std::string key, size_t offset, size_t len) 
+size_t AWSFileReader::Download(std::string backet, std::string key, size_t offset, size_t len)
 {
     Aws::S3::Model::GetObjectRequest request;
     request.SetBucket(backet);

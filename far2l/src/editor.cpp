@@ -3759,7 +3759,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			&& (MouseEvent->dwEventFlags & (DOUBLE_CLICK | MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) == 0) {
 		ProcessPasteEvent();
 	}
-	
+
 	return TRUE;
 }
 
@@ -7362,7 +7362,7 @@ void Editor::SetTabSize(int NewSize)
 void Editor::SetWordWrap(int NewMode)
 {
 	if (m_MouseButtonIsHeld) return;
-	
+
 	if ((NewMode != 0) != m_bWordWrap)
 	{
 		m_bWordWrap = (NewMode != 0);

@@ -215,7 +215,7 @@ namespace Mounts
 			e.col3 = Opt.ChangeDriveColumn3;
 			ExpandMountpointInfo(mp, e.col2);
 			ExpandMountpointInfo(mp, e.col3);
-			
+
 			if (e.path == WGOOD_SLASH) {
 				has_rootfs = true;
 			} else {

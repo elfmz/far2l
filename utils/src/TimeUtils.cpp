@@ -25,7 +25,7 @@ std::string TimeString(const struct tm &t, TimeStringFormat tsf)
 		default:
 			ABORT();
 	}
-	
+
 	return buf;
 }
 

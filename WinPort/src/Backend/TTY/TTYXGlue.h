@@ -20,7 +20,7 @@ struct ITTYXGlue
 typedef std::shared_ptr<ITTYXGlue> ITTYXGluePtr;
 
 // Starts far2l_ttyx.broker process and returns instance of glue that communicates to it
-// NB: instance of glue must be destroyed by same thread as one that called StartTTYX in 
+// NB: instance of glue must be destroyed by same thread as one that called StartTTYX in
 // order to correctly join broker process.
 ITTYXGluePtr StartTTYX(const char *full_exe_path, bool allow_xi);
 

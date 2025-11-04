@@ -15,7 +15,7 @@ size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 		} else if (CharClasses::IsXxxfix(pwz[i])) {
 			continue;
 		} else if (!joining) {
-			out += CharClasses::IsFullWidth(&pwz[i]) ? 2 : 1; 
+			out += CharClasses::IsFullWidth(&pwz[i]) ? 2 : 1;
 		}
 		joining = false;
 	}
@@ -33,7 +33,7 @@ size_t StrZCellsCount(const wchar_t *pwz)
 		} else if (CharClasses::IsXxxfix(pwz[i])) {
 			continue;
 		} else if (!joining) {
-			out += CharClasses::IsFullWidth(&pwz[i]) ? 2 : 1; 
+			out += CharClasses::IsFullWidth(&pwz[i]) ? 2 : 1;
 		}
 		joining = false;
 	}
@@ -42,7 +42,7 @@ size_t StrZCellsCount(const wchar_t *pwz)
 
 size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 {
-	size_t i = 0, g = 0; 
+	size_t i = 0, g = 0;
 	bool joining = false;
 
 	size_t char_width = 1;

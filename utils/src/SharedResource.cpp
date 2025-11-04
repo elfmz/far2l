@@ -127,7 +127,7 @@ bool SharedResource::Lock(int op, int timeout) noexcept
 			} else
 				usleep(10000);
 		}
-		
+
 	} else {
 		out = flock(_fd, op) != -1;
 	}

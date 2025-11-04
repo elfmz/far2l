@@ -274,7 +274,7 @@ size_t TestController::ClientDispatchSync(size_t len)
 	if (len < sizeof(TestRequestSync)) {
 		throw std::runtime_error(StrPrintf("len=%lu < sizeof(TestRequestSync)", (unsigned long)len));
 	}
-	
+
 	TestSyncEvent *ev = new TestSyncEvent;
 	INPUT_RECORD ir{};
 	ir.EventType = CALLBACK_EVENT;

@@ -13,7 +13,7 @@
 # include <malloc.h>
 #endif
 
-template <class C> 
+template <class C>
 	static bool TranslateInstallPathT(std::basic_string<C> &path, const C *dir_from, const C *dir_to, const C* prefix)
 {
 	if (!prefix || !*prefix)
@@ -27,7 +27,7 @@ template <class C>
 
 	if (memcmp(path.c_str(), prefix, prefix_len * sizeof(C)) != 0)
 		return false;
-	
+
 	if (memcmp(path.c_str() + prefix_len, dir_from, dir_from_len * sizeof(C)) != 0)
 		return false;
 

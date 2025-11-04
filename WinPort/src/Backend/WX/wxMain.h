@@ -77,7 +77,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 
 	wxDECLARE_EVENT_TABLE();
 	KeyTracker _key_tracker;
-	
+
 	ConsolePaintContext _paint_context;
 	WinPortFrame *_frame;
 	DWORD _refresh_rects_throttle;
@@ -112,7 +112,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
 	wchar_t _stolen_key{0};
-	
+
 	unsigned int _pending_refreshes{0};
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 
@@ -123,7 +123,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void RefreshInner( bool force_update );
 	void OnInitialized( wxCommandEvent& event );
 	void CheckForUnfreeze(bool force);
-	void OnTimerPeriodic(wxTimerEvent& event);	
+	void OnTimerPeriodic(wxTimerEvent& event);
 	void OnWindowMovedSync( wxCommandEvent& event );
 	void OnRefreshSync( wxCommandEvent& event );
 	void OnConsoleResizedSync( wxCommandEvent& event );

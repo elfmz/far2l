@@ -28,9 +28,9 @@
 int inerror=0,lasterror=0;
 
 char *error_string[]={
-    "Error in error handling !!!",			
+    "Error in error handling !!!",
     "Unknown error",
-    "Command %c not implemented",	
+    "Command %c not implemented",
     "Could not open archive %s",
     "Out of memory in %s",
     "%s is not a HA archive",
@@ -60,15 +60,15 @@ char *error_string[]={
 
 
 void error(int fatal, int number, ...) {
-    
+
     va_list argptr;
-    
+
     fflush(stdout);
     if (inerror) {
 	fprintf(stderr,"\n%s: ",myname);
 	fprintf(stderr,"%s",error_string[0]);
 	fprintf(stderr,"\n");
-	fflush(stderr);	
+	fflush(stderr);
 	_exit(inerror);
     }
     inerror=number;

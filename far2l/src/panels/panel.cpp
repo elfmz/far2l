@@ -1518,7 +1518,7 @@ void Panel::ShowScreensCount()
 			}
 
 			if (Viewers > 0) {
-				strScreensText.Format(L"%cV%d", Prefix, Viewers);
+				strScreensText.AppendFormat(L"%cV%d", Prefix, Viewers);
 				Prefix = ' ';
 			}
 

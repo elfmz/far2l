@@ -268,7 +268,7 @@ namespace Mounts
 						if (e.path == WGOOD_SLASH) {
 							has_rootfs = true;
 
-						} else if (*e.path.CPtr() == L'/') {
+						} else if (*e.path.CPtr() == LGOOD_SLASH) {
 							e.unmountable = true;
 						}
 					}

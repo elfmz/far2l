@@ -1265,7 +1265,7 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 		strFullPath = StackData.strHelpPath;
 		// уберем _все_ конечные слеши и добавим один
 		DeleteEndSlash(strFullPath, true);
-		strFullPath+= L"/";
+		strFullPath+= WGOOD_SLASH;
 		strFullPath+= strNewTopic.CPtr() + (IsSlash(strNewTopic.At(0)) ? 1 : 0);
 		bool addSlash = DeleteEndSlash(strFullPath);
 		ConvertNameToFull(strFullPath, strNewTopic);

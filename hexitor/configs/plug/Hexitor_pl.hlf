@@ -48,3 +48,7 @@
 ^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@
 
 ^oryginalny hexitor: ~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+
+@Goto
+  Przesunięcie w pliku można podać jako liczbę szesnastkową lub procent, np.: 0x1000 lub 50%
+

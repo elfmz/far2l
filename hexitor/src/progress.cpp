@@ -18,7 +18,7 @@
  **************************************************************************/
 
 #include "progress.h"
-#include "string_rc.h"
+#include "i18nindex.h"
 
 #define PROGRESS_WIDTH 50
 

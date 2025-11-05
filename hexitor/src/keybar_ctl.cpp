@@ -18,7 +18,7 @@
  **************************************************************************/
 
 #include "keybar_ctl.h"
-#include "string_rc.h"
+#include "i18nindex.h"
 #include <farkeys.h>
 
 #define BTN_LABEL_LEN	6	//Button label length
@@ -122,23 +122,23 @@ void keybar_ctl::set_labels()
 
 	switch (_state) {
 		case st_normal:
-			set_label( 1, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_help));
+			set_label( 1, I18N(ps_fn_help));
 			if (_rw_mode)
-				set_label( 2, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_save));
-			set_label( 4, _PSI.GetMsg(_PSI.ModuleNumber, _rw_mode ? ps_fn_mode_ro : ps_fn_mode_rw));
-			set_label( 5, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_goto));
-			set_label( 7, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_find));
-			set_label( 8, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_codepage));
-			set_label( 9, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_setup));
-			set_label(10, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_exit));
-			set_label(12, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_screen));
+				set_label( 2, I18N(ps_fn_save));
+			set_label( 4, _rw_mode ? I18N(ps_fn_mode_ro) : I18N(ps_fn_mode_rw));
+			set_label( 5, I18N(ps_fn_goto));
+			set_label( 7, I18N(ps_fn_find));
+			set_label( 8, I18N(ps_fn_codepage));
+			set_label( 9, I18N(ps_fn_setup));
+			set_label(10, I18N(ps_fn_exit));
+			set_label(12, I18N(ps_fn_screen));
 			break;
 		case st_alt:
-			set_label(7, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_prev));
+			set_label(7, I18N(ps_fn_prev));
 			break;
 		case st_shift:
-			set_label(2, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_saveas));
-			set_label(7, _PSI.GetMsg(_PSI.ModuleNumber, ps_fn_next));
+			set_label(2, I18N(ps_fn_saveas));
+			set_label(7, I18N(ps_fn_next));
 			break;
 		case st_ctrl:
 		case st_undef:

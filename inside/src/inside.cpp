@@ -168,7 +168,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePlugin(const char *Name, const unsign
 	if (elf) {
 		out = new PluginImplELF(Name, Data[4], Data[5]);
 
-	} else 
+	} else
 #endif
 	if (plain) {
 		out = new PluginImplPlain(Name, plain);

@@ -38,8 +38,8 @@ public:
 
 	struct SignalHandlerRegistrar
 	{
-		SignalHandlerRegistrar() { SafeMMap::sRegisterSignalHandler(); } 
-		~SignalHandlerRegistrar() { SafeMMap::sUnregisterSignalHandler(); } 
+		SignalHandlerRegistrar() { SafeMMap::sRegisterSignalHandler(); }
+		~SignalHandlerRegistrar() { SafeMMap::sUnregisterSignalHandler(); }
 	};
 
 	enum Mode

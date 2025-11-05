@@ -44,7 +44,7 @@
 	WINPORT_DECL_DEF(WriteConsoleInput,BOOL,(HANDLE hConsoleInput, const INPUT_RECORD *lpBuffer, DWORD nLength, LPDWORD lpNumberOfEventsWritten))
 
 	WINPORT_DECL_DEF(CheckForKeyPress,DWORD,(HANDLE hConsoleInput, const WORD *KeyCodes, DWORD KeyCodesCount, DWORD Flags))
-	
+
 	WINPORT_DECL_DEF(SetConsoleDisplayMode,BOOL,(DWORD ModeFlags))
 	WINPORT_DECL_DEF(GetConsoleDisplayMode,BOOL,(LPDWORD lpModeFlags))
 	WINPORT_DECL_DEF(SetConsoleWindowMaximized,VOID,(BOOL Maximized))
@@ -55,7 +55,7 @@
 
 	WINPORT_DECL_DEF(GenerateConsoleCtrlEvent, BOOL, (DWORD dwCtrlEvent, DWORD dwProcessGroupId ))
 	WINPORT_DECL_DEF(SetConsoleCtrlHandler, BOOL, (PHANDLER_ROUTINE HandlerRoutine, BOOL Add ))
-	
+
 	WINPORT_DECL_DEF(SetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT top, SHORT bottom))
 	WINPORT_DECL_DEF(GetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT *top, SHORT *bottom))
 
@@ -81,23 +81,23 @@
 #ifdef WINPORT_REGISTRY
 	///registry API
 	WINPORT_DECL_DEF(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult))
-	WINPORT_DECL_DEF(RegCreateKeyEx, LONG, (HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions, 
+	WINPORT_DECL_DEF(RegCreateKeyEx, LONG, (HKEY hKey, LPCWSTR lpSubKey, DWORD Reserved, LPWSTR lpClass, DWORD dwOptions,
 		REGSAM samDesired, LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition))
 	WINPORT_DECL_DEF(RegCloseKey, LONG, (HKEY hKey))
 	WINPORT_DECL_DEF(RegDeleteKey, LONG, (HKEY hKey, LPCWSTR lpSubKey))
 	WINPORT_DECL_DEF(RegDeleteValue, LONG, (HKEY hKey, LPCWSTR lpValueName))
-	WINPORT_DECL_DEF(RegSetValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName, DWORD Reserved, 
+	WINPORT_DECL_DEF(RegSetValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName, DWORD Reserved,
 		DWORD dwType, const BYTE *lpData, DWORD cbData))
-	WINPORT_DECL_DEF(RegEnumKeyEx, LONG, (HKEY hKey, DWORD dwIndex, LPWSTR lpName, LPDWORD lpcName, 
+	WINPORT_DECL_DEF(RegEnumKeyEx, LONG, (HKEY hKey, DWORD dwIndex, LPWSTR lpName, LPDWORD lpcName,
 		LPDWORD lpReserved, LPWSTR lpClass,LPDWORD lpcClass, PFILETIME lpftLastWriteTime))
 	WINPORT_DECL_DEF(RegEnumKey, LONG, (HKEY hKey, DWORD dwIndex, LPWSTR lpName, DWORD cchName))
 	WINPORT_DECL_DEF(RegEnumValue, LONG, (HKEY hKey, DWORD dwIndex, LPWSTR lpValueName, LPDWORD lpcchValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData))
-	WINPORT_DECL_DEF(RegQueryValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName, 
+	WINPORT_DECL_DEF(RegQueryValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName,
 		LPDWORD lpReserved, LPDWORD lpType, LPBYTE lpData, LPDWORD lpcbData))
 #if 0
 // duplicated definition
-	WINPORT_DECL_DEF(RegSetValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName, 
+	WINPORT_DECL_DEF(RegSetValueEx, LONG, (HKEY hKey, LPCWSTR lpValueName,
 		DWORD lpReserved, DWORD lpType, CONST BYTE * lpData, DWORD cbData))
 #endif
 	WINPORT_DECL_DEF(RegQueryInfoKey, LONG, (HKEY hKey, LPTSTR lpClass, LPDWORD lpcClass,
@@ -130,11 +130,11 @@
 	WINPORT_DECL_DEF(GetFileSizeEx, BOOL, ( HANDLE hFile, PLARGE_INTEGER lpFileSize))
 	WINPORT_DECL_DEF(GetFileSize, DWORD, ( HANDLE hFile, LPDWORD lpFileSizeHigh))
 	WINPORT_DECL_DEF(GetFileSize64, DWORD64, ( HANDLE hFile))
-	WINPORT_DECL_DEF(ReadFile, BOOL, ( HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead, 
+	WINPORT_DECL_DEF(ReadFile, BOOL, ( HANDLE hFile, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 		LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped))
-	WINPORT_DECL_DEF(WriteFile, BOOL, ( HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite, 
+	WINPORT_DECL_DEF(WriteFile, BOOL, ( HANDLE hFile, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 		LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped))
-	WINPORT_DECL_DEF(SetFilePointerEx, BOOL, ( HANDLE hFile, LARGE_INTEGER liDistanceToMove, 
+	WINPORT_DECL_DEF(SetFilePointerEx, BOOL, ( HANDLE hFile, LARGE_INTEGER liDistanceToMove,
 		PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod))
 
 	// hints that file will soon grow up to specified size, doesnt change actual size of file
@@ -142,11 +142,11 @@
 	// grows file to specified size if it was smaller, ensuring that disk space is actually allocated
 	WINPORT_DECL_DEF(FileAllocationRequire, BOOL, (HANDLE hFile, DWORD64 RequireFileSize))
 
-	WINPORT_DECL_DEF(SetFilePointer, DWORD, ( HANDLE hFile, 
+	WINPORT_DECL_DEF(SetFilePointer, DWORD, ( HANDLE hFile,
 		LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod))
-	WINPORT_DECL_DEF(GetFileTime, BOOL, ( HANDLE hFile, LPFILETIME lpCreationTime, 
+	WINPORT_DECL_DEF(GetFileTime, BOOL, ( HANDLE hFile, LPFILETIME lpCreationTime,
 		LPFILETIME lpLastAccessTime, LPFILETIME lpLastWriteTime))
-	WINPORT_DECL_DEF(SetFileTime, BOOL, ( HANDLE hFile, const FILETIME *lpCreationTime, 
+	WINPORT_DECL_DEF(SetFileTime, BOOL, ( HANDLE hFile, const FILETIME *lpCreationTime,
 		const FILETIME *lpLastAccessTime, const FILETIME *lpLastWriteTime))
 	WINPORT_DECL_DEF(SetEndOfFile, BOOL, ( HANDLE hFile))
 	WINPORT_DECL_DEF(FlushFileBuffers, BOOL, ( HANDLE hFile))
@@ -195,9 +195,9 @@
 	WINPORT_DECL_DEF(IsCharAlphaNumeric, BOOL, (WCHAR ch))
 	WINPORT_DECL_DEF(CompareString, int, ( LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, int cchCount1, LPCWSTR lpString2, int cchCount2))
 	WINPORT_DECL_DEF(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags, LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2))
-	WINPORT_DECL_DEF(WideCharToMultiByte, int, ( UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, 
+	WINPORT_DECL_DEF(WideCharToMultiByte, int, ( UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 		int cchWideChar, LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar, LPBOOL lpUsedDefaultChar))
-	WINPORT_DECL_DEF(MultiByteToWideChar, int, ( UINT CodePage, DWORD dwFlags, 
+	WINPORT_DECL_DEF(MultiByteToWideChar, int, ( UINT CodePage, DWORD dwFlags,
 		LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar))
 	WINPORT_DECL_DEF(CharUpper, LPWSTR, (LPWSTR lpsz))
 	WINPORT_DECL_DEF(CharLower, LPWSTR, (LPWSTR lpsz))
@@ -231,7 +231,7 @@
 	WINPORT_DECL_DEF(GetKeyboardLayoutList, int, (int nBuff, HKL *lpList))
 	WINPORT_DECL_DEF(MapVirtualKey, UINT, (UINT uCode, UINT uMapType))
 	WINPORT_DECL_DEF(VkKeyScan, SHORT, (WCHAR ch))
-	WINPORT_DECL_DEF(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState, 
+	WINPORT_DECL_DEF(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState,
 		LPWSTR pwszBuff, int cchBuff, UINT wFlags, HKL dwhkl))
 
 	//mem

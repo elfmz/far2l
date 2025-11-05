@@ -33,7 +33,7 @@ HANDLE Dialog::DialogInit() {
 		_PSI.ModuleNumber,
 		-1, -1, width + dborder.left + dborder.right, height + dborder.top + dborder.bottom,
 		helptopic,
-		fdi.data(), fdi.size(), 
+		fdi.data(), fdi.size(),
 		0, // Reserved
 		flags,
 		cb,

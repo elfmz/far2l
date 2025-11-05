@@ -1537,7 +1537,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		DlgParam.strInitOwnerIDShow = DlgParam.strOwnerIDShow;
 		DlgParam.strInitGroupIDShow = DlgParam.strGroupIDShow;
 		AttrDlg[SA_COMBO_OWNER].strData = Opt.OwnerGroupShowId ? DlgParam.strOwnerIDShow : DlgParam.strOwner;
-		AttrDlg[SA_COMBO_GROUP].strData = Opt.OwnerGroupShowId ? DlgParam.strGroupIDShow : DlgParam.strGroup; 
+		AttrDlg[SA_COMBO_GROUP].strData = Opt.OwnerGroupShowId ? DlgParam.strGroupIDShow : DlgParam.strGroup;
 
 		// if was error during obtain attributes / flags make it disabled
 		if (FSFileFlagsErrno != 0) {

@@ -1,6 +1,6 @@
 #include <set>
 #include <string>
-#include <locale> 
+#include <locale>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -212,7 +212,7 @@ INT WINAPI WINPORT(CompareStringEx)(LPCWSTR locale, DWORD flags, LPCWSTR str1, I
 	return CSTR_EQUAL;
 }
 
-WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags, 
+WINPORT_DECL(CompareStringA, int, ( LCID Locale, DWORD dwCmpFlags,
 		LPCSTR lpString1, int cchCount1, LPCSTR lpString2, int cchCount2))
 {
 	if (cchCount1==-1) cchCount1 = lpString1 ? strlen(lpString1) : 0;

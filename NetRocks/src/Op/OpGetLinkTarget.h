@@ -5,7 +5,7 @@
 class OpGetLinkTarget : protected OpBase
 {
 	virtual void Process();
-	
+
 	std::string _path, _result;
 	bool _success{false};
 

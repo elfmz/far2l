@@ -137,7 +137,7 @@ extern "C" {
 	{
 		ReleaseForkedConsole(NULL, hConsole, false);
 	}
-	
+
 	WINPORT_DECL(GetLargestConsoleWindowSize,COORD,(HANDLE hConsoleOutput))
 	{
 		return ChooseConOut(hConsoleOutput)->GetLargestConsoleWindowSize();
@@ -179,7 +179,7 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(ScrollConsoleScreenBuffer,BOOL,(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, 
+	WINPORT_DECL(ScrollConsoleScreenBuffer,BOOL,(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle,
 		const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill))
 	{
 		return ChooseConOut(hConsoleOutput)->Scroll(lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill) ? TRUE : FALSE;
@@ -206,7 +206,7 @@ extern "C" {
 		lpConsoleScreenBufferInfo->srWindow.Bottom = height - 1;
 		lpConsoleScreenBufferInfo->dwMaximumWindowSize.X = width;
 		lpConsoleScreenBufferInfo->dwMaximumWindowSize.Y = height;
-		
+
 		return TRUE;
 	}
 
@@ -245,7 +245,7 @@ extern "C" {
 		*lpMode = ChooseConOut(hConsoleHandle)->GetMode();
 		return TRUE;
 	}
-	
+
 	WINPORT_DECL(SetConsoleMode,BOOL,(HANDLE hConsoleHandle, DWORD dwMode))
 	{
 		ChooseConOut(hConsoleHandle)->SetMode(dwMode);
@@ -420,29 +420,29 @@ extern "C" {
 
 		return FALSE;
 	}
-	
+
 	WINPORT_DECL(SetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT top, SHORT bottom))
 	{
 		ChooseConOut(hConsoleOutput)->SetScrollRegion(top, bottom);
 	}
-	
+
 	WINPORT_DECL(GetConsoleScrollRegion, VOID, (HANDLE hConsoleOutput, SHORT *top, SHORT *bottom))
 	{
 		ChooseConOut(hConsoleOutput)->GetScrollRegion(*top, *bottom);
 	}
-	
+
 	WINPORT_DECL(SetConsoleScrollCallback, VOID, (HANDLE hConsoleOutput, PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext))
 	{
 		ChooseConOut(hConsoleOutput)->SetScrollCallback(pCallback, pContext);
 	}
-	
+
 	WINPORT_DECL(BeginConsoleAdhocQuickEdit, BOOL, ())
 	{
 		if (g_winport_con_out->GetMode() & ENABLE_QUICK_EDIT_MODE) {
 			fprintf(stderr, "BeginConsoleAdhocQuickEdit: meaningless when enabled ENABLE_QUICK_EDIT_MODE\n");
 			return FALSE;
 		}
-		
+
 		//here is possible non-critical race with enabling ENABLE_QUICK_EDIT_MODE
 		g_winport_con_out->AdhocQuickEdit();
 		return TRUE;

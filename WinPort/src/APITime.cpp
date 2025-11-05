@@ -50,7 +50,7 @@ static void TM2Systemtime(LPSYSTEMTIME lpSystemTime, const struct tm *ptm)
 	lpSystemTime->wDayOfWeek = ptm->tm_wday;
 	lpSystemTime->wMilliseconds = 0;
 }
-		
+
 static void Systemtime2TM(const SYSTEMTIME *lpSystemTime, struct tm *ptm)
 {
 	ptm->tm_sec = lpSystemTime->wSecond;
@@ -84,7 +84,7 @@ WINPORT_DECL(FileTime_UnixToWin32, VOID, (struct timespec ts, FILETIME *lpFileTi
 		tm+= add_ns;
 		ts.tv_nsec-= add_ns * 1000000000;
 	}
-	
+
 	SYSTEMTIME sys_time = {};
 	TM2Systemtime(&sys_time, gmtime(&tm));
 	sys_time.wMilliseconds+= ts.tv_nsec/1000000;
@@ -97,7 +97,7 @@ WINPORT_DECL(FileTime_Win32ToUnix, VOID, (const FILETIME *lpFileTime, struct tim
 
 	SYSTEMTIME sys_time = {};
 	WINPORT(FileTimeToSystemTime)(lpFileTime, &sys_time);
-	struct tm tm = {};	
+	struct tm tm = {};
 	Systemtime2TM(&sys_time, &tm);
 	ts->tv_sec = timegm(&tm);
 	ts->tv_nsec = sys_time.wMilliseconds;
@@ -123,7 +123,7 @@ WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILE
 	* First start counting years from March. This way the leap days
 	* are added at the end of the year, not somewhere in the middle.
 	* Formula's become so much less complicate that way.
-	* To convert: add 12 to the month numbers of Jan and Feb, and 
+	* To convert: add 12 to the month numbers of Jan and Feb, and
 	* take 1 from the year */
 	if(lpSystemTime->wMonth < 3) {
 		month = lpSystemTime->wMonth + 13;
@@ -140,8 +140,8 @@ WINPORT_DECL(SystemTimeToFileTime, BOOL, (const SYSTEMTIME *lpSystemTime, LPFILE
 	/* done */
 
 	LARGE_INTEGER liTime;
-	liTime.QuadPart = (((((LONGLONG) day * HOURSPERDAY + 
-		lpSystemTime->wHour) * MINSPERHOUR + 
+	liTime.QuadPart = (((((LONGLONG) day * HOURSPERDAY +
+		lpSystemTime->wHour) * MINSPERHOUR +
 		lpSystemTime->wMinute) * SECSPERMIN +
 		lpSystemTime->wSecond ) * 1000 +
 		lpSystemTime->wMilliseconds ) * TICKSPERMSEC;
@@ -329,7 +329,7 @@ WINPORT_DECL(FileTimeToSystemTime, BOOL, (const FILETIME *lpFileTime, LPSYSTEMTI
 		lpSystemTime->wYear = years + 1525;
 	}
 	/* calculation of day of month is based on the wonderful
-	* sequence of INT( n * 30.6): it reproduces the 
+	* sequence of INT( n * 30.6): it reproduces the
 	* 31-30-31-30-31-31 month lengths exactly for small n's */
 	lpSystemTime->wDay = yearday - (1959 * months) / 64 ;
 	return TRUE;

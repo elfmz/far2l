@@ -269,7 +269,7 @@ static LONG_PTR WINAPI ChattrDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			}
 			break;
 		case DN_BTNCLICK:
-			if (Param1 == CA_BUTTON_RESET) { 
+			if (Param1 == CA_BUTTON_RESET) {
 				FSFileFlags *FFFlags =
 						reinterpret_cast<FSFileFlags *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 				FFFlags->Reset();

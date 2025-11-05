@@ -42,16 +42,16 @@ CSgmlEl::~CSgmlEl()
 {
 	if ((type == EBASEEL) && enext)
 		enext->destroylevel();
-	if (echild) 
+	if (echild)
 		echild->destroylevel();
 	// if (name) delete[] name;
-	if (content) 
+	if (content)
 		delete[] content;
 	for (int i = 0; i < parnum; i++)
 	{
-		if (params[i][0]) 
+		if (params[i][0])
 			delete params[i][0];
-		if (params[i][1]) 
+		if (params[i][1])
 			delete params[i][1];
 	}
 }
@@ -64,13 +64,13 @@ PSgmlEl CSgmlEl::createnew(ElType type, PSgmlEl parent, PSgmlEl after)
 	{
 		El->enext = parent->echild;
 		El->eparent = parent;
-		if (parent->echild) 
+		if (parent->echild)
 			parent->echild->eprev = El;
 		parent->echild = El;
 		parent->chnum++;
 		parent->type = EBLOCKEDEL;
-	} 
-	else if (after) 
+	}
+	else if (after)
 		after->insert(El);
 	return El;
 }
@@ -126,7 +126,7 @@ bool CSgmlEl::parse(std::string &path)
 		if (i+4 < src.size() && src[i] == '<' && src[i+1] == '!' && src[i+2] == '-' && src[i+3] == '-')
 		{
 			i += 4;
-			while(i+3  < src.size() && (src[i] != '-' || src[i+1] != '-' || src[i+2] != '>')) 
+			while(i+3  < src.size() && (src[i] != '-' || src[i+1] != '-' || src[i+2] != '>'))
 				i++;
 			i+=3;
 		}
@@ -141,7 +141,7 @@ bool CSgmlEl::parse(std::string &path)
 				j = lins;
 				while (j < i && iswspace(src[j]))
 					j++;
-				if (j == i) 
+				if (j == i)
 					break; // empty text
 				Child = createnew(EPLAINEL,0,Next);
 				Child->init();
@@ -149,7 +149,7 @@ bool CSgmlEl::parse(std::string &path)
 				Next = Child;
 				break;
 			}
-			if (i + 1 >= src.size()) 
+			if (i + 1 >= src.size())
 				continue;
 
 			// start or single tag
@@ -159,10 +159,10 @@ bool CSgmlEl::parse(std::string &path)
 				Child->init();
 				Next  = Child;
 				j = i+1;
-				while (i < src.size() && src[i] != '>' && !iswspace(src[i])) 
+				while (i < src.size() && src[i] != '>' && !iswspace(src[i]))
 					i++;
 				// Child->name = new wchar_t[i-j+1];
-				if (i-j > MAXTAG) 
+				if (i-j > MAXTAG)
 					i = j + MAXTAG - 1;
 				wcsncpy(Child->name, src.c_str()+j, i-j);
 				Child->name[i-j] = 0;
@@ -171,20 +171,20 @@ bool CSgmlEl::parse(std::string &path)
 				while (i < src.size() && src[i] != '>' && Child->parnum < MAXPARAMS)
 				{
 					ls = i;
-					while (ls < src.size() && iswspace(src[ls])) 
+					while (ls < src.size() && iswspace(src[ls]))
 						ls++;
 					le = ls;
-					while (le < src.size() && !iswspace(src[le]) && src[le]!='>' && src[le]!='=') 
+					while (le < src.size() && !iswspace(src[le]) && src[le]!='>' && src[le]!='=')
 						le++;
 					rs = le;
-					while (rs < src.size() && iswspace(src[rs])) 
+					while (rs < src.size() && iswspace(src[rs]))
 						rs++;
 					empty = 1;
 					if (src[rs] == '=')
 					{
 						empty = 0;
 						rs++;
-						while (rs < src.size() && iswspace(src[rs])) 
+						while (rs < src.size() && iswspace(src[rs]))
 							rs++;
 						re = rs;
 						if (src[re] == '"')
@@ -202,32 +202,32 @@ bool CSgmlEl::parse(std::string &path)
 							i = re+1;
 						} else
 						{
-							while (re < src.size() && !iswspace(src[re]) && src[re] != '>') 
+							while (re < src.size() && !iswspace(src[re]) && src[re] != '>')
 								re++;
 							i = re;
 						}
 					} else
 						i = re = rs;
-					
-					if (ls == le) 
+
+					if (ls == le)
 						continue;
 					if (rs == re && empty)
 					{
 						rs = ls;
 						re = le;
 					}
-					
+
 					int pn = Child->parnum;
 					Child->params[pn][0] = new wchar_t[le-ls+1];
 					wcsncpy(Child->params[pn][0], src.c_str()+ls, le-ls);
 					Child->params[pn][0][le-ls] = 0;
-					
+
 					Child->params[pn][1] = new wchar_t[re-rs+1];
 					wcsncpy(Child->params[pn][1], src.c_str()+rs, re-rs);
 					Child->params[pn][1][re-rs] = 0;
-					
+
 					Child->parnum++;
-					
+
 					substquote(Child->params[pn], L"&lt;", L'<');
 					substquote(Child->params[pn], L"&gt;", L'>');
 					substquote(Child->params[pn], L"&amp;", L'&');
@@ -253,32 +253,32 @@ bool CSgmlEl::parse(std::string &path)
 						}
 					}
 				}
-			} else 
+			} else
 			{  // end tag
 				j = i+2;
 				i += 2;
-				while (i < src.size() && src[i] != '>' && !iswspace(src[i])) 
+				while (i < src.size() && src[i] != '>' && !iswspace(src[i]))
 					i++;
 				int cn = 0;
 				for (Parent = Next; Parent->eprev; Parent = Parent->eprev, cn++)
 				{
-					if (!*Parent->name) 
+					if (!*Parent->name)
 						continue;
 					size_t len = wcslen(Parent->name);
-					if (len != i-j) 
+					if (len != i-j)
 						continue;
-					if (Parent->type != ESINGLEEL || wcsncasecmp( (wchar_t*)src.c_str() + j, Parent->name, len)) 
+					if (Parent->type != ESINGLEEL || wcsncasecmp( (wchar_t*)src.c_str() + j, Parent->name, len))
 						continue;
 					break;
 				}
-				
+
 				if (Parent && Parent->eprev)
 				{
 					Parent->echild = Parent->enext;
 					Parent->chnum = cn;
 					Parent->type = EBLOCKEDEL;
 					Child = Parent->echild;
-					if (Child) 
+					if (Child)
 						Child->eprev = 0;
 					while(Child)
 					{
@@ -288,13 +288,13 @@ bool CSgmlEl::parse(std::string &path)
 					Parent->enext = 0;
 					Next = Parent;
 				}
-				while (i < src.size() && src[i] != '>') 
+				while (i < src.size() && src[i] != '>')
 					i++;
 				lins = i+1;
 			}
 		}
 	}
-	
+
 	return true;
 }
 
@@ -329,7 +329,7 @@ void CSgmlEl::insert(PSgmlEl El)
 	El->eprev = this;
 	El->enext = this->enext;
 	El->eparent = this->eparent;
-	if (this->enext) 
+	if (this->enext)
 		this->enext->eprev = El;
 	this->enext = El;
 }
@@ -337,7 +337,7 @@ void CSgmlEl::insert(PSgmlEl El)
 // recursive deletion
 void CSgmlEl::destroylevel()
 {
-	if (enext) 
+	if (enext)
 		enext->destroylevel();
 	delete this;
 }
@@ -369,7 +369,7 @@ ElType  CSgmlEl::gettype()
 
 wchar_t *CSgmlEl::getname()
 {
-	if (!*name) 
+	if (!*name)
 		return NULL;
 	return name;
 }
@@ -386,7 +386,7 @@ int CSgmlEl::getcontentsize()
 
 wchar_t* CSgmlEl::GetParam(int no)
 {
-	if (no >= parnum) 
+	if (no >= parnum)
 		return NULL;
 	return params[no][0];
 }
@@ -436,7 +436,7 @@ PSgmlEl CSgmlEl::search(const wchar_t *TagName)
 	PSgmlEl Next = this->enext;
 	while(Next)
 	{
-		if (!wcscasecmp(TagName,Next->name)) 
+		if (!wcscasecmp(TagName,Next->name))
 			return Next;
 		Next = Next->enext;
 	}
@@ -457,7 +457,7 @@ PSgmlEl CSgmlEl::enumchilds(int no)
 PSgmlEl CSgmlEl::fprev()
 {
 	PSgmlEl El = this;
-	if (!El->eprev) 
+	if (!El->eprev)
 		return El->eparent;
 	if (El->eprev->echild)
 		return El->eprev->echild->flast();
@@ -467,12 +467,12 @@ PSgmlEl CSgmlEl::fprev()
 PSgmlEl CSgmlEl::fnext()
 {
 	PSgmlEl El = this;
-	if (El->echild) 
+	if (El->echild)
 		return El->echild;
 	while(!El->enext)
 	{
 		El = El->eparent;
-		if (!El) 
+		if (!El)
 			return 0;
 	}
 	return El->enext;
@@ -483,7 +483,7 @@ PSgmlEl CSgmlEl::ffirst()
 	PSgmlEl Prev = this;
 	while(Prev)
 	{
-		if (!Prev->eprev) 
+		if (!Prev->eprev)
 			return Prev;
 		Prev = Prev->eprev;
 	}

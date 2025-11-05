@@ -43,7 +43,7 @@ FileHolderPtr GrepFile(FileHolderPtr src)
 	}
 	apiCreateDirectory(new_file_path_name, nullptr);
 
-	new_file_path_name+= L'/';
+	new_file_path_name+= LGOOD_SLASH;
 	new_file_path_name+= PointToName(src->GetPathName());
 
 	std::string cmd_pattern = s_pattern.GetMB();

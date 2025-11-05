@@ -377,7 +377,7 @@ static void AddBookmarkItems(VMenu &ChDisk, int Pos)
 
 			if (!PluginFile.IsEmpty()) {
 				ShortcutPath+= PluginFile;
-				ShortcutPath+= L"/";
+				ShortcutPath+= WGOOD_SLASH;
 			}
 			ShortcutPath+= Folder;
 			if (ShortcutPath.IsEmpty()) {
@@ -816,7 +816,7 @@ bool Panel::SetLocation_Plugin(bool file_plugin, Plugin *plugin, const wchar_t *
 	if (path) {
 		NewPanel->Update(0);
 		NewPanel->Show();
-		CtrlObject->Plugins.SetDirectory(hPlugin, L"/", 0);
+		CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, 0);
 		if (!CtrlObject->Plugins.SetDirectory(hPlugin, path, 0)) {
 			fprintf(stderr, "SetLocation_Plugin(%d, %p, '%ls', '%ls', %lld) FAILED set directory\n",
 					file_plugin, plugin, path, host_file, (long long)item);
@@ -1332,7 +1332,7 @@ int Panel::GetCurDirPluginAware(FARString &strCurDir)
 
 		if (Info.HostFile && *Info.HostFile) {
 			strCurDir+= Info.HostFile;
-			strCurDir+= L"/";
+			strCurDir+= WGOOD_SLASH;
 		}
 
 		strCurDir+= Info.CurDir;
@@ -1518,7 +1518,7 @@ void Panel::ShowScreensCount()
 			}
 
 			if (Viewers > 0) {
-				strScreensText.Format(L"%cV%d", Prefix, Viewers);
+				strScreensText.AppendFormat(L"%cV%d", Prefix, Viewers);
 				Prefix = ' ';
 			}
 

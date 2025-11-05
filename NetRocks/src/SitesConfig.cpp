@@ -91,7 +91,7 @@ static bool SitesConfig_AppendSubParts(std::vector<std::string> &parts, const st
 		}
 	}
 
-	return true;	
+	return true;
 }
 
 static std::string SitesConfig_TranslateToDir(const std::vector<std::string> &parts)
@@ -293,7 +293,7 @@ bool SitesConfigLocation::Import(const std::string &src_dir, const std::string &
 		actual_name.resize(actual_name.size() - (sizeof(NETROCKS_EXPORT_DIR_EXTENSION) - 1));
 	}
 
-	std::vector<std::string> saved_parts = _parts;	
+	std::vector<std::string> saved_parts = _parts;
 
 	if (!Change(actual_name)) {
 		Make(actual_name);
@@ -400,7 +400,7 @@ SiteSpecification::SiteSpecification(const std::string &standalone_config, const
 	} else {
 		site = s.substr(p + 1, s.size() - p - 1);
 	}
-	
+
 }
 
 std::string SiteSpecification::ToString() const

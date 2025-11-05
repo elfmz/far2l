@@ -245,7 +245,7 @@ public:
 			}
 
 			name = de->d_name;
-			
+
 			_subpath = _path;
 			_subpath+= name;
 			struct stat s = {};

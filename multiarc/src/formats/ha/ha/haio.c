@@ -46,7 +46,7 @@ static void makecrctab(void) {
 
     U16B i,j;
     U32B tv;
-	
+
     for (i=0;i<256;i++) {
 	tv=i;
 	for (j=8;j>0;j--) {
@@ -92,7 +92,7 @@ void setinput(int fh, int mode, char *name) {
 
 
 U32B getcrc(void) {
-	
+
     return crc^CRCMASK;
 }
 
@@ -102,7 +102,7 @@ void clearcrc(void) {
 }
 
 void bread(void) {
-	
+
     register int i;
     register unsigned char *ptr;
 
@@ -141,7 +141,7 @@ void bwrite(void) {
 	    (*outspecial)(ob,obl);
 	}
 	else {
-	    if (write_on && write(outfile,ob,obl)!=obl) 
+	    if (write_on && write(outfile,ob,obl)!=obl)
 	      error(1,ERR_WRITE,outname);
 	    ocnt+=obl;
 	    if (w_progdisp) {

@@ -18,7 +18,7 @@
 |----------------------------------------------|
 | [  OK    ]    [ Cancel ]                     |
  ==============================================
-    6                     29       38 
+    6                     29       38
 */
 
 class ProtocolOptionsWebDAV : protected BaseDialog
@@ -42,7 +42,7 @@ class ProtocolOptionsWebDAV : protected BaseDialog
 
 	LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
-		if (msg == DN_INITDIALOG 
+		if (msg == DN_INITDIALOG
 		 || (msg == DN_BTNCLICK && (param1 == _i_use_proxy || param1 == _i_auth_proxy))) {
 			UpdateEnableds();
 		}

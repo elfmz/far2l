@@ -16,7 +16,7 @@ typedef ttmath::Big<1,26> Big;
 typedef ttmath::Int<24> BigInt;
 typedef ttmath::UInt<24> BigUInt;
 
-enum EArgType 
+enum EArgType
 {
 	SA_BIG,
 	SA_INT64, SA_UINT64, SA_INT, SA_SHORT, SA_CHAR,
@@ -41,10 +41,10 @@ private:
 		unsigned char  v_byte;
 		double  v_dbl;
 		float   v_flt;
-	
+
 	} arg {};
 
-	// XXX:	
+	// XXX:
 	Big v_big;
 
 public:
@@ -66,12 +66,12 @@ public:
 
 	SArg(const Big & var);
 
-	
+
 
 	bool isempty() const;
 	int  varsize() const;
 	EArgType gettype();
-	
+
 	bool IsFixedLength() const;
 
 	SArg &operator=(const SArg & op);
@@ -95,16 +95,16 @@ public:
 
 	SArg Ror(const SArg & op) const;
 	SArg Rol(const SArg & op) const;
-	
+
 	SArg Pow(const SArg & op) const;
 
 	SArg operator-  ();
 	SArg operator%  (const SArg & op) const;
-	
-	
+
+
 	SArg operator~  () const;
-	
-	
+
+
 	SArg operator+= (const SArg & op);
 	SArg operator-= (const SArg & op);
 
@@ -129,7 +129,7 @@ public:
 	static Big GreatestCommonDiv(Big numer, Big denom);
 
 public:
-	
+
 	static SArg _factor(const SArg & op1);
 	static SArg _frac(const SArg & op1);
 	static SArg _floor(const SArg & op1);

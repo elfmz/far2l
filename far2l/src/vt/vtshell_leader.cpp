@@ -1,4 +1,4 @@
-#define __USE_BSD 
+#define __USE_BSD
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>

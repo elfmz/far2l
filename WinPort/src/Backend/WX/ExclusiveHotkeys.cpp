@@ -3,8 +3,8 @@
 
 
 ExclusiveHotkeys::ExclusiveHotkeys() :
-	_ctrl_left(false), _ctrl_right(false), 
-	_alt_left(false), _alt_right(false), 
+	_ctrl_left(false), _ctrl_right(false),
+	_alt_left(false), _alt_right(false),
 	_win_left(false), _win_right(false),
 	_pending(false)
 {
@@ -12,8 +12,8 @@ ExclusiveHotkeys::ExclusiveHotkeys() :
 	_gdk_grab = (gdk_keyboard_grab_t)dlsym(RTLD_DEFAULT, "gdk_keyboard_grab");
 	_gdk_ungrab = (gdk_keyboard_ungrab_t)dlsym(RTLD_DEFAULT, "gdk_keyboard_ungrab");
 	if (!_gdk_grab || !_gdk_ungrab) {
-		fprintf(stderr, 
-			"ExclusiveHotkeys - API not found: _gdk_grab=%p _gdk_ungrab=%p\n", 
+		fprintf(stderr,
+			"ExclusiveHotkeys - API not found: _gdk_grab=%p _gdk_ungrab=%p\n",
 			_gdk_grab, _gdk_ungrab);
 	}
 #endif
@@ -44,11 +44,11 @@ bool ExclusiveHotkeys::IsTriggeringKeyEvent(wxKeyEvent& event)
 		|| (_win_right && event.GetRawKeyCode() == 0xffec);
 }
 
-void ExclusiveHotkeys::SetTriggerKeys(bool ctrl_left, bool ctrl_right, 
+void ExclusiveHotkeys::SetTriggerKeys(bool ctrl_left, bool ctrl_right,
 				bool alt_left, bool alt_right, bool win_left, bool win_right)
 {
-	fprintf(stderr, 
-		"ExclusiveHotkeys::SetTriggerKeys: ctrl_left=%u ctrl_right=%u alt_left=%u alt_right=%u win_left=%u win_right=%u\n", 
+	fprintf(stderr,
+		"ExclusiveHotkeys::SetTriggerKeys: ctrl_left=%u ctrl_right=%u alt_left=%u alt_right=%u win_left=%u win_right=%u\n",
 		ctrl_left, ctrl_right, alt_left, alt_right, win_left, win_right);
 
 	_ctrl_left = ctrl_left;

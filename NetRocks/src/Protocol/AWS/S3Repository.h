@@ -26,7 +26,7 @@ private:
         static std::string ParseBucket(const std::string& path) {
             size_t start = path.find_first_not_of('/');
             if (start == std::string::npos) {
-                return ""; 
+                return "";
             }
 
             auto pos = path.find('/', start);

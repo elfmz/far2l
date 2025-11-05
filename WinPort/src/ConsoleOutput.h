@@ -14,7 +14,7 @@ class ConsoleOutput : public IConsoleOutput
 	std::vector<CHAR_INFO> _temp_chars;
 	std::wstring _title;
 	IConsoleOutputBackend *_backend;
-	DWORD _mode;	
+	DWORD _mode;
 	DWORD64 _attributes;
 	COORD _prev_pos{-1, -1};
 	unsigned short _repaint_defer{0}; // unlikely it will be more than 10..
@@ -25,13 +25,13 @@ class ConsoleOutput : public IConsoleOutput
 	} _deferred_repaints;
 	unsigned int _change_id{1};
 	std::condition_variable _change_id_cond;
-	
+
 	struct {
 		COORD pos;
 		UCHAR height;
 		bool visible;
 	} _cursor;
-	
+
 	struct {
 		USHORT top;
 		USHORT bottom;
@@ -51,7 +51,7 @@ class ConsoleOutput : public IConsoleOutput
 			DWORD64 attr;
 		};
 	};
-	
+
 	void LockedChangeIdUpdate();
 
 	SHORT ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area);
@@ -100,14 +100,14 @@ public:
 	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos);
 	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos);
 	virtual size_t FillAttributeAt(DWORD64 qAttribute, size_t count, COORD &pos);
-	
-	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
+
+	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle,
 				COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
-				
+
 	virtual void SetScrollRegion(SHORT top, SHORT bottom);
 	virtual void GetScrollRegion(SHORT &top, SHORT &bottom);
 	virtual void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext);
-	
+
 	virtual void AdhocQuickEdit();
 	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks);
 	virtual void ConsoleChangeFont();

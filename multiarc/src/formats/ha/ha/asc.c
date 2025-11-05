@@ -43,7 +43,7 @@
 #define CTSTEP 1
 #define MAXCT (1000*CTSTEP)
 #define PTSTEP 24
-#define MAXPT (250*PTSTEP) 
+#define MAXPT (250*PTSTEP)
 #define TTSTEP 40
 #define MAXTT (150*TTSTEP)
 #define TTORD 4
@@ -66,14 +66,14 @@ static U16B les;
 static U16B ttcon;
 
 void asc_cleanup(void) {
-    
+
     swd_cleanup();
 }
 
 static void tabinit(U16B t[], U16B tl, U16B ival) {
 
     register U16B i,j;
-    
+
     for (i=tl;(unsigned)i<(unsigned)tl*2;++i) t[i]=ival;
     for (i=tl-1,j=(tl<<1)-2;i;--i,j-=2) {
 	t[i]=t[j]+t[j+1];
@@ -83,7 +83,7 @@ static void tabinit(U16B t[], U16B tl, U16B ival) {
 static void tscale(U16B t[], U16B tl) {
 
     register U16B i,j;
-    
+
     for (i=(tl<<1)-1;i>=tl;--i) {
 	if (t[i]>1) t[i]>>=1;
     }
@@ -95,7 +95,7 @@ static void tscale(U16B t[], U16B tl) {
 static void tupd(U16B t[], U16B tl, U16B maxt, U16B step, U16B p) {
 
     register S16B i;
-    
+
     for (i=p+tl;i;i>>=1) t[i]+=step;
     if (t[1]>=maxt) tscale(t,tl);
 }
@@ -103,14 +103,14 @@ static void tupd(U16B t[], U16B tl, U16B maxt, U16B step, U16B p) {
 static void tzero(U16B t[], U16B tl, U16B p) {
 
     register S16B i,step;
-    
+
     for (i=p+tl,step=t[i];i;i>>=1) t[i]-=step;
 }
 
 static void model_init(void) {
 
     register S16B i;
-    
+
     ces=CTSTEP;
     les=LTSTEP;
     ccnt=0;
@@ -121,7 +121,7 @@ static void model_init(void) {
     tabinit(eltab,LTCODES,1);
     tabinit(ctab,CTCODES,0);
     tabinit(ectab,CTCODES,1);
-    tabinit(ptab,PTCODES,0);	
+    tabinit(ptab,PTCODES,0);
     tupd(ptab,PTCODES,MAXPT,PTSTEP,0);
 }
 
@@ -140,13 +140,13 @@ static void ttscale(U16B con) {
 }
 
 void asc_unpack(void) {
-    
+
     register U16B l,p,tv,i,lt;
-    
+
     swd_dinit(POSCODES);
     unpack_init();
     for (;;) {
-	tv=ac_threshold_val(ttab[ttcon][0]+ttab[ttcon][1]+1);		
+	tv=ac_threshold_val(ttab[ttcon][0]+ttab[ttcon][1]+1);
 	i=ttab[ttcon][0]+ttab[ttcon][1];
 	if (ttab[ttcon][0]>tv) {
 	    ac_in(0,ttab[ttcon][0],i+1);
@@ -192,7 +192,7 @@ void asc_unpack(void) {
 		ac_in(lt,lt+ctab[CTCODES+l],ctab[1]+ces);
 	    }
 	    tupd(ctab,CTCODES,MAXCT,CTSTEP,l);
-	    if (ctab[CTCODES+l]==CCUTOFF) ces-=CTSTEP<ces?CTSTEP:ces-1; 
+	    if (ctab[CTCODES+l]==CCUTOFF) ces-=CTSTEP<ces?CTSTEP:ces-1;
 	    swd_dchar(l);
 	    if (ccnt<POSCODES) ++ccnt;
 	}
@@ -203,7 +203,7 @@ void asc_unpack(void) {
 	    ttcon=((ttcon<<1)|1)&TTOMASK;
 	    while (ccnt>pmax) {
 		tupd(ptab,PTCODES,MAXPT,PTSTEP,npt++);
-		pmax<<=1;	
+		pmax<<=1;
 	    }
 	    tv=ac_threshold_val(ptab[1]);
 	    for (p=2,lt=0;;) {
@@ -267,7 +267,7 @@ void asc_unpack(void) {
 		ac_in(lt,lt+ltab[LTCODES+l],ltab[1]+les);
 	    }
 	    tupd(ltab,LTCODES,MAXLT,LTSTEP,l);
-	    if (ltab[LTCODES+l]==LCUTOFF) les-=LTSTEP<les?LTSTEP:les-1; 
+	    if (ltab[LTCODES+l]==LCUTOFF) les-=LTSTEP<les?LTSTEP:les-1;
 	    if (l==SLCODES-1) l=LENCODES-1;
 	    else if (l>=SLCODES) {
 		i=ac_threshold_val(LLLEN);
@@ -279,7 +279,7 @@ void asc_unpack(void) {
 		ccnt+=l;
 		if (ccnt>POSCODES) ccnt=POSCODES;
 	    }
-	    swd_dpair(l,p);				
+	    swd_dpair(l,p);
 	}
 	else {
 	    ac_in(i,i+1,i+1);
@@ -289,5 +289,5 @@ void asc_unpack(void) {
 	}
     }
 }
- 
+
 

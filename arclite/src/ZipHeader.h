@@ -49,15 +49,15 @@ namespace NFileHeader
       kDeflate = 8,
       kDeflate64 = 9,
       kPKImploding = 10,
-      
+
       kBZip2 = 12,
-      
+
       kLZMA = 14,
-      
+
       kTerse = 18,
       kLz77 = 19,
       kZstdPk = 20,
-      
+
       kZstdWz = 93,
       kMP3 = 94,
       kXz = 95,
@@ -68,7 +68,7 @@ namespace NFileHeader
     };
 
     const Byte kMadeByProgramVersion = 63;
-    
+
     const Byte kExtractVersion_Default = 10;
     const Byte kExtractVersion_Dir = 20;
     const Byte kExtractVersion_ZipCrypto = 20;
@@ -143,7 +143,7 @@ namespace NFileHeader
 
     const unsigned kImplodeDictionarySizeMask = 1 << 1;
     const unsigned kImplodeLiteralsOnMask     = 1 << 2;
-    
+
     /*
     const unsigned kDeflateTypeBitStart = 1;
     const unsigned kNumDeflateTypeBits = 2;
@@ -151,7 +151,7 @@ namespace NFileHeader
     const unsigned kDeflateTypeMask = (1 << kNumDeflateTypeBits) - 1;
     */
   }
-  
+
   namespace NHostOS
   {
     enum EEnum

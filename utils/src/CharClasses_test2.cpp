@@ -20,7 +20,7 @@ int main() {
 
 	    //int code;
 	    //utf8proc_ssize_t length = utf8proc_iterate((uint8_t *)i, -1, &code);
-    
+
 	    int width = utf8proc_charwidth(i);
 
 		utf8proc_category_t category = utf8proc_category(i);

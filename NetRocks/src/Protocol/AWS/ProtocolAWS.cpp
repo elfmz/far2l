@@ -13,7 +13,7 @@ std::shared_ptr<IProtocol> CreateProtocol(const std::string &protocol, const std
 ProtocolAWS::ProtocolAWS(const std::string &host, unsigned int port,
                          const std::string &username, const std::string &password,
                          const std::string &protocol_options)
-{    
+{
     _repository = std::make_shared<S3Repository>(host, port, username, password, protocol_options);
 }
 
@@ -118,12 +118,12 @@ std::shared_ptr<IDirectoryEnumer> ProtocolAWS::DirectoryEnum(const std::string &
 	const std::string &rooted_path = RootedPath(path);
 	return std::shared_ptr<IDirectoryEnumer>(new AWSDirectoryEnumer(_repository, rooted_path));
 }
-	
+
 std::shared_ptr<IFileReader> ProtocolAWS::FileGet(const std::string &path, unsigned long long resume_pos)
 {
     return _repository->GetDownloader(
-		RootedPath(path), 
-		resume_pos, 
+		RootedPath(path),
+		resume_pos,
 		_repository->GetFileInfo(RootedPath(path)).size
 	);
 }
@@ -164,7 +164,7 @@ void ProtocolAWS::SetTimes(const std::string &path, const timespec &access_time,
 {
 }
 
-void ProtocolAWS::SetMode(const std::string &path, mode_t mode) 
+void ProtocolAWS::SetMode(const std::string &path, mode_t mode)
 {
 }
 

@@ -40,7 +40,7 @@ template <uint32_t MAGIC>
 	}
 };
 
-template <class T> 
+template <class T>
 	class AutoWinPortHandle
 {
 	T *_p;
@@ -59,7 +59,7 @@ public:
 	{
 		return _p;
 	}
-	
+
 	T * get()
 	{
 		return _p;

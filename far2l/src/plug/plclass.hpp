@@ -43,7 +43,7 @@ struct AnalyseInfo
 	const unsigned char *pBuffer;
 	DWORD dwBufferSize;
 	int OpMode;
-	void * Instance;	
+	void * Instance;
 };
 
 struct AnalyseInfo

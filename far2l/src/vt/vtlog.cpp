@@ -20,7 +20,7 @@ namespace VTLog
 	struct DumpState
 	{
 		DumpState() : nonempty(false) {}
-		
+
 		bool nonempty;
 	};
 
@@ -129,7 +129,7 @@ namespace VTLog
 		}
 	}
 
-	
+
 	static class Lines
 	{
 		std::mutex _mutex;
@@ -232,7 +232,7 @@ namespace VTLog
 				}
 			}
 		}
-		
+
 		void Reset(HANDLE con_hnd)
 		{
 			std::lock_guard<std::mutex> lock(_mutex);
@@ -292,12 +292,12 @@ namespace VTLog
 	{
 		g_lines.ConsoleJoined(con_hnd);
 	}
-	
+
 	void Reset(HANDLE con_hnd)
 	{
 		g_lines.Reset(con_hnd);
 	}
-	
+
 	static void AppendScreenLine(const CHAR_INFO *line, unsigned int width, std::string &s, DumpState &ds, bool colored, bool no_line_recompose)
 	{
 		auto width_eol = ActualLineWidth(width, line);
@@ -328,7 +328,7 @@ namespace VTLog
 					AppendScreenLine(&line[0], (unsigned int)csbi.dwSize.X, s, ds, colored, no_line_recompose);
 				}
 			}
-		}		
+		}
 	}
 
 	std::string GetAsFile(HANDLE con_hnd, bool colored, bool append_screen_lines, const char *wanted_path)
@@ -343,13 +343,13 @@ namespace VTLog
 				 st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond,
 				 colored ? "ans" : "log");
 		}
-				
+
 		int fd = open(path.c_str(), O_CREAT | O_TRUNC | O_RDWR | O_CLOEXEC, 0600);
 		if (fd==-1) {
 			fprintf(stderr, "VTLog: errno %u creating '%s'\n", errno, path.c_str() );
 			return std::string();
 		}
-			
+
 		DumpState ds;
 		g_lines.DumpToFile(con_hnd, fd, ds, colored);
 		if (append_screen_lines) {

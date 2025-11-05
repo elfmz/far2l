@@ -461,7 +461,7 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 						CI_SET_COMPOSITE(prev_ch, prev_str.c_str());
 						_buf.Write(prev_ch, _prev_pos);
 						AffectArea(area, _prev_pos.X, _prev_pos.Y);
-						
+
 						return 0;
 					}
 				}

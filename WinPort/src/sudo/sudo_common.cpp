@@ -31,7 +31,7 @@ namespace Sudo
 			throw;
 		}
 	}
-	
+
 	void BaseTransaction::SendStr(const char *sz)
 	{
 		size_t len = strlen(sz);
@@ -54,7 +54,7 @@ namespace Sudo
 			throw;
 		}
 	}
-	
+
 	void BaseTransaction::RecvStr(std::string &str)
 	{
 		size_t len;
@@ -63,14 +63,14 @@ namespace Sudo
 		if (len)
 			RecvBuf(&str[0], len);
 	}
-	
+
 	int BaseTransaction::RecvInt()
 	{
 		int r;
 		RecvPOD(r);
 		return r;
 	}
-	
+
 /////////////////////
 
 #if !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__DragonFly__) && !defined(__HAIKU__)

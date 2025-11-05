@@ -1,12 +1,12 @@
 #include "AWSFileWriter.h"
 
 AWSFileWriter::AWSFileWriter(const std::string& bucket, const std::string& key, const std::shared_ptr<Aws::S3::S3Client> client)
-    : _bucket(bucket), _key(key), _client(client), partNumber(1) 
+    : _bucket(bucket), _key(key), _client(client), partNumber(1)
 {
     StartMultipartUpload();
 }
 
-AWSFileWriter::~AWSFileWriter() 
+AWSFileWriter::~AWSFileWriter()
 {
     try {
         CompleteMultipartUpload();

@@ -4,20 +4,20 @@
  * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
-/* 
+/*
  * Copyright (c) 2012, Tomasz Sowa
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *  * Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
- *    
+ *
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *    
+ *
  *  * Neither the name Tomasz Sowa nor the names of contributors to this
  *    project may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -109,7 +109,7 @@ public:
 	/*!
 		this method clears a specific bit in the 'info' variable
 
-		bit is one of: 
+		bit is one of:
 	*/
 	void ClearInfoBit(unsigned char bit)
 	{
@@ -120,7 +120,7 @@ public:
 	/*!
 		this method sets a specific bit in the 'info' variable
 
-		bit is one of: 
+		bit is one of:
 
 	*/
 	void SetInfoBit(unsigned char bit)
@@ -132,7 +132,7 @@ public:
 	/*!
 		this method returns true if a specific bit in the 'info' variable is set
 
-		bit is one of: 
+		bit is one of:
 	*/
 	bool IsInfoBit(unsigned char bit) const
 	{
@@ -140,13 +140,13 @@ public:
 	}
 
 
-	bool IsNan() const 
+	bool IsNan() const
 	{
 		return IsInfoBit(TTMATH_DEC_NAN);
 	}
 
 
-	bool IsSign() const 
+	bool IsSign() const
 	{
 		return IsInfoBit(TTMATH_DEC_SIGN);
 	}
@@ -187,7 +187,7 @@ public:
 
 		if( IsSign() == arg.IsSign() )
 		{
-			c += value.Add(arg.value);		
+			c += value.Add(arg.value);
 		}
 		else
 		{
@@ -237,7 +237,7 @@ private:
 		// this guardian is initialized before the program runs (static POD type)
 		static int guardian = 0;
 		static UInt<value_size> multiplier;
-	
+
 		if( guardian == 0 )
 		{
 			multiplier = 10;
@@ -257,7 +257,7 @@ private:
 		// this guardian is initialized before the program runs (static POD type)
 		volatile static sig_atomic_t guardian = 0;
 		static UInt<value_size> * pMultiplier;
-	
+
 		// double-checked locking
 		if( guardian == 0 )
 		{
@@ -281,7 +281,7 @@ private:
 				// there was a problem with locking, we store the result directly in 'result' object
 				result = 10;
 				result.Pow(dec_digits);
-				
+
 			return;
 			}
 

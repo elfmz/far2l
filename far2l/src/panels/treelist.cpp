@@ -698,7 +698,7 @@ bool TreeList::FillLastData()
 			parents.push_back(I);
 		else
 			parents[Depth] = I;
-		
+
 		ListData[I]->ParentIndex = (Depth > 0) ? parents[Depth - 1] : 0;
 
 		bool Last;
@@ -1071,7 +1071,7 @@ int TreeList::ProcessKey(FarKey Key)
 		{
 			if (ListData[CurFile]->Collapsed)
 				LevelUp();
-			else 
+			else
 				Collapse();
 
 			if (Opt.Tree.AutoChangeFolder && !ModalMode)
@@ -1216,7 +1216,7 @@ void TreeList::ExpandTreeToLevel(int level) {
 		}
 		else if (ListData[i]->Depth == level) {
 			ListData[i]->Collapsed = true;
-		}	
+		}
 	}
 	VisibleDirty = true;
 	DisplayTree(TRUE);

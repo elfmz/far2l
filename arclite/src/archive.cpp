@@ -308,7 +308,7 @@ static bool GetCoderInfo(Func_GetMethodProperty getMethodProperty, UInt32 index,
 }
 
 template<bool UseVirtualDestructor>
-class MyCompressCodecsInfo : public ICompressCodecsInfo<UseVirtualDestructor>, 
+class MyCompressCodecsInfo : public ICompressCodecsInfo<UseVirtualDestructor>,
 							 public IHashers<UseVirtualDestructor>, private ComBase<UseVirtualDestructor>
 {
 private:
@@ -1466,7 +1466,7 @@ bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 	return false;
 }
 
-constexpr DWORD c_valid_import_attributes = 
+constexpr DWORD c_valid_import_attributes =
 		FILE_ATTRIBUTE_READONLY |
 		FILE_ATTRIBUTE_HIDDEN |
 		FILE_ATTRIBUTE_SYSTEM |

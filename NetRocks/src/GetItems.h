@@ -18,7 +18,7 @@ class GetFocusedItem
 
 	GetFocusedItem(const GetFocusedItem&) = delete;
 
-public:	
+public:
 	GetFocusedItem(HANDLE plug);
 	~GetFocusedItem();
 

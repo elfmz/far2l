@@ -5,7 +5,7 @@
 #include "../../lng.h"
 #include "../../PooledStrings.h"
 
-/*                                               
+/*
 345                                            50
  ============== Login credentials =============
 | Connecting to :     [TEXTBOX               ] |
@@ -14,7 +14,7 @@
 |----------------------------------------------|
 |   [       Ok      ]      [    Cancel    ]    |
  ==============================================
-    6                     29       38            
+    6                     29       38
 */
 
 class InteractiveLoginDialog : BaseDialog

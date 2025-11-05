@@ -20,10 +20,10 @@ private:
 
 public:
 	AWSFileReader(
-        std::shared_ptr<Aws::S3::S3Client> client, 
-        const std::string& backet, 
-        const std::string& key, 
-        unsigned long long position, 
+        std::shared_ptr<Aws::S3::S3Client> client,
+        const std::string& backet,
+        const std::string& key,
+        unsigned long long position,
         unsigned long long size
     );
 

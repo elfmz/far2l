@@ -27,7 +27,7 @@
 #include "error.h"
 
 typedef void (*Voidfunc)(void);
-     
+
 struct culist {
     union {
 	Voidfunc func;
@@ -41,7 +41,7 @@ struct culist {
 };
 
 int skipemptypath=0,sloppymatch=1;
-static struct culist cuhead={{NULL},NULL,NULL,0}; 
+static struct culist cuhead={{NULL},NULL,NULL,0};
 char **patterns;
 unsigned patcnt;
 
@@ -67,7 +67,7 @@ void *cu_add(unsigned long flags, ...) {
     struct culist *ptr,*mark;
     va_list vaptr;
     char *string;
-    
+
     mark=cuhead.next;
     ptr=malloc(sizeof(struct culist));
     if (ptr==NULL) error(1,ERR_MEM,"add_cleanup()");
@@ -76,7 +76,7 @@ void *cu_add(unsigned long flags, ...) {
     if (flags&CU_FUNC) ptr->arg.func=va_arg(vaptr,Voidfunc);
     else if ((flags&CU_RMFILE) || (flags&CU_RMDIR)) {
 	string=va_arg(vaptr,char *);
-	if ((ptr->arg.fileinfo.name=malloc(strlen(string)+1))==NULL) 
+	if ((ptr->arg.fileinfo.name=malloc(strlen(string)+1))==NULL)
 	  error(0,ERR_MEM,"cu_add()");
 	strcpy(ptr->arg.fileinfo.name,string);
 	if (!(flags&CU_RMDIR)) ptr->arg.fileinfo.handle=va_arg(vaptr,int);
@@ -97,16 +97,16 @@ void *cu_getmark(void) {
 void cu_relax(void *mark) {
 
     struct culist *ptr;
-    
+
     for (ptr=cuhead.next;ptr!=NULL && ptr!=mark;ptr=ptr->next) {
-	if (ptr->flags&CU_CANRELAX) ptr->flags|=CU_RELAXED; 
+	if (ptr->flags&CU_CANRELAX) ptr->flags|=CU_RELAXED;
     }
 }
 
 void cu_do(void *mark) {
 
     struct culist *ptr;
-    
+
     for (ptr=cuhead.next;ptr!=NULL && ptr!=mark;) {
 	if ((ptr->flags&CU_FUNC) && ptr->arg.func!=NULL) {
 	    if (!(ptr->flags&CU_RELAXED)) ptr->arg.func();
@@ -136,7 +136,7 @@ char *getname(char *fullpath) {
 
     int i,j;
     static char *name=NULL;
-    
+
     if (name!=NULL) free(name),name=NULL;
     for (i=j=strlen(fullpath);--i>=0;) {
 	if ((unsigned char)fullpath[i]==0xff) {
@@ -152,7 +152,7 @@ char *getpath(char *fullpath) {
 
     int i;
     static char *path=NULL;
-    
+
     if (path!=NULL) free(path),path=NULL;
     for(i=strlen(fullpath);--i;) {
 	if ((unsigned char)fullpath[i]==0xff) {
@@ -169,14 +169,14 @@ char *fullpath(char *path, char *name) {
 
     static char *fullpath=NULL;
     int need_delim;
-    
+
     if (fullpath!=NULL) free(fullpath),fullpath=NULL;
     if (path==NULL || *path==0) return name;
     if ((unsigned char)path[strlen(path)-1]!=0xff) need_delim=1;
     else need_delim=0;
     if ((fullpath=malloc(strlen(path)+strlen(name)+need_delim+1))==NULL) {
 	error(1,ERR_MEM,"fullpath()");
-    }			
+    }
     strcpy(fullpath,path);
     strcpy(fullpath+strlen(fullpath)+need_delim,name);
     if (need_delim) fullpath[strlen(fullpath)]=0xff;
@@ -186,14 +186,14 @@ char *fullpath(char *path, char *name) {
 void makepath(char *hapath) {
 
     char *last,*path;
-    
+
     for (last=strchr(hapath,0xff);last!=NULL;last=strchr(last+1,0xff)) {
 	*last=0;
 	if (access((path=md_tomdpath(hapath)),F_OK)) {
 	    if (mkdir(path,DEF_DIRATTR)<0) error(0,ERR_MKDIR,path);
 	}
 	*last=0xff;
-    }	
+    }
 }
 
 
@@ -201,10 +201,10 @@ void makepath(char *hapath) {
 	General filename matching (for paths in ha format !)
 */
 
-static int matchpattern(char *matchpath, char *matchpat, 
+static int matchpattern(char *matchpath, char *matchpat,
 			char *path, char *name) {
 
-    if (((*matchpath==0 && skipemptypath && sloppymatch) || 
+    if (((*matchpath==0 && skipemptypath && sloppymatch) ||
 	 strcmp(matchpath,path)==0) &&
 	md_namecmp(matchpat,name)) return 1;
     return 0;
@@ -215,13 +215,13 @@ int match(char *path, char *name) {
 
     int i;
     char *fullhapath;
-    
+
     for (i=0;i<patcnt;++i) {
 	fullhapath=md_tohapath(patterns[i]);
 	if (matchpattern(getpath(fullhapath),getname(fullhapath),
-			 md_strcase(path),md_strcase(name))) return 1;	
-    }	
-    return 0;	
+			 md_strcase(path),md_strcase(name))) return 1;
+    }
+    return 0;
 }
 
 

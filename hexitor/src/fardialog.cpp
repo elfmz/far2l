@@ -6,10 +6,9 @@ const Border dborder = Border(2, 1, 2, 1);
 
 void Dialog::buildFDI(Sizer *contents){
 	this->contents = contents;
-	std::vector<Window*> windows = {contents};
-	DlgVSizer vbox1(windows, dborder);
+	DlgVSizer vbox1({contents}, dborder);
 	Size size = vbox1.get_best_size();
-	size.width = std::max(size.width + 1, (int)wcslen(title) + 2);
+	size.width = std::max(size.width + 2, (int)wcslen(title) + 2);
 	vbox1.size(3, 1, size.width, size.height);
 	width = size.width;
 	height = size.height;
@@ -30,8 +29,8 @@ void Dialog::buildFDI(Sizer *contents){
 }
 
 HANDLE Dialog::DialogInit() {
-	hDlg = plugin->DialogInit(
-		plugin->ModuleNumber,
+	hDlg = _PSI.DialogInit(
+		_PSI.ModuleNumber,
 		-1, -1, width + dborder.left + dborder.right, height + dborder.top + dborder.bottom,
 		helptopic,
 		fdi.data(), fdi.size(),

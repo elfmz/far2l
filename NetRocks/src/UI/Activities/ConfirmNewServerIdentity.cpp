@@ -4,7 +4,7 @@
 
 
 
-/*                                               
+/*
 345                                            60
  ======== Confirm new server identify =========
 | Site:          [                           ] |
@@ -13,7 +13,7 @@
 |----------------------------------------------|
 |   [       Ok      ]      [    Cancel    ]    |
  ==============================================
-    6                     29       38            
+    6                     29       38
 */
 
 ConfirmNewServerIdentity::ConfirmNewServerIdentity(const std::string &site, const std::string &identity, bool may_remember)

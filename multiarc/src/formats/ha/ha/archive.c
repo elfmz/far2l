@@ -41,7 +41,7 @@ static U32B getvalue(int len) {
     unsigned char buf[4];
     U32B val;
     int i;
-    
+
     if (read(arcfile,buf,len)!=len) error(1,ERR_READ,arcname);
     for (val=i=0;i<len;++i) val|=(U32B)buf[i]<<(i<<3);
     return val;
@@ -51,22 +51,22 @@ static void putvalue(U32B val, int len) {
 
     unsigned char buf[4];
     int i;
-    
+
     for (i=0;i<len;++i,val>>=8) buf[i]=(unsigned char) val&0xff;
     if (write(arcfile,&buf,len)!=len) error(1,ERR_WRITE,arcname);
 }
 
 static char *getstring(void) {
-    
+
     char *sptr;
     int offset;
-    
+
     if ((sptr=malloc(STRING))==NULL) error(1,ERR_MEM,"getstring()");
     for (offset=0;;offset++) {
 	if (read(arcfile,sptr+offset,1)!=1) error(1,ERR_READ,arcname);
 	if (sptr[offset]==0) break;
 	if ((offset&(STRING-1))==0) {
-	    if ((sptr=realloc(sptr,STRING))==NULL) 
+	    if ((sptr=realloc(sptr,STRING))==NULL)
 	      error(1,ERR_MEM,"getstring()");
 	}
     }
@@ -74,7 +74,7 @@ static char *getstring(void) {
 }
 
 static void putstring(char *string) {
-    
+
     int len;
 
     len=strlen(string)+1;
@@ -90,7 +90,7 @@ static Fheader *getheader(void) {
 	hd.ver>>=4;
 	if (hd.ver>MYVER) error(1,ERR_TOONEW);
 	if (hd.ver<LOWVER) error(1,ERR_TOOOLD);
-	if (hd.type!=M_SPECIAL && hd.type!=M_DIR && hd.type>=M_UNK) 
+	if (hd.type!=M_SPECIAL && hd.type!=M_DIR && hd.type>=M_UNK)
 	  error(1,ERR_UNKMET,hd.type);
     }
     hd.clen=getvalue(4);
@@ -110,18 +110,18 @@ static Fheader *getheader(void) {
 static void putheader(Fheader *hd) {
 
     putvalue((hd->ver<<4)|hd->type,1);
-    putvalue(hd->clen,4); 
-    putvalue(hd->olen,4); 
-    putvalue(hd->crc,4); 
-    putvalue(hd->time,4); 
+    putvalue(hd->clen,4);
+    putvalue(hd->olen,4);
+    putvalue(hd->crc,4);
+    putvalue(hd->time,4);
     putstring(hd->path);
     putstring(hd->name);
     putvalue(hd->mdilen,1);
     md_puthdr();
-}	
+}
 
 void arc_close(void) {
-    
+
     if (arcfile>=0) {
 	close(arcfile);
 	if (!arccnt) {
@@ -131,11 +131,11 @@ void arc_close(void) {
 }
 
 static U32B arc_scan(void) {
-    
+
     U32B pos;
     unsigned i;
     Fheader *hd;
-    
+
     pos=4;
     for (i=0;i<arccnt;++i) {
 	if (pos>=arcsize) {
@@ -154,9 +154,9 @@ static U32B arc_scan(void) {
 }
 
 void arc_open(char *aname) {
-    
+
     char id[2];
-    
+
     arcname=md_arcname(aname);
     if ((arcfile=open(arcname,AO_RDOFLAGS))>=0) {
 	if (fstat(arcfile,&arcstat)!=0) error(1,ERR_STAT,arcname);
@@ -172,7 +172,7 @@ void arc_open(char *aname) {
     cu_add(CU_FUNC,arc_close);
 }
 
-void arc_reset(void) {			
+void arc_reset(void) {
 
     nextheader=4;
 }
@@ -180,10 +180,10 @@ void arc_reset(void) {
 Fheader *arc_seek(void) {
 
     static Fheader *hd;
-    
+
     for (;;) {
 	if (nextheader>=arcsize) return NULL;
-	if (lseek(arcfile,nextheader,SEEK_SET)<0) 
+	if (lseek(arcfile,nextheader,SEEK_SET)<0)
 	  error(1,ERR_SEEK,"arc_seek()");
 	hd=getheader();
 	thisheader=nextheader;

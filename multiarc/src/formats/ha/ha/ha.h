@@ -19,7 +19,7 @@
 	HA main include file
 ***********************************************************************/
 
-#include "machine.h" 
+#include "machine.h"
 
 #define VERSION	 "0.9999"
 #define BANNER  "HA " VERSION " Copyright (c) 1995 Harri Hirvola\n"
@@ -41,7 +41,7 @@ extern unsigned char infodat[];         /* HA information data          */
 extern unsigned infolen;                /* HA information data length   */
 
 extern int sloppymatch;                 /* How to use path information in archive seeks */
-extern int skipemptypath;               
+extern int skipemptypath;
 
 /* Miscalneous routines */
 

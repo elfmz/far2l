@@ -593,7 +593,7 @@ public:
 };
 
 template<bool UseVirtualDestructor>
-class AcmRelayStream : public ISequentialOutStream<UseVirtualDestructor>, 
+class AcmRelayStream : public ISequentialOutStream<UseVirtualDestructor>,
 						public ISequentialInStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor> {
 private:
 	static constexpr size_t c_min_buff_size = 10 * 1024 * 1024;
@@ -940,7 +940,7 @@ public:
 	ArchiveUpdater(const std::wstring &src_dir, const std::wstring &dst_dir, UInt32 num_indices,
 			std::shared_ptr<FileIndexMap> file_index_map, const UpdateOptions &options,
 			std::shared_ptr<bool> ignore_errors, bool dereference_symlinks, std::shared_ptr<ErrorLog> error_log,
-			std::shared_ptr<ArchiveUpdateProgress> progress, ISequentialInStream<UseVirtualDestructor> *stream = nullptr, 
+			std::shared_ptr<ArchiveUpdateProgress> progress, ISequentialInStream<UseVirtualDestructor> *stream = nullptr,
 			bool use_mem_stream = false)
 		: src_dir(src_dir),
 		  dst_dir(dst_dir),
@@ -1009,7 +1009,7 @@ public:
 	{
 		COM_ERROR_HANDLER_BEGIN
 		const FileIndexInfo &file_index_info = file_index_map->at(index);
-		constexpr DWORD c_valid_export_attributes = 
+		constexpr DWORD c_valid_export_attributes =
 			FILE_ATTRIBUTE_READONLY |
 			FILE_ATTRIBUTE_HIDDEN |
 			FILE_ATTRIBUTE_SYSTEM |
@@ -1249,7 +1249,7 @@ public:
 			}
 			break;
 			case kpidGroup:
-				if (!Far::g_fsf.GetFileGroup(NULL, (add_trailing_slash(add_trailing_slash(src_dir) + 
+				if (!Far::g_fsf.GetFileGroup(NULL, (add_trailing_slash(add_trailing_slash(src_dir) +
 							file_index_info.rel_path) + file_index_info.find_data.cFileName).c_str(), wtmp, 32 )) {
 					wtmp[0] = L'-';
 					wtmp[1] = 0;

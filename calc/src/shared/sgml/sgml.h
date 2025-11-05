@@ -54,7 +54,7 @@ class CSgmlEl
 public:
   CSgmlEl();
   virtual ~CSgmlEl();
-  
+
   bool parse(std::string &path);
 
   virtual PSgmlEl parent();

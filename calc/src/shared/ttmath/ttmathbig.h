@@ -4,20 +4,20 @@
  * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
-/* 
+/*
  * Copyright (c) 2006-2012, Tomasz Sowa
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *  * Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
- *    
+ *
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *    
+ *
  *  * Neither the name Tomasz Sowa nor the names of contributors to this
  *    project may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -64,12 +64,12 @@ class Big
 {
 
 /*
-	value = mantissa * 2^exponent	
+	value = mantissa * 2^exponent
 
 	exponent - an integer value with a sign
 	mantissa - an integer value without a sing
 
-	mantissa must be pushed into the left side that is the highest bit from 
+	mantissa must be pushed into the left side that is the highest bit from
 	mantissa must be one (of course if there's another value than zero) -- this job
 	(pushing bits into the left side) making Standardizing() method
 
@@ -264,7 +264,7 @@ public:
 		*/
 	}
 
-	
+
 	/*!
 		this method sets one
 	*/
@@ -333,40 +333,40 @@ private:
 	{
 	// this is a static table which represents the value of Pi (mantissa of it)
 	// (first is the highest word)
-	// we must define this table as 'unsigned int' because 
+	// we must define this table as 'unsigned int' because
 	// both on 32bit and 64bit platforms this table is 32bit
 	static const unsigned int temp_table[] = {
-		0xc90fdaa2, 0x2168c234, 0xc4c6628b, 0x80dc1cd1, 0x29024e08, 0x8a67cc74, 0x020bbea6, 0x3b139b22, 
-		0x514a0879, 0x8e3404dd, 0xef9519b3, 0xcd3a431b, 0x302b0a6d, 0xf25f1437, 0x4fe1356d, 0x6d51c245, 
-		0xe485b576, 0x625e7ec6, 0xf44c42e9, 0xa637ed6b, 0x0bff5cb6, 0xf406b7ed, 0xee386bfb, 0x5a899fa5, 
-		0xae9f2411, 0x7c4b1fe6, 0x49286651, 0xece45b3d, 0xc2007cb8, 0xa163bf05, 0x98da4836, 0x1c55d39a, 
-		0x69163fa8, 0xfd24cf5f, 0x83655d23, 0xdca3ad96, 0x1c62f356, 0x208552bb, 0x9ed52907, 0x7096966d, 
-		0x670c354e, 0x4abc9804, 0xf1746c08, 0xca18217c, 0x32905e46, 0x2e36ce3b, 0xe39e772c, 0x180e8603, 
-		0x9b2783a2, 0xec07a28f, 0xb5c55df0, 0x6f4c52c9, 0xde2bcbf6, 0x95581718, 0x3995497c, 0xea956ae5, 
-		0x15d22618, 0x98fa0510, 0x15728e5a, 0x8aaac42d, 0xad33170d, 0x04507a33, 0xa85521ab, 0xdf1cba64, 
-		0xecfb8504, 0x58dbef0a, 0x8aea7157, 0x5d060c7d, 0xb3970f85, 0xa6e1e4c7, 0xabf5ae8c, 0xdb0933d7, 
-		0x1e8c94e0, 0x4a25619d, 0xcee3d226, 0x1ad2ee6b, 0xf12ffa06, 0xd98a0864, 0xd8760273, 0x3ec86a64, 
-		0x521f2b18, 0x177b200c, 0xbbe11757, 0x7a615d6c, 0x770988c0, 0xbad946e2, 0x08e24fa0, 0x74e5ab31, 
-		0x43db5bfc, 0xe0fd108e, 0x4b82d120, 0xa9210801, 0x1a723c12, 0xa787e6d7, 0x88719a10, 0xbdba5b26, 
-		0x99c32718, 0x6af4e23c, 0x1a946834, 0xb6150bda, 0x2583e9ca, 0x2ad44ce8, 0xdbbbc2db, 0x04de8ef9, 
-		0x2e8efc14, 0x1fbecaa6, 0x287c5947, 0x4e6bc05d, 0x99b2964f, 0xa090c3a2, 0x233ba186, 0x515be7ed, 
-		0x1f612970, 0xcee2d7af, 0xb81bdd76, 0x2170481c, 0xd0069127, 0xd5b05aa9, 0x93b4ea98, 0x8d8fddc1, 
-		0x86ffb7dc, 0x90a6c08f, 0x4df435c9, 0x34028492, 0x36c3fab4, 0xd27c7026, 0xc1d4dcb2, 0x602646de, 
-		0xc9751e76, 0x3dba37bd, 0xf8ff9406, 0xad9e530e, 0xe5db382f, 0x413001ae, 0xb06a53ed, 0x9027d831, 
-		0x179727b0, 0x865a8918, 0xda3edbeb, 0xcf9b14ed, 0x44ce6cba, 0xced4bb1b, 0xdb7f1447, 0xe6cc254b, 
-		0x33205151, 0x2bd7af42, 0x6fb8f401, 0x378cd2bf, 0x5983ca01, 0xc64b92ec, 0xf032ea15, 0xd1721d03, 
-		0xf482d7ce, 0x6e74fef6, 0xd55e702f, 0x46980c82, 0xb5a84031, 0x900b1c9e, 0x59e7c97f, 0xbec7e8f3, 
-		0x23a97a7e, 0x36cc88be, 0x0f1d45b7, 0xff585ac5, 0x4bd407b2, 0x2b4154aa, 0xcc8f6d7e, 0xbf48e1d8, 
-		0x14cc5ed2, 0x0f8037e0, 0xa79715ee, 0xf29be328, 0x06a1d58b, 0xb7c5da76, 0xf550aa3d, 0x8a1fbff0, 
-		0xeb19ccb1, 0xa313d55c, 0xda56c9ec, 0x2ef29632, 0x387fe8d7, 0x6e3c0468, 0x043e8f66, 0x3f4860ee, 
-		0x12bf2d5b, 0x0b7474d6, 0xe694f91e, 0x6dbe1159, 0x74a3926f, 0x12fee5e4, 0x38777cb6, 0xa932df8c, 
-		0xd8bec4d0, 0x73b931ba, 0x3bc832b6, 0x8d9dd300, 0x741fa7bf, 0x8afc47ed, 0x2576f693, 0x6ba42466, 
-		0x3aab639c, 0x5ae4f568, 0x3423b474, 0x2bf1c978, 0x238f16cb, 0xe39d652d, 0xe3fdb8be, 0xfc848ad9, 
-		0x22222e04, 0xa4037c07, 0x13eb57a8, 0x1a23f0c7, 0x3473fc64, 0x6cea306b, 0x4bcbc886, 0x2f8385dd, 
-		0xfa9d4b7f, 0xa2c087e8, 0x79683303, 0xed5bdd3a, 0x062b3cf5, 0xb3a278a6, 0x6d2a13f8, 0x3f44f82d, 
-		0xdf310ee0, 0x74ab6a36, 0x4597e899, 0xa0255dc1, 0x64f31cc5, 0x0846851d, 0xf9ab4819, 0x5ded7ea1, 
-		0xb1d510bd, 0x7ee74d73, 0xfaf36bc3, 0x1ecfa268, 0x359046f4, 0xeb879f92, 0x4009438b, 0x481c6cd7, 
-		0x889a002e, 0xd5ee382b, 0xc9190da6, 0xfc026e47, 0x9558e447, 0x5677e9aa, 0x9e3050e2, 0x765694df, 
+		0xc90fdaa2, 0x2168c234, 0xc4c6628b, 0x80dc1cd1, 0x29024e08, 0x8a67cc74, 0x020bbea6, 0x3b139b22,
+		0x514a0879, 0x8e3404dd, 0xef9519b3, 0xcd3a431b, 0x302b0a6d, 0xf25f1437, 0x4fe1356d, 0x6d51c245,
+		0xe485b576, 0x625e7ec6, 0xf44c42e9, 0xa637ed6b, 0x0bff5cb6, 0xf406b7ed, 0xee386bfb, 0x5a899fa5,
+		0xae9f2411, 0x7c4b1fe6, 0x49286651, 0xece45b3d, 0xc2007cb8, 0xa163bf05, 0x98da4836, 0x1c55d39a,
+		0x69163fa8, 0xfd24cf5f, 0x83655d23, 0xdca3ad96, 0x1c62f356, 0x208552bb, 0x9ed52907, 0x7096966d,
+		0x670c354e, 0x4abc9804, 0xf1746c08, 0xca18217c, 0x32905e46, 0x2e36ce3b, 0xe39e772c, 0x180e8603,
+		0x9b2783a2, 0xec07a28f, 0xb5c55df0, 0x6f4c52c9, 0xde2bcbf6, 0x95581718, 0x3995497c, 0xea956ae5,
+		0x15d22618, 0x98fa0510, 0x15728e5a, 0x8aaac42d, 0xad33170d, 0x04507a33, 0xa85521ab, 0xdf1cba64,
+		0xecfb8504, 0x58dbef0a, 0x8aea7157, 0x5d060c7d, 0xb3970f85, 0xa6e1e4c7, 0xabf5ae8c, 0xdb0933d7,
+		0x1e8c94e0, 0x4a25619d, 0xcee3d226, 0x1ad2ee6b, 0xf12ffa06, 0xd98a0864, 0xd8760273, 0x3ec86a64,
+		0x521f2b18, 0x177b200c, 0xbbe11757, 0x7a615d6c, 0x770988c0, 0xbad946e2, 0x08e24fa0, 0x74e5ab31,
+		0x43db5bfc, 0xe0fd108e, 0x4b82d120, 0xa9210801, 0x1a723c12, 0xa787e6d7, 0x88719a10, 0xbdba5b26,
+		0x99c32718, 0x6af4e23c, 0x1a946834, 0xb6150bda, 0x2583e9ca, 0x2ad44ce8, 0xdbbbc2db, 0x04de8ef9,
+		0x2e8efc14, 0x1fbecaa6, 0x287c5947, 0x4e6bc05d, 0x99b2964f, 0xa090c3a2, 0x233ba186, 0x515be7ed,
+		0x1f612970, 0xcee2d7af, 0xb81bdd76, 0x2170481c, 0xd0069127, 0xd5b05aa9, 0x93b4ea98, 0x8d8fddc1,
+		0x86ffb7dc, 0x90a6c08f, 0x4df435c9, 0x34028492, 0x36c3fab4, 0xd27c7026, 0xc1d4dcb2, 0x602646de,
+		0xc9751e76, 0x3dba37bd, 0xf8ff9406, 0xad9e530e, 0xe5db382f, 0x413001ae, 0xb06a53ed, 0x9027d831,
+		0x179727b0, 0x865a8918, 0xda3edbeb, 0xcf9b14ed, 0x44ce6cba, 0xced4bb1b, 0xdb7f1447, 0xe6cc254b,
+		0x33205151, 0x2bd7af42, 0x6fb8f401, 0x378cd2bf, 0x5983ca01, 0xc64b92ec, 0xf032ea15, 0xd1721d03,
+		0xf482d7ce, 0x6e74fef6, 0xd55e702f, 0x46980c82, 0xb5a84031, 0x900b1c9e, 0x59e7c97f, 0xbec7e8f3,
+		0x23a97a7e, 0x36cc88be, 0x0f1d45b7, 0xff585ac5, 0x4bd407b2, 0x2b4154aa, 0xcc8f6d7e, 0xbf48e1d8,
+		0x14cc5ed2, 0x0f8037e0, 0xa79715ee, 0xf29be328, 0x06a1d58b, 0xb7c5da76, 0xf550aa3d, 0x8a1fbff0,
+		0xeb19ccb1, 0xa313d55c, 0xda56c9ec, 0x2ef29632, 0x387fe8d7, 0x6e3c0468, 0x043e8f66, 0x3f4860ee,
+		0x12bf2d5b, 0x0b7474d6, 0xe694f91e, 0x6dbe1159, 0x74a3926f, 0x12fee5e4, 0x38777cb6, 0xa932df8c,
+		0xd8bec4d0, 0x73b931ba, 0x3bc832b6, 0x8d9dd300, 0x741fa7bf, 0x8afc47ed, 0x2576f693, 0x6ba42466,
+		0x3aab639c, 0x5ae4f568, 0x3423b474, 0x2bf1c978, 0x238f16cb, 0xe39d652d, 0xe3fdb8be, 0xfc848ad9,
+		0x22222e04, 0xa4037c07, 0x13eb57a8, 0x1a23f0c7, 0x3473fc64, 0x6cea306b, 0x4bcbc886, 0x2f8385dd,
+		0xfa9d4b7f, 0xa2c087e8, 0x79683303, 0xed5bdd3a, 0x062b3cf5, 0xb3a278a6, 0x6d2a13f8, 0x3f44f82d,
+		0xdf310ee0, 0x74ab6a36, 0x4597e899, 0xa0255dc1, 0x64f31cc5, 0x0846851d, 0xf9ab4819, 0x5ded7ea1,
+		0xb1d510bd, 0x7ee74d73, 0xfaf36bc3, 0x1ecfa268, 0x359046f4, 0xeb879f92, 0x4009438b, 0x481c6cd7,
+		0x889a002e, 0xd5ee382b, 0xc9190da6, 0xfc026e47, 0x9558e447, 0x5677e9aa, 0x9e3050e2, 0x765694df,
 		0xc81f56e8, 0x80b96e71, 0x60c980dd, 0x98a573ea, 0x4472065a, 0x139cd290, 0x6cd1cb72, 0x9ec52a53 // last one was: 0x9ec52a52
 		//0x86d44014, ...
 		// (the last word 0x9ec52a52 was rounded up because the next one is 0x86d44014 -- first bit is one 0x8..)
@@ -380,7 +380,7 @@ private:
 		// and then the first 256 words were taken into this table
 		// (TTMATH_BUILTIN_VARIABLES_SIZE on 32bit platform should have the value 256,
 		// and on 64bit platform value 128 (256/2=128))
-	
+
 		mantissa.SetFromTable(temp_table, sizeof(temp_table) / sizeof(int));
 	}
 
@@ -427,37 +427,37 @@ public:
 	void SetE()
 	{
 	static const unsigned int temp_table[] = {
-		0xadf85458, 0xa2bb4a9a, 0xafdc5620, 0x273d3cf1, 0xd8b9c583, 0xce2d3695, 0xa9e13641, 0x146433fb, 
-		0xcc939dce, 0x249b3ef9, 0x7d2fe363, 0x630c75d8, 0xf681b202, 0xaec4617a, 0xd3df1ed5, 0xd5fd6561, 
-		0x2433f51f, 0x5f066ed0, 0x85636555, 0x3ded1af3, 0xb557135e, 0x7f57c935, 0x984f0c70, 0xe0e68b77, 
-		0xe2a689da, 0xf3efe872, 0x1df158a1, 0x36ade735, 0x30acca4f, 0x483a797a, 0xbc0ab182, 0xb324fb61, 
-		0xd108a94b, 0xb2c8e3fb, 0xb96adab7, 0x60d7f468, 0x1d4f42a3, 0xde394df4, 0xae56ede7, 0x6372bb19, 
-		0x0b07a7c8, 0xee0a6d70, 0x9e02fce1, 0xcdf7e2ec, 0xc03404cd, 0x28342f61, 0x9172fe9c, 0xe98583ff, 
-		0x8e4f1232, 0xeef28183, 0xc3fe3b1b, 0x4c6fad73, 0x3bb5fcbc, 0x2ec22005, 0xc58ef183, 0x7d1683b2, 
-		0xc6f34a26, 0xc1b2effa, 0x886b4238, 0x611fcfdc, 0xde355b3b, 0x6519035b, 0xbc34f4de, 0xf99c0238, 
-		0x61b46fc9, 0xd6e6c907, 0x7ad91d26, 0x91f7f7ee, 0x598cb0fa, 0xc186d91c, 0xaefe1309, 0x85139270, 
-		0xb4130c93, 0xbc437944, 0xf4fd4452, 0xe2d74dd3, 0x64f2e21e, 0x71f54bff, 0x5cae82ab, 0x9c9df69e, 
-		0xe86d2bc5, 0x22363a0d, 0xabc52197, 0x9b0deada, 0x1dbf9a42, 0xd5c4484e, 0x0abcd06b, 0xfa53ddef, 
-		0x3c1b20ee, 0x3fd59d7c, 0x25e41d2b, 0x669e1ef1, 0x6e6f52c3, 0x164df4fb, 0x7930e9e4, 0xe58857b6, 
-		0xac7d5f42, 0xd69f6d18, 0x7763cf1d, 0x55034004, 0x87f55ba5, 0x7e31cc7a, 0x7135c886, 0xefb4318a, 
-		0xed6a1e01, 0x2d9e6832, 0xa907600a, 0x918130c4, 0x6dc778f9, 0x71ad0038, 0x092999a3, 0x33cb8b7a, 
-		0x1a1db93d, 0x7140003c, 0x2a4ecea9, 0xf98d0acc, 0x0a8291cd, 0xcec97dcf, 0x8ec9b55a, 0x7f88a46b, 
-		0x4db5a851, 0xf44182e1, 0xc68a007e, 0x5e0dd902, 0x0bfd64b6, 0x45036c7a, 0x4e677d2c, 0x38532a3a, 
-		0x23ba4442, 0xcaf53ea6, 0x3bb45432, 0x9b7624c8, 0x917bdd64, 0xb1c0fd4c, 0xb38e8c33, 0x4c701c3a, 
-		0xcdad0657, 0xfccfec71, 0x9b1f5c3e, 0x4e46041f, 0x388147fb, 0x4cfdb477, 0xa52471f7, 0xa9a96910, 
-		0xb855322e, 0xdb6340d8, 0xa00ef092, 0x350511e3, 0x0abec1ff, 0xf9e3a26e, 0x7fb29f8c, 0x183023c3, 
-		0x587e38da, 0x0077d9b4, 0x763e4e4b, 0x94b2bbc1, 0x94c6651e, 0x77caf992, 0xeeaac023, 0x2a281bf6, 
-		0xb3a739c1, 0x22611682, 0x0ae8db58, 0x47a67cbe, 0xf9c9091b, 0x462d538c, 0xd72b0374, 0x6ae77f5e, 
-		0x62292c31, 0x1562a846, 0x505dc82d, 0xb854338a, 0xe49f5235, 0xc95b9117, 0x8ccf2dd5, 0xcacef403, 
-		0xec9d1810, 0xc6272b04, 0x5b3b71f9, 0xdc6b80d6, 0x3fdd4a8e, 0x9adb1e69, 0x62a69526, 0xd43161c1, 
-		0xa41d570d, 0x7938dad4, 0xa40e329c, 0xcff46aaa, 0x36ad004c, 0xf600c838, 0x1e425a31, 0xd951ae64, 
-		0xfdb23fce, 0xc9509d43, 0x687feb69, 0xedd1cc5e, 0x0b8cc3bd, 0xf64b10ef, 0x86b63142, 0xa3ab8829, 
-		0x555b2f74, 0x7c932665, 0xcb2c0f1c, 0xc01bd702, 0x29388839, 0xd2af05e4, 0x54504ac7, 0x8b758282, 
-		0x2846c0ba, 0x35c35f5c, 0x59160cc0, 0x46fd8251, 0x541fc68c, 0x9c86b022, 0xbb709987, 0x6a460e74, 
-		0x51a8a931, 0x09703fee, 0x1c217e6c, 0x3826e52c, 0x51aa691e, 0x0e423cfc, 0x99e9e316, 0x50c1217b, 
-		0x624816cd, 0xad9a95f9, 0xd5b80194, 0x88d9c0a0, 0xa1fe3075, 0xa577e231, 0x83f81d4a, 0x3f2fa457, 
-		0x1efc8ce0, 0xba8a4fe8, 0xb6855dfe, 0x72b0a66e, 0xded2fbab, 0xfbe58a30, 0xfafabe1c, 0x5d71a87e, 
-		0x2f741ef8, 0xc1fe86fe, 0xa6bbfde5, 0x30677f0d, 0x97d11d49, 0xf7a8443d, 0x0822e506, 0xa9f4614e, 
+		0xadf85458, 0xa2bb4a9a, 0xafdc5620, 0x273d3cf1, 0xd8b9c583, 0xce2d3695, 0xa9e13641, 0x146433fb,
+		0xcc939dce, 0x249b3ef9, 0x7d2fe363, 0x630c75d8, 0xf681b202, 0xaec4617a, 0xd3df1ed5, 0xd5fd6561,
+		0x2433f51f, 0x5f066ed0, 0x85636555, 0x3ded1af3, 0xb557135e, 0x7f57c935, 0x984f0c70, 0xe0e68b77,
+		0xe2a689da, 0xf3efe872, 0x1df158a1, 0x36ade735, 0x30acca4f, 0x483a797a, 0xbc0ab182, 0xb324fb61,
+		0xd108a94b, 0xb2c8e3fb, 0xb96adab7, 0x60d7f468, 0x1d4f42a3, 0xde394df4, 0xae56ede7, 0x6372bb19,
+		0x0b07a7c8, 0xee0a6d70, 0x9e02fce1, 0xcdf7e2ec, 0xc03404cd, 0x28342f61, 0x9172fe9c, 0xe98583ff,
+		0x8e4f1232, 0xeef28183, 0xc3fe3b1b, 0x4c6fad73, 0x3bb5fcbc, 0x2ec22005, 0xc58ef183, 0x7d1683b2,
+		0xc6f34a26, 0xc1b2effa, 0x886b4238, 0x611fcfdc, 0xde355b3b, 0x6519035b, 0xbc34f4de, 0xf99c0238,
+		0x61b46fc9, 0xd6e6c907, 0x7ad91d26, 0x91f7f7ee, 0x598cb0fa, 0xc186d91c, 0xaefe1309, 0x85139270,
+		0xb4130c93, 0xbc437944, 0xf4fd4452, 0xe2d74dd3, 0x64f2e21e, 0x71f54bff, 0x5cae82ab, 0x9c9df69e,
+		0xe86d2bc5, 0x22363a0d, 0xabc52197, 0x9b0deada, 0x1dbf9a42, 0xd5c4484e, 0x0abcd06b, 0xfa53ddef,
+		0x3c1b20ee, 0x3fd59d7c, 0x25e41d2b, 0x669e1ef1, 0x6e6f52c3, 0x164df4fb, 0x7930e9e4, 0xe58857b6,
+		0xac7d5f42, 0xd69f6d18, 0x7763cf1d, 0x55034004, 0x87f55ba5, 0x7e31cc7a, 0x7135c886, 0xefb4318a,
+		0xed6a1e01, 0x2d9e6832, 0xa907600a, 0x918130c4, 0x6dc778f9, 0x71ad0038, 0x092999a3, 0x33cb8b7a,
+		0x1a1db93d, 0x7140003c, 0x2a4ecea9, 0xf98d0acc, 0x0a8291cd, 0xcec97dcf, 0x8ec9b55a, 0x7f88a46b,
+		0x4db5a851, 0xf44182e1, 0xc68a007e, 0x5e0dd902, 0x0bfd64b6, 0x45036c7a, 0x4e677d2c, 0x38532a3a,
+		0x23ba4442, 0xcaf53ea6, 0x3bb45432, 0x9b7624c8, 0x917bdd64, 0xb1c0fd4c, 0xb38e8c33, 0x4c701c3a,
+		0xcdad0657, 0xfccfec71, 0x9b1f5c3e, 0x4e46041f, 0x388147fb, 0x4cfdb477, 0xa52471f7, 0xa9a96910,
+		0xb855322e, 0xdb6340d8, 0xa00ef092, 0x350511e3, 0x0abec1ff, 0xf9e3a26e, 0x7fb29f8c, 0x183023c3,
+		0x587e38da, 0x0077d9b4, 0x763e4e4b, 0x94b2bbc1, 0x94c6651e, 0x77caf992, 0xeeaac023, 0x2a281bf6,
+		0xb3a739c1, 0x22611682, 0x0ae8db58, 0x47a67cbe, 0xf9c9091b, 0x462d538c, 0xd72b0374, 0x6ae77f5e,
+		0x62292c31, 0x1562a846, 0x505dc82d, 0xb854338a, 0xe49f5235, 0xc95b9117, 0x8ccf2dd5, 0xcacef403,
+		0xec9d1810, 0xc6272b04, 0x5b3b71f9, 0xdc6b80d6, 0x3fdd4a8e, 0x9adb1e69, 0x62a69526, 0xd43161c1,
+		0xa41d570d, 0x7938dad4, 0xa40e329c, 0xcff46aaa, 0x36ad004c, 0xf600c838, 0x1e425a31, 0xd951ae64,
+		0xfdb23fce, 0xc9509d43, 0x687feb69, 0xedd1cc5e, 0x0b8cc3bd, 0xf64b10ef, 0x86b63142, 0xa3ab8829,
+		0x555b2f74, 0x7c932665, 0xcb2c0f1c, 0xc01bd702, 0x29388839, 0xd2af05e4, 0x54504ac7, 0x8b758282,
+		0x2846c0ba, 0x35c35f5c, 0x59160cc0, 0x46fd8251, 0x541fc68c, 0x9c86b022, 0xbb709987, 0x6a460e74,
+		0x51a8a931, 0x09703fee, 0x1c217e6c, 0x3826e52c, 0x51aa691e, 0x0e423cfc, 0x99e9e316, 0x50c1217b,
+		0x624816cd, 0xad9a95f9, 0xd5b80194, 0x88d9c0a0, 0xa1fe3075, 0xa577e231, 0x83f81d4a, 0x3f2fa457,
+		0x1efc8ce0, 0xba8a4fe8, 0xb6855dfe, 0x72b0a66e, 0xded2fbab, 0xfbe58a30, 0xfafabe1c, 0x5d71a87e,
+		0x2f741ef8, 0xc1fe86fe, 0xa6bbfde5, 0x30677f0d, 0x97d11d49, 0xf7a8443d, 0x0822e506, 0xa9f4614e,
 		0x011e2a94, 0x838ff88c, 0xd68c8bb7, 0xc51eef6d, 0x49ea8ab4, 0xf2c3df5b, 0xb4e0735a, 0xb0d68749
 		// 0x2fe26dd4, ...
 		// 256 32bit words for the mantissa -- about 2464 valid decimal digits
@@ -484,42 +484,42 @@ public:
 	void SetLn2()
 	{
 	static const unsigned int temp_table[] = {
-		0xb17217f7, 0xd1cf79ab, 0xc9e3b398, 0x03f2f6af, 0x40f34326, 0x7298b62d, 0x8a0d175b, 0x8baafa2b, 
-		0xe7b87620, 0x6debac98, 0x559552fb, 0x4afa1b10, 0xed2eae35, 0xc1382144, 0x27573b29, 0x1169b825, 
-		0x3e96ca16, 0x224ae8c5, 0x1acbda11, 0x317c387e, 0xb9ea9bc3, 0xb136603b, 0x256fa0ec, 0x7657f74b, 
-		0x72ce87b1, 0x9d6548ca, 0xf5dfa6bd, 0x38303248, 0x655fa187, 0x2f20e3a2, 0xda2d97c5, 0x0f3fd5c6, 
-		0x07f4ca11, 0xfb5bfb90, 0x610d30f8, 0x8fe551a2, 0xee569d6d, 0xfc1efa15, 0x7d2e23de, 0x1400b396, 
-		0x17460775, 0xdb8990e5, 0xc943e732, 0xb479cd33, 0xcccc4e65, 0x9393514c, 0x4c1a1e0b, 0xd1d6095d, 
-		0x25669b33, 0x3564a337, 0x6a9c7f8a, 0x5e148e82, 0x074db601, 0x5cfe7aa3, 0x0c480a54, 0x17350d2c, 
-		0x955d5179, 0xb1e17b9d, 0xae313cdb, 0x6c606cb1, 0x078f735d, 0x1b2db31b, 0x5f50b518, 0x5064c18b, 
-		0x4d162db3, 0xb365853d, 0x7598a195, 0x1ae273ee, 0x5570b6c6, 0x8f969834, 0x96d4e6d3, 0x30af889b, 
-		0x44a02554, 0x731cdc8e, 0xa17293d1, 0x228a4ef9, 0x8d6f5177, 0xfbcf0755, 0x268a5c1f, 0x9538b982, 
-		0x61affd44, 0x6b1ca3cf, 0x5e9222b8, 0x8c66d3c5, 0x422183ed, 0xc9942109, 0x0bbb16fa, 0xf3d949f2, 
-		0x36e02b20, 0xcee886b9, 0x05c128d5, 0x3d0bd2f9, 0x62136319, 0x6af50302, 0x0060e499, 0x08391a0c, 
-		0x57339ba2, 0xbeba7d05, 0x2ac5b61c, 0xc4e9207c, 0xef2f0ce2, 0xd7373958, 0xd7622658, 0x901e646a, 
-		0x95184460, 0xdc4e7487, 0x156e0c29, 0x2413d5e3, 0x61c1696d, 0xd24aaebd, 0x473826fd, 0xa0c238b9, 
-		0x0ab111bb, 0xbd67c724, 0x972cd18b, 0xfbbd9d42, 0x6c472096, 0xe76115c0, 0x5f6f7ceb, 0xac9f45ae, 
-		0xcecb72f1, 0x9c38339d, 0x8f682625, 0x0dea891e, 0xf07afff3, 0xa892374e, 0x175eb4af, 0xc8daadd8, 
-		0x85db6ab0, 0x3a49bd0d, 0xc0b1b31d, 0x8a0e23fa, 0xc5e5767d, 0xf95884e0, 0x6425a415, 0x26fac51c, 
-		0x3ea8449f, 0xe8f70edd, 0x062b1a63, 0xa6c4c60c, 0x52ab3316, 0x1e238438, 0x897a39ce, 0x78b63c9f, 
-		0x364f5b8a, 0xef22ec2f, 0xee6e0850, 0xeca42d06, 0xfb0c75df, 0x5497e00c, 0x554b03d7, 0xd2874a00, 
-		0x0ca8f58d, 0x94f0341c, 0xbe2ec921, 0x56c9f949, 0xdb4a9316, 0xf281501e, 0x53daec3f, 0x64f1b783, 
-		0x154c6032, 0x0e2ff793, 0x33ce3573, 0xfacc5fdc, 0xf1178590, 0x3155bbd9, 0x0f023b22, 0x0224fcd8, 
-		0x471bf4f4, 0x45f0a88a, 0x14f0cd97, 0x6ea354bb, 0x20cdb5cc, 0xb3db2392, 0x88d58655, 0x4e2a0e8a, 
-		0x6fe51a8c, 0xfaa72ef2, 0xad8a43dc, 0x4212b210, 0xb779dfe4, 0x9d7307cc, 0x846532e4, 0xb9694eda, 
-		0xd162af05, 0x3b1751f3, 0xa3d091f6, 0x56658154, 0x12b5e8c2, 0x02461069, 0xac14b958, 0x784934b8, 
-		0xd6cce1da, 0xa5053701, 0x1aa4fb42, 0xb9a3def4, 0x1bda1f85, 0xef6fdbf2, 0xf2d89d2a, 0x4b183527, 
-		0x8fd94057, 0x89f45681, 0x2b552879, 0xa6168695, 0xc12963b0, 0xff01eaab, 0x73e5b5c1, 0x585318e7, 
-		0x624f14a5, 0x1a4a026b, 0x68082920, 0x57fd99b6, 0x6dc085a9, 0x8ac8d8ca, 0xf9eeeea9, 0x8a2400ca, 
-		0xc95f260f, 0xd10036f9, 0xf91096ac, 0x3195220a, 0x1a356b2a, 0x73b7eaad, 0xaf6d6058, 0x71ef7afb, 
-		0x80bc4234, 0x33562e94, 0xb12dfab4, 0x14451579, 0xdf59eae0, 0x51707062, 0x4012a829, 0x62c59cab, 
-		0x347f8304, 0xd889659e, 0x5a9139db, 0x14efcc30, 0x852be3e8, 0xfc99f14d, 0x1d822dd6, 0xe2f76797, 
-		0xe30219c8, 0xaa9ce884, 0x8a886eb3, 0xc87b7295, 0x988012e8, 0x314186ed, 0xbaf86856, 0xccd3c3b6, 
+		0xb17217f7, 0xd1cf79ab, 0xc9e3b398, 0x03f2f6af, 0x40f34326, 0x7298b62d, 0x8a0d175b, 0x8baafa2b,
+		0xe7b87620, 0x6debac98, 0x559552fb, 0x4afa1b10, 0xed2eae35, 0xc1382144, 0x27573b29, 0x1169b825,
+		0x3e96ca16, 0x224ae8c5, 0x1acbda11, 0x317c387e, 0xb9ea9bc3, 0xb136603b, 0x256fa0ec, 0x7657f74b,
+		0x72ce87b1, 0x9d6548ca, 0xf5dfa6bd, 0x38303248, 0x655fa187, 0x2f20e3a2, 0xda2d97c5, 0x0f3fd5c6,
+		0x07f4ca11, 0xfb5bfb90, 0x610d30f8, 0x8fe551a2, 0xee569d6d, 0xfc1efa15, 0x7d2e23de, 0x1400b396,
+		0x17460775, 0xdb8990e5, 0xc943e732, 0xb479cd33, 0xcccc4e65, 0x9393514c, 0x4c1a1e0b, 0xd1d6095d,
+		0x25669b33, 0x3564a337, 0x6a9c7f8a, 0x5e148e82, 0x074db601, 0x5cfe7aa3, 0x0c480a54, 0x17350d2c,
+		0x955d5179, 0xb1e17b9d, 0xae313cdb, 0x6c606cb1, 0x078f735d, 0x1b2db31b, 0x5f50b518, 0x5064c18b,
+		0x4d162db3, 0xb365853d, 0x7598a195, 0x1ae273ee, 0x5570b6c6, 0x8f969834, 0x96d4e6d3, 0x30af889b,
+		0x44a02554, 0x731cdc8e, 0xa17293d1, 0x228a4ef9, 0x8d6f5177, 0xfbcf0755, 0x268a5c1f, 0x9538b982,
+		0x61affd44, 0x6b1ca3cf, 0x5e9222b8, 0x8c66d3c5, 0x422183ed, 0xc9942109, 0x0bbb16fa, 0xf3d949f2,
+		0x36e02b20, 0xcee886b9, 0x05c128d5, 0x3d0bd2f9, 0x62136319, 0x6af50302, 0x0060e499, 0x08391a0c,
+		0x57339ba2, 0xbeba7d05, 0x2ac5b61c, 0xc4e9207c, 0xef2f0ce2, 0xd7373958, 0xd7622658, 0x901e646a,
+		0x95184460, 0xdc4e7487, 0x156e0c29, 0x2413d5e3, 0x61c1696d, 0xd24aaebd, 0x473826fd, 0xa0c238b9,
+		0x0ab111bb, 0xbd67c724, 0x972cd18b, 0xfbbd9d42, 0x6c472096, 0xe76115c0, 0x5f6f7ceb, 0xac9f45ae,
+		0xcecb72f1, 0x9c38339d, 0x8f682625, 0x0dea891e, 0xf07afff3, 0xa892374e, 0x175eb4af, 0xc8daadd8,
+		0x85db6ab0, 0x3a49bd0d, 0xc0b1b31d, 0x8a0e23fa, 0xc5e5767d, 0xf95884e0, 0x6425a415, 0x26fac51c,
+		0x3ea8449f, 0xe8f70edd, 0x062b1a63, 0xa6c4c60c, 0x52ab3316, 0x1e238438, 0x897a39ce, 0x78b63c9f,
+		0x364f5b8a, 0xef22ec2f, 0xee6e0850, 0xeca42d06, 0xfb0c75df, 0x5497e00c, 0x554b03d7, 0xd2874a00,
+		0x0ca8f58d, 0x94f0341c, 0xbe2ec921, 0x56c9f949, 0xdb4a9316, 0xf281501e, 0x53daec3f, 0x64f1b783,
+		0x154c6032, 0x0e2ff793, 0x33ce3573, 0xfacc5fdc, 0xf1178590, 0x3155bbd9, 0x0f023b22, 0x0224fcd8,
+		0x471bf4f4, 0x45f0a88a, 0x14f0cd97, 0x6ea354bb, 0x20cdb5cc, 0xb3db2392, 0x88d58655, 0x4e2a0e8a,
+		0x6fe51a8c, 0xfaa72ef2, 0xad8a43dc, 0x4212b210, 0xb779dfe4, 0x9d7307cc, 0x846532e4, 0xb9694eda,
+		0xd162af05, 0x3b1751f3, 0xa3d091f6, 0x56658154, 0x12b5e8c2, 0x02461069, 0xac14b958, 0x784934b8,
+		0xd6cce1da, 0xa5053701, 0x1aa4fb42, 0xb9a3def4, 0x1bda1f85, 0xef6fdbf2, 0xf2d89d2a, 0x4b183527,
+		0x8fd94057, 0x89f45681, 0x2b552879, 0xa6168695, 0xc12963b0, 0xff01eaab, 0x73e5b5c1, 0x585318e7,
+		0x624f14a5, 0x1a4a026b, 0x68082920, 0x57fd99b6, 0x6dc085a9, 0x8ac8d8ca, 0xf9eeeea9, 0x8a2400ca,
+		0xc95f260f, 0xd10036f9, 0xf91096ac, 0x3195220a, 0x1a356b2a, 0x73b7eaad, 0xaf6d6058, 0x71ef7afb,
+		0x80bc4234, 0x33562e94, 0xb12dfab4, 0x14451579, 0xdf59eae0, 0x51707062, 0x4012a829, 0x62c59cab,
+		0x347f8304, 0xd889659e, 0x5a9139db, 0x14efcc30, 0x852be3e8, 0xfc99f14d, 0x1d822dd6, 0xe2f76797,
+		0xe30219c8, 0xaa9ce884, 0x8a886eb3, 0xc87b7295, 0x988012e8, 0x314186ed, 0xbaf86856, 0xccd3c3b6,
 		0xee94e62f, 0x110a6783, 0xd2aae89c, 0xcc3b76fc, 0x435a0ce1, 0x34c2838f, 0xd571ec6c, 0x1366a993 // last one was: 0x1366a992
 		//0xcbb9ac40, ...
 		// (the last word 0x1366a992 was rounded up because the next one is 0xcbb9ac40 -- first bit is one 0xc..)
 		// 256 32bit words for the mantissa -- about 2464 valid decimal digits
-		};	
+		};
 
 		// above value was calculated using Big<1,400> type on a 32bit platform
 		// and then the first 256 words were taken,
@@ -552,42 +552,42 @@ public:
 	void SetLn10()
 	{
 	static const unsigned int temp_table[] = {
-		0x935d8ddd, 0xaaa8ac16, 0xea56d62b, 0x82d30a28, 0xe28fecf9, 0xda5df90e, 0x83c61e82, 0x01f02d72, 
-		0x962f02d7, 0xb1a8105c, 0xcc70cbc0, 0x2c5f0d68, 0x2c622418, 0x410be2da, 0xfb8f7884, 0x02e516d6, 
-		0x782cf8a2, 0x8a8c911e, 0x765aa6c3, 0xb0d831fb, 0xef66ceb0, 0x4ab3c6fa, 0x5161bb49, 0xd219c7bb, 
-		0xca67b35b, 0x23605085, 0x8e93368d, 0x44789c4f, 0x5b08b057, 0xd5ede20f, 0x469ea58e, 0x9305e981, 
-		0xe2478fca, 0xad3aee98, 0x9cd5b42e, 0x6a271619, 0xa47ecb26, 0x978c5d4f, 0xdb1d28ea, 0x57d4fdc0, 
-		0xe40bf3cc, 0x1e14126a, 0x45765cde, 0x268339db, 0xf47fa96d, 0xeb271060, 0xaf88486e, 0xa9b7401e, 
-		0x3dfd3c51, 0x748e6d6e, 0x3848c8d2, 0x5faf1bca, 0xe88047f1, 0x7b0d9b50, 0xa949eaaa, 0xdf69e8a5, 
-		0xf77e3760, 0x4e943960, 0xe38a5700, 0xffde2db1, 0xad6bfbff, 0xd821ba0a, 0x4cb0466d, 0x61ba648e, 
-		0xef99c8e5, 0xf6974f36, 0x3982a78c, 0xa45ddfc8, 0x09426178, 0x19127a6e, 0x3b70fcda, 0x2d732d47, 
-		0xb5e4b1c8, 0xc0e5a10a, 0xaa6604a5, 0x324ec3dc, 0xbc64ea80, 0x6e198566, 0x1f1d366c, 0x20663834, 
-		0x4d5e843f, 0x20642b97, 0x0a62d18e, 0x478f7bd5, 0x8fcd0832, 0x4a7b32a6, 0xdef85a05, 0xeb56323a, 
-		0x421ef5e0, 0xb00410a0, 0xa0d9c260, 0x794a976f, 0xf6ff363d, 0xb00b6b33, 0xf42c58de, 0xf8a3c52d, 
-		0xed69b13d, 0xc1a03730, 0xb6524dc1, 0x8c167e86, 0x99d6d20e, 0xa2defd2b, 0xd006f8b4, 0xbe145a2a, 
-		0xdf3ccbb3, 0x189da49d, 0xbc1261c8, 0xb3e4daad, 0x6a36cecc, 0xb2d5ae5b, 0x89bf752f, 0xb5dfb353, 
-		0xff3065c4, 0x0cfceec8, 0x1be5a9a9, 0x67fddc57, 0xc4b83301, 0x006bf062, 0x4b40ed7a, 0x56c6cdcd, 
-		0xa2d6fe91, 0x388e9e3e, 0x48a93f5f, 0x5e3b6eb4, 0xb81c4a5b, 0x53d49ea6, 0x8e668aea, 0xba83c7f8, 
-		0xfb5f06c3, 0x58ac8f70, 0xfa9d8c59, 0x8c574502, 0xbaf54c96, 0xc84911f0, 0x0482d095, 0x1a0af022, 
-		0xabbab080, 0xec97efd3, 0x671e4e0e, 0x52f166b6, 0xcd5cd226, 0x0dc67795, 0x2e1e34a3, 0xf799677f, 
-		0x2c1d48f1, 0x2944b6c5, 0x2ba1307e, 0x704d67f9, 0x1c1035e4, 0x4e927c63, 0x03cf12bf, 0xe2cd2e31, 
-		0xf8ee4843, 0x344d51b0, 0xf37da42b, 0x9f0b0fd9, 0x134fb2d9, 0xf815e490, 0xd966283f, 0x23962766, 
-		0xeceab1e4, 0xf3b5fc86, 0x468127e2, 0xb606d10d, 0x3a45f4b6, 0xb776102d, 0x2fdbb420, 0x80c8fa84, 
-		0xd0ff9f45, 0xc58aef38, 0xdb2410fd, 0x1f1cebad, 0x733b2281, 0x52ca5f36, 0xddf29daa, 0x544334b8, 
-		0xdeeaf659, 0x4e462713, 0x1ed485b4, 0x6a0822e1, 0x28db471c, 0xa53938a8, 0x44c3bef7, 0xf35215c8, 
-		0xb382bc4e, 0x3e4c6f15, 0x6285f54c, 0x17ab408e, 0xccbf7f5e, 0xd16ab3f6, 0xced2846d, 0xf457e14f, 
-		0xbb45d9c5, 0x646ad497, 0xac697494, 0x145de32e, 0x93907128, 0xd263d521, 0x79efb424, 0xd64651d6, 
-		0xebc0c9f0, 0xbb583a44, 0xc6412c84, 0x85bb29a6, 0x4d31a2cd, 0x92954469, 0xa32b1abd, 0xf7f5202c, 
-		0xa4aa6c93, 0x2e9b53cf, 0x385ab136, 0x2741f356, 0x5de9c065, 0x6009901c, 0x88abbdd8, 0x74efcf73, 
-		0x3f761ad4, 0x35f3c083, 0xfd6b8ee0, 0x0bef11c7, 0xc552a89d, 0x58ce4a21, 0xd71e54f2, 0x4157f6c7, 
-		0xd4622316, 0xe98956d7, 0x450027de, 0xcbd398d8, 0x4b98b36a, 0x0724c25c, 0xdb237760, 0xe9324b68, 
-		0x7523e506, 0x8edad933, 0x92197f00, 0xb853a326, 0xb330c444, 0x65129296, 0x34bc0670, 0xe177806d, 
-		0xe338dac4, 0x5537492a, 0xe19add83, 0xcf45000f, 0x5b423bce, 0x6497d209, 0xe30e18a1, 0x3cbf0687, 
+		0x935d8ddd, 0xaaa8ac16, 0xea56d62b, 0x82d30a28, 0xe28fecf9, 0xda5df90e, 0x83c61e82, 0x01f02d72,
+		0x962f02d7, 0xb1a8105c, 0xcc70cbc0, 0x2c5f0d68, 0x2c622418, 0x410be2da, 0xfb8f7884, 0x02e516d6,
+		0x782cf8a2, 0x8a8c911e, 0x765aa6c3, 0xb0d831fb, 0xef66ceb0, 0x4ab3c6fa, 0x5161bb49, 0xd219c7bb,
+		0xca67b35b, 0x23605085, 0x8e93368d, 0x44789c4f, 0x5b08b057, 0xd5ede20f, 0x469ea58e, 0x9305e981,
+		0xe2478fca, 0xad3aee98, 0x9cd5b42e, 0x6a271619, 0xa47ecb26, 0x978c5d4f, 0xdb1d28ea, 0x57d4fdc0,
+		0xe40bf3cc, 0x1e14126a, 0x45765cde, 0x268339db, 0xf47fa96d, 0xeb271060, 0xaf88486e, 0xa9b7401e,
+		0x3dfd3c51, 0x748e6d6e, 0x3848c8d2, 0x5faf1bca, 0xe88047f1, 0x7b0d9b50, 0xa949eaaa, 0xdf69e8a5,
+		0xf77e3760, 0x4e943960, 0xe38a5700, 0xffde2db1, 0xad6bfbff, 0xd821ba0a, 0x4cb0466d, 0x61ba648e,
+		0xef99c8e5, 0xf6974f36, 0x3982a78c, 0xa45ddfc8, 0x09426178, 0x19127a6e, 0x3b70fcda, 0x2d732d47,
+		0xb5e4b1c8, 0xc0e5a10a, 0xaa6604a5, 0x324ec3dc, 0xbc64ea80, 0x6e198566, 0x1f1d366c, 0x20663834,
+		0x4d5e843f, 0x20642b97, 0x0a62d18e, 0x478f7bd5, 0x8fcd0832, 0x4a7b32a6, 0xdef85a05, 0xeb56323a,
+		0x421ef5e0, 0xb00410a0, 0xa0d9c260, 0x794a976f, 0xf6ff363d, 0xb00b6b33, 0xf42c58de, 0xf8a3c52d,
+		0xed69b13d, 0xc1a03730, 0xb6524dc1, 0x8c167e86, 0x99d6d20e, 0xa2defd2b, 0xd006f8b4, 0xbe145a2a,
+		0xdf3ccbb3, 0x189da49d, 0xbc1261c8, 0xb3e4daad, 0x6a36cecc, 0xb2d5ae5b, 0x89bf752f, 0xb5dfb353,
+		0xff3065c4, 0x0cfceec8, 0x1be5a9a9, 0x67fddc57, 0xc4b83301, 0x006bf062, 0x4b40ed7a, 0x56c6cdcd,
+		0xa2d6fe91, 0x388e9e3e, 0x48a93f5f, 0x5e3b6eb4, 0xb81c4a5b, 0x53d49ea6, 0x8e668aea, 0xba83c7f8,
+		0xfb5f06c3, 0x58ac8f70, 0xfa9d8c59, 0x8c574502, 0xbaf54c96, 0xc84911f0, 0x0482d095, 0x1a0af022,
+		0xabbab080, 0xec97efd3, 0x671e4e0e, 0x52f166b6, 0xcd5cd226, 0x0dc67795, 0x2e1e34a3, 0xf799677f,
+		0x2c1d48f1, 0x2944b6c5, 0x2ba1307e, 0x704d67f9, 0x1c1035e4, 0x4e927c63, 0x03cf12bf, 0xe2cd2e31,
+		0xf8ee4843, 0x344d51b0, 0xf37da42b, 0x9f0b0fd9, 0x134fb2d9, 0xf815e490, 0xd966283f, 0x23962766,
+		0xeceab1e4, 0xf3b5fc86, 0x468127e2, 0xb606d10d, 0x3a45f4b6, 0xb776102d, 0x2fdbb420, 0x80c8fa84,
+		0xd0ff9f45, 0xc58aef38, 0xdb2410fd, 0x1f1cebad, 0x733b2281, 0x52ca5f36, 0xddf29daa, 0x544334b8,
+		0xdeeaf659, 0x4e462713, 0x1ed485b4, 0x6a0822e1, 0x28db471c, 0xa53938a8, 0x44c3bef7, 0xf35215c8,
+		0xb382bc4e, 0x3e4c6f15, 0x6285f54c, 0x17ab408e, 0xccbf7f5e, 0xd16ab3f6, 0xced2846d, 0xf457e14f,
+		0xbb45d9c5, 0x646ad497, 0xac697494, 0x145de32e, 0x93907128, 0xd263d521, 0x79efb424, 0xd64651d6,
+		0xebc0c9f0, 0xbb583a44, 0xc6412c84, 0x85bb29a6, 0x4d31a2cd, 0x92954469, 0xa32b1abd, 0xf7f5202c,
+		0xa4aa6c93, 0x2e9b53cf, 0x385ab136, 0x2741f356, 0x5de9c065, 0x6009901c, 0x88abbdd8, 0x74efcf73,
+		0x3f761ad4, 0x35f3c083, 0xfd6b8ee0, 0x0bef11c7, 0xc552a89d, 0x58ce4a21, 0xd71e54f2, 0x4157f6c7,
+		0xd4622316, 0xe98956d7, 0x450027de, 0xcbd398d8, 0x4b98b36a, 0x0724c25c, 0xdb237760, 0xe9324b68,
+		0x7523e506, 0x8edad933, 0x92197f00, 0xb853a326, 0xb330c444, 0x65129296, 0x34bc0670, 0xe177806d,
+		0xe338dac4, 0x5537492a, 0xe19add83, 0xcf45000f, 0x5b423bce, 0x6497d209, 0xe30e18a1, 0x3cbf0687,
 		0x67973103, 0xd9485366, 0x81506bba, 0x2e93a9a4, 0x7dd59d3f, 0xf17cd746, 0x8c2075be, 0x552a4348 // last one was: 0x552a4347
 		// 0xb4a638ef, ...
 		//(the last word 0x552a4347 was rounded up because the next one is 0xb4a638ef -- first bit is one 0xb..)
 		// 256 32bit words for the mantissa -- about 2464 valid digits (decimal)
-		};	
+		};
 
 		// above value was calculated using Big<1,400> type on a 32bit platform
 		// and then the first 256 32bit words were taken,
@@ -681,7 +681,7 @@ public:
 
 	/*!
 		this method remains the 'sign' of the value
-		e.g.  -2 = -1 
+		e.g.  -2 = -1
 		       0 = 0
 		      10 = 1
 	*/
@@ -854,12 +854,12 @@ private:
 
 				if( moved > 1 )
 					rest_zero = ss2.mantissa.AreFirstBitsZero(moved - 1);
-			
+
 				// (2) moving 'exp_offset' times
 				ss2.mantissa.Rcr(moved, 0);
 			}
 
-			do_adding    = true; 
+			do_adding    = true;
 			do_rounding  = true;
 		}
 
@@ -931,7 +931,7 @@ public:
 		// (1) abs(this) will be >= abs(ss2)
 		if( SmallerWithoutSignThan(ss2) )
 			Swap(ss2);
-	
+
 		if( ss2.IsZero() )
 			return 0;
 
@@ -965,7 +965,7 @@ public:
 	{
 		return Add(ss2, round, false);
 	}
-		
+
 
 	/*!
 		bitwise AND
@@ -1044,7 +1044,7 @@ public:
 			SetNan();
 			return 2;
 		}
-		
+
 		if( IsZero() )
 		{
 			*this = ss2;
@@ -1099,7 +1099,7 @@ public:
 			SetNan();
 			return 2;
 		}
-		
+
 		if( ss2.IsZero() )
 			return 0;
 
@@ -1162,7 +1162,7 @@ public:
 		mantissa.MulInt(ss2, man_result);
 
 		sint bit = UInt<man>::FindLeadingBitInWord(man_result.table[man]); // man - last word
-		
+
 		if( bit!=-1 && uint(bit) > (TTMATH_BITS_PER_UINT/2) )
 		{
 			// 'i' will be from 0 to TTMATH_BITS_PER_UINT
@@ -1289,7 +1289,7 @@ private:
 		mantissa.MulBig(ss2.mantissa, man_result);
 
 		// 'i' will be from 0 to man*TTMATH_BITS_PER_UINT
-		// because mantissa and ss2.mantissa are standardized 
+		// because mantissa and ss2.mantissa are standardized
 		// (the highest bit in man_result is set to 1 or
 		// if there is a zero value in man_result the method CompensationToLeft()
 		// returns 0 but we'll correct this at the end in Standardizing() method)
@@ -1307,7 +1307,7 @@ private:
 		if( round && (man_result.table[man-1] & TTMATH_UINT_HIGHEST_BIT) != 0 )
 		{
 			bool is_half = CheckGreaterOrEqualHalf(man_result.table, man);
-			c += RoundHalfToEven(is_half);		
+			c += RoundHalfToEven(is_half);
 		}
 
 		if( IsSign() == ss2.IsSign() )
@@ -1326,7 +1326,7 @@ private:
 
 	return CheckCarry(c);
 	}
-	
+
 
 public:
 
@@ -1366,7 +1366,7 @@ private:
 	UInt<man*2> man1;
 	UInt<man*2> man2;
 	uint i,c = 0;
-		
+
 		if( IsNan() || ss2.IsNan() )
 			return CheckCarry(1);
 
@@ -1401,7 +1401,7 @@ private:
 			c += exponent.Sub(i);
 
 		c += exponent.Sub(ss2.exponent);
-		
+
 		for(i=0 ; i<man ; ++i)
 			mantissa.table[i] = man1.table[i+man];
 
@@ -1856,7 +1856,7 @@ public:
 		Big<exp,man> denominator, denominator_i;
 		Big<exp,man> one, old_value, next_part;
 		Big<exp,man> numerator = x;
-		
+
 		SetOne();
 		one.SetOne();
 		denominator.SetOne();
@@ -1877,7 +1877,7 @@ public:
 			next_part = numerator;
 
 			if( next_part.Div( denominator ) )
-				// if there is a carry here we only break the loop 
+				// if there is a carry here we only break the loop
 				// however the result we return as good
 				// it means there are too many parts of the formula
 				break;
@@ -1928,7 +1928,7 @@ public:
 	uint Exp(const Big<exp,man> & x)
 	{
 	uint c = 0;
-		
+
 		if( x.IsNan() )
 			return CheckCarry(1);
 
@@ -1983,7 +1983,7 @@ public:
 			ExpSurrounding0(m);
 			c += PowUInt(e_);
 		}
-	
+
 	return CheckCarry(c);
 	}
 
@@ -2043,7 +2043,7 @@ public:
 			next_part = x1;
 
 			if( next_part.Div(denominator) )
-				// if there is a carry here we only break the loop 
+				// if there is a carry here we only break the loop
 				// however the result we return as good
 				// it means there are too many parts of the formula
 				break;
@@ -2163,7 +2163,7 @@ public:
 			SetNan();
 			return 3;
 		}
-		
+
 		if( x == denominator ) // (this is: if x == 1)
 		{
 			// log(1) is 0
@@ -2214,7 +2214,7 @@ public:
 
 		for( i = 0 ; i<man_len_min ; ++i )
 			mantissa.table[man-1-i] = another.mantissa.table[another_man-1-i];
-	
+
 		for( ; i<man ; ++i )
 			mantissa.table[man-1-i] = 0;
 
@@ -2237,7 +2237,7 @@ public:
 			uint man_diff = (another_man - man) * TTMATH_BITS_PER_UINT;
 			c += exponent.AddInt(man_diff, 0);
 		}
-		
+
 		#ifdef _MSC_VER
 		#pragma warning( default: 4307 )
 		#endif
@@ -2279,7 +2279,7 @@ private:
 
 		// how_many_bits is negative, we'll make it positive
 		how_many_bits = -how_many_bits;
-	
+
 		result = (mantissa.table[man-1] >> (how_many_bits % TTMATH_BITS_PER_UINT));
 
 	return 0;
@@ -2383,7 +2383,7 @@ private:
 
 		if( IsZero() )
 			return 0;
-		
+
 		sint maxbit = -sint(man*TTMATH_BITS_PER_UINT);
 
 		if( exponent > maxbit + sint(int_size*TTMATH_BITS_PER_UINT) )
@@ -2509,7 +2509,7 @@ public:
 		mantissa.table[man-1] = value;
 		exponent = -sint(man-1) * sint(TTMATH_BITS_PER_UINT);
 
-		// there shouldn't be a carry because 'value' has the 'uint' type 
+		// there shouldn't be a carry because 'value' has the 'uint' type
 		Standardizing();
 
 	return 0;
@@ -2573,17 +2573,17 @@ public:
 		* If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-1022) * (0.F) These are
 		  "unnormalized" values.
 		* If E=0 and F is zero and S is 1, then V=-0
-		* If E=0 and F is zero and S is 0, then V=0 
+		* If E=0 and F is zero and S is 0, then V=0
 	*/
 
 #ifdef TTMATH_PLATFORM32
 
 	uint FromDouble(double value)
 	{
-		// I am not sure what will be on a platform which has 
+		// I am not sure what will be on a platform which has
 		// a different endianness... but we use this library only
 		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
-		union 
+		union
 		{
 			double d;
 			uint u[2]; // two 32bit words
@@ -2594,7 +2594,7 @@ public:
 		sint e  = ( temp.u[1] & 0x7FF00000u) >> 20;
 		uint m1 = ((temp.u[1] &    0xFFFFFu) << 11) | (temp.u[0] >> 21);
 		uint m2 = temp.u[0] << 11;
-		
+
 		if( e == 2047 )
 		{
 			// If E=2047 and F is nonzero, then V=NaN ("Not a number")
@@ -2602,7 +2602,7 @@ public:
 			// If E=2047 and F is zero and S is 0, then V=Infinity
 
 			// we do not support -Infinity and +Infinity
-			// we assume that there is always NaN 
+			// we assume that there is always NaN
 
 			SetNan();
 		}
@@ -2613,7 +2613,7 @@ public:
 			// V=(-1)**S * 2 ** (E-1023) * (1.F)
 			// where "1.F" is intended to represent the binary number
 			// created by prefixing F with an implicit leading 1 and a binary point.
-			
+
 			FromDouble_SetExpAndMan((temp.u[1] & 0x80000000u) != 0,
 									e - 1023 - man*TTMATH_BITS_PER_UINT + 1, 0x80000000u,
 									m1, m2);
@@ -2643,7 +2643,7 @@ public:
 			else
 			{
 				// If E=0 and F is zero and S is 1, then V=-0
-				// If E=0 and F is zero and S is 0, then V=0 
+				// If E=0 and F is zero and S is 0, then V=0
 
 				// we do not support -0 or 0, only is one 0
 				SetZero();
@@ -2677,7 +2677,7 @@ private:
 		}
 
 		info = 0;
-	
+
 		// the value should be different from zero
 		TTMATH_ASSERT( mantissa.IsZero() == false )
 
@@ -2693,20 +2693,20 @@ public:
 	// 64bit platforms
 	uint FromDouble(double value)
 	{
-		// I am not sure what will be on a plaltform which has 
+		// I am not sure what will be on a plaltform which has
 		// a different endianness... but we use this library only
 		// on x86 and amd (intel) 64 bits (as there's a lot of assembler code)
-		union 
+		union
 		{
 			double d;
 			uint u; // one 64bit word
 		} temp;
 
 		temp.d = value;
-                          
+
 		sint e = (temp.u & 0x7FF0000000000000ul) >> 52;
 		uint m = (temp.u &    0xFFFFFFFFFFFFFul) << 11;
-		
+
 		if( e == 2047 )
 		{
 			// If E=2047 and F is nonzero, then V=NaN ("Not a number")
@@ -2714,7 +2714,7 @@ public:
 			// If E=2047 and F is zero and S is 0, then V=Infinity
 
 			// we do not support -Infinity and +Infinity
-			// we assume that there is always NaN 
+			// we assume that there is always NaN
 
 			SetNan();
 		}
@@ -2725,7 +2725,7 @@ public:
 			// V=(-1)**S * 2 ** (E-1023) * (1.F)
 			// where "1.F" is intended to represent the binary number
 			// created by prefixing F with an implicit leading 1 and a binary point.
-			
+
 			FromDouble_SetExpAndMan((temp.u & 0x8000000000000000ul) != 0,
 									e - 1023 - man*TTMATH_BITS_PER_UINT + 1,
 									0x8000000000000000ul, m);
@@ -2750,7 +2750,7 @@ public:
 			else
 			{
 				// If E=0 and F is zero and S is 1, then V=-0
-				// If E=0 and F is zero and S is 0, then V=0 
+				// If E=0 and F is zero and S is 0, then V=0
 
 				// we do not support -0 or 0, only is one 0
 				SetZero();
@@ -2838,13 +2838,13 @@ private:
 			  the binary number created by prefixing F with an implicit leading 1 and a binary point.
 			* If E=0 and F is nonzero, then V=(-1)**S * 2 ** (-126) * (0.F) These are "unnormalized" values.
 			* If E=0 and F is zero and S is 1, then V=-0
-			* If E=0 and F is zero and S is 0, then V=0 		
+			* If E=0 and F is zero and S is 0, then V=0
 	*/
 	bool IsInf(float value) const
 	{
 		// need testing on a 64 bit machine
 
-		union 
+		union
 		{
 			float d;
 			uint u;
@@ -2898,7 +2898,7 @@ public:
 
 		uint c = ToDouble(result_double);
 		result = float(result_double);
-		
+
 		if( result == -0.0f )
 			result = 0.0f;
 
@@ -2962,7 +2962,7 @@ public:
 			// and return a carry
 		return 1;
 		}
-		
+
 		sint e = exponent.ToInt() + e_correction;
 
 		if( e <= -1023 )
@@ -2986,7 +2986,7 @@ private:
 	// 32bit platforms
 	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false, bool nan = false) const
 	{
-		union 
+		union
 		{
 			double d;
 			uint u[2]; // two 32bit words
@@ -3029,17 +3029,17 @@ private:
 	// 64bit platforms
 	double ToDouble_SetDouble(bool is_sign, uint e, sint move, bool infinity = false, bool nan = false) const
 	{
-		union 
+		union
 		{
 			double d;
 			uint u; // 64bit word
 		} temp;
 
 		temp.u = 0;
-		
+
 		if( is_sign )
 			temp.u |= 0x8000000000000000ul;
-		                
+
 		temp.u |= (e << 52) & 0x7FF0000000000000ul;
 
 		if( nan )
@@ -3122,10 +3122,10 @@ public:
 		a constructor for converting 'uint' to this class
 	*/
 	Big(uint value)
-	{	
+	{
 		FromUInt(value);
 	}
-	
+
 
 	/*!
 		a constructor for converting 'double' to this class
@@ -3240,7 +3240,7 @@ public:
 				mantissa.table[i] = 0;
 		}
 
-		// there shouldn't be a carry because 'value' has the 'ulint' type 
+		// there shouldn't be a carry because 'value' has the 'ulint' type
 		// (we have	sufficient exponent)
 		Standardizing();
 
@@ -3283,7 +3283,7 @@ public:
 		a constructor for converting 'ulint' (64bit unsigned integer) to this class
 	*/
 	Big(ulint value)
-	{	
+	{
 		FromUInt(value);
 	}
 
@@ -3292,7 +3292,7 @@ public:
 		an operator for converting 'ulint' (64bit unsigned integer) to this class
 	*/
 	Big<exp, man> & operator=(ulint value)
-	{	
+	{
 		FromUInt(value);
 
 	return *this;
@@ -3303,7 +3303,7 @@ public:
 		a constructor for converting 'slint' (64bit signed integer) to this class
 	*/
 	Big(slint value)
-	{	
+	{
 		FromInt(value);
 	}
 
@@ -3312,7 +3312,7 @@ public:
 		an operator for converting 'slint' (64bit signed integer) to this class
 	*/
 	Big<exp, man> & operator=(slint value)
-	{	
+	{
 		FromInt(value);
 
 	return *this;
@@ -3492,7 +3492,7 @@ public:
 	{
 		info = 0;
 		sint compensation = (sint)value.CompensationToLeft();
-	
+
 	return FromUIntOrInt(value, compensation);
 	}
 
@@ -3506,7 +3506,7 @@ public:
 		return FromUInt(value);
 	}
 
-		
+
 	/*!
 		a method for converting from 'Int<int_size>' to this class
 	*/
@@ -3521,7 +3521,7 @@ public:
 			value.ChangeSign();
 			is_sign = true;
 		}
-		
+
 		sint compensation = (sint)value.CompensationToLeft();
 		FromUIntOrInt(value, compensation);
 
@@ -3604,7 +3604,7 @@ public:
 		by default we don't set any of the members to zero
 		only NaN flag is set
 
-		if you want the mantissa and exponent to be set to zero 
+		if you want the mantissa and exponent to be set to zero
 		define TTMATH_BIG_DEFAULT_CLEAR macro
 		(useful for debug purposes)
 	*/
@@ -3648,12 +3648,12 @@ public:
 	/*!
 		a constructor for copying from another object of this class
 	*/
-	
+
 	Big(const Big<exp,man> & value)
 	{
 		operator=(value);
 	}
-	
+
 
 
 	/*!
@@ -3705,7 +3705,7 @@ public:
 	{
 		std::string result;
 		ToStringBase<std::string, char>(result, conv);
-		
+
 	return result;
 	}
 
@@ -3770,7 +3770,7 @@ public:
 	{
 		std::wstring result;
 		ToStringBase<std::wstring, wchar_t>(result, conv);
-		
+
 	return result;
 	}
 
@@ -3815,7 +3815,7 @@ private:
 			Misc::AssignString(result, error_overflow_msg);
 			return 1;
 		}
-	
+
 		if( IsZero() )
 		{
 			result = '0';
@@ -3831,11 +3831,11 @@ private:
 				max() ->  11111111 * 2 ^ 11111111111  (bin)(the mantissa and exponent have all bits set)
 				if we were using 'Int<exp>' we couldn't show it in this format:
 				1,1111111 * 2 ^ 11111111111  (bin)
-				because we have to add something to the mantissa and because 
+				because we have to add something to the mantissa and because
 				mantissa is full we can't do it and it'll be a carry
 				(look at ToString_SetCommaAndExponent(...))
 
-				when the base would be greater than two (for example 10) 
+				when the base would be greater than two (for example 10)
 				we could use 'Int<exp>' here
 		*/
 		Int<exp+1> new_exp;
@@ -3846,7 +3846,7 @@ private:
 			return 1;
 		}
 
-			
+
 		if( ToString_SetCommaAndExponent<string_type, char_type>(result, conv, new_exp) )
 		{
 			Misc::AssignString(result, error_overflow_msg);
@@ -3864,7 +3864,7 @@ private:
 
 
 	/*!
-		in the method 'ToString_CreateNewMantissaAndExponent()' we're using 
+		in the method 'ToString_CreateNewMantissaAndExponent()' we're using
 		type 'Big<exp+1,man>' and we should have the ability to use some
 		necessary methods from that class (methods which are private here)
 	*/
@@ -3902,8 +3902,8 @@ private:
 		a 'new_exp' equal that value when the (2^exponent / base^new_exp) will be equal one
 
 		on account of the 'base' is not as power of 2 (can be from 2 to 16),
-		this formula will not be true for integer 'new_exp' then in our case we take 
-		'base^new_exp' _greater_ than '2^exponent' 
+		this formula will not be true for integer 'new_exp' then in our case we take
+		'base^new_exp' _greater_ than '2^exponent'
 
 		if 'base^new_exp' were smaller than '2^exponent' the new mantissa could be
 		greater than the max value of the container UInt<man>
@@ -3913,7 +3913,7 @@ private:
 		value = M * base^new_exp
 
 		in our calculation we treat M as floating value showing it as:
-			M = mm * 2^ee where ee will be <= 0 
+			M = mm * 2^ee where ee will be <= 0
 
 		next we'll move all bits of mm into the right when ee is equal zero
 		abs(ee) must not be too big that only few bits from mm we can leave
@@ -3926,7 +3926,7 @@ private:
 		new_exp we calculate in this way:
 			2^exponent <= base^new_exp
 			new_exp >= log base (2^exponent)   <- logarithm with the base 'base' from (2^exponent)
-			
+
 			but we need new_exp as integer then we test:
 			if new_exp is greater than zero and with fraction we add one to new_exp
 			  new_exp = new_exp + 1    (if new_exp>0 and with fraction)
@@ -3941,7 +3941,7 @@ private:
 
 		if( conv.base<2 || conv.base>16 )
 			return 1;
-	
+
 		// special method for base equal 2
 		if( conv.base == 2 )
 			return ToString_CreateNewMantissaAndExponent_Base2(new_man, new_exp);
@@ -3961,7 +3961,7 @@ private:
 
 		// this = mantissa * 2^exponent
 
-		// temp = +1 * 2^exponent  
+		// temp = +1 * 2^exponent
 		// we're using a bigger type than 'big<exp,man>' (look below)
 		Big<exp+1,man> temp;
 		temp.info = 0;
@@ -3969,8 +3969,8 @@ private:
 		temp.mantissa.SetOne();
 		c += temp.Standardizing();
 
-		// new_exp_ = log base (2^exponent)   
-		// if new_exp_ is positive and with fraction then we add one 
+		// new_exp_ = log base (2^exponent)
+		// if new_exp_ is positive and with fraction then we add one
 		Big<exp+1,man> new_exp_;
 		c += new_exp_.ToString_Log(temp, conv.base); // this logarithm isn't very complicated
 
@@ -4009,7 +4009,7 @@ private:
 	{
 	uint c = 0;
 
-		// because 'base^new_exp' is >= '2^exponent' then 
+		// because 'base^new_exp' is >= '2^exponent' then
 		// because base is >= 2 then we've got:
 		// 'new_exp_' must be smaller or equal 'new_exp'
 		// and we can pass it into the Int<exp> type
@@ -4031,14 +4031,14 @@ private:
 		temp.exponent = exponent;
 		c += temp.Div(base_);
 
-		// moving all bits of the mantissa into the right 
+		// moving all bits of the mantissa into the right
 		// (how many times to move depend on the exponent)
 		c += temp.ToString_MoveMantissaIntoRight();
 
 		// because we took 'new_exp' as small as it was
-		// possible ([log base (2^exponent)] + 1) that after the division 
-		// (temp.Div( base_ )) the value of exponent should be equal zero or 
-		// minimum smaller than zero then we've got the mantissa which has 
+		// possible ([log base (2^exponent)] + 1) that after the division
+		// (temp.Div( base_ )) the value of exponent should be equal zero or
+		// minimum smaller than zero then we've got the mantissa which has
 		// maximum valid bits
 		temp.mantissa.ToString(new_man, conv.base);
 
@@ -4087,7 +4087,7 @@ private:
 		}
 
 		// there can be only a carry
-		// because the 'x' is in '1+2*exponent' form then 
+		// because the 'x' is in '1+2*exponent' form then
 		// the long formula from LnSurrounding1() will not be calculated
 		// (LnSurrounding1() will return one immediately)
 		uint c = Ln(x);
@@ -4124,7 +4124,7 @@ private:
 		static Big<exp,man> log_history[15];
 		uint index = base - 2;
 		uint c = 0;
-	
+
 		if( guardians[index] == 0 )
 		{
 			Big<exp,man> base_(base);
@@ -4152,7 +4152,7 @@ private:
 		static Big<exp,man> * plog_history;
 		uint index = base - 2;
 		uint c = 0;
-	
+
 		// double-checked locking
 		if( guardians[index] == 0 )
 		{
@@ -4166,7 +4166,7 @@ private:
 				if( guardians[index] == 0 )
 				{
 					plog_history = log_history;
-				
+
 					Big<exp,man> base_(base);
 					c += log_history[index].Ln(base_);
 					guardians[index] = 1;
@@ -4177,7 +4177,7 @@ private:
 				// there was a problem with locking, we store the result directly in 'result' object
 				Big<exp,man> base_(base);
 				c += result.Ln(base_);
-				
+
 			return (c==0)? 0 : 1;
 			}
 
@@ -4201,7 +4201,7 @@ private:
 	{
 		if( exponent.IsZero() )
 			return 0;
-		
+
 		// exponent can't be greater than zero
 		// because we would cat the highest bits of the mantissa
 		if( !exponent.IsSign() )
@@ -4236,7 +4236,7 @@ private:
 	{
 		for( sint i=man-1 ; i>=0 ; --i )
 		{
-			uint value = mantissa.table[i]; 
+			uint value = mantissa.table[i];
 
 			for( uint bit=0 ; bit<TTMATH_BITS_PER_UINT ; ++bit )
 			{
@@ -4398,7 +4398,7 @@ private:
 
 		if( new_man.size() >= TTMATH_UINT_HIGHEST_BIT || new_man.size() < 2 )
 			return true; // oops, the mantissa is too large for calculating (or too small) - we are not doing the base rounding
-		
+
 		uint i = 0;
 		char_type digit;
 
@@ -4407,7 +4407,7 @@ private:
 			uint new_exp_abs = -new_exp.ToInt();
 			i = new_man.size() - new_exp_abs; // start from the first digit after the comma operator
 		}
-		
+
 		if( Misc::CharToDigit(new_man[new_man.size()-1]) >= conv.base/2 )
 		{
 			if( new_exp < -sint(new_man.size()) )
@@ -4440,9 +4440,9 @@ private:
 		after floating point calculating the new mantissa can consist of some fraction
 		so if our value is integer we should check the new mantissa
 		(after the decimal point there should be only zeroes)
-		
+
 		often this is a last digit different from zero
-		ToString_BaseRound would not get rid of it because the method make a test against 
+		ToString_BaseRound would not get rid of it because the method make a test against
 		an integer value (ToString_RoundMantissaWouldBeInteger) and returns immediately
 	*/
 	template<class string_type, class char_type>
@@ -4450,7 +4450,7 @@ private:
 	{
 		if( !new_exp.IsSign() )
 			return; // return if new_exp >= 0
-		
+
 		uint i = 0;
 		uint man_size = new_man.size();
 
@@ -4504,7 +4504,7 @@ private:
 
 	return c;
 	}
-	
+
 
 	/*!
 		an auxiliary method for converting into the string
@@ -4615,11 +4615,11 @@ private:
 		// we're adding zero characters at the end
 		// 'i' will be smaller than 'when_scientific' (or equal)
 		uint i = new_exp.ToInt();
-		
+
 		if( new_man.length() + i > new_man.capacity() )
 			// about 6 characters more (we'll need it for the comma or something)
 			new_man.reserve( new_man.length() + i + 6 );
-		
+
 		for( ; i>0 ; --i)
 			new_man += '0';
 	}
@@ -4634,7 +4634,7 @@ private:
 															const Conv & conv,
 															Int<exp+1> & new_exp ) const
 	{
-		// new_exp is < 0 
+		// new_exp is < 0
 
 		sint new_man_len = sint(new_man.length()); // 'new_man_len' with a sign
 		sint e = -( new_exp.ToInt() ); // 'e' will be positive
@@ -4642,7 +4642,7 @@ private:
 		if( new_exp > -new_man_len )
 		{
 			// we're setting the comma within the mantissa
-			
+
 			sint index = new_man_len - e;
 			new_man.insert( new_man.begin() + index, static_cast<char_type>(conv.comma));
 		}
@@ -4671,7 +4671,7 @@ private:
 	{
 		if( new_man.empty() )
 			return;
-		
+
 		if( new_man.size() > 1 )
 		{
 			new_man.insert( new_man.begin()+1, static_cast<char_type>(conv.comma) );
@@ -4726,7 +4726,7 @@ private:
 		StrSize index = new_man.find(static_cast<char_type>(conv.comma), 0);
 
 		if( index == string_type::npos )
-			index = new_man.size();	
+			index = new_man.size();
 
 		ToString_Group_man_before_comma<string_type, char_type>(new_man, conv, index);
 		ToString_Group_man_after_comma<string_type, char_type>(new_man, conv, index+1);
@@ -4826,7 +4826,7 @@ private:
 		if( i == new_man.length() - 1 )
 			return;
 
-		// we must have a comma 
+		// we must have a comma
 		// (the comma can be removed by ToString_CorrectDigitsAfterComma_Round
 		// which is called before)
 		if( new_man.find_last_of(static_cast<char_type>(conv.comma), i) == string_type::npos )
@@ -4895,7 +4895,7 @@ public:
 		it returns 1 if the value is too big -- we cannot pass it into the range
 		of our class Big<exp,man> (or if the base is incorrect)
 
-		that means only digits before the comma operator can make this value too big, 
+		that means only digits before the comma operator can make this value too big,
 		all digits after the comma we can ignore
 
 		'source' - pointer to the string for parsing
@@ -4928,7 +4928,7 @@ public:
 
 
 	/*!
-		a method for converting a string into its value		
+		a method for converting a string into its value
 	*/
 	uint FromString(const std::string & string, uint base = 10, const char ** after_source = 0, bool * value_read = 0)
 	{
@@ -4937,7 +4937,7 @@ public:
 
 
 	/*!
-		a method for converting a string into its value		
+		a method for converting a string into its value
 	*/
 	uint FromString(const std::string & string, const Conv & conv, const char ** after_source = 0, bool * value_read = 0)
 	{
@@ -4969,7 +4969,7 @@ public:
 
 
 	/*!
-		a method for converting a string into its value		
+		a method for converting a string into its value
 	*/
 	uint FromString(const std::wstring & string, uint base = 10, const wchar_t ** after_source = 0, bool * value_read = 0)
 	{
@@ -4978,7 +4978,7 @@ public:
 
 
 	/*!
-		a method for converting a string into its value		
+		a method for converting a string into its value
 	*/
 	uint FromString(const std::wstring & string, const Conv & conv, const wchar_t ** after_source = 0, bool * value_read = 0)
 	{
@@ -5068,7 +5068,7 @@ private:
 	template<class char_type>
 	bool FromString_TestCommaOperator(const char_type * & source, const Conv & conv)
 	{
-		if( (*source == static_cast<char_type>(conv.comma)) || 
+		if( (*source == static_cast<char_type>(conv.comma)) ||
 			(*source == static_cast<char_type>(conv.comma2) && conv.comma2 != 0 ) )
 		{
 			++source;
@@ -5090,7 +5090,7 @@ private:
 		sint character;
 		Big<exp, man> temp;
 		Big<exp, man> base_( conv.base );
-		
+
 		Misc::SkipWhiteCharacters( source );
 
 		for( ; true ; ++source )
@@ -5138,7 +5138,7 @@ private:
 			// XXX: char -> char_type
 			if( conv.group!=0 && *source==static_cast<char_type>(conv.group) )
 				continue;
-			
+
 			character = Misc::CharToDigit(*source, conv.base);
 
 			if( character == -1 )
@@ -5550,7 +5550,7 @@ public:
 
 	/*!
 	*
-	*	standard mathematical operators 
+	*	standard mathematical operators
 	*
 	*/
 
@@ -5778,9 +5778,9 @@ public:
 
 		// exponent is in range (-man*TTMATH_BITS_PER_UINT, 0)
 		sint e = exponent.ToInt();
-	
+
 		mantissa.ClearFirstBits( -e );
-		
+
 		// we don't have to standardize 'Standardizing()' the value because
 		// there's at least one bit in the mantissa
 		// (the highest bit which we didn't touch)
@@ -5911,7 +5911,7 @@ public:
 	return CheckCarry(c);
 	}
 
-	
+
 
 	/*!
 	*
@@ -5971,12 +5971,12 @@ private:
 	static istream_type & InputFromStream(istream_type & s, Big<exp,man> & l)
 	{
 	string_type ss;
-	
+
 	// char or wchar_t for operator>>
 	char_type z, old_z;
 	bool was_comma = false;
 	bool was_e     = false;
-	
+
 
 		// operator>> omits white characters if they're set for omitting
 		s >> z;
@@ -5986,7 +5986,7 @@ private:
 			ss += z;
 			s >> z; // we're reading a next character (white characters can be omitted)
 		}
-		
+
 		old_z = 0;
 
 		// we're reading only digits (base=10) and only one comma operator

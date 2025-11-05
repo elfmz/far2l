@@ -69,7 +69,7 @@ int PluginImpl::SetDirectory(const char *Dir,int OpMode)
 {
 	fprintf(stderr, "Inside::SetDirectory('%s', %d)\n", Dir, OpMode);
 	if (strcmp(Dir, ".") == 0) {
-		
+
 	} else if (strcmp(Dir, "..") == 0) {
 		size_t n = _dir.rfind('/');
 		if (n == std::string::npos)
@@ -117,7 +117,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 		if (!data_path.empty() && data_path[data_path.size() - 1] != '/') {
 			data_path+= '/';
 		}
-		
+
 		const size_t name_ofs = data_path.size();
 		CharArrayAppendToStr(data_path, PanelItem[i].FindData.cFileName);
 		uint64_t len = PanelItem[i].FindData.nFileSize;

@@ -123,6 +123,6 @@ LONG_PTR SimpleOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 		_state.aborting = true;
 		return TRUE;
 	}*/
-	
+
 	return BaseDialog::DlgProc(msg, param1, param2);
 }

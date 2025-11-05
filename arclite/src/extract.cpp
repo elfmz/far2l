@@ -492,7 +492,7 @@ private:
 		{
 			std::unique_lock<std::mutex> lock(io_mutex);
 			//fprintf(stderr, "FWC: write() !worker_data_processed ? [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
-			if (!worker_data_processed) { /// wait for writer 
+			if (!worker_data_processed) { /// wait for writer
 				//fprintf(stderr, "FWC: write() wait worker_data_processed || stop_worker_flag.load(); [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 				worker_cv.wait(lock, [this] {
 					return worker_data_processed || stop_worker_flag.load();
@@ -637,7 +637,7 @@ public:
 	}
 
 	bool has_background_work() const {
-	    return worker_started.load(std::memory_order_acquire) && 
+	    return worker_started.load(std::memory_order_acquire) &&
 	           worker_has_unfinished_work.load(std::memory_order_acquire);
 	}
 
@@ -711,7 +711,7 @@ public:
 };
 
 template<bool UseVirtualDestructor>
-class ArchiveExtractor : public IArchiveExtractCallback<UseVirtualDestructor>, 
+class ArchiveExtractor : public IArchiveExtractCallback<UseVirtualDestructor>,
 						 public ICryptoGetTextPassword<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:
@@ -1409,12 +1409,12 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 //	bDoubleBuffering = false;
 
 	const auto progress = std::make_shared<ExtractProgress>(arc_path, bDoubleBuffering);
-	const auto cache = std::make_shared<FileWriteCache<UseVirtualDestructor>>(this->shared_from_this(), ignore_errors, 
+	const auto cache = std::make_shared<FileWriteCache<UseVirtualDestructor>>(this->shared_from_this(), ignore_errors,
 							extract_access_rights, extract_owners_groups, extract_attributes, error_log, progress, bDoubleBuffering);
 	const auto skipped_indices = extracted_indices ? std::make_shared<std::set<UInt32>>() : nullptr;
 
 	ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new ArchiveExtractor<UseVirtualDestructor>(src_dir_index, options.dst_dir,
-			this->shared_from_this(), overwrite_action, ignore_errors, 
+			this->shared_from_this(), overwrite_action, ignore_errors,
 			error_log, cache, progress,
 			skipped_indices));
 

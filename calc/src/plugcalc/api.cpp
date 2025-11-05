@@ -116,7 +116,7 @@ CalcDialog::~CalcDialog()
 	}
 }
 
-bool CalcDialog::Init(int id, int X1, int Y1, int X2, int Y2, const wchar_t *HelpTopic, 
+bool CalcDialog::Init(int id, int X1, int Y1, int X2, int Y2, const wchar_t *HelpTopic,
 							struct FarDialogItem *Item, unsigned int ItemsNumber)
 {
 	hdlg = dlg_funcs->DialogInit(id, X1, Y1, X2, Y2, HelpTopic, Item, ItemsNumber, dlgProc);

@@ -929,7 +929,7 @@ bool GetColorDialogForFileFilter(uint64_t *color, uint64_t *mask)
 
 bool GetColorDialog(uint64_t *color, bool bCentered)
 {
-	if (!color) 
+	if (!color)
 		return false;
 
 //	return GetColorDialogInner(color, NULL, true, false, bCentered);

@@ -45,11 +45,11 @@ typedef struct {			/* Header of file in archive 	*/
     unsigned mylen;
 } Fheader;
 
-extern int arcfile;			/* Archive handle 		*/ 
+extern int arcfile;			/* Archive handle 		*/
 extern char *arcname;                   /* Archive name                 */
 extern struct stat arcstat;             /* Archive status (when opened) */
 
 void arc_open(char *arcname);
-void arc_reset(void);	
+void arc_reset(void);
 Fheader *arc_seek(void);
 

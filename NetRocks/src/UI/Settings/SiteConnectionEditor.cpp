@@ -75,7 +75,7 @@ SiteConnectionEditor::SiteConnectionEditor(const SitesConfigLocation &sites_cfg_
 		_port = DefaultPortForProtocol(_di_protocols.GetSelection());
 	}
 
-	char sz[32]; 
+	char sz[32];
 
 	_di.SetBoxTitleItem(MEditHost);
 

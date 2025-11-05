@@ -57,7 +57,7 @@ void OpRemove::Process()
 		}
 
 		WhatOnErrorWrap<WEK_REMOVE>(_wea_state, _state, _base_host.get(), _base_dir,
-			[&] () mutable 
+			[&] () mutable
 			{
 				const std::string &subpath = rev_i->first.substr(_base_dir.size());
 

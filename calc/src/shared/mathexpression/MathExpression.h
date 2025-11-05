@@ -11,7 +11,7 @@
  *
  * Here are 2 examples of customized MathExpression class parametrized by float and double.
  * Note that at different platforms some math functions could be not defined.
- * If this is your case, then just comment out corresponding lines, or provide appropriate 
+ * If this is your case, then just comment out corresponding lines, or provide appropriate
  * equivalents from your platform math library.
  *
  * NOTE:

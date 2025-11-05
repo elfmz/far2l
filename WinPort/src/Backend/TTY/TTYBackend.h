@@ -1,6 +1,6 @@
 #pragma once
-//#define __USE_BSD 
-#include <termios.h> 
+//#define __USE_BSD
+#include <termios.h>
 #include <mutex>
 #include <atomic>
 #include <memory>

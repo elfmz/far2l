@@ -96,7 +96,7 @@ enum LanguageID
 	MXferRemain,
 	MXferAllTimeSpent,
 	MXferSpeedCurrent,
-	MXferAverage, 
+	MXferAverage,
 
 	MBackground,
 	MPause,
@@ -300,7 +300,7 @@ enum LanguageID
 
 	MFTPOptionsTitle,
 	MFTPSOptionsTitle,
-	MFTPExplicitEncryption, 
+	MFTPExplicitEncryption,
 	MSFTPEncryptionProtocol,
 	MSFTPListCommand,
 	MSFTPServerCodepage,

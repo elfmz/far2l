@@ -688,7 +688,7 @@ void TTYInputSequenceParser::ParseWinDoubleBuffer(bool idle)
 		_win32_accumulate = true;
 		return;
 	}
-	
+
 	if (_win_double_buffer.size() > 2 && _win_double_buffer.back() >= '@' && _win_double_buffer.back() <= '~') {
 		// end of sequence, whatever is it
 		_win32_accumulate = false;

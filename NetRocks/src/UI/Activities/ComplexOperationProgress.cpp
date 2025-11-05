@@ -137,7 +137,7 @@ LONG_PTR ComplexOperationProgress::DlgProc(int msg, int param1, LONG_PTR param2)
 			OnIdle();
 		break;
 	}
-	
+
 	return BaseDialog::DlgProc(msg, param1, param2);
 }
 

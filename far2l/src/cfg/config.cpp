@@ -786,20 +786,20 @@ void InterfaceSettings()
 				pos_date_2 = 0; // for not error in message
 			}
 			else if (format_date.length() >= 8) {
-				static std::vector<const char*> codes_day = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
+				static const char *codes_day[] = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
 				for (const auto &code : codes_day) {
 					pos_day = format_date.find(code);
 					if (pos_day != std::string::npos)
 						break;
 				}
-				static std::vector<const char*> codes_month = {
+				static const char *codes_month[] = {
 					"%m", "%B", "%b", "%h", "%Em", "%EB", "%Eb", "%Eh", "%Om", "%OB", "%Ob", "%Oh" };
 				for (const auto &code : codes_month) {
 					pos_month = format_date.find(code);
 					if (pos_month != std::string::npos)
 						break;
 				}
-				static std::vector<const char*> codes_year = {
+				static const char *codes_year[] = {
 					"%Y", "%y", "%G", "%g", "%EY", "%Ey", "%EG", "%Eg", "%OY", "%Oy", "%OG", "%Og" };
 				for (const auto &code : codes_year) {
 					pos_year = format_date.find(code);

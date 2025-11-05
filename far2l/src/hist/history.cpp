@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "interf.hpp"
 #include <crc64.h>
 #include "FileMasksProcessor.hpp"
+#include "cmdline.hpp"
+#include "ctrlobj.hpp"
 
 static uint64_t RegKey2ID(const FARString &str)
 {
@@ -1038,6 +1040,27 @@ bool History::GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str)
 {
 	SyncChanges();
 	int Length = StrLength(Str);
+	if (TypeHistory == HISTORYTYPE_CMD) {
+		//suggesting commands executed from current directory before others
+		FARString strCurDir;
+		CtrlObject->CmdLine->GetCurDir(strCurDir);
+
+		for (HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem;
+				HistoryItem = HistoryList.Prev(HistoryItem)) {
+			if (!HistoryItem->strExtra.IsEmpty() && HistoryItem->strExtra == strCurDir
+					&& !StrCmpNI(Str, HistoryItem->strName, Length) && StrCmp(Str, HistoryItem->strName)
+					&& (IsAllowedForHistory(HistoryItem->strName.CPtr()))
+					&& HistoryMenu.FindItem(0, HistoryItem->strName.CPtr(), LIFIND_EXACTMATCH | LIFIND_KEEPAMPERSAND) < 0) {
+				HistoryMenu.AddItem(HistoryItem->strName);
+			}
+		}
+		if (HistoryMenu.GetItemCount()) {
+			MenuItemEx item{};
+			item.Flags = LIF_SEPARATOR;
+			HistoryMenu.AddItem(&item);
+		}
+
+	}
 	for (HistoryRecord *HistoryItem = HistoryList.Last(); HistoryItem;
 			HistoryItem = HistoryList.Prev(HistoryItem)) {
 		if (!StrCmpNI(Str, HistoryItem->strName, Length) && StrCmp(Str, HistoryItem->strName)

@@ -107,7 +107,7 @@ static std::string LitterFile(const char *path)
 	os_call_int(close, fd);
 
 	std::string garbage_path = path;
-	size_t p = garbage_path.rfind('/');
+	size_t p = garbage_path.rfind(GOOD_SLASH);
 	if (p != std::string::npos) {
 		size_t l = garbage_path.size();
 		if (l > p + 1) {

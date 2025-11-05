@@ -403,7 +403,7 @@ void ShellDelete(Panel *SrcPanel, bool Wipe)
 	LCF.RefreshOnUnlock();
 	wakeful W;
 	if (SrcPanel->GetType() == TREE_PANEL)
-		FarChDir(L"/");
+		FarChDir(WGOOD_SLASH);
 	// SaveScreen SaveScr;
 	SetCursorType(FALSE, 0);
 	ReadOnlyDeleteMode = -1;

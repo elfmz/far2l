@@ -109,7 +109,7 @@ static void trex_error(TRex *exp,const TRexChar *error)
 }
 
 static void trex_expect(TRex *exp, int n){
-	if((*exp->_p) != n) 
+	if((*exp->_p) != n)
 		trex_error(exp, _SC("expected paren"));
 	exp->_p++;
 }
@@ -148,31 +148,31 @@ static int trex_charnode(TRex *exp,TRexBool isclass)
 			case 'r': exp->_p++; return trex_newnode(exp,'\r');
 			case 'f': exp->_p++; return trex_newnode(exp,'\f');
 			case 'v': exp->_p++; return trex_newnode(exp,'\v');
-			case 'a': case 'A': case 'w': case 'W': case 's': case 'S': 
-			case 'd': case 'D': case 'x': case 'X': case 'c': case 'C': 
-			case 'p': case 'P': case 'l': case 'u': 
+			case 'a': case 'A': case 'w': case 'W': case 's': case 'S':
+			case 'd': case 'D': case 'x': case 'X': case 'c': case 'C':
+			case 'p': case 'P': case 'l': case 'u':
 				{
-				t = *exp->_p; exp->_p++; 
+				t = *exp->_p; exp->_p++;
 				return trex_charclass(exp,t);
 				}
-			case 'b': 
+			case 'b':
 			case 'B':
 				if(!isclass) {
 					int node = trex_newnode(exp,OP_WB);
 					exp->_nodes[node].left = *exp->_p;
-					exp->_p++; 
+					exp->_p++;
 					return node;
 				} //else default
-			default: 
-				t = *exp->_p; exp->_p++; 
+			default:
+				t = *exp->_p; exp->_p++;
 				return trex_newnode(exp,t);
 		}
 	}
 	else if(!scisprint(*exp->_p)) {
-		
+
 		trex_error(exp,_SC("letter expected"));
 	}
-	t = *exp->_p; exp->_p++; 
+	t = *exp->_p; exp->_p++;
 	return trex_newnode(exp,t);
 }
 static int trex_class(TRex *exp)
@@ -183,11 +183,11 @@ static int trex_class(TRex *exp)
 		ret = trex_newnode(exp,OP_NCLASS);
 		exp->_p++;
 	}else ret = trex_newnode(exp,OP_CLASS);
-	
+
 	if(*exp->_p == ']') trex_error(exp,_SC("empty class"));
 	chain = ret;
 	while(*exp->_p != ']' && exp->_p != exp->_eol) {
-		if(*exp->_p == '-' && first != -1){ 
+		if(*exp->_p == '-' && first != -1){
 			int r,t;
 			if(*exp->_p++ == ']') trex_error(exp,_SC("unfinished range"));
 			r = trex_newnode(exp,OP_RANGE);
@@ -278,25 +278,25 @@ static int trex_element(TRex *exp)
 		TRexBool isnotgreedy = TRex_False;
 		unsigned short p0 = 0, p1 = 0;
 		switch(*exp->_p){
-			case TREX_SYMBOL_GREEDY_ZERO_OR_MORE: p0 = 0; p1 = 0xFFFF; exp->_p++; 
-				// XXX:	
-				if (*exp->_p == TREX_SYMBOL_GREEDY_ZERO_OR_ONE) 
+			case TREX_SYMBOL_GREEDY_ZERO_OR_MORE: p0 = 0; p1 = 0xFFFF; exp->_p++;
+				// XXX:
+				if (*exp->_p == TREX_SYMBOL_GREEDY_ZERO_OR_ONE)
 				{
-					isnotgreedy = TRex_True; 
-					exp->_p++; 
+					isnotgreedy = TRex_True;
+					exp->_p++;
 				}
-				else 
-					isgreedy = TRex_True; 
+				else
+					isgreedy = TRex_True;
 				break;
-			case TREX_SYMBOL_GREEDY_ONE_OR_MORE: p0 = 1; p1 = 0xFFFF; exp->_p++; 
-				// XXX:	
-				if (*exp->_p == TREX_SYMBOL_GREEDY_ZERO_OR_ONE) 
+			case TREX_SYMBOL_GREEDY_ONE_OR_MORE: p0 = 1; p1 = 0xFFFF; exp->_p++;
+				// XXX:
+				if (*exp->_p == TREX_SYMBOL_GREEDY_ZERO_OR_ONE)
 				{
-					isnotgreedy = TRex_True; 
-					exp->_p++; 
+					isnotgreedy = TRex_True;
+					exp->_p++;
 				}
-				else 
-					isgreedy = TRex_True; 
+				else
+					isgreedy = TRex_True;
 				break;
 			case TREX_SYMBOL_GREEDY_ZERO_OR_ONE: p0 = 0; p1 = 1; exp->_p++; isgreedy = TRex_True; break;
 			case '{':
@@ -320,7 +320,7 @@ static int trex_element(TRex *exp)
 				trex_error(exp,_SC(", or } expected"));
 		}
 		/*******************************/
-		isgreedy = TRex_True; 
+		isgreedy = TRex_True;
 		break;
 
 		}
@@ -414,7 +414,7 @@ static TRexBool trex_matchclass(TRex* exp,TRexNode *node,TRexChar c)
 
 static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *str,TRexNode *next)
 {
-	
+
 	TRexNodeType type = node->type;
 	switch(type) {
 	case OP_GREEDY:
@@ -459,7 +459,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 					}
 				}
 			}
-			
+
 			if(s >= exp->_eol)
 				break;
 		}
@@ -498,7 +498,7 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 				exp->_matches[capture].begin = cur;
 				exp->_currsubexp++;
 			}
-			
+
 			do {
 				TRexNode *subnext = NULL;
 				if(n->next != -1) {
@@ -515,15 +515,15 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 				}
 			} while((n->next != -1) && (n = &exp->_nodes[n->next]));
 
-			if(capture != -1) 
+			if(capture != -1)
 				exp->_matches[capture].len = cur - exp->_matches[capture].begin;
 			return cur;
-	}				 
+	}
 	case OP_WB:
 		if( (str == exp->_bol && !isspace(*str))
 		 || (str == exp->_eol && !isspace(*(str-1)))
 		 || (!isspace(*str) && isspace(*(str+1)))
-		 || (isspace(*str) && !isspace(*(str+1))) ) {	
+		 || (isspace(*str) && !isspace(*(str+1))) ) {
 			return (node->left == 'b')?str:NULL;
 		}
 		return (node->left == 'b')?NULL:str;

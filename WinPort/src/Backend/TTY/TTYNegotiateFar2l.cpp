@@ -1,7 +1,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <termios.h> 
+#include <termios.h>
 #include <string.h>
 #include <unistd.h>
 #include <os_call.hpp>
@@ -42,8 +42,8 @@ bool TTYNegotiateFar2l(int fdin, int fdout, bool enable)
 		fd_set fds, fde;
 		FD_ZERO(&fds);
 		FD_ZERO(&fde);
-		FD_SET(fdin, &fds); 
-		FD_SET(fdin, &fde); 
+		FD_SET(fdin, &fds);
+		FD_SET(fdin, &fde);
 		struct timeval tv = {10, 0};
 
 		if (inlen >= sizeof(inbuf) - 1) {

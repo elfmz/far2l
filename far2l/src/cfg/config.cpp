@@ -256,6 +256,7 @@ void PanelSettings()
 	for (;;) {
 		DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
 		BOOL AutoUpdate = (Opt.AutoUpdateLimit);
+		BOOL TreeScanDepthEnabled = (Opt.Tree.ScanDepthEnabled);
 
 		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 
@@ -285,6 +286,12 @@ void PanelSettings()
 		Builder.AddCheckbox(Msg::ConfigClassicHotkeyLinkResolving, &Opt.ClassicHotkeyLinkResolving);
 
 		Builder.AddSeparator(Msg::ConfigTreeOptions);
+		Builder.StartColumns();
+		DialogItemEx *TreeScanDepthSwitch = Builder.AddCheckbox(Msg::ConfigDefaultTreeScanDepth, &TreeScanDepthEnabled);
+		Builder.ColumnBreak();
+		DialogItemEx *DefaultScanDepth = Builder.AddIntEditField((int *)&Opt.Tree.DefaultScanDepth, 12);
+		Builder.LinkFlags(TreeScanDepthSwitch, DefaultScanDepth, DIF_DISABLE, false);
+		Builder.EndColumns();
 		Builder.AddText(Msg::ConfigExclSubTreeMask);
 		Builder.AddEditField(&Opt.Tree.ExclSubTreeMask, 35);
 		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
@@ -317,7 +324,7 @@ void PanelSettings()
 		else if (clicked_id == ChangeSizeColumnStyleID)
 			DirectoryNameSettings();
 		else
-			break;		
+			break;
 	}
 }
 
@@ -665,7 +672,7 @@ void InterfaceSettings()
 		DecimalSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DecimalSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(DecimalSeparatorEdit, Msg::ConfigDecimalSeparator);
-        
+
 		Builder.ColumnBreak();
 		int DateTimeDefaultID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeDefault, DateTimeDefaultID);
@@ -1147,6 +1154,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditConfigScrollbar, &EdOpt.ShowScrollBar);
 	Builder.AddCheckbox(Msg::EditConfigPickUpWord, &EdOpt.SearchPickUpWord);
 	Builder.AddCheckbox(Msg::EditShowTitleBar, &EdOpt.ShowTitleBar);
+	Builder.AddCheckbox(Msg::EditWordWrap, &EdOpt.WordWrap);
 	Builder.EndColumns();
 
 	if (!Local) {

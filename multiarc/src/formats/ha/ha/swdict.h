@@ -33,5 +33,5 @@ void swd_dchar(S16B c);
 			/* implementation */
 
 extern U16B swd_bpos,swd_mlf;
-extern S16B swd_char;	
+extern S16B swd_char;
 

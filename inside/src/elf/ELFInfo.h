@@ -60,7 +60,7 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 	info.elf_length = sizeof(Ehdr);
 	Ehdr eh = {};
 	if (sdc_read(fd, &eh, sizeof(eh)) == sizeof(eh) && eh.e_phnum) {
-		
+
 		info.machine = E::C(((const uint16_t *)&eh)[9]);
 		uint64_t tmp = E::C(eh.e_phoff) + uint64_t(E::C(eh.e_phnum)) * E::C(eh.e_phentsize);
 		if (info.elf_length < tmp) info.elf_length = tmp;
@@ -127,6 +127,6 @@ template <class E, class Ehdr, class Phdr, class Shdr>
 			}
 		}
 	}
-	
+
 	close(fd);
 }

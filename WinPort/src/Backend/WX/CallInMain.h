@@ -13,7 +13,7 @@ template <class FN>
 	std::condition_variable _cond;
 	FN _fn;
 	bool _done = false;
-	
+
 protected:
 	virtual void Invoke(FN fn) = 0;
 
@@ -25,10 +25,10 @@ protected:
 		_done = true;
 		_cond.notify_all();
 	}
-	
+
 public:
 	InMainCallerBase(FN fn):_fn(fn) { }
-	
+
 	void Do()
 	{
 		_done = false;
@@ -45,16 +45,16 @@ template <class RV, class FN>
 	class InMainCaller : protected InMainCallerBase<FN>
 {
 	RV _result;
-	
+
 protected:
 	virtual void Invoke(FN fn)
 	{
 		_result = fn();
 	}
-	
+
 public:
 	InMainCaller(FN fn) : InMainCallerBase<FN>(fn) { }
-	
+
 	RV Do()
 	{
 		InMainCallerBase<FN>::Do();
@@ -70,21 +70,21 @@ protected:
 	{
 		fn();
 	}
-	
+
 public:
 	InMainCallerNoRet(FN fn) : InMainCallerBase<FN>(fn) { }
 };
 
 ////////
 
-template <class RV, class FN> 
+template <class RV, class FN>
 	static RV CallInMain(FN fn)
 {
 	InMainCaller<RV, FN> c(fn);
 	return c.Do();
 }
 
-template <class FN> 
+template <class FN>
 	static void CallInMainNoRet(FN fn)
 {
 	InMainCallerNoRet<FN> c(fn);

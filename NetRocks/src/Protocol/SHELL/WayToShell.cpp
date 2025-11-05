@@ -284,7 +284,7 @@ void WayToShell::OpenSerialPort(const WayToShellConfig &cfg, const StringConfig 
 		case 6: tios.c_cflag|= CS6; break;
 		case 7: tios.c_cflag|= CS7; break;
 		case 8: tios.c_cflag|= CS8; break;
-		default: 
+		default:
 			close(_master_fd);
 			throw ProtocolError("wrong databits", opt_databits.c_str());
 	}

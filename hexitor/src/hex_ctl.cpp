@@ -89,7 +89,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 			for (size_t col = 0; col < 16 && row * 16 + col < length; ) {
 				const UINT64 current_offset_abs = offset + static_cast<UINT64>(row) * 0x10 + col;
 				const size_t current_offset_rel = row * 16 + col;
-				
+
 				BYTE sequence[4];
 				bool is_updated = false;
 
@@ -102,7 +102,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 				else if ((sequence[0] & 0xE0) == 0xC0) expected_len = 2;
 				else if ((sequence[0] & 0xF0) == 0xE0) expected_len = 3;
 				else if ((sequence[0] & 0xF8) == 0xF0) expected_len = 4;
-				
+
 				if (expected_len == 0 || col + expected_len > 16 || current_offset_rel + expected_len > length) {
 					expected_len = 1; // Invalid start byte or truncated sequence
 				}
@@ -128,7 +128,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 					write(row, 64 + text_col, char_to_write);
 					if (is_updated) write(row, 64 + text_col, settings::clr_updated);
 				}
-				
+
 				for (int i=0; i < bytes_consumed; ++i) {
 					if (current_offset_rel + i < _byte_to_col_map.size()) {
 						_byte_to_col_map[current_offset_rel + i] = text_col;
@@ -186,7 +186,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 		if (upd_data.count(start_char_offset)) {
 			first_byte = upd_data.at(start_char_offset);
 		}
-		
+
 		int char_len = get_utf8_char_len(first_byte);
 
 		// Highlight all bytes of the character in the hex area

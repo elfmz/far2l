@@ -203,7 +203,7 @@ protected:
     enum  { numargs = 0 };
     FunctionPointerNode( F f, const NodeList & args, const string & name ) : FunctionalNode(args),fn(f),fn_name(name) {}
     T eval( const T _args[] )
-      { 
+      {
 		MathOpNameCallback(fn_name);
 		return fn();
       }
@@ -252,7 +252,7 @@ protected:
     enum  { numargs = 1 };
     FunctionPointerNode( F f, const NodeList & args, const string & name ) : FunctionalNode(args),fn(f),fn_name(name) {}
     T eval(const T _args[] )
-      { 
+      {
 		// XXX: sorry... needed for dynamic ops
 		P1 a1 = args[0]->eval(_args);
 		MathOpNameCallback(fn_name);
@@ -302,7 +302,7 @@ protected:
     enum  { numargs = 2 };
 	FunctionPointerNode( F f, const NodeList & args, const string & name ) : FunctionalNode(args),fn(f),fn_name(name) {}
     T eval( const T _args[] )
-      { 
+      {
 		// XXX: sorry... needed for dynamic ops
 //		if (!&_args) return 0;
 		P1 a1 = args[0]->eval(_args);
@@ -354,8 +354,8 @@ protected:
     enum  { numargs = 3 };
     FunctionPointerNode( F f, const NodeList & args, const string & name ) : FunctionalNode(args),fn(f), fn_name(name) {}
     T eval( const T _args[] )
-      { 
-		
+      {
+
 		// XXX: sorry... needed for dynamic ops
 		P1 a1 = args[0]->eval(_args);
 		P1 a2 = args[1]->eval(_args);
@@ -926,7 +926,7 @@ protected:
         : NodeFactory (name,description), fn(f)
         {}
       Node * create_node(const NodeList & args, const string & fn_name ) const
-        { 
+        {
 		  // XXX:
 		  FunctionPointerNode<F> *fpn = new FunctionPointerNode<F>(fn,args,fn_name);
 		  return fpn;
@@ -961,7 +961,7 @@ protected:
         : NodeFactory (name,description), fn(f)
         {}
       Node * create_node(const NodeList & args, const string & ) const
-        { 
+        {
 		  return new MathExpressionNode<R>(fn,args);
         }
       int getnumargs() const
@@ -1548,7 +1548,7 @@ void MathExpressionBase<T> :: set_error_msg( const wchar_t * format, ... )
 
 template<class T>
 PARSER_ERROR MathExpressionBase<T> :: get_error_id() const
-{ 
+{
 	return error_id;
 }
 
@@ -1623,7 +1623,7 @@ bool MathExpressionBase<T> :: parse_expression( size_t priority_level, const wch
 
   bool ret = parse_expression( priority_level+1, curpos, &arg1 );
   if (!ret)
-    { 
+    {
 	  // XXX:
 	  if (curpos == old_curpos || !arg1)
 		  return false;
@@ -1639,12 +1639,12 @@ bool MathExpressionBase<T> :: parse_expression( size_t priority_level, const wch
     curpos += binop->name.size();
 
     if( !parse_expression(priority_level+1, curpos, &arg2 ) )
-      { 
+      {
 		// XXX:
-		
+
 		//delete arg1;
 		//return false;
-	    
+
 	    curpos = old_curpos;
 		ret = false;
 		break;
@@ -1689,7 +1689,7 @@ bool MathExpressionBase<T> :: parse_terminal_token( const wchar_t * & curpos, No
       *ppNode = unop->create_node(*ppNode);
 
       if( arg_is_const )
-        { 
+        {
 		  T value = (*ppNode)->eval();
           delete (*ppNode);
           *ppNode = new ConstValueNode(value);
@@ -1755,10 +1755,10 @@ bool MathExpressionBase<T> :: parse_terminal_token( const wchar_t * & curpos, No
   else if( (ff = Functions.find_by_name(name)) )
     {
       if( *skip_white_spaces(curpos=tmp) != OBRACE )
-        { 
+        {
 		  // XXX: try consts first
 		  if( (cf = NamedConstants.find_by_name(name)) )
-		  { 
+		  {
 			  skip_white_spaces(curpos=tmp);
 			  *ppNode = cf->create_node();
 			  return *ppNode != 0;
@@ -1849,8 +1849,8 @@ bool MathExpressionBase<T> :: parse_terminal_token( const wchar_t * & curpos, No
   *ppNode = cf->create_node();
   }
   else if( !name.empty() )
-    { 
-#ifdef USE_DEFAULT_ERROR	  
+    {
+#ifdef USE_DEFAULT_ERROR
 	  set_error_msg(L"unknown identifier '%s'",name.c_str());
 #else
 	  set_error_id(PARSER_ERROR_UNKNOWN_ID);

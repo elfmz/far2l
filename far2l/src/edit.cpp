@@ -110,7 +110,8 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 	SelEnd(0),
 	CursorSize(-1),
 	CursorPos(0),
-	HasSpecialWidthChars(false)
+	HasSpecialWidthChars(false),
+	m_bWordWrapState(false)
 {
 	m_Callback.Active = true;
 	m_Callback.m_Callback = nullptr;
@@ -1259,6 +1260,10 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
+			if (m_bWordWrapState)
+			{
+				RecalculateWordWrap(ObjWidth, TabSize);
+			}
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1584,6 +1589,94 @@ int Edit::InsertKey(FarKey Key)
 	return TRUE;
 }
 
+int Edit::GetVisualLineCount() const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty())
+		return 1;
+	return m_WrapBreaks.size();
+}
+
+void Edit::GetVisualLine(int line, int& start, int& end) const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty() || line < 0)
+	{
+		start = 0;
+		end = StrSize;
+		return;
+	}
+
+	if (static_cast<size_t>(line) < m_WrapBreaks.size())
+	{
+		start = m_WrapBreaks[line];
+		if (static_cast<size_t>(line + 1) < m_WrapBreaks.size())
+			end = m_WrapBreaks[line + 1];
+		else
+			end = StrSize;
+	}
+	else
+	{
+		start = StrSize;
+		end = StrSize;
+	}
+}
+
+void Edit::RecalculateWordWrap(int Width, int TabSize)
+{
+    Width--; // save last column for cursor
+
+	m_WrapBreaks.clear();
+	if (!m_bWordWrapState || Width <= 1)
+	{
+		return;
+	}
+
+	m_WrapBreaks.push_back(0);
+
+	int CurrentStart = 0;
+	while (CurrentStart < StrSize)
+	{
+		int CurrentPos = CurrentStart;
+		int CurrentX = 0;
+		int LastBreakPos = -1; // Position *after* a space, where the new line would start.
+
+		int ForceBreakPos = -1;
+
+		while (CurrentPos < StrSize)
+		{
+			int CharWidth = 1;
+			if (Str[CurrentPos] == L'\t') {
+				CharWidth = TabSize - (CurrentX % TabSize);
+			} else if (CharClasses::IsFullWidth(&Str[CurrentPos])) {
+				CharWidth = 2;
+			}
+
+			if (CurrentX + CharWidth > Width)
+			{
+				ForceBreakPos = (CurrentPos > CurrentStart) ? CurrentPos : CurrentStart + 1;
+				break;
+			}
+
+			CurrentX += CharWidth;
+
+			if (Str[CurrentPos] == L' ') {
+				LastBreakPos = CurrentPos + 1;
+			}
+
+			CurrentPos++;
+		}
+
+		if (ForceBreakPos == -1) // Didn't exceed width, so we are done with this line
+		{
+			break;
+		}
+
+		int NextStart = (LastBreakPos != -1) ? LastBreakPos : ForceBreakPos;
+
+		m_WrapBreaks.push_back(NextStart);
+		CurrentStart = NextStart;
+	}
+}
+
 void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
 	this->Color = Color;
@@ -1766,6 +1859,17 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		CheckForSpecialWidthChars();
 	}
 
+	if (m_bWordWrapState) {
+		int Width = ObjWidth;
+		if (Flags.Check(FEDITLINE_EDITORMODE)) { // Corresponds to editor.cpp's EdOpt.ShowScrollBar
+			// This logic is a bit of a guess, assuming FEDITLINE_EDITORMODE is a good proxy.
+			// In editor.cpp, XX2 is calculated based on NumLastLine > Y2-Y1+1. We don't have that here.
+			// Let's assume for now if it's in editor mode, scrollbar might be there.
+			// A better solution would be to pass this info down.
+			// For now, let's just use ObjWidth as it is passed down correctly.
+		}
+		RecalculateWordWrap(Width, TabSize);
+	}
 	Changed();
 }
 
@@ -1913,6 +2017,10 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 			if (TabExpandMode == EXPAND_ALLTABS)
 				ExpandTabs();
 
+			if (m_bWordWrapState)
+			{
+				RecalculateWordWrap(ObjWidth, TabSize);
+			}
 			CheckForSpecialWidthChars(Str, Length);
 			Changed();
 		}
@@ -2217,7 +2325,7 @@ int Edit::CellPosToReal(int Pos)
 				CellPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
 
 			joining = false;
-			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) { 
+			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
 				if (Str[Index + 1] == CharClasses::ZERO_WIDTH_JOINER)
 					joining = true;
 				Index++;
@@ -2384,9 +2492,6 @@ void Edit::AddColor(const ColorItem *col)
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	if (ColorList.empty())
-		return 0;
-
 	size_t Dest, Src;
 
 	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
@@ -2419,6 +2524,7 @@ void Edit::ApplyColor()
 
 	// Обрабатываем элементы ракраски
 	for (auto &CurItem : ColorList) {
+
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
 			continue;
@@ -2542,7 +2648,6 @@ void Edit::ApplyColor()
 		if (Length < X2)
 			Length-= CorrectPos;
 
-		// Раскрашиваем элемент, если есть что раскрашивать
 		if (Length > 0) {
 			ScrBuf.ApplyColor(Start, Y1, Start + Length - 1, Y1, Attr, SelColor );
 					// Не раскрашиваем выделение
@@ -2773,7 +2878,7 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 
 void EditControl::ShowArrows()
 {
-	if (OverflowArrowsColor > 0) { 
+	if (OverflowArrowsColor > 0) {
 		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) != LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
@@ -2792,7 +2897,7 @@ void EditControl::Show()
 {
 	if (X2 - X1 + 1 > StrSize) {
 		Edit::SetLeftPos(0);
-	} 
+	}
 
 	Edit::Show();
 	ShowArrows();

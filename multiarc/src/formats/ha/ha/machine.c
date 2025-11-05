@@ -39,7 +39,7 @@
 #define HA_ISGID     0x0400
 #define HA_ISUID     0x0800
 #define HA_IRUSR     0x0100
-#define HA_IWUSR     0x0080 
+#define HA_IWUSR     0x0080
 #define HA_IXUSR     0x0040
 #define HA_IRGRP     0x0020
 #define HA_IWGRP     0x0010
@@ -63,7 +63,7 @@
 #define HA_ISSOCK(m) ((m&HA_IFMT)==HA_IFSOCK)
 
 typedef struct {
-    unsigned mtype; 
+    unsigned mtype;
     unsigned attr;
     unsigned user;
     unsigned group;
@@ -73,7 +73,7 @@ typedef struct {
 
 static Mdhd mdhd;
 struct stat filestat;
-	
+
 static void sig_handler(int signo) {
 
     error(1,ERR_INT,signo);
@@ -81,10 +81,10 @@ static void sig_handler(int signo) {
 
 void md_init(void) {
 
-    signal(SIGINT,sig_handler);	
-    signal(SIGTERM,sig_handler);	
-    signal(SIGPIPE,sig_handler);	
-    signal(SIGQUIT,sig_handler);	
+    signal(SIGINT,sig_handler);
+    signal(SIGTERM,sig_handler);
+    signal(SIGPIPE,sig_handler);
+    signal(SIGQUIT,sig_handler);
     umask(0);
 }
 
@@ -118,7 +118,7 @@ static mode_t md_tomdattr(U16B haattr) {
 static U16B md_tohaattr(mode_t mdattr) {
 
     U16B haattr;
-    
+
     haattr=0;
     if (mdattr&S_IRUSR) haattr|=HA_IRUSR;
     if (mdattr&S_IWUSR) haattr|=HA_IWUSR;
@@ -173,10 +173,10 @@ static char *attrstring(unsigned haattr) {
 }
 
 void md_gethdr(int len, int mode) {
-    
+
     static int longest=0;
     static unsigned char *buf=NULL;
-    
+
     if (len>longest) {
 	if (buf!=NULL) buf=realloc(buf,len);
 	else buf=malloc(len);
@@ -204,9 +204,9 @@ void md_gethdr(int len, int mode) {
 }
 
 void md_puthdr(void) {
-    
+
     unsigned char buf[MDHDLEN];
-    
+
     buf[0]=UNIXMDH;
     buf[1]=mdhd.attr&0xff;
     buf[2]=(mdhd.attr>>8)&0xff;
@@ -218,9 +218,9 @@ void md_puthdr(void) {
 }
 
 int md_filetype(char *path, char *name) {
-    
+
     char *fullpath;
-    
+
     if (!strcmp(name,".") || !strcmp(name,"..")) return T_SKIP;
     fullpath=md_pconcat(0,path,name);
     if (lstat(fullpath,&filestat)<0) {
@@ -236,7 +236,7 @@ int md_filetype(char *path, char *name) {
 }
 
 int md_newfile(void) {
-    
+
     mdhd.attr=md_tohaattr(filestat.st_mode);
     mdhd.user=filestat.st_uid;
     mdhd.group=filestat.st_gid;
@@ -244,10 +244,10 @@ int md_newfile(void) {
 }
 
 int md_special(char *fullname, unsigned char **sdata) {
-    
+
     static unsigned char *dat=NULL;
     int len;
-    
+
     if (dat!=NULL) {
 	free(dat);
 	dat=NULL;
@@ -260,7 +260,7 @@ int md_special(char *fullname, unsigned char **sdata) {
     }
     if (HA_ISLNK(mdhd.attr)) {
 	if ((dat=malloc(1024))==NULL) error(1,ERR_MEM,"md_special()");
-	if ((len=readlink(fullname,(char*)dat,1024))<0) 
+	if ((len=readlink(fullname,(char*)dat,1024))<0)
 	  error(1,ERR_RDLINK,fullname);
 	dat[len]=0;
 	*sdata=dat;
@@ -273,7 +273,7 @@ int md_special(char *fullname, unsigned char **sdata) {
 }
 
 int md_mkspecial(char *ofname,unsigned sdlen,unsigned char *sdata) {
-    
+
     if (mdhd.mtype!=UNIXMDH) {
 	error(0,ERR_HOW,ofname);
 	return 0;
@@ -304,7 +304,7 @@ int md_mkspecial(char *ofname,unsigned sdlen,unsigned char *sdata) {
 #endif
 #ifdef S_ISFIFO
     else if (HA_ISFIFO(mdhd.attr)) {
-	if (mkfifo(ofname,md_tomdattr(mdhd.attr))<0) 
+	if (mkfifo(ofname,md_tomdattr(mdhd.attr))<0)
 	  error(0,ERR_MKFIFO,sdata,ofname);
 	if (useattr) PERROR_ON_FAIL("chown", chown(ofname,mdhd.user,mdhd.group));
 	return 1;
@@ -315,7 +315,7 @@ int md_mkspecial(char *ofname,unsigned sdlen,unsigned char *sdata) {
 }
 
 void md_setfattrs(char *file) {
-    
+
     if (useattr) {
 	PERROR_ON_FAIL("chmod", chmod(file,md_tomdattr(mdhd.attr)));
 	PERROR_ON_FAIL("chown", chown(file,mdhd.user,mdhd.group));
@@ -323,44 +323,44 @@ void md_setfattrs(char *file) {
 }
 
 void md_setft(char *file,U32B time) {
-    
+
     struct utimbuf utb;
-    
+
     utb.actime=time;
     utb.modtime=time;
     PERROR_ON_FAIL("utime", utime(file,&utb));
 }
 
 void md_listhdr(void) {
-    
+
     printf("\n attr");
 }
 
 void md_listdat(void) {
-    
+
     printf("\n %s",attrstring(mdhd.attr));
 }
 
 char *md_timestring(time_t t) {
-    
+
     static char ts[40];
-    struct tm *tim;	
-    
+    struct tm *tim;
+
     tim=localtime(&t);
     sprintf(ts,"%04d-%02d-%02d  %02d:%02d",tim->tm_year+1900,tim->tm_mon+1,
 	    tim->tm_mday,tim->tm_hour,tim->tm_min);
-    return ts;	
+    return ts;
 }
 
 char *md_arcname(char *name_req) {
-    
+
     int pos;
     char *newname;
 
     pos=strlen(name_req);
-    if (pos>3 && 
-	tolower(name_req[pos-1])=='a' && 
-	tolower(name_req[pos-2])=='h' && 
+    if (pos>3 &&
+	tolower(name_req[pos-1])=='a' &&
+	tolower(name_req[pos-2])=='h' &&
 	name_req[pos-3]=='.') return name_req;
     if ((newname=malloc(pos+4))==NULL) error(1,ERR_MEM,"md_arcname()");
     strcpy(newname,name_req);
@@ -369,20 +369,20 @@ char *md_arcname(char *name_req) {
 }
 
 void md_truncfile(int fh, U32B len) {
-    
+
     PERROR_ON_FAIL("ftruncate", ftruncate(fh,len));
 }
 
 char *md_tohapath(char *mdpath) {
-    
+
     int i,j;
     static char *hapath=NULL;
-    
+
     if (hapath!=NULL) free(hapath),hapath=NULL;
     j=strlen(mdpath);
     for (i=0;mdpath[i];++i) if (mdpath[i]!='.' && mdpath[i]!='/') break;
     while (i>0 && mdpath[i-1]=='.') --i;
-    if (i==0) skipemptypath=1; 
+    if (i==0) skipemptypath=1;
     else skipemptypath=0;
     if ((hapath=malloc(j+1-i))==NULL) error(1,ERR_MEM,"md_tohapath()");
     strcpy(hapath,mdpath+i);
@@ -390,13 +390,13 @@ char *md_tohapath(char *mdpath) {
     return md_strcase(hapath);
 }
 
-char *md_tomdpath(char *hapath) {	
-    
+char *md_tomdpath(char *hapath) {
+
     int i;
     static char *mdpath=NULL;
-    
+
     if (mdpath!=NULL) free(mdpath),mdpath=NULL;
-    if ((mdpath=malloc(strlen(hapath)+1))==NULL) 
+    if ((mdpath=malloc(strlen(hapath)+1))==NULL)
       error(1,ERR_MEM,"md_tomdpath()");
     strcpy(mdpath,hapath);
     for (i=0;mdpath[i];++i) if ((unsigned char)mdpath[i]==0xff) mdpath[i]='/';
@@ -404,28 +404,28 @@ char *md_tomdpath(char *hapath) {
 }
 
 char *md_strippath(char *mdfullpath) {
-    
+
     int i;
     static char *plainpath=NULL;
-    
+
     if (plainpath!=NULL) free(plainpath),plainpath=NULL;
-    if ((plainpath=malloc(strlen(mdfullpath)+1))==NULL) 
+    if ((plainpath=malloc(strlen(mdfullpath)+1))==NULL)
       error(1,ERR_MEM,"md_strippath()");
     strcpy(plainpath,mdfullpath);
     for (i=strlen(plainpath)-1;i>=0;i--) {
-	if (plainpath[i]=='/') break; 
+	if (plainpath[i]=='/') break;
     }
     plainpath[i+1]=0;
     return plainpath;
 }
 
 char *md_stripname(char *mdfullpath) {
-    
+
     int i;
     static char *plainname=NULL;
-    
+
     if (plainname!=NULL) free(plainname),plainname=NULL;
-    if ((plainname=malloc(strlen(mdfullpath)+1))==NULL) 
+    if ((plainname=malloc(strlen(mdfullpath)+1))==NULL)
       error(1,ERR_MEM,"md_stripname()");
     for (i=strlen(mdfullpath)-1;i>0;i--) {
 	if (mdfullpath[i]=='/') {
@@ -438,15 +438,15 @@ char *md_stripname(char *mdfullpath) {
 }
 
 char *md_pconcat(int delim2, char *head, char *tail) {
-	
+
     char *newpath;
     int headlen,delim1;
-    
+
     delim1=0;
     if ((headlen=strlen(head))!=0)  {
 	if (head[headlen-1]!='/') delim1=1;
     }
-    if ((newpath=malloc(headlen+strlen(tail)+delim2+delim1+1))==NULL) 
+    if ((newpath=malloc(headlen+strlen(tail)+delim2+delim1+1))==NULL)
       error(1,ERR_MEM,"md_pconcat()");
     if (headlen!=0) strcpy(newpath,head);
     if (delim1) newpath[headlen]='/';
@@ -460,7 +460,7 @@ int md_namecmp(char *pat, char *cmp) {
     if (*pat==0) return !*cmp;
     if (*pat=='?') {
 	if (!*cmp) return 0;
-	return md_namecmp(pat+1,cmp+1); 
+	return md_namecmp(pat+1,cmp+1);
     }
     if (*pat=='*') {
 	if (*(pat+1)==0) return 1;

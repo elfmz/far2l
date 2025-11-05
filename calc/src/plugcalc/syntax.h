@@ -36,12 +36,12 @@ struct SSyntax
 	wchar_t *name_set;	// XXX:
 	wchar_t *mean;
 
-#ifdef USE_CREGEXP	
+#ifdef USE_CREGEXP
 	CRegExp *re;
 #else
 	TRex *re;
 #endif
-	
+
 	union
 	{
 		int priority;

@@ -50,7 +50,7 @@ typedef uint32_t U32B;
 
 extern struct stat filestat;
 
-void md_init(void);	
+void md_init(void);
 /* char *md_strcase(char *s); */
 char *md_arcname(char *name_req);
 void md_gethdr(int len, int mode);

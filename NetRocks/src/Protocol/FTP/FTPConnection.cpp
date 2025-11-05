@@ -573,7 +573,7 @@ void FTPConnection::SendRestIfNeeded(unsigned long long rest)
 				rest, reply_code, str.c_str()));
 		}
 	}
-}	
+}
 
 void FTPConnection::DataCommand_PASV(std::shared_ptr<BaseTransport> &data_transport, const std::string &cmd, unsigned long long rest)
 {

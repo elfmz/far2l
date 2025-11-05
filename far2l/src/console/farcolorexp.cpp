@@ -203,7 +203,7 @@ FN_STATIC_INLINE void eval_operator(const uint8_t op_id, uint64_t &lop, uint64_t
 
 #define T_SkipWhiteSpace() while (*expr == ' ' && len) { ++expr, --len; }
 #define T_SkipAllIn() while (*expr != ')' && len) { ++expr, --len; }
-#define T_GetID() while (tchtab[*expr] & TCH_ID && len) { ++expr, --len; } 
+#define T_GetID() while (tchtab[*expr] & TCH_ID && len) { ++expr, --len; }
 #define T_SkipZeros() while (*expr == '0' && len) { ++expr, --len; }
 
 #define T_PeekOP() (opp != -1 ? ops[opp] : 0)

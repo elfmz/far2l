@@ -234,6 +234,10 @@ int FolderTree::ProcessKey(FarKey Key)
 		case KEY_NUMPAD8:
 		case KEY_DOWN:
 		case KEY_NUMPAD2:
+		case KEY_LEFT:
+		case KEY_NUMPAD4:
+		case KEY_RIGHT:
+		case KEY_NUMPAD6:
 		case KEY_PGUP:
 		case KEY_NUMPAD9:
 		case KEY_PGDN:
@@ -246,6 +250,7 @@ int FolderTree::ProcessKey(FarKey Key)
 		case (KEY_MSWHEEL_UP | KEY_ALT):
 		case KEY_MSWHEEL_DOWN:
 		case (KEY_MSWHEEL_DOWN | KEY_ALT):
+		case KEY_CTRL0 ... KEY_CTRL9:
 			FindEdit->SetString(L"");
 			Tree->ProcessKey(Key);
 			DrawEdit();

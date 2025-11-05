@@ -16,7 +16,7 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 ************************************************************************
-  HA main program   
+  HA main program
 ***********************************************************************/
 
 #include <string.h>
@@ -34,7 +34,7 @@
 #include "hsc.h"
 
 /***********************************************************************
-  Commands  
+  Commands
 */
 
 #define EXTRACT		'e'
@@ -51,8 +51,8 @@ static char *defpat[]={ALLFILES};
 static int metqueue[M_UNK+1]={M_UNK};
 static void dummy(void) {
 	/* Do nothing */
-}	
-     
+}
+
 struct {
     char *name;
     void (*decode)(void);
@@ -63,27 +63,27 @@ struct {
 	{"3"},{"4"},{"5"},{"6"},{"7"},{"8"},{"9"},{"10"},{"11"},{"12"},{"13"},
 	{"DIR"},
 	{"SPC"}
-    };		
+    };
 
 static void banner(void) {
-    
+
     fprintf(stderr,BANNER);
     fflush(stderr);
 }
 
 static unsigned getinfo(unsigned char *buf, unsigned blen) {
-    
+
     static unsigned char *idat=infodat;
     unsigned i;
-    
+
     for (i=0;i<blen && --ilen;i++) {
 	buf[i]=*idat++;
-    } 
+    }
     return i;
 }
 
 static void info(void) {
-    
+
     setoutput(STDOUT_FILENO,0,"stdout");
     ilen=infolen;
     inspecial=getinfo;
@@ -97,13 +97,13 @@ static void info(void) {
 
 
 static void usage(int ex) {
-    
+
     banner();
     fprintf(stderr,"\n usage : HA <cmd> archive [files]"
 	    "\n"
 	    "\n commands :"
 	    "\n   e[aqty]      - Extract files"
-	    "\n   x[aqty]      - eXtract files with pathnames"	
+	    "\n   x[aqty]      - eXtract files with pathnames"
 	    "\n   l[f]         - List files     t[q]         - Test files"
 	    "\n"
 	    "\n switches :"
@@ -111,23 +111,23 @@ static void usage(int ex) {
 	    "\n   f      - Full listing"
 		"\n   y      - assume Yes on all questions"
 	    "\n   a      - set system specific file Attributes"
-	    "\n   e      - Exclude pathnames" 
+	    "\n   e      - Exclude pathnames"
 	    "\n   q      - Quiet operation"
 	    "\n"
-	    "\nType \"ha h | more\" to get more information about HA."	
+	    "\nType \"ha h | more\" to get more information about HA."
 	    "\n"
-	    );		
+	    );
     fflush(stderr);
     if (ex) {
 	cu_do(NULL);
-	_exit(ex); 
+	_exit(ex);
     }
 }
 
 static int yesno(char *format, char *string) {
-    
+
     int rep;
-    
+
     if (yes || quiet) return 1;
     printf(format,string);
     fflush(stdout);
@@ -144,7 +144,7 @@ static int yesno(char *format, char *string) {
 	    rep=0;
 	    break;
 	}
-    } 
+    }
     if (rep=='Y'||rep=='y') rep=1;
     else if (rep=='A'||rep=='a') rep=yes=1;
     else rep=0;
@@ -161,7 +161,7 @@ static void do_list(void) {
     U32B tcs,tos;
     unsigned files;
     Fheader *hd;
-    
+
     arc_reset();
     if ((hd=arc_seek())==NULL) error(1,ERR_NOFILES);
     printf("\n  filename        original    compressed"
@@ -202,13 +202,13 @@ static void do_list(void) {
 }
 
 static void do_extract(void) {
-    
+
     Fheader *hd;
     char *ofname;
     unsigned char *sdata;
     int of,newdir;
     void *cumark;
-    
+
     arc_reset();
     if ((hd=arc_seek())==NULL) error(1,ERR_NOFILES);
     do {
@@ -220,7 +220,7 @@ static void do_extract(void) {
 	switch(hd->type) {
 	  case M_SPECIAL:
 	    if (!access(ofname,F_OK)) {
-		if (!yesno("\nOverwrite special file %s ? (y/n/a) ",ofname)) 
+		if (!yesno("\nOverwrite special file %s ? (y/n/a) ",ofname))
 		  break;
 	    }
 	    if (!quiet) {
@@ -228,9 +228,9 @@ static void do_extract(void) {
 		backstep(strlen(ofname)+8);
 	    }
 	    if (hd->clen) {
-		if ((sdata=malloc(hd->clen))==NULL) 
+		if ((sdata=malloc(hd->clen))==NULL)
 		  error(1,ERR_MEM,"do_extract()");
-		if (read(arcfile,sdata,hd->clen)!=hd->clen) 
+		if (read(arcfile,sdata,hd->clen)!=hd->clen)
 		  error(1,ERR_READ,arcname);
 	    }
 	    else sdata=NULL;
@@ -305,7 +305,7 @@ static void do_test(void) {
     Fheader *hd;
     char *ofname;
     void *cumark;
-    
+
     arc_reset();
     if ((hd=arc_seek())==NULL) error(1,ERR_NOFILES);
     do {
@@ -344,25 +344,25 @@ static void do_test(void) {
 static void switchparse(char *s, char *valid) {
 
     int i;
-    
-    while (*s) { 
-	if (strchr(valid,tolower(*s))==NULL) error(1,ERR_INVSW,*s); 
-	switch (tolower(*s)) { 
-	  case 'q': 
-	    quiet=1; 
+
+    while (*s) {
+	if (strchr(valid,tolower(*s))==NULL) error(1,ERR_INVSW,*s);
+	switch (tolower(*s)) {
+	  case 'q':
+	    quiet=1;
 	    break;
-	  case 'y': 
-	    yes=1; 
-	    break; 
+	  case 'y':
+	    yes=1;
+	    break;
 	  case 'f':
-	    fulllist=1; 
-	    break; 
-	  case 'a': 
-	    useattr=1; 
+	    fulllist=1;
+	    break;
+	  case 'a':
+	    useattr=1;
 	    break;
 	  case 't':
-	    touch=1; 
-	    break; 
+	    touch=1;
+	    break;
 	  case 'e':
 	    usepath=0;
 	    break;
@@ -390,7 +390,7 @@ static void switchparse(char *s, char *valid) {
 static void fix_methods(void) {
 
     int i;
-    
+
     if (metqueue[0]==M_UNK) {
 	metqueue[0]=M_ASC;
 	metqueue[1]=M_CPY;
@@ -398,8 +398,8 @@ static void fix_methods(void) {
     }
     else {
 	for (i=0;metqueue[i]!=M_UNK;++i) {
-	    if (metqueue[i]==M_CPY) break; 
-	}	
+	    if (metqueue[i]==M_CPY) break;
+	}
 	if (metqueue[i]==M_UNK) {
 	    metqueue[i]=M_CPY;
 	    metqueue[i+1]=M_UNK;
@@ -408,7 +408,7 @@ static void fix_methods(void) {
 }
 
 static void (*parse_cmds(char *cs[]))(void) {
-	
+
     void (*cmd)(void)=do_list;
 
     switch(tolower(cs[0][0])) {
@@ -436,7 +436,7 @@ static void (*parse_cmds(char *cs[]))(void) {
 	usage(ERR_UNKNOWN);
     }
     return cmd;
-} 
+}
 
 int ha_main(int argc, char *argv[]) {
 
@@ -464,4 +464,3 @@ int ha_main(int argc, char *argv[]) {
     cu_do(NULL);
     return lasterror;
 }
- 

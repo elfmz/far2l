@@ -380,7 +380,7 @@ int History::Select(const wchar_t *Title, const wchar_t *HelpTopic, FARString &s
 	VMenu HistoryMenu(Title, nullptr, 0, Height);
 	HistoryMenu.SetFlags(VMENU_SHOWAMPERSAND | VMENU_WRAPMODE);
 
-	HistoryMenu.SetHelp(HelpTopic ? HelpTopic : L"HistoryCmd");	
+	HistoryMenu.SetHelp(HelpTopic ? HelpTopic : L"HistoryCmd");
 
 	HistoryMenu.SetPosition(-1, -1, 0, 0);
 	if (Opt.AutoHighlightHistory)

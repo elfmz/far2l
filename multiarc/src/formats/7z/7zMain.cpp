@@ -81,10 +81,10 @@ static size_t Utf16_To_Utf8_Calc(const UInt16 *src, const UInt16 *srcLim)
     UInt32 val;
     if (src == srcLim)
       return size;
-    
+
     size++;
     val = *src++;
-   
+
     if (val < 0x80)
       continue;
 
@@ -116,9 +116,9 @@ static Byte *Utf16_To_Utf8(Byte *dest, const UInt16 *src, const UInt16 *srcLim)
     UInt32 val;
     if (src == srcLim)
       return dest;
-    
+
     val = *src++;
-    
+
     if (val < 0x80)
     {
       *dest++ = (Byte)val;
@@ -148,7 +148,7 @@ static Byte *Utf16_To_Utf8(Byte *dest, const UInt16 *src, const UInt16 *srcLim)
         continue;
       }
     }
-    
+
     dest[0] = MY_UTF8_HEAD(2, val);
     dest[1] = MY_UTF8_CHAR(1, val);
     dest[2] = MY_UTF8_CHAR(0, val);
@@ -214,9 +214,9 @@ static SRes Utf16_To_Char(CBuf *buf, const UInt16 *s
 static WRes MyCreateDir(const UInt16 *name)
 {
   #ifdef USE_WINDOWS_FILE
-  
+
   return CreateDirectoryW((LPCWSTR)name, NULL) ? 0 : GetLastError();
-  
+
   #else
 
   CBuf buf;
@@ -233,7 +233,7 @@ static WRes MyCreateDir(const UInt16 *name)
   == 0 ? 0 : errno;
   Buf_Free(&buf, &g_Alloc);
   return res;
-  
+
   #endif
 }
 
@@ -266,12 +266,12 @@ static unsigned char MatchString(const UInt16 *s, const char *m)
 	  size_t l = strlen(m);
 	  if (l && m[l-1]=='*') {
 		  if (strncmp((const char *)buf.data, m, l - 1)==0) {
-			  out = 1; 
+			  out = 1;
 		  } else if (l > 1 && m[l-2]=='/') {//match '/path/name' by '/path/name/*'
 			  if (strncmp((const char *)buf.data, m, l - 2)==0 && !buf.data[l - 2])
-				  out = 1; 
+				  out = 1;
 		  }
-			  
+
 	  } else if (strcmp((const char *)buf.data, m)==0)
 		out = 1;
   }
@@ -524,9 +524,9 @@ extern "C" int sevenz_main(int numargs, char *args[])
       LookToRead2_INIT(&lookStream)
     }
   }
-    
+
   CrcGenerateTable();
-    
+
   SzArEx_Init(&db);
   struct TimeInfo
   {
@@ -546,7 +546,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
   {
     char *command = args[1];
     int listCommand = 0, testCommand = 0, fullPaths = 0;
-    
+
     if (strcmp(command, "l") == 0) listCommand = 1;
     else if (strcmp(command, "t") == 0) testCommand = 1;
     else if (strcmp(command, "e") == 0) { }
@@ -618,7 +618,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
 
           fileSize = SzArEx_GetFileSize(&db, i);
           UInt64ToStr(fileSize, s, 10);
-          
+
           if (SzBitWithVals_Check(&db.MTime, i))
             ConvertFileTimeToString(&db.MTime.Vals[i], t);
           else
@@ -628,7 +628,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
               t[j] = ' ';
             t[j] = '\0';
           }
-          
+
           Print(t);
           Print(" ");
           Print(attr);
@@ -662,7 +662,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
         res = PrintString(temp);
         if (res != SZ_OK)
           break;
-        
+
         if (isDir)
           Print("/");
         else
@@ -674,7 +674,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
           if (res != SZ_OK)
             break;
         }
-        
+
         if (!testCommand)
         {
           CSzFile outFile;
@@ -682,7 +682,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
           size_t j;
           UInt16 *name = (UInt16 *)temp;
           const UInt16 *destPath = (const UInt16 *)name;
- 
+
           for (j = 0; name[j] != 0; j++)
             if (name[j] == '/')
             {
@@ -712,7 +712,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
             ti.ctime.dwHighDateTime = (DWORD)(t->High);
             ti.has_ctime = true;
           }
-    
+
           if (isDir)
           {
             MyCreateDir(destPath);
@@ -740,7 +740,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
           }
 
           processedSize = outSizeProcessed;
-          
+
           {
             const WRes wres = File_Write(&outFile, outBuffer + offset, &processedSize);
             if (wres != 0 || processedSize != outSizeProcessed)
@@ -762,7 +762,7 @@ extern "C" int sevenz_main(int numargs, char *args[])
             futimens(outFile.fd, ts);
 #endif
           }
-          
+
             {
               const WRes wres = File_Close(&outFile);
               if (wres != 0)
@@ -805,13 +805,13 @@ extern "C" int sevenz_main(int numargs, char *args[])
 #endif
   }
 
-  
+
   if (res == SZ_OK)
   {
     Print("\nEverything is Ok\n");
     return 0;
   }
-  
+
   if (res == SZ_ERROR_UNSUPPORTED)
     PrintError("decoder doesn't support this archive");
   else if (res == SZ_ERROR_MEM)
@@ -826,6 +826,6 @@ extern "C" int sevenz_main(int numargs, char *args[])
     UInt64ToStr((unsigned)res, s, 0);
     PrintError(s);
   }
-  
+
   return 1;
 }

@@ -62,11 +62,11 @@ static const FarDialogItem dialog_template[] =
 
 static const int CALC_EDIT_ID = 2, CALC_TYPE_ID = 3;
 
-static const wchar_t types[][20] = 
+static const wchar_t types[][20] =
 {
-	L"type:big number", 
+	L"type:big number",
 	L"type:int64", L"type:uint64", L"type:int ", L"type:short ", L"type:char ",
-	L"type:uint ", L"type:ushort", L"type:byte", L"type:double", L"type:float" 
+	L"type:uint ", L"type:ushort", L"type:byte", L"type:double", L"type:float"
 };
 
 
@@ -124,11 +124,11 @@ void InitDynamicData()
 	LoadConfig();
 	CheckConfig();
 	SaveConfig();
-	
+
 	CalcParser::SetDelims(props.decimal_point[0], props.args[0], props.use_delim ? props.digit_delim[0] : 0);
 
 	CalcParser::InitTables(props.rep_fraction_max_start, props.rep_fraction_max_period, props.cont_fraction_max);
-	
+
 	PSgmlEl BaseRc = new CSgmlEl;
 
 	std::string calcset(StrWide2MB(api->GetModuleName()));
@@ -142,10 +142,10 @@ void InitDynamicData()
 		TranslateInstallPath_Lib2Share(calcset);
 
 	BaseRc->parse(calcset);
-	
+
 	CalcParser::ProcessData(BaseRc, props.case_sensitive != 0);
 	CalcParser::AddAll();
-	
+
 	delete BaseRc;
 
 	memset(&addons_info, 0, sizeof(addons_info));
@@ -185,13 +185,13 @@ void EditorDialog()
 	}
 
 	i = (int)api->Menu(-1, -1, num_fmi, FMENU_WRAPMODE, L"action", NULL, fmi);
-	
-	if (i == -1) 
+
+	if (i == -1)
 		return;
 	if (i == 0)
 	{
 		CalcShowDialog();
-		if (coreReturn) 
+		if (coreReturn)
 		{
 			api->EditorInsert(coreReturn);
 			free(coreReturn);
@@ -206,12 +206,12 @@ void EditorDialog()
 	api->EditorGet(&EditStr, &EditInfo);
 
 	for (e = (int)EditInfo.CurPos - 1; e > 0; e--)
-		if (EditStr.StringText[e] != ' ') 
+		if (EditStr.StringText[e] != ' ')
 			break;
 	for (s = e; s > 0; s--)
-		if (*PWORD(EditStr.StringText + s) == 0x2020) 
+		if (*PWORD(EditStr.StringText + s) == 0x2020)
 			break;
-	
+
 	if (EditInfo.BlockStartLine == EditInfo.CurLine &&
 			EditStr.SelStart != -1 && EditStr.SelEnd != -1)
 	{
@@ -243,11 +243,11 @@ void EditorDialog()
 		Text = convertToString(Res, i - 1, 0, false, props.pad_zeroes != 0, false, NULL);
 		if (Text)
 		{
-			if (After && !skip_eq) 
+			if (After && !skip_eq)
 				api->EditorInsert(L"=");
-			if (!parser->GetError()) 
+			if (!parser->GetError())
 				api->EditorInsert(Text);
-			if (!After && !skip_eq) 
+			if (!After && !skip_eq)
 				api->EditorInsert(L"=");
 
 			EditStr.StringNumber = -1;
@@ -275,12 +275,12 @@ void ShellDialog(const wchar_t *expression)
 	{
 		while ( (i = CalcMenu(i)) != 0)
 		{
-			if (i == -1) 
+			if (i == -1)
 				return;
 			ShowUnitsDialog(i);
 		}
 	}
-	
+
 	CalcShowDialog(expression);
 	if (coreReturn)
 	{
@@ -299,18 +299,18 @@ int CalcMenu(int c)
 {
 	unsigned i;
 	int ret;
-	
+
 	std::vector<FarMenuItem> MenuEls(CalcParser::DialogsNum + 1);
 	MenuEls[0].Text = _wcsdup(api->GetMsg(mName));
-	
+
 	PDialogData dd;
 	for(i = 1, dd = CalcParser::DialogData; dd; dd = dd->Next, i++)
 		MenuEls[i].Text = _wcsdup(dd->Name);
-	
+
 	MenuEls[c].Selected = TRUE;
 	ret = (int)api->Menu(-1, -1, 0, FMENU_WRAPMODE | FMENU_AUTOHIGHLIGHT,
 					api->GetMsg(mDialogs), L"Contents", MenuEls);
-	
+
 	for(i = 0; i < MenuEls.size(); i++)
 		free((void *)MenuEls[i].Text);
 
@@ -338,33 +338,33 @@ void SetUnitsDialogDims()
 	for (i = 0; i < cur_dlg_id-1; i++)
 		dd = dd->Next;
 	de = dd->Elem;
-	
+
 	int sX, sY;
 	getConsoleWindowSize(&sX, &sY);
 	cx = sX - 2;
 	cy = sY - 1;
 	j = sY - 5;
-	
+
 	if (!((dd->num + 2) / j))
 	{
 		cy = dd->num + 4;
 		cx = sX * 2 / 3;
 	}
-	
+
 	dialog[0].X1 = 3;
 	dialog[0].Y1 = 1;
 	dialog[0].X2 = cx - 3;
 	dialog[0].Y2 = cy - 2;
-	
+
 	cur_dlg_dlg_size.X = cx;
 	cur_dlg_dlg_size.Y = cy;
-	
+
 	cur_dlg_items = dialog;
-	
+
 	int col_width = (cx - 9) / (dd->num / (j + 1) + 1);
 	for (int i = 0; i < 10; i++)
 		cx_column_width[i] = 0;
-	
+
 	int oldk = -1, col_textlen = 0;
 	for (d = 1, i = 0, de1 = de; i < dd->num; i++,d++, de1 = de1->Next)
 	{
@@ -390,7 +390,7 @@ void SetUnitsDialogDims()
 		{
 			dialog[d].X1 = k;
 			dialog[d].Y1 = i%j + 2;
-		} else 
+		} else
 		{
 			int cl = (col_width/2 > col_textlen+2) ? col_textlen+2 : col_width/2;
 			dialog[d].X1 = k + 1;
@@ -405,7 +405,7 @@ void SetUnitsDialogDims()
 				cx_column_width[i/j] = w;
 		}
 	}
-	
+
 }
 
 class DlgUnits : public CalcDialog
@@ -449,7 +449,7 @@ public:
 			SetItemPosition(i, rect);
 		}
 		EnableRedraw(true);
-		
+
 		int curid = GetFocus();
 		if (curid >= 0)
 		{
@@ -510,7 +510,7 @@ public:
 		for (de = dd->Elem; de; de = de->Next, id++)
 		{
 			if (de->Type) id++;
-			if (id == param1) 
+			if (id == param1)
 			{
 				if (de->input != NULL && de->input->parser != NULL)
 				{
@@ -529,7 +529,7 @@ public:
 				break;
 			}
 		}
-		
+
 		id = 1;
 		for (de = dd->Elem; de; de = de->Next, id++)
 		{
@@ -550,7 +550,7 @@ public:
 					{
 						tmp = de->scale != 0 ? val / de->scale : 0;
 					}
-					
+
 					wchar_t *pwz = convertToString(tmp, idx, cx_column_width[de->column_idx] - 4, false, props.pad_zeroes != 0, true, nullptr);
 					if (pwz)
 					{
@@ -638,18 +638,18 @@ void ShowUnitsDialog(int no)
 	int i, d;
 	PDialogData dd = CalcParser::DialogData;
 	PDialogElem de, de1;
-	
+
 	cur_dlg_id = no;
 	for (i = 0; i < no-1; i++)
 		dd = dd->Next;
 	de = dd->Elem;
 
 	int dsize = 1+dd->num*2;
-	
+
 	FarDialogItem *dialog = new FarDialogItem [dsize];
 	memset(dialog, 0, sizeof(FarDialogItem) * dsize);
 	dialog[0].Type = DI_DOUBLEBOX;
-	
+
 	// XXX:
 	dialog[0].PtrData = _wcsdup(dd->Name);
 
@@ -660,7 +660,7 @@ void ShowUnitsDialog(int no)
 			dialog[d].Type = DI_TEXT;
 			dialog[d].Flags = DIF_BOXCOLOR;	// used to set highlight colors
 			dialog[d].PtrData = _wcsdup(de1->Name);
-		} else 
+		} else
 		{
 			dialog[d].Type = DI_TEXT;
 			dialog[d].PtrData = _wcsdup(de1->Name);
@@ -672,7 +672,7 @@ void ShowUnitsDialog(int no)
 	cur_dlg_items = dialog;
 	cur_dlg_items_num = dsize;
 	SetUnitsDialogDims();
-	
+
 	DlgUnits units(dd);
 	units.Init(CALC_DIALOG_UNITS, -1, -1, cur_dlg_dlg_size.X, cur_dlg_dlg_size.Y, L"Contents", dialog, dsize);
 	units.Run();
@@ -763,7 +763,7 @@ public:
 		}
 
 		EnableRedraw(true);
-		
+
 		cur_dlg_need_recalc = 1;
 		return -1;
 	}
@@ -785,7 +785,7 @@ public:
 		curRadio = param1;
 		return -1;
 	}
-	
+
 	virtual CALC_INT_PTR OnClose(int param1, void *param2)
 	{
 		std::wstring str;
@@ -839,7 +839,7 @@ public:
 				coreReturn = _wcsdup(str.c_str());
 				Close(CALC_EDIT_ID);
 			}
-				
+
 			AddHistory(CALC_EDIT_ID, str);
 			SArg res = parser->Parse(str.c_str(), props.case_sensitive != 0);
 			if (!props.auto_update)
@@ -851,7 +851,7 @@ public:
 					wcscpy((wchar_t *)force_update_item->PtrData, str.c_str());
 				}
 			}
-			
+
 			if (param1 >= addons_info.radio_id1 && param1 <= addons_info.radio_id2 && curRadio != param1)
 			{
 				FarDialogItem fdi;
@@ -862,7 +862,7 @@ public:
 				GetDlgItemShort(param1, &fdi);
 				fdi.Param.Selected = 1;
 				SetDlgItemShort(param1, fdi);
-				
+
 				curRadio = param1;
 			}
 
@@ -887,7 +887,7 @@ public:
 			int set_sel = calc_error;
 			int text_len = (int)wcslen(text);
 			SetText(CALC_EDIT_ID, text);
-			
+
 			if (loc_Radio >= 0)
 				free(free_text);
 
@@ -927,7 +927,7 @@ public:
 	{
 		return OnEditChangeInternal(param1, param2, false);
 	}
-	
+
 	CALC_INT_PTR OnEditChangeInternal(int param1, void *param2, bool force_update)
 	{
 		if (param1 == CALC_EDIT_ID)
@@ -957,7 +957,7 @@ public:
 					SetText(CALC_TYPE_ID, api->GetMsg(mNoError + parser->GetError()));
 					for (int i = addons_info.edit_id1; i <= addons_info.edit_id2; i++)
 						SetText(i, L"");
-					
+
 				} else
 				{
 					calc_error = 0;
@@ -1020,7 +1020,7 @@ public:
 };
 
 // XXX:
-int get_visible_len(const wchar_t *str) 
+int get_visible_len(const wchar_t *str)
 {
 	int len = 0;
 	for (int k = 0; str[k]; k++)
@@ -1044,7 +1044,7 @@ void CalcShowDialog(const wchar_t *expression)
 //	unsigned basenum = sizeof(dialog_template) / sizeof(dialog_template[0]);
 //	unsigned totalnum = basenum;
 	unsigned i;
-	
+
 	addons_info.num_custom = 0;
 	addons_info.max_len = 0;
 
@@ -1087,18 +1087,18 @@ void CalcShowDialog(const wchar_t *expression)
 		if (tmp)
 		{
 			int pad_len = addons_info.max_len - get_visible_len(from);
-			
+
 			wmemset(tmp, ' ', pad_len);
-			
+
 			wcscpy(tmp + pad_len, from);
 			wcscat(tmp, L":");
 		}
-		
+
 		it.PtrData = tmp;
 
 		it.Flags = (i == 0) ? DIF_GROUP : 0;
 		it.Param.Selected = (curRadio == (int)dialog.size()) ? 1 : 0; //int(i + addons_info.radio_id1)
-		
+
 		dialog.emplace_back(it);
 	}
 
@@ -1109,7 +1109,7 @@ void CalcShowDialog(const wchar_t *expression)
 		it.Type = DI_EDIT;
 		it.PtrData = L"";
 		it.Flags = DIF_READONLY;//DIF_DISABLE;
-		
+
 //		dialog[basenum + addons_info.num_custom + i] = it;
 		dialog.emplace_back(it);
 	}
@@ -1137,7 +1137,7 @@ void CalcShowDialog(const wchar_t *expression)
 //		dialog[2].PtrData = expression;
 //	}
 	DlgCalc calc(expression);
-	calc.Init(CALC_DIALOG_MAIN, -1, -1, cur_dlg_dlg_size.X, cur_dlg_dlg_size.Y, 
+	calc.Init(CALC_DIALOG_MAIN, -1, -1, cur_dlg_dlg_size.X, cur_dlg_dlg_size.Y,
 				L"Contents", &dialog[0], (int)dialog.size());
 
 	calc.Run();
@@ -1158,7 +1158,7 @@ SDialogElem::SDialogElem()
 
 SDialogElem::~SDialogElem()
 {
-	if (Next) 
+	if (Next)
 		delete Next;
 	if (input)
 		delete input;

@@ -9,7 +9,7 @@ template <class CHAR_T, class CHAR_COMPARE>
 	while ((*str) && (*wild != (CHAR_T)'*')) {
 		if (!CHAR_COMPARE()(*wild, *str) && (*wild != (CHAR_T)'?'))
 			return false;
-		
+
 		wild++;
 		str++;
 	}
@@ -18,7 +18,7 @@ template <class CHAR_T, class CHAR_COMPARE>
 		if (*wild == (CHAR_T)'*') {
 			if (!*++wild)
 				return true;
-			
+
 			mp = wild;
 			cp = str+1;
 

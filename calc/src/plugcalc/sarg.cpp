@@ -211,7 +211,7 @@ SArg operator/ (const SArg & op1, const SArg & op2)
 			return (float)op1 / (float)op2;
 		return (double)op1 / (double)op2;
 	}
-	if (op2.GetBig() == 0) 
+	if (op2.GetBig() == 0)
 		throw ERR_ZERO;
 	return op1.GetBig() / op2.GetBig();
 }
@@ -260,13 +260,13 @@ SArg SArg::operator~() const
 	case SA_BIG:
 	case SA_DOUBLE:
 	case SA_FLOAT:
-		 { 
+		 {
 			BigInt bint;
-			this->GetBig().ToInt(bint); 
+			this->GetBig().ToInt(bint);
 			bint.BitNot2();
 			Big bi;
 			bi.FromInt(bint);
-			return bi; 
+			return bi;
 		 }
 	}
 	throw ERR_TYPE;
@@ -351,9 +351,9 @@ SArg operator>> (const SArg & op1, int n)
 	case SA_BIG:
 	case SA_DOUBLE:
 	case SA_FLOAT:
-		{ 
-			BigInt bint; op1.GetBig().ToInt(bint); bint.Rcr(n); 
-			Big bi; bi.FromInt(bint); return bi; 
+		{
+			BigInt bint; op1.GetBig().ToInt(bint); bint.Rcr(n);
+			Big bi; bi.FromInt(bint); return bi;
 		}
 	}
 	throw ERR_TYPE;
@@ -375,9 +375,9 @@ SArg operator<< (const SArg & op1, int n)
 	case SA_BIG:
 	case SA_DOUBLE:
 	case SA_FLOAT:
-		{ 
-			BigInt bint; op1.GetBig().ToInt(bint); bint.Rcl(n); 
-			Big bi; bi.FromUInt(bint); return bi; 
+		{
+			BigInt bint; op1.GetBig().ToInt(bint); bint.Rcl(n);
+			Big bi; bi.FromUInt(bint); return bi;
 		}
 	}
 	throw ERR_TYPE;
@@ -408,7 +408,7 @@ SArg SArg::Ror(const SArg & op) const
 	default:
 		throw ERR_TYPE;
 	}
-	
+
 }
 
 SArg SArg::Rol(const SArg & op) const
@@ -512,7 +512,7 @@ SArg::operator int64_t() const
 		d.ToInt(res);
 		return res;
 	}
-	
+
 	case SA_INT64:  return arg.v_int64;
 	case SA_INT:    return arg.v_int;
 	case SA_SHORT:  return arg.v_short;
@@ -585,7 +585,7 @@ Big SArg::GetBig() const
 	switch(type)
 	{
 	case SA_BIG: return v_big;
-	
+
 	case SA_INT64:  big.FromInt(arg.v_int64);  return big;
 	case SA_UINT64: big.FromInt(arg.v_uint64);  return big;
 	case SA_INT:    big.FromInt(arg.v_int);  return big;
@@ -614,7 +614,7 @@ SArg::operator float() const
 		return arg.v_flt;
 	if (type == SA_DOUBLE)
 		return (float)arg.v_dbl;
-	if (this->GetBig().ToFloat(f) == 1) 
+	if (this->GetBig().ToFloat(f) == 1)
 		throw ERR_FLOW;
 	return f;
 }
@@ -626,7 +626,7 @@ SArg::operator double() const
 		return (double)arg.v_flt;
 	if (type == SA_DOUBLE)
 		return arg.v_dbl;
-	if (this->GetBig().ToDouble(d) == 1) 
+	if (this->GetBig().ToDouble(d) == 1)
 		throw ERR_FLOW;
 	return d;
 }

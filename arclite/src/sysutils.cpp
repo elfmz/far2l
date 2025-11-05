@@ -114,14 +114,14 @@ std::wstring get_system_message(HRESULT hr, DWORD lang_id)
     case E_NOINTERFACE         : error_str = "E_NOINTERFACE : No such interface supported"; break;
     case E_ABORT               : error_str = "E_ABORT : Operation aborted"; break;
     case E_FAIL                : error_str = "E_FAIL : Unspecified error"; break;
-    
+
     case STG_E_INVALIDFUNCTION : error_str = "STG_E_INVALIDFUNCTION"; break;
     case CLASS_E_CLASSNOTAVAILABLE : error_str = "CLASS_E_CLASSNOTAVAILABLE"; break;
-    
+
     case E_OUTOFMEMORY         : error_str = "E_OUTOFMEMORY : Can't allocate required memory"; break;
     case E_INVALIDARG          : error_str = "E_INVALIDARG : One or more arguments are invalid"; break;
 	//TODO: Localize:
-    
+
     // case MY__E_ERROR_NEGATIVE_SEEK : s = "MY__E_ERROR_NEGATIVE_SEEK"; break;
     default:
       break;
@@ -505,13 +505,13 @@ bool File::set_pos_nt(int64_t offset, DWORD method, UInt64 *new_pos) noexcept
 
 	if (is_symlink) {
 		switch(method) {
-		case FILE_BEGIN: 
+		case FILE_BEGIN:
 			symlinkRWptr = *new_pos;
 			break;
-		case FILE_CURRENT: 
+		case FILE_CURRENT:
 			symlinkRWptr += *new_pos;
 			break;
-		case FILE_END: 
+		case FILE_END:
 			if (*new_pos >= symlinksize)
 				symlinkRWptr = 0;
 			else
@@ -925,7 +925,7 @@ void enable_lfh()
 std::wstring search_path(const std::wstring &file_name)
 {
 	fprintf(stderr, "(!!!!!!!!!!!!) search_path() do nothing\n");
-	// TODO: From far2l 
+	// TODO: From far2l
 #if 0
   Buffer<wchar_t> path(MAX_PATH);
   wchar_t* name_ptr;

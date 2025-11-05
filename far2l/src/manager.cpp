@@ -367,7 +367,7 @@ static FARString FrameMenuNumTextPrefix(int i)
 	указатель на предыдущий фрейм.
 */
 
-class FramesMenu : public VMenu 
+class FramesMenu : public VMenu
 {
 	VTInfos _vts;
 	int _vts_base_index{-1};

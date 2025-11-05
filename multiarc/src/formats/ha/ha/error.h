@@ -46,7 +46,7 @@
 #define ERR_RDLINK      25      /* Readlink() error                     */
 #define ERR_MKLINK      26      /* Symlinklink() error                  */
 #define ERR_MKFIFO      27      /* Mkfifo() error                       */
- 
+
 extern int inerror;		/* Current error value */
 extern int lasterror;           /* Last error value */
 

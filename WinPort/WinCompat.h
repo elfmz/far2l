@@ -159,7 +159,7 @@ typedef SHORT *PSHORT;
 typedef LONGLONG *PLONGLONG;
 typedef ULONGLONG *PULONGLONG;
 
-//#define TCHAR WCHAR 
+//#define TCHAR WCHAR
 #define CONST const
 
 //typedef const CHAR *LPCSTR;

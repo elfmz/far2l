@@ -183,7 +183,7 @@ public:
 	TCall cb;
     DialogT(
 		PluginStartupInfo *plugin_,
-		const wchar_t *title_, 
+		const wchar_t *title_,
 		const wchar_t *helptopic_,
 		int flags_,
 		TClass &inst_,

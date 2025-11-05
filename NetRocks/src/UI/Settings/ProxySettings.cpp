@@ -152,7 +152,7 @@ public:
 		if (!kind.empty()) {
 			_di_kinds.Select(kind.c_str());
 		}
-		
+
 		_di.SetBoxTitleItem(MProxySettingsTitle);
 
 		_di.SetLine(2);

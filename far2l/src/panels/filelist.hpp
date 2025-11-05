@@ -399,7 +399,8 @@ public:
 	int PluginPanelHelp(HANDLE hPlugin);
 	virtual long GetFileCount() { return ListData.Count(); }
 
-	FARString &CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, bool RealName);
+	FARString &CreateFullPathName(const wchar_t *Name, FARString &strDest, bool RealName);
+	FARString &PluginGetURL(const wchar_t *Name, FARString &strDest);
 
 	virtual const void *GetItem(int Index);
 	virtual BOOL UpdateKeyBar();

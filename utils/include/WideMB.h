@@ -5,13 +5,13 @@
 /************************************************************************************************
  This functionality intendent to convert between UTF8 and wide chars in fault-tolerant manner,
  that means that incorrectly encoded UTF8 will be translated to corresponding wide representation
- with escaping of incorrect sequences. That mean if source UTF8 contains escaping char - it also 
+ with escaping of incorrect sequences. That mean if source UTF8 contains escaping char - it also
  will be escaped, even if source is completely valid UTF8.
  Corresponding reverse translation from wide to UTF8 will revert escaping.
- However fail tolerance works only in one direction - from UTF8 to UTF32. Broken UTF32 processed as 
+ However fail tolerance works only in one direction - from UTF8 to UTF32. Broken UTF32 processed as
  usually - with lost of corrupted sequences, but escaped sequences are recovered to initial values.
 */
-	
+
 void Wide2MB(const wchar_t *src_begin, size_t src_len, std::string &dst, bool append = false);
 void Wide2MB(const wchar_t *src, std::string &dst, bool append = false);
 void MB2Wide(const char *src, size_t src_len, std::wstring &dst, bool append = false);

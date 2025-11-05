@@ -36,7 +36,7 @@ static std::string StringUnescape(const std::string &str)
 				case '\\': out+= '\\'; break;
 				case '^':  out+= ':'; break;
 				case '_':  out+= ' '; break;
-				default: 
+				default:
 					out+= '\\';
 					out+= str[i];
 					fprintf(stderr, "StringUnescape: wrong escape char '%c'\n", str[i]);

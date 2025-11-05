@@ -1035,7 +1035,7 @@ static void prioritize_before_any(std::list<ArcEntry>& arc_entries, const ArcTyp
         }
     }
 
-    arc_entries.insert(insert_pos, 
+    arc_entries.insert(insert_pos,
                        std::make_move_iterator(entries_to_move.begin()),
                        std::make_move_iterator(entries_to_move.end()));
 }

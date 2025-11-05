@@ -4,7 +4,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <termios.h> 
+#include <termios.h>
 #include <dlfcn.h>
 
 #ifdef __linux__
@@ -114,7 +114,7 @@ static void SetupStdHandles()
 		} else
 			perror("freopen stderr");
 	}
-	
+
 	if ( reopened == 3 && out == DEVNULL && err == DEVNULL) {
 		if (!freopen(DEVNULL, "r", stdin)) {
 			perror("freopen stdin");

@@ -2254,6 +2254,17 @@ ConfigAutoChange
 "&Автозміна теки"
 "&Самастойная змена каталога"
 
+ConfigDefaultTreeScanDepth
+"&Глубина сканирования"
+"Scanning de&pth"
+"&Hloubka skenování"
+"&Tiefe scannen"
+"Mél&ység vizsgálat"
+"Głę&bokość skanowania"
+"Prof&undidad de escaneo"
+"Г&либина сканування"
+"Гл&ыбіня сканавання"
+
 ConfigExclSubTreeMask
 "Маска искл&ючений сканирования подкаталогов"
 "Mask for s&ubtree scanning exclusions"
@@ -27289,6 +27300,17 @@ upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows c
 upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
 "Використовувати OSC52 для встановлення даних буфера обміну (запит при першому запуску)\n\nOSC52 дозволяє копіювати з far2l, що працює в режимі TTY\n(навіть через підключення по SSH), до буфера обміну вашої локальної системи.\n(Якщо ви використовуєте far2l на віддаленій небезпечній системі, надання\nдоступу до запису в буфер обміну може бути потенційно небезпечним).\n\nДеяким терміналам також потрібно ввімкнення OSC52 у налаштуваннях терміналу.\n\nВи можете в будь-який момент вмикати/вимикати OSC52\nу Меню(F9)->Параметри->Налаштування інтерфейсу.\n\nДозволити far2l використовувати OSC52 для роботи з буфером обміну?\n"
 "Выкарыстоўваць OSC52 для ўстаноўкі даных буфера абмену (пытанне пры першым запуску)\n\nOSC52 дазваляе капіяваць з far2l, які працуе ў TTY-рэжыме\n(нават праз падключэнне па SSH), у буфер абмену вашай лакальнай сістэмы.\n(Калі вы выкарыстоўваеце far2l на аддаленай ненадзейнай сістэме, прадастаўленне\nдоступу да запісу ў ваш буфер абмену можа быць патэнцыйна небяспечным).\n\nНекаторым тэрміналам таксама трэба ўключыць OSC52 у іх наладках.\n\nВы можаце ў любы момант уключаць/выключаць OSC52\nу Меню(F9)->Параметры->Налады інтэрфейсу.\n\nДазволіць far2l выкарыстоўваць OSC52 для працы з буферам абмену?\n"
+
+EditWordWrap
+"Пере&нос по словам"
+"Wo&rd wrap"
+upd:"Word wrap"
+upd:"Word wrap"
+upd:"Word wrap"
+upd:"Word wrap"
+upd:"Word wrap"
+upd:"Word wrap"
+upd:"Word wrap"
 
 #Must be the last
 NewFileName

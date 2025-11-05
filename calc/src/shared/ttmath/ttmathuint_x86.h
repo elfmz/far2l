@@ -4,20 +4,20 @@
  * Author: Tomasz Sowa <t.sowa@ttmath.org>
  */
 
-/* 
+/*
  * Copyright (c) 2006-2009, Tomasz Sowa
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *  * Redistributions of source code must retain the above copyright notice,
  *    this list of conditions and the following disclaimer.
- *    
+ *
  *  * Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *    
+ *
  *  * Neither the name Tomasz Sowa nor the names of contributors to this
  *    project may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -75,7 +75,7 @@ namespace ttmath
 	{
 		#ifndef __GNUC__
 			static const char info[] = "asm_vc_32";
-		#endif		
+		#endif
 
 		#ifdef __GNUC__
 			static const char info[] = "asm_gcc_32";
@@ -93,7 +93,7 @@ namespace ttmath
 	{
 		#ifndef __GNUC__
 			LibTypeCode info = asm_vc_32;
-		#endif		
+		#endif
 
 		#ifdef __GNUC__
 			LibTypeCode info = asm_gcc_32;
@@ -129,7 +129,7 @@ namespace ttmath
 		// this algorithm doesn't require it
 
 		#ifndef __GNUC__
-			
+
 			//	this part might be compiled with for example visual c
 
 			__asm
@@ -141,7 +141,7 @@ namespace ttmath
 				push esi
 
 				mov ecx,[b]
-				
+
 				mov ebx,[p1]
 				mov esi,[p2]
 
@@ -169,13 +169,13 @@ namespace ttmath
 
 
 
-		#endif		
-			
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
 			//	this part should be compiled with gcc
-			
+
 			__asm__ __volatile__(
 
 				"xorl %%edx, %%edx				\n"
@@ -184,7 +184,7 @@ namespace ttmath
 			"1:									\n"
 				"movl (%%esi,%%edx,4), %%eax	\n"
 				"adcl %%eax, (%%ebx,%%edx,4)	\n"
-			
+
 				"incl %%edx						\n"
 				"decl %%ecx						\n"
 			"jnz 1b								\n"
@@ -212,7 +212,7 @@ namespace ttmath
 		if we've got (value_size=3):
 			table[0] = 10;
 			table[1] = 30;
-			table[2] = 5;	
+			table[2] = 5;
 		and we call:
 			AddInt(2,1)
 		then it'll be:
@@ -241,7 +241,7 @@ namespace ttmath
 				push edx
 
 				mov ecx, [b]
-				sub ecx, [index]				
+				sub ecx, [index]
 
 				mov edx, [index]
 				mov ebx, [p1]
@@ -268,20 +268,20 @@ namespace ttmath
 				pop eax
 			}
 
-		#endif		
-			
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
 
 			__asm__ __volatile__(
-			
+
 				"subl %%edx, %%ecx 				\n"
 
 			"1:									\n"
 				"addl %%eax, (%%ebx,%%edx,4)	\n"
 			"jnc 2f								\n"
-				
+
 				"movl $1, %%eax					\n"
 				"incl %%edx						\n"
 				"decl %%ecx						\n"
@@ -296,7 +296,7 @@ namespace ttmath
 				: "cc", "memory" );
 
 		#endif
-	
+
 		TTMATH_LOGC("UInt::AddInt", c)
 
 	return c;
@@ -329,10 +329,10 @@ namespace ttmath
 			table[1] = 4 + x1 = 14
 			table[2] = 5 + x2 = 25
 			table[3] = 6
-		
+
 		and no carry at the end of table[3]
 
-		(of course if there was a carry in table[2](5+20) then 
+		(of course if there was a carry in table[2](5+20) then
 		this carry would be passed to the table[3] etc.)
 	*/
 	template<uint value_size>
@@ -353,7 +353,7 @@ namespace ttmath
 				push edx
 
 				mov ecx, [b]
-				sub ecx, [index]				
+				sub ecx, [index]
 
 				mov ebx, [p1]
 				mov edx, [index]
@@ -364,7 +364,7 @@ namespace ttmath
 				dec ecx
 
 				mov eax, [x2]
-			
+
 			ttmath_loop:
 				adc [ebx+edx*4], eax
 			jnc ttmath_end
@@ -378,23 +378,23 @@ namespace ttmath
 				setc al
 				movzx edx, al
 				mov [c], edx
-				
+
 				pop edx
 				pop ecx
 				pop ebx
 				pop eax
 
 			}
-		#endif		
-			
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
 
 			__asm__ __volatile__(
-			
+
 				"subl %%edx, %%ecx 				\n"
-				
+
 				"addl %%esi, (%%ebx,%%edx,4) 	\n"
 				"incl %%edx						\n"
 				"decl %%ecx						\n"
@@ -419,7 +419,7 @@ namespace ttmath
 		#endif
 
 		TTMATH_LOGC("UInt::AddTwoInts", c)
-	
+
 	return c;
 	}
 
@@ -481,14 +481,14 @@ namespace ttmath
 				mov ebx, [rest]
 				or ebx, ebx
 				jz ttmath_end
-				
+
 				xor ebx, ebx             // ebx = 0
 				neg ecx                  // setting cf from ecx
 				mov ecx, [rest]          // ecx is != 0
-			
+
 			ttmath_loop2:
 				mov eax, [esi+edx*4]
-				adc eax, ebx 
+				adc eax, ebx
 				mov [edi+edx*4], eax
 
 				inc edx
@@ -503,11 +503,11 @@ namespace ttmath
 				popad
 			}
 
-		#endif		
-			
+		#endif
+
 
 		#ifdef __GNUC__
-			
+
 		//	this part should be compiled with gcc
 		uint dummy1, dummy2, dummy3;
 
@@ -528,7 +528,7 @@ namespace ttmath
 
 				"or %%eax, %%eax					\n"
 				"jz 3f								\n"
-				
+
 				"xor %%ebx, %%ebx					\n"   // ebx = 0
 				"neg %%ecx							\n"   // setting cf from ecx
 				"mov %%eax, %%ecx					\n"   // ecx=rest and is != 0
@@ -585,7 +585,7 @@ namespace ttmath
 				push esi
 
 				mov ecx,[b]
-				
+
 				mov ebx,[p1]
 				mov esi,[p2]
 
@@ -625,7 +625,7 @@ namespace ttmath
 			"1:									\n"
 				"movl (%%esi,%%edx,4), %%eax	\n"
 				"sbbl %%eax, (%%ebx,%%edx,4)	\n"
-			
+
 				"incl %%edx						\n"
 				"decl %%ecx						\n"
 			"jnz 1b								\n"
@@ -655,7 +655,7 @@ namespace ttmath
 		if we've got (value_size=3):
 			table[0] = 10;
 			table[1] = 30;
-			table[2] = 5;	
+			table[2] = 5;
 		and we call:
 			SubInt(2,1)
 		then it'll be:
@@ -684,7 +684,7 @@ namespace ttmath
 				push edx
 
 				mov ecx, [b]
-				sub ecx, [index]				
+				sub ecx, [index]
 
 				mov edx, [index]
 				mov ebx, [p1]
@@ -711,20 +711,20 @@ namespace ttmath
 				pop eax
 			}
 
-		#endif		
-			
+		#endif
+
 
 		#ifdef __GNUC__
 		uint dummy, dummy2;
 
 			__asm__ __volatile__(
-			
+
 				"subl %%edx, %%ecx 				\n"
 
 			"1:									\n"
 				"subl %%eax, (%%ebx,%%edx,4)	\n"
 			"jnc 2f								\n"
-				
+
 				"movl $1, %%eax					\n"
 				"incl %%edx						\n"
 				"decl %%ecx						\n"
@@ -739,9 +739,9 @@ namespace ttmath
 				: "cc", "memory" );
 
 		#endif
-		
+
 		TTMATH_LOGC("UInt::SubInt", c)
-	
+
 	return c;
 	}
 
@@ -777,7 +777,7 @@ namespace ttmath
 		uint c;
 
 		#ifndef __GNUC__
-			
+
 			//	this part might be compiled with for example visual c
 
 			/*
@@ -809,14 +809,14 @@ namespace ttmath
 				mov ebx, [rest]
 				or ebx, ebx
 				jz ttmath_end
-				
+
 				xor ebx, ebx             // ebx = 0
 				neg ecx                  // setting cf from ecx
 				mov ecx, [rest]          // ecx is != 0
 
 			ttmath_loop2:
 				mov eax, [esi+edx*4]
-				sbb eax, ebx 
+				sbb eax, ebx
 				mov [edi+edx*4], eax
 
 				inc edx
@@ -831,11 +831,11 @@ namespace ttmath
 				popad
 			}
 
-		#endif		
-			
+		#endif
+
 
 		#ifdef __GNUC__
-			
+
 		//	this part should be compiled with gcc
 		uint dummy1, dummy2, dummy3;
 
@@ -856,7 +856,7 @@ namespace ttmath
 
 				"or %%eax, %%eax					\n"
 				"jz 3f								\n"
-				
+
 				"xor %%ebx, %%ebx					\n"   // ebx = 0
 				"neg %%ecx							\n"   // setting cf from ecx
 				"mov %%eax, %%ecx					\n"   // ecx=rest and is != 0
@@ -918,14 +918,14 @@ namespace ttmath
 
 			ttmath_loop:
 				rcl dword ptr [ebx+edx*4], 1
-				
+
 				inc edx
 				dec ecx
 			jnz ttmath_loop
 
 				adc ecx, ecx
 				mov [c], ecx
-				
+
 				pop edx
 				pop ecx
 				pop ebx
@@ -994,7 +994,7 @@ namespace ttmath
 
 			ttmath_loop:
 				rcr dword ptr [ebx+ecx*4-4], 1
-				
+
 				dec ecx
 			jnz ttmath_loop
 
@@ -1039,7 +1039,7 @@ namespace ttmath
 #pragma warning (disable : 4731)
 //warning C4731: frame pointer register 'ebp' modified by inline assembly code
 #endif
-	
+
 
 
 	/*!
@@ -1058,7 +1058,7 @@ namespace ttmath
 	uint UInt<value_size>::Rcl2(uint bits, uint c)
 	{
 	TTMATH_ASSERT( bits>0 && bits<TTMATH_BITS_PER_UINT )
-		
+
 	uint b = value_size;
 	uint * p1 = table;
 
@@ -1093,7 +1093,7 @@ namespace ttmath
 
 			ttmath_loop:
 				rol dword ptr [ebx+edx*4], cl
-				
+
 				mov eax, [ebx+edx*4]
 				and eax, ebp
 				xor [ebx+edx*4], eax // clearing bits
@@ -1125,7 +1125,7 @@ namespace ttmath
 		__asm__  __volatile__(
 
 			"push %%ebp						\n"
-			
+
 			"movl %%ecx, %%esi				\n"
 			"movl $32, %%ecx				\n"
 			"subl %%esi, %%ecx				\n"    // ecx = 32 - bits
@@ -1147,11 +1147,11 @@ namespace ttmath
 			"xorl %%eax, (%%ebx,%%edx,4)	\n"
 			"orl  %%esi, (%%ebx,%%edx,4)	\n"
 			"movl %%eax, %%esi				\n"
-			
+
 			"incl %%edx						\n"
 			"decl %%edi						\n"
 		"jnz 1b								\n"
-			
+
 			"and $1, %%eax					\n"
 
 			"pop %%ebp						\n"
@@ -1223,9 +1223,9 @@ namespace ttmath
 
 			ttmath_loop:
 				ror dword ptr [ebx+edx*4], cl
-				
+
 				mov eax, [ebx+edx*4]
-				and eax, ebp 
+				and eax, ebp
 				xor [ebx+edx*4], eax // clearing bits
 				or [ebx+edx*4], esi  // saving old value
 				mov esi, eax
@@ -1237,7 +1237,7 @@ namespace ttmath
 				pop ebp              // restoring ebp
 
 				rol eax, 1           // 31bit will be first
-				and eax, 1  
+				and eax, 1
 				mov [c], eax
 
 				pop edi
@@ -1256,7 +1256,7 @@ namespace ttmath
 			__asm__  __volatile__(
 
 			"push %%ebp						\n"
-			
+
 			"movl %%ecx, %%esi				\n"
 			"movl $32, %%ecx				\n"
 			"subl %%esi, %%ecx				\n"    // ecx = 32 - bits
@@ -1280,11 +1280,11 @@ namespace ttmath
 			"xorl %%eax, (%%ebx,%%edx,4)	\n"
 			"orl  %%esi, (%%ebx,%%edx,4)	\n"
 			"movl %%eax, %%esi				\n"
-			
+
 			"decl %%edx						\n"
 			"decl %%edi						\n"
 		"jnz 1b								\n"
-			
+
 			"roll $1, %%eax					\n"
 			"andl $1, %%eax					\n"
 
@@ -1444,7 +1444,7 @@ namespace ttmath
 			"btsl %%ebx, %%eax		\n"
 			"setc %%bl				\n"
 			"movzx %%bl, %%ebx		\n"
-			
+
 			: "=a" (v), "=b" (old_bit)
 			: "0" (v),  "1" (bit)
 			: "cc" );
@@ -1463,7 +1463,7 @@ namespace ttmath
 		multiplication: result_high:result_low = a * b
 		result_high - higher word of the result
 		result_low  - lower word of the result
-	
+
 		this method never returns a carry
 		this method is used in the second version of the multiplication algorithms
 	*/
@@ -1503,7 +1503,7 @@ namespace ttmath
 		#ifdef __GNUC__
 
 		__asm__ (
-		
+
 			"mull %%edx			\n"
 
 			: "=a" (result1_), "=d" (result2_)
@@ -1527,7 +1527,7 @@ namespace ttmath
 	 *
 	 *
 	*/
-	
+
 
 
 
@@ -1574,7 +1574,7 @@ namespace ttmath
 
 
 		#ifdef __GNUC__
-		
+
 			__asm__ (
 
 			"divl %%ecx				\n"

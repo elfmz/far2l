@@ -594,11 +594,11 @@ static void SetPluginDirectory(const wchar_t *DirName, HANDLE hPlugin, bool Upda
 
 			if (*DirPtr) {
 				if (*DirPtr != GOOD_SLASH)	// fix #182
-					CtrlObject->Plugins.SetDirectory(hPlugin, L"/", OPM_SILENT);
+					CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
 
 				CtrlObject->Plugins.SetDirectory(hPlugin, DirPtr, OPM_SILENT);
 			} else {
-				CtrlObject->Plugins.SetDirectory(hPlugin, L"/", OPM_SILENT);
+				CtrlObject->Plugins.SetDirectory(hPlugin, WGOOD_SLASH, OPM_SILENT);
 			}
 		}
 
@@ -973,7 +973,7 @@ static bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX &FindData, con
 	CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin, &Info);
 	FARString strSaveDir = NullToEmpty(Info.CurDir);
 	AddEndSlash(strSaveDir);
-	CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"/", OPM_SILENT);
+	CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, WGOOD_SLASH, OPM_SILENT);
 	// SetPluginDirectory(ArcList[ArcIndex]->strRootPath,hPlugin);
 	SetPluginDirectory(FindData.strFileName, ArcItem.hPlugin);
 	const wchar_t *lpFileNameToFind = PointToName(FindData.strFileName);
@@ -998,7 +998,7 @@ static bool GetPluginFile(size_t ArcIndex, const FAR_FIND_DATA_EX &FindData, con
 		CtrlObject->Plugins.FreeFindData(ArcItem.hPlugin, pItems, nItemsNumber);
 	}
 
-	CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"/", OPM_SILENT);
+	CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, WGOOD_SLASH, OPM_SILENT);
 	SetPluginDirectory(strSaveDir, ArcItem.hPlugin);
 	return nResult;
 }
@@ -1247,7 +1247,7 @@ class FindDlg_TempFileHolder : public TempFileUploadHolder
 			strSaveDir = NullToEmpty(Info.CurDir);
 			AddEndSlash(strSaveDir);
 		}
-		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"/", OPM_SILENT);
+		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, WGOOD_SLASH, OPM_SILENT);
 		// SetPluginDirectory(ArcList[ArcIndex]->strRootPath,hPlugin);
 		SetPluginDirectory(FindData.strFileName, ArcItem.hPlugin);
 		//		const wchar_t *lpFileNameToFind = PointToName(FindData.strFileName);
@@ -1275,7 +1275,7 @@ class FindDlg_TempFileHolder : public TempFileUploadHolder
 		if (ClosePlugin) {
 			CtrlObject->Plugins.ClosePlugin(ArcItem.hPlugin);
 		} else {
-			CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"/", OPM_SILENT);
+			CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, WGOOD_SLASH, OPM_SILENT);
 			SetPluginDirectory(strSaveDir, ArcItem.hPlugin);
 		}
 
@@ -1968,7 +1968,7 @@ AddMenuRecord(HANDLE hDlg, const wchar_t *FullName, const FAR_FIND_DATA_EX &Find
 				if (!IsSlash(strPathName.At(0)))
 					AddEndSlash(strArcPathName);
 
-				strArcPathName+= (!StrCmp(strPathName, L"./") ? L"/" : strPathName.CPtr());
+				strArcPathName+= (!StrCmp(strPathName, L"./") ? WGOOD_SLASH : strPathName.CPtr());
 				strPathName = strArcPathName;
 			}
 		}
@@ -2252,7 +2252,7 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int &Recurs
 				}
 				if (SetDirectoryResult) {
 					strPluginSearchPath+= strCurName;
-					strPluginSearchPath+= L"/";
+					strPluginSearchPath+= WGOOD_SLASH;
 					ScanPluginTree(hDlg, hPlugin, Flags, RecurseLevel);
 
 					size_t pos = 0;
@@ -2302,10 +2302,10 @@ static void DoPrepareFileList(HANDLE hDlg)
 		}
 		List.Set(strPathEnv);
 	} else if (SearchMode == FINDAREA_ROOT) {
-		strRoot = L"/";
+		strRoot = WGOOD_SLASH;
 		List.Set(strRoot);
 	} else if (SearchMode == FINDAREA_ALL || SearchMode == FINDAREA_ALL_BUTNETWORK) {
-		List.AddItem(L"/");
+		List.AddItem(WGOOD_SLASH);
 	} else {
 		List.Set(strRoot);
 	}
@@ -2330,7 +2330,7 @@ static void DoPreparePluginList(HANDLE hDlg)
 		strSaveDir = Info.CurDir;
 		if (SearchMode == FINDAREA_ROOT || SearchMode == FINDAREA_ALL || SearchMode == FINDAREA_ALL_BUTNETWORK
 				|| SearchMode == FINDAREA_INPATH) {
-			CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"/", OPM_FIND);
+			CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, WGOOD_SLASH, OPM_FIND);
 			CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin, &Info);
 		}
 	}
@@ -2617,7 +2617,7 @@ static bool FindFilesProcess(Vars &v)
 						//						CtrlObject->Plugins.GetOpenPluginInfo(ArcItem.hPlugin,&Info);
 						if (SearchMode == FINDAREA_ROOT || SearchMode == FINDAREA_ALL
 								|| SearchMode == FINDAREA_ALL_BUTNETWORK || SearchMode == FINDAREA_INPATH)
-							CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, L"/", 0);
+							CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, WGOOD_SLASH, 0);
 
 						SetPluginDirectory(strFileName, ArcItem.hPlugin, TRUE);
 					}

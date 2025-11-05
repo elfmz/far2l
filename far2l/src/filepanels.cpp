@@ -83,7 +83,7 @@ static void PrepareOptFolder(FARString &strSrc, int IsLocalPath_FarPath)
 		apiExpandEnvironmentStrings(strSrc, strSrc);
 	}
 
-	if (strSrc != L"/") {
+	if (strSrc != WGOOD_SLASH) {
 		CheckShortcutFolder(strSrc, false, true);
 	}
 

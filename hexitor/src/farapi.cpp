@@ -7,13 +7,13 @@ extern PluginStartupInfo    _PSI;
 extern FarStandardFunctions _FSF;
 
 FarApi::FarApi(struct PluginStartupInfo & _PSI, struct FarStandardFunctions & _FSF):
-	psi(_PSI),
+	PSI(_PSI),
 	FSF(_FSF)
 {
 }
 
 FarApi::FarApi():
-	psi(_PSI),
+	PSI(_PSI),
 	FSF(_FSF)
 {
 }
@@ -25,23 +25,23 @@ FarApi::~FarApi()
 
 void FarApi::GetPanelInfo(PanelInfo & pi) const
 {
-	psi.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+	PSI.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 }
 
 
 PluginPanelItem * FarApi::GetPanelItem(intptr_t itemNum) const
 {
-	auto size = psi.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, itemNum, 0);
+	auto size = PSI.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, itemNum, 0);
 	PluginPanelItem * ppi = (PluginPanelItem *)malloc(size);
 	if( ppi != 0 )
-		psi.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, itemNum, (LONG_PTR)ppi);
+		PSI.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, itemNum, (LONG_PTR)ppi);
 	return ppi;
 }
 
 PluginPanelItem * FarApi::GetCurrentPanelItem(PanelInfo * piret) const
 {
 	struct PanelInfo pi = {0};
-	psi.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+	PSI.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
 	if( piret )
 		*piret = pi;
 	return GetPanelItem(pi.CurrentItem);
@@ -49,10 +49,10 @@ PluginPanelItem * FarApi::GetCurrentPanelItem(PanelInfo * piret) const
 
 PluginPanelItem * FarApi::GetSelectedPanelItem(intptr_t selectedItemNum) const
 {
-	auto size = psi.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, selectedItemNum, 0);
+	auto size = PSI.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, selectedItemNum, 0);
 	PluginPanelItem * ppi = (PluginPanelItem *)malloc(size);
 	if( ppi != 0 )
-		psi.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, selectedItemNum, (LONG_PTR)ppi);
+		PSI.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, selectedItemNum, (LONG_PTR)ppi);
 	return ppi;
 }
 
@@ -63,8 +63,8 @@ void FarApi::FreePanelItem(PluginPanelItem * ppi) const
 
 const wchar_t * FarApi::GetMsg(int msgId) const
 {
-	assert( psi.GetMsg != 0 );
-	return psi.GetMsg(psi.ModuleNumber, msgId);
+	assert( PSI.GetMsg != 0 );
+	return PSI.GetMsg(PSI.ModuleNumber, msgId);
 }
 
 int FarApi::Select(HANDLE hDlg, const wchar_t ** elements, int count, uint32_t setIndex) const
@@ -78,10 +78,10 @@ int FarApi::Select(HANDLE hDlg, const wchar_t ** elements, int count, uint32_t s
 
 	menuElements[0].Selected = 1;
 
-	index = psi.Menu(psi.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE|FMENU_AUTOHIGHLIGHT, \
+	index = PSI.Menu(PSI.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE|FMENU_AUTOHIGHLIGHT, \
 			 L"Select:", 0, L"", nullptr, nullptr, menuElements.get(), count);
 	if( index >= 0 && index < count )
-		psi.SendDlgMessage(hDlg, DM_SETTEXTPTR, setIndex, (LONG_PTR)menuElements[index].Text);
+		PSI.SendDlgMessage(hDlg, DM_SETTEXTPTR, setIndex, (LONG_PTR)menuElements[index].Text);
 	return index;
 }
 
@@ -90,9 +90,9 @@ int FarApi::SelectNum(HANDLE hDlg, const wchar_t ** elements, int count, const w
 	auto index = Select(hDlg, elements, count, setIndex);
 	if( index == (count-1) ) {
 		static wchar_t num[sizeof("4294967296")] = {0};
-		psi.InputBox(L"Enter number:", subTitle, 0, 0, num, ARRAYSIZE(num), 0, FIB_NOUSELASTHISTORY);
-		psi.SendDlgMessage(hDlg, DM_SETTEXTPTR, setIndex, (LONG_PTR)num);
-		psi.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
+		PSI.InputBox(L"Enter number:", subTitle, 0, 0, num, ARRAYSIZE(num), 0, FIB_NOUSELASTHISTORY);
+		PSI.SendDlgMessage(hDlg, DM_SETTEXTPTR, setIndex, (LONG_PTR)num);
+		PSI.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
 	}
 	return index;
 }

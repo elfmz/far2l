@@ -46,5 +46,5 @@ private:
 
 private:
 	UINT64	_file_size;
-	fardialog::Dialog *dlgptr;
+	fardialog::Dialog *myDialog = nullptr;
 };

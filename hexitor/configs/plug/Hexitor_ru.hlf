@@ -47,3 +47,7 @@
 ^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@
 
 ^оригинальный hexitor: ~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+
+@Goto
+  Смещение файла можно указать как шестнадцатеричное число или процент, например: 0x1000 или 50%.
+

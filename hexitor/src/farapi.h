@@ -4,9 +4,12 @@
 #include <farplug-wide.h>
 #include <memory>
 
+extern PluginStartupInfo    _PSI;
+extern FarStandardFunctions _FSF;
+
 class FarApi {
 private:
-	struct PluginStartupInfo & psi;
+	struct PluginStartupInfo & PSI;
 	struct FarStandardFunctions & FSF;
 public:
 	// towstr can use only for ASCII symbols

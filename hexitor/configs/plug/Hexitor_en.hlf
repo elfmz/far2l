@@ -48,3 +48,7 @@
 ^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@
 
 ^original hexitor: ~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+
+@Goto
+  The file offset can be specified as a hexadecimal number or a percentage, e.g.: 0x1000 or 50%
+

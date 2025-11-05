@@ -922,7 +922,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 			bSelStartFound = true;
 		}
 
-		for (;;) {
+		for (std::wstring vt_escape_sequence;;) {
 			if (OutPtr >= StrSize - 16)
 				break;
 
@@ -1065,7 +1065,30 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				Ch = L' ';
 
 			rString.SetChar(size_t(OutPtr++), Ch);
-			visual_length += CharClasses::IsFullWidth(Ch) ? 2 : CharClasses::IsXxxfix(Ch) ? 0 : 1;
+			bool part_of_processed_vt_escape_sequence = false;
+			if (VM.Processed) {
+				if (Ch == L'\e') {
+					if (vt_escape_sequence.size() == 1) {
+						vt_escape_sequence.clear(); // double escape sequence - just one escape
+					} else {
+						vt_escape_sequence = Ch;
+						part_of_processed_vt_escape_sequence = true;
+					}
+				} else if (!vt_escape_sequence.empty()) {
+					vt_escape_sequence+= Ch;
+					if (vt_escape_sequence[1] == '[') {
+						part_of_processed_vt_escape_sequence = true;
+						if (AnsiEsc::Parser().Parse(vt_escape_sequence.c_str())) {
+							vt_escape_sequence.clear();
+						}
+					} else {
+						vt_escape_sequence.clear();
+					}
+				}
+			}
+			if (!part_of_processed_vt_escape_sequence) {
+				visual_length += CharClasses::IsFullWidth(Ch) ? 2 : CharClasses::IsXxxfix(Ch) ? 0 : 1;
+			}
 			rString.SetChar(size_t(OutPtr), 0);
 
 			if (SelectSize > 0 && (SelectPos + SelectSize) == vtell()) {

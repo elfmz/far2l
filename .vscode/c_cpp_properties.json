@@ -1,0 +1,43 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceRoot}",
+                "${workspaceRoot}/far2l",
+                "${workspaceRoot}/far2l/Include",
+                "${workspaceRoot}/far2l/far2sdk",
+                "${workspaceRoot}/WinPort",
+                "${workspaceRoot}/utils/include",
+                "${workspaceRoot}/far2l/src",
+                "${workspaceRoot}/far2l/src/base",
+                "/usr/include",
+                "/usr/include/python3.11",
+                "."
+            ],
+            "defines": [
+                "FAR_DONT_USE_INTERNALS",
+                "UNICODE",
+                "WINPORT_DIRECT",
+                "WINPORT_REGISTRY",
+                "WXUSINGDLL",
+                "_FILE_OFFSET_BITS=64",
+                "__WXGTK__",
+                "PYTHON_LIBRARY=\"python3.11\""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": "",
+                "path": [
+                    "/usr/include"
+                ]
+            },
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}

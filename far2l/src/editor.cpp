@@ -3362,14 +3362,9 @@ case KEY_CTRLNUMPAD3: {
 						&& CurLine->GetCurPos() >= CurLine->GetLength() && CurLine->m_next) {
 
 					Pasting++;
-					if (m_bWordWrap) {
-						// Fixes Ctrl+Right at the end of logical line in Word Wrap mode
-						ProcessKey(KEY_DOWN);
-						ProcessKey(KEY_HOME);
-					} else {
-						ProcessKey(KEY_DOWN);
-						ProcessKey(KEY_HOME);
-					}
+					// Fixes Ctrl+Right at the end of line
+					ProcessKey(KEY_DOWN);
+					ProcessKey(KEY_HOME);
 					Pasting--;
 
 					if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {

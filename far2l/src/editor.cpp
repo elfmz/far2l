@@ -440,7 +440,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		if (EdOpt.ShowScrollBar)
 			render_width--;
 		CurLine->SetLeftPos(0);
-		MaxRightPos = CurLine->GetCellCurPos();
+		m_WordWrapMaxRightPos = CurLine->GetCellCurPos();
 
 		// Ensure TopScreen pointers are initialized
 		if (!m_TopScreenLogicalLine) {

@@ -582,10 +582,10 @@ void ViewConsoleHistory(HANDLE con_hnd, bool modal, bool autoclose)
 	FileViewer *Viewer = new (std::nothrow) FileViewer(tfh,
 		!modal, TRUE, TRUE, -1, nullptr, nullptr, FALSE, CP_UTF8);
 	Viewer->SetDynamicallyBorn(!modal);
+	Viewer->SetWrapModeAndType(true, false);
 	Viewer->ProcessKey(KEY_END); // scroll to the end
 	if (autoclose)
 		Viewer->SetAutoClose(true);
-	Viewer->SetWrapModeAndType(true, false);
 	if (modal)
 		FrameManager->ExecuteModalEV();
 	const int r = Viewer->GetExitCode();

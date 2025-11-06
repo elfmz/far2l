@@ -163,6 +163,8 @@ private:
 	void AdjustWidth();
 	void AdjustFilePos();
 
+	size_t SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t length);
+
 	void ReadString(ViewerString &rString, int MaxSize, int StrSize);
 	int CalcStrSize(const wchar_t *Str, int Length);
 	void ChangeViewKeyBar();

@@ -884,6 +884,32 @@ void Viewer::SetStatusMode(int Mode)
 	ShowStatusLine = Mode;
 }
 
+static bool IsAnsiEscapeColoringArgsChar(wchar_t Ch)
+{
+	return (Ch == L':' || Ch == L';' || (Ch >= '0' && Ch <= '9'));
+}
+
+size_t Viewer::SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t length)
+{
+	size_t saved_index;
+	do {
+		saved_index = index;
+		while (index < length && (CharClasses::IsXxxfix(buf[index]) || buf[index] == '\r' || buf[index] == '\n')) {
+			++index;
+		}
+		if (VM.Processed) {
+			while (index + 2 < length && buf[index] == L'\e' && buf[index + 1] == L'[' ) {
+				index+= 2;
+				for (bool stop = false; !stop && index < length; ++index) {
+					stop = !IsAnsiEscapeColoringArgsChar(buf[index]);
+				}
+			}
+		}
+	} while (saved_index != index);
+	return index;
+}
+
+
 void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 {
 	WCHAR Ch, Ch2;
@@ -922,9 +948,35 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 			bSelStartFound = true;
 		}
 
-		for (std::wstring vt_escape_sequence;;) {
+		for (;;) {
 			if (OutPtr >= StrSize - 16)
 				break;
+
+			do { // attach zero-length sequences at the string ending (if any)
+				int64_t SavePosEsc = vtell();
+				if (!vgetc(Ch)) {
+					break;
+				}
+				if (CharClasses::IsSuffix(Ch)) {
+					rString.SetChar(size_t(OutPtr++), Ch);
+					rString.SetChar(size_t(OutPtr), 0);
+				} else if (VM.Processed && Ch == L'\e' && vgetc(Ch2) && Ch2 == L'[') {
+					// in processed mode coloring escape sequences are invisible and thus dont affect length
+					// however they must be part of string, even if located after its wrap-caused end
+					rString.SetChar(size_t(OutPtr++), Ch);
+					rString.SetChar(size_t(OutPtr++), Ch2);
+					while (vgetc(Ch) && OutPtr < StrSize - 16) {
+						rString.SetChar(size_t(OutPtr++), Ch);
+						if (!IsAnsiEscapeColoringArgsChar(Ch)) {
+							break;
+						}
+					}
+					rString.SetChar(size_t(OutPtr), 0);
+				} else {
+					vseek(SavePosEsc, SEEK_SET);
+					break;
+				}
+			} while (OutPtr < StrSize - 16);
 
 			/*
 				$ 12.07.2000 SVS
@@ -1065,30 +1117,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				Ch = L' ';
 
 			rString.SetChar(size_t(OutPtr++), Ch);
-			bool part_of_processed_vt_escape_sequence = false;
-			if (VM.Processed) {
-				if (Ch == L'\e') {
-					if (vt_escape_sequence.size() == 1) {
-						vt_escape_sequence.clear(); // double escape sequence - just one escape
-					} else {
-						vt_escape_sequence = Ch;
-						part_of_processed_vt_escape_sequence = true;
-					}
-				} else if (!vt_escape_sequence.empty()) {
-					vt_escape_sequence+= Ch;
-					if (vt_escape_sequence[1] == '[') {
-						part_of_processed_vt_escape_sequence = true;
-						if (AnsiEsc::Parser().Parse(vt_escape_sequence.c_str())) {
-							vt_escape_sequence.clear();
-						}
-					} else {
-						vt_escape_sequence.clear();
-					}
-				}
-			}
-			if (!part_of_processed_vt_escape_sequence) {
-				visual_length += CharClasses::IsFullWidth(Ch) ? 2 : CharClasses::IsXxxfix(Ch) ? 0 : 1;
-			}
+			visual_length += CharClasses::IsFullWidth(Ch) ? 2 : CharClasses::IsXxxfix(Ch) ? 0 : 1;
 			rString.SetChar(size_t(OutPtr), 0);
 
 			if (SelectSize > 0 && (SelectPos + SelectSize) == vtell()) {
@@ -2161,6 +2190,7 @@ void Viewer::Up()
 		}
 
 		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I) {
+			I = SkipZeroWidthSubsequence(Buf, I, WrapBufSize);
 			if (I == WrapBufSize) {
 				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
 				FilePosShiftLeft((distance > 0) ? distance : 1);
@@ -2187,18 +2217,17 @@ int Viewer::CalcStrSize(const wchar_t *Str, int Length)
 {
 	int Size, I;
 
-	for (Size = 0, I = 0; I < Length; I++)
-		switch (Str[I]) {
-			case L'\t':
-				Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
-				break;
-			case L'\n':
-			case L'\r':
-				break;
-			default:
-				Size++;
-				break;
+	for (Size = 0, I = 0;; I++) {
+		I = SkipZeroWidthSubsequence(Str, I, Length);
+		if (I >= Length) {
+			break;
 		}
+		if (Str[I] == L'\t') {
+			Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
+		} else {
+			Size++;
+		}
+	}
 
 	return (Size);
 }

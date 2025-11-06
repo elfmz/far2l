@@ -3367,8 +3367,8 @@ case KEY_CTRLNUMPAD3: {
 						ProcessKey(KEY_DOWN);
 						ProcessKey(KEY_HOME);
 					} else {
-						ProcessKey(KEY_HOME);
 						ProcessKey(KEY_DOWN);
+						ProcessKey(KEY_HOME);
 					}
 					Pasting--;
 

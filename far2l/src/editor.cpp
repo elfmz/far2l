@@ -2187,7 +2187,7 @@ int Editor::ProcessKey(FarKey Key)
 					int new_pos = CurLine->GetLength();
 					CurLine->SetCurPos(new_pos);
 				}
-				MaxRightPos = CurLine->GetCellCurPos();
+				//MaxRightPos = CurLine->GetCellCurPos();
 				Show();
 				if (m_bWordWrap) {
 					int v_start_pos, v_end_pos;
@@ -2223,7 +2223,7 @@ int Editor::ProcessKey(FarKey Key)
 					CurLine->SetCurPos(0);
 					m_CurVisualLineInLogicalLine = 0;
 				}
-				MaxRightPos = CurLine->GetCellCurPos();
+				//MaxRightPos = CurLine->GetCellCurPos();
 				Show();
 				if (m_bWordWrap) {
 					int v_start_pos, v_end_pos;

@@ -78,6 +78,12 @@
 
 	WINPORT_DECL_DEF(SetConsoleRepaintsDefer, VOID, (HANDLE hConsoleOutput, BOOL Deferring))
 
+	// graphics API
+	WINPORT_DECL_DEF(CreateConsoleImageFromBuffer, HCONSOLEIMAGE, (const void *buffer, uint32_t width, uint32_t height, DWORD flags))
+	WINPORT_DECL_DEF(DisplayConsoleImage, BOOL, (HCONSOLEIMAGE h_image))
+	WINPORT_DECL_DEF(DeleteConsoleImage, BOOL, (HCONSOLEIMAGE h_image, DWORD action_flags))
+	WINPORT_DECL_DEF(GetConsoleGraphicsCaps, DWORD, ())
+	WINPORT_DECL_DEF(GetConsoleCellAspectRatio, double, ())
 #ifdef WINPORT_REGISTRY
 	///registry API
 	WINPORT_DECL_DEF(RegOpenKeyEx, LONG, (HKEY hKey,LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult))

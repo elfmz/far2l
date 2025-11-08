@@ -128,4 +128,10 @@ public:
 
 	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1);
 	virtual const char *BackendInfo(int entity);
+
+	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags);
+	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
+	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
+	virtual DWORD OnGetConsoleGraphicsCaps();
+	virtual double OnGetConsoleCellAspectRatio();
 };

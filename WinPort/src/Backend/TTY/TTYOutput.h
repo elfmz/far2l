@@ -5,6 +5,7 @@
 #include <WinCompat.h>
 #include <StackSerializer.h>
 #include "../WinPortRGB.h"
+#include "../WinPortGraphics.h"
 
 extern long _iterm2_cmd_ts;
 extern bool _iterm2_cmd_state;
@@ -73,6 +74,9 @@ public:
 
 	void SendFar2lInteract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
+	void RequestCellSize();
+	void SendKittyImage(const ConsoleImage* img);
+	void DeleteKittyImage(uint32_t id);
 
 	void CheckiTerm2Hack();
 };

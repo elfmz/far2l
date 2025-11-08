@@ -28,6 +28,7 @@
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 #include "../NotifySh.h"
+#include "base64.h"
 
 
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
@@ -371,6 +372,7 @@ void TTYBackend::WriterThread()
 	try {
 		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
 		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
+		tty_out.RequestCellSize();
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -410,6 +412,9 @@ void TTYBackend::WriterThread()
 			if (ae.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
 			}
+			if (ae.images_changed) {
+				DispatchImages(tty_out);
+			}
 
 			// iTerm2 cmd+v workaround
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
@@ -441,6 +446,29 @@ void TTYBackend::WriterThread()
 }
 
 
+void TTYBackend::DispatchImages(TTYOutput &tty_out)
+{
+	std::vector<HCONSOLEIMAGE> images_to_display;
+	std::vector<uint32_t> images_to_delete;
+
+	{
+		std::lock_guard<std::mutex> lock(m_images_mutex);
+		images_to_display.swap(m_images_to_display);
+		images_to_delete.swap(m_images_to_delete);
+	}
+
+	for (const auto h_image : images_to_display) {
+		std::lock_guard<std::mutex> lock(m_images_mutex);
+		auto it = m_images.find(h_image);
+		if (it != m_images.end()) {
+			tty_out.SendKittyImage(it->second.get());
+		}
+	}
+
+	for (const auto id : images_to_delete) {
+		tty_out.DeleteKittyImage(id);
+	}
+}
 /////////////////////////////////////////////////////////////////////////
 
 void TTYBackend::DispatchPalette(TTYOutput &tty_out)
@@ -1168,6 +1196,14 @@ void TTYBackend::OnInputBroken()
 	_far2l_interacts_sent.clear();
 }
 
+void TTYBackend::OnGetCellSize(unsigned int w, unsigned int h)
+{
+	fprintf(stderr, "TTYBackend: Received cell size: %u x %u pixels\n", w, h);
+	_cell_width_px = w;
+	_cell_height_px = h;
+	_cell_size_known = true;
+}
+
 DWORD TTYBackend::QueryControlKeys()
 {
 	DWORD out = 0;
@@ -1350,7 +1386,92 @@ static void OnSigHup(int signo)
 		g_vtb->KickAss(true);
 	}
 }
+DWORD TTYBackend::OnGetConsoleGraphicsCaps()
+{
+	const char* term = getenv("TERM");
+	if (term && (strstr(term, "kitty") || strstr(term, "xterm-kitty"))) {
+		//return GFX_CAPS_KITTY;
+		return 1;
+	}
+	// В будущем можно добавить проверку через XTGETTCAP(kittens)
+	return 0;
+}
 
+double TTYBackend::OnGetConsoleCellAspectRatio()
+{
+	if (!_cell_size_known || _cell_height_px == 0) {
+		// This can happen if the terminal doesn't respond to the CSI 16t query.
+		// Returning 0.0 signals the caller to use a default or fallback value.
+		return 0.0;
+	}
+	return (double)_cell_width_px / _cell_height_px;
+}
+
+HCONSOLEIMAGE TTYBackend::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags)
+{
+	fprintf(stderr, "TTYBackend::OnCreateConsoleImageFromBuffer\n");
+
+	if (!buffer || width == 0 || height == 0) {
+		return nullptr;
+	}
+
+	auto img = std::make_unique<ConsoleImage>();
+	img->width = width;
+	img->height = height;
+	img->id = ++m_image_id_counter; // Assign a unique ID
+
+	const size_t data_size = (size_t)width * height * 4;
+	img->pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + data_size);
+
+	HCONSOLEIMAGE handle = static_cast<HCONSOLEIMAGE>(img.get());
+	{
+		std::lock_guard<std::mutex> lock(m_images_mutex);
+		m_images[handle] = std::move(img);
+	}
+
+	fprintf(stderr, "TTYBackend::OnCreateConsoleImageFromBuffer END\n");
+	return handle;
+}
+
+bool TTYBackend::OnDisplayConsoleImage(HCONSOLEIMAGE h_image)
+{
+	fprintf(stderr, "TTYBackend::OnDisplayConsoleImage\n");
+
+	if (!h_image) return false;
+	{
+		std::lock_guard<std::mutex> lock(m_images_mutex);
+		if (m_images.find(h_image) == m_images.end()) {
+			return false; // Image not found
+		}
+		m_images_to_display.push_back(h_image);
+		_ae.images_changed = true;
+	}
+
+	_async_cond.notify_all(); // Wake up the writer thread
+
+	fprintf(stderr, "TTYBackend::OnDisplayConsoleImage END\n");
+	return true;
+}
+
+bool TTYBackend::OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags)
+{
+	if (!h_image) return false;
+
+	{
+		std::lock_guard<std::mutex> lock(m_images_mutex);
+		auto it = m_images.find(h_image);
+		if (it != m_images.end()) {
+			m_images_to_delete.push_back(it->second->id);
+			m_images.erase(it); // unique_ptr will delete the ConsoleImage object
+			_ae.images_changed = true;
+		} else {
+			return false; // Not found
+		}
+	}
+
+	_async_cond.notify_all();
+	return true;
+}
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {

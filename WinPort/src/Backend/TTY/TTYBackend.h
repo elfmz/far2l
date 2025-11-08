@@ -13,6 +13,11 @@
 #include "IFar2lInteractor.h"
 #include "TTYXGlue.h"
 #include "OSC52ClipboardBackend.h"
+#include <map>
+#include <atomic>
+#include <memory>
+#include <vector>
+#include "../WinPortGraphics.h"
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInteractor, IOSC52Interactor
 {
@@ -66,6 +71,15 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::atomic<bool> _largest_window_size_ready{false};
 	std::atomic<bool> _flush_input_queue{false};
 	std::atomic<bool> _focused{true}; // assume starting focused
+	std::atomic<unsigned int> _cell_width_px{0};
+	std::atomic<unsigned int> _cell_height_px{0};
+	std::atomic<bool> _cell_size_known{false};
+
+	std::mutex m_images_mutex;
+	std::map<HCONSOLEIMAGE, std::unique_ptr<ConsoleImage>> m_images;
+	std::vector<HCONSOLEIMAGE> m_images_to_display;
+	std::vector<uint32_t> m_images_to_delete;
+	std::atomic<uint32_t> m_image_id_counter{0};
 
 	struct BI : std::mutex { std::string flavor; } _backend_info;
 
@@ -91,6 +105,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		bool go_background : 1;
 		bool osc52clip_set : 1;
 		bool palette : 1;
+		bool images_changed : 1;
 
 		inline bool HasAny() const
 		{
@@ -111,6 +126,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInteract(TTYOutput &tty_out);
 	void DispatchOSC52ClipSet(TTYOutput &tty_out);
+	void DispatchImages(TTYOutput &tty_out);
 	void DispatchPalette(TTYOutput &tty_out);
 	void WaitForOutputIdleOrDead(std::unique_lock<std::mutex> &lock);
 
@@ -145,6 +161,11 @@ protected:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
+	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags);
+	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
+	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
+	virtual DWORD OnGetConsoleGraphicsCaps();
+	virtual double OnGetConsoleCellAspectRatio();
 	const char *OnConsoleBackendInfo(int entity);
 
 	// ITTYInputSpecialSequenceHandler
@@ -154,6 +175,7 @@ protected:
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();
+	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 
 	DWORD QueryControlKeys();
 

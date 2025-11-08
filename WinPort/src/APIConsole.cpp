@@ -512,6 +512,32 @@ extern "C" {
 			con_out->RepaintsDeferFinish(false);
 		}
 	}
+	WINPORT_DECL(CreateConsoleImageFromBuffer, HCONSOLEIMAGE, (const void *buffer, uint32_t width, uint32_t height, DWORD flags))
+	{
+		return ChooseConOut(NULL)->OnCreateConsoleImageFromBuffer(buffer, width, height, flags);
+	}
+
+	WINPORT_DECL(DisplayConsoleImage, BOOL, (HCONSOLEIMAGE h_image))
+	{
+		fprintf(stderr, "WINPORT_DECL(DisplayConsoleImage...\n");
+
+		return ChooseConOut(NULL)->OnDisplayConsoleImage(h_image);
+	}
+
+	WINPORT_DECL(DeleteConsoleImage, BOOL, (HCONSOLEIMAGE h_image, DWORD action_flags))
+	{
+		return ChooseConOut(NULL)->OnDeleteConsoleImage(h_image, action_flags);
+	}
+
+	WINPORT_DECL(GetConsoleGraphicsCaps, DWORD, ())
+	{
+		return ChooseConOut(NULL)->OnGetConsoleGraphicsCaps();
+	}
+
+	WINPORT_DECL(GetConsoleCellAspectRatio, double, ())
+	{
+		return ChooseConOut(NULL)->OnGetConsoleCellAspectRatio();
+	}
 
 	static struct {
 		struct Cmp

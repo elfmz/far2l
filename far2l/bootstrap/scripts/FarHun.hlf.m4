@@ -43,6 +43,7 @@ $^(help file last translated for build 882)
 
    ~Fájltársítások~@FileAssoc@
    ~Operációs rendszer parancsok~@OSCommands@
+   ~Special commands~@SpecCmd@
    ~Mappa gyorsbillentyűk~@Bookmarks@
    ~Szűrők menü~@FiltersMenu@
    ~Képernyők váltása~@ScrSwitch@
@@ -783,9 +784,9 @@ $ #Special commands#
 in the far2l ~internal command line~@CmdLineCmd@ and
 in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply command~@ApplyCmd@.
 
-   #far:about#  - Far information, list and information about plugins.
+   #far:about#  - Far information, list and information about plugins (also via the ~Commands menu~@CmdMenu@).
 
-   #far:config# - ~Configuration editor~@FarConfig@.
+   #far:config# - ~Configuration editor~@FarConfig@ (also via the ~Commands menu~@CmdMenu@).
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
    #view:<command# or #far:view:<command# or #far:view < command# - open in viewer result of #command# output in temporary file.
@@ -793,6 +794,14 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
    #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
    #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
    #edit:<command# or #far:edit:<command# or #far:edit < command# - open in editor result of #command# output in temporary file.
+   #edit:[line,col]file# or #edit:[line]file# or #edit:[,col]file#
+or #far:edit:[line,col]file# - open in editor #file# and immediately go to the specified position.
+To do this, immediately after the colon, in square brackets,
+you must specify the desired row and column (any component is optional; by default, one will be equal to 1).
+Square brackets are required!
+   If the filename contains square brackets (for example: "[1].txt"), then for
+the correct opening of the file in the editor you must provide at least one space
+before the filename: #edit: [1].txt#.
 
    #exit#       - reset shell in build-in ~Terminal~@Terminal@.
 

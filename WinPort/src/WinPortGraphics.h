@@ -1,8 +1,6 @@
 #pragma once
 #include <stdint.h>
 #include "../WinCompat.h"
-
-#ifdef __cplusplus
 #include <vector>
 
 struct ConsoleImage
@@ -18,9 +16,3 @@ struct ConsoleImage
     // ... другие поля для будущих расширений (z_index, etc.)
 };
 
-#else
-// C-совместимое объявление без C++ контейнеров
-struct ConsoleImage;
-#endif
-
-typedef void* HCONSOLEIMAGE;

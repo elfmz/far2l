@@ -18,6 +18,15 @@ struct TTYBasePalette
 	DWORD background[BASE_PALETTE_SIZE];
 };
 
+
+struct TTYConsoleImage
+{
+    std::vector<uint8_t> pixel_data; // Сырые пиксели в формате RGBA.
+   	uint32_t width{};          // Ширина в пикселях.
+    uint32_t height{};         // Высота в пикселях.
+	SMALL_RECT area{};         // Координаты (колонка, строка) и размер на сетке консоли.
+};
+
 class TTYOutput
 {
 	struct Cursor
@@ -75,8 +84,8 @@ public:
 	void SendFar2lInteract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
 	void RequestCellSize();
-	void SendKittyImage(const ConsoleImage* img);
-	void DeleteKittyImage(uint32_t id);
+	void SendKittyImage(const std::string &str_id, const TTYConsoleImage &img);
+	void DeleteKittyImage(const std::string &str_id);
 
 	void CheckiTerm2Hack();
 };

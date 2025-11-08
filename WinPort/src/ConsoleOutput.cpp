@@ -958,8 +958,17 @@ const char *ConsoleOutput::BackendInfo(int entity)
 	return _backend->OnConsoleBackendInfo(entity);
 }
 
-HCONSOLEIMAGE ConsoleOutput::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags) { return _backend->OnCreateConsoleImageFromBuffer(buffer, width, height, flags); }
-bool ConsoleOutput::OnDisplayConsoleImage(HCONSOLEIMAGE h_image) { return _backend->OnDisplayConsoleImage(h_image); }
-bool ConsoleOutput::OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags) { return _backend->OnDeleteConsoleImage(h_image, action_flags); }
-DWORD ConsoleOutput::OnGetConsoleGraphicsCaps() { return _backend->OnGetConsoleGraphicsCaps(); }
-double ConsoleOutput::OnGetConsoleCellAspectRatio() { return _backend->OnGetConsoleCellAspectRatio(); }
+void ConsoleOutput::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
+{
+	_backend->OnGetConsoleImageCaps(wgi);
+}
+
+bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height)
+{
+	return _backend->OnSetConsoleImage(id, flags, area, buffer, width, height);
+}
+
+bool ConsoleOutput::OnDeleteConsoleImage(const char *id)
+{
+	return _backend->OnDeleteConsoleImage(id);
+}

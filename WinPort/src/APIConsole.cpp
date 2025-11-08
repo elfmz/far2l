@@ -512,31 +512,41 @@ extern "C" {
 			con_out->RepaintsDeferFinish(false);
 		}
 	}
-	WINPORT_DECL(CreateConsoleImageFromBuffer, HCONSOLEIMAGE, (const void *buffer, uint32_t width, uint32_t height, DWORD flags))
+
+	WINPORT_DECL(GetConsoleImageCaps, BOOL, (HANDLE con, size_t sizeof_wgi, WinportGraphicsInfo *wgi))
 	{
-		return ChooseConOut(NULL)->OnCreateConsoleImageFromBuffer(buffer, width, height, flags);
+		if (sizeof_wgi != sizeof(*wgi)) {
+			return FALSE;
+		}
+		ChooseConOut(con)->OnGetConsoleImageCaps(wgi);
+		return TRUE;
 	}
 
-	WINPORT_DECL(DisplayConsoleImage, BOOL, (HCONSOLEIMAGE h_image))
+	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height))
 	{
-		fprintf(stderr, "WINPORT_DECL(DisplayConsoleImage...\n");
-
-		return ChooseConOut(NULL)->OnDisplayConsoleImage(h_image);
+		if (!id || !buffer || width == 0 || height == 0) {
+			fprintf(stderr, "%s('%s', .. %p, %u, %u): bad args\n", __FUNCTION__, id ? id : "???", buffer, width, height);
+			return FALSE;
+		}
+		ChooseConOut con_out(con);
+		if (!area) {
+			unsigned int awidth = 0, aheight = 0;
+			con_out->GetSize(awidth, aheight);
+			if (width && height) {
+				const SMALL_RECT whole_area = {0, 0, SHORT(awidth - 1), SHORT(aheight - 1)};
+				return con_out->OnSetConsoleImage(id, flags, &whole_area, buffer, width, height);
+			}
+		}
+		if (area->Left > area->Right || area->Top > area->Bottom) {
+			fprintf(stderr, "%s('%s', .. %p, %u, %u): bad area {%d, %d, %d, %d}\n",
+				__FUNCTION__, id, buffer, width, height, area->Left, area->Right, area->Top, area->Bottom);
+		}
+		return con_out->OnSetConsoleImage(id, flags, area, buffer, width, height);
 	}
 
-	WINPORT_DECL(DeleteConsoleImage, BOOL, (HCONSOLEIMAGE h_image, DWORD action_flags))
+	WINPORT_DECL(DeleteConsoleImage, BOOL, (HANDLE con, const char *id))
 	{
-		return ChooseConOut(NULL)->OnDeleteConsoleImage(h_image, action_flags);
-	}
-
-	WINPORT_DECL(GetConsoleGraphicsCaps, DWORD, ())
-	{
-		return ChooseConOut(NULL)->OnGetConsoleGraphicsCaps();
-	}
-
-	WINPORT_DECL(GetConsoleCellAspectRatio, double, ())
-	{
-		return ChooseConOut(NULL)->OnGetConsoleCellAspectRatio();
+		return ChooseConOut(con)->OnDeleteConsoleImage(id);
 	}
 
 	static struct {

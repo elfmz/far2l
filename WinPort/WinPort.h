@@ -5,7 +5,6 @@
 # include <Windows.h>
 #else
 # include "WinCompat.h"
-# include "src/WinPortGraphics.h"
 # include <sys/stat.h>
 # include <sys/time.h>
 # include <time.h>

@@ -14,6 +14,7 @@
 #include <os_call.hpp>
 #include <VT256ColorTable.h>
 #include <utils.h>
+#include <crc64.h>
 #include <TestPath.h>
 #include "TTYOutput.h"
 #include "FarTTY.h"
@@ -577,18 +578,23 @@ void TTYOutput::RequestCellSize()
 	fprintf(stderr, "TTYOutput: Sent cell size request (ESC[16t).\n");
 }
 
-void TTYOutput::SendKittyImage(const ConsoleImage* img)
+static unsigned int KittyImageID(const std::string &str_id)
 {
-    if (!img || img->pixel_data.empty()) return;
+	return crc64(123, (const unsigned char *)str_id.c_str(), str_id.size());
+}
+
+void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img)
+{
+	unsigned int id = KittyImageID(str_id);
 
     std::string base64_data;
-    base64_encode(base64_data, img->pixel_data.data(), img->pixel_data.size());
+    base64_encode(base64_data, img.pixel_data.data(), img.pixel_data.size());
 
     // --- Используем ОДИН механизм вывода: собираем все в строку и пишем через Write. ---
     
     // 1. Команда перемещения курсора
     char buf[64];
-    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img->grid_origin.Y + 1, img->grid_origin.X + 1);
+    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img.area.Left + 1, img.area.Top + 1);
     
     // Пишем в терминал
     Write(buf, len);
@@ -605,15 +611,15 @@ void TTYOutput::SendKittyImage(const ConsoleImage* img)
 
         if (offset == 0) {
             kitty_chunk_cmd += ESC "_Ga=T,f=32,t=d,s=";
-            kitty_chunk_cmd += std::to_string(img->width);
+            kitty_chunk_cmd += std::to_string(img.width);
             kitty_chunk_cmd += ",v=";
-            kitty_chunk_cmd += std::to_string(img->height);
+            kitty_chunk_cmd += std::to_string(img.height);
             kitty_chunk_cmd += ",c=";
-            kitty_chunk_cmd += std::to_string(img->grid_size.X);
+            kitty_chunk_cmd += std::to_string(img.area.Right + 1 - img.area.Left);
             kitty_chunk_cmd += ",r=";
-            kitty_chunk_cmd += std::to_string(img->grid_size.Y);
+            kitty_chunk_cmd += std::to_string(img.area.Bottom + 1 - img.area.Top);
             kitty_chunk_cmd += ",i=";
-            kitty_chunk_cmd += std::to_string(img->id);
+            kitty_chunk_cmd += std::to_string(id);
             kitty_chunk_cmd += ",m=";
             kitty_chunk_cmd += (more_to_follow ? "1" : "0");
             kitty_chunk_cmd += ";";
@@ -633,8 +639,9 @@ void TTYOutput::SendKittyImage(const ConsoleImage* img)
     }
 }
 
-void TTYOutput::DeleteKittyImage(uint32_t id)
+void TTYOutput::DeleteKittyImage(const std::string &str_id)
 {
+	unsigned int id = KittyImageID(str_id);
 	// a=d (delete), d=I (by ID)
 	Format(ESC "_Ga=d,d=I,i=%u" ESC "\\", id);
 }

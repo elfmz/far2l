@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <utils.h>
 
+#define WINPORT_IMAGE_ID "image_viewer"
+
 // Глобальные переменные для FAR API
 PluginStartupInfo g_far;
 FarStandardFunctions g_fsf;
@@ -39,9 +41,13 @@ bool IsImageFile(const wchar_t* FileName) {
     return false;
 }
 
-HCONSOLEIMAGE LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int target_h_cells) {
+bool LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int target_h_cells) {
     fprintf(stderr, "\n--- ImageViewer: Starting image processing for '%ls' ---\n", path_name);
     fprintf(stderr, "Target cell grid size: %dx%d\n", target_w_cells, target_h_cells);
+	if (target_w_cells <= 0 || target_h_cells <= 0) {
+        fprintf(stderr, "ERROR: bad grid size.\n");
+		return false;
+	}
 
     // 1. Получаем оригинальные размеры картинки
     std::string cmd = "identify -format \"%w %h\" \"";
@@ -51,23 +57,31 @@ HCONSOLEIMAGE LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells
     std::string dims_str;
     if (!POpen(dims_str, cmd.c_str())) {
         fprintf(stderr, "ERROR: ImageMagick 'identify' failed.\n");
-        return nullptr;
+        return false;
     }
 
     int orig_w = 0, orig_h = 0;
     if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
         fprintf(stderr, "ERROR: Failed to parse original dimensions. Got: '%s'\n", dims_str.c_str());
-        return nullptr;
+        return false;
     }
-    fprintf(stderr, "Original image size: %dx%d pixels\n", orig_w, orig_h);
 
     // 2. Получаем соотношение сторон ячейки терминала
-    double cell_aspect_ratio = WINPORT(GetConsoleCellAspectRatio)();
-    if (cell_aspect_ratio == 0.0) {
-        cell_aspect_ratio = 0.5; // Default for typical fonts like 8x16
-        fprintf(stderr, "GetConsoleCellAspectRatio returned 0.0, using default: %f\n", cell_aspect_ratio);
-    } else {
+	WinportGraphicsInfo wgi{};
+
+	if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || !wgi.Caps) {
+        fprintf(stderr, "ERROR: GetConsoleImageCaps failed\n");
+        return false;
+	}
+
+    fprintf(stderr, "Original image size: %dx%d pixels, PixPerCell=%dx%d\n", orig_w, orig_h, wgi.PixPerCell.X, wgi.PixPerCell.Y);
+
+    double cell_aspect_ratio = 0.5;
+    if (wgi.PixPerCell.Y > 0 && wgi.PixPerCell.X > 0) {
+		cell_aspect_ratio = double(wgi.PixPerCell.X) / double(wgi.PixPerCell.Y);
         fprintf(stderr, "GetConsoleCellAspectRatio returned: %f\n", cell_aspect_ratio);
+    } else {
+        fprintf(stderr, "GetConsoleCellAspectRatio returned 0.0, using default: %f\n", cell_aspect_ratio);
     }
 
     // 3. Вычисляем итоговое соотношение сторон целевой области в пикселях
@@ -77,7 +91,7 @@ HCONSOLEIMAGE LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells
     // 4. Вычисляем размер холста, который будет иметь нужные пропорции,
     //    но при этом будет не меньше оригинальной картинки, чтобы избежать апскейла.
     double img_aspect = (double)orig_w / orig_h;
-    int canvas_w, canvas_h;
+    int canvas_w{}, canvas_h{};
 
     if (img_aspect > target_pixel_aspect) {
         // Изображение "шире" целевой области. Ширина холста = ширина картинки.
@@ -101,7 +115,7 @@ HCONSOLEIMAGE LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
         fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
-        return nullptr;
+        return false;
     }
 
     std::vector<uint8_t> final_pixel_data(canvas_w * canvas_h * 4);
@@ -110,12 +124,13 @@ HCONSOLEIMAGE LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells
 
     if (bytes_read != final_pixel_data.size()) {
         fprintf(stderr, "ERROR: Failed to read final pixel data from ImageMagick.\n");
-        return nullptr;
+        return false;
     }
 
     // 6. Создаем ConsoleImage с готовым битмапом.
     fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
-    return WINPORT(CreateConsoleImageFromBuffer)(final_pixel_data.data(), canvas_w, canvas_h, 0);
+	SMALL_RECT area = {0, 0, SHORT(target_w_cells - 1), SHORT(target_h_cells - 1)};
+    return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, &area, final_pixel_data.data(), canvas_w, canvas_h) != FALSE;
 }
 
 
@@ -161,18 +176,9 @@ LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
             int target_w_cells = Rect.Right > 1 ? Rect.Right - 1 : 1;
             int target_h_cells = Rect.Bottom > 3 ? Rect.Bottom - 3 : 1;
 
-            initData->imageHandle = LoadAndLetterboxImage(initData->fileName.c_str(), target_w_cells, target_h_cells);
+            bool ok = LoadAndLetterboxImage(initData->fileName.c_str(), target_w_cells, target_h_cells);
 
-            if (initData->imageHandle) {
-                ConsoleImage* img = static_cast<ConsoleImage*>(initData->imageHandle);
-                img->grid_origin.X = 1;
-                img->grid_origin.Y = 1;
-                // Указываем WX-бэкенду, на сколько ячеек растянуть наш подготовленный битмап
-                img->grid_size.X = target_w_cells;
-                img->grid_size.Y = target_h_cells; 
-
-                WINPORT(DisplayConsoleImage)(initData->imageHandle);
-            } else {
+            if (!ok) {
                 const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", initData->fileName.c_str()};
                 g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
                 g_far.SendDlgMessage(hDlg, DM_CLOSE, -1, 0);
@@ -193,9 +199,7 @@ LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
         case DN_CLOSE:
         {
             if (data) {
-                if (data->imageHandle) {
-                    WINPORT(DeleteConsoleImage)(data->imageHandle, 0);
-                }
+                WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
                 delete data;
                 g_far.SendDlgMessage(hDlg, DM_SETDLGDATA, 0, 0);
             }

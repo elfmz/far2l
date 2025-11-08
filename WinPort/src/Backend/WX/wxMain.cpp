@@ -2,7 +2,6 @@
 #include <dlfcn.h>
 #include "../NotifySh.h"
 #include "wxWinTranslations.h"
-#include "../WinPortGraphics.h"
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
 #include <memory>

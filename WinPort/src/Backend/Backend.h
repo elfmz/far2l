@@ -1,7 +1,6 @@
 #pragma once
 #include "WinCompat.h"
 #include <string>
-#include "../WinPortGraphics.h"
 
 /// This file defines all interfacing between console API and rendering backends.
 

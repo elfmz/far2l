@@ -1753,7 +1753,7 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 				img_rc.SetWidth(sz.GetWidth());
 				img_rc.SetHeight(sz.GetHeight());
 				if (rc.Intersects(img_rc)) {
-					dc.DrawBitmap(it.second.bitmap, 0, 0, false); // Use 'false' for no transparency, as we pre-rendered on a black bg
+					dc.DrawBitmap(it.second.bitmap, img_rc.GetLeft(), img_rc.GetTop(), false); // Use 'false' for no transparency, as we pre-rendered on a black bg
 				}
 			}
 		}

@@ -73,54 +73,33 @@ bool LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int tar
         fprintf(stderr, "ERROR: GetConsoleImageCaps failed\n");
         return false;
 	}
+	int canvas_w = target_w_cells * wgi.PixPerCell.X;
+	int canvas_h = target_h_cells * wgi.PixPerCell.Y;
 
-    fprintf(stderr, "Original image size: %dx%d pixels, PixPerCell=%dx%d\n", orig_w, orig_h, wgi.PixPerCell.X, wgi.PixPerCell.Y);
-
-    double cell_aspect_ratio = 0.5;
-    if (wgi.PixPerCell.Y > 0 && wgi.PixPerCell.X > 0) {
-		cell_aspect_ratio = double(wgi.PixPerCell.X) / double(wgi.PixPerCell.Y);
-        fprintf(stderr, "GetConsoleCellAspectRatio returned: %f\n", cell_aspect_ratio);
-    } else {
-        fprintf(stderr, "GetConsoleCellAspectRatio returned 0.0, using default: %f\n", cell_aspect_ratio);
-    }
-
-    // 3. Вычисляем итоговое соотношение сторон целевой области в пикселях
-    double target_pixel_aspect = ((double)target_w_cells / (double)target_h_cells) * cell_aspect_ratio;
-    fprintf(stderr, "Target pixel aspect ratio for the cell grid is %f\n", target_pixel_aspect);
-
-    // 4. Вычисляем размер холста, который будет иметь нужные пропорции,
-    //    но при этом будет не меньше оригинальной картинки, чтобы избежать апскейла.
-    double img_aspect = (double)orig_w / orig_h;
-    int canvas_w{}, canvas_h{};
-
-    if (img_aspect > target_pixel_aspect) {
-        // Изображение "шире" целевой области. Ширина холста = ширина картинки.
-        canvas_w = orig_w;
-        canvas_h = (int)(orig_w / target_pixel_aspect);
-    } else {
-        // Изображение "выше" или такое же по пропорциям. Высота холста = высота картинки.
-        canvas_h = orig_h;
-        canvas_w = (int)(orig_h * target_pixel_aspect);
-    }
-    fprintf(stderr, "Calculated canvas size for letterboxing: %dx%d pixels\n", canvas_w, canvas_h);
+    fprintf(stderr, "Image pixels size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
 
     // 5. Формируем команду для imagemagick: без ресайза, только центрирование и добавление полей.
     cmd = "convert \"";
     cmd += Wide2MB(path_name);
-    cmd += "\" -background black -gravity center -extent " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
+    cmd += "\" -background black -gravity center";
+    cmd += " -resize " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
+    cmd += " -extent " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
     cmd += " -depth 8 rgba:-";
     
     fprintf(stderr, "Executing ImageMagick: %s\n", cmd.c_str());
 
     FILE* pipe = popen(cmd.c_str(), "r");
     if (!pipe) {
-        fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
+        fprintf(stderr, "ERROR: ImageMagick start failed.\n");
         return false;
     }
 
     std::vector<uint8_t> final_pixel_data(canvas_w * canvas_h * 4);
     size_t bytes_read = fread(final_pixel_data.data(), 1, final_pixel_data.size(), pipe);
-    pclose(pipe);
+    if (pclose(pipe) != 0) {
+        fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
+        return false;
+	}
 
     if (bytes_read != final_pixel_data.size()) {
         fprintf(stderr, "ERROR: Failed to read final pixel data from ImageMagick.\n");
@@ -129,7 +108,7 @@ bool LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int tar
 
     // 6. Создаем ConsoleImage с готовым битмапом.
     fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
-	COORD pos = {0, 0};
+	COORD pos = {1, 1};
     return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
 }
 

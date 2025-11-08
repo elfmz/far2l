@@ -161,7 +161,7 @@ protected:
 	virtual void OnConsoleOutputFlushDrawing();
 	const char *OnConsoleBackendInfo(int entity);
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
-	virtual bool OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height);
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer);
 	virtual bool OnDeleteConsoleImage(const char *id);
 
 	// ITTYInputSpecialSequenceHandler

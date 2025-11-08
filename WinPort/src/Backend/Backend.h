@@ -47,7 +47,7 @@ public:
 	virtual void OnConsoleOutputFlushDrawing() = 0;
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
-	virtual bool OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height) = 0;
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
@@ -225,7 +225,7 @@ public:
 	virtual void RepaintsDeferFinish(bool force) = 0;
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
-	virtual bool OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height) = 0;
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *BackendInfo(int entity) = 0;

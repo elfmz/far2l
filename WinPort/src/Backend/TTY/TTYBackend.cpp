@@ -1393,7 +1393,7 @@ void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 	}
 }
 
-bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height)
+bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
 	try {
 		std::string str_id(id);
@@ -1405,7 +1405,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT
 
 		img.width = width;
 		img.height = height;
-		img.area = *area;
+		img.pos = pos;
 
 		_images_to_display.insert(str_id);
 	} catch (...) {

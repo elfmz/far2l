@@ -7,6 +7,8 @@
 #include <farkeys.h>
 #include <memory>
 #include <cstdio>
+#include <set>
+#include <dirent.h>
 #include <utils.h>
 
 #define WINPORT_IMAGE_ID "image_viewer"
@@ -17,8 +19,15 @@ FarStandardFunctions g_fsf;
 
 // --- Структура для передачи данных в диалог ---
 struct ViewerData {
-    HCONSOLEIMAGE imageHandle;
     std::wstring fileName;
+    HCONSOLEIMAGE imageHandle{nullptr};
+	enum Result
+	{
+		CLOSE,
+		NEXT,
+		PREV,
+		ERROR
+	} result {CLOSE};
 };
 
 
@@ -85,6 +94,7 @@ bool LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int tar
     cmd += " -resize " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
     cmd += " -extent " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
     cmd += " -depth 8 rgba:-";
+
     
     fprintf(stderr, "Executing ImageMagick: %s\n", cmd.c_str());
 
@@ -115,28 +125,78 @@ bool LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int tar
 
 // --- Основная логика плагина ---
 
-void ShowImage(const wchar_t* FileName) {
-    auto data = std::make_unique<ViewerData>();
-    data->fileName = FileName;
-    data->imageHandle = nullptr;
+static ViewerData::Result ShowImage(const wchar_t* FileName)
+{
+    ViewerData data;
+    data.fileName = FileName;
+//	data.annotate = annotate;
 
     SMALL_RECT Rect;
     g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
 
     FarDialogItem DlgItems[] = {
-        {DI_USERCONTROL, 0, 0, Rect.Right, Rect.Bottom, 0, {}, 0, 0, L"", 0},
+		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, FileName, 0 },
+        { DI_USERCONTROL, 0, 0, Rect.Right, Rect.Bottom, 0, {}, 0, 0, L"", 0},
     };
 
-    HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, Rect.Right+1, Rect.Bottom+1,
+    HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
                              L"ImageViewer", DlgItems, sizeof(DlgItems)/sizeof(DlgItems[0]),
-                             0, FDLG_NODRAWSHADOW|FDLG_NODRAWPANEL, ViewerDlgProc, (LONG_PTR)data.get());
+                             0, FDLG_NODRAWSHADOW|FDLG_NODRAWPANEL, ViewerDlgProc, (LONG_PTR)&data);
 
     if (hDlg != INVALID_HANDLE_VALUE) {
-        data.release();
         g_far.DialogRun(hDlg);
         g_far.DialogFree(hDlg);
     }
+	return data.result;
 }
+
+static void ShowImageLoop(std::wstring file_name)
+{
+	std::set<std::string> all_files;
+	for (ViewerData::Result res = ViewerData::ERROR;;) {
+		auto cur_res = ShowImage(file_name.c_str());
+		if (cur_res == ViewerData::CLOSE) {
+			break;
+		}
+		if (cur_res != ViewerData::ERROR) {
+			res = cur_res;
+		} else if (res == ViewerData::ERROR) {
+            const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", file_name.c_str()};
+            g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+			break;
+		}
+
+		if (all_files.empty()) {
+			DIR *d = opendir(".");
+			if (d) {
+				for (;;) {
+					auto *de = readdir(d);
+					if (!de) break;
+					if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
+						all_files.insert(de->d_name);
+					}
+				}
+				closedir(d);
+			}
+		}
+		auto it = all_files.find(StrWide2MB(file_name));
+		if (it == all_files.end()) {
+			break;
+		}
+		if (res == ViewerData::NEXT) {
+			++it;
+			if (it == all_files.end()) {
+				break;
+			}
+		} else if (it == all_files.begin()) {
+			break;
+		} else {
+			--it;
+		}
+		file_name = StrMB2Wide(*it);
+	}
+}
+
 
 // --- Диалоговая процедура ---
 
@@ -153,13 +213,11 @@ LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
             SMALL_RECT Rect;
             g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
             int target_w_cells = Rect.Right > 1 ? Rect.Right - 1 : 1;
-            int target_h_cells = Rect.Bottom > 3 ? Rect.Bottom - 3 : 1;
+            int target_h_cells = Rect.Bottom > 1 ? Rect.Bottom - 1 : 1;
 
             bool ok = LoadAndLetterboxImage(initData->fileName.c_str(), target_w_cells, target_h_cells);
-
             if (!ok) {
-                const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", initData->fileName.c_str()};
-                g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+				data->result = ViewerData::ERROR;
                 g_far.SendDlgMessage(hDlg, DM_CLOSE, -1, 0);
             }
             return TRUE;
@@ -169,9 +227,15 @@ LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
         {
             int Key = (int)Param2;
             if (Key == KEY_ESC || Key == KEY_F10 || Key == KEY_ENTER) {
+				data->result = ViewerData::CLOSE;
                 g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0);
                 return TRUE;
             }
+            if (Key == KEY_SPACE || Key == KEY_RIGHT || Key == KEY_BS || Key == KEY_LEFT) {
+				data->result = (Key == KEY_BS || Key == KEY_LEFT) ? ViewerData::PREV : ViewerData::NEXT;
+                g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0);
+                return TRUE;
+			}
             return TRUE;
         }
 
@@ -179,7 +243,6 @@ LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
         {
             if (data) {
                 WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
-                delete data;
                 g_far.SendDlgMessage(hDlg, DM_SETDLGDATA, 0, 0);
             }
             return TRUE;
@@ -223,7 +286,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
                 std::wstring fn = ppi->FindData.lpwszFileName;
 
 	            if (IsImageFile(fn.c_str())) {
-	                ShowImage(fn.c_str());
+	                ShowImageLoop(fn.c_str());
 	            } else {
 	                const wchar_t *MsgItems[]={L"Image Viewer", L"This is not a supported image file."};
 	                g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);

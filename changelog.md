@@ -10,6 +10,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   Option to set the maximum recursive scanning depth (default: 4). 
   Right Arrow expands excluded subtrees, and Left Arrow collapses subtree in focus, if it's alreayd collapsed - navigates one level up.
   Ctrl+Number expands all branches to the chosen depth.
+* _New:_ Options of the special command `edit:[line,col]` for openening file with position
 * _hexitor plugin_: fix broken layout with narrow window
 
 ## 2.7.0 beta (2025-10-26)

@@ -22,12 +22,12 @@
 
 #include "ExclusiveHotkeys.h"
 #include <set>
+#include <map>
 #include <fstream>
 #include <vector>
 #include <algorithm>
 #include <atomic>
 #include <mutex>
-#include <map>
 #include "../WinPortGraphics.h"
 
 #ifdef __APPLE__
@@ -95,8 +95,13 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	struct BI : std::vector<std::string> {} _backend_info;
 
 	wxTimer* _periodic_timer{nullptr};
-	std::map<HCONSOLEIMAGE, wxBitmap*> m_images;
-	std::mutex m_images_mutex;
+	struct wxConsoleImage
+	{
+		SMALL_RECT area{};
+		wxBitmap bitmap;
+	};
+	struct Images : std::map<std::string, wxConsoleImage>, std::mutex {} _images;
+
 	unsigned int _timer_idling_counter{0};
 	std::atomic<unsigned int> _last_title_ticks{0};
 	wxSize _initial_size{};
@@ -176,12 +181,10 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
-	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags);
-	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
-	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
-	virtual DWORD OnGetConsoleGraphicsCaps();
-	virtual double OnGetConsoleCellAspectRatio();
 	virtual const char *OnConsoleBackendInfo(int entity);
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height);
+	virtual bool OnDeleteConsoleImage(const char *id);
 
 public:
 	WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

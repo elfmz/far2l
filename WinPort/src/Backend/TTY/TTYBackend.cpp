@@ -448,26 +448,19 @@ void TTYBackend::WriterThread()
 
 void TTYBackend::DispatchImages(TTYOutput &tty_out)
 {
-	std::vector<HCONSOLEIMAGE> images_to_display;
-	std::vector<uint32_t> images_to_delete;
-
-	{
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		images_to_display.swap(m_images_to_display);
-		images_to_delete.swap(m_images_to_delete);
-	}
-
-	for (const auto h_image : images_to_display) {
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		auto it = m_images.find(h_image);
-		if (it != m_images.end()) {
-			tty_out.SendKittyImage(it->second.get());
+	std::lock_guard<std::mutex> lock(_images_mutex);
+	for (const auto &id : _images_to_display) {
+		auto it = _images.find(id);
+		if (it != _images.end()) {
+			tty_out.SendKittyImage(id, it->second);
 		}
 	}
+	_images_to_display.clear();
 
-	for (const auto id : images_to_delete) {
+	for (const auto &id : _images_to_delete) {
 		tty_out.DeleteKittyImage(id);
 	}
+	_images_to_delete.clear();
 }
 /////////////////////////////////////////////////////////////////////////
 
@@ -1386,90 +1379,59 @@ static void OnSigHup(int signo)
 		g_vtb->KickAss(true);
 	}
 }
-DWORD TTYBackend::OnGetConsoleGraphicsCaps()
+
+void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	const char* term = getenv("TERM");
-	if (term && (strstr(term, "kitty") || strstr(term, "xterm-kitty"))) {
-		//return GFX_CAPS_KITTY;
-		return 1;
-	}
-	// В будущем можно добавить проверку через XTGETTCAP(kittens)
-	return 0;
-}
-
-double TTYBackend::OnGetConsoleCellAspectRatio()
-{
-	if (!_cell_size_known || _cell_height_px == 0) {
-		// This can happen if the terminal doesn't respond to the CSI 16t query.
-		// Returning 0.0 signals the caller to use a default or fallback value.
-		return 0.0;
-	}
-	return (double)_cell_width_px / _cell_height_px;
-}
-
-HCONSOLEIMAGE TTYBackend::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags)
-{
-	fprintf(stderr, "TTYBackend::OnCreateConsoleImageFromBuffer\n");
-
-	if (!buffer || width == 0 || height == 0) {
-		return nullptr;
-	}
-
-	auto img = std::make_unique<ConsoleImage>();
-	img->width = width;
-	img->height = height;
-	img->id = ++m_image_id_counter; // Assign a unique ID
-
-	const size_t data_size = (size_t)width * height * 4;
-	img->pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + data_size);
-
-	HCONSOLEIMAGE handle = static_cast<HCONSOLEIMAGE>(img.get());
-	{
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		m_images[handle] = std::move(img);
-	}
-
-	fprintf(stderr, "TTYBackend::OnCreateConsoleImageFromBuffer END\n");
-	return handle;
-}
-
-bool TTYBackend::OnDisplayConsoleImage(HCONSOLEIMAGE h_image)
-{
-	fprintf(stderr, "TTYBackend::OnDisplayConsoleImage\n");
-
-	if (!h_image) return false;
-	{
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		if (m_images.find(h_image) == m_images.end()) {
-			return false; // Image not found
+	memset(wgi, 0, sizeof(*wgi));
+	if (_cell_size_known) {
+		const char *term = getenv("TERM");
+		if (term && strstr(term, "kitty")) {
+			wgi->Caps = 1;
 		}
-		m_images_to_display.push_back(h_image);
-		_ae.images_changed = true;
+		wgi->PixPerCell.X = _cell_width_px;
+		wgi->PixPerCell.Y = _cell_height_px;
+	}
+}
+
+bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height)
+{
+	try {
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images_mutex);
+		auto &img = _images[str_id];
+
+		const size_t data_size = size_t(width) * height * 4;
+		img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + data_size);
+
+		img.width = width;
+		img.height = height;
+		img.area = *area;
+
+		_images_to_display.insert(str_id);
+	} catch (...) {
+		return false;
 	}
 
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	_ae.images_changed = true;
 	_async_cond.notify_all(); // Wake up the writer thread
-
-	fprintf(stderr, "TTYBackend::OnDisplayConsoleImage END\n");
 	return true;
 }
 
-bool TTYBackend::OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags)
+bool TTYBackend::OnDeleteConsoleImage(const char *id)
 {
-	if (!h_image) return false;
-
 	{
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		auto it = m_images.find(h_image);
-		if (it != m_images.end()) {
-			m_images_to_delete.push_back(it->second->id);
-			m_images.erase(it); // unique_ptr will delete the ConsoleImage object
-			_ae.images_changed = true;
-		} else {
-			return false; // Not found
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images_mutex);
+		if (!_images.erase(str_id)) {
+			return false;
 		}
+		_images_to_delete.insert(str_id);
 	}
 
-	_async_cond.notify_all();
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	_ae.images_changed = true;
+	_async_cond.notify_all(); // Wake up the writer thread
 	return true;
 }
 

@@ -1473,6 +1473,13 @@ typedef LONG NTSTATUS;
 
 #define CREATE_SUSPENDED                  0x00000004
 
+typedef void *HCONSOLEIMAGE;
+typedef struct WinportGraphicsInfo1
+{
+    DWORD Caps;
+    COORD PixPerCell;
+} WinportGraphicsInfo;
+
 #define HGLOBAL     HANDLE
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE       0x0002

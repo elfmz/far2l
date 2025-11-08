@@ -14,6 +14,7 @@
 #include "TTYXGlue.h"
 #include "OSC52ClipboardBackend.h"
 #include <map>
+#include <set>
 #include <atomic>
 #include <memory>
 #include <vector>
@@ -75,11 +76,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::atomic<unsigned int> _cell_height_px{0};
 	std::atomic<bool> _cell_size_known{false};
 
-	std::mutex m_images_mutex;
-	std::map<HCONSOLEIMAGE, std::unique_ptr<ConsoleImage>> m_images;
-	std::vector<HCONSOLEIMAGE> m_images_to_display;
-	std::vector<uint32_t> m_images_to_delete;
-	std::atomic<uint32_t> m_image_id_counter{0};
+	std::mutex _images_mutex;
+	std::map<std::string, TTYConsoleImage> _images;
+	std::set<std::string> _images_to_display, _images_to_delete;
 
 	struct BI : std::mutex { std::string flavor; } _backend_info;
 
@@ -161,12 +160,10 @@ protected:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
-	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags);
-	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image);
-	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags);
-	virtual DWORD OnGetConsoleGraphicsCaps();
-	virtual double OnGetConsoleCellAspectRatio();
 	const char *OnConsoleBackendInfo(int entity);
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height);
+	virtual bool OnDeleteConsoleImage(const char *id);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);

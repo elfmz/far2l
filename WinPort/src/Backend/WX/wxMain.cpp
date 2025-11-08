@@ -629,13 +629,6 @@ WinPortPanel::~WinPortPanel()
 #endif
 	delete _periodic_timer;
 
-	std::lock_guard<std::mutex> lock(m_images_mutex);
-	for (auto& pair : m_images) {
-		delete pair.second; // delete wxBitmap
-		delete static_cast<ConsoleImage*>(pair.first); // delete ConsoleImage
-	}
-	m_images.clear();
-
 	g_winport_con_out->SetBackend(NULL);
 }
 
@@ -1734,6 +1727,8 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
 	//fprintf(stderr, "WinPortPanel::OnPaint\n");
 	_pending_refreshes = 0;
+
+	wxPaintDC dc(this);
 	if (_mouse_qedit_moved && _mouse_qedit_start_ticks != 0
 	 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		SMALL_RECT qedit;
@@ -1742,21 +1737,24 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 		qedit.Right = _mouse_qedit_last.X;
 		qedit.Bottom = _mouse_qedit_last.Y;
 		NormalizeArea(qedit);
-		_paint_context.OnPaint(&qedit);
+		_paint_context.OnPaint(dc, &qedit);
 	}
 	else
-		_paint_context.OnPaint();
+		_paint_context.OnPaint(dc);
 
 	{
-		wxPaintDC dc(this);
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		for (const auto& pair : m_images) {
-			ConsoleImage* img = static_cast<ConsoleImage*>(pair.first);
-			wxBitmap* bmp = pair.second;
-			if (img && bmp) {
-				int x_px = img->grid_origin.X * _paint_context.FontWidth();
-				int y_px = img->grid_origin.Y * _paint_context.FontHeight();
-				dc.DrawBitmap(*bmp, x_px, y_px, false); // Use 'false' for no transparency, as we pre-rendered on a black bg
+		std::lock_guard<std::mutex> lock(_images);
+		if (!_images.empty()) {
+			wxRegion rgn = GetUpdateRegion();
+			wxRect img_rc, rc = rgn.GetBox();
+			for (auto& it : _images) {
+				img_rc.SetLeft(_paint_context.FontWidth() * it.second.area.Left);
+				img_rc.SetTop(_paint_context.FontHeight() * it.second.area.Top);
+				img_rc.SetRight(_paint_context.FontWidth() * it.second.area.Right);
+				img_rc.SetBottom(_paint_context.FontHeight() * it.second.area.Bottom);
+				if (rc.Intersects(img_rc)) {
+					dc.DrawBitmap(it.second.bitmap, 0, 0, false); // Use 'false' for no transparency, as we pre-rendered on a black bg
+				}
 			}
 		}
 	}
@@ -2170,168 +2168,66 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 	}
 }
 
-DWORD WinPortPanel::OnGetConsoleGraphicsCaps()
+void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	return 0xFFFFFFFF; // WX backend supports everything
+	wgi->Caps = 0xFFFFFFFF; // WX backend supports everything (what exactly ???)
+	wgi->PixPerCell.X = _paint_context.FontWidth();
+	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
 
-double WinPortPanel::OnGetConsoleCellAspectRatio()
+bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height)
 {
-    unsigned int font_w = _paint_context.FontWidth();
-    unsigned int font_h = _paint_context.FontHeight();
+	std::string str_id(id);
+	try {
+		fprintf(stderr, "OnSetConsoleImage: width=%d height=%d\n", width, height);
+	    const size_t num_pixels = size_t(width) * height;
+		unsigned char *rgb = new unsigned char[num_pixels * 3];
+		unsigned char *alpha = new unsigned char[num_pixels];
+		const uint8_t *pixel_data = (const uint8_t *)buffer;
+		for (size_t i = 0; i < num_pixels; ++i) {
+			rgb[i * 3 + 0] = pixel_data[i * 4 + 0];
+			rgb[i * 3 + 1] = pixel_data[i * 4 + 1];
+			rgb[i * 3 + 2] = pixel_data[i * 4 + 2];
+			alpha[i]       = pixel_data[i * 4 + 3];
+		}
+		wxImage wx_img(width, height, rgb, alpha, false);
+		if (!wx_img.IsOk()) {
+			fprintf(stderr, "%s('%s'): failed to create wxImage\n", __FUNCTION__, id);
+			delete[] rgb;
+			delete[] alpha;
+			return false;
+		}
 
-    if (font_h == 0) {
-        fprintf(stderr, "WinPortPanel: OnGetConsoleCellAspectRatio - ERROR, font height is 0. Returning 0.0 to fallback.\n");
-        return 0.0;
-    }
+		std::lock_guard<std::mutex> lock(_images);
+		auto &img = _images[str_id];
+		img.area = *area;
+		img.bitmap = wx_img;
+	} catch (...) {
+		_images.erase(str_id);
+		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		return false;
+	}
 
-    double ratio = (double)font_w / (double)font_h;
-    fprintf(stderr, "WinPortPanel: OnGetConsoleCellAspectRatio calculated: width=%u, height=%u, ratio=%f\n", font_w, font_h, ratio);
-    
-    return ratio;
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
 }
 
-HCONSOLEIMAGE WinPortPanel::OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags)
+bool WinPortPanel::OnDeleteConsoleImage(const char *id)
 {
-    if (!buffer || width == 0 || height == 0) {
-        return nullptr;
-    }
-
-    auto img = new ConsoleImage();
-    img->width = width;
-    img->height = height;
-    const size_t data_size = (size_t)width * height * 4;
-    img->pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + data_size);
-
-    return static_cast<HCONSOLEIMAGE>(img);
-}
-
-bool WinPortPanel::OnDisplayConsoleImage(HCONSOLEIMAGE h_image)
-{
-    if (!h_image) return false;
-
-    ConsoleImage* img = static_cast<ConsoleImage*>(h_image);
-    if (img->pixel_data.empty() || img->width == 0 || img->height == 0) {
-        fprintf(stderr, "wxMain: OnDisplayConsoleImage - Invalid image data received.\n");
-        return false;
-    }
-
-    // 1. Создаем wxImage из RGBA-буфера, который нам прислал плагин.
-    size_t num_pixels = img->width * img->height;
-    unsigned char* rgb_data = new unsigned char[num_pixels * 3];
-    unsigned char* alpha_data = new unsigned char[num_pixels];
-    for (size_t i = 0; i < num_pixels; ++i) {
-        rgb_data[i * 3 + 0] = img->pixel_data[i * 4 + 0];
-        rgb_data[i * 3 + 1] = img->pixel_data[i * 4 + 1];
-        rgb_data[i * 3 + 2] = img->pixel_data[i * 4 + 2];
-        alpha_data[i]       = img->pixel_data[i * 4 + 3];
-    }
-    wxImage wx_img(img->width, img->height, rgb_data, alpha_data, false);
-    if (!wx_img.IsOk()) {
-        fprintf(stderr, "wxMain: OnDisplayConsoleImage - Failed to create wxImage.\n");
-        delete[] rgb_data;
-        delete[] alpha_data;
-        return false;
-    }
-
-    // 2. Вычисляем целевой размер в пикселях на основе grid_size.
-    // Если grid_size не задан, используем размер пришедшего битмапа.
-    int target_w_px = (img->grid_size.X > 0) ? (img->grid_size.X * _paint_context.FontWidth()) : img->width;
-    int target_h_px = (img->grid_size.Y > 0) ? (img->grid_size.Y * _paint_context.FontHeight()) : img->height;
-    
-    fprintf(stderr, "wxMain: OnDisplayConsoleImage - img px: %dx%d, grid cells: %dx%d, final target px: %dx%d\n",
-            img->width, img->height, img->grid_size.X, img->grid_size.Y, target_w_px, target_h_px);
-
-    // 3. Растягиваем/сжимаем wxImage до целевого размера, если они не совпадают.
-    // Это и есть реализация поведения в стиле Kitty.
-    if (wx_img.GetWidth() != target_w_px || wx_img.GetHeight() != target_h_px) {
-        fprintf(stderr, "wxMain: Stretching image from %dx%d to %dx%d.\n", wx_img.GetWidth(), wx_img.GetHeight(), target_w_px, target_h_px);
-        wx_img.Rescale(target_w_px, target_h_px, wxIMAGE_QUALITY_BILINEAR);
-    }
-
-    // 4. Сохраняем итоговый, уже растянутый, битмап.
-    {
-        std::lock_guard<std::mutex> lock(m_images_mutex);
-        if (m_images.count(h_image)) {
-            delete m_images[h_image];
-        }
-        m_images[h_image] = new wxBitmap(wx_img);
-    }
-
-    Refresh(false);
-    return true;
-}
-
-/*
-bool WinPortPanel::OnDisplayConsoleImage(HCONSOLEIMAGE h_image)
-{
-    if (!h_image) return false;
-
-    {
-        std::lock_guard<std::mutex> lock(m_images_mutex);
-
-        // Если для этого хендла еще нет wxBitmap, создаем его
-        if (m_images.find(h_image) == m_images.end()) {
-            ConsoleImage* img = static_cast<ConsoleImage*>(h_image);
-
-            if (img->pixel_data.empty() || img->width == 0 || img->height == 0) {
-                fprintf(stderr, "OnDisplayConsoleImage: Invalid image data.\n");
-                return false;
-            }
-
-            // Создаем два буфера: один для RGB, другой для Alpha-канала
-            // wxImage будет управлять их памятью, если мы передадим ownership (static_data = false)
-            size_t num_pixels = img->width * img->height;
-            unsigned char* rgb_data = new unsigned char[num_pixels * 3];
-            unsigned char* alpha_data = new unsigned char[num_pixels];
-
-            // Де-интерлейсим RGBA-поток
-            for (size_t i = 0; i < num_pixels; ++i) {
-                rgb_data[i * 3 + 0] = img->pixel_data[i * 4 + 0]; // R
-                rgb_data[i * 3 + 1] = img->pixel_data[i * 4 + 1]; // G
-                rgb_data[i * 3 + 2] = img->pixel_data[i * 4 + 2]; // B
-                alpha_data[i]       = img->pixel_data[i * 4 + 3]; // A
-            }
-
-            // Создаем wxImage, передавая ему оба буфера.
-            // static_data=false означает, что wxImage теперь владеет этими буферами и сама их удалит.
-            wxImage wx_img(img->width, img->height, rgb_data, alpha_data, false);
-
-            if (!wx_img.IsOk()) {
-                fprintf(stderr, "Failed to create wxImage from separated RGB and Alpha buffers.\n");
-                // Если wxImage не создался, мы должны сами очистить память
-                delete[] rgb_data;
-                delete[] alpha_data;
-                return false;
-            }
-
-            m_images[h_image] = new wxBitmap(wx_img);
-        }
-    }
-
-    // Запрашиваем перерисовку окна. Refresh() является потоко-безопасным.
-    Refresh(false);
-    return true;
-}
-*/
-
-bool WinPortPanel::OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags)
-{
-	if (!h_image) return false;
-
 	{
-		std::lock_guard<std::mutex> lock(m_images_mutex);
-		auto it = m_images.find(h_image);
-		if (it != m_images.end()) {
-			delete it->second; // delete wxBitmap
-			delete static_cast<ConsoleImage*>(it->first); // delete ConsoleImage
-			m_images.erase(it);
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images);
+		if (!_images.erase(str_id)) {
+			return false;
 		}
 	}
 
-	Refresh(false);
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
 	return true;
 }
+
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");

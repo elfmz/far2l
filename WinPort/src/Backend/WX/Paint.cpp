@@ -330,9 +330,8 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 		dc.SetFont(_fonts[index]);
 }
 
-void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
+void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 {
-	wxPaintDC dc(_window);
 	if (UNLIKELY(_stage == STG_NOT_REFRESHED)) {
 		// not refreshed yet - so early start so nothing to paint yet
 		// so simple fill with background color for the sake of faster start

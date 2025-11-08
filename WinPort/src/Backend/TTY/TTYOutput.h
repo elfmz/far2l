@@ -5,7 +5,6 @@
 #include <WinCompat.h>
 #include <StackSerializer.h>
 #include "../WinPortRGB.h"
-#include "../WinPortGraphics.h"
 
 extern long _iterm2_cmd_ts;
 extern bool _iterm2_cmd_state;

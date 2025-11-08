@@ -28,7 +28,6 @@
 #include <algorithm>
 #include <atomic>
 #include <mutex>
-#include "../WinPortGraphics.h"
 
 #ifdef __APPLE__
 # include "Mac/dockicon.h"

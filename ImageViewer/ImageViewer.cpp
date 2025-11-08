@@ -1,5 +1,5 @@
 #include <farplug-wide.h>
-#include <src/WinPortGraphics.h>
+#include <WinPort.h>
 #include <string>
 #include <vector>
 #include <algorithm>

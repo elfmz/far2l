@@ -18,7 +18,6 @@
 #include <atomic>
 #include <memory>
 #include <vector>
-#include "../WinPortGraphics.h"
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInteractor, IOSC52Interactor
 {

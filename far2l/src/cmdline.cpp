@@ -677,8 +677,10 @@ void CommandLine::InsertString(const wchar_t *Str)
 		return;
 
 	LastCmdPartLength = -1;
+	CmdStr.DisableAC();
 	CmdStr.InsertString(Str);
 	CmdStr.Show();
+	CmdStr.RevertAC();
 }
 
 int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)

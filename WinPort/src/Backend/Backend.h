@@ -1,6 +1,7 @@
 #pragma once
 #include "WinCompat.h"
 #include <string>
+#include "../WinPortGraphics.h"
 
 /// This file defines all interfacing between console API and rendering backends.
 
@@ -45,6 +46,11 @@ public:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
 	virtual void OnConsoleOutputFlushDrawing() = 0;
+	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags) = 0;
+	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image) = 0;
+	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags) = 0;
+	virtual DWORD OnGetConsoleGraphicsCaps() = 0;
+	virtual double OnGetConsoleCellAspectRatio() = 0;
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
 };
 
@@ -218,6 +224,12 @@ public:
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void RepaintsDeferStart() = 0;
 	virtual void RepaintsDeferFinish(bool force) = 0;
+
+	virtual HCONSOLEIMAGE OnCreateConsoleImageFromBuffer(const void *buffer, uint32_t width, uint32_t height, DWORD flags) = 0;
+	virtual bool OnDisplayConsoleImage(HCONSOLEIMAGE h_image) = 0;
+	virtual bool OnDeleteConsoleImage(HCONSOLEIMAGE h_image, DWORD action_flags) = 0;
+	virtual DWORD OnGetConsoleGraphicsCaps() = 0;
+	virtual double OnGetConsoleCellAspectRatio() = 0;
 
 	virtual const char *BackendInfo(int entity) = 0;
 

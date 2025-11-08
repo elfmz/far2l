@@ -594,7 +594,7 @@ void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage 
     
     // 1. Команда перемещения курсора
     char buf[64];
-    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img.area.Left + 1, img.area.Top + 1);
+    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img.pos.X + 1, img.pos.Y + 1);
     
     // Пишем в терминал
     Write(buf, len);
@@ -614,10 +614,6 @@ void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage 
             kitty_chunk_cmd += std::to_string(img.width);
             kitty_chunk_cmd += ",v=";
             kitty_chunk_cmd += std::to_string(img.height);
-            kitty_chunk_cmd += ",c=";
-            kitty_chunk_cmd += std::to_string(img.area.Right + 1 - img.area.Left);
-            kitty_chunk_cmd += ",r=";
-            kitty_chunk_cmd += std::to_string(img.area.Bottom + 1 - img.area.Top);
             kitty_chunk_cmd += ",i=";
             kitty_chunk_cmd += std::to_string(id);
             kitty_chunk_cmd += ",m=";

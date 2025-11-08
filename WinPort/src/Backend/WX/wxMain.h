@@ -96,8 +96,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	wxTimer* _periodic_timer{nullptr};
 	struct wxConsoleImage
 	{
-		SMALL_RECT area{};
 		wxBitmap bitmap;
+		COORD pos;
 	};
 	struct Images : std::map<std::string, wxConsoleImage>, std::mutex {} _images;
 
@@ -182,7 +182,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleOutputFlushDrawing();
 	virtual const char *OnConsoleBackendInfo(int entity);
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
-	virtual bool OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height);
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer);
 	virtual bool OnDeleteConsoleImage(const char *id);
 
 public:

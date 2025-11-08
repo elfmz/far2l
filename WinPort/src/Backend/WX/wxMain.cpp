@@ -1747,10 +1747,11 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 			wxRegion rgn = GetUpdateRegion();
 			wxRect img_rc, rc = rgn.GetBox();
 			for (auto& it : _images) {
-				img_rc.SetLeft(_paint_context.FontWidth() * it.second.area.Left);
-				img_rc.SetTop(_paint_context.FontHeight() * it.second.area.Top);
-				img_rc.SetRight(_paint_context.FontWidth() * it.second.area.Right);
-				img_rc.SetBottom(_paint_context.FontHeight() * it.second.area.Bottom);
+				auto sz = it.second.bitmap.GetSize();
+				img_rc.SetLeft(_paint_context.FontWidth() * it.second.pos.X);
+				img_rc.SetTop(_paint_context.FontHeight() * it.second.pos.Y);
+				img_rc.SetWidth(sz.GetWidth());
+				img_rc.SetHeight(sz.GetHeight());
 				if (rc.Intersects(img_rc)) {
 					dc.DrawBitmap(it.second.bitmap, 0, 0, false); // Use 'false' for no transparency, as we pre-rendered on a black bg
 				}
@@ -2174,7 +2175,7 @@ void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
 
-bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height)
+bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
 	std::string str_id(id);
 	try {
@@ -2199,7 +2200,7 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RE
 
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
-		img.area = *area;
+		img.pos = pos;
 		img.bitmap = wx_img;
 	} catch (...) {
 		_images.erase(str_id);

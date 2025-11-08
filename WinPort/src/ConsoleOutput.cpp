@@ -963,9 +963,9 @@ void ConsoleOutput::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 	_backend->OnGetConsoleImageCaps(wgi);
 }
 
-bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height)
+bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
-	return _backend->OnSetConsoleImage(id, flags, area, buffer, width, height);
+	return _backend->OnSetConsoleImage(id, flags, pos, width, height, buffer);
 }
 
 bool ConsoleOutput::OnDeleteConsoleImage(const char *id)

@@ -522,26 +522,13 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD flags, const SMALL_RECT *area, const void *buffer, DWORD width, DWORD height))
+	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer))
 	{
 		if (!id || !buffer || width == 0 || height == 0) {
-			fprintf(stderr, "%s('%s', .. %p, %u, %u): bad args\n", __FUNCTION__, id ? id : "???", buffer, width, height);
+			fprintf(stderr, "%s('%s', %d:%d, %u, %u, %p): bad args\n", __FUNCTION__, id ? id : "???", pos.X, pos.Y, width, height, buffer);
 			return FALSE;
 		}
-		ChooseConOut con_out(con);
-		if (!area) {
-			unsigned int awidth = 0, aheight = 0;
-			con_out->GetSize(awidth, aheight);
-			if (width && height) {
-				const SMALL_RECT whole_area = {0, 0, SHORT(awidth - 1), SHORT(aheight - 1)};
-				return con_out->OnSetConsoleImage(id, flags, &whole_area, buffer, width, height);
-			}
-		}
-		if (area->Left > area->Right || area->Top > area->Bottom) {
-			fprintf(stderr, "%s('%s', .. %p, %u, %u): bad area {%d, %d, %d, %d}\n",
-				__FUNCTION__, id, buffer, width, height, area->Left, area->Right, area->Top, area->Bottom);
-		}
-		return con_out->OnSetConsoleImage(id, flags, area, buffer, width, height);
+		return ChooseConOut(con)->OnSetConsoleImage(id, flags, pos, width, height, buffer);
 	}
 
 	WINPORT_DECL(DeleteConsoleImage, BOOL, (HANDLE con, const char *id))

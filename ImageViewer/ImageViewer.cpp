@@ -129,8 +129,8 @@ bool LoadAndLetterboxImage(const wchar_t* path_name, int target_w_cells, int tar
 
     // 6. Создаем ConsoleImage с готовым битмапом.
     fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
-	SMALL_RECT area = {0, 0, SHORT(target_w_cells - 1), SHORT(target_h_cells - 1)};
-    return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, &area, final_pixel_data.data(), canvas_w, canvas_h) != FALSE;
+	COORD pos = {0, 0};
+    return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
 }
 
 

@@ -28,6 +28,7 @@
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 #include "../NotifySh.h"
+#include "base64.h"
 
 
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
@@ -371,6 +372,7 @@ void TTYBackend::WriterThread()
 	try {
 		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
 		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
+		tty_out.RequestCellSize();
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -410,6 +412,9 @@ void TTYBackend::WriterThread()
 			if (ae.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
 			}
+			if (ae.images_changed) {
+				DispatchImages(tty_out);
+			}
 
 			// iTerm2 cmd+v workaround
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
@@ -441,6 +446,22 @@ void TTYBackend::WriterThread()
 }
 
 
+void TTYBackend::DispatchImages(TTYOutput &tty_out)
+{
+	std::lock_guard<std::mutex> lock(_images_mutex);
+	for (const auto &id : _images_to_display) {
+		auto it = _images.find(id);
+		if (it != _images.end()) {
+			tty_out.SendKittyImage(id, it->second);
+		}
+	}
+	_images_to_display.clear();
+
+	for (const auto &id : _images_to_delete) {
+		tty_out.DeleteKittyImage(id);
+	}
+	_images_to_delete.clear();
+}
 /////////////////////////////////////////////////////////////////////////
 
 void TTYBackend::DispatchPalette(TTYOutput &tty_out)
@@ -1168,6 +1189,14 @@ void TTYBackend::OnInputBroken()
 	_far2l_interacts_sent.clear();
 }
 
+void TTYBackend::OnGetCellSize(unsigned int w, unsigned int h)
+{
+	fprintf(stderr, "TTYBackend: Received cell size: %u x %u pixels\n", w, h);
+	_cell_width_px = w;
+	_cell_height_px = h;
+	_cell_size_known = true;
+}
+
 DWORD TTYBackend::QueryControlKeys()
 {
 	DWORD out = 0;
@@ -1351,6 +1380,110 @@ static void OnSigHup(int signo)
 	}
 }
 
+void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
+{
+	memset(wgi, 0, sizeof(*wgi));
+	if (_far2l_tty) {
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_CAPS);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(wgi->PixPerCell.Y);
+				stk_ser.PopNum(wgi->PixPerCell.X);
+				stk_ser.PopNum(wgi->Caps);
+			}
+		} catch(std::exception &) {
+			memset(wgi, 0, sizeof(*wgi));
+		}
+
+	} else if (_cell_size_known) { // kitty?
+		const char *term = getenv("TERM");
+		if (term && strstr(term, "kitty")) {
+			wgi->Caps = 1;
+		}
+		wgi->PixPerCell.X = _cell_width_px;
+		wgi->PixPerCell.Y = _cell_height_px;
+	}
+}
+
+bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+{
+	if (_far2l_tty) {
+		uint8_t ok = 0;
+		try {
+			StackSerializer stk_ser;
+			stk_ser.Push(buffer, size_t(width) * height * 4);
+			stk_ser.PushNum(height);
+			stk_ser.PushNum(width);
+			stk_ser.PushNum(pos.Y);
+			stk_ser.PushNum(pos.X);
+			stk_ser.PushNum(flags);
+			stk_ser.PushStr(id);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_SET);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(ok);
+			}
+		} catch(std::exception &) {
+		}
+		return ok != 0;
+	}
+
+	try {
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images_mutex);
+		auto &img = _images[str_id];
+
+		const size_t data_size = size_t(width) * height * 4;
+		img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + data_size);
+
+		img.width = width;
+		img.height = height;
+		img.pos = pos;
+
+		_images_to_display.insert(str_id);
+	} catch (...) {
+		return false;
+	}
+
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	_ae.images_changed = true;
+	_async_cond.notify_all(); // Wake up the writer thread
+	return true;
+}
+
+bool TTYBackend::OnDeleteConsoleImage(const char *id)
+{
+	if (_far2l_tty) {
+		uint8_t ok = 0;
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushStr(id);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_DEL);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(ok);
+			}
+		} catch(std::exception &) {
+		}
+		return ok != 0;
+	}
+
+	{
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images_mutex);
+		if (!_images.erase(str_id)) {
+			return false;
+		}
+		_images_to_delete.insert(str_id);
+	}
+
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	_ae.images_changed = true;
+	_async_cond.notify_all(); // Wake up the writer thread
+	return true;
+}
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {

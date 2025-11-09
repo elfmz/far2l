@@ -513,6 +513,29 @@ extern "C" {
 		}
 	}
 
+	WINPORT_DECL(GetConsoleImageCaps, BOOL, (HANDLE con, size_t sizeof_wgi, WinportGraphicsInfo *wgi))
+	{
+		if (sizeof_wgi != sizeof(*wgi)) {
+			return FALSE;
+		}
+		ChooseConOut(con)->OnGetConsoleImageCaps(wgi);
+		return TRUE;
+	}
+
+	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer))
+	{
+		if (!id || !buffer || width == 0 || height == 0) {
+			fprintf(stderr, "%s('%s', %d:%d, %u, %u, %p): bad args\n", __FUNCTION__, id ? id : "???", pos.X, pos.Y, width, height, buffer);
+			return FALSE;
+		}
+		return ChooseConOut(con)->OnSetConsoleImage(id, flags, pos, width, height, buffer);
+	}
+
+	WINPORT_DECL(DeleteConsoleImage, BOOL, (HANDLE con, const char *id))
+	{
+		return ChooseConOut(con)->OnDeleteConsoleImage(id);
+	}
+
 	static struct {
 		struct Cmp
 		{

@@ -13,6 +13,11 @@
 #include "IFar2lInteractor.h"
 #include "TTYXGlue.h"
 #include "OSC52ClipboardBackend.h"
+#include <map>
+#include <set>
+#include <atomic>
+#include <memory>
+#include <vector>
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInteractor, IOSC52Interactor
 {
@@ -66,6 +71,13 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::atomic<bool> _largest_window_size_ready{false};
 	std::atomic<bool> _flush_input_queue{false};
 	std::atomic<bool> _focused{true}; // assume starting focused
+	std::atomic<unsigned int> _cell_width_px{0};
+	std::atomic<unsigned int> _cell_height_px{0};
+	std::atomic<bool> _cell_size_known{false};
+
+	std::mutex _images_mutex;
+	std::map<std::string, TTYConsoleImage> _images;
+	std::set<std::string> _images_to_display, _images_to_delete;
 
 	struct BI : std::mutex { std::string flavor; } _backend_info;
 
@@ -91,6 +103,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		bool go_background : 1;
 		bool osc52clip_set : 1;
 		bool palette : 1;
+		bool images_changed : 1;
 
 		inline bool HasAny() const
 		{
@@ -111,6 +124,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInteract(TTYOutput &tty_out);
 	void DispatchOSC52ClipSet(TTYOutput &tty_out);
+	void DispatchImages(TTYOutput &tty_out);
 	void DispatchPalette(TTYOutput &tty_out);
 	void WaitForOutputIdleOrDead(std::unique_lock<std::mutex> &lock);
 
@@ -146,6 +160,9 @@ protected:
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
 	const char *OnConsoleBackendInfo(int entity);
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnDeleteConsoleImage(const char *id);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);
@@ -154,6 +171,7 @@ protected:
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();
+	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 
 	DWORD QueryControlKeys();
 

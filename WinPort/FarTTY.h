@@ -86,6 +86,15 @@ All integer values are in little-endian format.
 */
 #define FARTTY_INTERACT_GET_COLOR_PALETTE         'p'
 
+/** Various operations for graphical image rendering, see also FARTTY_INTERACT_IMAGE_*
+ In:
+  char (FARTTY_INTERACT_IMAGE_* subcommand)
+  ..subcommands-specific
+ Out:
+  ..subcommands-specific
+*/
+#define FARTTY_INTERACT_IMAGE                     'i'
+
 
 /** Declares that client supports specified extra features, so server _may_ change its hehaviour accordingly if it also supports some of them
  In:
@@ -224,6 +233,38 @@ Glossary:
   uint32_t (0 - failure, nonzero value - registered format ID)
 */
 #define FARTTY_INTERACT_CLIP_REGISTER_FORMAT       'r'
+
+/** Request imaging capabilities.
+ In:
+  N/A
+ Out:
+  uint32_t (0 - not available, nonzero value - available (bit values reserved for not defined yet set of capabilities))
+  uint16_t (character cell width in pixels)
+  uint16_t (character cell height in pixels)
+*/
+#define FARTTY_INTERACT_IMAGE_CAPS                 'c'
+
+/** Upload and display image.
+ In:
+  string (image identity)
+  uint32_t (yet unused flags)
+  uint16_t (character cell position X)
+  uint16_t (character cell position Y)
+  uint32_t (image width pixels)
+  uint32_t (image height pixels)
+  RGBA data of size width * height * 4
+ Out:
+  uint8_t (0 - failure, nonzero value - image loaded and displayed)
+*/
+#define FARTTY_INTERACT_IMAGE_SET                  's'
+
+/** Remove previously set image.
+ In:
+  string (image identity)
+ Out:
+  uint8_t (0 - failure, nonzero value - image removed)
+*/
+#define FARTTY_INTERACT_IMAGE_DEL                  'd'
 
 ///////////////////////
 

@@ -14,6 +14,7 @@
 #include <os_call.hpp>
 #include <VT256ColorTable.h>
 #include <utils.h>
+#include <crc64.h>
 #include <TestPath.h>
 #include "TTYOutput.h"
 #include "FarTTY.h"
@@ -568,6 +569,77 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 	base64_encode(request, (const unsigned char *)clip_data.data(), clip_data.size());
 	request+= '\a';
 	Write(request.c_str(), request.size());
+}
+
+void TTYOutput::RequestCellSize()
+{
+	// Запрос размера ячейки в пикселях. Ответ: ESC [ 6 ; height ; width t
+	Format(ESC "[16t");
+	fprintf(stderr, "TTYOutput: Sent cell size request (ESC[16t).\n");
+}
+
+static unsigned int KittyImageID(const std::string &str_id)
+{
+	return crc64(123, (const unsigned char *)str_id.c_str(), str_id.size());
+}
+
+void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img)
+{
+	unsigned int id = KittyImageID(str_id);
+
+    std::string base64_data;
+    base64_encode(base64_data, img.pixel_data.data(), img.pixel_data.size());
+
+    // --- Используем ОДИН механизм вывода: собираем все в строку и пишем через Write. ---
+    
+    // 1. Команда перемещения курсора
+    char buf[64];
+    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img.pos.X + 1, img.pos.Y + 1);
+    
+    // Пишем в терминал
+    Write(buf, len);
+
+    // 2. Отправляем в терминал по Kitty-протоколу по частям (chunks).
+    const size_t CHUNK_SIZE = 4096;
+    size_t offset = 0;
+
+    while (offset < base64_data.length()) {
+        size_t chunk_len = std::min(CHUNK_SIZE, base64_data.length() - offset);
+        bool more_to_follow = (offset + chunk_len < base64_data.length());
+        
+        std::string kitty_chunk_cmd;
+
+        if (offset == 0) {
+            kitty_chunk_cmd += ESC "_Ga=T,f=32,t=d,s=";
+            kitty_chunk_cmd += std::to_string(img.width);
+            kitty_chunk_cmd += ",v=";
+            kitty_chunk_cmd += std::to_string(img.height);
+            kitty_chunk_cmd += ",i=";
+            kitty_chunk_cmd += std::to_string(id);
+            kitty_chunk_cmd += ",m=";
+            kitty_chunk_cmd += (more_to_follow ? "1" : "0");
+            kitty_chunk_cmd += ";";
+        } else {
+            kitty_chunk_cmd += ESC "_Gm=";
+            kitty_chunk_cmd += (more_to_follow ? "1" : "0");
+            kitty_chunk_cmd += ";";
+        }
+        
+        kitty_chunk_cmd.append(base64_data, offset, chunk_len);
+        kitty_chunk_cmd += ESC "\\";
+        
+        // Пишем весь чанк в терминал
+        Write(kitty_chunk_cmd.c_str(), kitty_chunk_cmd.length());
+        
+        offset += chunk_len;
+    }
+}
+
+void TTYOutput::DeleteKittyImage(const std::string &str_id)
+{
+	unsigned int id = KittyImageID(str_id);
+	// a=d (delete), d=I (by ID)
+	Format(ESC "_Ga=d,d=I,i=%u" ESC "\\", id);
 }
 
 // iTerm2 cmd+v workaround

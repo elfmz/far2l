@@ -79,7 +79,7 @@
 	WINPORT_DECL_DEF(SetConsoleRepaintsDefer, VOID, (HANDLE hConsoleOutput, BOOL Deferring))
 
 	// graphics API
-	WINPORT_DECL_DEF(GetConsoleImageCaps, BOOL, (HANDLE hConsoleOutput, size_t sizeof_wgi, WinportGraphicsInfo *wgi));
+	WINPORT_DECL_DEF(GetConsoleImageCaps, BOOL, (HANDLE hConsoleOutput, size_t sizeof_wgi, WinportGraphicsInfo *wgi))
 	WINPORT_DECL_DEF(SetConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer))
 	WINPORT_DECL_DEF(DeleteConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id))
 

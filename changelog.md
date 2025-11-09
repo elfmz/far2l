@@ -12,6 +12,10 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   Ctrl+Number expands all branches to the chosen depth.
 * _New:_ Options of the special command `edit:[line,col]` for openening file with position
 * _hexitor plugin_: fix broken layout with narrow window
+* _ImageViewer plugin_:  New plugin (**F11**->**I** to open image/video file.
+  Uses ImageMagic for graphics operations and ffmpeg for video preview,
+  works in GUI and in TTY|F and TTY|k,
+  see [#3028](https://github.com/elfmz/far2l/pull/3028#issuecomment-3508025346)))
 
 ## 2.7.0 beta (2025-10-26)
 * Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.

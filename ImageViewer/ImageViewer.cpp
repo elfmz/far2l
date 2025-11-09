@@ -88,7 +88,7 @@ static bool InspectFileFormat(struct ViewerData *data)
 	}
 
 	std::string cmd = StrPrintf(
-		"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 '%s'",
+		"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -- '%s'",
 		data->cur_file.c_str());
 
 	std::string frames_count;
@@ -142,7 +142,7 @@ static bool LoadAndShowImage(struct ViewerData *data)
 
 
 	// 1. Получаем оригинальные размеры картинки
-	std::string cmd = "identify -format \"%w %h\" \"";
+	std::string cmd = "identify -format \"%w %h\" -- \"";
 	cmd += data->render_file;
 	cmd += "\"";
 
@@ -180,7 +180,7 @@ static bool LoadAndShowImage(struct ViewerData *data)
 	if (resize_w > 8000 || resize_h > 8000) {
 		cmd += "timeout 3 "; // workaround for stuck on too huge images
 	}
-	cmd += "convert \"";
+	cmd += "convert -- \"";
 	cmd += data->render_file;
 	cmd += "\" -background black -gravity Center";
 
@@ -275,7 +275,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		case DN_KEY:
 		{
 			int Key = (int)Param2;
-			if (Key == '=' || Key == KEY_CLEAR) {
+			if (Key == '=' || Key == '*' || Key == KEY_MULTIPLY || Key == KEY_CLEAR) {
 				data->dx = data->dy = 0;
 				data->scale = 100;
 				LoadAndShowImage(data);
@@ -329,8 +329,8 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				else if (data->scale > 10) data->scale-= 10;
 				LoadAndShowImage(data);
 
-			} else if (Key == KEY_ESC || Key == KEY_F10 || Key == KEY_ENTER) {
-				data->exited_by_enter = (Key == KEY_ENTER);
+			} else if (Key == KEY_ESC || Key == KEY_F10 || Key == KEY_ENTER || Key == KEY_NUMENTER) {
+				data->exited_by_enter = (Key == KEY_ENTER || Key == KEY_NUMENTER);
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0);
 
 			} else if (Key == KEY_INS) {

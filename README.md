@@ -12,7 +12,7 @@ Python (optional scripting support),
 arclite <sub>(now as experimental version which partially more effective then multiarc;
 arclite disabled by default, to enable manually turn on
 F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>,
-hexitor, OpenWith.
+hexitor, OpenWith, ImageViewer.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -281,7 +281,7 @@ To control how RAR archives will be handled in multiarc:
 There're also options to toggle other plugins build in same way:
 `-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
 `-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
-`-DFILECASE=no`, `-DHEXITOR=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
+`-DFILECASE=no`, `-DHEXITOR=no`, `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
 `-DOPENWITH=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 

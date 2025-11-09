@@ -340,11 +340,11 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 			}
 
 			if (semicolon_pos > 0) {
-				// Мы нашли ';'. Теперь ищем "OK\"
-				if (l > semicolon_pos + 3) {
-					if (s[semicolon_pos + 1] == 'O' && s[semicolon_pos + 2] == 'K' && s[semicolon_pos + 3] == '\\') {
+				// Мы нашли ';'. Теперь ищем "OK\e\\"
+				if (l > semicolon_pos + 4) {
+					if (s[semicolon_pos + 1] == 'O' && s[semicolon_pos + 2] == 'K' && s[semicolon_pos + 3] == '\e' && s[semicolon_pos + 4] == '\\') {
 						fprintf(stderr, "TTYInput: Parsed and ignored Kitty graphics OK response.\n");
-						return semicolon_pos + 4; // Успешно распознано и "съедено"
+						return semicolon_pos + 5; // Успешно распознано и "съедено"
 					} else {
 						// После ';' идет что-то не то
 						fprintf(stderr, "TTYInput: Garbage after semicolon in Kitty response.\n");

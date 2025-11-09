@@ -316,14 +316,14 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				if (data->dy > -100) data->dy-= 10;
 				LoadAndShowImage(data);
 
-			} else if (Key == KEY_ADD) {
+			} else if (Key == KEY_ADD || Key == '+') {
 				if (data->scale < 400) {
 					if (data->scale < 200) data->scale+= 50;
 					else data->scale+= 100;
 				}
 				LoadAndShowImage(data);
 
-			}else if (Key == KEY_SUBTRACT) {
+			}else if (Key == KEY_SUBTRACT || Key == '-') {
 				if (data->scale > 1000) data->scale-= 100;
 				else if (data->scale > 100) data->scale-= 50;
 				else if (data->scale > 10) data->scale-= 10;

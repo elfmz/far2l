@@ -10,6 +10,7 @@
 #include <set>
 #include <dirent.h>
 #include <utils.h>
+#include <math.h>
 
 #define WINPORT_IMAGE_ID "image_viewer"
 
@@ -18,60 +19,64 @@ static FarStandardFunctions g_fsf;
 
 struct ViewerData
 {
-	std::string cur_file;
+	std::string initial_file, cur_file;
 	std::set<std::string> selection, all_files;
 	COORD pos{}, size{};
 	bool exited_by_enter{false};
+	int dx = 0, dy = 0;
+	int scale = 100;
+
+	bool IterateFile(bool forward)
+	{
+		if (all_files.empty()) {
+			DIR *d = opendir(".");
+			if (d) {
+				for (;;) {
+					auto *de = readdir(d);
+					if (!de) break;
+					if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
+						all_files.insert(de->d_name);
+					}
+				}
+				closedir(d);
+			}
+		}
+		auto it = all_files.find(cur_file);
+		if (it == all_files.end()) {
+			return false;
+		}
+		if (forward) {
+			++it;
+			if (it == all_files.end()) {
+				it = all_files.begin();
+			}
+		} else {
+			if (it == all_files.begin()) {
+				it = all_files.end();
+			}
+			--it;
+		}
+		cur_file = *it;
+		dx = dy = 0;
+		scale = 100;
+		return true;
+	}
 };
 
-static bool IterateFile(ViewerData &data, bool forward)
+
+
+static bool LoadAndShowImage(struct ViewerData *data)
 {
-	if (data.all_files.empty()) {
-		DIR *d = opendir(".");
-		if (d) {
-			for (;;) {
-				auto *de = readdir(d);
-				if (!de) break;
-				if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
-					data.all_files.insert(de->d_name);
-				}
-			}
-			closedir(d);
-		}
-	}
-	auto it = data.all_files.find(data.cur_file);
-	if (it == data.all_files.end()) {
-		return false;
-	}
-	if (forward) {
-		++it;
-		if (it == data.all_files.end()) {
-			it = data.all_files.begin();
-		}
-	} else {
-		if (it == data.all_files.begin()) {
-			it = data.all_files.end();
-		}
-		--it;
-	}
-	data.cur_file = *it;
-	return true;
-}
-
-
-
-static bool LoadAndShowImage(const char *path_name, COORD pos, COORD size)
-{
-	fprintf(stderr, "\n--- ImageViewer: Starting image processing for '%s' ---\n", path_name);
-	fprintf(stderr, "Target cell grid pos=%dx%d size=%dx%d\n", pos.X, pos.Y, size.X, size.Y);
-	if (pos.X < 0 || pos.Y < 0 || size.X <= 0 || size.Y <= 0) {
+	fprintf(stderr, "\n--- ImageViewer: Starting image processing for '%s' ---\n", data->cur_file.c_str());
+	fprintf(stderr, "Target cell grid pos=%dx%d size=%dx%d\n", data->pos.X, data->pos.Y, data->size.X, data->size.Y);
+	if (data->pos.X < 0 || data->pos.Y < 0 || data->size.X <= 0 || data->size.Y <= 0) {
 		fprintf(stderr, "ERROR: bad grid.\n");
 		return false;
 	}
 
 	// 1. Получаем оригинальные размеры картинки
 	std::string cmd = "identify -format \"%w %h\" \"";
-	cmd += path_name;
+	cmd += data->cur_file;
 	cmd += "\"";
 
 	std::string dims_str;
@@ -93,16 +98,36 @@ static bool LoadAndShowImage(const char *path_name, COORD pos, COORD size)
 		fprintf(stderr, "ERROR: GetConsoleImageCaps failed\n");
 		return false;
 	}
-	int canvas_w = int(size.X) * wgi.PixPerCell.X;
-	int canvas_h = int(size.Y) * wgi.PixPerCell.Y;
+	int canvas_w = int(data->size.X) * wgi.PixPerCell.X;
+	int canvas_h = int(data->size.Y) * wgi.PixPerCell.Y;
 
 	fprintf(stderr, "Image pixels size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
 
 	// 5. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
-	cmd = "convert \"";
-	cmd += path_name;
-	cmd += "\" -background black -gravity center";
-	cmd += " -resize " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
+	int resize_w = canvas_w, resize_h = canvas_h;
+	if (data->scale != 100) {
+		resize_w = long(resize_w) * long(data->scale) / 100;
+		resize_h = long(resize_h) * long(data->scale) / 100;
+	}
+	cmd.clear();
+	if (resize_w > 8000 || resize_h > 8000) {
+		cmd += "timeout 3 "; // workaround for stuck on too huge images
+	}
+	cmd += "convert \"";
+	cmd += data->cur_file;
+	cmd += "\" -background black -gravity Center";
+
+	if (data->dx != 0 || data->dy != 0) {
+		int rdx = long(orig_w) * long(data->dx) / 100;
+		int rdy = long(orig_h) * long(data->dy) / 100; // orig_h
+		cmd += " -roll ";
+		if (rdx >= 0) cmd+= "+";
+		cmd+= std::to_string(rdx);
+		if (rdy >= 0) cmd+= "+";
+		cmd+= std::to_string(rdy);
+	}
+
+	cmd += " -resize " + std::to_string(resize_w) + "x" + std::to_string(resize_h);
 	cmd += " -extent " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
 	cmd += " -depth 8 rgba:-";
 
@@ -128,7 +153,7 @@ static bool LoadAndShowImage(const char *path_name, COORD pos, COORD size)
 
 	// 6. Создаем ConsoleImage с готовым битмапом.
 	fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
-	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
+	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, data->pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
 }
 
 
@@ -141,7 +166,7 @@ static void UpdateDialogTitle(HANDLE hDlg, ViewerData* data)
 		ws_cur_file.insert(0, L"  "); 
 	}
 
-	std::wstring ws_hint = L"[Navigate: RIGHT LEFT | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]";
+	std::wstring ws_hint = L"[Navigate: PGUP PGDN HOME | Pan: CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]";
 
 	FarDialogItemData dd_title = { ws_cur_file.size(), (wchar_t*)ws_cur_file.c_str() };
 	FarDialogItemData dd_hint = { ws_hint.size(), (wchar_t*)ws_hint.c_str() };
@@ -170,7 +195,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			data->size.Y = Rect.Bottom > 1 ? Rect.Bottom - 1 : 1;
 
 			UpdateDialogTitle(hDlg, data);
-			bool ok = LoadAndShowImage(data->cur_file.c_str(), data->pos, data->size);
+			bool ok = LoadAndShowImage(data);
 			if (!ok) {
 				std::wstring ws_cur_file = StrMB2Wide(data->cur_file);
 				const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str()};
@@ -183,7 +208,61 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		case DN_KEY:
 		{
 			int Key = (int)Param2;
-			if (Key == KEY_ESC || Key == KEY_F10 || Key == KEY_ENTER) {
+			if (Key == '=' || Key == KEY_CLEAR) {
+				data->dx = data->dy = 0;
+				data->scale = 100;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_RIGHT || Key == KEY_NUMPAD6) {
+				if (data->dx < 100) data->dx+= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_LEFT || Key == KEY_NUMPAD4) {
+				if (data->dx > -100) data->dx-= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_DOWN || Key == KEY_NUMPAD2) {
+				if (data->dy < 100) data->dy+= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_UP || Key == KEY_NUMPAD8) {
+				if (data->dy > -100) data->dy-= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_NUMPAD9) {
+				if (data->dx < 100) data->dx+= 10;
+				if (data->dy > -100) data->dy-= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_NUMPAD1) {
+				if (data->dx > -100) data->dx-= 10;
+				if (data->dy < 100) data->dy+= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_NUMPAD3) {
+				if (data->dx < 100) data->dx+= 10;
+				if (data->dy < 100) data->dy+= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_NUMPAD7) {
+				if (data->dx > -100) data->dx-= 10;
+				if (data->dy > -100) data->dy-= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_ADD) {
+				if (data->scale < 400) {
+					if (data->scale < 200) data->scale+= 50;
+					else data->scale+= 100;
+				}
+				LoadAndShowImage(data);
+
+			}else if (Key == KEY_SUBTRACT) {
+				if (data->scale > 1000) data->scale-= 100;
+				else if (data->scale > 100) data->scale-= 50;
+				else if (data->scale > 10) data->scale-= 10;
+				LoadAndShowImage(data);
+
+			} else if (Key == KEY_ESC || Key == KEY_F10 || Key == KEY_ENTER) {
 				data->exited_by_enter = (Key == KEY_ENTER);
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0);
 
@@ -201,14 +280,20 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				data->selection.erase(data->cur_file);
 				UpdateDialogTitle(hDlg, data);
 
-			} else if (Key == KEY_RIGHT || Key == KEY_LEFT) {
+			} else if (Key == KEY_HOME) {
+				data->cur_file = data->initial_file;
+				if (LoadAndShowImage(data)) {
+					UpdateDialogTitle(hDlg, data);
+				}
+
+			} else if (Key == KEY_PGDN || Key == KEY_PGUP) {
 				for (;;) { // silently skip bad files
-					if (!IterateFile(*data, Key == KEY_RIGHT)) {
+					if (!data->IterateFile(Key == KEY_PGDN)) {
 						data->cur_file.clear();
 						g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0); // close dialog as reached the end
 						break;
 					}
-					if (LoadAndShowImage(data->cur_file.c_str(), data->pos, data->size)) {
+					if (LoadAndShowImage(data)) {
 						UpdateDialogTitle(hDlg, data);
 						break;
 					}
@@ -226,6 +311,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 static bool ShowImage(const std::string &initial_file, std::set<std::string> &selection)
 {
 	ViewerData data;
+	data.initial_file = initial_file;
 	data.cur_file = initial_file;
 	if (!selection.empty()) {
 		data.all_files = selection;

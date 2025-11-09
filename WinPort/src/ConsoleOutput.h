@@ -128,4 +128,8 @@ public:
 
 	virtual unsigned int WaitForChange(unsigned int prev_change_id, unsigned int timeout_msec = -1);
 	virtual const char *BackendInfo(int entity);
+
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
+	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnDeleteConsoleImage(const char *id);
 };

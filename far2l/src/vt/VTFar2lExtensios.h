@@ -37,6 +37,12 @@ class VTFar2lExtensios
 	void OnInteract_ClipboardGetDataID(StackSerializer &stk_ser);
 	void OnInteract_ClipboardRegisterFormat(StackSerializer &stk_ser);
 	void OnInteract_Clipboard(StackSerializer &stk_ser);
+
+	void OnInteract_ImageCaps(StackSerializer &stk_ser);
+	void OnInteract_ImageSet(StackSerializer &stk_ser);
+	void OnInteract_ImageDel(StackSerializer &stk_ser);
+	void OnInteract_Image(StackSerializer &stk_ser);
+
 	void OnInteract_GetLargestWindowSize(StackSerializer &stk_ser);
 	void OnInteract_ChangeCursorHeight(StackSerializer &stk_ser);
 	void OnInteract_DisplayNotification(StackSerializer &stk_ser);

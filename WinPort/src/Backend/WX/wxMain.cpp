@@ -2,6 +2,9 @@
 #include <dlfcn.h>
 #include "../NotifySh.h"
 #include "wxWinTranslations.h"
+#include "../../../utils/src/POpen.cpp"
+#include <vector>
+#include <memory>
 
 #define AREAS_REDUCTION
 
@@ -624,6 +627,7 @@ WinPortPanel::~WinPortPanel()
 	Touchbar_Deregister();
 #endif
 	delete _periodic_timer;
+
 	g_winport_con_out->SetBackend(NULL);
 }
 
@@ -1722,6 +1726,8 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
 	//fprintf(stderr, "WinPortPanel::OnPaint\n");
 	_pending_refreshes = 0;
+
+	wxPaintDC dc(this);
 	if (_mouse_qedit_moved && _mouse_qedit_start_ticks != 0
 	 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		SMALL_RECT qedit;
@@ -1730,10 +1736,29 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 		qedit.Right = _mouse_qedit_last.X;
 		qedit.Bottom = _mouse_qedit_last.Y;
 		NormalizeArea(qedit);
-		_paint_context.OnPaint(&qedit);
+		_paint_context.OnPaint(dc, &qedit);
 	}
 	else
-		_paint_context.OnPaint();
+		_paint_context.OnPaint(dc);
+
+	{
+		std::lock_guard<std::mutex> lock(_images);
+		if (!_images.empty()) {
+			wxRegion rgn = GetUpdateRegion();
+			wxRect img_rc, rc = rgn.GetBox();
+			for (auto& it : _images) {
+				auto sz = it.second.bitmap.GetSize();
+				img_rc.SetLeft(_paint_context.FontWidth() * it.second.pos.X);
+				img_rc.SetTop(_paint_context.FontHeight() * it.second.pos.Y);
+				img_rc.SetWidth(sz.GetWidth());
+				img_rc.SetHeight(sz.GetHeight());
+				if (rc.Intersects(img_rc)) {
+					dc.DrawBitmap(it.second.bitmap, img_rc.GetLeft(), img_rc.GetTop(), false); // Use 'false' for no transparency, as we pre-rendered on a black bg
+				}
+			}
+		}
+	}
+
 	if (_force_size_on_paint_state == 0) {
 		_force_size_on_paint_state = 1;
 	}
@@ -2141,6 +2166,66 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 		ir.Event.FocusEvent.bSetFocus = TRUE;
 		g_winport_con_in->Enqueue(&ir, 1);
 	}
+}
+
+void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
+{
+	wgi->Caps = 0xFFFFFFFF; // WX backend supports everything (what exactly ???)
+	wgi->PixPerCell.X = _paint_context.FontWidth();
+	wgi->PixPerCell.Y = _paint_context.FontHeight();
+}
+
+bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+{
+	std::string str_id(id);
+	try {
+		fprintf(stderr, "OnSetConsoleImage: width=%d height=%d\n", width, height);
+	    const size_t num_pixels = size_t(width) * height;
+		unsigned char *rgb = new unsigned char[num_pixels * 3];
+		unsigned char *alpha = new unsigned char[num_pixels];
+		const uint8_t *pixel_data = (const uint8_t *)buffer;
+		for (size_t i = 0; i < num_pixels; ++i) {
+			rgb[i * 3 + 0] = pixel_data[i * 4 + 0];
+			rgb[i * 3 + 1] = pixel_data[i * 4 + 1];
+			rgb[i * 3 + 2] = pixel_data[i * 4 + 2];
+			alpha[i]       = pixel_data[i * 4 + 3];
+		}
+		wxImage wx_img(width, height, rgb, alpha, false);
+		if (!wx_img.IsOk()) {
+			fprintf(stderr, "%s('%s'): failed to create wxImage\n", __FUNCTION__, id);
+			delete[] rgb;
+			delete[] alpha;
+			return false;
+		}
+
+		std::lock_guard<std::mutex> lock(_images);
+		auto &img = _images[str_id];
+		img.pos = pos;
+		img.bitmap = wx_img;
+	} catch (...) {
+		_images.erase(str_id);
+		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		return false;
+	}
+
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
+}
+
+bool WinPortPanel::OnDeleteConsoleImage(const char *id)
+{
+	{
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images);
+		if (!_images.erase(str_id)) {
+			return false;
+		}
+	}
+
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
 }
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )

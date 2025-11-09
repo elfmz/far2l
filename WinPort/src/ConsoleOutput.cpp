@@ -957,3 +957,18 @@ const char *ConsoleOutput::BackendInfo(int entity)
 {
 	return _backend->OnConsoleBackendInfo(entity);
 }
+
+void ConsoleOutput::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
+{
+	_backend->OnGetConsoleImageCaps(wgi);
+}
+
+bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+{
+	return _backend->OnSetConsoleImage(id, flags, pos, width, height, buffer);
+}
+
+bool ConsoleOutput::OnDeleteConsoleImage(const char *id)
+{
+	return _backend->OnDeleteConsoleImage(id);
+}

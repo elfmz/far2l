@@ -140,8 +140,15 @@ static void UpdateDialogTitle(HANDLE hDlg, ViewerData* data)
 	} else {
 		ws_cur_file.insert(0, L"  "); 
 	}
-	FarDialogItemData dd = { ws_cur_file.size(), (wchar_t*)ws_cur_file.c_str() };
-	g_far.SendDlgMessage(hDlg, DM_SETTEXT, 0, (LONG_PTR)&dd);
+
+	std::wstring ws_hint = L"[Navigate: RIGHT LEFT | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]";
+
+	FarDialogItemData dd_title = { ws_cur_file.size(), (wchar_t*)ws_cur_file.c_str() };
+	FarDialogItemData dd_hint = { ws_hint.size(), (wchar_t*)ws_hint.c_str() };
+
+	g_far.SendDlgMessage(hDlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
+	g_far.SendDlgMessage(hDlg, DM_SETTEXT, 2, (LONG_PTR)&dd_hint);
+
 }
 
 
@@ -186,9 +193,17 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				}
 				UpdateDialogTitle(hDlg, data);
 
-			} else if (Key == KEY_SPACE || Key == KEY_RIGHT || Key == KEY_BS || Key == KEY_LEFT) {
+			} else if (Key == KEY_SPACE) {
+				data->selection.insert(data->cur_file);
+				UpdateDialogTitle(hDlg, data);
+
+			} else if (Key == KEY_BS) {
+				data->selection.erase(data->cur_file);
+				UpdateDialogTitle(hDlg, data);
+
+			} else if (Key == KEY_RIGHT || Key == KEY_LEFT) {
 				for (;;) { // silently skip bad files
-					if (!IterateFile(*data, Key == KEY_SPACE || Key == KEY_RIGHT)) {
+					if (!IterateFile(*data, Key == KEY_RIGHT)) {
 						data->cur_file.clear();
 						g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0); // close dialog as reached the end
 						break;
@@ -223,7 +238,7 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 	FarDialogItem DlgItems[] = {
 		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
 		{ DI_USERCONTROL, 1, 1, Rect.Right - 2, Rect.Bottom - 2, 0, {}, 0, 0, L"", 0},
-		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"[Navigate: RIGHT LEFT | (De)Select: INS | ENTER | ESC]", 0},
+		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
 	};
 
 	HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,

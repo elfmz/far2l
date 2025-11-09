@@ -19,7 +19,7 @@ static FarStandardFunctions g_fsf;
 
 struct ViewerData
 {
-	std::string initial_file, cur_file, preprocessed_file;
+	std::string initial_file, cur_file, render_file, tmp_file;
 	std::set<std::string> selection, all_files;
 	COORD pos{}, size{};
 	bool exited_by_enter{false};
@@ -63,9 +63,9 @@ struct ViewerData
 	}
 };
 
-static bool PreprocessFileIfNeeded(struct ViewerData *data)
+static bool InspectFileFormat(struct ViewerData *data)
 {
-	data->preprocessed_file = data->cur_file;
+	data->render_file = data->cur_file;
 
 	struct stat st {};
 	if (stat(data->cur_file.c_str(), &st) == -1) {
@@ -101,25 +101,27 @@ static bool PreprocessFileIfNeeded(struct ViewerData *data)
 	unsigned int frames_interval = atoi(frames_count.c_str()) / 6;
 	if (frames_interval < 5) frames_interval = 5;
 
-	wchar_t preview_tmp[MAX_PATH + 32]{};
-	g_fsf.MkTemp(preview_tmp, MAX_PATH, L"far2l-img");
-	wcscat(preview_tmp, L".jpg");
-	std::string preview_tmp_mb = StrWide2MB(preview_tmp);
+	if (data->tmp_file.empty()) {
+		wchar_t preview_tmp[MAX_PATH + 32]{};
+		g_fsf.MkTemp(preview_tmp, MAX_PATH, L"far2l-img");
+		wcscat(preview_tmp, L".jpg");
+		data->tmp_file = StrWide2MB(preview_tmp);
+	}
 
-	unlink(preview_tmp_mb.c_str());
+	unlink(data->tmp_file.c_str());
 
 	cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',scale=200:-1,tile=3x2\" '%s'",
-		data->cur_file.c_str(), frames_interval, preview_tmp_mb.c_str());
+		data->cur_file.c_str(), frames_interval, data->tmp_file.c_str());
 
 	int r = system(cmd.c_str());
 	fprintf(stderr, "\n--- ImageViewer: r=%d from %s\n", r, cmd.c_str());
 
-	if (stat(preview_tmp_mb.c_str(), &st) == -1 || st.st_size == 0) {
-		unlink(preview_tmp_mb.c_str());
+	if (stat(data->tmp_file.c_str(), &st) == -1 || st.st_size == 0) {
+		unlink(data->tmp_file.c_str());
 		return false;
 	}
 
-	data->preprocessed_file = std::move(preview_tmp_mb);
+	data->render_file = data->tmp_file;
 	return true;
 }
 
@@ -127,7 +129,7 @@ static bool LoadAndShowImage(struct ViewerData *data)
 {
 	fprintf(stderr, "\n--- ImageViewer: Starting image processing for '%s' ---\n", data->cur_file.c_str());
 
-	if (data->preprocessed_file.empty()) {
+	if (data->render_file.empty()) {
 		fprintf(stderr, "ERROR: bad file.\n");
 		return false;
 	}
@@ -141,7 +143,7 @@ static bool LoadAndShowImage(struct ViewerData *data)
 
 	// 1. Получаем оригинальные размеры картинки
 	std::string cmd = "identify -format \"%w %h\" \"";
-	cmd += data->preprocessed_file;
+	cmd += data->render_file;
 	cmd += "\"";
 
 	std::string dims_str;
@@ -179,7 +181,7 @@ static bool LoadAndShowImage(struct ViewerData *data)
 		cmd += "timeout 3 "; // workaround for stuck on too huge images
 	}
 	cmd += "convert \"";
-	cmd += data->preprocessed_file;
+	cmd += data->render_file;
 	cmd += "\" -background black -gravity Center";
 
 	if (data->dx != 0 || data->dy != 0) {
@@ -260,7 +262,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			data->size.Y = Rect.Bottom > 1 ? Rect.Bottom - 1 : 1;
 
 			UpdateDialogTitle(hDlg, data);
-			bool ok = PreprocessFileIfNeeded(data) && LoadAndShowImage(data);
+			bool ok = InspectFileFormat(data) && LoadAndShowImage(data);
 			if (!ok) {
 				std::wstring ws_cur_file = StrMB2Wide(data->cur_file);
 				const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str()};
@@ -358,7 +360,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 						g_far.SendDlgMessage(hDlg, DM_CLOSE, 1, 0); // close dialog as reached the end
 						break;
 					}
-					if (PreprocessFileIfNeeded(data) && LoadAndShowImage(data)) {
+					if (InspectFileFormat(data) && LoadAndShowImage(data)) {
 						UpdateDialogTitle(hDlg, data);
 						break;
 					}
@@ -402,7 +404,13 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 
 	g_far.DialogRun(hDlg);
 	g_far.DialogFree(hDlg);
+
 	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+
+	if (!data.tmp_file.empty()) {
+		unlink(data.tmp_file.c_str());
+	}
+
 	if (!data.exited_by_enter) {
 		return false;
 	}

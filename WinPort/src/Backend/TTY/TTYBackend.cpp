@@ -1383,7 +1383,21 @@ static void OnSigHup(int signo)
 void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
 	memset(wgi, 0, sizeof(*wgi));
-	if (_cell_size_known) {
+	if (_far2l_tty) {
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_CAPS);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(wgi->PixPerCell.Y);
+				stk_ser.PopNum(wgi->PixPerCell.X);
+				stk_ser.PopNum(wgi->Caps);
+			}
+		} catch(std::exception &) {
+			memset(wgi, 0, sizeof(*wgi));
+		}
+
+	} else if (_cell_size_known) { // kitty?
 		const char *term = getenv("TERM");
 		if (term && strstr(term, "kitty")) {
 			wgi->Caps = 1;
@@ -1395,6 +1409,27 @@ void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 
 bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
+	if (_far2l_tty) {
+		uint8_t ok = 0;
+		try {
+			StackSerializer stk_ser;
+			stk_ser.Push(buffer, size_t(width) * height * 4);
+			stk_ser.PushNum(height);
+			stk_ser.PushNum(width);
+			stk_ser.PushNum(pos.Y);
+			stk_ser.PushNum(pos.X);
+			stk_ser.PushNum(flags);
+			stk_ser.PushStr(id);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_SET);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(ok);
+			}
+		} catch(std::exception &) {
+		}
+		return ok != 0;
+	}
+
 	try {
 		std::string str_id(id);
 		std::lock_guard<std::mutex> lock(_images_mutex);
@@ -1420,6 +1455,21 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD
 
 bool TTYBackend::OnDeleteConsoleImage(const char *id)
 {
+	if (_far2l_tty) {
+		uint8_t ok = 0;
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushStr(id);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_DEL);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(ok);
+			}
+		} catch(std::exception &) {
+		}
+		return ok != 0;
+	}
+
 	{
 		std::string str_id(id);
 		std::lock_guard<std::mutex> lock(_images_mutex);

@@ -66,6 +66,14 @@ class ImageViewer
 		return true;
 	}
 
+	void ErrorMessage(std::string const &err_str)
+	{
+		std::wstring ws_cur_file = StrMB2Wide(_cur_file);
+		std::wstring werr_str = StrMB2Wide(err_str);
+		const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str(), werr_str.c_str(), L"Ok"};
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+	}
+
 	bool IsVideoFile() const
 	{
 		const char *video_extensions[] = {".mp4", ".mpg", ".avi", ".flv", ".mov", ".wmv", ".mkv"};
@@ -77,7 +85,7 @@ class ImageViewer
 		return false;
 	}
 
-	bool InspectFileFormat()
+	bool InspectFileFormat(std::string &err_str)
 	{
 		_render_file = _cur_file;
 
@@ -100,7 +108,8 @@ class ImageViewer
 
 		std::string frames_count;
 		if (!POpen(frames_count, cmd.c_str())) {
-			fprintf(stderr, "ERROR: ffprobe failed.\n");
+			err_str = "ERROR: ffprobe failed";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 		fprintf(stderr, "\n--- ImageViewer: frames_count=%s from %s\n", frames_count.c_str(), cmd.c_str());
@@ -117,7 +126,7 @@ class ImageViewer
 
 		unlink(_tmp_file.c_str());
 
-		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',_scale=200:-1,tile=3x2\" '%s'",
+		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',scale=200:-1,tile=3x2\" '%s'",
 			_cur_file.c_str(), frames_interval, _tmp_file.c_str());
 
 		int r = system(cmd.c_str());
@@ -132,52 +141,56 @@ class ImageViewer
 		return true;
 	}
 
-	bool LoadAndShowImage()
+	bool LoadAndShowImage(std::string &err_str)
 	{
 		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _cur_file.c_str());
 
 		if (_render_file.empty()) {
-			fprintf(stderr, "ERROR: bad file.\n");
+			err_str = "ERROR: bad file";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 
 		fprintf(stderr, "Target cell grid _pos=%dx%d _size=%dx%d\n", _pos.X, _pos.Y, _size.X, _size.Y);
 		if (_pos.X < 0 || _pos.Y < 0 || _size.X <= 0 || _size.Y <= 0) {
-			fprintf(stderr, "ERROR: bad grid.\n");
+			err_str = "ERROR: bad grid";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 
+		// 1. Получаем соотношение сторон ячейки терминала
+		WinportGraphicsInfo wgi{};
 
-		// 1. Получаем оригинальные размеры картинки
+		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || !wgi.Caps) {
+			err_str = "ERROR: GetConsoleImageCaps failed";
+			fprintf(stderr, "%s.\n", err_str.c_str());
+			return false;
+		}
+		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
+		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
+
+		// 2. Получаем оригинальные размеры картинки
 		std::string cmd = "identify -format \"%w %h\" -- \"";
 		cmd += _render_file;
 		cmd += "\"";
 
 		std::string dims_str;
 		if (!POpen(dims_str, cmd.c_str())) {
-			fprintf(stderr, "ERROR: ImageMagick 'identify' failed.\n");
+			err_str = "ERROR: ImageMagick 'identify' failed";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 
 		int orig_w = 0, orig_h = 0;
 		if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
-			fprintf(stderr, "ERROR: Failed to parse original dimensions. Got: '%s'\n", dims_str.c_str());
+			err_str = "ERROR: Failed to parse original dimensions. Got: '" + dims_str + "'";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
-
-		// 2. Получаем соотношение сторон ячейки терминала
-		WinportGraphicsInfo wgi{};
-
-		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || !wgi.Caps) {
-			fprintf(stderr, "ERROR: GetConsoleImageCaps failed\n");
-			return false;
-		}
-		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
-		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
 		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
 
-		// 5. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
+		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
 		int resize_w = canvas_w, resize_h = canvas_h;
 		if (_scale != 100) {
 			resize_w = long(resize_w) * long(_scale) / 100;
@@ -209,23 +222,26 @@ class ImageViewer
 
 		FILE* fp = popen(cmd.c_str(), "r");
 		if (!fp) {
-			fprintf(stderr, "ERROR: ImageMagick start failed.\n");
+			err_str = "ERROR: ImageMagick start failed";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 
 		std::vector<uint8_t> final_pixel_data(canvas_w * canvas_h * 4);
 		size_t n_read = fread(final_pixel_data.data(), final_pixel_data.size(), 1, fp);
 		if (pclose(fp) != 0) {
-			fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
+			err_str = "ERROR: ImageMagick 'convert' failed";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 
 		if (n_read != 1) {
-			fprintf(stderr, "ERROR: Failed to read final pixel data from ImageMagick.\n");
+			err_str = "ERROR: Failed to read final pixel data from ImageMagick";
+			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
 
-		// 6. Создаем ConsoleImage с готовым битмапом.
+		// 4. Создаем ConsoleImage с готовым битмапом.
 		fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
 		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, _pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
 	}
@@ -278,12 +294,11 @@ public:
 		_pos.Y = 1;
 		_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
 		_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
+		std::string err_str;
 
 		UpdateDialogTitle();
-		if (!InspectFileFormat() || !LoadAndShowImage()) {
-			std::wstring ws_cur_file = StrMB2Wide(_cur_file);
-			const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str()};
-			g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+		if (!InspectFileFormat(err_str) || !LoadAndShowImage(err_str)) {
+			ErrorMessage(err_str);
 			return false;
 		}
 
@@ -293,19 +308,25 @@ public:
 	void Home()
 	{
 		_cur_file = _initial_file;
-		if (InspectFileFormat() && LoadAndShowImage()) {
+		std::string err_str;
+		if (InspectFileFormat(err_str) && LoadAndShowImage(err_str)) {
 			UpdateDialogTitle();
+		}
+		else {
+			ErrorMessage(err_str);
 		}
 	}
 
 	bool Iterate(bool forward)
 	{
+		std::string err_str;
 		for (size_t i = 0;; ++i) { // silently skip bad files
 			if (!IterateFile(forward) || i > _all_files.size()) {
 				_cur_file.clear();
 				return false; // bail out on logic error or infinite loop
 			}
-			if (InspectFileFormat() && LoadAndShowImage()) {
+			err_str.clear();
+			if (InspectFileFormat(err_str) && LoadAndShowImage(err_str)) {
 				UpdateDialogTitle();
 				return true;
 			}
@@ -315,6 +336,7 @@ public:
 
 	void Scale(int change)
 	{
+		std::string err_str;
 		if (change > 0) {
 			if (_scale < 100) _scale+= 10;
 			else if (_scale < 200) _scale+= 50;
@@ -324,11 +346,13 @@ public:
 			else if (_scale >= 100) _scale-= 50;
 			else if (_scale > 10) _scale-= 10;
 		}
-		LoadAndShowImage();
+		if (!LoadAndShowImage(err_str))
+			ErrorMessage(err_str);
 	}
 
 	void Shift(int horizontal, int vertical)
 	{
+		std::string err_str;
 		if (horizontal != 0) {
 			int ddx = (horizontal < 0) ? -10 : 10;
 			_dx = std::min(std::max(_dx + ddx, -100), 100);
@@ -337,15 +361,18 @@ public:
 			int ddy = (vertical < 0) ? -10 : 10;
 			_dy = std::min(std::max(_dy + ddy, -100), 100);
 		}
-		LoadAndShowImage();
+		if (!LoadAndShowImage(err_str))
+			ErrorMessage(err_str);
 	}
 
 	void Reset()
 	{
 		_dx = _dy = 0;
 		_scale = 100;
+		std::string err_str;
 
-		LoadAndShowImage();
+		if (!LoadAndShowImage(err_str))
+			ErrorMessage(err_str);
 	}
 
 	void Select()

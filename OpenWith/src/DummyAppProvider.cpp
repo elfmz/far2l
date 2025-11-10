@@ -21,7 +21,7 @@ std::vector<std::wstring> DummyAppProvider::ConstructCommandLine(const Candidate
 }
 
 
-std::vector<std::wstring> DummyAppProvider::GetMimeTypes(const std::vector<std::wstring>& pathnames)
+std::vector<std::wstring> DummyAppProvider::GetMimeTypes()
 {
 	return {L"application/octet-stream"};
 }

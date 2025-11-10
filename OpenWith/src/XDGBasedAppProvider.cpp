@@ -111,6 +111,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 	// Clear class-level caches from the previous operation
 	_desktop_entry_cache.clear();
 	_last_candidates_source_info.clear();
+	_last_mime_profiles.clear();
 
 	// Initialize all operation-scoped state
 	OperationContext op_context(*this);
@@ -120,6 +121,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 	// --- Case 1: Handle the simple single-file ---
 	if (pathnames.size() == 1) {
 		auto profile = GetRawMimeProfile(StrWide2MB(pathnames[0]));
+		_last_mime_profiles.insert(profile); // Cache the single profile
 		auto prioritized_mimes = ExpandAndPrioritizeMimeTypes(profile);
 		final_candidates = ResolveMimesToCandidateMap(prioritized_mimes);
 	}
@@ -132,6 +134,10 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		for (const auto& w_pathname : pathnames) {
 			unique_profiles.insert(GetRawMimeProfile(StrWide2MB(w_pathname))); // N calls to external tools
 		}
+
+		// Cache all unique profiles. This is done *before* any early exits
+		// so that GetMimeTypes() can report them even if no apps are found.
+		_last_mime_profiles = unique_profiles;
 
 		// Step 2: Gather candidates K times, not N times. (K = unique_profiles.size())
 		std::unordered_map<RawMimeProfile, CandidateMap, RawMimeProfile::Hash> candidate_cache;
@@ -400,33 +406,52 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 }
 
 
-// Collects unique MIME types for a list of files. It uses `xdg-mime`, `file`, and an internal extension map
-std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes(const std::vector<std::wstring>& pathnames)
+// Returns a list of formatted strings representing the unique MIME profiles
+// that were collected during the last GetAppCandidates() call.
+std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes()
 {
-	std::vector<std::string> ordered_unique_mimes;
-	std::unordered_set<std::string> seen_mimes;
+	std::set<std::wstring> final_unique_strings;
+	bool has_none = false;
 
-	// Helper to add a MIME type if it's valid and hasn't been seen.
-	auto add_unique = [&](std::string mime) {
-		mime = Trim(mime);
-		if (!mime.empty() && mime.find('/') != std::string::npos) {
-			if (seen_mimes.insert(mime).second) {
-				ordered_unique_mimes.push_back(std::move(mime));
-			}
+	for (const auto& profile : _last_mime_profiles)
+	{
+
+		std::set<std::string> unique_mimes_for_profile;
+
+		if (!profile.xdg_mime.empty()) {
+			unique_mimes_for_profile.insert(profile.xdg_mime);
 		}
-	};
+		if (!profile.file_mime.empty()) {
+			unique_mimes_for_profile.insert(profile.file_mime);
+		}
+		if (!profile.stat_mime.empty()) {
+			unique_mimes_for_profile.insert(profile.stat_mime);
+		}
+		if (!profile.ext_mime.empty()) {
+			unique_mimes_for_profile.insert(profile.ext_mime);
+		}
 
-	for (const auto& w_pathname : pathnames) {
-		std::string pathname = StrWide2MB(w_pathname);
-		add_unique(MimeTypeFromXdgMimeTool(pathname));
-		add_unique(MimeTypeFromFileTool(pathname));
-		add_unique(MimeTypeByExtension(pathname));
+		if (unique_mimes_for_profile.empty()) {
+			has_none = true;
+		} else {
+			std::stringstream ss;
+			ss << "(";
+			for (auto it = unique_mimes_for_profile.begin(); it != unique_mimes_for_profile.end(); ++it) {
+				if (it != unique_mimes_for_profile.begin()) {
+					ss << ";";
+				}
+				ss << *it;
+			}
+			ss << ")";
+
+			final_unique_strings.insert(StrMB2Wide(ss.str()));
+		}
 	}
 
-	std::vector<std::wstring> result;
-	result.reserve(ordered_unique_mimes.size());
-	for (const auto& mime : ordered_unique_mimes) {
-		result.push_back(StrMB2Wide(mime));
+	std::vector<std::wstring> result(final_unique_strings.begin(), final_unique_strings.end());
+
+	if (has_none) {
+		result.insert(result.begin(), L"(none)");
 	}
 
 	return result;
@@ -772,33 +797,44 @@ CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const Desk
 
 // ****************************** File MIME Type Detection & Expansion ******************************
 
-// Gathers file attributes (file/dir) and "raw" MIME types from all enabled
-// detection methods for a single file.
+// Gathers file attributes and "raw" MIME types from all enabled detection methods for a single file.
 XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const std::string& pathname)
 {
-	RawMimeProfile profile;
+	RawMimeProfile profile = {};
+	struct stat st;
 
-	switch (GetPathStatus(pathname)) {
-	case PathStatus::IsReadableFile:
-		profile.is_readable_file = true;
-		break;
-	case PathStatus::IsDirectory:
-		profile.is_valid_dir = true;
-		break;
-	default:
-		break;
+	if (stat(pathname.c_str(), &st) != 0) {
+		// stat() failed (e.g., ENOENT).
+		// We can't determine any file type. Return the empty profile.
+		return profile;
 	}
 
-	// Only run detection tools if the path is a file or directory
-	if (profile.is_valid_dir || profile.is_readable_file)
-	{
-		profile.xdg_mime = MimeTypeFromXdgMimeTool(pathname);
-		profile.file_mime = MimeTypeFromFileTool(pathname);
-		// Extension fallback only makes sense for files
-		if (profile.is_readable_file) {
-			profile.ext_mime = MimeTypeByExtension(pathname);
+	// Path exists. Determine file type and get MIME types based on it.
+	if (S_ISREG(st.st_mode)) {
+		profile.is_regular_file = true;
+
+		// Only call extension-based lookup for regular files
+		profile.ext_mime = MimeTypeByExtension(pathname);
+
+		if (access(pathname.c_str(), R_OK) == 0) {
+			// Run expensive external tools ONLY for accessible regular files.
+			profile.xdg_mime = MimeTypeFromXdgMimeTool(pathname);
+			profile.file_mime = MimeTypeFromFileTool(pathname);
 		}
+
+	} else if (S_ISDIR(st.st_mode)) {
+		profile.stat_mime = "inode/directory";
+	} else if (S_ISFIFO(st.st_mode)) {
+		profile.stat_mime = "inode/fifo";
+	} else if (S_ISSOCK(st.st_mode)) {
+		profile.stat_mime = "inode/socket";
+	} else if (S_ISCHR(st.st_mode)) {
+		profile.stat_mime = "inode/chardevice";
+	} else if (S_ISBLK(st.st_mode)) {
+		profile.stat_mime = "inode/blockdevice";
 	}
+
+	// Return the populated profile.
 	return profile;
 }
 
@@ -817,113 +853,110 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 		}
 	};
 
-	// Use the pre-calculated boolean flags from the RawMimeProfile
-	if (profile.is_valid_dir || profile.is_readable_file) {
+	// --- Step 1: Initial, most specific MIME type detection ---
+	// Use the pre-detected types from the RawMimeProfile in order of priority.
+	add_unique(profile.xdg_mime);
+	add_unique(profile.file_mime);
+	add_unique(profile.stat_mime);
+	add_unique(profile.ext_mime);
 
-		// --- Step 1: Initial, most specific MIME type detection ---
-		// Use the pre-detected types from the RawMimeProfile
-		add_unique(profile.xdg_mime);
-		add_unique(profile.file_mime);
-		add_unique(profile.ext_mime); // this will be empty if it was a directory
+	// --- Step 2: Iteratively expand the MIME type list with parents and aliases ---
+	if (_op_subclass_to_parent_map || _op_alias_to_canonical_map) {
 
-		// --- Step 2: Iteratively expand the MIME type list with parents and aliases ---
-		if (_op_subclass_to_parent_map || _op_alias_to_canonical_map) {
+		for (size_t i = 0; i < mime_types.size(); ++i) {
+			const std::string current_mime = mime_types[i];
 
-			for (size_t i = 0; i < mime_types.size(); ++i) {
-				const std::string current_mime = mime_types[i];
+			// Expansion A: process aliases
+			if (_op_alias_to_canonical_map) {
 
-				// Expansion A: process aliases
-				if (_op_alias_to_canonical_map) {
+				// --- Standard forward lookup (alias -> canonical) ---
+				const auto& alias_to_canonical_map = *_op_alias_to_canonical_map;
+				auto it_canonical = alias_to_canonical_map.find(current_mime);
+				if (it_canonical != alias_to_canonical_map.end()) {
+					add_unique(it_canonical->second);
+				}
 
-					// --- Standard forward lookup (alias -> canonical) ---
-					const auto& alias_to_canonical_map = *_op_alias_to_canonical_map;
-					auto it_canonical = alias_to_canonical_map.find(current_mime);
-					if (it_canonical != alias_to_canonical_map.end()) {
-						add_unique(it_canonical->second);
-					}
+				// --- Smart reverse lookup (canonical -> alias) using the pre-built map ---
+				// Find aliases for the current canonical MIME type, but filter them
+				// to avoid incorrect associations (e.g., image/* -> text/*).
 
-					// --- Smart reverse lookup (canonical -> alias) using the pre-built map ---
-					// Find aliases for the current canonical MIME type, but filter them
-					// to avoid incorrect associations (e.g., image/* -> text/*).
-
-					auto it_aliases = _op_canonical_to_aliases_map->find(current_mime);
-					if (it_aliases != _op_canonical_to_aliases_map->end()) {
-						size_t canonical_slash_pos = current_mime.find('/');
-						// Proceed only if the canonical MIME type has a valid format (e.g., "type/subtype").
-						if (canonical_slash_pos != std::string::npos) {
-							std::string_view canonical_major_type(current_mime.data(), canonical_slash_pos);
-							for (const auto& alias : it_aliases->second) {
-								size_t alias_slash_pos = alias.find('/');
-								if (alias_slash_pos != std::string::npos) {
-									std::string_view alias_major_type(alias.data(), alias_slash_pos);
-									// Add the alias ONLY if its major type matches the canonical one.
-									// This prevents adding, for example, "text/ico" for "image/vnd.microsoft.icon",
-									// but allows adding "image/x-icon".
-									if (alias_major_type == canonical_major_type) {
-										add_unique(alias);
-									}
+				auto it_aliases = _op_canonical_to_aliases_map->find(current_mime);
+				if (it_aliases != _op_canonical_to_aliases_map->end()) {
+					size_t canonical_slash_pos = current_mime.find('/');
+					// Proceed only if the canonical MIME type has a valid format (e.g., "type/subtype").
+					if (canonical_slash_pos != std::string::npos) {
+						std::string_view canonical_major_type(current_mime.data(), canonical_slash_pos);
+						for (const auto& alias : it_aliases->second) {
+							size_t alias_slash_pos = alias.find('/');
+							if (alias_slash_pos != std::string::npos) {
+								std::string_view alias_major_type(alias.data(), alias_slash_pos);
+								// Add the alias ONLY if its major type matches the canonical one.
+								// This prevents adding, for example, "text/ico" for "image/vnd.microsoft.icon",
+								// but allows adding "image/x-icon".
+								if (alias_major_type == canonical_major_type) {
+									add_unique(alias);
 								}
 							}
 						}
 					}
 				}
+			}
 
-				// Expansion B: Add parent from subclass hierarchy.
-				if (_op_subclass_to_parent_map) {
-					auto it = _op_subclass_to_parent_map->find(current_mime);
-					if (it != _op_subclass_to_parent_map->end()) {
-						add_unique(it->second);
-					}
+			// Expansion B: Add parent from subclass hierarchy.
+			if (_op_subclass_to_parent_map) {
+				auto it = _op_subclass_to_parent_map->find(current_mime);
+				if (it != _op_subclass_to_parent_map->end()) {
+					add_unique(it->second);
 				}
 			}
 		}
+	}
 
-		if (_resolve_structured_suffixes) {
+	if (_resolve_structured_suffixes) {
 
-			// --- Step 3: Add base types for structured syntaxes (e.g., +xml, +zip) ---
-			// This is a reliable fallback that works even if the subclass hierarchy is incomplete in the system's MIME database.
+		// --- Step 3: Add base types for structured syntaxes (e.g., +xml, +zip) ---
+		// This is a reliable fallback that works even if the subclass hierarchy is incomplete in the system's MIME database.
 
-			static const std::map<std::string, std::string> s_suffix_to_base_mime = {
-				{"xml", "application/xml"},
-				{"zip", "application/zip"},
-				{"json", "application/json"},
-				{"gzip", "application/gzip"}
-			};
+		static const std::map<std::string, std::string> s_suffix_to_base_mime = {
+			{"xml", "application/xml"},
+			{"zip", "application/zip"},
+			{"json", "application/json"},
+			{"gzip", "application/gzip"}
+		};
 
-			auto obtained_types_before_suffix_check = mime_types;
-			for (const auto& mime : obtained_types_before_suffix_check) {
-				size_t plus_pos = mime.rfind('+');
-				if (plus_pos != std::string::npos && plus_pos < mime.length() - 1) {
-					std::string suffix = mime.substr(plus_pos + 1);
-					auto it = s_suffix_to_base_mime.find(suffix);
-					if (it != s_suffix_to_base_mime.end()) {
-						add_unique(it->second);
-					}
+		auto obtained_types_before_suffix_check = mime_types;
+		for (const auto& mime : obtained_types_before_suffix_check) {
+			size_t plus_pos = mime.rfind('+');
+			if (plus_pos != std::string::npos && plus_pos < mime.length() - 1) {
+				std::string suffix = mime.substr(plus_pos + 1);
+				auto it = s_suffix_to_base_mime.find(suffix);
+				if (it != s_suffix_to_base_mime.end()) {
+					add_unique(it->second);
 				}
 			}
 		}
+	}
 
-		if (_use_generic_mime_fallbacks) {
-			// --- Step 4: Add generic fallback MIME types ---
-			auto obtained_types_before_fallback = mime_types;
-			for (const auto& mime : obtained_types_before_fallback) {
-				// text/plain is a safe fallback for any text/* type.
-				if (mime.rfind("text/", 0) == 0) {
-					add_unique("text/plain");
-				}
-				// Add wildcard for the major type (e.g., image/jpeg -> image/*)
-				size_t slash_pos = mime.find('/');
-				if (slash_pos != std::string::npos) {
-					add_unique(mime.substr(0, slash_pos) + "/*");
-				}
+	if (_use_generic_mime_fallbacks) {
+		// --- Step 4: Add generic fallback MIME types ---
+		auto obtained_types_before_fallback = mime_types;
+		for (const auto& mime : obtained_types_before_fallback) {
+			// text/plain is a safe fallback for any text/* type.
+			if (mime.rfind("text/", 0) == 0) {
+				add_unique("text/plain");
+			}
+			// Add wildcard for the major type (e.g., image/jpeg -> image/*)
+			size_t slash_pos = mime.find('/');
+			if (slash_pos != std::string::npos) {
+				add_unique(mime.substr(0, slash_pos) + "/*");
 			}
 		}
+	}
 
-		if (_show_universal_handlers) {
-			// --- Step 5: Add the ultimate fallback for any binary data ---
-			if (profile.is_readable_file) {
-				add_unique("application/octet-stream");
-			}
+	if (_show_universal_handlers) {
+		// --- Step 5: Add the ultimate fallback for any binary data ---
+		if (profile.is_regular_file) {
+			add_unique("application/octet-stream");
 		}
 	}
 
@@ -947,7 +980,7 @@ std::string XDGBasedAppProvider::MimeTypeFromFileTool(const std::string& pathnam
 	std::string result;
 	if(_use_file_tool) {
 		auto escaped_pathname = EscapeArgForShell(pathname);
-		result = RunCommandAndCaptureOutput("file -b --mime-type " + escaped_pathname + " 2>/dev/null");
+		result = RunCommandAndCaptureOutput("file --brief --dereference --mime-type " + escaped_pathname + " 2>/dev/null");
 	}
 	return result;
 }
@@ -1215,7 +1248,7 @@ XDGBasedAppProvider::MimeinfoCacheData XDGBasedAppProvider::ParseAllMimeinfoCach
 	MimeinfoCacheData data;
 	for (const auto& dir : search_paths) {
 		std::string cache_path = dir + "/mimeinfo.cache";
-		if (GetPathStatus(cache_path) == PathStatus::IsReadableFile) {
+		if (IsReadableFile(cache_path)) {
 			ParseMimeinfoCache(cache_path, data);
 		}
 	}
@@ -1503,7 +1536,7 @@ std::vector<std::string> XDGBasedAppProvider::GetDesktopFileSearchPaths()
 	std::unordered_set<std::string> seen_paths;
 
 	auto add_path = [&](const std::string& p) {
-		if (!p.empty() && (GetPathStatus(p) == PathStatus::IsDirectory) && seen_paths.insert(p).second) {
+		if (!p.empty() && IsTraversableDirectory(p) && seen_paths.insert(p).second) {
 			paths.push_back(p);
 		}
 	};
@@ -1541,7 +1574,7 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeappsListSearchPaths()
 	// This helper only adds paths that point to existing, readable files.
 	auto add_path = [&](const std::string& p) {
 		if (p.empty() || !seen_paths.insert(p).second) return;
-		if (GetPathStatus(p) == PathStatus::IsReadableFile) {
+		if (IsReadableFile(p)) {
 			paths.push_back(p);
 		}
 	};
@@ -1588,7 +1621,7 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeDatabaseSearchPaths()
 	std::unordered_set<std::string> seen_paths;
 
 	auto add_path = [&](const std::string& p) {
-		if (!p.empty() && (GetPathStatus(p) == PathStatus::IsDirectory) && seen_paths.insert(p).second) {
+		if (!p.empty() && IsTraversableDirectory(p) && seen_paths.insert(p).second) {
 			paths.push_back(p);
 		}
 	};
@@ -1966,34 +1999,33 @@ std::string XDGBasedAppProvider::GetBaseName(const std::string& path)
 }
 
 
-// Checks the status of a path (directory, readable file, etc.)
-XDGBasedAppProvider::PathStatus XDGBasedAppProvider::GetPathStatus(const std::string& path)
+// Checks if a path is a regular file (S_ISREG) AND is readable (R_OK).
+bool XDGBasedAppProvider::IsReadableFile(const std::string& path)
 {
 	struct stat st;
-	// Perform the system call to get path metadata.
-	if (stat(path.c_str(), &st) != 0) {
-		// If stat fails, the path likely doesn't exist or is inaccessible.
-		return PathStatus::DoesNotExist;
-	}
-
-	// Check if the path is a directory.
-	if (S_ISDIR(st.st_mode)) {
-		return PathStatus::IsDirectory;
-	}
-
-	// Check if it's a regular file
-	if (S_ISREG(st.st_mode)) {
-		// To confirm readability, we must try to open it.
-		int fd = open(path.c_str(), O_RDONLY);
-		if (fd != -1) {
-			close(fd);
-			return PathStatus::IsReadableFile;
+	// Use stat() to follow symlinks
+	if (stat(path.c_str(), &st) == 0) {
+		// Check type first, then check permissions
+		if (S_ISREG(st.st_mode)) {
+			return (access(path.c_str(), R_OK) == 0);
 		}
-		return PathStatus::IsFileButNotReadable;
 	}
+	return false;
+}
 
-	// Handle other filesystem object types like sockets, pipes, etc.
-	return PathStatus::IsOther;
+
+// Checks if a path is a directory (S_ISDIR) AND is traversable (X_OK).
+bool XDGBasedAppProvider::IsTraversableDirectory(const std::string& path)
+{
+	struct stat st;
+	// Use stat() to follow symlinks
+	if (stat(path.c_str(), &st) == 0) {
+		// Check type first, then check permissions
+		if (S_ISDIR(st.st_mode)) {
+			return (access(path.c_str(), X_OK) == 0);
+		}
+	}
+	return false;
 }
 
 

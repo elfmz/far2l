@@ -21,6 +21,47 @@
 static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
 
+class IVInfoMessage
+{
+private:
+	HANDLE _h_scr;
+	std::wstring _title;
+	std::wstring _text1;
+	std::wstring _text2;
+
+public:
+	void show(std::wstring const &text2, std::wstring const &text1 = L"")
+	{
+		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+		if (_h_scr == nullptr)
+			_h_scr = g_far.SaveScreen(0,0,-1,-1);
+		if (!text1.empty()) {
+			_text1 = text1;
+			if (_text1.back() != L'\n')
+				_text1 += L'\n';
+		}
+		_text2 = text2;
+		std::wstring tmp = _title + L'\n' + _text1 + _text2;
+		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr,
+			(const wchar_t * const *) tmp.c_str(),
+			0, 0);
+	}
+	void close()
+	{
+		if (_h_scr) {
+			g_far.RestoreScreen(_h_scr);
+			_h_scr = nullptr;
+		}
+	}
+	IVInfoMessage(const std::wstring &text1 = L"", const std::wstring &title = L"ImageViewer")
+		: _h_scr(nullptr), _title(title), _text1(text1), _text2(L"")
+		{
+			if (_text1.back() != L'\n')
+				_text1 += L'\n';
+		}
+	~IVInfoMessage() { close(); }
+};
+
 class ImageViewer
 {
 	HANDLE _dlg{};
@@ -102,6 +143,17 @@ class ImageViewer
 			return true;
 		}
 
+		IVInfoMessage ivmessage(
+			L"Processing video file ("
+			+ ( st.st_size < 1024 ? std::to_wstring(st.st_size) + L" b"
+				: st.st_size < 1024*1024 ? std::to_wstring(st.st_size / 1024) + L" K"
+				: st.st_size < 1024*1024*1024 ? std::to_wstring(st.st_size / 1024 / 1024) + L" M"
+				: std::to_wstring(st.st_size / 1024 / 1024 / 1024) + L" G" )
+			+ L"):\n\""
+			+ StrMB2Wide(_cur_file) + L"\""
+			);
+
+		ivmessage.show(L"Video file: get count of frames...");
 		std::string cmd = StrPrintf(
 			"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -- '%s'",
 			_cur_file.c_str());
@@ -126,6 +178,7 @@ class ImageViewer
 
 		unlink(_tmp_file.c_str());
 
+		ivmessage.show(L"Video file has " + std::to_wstring(atoi(frames_count.c_str())) + L" frames.\nObtaining 6 frames to preview picture...");
 		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',scale=200:-1,tile=3x2\" '%s'",
 			_cur_file.c_str(), frames_interval, _tmp_file.c_str());
 
@@ -141,9 +194,11 @@ class ImageViewer
 		return true;
 	}
 
-	bool LoadAndShowImage(std::string &err_str)
+	bool LoadAndShowImage(std::string &err_str, bool bmess = true)
 	{
-		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _cur_file.c_str());
+		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _render_file.c_str());
+
+		IVInfoMessage ivmessage(L"Processing file: \"" + StrMB2Wide(_render_file) + L"\"");
 
 		if (_render_file.empty()) {
 			err_str = "ERROR: bad file";
@@ -170,6 +225,8 @@ class ImageViewer
 		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
 		// 2. Получаем оригинальные размеры картинки
+		if (bmess)
+			ivmessage.show(L"Obtain picture size via ImageMagick 'identify'...");
 		std::string cmd = "identify -format \"%w %h\" -- \"";
 		cmd += _render_file;
 		cmd += "\"";
@@ -191,6 +248,8 @@ class ImageViewer
 		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
 
 		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
+		if (bmess)
+			ivmessage.show(L"Executing ImageMagick 'convert'...");
 		int resize_w = canvas_w, resize_h = canvas_h;
 		if (_scale != 100) {
 			resize_w = long(resize_w) * long(_scale) / 100;
@@ -240,6 +299,9 @@ class ImageViewer
 			fprintf(stderr, "%s.\n", err_str.c_str());
 			return false;
 		}
+
+		if (bmess)
+			ivmessage.close();
 
 		// 4. Создаем ConsoleImage с готовым битмапом.
 		fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
@@ -346,7 +408,7 @@ public:
 			else if (_scale >= 100) _scale-= 50;
 			else if (_scale > 10) _scale-= 10;
 		}
-		if (!LoadAndShowImage(err_str))
+		if (!LoadAndShowImage(err_str, false))
 			ErrorMessage(err_str);
 	}
 
@@ -361,7 +423,7 @@ public:
 			int ddy = (vertical < 0) ? -10 : 10;
 			_dy = std::min(std::max(_dy + ddy, -100), 100);
 		}
-		if (!LoadAndShowImage(err_str))
+		if (!LoadAndShowImage(err_str, false))
 			ErrorMessage(err_str);
 	}
 
@@ -371,7 +433,7 @@ public:
 		_scale = 100;
 		std::string err_str;
 
-		if (!LoadAndShowImage(err_str))
+		if (!LoadAndShowImage(err_str, false))
 			ErrorMessage(err_str);
 	}
 

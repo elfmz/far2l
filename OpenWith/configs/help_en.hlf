@@ -109,7 +109,15 @@ $^#Information Dialog (F3)#
    The full, absolute path to the selected file. If multiple files are selected, this field will instead show a count of the selected files.
 
  #-# MIME type
-   The MIME type of the file as determined by the plugin.
+   Displays one or more MIME profiles for the selected file(s).
+   In the #Linux/BSD# implementation, this field shows technical data from the XDG provider.
+   A MIME profile represents the set of "raw" MIME types found for a single file, gathered from all enabled detection tools (like 'xdg-mime' or 'file') before any expansion (like aliases or subclasses) is applied.
+   A profile may contain multiple types (e.g., "(text/plain;application/x-shellscript)") if different detection tools returned different valid results for that file.
+   If multiple files with different profiles are selected, all unique profiles are listed (e.g., "(image/jpeg); (text/plain)").
+   The special profile "(none)" will be displayed if, for at least one of the selected files, all enabled detection tools failed to determine a MIME type. This can be due to a lack of read permissions, or the file residing in a directory without execute (search) permissions.
+   On #macOS#, the logic is simpler: it shows the MIME type associated with the file's UTI (Uniform Type Identifier). It may also display two special profiles:
+   "(none)": The file is accessible, but its UTI has no corresponding MIME type.
+   "(inaccessible)": The file could not be read (e.g., permissions error, invalid path).
 
  #-# Launch command
    The final command line that will be executed if you press Enter.

@@ -11,7 +11,6 @@ enum LanguageID
 	MNotRealNames,
 	MSaveConfigError,
 	MNoAppsFound,
-	MAndMore,
 	MCannotExecute,
 
 	MConfigTitle,

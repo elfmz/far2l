@@ -522,7 +522,7 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer))
+	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer))
 	{
 		if (!id || !buffer || width == 0 || height == 0) {
 			fprintf(stderr, "%s('%s', %d:%d, %u, %u, %p): bad args\n", __FUNCTION__, id ? id : "???", pos.X, pos.Y, width, height, buffer);

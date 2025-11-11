@@ -21,6 +21,7 @@ struct TTYBasePalette
 struct TTYConsoleImage
 {
     std::vector<uint8_t> pixel_data; // Сырые пиксели в формате RGBA.
+	uint32_t bpp{32};    // format: 32 or 24 BPP
    	uint32_t width{};    // Ширина в пикселях.
     uint32_t height{};   // Высота в пикселях.
 	COORD pos{};         // Координаты (колонка, строка)
@@ -58,6 +59,7 @@ class TTYOutput
 	void FinalizeSameChars();
 	void WriteWChar(WCHAR wch);
 	void Write(const char *str, int len);
+	void Write(const char *str);
 	void Format(const char *fmt, ...);
 
 	void AppendTrueColorSuffix(std::string &out, DWORD rgb);

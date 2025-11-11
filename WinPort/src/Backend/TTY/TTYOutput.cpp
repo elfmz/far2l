@@ -335,6 +335,11 @@ void TTYOutput::Write(const char *str, int len)
 	}
 }
 
+void TTYOutput::Write(const char *str)
+{
+	Write(str, strlen(str));
+}
+
 void TTYOutput::Format(const char *fmt, ...)
 {
 	FinalizeSameChars();
@@ -590,47 +595,20 @@ void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage 
     std::string base64_data;
     base64_encode(base64_data, img.pixel_data.data(), img.pixel_data.size());
 
-    // --- Используем ОДИН механизм вывода: собираем все в строку и пишем через Write. ---
-    
     // 1. Команда перемещения курсора
-    char buf[64];
-    int len = snprintf(buf, sizeof(buf), ESC "[%d;%dH", img.pos.X + 1, img.pos.Y + 1);
+	Format(ESC "[%d;%dH", img.pos.X + 1, img.pos.Y + 1);
     
-    // Пишем в терминал
-    Write(buf, len);
-
     // 2. Отправляем в терминал по Kitty-протоколу по частям (chunks).
-    const size_t CHUNK_SIZE = 4096;
-    size_t offset = 0;
-
-    while (offset < base64_data.length()) {
-        size_t chunk_len = std::min(CHUNK_SIZE, base64_data.length() - offset);
-        bool more_to_follow = (offset + chunk_len < base64_data.length());
-        
-        std::string kitty_chunk_cmd;
-
+    for (size_t offset = 0;offset < base64_data.length(); ) {
+        const size_t chunk_len = std::min(base64_data.length() - offset, (size_t)4096);
+        const unsigned more_to_follow = (offset + chunk_len < base64_data.length()) ? 1 : 0;
         if (offset == 0) {
-            kitty_chunk_cmd += ESC "_Ga=T,f=32,t=d,s=";
-            kitty_chunk_cmd += std::to_string(img.width);
-            kitty_chunk_cmd += ",v=";
-            kitty_chunk_cmd += std::to_string(img.height);
-            kitty_chunk_cmd += ",i=";
-            kitty_chunk_cmd += std::to_string(id);
-            kitty_chunk_cmd += ",m=";
-            kitty_chunk_cmd += (more_to_follow ? "1" : "0");
-            kitty_chunk_cmd += ";";
+			Format(ESC "_Ga=T,f=%u,t=d,s=%u,v=%u,i=%u,m=%u;", img.bpp, img.width, img.height, id, more_to_follow);
         } else {
-            kitty_chunk_cmd += ESC "_Gm=";
-            kitty_chunk_cmd += (more_to_follow ? "1" : "0");
-            kitty_chunk_cmd += ";";
+			Format(ESC "_Gm=%u;", more_to_follow);
         }
-        
-        kitty_chunk_cmd.append(base64_data, offset, chunk_len);
-        kitty_chunk_cmd += ESC "\\";
-        
-        // Пишем весь чанк в терминал
-        Write(kitty_chunk_cmd.c_str(), kitty_chunk_cmd.length());
-        
+        Write(base64_data.c_str() + offset, chunk_len);
+        Write(ESC "\\");
         offset += chunk_len;
     }
 }

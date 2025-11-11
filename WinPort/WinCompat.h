@@ -1474,9 +1474,18 @@ typedef LONG NTSTATUS;
 #define CREATE_SUSPENDED                  0x00000004
 
 typedef void *HCONSOLEIMAGE;
+
+
+// capabilitoes reported by GetConsoleImageCaps
+#define WP_IMGCAP_RGBA	0x01 // supports WP_IMG_RGB/WP_IMG_RGBA
+
+// flags used for SetConsoleImage
+#define WP_IMG_RGBA		0 // supported if WP_CAP_IMG_RGB
+#define WP_IMG_RGB		1 // supported if WP_CAP_IMG_RGB
+
 typedef struct WinportGraphicsInfo1
 {
-    DWORD Caps;
+    DWORD64 Caps;
     COORD PixPerCell;
 } WinportGraphicsInfo;
 

@@ -29,6 +29,7 @@ class ImageViewer
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
 	int _scale{100};
+	int _rotate{0};
 
 	bool IterateFile(bool forward)
 	{
@@ -63,6 +64,7 @@ class ImageViewer
 		_cur_file = *it;
 		_dx = _dy = 0;
 		_scale = 100;
+		_rotate = 0;
 		return true;
 	}
 
@@ -94,6 +96,7 @@ class ImageViewer
 			return true;
 		}
 
+		SetProcessingTitle("Transforming");
 		std::string cmd = StrPrintf(
 			"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -- '%s'",
 			_cur_file.c_str());
@@ -117,7 +120,7 @@ class ImageViewer
 
 		unlink(_tmp_file.c_str());
 
-		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',_scale=200:-1,tile=3x2\" '%s'",
+		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',scale=200:-1,tile=3x2\" '%s'",
 			_cur_file.c_str(), frames_interval, _tmp_file.c_str());
 
 		int r = system(cmd.c_str());
@@ -132,7 +135,7 @@ class ImageViewer
 		return true;
 	}
 
-	bool LoadAndShowImage()
+	bool RenderImage()
 	{
 		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _cur_file.c_str());
 
@@ -148,6 +151,7 @@ class ImageViewer
 		}
 
 
+		SetProcessingTitle("Analyzing");
 		// 1. Получаем оригинальные размеры картинки
 		std::string cmd = "identify -format \"%w %h\" -- \"";
 		cmd += _render_file;
@@ -165,10 +169,11 @@ class ImageViewer
 			return false;
 		}
 
+		SetProcessingTitle("Rendering");
 		// 2. Получаем соотношение сторон ячейки терминала
 		WinportGraphicsInfo wgi{};
 
-		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || !wgi.Caps) {
+		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || (wgi.Caps & WP_IMGCAP_RGBA) == 0) {
 			fprintf(stderr, "ERROR: GetConsoleImageCaps failed\n");
 			return false;
 		}
@@ -190,6 +195,10 @@ class ImageViewer
 		cmd += "convert -- \"";
 		cmd += _render_file;
 		cmd += "\" -background black -gravity Center";
+
+		if (_rotate != 0) {
+			cmd += " -rotate " + std::to_string(_rotate);
+		}
 
 		if (_dx != 0 || _dy != 0) {
 			int rdx = long(orig_w) * long(_dx) / 100;
@@ -213,7 +222,8 @@ class ImageViewer
 			return false;
 		}
 
-		std::vector<uint8_t> final_pixel_data(canvas_w * canvas_h * 4);
+		const size_t pixels_count = size_t(canvas_w) * canvas_h;
+		std::vector<uint8_t> final_pixel_data(pixels_count * 4);
 		size_t n_read = fread(final_pixel_data.data(), final_pixel_data.size(), 1, fp);
 		if (pclose(fp) != 0) {
 			fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
@@ -225,9 +235,36 @@ class ImageViewer
 			return false;
 		}
 
+		DWORD flags = WP_IMG_RGB; // use RGBA only if image really has non-opaque pixels
+		for (size_t i = 0; i < pixels_count; ++i) {
+			if (final_pixel_data[i * 4 + 3] != 0xff) {
+				flags = WP_IMG_RGBA;
+				break;
+			}
+		}
+		if (flags == WP_IMG_RGB) {
+			std::vector<uint8_t> rgb_pixel_data(pixels_count * 3);
+			for (size_t i = 0; i < pixels_count; ++i) {
+				rgb_pixel_data[i * 3] = final_pixel_data[i * 4];
+				rgb_pixel_data[i * 3 + 1] = final_pixel_data[i * 4 + 1];
+				rgb_pixel_data[i * 3 + 2] = final_pixel_data[i * 4 + 2];
+			}
+			final_pixel_data.swap(rgb_pixel_data);
+		}
+
 		// 6. Создаем ConsoleImage с готовым битмапом.
-		fprintf(stderr, "--- Image processing finished, creating ConsoleImage ---\n\n");
-		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, 0, _pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
+		fprintf(stderr, "--- Image processing finished, flags=%u ---\n\n", flags);
+		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, _pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
+	}
+
+	void SetProcessingTitle(const char *stage)
+	{
+		std::wstring ws = StrMB2Wide(_cur_file);
+		ws+= L" [";
+		ws+= MB2Wide(stage);
+		ws+= L"]";
+		FarDialogItemData dd = { ws.size(), (wchar_t*)ws.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd);
 	}
 
 	void UpdateDialogTitle()
@@ -239,13 +276,27 @@ class ImageViewer
 			ws_cur_file.insert(0, L"  "); 
 		}
 
-		std::wstring ws_hint = L"[Navigate: PGUP PGDN HOME | Pan: CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]";
+		std::wstring ws_hint = L"[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]";
+
+		wchar_t prefix[32];
+		if (_dx != 0 || _dy != 0) {
+			swprintf(prefix, ARRAYSIZE(prefix), L"%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
+			ws_hint.insert(0, prefix);
+		}
+		if (_scale != 100) {
+			swprintf(prefix, ARRAYSIZE(prefix), L"%d%% ", _scale);
+			ws_hint.insert(0, prefix);
+		}
+		if (_rotate != 0) {
+			swprintf(prefix, ARRAYSIZE(prefix), L"%d° ", _rotate);
+			ws_hint.insert(0, prefix);
+		}
 
 		FarDialogItemData dd_title = { ws_cur_file.size(), (wchar_t*)ws_cur_file.c_str() };
 		FarDialogItemData dd_hint = { ws_hint.size(), (wchar_t*)ws_hint.c_str() };
 
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 2, (LONG_PTR)&dd_hint);
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_hint);
 	}
 
 public:
@@ -279,13 +330,13 @@ public:
 		_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
 		_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
 
-		UpdateDialogTitle();
-		if (!InspectFileFormat() || !LoadAndShowImage()) {
+		if (!InspectFileFormat() || !RenderImage()) {
 			std::wstring ws_cur_file = StrMB2Wide(_cur_file);
 			const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str()};
 			g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
 			return false;
 		}
+		UpdateDialogTitle();
 
 		return true;
 	}
@@ -293,7 +344,7 @@ public:
 	void Home()
 	{
 		_cur_file = _initial_file;
-		if (InspectFileFormat() && LoadAndShowImage()) {
+		if (InspectFileFormat() && RenderImage()) {
 			UpdateDialogTitle();
 		}
 	}
@@ -305,7 +356,7 @@ public:
 				_cur_file.clear();
 				return false; // bail out on logic error or infinite loop
 			}
-			if (InspectFileFormat() && LoadAndShowImage()) {
+			if (InspectFileFormat() && RenderImage()) {
 				UpdateDialogTitle();
 				return true;
 			}
@@ -316,36 +367,55 @@ public:
 	void Scale(int change)
 	{
 		if (change > 0) {
-			if (_scale < 100) _scale+= 10;
-			else if (_scale < 200) _scale+= 50;
-			else if (_scale < 400) _scale+= 100;
+			if (_scale < 100) _scale+= change;
+			else if (_scale < 200) _scale+= change * 5;
+			else if (_scale < 400) _scale+= change * 10;
 		} else if (change < 0) {
-			if (_scale >= 200) _scale-= 100;
-			else if (_scale >= 100) _scale-= 50;
-			else if (_scale > 10) _scale-= 10;
+			if (_scale > 200) _scale+= change * 10;
+			else if (_scale > 100) _scale+= change * 5;
+			else if (_scale > 10) _scale+= change;
 		}
-		LoadAndShowImage();
+		if (_scale < 10) {
+			_scale = 10;
+		}
+		RenderImage();
+		UpdateDialogTitle();
+	}
+
+	void Rotate(int change)
+	{
+		_rotate+= (change > 0) ? 90 : -90;
+		if (_rotate == 360 || _rotate == -360) {
+			_rotate = 0;
+		}
+		RenderImage();
+		UpdateDialogTitle();
 	}
 
 	void Shift(int horizontal, int vertical)
 	{
 		if (horizontal != 0) {
-			int ddx = (horizontal < 0) ? -10 : 10;
-			_dx = std::min(std::max(_dx + ddx, -100), 100);
+			_dx+= horizontal;
+			if (_dx >= 100) _dx-= 100;
+			if (_dx <= -100) _dx+= 100;
 		}
 		if (vertical != 0) {
-			int ddy = (vertical < 0) ? -10 : 10;
-			_dy = std::min(std::max(_dy + ddy, -100), 100);
+			_dy+= vertical;
+			if (_dy >= 100) _dy-= 100;
+			if (_dy <= -100) _dy+= 100;
 		}
-		LoadAndShowImage();
+		RenderImage();
+		UpdateDialogTitle();
 	}
 
 	void Reset()
 	{
 		_dx = _dy = 0;
 		_scale = 100;
+		_rotate = 0;
 
-		LoadAndShowImage();
+		RenderImage();
+		UpdateDialogTitle();
 	}
 
 	void Select()
@@ -395,18 +465,20 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		case DN_KEY:
 		{
 			ImageViewer *iv = (ImageViewer *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-			switch ((int)Param2) {
+			const int delta = ((((int)Param2) & KEY_SHIFT) != 0) ? 1 : 10;
+			switch ((int)(Param2 & ~KEY_SHIFT)) {
 				case KEY_CLEAR: case KEY_MULTIPLY: case '=': case '*': iv->Reset(); break;
-				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(1, 0); break;
-				case KEY_NUMPAD4: case KEY_LEFT: iv->Shift(-1, 0); break;
-				case KEY_NUMPAD2: case KEY_DOWN: iv->Shift(0, 1); break;
-				case KEY_NUMPAD8: case KEY_UP: iv->Shift(0, -1); break;
-				case KEY_NUMPAD9: iv->Shift(1, -1); break;
-				case KEY_NUMPAD1: iv->Shift(-1, 1); break;
-				case KEY_NUMPAD3: iv->Shift(1, 1); break;
-				case KEY_NUMPAD7: iv->Shift(-1, -1); break;
-				case KEY_ADD: case '+': iv->Scale(1); break;
-				case KEY_SUBTRACT: case '-': iv->Scale(-1); break;
+				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(delta, 0); break;
+				case KEY_NUMPAD4: case KEY_LEFT: iv->Shift(-delta, 0); break;
+				case KEY_NUMPAD2: case KEY_DOWN: iv->Shift(0, delta); break;
+				case KEY_NUMPAD8: case KEY_UP: iv->Shift(0, -delta); break;
+				case KEY_NUMPAD9: iv->Shift(delta, -delta); break;
+				case KEY_NUMPAD1: iv->Shift(-delta, delta); break;
+				case KEY_NUMPAD3: iv->Shift(delta, delta); break;
+				case KEY_NUMPAD7: iv->Shift(-delta, -delta); break;
+				case KEY_ADD: case '+': iv->Scale(delta); break;
+				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;
+				case KEY_TAB: iv->Rotate( (delta == 1) ? -90 : 90); break;
 				case KEY_INS: iv->Toggle(); break;
 				case KEY_SPACE: iv->Select(); break;
 				case KEY_BS: iv->Deselect(); break;
@@ -422,6 +494,10 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			}
 			return TRUE;
 		}
+
+		case DN_CLOSE:
+			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+			break;
 	}
 
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -436,8 +512,8 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 
 	FarDialogItem DlgItems[] = {
 		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
-		{ DI_USERCONTROL, 1, 1, Rect.Right - 2, Rect.Bottom - 2, 0, {}, 0, 0, L"", 0},
 		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
+		{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0}, //
 	};
 
 	HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
@@ -450,8 +526,6 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 
 	int exit_code = g_far.DialogRun(hDlg);
 	g_far.DialogFree(hDlg);
-
-	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 
 	if (exit_code != EXITED_DUE_ENTER) {
 		return false;

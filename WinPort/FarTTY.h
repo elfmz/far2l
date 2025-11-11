@@ -238,7 +238,7 @@ Glossary:
  In:
   N/A
  Out:
-  uint32_t (0 - not available, nonzero value - available (bit values reserved for not defined yet set of capabilities))
+  uint64_t (0 - not available, nonzero value - see WP_IMGCAP_*)
   uint16_t (character cell width in pixels)
   uint16_t (character cell height in pixels)
 */
@@ -247,12 +247,12 @@ Glossary:
 /** Upload and display image.
  In:
   string (image identity)
-  uint32_t (yet unused flags)
+  uint64_t (flags: see WP_IMG_*)
   uint16_t (character cell position X)
   uint16_t (character cell position Y)
   uint32_t (image width pixels)
   uint32_t (image height pixels)
-  RGBA data of size width * height * 4
+  RGB/RGBA data of size width * height * 3 / width * height * 4
  Out:
   uint8_t (0 - failure, nonzero value - image loaded and displayed)
 */

@@ -39,7 +39,7 @@ public:
 	explicit XDGBasedAppProvider(TMsgGetter msg_getter);
 	std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& pathnames) override;
 	std::vector<std::wstring> ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames) override;
-	std::vector<std::wstring> GetMimeTypes(const std::vector<std::wstring>& pathnames) override;
+	std::vector<std::wstring> GetMimeTypes() override;
 	std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) override;
 
 	// Platform-specific settings API
@@ -53,16 +53,19 @@ private:
 	// Represents the "raw" MIME profile of a file, derived from all available detection tools before any expansion.
 	struct RawMimeProfile
 	{
+		// MIME type results from different tools
 		std::string xdg_mime;  // result from xdg-mime query filetype
 		std::string file_mime; // result from file --mime-type
 		std::string ext_mime;  // result from internal extension fallback map
-		bool is_valid_dir = false;
-		bool is_readable_file = false;
+		std::string stat_mime; // result from internal stat() analysis (e.g., inode/directory)
+
+		bool is_regular_file;           // True if S_ISREG
 
 		bool operator==(const RawMimeProfile& other) const
 		{
-			return std::tie(is_valid_dir, is_readable_file, xdg_mime, file_mime, ext_mime) ==
-				   std::tie(other.is_valid_dir, other.is_readable_file, other.xdg_mime, other.file_mime, other.ext_mime);
+			// Compare all fields that define the profile
+			return std::tie(is_regular_file, xdg_mime, file_mime, ext_mime, stat_mime) ==
+				   std::tie(other.is_regular_file, other.xdg_mime, other.file_mime, other.ext_mime, other.stat_mime);
 		}
 
 		// Custom hash function to allow RawMimeProfile to be used as a key in std::unordered_map.
@@ -73,8 +76,8 @@ private:
 				std::size_t h1 = std::hash<std::string>{}(s.xdg_mime);
 				std::size_t h2 = std::hash<std::string>{}(s.file_mime);
 				std::size_t h3 = std::hash<std::string>{}(s.ext_mime);
-				std::size_t h4 = std::hash<bool>{}(s.is_valid_dir);
-				std::size_t h5 = std::hash<bool>{}(s.is_readable_file);
+				std::size_t h4 = std::hash<std::string>{}(s.stat_mime);
+				std::size_t h5 = std::hash<bool>{}(s.is_regular_file);
 
 				// Combine hashes using a simple boost-like hash_combine
 				std::size_t seed = h1;
@@ -85,7 +88,6 @@ private:
 				return seed;
 			}
 		};
-
 	};
 
 
@@ -168,15 +170,6 @@ private:
 		}
 	};
 
-	enum class PathStatus
-	{
-		DoesNotExist,
-		IsDirectory,
-		IsReadableFile,
-		IsFileButNotReadable,
-		IsOther
-	};
-
 	using CandidateMap = std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKeyHash>;
 	using MimeToDesktopEntryIndex = std::unordered_map<std::string, std::vector<const DesktopEntry*>>;
 	using MimeinfoCacheData = std::unordered_map<std::string, std::vector<HandlerProvenance>>;
@@ -234,7 +227,8 @@ private:
 	static std::vector<std::string> SplitString(const std::string& str, char delimiter);
 	static std::string EscapeArgForShell(const std::string& arg);
 	static std::string GetBaseName(const std::string& path);
-	static PathStatus GetPathStatus(const std::string& path);
+	static bool IsReadableFile(const std::string& path);
+	static bool IsTraversableDirectory(const std::string& path);
 
 
 	// WARNING: This cache is a std::map on purpose.
@@ -251,6 +245,10 @@ private:
 	// It's used by GetCandidateDetails to display where the association came from (e.g., mimeapps.list).
 	// This is only populated for single-file lookups.
 	std::map<std::wstring, std::string> _last_candidates_source_info;
+
+	// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates call.
+	// This is used by GetMimeTypes to avoid redundant work.
+	std::unordered_set<RawMimeProfile, RawMimeProfile::Hash> _last_mime_profiles;
 
 	// --- Platform-specific settings (values are loaded from INI) ---
 	bool _use_xdg_mime_tool;

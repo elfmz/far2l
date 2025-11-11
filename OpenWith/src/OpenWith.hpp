@@ -46,6 +46,8 @@ private:
 	static void LoadOptions();
 	static void SaveOptions();
 	static void ShowError(const wchar_t *title, const std::vector<std::wstring>& text);
+	static std::wstring JoinStrings(const std::vector<std::wstring>& vec, const std::wstring& delimiter);
+
 	static int GetScreenWidth();
 };
 

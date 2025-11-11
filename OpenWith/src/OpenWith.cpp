@@ -323,23 +323,11 @@ namespace OpenWith {
 
 	// Shows the details dialog with file and application information.
 	// For a single file, it shows the full path. For multiple files, it shows a count.
-	// It also removes ambiguous information (like association source) for multi-file selections.
 	bool OpenWithPlugin::ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app,
 										   const std::vector<std::wstring>& pathnames,
 										   const std::vector<std::wstring>& cmds,
 										   const std::vector<std::wstring>& unique_mimes)
 	{
-		// Helper lambda to join a vector of wstrings into a single wstring.
-		auto join_strings = [](const std::vector<std::wstring>& vec, const std::wstring& delimiter) -> std::wstring {
-			if (vec.empty()) return L"";
-			std::wstring result;
-			for (size_t i = 0; i < vec.size(); ++i) {
-				if (i > 0) result += delimiter;
-				result += vec[i];
-			}
-			return result;
-		};
-
 		std::vector<Field> file_info;
 		if (pathnames.size() == 1) {
 			// For a single file, show its full path.
@@ -351,9 +339,9 @@ namespace OpenWith {
 		}
 
 		// Use the pre-fetched mime types instead of re-calculating them.
-		file_info.push_back({ GetMsg(MMimeType), join_strings(unique_mimes, L"; ") });
+		file_info.push_back({ GetMsg(MMimeType), JoinStrings(unique_mimes, L"; ") });
 
-		std::wstring all_cmds = join_strings(cmds, L"; ");
+		std::wstring all_cmds = JoinStrings(cmds, L"; ");
 		std::vector<Field> application_info = provider->GetCandidateDetails(app);
 		Field launch_command { GetMsg(MLaunchCommand), all_cmds.c_str() };
 
@@ -426,13 +414,13 @@ namespace OpenWith {
 		// only if the user presses F3 or if no apps are found.
 		std::optional<std::vector<std::wstring>> unique_mimes_cache;
 
-		// Helper lambda to lazily get or populate the MIME types cache.
+		// Helper lambda to lazily get or populate the MIME profiles cache.
 		// It's called only when the MIME info is actually needed.
-		auto get_unique_mimes = [&]() -> const std::vector<std::wstring>& {
+		auto get_unique_mime_profiles = [&]() -> const std::vector<std::wstring>& {
 			// Check if the cache is already populated.
 			if (!unique_mimes_cache.has_value()) {
 				// If not, populate it by calling the expensive provider function.
-				unique_mimes_cache = provider->GetMimeTypes(pathnames);
+				unique_mimes_cache = provider->GetMimeTypes();
 			}
 			// Return a const reference to the cached vector.
 			return *unique_mimes_cache;
@@ -462,44 +450,15 @@ namespace OpenWith {
 		const int BreakKeys[] = {VK_F3, VK_F9, 0};
 		int active_idx = 0;
 
-		// A local helper lambda to join strings, needed for the error message.
-		auto join_strings = [](const std::vector<std::wstring>& vec, const std::wstring& delimiter) -> std::wstring {
-			if (vec.empty()) return L"";
-			std::wstring result;
-			for (size_t i = 0; i < vec.size(); ++i) {
-				if (i > 0) result += delimiter;
-				result += vec[i];
-			}
-			return result;
-		};
-
 		// Main application selection menu loop.
 		while(true) {
 			if (candidates.empty()) {
 				std::vector<std::wstring> error_lines = { GetMsg(MNoAppsFound) };
 
 				// Get the MIME types (lazily) only now that we need them for the error message.
-				const auto& unique_mimes = get_unique_mimes();
+				const auto& unique_mimes = get_unique_mime_profiles();
 
-				auto generate_mime_info_string = [&]() -> std::wstring {
-					if (unique_mimes.empty()) {
-						return L"(none)";
-					}
-					if (pathnames.size() == 1) {
-						return join_strings(unique_mimes, L"; ");
-					}
-					const size_t mime_count = unique_mimes.size();
-					const size_t count_to_show = std::min<size_t>(mime_count, 3);
-					std::vector<std::wstring> head(unique_mimes.begin(), unique_mimes.begin() + count_to_show);
-					std::wstring result = join_strings(head, L"; ");
-					if (mime_count > count_to_show) {
-						size_t remaining_count = mime_count - count_to_show;
-						result += std::wstring(GetMsg(MAndMore)) + L"(" + std::to_wstring(remaining_count) + L")";
-					}
-					return result;
-				};
-
-				error_lines.push_back(generate_mime_info_string());
+				error_lines.push_back(JoinStrings(unique_mimes, L"; "));
 
 				ShowError(GetMsg(MError), error_lines);
 				return;	// No application candidates; exit the plugin entirely
@@ -520,7 +479,6 @@ namespace OpenWith {
 				return; // User cancelled the menu (e.g., with Esc); exit the plugin entirely
 			}
 
-			menu_items[active_idx].Selected = false;
 			active_idx = selected_idx;
 			const auto& selected_app = candidates[selected_idx];
 
@@ -529,7 +487,7 @@ namespace OpenWith {
 				// Repeat until user either launches the application or closes the dialog to go back.
 				while (true) {
 					// Get MIME types (lazily) and pass them to the details dialog.
-					bool wants_to_launch = ShowDetailsDialog(provider.get(), selected_app, pathnames, cmds, get_unique_mimes());
+					bool wants_to_launch = ShowDetailsDialog(provider.get(), selected_app, pathnames, cmds, get_unique_mime_profiles());
 					if (!wants_to_launch) {
 						// User clicked "Close", break the inner loop to return to the main menu.
 						break;
@@ -611,6 +569,19 @@ namespace OpenWith {
 		for (const auto &line : text) items.push_back(line.c_str());
 		items.push_back(GetMsg(MOk));
 		s_Info.Message(s_Info.ModuleNumber, FMSG_WARNING, nullptr, items.data(), items.size(), 1);
+	}
+
+
+	// Helper function to join a vector of wstrings with a delimiter.
+	std::wstring OpenWithPlugin::JoinStrings(const std::vector<std::wstring>& vec, const std::wstring& delimiter)
+	{
+		if (vec.empty()) return L"";
+		std::wstring result;
+		for (size_t i = 0; i < vec.size(); ++i) {
+			if (i > 0) result += delimiter;
+			result += vec[i];
+		}
+		return result;
 	}
 
 

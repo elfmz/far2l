@@ -8,13 +8,22 @@
 #include <memory>
 #include <cstdio>
 #include <set>
+#include <signal.h>
 #include <dirent.h>
 #include <utils.h>
 #include <math.h>
+#include <ExecAsync.h>
 
 #define WINPORT_IMAGE_ID "image_viewer"
 
 #define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
+
+// how long msec wait before showing progress message window
+#define COMMAND_TIMEOUT_BEFORE_MESSAGE 300
+// how long msec wait between checking for skip keypress while command is running
+#define COMMAND_TIMEOUT_CHECK_PRESS 100
+// how long msec wait after gracefull kill before doing kill -9
+#define COMMAND_TIMEOUT_HARD_KILL 300
 
 #define EXITED_DUE_ERROR      -1
 #define EXITED_DUE_ENTER      42
@@ -63,6 +72,31 @@ public:
 		}
 	~IVInfoMessage() { Close(); }
 };
+
+static bool CheckForPgDnUpPress()
+{
+	WORD KeyCodes[] = {VK_NEXT, VK_PRIOR};
+	return WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
+		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS) != 0;
+}
+
+static bool ExecAsyncSmartWait(ExecAsync &ea, IVInfoMessage &ivmessage, const std::wstring &text)
+{
+	if (!ea.Wait(COMMAND_TIMEOUT_BEFORE_MESSAGE)) {
+		ivmessage.Show(text);
+		do {
+			if (CheckForPgDnUpPress()) {
+				ea.KillSoftly();
+				if (!ea.Wait(COMMAND_TIMEOUT_HARD_KILL)) {
+					ea.KillHardly();
+				}
+				return false;
+			}
+		} while (!ea.Wait(COMMAND_TIMEOUT_CHECK_PRESS));
+		ivmessage.Close();
+	}
+	return true;
+}
 
 class ImageViewer
 {
@@ -138,10 +172,12 @@ class ImageViewer
 
 		struct stat st {};
 		if (stat(_cur_file.c_str(), &st) == -1) {
+			_selection.erase(_cur_file); // remove non-loadable files from _selection
 			return false;
 		}
 
 		if (!S_ISREG(st.st_mode) || st.st_size == 0) {
+			_selection.erase(_cur_file); // remove non-loadable files from _selection
 			return false;
 		}
 
@@ -161,19 +197,21 @@ class ImageViewer
 
 		_orig_w = _orig_h = 0; // clear info about image size for title
 
-		ivmessage.Show(L"Video file: get count of frames...");
 		DenoteState("Transforming...");
-		std::string cmd = StrPrintf(
-			"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -- '%s'",
-			_cur_file.c_str());
 
 		std::string frames_count;
-		if (!POpen(frames_count, cmd.c_str())) {
-			_err_str = "ERROR: ffprobe failed";
-			fprintf(stderr, "%s.\n", _err_str.c_str());
-			return false;
+		{
+			ExecAsync ea("ffprobe");
+			if (ea.StartWithArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
+				"-show_entries", "stream=nb_read_packets", "-of csv=p=0", "--", _cur_file)) {
+				if (!ExecAsyncSmartWait(ea, ivmessage, L"Video file: get count of frames...")) {
+					return false;
+				}
+				frames_count = ea.FetchStdout();
+			}
 		}
-		fprintf(stderr, "\n--- ImageViewer: frames_count=%s from %s\n", frames_count.c_str(), cmd.c_str());
+
+		fprintf(stderr, "\n--- ImageViewer: frames_count=%s\n", frames_count.c_str());
 
 		unsigned int frames_count_i = atoi(frames_count.c_str());
 		unsigned int frames_interval = frames_count_i / 6;
@@ -188,15 +226,22 @@ class ImageViewer
 
 		unlink(_tmp_file.c_str());
 
-		ivmessage.Show(L"Video file has " + std::to_wstring(frames_count_i) + L" frames.\nObtaining 6 frames to preview picture...");
-		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',scale=200:-1,tile=3x2\" '%s'",
-			_cur_file.c_str(), frames_interval, _tmp_file.c_str());
+		{
+			ExecAsync ea("ffmpeg");
+			ea.DontCare();
+			if (ea.StartWithArguments("ffmpeg", "-i", _cur_file,
+					"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file)) {
 
-		int r = system(cmd.c_str());
-		fprintf(stderr, "\n--- ImageViewer: r=%d from %s\n", r, cmd.c_str());
+				if (!ExecAsyncSmartWait(ea, ivmessage,
+						L"Video file has " + std::to_wstring(frames_count_i) + L" frames.\nObtaining 6 frames to preview picture...")) {
+					return false;
+				}
+			}
+		}
 
 		if (stat(_tmp_file.c_str(), &st) == -1 || st.st_size == 0) {
 			unlink(_tmp_file.c_str());
+			_selection.erase(_cur_file); // remove non-loadable files from _selection
 			return false;
 		}
 
@@ -238,24 +283,23 @@ class ImageViewer
 
 		DenoteState("Analyzing...");
 		// 2. Получаем оригинальные размеры картинки
-		if (bmess)
-			ivmessage.Show(L"Obtain picture size via ImageMagick 'identify'...");
-		std::string cmd = "identify -format \"%w %h\" -- \"";
-		cmd += _render_file;
-		cmd += "\"";
-
-		std::string dims_str;
-		if (!POpen(dims_str, cmd.c_str())) {
-			_err_str = "ERROR: ImageMagick 'identify' failed";
-			fprintf(stderr, "%s.\n", _err_str.c_str());
-			return false;
-		}
 
 		int orig_w = 0, orig_h = 0;
-		if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
-			_err_str = "ERROR: Failed to parse original dimensions. Got: '" + dims_str + "'";
-			fprintf(stderr, "%s.\n", _err_str.c_str());
-			return false;
+		{
+			ExecAsync ea("identify");
+			if (ea.StartWithArguments("identify", "-format", "%w %h", "--", _render_file)) {
+				if (!ExecAsyncSmartWait(ea, ivmessage, L"Obtain picture size via ImageMagick 'identify'...")) {
+					return false;
+				}
+			}
+
+			const std::string &dims_str = ea.FetchStdout();
+			if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
+				_err_str = "ERROR: Failed to parse original dimensions. Got: '" + dims_str + "'";
+				fprintf(stderr, "%s.\n", _err_str.c_str());
+				_selection.erase(_cur_file); // remove non-loadable files from _selection
+				return false;
+			}
 		}
 
 		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
@@ -273,53 +317,38 @@ class ImageViewer
 			resize_w = long(resize_w) * long(_scale) / 100;
 			resize_h = long(resize_h) * long(_scale) / 100;
 		}
-		cmd.clear();
-		if (resize_w > 8000 || resize_h > 8000) {
-			cmd += "timeout 3 "; // workaround for stuck on too huge images
-		}
-		cmd += "convert -- \"";
-		cmd += _render_file;
-		cmd += "\" -background black -gravity Center";
+
+		ExecAsync ea("convert");
+		ea.AddArguments("convert", "--", _render_file, "-background", "black", "-gravity", "Center");
 
 		if (_rotate != 0) {
-			cmd += " -rotate " + std::to_string(_rotate);
+			ea.AddArguments("-rotate", _rotate);
 		}
 
 		if (_dx != 0 || _dy != 0) {
 			int rdx = long(orig_w) * long(_dx) / 100;
 			int rdy = long(orig_h) * long(_dy) / 100; // orig_h
-			cmd += " -roll ";
-			if (rdx >= 0) cmd+= "+";
-			cmd+= std::to_string(rdx);
-			if (rdy >= 0) cmd+= "+";
-			cmd+= std::to_string(rdy);
+			const auto &roll_arg
+				= StrPrintf( (rdx >= 0) ? "+%d" : "%d", rdx)
+				+ StrPrintf( (rdy >= 0) ? "+%d" : "%d", rdy);
+			ea.AddArguments("-roll", roll_arg);
 		}
+		ea.AddArguments("-resize", std::to_string(resize_w) + "x" + std::to_string(resize_h));
+		ea.AddArguments("-extent", std::to_string(canvas_w) + "x" + std::to_string(canvas_h));
+		ea.AddArguments("-depth", "8", "rgba:-");
 
-		cmd += " -resize " + std::to_string(resize_w) + "x" + std::to_string(resize_h);
-		cmd += " -extent " + std::to_string(canvas_w) + "x" + std::to_string(canvas_h);
-		cmd += " -depth 8 rgba:-";
-
-		fprintf(stderr, "Executing ImageMagick: %s\n", cmd.c_str());
-
-		FILE* fp = popen(cmd.c_str(), "r");
-		if (!fp) {
-			_err_str = "ERROR: ImageMagick start failed";
-			fprintf(stderr, "%s.\n", _err_str.c_str());
-			return false;
+		std::vector<char> final_pixel_data;
+		if (ea.Start()) {
+			if (!ExecAsyncSmartWait(ea, ivmessage, L"Convering picture via ImageMagick 'convert'...")) {
+				return false;
+			}
+			ea.FetchStdout(final_pixel_data);
 		}
-
 		const size_t pixels_count = size_t(canvas_w) * canvas_h;
-		std::vector<uint8_t> final_pixel_data(pixels_count * 4);
-		size_t n_read = fread(final_pixel_data.data(), final_pixel_data.size(), 1, fp);
-		if (pclose(fp) != 0) {
+		if (final_pixel_data.size() != pixels_count * 4) {
 			_err_str = "ERROR: ImageMagick 'convert' failed";
 			fprintf(stderr, "%s.\n", _err_str.c_str());
-			return false;
-		}
-
-		if (n_read != 1) {
-			_err_str = "ERROR: Failed to read final pixel data from ImageMagick";
-			fprintf(stderr, "%s.\n", _err_str.c_str());
+			_selection.erase(_cur_file); // remove non-loadable files from _selection
 			return false;
 		}
 
@@ -331,7 +360,7 @@ class ImageViewer
 			}
 		}
 		if (flags == WP_IMG_RGB) {
-			std::vector<uint8_t> rgb_pixel_data(pixels_count * 3);
+			std::vector<char> rgb_pixel_data(pixels_count * 3);
 			for (size_t i = 0; i < pixels_count; ++i) {
 				rgb_pixel_data[i * 3] = final_pixel_data[i * 4];
 				rgb_pixel_data[i * 3 + 1] = final_pixel_data[i * 4 + 1];
@@ -357,7 +386,7 @@ class ImageViewer
 		FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
 
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_status);
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 2, (LONG_PTR)&dd_status);
 	}
 
 	void DenoteState(const char *stage = NULL)
@@ -454,7 +483,6 @@ public:
 				DenoteState();
 				return true;
 			}
-			_selection.erase(_cur_file); // remove non-loadable files from _selection
 		}
 	}
 
@@ -606,8 +634,8 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 
 	FarDialogItem DlgItems[] = {
 		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
+		{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0},
 		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
-		{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0}, //
 	};
 
 	HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,

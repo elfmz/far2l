@@ -123,7 +123,13 @@ class ImageViewer
 
 	bool IsVideoFile() const
 	{
-		const char *video_extensions[] = {".mp4", ".mpg", ".avi", ".flv", ".mov", ".wmv", ".mkv"};
+		const char *video_extensions[] = {
+					".3g2",  ".3gp",  ".asf",  ".avchd", ".avi",
+					".divx", ".enc",  ".flv",  ".ifo",   ".m1v",  ".m2ts",
+					".m2v",  ".m4p",  ".m4v",  ".mkv",   ".mov",  ".mp2",
+					".mp4",  ".mpe",  ".mpeg", ".mpg",   ".mpv",  ".mts",
+					".ogm",  ".qt",   ".ra",   ".ram",   ".rmvb", ".swf",
+					".ts",   ".vob",  ".vob",  ".webm",  ".wm",   ".wmv" };
 		for (const auto &video_ext : video_extensions) {
 			if (StrEndsBy(_cur_file, video_ext)) {
 				return true;
@@ -573,7 +579,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				case KEY_ADD: case '+': iv->Scale(delta); break;
 				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;
 				case KEY_TAB: iv->Rotate( (delta == 1) ? -90 : 90); break;
-				case KEY_INS: iv->Toggle(); break;
+				case KEY_INS: case KEY_NUMPAD0: iv->Toggle(); break;
 				case KEY_SPACE: iv->Select(); break;
 				case KEY_BS: iv->Deselect(); break;
 				case KEY_HOME: iv->Home(); break;

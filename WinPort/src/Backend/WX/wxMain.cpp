@@ -5,6 +5,7 @@
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
 #include <memory>
+#include <optional>
 
 #define AREAS_REDUCTION
 
@@ -2170,38 +2171,48 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 
 void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	wgi->Caps = 0xFFFFFFFF; // WX backend supports everything (what exactly ???)
+	wgi->Caps = WP_IMGCAP_RGBA;
 	wgi->PixPerCell.X = _paint_context.FontWidth();
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
 
-bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
 	std::string str_id(id);
 	try {
-		fprintf(stderr, "OnSetConsoleImage: width=%d height=%d\n", width, height);
-	    const size_t num_pixels = size_t(width) * height;
-		unsigned char *rgb = new unsigned char[num_pixels * 3];
-		unsigned char *alpha = new unsigned char[num_pixels];
-		const uint8_t *pixel_data = (const uint8_t *)buffer;
-		for (size_t i = 0; i < num_pixels; ++i) {
-			rgb[i * 3 + 0] = pixel_data[i * 4 + 0];
-			rgb[i * 3 + 1] = pixel_data[i * 4 + 1];
-			rgb[i * 3 + 2] = pixel_data[i * 4 + 2];
-			alpha[i]       = pixel_data[i * 4 + 3];
+		fprintf(stderr, "OnSetConsoleImage: flags=%u width=%d height=%d\n", flags, width, height);
+		std::optional<wxImage> wx_img;
+		const size_t num_pixels = size_t(width) * height;
+		unsigned char *pixel_data = (unsigned char *)buffer;
+		if (flags == WP_IMG_RGB) {
+			wx_img.emplace((int)width, (int)height, pixel_data, true);
+		} else if (flags == WP_IMG_RGBA) {
+			unsigned char *rgb = (unsigned char *)malloc(num_pixels * 3);
+			unsigned char *alpha = (unsigned char *)malloc(num_pixels);
+			for (size_t i = 0; i < num_pixels; ++i) {
+				rgb[i * 3 + 0] = pixel_data[i * 4 + 0];
+				rgb[i * 3 + 1] = pixel_data[i * 4 + 1];
+				rgb[i * 3 + 2] = pixel_data[i * 4 + 2];
+				alpha[i]       = pixel_data[i * 4 + 3];
+			}
+			wx_img.emplace((int)width, (int)height, rgb, alpha, false);
+			if (!wx_img->IsOk()) {
+				free(rgb);
+				free(alpha);
+			}
+		} else {
+			fprintf(stderr, "%s('%s'): bad flags\n", __FUNCTION__, id);
+			return false;
 		}
-		wxImage wx_img(width, height, rgb, alpha, false);
-		if (!wx_img.IsOk()) {
+		if (!wx_img->IsOk()) {
 			fprintf(stderr, "%s('%s'): failed to create wxImage\n", __FUNCTION__, id);
-			delete[] rgb;
-			delete[] alpha;
 			return false;
 		}
 
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
 		img.pos = pos;
-		img.bitmap = wx_img;
+		img.bitmap = *wx_img;
 	} catch (...) {
 		_images.erase(str_id);
 		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);

@@ -522,7 +522,8 @@ void VTFar2lExtensios::OnInteract_ImageCaps(StackSerializer &stk_ser)
 
 void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 {
-	DWORD flags{}, width{}, height{};
+	DWORD64 flags{};
+	DWORD width{}, height{};
 	COORD pos{};
 	const std::string &id = stk_ser.PopStr();
 	stk_ser.PopNum(flags);

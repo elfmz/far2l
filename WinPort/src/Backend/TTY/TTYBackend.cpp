@@ -1400,20 +1400,29 @@ void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 	} else if (_cell_size_known) { // kitty?
 		const char *term = getenv("TERM");
 		if (term && strstr(term, "kitty")) {
-			wgi->Caps = 1;
+			wgi->Caps = WP_IMGCAP_RGBA;
 		}
 		wgi->PixPerCell.X = _cell_width_px;
 		wgi->PixPerCell.Y = _cell_height_px;
 	}
 }
 
-bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
+	size_t buffer_size;
+	if (flags == WP_IMG_RGBA) {
+		buffer_size = size_t(width) * height * 4;
+	} else if (flags == WP_IMG_RGB) {
+		buffer_size = size_t(width) * height * 3;
+	} else {
+		return false;
+	}
+
 	if (_far2l_tty) {
 		uint8_t ok = 0;
 		try {
 			StackSerializer stk_ser;
-			stk_ser.Push(buffer, size_t(width) * height * 4);
+			stk_ser.Push(buffer, buffer_size);
 			stk_ser.PushNum(height);
 			stk_ser.PushNum(width);
 			stk_ser.PushNum(pos.Y);
@@ -1435,9 +1444,10 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD
 		std::lock_guard<std::mutex> lock(_images_mutex);
 		auto &img = _images[str_id];
 
-		const size_t data_size = size_t(width) * height * 4;
-		img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + data_size);
+	
+		img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + buffer_size);
 
+		img.bpp = (flags == WP_IMG_RGBA) ? 32 : 24;
 		img.width = width;
 		img.height = height;
 		img.pos = pos;

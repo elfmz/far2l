@@ -130,6 +130,6 @@ public:
 	virtual const char *BackendInfo(int entity);
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
-	virtual bool OnSetConsoleImage(const char *id, DWORD flags, COORD pos, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer);
 	virtual bool OnDeleteConsoleImage(const char *id);
 };

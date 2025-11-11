@@ -14,6 +14,8 @@
 
 #define WINPORT_IMAGE_ID "image_viewer"
 
+#define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
+
 #define EXITED_DUE_ERROR      -1
 #define EXITED_DUE_ENTER      42
 #define EXITED_DUE_ESCAPE     24
@@ -96,7 +98,7 @@ class ImageViewer
 			return true;
 		}
 
-		SetProcessingTitle("Transforming");
+		DenoteState("Transforming");
 		std::string cmd = StrPrintf(
 			"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -- '%s'",
 			_cur_file.c_str());
@@ -151,7 +153,7 @@ class ImageViewer
 		}
 
 
-		SetProcessingTitle("Analyzing");
+		DenoteState("Analyzing");
 		// 1. Получаем оригинальные размеры картинки
 		std::string cmd = "identify -format \"%w %h\" -- \"";
 		cmd += _render_file;
@@ -169,7 +171,7 @@ class ImageViewer
 			return false;
 		}
 
-		SetProcessingTitle("Rendering");
+		DenoteState("Rendering");
 		// 2. Получаем соотношение сторон ячейки терминала
 		WinportGraphicsInfo wgi{};
 
@@ -257,46 +259,48 @@ class ImageViewer
 		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, _pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
 	}
 
-	void SetProcessingTitle(const char *stage)
+	void SetTitleAndStatus(const std::string &title, const std::string &status)
 	{
-		std::wstring ws = StrMB2Wide(_cur_file);
-		ws+= L" [";
-		ws+= MB2Wide(stage);
-		ws+= L"]";
-		FarDialogItemData dd = { ws.size(), (wchar_t*)ws.c_str() };
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd);
-	}
+		std::wstring ws_title = StrMB2Wide(title);
+		std::wstring ws_status = StrMB2Wide(status);
 
-	void UpdateDialogTitle()
-	{
-		std::wstring ws_cur_file = StrMB2Wide(_cur_file);
-		if (_selection.find(_cur_file) != _selection.end()) {
-			ws_cur_file.insert(0, L"* "); 
-		} else {
-			ws_cur_file.insert(0, L"  "); 
-		}
-
-		std::wstring ws_hint = L"[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]";
-
-		wchar_t prefix[32];
-		if (_dx != 0 || _dy != 0) {
-			swprintf(prefix, ARRAYSIZE(prefix), L"%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
-			ws_hint.insert(0, prefix);
-		}
-		if (_scale != 100) {
-			swprintf(prefix, ARRAYSIZE(prefix), L"%d%% ", _scale);
-			ws_hint.insert(0, prefix);
-		}
-		if (_rotate != 0) {
-			swprintf(prefix, ARRAYSIZE(prefix), L"%d° ", _rotate);
-			ws_hint.insert(0, prefix);
-		}
-
-		FarDialogItemData dd_title = { ws_cur_file.size(), (wchar_t*)ws_cur_file.c_str() };
-		FarDialogItemData dd_hint = { ws_hint.size(), (wchar_t*)ws_hint.c_str() };
+		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
+		FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
 
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_hint);
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_status);
+	}
+
+	void DenoteState(const char *stage = NULL)
+	{
+		std::string title = (_selection.find(_cur_file) != _selection.end()) ? "* " : "  ";
+		title+= _cur_file;
+		if (stage) {
+			title+= " [";
+			title+= stage;
+			title+= ']';
+		}
+
+		std::string status = HINT_STRING;
+
+		char prefix[32];
+
+		if (_dx != 0 || _dy != 0) {
+			snprintf(prefix, ARRAYSIZE(prefix), "%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
+			status.insert(0, prefix);
+		}
+
+		if (_scale != 100) {
+			snprintf(prefix, ARRAYSIZE(prefix), "%d%% ", _scale);
+			status.insert(0, prefix);
+		}
+
+		if (_rotate != 0) {
+			snprintf(prefix, ARRAYSIZE(prefix), "%d° ", _rotate);
+			status.insert(0, prefix);
+		}
+
+		SetTitleAndStatus(title, status);
 	}
 
 public:
@@ -336,7 +340,7 @@ public:
 			g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
 			return false;
 		}
-		UpdateDialogTitle();
+		DenoteState();
 
 		return true;
 	}
@@ -345,7 +349,7 @@ public:
 	{
 		_cur_file = _initial_file;
 		if (InspectFileFormat() && RenderImage()) {
-			UpdateDialogTitle();
+			DenoteState();
 		}
 	}
 
@@ -357,7 +361,7 @@ public:
 				return false; // bail out on logic error or infinite loop
 			}
 			if (InspectFileFormat() && RenderImage()) {
-				UpdateDialogTitle();
+				DenoteState();
 				return true;
 			}
 			_selection.erase(_cur_file); // remove non-loadable files from _selection
@@ -379,7 +383,7 @@ public:
 			_scale = 10;
 		}
 		RenderImage();
-		UpdateDialogTitle();
+		DenoteState();
 	}
 
 	void Rotate(int change)
@@ -389,7 +393,7 @@ public:
 			_rotate = 0;
 		}
 		RenderImage();
-		UpdateDialogTitle();
+		DenoteState();
 	}
 
 	void Shift(int horizontal, int vertical)
@@ -405,7 +409,7 @@ public:
 			if (_dy <= -100) _dy+= 100;
 		}
 		RenderImage();
-		UpdateDialogTitle();
+		DenoteState();
 	}
 
 	void Reset()
@@ -415,20 +419,20 @@ public:
 		_rotate = 0;
 
 		RenderImage();
-		UpdateDialogTitle();
+		DenoteState();
 	}
 
 	void Select()
 	{
 		if (_selection.insert(_cur_file).second) {
-			UpdateDialogTitle();
+			DenoteState();
 		}
 	}
 
 	void Deselect()
 	{
 		if (_selection.erase(_cur_file)) {
-			UpdateDialogTitle();
+			DenoteState();
 		}
 	}
 
@@ -437,7 +441,7 @@ public:
 		if (!_selection.erase(_cur_file)) {
 			_selection.insert(_cur_file);
 		}
-		UpdateDialogTitle();
+		DenoteState();
 	}
 };
 

@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x0F
+#define FAR2L_BACKEND_ABI_VERSION	0x10
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
@@ -46,10 +46,7 @@ public:
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
 	virtual void OnConsoleOutputFlushDrawing() = 0;
 
-	// wgi->caps & WP_IMG_RGBA - supporting
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
-
-	// flags: WP_IMG_*
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 

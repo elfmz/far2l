@@ -23,6 +23,47 @@
 static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
 
+class IVInfoMessage
+{
+private:
+	HANDLE _h_scr;
+	std::wstring _title;
+	std::wstring _text1;
+	std::wstring _text2;
+
+public:
+	void Show(std::wstring const &text2, std::wstring const &text1 = L"")
+	{
+		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+		if (_h_scr == nullptr)
+			_h_scr = g_far.SaveScreen(0,0,-1,-1);
+		if (!text1.empty()) {
+			_text1 = text1;
+			if (_text1.back() != L'\n')
+				_text1 += L'\n';
+		}
+		_text2 = text2;
+		std::wstring tmp = _title + L'\n' + _text1 + _text2;
+		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr,
+			(const wchar_t * const *) tmp.c_str(),
+			0, 0);
+	}
+	void Close()
+	{
+		if (_h_scr) {
+			g_far.RestoreScreen(_h_scr);
+			_h_scr = nullptr;
+		}
+	}
+	IVInfoMessage(const std::wstring &text1 = L"", const std::wstring &title = L"ImageViewer")
+		: _h_scr(nullptr), _title(title), _text1(text1), _text2(L"")
+		{
+			if (_text1.back() != L'\n')
+				_text1 += L'\n';
+		}
+	~IVInfoMessage() { Close(); }
+};
+
 class ImageViewer
 {
 	HANDLE _dlg{};
@@ -32,6 +73,16 @@ class ImageViewer
 	int _dx{0}, _dy{0};
 	int _scale{100};
 	int _rotate{0};
+	int _orig_w{0}, _orig_h{0}; // info about image size for title
+	std::string _err_str;
+
+	void ErrorMessage()
+	{
+		std::wstring ws_cur_file = L"\"" + StrMB2Wide(_cur_file) + L"\"";
+		std::wstring werr_str = StrMB2Wide(_err_str);
+		const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str(), werr_str.c_str(), L"Ok"};
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+	}
 
 	bool IterateFile(bool forward)
 	{
@@ -98,19 +149,34 @@ class ImageViewer
 			return true;
 		}
 
-		DenoteState("Transforming");
+		IVInfoMessage ivmessage(
+			L"Processing video file ("
+			+ ( st.st_size < 1024 ? std::to_wstring(st.st_size) + L" b"
+				: st.st_size < 1024*1024 ? std::to_wstring(st.st_size / 1024) + L" K"
+				: st.st_size < 1024*1024*1024 ? std::to_wstring(st.st_size / 1024 / 1024) + L" M"
+				: std::to_wstring(st.st_size / 1024 / 1024 / 1024) + L" G" )
+			+ L"):\n\""
+			+ StrMB2Wide(_cur_file) + L"\""
+			);
+
+		_orig_w = _orig_h = 0; // clear info about image size for title
+
+		ivmessage.Show(L"Video file: get count of frames...");
+		DenoteState("Transforming...");
 		std::string cmd = StrPrintf(
 			"ffprobe -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -of csv=p=0 -- '%s'",
 			_cur_file.c_str());
 
 		std::string frames_count;
 		if (!POpen(frames_count, cmd.c_str())) {
-			fprintf(stderr, "ERROR: ffprobe failed.\n");
+			_err_str = "ERROR: ffprobe failed";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 		fprintf(stderr, "\n--- ImageViewer: frames_count=%s from %s\n", frames_count.c_str(), cmd.c_str());
 
-		unsigned int frames_interval = atoi(frames_count.c_str()) / 6;
+		unsigned int frames_count_i = atoi(frames_count.c_str());
+		unsigned int frames_interval = frames_count_i / 6;
 		if (frames_interval < 5) frames_interval = 5;
 
 		if (_tmp_file.empty()) {
@@ -122,6 +188,7 @@ class ImageViewer
 
 		unlink(_tmp_file.c_str());
 
+		ivmessage.Show(L"Video file has " + std::to_wstring(frames_count_i) + L" frames.\nObtaining 6 frames to preview picture...");
 		cmd = StrPrintf("ffmpeg -i '%s' -vf \"select='not(mod(n,%d))',scale=200:-1,tile=3x2\" '%s'",
 			_cur_file.c_str(), frames_interval, _tmp_file.c_str());
 
@@ -137,54 +204,70 @@ class ImageViewer
 		return true;
 	}
 
-	bool RenderImage()
+	bool RenderImage(bool bmess = false)
 	{
-		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _cur_file.c_str());
+		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _render_file.c_str());
+
+		_orig_w = _orig_h = 0; // clear info about image size for title
 
 		if (_render_file.empty()) {
-			fprintf(stderr, "ERROR: bad file.\n");
+			_err_str = "ERROR: bad file";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 
 		fprintf(stderr, "Target cell grid _pos=%dx%d _size=%dx%d\n", _pos.X, _pos.Y, _size.X, _size.Y);
 		if (_pos.X < 0 || _pos.Y < 0 || _size.X <= 0 || _size.Y <= 0) {
-			fprintf(stderr, "ERROR: bad grid.\n");
+			_err_str = "ERROR: bad grid";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 
+		// 1. Получаем соотношение сторон ячейки терминала
+		WinportGraphicsInfo wgi{};
 
-		DenoteState("Analyzing");
-		// 1. Получаем оригинальные размеры картинки
+		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || (wgi.Caps & WP_IMGCAP_RGBA) == 0) {
+			_err_str = "ERROR: GetConsoleImageCaps failed";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
+			return false;
+		}
+		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
+		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
+
+		IVInfoMessage ivmessage(L"Processing file: \"" + StrMB2Wide(_render_file) + L"\"");
+
+		DenoteState("Analyzing...");
+		// 2. Получаем оригинальные размеры картинки
+		if (bmess)
+			ivmessage.Show(L"Obtain picture size via ImageMagick 'identify'...");
 		std::string cmd = "identify -format \"%w %h\" -- \"";
 		cmd += _render_file;
 		cmd += "\"";
 
 		std::string dims_str;
 		if (!POpen(dims_str, cmd.c_str())) {
-			fprintf(stderr, "ERROR: ImageMagick 'identify' failed.\n");
+			_err_str = "ERROR: ImageMagick 'identify' failed";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 
 		int orig_w = 0, orig_h = 0;
 		if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
-			fprintf(stderr, "ERROR: Failed to parse original dimensions. Got: '%s'\n", dims_str.c_str());
+			_err_str = "ERROR: Failed to parse original dimensions. Got: '" + dims_str + "'";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
-
-		DenoteState("Rendering");
-		// 2. Получаем соотношение сторон ячейки терминала
-		WinportGraphicsInfo wgi{};
-
-		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi) || (wgi.Caps & WP_IMGCAP_RGBA) == 0) {
-			fprintf(stderr, "ERROR: GetConsoleImageCaps failed\n");
-			return false;
-		}
-		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
-		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
 		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
 
-		// 5. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
+		// update info about image size for title
+		_orig_w = orig_w;
+		_orig_h = orig_h;
+
+		DenoteState("Rendering...");
+		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
+		if (bmess)
+			ivmessage.Show(L"Executing ImageMagick 'convert'...");
 		int resize_w = canvas_w, resize_h = canvas_h;
 		if (_scale != 100) {
 			resize_w = long(resize_w) * long(_scale) / 100;
@@ -220,7 +303,8 @@ class ImageViewer
 
 		FILE* fp = popen(cmd.c_str(), "r");
 		if (!fp) {
-			fprintf(stderr, "ERROR: ImageMagick start failed.\n");
+			_err_str = "ERROR: ImageMagick start failed";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 
@@ -228,12 +312,14 @@ class ImageViewer
 		std::vector<uint8_t> final_pixel_data(pixels_count * 4);
 		size_t n_read = fread(final_pixel_data.data(), final_pixel_data.size(), 1, fp);
 		if (pclose(fp) != 0) {
-			fprintf(stderr, "ERROR: ImageMagick 'convert' failed.\n");
+			_err_str = "ERROR: ImageMagick 'convert' failed";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 
 		if (n_read != 1) {
-			fprintf(stderr, "ERROR: Failed to read final pixel data from ImageMagick.\n");
+			_err_str = "ERROR: Failed to read final pixel data from ImageMagick";
+			fprintf(stderr, "%s.\n", _err_str.c_str());
 			return false;
 		}
 
@@ -254,7 +340,10 @@ class ImageViewer
 			final_pixel_data.swap(rgb_pixel_data);
 		}
 
-		// 6. Создаем ConsoleImage с готовым битмапом.
+		if (bmess)
+			ivmessage.Close();
+
+		// 4. Создаем ConsoleImage с готовым битмапом.
 		fprintf(stderr, "--- Image processing finished, flags=%u ---\n\n", flags);
 		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, _pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
 	}
@@ -280,6 +369,8 @@ class ImageViewer
 			title+= stage;
 			title+= ']';
 		}
+		else if (_orig_w > 0 && _orig_h > 0)
+			title+= " (" + std::to_string(_orig_w) + 'x' + std::to_string(_orig_h) + ')';
 
 		std::string status = HINT_STRING;
 
@@ -334,10 +425,9 @@ public:
 		_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
 		_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
 
-		if (!InspectFileFormat() || !RenderImage()) {
-			std::wstring ws_cur_file = StrMB2Wide(_cur_file);
-			const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str()};
-			g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+		_err_str.clear();
+		if (!InspectFileFormat() || !RenderImage(true)) {
+			ErrorMessage();
 			return false;
 		}
 		DenoteState();

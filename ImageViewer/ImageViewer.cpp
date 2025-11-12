@@ -32,45 +32,37 @@
 static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
 
-class IVInfoMessage
+class ImageViewerMessage
 {
 private:
-	HANDLE _h_scr;
-	std::wstring _title;
-	std::wstring _text1;
-	std::wstring _text2;
+	HANDLE _h_scr{nullptr};
+	std::string _title;
+	std::string _text1;
+	std::string _text2;
 
 public:
-	void Show(std::wstring const &text2, std::wstring const &text1 = L"")
+	ImageViewerMessage(const std::string &text1, const std::string &text2 = "", const std::string &title = "ImageViewer")
+		: _title(title), _text1(text1), _text2(text2)
 	{
 		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
-		if (_h_scr == nullptr)
-			_h_scr = g_far.SaveScreen(0,0,-1,-1);
-		if (!text1.empty()) {
-			_text1 = text1;
-			if (_text1.back() != L'\n')
-				_text1 += L'\n';
+		_h_scr = g_far.SaveScreen(0,0,-1,-1);
+		std::wstring tmp = StrMB2Wide(_title);
+		tmp+= L'\n';
+		tmp+= StrMB2Wide(_text1);
+		if (!_text1.empty() && !_text2.empty() && _text1.back() != L'\n') {
+			tmp+= L'\n';
 		}
-		_text2 = text2;
-		std::wstring tmp = _title + L'\n' + _text1 + _text2;
-		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr,
-			(const wchar_t * const *) tmp.c_str(),
-			0, 0);
+		tmp+= StrMB2Wide(_text2);
+		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
 	}
-	void Close()
+
+	~ImageViewerMessage()
 	{
 		if (_h_scr) {
 			g_far.RestoreScreen(_h_scr);
 			_h_scr = nullptr;
 		}
 	}
-	IVInfoMessage(const std::wstring &text1 = L"", const std::wstring &title = L"ImageViewer")
-		: _h_scr(nullptr), _title(title), _text1(text1), _text2(L"")
-		{
-			if (_text1.back() != L'\n')
-				_text1 += L'\n';
-		}
-	~IVInfoMessage() { Close(); }
 };
 
 static bool CheckForDismissProcessingKeyPress()
@@ -88,10 +80,10 @@ static void PurgeAccumulatedKeyPresses()
 	WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes), CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
 }
 
-static bool ExecAsyncSmartWait(ExecAsync &ea, IVInfoMessage &ivmessage, const std::wstring &text)
+static bool ExecAsyncSmartWait(ExecAsync &ea, const std::string &text1, const std::string &text2)
 {
 	if (!ea.Wait(COMMAND_TIMEOUT_BEFORE_MESSAGE)) {
-		ivmessage.Show(text);
+		ImageViewerMessage msg(text1, text2);
 		do {
 			if (CheckForDismissProcessingKeyPress()) {
 				ea.KillSoftly();
@@ -101,7 +93,6 @@ static bool ExecAsyncSmartWait(ExecAsync &ea, IVInfoMessage &ivmessage, const st
 				return false;
 			}
 		} while (!ea.Wait(COMMAND_TIMEOUT_CHECK_PRESS));
-		ivmessage.Close();
 	}
 	return true;
 }
@@ -193,16 +184,7 @@ class ImageViewer
 			return true;
 		}
 
-		IVInfoMessage ivmessage(
-			L"Processing video file ("
-			+ ( st.st_size < 1024 ? std::to_wstring(st.st_size) + L" b"
-				: st.st_size < 1024*1024 ? std::to_wstring(st.st_size / 1024) + L" K"
-				: st.st_size < 1024*1024*1024 ? std::to_wstring(st.st_size / 1024 / 1024) + L" M"
-				: std::to_wstring(st.st_size / 1024 / 1024 / 1024) + L" G" )
-			+ L"):\n\""
-			+ StrMB2Wide(_cur_file) + L"\""
-			);
-
+		const auto &text1 = StrPrintf("Processing video file (%ls)\n\"%s\"", FileSizeString(st.st_size).c_str(), _cur_file.c_str());
 		_orig_w = _orig_h = 0; // clear info about image size for title
 
 		DenoteState("Transforming...");
@@ -212,7 +194,7 @@ class ImageViewer
 			ExecAsync ea("ffprobe");
 			if (ea.StartWithArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
 				"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file)) {
-				if (!ExecAsyncSmartWait(ea, ivmessage, L"Video file: get count of frames...")) {
+				if (!ExecAsyncSmartWait(ea, text1, "Video file: get count of frames...")) {
 					return false;
 				}
 				frames_count = ea.FetchStdout();
@@ -239,9 +221,9 @@ class ImageViewer
 			ea.DontCare();
 			if (ea.StartWithArguments("ffmpeg", "-i", _cur_file,
 					"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file)) {
-
-				if (!ExecAsyncSmartWait(ea, ivmessage,
-						L"Video file has " + std::to_wstring(frames_count_i) + L" frames.\nObtaining 6 frames to preview picture...")) {
+				const auto &text2 = StrPrintf(
+					"Video file has %d frames.\nObtaining 6 frames to preview picture...", frames_count_i);
+				if (!ExecAsyncSmartWait(ea, text1, text2)) {
 					return false;
 				}
 			}
@@ -287,7 +269,7 @@ class ImageViewer
 		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
 		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
-		IVInfoMessage ivmessage(L"Processing file: \"" + StrMB2Wide(_render_file) + L"\"");
+		const auto &text1 = StrPrintf("Processing file: \"%s\"", _cur_file.c_str());
 
 		DenoteState("Analyzing...");
 		// 2. Получаем оригинальные размеры картинки
@@ -296,7 +278,7 @@ class ImageViewer
 		{
 			ExecAsync ea("identify");
 			if (ea.StartWithArguments("identify", "-format", "%w %h", "--", _render_file)) {
-				if (!ExecAsyncSmartWait(ea, ivmessage, L"Obtain picture size via ImageMagick 'identify'...")) {
+				if (!ExecAsyncSmartWait(ea, text1, "Obtain picture size via ImageMagick 'identify'...")) {
 					return false;
 				}
 			}
@@ -318,8 +300,6 @@ class ImageViewer
 
 		DenoteState("Rendering...");
 		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
-		if (bmess)
-			ivmessage.Show(L"Executing ImageMagick 'convert'...");
 		int resize_w = canvas_w, resize_h = canvas_h;
 		if (_scale != 100) {
 			resize_w = long(resize_w) * long(_scale) / 100;
@@ -347,7 +327,7 @@ class ImageViewer
 
 		std::vector<char> final_pixel_data;
 		if (ea.Start()) {
-			if (!ExecAsyncSmartWait(ea, ivmessage, L"Convering picture via ImageMagick 'convert'...")) {
+			if (!ExecAsyncSmartWait(ea, text1, "Convering picture via ImageMagick 'convert'...")) {
 				return false;
 			}
 			ea.FetchStdout(final_pixel_data);
@@ -376,9 +356,6 @@ class ImageViewer
 			}
 			final_pixel_data.swap(rgb_pixel_data);
 		}
-
-		if (bmess)
-			ivmessage.Close();
 
 		// 4. Создаем ConsoleImage с готовым битмапом.
 		fprintf(stderr, "--- Image processing finished, flags=%u ---\n\n", flags);

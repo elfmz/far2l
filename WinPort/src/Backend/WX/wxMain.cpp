@@ -2180,7 +2180,7 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 {
 	std::string str_id(id);
 	try {
-		fprintf(stderr, "OnSetConsoleImage: flags=%u width=%d height=%d\n", flags, width, height);
+		fprintf(stderr, "OnSetConsoleImage: flags=%llu width=%d height=%d\n", flags, width, height);
 		std::optional<wxImage> wx_img;
 		const size_t num_pixels = size_t(width) * height;
 		unsigned char *pixel_data = (unsigned char *)buffer;

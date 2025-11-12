@@ -77,16 +77,8 @@ static bool CheckForDismissProcessingKeyPress()
 {
 	WORD KeyCodes[] = {VK_ESCAPE, VK_NEXT, VK_PRIOR};
 	DWORD index = WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
-		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
-
-	if (index == 0) {
-		return false;
-	}
-
-	// purge Escape from queue to avoid unwanted plugin exit
-	WINPORT(CheckForKeyPress)(NULL, KeyCodes, 1,
 		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
-	return true;
+	return (index != 0);
 }
 
 static void PurgeAccumulatedKeyPresses()

@@ -559,6 +559,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED EDSORT OR EDSORT)
+    message(STATUS "EDSORT plugin enabled")
+    add_subdirectory (edsort)
+else()
+    message(STATUS "${ColorRed}EDSORT plugin disabled due to EDSORT=${EDSORT}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/edsort/plug/edsort.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 ##############################
 # common install directives
 

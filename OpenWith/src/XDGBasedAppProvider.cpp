@@ -1158,9 +1158,10 @@ std::string XDGBasedAppProvider::MimeTypeByExtension(const std::string& pathname
 	std::string result;
 
 	if (_use_extension_based_fallback) {
-		auto dot_pos = pathname.rfind('.');
+		auto basename = GetBaseName(pathname);
+		auto dot_pos = basename.rfind('.');
 		if (dot_pos != std::string::npos) {
-			std::string ext = pathname.substr(dot_pos);
+			std::string ext = basename.substr(dot_pos);
 			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
 			auto it = s_ext_to_type_map.find(ext);
 			if (it != s_ext_to_type_map.end()) {

@@ -1,5 +1,11 @@
 {
   "_": "_",
+  "ps_err_block_type": "Sortowanie działa tylko z zaznaczeniem blokowym.",
+  "ps_err_block_lines": "Wymagane zaznaczenie przynajmniej 2 wierszy.",
+  "ps__cancel": "&Anuluj",
+  "ps__no": "&Nie",
+  "ps__retry": "&Ponów",
+  "ps__yes": "&Tak",
   "ps_cancel": "Anuluj",
   "ps_helptopic": "edsort",
   "ps_ok": "OK",

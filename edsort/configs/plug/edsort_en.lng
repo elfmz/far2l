@@ -1,6 +1,12 @@
 .Language=English,English
+"&Cancel"
+"&No"
+"&Retry"
+"&Yes"
 "Cancel"
 "Column"
+"At least 2 lines must be selected."
+"Sorting only works with block selection."
 "edsort"
 "OK"
 "&Descending"

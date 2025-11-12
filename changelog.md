@@ -16,6 +16,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   Uses ImageMagic for graphics operations and ffmpeg for video preview,
   works in GUI and in TTY|F and TTY|k,
   see [#3028](https://github.com/elfmz/far2l/pull/3028#issuecomment-3508025346)))
+* _edsort plugin_:  New plugin (**F9**) in editor to sort selected block of text at choosen column.
 
 ## 2.7.0 beta (2025-10-26)
 * Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.

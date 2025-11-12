@@ -83,11 +83,9 @@ static bool CheckForDismissProcessingKeyPress()
 		return false;
 	}
 
-	if (index == 1) { // in case Escape pressed - flush all its keypresses
-		WINPORT(CheckForKeyPress)(NULL, KeyCodes, 1,
-			CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
-	}
-
+	// purge Escape from queue to avoid unwanted plugin exit
+	WINPORT(CheckForKeyPress)(NULL, KeyCodes, 1,
+		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
 	return true;
 }
 
@@ -224,7 +222,7 @@ class ImageViewer
 		{
 			ExecAsync ea("ffprobe");
 			if (ea.StartWithArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
-				"-show_entries", "stream=nb_read_packets", "-of csv=p=0", "--", _cur_file)) {
+				"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file)) {
 				if (!ExecAsyncSmartWait(ea, ivmessage, L"Video file: get count of frames...")) {
 					return false;
 				}

@@ -164,9 +164,8 @@ void *ExecAsync::ThreadProc()
 	std::vector<char *> argv(_args.size() + 1);
 	for (size_t i = 0; i < _args.size(); ++i) {
 		argv[i] = (char *)_args[i].c_str();
-		all_args+= '\'';
+		if (i) all_args+= ' ';
 		all_args+= _args[i];
-		all_args+= "\' ";
 	}
 	argv[_args.size()] = NULL;
 	fprintf(stderr, "ExecAsync: %s\n", all_args.c_str());
@@ -180,11 +179,17 @@ void *ExecAsync::ThreadProc()
 		return nullptr;
 	}
 
+	fflush(stdout);
+	fflush(stderr);
+//	fpurge(stdin);
 	if (!pid) {
 		dup2(in.fd[0], STDIN_FILENO); close(in.fd[0]);
 		dup2(out.fd[1], STDOUT_FILENO); close(out.fd[1]);
 		dup2(err.fd[1], STDERR_FILENO); close(err.fd[1]);
-		_exit(execvp(_program.c_str(), argv.data()));
+		execvp(_program.c_str(), argv.data());
+		int err = errno;
+		fprintf(stderr, "%s starting %s\n", strerror(err), all_args.c_str());
+		_exit(err);
 	}
 
 	{

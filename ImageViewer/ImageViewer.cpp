@@ -73,11 +73,32 @@ public:
 	~IVInfoMessage() { Close(); }
 };
 
-static bool CheckForPgDnUpPress()
+static bool CheckForDismissProcessingKeyPress()
 {
-	WORD KeyCodes[] = {VK_NEXT, VK_PRIOR};
-	return WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
-		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS) != 0;
+	WORD KeyCodes[] = {VK_ESCAPE, VK_NEXT, VK_PRIOR};
+	DWORD index = WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
+		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
+
+	if (index == 0) {
+		return false;
+	}
+
+	if (index == 1) { // in case Escape pressed - flush all its keypresses
+		WINPORT(CheckForKeyPress)(NULL, KeyCodes, 1,
+			CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
+	}
+
+	return true;
+}
+
+static void PurgeAccumulatedKeyPresses()
+{
+	// purge keys that can be accumulated due to long/many keypresses
+	WORD KeyCodes[] = {VK_ESCAPE, VK_NEXT, VK_PRIOR, VK_CLEAR, VK_ADD,
+		VK_SUBTRACT, VK_RIGHT, VK_LEFT, VK_RIGHT, VK_DOWN, VK_UP,
+		'+', '-', VK_TAB};
+	WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
+		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
 }
 
 static bool ExecAsyncSmartWait(ExecAsync &ea, IVInfoMessage &ivmessage, const std::wstring &text)
@@ -85,7 +106,7 @@ static bool ExecAsyncSmartWait(ExecAsync &ea, IVInfoMessage &ivmessage, const st
 	if (!ea.Wait(COMMAND_TIMEOUT_BEFORE_MESSAGE)) {
 		ivmessage.Show(text);
 		do {
-			if (CheckForPgDnUpPress()) {
+			if (CheckForDismissProcessingKeyPress()) {
 				ea.KillSoftly();
 				if (!ea.Wait(COMMAND_TIMEOUT_HARD_KILL)) {
 					ea.KillHardly();
@@ -295,7 +316,7 @@ class ImageViewer
 
 			const std::string &dims_str = ea.FetchStdout();
 			if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
-				_err_str = "ERROR: Failed to parse original dimensions. Got: '" + dims_str + "'";
+				_err_str = "ERROR: Failed to parse original dimensions. Got: '" + dims_str + "' '" + ea.FetchStdout() + "'";
 				fprintf(stderr, "%s.\n", _err_str.c_str());
 				_selection.erase(_cur_file); // remove non-loadable files from _selection
 				return false;
@@ -588,7 +609,9 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		{
 			ImageViewer *iv = (ImageViewer *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			const int delta = ((((int)Param2) & KEY_SHIFT) != 0) ? 1 : 10;
-			switch ((int)(Param2 & ~KEY_SHIFT)) {
+			const int key = (int)(Param2 & ~KEY_SHIFT);
+			PurgeAccumulatedKeyPresses(); // avoid navigation etc keypresses 'accumulation'
+			switch (key) {
 				case KEY_CLEAR: case KEY_MULTIPLY: case '=': case '*': iv->Reset(); break;
 				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(delta, 0); break;
 				case KEY_NUMPAD4: case KEY_LEFT: iv->Shift(-delta, 0); break;

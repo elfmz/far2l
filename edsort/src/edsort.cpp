@@ -71,6 +71,7 @@ void EdSort::Run()
 		return;
 	}
 	int lno;
+	bool wholelines = true;
 	for (lno = ei.BlockStartLine; lno < ei.TotalLines; lno++) {
 		EditorGetString egs = {};
 		egs.StringNumber = lno;
@@ -81,15 +82,7 @@ void EdSort::Run()
 			break;
 		}
 		if (egs.SelEnd != -1) {
-			// Extend selection to start of next line
-			EditorSelect es = {};
-			es.BlockType = ei.BlockType;
-			es.BlockStartLine = ei.BlockStartLine;
-			es.BlockStartPos = 0;
-			es.BlockWidth = 0;
-			es.BlockHeight = lno - ei.BlockStartLine + 2;
-			_PSI.EditorControl(ECTL_SELECT, &es);
-			_PSI.EditorControl(ECTL_REDRAW, nullptr);
+			wholelines = false;
 			break;
 		}
 	}
@@ -102,6 +95,24 @@ void EdSort::Run()
 		return;
 	}
 
+	if( !wholelines ) {
+		const wchar_t* err_msg[] = {
+			I18N(ps_title), I18N(ps_err_block_whole1), I18N(ps_err_block_whole2),
+			I18N(ps_err_block_whole3), I18N(ps_err_block_whole4)
+		};
+		auto mbrc = msg_box(FMSG_WARNING | FMSG_MB_YESNOCANCEL, err_msg);
+		if( mbrc == 2 ||mbrc < 0)
+			return;
+		// Include/exclude last line from selection
+		EditorSelect es = {};
+		es.BlockType = ei.BlockType;
+		es.BlockStartLine = ei.BlockStartLine;
+		es.BlockStartPos = 0;
+		es.BlockWidth = 0;
+		es.BlockHeight = lno - ei.BlockStartLine + (mbrc == 0 ? 2 : 1);
+		_PSI.EditorControl(ECTL_SELECT, &es);
+		_PSI.EditorControl(ECTL_REDRAW, nullptr);
+	}
 	fardialog::DlgTEXT text1(nullptr, I18N(ps_column));
     fardialog::DlgEDIT edit1("offset", 5);
     fardialog::DlgCHECKBOX checkbox3("reverse", I18N(ps_reverse), false);

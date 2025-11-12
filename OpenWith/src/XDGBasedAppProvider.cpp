@@ -111,7 +111,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 	// Clear class-level caches from the previous operation
 	_desktop_entry_cache.clear();
 	_last_candidates_source_info.clear();
-	_last_mime_profiles.clear();
+	_last_unique_mime_profiles.clear();
 
 	// Initialize all operation-scoped state
 	OperationContext op_context(*this);
@@ -121,7 +121,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 	// --- Case 1: Handle the simple single-file ---
 	if (pathnames.size() == 1) {
 		auto profile = GetRawMimeProfile(StrWide2MB(pathnames[0]));
-		_last_mime_profiles.insert(profile); // Cache the single profile
+		_last_unique_mime_profiles.insert(profile); // Cache the single profile
 		auto prioritized_mimes = ExpandAndPrioritizeMimeTypes(profile);
 		final_candidates = ResolveMimesToCandidateMap(prioritized_mimes);
 	}
@@ -130,23 +130,18 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		// --- Case 2: Logic for Multiple Files ---
 
 		// Step 1: Group N files into K unique "MIME profiles".
-		std::unordered_set<RawMimeProfile, RawMimeProfile::Hash> unique_profiles;
 		for (const auto& w_pathname : pathnames) {
-			unique_profiles.insert(GetRawMimeProfile(StrWide2MB(w_pathname))); // N calls to external tools
+			_last_unique_mime_profiles.insert(GetRawMimeProfile(StrWide2MB(w_pathname))); // N calls to external tools
 		}
-
-		// Cache all unique profiles. This is done *before* any early exits
-		// so that GetMimeTypes() can report them even if no apps are found.
-		_last_mime_profiles = unique_profiles;
 
 		// Step 2: Gather candidates K times, not N times. (K = unique_profiles.size())
 		std::unordered_map<RawMimeProfile, CandidateMap, RawMimeProfile::Hash> candidate_cache;
 
-		if (unique_profiles.empty()) {
+		if (_last_unique_mime_profiles.empty()) {
 			return {};
 		}
 
-		for (const auto& profile : unique_profiles) {
+		for (const auto& profile : _last_unique_mime_profiles) {
 			auto prioritized_mimes = ExpandAndPrioritizeMimeTypes(profile);
 			auto candidates_for_current_profile = ResolveMimesToCandidateMap(prioritized_mimes);
 			// Fail-fast optimization: If any profile has zero candidates, the final intersection will be empty.
@@ -161,10 +156,10 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		// Step 3a: Optimization: Find the profile with the *smallest* candidate set.
 		// Intersection will be much faster if we start with the most restrictive set.
 
-		auto smallest_set_it = unique_profiles.begin();
+		auto smallest_set_it = _last_unique_mime_profiles.begin();
 		size_t min_size = candidate_cache.at(*smallest_set_it).size();
 
-		for (auto it = std::next(smallest_set_it); it != unique_profiles.end(); ++it) {
+		for (auto it = std::next(smallest_set_it); it != _last_unique_mime_profiles.end(); ++it) {
 			size_t current_size = candidate_cache.at(*it).size();
 			if (current_size < min_size) {
 				min_size = current_size;
@@ -178,7 +173,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 		final_candidates = std::move(candidate_cache.at(base_profile));
 
 		// Step 3c: Iteratively intersect with candidates from all *other* profiles. This loop runs (K - 1) times.
-		for (const auto& current_profile : unique_profiles) {
+		for (const auto& current_profile : _last_unique_mime_profiles) {
 			if (current_profile == base_profile) {
 				continue;	// skip the profile we already used as the baseline.
 			}
@@ -413,7 +408,7 @@ std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes()
 	std::set<std::wstring> final_unique_strings;
 	bool has_none = false;
 
-	for (const auto& profile : _last_mime_profiles)
+	for (const auto& profile : _last_unique_mime_profiles)
 	{
 
 		std::set<std::string> unique_mimes_for_profile;

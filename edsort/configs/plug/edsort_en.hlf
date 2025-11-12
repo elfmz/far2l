@@ -1,0 +1,5 @@
+.Language=English,English
+
+@edsort
+
+Sort the selected block of rows starting from the selected column (minimum 1).

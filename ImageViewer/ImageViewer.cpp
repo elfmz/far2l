@@ -208,10 +208,10 @@ class ImageViewer
 		if (frames_interval < 5) frames_interval = 5;
 
 		if (_tmp_file.empty()) {
-			wchar_t preview_tmp[MAX_PATH + 32]{};
+			wchar_t preview_tmp[MAX_PATH + 1]{};
 			g_fsf.MkTemp(preview_tmp, MAX_PATH, L"far2l-img");
-			wcscat(preview_tmp, L".jpg");
 			_tmp_file = StrWide2MB(preview_tmp);
+			_tmp_file+= ".jpg";
 		}
 
 		unlink(_tmp_file.c_str());
@@ -342,7 +342,7 @@ class ImageViewer
 
 		DWORD flags = WP_IMG_RGB; // use RGBA only if image really has non-opaque pixels
 		for (size_t i = 0; i < pixels_count; ++i) {
-			if (final_pixel_data[i * 4 + 3] != 0xff) {
+			if (final_pixel_data[i * 4 + 3] != (char)0xff) {
 				flags = WP_IMG_RGBA;
 				break;
 			}

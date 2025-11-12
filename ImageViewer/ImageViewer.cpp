@@ -83,12 +83,9 @@ static bool CheckForDismissProcessingKeyPress()
 
 static void PurgeAccumulatedKeyPresses()
 {
-	// purge keys that can be accumulated due to long/many keypresses
-	WORD KeyCodes[] = {VK_ESCAPE, VK_NEXT, VK_PRIOR, VK_CLEAR, VK_ADD,
-		VK_SUBTRACT, VK_RIGHT, VK_LEFT, VK_RIGHT, VK_DOWN, VK_UP,
-		'+', '-', VK_TAB};
-	WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
-		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
+	// purge all currently queued keypresses
+	WORD KeyCodes[] = {VK_ESCAPE};
+	WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes), CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
 }
 
 static bool ExecAsyncSmartWait(ExecAsync &ea, IVInfoMessage &ivmessage, const std::wstring &text)

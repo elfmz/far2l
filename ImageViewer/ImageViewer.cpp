@@ -126,7 +126,7 @@ class ImageViewer
 	std::set<std::string> _selection, _all_files;
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
-	double _scale{-1};
+	double _scale{-1}, _scale_max{4};
 	int _rotate{0};
 	int _orig_w{0}, _orig_h{0}; // info about image size for title
 	std::string _err_str;
@@ -320,7 +320,8 @@ class ImageViewer
 		// update info about image size for title
 		_orig_w = orig_w;
 		_orig_h = orig_h;
-		if (_scale < 0) {
+		if (_scale <= 0) {
+			_scale_max = ceil(std::max(double(4 * canvas_w) / orig_w, double(4 * canvas_h) / orig_h));
 			if (s_allow_initial_enlarge || canvas_w < orig_w || canvas_h < orig_h) {
 				_scale = std::min(double(canvas_w) / double(orig_w), double(canvas_h) / double(orig_h));
 			} else {
@@ -515,7 +516,7 @@ public:
 		if (change > 0) {
 			if (_scale < 1) ds = change;
 			else if (_scale < 2) ds = change * 5;
-			else if (_scale < 4) ds = change * 10;
+			else if (_scale < _scale_max) ds = change * 10;
 		} else if (change < 0) {
 			if (_scale > 2) ds = change * 10;
 			else if (_scale > 1) ds = change * 5;
@@ -528,8 +529,8 @@ public:
 		_scale+= ds;
 		if (_scale < 0.1) {
 			_scale = 0.1;
-		} else if (_scale > 4.0) {
-			_scale = 4.0;
+		} else if (_scale > _scale_max) {
+			_scale = _scale_max;
 		} else if (fabs(_scale - 1.0) < 0.01) {
 			_scale = 1.0;
 		}

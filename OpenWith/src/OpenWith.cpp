@@ -241,8 +241,8 @@ namespace OpenWith {
 
 	// return true if exit by button "Launch", false otherwise
 	bool OpenWithPlugin::ShowDetailsDialogImpl(const std::vector<Field>& file_info,
-									  const std::vector<Field>& application_info,
-									  const Field& launch_command)
+											   const std::vector<Field>& application_info,
+											   const Field& launch_command)
 	{
 		constexpr int MIN_DIALOG_WIDTH = 40;
 		constexpr int DESIRED_DIALOG_WIDTH = 90;
@@ -252,15 +252,28 @@ namespace OpenWith {
 
 		int dialog_height = file_info.size() + application_info.size() + 9;
 
-		// Helper lambda to find the maximum label length in a vector of Fields for alignment.
-		auto max_in = [](const std::vector<Field>& v) -> size_t {
-			if (v.empty()) return 0;
-			return std::max_element(v.begin(), v.end(),
-									[](const Field& x, const Field& y){ return x.label.size() < y.label.size(); })->label.size();
+		// Helper lambda to get the console cell width of a field's label string.
+		// This is crucial for correct UI alignment with non-ASCII characters.
+		auto get_label_cell_width = [](const Field& f) -> size_t {
+			return s_FSF.StrCellsCount(f.label.c_str(), f.label.size());
 		};
 
+		// Helper lambda to find the maximum label length (in cells) in a vector of Fields for alignment.
+		auto max_in = [&](const std::vector<Field>& v) -> size_t {
+			if (v.empty()) return 0;
+			// Use a custom comparator that measures string width in console cells.
+			return get_label_cell_width(*std::max_element(v.begin(), v.end(),
+														  [](const Field& x, const Field& y){
+															  // This lambda is now captured by max_in, so we can't use get_label_cell_width directly.
+															  // Re-implement the helper lambda for the comparator.
+															  auto get_width = [](const Field& f) { return s_FSF.StrCellsCount(f.label.c_str(), f.label.size()); };
+															  return get_width(x) < get_width(y);
+														  }));
+		};
+
+		// Calculate the maximum label width (in cells) across all sections.
 		auto max_di_text_length = static_cast<int>(std::max({
-			launch_command.label.size(),
+			get_label_cell_width(launch_command),
 			max_in(file_info),
 			max_in(application_info)
 		}));
@@ -277,7 +290,8 @@ namespace OpenWith {
 		int cur_line = 2;
 
 		for (auto &field : file_info) {
-			int di_text_X1 = di_text_X2 - field.label.size() + 1;
+			// Calculate the X1 coordinate based on the label's cell width for right-alignment.
+			int di_text_X1 = di_text_X2 - static_cast<int>(get_label_cell_width(field)) + 1;
 			di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, field.label.c_str(), 0 });
 			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  field.content.c_str(), 0});
 			++cur_line;
@@ -287,7 +301,8 @@ namespace OpenWith {
 		++cur_line;
 
 		for (auto &field : application_info) {
-			int di_text_X1 = di_text_X2 - field.label.size() + 1;
+			// Calculate the X1 coordinate based on the label's cell width for right-alignment.
+			int di_text_X1 = di_text_X2 - static_cast<int>(get_label_cell_width(field)) + 1;
 			di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, field.label.c_str(), 0 });
 			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  field.content.c_str(), 0});
 			++cur_line;
@@ -296,7 +311,8 @@ namespace OpenWith {
 		di.push_back({ DI_TEXT, 5,  cur_line,  0,  cur_line, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
 		++cur_line;
 
-		int di_text_X1 = di_text_X2 - launch_command.label.size() + 1;
+		// Calculate the X1 coordinate based on the label's cell width for right-alignment.
+		int di_text_X1 = di_text_X2 - static_cast<int>(get_label_cell_width(launch_command)) + 1;
 		di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, launch_command.label.c_str(), 0 });
 		di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  launch_command.content.c_str(), 0});
 		++cur_line;

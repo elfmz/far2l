@@ -174,14 +174,14 @@ void *ExecAsync::ThreadProc()
 	MakeFDNonCloexec(out.fd[1]);
 	MakeFDNonCloexec(err.fd[1]);
 
+	fflush(stdout);
+	fflush(stderr);
+
 	pid_t pid = fork();
 	if (pid == (pid_t)-1) {
 		return nullptr;
 	}
 
-	fflush(stdout);
-	fflush(stderr);
-//	fpurge(stdin);
 	if (!pid) {
 		dup2(in.fd[0], STDIN_FILENO); close(in.fd[0]);
 		dup2(out.fd[1], STDOUT_FILENO); close(out.fd[1]);

@@ -84,6 +84,13 @@ bool ExecAsync::Wait(int timeout_msec)
 	return WaitThread(timeout_msec);
 }
 
+int ExecAsync::ExecError()
+{
+	assert(_started);
+	std::lock_guard<std::mutex> lock(_mtx);
+	return _exec_error;
+}
+
 int ExecAsync::ExitSignal()
 {
 	assert(_started);
@@ -155,24 +162,32 @@ static size_t ReadFDIntoVector(std::vector<char> &v, int &fd, bool dont_care)
 
 void *ExecAsync::ThreadProc()
 {
-	FDPairScope in, out, err;
-	if (pipe_cloexec(in.fd) == -1 || pipe_cloexec(out.fd) == -1 || pipe_cloexec(err.fd) == -1) {
+	FDPairScope in, out, err, xer;
+	if (pipe_cloexec(in.fd) == -1 || pipe_cloexec(out.fd) == -1 || pipe_cloexec(err.fd) == -1 || pipe_cloexec(xer.fd) == -1) {
 		return nullptr;
 	}
 
-	std::string all_args;
+	std::string print_str;
+	if (!_program.empty()) {
+		print_str = '[';
+		print_str = _program;
+		print_str+= ']';
+	}
 	std::vector<char *> argv(_args.size() + 1);
 	for (size_t i = 0; i < _args.size(); ++i) {
 		argv[i] = (char *)_args[i].c_str();
-		if (i) all_args+= ' ';
-		all_args+= _args[i];
+		if (!print_str.empty()) {
+			print_str+= ' ';
+		}
+		print_str+= _args[i];
 	}
 	argv[_args.size()] = NULL;
-	fprintf(stderr, "ExecAsync: %s\n", all_args.c_str());
+	fprintf(stderr, "ExecAsync: %s\n", print_str.c_str());
 
 	MakeFDNonCloexec(in.fd[0]);
 	MakeFDNonCloexec(out.fd[1]);
 	MakeFDNonCloexec(err.fd[1]);
+	MakeFDNonCloexec(xer.fd[1]);
 
 	fflush(stdout);
 	fflush(stderr);
@@ -186,10 +201,16 @@ void *ExecAsync::ThreadProc()
 		dup2(in.fd[0], STDIN_FILENO); close(in.fd[0]);
 		dup2(out.fd[1], STDOUT_FILENO); close(out.fd[1]);
 		dup2(err.fd[1], STDERR_FILENO); close(err.fd[1]);
-		execvp(_program.c_str(), argv.data());
-		int err = errno;
-		fprintf(stderr, "%s starting %s\n", strerror(err), all_args.c_str());
-		_exit(err);
+		const char *program = _program.empty() ? argv[0] : _program.c_str();
+		execvp(program, argv.data());
+		int e = errno;
+		fprintf(stderr, "%s trying to run [%s]\n", strerror(e), program);
+		fflush(stderr);
+		while (write(xer.fd[1], &e, sizeof(e)) < 0 && errno == EINTR) {
+			usleep(1000);
+		}
+		close(xer.fd[1]);
+		_exit(e);
 	}
 
 	{
@@ -200,12 +221,14 @@ void *ExecAsync::ThreadProc()
 	CheckedCloseFD(in.fd[0]);
 	CheckedCloseFD(out.fd[1]);
 	CheckedCloseFD(err.fd[1]);
+	CheckedCloseFD(xer.fd[1]);
 
 	MakeFDNonBlocking(in.fd[1]);
 	MakeFDNonBlocking(out.fd[0]);
 	MakeFDNonBlocking(err.fd[0]);
+	MakeFDNonBlocking(xer.fd[0]);
 
-	while (out.fd[0] != -1 || err.fd[0] != -1) {
+	while (out.fd[0] != -1 || err.fd[0] != -1 || xer.fd[0] != -1) {
 		fd_set read_fds, write_fds;
 		FD_ZERO(&read_fds);
 		FD_ZERO(&write_fds);
@@ -224,6 +247,10 @@ void *ExecAsync::ThreadProc()
 		if (err.fd[0] != -1) {
 			FD_SET(err.fd[0], &read_fds);
 			mfd = std::max(mfd, err.fd[0]);
+		}
+		if (xer.fd[0] != -1) {
+			FD_SET(xer.fd[0], &read_fds);
+			mfd = std::max(mfd, xer.fd[0]);
 		}
 
 		int r = select(mfd + 1, &read_fds, (in.fd[1] != -1) ? &write_fds : NULL, NULL, NULL);
@@ -262,6 +289,16 @@ void *ExecAsync::ThreadProc()
 			}
 		}
 
+        if (xer.fd[0] != -1 && FD_ISSET(xer.fd[0], &read_fds)) {
+			std::lock_guard<std::mutex> lock(_mtx);
+			ssize_t r = read(xer.fd[0], &_exec_error, sizeof(_exec_error));
+			if (r == 0 || (r < 0 && errno != EINTR && errno != EAGAIN)) {
+				CheckedCloseFD(xer.fd[0]);
+			} else if (r > 0 && _exec_error == 0) {
+				_exec_error = -1;
+			}
+		}
+
         if (_kill_fd[0] != -1 && FD_ISSET(_kill_fd[0], &read_fds)) {
 			break; // hard exit
 		}
@@ -276,13 +313,16 @@ void *ExecAsync::ThreadProc()
 				_exit_code = -1;
 				_exit_signal = WTERMSIG(st);
 				fprintf(stderr, "ExecAsync: pid=%u signal=%d (%s)\n", pid, _exit_signal, _program.c_str());
+				if (!_exit_signal) {
+					_exit_signal = -1;
+				}
 				break;
 			}
 			if (WIFEXITED(st)) {
 				std::lock_guard<std::mutex> lock(_mtx);
 				_pid = -1;
 				_exit_code = WEXITSTATUS(st);
-				_exit_signal = -1;
+				_exit_signal = 0;
 				fprintf(stderr, "ExecAsync: pid=%u exit=%d (%s)\n", pid, _exit_code, _program.c_str());
 				break;
 			}

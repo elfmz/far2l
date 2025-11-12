@@ -13,7 +13,8 @@ class ExecAsync : Threaded
 	std::mutex _mtx;
 	bool _dont_care{false};
 	bool _started{false};
-	int _exit_signal{-1}, _exit_code{-1};
+	int _exec_error{0};
+	int _exit_signal{0}, _exit_code{-1};
 	int _kill_fd[2]{-1, -1};
 	pid_t _pid{-1};
 
@@ -22,8 +23,14 @@ class ExecAsync : Threaded
 	void Kill(int sig);
 
 public:
-	ExecAsync(const char *program);
+	ExecAsync(const char *program = "");
 	~ExecAsync();
+
+	const std::vector<std::string> &GetArguments() const
+	{
+		return _args;
+	}
+
 	void AddArgument(const char *a);
 
 	// use if command stdout/stderr is out of interest,
@@ -60,6 +67,7 @@ public:
 
 	bool Start();
 
+
 	template <class FirstItemT, class... OtherItemsT>
 		bool StartWithArguments(const FirstItemT &FirstItem, OtherItemsT... OtherItems)
 	{
@@ -68,17 +76,20 @@ public:
 	}
 
 
+	// following functions can be used only after Start() returned true
 	bool Wait(int timeout_msec = -1);
 
-	void KillSoftly();
-	void KillHardly();
+	void KillSoftly(); // send SIGINT to process
+	void KillHardly(); // send SIGKILL to process and disrupt stdio dispatcher loop
 
-	int ExitSignal();
-	int ExitCode();
+	void FetchStdout(std::vector<char> &content); // get currently buffered-in stdout content and clear that buffer
+	std::string FetchStdout(); // same as above
 
-	void FetchStdout(std::vector<char> &content);
-	void FetchStderr(std::vector<char> &content);
+	void FetchStderr(std::vector<char> &content); // get currently buffered-in stderr content and clear that buffer
+	std::string FetchStderr(); // same as above
 
-	std::string FetchStdout();
-	std::string FetchStderr();
+	// following functions can be used only after Wait(..) returned true
+	int ExecError();  // nonzero error code if execvp failed (e.g. program not found)
+	int ExitSignal(); // nonzero signal number if app exited due to signal
+	int ExitCode();   // program exit code in case ExecError() and ExitSignal() both returned zeroes
 };

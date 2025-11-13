@@ -36,7 +36,7 @@ static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
 
 // keep following settings across plugin invokations
-static bool s_fit_to_screen{true};
+static bool s_fit_to_screen{true}, s_real_size_anyway{false};
 static std::set<std::wstring> s_warned_tools;
 
 
@@ -134,7 +134,7 @@ class ImageViewer
 	int _dx{0}, _dy{0};
 	double _scale{-1}, _scale_max{4};
 	int _rotate{0};
-	int _orig_w{0}, _orig_h{0}; // info about image size for title
+	int _orig_w{0}, _orig_h{0}, _resize_w{0}, _resize_h{0}; // info about image size for title
 	std::string _err_str;
 
 	void ErrorMessage()
@@ -217,7 +217,7 @@ class ImageViewer
 			return true;
 		}
 
-		_orig_w = _orig_h = 0; // clear info about image size for title
+		_orig_w = _orig_h = _resize_w = _resize_h = 0; // clear info about image size for title
 
 		DenoteState("Transforming...");
 
@@ -225,7 +225,7 @@ class ImageViewer
 		ffprobe.AddArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
 			"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file);
 
-		if (!ffprobe.Run(_cur_file, _file_size_str, "ffmpeg", "Obtaining video frames count...")) {
+		if (!ffprobe.Run(_cur_file, _file_size_str, "ffmpeg", "Obtaining video frames count (via ffmpeg 'ffprobe')...")) {
 			return false;
 		}
 		const auto &frames_count = ffprobe.FetchStdout();
@@ -250,7 +250,7 @@ class ImageViewer
 		ffmpeg.AddArguments("ffmpeg", "-i", _cur_file,
 			"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file);
 		if (!ffmpeg.Run(_cur_file, _file_size_str, "ffmpeg",
-				"Obtaining 6 video frames of %d for preview...", frames_count_i)) {
+				"Obtaining 6 video frames of %d for preview (via ffmpeg)...", frames_count_i)) {
 			return false;
 		}
 
@@ -305,7 +305,7 @@ class ImageViewer
 		int orig_w = 0, orig_h = 0;
 		ToolExec identify;
 		identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
-		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size...")) {
+		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size (via ImageMagick 'identify')...")) {
 			return false;
 		}
 
@@ -321,12 +321,10 @@ class ImageViewer
 
 		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
 
-		// update info about image size for title
-		_orig_w = orig_w;
-		_orig_h = orig_h;
+		_orig_w = orig_w; _orig_h = orig_h; // update info about image size for title
 		if (_scale <= 0) {
 			_scale_max = ceil(std::max(double(4 * canvas_w) / orig_w, double(4 * canvas_h) / orig_h));
-			if (s_fit_to_screen || canvas_w < orig_w || canvas_h < orig_h) {
+			if (s_fit_to_screen || (!s_real_size_anyway && (canvas_w < orig_w || canvas_h < orig_h))) {
 				_scale = std::min(double(canvas_w) / double(orig_w), double(canvas_h) / double(orig_h));
 			} else {
 				_scale = 1.0;
@@ -340,6 +338,7 @@ class ImageViewer
 			resize_w = double(resize_w) * _scale;
 			resize_h = double(resize_h) * _scale;
 		}
+		_resize_w = resize_w; _resize_h = resize_h; // update info about image size for title
 
 		ToolExec convert;
 		convert.AddArguments("convert", "--", _render_file, "-background", "black", "-gravity", "Center");
@@ -360,7 +359,7 @@ class ImageViewer
 		convert.AddArguments("-depth", "8", "rgba:-");
 
 		std::vector<char> final_pixel_data;
-		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {
+		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture (via ImageMagick 'convert')...")) {
 			return false;
 		}
 		convert.FetchStdout(final_pixel_data);
@@ -411,13 +410,14 @@ class ImageViewer
 	{
 		std::string title = (_selection.find(_cur_file) != _selection.end()) ? "* " : "  ";
 		title+= _cur_file;
+		std::string title2, title3;
 		if (stage) {
 			title+= " [";
 			title+= stage;
 			title+= ']';
 		}
 		else if (_orig_w > 0 && _orig_h > 0)
-			title+= " (" + std::to_string(_orig_w) + 'x' + std::to_string(_orig_h) + ')';
+			title2 = " (" + std::to_string(_orig_w) + 'x' + std::to_string(_orig_h);
 
 		std::string status = HINT_STRING;
 
@@ -431,11 +431,21 @@ class ImageViewer
 		if (fabs(_scale - 1) > 0.01) {
 			snprintf(prefix, ARRAYSIZE(prefix), "%d%% ", int(_scale * 100));
 			status.insert(0, prefix);
+			title3+= prefix;
 		}
 
 		if (_rotate != 0) {
 			snprintf(prefix, ARRAYSIZE(prefix), "%d° ", _rotate);
 			status.insert(0, prefix);
+			title3+= prefix;
+		}
+
+		if (!title2.empty()) {
+			if (_resize_w > 0 && _resize_h > 0 && _resize_w != _orig_w && _resize_h != _orig_h)
+				title3 += std::to_string(_resize_w) + 'x' + std::to_string(_resize_h);
+			if (!title3.empty())
+				title2+= " -> " + title3;
+			title+= title2 + ')';
 		}
 
 		SetTitleAndStatus(title, status);
@@ -502,6 +512,7 @@ public:
 
 	bool Iterate(bool forward)
 	{
+		s_real_size_anyway = false;
 		for (size_t i = 0;; ++i) { // silently skip bad files
 			if (!IterateFile(forward) || i > _all_files.size()) {
 				_cur_file.clear();
@@ -516,6 +527,7 @@ public:
 
 	void Scale(int change)
 	{
+		s_real_size_anyway = false;
 		double ds = 0;
 		if (change > 0) {
 			if (_scale < 1) ds = change;
@@ -629,13 +641,18 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			switch (key) {
 				case KEY_MULTIPLY: case '*':
 					s_fit_to_screen = true;
+					s_real_size_anyway = false;
 					iv->Reset();
 					break;
 				case KEY_DIVIDE: case '/':
 					s_fit_to_screen = false;
+					s_real_size_anyway = true;
 					iv->Reset();
-				break;
-				case KEY_CLEAR: case '=': iv->Reset(); break;
+					break;
+				case KEY_CLEAR: case '=':
+					s_real_size_anyway = false;
+					iv->Reset();
+					break;
 				case KEY_ADD: case '+': iv->Scale(delta); break;
 				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;
 				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(delta, 0); break;

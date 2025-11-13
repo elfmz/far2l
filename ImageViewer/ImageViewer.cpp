@@ -206,6 +206,31 @@ class ImageViewer
 		return false;
 	}
 
+	bool IdentifyImage()
+	{
+		DenoteState("Analyzing...");
+		_orig_w = _orig_h = 0; // clear info about image size for title
+
+		ToolExec identify;
+		identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
+		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size...")) {
+			return false;
+		}
+
+		const std::string &dims_str = identify.FetchStdout();
+		if (sscanf(dims_str.c_str(), "%d %d", &_orig_w, &_orig_h) != 2 || _orig_w <= 0 || _orig_w <= 0) {
+			_orig_w = _orig_h = 0; // clear info about image size for title
+			std::string stderr_str = identify.FetchStderr();
+			StrTrim(stderr_str, " \t\r\n");
+			_err_str = StrPrintf("Failed to parse original dimensions. Got: '%s' '%s'", dims_str.c_str(), stderr_str.c_str());
+			fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
+			_selection.erase(_cur_file); // remove non-loadable files from _selection
+			return false;
+		}
+
+		return true;
+	}
+
 	bool InspectFileFormat()
 	{
 		_render_file = _cur_file;
@@ -219,10 +244,8 @@ class ImageViewer
 		StrWide2MB(FileSizeString(st.st_size), _file_size_str);
 
 		if (!IsVideoFile()) {
-			return true;
+			return IdentifyImage();
 		}
-
-		_orig_w = _orig_h = 0; // clear info about image size for title
 
 		DenoteState("Transforming...");
 
@@ -266,14 +289,12 @@ class ImageViewer
 		}
 
 		_render_file = _tmp_file;
-		return true;
+		return IdentifyImage();
 	}
 
 	bool RenderImage(bool bmess = false)
 	{
 		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _render_file.c_str());
-
-		_orig_w = _orig_h = 0; // clear info about image size for title
 
 		if (_render_file.empty()) {
 			_err_str = "bad file";
@@ -282,6 +303,7 @@ class ImageViewer
 		}
 
 		fprintf(stderr, "Target cell grid _pos=%dx%d _size=%dx%d\n", _pos.X, _pos.Y, _size.X, _size.Y);
+
 		if (_pos.X < 0 || _pos.Y < 0 || _size.X <= 0 || _size.Y <= 0) {
 			_err_str = "bad grid";
 			fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
@@ -304,37 +326,14 @@ class ImageViewer
 		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
 		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
-		DenoteState("Analyzing...");
-		// 2. Получаем оригинальные размеры картинки
+		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", _orig_w, _orig_h, canvas_w, canvas_h);
 
-		int orig_w = 0, orig_h = 0;
-		ToolExec identify;
-		identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
-		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size...")) {
-			return false;
-		}
-
-		const std::string &dims_str = identify.FetchStdout();
-		if (sscanf(dims_str.c_str(), "%d %d", &orig_w, &orig_h) != 2 || orig_w <= 0 || orig_h <= 0) {
-			std::string stderr_str = identify.FetchStderr();
-			StrTrim(stderr_str, " \t\r\n");
-			_err_str = StrPrintf("Failed to parse original dimensions. Got: '%s' '%s'", dims_str.c_str(), stderr_str.c_str());
-			fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-			_selection.erase(_cur_file); // remove non-loadable files from _selection
-			return false;
-		}
-
-		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", orig_w, orig_h, canvas_w, canvas_h);
-
-		// update info about image size for title
-		_orig_w = orig_w;
-		_orig_h = orig_h;
 		if (_scale <= 0) {
-			_scale_max = ceil(std::max(double(4 * canvas_w) / orig_w, double(4 * canvas_h) / orig_h));
+			_scale_max = ceil(std::max(double(4 * canvas_w) / _orig_w, double(4 * canvas_h) / _orig_h));
 			if (s_def_scale == DS_EQUAL_IMAGE) {
 				_scale = 1.0;
-			} else if (s_def_scale == DS_EQUAL_SCREEN || canvas_w < orig_w || canvas_h < orig_h) {
-				_scale = std::min(double(canvas_w) / double(orig_w), double(canvas_h) / double(orig_h));
+			} else if (s_def_scale == DS_EQUAL_SCREEN || canvas_w < _orig_w || canvas_h < _orig_h) {
+				_scale = std::min(double(canvas_w) / double(_orig_w), double(canvas_h) / double(_orig_h));
 			} else {
 				_scale = 1.0;
 			}
@@ -342,7 +341,7 @@ class ImageViewer
 
 		DenoteState("Rendering...");
 		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
-		int resize_w = orig_w, resize_h = orig_h;
+		int resize_w = _orig_w, resize_h = _orig_h;
 		if (fabs(_scale - 1) > 0.01) {
 			resize_w = double(resize_w) * _scale;
 			resize_h = double(resize_h) * _scale;
@@ -355,8 +354,8 @@ class ImageViewer
 		}
 
 		if (_dx != 0 || _dy != 0) {
-			int rdx = long(orig_w) * long(_dx) / 100;
-			int rdy = long(orig_h) * long(_dy) / 100; // orig_h
+			int rdx = long(_orig_w) * long(_dx) / 100;
+			int rdy = long(_orig_h) * long(_dy) / 100; // orig_h
 			const auto &roll_arg
 				= StrPrintf( (rdx >= 0) ? "+%d" : "%d", rdx)
 				+ StrPrintf( (rdy >= 0) ? "+%d" : "%d", rdy);

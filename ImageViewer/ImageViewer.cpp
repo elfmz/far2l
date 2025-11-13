@@ -35,6 +35,11 @@
 static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
 
+// keep following settings across plugin invokations
+static bool s_fit_to_screen{true};
+static std::set<std::wstring> s_warned_tools;
+
+
 class ImageViewerMessage
 {
 	HANDLE _h_scr{nullptr};
@@ -105,12 +110,11 @@ struct ToolExec : ExecAsync
 			if (!args.empty()) {
 				ws_tool = StrMB2Wide(args.front());
 			}
-			static std::set<std::wstring> s_warned_tools;
 			if (s_warned_tools.insert(ws_tool).second) {
 				const auto &ws_pkg = MB2Wide(pkg);
 				const wchar_t *MsgItems[] = { PLUGIN_TITLE,
 					L"Failed to run tool:", ws_tool.c_str(),
-					L"Please install following package:", ws_pkg.c_str(),
+					L"Please install package:", ws_pkg.c_str(),
 					L"Ok"
 				};
 				errno = ExecError();
@@ -120,8 +124,6 @@ struct ToolExec : ExecAsync
 		return true;
 	}
 };
-
-static bool s_fit_to_screen{true}; // keep this setting across plugin invokations
 
 class ImageViewer
 {

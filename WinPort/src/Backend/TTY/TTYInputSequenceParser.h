@@ -70,6 +70,8 @@ struct ITTYInputSpecialSequenceHandler
 	virtual void OnFocusChange(bool focused) = 0;
 	virtual void OnFar2lEvent(StackSerializer &stk_ser) = 0;
 	virtual void OnFar2lReply(StackSerializer &stk_ser) = 0;
+	virtual void OnKittyGraphicsResponse(const std::string &s) = 0;
+	virtual void OnStatusResponse(char c) = 0;
 	virtual void OnInputBroken() = 0;
 	virtual void OnGetCellSize(unsigned int w, unsigned int h) = 0;
 };

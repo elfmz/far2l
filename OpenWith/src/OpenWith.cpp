@@ -70,12 +70,12 @@ namespace OpenWith {
 			return INVALID_HANDLE_VALUE;
 		}
 
-		if (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES)) {
-			ShowError(GetMsg(MError), {GetMsg(MNotRealNames)});
+		if (pi.PanelType != PTYPE_FILEPANEL || pi.ItemsNumber <= 0) {
 			return INVALID_HANDLE_VALUE;
 		}
 
-		if (pi.PanelType != PTYPE_FILEPANEL || pi.ItemsNumber <= 0) {
+		if (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES)) {
+			ShowError(GetMsg(MError), {GetMsg(MNotRealNames)});
 			return INVALID_HANDLE_VALUE;
 		}
 
@@ -174,8 +174,16 @@ namespace OpenWith {
 		di.push_back({ DI_CHECKBOX, 5, y, 0, 0, 0,  { s_ConfirmLaunch }, 0, 0, confirm_label, 0 });
 		di.push_back({ DI_FIXEDIT, (int)(confirm_label_width + 11), y, (int)(confirm_label_width + 14), 0, FALSE, {(DWORD_PTR)L"9999"}, DIF_MASKEDIT, 0, threshold_str, 0});
 
+		int first_platform_item_idx = 0;
+
 		if (!old_platform_settings.empty()) {
 			di.push_back({ DI_TEXT, 5, ++y, 0, 0, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
+
+			// Pre-calculates the final dialog index of the first platform checkbox.
+			// di.size() is the index where the item is currently pushed, and the '+ 1' accounts
+			// for the DI_DOUBLEBOX header that will later be inserted at index 0, shifting all subsequent elements.
+			first_platform_item_idx = (int)di.size() + 1;
+
 			for (const auto& setting : old_platform_settings) {
 				di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, FALSE, { setting.value }, 0, 0, setting.display_name.c_str(), 0 });
 			}
@@ -189,6 +197,7 @@ namespace OpenWith {
 
 		int dialog_height = y + 3;
 		int dialog_width = 70;
+
 		di.insert(di.begin(), { DI_DOUBLEBOX, 3, 1, dialog_width - 4, dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MConfigTitle), 0 });
 
 		HANDLE dlg = s_Info.DialogInit(s_Info.ModuleNumber, -1, -1, dialog_width, dialog_height, L"ConfigurationDialog", di.data(), di.size(), 0, 0, nullptr, 0);
@@ -198,9 +207,9 @@ namespace OpenWith {
 
 		int exitCode = s_Info.DialogRun(dlg);
 		ConfigureResult result;
+		auto ok_button_index = (int)di.size() - 2;
 
-		// The index of the 'OK' button is determined by its position in the 'di' vector.
-		if (exitCode == (int)di.size() - 2) { // OK was clicked
+		if (exitCode == ok_button_index) {
 			result.settings_saved = true;
 			// Save platform-independent settings
 			s_UseExternalTerminal = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
@@ -215,7 +224,6 @@ namespace OpenWith {
 			bool platform_settings_changed = false;
 			if (!old_platform_settings.empty()) {
 				std::vector<ProviderSetting> new_settings;
-				int first_platform_item_idx = 7; // Index of the first platform-specific checkbox
 
 				for (size_t i = 0; i < old_platform_settings.size(); ++i) {
 					bool new_value = (s_Info.SendDlgMessage(dlg, DM_GETCHECK, first_platform_item_idx + i, 0) == BSTATE_CHECKED);
@@ -241,8 +249,8 @@ namespace OpenWith {
 
 	// return true if exit by button "Launch", false otherwise
 	bool OpenWithPlugin::ShowDetailsDialogImpl(const std::vector<Field>& file_info,
-									  const std::vector<Field>& application_info,
-									  const Field& launch_command)
+											   const std::vector<Field>& application_info,
+											   const Field& launch_command)
 	{
 		constexpr int MIN_DIALOG_WIDTH = 40;
 		constexpr int DESIRED_DIALOG_WIDTH = 90;
@@ -252,15 +260,26 @@ namespace OpenWith {
 
 		int dialog_height = file_info.size() + application_info.size() + 9;
 
-		// Helper lambda to find the maximum label length in a vector of Fields for alignment.
-		auto max_in = [](const std::vector<Field>& v) -> size_t {
-			if (v.empty()) return 0;
-			return std::max_element(v.begin(), v.end(),
-									[](const Field& x, const Field& y){ return x.label.size() < y.label.size(); })->label.size();
+		// Helper lambda to get the console cell width of a field's label string.
+		// This is crucial for correct UI alignment with non-ASCII characters.
+		auto get_label_cell_width = [](const Field& f) -> size_t {
+			return s_FSF.StrCellsCount(f.label.c_str(), f.label.size());
 		};
 
+		// Helper lambda to find the maximum label length (in cells) in a vector of Fields for alignment.
+		auto max_in = [&](const std::vector<Field>& v) -> size_t {
+			if (v.empty()) return 0;
+			// Use a custom comparator that measures string width in console cells.
+			// The inner lambda captures '[&]' to access the get_label_cell_width helper.
+			return get_label_cell_width(*std::max_element(v.begin(), v.end(),
+														  [&](const Field& x, const Field& y){
+															  return get_label_cell_width(x) < get_label_cell_width(y);
+														  }));
+		};
+
+		// Calculate the maximum label width (in cells) across all sections.
 		auto max_di_text_length = static_cast<int>(std::max({
-			launch_command.label.size(),
+			get_label_cell_width(launch_command),
 			max_in(file_info),
 			max_in(application_info)
 		}));
@@ -277,7 +296,7 @@ namespace OpenWith {
 		int cur_line = 2;
 
 		for (auto &field : file_info) {
-			int di_text_X1 = di_text_X2 - field.label.size() + 1;
+			int di_text_X1 = di_text_X2 - static_cast<int>(get_label_cell_width(field)) + 1;
 			di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, field.label.c_str(), 0 });
 			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  field.content.c_str(), 0});
 			++cur_line;
@@ -287,7 +306,7 @@ namespace OpenWith {
 		++cur_line;
 
 		for (auto &field : application_info) {
-			int di_text_X1 = di_text_X2 - field.label.size() + 1;
+			int di_text_X1 = di_text_X2 - static_cast<int>(get_label_cell_width(field)) + 1;
 			di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, field.label.c_str(), 0 });
 			di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  field.content.c_str(), 0});
 			++cur_line;
@@ -296,7 +315,7 @@ namespace OpenWith {
 		di.push_back({ DI_TEXT, 5,  cur_line,  0,  cur_line, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
 		++cur_line;
 
-		int di_text_X1 = di_text_X2 - launch_command.label.size() + 1;
+		int di_text_X1 = di_text_X2 - static_cast<int>(get_label_cell_width(launch_command)) + 1;
 		di.push_back({ DI_TEXT, di_text_X1, cur_line,  di_text_X2, cur_line, FALSE, {}, 0, 0, launch_command.label.c_str(), 0 });
 		di.push_back({ DI_EDIT, di_edit_X1, cur_line,  di_edit_X2, cur_line, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,  launch_command.content.c_str(), 0});
 		++cur_line;
@@ -326,7 +345,7 @@ namespace OpenWith {
 	bool OpenWithPlugin::ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app,
 										   const std::vector<std::wstring>& pathnames,
 										   const std::vector<std::wstring>& cmds,
-										   const std::vector<std::wstring>& unique_mimes)
+										   const std::vector<std::wstring>& unique_mime_profiles)
 	{
 		std::vector<Field> file_info;
 		if (pathnames.size() == 1) {
@@ -338,8 +357,8 @@ namespace OpenWith {
 			file_info.push_back({ GetMsg(MPathname), count_msg });
 		}
 
-		// Use the pre-fetched mime types instead of re-calculating them.
-		file_info.push_back({ GetMsg(MMimeType), JoinStrings(unique_mimes, L"; ") });
+		// Use the pre-fetched mime profiles instead of re-calculating them.
+		file_info.push_back({ GetMsg(MMimeType), JoinStrings(unique_mime_profiles, L"; ") });
 
 		std::wstring all_cmds = JoinStrings(cmds, L"; ");
 		std::vector<Field> application_info = provider->GetCandidateDetails(app);
@@ -410,20 +429,16 @@ namespace OpenWith {
 		// Get a platform-specific application provider.
 		auto provider = AppProvider::CreateAppProvider(&OpenWithPlugin::GetMsg);
 
-		// A cache for MIME types. It will be populated (lazily)
-		// only if the user presses F3 or if no apps are found.
-		std::optional<std::vector<std::wstring>> unique_mimes_cache;
+		// A cache for MIME profiles. It will be populated (lazily) only if the user presses F3 or if no apps are found.
+		std::optional<std::vector<std::wstring>> unique_mime_profiles_cache;
 
 		// Helper lambda to lazily get or populate the MIME profiles cache.
 		// It's called only when the MIME info is actually needed.
 		auto get_unique_mime_profiles = [&]() -> const std::vector<std::wstring>& {
-			// Check if the cache is already populated.
-			if (!unique_mimes_cache.has_value()) {
-				// If not, populate it by calling the expensive provider function.
-				unique_mimes_cache = provider->GetMimeTypes();
+			if (!unique_mime_profiles_cache.has_value()) {
+				unique_mime_profiles_cache = provider->GetMimeTypes();
 			}
-			// Return a const reference to the cached vector.
-			return *unique_mimes_cache;
+			return *unique_mime_profiles_cache;
 		};
 
 		std::vector<CandidateInfo> candidates;
@@ -446,8 +461,11 @@ namespace OpenWith {
 		// Perform the initial fetch and filtering of application candidates.
 		update_candidates();
 
-		int BreakCode = -1;
 		const int BreakKeys[] = {VK_F3, VK_F9, 0};
+		constexpr int KEY_F3_DETAILS = 0;
+		constexpr int KEY_F9_OPTIONS = 1;
+
+		int BreakCode = -1;
 		int active_idx = 0;
 
 		// Main application selection menu loop.
@@ -482,11 +500,11 @@ namespace OpenWith {
 			active_idx = selected_idx;
 			const auto& selected_app = candidates[selected_idx];
 
-			if (BreakCode == 0) { // F3 for Details
+			if (BreakCode == KEY_F3_DETAILS) {
 				std::vector<std::wstring> cmds = provider->ConstructCommandLine(selected_app, pathnames);
 				// Repeat until user either launches the application or closes the dialog to go back.
 				while (true) {
-					// Get MIME types (lazily) and pass them to the details dialog.
+					// Get MIME profiles (lazily) and pass them to the details dialog.
 					bool wants_to_launch = ShowDetailsDialog(provider.get(), selected_app, pathnames, cmds, get_unique_mime_profiles());
 					if (!wants_to_launch) {
 						// User clicked "Close", break the inner loop to return to the main menu.
@@ -501,7 +519,7 @@ namespace OpenWith {
 					}
 				}
 
-			} else if (BreakCode == 1) { // F9 for Options.
+			} else if (BreakCode == KEY_F9_OPTIONS) {
 				const auto configure_result = ConfigureImpl();
 
 				// Check if settings were saved AND if a refresh is required. A refresh is needed if any setting that affects
@@ -517,7 +535,7 @@ namespace OpenWith {
 					active_idx = 0;
 
 					// Invalidate the mime cache, as settings affecting it might have changed.
-					unique_mimes_cache.reset();
+					unique_mime_profiles_cache.reset();
 				}
 
 			} else { // Enter to launch.
@@ -587,9 +605,10 @@ namespace OpenWith {
 
 	int OpenWithPlugin::GetScreenWidth()
 	{
-		CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenBufferInfo;
-		if (WINPORT(GetConsoleScreenBufferInfo)(NULL, &ConsoleScreenBufferInfo))
-			return ConsoleScreenBufferInfo.dwSize.X;
+		SMALL_RECT rect;
+		if (s_Info.AdvControl(s_Info.ModuleNumber, ACTL_GETFARRECT, &rect, 0)) {
+			return rect.Right - rect.Left + 1;
+		}
 		return 0;
 	}
 

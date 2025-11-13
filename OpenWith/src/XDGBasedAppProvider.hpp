@@ -248,7 +248,7 @@ private:
 
 	// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates call.
 	// This is used by GetMimeTypes to avoid redundant work.
-	std::unordered_set<RawMimeProfile, RawMimeProfile::Hash> _last_mime_profiles;
+	std::unordered_set<RawMimeProfile, RawMimeProfile::Hash> _last_unique_mime_profiles;
 
 	// --- Platform-specific settings (values are loaded from INI) ---
 	bool _use_xdg_mime_tool;

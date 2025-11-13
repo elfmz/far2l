@@ -292,8 +292,6 @@ class ImageViewer
 		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
 		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
-		const auto &text_prefix = StrPrintf("Processing file: \"%s\"\n", _cur_file.c_str());
-
 		DenoteState("Analyzing...");
 		// 2. Получаем оригинальные размеры картинки
 

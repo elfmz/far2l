@@ -280,8 +280,8 @@ To control how RAR archives will be handled in multiarc:
 
 There're also options to toggle other plugins build in same way:
 `-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
-`-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
-`-DEDSORT=no`, `-DFILECASE=no`, `-DHEXITOR=no`, `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
+`-DEDSORT=no`, `-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
+`-DFILECASE=no`, `-DHEXITOR=no`, `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
 `-DOPENWITH=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 

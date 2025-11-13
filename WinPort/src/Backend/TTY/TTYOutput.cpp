@@ -578,17 +578,22 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
 
 void TTYOutput::RequestCellSize()
 {
-	// Запрос размера ячейки в пикселях. Ответ: ESC [ 6 ; height ; width t
+	// Expected reply: ESC [ 6 ; height ; width t
 	Format(ESC "[16t");
-	fprintf(stderr, "TTYOutput: Sent cell size request (ESC[16t).\n");
+}
+
+void TTYOutput::RequestStatus()
+{
+	Format(ESC "[5n");
 }
 
 static unsigned int KittyImageID(const std::string &str_id)
 {
-	return crc64(123, (const unsigned char *)str_id.c_str(), str_id.size());
+	unsigned int out = crc64(123, (const unsigned char *)str_id.c_str(), str_id.size());
+	return out ? out : 1;
 }
 
-void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img)
+unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img)
 {
 	unsigned int id = KittyImageID(str_id);
 
@@ -609,13 +614,15 @@ void TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage 
         Write(ESC "\\");
         offset += chunk_len;
     }
+	return id;
 }
 
-void TTYOutput::DeleteKittyImage(const std::string &str_id)
+unsigned int TTYOutput::DeleteKittyImage(const std::string &str_id)
 {
 	unsigned int id = KittyImageID(str_id);
 	// a=d (delete), d=I (by ID)
 	Format(ESC "_Ga=d,d=I,i=%u" ESC "\\", id);
+	return id;
 }
 
 // iTerm2 cmd+v workaround

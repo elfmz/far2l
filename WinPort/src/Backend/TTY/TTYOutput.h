@@ -84,9 +84,12 @@ public:
 
 	void SendFar2lInteract(const StackSerializer &stk_ser);
 	void SendOSC52ClipSet(const std::string &clip_data);
+
 	void RequestCellSize();
-	void SendKittyImage(const std::string &str_id, const TTYConsoleImage &img);
-	void DeleteKittyImage(const std::string &str_id);
+	void RequestStatus();
+
+	unsigned int SendKittyImage(const std::string &str_id, const TTYConsoleImage &img);
+	unsigned int DeleteKittyImage(const std::string &str_id);
 
 	void CheckiTerm2Hack();
 };

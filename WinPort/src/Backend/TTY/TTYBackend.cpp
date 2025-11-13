@@ -31,6 +31,8 @@
 #include "base64.h"
 
 
+#define PROBE_IMAGE_ID "tty-backend-image-probe"
+
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
@@ -212,6 +214,14 @@ void TTYBackend::ReaderThread()
 {
 	bool prev_far2l_tty = false;
 	while (!_exiting) {
+		{
+			std::unique_lock<std::mutex> lock(_async_mutex);
+			_pix_per_cell.X = _pix_per_cell.Y = 0;
+			_images_kitty_status = IKS_UNKNOWN;
+			for (const auto &it : _images) {
+				_images_to_display.insert(it.first);
+			}
+		}
 		_far2l_cursor_height = -1; // force cursor height update on next output dispatch
 		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
 
@@ -265,6 +275,7 @@ void TTYBackend::ReaderThread()
 			std::unique_lock<std::mutex> lock(_async_mutex);
 			_deadio = true;
 			_async_cond.notify_all();
+			_images_kitty_status_cond.notify_all();
 		}
 
 		pthread_join(writer_trd, nullptr);
@@ -372,7 +383,6 @@ void TTYBackend::WriterThread()
 	try {
 		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
 		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
-		tty_out.RequestCellSize();
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -412,6 +422,12 @@ void TTYBackend::WriterThread()
 			if (ae.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
 			}
+			if (ae.images_probe) {
+				DispatchImagesProbe(tty_out);
+			}
+			if (ae.images_probe_del) {
+				DispatchImagesProbeDelete(tty_out);
+			}
 			if (ae.images_changed) {
 				DispatchImages(tty_out);
 			}
@@ -445,20 +461,38 @@ void TTYBackend::WriterThread()
 	}
 }
 
+void TTYBackend::DispatchImagesProbe(TTYOutput &tty_out)
+{
+	tty_out.RequestCellSize();
+	TTYConsoleImage probe_img;
+	probe_img.width = probe_img.height = 1;
+	probe_img.pixel_data.resize(probe_img.width * probe_img.height * (probe_img.bpp / 8));
+	unsigned int kitty_id = tty_out.SendKittyImage(PROBE_IMAGE_ID, probe_img);
+	tty_out.RequestStatus();
+	fprintf(stderr, "%s: kitty_id=%u\n", __FUNCTION__, kitty_id);
+}
+
+void TTYBackend::DispatchImagesProbeDelete(TTYOutput &tty_out)
+{
+	unsigned int kitty_id = tty_out.DeleteKittyImage(PROBE_IMAGE_ID);
+	fprintf(stderr, "%s: kitty_id=%u\n", __FUNCTION__, kitty_id);
+}
 
 void TTYBackend::DispatchImages(TTYOutput &tty_out)
 {
-	std::lock_guard<std::mutex> lock(_images_mutex);
+	std::lock_guard<std::mutex> lock(_async_mutex);
 	for (const auto &id : _images_to_display) {
 		auto it = _images.find(id);
 		if (it != _images.end()) {
-			tty_out.SendKittyImage(id, it->second);
+			unsigned int kitty_id = tty_out.SendKittyImage(id, it->second);
+			fprintf(stderr, "%s: added kitty_id=%u for '%s'\n", __FUNCTION__, kitty_id, id.c_str());
 		}
 	}
 	_images_to_display.clear();
 
 	for (const auto &id : _images_to_delete) {
-		tty_out.DeleteKittyImage(id);
+		unsigned int kitty_id = tty_out.DeleteKittyImage(id);
+		fprintf(stderr, "%s: delete kitty_id=%u for '%s'\n", __FUNCTION__, kitty_id, id.c_str());
 	}
 	_images_to_delete.clear();
 }
@@ -988,6 +1022,7 @@ void TTYBackend::OnConsoleExit()
 		std::unique_lock<std::mutex> lock(_async_mutex);
 		_exiting = true;
 		_async_cond.notify_all();
+		_images_kitty_status_cond.notify_all();
 	}
 	KickAss();
 }
@@ -1179,6 +1214,29 @@ void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 	}
 }
 
+void TTYBackend::OnKittyGraphicsResponse(const std::string &s)
+{
+	fprintf(stderr, "OnKittyGraphicsResponse: '%s'\n", s.c_str());
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	if (_images_kitty_status == IKS_PROBING) {
+		_ae.images_probe_del = true;
+		_async_cond.notify_all();
+	}
+	_images_kitty_status = IKS_SUPPORTED;
+	_images_kitty_status_cond.notify_all();
+}
+
+
+void TTYBackend::OnStatusResponse(char c)
+{
+	fprintf(stderr, "OnStatusResponse: '%c'\n", c);
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	if (_images_kitty_status == IKS_PROBING) {
+		_images_kitty_status = IKS_UNSUPPORTED;
+	}
+	_images_kitty_status_cond.notify_all();
+}
+
 void TTYBackend::OnInputBroken()
 {
 	std::unique_lock<std::mutex> lock_sent(_far2l_interacts_sent);
@@ -1192,9 +1250,9 @@ void TTYBackend::OnInputBroken()
 void TTYBackend::OnGetCellSize(unsigned int w, unsigned int h)
 {
 	fprintf(stderr, "TTYBackend: Received cell size: %u x %u pixels\n", w, h);
-	_cell_width_px = w;
-	_cell_height_px = h;
-	_cell_size_known = true;
+	std::lock_guard<std::mutex> lock(_async_mutex);
+	_pix_per_cell.X = w;
+	_pix_per_cell.Y = h;
 }
 
 DWORD TTYBackend::QueryControlKeys()
@@ -1397,13 +1455,45 @@ void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 			memset(wgi, 0, sizeof(*wgi));
 		}
 
-	} else if (_cell_size_known) { // kitty?
-		const char *term = getenv("TERM");
-		if (term && strstr(term, "kitty")) {
-			wgi->Caps = WP_IMGCAP_RGBA;
+	} else if (CheckKittyImagesSupport()) {
+		wgi->PixPerCell = _pix_per_cell;
+		wgi->Caps = WP_IMGCAP_RGBA;
+	}
+}
+
+bool TTYBackend::CheckKittyImagesSupport()
+{
+	if ( (_nodetect & NODETECT_K) != 0) {
+		fprintf(stderr, "%s: nodetect\n", __FUNCTION__);
+		return false;
+	}
+	const auto reply_timeout_msec = 1000;
+	for (clock_t wait_begin = GetProcessUptimeMSec();;) {
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		if (_images_kitty_status == IKS_SUPPORTED) {
+			if (_pix_per_cell.X <= 0 || _pix_per_cell.Y <= 0) {
+				fprintf(stderr, "%s: bad cell size\n", __FUNCTION__);
+				return false;
+			}
+			fprintf(stderr, "%s: supported\n", __FUNCTION__);
+			return true;
 		}
-		wgi->PixPerCell.X = _cell_width_px;
-		wgi->PixPerCell.Y = _cell_height_px;
+		if (_images_kitty_status == IKS_UNSUPPORTED || _deadio || _exiting) {
+			fprintf(stderr, "%s: unsupported\n", __FUNCTION__);
+			_images_kitty_status = IKS_UNSUPPORTED;
+			return false;
+		}
+		if (_images_kitty_status == IKS_UNKNOWN) {
+			fprintf(stderr, "%s: probing\n", __FUNCTION__);
+			_images_kitty_status = IKS_PROBING;
+			_ae.images_probe = true;
+			_async_cond.notify_all();
+		} else if (GetProcessUptimeMSec() - wait_begin >= reply_timeout_msec) {
+			fprintf(stderr, "%s: kitty reply wait timed out\n", __FUNCTION__);
+			_images_kitty_status = IKS_UNSUPPORTED;
+			return false;
+		}
+		_images_kitty_status_cond.wait_for(lock, std::chrono::milliseconds(reply_timeout_msec));
 	}
 }
 
@@ -1439,21 +1529,24 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 		return ok != 0;
 	}
 
-	try {
-		std::string str_id(id);
-		std::lock_guard<std::mutex> lock(_images_mutex);
-		auto &img = _images[str_id];
+	if (CheckKittyImagesSupport()) {
+		try {
+			std::string str_id(id);
+			std::lock_guard<std::mutex> lock(_async_mutex);
+			auto &img = _images[str_id];
 
-	
-		img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + buffer_size);
+			img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + buffer_size);
 
-		img.bpp = (flags == WP_IMG_RGBA) ? 32 : 24;
-		img.width = width;
-		img.height = height;
-		img.pos = pos;
+			img.bpp = (flags == WP_IMG_RGBA) ? 32 : 24;
+			img.width = width;
+			img.height = height;
+			img.pos = pos;
 
-		_images_to_display.insert(str_id);
-	} catch (...) {
+			_images_to_display.insert(str_id);
+		} catch (...) {
+			return false;
+		}
+	} else {
 		return false;
 	}
 
@@ -1480,13 +1573,15 @@ bool TTYBackend::OnDeleteConsoleImage(const char *id)
 		return ok != 0;
 	}
 
-	{
+	if (CheckKittyImagesSupport()) {
 		std::string str_id(id);
-		std::lock_guard<std::mutex> lock(_images_mutex);
+		std::lock_guard<std::mutex> lock(_async_mutex);
 		if (!_images.erase(str_id)) {
 			return false;
 		}
 		_images_to_delete.insert(str_id);
+	} else {
+		return false;
 	}
 
 	std::lock_guard<std::mutex> lock(_async_mutex);

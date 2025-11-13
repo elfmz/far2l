@@ -301,6 +301,9 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 	} else if (strncmp(s, "far2l", 5) == 0) {
 		_tmp_stk_ser.FromBase64(s + 5, l - 5);
 		_handler->OnFar2lReply(_tmp_stk_ser);
+
+	} else if (*s == 'G') {
+		_handler->OnKittyGraphicsResponse(std::string(s + 1, l - 1));
 	}
 }
 
@@ -314,61 +317,13 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 	fprintf(stderr, "\n");
 	*/
 
-
-	/*
-		Handle Kitty graphics response: ESC _G i=<id>;OK ESC \
-		For now, just ignore it
-	*/
-	if (l > 1 && s[0] == '_' && s[1] == 'G') {
-
-		// Ждем как минимум "_Gi="
-		if (l < 4) 
-			return TTY_PARSED_WANTMORE;
-
-		if (s[2] == 'i' && s[3] == '=') {
-			size_t semicolon_pos = 0;
-			for (size_t i = 4; i < l; ++i) {
-				if (s[i] == ';') {
-					semicolon_pos = i;
-					break;
-				}
-				if (s[i] < '0' || s[i] > '9') {
-					// Мусор вместо ID, это не наш ответ.
-					fprintf(stderr, "TTYInput: Invalid char in Kitty response ID. Not a graphics response.\n");
-					return TTY_PARSED_BADSEQUENCE; // Считаем последовательность плохой
-				}
-			}
-
-			if (semicolon_pos > 0) {
-				// Мы нашли ';'. Теперь ищем "OK\e\\"
-				if (l > semicolon_pos + 4) {
-					if (s[semicolon_pos + 1] == 'O' && s[semicolon_pos + 2] == 'K' && s[semicolon_pos + 3] == '\e' && s[semicolon_pos + 4] == '\\') {
-						fprintf(stderr, "TTYInput: Parsed and ignored Kitty graphics OK response.\n");
-						return semicolon_pos + 5; // Успешно распознано и "съедено"
-					} else {
-						// После ';' идет что-то не то
-						fprintf(stderr, "TTYInput: Garbage after semicolon in Kitty response.\n");
-						return TTY_PARSED_BADSEQUENCE;
-					}
-				} else {
-					// Последовательность оборвалась после ';', ждем "OK\"
-					return TTY_PARSED_WANTMORE;
-				}
-			} else {
-				// Последовательность оборвалась на середине ID, ждем ';'
-				return TTY_PARSED_WANTMORE;
-			}
-		}
-		// Это какая-то другая команда _G, которую мы не знаем.
-	}
-
-
 	if (l > 1 && s[0] == '[' && (s[1] == 'I' || s[1] == 'O')) { // focus
 		_handler->OnFocusChange(s[1] == 'I');
 		return 2;
 	}
 
 	if (l > 2 && s[0] == '[' && s[2] == 'n') {
+		_handler->OnStatusResponse(s[1]);
 		return 3;
 	}
 
@@ -378,8 +333,11 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 				ParseAPC(s + 1, i - 1);
 				return i + 1;
 			}
+			if (s[i] == '\e' && i + 1 < l && s[i + 1] == '\\' ) {
+				ParseAPC(s + 1, i - 1);
+				return i + 2;
+			}
 		}
-		return 0;
 	}
 
 	if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && (s[3] == '0' || s[3] == '1') && s[4] == '~') {
@@ -428,15 +386,13 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 		return r;
 	}
 
-	//win32-input-mode must be checked before kitty
 	if (l > 1 && s[0] == '[') {
+		//win32-input-mode must be checked before kitty
 		r = TryParseAsWinTermEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;
 		}
-	}
 
-	if (l > 1 && s[0] == '[') {
 		r = TryParseAsKittyEscapeSequence(s, l);
 		if (r != TTY_PARSED_BADSEQUENCE) {
 			return r;

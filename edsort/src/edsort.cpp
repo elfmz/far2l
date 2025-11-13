@@ -71,7 +71,8 @@ void EdSort::Run()
 		return;
 	}
 	int lno;
-	bool wholelines = true;
+	bool firstineok = true;
+	bool lastlineok = true;
 	for (lno = ei.BlockStartLine; lno < ei.TotalLines; lno++) {
 		EditorGetString egs = {};
 		egs.StringNumber = lno;
@@ -81,8 +82,11 @@ void EdSort::Run()
 			// Stop when reaching the end of the text selection
 			break;
 		}
+		if( lno == ei.BlockStartLine && egs.SelStart != 0) {
+			firstineok = false;
+		}
 		if (egs.SelEnd != -1) {
-			wholelines = false;
+			lastlineok = false;
 			break;
 		}
 	}
@@ -95,21 +99,36 @@ void EdSort::Run()
 		return;
 	}
 
-	if( !wholelines ) {
+	EditorSelect es = {};
+	es.BlockType = ei.BlockType;
+	es.BlockStartLine = ei.BlockStartLine;
+	es.BlockStartPos = 0;
+	es.BlockWidth = 0;
+	es.BlockHeight = lno - ei.BlockStartLine;
+	if( !firstineok ) {
 		const wchar_t* err_msg[] = {
-			I18N(ps_title), I18N(ps_err_block_whole1), I18N(ps_err_block_whole2),
+			I18N(ps_title), I18N(ps_err_block_whole1), I18N(ps_err_block_whole2f),
 			I18N(ps_err_block_whole3), I18N(ps_err_block_whole4)
 		};
 		auto mbrc = msg_box(FMSG_WARNING | FMSG_MB_YESNOCANCEL, err_msg);
-		if( mbrc == 2 ||mbrc < 0)
+		if( mbrc == 2 || mbrc < 0)
+			return;
+		// Include/exclude first line from selection
+		if( mbrc == 1 )
+			es.BlockStartLine += 1;
+	}
+	if( !lastlineok ) {
+		const wchar_t* err_msg[] = {
+			I18N(ps_title), I18N(ps_err_block_whole1), I18N(ps_err_block_whole2l),
+			I18N(ps_err_block_whole3), I18N(ps_err_block_whole4)
+		};
+		auto mbrc = msg_box(FMSG_WARNING | FMSG_MB_YESNOCANCEL, err_msg);
+		if( mbrc == 2 || mbrc < 0)
 			return;
 		// Include/exclude last line from selection
-		EditorSelect es = {};
-		es.BlockType = ei.BlockType;
-		es.BlockStartLine = ei.BlockStartLine;
-		es.BlockStartPos = 0;
-		es.BlockWidth = 0;
-		es.BlockHeight = lno - ei.BlockStartLine + (mbrc == 0 ? 2 : 1);
+		es.BlockHeight = lno - es.BlockStartLine + (mbrc == 0 ? 2 : 1);
+	}
+	if(!firstineok || !lastlineok){
 		_PSI.EditorControl(ECTL_SELECT, &es);
 		_PSI.EditorControl(ECTL_REDRAW, nullptr);
 	}

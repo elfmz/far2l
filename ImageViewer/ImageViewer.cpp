@@ -19,7 +19,7 @@
 
 #define PLUGIN_TITLE L"Image Viewer"
 
-#define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
+#define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD DEL + - * / = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
 
 // how long msec wait before showing progress message window
 #define COMMAND_TIMEOUT_BEFORE_MESSAGE 300
@@ -36,7 +36,12 @@ static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
 
 // keep following settings across plugin invokations
-static bool s_fit_to_screen{true};
+static enum DefaultScale {
+	DS_EQUAL_SCREEN,
+	DS_LESSOREQUAL_SCREEN,
+	DS_EQUAL_IMAGE
+} s_def_scale{DS_EQUAL_SCREEN};
+
 static std::set<std::wstring> s_warned_tools;
 
 
@@ -326,7 +331,9 @@ class ImageViewer
 		_orig_h = orig_h;
 		if (_scale <= 0) {
 			_scale_max = ceil(std::max(double(4 * canvas_w) / orig_w, double(4 * canvas_h) / orig_h));
-			if (s_fit_to_screen || canvas_w < orig_w || canvas_h < orig_h) {
+			if (s_def_scale == DS_EQUAL_IMAGE) {
+				_scale = 1.0;
+			} else if (s_def_scale == DS_EQUAL_SCREEN || canvas_w < orig_w || canvas_h < orig_h) {
 				_scale = std::min(double(canvas_w) / double(orig_w), double(canvas_h) / double(orig_h));
 			} else {
 				_scale = 1.0;
@@ -628,11 +635,15 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			PurgeAccumulatedKeyPresses(); // avoid navigation etc keypresses 'accumulation'
 			switch (key) {
 				case KEY_MULTIPLY: case '*':
-					s_fit_to_screen = true;
+					s_def_scale = DS_LESSOREQUAL_SCREEN;
 					iv->Reset();
 					break;
 				case KEY_DIVIDE: case '/':
-					s_fit_to_screen = false;
+					s_def_scale = DS_EQUAL_SCREEN;
+					iv->Reset();
+				break;
+				case KEY_DEL: case KEY_NUMDEL:
+					s_def_scale = DS_EQUAL_IMAGE;
 					iv->Reset();
 				break;
 				case KEY_CLEAR: case '=': iv->Reset(); break;

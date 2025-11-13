@@ -404,27 +404,36 @@ class ImageViewer
 
 	void SetTitleAndStatus(const std::string &title, const std::string &status)
 	{
-		std::wstring ws_title = StrMB2Wide(title);
-		std::wstring ws_status = StrMB2Wide(status);
-
+		std::wstring ws_title = (_selection.find(_cur_file) != _selection.end()) ? L"* " : L"  ";
+		StrMB2Wide(title, ws_title, true);
 		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
-		FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
 
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 2, (LONG_PTR)&dd_status);
+		if (_selection.find(_cur_file) == _selection.end()) {
+			g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 1);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 0);
+		} else {
+			g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 0);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 1);
+		}
+
+		// update status after title, so it will get redrawn after too, and due to that - will remain visible
+		std::wstring ws_status = StrMB2Wide(status);
+		FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 3, (LONG_PTR)&dd_status);
 	}
 
 	void DenoteState(const char *stage = NULL)
 	{
-		std::string title = (_selection.find(_cur_file) != _selection.end()) ? "* " : "  ";
-		title+= _cur_file;
+		std::string title = _cur_file;
 		if (stage) {
 			title+= " [";
 			title+= stage;
 			title+= ']';
-		}
-		else if (_orig_w > 0 && _orig_h > 0)
+		} else if (_orig_w > 0 && _orig_h > 0) {
 			title+= " (" + std::to_string(_orig_w) + 'x' + std::to_string(_orig_h) + ')';
+		}
 
 		std::string status = HINT_STRING;
 
@@ -690,7 +699,8 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 	g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
 
 	FarDialogItem DlgItems[] = {
-		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
+		{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
+		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN, 0, L"???", 0 },
 		{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0},
 		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
 	};

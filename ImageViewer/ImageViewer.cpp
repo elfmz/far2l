@@ -17,6 +17,8 @@
 
 #define WINPORT_IMAGE_ID "image_viewer"
 
+#define PLUGIN_TITLE L"Image Viewer"
+
 #define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD + - = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
 
 // how long msec wait before showing progress message window
@@ -43,7 +45,7 @@ public:
 		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 		_h_scr = g_far.SaveScreen(0, 0, -1, -1);
 		wchar_t buf[0x100]{};
-		swprintf(buf, ARRAYSIZE(buf) - 1, L"ImageViewer\nFile of %s:\n", size_str.c_str());
+		swprintf(buf, ARRAYSIZE(buf) - 1, PLUGIN_TITLE L"\nFile of %s:\n", size_str.c_str());
 		std::wstring tmp = buf;
 		StrMB2Wide(file, tmp, true);
 		tmp+= L'\n';
@@ -77,7 +79,7 @@ static void PurgeAccumulatedKeyPresses()
 struct ToolExec : ExecAsync
 {
 	// return false in case tool run dismissed by user, otherwise always return true
-	bool FN_PRINTF_ARGS(5) Run(const char *pkg, const std::string &file, const std::string &size_str, const char *info_fmt, ...)
+	bool FN_PRINTF_ARGS(5) Run(const std::string &file, const std::string &size_str, const char *pkg, const char *info_fmt, ...)
 	{
 		if (Start() && !Wait(COMMAND_TIMEOUT_BEFORE_MESSAGE)) {
 			va_list args;
@@ -106,8 +108,7 @@ struct ToolExec : ExecAsync
 			static std::set<std::wstring> s_warned_tools;
 			if (s_warned_tools.insert(ws_tool).second) {
 				const auto &ws_pkg = MB2Wide(pkg);
-				const wchar_t *MsgItems[]={
-					L"Image Viewer",
+				const wchar_t *MsgItems[] = { PLUGIN_TITLE,
 					L"Failed to run tool:", ws_tool.c_str(),
 					L"Please install following package:", ws_pkg.c_str(),
 					L"Ok"
@@ -138,7 +139,11 @@ class ImageViewer
 	{
 		std::wstring ws_cur_file = L"\"" + StrMB2Wide(_cur_file) + L"\"";
 		std::wstring werr_str = StrMB2Wide(_err_str);
-		const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str(), werr_str.c_str(), L"Ok"};
+		const wchar_t *MsgItems[] = { PLUGIN_TITLE,
+			L"Failed to load image file:",
+			ws_cur_file.c_str(),
+			werr_str.c_str(),
+			L"Ok"};
 		g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
 	}
 
@@ -218,7 +223,7 @@ class ImageViewer
 		ffprobe.AddArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
 			"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file);
 
-		if (!ffprobe.Run("ffmpeg", _cur_file, _file_size_str, "Obtaining video frames count...")) {
+		if (!ffprobe.Run(_cur_file, _file_size_str, "ffmpeg", "Obtaining video frames count...")) {
 			return false;
 		}
 		const auto &frames_count = ffprobe.FetchStdout();
@@ -242,7 +247,7 @@ class ImageViewer
 		ffmpeg.DontCare();
 		ffmpeg.AddArguments("ffmpeg", "-i", _cur_file,
 			"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file);
-		if (!ffmpeg.Run("ffmpeg", _cur_file, _file_size_str,
+		if (!ffmpeg.Run(_cur_file, _file_size_str, "ffmpeg",
 				"Obtaining 6 video frames of %d for preview...", frames_count_i)) {
 			return false;
 		}
@@ -298,7 +303,7 @@ class ImageViewer
 		int orig_w = 0, orig_h = 0;
 		ToolExec identify;
 		identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
-		if (!identify.Run("imagemagick", _cur_file, _file_size_str, "Obtaining picture size...")) {
+		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size...")) {
 			return false;
 		}
 
@@ -353,7 +358,7 @@ class ImageViewer
 		convert.AddArguments("-depth", "8", "rgba:-");
 
 		std::vector<char> final_pixel_data;
-		if (!convert.Run("imagemagick", _cur_file, _file_size_str, "Convering picture...")) {
+		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {
 			return false;
 		}
 		convert.FetchStdout(final_pixel_data);
@@ -709,7 +714,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->Flags = 0;
 
 	static const wchar_t *PluginMenuStrings[1];
-	PluginMenuStrings[0] = L"Image Viewer";
+	PluginMenuStrings[0] = PLUGIN_TITLE;
 	Info->PluginMenuStrings = PluginMenuStrings;
 	Info->PluginMenuStringsNumber = 1;
 }

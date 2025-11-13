@@ -634,15 +634,15 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			const int key = (int)(Param2 & ~KEY_SHIFT);
 			PurgeAccumulatedKeyPresses(); // avoid navigation etc keypresses 'accumulation'
 			switch (key) {
-				case KEY_MULTIPLY: case '*':
+				case 'a': case 'A': case KEY_MULTIPLY: case '*':
 					s_def_scale = DS_LESSOREQUAL_SCREEN;
 					iv->Reset();
 					break;
-				case KEY_DIVIDE: case '/':
+				case 'q': case 'Q': case KEY_DEL: case KEY_NUMDEL:
 					s_def_scale = DS_EQUAL_SCREEN;
 					iv->Reset();
 				break;
-				case KEY_DEL: case KEY_NUMDEL:
+				case 'z': case 'Z': case KEY_DIVIDE: case '/':
 					s_def_scale = DS_EQUAL_IMAGE;
 					iv->Reset();
 				break;

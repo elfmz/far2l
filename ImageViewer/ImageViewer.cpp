@@ -35,21 +35,19 @@ static FarStandardFunctions g_fsf;
 
 class ImageViewerMessage
 {
-private:
 	HANDLE _h_scr{nullptr};
 
 public:
-	ImageViewerMessage(const std::string &text1, const std::string &text2 = "", const std::string &title = "ImageViewer")
+	ImageViewerMessage(const std::string &file, const std::string &size_str, const std::string &info)
 	{
 		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 		_h_scr = g_far.SaveScreen(0, 0, -1, -1);
-		std::wstring tmp = StrMB2Wide(title);
+		wchar_t buf[0x100]{};
+		swprintf(buf, ARRAYSIZE(buf) - 1, L"ImageViewer\nFile of %s:\n", size_str.c_str());
+		std::wstring tmp = buf;
+		StrMB2Wide(file, tmp, true);
 		tmp+= L'\n';
-		tmp+= StrMB2Wide(text1);
-		if (!text1.empty() && !text2.empty() && text1.back() != L'\n') {
-			tmp+= L'\n';
-		}
-		tmp+= StrMB2Wide(text2);
+		StrMB2Wide(info, tmp, true);
 		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
 	}
 
@@ -79,10 +77,15 @@ static void PurgeAccumulatedKeyPresses()
 struct ToolExec : ExecAsync
 {
 	// return false in case tool run dismissed by user, otherwise always return true
-	bool Run(const std::string &text1, const std::string &text2, const char *pkg)
+	bool FN_PRINTF_ARGS(5) Run(const char *pkg, const std::string &file, const std::string &size_str, const char *info_fmt, ...)
 	{
 		if (Start() && !Wait(COMMAND_TIMEOUT_BEFORE_MESSAGE)) {
-			ImageViewerMessage msg(text1, text2);
+			va_list args;
+			va_start(args, info_fmt);
+			const std::string &info = StrPrintfV(info_fmt, args);
+			va_end(args);
+
+			ImageViewerMessage msg(file, size_str, info);
 			do {
 				if (CheckForDismissProcessingKeyPress()) {
 					KillSoftly();
@@ -117,12 +120,12 @@ struct ToolExec : ExecAsync
 	}
 };
 
-static bool s_allow_initial_enlarge{true}; // keep this setting across plugin invokations
+static bool s_fit_to_screen{true}; // keep this setting across plugin invokations
 
 class ImageViewer
 {
 	HANDLE _dlg{};
-	std::string _initial_file, _cur_file, _render_file, _tmp_file;
+	std::string _initial_file, _cur_file, _render_file, _tmp_file, _file_size_str;
 	std::set<std::string> _selection, _all_files;
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
@@ -136,7 +139,7 @@ class ImageViewer
 		std::wstring ws_cur_file = L"\"" + StrMB2Wide(_cur_file) + L"\"";
 		std::wstring werr_str = StrMB2Wide(_err_str);
 		const wchar_t *MsgItems[]={L"Image Viewer", L"Failed to load image file:", ws_cur_file.c_str(), werr_str.c_str(), L"Ok"};
-		g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_WARNING, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
 	}
 
 	bool IterateFile(bool forward)
@@ -196,21 +199,17 @@ class ImageViewer
 		_render_file = _cur_file;
 
 		struct stat st {};
-		if (stat(_cur_file.c_str(), &st) == -1) {
+		if (stat(_cur_file.c_str(), &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0) {
 			_selection.erase(_cur_file); // remove non-loadable files from _selection
 			return false;
 		}
 
-		if (!S_ISREG(st.st_mode) || st.st_size == 0) {
-			_selection.erase(_cur_file); // remove non-loadable files from _selection
-			return false;
-		}
+		StrWide2MB(FileSizeString(st.st_size), _file_size_str);
 
 		if (!IsVideoFile()) {
 			return true;
 		}
 
-		const auto &text1 = StrPrintf("Processing video file (%ls)\n\"%s\"", FileSizeString(st.st_size).c_str(), _cur_file.c_str());
 		_orig_w = _orig_h = 0; // clear info about image size for title
 
 		DenoteState("Transforming...");
@@ -218,7 +217,8 @@ class ImageViewer
 		ToolExec ffprobe;
 		ffprobe.AddArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
 			"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file);
-		if (!ffprobe.Run(text1, "Video file: get count of frames...", "ffmpeg")) {
+
+		if (!ffprobe.Run("ffmpeg", _cur_file, _file_size_str, "Obtaining video frames count...")) {
 			return false;
 		}
 		const auto &frames_count = ffprobe.FetchStdout();
@@ -242,9 +242,8 @@ class ImageViewer
 		ffmpeg.DontCare();
 		ffmpeg.AddArguments("ffmpeg", "-i", _cur_file,
 			"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file);
-		const auto &text2 = StrPrintf(
-			"Video file has %d frames.\nObtaining 6 frames to preview picture...", frames_count_i);
-		if (!ffmpeg.Run(text1, text2, "ffmpeg")) {
+		if (!ffmpeg.Run("ffmpeg", _cur_file, _file_size_str,
+				"Obtaining 6 video frames of %d for preview...", frames_count_i)) {
 			return false;
 		}
 
@@ -293,7 +292,7 @@ class ImageViewer
 		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
 		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
-		const auto &text1 = StrPrintf("Processing file: \"%s\"", _cur_file.c_str());
+		const auto &text_prefix = StrPrintf("Processing file: \"%s\"\n", _cur_file.c_str());
 
 		DenoteState("Analyzing...");
 		// 2. Получаем оригинальные размеры картинки
@@ -301,7 +300,7 @@ class ImageViewer
 		int orig_w = 0, orig_h = 0;
 		ToolExec identify;
 		identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
-		if (!identify.Run(text1, "Obtain picture size via ImageMagick 'identify'...", "imagemagick")) {
+		if (!identify.Run("imagemagick", _cur_file, _file_size_str, "Obtaining picture size...")) {
 			return false;
 		}
 
@@ -322,7 +321,7 @@ class ImageViewer
 		_orig_h = orig_h;
 		if (_scale <= 0) {
 			_scale_max = ceil(std::max(double(4 * canvas_w) / orig_w, double(4 * canvas_h) / orig_h));
-			if (s_allow_initial_enlarge || canvas_w < orig_w || canvas_h < orig_h) {
+			if (s_fit_to_screen || canvas_w < orig_w || canvas_h < orig_h) {
 				_scale = std::min(double(canvas_w) / double(orig_w), double(canvas_h) / double(orig_h));
 			} else {
 				_scale = 1.0;
@@ -356,7 +355,7 @@ class ImageViewer
 		convert.AddArguments("-depth", "8", "rgba:-");
 
 		std::vector<char> final_pixel_data;
-		if (!convert.Run(text1, "Convering picture via ImageMagick 'convert'...", "imagemagick")) {
+		if (!convert.Run("imagemagick", _cur_file, _file_size_str, "Convering picture...")) {
 			return false;
 		}
 		convert.FetchStdout(final_pixel_data);
@@ -593,12 +592,6 @@ public:
 		}
 		DenoteState();
 	}
-
-	void ToggleInitialEnlarge()
-	{
-		s_allow_initial_enlarge = !s_allow_initial_enlarge;
-		Reset();
-	}
 };
 
 
@@ -629,7 +622,17 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 			const int key = (int)(Param2 & ~KEY_SHIFT);
 			PurgeAccumulatedKeyPresses(); // avoid navigation etc keypresses 'accumulation'
 			switch (key) {
-				case KEY_CLEAR: case KEY_MULTIPLY: case '=': case '*': iv->Reset(); break;
+				case KEY_MULTIPLY: case '*':
+					s_fit_to_screen = true;
+					iv->Reset();
+					break;
+				case KEY_DIVIDE: case '/':
+					s_fit_to_screen = false;
+					iv->Reset();
+				break;
+				case KEY_CLEAR: case '=': iv->Reset(); break;
+				case KEY_ADD: case '+': iv->Scale(delta); break;
+				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;
 				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(delta, 0); break;
 				case KEY_NUMPAD4: case KEY_LEFT: iv->Shift(-delta, 0); break;
 				case KEY_NUMPAD2: case KEY_DOWN: iv->Shift(0, delta); break;
@@ -638,10 +641,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				case KEY_NUMPAD1: iv->Shift(-delta, delta); break;
 				case KEY_NUMPAD3: iv->Shift(delta, delta); break;
 				case KEY_NUMPAD7: iv->Shift(-delta, -delta); break;
-				case KEY_ADD: case '+': iv->Scale(delta); break;
-				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;
 				case KEY_TAB: iv->Rotate( (delta == 1) ? -90 : 90); break;
-				case 'F': case 'f': case '/': case KEY_DIVIDE: iv->ToggleInitialEnlarge(); break;
 				case KEY_INS: case KEY_NUMPAD0: iv->ToggleSelection(); break;
 				case KEY_SPACE: iv->Select(); break;
 				case KEY_BS: iv->Deselect(); break;

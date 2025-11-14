@@ -142,6 +142,11 @@ class ImageViewer
 	int _orig_w{0}, _orig_h{0}; // info about image size for title
 	std::string _err_str;
 
+	std::vector<char> _pixel_data, _viewport_data;
+	double _pixel_data_scale{0};
+	int _pixel_data_rotate{0};
+	int _pixel_data_w{0}, _pixel_data_h{0};
+
 	void ErrorMessage()
 	{
 		std::wstring ws_cur_file = L"\"" + StrMB2Wide(_cur_file) + L"\"";
@@ -231,9 +236,10 @@ class ImageViewer
 		return true;
 	}
 
-	bool InspectFileFormat()
+	bool PrepareImage()
 	{
 		_render_file = _cur_file;
+		_pixel_data.clear();
 
 		struct stat st {};
 		if (stat(_cur_file.c_str(), &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0) {
@@ -292,6 +298,69 @@ class ImageViewer
 		return IdentifyImage();
 	}
 
+	bool ConvertImage(int canvas_w, int canvas_h)
+	{
+		int resize_w = _orig_w, resize_h = _orig_h;
+		if (fabs(_scale - 1) > 0.01) {
+			resize_w = double(resize_w) * _scale;
+			resize_h = double(resize_h) * _scale;
+		}
+
+
+		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", _orig_w, _orig_h, canvas_w, canvas_h);
+
+		ToolExec convert;
+
+		convert.AddArguments("convert", "--", _render_file, "-background", "black", "-gravity", "Center");
+		if (_rotate != 0) {
+			convert.AddArguments("-rotate", _rotate);
+		}
+
+		/* if (_dx != 0 || _dy != 0) {
+			int rdx = long(_orig_w) * long(_dx) / 100;
+			int rdy = long(_orig_h) * long(_dy) / 100; // orig_h
+			const auto &roll_arg
+				= StrPrintf( (rdx >= 0) ? "+%d" : "%d", rdx)
+				+ StrPrintf( (rdy >= 0) ? "+%d" : "%d", rdy);
+			convert.AddArguments("-roll", roll_arg);
+		} */
+		convert.AddArguments("-resize", std::to_string(resize_w) + "x" + std::to_string(resize_h));
+		convert.AddArguments("-extent", std::to_string(resize_w) + "x" + std::to_string(resize_h));
+//		convert.AddArguments("-extent", std::to_string(canvas_w) + "x" + std::to_string(canvas_h));
+		convert.AddArguments("-depth", "8", "rgb:-");
+
+		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {
+			return false;
+		}
+		convert.FetchStdout(_pixel_data);
+
+		const size_t pixels_count = size_t(resize_w) * resize_h;
+		if (_pixel_data.size() != pixels_count * 3) {
+			_err_str = "ImageMagick 'convert' failed";
+			fprintf(stderr, "ERROR: %s. _pixel_data.size()=%lu while expected=%lu (%u * %u * 3)\n",
+				_err_str.c_str(), (unsigned long)_pixel_data.size(), (unsigned long)pixels_count * 4, resize_w, resize_h);
+			_selection.erase(_cur_file); // remove non-loadable files from _selection
+			_pixel_data.clear();
+			return false;
+		}
+
+		_pixel_data_scale = _scale;
+		_pixel_data_rotate = _rotate;
+		_pixel_data_w = resize_w;
+		_pixel_data_h = resize_h;
+		return true;
+	}
+
+	static int ShiftPercentsToPixels(int &percents, int width, int limit)
+	{
+		int pixels = long(width) * percents / 100;
+		if (abs(pixels) > limit) {
+			pixels = (percents < 0) ? -limit : limit;
+			percents = long(pixels) * 100 / width;
+		}
+		return pixels;
+	}
+
 	bool RenderImage(bool bmess = false)
 	{
 		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _render_file.c_str());
@@ -310,7 +379,6 @@ class ImageViewer
 			return false;
 		}
 
-		// 1. Получаем соотношение сторон ячейки терминала
 		WinportGraphicsInfo wgi{};
 
 		if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi)) {
@@ -326,8 +394,6 @@ class ImageViewer
 		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
 		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
 
-		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", _orig_w, _orig_h, canvas_w, canvas_h);
-
 		if (_scale <= 0) {
 			_scale_max = ceil(std::max(double(4 * canvas_w) / _orig_w, double(4 * canvas_h) / _orig_h));
 			if (s_def_scale == DS_EQUAL_IMAGE) {
@@ -341,64 +407,46 @@ class ImageViewer
 
 		DenoteState("Rendering...");
 		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
-		int resize_w = _orig_w, resize_h = _orig_h;
-		if (fabs(_scale - 1) > 0.01) {
-			resize_w = double(resize_w) * _scale;
-			resize_h = double(resize_h) * _scale;
-		}
 
-		ToolExec convert;
-		convert.AddArguments("convert", "--", _render_file, "-background", "black", "-gravity", "Center");
-		if (_rotate != 0) {
-			convert.AddArguments("-rotate", _rotate);
-		}
-
-		if (_dx != 0 || _dy != 0) {
-			int rdx = long(_orig_w) * long(_dx) / 100;
-			int rdy = long(_orig_h) * long(_dy) / 100; // orig_h
-			const auto &roll_arg
-				= StrPrintf( (rdx >= 0) ? "+%d" : "%d", rdx)
-				+ StrPrintf( (rdy >= 0) ? "+%d" : "%d", rdy);
-			convert.AddArguments("-roll", roll_arg);
-		}
-		convert.AddArguments("-resize", std::to_string(resize_w) + "x" + std::to_string(resize_h));
-		convert.AddArguments("-extent", std::to_string(canvas_w) + "x" + std::to_string(canvas_h));
-		convert.AddArguments("-depth", "8", "rgba:-");
-
-		std::vector<char> final_pixel_data;
-		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {
-			return false;
-		}
-		convert.FetchStdout(final_pixel_data);
-
-		const size_t pixels_count = size_t(canvas_w) * canvas_h;
-		if (final_pixel_data.size() != pixels_count * 4) {
-			_err_str = "ImageMagick 'convert' failed";
-			fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-			_selection.erase(_cur_file); // remove non-loadable files from _selection
-			return false;
-		}
-
-		DWORD flags = WP_IMG_RGB; // use RGBA only if image really has non-opaque pixels
-		for (size_t i = 0; i < pixels_count; ++i) {
-			if (final_pixel_data[i * 4 + 3] != (char)0xff) {
-				flags = WP_IMG_RGBA;
-				break;
+		if (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01 || _rotate != _pixel_data_rotate) {
+			if (!ConvertImage(canvas_w, canvas_h)) {
+				return false;
 			}
 		}
-		if (flags == WP_IMG_RGB) {
-			std::vector<char> rgb_pixel_data(pixels_count * 3);
-			for (size_t i = 0; i < pixels_count; ++i) {
-				rgb_pixel_data[i * 3] = final_pixel_data[i * 4];
-				rgb_pixel_data[i * 3 + 1] = final_pixel_data[i * 4 + 1];
-				rgb_pixel_data[i * 3 + 2] = final_pixel_data[i * 4 + 2];
-			}
-			final_pixel_data.swap(rgb_pixel_data);
+
+		_viewport_data.resize(canvas_w * canvas_h * 3);
+
+		int dst_left = (canvas_w > _pixel_data_w) ? (canvas_w - _pixel_data_w) / 2 : 0;
+		int src_left = (_pixel_data_w > canvas_w) ? (_pixel_data_w - canvas_w) / 2 : 0;
+		int dst_top = (canvas_h > _pixel_data_h) ? (canvas_h - _pixel_data_h) / 2 : 0;
+		int src_top = (_pixel_data_h > canvas_h) ? (_pixel_data_h - canvas_h) / 2 : 0;
+		int cpy_w = std::min(canvas_w, _pixel_data_w);
+		int cpy_h = std::min(canvas_h, _pixel_data_h);
+
+		if (_dx != 0 && _pixel_data_w > canvas_w) {
+			src_left-= ShiftPercentsToPixels(_dx, _pixel_data_w, (_pixel_data_w - canvas_w) / 2);
+		} else {
+			_dx = 0;
 		}
 
-		// 4. Создаем ConsoleImage с готовым битмапом.
-		fprintf(stderr, "--- Image processing finished, flags=%u ---\n\n", flags);
-		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, _pos, canvas_w, canvas_h, final_pixel_data.data()) != FALSE;
+		if (_dy != 0 && _pixel_data_h > canvas_h) {
+			src_top-= ShiftPercentsToPixels(_dy, _pixel_data_h, (_pixel_data_h - canvas_h) / 2);
+		} else {
+			_dy = 0;
+		}
+
+		fprintf(stderr, "--- Sending processed image to viewport [%d %d %d %d] -> [%d %d]\n",
+			src_left, src_top, src_left + cpy_w, src_top + cpy_h, dst_left, dst_top);
+
+
+		memset(_viewport_data.data(), 0, _viewport_data.size());
+		for (int y = 0; y < cpy_h; ++y) {
+			auto *dst = &_viewport_data[((dst_top + y) * canvas_w + dst_left) * 3];
+			const auto *src = &_pixel_data[((src_top + y) * _pixel_data_w + src_left) * 3];
+			memcpy(dst, src, cpy_w * 3);
+		}
+
+		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB, _pos, canvas_w, canvas_h, _viewport_data.data()) != FALSE;
 	}
 
 	void SetTitleAndStatus(const std::string &title, const std::string &status)
@@ -498,7 +546,7 @@ public:
 		_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
 
 		_err_str.clear();
-		if (!InspectFileFormat() || !RenderImage(true)) {
+		if (!PrepareImage() || !RenderImage(true)) {
 			ErrorMessage();
 			return false;
 		}
@@ -510,7 +558,7 @@ public:
 	void Home()
 	{
 		_cur_file = _initial_file;
-		if (InspectFileFormat() && RenderImage()) {
+		if (PrepareImage() && RenderImage()) {
 			DenoteState();
 		}
 	}
@@ -522,7 +570,7 @@ public:
 				_cur_file.clear();
 				return false; // bail out on logic error or infinite loop
 			}
-			if (InspectFileFormat() && RenderImage()) {
+			if (PrepareImage() && RenderImage()) {
 				DenoteState();
 				return true;
 			}
@@ -572,13 +620,13 @@ public:
 	{
 		if (horizontal != 0) {
 			_dx+= horizontal;
-			if (_dx >= 100) _dx-= 100;
-			if (_dx <= -100) _dx+= 100;
+			if (_dx > 100) _dx = 100;
+			if (_dx < -100) _dx = -100;
 		}
 		if (vertical != 0) {
 			_dy+= vertical;
-			if (_dy >= 100) _dy-= 100;
-			if (_dy <= -100) _dy+= 100;
+			if (_dy > 100) _dy = 100;
+			if (_dy < -100) _dy = -100;
 		}
 		RenderImage();
 		DenoteState();

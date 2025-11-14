@@ -37,6 +37,7 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 	_platform_settings_definitions = {
 		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true },
 		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true },
+		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false },
 		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false },
 		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true },
 		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true },
@@ -418,6 +419,9 @@ std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes()
 		}
 		if (!profile.file_mime.empty()) {
 			unique_mimes_for_profile.insert(profile.file_mime);
+		}
+		if (!profile.magika_mime.empty()) {
+			unique_mimes_for_profile.insert(profile.magika_mime);
 		}
 		if (!profile.stat_mime.empty()) {
 			unique_mimes_for_profile.insert(profile.stat_mime);
@@ -815,6 +819,8 @@ XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const
 			// Run expensive external tools ONLY for accessible regular files.
 			profile.xdg_mime = MimeTypeFromXdgMimeTool(pathname);
 			profile.file_mime = MimeTypeFromFileTool(pathname);
+			profile.magika_mime = MimeTypeFromMagikaTool(pathname);
+
 		}
 
 	} else if (S_ISDIR(st.st_mode)) {
@@ -852,6 +858,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 	// Use the pre-detected types from the RawMimeProfile in order of priority.
 	add_unique(profile.xdg_mime);
 	add_unique(profile.file_mime);
+	add_unique(profile.magika_mime);
 	add_unique(profile.stat_mime);
 	add_unique(profile.ext_mime);
 
@@ -977,6 +984,18 @@ std::string XDGBasedAppProvider::MimeTypeFromFileTool(const std::string& pathnam
 		auto escaped_pathname = EscapeArgForShell(pathname);
 		result = RunCommandAndCaptureOutput("file --brief --dereference --mime-type " + escaped_pathname + " 2>/dev/null");
 	}
+	return result;
+}
+
+
+std::string XDGBasedAppProvider::MimeTypeFromMagikaTool(const std::string& pathname)
+{
+	std::string result;
+	if(_use_magika_tool) {
+		auto escaped_pathname = EscapeArgForShell(pathname);
+		result = RunCommandAndCaptureOutput("magika --no-colors --format %m " + escaped_pathname + " 2>/dev/null");
+	}
+
 	return result;
 }
 

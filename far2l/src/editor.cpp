@@ -704,6 +704,10 @@ void Editor::ShowEditor(int CurLineOnly)
 					MoveCursor(X1, Y);
 				}
 			}
+			if (CurVisualLine < CurLogicalLine->GetVisualLineCount() - 1)
+			{
+				HighlightAsWrapped(Y, ShowString);
+			}
 
 			// Advance to the next visual line
 			CurVisualLine++;
@@ -3767,6 +3771,72 @@ int Editor::CalcDistance(Edit *From, Edit *To, int MaxDist)
 
 	return (Distance);
 }
+
+void Editor::HighlightAsWrapped(int Y, Edit &ShowString)
+{
+	int lineLen = ShowString.GetLength();
+	if (lineLen <= 0)
+		return;
+
+	int lastCharPos = lineLen - 1;
+
+	// 1. Узнаем базовый цвет строки.
+	uint64_t finalColor = ShowString.GetObjectColor();
+
+	// 2. Ищем наиболее подходящий (самый "узкий") ColorItem для последнего символа.
+	ColorItem ci;
+	int bestSpan = std::numeric_limits<int>::max();
+
+	// Используем существующий метод GetColor для итерации по списку.
+	for (size_t i = 0; ShowString.GetColor(&ci, i); ++i)
+	{
+		// Сначала обработаем цвет фона для всей строки ([-1, -1])
+		if (ci.StartPos == -1 && ci.EndPos == -1) {
+			finalColor = ci.Color;
+			bestSpan = std::numeric_limits<int>::max(); // Фон имеет самый низкий приоритет
+			continue;
+		}
+
+		// Теперь ищем более специфичные цвета, которые покрывают наш символ
+		if (lastCharPos >= ci.StartPos && lastCharPos <= ci.EndPos)
+		{
+			int currentSpan = ci.EndPos - ci.StartPos;
+			if (currentSpan <= bestSpan) // Чем меньше диапазон, тем цвет "важнее"
+			{
+				finalColor = ci.Color;
+				bestSpan = currentSpan;
+			}
+		}
+	}
+
+	// 3. Инвертируем найденный цвет (исправленная логика инверсии)
+	DWORD64 invertedAttr =
+		((finalColor & 0xF) << 4) |
+		((finalColor >> 4) & 0xF) |
+		(finalColor & 0xFF00ULL) |
+		((finalColor & (0xFFFFFFull << 16)) << 24) |
+		((finalColor & (0xFFFFFFull << 40)) >> 24);
+
+	// 4. Записываем результат напрямую в экранный буфер
+	int startCell = ShowString.RealPosToCell(lastCharPos);
+	int endCell = ShowString.RealPosToCell(lastCharPos + 1);
+
+	int startX = X1 + startCell;
+	int endX = X1 + endCell - 1;
+
+	if (startX > XX2) return;
+	if (endX > XX2) endX = XX2;
+
+	for (int x = startX; x <= endX; ++x)
+	{
+		CHAR_INFO Fci;
+		// Читаем только для того, чтобы не затереть сам символ
+		ScrBuf.Read(x, Y, x, Y, &Fci, 1);
+		Fci.Attributes = invertedAttr;
+		ScrBuf.Write(x, Y, &Fci, 1);
+	}
+}
+
 void Editor::GoToVisualLine(int VisualLine)
 {
 	if (VisualLine < 0) VisualLine = 0;

@@ -3778,42 +3778,61 @@ void Editor::HighlightAsWrapped(int Y, Edit &ShowString)
 	if (lineLen <= 0)
 		return;
 
-	// Мы хотим изменить только самый последний символ визуальной строки.
 	int lastCharPos = lineLen - 1;
 
-	// Один символ может занимать одну или две экранные ячейки (для CJK и т.п.).
-	// Нам нужно найти экранные координаты для всех ячеек этого символа.
+	// 1. Узнаем базовый цвет строки.
+	uint64_t finalColor = ShowString.GetObjectColor();
+
+	// 2. Ищем наиболее подходящий (самый "узкий") ColorItem для последнего символа.
+	ColorItem ci;
+	int bestSpan = std::numeric_limits<int>::max();
+
+	// Используем существующий метод GetColor для итерации по списку.
+	for (size_t i = 0; ShowString.GetColor(&ci, i); ++i)
+	{
+		// Сначала обработаем цвет фона для всей строки ([-1, -1])
+		if (ci.StartPos == -1 && ci.EndPos == -1) {
+			finalColor = ci.Color;
+			bestSpan = std::numeric_limits<int>::max(); // Фон имеет самый низкий приоритет
+			continue;
+		}
+
+		// Теперь ищем более специфичные цвета, которые покрывают наш символ
+		if (lastCharPos >= ci.StartPos && lastCharPos <= ci.EndPos)
+		{
+			int currentSpan = ci.EndPos - ci.StartPos;
+			if (currentSpan <= bestSpan) // Чем меньше диапазон, тем цвет "важнее"
+			{
+				finalColor = ci.Color;
+				bestSpan = currentSpan;
+			}
+		}
+	}
+
+	// 3. Инвертируем найденный цвет (исправленная логика инверсии)
+	DWORD64 invertedAttr =
+		((finalColor & 0xF) << 4) |
+		((finalColor >> 4) & 0xF) |
+		(finalColor & 0xFF00ULL) |
+		((finalColor & (0xFFFFFFull << 16)) << 24) |
+		((finalColor & (0xFFFFFFull << 40)) >> 24);
+
+	// 4. Записываем результат напрямую в экранный буфер
 	int startCell = ShowString.RealPosToCell(lastCharPos);
 	int endCell = ShowString.RealPosToCell(lastCharPos + 1);
 
-	// Визуальная строка рендерится с LeftPos=0 относительно своего объекта Edit,
-	// поэтому мы добавляем X1 для получения абсолютных экранных координат.
 	int startX = X1 + startCell;
 	int endX = X1 + endCell - 1;
 
-	// Убедимся, что не пытаемся писать за пределами видимой области редактора.
-	if (startX > XX2)
-		return;
-	if (endX > XX2)
-		endX = XX2;
+	if (startX > XX2) return;
+	if (endX > XX2) endX = XX2;
 
-	// Итерируем по 1 или 2 ячейкам, которые занимает последний символ.
 	for (int x = startX; x <= endX; ++x)
 	{
 		CHAR_INFO Fci;
+		// Читаем только для того, чтобы не затереть сам символ
 		ScrBuf.Read(x, Y, x, Y, &Fci, 1);
-
-		DWORD64 Attr = FarColorToReal(COL_EDITORTEXT);
-
-		Attr =
-			((Attr & 0xF) << 4) |                    /* 0–3 → 4–7 */
-			((Attr >> 4) & 0xF) |                    /* 4–7 → 0–3 */
-			(Attr & 0xFF00ULL) |                     /* биты 8–15 без изменений */
-			((Attr & 0xFFFFFF0000ULL) << 24) |       /* 16–39 → 40–63 */
-			((Attr >> 24) & 0xFFFFFF0000ULL) |       /* 40–63 → 16–39 */
-			(Attr & 0xFFFFULL);                      /* 0–15 были обработаны, остальное сохраняем */
-
-		Fci.Attributes = Attr;
+		Fci.Attributes = invertedAttr;
 		ScrBuf.Write(x, Y, &Fci, 1);
 	}
 }

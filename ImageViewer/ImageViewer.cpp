@@ -357,6 +357,7 @@ class ImageViewer
 		if (abs(pixels) > limit) {
 			pixels = (percents < 0) ? -limit : limit;
 			percents = long(pixels) * 100 / width;
+			percents+= (percents > 0) ? 1 : -1;
 		}
 		return pixels;
 	}

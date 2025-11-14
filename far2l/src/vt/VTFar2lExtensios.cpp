@@ -533,7 +533,8 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 	stk_ser.PopNum(height);
 	uint8_t ok = 0;
 	if (width && height) {
-		std::vector<char> bitmap(size_t(width) * height * 4);
+		const size_t buffer_size = (flags == WP_IMG_RGB) ? (width) * height * 3 : (width) * height * 4;
+		std::vector<char> bitmap(buffer_size);
 		stk_ser.Pop(bitmap.data(), bitmap.size());
 		ok = WINPORT(SetConsoleImage)(NULL, id.c_str(), flags, pos, width, height, bitmap.data()) ? 1 : 0;
 	}

@@ -285,6 +285,7 @@ void GoToVisualLine(int VisualLine);
 	void AdjustScreenPosition();
 	void Undo(int redo);
 	void SelectAll();
+	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();

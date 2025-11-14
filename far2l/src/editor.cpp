@@ -704,6 +704,10 @@ void Editor::ShowEditor(int CurLineOnly)
 					MoveCursor(X1, Y);
 				}
 			}
+			if (CurVisualLine < CurLogicalLine->GetVisualLineCount() - 1)
+			{
+				HighlightAsWrapped(Y, ShowString);
+			}
 
 			// Advance to the next visual line
 			CurVisualLine++;
@@ -3767,6 +3771,53 @@ int Editor::CalcDistance(Edit *From, Edit *To, int MaxDist)
 
 	return (Distance);
 }
+
+void Editor::HighlightAsWrapped(int Y, Edit &ShowString)
+{
+	int lineLen = ShowString.GetLength();
+	if (lineLen <= 0)
+		return;
+
+	// Мы хотим изменить только самый последний символ визуальной строки.
+	int lastCharPos = lineLen - 1;
+
+	// Один символ может занимать одну или две экранные ячейки (для CJK и т.п.).
+	// Нам нужно найти экранные координаты для всех ячеек этого символа.
+	int startCell = ShowString.RealPosToCell(lastCharPos);
+	int endCell = ShowString.RealPosToCell(lastCharPos + 1);
+
+	// Визуальная строка рендерится с LeftPos=0 относительно своего объекта Edit,
+	// поэтому мы добавляем X1 для получения абсолютных экранных координат.
+	int startX = X1 + startCell;
+	int endX = X1 + endCell - 1;
+
+	// Убедимся, что не пытаемся писать за пределами видимой области редактора.
+	if (startX > XX2)
+		return;
+	if (endX > XX2)
+		endX = XX2;
+
+	// Итерируем по 1 или 2 ячейкам, которые занимает последний символ.
+	for (int x = startX; x <= endX; ++x)
+	{
+		CHAR_INFO Fci;
+		ScrBuf.Read(x, Y, x, Y, &Fci, 1);
+
+		DWORD64 Attr = FarColorToReal(COL_EDITORTEXT);
+
+		Attr =
+			((Attr & 0xF) << 4) |                    /* 0–3 → 4–7 */
+			((Attr >> 4) & 0xF) |                    /* 4–7 → 0–3 */
+			(Attr & 0xFF00ULL) |                     /* биты 8–15 без изменений */
+			((Attr & 0xFFFFFF0000ULL) << 24) |       /* 16–39 → 40–63 */
+			((Attr >> 24) & 0xFFFFFF0000ULL) |       /* 40–63 → 16–39 */
+			(Attr & 0xFFFFULL);                      /* 0–15 были обработаны, остальное сохраняем */
+
+		Fci.Attributes = Attr;
+		ScrBuf.Write(x, Y, &Fci, 1);
+	}
+}
+
 void Editor::GoToVisualLine(int VisualLine)
 {
 	if (VisualLine < 0) VisualLine = 0;

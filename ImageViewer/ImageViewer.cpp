@@ -316,17 +316,8 @@ class ImageViewer
 			convert.AddArguments("-rotate", _rotate);
 		}
 
-		/* if (_dx != 0 || _dy != 0) {
-			int rdx = long(_orig_w) * long(_dx) / 100;
-			int rdy = long(_orig_h) * long(_dy) / 100; // orig_h
-			const auto &roll_arg
-				= StrPrintf( (rdx >= 0) ? "+%d" : "%d", rdx)
-				+ StrPrintf( (rdy >= 0) ? "+%d" : "%d", rdy);
-			convert.AddArguments("-roll", roll_arg);
-		} */
-		convert.AddArguments("-resize", std::to_string(resize_w) + "x" + std::to_string(resize_h));
+		convert.AddArguments("-resize", std::to_string(int(_scale * 100)) + "%");
 		convert.AddArguments("-extent", std::to_string(resize_w) + "x" + std::to_string(resize_h));
-//		convert.AddArguments("-extent", std::to_string(canvas_w) + "x" + std::to_string(canvas_h));
 		convert.AddArguments("-depth", "8", "rgb:-");
 
 		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {

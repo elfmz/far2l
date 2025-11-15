@@ -163,7 +163,7 @@ struct ToolExec : ExecAsync
 					L"Ok"
 				};
 				errno = ExecError();
-				g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+				g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
 			}
 		}
 		return true;
@@ -233,8 +233,9 @@ class ImageViewer
 			L"Failed to load image file:",
 			ws_cur_file.c_str(),
 			werr_str.c_str(),
-			L"Ok"};
-		g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, sizeof(MsgItems)/sizeof(MsgItems[0]), 1);
+			L"Ok"
+		};
+		g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
 	}
 
 	bool IterateFile(bool forward)
@@ -971,8 +972,11 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 
 	static const wchar_t *PluginMenuStrings[1];
 	PluginMenuStrings[0] = PLUGIN_TITLE;
+
 	Info->PluginMenuStrings = PluginMenuStrings;
 	Info->PluginMenuStringsNumber = 1;
+
+	Info->CommandPrefix = L"img:";
 }
 
 static std::pair<std::string, bool> GetPanelItem(int cmd, int index)
@@ -1022,22 +1026,52 @@ static std::vector<std::string> GetAllItems()
 	return out;
 }
 
+static void OpenPluginAtCurrentPanel(const std::string &name)
+{
+	std::set<std::string> _selection = GetSelectedItems();
+	if (ShowImage(name, _selection)) {
+		std::vector<std::string> all_items = GetAllItems();
+		g_far.Control(PANEL_ACTIVE, FCTL_BEGINSELECTION, 0, 0);
+		for (size_t i = 0; i < all_items.size(); ++i) {
+			BOOL selected = _selection.find(all_items[i]) != _selection.end();
+			g_far.Control(PANEL_ACTIVE, FCTL_SETSELECTION, i, (LONG_PTR)selected);
+		}
+		g_far.Control(PANEL_ACTIVE,FCTL_ENDSELECTION, 0, 0);
+		g_far.Control(PANEL_ACTIVE,FCTL_REDRAWPANEL, 0, 0);
+	}
+}
+
+static void OpenPluginAtSomePath(const std::string &name)
+{
+	std::set<std::string> selection;
+	if (ShowImage(name, selection)) {
+		if (!selection.empty()) {
+			const wchar_t *MsgItems[] = { PLUGIN_TITLE,
+				L"Selection will not be applied cuz was invoked for non-panel file",
+				L"Ok"
+			};
+			g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
+		}
+	}
+}
+
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
 	if (OpenFrom == OPEN_PLUGINSMENU) {
 		const auto &fn_sel = GetPanelItem(FCTL_GETCURRENTPANELITEM, 0);
 		if (!fn_sel.first.empty()) {
-			std::set<std::string> _selection = GetSelectedItems();
-			if (ShowImage(fn_sel.first, _selection)) {
-				std::vector<std::string> all_items = GetAllItems();
-				g_far.Control(PANEL_ACTIVE, FCTL_BEGINSELECTION, 0, 0);
-				for (size_t i = 0; i < all_items.size(); ++i) {
-					BOOL selected = _selection.find(all_items[i]) != _selection.end();
-					g_far.Control(PANEL_ACTIVE, FCTL_SETSELECTION, i, (LONG_PTR)selected);
-				}
-				g_far.Control(PANEL_ACTIVE,FCTL_ENDSELECTION, 0, 0);
-				g_far.Control(PANEL_ACTIVE,FCTL_REDRAWPANEL, 0, 0);
-			}
+			OpenPluginAtCurrentPanel(fn_sel.first);
+		}
+	} else if (Item > 0xfff) {
+		const wchar_t *wide_path = (const wchar_t *)Item;
+		while (wcsncmp(wide_path, L"./", 2) == 0) {
+			wide_path+= 2;
+		}
+		const auto &path = Wide2MB(wide_path);
+		if (path.find('/') == std::string::npos) {
+			OpenPluginAtCurrentPanel(path);
+		} else {
+			OpenPluginAtSomePath(path);
 		}
 	}
 

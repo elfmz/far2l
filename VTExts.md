@@ -301,7 +301,7 @@ Queries the terminal's image rendering capabilities.
 -   **Out Stack:**
     | Argument          | Type       | Description                                  |
     | ----------------- | ---------- | -------------------------------------------- |
-    | Capabilities      | `uint64_t` | A bitmask of `WP_IMGCAP_*` flags.            |
+    | Capabilities      | `uint64_t` | A bitmask of `WP_IMGCAP_*` flags, see below. |
     | Cell Width (px)   | `uint16_t` | The width of a character cell in pixels.     |
     | Cell Height (px)  | `uint16_t` | The height of a character cell in pixels.    |
 

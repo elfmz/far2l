@@ -242,16 +242,28 @@ Checks if a specific data format is available on the clipboard.
 Puts data onto the clipboard.
 
 -   **In Stack:**
-    | Argument   | Type        | Description                             |
-    | ---------- | ----------- | --------------------------------------- |
-    | Format ID  | `uint32_t`  | The ID of the data format.              |
-    | Data       | `raw bytes` | The data buffer. Its size is determined by the next argument. |
-    | Data Size  | `uint32_t`  | The size of the data buffer.            |
+    | Argument   | Type        | Description                                                               |
+    | ---------- | ----------- | ------------------------------------------------------------------------- |
+    | Format ID  | `uint32_t`  | The ID of the data format.                                                |
+    | Data Size  | `uint32_t`  | The size of the data buffer that follows.                                 |
+    | Data       | `raw bytes` | The data buffer. (Prepended by any data from previous `..._SETDATACHUNK` calls). |
 -   **Out Stack:**
     | Argument   | Type       | Description                                  |
     | ---------- | ---------- | -------------------------------------------- |
     | Status     | `int8_t`   | `1` for success, `0` for failure, `-1` if not open. |
     | Data ID    | `uint64_t` | (Optional) A unique ID for the data (e.g., CRC64). |
+
+##### `FARTTY_INTERACT_CLIP_SETDATACHUNK` ('S')
+(Optional) Sends a chunk of data to the server. This allows for sending large amounts of data in the background, which can be canceled. This command can be used multiple times before a final `FARTTY_INTERACT_CLIP_SETDATA` call appends the last part of the data and finalizes the operation.
+
+> **Note:** This feature is optional and can only be used if the server reported the `FARTTY_FEATCLIP_CHUNKED_SET` flag during the `CLIP_OPEN` response.
+
+-   **In Stack:**
+    | Argument           | Type       | Description                                                                                                        |
+    | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+    | Encoded Chunk Size | `uint16_t` | The size of the chunk's data, right-shifted by 8 bits. The actual size is `value << 8`. A value of `0` cancels all pending chunks. |
+    | Chunk Data         | `raw bytes`| The raw byte data for this chunk.                                                                                  |
+-   **Out Stack:** None.
 
 ##### `FARTTY_INTERACT_CLIP_GETDATA` ('g')
 Retrieves data from the clipboard.
@@ -289,9 +301,15 @@ Queries the terminal's image rendering capabilities.
 -   **Out Stack:**
     | Argument          | Type       | Description                                  |
     | ----------------- | ---------- | -------------------------------------------- |
-    | Capabilities      | `uint64_t` | A bitmask of `WP_IMGCAP_*` flags (e.g., `0x02` for RGBA). |
+    | Capabilities      | `uint64_t` | A bitmask of `WP_IMGCAP_*` flags.            |
     | Cell Width (px)   | `uint16_t` | The width of a character cell in pixels.     |
     | Cell Height (px)  | `uint16_t` | The height of a character cell in pixels.    |
+
+`WP_IMGCAP_*` (Rendering Capabilities)
+
+-   `WP_IMGCAP_RGBA` (0x01): Client supports supports WP_IMG_RGB/WP_IMG_RGBA formats (see below).
+-   `WP_IMGCAP_SCROLL` (0x02): Client supports existing image scrolling.
+-   `WP_IMGCAP_ROTATE` (0x03): Client supports existing image rotation.
 
 ##### `FARTTY_INTERACT_IMAGE_SET` ('s')
 Uploads and displays an image.
@@ -300,16 +318,28 @@ Uploads and displays an image.
     | Argument      | Type        | Description                                  |
     | ------------- | ----------- | -------------------------------------------- |
     | Image ID      | `string`    | A unique identifier for the image.           |
-    | Flags         | `uint64_t`  | The image format (`0x01` for RGB, `0x02` for RGBA). |
+    | Flags         | `uint64_t`  | The image format flags, see below.           |
     | Position X    | `uint16_t`  | The horizontal character column.             |
     | Position Y    | `uint16_t`  | The vertical character row.                  |
     | Image Width   | `uint32_t`  | Image width in pixels.                       |
     | Image Height  | `uint32_t`  | Image height in pixels.                      |
-    | Image Data    | `raw bytes` | The raw RGB/RGBA pixel data.                 |
+    | Image Data    | `raw bytes` | The raw pixel data.                          |
 -   **Out Stack:**
     | Argument   | Type      | Description                                  |
     | ---------- | --------- | -------------------------------------------- |
     | Success    | `uint8_t` | `1` on success, `0` on failure.                |
+
+`WP_IMG_*` (Image Format Flags)
+
+-   `WP_IMG_RGBA` (0x00): Supported if WP_IMGCAP_RGBA was set
+-   `WP_IMG_RGB` (0x01): Supported if WP_IMGCAP_RGBA was set
+
+Flags below are supported only if WP_IMGCAP_SCROLL was reported. They are intended to scroll existing image instead of displaying a new one.
+
+-   `WP_IMG_SCROLL_AT_LEFT` (0x10000): Left->right scrolling, sending rectangle to insert at left
+-   `WP_IMG_SCROLL_AT_RIGHT` (0x20000): Right->left scrolling, sending rectangle to insert at right
+-   `WP_IMG_SCROLL_AT_TOP` (0x30000): Top->bottom scrolling, sending rectangle to insert at top
+-   `WP_IMG_SCROLL_AT_BOTTOM` (0x40000): Bottom->top scrolling, sending rectangle to insert at bottom
 
 ##### `FARTTY_INTERACT_IMAGE_DEL` ('d')
 Removes a previously displayed image.
@@ -318,6 +348,21 @@ Removes a previously displayed image.
     | Argument   | Type     | Description                           |
     | ---------- | -------- | ------------------------------------- |
     | Image ID   | `string` | The identifier of the image to remove. |
+-   **Out Stack:**
+    | Argument   | Type      | Description                                  |
+    | ---------- | --------- | -------------------------------------------- |
+    | Success    | `uint8_t` | `1` on success, `0` on failure.                |
+
+##### `FARTTY_INTERACT_IMAGE_ROT` ('r')
+Rotates and repositions a previously displayed image.
+
+-   **In Stack:**
+    | Argument      | Type       | Description                                                                 |
+    | ------------- | ---------- | --------------------------------------------------------------------------- |
+    | Image ID      | `string`   | The unique identifier of the image to rotate.                               |
+    | Position X    | `uint16_t` | The new horizontal character column for the image's top-left corner.        |
+    | Position Y    | `uint16_t` | The new vertical character row for the image's top-left corner.             |
+    | Rotation Angle| `uint8_t`  | The angle of rotation in 90-degree increments (`0`=0°, `1`=90°, `2`=180°, `3`=270°). |
 -   **Out Stack:**
     | Argument   | Type      | Description                                  |
     | ---------- | --------- | -------------------------------------------- |

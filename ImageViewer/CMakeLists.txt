@@ -2,6 +2,7 @@
 project(ImageViewer)
 
 set(SOURCES
+Plugin.cpp 
 ImageViewer.cpp 
 )
 

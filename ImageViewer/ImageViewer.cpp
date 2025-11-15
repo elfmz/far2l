@@ -382,22 +382,31 @@ class ImageViewer
 
 		ToolExec convert;
 
-		convert.AddArguments("convert", "--", _render_file, "-background", "black", "-gravity", "Center");
+		convert.AddArguments("convert", "--", _render_file);
 		if (fabs(_scale - 1) > 0.01) {
 			resize_w = double(resize_w) * _scale;
 			resize_h = double(resize_h) * _scale;
 			convert.AddArguments("-resize", std::to_string(int(_scale * 100)) + "%");
 		}
-		convert.AddArguments("-extent", std::to_string(resize_w) + "x" + std::to_string(resize_h));
-		convert.AddArguments("-depth", "8", "rgb:-");
+		convert.AddArguments("-print", "%w %h:", "-depth", "8", "rgb:-");
 
-		fprintf(stderr, "Image pixels _size, original: %dx%d resize: %dx%d\n",
-			_orig_w, _orig_h, resize_w, resize_h);
+		fprintf(stderr, "Image dimensions: original=%dx%d wanted=%dx%d [scale=%f]\n",
+			_orig_w, _orig_h, resize_w, resize_h, _scale);
 
 		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {
 			return false;
 		}
 		convert.FetchStdout(_pixel_data);
+		size_t print_end = 0;
+		while (print_end < _pixel_data.size() && print_end < 32 && _pixel_data[print_end] != ':') {
+			++print_end;
+		}
+		if (print_end < _pixel_data.size()) {
+			_pixel_data[print_end] = 0;
+			fprintf(stderr, "Obtained dimensions: %s\n", _pixel_data.data());
+			sscanf(_pixel_data.data(), "%d %d", &resize_w, &resize_h);
+			_pixel_data.erase(_pixel_data.begin(), _pixel_data.begin() + print_end + 1);
+		}
 
 		const size_t pixels_count = size_t(resize_w) * resize_h;
 		if (_pixel_data.size() != pixels_count * _pixel_size) {

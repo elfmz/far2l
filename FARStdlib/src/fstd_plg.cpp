@@ -17,7 +17,7 @@ static void _cdecl idAtExit(void)
 	FP_FSF = NULL;
 	delete[] FP_PluginRootKey;
 	FP_PluginRootKey = NULL;
-	delete[] FP_PluginStartPath;
+	free(FP_PluginStartPath);
 	FP_PluginStartPath = NULL;
 	//	FP_HModule = NULL;
 }
@@ -45,5 +45,7 @@ void WINAPI FP_SetStartupInfo(const PluginStartupInfo *Info, const char *KeyName
 
 SHAREDSYMBOL void PluginModuleOpen(const char *path)
 {
+	if (FP_PluginStartPath)
+		free(FP_PluginStartPath);
 	FP_PluginStartPath = strdup(path);
 }

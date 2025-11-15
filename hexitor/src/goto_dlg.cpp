@@ -26,9 +26,9 @@ LONG_PTR WINAPI goto_dlg::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR par
 		//Check parameters
 		if ( get_val() >= _file_size) {
 			wchar_t scv[80];
-			swprintf(scv, sizeof(scv), I18N(ps_goto_spec), _file_size-1);
+			swprintf(scv, ARRAYSIZE(scv), I18N(ps_goto_spec), _file_size-1);
 			const wchar_t* err_msg[] = { I18N(ps_goto_title), I18N(ps_goto_out_ofr), scv };
-			_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, sizeof(err_msg) / sizeof(err_msg[0]), 0);
+			_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, ARRAYSIZE(err_msg), 0);
 			return 0;
 		}
 	}
@@ -71,9 +71,9 @@ bool goto_dlg::show(const UINT64 file_size, UINT64& offset)
 			UINT64 off = get_val();
 			if ( off >= _file_size) {
 				wchar_t scv[80];
-				swprintf(scv, sizeof(scv), I18N(ps_goto_spec), _file_size-1);
+				swprintf(scv, ARRAYSIZE(scv), I18N(ps_goto_spec), _file_size-1);
 				const wchar_t* err_msg[] = { I18N(ps_goto_title), I18N(ps_goto_out_ofr), scv };
-				_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, sizeof(err_msg) / sizeof(err_msg[0]), 0);
+				_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, ARRAYSIZE(err_msg), 0);
 				continue;
 			}
 			offset = off;

@@ -1500,9 +1500,10 @@ bool TTYBackend::CheckKittyImagesSupport()
 bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer)
 {
 	size_t buffer_size;
-	if (flags == WP_IMG_RGBA) {
+	auto fmt = (flags & WP_IMG_MASK_FMT);
+	if ( fmt == WP_IMG_RGBA) {
 		buffer_size = size_t(width) * height * 4;
-	} else if (flags == WP_IMG_RGB) {
+	} else if ( fmt == WP_IMG_RGB) {
 		buffer_size = size_t(width) * height * 3;
 	} else {
 		return false;
@@ -1537,7 +1538,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 
 			img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + buffer_size);
 
-			img.bpp = (flags == WP_IMG_RGBA) ? 32 : 24;
+			img.bpp = fmt ? 32 : 24;
 			img.width = width;
 			img.height = height;
 			img.pos = pos;

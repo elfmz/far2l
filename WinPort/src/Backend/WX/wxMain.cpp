@@ -2171,7 +2171,7 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 
 void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	wgi->Caps = WP_IMGCAP_RGBA;
+	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_SCROLL;
 	wgi->PixPerCell.X = _paint_context.FontWidth();
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
@@ -2184,9 +2184,10 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 		std::optional<wxImage> wx_img;
 		const size_t num_pixels = size_t(width) * height;
 		unsigned char *pixel_data = (unsigned char *)buffer;
-		if (flags == WP_IMG_RGB) {
+		const auto fmt = (flags & WP_IMG_MASK_FMT);
+		if (fmt == WP_IMG_RGB) {
 			wx_img.emplace((int)width, (int)height, pixel_data, true);
-		} else if (flags == WP_IMG_RGBA) {
+		} else if (fmt == WP_IMG_RGBA) {
 			unsigned char *rgb = (unsigned char *)malloc(num_pixels * 3);
 			unsigned char *alpha = (unsigned char *)malloc(num_pixels);
 			for (size_t i = 0; i < num_pixels; ++i) {
@@ -2212,7 +2213,46 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
 		img.pos = pos;
-		img.bitmap = *wx_img;
+		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
+		if (scroll) { // scroll/move existing image
+			if (width && height) { // if empty image specified - its just a move operation
+				auto sz = img.bitmap.GetSize();
+				if (scroll == WP_IMG_SCROLL_AT_LEFT || scroll == WP_IMG_SCROLL_AT_RIGHT) {
+					if (height != (DWORD)sz.GetHeight()) {
+						fprintf(stderr, "WP_IMG_SCROLL_AT_LEFT: height mismatch, %u != %d\n", height, sz.GetHeight());
+						return false;
+					}
+				} else if (width != (DWORD)sz.GetWidth()) {
+					fprintf(stderr, "WP_IMG_SCROLL_AT_RIGHT: width mismatch, %u != %d\n", width, sz.GetWidth());
+					return false;
+				}
+				wxBitmap new_bmp(sz);
+				wxBitmap edge_bmp = *wx_img;
+				wxMemoryDC img_dc(img.bitmap), edge_dc(edge_bmp), new_dc(new_bmp);
+				switch (scroll) {
+					case WP_IMG_SCROLL_AT_LEFT:
+						new_dc.Blit(width, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, 0, 0, wxCOPY, false);
+						new_dc.Blit(0, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+					case WP_IMG_SCROLL_AT_RIGHT:
+						new_dc.Blit(0, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, width, 0, wxCOPY, false);
+						new_dc.Blit(sz.GetWidth() - width, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+					case WP_IMG_SCROLL_AT_TOP:
+						new_dc.Blit(0, height, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, 0, wxCOPY, false);
+						new_dc.Blit(0, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+					case WP_IMG_SCROLL_AT_BOTTOM:
+						new_dc.Blit(0, 0, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, height, wxCOPY, false);
+						new_dc.Blit(0, sz.GetHeight() - height, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+				}
+				img.bitmap = new_bmp;
+			}
+		} else {
+			img.bitmap = *wx_img;
+		}
+
 	} catch (...) {
 		_images.erase(str_id);
 		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);

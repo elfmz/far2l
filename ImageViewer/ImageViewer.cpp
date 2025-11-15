@@ -31,6 +31,7 @@
 #define EXITED_DUE_ERROR      -1
 #define EXITED_DUE_ENTER      42
 #define EXITED_DUE_ESCAPE     24
+#define EXITED_DUE_RESIZE     37
 
 static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
@@ -142,10 +143,11 @@ class ImageViewer
 	int _orig_w{0}, _orig_h{0}; // info about image size for title
 	std::string _err_str;
 
-	std::vector<char> _pixel_data, _viewport_data;
+	std::vector<char> _pixel_data, _send_data;
 	double _pixel_data_scale{0};
 	int _pixel_data_rotate{0};
 	int _pixel_data_w{0}, _pixel_data_h{0};
+	int _prev_left{0}, _prev_top{0};
 
 	void ErrorMessage()
 	{
@@ -218,7 +220,7 @@ class ImageViewer
 
 		ToolExec identify;
 		identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
-		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size (via ImageMagick 'identify')...")) {
+		if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size...")) {
 			return false;
 		}
 
@@ -259,7 +261,7 @@ class ImageViewer
 		ffprobe.AddArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
 			"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file);
 
-		if (!ffprobe.Run(_cur_file, _file_size_str, "ffmpeg", "Obtaining video frames count (via ffmpeg 'ffprobe')...")) {
+		if (!ffprobe.Run(_cur_file, _file_size_str, "ffmpeg", "Obtaining video frames count...")) {
 			return false;
 		}
 		const auto &frames_count = ffprobe.FetchStdout();
@@ -284,7 +286,7 @@ class ImageViewer
 		ffmpeg.AddArguments("ffmpeg", "-i", _cur_file,
 			"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file);
 		if (!ffmpeg.Run(_cur_file, _file_size_str, "ffmpeg",
-				"Obtaining 6 video frames of %d for preview (via ffmpeg)...", frames_count_i)) {
+				"Obtaining 6 video frames of %d for preview...", frames_count_i)) {
 			return false;
 		}
 
@@ -298,16 +300,9 @@ class ImageViewer
 		return IdentifyImage();
 	}
 
-	bool ConvertImage(int canvas_w, int canvas_h)
+	bool ConvertImage(int viewport_w, int viewport_h)
 	{
 		int resize_w = _orig_w, resize_h = _orig_h;
-		if (fabs(_scale - 1) > 0.01) {
-			resize_w = double(resize_w) * _scale;
-			resize_h = double(resize_h) * _scale;
-		}
-
-
-		fprintf(stderr, "Image pixels _size, original: %dx%d canvas: %dx%d\n", _orig_w, _orig_h, canvas_w, canvas_h);
 
 		ToolExec convert;
 
@@ -316,11 +311,18 @@ class ImageViewer
 			convert.AddArguments("-rotate", _rotate);
 		}
 
-		convert.AddArguments("-resize", std::to_string(int(_scale * 100)) + "%");
+		if (fabs(_scale - 1) > 0.01) {
+			resize_w = double(resize_w) * _scale;
+			resize_h = double(resize_h) * _scale;
+			convert.AddArguments("-resize", std::to_string(int(_scale * 100)) + "%");
+		}
 		convert.AddArguments("-extent", std::to_string(resize_w) + "x" + std::to_string(resize_h));
 		convert.AddArguments("-depth", "8", "rgb:-");
 
-		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture (via ImageMagick 'convert')...")) {
+		fprintf(stderr, "Image pixels _size, original: %dx%d resize: %dx%d viewport: %dx%d\n",
+			_orig_w, _orig_h, resize_w, resize_h, viewport_w, viewport_h);
+
+		if (!convert.Run(_cur_file, _file_size_str, "imagemagick", "Convering picture...")) {
 			return false;
 		}
 		convert.FetchStdout(_pixel_data);
@@ -353,6 +355,18 @@ class ImageViewer
 		return pixels;
 	}
 
+	static void Blit(int cpy_w, int cpy_h,
+			char *dst, int dst_left, int dst_top, int dst_width,
+			const char *src, int src_left, int src_top, int src_width)
+	{
+		for (int y = 0; y < cpy_h; ++y) {
+			memcpy(
+				&dst[((dst_top + y) * dst_width + dst_left) * 3],
+				&src[((src_top + y) * src_width + src_left) * 3],
+				cpy_w * 3);
+		}
+	}
+
 	bool RenderImage(bool bmess = false)
 	{
 		fprintf(stderr, "\n--- ImageViewer: '%s' ---\n", _render_file.c_str());
@@ -383,62 +397,114 @@ class ImageViewer
 			fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
 			return false;
 		}
-		int canvas_w = int(_size.X) * wgi.PixPerCell.X;
-		int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
+		int viewport_w = int(_size.X) * wgi.PixPerCell.X;
+		int viewport_h = int(_size.Y) * wgi.PixPerCell.Y;
 
 		if (_scale <= 0) {
-			_scale_max = ceil(std::max(double(4 * canvas_w) / _orig_w, double(4 * canvas_h) / _orig_h));
+			_scale_max = ceil(std::max(double(4 * viewport_w) / _orig_w, double(4 * viewport_h) / _orig_h));
 			if (s_def_scale == DS_EQUAL_IMAGE) {
 				_scale = 1.0;
-			} else if (s_def_scale == DS_EQUAL_SCREEN || canvas_w < _orig_w || canvas_h < _orig_h) {
-				_scale = std::min(double(canvas_w) / double(_orig_w), double(canvas_h) / double(_orig_h));
+			} else if (s_def_scale == DS_EQUAL_SCREEN || viewport_w < _orig_w || viewport_h < _orig_h) {
+				_scale = std::min(double(viewport_w) / double(_orig_w), double(viewport_h) / double(_orig_h));
 			} else {
 				_scale = 1.0;
 			}
 		}
 
 		DenoteState("Rendering...");
-		// 3. Формируем команду для imagemagick: ресайз, центрирование и добавление полей.
 
-		if (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01 || _rotate != _pixel_data_rotate) {
-			if (!ConvertImage(canvas_w, canvas_h)) {
-				return false;
-			}
+		const bool need_convert = (_pixel_data.empty()
+			|| fabs(_scale -_pixel_data_scale) > 0.01 || _rotate != _pixel_data_rotate);
+		if (need_convert && !ConvertImage(viewport_w, viewport_h)) {
+			return false;
 		}
 
-		_viewport_data.resize(canvas_w * canvas_h * 3);
+		int dst_left = (viewport_w > _pixel_data_w) ? (viewport_w - _pixel_data_w) / 2 : 0;
+		int src_left = (_pixel_data_w > viewport_w) ? (_pixel_data_w - viewport_w) / 2 : 0;
+		int dst_top = (viewport_h > _pixel_data_h) ? (viewport_h - _pixel_data_h) / 2 : 0;
+		int src_top = (_pixel_data_h > viewport_h) ? (_pixel_data_h - viewport_h) / 2 : 0;
 
-		int dst_left = (canvas_w > _pixel_data_w) ? (canvas_w - _pixel_data_w) / 2 : 0;
-		int src_left = (_pixel_data_w > canvas_w) ? (_pixel_data_w - canvas_w) / 2 : 0;
-		int dst_top = (canvas_h > _pixel_data_h) ? (canvas_h - _pixel_data_h) / 2 : 0;
-		int src_top = (_pixel_data_h > canvas_h) ? (_pixel_data_h - canvas_h) / 2 : 0;
-		int cpy_w = std::min(canvas_w, _pixel_data_w);
-		int cpy_h = std::min(canvas_h, _pixel_data_h);
-
-		if (_dx != 0 && _pixel_data_w > canvas_w) {
-			src_left+= ShiftPercentsToPixels(_dx, _pixel_data_w, (_pixel_data_w - canvas_w) / 2);
+		if (_dx != 0 && _pixel_data_w > viewport_w) {
+			src_left+= ShiftPercentsToPixels(_dx, _pixel_data_w, (_pixel_data_w - viewport_w) / 2);
 		} else {
 			_dx = 0;
 		}
 
-		if (_dy != 0 && _pixel_data_h > canvas_h) {
-			src_top+= ShiftPercentsToPixels(_dy, _pixel_data_h, (_pixel_data_h - canvas_h) / 2);
+		if (_dy != 0 && _pixel_data_h > viewport_h) {
+			src_top+= ShiftPercentsToPixels(_dy, _pixel_data_h, (_pixel_data_h - viewport_h) / 2);
 		} else {
 			_dy = 0;
 		}
 
-		fprintf(stderr, "--- Sending processed image to viewport [%d %d %d %d] -> [%d %d]\n",
-			src_left, src_top, src_left + cpy_w, src_top + cpy_h, dst_left, dst_top);
-
-
-		memset(_viewport_data.data(), 0, _viewport_data.size());
-		for (int y = 0; y < cpy_h; ++y) {
-			auto *dst = &_viewport_data[((dst_top + y) * canvas_w + dst_left) * 3];
-			const auto *src = &_pixel_data[((src_top + y) * _pixel_data_w + src_left) * 3];
-			memcpy(dst, src, cpy_w * 3);
+		if (!need_convert && _prev_left == src_left && _prev_top == src_top) {
+			fprintf(stderr, "--- Nothing to do\n");
+			return true;
 		}
 
-		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB, _pos, canvas_w, canvas_h, _viewport_data.data()) != FALSE;
+		BOOL out = TRUE;
+		if (!need_convert && (wgi.Caps & WP_IMGCAP_SCROLL) != 0
+				&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h) {
+			if (_prev_left != src_left) {
+				DWORD ins_w = abs(_prev_left - src_left);
+				_send_data.resize( size_t(ins_w) * viewport_h * 3);
+				if (_prev_left > src_left) {
+					Blit(ins_w, viewport_h,
+						_send_data.data(), 0, 0, ins_w,
+						_pixel_data.data(), src_left, _prev_top, _pixel_data_w);
+					fprintf(stderr, "--- Sending to [%d %d] left edge [%d %d %d %d]\n",
+						dst_left, dst_top, src_left, _prev_top, src_left + ins_w, _prev_top + viewport_h);
+					out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+						| WP_IMG_SCROLL_AT_LEFT, _pos, ins_w, viewport_h, _send_data.data());
+				} else {
+					Blit(ins_w, viewport_h,
+						_send_data.data(), 0, 0, ins_w,
+						_pixel_data.data(), src_left + viewport_w - ins_w, _prev_top, _pixel_data_w);
+					fprintf(stderr, "--- Sending to [%d %d] right edge [%d %d %d %d]\n",
+						dst_left, dst_top, src_left + viewport_w - ins_w, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
+					out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+						| WP_IMG_SCROLL_AT_RIGHT, _pos, ins_w, viewport_h, _send_data.data());
+				}
+			}
+			if (_prev_top != src_top && out != FALSE) {
+				DWORD ins_h = abs(_prev_top - src_top);
+				_send_data.resize( size_t(ins_h) * viewport_w * 3);
+				if (_prev_top > src_top) {
+					Blit(viewport_w, ins_h,
+						_send_data.data(), 0, 0, viewport_w,
+						_pixel_data.data(), src_left, src_top, _pixel_data_w);
+					fprintf(stderr, "--- Sending to [%d %d] top edge [%d %d %d %d]\n",
+						dst_left, dst_top, src_left, src_top, src_left + viewport_w, src_top + ins_h);
+					out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+						| WP_IMG_SCROLL_AT_TOP, _pos, viewport_w, ins_h, _send_data.data());
+				} else {
+					Blit(viewport_w, ins_h,
+						_send_data.data(), 0, 0, viewport_w,
+						_pixel_data.data(), src_left, src_top + viewport_h - ins_h, _pixel_data_w);
+					fprintf(stderr, "--- Sending to [%d %d] bottom edge [%d %d %d %d]\n",
+						dst_left, dst_top, src_left, src_top + viewport_h - ins_h, src_left + viewport_w, src_top + viewport_h);
+					out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+						| WP_IMG_SCROLL_AT_BOTTOM, _pos, viewport_w, ins_h, _send_data.data());
+				}
+			}
+		} else {
+			_send_data.resize(viewport_w * viewport_h * 3);
+			memset(_send_data.data(), 0, _send_data.size());
+			const int cpy_w = std::min(viewport_w, _pixel_data_w);
+			const int cpy_h = std::min(viewport_h, _pixel_data_h);
+
+			Blit(cpy_w, cpy_h,
+				_send_data.data(), dst_left, dst_top, viewport_w,
+				_pixel_data.data(), src_left, src_top, _pixel_data_w);
+
+			fprintf(stderr, "--- Sending to [%d %d] full viewport [%d %d %d %d]\n",
+				dst_left, dst_top, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
+			out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB, _pos, viewport_w, viewport_h, _send_data.data());
+		}
+		if (out) {
+			_prev_left = src_left;
+			_prev_top = src_top;
+		}
+		return out;
 	}
 
 	void SetTitleAndStatus(const std::string &title, const std::string &status)
@@ -535,13 +601,16 @@ public:
 		return _selection;
 	}
 
-	bool Init(HANDLE dlg, SMALL_RECT &rc)
+	bool Setup(HANDLE dlg, SMALL_RECT &rc)
 	{
 		_dlg = dlg;
 		_pos.X = 1;
 		_pos.Y = 1;
 		_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
 		_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
+
+		_pixel_data.clear();
+		JustReset();
 
 		_err_str.clear();
 		if (!PrepareImage() || !RenderImage(true)) {
@@ -675,7 +744,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 
 			ImageViewer *iv = (ImageViewer *)Param2;
 
-			if (!iv->Init(hDlg, Rect)) {
+			if (!iv->Setup(hDlg, Rect)) {
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);
 			}
 			return TRUE;
@@ -731,6 +800,10 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		case DN_CLOSE:
 			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 			break;
+
+		case DN_RESIZECONSOLE:
+			g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
+			break;
 	}
 
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -740,32 +813,36 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 {
 	ImageViewer iv(initial_file, selection);
 
-	SMALL_RECT Rect;
-	g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
+	for (;;) {
+		SMALL_RECT Rect;
+		g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
 
-	FarDialogItem DlgItems[] = {
-		{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
-		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN, 0, L"???", 0 },
-		{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0},
-		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
-	};
+		FarDialogItem DlgItems[] = {
+			{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
+			{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN, 0, L"???", 0 },
+			{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0},
+			{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
+		};
 
-	HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
+		HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
 							 L"ImageViewer", DlgItems, sizeof(DlgItems)/sizeof(DlgItems[0]),
 							 0, FDLG_NODRAWSHADOW|FDLG_NODRAWPANEL, ViewerDlgProc, (LONG_PTR)&iv);
 
-	if (hDlg == INVALID_HANDLE_VALUE) {
-		return false;
-	}
+		if (hDlg == INVALID_HANDLE_VALUE) {
+			return false;
+		}
 
-	int exit_code = g_far.DialogRun(hDlg);
-	g_far.DialogFree(hDlg);
+		int exit_code = g_far.DialogRun(hDlg);
+		g_far.DialogFree(hDlg);
 
-	if (exit_code != EXITED_DUE_ENTER) {
-		return false;
+		if (exit_code != EXITED_DUE_RESIZE) {
+			if (exit_code != EXITED_DUE_ENTER) {
+				return false;
+			}
+			selection = iv.GetSelection();
+			return true;
+		}
 	}
-	selection = iv.GetSelection();
-	return true;
 }
 
 // --- Экспортируемые функции плагина ---

@@ -3611,10 +3611,9 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда
-	if ((MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+	if (!isDraggingSelection && (MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
 		if ((!EdOpt.PersistentBlocks) && (BlockStart || VBlockStart)) {
 			UnmarkBlock();
-			Show();
 		}
 	}
 
@@ -3655,11 +3654,11 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
-
 	// Основная логика обработки кликов и выделения внутри окна редактора
 	if (MouseEvent->dwMousePosition.X >= X1 && MouseEvent->dwMousePosition.X <= XX2
 		&& MouseEvent->dwMousePosition.Y >= Y1 && MouseEvent->dwMousePosition.Y <= Y2)
 	{
+		// Перемещение курсора в точку клика/движения
 		if((MouseEvent->dwButtonState & 3))
 		{
 			Edit* TargetLine = nullptr;
@@ -3708,6 +3707,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			if (TargetLine)
 			{
+				// Если это не продолжение выделения, а новый клик, снимаем старое выделение
+				if (!isDraggingSelection && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+					UnmarkBlock();
+				}
 				CurLine = TargetLine;
 				NumLine = CalcDistance(TopList, CurLine, -1);
 				CurLine->SetCurPos(TargetPos);
@@ -3722,17 +3725,58 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			}
 		}
 
-		// НАЧАЛО: Новая логика выделения
+		// НАЧАЛО ВЫДЕЛЕНИЯ (первый клик)
 		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
 		{
-			// НАЧАЛО ВЫДЕЛЕНИЯ (первый клик)
-			if (!isDraggingSelection && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+			bool multiClickHandled = false;
+
+			// --- Сначала обрабатываем двойные/тройные клики ---
+			static int EditorPrevClickCount = 0;
+			static DWORD EditorPrevClickTime = 0;
+			static COORD EditorPrevPosition = {0,0};
+
+			if ( (WINPORT(GetTickCount)() - EditorPrevClickTime <= WINPORT(GetDoubleClickTime)())
+				&& (MouseEvent->dwEventFlags != MOUSE_MOVED)
+				&& (EditorPrevPosition.X == MouseEvent->dwMousePosition.X)
+				&& (EditorPrevPosition.Y == MouseEvent->dwMousePosition.Y) )
 			{
-				// Сбрасываем старое выделение, если оно не "постоянное"
-				if (!EdOpt.PersistentBlocks) {
-					UnmarkBlock();
+				EditorPrevClickCount++;
+			}
+			else
+			{
+				EditorPrevClickCount = 1;
+			}
+
+			// Только обновляем, если это начало новой последовательности кликов
+			if (EditorPrevClickCount == 1) {
+				EditorPrevClickTime = WINPORT(GetTickCount)();
+				EditorPrevPosition = MouseEvent->dwMousePosition;
+			}
+
+			if (EditorPrevClickCount == 2) // Double-click
+			{
+				ProcessKey(KEY_OP_SELWORD);
+				multiClickHandled = true;
+				isDraggingSelection = false; // Двойной клик - это атомарное действие, а не начало выделения
+			}
+			else if (EditorPrevClickCount >= 3) // Triple-click
+			{
+				CurLine->Select(0, CurLine->GetLength());
+				if (CurLine->IsSelection()) {
+					Flags.Set(FEDITOR_MARKINGBLOCK);
+					BlockStart = CurLine;
+					BlockStartLine = NumLine;
 				}
-				
+				multiClickHandled = true;
+				isDraggingSelection = false; // Тройной клик - тоже
+				EditorPrevClickCount = 0; // Сбрасываем, чтобы следующий клик был одинарным
+			}
+
+			// --- Затем, если это не был мульти-клик, обрабатываем выделение перетаскиванием ---
+
+			// НАЧАЛО ВЫДЕЛЕНИЯ (первый клик)
+			if (!multiClickHandled && !isDraggingSelection && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+			{
 				isDraggingSelection = true;
 				selectionAnchorLine = CurLine;
 				selectionAnchorPos = CurLine->GetCurPos();
@@ -3780,7 +3824,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				} else {
 					// Выделение охватывает несколько строк
 					Edit* p = startLine;
-					
+
 					// Первая строка: от начальной позиции до конца
 					p->Select(startPos, -1);
 					p = p->m_next;
@@ -3796,45 +3840,6 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 						p->Select(0, endPos);
 					}
 				}
-			}
-		}
-		// КОНЕЦ: Новая логика выделения
-
-		// --- Оригинальная логика для click/double-click/triple-click ---
-		if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) && !isDraggingSelection)
-		{
-			static int EditorPrevClickCount = 0;
-			static DWORD EditorPrevClickTime = 0;
-			static COORD EditorPrevPosition = {0,0};
-
-			if ( (WINPORT(GetTickCount)() - EditorPrevClickTime <= WINPORT(GetDoubleClickTime)())
-				&& (MouseEvent->dwEventFlags != MOUSE_MOVED)
-				&& (EditorPrevPosition.X == MouseEvent->dwMousePosition.X)
-				&& (EditorPrevPosition.Y == MouseEvent->dwMousePosition.Y) )
-			{
-				EditorPrevClickCount++;
-			}
-			else
-			{
-				EditorPrevClickCount = 1;
-			}
-
-			EditorPrevClickTime = WINPORT(GetTickCount)();
-			EditorPrevPosition = MouseEvent->dwMousePosition;
-
-			if (EditorPrevClickCount == 2) // Double-click
-			{
-				ProcessKey(KEY_OP_SELWORD);
-			}
-			else if (EditorPrevClickCount >= 3) // Triple-click (and more)
-			{
-				CurLine->Select(0, CurLine->GetLength());
-				if (CurLine->IsSelection()) {
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					BlockStart = CurLine;
-					BlockStartLine = NumLine;
-				}
-				EditorPrevClickCount = 0; // Reset to avoid re-triggering
 			}
 		}
 

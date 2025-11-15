@@ -276,6 +276,10 @@ private:
 	// A pre-calculated lookup map (Key -> MemberPtr) for efficient updates in SetPlatformSettings.
 	std::map<std::wstring, bool XDGBasedAppProvider::*> _key_to_member_map;
 
+	// Maps the setting's internal string key (e.g., "UseXdgMimeTool") to the command-line tool
+	// it depends on (e.g., "xdg-mime"). Used by GetPlatformSettings to check tool availability.
+	using ToolKeyMap = std::map<std::string, std::string>;
+	static const ToolKeyMap s_tool_key_map;
 
 	// --- Operation-Scoped State ---
 	// These fields are managed by the OperationContext RAII helper.
@@ -288,6 +292,12 @@ private:
 	std::optional<MimeappsListsData> _op_mimeapps_lists_data;      // combined mimeapps.list data
 	std::optional<std::vector<std::string>> _op_desktop_paths; // XDG .desktop file search paths
 	std::optional<std::string> _op_current_desktop_env; // $XDG_CURRENT_DESKTOP
+
+	// Tool availability flags, cached for the duration of one GetAppCandidates operation.
+	// They are calculated in OperationContext::OperationContext.
+	bool _op_xdg_mime_enabled_and_exists = false;
+	bool _op_file_tool_enabled_and_exists = false;
+	bool _op_magika_tool_enabled_and_exists = false;
 
 	// One of the following two caches will be populated based on settings.
 	std::optional<MimeinfoCacheData> _op_mime_to_handlers_map;	// from mimeinfo.cache

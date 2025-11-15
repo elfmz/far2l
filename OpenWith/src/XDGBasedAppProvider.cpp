@@ -81,10 +81,23 @@ std::vector<ProviderSetting> XDGBasedAppProvider::GetPlatformSettings()
 	std::vector<ProviderSetting> settings;
 	settings.reserve(_platform_settings_definitions.size());
 	for (const auto& def : _platform_settings_definitions) {
+
+		bool is_disabled = false;
+		// Check if this setting is linked to a command-line tool via its internal string key.
+		auto it = s_tool_key_map.find(def.key);
+
+		if (it != s_tool_key_map.end()) {
+			// If a corresponding tool name is found, check for the executable's existence.
+			// The option is disabled if the tool is not found on the system.
+			const std::string& tool_name = it->second;
+			is_disabled = !CheckExecutable(tool_name);
+		}
+
 		settings.push_back({
 			StrMB2Wide(def.key),
 			m_GetMsg(def.display_name_id),
-			this->*(def.member_variable)
+			this->*(def.member_variable),
+			is_disabled // Pass the disabled state to the UI
 		});
 	}
 	return settings;
@@ -969,7 +982,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 std::string XDGBasedAppProvider::MimeTypeFromXdgMimeTool(const std::string& pathname)
 {
 	std::string result;
-	if (_use_xdg_mime_tool) {
+	if (_op_xdg_mime_enabled_and_exists) {
 		auto escaped_pathname = EscapeArgForShell(pathname);
 		result = RunCommandAndCaptureOutput("xdg-mime query filetype " + escaped_pathname + " 2>/dev/null");
 	}
@@ -980,7 +993,7 @@ std::string XDGBasedAppProvider::MimeTypeFromXdgMimeTool(const std::string& path
 std::string XDGBasedAppProvider::MimeTypeFromFileTool(const std::string& pathname)
 {
 	std::string result;
-	if(_use_file_tool) {
+	if(_op_file_tool_enabled_and_exists) {
 		auto escaped_pathname = EscapeArgForShell(pathname);
 		result = RunCommandAndCaptureOutput("file --brief --dereference --mime-type " + escaped_pathname + " 2>/dev/null");
 	}
@@ -991,7 +1004,7 @@ std::string XDGBasedAppProvider::MimeTypeFromFileTool(const std::string& pathnam
 std::string XDGBasedAppProvider::MimeTypeFromMagikaTool(const std::string& pathname)
 {
 	std::string result;
-	if(_use_magika_tool) {
+	if(_op_magika_tool_enabled_and_exists) {
 		auto escaped_pathname = EscapeArgForShell(pathname);
 		result = RunCommandAndCaptureOutput("magika --no-colors --format %m " + escaped_pathname + " 2>/dev/null");
 	}
@@ -2068,7 +2081,13 @@ XDGBasedAppProvider::OperationContext::OperationContext(XDGBasedAppProvider& p) 
 	provider._op_mimeapps_lists_data = provider.ParseMimeappsLists(mimeapps_paths);
 	provider._op_current_desktop_env = provider._filter_by_show_in ? provider.GetEnv("XDG_CURRENT_DESKTOP", "") : "";
 
-	// 3. Build the primary application lookup cache
+	// 3. Check for external tool availability *once* for this operation.
+	// This sets the operation-scoped flags for use by MimeTypeFrom... functions.
+	provider._op_xdg_mime_enabled_and_exists = provider._use_xdg_mime_tool && provider.CheckExecutable("xdg-mime");
+	provider._op_file_tool_enabled_and_exists = provider._use_file_tool && provider.CheckExecutable("file");
+	provider._op_magika_tool_enabled_and_exists = provider._use_magika_tool && provider.CheckExecutable("magika");
+
+	// 4. Build the primary application lookup cache
 	// We build *either* the mimeinfo.cache or the full mime-to-app index, based on settings.
 	if (provider._use_mimeinfo_cache) {
 		// Attempt to load from mimeinfo.cache first, as per user setting.
@@ -2101,6 +2120,19 @@ XDGBasedAppProvider::OperationContext::~OperationContext()
 	provider._op_current_desktop_env.reset();
 	provider._op_mime_to_handlers_map.reset();
 	provider._op_mime_to_desktop_entry_map.reset();
+
+	// Reset the operation-scoped tool availability flags
+	provider._op_xdg_mime_enabled_and_exists = false;
+	provider._op_file_tool_enabled_and_exists = false;
+	provider._op_magika_tool_enabled_and_exists = false;
 }
+
+
+// Maps the setting's internal string key to the command-line tool it depends on.
+const XDGBasedAppProvider::ToolKeyMap XDGBasedAppProvider::s_tool_key_map = {
+	{ "UseXdgMimeTool", "xdg-mime" },
+	{ "UseFileTool", "file" },
+	{ "UseMagikaTool", "magika" }
+};
 
 #endif

@@ -52,6 +52,9 @@ $^#Configuration Dialog (F9)#
  #-# Use `file` tool
    Determine the MIME type of the selected file by invoking the 'file --mime-type' command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and is not deceived by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents, and the MIME type names it produces may occasionally differ from the official IANA names or those in the shared-mime-info database, potentially leading to fewer application matches.
 
+ #-# Use `magika` tool
+   Determine the MIME type of the selected file by invoking the 'magika --format %m' command. This is a modern, AI-powered tool from Google that uses a machine learning model to achieve very high accuracy and performance. It excels at identifying a wide range of formats, including modern programming languages, ML/AI files, and DevOps components. Like the 'file' tool, it performs content analysis rather than relying on extensions, making it robust against incorrect filenames, but it also requires reading the file's content.
+
  #-# Use extension-based fallback
    As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
 
@@ -237,6 +240,13 @@ $^#Troubleshooting#
  #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
  #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
  #-# Outdated Cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
+
+
+ #Why is a checkbox in the configuration dialog grayed out? (Linux/BSD)#
+
+ Some checkboxes in the F9 configuration dialog, such as "Use `xdg-mime` tool", may be disabled (grayed out) and cannot be toggled. Depending on your last saved settings, this grayed-out checkbox might appear either checked or unchecked, but you cannot change its state. This happens when the plugin cannot find the required command-line tool in your system's $PATH. When the configuration dialog is opened, the plugin checks if the corresponding executables (e.g., 'xdg-mime', 'file', 'magika') exist and are runnable. If a tool is not found, its option is disabled in the UI to prevent errors.
+ The plugin will behave as if the option is always 'off' (unchecked), and the associated file type detection method will not be used. This is true regardless of whether the grayed-out checkbox appears checked or not. The displayed checkmark is just a visual artifact of the last saved setting and has no effect.
+ To enable the option, you must install the missing tool using your distribution's package manager. After installation, ensure the tool's executable is located in a directory listed in your $PATH environment variable.
 
 
  #An application is in the list, but it fails to launch. (Linux/BSD)#

@@ -31,6 +31,7 @@
 #define EXITED_DUE_ERROR      -1
 #define EXITED_DUE_ENTER      42
 #define EXITED_DUE_ESCAPE     24
+#define EXITED_DUE_RESIZE     37
 
 static PluginStartupInfo g_far;
 static FarStandardFunctions g_fsf;
@@ -594,13 +595,16 @@ public:
 		return _selection;
 	}
 
-	bool Init(HANDLE dlg, SMALL_RECT &rc)
+	bool Setup(HANDLE dlg, SMALL_RECT &rc)
 	{
 		_dlg = dlg;
 		_pos.X = 1;
 		_pos.Y = 1;
 		_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
 		_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
+
+		_pixel_data.clear();
+		JustReset();
 
 		_err_str.clear();
 		if (!PrepareImage() || !RenderImage(true)) {
@@ -734,7 +738,7 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 
 			ImageViewer *iv = (ImageViewer *)Param2;
 
-			if (!iv->Init(hDlg, Rect)) {
+			if (!iv->Setup(hDlg, Rect)) {
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);
 			}
 			return TRUE;
@@ -790,6 +794,10 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 		case DN_CLOSE:
 			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 			break;
+
+		case DN_RESIZECONSOLE:
+			g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
+			break;
 	}
 
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -799,32 +807,36 @@ static bool ShowImage(const std::string &initial_file, std::set<std::string> &se
 {
 	ImageViewer iv(initial_file, selection);
 
-	SMALL_RECT Rect;
-	g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
+	for (;;) {
+		SMALL_RECT Rect;
+		g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
 
-	FarDialogItem DlgItems[] = {
-		{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
-		{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN, 0, L"???", 0 },
-		{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0},
-		{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
-	};
+		FarDialogItem DlgItems[] = {
+			{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
+			{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN, 0, L"???", 0 },
+			{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {}, 0, 0, L"", 0},
+			{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
+		};
 
-	HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
+		HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
 							 L"ImageViewer", DlgItems, sizeof(DlgItems)/sizeof(DlgItems[0]),
 							 0, FDLG_NODRAWSHADOW|FDLG_NODRAWPANEL, ViewerDlgProc, (LONG_PTR)&iv);
 
-	if (hDlg == INVALID_HANDLE_VALUE) {
-		return false;
-	}
+		if (hDlg == INVALID_HANDLE_VALUE) {
+			return false;
+		}
 
-	int exit_code = g_far.DialogRun(hDlg);
-	g_far.DialogFree(hDlg);
+		int exit_code = g_far.DialogRun(hDlg);
+		g_far.DialogFree(hDlg);
 
-	if (exit_code != EXITED_DUE_ENTER) {
-		return false;
+		if (exit_code != EXITED_DUE_RESIZE) {
+			if (exit_code != EXITED_DUE_ENTER) {
+				return false;
+			}
+			selection = iv.GetSelection();
+			return true;
+		}
 	}
-	selection = iv.GetSelection();
-	return true;
 }
 
 // --- Экспортируемые функции плагина ---

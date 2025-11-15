@@ -61,6 +61,9 @@ public:
 		StrMB2Wide(file, tmp, true);
 		tmp+= L'\n';
 		StrMB2Wide(info, tmp, true);
+		tmp+= L'\n';
+		tmp+= L"\n          <I> - additional details";
+		tmp+= L"\n<PgDn>/<PgUp> - skip current file";
 		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
 	}
 
@@ -73,12 +76,25 @@ public:
 	}
 };
 
-static bool CheckForDismissProcessingKeyPress()
+enum ProcessingKeyPress {
+	PKP_NONE,
+	PKP_INFO,
+	PKP_DISMISS,
+};
+
+static ProcessingKeyPress CheckForProcessingKeyPress()
 {
-	WORD KeyCodes[] = {VK_ESCAPE, VK_NEXT, VK_PRIOR};
+	WORD KeyCodes[] = {'i', 'I', VK_ESCAPE, VK_NEXT, VK_PRIOR};
 	DWORD index = WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
 		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
-	return (index != 0);
+	switch (index) {
+		case 0:
+			return PKP_NONE;
+		case 1: case 2:
+			return PKP_INFO;
+		default:
+			return PKP_DISMISS;
+	}
 }
 
 static void PurgeAccumulatedKeyPresses()
@@ -89,6 +105,22 @@ static void PurgeAccumulatedKeyPresses()
 
 struct ToolExec : ExecAsync
 {
+	void ShowAdditionalInfo(const char *pkg)
+	{
+		std::wstring tmp;
+		tmp = PLUGIN_TITLE L" - operation details\n";
+		tmp+= L"Package: ";
+		tmp+= MB2Wide(pkg);
+		tmp+= L'\n';
+		tmp+= L"Command:";
+		for (const auto &a : GetArguments()) {
+			tmp+= L" \"";
+			StrMB2Wide(a, tmp, true);
+			tmp+= L'"';
+		}
+		g_far.Message(g_far.ModuleNumber, FMSG_MB_OK | FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
+	}
+
 	// return false in case tool run dismissed by user, otherwise always return true
 	bool FN_PRINTF_ARGS(5) Run(const std::string &file, const std::string &size_str, const char *pkg, const char *info_fmt, ...)
 	{
@@ -100,13 +132,19 @@ struct ToolExec : ExecAsync
 
 			ImageViewerMessage msg(file, size_str, info);
 			do {
-				if (CheckForDismissProcessingKeyPress()) {
-					KillSoftly();
-					if (!Wait(COMMAND_TIMEOUT_HARD_KILL)) {
-						KillHardly();
-						Wait();
-					}
-					return false;
+				switch (CheckForProcessingKeyPress()) {
+					case PKP_DISMISS:
+						KillSoftly();
+						if (!Wait(COMMAND_TIMEOUT_HARD_KILL)) {
+							KillHardly();
+							Wait();
+						}
+						return false;
+
+					case PKP_INFO:
+						ShowAdditionalInfo(pkg);
+						break;
+					default: ;
 				}
 			} while (!Wait(COMMAND_TIMEOUT_CHECK_PRESS));
 		}

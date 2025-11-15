@@ -80,8 +80,10 @@
 
 	// graphics API
 	WINPORT_DECL_DEF(GetConsoleImageCaps, BOOL, (HANDLE hConsoleOutput, size_t sizeof_wgi, WinportGraphicsInfo *wgi))
+
 	// flags: format identity, one of WP_IMG_ that is supported according to GetConsoleImageCaps
 	WINPORT_DECL_DEF(SetConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer))
+	WINPORT_DECL_DEF(RotateConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, COORD pos, unsigned char angle_x90))
 	WINPORT_DECL_DEF(DeleteConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id))
 
 #ifdef WINPORT_REGISTRY

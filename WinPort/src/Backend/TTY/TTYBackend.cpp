@@ -1513,7 +1513,9 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 		uint8_t ok = 0;
 		try {
 			StackSerializer stk_ser;
-			stk_ser.Push(buffer, buffer_size);
+			if (buffer_size) {
+				stk_ser.Push(buffer, buffer_size);
+			}
 			stk_ser.PushNum(height);
 			stk_ser.PushNum(width);
 			stk_ser.PushNum(pos.Y);
@@ -1555,6 +1557,28 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 	_ae.images_changed = true;
 	_async_cond.notify_all(); // Wake up the writer thread
 	return true;
+}
+
+bool TTYBackend::OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90)
+{
+	if (_far2l_tty) {
+		uint8_t ok = 0;
+		try {
+			StackSerializer stk_ser;
+			stk_ser.PushNum(angle_x90);
+			stk_ser.PushNum(pos.Y);
+			stk_ser.PushNum(pos.X);
+			stk_ser.PushStr(id);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_ROT);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
+			if (Far2lInteract(stk_ser, true)) {
+				stk_ser.PopNum(ok);
+			}
+		} catch(std::exception &) {
+		}
+		return ok != 0;
+	}
+	return false;
 }
 
 bool TTYBackend::OnDeleteConsoleImage(const char *id)

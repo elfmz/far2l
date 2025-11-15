@@ -2171,7 +2171,7 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 
 void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_SCROLL;
+	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_SCROLL | WP_IMGCAP_ROTATE;
 	wgi->PixPerCell.X = _paint_context.FontWidth();
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
@@ -2180,7 +2180,6 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 {
 	std::string str_id(id);
 	try {
-		fprintf(stderr, "OnSetConsoleImage: flags=%llu width=%d height=%d\n", flags, width, height);
 		std::optional<wxImage> wx_img;
 		const size_t num_pixels = size_t(width) * height;
 		unsigned char *pixel_data = (unsigned char *)buffer;
@@ -2210,20 +2209,25 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 			return false;
 		}
 
+		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
 		img.pos = pos;
-		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
 		if (scroll) { // scroll/move existing image
-			if (width && height) { // if empty image specified - its just a move operation
+			if (width && height) { // scrolling, but if empty image specified - its just a move operation
 				auto sz = img.bitmap.GetSize();
 				if (scroll == WP_IMG_SCROLL_AT_LEFT || scroll == WP_IMG_SCROLL_AT_RIGHT) {
 					if (height != (DWORD)sz.GetHeight()) {
-						fprintf(stderr, "WP_IMG_SCROLL_AT_LEFT: height mismatch, %u != %d\n", height, sz.GetHeight());
+						fprintf(stderr, "%s: WP_IMG_SCROLL - height mismatch, %u != %d\n", __FUNCTION__, height, sz.GetHeight());
 						return false;
 					}
-				} else if (width != (DWORD)sz.GetWidth()) {
-					fprintf(stderr, "WP_IMG_SCROLL_AT_RIGHT: width mismatch, %u != %d\n", width, sz.GetWidth());
+				} else if (scroll == WP_IMG_SCROLL_AT_TOP || scroll == WP_IMG_SCROLL_AT_BOTTOM) {
+					if (width != (DWORD)sz.GetWidth()) {
+						fprintf(stderr, "%s: WP_IMG_SCROLL - width mismatch, %u != %d\n", __FUNCTION__, width, sz.GetWidth());
+						return false;
+					}
+				} else {
+					fprintf(stderr, "%s: bad scroll=%llu\n", __FUNCTION__, (unsigned long long)scroll);
 					return false;
 				}
 				wxBitmap new_bmp(sz);
@@ -2259,6 +2263,32 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 		return false;
 	}
 
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
+}
+
+bool WinPortPanel::OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90)
+{
+	try {
+		std::string str_id(id);
+		angle_x90&= 3; // any other represented one of: 90, 180, 270
+		std::lock_guard<std::mutex> lock(_images);
+		auto &img = _images[str_id];
+		img.pos = pos;
+		if (angle_x90) { // if zero - its a trivial move
+			wxImage rotated_img = img.bitmap.ConvertToImage();
+			switch (angle_x90) {
+				case 1: img.bitmap = rotated_img.Rotate90(true); break;
+				case 2: img.bitmap = rotated_img.Rotate180(); break;
+				case 3: img.bitmap = rotated_img.Rotate90(false); break;
+				default: ;
+			}
+		}
+	} catch (...) {
+		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		return false;
+	}
 	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
 	CallInMainNoRet(fn);
 	return true;

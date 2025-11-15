@@ -1476,20 +1476,21 @@ typedef LONG NTSTATUS;
 // capabilities reported by GetConsoleImageCaps
 #define WP_IMGCAP_RGBA      0x01 // supports WP_IMG_RGB/WP_IMG_RGBA
 #define WP_IMGCAP_SCROLL    0x02 // supports existing image scrolling
+#define WP_IMGCAP_ROTATE    0x04 // supports existing image rotation
 
 // flags used for SetConsoleImage
 #define WP_IMG_RGBA             0 // supported if WP_IMGCAP_RGBA
 #define WP_IMG_RGB              1 // supported if WP_IMGCAP_RGBA
 
-// SetConsoleImage scroll flags supported if WP_IMGCAP_SCROLL
-// they're scrolling and moving already existing image, by 'prepending' it with newly sent part and putting it at new position
-#define WP_IMG_SCROLL_AT_LEFT   0x100 // left->right scrolling, sending rectangle to insert at left
-#define WP_IMG_SCROLL_AT_RIGHT  0x200 // right->left scrolling, sending rectangle to insert at right
-#define WP_IMG_SCROLL_AT_TOP    0x300 // top->bottom scrolling, sending rectangle to insert at top
-#define WP_IMG_SCROLL_AT_BOTTOM 0x400 // bottom->top scrolling, sending rectangle to insert at bottom
+// SetConsoleImage scrolling flags supported if WP_IMGCAP_SCROLL reported
+// move already existing image and scroll it with 'prepending' by newly sent part
+#define WP_IMG_SCROLL_AT_LEFT   0x10000 // left->right scrolling, sending rectangle to insert at left
+#define WP_IMG_SCROLL_AT_RIGHT  0x20000 // right->left scrolling, sending rectangle to insert at right
+#define WP_IMG_SCROLL_AT_TOP    0x30000 // top->bottom scrolling, sending rectangle to insert at top
+#define WP_IMG_SCROLL_AT_BOTTOM 0x40000 // bottom->top scrolling, sending rectangle to insert at bottom
 
-#define WP_IMG_MASK_FMT         0xff
-#define WP_IMG_MASK_SCROLL      0x700
+#define WP_IMG_MASK_FMT         0x0ffff
+#define WP_IMG_MASK_SCROLL      0x70000
 
 typedef struct WinportGraphicsInfo1
 {

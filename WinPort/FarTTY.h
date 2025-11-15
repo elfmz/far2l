@@ -266,6 +266,16 @@ Glossary:
 */
 #define FARTTY_INTERACT_IMAGE_DEL                  'd'
 
+/** Rotate previously set image.
+ In:
+  string (image identity)
+  uint8_t (one of: 0, 1, 2, 3 meaning rotation angle in 90 degrees units)
+ Out:
+  uint8_t (0 - failure, nonzero value - image rotated)
+*/
+#define FARTTY_INTERACT_IMAGE_ROT                  'r'
+
+
 ///////////////////////
 
 /** Client may specify this wanted extra feature if it supports compact input events.

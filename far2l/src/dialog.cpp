@@ -2312,7 +2312,7 @@ void Dialog::ShowDialog(unsigned ID)
 				} else { // fill with spaces of given attibutes
 					CHAR_INFO ci{};
 					CI_SET_WCHAR(ci, L' ');
-					CI_SET_ATTR(ci, CurItem->Reserved);
+					CI_SET_ATTR(ci, FarColorToReal(CurItem->Reserved));
 					for (auto Y = Y1 + CY1; Y <= Y1 + CY2; ++Y) {
 						for (auto X = X1 + CX1; X <= X1 + CX2; ++X) {
 							PutText(X, Y, X, Y, &ci);

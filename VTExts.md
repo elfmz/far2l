@@ -59,6 +59,8 @@ Before sending any commands, the client must enable the extension protocol.
     ```
 The client must wait for this acknowledgment before proceeding.
 
+NB! Better approach is to add `\x1b[5n` after `\x1B_far2l1\x07` that will cause non-far2l terminal to respond with (typically) `\x1b[0n`. This avoids the use of timeouts, the counting of which can be long in terminals that do not support far2l extensions.
+
 ## 4. Client-to-Server Commands (`FARTTY_INTERACT_*`)
 
 These commands are sent by the client to request an action from `far2l`.
@@ -74,6 +76,11 @@ Declares that the client supports a set of optional features. `far2l` may change
     | --------------- | ---------- | -------------------------------------------- |
     | Feature Flags   | `uint64_t` | A bitmask of `FARTTY_FEAT_*` flags.          |
 -   **Out Stack:** None.
+
+`FARTTY_FEAT_*` (Client Features)
+
+-   `FARTTY_FEAT_COMPACT_INPUT` (0x01): Client supports receiving compact input events.
+-   `FARTTY_FEAT_TERMINAL_SIZE` (0x02): Client supports receiving terminal size events via this protocol (in addition to `SIGWINCH`).
 
 ---
 
@@ -195,6 +202,11 @@ Authorizes and opens the clipboard for subsequent operations.
     | ----------------- | ---------- | -------------------------------------------------------------------------------- |
     | Status            | `int8_t`   | `1` for success, `0` for failure, `-1` for access denied.                          |
     | Server Features   | `uint64_t` | (Optional) A bitmask of `FARTTY_FEATCLIP_*` flags supported by the server.         |
+
+`FARTTY_FEATCLIP_*` (Server Clipboard Features)
+
+-   `FARTTY_FEATCLIP_DATA_ID` (0x01): Server can provide a unique ID for clipboard data, allowing for client-side caching.
+-   `FARTTY_FEATCLIP_CHUNKED_SET` (0x02): Server supports setting clipboard data in multiple chunks.
 
 ##### `FARTTY_INTERACT_CLIP_CLOSE` ('c')
 Closes the clipboard, finalizing the transaction.
@@ -373,14 +385,3 @@ Reports a change in the terminal dimensions.
     | Width      | `uint16_t` | New width in columns.  |
     | Height     | `uint16_t` | New height in rows.    |
 
-## 6. Appendix: Feature Flags
-
-### `FARTTY_FEAT_*` (Client Features)
-
--   `FARTTY_FEAT_COMPACT_INPUT` (0x01): Client supports receiving compact input events.
--   `FARTTY_FEAT_TERMINAL_SIZE` (0x02): Client supports receiving terminal size events via this protocol (in addition to `SIGWINCH`).
-
-### `FARTTY_FEATCLIP_*` (Server Clipboard Features)
-
--   `FARTTY_FEATCLIP_DATA_ID` (0x01): Server can provide a unique ID for clipboard data, allowing for client-side caching.
--   `FARTTY_FEATCLIP_CHUNKED_SET` (0x02): Server supports setting clipboard data in multiple chunks.

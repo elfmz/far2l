@@ -90,7 +90,7 @@ void statusbar_ctl::write_codepage(const UINT cp)
 void statusbar_ctl::write_offset(const UINT64 pos)
 {
 	wchar_t num[16];
-	const int num_len = swprintf(num, sizeof(num) / sizeof(num[0]), L"0x%012llX", pos);
+	const int num_len = swprintf(num, ARRAYSIZE(num), L"0x%012llX", pos);
 	write(0, 61, num, num_len);
 }
 
@@ -100,7 +100,7 @@ void statusbar_ctl::write_position(const unsigned char percent)
 	assert(percent <= 100);
 
 	wchar_t num[8];
-	const int num_len = swprintf(num, sizeof(num) / sizeof(num[0]), L"%d%%", percent);
+	const int num_len = swprintf(num, ARRAYSIZE(num), L"%d%%", percent);
 	for (size_t i = 76; i < 80; ++i)
 		write(0, i, L' ');
 	write(0, 80 - num_len, num, num_len);

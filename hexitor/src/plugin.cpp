@@ -57,10 +57,10 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(PluginInfo* info)
 	menu_strings[0] = I18N(ps_title);
 
 	info->PluginConfigStrings = menu_strings;
-	info->PluginConfigStringsNumber = sizeof(menu_strings) / sizeof(menu_strings[0]);
+	info->PluginConfigStringsNumber = ARRAYSIZE(menu_strings);
 
 	info->PluginMenuStrings = menu_strings;
-	info->PluginMenuStringsNumber = sizeof(menu_strings) / sizeof(menu_strings[0]);
+	info->PluginMenuStringsNumber = ARRAYSIZE(menu_strings);
 
 #ifdef _DEBUG
 	info->Flags |= PF_PRELOAD;

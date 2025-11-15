@@ -201,7 +201,7 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 		wnd_heigth,
 		nullptr,
 		dlg_items,
-		sizeof(dlg_items) / sizeof(dlg_items[0]),
+		ARRAYSIZE(dlg_items),
 		0,
 		FDLG_NODRAWSHADOW | FDLG_NODRAWPANEL | FDLG_NONMODAL,
 		(FARWINDOWPROC)&editor::dlg_proc,
@@ -373,7 +373,7 @@ void editor::save_as()
 	wchar_t new_file_name[1024];
 	if (!_PSI.InputBox(
 		I18N(ps_sav_title), I18N(ps_sav_saveas),
-		nullptr, _file.name(), new_file_name, sizeof(new_file_name), nullptr, FIB_EXPANDENV | FIB_BUTTONS | FIB_EDITPATH))
+		nullptr, _file.name(), new_file_name, ARRAYSIZE(new_file_name), nullptr, FIB_EXPANDENV | FIB_BUTTONS | FIB_EDITPATH))
 		return;
 
 	if (file::file_exist(new_file_name)) {

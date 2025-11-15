@@ -90,7 +90,7 @@ void find_dlg::fill_hex()
 {
 	wchar_t txt[MAX_SEQ_SIZE*3 + 1]={};
 	const size_t len = std::min(_seq.size(), MAX_SEQ_SIZE);
-	for (size_t i = 0; i < len; ++i) swprintf_ws2ls(&txt[i*3], sizeof(txt), L"%02X ", (unsigned)_seq[i]);
+	for (size_t i = 0; i < len; ++i) swprintf_ws2ls(&txt[i*3], ARRAYSIZE(txt), L"%02X ", (unsigned)_seq[i]);
 	FarDialogItemData item_data{ len*3, txt };
 	_PSI.SendDlgMessage(_dialog, DM_SETTEXT, DLGID_HEX_EDIT, (LONG_PTR)&item_data);
 }
@@ -159,7 +159,7 @@ intptr_t WINAPI find_dlg::dlg_proc(HANDLE dlg, intptr_t msg, int param1, void* p
 	}
 	else if (msg == DN_CLOSE && param1 >= 0 && param1 != DLGID_BTN_CANCEL && param1 != -1 && instance->_seq.empty()) {
 		const wchar_t* err_msg[] = { I18N(ps_find_title), I18N(ps_find_empty) };
-		_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, sizeof(err_msg) / sizeof(err_msg[0]), 0);
+		_PSI.Message(_PSI.ModuleNumber, FMSG_MB_OK | FMSG_WARNING, nullptr, err_msg, ARRAYSIZE(err_msg), 0);
 		return 0;
 	}
 	else if (msg == DN_EDITCHANGE) {

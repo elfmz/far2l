@@ -519,13 +519,13 @@ class ImageViewer
 		int src_top = (_pixel_data_h > viewport_h) ? (_pixel_data_h - viewport_h) / 2 : 0;
 
 		if (_dx != 0 && _pixel_data_w > viewport_w) {
-			src_left-= ShiftPercentsToPixels(_dx, _pixel_data_w, (_pixel_data_w - viewport_w) / 2);
+			src_left+= ShiftPercentsToPixels(_dx, _pixel_data_w, (_pixel_data_w - viewport_w) / 2);
 		} else {
 			_dx = 0;
 		}
 
 		if (_dy != 0 && _pixel_data_h > viewport_h) {
-			src_top-= ShiftPercentsToPixels(_dy, _pixel_data_h, (_pixel_data_h - viewport_h) / 2);
+			src_top+= ShiftPercentsToPixels(_dy, _pixel_data_h, (_pixel_data_h - viewport_h) / 2);
 		} else {
 			_dy = 0;
 		}
@@ -641,8 +641,14 @@ class ImageViewer
 			title+= " [";
 			title+= stage;
 			title+= ']';
-		} else if (_orig_w > 0 && _orig_h > 0) {
-			title+= " (" + std::to_string(_orig_w) + 'x' + std::to_string(_orig_h) + ')';
+		} else {
+			std::string title2;
+			if (_orig_w > 0 && _orig_h > 0)
+				title2 = std::to_string(_orig_w) + 'x' + std::to_string(_orig_h);
+			if (!_file_size_str.empty())
+				title2+= (title2.empty() ? "" : ", ") + _file_size_str;
+			if (!title2.empty())
+				title+= " (" + title2 + ')';
 		}
 
 		std::string status = HINT_STRING;
@@ -860,11 +866,11 @@ static LONG_PTR WINAPI ViewerDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR 
 				case 'q': case 'Q': case KEY_DEL: case KEY_NUMDEL:
 					s_def_scale = DS_EQUAL_SCREEN;
 					iv->Reset();
-				break;
+					break;
 				case 'z': case 'Z': case KEY_DIVIDE: case '/':
 					s_def_scale = DS_EQUAL_IMAGE;
 					iv->Reset();
-				break;
+					break;
 				case KEY_CLEAR: case '=': iv->Reset(); break;
 				case KEY_ADD: case '+': iv->Scale(delta); break;
 				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;

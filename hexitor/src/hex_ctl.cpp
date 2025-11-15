@@ -63,7 +63,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 
 		//Offset address
 		wchar_t offset_txt[16];
-		const int offset_len = swprintf(offset_txt, sizeof(offset_txt) / sizeof(offset_txt[0]), L"%012llX:", offset + static_cast<UINT64>(row) * 0x10);
+		const int offset_len = swprintf(offset_txt, ARRAYSIZE(offset_txt), L"%012llX:", offset + static_cast<UINT64>(row) * 0x10);
 		write(row, 0, offset_txt, offset_len);
 
 		//Hex values area (common for all codepages)
@@ -73,7 +73,7 @@ void hex_ctl::update(const UINT64 offset, const vector<BYTE>& ori_data, const ma
 
 			//Hex value
 			wchar_t hex_val[3];
-			const int hex_val_len = swprintf(hex_val, sizeof(hex_val) / sizeof(offset_txt[0]), L"%02X", val);
+			const int hex_val_len = swprintf(hex_val, ARRAYSIZE(hex_val), L"%02X", val);
 			write(row, 15 + col * 3, hex_val, hex_val_len);
 
 			 //Set color for updated data

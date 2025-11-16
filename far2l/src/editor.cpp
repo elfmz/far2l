@@ -359,9 +359,7 @@ void Editor::ShowEditor(int CurLineOnly)
 	if (m_bWordWrap && CurLine)
 	{
 		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
-	}
-	if (m_bWordWrap && CurLine)
-	{
+
 		// Проверяем, видим ли мы курсор на экране
 		bool is_cursor_visible = false;
 		Edit* scan_line = m_TopScreenLogicalLine;
@@ -401,12 +399,11 @@ void Editor::ShowEditor(int CurLineOnly)
 	}
 	if (Locked() || !TopList)
 		return;
-	if (m_bWordWrap) {
-		CurLineOnly = FALSE;
-	}
 
 	if (m_bWordWrap)
 	{
+		CurLineOnly = FALSE;
+
 		// Centralized correction logic to prevent scrolling past the end of the file.
 		int ScreenHeight = Y2 - Y1 + 1;
 		int LinesBelow = GetVisualLinesBelow(m_TopScreenLogicalLine, m_TopScreenVisualLine);
@@ -562,7 +559,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			ShowString.GetSelection(dbg_s, db_e);
 
 			// --- Специальная отрисовка для выделенных пустых строк ---
-			if (m_bWordWrap && CurLogicalLine->GetLength() == 0)
+			if (CurLogicalLine->GetLength() == 0)
 			{
 				int RealSelStart, RealSelEnd;
 				CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
@@ -577,7 +574,7 @@ void Editor::ShowEditor(int CurLineOnly)
 
 			bool background_filled = false;
 			// Special handling for syntax highlighting on empty visual lines
-			if (m_bWordWrap && VisualLineStart == VisualLineEnd)
+			if (VisualLineStart == VisualLineEnd)
 			{
 				ColorItem current_ci;
 
@@ -611,13 +608,10 @@ void Editor::ShowEditor(int CurLineOnly)
 
 					if (ci.StartPos != -1 || ci.EndPos != -1) // Standard color item
 					{
-						if (m_bWordWrap)
+						// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
+						if (ci.StartPos <= VisualLineStart && ci.EndPos >= VisualLineEnd - 1)
 						{
-							// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
-							if (ci.StartPos <= VisualLineStart && ci.EndPos >= VisualLineEnd - 1)
-							{
-								is_full_visual_line_coverage = true;
-							}
+							is_full_visual_line_coverage = true;
 						}
 
 						new_ci.StartPos -= VisualLineStart;
@@ -625,7 +619,7 @@ void Editor::ShowEditor(int CurLineOnly)
 
 						if (new_ci.StartPos < 0) new_ci.StartPos = 0;
 
-						if (m_bWordWrap && is_full_visual_line_coverage)
+						if (is_full_visual_line_coverage)
 						{
 							// Force EndPos large to cause DrawColor/ApplyColor to fill to the screen edge (via its internal clamping to X2).
 							new_ci.EndPos = FULL_LINE_END_POS_HINT;
@@ -637,11 +631,8 @@ void Editor::ShowEditor(int CurLineOnly)
 					}
 					else // Special case for {-1, -1} background element
 					{
-						if (m_bWordWrap)
-						{
-							new_ci.StartPos = 0;
-							new_ci.EndPos = FULL_LINE_END_POS_HINT;
-						}
+						new_ci.StartPos = 0;
+						new_ci.EndPos = FULL_LINE_END_POS_HINT;
 					}
 
 					if (new_ci.StartPos <= new_ci.EndPos)
@@ -679,7 +670,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			else // This 'else' corresponds to 'if (!background_filled)'
 			{
 				// Even if background was filled, we might need to draw our fake selection cursor on top of it.
-				if (m_bWordWrap && CurLogicalLine->GetLength() == 0)
+				if (CurLogicalLine->GetLength() == 0)
 				{
 					int RealSelStart, RealSelEnd;
 					CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
@@ -1411,10 +1402,6 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD9:
 		case KEY_CTRLSHIFTHOME:
 		case KEY_CTRLSHIFTNUMPAD7: {
-			{
-				int DbgSelStart, DbgSelEnd;
-				CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
-			}
 
 			Lock();
 			Pasting++;
@@ -1435,10 +1422,6 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD3:
 		case KEY_CTRLSHIFTEND:
 		case KEY_CTRLSHIFTNUMPAD1: {
-			{
-				int DbgSelStart, DbgSelEnd;
-				CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
-			}
 
 			Lock();
 			Pasting++;
@@ -1907,9 +1890,7 @@ int Editor::ProcessKey(FarKey Key)
 			} else		// расширяем выделение
 			{
 				CurLine->Select(SelStart, -1);
-				if (m_bWordWrap) {
-					int DbgSelStart, DbgSelEnd; CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
-				}
+
 				SelStart = CurLine->m_next->CellPosToReal(0);
 				SelEnd = CurLine->m_next->CellPosToReal(CurPos);
 			}
@@ -1926,9 +1907,7 @@ int Editor::ProcessKey(FarKey Key)
 			//				CurLine->m_next->Select(-1,0);
 			//			else
 			CurLine->m_next->Select(SelStart, SelEnd);
-			if (m_bWordWrap) {
-				int DbgSelStart, DbgSelEnd; CurLine->m_next->GetRealSelection(DbgSelStart, DbgSelEnd);
-			}
+
 			Down();
 			Show();
 			return TRUE;
@@ -2193,12 +2172,12 @@ int Editor::ProcessKey(FarKey Key)
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
-				if (m_bWordWrap) {
-					int v_start_pos, v_end_pos;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
-				}
+
+				int v_start_pos, v_end_pos;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 			} else { // Original logic
 				if (!CurPos && CurLine->m_prev) {
 					Up();
@@ -2229,12 +2208,12 @@ int Editor::ProcessKey(FarKey Key)
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
-				if (m_bWordWrap) {
-					int v_start_pos, v_end_pos;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
-				}
+
+				int v_start_pos, v_end_pos;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 			} else {
 				// Original logic for non-word-wrap
 				if (CurLine->GetCurPos() >= CurLine->GetLength() && CurLine->m_next && !EdOpt.CursorBeyondEOL)
@@ -3282,12 +3261,12 @@ case KEY_CTRLNUMPAD3: {
 				CurLine->SetCurPos(targetPos);
 
 				Show();
-				if (m_bWordWrap) {
-					int v_start_pos, v_end_pos;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
-				}
+
+				int v_start_pos, v_end_pos;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 				return TRUE;
 			}
 		}
@@ -3589,6 +3568,12 @@ case KEY_CTRLNUMPAD3: {
 
 int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
+	// Статические переменные для отслеживания состояния выделения мышью
+	static bool isDraggingSelection = false;
+	static Edit* selectionAnchorLine = nullptr;
+	static int selectionAnchorPos = 0;
+	static int selectionAnchorLineNum = 0;
+
 	m_MouseButtonIsHeld = MouseEvent->dwButtonState & 3;
 
 	// Shift + Mouse click -> adhoc quick edit
@@ -3598,11 +3583,16 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
+	// Отпускание кнопки мыши завершает процесс выделения
+	if (isDraggingSelection && !(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED))
+	{
+		isDraggingSelection = false;
+	}
+
 	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда
-	if ((MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+	if (!isDraggingSelection && (MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
 		if ((!EdOpt.PersistentBlocks) && (BlockStart || VBlockStart)) {
 			UnmarkBlock();
-			Show();
 		}
 	}
 
@@ -3627,23 +3617,27 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					GoToLine((NumLastLine - 1) * (MouseY - Y1) / (Y2 - Y1));
 			}
 		}
+		isDraggingSelection = false; // Скроллбар отменяет выделение
 		return TRUE;
 	}
 
-	// scroll up/down by dragging outside editor window
-	if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
-		while (IsMouseButtonPressed() && MouseY < Y1) ProcessKey(KEY_UP);
+	// Автопрокрутка при выделении мышью за пределами окна редактора
+	if (isDraggingSelection && MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
+		while (IsMouseButtonPressed() && MouseY < Y1) Up();
+		// Обновление выделения произойдет при следующем событии MOUSE_MOVED
 		return TRUE;
 	}
-	if (MouseEvent->dwMousePosition.Y > Y2 && (MouseEvent->dwButtonState & 3)) {
-		while (IsMouseButtonPressed() && MouseY > Y2) ProcessKey(KEY_DOWN);
+	if (isDraggingSelection && MouseEvent->dwMousePosition.Y > Y2 && (MouseEvent->dwButtonState & 3)) {
+		while (IsMouseButtonPressed() && MouseY > Y2) Down();
+		// Обновление выделения произойдет при следующем событии MOUSE_MOVED
 		return TRUE;
 	}
 
-	// For any click inside the editor window, first position the cursor
+	// Основная логика обработки кликов и выделения внутри окна редактора
 	if (MouseEvent->dwMousePosition.X >= X1 && MouseEvent->dwMousePosition.X <= XX2
 		&& MouseEvent->dwMousePosition.Y >= Y1 && MouseEvent->dwMousePosition.Y <= Y2)
 	{
+		// Перемещение курсора в точку клика/движения
 		if((MouseEvent->dwButtonState & 3))
 		{
 			Edit* TargetLine = nullptr;
@@ -3692,6 +3686,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			if (TargetLine)
 			{
+				// Если это не продолжение выделения, а новый клик, снимаем старое выделение
+				if (!isDraggingSelection && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+					UnmarkBlock();
+				}
 				CurLine = TargetLine;
 				NumLine = CalcDistance(TopList, CurLine, -1);
 				CurLine->SetCurPos(TargetPos);
@@ -3703,18 +3701,15 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(v_start);
 					MaxRightPos = CurLine->GetCellCurPos();
 				}
-				// Снимаем любое предыдущее выделение при новом клике.
-		        // UnmarkBlock() должен вызываться только при первом клике, а не при каждом движении
-        		if (!(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
-					UnmarkBlock();
-				}
-				Show();
 			}
 		}
 
-		// --- Common logic for click/double-click/triple-click ---
+		// НАЧАЛО ВЫДЕЛЕНИЯ (первый клик)
 		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
 		{
+			bool multiClickHandled = false;
+
+			// --- Сначала обрабатываем двойные/тройные клики ---
 			static int EditorPrevClickCount = 0;
 			static DWORD EditorPrevClickTime = 0;
 			static COORD EditorPrevPosition = {0,0};
@@ -3731,14 +3726,19 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				EditorPrevClickCount = 1;
 			}
 
-			EditorPrevClickTime = WINPORT(GetTickCount)();
-			EditorPrevPosition = MouseEvent->dwMousePosition;
+			// Только обновляем, если это начало новой последовательности кликов
+			if (EditorPrevClickCount == 1) {
+				EditorPrevClickTime = WINPORT(GetTickCount)();
+				EditorPrevPosition = MouseEvent->dwMousePosition;
+			}
 
 			if (EditorPrevClickCount == 2) // Double-click
 			{
 				ProcessKey(KEY_OP_SELWORD);
+				multiClickHandled = true;
+				isDraggingSelection = false; // Двойной клик - это атомарное действие, а не начало выделения
 			}
-			else if (EditorPrevClickCount >= 3) // Triple-click (and more)
+			else if (EditorPrevClickCount >= 3) // Triple-click
 			{
 				CurLine->Select(0, CurLine->GetLength());
 				if (CurLine->IsSelection()) {
@@ -3746,10 +3746,83 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					BlockStart = CurLine;
 					BlockStartLine = NumLine;
 				}
-				EditorPrevClickCount = 0; // Reset to avoid re-triggering
+				multiClickHandled = true;
+				isDraggingSelection = false; // Тройной клик - тоже
+				EditorPrevClickCount = 0; // Сбрасываем, чтобы следующий клик был одинарным
 			}
-			Show();
+
+			// --- Затем, если это не был мульти-клик, обрабатываем выделение перетаскиванием ---
+
+			// НАЧАЛО ВЫДЕЛЕНИЯ (первый клик)
+			if (!multiClickHandled && !isDraggingSelection && !(MouseEvent->dwEventFlags & MOUSE_MOVED))
+			{
+				isDraggingSelection = true;
+				selectionAnchorLine = CurLine;
+				selectionAnchorPos = CurLine->GetCurPos();
+				selectionAnchorLineNum = NumLine;
+
+				// Устанавливаем состояние, совместимое с клавиатурным выделением
+				Flags.Set(FEDITOR_MARKINGBLOCK);
+				BlockStart = CurLine;
+				BlockStartLine = NumLine;
+				// Начинаем с выделения нулевой длины в точке клика
+				CurLine->Select(selectionAnchorPos, selectionAnchorPos);
+			}
+			// ПРОЦЕСС ВЫДЕЛЕНИЯ (движение мышью с зажатой кнопкой)
+			else if (isDraggingSelection && (MouseEvent->dwEventFlags & MOUSE_MOVED))
+			{
+				// Курсор уже перемещен в нужную позицию кодом выше
+				Edit *startLine, *endLine;
+				int startPos, endPos, startLineNum;
+
+				// Определяем, где начало и где конец выделения (якорь и текущая позиция)
+				if (NumLine < selectionAnchorLineNum || (NumLine == selectionAnchorLineNum && CurLine->GetCurPos() < selectionAnchorPos)) {
+					startLine = CurLine;
+					startPos = CurLine->GetCurPos();
+					startLineNum = NumLine;
+					endLine = selectionAnchorLine;
+					endPos = selectionAnchorPos;
+				} else {
+					startLine = selectionAnchorLine;
+					startPos = selectionAnchorPos;
+					startLineNum = selectionAnchorLineNum;
+					endLine = CurLine;
+					endPos = CurLine->GetCurPos();
+				}
+
+				// Применяем выделение: сначала всё снимаем, потом выставляем заново
+				UnmarkBlock();
+
+				BlockStart = startLine;
+				BlockStartLine = startLineNum;
+				Flags.Set(FEDITOR_MARKINGBLOCK);
+
+				if (startLine == endLine) {
+					// Выделение в пределах одной строки
+					startLine->Select(startPos, endPos);
+				} else {
+					// Выделение охватывает несколько строк
+					Edit* p = startLine;
+
+					// Первая строка: от начальной позиции до конца
+					p->Select(startPos, -1);
+					p = p->m_next;
+
+					// Средние строки: выделяем полностью
+					while(p && p != endLine) {
+						p->Select(0, -1);
+						p = p->m_next;
+					}
+
+					// Последняя строка: от начала до конечной позиции
+					if (p == endLine) {
+						p->Select(0, endPos);
+					}
+				}
+			}
 		}
+
+		Show();
 	}
 
 	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED
@@ -4035,11 +4108,6 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 
 void Editor::InsertString()
 {
-	if (m_bWordWrap) {
-		const wchar_t* str_addr;
-		int str_len;
-		CurLine->GetBinaryString(&str_addr, nullptr, str_len);
-	}
 	if (Flags.Check(FEDITOR_LOCKMODE))
 		return;
 

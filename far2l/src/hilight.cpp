@@ -818,31 +818,15 @@ void HighlightFiles::HiEdit(int MenuPos)
 							em.AddDupWrap(fmask);
 
 							// expand all groups
-							int ngroups = 0;
-							size_t pos_open, pos_close = 0;
-							FARString fs_group_name, fs_masks_from_group;
-							fs = fmask;
-							for( ;; ) {
-								if( !fs.Pos(pos_open, '<', pos_close) )
-									break;
-								if( !fs.Pos(pos_close, '>', pos_open+1) )
-									break;
-								if( pos_close-pos_open < 2 )
-									continue;
-								fs_group_name = fs.SubStr(pos_open+1, pos_close-pos_open-1);
-								if( !GetMaskGroup(fs_group_name, fs_masks_from_group) )
-									continue;
-								fs.Replace(pos_open, pos_close-pos_open+1, fs_masks_from_group);
-								pos_close = pos_open; // may be need recursive expand
-								ngroups++;
-							}
-							em.AddDup(L"");
-							fs_group_name = Msg::HighlightViewMasksCountExpandedGroups;
-							fs_group_name.AppendFormat(L" %d", ngroups);
-							em.AddDup(fs_group_name);
+							FARString fsmask_expanded = fmask;
+							unsigned ngroups = GetMaskGroupExpandRecursiveAll(fsmask_expanded);
+							em.AddDup(L"\x1");
+							fs = Msg::HighlightViewMasksCountExpandedGroups;
+							fs.AppendFormat(L" %u", ngroups);
+							em.AddDup(fs);
 							em.AddDup(L"");
 							em.AddDup(Msg::HighlightViewMasksAfterExpand);
-							em.AddDupWrap(fs);
+							em.AddDupWrap(fsmask_expanded);
 						}
 						em.AddDup(Msg::Ok);
 						em.AddDup(Msg::MaskGroupTitle);

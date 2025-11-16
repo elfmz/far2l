@@ -1749,12 +1749,40 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 			wxRect img_rc, rc = rgn.GetBox();
 			for (auto& it : _images) {
 				auto sz = it.second.bitmap.GetSize();
-				img_rc.SetLeft(_paint_context.FontWidth() * it.second.pos.X);
-				img_rc.SetTop(_paint_context.FontHeight() * it.second.pos.Y);
-				img_rc.SetWidth(sz.GetWidth());
-				img_rc.SetHeight(sz.GetHeight());
+				img_rc.SetLeft(_paint_context.FontWidth() * it.second.area.Left);
+				img_rc.SetTop(_paint_context.FontHeight() * it.second.area.Top);
+				if (it.second.pixel_offset || it.second.area.Right == -1) {
+					img_rc.SetWidth(sz.GetWidth());
+				} else {
+					img_rc.SetWidth(_paint_context.FontWidth() * (it.second.area.Right + 1 - it.second.area.Left));
+				}
+				if (it.second.pixel_offset || it.second.area.Bottom == -1) {
+					img_rc.SetHeight(sz.GetHeight());
+				} else {
+					img_rc.SetHeight(_paint_context.FontHeight() * (it.second.area.Bottom + 1 - it.second.area.Top));
+				}
 				if (rc.Intersects(img_rc)) {
-					dc.DrawBitmap(it.second.bitmap, img_rc.GetLeft(), img_rc.GetTop(), false); // Use 'false' for no transparency, as we pre-rendered on a black bg
+					if (img_rc.GetWidth() == sz.GetWidth() && img_rc.GetHeight() == sz.GetHeight()) {
+						int x = img_rc.GetLeft(), y = img_rc.GetTop();
+						if (it.second.pixel_offset && it.second.area.Right > 0) {
+							x+= it.second.area.Right;
+						}
+						if (it.second.pixel_offset && it.second.area.Bottom > 0) {
+							y+= it.second.area.Bottom;
+						}
+//						fprintf(stderr, "WX image: [%d:%d] at [%d:%d]\n", sz.GetWidth(), sz.GetHeight(), x, y);
+						dc.DrawBitmap(it.second.bitmap, x, y, false);
+					} else {
+						auto scaled_sz = it.second.scaled_bitmap.GetSize();
+						if (img_rc.GetWidth() != scaled_sz.GetWidth() || img_rc.GetHeight() != scaled_sz.GetHeight()) {
+							fprintf(stderr, "WX image scaling: [%d:%d] -> [%d:%d] at [%d:%d]\n",
+								sz.GetWidth(), sz.GetHeight(), img_rc.GetWidth(), img_rc.GetHeight(),
+								img_rc.GetLeft(), img_rc.GetTop());
+							auto scaled_image = it.second.bitmap.ConvertToImage().Scale(img_rc.GetWidth(), img_rc.GetHeight(), wxIMAGE_QUALITY_HIGH);
+							it.second.scaled_bitmap = scaled_image;
+						}
+						dc.DrawBitmap(it.second.scaled_bitmap, img_rc.GetLeft(), img_rc.GetTop(), false);
+					}
 				}
 			}
 		}
@@ -2176,7 +2204,7 @@ void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
 
-bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
 {
 	std::string str_id(id);
 	try {
@@ -2209,10 +2237,12 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 			return false;
 		}
 
+		auto cur_pos = g_winport_con_out->GetCursor();
 		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
-		img.pos = pos;
+		img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;
+		MakeImageArea(img.area, area, cur_pos);
 		if (scroll) { // scroll/move existing image
 			if (width && height) { // scrolling, but if empty image specified - its just a move operation
 				auto sz = img.bitmap.GetSize();
@@ -2268,14 +2298,16 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, D
 	return true;
 }
 
-bool WinPortPanel::OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90)
+bool WinPortPanel::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
 {
 	try {
 		std::string str_id(id);
 		angle_x90&= 3; // any other represented one of: 90, 180, 270
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
-		img.pos = pos;
+		if (area) {
+			img.area = *area;
+		}
 		if (angle_x90) { // if zero - its a trivial move
 			wxImage rotated_img = img.bitmap.ConvertToImage();
 			switch (angle_x90) {

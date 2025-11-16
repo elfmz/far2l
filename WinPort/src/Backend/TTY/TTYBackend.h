@@ -169,8 +169,8 @@ protected:
 	virtual void OnConsoleOutputFlushDrawing();
 	const char *OnConsoleBackendInfo(int entity);
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
-	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer);
-	virtual bool OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90);
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90);
 	virtual bool OnDeleteConsoleImage(const char *id);
 
 	// ITTYInputSpecialSequenceHandler

@@ -24,7 +24,8 @@ struct TTYConsoleImage
 	uint32_t bpp{32};    // format: 32 or 24 BPP
    	uint32_t width{};    // Ширина в пикселях.
     uint32_t height{};   // Высота в пикселях.
-	COORD pos{};         // Координаты (колонка, строка)
+	SMALL_RECT area{-1, -1, -1, -1};         // Координаты (колонка, строка)
+	bool pixel_offset{false};
 };
 
 class TTYOutput

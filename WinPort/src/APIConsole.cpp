@@ -522,14 +522,14 @@ extern "C" {
 		return TRUE;
 	}
 
-	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer))
+	WINPORT_DECL(SetConsoleImage, BOOL, (HANDLE con, const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer))
 	{
-		return ChooseConOut(con)->OnSetConsoleImage(id, flags, pos, width, height, buffer);
+		return ChooseConOut(con)->OnSetConsoleImage(id, flags, area, width, height, buffer);
 	}
 
-	WINPORT_DECL(RotateConsoleImage, BOOL, (HANDLE con, const char *id, COORD pos, unsigned char angle_x90))
+	WINPORT_DECL(RotateConsoleImage, BOOL, (HANDLE con, const char *id, const SMALL_RECT *area, unsigned char angle_x90))
 	{
-		return ChooseConOut(con)->OnRotateConsoleImage(id, pos, angle_x90);
+		return ChooseConOut(con)->OnRotateConsoleImage(id, area, angle_x90);
 	}
 
 	WINPORT_DECL(DeleteConsoleImage, BOOL, (HANDLE con, const char *id))

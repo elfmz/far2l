@@ -230,11 +230,18 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 			OpenPluginAtCurrentPanel(fn_sel.first);
 		}
 	} else if (Item > 0xfff) {
-		const wchar_t *wide_path = (const wchar_t *)Item;
-		while (wcsncmp(wide_path, L"./", 2) == 0) {
-			wide_path+= 2;
+		std::string path = Wide2MB((const wchar_t *)Item);
+		while (!path.empty() && path.front() == ' ') {
+			path.erase(0, 1);
 		}
-		const auto &path = Wide2MB(wide_path);
+		for (size_t i = 0; i + 1 < path.size(); ++i) {
+			if (path[i] == '\\') {
+				path.erase(i, 1);
+			}
+		}
+		while (strncmp(path.c_str(), "./", 2) == 0) {
+			path.erase(0, 2);
+		}
 		if (path.find('/') == std::string::npos) {
 			OpenPluginAtCurrentPanel(path);
 		} else {

@@ -135,6 +135,7 @@ src/plug/PluginA.cpp
 src/plug/plclass.cpp
 
 src/vt/vtansi.cpp
+src/vt/vtansi_kitty.cpp
 src/vt/vtshell.cpp
 src/vt/vtshell_translation.cpp
 src/vt/vtshell_translation_kitty.cpp

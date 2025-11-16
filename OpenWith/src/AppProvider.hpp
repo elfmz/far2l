@@ -13,6 +13,7 @@ struct ProviderSetting
 	std::wstring internal_key;
 	std::wstring display_name;
 	bool value;
+	bool disabled = false; // true if the setting should be grayed out in the UI
 };
 
 

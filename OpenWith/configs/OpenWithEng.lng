@@ -20,6 +20,7 @@
 
 "Use `&xdg-mime` tool"
 "Use `&file` tool"
+"Use `magi&ka` tool"
 "Use &extension-based fallback"
 "Load MIME type &aliases"
 "Load MIME type su&bclasses"

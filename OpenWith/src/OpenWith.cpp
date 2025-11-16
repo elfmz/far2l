@@ -185,7 +185,7 @@ namespace OpenWith {
 			first_platform_item_idx = (int)di.size() + 1;
 
 			for (const auto& setting : old_platform_settings) {
-				di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, FALSE, { setting.value }, 0, 0, setting.display_name.c_str(), 0 });
+				di.push_back({ DI_CHECKBOX, 5, ++y, 0, 0, FALSE, { setting.value }, setting.disabled ? DIF_DISABLE : DIF_NONE, 0, setting.display_name.c_str(), 0 });
 			}
 		}
 

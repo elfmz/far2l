@@ -524,11 +524,13 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 {
 	DWORD64 flags{};
 	DWORD width{}, height{};
-	COORD pos{};
+	SMALL_RECT area{-1, -1, -1, -1};
 	const std::string &id = stk_ser.PopStr();
 	stk_ser.PopNum(flags);
-	stk_ser.PopNum(pos.X);
-	stk_ser.PopNum(pos.Y);
+	stk_ser.PopNum(area.Left);
+	stk_ser.PopNum(area.Top);
+	stk_ser.PopNum(area.Right);
+	stk_ser.PopNum(area.Bottom);
 	stk_ser.PopNum(width);
 	stk_ser.PopNum(height);
 	uint8_t ok = 0;
@@ -536,7 +538,7 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 		const size_t buffer_size = (flags == WP_IMG_RGB) ? (width) * height * 3 : (width) * height * 4;
 		std::vector<char> bitmap(buffer_size);
 		stk_ser.Pop(bitmap.data(), bitmap.size());
-		ok = WINPORT(SetConsoleImage)(NULL, id.c_str(), flags, pos, width, height, bitmap.data()) ? 1 : 0;
+		ok = WINPORT(SetConsoleImage)(NULL, id.c_str(), flags, &area, width, height, bitmap.data()) ? 1 : 0;
 	}
 	stk_ser.Clear();
 	stk_ser.PushNum(ok);
@@ -545,12 +547,14 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 void VTFar2lExtensios::OnInteract_ImageRotate(StackSerializer &stk_ser)
 {
 	unsigned char angle_x90{};
-	COORD pos{};
+	SMALL_RECT area{-1, -1, -1, -1};
 	const std::string &id = stk_ser.PopStr();
-	stk_ser.PopNum(pos.X);
-	stk_ser.PopNum(pos.Y);
+	stk_ser.PopNum(area.Left);
+	stk_ser.PopNum(area.Top);
+	stk_ser.PopNum(area.Right);
+	stk_ser.PopNum(area.Bottom);
 	stk_ser.PopNum(angle_x90);
-	uint8_t ok = WINPORT(RotateConsoleImage)(NULL, id.c_str(), pos, angle_x90) ? 1 : 0;
+	uint8_t ok = WINPORT(RotateConsoleImage)(NULL, id.c_str(), &area, angle_x90) ? 1 : 0;
 	stk_ser.Clear();
 	stk_ser.PushNum(ok);
 }

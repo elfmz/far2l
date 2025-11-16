@@ -1497,7 +1497,7 @@ bool TTYBackend::CheckKittyImagesSupport()
 	}
 }
 
-bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
 {
 	size_t buffer_size;
 	auto fmt = (flags & WP_IMG_MASK_FMT);
@@ -1518,8 +1518,10 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 			}
 			stk_ser.PushNum(height);
 			stk_ser.PushNum(width);
-			stk_ser.PushNum(pos.Y);
-			stk_ser.PushNum(pos.X);
+			stk_ser.PushNum(area ? area->Bottom : SHORT(-1));
+			stk_ser.PushNum(area ? area->Right : SHORT(-1));
+			stk_ser.PushNum(area ? area->Top : SHORT(-1));
+			stk_ser.PushNum(area ? area->Left : SHORT(-1));
 			stk_ser.PushNum(flags);
 			stk_ser.PushStr(id);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_SET);
@@ -1534,6 +1536,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 
 	if (CheckKittyImagesSupport()) {
 		try {
+			auto cur_pos = g_winport_con_out->GetCursor();
 			std::string str_id(id);
 			std::lock_guard<std::mutex> lock(_async_mutex);
 			auto &img = _images[str_id];
@@ -1543,8 +1546,8 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 			img.bpp = (fmt == WP_IMG_RGBA) ? 32 : 24;
 			img.width = width;
 			img.height = height;
-			img.pos = pos;
-
+			img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;
+			MakeImageArea(img.area, area, cur_pos);
 			_images_to_display.insert(str_id);
 		} catch (...) {
 			return false;
@@ -1559,15 +1562,17 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWO
 	return true;
 }
 
-bool TTYBackend::OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90)
+bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
 {
 	if (_far2l_tty) {
 		uint8_t ok = 0;
 		try {
 			StackSerializer stk_ser;
 			stk_ser.PushNum(angle_x90);
-			stk_ser.PushNum(pos.Y);
-			stk_ser.PushNum(pos.X);
+			stk_ser.PushNum(area ? area->Bottom : SHORT(-1));
+			stk_ser.PushNum(area ? area->Right : SHORT(-1));
+			stk_ser.PushNum(area ? area->Top : SHORT(-1));
+			stk_ser.PushNum(area ? area->Left : SHORT(-1));
 			stk_ser.PushStr(id);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_ROT);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);

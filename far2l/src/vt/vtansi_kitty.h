@@ -11,6 +11,8 @@ class VTAnsiKitty
 	{
 		std::vector<unsigned char> data;
 		int width{-1}, height{-1}, fmt{32};
+		int cols{-1}, rows{-1};
+		int ofsx{-1}, ofsy{-1};
 		bool show{false}, shown{false};
 	};
 	struct Images : std::map<int, Image>, std::mutex {} _images;
@@ -18,7 +20,7 @@ class VTAnsiKitty
 	const char *ShowImage(int id, Image &img);
 
 	const char *AddImage(char action, char medium,
-		int id, int fmt, int width, int height, int more, const char *b64data, size_t b64len);
+		int id, int fmt, int width, int height, int rows, int cols, int ofsx, int ofsy, int more, const char *b64data, size_t b64len);
 	const char *DisplayImage(int id);
 	const char *RemoveImage(int id);
 

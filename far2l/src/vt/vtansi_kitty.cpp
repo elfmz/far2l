@@ -40,14 +40,23 @@ const char *VTAnsiKitty::ShowImage(int id, Image &img)
 	if (img.data.size() < wanted_size) {
 		return "TRUNCATED_DATA";
 	}
-	
-	int dummy_lines = std::min(int(csbi.dwCursorPosition.Y), int(img.height / wgi.PixPerCell.Y));
+	int dummy_lines = (img.rows > 0) ? img.rows : int(img.height / wgi.PixPerCell.Y);
+	dummy_lines = std::min(int(csbi.dwCursorPosition.Y), dummy_lines);
 	for (int i = dummy_lines; i--; ) {
 		_vts->InjectInput("\r\n");
 	}
 	csbi.dwCursorPosition.Y-= dummy_lines;
+	SMALL_RECT area{csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y,
+			SHORT(img.rows > 0 ? csbi.dwCursorPosition.X + img.rows - 1 : -1),
+			SHORT(img.cols > 0 ? csbi.dwCursorPosition.Y + img.cols - 1 : -1)
+	};
+	if (img.cols < 0 && img.rows < 0 && (img.ofsx > 0 || img.ofsy > 0)) {
+		area.Right = img.ofsx;
+		area.Bottom = img.ofsy;
+		flags|= WP_IMG_PIXEL_OFFSET;
+	}
 	if (!WINPORT(SetConsoleImage)(NULL, KittyID(id).c_str(),
-			flags, csbi.dwCursorPosition, img.width, img.height, img.data.data())) {
+			flags, &area, img.width, img.height, img.data.data())) {
 		return "BACKEND_ERROR";
 	}
 	img.shown = true;
@@ -56,7 +65,7 @@ const char *VTAnsiKitty::ShowImage(int id, Image &img)
 }
 
 const char *VTAnsiKitty::AddImage(char action, char medium,
-		int id, int fmt, int width, int height, int more, const char *b64data, size_t b64len)
+		int id, int fmt, int width, int height, int rows, int cols, int ofsx, int ofsy, int more, const char *b64data, size_t b64len)
 {
 	if (medium != 0 && medium != 'd') { // only escape codes are supported
 		return "BAD_MEDIUM";
@@ -86,6 +95,19 @@ const char *VTAnsiKitty::AddImage(char action, char medium,
 	if (height > 0) {
 		img.height = height;
 	}
+	if (rows > 0) {
+		img.rows = rows;
+	}
+	if (rows > 0) {
+		img.cols = cols;
+	}
+	if (ofsx > 0) {
+		img.ofsx = ofsx;
+	}
+	if (ofsy > 0) {
+		img.ofsy = ofsy;
+	}
+
 	base64_decode(img.data, b64data, b64len);
 	if (!img.show || more) {
 		return nullptr;
@@ -130,18 +152,23 @@ const char *VTAnsiKitty::RemoveImage(int id)
 
 class KittyArgs
 {
-	const char *_vals[1 + 'z' - 'a']{};
-	int _data_pos{};
+	const char *_str;
+	int _vals[1 + 'z' - 'a'];
+	int _data_pos;
 
 public:
-	KittyArgs(const char *s, size_t l)
+	KittyArgs(const char *s, int l)
 		:
+		_str(s),
 		_data_pos(l) // by default set data pos to the end of string
 	{
-		for (size_t i = 0, j = 0; ; ++i) {
+		for (auto &v : _vals) {
+			v = -1;
+		}
+		for (int i = 0, j = 0; ; ++i) {
 			if (i == 0 || s[i] == ';' || s[i] == ',') {
 				if (i + 1 > j && s[j + 1] == '=' && s[j] >= 'a'  && s[j] <= 'z') {
-					_vals[s[j] - 'a'] = &s[j + 2];
+					_vals[s[j] - 'a'] = j + 2;//&s[j + 2];
 				}
 				if (i == l) {
 					break;
@@ -158,12 +185,26 @@ public:
 
 	int GetInt(char c, int def = -1) const
 	{
-		return _vals[c - 'a'] ? atoi(_vals[c - 'a']) : def;
+		if (c < 'a' || c > 'z' || _vals[c - 'a'] < 0) {
+			return def;
+		}
+		int out = 0;
+		for (int i = _vals[c - 'a']; i < _data_pos; ++i) {
+			if (_str[i] < '0' || _str[i] > '9') {
+				break;
+			}
+			out*= 10;
+			out+= _str[i] - '0';
+		}
+		return out;
 	}
 
 	int GetChar(char c, char def = 0) const
 	{
-		return _vals[c - 'a'] ? *(_vals[c - 'a']) : def;
+		if (c < 'a' || c > 'z' || _vals[c - 'a'] < 0) {
+			return  def;
+		}
+		return  _str[_vals[c - 'a']];
 	}
 
 	int GetDataPos() const
@@ -187,6 +228,10 @@ void VTAnsiKitty::InterpretControlString(const char *s, size_t l)
 				ka.GetInt('f'), // format: 24, 32, 100
 				ka.GetInt('s'), // width pixels
 				ka.GetInt('v'), // height pixels
+				ka.GetInt('c'), // columns (display width in cells)
+				ka.GetInt('r'), // rows (display height in cells)
+				ka.GetInt('X'), // in-cell pixel X-offset
+				ka.GetInt('Y'), // in-cell pixel Y-offset
 				ka.GetInt('m'), // more to follow
 				s + ka.GetDataPos(), l - ka.GetDataPos()); 
 		} break;

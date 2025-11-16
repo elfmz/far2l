@@ -1484,13 +1484,20 @@ typedef LONG NTSTATUS;
 
 // SetConsoleImage scrolling flags supported if WP_IMGCAP_SCROLL reported
 // move already existing image and scroll it with 'prepending' by newly sent part
-#define WP_IMG_SCROLL_AT_LEFT   0x10000 // left->right scrolling, sending rectangle to insert at left
-#define WP_IMG_SCROLL_AT_RIGHT  0x20000 // right->left scrolling, sending rectangle to insert at right
-#define WP_IMG_SCROLL_AT_TOP    0x30000 // top->bottom scrolling, sending rectangle to insert at top
-#define WP_IMG_SCROLL_AT_BOTTOM 0x40000 // bottom->top scrolling, sending rectangle to insert at bottom
+#define WP_IMG_SCROLL_AT_LEFT   0x010000 // left->right scrolling, sending rectangle to insert at left
+#define WP_IMG_SCROLL_AT_RIGHT  0x020000 // right->left scrolling, sending rectangle to insert at right
+#define WP_IMG_SCROLL_AT_TOP    0x030000 // top->bottom scrolling, sending rectangle to insert at top
+#define WP_IMG_SCROLL_AT_BOTTOM 0x040000 // bottom->top scrolling, sending rectangle to insert at bottom
 
-#define WP_IMG_MASK_FMT         0x0ffff
-#define WP_IMG_MASK_SCROLL      0x70000
+
+// if area fully specified - then:
+//  if WP_IMG_PIXEL_OFFSET is not set - image scaled to cover specified area [LEFT TOP RIGHT BOTTOM]
+//  if WP_IMG_PIXEL_OFFSET is set - image NOT scaled, and RIGHT and BOTTOM fields treated as pixel-level offset for displaying image
+#define WP_IMG_PIXEL_OFFSET     0x100000
+
+
+#define WP_IMG_MASK_FMT         0x00ffff
+#define WP_IMG_MASK_SCROLL      0x070000
 
 typedef struct WinportGraphicsInfo1
 {

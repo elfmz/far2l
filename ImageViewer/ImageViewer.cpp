@@ -459,14 +459,14 @@ bool ImageViewer::RenderImage()
 
 	auto viewport_w = canvas_w;
 	auto viewport_h = canvas_h;
-	COORD pos = _pos;
+	SMALL_RECT area = {_pos.X, _pos.Y, -1, -1};
 
 	if (viewport_w > _pixel_data_w) {
-		pos.X+= (viewport_w - _pixel_data_w) / (2 * wgi.PixPerCell.X);
+		area.Left+= (viewport_w - _pixel_data_w) / (2 * wgi.PixPerCell.X);
 		viewport_w = _pixel_data_w;
 	}
 	if (viewport_h > _pixel_data_h) {
-		pos.Y+= (viewport_h - _pixel_data_h) / (2 * wgi.PixPerCell.Y);
+		area.Top+= (viewport_h - _pixel_data_h) / (2 * wgi.PixPerCell.Y);
 		viewport_h = _pixel_data_h;
 	}
 
@@ -497,7 +497,7 @@ bool ImageViewer::RenderImage()
 	if (rotated_angle != 0 && !do_convert && (wgi.Caps & WP_IMGCAP_ROTATE) != 0
 			&& _pixel_data_w <= std::min(canvas_w, canvas_h)
 			&& _pixel_data_h <= std::min(canvas_w, canvas_h)) {
-		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, pos, rotated_angle)) {
+		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle)) {
 			rotated_angle = 0; // no need to rotate anything else
 		}
 	}
@@ -515,7 +515,7 @@ bool ImageViewer::RenderImage()
 				fprintf(stderr, "--- Sending to [%d %d] left edge [%d %d %d %d]\n",
 					dst_left, dst_top, src_left, _prev_top, src_left + ins_w, _prev_top + viewport_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
-					| WP_IMG_SCROLL_AT_LEFT, pos, ins_w, viewport_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL_AT_LEFT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
 			} else {
 				Blit(ins_w, viewport_h,
 					_send_data.data(), 0, 0, ins_w,
@@ -523,7 +523,7 @@ bool ImageViewer::RenderImage()
 				fprintf(stderr, "--- Sending to [%d %d] right edge [%d %d %d %d]\n",
 					dst_left, dst_top, src_left + viewport_w - ins_w, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
-					| WP_IMG_SCROLL_AT_RIGHT, pos, ins_w, viewport_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL_AT_RIGHT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
 			}
 		}
 		if (_prev_top != src_top && out) {
@@ -536,7 +536,7 @@ bool ImageViewer::RenderImage()
 				fprintf(stderr, "--- Sending to [%d %d] top edge [%d %d %d %d]\n",
 					dst_left, dst_top, src_left, src_top, src_left + viewport_w, src_top + ins_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
-					| WP_IMG_SCROLL_AT_TOP, pos, viewport_w, ins_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL_AT_TOP, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
 			} else {
 				Blit(viewport_w, ins_h,
 					_send_data.data(), 0, 0, viewport_w,
@@ -544,7 +544,7 @@ bool ImageViewer::RenderImage()
 				fprintf(stderr, "--- Sending to [%d %d] bottom edge [%d %d %d %d]\n",
 					dst_left, dst_top, src_left, src_top + viewport_h - ins_h, src_left + viewport_w, src_top + viewport_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
-					| WP_IMG_SCROLL_AT_BOTTOM, pos, viewport_w, ins_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL_AT_BOTTOM, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
 			}
 		}
 	} else {
@@ -560,7 +560,7 @@ bool ImageViewer::RenderImage()
 		fprintf(stderr, "--- Sending to [%d %d] full viewport [%d %d %d %d]\n",
 			dst_left, dst_top, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
 		out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB,
-			pos, viewport_w, viewport_h, _send_data.data()) != FALSE;
+			&area, viewport_w, viewport_h, _send_data.data()) != FALSE;
 	}
 	if (out) {
 		_prev_left = src_left;

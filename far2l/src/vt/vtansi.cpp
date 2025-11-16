@@ -1141,8 +1141,17 @@ struct VTAnsiContext
 				}
 
 			case 't':                 // ESC[#t Window manipulation
-				if (es_argc != 1) return;
-				if (es_argv[0] == 21) {	// ESC[21t Report xterm window's title
+				if (es_argc == 1 && es_argv[0] == 16) {	// Report cell size: ESC [ 6 ; height ; width t
+					WinportGraphicsInfo wgi{};
+					if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi)) {
+						wgi.PixPerCell.Y = wgi.PixPerCell.X = 0;
+					}
+					SendSequence( StrPrintf("\e[6;%d;%dt",
+						wgi.PixPerCell.Y ? wgi.PixPerCell.Y : 16,
+						wgi.PixPerCell.X ? wgi.PixPerCell.X : 8
+					).c_str() );
+
+				} else if (es_argc == 1 && es_argv[0] == 21) {	// ESC[21t Report xterm window's title
 					std::string seq;
 					{
 						std::lock_guard<std::mutex> lock(title_mutex);

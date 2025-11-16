@@ -600,16 +600,31 @@ unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConso
     std::string base64_data;
     base64_encode(base64_data, img.pixel_data.data(), img.pixel_data.size());
 
-	MoveCursorStrict(img.pos.Y + 1, img.pos.X + 1);
+	MoveCursorStrict(img.area.Top + 1, img.area.Left + 1);
     
     for (size_t offset = 0;offset < base64_data.length(); ) {
         const size_t chunk_len = std::min(base64_data.length() - offset, (size_t)4096);
         const unsigned more_to_follow = (offset + chunk_len < base64_data.length()) ? 1 : 0;
         if (offset == 0) {
-			Format(ESC "_Ga=T,f=%u,t=d,s=%u,v=%u,i=%u,m=%u;", img.bpp, img.width, img.height, id, more_to_follow);
+			Format(ESC "_Ga=T,f=%u,t=d,s=%u,v=%u,i=%u,m=%u", img.bpp, img.width, img.height, id, more_to_follow);
+			if (img.area.Right != -1) {
+				if (img.pixel_offset) {
+					Format(",X=%d", img.area.Right);
+				} else {
+					Format(",c=%d", img.area.Right + 1 - img.area.Left);
+				}
+			}
+			if (img.area.Bottom != -1) {
+				if (img.pixel_offset) {
+					Format(",Y=%d", img.area.Bottom);
+				} else {
+					Format(",r=%d", img.area.Bottom + 1 - img.area.Top);
+				}
+			}
         } else {
-			Format(ESC "_Gm=%u;", more_to_follow);
+			Format(ESC "_Gm=%u", more_to_follow);
         }
+		Write(";");
         Write(base64_data.c_str() + offset, chunk_len);
         Write(ESC "\\");
         offset += chunk_len;

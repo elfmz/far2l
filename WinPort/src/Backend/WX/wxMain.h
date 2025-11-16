@@ -97,7 +97,9 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	struct wxConsoleImage
 	{
 		wxBitmap bitmap;
-		COORD pos;
+		wxBitmap scaled_bitmap;
+		SMALL_RECT area{-1, -1, -1, -1};
+		bool pixel_offset{false};
 	};
 	struct Images : std::map<std::string, wxConsoleImage>, std::mutex {} _images;
 
@@ -182,8 +184,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleOutputFlushDrawing();
 	virtual const char *OnConsoleBackendInfo(int entity);
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
-	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer);
-	virtual bool OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90);
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90);
 	virtual bool OnDeleteConsoleImage(const char *id);
 
 public:

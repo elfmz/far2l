@@ -47,8 +47,8 @@ public:
 	virtual void OnConsoleOutputFlushDrawing() = 0;
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
-	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer) = 0;
-	virtual bool OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90) = 0;
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
@@ -226,8 +226,8 @@ public:
 	virtual void RepaintsDeferFinish(bool force) = 0;
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
-	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer) = 0;
-	virtual bool OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90) = 0;
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *BackendInfo(int entity) = 0;
@@ -262,6 +262,27 @@ public:
 	};
 };
 
+inline void MakeImageArea(SMALL_RECT &dst, const SMALL_RECT *src, COORD cur_pos)
+{
+	if (src && src->Left != -1) {
+		dst.Left = src->Left;
+	}
+	if (src && src->Top != -1) {
+		dst.Top = src->Top;
+	}
+	if (src && src->Right != -1) {
+		dst.Right = src->Right;
+	}
+	if (src && src->Bottom != -1) {
+		dst.Bottom = src->Bottom;
+	}
+	if (dst.Left == -1) {
+		dst.Left = cur_pos.X;
+	}
+	if (dst.Top == -1) {
+		dst.Top = cur_pos.Y;
+	}
+}
 //////////////////////////////////////////////////////////////////////////////////
 
 extern IConsoleOutput *g_winport_con_out;

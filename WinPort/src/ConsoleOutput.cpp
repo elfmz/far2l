@@ -963,22 +963,23 @@ void ConsoleOutput::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 	_backend->OnGetConsoleImageCaps(wgi);
 }
 
-bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD64 flags, COORD pos, DWORD width, DWORD height, const void *buffer)
+bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
 {
 	bool bad = (!id || !buffer || width == 0 || height == 0);
 	fprintf(stderr,
-		"OnSetConsoleImage: id='%s' flags=0x%llx pos={%d:%d} width=%d height=%d %s\n",
-		id, flags, pos.X, pos.Y, width, height, bad ? "- BAD ARGS" : "");
+		"OnSetConsoleImage: id='%s' flags=0x%llx area={%d:%d %d:%d} width=%d height=%d %s\n",
+		id, flags, area->Left, area->Top, area->Right, area->Bottom, width, height, bad ? "- BAD ARGS" : "");
 	if (bad) {
 		return false;
 	}
-	return _backend->OnSetConsoleImage(id, flags, pos, width, height, buffer);
+	return _backend->OnSetConsoleImage(id, flags, area, width, height, buffer);
 }
 
-bool ConsoleOutput::OnRotateConsoleImage(const char *id, COORD pos, unsigned char angle_x90)
+bool ConsoleOutput::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
 {
-	fprintf(stderr, "OnRotateConsoleImage: id='%s' pos={%d:%d} angle_x90=%u\n", id, pos.X, pos.Y, angle_x90);
-	return _backend->OnRotateConsoleImage(id, pos, angle_x90);
+	fprintf(stderr, "OnRotateConsoleImage: id='%s' area={%d:%d %d:%d} angle_x90=%u\n",
+		id, area->Left, area->Top, area->Right, area->Bottom, angle_x90);
+	return _backend->OnRotateConsoleImage(id, area, angle_x90);
 }
 
 bool ConsoleOutput::OnDeleteConsoleImage(const char *id)

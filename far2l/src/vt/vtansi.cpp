@@ -171,6 +171,7 @@ jadoxa@yahoo.com.au
 #include <optional>
 #include <map>
 #include "vtansi.h"
+#include "vtansi_kitty.h"
 #include "AnsiEsc.hpp"
 #include "UtfConvert.hpp"
 
@@ -1231,11 +1232,22 @@ struct VTAnsiContext
 		return (str.size() >= l && memcmp(str.c_str(), needle, l) == 0);
 	}
 
+	std::optional<VTAnsiKitty> _vta_kitty;
+
 	void InterpretControlString()
 	{
 		FlushBuffer();
 		if (prefix == '_') {//Application Program Command
-			if (StrStartsWith(os_cmd_arg, "set-blank="))  {
+			if (StrStartsWith(os_cmd_arg, "G"))  {
+				if (os_cmd_arg.size() > 1) {
+					if (!_vta_kitty) {
+						_vta_kitty.emplace(vt_shell);
+					}
+					_crds.reset(); // prevent miss repaints
+					_vta_kitty->InterpretControlString(os_cmd_arg.c_str() + 1, os_cmd_arg.size() - 1);
+				}
+
+			} else if (StrStartsWith(os_cmd_arg, "set-blank="))  {
 				blank_character = (os_cmd_arg.size() > 10) ? os_cmd_arg[10] : L' ';
 
 			} else if (os_cmd_arg == "push-attr")  {
@@ -1318,6 +1330,7 @@ struct VTAnsiContext
 	void ResetTerminal()
 	{
 		fprintf(stderr, "ANSI: ResetTerminal\n");
+		_vta_kitty.reset();
 		WINPORT(SetConsoleScrollRegion)(vt_shell->ConsoleHandle(), 0, MAXSHORT);
 
 		chars_in_buffer = 0;

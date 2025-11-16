@@ -76,7 +76,8 @@ void ScanTree::CheckForEnterSubdir(FAR_FIND_DATA_EX *fdata)
 		return;
 
 	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
-		&& (fmpExclSubTree.Compare(fdata->strFileName, false) || (MaxDepth > 0 && ScanDirStack.size() > MaxDepth) ) )
+		&& (fmpExclSubTree.Compare(fdata->strFileName, false)
+				|| (MaxDepth > 0 && ScanDirStack.size() > static_cast<size_t>(MaxDepth))) )
 	{
         fdata->dwFileAttributes |= FILE_ATTRIBUTE_PINNED; //mark as potentially expandable since skipped by settings
 		return;

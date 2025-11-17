@@ -1140,34 +1140,39 @@ struct VTAnsiContext
 					return;
 				}
 
-			case 't':                 // ESC[#t Window manipulation
-				if (es_argc == 1 && es_argv[0] == 16) {	// Report cell size: ESC [ 6 ; height ; width t
+			case 't': {                 // ESC[#t Window manipulation
+				std::string reply;
+				if (es_argc == 1 && es_argv[0] == 18) { // Report text area cells size: ESC [ 8 ; height ; width t
+					reply = StrPrintf("\e[8;%d;%dt", Info.dwSize.Y, Info.dwSize.X);
+				} else if (es_argc == 1 && (es_argv[0] == 14 || es_argv[0] == 16) ) {
 					WinportGraphicsInfo wgi{};
 					if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi)) {
 						wgi.PixPerCell.Y = wgi.PixPerCell.X = 0;
 					}
-					SendSequence( StrPrintf("\e[6;%d;%dt",
-						wgi.PixPerCell.Y ? wgi.PixPerCell.Y : 16,
-						wgi.PixPerCell.X ? wgi.PixPerCell.X : 8
-					).c_str() );
+					int x = wgi.PixPerCell.X > 0 ? wgi.PixPerCell.X : 8;
+					int y = wgi.PixPerCell.Y > 0 ? wgi.PixPerCell.Y : 16;
+					if (es_argv[0] == 14) { // Report text area pixel size: ESC [ 4 ; height ; width t
+						reply = StrPrintf("\e[4;%d;%dt", y * Info.dwSize.Y, x * Info.dwSize.X);
+					} else if (es_argv[0] == 16) { // Report text cell pixel size: ESC [ 6 ; height ; width t
+						reply = StrPrintf("\e[6;%d;%dt", y, x);
+					}
 
 				} else if (es_argc == 1 && es_argv[0] == 21) {	// ESC[21t Report xterm window's title
-					std::string seq;
-					{
-						std::lock_guard<std::mutex> lock(title_mutex);
-						seq.reserve(cur_title.size() + 8);
-						// Too bad if it's too big or fails.
-						seq+= ESC;
-						seq+= ']';
-						seq+= 'l';
-						seq+= cur_title;
-						seq+= ESC;
-						seq+= '\\';
-					}
-					SendSequence( seq.c_str() );
+					std::lock_guard<std::mutex> lock(title_mutex);
+					reply.reserve(cur_title.size() + 8);
+					// Too bad if it's too big or fails.
+					reply+= ESC;
+					reply+= ']';
+					reply+= 'l';
+					reply+= cur_title;
+					reply+= ESC;
+					reply+= '\\';
+				}
+				if (!reply.empty()) {
+					SendSequence( reply.c_str() );
 				}
 				return;
-
+			}
 			case 'h':                 // ESC[#h Set Mode
 				if (es_argc == 1 && es_argv[0] == 3)
 					ansi_state.crm = TRUE;

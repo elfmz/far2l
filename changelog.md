@@ -8,7 +8,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Editor: Word wrap (like in Windows Notepad or HTML textareas). Toggled by **F3** or **Alt+W**
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
   Option to set the maximum recursive scanning depth (default: 4). 
-  Right Arrow expands excluded subtrees, and Left Arrow collapses subtree in focus, if it's alreayd collapsed - navigates one level up.
+  Right Arrow expands excluded subtrees, and Left Arrow collapses subtree in focus, if it's already collapsed - navigates one level up.
   Ctrl+Number expands all branches to the chosen depth.
 * _New:_ Options of the special command `edit:[line,col]` for openening file with position
 * _hexitor plugin_: fix broken layout with narrow window

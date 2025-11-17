@@ -54,8 +54,8 @@ public:
 		tmp+= L'\n';
 		StrMB2Wide(info, tmp, true);
 		tmp+= L'\n';
-		tmp+= L"\n          <I> - additional details";
-		tmp+= L"\n<PgDn>/<PgUp> - skip current file";
+		tmp+= L"\n<I> - additional details";
+		tmp+= L"\n<PgDn>/<PgUp> - skip and go to the next/previous file";
 		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
 	}
 

@@ -1587,6 +1587,39 @@ upd:"Groups of file masks"
 "Групи масок файлів"
 "Суполкі масак файлаў"
 
+MaskGroupBeforeExpand
+"== Группы масок файлов - маски до раскрытия вложенных групп масок:"
+"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+upd:"== Groups of file masks before expand nested:"
+
+MaskGroupCountExpandedGroups
+"== Число корректно раскрытых вложенных групп внутри масок:"
+"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+upd:"== Correctly expanded nested Groups inside masks:"
+
+MaskGroupAfterExpand
+"== Группы масок файлов - маски после раскрытия всех групп масок:"
+"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+upd:"== Groups of file masks after expand all nested groups:"
+
 MaskGroupBottomTitle
 "Ins Del Enter/F4 F3 F7 Ctrl+Вверх/Вниз Ctrl+R"
 "Ins Del Enter/F4 F3 F7 Ctrl+Up/Down Ctrl+R"

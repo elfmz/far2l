@@ -9,10 +9,12 @@ static std::string KittyID(int id)
 
 VTAnsiKitty::VTAnsiKitty(IVTShell *vts) : _vts(vts)
 {
+	fprintf(stderr, "VTAnsiKitty was born\n");
 }
 
 VTAnsiKitty::~VTAnsiKitty()
 {
+	fprintf(stderr, "VTAnsiKitty destroyed\n");
 	for (auto &it : _images) {
 		WINPORT(DeleteConsoleImage)(NULL, KittyID(it.first).c_str());
 	}
@@ -76,7 +78,6 @@ const char *VTAnsiKitty::AddImage(char action, char medium,
 	if (action == 'q') {
 		return nullptr;
 	}
-	std::lock_guard<std::mutex> lock(_images);
 	auto &img = _images[id];
 	if (img.shown) {
 		img.data.clear();
@@ -122,7 +123,6 @@ const char *VTAnsiKitty::AddImage(char action, char medium,
 
 const char *VTAnsiKitty::DisplayImage(int id)
 {
-	std::lock_guard<std::mutex> lock(_images);
 	auto it = _images.find(id);
 	if (it == _images.end()) {
 		return "BAD_ID";
@@ -138,7 +138,6 @@ const char *VTAnsiKitty::DisplayImage(int id)
 
 const char *VTAnsiKitty::RemoveImage(int id)
 {
-	std::lock_guard<std::mutex> lock(_images);
 	if (!_images.erase(id)) {
 		return "BAD_ID";
 	}
@@ -153,8 +152,16 @@ const char *VTAnsiKitty::RemoveImage(int id)
 class KittyArgs
 {
 	const char *_str;
-	int _vals[1 + 'z' - 'a'];
+	int _vals['z' - 'A' + 1];
 	int _data_pos;
+
+	static int C2VI(char c)
+	{
+		if (c >= 'A' && c <= 'z') {
+			return c - 'A';
+		}
+		return -1;
+	}
 
 public:
 	KittyArgs(const char *s, int l)
@@ -166,9 +173,12 @@ public:
 			v = -1;
 		}
 		for (int i = 0, j = 0; ; ++i) {
-			if (i == 0 || s[i] == ';' || s[i] == ',') {
-				if (i + 1 > j && s[j + 1] == '=' && s[j] >= 'a'  && s[j] <= 'z') {
-					_vals[s[j] - 'a'] = j + 2;//&s[j + 2];
+			if (i == l || s[i] == ';' || s[i] == ',') {
+				if (i + 1 > j && s[j + 1] == '=') {
+					int vi = C2VI(s[j]);
+					if (vi >= 0) {
+						_vals[vi] = j + 2;
+					}
 				}
 				if (i == l) {
 					break;
@@ -185,11 +195,12 @@ public:
 
 	int GetInt(char c, int def = -1) const
 	{
-		if (c < 'a' || c > 'z' || _vals[c - 'a'] < 0) {
+		int vi = C2VI(c);
+		if (vi < 0 || _vals[vi] < 0) {
 			return def;
 		}
 		int out = 0;
-		for (int i = _vals[c - 'a']; i < _data_pos; ++i) {
+		for (int i = _vals[vi]; i < _data_pos; ++i) {
 			if (_str[i] < '0' || _str[i] > '9') {
 				break;
 			}
@@ -199,12 +210,13 @@ public:
 		return out;
 	}
 
-	int GetChar(char c, char def = 0) const
+	char GetChar(char c, char def = 0) const
 	{
-		if (c < 'a' || c > 'z' || _vals[c - 'a'] < 0) {
-			return  def;
+		int vi = C2VI(c);
+		if (vi < 0 || _vals[vi] < 0) {
+			return def;
 		}
-		return  _str[_vals[c - 'a']];
+		return  _str[_vals[vi]];
 	}
 
 	int GetDataPos() const

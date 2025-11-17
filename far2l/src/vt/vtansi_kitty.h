@@ -15,7 +15,7 @@ class VTAnsiKitty
 		int ofsx{-1}, ofsy{-1};
 		bool show{false}, shown{false};
 	};
-	struct Images : std::map<int, Image>, std::mutex {} _images;
+	struct Images : std::map<int, Image>{} _images;
 
 	const char *ShowImage(int id, Image &img);
 

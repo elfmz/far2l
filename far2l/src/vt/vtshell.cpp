@@ -240,11 +240,21 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		if (WINPORT(GetConsoleScreenBufferInfo)(ConsoleHandle(), &csbi )
+		HANDLE con = ConsoleHandle();
+		if (WINPORT(GetConsoleScreenBufferInfo)(con, &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
-			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
 			struct winsize ws = {(unsigned short)csbi.dwSize.Y,
 				(unsigned short)csbi.dwSize.X, 0, 0};
+
+			WinportGraphicsInfo wgi{};
+			if (WINPORT(GetConsoleImageCaps)(con, sizeof(wgi), &wgi)) {
+				ws.ws_xpixel = std::min(16384, int(ws.ws_col) * wgi.PixPerCell.X);
+				ws.ws_ypixel = std::min(16384, int(ws.ws_row) * wgi.PixPerCell.Y);
+			}
+
+			fprintf(stderr, "UpdateTerminalSize: %u x %u cells, %d x %d pixels\n",
+				csbi.dwSize.X, csbi.dwSize.Y, ws.ws_xpixel, ws.ws_ypixel);
+
 			if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
 				perror("VT: ioctl(TIOCSWINSZ)");
 		}

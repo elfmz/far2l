@@ -459,20 +459,23 @@ bool ImageViewer::RenderImage()
 
 	auto viewport_w = canvas_w;
 	auto viewport_h = canvas_h;
-	SMALL_RECT area = {_pos.X, _pos.Y, -1, -1};
+	SMALL_RECT area = {_pos.X, _pos.Y, 0, 0};
 
 	if (viewport_w > _pixel_data_w) {
-		area.Left+= (viewport_w - _pixel_data_w) / (2 * wgi.PixPerCell.X);
+		auto margin = (viewport_w - _pixel_data_w) / 2;
+		area.Left+= margin / wgi.PixPerCell.X;  // offset by cells count
+		area.Right = margin % wgi.PixPerCell.X; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
 		viewport_w = _pixel_data_w;
 	}
+
 	if (viewport_h > _pixel_data_h) {
-		area.Top+= (viewport_h - _pixel_data_h) / (2 * wgi.PixPerCell.Y);
+		auto margin = (viewport_h - _pixel_data_h) / 2;
+		area.Top+= margin / wgi.PixPerCell.Y;    // offset by cells count
+		area.Bottom = margin % wgi.PixPerCell.Y; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
 		viewport_h = _pixel_data_h;
 	}
 
-	int dst_left = (viewport_w > _pixel_data_w) ? (viewport_w - _pixel_data_w) / 2 : 0;
 	int src_left = (_pixel_data_w > viewport_w) ? (_pixel_data_w - viewport_w) / 2 : 0;
-	int dst_top = (viewport_h > _pixel_data_h) ? (viewport_h - _pixel_data_h) / 2 : 0;
 	int src_top = (_pixel_data_h > viewport_h) ? (_pixel_data_h - viewport_h) / 2 : 0;
 
 	if (_dx != 0 && _pixel_data_w > viewport_w) {
@@ -512,17 +515,17 @@ bool ImageViewer::RenderImage()
 				Blit(ins_w, viewport_h,
 					_send_data.data(), 0, 0, ins_w,
 					_pixel_data.data(), src_left, _prev_top, _pixel_data_w);
-				fprintf(stderr, "--- Sending to [%d %d] left edge [%d %d %d %d]\n",
-					dst_left, dst_top, src_left, _prev_top, src_left + ins_w, _prev_top + viewport_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+				fprintf(stderr, "--- Sending to left edge [%d %d %d %d]\n",
+					src_left, _prev_top, src_left + ins_w, _prev_top + viewport_h);
+				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
 					| WP_IMG_SCROLL_AT_LEFT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
 			} else {
 				Blit(ins_w, viewport_h,
 					_send_data.data(), 0, 0, ins_w,
 					_pixel_data.data(), src_left + viewport_w - ins_w, _prev_top, _pixel_data_w);
-				fprintf(stderr, "--- Sending to [%d %d] right edge [%d %d %d %d]\n",
-					dst_left, dst_top, src_left + viewport_w - ins_w, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+				fprintf(stderr, "--- Sending to right edge [%d %d %d %d]\n",
+					src_left + viewport_w - ins_w, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
+				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
 					| WP_IMG_SCROLL_AT_RIGHT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
 			}
 		}
@@ -533,17 +536,17 @@ bool ImageViewer::RenderImage()
 				Blit(viewport_w, ins_h,
 					_send_data.data(), 0, 0, viewport_w,
 					_pixel_data.data(), src_left, src_top, _pixel_data_w);
-				fprintf(stderr, "--- Sending to [%d %d] top edge [%d %d %d %d]\n",
-					dst_left, dst_top, src_left, src_top, src_left + viewport_w, src_top + ins_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+				fprintf(stderr, "--- Sending to top edge [%d %d %d %d]\n",
+					src_left, src_top, src_left + viewport_w, src_top + ins_h);
+				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
 					| WP_IMG_SCROLL_AT_TOP, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
 			} else {
 				Blit(viewport_w, ins_h,
 					_send_data.data(), 0, 0, viewport_w,
 					_pixel_data.data(), src_left, src_top + viewport_h - ins_h, _pixel_data_w);
-				fprintf(stderr, "--- Sending to [%d %d] bottom edge [%d %d %d %d]\n",
-					dst_left, dst_top, src_left, src_top + viewport_h - ins_h, src_left + viewport_w, src_top + viewport_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB
+				fprintf(stderr, "--- Sending to bottom edge [%d %d %d %d]\n",
+					src_left, src_top + viewport_h - ins_h, src_left + viewport_w, src_top + viewport_h);
+				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
 					| WP_IMG_SCROLL_AT_BOTTOM, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
 			}
 		}
@@ -554,12 +557,12 @@ bool ImageViewer::RenderImage()
 		const int cpy_h = std::min(viewport_h, _pixel_data_h);
 
 		Blit(cpy_w, cpy_h,
-			_send_data.data(), dst_left, dst_top, viewport_w,
+			_send_data.data(), 0, 0, viewport_w,
 			_pixel_data.data(), src_left, src_top, _pixel_data_w);
 
-		fprintf(stderr, "--- Sending to [%d %d] full viewport [%d %d %d %d]\n",
-			dst_left, dst_top, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
-		out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB,
+		fprintf(stderr, "--- Sending to full viewport [%d %d %d %d]\n",
+			src_left, src_top, src_left + viewport_w, src_top + viewport_h);
+		out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET,
 			&area, viewport_w, viewport_h, _send_data.data()) != FALSE;
 	}
 	if (out) {

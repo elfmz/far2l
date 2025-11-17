@@ -1242,6 +1242,7 @@ struct VTAnsiContext
 	}
 
 	std::optional<VTAnsiKitty> _vta_kitty;
+	std::mutex _vta_kitty_mtx;
 
 	void InterpretControlString()
 	{
@@ -1249,10 +1250,11 @@ struct VTAnsiContext
 		if (prefix == '_') {//Application Program Command
 			if (StrStartsWith(os_cmd_arg, "G"))  {
 				if (os_cmd_arg.size() > 1) {
+					_crds.reset(); // prevent miss repaints
+					std::lock_guard<std::mutex> lock(_vta_kitty_mtx);
 					if (!_vta_kitty) {
 						_vta_kitty.emplace(vt_shell);
 					}
-					_crds.reset(); // prevent miss repaints
 					_vta_kitty->InterpretControlString(os_cmd_arg.c_str() + 1, os_cmd_arg.size() - 1);
 				}
 
@@ -1339,7 +1341,10 @@ struct VTAnsiContext
 	void ResetTerminal()
 	{
 		fprintf(stderr, "ANSI: ResetTerminal\n");
-		_vta_kitty.reset();
+		{ // remove all images after command completion
+			std::lock_guard<std::mutex> lock(_vta_kitty_mtx);
+			_vta_kitty.reset();
+		}
 		WINPORT(SetConsoleScrollRegion)(vt_shell->ConsoleHandle(), 0, MAXSHORT);
 
 		chars_in_buffer = 0;

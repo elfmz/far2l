@@ -180,7 +180,9 @@ void VTInputReader::InjectInput(const char *str, size_t len)
 		std::lock_guard<std::mutex> locker(_pending_injected_inputs_mutex);
 		_pending_injected_inputs.emplace_back(str, len);
 	}
-	KickInputThread();
+	if (_started) {
+		KickInputThread();
+	}
 }
 
 void VTInputReader::OnJoin()

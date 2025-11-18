@@ -248,10 +248,10 @@ Glossary:
  In:
   string (image identity)
   uint64_t (flags: see WP_IMG_*)
-  uint16_t (character cell of image Left or -1 to leave it unchanged or initially set to current cursor position)
-  uint16_t (character cell of image Top or -1 to leave it unchanged or initially set to current cursor position)
-  uint16_t (character cell of image Right or -1 to leave it unchanged or initially set to image pixels width)
-  uint16_t (character cell of image Bottom or -1 to leave it unchanged or or initially set to image pixels height)
+  uint16_t (character cell of image Left or -1 to leave it unchanged OR initially set to current cursor position)
+  uint16_t (character cell of image Top or -1 to leave it unchanged OR initially set to current cursor position)
+  uint16_t (character cell of image Right or -1 to leave it unchanged OR initially set to image pixels width OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag specified)
+  uint16_t (character cell of image Bottom or -1 to leave it unchanged OR initially set to image pixels height OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag specified)
   uint32_t (image width pixels)
   uint32_t (image height pixels)
   RGB/RGBA data of size width * height * 3 / width * height * 4
@@ -271,10 +271,10 @@ Glossary:
 /** Rotate previously set image.
  In:
   string (image identity)
-  uint16_t (character cell of image Left or -1 to leave it unchanged)
-  uint16_t (character cell of image Top or -1 to leave it unchanged)
-  uint16_t (character cell of image Right or -1 to leave it unchanged)
-  uint16_t (character cell of image Bottom or -1 to leave it unchanged)
+  uint16_t (character cell of image Left OR -1 to leave it unchanged)
+  uint16_t (character cell of image Top OR -1 to leave it unchanged)
+  uint16_t (character cell of image Right OR -1 to leave it unchanged OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag was specified before)
+  uint16_t (character cell of image Bottom OR -1 to leave it unchanged OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag was specified before)
   uint8_t (one of: 0, 1, 2, 3 meaning rotation angle in 90 degrees units)
  Out:
   uint8_t (0 - failure, nonzero value - image rotated)

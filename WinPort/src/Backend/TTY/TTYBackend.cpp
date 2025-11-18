@@ -1511,9 +1511,9 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 
 	if (_far2l_tty) {
 		uint8_t ok = 0;
-		SMALL_RECT push_area = {-1, -1, -1, -1};
-		if (area) {
-			push_area = *area;
+		SMALL_RECT def_area = {-1, -1, -1, -1};
+		if (!area) {
+			area = &def_area;
 		}
 		try {
 			StackSerializer stk_ser;
@@ -1522,10 +1522,10 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 			}
 			stk_ser.PushNum(height);
 			stk_ser.PushNum(width);
-			stk_ser.PushNum(push_area.Bottom);
-			stk_ser.PushNum(push_area.Right);
-			stk_ser.PushNum(push_area.Top);
-			stk_ser.PushNum(push_area.Left);
+			stk_ser.PushNum(area->Bottom);
+			stk_ser.PushNum(area->Right);
+			stk_ser.PushNum(area->Top);
+			stk_ser.PushNum(area->Left);
 			stk_ser.PushNum(flags);
 			stk_ser.PushStr(id);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_SET);
@@ -1571,16 +1571,16 @@ bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, un
 	if (_far2l_tty) {
 		uint8_t ok = 0;
 		try {
-			SMALL_RECT push_area = {-1, -1, -1, -1};
-			if (area) {
-				push_area = *area;
+			SMALL_RECT def_area = {-1, -1, -1, -1};
+			if (!area) {
+				area = &def_area;
 			}
 			StackSerializer stk_ser;
 			stk_ser.PushNum(angle_x90);
-			stk_ser.PushNum(push_area.Bottom);
-			stk_ser.PushNum(push_area.Right);
-			stk_ser.PushNum(push_area.Top);
-			stk_ser.PushNum(push_area.Left);
+			stk_ser.PushNum(area->Bottom);
+			stk_ser.PushNum(area->Right);
+			stk_ser.PushNum(area->Top);
+			stk_ser.PushNum(area->Left);
 			stk_ser.PushStr(id);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_ROT);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);

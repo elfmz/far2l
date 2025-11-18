@@ -16,6 +16,7 @@ class VTAnsiKitty
 		bool show{false}, shown{false};
 	};
 	struct Images : std::map<int, Image>{} _images;
+	int _images_hide_cnt{0};
 
 	const char *ShowImage(int id, Image &img);
 
@@ -24,9 +25,14 @@ class VTAnsiKitty
 	const char *DisplayImage(int id);
 	const char *RemoveImage(int id);
 
+
 public:
 	VTAnsiKitty(IVTShell *vts);
 	~VTAnsiKitty();
 
 	void InterpretControlString(const char *s, size_t l);
+
+	bool HasImages() const;
+	void HideImages();
+	void ShowImages();
 };

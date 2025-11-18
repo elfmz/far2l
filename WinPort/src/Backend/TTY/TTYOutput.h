@@ -21,7 +21,7 @@ struct TTYBasePalette
 struct TTYConsoleImage
 {
     std::vector<uint8_t> pixel_data; // Сырые пиксели в формате RGBA.
-	uint32_t bpp{32};    // format: 32 or 24 BPP
+	uint32_t fmt{32};    // format: 32 or 24 BPP or 100 if PNG
    	uint32_t width{};    // Ширина в пикселях.
     uint32_t height{};   // Высота в пикселях.
 	SMALL_RECT area{-1, -1, -1, -1};         // Координаты (колонка, строка)

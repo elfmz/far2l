@@ -1,5 +1,7 @@
 #include "wxMain.h"
 #include <dlfcn.h>
+#include <wx/mstream.h>
+#include <wx/image.h>
 #include "../NotifySh.h"
 #include "wxWinTranslations.h"
 #include "../../../utils/src/POpen.cpp"
@@ -2209,12 +2211,34 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_
 	std::string str_id(id);
 	try {
 		std::optional<wxImage> wx_img;
-		const size_t num_pixels = size_t(width) * height;
 		unsigned char *pixel_data = (unsigned char *)buffer;
 		const auto fmt = (flags & WP_IMG_MASK_FMT);
-		if (fmt == WP_IMG_RGB) {
+		if (fmt == WP_IMG_PNG) {
+			if (height != 1) {
+				fprintf(stderr, "%s('%s'): unexpected PNG height %u\n", __FUNCTION__, id, height);
+				return false;
+			}
+			static int s_ih = 0;
+			if (!s_ih) {
+				auto fn = std::bind(wxInitAllImageHandlers);
+				CallInMainNoRet(fn);
+				s_ih = 1;
+			}
+			wxMemoryInputStream stream(pixel_data, width);
+		    wx_img.emplace();
+		    if (!wx_img->LoadFile(stream, wxBITMAP_TYPE_PNG)) {
+				fprintf(stderr, "%s('%s'): PNG load failed\n", __FUNCTION__, id);
+				return false;
+		    }
+			width = wx_img->GetWidth();
+			height = wx_img->GetHeight();
+			fprintf(stderr, "%s('%s'): PNG loaded %u x %u pixels\n", __FUNCTION__, id, width, height);
+
+		} else if (fmt == WP_IMG_RGB) {
 			wx_img.emplace((int)width, (int)height, pixel_data, true);
+
 		} else if (fmt == WP_IMG_RGBA) {
+			const size_t num_pixels = size_t(width) * height;
 			unsigned char *rgb = (unsigned char *)malloc(num_pixels * 3);
 			unsigned char *alpha = (unsigned char *)malloc(num_pixels);
 			for (size_t i = 0; i < num_pixels; ++i) {
@@ -2242,7 +2266,15 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_
 		std::lock_guard<std::mutex> lock(_images);
 		auto &img = _images[str_id];
 		img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;
+		if (area->Top == -1) {
+			cur_pos.Y-= (height / _paint_context.FontHeight()) + ((height % _paint_context.FontHeight()) ? 1 : 0);
+			if (cur_pos.Y < 0) {
+				cur_pos.Y = 0;
+			}
+		}
 		MakeImageArea(img.area, area, cur_pos);
+		fprintf(stderr, "%s('%s'): area %d x %d - %d x %d\n", __FUNCTION__, id, img.area.Left, img.area.Top, img.area.Right, img.area.Bottom);
+
 		if (scroll) { // scroll/move existing image
 			if (width && height) { // scrolling, but if empty image specified - its just a move operation
 				auto sz = img.bitmap.GetSize();

@@ -466,7 +466,7 @@ void TTYBackend::DispatchImagesProbe(TTYOutput &tty_out)
 	tty_out.RequestCellSize();
 	TTYConsoleImage probe_img;
 	probe_img.width = probe_img.height = 1;
-	probe_img.pixel_data.resize(probe_img.width * probe_img.height * (probe_img.bpp / 8));
+	probe_img.pixel_data.resize(probe_img.width * probe_img.height * (probe_img.fmt / 8));
 	unsigned int kitty_id = tty_out.SendKittyImage(PROBE_IMAGE_ID, probe_img);
 	tty_out.RequestStatus();
 	fprintf(stderr, "%s: kitty_id=%u\n", __FUNCTION__, kitty_id);
@@ -1499,11 +1499,12 @@ bool TTYBackend::CheckKittyImagesSupport()
 
 bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
 {
-	size_t buffer_size = size_t(width) * height;
+	size_t buffer_size;
 	const auto fmt = (flags & WP_IMG_MASK_FMT);
 	switch (fmt) {
-		case WP_IMG_RGBA: buffer_size*= 4; break;
-		case WP_IMG_RGB: buffer_size*= 3; break;
+		case WP_IMG_PNG: buffer_size = size_t(width); break;
+		case WP_IMG_RGB: buffer_size = size_t(width) * height * 3; break;
+		case WP_IMG_RGBA: buffer_size = size_t(width) * height * 4; break;
 		default:
 			fprintf(stderr, "%s: bad flags 0x%llx\n", __FUNCTION__, (unsigned long long)flags);
 			return false;
@@ -1547,7 +1548,13 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 
 			img.pixel_data.assign(static_cast<const uint8_t*>(buffer), static_cast<const uint8_t*>(buffer) + buffer_size);
 
-			img.bpp = (fmt == WP_IMG_RGBA) ? 32 : 24;
+			switch (fmt) {
+				case WP_IMG_RGBA: img.fmt = 32; break;
+				case WP_IMG_RGB: img.fmt = 24; break;
+				case WP_IMG_PNG: img.fmt = 100; break;
+				default:
+					return false;
+			}
 			img.width = width;
 			img.height = height;
 			img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;

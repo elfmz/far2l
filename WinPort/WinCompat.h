@@ -1474,13 +1474,15 @@ typedef LONG NTSTATUS;
 #define CREATE_SUSPENDED                  0x00000004
 
 // capabilities reported by GetConsoleImageCaps
-#define WP_IMGCAP_RGBA      0x01 // supports WP_IMG_RGB/WP_IMG_RGBA
-#define WP_IMGCAP_SCROLL    0x02 // supports existing image scrolling
-#define WP_IMGCAP_ROTATE    0x04 // supports existing image rotation
+#define WP_IMGCAP_RGBA      0x001 // supports WP_IMG_RGB/WP_IMG_RGBA
+#define WP_IMGCAP_PNG       0x002 // supports WP_IMG_PNG
+#define WP_IMGCAP_SCROLL    0x100 // supports existing image scrolling
+#define WP_IMGCAP_ROTATE    0x200 // supports existing image rotation
 
 // flags used for SetConsoleImage
 #define WP_IMG_RGBA             0 // supported if WP_IMGCAP_RGBA
 #define WP_IMG_RGB              1 // supported if WP_IMGCAP_RGBA
+#define WP_IMG_PNG              2 // supported if WP_IMGCAP_PNG
 
 // SetConsoleImage scrolling flags supported if WP_IMGCAP_SCROLL reported
 // move already existing image and scroll it with 'prepending' by newly sent part

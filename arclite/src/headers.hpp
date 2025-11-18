@@ -116,6 +116,17 @@ WARNING_DISABLE_CLANG("-Weverything")
 #endif
 #endif
 
+#if IS_BIG_ENDIAN
+#define le16_to_host(x) ((((x) >> 8) & 0x00FF) | (((x) << 8) & 0xFF00))
+#define le32_to_host(x) ((((x) >> 24) & 0x000000FF) | \
+						(((x) >> 8)  & 0x0000FF00) | \
+						(((x) << 8)  & 0x00FF0000) | \
+						(((x) << 24) & 0xFF000000))
+#else
+#define le16_to_host(x) (x)
+#define le32_to_host(x) (x)
+#endif
+
 WARNING_POP()
 
 extern GUID IID_IUnknown;

@@ -10,6 +10,10 @@
 #include "options.hpp"
 #include "error.hpp"
 
+#include <sys/mman.h>
+#include <pwd.h>
+#include <grp.h>
+
 ExtractOptions::ExtractOptions()
 	: ignore_errors(false),
 	  overwrite(oaOverwrite),
@@ -17,9 +21,23 @@ ExtractOptions::ExtractOptions()
 	  separate_dir(triFalse),
 	  delete_archive(false),
 	  disable_delete_archive(false),
-      double_buffering(triUndef),
+	  double_buffering(triUndef),
 	  open_dir(triFalse)
 {}
+
+struct PendingHardlink {
+	uint32_t src_index;
+	uint32_t dst_index;
+};
+
+struct PendingSymlink {
+	std::wstring src_path;
+	uint32_t dst_index;
+};
+
+using HardlinkIndexMap = std::unordered_map<UInt32, UInt32>;
+using PendingHardlinks = std::vector<PendingHardlink>;
+using PendingSymlinks = std::vector<PendingSymlink>;
 
 static std::wstring get_progress_bar_str(unsigned width, unsigned percent1, unsigned percent2)
 {
@@ -153,11 +171,157 @@ public:
 	}
 };
 
+template<bool UseVirtualDestructor>
+std::wstring Archive<UseVirtualDestructor>::build_extract_path(
+	UInt32 file_index,
+	const std::wstring &dst_dir,
+	UInt32 src_dir_index
+) const
+{
+	const auto &file_info = file_list[file_index];
+	const auto cmode = static_cast<int>(g_options.correct_name_mode);
+	std::wstring path = correct_filename(file_info.name, cmode, file_info.is_altstream);
+	UInt32 parent_index = file_info.parent;
+
+	while (parent_index != src_dir_index && parent_index != c_root_index) {
+		const auto &parent_info = file_list[parent_index];
+		path.insert(0, 1, L'/')
+			.insert(0, correct_filename(parent_info.name, cmode & ~(0x10 | 0x40), false));
+		parent_index = parent_info.parent;
+	}
+
+	fprintf(stderr, "build_extract_path(): %ls after\n", path.c_str());
+
+	return add_trailing_slash(dst_dir) + path;
+}
+
+static int set_file_times(const std::string &path, FILETIME atime_ft, FILETIME mtime_ft)
+{
+	if (!atime_ft.dwHighDateTime && !atime_ft.dwLowDateTime &&
+		!mtime_ft.dwHighDateTime && !mtime_ft.dwLowDateTime) {
+		return 0;
+	}
+
+	struct stat st;
+	if (sdc_stat(path.c_str(), &st) != 0) {
+		memset(&st, 0, sizeof(st));
+	}
+
+	struct timespec times[2];
+	if (atime_ft.dwHighDateTime || atime_ft.dwLowDateTime) {
+		WINPORT(FileTime_Win32ToUnix)(&atime_ft, &times[0]);
+	} else {
+		times[0] = st.st_atim;
+	}
+	if (mtime_ft.dwHighDateTime || mtime_ft.dwLowDateTime) {
+		WINPORT(FileTime_Win32ToUnix)(&mtime_ft, &times[1]);
+	} else {
+		times[1] = st.st_mtim;
+	}
+
+	return sdc_utimens(path.c_str(), times);
+}
+
+static int set_symlink_times(const std::string &path, FILETIME atime_ft, FILETIME mtime_ft)
+{
+	if (!atime_ft.dwHighDateTime && !atime_ft.dwLowDateTime &&
+		!mtime_ft.dwHighDateTime && !mtime_ft.dwLowDateTime) {
+		return 0;
+	}
+
+	struct timeval times[2];
+	if (atime_ft.dwHighDateTime || atime_ft.dwLowDateTime) {
+		struct timespec ts;
+		WINPORT(FileTime_Win32ToUnix)(&atime_ft, &ts);
+		times[0].tv_sec = ts.tv_sec;
+		times[0].tv_usec = ts.tv_nsec / 1000;
+	} else {
+		times[0].tv_sec = 0;
+		times[0].tv_usec = 0;
+	}
+	if (mtime_ft.dwHighDateTime || mtime_ft.dwLowDateTime) {
+		struct timespec ts;
+		WINPORT(FileTime_Win32ToUnix)(&mtime_ft, &ts);
+		times[1].tv_sec = ts.tv_sec;
+		times[1].tv_usec = ts.tv_nsec / 1000;
+	} else {
+		times[1].tv_sec = 0;
+		times[1].tv_usec = 0;
+	}
+
+	return sdc_lutimes(path.c_str(), times);
+}
+
+#if 1
+
+static int set_file_owner_group(const std::string &path, const ArcFileInfo &fi, int mode )
+{
+	if (mode <= 0) return 0;
+
+	uid_t target_uid = static_cast<uid_t>(-1);
+	gid_t target_gid = static_cast<gid_t>(-1);
+	bool uid_valid = false;
+	bool gid_valid = false;
+
+	auto uid_by_name = [&](const std::string &name) -> bool {
+		struct passwd *pw = getpwnam(name.c_str());
+		if (pw) { target_uid = pw->pw_uid; return true; }
+		return false;
+	};
+	auto gid_by_name = [&](const std::string &name) -> bool {
+		struct group *gr = getgrnam(name.c_str());
+		if (gr) { target_gid = gr->gr_gid; return true; }
+		return false;
+	};
+	auto uid_exists = [&](uid_t uid) -> bool { return getpwuid(uid) != nullptr; };
+	auto gid_exists = [&](gid_t gid) -> bool { return getgrgid(gid) != nullptr; };
+
+	std::string owner_mb = StrWide2MB(fi.owner);
+	std::string group_mb = StrWide2MB(fi.group);
+
+	if (mode == 1 || mode == 3) {
+		if (!owner_mb.empty()) uid_valid = uid_by_name(owner_mb);
+		if (!group_mb.empty()) gid_valid = gid_by_name(group_mb);
+	}
+
+	if ((mode == 2 || mode == 3) && (!uid_valid || !gid_valid)) { // ids or ids + names
+		if (!uid_valid && fi.fuid != static_cast<uid_t>(-1)) {
+			if (mode == 2 || (mode == 3 && uid_exists(fi.fuid))) {
+				target_uid = fi.fuid;
+				uid_valid = true;
+			}
+		}
+		if (!gid_valid && fi.fgid != static_cast<gid_t>(-1)) {
+			if (mode == 2 || (mode == 3 && gid_exists(fi.fgid))) {
+				target_gid = fi.fgid;
+				gid_valid = true;
+			}
+		}
+	}
+
+	if (uid_valid || gid_valid) {
+		uid_t use_uid = uid_valid ? target_uid : static_cast<uid_t>(-1);
+		gid_t use_gid = gid_valid ? target_gid : static_cast<gid_t>(-1);
+		return sdc_lchown(path.c_str(), use_uid, use_gid);
+	}
+
+	return 0;
+}
+
+static int set_file_owner_group(const std::wstring &path, const ArcFileInfo &fi, int mode )
+{
+	std::string mb_path = StrWide2MB(path);
+	return set_file_owner_group(mb_path, fi, mode);
+}
+
+#endif
+
+
 template <bool UseVirtualDestructor>
 class FileWriteCache {
 private:
 	static constexpr size_t c_min_cache_size = 32 * 1024 * 1024; // x2 for double buffer
-	static constexpr size_t c_max_cache_size = 128 * 1024 * 1024; // x2 for double buffer
+	static constexpr size_t c_max_cache_size = 100 * 1024 * 1024; // x2 for double buffer
 	static constexpr size_t c_block_size = 1 * 1024 * 1024; // Write block size
 
 	struct CacheRecord {
@@ -171,9 +335,7 @@ private:
 
 	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
 	std::shared_ptr<bool> ignore_errors;
-	std::shared_ptr<bool> extract_access_rights;
-	std::shared_ptr<bool> extract_owners_groups;
-	std::shared_ptr<bool> extract_attributes;
+	const ExtractOptions &options;
 	std::shared_ptr<ErrorLog> error_log;
 	std::shared_ptr<ExtractProgress> progress;
 	bool bDouble_buffering = true;
@@ -241,6 +403,7 @@ private:
 		const DWORD access = FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES;
 		const DWORD shares = FILE_SHARE_READ;
 		DWORD attrib = FILE_ATTRIBUTE_TEMPORARY;
+//		const ArcFileInfo &fi = archive->file_list[current_rec.file_id];
 		DWORD attr, posixattr = 0;
 		attr = archive->get_attr(current_rec.file_id, &posixattr);
 		(void)attr;
@@ -330,7 +493,6 @@ private:
 
 	void close_file()
 	{
-		//fprintf(stderr, "FWC: close_file() [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 		if (!file.is_open())
 			return;
 
@@ -339,55 +501,62 @@ private:
 			return;
 		}
 
-		RETRY_OR_IGNORE_BEGIN
-		file.set_end();
-
+		const ArcFileInfo &fi = archive->file_list[current_rec.file_id];
+		std::string mb_path = StrWide2MB(current_rec.file_path);
 		DWORD attr, posixattr = 0;
 		attr = archive->get_attr(current_rec.file_id, &posixattr);
 		(void)attr;
 
+		RETRY_OR_IGNORE_BEGIN
+		file.set_end();
+
 		if ((posixattr & S_IFMT) == S_IFLNK) {
-			size_t slsize = file.getsymlinksize();
+
+			size_t slsize = file.getsymlinkdatasize();
 			if (slsize) {
 				if (slsize >= PATH_MAX)
 					slsize = PATH_MAX - 1;
-				char* symlinkaddr = file.getsymlink();
-				symlinkaddr[slsize] = 0;
-				int res = sdc_symlink(symlinkaddr, StrWide2MB(current_rec.file_path).c_str());
-				if (!res) {
+				char* symlinkdata = file.getsymlink();
+				symlinkdata[slsize] = 0;
+
+				if (sdc_symlink(symlinkdata, mb_path.c_str()) != 0) {
+					FAIL(errno);
+				}
+
+				if (options.extract_owners_groups) {
+					set_file_owner_group(mb_path, fi, options.extract_owners_groups);
+				}
+
+				FILETIME atime_ft = archive->get_atime(current_rec.file_id);
+				FILETIME mtime_ft = archive->get_mtime(current_rec.file_id);
+				if (set_symlink_times(mb_path, atime_ft, mtime_ft)) {
+					FAIL(errno);
 				}
 			}
 		} else {
-			if (*extract_access_rights && posixattr) {
-				int res = Far::g_fsf.ESetFileMode(current_rec.file_path.c_str(), posixattr,
-					*ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-				if (res != SETATTR_RET_OK) {
-					FAIL(res);
-				}
-			}
-			if (*extract_owners_groups && current_rec.file_id < archive->m_num_indices) {
-				std::wstring &owner = archive->file_list[current_rec.file_id].owner,
-							 &group = archive->file_list[current_rec.file_id].group;
-				if (owner.size()) {
-					int res = Far::g_fsf.ESetFileOwner(current_rec.file_path.c_str(), owner.c_str(),
-						*ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-					if (res != SETATTR_RET_OK)
-						FAIL(res);
-				}
-				if (group.size()) {
-					int res = Far::g_fsf.ESetFileGroup(current_rec.file_path.c_str(), group.c_str(),
-						*ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-					if (res != SETATTR_RET_OK)
-						FAIL(res);
-				}
-			}
-			file.set_time_nt(archive->get_ctime(current_rec.file_id),
-				archive->get_atime(current_rec.file_id), archive->get_mtime(current_rec.file_id));
-		}
-		IGNORE_END(*ignore_errors, *error_log, *progress)
 
-		if (error_ignored)
+			if (options.extract_access_rights && posixattr) {
+				if (sdc_chmod(mb_path.c_str(), posixattr & 0xFFF) != 0) {
+					FAIL(errno);
+				}
+			}
+
+			if (options.extract_owners_groups) {
+				if (set_file_owner_group(mb_path, fi, options.extract_owners_groups)) {
+					FAIL(errno);
+				}
+			}
+
+			FILETIME atime_ft = archive->get_atime(current_rec.file_id);
+			FILETIME mtime_ft = archive->get_mtime(current_rec.file_id);
+			if (set_file_times(mb_path, atime_ft, mtime_ft)) {
+				FAIL(errno);
+			}
+		}
+		RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *progress)
+		if (error_ignored) {
 			error_state = true;
+		}
 
 		file.close();
 	}
@@ -446,7 +615,7 @@ private:
 			//fprintf(stderr, "FWC: WorkerThread worker_data_ready>?? [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 			if (worker_data_ready) {
 				//fprintf(stderr, "FWC: WorkerThread unlock & write [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
-                worker_has_unfinished_work.store(true);
+				worker_has_unfinished_work.store(true);
 				lock.unlock();
 				perform_write();
 				{
@@ -455,7 +624,7 @@ private:
 					worker_data_ready = false;
 					worker_data_processed = true;
 					wbi = 0xFFFFFFFF;
-                    worker_has_unfinished_work.store(false);
+					worker_has_unfinished_work.store(false);
 				}
 				worker_cv.notify_one();
 				//fprintf(stderr, "FWC: WorkerThread Batch Processed [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
@@ -465,19 +634,19 @@ private:
 		} catch (const std::exception& e) {
 			//fprintf(stderr, "FWC: WorkerThread catch1 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 			stop_worker_flag.store(true);
-	        worker_has_unfinished_work.store(false);
+			worker_has_unfinished_work.store(false);
 			worker_cv.notify_one();
 		} catch (...) {
 		//error_state = true;
 			//fprintf(stderr, "FWC: WorkerThread catch2 [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 			stop_worker_flag.store(true);
-	        worker_has_unfinished_work.store(false);
+			worker_has_unfinished_work.store(false);
 			worker_cv.notify_one();
 		}
 		//fprintf(stderr, "FWC: WorkerThread Stopped [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 
 		stop_worker_flag.store(true);
-        worker_has_unfinished_work.store(false);
+		worker_has_unfinished_work.store(false);
 	}
 
 	void write()
@@ -556,23 +725,20 @@ private:
 
 public:
 	FileWriteCache(std::shared_ptr<Archive<UseVirtualDestructor>> archive,
-		std::shared_ptr<bool> ignore_errors, std::shared_ptr<bool> extract_access_rights,
-		std::shared_ptr<bool> extract_owners_groups, std::shared_ptr<bool> extract_attributes,
+		std::shared_ptr<bool> ignore_errors, const ExtractOptions &options,
 		std::shared_ptr<ErrorLog> error_log, std::shared_ptr<ExtractProgress> progress,
 		bool double_buffering = false )
-		: archive(archive)
-		, ignore_errors(ignore_errors)
-		, extract_access_rights(extract_access_rights)
-		, extract_owners_groups(extract_owners_groups)
-		, extract_attributes(extract_attributes)
-		, error_log(error_log)
-		, progress(progress)
-		, bDouble_buffering(double_buffering)
-		, buffer_size(get_max_cache_size())
+		: archive(archive),
+		ignore_errors(ignore_errors),
+		options(options),
+		error_log(error_log),
+		progress(progress),
+		bDouble_buffering(double_buffering),
+		buffer_size(get_max_cache_size())
 	{
 		progress->set_cache_total(buffer_size);
 		_buffer = (unsigned char *)mmap(NULL, buffer_size * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-		if (!_buffer) {
+		if (_buffer == MAP_FAILED) {
 			FAIL(E_OUTOFMEMORY);
 		}
 		buffer[0] = _buffer;
@@ -637,8 +803,8 @@ public:
 	}
 
 	bool has_background_work() const {
-	    return worker_started.load(std::memory_order_acquire) && 
-	           worker_has_unfinished_work.load(std::memory_order_acquire);
+		return worker_started.load(std::memory_order_acquire) &&
+			   worker_has_unfinished_work.load(std::memory_order_acquire);
 	}
 
 	void finalize()
@@ -720,6 +886,7 @@ private:
 	UInt32 src_dir_index;
 	std::wstring dst_dir;
 	std::shared_ptr<Archive<UseVirtualDestructor>> archive;
+	HardlinkIndexMap &hlmap;
 	std::shared_ptr<OverwriteAction> overwrite_action;
 	std::shared_ptr<bool> ignore_errors;
 	std::shared_ptr<ErrorLog> error_log;
@@ -729,19 +896,21 @@ private:
 
 public:
 	ArchiveExtractor(UInt32 src_dir_index, const std::wstring &dst_dir, std::shared_ptr<Archive<UseVirtualDestructor>> archive,
-			std::shared_ptr<OverwriteAction> overwrite_action, std::shared_ptr<bool> ignore_errors,
+			HardlinkIndexMap &hlmap, std::shared_ptr<OverwriteAction> overwrite_action, std::shared_ptr<bool> ignore_errors,
 			std::shared_ptr<ErrorLog> error_log, std::shared_ptr<FileWriteCache<UseVirtualDestructor>> cache,
 			std::shared_ptr<ExtractProgress> progress, std::shared_ptr<std::set<UInt32>> skipped_indices)
 		: src_dir_index(src_dir_index),
 		  dst_dir(dst_dir),
 		  archive(archive),
+		  hlmap(hlmap),
 		  overwrite_action(overwrite_action),
 		  ignore_errors(ignore_errors),
 		  error_log(error_log),
 		  cache(cache),
 		  progress(progress),
 		  skipped_indices(skipped_indices)
-	{}
+	{
+	}
 
 	UNKNOWN_IMPL_BEGIN
 	UNKNOWN_IMPL_ITF(IProgress)
@@ -776,16 +945,25 @@ public:
 		if (file_info.is_dir)
 			return S_OK;
 
-		const auto cmode = static_cast<int>(g_options.correct_name_mode);
-		file_path = correct_filename(file_info.name, cmode, file_info.is_altstream);
-		UInt32 parent_index = file_info.parent;
-		while (parent_index != src_dir_index && parent_index != c_root_index) {
-			const ArcFileInfo &parent_file_info = archive->file_list[parent_index];
-			file_path.insert(0, 1, L'/')
-					.insert(0, correct_filename(parent_file_info.name, cmode & ~(0x10 | 0x40), false));
-			parent_index = parent_file_info.parent;
+		fprintf(stderr, "GetStream index %u file_info.hl_group = %u\n", index, file_info.hl_group);
+
+		if (file_info.hl_group != (uint32_t)-1 && !file_info.is_altstream) {
+			fprintf(stderr, "GetStream index %u Well well\n", index);
+///			const HardLinkGroup &group = archive->hard_link_groups[file_info.hl_group];
+			fprintf(stderr, "GetStream index %u Well well file_info.hl_group %u\n", index, file_info.hl_group);
+
+			auto it_hlmap = hlmap.find(file_info.hl_group);
+			if (it_hlmap != hlmap.end()) {
+				index = it_hlmap->second;
+				file_info = archive->file_list[index];
+				fprintf(stderr, "GetStream index MAP!!! new index = %u\n", it_hlmap->second);
+			}
+			else {
+				fprintf(stderr, "GetStream index MAPING NOT FOUNDdd\n");
+			}
 		}
-		file_path.insert(0, add_trailing_slash(dst_dir));
+
+		file_path = archive->build_extract_path(index, dst_dir, src_dir_index);
 
 		if (askExtractMode != NArchive::NExtract::NAskMode::kExtract)
 			return S_OK;
@@ -816,6 +994,7 @@ public:
 					*overwrite_action = ov_options.action;
 			} else
 				overwrite = *overwrite_action;
+
 			if (overwrite == oaSkip) {
 				if (skipped_indices) {
 					skipped_indices->insert(index);
@@ -935,6 +1114,9 @@ class PrepareExtract : public ProgressMonitor
 private:
 	Archive<UseVirtualDestructor> &archive;
 	std::list<UInt32> &indices;
+	HardlinkIndexMap &hlmap;
+	PendingHardlinks &phl;
+	PendingSymlinks &psl;
 	Far::FileFilter *filter;
 	bool &ignore_errors;
 	ErrorLog &error_log;
@@ -985,12 +1167,11 @@ private:
 				if (archive.get_encrypted(file_index))
 					farattr |= FILE_ATTRIBUTE_ENCRYPTED;
 
-				{
-					uint32_t n = archive.get_links(file_index);
-					filter_data.NumberOfLinks = n;
-					if (n > 1)
-						attr |= FILE_ATTRIBUTE_HARDLINKS;
-				}
+				filter_data.NumberOfLinks = file_info.num_links;
+				if (!file_info.num_links)
+					farattr |= FILE_ATTRIBUTE_BROKEN;
+				else if (file_info.num_links > 1)
+					farattr |= FILE_ATTRIBUTE_HARDLINKS;
 
 				filter_data.FindData.dwFileAttributes = attr | farattr;
 				filter_data.FindData.dwUnixMode = posixattr;
@@ -1027,6 +1208,46 @@ private:
 				FileIndexRange dir_list = archive.get_dir_list(file_index);
 				prepare_extract(dir_list, dir_path);
 			} else {
+
+				if (!file_info.num_links) // broken hard link
+					return;
+
+				std::wstring link_path;
+				if (archive.get_symlink(file_index, link_path)) {
+//					PendingSymlink syml = { StrWide2MB(link_path), file_index };
+					PendingSymlink syml = { link_path, file_index };
+					psl.push_back(syml);
+					return;
+				}
+
+				if (file_info.hl_group == (uint32_t)-1 || file_info.is_altstream) {
+					fprintf(stderr, "ALTSTREAM! %ls group %u, file_index %u;\n", file_info.name.c_str(), file_info.hl_group, file_index);
+					indices.push_back(file_index);
+					return;
+				}
+
+				const HardLinkGroup &group = archive.hard_link_groups[file_info.hl_group];
+				if (group.empty()) {
+					indices.push_back(file_index);
+					return;
+				}
+
+				auto it_hlmap = hlmap.find(file_info.hl_group);
+				if (it_hlmap == hlmap.end()) {
+					fprintf(stderr, "hlmap[%u] = file_index %u;\n", file_info.hl_group, file_index);
+					hlmap[file_info.hl_group] = file_index;
+					fprintf(stderr, "*it = group[0]; %u\n", group[0]);
+					indices.push_back(group[0]);
+					return;
+				} else {
+					UInt32 ex_index = it_hlmap->second;
+					PendingHardlink hardl = { ex_index, file_index };
+					phl.push_back(hardl);
+					fprintf(stderr, "Create pending hard link src %u[already extracted index] dst %u\n", ex_index, file_index);
+					fprintf(stderr, "Removed file_index %u from indices list (will be processed as hardlink later)\n", file_index);
+					return;
+				}
+
 				indices.push_back(file_index);
 			}
 
@@ -1035,10 +1256,14 @@ private:
 
 public:
 	PrepareExtract(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive,
-			std::list<UInt32> &indices, Far::FileFilter *filter, bool &ignore_errors, ErrorLog &error_log)
+			std::list<UInt32> &indices, HardlinkIndexMap &hlmap, PendingHardlinks &phl, PendingSymlinks &psl, Far::FileFilter *filter, bool &ignore_errors,
+			ErrorLog &error_log)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_CREATE_DIRS), false),
 		  archive(archive),
 		  indices(indices),
+		  hlmap(hlmap),
+		  phl(phl),
+		  psl(psl),
 		  filter(filter),
 		  ignore_errors(ignore_errors),
 		  error_log(error_log)
@@ -1057,9 +1282,7 @@ private:
 	Archive<UseVirtualDestructor> &archive;
 	Far::FileFilter *filter;
 	bool &ignore_errors;
-	bool &extract_access_rights;
-	bool &extract_owners_groups;
-	bool &extract_attributes;
+	const ExtractOptions &options;
 	ErrorLog &error_log;
 	const std::wstring *m_file_path{};
 	FILETIME crft;
@@ -1100,9 +1323,8 @@ private:
 				if (File::exists(file_path)) {
 					File::remove_dir(file_path);
 				}
-			} else {
 
-				const ArcFileInfo &file_info = archive.file_list[file_index];
+			} else {
 				DWORD attr = 0, posixattr = 0;
 				attr = archive.get_attr(file_index, &posixattr);
 
@@ -1152,83 +1374,51 @@ private:
 					}
 				}
 
-				if (extract_access_rights && posixattr) {
-					int res = Far::g_fsf.ESetFileMode(file_path.c_str(), posixattr, ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-					if (res != SETATTR_RET_OK) FAIL(res);
-				}
+				std::string mb_path = StrWide2MB(file_path);
 
-				if (extract_owners_groups) {
-					std::wstring owner, group;
-
-					owner = archive.get_user(file_index);
-					if (owner.size()) {
-						int res = Far::g_fsf.ESetFileOwner(file_path.c_str(), owner.c_str(), ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-						if (res != SETATTR_RET_OK) FAIL(res);
-					}
-
-					group = archive.get_group(file_index);
-					if (group.size()) {
-						int res = Far::g_fsf.ESetFileGroup(file_path.c_str(), group.c_str(), ignore_errors ? SETATTR_RET_SKIPALL : SETATTR_RET_UNKNOWN);
-						if (res != SETATTR_RET_OK) FAIL(res);
-					}
-					//fprintf(stderr, "[!!!] owner and group set to: = [%ls](%lu) [%ls](%lu)\n", owner.c_str(), owner.size(), group.c_str(), group.size() );
-				}
-
-				{
-					FILETIME AccessTime = archive.get_atime(file_index),
-							 ModifyTime = archive.get_mtime(file_index);
-
-					if (AccessTime.dwHighDateTime || AccessTime.dwLowDateTime ||
-						ModifyTime.dwHighDateTime || ModifyTime.dwLowDateTime) {
-
-						if (!AccessTime.dwHighDateTime && !AccessTime.dwLowDateTime)
-							AccessTime = crft;
-
-						if (!ModifyTime.dwHighDateTime && !ModifyTime.dwLowDateTime)
-							ModifyTime = crft;
-
-						const std::string &mb_name = Wide2MB(file_path.c_str());
-						struct stat s{};
-						if (sdc_stat(mb_name.c_str(), &s) != 0)
-							memset(&s, 0, sizeof(s));
-
-						WINPORT(FileTime_Win32ToUnix)(&AccessTime, &s.st_atim);
-						WINPORT(FileTime_Win32ToUnix)(&ModifyTime, &s.st_mtim);
-
-						struct timespec times[2] = {s.st_atim, s.st_mtim};
-						if (sdc_utimens(mb_name.c_str(), times) != 0)
-							FAIL(errno);
+				if (options.extract_access_rights && posixattr) {
+					if (sdc_chmod(mb_path.c_str(), posixattr & 0xFFF) != 0) {
+						FAIL(errno);
 					}
 				}
 
-				///File::set_attr(file_path, FILE_ATTRIBUTE_NORMAL);
-//				File file(file_path, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS);
-				///File::set_attr_nt(file_path, archive.get_attr(file_index));
-//				file.set_time_nt(archive.get_ctime(file_index), archive.get_atime(file_index), archive.get_mtime(file_index));
-///				File::set_attr_nt(file_path, archive.get_attr(file_index));
-///				File::set_attr_nt(file_path, attr);
-//				File::set_attr_posix(file_path, posixattr);
+				if (options.extract_owners_groups) {
+					if (set_file_owner_group(mb_path, file_info, options.extract_owners_groups)) {
+						FAIL(errno);
+					}
+				}
+
+				FILETIME atime_ft = archive.get_atime(file_index);
+				FILETIME mtime_ft = archive.get_mtime(file_index);
+				if (set_symlink_times(mb_path, atime_ft, mtime_ft)) {
+					FAIL(errno);
+				}
 			}
+
 			RETRY_OR_IGNORE_END(ignore_errors, error_log, *this)
+
 		});
 
 	}
 
 public:
 	SetDirAttr(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive, Far::FileFilter *filter,
-			bool &ignore_errors, bool &extract_access_rights, bool &extract_owners_groups, bool &extract_attributes, ErrorLog &error_log)
+			bool &ignore_errors, const ExtractOptions &options, ErrorLog &error_log)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_SET_ATTR), false),
 		  archive(archive),
 		  filter(filter),
 		  ignore_errors(ignore_errors),
-		  extract_access_rights(extract_access_rights),
-		  extract_owners_groups(extract_owners_groups),
-		  extract_attributes(extract_attributes),
+		  options(options),
+//		  extract_access_rights(options.extract_access_rights),
+//		  extract_owners_groups(options.extract_owners_groups),
+//		  extract_attributes(options.extract_attributes),
 		  error_log(error_log)
 	{
 		WINPORT(GetSystemTimeAsFileTime)(&crft);
+
 		if (filter)
 			filter->start();
+
 		set_dir_attr(index_range, parent_dir);
 	}
 };
@@ -1363,26 +1553,294 @@ public:
 	}
 };
 
+class CreateHardlinksProgress : public ProgressMonitor
+{
+private:
+	std::wstring arc_path;
+	UInt64 completed;
+	UInt64 total;
+	std::wstring current_file;
+
+	void do_update_ui() override
+	{
+		const unsigned c_width = 60;
+
+		percent_done = calc_percent(completed, total);
+
+		std::wostringstream st;
+		st << fit_str(arc_path, c_width) << L'\n';
+		st << L"\x1\n";
+		st << fit_str(current_file, c_width) << L'\n';
+		st << completed << L" / " << total << L" hardlinks\n";
+		st << Far::get_progress_bar_str(c_width, percent_done, 100) << L'\n';
+		progress_text = st.str();
+	}
+
+public:
+	CreateHardlinksProgress(const std::wstring &arc_path)
+//		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_CREATE_HARDLINKS)),
+		: ProgressMonitor(L"Create hardlinks"),
+		  arc_path(arc_path),
+		  completed(0),
+		  total(0)
+	{}
+
+	void set_total(UInt64 total_count)
+	{
+		CriticalSectionLock lock(GetSync());
+		total = total_count;
+		update_ui();
+	}
+
+	void update_current_file(const std::wstring &file_path)
+	{
+		CriticalSectionLock lock(GetSync());
+		current_file = file_path;
+		update_ui();
+	}
+
+	void update_completed(UInt64 completed_count)
+	{
+		CriticalSectionLock lock(GetSync());
+		completed = completed_count;
+		update_ui();
+	}
+};
+
+static void create_hardlink_copy(const std::string &src_path, 
+										 const std::string &dst_path, 
+										 off_t total_size,
+										 std::shared_ptr<CreateHardlinksProgress> progress)
+{
+	int src_fd = sdc_open(src_path.c_str(), O_RDONLY);
+	if (src_fd == -1) {
+		FAIL(errno);
+	}
+
+	auto src_guard = std::shared_ptr<void>(nullptr, [src_fd](void*) {
+		if (src_fd != -1) sdc_close(src_fd);
+	});
+
+	struct stat st;
+	if (sdc_fstat(src_fd, &st) != 0) {
+		FAIL(errno);
+	}
+
+	int dst_fd = sdc_open(dst_path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, st.st_mode & 0777);
+	if (dst_fd == -1) {
+		FAIL(HRESULT_FROM_WIN32(errno));
+	}
+
+	auto dst_guard = std::shared_ptr<void>(nullptr, [dst_fd](void*) {
+		if (dst_fd != -1) sdc_close(dst_fd);
+	});
+
+	const size_t buf_size = 64 * 1024;
+	std::vector<char> buffer(buf_size);
+
+	off_t total_copied = 0;
+	ssize_t bytes_read;
+
+	std::wstring original_filename = extract_file_name(StrMB2Wide(src_path));
+
+	while ((bytes_read = sdc_read(src_fd, buffer.data(), buf_size)) > 0) {
+		ssize_t bytes_written = sdc_write(dst_fd, buffer.data(), bytes_read);
+		if (bytes_written != bytes_read) {
+			FAIL(errno);
+		}
+
+		total_copied += bytes_written;
+
+		if (total_size > 1024 * 1024) {
+			if (total_copied % (512 * 1024) == 0 || total_copied == total_size) {
+				unsigned percent = calc_percent(total_copied, total_size);
+				std::wstring progress_text = original_filename + 
+											L" (" + int_to_str(percent) + L"%)";
+				progress->update_current_file(progress_text);
+			}
+		}
+	}
+
+	if (bytes_read == -1) {
+		FAIL(errno);
+	}
+
+	struct timespec times[2];
+	times[0] = st.st_atim; // access time
+	times[1] = st.st_mtim; // modification time
+
+	if (sdc_futimens(dst_fd, times) != 0) {
+		fprintf(stderr, "Warning: failed to set timestamps for %s: %s\n", dst_path.c_str(), strerror(errno));
+	}
+
+	dst_guard.reset();
+	src_guard.reset();
+
+	if (sdc_chown(dst_path.c_str(), st.st_uid, st.st_gid) != 0) {
+		fprintf(stderr, "Warning: failed to set owner/group for %s: %s\n",
+			dst_path.c_str(), strerror(errno));
+	}
+
+	if (sdc_chmod(dst_path.c_str(), st.st_mode & 07777) != 0) {
+		fprintf(stderr, "Warning: failed to set permissions for %s: %s\n", 
+			dst_path.c_str(), strerror(errno));
+	}
+}
+
+
+template<bool UseVirtualDestructor>
+void create_hardlinks(
+	Archive<UseVirtualDestructor>& archive,
+	const std::wstring& dst_dir,
+	UInt32 src_dir_index,
+	const PendingHardlinks &phl,
+	const PendingSymlinks &psl,
+	const HardlinkIndexMap &hardlink_map,
+	bool bCreateHardLinks,
+	const ExtractOptions &options,
+	std::shared_ptr<ErrorLog> error_log)
+{
+	size_t total_links = phl.size() + psl.size();
+	if (total_links == 0) {
+		return;
+	}
+
+	auto progress = std::make_shared<CreateHardlinksProgress>(archive.arc_path);
+	progress->set_total(total_links);
+
+	UInt64 completed = 0;
+	bool ignore_errors = false;
+
+	for (const auto &link : phl) {
+		try {
+			std::wstring src_path = archive.build_extract_path(link.src_index, dst_dir, src_dir_index);
+			std::wstring dst_path = archive.build_extract_path(link.dst_index, dst_dir, src_dir_index);
+
+			std::wstring current_file = extract_file_name(dst_path);
+			if (bCreateHardLinks) {
+				current_file = L"[Hardlink] " + current_file;
+			} else {
+				current_file = L"[Copy] " + current_file;
+			}
+			progress->update_current_file(current_file);
+
+			if (bCreateHardLinks) {
+				RETRY_OR_IGNORE_BEGIN
+				std::string src_mb = StrWide2MB(src_path);
+				std::string dst_mb = StrWide2MB(dst_path);
+
+				struct stat st;
+				if (sdc_stat(src_mb.c_str(), &st) != 0) {
+					FAIL_MSG(L"Source file for hardlink does not exist: " + src_path);
+				}
+
+				struct stat dst_st;
+				if (sdc_stat(dst_mb.c_str(), &dst_st) == 0) {
+					if (sdc_unlink(dst_mb.c_str()) != 0) {
+						FAIL(HRESULT_FROM_WIN32(errno));
+					}
+				}
+
+				if (sdc_link(src_mb.c_str(), dst_mb.c_str()) != 0) {
+					FAIL(HRESULT_FROM_WIN32(errno));
+				}
+				RETRY_OR_IGNORE_END(ignore_errors, *error_log, *progress)
+			} else {
+				RETRY_OR_IGNORE_BEGIN
+				std::string src_mb = StrWide2MB(src_path);
+				std::string dst_mb = StrWide2MB(dst_path);
+
+				struct stat st;
+				if (sdc_stat(src_mb.c_str(), &st) != 0) {
+					FAIL_MSG(L"Source file for copy does not exist: " + src_path);
+				}
+
+				struct stat dst_st;
+				if (sdc_stat(dst_mb.c_str(), &dst_st) == 0) {
+					if (sdc_unlink(dst_mb.c_str()) != 0) {
+						FAIL(HRESULT_FROM_WIN32(errno));
+					}
+				}
+
+				create_hardlink_copy(src_mb, dst_mb, st.st_size, progress);
+				RETRY_OR_IGNORE_END(ignore_errors, *error_log, *progress)
+			}
+
+			completed++;
+			progress->update_completed(completed);
+		} catch (const Error& error) {
+			retry_or_ignore_error(error, ignore_errors, ignore_errors, *error_log, *progress, true, true);
+			if (!ignore_errors) throw;
+		}
+	}
+
+	for (const auto &symlink_info : psl) {
+		try {
+			std::wstring link_path = archive.build_extract_path(symlink_info.dst_index, dst_dir, src_dir_index);
+			std::wstring target_path = symlink_info.src_path;
+			const ArcFileInfo &file_info = archive.file_list[symlink_info.dst_index];
+
+			std::wstring current_file = L"[Symlink] " + extract_file_name(link_path);
+			progress->update_current_file(current_file);
+
+			RETRY_OR_IGNORE_BEGIN
+			std::string link_mb = StrWide2MB(link_path);
+			std::string target_mb = StrWide2MB(target_path);
+
+			struct stat st;
+			if (sdc_lstat(link_mb.c_str(), &st) == 0) {
+				if (sdc_unlink(link_mb.c_str()) != 0) {
+					FAIL(errno);
+				}
+			}
+
+			if (sdc_symlink(target_mb.c_str(), link_mb.c_str()) != 0) {
+				FAIL(errno);
+			}
+
+			if (options.extract_owners_groups) {
+				set_file_owner_group(link_mb, file_info, options.extract_owners_groups);
+			}
+
+			FILETIME atime_ft = archive.get_atime(symlink_info.dst_index);
+			FILETIME mtime_ft = archive.get_mtime(symlink_info.dst_index);
+			if (set_symlink_times(link_mb, atime_ft, mtime_ft)) {
+				FAIL(errno);
+			}
+
+			RETRY_OR_IGNORE_END(ignore_errors, *error_log, *progress)
+
+			completed++;
+			progress->update_completed(completed);
+		} catch (const Error& error) {
+			retry_or_ignore_error(error, ignore_errors, ignore_errors, *error_log, *progress, true, true);
+			if (!ignore_errors) throw;
+		}
+	}
+
+	progress->clean();
+}
+
 template<bool UseVirtualDestructor>
 void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indices,
 		const ExtractOptions &options, std::shared_ptr<ErrorLog> error_log,
 		std::vector<UInt32> *extracted_indices)
 {
 	DisableSleepMode dsm;
+	HardlinkIndexMap hlmap;
+	PendingHardlinks phl;
+	PendingSymlinks psl;
 
 	fprintf(stderr, ">>> Archive::extract():\n" );
 
 	const auto ignore_errors = std::make_shared<bool>(options.ignore_errors);
 	const auto overwrite_action = std::make_shared<OverwriteAction>(options.overwrite);
-	const auto extract_access_rights = std::make_shared<bool>(options.extract_access_rights);
-	const auto extract_owners_groups = std::make_shared<bool>(options.extract_owners_groups);
-	const auto extract_attributes = std::make_shared<bool>(options.extract_attributes);
 
 	prepare_dst_dir(options.dst_dir);
 
 	std::list<UInt32> file_indices;
 	PrepareExtract(FileIndexRange(src_indices.begin(), src_indices.end()), options.dst_dir, *this,
-			file_indices, options.filter.get(), *ignore_errors, *error_log);
+			file_indices, hlmap, phl, psl, options.filter.get(), *ignore_errors, *error_log);
 
 	std::vector<UInt32> indices;
 	indices.reserve(file_indices.size());
@@ -1390,14 +1848,12 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 			std::back_insert_iterator<std::vector<UInt32>>(indices));
 	std::sort(indices.begin(), indices.end());
 
-//	bool bDoubleBuffering = true;
-
 	bool bDoubleBuffering = (options.double_buffering == triTrue);
 	if (options.double_buffering == triUndef) {
 
 		struct stat src_stat, dst_stat;
-		const std::string src_path_mb = StrWide2MB(get_root()->arc_path);
-		const std::string dst_path_mb = StrWide2MB(options.dst_dir);
+		const std::string &src_path_mb = StrWide2MB(get_root()->arc_path);
+		const std::string &dst_path_mb = StrWide2MB(options.dst_dir);
 
 		if (sdc_stat(src_path_mb.c_str(), &src_stat) == 0 &&
 			sdc_stat(dst_path_mb.c_str(), &dst_stat) == 0 ) {
@@ -1406,15 +1862,13 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 		}
 	}
 
-//	bDoubleBuffering = false;
-
 	const auto progress = std::make_shared<ExtractProgress>(arc_path, bDoubleBuffering);
 	const auto cache = std::make_shared<FileWriteCache<UseVirtualDestructor>>(this->shared_from_this(), ignore_errors, 
-							extract_access_rights, extract_owners_groups, extract_attributes, error_log, progress, bDoubleBuffering);
+							options, error_log, progress, bDoubleBuffering);
 	const auto skipped_indices = extracted_indices ? std::make_shared<std::set<UInt32>>() : nullptr;
 
 	ComObject<IArchiveExtractCallback<UseVirtualDestructor>> extractor(new ArchiveExtractor<UseVirtualDestructor>(src_dir_index, options.dst_dir,
-			this->shared_from_this(), overwrite_action, ignore_errors, 
+			this->shared_from_this(), hlmap, overwrite_action, ignore_errors, 
 			error_log, cache, progress,
 			skipped_indices));
 
@@ -1470,7 +1924,7 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	    }
+		}
 
 		ex_thread1.join();
 		ex_thread2.join();
@@ -1510,7 +1964,7 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 			}
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	    }
+		}
 
 		ex_thread2.join();
 		int errc2 = future2.get();
@@ -1522,7 +1976,13 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 	progress->clean();
 
 	SetDirAttr(FileIndexRange(src_indices.begin(), src_indices.end()), options.dst_dir, *this, options.filter.get(), *ignore_errors,
-			*extract_access_rights, *extract_owners_groups, *extract_attributes, *error_log);
+			options, *error_log);
+
+	if (!phl.empty() || !psl.empty()) {
+		//bool bCreateHardLinks = false;
+		bool bCreateHardLinks = !options.duplicate_hardlinks;
+		::create_hardlinks(*this, options.dst_dir, src_dir_index, phl, psl, hlmap, bCreateHardLinks, options, error_log);
+	}
 
 	if (extracted_indices) {
 		std::vector<UInt32> sorted_src_indices(src_indices);

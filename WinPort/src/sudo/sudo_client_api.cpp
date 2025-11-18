@@ -914,5 +914,52 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_mknod(const char *pat
 	return r;
 }
 
+extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *path, uid_t owner, gid_t group)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = lchown(path, owner, group);
+	if (r == -1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
+		try {
+			ClientTransaction ct(SUDO_CMD_LCHOWN);
+			ct.SendStr(path);
+			ct.SendPOD(owner);
+			ct.SendPOD(group);
+			r = ct.RecvInt();
+			if (r == -1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_lchown('%s') - error %s\n", path, e.what());
+			r = -1;
+		}
+	}
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2])
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(filename);
+	int r = lutimes(filename, times);
+	if (r == -1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
+		try {
+			ClientTransaction ct(SUDO_CMD_LUTIMES);
+			ct.SendStr(filename);
+			ct.SendPOD(times[0]);
+			ct.SendPOD(times[1]);
+			r = ct.RecvInt();
+			if (r == -1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_lutimes('%s') - error %s\n", filename, e.what());
+			r = -1;
+		}
+	}
+	return r;
+}
 
 } //namespace Sudo

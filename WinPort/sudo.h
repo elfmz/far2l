@@ -74,6 +74,8 @@ extern "C" {
 	__attribute__ ((visibility("default"))) int sdc_fs_flags_set(const char *path, unsigned long flags);
 	__attribute__ ((visibility("default"))) int sdc_mkfifo(const char *path, mode_t mode);
 	__attribute__ ((visibility("default"))) int sdc_mknod(const char *path, mode_t mode, dev_t dev);
+	__attribute__ ((visibility("default"))) int sdc_lchown(const char *pathname, uid_t owner, gid_t group);
+	__attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2]);
 
 #ifdef __cplusplus
 }

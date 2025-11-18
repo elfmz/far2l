@@ -535,7 +535,13 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 	stk_ser.PopNum(height);
 	uint8_t ok = 0;
 	if (width && height) {
-		const size_t buffer_size = (flags == WP_IMG_RGB) ? (width) * height * 3 : (width) * height * 4;
+		size_t buffer_size = size_t(width) * height;
+		switch (flags & WP_IMG_MASK_FMT) {
+			case WP_IMG_RGBA: buffer_size*= 4; break;
+			case WP_IMG_RGB: buffer_size*= 3; break;
+			default:
+				throw std::runtime_error(StrPrintf("Bad image flags: 0x%llx", (unsigned long long)flags));
+		}
 		std::vector<char> bitmap(buffer_size);
 		stk_ser.Pop(bitmap.data(), bitmap.size());
 		ok = WINPORT(SetConsoleImage)(NULL, id.c_str(), flags, &area, width, height, bitmap.data()) ? 1 : 0;

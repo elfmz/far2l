@@ -1499,18 +1499,22 @@ bool TTYBackend::CheckKittyImagesSupport()
 
 bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
 {
-	size_t buffer_size;
-	auto fmt = (flags & WP_IMG_MASK_FMT);
-	if (fmt == WP_IMG_RGBA) {
-		buffer_size = size_t(width) * height * 4;
-	} else if ( fmt == WP_IMG_RGB) {
-		buffer_size = size_t(width) * height * 3;
-	} else {
-		return false;
+	size_t buffer_size = size_t(width) * height;
+	const auto fmt = (flags & WP_IMG_MASK_FMT);
+	switch (fmt) {
+		case WP_IMG_RGBA: buffer_size*= 4; break;
+		case WP_IMG_RGB: buffer_size*= 3; break;
+		default:
+			fprintf(stderr, "%s: bad flags 0x%llx\n", __FUNCTION__, (unsigned long long)flags);
+			return false;
 	}
 
 	if (_far2l_tty) {
 		uint8_t ok = 0;
+		SMALL_RECT push_area = {-1, -1, -1, -1};
+		if (area) {
+			push_area = *area;
+		}
 		try {
 			StackSerializer stk_ser;
 			if (buffer_size) {
@@ -1518,10 +1522,10 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 			}
 			stk_ser.PushNum(height);
 			stk_ser.PushNum(width);
-			stk_ser.PushNum(area ? area->Bottom : SHORT(-1));
-			stk_ser.PushNum(area ? area->Right : SHORT(-1));
-			stk_ser.PushNum(area ? area->Top : SHORT(-1));
-			stk_ser.PushNum(area ? area->Left : SHORT(-1));
+			stk_ser.PushNum(push_area.Bottom);
+			stk_ser.PushNum(push_area.Right);
+			stk_ser.PushNum(push_area.Top);
+			stk_ser.PushNum(push_area.Left);
 			stk_ser.PushNum(flags);
 			stk_ser.PushStr(id);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_SET);
@@ -1567,12 +1571,16 @@ bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, un
 	if (_far2l_tty) {
 		uint8_t ok = 0;
 		try {
+			SMALL_RECT push_area = {-1, -1, -1, -1};
+			if (area) {
+				push_area = *area;
+			}
 			StackSerializer stk_ser;
 			stk_ser.PushNum(angle_x90);
-			stk_ser.PushNum(area ? area->Bottom : SHORT(-1));
-			stk_ser.PushNum(area ? area->Right : SHORT(-1));
-			stk_ser.PushNum(area ? area->Top : SHORT(-1));
-			stk_ser.PushNum(area ? area->Left : SHORT(-1));
+			stk_ser.PushNum(push_area.Bottom);
+			stk_ser.PushNum(push_area.Right);
+			stk_ser.PushNum(push_area.Top);
+			stk_ser.PushNum(push_area.Left);
 			stk_ser.PushStr(id);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_ROT);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);

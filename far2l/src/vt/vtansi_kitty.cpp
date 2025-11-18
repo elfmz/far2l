@@ -33,25 +33,23 @@ const char *VTAnsiKitty::ShowImage(int id, Image &img)
 	CONSOLE_SCREEN_BUFFER_INFO  csbi{};
 	WINPORT(GetConsoleScreenBufferInfo)(NULL, &csbi );
 
-	size_t wanted_size = size_t(img.width) * img.height;
-	DWORD64 flags;
-	if (img.fmt == 24) {
+	DWORD64 flags = 0;
+	if (img.fmt == 100) {
+		flags = WP_IMG_PNG;
+	} else if (img.fmt == 24) {
 		flags = WP_IMG_RGB;
-		wanted_size*= 3;
-	} else {
+		if (img.data.size() < size_t(img.width) * img.height * 3) {
+			return "TRUNCATED_RGB";
+		}
+	} else if (img.fmt == 32) {
 		flags = WP_IMG_RGBA;
-		wanted_size*= 4;
+		if (img.data.size() < size_t(img.width) * img.height * 4) {
+			return "TRUNCATED_RGBA";
+		}
+	} else {
+		return "BAD_FMT";
 	}
-	if (img.data.size() < wanted_size) {
-		return "TRUNCATED_DATA";
-	}
-	int dummy_lines = (img.rows > 0) ? img.rows : int(img.height / wgi.PixPerCell.Y);
-	dummy_lines = std::min(int(csbi.dwCursorPosition.Y), dummy_lines);
-	for (int i = dummy_lines; i--; ) {
-		_vts->InjectInput("\r\n");
-	}
-	csbi.dwCursorPosition.Y-= dummy_lines;
-	SMALL_RECT area{csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y,
+	SMALL_RECT area{-1, -1,
 			SHORT(img.rows > 0 ? csbi.dwCursorPosition.X + img.rows - 1 : -1),
 			SHORT(img.cols > 0 ? csbi.dwCursorPosition.Y + img.cols - 1 : -1)
 	};
@@ -61,7 +59,12 @@ const char *VTAnsiKitty::ShowImage(int id, Image &img)
 		flags|= WP_IMG_PIXEL_OFFSET;
 	}
 	if (_images_hide_cnt == 0) {
-		if (!WINPORT(SetConsoleImage)(NULL, KittyID(id).c_str(),
+		if (img.fmt == 100) {
+			if (!WINPORT(SetConsoleImage)(NULL, KittyID(id).c_str(),
+					flags, &area, img.data.size(), 1, img.data.data())) {
+				return "BACKEND_ERROR";
+			}
+		} else if (!WINPORT(SetConsoleImage)(NULL, KittyID(id).c_str(),
 				flags, &area, img.width, img.height, img.data.data())) {
 			return "BACKEND_ERROR";
 		}
@@ -77,7 +80,7 @@ const char *VTAnsiKitty::AddImage(char action, char medium,
 	if (medium != 0 && medium != 'd') { // only escape codes are supported
 		return "BAD_MEDIUM";
 	}
-	if (fmt > 0 && fmt != 24 && fmt != 32) {
+	if (fmt > 0 && fmt != 24 && fmt != 32 && fmt != 100) {
 		return "BAD_FORMAT";
 	}
 	if (action == 'q') {

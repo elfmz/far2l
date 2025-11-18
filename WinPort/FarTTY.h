@@ -252,8 +252,8 @@ Glossary:
   uint16_t (character cell of image Top or -1 to leave it unchanged OR initially set to current cursor position)
   uint16_t (character cell of image Right or -1 to leave it unchanged OR initially set to image pixels width OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag specified)
   uint16_t (character cell of image Bottom or -1 to leave it unchanged OR initially set to image pixels height OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag specified)
-  uint32_t (image width pixels)
-  uint32_t (image height pixels)
+  uint32_t (image width pixels for RGB/RGBA and encoded data size for PNG)
+  uint32_t (image height pixels for RGB/RGBA and 1 for PNG)
   RGB/RGBA data of size width * height * 3 / width * height * 4
  Out:
   uint8_t (0 - failure, nonzero value - image loaded and displayed)

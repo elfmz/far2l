@@ -544,7 +544,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		DeliverPendingWindowInfo();
 		InterThreadCall<int>(std::bind(sShowConsoleLog, kind));
-
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
 		if (_far2l_exts)
@@ -1125,6 +1124,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		ExecuteCommandEnd();
+		if (_vta.HasImages() && !_console_kill_requested && _exit_code == 0) {
+			// some apps like chafa just 'prints' image and exit successfully
+			// we're not keeping images with terminale history - so it will go away due to terminal reset
+			// so let user see masterpiece before it will be disappear forever
+			const auto *msg = L"Close by any key of: [SPACE | ENTER | ESCAPE | 'C']";
+			DWORD dw;
+			WINPORT(WriteConsole)(NULL, msg, wcslen(msg), &dw, NULL );
+			WORD keys[] = {VK_RETURN, VK_ESCAPE, VK_SPACE, 'C'};
+			while (!WINPORT(CheckForKeyPress)(NULL, keys, ARRAYSIZE(keys), CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MOUSE_EVENTS)) {
+				WINPORT(WaitConsoleInput)(NULL, 1000);
+			}
+		}
 
 		CheckLeaderAlive();
 

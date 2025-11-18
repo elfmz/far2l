@@ -1,4 +1,5 @@
 #include "headers.hpp"
+#include <assert.h>
 #include "vtansi_kitty.h"
 #include "base64.h"
 
@@ -16,7 +17,9 @@ VTAnsiKitty::~VTAnsiKitty()
 {
 	fprintf(stderr, "VTAnsiKitty destroyed\n");
 	for (auto &it : _images) {
-		WINPORT(DeleteConsoleImage)(NULL, KittyID(it.first).c_str());
+		if (it.second.shown) {
+			WINPORT(DeleteConsoleImage)(NULL, KittyID(it.first).c_str());
+		}
 	}
 }
 
@@ -57,9 +60,11 @@ const char *VTAnsiKitty::ShowImage(int id, Image &img)
 		area.Bottom = img.ofsy;
 		flags|= WP_IMG_PIXEL_OFFSET;
 	}
-	if (!WINPORT(SetConsoleImage)(NULL, KittyID(id).c_str(),
-			flags, &area, img.width, img.height, img.data.data())) {
-		return "BACKEND_ERROR";
+	if (_images_hide_cnt == 0) {
+		if (!WINPORT(SetConsoleImage)(NULL, KittyID(id).c_str(),
+				flags, &area, img.width, img.height, img.data.data())) {
+			return "BACKEND_ERROR";
+		}
 	}
 	img.shown = true;
 
@@ -267,3 +272,39 @@ void VTAnsiKitty::InterpretControlString(const char *s, size_t l)
 	response+= "\e\\";
 	_vts->InjectInput(response.c_str());
 }
+
+bool VTAnsiKitty::HasImages() const
+{
+	for (const auto &it : _images) {
+		if (it.second.shown) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void VTAnsiKitty::HideImages()
+{
+	++_images_hide_cnt;
+	if (_images_hide_cnt == 1) {
+		for (auto &it : _images) {
+			if (it.second.shown) {
+				WINPORT(DeleteConsoleImage)(NULL, KittyID(it.first).c_str());
+			}
+		}
+	}
+}
+
+void VTAnsiKitty::ShowImages()
+{
+	assert(_images_hide_cnt > 0);
+	--_images_hide_cnt;
+	if (_images_hide_cnt == 0) {
+		for (auto &it : _images) {
+			if (it.second.shown) {
+				ShowImage(it.first, it.second);
+			}
+		}
+	}
+}
+

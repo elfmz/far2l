@@ -39,6 +39,7 @@ class VTAnsi
 	void OnStop();
 	void OnDetached();
 	void OnReattached();
+	bool HasImages();
 	std::string GetTitle();
 };
 

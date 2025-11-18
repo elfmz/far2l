@@ -301,6 +301,9 @@ struct VTAnsiContext
 	std::string cur_title;
 	std::atomic<bool> output_disabled{false};
 	std::map<DWORD, std::pair<DWORD, DWORD> > orig_palette;
+	std::optional<VTAnsiKitty> vta_kitty;
+	std::mutex vta_kitty_mtx;
+
 
 	int   state;					// automata state
 	char  prefix;				// escape sequence prefix ( '[', ']' or '(' );
@@ -1246,9 +1249,6 @@ struct VTAnsiContext
 		return (str.size() >= l && memcmp(str.c_str(), needle, l) == 0);
 	}
 
-	std::optional<VTAnsiKitty> _vta_kitty;
-	std::mutex _vta_kitty_mtx;
-
 	void InterpretControlString()
 	{
 		FlushBuffer();
@@ -1256,11 +1256,11 @@ struct VTAnsiContext
 			if (StrStartsWith(os_cmd_arg, "G"))  {
 				if (os_cmd_arg.size() > 1) {
 					_crds.reset(); // prevent miss repaints
-					std::lock_guard<std::mutex> lock(_vta_kitty_mtx);
-					if (!_vta_kitty) {
-						_vta_kitty.emplace(vt_shell);
+					std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+					if (!vta_kitty) {
+						vta_kitty.emplace(vt_shell);
 					}
-					_vta_kitty->InterpretControlString(os_cmd_arg.c_str() + 1, os_cmd_arg.size() - 1);
+					vta_kitty->InterpretControlString(os_cmd_arg.c_str() + 1, os_cmd_arg.size() - 1);
 				}
 
 			} else if (StrStartsWith(os_cmd_arg, "set-blank="))  {
@@ -1347,8 +1347,8 @@ struct VTAnsiContext
 	{
 		fprintf(stderr, "ANSI: ResetTerminal\n");
 		{ // remove all images after command completion
-			std::lock_guard<std::mutex> lock(_vta_kitty_mtx);
-			_vta_kitty.reset();
+			std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+			vta_kitty.reset();
 		}
 		WINPORT(SetConsoleScrollRegion)(vt_shell->ConsoleHandle(), 0, MAXSHORT);
 
@@ -1566,6 +1566,20 @@ struct VTAnsiContext
 		ASSERT(i == 0);
 	}
 
+	void HideImages()
+	{
+		std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+		if (vta_kitty)
+			vta_kitty->HideImages();
+	}
+
+	void ShowImages()
+	{
+		std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+		if (vta_kitty)
+			vta_kitty->ShowImages();
+	}
+
 	VTAnsiContext()
 	{
 	}
@@ -1611,6 +1625,7 @@ struct VTAnsiState *VTAnsi::Suspend()
 		HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
 		out->InitFromConsole(con_hnd);
 		_ctx->saved_state.ApplyToConsole(con_hnd);
+		_ctx->HideImages();
 	} else
 		perror("VTAnsi::Suspend");
 
@@ -1620,6 +1635,7 @@ struct VTAnsiState *VTAnsi::Suspend()
 void VTAnsi::Resume(struct VTAnsiState* state)
 {
 	state->ApplyToConsole(_ctx->vt_shell->ConsoleHandle());
+	_ctx->ShowImages();
 	delete state;
 }
 
@@ -1647,6 +1663,7 @@ void VTAnsi::OnStop()
 
 void VTAnsi::OnDetached()
 {
+	_ctx->HideImages();
 	WINPORT(GetConsoleScrollRegion)(NULL, &_detached_state.scrl_top, &_detached_state.scrl_bottom);
 	RevertConsoleState(NULL);
 }
@@ -1659,6 +1676,13 @@ void VTAnsi::OnReattached()
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, _detached_state.scrl_top, _detached_state.scrl_bottom);
 	_ctx->ApplyConsoleTitle(con_hnd);
+	_ctx->ShowImages();
+}
+
+bool VTAnsi::HasImages()
+{
+	std::lock_guard<std::mutex> lock(_ctx->vta_kitty_mtx);
+	return (_ctx->vta_kitty && _ctx->vta_kitty->HasImages());
 }
 
 

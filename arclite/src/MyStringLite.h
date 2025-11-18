@@ -1,3 +1,4 @@
+#pragma once
 
 static const unsigned kStartStringCapacity = 4;
 

@@ -16,6 +16,10 @@
 #include <sys/sysmacros.h>	  // major / minor
 #endif
 
+#include <sys/stat.h>
+#include <pwd.h>
+#include <grp.h>
+
 static std::wstring format_time(UInt64 t)
 {
 	UInt64 s = t % 60;
@@ -530,21 +534,26 @@ private:
 	std::shared_ptr<ArchiveUpdateProgress> progress;
 	bool dereference_symlinks;
 	uint32_t fileattr;
-
 public:
 	FileReadStream(const std::wstring &file_path, bool open_shared,
-			std::shared_ptr<ArchiveUpdateProgress> progress, bool dereference_symlinks, uint32_t fileattr)
+			std::shared_ptr<ArchiveUpdateProgress> progress, bool dereference_symlinks, uint32_t fileattr, uint32_t smp)
 		: progress(progress),
 		  dereference_symlinks(dereference_symlinks),
 		  fileattr(fileattr)
 	{
 		SudoRegionGuard sudo_guard;
 		uint32_t flags = FILE_FLAG_SEQUENTIAL_SCAN;
-		if (!dereference_symlinks) {
-			if (fileattr & FILE_ATTRIBUTE_REPARSE_POINT) {
+
+		fprintf(stderr, "FileReadStream( ) %ls \n", file_path.c_str() );
+
+		if (fileattr & FILE_ATTRIBUTE_REPARSE_POINT) {
+			if (!dereference_symlinks) {
 				flags |= FILE_FLAG_OPEN_REPARSE_POINT;
+				open(file_path, FILE_READ_DATA, FILE_SHARE_READ | (open_shared ? FILE_SHARE_WRITE | FILE_SHARE_DELETE : 0), smp, flags);
+				return;
 			}
 		}
+
 		open(file_path, FILE_READ_DATA, FILE_SHARE_READ | (open_shared ? FILE_SHARE_WRITE | FILE_SHARE_DELETE : 0), OPEN_EXISTING, flags);
 	}
 
@@ -621,7 +630,7 @@ public:
 		buffer = (unsigned char *)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE,
 				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-		if (!buffer) {
+		if (buffer == MAP_FAILED) {
 			FAIL(E_OUTOFMEMORY);
 		}
 	}
@@ -717,6 +726,21 @@ struct FileIndexInfo
 };
 typedef std::map<UInt32, FileIndexInfo> FileIndexMap;
 
+struct PairHash {
+	std::size_t operator()(const std::pair<uint64_t, uint64_t>& p) const {
+		return p.first + p.second;
+	}
+};
+
+struct PairEqual {
+	bool operator()(const std::pair<uint64_t, uint64_t>& a, 
+				   const std::pair<uint64_t, uint64_t>& b) const {
+		return a.first == b.first && a.second == b.second;
+	}
+};
+
+typedef std::unordered_map<std::pair<uint64_t, uint64_t>, uint32_t, PairHash, PairEqual> HardLinkMap;
+
 template<bool UseVirtualDestructor>
 class PrepareUpdate : private ProgressMonitor
 {
@@ -724,14 +748,14 @@ private:
 	std::wstring src_dir;
 	Archive<UseVirtualDestructor> &archive;
 	FileIndexMap &file_index_map;
+	HardLinkMap &hlmap;
 	UInt32 &new_index;
 	bool &ignore_errors;
 	ErrorLog &error_log;
 	OverwriteAction overwrite_action;
 	Far::FileFilter *filter;
 	bool &skipped_files;
-	bool skip_symlinks;
-	bool dereference_symlinks;
+	const UpdateOptions &options;
 
 	const std::wstring *file_path;
 
@@ -753,15 +777,25 @@ private:
 			UInt32 &file_index)
 	{
 		if (src_find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			if (skip_symlinks)
+
+			fprintf(stderr, "process_file: REPARSE POINT! %ls \n", src_find_data.cFileName );
+			if (options.skip_symlinks)
 				return false;
-			if (!dereference_symlinks) {
+
+			if (!options.dereference_symlinks) {
+
+				fprintf(stderr, "process_file: lstat for %ls \n", src_find_data.cFileName );
+
 				struct stat s{};
-				BOOL r = sdc_lstat( StrWide2MB(add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
-				if (r) {
+				int r = sdc_lstat( StrWide2MB(add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
+				if (!r) {
 					WINPORT(FileTime_UnixToWin32)(s.st_ctim, &src_find_data.ftCreationTime);
 					WINPORT(FileTime_UnixToWin32)(s.st_atim, &src_find_data.ftLastAccessTime);
 					WINPORT(FileTime_UnixToWin32)(s.st_mtim, &src_find_data.ftLastWriteTime);
+
+					fprintf(stderr, "process_file: lstat s.st_uid %u \n", s.st_uid );
+					fprintf(stderr, "process_file: lstat s.st_gid %u \n", s.st_gid );
+					fprintf(stderr, "process_file: lstat s.st_mode %u \n", s.st_mode );
 
 					src_find_data.UnixOwner = s.st_uid;
 					src_find_data.UnixGroup = s.st_gid;
@@ -770,7 +804,13 @@ private:
 					src_find_data.nHardLinks = (DWORD)s.st_nlink;
 				}
 			}
+			else if (src_find_data.dwFileAttributes & FILE_ATTRIBUTE_BROKEN) {
+				fprintf(stderr, "process_file: this one is broken ! \n");
+				return false;
+			}
 		}
+
+		if (options.symlink_fix_path_mode) {}
 
 		if (filter) {
 			PluginPanelItem filter_data;
@@ -793,6 +833,11 @@ private:
 			if (!filter->match(filter_data))
 				return false;
 		}
+
+		//fprintf(stderr, "process_file: %ls DIR = %u\n", src_find_data.cFileName, src_find_data.is_dir());
+
+		if (!src_find_data.is_dir() && src_find_data.nHardLinks > 1 && options.skip_hardlinks)
+			return false;
 
 		FileIndexInfo file_index_info;
 		file_index_info.rel_path = sub_dir;
@@ -851,6 +896,15 @@ private:
 				file_index_map[file_index] = file_index_info;
 			}
 		}
+
+		if (!src_find_data.is_dir() && src_find_data.nHardLinks > 1 && !options.duplicate_hardlinks) {
+			std::pair<uint64_t, uint64_t> key = {src_find_data.UnixDevice, src_find_data.UnixNode};
+			auto it = hlmap.find(key);
+			if (it == hlmap.end()) {
+				hlmap[key] = file_index;
+			}
+		}
+
 		return true;
 	}
 
@@ -869,7 +923,7 @@ private:
 
 			if (process_file(sub_dir, file_enum.data(), dst_dir_index, file_index)) {
 
-				if (file_enum.data().is_dir() && ( !(file_enum.data().dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || dereference_symlinks ) ) {
+				if (file_enum.data().is_dir() && ( !(file_enum.data().dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || options.dereference_symlinks ) ) {
 					std::wstring rel_path = add_trailing_slash(sub_dir) + file_enum.data().cFileName;
 					std::wstring full_path = add_trailing_slash(src_dir) + rel_path;
 					update_progress(full_path);
@@ -890,21 +944,22 @@ private:
 
 public:
 	PrepareUpdate(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
-			UInt32 dst_dir_index, Archive<UseVirtualDestructor> &archive, FileIndexMap &file_index_map, UInt32 &new_index,
+			UInt32 dst_dir_index, Archive<UseVirtualDestructor> &archive, FileIndexMap &file_index_map,
+			HardLinkMap &hlmap, UInt32 &new_index,
 			OverwriteAction overwrite_action, bool &ignore_errors, ErrorLog &error_log,
-			Far::FileFilter *filter, bool &skipped_files, bool skip_symlinks, bool dereference_symlinks)
+			Far::FileFilter *filter, bool &skipped_files, const UpdateOptions &options)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_SCAN_DIRS), false),
 		  src_dir(src_dir),
 		  archive(archive),
 		  file_index_map(file_index_map),
+		  hlmap(hlmap),
 		  new_index(new_index),
 		  ignore_errors(ignore_errors),
 		  error_log(error_log),
 		  overwrite_action(overwrite_action),
 		  filter(filter),
 		  skipped_files(skipped_files),
-		  skip_symlinks(skip_symlinks),
-		  dereference_symlinks(dereference_symlinks)
+		  options(options)
 	{
 		skipped_files = false;
 		if (filter)
@@ -927,28 +982,29 @@ private:
 	std::wstring dst_dir;
 	UInt32 num_indices;
 	std::shared_ptr<FileIndexMap> file_index_map;
+	HardLinkMap &hlmap;
 	const UpdateOptions &options;
 	std::shared_ptr<bool> ignore_errors;
-	bool dereference_symlinks;
 	std::shared_ptr<ErrorLog> error_log;
 	std::shared_ptr<ArchiveUpdateProgress> progress;
 	ComObject<ISequentialInStream<UseVirtualDestructor>> mem_stream;
-    bool use_mem_stream = false;
+	bool use_mem_stream = false;
 	FILETIME crft;
+	std::wstring tmp_str;
 
 public:
 	ArchiveUpdater(const std::wstring &src_dir, const std::wstring &dst_dir, UInt32 num_indices,
-			std::shared_ptr<FileIndexMap> file_index_map, const UpdateOptions &options,
-			std::shared_ptr<bool> ignore_errors, bool dereference_symlinks, std::shared_ptr<ErrorLog> error_log,
+			std::shared_ptr<FileIndexMap> file_index_map, HardLinkMap &hlmap, const UpdateOptions &options,
+			std::shared_ptr<bool> ignore_errors, std::shared_ptr<ErrorLog> error_log,
 			std::shared_ptr<ArchiveUpdateProgress> progress, ISequentialInStream<UseVirtualDestructor> *stream = nullptr, 
 			bool use_mem_stream = false)
 		: src_dir(src_dir),
 		  dst_dir(dst_dir),
 		  num_indices(num_indices),
 		  file_index_map(file_index_map),
+		  hlmap(hlmap),
 		  options(options),
 		  ignore_errors(ignore_errors),
-		  dereference_symlinks(dereference_symlinks),
 		  error_log(error_log),
 		  progress(progress),
 		  mem_stream(stream),
@@ -1025,15 +1081,15 @@ public:
 			FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
 			FILE_ATTRIBUTE_ENCRYPTED |
 			FILE_ATTRIBUTE_INTEGRITY_STREAM;
-			//#define FILE_ATTRIBUTE_INTEGRITY_STREAM     0x00008000
-			//#define FILE_ATTRIBUTE_VIRTUAL              0x00010000 // 65536
-			//#define FILE_ATTRIBUTE_NO_SCRUB_DATA        0x00020000
-			//#define FILE_ATTRIBUTE_EA                   0x00040000
-			//#define FILE_ATTRIBUTE_PINNED               0x00080000
-			//#define FILE_ATTRIBUTE_UNPINNED             0x00100000
+			//#define FILE_ATTRIBUTE_INTEGRITY_STREAM	 0x00008000
+			//#define FILE_ATTRIBUTE_VIRTUAL			  0x00010000 // 65536
+			//#define FILE_ATTRIBUTE_NO_SCRUB_DATA		0x00020000
+			//#define FILE_ATTRIBUTE_EA				   0x00040000
+			//#define FILE_ATTRIBUTE_PINNED			   0x00080000
+			//#define FILE_ATTRIBUTE_UNPINNED			 0x00100000
 
 		PropVariant prop;
-		wchar_t wtmp[32];
+//		wchar_t wtmp[256];
 
 		switch (propID) {
 			case kpidPath:
@@ -1049,7 +1105,7 @@ public:
 					break;
 				}
 				if (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-					if (!dereference_symlinks && (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ) {
+					if (!options.dereference_symlinks && (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ) {
 						prop = (bool)false;
 						break;
 					}
@@ -1162,7 +1218,7 @@ public:
 				}
 
 				if (attributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-					if (dereference_symlinks) {
+					if (options.dereference_symlinks) {
 						attributes &= ~(FILE_ATTRIBUTE_REPARSE_POINT);
 						if (options.use_export_settings && !options.export_options.export_unix_mode)
 							unixmode = 0;
@@ -1184,6 +1240,7 @@ public:
 //				fprintf(stderr, "----------PUT ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
 			}
 			break;
+
 			case kpidPosixAttrib: {
 				if (options.use_export_settings) {
 					if (options.export_options.export_unix_mode) {
@@ -1198,32 +1255,51 @@ public:
 //				fprintf(stderr, "----------PUT POSIX ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
 			}
 			break;
+
 			case kpidSymLink: {
-				if (file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT && !dereference_symlinks) {
-					char symlinkaddr[PATH_MAX];
-					std::wstring fpath = add_trailing_slash(add_trailing_slash(src_dir) + file_index_info.rel_path) + file_index_info.find_data.cFileName;
-					size_t r = sdc_readlink(Wide2MB(fpath.c_str()).c_str(), symlinkaddr, PATH_MAX);
-					if ((intptr_t)r <= 0 || r >= PATH_MAX)
-						break;
-					symlinkaddr[r] = 0;
-					prop = StrMB2Wide(symlinkaddr).c_str();
+				if ( !(file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || options.dereference_symlinks)
+					break;
+
+				char symlinkdata[PATH_MAX + 1];
+				std::wstring file_path = add_trailing_slash(add_trailing_slash(src_dir) + file_index_info.rel_path) + file_index_info.find_data.cFileName;
+				int r = sdc_readlink(Wide2MB(file_path.c_str()).c_str(), symlinkdata, PATH_MAX);
+				if (r <= 0 || r > PATH_MAX)
+					break;
+				symlinkdata[r] = 0;
+				std::wstring symtp;
+				MB2Wide(symlinkdata, symtp);
+
+				if (options.symlink_fix_path_mode == 1) {
+					prop = make_absolute_symlink_target(file_path, symtp);
+				} else if (options.symlink_fix_path_mode == 2) {
+					prop = make_relative_symlink_target(file_path, symtp);
+				} else {
+					prop = symtp;
 				}
 			}
 			break;
 
 			case kpidHardLink: {
-				///prop = L"HARD link path";
+
+//				prop = L"Broken Hardlink";
+//				break;
+
+				if (file_index_info.find_data.is_dir() || file_index_info.find_data.nHardLinks < 2)
+					break;
+
+				std::pair<uint64_t, uint64_t> key = {file_index_info.find_data.UnixDevice, file_index_info.find_data.UnixNode};
+				HardLinkMap::iterator it = hlmap.find(key);
+
+				if (it == hlmap.end())
+					break;
+				if (it->second == index)
+					break;
+
+				prop = add_trailing_slash(add_trailing_slash(dst_dir) + file_index_map->at(it->second).rel_path)
+						+ file_index_map->at(it->second).find_data.cFileName;
 			}
 			break;
 
-			case kpidINode: {
-			}
-			break;
-
-			case kpidNtReparse: {
-			}
-
-			break;
 			case kpidUserId:
 				if (options.use_export_settings) {
 					if (options.export_options.export_user_id) {
@@ -1236,6 +1312,7 @@ public:
 				else
 					prop = static_cast<UInt32>(file_index_info.find_data.UnixOwner);
 			break;
+
 			case kpidGroupId:
 				if (options.use_export_settings) {
 					if (options.export_options.export_group_id) {
@@ -1248,51 +1325,58 @@ public:
 				else
 					prop = static_cast<UInt32>(file_index_info.find_data.UnixGroup);
 			break;
+
 			case kpidUser: {
-				std::wstring fpath = add_trailing_slash(add_trailing_slash(src_dir) + file_index_info.rel_path) + file_index_info.find_data.cFileName;
-				if (!Far::g_fsf.GetFileOwner(NULL, fpath.c_str(), wtmp, 32 )) {
-					wtmp[0] = L'-';
-					wtmp[1] = 0;
+				struct passwd *pw = getpwuid(file_index_info.find_data.UnixOwner);
+				if (pw && pw->pw_name) {
+					MB2Wide(pw->pw_name, tmp_str);
+//					WINPORT_MultiByteToWideChar(CP_UTF8, 0, pw->pw_name, -1, wtmp, 256);
+//					wtmp[255] = L'\0';
+				} else {
+					tmp_str = L"-";
 				}
+
 				if (options.use_export_settings) {
 					if (options.export_options.export_user_name) {
 						if (options.export_options.custom_user_name)
-							prop = (const wchar_t *)options.export_options.Owner.c_str();
+							prop = options.export_options.Owner;
 						else
-							prop = (const wchar_t *)&wtmp[0];
+							prop = tmp_str;
 					}
 				}
 				else
-					prop = (const wchar_t *)&wtmp[0];
+					prop = tmp_str;
 			}
 			break;
-			case kpidGroup:
-				if (!Far::g_fsf.GetFileGroup(NULL, (add_trailing_slash(add_trailing_slash(src_dir) + 
-							file_index_info.rel_path) + file_index_info.find_data.cFileName).c_str(), wtmp, 32 )) {
-					wtmp[0] = L'-';
-					wtmp[1] = 0;
+
+			case kpidGroup: {
+				struct group *gr = getgrgid(file_index_info.find_data.UnixGroup);
+				if (gr && gr->gr_name) {
+					MB2Wide(gr->gr_name, tmp_str);
+//					WINPORT_MultiByteToWideChar(CP_UTF8, 0, gr->gr_name, -1, wtmp, 256);
+//					wtmp[255] = L'\0';
+				} else {
+					tmp_str = L"-";
 				}
+
 				if (options.use_export_settings) {
 					if (options.export_options.export_group_name) {
 						if (options.export_options.custom_group_name)
-							prop = (const wchar_t *)options.export_options.Group.c_str();
+							prop = options.export_options.Group;
 						else
-							prop = (const wchar_t *)&wtmp[0];
+							prop = tmp_str;
 					}
 				}
 				else
-					prop = (const wchar_t *)&wtmp[0];
+					prop = tmp_str;
+			}
 			break;
 
 			case kpidComment:
-				if (options.use_export_settings && options.export_options.export_file_descriptions) {
-					prop = L"TODO:";
-				}
+//				if (options.use_export_settings && options.export_options.export_file_descriptions) {
+//					prop = L"TODO:";
+//				}
 			break;
-
-///			case kpidCommented:
-///				prop = static_cast<bool>(true);
-///			break;
 
 			case kpidDeviceMajor:
 				if (options.use_export_settings) {
@@ -1306,7 +1390,8 @@ public:
 				else
 					prop = (UInt32)major(file_index_info.find_data.UnixDevice);
 			break;
-       		case kpidDeviceMinor:
+
+	   		case kpidDeviceMinor:
 				if (options.use_export_settings) {
 					if (options.export_options.export_unix_device) {
 						if (options.export_options.custom_unix_device)
@@ -1336,9 +1421,11 @@ public:
 			return S_OK;
 		}
 
+		fprintf(stderr, "GetStream( ) %u \n", index );
+
 		const FileIndexInfo &file_index_info = file_index_map->at(index);
 
-		if (file_index_info.find_data.is_dir() && (!(file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || dereference_symlinks) ) {
+		if (file_index_info.find_data.is_dir() && (!(file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || options.dereference_symlinks) ) {
 			return S_OK;
 		}
 
@@ -1346,9 +1433,12 @@ public:
 				+ file_index_info.find_data.cFileName;
 		this->progress->on_open_file(file_path, file_index_info.find_data.size());
 
+		fprintf(stderr, "GetStream( ) %ls \n", file_path.c_str() );
+
 		ComObject<ISequentialInStream<UseVirtualDestructor>> stream;
 		RETRY_OR_IGNORE_BEGIN
-		stream = new FileReadStream<UseVirtualDestructor>(file_path, options.open_shared, progress, options.dereference_symlinks, file_index_info.find_data.dwFileAttributes);
+		stream = new FileReadStream<UseVirtualDestructor>(file_path, options.open_shared, progress, options.dereference_symlinks, 
+															file_index_info.find_data.dwFileAttributes, options.symlink_fix_path_mode );
 
 		RETRY_OR_IGNORE_END(*ignore_errors, *error_log, *this->progress)
 		if (error_ignored)
@@ -1423,7 +1513,7 @@ void Archive<UseVirtualDestructor>::set_properties(IOutArchive<UseVirtualDestruc
 			PropVariant var;
 			if (!v.empty()) {
 				wchar_t *endptr = nullptr;
-		        UINT64 v64 = wcstoull(v.c_str(), &endptr, 10);
+				UINT64 v64 = wcstoull(v.c_str(), &endptr, 10);
 
 				if (endptr && !*endptr) {
 					if (v64 <= UINT_MAX)
@@ -1675,7 +1765,7 @@ void Archive<UseVirtualDestructor>::set_properties(IOutArchive<UseVirtualDestruc
 			wchar_t *endptr{};
 			const auto str_end = str.data() + str.size();
 
-			//      const auto value = converter(str.c_str(), &endptr, 10);
+			//	  const auto value = converter(str.c_str(), &endptr, 10);
 			const uint64_t value = converter(str.c_str(), &endptr, 10);
 
 			if (endptr != str_end) {
@@ -1701,7 +1791,7 @@ void Archive<UseVirtualDestructor>::set_properties(IOutArchive<UseVirtualDestruc
 					|| string_to_integer(str, (converter_t)&wcstoll, i);
 		}
 
-	    CHECK_COM(set_props->SetProperties(name_ptrs.data(), values.data(), static_cast<UInt32>(values.size())));
+		CHECK_COM(set_props->SetProperties(name_ptrs.data(), values.data(), static_cast<UInt32>(values.size())));
 	}
 }
 
@@ -1809,6 +1899,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 		UpdateOptions repack_options = options;
 		const auto tar_file_index_map = std::make_shared<FileIndexMap>();
 		const auto arc_file_index_map = std::make_shared<FileIndexMap>();
+		HardLinkMap hlmap;
 
 		ComObject<IOutArchive<UseVirtualDestructor>> out_tar;
 		ArcAPI::create_out_archive(options.arc_type, (void **)out_tar.ref());
@@ -1837,11 +1928,11 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 		const auto progress = std::make_shared<ArchiveUpdateProgress>(true, repack_options.arc_path);
 		const auto progress2 = std::make_shared<ArchiveUpdateProgress>(true, repack_options.arc_path, true);
 
-		PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, c_root_index, *this, *tar_file_index_map, new_index, oaOverwrite,
-				*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
+		PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, c_root_index, *this, *tar_file_index_map, hlmap, new_index, oaOverwrite,
+				*ignore_errors, *error_log, options.filter.get(), skipped_files, options);
 
-		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> tar_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, tar_file_index_map,
-				options, ignore_errors, options.dereference_symlinks, error_log, progress));
+		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> tar_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0,
+				tar_file_index_map, hlmap, options, ignore_errors, error_log, progress));
 
 		ComObject<AcmRelayStream<UseVirtualDestructor>> mem_stream(new AcmRelayStream<UseVirtualDestructor>( (size_t)g_options.relay_buffer_size ));
 
@@ -1856,8 +1947,8 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 			promise1.set_value(errc);
 		});
 
-		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> arc_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, arc_file_index_map,
-				repack_options, ignore_errors, repack_options.dereference_symlinks, error_log, progress2, mem_stream, true));
+		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> arc_updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0,
+				arc_file_index_map, hlmap, repack_options, ignore_errors, error_log, progress2, mem_stream, true));
 
 		UpdateStream<UseVirtualDestructor> *arc_wstream_impl;
 		if (options.enable_volumes)
@@ -1908,9 +1999,10 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 	UInt32 new_index = 0;
 	bool skipped_files = false;
 	const auto file_index_map = std::make_shared<FileIndexMap>();
+	HardLinkMap hlmap;
 
-	PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, c_root_index, *this, *file_index_map, new_index, oaOverwrite,
-			*ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
+	PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, c_root_index, *this, *file_index_map, hlmap, new_index, oaOverwrite,
+			*ignore_errors, *error_log, options.filter.get(), skipped_files, options);
 
 	ComObject<IOutArchive<UseVirtualDestructor>> out_arc;
 	ArcAPI::create_out_archive(options.arc_type, (void **)out_arc.ref());
@@ -1918,8 +2010,8 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 	set_properties(out_arc, options);
 
 	const auto progress = std::make_shared<ArchiveUpdateProgress>(true, options.arc_path);
-	ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0, file_index_map,
-			options, ignore_errors, options.dereference_symlinks, error_log, progress));
+	ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, std::wstring(), 0,
+			file_index_map, hlmap, options, ignore_errors, error_log, progress));
 
 	prepare_dst_dir(extract_file_path(options.arc_path));
 	UpdateStream<UseVirtualDestructor> *stream_impl;
@@ -1978,8 +2070,10 @@ void Archive<UseVirtualDestructor>::update(const std::wstring &src_dir, const st
 	bool skipped_files = false;
 
 	const auto file_index_map = std::make_shared<FileIndexMap>();
-	PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, find_dir(dst_dir), *this, *file_index_map, new_index,
-			options.overwrite, *ignore_errors, *error_log, options.filter.get(), skipped_files, options.skip_symlinks, options.dereference_symlinks);
+	HardLinkMap hlmap;
+
+	PrepareUpdate<UseVirtualDestructor>(src_dir, file_names, find_dir(dst_dir), *this, *file_index_map, hlmap, new_index,
+			options.overwrite, *ignore_errors, *error_log, options.filter.get(), skipped_files, options);
 
 	std::wstring temp_arc_name = get_temp_file_name();
 	try {
@@ -1989,7 +2083,7 @@ void Archive<UseVirtualDestructor>::update(const std::wstring &src_dir, const st
 
 		const auto progress = std::make_shared<ArchiveUpdateProgress>(false, arc_path);
 		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(src_dir, dst_dir, m_num_indices,
-				file_index_map, options, ignore_errors, options.dereference_symlinks, error_log, progress));
+				file_index_map, hlmap, options, ignore_errors, error_log, progress));
 		ComObject<SimpleUpdateStream<UseVirtualDestructor>> update_stream(new SimpleUpdateStream<UseVirtualDestructor>(temp_arc_name, progress));
 
 		COM_ERROR_CHECK(copy_prologue(update_stream));
@@ -2037,6 +2131,7 @@ void Archive<UseVirtualDestructor>::create_dir(const std::wstring &dir_name, con
 	DisableSleepMode dsm;
 
 	const auto file_index_map = std::make_shared<FileIndexMap>();
+	HardLinkMap hlmap;
 	FileIndexInfo file_index_info{};
 	file_index_info.find_data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 	SYSTEMTIME sys_time;
@@ -2069,7 +2164,7 @@ void Archive<UseVirtualDestructor>::create_dir(const std::wstring &dir_name, con
 
 		const auto progress = std::make_shared<ArchiveUpdateProgress>(false, arc_path);
 		ComObject<IArchiveUpdateCallback<UseVirtualDestructor>> updater(new ArchiveUpdater<UseVirtualDestructor>(std::wstring(), dst_dir, m_num_indices,
-				file_index_map, options, ignore_errors, true, error_log, progress));
+				file_index_map, hlmap, options, ignore_errors, error_log, progress));
 		ComObject<IOutStream<UseVirtualDestructor>> update_stream(new SimpleUpdateStream<UseVirtualDestructor>(temp_arc_name, progress));
 
 		COM_ERROR_CHECK(out_arc->UpdateItems(update_stream, m_num_indices + 1, updater));

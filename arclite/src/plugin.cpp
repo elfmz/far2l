@@ -79,7 +79,7 @@ public:
       child(nullptr),
       parent(nullptr)
 	{
-		//fprintf(stderr, "Plugin() CONSTRUCT\n" );
+		//fprintf(stderr, "Plugin()\n" );
 	}
 
 	~Plugin() {
@@ -258,8 +258,6 @@ public:
 			open_options.password = this->archive->m_password;
 			open_options.arc_types = ArcAPI::formats().get_arc_types();
 
-//				archive->arc_path = extract_file_name(ef.cFileName);
-
 			Archive<UseVirtualDestructor>::open(open_options, *archives, index);
 //			if (archives->empty())
 //				throw Error(Far::get_msg(MSG_ERROR_NOT_ARCHIVE), arc_list[i], __FILE__, __LINE__);
@@ -386,10 +384,10 @@ public:
 		std::for_each(dir_list.first, dir_list.second, [&](UInt32 file_index) {
 			ArcFileInfo &file_info = archive->file_list[file_index];
 			DWORD attr = 0, posixattr = 0, farattr = 0;
+
 			attr = archive->get_attr(file_index, &posixattr);
 
 			if (posixattr) {
-
 				switch (posixattr & S_IFMT) {
 					case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
 					case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
@@ -428,20 +426,20 @@ public:
 			if (archive->get_encrypted(file_index))
 				farattr |= FILE_ATTRIBUTE_ENCRYPTED;
 
-			{
-				uint32_t n = archive->get_links(file_index);
-				items[idx].NumberOfLinks = n;
-				if (n > 1)
-					farattr |= FILE_ATTRIBUTE_HARDLINKS;
+			items[idx].NumberOfLinks = file_info.num_links;
+			if (!file_info.num_links)
+				farattr |= FILE_ATTRIBUTE_BROKEN;
+			else if (file_info.num_links > 1) {
+				farattr |= FILE_ATTRIBUTE_HARDLINKS;
 			}
 
-			//	items[idx].FindData.dwFileAttributes = (attr & c_valid_import_attributes) | farattr;
 			items[idx].FindData.dwFileAttributes = attr | farattr;
 			items[idx].FindData.dwUnixMode = posixattr;
 
 			items[idx].FindData.ftCreationTime = archive->get_ctime(file_index);
 			items[idx].FindData.ftLastAccessTime = archive->get_atime(file_index);
 			items[idx].FindData.ftLastWriteTime = archive->get_mtime(file_index);
+//			items[idx].FindData.ftChangeTime = archive->get_chtime(file_index);
 
 			items[idx].FindData.nFileSize = archive->get_size(file_index);
 			items[idx].FindData.nPhysicalSize = archive->get_psize(file_index);
@@ -455,7 +453,6 @@ public:
 			items[idx].Group = const_cast<wchar_t *>(file_info.group.c_str());
 			items[idx].Description = const_cast<wchar_t *>(file_info.desc.c_str());
 
-			//      items[idx].UserData = reinterpret_cast<DWORD_PTR>(static_cast<size_t>(file_index));
 			items[idx].UserData = (DWORD_PTR)file_index;
 
 			items[idx].CRC32 = archive->get_crc(file_index);
@@ -512,11 +509,15 @@ public:
 			options.extract_access_rights = g_options.extract_access_rights;
 			options.extract_owners_groups = g_options.extract_owners_groups;
 			options.extract_attributes = g_options.extract_attributes;
+			options.duplicate_hardlinks = g_options.extract_duplicate_hardlinks;
+			options.restore_special_files = g_options.extract_restore_special_files;
 		}
 		else {
 			options.extract_access_rights = false;
-			options.extract_owners_groups = false;
+			options.extract_owners_groups = 0;
 			options.extract_attributes = false;
+			options.duplicate_hardlinks = false;
+			options.restore_special_files = false;
 		}
 
 		if (show_dialog) {
@@ -1056,9 +1057,10 @@ public:
 	    options.skip_symlinks = g_options.update_skip_symlinks;
 	    options.symlink_fix_path_mode = g_options.update_symlink_fix_path_mode;
 	    options.dereference_symlinks = g_options.update_dereference_symlinks;
+	    options.skip_hardlinks = g_options.update_skip_hardlinks;
+	    options.duplicate_hardlinks = g_options.update_duplicate_hardlinks;
 		options.export_options = g_options.update_export_options;
 		options.use_export_settings = g_options.update_use_export_settings;
-
 		options.show_password = g_options.update_show_password;
 		options.ignore_errors = g_options.update_ignore_errors;
 
@@ -1214,6 +1216,8 @@ public:
 	    options.skip_symlinks = g_options.update_skip_symlinks;
 	    options.symlink_fix_path_mode = g_options.update_symlink_fix_path_mode;
 	    options.dereference_symlinks = g_options.update_dereference_symlinks;
+		options.skip_hardlinks = g_options.update_skip_hardlinks;
+		options.duplicate_hardlinks = g_options.update_duplicate_hardlinks;
 		options.export_options = g_options.update_export_options;
 		options.use_export_settings = g_options.update_use_export_settings;
 
@@ -1409,6 +1413,120 @@ public:
 		}
 		if (!attr_list.empty())
 			attr_dialog(attr_list);
+	}
+
+
+	void show_hardlinks()
+	{
+		std::vector<std::wstring> hl_names;
+		std::vector<FarMenuItem> menu_items;
+		static const int BreakKeys[] = {VK_ESCAPE, 0};
+		int BreakCode = -1;
+		FarMenuItem mi;
+	    Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
+	    std::wstring empty_str = L"";
+
+		if (panel_item.file_name == L"..") {
+
+		//		hl_names.reserve(group.size());
+		//		menu_items.reserve(group.size());
+
+	        for (size_t group_idx = 0; group_idx < archive->hard_link_groups.size(); ++group_idx) {
+	            const HardLinkGroup &group = archive->hard_link_groups[group_idx];
+
+				for (size_t i = 0; i < group.size(); ++i) {
+				    UInt32 file_index = group[i];
+				    if (file_index < archive->file_list.size()) {
+				        std::wstring full_path = archive->get_path(file_index);
+			            hl_names.emplace_back(std::to_wstring(i + 1) + L": " + std::to_wstring(file_index) + L": " + full_path);
+
+						mi.Text = hl_names.back().c_str();
+						mi.Selected = 0;
+						mi.Checked = 0;
+						mi.Separator = 0;
+						menu_items.push_back(mi);
+				    }
+				}
+				if (group_idx < archive->hard_link_groups.size() - 1) {
+					mi.Text = empty_str.c_str();
+					mi.Selected = 0;
+					mi.Checked = 0;
+					mi.Separator = 1;
+					menu_items.push_back(mi);
+				}
+			}
+
+			std::wstring bottom_title = L"Total: " + std::to_wstring(999);
+
+			uint32_t ret = (uint32_t)Far::g_far.Menu(Far::g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, L"HardLinks", bottom_title.c_str(), nullptr,
+					BreakKeys, &BreakCode, menu_items.data(), static_cast<int>(menu_items.size()));
+
+			(void)ret;
+			return;
+		}
+
+	    uint32_t index = static_cast<UInt32>(reinterpret_cast<size_t>(panel_item.user_data));
+	    const ArcFileInfo &current_file_info = archive->file_list[index];
+
+	    uint32_t group_index = current_file_info.hl_group;
+	    if (group_index == (uint32_t)-1)
+			return;
+
+	    const HardLinkGroup &group = archive->hard_link_groups[group_index];
+		if (!group.size())
+			return;
+
+		hl_names.reserve(group.size());
+		menu_items.reserve(group.size());
+
+		uint32_t isel = 0;
+		for (size_t i = 0; i < group.size(); ++i) {
+		    UInt32 file_index = group[i];
+		    if (file_index < archive->file_list.size()) {
+		        std::wstring full_path = archive->get_path(file_index);
+	            hl_names.emplace_back(std::to_wstring(i) + L": " + std::to_wstring(file_index) + L": " + full_path);
+
+				mi.Text = hl_names.back().c_str();
+				if (index == file_index) {
+					mi.Selected = (index == file_index);
+					isel = i;
+				}
+				else
+					mi.Selected = 0;
+
+				mi.Checked = 0;
+				mi.Separator = 0;
+				menu_items.push_back(mi);
+		    }
+		}
+
+		std::wstring bottom_title = L"Total: " + std::to_wstring(group.size());
+
+		while( 1 ) {
+
+			uint32_t ret = (uint32_t)Far::g_far.Menu(Far::g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, L"HardLinks", bottom_title.c_str(), nullptr,
+					BreakKeys, &BreakCode, menu_items.data(), static_cast<int>(menu_items.size()));
+
+			if (BreakCode >= 0) {
+				//ret = (uint32_t)-1;
+				break;
+			}
+
+			if (ret != (uint32_t)-1) {
+				menu_items[isel].Selected = 0;
+				menu_items[ret].Selected = 1;
+				isel = ret;
+
+			    UInt32 file_index = group[ret];
+
+		        const std::wstring &cfpath = archive->get_path(file_index);
+
+				set_dir(add_leading_slash(extract_file_path(cfpath)));
+
+				Far::update_panel(PANEL_ACTIVE, false, true);
+				Far::panel_set_file(PANEL_ACTIVE, extract_file_name(cfpath));
+			}
+		}
 	}
 
 	void close()
@@ -2159,6 +2277,15 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->show_attr();
 		return TRUE;
 	}
+
+	if (Key == 'H' && ControlState == PKF_CONTROL) {
+		if (ArcAPI::have_virt_destructor())
+			reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->show_hardlinks();
+		else
+			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->show_hardlinks();
+		return TRUE;
+	}
+
     // Alt+F6
 	if (Key == VK_F6 && ControlState == PKF_ALT) {
 		if (ArcAPI::have_virt_destructor())

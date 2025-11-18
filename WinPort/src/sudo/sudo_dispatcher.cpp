@@ -392,6 +392,33 @@ namespace Sudo
 			bt.SendErrno();
 		}
 	}
+
+	static void OnSudoDispatch_LChown(BaseTransaction &bt)
+	{
+		std::string path;
+		uid_t owner;
+		gid_t group;
+		bt.RecvStr(path);
+		bt.RecvPOD(owner);
+		bt.RecvPOD(group);
+		int r = lchown(path.c_str(), owner, group);
+		bt.SendInt(r);
+		if (r == -1)
+			bt.SendErrno();
+	}
+
+	static void OnSudoDispatch_LUtimes(BaseTransaction &bt)
+	{
+		std::string path;
+		struct timeval times[2];
+		bt.RecvStr(path);
+		bt.RecvPOD(times[0]);
+		bt.RecvPOD(times[1]);
+		int r = lutimes(path.c_str(), times);
+		bt.SendInt(r);
+		if (r == -1)
+			bt.SendErrno();
+	}
 	
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt, OpenedDirs &dirs)
 	{
@@ -468,11 +495,11 @@ namespace Sudo
 				OnSudoDispatch_UTimens(bt);
 				break;
 
-            case SUDO_CMD_FUTIMENS:
-                OnSudoDispatch_FUTimens(bt);
-                break;
+			case SUDO_CMD_FUTIMENS:
+				OnSudoDispatch_FUTimens(bt);
+				break;
 
-            case SUDO_CMD_RENAME:
+			case SUDO_CMD_RENAME:
 				OnSudoDispatch_TwoPaths(&rename, bt);
 				break;
 
@@ -510,6 +537,14 @@ namespace Sudo
 
 			case SUDO_CMD_MKNOD:
 				OnSudoDispatch_MkNod(bt);
+				break;
+
+			case SUDO_CMD_LCHOWN:
+				OnSudoDispatch_LChown(bt);
+				break;
+
+			case SUDO_CMD_LUTIMES:
+				OnSudoDispatch_LUtimes(bt);
 				break;
 				
 			default:

@@ -14,12 +14,23 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <errno.h>
+
+#if defined(__linux__)
+#include <sys/ioctl.h>
+#include <linux/fs.h>
+#elif defined(__APPLE__)
+#include <sys/disk.h>
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#elif defined(__HAIKU__)
+#include <Drivers.h>
+#endif
+
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
 #include <sys/mount.h>
 #elif !defined(__HAIKU__)
 #include <sys/statfs.h>
-#include <sys/ioctl.h>
-#include <linux/fs.h>
 #endif
 
 OpenOptions::OpenOptions()
@@ -69,7 +80,7 @@ public:
 		buffer = (unsigned char *)mmap(NULL, buffer_size, PROT_READ | PROT_WRITE,
 				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-		if (!buffer) {
+		if (buffer == MAP_FAILED) {
 			FAIL(E_OUTOFMEMORY);
 		}
 	}
@@ -535,72 +546,263 @@ public:
 	}
 };
 
+class BlockDeviceInfo {
+public:
+	uint64_t size = 0;
+	unsigned sector_size = 4096;
+
+	bool get_info(int fd) {
+		bool success = false;
+
+#if defined(__linux__)
+		success = get_info_linux(fd);
+#elif defined(__APPLE__)
+		success = get_info_apple(fd);
+#elif defined(__FreeBSD__) || defined(__DragonFly__)
+		success = get_info_bsd(fd);
+#elif defined(__HAIKU__)
+		success = get_info_haiku(fd);
+#else
+		success = get_info_fallback(fd);
+#endif
+		if (sector_size == 0 || (sector_size & (sector_size - 1)) != 0) {
+			 fprintf(stderr, "BlockDeviceInfo: Invalid sector size %u, using default 512\n", sector_size);
+			 sector_size = 512;
+		} else if (sector_size < 512) {
+			 fprintf(stderr, "BlockDeviceInfo: Sector size %u < 512, using 512\n", sector_size);
+			 sector_size = 512;
+		}
+
+		if (sector_size > 65536)
+			sector_size = 65536;
+
+		return success;
+	}
+
+private:
+#if defined(__linux__)
+	bool get_info_linux(int fd) {
+		uint64_t blk_size;
+		if (ioctl(fd, BLKGETSIZE64, &blk_size) == 0) {
+			size = blk_size;
+		} else {
+			off_t sz = lseek(fd, 0, SEEK_END);
+			if (sz != (off_t)-1) {
+				size = sz;
+				lseek(fd, 0, SEEK_SET);
+			} else {
+				return false;
+			}
+		}
+
+		unsigned phys_sector_size;
+		if (ioctl(fd, BLKPBSZGET, &phys_sector_size) == 0) {
+			sector_size = phys_sector_size;
+			// fprintf(stderr, "BLKPBSZGET: %u\n", sector_size);
+		}
+		else if (ioctl(fd, BLKSSZGET, &sector_size) == 0) {
+			// fprintf(stderr, "BLKSSZGET: %u\n", sector_size);
+		} else {
+			sector_size = 4096;
+		}
+		return true;
+	}
+#endif
+
+#if defined(__APPLE__)
+	bool get_info_apple(int fd) {
+		uint64_t block_count;
+		uint32_t logical_block_size;
+
+		if (ioctl(fd, DKIOCGETBLOCKCOUNT, &block_count) == 0 &&
+			ioctl(fd, DKIOCGETBLOCKSIZE, &logical_block_size) == 0) {
+			size = block_count * logical_block_size;
+		} else {
+			off_t sz = lseek(fd, 0, SEEK_END);
+			if (sz != (off_t)-1) {
+				size = sz;
+				lseek(fd, 0, SEEK_SET);
+			} else {
+				return false;
+			}
+		}
+
+		sector_size = 512;
+		uint32_t phys_block_size;
+		if (ioctl(fd, DKIOCGETPHYSICALBLOCKSIZE, &phys_block_size) == 0) {
+			sector_size = phys_block_size;
+			// fprintf(stderr, "DKIOCGETPHYSICALBLOCKSIZE: %u\n", sector_size);
+		}
+		else if (ioctl(fd, DKIOCGETBLOCKSIZE, &sector_size) == 0) {
+			// fprintf(stderr, "DKIOCGETBLOCKSIZE: %u\n", sector_size);
+		} else {
+			 // fprintf(stderr, "DKIOC*: using default %u\n", sector_size);
+		}
+		return true;
+	}
+#endif
+
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+	bool get_info_bsd(int fd) {
+		off_t media_size;
+		if (ioctl(fd, DIOCGMEDIASIZE, &media_size) == 0) {
+			size = media_size;
+		} else {
+			off_t sz = lseek(fd, 0, SEEK_END);
+			if (sz != (off_t)-1) {
+				size = sz;
+				lseek(fd, 0, SEEK_SET);
+			} else {
+				return false;
+			}
+		}
+
+		if (ioctl(fd, DIOCGSECTORSIZE, &sector_size) != 0) {
+			sector_size = 512;
+		}
+		return true;
+	}
+#endif
+
+#if defined(__HAIKU__)
+	bool get_info_haiku(int fd) {
+		struct device_geometry geometry;
+		if (ioctl(fd, B_GET_GEOMETRY, &geometry) == 0) {
+			sector_size = geometry.bytes_per_sector;
+			size = (uint64_t)geometry.bytes_per_sector *
+				   geometry.sectors_per_track *
+				   geometry.cylinder_count *
+				   geometry.head_count;
+			return true;
+		}
+
+		off_t device_size;
+		if (ioctl(fd, B_GET_DEVICE_SIZE, &device_size) == 0) {
+			size = device_size;
+			sector_size = 512;
+			return true;
+		}
+
+		off_t sz = lseek(fd, 0, SEEK_END);
+		if (sz != (off_t)-1) {
+			 size = sz;
+			 lseek(fd, 0, SEEK_SET);
+			 sector_size = 512;
+			 return true;
+		}
+		return false;
+	}
+#endif
+
+	bool get_info_fallback(int fd) {
+		off_t device_size = lseek(fd, 0, SEEK_END);
+		if (device_size != (off_t)-1) {
+			size = device_size;
+			lseek(fd, 0, SEEK_SET);
+			sector_size = 512;
+			return true;
+		}
+		return false;
+	}
+};
+
 template<bool UseVirtualDestructor>
 class ArchiveOpenStream : public IInStream<UseVirtualDestructor>, private ComBase<UseVirtualDestructor>, private File
 {
 private:
 	bool device_file;
-	bool stream_file;
-	UInt64 device_pos;
-	UInt64 device_size;
-	unsigned device_sector_size;
+	BlockDeviceInfo bdinfo;
+	uint64_t device_pos = 0;
+	uint64_t device_size = 1024ULL * 1024 * 1024;
+	unsigned device_sector_size = 4096;
 
-	Byte *cached_header;
-	UInt32 cached_size;
+	uint8_t *cached_header;
+	uint32_t cached_size;
 
-	void check_device_file()
-	{
- 		device_pos = 0;
-		device_file = false;
-		if (size_nt(device_size))
-			return;
+	uint8_t *shared_buffer = nullptr;
+	size_t shared_buffer_size = 0;
 
-		device_file = true;
+	bool allocate_shared_buffer() {
+		size_t requested_size = g_options.relay_buffer_size > 0 ? g_options.relay_buffer_size : (1024 * 1024);
 
-		struct statfs s = {};
-		if (statfs(Wide2MB(add_trailing_slash(path()).c_str()).c_str(), &s) != 0) {
-			device_sector_size = 4096;
-			device_size = 1024 * 1024 * 1024;
-			return;
+		size_t page_size = sysconf(_SC_PAGESIZE);
+		if (page_size == (size_t)-1) {
+			page_size = 4096;
 		}
 
-//		device_file = true;
-		device_size = s.f_bsize * s.f_blocks;
-		device_sector_size = s.f_bsize;
+		shared_buffer_size = (requested_size + page_size - 1) & ~(page_size - 1);
+		if (shared_buffer_size < requested_size) shared_buffer_size = requested_size;
 
-#if 0
-    PARTITION_INFORMATION part_info;
-    if (io_control_out_nt(IOCTL_DISK_GET_PARTITION_INFO, part_info)) {
-      device_size = part_info.PartitionLength.QuadPart;
-      DWORD sectors_per_cluster, bytes_per_sector, number_of_free_clusters, total_number_of_clusters;
-      if (WINPORT_GetDiskFreeSpaceW(add_trailing_slash(path()).c_str(), &sectors_per_cluster, &bytes_per_sector, &number_of_free_clusters, &total_number_of_clusters))
-        device_sector_size = bytes_per_sector;
-      else
-        device_sector_size = 4096;
-      device_file = true;
-      return;
-    }
+		shared_buffer = (uint8_t *)mmap(NULL, shared_buffer_size, PROT_READ | PROT_WRITE,
+										MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-    DISK_GEOMETRY disk_geometry;
-    if (io_control_out_nt(IOCTL_DISK_GET_DRIVE_GEOMETRY, disk_geometry)) {
-      device_size = disk_geometry.Cylinders.QuadPart * disk_geometry.TracksPerCylinder * disk_geometry.SectorsPerTrack * disk_geometry.BytesPerSector;
-      device_sector_size = disk_geometry.BytesPerSector;
-      device_file = true;
-      return;
-    }
-#endif
+		if (shared_buffer == MAP_FAILED) {
+			shared_buffer = nullptr;
+			shared_buffer_size = 0;
+			return false;
+		}
+
+		return true;
+	}
+
+	void deallocate_shared_buffer() {
+		if (shared_buffer && shared_buffer != MAP_FAILED) {
+			if (munmap(shared_buffer, shared_buffer_size) != 0) {
+			} else {
+			}
+		}
+		shared_buffer = nullptr;
+		shared_buffer_size = 0;
 	}
 
 public:
 	ArchiveOpenStream(const std::wstring &file_path)
+		: shared_buffer(nullptr), shared_buffer_size(0) // Инициализируем в списке инициализации
 	{
 		open(file_path, FILE_READ_DATA | FILE_READ_ATTRIBUTES,
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, OPEN_EXISTING,
 				FILE_FLAG_SEQUENTIAL_SCAN);
-		check_device_file();
-		stream_file = false;
+
+		int fd = WINPORT_GetFileDescriptor(handle());
+		if (fd == -1) {
+			 FAIL(EBADF);
+		}
+
+		struct stat s{};
+		if (sdc_fstat(fd, &s) != 0) {
+			FAIL(errno);
+		}
+
+		device_file = S_ISBLK(s.st_mode);
+		if (!S_ISREG(s.st_mode) && !device_file) {
+			FAIL(E_ABORT);
+		}
+		if (S_ISREG(s.st_mode) && s.st_size < 8) {
+			FAIL(E_ABORT);
+		}
+
+		if (device_file) {
+			if (!allocate_shared_buffer()) {
+			}
+
+			if (bdinfo.get_info(fd)) {
+				device_size = bdinfo.size;
+				device_sector_size = bdinfo.sector_size;
+			} else {
+				 fprintf(stderr, "Failed to get device info, using defaults\n");
+			}
+		} else {
+			device_size = s.st_size;
+			fprintf(stderr, "Regular file: Size=%lu\n", device_size);
+		}
+
 		cached_header = nullptr;
 		cached_size = 0;
+	}
+
+	~ArchiveOpenStream() noexcept {
+		if (device_file)
+			deallocate_shared_buffer();
 	}
 
 	void CacheHeader(Byte *buffer, UInt32 size)
@@ -621,28 +823,55 @@ public:
 		COM_ERROR_HANDLER_BEGIN
 		if (processedSize)
 			*processedSize = 0;
-		unsigned size_read;
+		unsigned size_read = 0;
+
 		if (device_file) {
 			UInt64 aligned_pos = device_pos / device_sector_size * device_sector_size;
 			unsigned aligned_offset = static_cast<unsigned>(device_pos - aligned_pos);
 			unsigned aligned_size = aligned_offset + size;
-			aligned_size = (aligned_size / device_sector_size + (aligned_size % device_sector_size ? 1 : 0))
-					* device_sector_size;
-			Buffer<unsigned char> buffer(aligned_size + device_sector_size);
-			const auto buffer_addr = reinterpret_cast<ptrdiff_t>(buffer.data());
-			unsigned char *aligned_buffer = reinterpret_cast<unsigned char *>(buffer_addr % device_sector_size
-							? (buffer_addr / device_sector_size + 1) * device_sector_size
-							: buffer_addr);
+
+			aligned_size = ((aligned_size + device_sector_size - 1) / device_sector_size) * device_sector_size;
+
+			uint8_t *aligned_buffer = nullptr;
+			if (shared_buffer && shared_buffer_size >= (aligned_size + device_sector_size)) {
+				const uintptr_t buffer_addr = reinterpret_cast<uintptr_t>(shared_buffer);
+				const size_t alignment_mask = device_sector_size - 1;
+				aligned_buffer = reinterpret_cast<uint8_t*>((buffer_addr + alignment_mask) & ~alignment_mask);
+
+				if ((aligned_buffer + aligned_size) > (shared_buffer + shared_buffer_size)) {
+					aligned_buffer = nullptr;
+				}
+			}
+
+			if (!aligned_buffer) {
+				Buffer<unsigned char> fallback_buffer(aligned_size + device_sector_size);
+				const auto buffer_addr = reinterpret_cast<uintptr_t>(fallback_buffer.data());
+				const size_t alignment_mask = device_sector_size - 1;
+				aligned_buffer = reinterpret_cast<unsigned char*>((buffer_addr + alignment_mask) & ~alignment_mask);
+
+				set_pos(aligned_pos, FILE_BEGIN);
+				size_t bytes_read = read(aligned_buffer, aligned_size);
+				size_read = (bytes_read < aligned_offset) ? 0 : (bytes_read - aligned_offset);
+				if (size_read > size) size_read = size;
+				device_pos += size_read;
+				memcpy(data, aligned_buffer + aligned_offset, size_read);
+
+				if (processedSize) *processedSize = size_read;
+				return S_OK;
+			}
+
 			set_pos(aligned_pos, FILE_BEGIN);
-			size_read = static_cast<unsigned>(read(aligned_buffer, aligned_size));
-			if (size_read < aligned_offset)
+			size_t bytes_read = read(aligned_buffer, aligned_size);
+
+			if (bytes_read < aligned_offset) {
 				size_read = 0;
-			else
-				size_read -= aligned_offset;
-			if (size_read > size)
-				size_read = size;
+			} else {
+				size_read = bytes_read - aligned_offset;
+				if (size_read > size) size_read = size;
+			}
 			device_pos += size_read;
 			memcpy(data, aligned_buffer + aligned_offset, size_read);
+
 		} else {
 			size_read = 0;
 			if (cached_size) {
@@ -691,19 +920,15 @@ public:
 			DWORD method;
 			switch (seekOrigin) {
 				case STREAM_SEEK_SET:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_SET > %li \n", offset );
 					method = FILE_BEGIN;
 					break;
 				case STREAM_SEEK_CUR:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_CUR +> %li \n", offset );
 					method = FILE_CURRENT;
 					break;
 				case STREAM_SEEK_END:
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_END < %li \n", offset );
 					method = FILE_END;
 					break;
 				default: {
-//					fprintf(stderr, "ArchiveOpenStream: STREAM_SEEK_UNKNOWN > %li \n", offset );
 					FAIL(E_INVALIDARG);
 				}
 			}
@@ -728,12 +953,12 @@ public:
 			file_info.ftCreationTime = fi.ftCreationTime;
 			file_info.ftLastAccessTime = fi.ftLastAccessTime;
 			file_info.ftLastWriteTime = fi.ftLastWriteTime;
-			//file_info.ftChangeTime = {}; // BUGBUG
 			file_info.nFileSize = fi.nFileSize;
 		}
 		return file_info;
 	}
 };
+
 
 template<bool UseVirtualDestructor>
 class ArchiveOpener
@@ -871,7 +1096,7 @@ public:
 		volume_file_info = find_data;
 		ComObject<IInStream<UseVirtualDestructor>> file_stream(new ArchiveOpenStream<UseVirtualDestructor>(file_path));
 		file_stream.detach(inStream);
-		//    CriticalSectionLock lock(GetSync());
+		//	CriticalSectionLock lock(GetSync());
 
 		if (bShowProgress)
 			update_ui();
@@ -973,6 +1198,9 @@ bool Archive<UseVirtualDestructor>::open(IInStream<UseVirtualDestructor> *stream
 	ArcAPI::create_in_archive(type, (void **)in_arc.ref());
 	ComObject<IArchiveOpenCallback<UseVirtualDestructor>> opener(new ArchiveOpener<UseVirtualDestructor>(this->shared_from_this(), show_progress));
 
+//	allow_tail = true;
+
+//	if (allow_tail && ArcAPI::formats().at(type).Flags_PreArc()) {
 	if (allow_tail && ArcAPI::formats().at(type).Flags_PreArc()) {
 		ComObject<IArchiveAllowTail<UseVirtualDestructor>> allowTail;
 		in_arc->QueryInterface((REFIID)IID_IArchiveAllowTail, (void **)&allowTail);
@@ -1012,36 +1240,36 @@ static void prioritize(std::list<ArcEntry> &arc_entries, const ArcType &first, c
 }
 
 static void prioritize_before_any(std::list<ArcEntry>& arc_entries, const ArcType& to_move, std::initializer_list<ArcType> targets) {
-    std::vector<ArcEntry> entries_to_move;
-    for (auto it = arc_entries.begin(); it != arc_entries.end();) {
-        if (it->type == to_move) {
-            entries_to_move.push_back(std::move(*it));
-            it = arc_entries.erase(it);
-        } else {
-            ++it;
-        }
-    }
+	std::vector<ArcEntry> entries_to_move;
+	for (auto it = arc_entries.begin(); it != arc_entries.end();) {
+		if (it->type == to_move) {
+			entries_to_move.push_back(std::move(*it));
+			it = arc_entries.erase(it);
+		} else {
+			++it;
+		}
+	}
 
-    if (entries_to_move.empty()) {
-        return;
-    }
+	if (entries_to_move.empty()) {
+		return;
+	}
 
-    auto insert_pos = arc_entries.end();
-    for (const auto& target : targets) {
-        for (auto pos = arc_entries.begin(); pos != arc_entries.end(); ++pos) {
-            if (pos->type == target) {
-                if (insert_pos == arc_entries.end() ||
-                    std::distance(arc_entries.begin(), pos) < std::distance(arc_entries.begin(), insert_pos)) {
-                    insert_pos = pos;
-                }
-                break;
-            }
-        }
-    }
+	auto insert_pos = arc_entries.end();
+	for (const auto& target : targets) {
+		for (auto pos = arc_entries.begin(); pos != arc_entries.end(); ++pos) {
+			if (pos->type == target) {
+				if (insert_pos == arc_entries.end() ||
+					std::distance(arc_entries.begin(), pos) < std::distance(arc_entries.begin(), insert_pos)) {
+					insert_pos = pos;
+				}
+				break;
+			}
+		}
+	}
 
-    arc_entries.insert(insert_pos, 
-                       std::make_move_iterator(entries_to_move.begin()),
-                       std::make_move_iterator(entries_to_move.end()));
+	arc_entries.insert(insert_pos, 
+					   std::make_move_iterator(entries_to_move.begin()),
+					   std::make_move_iterator(entries_to_move.end()));
 }
 
 //??? filter multi-volume .zip archives to avoid wrong opening.
@@ -1074,7 +1302,7 @@ static bool accepted_signature(size_t pos, const SigData &sig, const Byte *buffe
 			pos = size - check_size;
 		tail = {(const char *)buffer + pos, size - pos};
 	} else {
-		//    buf = std::make_unique<Byte[]>(check_size);
+		//	buf = std::make_unique<Byte[]>(check_size);
 		buf.reset(new Byte[check_size]);
 		pos = 0;
 		buffer = buf.get();
@@ -1136,9 +1364,9 @@ ArcEntries Archive<UseVirtualDestructor>::detect(Byte *buffer, UInt32 size, bool
 	});
 
 	arc_entries.sort([&](const ArcEntry &a, const ArcEntry &b) {
-	    int prio_a = g_format_priority.count(a.type) ? g_format_priority.at(a.type) : 100;
-	    int prio_b = g_format_priority.count(b.type) ? g_format_priority.at(b.type) : 100;
-	    return prio_a < prio_b;
+		int prio_a = g_format_priority.count(a.type) ? g_format_priority.at(a.type) : 100;
+		int prio_b = g_format_priority.count(b.type) ? g_format_priority.at(b.type) : 100;
+		return prio_a < prio_b;
 	});
 
 	// 2. find formats by file extension
@@ -1195,10 +1423,10 @@ UInt64 Archive<UseVirtualDestructor>::archive_filesize()
 	auto arc_size = arc_info.size();
 #if 0
   for (const auto& volume_name : volume_names) {
-    auto volume_path = add_trailing_slash(arc_dir()) + volume_name;
-    FindData find_data;
-    if (File::get_find_data_nt(volume_path, find_data))
-      arc_size += find_data.size();
+	auto volume_path = add_trailing_slash(arc_dir()) + volume_name;
+	FindData find_data;
+	if (File::get_find_data_nt(volume_path, find_data))
+	  arc_size += find_data.size();
   }
 #endif
 	return arc_size;
@@ -1244,6 +1472,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		fprintf(stderr,"Opening root archive from file path %ls\n", options.arc_path.c_str());
 		stream_impl = new ArchiveOpenStream<UseVirtualDestructor>(options.arc_path);
 		stream = stream_impl;
+		fprintf(stderr, "Stream get info\n" );
 		arc_info = stream_impl->get_info();
 		fprintf(stderr,"Root archive info: name='%ls', size=%lu\n", arc_info.cFileName, arc_info.size());
 	} else {
@@ -1400,7 +1629,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 						else
 							mem_stream->FinishReading();
 					}
-				    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				}
 
 				fprintf(stderr,"joininbg threads......\n" );
@@ -1446,7 +1675,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 						mem_stream->FinishWriting();
 						errc1 = future.get();
 					}
-				    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+					std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				}
 				extract_thread.join();
 				HRESULT res = errc1;
@@ -1469,39 +1698,39 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 			extract_file_ext(arc_info.cFileName), options.arc_types, stream);
 
 #if 0
-    fprintf(stderr, "Total arc_entries list: %lu\n", static_cast<unsigned long>(arc_entries.size()));
-    unsigned int entry_index = 0;
-    for (const ArcEntry& entry : arc_entries) {
-        entry_index++;
-        const auto& format_info = ArcAPI::formats().at(entry.type);
-        fprintf(stderr, "  [%u] ArcEntry:\n", entry_index);
-        fprintf(stderr, "      Type (GUID): "); // GUID
-        for (size_t i = 0; i < entry.type.size(); ++i) {
-             fprintf(stderr, "%02X", static_cast<unsigned char>(entry.type[i]));
-        }
-        fprintf(stderr, "\n");
-        fprintf(stderr, "      Signature Position: %zu\n", entry.sig_pos);
-        fprintf(stderr, "      Flags: %zu\n", entry.flags);
+	fprintf(stderr, "Total arc_entries list: %lu\n", static_cast<unsigned long>(arc_entries.size()));
+	unsigned int entry_index = 0;
+	for (const ArcEntry& entry : arc_entries) {
+		entry_index++;
+		const auto& format_info = ArcAPI::formats().at(entry.type);
+		fprintf(stderr, "  [%u] ArcEntry:\n", entry_index);
+		fprintf(stderr, "	  Type (GUID): "); // GUID
+		for (size_t i = 0; i < entry.type.size(); ++i) {
+			 fprintf(stderr, "%02X", static_cast<unsigned char>(entry.type[i]));
+		}
+		fprintf(stderr, "\n");
+		fprintf(stderr, "	  Signature Position: %zu\n", entry.sig_pos);
+		fprintf(stderr, "	  Flags: %zu\n", entry.flags);
 
-        fprintf(stderr, "      Format Name: %ls\n", format_info.name.c_str());
-        fprintf(stderr, "      Default Extension: %ls\n", format_info.default_extension().c_str());
+		fprintf(stderr, "	  Format Name: %ls\n", format_info.name.c_str());
+		fprintf(stderr, "	  Default Extension: %ls\n", format_info.default_extension().c_str());
 
-        if (!format_info.Signatures.empty()) {
-            fprintf(stderr, "      Signatures:\n");
-            for(const auto& sig_data : format_info.Signatures) {
-//                fprintf(stderr, "        - Offset: %d, Signature: ", sig_data.offset);
-                // sig hex
-                for (size_t i = 0; i < sig_data.size(); ++i) {
-                    fprintf(stderr, "%02X ", static_cast<unsigned char>(sig_data[i]));
-                }
-                fprintf(stderr, "\n");
-            }
-        } else {
-             fprintf(stderr, "      Signatures: (none listed)\n");
-        }
-        fprintf(stderr, "  --------------------------------------------------------\n");
-    }
-    fprintf(stderr, "========== End of arc_entries list ==========\n");
+		if (!format_info.Signatures.empty()) {
+			fprintf(stderr, "	  Signatures:\n");
+			for(const auto& sig_data : format_info.Signatures) {
+//				fprintf(stderr, "		- Offset: %d, Signature: ", sig_data.offset);
+				// sig hex
+				for (size_t i = 0; i < sig_data.size(); ++i) {
+					fprintf(stderr, "%02X ", static_cast<unsigned char>(sig_data[i]));
+				}
+				fprintf(stderr, "\n");
+			}
+		} else {
+			 fprintf(stderr, "	  Signatures: (none listed)\n");
+		}
+		fprintf(stderr, "  --------------------------------------------------------\n");
+	}
+	fprintf(stderr, "========== End of arc_entries list ==========\n");
 #endif
 
 	for (ArcEntries::const_iterator arc_entry = arc_entries.cbegin(); arc_entry != arc_entries.cend();
@@ -1520,10 +1749,10 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		const ArcFormat &format = ArcAPI::formats().at(arc_entry->type);
 
 		bool opened = false, have_tail = false;
-		fprintf(stderr,"Seeking to signature position: %zu", arc_entry->sig_pos);
+//		fprintf(stderr,"Seeking to signature position: %zu\n", arc_entry->sig_pos);
 		CHECK_COM(stream->Seek(arc_entry->sig_pos, STREAM_SEEK_SET, nullptr));
 
-		fprintf(stderr,"Attempting to open at sig_pos=%zu as format '%ls'", arc_entry->sig_pos, format.name.c_str());
+//		fprintf(stderr,"Attempting to open at sig_pos=%zu as format '%ls'\n", arc_entry->sig_pos, format.name.c_str());
 
 		if (!arc_entry->sig_pos) {
 			opened = archive->open(stream, arc_entry->type);
@@ -1553,7 +1782,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 		}
 
 		if (opened) {
-			fprintf(stderr,"SUCCESSFULLY OPENED as format: %ls", format.name.c_str());
+			fprintf(stderr,"SUCCESSFULLY OPENED as format: %ls\n", format.name.c_str());
 			if (parent_idx != (size_t)-1) {
 				archives[parent_idx]->m_chain_file_index = entry_index;
 				archive->parent = archives[parent_idx];

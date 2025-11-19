@@ -1,4 +1,5 @@
 #include <functional>
+#include <optional>
 #include <wx/mstream.h>
 #include <wx/image.h>
 #include "wxConsoleImages.h"

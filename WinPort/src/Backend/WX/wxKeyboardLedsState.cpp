@@ -88,8 +88,10 @@ void *wxKeyboardLedsState::ThreadProc()
 			lock.lock();
 		} else if (!_long_wait) {
 			_cond.wait_for(lock, std::chrono::milliseconds(500));
+			if (id == _id) {
+				_long_wait = true;
+			}
 		} else {
-			_long_wait = true;
 			_cond.wait(lock);
 		}
 	}

@@ -542,19 +542,14 @@ bool File::set_pos_nt(int64_t offset, DWORD method, UInt64 *new_pos) noexcept
 
 	if (is_symlink) {
 		switch(method) {
-		case FILE_BEGIN:
+		case FILE_BEGIN: 
 			symlinkRWptr = *new_pos;
 			break;
-		case FILE_CURRENT:
+		case FILE_CURRENT: 
 			symlinkRWptr += *new_pos;
 			break;
-<<<<<<< HEAD
 		case FILE_END: 
 			if (*new_pos >= symlinkdatasize)
-=======
-		case FILE_END:
-			if (*new_pos >= symlinksize)
->>>>>>> upstream/master
 				symlinkRWptr = 0;
 			else
 				symlinkRWptr = symlinkdatasize - *new_pos;

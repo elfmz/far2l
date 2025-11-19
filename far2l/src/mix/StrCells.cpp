@@ -7,12 +7,17 @@
 size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 {
 	size_t out = 0;
+	bool joining = false;
 	for (size_t i = 0; i < nw; ++i) {
-		if (CharClasses::IsFullWidth(pwz[i])) {
-			out+= 2;
-		} else if ((i == nw - 1 || !CharClasses::IsPrefix(pwz[i])) && !CharClasses::IsSuffix(pwz[i]) ) {
-			++out;
+		if (pwz[i] == CharClasses::ZERO_WIDTH_JOINER) {
+			joining = true;
+			continue;
+		} else if (CharClasses::IsXxxfix(pwz[i])) {
+			continue;
+		} else if (!joining) {
+			out += CharClasses::IsFullWidth(&pwz[i]) ? 2 : 1;
 		}
+		joining = false;
 	}
 	return out;
 }
@@ -20,12 +25,17 @@ size_t StrCellsCount(const wchar_t *pwz, size_t nw)
 size_t StrZCellsCount(const wchar_t *pwz)
 {
 	size_t out = 0;
+	bool joining = false;
 	for (size_t i = 0; pwz[i] != 0; ++i) {
-		if (CharClasses::IsFullWidth(pwz[i])) {
-			out+= 2;
-		} else if ((pwz[i + 1] == 0 || !CharClasses::IsPrefix(pwz[i])) && !CharClasses::IsSuffix(pwz[i]) ) {
-			++out;
+		if (pwz[i] == CharClasses::ZERO_WIDTH_JOINER) {
+			joining = true;
+			continue;
+		} else if (CharClasses::IsXxxfix(pwz[i])) {
+			continue;
+		} else if (!joining) {
+			out += CharClasses::IsFullWidth(&pwz[i]) ? 2 : 1;
 		}
+		joining = false;
 	}
 	return out;
 }
@@ -33,27 +43,46 @@ size_t StrZCellsCount(const wchar_t *pwz)
 size_t StrSizeOfCells(const wchar_t *pwz, size_t n, size_t &ng, bool round_up)
 {
 	size_t i = 0, g = 0;
-	for (; g < ng && i < n; ++g) {
+	bool joining = false;
+
+	size_t char_width = 1;
+	while (g < ng && i < n) {
+		char_width = 1;
 		for (; i < n; ++i) {
-			if (!CharClasses::IsXxxfix(pwz[i])) {
+			if (pwz[i] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+				++i;
 				break;
 			}
+			if (!CharClasses::IsXxxfix(pwz[i]))
+				break;
 		}
 		if (i < n) {
-			if (CharClasses::IsFullWidth(pwz[i])) {
+			if (CharClasses::IsFullWidth(&pwz[i])) {
 //				++g;
 //				if (!round_up && g == ng) {
-				if (!round_up && (g + 1) == ng) {
+				if (!round_up && (g + char_width) >= ng) {
 					break;
 				}
-				++g;
+				char_width=2;
 			}
 			++i;
+			joining = false;
 		}
 		for (; i < n; ++i) {
-			if (!CharClasses::IsSuffix(pwz[i])) {
+			if (pwz[i] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+				++i;
 				break;
 			}
+			if (!CharClasses::IsSuffix(pwz[i]))
+				break;
+		}
+
+		if (joining) {
+			continue;
+		} else {
+			g+= char_width;
 		}
 	}
 	ng = g;

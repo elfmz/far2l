@@ -166,6 +166,10 @@ class ConsoleForkScope
 
 public:
 	ConsoleForkScope() = default;
+	ConsoleForkScope(HANDLE parent)
+	{
+		Fork(parent);
+	}
 
 	~ConsoleForkScope()
 	{

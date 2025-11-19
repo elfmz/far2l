@@ -80,7 +80,7 @@ S3Repository::~S3Repository()
 std::string S3Repository::Trim(const std::string& str) {
     const std::string unwanted = "/\\ ";
     auto result = str;
-    
+
     size_t start = result.find_first_not_of(unwanted);
     if (start == std::string::npos) {
         result.clear();
@@ -95,7 +95,7 @@ std::string S3Repository::Trim(const std::string& str) {
 }
 
 
-std::string S3Repository::GetS3ErrorTypeString(Aws::S3::S3Errors errorType) 
+std::string S3Repository::GetS3ErrorTypeString(Aws::S3::S3Errors errorType)
 {
     switch (errorType) {
         case Aws::S3::S3Errors::INCOMPLETE_SIGNATURE: return "INCOMPLETE_SIGNATURE";
@@ -141,7 +141,7 @@ std::string S3Repository::GetS3ErrorTypeString(Aws::S3::S3Errors errorType)
 }
 
 
-ProtocolError S3Repository::ConstructProtocolError(const Aws::Client::AWSError<Aws::S3::S3Errors>& error, const std::string& context) 
+ProtocolError S3Repository::ConstructProtocolError(const Aws::Client::AWSError<Aws::S3::S3Errors>& error, const std::string& context)
 {
     std::string errorMessage;
 
@@ -277,10 +277,10 @@ std::string S3Repository::ExtractFileName(const std::string& path) {
     if (pos == std::string::npos) {
         return path;
     }
-    return path.substr(pos + 1); 
+    return path.substr(pos + 1);
 }
 
-std::shared_ptr<AWSFileWriter> S3Repository::GetUploader(const std::string& path) 
+std::shared_ptr<AWSFileWriter> S3Repository::GetUploader(const std::string& path)
 {
     Path localPath(path);
     return std::make_shared<AWSFileWriter>(localPath.bucket(), localPath.key(), _client);

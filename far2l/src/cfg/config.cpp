@@ -256,6 +256,7 @@ void PanelSettings()
 	for (;;) {
 		DialogBuilder Builder(Msg::ConfigPanelTitle, L"PanelSettings");
 		BOOL AutoUpdate = (Opt.AutoUpdateLimit);
+		BOOL TreeScanDepthEnabled = (Opt.Tree.ScanDepthEnabled);
 
 		Builder.AddCheckbox(Msg::ConfigHidden, &Opt.ShowHidden);
 
@@ -270,7 +271,6 @@ void PanelSettings()
 		//ChangeSizeColumnStyleItem->Flags = DIF_CENTERGROUP;
 		ChangeSizeColumnStyleItem->Indent(1);
 
-		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 		Builder.AddCheckbox(Msg::ConfigSelectFolders, &Opt.SelectFolders);
 		Builder.AddCheckbox(Msg::ConfigCaseSensitiveCompareSelect, &Opt.PanelCaseSensitiveCompareSelect);
 		Builder.AddCheckbox(Msg::ConfigSortFolderExt, &Opt.SortFolderExt);
@@ -284,6 +284,17 @@ void PanelSettings()
 		AutoUpdateText->Indent(4);
 		Builder.AddCheckbox(Msg::ConfigAutoUpdateRemoteDrive, &Opt.AutoUpdateRemoteDrive);
 		Builder.AddCheckbox(Msg::ConfigClassicHotkeyLinkResolving, &Opt.ClassicHotkeyLinkResolving);
+
+		Builder.AddSeparator(Msg::ConfigTreeOptions);
+		Builder.StartColumns();
+		DialogItemEx *TreeScanDepthSwitch = Builder.AddCheckbox(Msg::ConfigDefaultTreeScanDepth, &TreeScanDepthEnabled);
+		Builder.ColumnBreak();
+		DialogItemEx *DefaultScanDepth = Builder.AddIntEditField((int *)&Opt.Tree.DefaultScanDepth, 12);
+		Builder.LinkFlags(TreeScanDepthSwitch, DefaultScanDepth, DIF_DISABLE, false);
+		Builder.EndColumns();
+		Builder.AddText(Msg::ConfigExclSubTreeMask);
+		Builder.AddEditField(&Opt.Tree.ExclSubTreeMask, 35);
+		Builder.AddCheckbox(Msg::ConfigAutoChange, &Opt.Tree.AutoChangeFolder);
 
 		Builder.AddSeparator();
 		Builder.AddCheckbox(Msg::ConfigShowColumns, &Opt.ShowColumnTitles);
@@ -313,7 +324,7 @@ void PanelSettings()
 		else if (clicked_id == ChangeSizeColumnStyleID)
 			DirectoryNameSettings();
 		else
-			break;		
+			break;
 	}
 }
 
@@ -661,7 +672,7 @@ void InterfaceSettings()
 		DecimalSeparatorEdit->Flags |= DIF_MASKEDIT;
 		DecimalSeparatorEdit->strMask = L"X";
 		Builder.AddTextAfter(DecimalSeparatorEdit, Msg::ConfigDecimalSeparator);
-        
+
 		Builder.ColumnBreak();
 		int DateTimeDefaultID = -1;
 		Builder.AddButton(Msg::ConfigDateTimeDefault, DateTimeDefaultID);
@@ -766,29 +777,29 @@ void InterfaceSettings()
 			std::string format_decimal = nl_langinfo(RADIXCHAR/*DECIMAL_POINT*/);
 			if (format_date=="%D") { // %D Equivalent to %m/%d/%y
 				DateFormatIndex = 0;
-				strTimeSeparator = "/";
+				strDateSeparator = "/";
 				pos_date_2 = 0; // for not error in message
 			}
-			if (format_date=="%F") { // %F Equivalent to %Y-%m-%d
+			else if (format_date=="%F") { // %F Equivalent to %Y-%m-%d
 				DateFormatIndex = 2;
-				strTimeSeparator = "-";
+				strDateSeparator = "-";
 				pos_date_2 = 0; // for not error in message
 			}
 			else if (format_date.length() >= 8) {
-				std::vector<const char*> codes_day = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
+				static const char *codes_day[] = { "%d", "%e", "%Ed", "%Ee", "%Od", "%Oe" };
 				for (const auto &code : codes_day) {
 					pos_day = format_date.find(code);
 					if (pos_day != std::string::npos)
 						break;
 				}
-				std::vector<const char*> codes_month = {
+				static const char *codes_month[] = {
 					"%m", "%B", "%b", "%h", "%Em", "%EB", "%Eb", "%Eh", "%Om", "%OB", "%Ob", "%Oh" };
 				for (const auto &code : codes_month) {
 					pos_month = format_date.find(code);
 					if (pos_month != std::string::npos)
 						break;
 				}
-				std::vector<const char*> codes_year = {
+				static const char *codes_year[] = {
 					"%Y", "%y", "%G", "%g", "%EY", "%Ey", "%EG", "%Eg", "%OY", "%Oy", "%OG", "%Og" };
 				for (const auto &code : codes_year) {
 					pos_year = format_date.find(code);
@@ -797,15 +808,13 @@ void InterfaceSettings()
 				}
 				if (pos_day != std::string::npos && pos_month != std::string::npos && pos_year != std::string::npos) {
 					if (pos_day < pos_month && pos_month < pos_year) // day-month-year
-					{ DateFormatIndex = 1; pos_date_2 = pos_month; }
+					{ DateFormatIndex = 1; pos_date_2 = pos_month; strDateSeparator = format_date[pos_date_2-1]; }
 					else if (pos_year < pos_month && pos_month < pos_day) // year-month-day
-					{ DateFormatIndex = 2; pos_date_2 = pos_month; }
+					{ DateFormatIndex = 2; pos_date_2 = pos_month; strDateSeparator = format_date[pos_date_2-1]; }
 					else if (pos_month < pos_day  && pos_month < pos_year) // month-day-year
-					{ DateFormatIndex = 0; pos_date_2 = pos_day; }
+					{ DateFormatIndex = 0; pos_date_2 = pos_day;   strDateSeparator = format_date[pos_date_2-1]; }
 				}
 			}
-			if (pos_date_2 != std::string::npos)
-				strDateSeparator = format_date[pos_date_2-1];
 
 			if (format_time=="%T") { // %T The time in 24-hour notation (%H:%M:%S).
 				strTimeSeparator = ":";
@@ -1143,6 +1152,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditConfigScrollbar, &EdOpt.ShowScrollBar);
 	Builder.AddCheckbox(Msg::EditConfigPickUpWord, &EdOpt.SearchPickUpWord);
 	Builder.AddCheckbox(Msg::EditShowTitleBar, &EdOpt.ShowTitleBar);
+	Builder.AddCheckbox(Msg::EditWordWrap, &EdOpt.WordWrap);
 	Builder.EndColumns();
 
 	if (!Local) {

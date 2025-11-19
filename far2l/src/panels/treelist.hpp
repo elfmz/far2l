@@ -33,6 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include <memory>
 #include <vector>
 #include "FARString.hpp"
 #include "panel.hpp"
@@ -50,7 +51,10 @@ struct TreeItem
 	struct LastT : std::vector<bool>
 	{
 	} Last;
+	bool Expandable;
+	bool Collapsed;
 	int Depth;	// уровень вложенности
+	int ParentIndex;
 
 	TreeItem() { Clear(); }
 
@@ -60,7 +64,10 @@ struct TreeItem
 		for (LastT::iterator i = Last.begin(); i != Last.end(); ++i) {
 			*i = false;
 		}
+		Expandable = false;
+		Collapsed = false;
 		Depth = 0;
+		ParentIndex = -1;
 	}
 };
 
@@ -75,7 +82,10 @@ class TreeList : public Panel
 {
 private:
 	int PrevMacroMode;
-	TreeItem **ListData;
+	std::vector<std::unique_ptr<TreeItem>> ListData;
+	std::vector<int> VisibleIndices; // ordered list of visible item indices
+	std::vector<int> VisibleMap;     // maps item index -> visible index or -1 if hidden
+	bool VisibleDirty = true;        // mark true when structure or collapse state changes
 	FARString strRoot;
 	long TreeCount;
 	long WorkDir;
@@ -93,13 +103,17 @@ private:
 	virtual void DisplayObject();
 	void DisplayTree(int Fast);
 	void DisplayTreeName(const wchar_t *Name, int Pos);
-	void Up(int Count);
-	void Down(int Count);
+	void Collapse();
+	void Expand();
+	void LevelUp();
+	void MoveBy(int delta);
 	void Scroll(int Count);
 	void CorrectPosition();
 	bool FillLastData();
 	UINT CountSlash(const wchar_t *Str);
 	int SetDirPosition(const wchar_t *NewDir);
+	void SortAndDeduplicate();
+	bool ExpandDirectory(const wchar_t *Path, int depth = -1);
 	void GetRoot();
 	Panel *GetRootPanel();
 	void SyncDir();
@@ -115,9 +129,19 @@ private:
 
 	bool SaveState();
 	bool RestoreState();
+	bool isHidden(int idx);
+	void Unhide(int idx);
+	void ExpandTreeToLevel(int level);
+	void RebuildVisibleList();
+	int VisibleCount();
+	int ToVisibleIndex(int realIdx);
+	int FromVisibleIndex(int visIdx);
+	int GetVisibleHeight() const;
+
+
 
 private:
-	static int MsgReadTree(int TreeCount, int &FirstCall);
+	static int MsgReadTree(int TreeCount, int FirstCall);
 	static int GetCacheTreeName(const wchar_t *Root, FARString &strName, int CreateDir);
 
 public:
@@ -130,7 +154,7 @@ public:
 	virtual int64_t VMProcess(MacroOpcode OpCode, void *vParam = nullptr, int64_t iParam = 0);
 	//	virtual void KillFocus();
 	virtual void Update(int Mode);
-	int ReadTree();
+	int ReadTree(int depth = -1);
 
 	virtual BOOL SetCurDir(const wchar_t *NewDir, int ClosePlugin);
 

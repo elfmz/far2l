@@ -20,6 +20,9 @@
 #pragma once
 
 #include "common.h"
+#include "UtfDefines.h"
+
+#define WCharSanitize(wc) (((wc) && WCHAR_IS_VALID(wc) && !WCHAR_IS_COMBINING(wc)) ? (wc) : WCHAR_REPLACEMENT)
 
 static constexpr size_t MIN_WIDTH_SIZE = 80;		//Minimal width size of the screen control
 static constexpr size_t MIN_HEIGHT_SIZE = 1;		//Minimal height size of the screen control
@@ -95,8 +98,21 @@ protected:
 		assert(row * _width + col + len <= _buffer.size());
 
 		const size_t start_pos = row * _width + col;
-		for (size_t i = 0; i < len; ++i)
-			_buffer[start_pos + i].Char.UnicodeChar = val[i];
+		for (size_t i = 0; i < len; ++i) {
+			_buffer[start_pos + i].Char.UnicodeChar = WCharSanitize(val[i]);
+		}
+	}
+
+	void write_bounded(const size_t row, const size_t col, const wchar_t* val, size_t len)
+	{
+		if (row >= _height || col >= _width) {
+			return;
+		}
+		if (col + len > _width) {
+			len = _width - col;
+		}
+
+		write(row, col, val, len);
 	}
 
 	/**
@@ -109,8 +125,17 @@ protected:
 	{
 		assert(row < _height);
 		assert(col < _width);
-		_buffer[row * _width + col].Char.UnicodeChar = val;
+		_buffer[row * _width + col].Char.UnicodeChar = WCharSanitize(val);
 	}
+
+	void write_bounded(const size_t row, const size_t col, const wchar_t val)
+	{
+		if (row >= _height || col >= _width) {
+			return;
+		}
+		write(row, col, val);
+	}
+
 
 	/**
 	 * Write color attribute to character buffer
@@ -124,6 +149,15 @@ protected:
 		assert(col < _width);
 		_buffer[row * _width + col].Attributes = val;
 	}
+
+	void write_bounded(const size_t row, const size_t col, const FarColor& val)
+	{
+		if (row >= _height || col >= _width) {
+			return;
+		}
+		write(row, col, val);
+	}
+
 
 protected:
 	typedef vector<FAR_CHAR_INFO> screen_buf;

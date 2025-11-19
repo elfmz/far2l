@@ -1,0 +1,20 @@
+{
+  "_": "_",
+  "ps_err_block_type": "Sorting only works with block selection.",
+  "ps_err_block_lines": "At least 2 lines must be selected.",
+  "ps_err_block_whole1": "Edsort can only sort entire rows,",
+  "ps_err_block_whole2f": "but the first row is only partially selected.",
+  "ps_err_block_whole2l": "but the last row is only partially selected.",
+  "ps_err_block_whole3": "Select it entirely (Yes) or",
+  "ps_err_block_whole4": "exclude it from the selection (No)?",
+  "ps__cancel": "&Cancel",
+  "ps__no": "&No",
+  "ps__retry": "&Retry",
+  "ps__yes": "&Yes",
+  "ps_cancel": "Cancel",
+  "ps_helptopic": "edsort",
+  "ps_ok": "OK",
+  "ps_column": "Column",
+  "ps_title": "Sort rows",
+  "ps_reverse": "&Descending"
+}

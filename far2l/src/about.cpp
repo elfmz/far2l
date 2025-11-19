@@ -125,7 +125,7 @@ void FarAbout(PluginManager &Plugins)
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 	fs.Format(L"    ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs.Format(L" Win size in char cells: %ux%u", ScrX, ScrY );
+	fs.Format(L" Win size in char cells: %ux%u", ScrX+1, ScrY+1 );
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
 	fs.Format(L"                  Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
 	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
@@ -192,8 +192,10 @@ void FarAbout(PluginManager &Plugins)
 	static const char * const env_vars[] = {
 		"HOSTNAME", "USER",
 		"FARSETTINGS", "FAR2L_ARGS",
-		"XDG_SESSION_TYPE",
 		"TERM", "COLORTERM",
+		"XDG_SESSION_TYPE",
+		"XDG_SESSION_DESKTOP",
+		"XDG_CURRENT_DESKTOP",
 		"GDK_BACKEND", "DESKTOP_SESSION",
 		"WSL_DISTRO_NAME", "WSL2_GUI_APPS_ENABLED",
 		"DISPLAY", "WAYLAND_DISPLAY",
@@ -337,7 +339,7 @@ void FarAbout(PluginManager &Plugins)
 			mi.strName.Format(L"%ls      CommandPrefix: \"%ls\"", fs.CPtr(), fsCommandPrefix.CPtr());
 			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
 		}
-		
+
 	}
 
 	ListAbout.SetPosition(-1, -1, 0, 0);

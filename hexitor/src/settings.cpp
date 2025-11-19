@@ -18,29 +18,15 @@
  **************************************************************************/
 
 #include "settings.h"
-#include "string_rc.h"
+#include "i18nindex.h"
 #include <utils.h>
 #include <KeyFileHelper.h>
 //#include <src/pick_color.hpp>
-#include "fardialog.h"
 
 #define MAKEDWORD(low, high) ((DWORD)(((WORD)(low)) | ((DWORD)((WORD)(high))) << 16))
 
 #define INI_LOCATION InMyConfig("plugins/hexitor/config.ini")
 #define INI_SECTION "Settings"
-
-bool settings::add_to_panel_menu = true;
-bool settings::add_to_editor_menu = true;
-bool settings::add_to_viewer_menu = true;
-wstring settings::cmd_prefix = L"hex";
-bool settings::save_file_pos = true;
-bool settings::show_dword_seps = true;
-bool settings::move_inside_byte = true;
-bool settings::std_cursor_size = false;
-FarColor settings::clr_active = FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY | BACKGROUND_BLUE;
-FarColor settings::clr_updated = FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_RED | FOREGROUND_INTENSITY | BACKGROUND_BLUE;
-FarColor settings::clr_offset = FOREGROUND_BLUE | FOREGROUND_GREEN | BACKGROUND_BLUE;
-void *settings::Dialog = nullptr;
 
 const char* param_add_to_panel_menu = "add_to_panel_menu";
 const char* param_add_to_editor_menu = "add_to_editor_menu";
@@ -54,7 +40,22 @@ const char* param_clr_updated = "clr_updated";
 const char* param_clr_offset = "clr_offset";
 const char* param_std_cursor_size = "std_cursor_size";
 
-void settings::load()
+Settings::Settings()
+	: add_to_panel_menu(true),
+	  add_to_editor_menu(true),
+	  add_to_viewer_menu(false),
+	  cmd_prefix(L"hex"),
+	  save_file_pos(false),
+	  show_dword_seps(true),
+	  move_inside_byte(true),
+	  std_cursor_size(false),
+	  clr_active(MAKEDWORD(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY, 0)),
+	  clr_updated(MAKEDWORD(FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY, 0)),
+	  clr_offset(MAKEDWORD(FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY, 0)),
+	  myDialog(nullptr)
+{
+}
+void Settings::load()
 {
 	KeyFileReadSection kfr(INI_LOCATION, INI_SECTION);
 	if (!kfr.SectionLoaded())
@@ -67,13 +68,13 @@ void settings::load()
 	show_dword_seps = kfr.GetInt(param_show_dword_seps, 0) != 0;
 	move_inside_byte = kfr.GetInt(param_move_inside_byte, 0) != 0;
 	std_cursor_size = kfr.GetInt(param_std_cursor_size, 0) != 0;
-	clr_active = static_cast<FarColor>(kfr.GetInt(param_clr_active, 0));
-	clr_updated = static_cast<FarColor>(kfr.GetInt(param_clr_updated, 0));
-	clr_offset = static_cast<FarColor>(kfr.GetInt(param_clr_offset, 0));
+	clr_active = static_cast<FarColor>(kfr.GetULL(param_clr_active, 0));
+	clr_updated = static_cast<FarColor>(kfr.GetULL(param_clr_updated, 0));
+	clr_offset = static_cast<FarColor>(kfr.GetULL(param_clr_offset, 0));
 }
 
 
-void settings::save()
+void Settings::save()
 {
 	KeyFileHelper kfh(INI_LOCATION);
 	kfh.SetInt(INI_SECTION, param_add_to_panel_menu, add_to_panel_menu ? 1 : 0);
@@ -84,60 +85,65 @@ void settings::save()
 	kfh.SetInt(INI_SECTION, param_show_dword_seps, show_dword_seps ? 1 : 0);
 	kfh.SetInt(INI_SECTION, param_move_inside_byte, move_inside_byte ? 1 : 0);
 	kfh.SetInt(INI_SECTION, param_std_cursor_size, std_cursor_size ? 1 : 0);
-	kfh.SetInt(INI_SECTION, param_clr_active, clr_active);
-	kfh.SetInt(INI_SECTION, param_clr_updated, clr_updated);
-	kfh.SetInt(INI_SECTION, param_clr_offset, clr_offset);
+	kfh.SetULL(INI_SECTION, param_clr_active, clr_active);
+	kfh.SetULL(INI_SECTION, param_clr_updated, clr_updated);
+	kfh.SetULL(INI_SECTION, param_clr_offset, clr_offset);
 }
 
-void settings::configure()
+void Settings::configure()
 {
-	fardialog::DlgCHECKBOX checkbox0("add_pm", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_add_pm), add_to_panel_menu);
-	fardialog::DlgCHECKBOX checkbox1("add_em", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_add_em), add_to_editor_menu);
-	fardialog::DlgCHECKBOX checkbox2("add_vm", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_add_vm), add_to_viewer_menu);
+	fardialog::DlgCHECKBOX checkbox0("add_pm", I18N(ps_cfg_add_pm), add_to_panel_menu);
+	fardialog::DlgCHECKBOX checkbox1("add_em", I18N(ps_cfg_add_em), add_to_editor_menu);
+	fardialog::DlgCHECKBOX checkbox2("add_vm", I18N(ps_cfg_add_vm), add_to_viewer_menu);
 	
-	fardialog::DlgTEXT text1(nullptr, _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_prefix));
+	fardialog::DlgTEXT text1(nullptr, I18N(ps_cfg_prefix));
 	fardialog::DlgEDIT edit1("prefix", 10);
-	fardialog::DlgHLine hline1;
-	fardialog::DlgCHECKBOX checkbox3("save_pos", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_save_pos), save_file_pos);
-	fardialog::DlgCHECKBOX checkbox4("move_ib", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_move_ib), move_inside_byte);
-	fardialog::DlgCHECKBOX checkbox5("std_csize", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_std_csize), std_cursor_size);
-	fardialog::DlgCHECKBOX checkbox6("show_dd", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_show_dd), show_dword_seps);
-	fardialog::DlgHLine hline2(nullptr, _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_clr_title));
-	fardialog::DlgBUTTON button1("clr_offset", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_clr_offset), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
-	fardialog::DlgBUTTON button2("clr_active", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_clr_active), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
-	fardialog::DlgBUTTON button3("clr_updated", _PSI.GetMsg(_PSI.ModuleNumber, ps_cfg_clr_updated), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
-	fardialog::DlgHLine hline3;
-	fardialog::DlgBUTTON button4("bn_ok", _PSI.GetMsg(_PSI.ModuleNumber, ps_ok), DIF_CENTERGROUP | DIF_DEFAULT, 0, 1);
-	fardialog::DlgBUTTON button5("bn_cancel", _PSI.GetMsg(_PSI.ModuleNumber, ps_cancel), DIF_CENTERGROUP);
+	fardialog::DlgHLine hline1(nullptr, nullptr);
+	fardialog::DlgCHECKBOX checkbox3("save_pos", I18N(ps_cfg_save_pos), save_file_pos);
+	fardialog::DlgCHECKBOX checkbox4("move_ib", I18N(ps_cfg_move_ib), move_inside_byte);
+	fardialog::DlgCHECKBOX checkbox5("std_csize", I18N(ps_cfg_std_csize), std_cursor_size);
+	fardialog::DlgCHECKBOX checkbox6("show_dd", I18N(ps_cfg_show_dd), show_dword_seps);
+	fardialog::DlgHLine hline2(nullptr, I18N(ps_cfg_clr_title));
+	fardialog::DlgBUTTON button1("clr_offset", I18N(ps_cfg_clr_offset), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
+	fardialog::DlgBUTTON button2("clr_active", I18N(ps_cfg_clr_active), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
+	fardialog::DlgBUTTON button3("clr_updated", I18N(ps_cfg_clr_updated), DIF_CENTERGROUP | DIF_BTNNOCLOSE);
+	fardialog::DlgHLine hline3(nullptr, nullptr);
+	fardialog::DlgBUTTON button4("bn_ok", I18N(ps_ok), DIF_CENTERGROUP | DIF_DEFAULT, 0, 1);
+	fardialog::DlgBUTTON button5("bn_cancel", I18N(ps_cancel), DIF_CENTERGROUP);
 
-	std::vector<fardialog::Window*> hbox1c = {&text1, &edit1};
-	fardialog::DlgHSizer hbox1(hbox1c);
-	std::vector<fardialog::Window*> hbox2c = {&checkbox4, &checkbox5, &checkbox6};
-	fardialog::DlgVSizer hbox2(hbox2c);
-	std::vector<fardialog::Window*> hbox3c = {&button2, &button3};
-	fardialog::DlgHSizer hbox3(hbox3c);
-	std::vector<fardialog::Window*> hbox4c = {&button4, &button5};
-	fardialog::DlgHSizer hbox4(hbox4c);
+	fardialog::DlgHSizer hbox1({&text1, &edit1});
+	fardialog::DlgVSizer vbox2({&checkbox4, &checkbox5, &checkbox6});
+	fardialog::DlgHSizer hbox3({&button2, &button3});
+	fardialog::DlgHSizer hbox4({&button4, &button5});
 
-	std::vector<fardialog::Window*> vbox1c = {
+	fardialog::DlgVSizer vbox1({
 		&checkbox0,
 		&checkbox1,
 		&checkbox2,
 		&hbox1,
 		&hline1,
 		&checkbox3,
-		&hbox2,
+		&vbox2,
 		&hline2,
 		&button1,
 		&hbox3,
 		&hline3,
 		&hbox4
-	};
-	fardialog::DlgVSizer vbox1(vbox1c);
-	fardialog::Dialog dlg(&_PSI, _PSI.GetMsg(_PSI.ModuleNumber, ps_title), _PSI.GetMsg(_PSI.ModuleNumber, ps_helptopic), 0, &settings::dlg_proc, 0);
-	dlg.buildFDI(&vbox1);
+	});
+	auto dlg = fardialog::CreateDialog(
+		I18N(ps_title),
+		I18N(ps_helptopic),
+		0,
+		*this,
+		&Settings::dlg_proc,
+		vbox1
+	);
 
-	settings::Dialog = &dlg;
+	myDialog = &dlg;
+	FarColor save_clr_active = clr_active;
+	FarColor save_clr_updated = clr_updated;
+	FarColor save_clr_offset = clr_offset;
+
 
 	const HANDLE hDlg = dlg.DialogInit();
 	const intptr_t rc = _PSI.DialogRun(hDlg);
@@ -151,24 +157,29 @@ void settings::configure()
 		std_cursor_size = dlg.GetCheck(dlg.getID("std_csize")) != 0;
 		show_dword_seps = dlg.GetCheck(dlg.getID("show_dd")) != 0;
 		save();
+	} else {
+		clr_active = save_clr_active;
+		clr_updated = save_clr_updated;
+		clr_offset = save_clr_offset;
 	}
 	_PSI.DialogFree(hDlg);
 }
 
 
-LONG_PTR WINAPI settings::dlg_proc(HANDLE dlg, int Msg, int Param1, LONG_PTR Param2)
+LONG_PTR WINAPI Settings::dlg_proc(HANDLE dlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if (Msg == DN_BTNCLICK) {
 		FarColor *fc = nullptr;
-		fardialog::Dialog *dlg = static_cast<fardialog::Dialog*>(settings::Dialog);
-		if (Param1 == dlg->getID("clr_offset"))
-			fc = &settings::clr_offset;
-		else if (Param1 == dlg->getID("clr_active"))
-			fc = &settings::clr_active;
-		else if (Param1 == dlg->getID("clr_updated"))
-			fc = &settings::clr_updated;
-		if (fc)
+		if (Param1 == myDialog->getID("clr_offset"))
+			fc = &clr_offset;
+		else if (Param1 == myDialog->getID("clr_active"))
+			fc = &clr_active;
+		else if (Param1 == myDialog->getID("clr_updated"))
+			fc = &clr_updated;
+		if (fc){
 			_PSI.ColorDialog(0, fc);
+			return 1;
+		}
 	}
 	return _PSI.DefDlgProc(dlg, Msg, Param1, Param2);
 }

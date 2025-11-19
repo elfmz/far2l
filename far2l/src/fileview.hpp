@@ -119,6 +119,7 @@ public:
 	int64_t GetViewFilePos() const;
 	void ShowStatus();
 	void SetAutoClose(bool AC) { AutoClose = AC; }
+	void SetWrapModeAndType(bool Wrap, bool WordWrap);
 };
 
 void ModalViewFile(const std::string &pathname);

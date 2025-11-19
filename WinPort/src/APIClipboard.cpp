@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string>
-#include <locale> 
+#include <locale>
 #include <map>
 #include <set>
 #include <vector>
@@ -41,9 +41,9 @@ __attribute__ ((visibility("default"))) IClipboardBackend *WinPortClipboard_SetB
 }
 
 extern "C" {
-	
+
 	WINPORT_DECL(RegisterClipboardFormat, UINT, (LPCWSTR lpszFormat))
-	{		
+	{
 		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
 		return g_clipboard_backend ? g_clipboard_backend->OnClipboardRegisterFormat(lpszFormat) : 0;
 	}
@@ -104,7 +104,7 @@ extern "C" {
 		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);
 		return g_clipboard_backend ? g_clipboard_backend->OnClipboardIsFormatAvailable(format) : FALSE;
 	}
-	
+
 	WINPORT_DECL(GetClipboardData, HANDLE, (UINT format))
 	{
 		std::lock_guard<std::mutex> lock(g_clipboard_backend_mutex);

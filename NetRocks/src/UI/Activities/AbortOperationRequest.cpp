@@ -5,14 +5,14 @@
 #include "../../Globals.h"
 
 
-/*                                               
+/*
 345                                            50
  ============= Abort operation ================
 | Confirm abort current operation              |
 |----------------------------------------------|
 |   [ &Abort operation  ]    [ &Continue ]     |
  ==============================================
-    6                   27   32           45     
+    6                   27   32           45
 */
 
 
@@ -84,7 +84,7 @@ protected:
 					}
 				}
 			}
-		}	
+		}
 		return BaseDialog::DlgProc(msg, param1, param2);
 	}
 
@@ -130,7 +130,7 @@ void AbortOperationRequest(ProgressState &state, bool force_immediate)
 		saved_paused = state.paused;
 		state.paused = true;
 	}
-	if (!AbortConfirm().Ask()) { //param1 == _i_cancel && 
+	if (!AbortConfirm().Ask()) { //param1 == _i_cancel &&
 		std::lock_guard<std::mutex> locker(state.mtx);
 		state.paused = saved_paused;
 		return;

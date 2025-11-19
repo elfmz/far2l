@@ -107,11 +107,11 @@ int pipe_cloexec(int pipedes[2])
 	return r;
 #else
 	return os_call_int(pipe2, pipedes, O_CLOEXEC);
-#endif	
+#endif
 }
 
 bool IsPathIn(const wchar_t *path, const wchar_t *root)
-{	
+{
 	const size_t path_len = wcslen(path);
 	size_t root_len = wcslen(root);
 
@@ -123,7 +123,7 @@ bool IsPathIn(const wchar_t *path, const wchar_t *root)
 
 	if (memcmp(path, root, root_len * sizeof(wchar_t)) != 0)
 		return false;
-	
+
 	if (root_len > 1 && path[root_len] && path[root_len] != GOOD_SLASH)
 		return false;
 
@@ -211,7 +211,7 @@ std::wstring FileSizeString(unsigned long long value)
 static inline bool CaseIgnoreEngChrMatch(const char c1, const char c2)
 {
 	if (c1 != c2) {
-		if (c1 >= 'A' && c1 <= 'Z') { 
+		if (c1 >= 'A' && c1 <= 'Z') {
 			if (c1 + ('a' - 'A') != c2) {
 				return false;
 			}

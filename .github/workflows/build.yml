@@ -16,12 +16,15 @@ on:
       - '.gitignore'
       - '.travis.yml'
       - 'Brewfile'
+      - 'changelog.md'
       - 'CODESTYLE.md'
       - 'dependencies-minimal.txt'
       - 'dependencies.txt'
       - 'Dockerfile'
+      - 'DUMPER.md'
       - 'HACKING.md'
       - 'LICENSE.txt'
+      - 'packaging/**'
       - 'README.md'
   # run on pull request to master
   pull_request:
@@ -33,15 +36,15 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  ubuntu-low-compiler:
+  different-compiler:
     if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc7, clang7 ]
+        compiler: [ gcc7, clang7, gcc15 ]
 
-    name: ubuntu-${{ matrix.compiler }}
+    name: ${{ matrix.compiler }}
 
     steps:
       - name: Checkout source
@@ -160,7 +163,61 @@ jobs:
 
       - name: Validate AppStream metainfo file
         run: appstreamcli validate --strict _build/far2l/DE/io.github.elfmz.far2l.metainfo.xml
-        
+
+  ubuntu-clang20:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [ clang ]
+        include:
+          - compiler: clang
+            version: 20
+            c: /usr/bin/clang-20
+            cxx: /usr/bin/clang++-20
+
+    name: ubuntu-${{ matrix.compiler }}-${{ matrix.version }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install far2l dependencies
+        run: >
+          sudo apt-get update;
+          sudo apt-get -y install
+          clang-20
+          libuchardet-dev libxml2-dev libwxgtk3.2-dev
+          libx11-dev libxi-dev
+          libssl-dev libsmbclient-dev libnfs-dev libneon27-dev libssh-dev
+          libarchive-dev
+          python3-dev python3-cffi
+          python3-markdown appstream
+
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: >
+          cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+          -DCMAKE_C_COMPILER=${{ matrix.c }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(nproc --all)
+
+      - name: Validate AppStream metainfo file
+        run: appstreamcli validate --strict _build/far2l/DE/io.github.elfmz.far2l.metainfo.xml
+
   macos14-arm64-clang15:
     if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
     runs-on: macos-14
@@ -188,6 +245,39 @@ jobs:
         # -S and -B options specify source and build directories
         run: cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
   
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: |
+          cmake --build _build --config $BUILD_TYPE -j$(sysctl -n hw.logicalcpu)
+
+  macos15-arm64-clang16:
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository != 'elfmz/far2l') }}
+    runs-on: macos-15
+
+    steps:
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install far2l dependencies
+        # libx11, openssl is already installed
+        run: brew bundle -v
+
+      - name: Relink 'keg-only' packages
+        run: brew link libarchive --force
+
+      - name: Create Build Environment
+        # Create a separate build directory as working directory for all subsequent commands
+        run: mkdir -p _build
+
+      - name: Configure CMake
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # -S and -B options specify source and build directories
+        run: cmake -S . -B _build -Wno-dev -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DPYTHON=yes
+
       - name: Build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"

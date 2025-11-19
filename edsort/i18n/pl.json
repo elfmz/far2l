@@ -1,0 +1,20 @@
+{
+  "_": "_",
+  "ps_err_block_type": "Sortowanie działa tylko z zaznaczeniem blokowym.",
+  "ps_err_block_lines": "Wymagane zaznaczenie przynajmniej 2 wierszy.",
+  "ps_err_block_whole1": "Edsort może sortować tylko całe wiersze,",
+  "ps_err_block_whole2f": "ale pierwszy wiersz jest zaznaczony tylko częściowo.",
+  "ps_err_block_whole2l": "ale ostatni wiersz jest zaznaczony tylko częściowo.",
+  "ps_err_block_whole3": "Czy zaznaczyć go w całości (Tak),",
+  "ps_err_block_whole4": "czy wykluczyć z wyboru (Nie)?",
+  "ps__cancel": "&Anuluj",
+  "ps__no": "&Nie",
+  "ps__retry": "&Ponów",
+  "ps__yes": "&Tak",
+  "ps_cancel": "Anuluj",
+  "ps_helptopic": "edsort",
+  "ps_ok": "OK",
+  "ps_column": "Kolumna",
+  "ps_title": "Sortuj wiersze",
+  "ps_reverse": "&Malejąco"
+}

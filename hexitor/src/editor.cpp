@@ -19,15 +19,35 @@
 
 #include "editor.h"
 #include "progress.h"
-#include "string_rc.h"
+#include "i18nindex.h"
 #include "goto_dlg.h"
 #include "find_dlg.h"
 #include "settings.h"
 #include "history.h"
 #include "version.h"
+#include "hex_ctl.h" // For CP_UTF8
 #include <farkeys.h>
+#include <algorithm> // for std::max
+#include <UtfConvert.hpp> // For UtfConverter
 
-#define MIN_WIDTH		80		//Minimum width width size of main edit window
+// Helper to find the start of the previous UTF-8 character
+UINT64 find_prev_utf8_start(const editor* ed, UINT64 current_offset)
+{
+	if (current_offset == 0) return 0;
+	UINT64 offset = current_offset - 1;
+	int limit = 6; // Sane limit for backward search
+	// Move backwards until we find a byte that is NOT a continuation byte (10xxxxxx)
+	while (offset > 0 && limit-- > 0) {
+		BYTE b = ed->get_current_value(offset);
+		if ((b & 0xC0) != 0x80) {
+			break; // Found the start of a character
+		}
+		offset--;
+	}
+	return offset;
+}
+
+#define MIN_WIDTH		100		//Minimum width width size of main edit window
 #define MIN_HEIGHT	3		//Minimum height width size of main edit window
 
 #define ID_TITLE		0		//Id of the fake title control
@@ -40,10 +60,6 @@
 #endif // MAXUINT64
 
 //#############################################################################
-
-static const auto get_msg(const int txt_id) noexcept {
-	return _PSI.GetMsg(_PSI.ModuleNumber, txt_id);
-}
 
 static constexpr FARMESSAGEFLAGS MB_mask
 = FMSG_MB_OK					// =
@@ -60,21 +76,21 @@ static auto msg_box(
 	auto flags(f);
 	auto items(i);
 	intptr_t nbutt(0);
-	auto b1{ 0 }, b2{ 0 }, b3{ 0 };
+	const wchar_t *b1= nullptr, *b2= nullptr, *b3= nullptr;
 	const wchar_t* my_items[20]; // big enough to append buttons
 
 	switch (f & MB_mask) {
-	case FMSG_MB_YESNO:       b1 = ps__yes;   b2 = ps__no;                  break;
-	case FMSG_MB_YESNOCANCEL: b1 = ps__yes;   b2 = ps__no; b3 = ps__cancel; break;
-	case FMSG_MB_RETRYCANCEL: b1 = ps__retry; b2 = ps__cancel;              break;
+	case FMSG_MB_YESNO:       b1 = I18N(ps__yes);   b2 = I18N(ps__no);                  break;
+	case FMSG_MB_YESNOCANCEL: b1 = I18N(ps__yes);   b2 = I18N(ps__no); b3 = I18N(ps__cancel); break;
+	case FMSG_MB_RETRYCANCEL: b1 = I18N(ps__retry); b2 = I18N(ps__cancel);              break;
 	}
 	if (b1) {
 		for (size_t j = 0; j < ntext; ++j) my_items[j] = i[j];
 		items = &my_items[0];
 		flags &= ~MB_mask;
-		my_items[ntext + nbutt++] = get_msg(b1);
-		if (b2) my_items[ntext + nbutt++] = get_msg(b2);
-		if (b3) my_items[ntext + nbutt++] = get_msg(b3);
+		my_items[ntext + nbutt++] = b1;
+		if (b2) my_items[ntext + nbutt++] = b2;
+		if (b3) my_items[ntext + nbutt++] = b3;
 	}
 
 	return _PSI.Message(_PSI.ModuleNumber, flags, nullptr, items, ntext+nbutt, nbutt);
@@ -90,8 +106,7 @@ static inline auto msg_box(const FARMESSAGEFLAGS f, const wchar_t* (&msgs)[N]) {
 editor::editor()
 :	_cursor_offset(0), _cursor_fbp(true), _cursor_iha(true),
 	_view_offset(0),
-	_undo_pos(string::npos),
-	_search_fwd(true)
+	_undo_pos(string::npos)
 {
 }
 
@@ -101,11 +116,17 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 {
 	assert(file_name && *file_name);
 
+	//Create edit window
+	SMALL_RECT far_wnd_size = { 0, 0, MIN_WIDTH, MIN_HEIGHT };
+	_PSI.AdvControl(_PSI.ModuleNumber, ACTL_GETFARRECT, &far_wnd_size, 0);
+	const size_t wnd_width = max(far_wnd_size.Right - far_wnd_size.Left + 1, MIN_WIDTH);
+	const size_t wnd_heigth = max(far_wnd_size.Bottom - far_wnd_size.Top + 1, MIN_HEIGHT);
+
 	//Open edited file
 	const DWORD open_status = _file.open(file_name);
 	if (open_status != ERROR_SUCCESS) {
 		const wchar_t* err_msg[] = {
-			get_msg(ps_title), get_msg(ps_err_open_file), file_name
+			I18N(ps_title), I18N(ps_err_open_file), file_name
 		};
 		msg_box(FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_OK, err_msg);
 		return false;
@@ -121,12 +142,6 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 
 	//Prepare undo buffer
 	_undo.reserve(1024);
-
-	//Create edit window
-	SMALL_RECT far_wnd_size = { 0, 0, MIN_WIDTH, MIN_HEIGHT };
-	_PSI.AdvControl(_PSI.ModuleNumber, ACTL_GETFARRECT, &far_wnd_size, 0);
-	const size_t wnd_width = max(far_wnd_size.Right - far_wnd_size.Left + 1, MIN_WIDTH);
-	const size_t wnd_heigth = max(far_wnd_size.Bottom - far_wnd_size.Top + 1, MIN_HEIGHT);
 
 	//Allocate screen buffers
 	_statusbar.resize(wnd_width);
@@ -168,7 +183,7 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 	_cursor_offset = _view_offset;
 
 	//Try to find last position in history
-	if (_cursor_offset == 0 && settings::save_file_pos && history().load_last_position(_file.name(), _view_offset, _cursor_offset)) {
+	if (_cursor_offset == 0 && settings.save_file_pos && history().load_last_position(_file.name(), _view_offset, _cursor_offset)) {
 		if (_cursor_offset < _view_offset || _cursor_offset >= _view_offset + _hexeditor.showed_data_size())
 			_view_offset = _cursor_offset - _cursor_offset % 0x10;
 	}
@@ -186,7 +201,7 @@ bool editor::edit(const wchar_t* file_name, const UINT64 file_offset /*= 0*/)
 		wnd_heigth,
 		nullptr,
 		dlg_items,
-		sizeof(dlg_items) / sizeof(dlg_items[0]),
+		ARRAYSIZE(dlg_items),
 		0,
 		FDLG_NODRAWSHADOW | FDLG_NODRAWPANEL | FDLG_NONMODAL,
 		(FARWINDOWPROC)&editor::dlg_proc,
@@ -206,7 +221,7 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 
 	if (msg == DN_INITDIALOG) {
 		DWORD cursor_size = MAKELONG(1, 100);
-		if (settings::std_cursor_size) {
+		if (settings.std_cursor_size) {
 			CONSOLE_CURSOR_INFO cci;
 			if (GetConsoleCursorInfo(0, &cci))
 				cursor_size = MAKELONG(1, cci.dwSize);
@@ -225,17 +240,17 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 		return 1;
 	}
 	else if (msg == DN_KEY){
-		if( param1 == -1) 
+		if( param1 == -1){
 			instance->set_keys_state((int)param2);
-		else if( param1 == ID_EDITOR)
-			instance->handle_key_down((int)param2);
-		return 1;
+			return 1;
+		} else if( param1 == ID_EDITOR)
+			return instance->handle_key_down((int)param2);
+		return _PSI.DefDlgProc(dlg, msg, param1, (LONG_PTR)param2);
 	} else if (msg == DN_MOUSECLICK || msg == DN_MOUSEEVENT){
-		instance->move_handle_mouse(msg, param1, (MOUSE_EVENT_RECORD *)param2);
-		return 1;
+		return instance->move_handle_mouse(msg, param1, (MOUSE_EVENT_RECORD *)param2);
 	} else if( msg == DN_CLOSE) {
 		//Save last position to history
-		if (settings::save_file_pos)
+		if (settings.save_file_pos)
 			history().save_last_position(instance->_file.name(), instance->_view_offset, instance->_cursor_offset);
         delete instance;
         _PSI.SendDlgMessage(dlg, DM_SETDLGDATA, 0, 0);
@@ -249,6 +264,9 @@ LONG_PTR WINAPI editor::dlg_proc(HANDLE dlg, int msg, int param1, LONG_PTR param
 
 void editor::on_resize(const COORD& coord)
 {
+	if( coord.X < MIN_WIDTH || coord.Y < MIN_HEIGHT )
+		return;
+
 	_PSI.SendDlgMessage(_dialog, DM_ENABLEREDRAW, FALSE, (LONG_PTR)nullptr);
 
 	//Resize screen controls
@@ -317,14 +335,14 @@ bool editor::save()
 
 	if (_file.read_only()) {
 		const wchar_t* msg[] = {
-			get_msg(ps_sav_title), get_msg(ps_sav_file), _file.name(), get_msg(ps_sav_readonly), get_msg(ps_sav_overwrq)
+			I18N(ps_sav_title), I18N(ps_sav_file), _file.name(), I18N(ps_sav_readonly), I18N(ps_sav_overwrq)
 		};
 		if (msg_box(FMSG_WARNING | FMSG_MB_YESNO, msg) != 0)
 			return false;
 		DWORD setattr_status;
 		while ((setattr_status = file::clear_read_only(_file.name())) != ERROR_SUCCESS) {
 			const wchar_t* err_msg[] = {
-				get_msg(ps_sav_title), get_msg(ps_err_save_file), _file.name()
+				I18N(ps_sav_title), I18N(ps_err_save_file), _file.name()
 			};
 			if (msg_box(FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_RETRYCANCEL, err_msg) != 0)
 				return false;
@@ -334,7 +352,7 @@ bool editor::save()
 	DWORD save_status;
 	while ((save_status = _file.save(_upd_data)) != ERROR_SUCCESS) {
 		const wchar_t* err_msg[] = {
-			get_msg(ps_sav_title), get_msg(ps_err_save_file), _file.name()
+			I18N(ps_sav_title), I18N(ps_err_save_file), _file.name()
 		};
 		if (msg_box(FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_RETRYCANCEL, err_msg) != 0)
 			return false;
@@ -354,26 +372,26 @@ void editor::save_as()
 {
 	wchar_t new_file_name[1024];
 	if (!_PSI.InputBox(
-		get_msg(ps_sav_title), get_msg(ps_sav_saveas),
-		nullptr, _file.name(), new_file_name, sizeof(new_file_name), nullptr, FIB_EXPANDENV | FIB_BUTTONS | FIB_EDITPATH))
+		I18N(ps_sav_title), I18N(ps_sav_saveas),
+		nullptr, _file.name(), new_file_name, ARRAYSIZE(new_file_name), nullptr, FIB_EXPANDENV | FIB_BUTTONS | FIB_EDITPATH))
 		return;
 
 	if (file::file_exist(new_file_name)) {
 		const wchar_t* msg[] = {
-			get_msg(ps_sav_title), get_msg(ps_sav_file), _file.name(), get_msg(ps_sav_alrexist), get_msg(ps_sav_overwrq)
+			I18N(ps_sav_title), I18N(ps_sav_file), _file.name(), I18N(ps_sav_alrexist), I18N(ps_sav_overwrq)
 		};
 		if (msg_box(FMSG_WARNING | FMSG_MB_YESNO, msg) != 0)
 			return;
 	}
 
-	progress progress_wnd(get_msg(ps_sav_title), 0, _file.size());
+	progress progress_wnd(I18N(ps_sav_title), 0, _file.size());
 
 	DWORD save_status;
 	while ((save_status = _file.save_as(new_file_name, _upd_data, &editor::copy_progress_routine, &progress_wnd)) != ERROR_SUCCESS) {
 		if (save_status != NO_ERROR)
 			return;
 		const wchar_t* err_msg[] = {
-			get_msg(ps_sav_title), get_msg(ps_err_save_file), _file.name()
+			I18N(ps_sav_title), I18N(ps_err_save_file), _file.name()
 		};
 		if (msg_box(FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_RETRYCANCEL, err_msg) != 0)
 			return;
@@ -447,22 +465,28 @@ bool editor::move_handle_key(int key)
 				}
 			}
 			else {
-				if (_cursor_offset && !_cursor_iha)
+				if (!_cursor_iha && _hexeditor.get_codepage() == CP_UTF8) {
+					// Move to the beginning of the previous UTF-8 character
+					_cursor_offset = find_prev_utf8_start(this, _cursor_offset);
 					_cursor_fbp = true;
-				if (_cursor_offset || (_cursor_iha && !_cursor_fbp)) {
-					bool cursor_moved = false;
-					if (_cursor_iha) {
-						if (settings::move_inside_byte) {
-							cursor_moved = _cursor_fbp;
-							_cursor_fbp = !_cursor_fbp;
+				} else { // Original logic for other modes
+					if (_cursor_offset && !_cursor_iha)
+						_cursor_fbp = true;
+					if (_cursor_offset || (_cursor_iha && !_cursor_fbp)) {
+						bool cursor_moved = false;
+						if (_cursor_iha) {
+							if (settings.move_inside_byte) {
+								cursor_moved = _cursor_fbp;
+								_cursor_fbp = !_cursor_fbp;
+							}
+							else {
+								cursor_moved = true;
+								_cursor_fbp = true;
+							}
 						}
-						else {
-							cursor_moved = true;
-							_cursor_fbp = true;
-						}
+						if (!_cursor_iha || cursor_moved)
+							_cursor_offset -= (_hexeditor.get_codepage() == CP_UTF16LE && !_cursor_iha ? 2 : 1);
 					}
-					if (!_cursor_iha || cursor_moved)
-						_cursor_offset -= (_hexeditor.get_codepage() == CP_UTF16LE && !_cursor_iha ? 2 : 1);
 				}
 			}
 			if (_cursor_offset < _view_offset)
@@ -471,18 +495,32 @@ bool editor::move_handle_key(int key)
 
 		case KEY_NUMPAD6:
 		case KEY_RIGHT:
-			if (!ctrl_pressed)
-				move_right(false);
-			else {
+			if (ctrl_pressed) {
 				_cursor_fbp = true;
 				_cursor_offset = _cursor_offset + 0x4 - (_cursor_offset % 0x4);
 				if (_cursor_offset >= _file.size())
 					_cursor_offset = _file.size() - 1;
+			} else {
+				if (!_cursor_iha && _hexeditor.get_codepage() == CP_UTF8) {
+					// Move to the beginning of the next UTF-8 character
+					if (_cursor_offset < _file.size()) {
+						int len = get_utf8_char_len(get_current_value(_cursor_offset));
+						if (_cursor_offset + len < _file.size()) {
+							_cursor_offset += len;
+						} else {
+							_cursor_offset = _file.size() -1;
+						}
+						_cursor_fbp = true;
+					}
+				} else { // Original logic for other modes
+					move_right(false);
+				}
 			}
 			if (_cursor_offset >= _view_offset + _hexeditor.showed_data_size())
 				update_buffer(_view_offset + 0x10);
 			break;
 
+		case KEY_MSWHEEL_UP:
 		case KEY_NUMPAD8:
 		case KEY_UP:
 			if (ctrl_pressed) {
@@ -504,6 +542,7 @@ bool editor::move_handle_key(int key)
 			}
 			break;
 
+		case KEY_MSWHEEL_DOWN:
 		case KEY_NUMPAD2:
 		case KEY_DOWN:
 			if (ctrl_pressed) {
@@ -581,8 +620,11 @@ bool editor::move_handle_mouse(int msg, int ctrl, MOUSE_EVENT_RECORD *rec)
 	if( ctrl == ID_KEYBAR && msg == DN_MOUSECLICK){
 		//Mouse click on fake button?
 		const WORD btn_id = _keybar.get_button(rec->dwMousePosition.X);
-		if (btn_id > 0)
-			event_handled = sckey_handle(VK_F1 + btn_id - 1);
+		if (btn_id > 0){
+			event_handled = sckey_handle(KEY_F1 + btn_id - 1);
+			if( btn_id == 10 )
+				return true; // dont process further, dialog is destroyed
+		}
 	}
 	else if( ctrl == ID_EDITOR ){
 		if (msg == DN_MOUSECLICK) {
@@ -657,7 +699,7 @@ bool editor::sckey_handle(const int key)
 				bool can_exit = _upd_data.empty();
 				if (!can_exit) {
 					const wchar_t* msg[] = {
-						get_msg(ps_sav_title), get_msg(ps_sav_modifq)
+						I18N(ps_sav_title), I18N(ps_sav_modifq)
 					};
 					const intptr_t ret = msg_box(FMSG_WARNING | FMSG_MB_YESNOCANCEL, msg);
 					if (ret == 0)
@@ -748,8 +790,16 @@ bool editor::sckey_handle(const int key)
 		case KEY_F9:
 			if ((!ctrl_pressed && !alt_pressed && !shift_pressed) || (!ctrl_pressed && alt_pressed && shift_pressed)) {
 				even_handled = true;
-				settings::configure();
+				settings.configure();
 				update_screen();
+			}
+			break;
+
+		case KEY_F12:
+			if (!ctrl_pressed && !alt_pressed && !shift_pressed) {
+				int KeyArray[] = {KEY_F12};
+				_PSI.SendDlgMessage(_dialog, DM_KEY, 1, (LONG_PTR)&KeyArray);
+				even_handled = true;
 			}
 			break;
 
@@ -798,7 +848,11 @@ bool editor::edkey_handle(int key)
 	bool alt_pressed = (kb_state == keybar_ctl::st_alt);
 	if (ctrl_pressed || alt_pressed)
 		return false;
-	
+
+	if (key == KEY_DEL || key == KEY_NUMDEL) {
+		// Disable DELETE key for now
+		return true; // Event handled, do nothing
+	}
 	if( key & KEY_CTRLMASK )
 		return false;
 	key &= KEY_MASKF;
@@ -818,7 +872,7 @@ bool editor::edkey_handle(int key)
 
 		if (!_file.writable()) {
 			const wchar_t* msg[] = {
-				get_msg(ps_title), get_msg(ps_swmod_warn), get_msg(ps_swmod_quest)
+				I18N(ps_title), I18N(ps_swmod_warn), I18N(ps_swmod_quest)
 			};
 			if (msg_box(FMSG_MB_YESNO, msg))
 				return false;
@@ -829,6 +883,7 @@ bool editor::edkey_handle(int key)
 		const BYTE old_val = get_current_value(_cursor_offset);
 		const BYTE new_val = _cursor_fbp ? ((old_val & 0x0f) | (key_code << 4)) : ((old_val & 0xf0) | key_code);
 		update_data(_cursor_offset, new_val);
+		move_right(true);
 	}
 	else {
 		if (key < ' ')
@@ -836,7 +891,7 @@ bool editor::edkey_handle(int key)
 
 		if (!_file.writable()) {
 			const wchar_t* msg[] = {
-				get_msg(ps_title), get_msg(ps_swmod_warn), get_msg(ps_swmod_quest)
+				I18N(ps_title), I18N(ps_swmod_warn), I18N(ps_swmod_quest)
 			};
 			if (msg_box(FMSG_MB_YESNO, msg) != 0)
 				return false;
@@ -845,19 +900,55 @@ bool editor::edkey_handle(int key)
 		}
 		const wchar_t key_value = static_cast<wchar_t>(key);
 
-		if (_hexeditor.get_codepage() == CP_UTF16LE) {
-			update_data(_cursor_offset, LOBYTE(key_value));
-			if (_cursor_offset + 1 < _file.size())
-				update_data(_cursor_offset + 1, HIBYTE(key_value));
+		if (_hexeditor.get_codepage() == CP_UTF8) {
+			// Get length of the character we are about to replace
+			const int old_len = get_utf8_char_len(get_current_value(_cursor_offset));
+
+			// Get bytes of the new character
+			UtfConverter<wchar_t, uint8_t, false> utf8_seq(&key_value, 1);
+			const int new_len = utf8_seq.size();
+
+			// Determine loop boundary to handle both expansion and contraction
+			const int loop_len = std::max(old_len, new_len);
+
+			// Overwrite bytes
+			for (int i = 0; i < loop_len; ++i) {
+				if (_cursor_offset + i >= _file.size()) break; // End of file check
+
+				if (i < new_len) {
+					// Write new character's byte
+					update_data(_cursor_offset + i, utf8_seq[i]);
+				} else {
+					// New char is shorter, pad with null bytes
+					update_data(_cursor_offset + i, 0x00);
+				}
+			}
+
+			// Advance cursor by the length of the *new* character for continuous typing
+			_cursor_offset += new_len;
+			if (_cursor_offset >= _file.size()) {
+				_cursor_offset = _file.size() - 1;
+			}
+			_cursor_fbp = true;
 		}
 		else {
-			BYTE new_val;
-			WideCharToMultiByte(_hexeditor.get_codepage(), 0, &key_value, 1, reinterpret_cast<LPSTR>(&new_val), 1, nullptr, nullptr);
-			update_data(_cursor_offset, new_val);
+			if (_hexeditor.get_codepage() == CP_UTF16LE) {
+				update_data(_cursor_offset, LOBYTE(key_value));
+				if (_cursor_offset + 1 < _file.size())
+					update_data(_cursor_offset + 1, HIBYTE(key_value));
+			}
+			else {
+				BYTE new_val;
+				WideCharToMultiByte(_hexeditor.get_codepage(), 0, &key_value, 1, reinterpret_cast<LPSTR>(&new_val), 1, nullptr, nullptr);
+				update_data(_cursor_offset, new_val);
+			}
+			move_right(true);
 		}
 	}
 
-	move_right(true);
+	if (_cursor_offset >= _view_offset + _hexeditor.showed_data_size())
+		update_buffer(_view_offset + 0x10);
+
 	move_far_cursor();
 	update_screen();
 
@@ -871,7 +962,7 @@ bool editor::switch_mode()
 	if (!_upd_data.empty()) {
 		assert(_file.writable());
 		const wchar_t* msg[] = {
-			get_msg(ps_title), get_msg(ps_sav_modifq)
+			I18N(ps_title), I18N(ps_sav_modifq)
 		};
 		const intptr_t ret = msg_box(FMSG_MB_YESNOCANCEL | FMSG_WARNING, msg);
 
@@ -889,7 +980,7 @@ bool editor::switch_mode()
 	while ((swm_status = _file.switch_mode()) != ERROR_SUCCESS) {
 		SetLastError(swm_status);
 		const wchar_t* err_msg[] = {
-			get_msg(ps_title), get_msg(ps_err_open_file), _file.name()
+			I18N(ps_title), I18N(ps_err_open_file), _file.name()
 		};
 		if (msg_box(FMSG_WARNING | FMSG_ERRORTYPE | FMSG_MB_RETRYCANCEL, err_msg) != 0)
 			return false;
@@ -906,7 +997,7 @@ bool editor::switch_mode()
 
 void editor::move_right(const bool ingnore_settings)
 {
-	if (_cursor_iha && _cursor_fbp && (ingnore_settings || settings::move_inside_byte))
+	if (_cursor_iha && _cursor_fbp && (ingnore_settings || settings.move_inside_byte))
 		_cursor_fbp = false;
 	else if (_cursor_offset + (_hexeditor.get_codepage() == CP_UTF16LE && !_cursor_iha ? 2 : 1) < _file.size()) {
 		_cursor_fbp = true;
@@ -1029,7 +1120,7 @@ void editor::paste()
 
 	if (!_file.writable()) {
 		const wchar_t* msg[] = {
-			get_msg(ps_title), get_msg(ps_swmod_warn), get_msg(ps_swmod_quest)
+			I18N(ps_title), I18N(ps_swmod_warn), I18N(ps_swmod_quest)
 		};
 		if (msg_box(FMSG_MB_YESNO, msg) != 0)
 			return;
@@ -1095,7 +1186,7 @@ void editor::find(const bool forward, const bool force_dlg)
 
 	if (dir_forward && _cursor_offset + 1 < _file.size()) {
 		//Initialize progress bar window
-		progress progress_wnd(get_msg(ps_find_title), _cursor_offset, _file.size());
+		progress progress_wnd(I18N(ps_find_title), _cursor_offset, _file.size());
 
 		//Initial read position
 		UINT64 read_offset = _cursor_offset + 1;
@@ -1139,7 +1230,7 @@ void editor::find(const bool forward, const bool force_dlg)
 	}
 	else if (!dir_forward && _cursor_offset != 0) {
 		//Initialize progress bar window
-		progress progress_wnd(get_msg(ps_find_title), _cursor_offset, 0);
+		progress progress_wnd(I18N(ps_find_title), _cursor_offset, 0);
 
 		//Initial read position
 		UINT64 read_offset_start = _cursor_offset < init_buff_size ? 0 : _cursor_offset - init_buff_size;
@@ -1189,7 +1280,7 @@ void editor::find(const bool forward, const bool force_dlg)
 
 	if (seq_offset == MAXUINT64 && !interrupted_by_user) {
 		const wchar_t* msg[] = {
-			get_msg(ps_find_title), get_msg(ps_find_not_found)
+			I18N(ps_find_title), I18N(ps_find_not_found)
 		};
 		msg_box(FMSG_MB_OK, msg);
 	}
@@ -1212,11 +1303,11 @@ BYTE editor::get_current_value(const UINT64 offset) const
 	BYTE val = 0;
 
 	if (offset < _file.size()) {
-		map<UINT64, BYTE>::const_iterator itup = _upd_data.find(_cursor_offset);
+		map<UINT64, BYTE>::const_iterator itup = _upd_data.find(offset); // Corrected: use offset, not _cursor_offset
 		if (itup != _upd_data.end())
 			val = itup->second;
 		else {
-			if (offset >= _view_offset && offset < _view_offset + _hexeditor.showed_data_size())
+			if (offset >= _view_offset && offset < _view_offset + _ori_data.size()) // Corrected: use _ori_data.size()
 				val = _ori_data[static_cast<size_t>(offset - _view_offset)];
 			else {
 				//Read from file
@@ -1240,7 +1331,7 @@ bool editor::update_buffer(const UINT64 offset)
 	const DWORD read_status = _file.read(offset, _ori_data, _hexeditor.showed_data_size());
 	if (read_status != ERROR_SUCCESS) {
 		const wchar_t* msg[] = {
-			get_msg(ps_title), get_msg(ps_err_read_file), _file.name()
+			I18N(ps_title), I18N(ps_err_read_file), _file.name()
 		};
 		msg_box(FMSG_MB_OK | FMSG_WARNING | FMSG_ERRORTYPE, msg);
 		return false;
@@ -1278,7 +1369,7 @@ DWORD CALLBACK editor::copy_progress_routine(LARGE_INTEGER, LARGE_INTEGER total_
 	bool interrupted = progress::aborted();
 	if (interrupted) {
 		const wchar_t* msg[] = {
-			get_msg(ps_sav_title), get_msg(ps_sav_cancelq)
+			I18N(ps_sav_title), I18N(ps_sav_cancelq)
 		};
 		interrupted = msg_box(FMSG_MB_YESNO | FMSG_WARNING, msg) == 0;
 	}

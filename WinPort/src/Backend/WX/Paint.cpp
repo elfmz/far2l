@@ -22,10 +22,10 @@
 #endif
 
 /////////////////////////////////////////////////////////////////////////////////
-static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu", 
+static const char *g_known_good_fonts[] = { "Ubuntu", "Terminus", "DejaVu",
 											"Liberation", "Droid", "Monospace", "PT Mono", "Menlo",
 											nullptr};
-	
+
 
 class FixedFontLookup : wxFontEnumerator
 {
@@ -38,11 +38,11 @@ class FixedFontLookup : wxFontEnumerator
 				_known_good = face_name;
 			}
 		}
-		
+
 		/* unfortunately following code gives nothing interesting
 		wxFont f(wxFontInfo(DEFAULT_FONT_SIZE).Underlined().FaceName(face_name));
 		if (f.IsOk()) {
-			fprintf(stderr, "FONT family %u encoding %u face_name='%ls' \n", 
+			fprintf(stderr, "FONT family %u encoding %u face_name='%ls' \n",
 				(unsigned int)f.GetFamily(), (unsigned int)f.GetEncoding(), static_cast<const wchar_t*>(face_name.wc_str()));
 		} else {
 			fprintf(stderr, "BAD FONT: face_name='%ls'\n", static_cast<const wchar_t*>(face_name.wc_str()));
@@ -60,7 +60,7 @@ public:
 			static_cast<const wchar_t*>(_any.wc_str()),
 			static_cast<const wchar_t*>(_known_good.wc_str()));
 		return _known_good.IsEmpty() ? _any : _known_good;
-	}	
+	}
 };
 
 static bool LoadFontFromSettings(wxFont& font)
@@ -73,11 +73,11 @@ static bool LoadFontFromSettings(wxFont& font)
 			if (font.IsOk()) {
 				printf("LoadFontFromSettings: used %ls\n",
 					static_cast<const wchar_t*>(str.wc_str()));
-				return true;				
+				return true;
 			}
 		}
-	} 
-	
+	}
+
 	return false;
 }
 
@@ -94,7 +94,7 @@ static bool ChooseFontAndSaveToSettings(wxWindow *parent, wxFont& font)
 		file.Write();
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -102,8 +102,8 @@ static void InitializeFont(wxWindow *parent, wxFont& font)
 {
 	if (LoadFontFromSettings(font))
 		return;
-	
-	
+
+
 	for (;;) {
 		FixedFontLookup ffl;
 		wxString fixed_font = ffl.Query();
@@ -141,31 +141,31 @@ class FontSizeInspector
 {
 	wxBitmap _bitmap;
 	wxMemoryDC _dc;
-	
+
 	int _max_width, _prev_width;
 	int _max_height, _prev_height;
 	int _max_descent;
 	bool _unstable_size, _fractional_size;
-	
+
 	void InspectChar(const wchar_t c)
 	{
 		wchar_t wz[2] = { c, 0};
 		wxCoord width = 0, height = 0, descent = 0;
 		_dc.GetTextExtent(wz, &width, &height, &descent);
-		
+
 		if (_max_width < width) _max_width = width;
 		if (_max_height < height) _max_height = height;
 		if (_max_descent < descent) _max_descent = descent;
 
 		if ( _prev_width != width ) {
-			if (_prev_width!=-1) 
+			if (_prev_width!=-1)
 				_unstable_size = true;
 			_prev_width = width;
 		}
 		if ( _prev_height != height ) {
 			if (_prev_height!=-1) _unstable_size = true;
 			_prev_height = height;
-		}		
+		}
 	}
 
 	void DetectFractionalSize(const wchar_t *chars)
@@ -176,10 +176,10 @@ class FontSizeInspector
 	}
 
 	public:
-	FontSizeInspector(wxFont& font) 
+	FontSizeInspector(wxFont& font)
 		: _bitmap(48, 48, wxBITMAP_SCREEN_DEPTH),
-		_max_width(4), _prev_width(-1), 
-		_max_height(6), _prev_height(-1), 
+		_max_width(4), _prev_width(-1),
+		_max_height(6), _prev_height(-1),
 		_max_descent(0),
 		_unstable_size(false), _fractional_size(false)
 	{
@@ -199,7 +199,7 @@ class FontSizeInspector
 		DetectFractionalSize(chars);
 #endif
 	}
-	
+
 	bool IsUnstableSize() const { return _unstable_size; }
 	bool IsFractionalSize() const { return _fractional_size; }
 	int GetMaxWidth() const { return _max_width; }
@@ -214,7 +214,7 @@ void ConsolePaintContext::SetFont(wxFont font)
 	FontSizeInspector fsi(font);
 	fsi.InspectChars(L" 1234567890-=!@#$%^&*()_+qwertyuiop[]asdfghjkl;'zxcvbnm,./QWERTYUIOP{}ASDFGHJKL:\"ZXCVBNM<>?");
 	//fsi.InspectChars(L"QWERTYUIOPASDFGHJKL");
-	
+
 	bool is_unstable = fsi.IsUnstableSize();
 	bool is_fractional = fsi.IsFractionalSize();
 	_font_width = fsi.GetMaxWidth();
@@ -273,7 +273,7 @@ void ConsolePaintContext::ShowFontDialog()
 
 	} else
 		InitializeFont(_window, font);
-		
+
 	SetFont(font);
 }
 
@@ -330,9 +330,8 @@ void ConsolePaintContext::ApplyFont(wxPaintDC &dc, uint8_t index)
 		dc.SetFont(_fonts[index]);
 }
 
-void ConsolePaintContext::OnPaint(SMALL_RECT *qedit)
+void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 {
-	wxPaintDC dc(_window);
 	if (UNLIKELY(_stage == STG_NOT_REFRESHED)) {
 		// not refreshed yet - so early start so nothing to paint yet
 		// so simple fill with background color for the sake of faster start
@@ -497,10 +496,10 @@ void ConsolePaintContext::BlinkCursor()
 	}
 }
 
-void ConsolePaintContext::SetSharp(bool sharp) 
+void ConsolePaintContext::SetSharp(bool sharp)
 {
 	if (_sharp != sharp) {
-		_sharp = sharp; 
+		_sharp = sharp;
 		_window->Refresh();
 	}
 }
@@ -554,17 +553,17 @@ ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxSt
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
 	_buffer.Empty();
 }
-	
-	
+
+
 void ConsolePainter::SetFillColor(const WinPortRGB &clr)
 {
 	if (_brush_clr.Change(clr)) {
 		wxBrush &brush = _context->GetBrush(clr);
 		_dc.SetBrush(brush);
 		_dc.SetBackground(brush);
-	}		
+	}
 }
-	
+
 void ConsolePainter::PrepareBackground(unsigned int cx, const WinPortRGB &clr, unsigned int nx)
 {
 	const bool cursor_here = (_cursor_props.visible && _cursor_props.blink_state
@@ -604,10 +603,10 @@ void ConsolePainter::FlushBackground(unsigned int cx_end)
 {
 	if (_start_back_cx != ((unsigned int)-1)) {
 		SetFillColor(_clr_back);
-		_dc.DrawRectangle(_start_back_cx * _context->FontWidth(), _start_y, 
+		_dc.DrawRectangle(_start_back_cx * _context->FontWidth(), _start_y,
 			(cx_end - _start_back_cx) * _context->FontWidth(), _context->FontHeight());
 		_start_back_cx = ((unsigned int)-1);
-	}		
+	}
 }
 
 void ConsolePainter::FlushText(unsigned int cx_end)
@@ -783,7 +782,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 	}
 
 	uint8_t fit_font_index = _context->CharFitTest(_dc, *wcz, nx);
-	
+
 	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
 		&& _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered())
 	{

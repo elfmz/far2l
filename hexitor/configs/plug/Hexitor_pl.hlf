@@ -38,10 +38,17 @@
   Przełączenie strony kodowej:   #F8#
   Opcje:                         #F9, Alt-Shift-F9#
   Wyjście:                       #Esc, F10#
+  Przełączanie ekranów far:      #F12, Ctrl-Tab, Ctrl-Shift-Tab#
 
 
 ^* * *
 
 ^Kod źródłowy i aktualizacje można znaleźć na stronie projektu:
 
-^~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@
+
+^oryginalny hexitor: ~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+
+@Goto
+  Przesunięcie w pliku można podać jako liczbę szesnastkową lub procent, np.: 0x1000 lub 50%
+

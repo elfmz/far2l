@@ -1,4 +1,4 @@
-#include "headers.hpp"
+﻿#include "headers.hpp"
 
 #include "msg.hpp"
 #include "utils.hpp"
@@ -318,7 +318,7 @@ static bool GetCoderInfo(Func_GetMethodProperty getMethodProperty, UInt32 index,
 }
 
 template<bool UseVirtualDestructor>
-class MyCompressCodecsInfo : public ICompressCodecsInfo<UseVirtualDestructor>, 
+class MyCompressCodecsInfo : public ICompressCodecsInfo<UseVirtualDestructor>,
 							 public IHashers<UseVirtualDestructor>, private ComBase<UseVirtualDestructor>
 {
 private:
@@ -1617,6 +1617,7 @@ bool Archive<UseVirtualDestructor>::get_main_file(UInt32 &index)
 
 	return false;
 }
+
 
 template<bool UseVirtualDestructor>
 DWORD Archive<UseVirtualDestructor>::get_links(UInt32 index) const

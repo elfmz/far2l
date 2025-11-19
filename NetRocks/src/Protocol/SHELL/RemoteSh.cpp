@@ -15,7 +15,7 @@ class CompactizedTokens
 
 public:
 	CompactizedTokens(char heading) : _out(1, heading) { }
-	
+
 	const std::string &Compactize(const std::string &token)
 	{
 		auto ir = _m.emplace(token, _m.size());

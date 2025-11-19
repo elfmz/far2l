@@ -884,14 +884,40 @@ void Viewer::SetStatusMode(int Mode)
 	ShowStatusLine = Mode;
 }
 
+static bool IsAnsiEscapeColoringArgsChar(wchar_t Ch)
+{
+	return (Ch == L':' || Ch == L';' || (Ch >= '0' && Ch <= '9'));
+}
+
+size_t Viewer::SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t length)
+{
+	size_t saved_index;
+	do {
+		saved_index = index;
+		while (index < length && (CharClasses::IsXxxfix(buf[index]) || buf[index] == '\r' || buf[index] == '\n')) {
+			++index;
+		}
+		if (VM.Processed) {
+			while (index + 2 < length && buf[index] == L'\e' && buf[index + 1] == L'[' ) {
+				index+= 2;
+				for (bool stop = false; !stop && index < length; ++index) {
+					stop = !IsAnsiEscapeColoringArgsChar(buf[index]);
+				}
+			}
+		}
+	} while (saved_index != index);
+	return index;
+}
+
+
 void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 {
 	WCHAR Ch, Ch2;
-	int64_t OutPtr;
+	int64_t OutPtr, visual_length;
 	bool bSelStartFound = false, bSelEndFound = false;
 	rString.bSelection = false;
 	AdjustWidth();
-	OutPtr = 0;
+	OutPtr = visual_length = 0;
 	rString.SetChar(0, 0);
 
 	if (VM.Hex) {
@@ -926,11 +952,37 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 			if (OutPtr >= StrSize - 16)
 				break;
 
+			do { // attach zero-length sequences at the string ending (if any)
+				int64_t SavePosEsc = vtell();
+				if (!vgetc(Ch)) {
+					break;
+				}
+				if (CharClasses::IsSuffix(Ch)) {
+					rString.SetChar(size_t(OutPtr++), Ch);
+					rString.SetChar(size_t(OutPtr), 0);
+				} else if (VM.Processed && Ch == L'\e' && vgetc(Ch2) && Ch2 == L'[') {
+					// in processed mode coloring escape sequences are invisible and thus dont affect length
+					// however they must be part of string, even if located after its wrap-caused end
+					rString.SetChar(size_t(OutPtr++), Ch);
+					rString.SetChar(size_t(OutPtr++), Ch2);
+					while (vgetc(Ch) && OutPtr < StrSize - 16) {
+						rString.SetChar(size_t(OutPtr++), Ch);
+						if (!IsAnsiEscapeColoringArgsChar(Ch)) {
+							break;
+						}
+					}
+					rString.SetChar(size_t(OutPtr), 0);
+				} else {
+					vseek(SavePosEsc, SEEK_SET);
+					break;
+				}
+			} while (OutPtr < StrSize - 16);
+
 			/*
 				$ 12.07.2000 SVS
 				! Wrap - трехпозиционный
 			*/
-			if (VM.Wrap && OutPtr > XX2 - X1) {
+			if (VM.Wrap && visual_length > XX2 - X1) {
 				/*
 					$ 11.07.2000 tran
 					+ warp are now WORD-WRAP
@@ -1024,11 +1076,13 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 			if (CRSkipped) {
 				CRSkipped = false;
 				rString.SetChar(size_t(OutPtr++), L'\r');
+				visual_length++;
 			}
 
 			if (Ch == L'\t') {
 				do {
 					rString.SetChar(size_t(OutPtr++), L' ');
+					visual_length++;
 				} while ((OutPtr % ViOpt.TabSize) && ((int)OutPtr < (MAX_VIEWLINE - 1)));
 
 				if (VM.Wrap && OutPtr > XX2 - X1)
@@ -1044,7 +1098,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 			if (Ch == L'\r') {
 				CRSkipped = true;
 
-				if (OutPtr >= XX2 - X1) {
+				if (visual_length >= XX2 - X1) {
 					int64_t SavePos = vtell();
 					WCHAR nextCh = 0;
 
@@ -1063,6 +1117,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 				Ch = L' ';
 
 			rString.SetChar(size_t(OutPtr++), Ch);
+			visual_length += CharClasses::IsFullWidth(Ch) ? 2 : CharClasses::IsXxxfix(Ch) ? 0 : 1;
 			rString.SetChar(size_t(OutPtr), 0);
 
 			if (SelectSize > 0 && (SelectPos + SelectSize) == vtell()) {
@@ -2135,6 +2190,7 @@ void Viewer::Up()
 		}
 
 		for (int PrevSublineLength = 0, CurLineStart = I = 0;; ++I) {
+			I = SkipZeroWidthSubsequence(Buf, I, WrapBufSize);
 			if (I == WrapBufSize) {
 				int distance = CalcCodeUnitsDistance(VM.CodePage, &Buf[CurLineStart], &Buf[WrapBufSize]);
 				FilePosShiftLeft((distance > 0) ? distance : 1);
@@ -2161,18 +2217,17 @@ int Viewer::CalcStrSize(const wchar_t *Str, int Length)
 {
 	int Size, I;
 
-	for (Size = 0, I = 0; I < Length; I++)
-		switch (Str[I]) {
-			case L'\t':
-				Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
-				break;
-			case L'\n':
-			case L'\r':
-				break;
-			default:
-				Size++;
-				break;
+	for (Size = 0, I = 0;; I++) {
+		I = SkipZeroWidthSubsequence(Str, I, Length);
+		if (I >= Length) {
+			break;
 		}
+		if (Str[I] == L'\t') {
+			Size+= ViOpt.TabSize - (Size % ViOpt.TabSize);
+		} else {
+			Size++;
+		}
+	}
 
 	return (Size);
 }

@@ -29,7 +29,7 @@
 #define HSIZE	16384
 #define HSHIFT	3
 #define HASH(p) ((b[p]^((b[p+1]^(b[p+2]<<HSHIFT))<<HSHIFT))&(HSIZE-1))
-#define MAXCNT	1024	
+#define MAXCNT	1024
 
 U16B swd_bpos,swd_mlf;
 S16B swd_char;
@@ -44,15 +44,15 @@ void swd_cleanup(void) {
     if (ccnt!=NULL) free(ccnt),ccnt=NULL;
     if (ll!=NULL) free(ll),ll=NULL;
     if (cr!=NULL) free(cr),cr=NULL;
-    if (b!=NULL) free(b),b=NULL;	
-    if (best!=NULL) free(best),best=NULL;	
+    if (b!=NULL) free(b),b=NULL;
+    if (best!=NULL) free(best),best=NULL;
 }
 
 void swd_init(U16B maxl, U16B bufl) {
-	
+
     register S16B i;
-    
-    iblen=maxl; 
+
+    iblen=maxl;
     cblen=bufl;
     blen=cblen+iblen;
     ll=malloc(blen*sizeof(*ll));
@@ -64,7 +64,7 @@ void swd_init(U16B maxl, U16B bufl) {
 	swd_cleanup();
 	error(1,ERR_MEM,"swd_init()");
     }
-    for (i=0;i<HSIZE;++i) ccnt[i]=0; 
+    for (i=0;i<HSIZE;++i) ccnt[i]=0;
     binb=bbf=bbl=inptr=0;
     while (bbl<iblen) {
 	if ((i=getbyte())<0) break;
@@ -79,7 +79,7 @@ void swd_init(U16B maxl, U16B bufl) {
 void swd_accept(void) {
 
     register S16B i,j;
-    
+
     j=swd_mlf-2;
     do {   		/* Relies on non changed swd_mlf !!! */
 	if (binb==cblen) --ccnt[HASH(inptr)];
@@ -111,7 +111,7 @@ void swd_findbest(void) {
 
     register U16B i,ref,cnt,ptr,start_len;
     register S16B c;
-    
+
     i=HASH(bbf);
     if ((cnt=ccnt[i]++)>MAXCNT) cnt=MAXCNT;
     ptr=ll[bbf]=cr[i];
@@ -123,16 +123,16 @@ void swd_findbest(void) {
     }
     else {
 	for (ref=b[bbf+swd_mlf-1];cnt--;ptr=ll[ptr]) {
-	    if (b[ptr+swd_mlf-1]==ref && 
+	    if (b[ptr+swd_mlf-1]==ref &&
 		b[ptr]==b[bbf] && b[ptr+1]==b[bbf+1]) {
 		{
 		    register unsigned char *p1=b+ptr+3,*p2=b+bbf+3;
 		    for (i=3;i<bbl;++i) {
-			if (*p1++!=*p2++) break; 
+			if (*p1++!=*p2++) break;
 		    }
 		}
 		if (i<=swd_mlf) continue;
-		swd_bpos=ptr;				
+		swd_bpos=ptr;
 		if ((swd_mlf=i)==bbl || best[ptr]<i) break;
 		ref=b[bbf+swd_mlf-1];
 	    }
@@ -166,7 +166,7 @@ void swd_findbest(void) {
 void swd_dinit(U16B bufl) {
 
     cblen=bufl;
-    b=malloc(cblen*sizeof(unsigned char));	
+    b=malloc(cblen*sizeof(unsigned char));
     if (b==NULL) {
 	swd_cleanup();
 	error(1,ERR_MEM,"swd_dinit()");
@@ -176,7 +176,7 @@ void swd_dinit(U16B bufl) {
 
 
 void swd_dpair(U16B l, U16B p) {
-	
+
     if (bbf>p) p=bbf-1-p;
     else p=cblen-1-p+bbf;
     while (l--) {

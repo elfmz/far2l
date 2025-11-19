@@ -1,6 +1,6 @@
 #pragma once
-//#define __USE_BSD 
-#include <termios.h> 
+//#define __USE_BSD
+#include <termios.h>
 #include <mutex>
 #include <atomic>
 #include <memory>
@@ -13,6 +13,11 @@
 #include "IFar2lInteractor.h"
 #include "TTYXGlue.h"
 #include "OSC52ClipboardBackend.h"
+#include <map>
+#include <set>
+#include <atomic>
+#include <memory>
+#include <vector>
 
 class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2lInteractor, IOSC52Interactor
 {
@@ -62,10 +67,20 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	ITTYXGluePtr _ttyx;
 	char _using_extension = 0;
 
-	COORD _largest_window_size{};
+	COORD _largest_window_size{}, _pix_per_cell{};
 	std::atomic<bool> _largest_window_size_ready{false};
 	std::atomic<bool> _flush_input_queue{false};
 	std::atomic<bool> _focused{true}; // assume starting focused
+	std::condition_variable _images_kitty_status_cond;
+	enum {
+		IKS_UNKNOWN = 0,
+		IKS_PROBING,
+		IKS_SUPPORTED,
+		IKS_UNSUPPORTED,
+	} _images_kitty_status {IKS_UNKNOWN};
+
+	std::map<std::string, TTYConsoleImage> _images;
+	std::set<std::string> _images_to_display, _images_to_delete;
 
 	struct BI : std::mutex { std::string flavor; } _backend_info;
 
@@ -91,10 +106,13 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		bool go_background : 1;
 		bool osc52clip_set : 1;
 		bool palette : 1;
+		bool images_probe : 1;
+		bool images_probe_del : 1;
+		bool images_changed : 1;
 
 		inline bool HasAny() const
 		{
-			return term_resized || output || title_changed || far2l_interact || go_background || osc52clip_set || palette;
+			return term_resized || output || title_changed || far2l_interact || go_background || osc52clip_set || palette || images_probe || images_probe_del || images_changed;
 		}
 	} _ae{};
 
@@ -111,7 +129,11 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInteract(TTYOutput &tty_out);
 	void DispatchOSC52ClipSet(TTYOutput &tty_out);
+	void DispatchImagesProbe(TTYOutput &tty_out);
+	void DispatchImagesProbeDelete(TTYOutput &tty_out);
+	void DispatchImages(TTYOutput &tty_out);
 	void DispatchPalette(TTYOutput &tty_out);
+	bool CheckKittyImagesSupport();
 	void WaitForOutputIdleOrDead(std::unique_lock<std::mutex> &lock);
 
 	void DetachNotifyPipe();
@@ -146,6 +168,10 @@ protected:
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
 	const char *OnConsoleBackendInfo(int entity);
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90);
+	virtual bool OnDeleteConsoleImage(const char *id);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);
@@ -153,7 +179,10 @@ protected:
 	virtual void OnFocusChange(bool focused);
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
+	virtual void OnKittyGraphicsResponse(const std::string &s);
+	virtual void OnStatusResponse(char c);
 	virtual void OnInputBroken();
+	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 
 	DWORD QueryControlKeys();
 

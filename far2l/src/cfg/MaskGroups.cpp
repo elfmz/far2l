@@ -301,7 +301,21 @@ void MaskGroupsSettings()
 						strTitle.AppendFormat(L" \"%ls\"", cfg_reader.GetString(FMS.MaskName).CPtr());
 
 						ExMessager em(strTitle);
-						em.AddDupWrap(cfg_reader.GetString(FMS.MaskValue));
+
+						FARString fs, fsmask = cfg_reader.GetString(FMS.MaskValue);
+						em.AddDup(Msg::MaskGroupBeforeExpand);
+						em.AddDupWrap(fsmask);
+
+						// expand all groups
+						unsigned ngroups = GetMaskGroupExpandRecursiveAll(fsmask);
+						em.AddDup(L"\x1");
+						fs = Msg::MaskGroupCountExpandedGroups;
+						fs.AppendFormat(L" %u", ngroups);
+						em.AddDup(fs);
+						em.AddDup(L"");
+						em.AddDup(Msg::MaskGroupAfterExpand);
+						em.AddDupWrap(fsmask);
+
 						em.AddDup(Msg::Ok);
 						em.Show(MSG_LEFTALIGN, 1);
 					}
@@ -421,4 +435,32 @@ bool GetMaskGroup(const FARString &MaskName, FARString &MaskValue)
 			return cfg_reader.GetString(MaskValue, FMS.MaskValue);
 	}
 	return false;
+}
+
+// parameters:
+//  fsMasks - initial string with file masks and groups
+// return value:
+//  >= 0:    number of expanded subgroups
+//  fsMasks: masks after recursive expanded all subgroups
+unsigned GetMaskGroupExpandRecursiveAll(FARString &fsMasks)
+{
+	// expand all groups
+	unsigned ngroups = 0;
+	size_t pos_open, pos_close = 0;
+	FARString fs_group_name, fs_masks_from_group;
+	for( ;; ) {
+		if( !fsMasks.Pos(pos_open, '<', pos_close) )
+			break;
+		if( !fsMasks.Pos(pos_close, '>', pos_open+1) )
+			break;
+		if( pos_close-pos_open < 2 )
+			continue;
+		fs_group_name = fsMasks.SubStr(pos_open+1, pos_close-pos_open-1);
+		if( !GetMaskGroup(fs_group_name, fs_masks_from_group) )
+			continue;
+		fsMasks.Replace(pos_open, pos_close-pos_open+1, fs_masks_from_group);
+		pos_close = pos_open; // may be need recursive expand
+		ngroups++;
+	}
+	return ngroups;
 }

@@ -42,6 +42,7 @@ $^#Програма управління файлами та архівами#
 
  ~Асоціації файлів~@FileAssoc@
  ~Команди операційної системи~@OSCommands@
+ ~Special commands~@SpecCmd@
  ~Закладки~@Bookmarks@
  ~Меню фільтрів~@FiltersMenu@
  ~Переключення між екранами~@ScrSwitch@
@@ -800,9 +801,9 @@ $ #Special commands#
 in the far2l ~internal command line~@CmdLineCmd@ and
 in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply command~@ApplyCmd@.
 
-   #far:about#  - Far information, list and information about plugins.
+   #far:about#  - Far information, list and information about plugins (also via the ~Commands menu~@CmdMenu@).
 
-   #far:config# - ~Configuration editor~@FarConfig@.
+   #far:config# - ~Configuration editor~@FarConfig@ (also via the ~Commands menu~@CmdMenu@).
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
    #view:<command# or #far:view:<command# or #far:view < command# - open in viewer result of #command# output in temporary file.
@@ -810,6 +811,14 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
    #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
    #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
    #edit:<command# or #far:edit:<command# or #far:edit < command# - open in editor result of #command# output in temporary file.
+   #edit:[line,col]file# or #edit:[line]file# or #edit:[,col]file#
+or #far:edit:[line,col]file# - open in editor #file# and immediately go to the specified position.
+To do this, immediately after the colon, in square brackets,
+you must specify the desired row and column (any component is optional; by default, one will be equal to 1).
+Square brackets are required!
+   If the filename contains square brackets (for example: "[1].txt"), then for
+the correct opening of the file in the editor you must provide at least one space
+before the filename: #edit: [1].txt#.
 
    #exit#       - reset shell in build-in ~Terminal~@Terminal@.
 
@@ -1076,6 +1085,13 @@ $ #Дерево папок#
 
  #Gray +# і #Gray -# використовуються для швидкого переміщення вгору або вниз
 за папками одного рівня.
+
+ Стрілка #Вліво# згортає поточну гілку. Якщо гілка вже згорнута, піднімається на один рівень вище.
+ Стрілка #Вправо# розгортає гілку дерева, що була згорнута під час
+створення відповідно до налаштованої маски виключень або встановленої
+глибини сканування.
+
+ #Ctrl+Цифра# розгортає всі гілки до вибраного рівня глибини.
 
 Дивіться також список ~макроклавіш~@KeyMacroTreeList@, доступних на панелі дерева папок.
 
@@ -1788,6 +1804,13 @@ $ #Пошук папки#
  #Gray +# і #Gray -# використовуються для швидкого переміщення вгору або вниз
 за папками одного рівня.
 
+ Стрілка #Вліво# згортає поточну гілку. Якщо гілка вже згорнута, піднімається на один рівень вище.
+ Стрілка #Вправо# розгортає гілку дерева, що була згорнута під час
+створення відповідно до налаштованої маски виключень або встановленої
+глибини сканування.
+
+ #Ctrl+Цифра# розгортає всі гілки до вибраного рівня глибини.
+
  #F5# дозволяє розгорнути вікно на весь екран, повторне натискання #F5# поверне
 розмір вікна у початковий стан.
 
@@ -2378,12 +2401,6 @@ $ #Налаштування панелі#
                           also open from panel by #Ctrl-Alt-D#.
 
 
- #Автозміна папки# Якщо ця опція увімкнена, то пересування
-курсору по ~дереву папок~@TreePanel@ будуть викликати
-зміну папки на іншій панелі. Якщо ця опція
- вимкнено, то для зміни папки з дерева
- папок ви повинні натиснути #Enter#.
-
  #Позначка папок# Дозволяє позначку папок з використанням
 #Gray +# та #Gray *#. Інакше ці
  команди працюють лише з файлами.
@@ -2422,7 +2439,22 @@ Influence on ~Порівняння папок~@CompFolders@ and ~Помітка 
 
  #Класичне розширення#  Розгортати символічні посилання при використанні
  #посилань гарячими#    деяких комбінацій клавіш, див. докладніше:
- #клавішами#          ~Командний рядок~@CmdLineCmd@ і ~Команда керування панелями~@PanelCmd@.
+ #клавішами#           ~Командний рядок~@CmdLineCmd@ і ~Команда керування панелями~@PanelCmd@.
+
+ #Автозміна папки#      Якщо ця опція увімкнена, то пересування
+                      курсору по ~дереву папок~@TreePanel@ будуть викликати
+                      зміну папки на іншій панелі. Якщо ця опція
+                      вимкнено, то для зміни папки з дерева
+                      папок ви повинні натиснути #Enter#.
+
+ #Глибина сканування#   Встановлює максимальну глибину рекурсивного
+                      сканування каталогів при побудові дерева.
+
+ #Маска виключень#      Визначає ~маски~@FileMasks@ імен підкаталогів,
+ #сканування#           які слід виключити під час сканування.
+ #підтек#               Використовується для пропуску папок, таких як .git або .mvn
+                      при розгортанні дерева.
+                      #Приклад:# .git;.mvn;.svn;node_modules
 
  #Показувати заголовки# Дозволяє показ заголовків колонок
 #колонок# ~панелі файлів~@FilePanel@.
@@ -2905,6 +2937,20 @@ $ #Редактор#
  3. ^<wrap>Кодову сторінку, яка використовується під час створення нового файлу, можна вибрати в меню
 ~Налаштування редактора~@EditorSettings@.
 
+ #Title bar items#
+   - File path
+   - #*# (file modified) or empty
+   - #-# (file modification is locked) or empty         (toggled via #Ctrl-L#)
+   - #"# (during processing #Ctrl-Q#) or empty
+   - #WW# (WordWrap mode) or empty                      (toggled via #F3# or #Alt-W# or in the ~Editor settings~@EditorSettings@ dialog)
+   - #Tn# (not expand Tab) or #Sn# (expand Tab to spaces) (toggled via #Shift-F5# and #Ctrl-F5# or in the ~Editor settings~@EditorSettings@ dialog)
+   - #LF# or #CR# or #CRLF#: format of the line break       (toggled via #Shift-F2#)
+   - Codepage                                         (toggled via #F8# or #Shift-F8#)
+   - Line current/all lines
+   - Column current
+   - Code of character under cursor
+   - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
+
  #Клавіші управління#
 
  Команди керування курсором
@@ -2940,8 +2986,8 @@ $ #Редактор#
 
  #Shift-Клавіші курсору# Позначка блоку
  #Ctrl-Shift-Клав.курсора# Позначка блоку за словами
- #Alt-Клав.курсора# Позначка вертикального блоку
- #Alt-Shift-Клав.курсора# Позначка вертикального блоку (NumLock клав)
+ #Alt-Клав.курсора# Позначка вертикального блоку (тільки при вимкненому перенесенні рядків)
+ #Alt-Shift-Клав.курсора# Позначка вертикального блоку (NumLock клав, тільки при вимкненому перенесенні рядків)
  #Ctrl-A# Позначити весь текст
  #Ctrl-U# Зняти позначку з блоку
  #Shift-Ins, Ctrl-V# Скопіювати блок із Буфера Обміну
@@ -2962,6 +3008,7 @@ $ #Редактор#
  #F1# Допомога
  #F2# Зберегти файл
  #Shift-F2# ~Зберегти файл як ...~@FileSaveAs@
+ #F3# или #Alt-W# Перенесення рядків (увімкнено, вимкнено)
  #Shift-F4# Редагувати ~новий файл~@FileOpenCreate@
  #F5#                      Toggle whitespace characters displaying
  #Shift-F5#                Change Tab character width

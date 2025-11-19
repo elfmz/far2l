@@ -44,15 +44,15 @@ class ConsolePaintContext
 
 	std::map<WinPortRGB, wxBrush> _color2brush;
 	wxPen _transparent_pen{wxColour(0, 0, 0), 1, wxPENSTYLE_TRANSPARENT};
-	
+
 	void SetFont(wxFont font);
 public:
 	ConsolePaintContext(wxWindow *window);
 	void ShowFontDialog();
-	
+
 	uint8_t CharFitTest(wxPaintDC &dc, wchar_t wcz, unsigned int nx);
 	void ApplyFont(wxPaintDC &dc, uint8_t index = 0);
-	void OnPaint(SMALL_RECT *qedit = NULL);	
+	void OnPaint(wxPaintDC &dc, SMALL_RECT *qedit = NULL);
 	void RefreshArea( const SMALL_RECT &area );
 	void BlinkCursor();
 	void SetSharp(bool sharp);
@@ -91,9 +91,9 @@ class ConsolePainter
 			}
 			return false;
 		}
-		
+
 	} _brush_clr;
-	
+
 	ConsolePaintContext *_context;
 	wxPaintDC &_dc;
 	wxString &_buffer;
@@ -113,20 +113,20 @@ class ConsolePainter
 	void FlushBackground(unsigned int cx_end);
 	void FlushText(unsigned int cx_end);
 	void FlushDecorations(unsigned int cx_end);
-		
+
 public:
 	ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &_buffer, CursorProps &cursor_props);
 	void SetFillColor(const WinPortRGB &clr);
-	
+
 
 	void NextChar(unsigned int cx, DWORD64 attributes, const wchar_t *wcz, unsigned int nx);
-	
+
 	inline void LineBegin(unsigned int cy)
 	{
 		_start_cy = cy;
 		_start_y = cy * _context->FontHeight();
 	}
-	
+
 	inline void LineFlush(unsigned int cx_end)
 	{
 		FlushBackground(cx_end);

@@ -41,6 +41,9 @@
 #include <future>
 #include <condition_variable>
 
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
 //#include <cinttypes>
 #include <inttypes.h>
 

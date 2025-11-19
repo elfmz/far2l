@@ -1,4 +1,4 @@
-#include "headers.hpp"
+﻿#include "headers.hpp"
 
 #include "msg.hpp"
 #include "utils.hpp"
@@ -602,7 +602,7 @@ public:
 };
 
 template<bool UseVirtualDestructor>
-class AcmRelayStream : public ISequentialOutStream<UseVirtualDestructor>, 
+class AcmRelayStream : public ISequentialOutStream<UseVirtualDestructor>,
 						public ISequentialInStream<UseVirtualDestructor>, public ComBase<UseVirtualDestructor> {
 private:
 	static constexpr size_t c_min_buff_size = 10 * 1024 * 1024;
@@ -1065,7 +1065,7 @@ public:
 	{
 		COM_ERROR_HANDLER_BEGIN
 		const FileIndexInfo &file_index_info = file_index_map->at(index);
-		constexpr DWORD c_valid_export_attributes = 
+		constexpr DWORD c_valid_export_attributes =
 			FILE_ATTRIBUTE_READONLY |
 			FILE_ATTRIBUTE_HIDDEN |
 			FILE_ATTRIBUTE_SYSTEM |

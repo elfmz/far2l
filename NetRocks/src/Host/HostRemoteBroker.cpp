@@ -316,12 +316,12 @@ class HostRemoteBroker : protected IPCEndpoint
 			case IPC_SYMLINK_CREATE: OnSymLinkCreate(); break;
 			case IPC_SYMLINK_QUERY: OnSymLinkQuery(); break;
 			case IPC_DIRECTORY_ENUM: OnDirectoryEnum(); break;
-			case IPC_FILE_GET: OnFileGet(); break;	
+			case IPC_FILE_GET: OnFileGet(); break;
 			case IPC_FILE_PUT: OnFilePut(); break;
 			case IPC_EXECUTE_COMMAND: OnExecuteCommand(); break;
-				
+
 			default:
-				throw PipeIPCError("HostRemoteBroker: bad command", (unsigned int)c); 
+				throw PipeIPCError("HostRemoteBroker: bad command", (unsigned int)c);
 		}
 	}
 
@@ -394,7 +394,7 @@ void handle_sigquit(int) {
 	_exit(0);  // fast exit, no crash report
 }
 
-extern "C" int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	if (argc != 4) {
 		fprintf(stderr, "Its a NetRocks protocol broker and must be started by NetRocks only\n");

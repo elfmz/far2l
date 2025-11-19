@@ -40,12 +40,18 @@ PlainViewerPrinter::~PlainViewerPrinter()
 int PlainViewerPrinter::Length(const wchar_t *str, int limit)
 {
 	int out;
+	bool joining = false;
 	for (out = 0; *str && limit != 0; ++str, --limit) {
 		if (!ShouldSkip(*str)) {
-			if (CharClasses::IsFullWidth(*str))
-				out+= 2;
-			else if (!CharClasses::IsXxxfix(*str))
-				++out;
+			if (*str == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsFullWidth(str)) {
+				if (!joining) out+= 2;
+				joining = false;
+			} else if (!CharClasses::IsXxxfix(*str)) {
+				if (!joining) ++out;
+				joining = false;
+			}
 		}
 	}
 	return out;
@@ -55,12 +61,18 @@ void PlainViewerPrinter::Print(int skip_len, int print_len, const wchar_t *str)
 {
 	SetColor(_selection ? FarColorToReal(COL_VIEWERSELECTEDTEXT) : _color);
 
+	bool joining = false;
 	for(; skip_len > 0 && *str; ++str) {
 		if (!ShouldSkip(*str)) {
-			if (CharClasses::IsFullWidth(*str))
-				skip_len-= 2;
-			else if (!CharClasses::IsXxxfix(*str))
-				skip_len--;
+			if (*str == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsFullWidth(str)) {
+				if (!joining) skip_len-= 2;
+				joining = false;
+			} else if (!CharClasses::IsXxxfix(*str)) {
+				if (!joining) skip_len--;
+				joining = false;
+			}
 		}
 	}
 

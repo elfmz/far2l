@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x0E
+#define FAR2L_BACKEND_ABI_VERSION	0x11
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
@@ -45,6 +45,12 @@ public:
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval) = 0;
 	virtual void OnConsoleOutputFlushDrawing() = 0;
+
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90) = 0;
+	virtual bool OnDeleteConsoleImage(const char *id) = 0;
+
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
 };
 
@@ -196,14 +202,14 @@ public:
 	virtual size_t WriteStringAt(const WCHAR *data, size_t count, COORD &pos) = 0;
 	virtual size_t FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos) = 0;
 	virtual size_t FillAttributeAt(DWORD64 qAttribute, size_t count, COORD &pos) = 0;
-	
-	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, 
+
+	virtual bool Scroll(const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle,
 				COORD dwDestinationOrigin, const CHAR_INFO *lpFill) = 0;
-				
+
 	virtual void SetScrollRegion(SHORT top, SHORT bottom) = 0;
 	virtual void GetScrollRegion(SHORT &top, SHORT &bottom) = 0;
 	virtual void SetScrollCallback(PCONSOLE_SCROLL_CALLBACK pCallback, PVOID pContext) = 0;
-	
+
 	virtual void AdhocQuickEdit() = 0;
 	virtual DWORD64 SetConsoleTweaks(DWORD64 tweaks) = 0;
 	virtual void ConsoleChangeFont() = 0;
@@ -218,6 +224,11 @@ public:
 	virtual void OverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK) = 0;
 	virtual void RepaintsDeferStart() = 0;
 	virtual void RepaintsDeferFinish(bool force) = 0;
+
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90) = 0;
+	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *BackendInfo(int entity) = 0;
 
@@ -251,6 +262,27 @@ public:
 	};
 };
 
+inline void MakeImageArea(SMALL_RECT &dst, const SMALL_RECT *src, COORD cur_pos)
+{
+	if (src && src->Left != -1) {
+		dst.Left = src->Left;
+	}
+	if (src && src->Top != -1) {
+		dst.Top = src->Top;
+	}
+	if (src && src->Right != -1) {
+		dst.Right = src->Right;
+	}
+	if (src && src->Bottom != -1) {
+		dst.Bottom = src->Bottom;
+	}
+	if (dst.Left == -1) {
+		dst.Left = cur_pos.X;
+	}
+	if (dst.Top == -1) {
+		dst.Top = cur_pos.Y;
+	}
+}
 //////////////////////////////////////////////////////////////////////////////////
 
 extern IConsoleOutput *g_winport_con_out;

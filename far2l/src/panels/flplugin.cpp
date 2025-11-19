@@ -452,7 +452,7 @@ void FileList::PutDizToPlugin(FileList *DestPanel, PluginPanelItem *ItemList, in
 			if (FarMkTempEx(strTempDir) && apiCreateDirectory(strTempDir, nullptr)) {
 				FARString strSaveDir;
 				apiGetCurrentDirectory(strSaveDir);
-				FARString strDizName = strTempDir + L"/" + DestPanel->strPluginDizName;
+				FARString strDizName = strTempDir + WGOOD_SLASH + DestPanel->strPluginDizName;
 				DestDiz->Flush(L"", strDizName);
 
 				if (Move)

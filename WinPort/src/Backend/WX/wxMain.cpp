@@ -1,7 +1,13 @@
 #include "wxMain.h"
 #include <dlfcn.h>
+#include <wx/mstream.h>
+#include <wx/image.h>
 #include "../NotifySh.h"
 #include "wxWinTranslations.h"
+#include "../../../utils/src/POpen.cpp"
+#include <vector>
+#include <memory>
+#include <optional>
 
 #define AREAS_REDUCTION
 
@@ -56,7 +62,7 @@ WINPORT_DECL_DEF(UnfreezeConsoleOutput,VOID,())
 static void NormalizeArea(SMALL_RECT &area)
 {
 	if (area.Left > area.Right) std::swap(area.Left, area.Right);
-	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);	
+	if (area.Top > area.Bottom) std::swap(area.Top, area.Bottom);
 }
 
 WinPortAppThread::WinPortAppThread(int argc, char **argv, int(*appmain)(int argc, char **argv))
@@ -254,7 +260,7 @@ void WinState::Save()
 template <class COOKIE_T>
 	struct EventWith : wxCommandEvent
 {
-	EventWith(const COOKIE_T &cookie_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
+	EventWith(const COOKIE_T &cookie_, wxEventType commandType = wxEVT_NULL, int winid = 0)
 		:wxCommandEvent(commandType, winid), cookie(cookie_) { }
 
 	virtual wxEvent *Clone() const { return new EventWith<COOKIE_T>(*this); }
@@ -265,7 +271,7 @@ template <class COOKIE_T>
 
 struct EventWithRect : EventWith<SMALL_RECT>
 {
-	EventWithRect(const SMALL_RECT &cookie_, wxEventType commandType = wxEVT_NULL, int winid = 0) 
+	EventWithRect(const SMALL_RECT &cookie_, wxEventType commandType = wxEVT_NULL, int winid = 0)
 		:EventWith<SMALL_RECT>(cookie_, commandType, winid)
 	{
 		NormalizeArea(cookie);
@@ -461,17 +467,17 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 #ifndef __APPLE__
 	struct stat s;
 	if (stat(InMyConfig("nomenu").c_str(), &s)!=0) {
-		//workaround for non-working with non-latin input language Ctrl+? hotkeys 
+		//workaround for non-working with non-latin input language Ctrl+? hotkeys
 		_menu_bar = new wxMenuBar(wxMB_DOCKABLE);
 		char str[128];
-		
+
 		wxMenu *menu = new wxMenu;
 		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Ctrl + %c\tCtrl+%c", c, c);
 			menu->Append(ID_CTRL_BASE + (c - 'A'), wxString(str));
 		}
 		_menu_bar->Append(menu, _T("Ctrl + ?"));
-		
+
 		menu = new wxMenu;
 		for (char c = 'A'; c <= 'Z'; ++c) {
 			sprintf(str, "Ctrl + Shift + %c\tCtrl+Shift+%c", c, c);
@@ -488,7 +494,7 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		_menu_bar->Append(menu, _T("Alt + ?"));
 #endif
 		SetMenuBar(_menu_bar);
-		
+
 		//now hide menu bar just like it gets hidden during fullscreen transition
 		//wxAcceleratorTable table(wxCreateAcceleratorTableForMenuBar(_menu_bar);
 		//if (table.IsOk())
@@ -496,14 +502,14 @@ void WinPortFrame::OnShow(wxShowEvent &show)
 		_menu_bar->Show(false);
 	}
 #endif
-	
+
 	if (!_shown) {
 		_shown = true;
 		wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_INITIALIZED);
 		if (event)
 			wxQueueEvent(_panel, event);
 	}
-}	
+}
 
 void WinPortFrame::OnClose(wxCloseEvent &event)
 {
@@ -521,11 +527,11 @@ void WinPortFrame::OnAccelerator(wxCommandEvent& event)
 	if (event.GetId() >= ID_CTRL_BASE && event.GetId() < ID_CTRL_END) {
 		ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED;
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_BASE);
-		
+
 	} else if (event.GetId() >= ID_CTRL_SHIFT_BASE && event.GetId() < ID_CTRL_SHIFT_END) {
 		ir.Event.KeyEvent.dwControlKeyState = LEFT_CTRL_PRESSED | SHIFT_PRESSED;
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_CTRL_SHIFT_BASE);
-		
+
 	} else if (event.GetId() >= ID_ALT_BASE && event.GetId() < ID_ALT_END) {
 		ir.Event.KeyEvent.dwControlKeyState = LEFT_ALT_PRESSED;
 		ir.Event.KeyEvent.wVirtualKeyCode = 'A' + (event.GetId() - ID_ALT_BASE);
@@ -624,6 +630,7 @@ WinPortPanel::~WinPortPanel()
 	Touchbar_Deregister();
 #endif
 	delete _periodic_timer;
+
 	g_winport_con_out->SetBackend(NULL);
 }
 
@@ -810,7 +817,7 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	CheckForUnfreeze(false);
 
 	CheckForResizePending();
-	CheckPutText2CLip();	
+	CheckPutText2CLip();
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 	}
@@ -952,21 +959,21 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 #endif // AREAS_REDUCTION
 		}
 	}
-	
+
 	switch (action) {
 		case A_QUEUE: {
 			wxCommandEvent *event = new(std::nothrow) wxCommandEvent(WX_CONSOLE_REFRESH);
 			if (event)
 				wxQueueEvent (this, event);
 		} break;
-		
+
 		case A_THROTTLE: {
 			auto fn = [] { return ProcessAllEvents(); };
 			CallInMain<int>(fn);
 			std::lock_guard<std::mutex> lock(_refresh_rects);
 			_refresh_rects_throttle = WINPORT(GetTickCount)();
 		} break;
-		
+
 		case A_NOTHING: break;
 	}
 }
@@ -992,7 +999,7 @@ COORD WinPortPanel::OnConsoleGetLargestWindowSize()
 		auto fn = std::bind(&WinPortPanel::OnConsoleGetLargestWindowSize, this);
 		return CallInMain<COORD>(fn);
 	}
-	
+
 	wxSize sz = GetClientSize();
 	if (_frame->IsMaximized()) {
 		return COORD{(SHORT)(sz.GetWidth() / _paint_context.FontWidth()),
@@ -1048,7 +1055,7 @@ void WinPortPanel::RefreshInner( bool force_update )
 		if (_refresh_rects.empty() && !force_update)
 			return;
 
-		refresh_rects.swap(_refresh_rects);	
+		refresh_rects.swap(_refresh_rects);
 	}
 
 #ifndef __APPLE__
@@ -1090,16 +1097,16 @@ void WinPortPanel::OnConsoleResizedSync( wxCommandEvent& event )
 
 	prev_width/= _paint_context.FontWidth();
 	prev_height/= _paint_context.FontHeight();
-	
+
 	if ((int)width != prev_width || (int)height != prev_height) {
 //		if ((int)width > prev_width || (int)height > prev_height) {
 //			_frame->SetPosition(wxPoint(0,0 ));
 //		}
-		
+
 		width*= _paint_context.FontWidth();
 		height*= _paint_context.FontHeight();
 		fprintf(stderr, "OnConsoleResized SET client size: %u %u\n", width, height);
-		_frame->SetClientSize(width, height);		
+		_frame->SetClientSize(width, height);
 	}
 	Refresh(false);
 }
@@ -1156,9 +1163,9 @@ void WinPortPanel::OnConsoleOutputTitleChanged()
 
 static bool IsForcedCharTranslation(int code)
 {
-	return (code==WXK_NUMPAD0 || code==WXK_NUMPAD1|| code==WXK_NUMPAD2 
+	return (code==WXK_NUMPAD0 || code==WXK_NUMPAD1|| code==WXK_NUMPAD2
 		|| code==WXK_NUMPAD3 || code==WXK_NUMPAD4 || code==WXK_NUMPAD5
-		|| code==WXK_NUMPAD6 || code==WXK_NUMPAD7 || code==WXK_NUMPAD8 
+		|| code==WXK_NUMPAD6 || code==WXK_NUMPAD7 || code==WXK_NUMPAD8
 		|| code==WXK_NUMPAD9 || code==WXK_NUMPAD_DECIMAL || code==WXK_NUMPAD_SPACE
 		|| code==WXK_NUMPAD_SEPARATOR || code==WXK_NUMPAD_EQUAL || code==WXK_NUMPAD_ADD
 		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
@@ -1617,7 +1624,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 	}
 	fprintf(stderr, "\n");
 
-	if (event.GetUnicodeKey() != WXK_NONE && 
+	if (event.GetUnicodeKey() != WXK_NONE &&
 		(!_last_keydown_enqueued || _key_tracker.LastKeydown().GetTimestamp() != event.GetTimestamp())) {
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
@@ -1638,7 +1645,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		// See also: https://github.com/wxWidgets/wxWidgets/issues/25379
 
 		const wxKeyEvent& last_keydown = _key_tracker.LastKeydown();
-		if (event.GetKeyCode() == 0 || event.GetTimestamp() != last_keydown.GetTimestamp())
+		if (event.GetRawKeyCode() == 0 || event.GetTimestamp() != last_keydown.GetTimestamp())
 		{
 			// Likely an IME-generated event or a desynchronized event. Use the safe fallback.
 			ir.Event.KeyEvent.wVirtualKeyCode = VK_NONAME;
@@ -1648,9 +1655,12 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			// The event seems to be a direct result of a key press.
 			// Use the new logic to get a more precise virtual key code.
 			ir.Event.KeyEvent.wVirtualKeyCode = wxKeyCode2WinKeyCode(last_keydown.GetKeyCode());
+			if (ir.Event.KeyEvent.wVirtualKeyCode == 0 && event.GetKeyCode() == 0) {
+				ir.Event.KeyEvent.wVirtualKeyCode = VK_NONAME;
+			}
 		}
-		
-		if (event.GetUnicodeKey() <= 0x7f) { 
+
+		if (event.GetUnicodeKey() <= 0x7f) {
 			if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
 				wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
 				ir.Event.KeyEvent.wVirtualKeyCode = irx.Event.KeyEvent.wVirtualKeyCode;
@@ -1699,7 +1709,7 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
-		
+
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 
@@ -1717,8 +1727,10 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 
 void WinPortPanel::OnPaint( wxPaintEvent& event )
 {
-	//fprintf(stderr, "WinPortPanel::OnPaint\n"); 
+	//fprintf(stderr, "WinPortPanel::OnPaint\n");
 	_pending_refreshes = 0;
+
+	wxPaintDC dc(this);
 	if (_mouse_qedit_moved && _mouse_qedit_start_ticks != 0
 	 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
 		SMALL_RECT qedit;
@@ -1727,10 +1739,57 @@ void WinPortPanel::OnPaint( wxPaintEvent& event )
 		qedit.Right = _mouse_qedit_last.X;
 		qedit.Bottom = _mouse_qedit_last.Y;
 		NormalizeArea(qedit);
-		_paint_context.OnPaint(&qedit);
+		_paint_context.OnPaint(dc, &qedit);
 	}
 	else
-		_paint_context.OnPaint();
+		_paint_context.OnPaint(dc);
+
+	{
+		std::lock_guard<std::mutex> lock(_images);
+		if (!_images.empty()) {
+			wxRegion rgn = GetUpdateRegion();
+			wxRect img_rc, rc = rgn.GetBox();
+			for (auto& it : _images) {
+				auto sz = it.second.bitmap.GetSize();
+				img_rc.SetLeft(_paint_context.FontWidth() * it.second.area.Left);
+				img_rc.SetTop(_paint_context.FontHeight() * it.second.area.Top);
+				if (it.second.pixel_offset || it.second.area.Right == -1) {
+					img_rc.SetWidth(sz.GetWidth());
+				} else {
+					img_rc.SetWidth(_paint_context.FontWidth() * (it.second.area.Right + 1 - it.second.area.Left));
+				}
+				if (it.second.pixel_offset || it.second.area.Bottom == -1) {
+					img_rc.SetHeight(sz.GetHeight());
+				} else {
+					img_rc.SetHeight(_paint_context.FontHeight() * (it.second.area.Bottom + 1 - it.second.area.Top));
+				}
+				if (rc.Intersects(img_rc)) {
+					if (img_rc.GetWidth() == sz.GetWidth() && img_rc.GetHeight() == sz.GetHeight()) {
+						int x = img_rc.GetLeft(), y = img_rc.GetTop();
+						if (it.second.pixel_offset && it.second.area.Right > 0) {
+							x+= it.second.area.Right;
+						}
+						if (it.second.pixel_offset && it.second.area.Bottom > 0) {
+							y+= it.second.area.Bottom;
+						}
+//						fprintf(stderr, "WX image: [%d:%d] at [%d:%d]\n", sz.GetWidth(), sz.GetHeight(), x, y);
+						dc.DrawBitmap(it.second.bitmap, x, y, false);
+					} else {
+						auto scaled_sz = it.second.scaled_bitmap.GetSize();
+						if (img_rc.GetWidth() != scaled_sz.GetWidth() || img_rc.GetHeight() != scaled_sz.GetHeight()) {
+							fprintf(stderr, "WX image scaling: [%d:%d] -> [%d:%d] at [%d:%d]\n",
+								sz.GetWidth(), sz.GetHeight(), img_rc.GetWidth(), img_rc.GetHeight(),
+								img_rc.GetLeft(), img_rc.GetTop());
+							auto scaled_image = it.second.bitmap.ConvertToImage().Scale(img_rc.GetWidth(), img_rc.GetHeight(), wxIMAGE_QUALITY_HIGH);
+							it.second.scaled_bitmap = scaled_image;
+						}
+						dc.DrawBitmap(it.second.scaled_bitmap, img_rc.GetLeft(), img_rc.GetTop(), false);
+					}
+				}
+			}
+		}
+	}
+
 	if (_force_size_on_paint_state == 0) {
 		_force_size_on_paint_state = 1;
 	}
@@ -1745,7 +1804,7 @@ void WinPortPanel::OnSize(wxSizeEvent &event)
 	if (_resize_pending==RP_INSTANT) {
 		CheckForResizePending();
 	} else {
-		_resize_pending = RP_DEFER;	
+		_resize_pending = RP_DEFER;
 		ResetTimerIdling();
 		//fprintf(stderr, "RP_DEFER\n");
 	}
@@ -1764,7 +1823,7 @@ COORD WinPortPanel::TranslateMousePosition( wxMouseEvent &event )
 
 	unsigned int width = 80, height = 25;
 	g_winport_con_out->GetSize(width, height);
-	
+
 	if ( (USHORT)out.X >= width) out.X = width - 1;
 	if ( (USHORT)out.Y >= height) out.Y = height - 1;
 	return out;
@@ -1775,7 +1834,7 @@ void WinPortPanel::OnMouse( wxMouseEvent &event )
 	ResetTimerIdling();
 
 	COORD pos_char = TranslateMousePosition( event );
-	
+
 	DWORD mode = 0;
 	if (!WINPORT(GetConsoleMode)(NULL, &mode))
 		mode = 0;
@@ -1819,7 +1878,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 		ir.Event.MouseEvent.dwButtonState|= (event.GetWheelRotation() > 0) ? 0x00010000 : 0xffff0000;
 
 	} else if ( event.ButtonDClick() ) {
-		
+
 		if (event.ButtonDClick(wxMOUSE_BTN_LEFT))
 			ir.Event.MouseEvent.dwButtonState|= FROM_LEFT_1ST_BUTTON_PRESSED;
 		else if (event.ButtonDClick(wxMOUSE_BTN_MIDDLE))
@@ -1828,7 +1887,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 			ir.Event.MouseEvent.dwButtonState|= RIGHTMOST_BUTTON_PRESSED;
 		else {
 			fprintf(stderr, "Unsupported mouse double-click\n");
-			return;			
+			return;
 		}
 		ir.Event.MouseEvent.dwEventFlags|= DOUBLE_CLICK;
 	} else {
@@ -1836,13 +1895,13 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 			fprintf(stderr, "Unsupported mouse event\n");
 		return;
 	}
-	
+
 	ir.Event.MouseEvent.dwButtonState|= _mouse_state;
 	ir.Event.MouseEvent.dwMousePosition = pos_char;
-	
+
 	if (!(ir.Event.MouseEvent.dwEventFlags &MOUSE_MOVED) ) {
 		fprintf(stderr, "Mouse: dwEventFlags=0x%x dwButtonState=0x%x dwControlKeyState=0x%x\n",
-			ir.Event.MouseEvent.dwEventFlags, ir.Event.MouseEvent.dwButtonState, 
+			ir.Event.MouseEvent.dwEventFlags, ir.Event.MouseEvent.dwButtonState,
 			ir.Event.MouseEvent.dwControlKeyState);
 	}
 
@@ -1887,7 +1946,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 	} else if (_mouse_qedit_start_ticks != 0) {
 		if (event.Moving() || event.Dragging()) {
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
-			DamageAreaBetween(_mouse_qedit_start, pos_char);			
+			DamageAreaBetween(_mouse_qedit_start, pos_char);
 			_mouse_qedit_last = pos_char;
 			_mouse_qedit_moved = true;
 
@@ -1937,20 +1996,20 @@ void WinPortPanel::OnConsoleAdhocQuickEditSync( wxCommandEvent& event )
 {
 	if (_adhoc_quickedit) {
 		fprintf(stderr, "OnConsoleAdhocQuickEditSync: already\n");
-		return;		
+		return;
 	}
 	if ((_mouse_state & (FROM_LEFT_2ND_BUTTON_PRESSED | RIGHTMOST_BUTTON_PRESSED)) != 0) {
 		fprintf(stderr, "OnConsoleAdhocQuickEditSync: inappropriate _mouse_state=0x%x\n", _mouse_state);
 		return;
 	}
-	
+
 	_adhoc_quickedit = true;
-	
+
 	if ( (_mouse_state & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
 		_mouse_state&= ~FROM_LEFT_1ST_BUTTON_PRESSED;
-	
+
 		COORD pos_char = TranslateMousePosition( _last_mouse_event );
-		
+
 		INPUT_RECORD ir = {0};
 		ir.EventType = MOUSE_EVENT;
 		ir.Event.MouseEvent.dwButtonState = _mouse_state;
@@ -1989,7 +2048,7 @@ DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 
 	if (_paint_context.IsSharpSupported())
 		out|= TWEAK_STATUS_SUPPORT_PAINT_SHARP;
-		
+
 	if (_exclusive_hotkeys.Available())
 		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
 
@@ -2120,9 +2179,9 @@ void WinPortPanel::CheckPutText2CLip()
 				wxTheClipboard->SetData( new wxTextDataObject(text2clip) );
 				wxTheClipboard->Close();
 			}
-		} else 
+		} else
 			fprintf(stderr, "CheckPutText2CLip: clipboard busy\n");
-	}	
+	}
 }
 
 void WinPortPanel::OnSetFocus( wxFocusEvent &event )
@@ -2138,6 +2197,180 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 		ir.Event.FocusEvent.bSetFocus = TRUE;
 		g_winport_con_in->Enqueue(&ir, 1);
 	}
+}
+
+void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
+{
+	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_SCROLL | WP_IMGCAP_ROTATE;
+	wgi->PixPerCell.X = _paint_context.FontWidth();
+	wgi->PixPerCell.Y = _paint_context.FontHeight();
+}
+
+bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer)
+{
+	std::string str_id(id);
+	try {
+		std::optional<wxImage> wx_img;
+		unsigned char *pixel_data = (unsigned char *)buffer;
+		const auto fmt = (flags & WP_IMG_MASK_FMT);
+		if (fmt == WP_IMG_PNG) {
+			if (height != 1) {
+				fprintf(stderr, "%s('%s'): unexpected PNG height %u\n", __FUNCTION__, id, height);
+				return false;
+			}
+			static int s_ih = 0;
+			if (!s_ih) {
+				auto fn = std::bind(wxInitAllImageHandlers);
+				CallInMainNoRet(fn);
+				s_ih = 1;
+			}
+			wxMemoryInputStream stream(pixel_data, width);
+		    wx_img.emplace();
+		    if (!wx_img->LoadFile(stream, wxBITMAP_TYPE_PNG)) {
+				fprintf(stderr, "%s('%s'): PNG load failed\n", __FUNCTION__, id);
+				return false;
+		    }
+			width = wx_img->GetWidth();
+			height = wx_img->GetHeight();
+			fprintf(stderr, "%s('%s'): PNG loaded %u x %u pixels\n", __FUNCTION__, id, width, height);
+
+		} else if (fmt == WP_IMG_RGB) {
+			wx_img.emplace((int)width, (int)height, pixel_data, true);
+
+		} else if (fmt == WP_IMG_RGBA) {
+			const size_t num_pixels = size_t(width) * height;
+			unsigned char *rgb = (unsigned char *)malloc(num_pixels * 3);
+			unsigned char *alpha = (unsigned char *)malloc(num_pixels);
+			for (size_t i = 0; i < num_pixels; ++i) {
+				rgb[i * 3 + 0] = pixel_data[i * 4 + 0];
+				rgb[i * 3 + 1] = pixel_data[i * 4 + 1];
+				rgb[i * 3 + 2] = pixel_data[i * 4 + 2];
+				alpha[i]       = pixel_data[i * 4 + 3];
+			}
+			wx_img.emplace((int)width, (int)height, rgb, alpha, false);
+			if (!wx_img->IsOk()) {
+				free(rgb);
+				free(alpha);
+			}
+		} else {
+			fprintf(stderr, "%s('%s'): bad flags\n", __FUNCTION__, id);
+			return false;
+		}
+		if (!wx_img->IsOk()) {
+			fprintf(stderr, "%s('%s'): failed to create wxImage\n", __FUNCTION__, id);
+			return false;
+		}
+
+		auto cur_pos = g_winport_con_out->GetCursor();
+		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
+		std::lock_guard<std::mutex> lock(_images);
+		auto &img = _images[str_id];
+		img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;
+		if (area->Top == -1) {
+			cur_pos.Y-= (height / _paint_context.FontHeight()) + ((height % _paint_context.FontHeight()) ? 1 : 0);
+			if (cur_pos.Y < 0) {
+				cur_pos.Y = 0;
+			}
+		}
+		MakeImageArea(img.area, area, cur_pos);
+		fprintf(stderr, "%s('%s'): area %d x %d - %d x %d\n", __FUNCTION__, id, img.area.Left, img.area.Top, img.area.Right, img.area.Bottom);
+
+		if (scroll) { // scroll/move existing image
+			if (width && height) { // scrolling, but if empty image specified - its just a move operation
+				auto sz = img.bitmap.GetSize();
+				if (scroll == WP_IMG_SCROLL_AT_LEFT || scroll == WP_IMG_SCROLL_AT_RIGHT) {
+					if (height != (DWORD)sz.GetHeight()) {
+						fprintf(stderr, "%s: WP_IMG_SCROLL - height mismatch, %u != %d\n", __FUNCTION__, height, sz.GetHeight());
+						return false;
+					}
+				} else if (scroll == WP_IMG_SCROLL_AT_TOP || scroll == WP_IMG_SCROLL_AT_BOTTOM) {
+					if (width != (DWORD)sz.GetWidth()) {
+						fprintf(stderr, "%s: WP_IMG_SCROLL - width mismatch, %u != %d\n", __FUNCTION__, width, sz.GetWidth());
+						return false;
+					}
+				} else {
+					fprintf(stderr, "%s: bad scroll=%llu\n", __FUNCTION__, (unsigned long long)scroll);
+					return false;
+				}
+				wxBitmap new_bmp(sz);
+				wxBitmap edge_bmp = *wx_img;
+				wxMemoryDC img_dc(img.bitmap), edge_dc(edge_bmp), new_dc(new_bmp);
+				switch (scroll) {
+					case WP_IMG_SCROLL_AT_LEFT:
+						new_dc.Blit(width, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, 0, 0, wxCOPY, false);
+						new_dc.Blit(0, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+					case WP_IMG_SCROLL_AT_RIGHT:
+						new_dc.Blit(0, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, width, 0, wxCOPY, false);
+						new_dc.Blit(sz.GetWidth() - width, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+					case WP_IMG_SCROLL_AT_TOP:
+						new_dc.Blit(0, height, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, 0, wxCOPY, false);
+						new_dc.Blit(0, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+					case WP_IMG_SCROLL_AT_BOTTOM:
+						new_dc.Blit(0, 0, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, height, wxCOPY, false);
+						new_dc.Blit(0, sz.GetHeight() - height, width, height, &edge_dc, 0, 0, wxCOPY, false);
+						break;
+				}
+				img.bitmap = new_bmp;
+			}
+		} else {
+			img.bitmap = *wx_img;
+		}
+
+	} catch (...) {
+		_images.erase(str_id);
+		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		return false;
+	}
+
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
+}
+
+bool WinPortPanel::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
+{
+	try {
+		std::string str_id(id);
+		angle_x90&= 3; // any other represented one of: 90, 180, 270
+		std::lock_guard<std::mutex> lock(_images);
+		auto &img = _images[str_id];
+		if (area) {
+			img.area = *area;
+		}
+		if (angle_x90) { // if zero - its a trivial move
+			wxImage rotated_img = img.bitmap.ConvertToImage();
+			switch (angle_x90) {
+				case 1: img.bitmap = rotated_img.Rotate90(true); break;
+				case 2: img.bitmap = rotated_img.Rotate180(); break;
+				case 3: img.bitmap = rotated_img.Rotate90(false); break;
+				default: ;
+			}
+		}
+	} catch (...) {
+		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		return false;
+	}
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
+}
+
+bool WinPortPanel::OnDeleteConsoleImage(const char *id)
+{
+	{
+		std::string str_id(id);
+		std::lock_guard<std::mutex> lock(_images);
+		if (!_images.erase(str_id)) {
+			return false;
+		}
+	}
+
+	auto fn = std::bind(&WinPortPanel::Refresh, this, false, nullptr);
+	CallInMainNoRet(fn);
+	return true;
 }
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )
@@ -2156,12 +2389,12 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 void WinPortPanel::ResetInputState()
 {
 	_key_tracker.ForceAllUp();
-	
+
 	if (_mouse_qedit_start_ticks) {
 		_mouse_qedit_start_ticks = 0;
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 	}
-	
+
 	_exclusive_hotkeys.Reset();
 }
 

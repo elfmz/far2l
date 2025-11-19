@@ -222,9 +222,9 @@ CHAR_INFO *ConsoleBuffer::InspectCopyArea(const COORD &data_size, const COORD &d
 void ConsoleBuffer::Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect)
 {
 	CHAR_INFO *screen = InspectCopyArea(data_size, data_pos, screen_rect);
-	if (!screen) 
+	if (!screen)
 		return;
-	
+
 	data = OffsetMatrixPtr(data, data_size.X, data_pos.X, data_pos.Y);
 	for (SHORT y = screen_rect.Top; y <= screen_rect.Bottom; ++y) {
 		memcpy(data, screen, (screen_rect.Right + 1 - screen_rect.Left) * sizeof(*data));
@@ -283,7 +283,7 @@ ConsoleBuffer::WriteResult ConsoleBuffer::Write(const CHAR_INFO &ch, COORD scree
 	CHAR_INFO &dch = _console_chars[index];
 	if (AreSameChars(dch, ch))
 		return WR_SAME;
-		
+
 	dch = ch;
 	return WR_MODIFIED;
 }

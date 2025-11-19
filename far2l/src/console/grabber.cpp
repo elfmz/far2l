@@ -192,7 +192,7 @@ void Grabber::DisplayObject()
 			for (auto x = area.left; x <= area.right; ++x)
 				for (auto y = area.top; y <= area.bottom; ++y) {
 					DWORD64 new_attrs;
-					
+
 					if ((_save_scr->Read(x, y).Attributes & B_LIGHTGRAY) == B_LIGHTGRAY)
 						new_attrs = B_BLACK | F_LIGHTGRAY;
 					else

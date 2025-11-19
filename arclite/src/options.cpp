@@ -257,7 +257,7 @@ public:
 	}
 };
 
-ExportOptions::ExportOptions() : 
+ExportOptions::ExportOptions() :
 	export_creation_time(triUndef),
 	custom_creation_time(false),
 	current_creation_time(false),

@@ -32,7 +32,7 @@
 #define NECTLIM		4	       /* */
 #define NECMAX		10	       /* no escape expected counter maximum */
 #define MAXCLEN		4	       /* assumed to be 4 in several places */
-#define NUMCON		10000	       /* number of contexts to remember */ 
+#define NUMCON		10000	       /* number of contexts to remember */
 #define NUMCFB		32760	       /* number of frequencies to remember */
 #define ESCTH		3	       /* threshold for escape calculation */
 #define MAXTVAL		8000	       /* maximum frequency value */
@@ -64,7 +64,7 @@ static U16B nrel;		      /* context for frequency block release */
 
 /* frequency mask system */
 static unsigned char cmask[256];      /* masked characters */
-static unsigned char cmstack[256];    /* stack of cmask[] entries to clear */ 
+static unsigned char cmstack[256];    /* stack of cmask[] entries to clear */
 static S16B cmsp;		      /* pointer to cmstack */
 
 /* escape propability modifying system variables */
@@ -78,17 +78,17 @@ static U16B as[MAXCLEN+1];	      /* indexes to frequency array */
 
 /* miscalneous */
 static S16B dropcnt;		      /* counter for context len drop */
-static unsigned char maxclen;	      /* current maximum length for context */ 
+static unsigned char maxclen;	      /* current maximum length for context */
 static U16B hrt[HTLEN];		      /* semi random data for hashing */
-static U16B hs[MAXCLEN+1]; 	      /* hash stack for context search */ 
+static U16B hs[MAXCLEN+1]; 	      /* hash stack for context search */
 static S16B cslen;		      /* length of context to search */
- 
+
 /***********************************************************************
 	Cleanup routine
 ***********************************************************************/
 
 void hsc_cleanup(void) {
-    
+
     if (ht!=NULL) free(ht),ht=NULL;
     if (fc!=NULL) free(fc),fc=NULL;
     if (fa!=NULL) free(fa),fa=NULL;
@@ -115,8 +115,8 @@ static void init_model(void) {
 
     register S16B i;
     S32B z,l,h,t;
-    
-    ht=malloc(HTLEN*sizeof(*ht));		
+
+    ht=malloc(HTLEN*sizeof(*ht));
     hp=malloc(NUMCON*sizeof(*hp));
     elp=malloc(NUMCON*sizeof(*elp));
     eln=malloc(NUMCON*sizeof(*eln));
@@ -136,14 +136,14 @@ static void init_model(void) {
 	hsc_cleanup();
 	error(1,ERR_MEM,"init_model()");
     }
-    maxclen=MAXCLEN;		
+    maxclen=MAXCLEN;
     iec[0]=(IECLIM>>1);
     for (i=1;i<=MAXCLEN;++i) iec[i]=(IECLIM>>1)-1;
     dropcnt=NUMCON/4;
     nec=0;
     nrel=0;
     hs[0]=0;
-    for (i=0;i<HTLEN;++i) ht[i]=NIL;	
+    for (i=0;i<HTLEN;++i) ht[i]=NIL;
     for (i=0;i<NUMCON;++i) {
 	eln[i]=i+1;
 	elp[i]=i-1;
@@ -157,10 +157,10 @@ static void init_model(void) {
     fcfbl=NUMCON;
     curcon[3]=curcon[2]=curcon[1]=curcon[0]=0;
     cmsp=0;
-    for (i=0;i<256;++i) cmask[i]=0;		
+    for (i=0;i<256;++i) cmask[i]=0;
     for (z=10,i=0;i<HTLEN;++i) {
 	h=z/(2147483647L/16807L);
-	l=z%(2147483647L/16807L);		
+	l=z%(2147483647L/16807L);
 	if ((t=16807L*l-(2147483647L%16807L)*h)>0) z=t;
 	else z=t+2147483647L;
 	hrt[i]=(U16B)z&(HTLEN-1);
@@ -184,19 +184,19 @@ static void init_unpack(void) {
 			  if (l>1) h=hrt[(s[1]+h)&(HTLEN-1)];     \
 			  if (l>2) h=hrt[(s[2]+h)&(HTLEN-1)];     \
 			  if (l>3) h=hrt[(s[3]+h)&(HTLEN-1)];     \
-			}                                                     
+			}
 
 #define move_context(c) curcon[3]=curcon[2],curcon[2]=curcon[1], \
 			curcon[1]=curcon[0],curcon[0]=c
 
 static  void release_cfblocks(void) {
-	
+
     register U16B i,j,d;
-    
+
     do {
 	do if (++nrel==NUMCON) nrel=0; while (nb[nrel]==NIL);
 	for (i=0;i<=usp;++i) if ((cps[i]&0x7fff)==nrel) break;
-    } while (i<=usp);	
+    } while (i<=usp);
     for (i=nb[nrel],d=fa[nrel];i!=NIL;i=nb[i]) if (fa[i]<d) d=fa[i];
     ++d;
     if (fa[nrel]<d) {
@@ -235,7 +235,7 @@ static  U16B make_context(unsigned char conlen, S16B c) {
 
     register S16B i;
     register U16B nc,fp;
-    
+
     nc=ell;
     ell=elp[nc];
     elp[elf]=nc;
@@ -278,7 +278,7 @@ static  void el_movefront(U16B cp) {
     else {
 	elp[eln[cp]]=elp[cp];
 	eln[elp[cp]]=eln[cp];
-    }	
+    }
     elp[elf]=cp;
     eln[cp]=elf;
     elf=cp;
@@ -288,7 +288,7 @@ static void  add_model(S16B c) {
 
     register U16B i;
     register S16B cp;
-    
+
     while (usp!=0) {
 	i=as[--usp];
 	cp=cps[usp];
@@ -299,7 +299,7 @@ static void  add_model(S16B c) {
 	    i=nb[i];
 	    fcfbl=nb[fcfbl];
 	    nb[i]=NIL;
-	    fa[i]=1;			
+	    fa[i]=1;
 	    fc[i]=c;
 	    ++cc[cp];
 	    ++fe[cp];
@@ -328,7 +328,7 @@ static  U16B find_next(void) {
 
     register S16B i,k;
     register U16B cp;
-    
+
     for (i=cslen-1;i>=0;--i) {
 	k=hs[i];
 	for (cp=ht[k];cp!=NIL;cp=hp[cp]) {
@@ -346,7 +346,7 @@ static  U16B find_next(void) {
 		    cslen=i;
 		    return cp;
 		}
-	    }	
+	    }
 	}
     }
     return NIL;
@@ -354,10 +354,10 @@ static  U16B find_next(void) {
 
 static  U16B find_longest(void) {
 
-    hs[1]=hrt[curcon[0]];	
-    hs[2]=hrt[(curcon[1]+hs[1])&(HTLEN-1)]; 
-    hs[3]=hrt[(curcon[2]+hs[2])&(HTLEN-1)]; 
-    hs[4]=hrt[(curcon[3]+hs[3])&(HTLEN-1)]; 
+    hs[1]=hrt[curcon[0]];
+    hs[2]=hrt[(curcon[1]+hs[1])&(HTLEN-1)];
+    hs[3]=hrt[(curcon[2]+hs[2])&(HTLEN-1)];
+    hs[4]=hrt[(curcon[3]+hs[3])&(HTLEN-1)];
     usp=0;
     while(cmsp) cmask[cmstack[--cmsp]]=0;
     cslen=MAXCLEN+1;
@@ -376,7 +376,7 @@ static U16B adj_escape_prob(U16B esc, U16B cp) {
 }
 
 static  S16B decode_first(U16B cp) {
-    
+
     register U16B c;
     register U16B tv;
     register U16B i;
@@ -441,7 +441,7 @@ static  S16B decode_rest(U16B cp) {
     register U16B tv;
     register U16B i;
     register S16B sum,tot,esc,cf;
-    
+
     esc=tot=0;
     for (i=cp;i!=NIL;i=nb[i]) {
 	if (!cmask[fc[i]]) {
@@ -486,10 +486,10 @@ static  S16B decode_rest(U16B cp) {
 }
 
 static  S16B decode_new(void) {
-    
+
     register S16B c;
     register U16B tv,sum,tot;
-    
+
     tot=257-cmsp;
     tv=ac_threshold_val(tot);
     for (c=sum=0;c<256;++c) {
@@ -497,7 +497,7 @@ static  S16B decode_new(void) {
 	if (sum+1<=tv) ++sum;
 	else break;
     }
-    ac_in(sum,sum+1,tot);	
+    ac_in(sum,sum+1,tot);
     return c;
 }
 
@@ -512,21 +512,21 @@ void hsc_unpack(void) {
     S16B c;
     U16B cp;
     unsigned char ncmax,ncmin;
-    
+
     init_unpack();
     for (;;) {
-	cp=find_longest(); 
+	cp=find_longest();
 	ncmin=cp==NIL?0:cl[cp]+1;
 	ncmax=maxclen+1;
 	for(;;) {
 	    if (cp==NIL) {
 		c=decode_new();
 		break;
-	    }			
+	    }
 	    if ((c=decode_byte(cp))!=ESC) {
 		el_movefront(cp);
 		break;
-	    }		
+	    }
 	    cp=find_next();
 	}
 	if (c==ESC) break;

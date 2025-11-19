@@ -17,6 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>. *
  **************************************************************************/
 
+#include "hex_ctl.h" // For CP_UTF8, CP_UTF16LE
 #include "statusbar_ctl.h"
 #include "version.h"
 
@@ -63,18 +64,33 @@ void statusbar_ctl::write_update_flag(const bool upd)
 
 void statusbar_ctl::write_codepage(const UINT cp)
 {
-	wchar_t num[8];
-	const int num_len = swprintf(num, sizeof(num) / sizeof(num[0]), L"%d", cp);
-	for (size_t i = 56; i < 60; ++i)
+	const wchar_t* cp_name;
+	wchar_t cp_num_str[16];
+
+	if (cp == CP_UTF8) {
+		cp_name = L"UTF-8";
+	} else if (cp == CP_UTF16LE) {
+		cp_name = L"UTF-16";
+	} else if (cp == GetOEMCP()) {
+		cp_name = L"OEM";
+	} else if (cp == GetACP()) {
+		cp_name = L"ANSI";
+	} else {
+		swprintf(cp_num_str, _countof(cp_num_str), L"%d", cp);
+		cp_name = cp_num_str;
+	}
+
+	const int name_len = wcslen(cp_name);
+	for (size_t i = 54; i < 60; ++i)
 		write(0, i, L' ');
-	write(0, 60 - num_len, num, num_len);
+	write(0, 60 - name_len, cp_name, name_len);
 }
 
 
 void statusbar_ctl::write_offset(const UINT64 pos)
 {
 	wchar_t num[16];
-	const int num_len = swprintf(num, sizeof(num) / sizeof(num[0]), L"0x%012llX", pos);
+	const int num_len = swprintf(num, ARRAYSIZE(num), L"0x%012llX", pos);
 	write(0, 61, num, num_len);
 }
 
@@ -84,7 +100,7 @@ void statusbar_ctl::write_position(const unsigned char percent)
 	assert(percent <= 100);
 
 	wchar_t num[8];
-	const int num_len = swprintf(num, sizeof(num) / sizeof(num[0]), L"%d%%", percent);
+	const int num_len = swprintf(num, ARRAYSIZE(num), L"%d%%", percent);
 	for (size_t i = 76; i < 80; ++i)
 		write(0, i, L' ');
 	write(0, 80 - num_len, num, num_len);

@@ -5,6 +5,20 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Editor: Word wrap (like in Windows Notepad or HTML textareas). Toggled by **F3** or **Alt+W**
+* Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
+  Option to set the maximum recursive scanning depth (default: 4). 
+  Right Arrow expands excluded subtrees, and Left Arrow collapses subtree in focus, if it's already collapsed - navigates one level up.
+  Ctrl+Number expands all branches to the chosen depth.
+* _New:_ Options of the special command `edit:[line,col]` for openening file with position
+* _hexitor plugin_: fix broken layout with narrow window
+* _ImageViewer plugin_:  New plugin (**F11**->**I** to open image/video file.
+  Uses ImageMagick for graphics operations and ffmpeg for video preview,
+  works in GUI and in TTY|F and TTY|k,
+  see [#3028](https://github.com/elfmz/far2l/pull/3028#issuecomment-3508025346))).
+* _edsort plugin_:  New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column.
+
+## 2.7.0 beta (2025-10-26)
 * Far2l internal virtual terminal: Now the original output of applications is preserved. The Far2l VT window applies dynamic formatting with correct line wrapping. Operations such as F3/F4 and copy/paste use the original, unwrapped lines.
 * _New:_ new debug dump functionality (see [DUMPER.md](https://github.com/elfmz/far2l/blob/master/DUMPER.md))
 * _New:_ far2l-cd.sh wrapper to enable external directory change to far2l's when it exit ([#2758](https://github.com/elfmz/far2l/issues/2758))
@@ -31,7 +45,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   (now as experimental version which partially more effective then multiarc;
   arclite disabled by default, to enable manually turn on
   F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)
-* _hexitor plugin_: Hex editor (ported from far3)
+* _hexitor plugin_: Hex editor (ported from far3) + preliminary support for viewing and editing UTF-8 characters
 * _OpenWith plugin_: New plugin provides a context-aware menu to open the currently selected file with an appropriate application
 * Several bugfixes
 

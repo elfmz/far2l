@@ -109,7 +109,9 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 	SelStart(-1),
 	SelEnd(0),
 	CursorSize(-1),
-	CursorPos(0)
+	CursorPos(0),
+	HasSpecialWidthChars(false),
+	m_bWordWrapState(false)
 {
 	m_Callback.Active = true;
 	m_Callback.m_Callback = nullptr;
@@ -374,6 +376,7 @@ void Edit::FastShow()
 
 	OutStr.clear();
 	size_t OutStrCells = 0;
+	bool joining = false;
 	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i) {
 		auto wc = Str[i];
 		if (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
@@ -419,15 +422,20 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			if (CharClasses::IsFullWidth(wc)) {
+			if (wc == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsFullWidth(&Str[i])) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
 					break;
 				}
-				OutStrCells+= 2;
-			} else if (!CharClasses::IsXxxfix(wc))
-				OutStrCells++;
+				if (!joining) OutStrCells+= 2;
+				joining = false;
+			} else if (!CharClasses::IsXxxfix(wc)) {
+				if (!joining) OutStrCells++;
+				joining = false;
+			}
 
 			OutStr.emplace_back(wc ? wc : L' ');
 		}
@@ -587,13 +595,12 @@ int64_t Edit::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 					switch (iParam) {
 						case 0:		// return FirstLine
 						case 2:		// return LastLine
+						case 4:		// return block type (0=nothing 1=stream, 2=column)
 							return IsSelection() ? 1 : 0;
 						case 1:		// return FirstPos
 							return IsSelection() ? SelStart + 1 : 0;
 						case 3:		// return LastPos
 							return IsSelection() ? SelEnd : 0;
-						case 4:		// return block type (0=nothing 1=stream, 2=column)
-							return IsSelection() ? 1 : 0;
 					}
 
 					break;
@@ -669,15 +676,37 @@ int Edit::CalcRTrimmedStrSize() const
 
 int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 {
+	bool joining = false;
 	if (LimitPos != -1) {
-		if (Pos < LimitPos)
-			do {
-				Pos++;
-			} while (Pos < LimitPos && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
-	} else
-		do {
-			Pos++;
-		} while (Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
+		if (Pos < LimitPos) {
+			++Pos;
+			// Skip combining marks and ZWJ sequences
+			for ( ; Pos < LimitPos && Pos < StrSize; ++Pos) {
+				if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
+					joining = true;
+				} else if (CharClasses::IsXxxfix(Str[Pos])) {
+					continue;
+				} else if (joining) {
+					joining = false;
+				} else {
+					break;
+				}
+			}
+		}
+	} else {
+		++Pos;
+		for ( ; Pos < StrSize; ++Pos) {
+			if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsXxxfix(Str[Pos])) {
+				continue;
+			} else if (joining) {
+				joining = false;
+			} else {
+				break;
+			}
+		}
+	}
 
 	return Pos;
 }
@@ -687,9 +716,18 @@ int Edit::CalcPosBwdTo(int Pos) const
 	if (Pos <= 0)
 		return 0;
 
-	do {
-		--Pos;
-	} while (Pos > 0 && Pos < StrSize && CharClasses::IsXxxfix(Str[Pos]));
+	--Pos;
+	for ( ; Pos > 0 && Pos < StrSize; --Pos) {
+		if (Str[Pos] == CharClasses::ZERO_WIDTH_JOINER) {
+			continue;
+		} else if (CharClasses::IsXxxfix(Str[Pos])) {
+			continue;
+		} else if (Str[Pos - 1] == CharClasses::ZERO_WIDTH_JOINER) {
+			continue;
+		} else {
+			break;
+		}
+	}
 
 	return Pos;
 }
@@ -1222,6 +1260,10 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
+			if (m_bWordWrapState)
+			{
+				RecalculateWordWrap(ObjWidth, TabSize);
+			}
 			Changed(true);
 			Show();
 			return TRUE;
@@ -1360,6 +1402,7 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_SHIFTSPACE:
 			Key = KEY_SPACE;
+			[[fallthrough]];
 		default: {
 			//			_D(SysLog(L"Key=0x%08X",Key));
 			if (Key == KEY_ENTER || !IS_KEY_NORMAL(Key))	// KEY_NUMENTER,KEY_IDLE,KEY_NONE covered by !IS_KEY_NORMAL
@@ -1546,6 +1589,94 @@ int Edit::InsertKey(FarKey Key)
 	return TRUE;
 }
 
+int Edit::GetVisualLineCount() const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty())
+		return 1;
+	return m_WrapBreaks.size();
+}
+
+void Edit::GetVisualLine(int line, int& start, int& end) const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty() || line < 0)
+	{
+		start = 0;
+		end = StrSize;
+		return;
+	}
+
+	if (static_cast<size_t>(line) < m_WrapBreaks.size())
+	{
+		start = m_WrapBreaks[line];
+		if (static_cast<size_t>(line + 1) < m_WrapBreaks.size())
+			end = m_WrapBreaks[line + 1];
+		else
+			end = StrSize;
+	}
+	else
+	{
+		start = StrSize;
+		end = StrSize;
+	}
+}
+
+void Edit::RecalculateWordWrap(int Width, int TabSize)
+{
+    Width--; // save last column for cursor
+
+	m_WrapBreaks.clear();
+	if (!m_bWordWrapState || Width <= 1)
+	{
+		return;
+	}
+
+	m_WrapBreaks.push_back(0);
+
+	int CurrentStart = 0;
+	while (CurrentStart < StrSize)
+	{
+		int CurrentPos = CurrentStart;
+		int CurrentX = 0;
+		int LastBreakPos = -1; // Position *after* a space, where the new line would start.
+
+		int ForceBreakPos = -1;
+
+		while (CurrentPos < StrSize)
+		{
+			int CharWidth = 1;
+			if (Str[CurrentPos] == L'\t') {
+				CharWidth = TabSize - (CurrentX % TabSize);
+			} else if (CharClasses::IsFullWidth(&Str[CurrentPos])) {
+				CharWidth = 2;
+			}
+
+			if (CurrentX + CharWidth > Width)
+			{
+				ForceBreakPos = (CurrentPos > CurrentStart) ? CurrentPos : CurrentStart + 1;
+				break;
+			}
+
+			CurrentX += CharWidth;
+
+			if (Str[CurrentPos] == L' ') {
+				LastBreakPos = CurrentPos + 1;
+			}
+
+			CurrentPos++;
+		}
+
+		if (ForceBreakPos == -1) // Didn't exceed width, so we are done with this line
+		{
+			break;
+		}
+
+		int NextStart = (LastBreakPos != -1) ? LastBreakPos : ForceBreakPos;
+
+		m_WrapBreaks.push_back(NextStart);
+		CurrentStart = NextStart;
+	}
+}
+
 void Edit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
 	this->Color = Color;
@@ -1728,6 +1859,17 @@ void Edit::SetBinaryString(const wchar_t *Str, int Length)
 		CheckForSpecialWidthChars();
 	}
 
+	if (m_bWordWrapState) {
+		int Width = ObjWidth;
+		if (Flags.Check(FEDITLINE_EDITORMODE)) { // Corresponds to editor.cpp's EdOpt.ShowScrollBar
+			// This logic is a bit of a guess, assuming FEDITLINE_EDITORMODE is a good proxy.
+			// In editor.cpp, XX2 is calculated based on NumLastLine > Y2-Y1+1. We don't have that here.
+			// Let's assume for now if it's in editor mode, scrollbar might be there.
+			// A better solution would be to pass this info down.
+			// For now, let's just use ObjWidth as it is passed down correctly.
+		}
+		RecalculateWordWrap(Width, TabSize);
+	}
 	Changed();
 }
 
@@ -1875,6 +2017,10 @@ void Edit::InsertBinaryString(const wchar_t *Str, int Length)
 			if (TabExpandMode == EXPAND_ALLTABS)
 				ExpandTabs();
 
+			if (m_bWordWrapState)
+			{
+				RecalculateWordWrap(ObjWidth, TabSize);
+			}
 			CheckForSpecialWidthChars(Str, Length);
 			Changed();
 		}
@@ -2101,7 +2247,7 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 	else {
 		// Начинаем вычисление с предыдущей позиции
 		int Index = PrevPos;
-
+		bool joining = false;
 		// Проходим по всем символам до позиции поиска, если она ещё в пределах строки,
 		// либо до конца строки, если позиция поиска за пределами строки
 		for (; Index < Min(Pos, StrSize); Index++)
@@ -2118,14 +2264,24 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 				// Расчитываем длину таба с учётом настроек и текущей позиции в строке
 				TabPos+= TabSize - (TabPos % TabSize);
+				joining = false;
 			}
 			// Обрабатываем все остальные символы
 			else {
-				if (CharClasses::IsFullWidth(Str[Index])) {
-					TabPos+= 2;
-				} else if (!CharClasses::IsXxxfix(Str[Index])) {
-					TabPos++;
+				if (Str[Index] == CharClasses::ZERO_WIDTH_JOINER)
+				{
+					joining = true;
+					continue;
 				}
+				if (CharClasses::IsXxxfix(Str[Index]))
+					continue;
+				if (joining)
+				{
+					joining = false;
+					continue;
+				}
+
+				TabPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
 			}
 
 		// Если позиция находится за пределами строки, то там точно нет табов и всё просто
@@ -2140,7 +2296,8 @@ int Edit::CellPosToReal(int Pos)
 	if (Pos < 0) return 0;
 	if (!HasSpecialWidthChars) return Pos;
 	int Index = 0;
-	for (int CellPos = 0; CellPos < Pos; Index++) {
+	bool joining = false;
+	for (int CellPos = 0; CellPos < Pos || joining; Index++) {
 		if (Index >= StrSize) {
 			Index+= Pos - CellPos;
 			break;
@@ -2153,9 +2310,24 @@ int Edit::CellPosToReal(int Pos)
 				break;
 
 			CellPos = NewCellPos;
+			joining = false;
 		} else {
-			CellPos+= CharClasses::IsFullWidth(Str[Index]) ? 2 : CharClasses::IsXxxfix(Str[Index]) ? 0 : 1;
+			if (Str[Index] == CharClasses::ZERO_WIDTH_JOINER)
+			{
+				joining = true;
+				continue;
+			}
+
+			if (CharClasses::IsXxxfix(Str[Index]))
+				continue;
+
+			if (!joining)
+				CellPos += CharClasses::IsFullWidth(&Str[Index]) ? 2 : 1;
+
+			joining = false;
 			while (Index + 1 < StrSize && CharClasses::IsXxxfix(Str[Index + 1])) {
+				if (Str[Index + 1] == CharClasses::ZERO_WIDTH_JOINER)
+					joining = true;
 				Index++;
 			}
 		}
@@ -2166,11 +2338,31 @@ int Edit::CellPosToReal(int Pos)
 void Edit::SanitizeSelectionRange()
 {
 	if (HasSpecialWidthChars && SelEnd >= SelStart && SelStart >= 0) {
-		while (SelStart > 0 && CharClasses::IsXxxfix(Str[SelStart]))
-			--SelStart;
+		bool joining = false;
+		for ( ; SelStart > 0; SelStart--) {
+			if (Str[SelStart] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsXxxfix(Str[SelStart])) {
+				continue;
+			} else if (joining) {
+				joining = false;
+			} else {
+				break;
+			}
+		}
 
-		while (SelEnd < StrSize && CharClasses::IsXxxfix(Str[SelEnd]))
-			++SelEnd;
+		joining = false;
+		for ( ; SelEnd < StrSize; SelEnd++) {
+			if (Str[SelEnd] == CharClasses::ZERO_WIDTH_JOINER) {
+				joining = true;
+			} else if (CharClasses::IsXxxfix(Str[SelEnd])) {
+				continue;
+			} else if (joining) {
+				joining = false;
+			} else {
+				break;
+			}
+		}
 	}
 
 	/*
@@ -2300,9 +2492,6 @@ void Edit::AddColor(const ColorItem *col)
 
 size_t Edit::DeleteColor(int ColorPos)
 {
-	if (ColorList.empty())
-		return 0;
-
 	size_t Dest, Src;
 
 	for (Src = Dest = 0; Src < ColorList.size(); ++Src)
@@ -2335,15 +2524,18 @@ void Edit::ApplyColor()
 
 	// Обрабатываем элементы ракраски
 	for (auto &CurItem : ColorList) {
+
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
 			continue;
 
 		// Отсекаем элементы заведомо не попадающие на экран
-		if (CurItem.StartPos - LeftPos > X2 && CurItem.EndPos - LeftPos < X1)
-			continue;
+		/*if (CurItem.StartPos - LeftPos > X2 && CurItem.EndPos - LeftPos < X1)
+			continue;*/
+		/* ^^^ закомментировано, т.к. при текущем && условие никогда не выполняется - лишняя проверка в цикле.
+		       Замена на || приводит к некорректной логике,
+		       если в строке за пределами видимой части есть \t или многобайтовые.*/
 
-		DWORD64 Attr = CurItem.Color;
 		int Length = CurItem.EndPos - CurItem.StartPos + 1;
 
 		if (CurItem.StartPos + Length >= StrSize)
@@ -2384,6 +2576,7 @@ void Edit::ApplyColor()
 			continue;
 
 		// Корректировка относительно табов (отключается, если присутвует флаг ECF_TAB1)
+		DWORD64 Attr = CurItem.Color;
 		int CorrectPos = Attr & ECF_TAB1 ? 0 : 1;
 
 		if (!CorrectPos)
@@ -2395,7 +2588,7 @@ void Edit::ApplyColor()
 
 		/*
 			Обрабатываем случай, когда предыдущая позиция равна текущей, то есть
-			длина раскрашиваемой строкии равна 1
+			длина раскрашиваемой строки равна 1
 		*/
 		if (Pos == EndPos) {
 			/*
@@ -2416,11 +2609,13 @@ void Edit::ApplyColor()
 			Если предыдущая позиция больше текущей, то производим вычисление
 			с начала строки (с учётом корректировки относительно табов)
 		*/
-		else if (EndPos < Pos) {
+		/*else if (EndPos < Pos) {
 			RealEnd = RealPosToCell(0, 0, EndPos, &CorrectPos);
 			EndPos+= CorrectPos;
 			End = RealEnd - LeftPos;
-		}
+		}*/
+		// ^^^ закомментировано, т.к. данное условие всегда ложно - лишняя проверка в цикле.
+
 		/*
 			Для оптимизации делаем вычисление относительно предыдущей позиции (с учётом
 			корректировки относительно табов)
@@ -2453,7 +2648,6 @@ void Edit::ApplyColor()
 		if (Length < X2)
 			Length-= CorrectPos;
 
-		// Раскрашиваем элемент, если есть что раскрашивать
 		if (Length > 0) {
 			ScrBuf.ApplyColor(Start, Y1, Start + Length - 1, Y1, Attr, SelColor );
 					// Не раскрашиваем выделение
@@ -2684,7 +2878,7 @@ EditControl::EditControl(ScreenObject *pOwner, Callback *aCallback, bool bAlloca
 
 void EditControl::ShowArrows()
 {
-	if (OverflowArrowsColor > 0) { 
+	if (OverflowArrowsColor > 0) {
 		if (RealPosToCell(StrSize) > LeftPos + X2 - X1 && RealPosToCell(CurPos) != LeftPos + X2 - X1) {
 			GotoXY(X2, Y1);
 			SetColor(OverflowArrowsColor);
@@ -2703,7 +2897,7 @@ void EditControl::Show()
 {
 	if (X2 - X1 + 1 > StrSize) {
 		Edit::SetLeftPos(0);
-	} 
+	}
 
 	Edit::Show();
 	ShowArrows();
@@ -2955,6 +3149,7 @@ void EditControl::AutoCompleteProcMenu(bool &Result, bool Manual, bool DelBlock,
 									ComplMenu.ProcessInput();
 									break;
 								}
+								[[fallthrough]];
 							}
 
 							// всё остальное закрывает список и идёт владельцу

@@ -1,5 +1,6 @@
 #include "wxWinTranslations.h"
 #include "wxConsoleInputShim.h"
+#include "wxKeyboardLedsState.h"
 #include "KeyFileHelper.h"
 #include "utils.h"
 #include "WinPort.h"
@@ -9,6 +10,7 @@
 
 #include <wx/wx.h>
 #include <wx/display.h>
+
 
 #if defined (__WXGTK__) && defined (__HASX11__)
 #include <X11/Xlib.h>
@@ -458,10 +460,6 @@ bool KeyTracker::RightControl() const
 
 //////////////////////
 
-static DWORD s_cached_led_state = 0;
-#ifdef __WXOSX__
-static bool s_toggle_numlock = false;
-#endif
 
 #if defined (__WXGTK__) && defined (__HASX11__)
 static int X11KeyCodeLookupUncached(wxUint32 keyflags)
@@ -556,8 +554,6 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	}
 #endif
 
-	auto raw_key_code = event.GetRawKeyCode();
-
 #ifdef __linux__
 	// Recent KDEs put into keycode non-latin characters in case of
 	// non-latin input layout configured as first in the list of layouts.
@@ -566,6 +562,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	// GetKeyCode() served well for a long time til this started to happen.
 	// See https://github.com/elfmz/far2l/issues/1180
 	if (key_code > 0x100) {
+		auto raw_key_code = event.GetRawKeyCode();
 		if (raw_key_code > 0x1f && raw_key_code <= 0x7f) {
 			key_code = raw_key_code;
 		}
@@ -583,17 +580,20 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 	Event.KeyEvent.dwControlKeyState = 0;
 
 #if defined(wxHAS_RAW_KEY_CODES) && !defined(__WXMAC__)
-	if (event.GetKeyCode() == WXK_CONTROL && event.GetRawKeyCode() == RAW_RCTRL) {
-		Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
-	}
-
-	switch (raw_key_code) {
+	switch (event.GetRawKeyCode()) {
+		case RAW_RCTRL:
+			if (event.GetKeyCode() == WXK_CONTROL)
+				Event.KeyEvent.wVirtualKeyCode = VK_RCONTROL;
+			break;
 		case RAW_NUMPAD_STAR:
-			Event.KeyEvent.wVirtualKeyCode = VK_MULTIPLY; break;
+			Event.KeyEvent.wVirtualKeyCode = VK_MULTIPLY;
+			break;
 		case RAW_NUMPAD_MINUS:
-			Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT; break;
+			Event.KeyEvent.wVirtualKeyCode = VK_SUBTRACT;
+			break;
 		case RAW_NUMPAD_PLUS:
-			Event.KeyEvent.wVirtualKeyCode = VK_ADD; break;
+			Event.KeyEvent.wVirtualKeyCode = VK_ADD;
+			break;
 	}
 #endif
 
@@ -617,17 +617,7 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 		Event.KeyEvent.dwControlKeyState|= ENHANCED_KEY;
 	}
 
-#ifdef __WXOSX__
-	(void) raw_key_code;
-	if (Event.KeyEvent.wVirtualKeyCode == VK_CLEAR && KeyDown)
-		s_toggle_numlock = !s_toggle_numlock;
-#endif
-
-	if (KeyDown || WINPORT(GetTickCount)() - key_tracker.LastKeydownTicks() > 500) {
-		s_cached_led_state = WxKeyboardLedsState();
-	}
-
-	Event.KeyEvent.dwControlKeyState|= s_cached_led_state;
+	Event.KeyEvent.dwControlKeyState|= g_wx_keyboard_leds_state.Current();
 
 	// Keep in mind that key composing combinations with AltGr+.. arrive as keydown of Ctrl+Alt+..
 	// so if event.ControlDown() and event.AltDown() are together then don't believe them and
@@ -654,72 +644,3 @@ wx2INPUT_RECORD::wx2INPUT_RECORD(BOOL KeyDown, const wxKeyEvent& event, const Ke
 }
 
 //////////////
-
-static unsigned int s_wx_assert_cached_bits = 0;
-static unsigned int s_wx_assert_cache_bit = 0;
-static unsigned int s_remote_time_avg = 0;
-
-#define REMOTE_SLOWNESS_TRSH_MSEC		50
-
-DWORD WxKeyboardLedsState()
-{
-	// Getting LED modifiers requires 3 server roundtrips that
-	// can be too time-expensive for remotely forwarded connections.
-	clock_t stopwatch = 0;
-	if (g_remote) {
-		if (s_remote_time_avg > REMOTE_SLOWNESS_TRSH_MSEC) {
-			return 0;
-		}
-		stopwatch = GetProcessUptimeMSec();
-	}
-
-	DWORD out = 0;
-	// Old non-GTK wxWidgets had missing support for this keys, and attempt
-	// to use wxGetKeyState with unsupported key causes assert callback
-	// to be invoked several times on each key event thats not good.
-	// Avoid asserts all the time by 'caching' unsupported state.
-#ifdef __WXOSX__
-	// NumLock emulation with Clear button
-	if (s_toggle_numlock) {
-#else
-	s_wx_assert_cache_bit = 1;
-	if ((s_wx_assert_cached_bits & 1) == 0 && wxGetKeyState(WXK_NUMLOCK)) {
-#endif
-		out|= NUMLOCK_ON;
-	}
-
-	s_wx_assert_cache_bit = 2;
-	if ((s_wx_assert_cached_bits & 2) == 0 && wxGetKeyState(WXK_SCROLL)) {
-		out|= SCROLLLOCK_ON;
-	}
-
-	s_wx_assert_cache_bit = 4;
-	if ((s_wx_assert_cached_bits & 4) == 0 && wxGetKeyState(WXK_CAPITAL)) {
-		out|= CAPSLOCK_ON;
-	}
-
-	s_wx_assert_cache_bit = 0;
-
-	if (g_remote) {
-		s_remote_time_avg+= (unsigned int)(GetProcessUptimeMSec() - stopwatch);
-		s_remote_time_avg/= 2;
-		if (s_remote_time_avg > REMOTE_SLOWNESS_TRSH_MSEC) {
-			fprintf(stderr, "%s: remote is slow (%u)\n", __FUNCTION__, s_remote_time_avg);
-		}
-	}
-
-	return out;
-}
-
-void WinPortWxAssertHandler(const wxString& file, int line, const wxString& func, const wxString& cond, const wxString& msg)
-{
-	s_wx_assert_cached_bits|= s_wx_assert_cache_bit;
-
-	fprintf(stderr, "%s: file='%ls' line=%d func='%ls' cond='%ls' msg='%ls'\n",
-			__FUNCTION__,
-			static_cast<const wchar_t*>(file.wc_str()), line,
-			static_cast<const wchar_t*>(func.wc_str()),
-			static_cast<const wchar_t*>(cond.wc_str()),
-			static_cast<const wchar_t*>(msg.wc_str()));
-}
-

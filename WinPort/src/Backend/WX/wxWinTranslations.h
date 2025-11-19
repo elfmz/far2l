@@ -8,7 +8,6 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 
-
 class KeyTracker
 {
 	std::set<int> _pressed_keys;

@@ -57,8 +57,8 @@ private:
 
 public:
     DataRelayStream(size_t max_size = 64, UInt64 filesize = 0xFFFFFFFFFFFFFFFF)
-	:	buffer_max_size(max_size << 20),
-		file_size(filesize) {
+	:	file_size(filesize),
+		buffer_max_size(max_size << 20) {
 
 		if (!filesize) { // unknown size ?
 			file_size = 0xFFFFFFFFFFFFFFFF;

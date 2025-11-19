@@ -6,7 +6,6 @@
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
 #include <memory>
-#include <optional>
 
 #define AREAS_REDUCTION
 

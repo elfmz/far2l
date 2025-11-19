@@ -83,6 +83,7 @@ void *wxKeyboardLedsState::ThreadProc()
 	for (unsigned int id = 0; _id != 0;) {
 		if (id != _id) { // update requested
 			id = _id;
+			_long_wait = false;
 			lock.unlock();
 			_state = CallInMain<unsigned int>(std::bind(&wxGetKeyboardLedsState));
 			lock.lock();

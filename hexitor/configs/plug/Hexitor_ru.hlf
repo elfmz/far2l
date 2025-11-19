@@ -37,10 +37,17 @@
   Переключение кодовой страницы: #F8#
   Настройки:                     #F9, Alt-Shift-F9#
   Выход:                         #Esc, F10#
+  Переключение экранов far:      #F12, Ctrl-Tab, Ctrl-Shift-Tab#
 
 
 ^* * *
 
 ^Исходные коды и обновления для данного модуля можно найти на странице проекта:
 
-^~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@
+
+^оригинальный hexitor: ~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+
+@Goto
+  Смещение файла можно указать как шестнадцатеричное число или процент, например: 0x1000 или 50%.
+

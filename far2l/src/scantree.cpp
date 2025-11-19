@@ -47,11 +47,17 @@ ScanTree::ScanTree(int RetUpDir, int Recurse, int ScanJunction)
 	Flags.Change(FSCANTREE_SCANSYMLINK, (ScanJunction == -1 ? Opt.ScanJunction : ScanJunction));
 }
 
-void ScanTree::SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags)
+void ScanTree::SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD NewScanFlags, const wchar_t *ExcludeSubDirMask)
 {
 	Flags.Flags = (Flags.Flags & 0x0000FFFF) | (NewScanFlags & 0xFFFF0000);
 	strFindPath = *Path ? Path : L".";
 	strFindMask = wcscmp(Mask, L"*") ? Mask : L"";
+
+	fmpExclSubTree.Reset();
+	if (ExcludeSubDirMask && *ExcludeSubDirMask) {
+		fmpExclSubTree.Set(ExcludeSubDirMask, FMF_ADDASTERISK);
+	}
+
 	ScanDirStack.clear();
 
 	if (strFindPath != WGOOD_SLASH) {
@@ -64,10 +70,18 @@ void ScanTree::SetFindPath(const wchar_t *Path, const wchar_t *Mask, const DWORD
 	StartEnumSubdir();
 }
 
-void ScanTree::CheckForEnterSubdir(const FAR_FIND_DATA_EX *fdata)
+void ScanTree::CheckForEnterSubdir(FAR_FIND_DATA_EX *fdata)
 {
 	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0 || !Flags.Check(FSCANTREE_RECUR))
 		return;
+
+	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0
+		&& (fmpExclSubTree.Compare(fdata->strFileName, false)
+				|| (MaxDepth > 0 && ScanDirStack.size() > static_cast<size_t>(MaxDepth))) )
+	{
+        fdata->dwFileAttributes |= FILE_ATTRIBUTE_PINNED; //mark as potentially expandable since skipped by settings
+		return;
+	}
 
 	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 && !Flags.Check(FSCANTREE_SCANSYMLINK))
 		return;

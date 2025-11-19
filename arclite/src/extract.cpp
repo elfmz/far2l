@@ -1,4 +1,4 @@
-#include "headers.hpp"
+﻿#include "headers.hpp"
 
 #include "msg.hpp"
 #include "utils.hpp"
@@ -661,7 +661,7 @@ private:
 		{
 			std::unique_lock<std::mutex> lock(io_mutex);
 			//fprintf(stderr, "FWC: write() !worker_data_processed ? [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
-			if (!worker_data_processed) { /// wait for writer 
+			if (!worker_data_processed) { /// wait for writer
 				//fprintf(stderr, "FWC: write() wait worker_data_processed || stop_worker_flag.load(); [TID: %lu]\n", static_cast<unsigned long>(pthread_self()));
 				worker_cv.wait(lock, [this] {
 					return worker_data_processed || stop_worker_flag.load();
@@ -877,7 +877,7 @@ public:
 };
 
 template<bool UseVirtualDestructor>
-class ArchiveExtractor : public IArchiveExtractCallback<UseVirtualDestructor>, 
+class ArchiveExtractor : public IArchiveExtractCallback<UseVirtualDestructor>,
 						 public ICryptoGetTextPassword<UseVirtualDestructor>, public ComBase<UseVirtualDestructor>
 {
 private:

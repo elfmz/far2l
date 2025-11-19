@@ -10,7 +10,7 @@ WithThread::WithThread()
 	: _started(false), _thread(0)
 {
 }
-	
+
 WithThread::~WithThread()
 {
 	ASSERT(!_started);
@@ -24,7 +24,7 @@ bool WithThread::Start()
 		perror("VT: pthread_create");
 		_started = false;
 		return false;
-	}		
+	}
 	return true;
 }
 
@@ -49,18 +49,18 @@ void *WithThread::sThreadProc(void *p)
 
 //////////////////////
 
-VTOutputReader::VTOutputReader(IProcessor *processor) 
+VTOutputReader::VTOutputReader(IProcessor *processor)
 	: _processor(processor), _fd_out(-1), _deactivated(false)
 {
 	_pipe[0] = _pipe[1] = -1;
 }
-	
+
 VTOutputReader::~VTOutputReader()
 {
 	Stop();
 	CheckedCloseFDPair(_pipe);
 }
-	
+
 void VTOutputReader::Start(int fd_out)
 {
 	if (fd_out != -1 ) {
@@ -81,7 +81,7 @@ void VTOutputReader::Start(int fd_out)
 		perror("VTOutputReader::Start");
 	}
 }
-	
+
 void VTOutputReader::Stop()
 {
 	if (_started) {
@@ -107,12 +107,12 @@ void *VTOutputReader::ThreadProc()
 {
 	char buf[0x1000];
 	fd_set rfds;
-		
+
 	for (;;) {
 		FD_ZERO(&rfds);
 		FD_SET(_fd_out, &rfds);
 		FD_SET(_pipe[0], &rfds);
-			
+
 		int r = os_call_int(select, std::max(_fd_out, _pipe[0]) + 1, &rfds, (fd_set *)nullptr, (fd_set *)nullptr, (timeval *)nullptr);
 		if (r <= 0) {
 			perror("VTOutputReader select");
@@ -121,9 +121,9 @@ void *VTOutputReader::ThreadProc()
 		if (FD_ISSET(_fd_out, &rfds)) {
 			r = os_call_ssize(read, _fd_out, (void *)buf, sizeof(buf));
 			if (r <= 0) break;
-#if 1 //set to 0 to test extremely fragmented output processing 
+#if 1 //set to 0 to test extremely fragmented output processing
 			if (!_processor->OnProcessOutput(buf, r)) break;
-#else 
+#else
 			for (int i = 0; r > 0;) {
 				int n = 1 + (rand()%7);
 				if (n > r) n = r;
@@ -156,7 +156,7 @@ void *VTOutputReader::ThreadProc()
 VTInputReader::VTInputReader(IProcessor *processor) : _stop(false), _processor(processor)
 {
 }
-	
+
 void VTInputReader::Start(HANDLE con_hnd)
 {
 	if (!_started) {
@@ -180,7 +180,9 @@ void VTInputReader::InjectInput(const char *str, size_t len)
 		std::lock_guard<std::mutex> locker(_pending_injected_inputs_mutex);
 		_pending_injected_inputs.emplace_back(str, len);
 	}
-	KickInputThread();
+	if (_started) {
+		KickInputThread();
+	}
 }
 
 void VTInputReader::OnJoin()

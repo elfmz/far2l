@@ -40,18 +40,13 @@ private:
 	void fill_ans() noexcept;
 	void fill_oem() noexcept;
 	void fill_u16();
+	void fill_u8() noexcept;
 
 	//Far dialog's callback
-	static intptr_t WINAPI dlg_proc(HANDLE dlg, intptr_t msg, intptr_t param1, void* param2);
+	static intptr_t WINAPI dlg_proc(HANDLE dlg, intptr_t msg, int param1, void* param2);
 
 private:
 	HANDLE			_dialog;		///< Dialog window handle
 	vector<unsigned char>	_seq;
-	intptr_t	_id_ed_hex;
-	intptr_t	_id_ed_ansi;
-	intptr_t	_id_ed_oem;
-	intptr_t	_id_ed_uni;
-	intptr_t	_id_backward;
-	intptr_t	_id_btn_cancel;
 	bool		_can_update;
 };

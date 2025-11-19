@@ -77,19 +77,17 @@ struct EditorCacheParams
 
 struct EditorUndoData
 {
-	int Type;
-	int StrPos;
-	int StrNum;
-	wchar_t EOL[10];
-	int Length;
-	wchar_t *Str;
+	int Type {0};
+	int StrPos {0};
+	int StrNum {0};
+	wchar_t EOL[10]{0};
+	int Length {0};
+	wchar_t *Str {nullptr};
 
-	EditorUndoData() { memset(this, 0, sizeof(*this)); }
+	EditorUndoData() = default;
 	~EditorUndoData()
 	{
-		if (Str) {
-			delete[] Str;
-		}
+	    delete[] Str;
 	}
 	EditorUndoData(const EditorUndoData& src) : EditorUndoData()
 	{
@@ -114,9 +112,7 @@ struct EditorUndoData
 		this->Length = Length;
 		far_wcsncpy(EOL, Eol ? Eol : L"", ARRAYSIZE(EOL) - 1);
 
-		if (this->Str) {
-			delete[] this->Str;
-		}
+	    delete[] this->Str;
 
 		if (Str) {
 			this->Str = new wchar_t[Length + 1];
@@ -223,6 +219,7 @@ private:
 		Новая переменная для поиска "Whole words"
 	*/
 	int LastSearchCase, LastSearchWholeWords, LastSearchReverse, LastSearchSelFound, LastSearchRegexp;
+	int m_WordWrapMaxRightPos;
 
 	UINT m_codepage;	// BUGBUG
 
@@ -240,13 +237,24 @@ private:
 	Edit *TopList;
 	Edit *EndList;
 	Edit *TopScreen;
+	int m_CurVisualLineInLogicalLine;
+	Edit *m_TopScreenLogicalLine;
+	int m_TopScreenVisualLine;
 	Edit *CurLine;
 	Edit *LastGetLine;
 	int LastGetLineNumber;
 	bool SaveTabSettings;
+	bool m_bWordWrap;
+	int m_WrapMaxVisibleLineLength;
+	bool m_MouseButtonIsHeld;
 
 private:
+	int FindVisualLine(Edit* line, int Pos);
+	int GetTotalVisualLines();
+	int GetTopVisualLine();
+	int GetVisualLinesBelow(Edit* startLine, int startVisual);
 	virtual void DisplayObject();
+	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);
 	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
 	void InsertString();
@@ -256,6 +264,7 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
+void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 
@@ -273,8 +282,10 @@ private:
 
 	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
 			int StrPos = 0, int Length = -1);
+	void AdjustScreenPosition();
 	void Undo(int redo);
 	void SelectAll();
+	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();
@@ -346,6 +357,8 @@ public:
 	void SetTabSize(int NewSize);
 	int GetTabSize() const { return EdOpt.TabSize; }
 
+	void SetWordWrap(int NewMode);
+	int GetWordWrap() const { return m_bWordWrap; }
 	void SetConvertTabs(int NewMode);
 	int GetConvertTabs() const { return EdOpt.ExpandTabs; }
 
@@ -420,6 +433,8 @@ public:
 	void GetCursorType(bool &Visible, DWORD &Size);
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
+
+	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
 };
 
 #define POSCACHE_EDIT_PARAM4_PACK(VALUE, CP, EXPAND_TABS, TAB_SIZE)                                            \

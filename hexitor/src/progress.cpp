@@ -18,7 +18,7 @@
  **************************************************************************/
 
 #include "progress.h"
-#include "string_rc.h"
+#include "i18nindex.h"
 
 #define PROGRESS_WIDTH 50
 
@@ -48,7 +48,7 @@ void progress::show()
 	}
 
 	const wchar_t* msg[] = { _title, _bar.c_str() };
-	_PSI.Message(_PSI.ModuleNumber, FMSG_NONE, nullptr, msg, sizeof(msg) / sizeof(msg[0]), 0);
+	_PSI.Message(_PSI.ModuleNumber, FMSG_NONE, nullptr, msg, ARRAYSIZE(msg), 0);
 }
 
 

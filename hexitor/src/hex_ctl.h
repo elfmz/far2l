@@ -22,7 +22,17 @@
 #include "screen_ctl.h"
 
 #define CP_UTF16LE		1200	//Unicode LE code page
+#define CP_UTF8			65001	//UTF-8 code page
 
+// Helper to get the length of a UTF-8 character from its first byte
+static inline int get_utf8_char_len(BYTE b)
+{
+	if ((b & 0x80) == 0) return 1;
+	if ((b & 0xE0) == 0xC0) return 2;
+	if ((b & 0xF0) == 0xE0) return 3;
+	if ((b & 0xF8) == 0xF0) return 4;
+	return 1; // Invalid start byte, treat as 1 byte
+}
 
 class hex_ctl : public screen_ctl
 {
@@ -94,4 +104,5 @@ private:
 	void reset();
 private:
 	UINT	_codepage;		///< Code page
+	vector<int> _byte_to_col_map; ///< Map byte offset in view to text column for UTF-8
 };

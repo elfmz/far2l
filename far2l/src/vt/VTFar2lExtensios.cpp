@@ -269,8 +269,7 @@ char VTFar2lExtensios::ClipboardAuthorize(std::string client_id)
 	int choice;
 
 	{
-		ConsoleForkScope saved_scr;
-		saved_scr.Fork();
+		ConsoleForkScope saved_scr(NULL);
 		ScrBuf.FillBuf();
 		do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
 			choice = Message(MSG_KEEPBACKGROUND, 5,
@@ -507,6 +506,92 @@ void VTFar2lExtensios::OnInteract_Clipboard(StackSerializer &stk_ser)
 	}
 }
 
+///////////
+
+void VTFar2lExtensios::OnInteract_ImageCaps(StackSerializer &stk_ser)
+{
+	WinportGraphicsInfo wgi{};
+	if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi)) {
+		memset(&wgi, 0, sizeof(wgi));
+	}
+	stk_ser.Clear();
+	stk_ser.PushNum(wgi.Caps);
+	stk_ser.PushNum(wgi.PixPerCell.X);
+	stk_ser.PushNum(wgi.PixPerCell.Y);
+}
+
+void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
+{
+	DWORD64 flags{};
+	DWORD width{}, height{};
+	SMALL_RECT area{-1, -1, -1, -1};
+	const std::string &id = stk_ser.PopStr();
+	stk_ser.PopNum(flags);
+	stk_ser.PopNum(area.Left);
+	stk_ser.PopNum(area.Top);
+	stk_ser.PopNum(area.Right);
+	stk_ser.PopNum(area.Bottom);
+	stk_ser.PopNum(width);
+	stk_ser.PopNum(height);
+	uint8_t ok = 0;
+	if (width && height) {
+		size_t buffer_size;
+		switch (flags & WP_IMG_MASK_FMT) {
+			case WP_IMG_PNG: buffer_size = size_t(width); break;
+			case WP_IMG_RGB: buffer_size*= size_t(width) * height * 3; break;
+			case WP_IMG_RGBA: buffer_size = size_t(width) * height * 4; break;
+			default:
+				throw std::runtime_error(StrPrintf("Bad image flags: 0x%llx", (unsigned long long)flags));
+		}
+		std::vector<char> bitmap(buffer_size);
+		stk_ser.Pop(bitmap.data(), bitmap.size());
+		ok = WINPORT(SetConsoleImage)(NULL, id.c_str(), flags, &area, width, height, bitmap.data()) ? 1 : 0;
+	}
+	stk_ser.Clear();
+	stk_ser.PushNum(ok);
+}
+
+void VTFar2lExtensios::OnInteract_ImageRotate(StackSerializer &stk_ser)
+{
+	unsigned char angle_x90{};
+	SMALL_RECT area{-1, -1, -1, -1};
+	const std::string &id = stk_ser.PopStr();
+	stk_ser.PopNum(area.Left);
+	stk_ser.PopNum(area.Top);
+	stk_ser.PopNum(area.Right);
+	stk_ser.PopNum(area.Bottom);
+	stk_ser.PopNum(angle_x90);
+	uint8_t ok = WINPORT(RotateConsoleImage)(NULL, id.c_str(), &area, angle_x90) ? 1 : 0;
+	stk_ser.Clear();
+	stk_ser.PushNum(ok);
+}
+
+void VTFar2lExtensios::OnInteract_ImageDel(StackSerializer &stk_ser)
+{
+	const std::string &id = stk_ser.PopStr();
+	uint8_t ok = WINPORT(DeleteConsoleImage)(NULL, id.c_str()) ? 1 : 0;
+	stk_ser.Clear();
+	stk_ser.PushNum(ok);
+}
+
+void VTFar2lExtensios::OnInteract_Image(StackSerializer &stk_ser)
+{
+	const char code = stk_ser.PopChar();
+
+	switch (code) {
+		case FARTTY_INTERACT_IMAGE_CAPS: OnInteract_ImageCaps(stk_ser); break;
+		case FARTTY_INTERACT_IMAGE_SET: OnInteract_ImageSet(stk_ser); break;
+		case FARTTY_INTERACT_IMAGE_ROT: OnInteract_ImageRotate(stk_ser); break;
+		case FARTTY_INTERACT_IMAGE_DEL: OnInteract_ImageDel(stk_ser); break;
+
+		default:
+			fprintf(stderr, "OnInteract_Image: wrong code %c\n", code);
+	}
+}
+
+///////////
+
+
 void VTFar2lExtensios::OnInteract_ChangeCursorHeight(StackSerializer &stk_ser)
 {
 	UCHAR h;
@@ -594,6 +679,10 @@ void VTFar2lExtensios::OnInteract(StackSerializer &stk_ser)
 
 		case FARTTY_INTERACT_CLIPBOARD:
 			OnInteract_Clipboard(stk_ser);
+		break;
+
+		case FARTTY_INTERACT_IMAGE:
+			OnInteract_Image(stk_ser);
 		break;
 
 		case FARTTY_INTERACT_SET_CURSOR_HEIGHT:

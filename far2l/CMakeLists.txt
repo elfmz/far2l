@@ -135,6 +135,7 @@ src/plug/PluginA.cpp
 src/plug/plclass.cpp
 
 src/vt/vtansi.cpp
+src/vt/vtansi_kitty.cpp
 src/vt/vtshell.cpp
 src/vt/vtshell_translation.cpp
 src/vt/vtshell_translation_kitty.cpp
@@ -304,7 +305,7 @@ else()
         COMPONENT desktop
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 
-    find_package(Python3 COMPONENTS Interpreter)
+    find_package(Python3 3.9 COMPONENTS Interpreter)
 
     if(Python3_Interpreter_FOUND)
         execute_process(COMMAND "${Python3_EXECUTABLE}" -c "import markdown"
@@ -332,7 +333,7 @@ else()
             message(WARNING "Python-Markdown not found. Skipping AppStream metainfo generation.")
         endif()
     else()
-        message(WARNING "Python3 interpreter not found. Skipping AppStream metainfo generation.")
+        message(WARNING "Python >=3.9 interpreter not found. Skipping AppStream metainfo generation.")
     endif()
 
 endif()

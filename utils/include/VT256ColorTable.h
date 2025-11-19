@@ -1,6 +1,6 @@
 #pragma once
 #include <stdint.h>
-/* 
+/*
  * First 16 colors of 256-color table are mapped to base system 16-color palette.
  * So actual table defines 240 elements.
  */

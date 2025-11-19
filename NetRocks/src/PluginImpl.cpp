@@ -91,6 +91,7 @@ PluginImpl::PluginImpl(const wchar_t *path, bool path_is_standalone_config, int 
 		}
 
 		if (path && *path) {
+			NR_DBG("path: %ls", path);
 			const std::string &standalone_config = StrWide2MB(_standalone_config);
 			if (_location.FromString(standalone_config, Wide2MB(path))) {
 				_remote = OpConnect(0, standalone_config, _location).Do();
@@ -123,9 +124,22 @@ void PluginImpl::UpdatePathInfo()
 	if (_remote) {
 		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
 		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
-//		tmp = _remote->SiteInfo();
-//		tmp+= '/';
-		tmp+= _cur_dir;
+		// make up URL string start
+		IHost::Identity identity;
+		_remote->GetIdentity(identity);
+		tmp = StrMB2Wide(StrPrintf("%s://", identity.protocol.c_str()));
+		if (!identity.username.empty()) {
+			tmp += StrMB2Wide(StrPrintf("%s@", identity.username.c_str()));
+		}
+		tmp += StrMB2Wide(identity.host);
+		const auto *pi = ProtocolInfoLookup(identity.protocol.c_str());
+		if (identity.port && pi && pi->default_port != -1 && pi->default_port != (int)identity.port) {
+			tmp += StrMB2Wide(StrPrintf(":%u", identity.port));
+		}
+		tmp += L"/" + StrMB2Wide(_location.ToString(false));
+		wcsncpy(_cur_URL, tmp.c_str(), ARRAYSIZE(_cur_URL) - 1 );
+		// make up URL string end
+		tmp = _cur_dir;
 
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));
@@ -167,13 +181,13 @@ std::string PluginImpl::CurrentSiteDir(bool with_ending_slash) const
 		out.resize(out.size() - 1);
 	}
 
-	fprintf(stderr, "CurrentSiteDir: out='%s'\n", out.c_str());
+	NR_DBG("out='%s'", out.c_str());
 	return out;
 }
 
 int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
 {
-	fprintf(stderr, "NetRocks::GetFindData '%ls'\n", _cur_dir);
+	NR_DBG("cur_dir: '%ls'", _cur_dir);
 	PluginPanelItems ppis;
 	try { //_location.path
 		auto *ppi = ppis.Add(L"..");
@@ -203,7 +217,7 @@ int PluginImpl::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int
 		}
 
 	} catch (std::exception &e) {
-		fprintf(stderr, "NetRocks::GetFindData('%ls', %d) ERROR: %s\n", _cur_dir, OpMode, e.what());
+		NR_ERR("cur_dir: %ls, OpMode:%d, ERROR: %s", _cur_dir, OpMode, e.what());
 		return FALSE;
 	}
 
@@ -240,7 +254,7 @@ static bool PreprocessPathTokens(std::vector<std::string> &components)
 
 int PluginImpl::SetDirectory(const wchar_t *Dir, int OpMode)
 {
-	fprintf(stderr, "PluginImpl::SetDirectory('%ls', %d)\n", Dir, OpMode);
+	NR_DBG("Dir: '%ls', OpMode: 0x%x", Dir, OpMode);
 	StackedDir sd;
 	StackedDirCapture(sd);
 
@@ -304,7 +318,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		std::string dir_mb = Wide2MB(Dir);
 		if (dir_mb.empty() || dir_mb[0] == '/'
 		 || (dir_mb[0] == '~' && (dir_mb.size() == 1 || dir_mb[1] == '/'))) {
-			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): wrong path for non-connected state\n", Dir, OpMode);
+			NR_ERR("wrong path for non-connected state; Dir='%ls', OpMode=0x%x", Dir, OpMode);
 			return FALSE;
 		}
 
@@ -321,7 +335,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 
 		Location new_location;
 		if (!new_location.FromString(StrWide2MB(_standalone_config), dir_mb)) {
-			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): parse path failed\n", Dir, OpMode);
+			NR_ERR("Dir='%ls', OpMode=0x%x; parse path failed", Dir, OpMode);
 			return FALSE;
 		}
 
@@ -332,7 +346,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		_location = new_location;
 
 		if (!PreprocessPathTokens(_location.path.components)) {
-			fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): inconstistent path\n", Dir, OpMode);
+			NR_ERR("Dir='%ls', OpMode=0x%x; inconstistent path", Dir, OpMode);
 			return FALSE;
 		}
 
@@ -343,7 +357,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 		if (!_remote) {
 			_remote = OpConnect(0, StrWide2MB(_standalone_config), _location).Do();
 			if (!_remote) {
-				fprintf(stderr, "SetDirectoryInternal('%ls', 0x%x): connect failed\n", Dir, OpMode);
+				NR_ERR("Dir='%ls', OpMode=0x%x; connect failed", Dir, OpMode);
 				return FALSE;
 			}
 		}
@@ -374,7 +388,7 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 	}
 
 	if (!PreprocessPathTokens(_location.path.components)) {
-		fprintf(stderr, "NetRocks::SetDirectoryInternal - close connection due to: '%ls'\n", Dir);
+		NR_ERR("close connection due to: '%ls'", Dir);
 		DismissRemoteHost();
 		return TRUE;
 	}
@@ -390,19 +404,19 @@ int PluginImpl::SetDirectoryInternal(const wchar_t *Dir, int OpMode)
 bool PluginImpl::ValidateLocationDirectory(int OpMode)
 {
 	const std::string &dir = _location.ToString(false);
-	fprintf(stderr, "NetRocks::ValidateLocationDirectory - dir: '%s'\n", dir.c_str());
+	NR_DBG("dir: '%s'", dir.c_str());
 	if (dir.empty()) {
 		return true;
 	}
 
 	std::string final_dir;
 	if (!OpCheckDirectory(OpMode, _remote, dir, _wea_state).Do(final_dir)) {
-		fprintf(stderr, "NetRocks::ValidateLocationDirectory - failed\n");
+		NR_DBG("failed");
 		return false;
 	}
 
 	if (dir != final_dir) {
-		fprintf(stderr, "NetRocks::ValidateLocationDirectory - final_dir: '%s'\n", final_dir.c_str());
+		NR_DBG("final_dir: '%s'", final_dir.c_str());
 		_location.PathFromString(final_dir);
 	}
 
@@ -443,6 +457,7 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 	Info->CurDir = _cur_dir;
 	Info->Format = _format;
 	Info->PanelTitle = _panel_title;
+	Info->CurURL = _cur_URL;
 }
 
 
@@ -461,7 +476,7 @@ BackgroundTaskStatus PluginImpl::StartXfer(int op_mode, std::shared_ptr<IHost> &
 			AddBackgroundTask(task);
 		}
 	} catch (std::exception &ex) {
-		fprintf(stderr, "NetRocks::StartXfer: %s\n", ex.what());
+		NR_ERR("%s", ex.what());
 	}
 
 	return out;
@@ -499,7 +514,7 @@ BOOL PluginImpl::SitesXfer(const char *dir, struct PluginPanelItem *items, int i
 
 int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *DestPath, int OpMode)
 {
-	fprintf(stderr, "NetRocks::GetFiles: _dir='%ls' DestPath='%ls' ItemsNumber=%d OpMode=%d\n", _cur_dir, DestPath, ItemsNumber, OpMode);
+	NR_DBG("_dir='%ls' DestPath='%ls' ItemsNumber=%d OpMode=%d", _cur_dir, DestPath, ItemsNumber, OpMode);
 	if (ItemsNumber <= 0) {
 		return FALSE;
 	}
@@ -532,7 +547,7 @@ int PluginImpl::GetFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int
 int PluginImpl::PutFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode)
 {
 	const std::string &site_dir = CurrentSiteDir(true);
-	fprintf(stderr, "NetRocks::PutFiles: _dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d OpMode=%d\n", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber, OpMode);
+	NR_DBG("_dir='%ls' SrcPath='%ls' site_dir='%s' ItemsNumber=%d OpMode=%d", _cur_dir, SrcPath, site_dir.c_str(), ItemsNumber, OpMode);
 	if (ItemsNumber <= 0)
 		return FALSE;
 
@@ -586,7 +601,7 @@ int PluginImpl::GetLinkTarget(struct PluginPanelItem *PanelItem, wchar_t *Target
 
 int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
-	fprintf(stderr, "NetRocks::DeleteFiles: _dir='%ls' ItemsNumber=%d\n", _cur_dir, ItemsNumber);
+	NR_DBG("_dir='%ls' ItemsNumber=%d", _cur_dir, ItemsNumber);
 	if (ItemsNumber <= 0)
 		return FALSE;
 
@@ -599,10 +614,10 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 			const std::string &display_name = Wide2MB(PanelItem[i].FindData.lpwszFileName);
 
 			if (PanelItem[i].FindData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) {
-				fprintf(stderr, "Removing sites directory: %s\n", display_name.c_str());
+				NR_DBG("Removing sites directory: %s", display_name.c_str());
 				_sites_cfg_location.Remove(display_name);
 			} else {
-				fprintf(stderr, "Removing site: %s\n", display_name.c_str());
+				NR_DBG("Removing site: %s", display_name.c_str());
 				sc.RemoveSite(display_name);
 			}
 		}
@@ -614,7 +629,7 @@ int PluginImpl::DeleteFiles(struct PluginPanelItem *PanelItem, int ItemsNumber, 
 
 int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 {
-	fprintf(stderr, "NetRocks::MakeDirectory('%ls', 0x%x)\n", Name ? *Name : L"NULL", OpMode);
+	NR_DBG("Name='%ls', OpMode=0x%x", Name ? *Name : L"NULL", OpMode);
 
 	std::string dir_name;
 	if (Name && *Name) {
@@ -626,7 +641,7 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 	}
 
 	if (dir_name.empty()) {
-		fprintf(stderr, "NetRocks::MakeDirectory: cancel\n");
+		NR_DBG("cancel");
 		return -1;
 	}
 
@@ -761,7 +776,7 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 	if ( _remote) {
 		if (!dst_remote) { // TODO: Show error that need connection
-			fprintf(stderr, "ByKey_TryCrossload(%d): tried to upload to unconnected NetRocks instance\n", mv);
+			NR_ERR("mv=%d; tried to upload to unconnected NetRocks instance", mv);
 			return true;
 		}
 		auto state = StartXfer(0, _remote, CurrentSiteDir(true), dst_remote, dst_site_dir,
@@ -773,7 +788,7 @@ bool PluginImpl::ByKey_TryCrossload(bool mv)
 
 	} else {
 		if (dst_remote) { // TODO: Show error that need opened sites list
-			fprintf(stderr, "ByKey_TryCrossload(%d): tried to transfer site to connected NetRocks instance\n", mv);
+			NR_ERR("mv=%d; tried to transfer site to connected NetRocks instance", mv);
 			return true;
 		}
 
@@ -864,7 +879,7 @@ void PluginImpl::ByKey_EditAttributesSelected()
 		G.info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
 
 	} catch (std::exception &ex) {
-		fprintf(stderr, "ByKey_EditAttributesSelected: %s\n", ex.what());
+		NR_ERR("%s", ex.what());
 	}
 }
 
@@ -956,7 +971,7 @@ int PluginImpl::ProcessEventCommand(const wchar_t *cmd)
 		G.info.Message(G.info.ModuleNumber, FMSG_WARNING, nullptr, msg, ARRAYSIZE(msg), 1);
 
 	} catch (std::exception &ex) {
-		fprintf(stderr, "OpExecute::Do: %s\n", ex.what());
+		NR_ERR("OpExecute::Do: %s", ex.what());
 
 		const std::wstring &tmp_what = MB2Wide(ex.what());
 		const wchar_t *msg[] = { G.GetMsgWide(MError), tmp_what.c_str(), G.GetMsgWide(MOK)};

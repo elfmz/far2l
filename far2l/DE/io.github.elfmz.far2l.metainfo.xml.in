@@ -28,6 +28,7 @@
     </p>
     <ul>
       <li>align</li>
+      <li>arclite</li>
       <li>autowrap</li>
       <li>calc</li>
       <li>colorer</li>
@@ -36,10 +37,13 @@
       <li>editcase</li>
       <li>editorcomp</li>
       <li>filecase</li>
+      <li>hexitor</li>
+      <li>ImageViewer</li>
       <li>incsrch</li>
       <li>inside</li>
       <li>multiarc</li>
-      <li>NetRocks (SFTP/SCP/FTP/FTPS/SMB/NFS/WebDAV)</li>
+      <li>NetRocks (SFTP/SCP/SHELL/FTP/FTPS/SMB/NFS/WebDAV)</li>
+      <li>OpenWith</li>
       <li>python</li>
       <li>SimpleIndent</li>
       <li>tmppanel</li>

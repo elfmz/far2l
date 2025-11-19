@@ -38,10 +38,17 @@
   Switching the code page:       #F8#
   Options:                       #F9, Alt-Shift-F9#
   Exit:                          #Esc, F10#
+  Far screens switching:         #F12, Ctrl-Tab, Ctrl-Shift-Tab#
 
 
 ^* * *
 
 ^Source code and updates you can get at project page:
+  
+^far2l hexitor: ~https://github.com/elfmz/far2l/tree/master/hexitor~@https://github.com/elfmz/far2l/tree/master/hexitor@
 
-^~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+^original hexitor: ~https://sourceforge.net/projects/farplugs/~@https://sourceforge.net/projects/farplugs/@
+
+@Goto
+  The file offset can be specified as a hexadecimal number or a percentage, e.g.: 0x1000 or 50%
+

@@ -16,7 +16,7 @@
 |-------------------------------------------|
 | [  OK    ]    [ Cancel ]                  |
  ===========================================
-    6                     29       38 
+    6                     29       38
 */
 
 class ProtocolOptionsNFS : protected BaseDialog
@@ -35,7 +35,7 @@ class ProtocolOptionsNFS : protected BaseDialog
 
 	virtual LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2)
 	{
-		if (msg == DN_INITDIALOG 
+		if (msg == DN_INITDIALOG
 		 || (msg == DN_BTNCLICK && param1 == _i_override)) {
 			UpdateEnableds();
 		}

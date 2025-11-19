@@ -19,13 +19,14 @@
 
 #include "common.h"
 #include "version.h"
-#include "string_rc.h"
+#include "i18nindex.h"
 #include "editor.h"
 #include "settings.h"
 #include "farapi.h"
 
 PluginStartupInfo    _PSI;
 FarStandardFunctions _FSF;
+Settings settings;
 
 SHAREDSYMBOL void WINAPI _export SetStartupInfoW(const PluginStartupInfo* psi)
 {
@@ -33,7 +34,7 @@ SHAREDSYMBOL void WINAPI _export SetStartupInfoW(const PluginStartupInfo* psi)
 	_FSF = *psi->FSF;
 	_PSI.FSF = &_FSF;
 
-	settings::load();
+	settings.load();
 }
 
 
@@ -42,24 +43,24 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(PluginInfo* info)
 	assert(info);
 
 	info->StructSize = sizeof(PluginInfo);
-	if (settings::add_to_viewer_menu)
+	if (settings.add_to_viewer_menu)
 		info->Flags |= PF_VIEWER;
-	if (settings::add_to_editor_menu)
+	if (settings.add_to_editor_menu)
 		info->Flags |= PF_EDITOR;
-	if (!settings::add_to_panel_menu)
+	if (!settings.add_to_panel_menu)
 		info->Flags |= PF_DISABLEPANELS;
 
-	if (!settings::cmd_prefix.empty())
-		info->CommandPrefix = settings::cmd_prefix.c_str();
+	if (!settings.cmd_prefix.empty())
+		info->CommandPrefix = settings.cmd_prefix.c_str();
 
 	static const wchar_t* menu_strings[1];
-	menu_strings[0] = _PSI.GetMsg(_PSI.ModuleNumber, ps_title);
+	menu_strings[0] = I18N(ps_title);
 
 	info->PluginConfigStrings = menu_strings;
-	info->PluginConfigStringsNumber = sizeof(menu_strings) / sizeof(menu_strings[0]);
+	info->PluginConfigStringsNumber = ARRAYSIZE(menu_strings);
 
 	info->PluginMenuStrings = menu_strings;
-	info->PluginMenuStringsNumber = sizeof(menu_strings) / sizeof(menu_strings[0]);
+	info->PluginMenuStringsNumber = ARRAYSIZE(menu_strings);
 
 #ifdef _DEBUG
 	info->Flags |= PF_PRELOAD;
@@ -111,6 +112,6 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenPluginW(int openFrom, INT_PTR item)
 
 SHAREDSYMBOL int WINAPI _export ConfigureW(int /*itemNumber*/)
 {
-	settings::configure();
+	settings.configure();
 	return 0;
 }

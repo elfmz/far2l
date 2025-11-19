@@ -41,6 +41,13 @@ public:
 };
 
 
+struct FDPairScope
+{
+	int fd[2] {-1, -1};
+
+	~FDPairScope();
+};
+
 class UnlinkScope
 {
 	std::string _path;

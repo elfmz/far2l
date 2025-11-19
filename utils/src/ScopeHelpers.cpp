@@ -25,6 +25,11 @@ FDScope::~FDScope()
 	CheckedClose();
 }
 
+FDPairScope::~FDPairScope()
+{
+	CheckedCloseFD(fd[0]);
+	CheckedCloseFD(fd[1]);
+}
 //////////
 
 UnlinkScope::UnlinkScope()

@@ -79,9 +79,9 @@ void ac_in(U16B low, U16B high, U16B tot) {
 }
 
 U16B ac_threshold_val(U16B tot) {
-	
+
     register U32B r;
-    
+
     r=(U32B)(h-l)+1;
     return (U16B)((((U32B)(v-l)+1)*tot-1)/r);
 }

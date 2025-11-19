@@ -43,6 +43,7 @@ $^(help file last translated for build 882)
 
    ~Fájltársítások~@FileAssoc@
    ~Operációs rendszer parancsok~@OSCommands@
+   ~Special commands~@SpecCmd@
    ~Mappa gyorsbillentyűk~@Bookmarks@
    ~Szűrők menü~@FiltersMenu@
    ~Képernyők váltása~@ScrSwitch@
@@ -783,9 +784,9 @@ $ #Special commands#
 in the far2l ~internal command line~@CmdLineCmd@ and
 in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply command~@ApplyCmd@.
 
-   #far:about#  - Far information, list and information about plugins.
+   #far:about#  - Far information, list and information about plugins (also via the ~Commands menu~@CmdMenu@).
 
-   #far:config# - ~Configuration editor~@FarConfig@.
+   #far:config# - ~Configuration editor~@FarConfig@ (also via the ~Commands menu~@CmdMenu@).
 
    #view:file# or #far:view:file# or #far:view file# - open in viewer existing #file#.
    #view:<command# or #far:view:<command# or #far:view < command# - open in viewer result of #command# output in temporary file.
@@ -793,6 +794,14 @@ in ~associated commands~@FileAssoc@, ~user menu~@UserMenu@ and the ~apply comman
    #edit:file# or #far:edit:file# or #far:edit file# - open in editor #file# (if #file# not exist will be open empty).
    #edit:# or #far:edit:# or #far:edit# - open in editor new empty file.
    #edit:<command# or #far:edit:<command# or #far:edit < command# - open in editor result of #command# output in temporary file.
+   #edit:[line,col]file# or #edit:[line]file# or #edit:[,col]file#
+or #far:edit:[line,col]file# - open in editor #file# and immediately go to the specified position.
+To do this, immediately after the colon, in square brackets,
+you must specify the desired row and column (any component is optional; by default, one will be equal to 1).
+Square brackets are required!
+   If the filename contains square brackets (for example: "[1].txt"), then for
+the correct opening of the file in the editor you must provide at least one space
+before the filename: #edit: [1].txt#.
 
    #exit#       - reset shell in build-in ~Terminal~@Terminal@.
 
@@ -1072,6 +1081,12 @@ lépkedhetünk.
 
     A #Szürke +# és a #Szürke -# billentyűkkel fel-le mozoghatunk ugyanannak
 a szintnek a mappáin.
+
+    A #Balra nyíl# osszecsukja az aktuálisan kijelölt ágat. Ha az ág már össze van csukva, egy szinttel feljebb lép.
+    A #Jobb nyíl# kibontja a faágat, amely a létrehozáskor a beállított kizárási maszk
+vagy a meghatározott beolvasási mélység szerint lett összecsukva.
+
+    #Ctrl+Szám# — Kibontja az összes ágat a megadott mélységi szintig.
 
 @InfoPanel
 $ #Panels: info panel#
@@ -1605,6 +1620,12 @@ karaktereinek begépelésével, joker karakterek is használhatók.
 
     A #Szürke +# és #Szürke -# fel-le léptet a jelenlegi mappával azonos
 szinten lévő mappákon.
+
+    A #Balra nyíl# osszecsukja az aktuálisan kijelölt ágat. Ha az ág már össze van csukva, egy szinttel feljebb lép.
+    A #Jobb nyíl# kibontja a faágat, amely a létrehozáskor a beállított kizárási maszk
+vagy a meghatározott beolvasási mélység szerint lett összecsukva.
+
+    #Ctrl+Szám# — Kibontja az összes ágat a megadott mélységi szintig.
 
     Az #F5# a keresőablak teljes és eredeti mérete közt váltogat.
 
@@ -2178,11 +2199,6 @@ $ #Beállítások: panel beállítások#
   #in Size column#          also open from panel by #Ctrl-Alt-D#.
 
 
-  #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
-  #mappaváltás#             a kurzor mozgatására a másik panel is
-                          ^<wrap>mappát vált. Ha nincs engedélyezve,
-a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
-
   #A mappák is#             A #Szürke +# és a #Szürke *# nem csak a
   #kijelölhetők#            fájlokat, hanem a mappákat is kijelöli.
                           ^<wrap>Kikapcsolt opciónál csak a fájlok kapnak
@@ -2219,6 +2235,19 @@ opciót kikapcsolni.
   #Classic hotkey link#     Expand ~symbolic links~@HardSymLink@ when using certain
   #resolving#               keyboard shortcuts. See ~Panel control commands~@PanelCmd@ and
                           ~Command line commands~@CmdLineCmd@ for details.
+
+  #Automatikus#             Ha engedélyezett, a ~fastruktúra panelen~@TreePanel@
+  #mappaváltás#             a kurzor mozgatására a másik panel is
+                          ^<wrap>mappát vált. Ha nincs engedélyezve,
+a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
+
+  #Scanning depth#          Sets the maximum depth for recursive catalogue scanning 
+                          while building the tree.
+
+  #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
+  #scanning exclusions#     from automatic scanning. Use this to skip folders
+                          like .git or .mvn during tree expansion.
+                          #Example:# .git;.mvn;.svn;node_modules
 
   #Oszlopnevek mutatva#     ^<wrap>Megjeleníti a ~fájlpanelek~@FilePanel@
 oszlopainak neveit.
@@ -2606,7 +2635,7 @@ $ #Szerkesztő#
 ~szerkesztő beállítások~@EditorSettings@ menüben beállított külső
 szerkesztővel nyithatjuk meg.
 
-    #Új fájl létrehozása a szerkesztővel#
+  #Új fájl létrehozása a szerkesztővel#
 
     Ha a #Shift-F4# billentyűk lenyomása után egy nem létező fájl nevét
 adjuk meg, ~új fájlt~@FileOpenCreate@ hozhatunk létre.
@@ -2625,6 +2654,20 @@ a lehetőségek közül.
     3. ^<wrap>Az új fájl létrehozásakor alapértelmezés szerint a UTF-8
 kódlapját kapja, de ez az opció a ~szerkesztő beállítások~@EditorSettings@
 menüben kikapcsolható.
+
+  #Title bar items#
+   - File path
+   - #*# (file modified) or empty
+   - #-# (file modification is locked) or empty         (toggled via #Ctrl-L#)
+   - #"# (during processing #Ctrl-Q#) or empty
+   - #WW# (WordWrap mode) or empty                      (toggled via #F3# or #Alt-W# or in the ~Editor settings~@EditorSettings@ dialog)
+   - #Tn# (not expand Tab) or #Sn# (expand Tab to spaces) (toggled via #Shift-F5# and #Ctrl-F5# or in the ~Editor settings~@EditorSettings@ dialog)
+   - #LF# or #CR# or #CRLF#: format of the line break       (toggled via #Shift-F2#)
+   - Codepage                                         (toggled via #F8# or #Shift-F8#)
+   - Line current/all lines
+   - Column current
+   - Code of character under cursor
+   - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
 
   #Vezérlőbillentyűk#
 
@@ -2664,8 +2707,8 @@ kijelölt szöveget is törölheti, a
 
    #Shift-Kurzorbill.#       Blokk kijelölése
    #Ctrl-Shift-Kurzorbill.#  Blokk kijelölése
-   #Alt-Kurzorbill.#   Függőleges blokk kijelölése
-   #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése (NumLock Kurzorbill)
+   #Alt-Kurzorbill.#   Függőleges blokk kijelölése (csak akkor, ha a sortörések le vannak tiltva)
+   #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése (NumLock Kurzorbill, csak akkor, ha a sortörések le vannak tiltva)
    #Ctrl-A#                  Az egész szöveg kijelölése
    #Ctrl-U#                  Leveszi a blokk kijelölését
    #Shift-Ins, Ctrl-V#       Blokk beillesztése a vágólapról
@@ -2688,6 +2731,7 @@ kurzorpozícióba (csak maradó blokk módban)
    #F1#                      Súgó
    #F2#                      Fájl mentése
    #Shift-F2#                ~Fájl mentése másként~@FileSaveAs@
+   #F3# vagy #Alt-W#           Sortörés be/ki
    #Shift-F4#                ~Új fájl~@FileOpenCreate@ szerkesztése
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width

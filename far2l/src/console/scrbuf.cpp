@@ -168,15 +168,15 @@ void ScreenBuf::FillBufWithRecompose(HANDLE Console)
 	COORD BufferSize = {BufX, BufY};
 	SMALL_RECT ReadRegion = {0, 0, (SHORT)(BufX - 1), (SHORT)(BufY - 1)};
 	CONSOLE_SCREEN_BUFFER_INFO csbi{};
+	SBFlags.Clear(SBFLAGS_FLUSHED);
 	if (WINPORT(GetConsoleScreenBufferInfo)(Console, &csbi) && (csbi.dwSize.X != BufX || csbi.dwSize.Y != BufY)) {
 		// in case size different - fork&resize original console to enable lines recompisition to its job
-		HANDLE TmpConsole = WINPORT(ForkConsole)(Console);
+		ConsoleForkScope TmpConsole(Console);
 		if (TmpConsole) {
-			if (WINPORT(SetConsoleScreenBufferSize)(TmpConsole, BufferSize)) {
-				WINPORT(ReadConsoleOutput)(TmpConsole, Buf, BufferSize, COORD{0,0}, &ReadRegion);
-				WINPORT(DiscardConsole)(TmpConsole);
-				return;
-			}
+			WINPORT(SetConsoleScreenBufferSize)(TmpConsole.Handle(), BufferSize);
+			WINPORT(ReadConsoleOutput)(TmpConsole.Handle(), Buf, BufferSize, COORD{0,0}, &ReadRegion);
+			TmpConsole.Discard();
+			return;
 		}
 	}
 	WINPORT(ReadConsoleOutput)(Console, Buf, BufferSize, COORD{0,0}, &ReadRegion);

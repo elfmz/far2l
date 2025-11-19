@@ -22,6 +22,7 @@
 
 #include "ExclusiveHotkeys.h"
 #include <set>
+#include <map>
 #include <fstream>
 #include <vector>
 #include <algorithm>
@@ -77,7 +78,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 
 	wxDECLARE_EVENT_TABLE();
 	KeyTracker _key_tracker;
-	
+
 	ConsolePaintContext _paint_context;
 	WinPortFrame *_frame;
 	DWORD _refresh_rects_throttle;
@@ -93,6 +94,15 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	struct BI : std::vector<std::string> {} _backend_info;
 
 	wxTimer* _periodic_timer{nullptr};
+	struct wxConsoleImage
+	{
+		wxBitmap bitmap;
+		wxBitmap scaled_bitmap;
+		SMALL_RECT area{-1, -1, -1, -1};
+		bool pixel_offset{false};
+	};
+	struct Images : std::map<std::string, wxConsoleImage>, std::mutex {} _images;
+
 	unsigned int _timer_idling_counter{0};
 	std::atomic<unsigned int> _last_title_ticks{0};
 	wxSize _initial_size{};
@@ -112,7 +122,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
 	wchar_t _stolen_key{0};
-	
+
 	unsigned int _pending_refreshes{0};
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 
@@ -123,7 +133,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	void RefreshInner( bool force_update );
 	void OnInitialized( wxCommandEvent& event );
 	void CheckForUnfreeze(bool force);
-	void OnTimerPeriodic(wxTimerEvent& event);	
+	void OnTimerPeriodic(wxTimerEvent& event);
 	void OnWindowMovedSync( wxCommandEvent& event );
 	void OnRefreshSync( wxCommandEvent& event );
 	void OnConsoleResizedSync( wxCommandEvent& event );
@@ -173,6 +183,10 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
 	virtual void OnConsoleOutputFlushDrawing();
 	virtual const char *OnConsoleBackendInfo(int entity);
+	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi);
+	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer);
+	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90);
+	virtual bool OnDeleteConsoleImage(const char *id);
 
 public:
 	WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size);

@@ -6,6 +6,7 @@
 # include <sys/event.h>
 # include <sys/time.h>
 #elif defined(__HAIKU__)
+#elif defined(__gnu_hurd__)
 #elif !defined(__CYGWIN__)
 # include <sys/inotify.h>
 #endif

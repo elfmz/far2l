@@ -20,41 +20,46 @@
 #pragma once
 
 #include "common.h"
+#include "fardialog.h"
 
 
-class settings
+class Settings
 {
 public:
+	Settings();
+
 	/**
 	 * Load settings.
 	 */
-	static void load();
+	void load();
 
 	/**
 	 * Configure settings
 	 */
-	static void configure();
+	void configure();
 
 private:
 	/**
 	 * Save settings.
 	 */
-	static void save();
+	void save();
 
 	//Far dialog's callback
-	static LONG_PTR WINAPI dlg_proc(HANDLE dlg, int Msg, int Param1, LONG_PTR Param2);
+	LONG_PTR WINAPI dlg_proc(HANDLE dlg, int Msg, int Param1, LONG_PTR Param2);
 
 public:
-	static bool add_to_panel_menu;		///< Add plugin to the panel plugin menu flag
-	static bool add_to_editor_menu;		///< Add plugin to the editor plugin menu flag
-	static bool add_to_viewer_menu;		///< Add plugin to the viewer plugin menu flag
-	static wstring cmd_prefix;			///< Plugin command prefix
-	static bool save_file_pos;			///< Save file position
-	static bool show_dword_seps;		///< Show separators between DWORDs
-	static bool move_inside_byte;		///< Move cursor inside the byte
-	static bool std_cursor_size;		///< Use standard cursor size
-	static FarColor clr_active;			///< Highlight color for active position
-	static FarColor clr_updated;			///< Highlight color for updated position
-	static FarColor clr_offset;			///< Highlight color for offset and separators
-	static void *Dialog;
+	bool add_to_panel_menu;		///< Add plugin to the panel plugin menu flag
+	bool add_to_editor_menu;		///< Add plugin to the editor plugin menu flag
+	bool add_to_viewer_menu;		///< Add plugin to the viewer plugin menu flag
+	wstring cmd_prefix;			///< Plugin command prefix
+	bool save_file_pos;			///< Save file position
+	bool show_dword_seps;		///< Show separators between DWORDs
+	bool move_inside_byte;		///< Move cursor inside the byte
+	bool std_cursor_size;		///< Use standard cursor size
+	FarColor clr_active;			///< Highlight color for active position
+	FarColor clr_updated;			///< Highlight color for updated position
+	FarColor clr_offset;			///< Highlight color for offset and separators
+	fardialog::Dialog *myDialog;
 };
+
+extern Settings settings;

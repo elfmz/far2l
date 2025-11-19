@@ -33,8 +33,20 @@ set_target_properties(hexitor
         PREFIX ""
         SUFFIX ".far-plug-wide")
 
-# copy resource files
+# update resource files
 set(CURRENT_TARGET "hexitor")
+file(GLOB_RECURSE I18N_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/i18n
+        "${CMAKE_CURRENT_SOURCE_DIR}/i18n/*"
+)
+add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/i18nindex.h"
+    DEPENDS I18N_FILES
+    COMMAND echo python ${CMAKE_CURRENT_SOURCE_DIR}/i18n2lng.py
+    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/i18n2lng.py
+)
+
+# copy resource files
 file(GLOB_RECURSE RESOURCE_FILES
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
         "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"

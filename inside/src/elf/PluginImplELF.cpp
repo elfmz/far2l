@@ -158,7 +158,7 @@ bool PluginImplELF::OnDeleteFile(const char *item_file)
 		Root::Clear(item_file, _name);
 		return true;
 	}
-	
+
 	if (_dir == "/" STR_DISASM ) {
 		Disasm::Clear(_elf_info->machine, item_file, _name);
 		return true;

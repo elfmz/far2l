@@ -210,8 +210,11 @@ else()
     target_compile_definitions(multiarc PRIVATE -DRARDLL -DHAVE_UNRAR)
     # hide rar warnings in release build
     if(NOT ${CMAKE_BUILD_TYPE} MATCHES Debug)
-        set_source_files_properties(${RAR_FILES} PROPERTIES COMPILE_FLAGS
-            "-Wno-unknown-warning-option -Wno-parentheses -Wno-switch -Wno-unused-variable -Wno-unused-but-set-variable -Wno-sign-compare -Wno-class-memaccess -Wno-catch-value -Wno-misleading-indentation -Wno-missing-braces")
+        set(UNRAR_FLAGS "-Wno-parentheses -Wno-switch -Wno-unused-variable -Wno-unused-but-set-variable -Wno-sign-compare -Wno-class-memaccess -Wno-catch-value -Wno-misleading-indentation -Wno-missing-braces")
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            set(UNRAR_FLAGS "${UNRAR_FLAGS} -Wno-unknown-warning-option")
+        endif()
+        set_source_files_properties(${RAR_FILES} PROPERTIES COMPILE_FLAGS "${UNRAR_FLAGS}")
     endif()
 endif()
 

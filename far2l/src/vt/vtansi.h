@@ -29,9 +29,9 @@ class VTAnsi
 
 	void DisableOutput();
 	void EnableOutput();
-	
+
 	void Write(const char *str, size_t len);
-	
+
 	struct VTAnsiState *Suspend();
 	void Resume(struct VTAnsiState* state);
 
@@ -39,6 +39,7 @@ class VTAnsi
 	void OnStop();
 	void OnDetached();
 	void OnReattached();
+	bool HasImages();
 	std::string GetTitle();
 };
 
@@ -48,7 +49,7 @@ class VTAnsiSuspend
 	struct VTAnsiState *_ansi_state;
 
 	public:
-	VTAnsiSuspend(VTAnsi &vta) 
+	VTAnsiSuspend(VTAnsi &vta)
 		: _vta(vta), _ansi_state(_vta.Suspend())
 	{
 	}
@@ -58,7 +59,7 @@ class VTAnsiSuspend
 		if (_ansi_state)
 			_vta.Resume(_ansi_state);
 	}
-	
+
 	inline operator bool() const
 	{
 		return _ansi_state != nullptr;

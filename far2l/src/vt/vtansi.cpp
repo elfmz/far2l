@@ -171,6 +171,7 @@ jadoxa@yahoo.com.au
 #include <optional>
 #include <map>
 #include "vtansi.h"
+#include "vtansi_kitty.h"
 #include "AnsiEsc.hpp"
 #include "UtfConvert.hpp"
 
@@ -300,6 +301,9 @@ struct VTAnsiContext
 	std::string cur_title;
 	std::atomic<bool> output_disabled{false};
 	std::map<DWORD, std::pair<DWORD, DWORD> > orig_palette;
+	std::optional<VTAnsiKitty> vta_kitty;
+	std::mutex vta_kitty_mtx;
+
 
 	int   state;					// automata state
 	char  prefix;				// escape sequence prefix ( '[', ']' or '(' );
@@ -1139,25 +1143,39 @@ struct VTAnsiContext
 					return;
 				}
 
-			case 't':                 // ESC[#t Window manipulation
-				if (es_argc != 1) return;
-				if (es_argv[0] == 21) {	// ESC[21t Report xterm window's title
-					std::string seq;
-					{
-						std::lock_guard<std::mutex> lock(title_mutex);
-						seq.reserve(cur_title.size() + 8);
-						// Too bad if it's too big or fails.
-						seq+= ESC;
-						seq+= ']';
-						seq+= 'l';
-						seq+= cur_title;
-						seq+= ESC;
-						seq+= '\\';
+			case 't': {                 // ESC[#t Window manipulation
+				std::string reply;
+				if (es_argc == 1 && es_argv[0] == 18) { // Report text area cells size: ESC [ 8 ; height ; width t
+					reply = StrPrintf("\e[8;%d;%dt", Info.dwSize.Y, Info.dwSize.X);
+				} else if (es_argc == 1 && (es_argv[0] == 14 || es_argv[0] == 16) ) {
+					WinportGraphicsInfo wgi{};
+					if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi)) {
+						wgi.PixPerCell.Y = wgi.PixPerCell.X = 0;
 					}
-					SendSequence( seq.c_str() );
+					int x = wgi.PixPerCell.X > 0 ? wgi.PixPerCell.X : 8;
+					int y = wgi.PixPerCell.Y > 0 ? wgi.PixPerCell.Y : 16;
+					if (es_argv[0] == 14) { // Report text area pixel size: ESC [ 4 ; height ; width t
+						reply = StrPrintf("\e[4;%d;%dt", y * Info.dwSize.Y, x * Info.dwSize.X);
+					} else if (es_argv[0] == 16) { // Report text cell pixel size: ESC [ 6 ; height ; width t
+						reply = StrPrintf("\e[6;%d;%dt", y, x);
+					}
+
+				} else if (es_argc == 1 && es_argv[0] == 21) {	// ESC[21t Report xterm window's title
+					std::lock_guard<std::mutex> lock(title_mutex);
+					reply.reserve(cur_title.size() + 8);
+					// Too bad if it's too big or fails.
+					reply+= ESC;
+					reply+= ']';
+					reply+= 'l';
+					reply+= cur_title;
+					reply+= ESC;
+					reply+= '\\';
+				}
+				if (!reply.empty()) {
+					SendSequence( reply.c_str() );
 				}
 				return;
-
+			}
 			case 'h':                 // ESC[#h Set Mode
 				if (es_argc == 1 && es_argv[0] == 3)
 					ansi_state.crm = TRUE;
@@ -1235,7 +1253,17 @@ struct VTAnsiContext
 	{
 		FlushBuffer();
 		if (prefix == '_') {//Application Program Command
-			if (StrStartsWith(os_cmd_arg, "set-blank="))  {
+			if (StrStartsWith(os_cmd_arg, "G"))  {
+				if (os_cmd_arg.size() > 1) {
+					_crds.reset(); // prevent miss repaints
+					std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+					if (!vta_kitty) {
+						vta_kitty.emplace(vt_shell);
+					}
+					vta_kitty->InterpretControlString(os_cmd_arg.c_str() + 1, os_cmd_arg.size() - 1);
+				}
+
+			} else if (StrStartsWith(os_cmd_arg, "set-blank="))  {
 				blank_character = (os_cmd_arg.size() > 10) ? os_cmd_arg[10] : L' ';
 
 			} else if (os_cmd_arg == "push-attr")  {
@@ -1318,6 +1346,10 @@ struct VTAnsiContext
 	void ResetTerminal()
 	{
 		fprintf(stderr, "ANSI: ResetTerminal\n");
+		{ // remove all images after command completion
+			std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+			vta_kitty.reset();
+		}
 		WINPORT(SetConsoleScrollRegion)(vt_shell->ConsoleHandle(), 0, MAXSHORT);
 
 		chars_in_buffer = 0;
@@ -1534,6 +1566,20 @@ struct VTAnsiContext
 		ASSERT(i == 0);
 	}
 
+	void HideImages()
+	{
+		std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+		if (vta_kitty)
+			vta_kitty->HideImages();
+	}
+
+	void ShowImages()
+	{
+		std::lock_guard<std::mutex> lock(vta_kitty_mtx);
+		if (vta_kitty)
+			vta_kitty->ShowImages();
+	}
+
 	VTAnsiContext()
 	{
 	}
@@ -1579,6 +1625,7 @@ struct VTAnsiState *VTAnsi::Suspend()
 		HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
 		out->InitFromConsole(con_hnd);
 		_ctx->saved_state.ApplyToConsole(con_hnd);
+		_ctx->HideImages();
 	} else
 		perror("VTAnsi::Suspend");
 
@@ -1588,6 +1635,7 @@ struct VTAnsiState *VTAnsi::Suspend()
 void VTAnsi::Resume(struct VTAnsiState* state)
 {
 	state->ApplyToConsole(_ctx->vt_shell->ConsoleHandle());
+	_ctx->ShowImages();
 	delete state;
 }
 
@@ -1615,6 +1663,7 @@ void VTAnsi::OnStop()
 
 void VTAnsi::OnDetached()
 {
+	_ctx->HideImages();
 	WINPORT(GetConsoleScrollRegion)(NULL, &_detached_state.scrl_top, &_detached_state.scrl_bottom);
 	RevertConsoleState(NULL);
 }
@@ -1627,6 +1676,13 @@ void VTAnsi::OnReattached()
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, _detached_state.scrl_top, _detached_state.scrl_bottom);
 	_ctx->ApplyConsoleTitle(con_hnd);
+	_ctx->ShowImages();
+}
+
+bool VTAnsi::HasImages()
+{
+	std::lock_guard<std::mutex> lock(_ctx->vta_kitty_mtx);
+	return (_ctx->vta_kitty && _ctx->vta_kitty->HasImages());
 }
 
 

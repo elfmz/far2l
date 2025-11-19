@@ -167,15 +167,15 @@ BOOL WINAPI _export ARJ_OpenArchive(const char *Name, int *Type, bool Silent)
 																		  option
 												 (0x02 = reserved bit)
 									   2   spare bytes
-						
+
 								   ?   filename of archive when created (null-terminated string)
 								   ?   archive comment  (null-terminated string)
-						
+
 								   4   basic header CRC
-						
+
 								   2   1st extended header size (0 if none)
 								   --
-						
+
 								   ?   1st extended header (currently not used)
 								   4   1st extended header's CRC (not present when 0 extended header size)
 								*/
@@ -263,15 +263,15 @@ int WINAPI _export ARJ_GetArcItem(struct ArcItemInfo *Info)
 							/*
 							   ?   filename (null-terminated string)
 							   ?   comment  (null-terminated string)
-					
+
 							   4   basic header CRC
-					
+
 							   2   1st extended header size (0 if none)
 							   ?   1st extended header (currently not used)
 							   4   1st extended header's CRC (not present when 0 extended header size)
-					
+
 							   ...
-					
+
 							   ?   compressed file
 							*/
 	} ArjHeader;

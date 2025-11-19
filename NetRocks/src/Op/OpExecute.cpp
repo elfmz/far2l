@@ -140,7 +140,7 @@ SHAREDSYMBOL int OpExecute_Shell(int argc, char *argv[])
 				}
 			}
 
-			
+
 			if (out_fails) {
 				if (out_fails == 3) {
 					break;

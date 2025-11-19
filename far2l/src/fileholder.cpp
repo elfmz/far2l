@@ -7,6 +7,7 @@
 #include "delete.hpp"
 #include "farwinapi.hpp"
 #include "fileholder.hpp"
+#include "pathmix.hpp"
 
 static struct TempFileHolders : std::set<TempFileHolder *>, std::mutex
 {
@@ -17,6 +18,12 @@ static struct TempFileHolders : std::set<TempFileHolder *>, std::mutex
 FileHolder::FileHolder(const FARString &file_path_name, bool temporary)
 	: _file_path_name(file_path_name), _temporary(temporary)
 {
+	if (!_file_path_name.IsEmpty()
+		&& StrCmp(_file_path_name, Msg::NewFileName)
+		&& !IsPluginPrefixPath(_file_path_name.CPtr())) {
+			ConvertHomePrefixInPath(_file_path_name);
+			ConvertNameToFull(_file_path_name);
+	}
 }
 
 FileHolder::~FileHolder()

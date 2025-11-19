@@ -74,7 +74,7 @@ static const struct
 	{ NULL, NULL, "", 0, CALC_PARAM_CHECK_BOOL },
 };
 
-static const struct 
+static const struct
 {
 	DialogItemTypes Type;
 	int				    X1, Y1, X2, Y2;		// if Y1 == 0, then Y1=last_Y1;  if Y1 == -1, then Y1=last_Y1+1
@@ -82,12 +82,12 @@ static const struct
 	int				    name_ID;
 	int				    *prop_ivalue;
 	wchar_t			    *prop_svalue;
-} dlgItems[] = 
+} dlgItems[] =
 {
 	{ DI_DOUBLEBOX,    3,  1, 54, 14, 0, mConfigName, NULL, NULL },
 	{ DI_CHECKBOX,     5, -1,  0,  0, DIF_FOCUS, mConfigShowResults, &props.auto_update, NULL },
 	{ DI_CHECKBOX,     5, -1,  0,  0, 0, mConfigCaseSensitive, &props.case_sensitive, NULL },
-	
+
 	{ DI_CHECKBOX,     5, -1,  0,  0, 0, mConfigPadZeroes, &props.pad_zeroes, NULL },
 #if 0
 	{ DI_CHECKBOX,     5, -1,  0,  0, 0, mConfigRightAligned, &props.right_align, NULL },
@@ -97,17 +97,17 @@ static const struct
 #endif
 
 	{ DI_TEXT,         5, -1,  0,  0, DIF_BOXCOLOR|DIF_SEPARATOR, mConfigHistory, NULL, NULL },
-	
+
 	{ DI_RADIOBUTTON,  5, -1,  0,  0, DIF_GROUP, mConfigHide, &props.history_hide, NULL },
 	{ DI_RADIOBUTTON, 19,  0,  0,  0, DIF_DISABLE, mConfigShowAbove, &props.history_above, NULL },
 	{ DI_RADIOBUTTON, 37,  0,  0,  0, DIF_DISABLE, mConfigShowBelow, &props.history_below, NULL },
-	
+
 	{ DI_FIXEDIT,      5, -1,  7,  0, DIF_DISABLE, 0, &props.history_lines, NULL },
 	{ DI_TEXT,         9,  0,  0,  0, DIF_DISABLE, mConfigLines, NULL, NULL },
 	{ DI_CHECKBOX,    19,  0,  0,  0, 0, mConfigAutocomplete, &props.autocomplete, NULL },
 
 	{ DI_TEXT,         5, -1,  0,  0, DIF_BOXCOLOR|DIF_SEPARATOR, mConfigDelimiters, NULL, NULL },
-	
+
 	{ DI_TEXT,         5, -1,  0,  0, 0, mConfigDecimalSymbol, NULL, NULL },
 	{ DI_FIXEDIT,     22,  0, 22,  0 , 0, 0, (int *)sizeof(props.decimal_point), props.decimal_point },
 	{ DI_CHECKBOX,    25,  0,  0,  0, 0, mConfigDigitDelimiter, &props.use_delim, NULL },
@@ -116,9 +116,9 @@ static const struct
 	{ DI_TEXT,         5, -1,  0,  0, 0, mConfigArguments, NULL, NULL },
 	{ DI_FIXEDIT,     22,  0, 22,  0, 0, 0, (int *)sizeof(props.args), props.args },
 	{ DI_CHECKBOX,    25,  0,  0,  0, 0, mConfigUseRegional, &props.use_regional, NULL },
-	
+
 	{ DI_TEXT,         5, -1,  0,  0, DIF_BOXCOLOR|DIF_SEPARATOR, 0, NULL, NULL },
-	
+
 	{ DI_BUTTON,       0, -1,  0,  0, DIF_CENTERGROUP | DIF_DEFAULT, mOk, NULL, NULL },
 	{ DI_BUTTON,       0,  0,  0,  0, DIF_CENTERGROUP, mCancel, NULL, NULL },
 	{ DI_BUTTON,       0,  0,  0,  0, DIF_CENTERGROUP|DIF_BTNNOCLOSE|DIF_DISABLE, mAdvanced, NULL, NULL },
@@ -239,7 +239,7 @@ bool ConfigDialog()
 	wchar_t tmpnum[num][32];
 
 	int ExitCode, ok_id = -2;
-	
+
 	FarDialogItem *dlg = new FarDialogItem[num];
 	if (!dlg)
 		return false;
@@ -249,15 +249,15 @@ bool ConfigDialog()
 	{
 		dlg[i].Type = dlgItems[i].Type;	dlg[i].Flags = dlgItems[i].Flags;
 		dlg[i].X1 = dlgItems[i].X1;		dlg[i].X2 = dlgItems[i].X2;
-		
+
 		dlg[i].Y1 = (dlgItems[i].Y1 == -1) ? (Y1+1) : ((dlgItems[i].Y1 == 0) ? Y1 : dlgItems[i].Y1);
 		dlg[i].Y2 = (dlgItems[i].Type == DI_FIXEDIT) ? dlg[i].Y1 : dlgItems[i].Y2;
-		
+
 		Y1 = dlg[i].Y1;
-		
+
 		if (dlgItems[i].name_ID == mOk)
 			ok_id = i;
-		
+
 		if (dlgItems[i].Type == DI_FIXEDIT)
 		{
 			if (dlgItems[i].prop_svalue)
@@ -266,7 +266,7 @@ bool ConfigDialog()
 			{
 				_itow(*dlgItems[i].prop_ivalue, tmpnum[i], 10);
 				dlg[i].PtrData = tmpnum[i];
-			} 
+			}
 		}
 		else
 		{
@@ -277,7 +277,7 @@ bool ConfigDialog()
 				dlg[i].Param.Selected = *dlgItems[i].prop_ivalue;
 		}
 	}
-	
+
 	dlg[0].Y2 = Y1 + 1;
 
 	DlgConfig cfg;
@@ -302,12 +302,12 @@ bool ConfigDialog()
 				{
 					cfg.GetText(i, str);
 					*dlgItems[i].prop_ivalue = _wtoi(str.c_str());
-				} 
+				}
 				else
 				{
 					*dlgItems[i].prop_ivalue = cfg.IsChecked(i) ? 1 : 0;
 				}
-			} 
+			}
 		}
 	}
 

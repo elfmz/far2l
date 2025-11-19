@@ -2406,6 +2406,7 @@ struct OpenPluginInfo
 	int                   StartSortOrder;
 	const struct KeyBarTitles *KeyBar;
 	const wchar_t           *ShortcutData;
+	const wchar_t           *CurURL;
 	long                  Reserved;
 };
 

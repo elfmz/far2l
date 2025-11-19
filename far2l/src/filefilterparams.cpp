@@ -716,7 +716,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		}
 
 		case DN_DRAWDLGITEM: {
-			if (Param1 != ID_HER_COLOREXAMPLE) 
+			if (Param1 != ID_HER_COLOREXAMPLE)
 				break;
 
 			static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANELCURSOR, COL_PANELSELECTEDCURSOR};
@@ -852,7 +852,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 
 				for (int i = 0; i < 2; i++)
 					for (int j = 0; j < 4; j++)
-						hl->Mask[i][j] = (0x000000000000FF00 ^ (BACKGROUND_TRUECOLOR | FOREGROUND_TRUECOLOR | 
+						hl->Mask[i][j] = (0x000000000000FF00 ^ (BACKGROUND_TRUECOLOR | FOREGROUND_TRUECOLOR |
 												COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE | COMMON_LVB_REVERSE_VIDEO));
 
 				SendDlgMessage(hDlg, DM_SETCHECK, ID_HER_MARKINHERIT, BSTATE_CHECKED);
@@ -866,7 +866,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 		case DN_MOUSECLICK:
 
 			if ((Msg == DN_BTNCLICK && Param1 >= ID_HER_NORMALFILE && Param1 <= ID_HER_SELECTEDCURSORMARKING)
-					|| (Msg == DN_MOUSECLICK && Param1 == ID_HER_COLOREXAMPLE && 
+					|| (Msg == DN_MOUSECLICK && Param1 == ID_HER_COLOREXAMPLE &&
 						((MOUSE_EVENT_RECORD *)Param2)->dwButtonState == FROM_LEFT_1ST_BUTTON_PRESSED)) {
 
 				if (Msg == DN_MOUSECLICK) {
@@ -881,7 +881,7 @@ LONG_PTR WINAPI FileFilterConfigDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_P
 				uint64_t *color = &fphlstate->hl.Color[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
 				uint64_t *mask  = &fphlstate->hl.Mask[(Param1 - ID_HER_NORMALFILE) & 1][(Param1 - ID_HER_NORMALFILE) / 2];
 				GetColorDialogForFileFilter(color, mask);
-				
+
 				int nLength = (int)SendDlgMessage(hDlg, DM_GETTEXTLENGTH, ID_HER_MARKEDIT, 0);
 				if (nLength > HIGHLIGHT_MAX_MARK_LENGTH ) {
 					SendDlgMessage(hDlg, DM_SETTEXTPTRSILENT, ID_HER_MARKEDIT, (LONG_PTR)&fphlstate->hl.Mark[0]);

@@ -96,7 +96,7 @@ bool ConfirmSitesDisposition::Ask()
 
 //////////////////////////////////////////////////////////////////////////
 
-/*                                               
+/*
 345                                            50
  ============ Create directory ================
 | Enter name of directory to create:           |
@@ -104,7 +104,7 @@ bool ConfirmSitesDisposition::Ask()
 |----------------------------------------------|
 |   [       Ok      ]      [    Cancel    ]    |
  ==============================================
-    6                     29       38            
+    6                     29       38
 */
 
 ConfirmMakeDir::ConfirmMakeDir(const std::string &default_name)

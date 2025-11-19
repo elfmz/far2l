@@ -266,8 +266,8 @@ private:
 	EXECUTION_STATE saved_state;
 
 public:
-	DisableSleepMode() { 
-//		saved_state = WINPORT_SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED); 
+	DisableSleepMode() {
+//		saved_state = WINPORT_SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED);
 	}
 	~DisableSleepMode()
 	{

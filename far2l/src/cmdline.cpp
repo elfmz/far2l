@@ -677,8 +677,10 @@ void CommandLine::InsertString(const wchar_t *Str)
 		return;
 
 	LastCmdPartLength = -1;
+	CmdStr.DisableAC();
 	CmdStr.InsertString(Str);
 	CmdStr.Show();
+	CmdStr.RevertAC();
 }
 
 int CommandLine::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
@@ -970,6 +972,17 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			? 9 // wcslen(L"far:edit:") or wcslen(L"far:edit ")
 			: 0 );
 	if (p > 0) {
+		int StartLine = -1, StartChar = -1;
+		// check location of optional parametrs with line and column
+		std::string::size_type p1 = std::string::npos, p2 = std::string::npos;
+		if (str_command[p-1] == L':' && p < str_command.length() && str_command[p] == L'[') {
+			p2 = str_command.find(L"]", p+1);
+			if (p2 != std::string::npos) {
+				p1 = p;
+				p = p2 + 1;
+			}
+		}
+		// check filename
 		p = str_command.find_first_not_of(L" \t", p);
 		if (p != std::string::npos) { // after spaces found filename or command
 			if (str_command[p]==L'<') { // redirect command
@@ -983,9 +996,28 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			}
 			else { // filename
 				const std::wstring filename = expandString(str_command.substr(p,std::string::npos));
+				// optional parametrs with line and column to numbers
+				if (p1 != std::string::npos) {
+					p1 = str_command.find_first_not_of(L" \t", p1+1);
+					if (p1 != std::string::npos && p1 < p2) {
+						if (iswdigit(str_command[p1])) {
+							StartLine = _wtoi(str_command.substr(p1).c_str());
+							StartChar = 1;
+						}
+						p = str_command.find_first_of(L",:", p1);
+						if (p != std::string::npos && p < p2) {
+							p = str_command.find_first_not_of(L" \t", p+1);
+							if (p != std::string::npos && p < p2 && iswdigit(str_command[p])) {
+								StartChar = _wtoi(str_command.substr(p).c_str());
+								if (StartLine < 0)
+									StartLine = 1;
+							}
+						}
+					}
+				}
 				new FileEditor(
 					std::make_shared<FileHolder>( filename.c_str() ),
-					CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+					CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6, StartLine, StartChar);
 			}
 		}
 		else // new empty file

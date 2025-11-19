@@ -8,7 +8,7 @@
 #define LOW_MEM_COUNTDOWN      (0x1000)
 
 
-IOBuffer::IOBuffer(size_t initial_size, size_t min_size, size_t max_size) 
+IOBuffer::IOBuffer(size_t initial_size, size_t min_size, size_t max_size)
 	: _min_size(ALIGN_SIZE(min_size)), _max_size(ALIGN_SIZE(max_size))
 {
 	if (!_min_size)

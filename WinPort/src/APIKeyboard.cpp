@@ -2,8 +2,8 @@
 #include <fstream>
 
 #include <string>
-#include <locale> 
-#include <set> 
+#include <locale>
+#include <set>
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -61,7 +61,7 @@ WINPORT_DECL(VkKeyScan, SHORT, (WCHAR ch))
 	return 0;
 }
 
-WINPORT_DECL(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState, 
+WINPORT_DECL(ToUnicodeEx, int, (UINT wVirtKey, UINT wScanCode, CONST BYTE *lpKeyState,
 		LPWSTR pwszBuff, int cchBuff, UINT wFlags, HKL dwhkl))
 {
 	//fprintf(stderr, "ToUnicodeEx(0x%x)\n", wVirtKey);

@@ -240,11 +240,21 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
-		if (WINPORT(GetConsoleScreenBufferInfo)(ConsoleHandle(), &csbi )
+		HANDLE con = ConsoleHandle();
+		if (WINPORT(GetConsoleScreenBufferInfo)(con, &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
-			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
 			struct winsize ws = {(unsigned short)csbi.dwSize.Y,
 				(unsigned short)csbi.dwSize.X, 0, 0};
+
+			WinportGraphicsInfo wgi{};
+			if (WINPORT(GetConsoleImageCaps)(con, sizeof(wgi), &wgi)) {
+				ws.ws_xpixel = std::min(16384, int(ws.ws_col) * wgi.PixPerCell.X);
+				ws.ws_ypixel = std::min(16384, int(ws.ws_row) * wgi.PixPerCell.Y);
+			}
+
+			fprintf(stderr, "UpdateTerminalSize: %u x %u cells, %d x %d pixels\n",
+				csbi.dwSize.X, csbi.dwSize.Y, ws.ws_xpixel, ws.ws_ypixel);
+
 			if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
 				perror("VT: ioctl(TIOCSWINSZ)");
 		}
@@ -534,7 +544,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		DeliverPendingWindowInfo();
 		InterThreadCall<int>(std::bind(sShowConsoleLog, kind));
-
 		if (!_slavename.empty())
 			UpdateTerminalSize(_fd_out);
 		if (_far2l_exts)
@@ -724,8 +733,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			{
 				VTAnsiSuspend vta_suspend(_vta); // preserve console state
 				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
-				ConsoleForkScope saved_scr;
-				saved_scr.Fork();
+				ConsoleForkScope saved_scr(NULL);
 				ScrBuf.FillBuf();
 				int choice;
 				do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
@@ -1116,6 +1124,18 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		ExecuteCommandEnd();
+		if (_vta.HasImages() && !_console_kill_requested && _exit_code == 0) {
+			// some apps like chafa just 'prints' image and exit successfully
+			// we're not keeping images with terminale history - so it will go away due to terminal reset
+			// so let user see masterpiece before it will be disappear forever
+			const auto *msg = L"Close by any key of: [SPACE | ENTER | ESCAPE | 'C']";
+			DWORD dw;
+			WINPORT(WriteConsole)(NULL, msg, wcslen(msg), &dw, NULL );
+			WORD keys[] = {VK_RETURN, VK_ESCAPE, VK_SPACE, 'C'};
+			while (!WINPORT(CheckForKeyPress)(NULL, keys, ARRAYSIZE(keys), CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MOUSE_EVENTS)) {
+				WINPORT(WaitConsoleInput)(NULL, 1000);
+			}
+		}
 
 		CheckLeaderAlive();
 

@@ -12,7 +12,7 @@ Python (optional scripting support),
 arclite <sub>(now as experimental version which partially more effective then multiarc;
 arclite disabled by default, to enable manually turn on
 F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>,
-hexitor, OpenWith.
+hexitor, OpenWith, ImageViewer, edsort.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -89,7 +89,7 @@ _Sticky controls via **Ctrl**+**Space** or **Alt**+**Space**_ or _Exclusively ha
 | **Works:** | in **console**<br>and in any<br>**terminal** | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **terminal<br>window**<br><sub>under graphic<br>X11 session</sub> | in **Desktop<br>environment**<br><sub>(X11<br>or Wayland<br>or macOS)<br>via wxWidgets</sub> |
 | **Binaries:** | far2l | far2l<br>far2l_ttyx.broker | far2l<br>far2l_ttyx.broker | far2l<br>far2l_gui.so |
 | **[Dependencies](#required-dependencies):** | minimal | + libx11 | + libx11, libxi | + wxWidgets, GTK |
-| **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
+| **Keyboard:** | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**<br>(see: [Compatible<br>Terminals<br>and SSH clients](#terminals))</sub> | <sub>_Typical terminals_:<br>**only essential<br>key combinations**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | <sub>_Typical terminals_:<br>**most of key<br>combinations under x11**;<br>**only essential key<br>combinations<br>under Wayland**<br><br>_KiTTY_ (putty fork),<br>_kitty_ (\*nix one),<br>_iTerm2_,<br>_Windows Terminal_,<br>far2l’s VT: **full support**</sub> | **All key<br>combinations** |
 | **Clipboard<br>access:** | <sub>_Typical terminals_:<br>via command line<br>tools like xclip<br><br>_kitty_ (\*nix one),<br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | <sub>_Typical terminals_,<br>_kitty_ (\*nix one):<br>via **x11 interaction**<br><br>_iTerm2_:<br>via **OSC52**<br><br>_Windows Terminal_:<br>via **OSC52**<br>or via **command line<br>tools under WSL**<br><br>_KiTTY_ (putty fork),<br>far2l’s VT:<br>via **far2l extensions**</sub> | via<br>**wxWidgets API**<br><br><sub>via command line<br>tools under WSL</sub> |
 | **Typical<br>use case:** | **Servers**,<br>embedded<br>(\*wrt, etc) | <sub>Run far2l in<br>favorite terminal<br>but with<br>**better UX**</sub> | <sub>Run far2l in<br>favorite terminal<br>but with<br>**best UX**</sub> | **Desktop** |
 | [Debian](#debian) / [Ubuntu](#debian)<br><sup>official repositories<br>(packages names):</sup> | Install `far2l` with<br><sup>`--no-install-recommends`<br>and use `far2l` due to<br>[auto downgrade](#downgrade)<br>(since _2.6.5~ds-3_ /<br>Ubuntu 25.10+)</sup> | `far2l` | `far2l` | `far2l-wx`<br><sup>(since _2.6.4_ /<br>Ubuntu 25.04+)</sup> |
@@ -105,7 +105,7 @@ for **TTY|X**: `far2l --tty --nodetect=xi`;
 for plain **TTY**: `far2l --tty --nodetect=x`
 (see details via `far2l --help`).</sub>
 
-<sub>_Note about use OSC 52 in TTY/TTY|X_:
+<sub>_Note_: Using OSC 52 in TTY/TTY|X_:
 to interact with the system clipboard you must **not forget to enable OSC 52**
 in both the **FAR2L settings** (`Options`⇒`Interface settings`⇒`Use OSC52 to set clipboard data`,
 which shown in the dialog only if far2l run in TTY/TTY|X mode and all other options for clipboard access are unavailable;
@@ -113,6 +113,10 @@ you can run `far2l --tty --nodetect` to force not use others clipboard options),
 and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 is disabled in some terminals for security reasons;
 OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).</sub>
 
+<sub>_Note_: Using **TTY** under **Wayland** and **OSC 52** under Wayland:
+**TTY X|xi** in `--tty` works incorrectly. You need fully disable it to use OSC 52 for propper clipboard integration;
+you need to run `far2l --tty --nodetect=x`, than OSC 52 setting option will appear in `Interface Settings`, and you could enable it, as it described in a chapter above.
+Clipboard in `wx-gui` is working correctly. </sub>
 
 <a name="inst_run"></a>
 ## Installing, Running
@@ -276,8 +280,8 @@ To control how RAR archives will be handled in multiarc:
 
 There're also options to toggle other plugins build in same way:
 `-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
-`-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
-`-DFILECASE=no`, `-DHEXITOR=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
+`-DEDSORT=no`, `-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
+`-DFILECASE=no`, `-DHEXITOR=no`, `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
 `-DOPENWITH=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 
@@ -375,9 +379,9 @@ The Far2l adaptation for _nix_ is [a small file on GitHub](https://github.com/Ni
 
 #### Custom Building and Installing on [NixOS](https://nixos.org/) or Nix for Linux or macOS from scratch
 
-1) Copy [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to your Nix configuration folder
+1) Copy [packaging/NixOS/far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/packaging/NixOS/far2lOverlays.nix) to your Nix configuration folder
 2) Add it as import to 'configuration.nix'
-3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
+3) Optionally you could change a revision in [far2lOverlays.nix](https://github.com/elfmz/far2l/blob/master/packaging/NixOS/far2lOverlays.nix) to whatever you want (read the comments in the nix file, all the fields you need to change are commented)
 4) update with 'nixos-rebuild switch'
 
 #### IDE Setup

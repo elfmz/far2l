@@ -39,6 +39,13 @@ public:
 	 */
 	bool edit(const wchar_t* file_name, const UINT64 file_offset = 0);
 
+	/**
+	 * Get current byte value (original or updated)
+	 * \param offset value offset
+	 * \return byte value
+	 */
+	BYTE get_current_value(const UINT64 offset) const;
+
 private:
 	/**
 	 * Window resize handler.
@@ -129,13 +136,6 @@ private:
 	void find(const bool forward, const bool force_dlg);
 
 	/**
-	 * Get current byte value (original or updated)
-	 * \param offset value offset
-	 * \return byte value
-	 */
-	BYTE get_current_value(const UINT64 offset) const;
-
-	/**
 	 * Update internal view buffer
 	 * \param offset needed offset
 	 * \return false if error
@@ -181,7 +181,6 @@ private:
 	size_t			_undo_pos;		///< Undo position
 
 	vector<BYTE>	_search_seq;	///< Search sequence
-	bool			_search_fwd;	///< Search direction flag (true = forward, false = backward)
 };
 
 void CreateEditor(const wchar_t *file_name, const UINT64 offset);

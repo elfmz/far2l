@@ -552,6 +552,14 @@ void FileViewer::OnChangeFocus(int focus)
 	CtrlObject->Plugins.ProcessViewerEvent(focus ? VE_GOTFOCUS : VE_KILLFOCUS, &FCurViewerID);
 }
 
+void FileViewer::SetWrapModeAndType(bool Wrap, bool WordWrap)
+{
+	View.SetWrapMode(Wrap);
+	View.SetWrapType(WordWrap);
+	View.ChangeViewKeyBar();
+	View.Show();
+}
+
 void ModalViewFile(const std::string &pathname)
 {
 	FileViewer Viewer(std::make_shared<FileHolder>(pathname),
@@ -574,6 +582,7 @@ void ViewConsoleHistory(HANDLE con_hnd, bool modal, bool autoclose)
 	FileViewer *Viewer = new (std::nothrow) FileViewer(tfh,
 		!modal, TRUE, TRUE, -1, nullptr, nullptr, FALSE, CP_UTF8);
 	Viewer->SetDynamicallyBorn(!modal);
+	Viewer->SetWrapModeAndType(true, false);
 	Viewer->ProcessKey(KEY_END); // scroll to the end
 	if (autoclose)
 		Viewer->SetAutoClose(true);

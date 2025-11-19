@@ -85,7 +85,7 @@ void *wxKeyboardLedsState::ThreadProc()
 			id = _id;
 			_long_wait = false;
 			lock.unlock();
-			_state = 0;//CallInMain<unsigned int>(std::bind(&wxGetKeyboardLedsState));
+			_state = CallInMain<unsigned int>(std::bind(&wxGetKeyboardLedsState));
 			lock.lock();
 		} else if (!_long_wait) {
 			_cond.wait_for(lock, std::chrono::milliseconds(500));

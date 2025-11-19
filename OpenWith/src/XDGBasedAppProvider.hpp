@@ -74,20 +74,17 @@ private:
 		{
 			std::size_t operator()(const RawMimeProfile& s) const noexcept
 			{
-				std::size_t h1 = std::hash<std::string>{}(s.xdg_mime);
-				std::size_t h2 = std::hash<std::string>{}(s.file_mime);
-				std::size_t h3 = std::hash<std::string>{}(s.magika_mime);
-				std::size_t h4 = std::hash<std::string>{}(s.ext_mime);
-				std::size_t h5 = std::hash<std::string>{}(s.stat_mime);
-				std::size_t h6 = std::hash<bool>{}(s.is_regular_file);
+				auto hash_combine = [](std::size_t& seed, std::size_t hash_val) {
+					seed ^= hash_val + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				};
 
-				// Combine hashes using a simple boost-like hash_combine
-				std::size_t seed = h1;
-				seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-				seed ^= h3 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-				seed ^= h4 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-				seed ^= h5 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-				seed ^= h6 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+				std::size_t seed = std::hash<std::string>{}(s.xdg_mime);
+				hash_combine(seed, std::hash<std::string>{}(s.file_mime));
+				hash_combine(seed, std::hash<std::string>{}(s.magika_mime));
+				hash_combine(seed, std::hash<std::string>{}(s.ext_mime));
+				hash_combine(seed, std::hash<std::string>{}(s.stat_mime));
+				hash_combine(seed, std::hash<bool>{}(s.is_regular_file));
+
 				return seed;
 			}
 		};
@@ -128,7 +125,10 @@ private:
 			if (rank != other.rank) {
 				return rank > other.rank; // primary sort: descending by rank (highest rank first).
 			}
-			return entry && other.entry && entry->name < other.entry->name; // secondary sort: ascending by name
+			if (entry && other.entry) {
+				return entry->name < other.entry->name;	// secondary sort: ascending by name
+			}
+			return entry == nullptr && other.entry != nullptr;
 		}
 	};
 
@@ -138,6 +138,18 @@ private:
 	{
 		std::string desktop_file;
 		std::string source_path;
+
+		HandlerProvenance() = default;
+		HandlerProvenance(const std::string& df, const std::string& sp)
+			: desktop_file(df), source_path(sp) {}
+	};
+
+	// Tracks ranking score and provenance info to identify the highest-ranked association.
+	struct AssociationScore
+	{
+		int rank;
+		std::string source_info;
+		AssociationScore(int r, std::string s) : rank(r), source_info(std::move(s)) {}
 	};
 
 	// Represents the combined associations from all parsed mimeapps.list files.
@@ -169,7 +181,7 @@ private:
 		size_t operator()(const AppUniqueKey& k) const {
 			const auto h1 = std::hash<std::string_view>{}(k.name);
 			const auto h2 = std::hash<std::string_view>{}(k.exec);
-			return h1 ^ (h2 << 1); // Simple combination hash
+			return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
 		}
 	};
 
@@ -178,15 +190,15 @@ private:
 	using MimeinfoCacheData = std::unordered_map<std::string, std::vector<HandlerProvenance>>;
 
 	// --- Searching and ranking candidates logic ---
-	CandidateMap ResolveMimesToCandidateMap(const std::vector<std::string>& prioritized_mimes);
-	static std::string GetDefaultApp(const std::string& mime_type);
-	void AppendCandidatesFromMimeAppsLists(const std::vector<std::string>& prioritized_mimes, CandidateMap& unique_candidates);
-	void AppendCandidatesFromMimeinfoCache(const std::vector<std::string>& prioritized_mimes, CandidateMap& unique_candidates);
-	void AppendCandidatesByFullScan(const std::vector<std::string>& prioritized_mimes, CandidateMap& unique_candidates);
-	void RegisterCandidateById(CandidateMap& unique_candidates, const std::string& app_desktop_file, int rank, const std::string& source_info);
+	CandidateMap DiscoverCandidatesForExpandedMimes(const std::vector<std::string>& expanded_mimes);
+	std::string GetDefaultApp(const std::string& mime);
+	void AppendCandidatesFromMimeAppsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
+	void AppendCandidatesFromMimeinfoCache(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
+	void AppendCandidatesByFullScan(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
+	void RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_file, int rank, const std::string& source_info);
 	void RegisterCandidateFromObject(CandidateMap& unique_candidates, const DesktopEntry& entry, int rank, const std::string& source_info);
 	void AddOrUpdateCandidate(CandidateMap& unique_candidates, const DesktopEntry& entry, int rank, const std::string& source_info);
-	bool IsAssociationRemoved(const std::string& mime_type, const std::string& app_desktop_file);
+	bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_file);
 	std::vector<RankedCandidate> BuildSortedRankedCandidatesList(const CandidateMap& candidate_map);
 	std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
@@ -194,14 +206,14 @@ private:
 	// --- File MIME Type Detection & Expansion ---
 	RawMimeProfile GetRawMimeProfile(const std::string& pathname);
 	std::vector<std::string> ExpandAndPrioritizeMimeTypes(const RawMimeProfile& profile);
-	std::string MimeTypeFromXdgMimeTool(const std::string& pathname);
-	std::string MimeTypeFromFileTool(const std::string& pathname);
-	std::string MimeTypeFromMagikaTool(const std::string& pathname);
-	std::string MimeTypeByExtension(const std::string& pathname);
+	std::string DetectMimeTypeWithXdgMimeTool(const std::string& escaped_pathname);
+	std::string DetectMimeTypeWithFileTool(const std::string& escaped_pathname);
+	std::string DetectMimeTypeWithMagikaTool(const std::string& escaped_pathname);
+	std::string GuessMimeTypeByExtension(const std::string& pathname);
 
 	// --- XDG Database Parsing & Caching ---
 	const std::optional<DesktopEntry>& GetCachedDesktopEntry(const std::string& desktop_file);
-	MimeToDesktopEntryIndex FullScanDesktopFilesAndBuildIndex(const std::vector<std::string>& search_paths);
+	MimeToDesktopEntryIndex FullScanDesktopFiles(const std::vector<std::string>& search_paths);
 	static MimeinfoCacheData ParseAllMimeinfoCacheFiles(const std::vector<std::string>& search_paths);
 	static void ParseMimeinfoCache(const std::string& path, MimeinfoCacheData& mimeinfo_cache_data);
 	static MimeappsListsData ParseMimeappsLists(const std::vector<std::string>& paths);
@@ -209,6 +221,7 @@ private:
 	static std::optional<DesktopEntry> ParseDesktopFile(const std::string& path);
 	static std::string GetLocalizedValue(const std::unordered_map<std::string, std::string>& values, const std::string& base_key);
 	static std::unordered_map<std::string, std::string> LoadMimeAliases();
+	static std::string_view GetMajorMimeType(const std::string& mime);
 	static std::unordered_map<std::string, std::string> LoadMimeSubclasses();
 	static std::vector<std::string> GetDesktopFileSearchPaths();
 	static std::vector<std::string> GetMimeappsListSearchPaths();
@@ -216,13 +229,13 @@ private:
 
 	// --- Command line constructing ---
 	static std::vector<std::string> TokenizeExecString(const std::string& exec_str);
-	static std::string UnescapeGeneralString(const std::string& raw_str);
+	static std::string UnescapeGKeyFileString(const std::string& raw_str);
 	static bool ExpandFieldCodes(const DesktopEntry& candidate, const std::string& pathname, const std::string& unescaped, std::vector<std::string>& out_args, bool treat_urls_as_paths);
 	static bool HasFieldCode(const std::string& exec, const std::string& codes_to_find);
 	static std::string PathToUri(const std::string& path);
 
 	// --- System & Environment Helpers ---
-	static bool CheckExecutable(const std::string& path);
+	static bool IsExecutableAvailable(const std::string& path);
 	static std::string GetEnv(const char* var, const char* default_val = "");
 	static std::string RunCommandAndCaptureOutput(const std::string& cmd);
 
@@ -279,7 +292,12 @@ private:
 	// Maps the setting's internal string key (e.g., "UseXdgMimeTool") to the command-line tool
 	// it depends on (e.g., "xdg-mime"). Used by GetPlatformSettings to check tool availability.
 	using ToolKeyMap = std::map<std::string, std::string>;
-	static const ToolKeyMap s_tool_key_map;
+
+	inline static const ToolKeyMap s_tool_key_map = {
+		{ "UseXdgMimeTool", "xdg-mime" },
+		{ "UseFileTool", "file" },
+		{ "UseMagikaTool", "magika" }
+	};
 
 	// --- Operation-Scoped State ---
 	// These fields are managed by the OperationContext RAII helper.
@@ -295,13 +313,16 @@ private:
 
 	// Tool availability flags, cached for the duration of one GetAppCandidates operation.
 	// They are calculated in OperationContext::OperationContext.
-	bool _op_xdg_mime_enabled_and_exists = false;
+	bool _op_xdg_mime_exists = false;
 	bool _op_file_tool_enabled_and_exists = false;
 	bool _op_magika_tool_enabled_and_exists = false;
 
 	// One of the following two caches will be populated based on settings.
 	std::optional<MimeinfoCacheData> _op_mime_to_handlers_map;	// from mimeinfo.cache
 	std::optional<MimeToDesktopEntryIndex> _op_mime_to_desktop_entry_map;	// from full .desktop scan
+
+	// Cache for 'xdg-mime query default' results (MIME type -> .desktop file name)
+	std::map<std::string, std::string> _op_default_app_cache;
 
 	// RAII helper to manage the lifecycle of the operation-scoped state.
 	struct OperationContext

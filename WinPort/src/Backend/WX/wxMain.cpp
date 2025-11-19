@@ -4,6 +4,7 @@
 #include <wx/image.h>
 #include "../NotifySh.h"
 #include "wxWinTranslations.h"
+#include "wxKeyboardLedsState.h"
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
 #include <memory>
@@ -183,6 +184,7 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	}
 
 	wxEntry(a->argc, a->argv);
+
 	wxUninitialize();
 	*a->result = g_exit_code;
 	return true;
@@ -588,6 +590,8 @@ wxEND_EVENT_TABLE()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
 	: _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
 {
+	g_wx_keyboard_leds_state.Startup();
+
 	_backend_info.emplace_back(
 		StrPrintf("Build/wxWidgets %d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
 
@@ -626,6 +630,8 @@ WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize
 
 WinPortPanel::~WinPortPanel()
 {
+	g_wx_keyboard_leds_state.Shutdown();
+
 #ifdef __APPLE__
 	Touchbar_Deregister();
 #endif
@@ -722,7 +728,7 @@ void WinPortPanel::OnTouchbarKey(bool alternate, int index)
 	if (wxGetKeyState(WXK_SHIFT)) ir.Event.KeyEvent.dwControlKeyState|= SHIFT_PRESSED;
 	if (wxGetKeyState(WXK_CONTROL)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 	if (wxGetKeyState(WXK_ALT)) ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
-	ir.Event.KeyEvent.dwControlKeyState|= WxKeyboardLedsState();
+	ir.Event.KeyEvent.dwControlKeyState|= g_wx_keyboard_leds_state.Current();
 
 	fprintf(stderr, "%s: F%d dwControlKeyState=0x%x\n", __FUNCTION__,
 		index + 1, ir.Event.KeyEvent.dwControlKeyState);
@@ -1352,6 +1358,21 @@ bool isLayoutDependentKey( wxKeyEvent& event ) {
 	}
 }
 
+static void CheckForLedsStateUpdate(int kc, bool down)
+{
+#ifdef __WXOSX__ // under mac NumLock emulated with Clear button
+	if (kc == WXK_CLEAR && down) {
+		g_wx_keyboard_leds_state.Toggle(NUMLOCK_ON);
+	} else if (kc == WXK_SCROLL || kc == WXK_CAPITAL) {
+		g_wx_keyboard_leds_state.Current(true);
+	}
+#else
+	if (kc == WXK_NUMLOCK || kc == WXK_SCROLL || kc == WXK_CAPITAL) {
+		g_wx_keyboard_leds_state.Current(true);
+	}
+#endif
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
 	ResetTimerIdling();
@@ -1381,6 +1402,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 		event.Skip();
 		return;
 	}
+
+	CheckForLedsStateUpdate(event.GetKeyCode(), true);
 
 #ifdef __APPLE__
 	if (!event.RawControlDown() && !event.ShiftDown() && !event.MetaDown() && !event.AltDown() && event.CmdDown()
@@ -1536,6 +1559,8 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 		event.Skip();
 		return;
 	}
+
+	CheckForLedsStateUpdate(event.GetKeyCode(), false);
 
 #ifdef __WXOSX__
 	// Workaround for #1580:
@@ -2187,6 +2212,7 @@ void WinPortPanel::CheckPutText2CLip()
 void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 {
 	//fprintf(stderr, "OnSetFocus\n");
+	g_wx_keyboard_leds_state.Current(true);
 	const bool was_focused = (_focused_ts != 0);
 	const DWORD ts = WINPORT(GetTickCount)();
 	_focused_ts = ts ? ts : 1;

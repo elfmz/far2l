@@ -148,10 +148,9 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 	return INVALID_HANDLE_VALUE;
 }
 
-SHAREDSYMBOL int WINAPI MayExitFARW(void) // using DismissImageAtQV from ExitFARW is too late and frequently stucks, here its ok
+SHAREDSYMBOL void WINAPI ExitFARW(void)
 {
 	DismissImageAtQV();
-	return 1;
 }
 
 

@@ -9,7 +9,7 @@
 // note that since image loading performed from additional thread - it almost doesnt block panel's UI 
 #define TIMER_PERIOD_MSEC      100
 
-class ImageAtQV : protected Threaded
+class ImageAtQV : public Threaded
 {
 	Event _exit_event;
 	std::string _current_file;
@@ -69,10 +69,16 @@ public:
 		if (!WaitThread(0)) {
 			fprintf(stderr, "ImageAtQV: exiting...\n");
 			_exit_event.Signal();
-			WaitThread();
+			DWORD tmout;
+			do { // prevent stuck on exit
+				if (g_fsf.DispatchInterThreadCalls() > 0) {
+					tmout = 1;
+				} else {
+					tmout = 100;
+				}
+			} while (!WaitThread(tmout));
 		}
 	}
-
 };
 
 static std::optional<ImageAtQV> s_iv_at_qv;

@@ -182,7 +182,7 @@ bool ConfigCommands(const std::string &ArcFormat, int IDFocus, bool FastAccess, 
 	DialogItems[IDFocus].Focus = 1;
 
 	for (I = 1; I <= 31; I+= 2)
-		if ((Length = strlen(DialogItems[I].Data)) > MaxLength)
+		if ((Length = FSF.StrCellsCount(DialogItems[I].Data, strlen(DialogItems[I].Data))) > MaxLength)
 			MaxLength = Length;
 
 	for (I = 2, J = 0; I <= 32; I+= 2, J++)

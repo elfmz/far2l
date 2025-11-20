@@ -14,63 +14,33 @@
 // keep following settings across plugin invokations
 DefaultScale g_def_scale{DS_EQUAL_SCREEN};
 static std::set<std::wstring> s_warned_tools;
+static std::atomic<int> s_in_progress_dialog{0};
 
-
-
-enum ProcessingKeyPress {
-	PKP_NONE,
-	PKP_INFO,
-	PKP_DISMISS,
-};
-
-static ProcessingKeyPress CheckForProcessingKeyPress()
+class ToolExec : public ExecAsync
 {
-	WORD KeyCodes[] = {'i', 'I', VK_ESCAPE, VK_NEXT, VK_PRIOR};
-	DWORD index = WINPORT(CheckForKeyPress)(NULL, KeyCodes, ARRAYSIZE(KeyCodes),
-		CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
-	switch (index) {
-		case 0:
-			return PKP_NONE;
-		case 1: case 2:
-			return PKP_INFO;
-		default:
-			return PKP_DISMISS;
-	}
-}
-
-class ImageViewerMessage
-{
-	HANDLE _h_scr{nullptr};
+	std::atomic<bool> _exited{false};
 
 public:
-	ImageViewerMessage(const std::string &file, const std::string &size_str, const std::string &info)
+	void ErrorDialog(const char *pkg, int err)
 	{
-		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
-		_h_scr = g_far.SaveScreen(0, 0, -1, -1);
-		wchar_t buf[0x100]{};
-		swprintf(buf, ARRAYSIZE(buf) - 1, PLUGIN_TITLE L"\nFile of %s:\n", size_str.c_str());
-		std::wstring tmp = buf;
-		StrMB2Wide(file, tmp, true);
-		tmp+= L'\n';
-		StrMB2Wide(info, tmp, true);
-		tmp+= L'\n';
-		tmp+= L"\n          <I> - additional details";
-		tmp+= L"\n<PgDn>/<PgUp> - skip current file";
-		g_far.Message(g_far.ModuleNumber, FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
-	}
-
-	~ImageViewerMessage()
-	{
-		if (_h_scr) {
-			g_far.RestoreScreen(_h_scr);
-			_h_scr = nullptr;
+		std::wstring ws_tool;
+		const auto &args = GetArguments();
+		if (!args.empty()) {
+			ws_tool = StrMB2Wide(args.front());
+		}
+		if (s_warned_tools.insert(ws_tool).second) {
+			const auto &ws_pkg = MB2Wide(pkg);
+			const wchar_t *MsgItems[] = { PLUGIN_TITLE,
+				L"Failed to run tool:", ws_tool.c_str(),
+				L"Please install package:", ws_pkg.c_str(),
+				L"Ok"
+			};
+			errno = err;
+			g_far.Message(g_far.ModuleNumber, FMSG_WARNING | FMSG_ERRORTYPE, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
 		}
 	}
-};
 
-struct ToolExec : ExecAsync
-{
-	void ShowAdditionalInfo(const char *pkg)
+	void InfoDialog(const char *pkg)
 	{
 		std::wstring tmp;
 		tmp = PLUGIN_TITLE L" - operation details\n";
@@ -86,6 +56,45 @@ struct ToolExec : ExecAsync
 		g_far.Message(g_far.ModuleNumber, FMSG_MB_OK | FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 0);
 	}
 
+	void ProgressDialog(const std::string &file, const std::string &size_str, const char *pkg, const std::string &info)
+	{
+		WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+
+		wchar_t buf[0x100]{};
+		swprintf(buf, ARRAYSIZE(buf) - 1, PLUGIN_TITLE L"\nFile of %s:\n", size_str.c_str());
+		std::wstring tmp = buf;
+		StrMB2Wide(file, tmp, true);
+		tmp+= L'\n';
+		StrMB2Wide(info, tmp, true);
+		tmp+= L'\n';
+		tmp+= L"\n&Skip";
+		tmp+= L"\n&Info";
+		++s_in_progress_dialog;
+		while (!_exited && g_far.Message(g_far.ModuleNumber,
+				FMSG_ALLINONE, nullptr, (const wchar_t * const *) tmp.c_str(), 0, 2) == 1) {
+			InfoDialog(pkg);
+		}
+		--s_in_progress_dialog;
+	}
+
+	static VOID sCallback(VOID *Context)
+	{
+		// callbacks called withing UI thread, so there can be no race condition at dialog creation/s_in_progress_dialog counter update
+		if (s_in_progress_dialog != 0) { // inject ESCAPE keypress that will close dialog
+			DWORD dw;
+			INPUT_RECORD ir{KEY_EVENT, {}};
+			ir.Event.KeyEvent.bKeyDown = 1;
+			ir.Event.KeyEvent.wRepeatCount = 1;
+			ir.Event.KeyEvent.wVirtualKeyCode = VK_ESCAPE;
+			ir.Event.KeyEvent.wVirtualScanCode = 0;
+			ir.Event.KeyEvent.uChar.UnicodeChar = 0;
+			ir.Event.KeyEvent.dwControlKeyState = 0;
+			WINPORT(WriteConsoleInput)(NULL, &ir, 1, &dw);
+			ir.Event.KeyEvent.bKeyDown = 0;
+			WINPORT(WriteConsoleInput)(NULL, &ir, 1, &dw);
+		}
+	}
+
 	// return false in case tool run dismissed by user, otherwise always return true
 	bool FN_PRINTF_ARGS(5) Run(const std::string &file, const std::string &size_str, const char *pkg, const char *info_fmt, ...)
 	{
@@ -95,42 +104,34 @@ struct ToolExec : ExecAsync
 			const std::string &info = StrPrintfV(info_fmt, args);
 			va_end(args);
 
-			ImageViewerMessage msg(file, size_str, info);
-			do {
-				switch (CheckForProcessingKeyPress()) {
-					case PKP_DISMISS:
-						KillSoftly();
-						if (!Wait(COMMAND_TIMEOUT_HARD_KILL)) {
-							KillHardly();
-							Wait();
-						}
-						return false;
-
-					case PKP_INFO:
-						ShowAdditionalInfo(pkg);
-						break;
-					default: ;
+			ProgressDialog(file, size_str, pkg, info);
+			if (!_exited) {
+				KillSoftly();
+				if (!Wait(COMMAND_TIMEOUT_HARD_KILL)) {
+					KillHardly();
+					Wait();
 				}
-			} while (!Wait(COMMAND_TIMEOUT_CHECK_PRESS));
+			} else {
+				Wait();
+			}
+			// purge injected escape that could remain or anything else user could press
+			PurgeAccumulatedKeyPresses();
 		}
 		if (ExecError() != 0) {
-			std::wstring ws_tool;
-			const auto &args = GetArguments();
-			if (!args.empty()) {
-				ws_tool = StrMB2Wide(args.front());
-			}
-			if (s_warned_tools.insert(ws_tool).second) {
-				const auto &ws_pkg = MB2Wide(pkg);
-				const wchar_t *MsgItems[] = { PLUGIN_TITLE,
-					L"Failed to run tool:", ws_tool.c_str(),
-					L"Please install package:", ws_pkg.c_str(),
-					L"Ok"
-				};
-				errno = ExecError();
-				g_far.Message(g_far.ModuleNumber, FMSG_WARNING|FMSG_ERRORTYPE, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
-			}
+			ErrorDialog(pkg, ExecError());
 		}
 		return true;
+	}
+
+	virtual void *ThreadProc()
+	{
+		void *out = ExecAsync::ThreadProc();
+		_exited = true;
+		DWORD dw;
+		INPUT_RECORD ir{CALLBACK_EVENT, {}};
+		ir.Event.CallbackEvent.Function = sCallback;
+		WINPORT(WriteConsoleInput)(NULL, &ir, 1, &dw);
+		return out;
 	}
 };
 

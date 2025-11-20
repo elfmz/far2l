@@ -19,3 +19,5 @@ enum DefaultScale {
 };
 
 extern DefaultScale g_def_scale;
+
+void PurgeAccumulatedKeyPresses();

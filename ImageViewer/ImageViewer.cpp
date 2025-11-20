@@ -579,20 +579,22 @@ void ImageViewer::SetTitleAndStatus(const std::string &title, const std::string 
 	StrMB2Wide(title, ws_title, true);
 	FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
 
-	if (_selection.find(_cur_file) == _selection.end()) {
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 1);
-		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 0);
-	} else {
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 0);
-		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 1);
-	}
+	if (_dlg != INVALID_HANDLE_VALUE) {
+		if (_selection.find(_cur_file) == _selection.end()) {
+			g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 1);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 0);
+		} else {
+			g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 0);
+			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 1);
+		}
 
-	// update status after title, so it will get redrawn after too, and due to that - will remain visible
-	std::wstring ws_status = StrMB2Wide(status);
-	FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
-	g_far.SendDlgMessage(_dlg, DM_SETTEXT, 3, (LONG_PTR)&dd_status);
+		// update status after title, so it will get redrawn after too, and due to that - will remain visible
+		std::wstring ws_status = StrMB2Wide(status);
+		FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 3, (LONG_PTR)&dd_status);
+	}
 }
 
 void ImageViewer::DenoteState(const char *stage)
@@ -657,13 +659,14 @@ ImageViewer::ImageViewer(const std::string &initial_file, const std::set<std::st
 
 ImageViewer::~ImageViewer()
 {
+	WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 	if (!_tmp_file.empty()) {
 		unlink(_tmp_file.c_str());
 	}
 }
 
 
-bool ImageViewer::Setup(HANDLE dlg, SMALL_RECT &rc)
+bool ImageViewer::Setup(SMALL_RECT &rc, HANDLE dlg)
 {
 	_dlg = dlg;
 	_pos.X = 1;
@@ -676,7 +679,9 @@ bool ImageViewer::Setup(HANDLE dlg, SMALL_RECT &rc)
 
 	_err_str.clear();
 	if (!PrepareImage() || !RenderImage()) {
-		ErrorMessage();
+		if (dlg != INVALID_HANDLE_VALUE) { // show error dialog only if not quick-view mode
+			ErrorMessage();
+		}
 		return false;
 	}
 	DenoteState();

@@ -2121,8 +2121,21 @@ void WinPortPanel::OnConsoleSetCursorBlinkTimeSync( wxCommandEvent& event )
 
 void WinPortPanel::OnConsoleOutputFlushDrawing()
 {
-	auto fn = std::bind(&WinPortPanel::RefreshInner, this, true);
-	CallInMainNoRet(fn);
+//	auto fn = std::bind(&WinPortPanel::RefreshInner, this, true);
+//	CallInMainNoRet(fn);
+// NB: disabled cuz sometimes causes stuck with following trace (wx issue???)
+//#0  0x00007f681bc28bcf in __GI___poll (fds=0x7fffc2436b48, nfds=1, timeout=-1) at ../sysdeps/unix/sysv/linux/poll.c:29
+//#1  0x00007f6819abe7e2 in  () at /lib/x86_64-linux-gnu/libxcb.so.1
+//#2  0x00007f6819abeeb1 in  () at /lib/x86_64-linux-gnu/libxcb.so.1
+//#3  0x00007f6819abfea6 in xcb_wait_for_reply64 () at /lib/x86_64-linux-gnu/libxcb.so.1
+//#4  0x00007f681a92731c in _XReply () at /lib/x86_64-linux-gnu/libX11.so.6
+//#5  0x00007f681a92777f in XSync () at /lib/x86_64-linux-gnu/libX11.so.6
+//#6  0x00007f681aef5c8d in wxWindow::Update() () at /lib/x86_64-linux-gnu/libwx_gtk3u_core-3.0.so.0
+//#7  0x00007f681b2927a1 in WinPortPanel::RefreshInner(bool) () at /home/user/projects/far2l.build/install/far2l_gui.so
+//#8  0x00007f681b28ca99 in InMainCallerBase<std::_Bind<void (WinPortPanel::*(WinPortPanel*, bool))(bool)> >::Callback() () at /home/user/projects/far2l.build/install/far2l_gui.so
+//#9  0x00007f681aba1900 in wxEvtHandler::TryHereOnly(wxEvent&) () at /lib/x86_64-linux-gnu/libwx_baseu-3.0.so.0
+//#10 0x00007f681aba195f in wxEvtHandler::ProcessEventLocally(wxEvent&) () at /lib/x86_64-linux-gnu/libwx_baseu-3.0.so.0
+//#11 0x00007f681aba1a51 in wxEvtHandler::ProcessEvent(wxEvent&) () at /lib/x86_64-linux-gnu/libwx_baseu-3.0.so.0
 }
 
 void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)

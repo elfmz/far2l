@@ -4,6 +4,8 @@ project(ImageViewer)
 set(SOURCES
 Plugin.cpp 
 ImageViewer.cpp 
+ImageAtFull.cpp
+ImageAtQV.cpp
 )
 
 add_library (ImageViewer MODULE ${SOURCES})

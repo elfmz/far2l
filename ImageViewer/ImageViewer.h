@@ -55,7 +55,7 @@ public:
 	ImageViewer(const std::string &initial_file, const std::set<std::string> &selection);
 	~ImageViewer();
 
-	bool Setup(HANDLE dlg, SMALL_RECT &rc);
+	bool Setup(SMALL_RECT &rc, HANDLE dlg = INVALID_HANDLE_VALUE);
 	void Home();
 	bool Iterate(bool forward);
 	void Scale(int change);

@@ -1,5 +1,5 @@
-#include "ImageViewer.h"
 #include "Common.h"
+#include "ImageViewer.h"
 
 static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {

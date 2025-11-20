@@ -1,9 +1,4 @@
 #pragma once
-#include <farplug-wide.h>
-#include <WinPort.h>
-#include <farkeys.h>
-#include <farcolor.h>
-
 #include <string>
 #include <vector>
 #include <algorithm>

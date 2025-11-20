@@ -1,5 +1,5 @@
-#include "ImageViewer.h"
 #include "Common.h"
+#include "ImageViewer.h"
 #include "ExecAsync.h"
 
 #define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD DEL + - * / = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"

@@ -1,5 +1,5 @@
-#include "ImageViewer.h"
 #include "Common.h"
+#include "ImageViewer.h"
 
 PluginStartupInfo g_far;
 FarStandardFunctions g_fsf;

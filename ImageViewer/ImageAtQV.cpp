@@ -1,8 +1,8 @@
+#include "Common.h"
+#include "ImageViewer.h"
 #include <optional>
 #include <Threaded.h>
 #include <Event.h>
-#include "ImageViewer.h"
-#include "Common.h"
 
 // there is no notification from far2l so using dummy timer-based polling of panel mode and current file
 // and below is period of times that drives that polling

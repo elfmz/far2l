@@ -1,4 +1,11 @@
 #pragma once
+#include <string>
+#include <set>
+
+#include <farplug-wide.h>
+#include <WinPort.h>
+#include <farkeys.h>
+#include <farcolor.h>
 
 #define WINPORT_IMAGE_ID "image_viewer"
 #define PLUGIN_TITLE L"Image Viewer"

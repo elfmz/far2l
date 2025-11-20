@@ -562,6 +562,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chmod(const char *pat
 	return common_path_and_mode(SUDO_CMD_CHMOD, &chmod, path, mode, true);
 }
 
+/**
 extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
 {
 	int saved_errno = errno;
@@ -585,6 +586,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *pat
 	}
 	return r;
 }
+**/
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_utimens(const char *filename, const struct timespec times[2])
 {
@@ -914,6 +916,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_mknod(const char *pat
 	return r;
 }
 
+/**
 extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *path, uid_t owner, gid_t group)
 {
 	int saved_errno = errno;
@@ -936,6 +939,52 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *pa
 		}
 	}
 	return r;
+}
+**/
+
+static int common_chown(SudoCommand cmd, int (*pfn)(const char *, uid_t, gid_t), const char *path, uid_t owner, gid_t group) {
+	int saved_errno = errno;
+	Sudo::ClientReconstructCurDir crcd(path);
+	int r = pfn(path, owner, group);
+
+	if (r == -1 && Sudo::IsAccessDeniedErrno() && Sudo::TouchClientConnection(true)) {
+		try {
+			Sudo::ClientTransaction ct(cmd);
+			ct.SendStr(path);
+			ct.SendPOD(owner);
+			ct.SendPOD(group);
+			r = ct.RecvInt();
+			if (r == -1) {
+				ct.RecvErrno();
+			} else {
+				errno = saved_errno;
+			}
+		} catch(const std::exception &e) {
+			fprintf(stderr, "sudo_client: common_chown(%u, '%s', %d, %d) - error %s\n", cmd, path, (int)owner, (int)group, e.what());
+		}
+	}
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
+{
+	return common_chown(SUDO_CMD_CHOWN, &::chown, path, owner, group);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *path, uid_t owner, gid_t group)
+{
+	return common_chown(SUDO_CMD_LCHOWN, &::lchown, path, owner, group);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_xchown(SudoXChownCommand cmd, const char *path, uid_t owner, gid_t group)
+{
+	switch (cmd) {
+		case SDC_CHOWN_CMD_CHOWN: return common_chown(SUDO_CMD_CHOWN, &::chown, path, owner, group);
+		case SDC_CHOWN_CMD_LCHOWN: return common_chown(SUDO_CMD_LCHOWN, &::lchown, path, owner, group);
+		default:
+			errno = EINVAL;
+			return -1;
+	}
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2])

@@ -18,9 +18,10 @@ class ExecAsync : Threaded
 	int _kill_fd[2]{-1, -1};
 	pid_t _pid{-1};
 
-	virtual void *ThreadProc();
-
 	void Kill(int sig);
+
+protected:
+	virtual void *ThreadProc();
 
 public:
 	ExecAsync(const char *program = "");

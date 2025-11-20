@@ -2733,6 +2733,7 @@ kurzorpozícióba (csak maradó blokk módban)
    #F2#                      Fájl mentése
    #Shift-F2#                ~Fájl mentése másként~@FileSaveAs@
    #F3# vagy #Alt-W#           Sortörés be/ki
+   #Ctrl-F3#                 Sorszámozás be/ki
    #Shift-F4#                ~Új fájl~@FileOpenCreate@ szerkesztése
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width

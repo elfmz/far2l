@@ -3010,6 +3010,7 @@ $ #Редактор#
  #F2# Зберегти файл
  #Shift-F2# ~Зберегти файл як ...~@FileSaveAs@
  #F3# или #Alt-W# Перенесення рядків (увімкнено, вимкнено)
+ #Ctrl-F3# Перемкнути відображення номерів рядків
  #Shift-F4# Редагувати ~новий файл~@FileOpenCreate@
  #F5#                      Toggle whitespace characters displaying
  #Shift-F5#                Change Tab character width

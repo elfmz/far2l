@@ -3110,6 +3110,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F2#                      Save file
    #Shift-F2#                ~Save file as...~@FileSaveAs@
    #F3# or #Alt-W#             Toggle line wrap/unwrap
+   #Ctrl-F3#                 Toggle line numbers display
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
@@ -3638,6 +3639,10 @@ $ #Settings dialog: editor#
                           with .editorconfig file contains "indent_size").
 
   #Show scrollbar#          Show scrollbar.
+
+  #Show line numbers#       Show line numbers on the left side of the
+                          editor. This option can also be toggled by
+                          pressing #Ctrl-F3# in the editor.
 
   #Pick up the word#        When the search/replace dialog is invoked,
                           the word under the cursor will be inserted

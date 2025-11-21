@@ -167,7 +167,6 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 
 	} catch (...) {
 		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
-		std::optional<wxImage> wx_img;
 		_images.erase(str_id);
 		return false;
 	}

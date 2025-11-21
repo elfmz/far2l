@@ -8,7 +8,6 @@
 
 void wxConsoleImages::Paint(wxPaintDC &dc, const wxRect &rc, unsigned int font_width, unsigned int font_height)
 {
-	std::lock_guard<std::mutex> lock(_mtx);
 	if (_images.empty()) {
 		return;
 	}
@@ -117,7 +116,6 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 		}
 
 		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
-		std::lock_guard<std::mutex> lock(_mtx);
 		auto &img = _images[str_id];
 		img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;
 		MakeImageArea(img.area, area, default_pos);
@@ -168,8 +166,9 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 		}
 
 	} catch (...) {
-		_images.erase(str_id);
 		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		std::optional<wxImage> wx_img;
+		_images.erase(str_id);
 		return false;
 	}
 	return true;
@@ -181,7 +180,6 @@ bool wxConsoleImages::Rotate(const char *id, const SMALL_RECT *area, unsigned ch
 		std::string str_id(id);
 		angle_x90&= 3; // any other represents one of: 90, 180, 270
 
-		std::lock_guard<std::mutex> lock(_mtx);
 		auto it = _images.find(id);
 		if (it == _images.end()) {
 			fprintf(stderr, "%s('%s'): no such image\n", __FUNCTION__, id);
@@ -219,6 +217,5 @@ bool wxConsoleImages::Rotate(const char *id, const SMALL_RECT *area, unsigned ch
 bool wxConsoleImages::Delete(const char *id)
 {
 	std::string str_id(id);
-	std::lock_guard<std::mutex> lock(_mtx);
 	return _images.erase(str_id) != 0;
 }

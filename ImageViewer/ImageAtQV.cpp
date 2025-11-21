@@ -1,65 +1,63 @@
 #include "Common.h"
 #include "ImageViewer.h"
 #include <optional>
+#include <mutex>
+#include <condition_variable>
 #include <Threaded.h>
-#include <Event.h>
 
-// there is no notification from far2l so using dummy timer-based polling of panel mode and current file
-// and below is period of times that drives that polling
-// note that since image loading performed from additional thread - it almost doesnt block panel's UI 
-#define TIMER_PERIOD_MSEC      100
-
+// quick view processing happens in background thread, that keeps UI fluent,
+// even if decoding of some file takes long time - it happens in background
+// and seamlessly cancelled when user navigates to another file
 class ImageAtQV : public Threaded
 {
-	Event _exit_event;
-	std::string _current_file;
+	std::condition_variable _cond;
+	std::mutex _mtx;
+	volatile bool _exiting{false};
+	volatile bool _changing{true};
+
+	std::string _cur_file;
+	SMALL_RECT _cur_area{-1, -1, -1, -1};
 
 	virtual void *ThreadProc()
 	{
-		struct PanelInfo pi{};
-		std::optional<ImageViewer> iv;
-		std::string iv_file, cur_file; //, prev_file
-		SMALL_RECT rc{-1, -1, -1, -1};
 		fprintf(stderr, "ImageAtQV: thread started\n");
-		do {
-			g_far.Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
-			if (!pi.Visible || pi.PanelType != PTYPE_QVIEWPANEL) {
-				fprintf(stderr, "ImageAtQV: thread exit due to unappropriate panel\n");
-				break;
-			}
 
-			cur_file = GetCurrentPanelItem();
-
-			if (iv_file != cur_file // switch_file_periods_counter >= SWITCH_FILE_PERIODS
-				|| pi.PanelRect.left != rc.Left || pi.PanelRect.top != rc.Top
-				|| pi.PanelRect.right != rc.Right || pi.PanelRect.bottom != rc.Bottom) {
-
-				rc.Left = pi.PanelRect.left;
-				rc.Top = pi.PanelRect.top;
-				rc.Right = pi.PanelRect.right;
-				rc.Bottom = pi.PanelRect.bottom;
-
-				iv_file = std::move(cur_file);
-
-				fprintf(stderr, "ImageAtQV: setup for '%s'\n", iv_file.c_str());
-
-				iv.reset();
-				std::set<std::string> single_selection;
-				single_selection.emplace(iv_file); // prevent navigation to another file
-				iv.emplace(iv_file, single_selection);
-				if (!iv->Setup(rc)) {
-					iv.reset();
+		std::optional<ImageViewer> iv;
+		std::string file;
+		SMALL_RECT area;
+		for (;;) {
+			for (;;) {
+				std::unique_lock<std::mutex> lock(_mtx);
+				if (_exiting) {
+					fprintf(stderr, "ImageAtQV: thread exited\n");
+					return nullptr;
 				}
+				if (_changing) {
+					_changing = false;
+					file = _cur_file;
+					area = _cur_area;
+					break;
+				}
+				_cond.wait(lock);
 			}
-//			fprintf(stderr, "ImageAtQV: loop\n");
-		} while (!_exit_event.TimedWait(TIMER_PERIOD_MSEC));
+			fprintf(stderr, "ImageAtQV: [%d %d %d %d] '%s'\n",
+				area.Left, area.Top, area.Right, area.Bottom, file.c_str());
 
-		fprintf(stderr, "ImageAtQV: thread exited\n");
-		return nullptr;
+			iv.reset();
+			std::set<std::string> single_selection;
+			single_selection.emplace(file); // prevent navigation to another file
+			iv.emplace(file, single_selection);
+			if (!iv->SetupQV(area, &_changing)) {
+				iv.reset();
+			}
+		}
 	}
 
 public:
-	ImageAtQV()
+	ImageAtQV(const std::string &file, const SMALL_RECT &area)
+		:
+		_cur_file(file),
+		_cur_area(area)
 	{
 		StartThread();
 	}
@@ -67,8 +65,13 @@ public:
 	~ImageAtQV()
 	{
 		if (!WaitThread(0)) {
-			fprintf(stderr, "ImageAtQV: exiting...\n");
-			_exit_event.Signal();
+			fprintf(stderr, "~ImageAtQV: exiting...\n");
+			{
+				std::lock_guard<std::mutex> lock(_mtx);
+				_exiting = true;
+				_changing = true;
+				_cond.notify_all();
+			}
 			DWORD tmout;
 			do { // prevent stuck on exit
 				if (g_fsf.DispatchInterThreadCalls() > 0) {
@@ -78,15 +81,41 @@ public:
 				}
 			} while (!WaitThread(tmout));
 		}
+		fprintf(stderr, "~ImageAtQV: exited\n");
+	}
+
+	void Update(const std::string &file, const SMALL_RECT &area)
+	{
+		std::lock_guard<std::mutex> lock(_mtx);
+		if (_cur_file != file || memcmp(&_cur_area, &area, sizeof(_cur_area)) != 0) {
+			_changing = true;
+			_cur_file = file;
+			_cur_area = area;
+			_cond.notify_all();
+		}
+	}
+
+	bool Alive()
+	{
+		return !WaitThread(0);
 	}
 };
 
+///////////////////////////////////////////////////////////////////////////////
 static std::optional<ImageAtQV> s_iv_at_qv;
 
-void ShowImageAtQV()
+void ShowImageAtQV(const std::string &file, const SMALL_RECT &area)
 {
-	s_iv_at_qv.reset();
-	s_iv_at_qv.emplace();
+	if (s_iv_at_qv && s_iv_at_qv->Alive()) {
+		s_iv_at_qv->Update(file, area);
+	} else {
+		s_iv_at_qv.emplace(file, area);
+	}
+}
+
+bool IsShowingImageAtQV()
+{
+	return (bool)s_iv_at_qv;
 }
 
 void DismissImageAtQV()

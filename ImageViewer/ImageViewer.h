@@ -13,12 +13,14 @@
 
 class ImageViewer
 {
-	HANDLE _dlg{};
+	HANDLE _dlg{INVALID_HANDLE_VALUE};
+	volatile bool *_cancel{nullptr};
+
 	std::string _initial_file, _cur_file, _render_file, _tmp_file, _file_size_str;
 	std::set<std::string> _selection, _all_files;
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
-	double _scale{-1}, _scale_max{4};
+	double _scale{-1}, _scale_fit{-1}, _scale_min{0.1}, _scale_max{4};
 	int _rotate{0}, _rotated{0};
 	int _orig_w{0}, _orig_h{0}; // info about image size for title
 	std::string _err_str;
@@ -46,16 +48,21 @@ class ImageViewer
 	void DenoteState(const char *stage = NULL);
 	void JustReset();
 
+	bool SetupCommon(SMALL_RECT &rc);
+
 public:
 	ImageViewer(const std::string &initial_file, const std::set<std::string> &selection);
 	~ImageViewer();
 
-	bool Setup(SMALL_RECT &rc, HANDLE dlg = INVALID_HANDLE_VALUE);
+	bool SetupQV(SMALL_RECT &rc, volatile bool *cancel);
+	bool SetupFull(SMALL_RECT &rc, HANDLE dlg);
+
 	void Home();
 	bool Iterate(bool forward);
 	void Scale(int change);
 	void Rotate(int change);
 	void Shift(int horizontal, int vertical);
+	COORD ShiftByPixels(COORD delta);
 	void Reset();
 	void Select();
 	void Deselect();

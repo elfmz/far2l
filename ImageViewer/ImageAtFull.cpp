@@ -83,6 +83,14 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 
 			ImageViewerAtFull *iv = (ImageViewerAtFull *)Param2;
 
+			if (Rect.Right - Rect.Left > 2) {
+				Rect.Left++;
+				Rect.Right--;
+			}
+			if (Rect.Bottom - Rect.Top > 2) {
+				Rect.Top++;
+				Rect.Bottom--;
+			}
 			if (iv->SetupFull(Rect, hDlg)) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {

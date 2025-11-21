@@ -692,10 +692,10 @@ ImageViewer::~ImageViewer()
 
 bool ImageViewer::SetupCommon(SMALL_RECT &rc)
 {
-	_pos.X = 1;
-	_pos.Y = 1;
-	_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
-	_size.Y = rc.Bottom > 1 ? rc.Bottom - 1 : 1;
+	_pos.X = rc.Left;
+	_pos.Y = rc.Top;
+	_size.X = rc.Right > rc.Left ? rc.Right - rc.Left + 1 : 1;
+	_size.Y = rc.Bottom > rc.Top ? rc.Bottom - rc.Top + 1 : 1;
 
 	_pixel_data.clear();
 	JustReset();

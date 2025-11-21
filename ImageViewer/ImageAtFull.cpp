@@ -66,9 +66,7 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			} else {
 				iv->DraggingFinish();
 			}
-
-			// dragging with pressed Ctrl or Shift uses lazy-on-idle commits and can be useful if terminal is slow
-			if ((me->dwControlKeyState & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) == 0) {
+			if ((me->dwControlKeyState & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0) {
 				iv->DraggingCommit();
 			}
 			return TRUE;

@@ -3,7 +3,6 @@
 #include <wx/wx.h>
 #include <map>
 #include <string>
-#include <mutex>
 
 class wxConsoleImages
 {
@@ -16,7 +15,6 @@ class wxConsoleImages
 	};
 
 	struct Images : std::map<std::string, wxConsoleImage> {} _images;
-	std::mutex _mtx;
 
 public:
 	void Paint(wxPaintDC &dc, const wxRect &rc, unsigned int font_width, unsigned int font_height);

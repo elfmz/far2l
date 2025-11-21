@@ -188,20 +188,7 @@ void ImageViewer::ErrorMessage()
 
 bool ImageViewer::IterateFile(bool forward)
 {
-	if (_all_files.empty()) {
-		DIR *d = opendir(".");
-		if (d) {
-			for (;;) {
-				auto *de = readdir(d);
-				if (!de) break;
-				if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
-					_all_files.insert(de->d_name);
-				}
-			}
-			closedir(d);
-		}
-	}
-	auto it = _all_files.find(_cur_file);
+	auto it = std::find(_all_files.begin(), _all_files.end(), _cur_file);
 	if (it == _all_files.end()) {
 		return false;
 	}
@@ -645,16 +632,15 @@ void ImageViewer::JustReset()
 
 ///////////////////// ImageViewer PUBLICs
 
-ImageViewer::ImageViewer(const std::string &initial_file, const std::set<std::string> &selection)
+ImageViewer::ImageViewer(const std::string &initial_file, const std::vector<std::string> &all_files, const std::set<std::string> &selection)
 	:
 	_initial_file(initial_file),
 	_cur_file(initial_file),
 	_selection(selection),
-	_all_files(selection)
+	_all_files(all_files)
 {
-	if (!_all_files.empty()) {
-		_all_files.insert(initial_file);
-	}
+	if (std::find(_all_files.begin(), _all_files.end(), initial_file) == _all_files.end())
+		_all_files.push_back(initial_file);
 }
 
 ImageViewer::~ImageViewer()

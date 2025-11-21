@@ -31,7 +31,7 @@ void PurgeAccumulatedKeyPresses();
 
 std::string GetCurrentPanelItem();
 
-bool ShowImageAtFull(const std::string &initial_file, std::set<std::string> &selection);
+bool ShowImageAtFull(const std::string &initial_file, std::vector<std::string> &all_files, std::set<std::string> &selection);
 
 void ShowImageAtQV();
 void DismissImageAtQV();

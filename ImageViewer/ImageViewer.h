@@ -15,7 +15,8 @@ class ImageViewer
 {
 	HANDLE _dlg{};
 	std::string _initial_file, _cur_file, _render_file, _tmp_file, _file_size_str;
-	std::set<std::string> _selection, _all_files;
+	std::set<std::string> _selection;
+	std::vector<std::string> _all_files;
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
 	double _scale{-1}, _scale_max{4};
@@ -47,7 +48,7 @@ class ImageViewer
 	void JustReset();
 
 public:
-	ImageViewer(const std::string &initial_file, const std::set<std::string> &selection);
+	ImageViewer(const std::string &initial_file, const std::vector<std::string> &all_files, const std::set<std::string> &selection);
 	~ImageViewer();
 
 	bool Setup(SMALL_RECT &rc, HANDLE dlg = INVALID_HANDLE_VALUE);

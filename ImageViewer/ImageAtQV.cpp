@@ -44,9 +44,10 @@ class ImageAtQV : public Threaded
 				fprintf(stderr, "ImageAtQV: setup for '%s'\n", iv_file.c_str());
 
 				iv.reset();
+				std::vector<std::string> single_all_files;
 				std::set<std::string> single_selection;
 				single_selection.emplace(iv_file); // prevent navigation to another file
-				iv.emplace(iv_file, single_selection);
+				iv.emplace(iv_file, single_all_files, single_selection);
 				if (!iv->Setup(rc)) {
 					iv.reset();
 				}

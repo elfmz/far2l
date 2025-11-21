@@ -129,25 +129,30 @@ static void OpenPluginAtSomePath(const std::string &name)
 	}
 }
 
-std::string GetCurrentPanelItem()
+static void OpenAtCurrentPanelItem()
 {
-	const auto &fn_sel = GetPanelItem(FCTL_GETCURRENTPANELITEM, 0);
-	return fn_sel.first;
+	const auto &fn_sel = GetCurrentPanelItem();
+	if (!fn_sel.empty()) {
+		struct PanelInfo pi{};
+		g_far.Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+		if (pi.Visible && pi.PanelType == PTYPE_QVIEWPANEL) {
+			ShowImageAtQV(fn_sel,
+				SMALL_RECT {
+					SHORT(pi.PanelRect.left), SHORT(pi.PanelRect.top),
+					SHORT(pi.PanelRect.right), SHORT(pi.PanelRect.bottom)
+				}
+			);
+		} else {
+			OpenPluginAtCurrentPanel(fn_sel);
+		}
+	}
 }
 
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
 	if (OpenFrom == OPEN_PLUGINSMENU) {
-		const auto &fn_sel = GetCurrentPanelItem();
-		if (!fn_sel.empty()) {
-			struct PanelInfo pi{};
-			g_far.Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
-			if (pi.Visible && pi.PanelType == PTYPE_QVIEWPANEL) {
-				ShowImageAtQV();
-			} else {
-				OpenPluginAtCurrentPanel(fn_sel);
-			}
-		}
+		OpenAtCurrentPanelItem();
+
 	} else if (Item > 0xfff) {
 		std::string path = Wide2MB((const wchar_t *)Item);
 		while (!path.empty() && path.front() == ' ') {
@@ -161,7 +166,9 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 		while (strncmp(path.c_str(), "./", 2) == 0) {
 			path.erase(0, 2);
 		}
-		if (path.find('/') == std::string::npos) {
+		if (path.empty()) {
+			OpenAtCurrentPanelItem();
+		} else if (path.find('/') == std::string::npos) {
 			OpenPluginAtCurrentPanel(path);
 		} else {
 			OpenPluginAtSomePath(path);
@@ -179,3 +186,29 @@ SHAREDSYMBOL void WINAPI ExitFARW(void)
 
 SHAREDSYMBOL void WINAPI ClosePluginW(HANDLE hPlugin) {}
 SHAREDSYMBOL int WINAPI ProcessEventW(HANDLE hPlugin, int Event, void *Param) { return FALSE; }
+
+SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event,void *Param)
+{
+	if ((Event == VE_READ || Event == VE_CLOSE) && IsShowingImageAtQV()) {
+		bool dismiss = true;
+		const auto &fn_sel = GetCurrentPanelItem();
+		if (!fn_sel.empty()) {
+			struct PanelInfo pi{};
+			g_far.Control(PANEL_PASSIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+			if (pi.Visible && pi.PanelType == PTYPE_QVIEWPANEL) {
+				ShowImageAtQV(fn_sel,
+					SMALL_RECT{
+						SHORT(pi.PanelRect.left), SHORT(pi.PanelRect.top),
+						SHORT(pi.PanelRect.right), SHORT(pi.PanelRect.bottom)
+					}
+				);
+				dismiss = false;
+			}
+		}
+		if (dismiss) {
+			DismissImageAtQV();
+		}
+	}
+	return 0;
+}
+

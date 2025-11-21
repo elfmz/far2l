@@ -19,7 +19,13 @@ protected:
 
 	void Callback()
 	{
-		Invoke(_fn);
+		try {
+			Invoke(_fn);
+		} catch (std::exception &e) {
+			fprintf(stderr, "InMainCallerBase: '%s'\n", e.what());
+		} catch (...) {
+			fprintf(stderr, "InMainCallerBase: ...\n");
+		}
 
 		std::unique_lock<std::mutex> locker(_mutex);
 		_done = true;

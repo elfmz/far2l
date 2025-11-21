@@ -6,8 +6,8 @@
 
 // how long msec wait before showing progress message window
 #define COMMAND_TIMEOUT_BEFORE_MESSAGE 300
-// how long msec wait between checking for skip keypress while command is running
-#define COMMAND_TIMEOUT_CHECK_PRESS 100
+// how long msec wait between checking for cancel signalled while command is running
+#define COMMAND_TIMEOUT_CHECK_CANCEL 100
 // how long msec wait after gracefull kill before doing kill -9
 #define COMMAND_TIMEOUT_HARD_KILL 300
 
@@ -19,8 +19,24 @@ static std::atomic<int> s_in_progress_dialog{0};
 class ToolExec : public ExecAsync
 {
 	std::atomic<bool> _exited{false};
+	volatile bool *_cancel{nullptr};
+
+	void KillAndWait()
+	{
+		KillSoftly();
+		if (!Wait(COMMAND_TIMEOUT_HARD_KILL)) {
+			KillHardly();
+			Wait();
+		}
+	}
 
 public:
+	ToolExec(volatile bool *cancel)
+		:
+		_cancel(cancel)
+	{
+	}
+
 	void ErrorDialog(const char *pkg, int err)
 	{
 		std::wstring ws_tool;
@@ -99,20 +115,26 @@ public:
 	bool FN_PRINTF_ARGS(5) Run(const std::string &file, const std::string &size_str, const char *pkg, const char *info_fmt, ...)
 	{
 		if (Start() && !Wait(COMMAND_TIMEOUT_BEFORE_MESSAGE)) {
+			if (_cancel) { // Quick View: dont show any UI, seamless cancellation by navigation to another file
+				do {
+					if (*_cancel) {
+						KillAndWait();
+						return false;
+					}
+				} while (!Wait(COMMAND_TIMEOUT_CHECK_CANCEL));
+				return true;
+			}
+
+			// Full View: progress UI on long processing allowing to cancel processing skipping current file or show extra info
 			va_list args;
 			va_start(args, info_fmt);
 			const std::string &info = StrPrintfV(info_fmt, args);
 			va_end(args);
-
 			ProgressDialog(file, size_str, pkg, info);
-			if (!_exited) {
-				KillSoftly();
-				if (!Wait(COMMAND_TIMEOUT_HARD_KILL)) {
-					KillHardly();
-					Wait();
-				}
-			} else {
+			if (_exited) {
 				Wait();
+			} else {
+				KillAndWait();
 			}
 			// purge injected escape that could remain or anything else user could press
 			PurgeAccumulatedKeyPresses();
@@ -230,7 +252,7 @@ bool ImageViewer::IdentifyImage()
 	DenoteState("Analyzing...");
 	_orig_w = _orig_h = 0; // clear info about image size for title
 
-	ToolExec identify;
+	ToolExec identify(_cancel);
 	identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
 	if (!identify.Run(_cur_file, _file_size_str, "imagemagick", "Obtaining picture size...")) {
 		return false;
@@ -269,7 +291,7 @@ bool ImageViewer::PrepareImage()
 
 	DenoteState("Transforming...");
 
-	ToolExec ffprobe;
+	ToolExec ffprobe(_cancel);
 	ffprobe.AddArguments("ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
 		"-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", "--",  _cur_file);
 
@@ -293,7 +315,7 @@ bool ImageViewer::PrepareImage()
 
 	unlink(_tmp_file.c_str());
 
-	ToolExec ffmpeg;
+	ToolExec ffmpeg(_cancel);
 	ffmpeg.DontCare();
 	ffmpeg.AddArguments("ffmpeg", "-i", _cur_file,
 		"-vf", StrPrintf("select='not(mod(n,%d))',scale=200:-1,tile=3x2", frames_interval), _tmp_file);
@@ -316,7 +338,7 @@ bool ImageViewer::ConvertImage()
 {
 	int resize_w = _orig_w, resize_h = _orig_h;
 
-	ToolExec convert;
+	ToolExec convert(_cancel);
 
 	convert.AddArguments("convert", "--", _render_file);
 	if (fabs(_scale - 1) > 0.01) {
@@ -424,11 +446,14 @@ bool ImageViewer::RenderImage()
 			std::swap(rotated_orig_w, rotated_orig_h);
 		}
 
-		_scale_max = ceil(std::max(double(4 * canvas_w) / rotated_orig_w, double(4 * canvas_h) / rotated_orig_h));
+		_scale_fit = std::min(double(canvas_w) / double(rotated_orig_w), double(canvas_h) / double(rotated_orig_h));
+		_scale_max = std::max(_scale_fit * 4.0, 1.1);
+		_scale_min = std::min(_scale_fit / 8.0, 0.5);
+
 		if (g_def_scale == DS_EQUAL_IMAGE) {
 			_scale = 1.0;
 		} else if (g_def_scale == DS_EQUAL_SCREEN || canvas_w < rotated_orig_w || canvas_h < rotated_orig_h) {
-			_scale = std::min(double(canvas_w) / double(rotated_orig_w), double(canvas_h) / double(rotated_orig_h));
+			_scale = _scale_fit;
 		} else {
 			_scale = 1.0;
 		}
@@ -562,11 +587,11 @@ bool ImageViewer::RenderImage()
 
 void ImageViewer::SetTitleAndStatus(const std::string &title, const std::string &status)
 {
-	std::wstring ws_title = (_selection.find(_cur_file) != _selection.end()) ? L"* " : L"  ";
-	StrMB2Wide(title, ws_title, true);
-	FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
-
 	if (_dlg != INVALID_HANDLE_VALUE) {
+		std::wstring ws_title = (_selection.find(_cur_file) != _selection.end()) ? L"* " : L"  ";
+		StrMB2Wide(title, ws_title, true);
+		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
+
 		if (_selection.find(_cur_file) == _selection.end()) {
 			g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
 			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 1);
@@ -651,10 +676,8 @@ ImageViewer::~ImageViewer()
 	}
 }
 
-
-bool ImageViewer::Setup(SMALL_RECT &rc, HANDLE dlg)
+bool ImageViewer::SetupCommon(SMALL_RECT &rc)
 {
-	_dlg = dlg;
 	_pos.X = 1;
 	_pos.Y = 1;
 	_size.X = rc.Right > 1 ? rc.Right - 1 : 1;
@@ -665,7 +688,7 @@ bool ImageViewer::Setup(SMALL_RECT &rc, HANDLE dlg)
 
 	_err_str.clear();
 	if (!PrepareImage() || !RenderImage()) {
-		if (dlg != INVALID_HANDLE_VALUE) { // show error dialog only if not quick-view mode
+		if (_dlg != INVALID_HANDLE_VALUE) { // show error dialog only if not quick-view mode
 			ErrorMessage();
 		}
 		return false;
@@ -673,6 +696,20 @@ bool ImageViewer::Setup(SMALL_RECT &rc, HANDLE dlg)
 	DenoteState();
 
 	return true;
+}
+
+bool ImageViewer::SetupQV(SMALL_RECT &rc, volatile bool *cancel)
+{
+	_dlg = INVALID_HANDLE_VALUE;
+	_cancel = cancel;
+	return SetupCommon(rc);
+}
+
+bool ImageViewer::SetupFull(SMALL_RECT &rc, HANDLE dlg)
+{
+	_dlg = dlg;
+	_cancel = nullptr;
+	return SetupCommon(rc);
 }
 
 void ImageViewer::Home()
@@ -703,27 +740,35 @@ void ImageViewer::Scale(int change)
 	if (change > 0) {
 		if (_scale < 1) ds = change;
 		else if (_scale < 2) ds = change * 5;
-		else if (_scale < _scale_max) ds = change * 10;
+		else ds = change * 10;
 	} else if (change < 0) {
 		if (_scale > 2) ds = change * 10;
 		else if (_scale > 1) ds = change * 5;
-		else if (_scale > 0.1) ds = change;
+		else ds = change;
 	} else {
 		return;
 	}
-	ds/= 100.0;
-	fprintf(stderr, "Scale: %f + %f\n", _scale, ds);
-	_scale+= ds;
-	if (_scale < 0.1) {
-		_scale = 0.1;
-	} else if (_scale > _scale_max) {
-		_scale = _scale_max;
-	} else if (fabs(_scale - 1.0) < 0.01) {
-		_scale = 1.0;
+	auto new_scale = _scale + ds / 100.0;
+	if (new_scale < _scale_min) {
+		new_scale = _scale_min;
+		fprintf(stderr, "Scale: %f -> %f [MIN]\n", _scale, new_scale);
+	} else if (new_scale > _scale_max) {
+		new_scale = _scale_max;
+		fprintf(stderr, "Scale: %f -> %f [MAX]\n", _scale, new_scale);
+	} else if ( (new_scale - _scale_fit) * (_scale - _scale_fit) < -0.01) {
+		new_scale = _scale_fit;
+		fprintf(stderr, "Scale: %f -> %f [SCREEN]\n", _scale, new_scale);
+	} else if ( (new_scale - 1) * (_scale - 1) < -0.01) {
+		new_scale = 1;
+		fprintf(stderr, "Scale: %f -> 1.0 [IMAGE]\n", _scale);
+	} else {
+		fprintf(stderr, "Scale: %f -> %f\n", _scale, new_scale);
 	}
-
-	RenderImage();
-	DenoteState();
+	if (_scale != new_scale) {
+		_scale = new_scale;
+		RenderImage();
+		DenoteState();
+	}
 }
 
 void ImageViewer::Rotate(int change)
@@ -747,6 +792,18 @@ void ImageViewer::Shift(int horizontal, int vertical)
 	}
 	RenderImage();
 	DenoteState();
+}
+
+COORD ImageViewer::ShiftByPixels(COORD delta) // returns actual shift in pixels
+{
+	int saved_dx = _dx, saved_dy = _dy;
+
+	Shift(int(delta.X) * 100 / _pixel_data_w, int(delta.Y) * 100 / _pixel_data_h);
+
+	return COORD{
+		SHORT((_dx - saved_dx) * _pixel_data_w / 100),
+		SHORT((_dy - saved_dy) * _pixel_data_h / 100)
+	};
 }
 
 void ImageViewer::Reset()

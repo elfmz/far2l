@@ -36,6 +36,14 @@ class ImageAtQV : public Threaded
 					_changing = false;
 					file = _cur_file;
 					area = _cur_area;
+					if (area.Right - area.Left > 2) {
+						area.Left++;
+						area.Right--;
+					}
+					if (area.Bottom - area.Top > 2) {
+						area.Top++;
+						area.Bottom--;
+					}
 					break;
 				}
 				_cond.wait(lock);

@@ -629,9 +629,16 @@ void ImageView::DenoteState(const char *stage)
 		status.insert(0, prefix);
 	}
 
-	if (fabs(_scale - 1) > 0.01) {
+	if (_scale > 0 && fabs(_scale - 1) > 0.01) {
 		snprintf(prefix, ARRAYSIZE(prefix), "%d%% ", int(_scale * 100));
 		status.insert(0, prefix);
+		if (_scale - _scale_fit > 0.01) {
+			status.insert(0, 1, '>');
+		} else if (_scale - _scale_fit < -0.01) {
+			status.insert(0, 1, '<');
+		}else {
+			status.insert(0, 1, '=');
+		}
 	}
 
 	if (_rotate != 0) {

@@ -653,9 +653,9 @@ void ImageView::JustReset()
 
 ImageView::ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
 	:
+	_all_files(all_files),
 	_initial_file(initial_file),
-	_cur_file(initial_file),
-	_all_files(all_files)
+	_cur_file(initial_file)
 {
 	assert(_initial_file < all_files.size());
 }

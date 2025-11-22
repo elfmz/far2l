@@ -9,6 +9,18 @@ void PurgeAccumulatedInputEvents()
 	WINPORT(CheckForKeyPress)(NULL, NULL, 0, CFKP_KEEP_OTHER_EVENTS);
 }
 
+void RectReduce(SMALL_RECT &rc)
+{
+	if (rc.Right - rc.Left >= 2) {
+		rc.Left++;
+		rc.Right--;
+	}
+	if (rc.Bottom - rc.Top >= 2) {
+		rc.Top++;
+		rc.Bottom--;
+	}
+}
+
 
 SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 {

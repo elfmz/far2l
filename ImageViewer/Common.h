@@ -36,3 +36,4 @@ void ShowImageAtQV(const std::string &file, const SMALL_RECT &area);
 bool IsShowingImageAtQV();
 void DismissImageAtQV();
 
+void RectReduce(SMALL_RECT &rc);

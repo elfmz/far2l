@@ -453,10 +453,9 @@ bool ImageView::RenderImage()
 		}
 	}
 
-	DenoteState("Rendering...");
-
 	const bool do_convert = (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01);
 	if (do_convert) {
+		DenoteState("Rendering...");
 		if (!ConvertImage()) {
 			return false;
 		}
@@ -497,9 +496,12 @@ bool ImageView::RenderImage()
 		_dy = 0;
 	}
 
-	if (!do_convert && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
-		fprintf(stderr, "--- Nothing to do\n");
-		return true;
+	if (!do_convert) {
+		if (_prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
+			fprintf(stderr, "--- Nothing to do\n");
+			return true;
+		}
+		DenoteState("Rendering...");
 	}
 
 	bool out = true;
@@ -582,6 +584,7 @@ bool ImageView::RenderImage()
 void ImageView::SetTitleAndStatus(const std::string &title, const std::string &status)
 {
 	if (_dlg != INVALID_HANDLE_VALUE) {
+		ConsoleRepaintsDeferScope crds(NULL);
 		std::wstring ws_title = _all_files[_cur_file].second ? L"* " : L"  ";
 		StrMB2Wide(title, ws_title, true);
 		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
@@ -620,31 +623,27 @@ void ImageView::DenoteState(const char *stage)
 			title+= " (" + title2 + ')';
 	}
 
-	std::string status = HINT_STRING;
+	std::string status;
 
-	char prefix[32];
+	if (_scale > 0) {
+		const auto status_len_before = status.size();
+		if (fabs(_scale - 1) > 0.01) {
+			const char c = (_scale - _scale_fit > 0.01) ? '>' : ((_scale - _scale_fit < -0.01) ? '<' : '=');
+			status+= StrPrintf("%c%d%% ", c, int(_scale * 100));
+		}
+		_prev_scale_str_length = status.size() - status_len_before;
+	} else { // reduce status flickering due to autoscale recalculatation
+		status.append(_prev_scale_str_length, ' ');
+	}
 
 	if (_dx != 0 || _dy != 0) {
-		snprintf(prefix, ARRAYSIZE(prefix), "%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
-		status.insert(0, prefix);
+		status+= StrPrintf("%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
 	}
-
-	if (_scale > 0 && fabs(_scale - 1) > 0.01) {
-		snprintf(prefix, ARRAYSIZE(prefix), "%d%% ", int(_scale * 100));
-		status.insert(0, prefix);
-		if (_scale - _scale_fit > 0.01) {
-			status.insert(0, 1, '>');
-		} else if (_scale - _scale_fit < -0.01) {
-			status.insert(0, 1, '<');
-		}else {
-			status.insert(0, 1, '=');
-		}
-	}
-
 	if (_rotate != 0) {
-		snprintf(prefix, ARRAYSIZE(prefix), "%d° ", _rotate * 90);
-		status.insert(0, prefix);
+		status+= StrPrintf("%d° ", _rotate * 90);
 	}
+
+	status+= HINT_STRING;
 
 	SetTitleAndStatus(title, status);
 }

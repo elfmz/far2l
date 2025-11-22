@@ -538,7 +538,7 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 		size_t buffer_size;
 		switch (flags & WP_IMG_MASK_FMT) {
 			case WP_IMG_PNG: buffer_size = size_t(width); break;
-			case WP_IMG_RGB: buffer_size*= size_t(width) * height * 3; break;
+			case WP_IMG_RGB: buffer_size = size_t(width) * height * 3; break;
 			case WP_IMG_RGBA: buffer_size = size_t(width) * height * 4; break;
 			default:
 				throw std::runtime_error(StrPrintf("Bad image flags: 0x%llx", (unsigned long long)flags));

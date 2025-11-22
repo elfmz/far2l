@@ -3,7 +3,7 @@ project(ImageViewer)
 
 set(SOURCES
 Plugin.cpp 
-ImageViewer.cpp 
+ImageView.cpp 
 ImageAtFull.cpp
 ImageAtQV.cpp
 )

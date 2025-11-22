@@ -5,20 +5,21 @@
 #include <cwctype>
 #include <memory>
 #include <cstdio>
-#include <set>
+#include <unordered_set>
 #include <signal.h>
 #include <dirent.h>
 #include <utils.h>
 #include <math.h>
 
-class ImageViewer
+class ImageView
 {
 	HANDLE _dlg{INVALID_HANDLE_VALUE};
 	volatile bool *_cancel{nullptr};
 
-	std::string _initial_file, _cur_file, _render_file, _tmp_file, _file_size_str;
-	std::set<std::string> _selection;
-	std::vector<std::string> _all_files;
+	std::string _render_file, _tmp_file, _file_size_str;
+	std::vector<std::pair<std::string, bool> > _all_files;
+	size_t _cur_file{}, _initial_file{};
+
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
 	double _scale{-1}, _scale_fit{-1}, _scale_min{0.1}, _scale_max{4};
@@ -33,6 +34,7 @@ class ImageViewer
 	int _pixel_data_w{0}, _pixel_data_h{0};
 	int _prev_left{0}, _prev_top{0};
 
+	const std::string &CurFile() const { return _all_files[_cur_file].first; }
 	void RotatePixelData(bool clockwise);
 	unsigned int EnsureRotated();
 	void ErrorMessage();
@@ -52,8 +54,10 @@ class ImageViewer
 	bool SetupCommon(SMALL_RECT &rc);
 
 public:
-	ImageViewer(const std::string &initial_file, const std::vector<std::string> &all_files, const std::set<std::string> &selection);
-	~ImageViewer();
+	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files);
+	~ImageView();
+
+	std::unordered_set<std::string> GetSelection() const;
 
 	bool SetupQV(SMALL_RECT &rc, volatile bool *cancel);
 	bool SetupFull(SMALL_RECT &rc, HANDLE dlg);
@@ -68,10 +72,5 @@ public:
 	void Select();
 	void Deselect();
 	void ToggleSelection();
-
-	const std::set<std::string> &GetSelection() const
-	{
-		return _selection;
-	}
 };
 

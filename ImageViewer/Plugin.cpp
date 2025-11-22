@@ -1,5 +1,5 @@
 #include "Common.h"
-#include "ImageViewer.h"
+#include "ImageView.h"
 
 PluginStartupInfo g_far;
 FarStandardFunctions g_fsf;
@@ -53,78 +53,93 @@ static std::string GetCurrentPanelItem()
 	return fn_sel.first;
 }
 
-static bool GetInitialPanelItems(const std::string &name, std::vector<std::string> &all_files, std::set<std::string> &selection)
+static ssize_t GetInitialPanelItems(const std::string &name, std::vector<std::pair<std::string, bool>> &all_files)
 {
 	PanelInfo pi{};
 	g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
-	if (pi.PanelType != PTYPE_FILEPANEL || pi.ItemsNumber <= 0)
-		return false;
-	if (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES)) {
+	if (pi.ItemsNumber <= 0) {
+		return -1;
+	}
+	if (pi.PanelType != PTYPE_FILEPANEL || (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES))) {
 		const wchar_t *MsgItems[] = { PLUGIN_TITLE,
 			L"The active panel must be with files accessible locally via real path",
 			L"Close"
 		};
 		g_far.Message(g_far.ModuleNumber, FMSG_WARNING, nullptr, MsgItems, ARRAYSIZE(MsgItems), 1);
-		return false;
+		return -1;
 	}
-	all_files.clear();
-	selection.clear();
-	if (pi.SelectedItemsNumber > 0) {
-		for (int i = 0; i < pi.SelectedItemsNumber; ++i) {
-			const auto &fn_sel = GetPanelItem(FCTL_GETSELECTEDPANELITEM, i);
-			if (!fn_sel.first.empty() && fn_sel.second) {
-				all_files.push_back(fn_sel.first);
-				selection.insert(fn_sel.first);
-			}
-	}
-	if (selection.empty()) { // if no selected files add all files from panel
-		for (int i = 0; i < pi.ItemsNumber; ++i) {
-			const auto &fn = GetPanelItem(FCTL_GETPANELITEM, i);
-			if (!fn.first.empty())
-				all_files.push_back(fn.first);
-			}
-		}
-	}
-	return true;
-}
 
-static std::vector<std::string> GetAllItems()
-{
-	std::vector<std::string> out;
-	PanelInfo pi{};
-	g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+	if (pi.SelectedItemsNumber <= 0) abort();
+
+	bool has_real_selection = false;
+	ssize_t cur = 0;
+	const auto &cur_fn = GetCurrentPanelItem();
 	for (int i = 0; i < pi.ItemsNumber; ++i) {
-		auto fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
-		if (!fn_sel.first.empty()) {
-			out.emplace_back(std::move(fn_sel.first));
+		const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
+		if (!fn_sel.first.empty() && fn_sel.first != "." && fn_sel.first != "..") {
+			if (fn_sel.second) {
+				has_real_selection = true;
+			}
+			if (fn_sel.first == cur_fn) {
+				cur = all_files.size();
+			}
+			all_files.emplace_back(fn_sel);
 		}
 	}
-	return out;
+
+	if (has_real_selection) { // leave only selected files, and current one
+		std::vector<std::pair<std::string, bool>> selected_files;
+		const auto saved_cur = cur;
+		for (ssize_t i = 0; i != (ssize_t)all_files.size(); ++i) {
+			if (i == saved_cur) {
+				cur = selected_files.size();
+				selected_files.emplace_back(all_files[i]);
+			} else if (all_files[i].second) {
+				selected_files.emplace_back(all_files[i]);
+			}
+		}
+		all_files = std::move(selected_files);
+	}
+
+
+	return cur;
 }
 
 static void OpenPluginAtCurrentPanel(const std::string &name)
 {
-	std::vector<std::string> all_items;
-	std::set<std::string> selection;
-	if (!GetInitialPanelItems(name, all_items, selection))
+	std::vector<std::pair<std::string, bool>> all_items;
+	ssize_t initial_file = GetInitialPanelItems(name, all_items);
+	if (initial_file < 0) {
 		return;
-	if (ShowImageAtFull(name, all_items, selection)) {
-		all_items = GetAllItems();
-		g_far.Control(PANEL_ACTIVE, FCTL_BEGINSELECTION, 0, 0);
-		for (size_t i = 0; i < all_items.size(); ++i) {
-			BOOL selected = selection.find(all_items[i]) != selection.end();
-			g_far.Control(PANEL_ACTIVE, FCTL_SETSELECTION, i, (LONG_PTR)selected);
+	}
+
+	std::unordered_set<std::string> selection;
+	if (ShowImageAtFull(initial_file, all_items, selection)) {
+		PanelInfo pi{};
+		g_far.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&pi);
+		if (pi.ItemsNumber > 0) {
+			std::vector<bool> selection_to_apply;
+			selection_to_apply.reserve(pi.ItemsNumber);
+			for (int i = 0; i < pi.ItemsNumber; ++i) {
+				const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);
+				selection_to_apply.emplace_back(selection.find(fn_sel.first) != selection.end());
+			}
+			g_far.Control(PANEL_ACTIVE, FCTL_BEGINSELECTION, 0, 0);
+			for (size_t i = 0; i < selection_to_apply.size(); ++i) {
+				BOOL selected = selection_to_apply[i] ? TRUE : FALSE;
+				g_far.Control(PANEL_ACTIVE, FCTL_SETSELECTION, i, (LONG_PTR)selected);
+			}
+			g_far.Control(PANEL_ACTIVE,FCTL_ENDSELECTION, 0, 0);
+			g_far.Control(PANEL_ACTIVE,FCTL_REDRAWPANEL, 0, 0);
 		}
-		g_far.Control(PANEL_ACTIVE,FCTL_ENDSELECTION, 0, 0);
-		g_far.Control(PANEL_ACTIVE,FCTL_REDRAWPANEL, 0, 0);
 	}
 }
 
 static void OpenPluginAtSomePath(const std::string &name)
 {
-	std::vector<std::string> all_items;
-	std::set<std::string> selection;
-	if (ShowImageAtFull(name, all_items, selection)) {
+	std::vector<std::pair<std::string, bool> > all_files{{name, false}};
+	std::unordered_set<std::string> selection;
+	if (ShowImageAtFull(0, all_files, selection)) {
 		if (!selection.empty()) {
 			const wchar_t *MsgItems[] = { PLUGIN_TITLE,
 				L"Selection will not be applied cuz was invoked for non-panel file",

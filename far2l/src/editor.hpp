@@ -264,7 +264,7 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
-void GoToVisualLine(int VisualLine);
+	void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 

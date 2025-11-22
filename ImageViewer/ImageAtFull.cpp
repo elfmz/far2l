@@ -66,7 +66,8 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			} else {
 				iv->DraggingFinish();
 			}
-			if ((me->dwControlKeyState & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0) {
+			if ((me->dwControlKeyState & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0
+					|| !WINPORT(WaitConsoleInput)(NULL, 0)) {
 				iv->DraggingCommit();
 			}
 			return TRUE;
@@ -103,7 +104,7 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			ImageViewerAtFull *iv = (ImageViewerAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			const int delta = ((((int)Param2) & KEY_SHIFT) != 0) ? 1 : 10;
 			const int key = (int)(Param2 & ~KEY_SHIFT);
-			PurgeAccumulatedKeyPresses(); // avoid navigation etc keypresses 'accumulation'
+			PurgeAccumulatedInputEvents(); // avoid navigation etc keypresses 'accumulation'
 			switch (key) {
 				case 'a': case 'A': case KEY_MULTIPLY: case '*':
 					g_def_scale = DS_LESSOREQUAL_SCREEN;
@@ -118,8 +119,8 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					iv->Reset();
 					break;
 				case KEY_CLEAR: case '=': iv->Reset(); break;
-				case KEY_ADD: case '+': iv->Scale(delta); break;
-				case KEY_SUBTRACT: case '-': iv->Scale(-delta); break;
+				case KEY_ADD: case '+': case KEY_MSWHEEL_UP: iv->Scale(delta); break;
+				case KEY_SUBTRACT: case '-': case KEY_MSWHEEL_DOWN: iv->Scale(-delta); break;
 				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(delta, 0); break;
 				case KEY_NUMPAD4: case KEY_LEFT: iv->Shift(-delta, 0); break;
 				case KEY_NUMPAD2: case KEY_DOWN: iv->Shift(0, delta); break;

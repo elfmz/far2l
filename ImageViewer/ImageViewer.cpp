@@ -137,7 +137,7 @@ public:
 				KillAndWait();
 			}
 			// purge injected escape that could remain or anything else user could press
-			PurgeAccumulatedKeyPresses();
+			PurgeAccumulatedInputEvents();
 		}
 		if (ExecError() != 0) {
 			ErrorDialog(pkg, ExecError());

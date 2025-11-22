@@ -27,7 +27,7 @@ enum DefaultScale {
 
 extern DefaultScale g_def_scale;
 
-void PurgeAccumulatedKeyPresses();
+void PurgeAccumulatedInputEvents();
 
 bool ShowImageAtFull(const std::string &initial_file, std::set<std::string> &selection);
 

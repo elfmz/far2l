@@ -4,9 +4,9 @@
 PluginStartupInfo g_far;
 FarStandardFunctions g_fsf;
 
-void PurgeAccumulatedKeyPresses()
+void PurgeAccumulatedInputEvents()
 { // just purge all currently queued keypresses
-	WINPORT(CheckForKeyPress)(NULL, NULL, 0, CFKP_KEEP_OTHER_EVENTS | CFKP_KEEP_MOUSE_EVENTS);
+	WINPORT(CheckForKeyPress)(NULL, NULL, 0, CFKP_KEEP_OTHER_EVENTS);
 }
 
 

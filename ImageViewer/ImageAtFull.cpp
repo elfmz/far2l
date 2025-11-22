@@ -1,15 +1,15 @@
 #include "Common.h"
-#include "ImageViewer.h"
+#include "ImageView.h"
 
-class ImageViewerAtFull : public ImageViewer
+class ImageViewAtFull : public ImageView
 {
 	WinportGraphicsInfo _drag_wgi{};
 	COORD _drag_prev_pos{}, _drag_pending{};
 	bool _dragging{false};
 
 public:
-	ImageViewerAtFull(const std::string &initial_file, std::vector<std::string> &all_files, const std::set<std::string> &selection)
-		: ImageViewer(initial_file, all_files, selection)
+	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
+		: ImageView(initial_file, all_files)
 	{
 	}
 
@@ -53,13 +53,13 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	switch(Msg) {
 		case DN_ENTERIDLE:
 		{
-			ImageViewerAtFull *iv = (ImageViewerAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			iv->DraggingCommit();
 			return TRUE;
 		}
 		case DN_MOUSEEVENT:
 		{
-			ImageViewerAtFull *iv = (ImageViewerAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			const MOUSE_EVENT_RECORD *me = (const MOUSE_EVENT_RECORD *)Param2;
 			if ((me->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
 				iv->DraggingMove(me->dwMousePosition);
@@ -80,7 +80,7 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			SMALL_RECT Rect;
 			g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
 
-			ImageViewerAtFull *iv = (ImageViewerAtFull *)Param2;
+			ImageViewAtFull *iv = (ImageViewAtFull *)Param2;
 
 			if (Rect.Right - Rect.Left > 2) {
 				Rect.Left++;
@@ -101,7 +101,7 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 
 		case DN_KEY:
 		{
-			ImageViewerAtFull *iv = (ImageViewerAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			const int delta = ((((int)Param2) & KEY_SHIFT) != 0) ? 1 : 10;
 			const int key = (int)(Param2 & ~KEY_SHIFT);
 			PurgeAccumulatedInputEvents(); // avoid navigation etc keypresses 'accumulation'
@@ -158,9 +158,9 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-bool ShowImageAtFull(const std::string &initial_file, std::vector<std::string> &all_files, std::set<std::string> &selection)
+bool ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> &selection)
 {
-	ImageViewerAtFull iv(initial_file, all_files, selection);
+	ImageViewAtFull iv(initial_file, all_files);
 
 	for (;;) {
 		SMALL_RECT Rect;
@@ -188,7 +188,7 @@ bool ShowImageAtFull(const std::string &initial_file, std::vector<std::string> &
 			if (exit_code != EXITED_DUE_ENTER) {
 				return false;
 			}
-			selection = iv.GetSelection();
+			selection = std::move(iv.GetSelection());
 			return true;
 		}
 	}

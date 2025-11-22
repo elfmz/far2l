@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
-#include <set>
+#include <unordered_set>
+#include <assert.h>
 
 #include <farplug-wide.h>
 #include <WinPort.h>
@@ -29,7 +30,7 @@ extern DefaultScale g_def_scale;
 
 void PurgeAccumulatedInputEvents();
 
-bool ShowImageAtFull(const std::string &initial_file, std::vector<std::string> &all_files, std::set<std::string> &selection);
+bool ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> &selection);
 
 void ShowImageAtQV(const std::string &file, const SMALL_RECT &area);
 bool IsShowingImageAtQV();

@@ -453,9 +453,11 @@ bool ImageView::RenderImage()
 		}
 	}
 
+	if (_scale < 0) { // show stage only when switched file or reset state - avoid flickering on resizing and dragging
+		DenoteState("Rendering...");
+	}
 	const bool do_convert = (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01);
 	if (do_convert) {
-		DenoteState("Rendering...");
 		if (!ConvertImage()) {
 			return false;
 		}
@@ -496,12 +498,9 @@ bool ImageView::RenderImage()
 		_dy = 0;
 	}
 
-	if (!do_convert) {
-		if (_prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
-			fprintf(stderr, "--- Nothing to do\n");
-			return true;
-		}
-		DenoteState("Rendering...");
+	if (!do_convert && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
+		fprintf(stderr, "--- Nothing to do\n");
+		return true;
 	}
 
 	bool out = true;

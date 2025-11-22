@@ -18,7 +18,7 @@ class ImageView
 
 	std::string _render_file, _tmp_file, _file_size_str;
 	std::vector<std::pair<std::string, bool> > _all_files;
-	size_t _cur_file{}, _initial_file{};
+	size_t _initial_file{}, _cur_file{};
 
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};

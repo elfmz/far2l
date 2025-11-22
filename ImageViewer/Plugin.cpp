@@ -70,7 +70,7 @@ static ssize_t GetInitialPanelItems(const std::string &name, std::vector<std::pa
 	}
 
 	bool has_real_selection = false;
-	ssize_t cur = 0;
+	ssize_t cur = -1;
 	const auto &cur_fn = GetCurrentPanelItem();
 	for (int i = 0; i < pi.ItemsNumber; ++i) {
 		const auto &fn_sel = GetPanelItem(FCTL_GETPANELITEM, i);

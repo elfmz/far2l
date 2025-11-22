@@ -23,6 +23,7 @@ class ImageView
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
 	double _scale{-1}, _scale_fit{-1}, _scale_min{0.1}, _scale_max{4};
+	size_t _prev_scale_str_length{};
 	int _rotate{0}, _rotated{0};
 	int _orig_w{0}, _orig_h{0}; // info about image size for title
 	std::string _err_str;

@@ -52,9 +52,10 @@ class ImageAtQV : public Threaded
 				area.Left, area.Top, area.Right, area.Bottom, file.c_str());
 
 			iv.reset();
+			std::vector<std::string> single_all_files;
 			std::set<std::string> single_selection;
 			single_selection.emplace(file); // prevent navigation to another file
-			iv.emplace(file, single_selection);
+			iv.emplace(file, single_all_files, single_selection);
 			if (!iv->SetupQV(area, &_changing)) {
 				iv.reset();
 			}

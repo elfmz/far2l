@@ -29,7 +29,7 @@ extern DefaultScale g_def_scale;
 
 void PurgeAccumulatedKeyPresses();
 
-bool ShowImageAtFull(const std::string &initial_file, std::set<std::string> &selection);
+bool ShowImageAtFull(const std::string &initial_file, std::vector<std::string> &all_files, std::set<std::string> &selection);
 
 void ShowImageAtQV(const std::string &file, const SMALL_RECT &area);
 bool IsShowingImageAtQV();

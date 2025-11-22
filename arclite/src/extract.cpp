@@ -190,8 +190,6 @@ std::wstring Archive<UseVirtualDestructor>::build_extract_path(
 		parent_index = parent_info.parent;
 	}
 
-	fprintf(stderr, "build_extract_path(): %ls after\n", path.c_str());
-
 	return add_trailing_slash(dst_dir) + path;
 }
 
@@ -945,21 +943,13 @@ public:
 		if (file_info.is_dir)
 			return S_OK;
 
-		fprintf(stderr, "GetStream index %u file_info.hl_group = %u\n", index, file_info.hl_group);
-
 		if (file_info.hl_group != (uint32_t)-1 && !file_info.is_altstream) {
-			fprintf(stderr, "GetStream index %u Well well\n", index);
-///			const HardLinkGroup &group = archive->hard_link_groups[file_info.hl_group];
-			fprintf(stderr, "GetStream index %u Well well file_info.hl_group %u\n", index, file_info.hl_group);
-
 			auto it_hlmap = hlmap.find(file_info.hl_group);
 			if (it_hlmap != hlmap.end()) {
 				index = it_hlmap->second;
 				file_info = archive->file_list[index];
-				fprintf(stderr, "GetStream index MAP!!! new index = %u\n", it_hlmap->second);
 			}
 			else {
-				fprintf(stderr, "GetStream index MAPING NOT FOUNDdd\n");
 			}
 		}
 
@@ -1214,14 +1204,13 @@ private:
 
 				std::wstring link_path;
 				if (archive.get_symlink(file_index, link_path)) {
-//					PendingSymlink syml = { StrWide2MB(link_path), file_index };
 					PendingSymlink syml = { link_path, file_index };
 					psl.push_back(syml);
 					return;
 				}
 
 				if (file_info.hl_group == (uint32_t)-1 || file_info.is_altstream) {
-					fprintf(stderr, "ALTSTREAM! %ls group %u, file_index %u;\n", file_info.name.c_str(), file_info.hl_group, file_index);
+					//fprintf(stderr, "ALTSTREAM! %ls group %u, file_index %u;\n", file_info.name.c_str(), file_info.hl_group, file_index);
 					indices.push_back(file_index);
 					return;
 				}
@@ -1234,17 +1223,13 @@ private:
 
 				auto it_hlmap = hlmap.find(file_info.hl_group);
 				if (it_hlmap == hlmap.end()) {
-					fprintf(stderr, "hlmap[%u] = file_index %u;\n", file_info.hl_group, file_index);
 					hlmap[file_info.hl_group] = file_index;
-					fprintf(stderr, "*it = group[0]; %u\n", group[0]);
 					indices.push_back(group[0]);
 					return;
 				} else {
 					UInt32 ex_index = it_hlmap->second;
 					PendingHardlink hardl = { ex_index, file_index };
 					phl.push_back(hardl);
-					fprintf(stderr, "Create pending hard link src %u[already extracted index] dst %u\n", ex_index, file_index);
-					fprintf(stderr, "Removed file_index %u from indices list (will be processed as hardlink later)\n", file_index);
 					return;
 				}
 
@@ -1409,9 +1394,6 @@ public:
 		  filter(filter),
 		  ignore_errors(ignore_errors),
 		  options(options),
-//		  extract_access_rights(options.extract_access_rights),
-//		  extract_owners_groups(options.extract_owners_groups),
-//		  extract_attributes(options.extract_attributes),
 		  error_log(error_log)
 	{
 		WINPORT(GetSystemTimeAsFileTime)(&crft);

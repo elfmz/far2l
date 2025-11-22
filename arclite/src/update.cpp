@@ -544,7 +544,7 @@ public:
 		SudoRegionGuard sudo_guard;
 		uint32_t flags = FILE_FLAG_SEQUENTIAL_SCAN;
 
-		fprintf(stderr, "FileReadStream( ) %ls \n", file_path.c_str() );
+		//fprintf(stderr, "FileReadStream( ) %ls \n", file_path.c_str() );
 
 		if (fileattr & FILE_ATTRIBUTE_REPARSE_POINT) {
 			if (!dereference_symlinks) {
@@ -740,6 +740,7 @@ struct PairEqual {
 };
 
 typedef std::unordered_map<std::pair<uint64_t, uint64_t>, uint32_t, PairHash, PairEqual> HardLinkMap;
+typedef std::set<std::pair<dev_t, ino_t>> DirVisitedSet;
 
 template<bool UseVirtualDestructor>
 class PrepareUpdate : private ProgressMonitor
@@ -756,8 +757,8 @@ private:
 	Far::FileFilter *filter;
 	bool &skipped_files;
 	const UpdateOptions &options;
-
 	const std::wstring *file_path;
+	DirVisitedSet vdirs;
 
 	void do_update_ui() override
 	{
@@ -781,7 +782,6 @@ private:
 				return false;
 
 			if (!options.dereference_symlinks) {
-
 				struct stat s{};
 				int r = sdc_lstat( StrWide2MB(add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
 				if (!r) {
@@ -800,8 +800,6 @@ private:
 				return false;
 			}
 		}
-
-		if (options.symlink_fix_path_mode) {}
 
 		if (filter) {
 			PluginPanelItem filter_data;
@@ -824,8 +822,6 @@ private:
 			if (!filter->match(filter_data))
 				return false;
 		}
-
-		//fprintf(stderr, "process_file: %ls DIR = %u\n", src_find_data.cFileName, src_find_data.is_dir());
 
 		if (!src_find_data.is_dir() && src_find_data.nHardLinks > 1 && options.skip_hardlinks)
 			return false;
@@ -918,6 +914,19 @@ private:
 					std::wstring rel_path = add_trailing_slash(sub_dir) + file_enum.data().cFileName;
 					std::wstring full_path = add_trailing_slash(src_dir) + rel_path;
 					update_progress(full_path);
+
+					bool added_to_visited = false;
+
+					if (options.dereference_symlinks) {
+						auto key = std::make_pair(file_enum.data().UnixDevice, file_enum.data().UnixNode);
+						if (vdirs.find(key) != vdirs.end()) {
+							fprintf(stderr, "process_file_enum( ) break loop %ls \n", full_path.c_str() );
+							continue;
+						}
+						vdirs.insert(key);
+						added_to_visited = true;
+					}
+
 					DirList dir_list(full_path);
 					if (!process_file_enum(dir_list, rel_path, file_index)) {
 						if (filter) {
@@ -926,6 +935,11 @@ private:
 						}
 					} else
 						not_empty = true;
+
+					if (added_to_visited) {
+						vdirs.erase({file_enum.data().UnixDevice, file_enum.data().UnixNode});
+					}
+
 				} else
 					not_empty = true;
 			}
@@ -950,7 +964,8 @@ public:
 		  overwrite_action(overwrite_action),
 		  filter(filter),
 		  skipped_files(skipped_files),
-		  options(options)
+		  options(options),
+		  vdirs()
 	{
 		skipped_files = false;
 		if (filter)
@@ -1243,7 +1258,7 @@ public:
 				}
 				else
 					prop = static_cast<UInt32>(file_index_info.find_data.dwUnixMode);
-				fprintf(stderr, "----------PUT POSIX ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
+//				fprintf(stderr, "----------PUT POSIX ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
 			}
 			break;
 
@@ -1344,8 +1359,6 @@ public:
 				struct group *gr = getgrgid(file_index_info.find_data.UnixGroup);
 				if (gr && gr->gr_name) {
 					MB2Wide(gr->gr_name, tmp_str);
-//					WINPORT_MultiByteToWideChar(CP_UTF8, 0, gr->gr_name, -1, wtmp, 256);
-//					wtmp[255] = L'\0';
 				} else {
 					tmp_str = L"-";
 				}
@@ -1412,10 +1425,7 @@ public:
 			return S_OK;
 		}
 
-		fprintf(stderr, "GetStream( ) %u \n", index );
-
 		const FileIndexInfo &file_index_info = file_index_map->at(index);
-
 		if (file_index_info.find_data.is_dir() && (!(file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || options.dereference_symlinks) ) {
 			return S_OK;
 		}
@@ -1423,8 +1433,6 @@ public:
 		std::wstring file_path = add_trailing_slash(add_trailing_slash(src_dir) + file_index_info.rel_path)
 				+ file_index_info.find_data.cFileName;
 		this->progress->on_open_file(file_path, file_index_info.find_data.size());
-
-		fprintf(stderr, "GetStream( ) %ls \n", file_path.c_str() );
 
 		ComObject<ISequentialInStream<UseVirtualDestructor>> stream;
 		RETRY_OR_IGNORE_BEGIN

@@ -341,8 +341,6 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 
 	if (flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) {
 
-		fprintf(stderr, "file open_nt as reparse point! %ls creation_disposition = %u\n", file_path.c_str(), creation_disposition );
-
 		char symtp[PATH_MAX + 1];
 		int symtp_len;
 		symlinkdata = (char *)malloc(PATH_MAX + 1);
@@ -354,12 +352,10 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 
 		symtp_len = sdc_readlink(Wide2MB(file_path.c_str()).c_str(), symtp, PATH_MAX);
 		if (symtp_len <= 0) {
-			fprintf(stderr, "symtp_len <= 0 - return false for %ls\n", file_path.c_str() );
+			//fprintf(stderr, "symtp_len <= 0 - return false for %ls\n", file_path.c_str() );
 			return false;
 		}
 		symtp[symtp_len] = 0;
-
-		fprintf(stderr, "symlink for %ls resolved = %s\n", file_path.c_str(), symtp );
 
 		std::string final_target;
 
@@ -382,12 +378,10 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 		return true;
 	}
 
-	fprintf(stderr, "file open_nt as regular %ls creation_disposition = %u\n", file_path.c_str(), creation_disposition );
-
 	h_file = WINPORT_CreateFile(long_path_norm(file_path).c_str(), desired_access, share_mode, nullptr,
 			creation_disposition, flags_and_attributes, nullptr);
 
-	fprintf(stderr, "h_file = %p\n", h_file );
+	//fprintf(stderr, "h_file = %p\n", h_file );
 
 	return h_file != INVALID_HANDLE_VALUE;
 }

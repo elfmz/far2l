@@ -69,8 +69,6 @@ static ssize_t GetInitialPanelItems(const std::string &name, std::vector<std::pa
 		return -1;
 	}
 
-	if (pi.SelectedItemsNumber <= 0) abort();
-
 	bool has_real_selection = false;
 	ssize_t cur = 0;
 	const auto &cur_fn = GetCurrentPanelItem();

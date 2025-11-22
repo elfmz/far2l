@@ -166,6 +166,8 @@ bool ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, boo
 			{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN | DIF_SHOWAMPERSAND, 0, L"???", 0 },
 			{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {COL_DIALOGBOX}, 0, 0, L"", 0},
 			{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT | DIF_SHOWAMPERSAND, 0, L"", 0},
+			{ DI_TEXT, Rect.Left + 1, Rect.Top, Rect.Left + 1, Rect.Top, 0, {}, DIF_SHOWAMPERSAND, 0, L"", 0},
+			{ DI_TEXT, Rect.Right - 1, Rect.Top, Rect.Right - 1, Rect.Top, 0, {}, DIF_SHOWAMPERSAND, 0, L"", 0},
 		};
 
 		HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,

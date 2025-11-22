@@ -2,7 +2,7 @@
 #include "ImageView.h"
 #include "ExecAsync.h"
 
-#define HINT_STRING "[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD DEL + - * / = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
+#define HINT_STRING L"[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD DEL + - * / = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
 
 // how long msec wait before showing progress message window
 #define COMMAND_TIMEOUT_BEFORE_MESSAGE 300
@@ -580,16 +580,51 @@ bool ImageView::RenderImage()
 	return out;
 }
 
-void ImageView::SetTitleAndStatus(const std::string &title, const std::string &status)
+void ImageView::DenoteState(const char *stage)
+{
+	std::string info;
+	if (stage) {
+		info = stage;
+	} else {
+		if (_orig_w > 0 && _orig_h > 0)
+			info = std::to_string(_orig_w) + 'x' + std::to_string(_orig_h);
+		if (!_file_size_str.empty())
+			info+= (info.empty() ? "" : ", ") + _file_size_str;
+	}
+
+	if (!info.empty()) {
+		info.insert(0, 1, ' ');
+		info+= ' ';
+	}
+
+	std::string pan;
+	if (_scale > 0 && fabs(_scale - 1) > 0.01) {
+		const char c1 = (_scale - _scale_fit > 0.01) ? '>' : ((_scale - _scale_fit < -0.01) ? '<' : '[');
+		const char c2 = (_scale - _scale_fit > 0.01) ? '<' : ((_scale - _scale_fit < -0.01) ? '>' : ']');
+		pan+= StrPrintf("%c%d%%%c ", c1, int(_scale * 100), c2);
+	}
+
+	if (_dx != 0 || _dy != 0) {
+		pan+= StrPrintf("%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
+	}
+	if (_rotate != 0) {
+		pan+= StrPrintf("%d° ", _rotate * 90);
+	}
+	if (!pan.empty()) {
+		pan.insert(0, 1, ' ');
+	}
+
+	SetInfoAndPan(info, pan);
+}
+
+void ImageView::SetInfoAndPan(const std::string &info, const std::string &pan)
 {
 	if (_dlg != INVALID_HANDLE_VALUE) {
 		ConsoleRepaintsDeferScope crds(NULL);
 		std::wstring ws_title = _all_files[_cur_file].second ? L"* " : L"  ";
-		StrMB2Wide(title, ws_title, true);
+		StrMB2Wide(CurFile(), ws_title, true);
 		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
 
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
 		if (_all_files[_cur_file].second) {
 			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 0);
 			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 1);
@@ -598,54 +633,32 @@ void ImageView::SetTitleAndStatus(const std::string &title, const std::string &s
 			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 0);
 		}
 
-		// update status after title, so it will get redrawn after too, and due to that - will remain visible
-		std::wstring ws_status = StrMB2Wide(status);
-		FarDialogItemData dd_status = { ws_status.size(), (wchar_t*)ws_status.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
+
+		FarDialogItemData dd_status = { wcslen(HINT_STRING), (wchar_t*)HINT_STRING };
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 3, (LONG_PTR)&dd_status);
-	}
-}
 
-void ImageView::DenoteState(const char *stage)
-{
-	std::string title = CurFile();
-	if (stage) {
-		title+= " [";
-		title+= stage;
-		title+= ']';
-	} else {
-		std::string title2;
-		if (_orig_w > 0 && _orig_h > 0)
-			title2 = std::to_string(_orig_w) + 'x' + std::to_string(_orig_h);
-		if (!_file_size_str.empty())
-			title2+= (title2.empty() ? "" : ", ") + _file_size_str;
-		if (!title2.empty())
-			title+= " (" + title2 + ')';
-	}
-
-	std::string status;
-
-	if (_scale > 0) {
-		const auto status_len_before = status.size();
-		if (fabs(_scale - 1) > 0.01) {
-			const char c = (_scale - _scale_fit > 0.01) ? '>' : ((_scale - _scale_fit < -0.01) ? '<' : '=');
-			status+= StrPrintf("%c%d%% ", c, int(_scale * 100));
+		// update status and info after title, so it will get redrawn after too, and due to that - will remain visible
+		std::wstring ws_pan = StrMB2Wide(pan);
+		FarDialogItem di{};
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, 4, (LONG_PTR)&di)) {
+			di.X2 = di.X1 + (ws_pan.empty() ? 0 : ws_pan.size() - 1);
+			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, 4, (LONG_PTR)&di);
 		}
-		_prev_scale_str_length = status.size() - status_len_before;
-	} else { // reduce status flickering due to autoscale recalculatation
-		status.append(_prev_scale_str_length, ' ');
-	}
+		FarDialogItemData dd_pan = { ws_pan.size(), (wchar_t*)ws_pan.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 4, (LONG_PTR)&dd_pan);
 
-	if (_dx != 0 || _dy != 0) {
-		status+= StrPrintf("%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
+		std::wstring ws_info = StrMB2Wide(info);
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, 5, (LONG_PTR)&di)) {
+			di.X1 = di.X2 - (ws_info.empty() ? 0 : ws_info.size() - 1);
+			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, 5, (LONG_PTR)&di);
+		}
+		FarDialogItemData dd_info = { ws_info.size(), (wchar_t*)ws_info.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 5, (LONG_PTR)&dd_info);
 	}
-	if (_rotate != 0) {
-		status+= StrPrintf("%d° ", _rotate * 90);
-	}
-
-	status+= HINT_STRING;
-
-	SetTitleAndStatus(title, status);
 }
+
 
 void ImageView::JustReset()
 {

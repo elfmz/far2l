@@ -145,6 +145,9 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 		case DN_RESIZECONSOLE:
 			g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
 			break;
+
+		case DN_DRAGGED:
+			return FALSE;
 	}
 
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);

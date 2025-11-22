@@ -8,8 +8,8 @@ class ImageViewerAtFull : public ImageViewer
 	bool _dragging{false};
 
 public:
-	ImageViewerAtFull(const std::string &initial_file, const std::set<std::string> &selection)
-		: ImageViewer(initial_file, selection)
+	ImageViewerAtFull(const std::string &initial_file, std::vector<std::string> &all_files, const std::set<std::string> &selection)
+		: ImageViewer(initial_file, all_files, selection)
 	{
 	}
 
@@ -158,19 +158,19 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-bool ShowImageAtFull(const std::string &initial_file, std::set<std::string> &selection)
+bool ShowImageAtFull(const std::string &initial_file, std::vector<std::string> &all_files, std::set<std::string> &selection)
 {
-	ImageViewerAtFull iv(initial_file, selection);
+	ImageViewerAtFull iv(initial_file, all_files, selection);
 
 	for (;;) {
 		SMALL_RECT Rect;
 		g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
 
 		FarDialogItem DlgItems[] = {
-			{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, 0, 0, L"???", 0 },
-			{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN, 0, L"???", 0 },
+			{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_SHOWAMPERSAND, 0, L"???", 0 },
+			{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN | DIF_SHOWAMPERSAND, 0, L"???", 0 },
 			{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {COL_DIALOGBOX}, 0, 0, L"", 0},
-			{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT, 0, L"", 0},
+			{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT | DIF_SHOWAMPERSAND, 0, L"", 0},
 		};
 
 		HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,

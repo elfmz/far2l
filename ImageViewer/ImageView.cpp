@@ -453,10 +453,9 @@ bool ImageView::RenderImage()
 		}
 	}
 
-	DenoteState("Rendering...");
-
 	const bool do_convert = (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01);
 	if (do_convert) {
+		DenoteState("Rendering...");
 		if (!ConvertImage()) {
 			return false;
 		}
@@ -501,6 +500,8 @@ bool ImageView::RenderImage()
 		fprintf(stderr, "--- Nothing to do\n");
 		return true;
 	}
+
+	DenoteState("Rendering...");
 
 	bool out = true;
 
@@ -717,6 +718,8 @@ bool ImageView::SetupFull(SMALL_RECT &rc, HANDLE dlg)
 
 void ImageView::Home()
 {
+	if (_cur_file == _initial_file)
+		return;
 	_cur_file = _initial_file;
 	if (PrepareImage() && RenderImage()) {
 		DenoteState();
@@ -725,6 +728,8 @@ void ImageView::Home()
 
 bool ImageView::Iterate(bool forward)
 {
+	if (_all_files.size() <=1)
+		return true;
 	for (size_t i = 0;; ++i) { // silently skip bad files
 		if (!IterateFile(forward) || i > _all_files.size()) {
 			_cur_file = _initial_file;

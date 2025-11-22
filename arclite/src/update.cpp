@@ -777,14 +777,10 @@ private:
 			UInt32 &file_index)
 	{
 		if (src_find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-
-			fprintf(stderr, "process_file: REPARSE POINT! %ls \n", src_find_data.cFileName );
 			if (options.skip_symlinks)
 				return false;
 
 			if (!options.dereference_symlinks) {
-
-				fprintf(stderr, "process_file: lstat for %ls \n", src_find_data.cFileName );
 
 				struct stat s{};
 				int r = sdc_lstat( StrWide2MB(add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
@@ -792,10 +788,6 @@ private:
 					WINPORT(FileTime_UnixToWin32)(s.st_ctim, &src_find_data.ftCreationTime);
 					WINPORT(FileTime_UnixToWin32)(s.st_atim, &src_find_data.ftLastAccessTime);
 					WINPORT(FileTime_UnixToWin32)(s.st_mtim, &src_find_data.ftLastWriteTime);
-
-					fprintf(stderr, "process_file: lstat s.st_uid %u \n", s.st_uid );
-					fprintf(stderr, "process_file: lstat s.st_gid %u \n", s.st_gid );
-					fprintf(stderr, "process_file: lstat s.st_mode %u \n", s.st_mode );
 
 					src_find_data.UnixOwner = s.st_uid;
 					src_find_data.UnixGroup = s.st_gid;
@@ -805,7 +797,6 @@ private:
 				}
 			}
 			else if (src_find_data.dwFileAttributes & FILE_ATTRIBUTE_BROKEN) {
-				fprintf(stderr, "process_file: this one is broken ! \n");
 				return false;
 			}
 		}
@@ -1252,7 +1243,7 @@ public:
 				}
 				else
 					prop = static_cast<UInt32>(file_index_info.find_data.dwUnixMode);
-//				fprintf(stderr, "----------PUT POSIX ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
+				fprintf(stderr, "----------PUT POSIX ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
 			}
 			break;
 

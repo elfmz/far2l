@@ -77,20 +77,12 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 		{
 			g_far.SendDlgMessage(hDlg, DM_SETDLGDATA, 0, Param2);
 
-			SMALL_RECT Rect;
-			g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
+			SMALL_RECT rc;
+			g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &rc, 0);
+			RectReduce(rc);
 
 			ImageViewAtFull *iv = (ImageViewAtFull *)Param2;
-
-			if (Rect.Right - Rect.Left > 2) {
-				Rect.Left++;
-				Rect.Right--;
-			}
-			if (Rect.Bottom - Rect.Top > 2) {
-				Rect.Top++;
-				Rect.Bottom--;
-			}
-			if (iv->SetupFull(Rect, hDlg)) {
+			if (iv->SetupFull(rc, hDlg)) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);

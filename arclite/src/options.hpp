@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #if 0
 struct ExternalCodec {
@@ -53,8 +53,10 @@ struct Options
 	// extract
 	bool extract_ignore_errors;
 	bool extract_access_rights;
-	bool extract_owners_groups;
+	int extract_owners_groups;
 	bool extract_attributes;
+	bool extract_duplicate_hardlinks;
+	bool extract_restore_special_files;
 	OverwriteAction extract_overwrite;
 	TriState extract_separate_dir;
 	bool extract_open_dir;
@@ -83,6 +85,8 @@ struct Options
 	bool update_skip_symlinks;
 	int update_symlink_fix_path_mode;
 	bool update_dereference_symlinks;
+	bool update_skip_hardlinks;
+	bool update_duplicate_hardlinks;
 	bool update_move_files;
 	bool update_ignore_errors;
 	OverwriteAction update_overwrite;

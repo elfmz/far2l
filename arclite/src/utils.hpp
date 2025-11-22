@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "error.hpp"
 #include "noncopyable.hpp"
@@ -11,6 +11,38 @@ enum TriState
 };
 
 typedef std::vector<unsigned char> ByteVector;
+
+template<typename CharT>
+std::basic_string<CharT> make_absolute_symlink_target(
+	const std::basic_string<CharT> &symlink_path,
+	const std::basic_string<CharT> &raw_target);
+
+template<typename CharT>
+std::basic_string<CharT> get_parent_directory(const std::basic_string<CharT> &path);
+
+template<typename CharT>
+std::basic_string<CharT> normalize_path(const std::basic_string<CharT> &path);
+
+template<typename CharT>
+std::basic_string<CharT> make_relative_symlink_target(
+	const std::basic_string<CharT> &symlink_path,
+	const std::basic_string<CharT> &raw_target);
+
+extern template std::basic_string<char> make_absolute_symlink_target<char>(
+	const std::basic_string<char>&, const std::basic_string<char>&);
+extern template std::basic_string<wchar_t> make_absolute_symlink_target<wchar_t>(
+	const std::basic_string<wchar_t>&, const std::basic_string<wchar_t>&);
+
+extern template std::basic_string<char> get_parent_directory<char>(const std::basic_string<char>&);
+extern template std::basic_string<wchar_t> get_parent_directory<wchar_t>(const std::basic_string<wchar_t>&);
+
+extern template std::basic_string<char> normalize_path<char>(const std::basic_string<char>&);
+extern template std::basic_string<wchar_t> normalize_path<wchar_t>(const std::basic_string<wchar_t>&);
+
+extern template std::basic_string<char> make_relative_symlink_target<char>(
+	const std::basic_string<char>&, const std::basic_string<char>&);
+extern template std::basic_string<wchar_t> make_relative_symlink_target<wchar_t>(
+	const std::basic_string<wchar_t>&, const std::basic_string<wchar_t>&);
 
 bool substr_match(const std::wstring &str, std::wstring::size_type pos, std::wstring::const_pointer mstr);
 std::wstring word_wrap(const std::wstring &str, std::wstring::size_type wrap_bound);
@@ -39,6 +71,7 @@ std::wstring long_path_norm(const std::wstring &path);
 
 std::wstring add_trailing_slash(const std::wstring &path);
 std::wstring del_trailing_slash(const std::wstring &path);
+std::wstring add_leading_slash(const std::wstring &path);
 
 std::wstring extract_path_root(const std::wstring &path);
 std::wstring extract_file_name(const std::wstring &path);

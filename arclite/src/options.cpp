@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "utils.hpp"
 #include "sysutils.hpp"
@@ -149,7 +149,7 @@ static bool load_arclite_xml(Options &options)
 
 
 
-//StrMB2Wide(symlinkaddr).c_str()
+//StrMB2Wide(symlinkdata).c_str()
 
 //	xml.parse(plugin_path + L"arclite.xml.custom");
 	//	settingsIni = InMyConfig("plugins/arclite/arclite.ini");
@@ -310,8 +310,10 @@ Options::Options()
 	max_arc_cache_size(128),
 	extract_ignore_errors(false),
 	extract_access_rights(true),
-	extract_owners_groups(false),
+	extract_owners_groups(0),
 	extract_attributes(false),
+	extract_duplicate_hardlinks(false),
+	extract_restore_special_files(false),
 	extract_overwrite(oaAsk),
 	extract_separate_dir(triUndef),
 	extract_open_dir(false),
@@ -337,6 +339,8 @@ Options::Options()
 	update_skip_symlinks(false),
 	update_symlink_fix_path_mode(0),
 	update_dereference_symlinks(false),
+	update_skip_hardlinks(false),
+	update_duplicate_hardlinks(false),
 	update_move_files(false),
 	update_ignore_errors(false),
 	update_overwrite(oaAsk),
@@ -552,8 +556,10 @@ bool Options::load()
 	GET_VALUE(extract_ignore_errors, bool);
 	GET_VALUE(extract_ignore_errors, bool);
 	GET_VALUE(extract_access_rights, bool);
-	GET_VALUE(extract_owners_groups, bool);
+	GET_VALUE(extract_owners_groups, int);
 	GET_VALUE(extract_attributes, bool);
+	GET_VALUE(extract_duplicate_hardlinks, bool);
+	GET_VALUE(extract_restore_special_files, bool);
 	GET_VALUE(extract_overwrite, int);
 	GET_VALUE(extract_separate_dir, int);
 	GET_VALUE(extract_open_dir, bool);
@@ -581,6 +587,8 @@ bool Options::load()
 	GET_VALUE(update_skip_symlinks, bool);
 	GET_VALUE(update_symlink_fix_path_mode, int);
 	GET_VALUE(update_dereference_symlinks, bool);
+	GET_VALUE(update_skip_hardlinks, bool);
+	GET_VALUE(update_duplicate_hardlinks, bool);
 	GET_VALUE(update_move_files, bool);
 	GET_VALUE(update_ignore_errors, bool);
 	GET_VALUE(update_overwrite, int);
@@ -632,8 +640,10 @@ void Options::save() const
 	SET_VALUE(max_arc_cache_size, int);
 	SET_VALUE(extract_ignore_errors, bool);
 	SET_VALUE(extract_access_rights, bool);
-	SET_VALUE(extract_owners_groups, bool);
+	SET_VALUE(extract_owners_groups, int);
 	SET_VALUE(extract_attributes, bool);
+	SET_VALUE(extract_duplicate_hardlinks, bool);
+	SET_VALUE(extract_restore_special_files, bool);
 	SET_VALUE(extract_overwrite, int);
 	SET_VALUE(extract_separate_dir, int);
 	SET_VALUE(extract_open_dir, bool);
@@ -661,6 +671,8 @@ void Options::save() const
 	SET_VALUE(update_skip_symlinks, bool);
 	SET_VALUE(update_symlink_fix_path_mode, int);
 	SET_VALUE(update_dereference_symlinks, bool);
+	SET_VALUE(update_skip_hardlinks, bool);
+	SET_VALUE(update_duplicate_hardlinks, bool);
 	SET_VALUE(update_move_files, bool);
 	SET_VALUE(update_ignore_errors, bool);
 	SET_VALUE(update_overwrite, int);
@@ -718,6 +730,8 @@ ProfileOptions::ProfileOptions()
 	skip_symlinks(false),
 	symlink_fix_path_mode(0),
 	dereference_symlinks(false),
+	skip_hardlinks(false),
+	duplicate_hardlinks(false),
 	move_files(false),
 	ignore_errors(false),
 	advanced()
@@ -763,6 +777,8 @@ void UpdateProfiles::load()
 		GET_VALUE(skip_symlinks, bool);
 		GET_VALUE(symlink_fix_path_mode, int);
 		GET_VALUE(dereference_symlinks, bool);
+		GET_VALUE(skip_hardlinks, bool);
+		GET_VALUE(duplicate_hardlinks, bool);
 		GET_VALUE(move_files, bool);
 		GET_VALUE(ignore_errors, bool);
 		GET_VALUE(advanced, str);
@@ -808,6 +824,8 @@ void UpdateProfiles::save() const
 		SET_VALUE(skip_symlinks, bool);
 		SET_VALUE(symlink_fix_path_mode, int);
 		SET_VALUE(dereference_symlinks, bool);
+		SET_VALUE(skip_hardlinks, bool);
+		SET_VALUE(duplicate_hardlinks, bool);
 		SET_VALUE(move_files, bool);
 		SET_VALUE(ignore_errors, bool);
 		SET_VALUE(advanced, str);

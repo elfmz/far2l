@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 extern std::wstring get_error_dlg_title();
 
@@ -32,7 +32,7 @@ extern std::wstring get_error_dlg_title();
 
 namespace Far
 {
-
+extern PluginStartupInfo g_far;
 extern FarStandardFunctions g_fsf;
 
 void init(const PluginStartupInfo *psi);
@@ -49,6 +49,7 @@ intptr_t message(const GUID &id, const std::wstring &msg, int button_cnt = 0, FA
 class MenuItems : public std::vector<std::wstring>
 {
 public:
+	uint32_t flags;
 	unsigned add(const std::wstring &item);
 };
 intptr_t menu(const GUID &id, const std::wstring &title, const MenuItems &items, const wchar_t *help = {});

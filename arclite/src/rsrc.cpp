@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "rsrc.hpp"
 #include "utils.hpp"

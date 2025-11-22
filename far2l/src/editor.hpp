@@ -264,7 +264,7 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
-void GoToVisualLine(int VisualLine);
+	void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
 
@@ -395,6 +395,9 @@ public:
 
 	int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
 	void SetShowWhiteSpace(int NewMode);
+
+	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
+	void SetShowLineNumbers(int NewMode);
 
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 

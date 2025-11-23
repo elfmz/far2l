@@ -3587,6 +3587,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (isDraggingSelection && !(MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED))
 	{
 		isDraggingSelection = false;
+		UnmarkEmptyBlock();
 	}
 
 	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда

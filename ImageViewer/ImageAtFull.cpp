@@ -58,7 +58,14 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 		{
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			const MOUSE_EVENT_RECORD *me = (const MOUSE_EVENT_RECORD *)Param2;
-			if ((me->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
+			if ( (me->dwButtonState & RIGHTMOST_BUTTON_PRESSED) != 0 && (me->dwEventFlags & MOUSE_MOVED)  == 0) {
+				if ((me->dwControlKeyState & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0) {
+					iv->Rotate(-90);
+				} else {
+					iv->Rotate(90);
+				}
+
+			} else if ((me->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
 				iv->DraggingMove(me->dwMousePosition);
 				if (!WINPORT(WaitConsoleInput)(NULL, 0)) { // avoid movements 'accumulation'
 					iv->DraggingApplyMoves();

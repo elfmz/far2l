@@ -3701,7 +3701,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					MouseSelStartingLine = NumLine;
 					MouseSelStartingPos = TargetPos;
 				} else {
-					EditorSelect es{BTYPE_STREAM};
+					EditorSelect es{(MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) ? BTYPE_COLUMN : BTYPE_STREAM};
 					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
 						es.BlockStartLine = MouseSelStartingLine;
 						es.BlockStartPos = MouseSelStartingPos;

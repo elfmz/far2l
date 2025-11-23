@@ -598,7 +598,7 @@ void ImageView::DenoteState(const char *stage)
 	}
 
 	std::string pan;
-	if (_scale > 0 && fabs(_scale - 1) > 0.01) {
+	if (_scale > 0) {
 		const char c1 = (_scale - _scale_fit > 0.01) ? '>' : ((_scale - _scale_fit < -0.01) ? '<' : '[');
 		const char c2 = (_scale - _scale_fit > 0.01) ? '<' : ((_scale - _scale_fit < -0.01) ? '>' : ']');
 		pan+= StrPrintf("%c%d%%%c ", c1, int(_scale * 100), c2);

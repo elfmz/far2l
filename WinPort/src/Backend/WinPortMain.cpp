@@ -125,6 +125,59 @@ static void SetupStdHandles()
 	}
 }
 
+int detect_vs16_width() {
+	// U+25AB + U+FE0F: ▫️
+	const char sym[] = "\xE2\x96\xAB\xEF\xB8\x8F";
+
+	termios orig, raw;
+	tcgetattr(STDIN_FILENO, &orig);
+	raw = orig;
+	raw.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+
+	auto readPos = []() {
+		std::string buf;
+		char c;
+		while (read(STDIN_FILENO, &c, 1) == 1) {
+			buf.push_back(c);
+			if (c == 'R') break;
+		}
+		int row, col;
+		return (sscanf(buf.c_str(), "\x1b[%d;%dR", &row, &col) == 2) ? col : -1;
+	};
+
+	// Query cursor before printing
+	write(STDOUT_FILENO, "\x1b[6n", 4);
+	tcdrain(STDOUT_FILENO);
+	int start = readPos();
+
+	// Print the VS16 symbol
+	write(STDOUT_FILENO, sym, strlen(sym));
+	tcdrain(STDOUT_FILENO);
+
+	// Query cursor after printing
+	write(STDOUT_FILENO, "\x1b[6n", 4);
+	tcdrain(STDOUT_FILENO);
+	int end = readPos();
+
+	// Remove the printed symbol
+	if (start >= 0 && end >= 0) {
+		int w = end - start;
+		if (w > 0) {
+			char seq[32];
+			int n = snprintf(seq, sizeof(seq), "\x1b[%dD\x1b[K", w);
+			if (n > 0) {
+				write(STDOUT_FILENO, seq, (size_t)n);
+				tcdrain(STDOUT_FILENO);
+			}
+		}
+	}
+
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
+
+	if (start < 0 || end < 0) return -1;
+	return end - start;  // 1 = no emoji width, 2 = VS16 rendered full-width
+}
 
 class NormalizeTerminalState
 {
@@ -440,7 +493,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			}
 		}
 	}
-
+	//check variation selector 16 is usable before reassigning stdout
+	bool vs16_supported = detect_vs16_width() == 2;
 	SetupStdHandles();
 	if (!arg_opts.mortal) {
 		signal(SIGHUP, SIG_IGN);
@@ -534,6 +588,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	}
 
 	if (arg_opts.tty) {
+		CharClasses::SetUseVS16(vs16_supported);
 		if (!tty_raw_mode) {
 			tty_raw_mode.reset(new TTYRawMode(std_in, std_out));
 		}

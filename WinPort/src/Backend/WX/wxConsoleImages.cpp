@@ -60,9 +60,9 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 		std::optional<wxImage> wx_img;
 		unsigned char *pixel_data = (unsigned char *)buffer;
 		const auto fmt = (flags & WP_IMG_MASK_FMT);
-		if (fmt == WP_IMG_PNG) {
+		if (fmt == WP_IMG_PNG || fmt == WP_IMG_JPG) {
 			if (height != 1) {
-				fprintf(stderr, "%s('%s'): unexpected PNG height %u\n", __FUNCTION__, id, height);
+				fprintf(stderr, "%s('%s'): unexpected height=%u\n", __FUNCTION__, id, height);
 				return false;
 			}
 			static int s_ih = 0;
@@ -73,7 +73,7 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 			}
 			wxMemoryInputStream stream(pixel_data, width);
 		    wx_img.emplace();
-		    if (!wx_img->LoadFile(stream, wxBITMAP_TYPE_PNG)) {
+		    if (!wx_img->LoadFile(stream, (fmt == WP_IMG_JPG) ? wxBITMAP_TYPE_JPEG : wxBITMAP_TYPE_PNG)) {
 				fprintf(stderr, "%s('%s'): PNG load failed\n", __FUNCTION__, id);
 				return false;
 		    }
@@ -115,47 +115,53 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 			default_pos.Y = 0;
 		}
 
-		const auto scroll = (flags & WP_IMG_MASK_SCROLL);
+		const auto attach = (flags & WP_IMG_MASK_ATTACH);
 		auto &img = _images[str_id];
 		img.pixel_offset = (flags & WP_IMG_PIXEL_OFFSET) != 0;
 		MakeImageArea(img.area, area, default_pos);
 		fprintf(stderr, "%s('%s'): area %d x %d - %d x %d\n", __FUNCTION__, id, img.area.Left, img.area.Top, img.area.Right, img.area.Bottom);
 
-		if (scroll) { // scroll/move existing image
-			if (width && height) { // scrolling, but if empty image specified - its just a move operation
+		if (attach) { // attach/move existing image
+			if (width && height) { // attaching, but if empty image specified - its just a move operation
 				auto sz = img.bitmap.GetSize();
-				if (scroll == WP_IMG_SCROLL_AT_LEFT || scroll == WP_IMG_SCROLL_AT_RIGHT) {
+				if (attach == WP_IMG_ATTACH_LEFT || attach == WP_IMG_ATTACH_RIGHT) {
 					if (height != (DWORD)sz.GetHeight()) {
-						fprintf(stderr, "%s: WP_IMG_SCROLL - height mismatch, %u != %d\n", __FUNCTION__, height, sz.GetHeight());
+						fprintf(stderr, "%s: WP_IMG_ATTACH - height mismatch, %u != %d\n", __FUNCTION__, height, sz.GetHeight());
 						return false;
 					}
-				} else if (scroll == WP_IMG_SCROLL_AT_TOP || scroll == WP_IMG_SCROLL_AT_BOTTOM) {
+					if ((flags & WP_IMG_SCROLL) == 0) {
+						sz.IncBy(width, 0);
+					}
+				} else if (attach == WP_IMG_ATTACH_TOP || attach == WP_IMG_ATTACH_BOTTOM) {
 					if (width != (DWORD)sz.GetWidth()) {
-						fprintf(stderr, "%s: WP_IMG_SCROLL - width mismatch, %u != %d\n", __FUNCTION__, width, sz.GetWidth());
+						fprintf(stderr, "%s: WP_IMG_ATTACH - width mismatch, %u != %d\n", __FUNCTION__, width, sz.GetWidth());
 						return false;
+					}
+					if ((flags & WP_IMG_SCROLL) == 0) {
+						sz.IncBy(0, height);
 					}
 				} else {
-					fprintf(stderr, "%s: bad scroll=%llu\n", __FUNCTION__, (unsigned long long)scroll);
+					fprintf(stderr, "%s: bad attach=%llu\n", __FUNCTION__, (unsigned long long)attach);
 					return false;
 				}
 				wxBitmap new_bmp(sz);
 				wxBitmap edge_bmp = *wx_img;
 				wxMemoryDC img_dc(img.bitmap), edge_dc(edge_bmp), new_dc(new_bmp);
-				switch (scroll) {
-					case WP_IMG_SCROLL_AT_LEFT:
+				switch (attach) {
+					case WP_IMG_ATTACH_LEFT:
 						new_dc.Blit(width, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, 0, 0, wxCOPY, false);
 						new_dc.Blit(0, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
 						break;
-					case WP_IMG_SCROLL_AT_RIGHT:
-						new_dc.Blit(0, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, width, 0, wxCOPY, false);
+					case WP_IMG_ATTACH_RIGHT:
+						new_dc.Blit(0, 0, sz.GetWidth() - width, sz.GetHeight(), &img_dc, (flags & WP_IMG_SCROLL) ? width : 0, 0, wxCOPY, false);
 						new_dc.Blit(sz.GetWidth() - width, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
 						break;
-					case WP_IMG_SCROLL_AT_TOP:
+					case WP_IMG_ATTACH_TOP:
 						new_dc.Blit(0, height, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, 0, wxCOPY, false);
 						new_dc.Blit(0, 0, width, height, &edge_dc, 0, 0, wxCOPY, false);
 						break;
-					case WP_IMG_SCROLL_AT_BOTTOM:
-						new_dc.Blit(0, 0, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, height, wxCOPY, false);
+					case WP_IMG_ATTACH_BOTTOM:
+						new_dc.Blit(0, 0, sz.GetWidth(), sz.GetHeight() - height, &img_dc, 0, (flags & WP_IMG_SCROLL) ? height : 0, wxCOPY, false);
 						new_dc.Blit(0, sz.GetHeight() - height, width, height, &edge_dc, 0, 0, wxCOPY, false);
 						break;
 				}

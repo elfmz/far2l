@@ -513,7 +513,7 @@ bool ImageView::RenderImage()
 		}
 	}
 
-	if (!do_convert && rotated_angle == 0 && (wgi.Caps & WP_IMGCAP_SCROLL) != 0
+	if (!do_convert && rotated_angle == 0 && (wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (wgi.Caps & WP_IMGCAP_ATTACH) != 0 
 			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h) {
 
 		if (_prev_left != src_left && out) {
@@ -526,7 +526,7 @@ bool ImageView::RenderImage()
 				fprintf(stderr, "--- Sending to left edge [%d %d %d %d]\n",
 					src_left, _prev_top, src_left + ins_w, _prev_top + viewport_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL_AT_LEFT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL | WP_IMG_ATTACH_LEFT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
 			} else {
 				Blit(ins_w, viewport_h,
 					_send_data.data(), 0, 0, ins_w,
@@ -534,7 +534,7 @@ bool ImageView::RenderImage()
 				fprintf(stderr, "--- Sending to right edge [%d %d %d %d]\n",
 					src_left + viewport_w - ins_w, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL_AT_RIGHT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL | WP_IMG_ATTACH_RIGHT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
 			}
 		}
 		if (_prev_top != src_top && out) {
@@ -547,7 +547,7 @@ bool ImageView::RenderImage()
 				fprintf(stderr, "--- Sending to top edge [%d %d %d %d]\n",
 					src_left, src_top, src_left + viewport_w, src_top + ins_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL_AT_TOP, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL | WP_IMG_ATTACH_TOP, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
 			} else {
 				Blit(viewport_w, ins_h,
 					_send_data.data(), 0, 0, viewport_w,
@@ -555,7 +555,7 @@ bool ImageView::RenderImage()
 				fprintf(stderr, "--- Sending to bottom edge [%d %d %d %d]\n",
 					src_left, src_top + viewport_h - ins_h, src_left + viewport_w, src_top + viewport_h);
 				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL_AT_BOTTOM, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
+					| WP_IMG_SCROLL | WP_IMG_ATTACH_BOTTOM, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
 			}
 		}
 	} else {

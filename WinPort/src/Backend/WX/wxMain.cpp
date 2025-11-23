@@ -2182,7 +2182,7 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 
 void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_SCROLL | WP_IMGCAP_ROTATE;
+	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_ATTACH | WP_IMGCAP_SCROLL | WP_IMGCAP_ROTATE | WP_IMGCAP_PNG | WP_IMGCAP_JPG;
 	wgi->PixPerCell.X = _paint_context.FontWidth();
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }

@@ -29,12 +29,7 @@ public:
 		_drag_prev_pos = pos;
 	}
 
-	void DraggingFinish()
-	{
-		_dragging = false;
-	}
-
-	void DraggingCommit()
+	void DraggingApplyMoves()
 	{
 		if (_drag_pending.X != 0 || _drag_pending.Y != 0) {
 			COORD actual = ShiftByPixels(_drag_pending);
@@ -46,29 +41,30 @@ public:
 			}
 		}
 	}
+
+	void DraggingFinish()
+	{
+		if (_dragging) {
+			_dragging = false;
+			DraggingApplyMoves();
+		}
+	}
 };
 
 static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	switch(Msg) {
-		case DN_ENTERIDLE:
-		{
-			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
-			iv->DraggingCommit();
-			return TRUE;
-		}
 		case DN_MOUSEEVENT:
 		{
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			const MOUSE_EVENT_RECORD *me = (const MOUSE_EVENT_RECORD *)Param2;
 			if ((me->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
 				iv->DraggingMove(me->dwMousePosition);
+				if (!WINPORT(WaitConsoleInput)(NULL, 0)) { // avoid movements 'accumulation'
+					iv->DraggingApplyMoves();
+				}
 			} else {
 				iv->DraggingFinish();
-			}
-			if ((me->dwControlKeyState & (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0
-					|| !WINPORT(WaitConsoleInput)(NULL, 0)) {
-				iv->DraggingCommit();
 			}
 			return TRUE;
 		}

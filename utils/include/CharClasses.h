@@ -5,6 +5,8 @@
 #include <memory>
 #include <unordered_map>
 
+extern bool g_use_vs16;
+
 class CharClasses
 {
 	const wchar_t _c;
@@ -30,7 +32,6 @@ class CharClasses
 		IS_FULLWIDTH = 1 << 2,
 	};
 	static bool initialized;
-	static bool use_vs16;
 
 	struct BlockHasher { //FNV-1a hash
 		static constexpr std::size_t fnv_offset_basis =
@@ -67,10 +68,6 @@ public:
 	static constexpr wchar_t VARIATION_SELECTOR_16 = 0xFE0F;
 	static constexpr wchar_t ZERO_WIDTH_JOINER = 0x200D;
 	inline CharClasses(wchar_t c) : _c(c) {}
-
-	static void SetUseVS16(bool vs16) {
-		use_vs16 = vs16;
-	}
 
 	static void InitCharFlags() {
 		if (initialized)
@@ -121,13 +118,13 @@ public:
 	static inline bool IsFullWidth(const wchar_t* p) {
 		if (!p || *p <= ASCII_MAX) return false;
 		//Variation Selector-16 indicates that the previous character should be rendered as an image
-		if (use_vs16 && *(p + 1) == VARIATION_SELECTOR_16) return true;
+		if (g_use_vs16 && *(p + 1) == VARIATION_SELECTOR_16) return true;
 		return Get(*p) & IS_FULLWIDTH;
 	}
 	static inline bool IsFullWidth(const wchar_t* p, size_t n) {
 		if (!p || *p <= ASCII_MAX) return false;
 		//Variation Selector-16 indicates that the previous character should be rendered as an image
-		if (use_vs16 && n > 1 && *(p + 1) == VARIATION_SELECTOR_16) return true;
+		if (g_use_vs16 && n > 1 && *(p + 1) == VARIATION_SELECTOR_16) return true;
 		return Get(*p) & IS_FULLWIDTH;
 	}
 	static inline bool IsFullWidth(wchar_t c) {

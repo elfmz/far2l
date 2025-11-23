@@ -5,7 +5,6 @@
 
 std::array<std::shared_ptr<CharClasses::Block>, CharClasses::BLOCK_COUNT> CharClasses::blocks;
 bool CharClasses::initialized = false;
-bool CharClasses::use_vs16 = true;
 
 bool CharClasses::FullWidth()
 {

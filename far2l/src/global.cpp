@@ -110,3 +110,5 @@ DWORD RedrawTimeout = 200;
 FormatScreen FS;
 
 DWORD ErrorMode;
+
+bool g_use_vs16=true;

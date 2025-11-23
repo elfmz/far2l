@@ -625,6 +625,20 @@ void ImageView::SetInfoAndPan(const std::string &info, const std::string &pan)
 		StrMB2Wide(CurFile(), ws_title, true);
 		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
 
+		// update pan and info lengthes before title, so title will paint over previous one
+		// but texts  - after title, so text it will get drawn after title, and due to that - will remain visible
+		std::wstring ws_pan = StrMB2Wide(pan);
+		FarDialogItem di{};
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, 4, (LONG_PTR)&di)) {
+			di.X2 = di.X1 + (ws_pan.empty() ? 0 : ws_pan.size() - 1);
+			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, 4, (LONG_PTR)&di);
+		}
+		std::wstring ws_info = StrMB2Wide(info);
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, 5, (LONG_PTR)&di)) {
+			di.X1 = di.X2 - (ws_info.empty() ? 0 : ws_info.size() - 1);
+			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, 5, (LONG_PTR)&di);
+		}
+
 		if (_all_files[_cur_file].second) {
 			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 0, 0);
 			g_far.SendDlgMessage(_dlg, DM_SHOWITEM, 1, 1);
@@ -639,21 +653,9 @@ void ImageView::SetInfoAndPan(const std::string &info, const std::string &pan)
 		FarDialogItemData dd_status = { wcslen(HINT_STRING), (wchar_t*)HINT_STRING };
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 3, (LONG_PTR)&dd_status);
 
-		// update status and info after title, so it will get redrawn after too, and due to that - will remain visible
-		std::wstring ws_pan = StrMB2Wide(pan);
-		FarDialogItem di{};
-		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, 4, (LONG_PTR)&di)) {
-			di.X2 = di.X1 + (ws_pan.empty() ? 0 : ws_pan.size() - 1);
-			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, 4, (LONG_PTR)&di);
-		}
 		FarDialogItemData dd_pan = { ws_pan.size(), (wchar_t*)ws_pan.c_str() };
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 4, (LONG_PTR)&dd_pan);
 
-		std::wstring ws_info = StrMB2Wide(info);
-		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, 5, (LONG_PTR)&di)) {
-			di.X1 = di.X2 - (ws_info.empty() ? 0 : ws_info.size() - 1);
-			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, 5, (LONG_PTR)&di);
-		}
 		FarDialogItemData dd_info = { ws_info.size(), (wchar_t*)ws_info.c_str() };
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 5, (LONG_PTR)&dd_info);
 	}

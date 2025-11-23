@@ -68,7 +68,7 @@ public:
 	void Rotate(int change);
 	void Shift(int horizontal, int vertical);
 	COORD ShiftByPixels(COORD delta);
-	void Reset();
+	void Reset(bool keep_rotation);
 	void Select();
 	void Deselect();
 	void ToggleSelection();

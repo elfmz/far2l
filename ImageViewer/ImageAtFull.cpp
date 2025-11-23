@@ -96,17 +96,17 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			switch (key) {
 				case 'a': case 'A': case KEY_MULTIPLY: case '*':
 					g_def_scale = DS_LESSOREQUAL_SCREEN;
-					iv->Reset();
+					iv->Reset(true);
 					break;
 				case 'q': case 'Q': case KEY_DEL: case KEY_NUMDEL:
 					g_def_scale = DS_EQUAL_SCREEN;
-					iv->Reset();
+					iv->Reset(true);
 					break;
 				case 'z': case 'Z': case KEY_DIVIDE: case '/':
 					g_def_scale = DS_EQUAL_IMAGE;
-					iv->Reset();
+					iv->Reset(true);
 					break;
-				case KEY_CLEAR: case '=': iv->Reset(); break;
+				case KEY_CLEAR: case '=': iv->Reset(false); break;
 				case KEY_ADD: case '+': case KEY_MSWHEEL_UP: iv->Scale(delta); break;
 				case KEY_SUBTRACT: case '-': case KEY_MSWHEEL_DOWN: iv->Scale(-delta); break;
 				case KEY_NUMPAD6: case KEY_RIGHT: iv->Shift(delta, 0); break;

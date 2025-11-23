@@ -829,9 +829,13 @@ COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels
 	};
 }
 
-void ImageView::Reset()
+void ImageView::Reset(bool keep_rotation)
 {
+	int saved_rotate = _rotate;
 	JustReset();
+	if (keep_rotation) {
+		_rotate = saved_rotate;
+	}
 	RenderImage();
 	DenoteState();
 }

@@ -2666,6 +2666,7 @@ menüben kikapcsolható.
    - Codepage                                         (toggled via #F8# or #Shift-F8#)
    - Line current/all lines
    - Column current
+   - #RSH# or empty: file attributes (Read only, System, Hidden)
    - Code of character under cursor
    - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
 

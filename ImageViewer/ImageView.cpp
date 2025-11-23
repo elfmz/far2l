@@ -220,7 +220,6 @@ bool ImageView::IterateFile(bool forward)
 	} else {
 		_cur_file = _all_files.size() - 1;
 	}
-	JustReset();
 	return true;
 }
 
@@ -738,6 +737,7 @@ bool ImageView::SetupFull(SMALL_RECT &rc, HANDLE dlg)
 void ImageView::Home()
 {
 	_cur_file = _initial_file;
+	JustReset();
 	if (PrepareImage() && RenderImage()) {
 		DenoteState();
 	}
@@ -750,6 +750,7 @@ bool ImageView::Iterate(bool forward)
 			_cur_file = _initial_file;
 			return false; // bail out on logic error or infinite loop
 		}
+		JustReset();
 		if (PrepareImage() && RenderImage()) {
 			DenoteState();
 			return true;

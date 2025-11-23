@@ -242,6 +242,7 @@ private:
 	int m_TopScreenVisualLine;
 	Edit *CurLine;
 	Edit *LastGetLine;
+	int MouseSelStartingLine{-1}, MouseSelStartingPos{-1};
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;

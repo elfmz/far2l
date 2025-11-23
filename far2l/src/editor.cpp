@@ -3598,6 +3598,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
+	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0) {
+		MouseSelStartingLine = -1;
+	}
+
 	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда
 	if ((MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
 		if ((!EdOpt.PersistentBlocks) && (BlockStart || VBlockStart)) {
@@ -3692,8 +3696,28 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			if (TargetLine)
 			{
+				NumLine = CalcDistance(TopList, TargetLine, -1);
+				if (MouseSelStartingLine == -1) {
+					MouseSelStartingLine = NumLine;
+					MouseSelStartingPos = TargetPos;
+				} else {
+					EditorSelect es{BTYPE_STREAM};
+					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
+						es.BlockStartLine = MouseSelStartingLine;
+						es.BlockStartPos = MouseSelStartingPos;
+						es.BlockWidth = TargetPos - MouseSelStartingPos;
+						es.BlockHeight = NumLine + 1 - MouseSelStartingLine;
+					} else {
+						es.BlockStartLine = NumLine;
+						es.BlockStartPos = TargetPos;
+						es.BlockWidth = MouseSelStartingPos - TargetPos;
+						es.BlockHeight = MouseSelStartingLine + 1 - NumLine;
+					}
+					fprintf(stderr, "Editor mouse selection: StartLine=%d StartPos=%d Width=%d Height=%d\n",
+						es.BlockStartLine, es.BlockStartPos, es.BlockWidth, es.BlockHeight);
+					EditorControl(ECTL_SELECT, &es);
+				}
 				CurLine = TargetLine;
-				NumLine = CalcDistance(TopList, CurLine, -1);
 				CurLine->SetCurPos(TargetPos);
 				if (m_bWordWrap)
 				{

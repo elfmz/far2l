@@ -49,8 +49,7 @@ int main()
 	printf("#include <wchar.h>\n");
 	printf("#include \"../include/CharClasses.h\"\n\n");
 	printf("std::array<std::shared_ptr<CharClasses::Block>, CharClasses::BLOCK_COUNT> CharClasses::blocks;\n");
-	printf("bool CharClasses::initialized = false;\n");
-	printf("bool CharClasses::use_vs16 = true;\n\n");
+	printf("bool CharClasses::initialized = false;\n\n");
 
 
 	WriteFunc("FullWidth", [](wchar_t c)->bool {

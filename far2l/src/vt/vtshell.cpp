@@ -968,11 +968,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			// due to being typed while previous command being executed in interactive shell
 			cmd_str+= "\x15";
 		}
-		// then send sourcing directive (dot) with space trailing to avoid adding it to history
-		// Assuming all shells support sourcing via dot. Fish also supports it in recent versions.
-		cmd_str+= " . ";
-
-		cmd_str+= EscapeCmdStr(_cce->ScriptFile());
+		cmd_str+= _backend->MakeRunScriptCommand(_cce->ScriptFile());
 		cmd_str+= '\n';
 
 		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {

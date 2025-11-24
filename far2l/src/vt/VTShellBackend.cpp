@@ -183,6 +183,11 @@ public:
 		return content;
 	}
 
+	virtual std::string MakeRunScriptCommand(const std::string &script_path) const override
+	{
+		// Space prefix to avoid history
+		return " . " + EscapeCmdStr(script_path);
+	}
 	virtual std::string GetCompletorConfigContent() const override
 	{
 		return "set completion-query-items 0\n"
@@ -212,6 +217,35 @@ public:
 	{
 		// For bash we simulate user input followed by tabs
 		return command + "\t\t";
+	}
+	virtual bool ParseCompletionOutput(const std::string &output, const std::string &command, std::vector<std::string> &possibilities) const override
+	{
+		std::string reply = output;
+		// Bash/Readline echo logic
+		size_t p = reply.find(command);
+		if (p == std::string::npos || p + command.size() >= reply.size()) {
+			return false;
+		}
+		reply.erase(0, p + command.size());
+		if (StrEndsBy(reply, command.c_str())) {
+			reply.resize(reply.size() - command.size());
+		}
+
+		for (;;) {
+			size_t p = reply.find('\n');
+			if (p == std::string::npos) break;
+
+			std::string line = reply.substr(0, p);
+			StrTrim(line, "\r");
+			StrTrim(line, " ");
+
+			if (!line.empty()) {
+				possibilities.emplace_back(line);
+			}
+
+			reply.erase(0, p + 1);
+		}
+		return true;
 	}
 };
 
@@ -344,6 +378,11 @@ public:
 		return content;
 	}
 
+	virtual std::string MakeRunScriptCommand(const std::string &script_path) const override
+	{
+		// Space prefix to avoid history
+		return " source " + EscapeCmdStr(script_path);
+	}
 	virtual std::string GetCompletorConfigContent() const override
 	{
 		// Fish doesn't use inputrc. We can return empty or specific fish config.
@@ -368,7 +407,43 @@ public:
 			escaped.insert(pos, 1, '\\');
 			pos += 2;
 		}
-		return "complete -C \"" + escaped + "\"";
+		return "complete -C \"" + escaped + "\"\n";
+	}
+
+	virtual bool ParseCompletionOutput(const std::string &output, const std::string &command, std::vector<std::string> &possibilities) const override
+	{
+		std::string reply = output;
+		// Fish output format from 'complete -C' is lines of "suggestion\tdescription"
+
+		// If reply contains the completion command itself, strip it
+		std::string comp_cmd = MakeCompletionCommand(command);
+		if (!comp_cmd.empty() && comp_cmd.back() == '\n') comp_cmd.pop_back();
+
+		size_t p = reply.find(comp_cmd);
+		if (p != std::string::npos) {
+			reply.erase(0, p + comp_cmd.size());
+		}
+
+		for (;;) {
+			size_t p = reply.find('\n');
+			if (p == std::string::npos) break;
+
+			std::string line = reply.substr(0, p);
+			StrTrim(line, "\r");
+
+			// Parse "candidate<TAB>description"
+			size_t tab_pos = line.find('\t');
+			if (tab_pos != std::string::npos) {
+				line.resize(tab_pos);
+			}
+
+			if (!line.empty()) {
+				possibilities.emplace_back(line);
+			}
+
+			reply.erase(0, p + 1);
+		}
+		return true;
 	}
 };
 

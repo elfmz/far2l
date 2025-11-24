@@ -214,10 +214,6 @@ bool VTCompletor::TalkWithShell(const std::string &cmd, std::string &reply, cons
 	} else {
 		// If using backend-specific completion command generation
 		sendline+= _backend->MakeCompletionCommand(cmd);
-		// For fish 'complete -C' we need newline to execute it
-		if (_backend->GetName() == "fish") {
-			sendline+= "\n";
-		}
 	}
 
 	sendline+= done;
@@ -353,51 +349,8 @@ bool VTCompletor::GetPossibilities(const std::string &cmd, std::vector<std::stri
 	const bool whole_next_arg = (eval_cmd.back() == ' ' && args.back().quot == Environment::QUOT_NONE);
 
 	// Cleaning up the reply depends on the method used
-	if (_backend->GetName() == "fish") {
-		// Fish output format from 'complete -C' is lines of "suggestion\tdescription"
-		// We need to parse this.
-		// Also need to remove the command echo if pty is used, but TalkWithShell usually handles simple echo
-
-		// If reply contains the completion command itself, strip it
-		std::string comp_cmd = _backend->MakeCompletionCommand(eval_cmd);
-		size_t p = reply.find(comp_cmd);
-		if (p != std::string::npos) {
-			reply.erase(0, p + comp_cmd.size());
-		}
-	} else {
-		// Bash/Readline echo logic
-		size_t p = reply.find(eval_cmd);
-		if (p == std::string::npos || p + eval_cmd.size() >= reply.size() ) {
-			return false;
-		}
-		reply.erase(0, p + eval_cmd.size());
-		if (StrEndsBy(reply, eval_cmd.c_str())) {
-			reply.resize(reply.size() - eval_cmd.size());
-		}
-	}
-
-	for (;;) {
-		size_t p = reply.find('\n');
-		if (p == std::string::npos ) break;
-
-		std::string line = reply.substr(0, p);
-		StrTrim(line, "\r");
-
-		if (_backend->GetName() == "fish") {
-			// Parse "candidate<TAB>description"
-			size_t tab_pos = line.find('\t');
-			if (tab_pos != std::string::npos) {
-				line.resize(tab_pos);
-			}
-		} else {
-			StrTrim(line, " ");
-		}
-
-		if (!line.empty()) {
-			possibilities.emplace_back(line);
-		}
-
-		reply.erase(0, p + 1);
+	if (!_backend->ParseCompletionOutput(reply, eval_cmd, possibilities)) {
+		return false;
 	}
 
 	if (!possibilities.empty() && possibilities.back() == eval_cmd) {

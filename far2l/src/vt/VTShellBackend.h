@@ -35,6 +35,11 @@ public:
 	// For bash: just the command itself (tabs will be appended by caller/completor logic)
 	// For fish: complete -C "command"
 	virtual std::string MakeCompletionCommand(const std::string &command) const = 0;
+	// Parse the raw output from the shell after sending the completion command
+	virtual bool ParseCompletionOutput(const std::string &output, const std::string &command, std::vector<std::string> &possibilities) const = 0;
+	// Generates the command to run/source the temporary script file
+	// e.g. " . /tmp/script" for bash
+	virtual std::string MakeRunScriptCommand(const std::string &script_path) const = 0;
 };
 
 // Factory

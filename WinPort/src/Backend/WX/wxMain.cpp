@@ -1843,6 +1843,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 		if (wxGetKeyState(WXK_CONTROL)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
 		if (wxGetKeyState(WXK_ALT)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 	}
+	if (_key_tracker.Alt()) ir.Event.MouseEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 	if (event.LeftDown()) _mouse_state|= FROM_LEFT_1ST_BUTTON_PRESSED;
 	else if (event.MiddleDown()) _mouse_state|= FROM_LEFT_2ND_BUTTON_PRESSED;
 	else if (event.RightDown()) _mouse_state|= RIGHTMOST_BUTTON_PRESSED;

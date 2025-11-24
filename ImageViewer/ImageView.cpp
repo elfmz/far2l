@@ -2,7 +2,7 @@
 #include "ImageView.h"
 #include "ExecAsync.h"
 
-#define HINT_STRING L"[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD DEL + - * / = | Select: SPACE | Deselect: BS | Toggle: INS | ENTER | ESC]"
+#define HINT_STRING L"[Navigate: PGUP PGDN HOME | Pan: TAB CURSORS NUMPAD DEL + - * / = | Selection: SPACE BS INS | ENTER | ESC]"
 
 // how long msec wait before showing progress message window
 #define COMMAND_TIMEOUT_BEFORE_MESSAGE 300

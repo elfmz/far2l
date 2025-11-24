@@ -2815,11 +2815,6 @@ case KEY_CTRLNUMPAD3: {
 
 			return TRUE;
 		}
-		case KEY_CTRLF3: {
-			// Toggle line numbers display
-			SetShowLineNumbers(!EdOpt.ShowLineNumbers);
-			return TRUE;
-		}
 		case KEY_CTRLF7: {
 			if (!Flags.Check(FEDITOR_LOCKMODE)) {
 				int ReplaceMode0 = ReplaceMode;
@@ -7775,6 +7770,14 @@ void Editor::SetWordWrap(int NewMode)
 	if ((NewMode != 0) != m_bWordWrap)
 	{
 		m_bWordWrap = (NewMode != 0);
+
+		// Clear vertical block selection when switching wrap modes
+		// Vertical blocks don't make sense in wrap mode and can cause issues
+		if (VBlockStart)
+		{
+			VBlockStart = nullptr;
+			Flags.Clear(FEDITOR_MARKINGVBLOCK);
+		}
 
 		if (m_bWordWrap) // Turning ON
 		{

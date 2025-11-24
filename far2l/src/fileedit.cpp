@@ -1110,6 +1110,13 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				ShowStatus();
 				return TRUE;
 			}
+			case KEY_CTRLF3: {
+				m_editor->SetShowLineNumbers(!m_editor->GetShowLineNumbers());
+				m_editor->Show();
+				ChangeEditKeyBar();
+				ShowStatus();
+				return TRUE;
+			}
 			case KEY_F5:
 				m_editor->SetShowWhiteSpace(m_editor->GetShowWhiteSpace() ? 0 : 1);
 				m_editor->Show();
@@ -2184,6 +2191,8 @@ void FileEditor::SetEditKeyBarStatefulLabels()
 	EditKeyBar.Change(KBL_CTRL, m_editor->GetConvertTabs() ? Msg::EditCtrlF5 : Msg::EditCtrlF5Spaces, 4);
 
 	EditKeyBar.Change(KBL_MAIN, m_editor->GetWordWrap() ? Msg::ViewF2Unwrap : Msg::ViewShiftF2, 2);
+
+	EditKeyBar.Change(KBL_CTRL, m_editor->GetShowLineNumbers() ? Msg::EditCtrlF3Hide : (Opt.OnlyEditorViewerUsed ? Msg::SingleEditCtrlF3 : Msg::EditCtrlF3), 2);
 }
 
 void FileEditor::ChangeEditKeyBar()

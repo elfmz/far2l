@@ -7024,6 +7024,17 @@ upd:"HidSpc"
 "СхвПрб"
 "СхвПрб"
 
+EditCtrlF3Hide
+"СпрНом"
+"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+"СхвНом"
+"СхвНом"
+
 EditCtrlF5Spaces
 "Прбелы"
 "Spaces"
@@ -7376,15 +7387,15 @@ EditCtrlF2
 ""
 
 EditCtrlF3
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ЛинНом"
+"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+"ЛінНом"
+upd:"LineNum"
 
 EditCtrlF4
 ""
@@ -8473,15 +8484,15 @@ SingleEditCtrlF2
 ""
 
 SingleEditCtrlF3
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ЛинНом"
+"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+"ЛінНом"
+upd:"LineNum"
 
 SingleEditCtrlF4
 ""

@@ -3696,7 +3696,9 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			if (TargetLine)
 			{
-				NumLine = CalcDistance(TopList, TargetLine, -1);
+				CurLine = TargetLine;
+				NumLine = CalcDistance(TopList, CurLine, -1);
+				CurLine->SetCurPos(TargetPos);
 				if (MouseSelStartingLine == -1) {
 					MouseSelStartingLine = NumLine;
 					MouseSelStartingPos = TargetPos;
@@ -3717,8 +3719,6 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 						es.BlockStartLine, es.BlockStartPos, es.BlockWidth, es.BlockHeight);
 					EditorControl(ECTL_SELECT, &es);
 				}
-				CurLine = TargetLine;
-				CurLine->SetCurPos(TargetPos);
 				if (m_bWordWrap)
 				{
 					m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());

@@ -1257,7 +1257,7 @@ int Editor::ProcessKey(FarKey Key)
 	_KEYMACRO(SysLog(L"Key=%ls", _FARKEY_ToName(Key)));
 	int CurPos, CurVisPos, I;
 	CurPos = CurLine->GetCurPos();
-	CurVisPos = GetLineCurPos();
+	CurVisPos = CurLine->GetCellCurPos();
 	const bool isk = IsShiftKey(Key);
 	_SVS(SysLog(L"[%d] isk=%d", __LINE__, isk));
 
@@ -2833,7 +2833,7 @@ case KEY_CTRLNUMPAD3: {
 			}
 			Pasting--;
 			Show();
-			//_D(SysLog(L"VBlockX=%i, VBlockSizeX=%i, GetLineCurPos=%i",VBlockX,VBlockSizeX,GetLineCurPos()));
+			//_D(SysLog(L"VBlockX=%i, VBlockSizeX=%i, GetLineCurPos=%i",VBlockX,VBlockSizeX,CurLine->GetCellCurPos()));
 			//_D(SysLog(L"~~~~~~~~~~~~~~~~ KEY_ALTLEFT END, VBlockY=%i:%i, VBlockX=%i:%i",VBlockY,VBlockSizeY,VBlockX,VBlockSizeX));
 			return TRUE;
 		}
@@ -2852,7 +2852,7 @@ case KEY_CTRLNUMPAD3: {
 			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
 				BeginVBlockMarking();
 
-			//_D(SysLog(L"---------------- KEY_ALTRIGHT, getLineCurPos=%i",GetLineCurPos()));
+			//_D(SysLog(L"---------------- KEY_ALTRIGHT, getLineCurPos=%i",CurLine->GetCellCurPos()));
 			Pasting++;
 			{
 				int Delta;
@@ -2885,7 +2885,7 @@ case KEY_CTRLNUMPAD3: {
 				}
 
 				ProcessKey(KEY_RIGHT);
-				//_D(SysLog(L"VBlockX=%i, VBlockSizeX=%i, GetLineCurPos=%i",VBlockX,VBlockSizeX,GetLineCurPos()));
+				//_D(SysLog(L"VBlockX=%i, VBlockSizeX=%i, GetLineCurPos=%i",VBlockX,VBlockSizeX,CurLine->GetCellCurPos()));
 			}
 			Pasting--;
 			Show();
@@ -3703,21 +3703,14 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					MouseSelStartingLine = NumLine;
 					MouseSelStartingPos = TargetPos;
 				} else {
-					EditorSelect es{(MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) ? BTYPE_COLUMN : BTYPE_STREAM};
+					const bool SelVBlock = (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
 					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
-						es.BlockStartLine = MouseSelStartingLine;
-						es.BlockStartPos = MouseSelStartingPos;
-						es.BlockWidth = TargetPos - MouseSelStartingPos;
-						es.BlockHeight = NumLine + 1 - MouseSelStartingLine;
+						SetSelection(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
+							TargetPos - MouseSelStartingPos, NumLine + 1 - MouseSelStartingLine);
 					} else {
-						es.BlockStartLine = NumLine;
-						es.BlockStartPos = TargetPos;
-						es.BlockWidth = MouseSelStartingPos - TargetPos;
-						es.BlockHeight = MouseSelStartingLine + 1 - NumLine;
+						SetSelection(SelVBlock, NumLine, TargetPos,
+							MouseSelStartingPos - TargetPos, MouseSelStartingLine + 1 - NumLine);
 					}
-					fprintf(stderr, "Editor mouse selection: StartLine=%d StartPos=%d Width=%d Height=%d\n",
-						es.BlockStartLine, es.BlockStartPos, es.BlockWidth, es.BlockHeight);
-					EditorControl(ECTL_SELECT, &es);
 				}
 				if (m_bWordWrap)
 				{
@@ -6518,86 +6511,15 @@ int Editor::EditorControl(int Command, void *Param)
 		case ECTL_SELECT: {
 			if (Param) {
 				EditorSelect *Sel = (EditorSelect *)Param;
-				_ECTLLOG(SysLog(L"EditorSelect{"));
-				_ECTLLOG(SysLog(L"  BlockType     =%ls (%d)",
-						(Sel->BlockType == BTYPE_NONE
-										? L"BTYPE_NONE"
-										: (Sel->BlockType == BTYPE_STREAM
-														? L""
-														: (Sel->BlockType == BTYPE_COLUMN ? L"BTYPE_COLUMN"
-																						: L"BTYPE_?????"))),
-						Sel->BlockType));
-				_ECTLLOG(SysLog(L"  BlockStartLine=%d", Sel->BlockStartLine));
-				_ECTLLOG(SysLog(L"  BlockStartPos =%d", Sel->BlockStartPos));
-				_ECTLLOG(SysLog(L"  BlockWidth    =%d", Sel->BlockWidth));
-				_ECTLLOG(SysLog(L"  BlockHeight   =%d", Sel->BlockHeight));
-				_ECTLLOG(SysLog(L"}"));
-
-				if (Sel->BlockType == BTYPE_NONE || Sel->BlockStartPos == -1) {
+				if (Sel->BlockType == BTYPE_NONE || Sel->BlockStartPos < 0) {
+					fprintf(stderr, "ECTL_SELECT: unmark cuz Type=%d StartPos=%d\n", Sel->BlockType, Sel->BlockStartPos);
 					UnmarkBlock();
 					return TRUE;
 				}
-
-				if (Sel->BlockHeight < 1) {
-					_ECTLLOG(SysLog(L"Error: EditorSelect::BlockHeight < 1"));
-					return FALSE;
-				}
-
-				Edit *CurPtr = GetStringByNumber(Sel->BlockStartLine);
-
-				if (!CurPtr) {
-					_ECTLLOG(SysLog(L"Error: start line BlockStartLine=%d not found, GetStringByNumber(%d) "
-									L"return nullptr",
-							Sel->BlockStartLine, Sel->BlockStartLine));
-					return FALSE;
-				}
-
-				UnmarkBlock();
-
-				if (Sel->BlockType == BTYPE_STREAM) {
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					BlockStart = CurPtr;
-
-					if ((BlockStartLine = Sel->BlockStartLine) == -1)
-						BlockStartLine = NumLine;
-
-					for (int i = 0; i < Sel->BlockHeight; i++) {
-						int SelStart = i ? 0 : Sel->BlockStartPos;
-						int SelEnd = (i < Sel->BlockHeight - 1) ? -1 : Sel->BlockStartPos + Sel->BlockWidth;
-						CurPtr->Select(SelStart, SelEnd);
-						CurPtr = CurPtr->m_next;
-
-						if (!CurPtr)
-							return TRUE;	// ранее было FALSE
-					}
-				} else if (Sel->BlockType == BTYPE_COLUMN) {
-					Flags.Set(FEDITOR_MARKINGVBLOCK);
-					VBlockStart = CurPtr;
-
-					if ((BlockStartLine = Sel->BlockStartLine) == -1)
-						BlockStartLine = NumLine;
-
-					VBlockX = Sel->BlockStartPos;
-
-					if ((VBlockY = Sel->BlockStartLine) == -1)
-						VBlockY = NumLine;
-
-					VBlockSizeX = Sel->BlockWidth;
-					VBlockSizeY = Sel->BlockHeight;
-
-					if (VBlockSizeX < 0) {
-						VBlockSizeX = -VBlockSizeX;
-						VBlockX-= VBlockSizeX;
-
-						if (VBlockX < 0)
-							VBlockX = 0;
-					}
-				}
-
-				return TRUE;
+				return SetSelection(Sel->BlockType == BTYPE_COLUMN,
+					Sel->BlockStartLine, Sel->BlockStartPos, Sel->BlockWidth, Sel->BlockHeight);
 			}
-
-			_ECTLLOG(SysLog(L"Error: !Param"));
+			fprintf(stderr, "ECTL_SELECT: !Param\n");
 			break;
 		}
 		case ECTL_REDRAW: {
@@ -6887,6 +6809,70 @@ int Editor::EditorControl(int Command, void *Param)
 	}
 
 	return FALSE;
+}
+
+BOOL Editor::SetSelection(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight)
+{
+	fprintf(stderr, "Editor::SetSelection: VBlock=%d StartLine=%d StartPos=%d Width=%d Height=%d\n",
+		SelVBlock, SelStartLine, SelStartPos, SelWidth, SelHeight);
+
+	Edit *CurPtr = GetStringByNumber(SelStartLine);
+
+	if (!CurPtr) {
+		fprintf(stderr, "Editor::SetSelection: fail cuz StartLine=%d not found\n", SelStartLine);
+		return FALSE;
+	}
+	if (SelHeight <= 0 || SelStartPos < 0) {
+		fprintf(stderr, "Editor::SetSelection: fail cuz Height=%d <= 0 || StartPos=%d < 0\n", SelHeight, SelStartPos);
+		return FALSE;
+	}
+
+	UnmarkBlock();
+
+	if (SelVBlock) {
+		Flags.Set(FEDITOR_MARKINGVBLOCK);
+		VBlockStart = CurPtr;
+
+		if ((BlockStartLine = SelStartLine) == -1)
+			BlockStartLine = NumLine;
+
+		VBlockX = CurPtr->RealPosToCell(SelStartPos);
+
+		if ((VBlockY = SelStartLine) == -1)
+			VBlockY = NumLine;
+
+		auto LastPtr = CurPtr;
+		for (int i = SelHeight; --i > 0 && LastPtr->m_next; ) {
+			LastPtr = LastPtr->m_next;
+		}
+		VBlockSizeX = LastPtr->RealPosToCell(SelStartPos + SelWidth) - VBlockX;
+		VBlockSizeY = SelHeight;
+
+		if (VBlockSizeX < 0) {
+			VBlockSizeX = -VBlockSizeX;
+			VBlockX-= VBlockSizeX;
+
+			if (VBlockX < 0)
+				VBlockX = 0;
+		}
+
+	} else {
+		Flags.Set(FEDITOR_MARKINGBLOCK);
+		BlockStart = CurPtr;
+
+		if ((BlockStartLine = SelStartLine) == -1)
+			BlockStartLine = NumLine;
+
+		for (int i = 0; i < SelHeight && CurPtr; i++) {
+			int SelStart = i ? 0 : SelStartPos;
+			int SelEnd = (i < SelHeight - 1) ? -1 : SelStartPos + SelWidth;
+			CurPtr->Select(SelStart, SelEnd);
+			CurPtr = CurPtr->m_next;
+			// ранее было if (!CurPtr) return FALSE
+		}
+	}
+
+	return TRUE;
 }
 
 int Editor::SetBookmark(DWORD Pos)
@@ -7271,11 +7257,6 @@ void Editor::SetReplaceMode(int Mode)
 	::ReplaceMode = Mode;
 }
 
-int Editor::GetLineCurPos()
-{
-	return CurLine->GetCellCurPos();
-}
-
 void Editor::BeginVBlockMarking()
 {
 	UnmarkBlock();
@@ -7291,7 +7272,7 @@ void Editor::BeginVBlockMarking()
 
 void Editor::AdjustVBlock(int PrevX)
 {
-	int x = GetLineCurPos();
+	int x = CurLine->GetCellCurPos();
 	int c2;
 
 	//_D(SysLog(L"AdjustVBlock, x=%i, vblock is VBlockY=%i:%i, VBlockX=%i:%i, PrevX=%i",x,VBlockY,VBlockSizeY,VBlockX,VBlockSizeX,PrevX));

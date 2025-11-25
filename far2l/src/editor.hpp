@@ -275,8 +275,9 @@ void GoToVisualLine(int VisualLine);
 	void Paste(const wchar_t *Src = nullptr);
 	void Copy(int Append);
 	void DeleteBlock();
-	BOOL MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
-	void UnmarkBlock();
+	bool MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
+	bool UnmarkBlock();
+	void UnmarkBlockAndShowIt();
 	void UnmarkEmptyBlock();
 	void UnmarkMacroBlock();
 

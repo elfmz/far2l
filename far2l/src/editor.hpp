@@ -265,8 +265,6 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
-	BOOL SetSelection(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
-
 void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
@@ -277,6 +275,7 @@ void GoToVisualLine(int VisualLine);
 	void Paste(const wchar_t *Src = nullptr);
 	void Copy(int Append);
 	void DeleteBlock();
+	BOOL MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
 	void UnmarkBlock();
 	void UnmarkEmptyBlock();
 	void UnmarkMacroBlock();

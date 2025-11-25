@@ -7414,6 +7414,14 @@ void Editor::SetWordWrap(int NewMode)
 	{
 		m_bWordWrap = (NewMode != 0);
 
+		// Clear vertical block selection when switching wrap modes
+		// Vertical blocks don't make sense in wrap mode
+		if (VBlockStart)
+		{
+			VBlockStart = nullptr;
+			Flags.Clear(FEDITOR_MARKINGVBLOCK);
+		}
+
 		if (m_bWordWrap) // Turning ON
 		{
 			m_TopScreenLogicalLine = TopScreen;

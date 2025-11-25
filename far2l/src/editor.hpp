@@ -242,6 +242,7 @@ private:
 	int m_TopScreenVisualLine;
 	Edit *CurLine;
 	Edit *LastGetLine;
+	int MouseSelStartingLine{-1}, MouseSelStartingPos{-1};
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;
@@ -274,7 +275,9 @@ void GoToVisualLine(int VisualLine);
 	void Paste(const wchar_t *Src = nullptr);
 	void Copy(int Append);
 	void DeleteBlock();
-	void UnmarkBlock();
+	bool MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
+	bool UnmarkBlock();
+	void UnmarkBlockAndShowIt();
 	void UnmarkEmptyBlock();
 	void UnmarkMacroBlock();
 
@@ -404,7 +407,6 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	int GetLineCurPos();
 	void BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 

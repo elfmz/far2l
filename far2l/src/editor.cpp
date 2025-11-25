@@ -2100,8 +2100,7 @@ int Editor::ProcessKey(FarKey Key)
 		}
 		case KEY_CTRLU: {
 			UnmarkMacroBlock();
-			UnmarkBlock();
-			Show();
+			UnmarkBlockAndShowIt();
 			return TRUE;
 		}
 		case KEY_CTRLC:
@@ -6584,11 +6583,10 @@ int Editor::EditorControl(int Command, void *Param)
 				EditorSelect *Sel = (EditorSelect *)Param;
 				if (Sel->BlockType == BTYPE_NONE || Sel->BlockStartPos < 0) {
 					fprintf(stderr, "ECTL_SELECT: unmark cuz Type=%d StartPos=%d\n", Sel->BlockType, Sel->BlockStartPos);
-					UnmarkBlockAndShowIt();
+					UnmarkBlock();
 					return TRUE;
 				}
-				return MarkBlock(Sel->BlockType == BTYPE_COLUMN,
-					Sel->BlockStartLine, Sel->BlockStartPos, Sel->BlockWidth, Sel->BlockHeight);
+				return MarkBlock(Sel->BlockType == BTYPE_COLUMN, Sel->BlockStartLine, Sel->BlockStartPos, Sel->BlockWidth, Sel->BlockHeight);
 			}
 			fprintf(stderr, "ECTL_SELECT: !Param\n");
 			break;

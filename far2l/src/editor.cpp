@@ -359,9 +359,7 @@ void Editor::ShowEditor(int CurLineOnly)
 	if (m_bWordWrap && CurLine)
 	{
 		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
-	}
-	if (m_bWordWrap && CurLine)
-	{
+
 		// Проверяем, видим ли мы курсор на экране
 		bool is_cursor_visible = false;
 		Edit* scan_line = m_TopScreenLogicalLine;
@@ -401,12 +399,11 @@ void Editor::ShowEditor(int CurLineOnly)
 	}
 	if (Locked() || !TopList)
 		return;
-	if (m_bWordWrap) {
-		CurLineOnly = FALSE;
-	}
 
 	if (m_bWordWrap)
 	{
+		CurLineOnly = FALSE;
+
 		// Centralized correction logic to prevent scrolling past the end of the file.
 		int ScreenHeight = Y2 - Y1 + 1;
 		int LinesBelow = GetVisualLinesBelow(m_TopScreenLogicalLine, m_TopScreenVisualLine);
@@ -562,7 +559,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			ShowString.GetSelection(dbg_s, db_e);
 
 			// --- Специальная отрисовка для выделенных пустых строк ---
-			if (m_bWordWrap && CurLogicalLine->GetLength() == 0)
+			if (CurLogicalLine->GetLength() == 0)
 			{
 				int RealSelStart, RealSelEnd;
 				CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
@@ -577,7 +574,7 @@ void Editor::ShowEditor(int CurLineOnly)
 
 			bool background_filled = false;
 			// Special handling for syntax highlighting on empty visual lines
-			if (m_bWordWrap && VisualLineStart == VisualLineEnd)
+			if (VisualLineStart == VisualLineEnd)
 			{
 				ColorItem current_ci;
 
@@ -611,13 +608,10 @@ void Editor::ShowEditor(int CurLineOnly)
 
 					if (ci.StartPos != -1 || ci.EndPos != -1) // Standard color item
 					{
-						if (m_bWordWrap)
+						// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
+						if (ci.StartPos <= VisualLineStart && ci.EndPos >= VisualLineEnd - 1)
 						{
-							// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
-							if (ci.StartPos <= VisualLineStart && ci.EndPos >= VisualLineEnd - 1)
-							{
-								is_full_visual_line_coverage = true;
-							}
+							is_full_visual_line_coverage = true;
 						}
 
 						new_ci.StartPos -= VisualLineStart;
@@ -625,7 +619,7 @@ void Editor::ShowEditor(int CurLineOnly)
 
 						if (new_ci.StartPos < 0) new_ci.StartPos = 0;
 
-						if (m_bWordWrap && is_full_visual_line_coverage)
+						if (is_full_visual_line_coverage)
 						{
 							// Force EndPos large to cause DrawColor/ApplyColor to fill to the screen edge (via its internal clamping to X2).
 							new_ci.EndPos = FULL_LINE_END_POS_HINT;
@@ -637,11 +631,8 @@ void Editor::ShowEditor(int CurLineOnly)
 					}
 					else // Special case for {-1, -1} background element
 					{
-						if (m_bWordWrap)
-						{
-							new_ci.StartPos = 0;
-							new_ci.EndPos = FULL_LINE_END_POS_HINT;
-						}
+						new_ci.StartPos = 0;
+						new_ci.EndPos = FULL_LINE_END_POS_HINT;
 					}
 
 					if (new_ci.StartPos <= new_ci.EndPos)
@@ -679,7 +670,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			else // This 'else' corresponds to 'if (!background_filled)'
 			{
 				// Even if background was filled, we might need to draw our fake selection cursor on top of it.
-				if (m_bWordWrap && CurLogicalLine->GetLength() == 0)
+				if (CurLogicalLine->GetLength() == 0)
 				{
 					int RealSelStart, RealSelEnd;
 					CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
@@ -1411,10 +1402,6 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD9:
 		case KEY_CTRLSHIFTHOME:
 		case KEY_CTRLSHIFTNUMPAD7: {
-			{
-				int DbgSelStart, DbgSelEnd;
-				CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
-			}
 
 			Lock();
 			Pasting++;
@@ -1435,10 +1422,6 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD3:
 		case KEY_CTRLSHIFTEND:
 		case KEY_CTRLSHIFTNUMPAD1: {
-			{
-				int DbgSelStart, DbgSelEnd;
-				CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
-			}
 
 			Lock();
 			Pasting++;
@@ -1907,9 +1890,7 @@ int Editor::ProcessKey(FarKey Key)
 			} else		// расширяем выделение
 			{
 				CurLine->Select(SelStart, -1);
-				if (m_bWordWrap) {
-					int DbgSelStart, DbgSelEnd; CurLine->GetRealSelection(DbgSelStart, DbgSelEnd);
-				}
+
 				SelStart = CurLine->m_next->CellPosToReal(0);
 				SelEnd = CurLine->m_next->CellPosToReal(CurPos);
 			}
@@ -1926,9 +1907,7 @@ int Editor::ProcessKey(FarKey Key)
 			//				CurLine->m_next->Select(-1,0);
 			//			else
 			CurLine->m_next->Select(SelStart, SelEnd);
-			if (m_bWordWrap) {
-				int DbgSelStart, DbgSelEnd; CurLine->m_next->GetRealSelection(DbgSelStart, DbgSelEnd);
-			}
+
 			Down();
 			Show();
 			return TRUE;
@@ -2193,12 +2172,12 @@ int Editor::ProcessKey(FarKey Key)
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
-				if (m_bWordWrap) {
-					int v_start_pos, v_end_pos;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
-				}
+
+				int v_start_pos, v_end_pos;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 			} else { // Original logic
 				if (!CurPos && CurLine->m_prev) {
 					Up();
@@ -2229,12 +2208,12 @@ int Editor::ProcessKey(FarKey Key)
 				}
 				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
-				if (m_bWordWrap) {
-					int v_start_pos, v_end_pos;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
-				}
+
+				int v_start_pos, v_end_pos;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 			} else {
 				// Original logic for non-word-wrap
 				if (CurLine->GetCurPos() >= CurLine->GetLength() && CurLine->m_next && !EdOpt.CursorBeyondEOL)
@@ -3282,12 +3261,12 @@ case KEY_CTRLNUMPAD3: {
 				CurLine->SetCurPos(targetPos);
 
 				Show();
-				if (m_bWordWrap) {
-					int v_start_pos, v_end_pos;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-					int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
-				}
+
+				int v_start_pos, v_end_pos;
+				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
+				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
+				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 				return TRUE;
 			}
 		}
@@ -4051,11 +4030,6 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 
 void Editor::InsertString()
 {
-	if (m_bWordWrap) {
-		const wchar_t* str_addr;
-		int str_len;
-		CurLine->GetBinaryString(&str_addr, nullptr, str_len);
-	}
 	if (Flags.Check(FEDITOR_LOCKMODE))
 		return;
 

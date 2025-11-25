@@ -265,6 +265,8 @@ private:
 	void ScrollUp();
 	BOOL Search(int Next);
 
+	BOOL SetSelection(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
+
 void GoToVisualLine(int VisualLine);
 	void GoToLine(int Line);
 	void GoToPosition();
@@ -405,7 +407,6 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	int GetLineCurPos();
 	void BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 

@@ -3705,10 +3705,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				} else {
 					const bool SelVBlock = (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
 					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
-						SetSelection(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
+						MarkBlock(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
 							TargetPos - MouseSelStartingPos, NumLine + 1 - MouseSelStartingLine);
 					} else {
-						SetSelection(SelVBlock, NumLine, TargetPos,
+						MarkBlock(SelVBlock, NumLine, TargetPos,
 							MouseSelStartingPos - TargetPos, MouseSelStartingLine + 1 - NumLine);
 					}
 				}
@@ -5295,6 +5295,70 @@ void Editor::DeleteBlock()
 	BlockStart = nullptr;
 }
 
+BOOL Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight)
+{
+	fprintf(stderr, "Editor::MarkBlock: VBlock=%d StartLine=%d StartPos=%d Width=%d Height=%d\n",
+		SelVBlock, SelStartLine, SelStartPos, SelWidth, SelHeight);
+
+	Edit *CurPtr = GetStringByNumber(SelStartLine);
+
+	if (!CurPtr) {
+		fprintf(stderr, "Editor::MarkBlock: fail cuz StartLine=%d not found\n", SelStartLine);
+		return FALSE;
+	}
+	if (SelHeight <= 0 || SelStartPos < 0) {
+		fprintf(stderr, "Editor::MarkBlock: fail cuz Height=%d <= 0 || StartPos=%d < 0\n", SelHeight, SelStartPos);
+		return FALSE;
+	}
+
+	UnmarkBlock();
+
+	if (SelVBlock) {
+		Flags.Set(FEDITOR_MARKINGVBLOCK);
+		VBlockStart = CurPtr;
+
+		if ((BlockStartLine = SelStartLine) == -1)
+			BlockStartLine = NumLine;
+
+		VBlockX = CurPtr->RealPosToCell(SelStartPos);
+
+		if ((VBlockY = SelStartLine) == -1)
+			VBlockY = NumLine;
+
+		auto LastPtr = CurPtr;
+		for (int i = SelHeight; --i > 0 && LastPtr->m_next; ) {
+			LastPtr = LastPtr->m_next;
+		}
+		VBlockSizeX = LastPtr->RealPosToCell(SelStartPos + SelWidth) - VBlockX;
+		VBlockSizeY = SelHeight;
+
+		if (VBlockSizeX < 0) {
+			VBlockSizeX = -VBlockSizeX;
+			VBlockX-= VBlockSizeX;
+
+			if (VBlockX < 0)
+				VBlockX = 0;
+		}
+
+	} else {
+		Flags.Set(FEDITOR_MARKINGBLOCK);
+		BlockStart = CurPtr;
+
+		if ((BlockStartLine = SelStartLine) == -1)
+			BlockStartLine = NumLine;
+
+		for (int i = 0; i < SelHeight && CurPtr; i++) {
+			int SelStart = i ? 0 : SelStartPos;
+			int SelEnd = (i < SelHeight - 1) ? -1 : SelStartPos + SelWidth;
+			CurPtr->Select(SelStart, SelEnd);
+			CurPtr = CurPtr->m_next;
+			// ранее было if (!CurPtr) return FALSE
+		}
+	}
+
+	return TRUE;
+}
+
 void Editor::UnmarkBlock()
 {
 	if (!BlockStart && !VBlockStart)
@@ -6516,7 +6580,7 @@ int Editor::EditorControl(int Command, void *Param)
 					UnmarkBlock();
 					return TRUE;
 				}
-				return SetSelection(Sel->BlockType == BTYPE_COLUMN,
+				return MarkBlock(Sel->BlockType == BTYPE_COLUMN,
 					Sel->BlockStartLine, Sel->BlockStartPos, Sel->BlockWidth, Sel->BlockHeight);
 			}
 			fprintf(stderr, "ECTL_SELECT: !Param\n");
@@ -6809,70 +6873,6 @@ int Editor::EditorControl(int Command, void *Param)
 	}
 
 	return FALSE;
-}
-
-BOOL Editor::SetSelection(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight)
-{
-	fprintf(stderr, "Editor::SetSelection: VBlock=%d StartLine=%d StartPos=%d Width=%d Height=%d\n",
-		SelVBlock, SelStartLine, SelStartPos, SelWidth, SelHeight);
-
-	Edit *CurPtr = GetStringByNumber(SelStartLine);
-
-	if (!CurPtr) {
-		fprintf(stderr, "Editor::SetSelection: fail cuz StartLine=%d not found\n", SelStartLine);
-		return FALSE;
-	}
-	if (SelHeight <= 0 || SelStartPos < 0) {
-		fprintf(stderr, "Editor::SetSelection: fail cuz Height=%d <= 0 || StartPos=%d < 0\n", SelHeight, SelStartPos);
-		return FALSE;
-	}
-
-	UnmarkBlock();
-
-	if (SelVBlock) {
-		Flags.Set(FEDITOR_MARKINGVBLOCK);
-		VBlockStart = CurPtr;
-
-		if ((BlockStartLine = SelStartLine) == -1)
-			BlockStartLine = NumLine;
-
-		VBlockX = CurPtr->RealPosToCell(SelStartPos);
-
-		if ((VBlockY = SelStartLine) == -1)
-			VBlockY = NumLine;
-
-		auto LastPtr = CurPtr;
-		for (int i = SelHeight; --i > 0 && LastPtr->m_next; ) {
-			LastPtr = LastPtr->m_next;
-		}
-		VBlockSizeX = LastPtr->RealPosToCell(SelStartPos + SelWidth) - VBlockX;
-		VBlockSizeY = SelHeight;
-
-		if (VBlockSizeX < 0) {
-			VBlockSizeX = -VBlockSizeX;
-			VBlockX-= VBlockSizeX;
-
-			if (VBlockX < 0)
-				VBlockX = 0;
-		}
-
-	} else {
-		Flags.Set(FEDITOR_MARKINGBLOCK);
-		BlockStart = CurPtr;
-
-		if ((BlockStartLine = SelStartLine) == -1)
-			BlockStartLine = NumLine;
-
-		for (int i = 0; i < SelHeight && CurPtr; i++) {
-			int SelStart = i ? 0 : SelStartPos;
-			int SelEnd = (i < SelHeight - 1) ? -1 : SelStartPos + SelWidth;
-			CurPtr->Select(SelStart, SelEnd);
-			CurPtr = CurPtr->m_next;
-			// ранее было if (!CurPtr) return FALSE
-		}
-	}
-
-	return TRUE;
 }
 
 int Editor::SetBookmark(DWORD Pos)

@@ -1183,8 +1183,7 @@ int64_t Editor::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 				}
 				case 4:		// UnMark sel block
 				{
-					bool NeedRedraw = BlockStart || VBlockStart;
-					UnmarkBlock();
+					auto NeedRedraw = UnmarkBlock();
 					UnmarkMacroBlock();
 
 					if (NeedRedraw)
@@ -1317,7 +1316,7 @@ int Editor::ProcessKey(FarKey Key)
 
 				for (size_t I = 0; I < ARRAYSIZE(UnmarkKeys); I++)
 					if (Key == UnmarkKeys[I]) {
-						UnmarkBlock();
+						UnmarkBlockAndShowIt();
 						break;
 					}
 			} else {
@@ -1327,8 +1326,9 @@ int Editor::ProcessKey(FarKey Key)
 				BlockStart->GetRealSelection(StartSel, EndSel);
 				_SVS(SysLog(L"[%d] PersistentBlocks! StartSel=%d, EndSel=%d", __LINE__, StartSel, EndSel));
 
-				if (StartSel == -1 || StartSel == EndSel)
-					UnmarkBlock();
+				if (StartSel == -1 || StartSel == EndSel) {
+					UnmarkBlockAndShowIt();
+				}
 			}
 		}
 	}
@@ -1388,7 +1388,7 @@ int Editor::ProcessKey(FarKey Key)
 			_SVS(SysLog(L"[%d] SelStart=%d, SelEnd=%d", __LINE__, SelStart, SelEnd));
 
 			if (!Flags.Check(FEDITOR_MARKINGBLOCK)) {
-				UnmarkBlock();
+				UnmarkBlockAndShowIt();
 				Flags.Set(FEDITOR_MARKINGBLOCK);
 				BlockStart = CurLine;
 				BlockStartLine = NumLine;
@@ -1948,7 +1948,7 @@ int Editor::ProcessKey(FarKey Key)
 				}
 
 				if (!Flags.Check(FEDITOR_MARKINGBLOCK)) {
-					UnmarkBlock();
+					UnmarkBlockAndShowIt();
 					Flags.Set(FEDITOR_MARKINGBLOCK);
 					BlockStart = CurLine;
 					BlockStartLine = NumLine;
@@ -2095,12 +2095,13 @@ int Editor::ProcessKey(FarKey Key)
 		}
 		case KEY_CTRLA: {
 			UnmarkBlock();
-			SelectAll();
+			SelectAll(); // Show(); inside
 			return TRUE;
 		}
 		case KEY_CTRLU: {
 			UnmarkMacroBlock();
 			UnmarkBlock();
+			Show();
 			return TRUE;
 		}
 		case KEY_CTRLC:
@@ -3604,9 +3605,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	// $ 28.12.2000 VVM - Щелчок мышкой снимает непостоянный блок всегда
 	if ((MouseEvent->dwButtonState & 3) && !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
-		if ((!EdOpt.PersistentBlocks) && (BlockStart || VBlockStart)) {
-			UnmarkBlock();
-			Show();
+		if (!EdOpt.PersistentBlocks) {
+			UnmarkBlockAndShowIt();
 		}
 	}
 
@@ -3696,6 +3696,11 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			if (TargetLine)
 			{
+				// Снимаем любое предыдущее выделение при новом клике.
+				// UnmarkBlock() должен вызываться только при первом клике, а не при каждом движении
+				if ((MouseEvent->dwEventFlags & MOUSE_MOVED) == 0) {
+					UnmarkBlockAndShowIt();
+				}
 				CurLine = TargetLine;
 				NumLine = CalcDistance(TopList, CurLine, -1);
 				CurLine->SetCurPos(TargetPos);
@@ -3719,11 +3724,6 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
 					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(v_start);
 					MaxRightPos = CurLine->GetCellCurPos();
-				}
-				// Снимаем любое предыдущее выделение при новом клике.
-		        // UnmarkBlock() должен вызываться только при первом клике, а не при каждом движении
-        		if (!(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
-					UnmarkBlock();
 				}
 				Show();
 			}
@@ -4600,8 +4600,9 @@ BOOL Editor::Search(int Next)
 
 	// LastSuccessfulReplaceMode=ReplaceMode;
 
-	if (!EdOpt.PersistentBlocks || (SelectFound && !ReplaceMode))
-		UnmarkBlock();
+	if (!EdOpt.PersistentBlocks || (SelectFound && !ReplaceMode)) {
+		UnmarkBlockAndShowIt();
+	}
 
 	{
 		// SaveScreen SaveScr;
@@ -4674,7 +4675,7 @@ BOOL Editor::Search(int Next)
 				if (SelectFound && !ReplaceMode) {
 					Pasting++;
 					Lock();
-					UnmarkBlock();
+					UnmarkBlockAndShowIt();
 					Flags.Set(FEDITOR_MARKINGBLOCK);
 					int iFoundPos = CurPtr->GetCurPos();
 					CurPtr->Select(iFoundPos, iFoundPos + SearchLength);
@@ -4870,7 +4871,7 @@ BOOL Editor::Search(int Next)
 							CurLine->SetCurPos(CurPos + RStrLen);
 
 							if (SelectFound && !ReplaceMode) {
-								UnmarkBlock();
+								UnmarkBlockAndShowIt();
 								Flags.Set(FEDITOR_MARKINGBLOCK);
 								CurPtr->Select(CurPos, CurPos + RStrLen);
 								BlockStart = CurPtr;
@@ -4957,7 +4958,7 @@ void Editor::Paste(const wchar_t *Src)
 		Flags.Set(FEDITOR_NEWUNDO);
 		TextChanged(1);
 		int SaveOvertype = Flags.Check(FEDITOR_OVERTYPE);
-		UnmarkBlock();
+		UnmarkBlockAndShowIt();
 		Pasting++;
 		Lock();
 
@@ -5295,7 +5296,7 @@ void Editor::DeleteBlock()
 	BlockStart = nullptr;
 }
 
-BOOL Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight)
+bool Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight)
 {
 	fprintf(stderr, "Editor::MarkBlock: VBlock=%d StartLine=%d StartPos=%d Width=%d Height=%d\n",
 		SelVBlock, SelStartLine, SelStartPos, SelWidth, SelHeight);
@@ -5304,11 +5305,11 @@ BOOL Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int Se
 
 	if (!CurPtr) {
 		fprintf(stderr, "Editor::MarkBlock: fail cuz StartLine=%d not found\n", SelStartLine);
-		return FALSE;
+		return false;
 	}
 	if (SelHeight <= 0 || SelStartPos < 0) {
 		fprintf(stderr, "Editor::MarkBlock: fail cuz Height=%d <= 0 || StartPos=%d < 0\n", SelHeight, SelStartPos);
-		return FALSE;
+		return false;
 	}
 
 	UnmarkBlock();
@@ -5356,13 +5357,13 @@ BOOL Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int Se
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
-void Editor::UnmarkBlock()
+bool Editor::UnmarkBlock()
 {
 	if (!BlockStart && !VBlockStart)
-		return;
+		return false;
 
 	VBlockStart = nullptr;
 	_SVS(SysLog(L"[%d] Editor::UnmarkBlock()", __LINE__));
@@ -5394,7 +5395,13 @@ void Editor::UnmarkBlock()
 	}
 
 	BlockStart = nullptr;
-	Show();
+	return true;
+}
+
+void Editor::UnmarkBlockAndShowIt()
+{
+	if (UnmarkBlock())
+		Show();
 }
 
 /*
@@ -5430,8 +5437,8 @@ void Editor::UnmarkEmptyBlock()
 				Block = Block->m_next;
 			}
 
-		if (!Lines)			// если выделено ноль символов в ширину, то
-			UnmarkBlock();	// перестанем морочить голову и снимем выделение
+		if (!Lines)                 // если выделено ноль символов в ширину,
+			UnmarkBlockAndShowIt(); // то перестанем морочить голову и снимем выделение
 	}
 }
 
@@ -5674,7 +5681,7 @@ void Editor::Undo(int redo)
 	if (level)
 		uend = ustart;
 
-	UnmarkBlock();
+	UnmarkBlockAndShowIt();
 	EditorUndoData *ud = ustart;
 
 	for (;;) {
@@ -6117,7 +6124,7 @@ void Editor::VPaste(wchar_t *ClipText)
 		Flags.Set(FEDITOR_NEWUNDO);
 		TextChanged(1);
 		int SaveOvertype = Flags.Check(FEDITOR_OVERTYPE);
-		UnmarkBlock();
+		UnmarkBlockAndShowIt();
 		Pasting++;
 		Lock();
 
@@ -6577,7 +6584,7 @@ int Editor::EditorControl(int Command, void *Param)
 				EditorSelect *Sel = (EditorSelect *)Param;
 				if (Sel->BlockType == BTYPE_NONE || Sel->BlockStartPos < 0) {
 					fprintf(stderr, "ECTL_SELECT: unmark cuz Type=%d StartPos=%d\n", Sel->BlockType, Sel->BlockStartPos);
-					UnmarkBlock();
+					UnmarkBlockAndShowIt();
 					return TRUE;
 				}
 				return MarkBlock(Sel->BlockType == BTYPE_COLUMN,
@@ -7259,7 +7266,7 @@ void Editor::SetReplaceMode(int Mode)
 
 void Editor::BeginVBlockMarking()
 {
-	UnmarkBlock();
+	UnmarkBlockAndShowIt();
 	VBlockStart = CurLine;
 	VBlockX = CurLine->GetCellCurPos();
 	VBlockSizeX = 0;

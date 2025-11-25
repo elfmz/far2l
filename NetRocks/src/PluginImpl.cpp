@@ -123,7 +123,7 @@ void PluginImpl::UpdatePathInfo()
 	std::wstring tmp;
 	if (_remote) {
 		wcsncpy(_format, StrMB2Wide(_location.server).c_str(), ARRAYSIZE(_format) - 1);
-		wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
+		//wcsncpy(_cur_dir, StrMB2Wide(_location.ToString(true)).c_str(), ARRAYSIZE(_cur_dir) - 1 );
 		// make up URL string start
 		IHost::Identity identity;
 		_remote->GetIdentity(identity);
@@ -139,7 +139,7 @@ void PluginImpl::UpdatePathInfo()
 		tmp += L"/" + StrMB2Wide(_location.ToString(false));
 		wcsncpy(_cur_URL, tmp.c_str(), ARRAYSIZE(_cur_URL) - 1 );
 		// make up URL string end
-		tmp = _cur_dir;
+		//tmp = _cur_dir;
 
 	} else {
 		tmp = StrMB2Wide(_sites_cfg_location.TranslateToPath(false));

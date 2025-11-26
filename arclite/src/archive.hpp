@@ -477,6 +477,8 @@ public:
 	unsigned get_crc(UInt32 index) const;
 	bool get_anti(UInt32 index) const;
 	bool get_isaltstream(UInt32 index) const;
+	bool get_dev(UInt32 index, dev_t &_device) const;
+	bool get_device(UInt32 index, dev_t &_device) const;
 
 	UInt64 get_offset(UInt32 index) const;
 

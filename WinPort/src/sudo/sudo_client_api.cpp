@@ -562,7 +562,6 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chmod(const char *pat
 	return common_path_and_mode(SUDO_CMD_CHMOD, &chmod, path, mode, true);
 }
 
-/**
 extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
 {
 	int saved_errno = errno;
@@ -586,7 +585,6 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *pat
 	}
 	return r;
 }
-**/
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_utimens(const char *filename, const struct timespec times[2])
 {
@@ -916,7 +914,6 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_mknod(const char *pat
 	return r;
 }
 
-/**
 extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *path, uid_t owner, gid_t group)
 {
 	int saved_errno = errno;
@@ -940,8 +937,8 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *pa
 	}
 	return r;
 }
-**/
 
+/**
 static int common_chown(SudoCommand cmd, int (*pfn)(const char *, uid_t, gid_t), const char *path, uid_t owner, gid_t group) {
 	int saved_errno = errno;
 	Sudo::ClientReconstructCurDir crcd(path);
@@ -986,6 +983,7 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_xchown(SudoXChownComm
 			return -1;
 	}
 }
+**/
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2])
 {

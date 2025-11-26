@@ -9,6 +9,12 @@
 #include "archive.hpp"
 #include "options.hpp"
 
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#include <sys/types.h>
+#else
+#include <sys/sysmacros.h>	  // major / minor
+#endif
+
 const wchar_t *c_method_default = L"Default";
 const wchar_t *c_method_copy = L"Copy";
 const wchar_t *c_method_lzma = L"LZMA";
@@ -2019,6 +2025,48 @@ bool Archive<UseVirtualDestructor>::get_isaltstream(UInt32 index) const
 		return prop.get_bool();
 	else
 		return false;
+}
+
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_device(UInt32 index, dev_t &_device) const
+{
+	UInt32 dev_major, dev_minor;
+	PropVariant prop;
+	if (index >= m_num_indices)
+		return false;
+
+	if (in_arc->GetProperty(index, kpidDeviceMajor, prop.ref()) != S_OK || !prop.is_uint())
+		return false;
+
+	dev_major = prop.get_uint();
+
+	if (in_arc->GetProperty(index, kpidDeviceMinor, prop.ref()) != S_OK || !prop.is_uint())
+		return false;
+
+	dev_minor = prop.get_uint();
+	_device = makedev(dev_major, dev_minor);
+	return true;
+}
+
+template<bool UseVirtualDestructor>
+bool Archive<UseVirtualDestructor>::get_dev(UInt32 index, dev_t &_device) const
+{
+	UInt32 dev_major, dev_minor;
+	PropVariant prop;
+	if (index >= m_num_indices)
+		return false;
+
+	if (in_arc->GetProperty(index, kpidDevMajor, prop.ref()) != S_OK || !prop.is_uint())
+		return false;
+
+	dev_major = prop.get_uint();
+
+	if (in_arc->GetProperty(index, kpidDevMinor, prop.ref()) != S_OK || !prop.is_uint())
+		return false;
+
+	dev_minor = prop.get_uint();
+	_device = makedev(dev_major, dev_minor);
+	return true;
 }
 
 template<bool UseVirtualDestructor>

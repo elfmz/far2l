@@ -38,6 +38,7 @@ struct PendingSymlink {
 using HardlinkIndexMap = std::unordered_map<UInt32, UInt32>;
 using PendingHardlinks = std::vector<PendingHardlink>;
 using PendingSymlinks = std::vector<PendingSymlink>;
+using PendingSPFiles = std::vector<UInt32>;
 
 static std::wstring get_progress_bar_str(unsigned width, unsigned percent1, unsigned percent2)
 {
@@ -509,13 +510,26 @@ private:
 		file.set_end();
 
 		if ((posixattr & S_IFMT) == S_IFLNK) {
-
 			size_t slsize = file.getsymlinkdatasize();
+
 			if (slsize) {
 				if (slsize >= PATH_MAX)
 					slsize = PATH_MAX - 1;
 				char* symlinkdata = file.getsymlink();
 				symlinkdata[slsize] = 0;
+
+				std::wstring file_path = current_rec.file_path;
+				mb_path = StrWide2MB(current_rec.file_path);
+				struct stat st;
+				if (sdc_lstat(mb_path.c_str(), &st) == 0) {
+					if (current_rec.overwrite == oaRename)
+						file_path = auto_rename(current_rec.file_path);
+					else if (sdc_unlink(mb_path.c_str()) != 0) {
+						FAIL(errno);
+					}
+				}
+
+				mb_path = StrWide2MB(file_path);
 
 				if (sdc_symlink(symlinkdata, mb_path.c_str()) != 0) {
 					FAIL(errno);
@@ -532,6 +546,7 @@ private:
 				}
 			}
 		} else {
+			mb_path = StrWide2MB(current_rec.file_path);
 
 			if (options.extract_access_rights && posixattr) {
 				if (sdc_chmod(mb_path.c_str(), posixattr & 0xFFF) != 0) {
@@ -1107,6 +1122,7 @@ private:
 	HardlinkIndexMap &hlmap;
 	PendingHardlinks &phl;
 	PendingSymlinks &psl;
+	PendingSPFiles &psf;
 	Far::FileFilter *filter;
 	bool &ignore_errors;
 	ErrorLog &error_log;
@@ -1133,13 +1149,13 @@ private:
 		const auto cmode = static_cast<int>(g_options.correct_name_mode);
 		std::for_each(index_range.first, index_range.second, [&](UInt32 file_index) {
 			const ArcFileInfo &file_info = archive.file_list[file_index];
+			DWORD attr = 0, posixattr = 0;
+			attr = archive.get_attr(file_index, &posixattr);
 
 			if (filter) {
 				PluginPanelItem filter_data;
 				memset(&filter_data, 0, sizeof(PluginPanelItem));
 
-				DWORD attr = 0, posixattr = 0;
-				attr = archive.get_attr(file_index, &posixattr);
 				DWORD farattr = SetFARAttributes(attr, posixattr);
 
 				if (file_info.name.length()) {
@@ -1209,6 +1225,12 @@ private:
 					return;
 				}
 
+				uint32_t ftype = posixattr & S_IFMT;
+				if (ftype == S_IFCHR || ftype == S_IFBLK || ftype == S_IFIFO) {
+					psf.push_back(file_index);
+					return;
+				}
+
 				if (file_info.hl_group == (uint32_t)-1 || file_info.is_altstream) {
 					//fprintf(stderr, "ALTSTREAM! %ls group %u, file_index %u;\n", file_info.name.c_str(), file_info.hl_group, file_index);
 					indices.push_back(file_index);
@@ -1241,14 +1263,15 @@ private:
 
 public:
 	PrepareExtract(const FileIndexRange &index_range, const std::wstring &parent_dir, Archive<UseVirtualDestructor> &archive,
-			std::list<UInt32> &indices, HardlinkIndexMap &hlmap, PendingHardlinks &phl, PendingSymlinks &psl, Far::FileFilter *filter, bool &ignore_errors,
-			ErrorLog &error_log)
+			std::list<UInt32> &indices, HardlinkIndexMap &hlmap, PendingHardlinks &phl, PendingSymlinks &psl, PendingSPFiles &psf, 
+			Far::FileFilter *filter, bool &ignore_errors, ErrorLog &error_log)
 		: ProgressMonitor(Far::get_msg(MSG_PROGRESS_CREATE_DIRS), false),
 		  archive(archive),
 		  indices(indices),
 		  hlmap(hlmap),
 		  phl(phl),
 		  psl(psl),
+		  psf(psf),
 		  filter(filter),
 		  ignore_errors(ignore_errors),
 		  error_log(error_log)
@@ -1669,7 +1692,6 @@ static void create_hardlink_copy(const std::string &src_path,
 	}
 }
 
-
 template<bool UseVirtualDestructor>
 void create_hardlinks(
 	Archive<UseVirtualDestructor>& archive,
@@ -1677,26 +1699,33 @@ void create_hardlinks(
 	UInt32 src_dir_index,
 	const PendingHardlinks &phl,
 	const PendingSymlinks &psl,
+	const PendingSPFiles &psf,
 	const HardlinkIndexMap &hardlink_map,
-	bool bCreateHardLinks,
 	const ExtractOptions &options,
-	std::shared_ptr<ErrorLog> error_log)
+	OverwriteAction &overwrite_action,
+	bool &ignore_errors,
+	ErrorLog &error_log)
 {
-	size_t total_links = phl.size() + psl.size();
-	if (total_links == 0) {
+	fprintf(stderr, "create_hardlinks()\n");
+
+	bool bCreateHardLinks = !options.duplicate_hardlinks;
+
+	size_t total_files = phl.size() + psl.size() + (options.restore_special_files ? psf.size() : 0);
+
+	if (total_files == 0) {
 		return;
 	}
 
 	auto progress = std::make_shared<CreateHardlinksProgress>(archive.arc_path);
-	progress->set_total(total_links);
+	progress->set_total(total_files);
 
 	UInt64 completed = 0;
-	bool ignore_errors = false;
 
 	for (const auto &link : phl) {
 		try {
 			std::wstring src_path = archive.build_extract_path(link.src_index, dst_dir, src_dir_index);
 			std::wstring dst_path = archive.build_extract_path(link.dst_index, dst_dir, src_dir_index);
+			const ArcFileInfo &file_info = archive.file_list[link.dst_index];
 
 			std::wstring current_file = extract_file_name(dst_path);
 			if (bCreateHardLinks) {
@@ -1706,52 +1735,67 @@ void create_hardlinks(
 			}
 			progress->update_current_file(current_file);
 
-			if (bCreateHardLinks) {
-				RETRY_OR_IGNORE_BEGIN
-				std::string src_mb = StrWide2MB(src_path);
-				std::string dst_mb = StrWide2MB(dst_path);
-
-				struct stat st;
-				if (sdc_stat(src_mb.c_str(), &st) != 0) {
-					FAIL_MSG(L"Source file for hardlink does not exist: " + src_path);
-				}
-
-				struct stat dst_st;
-				if (sdc_stat(dst_mb.c_str(), &dst_st) == 0) {
-					if (sdc_unlink(dst_mb.c_str()) != 0) {
-						FAIL(HRESULT_FROM_WIN32(errno));
-					}
-				}
-
-				if (sdc_link(src_mb.c_str(), dst_mb.c_str()) != 0) {
-					FAIL(HRESULT_FROM_WIN32(errno));
-				}
-				RETRY_OR_IGNORE_END(ignore_errors, *error_log, *progress)
-			} else {
-				RETRY_OR_IGNORE_BEGIN
-				std::string src_mb = StrWide2MB(src_path);
-				std::string dst_mb = StrWide2MB(dst_path);
-
-				struct stat st;
-				if (sdc_stat(src_mb.c_str(), &st) != 0) {
-					FAIL_MSG(L"Source file for copy does not exist: " + src_path);
-				}
-
-				struct stat dst_st;
-				if (sdc_stat(dst_mb.c_str(), &dst_st) == 0) {
-					if (sdc_unlink(dst_mb.c_str()) != 0) {
-						FAIL(HRESULT_FROM_WIN32(errno));
-					}
-				}
-
-				create_hardlink_copy(src_mb, dst_mb, st.st_size, progress);
-				RETRY_OR_IGNORE_END(ignore_errors, *error_log, *progress)
+			RETRY_OR_IGNORE_BEGIN
+			std::string src_mb = StrWide2MB(src_path);
+			std::string dst_mb = StrWide2MB(dst_path);
+			struct stat st;
+			if (sdc_stat(src_mb.c_str(), &st) != 0) {
+				FAIL_MSG(L"Source file for hardlink/copy does not exist: " + src_path);
 			}
+
+			struct stat dst_st;
+			std::wstring file_path = dst_path;
+			OverwriteAction overwrite = overwrite_action;
+			if (sdc_stat(dst_mb.c_str(), &dst_st) == 0) {
+
+				if (overwrite_action == oaAsk) {
+					OverwriteFileInfo src_ov_info, dst_ov_info;
+
+					src_ov_info.is_dir = file_info.is_dir;
+					src_ov_info.size = archive.get_size(link.dst_index);
+					src_ov_info.mtime = archive.get_mtime(link.dst_index);
+
+					dst_ov_info.is_dir = S_ISDIR(st.st_mode);
+					dst_ov_info.size = st.st_size;
+					WINPORT(FileTime_UnixToWin32)(st.st_mtim, &dst_ov_info.mtime);
+
+					OverwriteOptions ov_options;
+					if (!overwrite_dialog(dst_path, src_ov_info, dst_ov_info, odkExtract, ov_options))
+						throw E_ABORT;
+
+					overwrite = ov_options.action;
+					if (ov_options.all)
+						overwrite_action = ov_options.action;
+				} else
+					overwrite = overwrite_action;
+
+				if (overwrite == oaSkip)
+					break;
+
+				if (overwrite == oaRename) {
+					file_path = auto_rename(dst_path);
+				}
+				else if (sdc_unlink(dst_mb.c_str()) != 0) {
+					FAIL(errno);
+				}
+			}
+
+			std::string filepath_mb = StrWide2MB(file_path);
+
+			if (bCreateHardLinks) {
+				if (sdc_link(src_mb.c_str(), filepath_mb.c_str()) != 0) {
+					FAIL(errno);
+				}
+			}
+			else {
+				create_hardlink_copy(src_mb, filepath_mb, st.st_size, progress);
+			}
+			RETRY_OR_IGNORE_END(ignore_errors, error_log, *progress)
 
 			completed++;
 			progress->update_completed(completed);
 		} catch (const Error& error) {
-			retry_or_ignore_error(error, ignore_errors, ignore_errors, *error_log, *progress, true, true);
+			retry_or_ignore_error(error, ignore_errors, ignore_errors, error_log, *progress, true, true);
 			if (!ignore_errors) throw;
 		}
 	}
@@ -1767,35 +1811,174 @@ void create_hardlinks(
 
 			RETRY_OR_IGNORE_BEGIN
 			std::string link_mb = StrWide2MB(link_path);
+			std::wstring file_path = link_path;
 			std::string target_mb = StrWide2MB(target_path);
-
 			struct stat st;
+			OverwriteAction overwrite = overwrite_action;
 			if (sdc_lstat(link_mb.c_str(), &st) == 0) {
-				if (sdc_unlink(link_mb.c_str()) != 0) {
+
+				if (overwrite_action == oaAsk) {
+					OverwriteFileInfo src_ov_info, dst_ov_info;
+
+					src_ov_info.is_dir = file_info.is_dir;
+					src_ov_info.size = archive.get_size(symlink_info.dst_index);
+					src_ov_info.mtime = archive.get_mtime(symlink_info.dst_index);
+
+					dst_ov_info.is_dir = S_ISDIR(st.st_mode);
+					dst_ov_info.size = st.st_size;
+					WINPORT(FileTime_UnixToWin32)(st.st_mtim, &dst_ov_info.mtime);
+
+					OverwriteOptions ov_options;
+					if (!overwrite_dialog(link_path, src_ov_info, dst_ov_info, odkExtract, ov_options))
+						throw E_ABORT;
+
+					overwrite = ov_options.action;
+					if (ov_options.all)
+						overwrite_action = ov_options.action;
+				} else
+					overwrite = overwrite_action;
+
+				if (overwrite == oaSkip)
+					break;
+
+				if (overwrite == oaRename) {
+					file_path = auto_rename(link_path);
+				}
+				else if (sdc_unlink(link_mb.c_str()) != 0) {
 					FAIL(errno);
 				}
 			}
 
-			if (sdc_symlink(target_mb.c_str(), link_mb.c_str()) != 0) {
+			std::string filepath_mb = StrWide2MB(file_path);
+
+			if (sdc_symlink(target_mb.c_str(), filepath_mb.c_str()) != 0) {
 				FAIL(errno);
 			}
 
 			if (options.extract_owners_groups) {
-				set_file_owner_group(link_mb, file_info, options.extract_owners_groups);
+				set_file_owner_group(filepath_mb, file_info, options.extract_owners_groups);
 			}
 
 			FILETIME atime_ft = archive.get_atime(symlink_info.dst_index);
 			FILETIME mtime_ft = archive.get_mtime(symlink_info.dst_index);
-			if (set_symlink_times(link_mb, atime_ft, mtime_ft)) {
+			if (set_symlink_times(filepath_mb, atime_ft, mtime_ft)) {
 				FAIL(errno);
 			}
 
-			RETRY_OR_IGNORE_END(ignore_errors, *error_log, *progress)
+			RETRY_OR_IGNORE_END(ignore_errors, error_log, *progress)
 
 			completed++;
 			progress->update_completed(completed);
 		} catch (const Error& error) {
-			retry_or_ignore_error(error, ignore_errors, ignore_errors, *error_log, *progress, true, true);
+			retry_or_ignore_error(error, ignore_errors, ignore_errors, error_log, *progress, true, true);
+			if (!ignore_errors) throw;
+		}
+	}
+
+	if (!options.restore_special_files) {
+		progress->clean();
+		return;
+	}
+
+	for (const auto &dst_index : psf) {
+		try {
+			std::wstring dev_path = archive.build_extract_path(dst_index, dst_dir, src_dir_index);
+			const ArcFileInfo &file_info = archive.file_list[dst_index];
+
+			std::wstring current_file = L"[Device] " + extract_file_name(dev_path);
+			progress->update_current_file(current_file);
+
+			DWORD attr = 0, posixattr = 0;
+			attr = archive.get_attr(dst_index, &posixattr);
+			(void)attr;
+			uint32_t ftype = posixattr & S_IFMT;
+			dev_t _device;
+
+			if (ftype == S_IFCHR || ftype == S_IFBLK) {
+				if (!archive.get_device(dst_index, _device)) {
+					completed++; progress->update_completed(completed);
+					continue;
+				}
+			}
+			else if (ftype != S_IFIFO) {
+				completed++; progress->update_completed(completed);
+				continue;
+			}
+
+			RETRY_OR_IGNORE_BEGIN
+			std::string dev_mb = StrWide2MB(dev_path);
+			std::wstring file_path = dev_path;
+			struct stat st;
+			OverwriteAction overwrite = overwrite_action;
+			if (sdc_lstat(dev_mb.c_str(), &st) == 0) {
+
+				if (overwrite_action == oaAsk) {
+					OverwriteFileInfo src_ov_info, dst_ov_info;
+
+					src_ov_info.is_dir = file_info.is_dir;
+					src_ov_info.size = archive.get_size(dst_index);
+					src_ov_info.mtime = archive.get_mtime(dst_index);
+
+					dst_ov_info.is_dir = S_ISDIR(st.st_mode);
+					dst_ov_info.size = st.st_size;
+					WINPORT(FileTime_UnixToWin32)(st.st_mtim, &dst_ov_info.mtime);
+
+					OverwriteOptions ov_options;
+					if (!overwrite_dialog(dev_path, src_ov_info, dst_ov_info, odkExtract, ov_options))
+						throw E_ABORT;
+
+					overwrite = ov_options.action;
+					if (ov_options.all)
+						overwrite_action = ov_options.action;
+				} else
+					overwrite = overwrite_action;
+
+				if (overwrite == oaSkip)
+					break;
+
+				if (overwrite == oaRename) {
+					file_path = auto_rename(dev_path);
+				}
+				else if (sdc_unlink(dev_mb.c_str()) != 0) {
+					FAIL(errno);
+				}
+			}
+
+			std::string filepath_mb = StrWide2MB(file_path);
+
+			switch(ftype) {
+			case S_IFCHR:
+			case S_IFBLK:
+				if (sdc_mknod(filepath_mb.c_str(), posixattr, _device) != 0) {
+					FAIL(errno);
+				}
+			break;
+			case S_IFIFO:
+				if (sdc_mkfifo(filepath_mb.c_str(), posixattr) != 0) {
+					FAIL(errno);
+				}
+			break;
+
+			default:
+			break;
+			}
+
+			if (options.extract_owners_groups) {
+				set_file_owner_group(filepath_mb, file_info, options.extract_owners_groups);
+			}
+
+			FILETIME atime_ft = archive.get_atime(dst_index);
+			FILETIME mtime_ft = archive.get_mtime(dst_index);
+			if (set_file_times(filepath_mb, atime_ft, mtime_ft)) {
+				FAIL(errno);
+			}
+
+			RETRY_OR_IGNORE_END(ignore_errors, error_log, *progress)
+
+			completed++;
+			progress->update_completed(completed);
+		} catch (const Error& error) {
+			retry_or_ignore_error(error, ignore_errors, ignore_errors, error_log, *progress, true, true);
 			if (!ignore_errors) throw;
 		}
 	}
@@ -1812,6 +1995,7 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 	HardlinkIndexMap hlmap;
 	PendingHardlinks phl;
 	PendingSymlinks psl;
+	PendingSPFiles psf;
 
 	fprintf(stderr, ">>> Archive::extract():\n" );
 
@@ -1822,7 +2006,7 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 
 	std::list<UInt32> file_indices;
 	PrepareExtract(FileIndexRange(src_indices.begin(), src_indices.end()), options.dst_dir, *this,
-			file_indices, hlmap, phl, psl, options.filter.get(), *ignore_errors, *error_log);
+			file_indices, hlmap, phl, psl, psf, options.filter.get(), *ignore_errors, *error_log);
 
 	std::vector<UInt32> indices;
 	indices.reserve(file_indices.size());
@@ -1960,10 +2144,8 @@ void Archive<UseVirtualDestructor>::extract(UInt32 src_dir_index, const std::vec
 	SetDirAttr(FileIndexRange(src_indices.begin(), src_indices.end()), options.dst_dir, *this, options.filter.get(), *ignore_errors,
 			options, *error_log);
 
-	if (!phl.empty() || !psl.empty()) {
-		//bool bCreateHardLinks = false;
-		bool bCreateHardLinks = !options.duplicate_hardlinks;
-		::create_hardlinks(*this, options.dst_dir, src_dir_index, phl, psl, hlmap, bCreateHardLinks, options, error_log);
+	if (!phl.empty() || !psl.empty() || !psf.empty()) {
+		::create_hardlinks(*this, options.dst_dir, src_dir_index, phl, psl, psf, hlmap, options, *overwrite_action, *ignore_errors, *error_log);
 	}
 
 	if (extracted_indices) {

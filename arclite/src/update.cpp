@@ -801,6 +801,16 @@ private:
 			}
 		}
 
+		uint32_t ftype = src_find_data.dwUnixMode & S_IFMT;
+		if (ftype == S_IFCHR || ftype == S_IFBLK) {
+
+			struct stat s{};
+			int r = sdc_stat( StrWide2MB(add_trailing_slash(sub_dir) + src_find_data.cFileName).c_str(), &s);
+			if (!r) {
+				src_find_data.UnixDevice = s.st_rdev;
+			}
+		}
+
 		if (filter) {
 			PluginPanelItem filter_data;
 			memset(&filter_data, 0, sizeof(PluginPanelItem));
@@ -1118,13 +1128,22 @@ public:
 				}
 				prop = file_index_info.find_data.is_dir();
 				break;
-			case kpidSize:
+
+			case kpidSize: {
 				if (use_mem_stream) {
 					prop = (UInt64)100ull;
 					break;
 				}
+				uint32_t ftype = file_index_info.find_data.dwUnixMode & S_IFMT;
+				if (ftype == S_IFSOCK || ftype == S_IFCHR || ftype == S_IFBLK || ftype == S_IFIFO) {
+					prop = (UInt64)0ull;
+					break;
+				}
+
 				prop = file_index_info.find_data.size();
-				break;
+			}
+			break;
+
 			case kpidCTime: {
 				const FILETIME *ptime = &file_index_info.find_data.ftCreationTime;
 				if (options.use_export_settings && options.export_options.export_creation_time != triUndef) {
@@ -1248,17 +1267,20 @@ public:
 			break;
 
 			case kpidPosixAttrib: {
+
+				uint32_t unixmode = file_index_info.find_data.dwUnixMode;
 				if (options.use_export_settings) {
 					if (options.export_options.export_unix_mode) {
-						if (options.export_options.custom_unix_mode)
-							prop = static_cast<UInt32>(options.export_options.UnixNode);
-						else
-							prop = static_cast<UInt32>(file_index_info.find_data.dwUnixMode);
+						if (options.export_options.custom_unix_mode) {
+							unixmode &= 0xF000;
+							unixmode |= static_cast<UInt32>(options.export_options.UnixNode);
+						}
 					}
+					else
+						unixmode &= 0xF000;
 				}
-				else
-					prop = static_cast<UInt32>(file_index_info.find_data.dwUnixMode);
-//				fprintf(stderr, "----------PUT POSIX ATTRIB = %X | %u\n", (UInt32)file_index_info.find_data.dwUnixMode, (UInt32)file_index_info.find_data.dwUnixMode);
+
+				prop = static_cast<UInt32>(unixmode);
 			}
 			break;
 
@@ -1382,30 +1404,44 @@ public:
 //				}
 			break;
 
-			case kpidDeviceMajor:
-				if (options.use_export_settings) {
-					if (options.export_options.export_unix_device) {
-						if (options.export_options.custom_unix_device)
-							prop = (UInt32)major(options.export_options.UnixDevice);
-						else
-							prop = (UInt32)major(file_index_info.find_data.UnixDevice);
-					}
+			case kpidDevMajor:
+//					prop = (UInt32)999;
+			break;
+
+			case kpidDevMinor:
+//					prop = (UInt32)999;
+			break;
+
+			case kpidDeviceMajor: {
+				uint32_t ftype = file_index_info.find_data.dwUnixMode & S_IFMT;
+				if (ftype != S_IFCHR && ftype != S_IFBLK) {
+					break;
+				}
+
+				if (options.use_export_settings && options.export_options.export_unix_device &&
+						options.export_options.custom_unix_device) {
+					if (options.export_options.custom_unix_device)
+						prop = (UInt32)major(options.export_options.UnixDevice);
 				}
 				else
 					prop = (UInt32)major(file_index_info.find_data.UnixDevice);
+			}
 			break;
 
-	   		case kpidDeviceMinor:
-				if (options.use_export_settings) {
-					if (options.export_options.export_unix_device) {
-						if (options.export_options.custom_unix_device)
-							prop = (UInt32)minor(options.export_options.UnixDevice);
-						else
-							prop = (UInt32)minor(file_index_info.find_data.UnixDevice);
-					}
+			case kpidDeviceMinor: {
+				uint32_t ftype = file_index_info.find_data.dwUnixMode & S_IFMT;
+				if (ftype != S_IFCHR && ftype != S_IFBLK) {
+					break;
+				}
+
+				if (options.use_export_settings && options.export_options.export_unix_device &&
+						options.export_options.custom_unix_device) {
+					if (options.export_options.custom_unix_device)
+						prop = (UInt32)minor(options.export_options.UnixDevice);
 				}
 				else
 					prop = (UInt32)minor(file_index_info.find_data.UnixDevice);
+			}
 			break;
 		}
 		prop.detach(value);
@@ -1425,8 +1461,13 @@ public:
 			return S_OK;
 		}
 
-		const FileIndexInfo &file_index_info = file_index_map->at(index);
+		FileIndexInfo &file_index_info = file_index_map->at(index);
 		if (file_index_info.find_data.is_dir() && (!(file_index_info.find_data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || options.dereference_symlinks) ) {
+			return S_OK;
+		}
+
+		uint32_t ftype = file_index_info.find_data.dwUnixMode & S_IFMT;
+		if (ftype == S_IFSOCK || ftype == S_IFCHR || ftype == S_IFBLK || ftype == S_IFIFO) {
 			return S_OK;
 		}
 

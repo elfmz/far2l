@@ -109,7 +109,10 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	LastGetLine(nullptr),
 	LastGetLineNumber(0),
 	SaveTabSettings(false),
-	m_MouseButtonIsHeld(false)
+	m_MouseButtonIsHeld(false),
+	m_CachedTotalLines(0),
+	m_CachedLineNumWidth(0),
+	m_LineCountDirty(true)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
 	_KEYMACRO(SysLog(1));
@@ -245,6 +248,12 @@ int Editor::CalculateLineNumberWidth()
 		return 0;
 	}
 
+	// Use cached value if available
+	if (!m_LineCountDirty) {
+		return m_CachedLineNumWidth;
+	}
+
+	// Recalculate when cache is dirty
 	int TotalLines = CalculateTotalLines();
 	int LineNumWidth = 1;
 	int temp = TotalLines;
@@ -256,6 +265,12 @@ int Editor::CalculateLineNumberWidth()
 		LineNumWidth = 4;
 	}
 	LineNumWidth += 1;  // Add space after numbers
+
+	// Update cache
+	m_CachedTotalLines = TotalLines;
+	m_CachedLineNumWidth = LineNumWidth;
+	m_LineCountDirty = false;
+
 	return LineNumWidth;
 }
 
@@ -274,6 +289,7 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 	m_TopScreenLogicalLine = nullptr;
 	m_TopScreenVisualLine = 0;
 	m_CurVisualLineInLogicalLine = 0;
+	m_LineCountDirty = true;  // Invalidate line number cache
 	ClearStackBookmarks();
 	TopList = EndList = CurLine = nullptr;
 	NumLastLine = 0;
@@ -4093,6 +4109,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 	}
 
 	NumLastLine--;
+	m_LineCountDirty = true;  // Invalidate line number cache
 
 	if (LastGetLine) {
 		if (LineNumber <= LastGetLineNumber) {
@@ -7879,6 +7896,7 @@ Edit *Editor::InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter, i
 		}
 
 		NumLastLine++;
+		m_LineCountDirty = true;  // Invalidate line number cache
 
 		if (AfterLineNumber < LastGetLineNumber) {
 			LastGetLineNumber++;

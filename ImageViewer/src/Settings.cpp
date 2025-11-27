@@ -70,8 +70,8 @@ void Settings::configurationMenuDialog()
 	if (r == ARRAYSIZE(fdi) - 2) {
 		_open_by_enter = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
 		_open_by_cpgdn = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
-		_open_in_qv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
-		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
+		_open_in_qv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
+		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
 		image_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 6, 0);
 		video_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 8, 0);
 

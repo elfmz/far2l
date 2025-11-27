@@ -37,7 +37,6 @@ class ImageView
 	const std::string &CurFile() const { return _all_files[_cur_file].first; }
 	void RotatePixelData(bool clockwise);
 	unsigned int EnsureRotated();
-	void ErrorMessage();
 	bool IterateFile(bool forward);
 	bool IsVideoFile() const;
 	bool IdentifyImage();
@@ -56,6 +55,8 @@ class ImageView
 public:
 	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files);
 	~ImageView();
+
+	const std::string &ErrorString() const { return _err_str; }
 
 	std::unordered_set<std::string> GetSelection() const;
 

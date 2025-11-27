@@ -207,6 +207,7 @@ ColorsInit[]
 	{"WarnDialog.Combo.Selected",                   F_LIGHTGRAY | B_BLACK,    }, // COL_WARNDIALOGCOMBOSELPREFIX,
 	{"Menu.Prefix",                                 F_DARKGRAY | B_CYAN,      }, // COL_MENUPREFIX,
 	{"Menu.Prefix.Selected",                        F_LIGHTGRAY | B_BLACK,    }, // COL_MENUSELPREFIX,
+	{"Editor.LineNumber",                           F_YELLOW | B_BLUE,        }, // COL_EDITORLINENUMBER,
 };
 
 static_assert(ARRAYSIZE(ColorsInit) == COL_LASTPALETTECOLOR);

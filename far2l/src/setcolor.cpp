@@ -319,10 +319,11 @@ void SetColors()
 		{(const wchar_t *)Msg::SetColorEditorNormal,    LIF_SELECTED, 0},
 		{(const wchar_t *)Msg::SetColorEditorSelected,  0,            0},
 		{(const wchar_t *)Msg::SetColorEditorStatus,    0,            0},
-		{(const wchar_t *)Msg::SetColorEditorScrollbar, 0,            0}
+		{(const wchar_t *)Msg::SetColorEditorScrollbar, 0,            0},
+		{(const wchar_t *)Msg::SetColorEditorLineNumber,0,            0}
 	};
 	int EditorPaletteItems[] = {COL_EDITORTEXT, COL_EDITORSELECTEDTEXT, COL_EDITORSTATUS,
-			COL_EDITORSCROLLBAR};
+			COL_EDITORSCROLLBAR, COL_EDITORLINENUMBER};
 	MenuDataEx HelpItems[] = {
 		{(const wchar_t *)Msg::SetColorHelpNormal,            LIF_SELECTED, 0},
 		{(const wchar_t *)Msg::SetColorHelpHighlighted,       0,            0},

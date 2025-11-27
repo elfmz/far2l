@@ -243,6 +243,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecEditor, "SearchPickUpWord", &Opt.EdOpt.SearchPickUpWord, 0},
 	{true,  NSecEditor, "WordWrap", &Opt.EdOpt.WordWrap, 0},
 	{true,  NSecEditor, "ShowWhiteSpace", &Opt.EdOpt.ShowWhiteSpace, 0},
+	{true,  NSecEditor, "ShowLineNumbers", &Opt.EdOpt.ShowLineNumbers, 0},
 
 	{true,  NSecNotifications, "OnFileOperation", &Opt.NotifOpt.OnFileOperation, 1},
 	{true,  NSecNotifications, "OnConsole", &Opt.NotifOpt.OnConsole, 1},

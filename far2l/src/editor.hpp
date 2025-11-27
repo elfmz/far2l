@@ -289,6 +289,8 @@ void GoToVisualLine(int VisualLine);
 	void Undo(int redo);
 	void SelectAll();
 	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
+	int CalculateTotalLines();  // Helper to count total lines
+	int CalculateLineNumberWidth();  // Helper to calculate line number display width
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();
@@ -398,6 +400,9 @@ public:
 
 	int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
 	void SetShowWhiteSpace(int NewMode);
+
+	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
+	void SetShowLineNumbers(int NewMode);
 
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 

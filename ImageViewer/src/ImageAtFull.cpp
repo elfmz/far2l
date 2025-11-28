@@ -7,6 +7,60 @@ class ImageViewAtFull : public ImageView
 	WinportGraphicsInfo _drag_wgi{};
 	COORD _drag_prev_pos{}, _drag_pending{};
 	bool _dragging{false};
+	HANDLE _dlg{NULL};
+
+protected:
+	virtual void SetInfoAndPan(const std::string &info, const std::string &pan)
+	{
+		const int visible_box_dlgid = CurFileSelected() ? 1 : 0;
+		const int invisible_box_dlgid = CurFileSelected() ? 0 : 1;
+		const int hint_text_dlgid = 3;
+		const int pan_text_dlgid = 4;
+		const int info_text_dlgid = 5;
+
+		ConsoleRepaintsDeferScope crds(NULL);
+		std::wstring ws_title = CurFileSelected() ? L"* " : L"  ";
+		StrMB2Wide(CurFile(), ws_title, true);
+		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
+
+		// update pan and info lengthes before title, so title will paint over previous one
+		// but texts  - after title, so text it will get drawn after title, and due to that - will remain visible
+		const auto &ws_pan = StrMB2Wide(pan);
+		FarDialogItem di{};
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, pan_text_dlgid, (LONG_PTR)&di)) {
+			di.X2 = di.X1 + (ws_pan.empty() ? 0 : ws_pan.size() - 1);
+			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, pan_text_dlgid, (LONG_PTR)&di);
+		}
+		const auto &ws_info = StrMB2Wide(info);
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, info_text_dlgid, (LONG_PTR)&di)) {
+			di.X1 = di.X2 - (ws_info.empty() ? 0 : ws_info.size() - 1);
+			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, info_text_dlgid, (LONG_PTR)&di);
+		}
+
+		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, invisible_box_dlgid, 0);
+		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, visible_box_dlgid, 1);
+
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
+
+		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, visible_box_dlgid, (LONG_PTR)&di)) {
+			int X1 = di.X1, X2 = di.X2;
+			const int hint_length = g_far.SendDlgMessage(_dlg, DM_GETTEXTPTR, hint_text_dlgid, 0);
+			if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, hint_text_dlgid, (LONG_PTR)&di)) {
+				di.X1 = std::max(X1, int(X1 + X2 + 1 - hint_length) / 2);
+				di.X2 = std::min(X2, int(di.X1 + hint_length - 1));
+				g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, hint_text_dlgid, (LONG_PTR)&di);
+			}
+		}
+
+		FarDialogItemData dd_pan = { ws_pan.size(), (wchar_t*)ws_pan.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, pan_text_dlgid, (LONG_PTR)&dd_pan);
+
+		FarDialogItemData dd_info = { ws_info.size(), (wchar_t*)ws_info.c_str() };
+		g_far.SendDlgMessage(_dlg, DM_SETTEXT, info_text_dlgid, (LONG_PTR)&dd_info);
+
+		ImageView::SetInfoAndPan(info, pan);
+	}
 
 public:
 	bool may_select{false};
@@ -15,6 +69,12 @@ public:
 	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
 		: ImageView(initial_file, all_files)
 	{
+	}
+
+	bool Setup(SMALL_RECT &rc, HANDLE dlg)
+	{
+		_dlg = dlg;
+		return ImageView::Setup(rc);
 	}
 
 	void DraggingMove(COORD pos)
@@ -92,7 +152,7 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				RectReduce(rc);
 			}
 
-			if (iv->SetupFull(rc, hDlg)) {
+			if (iv->Setup(rc, hDlg)) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);

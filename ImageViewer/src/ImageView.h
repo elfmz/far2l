@@ -48,7 +48,7 @@ class ImageView
 	void JustReset();
 
 protected:
-	virtual void SetInfoAndPan(const std::string &info, const std::string &pan);
+	virtual void DenoteInfoAndPan(const std::string &info, const std::string &pan);
 	bool CurFileSelected() const { return _all_files[_cur_file].second; }
 	const std::string &CurFile() const { return _all_files[_cur_file].first; }
 

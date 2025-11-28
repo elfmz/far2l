@@ -593,58 +593,8 @@ void ImageView::DenoteState(const char *stage)
 
 void ImageView::SetInfoAndPan(const std::string &info, const std::string &pan)
 {
-	if (_dlg != INVALID_HANDLE_VALUE) {
-		const int visible_box_dlgid = _all_files[_cur_file].second ? 1 : 0;
-		const int invisible_box_dlgid = _all_files[_cur_file].second ? 0 : 1;
-		const int hint_text_dlgid = 3;
-		const int pan_text_dlgid = 4;
-		const int info_text_dlgid = 5;
-		//std::wstring hint_string(g_far.SendDlgMessage(_dlg, DM_GETTEXTPTR, hint_text_dlgid, 0));
-
-		ConsoleRepaintsDeferScope crds(NULL);
-		std::wstring ws_title = _all_files[_cur_file].second ? L"* " : L"  ";
-		StrMB2Wide(CurFile(), ws_title, true);
-		FarDialogItemData dd_title = { ws_title.size(), (wchar_t*)ws_title.c_str() };
-
-		// update pan and info lengthes before title, so title will paint over previous one
-		// but texts  - after title, so text it will get drawn after title, and due to that - will remain visible
-		const auto &ws_pan = StrMB2Wide(pan);
-		FarDialogItem di{};
-		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, pan_text_dlgid, (LONG_PTR)&di)) {
-			di.X2 = di.X1 + (ws_pan.empty() ? 0 : ws_pan.size() - 1);
-			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, pan_text_dlgid, (LONG_PTR)&di);
-		}
-		const auto &ws_info = StrMB2Wide(info);
-		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, info_text_dlgid, (LONG_PTR)&di)) {
-			di.X1 = di.X2 - (ws_info.empty() ? 0 : ws_info.size() - 1);
-			g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, info_text_dlgid, (LONG_PTR)&di);
-		}
-
-		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, invisible_box_dlgid, 0);
-		g_far.SendDlgMessage(_dlg, DM_SHOWITEM, visible_box_dlgid, 1);
-
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 0, (LONG_PTR)&dd_title);
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, 1, (LONG_PTR)&dd_title);
-
-		if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, visible_box_dlgid, (LONG_PTR)&di)) {
-			int X1 = di.X1, X2 = di.X2;
-			const int hint_length = g_far.SendDlgMessage(_dlg, DM_GETTEXTPTR, hint_text_dlgid, 0);
-			if (g_far.SendDlgMessage(_dlg, DM_GETDLGITEMSHORT, hint_text_dlgid, (LONG_PTR)&di)) {
-				di.X1 = std::max(X1, int(X1 + X2 + 1 - hint_length) / 2);
-				di.X2 = std::min(X2, int(di.X1 + hint_length - 1));
-				g_far.SendDlgMessage(_dlg, DM_SETDLGITEMSHORT, hint_text_dlgid, (LONG_PTR)&di);
-			}
-		}
-
-//		FarDialogItemData dd_status = { hint_string.size(), (wchar_t*)hint_string.c_str() };
-//		g_far.SendDlgMessage(_dlg, DM_SETTEXT, hint_text_dlgid, (LONG_PTR)&dd_status);
-
-		FarDialogItemData dd_pan = { ws_pan.size(), (wchar_t*)ws_pan.c_str() };
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, pan_text_dlgid, (LONG_PTR)&dd_pan);
-
-		FarDialogItemData dd_info = { ws_info.size(), (wchar_t*)ws_info.c_str() };
-		g_far.SendDlgMessage(_dlg, DM_SETTEXT, info_text_dlgid, (LONG_PTR)&dd_info);
-	}
+	fprintf(stderr, "SetInfoAndPan: %s'%s' '%s' '%s'\n",
+		CurFileSelected() ? "*" : "", CurFile().c_str(), info.c_str(), pan.c_str());
 }
 
 
@@ -685,8 +635,9 @@ std::unordered_set<std::string> ImageView::GetSelection() const
 	return out;
 }
 
-bool ImageView::SetupCommon(SMALL_RECT &rc)
+bool ImageView::Setup(SMALL_RECT &rc, volatile bool *cancel)
 {
+	_cancel = cancel;
 	_pos.X = rc.Left;
 	_pos.Y = rc.Top;
 	_size.X = rc.Right > rc.Left ? rc.Right - rc.Left + 1 : 1;
@@ -702,20 +653,6 @@ bool ImageView::SetupCommon(SMALL_RECT &rc)
 	DenoteState();
 
 	return true;
-}
-
-bool ImageView::SetupQV(SMALL_RECT &rc, volatile bool *cancel)
-{
-	_dlg = INVALID_HANDLE_VALUE;
-	_cancel = cancel;
-	return SetupCommon(rc);
-}
-
-bool ImageView::SetupFull(SMALL_RECT &rc, HANDLE dlg)
-{
-	_dlg = dlg;
-	_cancel = nullptr;
-	return SetupCommon(rc);
 }
 
 void ImageView::Home()

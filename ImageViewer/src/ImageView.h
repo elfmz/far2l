@@ -13,7 +13,6 @@
 
 class ImageView
 {
-	HANDLE _dlg{INVALID_HANDLE_VALUE};
 	volatile bool *_cancel{nullptr};
 
 	std::string _render_file, _tmp_file, _file_size_str;
@@ -34,7 +33,6 @@ class ImageView
 	int _pixel_data_w{0}, _pixel_data_h{0};
 	int _prev_left{0}, _prev_top{0};
 
-	const std::string &CurFile() const { return _all_files[_cur_file].first; }
 	void RotatePixelData(bool clockwise);
 	unsigned int EnsureRotated();
 	bool IterateFile(bool forward);
@@ -46,22 +44,24 @@ class ImageView
 			char *dst, int dst_left, int dst_top, int dst_width,
 			const char *src, int src_left, int src_top, int src_width);
 	bool RenderImage();
-	void SetInfoAndPan(const std::string &info, const std::string &pan);
 	void DenoteState(const char *stage = NULL);
 	void JustReset();
 
-	bool SetupCommon(SMALL_RECT &rc);
+protected:
+	virtual void SetInfoAndPan(const std::string &info, const std::string &pan);
+	bool CurFileSelected() const { return _all_files[_cur_file].second; }
+	const std::string &CurFile() const { return _all_files[_cur_file].first; }
 
 public:
 	ImageView(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files);
 	~ImageView();
 
+
 	const std::string &ErrorString() const { return _err_str; }
 
 	std::unordered_set<std::string> GetSelection() const;
 
-	bool SetupQV(SMALL_RECT &rc, volatile bool *cancel);
-	bool SetupFull(SMALL_RECT &rc, HANDLE dlg);
+	bool Setup(SMALL_RECT &rc, volatile bool *cancel = nullptr);
 
 	void Home();
 	bool Iterate(bool forward);

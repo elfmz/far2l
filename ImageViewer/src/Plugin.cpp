@@ -270,7 +270,7 @@ SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const un
 {
 	if (Name) {
 		if ((OpMode == OPM_PGDN && g_settings.OpenByCtrlPgDn())
-		 || ((OpMode & (~OPM_PGDN)) == 0 && g_settings.OpenByEnter())) {
+		 || (OpMode  == 0 && g_settings.OpenByEnter())) {
 			const wchar_t *slash = wcsrchr(Name, L'/');
 			const auto &name_mb = Wide2MB(slash ? slash + 1 : Name);
 			if (g_settings.MatchFile(name_mb.c_str())) {

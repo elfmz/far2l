@@ -248,6 +248,11 @@ private:
 	bool m_bWordWrap;
 	int m_WrapMaxVisibleLineLength;
 	bool m_MouseButtonIsHeld;
+	
+	// Line number caching for performance
+	int m_CachedTotalLines;
+	int m_CachedLineNumWidth;
+	bool m_LineCountDirty;
 
 private:
 	int FindVisualLine(Edit* line, int Pos);

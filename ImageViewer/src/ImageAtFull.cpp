@@ -10,7 +10,7 @@ class ImageViewAtFull : public ImageView
 	HANDLE _dlg{NULL};
 
 protected:
-	virtual void SetInfoAndPan(const std::string &info, const std::string &pan)
+	virtual void DenoteInfoAndPan(const std::string &info, const std::string &pan)
 	{
 		const int visible_box_dlgid = CurFileSelected() ? 1 : 0;
 		const int invisible_box_dlgid = CurFileSelected() ? 0 : 1;
@@ -59,7 +59,7 @@ protected:
 		FarDialogItemData dd_info = { ws_info.size(), (wchar_t*)ws_info.c_str() };
 		g_far.SendDlgMessage(_dlg, DM_SETTEXT, info_text_dlgid, (LONG_PTR)&dd_info);
 
-		ImageView::SetInfoAndPan(info, pan);
+		ImageView::DenoteInfoAndPan(info, pan);
 	}
 
 public:

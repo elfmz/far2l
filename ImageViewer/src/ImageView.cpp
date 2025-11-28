@@ -588,12 +588,12 @@ void ImageView::DenoteState(const char *stage)
 		pan.insert(0, 1, ' ');
 	}
 
-	SetInfoAndPan(info, pan);
+	DenoteInfoAndPan(info, pan);
 }
 
-void ImageView::SetInfoAndPan(const std::string &info, const std::string &pan)
+void ImageView::DenoteInfoAndPan(const std::string &info, const std::string &pan)
 {
-	fprintf(stderr, "SetInfoAndPan: %s'%s' '%s' '%s'\n",
+	fprintf(stderr, "DenoteInfoAndPan: %s'%s' '%s' '%s'\n",
 		CurFileSelected() ? "*" : "", CurFile().c_str(), info.c_str(), pan.c_str());
 }
 

@@ -10,7 +10,7 @@ Settings g_settings;
 #define INI_PATH          "plugins/ImageViewer/config.ini"
 #define INI_SECTION       "Settings"
 #define INI_OPENBYENTER   "OpenByEnter"
-#define INI_OPENBYCPGDB   "OpenByCtrlPgDn"
+#define INI_OPENBYCPGDN   "OpenByCtrlPgDn"
 #define INI_OPENINQV      "OpenInQV"
 #define INI_OPENINFV      "OpenInFV"
 #define INI_IMAGEMASKS    "ImageMasks"
@@ -22,7 +22,7 @@ Settings::Settings()
 
 	KeyFileReadSection kfh(_ini_path, INI_SECTION);
 	_open_by_enter = kfh.GetInt(INI_OPENBYENTER, _open_by_enter) != 0;
-	_open_by_cpgdn = kfh.GetInt(INI_OPENBYCPGDB, _open_by_cpgdn) != 0;
+	_open_by_cpgdn = kfh.GetInt(INI_OPENBYCPGDN, _open_by_cpgdn) != 0;
 	_open_in_qv = kfh.GetInt(INI_OPENINQV, _open_in_qv) != 0;
 	_open_in_fv = kfh.GetInt(INI_OPENINFV, _open_in_fv) != 0;
 	_image_masks = kfh.GetString(INI_IMAGEMASKS, _image_masks.c_str());
@@ -80,7 +80,7 @@ void Settings::configurationMenuDialog()
 
 		KeyFileHelper kfh(_ini_path);
 		kfh.SetInt(INI_SECTION, INI_OPENBYENTER, _open_by_enter);
-		kfh.SetInt(INI_SECTION, INI_OPENBYCPGDB, _open_by_cpgdn);
+		kfh.SetInt(INI_SECTION, INI_OPENBYCPGDN, _open_by_cpgdn);
 		kfh.SetInt(INI_SECTION, INI_OPENINQV, _open_in_qv);
 		kfh.SetInt(INI_SECTION, INI_OPENINFV, _open_in_fv);
 		kfh.SetString(INI_SECTION, INI_IMAGEMASKS, _image_masks);

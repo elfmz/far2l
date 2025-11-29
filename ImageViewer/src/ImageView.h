@@ -18,6 +18,7 @@ class ImageView
 	std::string _render_file, _tmp_file, _file_size_str;
 	std::vector<std::pair<std::string, bool> > _all_files;
 	size_t _initial_file{}, _cur_file{};
+	WinportGraphicsInfo _wgi{}; // updated during RenderImage before actual rendering
 
 	COORD _pos{}, _size{};
 	int _dx{0}, _dy{0};
@@ -43,6 +44,12 @@ class ImageView
 	void Blit(int cpy_w, int cpy_h,
 			char *dst, int dst_left, int dst_top, int dst_width,
 			const char *src, int src_left, int src_top, int src_width);
+
+	bool RefreshWGI();
+	bool SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h);
+	bool SendScrollAttachH(const SMALL_RECT *area, int src_left, int viewport_w, int viewport_h, int delta);
+	bool SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta);
+	void SetupInitialScale(const int canvas_w, const int canvas_h);
 	bool RenderImage();
 	void DenoteState(const char *stage = NULL);
 	void JustReset();

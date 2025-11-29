@@ -6,42 +6,40 @@
 
 class Settings
 {
-    std::string _ini_path;
+public:
+	enum DefaultScale {
+		EQUAL_SCREEN = 0,
+		LESSOREQUAL_SCREEN,
+		EQUAL_IMAGE,
 
-    bool _open_by_enter = false;
+		INVALID_SCALE_EDGE_VALUE // must be last
+	};
+
+private:
+	std::string _ini_path;
+
+	DefaultScale _default_scale{EQUAL_SCREEN};
+
+	bool _open_by_enter = false;
 	bool _open_by_cpgdn = true;
-    bool _open_in_qv = false;
-    bool _open_in_fv = false;
+	bool _open_in_qv = false;
+	bool _open_in_fv = false;
 
-    std::string _image_masks =
-				"*.ai *.ani *.avif *.bmp *.bw *.cdr *.cel "
-				"*.cgm *.cmx *.cpt *.cur *.dcx *.dds *.dib "
-				"*.emf *.eps *.flc *.fli *.fpx *.gif *.icl *.ico "
-				"*.iff *.indd *.j2k *.jp2 *.jpc *.jpe *.jpeg "
-				"*.jpeg2000 *.jpg *.jps *.kra *.lbm *.mng *.mpo "
-				"*.pbm *.pcx *.pdn *.pgm *.pic *.png *.pns "
-				"*.ppm *.psd *.psp *.ras *.rgb *.rle *.sai "
-				"*.sgi *.spr *.svg *.tga *.tif *.tiff *.wbmp "
-				"*.webp *.wmf *.xbm *.xcf *.xpm";
-
-    std::string _video_masks =
-				"*.3g2 *.3gp *.asf *.avchd *.avi "
-				"*.divx *.enc *.flv *.ifo *.m1v *.m2ts "
-				"*.m2v *.m4p *.m4v *.mkv *.mov *.mp2 "
-				"*.mp4 *.mpe *.mpeg *.mpg *.mpv *.mts "
-				"*.ogm *.qt *.ra *.ram *.rmvb *.swf "
-				"*.ts *.vob *.vob *.webm *.wm *.wmv";
+	std::string _image_masks, _video_masks;
 
 public:
 	Settings();
-    const wchar_t *Msg(int msgId);
+	const wchar_t *Msg(int msgId);
 
-    void configurationMenuDialog();
+	void configurationMenuDialog();
 
 	bool OpenByEnter() const { return _open_by_enter; }
 	bool OpenByCtrlPgDn() const { return _open_by_cpgdn; }
 	bool OpenInQV() const { return _open_in_qv; }
 	bool OpenInFV() const { return _open_in_fv; }
+
+	DefaultScale GetDefaultScale() const { return _default_scale; }
+	void SetDefaultScale(DefaultScale default_scale);
 
 	bool MatchImageFile(const char *name) const;
 	bool MatchVideoFile(const char *name) const;

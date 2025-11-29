@@ -10,10 +10,27 @@
 // how long msec wait after gracefull kill before doing kill -9
 #define COMMAND_TIMEOUT_HARD_KILL 300
 
+// following constants used for incremental image display moderation
+#define SETIMG_INITALLY_ASSUMED_SPEED    8192 // 8kb per ms = 8MB/second
+#define SETIMG_DELAY_BASELINE_MSEC       256  // approx msec user may need to wait for cancellation
+#define SETIMG_ESTIMATION_SIZE_THRESHOLD 0x10000 // minimal size of data that can be used for set image rate estimation
+
+
 // keep following settings across plugin invokations
-DefaultScale g_def_scale{DS_EQUAL_SCREEN};
 static std::unordered_set<std::wstring> s_warned_tools;
 static std::atomic<int> s_in_progress_dialog{0};
+
+static bool CheckForEscAndPurgeAccumulatedInputEvents()
+{ // if ESC pressed: purge all currently queued keypresses and return true, else: just return false
+	WORD keys[] = {VK_ESCAPE};
+	if (WINPORT(CheckForKeyPress)(NULL, keys, ARRAYSIZE(keys),
+		CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS | CFKP_KEEP_OTHER_EVENTS) == 0) {
+		return false;
+	}
+
+	PurgeAccumulatedInputEvents();
+	return true;
+}
 
 class ToolExec : public ExecAsync
 {
@@ -374,6 +391,155 @@ void ImageView::Blit(int cpy_w, int cpy_h,
 	}
 }
 
+bool ImageView::RefreshWGI()
+{
+	if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(_wgi), &_wgi)) {
+		_err_str = "GetConsoleImageCaps failed";
+		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
+		return false;
+	}
+	if ((_wgi.Caps & WP_IMGCAP_RGBA) == 0) {
+		_err_str = "backend doesn't support RGBA graphics";
+		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
+		return false;
+	}
+	if (_wgi.PixPerCell.X <= 0 || _wgi.PixPerCell.Y <= 0) {
+		_err_str = StrPrintf("bad cell size ( %d x %d )", _wgi.PixPerCell.X, _wgi.PixPerCell.Y);
+		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
+		return false;
+	}
+	return true;
+}
+
+void ImageView::SetupInitialScale(const int canvas_w, const int canvas_h)
+{
+	auto rotated_orig_w = _orig_w;
+	auto rotated_orig_h = _orig_h;
+	if ((_rotate % 2) != 0) {
+		std::swap(rotated_orig_w, rotated_orig_h);
+	}
+
+	_scale_fit = std::min(double(canvas_w) / double(rotated_orig_w), double(canvas_h) / double(rotated_orig_h));
+	_scale_max = std::max(_scale_fit * 4.0, 1.1);
+	_scale_min = std::min(_scale_fit / 8.0, 0.5);
+
+	const auto set_defscale = g_settings.GetDefaultScale();
+	if (set_defscale == Settings::EQUAL_IMAGE) {
+		_scale = 1.0;
+	} else if (set_defscale == Settings::EQUAL_SCREEN || canvas_w < rotated_orig_w || canvas_h < rotated_orig_h) {
+		_scale = _scale_fit;
+	} else {
+		_scale = 1.0;
+	}
+}
+
+bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h)
+{
+	_send_data.resize(size_t(viewport_w) * viewport_h * _pixel_size);
+	memset(_send_data.data(), 0, _send_data.size());
+	const int cpy_w = std::min(viewport_w, _pixel_data_w);
+	const int cpy_h = std::min(viewport_h, _pixel_data_h);
+
+	Blit(cpy_w, cpy_h,
+		_send_data.data(), 0, 0, viewport_w,
+		_pixel_data.data(), src_left, src_top, _pixel_data_w);
+
+	// using WP_IMG_ATTACH_BOTTOM if WP_IMGCAP_ATTACH available for
+	// incremental image display and quick cancellation on slow connections
+	static std::atomic<size_t> s_avg_speed{};
+	size_t avg_speed = s_avg_speed;
+	if (!avg_speed) {
+		avg_speed = SETIMG_INITALLY_ASSUMED_SPEED;
+	}
+	auto msec = GetProcessUptimeMSec();
+	auto chunk_h = viewport_h;
+	if ((_wgi.Caps & WP_IMGCAP_ATTACH) != 0 && avg_speed != 0) {
+		auto estimated_time = _send_data.size() / avg_speed;
+		if (estimated_time >= 2 * SETIMG_DELAY_BASELINE_MSEC) {
+			chunk_h = std::max(32, int(viewport_h / (estimated_time / SETIMG_DELAY_BASELINE_MSEC)));
+		}
+	}
+
+	fprintf(stderr, "--- Sending whole viewport at [%d %d %d %d] chunk=%d\n",
+		src_left, src_top, src_left + viewport_w, src_top + viewport_h, chunk_h);
+
+	for (int sent_h = 0; sent_h < viewport_h; ) {
+		if ((_cancel && *_cancel) || (!_cancel && CheckForEscAndPurgeAccumulatedInputEvents())) {
+			fprintf(stderr, "%s: cancelled at %lu of %lu\n", __FUNCTION__, (unsigned long)sent_h, (unsigned long)viewport_h);
+			_err_str = "manually cancelled";
+			return false;
+		}
+		auto set_h = viewport_h - sent_h;
+		if (set_h > chunk_h + chunk_h / 4) {
+			set_h = chunk_h;
+		}
+		if (!WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID,
+				WP_IMG_RGB | WP_IMG_PIXEL_OFFSET | (sent_h ? WP_IMG_ATTACH_BOTTOM : 0),
+				area, viewport_w, set_h, _send_data.data() + sent_h * viewport_w * 3)) {
+			fprintf(stderr, "%s: error at %lu of %lu\n", __FUNCTION__, (unsigned long)sent_h, (unsigned long)viewport_h);
+			_err_str = "failed to send image to terminal";
+			return false;
+		}
+//		usleep(set_h * viewport_w * 8); // uncomment to simulate some slowness
+		sent_h+= set_h;
+	}
+	msec = GetProcessUptimeMSec() - msec;
+	if (_send_data.size() >= SETIMG_ESTIMATION_SIZE_THRESHOLD && msec >= 1) {
+		const size_t cur_speed = std::max(_send_data.size() / msec, size_t(1));
+		size_t speed = s_avg_speed;
+		if (speed < cur_speed || (speed - cur_speed > speed / 4) || speed == 0) {
+			speed+= cur_speed;
+			if (speed != cur_speed) {
+				speed/= 2;
+			}
+			fprintf(stderr, "Imaging rate: %lu -> %lu b/ms; Now: %lu bytes in %lu ms\n",
+				(unsigned long)s_avg_speed, (unsigned long)speed, (unsigned long)_send_data.size(), (unsigned long)msec);
+			s_avg_speed = speed;
+		}
+	}
+	return true;
+}
+
+bool ImageView::SendScrollAttachH(const SMALL_RECT *area, int src_left, int viewport_w, int viewport_h, int delta)
+{
+	_send_data.resize( size_t(abs(delta)) * viewport_h * _pixel_size);
+
+	if (delta > 0) {
+		Blit(delta, viewport_h, _send_data.data(), 0, 0, delta, _pixel_data.data(), src_left, _prev_top, _pixel_data_w);
+		fprintf(stderr, "--- Sending to left edge [%d %d %d %d]\n",
+		src_left, _prev_top, src_left + delta, _prev_top + viewport_h);
+		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
+			| WP_IMG_SCROLL | WP_IMG_ATTACH_LEFT, area, delta, viewport_h, _send_data.data()) != FALSE;
+	}
+
+	delta = -delta;
+	Blit(delta, viewport_h, _send_data.data(), 0, 0, delta, _pixel_data.data(), src_left + viewport_w - delta, _prev_top, _pixel_data_w);
+	fprintf(stderr, "--- Sending to right edge [%d %d %d %d]\n",
+		src_left + viewport_w - delta, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
+	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
+		| WP_IMG_SCROLL | WP_IMG_ATTACH_RIGHT, area, delta, viewport_h, _send_data.data()) != FALSE;
+}
+
+bool ImageView::SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta)
+{
+	_send_data.resize( size_t(abs(delta)) * viewport_w * _pixel_size);
+
+	if (delta > 0) {
+		Blit(viewport_w, delta, _send_data.data(), 0, 0, viewport_w, _pixel_data.data(), src_left, src_top, _pixel_data_w);
+		fprintf(stderr, "--- Sending to top edge [%d %d %d %d]\n",
+			src_left, src_top, src_left + viewport_w, src_top + delta);
+		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
+			| WP_IMG_SCROLL | WP_IMG_ATTACH_TOP, area, viewport_w, delta, _send_data.data()) != FALSE;
+	}
+
+	delta = -delta;
+	Blit(viewport_w, delta, _send_data.data(), 0, 0, viewport_w, _pixel_data.data(), src_left, src_top + viewport_h - delta, _pixel_data_w);
+	fprintf(stderr, "--- Sending to bottom edge [%d %d %d %d]\n",
+		src_left, src_top + viewport_h - delta, src_left + viewport_w, src_top + viewport_h);
+	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
+		| WP_IMG_SCROLL | WP_IMG_ATTACH_BOTTOM, area, viewport_w, delta, _send_data.data()) != FALSE;
+}
+
 bool ImageView::RenderImage()
 {
 	fprintf(stderr, "\n--- ImageView: '%s' ---\n", _render_file.c_str());
@@ -392,49 +558,21 @@ bool ImageView::RenderImage()
 		return false;
 	}
 
-	WinportGraphicsInfo wgi{};
+	if (!RefreshWGI()) {
+		return false;
+	}
 
-	if (!WINPORT(GetConsoleImageCaps)(NULL, sizeof(wgi), &wgi)) {
-		_err_str = "GetConsoleImageCaps failed";
-		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-		return false;
-	}
-	if ((wgi.Caps & WP_IMGCAP_RGBA) == 0) {
-		_err_str = "backend doesn't support graphical output";
-		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-		return false;
-	}
-	int canvas_w = int(_size.X) * wgi.PixPerCell.X;
-	int canvas_h = int(_size.Y) * wgi.PixPerCell.Y;
+	int canvas_w = int(_size.X) * _wgi.PixPerCell.X;
+	int canvas_h = int(_size.Y) * _wgi.PixPerCell.Y;
 
 	if (_scale <= 0) {
-		auto rotated_orig_w = _orig_w;
-		auto rotated_orig_h = _orig_h;
-		if ((_rotate % 2) != 0) {
-			std::swap(rotated_orig_w, rotated_orig_h);
-		}
-
-		_scale_fit = std::min(double(canvas_w) / double(rotated_orig_w), double(canvas_h) / double(rotated_orig_h));
-		_scale_max = std::max(_scale_fit * 4.0, 1.1);
-		_scale_min = std::min(_scale_fit / 8.0, 0.5);
-
-		if (g_def_scale == DS_EQUAL_IMAGE) {
-			_scale = 1.0;
-		} else if (g_def_scale == DS_EQUAL_SCREEN || canvas_w < rotated_orig_w || canvas_h < rotated_orig_h) {
-			_scale = _scale_fit;
-		} else {
-			_scale = 1.0;
-		}
-	}
-
-	if (_scale < 0) { // show stage only when switched file or reset state - avoid flickering on resizing and dragging
 		DenoteState("Rendering...");
+		SetupInitialScale(canvas_w, canvas_h);
 	}
+
 	const bool do_convert = (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01);
-	if (do_convert) {
-		if (!ConvertImage()) {
-			return false;
-		}
+	if (do_convert && !ConvertImage()) {
+		return false;
 	}
 
 	unsigned int rotated_angle = EnsureRotated();
@@ -445,15 +583,15 @@ bool ImageView::RenderImage()
 
 	if (viewport_w > _pixel_data_w) {
 		auto margin = (viewport_w - _pixel_data_w) / 2;
-		area.Left+= margin / wgi.PixPerCell.X;  // offset by cells count
-		area.Right = margin % wgi.PixPerCell.X; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
+		area.Left+= margin / _wgi.PixPerCell.X;  // offset by cells count
+		area.Right = margin % _wgi.PixPerCell.X; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
 		viewport_w = _pixel_data_w;
 	}
 
 	if (viewport_h > _pixel_data_h) {
 		auto margin = (viewport_h - _pixel_data_h) / 2;
-		area.Top+= margin / wgi.PixPerCell.Y;    // offset by cells count
-		area.Bottom = margin % wgi.PixPerCell.Y; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
+		area.Top+= margin / _wgi.PixPerCell.Y;    // offset by cells count
+		area.Bottom = margin % _wgi.PixPerCell.Y; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
 		viewport_h = _pixel_data_h;
 	}
 
@@ -477,9 +615,7 @@ bool ImageView::RenderImage()
 		return true;
 	}
 
-	bool out = true;
-
-	if (rotated_angle != 0 && !do_convert && (wgi.Caps & WP_IMGCAP_ROTATE) != 0
+	if (rotated_angle != 0 && !do_convert && (_wgi.Caps & WP_IMGCAP_ROTATE) != 0
 			&& _pixel_data_w <= std::min(canvas_w, canvas_h)
 			&& _pixel_data_h <= std::min(canvas_w, canvas_h)) {
 		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle)) {
@@ -487,65 +623,17 @@ bool ImageView::RenderImage()
 		}
 	}
 
-	if (!do_convert && rotated_angle == 0 && (wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (wgi.Caps & WP_IMGCAP_ATTACH) != 0 
+	bool out = true;
+	if (!do_convert && rotated_angle == 0 && (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0 
 			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h) {
-
-		if (_prev_left != src_left && out) {
-			DWORD ins_w = abs(_prev_left - src_left);
-			_send_data.resize( size_t(ins_w) * viewport_h * _pixel_size);
-			if (_prev_left > src_left) {
-				Blit(ins_w, viewport_h,
-					_send_data.data(), 0, 0, ins_w,
-					_pixel_data.data(), src_left, _prev_top, _pixel_data_w);
-				fprintf(stderr, "--- Sending to left edge [%d %d %d %d]\n",
-					src_left, _prev_top, src_left + ins_w, _prev_top + viewport_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL | WP_IMG_ATTACH_LEFT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
-			} else {
-				Blit(ins_w, viewport_h,
-					_send_data.data(), 0, 0, ins_w,
-					_pixel_data.data(), src_left + viewport_w - ins_w, _prev_top, _pixel_data_w);
-				fprintf(stderr, "--- Sending to right edge [%d %d %d %d]\n",
-					src_left + viewport_w - ins_w, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL | WP_IMG_ATTACH_RIGHT, &area, ins_w, viewport_h, _send_data.data()) != FALSE;
-			}
+		if (_prev_left != src_left) {
+			out = SendScrollAttachH(&area, src_left, viewport_w, viewport_h, _prev_left - src_left);
 		}
-		if (_prev_top != src_top && out) {
-			DWORD ins_h = abs(_prev_top - src_top);
-			_send_data.resize( size_t(ins_h) * viewport_w * _pixel_size);
-			if (_prev_top > src_top) {
-				Blit(viewport_w, ins_h,
-					_send_data.data(), 0, 0, viewport_w,
-					_pixel_data.data(), src_left, src_top, _pixel_data_w);
-				fprintf(stderr, "--- Sending to top edge [%d %d %d %d]\n",
-					src_left, src_top, src_left + viewport_w, src_top + ins_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL | WP_IMG_ATTACH_TOP, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
-			} else {
-				Blit(viewport_w, ins_h,
-					_send_data.data(), 0, 0, viewport_w,
-					_pixel_data.data(), src_left, src_top + viewport_h - ins_h, _pixel_data_w);
-				fprintf(stderr, "--- Sending to bottom edge [%d %d %d %d]\n",
-					src_left, src_top + viewport_h - ins_h, src_left + viewport_w, src_top + viewport_h);
-				out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-					| WP_IMG_SCROLL | WP_IMG_ATTACH_BOTTOM, &area, viewport_w, ins_h, _send_data.data()) != FALSE;
-			}
+		if (_prev_top != src_top) {
+			out = SendScrollAttachV(&area, src_left, src_top, viewport_w, viewport_h, _prev_top - src_top);
 		}
 	} else {
-		_send_data.resize(viewport_w * viewport_h * _pixel_size);
-		memset(_send_data.data(), 0, _send_data.size());
-		const int cpy_w = std::min(viewport_w, _pixel_data_w);
-		const int cpy_h = std::min(viewport_h, _pixel_data_h);
-
-		Blit(cpy_w, cpy_h,
-			_send_data.data(), 0, 0, viewport_w,
-			_pixel_data.data(), src_left, src_top, _pixel_data_w);
-
-		fprintf(stderr, "--- Sending to full viewport [%d %d %d %d]\n",
-			src_left, src_top, src_left + viewport_w, src_top + viewport_h);
-		out = WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET,
-			&area, viewport_w, viewport_h, _send_data.data()) != FALSE;
+		out = SendWholeViewport(&area, src_left, src_top, viewport_w, viewport_h);
 	}
 	if (out) {
 		_prev_left = src_left;

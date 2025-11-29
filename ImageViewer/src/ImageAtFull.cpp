@@ -5,9 +5,9 @@
 class ImageViewAtFull : public ImageView
 {
 	WinportGraphicsInfo _drag_wgi{};
+	HANDLE _dlg{NULL};
 	COORD _drag_prev_pos{}, _drag_pending{};
 	bool _dragging{false};
-	HANDLE _dlg{NULL};
 
 protected:
 	virtual void DenoteInfoAndPan(const std::string &info, const std::string &pan)
@@ -115,9 +115,9 @@ public:
 	}
 };
 
-static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-	switch(Msg) {
+	switch (Msg) {
 		case DN_MOUSEEVENT:
 		{
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
@@ -137,13 +137,12 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			} else {
 				iv->DraggingFinish();
 			}
-			return TRUE;
 		}
+		return TRUE;
 
 		case DN_INITDIALOG:
 		{
 			g_far.SendDlgMessage(hDlg, DM_SETDLGDATA, 0, Param2);
-
 			SMALL_RECT rc;
 			g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &rc, 0);
 
@@ -151,15 +150,13 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			if (!iv->full_size) {
 				RectReduce(rc);
 			}
-
 			if (iv->Setup(rc, hDlg)) {
 				g_far.SendDlgMessage(hDlg, DM_SETMOUSEEVENTNOTIFY, 1, 0);
 			} else {
 				g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ERROR, 0);
 			}
-
-			return TRUE;
 		}
+		return TRUE;
 
 		case DN_KEY:
 		{
@@ -169,15 +166,15 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			PurgeAccumulatedInputEvents(); // avoid navigation etc keypresses 'accumulation'
 			switch (key) {
 				case 'a': case 'A': case KEY_MULTIPLY: case '*':
-					g_def_scale = DS_LESSOREQUAL_SCREEN;
+					g_settings.SetDefaultScale(Settings::LESSOREQUAL_SCREEN);
 					iv->Reset(true);
 					break;
 				case 'q': case 'Q': case KEY_DEL: case KEY_NUMDEL:
-					g_def_scale = DS_EQUAL_SCREEN;
+					g_settings.SetDefaultScale(Settings::EQUAL_SCREEN);
 					iv->Reset(true);
 					break;
 				case 'z': case 'Z': case KEY_DIVIDE: case '/':
-					g_def_scale = DS_EQUAL_IMAGE;
+					g_settings.SetDefaultScale(Settings::EQUAL_IMAGE);
 					iv->Reset(true);
 					break;
 				case KEY_CLEAR: case '=': iv->Reset(false); break;
@@ -218,8 +215,8 @@ static LONG_PTR WINAPI DlgProcAtMax(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
 					break;
 			}
-			return TRUE;
 		}
+		return TRUE;
 
 		case DN_CLOSE:
 			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
@@ -244,8 +241,8 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 	}
 
 	for (;;) {
-		SMALL_RECT Rect;
-		g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &Rect, 0);
+		SMALL_RECT rc;
+		g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &rc, 0);
 
 		std::wstring hint;
 		hint+= L' ';
@@ -263,24 +260,23 @@ static EXITED_DUE ShowImageAtFullInternal(size_t initial_file, std::vector<std::
 		hint+= L' ';
 
 		FarDialogItem DlgItems[] = {
-			{ DI_SINGLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_SHOWAMPERSAND, 0, L"???", 0 },
-			{ DI_DOUBLEBOX, 0, 0, Rect.Right, Rect.Bottom, FALSE, {}, DIF_HIDDEN | DIF_SHOWAMPERSAND, 0, L"???", 0 },
-			{ DI_USERCONTROL, 1, 1, Rect.Right - 1, Rect.Bottom - 1, 0, {COL_DIALOGBOX}, 0, 0, L"", 0},
-			{ DI_TEXT, 0, Rect.Bottom, Rect.Right, Rect.Bottom, 0, {}, DIF_CENTERTEXT | DIF_SHOWAMPERSAND, 0, hint.c_str(), 0},
-			{ DI_TEXT, Rect.Left + 1, Rect.Top, Rect.Left + 1, Rect.Top, 0, {}, DIF_SHOWAMPERSAND, 0, L"", 0},
-			{ DI_TEXT, Rect.Right - 1, Rect.Top, Rect.Right - 1, Rect.Top, 0, {}, DIF_SHOWAMPERSAND, 0, L"", 0},
+			{ DI_SINGLEBOX, 0, 0, rc.Right, rc.Bottom, FALSE, {}, DIF_SHOWAMPERSAND, 0, L"???", 0 },
+			{ DI_DOUBLEBOX, 0, 0, rc.Right, rc.Bottom, FALSE, {}, DIF_HIDDEN | DIF_SHOWAMPERSAND, 0, L"???", 0 },
+			{ DI_USERCONTROL, 1, 1, rc.Right - 1, rc.Bottom - 1, 0, {COL_DIALOGBOX}, 0, 0, L"", 0},
+			{ DI_TEXT, 0, rc.Bottom, rc.Right, rc.Bottom, 0, {}, DIF_CENTERTEXT | DIF_SHOWAMPERSAND, 0, hint.c_str(), 0},
+			{ DI_TEXT, rc.Left + 1, rc.Top, rc.Left + 1, rc.Top, 0, {}, DIF_SHOWAMPERSAND, 0, L"", 0},
+			{ DI_TEXT, rc.Right - 1, rc.Top, rc.Right - 1, rc.Top, 0, {}, DIF_SHOWAMPERSAND, 0, L"", 0},
 		};
 
-		HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, Rect.Right, Rect.Bottom,
+		HANDLE dlg = g_far.DialogInit(g_far.ModuleNumber, 0, 0, rc.Right, rc.Bottom,
 							 L"ImageViewer", DlgItems, sizeof(DlgItems)/sizeof(DlgItems[0]),
-							 0, FDLG_NODRAWSHADOW|FDLG_NODRAWPANEL, DlgProcAtMax, (LONG_PTR)&iv);
+							 0, FDLG_NODRAWSHADOW|FDLG_NODRAWPANEL, ImageDlgProc, (LONG_PTR)&iv);
 
-		if (hDlg == INVALID_HANDLE_VALUE) {
-			return EXITED_DUE_ERROR;
+		auto exit_code = EXITED_DUE_ERROR;
+		if (dlg != INVALID_HANDLE_VALUE) {
+			exit_code = (EXITED_DUE)g_far.DialogRun(dlg);
+			g_far.DialogFree(dlg);
 		}
-
-		const auto exit_code = (EXITED_DUE)g_far.DialogRun(hDlg);
-		g_far.DialogFree(hDlg);
 
 		if (exit_code != EXITED_DUE_RESIZE) {
 			if (exit_code == EXITED_DUE_ENTER) {

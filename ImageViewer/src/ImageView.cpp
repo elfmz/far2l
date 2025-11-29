@@ -209,7 +209,7 @@ void ImageView::SetupInitialScale(const int canvas_w, const int canvas_h)
 	}
 
 	_scale_fit = std::min(double(canvas_w) / double(rotated_orig_w), double(canvas_h) / double(rotated_orig_h));
-	_scale_max = std::max(_scale_fit * 4.0, 1.1);
+	_scale_max = std::max(_scale_fit * 4.0, 2.0);
 	_scale_min = std::min(_scale_fit / 8.0, 0.5);
 
 	const auto set_defscale = g_settings.GetDefaultScale();

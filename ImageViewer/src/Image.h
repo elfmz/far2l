@@ -25,6 +25,9 @@ public:
 	void Resize(int width = 0, int height = 0, unsigned char bytes_per_pixel = 3);
 	void Assign(const void *data);
 
+	void MirrorH();
+	void MirrorV();
+
 	void Blit(Image &dst, int dst_left, int dst_top, int width, int height, int src_left, int src_top) const;
 	void Rotate(Image &dst, bool clockwise) const;
 	void Scale(Image &dst, double scale) const;

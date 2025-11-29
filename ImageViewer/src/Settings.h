@@ -20,6 +20,7 @@ private:
 
 	DefaultScale _default_scale{EQUAL_SCREEN};
 
+	bool _use_orientation = true;
 	bool _open_by_enter = false;
 	bool _open_by_cpgdn = true;
 	bool _open_in_qv = false;
@@ -33,6 +34,7 @@ public:
 
 	void configurationMenuDialog();
 
+	bool UseOrientation() const { return _use_orientation; }
 	bool OpenByEnter() const { return _open_by_enter; }
 	bool OpenByCtrlPgDn() const { return _open_by_cpgdn; }
 	bool OpenInQV() const { return _open_in_qv; }

@@ -114,10 +114,14 @@ bool ImageView::PrepareImage()
 
 bool ImageView::ReadImage()
 {
+	const bool use_orientation = g_settings.UseOrientation();
+
 	ToolExec convert(_cancel);
 
-	convert.AddArguments("convert", "--", _render_file);
-	convert.AddArguments("-print", "%w %h:", "-depth", "8", "rgb:-");
+	convert.AddArguments("convert", "--", _render_file,
+		"-print", use_orientation ? "%w %h %[exif:orientation]:" : "%w %h :",
+		"-depth", "8",
+		"rgb:-");
 
 	if (!convert.Run(CurFile(), _file_size_str, "imagemagick", "Convering picture...")) {
 		return false;
@@ -135,8 +139,9 @@ bool ImageView::ReadImage()
 		return false;
 	}
 	stdout_data[print_end] = 0;
-	int width = -1, height = -1;
-	if (sscanf(stdout_data.data(), "%d %d", &width, &height) != 2 || width < 0 || height < 0) {
+	int width = -1, height = -1, orientation = -1;
+	int scanned_args = sscanf(stdout_data.data(), "%d %d %d", &width, &height, &orientation);
+	if (scanned_args < 2 || width < 0 || height < 0) {
 		fprintf(stderr, "%s: bad convert dimensions - '%s'\n", __FUNCTION__, stdout_data.data());
 		_err_str = "ImageMagick 'convert' failed";
 		return false;
@@ -159,8 +164,41 @@ bool ImageView::ReadImage()
 	_ready_image.Resize();
 	_ready_image_scale = -1;
 	_scale = -1;
+	_rotate = 0;
 	_rotated = 0;
-	fprintf(stderr, "%s: loaded image of %d x %d\n", __FUNCTION__, width, height);
+	if (use_orientation && orientation > 0) {
+		switch (orientation) {
+			case 8: // Rotate 270 CW
+				_rotate = -1;
+				break;
+			case 7: // Mirror horizontal and rotate 90 CW
+				_orig_image.MirrorH();
+				_rotate = 1;
+				break;
+			case 6: // Rotate 90 CW
+				_rotate = 1;
+				break;
+			case 5: // Mirror horizontal and rotate 270 CW
+				_orig_image.MirrorH();
+				_rotate = -1;
+				break;
+			case 4: // irror vertical
+				_orig_image.MirrorV();
+				break;
+			case 3: // Rotate 180
+				_rotate = 2;
+				break;
+			case 2: // Mirror horizontal
+				_orig_image.MirrorH();
+				break;
+			case 1: // Normal
+				break;
+
+			default:
+				fprintf(stderr, "%s: unsupported orientation - %d\n", __FUNCTION__, orientation);
+		}
+	}
+	fprintf(stderr, "%s: loaded image of %d x %d orientation=%d\n", __FUNCTION__, width, height, orientation);
 	return true;
 }
 

@@ -16,15 +16,16 @@
 				"*.m2v *.m4p *.m4v *.mkv *.mov *.mp2 *.mp4 *.mpe *.mpeg *.mpg *.mpv *.mts " \
 				"*.ogm *.qt *.ra *.ram *.rmvb *.swf *.ts *.vob *.vob *.webm *.wm *.wmv"
 
-#define INI_PATH          "plugins/ImageViewer/config.ini"
-#define INI_SECTION       "Settings"
-#define INI_DEFAULTSCALE  "DefaultScale"
-#define INI_OPENBYENTER   "OpenByEnter"
-#define INI_OPENBYCPGDN   "OpenByCtrlPgDn"
-#define INI_OPENINQV      "OpenInQV"
-#define INI_OPENINFV      "OpenInFV"
-#define INI_IMAGEMASKS    "ImageMasks"
-#define INI_VIDEOMASKS    "VideoMasks"
+#define INI_PATH           "plugins/ImageViewer/config.ini"
+#define INI_SECTION        "Settings"
+#define INI_DEFAULTSCALE   "DefaultScale"
+#define INI_USEORIENTATION "UseOrientation"
+#define INI_OPENBYENTER    "OpenByEnter"
+#define INI_OPENBYCPGDN    "OpenByCtrlPgDn"
+#define INI_OPENINQV       "OpenInQV"
+#define INI_OPENINFV       "OpenInFV"
+#define INI_IMAGEMASKS     "ImageMasks"
+#define INI_VIDEOMASKS     "VideoMasks"
 
 Settings g_settings;
 
@@ -33,6 +34,7 @@ Settings::Settings()
 	_ini_path = InMyConfig(INI_PATH);
 
 	KeyFileReadSection kfh(_ini_path, INI_SECTION);
+	_use_orientation = kfh.GetInt(INI_USEORIENTATION, _use_orientation) != 0;
 	_open_by_enter = kfh.GetInt(INI_OPENBYENTER, _open_by_enter) != 0;
 	_open_by_cpgdn = kfh.GetInt(INI_OPENBYCPGDN, _open_by_cpgdn) != 0;
 	_open_in_qv = kfh.GetInt(INI_OPENINQV, _open_in_qv) != 0;
@@ -61,49 +63,53 @@ const wchar_t *Settings::Msg(int msgId)
 
 void Settings::configurationMenuDialog()
 {
-	const int w = 50, h = 14;
+	const int w = 50, h = 15;
 
 	struct FarDialogItem fdi[] = {
 	/* 0 */ {DI_DOUBLEBOX, 1,   1,   w - 2, h - 2, 0,	 {}, 0, 0,	Msg(M_TITLE), 0},
-	/* 1 */ {DI_CHECKBOX,  3,   2,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYENTER), 0},
-	/* 2 */ {DI_CHECKBOX,  3,   3,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYCTRLPGDN), 0},
-	/* 3 */ {DI_CHECKBOX,  3,   4,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINQVIEW), 0},
-	/* 4 */ {DI_CHECKBOX,  3,   5,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINFVIEW), 0},
-	/* 5 */ {DI_TEXT,      3,   6,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_IMAGEMASKS), 0},
-	/* 6 */ {DI_EDIT,      3,   7,   w - 4, 0,     0,  {},  0, 0, nullptr, 0},
-	/* 7 */ {DI_TEXT,      3,   8,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_VIDEOMASKS), 0},
-	/* 8 */ {DI_EDIT,      3,   9,   w - 4, 0,     0,  {}, 0, 0, nullptr, 0},
-	/* 9 */ {DI_SINGLEBOX, 2,   10,   w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
-	/*10 */ {DI_BUTTON,    11,  11,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
-	/*11 */ {DI_BUTTON,    26,  11,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
+	/* 1 */ {DI_CHECKBOX,  3,   2,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_USEORIENTATION), 0},
+	/* 2 */ {DI_CHECKBOX,  3,   3,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYENTER), 0},
+	/* 3 */ {DI_CHECKBOX,  3,   4,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYCTRLPGDN), 0},
+	/* 4 */ {DI_CHECKBOX,  3,   5,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINQVIEW), 0},
+	/* 5 */ {DI_CHECKBOX,  3,   6,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINFVIEW), 0},
+	/* 6 */ {DI_TEXT,      3,   7,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_IMAGEMASKS), 0},
+	/* 7 */ {DI_EDIT,      3,   8,   w - 4, 0,     0,  {},  0, 0, nullptr, 0},
+	/* 8 */ {DI_TEXT,      3,   9,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_VIDEOMASKS), 0},
+	/* 9 */ {DI_EDIT,      3,   10,  w - 4, 0,     0,  {}, 0, 0, nullptr, 0},
+	/*10 */ {DI_SINGLEBOX, 2,   11,  w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
+	/*11 */ {DI_BUTTON,    11,  12,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
+	/*12 */ {DI_BUTTON,    26,  12,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
 	};
 
-	fdi[1].Param.Selected = _open_by_enter;
-	fdi[2].Param.Selected = _open_by_cpgdn;
-	fdi[3].Param.Selected = _open_in_qv;
-	fdi[4].Param.Selected = _open_in_fv;
+	fdi[1].Param.Selected = _use_orientation;
+	fdi[2].Param.Selected = _open_by_enter;
+	fdi[3].Param.Selected = _open_by_cpgdn;
+	fdi[4].Param.Selected = _open_in_qv;
+	fdi[5].Param.Selected = _open_in_fv;
 	std::wstring image_masks, video_masks;
 	StrMB2Wide(_image_masks, image_masks);
 	StrMB2Wide(_video_masks, video_masks);
 
-	fdi[6].PtrData = image_masks.c_str();
-	fdi[8].PtrData = video_masks.c_str();
+	fdi[7].PtrData = image_masks.c_str();
+	fdi[9].PtrData = video_masks.c_str();
 
 	auto dlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, w, h, L"settings", fdi, ARRAYSIZE(fdi), 0, 0, nullptr, 0);
 
 	auto r = g_far.DialogRun(dlg);
 	if (r == ARRAYSIZE(fdi) - 2) {
-		_open_by_enter = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
-		_open_by_cpgdn = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
-		_open_in_qv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
-		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
-		image_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 6, 0);
-		video_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 8, 0);
+		_use_orientation = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
+		_open_by_enter = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
+		_open_by_cpgdn = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
+		_open_in_qv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
+		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 5, 0) == BSTATE_CHECKED);
+		image_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 7, 0);
+		video_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 9, 0);
 
 		StrWide2MB(image_masks, _image_masks);
 		StrWide2MB(video_masks, _video_masks);
 
 		KeyFileHelper kfh(_ini_path);
+		kfh.SetInt(INI_SECTION, INI_USEORIENTATION, _use_orientation);
 		kfh.SetInt(INI_SECTION, INI_OPENBYENTER, _open_by_enter);
 		kfh.SetInt(INI_SECTION, INI_OPENBYCPGDN, _open_by_cpgdn);
 		kfh.SetInt(INI_SECTION, INI_OPENINQV, _open_in_qv);

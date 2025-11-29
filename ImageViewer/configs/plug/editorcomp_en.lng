@@ -10,6 +10,7 @@
 "Selection: SPACE BS INS"
 "ENTER | ESC"
 
+"Respect EXIF &orientation info"
 "Open by &Enter on file"
 "Open by Ctrl+Pg&Dn on file"
 "Open automatically in &Quick View panel"

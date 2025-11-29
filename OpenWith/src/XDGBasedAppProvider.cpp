@@ -1122,10 +1122,9 @@ void XDGBasedAppProvider::IndexDirectoryRecursively(std::unordered_map<std::stri
 	}
 
 	// Loop protection using device and inode numbers.
-	if (visited_inodes.count({st.st_dev, st.st_ino})) {
+	if (!visited_inodes.insert({st.st_dev, st.st_ino}).second) {
 		return;
 	}
-	visited_inodes.insert({st.st_dev, st.st_ino});
 
 	DIR* dir_stream = opendir(current_path.c_str());
 	if (!dir_stream) return;

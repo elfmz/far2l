@@ -31,7 +31,6 @@ class ImageView
 	double _ready_image_scale{0};
 	int _prev_left{0}, _prev_top{0};
 
-	void RotatePixelData(bool clockwise);
 	unsigned int EnsureRotated();
 	bool IterateFile(bool forward);
 	bool IsVideoFile() const;

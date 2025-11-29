@@ -331,7 +331,7 @@ private:
 	static std::string GetEnv(const char* var, const char* default_val = "");
 	static std::string EscapeArgForShell(const std::string& arg);
 	static std::string GetBaseName(const std::string& filepath);
-	static std::string Trim(std::string str);
+	static std::string Trim(const std::string& str);
 	static std::vector<std::string> SplitString(const std::string& str, char delimiter);
 	static std::string ToLowerASCII(std::string str);
 

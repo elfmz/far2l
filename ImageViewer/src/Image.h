@@ -31,5 +31,18 @@ public:
 	void Blit(Image &dst, int dst_left, int dst_top, int width, int height, int src_left, int src_top) const;
 	void Rotate(Image &dst, bool clockwise) const;
 	void Scale(Image &dst, double scale) const;
-};
 
+
+	inline size_t Offset(int x, int y, unsigned char channel = 0) const
+	{
+		return (size_t(y) * _width + x) * _bytes_per_pixel + channel;
+	}
+	inline unsigned char *Ptr(int x, int y, unsigned char channel = 0)
+	{
+		return _data.data() + Offset(x, y, channel);
+	}
+	inline const unsigned char *Ptr(int x, int y, unsigned char channel = 0) const
+	{
+		return _data.data() + Offset(x, y, channel);
+	}
+};

@@ -287,7 +287,7 @@ bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 		}
 		if (!WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID,
 				WP_IMG_RGB | WP_IMG_PIXEL_OFFSET | (sent_h ? WP_IMG_ATTACH_BOTTOM : 0),
-				area, img.Width(), set_h, img.Data(sent_h * img.Width() * 3))) {
+				area, img.Width(), set_h, img.Ptr(0, sent_h))) {
 			fprintf(stderr, "%s: error at %d of %d\n", __FUNCTION__, sent_h, img.Height());
 			_err_str = "failed to send image to terminal";
 			return false;

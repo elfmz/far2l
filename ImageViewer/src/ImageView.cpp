@@ -229,7 +229,7 @@ bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 		avg_speed = SETIMG_INITALLY_ASSUMED_SPEED;
 	}
 	auto msec = GetProcessUptimeMSec();
-	auto chunk_h = img.Width();
+	auto chunk_h = img.Height();
 	if ((_wgi.Caps & WP_IMGCAP_ATTACH) != 0 && avg_speed != 0) {
 		auto estimated_time = img.Size() / avg_speed;
 		if (estimated_time >= 2 * SETIMG_DELAY_BASELINE_MSEC) {

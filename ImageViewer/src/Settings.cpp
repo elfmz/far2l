@@ -4,17 +4,29 @@
 #include <utils.h>
 #include <wchar.h>
 
-Settings g_settings;
+#define DEFAULT_IMAGE_MASKS \
+				"*.ai *.ani *.avif *.bmp *.bw *.cdr *.cel *.cgm *.cmx *.cpt *.cur *.dcx *.dds *.dib " \
+				"*.emf *.eps *.flc *.fli *.fpx *.gif *.icl *.ico *.iff *.indd *.j2k *.jp2 *.jpc *.jpe *.jpeg " \
+				"*.jpeg2000 *.jpg *.jps *.kra *.lbm *.mng *.mpo *.pbm *.pcx *.pdn *.pgm *.pic *.png *.pns " \
+				"*.ppm *.psd *.psp *.ras *.rgb *.rle *.sai *.sgi *.spr *.svg *.tga *.tif *.tiff *.wbmp " \
+				"*.webp *.wmf *.xbm *.xcf *.xpm"
 
+#define DEFAULT_VIDEO_MASKS \
+				"*.3g2 *.3gp *.asf *.avchd *.avi *.divx *.enc *.flv *.ifo *.m1v *.m2ts " \
+				"*.m2v *.m4p *.m4v *.mkv *.mov *.mp2 *.mp4 *.mpe *.mpeg *.mpg *.mpv *.mts " \
+				"*.ogm *.qt *.ra *.ram *.rmvb *.swf *.ts *.vob *.vob *.webm *.wm *.wmv"
 
 #define INI_PATH          "plugins/ImageViewer/config.ini"
 #define INI_SECTION       "Settings"
+#define INI_DEFAULTSCALE  "DefaultScale"
 #define INI_OPENBYENTER   "OpenByEnter"
 #define INI_OPENBYCPGDN   "OpenByCtrlPgDn"
 #define INI_OPENINQV      "OpenInQV"
 #define INI_OPENINFV      "OpenInFV"
 #define INI_IMAGEMASKS    "ImageMasks"
 #define INI_VIDEOMASKS    "VideoMasks"
+
+Settings g_settings;
 
 Settings::Settings()
 {
@@ -25,8 +37,21 @@ Settings::Settings()
 	_open_by_cpgdn = kfh.GetInt(INI_OPENBYCPGDN, _open_by_cpgdn) != 0;
 	_open_in_qv = kfh.GetInt(INI_OPENINQV, _open_in_qv) != 0;
 	_open_in_fv = kfh.GetInt(INI_OPENINFV, _open_in_fv) != 0;
-	_image_masks = kfh.GetString(INI_IMAGEMASKS, _image_masks.c_str());
-	_video_masks = kfh.GetString(INI_VIDEOMASKS, _video_masks.c_str());
+	_image_masks = kfh.GetString(INI_IMAGEMASKS, DEFAULT_IMAGE_MASKS);
+	_video_masks = kfh.GetString(INI_VIDEOMASKS, DEFAULT_VIDEO_MASKS);
+
+	unsigned int default_scale = kfh.GetUInt(INI_DEFAULTSCALE, _default_scale);
+	if (default_scale < (unsigned int)INVALID_SCALE_EDGE_VALUE) {
+		_default_scale = (DefaultScale)default_scale;
+	}
+}
+
+void Settings::SetDefaultScale(DefaultScale default_scale)
+{
+	fprintf(stderr, "%s: %u\n", __FUNCTION__, (unsigned int)default_scale);
+	_default_scale = default_scale;
+	KeyFileHelper kfh(_ini_path);
+	kfh.SetUInt(INI_SECTION, INI_DEFAULTSCALE, (unsigned int)_default_scale);
 }
 
 const wchar_t *Settings::Msg(int msgId)
@@ -83,15 +108,25 @@ void Settings::configurationMenuDialog()
 		kfh.SetInt(INI_SECTION, INI_OPENBYCPGDN, _open_by_cpgdn);
 		kfh.SetInt(INI_SECTION, INI_OPENINQV, _open_in_qv);
 		kfh.SetInt(INI_SECTION, INI_OPENINFV, _open_in_fv);
-		kfh.SetString(INI_SECTION, INI_IMAGEMASKS, _image_masks);
-		kfh.SetString(INI_SECTION, INI_VIDEOMASKS, _video_masks);
+
+		if (_image_masks != DEFAULT_IMAGE_MASKS) {
+			kfh.SetString(INI_SECTION, INI_IMAGEMASKS, _image_masks);
+		} else { // in case its same as default - erase it, so if/when defaults will change - it will be updated
+			kfh.RemoveKey(INI_SECTION, INI_IMAGEMASKS);
+		}
+
+		if (_video_masks != DEFAULT_VIDEO_MASKS) {
+			kfh.SetString(INI_SECTION, INI_VIDEOMASKS, _video_masks);
+		} else { // in case its same as default - erase it, so if/when defaults will change - it will be updated
+			kfh.RemoveKey(INI_SECTION, INI_VIDEOMASKS);
+		}
 	}
 
 	g_far.DialogFree(dlg);
 }
 
 
-static bool MatchSemicolonSeparatedWildcardsICE(const char *name, const std::string &masks)
+static bool MatchAnyOfWildcardsICE(const char *name, const std::string &masks)
 {
 	const char *last_slash = strrchr(name, '/');
 	if (last_slash && last_slash[1]) {
@@ -112,10 +147,10 @@ static bool MatchSemicolonSeparatedWildcardsICE(const char *name, const std::str
 
 bool Settings::MatchImageFile(const char *name) const
 {
-	return MatchSemicolonSeparatedWildcardsICE(name, _image_masks);
+	return MatchAnyOfWildcardsICE(name, _image_masks);
 }
 
 bool Settings::MatchVideoFile(const char *name) const
 {
-	return MatchSemicolonSeparatedWildcardsICE(name, _video_masks);
+	return MatchAnyOfWildcardsICE(name, _video_masks);
 }

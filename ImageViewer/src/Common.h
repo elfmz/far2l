@@ -21,14 +21,6 @@ enum EXITED_DUE
 extern PluginStartupInfo g_far;
 extern FarStandardFunctions g_fsf;
 
-enum DefaultScale {
-	DS_EQUAL_SCREEN,
-	DS_LESSOREQUAL_SCREEN,
-	DS_EQUAL_IMAGE
-};
-
-extern DefaultScale g_def_scale;
-
 void PurgeAccumulatedInputEvents();
 
 EXITED_DUE ShowImageAtFull(size_t initial_file, std::vector<std::pair<std::string, bool> > &all_files, std::unordered_set<std::string> &selection, bool silent_exit_on_error);

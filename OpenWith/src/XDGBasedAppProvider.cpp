@@ -2202,11 +2202,22 @@ std::string XDGBasedAppProvider::GetBaseName(const std::string& filepath)
 
 
 // Trims whitespace from both ends of a string.
-std::string XDGBasedAppProvider::Trim(std::string str)
+std::string XDGBasedAppProvider::Trim(const std::string& str)
 {
-	str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-	str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), str.end());
-	return str;
+	if (str.empty()) {
+		return "";
+	}
+	std::string_view sv = str;
+	auto is_ascii_space = [](char c) {
+		return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
+	};
+	while (!sv.empty() && is_ascii_space(sv.front())) {
+		sv.remove_prefix(1);
+	}
+	while (!sv.empty() && is_ascii_space(sv.back())) {
+		sv.remove_suffix(1);
+	}
+	return std::string(sv);
 }
 
 

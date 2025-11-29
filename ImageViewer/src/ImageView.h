@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <utils.h>
 #include <math.h>
+#include "Image.h"
 
 class ImageView
 {
@@ -24,32 +25,26 @@ class ImageView
 	int _dx{0}, _dy{0};
 	double _scale{-1}, _scale_fit{-1}, _scale_min{0.1}, _scale_max{4};
 	int _rotate{0}, _rotated{0};
-	int _orig_w{0}, _orig_h{0}; // info about image size for title
 	std::string _err_str;
 
-	constexpr static unsigned int _pixel_size = 3; // for now hardcoded RGB
-
-	std::vector<char> _pixel_data, _send_data;
-	double _pixel_data_scale{0};
-	int _pixel_data_w{0}, _pixel_data_h{0};
+	Image _orig_image, _ready_image, _tmp_image;
+	double _ready_image_scale{0};
 	int _prev_left{0}, _prev_top{0};
 
 	void RotatePixelData(bool clockwise);
 	unsigned int EnsureRotated();
 	bool IterateFile(bool forward);
 	bool IsVideoFile() const;
-	bool IdentifyImage();
 	bool PrepareImage();
-	bool ConvertImage();
-	void Blit(int cpy_w, int cpy_h,
-			char *dst, int dst_left, int dst_top, int dst_width,
-			const char *src, int src_left, int src_top, int src_width);
+	bool ReadImage();
 
 	bool RefreshWGI();
+	bool SendWholeImage(const SMALL_RECT *area, const Image &img);
 	bool SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h);
-	bool SendScrollAttachH(const SMALL_RECT *area, int src_left, int viewport_w, int viewport_h, int delta);
+	bool SendScrollAttachH(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta);
 	bool SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta);
 	void SetupInitialScale(const int canvas_w, const int canvas_h);
+	bool EnsureRescaled();
 	bool RenderImage();
 	void DenoteState(const char *stage = NULL);
 	void JustReset();

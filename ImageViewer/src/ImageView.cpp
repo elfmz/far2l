@@ -178,18 +178,9 @@ public:
 
 void ImageView::RotatePixelData(bool clockwise)
 {
-	std::vector<char> new_pixel_data(_pixel_data.size());
-	for (int y = 0; y < _pixel_data_h; ++y) {
-		for (int x = 0; x < _pixel_data_w; ++x) {
-			const size_t dst_ofs = size_t(x) * _pixel_data_h + (clockwise ? _pixel_data_h - 1 - y : y);
-			const size_t src_ofs = size_t(y) * _pixel_data_w + (clockwise ? x : _pixel_data_w - 1 - x);
-			for (unsigned i = 0; i < _pixel_size; ++i) {
-				new_pixel_data[dst_ofs * _pixel_size + i ] = _pixel_data[src_ofs * _pixel_size + i];
-			}
-		}
-	}
-	std::swap(_pixel_data_w, _pixel_data_h);
-	_pixel_data.swap(new_pixel_data);
+	Image rotated_image;
+	_ready_image.Rotate(rotated_image, clockwise);
+	_ready_image.Swap(rotated_image);
 }
 
 unsigned int ImageView::EnsureRotated()
@@ -232,35 +223,10 @@ bool ImageView::IsVideoFile() const
 	return g_settings.MatchVideoFile(CurFile().c_str());
 }
 
-bool ImageView::IdentifyImage()
-{
-	DenoteState("Analyzing...");
-	_orig_w = _orig_h = 0; // clear info about image size for title
-
-	ToolExec identify(_cancel);
-	identify.AddArguments("identify", "-format", "%w %h", "--", _render_file);
-	if (!identify.Run(CurFile(), _file_size_str, "imagemagick", "Obtaining picture size...")) {
-		return false;
-	}
-
-	const std::string &dims_str = identify.FetchStdout();
-	if (sscanf(dims_str.c_str(), "%d %d", &_orig_w, &_orig_h) != 2 || _orig_w <= 0 || _orig_w <= 0) {
-		_orig_w = _orig_h = 0; // clear info about image size for title
-		std::string stderr_str = identify.FetchStderr();
-		StrTrim(stderr_str, " \t\r\n");
-		_err_str = StrPrintf("Failed to parse original dimensions. Got: '%s' '%s'", dims_str.c_str(), stderr_str.c_str());
-		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
-		_all_files[_cur_file].second = false; // silently unselect non-loadable files
-		return false;
-	}
-
-	return true;
-}
-
 bool ImageView::PrepareImage()
 {
 	_render_file = CurFile();
-	_pixel_data.clear();
+	_orig_image.Resize();
 
 	struct stat st {};
 	if (stat(_render_file.c_str(), &st) == -1 || !S_ISREG(st.st_mode) || st.st_size == 0) {
@@ -271,7 +237,7 @@ bool ImageView::PrepareImage()
 	StrWide2MB(FileSizeString(st.st_size), _file_size_str);
 
 	if (!IsVideoFile()) {
-		return IdentifyImage();
+		return ReadImage();
 	}
 
 	DenoteState("Transforming...");
@@ -285,7 +251,7 @@ bool ImageView::PrepareImage()
 	}
 	const auto &frames_count = ffprobe.FetchStdout();
 
-	fprintf(stderr, "\n--- ImageView: frames_count=%s\n", frames_count.c_str());
+	fprintf(stderr, "%s: frames_count=%s\n", __FUNCTION__, frames_count.c_str());
 
 	unsigned int frames_count_i = atoi(frames_count.c_str());
 	unsigned int frames_interval = frames_count_i / 6;
@@ -316,55 +282,58 @@ bool ImageView::PrepareImage()
 	}
 
 	_render_file = _tmp_file;
-	return IdentifyImage();
+	return ReadImage();
 }
 
-bool ImageView::ConvertImage()
+bool ImageView::ReadImage()
 {
-	int resize_w = _orig_w, resize_h = _orig_h;
-
 	ToolExec convert(_cancel);
 
 	convert.AddArguments("convert", "--", _render_file);
-	if (fabs(_scale - 1) > 0.01) {
-		resize_w = double(resize_w) * _scale;
-		resize_h = double(resize_h) * _scale;
-		convert.AddArguments("-resize", std::to_string(int(_scale * 100)) + "%");
-	}
 	convert.AddArguments("-print", "%w %h:", "-depth", "8", "rgb:-");
-
-	fprintf(stderr, "Image dimensions: original=%dx%d wanted=%dx%d [scale=%f]\n",
-		_orig_w, _orig_h, resize_w, resize_h, _scale);
 
 	if (!convert.Run(CurFile(), _file_size_str, "imagemagick", "Convering picture...")) {
 		return false;
 	}
-	convert.FetchStdout(_pixel_data);
+	std::vector<char> stdout_data;
+	convert.FetchStdout(stdout_data);
+	// expecting "WIDTH HEIGHT:" followed by RGB data
 	size_t print_end = 0;
-	while (print_end < _pixel_data.size() && print_end < 32 && _pixel_data[print_end] != ':') {
+	while (print_end < stdout_data.size() && print_end < 32 && stdout_data[print_end] != ':') {
 		++print_end;
 	}
-	if (print_end < _pixel_data.size()) {
-		_pixel_data[print_end] = 0;
-		fprintf(stderr, "Obtained dimensions: %s\n", _pixel_data.data());
-		sscanf(_pixel_data.data(), "%d %d", &resize_w, &resize_h);
-		_pixel_data.erase(_pixel_data.begin(), _pixel_data.begin() + print_end + 1);
-	}
-
-	const size_t pixels_count = size_t(resize_w) * resize_h;
-	if (_pixel_data.size() != pixels_count * _pixel_size) {
+	if (print_end == stdout_data.size()) {
+		fprintf(stderr, "%s: no colon in convert output\n", __FUNCTION__);
 		_err_str = "ImageMagick 'convert' failed";
-		fprintf(stderr, "ERROR: %s. _pixel_data.size()=%lu while expected=%lu (%u * %u * %d)\n",
-			_err_str.c_str(), (unsigned long)_pixel_data.size(), (unsigned long)pixels_count * 4, resize_w, resize_h, _pixel_size);
-		_all_files[_cur_file].second = false; // silently unselect non-loadable files
-		_pixel_data.clear();
 		return false;
 	}
+	stdout_data[print_end] = 0;
+	int width = -1, height = -1;
+	if (sscanf(stdout_data.data(), "%d %d", &width, &height) != 2 || width < 0 || height < 0) {
+		fprintf(stderr, "%s: bad convert dimensions - '%s'\n", __FUNCTION__, stdout_data.data());
+		_err_str = "ImageMagick 'convert' failed";
+		return false;
+	}
+	const unsigned char bytes_per_pixel = 3; // only 24 bit RGB for now
+	const size_t expected_stdout_size = size_t(width) * height * bytes_per_pixel + print_end + 1;
+	if (stdout_data.size() < expected_stdout_size) {
+		fprintf(stderr, "%s: truncated output data - %lu < %lu\n", __FUNCTION__,
+			(unsigned long)stdout_data.size(), (unsigned long)expected_stdout_size);
+		_err_str = "ImageMagick 'convert' failed";
+		return false;
+	}
+	if (stdout_data.size() > expected_stdout_size) {
+		fprintf(stderr, "%s: excessive output data - %lu > %lu\n", __FUNCTION__,
+			(unsigned long)stdout_data.size(), (unsigned long)expected_stdout_size);
+	}
 
-	_pixel_data_scale = _scale;
-	_pixel_data_w = resize_w;
-	_pixel_data_h = resize_h;
+	_orig_image.Resize(width, height, bytes_per_pixel);
+	_orig_image.Assign(stdout_data.data() + print_end + 1);
+	_ready_image.Resize();
+	_ready_image_scale = -1;
+	_scale = -1;
 	_rotated = 0;
+	fprintf(stderr, "%s: loaded image of %d x %d\n", __FUNCTION__, width, height);
 	return true;
 }
 
@@ -377,18 +346,6 @@ static int ShiftPercentsToPixels(int &percents, int width, int limit)
 		percents+= (percents > 0) ? 1 : -1;
 	}
 	return pixels;
-}
-
-void ImageView::Blit(int cpy_w, int cpy_h,
-		char *dst, int dst_left, int dst_top, int dst_width,
-		const char *src, int src_left, int src_top, int src_width)
-{
-	for (int y = 0; y < cpy_h; ++y) {
-		memcpy(
-			&dst[((dst_top + y) * dst_width + dst_left) * _pixel_size],
-			&src[((src_top + y) * src_width + src_left) * _pixel_size],
-			cpy_w * _pixel_size);
-	}
 }
 
 bool ImageView::RefreshWGI()
@@ -413,8 +370,8 @@ bool ImageView::RefreshWGI()
 
 void ImageView::SetupInitialScale(const int canvas_w, const int canvas_h)
 {
-	auto rotated_orig_w = _orig_w;
-	auto rotated_orig_h = _orig_h;
+	auto rotated_orig_w = _orig_image.Width();
+	auto rotated_orig_h = _orig_image.Height();
 	if ((_rotate % 2) != 0) {
 		std::swap(rotated_orig_w, rotated_orig_h);
 	}
@@ -431,19 +388,12 @@ void ImageView::SetupInitialScale(const int canvas_w, const int canvas_h)
 	} else {
 		_scale = 1.0;
 	}
+
+	fprintf(stderr, "%s: min=%f fit=%f max=%f\n", __FUNCTION__, _scale_min, _scale_fit, _scale_max);
 }
 
-bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h)
+bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 {
-	_send_data.resize(size_t(viewport_w) * viewport_h * _pixel_size);
-	memset(_send_data.data(), 0, _send_data.size());
-	const int cpy_w = std::min(viewport_w, _pixel_data_w);
-	const int cpy_h = std::min(viewport_h, _pixel_data_h);
-
-	Blit(cpy_w, cpy_h,
-		_send_data.data(), 0, 0, viewport_w,
-		_pixel_data.data(), src_left, src_top, _pixel_data_w);
-
 	// using WP_IMG_ATTACH_BOTTOM if WP_IMGCAP_ATTACH available for
 	// incremental image display and quick cancellation on slow connections
 	static std::atomic<size_t> s_avg_speed{};
@@ -452,31 +402,28 @@ bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_
 		avg_speed = SETIMG_INITALLY_ASSUMED_SPEED;
 	}
 	auto msec = GetProcessUptimeMSec();
-	auto chunk_h = viewport_h;
+	auto chunk_h = img.Width();
 	if ((_wgi.Caps & WP_IMGCAP_ATTACH) != 0 && avg_speed != 0) {
-		auto estimated_time = _send_data.size() / avg_speed;
+		auto estimated_time = img.Size() / avg_speed;
 		if (estimated_time >= 2 * SETIMG_DELAY_BASELINE_MSEC) {
-			chunk_h = std::max(32, int(viewport_h / (estimated_time / SETIMG_DELAY_BASELINE_MSEC)));
+			chunk_h = std::max(32, int(img.Height() / (estimated_time / SETIMG_DELAY_BASELINE_MSEC)));
 		}
 	}
 
-	fprintf(stderr, "--- Sending whole viewport at [%d %d %d %d] chunk=%d\n",
-		src_left, src_top, src_left + viewport_w, src_top + viewport_h, chunk_h);
-
-	for (int sent_h = 0; sent_h < viewport_h; ) {
+	for (int sent_h = 0; sent_h < img.Height(); ) {
 		if ((_cancel && *_cancel) || (!_cancel && CheckForEscAndPurgeAccumulatedInputEvents())) {
-			fprintf(stderr, "%s: cancelled at %lu of %lu\n", __FUNCTION__, (unsigned long)sent_h, (unsigned long)viewport_h);
+			fprintf(stderr, "%s: cancelled at %lu of %lu\n", __FUNCTION__, (unsigned long)sent_h, (unsigned long)img.Height());
 			_err_str = "manually cancelled";
 			return false;
 		}
-		auto set_h = viewport_h - sent_h;
+		auto set_h = img.Height() - sent_h;
 		if (set_h > chunk_h + chunk_h / 4) {
 			set_h = chunk_h;
 		}
 		if (!WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID,
 				WP_IMG_RGB | WP_IMG_PIXEL_OFFSET | (sent_h ? WP_IMG_ATTACH_BOTTOM : 0),
-				area, viewport_w, set_h, _send_data.data() + sent_h * viewport_w * 3)) {
-			fprintf(stderr, "%s: error at %lu of %lu\n", __FUNCTION__, (unsigned long)sent_h, (unsigned long)viewport_h);
+				area, img.Width(), set_h, img.Data(sent_h * img.Width() * 3))) {
+			fprintf(stderr, "%s: error at %d of %d\n", __FUNCTION__, sent_h, img.Height());
 			_err_str = "failed to send image to terminal";
 			return false;
 		}
@@ -484,8 +431,8 @@ bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_
 		sent_h+= set_h;
 	}
 	msec = GetProcessUptimeMSec() - msec;
-	if (_send_data.size() >= SETIMG_ESTIMATION_SIZE_THRESHOLD && msec >= 1) {
-		const size_t cur_speed = std::max(_send_data.size() / msec, size_t(1));
+	if (img.Size() >= SETIMG_ESTIMATION_SIZE_THRESHOLD && msec >= 1) {
+		const size_t cur_speed = std::max(img.Size() / msec, size_t(1));
 		size_t speed = s_avg_speed;
 		if (speed < cur_speed || (speed - cur_speed > speed / 4) || speed == 0) {
 			speed+= cur_speed;
@@ -493,56 +440,95 @@ bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_
 				speed/= 2;
 			}
 			fprintf(stderr, "Imaging rate: %lu -> %lu b/ms; Now: %lu bytes in %lu ms\n",
-				(unsigned long)s_avg_speed, (unsigned long)speed, (unsigned long)_send_data.size(), (unsigned long)msec);
+				(unsigned long)s_avg_speed, (unsigned long)speed, (unsigned long)img.Size(), (unsigned long)msec);
 			s_avg_speed = speed;
 		}
 	}
 	return true;
 }
 
-bool ImageView::SendScrollAttachH(const SMALL_RECT *area, int src_left, int viewport_w, int viewport_h, int delta)
+bool ImageView::SendWholeViewport(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h)
 {
-	_send_data.resize( size_t(abs(delta)) * viewport_h * _pixel_size);
+	fprintf(stderr, "ImageView: sending viewport at [%d %d %d %d]\n",
+		src_left, src_top, src_left + viewport_w, src_top + viewport_h);
 
-	if (delta > 0) {
-		Blit(delta, viewport_h, _send_data.data(), 0, 0, delta, _pixel_data.data(), src_left, _prev_top, _pixel_data_w);
-		fprintf(stderr, "--- Sending to left edge [%d %d %d %d]\n",
-		src_left, _prev_top, src_left + delta, _prev_top + viewport_h);
-		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-			| WP_IMG_SCROLL | WP_IMG_ATTACH_LEFT, area, delta, viewport_h, _send_data.data()) != FALSE;
+	if (src_left == 0 && src_top == 0 && viewport_w == _ready_image.Width() && viewport_h == _ready_image.Height()) {
+		return SendWholeImage(area, _ready_image);
 	}
 
-	delta = -delta;
-	Blit(delta, viewport_h, _send_data.data(), 0, 0, delta, _pixel_data.data(), src_left + viewport_w - delta, _prev_top, _pixel_data_w);
-	fprintf(stderr, "--- Sending to right edge [%d %d %d %d]\n",
-		src_left + viewport_w - delta, _prev_top, src_left + viewport_w, _prev_top + viewport_h);
-	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-		| WP_IMG_SCROLL | WP_IMG_ATTACH_RIGHT, area, delta, viewport_h, _send_data.data()) != FALSE;
+	_tmp_image.Resize(viewport_w, viewport_h, _ready_image.BytesPerPixel());
+	_ready_image.Blit(_tmp_image, 0, 0, viewport_w, viewport_h, src_left, src_top);
+	return SendWholeImage(area, _tmp_image);
+}
+
+bool ImageView::SendScrollAttachH(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta)
+{
+	_tmp_image.Resize(abs(delta), viewport_h, _ready_image.BytesPerPixel());
+
+	DWORD64 flags = WP_IMG_RGB | WP_IMG_PIXEL_OFFSET | WP_IMG_SCROLL;
+	if (delta > 0) {
+		fprintf(stderr, "ImageView: scrolling by %d from left of [%d %d %d %d]\n",
+			delta, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
+		_ready_image.Blit(_tmp_image, 0, 0, delta, viewport_h, src_left, src_top);
+		flags|= WP_IMG_ATTACH_LEFT;
+	} else {
+		fprintf(stderr, "ImageView: scrolling by %d from right of [%d %d %d %d]\n",
+			-delta, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
+		_ready_image.Blit(_tmp_image, 0, 0, -delta, viewport_h, src_left + viewport_w + delta, src_top);
+		flags|= WP_IMG_ATTACH_RIGHT;
+	}
+
+	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, area,
+		_tmp_image.Width(), _tmp_image.Height(), _tmp_image.Data()) != FALSE;
 }
 
 bool ImageView::SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta)
 {
-	_send_data.resize( size_t(abs(delta)) * viewport_w * _pixel_size);
+	_tmp_image.Resize(viewport_w, abs(delta), _ready_image.BytesPerPixel());
 
+	DWORD64 flags = WP_IMG_RGB | WP_IMG_PIXEL_OFFSET | WP_IMG_SCROLL;
 	if (delta > 0) {
-		Blit(viewport_w, delta, _send_data.data(), 0, 0, viewport_w, _pixel_data.data(), src_left, src_top, _pixel_data_w);
-		fprintf(stderr, "--- Sending to top edge [%d %d %d %d]\n",
-			src_left, src_top, src_left + viewport_w, src_top + delta);
-		return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-			| WP_IMG_SCROLL | WP_IMG_ATTACH_TOP, area, viewport_w, delta, _send_data.data()) != FALSE;
+		fprintf(stderr, "ImageView: scrolling by %d from top of [%d %d %d %d]\n",
+			delta, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
+		_ready_image.Blit(_tmp_image, 0, 0, viewport_w, delta, src_left, src_top);
+		flags|= WP_IMG_ATTACH_TOP;
+	} else {
+		fprintf(stderr, "ImageView: scrolling by %d from bottom of [%d %d %d %d]\n",
+			-delta, src_left, src_top, src_left + viewport_w, src_top + viewport_h);
+		_ready_image.Blit(_tmp_image, 0, 0, viewport_w, -delta, src_left, src_top + viewport_h + delta);
+		flags|= WP_IMG_ATTACH_BOTTOM;
 	}
 
-	delta = -delta;
-	Blit(viewport_w, delta, _send_data.data(), 0, 0, viewport_w, _pixel_data.data(), src_left, src_top + viewport_h - delta, _pixel_data_w);
-	fprintf(stderr, "--- Sending to bottom edge [%d %d %d %d]\n",
-		src_left, src_top + viewport_h - delta, src_left + viewport_w, src_top + viewport_h);
-	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, WP_IMG_RGB | WP_IMG_PIXEL_OFFSET
-		| WP_IMG_SCROLL | WP_IMG_ATTACH_BOTTOM, area, viewport_w, delta, _send_data.data()) != FALSE;
+	return WINPORT(SetConsoleImage)(NULL, WINPORT_IMAGE_ID, flags, area,
+		_tmp_image.Width(), _tmp_image.Height(), _tmp_image.Data()) != FALSE;
+}
+
+
+bool ImageView::EnsureRescaled() // return true if image was rescaled, otherwise false, suppress OOM errors for now
+{
+	if (_ready_image_scale <= 0 || fabs(_scale -_ready_image_scale) >= 0.01) {
+		assert(_scale > 0);
+		try {
+			_orig_image.Scale(_ready_image, _scale);
+			fprintf(stderr, "%s: Rescaled by %f - %d x %d -> %d x %d\n", __FUNCTION__,
+				_scale, _orig_image.Width(), _orig_image.Height(), _ready_image.Width(), _ready_image.Height());
+			_ready_image_scale = _scale;
+			_rotated = 0;
+			return true;
+
+		} catch (std::exception &e) {
+			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
+		} catch (...) {
+			fprintf(stderr, "%s: ...\n", __FUNCTION__);
+		}
+		_ready_image.Resize();
+	}
+	return false;
 }
 
 bool ImageView::RenderImage()
 {
-	fprintf(stderr, "\n--- ImageView: '%s' ---\n", _render_file.c_str());
+	fprintf(stderr, "%s: '%s'\n", __FUNCTION__, _render_file.c_str());
 
 	if (_render_file.empty()) {
 		_err_str = "bad file";
@@ -570,10 +556,7 @@ bool ImageView::RenderImage()
 		SetupInitialScale(canvas_w, canvas_h);
 	}
 
-	const bool do_convert = (_pixel_data.empty() || fabs(_scale -_pixel_data_scale) > 0.01);
-	if (do_convert && !ConvertImage()) {
-		return false;
-	}
+	const bool rescaled = EnsureRescaled();
 
 	unsigned int rotated_angle = EnsureRotated();
 
@@ -581,53 +564,53 @@ bool ImageView::RenderImage()
 	auto viewport_h = canvas_h;
 	SMALL_RECT area = {_pos.X, _pos.Y, 0, 0};
 
-	if (viewport_w > _pixel_data_w) {
-		auto margin = (viewport_w - _pixel_data_w) / 2;
+	if (viewport_w > _ready_image.Width()) {
+		auto margin = (viewport_w - _ready_image.Width()) / 2;
 		area.Left+= margin / _wgi.PixPerCell.X;  // offset by cells count
 		area.Right = margin % _wgi.PixPerCell.X; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
-		viewport_w = _pixel_data_w;
+		viewport_w = _ready_image.Width();
 	}
 
-	if (viewport_h > _pixel_data_h) {
-		auto margin = (viewport_h - _pixel_data_h) / 2;
+	if (viewport_h > _ready_image.Height()) {
+		auto margin = (viewport_h - _ready_image.Height()) / 2;
 		area.Top+= margin / _wgi.PixPerCell.Y;    // offset by cells count
 		area.Bottom = margin % _wgi.PixPerCell.Y; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
-		viewport_h = _pixel_data_h;
+		viewport_h = _ready_image.Height();
 	}
 
-	int src_left = (_pixel_data_w > viewport_w) ? (_pixel_data_w - viewport_w) / 2 : 0;
-	int src_top = (_pixel_data_h > viewport_h) ? (_pixel_data_h - viewport_h) / 2 : 0;
+	int src_left = (_ready_image.Width() > viewport_w) ? (_ready_image.Width() - viewport_w) / 2 : 0;
+	int src_top = (_ready_image.Height() > viewport_h) ? (_ready_image.Height() - viewport_h) / 2 : 0;
 
-	if (_dx != 0 && _pixel_data_w > viewport_w) {
-		src_left+= ShiftPercentsToPixels(_dx, _pixel_data_w, (_pixel_data_w - viewport_w) / 2);
+	if (_dx != 0 && _ready_image.Width() > viewport_w) {
+		src_left+= ShiftPercentsToPixels(_dx, _ready_image.Width(), (_ready_image.Width() - viewport_w) / 2);
 	} else {
 		_dx = 0;
 	}
 
-	if (_dy != 0 && _pixel_data_h > viewport_h) {
-		src_top+= ShiftPercentsToPixels(_dy, _pixel_data_h, (_pixel_data_h - viewport_h) / 2);
+	if (_dy != 0 && _ready_image.Height() > viewport_h) {
+		src_top+= ShiftPercentsToPixels(_dy, _ready_image.Height(), (_ready_image.Height() - viewport_h) / 2);
 	} else {
 		_dy = 0;
 	}
 
-	if (!do_convert && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
-		fprintf(stderr, "--- Nothing to do\n");
+	if (!rescaled && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
+		fprintf(stderr, "%s: Nothing to do\n", __FUNCTION__);
 		return true;
 	}
 
-	if (rotated_angle != 0 && !do_convert && (_wgi.Caps & WP_IMGCAP_ROTATE) != 0
-			&& _pixel_data_w <= std::min(canvas_w, canvas_h)
-			&& _pixel_data_h <= std::min(canvas_w, canvas_h)) {
+	if (rotated_angle != 0 && !rescaled && (_wgi.Caps & WP_IMGCAP_ROTATE) != 0
+			&& _ready_image.Width() <= std::min(canvas_w, canvas_h)
+			&& _ready_image.Height() <= std::min(canvas_w, canvas_h)) {
 		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle)) {
 			rotated_angle = 0; // no need to rotate anything else
 		}
 	}
 
 	bool out = true;
-	if (!do_convert && rotated_angle == 0 && (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0 
+	if (!rescaled && rotated_angle == 0 && (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0 
 			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h) {
 		if (_prev_left != src_left) {
-			out = SendScrollAttachH(&area, src_left, viewport_w, viewport_h, _prev_left - src_left);
+			out = SendScrollAttachH(&area, src_left, src_top, viewport_w, viewport_h, _prev_left - src_left);
 		}
 		if (_prev_top != src_top) {
 			out = SendScrollAttachV(&area, src_left, src_top, viewport_w, viewport_h, _prev_top - src_top);
@@ -648,10 +631,12 @@ void ImageView::DenoteState(const char *stage)
 	if (stage) {
 		info = stage;
 	} else {
-		if (_orig_w > 0 && _orig_h > 0)
-			info = std::to_string(_orig_w) + 'x' + std::to_string(_orig_h);
-		if (!_file_size_str.empty())
+		if (_orig_image.Width() != 0 || _orig_image.Height() != 0) {
+			info = std::to_string(_orig_image.Width()) + 'x' + std::to_string(_orig_image.Height());
+		}
+		if (!_file_size_str.empty()) {
 			info+= (info.empty() ? "" : ", ") + _file_size_str;
+		}
 	}
 
 	if (!info.empty()) {
@@ -731,7 +716,9 @@ bool ImageView::Setup(SMALL_RECT &rc, volatile bool *cancel)
 	_size.X = rc.Right > rc.Left ? rc.Right - rc.Left + 1 : 1;
 	_size.Y = rc.Bottom > rc.Top ? rc.Bottom - rc.Top + 1 : 1;
 
-	_pixel_data.clear();
+	_orig_image.Resize();
+	_ready_image.Resize();
+	_tmp_image.Resize();
 	JustReset();
 
 	_err_str.clear();
@@ -769,34 +756,40 @@ bool ImageView::Iterate(bool forward)
 
 void ImageView::Scale(int change)
 {
-	double ds = 0;
-	if (change > 0) {
-		if (_scale < 1) ds = change;
-		else if (_scale < 2) ds = change * 5;
-		else ds = change * 10;
-	} else if (change < 0) {
-		if (_scale > 2) ds = change * 10;
-		else if (_scale > 1) ds = change * 5;
-		else ds = change;
+	double ds = change * 4;
+	if (fabs(_scale - _scale_fit) < 0.001) {
+		if (change < 0) {
+			ds*= (_scale_fit - _scale_min);
+		} else {
+			ds*= (_scale_max - _scale_fit);
+		}
+	} else if (_scale <= _scale_fit) {
+		ds*= (_scale_fit - _scale_min);
 	} else {
-		return;
+		ds*= (_scale_max - _scale_fit);
 	}
+
 	auto new_scale = _scale + ds / 100.0;
 	if (new_scale < _scale_min) {
 		new_scale = _scale_min;
-		fprintf(stderr, "Scale: %f -> %f [MIN]\n", _scale, new_scale);
 	} else if (new_scale > _scale_max) {
 		new_scale = _scale_max;
-		fprintf(stderr, "Scale: %f -> %f [MAX]\n", _scale, new_scale);
-	} else if ( (new_scale - _scale_fit) * (_scale - _scale_fit) < -0.01) {
-		new_scale = _scale_fit;
-		fprintf(stderr, "Scale: %f -> %f [SCREEN]\n", _scale, new_scale);
-	} else if ( (new_scale - 1) * (_scale - 1) < -0.01) {
-		new_scale = 1;
-		fprintf(stderr, "Scale: %f -> 1.0 [IMAGE]\n", _scale);
-	} else {
-		fprintf(stderr, "Scale: %f -> %f\n", _scale, new_scale);
 	}
+
+	auto min_special = std::min(_scale_fit, 1.0);
+	auto max_special = std::max(_scale_fit, 1.0);
+	if (ds > 0) {
+		if (_scale < min_special && new_scale > min_special) {
+			new_scale = min_special;
+		} else if (_scale < max_special && new_scale > max_special) {
+			new_scale = max_special;
+		}
+	} else if (_scale > max_special && new_scale < max_special) {
+		new_scale = max_special;
+	} else if (_scale > min_special && new_scale < min_special) {
+		new_scale = min_special;
+	}
+	fprintf(stderr, "Scale: %f -> %f\n", _scale, new_scale);
 	if (_scale != new_scale) {
 		_scale = new_scale;
 		RenderImage();
@@ -831,11 +824,11 @@ COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels
 {
 	int saved_dx = _dx, saved_dy = _dy;
 
-	Shift(int(delta.X) * 100 / _pixel_data_w, int(delta.Y) * 100 / _pixel_data_h);
+	Shift(int(delta.X) * 100 / _ready_image.Width(), int(delta.Y) * 100 / _ready_image.Height());
 
 	return COORD{
-		SHORT((_dx - saved_dx) * _pixel_data_w / 100),
-		SHORT((_dy - saved_dy) * _pixel_data_h / 100)
+		SHORT((_dx - saved_dx) * _ready_image.Width() / 100),
+		SHORT((_dy - saved_dy) * _ready_image.Height() / 100)
 	};
 }
 

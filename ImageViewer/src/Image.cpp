@@ -15,6 +15,34 @@ Image::Image(int width, int height, unsigned char bytes_per_pixel)
 	Resize(width, height, bytes_per_pixel);
 }
 
+void Image::MirrorH()
+{
+	for (int y = 0; y < _height; ++y) {
+		for (int i = 0; i < _width - 1 - i; ++i) {
+			for (unsigned char ch = 0; ch < _bytes_per_pixel; ++ch) {
+				std::swap(
+					_data[(y * _width + i) * _bytes_per_pixel + ch],
+					_data[(y * _width + _width - 1 - i) * _bytes_per_pixel + ch]
+				);
+			}
+		}
+	}
+}
+
+void Image::MirrorV()
+{
+	for (int x = 0; x < _width; ++x) {
+		for (int i = 0; i < _height - 1 - i; ++i) {
+			for (unsigned char ch = 0; ch < _bytes_per_pixel; ++ch) {
+				std::swap(
+					_data[((i) * _width + x) * _bytes_per_pixel + ch],
+					_data[((_height - 1 - i) * _width + x) * _bytes_per_pixel + ch]
+				);
+			}
+		}
+	}
+}
+
 void Image::Swap(Image &another)
 {
 	_data.swap(another._data);

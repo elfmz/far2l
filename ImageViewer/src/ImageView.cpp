@@ -442,7 +442,7 @@ bool ImageView::RenderImage()
 	if (!rescaled && rotated_angle == 0 && (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0 
 			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h) {
 		if (_prev_left != src_left) {
-			out = SendScrollAttachH(&area, src_left, src_top, viewport_w, viewport_h, _prev_left - src_left);
+			out = SendScrollAttachH(&area, src_left, _prev_top, viewport_w, viewport_h, _prev_left - src_left);
 		}
 		if (_prev_top != src_top) {
 			out = SendScrollAttachV(&area, src_left, src_top, viewport_w, viewport_h, _prev_top - src_top);

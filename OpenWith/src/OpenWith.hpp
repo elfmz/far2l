@@ -39,10 +39,10 @@ private:
 	static int s_confirm_launch_threshold;
 
 	static bool ShowDetailsDialogImpl(const std::vector<Field>& file_info, const std::vector<Field>& application_info, const Field& launch_command);
-	static bool ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app, const std::vector<std::wstring>& pathnames,  const std::vector<std::wstring>& cmds, const std::vector<std::wstring>& unique_mime_profiles);
-	static bool AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& pathnames);
+	static bool ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app, const std::vector<std::wstring>& filepaths,  const std::vector<std::wstring>& cmds, const std::vector<std::wstring>& unique_mime_profiles);
+	static bool AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& filepaths);
 	static void LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds);
-	static void ProcessFiles(const std::vector<std::wstring>& pathnames);
+	static void ProcessFiles(const std::vector<std::wstring>& filepaths);
 	static void LoadOptions();
 	static void SaveOptions();
 	static void ShowError(const wchar_t *title, const std::vector<std::wstring>& text);

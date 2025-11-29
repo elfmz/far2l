@@ -79,7 +79,7 @@ namespace OpenWith {
 			return INVALID_HANDLE_VALUE;
 		}
 
-		std::vector<std::wstring> selected_pathnames;
+		std::vector<std::wstring> selected_filepaths;
 
 		// Query the required buffer size for the panel's directory path.
 		int dir_size = s_info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0, 0);
@@ -103,7 +103,7 @@ namespace OpenWith {
 		// If no items are selected, pi.SelectedItemsNumber will be 1,
 		// and FCTL_GETSELECTEDPANELITEM will return the item under the cursor.
 		if (pi.SelectedItemsNumber > 0) {
-			selected_pathnames.reserve(pi.SelectedItemsNumber);
+			selected_filepaths.reserve(pi.SelectedItemsNumber);
 			for (int i = 0; i < pi.SelectedItemsNumber; ++i) {
 				// Query the buffer size for the selected panel item.
 				int item_size = s_info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, 0);
@@ -115,13 +115,13 @@ namespace OpenWith {
 				// Retrieve the panel item data.
 				if (s_info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)pi_item) && pi_item->FindData.lpwszFileName) {
 					// Construct the full path and add it to the list.
-					selected_pathnames.push_back(base_path + pi_item->FindData.lpwszFileName);
+					selected_filepaths.push_back(base_path + pi_item->FindData.lpwszFileName);
 				}
 			}
 		}
 
-		if (!selected_pathnames.empty()) {
-			ProcessFiles(selected_pathnames);
+		if (!selected_filepaths.empty()) {
+			ProcessFiles(selected_filepaths);
 		}
 
 		// The plugin doesn't create its own panel, so it returns INVALID_HANDLE_VALUE.
@@ -339,17 +339,17 @@ namespace OpenWith {
 	// Shows the details dialog with file and application information.
 	// For a single file, it shows the full path. For multiple files, it shows a count.
 	bool OpenWithPlugin::ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app,
-										   const std::vector<std::wstring>& pathnames,
+										   const std::vector<std::wstring>& filepaths,
 										   const std::vector<std::wstring>& cmds,
 										   const std::vector<std::wstring>& unique_mime_profiles)
 	{
 		std::vector<Field> file_info;
-		if (pathnames.size() == 1) {
+		if (filepaths.size() == 1) {
 			// For a single file, show its full path.
-			file_info.push_back({ GetMsg(MPathname), pathnames[0] });
+			file_info.push_back({ GetMsg(MPathname), filepaths[0] });
 		} else {
 			// For multiple files, show a summary count.
-			std::wstring count_msg = std::wstring(GetMsg(MFilesSelected)) + std::to_wstring(pathnames.size());
+			std::wstring count_msg = std::wstring(GetMsg(MFilesSelected)) + std::to_wstring(filepaths.size());
 			file_info.push_back({ GetMsg(MPathname), count_msg });
 		}
 
@@ -365,13 +365,13 @@ namespace OpenWith {
 
 
 	// Returns true if the user confirms or no confirmation is needed, false otherwise.
-	bool OpenWithPlugin::AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& pathnames)
+	bool OpenWithPlugin::AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& filepaths)
 	{
-		if (!s_confirm_launch || pathnames.size() <= static_cast<size_t>(s_confirm_launch_threshold)) {
+		if (!s_confirm_launch || filepaths.size() <= static_cast<size_t>(s_confirm_launch_threshold)) {
 			return true;
 		}
 		wchar_t message[255] = {};
-		s_fsf.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MConfirmLaunchMessage), pathnames.size(), app.name.c_str());
+		s_fsf.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MConfirmLaunchMessage), filepaths.size(), app.name.c_str());
 		const wchar_t* items[] = { GetMsg(MConfirmLaunchTitle), message };
 		int res = s_info.Message(s_info.ModuleNumber, FMSG_MB_YESNO, nullptr, items, ARRAYSIZE(items), 2);
 		return (res == 0);
@@ -409,9 +409,9 @@ namespace OpenWith {
 
 	// The main logic handler for both single and multiple files.
 	// It gets candidate applications, displays a menu, and handles user actions.
-	void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& pathnames)
+	void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 	{
-		if (pathnames.empty()) {
+		if (filepaths.empty()) {
 			return;
 		}
 
@@ -435,11 +435,11 @@ namespace OpenWith {
 		// Lambda to fetch and filter application candidates.
 		auto update_candidates = [&]() {
 			// Fetch the raw list of candidates from the platform-specific provider.
-			candidates = provider->GetAppCandidates(pathnames);
+			candidates = provider->GetAppCandidates(filepaths);
 
 			// When multiple files are selected and the internal far2l console is used, we must filter out terminal-based applications
 			// because the internal console cannot handle multiple concurrent instances.
-			if (pathnames.size() > 1 && !s_use_external_terminal) {
+			if (filepaths.size() > 1 && !s_use_external_terminal) {
 				candidates.erase(
 					std::remove_if(candidates.begin(), candidates.end(),
 								   [](const CandidateInfo& c) { return c.terminal && !c.multi_file_aware; }),
@@ -490,18 +490,18 @@ namespace OpenWith {
 			const auto& selected_app = candidates[selected_idx];
 
 			if (break_code == KEY_F3_DETAILS) {
-				std::vector<std::wstring> cmds = provider->ConstructCommandLine(selected_app, pathnames);
+				std::vector<std::wstring> cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
 				// Repeat until user either launches the application or closes the dialog to go back.
 				while (true) {
 					// Get MIME profiles (lazily) and pass them to the details dialog.
-					bool wants_to_launch = ShowDetailsDialog(provider.get(), selected_app, pathnames, cmds, get_unique_mime_profiles());
+					bool wants_to_launch = ShowDetailsDialog(provider.get(), selected_app, filepaths, cmds, get_unique_mime_profiles());
 					if (!wants_to_launch) {
 						// User clicked "Close", break the inner loop to return to the main menu.
 						break;
 					}
 
 					// User clicked "Launch", so ask for confirmation if needed.
-					if (AskForLaunchConfirmation(selected_app, pathnames)) {
+					if (AskForLaunchConfirmation(selected_app, filepaths)) {
 						// Confirmation was given. Launch the application and exit the plugin entirely.
 						LaunchApplication(selected_app, cmds);
 						return;
@@ -528,8 +528,8 @@ namespace OpenWith {
 				}
 
 			} else { // Enter to launch.
-				if (AskForLaunchConfirmation(selected_app, pathnames)) {
-					std::vector<std::wstring> cmds = provider->ConstructCommandLine(selected_app, pathnames);
+				if (AskForLaunchConfirmation(selected_app, filepaths)) {
+					std::vector<std::wstring> cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
 					LaunchApplication(selected_app, cmds);
 					return; // Exit the plugin after a successful launch.
 				}

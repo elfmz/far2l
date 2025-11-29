@@ -4,6 +4,7 @@ project(ImageViewer)
 set(SOURCES
 src/Plugin.cpp 
 src/Settings.cpp 
+src/Image.cpp 
 src/ImageView.cpp 
 src/ImageAtFull.cpp
 src/ImageAtQV.cpp
@@ -13,6 +14,7 @@ add_library (ImageViewer MODULE ${SOURCES})
 
 target_link_libraries(ImageViewer utils far2l)
 
+target_compile_options(ImageViewer PRIVATE -ffast-math)
 target_compile_definitions(ImageViewer PRIVATE -DUNICODE )
 
 target_include_directories(ImageViewer PRIVATE .)

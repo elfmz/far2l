@@ -20,10 +20,7 @@ void Image::MirrorH()
 	for (int y = 0; y < _height; ++y) {
 		for (int i = 0; i < _width - 1 - i; ++i) {
 			for (unsigned char ch = 0; ch < _bytes_per_pixel; ++ch) {
-				std::swap(
-					_data[(y * _width + i) * _bytes_per_pixel + ch],
-					_data[(y * _width + _width - 1 - i) * _bytes_per_pixel + ch]
-				);
+				std::swap(*Ptr(i, y, ch), *Ptr(_width - 1 - i, y, ch));
 			}
 		}
 	}
@@ -34,10 +31,7 @@ void Image::MirrorV()
 	for (int x = 0; x < _width; ++x) {
 		for (int i = 0; i < _height - 1 - i; ++i) {
 			for (unsigned char ch = 0; ch < _bytes_per_pixel; ++ch) {
-				std::swap(
-					_data[((i) * _width + x) * _bytes_per_pixel + ch],
-					_data[((_height - 1 - i) * _width + x) * _bytes_per_pixel + ch]
-				);
+				std::swap(*Ptr(x, i, ch), *Ptr(x, _height - 1 - i, ch));
 			}
 		}
 	}
@@ -128,14 +122,8 @@ void Image::Blit(Image &dst, int dst_left, int dst_top, int width, int height, i
 		return;
 	}
 
-	const auto *src_data = (const unsigned char *)_data.data();
-	auto *dst_data = (unsigned char *)dst._data.data();
-
 	for (int y = 0; y < height; ++y) {
-		memcpy(
-			&dst_data[((dst_top + y) * dst._width + dst_left) * _bytes_per_pixel],
-			&src_data[((src_top + y) * _width + src_left) * _bytes_per_pixel],
-			cpy_width);
+		memcpy(dst.Ptr(dst_left, dst_top + y), Ptr(src_left, src_top + y), cpy_width);
 	}
 }
 
@@ -250,34 +238,32 @@ void Image::ScaleReduce(Image &dst, double scale) const
 {
 	const int around = (int)round(0.618 / scale);
 
-	const auto *src_data = (const unsigned char *)_data.data();
-	auto *dst_data = (unsigned char *)dst._data.data();
 //fprintf(stderr, "around=%d\n", around);
 	for (int dst_y = 0; dst_y < dst._height; ++dst_y) {
 		const auto src_y = (int)round(double(dst_y) / scale);
 		for (int dst_x = 0; dst_x < dst._width; ++dst_x) {
 			const auto src_x = (int)round(double(dst_x) / scale);
-			for (int ch = 0; ch < _bytes_per_pixel; ++ch) {
+			for (unsigned char ch = 0; ch < _bytes_per_pixel; ++ch) {
 				unsigned int v = 0, cnt = 0;
 				for (int dy = around; dy-->0 ;) {
 					for (int dx = around; dx-->0 ;) {
 						if (src_y + dy < _height) {
 							if (src_x + dx < _width) {
-								v+= src_data[((src_y + dy) * _width + src_x + dx) * _bytes_per_pixel + ch];
+								v+= *Ptr(src_x + dx, src_y + dy, ch);
 								++cnt;
 							}
 							if (src_x - dx >= 0 && dx) {
-								v+= src_data[((src_y + dy) * _width + src_x - dx) * _bytes_per_pixel + ch];
+								v+= *Ptr(src_x - dx, src_y + dy, ch);
 								++cnt;
 							}
 						}
 						if (src_y - dy >= 0 && dy) {
 							if (src_x + dx < _width) {
-								v+= src_data[((src_y - dy) * _width + src_x + dx) * _bytes_per_pixel + ch];
+								v+= *Ptr(src_x + dx, src_y - dy, ch);
 								++cnt;
 							}
 							if (src_x - dx >= 0 && dx) {
-								v+= src_data[((src_y - dy) * _width + src_x - dx) * _bytes_per_pixel + ch];
+								v+= *Ptr(src_x - dx, src_y - dy, ch);
 								++cnt;
 							}
 						}
@@ -288,7 +274,7 @@ void Image::ScaleReduce(Image &dst, double scale) const
 					}					
 				}
 //				if (v > 255) {fprintf(stderr, "!!!v=%d\n", v); abort();}
-				dst_data[(dst_y * dst._width + dst_x) * _bytes_per_pixel + ch] = (unsigned char)v;
+				*dst.Ptr(dst_x, dst_y, ch) = (unsigned char)v;
 			}
 		}
 	}

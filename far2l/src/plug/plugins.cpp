@@ -1556,25 +1556,24 @@ struct PluginData
 
 int PluginManager::ProcessCommandLine(const wchar_t *CommandParam, Panel *Target)
 {
-	size_t PrefixLength = 0;
+	size_t PrefixLength = 0, slash_pos = 0;
+	FARString strPrefix;
 	FARString strCommand = CommandParam;
 	UnquoteExternal(strCommand);
 	RemoveLeadingSpaces(strCommand);
 
-	for (;;) {
-		wchar_t Ch = strCommand.At(PrefixLength);
+	std::wstring command(strCommand.CPtr());
+	PrefixLength = command.find(L':');
+	if (PrefixLength == std::wstring::npos)
+		return FALSE;
 
-		if (!Ch || IsSpace(Ch) || Ch == L'/' || PrefixLength > 64)
-			return FALSE;
-
-		if (Ch == L':' && PrefixLength > 0)
-			break;
-
-		PrefixLength++;
-	}
-
+	slash_pos = command.rfind(L'/',PrefixLength);
+	if (slash_pos == std::wstring::npos)
+		strPrefix = command.substr(0, PrefixLength);
+	else
+		strPrefix = command.substr(slash_pos + 1, PrefixLength - slash_pos - 1);
+	
 	LoadIfCacheAbsent();
-	FARString strPrefix(strCommand, PrefixLength);
 	FARString strPluginPrefix;
 	TPointerArray<PluginData> items;
 

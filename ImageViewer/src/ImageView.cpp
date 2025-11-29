@@ -8,22 +8,17 @@
 #define SETIMG_DELAY_BASELINE_MSEC       256  // approx msec user may need to wait for cancellation
 #define SETIMG_ESTIMATION_SIZE_THRESHOLD 0x10000 // minimal size of data that can be used for set image rate estimation
 
-void ImageView::RotatePixelData(bool clockwise)
-{
-	Image rotated_image;
-	_ready_image.Rotate(rotated_image, clockwise);
-	_ready_image.Swap(rotated_image);
-}
-
 unsigned int ImageView::EnsureRotated()
 {
 	int rotated_angle = 0;
 	for (;_rotated < _rotate; ++_rotated) {
-		RotatePixelData(true);
+		_ready_image.Rotate(_tmp_image, true);
+		_ready_image.Swap(_tmp_image);
 		rotated_angle++;
 	}
 	for (;_rotated > _rotate; --_rotated) {
-		RotatePixelData(false);
+		_ready_image.Rotate(_tmp_image, false);
+		_ready_image.Swap(_tmp_image);
 		rotated_angle--;
 	}
 	if (_rotated == 4 || _rotated == -4) {
@@ -360,15 +355,14 @@ bool ImageView::EnsureRescaled() // return true if image was rescaled, otherwise
 
 bool ImageView::RenderImage()
 {
-	fprintf(stderr, "%s: '%s'\n", __FUNCTION__, _render_file.c_str());
+	fprintf(stderr, "%s: _pos=%dx%d _size=%dx%d '%s'\n",
+		__FUNCTION__, _pos.X, _pos.Y, _size.X, _size.Y, _render_file.c_str());
 
 	if (_render_file.empty()) {
 		_err_str = "bad file";
 		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
 		return false;
 	}
-
-	fprintf(stderr, "Target cell grid _pos=%dx%d _size=%dx%d\n", _pos.X, _pos.Y, _size.X, _size.Y);
 
 	if (_pos.X < 0 || _pos.Y < 0 || _size.X <= 0 || _size.Y <= 0) {
 		_err_str = "bad grid";
@@ -433,6 +427,7 @@ bool ImageView::RenderImage()
 	if (rotated_angle != 0 && !rescaled && (_wgi.Caps & WP_IMGCAP_ROTATE) != 0
 			&& _ready_image.Width() <= std::min(canvas_w, canvas_h)
 			&& _ready_image.Height() <= std::min(canvas_w, canvas_h)) {
+		fprintf(stderr, "ImageView: rotating remote image\n");
 		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle)) {
 			rotated_angle = 0; // no need to rotate anything else
 		}
@@ -658,7 +653,7 @@ COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels
 
 	Shift(int(delta.X) * 100 / _ready_image.Width(), int(delta.Y) * 100 / _ready_image.Height());
 
-	return COORD{
+	return COORD {
 		SHORT((_dx - saved_dx) * _ready_image.Width() / 100),
 		SHORT((_dy - saved_dy) * _ready_image.Height() / 100)
 	};

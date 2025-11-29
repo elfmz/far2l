@@ -10,7 +10,7 @@ static unsigned int s_wx_assert_cache_bit = 0;
 
 #define REMOTE_SLOWNESS_TRSH_MSEC		50
 
-static unsigned int wxGetKeyboardLedsState()
+static unsigned int wxGetKeyboardLedsState(unsigned int prev_state)
 {
 	unsigned int out = 0;
 	// Old non-GTK wxWidgets had missing support for this keys, and attempt
@@ -20,9 +20,11 @@ static unsigned int wxGetKeyboardLedsState()
 #ifndef __WXOSX__ // under mac NumLock emulated externally with Clear button
 	s_wx_assert_cache_bit = 1;
 	if ((s_wx_assert_cached_bits & 1) == 0 && wxGetKeyState(WXK_NUMLOCK)) {
+#else
+ 	if(prev_state & NUMLOCK_ON) { 
+#endif
 		out|= NUMLOCK_ON;
 	}
-#endif
 
 	s_wx_assert_cache_bit = 2;
 	if ((s_wx_assert_cached_bits & 2) == 0 && wxGetKeyState(WXK_SCROLL)) {
@@ -85,7 +87,7 @@ void *wxKeyboardLedsState::ThreadProc()
 			id = _id;
 			_long_wait = false;
 			lock.unlock();
-			_state = CallInMain<unsigned int>(std::bind(&wxGetKeyboardLedsState));
+			_state = CallInMain<unsigned int>(std::bind(&wxGetKeyboardLedsState, _state));
 			lock.lock();
 		} else if (!_long_wait) {
 			_cond.wait_for(lock, std::chrono::milliseconds(500));

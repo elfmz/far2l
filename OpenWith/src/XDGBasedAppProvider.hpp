@@ -211,18 +211,20 @@ private:
 		[[nodiscard]] bool operator==(const AppUniqueKey& other) const {
 			return name == other.name && exec == other.exec;
 		}
+
+		// Custom hash function to allow AppUniqueKey to be used as a key in std::unordered_map.
+		struct Hash
+		{
+			size_t operator()(const AppUniqueKey& k) const {
+				const auto h1 = std::hash<std::string_view>{}(k.name);
+				const auto h2 = std::hash<std::string_view>{}(k.exec);
+				return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+			}
+		};
 	};
 
 
-	// Custom hash function for AppUniqueKey.
-	struct AppUniqueKeyHash
-	{
-		size_t operator()(const AppUniqueKey& k) const {
-			const auto h1 = std::hash<std::string_view>{}(k.name);
-			const auto h2 = std::hash<std::string_view>{}(k.exec);
-			return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
-		}
-	};
+
 
 
 	// ******************************************************************************
@@ -262,7 +264,7 @@ private:
 	// ALIASES
 	// ******************************************************************************
 
-	using CandidateMap = std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKeyHash>;
+	using CandidateMap = std::unordered_map<AppUniqueKey, RankedCandidate, AppUniqueKey::Hash>;
 	using MimeToDesktopEntryIndex = std::unordered_map<std::string, std::vector<const DesktopEntry*>>;
 	using MimeToDesktopAssociationsMap = std::unordered_map<std::string, std::vector<DesktopAssociation>>;
 	using VisitedInodeSet = std::set<std::pair<dev_t, ino_t>>;

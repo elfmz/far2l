@@ -129,7 +129,7 @@ void Image::Blit(Image &dst, int dst_left, int dst_top, int width, int height, i
 
 void Image::Scale(Image &dst, double scale) const
 {
-	if (fabs(scale - 1) < 0.0001) {
+	if (fabs(scale - 1.0) < 0.0001) {
 		dst = *this;
 		return;
 	}
@@ -142,14 +142,41 @@ void Image::Scale(Image &dst, double scale) const
 		return;
 	}
 
-	if (scale > 1) {
-		ScaleEnlarge(dst, scale);
-	} else {
-		ScaleReduce(dst, scale);
+	auto scale_y_range = [&](int y_begin, int y_end) {
+		if (scale > 1.0) {
+			ScaleEnlarge(dst, scale, y_begin, y_end);
+		} else {
+			ScaleReduce(dst, scale, y_begin, y_end);
+		}
+	};
+
+	std::vector<std::thread> threads;
+	const size_t size_per_cpu = 16384; // to fit into data cache of 32Kb
+	int y_begin = 0;
+	if (dst.Size() >= 2 * size_per_cpu && dst._height > 16) {
+		const int use_cpu_count = std::min(int(dst.Size() / size_per_cpu),
+				std::min(16, int(std::thread::hardware_concurrency())));
+		if (use_cpu_count > 1) {
+			const int base_portion = dst._height / use_cpu_count;
+			while (y_begin + base_portion < dst._height) {
+				int portion = base_portion;
+				if (y_begin == 0) { // 1st portion has more time than others
+					portion+= dst._height % use_cpu_count;
+				}
+				threads.emplace_back(std::bind(scale_y_range, y_begin, y_begin + portion));
+				y_begin+= portion;
+			}
+		}
+	}
+	if (y_begin < dst._height) {
+		scale_y_range(y_begin, dst._height);
+	}
+	for (auto &t : threads) {
+		t.join();
 	}
 }
 
-void Image::ScaleEnlarge(Image &dst, double scale) const
+void Image::ScaleEnlarge(Image &dst, double scale, int y_begin, int y_end) const
 {
 	const auto src_row_stride = _width * _bytes_per_pixel;
 	const auto dst_row_stride = dst._width * _bytes_per_pixel;
@@ -164,82 +191,63 @@ void Image::ScaleEnlarge(Image &dst, double scale) const
 	const auto *src_data = (const unsigned char *)_data.data();
 	auto *dst_data = (unsigned char *)dst._data.data();
 
+	for (int dst_y = y_begin; dst_y < y_end; ++dst_y) {
+		auto src_y = scale_y * dst_y;
+		int y1 = static_cast<int>(std::floor(src_y));
+		int y2 = std::min(y1 + 1, _height - 1);
+		const double weight_y = (src_y - y1);
+		const double one_minus_weight_y = 1.0 - weight_y;
 
-	auto process_y_range = [&](int y_begin, int y_end) mutable {
-		for (int dst_y = y_begin; dst_y < y_end; ++dst_y) {
-			auto src_y = scale_y * dst_y;
-			int y1 = static_cast<int>(std::floor(src_y));
-			int y2 = std::min(y1 + 1, _height - 1);
-			const double weight_y = (src_y - y1);
-			const double one_minus_weight_y = 1.0 - weight_y;
+		for (int dst_x = 0; dst_x < dst._width; ++dst_x) {
+			// Map destination coordinates to source coordinates
+			auto src_x = scale_x * dst_x;
 
-			for (int dst_x = 0; dst_x < dst._width; ++dst_x) {
-				// Map destination coordinates to source coordinates
-				auto src_x = scale_x * dst_x;
+			// Get the integer and fractional parts for interpolation weights
+			// Ensure indices are within bounds, especially for the high end
+			int x1 = static_cast<int>(std::floor(src_x));
+			int x2 = std::min(x1 + 1, _width - 1);
 
-				// Get the integer and fractional parts for interpolation weights
-				// Ensure indices are within bounds, especially for the high end
-				int x1 = static_cast<int>(std::floor(src_x));
-				int x2 = std::min(x1 + 1, _width - 1);
+			const double weight_x = (src_x - x1);
+			const double one_minus_weight_x = 1.0 - weight_x;
 
-				const double weight_x = (src_x - x1);
-				const double one_minus_weight_x = 1.0 - weight_x;
+			// Get the four surrounding pixels (A, B, C, D) values
+			// A: Top-Left, B: Top-Right, C: Bottom-Left, D: Bottom-Right
+			const auto *pA = src_data + (y1 * src_row_stride) + (x1 * _bytes_per_pixel);
+			const auto *pB = src_data + (y1 * src_row_stride) + (x2 * _bytes_per_pixel);
+			const auto *pC = src_data + (y2 * src_row_stride) + (x1 * _bytes_per_pixel);
+			const auto *pD = src_data + (y2 * src_row_stride) + (x2 * _bytes_per_pixel);
 
-				// Get the four surrounding pixels (A, B, C, D) values
-				// A: Top-Left, B: Top-Right, C: Bottom-Left, D: Bottom-Right
-				const auto *pA = src_data + (y1 * src_row_stride) + (x1 * _bytes_per_pixel);
-				const auto *pB = src_data + (y1 * src_row_stride) + (x2 * _bytes_per_pixel);
-				const auto *pC = src_data + (y2 * src_row_stride) + (x1 * _bytes_per_pixel);
-				const auto *pD = src_data + (y2 * src_row_stride) + (x2 * _bytes_per_pixel);
+			// Pointer to the destination pixel location
+			auto *dst_pixel = dst_data + (dst_y * dst_row_stride) + (dst_x * _bytes_per_pixel);
 
-				// Pointer to the destination pixel location
-				auto *pDst = dst_data + (dst_y * dst_row_stride) + (dst_x * _bytes_per_pixel);
+			// Perform interpolation for each color channel (R, G, B)
+			for (unsigned char k = 0; k < _bytes_per_pixel; ++k) {
+				// Horizontal interpolation (R1, R2)
+				double r1 = pA[k] * one_minus_weight_x + pB[k] * weight_x;
+				double r2 = pC[k] * one_minus_weight_x + pD[k] * weight_x;
 
-				// Perform interpolation for each color channel (R, G, B)
-				for (unsigned char k = 0; k < _bytes_per_pixel; ++k) {
-					// Horizontal interpolation (R1, R2)
-					double r1 = pA[k] * one_minus_weight_x + pB[k] * weight_x;
-					double r2 = pC[k] * one_minus_weight_x + pD[k] * weight_x;
+				// Vertical interpolation (final value)
+				int p = int(r1 * one_minus_weight_y + r2 * weight_y);
 
-					// Vertical interpolation (final value)
-					int p = int(r1 * one_minus_weight_y + r2 * weight_y);
-
-					// Assign the result, clamping to the valid 8-bit range [0, 255]
-					if (p >= 255) {
-						pDst[k] = 255;
-					} else if (p <= 0) {
-						pDst[k] = 0;
-					} else {
-						pDst[k] = (unsigned char)(unsigned int)(p);
-					}
+				// Assign the result, clamping to the valid 8-bit range [0, 255]
+				if (p >= 255) {
+					dst_pixel[k] = 255;
+				} else if (p <= 0) {
+					dst_pixel[k] = 0;
+				} else {
+					dst_pixel[k] = (unsigned char)(unsigned int)(p);
 				}
 			}
 		}
-	};
-
-	std::vector<std::thread> threads;
-	int y_offset = 0;
-	if (size_t(dst._height) * dst._width * _bytes_per_pixel > 4096 && dst._height > 16) {
-		const int processor_count = std::min(8, (int)std::thread::hardware_concurrency());
-		if (processor_count > 1) {
-			for (int portion = dst._height / processor_count; y_offset + portion < dst._height; y_offset+= portion) {
-				threads.emplace_back(std::bind(process_y_range, y_offset, y_offset + portion));
-			}
-		}
-	}
-
-	process_y_range(y_offset, dst._height);
-	for (auto &t : threads) {
-		t.join();
 	}
 }
 
-void Image::ScaleReduce(Image &dst, double scale) const
+void Image::ScaleReduce(Image &dst, double scale, int y_begin, int y_end) const
 {
 	const int around = (int)round(0.618 / scale);
 
 //fprintf(stderr, "around=%d\n", around);
-	for (int dst_y = 0; dst_y < dst._height; ++dst_y) {
+	for (int dst_y = y_begin; dst_y < y_end; ++dst_y) {
 		const auto src_y = (int)round(double(dst_y) / scale);
 		for (int dst_x = 0; dst_x < dst._width; ++dst_x) {
 			const auto src_x = (int)round(double(dst_x) / scale);

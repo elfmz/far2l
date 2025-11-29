@@ -7,8 +7,8 @@ class Image
 	int _width{}, _height{};
 	unsigned char _bytes_per_pixel{3};
 
-	void ScaleEnlarge(Image &dst, double scale) const;
-	void ScaleReduce(Image &dst, double scale) const;
+	void ScaleEnlarge(Image &dst, double scale, int y_begin, int y_end) const;
+	void ScaleReduce(Image &dst, double scale, int y_begin, int y_end) const;
 
 public:
 	Image(int width = 0, int height = 0, unsigned char bytes_per_pixel = 3);

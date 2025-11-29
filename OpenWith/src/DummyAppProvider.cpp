@@ -9,13 +9,13 @@ DummyAppProvider::DummyAppProvider(TMsgGetter msg_getter) : AppProvider(std::mov
 }
 
 
-std::vector<CandidateInfo> DummyAppProvider::GetAppCandidates(const std::vector<std::wstring>& pathnames)
+std::vector<CandidateInfo> DummyAppProvider::GetAppCandidates(const std::vector<std::wstring>& filepaths)
 {
 	return {};
 }
 
 
-std::vector<std::wstring> DummyAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames)
+std::vector<std::wstring> DummyAppProvider::ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths)
 {
 	return {};
 }

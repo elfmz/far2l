@@ -27,9 +27,9 @@ public:
 
 	static std::unique_ptr<AppProvider> CreateAppProvider(TMsgGetter msg_getter);
 
-	virtual std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& pathnames) = 0;
+	virtual std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& filepaths) = 0;
 	virtual std::vector<std::wstring> GetMimeTypes() = 0;
-	virtual std::vector<std::wstring> ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames) = 0;
+	virtual std::vector<std::wstring> ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths) = 0;
 	virtual std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) = 0;
 
 	virtual std::vector<ProviderSetting> GetPlatformSettings() { return {}; }

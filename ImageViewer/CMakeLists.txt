@@ -8,6 +8,7 @@ src/Image.cpp
 src/ImageView.cpp 
 src/ImageAtFull.cpp
 src/ImageAtQV.cpp
+src/ToolExec.cpp
 )
 
 add_library (ImageViewer MODULE ${SOURCES})

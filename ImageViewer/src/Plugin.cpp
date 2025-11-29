@@ -10,6 +10,19 @@ void PurgeAccumulatedInputEvents()
 	WINPORT(CheckForKeyPress)(NULL, NULL, 0, CFKP_KEEP_OTHER_EVENTS);
 }
 
+bool CheckForEscAndPurgeAccumulatedInputEvents()
+{ // if ESC pressed: purge all currently queued keypresses and return true, else: just return false
+	WORD keys[] = {VK_ESCAPE};
+	if (WINPORT(CheckForKeyPress)(NULL, keys, ARRAYSIZE(keys),
+		CFKP_KEEP_MATCHED_KEY_EVENTS | CFKP_KEEP_UNMATCHED_KEY_EVENTS | CFKP_KEEP_MOUSE_EVENTS | CFKP_KEEP_OTHER_EVENTS) == 0) {
+		return false;
+	}
+
+	PurgeAccumulatedInputEvents();
+	return true;
+}
+
+
 void RectReduce(SMALL_RECT &rc)
 {
 	if (rc.Right - rc.Left >= 2) {

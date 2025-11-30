@@ -158,7 +158,7 @@ struct pick_color256_s
 
 	union {
 		struct {
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 			uint32_t rgb;
 			uint32_t hsv;
 #else

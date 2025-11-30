@@ -143,18 +143,23 @@ void Image::Scale(Image &dst, double scale) const
 	}
 
 	auto scale_y_range = [&](int y_begin, int y_end) {
-		if (scale > 1.0) {
-			ScaleEnlarge(dst, scale, y_begin, y_end);
-		} else {
-			ScaleReduce(dst, scale, y_begin, y_end);
+		try {
+			if (scale > 1.0) {
+				ScaleEnlarge(dst, scale, y_begin, y_end);
+			} else {
+				ScaleReduce(dst, scale, y_begin, y_end);
+			}
+		} catch (...) {
+			fprintf(stderr, "scale_y_range: exception at %d .. %d\n", y_begin, y_end);
 		}
 	};
 
 	std::vector<std::thread> threads;
-	const size_t size_per_cpu = 16384; // to fit into data cache of 32Kb
+	const size_t min_size_per_cpu = 32768;
+	const size_t max_img_size = std::max(Size(), dst.Size());
 	int y_begin = 0;
-	if (dst.Size() >= 2 * size_per_cpu && dst._height > 16) {
-		const int use_cpu_count = std::min(int(dst.Size() / size_per_cpu),
+	if (max_img_size >= 2 * min_size_per_cpu && dst._height > 16) {
+		const int use_cpu_count = std::min(int(max_img_size / min_size_per_cpu),
 				std::min(16, int(std::thread::hardware_concurrency())));
 		if (use_cpu_count > 1) {
 			const int base_portion = dst._height / use_cpu_count;

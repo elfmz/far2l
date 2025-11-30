@@ -116,6 +116,7 @@ bool ImageView::ReadImage()
 {
 	const bool use_orientation = g_settings.UseOrientation();
 
+	auto msec = GetProcessUptimeMSec();
 	ToolExec convert(_cancel);
 
 	convert.AddArguments("convert", "--", _render_file,
@@ -198,7 +199,9 @@ bool ImageView::ReadImage()
 				fprintf(stderr, "%s: unsupported orientation - %d\n", __FUNCTION__, orientation);
 		}
 	}
-	fprintf(stderr, "%s: loaded image of %d x %d orientation=%d\n", __FUNCTION__, width, height, orientation);
+	msec = GetProcessUptimeMSec() - msec;
+	fprintf(stderr, "%s: loaded image of %d x %d orientation=%d in %u msec\n",
+		__FUNCTION__, width, height, orientation, (unsigned int)msec);
 	return true;
 }
 
@@ -369,26 +372,20 @@ bool ImageView::SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_
 }
 
 
-bool ImageView::EnsureRescaled() // return true if image was rescaled, otherwise false, suppress OOM errors for now
+bool ImageView::EnsureRescaled() // return true if image was rescaled, otherwise false
 {
-	if (_ready_image_scale <= 0 || fabs(_scale -_ready_image_scale) >= 0.01) {
-		assert(_scale > 0);
-		try {
-			_orig_image.Scale(_ready_image, _scale);
-			fprintf(stderr, "%s: Rescaled by %f - %d x %d -> %d x %d\n", __FUNCTION__,
-				_scale, _orig_image.Width(), _orig_image.Height(), _ready_image.Width(), _ready_image.Height());
-			_ready_image_scale = _scale;
-			_rotated = 0;
-			return true;
-
-		} catch (std::exception &e) {
-			fprintf(stderr, "%s: %s\n", __FUNCTION__, e.what());
-		} catch (...) {
-			fprintf(stderr, "%s: ...\n", __FUNCTION__);
-		}
-		_ready_image.Resize();
+	assert(_scale > 0);
+	if (_ready_image_scale > 0 && fabs(_scale -_ready_image_scale) <= 0.001) {
+		return false;
 	}
-	return false;
+	auto msec = GetProcessUptimeMSec();
+	_orig_image.Scale(_ready_image, _scale);
+	msec = GetProcessUptimeMSec() - msec;
+	fprintf(stderr, "%s: scaled by %f - %d x %d -> %d x %d in %u msec\n", __FUNCTION__, _scale,
+		_orig_image.Width(), _orig_image.Height(), _ready_image.Width(), _ready_image.Height(), (unsigned int)msec);
+	_ready_image_scale = _scale;
+	_rotated = 0;
+	return true;
 }
 
 bool ImageView::RenderImage()

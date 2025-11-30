@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "utils.hpp"
 #include "comutils.hpp"
@@ -136,11 +136,19 @@ std::wstring load_file(const std::wstring &file_path, unsigned *code_page)
 
 std::wstring auto_rename(const std::wstring &file_path)
 {
-	if (File::exists(file_path)) {
-		unsigned n = 0;
-		while (File::exists(file_path + L"." + int_to_str(n)))
-			n++;
-		return file_path + L"." + int_to_str(n);
-	} else
+	struct stat st{};
+	std::string file_path_mb = StrWide2MB(file_path);
+
+	if (sdc_lstat(file_path_mb.c_str(), &st) != 0) {
 		return file_path;
+	}
+
+	unsigned n = 0;
+	while(1) {
+		std::string file_path_mb = StrWide2MB(file_path + L"." + int_to_str(n));
+		if (sdc_lstat(file_path_mb.c_str(), &st) != 0) {
+			return file_path + L"." + int_to_str(n);
+		}
+		n++;
+	}
 }

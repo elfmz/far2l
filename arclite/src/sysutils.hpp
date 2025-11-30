@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 // #include "CriticalSections.hpp"
 
@@ -113,8 +113,8 @@ class File : private NonCopyable
 protected:
 	HANDLE h_file;
 	std::wstring m_file_path;
-	char *symlinkaddr;
-	size_t symlinksize;
+	char *symlinkdata;
+	size_t symlinkdatasize;
 	size_t symlinkRWptr;
 	bool	is_symlink;
 
@@ -131,8 +131,8 @@ public:
 	bool is_open() const noexcept { return h_file != INVALID_HANDLE_VALUE; }
 	HANDLE handle() const noexcept { return h_file; }
 	const std::wstring &path() const noexcept { return m_file_path; }
-	char *getsymlink() noexcept { return symlinkaddr;}
-	const size_t getsymlinksize() const noexcept {return symlinksize;}
+	char *getsymlink() noexcept { return symlinkdata;}
+	const size_t getsymlinkdatasize() const noexcept {return symlinkdatasize;}
 
 	UInt64 size();
 	bool size_nt(UInt64 &file_size) noexcept;

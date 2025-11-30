@@ -194,8 +194,13 @@ struct pick_colorRGB_s
 
 	union {
 		struct {
+#if IS_BIG_ENDIAN
+			uint32_t rgb;
+			uint32_t hsv;
+#else
 			uint32_t hsv;
 			uint32_t rgb;
+#endif
 		};
 		uint64_t hsvrgb64;
 	};

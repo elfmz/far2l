@@ -1,4 +1,4 @@
-﻿.Language=Italian,Italian (Italiano)
+.Language=Italian,Italian (Italiano)
 
 "it"
 "► Compressore (ArcLite)"
@@ -8,8 +8,14 @@
 "Estrai Files In:"
 "&Ignora Errori"
 "Estrarre permessi di access&o ai file"
-"Estrarre i proprietari e i &gruppi di file"
-"Estrarre gli attri&buti dei file"
+"Estrai proprietari e &gruppi per:"
+"Nomi"
+"ID"
+"Nomi + ID"
+"Estrai attri&buti estesi (xattr)"
+"Estrai har&d link come file separati"
+"Ri&pristina file speciali (dispositivi, FIFO)"
+"&Usa doppio buffer di cache"
 "Quando La Destinazione Esiste Gia':"
 "C&hiedi"
 "So&vrascrivi"
@@ -63,6 +69,10 @@
 "Come"
 "Assoluti"
 "Relativi"
+"&Hardlink:"
+"Archivia hardlink"
+"File separati"
+"2Salta hardlink"
 "Rimuo&vi File Dopo Compressione"
 "File Compresso Aperto In &Scrittura"
 "&Ignora Errori"
@@ -84,7 +94,7 @@
 "Il Modulo SFX Selezionato Non Supporta La Criptazione"
 "Salva Impostazioni"
 "Impostazioni Salvate"
-"Usa le impostazioni di esportazione"
+"Impostazioni di esportazione"
 "Impost. Esport."
 
 // Archive types

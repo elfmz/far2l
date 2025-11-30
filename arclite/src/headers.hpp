@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "PlatformConstants.h"
 #include "compiler.hpp"
@@ -103,6 +103,31 @@ WARNING_DISABLE_CLANG("-Weverything")
 	#define	FAR_ALIGNED(x) __attribute__ ((aligned (x)))
 	#define	FN_STATIC_INLINE static __attribute__((always_inline)) inline
 	#define	FN_INLINE __attribute__((always_inline)) inline
+#endif
+
+#ifndef IS_BIG_ENDIAN
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+	#define IS_BIG_ENDIAN 1
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN
+	#define IS_BIG_ENDIAN 1
+#elif defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || \
+		defined(__AARCH64EB__) || defined(_MIPSEB) || defined(__MIPSEB) || \
+		defined(__MIPSEB__)
+	#define IS_BIG_ENDIAN 1
+#else
+	#define IS_BIG_ENDIAN 0
+#endif
+#endif
+
+#if IS_BIG_ENDIAN
+#define le16_to_host(x) ((((x) >> 8) & 0x00FF) | (((x) << 8) & 0xFF00))
+#define le32_to_host(x) ((((x) >> 24) & 0x000000FF) | \
+						(((x) >> 8)  & 0x0000FF00) | \
+						(((x) << 8)  & 0x00FF0000) | \
+						(((x) << 24) & 0xFF000000))
+#else
+#define le16_to_host(x) (x)
+#define le32_to_host(x) (x)
 #endif
 
 WARNING_POP()

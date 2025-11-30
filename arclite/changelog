@@ -1,3 +1,21 @@
+drkns 2025-08-17 15:50:09+01:00 - build 352
+
+1. Show all file attributes of panel items.
+
+drkns 2025-08-15 21:57:29+01:00 - build 351
+
+1. Correction of 350.
+
+drkns 2025-08-15 17:47:30+01:00 - build 350
+
+1. Properly decode raw properties (kpidNtSecure, kpidNtReparse).
+
+drkns 2025-08-14 23:21:08+01:00 - build 349
+
+1. Change Time support.
+
+2. Make Far Attributes dialog reachable.
+
 drkns 2025-07-12 20:17:28+01:00 - build 348
 
 1. 7z.dll v25.00.

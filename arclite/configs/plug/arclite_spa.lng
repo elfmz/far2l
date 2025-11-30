@@ -1,4 +1,4 @@
-﻿.Language=Spanish,Spanish (Español)
+.Language=Spanish,Spanish (Español)
 
 "es"
 "ArcLite"
@@ -8,8 +8,14 @@
 "&Extraer archivos a:"
 "&Ignorar errores"
 "Extraer permisos &de acceso a archivos"
-"Extraer propietarios y &grupos de archivos"
-"Extraer a&tributos de archivos"
+"Extraer propietarios y &grupos por:"
+"Nombres"
+"IDs"
+"Nombres + IDs"
+"Extraer a&tributos extendidos (xattr)"
+"Extraer &enlaces duros como archivos separados"
+"Restaurar arc&hivos especiales (dispositivos, FIFOs...)"
+"&Usar búfer de caché doble"
 "Cuando archivo destino ya existe:"
 "&Preguntar"
 "S&obrescribir"
@@ -63,6 +69,10 @@
 "Tal cual"
 "Absolutos"
 "Relativos"
+"&Enlaces duros:"
+"Archivar enlaces duros"
+"Archivos separados"
+"Omitir enlaces duros"
 "&Borrar archivos luego de comprimirlos"
 "Archivos de arch. compr. abiertos a es&critura"
 "&Ignorar errores"
@@ -84,7 +94,7 @@
 "Módulo SFX seleccionado no soporta cifrado"
 "Guardar ajustes"
 "Ajustes guardados"
-"Usa la configuración de exportación"
+"Config de exportación"
 "Ajust. Exp."
 
 // Archive types

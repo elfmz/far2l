@@ -1,21 +1,404 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "utils.hpp"
+
+#if 0
+std::string make_absolute_symlink_target(const std::string &symlink_path, const std::string &raw_target)
+{
+	if (!raw_target.empty() && raw_target[0] == '/') {
+		return raw_target;
+	}
+
+	size_t last_slash = symlink_path.find_last_of('/');
+
+	if (last_slash == 0) {
+		return "/" + raw_target;
+	}
+
+	std::string base_dir;
+	if (last_slash == std::string::npos) {
+		base_dir = ".";
+	} else {
+		base_dir = symlink_path.substr(0, last_slash);
+		if (base_dir.empty()) base_dir = "/";
+	}
+
+	std::vector<std::string> parts;
+	parts.reserve(16);
+
+	auto add_parts = [&parts](const std::string &path) {
+		size_t start = 0;
+		size_t end = 0;
+
+		if (!path.empty() && path[0] == '/') {
+			start = 1;
+		}
+
+		while (start < path.length()) {
+			end = path.find('/', start);
+			if (end == std::string::npos) {
+				end = path.length();
+			}
+
+			if (end > start) {
+				std::string part = path.substr(start, end - start);
+				if (part == "..") {
+					if (!parts.empty()) parts.pop_back();
+				} else if (part != ".") {
+					parts.push_back(std::move(part));
+				}
+			}
+
+			start = end + 1;
+		}
+	};
+
+	add_parts(base_dir);
+	add_parts(raw_target);
+
+	if (parts.empty()) {
+		return "/";
+	}
+
+	std::string result;
+	result.reserve(parts.size() * 10 + 1);
+
+	result = "/";
+	for (size_t i = 0; i < parts.size(); ++i) {
+		if (i > 0) result += "/";
+		result += parts[i];
+	}
+
+	return result;
+}
+
+std::string get_parent_directory(const std::string& path) {
+	size_t last_slash = path.find_last_of('/');
+	if (last_slash == std::string::npos) {
+		return ".";
+	} else if (last_slash == 0) {
+		return "/";
+	} else {
+		return path.substr(0, last_slash);
+	}
+}
+
+std::string normalize_path(const std::string& path) {
+	if (path.empty()) return "/";
+	
+	std::vector<std::string> parts;
+	size_t start = (path[0] == '/') ? 1 : 0;
+	size_t end = 0;
+	
+	while (start < path.length()) {
+		end = path.find('/', start);
+		if (end == std::string::npos) end = path.length();
+		
+		if (end > start) {
+			std::string part = path.substr(start, end - start);
+			if (part == "..") {
+				if (!parts.empty()) parts.pop_back();
+			} else if (part != ".") {
+				parts.push_back(part);
+			}
+		}
+		start = end + 1;
+	}
+
+	if (parts.empty()) return "/";
+	
+	std::string result = "/";
+	for (size_t i = 0; i < parts.size(); i++) {
+		if (i > 0) result += "/";
+		result += parts[i];
+	}
+	
+	return result;
+}
+
+std::string make_relative_symlink_target(const std::string &symlink_path, const std::string &raw_target)
+{
+	if (raw_target.empty() || raw_target[0] != '/') {
+		return raw_target;
+	}
+
+	if (symlink_path.empty() || symlink_path[0] != '/') {
+		return raw_target;
+	}
+
+	std::string from_dir = get_parent_directory(symlink_path);
+	if (from_dir.empty()) from_dir = "/";
+
+	std::string to = raw_target;
+
+	from_dir = normalize_path(from_dir);
+	to = normalize_path(to);
+
+	auto split_path = [](const std::string& path) -> std::vector<std::string> {
+		std::vector<std::string> parts;
+		if (path.empty() || path == "/") return parts;
+		
+		size_t start = 1;
+		size_t end = 0;
+		
+		while (start < path.length()) {
+			end = path.find('/', start);
+			if (end == std::string::npos) end = path.length();
+			
+			if (end > start) {
+				parts.push_back(path.substr(start, end - start));
+			}
+			start = end + 1;
+		}
+		return parts;
+	};
+
+	auto from_parts = split_path(from_dir);
+	auto to_parts = split_path(to);
+
+	size_t common = 0;
+	size_t min_size = std::min(from_parts.size(), to_parts.size());
+	while (common < min_size && from_parts[common] == to_parts[common]) {
+		common++;
+	}
+
+	std::string result;
+	
+	for (size_t i = common; i < from_parts.size(); i++) {
+		if (!result.empty()) result += "/";
+		result += "..";
+	}
+
+	for (size_t i = common; i < to_parts.size(); i++) {
+		if (!result.empty()) result += "/";
+		result += to_parts[i];
+	}
+
+	return result.empty() ? "." : result;
+}
+#endif
+
+template<typename CharT>
+static std::basic_string<CharT> make_string(const char* s) {
+	if constexpr (std::is_same_v<CharT, char>) {
+		return std::string(s);
+	} else {
+		return std::wstring(s, s + strlen(s));
+	}
+}
+
+template<typename CharT>
+static CharT slash_char() {
+	if constexpr (std::is_same_v<CharT, char>) return '/';
+	else return L'/';
+}
+
+template<typename CharT>
+static std::basic_string<CharT> dot_str() {
+	if constexpr (std::is_same_v<CharT, char>) return ".";
+	else return L".";
+}
+
+template<typename CharT>
+static std::basic_string<CharT> dotdot_str() {
+	if constexpr (std::is_same_v<CharT, char>) return "..";
+	else return L"..";
+}
+
+template<typename CharT>
+std::basic_string<CharT> make_absolute_symlink_target(
+	const std::basic_string<CharT>& symlink_path,
+	const std::basic_string<CharT>& raw_target)
+{
+	const CharT slash = slash_char<CharT>();
+	if (!raw_target.empty() && raw_target[0] == slash) {
+		return raw_target;
+	}
+
+	size_t last_slash = symlink_path.find_last_of(slash);
+	if (last_slash == 0) {
+		return make_string<CharT>("/") + raw_target;
+	}
+
+	std::basic_string<CharT> base_dir;
+	if (last_slash == std::basic_string<CharT>::npos) {
+		base_dir = dot_str<CharT>();
+	} else {
+		base_dir = symlink_path.substr(0, last_slash);
+		if (base_dir.empty()) base_dir = make_string<CharT>("/");
+	}
+
+	std::vector<std::basic_string<CharT>> parts;
+	parts.reserve(16);
+
+	auto add_parts = [&parts, slash](const std::basic_string<CharT>& path) {
+		size_t start = 0;
+		if (!path.empty() && path[0] == slash) start = 1;
+
+		while (start < path.length()) {
+			size_t end = path.find(slash, start);
+			if (end == std::basic_string<CharT>::npos) end = path.length();
+			if (end > start) {
+				auto part = path.substr(start, end - start);
+				if (part == dotdot_str<CharT>()) {
+					if (!parts.empty()) parts.pop_back();
+				} else if (part != dot_str<CharT>()) {
+					parts.push_back(std::move(part));
+				}
+			}
+			start = end + 1;
+		}
+	};
+
+	add_parts(base_dir);
+	add_parts(raw_target);
+
+	if (parts.empty()) {
+		return make_string<CharT>("/");
+	}
+
+	std::basic_string<CharT> result;
+	result.reserve(parts.size() * 10 + 1);
+	result = make_string<CharT>("/");
+	for (size_t i = 0; i < parts.size(); ++i) {
+		if (i > 0) result += slash;
+		result += parts[i];
+	}
+	return result;
+}
+
+template<typename CharT>
+std::basic_string<CharT> get_parent_directory(const std::basic_string<CharT>& path) {
+	const CharT slash = slash_char<CharT>();
+	size_t last_slash = path.find_last_of(slash);
+	if (last_slash == std::basic_string<CharT>::npos) {
+		return dot_str<CharT>();
+	} else if (last_slash == 0) {
+		return make_string<CharT>("/");
+	} else {
+		return path.substr(0, last_slash);
+	}
+}
+
+template<typename CharT>
+std::basic_string<CharT> normalize_path(const std::basic_string<CharT>& path) {
+	if (path.empty()) return make_string<CharT>("/");
+
+	const CharT slash = slash_char<CharT>();
+	std::vector<std::basic_string<CharT>> parts;
+	size_t start = (path[0] == slash) ? 1 : 0;
+
+	while (start < path.length()) {
+		size_t end = path.find(slash, start);
+		if (end == std::basic_string<CharT>::npos) end = path.length();
+		if (end > start) {
+			auto part = path.substr(start, end - start);
+			if (part == dotdot_str<CharT>()) {
+				if (!parts.empty()) parts.pop_back();
+			} else if (part != dot_str<CharT>()) {
+				parts.push_back(part);
+			}
+		}
+		start = end + 1;
+	}
+
+	if (parts.empty()) return make_string<CharT>("/");
+	std::basic_string<CharT> result = make_string<CharT>("/");
+	for (size_t i = 0; i < parts.size(); i++) {
+		if (i > 0) result += slash;
+		result += parts[i];
+	}
+	return result;
+}
+
+template<typename CharT>
+std::basic_string<CharT> make_relative_symlink_target(
+	const std::basic_string<CharT>& symlink_path,
+	const std::basic_string<CharT>& raw_target)
+{
+	const CharT slash = slash_char<CharT>();
+	if (raw_target.empty() || raw_target[0] != slash) {
+		return raw_target;
+	}
+	if (symlink_path.empty() || symlink_path[0] != slash) {
+		return raw_target;
+	}
+
+	auto from_dir = get_parent_directory(symlink_path);
+	if (from_dir.empty()) from_dir = make_string<CharT>("/");
+
+	auto to = raw_target;
+	from_dir = normalize_path(from_dir);
+	to = normalize_path(to);
+
+	auto split_path = [slash](const std::basic_string<CharT>& path) {
+		std::vector<std::basic_string<CharT>> parts;
+		if (path.empty() || path == make_string<CharT>("/")) return parts;
+		size_t start = 1;
+		while (start < path.length()) {
+			size_t end = path.find(slash, start);
+			if (end == std::basic_string<CharT>::npos) end = path.length();
+			if (end > start) {
+				parts.push_back(path.substr(start, end - start));
+			}
+			start = end + 1;
+		}
+		return parts;
+	};
+
+	auto from_parts = split_path(from_dir);
+	auto to_parts = split_path(to);
+
+	size_t common = 0;
+	size_t min_size = std::min(from_parts.size(), to_parts.size());
+	while (common < min_size && from_parts[common] == to_parts[common]) {
+		++common;
+	}
+
+	std::basic_string<CharT> result;
+	const auto dotdot = dotdot_str<CharT>();
+	for (size_t i = common; i < from_parts.size(); ++i) {
+		if (!result.empty()) result += slash;
+		result += dotdot;
+	}
+	for (size_t i = common; i < to_parts.size(); ++i) {
+		if (!result.empty()) result += slash;
+		result += to_parts[i];
+	}
+
+	return result.empty() ? dot_str<CharT>() : result;
+}
+
+template std::basic_string<char> make_absolute_symlink_target<char>(
+	const std::basic_string<char>&, const std::basic_string<char>&);
+template std::basic_string<wchar_t> make_absolute_symlink_target<wchar_t>(
+	const std::basic_string<wchar_t>&, const std::basic_string<wchar_t>&);
+
+template std::basic_string<char> get_parent_directory<char>(const std::basic_string<char>&);
+template std::basic_string<wchar_t> get_parent_directory<wchar_t>(const std::basic_string<wchar_t>&);
+
+template std::basic_string<char> normalize_path<char>(const std::basic_string<char>&);
+template std::basic_string<wchar_t> normalize_path<wchar_t>(const std::basic_string<wchar_t>&);
+
+template std::basic_string<char> make_relative_symlink_target<char>(
+	const std::basic_string<char>&, const std::basic_string<char>&);
+template std::basic_string<wchar_t> make_relative_symlink_target<wchar_t>(
+	const std::basic_string<wchar_t>&, const std::basic_string<wchar_t>&);
 
 std::wstring long_path(const std::wstring &path)
 {
 #if 0
-  if (substr_match(path, 0, L"\\\\")) {
-    if (substr_match(path, 2, L"?\\") || substr_match(path, 2, L".\\")) {
-      return path;
-    }
-    else {
-      return std::wstring(path).replace(0, 1, L"\\\\?\\UNC");
-    }
-  }
-  else {
-    return std::wstring(path).insert(0, L"\\\\?\\");
-  }
+	if (substr_match(path, 0, L"\\\\")) {
+		if (substr_match(path, 2, L"?\\") || substr_match(path, 2, L".\\")) {
+			return path;
+	}
+	else {
+		return std::wstring(path).replace(0, 1, L"\\\\?\\UNC");
+	}
+	}
+	else {
+		return std::wstring(path).insert(0, L"\\\\?\\");
+	}
 #endif
 	return path;
 }
@@ -40,6 +423,14 @@ std::wstring add_trailing_slash(const std::wstring &path)
 	}
 }
 
+std::wstring add_leading_slash(const std::wstring &path)
+{
+	if (path.empty() || path[0] == L'/') {
+		return path;
+	}
+	return L'/' + path;
+}
+
 std::wstring del_trailing_slash(const std::wstring &path)
 {
 	if ((path.size() < 2) || (path[path.size() - 1] != L'/')) {
@@ -58,34 +449,34 @@ static void locate_path_root(const std::wstring &path, size_t &path_root_len, bo
 	return;
 #if 0
   if (substr_match(path, 0, L"\\\\")) {
-    if (substr_match(path, 2, L"?\\UNC\\")) {
-      prefix_len = 8;
-      is_unc_path = true;
-    }
-    else if (substr_match(path, 2, L"?\\") || substr_match(path, 2, L".\\")) {
-      prefix_len = 4;
-    }
-    else {
-      prefix_len = 2;
-      is_unc_path = true;
-    }
+	if (substr_match(path, 2, L"?\\UNC\\")) {
+	  prefix_len = 8;
+	  is_unc_path = true;
+	}
+	else if (substr_match(path, 2, L"?\\") || substr_match(path, 2, L".\\")) {
+	  prefix_len = 4;
+	}
+	else {
+	  prefix_len = 2;
+	  is_unc_path = true;
+	}
   }
 
   if ((prefix_len == 0) && !substr_match(path, 1, L":\\")) {
-    path_root_len = 0;
+	path_root_len = 0;
   }
   else {
-    std::wstring::size_type p = path.find(L'\\', prefix_len);
-    if (p == std::wstring::npos) {
-      p = path.size();
-    }
-    if (is_unc_path) {
-      p = path.find(L'\\', p + 1);
-      if (p == std::wstring::npos) {
-        p = path.size();
-      }
-    }
-    path_root_len = p;
+	std::wstring::size_type p = path.find(L'\\', prefix_len);
+	if (p == std::wstring::npos) {
+	  p = path.size();
+	}
+	if (is_unc_path) {
+	  p = path.find(L'\\', p + 1);
+	  if (p == std::wstring::npos) {
+		p = path.size();
+	  }
+	}
+	path_root_len = p;
   }
 #endif
 	std::wstring::size_type p = path.find(L'/', prefix_len);
@@ -212,50 +603,50 @@ std::wstring remove_path_root(const std::wstring &path)
 }
 
 std::string removeExtension(const std::string &filename) {
-    size_t dotPos = filename.find_last_of('.');
+	size_t dotPos = filename.find_last_of('.');
 
-    if (dotPos == std::string::npos || dotPos == 0) {
-        return filename;
-    }
+	if (dotPos == std::string::npos || dotPos == 0) {
+		return filename;
+	}
 
-    if (dotPos == filename.length() - 1) {
-        return filename;
-    }
+	if (dotPos == filename.length() - 1) {
+		return filename;
+	}
 
-    if (dotPos == 0) {
-        return filename;
-    }
+	if (dotPos == 0) {
+		return filename;
+	}
 
-    return filename.substr(0, dotPos);
+	return filename.substr(0, dotPos);
 }
 
 void removeExtension(std::wstring &filename) {
-    size_t dotPos = filename.find_last_of('.');
+	size_t dotPos = filename.find_last_of('.');
 
-    if (dotPos == std::wstring::npos || dotPos == 0) {
-        return;
-    }
-    if (dotPos == filename.length() - 1) {
-        return;
-    }
-    filename = filename.substr(0, dotPos);
+	if (dotPos == std::wstring::npos || dotPos == 0) {
+		return;
+	}
+	if (dotPos == filename.length() - 1) {
+		return;
+	}
+	filename = filename.substr(0, dotPos);
 }
 
 void removeExtension(std::vector<unsigned char> &filename) {
-    size_t dotPos = std::string::npos;
-    for (size_t i = 0; i < filename.size(); ++i) {
-        if (filename[i] == '.') {
-            dotPos = i;
-        }
-    }
+	size_t dotPos = std::string::npos;
+	for (size_t i = 0; i < filename.size(); ++i) {
+		if (filename[i] == '.') {
+			dotPos = i;
+		}
+	}
 
-    if (dotPos == std::string::npos || dotPos == 0) {
-        return;
-    }
-    if (dotPos == filename.size() - 1) {
-        return;
-    }
-    filename.erase(filename.begin() + dotPos, filename.end());
+	if (dotPos == std::string::npos || dotPos == 0) {
+		return;
+	}
+	if (dotPos == filename.size() - 1) {
+		return;
+	}
+	filename.erase(filename.begin() + dotPos, filename.end());
 }
 
 //-----------------------------------------------------------------------------

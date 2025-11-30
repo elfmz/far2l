@@ -25,6 +25,7 @@ class ImageView
 	int _dx{0}, _dy{0};
 	double _scale{-1}, _scale_fit{-1}, _scale_min{0.1}, _scale_max{4};
 	int _rotate{0}, _rotated{0};
+	int _mirror_pending{0};
 	std::string _err_str;
 
 	Image _orig_image, _ready_image, _tmp_image;
@@ -44,6 +45,7 @@ class ImageView
 	bool SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_top, int viewport_w, int viewport_h, int delta);
 	void SetupInitialScale(const int canvas_w, const int canvas_h);
 	bool EnsureRescaled();
+	bool EnsureMirrored();
 	bool RenderImage();
 	void DenoteState(const char *stage = NULL);
 	void JustReset();
@@ -70,6 +72,8 @@ public:
 	void Rotate(int change);
 	void Shift(int horizontal, int vertical);
 	COORD ShiftByPixels(COORD delta);
+	void MirrorH();
+	void MirrorV();
 	void Reset(bool keep_rotation);
 	void Select();
 	void Deselect();

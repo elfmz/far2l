@@ -143,7 +143,7 @@ void Image::Scale(Image &dst, double scale) const
 	}
 
 	auto scale_y_range = [&](int y_begin, int y_end) {
-		try {
+		try { // fprintf(stderr, "scale_y_range: y_begin=%d portion=%d\n", y_begin, y_end - y_begin);
 			if (scale > 1.0) {
 				ScaleEnlarge(dst, scale, y_begin, y_end);
 			} else {
@@ -154,30 +154,39 @@ void Image::Scale(Image &dst, double scale) const
 		}
 	};
 
-	std::vector<std::thread> threads;
+	struct Threads : std::vector<std::thread>
+	{
+		~Threads()
+		{
+			for (auto &t : *this) {
+				t.join();
+			}
+		}
+	} threads;
+
 	const size_t min_size_per_cpu = 32768;
 	const size_t max_img_size = std::max(Size(), dst.Size());
 	int y_begin = 0;
 	if (max_img_size >= 2 * min_size_per_cpu && dst._height > 16) {
-		const int use_cpu_count = std::min(int(max_img_size / min_size_per_cpu),
-				std::min(16, int(std::thread::hardware_concurrency())));
+		const int hw_cpu_count = int(std::thread::hardware_concurrency());
+		const int use_cpu_count = std::min(int(max_img_size / min_size_per_cpu), std::min(16, hw_cpu_count));
 		if (use_cpu_count > 1) {
 			const int base_portion = dst._height / use_cpu_count;
+			const int extra_portion = dst._height - (base_portion * use_cpu_count);
 			while (y_begin + base_portion < dst._height) {
 				int portion = base_portion;
-				if (y_begin == 0) { // 1st portion has more time than others
-					portion+= dst._height % use_cpu_count;
+				if (y_begin == 0 && y_begin + portion + extra_portion < dst._height) {
+					portion+= extra_portion; // 1st portion has more time than others
 				}
 				threads.emplace_back(std::bind(scale_y_range, y_begin, y_begin + portion));
 				y_begin+= portion;
 			}
+		} else if (hw_cpu_count <= 0) {
+			fprintf(stderr, "%s: CPU count unknown\n", __FUNCTION__);
 		}
 	}
-	if (y_begin < dst._height) {
+	if (y_begin < dst._height) { // fprintf(stderr, "last portion at main thread\n");
 		scale_y_range(y_begin, dst._height);
-	}
-	for (auto &t : threads) {
-		t.join();
 	}
 }
 

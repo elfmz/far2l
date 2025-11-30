@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "msg.hpp"
 #include "version.hpp"
@@ -636,12 +636,12 @@ FAR_ALIGNED(16) void CItem::GetUnicodeString(UString &res, const AString &s, boo
 }	 // namespace NArchive
 
 
-#if defined(__APPLE__)
+#if 0
 //void **find_plt_entry_for_symbol(struct link_map *map, void *target_addr)
 //{
 //	return NULL;
 //}
-#else
+
 void **find_plt_entry_for_symbol(struct link_map *map, void *target_addr)
 {
 //	ElfW(Dyn) *dynamic = map->l_ld;
@@ -776,6 +776,7 @@ bool get_faddrs(void *handle)
 	return true;
 }
 
+#if 0
 static bool patch_plt(void *handle)
 {
 #if defined(__APPLE__) || defined(__UCLIBC__)
@@ -812,6 +813,7 @@ static bool patch_plt(void *handle)
 	return true;
 #endif
 }
+#endif
 
 static bool patch_addr(void *handle)
 {

@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "utils.hpp"
 #include "sysutils.hpp"
@@ -9,7 +9,7 @@
 namespace Far
 {
 
-static PluginStartupInfo g_far;
+PluginStartupInfo g_far;
 FarStandardFunctions g_fsf;
 
 void init(const PluginStartupInfo *psi)
@@ -66,6 +66,9 @@ intptr_t menu(const GUID &id, const std::wstring &title, const MenuItems &items,
 	for (unsigned i = 0; i < items.size(); i++) {
 		mi = {};
 		mi.Text = items[i].c_str();
+		mi.Selected = 0;
+		mi.Checked = 0;
+		mi.Separator = 0;
 		menu_items.push_back(mi);
 	}
 
@@ -81,6 +84,68 @@ intptr_t menu(const GUID &id, const std::wstring &title, const MenuItems &items,
 
 	return ret;
 }
+
+#if 0
+struct FarMenuItem
+{
+	const wchar_t *Text;
+	int  Selected;
+	int  Checked;
+	int  Separator;
+};
+
+enum MENUITEMFLAGS
+{
+	MIF_NONE   = 0,
+	MIF_SELECTED   = 0x00010000UL,
+	MIF_CHECKED    = 0x00020000UL,
+	MIF_SEPARATOR  = 0x00040000UL,
+	MIF_DISABLE    = 0x00080000UL,
+	MIF_GRAYED     = 0x00100000UL,
+	MIF_HIDDEN     = 0x00200000UL,
+#ifdef FAR_USE_INTERNALS
+	MIF_SUBMENU    = 0x00400000UL,
+#endif // END FAR_USE_INTERNALS
+};
+
+struct FarMenuItemEx
+{
+	DWORD Flags;
+	const wchar_t *Text;
+	DWORD AccelKey;
+	DWORD Reserved;
+	DWORD_PTR UserData;
+};
+
+enum FARMENUFLAGS
+{
+	FMENU_SHOWAMPERSAND        = 0x00000001,
+	FMENU_WRAPMODE             = 0x00000002,
+	FMENU_AUTOHIGHLIGHT        = 0x00000004,
+	FMENU_REVERSEAUTOHIGHLIGHT = 0x00000008,
+#ifdef FAR_USE_INTERNALS
+	FMENU_SHOWNOBOX            = 0x00000010,
+#endif // END FAR_USE_INTERNALS
+	FMENU_USEEXT               = 0x00000020,
+	FMENU_CHANGECONSOLETITLE   = 0x00000040,
+};
+
+typedef int (WINAPI *FARAPIMENU)(
+	INT_PTR             PluginNumber,
+	int                 X,
+	int                 Y,
+	int                 MaxHeight,
+	DWORD               Flags,
+	const wchar_t      *Title,
+	const wchar_t      *Bottom,
+	const wchar_t      *HelpTopic,
+	const int          *BreakKeys,
+	int                *BreakCode,
+	const struct FarMenuItem *Item,
+	int                 ItemsNumber
+);
+
+#endif
 
 std::wstring get_progress_bar_str(unsigned width, UInt64 completed, UInt64 total)
 {

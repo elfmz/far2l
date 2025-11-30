@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "utils.hpp"
 #include "farutils.hpp"
@@ -295,8 +295,8 @@ std::wstring get_current_directory()
 File::File() noexcept {
 	h_file = INVALID_HANDLE_VALUE;
 	is_symlink = false;
-	symlinksize = symlinkRWptr = 0;
-	symlinkaddr = NULL;
+	symlinkdatasize = symlinkRWptr = 0;
+	symlinkdata = NULL;
 }
 
 File::~File() noexcept
@@ -308,8 +308,8 @@ File::File(const std::wstring &file_path, DWORD desired_access, DWORD share_mode
 {
 	h_file = INVALID_HANDLE_VALUE;
 	is_symlink = false;
-	symlinksize = symlinkRWptr = 0;
-	symlinkaddr = NULL;
+	symlinkdatasize = symlinkRWptr = 0;
+	symlinkdata = NULL;
 	open(file_path, desired_access, share_mode, creation_disposition, flags_and_attributes);
 }
 
@@ -326,23 +326,52 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 	close();
 	m_file_path = file_path;
 
-	if ((flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) || (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT)) {
-		if (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT) {
+	if (flags_and_attributes & FILE_FLAG_CREATE_REPARSE_POINT) {
+		is_symlink = true;
+		symlinkdata = (char *)malloc(PATH_MAX + 1);
+		if (!symlinkdata) {
+			WINPORT_SetLastError(E_OUTOFMEMORY);
+			return false;
 		}
+		symlinkRWptr = 0;
+		symlinkdatasize = 0;
+		h_file = (HANDLE)0x999;
+		return true;
+	}
 
-		symlinkaddr = (char *)malloc(PATH_MAX);
-		if (!symlinkaddr) {
+	if (flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) {
+
+		char symtp[PATH_MAX + 1];
+		int symtp_len;
+		symlinkdata = (char *)malloc(PATH_MAX + 1);
+		if (!symlinkdata) {
 			WINPORT_SetLastError(E_OUTOFMEMORY);
 			return false;
 		}
 		symlinkRWptr = 0;
 
-		if (flags_and_attributes & FILE_FLAG_OPEN_REPARSE_POINT) {
-			symlinksize = sdc_readlink(Wide2MB(file_path.c_str()).c_str(), symlinkaddr, PATH_MAX);
-			if ((intptr_t)symlinksize <= 0) {
-				return false;
-			}
+		symtp_len = sdc_readlink(Wide2MB(file_path.c_str()).c_str(), symtp, PATH_MAX);
+		if (symtp_len <= 0) {
+			//fprintf(stderr, "symtp_len <= 0 - return false for %ls\n", file_path.c_str() );
+			return false;
 		}
+		symtp[symtp_len] = 0;
+
+		std::string final_target;
+
+		if (creation_disposition == 1) {
+			final_target = make_absolute_symlink_target(Wide2MB(file_path.c_str()), std::string(symtp));
+		} else if (creation_disposition == 2) {
+			final_target = make_relative_symlink_target(Wide2MB(file_path.c_str()), std::string(symtp));
+		} else {
+			final_target = symtp;
+		}
+
+		if (final_target.size() >= PATH_MAX) {
+			final_target.resize(PATH_MAX - 1);
+		}
+		memcpy(symlinkdata, final_target.c_str(), final_target.size() + 1);
+		symlinkdatasize = final_target.size();
 
 		is_symlink = true;
 		h_file = (HANDLE)0x999;
@@ -352,17 +381,19 @@ bool File::open_nt(const std::wstring &file_path, DWORD desired_access, DWORD sh
 	h_file = WINPORT_CreateFile(long_path_norm(file_path).c_str(), desired_access, share_mode, nullptr,
 			creation_disposition, flags_and_attributes, nullptr);
 
+	//fprintf(stderr, "h_file = %p\n", h_file );
+
 	return h_file != INVALID_HANDLE_VALUE;
 }
 
 void File::close() noexcept
 {
-	if (symlinkaddr) {
-		free(symlinkaddr);
-		symlinkaddr = NULL;
+	if (symlinkdata) {
+		free(symlinkdata);
+		symlinkdata = NULL;
 	}
 
-	symlinksize = symlinkRWptr = 0;
+	symlinkdatasize = symlinkRWptr = 0;
 
 	if (is_symlink) {
 		h_file = INVALID_HANDLE_VALUE;
@@ -387,7 +418,7 @@ bool File::size_nt(UInt64 &file_size) noexcept
 {
 	LARGE_INTEGER fs;
 	if (is_symlink) {
-		file_size = symlinksize;
+		file_size = symlinkdatasize;
 		return true;
 	}
 
@@ -410,17 +441,17 @@ bool File::read_nt(void *data, size_t size, size_t &size_read) noexcept
 {
 	DWORD sz;
 	if (is_symlink) {
-		if (symlinkRWptr >= symlinksize || size <= 0) {
+		if (symlinkRWptr >= symlinkdatasize || size <= 0) {
 			size_read = 0;
 			return true;
 		}
-		if(size >= symlinksize - symlinkRWptr) {
-			memcpy(data, symlinkaddr, symlinksize - symlinkRWptr);
-			size_read = symlinksize - symlinkRWptr;
-			symlinkRWptr = symlinksize;
+		if(size >= symlinkdatasize - symlinkRWptr) {
+			memcpy(data, symlinkdata, symlinkdatasize - symlinkRWptr);
+			size_read = symlinkdatasize - symlinkRWptr;
+			symlinkRWptr = symlinkdatasize;
 		}
 		else {
-			memcpy(data, symlinkaddr, size);
+			memcpy(data, symlinkdata, size);
 			size_read = size;
 			symlinkRWptr += size;
 		}
@@ -449,17 +480,17 @@ bool File::write_nt(const void *data, size_t size, size_t &size_written) noexcep
 			return true;
 		}
 		if(size >= PATH_MAX - symlinkRWptr) {
-			memcpy(symlinkaddr, data, PATH_MAX - symlinkRWptr);
+			memcpy(symlinkdata, data, PATH_MAX - symlinkRWptr);
 			size_written = PATH_MAX - symlinkRWptr;
 			symlinkRWptr = PATH_MAX;
 		}
 		else {
-			memcpy(symlinkaddr, data, size);
+			memcpy(symlinkdata, data, size);
 			size_written = size;
 			symlinkRWptr += size;
 		}
-		if (symlinksize < symlinkRWptr)
-			symlinksize = symlinkRWptr;
+		if (symlinkdatasize < symlinkRWptr)
+			symlinkdatasize = symlinkRWptr;
 
 		return true;
 	}
@@ -505,21 +536,21 @@ bool File::set_pos_nt(int64_t offset, DWORD method, UInt64 *new_pos) noexcept
 
 	if (is_symlink) {
 		switch(method) {
-		case FILE_BEGIN:
+		case FILE_BEGIN: 
 			symlinkRWptr = *new_pos;
 			break;
-		case FILE_CURRENT:
+		case FILE_CURRENT: 
 			symlinkRWptr += *new_pos;
 			break;
-		case FILE_END:
-			if (*new_pos >= symlinksize)
+		case FILE_END: 
+			if (*new_pos >= symlinkdatasize)
 				symlinkRWptr = 0;
 			else
-				symlinkRWptr = symlinksize - *new_pos;
+				symlinkRWptr = symlinkdatasize - *new_pos;
 			break;
 		}
-		if (symlinkRWptr > symlinksize)
-			symlinkRWptr = symlinksize;
+		if (symlinkRWptr > symlinkdatasize)
+			symlinkRWptr = symlinkdatasize;
 		return true;
 	}
 
@@ -538,7 +569,7 @@ void File::set_end()
 bool File::set_end_nt() noexcept
 {
 	if (is_symlink) {
-		symlinkRWptr = symlinksize;
+		symlinkRWptr = symlinkdatasize;
 		return true;
 	}
 	return WINPORT_SetEndOfFile(h_file) != 0;
@@ -579,19 +610,19 @@ bool File::attributes_ex(const std::wstring &file_path, WIN32_FILE_ATTRIBUTE_DAT
 #if 0
   static BOOL (WINAPI *pfGetFileAttributesExW)(LPCWSTR pname, GET_FILEEX_INFO_LEVELS level, LPVOID pinfo) = nullptr;
   if (have_attributes_ex == 0) {
-    auto pf = GetProcAddress(GetModuleHandleW(L"kernel32"), "GetFileAttributesExW");
-    if (pf == nullptr)
-      have_attributes_ex = -1;
-    else {
-      pfGetFileAttributesExW = reinterpret_cast<decltype(pfGetFileAttributesExW)>(reinterpret_cast<void*>(pf));
-      have_attributes_ex = +1;
-    }
+	auto pf = GetProcAddress(GetModuleHandleW(L"kernel32"), "GetFileAttributesExW");
+	if (pf == nullptr)
+	  have_attributes_ex = -1;
+	else {
+	  pfGetFileAttributesExW = reinterpret_cast<decltype(pfGetFileAttributesExW)>(reinterpret_cast<void*>(pf));
+	  have_attributes_ex = +1;
+	}
   }
 #endif
 
 	auto norm_path = long_path_norm(file_path);
 	if (have_attributes_ex > 0) {
-		//    return pfGetFileAttributesExW(norm_path.c_str(), GetFileExInfoStandard, ex_attrs) != FALSE;
+		//	return pfGetFileAttributesExW(norm_path.c_str(), GetFileExInfoStandard, ex_attrs) != FALSE;
 	} else {
 		WIN32_FIND_DATAW ff;
 		auto hfind = WINPORT_FindFirstFile(norm_path.c_str(), &ff);
@@ -625,7 +656,7 @@ bool File::set_attr_posix(const std::wstring &file_path, DWORD attr) noexcept
 	//fprintf(stderr, " (!) File::set_attr_posix %ls\n", file_path.c_str());
 	//  const auto system_functions = Far::get_system_functions();
 	//  if (system_functions)
-	//    return system_functions->SetFileAttributes(long_path_norm(file_path).c_str(), attr) != 0;
+	//	return system_functions->SetFileAttributes(long_path_norm(file_path).c_str(), attr) != 0;
 	//  else
 //	return WINPORT_SetFileAttributes(long_path_norm(file_path).c_str(), attr) != 0;
 	return false;
@@ -931,8 +962,8 @@ std::wstring search_path(const std::wstring &file_name)
   wchar_t* name_ptr;
   DWORD size = SearchPathW(nullptr, file_name.c_str(), nullptr, static_cast<DWORD>(path.size()), path.data(), &name_ptr);
   if (size > path.size()) {
-    path.resize(size);
-    size = SearchPathW(nullptr, file_name.c_str(), nullptr, static_cast<DWORD>(path.size()), path.data(), &name_ptr);
+	path.resize(size);
+	size = SearchPathW(nullptr, file_name.c_str(), nullptr, static_cast<DWORD>(path.size()), path.data(), &name_ptr);
   }
   CHECK_SYS(size);
   CHECK(size < path.size());

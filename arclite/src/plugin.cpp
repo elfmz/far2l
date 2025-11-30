@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "msg.hpp"
 #include "version.hpp"
@@ -27,7 +27,6 @@ static const wchar_t ext_EXT4[] = L".ext4";
 static const wchar_t ext_EXTn[] = L".ext";
 static const wchar_t ext_HFS[] = L".hfs";
 static const wchar_t ext_APFS[] = L".apfs";
-static const wchar_t ext_TAR[] = L".tar";
 
 template<bool UseVirtualDestructor>
 class Plugin
@@ -49,8 +48,8 @@ private:
 public:
 	std::wstring current_dir;
 	char part_mode{'\0'};	 // '\0' 'm'br, 'g'pt
-	int part_idx{-1};		 // -1 or partition index
-	std::unique_ptr<Plugin<UseVirtualDestructor>> partition;
+//	int part_idx{-1};		 // -1 or partition index
+//	std::unique_ptr<Plugin<UseVirtualDestructor>> partition;
 	std::unique_ptr<Plugin<UseVirtualDestructor>> child;
     Plugin<UseVirtualDestructor>* parent;
 
@@ -80,7 +79,7 @@ public:
       child(nullptr),
       parent(nullptr)
 	{
-		//fprintf(stderr, "Plugin() CONSTRUCT\n" );
+		//fprintf(stderr, "Plugin()\n" );
 	}
 
 	~Plugin() {
@@ -201,46 +200,6 @@ public:
 		if (ext)
 			name = std::to_wstring(f_index) + (part_mode == 'm' ? L".mbr" : L".gpt") + ext;
 	}
-	//
-	bool part_index_to_item(const UInt32 index, Far::PanelItem &i)
-	{
-		if (!part_mode)
-			return false;
-
-		i.file_size = archive->get_size(index);
-		if (!i.file_size)
-			return false;
-		i.pack_size = archive->get_psize(index);
-		if (i.file_size != i.pack_size)
-			return false;
-
-		i.file_attributes = archive->get_attr(index, NULL);
-		i.file_name = archive->get_path(index);
-		correct_part_root_name(i.file_name, index, i.file_attributes, i.file_size, i.pack_size);
-
-		i.creation_time = {0, 0};		//
-		i.last_access_time = {0, 0};	//
-		i.last_write_time = {0, 0};		//
-		i.alt_file_name.clear();		// not used in set_partition()
-
-		i.user_data = (void *)(uintptr_t)(index);
-		return true;
-	}
-
-/***
-struct PanelItem
-{
-	uintptr_t file_attributes;
-	FILETIME creation_time;
-	FILETIME last_access_time;
-	FILETIME last_write_time;
-	UInt64 file_size;
-	UInt64 pack_size;
-	std::wstring file_name;
-	std::wstring alt_file_name;
-	void *user_data;
-};
-***/
 
 	bool level_up(void)
 	{
@@ -299,8 +258,6 @@ struct PanelItem
 			open_options.password = this->archive->m_password;
 			open_options.arc_types = ArcAPI::formats().get_arc_types();
 
-//				archive->arc_path = extract_file_name(ef.cFileName);
-
 			Archive<UseVirtualDestructor>::open(open_options, *archives, index);
 //			if (archives->empty())
 //				throw Error(Far::get_msg(MSG_ERROR_NOT_ARCHIVE), arc_list[i], __FILE__, __LINE__);
@@ -329,88 +286,8 @@ struct PanelItem
 		return true;
 	}
 
-	bool set_partition(const Far::PanelItem &i)
-	{
-		if (!part_mode || !current_dir.empty()) {
-			return false;
-		}
-
-		if (i.file_attributes & FILE_ATTRIBUTE_DIRECTORY) {
-			return false;
-		}
-
-		if (!i.file_size || i.file_size != i.pack_size) {
-			return false;
-		}
-
-		const auto index = (UInt32)(size_t)i.user_data;
-		const auto off = archive->get_offset(index);
-
-		if (off == ~0ULL) {
-			fprintf(stderr, "set_partition() invalid offset %lluu return false\n", ~0ULL );
-			return false;
-		}
-
-		const ArcType *p_type = nullptr;
-		if (str_end_with(i.file_name, ext_FAT))
-			p_type = &c_fat;
-		else if (str_end_with(i.file_name, ext_ExFAT))
-			p_type = &c_xfat;
-		else if (str_end_with(i.file_name, ext_NTFS))
-			p_type = &c_ntfs;
-		else if (str_end_with(i.file_name, ext_APFS))
-			p_type = &c_apfs;
-		else if (str_end_with(i.file_name, ext_HFS))
-			p_type = &c_hfs;
-		else if (str_end_with(i.file_name, ext_EXT2))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_EXT3))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_EXT4))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_EXTn))
-			p_type = &c_ext4;
-		else if (str_end_with(i.file_name, ext_TAR))
-			p_type = &c_tar;
-		else {
-			return false;
-		}
-
-		part_idx = -1;
-		partition = nullptr;
-		ComObject<IInStream<UseVirtualDestructor>> sub_stream;
-		if (!archive->get_stream(index, sub_stream.ref()))
-			return false;
-
-		auto part_archive = std::make_shared<Archive<UseVirtualDestructor>>();
-		if (!part_archive->open(sub_stream, *p_type, true))
-			return false;
-
-		part_idx = index;
-		current_dir = std::to_wstring(index);
-
-		part_archive->parent = archive;
-		part_archive->arc_path = archive->arc_path + L":" + current_dir;
-		part_archive->arc_info = archive->arc_info;
-		part_archive->arc_chain = archive->arc_chain;
-		part_archive->arc_chain.emplace_back(*p_type, off);
-
-		//		partition = std::make_unique<Plugin>(false);
-		partition.reset(new Plugin<UseVirtualDestructor>(false));
-		partition->archive = part_archive;
-		partition->host_file = host_file;
-
-		return true;
-	}
-
 	void info(OpenPluginInfo *opi)
 	{
-		if (part_mode && !current_dir.empty() && partition) {
-			partition->info(opi);
-			opi->CurDir = current_dir.c_str();
-			return;
-		}
-
 		opi->StructSize = sizeof(OpenPluginInfo);
 		opi->Flags = OPIF_ADDDOTS | OPIF_SHORTCUT | OPIF_USEHIGHLIGHTING | OPIF_USESORTGROUPS | OPIF_USEFILTER
 				| (recursive_panel ? OPIF_RECURSIVEPANEL : 0)
@@ -484,38 +361,7 @@ struct PanelItem
 		if (new_dir == L"/")
 			new_dir.clear();
 
-		if (!part_mode) {
-			archive->find_dir(new_dir);
-			current_dir = std::move(new_dir);
-			return;
-		}
-
-		// all code below for partition mode
-		//
-		if (new_dir.empty()) {	  // root level
-			const auto pidx = part_idx;
-			part_idx = -1;
-			partition = nullptr;
-			current_dir = std::move(new_dir);
-			Far::panel_go_to_part(PANEL_ACTIVE, pidx);
-			return;
-		}
-
-		if (new_dir[0] != '/' || !isdigit(new_dir[1]))
-			FAIL(E_ABORT);
-		const auto new_idx = _wtoi(new_dir.c_str() + 1);
-		if (new_idx != part_idx) {
-			Far::PanelItem p_item;
-			if (!part_index_to_item((UInt32)new_idx, p_item) || !set_partition(p_item))
-				FAIL(E_ABORT);
-		}
-
-		std::wstring new_subdir;
-		const auto pos = new_dir.find(L'/', 1);
-		if (pos != std::wstring::npos)
-			new_subdir = new_dir.substr(pos);
-
-		partition->set_dir(new_subdir);
+		archive->find_dir(new_dir);
 		current_dir = std::move(new_dir);
 		return;
 	}
@@ -523,12 +369,6 @@ struct PanelItem
 	void list(PluginPanelItem **panel_items, int *items_number)
 	{
 		if (!archive->is_open()) {
-			FAIL(E_ABORT);
-		}
-
-		if (part_mode && !current_dir.empty()) {	// partition sub panel
-			if (partition)
-				return partition->list(panel_items, items_number);
 			FAIL(E_ABORT);
 		}
 
@@ -544,10 +384,10 @@ struct PanelItem
 		std::for_each(dir_list.first, dir_list.second, [&](UInt32 file_index) {
 			ArcFileInfo &file_info = archive->file_list[file_index];
 			DWORD attr = 0, posixattr = 0, farattr = 0;
+
 			attr = archive->get_attr(file_index, &posixattr);
 
 			if (posixattr) {
-
 				switch (posixattr & S_IFMT) {
 					case 0: case S_IFREG: farattr = FILE_ATTRIBUTE_ARCHIVE; break;
 					case S_IFDIR: farattr = FILE_ATTRIBUTE_DIRECTORY; break;
@@ -586,20 +426,20 @@ struct PanelItem
 			if (archive->get_encrypted(file_index))
 				farattr |= FILE_ATTRIBUTE_ENCRYPTED;
 
-			{
-				uint32_t n = archive->get_links(file_index);
-				items[idx].NumberOfLinks = n;
-				if (n > 1)
-					farattr |= FILE_ATTRIBUTE_HARDLINKS;
+			items[idx].NumberOfLinks = file_info.num_links;
+			if (!file_info.num_links)
+				farattr |= FILE_ATTRIBUTE_BROKEN;
+			else if (file_info.num_links > 1) {
+				farattr |= FILE_ATTRIBUTE_HARDLINKS;
 			}
 
-			//	items[idx].FindData.dwFileAttributes = (attr & c_valid_import_attributes) | farattr;
 			items[idx].FindData.dwFileAttributes = attr | farattr;
 			items[idx].FindData.dwUnixMode = posixattr;
 
 			items[idx].FindData.ftCreationTime = archive->get_ctime(file_index);
 			items[idx].FindData.ftLastAccessTime = archive->get_atime(file_index);
 			items[idx].FindData.ftLastWriteTime = archive->get_mtime(file_index);
+//			items[idx].FindData.ftChangeTime = archive->get_chtime(file_index);
 
 			items[idx].FindData.nFileSize = archive->get_size(file_index);
 			items[idx].FindData.nPhysicalSize = archive->get_psize(file_index);
@@ -613,7 +453,6 @@ struct PanelItem
 			items[idx].Group = const_cast<wchar_t *>(file_info.group.c_str());
 			items[idx].Description = const_cast<wchar_t *>(file_info.desc.c_str());
 
-			//      items[idx].UserData = reinterpret_cast<DWORD_PTR>(static_cast<size_t>(file_index));
 			items[idx].UserData = (DWORD_PTR)file_index;
 
 			items[idx].CRC32 = archive->get_crc(file_index);
@@ -670,11 +509,15 @@ struct PanelItem
 			options.extract_access_rights = g_options.extract_access_rights;
 			options.extract_owners_groups = g_options.extract_owners_groups;
 			options.extract_attributes = g_options.extract_attributes;
+			options.duplicate_hardlinks = g_options.extract_duplicate_hardlinks;
+			options.restore_special_files = g_options.extract_restore_special_files;
 		}
 		else {
 			options.extract_access_rights = false;
-			options.extract_owners_groups = false;
+			options.extract_owners_groups = 0;
 			options.extract_attributes = false;
+			options.duplicate_hardlinks = false;
+			options.restore_special_files = false;
 		}
 
 		if (show_dialog) {
@@ -755,12 +598,6 @@ struct PanelItem
 	void get_files(const PluginPanelItem *panel_items, intptr_t items_number, int move,
 			const wchar_t **dest_path, OPERATION_MODES op_mode)
 	{
-
-		if (part_mode && !current_dir.empty() && partition) {
-			partition->get_files(panel_items, items_number, move, dest_path, op_mode);
-			return;
-		}
-
 		class PluginPanelItems : public PluginPanelItemAccessor
 		{
 		private:
@@ -1220,9 +1057,10 @@ struct PanelItem
 	    options.skip_symlinks = g_options.update_skip_symlinks;
 	    options.symlink_fix_path_mode = g_options.update_symlink_fix_path_mode;
 	    options.dereference_symlinks = g_options.update_dereference_symlinks;
+	    options.skip_hardlinks = g_options.update_skip_hardlinks;
+	    options.duplicate_hardlinks = g_options.update_duplicate_hardlinks;
 		options.export_options = g_options.update_export_options;
 		options.use_export_settings = g_options.update_use_export_settings;
-
 		options.show_password = g_options.update_show_password;
 		options.ignore_errors = g_options.update_ignore_errors;
 
@@ -1378,6 +1216,8 @@ struct PanelItem
 	    options.skip_symlinks = g_options.update_skip_symlinks;
 	    options.symlink_fix_path_mode = g_options.update_symlink_fix_path_mode;
 	    options.dereference_symlinks = g_options.update_dereference_symlinks;
+		options.skip_hardlinks = g_options.update_skip_hardlinks;
+		options.duplicate_hardlinks = g_options.update_duplicate_hardlinks;
 		options.export_options = g_options.update_export_options;
 		options.use_export_settings = g_options.update_use_export_settings;
 
@@ -1573,6 +1413,120 @@ struct PanelItem
 		}
 		if (!attr_list.empty())
 			attr_dialog(attr_list);
+	}
+
+
+	void show_hardlinks()
+	{
+		std::vector<std::wstring> hl_names;
+		std::vector<FarMenuItem> menu_items;
+		static const int BreakKeys[] = {VK_ESCAPE, 0};
+		int BreakCode = -1;
+		FarMenuItem mi;
+	    Far::PanelItem panel_item = Far::get_current_panel_item(PANEL_ACTIVE);
+	    std::wstring empty_str = L"";
+
+		if (panel_item.file_name == L"..") {
+
+		//		hl_names.reserve(group.size());
+		//		menu_items.reserve(group.size());
+
+	        for (size_t group_idx = 0; group_idx < archive->hard_link_groups.size(); ++group_idx) {
+	            const HardLinkGroup &group = archive->hard_link_groups[group_idx];
+
+				for (size_t i = 0; i < group.size(); ++i) {
+				    UInt32 file_index = group[i];
+				    if (file_index < archive->file_list.size()) {
+				        std::wstring full_path = archive->get_path(file_index);
+			            hl_names.emplace_back(std::to_wstring(i + 1) + L": " + std::to_wstring(file_index) + L": " + full_path);
+
+						mi.Text = hl_names.back().c_str();
+						mi.Selected = 0;
+						mi.Checked = 0;
+						mi.Separator = 0;
+						menu_items.push_back(mi);
+				    }
+				}
+				if (group_idx < archive->hard_link_groups.size() - 1) {
+					mi.Text = empty_str.c_str();
+					mi.Selected = 0;
+					mi.Checked = 0;
+					mi.Separator = 1;
+					menu_items.push_back(mi);
+				}
+			}
+
+			std::wstring bottom_title = L"Total: " + std::to_wstring(999);
+
+			uint32_t ret = (uint32_t)Far::g_far.Menu(Far::g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, L"HardLinks", bottom_title.c_str(), nullptr,
+					BreakKeys, &BreakCode, menu_items.data(), static_cast<int>(menu_items.size()));
+
+			(void)ret;
+			return;
+		}
+
+	    uint32_t index = static_cast<UInt32>(reinterpret_cast<size_t>(panel_item.user_data));
+	    const ArcFileInfo &current_file_info = archive->file_list[index];
+
+	    uint32_t group_index = current_file_info.hl_group;
+	    if (group_index == (uint32_t)-1)
+			return;
+
+	    const HardLinkGroup &group = archive->hard_link_groups[group_index];
+		if (!group.size())
+			return;
+
+		hl_names.reserve(group.size());
+		menu_items.reserve(group.size());
+
+		uint32_t isel = 0;
+		for (size_t i = 0; i < group.size(); ++i) {
+		    UInt32 file_index = group[i];
+		    if (file_index < archive->file_list.size()) {
+		        std::wstring full_path = archive->get_path(file_index);
+	            hl_names.emplace_back(std::to_wstring(i) + L": " + std::to_wstring(file_index) + L": " + full_path);
+
+				mi.Text = hl_names.back().c_str();
+				if (index == file_index) {
+					mi.Selected = (index == file_index);
+					isel = i;
+				}
+				else
+					mi.Selected = 0;
+
+				mi.Checked = 0;
+				mi.Separator = 0;
+				menu_items.push_back(mi);
+		    }
+		}
+
+		std::wstring bottom_title = L"Total: " + std::to_wstring(group.size());
+
+		while( 1 ) {
+
+			uint32_t ret = (uint32_t)Far::g_far.Menu(Far::g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE, L"HardLinks", bottom_title.c_str(), nullptr,
+					BreakKeys, &BreakCode, menu_items.data(), static_cast<int>(menu_items.size()));
+
+			if (BreakCode >= 0) {
+				//ret = (uint32_t)-1;
+				break;
+			}
+
+			if (ret != (uint32_t)-1) {
+				menu_items[isel].Selected = 0;
+				menu_items[ret].Selected = 1;
+				isel = ret;
+
+			    UInt32 file_index = group[ret];
+
+		        const std::wstring &cfpath = archive->get_path(file_index);
+
+				set_dir(add_leading_slash(extract_file_path(cfpath)));
+
+				Far::update_panel(PANEL_ACTIVE, false, true);
+				Far::panel_set_file(PANEL_ACTIVE, extract_file_name(cfpath));
+			}
+		}
 	}
 
 	void close()
@@ -2260,7 +2214,7 @@ ProcessHostFileW(HANDLE hPlugin, struct PluginPanelItem *PanelItem, int ItemsNum
 template<bool UseVirtualDestructor>
 static bool set_partition(Plugin<UseVirtualDestructor> *hPlugin, const Far::PanelItem &i)
 {
-	if (!hPlugin->part_mode && hPlugin->parent && i.file_name == L".." && hPlugin->current_dir.empty()) {
+	if (hPlugin->parent && i.file_name == L".." && hPlugin->current_dir.empty()) {
 		if (!hPlugin->get_archive()->is_open())
 			FAIL(E_ABORT);
 
@@ -2282,13 +2236,7 @@ static bool set_partition(Plugin<UseVirtualDestructor> *hPlugin, const Far::Pane
 		return true;
 	}
 
-	bool bRez = hPlugin->set_partition(i);
-
-	if (bRez) {
-		Far::update_panel(PANEL_ACTIVE, false, true);
-	}
-
-	return bRez;
+	return false;
 }
 
 template<bool UseVirtualDestructor>
@@ -2329,6 +2277,15 @@ SHAREDSYMBOL int WINAPI _export ProcessKeyW(HANDLE hPlugin, int Key, unsigned in
 			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->show_attr();
 		return TRUE;
 	}
+
+	if (Key == 'H' && ControlState == PKF_CONTROL) {
+		if (ArcAPI::have_virt_destructor())
+			reinterpret_cast<Plugin<true> *>(hPlugin)->get_tail()->show_hardlinks();
+		else
+			reinterpret_cast<Plugin<false> *>(hPlugin)->get_tail()->show_hardlinks();
+		return TRUE;
+	}
+
     // Alt+F6
 	if (Key == VK_F6 && ControlState == PKF_ALT) {
 		if (ArcAPI::have_virt_destructor())

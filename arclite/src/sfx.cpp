@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "sfx.hpp"
 #include "msg.hpp"

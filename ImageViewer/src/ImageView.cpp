@@ -704,8 +704,10 @@ void ImageView::Shift(int horizontal, int vertical)
 		if (_dy > 100) _dy = 100;
 		if (_dy < -100) _dy = -100;
 	}
-	RenderImage();
-	DenoteState();
+	if (horizontal != 0 || vertical != 0) {
+		RenderImage();
+		DenoteState();
+	}
 }
 
 COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels

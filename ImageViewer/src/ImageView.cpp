@@ -388,6 +388,30 @@ bool ImageView::EnsureRescaled() // return true if image was rescaled, otherwise
 	return true;
 }
 
+static void MirrorImage(Image &img, int mirror)
+{
+	if (mirror == 1) {
+		img.MirrorH();
+	} else {
+		img.MirrorV();
+	}
+}
+
+bool ImageView::EnsureMirrored()
+{
+	if (_mirror_pending == 0) {
+		return false;
+	}
+	MirrorImage(_ready_image, _mirror_pending);
+	if (_rotated % 2) {
+		MirrorImage(_orig_image, (_mirror_pending == 2) ? 1 : 2);
+	} else {
+		MirrorImage(_orig_image, _mirror_pending);
+	}
+	_mirror_pending = 0;
+	return true;
+}
+
 bool ImageView::RenderImage()
 {
 	fprintf(stderr, "%s: _pos=%dx%d _size=%dx%d '%s'\n",
@@ -418,8 +442,8 @@ bool ImageView::RenderImage()
 	}
 
 	const bool rescaled = EnsureRescaled();
-
 	unsigned int rotated_angle = EnsureRotated();
+	const bool mirrored = EnsureMirrored();
 
 	auto viewport_w = canvas_w;
 	auto viewport_h = canvas_h;
@@ -454,14 +478,15 @@ bool ImageView::RenderImage()
 		_dy = 0;
 	}
 
-	if (!rescaled && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
+	if (!rescaled && !mirrored && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
 		fprintf(stderr, "%s: Nothing to do\n", __FUNCTION__);
 		return true;
 	}
 
-	if (rotated_angle != 0 && !rescaled && (_wgi.Caps & WP_IMGCAP_ROTATE) != 0
+	if (rotated_angle != 0 && !rescaled && !mirrored
 			&& _ready_image.Width() <= std::min(canvas_w, canvas_h)
-			&& _ready_image.Height() <= std::min(canvas_w, canvas_h)) {
+			&& _ready_image.Height() <= std::min(canvas_w, canvas_h)
+			&& (_wgi.Caps & WP_IMGCAP_ROTATE) != 0) {
 		fprintf(stderr, "ImageView: rotating remote image\n");
 		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle)) {
 			rotated_angle = 0; // no need to rotate anything else
@@ -469,8 +494,9 @@ bool ImageView::RenderImage()
 	}
 
 	bool out = true;
-	if (!rescaled && rotated_angle == 0 && (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0 
-			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h) {
+	if (!rescaled && !mirrored && rotated_angle == 0
+			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h
+			&& (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0) {
 		if (_prev_left != src_left) {
 			out = SendScrollAttachH(&area, src_left, _prev_top, viewport_w, viewport_h, _prev_left - src_left);
 		}
@@ -692,6 +718,20 @@ COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels
 		SHORT((_dx - saved_dx) * _ready_image.Width() / 100),
 		SHORT((_dy - saved_dy) * _ready_image.Height() / 100)
 	};
+}
+
+void ImageView::MirrorH()
+{
+	_mirror_pending = 1;
+	RenderImage();
+	DenoteState();
+}
+
+void ImageView::MirrorV()
+{
+	_mirror_pending = 2;
+	RenderImage();
+	DenoteState();
 }
 
 void ImageView::Reset(bool keep_rotation)

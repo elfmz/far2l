@@ -210,7 +210,9 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 				case KEY_ESC: case KEY_F10:
 					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_ESCAPE, 0);
 					break;
-				case KEY_F9:
+				case KEY_F7: case 'h': case 'H': iv->MirrorH(); break;
+				case KEY_F8: case 'v': case 'V': iv->MirrorV(); break;
+				case KEY_F9: case 'f': case 'F': 
 					iv->full_size = !iv->full_size;
 					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
 					break;

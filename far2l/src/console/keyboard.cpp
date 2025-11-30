@@ -677,7 +677,15 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 		}
 
 		ScrBuf.Flush();
-		WINPORT(WaitConsoleInput)(NULL, 160);
+
+		static DWORD sLastIdleWaitConsoleInput = 0;
+		DWORD WaitConsoleInputTmout = (sLastIdleWaitConsoleInput < 5) ? 10 : 160;
+//		fprintf(stderr, " WaitConsoleInputTmout=%u\n", WaitConsoleInputTmout);
+		if (WINPORT(WaitConsoleInput)(NULL, WaitConsoleInputTmout)) {
+			sLastIdleWaitConsoleInput = 0;
+		} else {
+			++sLastIdleWaitConsoleInput;
+		}
 
 		// Позволяет избежать ситуации блокирования мыши
 		if (Opt.Mouse)	// А нужно ли это условие???

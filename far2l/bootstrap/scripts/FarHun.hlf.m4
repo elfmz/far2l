@@ -1086,7 +1086,7 @@ a szintnek a mappáin.
     A #Jobb nyíl# kibontja a faágat, amely a létrehozáskor a beállított kizárási maszk
 vagy a meghatározott beolvasási mélység szerint lett összecsukva.
 
-    #Ctrl+Szám# — Kibontja az összes ágat a megadott mélységi szintig.
+    #Balra Ctrl+1#...#Balra Ctrl+0# — Kibontja az összes ágat a megadott mélységi szintig (1...10).
 
 @InfoPanel
 $ #Panels: info panel#
@@ -2666,6 +2666,7 @@ menüben kikapcsolható.
    - Codepage                                         (toggled via #F8# or #Shift-F8#)
    - Line current/all lines
    - Column current
+   - #RSH# or empty: file attributes (Read only, System, Hidden)
    - Code of character under cursor
    - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
 
@@ -2706,9 +2707,13 @@ kijelölt szöveget is törölheti, a
   Blokkműveletek
 
    #Shift-Kurzorbill.#       Blokk kijelölése
+   Drag mouse              Select block
+   with holding left button
    #Ctrl-Shift-Kurzorbill.#  Blokk kijelölése
    #Alt-Kurzorbill.#   Függőleges blokk kijelölése (csak akkor, ha a sortörések le vannak tiltva)
    #Alt-Shift-Kurzorbill.#   Függőleges blokk kijelölése (NumLock Kurzorbill, csak akkor, ha a sortörések le vannak tiltva)
+   #Alt# + drag mouse        Select vertical block (only when unwrap mode)
+   with holding left button
    #Ctrl-A#                  Az egész szöveg kijelölése
    #Ctrl-U#                  Leveszi a blokk kijelölését
    #Shift-Ins, Ctrl-V#       Blokk beillesztése a vágólapról
@@ -2732,6 +2737,7 @@ kurzorpozícióba (csak maradó blokk módban)
    #F2#                      Fájl mentése
    #Shift-F2#                ~Fájl mentése másként~@FileSaveAs@
    #F3# vagy #Alt-W#           Sortörés be/ki
+   #Ctrl-F3#                 Sorszámozás be/ki
    #Shift-F4#                ~Új fájl~@FileOpenCreate@ szerkesztése
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
@@ -3220,6 +3226,13 @@ elhelyezett könyvjelzőinket.
 
   #Gördítősáv mutatva#      ^<wrap>Az oldalsó gördítősáv megjelenítése a
 a belső szerkesztőben.
+
+  #Show line numbers#       Show line numbers on the left side of the
+                          editor. This option can also be toggled by
+                          pressing #Ctrl-F3# in the editor.
+
+  #Word wrap#               Word wrap. This option can also be toggled by
+                          pressing #F3# in the editor.
 
 
   #Use .editorconfig#       Processing .editorconfig parameters

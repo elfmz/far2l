@@ -21,28 +21,28 @@ public:
 		bool refresh_needed = false; // true if a setting affecting the candidate list was changed.
 	};
 
-	static void SetStartupInfo(const PluginStartupInfo *info);
-	static void GetPluginInfo(PluginInfo *info);
-	static HANDLE OpenPlugin(int openFrom, INT_PTR item);
+	static void SetStartupInfo(const PluginStartupInfo *plugin_startup_info);
+	static void GetPluginInfo(PluginInfo *plugin_info);
+	static HANDLE OpenPlugin(int open_from, INT_PTR item);
 	static ConfigureResult ConfigureImpl();
-	static int Configure(int itemNumber);
+	static int Configure(int item_number);
 	static void Exit();
-	static const wchar_t* GetMsg(int MsgId);
+	static const wchar_t* GetMsg(int msg_id);
 
 private:
-	static PluginStartupInfo s_Info;
-	static FarStandardFunctions s_FSF;
-	static bool s_UseExternalTerminal;
-	static bool s_NoWaitForCommandCompletion;
-	static bool s_ClearSelection;
-	static bool s_ConfirmLaunch;
-	static int s_ConfirmLaunchThreshold;
+	static PluginStartupInfo s_info;
+	static FarStandardFunctions s_fsf;
+	static bool s_use_external_terminal;
+	static bool s_no_wait_for_command_completion;
+	static bool s_clear_selection;
+	static bool s_confirm_launch;
+	static int s_confirm_launch_threshold;
 
 	static bool ShowDetailsDialogImpl(const std::vector<Field>& file_info, const std::vector<Field>& application_info, const Field& launch_command);
-	static bool ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app, const std::vector<std::wstring>& pathnames,  const std::vector<std::wstring>& cmds, const std::vector<std::wstring>& unique_mime_profiles);
-	static bool AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& pathnames);
+	static bool ShowDetailsDialog(AppProvider* provider, const CandidateInfo& app, const std::vector<std::wstring>& filepaths,  const std::vector<std::wstring>& cmds, const std::vector<std::wstring>& unique_mime_profiles);
+	static bool AskForLaunchConfirmation(const CandidateInfo& app, const std::vector<std::wstring>& filepaths);
 	static void LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds);
-	static void ProcessFiles(const std::vector<std::wstring>& pathnames);
+	static void ProcessFiles(const std::vector<std::wstring>& filepaths);
 	static void LoadOptions();
 	static void SaveOptions();
 	static void ShowError(const wchar_t *title, const std::vector<std::wstring>& text);

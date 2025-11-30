@@ -338,6 +338,7 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 				return i + 2;
 			}
 		}
+		return TTY_PARSED_WANTMORE;
 	}
 
 	if (l > 4 && s[0] == '[' && s[1] == '2' && s[2] == '0' && (s[3] == '0' || s[3] == '1') && s[4] == '~') {

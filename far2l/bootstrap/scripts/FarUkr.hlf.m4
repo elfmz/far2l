@@ -1091,9 +1091,9 @@ $ #Дерево папок#
 створення відповідно до налаштованої маски виключень або встановленої
 глибини сканування.
 
- #Ctrl+Цифра# розгортає всі гілки до вибраного рівня глибини.
+ #Лівий Ctrl+1#...#Лівий Ctrl+0# розгортає всі гілки до вибраного рівня глибини (1..10).
 
-Дивіться також список ~макроклавіш~@KeyMacroTreeList@, доступних на панелі дерева папок.
+ Дивіться також список ~макроклавіш~@KeyMacroTreeList@, доступних на панелі дерева папок.
 
 
 @InfoPanel
@@ -2948,6 +2948,7 @@ $ #Редактор#
    - Codepage                                         (toggled via #F8# or #Shift-F8#)
    - Line current/all lines
    - Column current
+   - #RSH# or empty: file attributes (Read only, System, Hidden)
    - Code of character under cursor
    - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
 
@@ -2985,9 +2986,13 @@ $ #Редактор#
  Операції над блоками
 
  #Shift-Клавіші курсору# Позначка блоку
+ Drag mouse            Select block
+ with holding left button
  #Ctrl-Shift-Клав.курсора# Позначка блоку за словами
  #Alt-Клав.курсора# Позначка вертикального блоку (тільки при вимкненому перенесенні рядків)
  #Alt-Shift-Клав.курсора# Позначка вертикального блоку (NumLock клав, тільки при вимкненому перенесенні рядків)
+ #Alt# + drag mouse      Select vertical block (only when unwrap mode)
+ with holding left button
  #Ctrl-A# Позначити весь текст
  #Ctrl-U# Зняти позначку з блоку
  #Shift-Ins, Ctrl-V# Скопіювати блок із Буфера Обміну
@@ -3009,6 +3014,7 @@ $ #Редактор#
  #F2# Зберегти файл
  #Shift-F2# ~Зберегти файл як ...~@FileSaveAs@
  #F3# или #Alt-W# Перенесення рядків (увімкнено, вимкнено)
+ #Ctrl-F3# Перемкнути відображення номерів рядків
  #Shift-F4# Редагувати ~новий файл~@FileOpenCreate@
  #F5#                      Toggle whitespace characters displaying
  #Shift-F5#                Change Tab character width
@@ -3559,6 +3565,14 @@ $ #Налаштування редактора#
  #Cлово під курсором# При виклику діалогу пошуку/заміни в рядок
  пошуку буде підставлятися слово, на
  якому стоїть курсор.
+
+  #Show line numbers#       Show line numbers on the left side of the
+                          editor. This option can also be toggled by
+                          pressing #Ctrl-F3# in the editor.
+
+  #Word wrap#               Word wrap. This option can also be toggled by
+                          pressing #F3# in the editor.
+
 
   #Використовувати файли налаштувань .editorconfig#
  Processing .editorconfig parameters

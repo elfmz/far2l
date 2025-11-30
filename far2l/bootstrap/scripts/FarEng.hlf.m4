@@ -1231,7 +1231,7 @@ on the same level.
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
 
-    Keys #Ctrl+Number# expand all branches up to the selected depth level.
+    Keys #Left Ctrl+1#...#Left Ctrl+0# expand all branches up to the selected depth level (1...10).
 
     See also the list of ~macro keys~@KeyMacroTreeList@, available in the folder tree panel.
 
@@ -3049,6 +3049,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    - Codepage                                         (toggled via #F8# or #Shift-F8#)
    - Line current/all lines
    - Column current
+   - #RSH# or empty: file attributes (Read only, System, Hidden)
    - Code of character under cursor
    - Clock                                            (toggled in the ~Interface settings~@InterfSettings@ dialog)
 
@@ -3057,7 +3058,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
   Cursor movement
 
    #Left#                    Character left
-   #Ctrl-S#                  ^<wrap>Move the cursor one character to the left, but don't move to the previous line if the line beginning is reached.
+   #Ctrl-S#                  ^<wrap>Move the cursor one character to the left, but don't move to the previous line if the line beginning is reached
    #Right#                   Character right
    #Up#                      Line up
    #Down#                    Line down
@@ -3086,9 +3087,13 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
   Block operations
 
    #Shift-Cursor keys#       Select block
+   Drag mouse              Select block
+   with holding left button
    #Ctrl-Shift-Cursor keys#  Select block by words
    #Alt-Cursor keys#         Select vertical block (only when unwrap mode)
    #Alt-Shift-Cursor keys#   Select vertical block (use NumLock cursor keys, only when unwrap mode)
+   #Alt# + drag mouse        Select vertical block (only when unwrap mode)
+   with holding left button
    #Ctrl-A#                  Select all text
    #Ctrl-U#                  Deselect block
    #Shift-Ins, Ctrl-V#       Paste block from clipboard
@@ -3109,6 +3114,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F2#                      Save file
    #Shift-F2#                ~Save file as...~@FileSaveAs@
    #F3# or #Alt-W#             Toggle line wrap/unwrap
+   #Ctrl-F3#                 Toggle line numbers display
    #Shift-F4#                Edit ~new file~@FileOpenCreate@
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
@@ -3641,6 +3647,14 @@ $ #Settings dialog: editor#
   #Pick up the word#        When the search/replace dialog is invoked,
                           the word under the cursor will be inserted
                           into the search string.
+
+  #Show line numbers#       Show line numbers on the left side of the
+                          editor. This option can also be toggled by
+                          pressing #Ctrl-F3# in the editor.
+
+  #Word wrap#               Word wrap. This option can also be toggled by
+                          pressing #F3# in the editor.
+
 
   #Use .editorconfig#       Processing .editorconfig parameters
   #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)

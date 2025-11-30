@@ -242,11 +242,17 @@ private:
 	int m_TopScreenVisualLine;
 	Edit *CurLine;
 	Edit *LastGetLine;
+	int MouseSelStartingLine{-1}, MouseSelStartingPos{-1};
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;
 	int m_WrapMaxVisibleLineLength;
 	bool m_MouseButtonIsHeld;
+	
+	// Line number caching for performance
+	int m_CachedTotalLines;
+	int m_CachedLineNumWidth;
+	bool m_LineCountDirty;
 
 private:
 	int FindVisualLine(Edit* line, int Pos);
@@ -274,7 +280,9 @@ void GoToVisualLine(int VisualLine);
 	void Paste(const wchar_t *Src = nullptr);
 	void Copy(int Append);
 	void DeleteBlock();
-	void UnmarkBlock();
+	bool MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int SelWidth, int SelHeight);
+	bool UnmarkBlock();
+	void UnmarkBlockAndShowIt();
 	void UnmarkEmptyBlock();
 	void UnmarkMacroBlock();
 
@@ -286,6 +294,8 @@ void GoToVisualLine(int VisualLine);
 	void Undo(int redo);
 	void SelectAll();
 	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
+	int CalculateTotalLines();  // Helper to count total lines
+	int CalculateLineNumberWidth();  // Helper to calculate line number display width
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();
@@ -396,6 +406,9 @@ public:
 	int GetShowWhiteSpace() const { return EdOpt.ShowWhiteSpace; }
 	void SetShowWhiteSpace(int NewMode);
 
+	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
+	void SetShowLineNumbers(int NewMode);
+
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 
 	// передавайте в качестве значения параметра "-1" для параметра,
@@ -404,7 +417,6 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	int GetLineCurPos();
 	void BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 

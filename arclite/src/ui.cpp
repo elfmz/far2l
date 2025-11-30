@@ -1,4 +1,4 @@
-﻿#include "headers.hpp"
+#include "headers.hpp"
 
 #include "msg.hpp"
 #include "version.hpp"
@@ -1868,6 +1868,7 @@ private:
 	int ignore_errors_ctrl_id{};
 	int extract_accessr_ctrl_id{};
 	int extract_ownersg_ctrl_id{};
+	int extract_ownersg_cbox_ctrl_id{};
 	int extract_attr_ctrl_id{};
 	int oa_ask_ctrl_id{};
 	int oa_overwrite_ctrl_id{};
@@ -1883,6 +1884,9 @@ private:
 	int cancel_ctrl_id{};
 	int save_params_ctrl_id{};
 	int enable_filter_ctrl_id{};
+	int dup_hardlnks_ctrl_id{};
+	int special_files_ctrl_id{};
+	int double_cache_ctrl_id{};
 
 	void read_controls(ExtractOptions &options)
 	{
@@ -1892,8 +1896,18 @@ private:
 		options.ignore_errors = get_check(ignore_errors_ctrl_id);
 
 		options.extract_access_rights = get_check(extract_accessr_ctrl_id);
-		options.extract_owners_groups = get_check(extract_ownersg_ctrl_id);
+
+		bool bExOwnGr = get_check(extract_ownersg_ctrl_id);
+		if (bExOwnGr) {
+			unsigned sel = get_list_pos(extract_ownersg_cbox_ctrl_id);
+			options.extract_owners_groups = sel + 1;
+		}
+		else
+			options.extract_owners_groups = 0;
+
 		options.extract_attributes = get_check(extract_attr_ctrl_id);
+		options.duplicate_hardlinks = get_check(dup_hardlnks_ctrl_id);
+		options.restore_special_files = get_check(special_files_ctrl_id);
 
 		if (get_check(oa_ask_ctrl_id))
 			options.overwrite = oaAsk;
@@ -1911,6 +1925,7 @@ private:
 			options.move_files = get_check3(move_files_ctrl_id);
 		options.password = get_text(password_ctrl_id);
 		options.separate_dir = get_check3(separate_dir_ctrl_id);
+		options.double_buffering = get_check3(double_cache_ctrl_id);
 		options.delete_archive = get_check(delete_archive_ctrl_id);
 		if (options.open_dir != triUndef)
 			options.open_dir = get_check3(open_dir_ctrl_id);
@@ -1923,6 +1938,8 @@ private:
 		} else if (msg == DN_BTNCLICK && param1 == delete_archive_ctrl_id) {
 			enable(move_files_ctrl_id,
 					m_options.move_files != triUndef && !get_check(delete_archive_ctrl_id));
+		} else if (msg == DN_BTNCLICK && param1 == extract_ownersg_ctrl_id) {
+			enable(extract_ownersg_cbox_ctrl_id, get_check(extract_ownersg_ctrl_id));
 		} else if (msg == DN_BTNCLICK && param1 == save_params_ctrl_id) {
 			ExtractOptions options;
 			read_controls(options);
@@ -1931,6 +1948,8 @@ private:
 			g_options.extract_access_rights = options.extract_access_rights;
 			g_options.extract_owners_groups = options.extract_owners_groups;
 			g_options.extract_attributes = options.extract_attributes;
+			g_options.extract_duplicate_hardlinks = options.duplicate_hardlinks;
+			g_options.extract_restore_special_files = options.restore_special_files;
 			g_options.extract_overwrite = options.overwrite;
 			g_options.extract_separate_dir = options.separate_dir;
 
@@ -1979,11 +1998,36 @@ public:
 		extract_accessr_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_ACCESS_RIGHTS),
 				m_options.extract_access_rights);
 		new_line();
-		extract_ownersg_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_OWNER_GROUPS),
-				m_options.extract_owners_groups);
+
+		extract_ownersg_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_OWNER_GROUPS_BY),
+				m_options.extract_owners_groups > 0);
+
+		{
+			std::vector<std::wstring> exowngrpby = {Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_OWNER_GROUPS_BY_NAMES),
+					Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_OWNER_GROUPS_BY_IDS),
+					Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_OWNER_GROUPS_BY_NAMES_IDS)};
+
+			unsigned exowngrby_sel = (m_options.extract_owners_groups > 0) ? (m_options.extract_owners_groups - 1) : 0;
+			if (exowngrby_sel > 2) 
+				exowngrby_sel = 2;
+
+			extract_ownersg_cbox_ctrl_id = combo_box(exowngrpby, exowngrby_sel, AUTO_SIZE, DIF_DROPDOWNLIST | 
+									(m_options.extract_owners_groups ? 0 : DIF_DISABLE) );
+		}
+
 		new_line();
-		extract_attr_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_ATTRIBUTES),
+		extract_attr_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_EX_ATTRIBUTES),
 				m_options.extract_attributes, DIF_DISABLE);
+		new_line();
+
+		dup_hardlnks_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_DUP_HARDLINKS),
+				m_options.duplicate_hardlinks);
+
+		new_line();
+
+		special_files_ctrl_id = check_box(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_RESTORE_SPECIAL_FILES),
+				m_options.restore_special_files);
+
 		new_line();
 
 		label(Far::get_msg(MSG_EXTRACT_DLG_OA));
@@ -2014,6 +2058,11 @@ public:
 		new_line();
 		open_dir_ctrl_id = check_box3(Far::get_msg(MSG_EXTRACT_DLG_OPEN_DIR), m_options.open_dir,
 				m_options.open_dir == triUndef ? DIF_DISABLE : 0);
+		new_line();
+
+		double_cache_ctrl_id = check_box3(Far::get_msg(MSG_EXTRACT_DLG_EXTRACT_DOUBLE_CACHE),
+				m_options.double_buffering);
+
 		new_line();
 
 		label(Far::get_msg(MSG_EXTRACT_DLG_PASSWORD));
@@ -2393,8 +2442,9 @@ bool operator==(const ProfileOptions &o1, const ProfileOptions &o2)
 		}
 	}
 
-	if (o1.move_files != o2.move_files || o1.ignore_errors != o2.ignore_errors
-			|| o1.skip_symlinks != o2.skip_symlinks || o1.dereference_symlinks != o2.dereference_symlinks) {
+	if (o1.move_files != o2.move_files || o1.ignore_errors != o2.ignore_errors ||
+		o1.skip_symlinks != o2.skip_symlinks || o1.dereference_symlinks != o2.dereference_symlinks ||
+		o1.skip_hardlinks != o2.skip_hardlinks || o1.duplicate_hardlinks != o2.duplicate_hardlinks) {
 		return false;
 	}
 
@@ -2470,6 +2520,7 @@ private:
 	int sfx_options_ctrl_id{};
 	int symlinks_ctrl_id{};
 	int symlinks_paths_ctrl_id{};
+	int hardlinks_ctrl_id{};
 	int move_files_ctrl_id{};
 	int open_shared_ctrl_id{};
 	int ignore_errors_ctrl_id{};
@@ -3007,6 +3058,21 @@ private:
 			}
 		}
 
+		{
+			unsigned hardlinks_sel = get_list_pos(hardlinks_ctrl_id);
+
+			if (hardlinks_sel == 2) {
+				options.skip_hardlinks = true;
+				options.duplicate_hardlinks = false;
+			} else if (hardlinks_sel == 1) {
+				options.skip_hardlinks = false;
+				options.duplicate_hardlinks = true;
+			} else {
+				options.skip_hardlinks = false;
+				options.duplicate_hardlinks = false;
+			}
+		}
+
 		options.symlink_fix_path_mode = get_list_pos(symlinks_paths_ctrl_id + 1);
 		options.use_export_settings = get_check(use_export_settings_ctrl_id);
 		if (options.use_export_settings)
@@ -3055,6 +3121,16 @@ private:
 
 		set_list_pos(symlinks_paths_ctrl_id + 1,
 				options.symlink_fix_path_mode >= 3 ? options.symlink_fix_path_mode : 0);
+
+		{
+			unsigned hardlinks_sel = 0;
+			if (options.skip_hardlinks)
+				hardlinks_sel = 2;
+			else if (options.duplicate_hardlinks)
+				hardlinks_sel = 1;
+
+			set_list_pos(hardlinks_ctrl_id, hardlinks_sel);
+		}
 
 		std::wstring method =
 				options.method.empty() && options.arc_type == c_7z ? c_methods[0].value : options.method;
@@ -3348,6 +3424,8 @@ private:
 			g_options.update_skip_symlinks = options.skip_symlinks;
 			g_options.update_symlink_fix_path_mode = options.symlink_fix_path_mode;
 			g_options.update_dereference_symlinks = options.dereference_symlinks;
+			g_options.update_skip_hardlinks = options.skip_hardlinks;
+			g_options.update_duplicate_hardlinks = options.duplicate_hardlinks;
 
 			g_options.save();
 			Far::info_dlg(c_update_params_saved_dialog_guid, Far::get_msg(MSG_UPDATE_DLG_TITLE),
@@ -3676,12 +3754,12 @@ public:
 			new_line();
 		}
 
-		std::vector<std::wstring> symlink_actions = {Far::get_msg(MSG_UPDATE_DLG_SYMCOMBO_ARCHIVE_SYMLINKS),
-				Far::get_msg(MSG_UPDATE_DLG_SYMCOMBO_ARCHIVE_FILES),
-				Far::get_msg(MSG_UPDATE_DLG_SYMCOMBO_SKIP_SYMLINKS)};
-
 		label(Far::get_msg(MSG_UPDATE_DLG_SYMLINKS));
 		{
+			std::vector<std::wstring> symlink_actions = {Far::get_msg(MSG_UPDATE_DLG_SYMCOMBO_ARCHIVE_SYMLINKS),
+					Far::get_msg(MSG_UPDATE_DLG_SYMCOMBO_ARCHIVE_FILES),
+					Far::get_msg(MSG_UPDATE_DLG_SYMCOMBO_SKIP_SYMLINKS)};
+
 			unsigned symlinks_sel = 0;
 			if (m_options.skip_symlinks)
 				symlinks_sel = 2;
@@ -3691,23 +3769,42 @@ public:
 			symlinks_ctrl_id = combo_box(symlink_actions, symlinks_sel, AUTO_SIZE, DIF_DROPDOWNLIST);
 		}
 
-		std::vector<std::wstring> symlink_paths = {Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS_AS_IS),
-				Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS_ABSOLUTE),
-				Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS_RELATIVE)};
-
 		spacer(2);
+
 		symlinks_paths_ctrl_id = label(Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS));
 		{
+			std::vector<std::wstring> symlink_paths = {Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS_AS_IS),
+					Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS_ABSOLUTE),
+					Far::get_msg(MSG_UPDATE_DLG_SYMLINK_PATHS_RELATIVE)};
+
 			if (m_options.symlink_fix_path_mode >= 3)
 				m_options.symlink_fix_path_mode = 0;
 
 			combo_box(symlink_paths, m_options.symlink_fix_path_mode, AUTO_SIZE, DIF_DROPDOWNLIST);
 		}
+
 		new_line();
+		label(Far::get_msg(MSG_UPDATE_DLG_HARDLINKS));
+		{
+			std::vector<std::wstring> hardlinks_actions = {Far::get_msg(MSG_UPDATE_DLG_HARDCOMBO_ARCHIVE_HARDLINKS),
+					Far::get_msg(MSG_UPDATE_DLG_HARDCOMBO_SEP_FILES),
+					Far::get_msg(MSG_UPDATE_DLG_HARDCOMBO_SKIP_HARDLINKS)};
+
+			unsigned hardlinks_sel = 0;
+			if (m_options.skip_hardlinks)
+				hardlinks_sel = 2;
+			else if (m_options.duplicate_hardlinks)
+				hardlinks_sel = 1;
+
+			hardlinks_ctrl_id = combo_box(hardlinks_actions, hardlinks_sel, AUTO_SIZE, DIF_DROPDOWNLIST);
+		}
+		spacer(2);
 
 		use_export_settings_ctrl_id =
 				check_box(Far::get_msg(MSG_UPDATE_DLG_USE_EXPORT), m_options.use_export_settings);
 
+		new_line();
+		separator();
 		new_line();
 
 		move_files_ctrl_id = check_box(Far::get_msg(MSG_UPDATE_DLG_MOVE_FILES), m_options.move_files);

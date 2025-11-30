@@ -1,4 +1,4 @@
-﻿#ifndef H_SimpleXML_H
+#ifndef H_SimpleXML_H
 #define H_SimpleXML_H
 
 #include <string>

@@ -28,6 +28,9 @@
 # include <sys/ioctl.h>
 # include <linux/fs.h>
 #endif
+#ifdef USE_STATX
+#include <sys/syscall.h>
+#endif
 
 namespace Sudo {
 
@@ -937,6 +940,48 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *pa
 	}
 	return r;
 }
+
+#if USE_STATX
+extern "C" __attribute__ ((visibility("default")))
+int sdc_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct __statx *statxbuf)
+{
+	int saved_errno = errno;
+
+	int r = syscall(SYS_statx, dirfd, pathname, flags, mask, statxbuf);
+
+	if (r == -1 && IsAccessDeniedErrno() && TouchClientConnection(false)) {
+
+//		if (dirfd <= 0) {
+		if (dirfd == AT_FDCWD) {
+			ClientReconstructCurDir crcd(pathname);
+		}
+
+		try {
+			ClientTransaction ct(SUDO_CMD_STATX);
+			ct.SendInt(dirfd);
+			if (dirfd > 0) {
+				ct.SendFD(dirfd);
+			}
+			ct.SendStr(pathname ? pathname : "");
+			ct.SendInt(flags);
+			ct.SendInt(mask);
+
+			r = ct.RecvInt();
+			if (r == 0) {
+				ct.RecvPOD(*statxbuf);
+				errno = saved_errno;
+			} else {
+				ct.RecvErrno();
+			}
+		} catch(std::exception &e) {
+			fprintf(stderr, "sdc_statx('%s') - error %s\n", pathname, e.what());
+			r = -1;
+		}
+	}
+
+	return r;
+}
+#endif
 
 /**
 static int common_chown(SudoCommand cmd, int (*pfn)(const char *, uid_t, gid_t), const char *path, uid_t owner, gid_t group) {

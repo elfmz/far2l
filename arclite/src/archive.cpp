@@ -1579,7 +1579,7 @@ FindData Archive<UseVirtualDestructor>::get_file_info(UInt32 index)
 	file_info.ftCreationTime = get_ctime(index);
 	file_info.ftLastWriteTime = get_mtime(index);
 	file_info.ftLastAccessTime = get_atime(index);
-	//file_info.ftChangeTime = get_chtime(index);
+	file_info.ftChangeTime = get_chtime(index);
 
 	return file_info;
 }

@@ -273,6 +273,7 @@ typedef struct _WIN32_FILE_ATTRIBUTE_DATA {
   FILETIME ftCreationTime;
   FILETIME ftLastAccessTime;
   FILETIME ftLastWriteTime;
+  FILETIME ftChangeTime;
   DWORD64  nFileSize;
 } WIN32_FILE_ATTRIBUTE_DATA, *LPWIN32_FILE_ATTRIBUTE_DATA;
 
@@ -355,6 +356,7 @@ typedef struct _WIN32_FIND_DATAA {
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
+    FILETIME ftChangeTime;
     uid_t UnixOwner;
     gid_t UnixGroup;
     DWORD64 UnixDevice;
@@ -371,6 +373,7 @@ typedef struct _WIN32_FIND_DATAW {
     FILETIME ftCreationTime;
     FILETIME ftLastAccessTime;
     FILETIME ftLastWriteTime;
+    FILETIME ftChangeTime;
     uid_t UnixOwner;
     gid_t UnixGroup;
     DWORD64 UnixDevice;
@@ -389,6 +392,7 @@ typedef struct _BY_HANDLE_FILE_INFORMATION {
   FILETIME ftCreationTime;
   FILETIME ftLastAccessTime;
   FILETIME ftLastWriteTime;
+  FILETIME ftChangeTime;
   DWORD    dwVolumeSerialNumber;
   DWORD64  nFileSize;
   DWORD    nNumberOfLinks;
@@ -1036,7 +1040,8 @@ typedef void *HMODULE;
 #define FILE_ATTRIBUTE_DEVICE_FIFO          0x01000000
 #define FILE_ATTRIBUTE_DEVICE_SOCK          0x02000000
 #define FILE_ATTRIBUTE_HARDLINKS            0x08000000
-
+#define FILE_ATTRIBUTE_APPEND               0x10000000
+#define FILE_ATTRIBUTE_IMMUTABLE            0x20000000
 
 #define FILE_ATTRIBUTE_DEVICE               (FILE_ATTRIBUTE_DEVICE_CHAR | FILE_ATTRIBUTE_DEVICE_BLOCK | FILE_ATTRIBUTE_DEVICE_FIFO | FILE_ATTRIBUTE_DEVICE_SOCK)
 

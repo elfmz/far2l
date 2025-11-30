@@ -29,6 +29,7 @@
 #include <LocalSocket.h>
 #include <utimens_compat.h>
 #include "sudo_private.h"
+#include "sudo.h"
 
 namespace Sudo
 {
@@ -419,7 +420,33 @@ namespace Sudo
 		if (r == -1)
 			bt.SendErrno();
 	}
-	
+
+#if USE_STATX
+	static void OnSudoDispatch_Statx(BaseTransaction &bt)
+	{
+		int dirfd = bt.RecvInt();
+		if (dirfd > 0) {
+			dirfd = bt.RecvFD();
+		}
+		std::string pathname;
+		bt.RecvStr(pathname);
+		int flags = bt.RecvInt();
+		unsigned int mask = bt.RecvInt();
+
+		struct __statx statxbuf = {};
+		const char *path = pathname.empty() ? NULL : pathname.c_str();
+
+		int result = syscall(SYS_statx, dirfd, path, flags, mask, &statxbuf);
+
+		bt.SendInt(result);
+		if (result == 0) {
+			bt.SendPOD(statxbuf);
+		} else {
+			bt.SendErrno();
+		}
+	}
+#endif
+
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt, OpenedDirs &dirs)
 	{
 		//fprintf(stderr, "OnSudoDispatch: %u\n", cmd);
@@ -546,7 +573,11 @@ namespace Sudo
 			case SUDO_CMD_LUTIMES:
 				OnSudoDispatch_LUtimes(bt);
 				break;
-				
+#if USE_STATX
+			case SUDO_CMD_STATX:
+				OnSudoDispatch_Statx(bt);
+			break;
+#endif
 			default:
 				throw std::runtime_error("OnSudoDispatch - bad command");
 		}
@@ -570,7 +601,6 @@ namespace Sudo
 
 		}
 	}
-
 
 	extern "C" __attribute__ ((visibility("default"))) int sudo_main_dispatcher(int argc, char *argv[])
 	{

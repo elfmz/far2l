@@ -42,7 +42,9 @@ namespace Sudo
 		SUDO_CMD_MKFIFO,
 		SUDO_CMD_MKNOD,
 		SUDO_CMD_LCHOWN,
-		SUDO_CMD_LUTIMES
+		SUDO_CMD_LUTIMES,
+		SUDO_CMD_STATX,
+		SUDO_CMD_FSTATAT
 	};
 
 	class BaseTransaction

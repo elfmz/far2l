@@ -209,17 +209,16 @@ namespace Sudo
 			bt.SendErrno();
 	}
 
-	static void OnSudoDispatch_ChOwn(BaseTransaction &bt)
+	template <typename API>
+		static void OnSudoDispatch_XChOwn(API api, BaseTransaction &bt)
 	{
 		std::string path;
-		uid_t owner;
-		gid_t group;
-
+		uid_t owner{};
+		gid_t group{};
 		bt.RecvStr(path);
 		bt.RecvPOD(owner);
 		bt.RecvPOD(group);
-
-		int r = chown(path.c_str(), owner, group);
+		int r = api(path.c_str(), owner, group);
 		bt.SendInt(r);
 		if (r==-1)
 			bt.SendErrno();
@@ -393,20 +392,6 @@ namespace Sudo
 		}
 	}
 
-	static void OnSudoDispatch_LChown(BaseTransaction &bt)
-	{
-		std::string path;
-		uid_t owner;
-		gid_t group;
-		bt.RecvStr(path);
-		bt.RecvPOD(owner);
-		bt.RecvPOD(group);
-		int r = lchown(path.c_str(), owner, group);
-		bt.SendInt(r);
-		if (r == -1)
-			bt.SendErrno();
-	}
-
 	static void OnSudoDispatch_LUtimes(BaseTransaction &bt)
 	{
 		std::string path;
@@ -488,7 +473,11 @@ namespace Sudo
 				break;
 
 			case SUDO_CMD_CHOWN:
-				OnSudoDispatch_ChOwn(bt);
+				OnSudoDispatch_XChOwn(chown, bt);
+				break;
+
+			case SUDO_CMD_LCHOWN:
+				OnSudoDispatch_XChOwn(lchown, bt);
 				break;
 
 			case SUDO_CMD_UTIMENS:
@@ -537,10 +526,6 @@ namespace Sudo
 
 			case SUDO_CMD_MKNOD:
 				OnSudoDispatch_MkNod(bt);
-				break;
-
-			case SUDO_CMD_LCHOWN:
-				OnSudoDispatch_LChown(bt);
 				break;
 
 			case SUDO_CMD_LUTIMES:

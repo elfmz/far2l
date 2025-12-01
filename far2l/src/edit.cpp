@@ -2528,7 +2528,6 @@ void Edit::ApplyColor()
 		// Пропускаем элементы у которых начало больше конца
 		if (CurItem.StartPos > CurItem.EndPos)
 			continue;
-
 		// Отсекаем элементы заведомо не попадающие на экран
 		/*if (CurItem.StartPos - LeftPos > X2 && CurItem.EndPos - LeftPos < X1)
 			continue;*/
@@ -2631,13 +2630,8 @@ void Edit::ApplyColor()
 		TabPos = RealEnd;
 		TabEditorPos = End;
 
-		// Пропускаем элементы раскраски у которых конечная позиция меньше левой границы экрана
-		if (End < X1)
-			continue;
-
-		// Обрезаем раскраску элемента по экрану
-		if (Start < X1)
-			Start = X1;
+		if (Start < 0)
+			Start = 0;
 
 		if (End > X2)
 			End = X2;
@@ -2649,7 +2643,7 @@ void Edit::ApplyColor()
 			Length-= CorrectPos;
 
 		if (Length > 0) {
-			ScrBuf.ApplyColor(Start, Y1, Start + Length - 1, Y1, Attr, SelColor );
+			ScrBuf.ApplyColor(X1 + Start, Y1, X1 + Start + Length - 1, Y1, Attr, SelColor );
 					// Не раскрашиваем выделение
 //					SelColor >= COL_FIRSTPALETTECOLOR ? Palette[SelColor - COL_FIRSTPALETTECOLOR] : SelColor);
 		}

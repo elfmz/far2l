@@ -586,6 +586,7 @@ extern "C"
 		return EvaluateAttributesT(unix_mode, PointToNamePart(pathname));
 	}
 
+#if USE_STATX
 	void FileTime_StatxToWin32(const struct __statx_timestamp *stx_ts, FILETIME *lpFileTime)
 	{
 		if (!lpFileTime || !stx_ts) return;
@@ -605,6 +606,7 @@ extern "C"
 		lpFileTime->dwLowDateTime = (DWORD)(win_ticks & 0xFFFFFFFF);
 		lpFileTime->dwHighDateTime = (DWORD)(win_ticks >> 32);
 	}
+#endif
 
 	class Statocaster
 	{

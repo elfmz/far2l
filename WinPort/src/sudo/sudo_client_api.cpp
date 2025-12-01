@@ -917,12 +917,12 @@ template <SudoCommand cmd, typename API>
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *path, uid_t owner, gid_t group)
 {
-	return common_xchown<SUDO_CMD_CHOWN>(chown, path, owner, group);
+	return common_xchown<SUDO_CMD_LCHOWN>(lchown, path, owner, group);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
 {
-	return common_xchown<SUDO_CMD_LCHOWN>(lchown, path, owner, group);
+	return common_xchown<SUDO_CMD_CHOWN>(chown, path, owner, group);
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2])

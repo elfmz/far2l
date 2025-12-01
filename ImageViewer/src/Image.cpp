@@ -58,10 +58,10 @@ void Image::Resize(int width, int height, unsigned char bytes_per_pixel)
 	assert(height >= 0);
 
 	const size_t bytes_size = size_t(width) * size_t(height) * size_t(bytes_per_pixel);
-	assert(bytes_size >= size_t(width)); // overflow guard
-	assert(bytes_size >= size_t(height)); // overflow guard
+	assert(bytes_size >= size_t(width) || !height); // overflow guard
+	assert(bytes_size >= size_t(height) || !width); // overflow guard
 
-	_data.resize(bytes_size),
+	_data.resize(bytes_size);
 
 	_width = width;
 	_height = height;
@@ -137,7 +137,7 @@ void Image::Scale(Image &dst, double scale) const
 	const int width = int(scale * Width());
 	const int height = int(scale * Height());
 	dst.Resize(width, height, _bytes_per_pixel);
-	if (_width == 0 || dst._width == 0 || _height == 0 || dst._height == 0) {
+	if (_data.empty() || dst._data.empty()) {
 		std::fill(dst._data.begin(), dst._data.end(), 0);
 		return;
 	}

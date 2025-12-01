@@ -1487,13 +1487,13 @@ typedef LONG NTSTATUS;
 #define WP_IMG_PNG              2 // supported if WP_IMGCAP_PNG
 #define WP_IMG_JPG              3 // supported if WP_IMGCAP_JPG
 
-// SetConsoleImage scrolling flags supported if WP_IMGCAP_ATTACH reported
+// SetConsoleImage attaching flags supported if WP_IMGCAP_ATTACH reported
 #define WP_IMG_ATTACH_LEFT      0x010000 // attach given image at left edge of existing one
 #define WP_IMG_ATTACH_RIGHT     0x020000 // attach given image at right edge of existing one
 #define WP_IMG_ATTACH_TOP       0x030000 // attach given image at top edge of existing one
 #define WP_IMG_ATTACH_BOTTOM    0x040000 // attach given image at bottom edge of existing one
 
-// Must be used with any WP_IMG_ATTACH_*
+// Can be used only with any of WP_IMG_ATTACH_* if WP_IMGCAP_SCROLL reported
 // Scrolls image after attaching to direction opposite to attached edge
 #define WP_IMG_SCROLL           0x080000
 

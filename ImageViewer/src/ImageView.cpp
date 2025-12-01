@@ -8,28 +8,6 @@
 #define SETIMG_DELAY_BASELINE_MSEC       256  // approx msec user may need to wait for cancellation
 #define SETIMG_ESTIMATION_SIZE_THRESHOLD 0x10000 // minimal size of data that can be used for set image rate estimation
 
-unsigned int ImageView::EnsureRotated()
-{
-	int rotated_angle = 0;
-	for (;_rotated < _rotate; ++_rotated) {
-		_ready_image.Rotate(_tmp_image, true);
-		_ready_image.Swap(_tmp_image);
-		rotated_angle++;
-	}
-	for (;_rotated > _rotate; --_rotated) {
-		_ready_image.Rotate(_tmp_image, false);
-		_ready_image.Swap(_tmp_image);
-		rotated_angle--;
-	}
-	if (_rotated == 4 || _rotated == -4) {
-		_rotated = _rotate = 0;
-	}
-	while (rotated_angle < 0) {
-		rotated_angle+= 4;
-	}
-	return rotated_angle;
-}
-
 bool ImageView::IterateFile(bool forward)
 {
 	if (forward) {
@@ -45,11 +23,6 @@ bool ImageView::IterateFile(bool forward)
 	return true;
 }
 
-bool ImageView::IsVideoFile() const
-{
-	return g_settings.MatchVideoFile(CurFile().c_str());
-}
-
 bool ImageView::PrepareImage()
 {
 	_render_file = CurFile();
@@ -63,7 +36,7 @@ bool ImageView::PrepareImage()
 
 	StrWide2MB(FileSizeString(st.st_size), _file_size_str);
 
-	if (!IsVideoFile()) {
+	if (!g_settings.MatchVideoFile(CurFile().c_str())) {
 		return ReadImage();
 	}
 
@@ -165,39 +138,10 @@ bool ImageView::ReadImage()
 	_ready_image.Resize();
 	_ready_image_scale = -1;
 	_scale = -1;
-	_rotate = 0;
-	_rotated = 0;
+	_rotate = _rotated = 0;
+	_mirror_h = _mirrored_h = _mirror_v = _mirrored_v = false;
 	if (use_orientation && orientation > 0) {
-		switch (orientation) {
-			case 8: // Rotate 270 CW
-				_rotate = -1;
-				break;
-			case 7: // Mirror horizontal and rotate 90 CW
-				_orig_image.MirrorH();
-				_rotate = 1;
-				break;
-			case 6: // Rotate 90 CW
-				_rotate = 1;
-				break;
-			case 5: // Mirror horizontal and rotate 270 CW
-				_orig_image.MirrorH();
-				_rotate = -1;
-				break;
-			case 4: // irror vertical
-				_orig_image.MirrorV();
-				break;
-			case 3: // Rotate 180
-				_rotate = 2;
-				break;
-			case 2: // Mirror horizontal
-				_orig_image.MirrorH();
-				break;
-			case 1: // Normal
-				break;
-
-			default:
-				fprintf(stderr, "%s: unsupported orientation - %d\n", __FUNCTION__, orientation);
-		}
+		ApplyEXIFOrientation(orientation);
 	}
 	msec = GetProcessUptimeMSec() - msec;
 	fprintf(stderr, "%s: loaded image of %d x %d orientation=%d in %u msec\n",
@@ -205,15 +149,37 @@ bool ImageView::ReadImage()
 	return true;
 }
 
-static int ShiftPercentsToPixels(int &percents, int width, int limit)
+void ImageView::ApplyEXIFOrientation(int orientation)
 {
-	int pixels = long(width) * percents / 100;
-	if (abs(pixels) > limit) {
-		pixels = (percents < 0) ? -limit : limit;
-		percents = long(pixels) * 100 / width;
-		percents+= (percents > 0) ? 1 : -1;
+	switch (orientation) {
+		case 8: // Rotate 270 CW
+			_rotate = -1;
+			break;
+		case 7: // Mirror horizontal and rotate 90 CW
+			_mirror_h = true;
+			_rotate = 1;
+			break;
+		case 6: // Rotate 90 CW
+			_rotate = 1;
+			break;
+		case 5: // Mirror horizontal and rotate 270 CW
+			_mirror_h = true;
+			_rotate = -1;
+			break;
+		case 4: // Mirror vertical
+			_mirror_v = true;
+			break;
+		case 3: // Rotate 180
+			_rotate = 2;
+			break;
+		case 2: // Mirror horizontal
+			_mirror_h = true;
+			break;
+		case 1: // Normal
+			break;
+		default:
+			fprintf(stderr, "%s: unsupported orientation - %d\n", __FUNCTION__, orientation);
 	}
-	return pixels;
 }
 
 bool ImageView::RefreshWGI()
@@ -224,7 +190,7 @@ bool ImageView::RefreshWGI()
 		return false;
 	}
 	if ((_wgi.Caps & WP_IMGCAP_RGBA) == 0) {
-		_err_str = "backend doesn't support RGBA graphics";
+		_err_str = "backend doesn't support graphics";
 		fprintf(stderr, "ERROR: %s.\n", _err_str.c_str());
 		return false;
 	}
@@ -258,6 +224,56 @@ void ImageView::SetupInitialScale(const int canvas_w, const int canvas_h)
 	}
 
 	fprintf(stderr, "%s: min=%f fit=%f max=%f\n", __FUNCTION__, _scale_min, _scale_fit, _scale_max);
+}
+
+bool ImageView::EnsureReadyScaledMirrored()
+{ // return true if ready image was re-scaled or re-mirrored, return false if it wasn't changed by this function
+	bool out = false;
+	assert(_scale > 0);
+	if (_ready_image_scale <= 0 || fabs(_scale -_ready_image_scale) > 0.001) {
+		auto msec = GetProcessUptimeMSec();
+		_orig_image.Scale(_ready_image, _scale);
+		msec = GetProcessUptimeMSec() - msec;
+		fprintf(stderr, "%s: scaled by %f - %d x %d -> %d x %d in %u msec\n", __FUNCTION__, _scale,
+			_orig_image.Width(), _orig_image.Height(), _ready_image.Width(), _ready_image.Height(), (unsigned int)msec);
+		_ready_image_scale = _scale;
+		_rotated = 0;
+		_mirrored_h = _mirrored_v = false;
+		out = true;
+	}
+	if (_mirrored_h != _mirror_h) {
+		_mirrored_h = _mirror_h;
+		_ready_image.MirrorH();
+		out = true;
+	}
+	if (_mirrored_v != _mirror_v) {
+		_mirrored_v = _mirror_v;
+		_ready_image.MirrorV();
+		out = true;
+	}
+	return out;
+}
+
+unsigned int ImageView::EnsureRotated()
+{
+	int rotated_angle = 0;
+	for (;_rotated < _rotate; ++_rotated) {
+		_ready_image.Rotate(_tmp_image, true);
+		_ready_image.Swap(_tmp_image);
+		rotated_angle++;
+	}
+	for (;_rotated > _rotate; --_rotated) {
+		_ready_image.Rotate(_tmp_image, false);
+		_ready_image.Swap(_tmp_image);
+		rotated_angle--;
+	}
+	if (_rotated == 4 || _rotated == -4) {
+		_rotated = _rotate = 0;
+	}
+	while (rotated_angle < 0) {
+		rotated_angle+= 4;
+	}
+	return rotated_angle;
 }
 
 bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
@@ -371,51 +387,23 @@ bool ImageView::SendScrollAttachV(const SMALL_RECT *area, int src_left, int src_
 		_tmp_image.Width(), _tmp_image.Height(), _tmp_image.Data()) != FALSE;
 }
 
-
-bool ImageView::EnsureRescaled() // return true if image was rescaled, otherwise false
+static int ShiftPercentsToPixels(int &percents, int width, int limit)
 {
-	assert(_scale > 0);
-	if (_ready_image_scale > 0 && fabs(_scale -_ready_image_scale) <= 0.001) {
-		return false;
+	int pixels = long(width) * percents / 100;
+	if (abs(pixels) > limit) {
+		pixels = (percents < 0) ? -limit : limit;
+		percents = long(pixels) * 100 / width;
+		percents+= (percents > 0) ? 1 : -1;
 	}
-	auto msec = GetProcessUptimeMSec();
-	_orig_image.Scale(_ready_image, _scale);
-	msec = GetProcessUptimeMSec() - msec;
-	fprintf(stderr, "%s: scaled by %f - %d x %d -> %d x %d in %u msec\n", __FUNCTION__, _scale,
-		_orig_image.Width(), _orig_image.Height(), _ready_image.Width(), _ready_image.Height(), (unsigned int)msec);
-	_ready_image_scale = _scale;
-	_rotated = 0;
-	return true;
+	return pixels;
 }
 
-static void MirrorImage(Image &img, int mirror)
-{
-	if (mirror == 1) {
-		img.MirrorH();
-	} else {
-		img.MirrorV();
-	}
-}
-
-bool ImageView::EnsureMirrored()
-{
-	if (_mirror_pending == 0) {
-		return false;
-	}
-	MirrorImage(_ready_image, _mirror_pending);
-	if (_rotated % 2) {
-		MirrorImage(_orig_image, (_mirror_pending == 2) ? 1 : 2);
-	} else {
-		MirrorImage(_orig_image, _mirror_pending);
-	}
-	_mirror_pending = 0;
-	return true;
-}
 
 bool ImageView::RenderImage()
 {
-	fprintf(stderr, "%s: _pos=%dx%d _size=%dx%d '%s'\n",
-		__FUNCTION__, _pos.X, _pos.Y, _size.X, _size.Y, _render_file.c_str());
+	fprintf(stderr, "%s: pos=%dx%d size=%dx%d dx=%d dy=%d scale=%f rotate=%d mirror=%c%c '%s'\n",
+		__FUNCTION__, _pos.X, _pos.Y, _size.X, _size.Y, _dx, _dy, _scale, _rotate,
+		_mirror_h ? 'H' : '-', _mirror_v ? 'V' : '-', _render_file.c_str());
 
 	if (_render_file.empty()) {
 		_err_str = "bad file";
@@ -436,24 +424,27 @@ bool ImageView::RenderImage()
 	int canvas_w = int(_size.X) * _wgi.PixPerCell.X;
 	int canvas_h = int(_size.Y) * _wgi.PixPerCell.Y;
 
-	if (_scale <= 0) {
+	if (_scale <= 0) { // very first rendering of image that is just loaded
 		DenoteState("Rendering...");
 		SetupInitialScale(canvas_w, canvas_h);
 	}
 
-	const bool rescaled = EnsureRescaled();
+	const bool scaled_mirrored = EnsureReadyScaledMirrored();
 	unsigned int rotated_angle = EnsureRotated();
-	const bool mirrored = EnsureMirrored();
 
-	auto viewport_w = canvas_w;
-	auto viewport_h = canvas_h;
 	SMALL_RECT area = {_pos.X, _pos.Y, 0, 0};
+	int viewport_w = canvas_w, viewport_h = canvas_h;
+	int src_left = 0, src_top = 0;
 
 	if (viewport_w > _ready_image.Width()) {
 		auto margin = (viewport_w - _ready_image.Width()) / 2;
 		area.Left+= margin / _wgi.PixPerCell.X;  // offset by cells count
 		area.Right = margin % _wgi.PixPerCell.X; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
 		viewport_w = _ready_image.Width();
+		_dx = 0;
+	} else {
+		src_left = (_ready_image.Width() - viewport_w) / 2;
+		src_left+= ShiftPercentsToPixels(_dx, _ready_image.Width(), (_ready_image.Width() - viewport_w) / 2);
 	}
 
 	if (viewport_h > _ready_image.Height()) {
@@ -461,56 +452,44 @@ bool ImageView::RenderImage()
 		area.Top+= margin / _wgi.PixPerCell.Y;    // offset by cells count
 		area.Bottom = margin % _wgi.PixPerCell.Y; // extra pixel offset due to WP_IMG_PIXEL_OFFSET
 		viewport_h = _ready_image.Height();
-	}
-
-	int src_left = (_ready_image.Width() > viewport_w) ? (_ready_image.Width() - viewport_w) / 2 : 0;
-	int src_top = (_ready_image.Height() > viewport_h) ? (_ready_image.Height() - viewport_h) / 2 : 0;
-
-	if (_dx != 0 && _ready_image.Width() > viewport_w) {
-		src_left+= ShiftPercentsToPixels(_dx, _ready_image.Width(), (_ready_image.Width() - viewport_w) / 2);
-	} else {
-		_dx = 0;
-	}
-
-	if (_dy != 0 && _ready_image.Height() > viewport_h) {
-		src_top+= ShiftPercentsToPixels(_dy, _ready_image.Height(), (_ready_image.Height() - viewport_h) / 2);
-	} else {
 		_dy = 0;
-	}
-
-	if (!rescaled && !mirrored && _prev_left == src_left && _prev_top == src_top && rotated_angle == 0) {
-		fprintf(stderr, "%s: Nothing to do\n", __FUNCTION__);
-		return true;
-	}
-
-	if (rotated_angle != 0 && !rescaled && !mirrored
-			&& _ready_image.Width() <= std::min(canvas_w, canvas_h)
-			&& _ready_image.Height() <= std::min(canvas_w, canvas_h)
-			&& (_wgi.Caps & WP_IMGCAP_ROTATE) != 0) {
-		fprintf(stderr, "ImageView: rotating remote image\n");
-		if (WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle)) {
-			rotated_angle = 0; // no need to rotate anything else
-		}
+	} else {
+		src_top = (_ready_image.Height() - viewport_h) / 2;
+		src_top+= ShiftPercentsToPixels(_dy, _ready_image.Height(), (_ready_image.Height() - viewport_h) / 2);
 	}
 
 	bool out = true;
-	if (!rescaled && !mirrored && rotated_angle == 0
-			&& abs(_prev_left - src_left) < viewport_w && abs(_prev_top - src_top) < viewport_h
-			&& (_wgi.Caps & WP_IMGCAP_SCROLL) != 0 && (_wgi.Caps & WP_IMGCAP_ATTACH) != 0) {
-		if (_prev_left != src_left) {
+	if (!scaled_mirrored && rotated_angle != 0                       // if image only rotated
+			&& _ready_image.Width() <= std::min(canvas_w, canvas_h)  // and fits screen at any
+			&& _ready_image.Height() <= std::min(canvas_w, canvas_h) // orientaion and if
+			&& (_wgi.Caps & WP_IMGCAP_ROTATE) != 0) {                // backend supports rotation:
+		// rotate image remotely without any bitmap transfer
+		fprintf(stderr, "ImageView: rotating remote image\n");
+		out = WINPORT(RotateConsoleImage)(NULL, WINPORT_IMAGE_ID, &area, rotated_angle) != FALSE;
+
+	} else if (!scaled_mirrored && rotated_angle == 0  // if image only shifted
+			&& abs(_prev_left - src_left) < viewport_w // and shifted-in area is
+			&& abs(_prev_top - src_top) < viewport_h   // smaller than viewport
+			&& (_wgi.Caps & WP_IMGCAP_ATTACH) != 0     // and if backend supports
+			&& (_wgi.Caps & WP_IMGCAP_SCROLL) != 0) {  // remote scrolling:
+		if (_prev_left != src_left) { // scroll horizontally with sending only added left/right part
 			out = SendScrollAttachH(&area, src_left, _prev_top, viewport_w, viewport_h, _prev_left - src_left);
 		}
-		if (_prev_top != src_top) {
+		if (_prev_top != src_top) {   // scroll vertically with sending only added top/bottom part
 			out = SendScrollAttachV(&area, src_left, src_top, viewport_w, viewport_h, _prev_top - src_top);
 		}
-	} else {
+
+	} else if (scaled_mirrored || rotated_angle != 0 || _prev_left != src_left || _prev_top != src_top) {
+		// otherwise send all visible image area, if it was changed anyhow
 		out = SendWholeViewport(&area, src_left, src_top, viewport_w, viewport_h);
 	}
-	if (out) {
-		_prev_left = src_left;
-		_prev_top = src_top;
+	if (!out) {
+		fprintf(stderr, "ImageView: request failed\n");
+		return false;
 	}
-	return out;
+	_prev_left = src_left;
+	_prev_top = src_top;
+	return true;
 }
 
 void ImageView::DenoteState(const char *stage)
@@ -533,12 +512,18 @@ void ImageView::DenoteState(const char *stage)
 	}
 
 	std::string pan;
+	if (_mirrored_h && !_mirrored_v) {
+		pan+= "🮛 ";
+	} else if (_mirrored_v && !_mirrored_h) {
+		pan+= "🮚 ";
+	} else if (_mirrored_v && _mirrored_h) {
+		pan+= "🮽 ";
+	}
 	if (_scale > 0) {
 		const char c1 = (_scale - _scale_fit > 0.01) ? '>' : ((_scale - _scale_fit < -0.01) ? '<' : '[');
 		const char c2 = (_scale - _scale_fit > 0.01) ? '<' : ((_scale - _scale_fit < -0.01) ? '>' : ']');
 		pan+= StrPrintf("%c%d%%%c ", c1, int(_scale * 100), c2);
 	}
-
 	if (_dx != 0 || _dy != 0) {
 		pan+= StrPrintf("%s%d:%s%d ", (_dx > 0) ? "+" : "", _dx, (_dy > 0) ? "+" : "", _dy);
 	}
@@ -557,7 +542,6 @@ void ImageView::DenoteInfoAndPan(const std::string &info, const std::string &pan
 	fprintf(stderr, "DenoteInfoAndPan: %s'%s' '%s' '%s'\n",
 		CurFileSelected() ? "*" : "", CurFile().c_str(), info.c_str(), pan.c_str());
 }
-
 
 void ImageView::JustReset()
 {
@@ -724,14 +708,14 @@ COORD ImageView::ShiftByPixels(COORD delta) // returns actual shift in pixels
 
 void ImageView::MirrorH()
 {
-	_mirror_pending = 1;
+	_mirror_h = !_mirror_h;
 	RenderImage();
 	DenoteState();
 }
 
 void ImageView::MirrorV()
 {
-	_mirror_pending = 2;
+	_mirror_v = !_mirror_v;
 	RenderImage();
 	DenoteState();
 }
@@ -768,4 +752,3 @@ void ImageView::ToggleSelection()
 	_all_files[_cur_file].second = !_all_files[_cur_file].second;
 	DenoteState();
 }
-

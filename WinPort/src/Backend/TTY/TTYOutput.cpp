@@ -632,6 +632,7 @@ unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConso
         Write(ESC "\\");
         offset += chunk_len;
     }
+	_cursor.x = _cursor.y = -1;
 	return id;
 }
 

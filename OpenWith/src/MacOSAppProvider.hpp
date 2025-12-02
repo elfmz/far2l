@@ -13,8 +13,8 @@ class MacOSAppProvider : public AppProvider
 {
 public:
 	explicit MacOSAppProvider(TMsgGetter msg_getter);
-	std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& pathnames) override;
-	std::vector<std::wstring> ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames) override;
+	std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& filepaths) override;
+	std::vector<std::wstring> ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths) override;
 	std::vector<std::wstring> GetMimeTypes() override;
 	std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) override;
 	std::vector<ProviderSetting> GetPlatformSettings() override { return {}; }

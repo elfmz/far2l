@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "farcolors.hpp"
 
-#define SIZE_ARRAY_FARCOLORS 159
+#define SIZE_ARRAY_FARCOLORS 160
 
 class FarColors : NonCopyable
 {

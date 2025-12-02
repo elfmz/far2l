@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "comutils.hpp"
 
@@ -29,6 +29,9 @@ extern const ArcType c_lzma;
 extern const ArcType c_lzma86;
 extern const ArcType c_cab;
 extern const ArcType c_z;
+extern const ArcType c_lz4;
+extern const ArcType c_lz5;
+extern const ArcType c_lizard;
 
 extern const ArcType c_elf;
 extern const ArcType c_pe;
@@ -89,7 +92,28 @@ extern const UInt64 c_min_volume_size;
 extern const wchar_t *c_sfx_ext;
 extern const wchar_t *c_volume_ext;
 
-///struct ICompressCodecsInfo;
+static constexpr FILETIME nullftime = {0, 0};
+static constexpr DWORD c_valid_import_attributes = 
+		FILE_ATTRIBUTE_READONLY |
+		FILE_ATTRIBUTE_HIDDEN |
+		FILE_ATTRIBUTE_SYSTEM |
+		FILE_ATTRIBUTE_DIRECTORY |
+		FILE_ATTRIBUTE_ARCHIVE |
+		FILE_ATTRIBUTE_DEVICE_BLOCK |
+		FILE_ATTRIBUTE_NORMAL |
+		FILE_ATTRIBUTE_TEMPORARY |
+		FILE_ATTRIBUTE_SPARSE_FILE |
+		FILE_ATTRIBUTE_REPARSE_POINT |
+		FILE_ATTRIBUTE_COMPRESSED |
+		FILE_ATTRIBUTE_OFFLINE |
+		FILE_ATTRIBUTE_NOT_CONTENT_INDEXED |
+		FILE_ATTRIBUTE_ENCRYPTED |
+		FILE_ATTRIBUTE_INTEGRITY_STREAM |
+		FILE_ATTRIBUTE_VIRTUAL |
+		FILE_ATTRIBUTE_NO_SCRUB_DATA |
+		FILE_ATTRIBUTE_EA |
+		FILE_ATTRIBUTE_PINNED |
+		FILE_ATTRIBUTE_UNPINNED;
 
 struct ArcLib
 {
@@ -126,10 +150,11 @@ struct ArcFormat
 	std::map<std::wstring, std::wstring> nested_ext_mapping;
 	std::wstring default_extension() const;
 
-	UInt32 Flags{};
-	bool NewInterface{};
+	UInt32 Flags = 0;
+	UInt32 TimeFlags = 0;
+	bool NewInterface = false;
 
-	UInt32 SignatureOffset{};
+	UInt32 SignatureOffset = 0;
 	std::vector<ByteVector> Signatures;
 
 	int lib_index{-1};
@@ -240,15 +265,43 @@ public:
 	static void free();
 	static void reload();
 
-	static bool is_single_file_format(const ArcType &arc_ty)
-	{
-		return arc_ty == c_bzip2 || arc_ty == c_gzip || arc_ty == c_xz || arc_ty == c_SWFc || arc_ty == c_zstd;
+	static bool is_single_file_format(const ArcType &arc_ty) {
+		return	arc_ty == c_bzip2 ||
+				arc_ty == c_gzip ||
+				arc_ty == c_xz ||
+				arc_ty == c_SWFc ||
+				arc_ty == c_zstd ||
+				arc_ty == c_z ||
+				arc_ty == c_lzma ||
+				arc_ty == c_lzma86 ||
+				arc_ty == c_lz4 ||
+				arc_ty == c_lz5 ||
+				arc_ty == c_lizard ||
+				arc_ty == c_Base64 ||
+				arc_ty == c_Ppmd ||
+				arc_ty == c_mslz;
 	}
 };
 
 struct ArcFileInfo
 {
 	UInt32 parent{};
+	UInt32 num_links{};
+	UInt32 hl_group{};
+//	UInt32 attributes{};
+//	uint64_t size{};
+//	uint64_t psize{};
+//	uint64_t inode{};
+//	uint64_t device{};
+//	uint64_t rdev{};
+//    FILETIME ftCreationTime{};
+//    FILETIME ftLastAccessTime{};
+//    FILETIME ftLastWriteTime{};
+//    FILETIME ftChangeTime{};
+//	UInt32 unixmode{};
+//	UInt32 crc32{};
+	uid_t fuid{};
+	gid_t fgid{};
 	std::wstring name;
 	std::wstring desc;
 	std::wstring owner;
@@ -286,17 +339,48 @@ public:
 template<bool UseVirtualDestructor>
 class Archive;
 
-//typedef std::vector<std::shared_ptr<Archive>> Archives;
+using HardLinkGroup = std::vector<UInt32>;
 
 template<bool UseVirtualDestructor>
 using Archives = std::vector<std::shared_ptr<Archive<UseVirtualDestructor>>>;
 
-//using ArchivesVariant = std::variant<std::unique_ptr<Archives<true>>, std::unique_ptr<Archives<false>>>;
-//class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
-//class Archive : public std::enable_shared_from_this<Archive<UseVirtualDestructor>>
+struct WStringHash {
+	std::size_t operator()(const std::wstring& str) const {
+		return std::hash<std::wstring_view>{}(std::wstring_view(str));
+	}
+};
+
+struct WStringEqual {
+	bool operator()(const std::wstring& lhs, const std::wstring& rhs) const {
+		return lhs == rhs;
+	}
+};
+
+struct TrHardLinkData {
+	uint32_t source_index;
+	std::wstring target_path;
+
+	TrHardLinkData() : source_index((uint32_t)-1) {}
+	TrHardLinkData(uint32_t idx, const std::wstring &path)
+		: source_index(idx), target_path(path) {}
+};
+
+struct HardLinkPrepData {
+	struct InodeKey {
+		UInt64 inode;
+		UInt64 device;
+		bool operator<(const InodeKey &other) const {
+			return std::tie(inode, device) < std::tie(other.inode, other.device);
+		}
+	};
+
+	std::map<std::wstring, UInt32> name_to_index;
+	std::vector<TrHardLinkData> target_hardlinks;
+	std::map<InodeKey, UInt32> inode_to_group;
+};
 
 namespace ArchiveGlobals {
-    extern unsigned max_check_size;
+	extern unsigned max_check_size;
 }
 
 template<bool UseVirtualDestructor>
@@ -317,11 +401,9 @@ private:
 			const ArcTypes &arc_types, IInStream<UseVirtualDestructor> *stream);
 
 public:
-	//using std::enable_shared_from_this<Archive<UseVirtualDestructor>>::shared_from_this;
-	//static unsigned max_check_size;
 	std::shared_ptr<Archive<UseVirtualDestructor>> parent;
 
-	Archive<UseVirtualDestructor>* get_root() {
+	Archive<UseVirtualDestructor> *get_root() {
 		auto current = this->shared_from_this();
 		while (current->parent) {
 			current = current->parent;
@@ -364,6 +446,8 @@ public:
 	UInt32 m_chain_file_index;
 	FileList file_list;
 	FileIndex file_list_index;
+	std::vector<HardLinkGroup> hard_link_groups;
+
 	void make_index();
 	UInt32 find_dir(const std::wstring &dir);
 	FileIndexRange get_dir_list(UInt32 dir_index);
@@ -371,24 +455,32 @@ public:
 	std::wstring get_path(UInt32 index);
 	FindData get_file_info(UInt32 index);
 	bool get_main_file(UInt32 &index);
+
 	DWORD get_attr(UInt32 index, DWORD *posixattr ) const;
 	DWORD get_links(UInt32 index) const;
 
-	std::wstring get_user(UInt32 index) const;
-	std::wstring get_group(UInt32 index) const;
+	bool get_user(UInt32 index, std::wstring &str) const;
+	bool get_group(UInt32 index, std::wstring &str) const;
+	bool get_user_id(UInt32 index, UInt32 &id) const;
+	bool get_group_id(UInt32 index, UInt32 &id) const;
 
 	bool get_encrypted(UInt32 index) const;
+	bool get_hardlink(UInt32 index, std::wstring &str) const;
+	bool get_symlink(UInt32 index, std::wstring &str) const;
+
 	UInt64 get_size(UInt32 index) const;
 	UInt64 get_psize(UInt32 index) const;
 	FILETIME get_ctime(UInt32 index) const;
 	FILETIME get_mtime(UInt32 index) const;
 	FILETIME get_atime(UInt32 index) const;
+	FILETIME get_chtime(UInt32 index) const;
 	unsigned get_crc(UInt32 index) const;
 	bool get_anti(UInt32 index) const;
 	bool get_isaltstream(UInt32 index) const;
+	bool get_dev(UInt32 index, dev_t &_device) const;
+	bool get_device(UInt32 index, dev_t &_device) const;
 
 	UInt64 get_offset(UInt32 index) const;
-/// std::wstring get_filesystem(UInt32 index) const;
 
 	void read_open_results();
 	std::list<std::wstring> get_open_errors() const;
@@ -399,12 +491,20 @@ private:
 	std::wstring get_default_name() const;
 	void prepare_dst_dir(const std::wstring &path);
 	void prepare_test(UInt32 file_index, std::list<UInt32> &indices);
+	uint32_t addHardLinkGroup() {
+		hard_link_groups.emplace_back();
+		return static_cast<UInt32>(hard_link_groups.size() - 1);
+	}
+
+	void update_hard_link_counts();
+	void groupHardLinks(HardLinkPrepData &prep_data);
 
 public:
 	void extract(UInt32 src_dir_index, const std::vector<UInt32> &src_indices, const ExtractOptions &options,
 			std::shared_ptr<ErrorLog> error_log, std::vector<UInt32> *extracted_indices = nullptr);
 	void test(UInt32 src_dir_index, const std::vector<UInt32> &src_indices);
 	void delete_archive();
+	std::wstring build_extract_path(UInt32 file_index, const std::wstring &dst_dir, UInt32 src_dir_index) const;
 
 	// create & update archive
 private:

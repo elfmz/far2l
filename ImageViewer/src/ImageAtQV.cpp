@@ -47,7 +47,7 @@ class ImageAtQV : public Threaded
 			iv.reset();
 			std::vector<std::pair<std::string, bool> > all_files{{file, false}};
 			iv.emplace(0, all_files);
-			if (!iv->SetupQV(area, &_changing)) {
+			if (!iv->Setup(area, &_changing)) {
 				iv.reset();
 			}
 		}

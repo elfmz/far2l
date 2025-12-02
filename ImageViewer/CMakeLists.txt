@@ -2,17 +2,21 @@
 project(ImageViewer)
 
 set(SOURCES
-Plugin.cpp 
-ImageView.cpp 
-ImageAtFull.cpp
-ImageAtQV.cpp
+src/Plugin.cpp 
+src/Settings.cpp 
+src/Image.cpp 
+src/ImageView.cpp 
+src/ImageAtFull.cpp
+src/ImageAtQV.cpp
+src/ToolExec.cpp
 )
 
 add_library (ImageViewer MODULE ${SOURCES})
 
 target_link_libraries(ImageViewer utils far2l)
 
-target_compile_definitions(ImageViewer PRIVATE -DUNICODE -DFAR_DONT_USE_INTERNALS)
+target_compile_options(ImageViewer PRIVATE -ffast-math)
+target_compile_definitions(ImageViewer PRIVATE -DUNICODE )
 
 target_include_directories(ImageViewer PRIVATE .)
 target_include_directories(ImageViewer PRIVATE ../WinPort)
@@ -24,3 +28,16 @@ set_target_properties(ImageViewer
         PREFIX ""
         SUFFIX ".far-plug-wide")
 
+
+# copy resource files
+set(CURRENT_TARGET "ImageViewer")
+file(GLOB_RECURSE RESOURCE_FILES
+        RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${CMAKE_CURRENT_SOURCE_DIR}/configs/*"
+)
+setup_target_auxiliary_files(${CURRENT_TARGET}
+        RESOURCE_FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/configs
+        "${INSTALL_DIR}/Plugins/${CURRENT_TARGET}/"
+)
+add_dependencies(${CURRENT_TARGET} copy_aux_files_for_${CURRENT_TARGET})

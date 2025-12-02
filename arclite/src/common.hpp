@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #define E_PENDING -2147483638
 
@@ -161,8 +161,10 @@ struct ExtractOptions
 	std::wstring dst_dir;
 	bool ignore_errors;
 	bool extract_access_rights;
-	bool extract_owners_groups;
+	int extract_owners_groups;
 	bool extract_attributes;
+	bool duplicate_hardlinks;
+	bool restore_special_files;
 	OverwriteAction overwrite;
 	TriState move_files;
 	std::wstring password;
@@ -280,6 +282,8 @@ struct ProfileOptions
 	bool skip_symlinks;
 	uint32_t  symlink_fix_path_mode;
 	bool dereference_symlinks;
+	bool skip_hardlinks;
+	bool duplicate_hardlinks;
 	bool move_files;
 	bool ignore_errors;
 	std::wstring advanced;

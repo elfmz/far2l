@@ -562,30 +562,6 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_chmod(const char *pat
 	return common_path_and_mode(SUDO_CMD_CHMOD, &chmod, path, mode, true);
 }
 
-extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
-{
-	int saved_errno = errno;
-	ClientReconstructCurDir crcd(path);
-	int r = chown(path, owner, group);
-	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
-		try {
-			ClientTransaction ct(SUDO_CMD_CHOWN);
-			ct.SendStr(path);
-			ct.SendPOD(owner);
-			ct.SendPOD(group);
-			r = ct.RecvInt();
-			if (r==-1)
-				ct.RecvErrno();
-			else
-				errno = saved_errno;
-		} catch(std::exception &e) {
-			fprintf(stderr, "sudo_client: sdc_chown('%s') - error %s\n", path, e.what());
-			r = -1;
-		}
-	}
-	return r;
-}
-
 extern "C" __attribute__ ((visibility("default"))) int sdc_utimens(const char *filename, const struct timespec times[2])
 {
 	int saved_errno = errno;
@@ -914,5 +890,63 @@ extern "C" __attribute__ ((visibility("default"))) int sdc_mknod(const char *pat
 	return r;
 }
 
+template <SudoCommand cmd, typename API>
+	static int common_xchown(API api, const char *path, uid_t owner, gid_t group)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+	int r = api(path, owner, group);
+	if (r==-1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
+		try {
+			ClientTransaction ct(cmd);
+			ct.SendStr(path);
+			ct.SendPOD(owner);
+			ct.SendPOD(group);
+			r = ct.RecvInt();
+			if (r==-1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: %s<%d>('%s') - error %s\n", __FUNCTION__, cmd, path, e.what());
+			r = -1;
+		}
+	}
+	return r;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_lchown(const char *path, uid_t owner, gid_t group)
+{
+	return common_xchown<SUDO_CMD_LCHOWN>(lchown, path, owner, group);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_chown(const char *path, uid_t owner, gid_t group)
+{
+	return common_xchown<SUDO_CMD_CHOWN>(chown, path, owner, group);
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_lutimes(const char *filename, const struct timeval times[2])
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(filename);
+	int r = lutimes(filename, times);
+	if (r == -1 && IsAccessDeniedErrno() && TouchClientConnection(true)) {
+		try {
+			ClientTransaction ct(SUDO_CMD_LUTIMES);
+			ct.SendStr(filename);
+			ct.SendPOD(times[0]);
+			ct.SendPOD(times[1]);
+			r = ct.RecvInt();
+			if (r == -1)
+				ct.RecvErrno();
+			else
+				errno = saved_errno;
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_lutimes('%s') - error %s\n", filename, e.what());
+			r = -1;
+		}
+	}
+	return r;
+}
 
 } //namespace Sudo

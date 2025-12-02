@@ -1,3 +1,4 @@
+#pragma once
 
 	// special case: UDF must go before ISO
 ///	prioritize(arc_entries, c_udf, c_iso);
@@ -24,9 +25,9 @@ const std::map<ArcType, int> g_format_priority = {
     {c_vmdk,    100},  // VMware
     {c_qcow,    100},  // QEMU
 
-    {c_mbr,     999},  // MBR
-    {c_gpt,     999},  // GPT
-    {c_apm,     999},  // APM
+    {c_mbr,     100},  // MBR
+    {c_gpt,     100},  // GPT
+    {c_apm,     100},  // APM
 
     {c_hfs,     100},  // HFS — только если не DMG
     {c_apfs,    100},  // APFS — современная Apple FS

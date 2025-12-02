@@ -87,9 +87,9 @@ static std::wstring EscapeForShell(const std::wstring& arg) {
 // receives a higher score, ensuring it appears first in the list.
 // To optimize performance when handling many files, this function caches the application lists
 // based on the file's Uniform Type Identifier (UTI).
-std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<std::wstring>& pathnames) {
+std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<std::wstring>& filepaths) {
 	// Return immediately if the input vector is empty.
-	if (pathnames.empty()) {
+	if (filepaths.empty()) {
 		return {};
 	}
 
@@ -134,8 +134,8 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
 
 
 	// Iterate through each selected file to find and score compatible applications.
-	for (const auto& pathname : pathnames) {
-		NSString *path = [NSString stringWithUTF8String:StrWide2MB(pathname).c_str()];
+	for (const auto& filepath : filepaths) {
+		NSString *path = [NSString stringWithUTF8String:StrWide2MB(filepath).c_str()];
 		NSURL *fileURL = [NSURL fileURLWithPath:path];
 		if (!fileURL) {
 			// File path is invalid, cache as inaccessible
@@ -242,7 +242,7 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
 	};
 
 	std::vector<RankedCandidate> finalists;
-	const size_t num_files = pathnames.size();
+	const size_t num_files = filepaths.size();
 
 	// Filter the list, keeping only applications that can open every selected file.
 	for (const auto& [app_id, count] : app_occurrence_count) {
@@ -288,15 +288,15 @@ std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<
 
 
 // Constructs a single command line using the 'open' utility, which natively handles multiple files.
-std::vector<std::wstring> MacOSAppProvider::ConstructCommandLine(const CandidateInfo& candidate, const std::vector<std::wstring>& pathnames) {
-    if (candidate.id.empty() || pathnames.empty()) {
+std::vector<std::wstring> MacOSAppProvider::ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths) {
+    if (candidate.id.empty() || filepaths.empty()) {
         return {};
     }
 
     // The 'open -a <app_path>' command tells the system to open files with a specific application.
     std::wstring cmd = L"open -a " + EscapeForShell(candidate.id);
-    for (const auto& pathname : pathnames) {
-        cmd += L" " + EscapeForShell(pathname);
+    for (const auto& filepath : filepaths) {
+        cmd += L" " + EscapeForShell(filepath);
     }
     
     return {cmd}; // Return a vector containing the single constructed command.

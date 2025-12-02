@@ -146,6 +146,24 @@ public:
 			if (r > 4 && buf[0] == 0x7f && buf[1] == 'E' && buf[2] == 'L' && buf[3] == 'F') {
 				fprintf(stderr, "ExecClassifier('%s') - ELF executable\n", cmd);
 				_executable = true;
+			// Mach-O thin
+			} else if (r > 4 &&
+			  (
+				!memcmp(buf, "\xCE\xFA\xED\xFE", 4) || // MH_MAGIC
+				!memcmp(buf, "\xCF\xFA\xED\xFE", 4) || // MH_MAGIC_64
+				!memcmp(buf, "\xFE\xED\xFA\xCE", 4) || // MH_CIGAM
+				!memcmp(buf, "\xFE\xED\xFA\xCF", 4)    // MH_CIGAM_64
+			  )) {
+				fprintf(stderr, "ExecClassifier('%s') - Mach-O executable\n", cmd);
+				_executable = true;
+			// Mach-O FAT
+			} else if (r > 4 &&
+			  (
+				!memcmp(buf, "\xCA\xFE\xBA\xBE", 4) || // FAT_MAGIC
+				!memcmp(buf, "\xBE\xBA\xFE\xCA", 4)    // FAT_CIGAM
+			  )) {
+				fprintf(stderr, "ExecClassifier('%s') - Mach-O universal binary\n", cmd);
+				_executable = true;
 
 			} else if (r > 2 && buf[0] == '#' && buf[1] == '!') {
 				fprintf(stderr, "ExecClassifier('%s') - script\n", cmd);

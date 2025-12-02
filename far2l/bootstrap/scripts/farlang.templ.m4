@@ -4096,12 +4096,12 @@ upd:"Zeichentabelle &automatisch erkennen"
 
 EditUseEditorConfigOrg
 "Использовать &файлы настроек .editorconfig"
-"Use .editorconfig setti&ngs files"
-upd:"Use .editorco&nfig settings files"
-upd:"Use .editorco&nfig settings files"
-upd:"Use .editorco&nfig settings files"
-upd:"Use .editorco&nfig settings files"
-upd:"Use .editorco&nfig settings files"
+"Use .editorc&onfig settings files"
+upd:"Use .editorc&onfig settings files"
+upd:"Use .editorc&onfig settings files"
+upd:"Use .editorc&onfig settings files"
+upd:"Use .editorc&onfig settings files"
+upd:"Use .editorc&onfig settings files"
 "Використовувати &файли налаштувань .editorconfig"
 "Выкарыстоўваць &файлы настроек .editorconfig"
 
@@ -4159,6 +4159,17 @@ upd:"Show white space"
 "Mostrar espacios en blanco"
 "Пробільні символи"
 "Прагальныя сімвалы"
+
+EditShowLineNumbers
+"Номера стро&к"
+"Show line &numbers"
+upd:"Show line &numbers"
+upd:"Show line &numbers"
+upd:"Show line &numbers"
+upd:"Show line &numbers"
+upd:"Show line &numbers"
+"Номери рядкі&в"
+upd:"Show line &numbers"
 
 EditShowKeyBar
 "Показывать &линейку клавиш"
@@ -7013,6 +7024,17 @@ upd:"HidSpc"
 "СхвПрб"
 "СхвПрб"
 
+EditCtrlF3Hide
+"СпрНом"
+"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+upd:"HideNum"
+"СхвНом"
+"СхвНом"
+
 EditCtrlF5Spaces
 "Прбелы"
 "Spaces"
@@ -7365,15 +7387,15 @@ EditCtrlF2
 ""
 
 EditCtrlF3
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ЛинНом"
+"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+"ЛінНом"
+upd:"LineNum"
 
 EditCtrlF4
 ""
@@ -8462,15 +8484,15 @@ SingleEditCtrlF2
 ""
 
 SingleEditCtrlF3
-""
-""
-""
-""
-""
-""
-""
-""
-""
+"ЛинНом"
+"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+upd:"LineNum"
+"ЛінНом"
+upd:"LineNum"
 
 SingleEditCtrlF4
 ""
@@ -18725,6 +18747,17 @@ SetColorEditorScrollbar
 "Barra de desplazamiento"
 "Полоса прокрутки"
 "Працяжнік"
+
+SetColorEditorLineNumber
+"Номера строк"
+"Line numbers"
+upd:"Line numbers"
+upd:"Line numbers"
+upd:"Line numbers"
+upd:"Line numbers"
+upd:"Line numbers"
+"Номери рядків"
+upd:"Line numbers"
 
 SetColorHelpNormal
 l:

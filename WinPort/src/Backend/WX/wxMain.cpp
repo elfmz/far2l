@@ -2183,7 +2183,7 @@ void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 
 void WinPortPanel::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
-	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_ATTACH | WP_IMGCAP_SCROLL | WP_IMGCAP_ROTATE | WP_IMGCAP_PNG | WP_IMGCAP_JPG;
+	wgi->Caps = WP_IMGCAP_RGBA | WP_IMGCAP_PNG | WP_IMGCAP_JPG | WP_IMGCAP_ATTACH | WP_IMGCAP_SCROLL | WP_IMGCAP_ROTMIR;
 	wgi->PixPerCell.X = _paint_context.FontWidth();
 	wgi->PixPerCell.Y = _paint_context.FontHeight();
 }
@@ -2201,10 +2201,10 @@ bool WinPortPanel::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_
 	return wxIsMainThread() ? impl() : CallInMain<bool>(impl);
 }
 
-bool WinPortPanel::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
+bool WinPortPanel::OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
 	auto impl = [&]() {
-		if (!_images.Rotate(id, area, angle_x90)) {
+		if (!_images.Transform(id, area, tf)) {
 			return false;
 		}
 		Refresh(false, nullptr);

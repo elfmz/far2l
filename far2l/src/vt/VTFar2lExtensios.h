@@ -40,7 +40,7 @@ class VTFar2lExtensios
 
 	void OnInteract_ImageCaps(StackSerializer &stk_ser);
 	void OnInteract_ImageSet(StackSerializer &stk_ser);
-	void OnInteract_ImageRotate(StackSerializer &stk_ser);
+	void OnInteract_ImageTransform(StackSerializer &stk_ser);
 	void OnInteract_ImageDel(StackSerializer &stk_ser);
 	void OnInteract_Image(StackSerializer &stk_ser);
 

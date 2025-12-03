@@ -527,9 +527,9 @@ extern "C" {
 		return ChooseConOut(con)->OnSetConsoleImage(id, flags, area, width, height, buffer);
 	}
 
-	WINPORT_DECL(RotateConsoleImage, BOOL, (HANDLE con, const char *id, const SMALL_RECT *area, unsigned char angle_x90))
+	WINPORT_DECL(TransformConsoleImage, BOOL, (HANDLE con, const char *id, const SMALL_RECT *area, uint16_t tf))
 	{
-		return ChooseConOut(con)->OnRotateConsoleImage(id, area, angle_x90);
+		return ChooseConOut(con)->OnTransformConsoleImage(id, area, tf);
 	}
 
 	WINPORT_DECL(DeleteConsoleImage, BOOL, (HANDLE con, const char *id))

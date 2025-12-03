@@ -48,7 +48,7 @@ public:
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
-	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90) = 0;
+	virtual bool OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *OnConsoleBackendInfo(int entity) = 0;
@@ -227,7 +227,7 @@ public:
 
 	virtual void OnGetConsoleImageCaps(WinportGraphicsInfo *wgi) = 0;
 	virtual bool OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer) = 0;
-	virtual bool OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90) = 0;
+	virtual bool OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf) = 0;
 	virtual bool OnDeleteConsoleImage(const char *id) = 0;
 
 	virtual const char *BackendInfo(int entity) = 0;

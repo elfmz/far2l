@@ -551,17 +551,17 @@ void VTFar2lExtensios::OnInteract_ImageSet(StackSerializer &stk_ser)
 	stk_ser.PushNum(ok);
 }
 
-void VTFar2lExtensios::OnInteract_ImageRotate(StackSerializer &stk_ser)
+void VTFar2lExtensios::OnInteract_ImageTransform(StackSerializer &stk_ser)
 {
-	unsigned char angle_x90{};
 	SMALL_RECT area{-1, -1, -1, -1};
 	const std::string &id = stk_ser.PopStr();
+	uint16_t tf{};
 	stk_ser.PopNum(area.Left);
 	stk_ser.PopNum(area.Top);
 	stk_ser.PopNum(area.Right);
 	stk_ser.PopNum(area.Bottom);
-	stk_ser.PopNum(angle_x90);
-	uint8_t ok = WINPORT(RotateConsoleImage)(NULL, id.c_str(), &area, angle_x90) ? 1 : 0;
+	stk_ser.PopNum(tf);
+	uint8_t ok = WINPORT(TransformConsoleImage)(NULL, id.c_str(), &area, tf) ? 1 : 0;
 	stk_ser.Clear();
 	stk_ser.PushNum(ok);
 }
@@ -581,7 +581,7 @@ void VTFar2lExtensios::OnInteract_Image(StackSerializer &stk_ser)
 	switch (code) {
 		case FARTTY_INTERACT_IMAGE_CAPS: OnInteract_ImageCaps(stk_ser); break;
 		case FARTTY_INTERACT_IMAGE_SET: OnInteract_ImageSet(stk_ser); break;
-		case FARTTY_INTERACT_IMAGE_ROT: OnInteract_ImageRotate(stk_ser); break;
+		case FARTTY_INTERACT_IMAGE_TRANSFORM: OnInteract_ImageTransform(stk_ser); break;
 		case FARTTY_INTERACT_IMAGE_DEL: OnInteract_ImageDel(stk_ser); break;
 
 		default:

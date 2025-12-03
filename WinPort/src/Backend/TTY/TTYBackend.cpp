@@ -1573,7 +1573,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 	return true;
 }
 
-bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
+bool TTYBackend::OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
 	if (_far2l_tty) {
 		uint8_t ok = 0;
@@ -1583,13 +1583,13 @@ bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, un
 				area = &def_area;
 			}
 			StackSerializer stk_ser;
-			stk_ser.PushNum(angle_x90);
+			stk_ser.PushNum(tf);
 			stk_ser.PushNum(area->Bottom);
 			stk_ser.PushNum(area->Right);
 			stk_ser.PushNum(area->Top);
 			stk_ser.PushNum(area->Left);
 			stk_ser.PushStr(id);
-			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_ROT);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_TRANSFORM);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
 			if (Far2lInteract(stk_ser, true)) {
 				stk_ser.PopNum(ok);

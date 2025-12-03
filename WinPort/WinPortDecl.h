@@ -85,7 +85,9 @@
 	// width and height is image pixels dimensions for RGB/RGBA formats, but for PNG - width specifies buffer byte size and height must be 1 (but ignored for now)
 	// area is optional and its fields are also optional each one, use -1 to use default value
 	WINPORT_DECL_DEF(SetConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer))
-	WINPORT_DECL_DEF(RotateConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, const SMALL_RECT *area, unsigned char angle_x90))
+
+	// tf - is a valid combintation of WP_IMGTF_* values
+	WINPORT_DECL_DEF(TransformConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id, const SMALL_RECT *area, uint16_t tf))
 	WINPORT_DECL_DEF(DeleteConsoleImage, BOOL, (HANDLE hConsoleOutput, const char *id))
 
 #ifdef WINPORT_REGISTRY

@@ -469,7 +469,7 @@ bool ImageView::RenderImage()
 	bool out = true;
 	if (!scaled && _prev_left == src_left && _prev_top == src_top          // if image wasnt rescaled and
 			&& _dx == 0 && _dx == 0 && tformed != 0                        // centered but was mirrored or
-			&& ((tformed & WP_IMGTF_ROTATE_MASK) == WP_IMGTF_ROTATE0 ||    // rotated and if rotated it
+			&& ((tformed & WP_IMGTF_MASK_ROTATE) == WP_IMGTF_ROTATE0 ||    // rotated and if rotated it
 				(_ready_image.Width() <= std::min(canvas_w, canvas_h)      //             also fits screen
 				&& _ready_image.Height() <= std::min(canvas_w, canvas_h))) //             at any orientaion
 			&& (_wgi.Caps & WP_IMGCAP_ROTMIR) != 0) {                      // and backend supports transforms:

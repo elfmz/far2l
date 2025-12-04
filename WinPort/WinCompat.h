@@ -1509,7 +1509,7 @@ typedef LONG NTSTATUS;
 #define WP_IMG_MASK_ATTACH      0x070000
 
 // WP_IMGTF_ROTATE_* supported if WP_IMGCAP_ROTMIR reported occupy least
-#define WP_IMGTF_ROTATE_MASK     0x03 // 2 bits that can be one of given 3 values:
+#define WP_IMGTF_MASK_ROTATE     0x03 // 2 bits that can be one of given values:
 #define WP_IMGTF_ROTATE0         0x00 // no rotation (so can use it just to move image)
 #define WP_IMGTF_ROTATE90        0x01 // rotate by 90 degrees
 #define WP_IMGTF_ROTATE180       0x02 // rotate by 180 degrees

@@ -2571,7 +2571,7 @@ void Edit::ApplyColor()
 		TabEditorPos = Start;
 
 		// Пропускаем элементы раскраски у которых начальная позиция за экраном
-		if (Start > X2)
+		if (Start > ObjWidth - 1)
 			continue;
 
 		// Корректировка относительно табов (отключается, если присутвует флаг ECF_TAB1)
@@ -2633,8 +2633,8 @@ void Edit::ApplyColor()
 		if (Start < 0)
 			Start = 0;
 
-		if (End > X2)
-			End = X2;
+		if (End > ObjWidth - 1)
+			End = ObjWidth - 1;
 
 		// Устанавливаем длину раскрашиваемого элемента
 		Length = End - Start + 1;

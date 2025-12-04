@@ -100,17 +100,21 @@ bool Settings::ExtraCommandsMenuInternal(Commands &commands, std::string *select
 {
 	wchar_t command_name[0x100]{};
 	wchar_t command_line[0x1000]{};
+	int selected_idx = 0;
 	for (;;) {
 		std::vector<FarMenuItem> menu_items;
 		for (const auto &cmd : commands) {
 			auto &mi = menu_items.emplace_back();
 			mi.Text = cmd.first.c_str();
+			if ((int)menu_items.size() - 1 == selected_idx) {
+				mi.Selected = 1;
+			}
 		}
 		// Display the menu and get the user's selection.
 		constexpr int break_keys[] = {VK_F4, VK_INSERT, VK_DELETE, 0};
 		int break_code = -1;
 
-		int selected_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE,
+		selected_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE,
 				   Msg(M_EXTRA_COMMANDS), L"F4 INS DEL ENTER ESC", L"ExtraCommands", break_keys, &break_code, menu_items.data(), menu_items.size());
 		if (selected_idx < 0 || selected_idx >= (int)_commands.size()) {
 			return false; // User cancelled the menu (e.g., with Esc)

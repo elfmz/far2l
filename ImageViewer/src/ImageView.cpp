@@ -324,7 +324,7 @@ bool ImageView::SendWholeImage(const SMALL_RECT *area, const Image &img)
 	}
 	msec = GetProcessUptimeMSec() - msec;
 	if (img.Size() >= SETIMG_ESTIMATION_SIZE_THRESHOLD && msec >= 1) {
-		const size_t cur_speed = std::max(img.Size() / msec, size_t(1));
+		const size_t cur_speed = std::max(size_t(img.Size() / msec), size_t(1));
 		size_t speed = s_avg_speed;
 		if (speed < cur_speed || (speed - cur_speed > speed / 4) || speed == 0) {
 			speed+= cur_speed;

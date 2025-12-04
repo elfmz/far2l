@@ -207,7 +207,7 @@ bool wxConsoleImages::Transform(const char *id, const SMALL_RECT *area, uint16_t
 			if (tf & WP_IMGTF_MIRROR_V) {
 				img = img.Mirror(false);
 			}
-			switch (tf & WP_IMGTF_ROTATE_MASK) {
+			switch (tf & WP_IMGTF_MASK_ROTATE) {
 				case WP_IMGTF_ROTATE90:  img = img.Rotate90(true); break;
 				case WP_IMGTF_ROTATE180: img = img.Rotate180(); break;
 				case WP_IMGTF_ROTATE270: img = img.Rotate90(false); break;

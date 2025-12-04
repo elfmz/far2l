@@ -146,14 +146,16 @@ std::string Settings::ExtraCommandsMenu()
 	if (!ExtraCommandsMenuInternal(commands_copy, &selected_cmd)) {
 		return std::string();
 	}
-	_commands = std::move(commands_copy);
-	SaveCommands();
+	if (_commands != commands_copy) {
+		_commands = std::move(commands_copy);
+		SaveCommands();
+	}
 	return selected_cmd;
 }
 
 void Settings::configurationMenuDialog()
 {
-	const int w = 50, h = 16;
+	const int w = 50, h = 15;
 
 	struct FarDialogItem fdi[] = {
 	/* 0 */ {DI_DOUBLEBOX, 1,   1,   w - 2, h - 2, 0,	 {}, 0, 0,	Msg(M_TITLE), 0},
@@ -167,9 +169,9 @@ void Settings::configurationMenuDialog()
 	/* 8 */ {DI_TEXT,      3,   9,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_VIDEOMASKS), 0},
 	/* 9 */ {DI_EDIT,      3,   10,  w - 4, 0,     0,  {}, 0, 0, nullptr, 0},
 	/*10 */ {DI_SINGLEBOX, 2,   11,  w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
-	/*11 */ {DI_BUTTON,    11,  12,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_EXTRA_COMMANDS), 0},
-	/*11 */ {DI_BUTTON,    11,  13,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
-	/*12 */ {DI_BUTTON,    26,  13,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
+	/*11 */ {DI_BUTTON,    4,   12,  0,	    0,     FALSE, {}, 0, 0, Msg(M_EXTRA_COMMANDS), 0},
+	/*12 */ {DI_BUTTON,    27,  12,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
+	/*13 */ {DI_BUTTON,    35,  12,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
 	};
 
 	fdi[1].Param.Selected = _use_orientation;
@@ -189,7 +191,7 @@ void Settings::configurationMenuDialog()
 	int r;
 	for (;;) {
 		r = g_far.DialogRun(dlg);
-		if (r != ARRAYSIZE(fdi) - 2) {
+		if (r != ARRAYSIZE(fdi) - 3) {
 			break;
 		}
 		auto commands_copy_copy = commands_copy;
@@ -199,8 +201,10 @@ void Settings::configurationMenuDialog()
 	};
 
 	if (r == ARRAYSIZE(fdi) - 2) {
-		_commands = commands_copy;
-		SaveCommands();
+		if (_commands != commands_copy) {
+			_commands = commands_copy;
+			SaveCommands();
+		}
 		_use_orientation = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
 		_open_by_enter = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
 		_open_by_cpgdn = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);

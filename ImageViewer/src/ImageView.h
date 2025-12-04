@@ -31,6 +31,7 @@ class ImageView
 	signed char _rotate{0}, _rotated{0}; // [-3..3]: 0 - not rotated, 1 - rotated by 90, 2 - by 180, -1 - by -90 etc
 	bool _mirror_h{false}, _mirrored_h{false};
 	bool _mirror_v{false}, _mirrored_v{false};
+	bool _force_render{false};
 
 	bool IterateFile(bool forward);
 	bool PrepareImage();
@@ -78,5 +79,6 @@ public:
 	void Select();
 	void Deselect();
 	void ToggleSelection();
+	void RunProcessingCommand();
 };
 

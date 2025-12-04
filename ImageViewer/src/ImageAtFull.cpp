@@ -216,6 +216,9 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					iv->full_size = !iv->full_size;
 					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
 					break;
+				case KEY_F2:
+					iv->RunProcessingCommand();
+					break;
 			}
 		}
 		return TRUE;

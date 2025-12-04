@@ -4,11 +4,18 @@
 
 "Ok"
 "Cancel"
+"Extra commands"
+
+"Command name"
+"Input command name"
+
+"Command line"
+"Input command line"
 
 "Navigate: PGUP PGDN HOME"
 "Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F9"
 "Selection: SPACE BS INS"
-"ENTER | ESC"
+"F2 | ENTER | ESC"
 
 "Respect EXIF &orientation info"
 "Open by &Enter on file"

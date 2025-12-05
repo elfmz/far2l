@@ -133,6 +133,23 @@ namespace Sudo
 			bt.SendErrno();
 	}
 
+	static void OnSudoDispatch_OpenDir_FD(BaseTransaction &bt)
+	{
+		std::string path;
+		bt.RecvStr(path);
+
+		int dir_fd = open(path.c_str(), O_RDONLY | O_DIRECTORY);
+
+		bt.SendInt(dir_fd);
+		if (dir_fd > 0) {
+			bt.SendFD(dir_fd);
+			close(dir_fd);
+		}
+		else {
+			bt.SendErrno();
+		}
+	}
+
 	static void OnSudoDispatch_ReadDir(BaseTransaction &bt, OpenedDirs &dirs)
 	{
 		DIR *d;
@@ -469,6 +486,10 @@ namespace Sudo
 
 			case SUDO_CMD_OPENDIR:
 				OnSudoDispatch_OpenDir(bt, dirs);
+				break;
+
+			case SUDO_CMD_OPENDIR_FD:
+				OnSudoDispatch_OpenDir_FD(bt);
 				break;
 
 			case SUDO_CMD_READDIR:

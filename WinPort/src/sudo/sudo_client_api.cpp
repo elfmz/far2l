@@ -20,6 +20,9 @@
 #endif
 #include <map>
 #include <mutex>
+#include <unordered_map>
+#include <shared_mutex>
+
 #include <utimens_compat.h>
 #include "sudo_private.h"
 #include "sudo.h"
@@ -58,7 +61,6 @@ public:
 		remote = i->second;
 		_map.erase(i);
 		return true;
-
 	}
 
 	bool Lookup(LOCAL local, REMOTE &remote)
@@ -71,9 +73,7 @@ public:
 		remote = i->second;
 		return true;
 	}
-
 };
-
 
 static class Client2ServerDIR : protected Client2Server<DIR *, void *>
 {
@@ -392,6 +392,39 @@ extern "C" __attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *
 		}
 	}
 	return dir;
+}
+
+extern "C" __attribute__ ((visibility("default"))) int sdc_opendir_fd(const char *path)
+{
+	int saved_errno = errno;
+	ClientReconstructCurDir crcd(path);
+
+	if (!path) return -1;
+
+	int dir_fd = open(path, O_RDONLY | O_DIRECTORY);
+	if (dir_fd > 0) {
+		return dir_fd;
+	}
+
+	if (dir_fd <= 0 && IsAccessDeniedErrno() && TouchClientConnection(false)) {
+		try {
+			ClientTransaction ct(SUDO_CMD_OPENDIR_FD);
+			ct.SendStr(path);
+			dir_fd = ct.RecvInt();
+			if (dir_fd > 0) {
+				dir_fd = ct.RecvFD();
+				errno = saved_errno;
+			} else {
+				ct.RecvErrno();
+			}
+
+		} catch(std::exception &e) {
+			fprintf(stderr, "sudo_client: sdc_opendir_fd('%s') - error %s\n", path, e.what());
+			return -1;
+		}
+	}
+
+	return dir_fd;
 }
 
 extern "C" __attribute__ ((visibility("default"))) int sdc_closedir(DIR *dir)
@@ -923,12 +956,11 @@ extern "C" __attribute__ ((visibility("default")))
 int sdc_statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct __statx *statxbuf)
 {
 	int saved_errno = errno;
-
 	int r = syscall(SYS_statx, dirfd, pathname, flags, mask, statxbuf);
 
 	if (r == -1 && IsAccessDeniedErrno() && TouchClientConnection(false)) {
 
-//		if (dirfd <= 0) {
+		//if (dirfd <= 0) {
 		if (dirfd == AT_FDCWD) {
 			ClientReconstructCurDir crcd(pathname);
 		}

@@ -80,7 +80,7 @@ template <class CHAR_T>
 //#endif
 
 #if USE_STATX
-#warning USE STATX!!!!
+//#warning USE STATX!!!!
 static int statx_available = -1;
 
 static inline bool _statx_availabile() {
@@ -640,23 +640,21 @@ extern "C"
 			if (_statx_availabile()) {
 				bStatX = true;
 //				const char *stxpn = (name) ? name : pathname;
-//				int statx_fd = (dir_fd != -1) ? dir_fd : AT_FDCWD;
+//				int statx_fd = (dir_fd > 0) ? dir_fd : AT_FDCWD;
 				int statx_fd = AT_FDCWD;
 				const char *stxpn = pathname;
 
 				_attr = 0;
-				//if (syscall(SYS_statx, statx_fd, pathname, AT_SYMLINK_NOFOLLOW, STATX_ALL, &_stx_lnk) != 0) {
 				if (sdc_statx(statx_fd, stxpn, AT_SYMLINK_NOFOLLOW, STATX_ALL, &_stx_lnk) != 0) {
 					_attr = INVALID_FILE_ATTRIBUTES;
-					fprintf(stderr, "statx failed = %d pathname %s name = %s\n", dir_fd, pathname, name);
+					//fprintf(stderr, "statx failed[ %d ] = %d pathname %s name = %s\n", errno, dir_fd, pathname, name);
 					return;
 				}
 
 				if ((_stx_lnk.stx_mode & S_IFMT) == S_IFLNK) {
 					_attr |= FILE_ATTRIBUTE_REPARSE_POINT;
-					//if (syscall(SYS_statx, statx_fd, pathname, 0, STATX_ALL, &_stx_dst) != 0) {
 					if (sdc_statx(statx_fd, stxpn, 0, STATX_ALL, &_stx_dst) != 0) {
-						fprintf(stderr, "statx failed = %d pathname %s name = %s\n", dir_fd, pathname, name);
+						//fprintf(stderr, "statx failed[ %d ] = %d pathname %s name = %s\n", errno, dir_fd, pathname, name);
 						_attr |= FILE_ATTRIBUTE_BROKEN;
 						_st_lnk.st_size = 0;
 					}
@@ -968,19 +966,38 @@ extern "C"
 			_mask = mask;
 			if (_root.size() > 1 && _root.back() == GOOD_SLASH)
 				_root.resize(_root.size()-1);
-			_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
-			if (!_d) {
+
+			dir_fd = sdc_opendir_fd(_root.c_str());
+			if (dir_fd <= 0) {
 				fprintf(stderr, "opendir failed on %s\n", _root.c_str());
 				return;
 			}
+
+			_d = fdopendir(dir_fd);
+			if (!_d) {
+				fprintf(stderr, "fdopendir(%d) on %s failed\n", dir_fd, _root.c_str());
+				close(dir_fd);
+				dir_fd = -1;
+				return;
+			}
+
+			//_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
+			//if (!_d) {
+			//	fprintf(stderr, "opendir failed on %s\n", _root.c_str());
+			//	return;
+			//}
+
 #ifdef USE_FSTATAT
-			dir_fd = dirfd(_d);
+//			dir_fd = dirfd(_d);
 #endif
 		}
 
 		~UnixFindFile()
 		{
-			if (_d) os_call_int(sdc_closedir, _d);
+			if (_d) {
+				closedir(_d);
+			}
+			//if (_d) os_call_int(sdc_closedir, _d);
 		}
 
 		bool IsOpened() const
@@ -996,7 +1013,8 @@ extern "C"
 					return false;
 
 				errno = 0;
-				de = os_call_pv<struct dirent>(sdc_readdir, _d);
+				//de = os_call_pv<struct dirent>(sdc_readdir, _d);
+				de = readdir(_d);
 				if (!de)
 					return false;
 
@@ -1051,6 +1069,7 @@ extern "C"
 			_tmp.path+= name;
 
 			SudoSilentQueryRegion ssqr(hint_mode_type !=0 && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
+
 			if (!Statocaster(_tmp.path.c_str(), name, dir_fd).FillWFD(wfd)) {
 				fprintf(stderr, "UnixFindFile: errno=%u hmt=0%o on '%s'\n",
 					errno, hint_mode_type, _tmp.path.c_str());

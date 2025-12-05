@@ -54,6 +54,8 @@ extern "C" {
 	__attribute__ ((visibility("default"))) int sdc_fchmod(int fd, mode_t mode);
 	__attribute__ ((visibility("default"))) int sdc_closedir(DIR *dir);
 	__attribute__ ((visibility("default"))) DIR *sdc_opendir(const char *name);
+	__attribute__ ((visibility("default"))) int sdc_opendir_fd(const char *path);
+
 	__attribute__ ((visibility("default"))) struct dirent *sdc_readdir(DIR *dir);
 	__attribute__ ((visibility("default"))) int sdc_mkdir(const char *path, mode_t mode);
 	__attribute__ ((visibility("default"))) int sdc_chdir(const char *path);

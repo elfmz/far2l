@@ -19,6 +19,7 @@
 
 namespace OpenWith {
 
+
 // ****************************** Public API ******************************
 
 // Main workflow orchestrator: resolves application candidates via AppProvider,
@@ -59,7 +60,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 
 		constexpr int BREAK_KEYS[] = {VK_F3, VK_F9, 0};
 		constexpr int KEY_F3_DETAILS = 0;
-		constexpr int KEY_F9_OPTIONS = 1;
+		constexpr int KEY_F9_SETTINGS = 1;
 		int menu_break_code = -1;
 
 		// Display the menu and get the user's selection.
@@ -92,7 +93,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 				}
 			}
 
-		} else if (menu_break_code == KEY_F9_OPTIONS) {
+		} else if (menu_break_code == KEY_F9_SETTINGS) {
 			const auto is_refresh_needed = ShowConfigureDialog();
 			// Refresh is needed if any setting that affects the candidate list has been changed.
 			if (is_refresh_needed) {
@@ -119,8 +120,8 @@ bool OpenWithPlugin::ShowConfigureDialog()
 {
 	constexpr int CONFIG_DIALOG_WIDTH = 70;
 
-	// Load general (platform-independent) settings.
-	LoadOptions();
+	// Load platform-independent configuration.
+	LoadGeneralSettings();
 
 	// Create a temporary provider to access platform-specific settings (they are loaded automatically).
 	auto provider = AppProvider::CreateAppProvider(GetMsg);
@@ -210,7 +211,7 @@ bool OpenWithPlugin::ShowConfigureDialog()
 		auto threshold_str = (const wchar_t*)g_info.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, confirm_launch_edit_idx, 0);
 		s_confirm_launch_threshold = wcstol(threshold_str, nullptr, 10);
 
-		SaveOptions(); // Save general (platform-independent) settings.
+		SaveGeneralSettings(); // Save platform-independent configuration.
 
 		bool is_platform_settings_changed = false;
 
@@ -390,7 +391,7 @@ bool OpenWithPlugin::ShowDetailsDialog(const std::vector<std::wstring>& filepath
 	add_field_row(launch_command);
 	add_separator();
 	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MClose), 0 });
-	details_dialog_items.back().DefaultButton = TRUE; // Default action is "Close" for safety.
+	details_dialog_items.back().DefaultButton = TRUE;
 	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
 	const int launch_btn_idx = static_cast<int>(details_dialog_items.size()) - 1;
 
@@ -407,8 +408,8 @@ bool OpenWithPlugin::ShowDetailsDialog(const std::vector<std::wstring>& filepath
 
 
 
-// Loads general (platform-independent) configuration from the INI file.
-void OpenWithPlugin::LoadOptions()
+// Loads platform-independent configuration from the INI file.
+void OpenWithPlugin::LoadGeneralSettings()
 {
 	KeyFileReadSection kfh(INI_LOCATION, INI_SECTION);
 	s_use_external_terminal = kfh.GetInt("UseExternalTerminal", 0) != 0;
@@ -421,8 +422,8 @@ void OpenWithPlugin::LoadOptions()
 
 
 
-// Saves current general (platform-independent) configuration to the INI file.
-void OpenWithPlugin::SaveOptions()
+// Saves current platform-independent configuration to the INI file.
+void OpenWithPlugin::SaveGeneralSettings()
 {
 	KeyFileHelper kfh(INI_LOCATION);
 	kfh.SetInt(INI_SECTION, "UseExternalTerminal", s_use_external_terminal);
@@ -495,7 +496,6 @@ const wchar_t* GetMsg(int msg_id)
 }
 
 
-
 // ****************************** Static member initialization. ******************************
 
 bool OpenWithPlugin::s_use_external_terminal = false;
@@ -506,13 +506,15 @@ int OpenWithPlugin::s_confirm_launch_threshold = 10;
 
 // ****************************** Plugin entry points ******************************
 
+PluginStartupInfo g_info;
+FarStandardFunctions g_fsf;
 
 SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 {
 	g_info = *Info;
 	g_fsf = *Info->FSF;
 	g_info.FSF = &g_fsf;
-	OpenWithPlugin::LoadOptions();
+	OpenWithPlugin::LoadGeneralSettings();
 }
 
 

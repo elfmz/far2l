@@ -308,8 +308,8 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 			 std::pair{L"TryExec =",     &DesktopEntry::try_exec},
 			 std::pair{L"Terminal =",    &DesktopEntry::terminal},
 			 std::pair{L"MimeType =",    &DesktopEntry::mimetype},
-			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in},
-			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in}
+			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in},
+			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in}
 		 })
 	{
 		const std::string& val = desktop_entry.*member_ptr;

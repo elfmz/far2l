@@ -169,11 +169,11 @@ $^#Information Dialog (F3)#
  #-# MimeType
    The list of MIME types supported by this application, separated by semicolons. This is the key field used to associate the application with specific file types. The plugin uses this data to match the selected file's type against the application's capabilities.
 
- #-# NotShowIn
-   A semicolon-separated list of desktop environment identifiers. If this key is present, the application entry should be hidden in the specified environments. This is the inverse of OnlyShowIn and is useful for hiding applications that do not integrate well with certain desktops.
-
  #-# OnlyShowIn
    A semicolon-separated list of desktop environment identifiers (e.g., "GNOME;KDE;"). If this key is present, the application entry should only be shown in the specified environments. This allows developers to tailor visibility for desktop-specific tools.
+
+ #-# NotShowIn
+   A semicolon-separated list of desktop environment identifiers. If this key is present, the application entry should be hidden in the specified environments. This is the inverse of OnlyShowIn and is useful for hiding applications that do not integrate well with certain desktops.
 
 
  #2.2. macOS Application Details#

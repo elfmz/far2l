@@ -166,6 +166,9 @@ void ProgressMonitor::display()
 	}
 
 	Far::message(c_progress_dialog_guid, title + L'\n' + progress_text, 0, FMSG_LEFTALIGN);
+//	Far::flush_screen();
+//	Far::update_panel(PANEL_ACTIVE, false, true);
+
 	WINPORT(SetConsoleTitle)(NULL, title.c_str());
 }
 

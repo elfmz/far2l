@@ -540,6 +540,7 @@ namespace oldfar
 		FILETIME ftCreationTime;
 		FILETIME ftLastAccessTime;
 		FILETIME ftLastWriteTime;
+		FILETIME ftChangeTime;
 		DWORD64  nPhysicalSize;
 		DWORD64  nFileSize;
 		DWORD    dwFileAttributes;

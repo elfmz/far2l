@@ -48,7 +48,7 @@ struct FAR_FIND_DATA_EX
 	union
 	{
 		FILETIME ftCreationTime;
-		FILETIME ftUnixStatusChangeTime;
+		FILETIME ftUnixBirthTime;
 	};
 	union
 	{
@@ -60,7 +60,12 @@ struct FAR_FIND_DATA_EX
 		FILETIME ftLastWriteTime;
 		FILETIME ftUnixModificationTime;
 	};
-	FILETIME ftChangeTime;
+	union
+	{
+		FILETIME ftChangeTime;
+		FILETIME ftUnixStatusChangeTime;
+	};
+
 	uid_t UnixOwner;
 	gid_t UnixGroup;
 	uint64_t UnixDevice;

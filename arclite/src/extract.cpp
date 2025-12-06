@@ -1186,6 +1186,7 @@ private:
 				filter_data.FindData.ftCreationTime = archive.get_ctime(file_index);
 				filter_data.FindData.ftLastAccessTime = archive.get_atime(file_index);
 				filter_data.FindData.ftLastWriteTime = archive.get_mtime(file_index);
+				filter_data.FindData.ftChangeTime = archive.get_chtime(file_index);
 				filter_data.FindData.lpwszFileName = const_cast<wchar_t *>(file_info.name.c_str());
 
 				filter_data.CRC32 = archive.get_crc(file_index);
@@ -1370,6 +1371,8 @@ private:
 					filter_data.FindData.ftCreationTime = archive.get_ctime(file_index);
 					filter_data.FindData.ftLastAccessTime = archive.get_atime(file_index);
 					filter_data.FindData.ftLastWriteTime = archive.get_mtime(file_index);
+					filter_data.FindData.ftChangeTime = archive.get_chtime(file_index);
+
 					filter_data.FindData.lpwszFileName = const_cast<wchar_t *>(file_info.name.c_str());
 
 					filter_data.CRC32 = archive.get_crc(file_index);

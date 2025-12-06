@@ -31,7 +31,7 @@ $^#Configuration Dialog (F9)#
    If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal. Note: when multiple files are selected and this option is unchecked, the plugin applies a "smart" filter. Because far2l's built-in terminal cannot manage multiple concurrent instances, the plugin will hide those terminal applications that require a separate launch for each file. Applications that can accept the entire list of files in a single command will remain in the list.
 
  #-# Don't wait for command completion
-   If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications. It may also be ignored when multiple files are opened with an application that does not support receiving them in a single command; in this case, an asynchronous launch is forced to prevent the UI from blocking.
+   If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close. This setting does not affect terminal applications. It may also be ignored when multiple files are opened with an application that does not support receiving them in a single command; in this case, an asynchronous launch is forced (regardless of this setting) to prevent the UI from blocking.
 
  #-# Clear selection if command executed
    When this option is enabled the selection on the panel is cleared after exiting the menu if any menu command has been executed.
@@ -47,17 +47,23 @@ $^#Configuration Dialog (F9)#
  These settings fine-tune how the plugin identifies file types and discovers applications, following the XDG specifications. The plugin gathers a list of potential MIME types for a file from all enabled sources. This list is then prioritized, and applications are ranked based on how well they match the most specific MIME types. This allows for more flexible and accurate associations than relying on a single detection method.
 
  #-# Use `xdg-mime` tool
-   Determine the MIME type of the selected file by invoking the 'xdg-mime query filetype' command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the "MimeType" entries in .desktop files. Although the utility can also inspect file contents, it primarily relies on filenames, making it susceptible to errors for files with wrong or missing extensions.
+   Determine the MIME type of the selected file by invoking the 'xdg-mime query filetype' command. This is the standard and most recommended method. The utility queries the system's shared-mime-info database, which maps filename patterns (globs) to MIME types — the same database used by desktop environments to associate types with applications. Its results are highly compatible with the "MimeType" entries in .desktop files. Although the utility can inspect file contents, it primarily relies on file names, making it susceptible to errors for files with incorrect or missing extensions.
 
  #-# Use `file` tool
    Determine the MIME type of the selected file by invoking the 'file --mime-type' command. This utility performs deep analysis of the file’s binary content using its own "magic numbers" database. It is extremely reliable and is not deceived by incorrect file extensions. However, it can be slightly slower as it requires reading the file's contents, and the MIME type names it produces may occasionally differ from the official IANA names or those in the shared-mime-info database, potentially leading to fewer application matches.
 
  #-# Use `magika` tool
-   Determine the MIME type of the selected file by invoking the 'magika --format %m' command. This is a modern, AI-powered tool from Google that uses a machine learning model to achieve very high accuracy and performance. It excels at identifying a wide range of formats, including modern programming languages, ML/AI files, and DevOps components. Like the 'file' tool, it performs content analysis rather than relying on extensions, making it robust against incorrect filenames, but it also requires reading the file's content.
+   Determine the MIME type of the selected file by invoking the 'magika --format %m' command. This is a modern, AI-powered tool from Google that uses a machine learning model to achieve very high accuracy and performance. It excels at identifying a wide range of formats, including modern programming languages, ML/AI files, and DevOps components. Like the "file" tool, it performs content analysis rather than relying on extensions, making it robust against incorrect filenames, but it also requires reading the file's content.
    Learn more about Magika on its official website: ~https://github.com/google/magika~@https://github.com/google/magika@.
 
+ #-# Use glob rules detection
+   Determine the MIME type by matching the filename against the patterns defined in the system's "globs2" database.
+   Unlike the "Use `xdg-mime` tool" option, this method relies strictly on the filename and does not perform "magic sniffing" (content analysis). Consequently, it may fail to resolve ambiguities that arise if multiple glob rules match the file, resulting in conflicting MIME types, or if the file has an incorrect extension. However, this method is significantly faster, as the plugin directly reads and evaluates the rules, avoiding the launch of external processes.
+   Furthermore, this method is far more sophisticated than the "Use extension-based fallback" option. It respects the complex logic described in the specification: accounting for pattern weights, case-sensitivity flags, and literal filenames, which ensures accurate compliance with your desktop environment's behavior.
+   Enabling this option simultaneously with the "Use `xdg-mime` tool" option is redundant, as both methods utilize the exact same glob rules for type detection.
+
  #-# Use extension-based fallback
-   As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
+   As a last resort, if the above tools fail, are absent or disabled, it attempts to guess the MIME type from a built-in static map of common file extensions. The matching is case-insensitive. This is the least reliable method and should only be used as a fallback on systems with a misconfigured or incomplete MIME database.
 
  #-# Load MIME type aliases
    Enables loading MIME type associations from system "aliases" files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., linking "application/x-deb" to "application/vnd.debian.binary-package", or "image/ico" to "image/vnd.microsoft.icon").
@@ -74,13 +80,13 @@ $^#Configuration Dialog (F9)#
    When enabled, the plugin searches for applications associated not only with the file's specific MIME type but also with its generic variants. For example, for a file with the type "text/x-c++src", editors registered for "text/plain" will also be suggested. This increases the number of available applications but may add "noise" from less relevant programs. Disabling this option is useful if you want the list to contain only specialized applications that precisely match the file type.
 
  #-# Show universal handlers for all files
-   When enabled, this option adds the generic MIME type "application/octet-stream" as a last-resort fallback for any file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. Disable this option to reduce clutter in the application list and see only programs specifically registered for the file's detected type. If disabled, the list may be empty for files without a clear association.
+   When enabled, this option adds the generic MIME type "application/octet-stream" as a last-resort fallback for any regular file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. Disable this option to reduce clutter in the application list and see only programs specifically registered for the file's detected type. If disabled, the list may be empty for files without a clear association.
 
  #-# Use mimeinfo.cache
    Speed up application lookups by using the "mimeinfo.cache" files. These are index files, automatically maintained by the system, that create a direct mapping from a MIME type (e.g., "image/png") to a list of .desktop files of applications that can handle it. Disabling this forces a slower, exhaustive scan of all .desktop files found in XDG data directories.
 
  #-# Filter by OnlyShowIn/NotShowIn
-   Respect the "OnlyShowIn" and "NotShowIn" keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE).
+   Respect the "OnlyShowIn" and "NotShowIn" keys in .desktop files. This will filter the application list to show only those relevant to the current desktop environment (e.g., GNOME, KDE) as specified in the "$XDG_CURRENT_DESKTOP" environment variable.
 
  #-# Validate TryExec field
    Before showing an application, check if the executable specified in its .desktop file's "TryExec" key exists and is runnable. This helps hide applications that are declared but not properly installed or have broken shortcuts. However, this validation can slow down the appearance of the application menu. If the "TryExec" value is a simple command name (e.g., "gedit"), the plugin has to search for it in all directories listed in the "$PATH" environment variable, which involves multiple disk access operations for each application being checked. You can safely disable this option to improve performance if you are confident that your system's desktop entries are well-maintained and do not point to non-existent executables.
@@ -90,7 +96,7 @@ $^#Configuration Dialog (F9)#
    For a detailed explanation of the logic this option overrides, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
 
  #-# Pass plain paths instead of file:// URIs
-   This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the %u and %U field codes. Both methods are valid. By default, the plugin generates file:// URIs as this is a more explicit format. However, some applications are designed to receive plain paths even when using %u or %U. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
+   This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. Both methods are valid. By default, the plugin generates file:// URIs as this is a more explicit format. However, some applications are designed to receive plain paths even when using "%u" or "%U". Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
 
 
  #2.2. macOS Settings#
@@ -115,7 +121,7 @@ $^#Information Dialog (F3)#
  #-# MIME type
    Displays one or more MIME profiles for the selected file(s).
    In the #Linux/BSD# implementation, this field shows technical data from the XDG provider.
-   A MIME profile represents the set of "raw" MIME types found for a single file, gathered from all enabled detection tools (like 'xdg-mime' or 'file') before any expansion (like aliases or subclasses) is applied.
+   A MIME profile represents the set of "raw" MIME types found for a single file, gathered from all enabled detection tools (like "xdg-mime" or "file") before any expansion (like aliases or subclasses) is applied. The plugin also automatically detects directories ("inode/directory") and special system files (block and character devices, FIFOs, sockets), assigning them appropriate standard MIME types.
    A profile may contain multiple types (e.g., "(text/plain;application/x-shellscript)") if different detection tools returned different valid results for that file.
    If multiple files with different profiles are selected, all unique profiles are listed (e.g., "(image/jpeg); (text/plain)").
    The special profile "(none)" will be displayed if, for at least one of the selected files, all enabled detection tools failed to determine a MIME type. This can be due to a lack of read permissions, or the file residing in a directory without execute (search) permissions.
@@ -152,13 +158,16 @@ $^#Information Dialog (F3)#
    A semicolon-separated list of categories used by the desktop environment to organize applications in menus.
 
  #-# Exec
-   The command-line template used to launch the application. It may contain special placeholders (field codes), such as %f for a single file path, %U for a list of URLs, or %% for a literal percent sign.
+   The command-line template used to launch the application. It may contain special placeholders (field codes), such as "%f" for a single file path, "%U" for a list of URLs, or "%%" for a literal percent sign.
 
  #-# TryExec
    A path to an executable. The desktop environment can check if this file exists and is executable before displaying the entry. This is used to hide menu entries for applications that are not correctly installed.
 
  #-# Terminal
    A boolean value (true or false) indicating whether the application must be run in a terminal window.
+
+ #-# MimeType
+   The list of MIME types supported by this application, separated by semicolons. This is the key field used to associate the application with specific file types. The plugin uses this data to match the selected file's type against the application's capabilities.
 
  #-# OnlyShowIn
    A semicolon-separated list of desktop environment identifiers (e.g., "GNOME;KDE;"). If this key is present, the application entry should only be shown in the specified environments. This allows developers to tailor visibility for desktop-specific tools.
@@ -225,6 +234,12 @@ $^#Troubleshooting#
  Solution: Please process files of different categories in separate operations. This algorithm is most effective for batch-processing files of the same kind.
 
 
+ #Why do some terminal apps disappear when I select multiple files? (Linux/BSD)#
+
+ If the "Use external terminal for console apps" option is disabled, far2l runs console applications inside its own interface. Since it cannot handle multiple running instances simultaneously drawing to the same screen, the plugin automatically hides any terminal application that does not support opening all selected files in a single command (via the "%F" or "%U" codes).
+ Solution: Enable "Use external terminal for console apps" in the ~configuration dialog~@ConfigurationDialog@.
+
+
  #How does ranking work? Why is app X listed above app Y? (Linux/BSD)#
 
  The order in the list is determined by a rank calculated for each application. A higher rank means a more relevant application. The rank depends on two factors:
@@ -237,7 +252,7 @@ $^#Troubleshooting#
  #Why doesn't my favorite app appear in the list? (Linux/BSD)#
 
  If an application doesn't appear even for a single file, check the following:
- #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories ("~~/.local/share/applications", "/usr/share/applications", etc.).
+ #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories ("~~/.local/share/applications", "/usr/share/applications", etc.). The plugin also automatically scans standard Flatpak and Snap application directories.
  #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
  #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
  #-# Outdated Cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
@@ -245,8 +260,8 @@ $^#Troubleshooting#
 
  #Why is a checkbox in the configuration dialog grayed out? (Linux/BSD)#
 
- Some checkboxes in the F9 configuration dialog, such as "Use `xdg-mime` tool", may be disabled (grayed out) and cannot be toggled. Depending on your last saved settings, this grayed-out checkbox might appear either checked or unchecked, but you cannot change its state. This happens when the plugin cannot find the required command-line tool in your system's $PATH. When the configuration dialog is opened, the plugin checks if the corresponding executables (e.g., 'xdg-mime', 'file', 'magika') exist and are runnable. If a tool is not found, its option is disabled in the UI to prevent errors.
- The plugin will behave as if the option is always 'off' (unchecked), and the associated file type detection method will not be used. This is true regardless of whether the grayed-out checkbox appears checked or not. The displayed checkmark is just a visual artifact of the last saved setting and has no effect.
+ Some checkboxes in the F9 configuration dialog, such as "Use `xdg-mime` tool", may be disabled (grayed out) and cannot be toggled. Depending on your last saved settings, this grayed-out checkbox might appear either checked or unchecked, but you cannot change its state. This happens when the plugin cannot find the required command-line tool in your system's $PATH. When the configuration dialog is opened, the plugin checks if the corresponding executables (e.g., "xdg-mime", "file", "magika") exist and are runnable. If a tool is not found, its option is disabled in the UI to prevent errors.
+ The plugin will behave as if the option is always "off" (unchecked), and the associated file type detection method will not be used. This is true regardless of whether the grayed-out checkbox appears checked or not. The displayed checkmark is just a visual artifact of the last saved setting and has no effect.
  To enable the option, you must install the missing tool using your distribution's package manager. After installation, ensure the tool's executable is located in a directory listed in your $PATH environment variable.
 
 
@@ -254,8 +269,8 @@ $^#Troubleshooting#
 
  This almost always indicates an error in the "Exec" line of the .desktop file. Press F3 to view the command the plugin is trying to execute and check it for common mistakes:
  #-# Incorrect Field Codes: The plugin supports standard codes ("%f", "%F", "%u", "%U"). Some applications might use deprecated or non-standard codes that will not work.
- #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped.
+ #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped. Warning: Do NOT enclose field codes in quotes (e.g., use #%f#, not #"%f"#). According to the spec, field codes inside quotes are treated as literal text and are not expanded.
  #-# Program not in "$PATH": If "Exec" contains just a program name, it must be located in one of the directories listed in the "$PATH" environment variable.
- #-# Incorrect Path Format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the %u or %U field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
+ #-# Incorrect Path Format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the "%u" or "%U" field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
 
    ~Contents~@Contents@

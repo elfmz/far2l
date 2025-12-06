@@ -23,6 +23,7 @@ enum LanguageID
 	MUseXdgMimeTool,
 	MUseFileTool,
 	MUseMagikaTool,
+	MUseGlobRules,
 	MUseExtensionBasedFallback,
 	MLoadMimeTypeAliases,
 	MLoadMimeTypeSubclasses,

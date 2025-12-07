@@ -860,12 +860,22 @@ extern "C"
 			WINPORT(FileTime_UnixToWin32)(s.st_birthtimespec, &wfd->ftCreationTime);
 #elif defined(__FreeBSD__)
 			WINPORT(FileTime_UnixToWin32)(s.st_birthtim, &wfd->ftCreationTime);
-#elif defined(__NetBSD__) || defined(__DragonFly__)
+#elif defined(__NetBSD__)
+			WINPORT(FileTime_UnixToWin32)(s.st_birthtimespec, &wfd->ftCreationTime);
+#elif defined(__DragonFly__)
+			{
+				struct timespec birth_ts = { .tv_sec = s.st_birthtime, .tv_nsec = 0 };
+				WINPORT(FileTime_UnixToWin32)(birth_ts, &wfd->ftCreationTime);
+			}
+#elif defined(__OpenBSD__) && defined(__OpenBSD_version) && __OpenBSD_version >= 201405
 			WINPORT(FileTime_UnixToWin32)(s.st_birthtime, &wfd->ftCreationTime);
-#elif defined(__OpenBSD__)
-			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &wfd->ftCreationTime);
+#elif defined(__HAIKU__)
+			{
+				struct timespec birth_ts = { .tv_sec = s.st_crtime, .tv_nsec = 0 };
+				WINPORT(FileTime_UnixToWin32)(birth_ts, &wfd->ftCreationTime);
+			}
 #else
-			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &wfd->ftCreationTime);
+			wfd->ftCreationTime = wfd->ftLastWriteTime;
 #endif
 
 			wfd->UnixOwner = s.st_uid;

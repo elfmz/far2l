@@ -1160,7 +1160,7 @@ public:
 							ptime = &file_index_info.find_data.ftCreationTime;
 					}
 				}
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
 #else
 				prop = *ptime;
@@ -1181,7 +1181,7 @@ public:
 							ptime = &file_index_info.find_data.ftLastAccessTime;
 					}
 				}
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
 #else
 				prop = *ptime;
@@ -1202,7 +1202,7 @@ public:
 							ptime = &file_index_info.find_data.ftLastWriteTime;
 					}
 				}
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
 #else
 				prop = *ptime;

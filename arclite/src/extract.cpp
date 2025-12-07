@@ -849,8 +849,11 @@ public:
 		wbi = cbi;
 
 		bool has_remaining_data = !cache_records[wbi].empty()
-			&& (cache_records[wbi].size() > 1 || cache_records[wbi].front().buffer_size > 0
-				|| (cache_records[wbi].size() == 1 && cache_records[wbi].front().buffer_size > 0));
+			&& (cache_records[wbi].size() > 1 || cache_records[wbi].size() == 1);
+
+//		bool has_remaining_data = !cache_records[wbi].empty()
+//			&& (cache_records[wbi].size() > 1 || cache_records[wbi].front().buffer_size > 0
+//				|| (cache_records[wbi].size() == 1 && cache_records[wbi].front().buffer_size > 0));
 
 		if (has_remaining_data) {
 			//fprintf(stderr, "FWC::finalize() - Writing remaining data synchronously. [TID: %lu]\n", pthread_self());
@@ -1401,7 +1404,7 @@ private:
 
 				FILETIME atime_ft = archive.get_atime(file_index);
 				FILETIME mtime_ft = archive.get_mtime(file_index);
-				if (set_symlink_times(mb_path, atime_ft, mtime_ft)) {
+				if (set_file_times(mb_path, atime_ft, mtime_ft)) {
 					FAIL(errno);
 				}
 			}

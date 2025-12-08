@@ -115,7 +115,7 @@ bool Settings::ExtraCommandsMenuInternal(Commands &commands, std::string *select
 		int break_code = -1;
 
 		selected_idx = g_far.Menu(g_far.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_CHANGECONSOLETITLE,
-				   Msg(M_EXTRA_COMMANDS), L"F4 INS DEL ENTER ESC", L"ExtraCommands", break_keys, &break_code, menu_items.data(), menu_items.size());
+				   Msg(M_EXTRA_COMMANDS_TITLE), L"F4 INS DEL ENTER ESC", L"ExtraCommands", break_keys, &break_code, menu_items.data(), menu_items.size());
 		if (selected_idx < 0 || selected_idx >= (int)_commands.size()) {
 			return false; // User cancelled the menu (e.g., with Esc)
 		}
@@ -159,36 +159,37 @@ std::string Settings::ExtraCommandsMenu()
 
 void Settings::configurationMenuDialog()
 {
-	const int w = 50, h = 15;
+	const int w = 50, h = 16;
 
 	struct FarDialogItem fdi[] = {
 	/* 0 */ {DI_DOUBLEBOX, 1,   1,   w - 2, h - 2, 0,	 {}, 0, 0,	Msg(M_TITLE), 0},
 	/* 1 */ {DI_CHECKBOX,  3,   2,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_USEORIENTATION), 0},
-	/* 2 */ {DI_CHECKBOX,  3,   3,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYENTER), 0},
-	/* 3 */ {DI_CHECKBOX,  3,   4,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYCTRLPGDN), 0},
-	/* 4 */ {DI_CHECKBOX,  3,   5,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINQVIEW), 0},
-	/* 5 */ {DI_CHECKBOX,  3,   6,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINFVIEW), 0},
-	/* 6 */ {DI_TEXT,      3,   7,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_IMAGEMASKS), 0},
-	/* 7 */ {DI_EDIT,      3,   8,   w - 4, 0,     0,  {},  0, 0, nullptr, 0},
-	/* 8 */ {DI_TEXT,      3,   9,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_VIDEOMASKS), 0},
-	/* 9 */ {DI_EDIT,      3,   10,  w - 4, 0,     0,  {}, 0, 0, nullptr, 0},
-	/*10 */ {DI_SINGLEBOX, 2,   11,  w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
-	/*11 */ {DI_BUTTON,    4,   12,  0,	    0,     FALSE, {}, 0, 0, Msg(M_EXTRA_COMMANDS), 0},
-	/*12 */ {DI_BUTTON,    27,  12,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
-	/*13 */ {DI_BUTTON,    35,  12,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
+	/* 2 */ {DI_SINGLEBOX, 2,   3,   w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
+	/* 3 */ {DI_CHECKBOX,  3,   4,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYENTER), 0},
+	/* 4 */ {DI_CHECKBOX,  3,   5,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENBYCTRLPGDN), 0},
+	/* 5 */ {DI_CHECKBOX,  3,   6,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINQVIEW), 0},
+	/* 6 */ {DI_CHECKBOX,  3,   7,   0,	    0,     TRUE,  {}, 0, 0,	Msg(M_TEXT_OPENINFVIEW), 0},
+	/* 7 */ {DI_TEXT,      3,   8,   w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_IMAGEMASKS), 0},
+	/* 8 */ {DI_EDIT,      3,   9,   w - 4, 0,     0,  {},  0, 0, nullptr, 0},
+	/* 9 */ {DI_TEXT,      3,   10,  w - 9, 0,     FALSE, {}, 0, 0,	Msg(M_TEXT_VIDEOMASKS), 0},
+	/*10 */ {DI_EDIT,      3,   11,  w - 4, 0,     0,  {}, 0, 0, nullptr, 0},
+	/*11 */ {DI_SINGLEBOX, 2,   12,  w - 3, 0,     0,  {}, DIF_BOXCOLOR|DIF_SEPARATOR, 0, nullptr, 0},
+	/*12 */ {DI_BUTTON,    4,   13,  0,	    0,     FALSE, {}, 0, 0, Msg(M_EXTRA_COMMANDS), 0},
+	/*13 */ {DI_BUTTON,    27,  13,  0,	    0,     FALSE, {}, 0, TRUE, Msg(M_OK), 0},
+	/*14 */ {DI_BUTTON,    35,  13,  0,	    0,     FALSE, {}, 0, 0,	Msg(M_CANCEL), 0}
 	};
 
 	fdi[1].Param.Selected = _use_orientation;
-	fdi[2].Param.Selected = _open_by_enter;
-	fdi[3].Param.Selected = _open_by_cpgdn;
-	fdi[4].Param.Selected = _open_in_qv;
-	fdi[5].Param.Selected = _open_in_fv;
+	fdi[3].Param.Selected = _open_by_enter;
+	fdi[4].Param.Selected = _open_by_cpgdn;
+	fdi[5].Param.Selected = _open_in_qv;
+	fdi[6].Param.Selected = _open_in_fv;
 	std::wstring image_masks, video_masks;
 	StrMB2Wide(_image_masks, image_masks);
 	StrMB2Wide(_video_masks, video_masks);
 
-	fdi[7].PtrData = image_masks.c_str();
-	fdi[9].PtrData = video_masks.c_str();
+	fdi[8].PtrData = image_masks.c_str();
+	fdi[10].PtrData = video_masks.c_str();
 
 	auto dlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, w, h, L"settings", fdi, ARRAYSIZE(fdi), 0, 0, nullptr, 0);
 	auto commands_copy = _commands;
@@ -210,12 +211,12 @@ void Settings::configurationMenuDialog()
 			SaveCommands();
 		}
 		_use_orientation = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
-		_open_by_enter = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 2, 0) == BSTATE_CHECKED);
-		_open_by_cpgdn = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
-		_open_in_qv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
-		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 5, 0) == BSTATE_CHECKED);
-		image_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 7, 0);
-		video_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 9, 0);
+		_open_by_enter = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 3, 0) == BSTATE_CHECKED);
+		_open_by_cpgdn = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 4, 0) == BSTATE_CHECKED);
+		_open_in_qv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 5, 0) == BSTATE_CHECKED);
+		_open_in_fv = (g_far.SendDlgMessage(dlg, DM_GETCHECK, 6, 0) == BSTATE_CHECKED);
+		image_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 8, 0);
+		video_masks = (const wchar_t *)g_far.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, 10, 0);
 
 		StrWide2MB(image_masks, _image_masks);
 		StrWide2MB(video_masks, _video_masks);

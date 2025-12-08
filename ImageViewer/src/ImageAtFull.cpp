@@ -216,6 +216,11 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					iv->full_size = !iv->full_size;
 					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
 					break;
+				case KEY_F1:
+					WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+					g_far.ShowHelp(g_far.ModuleName, L"Contents", FHELP_USECONTENTS);
+					iv->ForceShow();
+					break;
 				case KEY_F2:
 					iv->RunProcessingCommand();
 					break;

@@ -812,7 +812,5 @@ void ImageView::RunProcessingCommand()
 			// TODO: msgbox
 		}
 	}
-	_force_render = true;
-	RenderImage();
-	DenoteState();
+	ForceShow();
 }

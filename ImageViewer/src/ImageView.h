@@ -76,6 +76,12 @@ public:
 	void MirrorH();
 	void MirrorV();
 	void Reset(bool keep_rotmir);
+	void ForceShow()
+	{
+		_force_render = true;
+		RenderImage();
+		DenoteState();
+	};
 	void Select();
 	void Deselect();
 	void ToggleSelection();

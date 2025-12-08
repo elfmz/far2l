@@ -15,7 +15,7 @@ public:
 
 	void Swap(Image &another);
 
-	char BytesPerPixel() const { return _bytes_per_pixel; } 
+	char BytesPerPixel() const { return _bytes_per_pixel; }
 	const int Width() const { return _width; }
 	const int Height() const { return _height; }
 

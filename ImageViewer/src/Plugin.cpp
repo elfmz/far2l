@@ -275,8 +275,8 @@ SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event,void *Param)
 
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 {
-   	g_settings.configurationMenuDialog();
-    return 1;
+	g_settings.ConfigurationDialog();
+	return 1;
 }
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode)

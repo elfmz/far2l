@@ -16,7 +16,7 @@
 "Navigate: PGUP PGDN HOME"
 "Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F9"
 "Selection: SPACE BS INS"
-"F2 | ENTER | ESC"
+"F4 | ENTER | ESC"
 
 "Respect EXIF o&rientation info"
 "Open by &Enter on file"

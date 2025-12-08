@@ -221,7 +221,7 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					g_far.ShowHelp(g_far.ModuleName, L"Contents", FHELP_USECONTENTS);
 					iv->ForceShow();
 					break;
-				case KEY_F2:
+				case KEY_F4:
 					iv->RunProcessingCommand();
 					break;
 			}

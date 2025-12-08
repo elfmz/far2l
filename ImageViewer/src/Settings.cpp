@@ -157,7 +157,7 @@ std::string Settings::ExtraCommandsMenu()
 	return selected_cmd;
 }
 
-void Settings::configurationMenuDialog()
+void Settings::ConfigurationDialog()
 {
 	const int w = 50, h = 16;
 

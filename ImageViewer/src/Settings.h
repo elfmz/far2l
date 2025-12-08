@@ -38,7 +38,7 @@ public:
 	Settings();
 	const wchar_t *Msg(int msgId);
 
-	void configurationMenuDialog();
+	void ConfigurationDialog();
 
 	bool UseOrientation() const { return _use_orientation; }
 	bool OpenByEnter() const { return _open_by_enter; }

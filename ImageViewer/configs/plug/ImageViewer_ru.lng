@@ -16,7 +16,7 @@
 "Навигация: PGUP PGDN HOME"
 "Панорама: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F9"
 "Выбор: SPACE BS INS"
-"F2 | ENTER | ESC"
+"F4 | ENTER | ESC"
 
 "Учитывать &ориентацию из EXIF"
 "Открывать по &Enter на файле"

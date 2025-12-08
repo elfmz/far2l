@@ -260,7 +260,7 @@ SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event,void *Param)
 				DismissImageAtQV();
 			}
 						
-			if (Event == VE_READ && g_settings.OpenInFV()) {
+			if (Event == VE_READ && (!pi.Visible || pi.PanelType != PTYPE_QVIEWPANEL) && g_settings.OpenInFV()) {
 				ViewerInfo vi{sizeof(ViewerInfo), 0};
 				if (g_far.ViewerControl(VCTL_GETINFO, &vi)) {
 					if (vi.FileName && g_settings.MatchFile(Wide2MB(vi.FileName).c_str())) {

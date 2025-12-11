@@ -21,12 +21,20 @@ class OpenWithPlugin
 {
 public:
 
+	struct ConfigDlgResult
+	{
+		bool is_platform_settings_changed = false;
+		bool should_refresh_candidates = false;
+	};
+
 	static void ProcessFiles(const std::vector<std::wstring>& filepaths);
-	static bool ShowConfigureDialog();
+	static ConfigDlgResult ShowConfigDlg();
 	static void ShowError(const std::vector<std::wstring>& error_lines);
 	static void LoadGeneralSettings();
 
 private:
+
+	enum class DetailsDlgResult { Close, Launch };
 
 	static bool s_use_external_terminal;
 	static bool s_no_wait_for_command_completion;
@@ -37,7 +45,7 @@ private:
 	static void FilterOutTerminalCandidates(std::vector<CandidateInfo> &candidates, size_t file_count);
 	static bool AskForLaunchConfirmation(const CandidateInfo& app, size_t file_count);
 	static void LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds);
-	static bool ShowDetailsDialog(const std::vector<std::wstring>& filepaths, const std::vector<std::wstring>& unique_mime_profiles, const std::vector<Field> &application_info, const std::vector<std::wstring>& cmds);
+	static DetailsDlgResult ShowDetailsDlg(const std::vector<std::wstring>& filepaths, const std::vector<std::wstring>& unique_mime_profiles, const std::vector<Field> &application_info, const std::vector<std::wstring>& cmds);
 	static void SaveGeneralSettings();
 	static std::wstring JoinStrings(const std::vector<std::wstring>& vec, const std::wstring& delimiter);
 	static size_t GetLabelCellWidth(const Field& field);

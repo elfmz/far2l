@@ -279,6 +279,7 @@ private:
 		LanguageID  display_name_id;
 		bool XDGBasedAppProvider::* member_variable;
 		bool default_value;
+		bool affects_candidates;
 	};
 
 

@@ -24,7 +24,6 @@ namespace OpenWith {
 
 // Main workflow orchestrator: resolves application candidates via AppProvider,
 // displays the selection menu, and handles user actions: F3 (details), F9 (settings), Enter (launch).
-// The function maintains a loop to allow returning to the menu after closing sub-dialogs.
 void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 {
 	if (filepaths.empty()) {
@@ -55,7 +54,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 
 		if ((*app_candidates).empty()) {
 			ShowError({ GetMsg(MNoAppsFound), JoinStrings(provider->GetMimeTypes(), L"; ") });
-			return; // No application candidates; exit the plugin entirely.
+			return; // No application candidates; exit the plugin.
 		}
 
 		constexpr int BREAK_KEYS[] = {VK_F3, VK_F9, 0};
@@ -71,41 +70,42 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 		menu_items[active_menu_idx].Selected = false;
 
 		if (selected_menu_idx == -1) {
-			return; // User cancelled the menu (e.g., with Esc); exit the plugin entirely
+			return; // User cancelled the menu; exit the plugin.
 		}
 
 		active_menu_idx = selected_menu_idx;
 		const auto& selected_app = (*app_candidates)[selected_menu_idx];
 
 		if (menu_break_code == KEY_F3_DETAILS) {
-			auto mime_profiles = provider->GetMimeTypes();
-			auto app_info = provider->GetCandidateDetails(selected_app);
-			auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
+			const auto mime_profiles = provider->GetMimeTypes();
+			const auto app_info = provider->GetCandidateDetails(selected_app);
+			const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
 			// Repeat until user either launches the application or closes the dialog to go back.
 			while (true) {
-				bool is_launch_requested = ShowDetailsDialog(filepaths, mime_profiles, app_info, cmds);
-				if (!is_launch_requested) {
-					break; // User clicked "Close", break the inner loop to return to the main menu.
-				}
-				if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
-					LaunchApplication(selected_app, cmds); // Launch the application and exit the plugin entirely.
-					return;
+				if (ShowDetailsDlg(filepaths, mime_profiles, app_info, cmds) == DetailsDlgResult::Launch) {
+					if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
+						LaunchApplication(selected_app, cmds);
+						return; // Application launched; exit the plugin.
+					}
+				} else {
+					break; // User clicked "Close"; return to the main menu.
 				}
 			}
 
 		} else if (menu_break_code == KEY_F9_SETTINGS) {
-			const auto is_refresh_needed = ShowConfigureDialog();
-			// Refresh is needed if any setting that affects the candidate list has been changed.
-			if (is_refresh_needed) {
+			auto config_result = ShowConfigDlg();
+			if (config_result.is_platform_settings_changed) {
 				provider->LoadPlatformSettings();
+			}
+			if (config_result.should_refresh_candidates) {
 				app_candidates.reset();
-		}
+			}
 
 		} else { // Enter to launch.
 			if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
-				auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
+				const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
 				LaunchApplication(selected_app, cmds);
-				return; // Exit the plugin after a successful launch.
+				return; // Application launched; exit the plugin.
 			}
 		}
 	}
@@ -115,19 +115,17 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 
 // Displays the configuration dialog containing both platform-independent (plugin-wide)
 // and platform-specific settings fetched dynamically from the current AppProvider.
-// Returns true if any setting affecting the candidate list generation was changed.
-bool OpenWithPlugin::ShowConfigureDialog()
+OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 {
 	constexpr int CONFIG_DIALOG_WIDTH = 70;
 
-	// Load platform-independent configuration.
 	LoadGeneralSettings();
 
 	// Create a temporary provider to access platform-specific settings (they are loaded automatically).
 	auto provider = AppProvider::CreateAppProvider(GetMsg);
 
 	const bool old_use_external_terminal = s_use_external_terminal;
-	const std::vector<ProviderSetting> old_platform_settings = provider->GetPlatformSettings();
+	const auto old_platform_settings = provider->GetPlatformSettings();
 
 	std::vector<FarDialogItem> config_dialog_items;
 	int current_y = 1;
@@ -189,62 +187,62 @@ bool OpenWithPlugin::ShowConfigureDialog()
 
 	HANDLE dlg = g_info.DialogInit(g_info.ModuleNumber, -1, -1, CONFIG_DIALOG_WIDTH, config_dialog_height, L"ConfigurationDialog",
 								   config_dialog_items.data(), static_cast<unsigned int>(config_dialog_items.size()), 0, 0, nullptr, 0);
-	if (dlg == INVALID_HANDLE_VALUE) {
-		return {};
-	}
 
-	int exit_code = g_info.DialogRun(dlg);
-	bool is_refresh_needed = false;
+	bool is_platform_settings_changed = false;
+	bool is_platform_settings_requiring_candidate_list_refresh_changed = false;
 
-	// ----- Process results if "OK" was pressed. -----
-	if (exit_code == static_cast<int>(ok_btn_idx)) {
+	if (dlg != INVALID_HANDLE_VALUE) {
 
-		auto is_checked = [&dlg](size_t i) -> bool {
-			return g_info.SendDlgMessage(dlg, DM_GETCHECK, i, 0) == BSTATE_CHECKED;
-		};
+		int exit_code = g_info.DialogRun(dlg);
 
-		s_use_external_terminal          = is_checked(use_external_terminal_idx);
-		s_no_wait_for_command_completion = is_checked(no_wait_for_command_completion_idx);
-		s_clear_selection                = is_checked(clear_selection_idx);
-		s_confirm_launch                 = is_checked(confirm_launch_chkbx_idx);
+		// ----- Process results if "OK" was pressed. -----
+		if (exit_code == static_cast<int>(ok_btn_idx)) {
 
-		auto threshold_str = (const wchar_t*)g_info.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, confirm_launch_edit_idx, 0);
-		s_confirm_launch_threshold = wcstol(threshold_str, nullptr, 10);
+			auto is_checked = [&dlg](size_t i) -> bool {
+				return g_info.SendDlgMessage(dlg, DM_GETCHECK, i, 0) == BSTATE_CHECKED;
+			};
 
-		SaveGeneralSettings(); // Save platform-independent configuration.
+			s_use_external_terminal          = is_checked(use_external_terminal_idx);
+			s_no_wait_for_command_completion = is_checked(no_wait_for_command_completion_idx);
+			s_clear_selection                = is_checked(clear_selection_idx);
+			s_confirm_launch                 = is_checked(confirm_launch_chkbx_idx);
 
-		bool is_platform_settings_changed = false;
+			auto threshold_str = (const wchar_t*)g_info.SendDlgMessage(dlg, DM_GETCONSTTEXTPTR, confirm_launch_edit_idx, 0);
+			s_confirm_launch_threshold = wcstol(threshold_str, nullptr, 10);
 
-		// Propagate changes to dynamic platform-specific settings back to the provider.
-		if (!dynamic_settings.empty()) {
-			std::vector<ProviderSetting> new_platform_settings;
-			new_platform_settings.reserve(dynamic_settings.size());
+			SaveGeneralSettings();
 
-			for (const auto& [idx, setting] : dynamic_settings) {
-				bool new_value = is_checked(idx);
-				if (setting.value != new_value) {
-					is_platform_settings_changed = true;
+			// Propagate changes to dynamic platform-specific settings back to the provider.
+			if (!dynamic_settings.empty()) {
+				std::vector<ProviderSetting> new_platform_settings;
+				new_platform_settings.reserve(dynamic_settings.size());
+
+				for (const auto& [idx, setting] : dynamic_settings) {
+					bool new_value = is_checked(idx);
+					if (setting.value != new_value) {
+						if (setting.affects_candidates) {
+							is_platform_settings_requiring_candidate_list_refresh_changed = true;
+						}
+						is_platform_settings_changed = true;
+					}
+					new_platform_settings.push_back({ setting.internal_key, setting.display_name, new_value });
 				}
-				new_platform_settings.push_back({ setting.internal_key, setting.display_name, new_value });
-			}
 
-			if (is_platform_settings_changed) {
-				provider->SetPlatformSettings(new_platform_settings);
-				provider->SavePlatformSettings();
+				if (is_platform_settings_changed) {
+					provider->SetPlatformSettings(new_platform_settings);
+					provider->SavePlatformSettings();
+				}
 			}
 		}
-
-		if (is_platform_settings_changed || (old_use_external_terminal != s_use_external_terminal)) {
-			is_refresh_needed = true;
-		}
+		g_info.DialogFree(dlg);
 	}
-	g_info.DialogFree(dlg);
-	return is_refresh_needed;
+
+	return { is_platform_settings_changed,
+			(is_platform_settings_requiring_candidate_list_refresh_changed || (old_use_external_terminal != s_use_external_terminal)) };
 }
 
 
 
-// Error reporting wrapper around the far2l message box API.
 void OpenWithPlugin::ShowError(const std::vector<std::wstring>& error_lines)
 {
 	std::vector<const wchar_t*> items;
@@ -292,7 +290,7 @@ bool OpenWithPlugin::AskForLaunchConfirmation(const CandidateInfo& app, const si
 
 
 
-// Executes one or more command lines to launch the selected application.
+// Executes one or more command lines to launch the selected application to open the provided files.
 void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds)
 {
 	if (cmds.empty()) {
@@ -302,11 +300,15 @@ void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vect
 	// If we have multiple commands to run, force asynchronous execution to avoid UI blocking.
 	bool force_no_wait = cmds.size() > 1;
 
-	unsigned int execute_flags {};
+	unsigned int execute_flags = 0;
 	if (app.terminal) {
-		execute_flags = s_use_external_terminal ? EF_EXTERNALTERM : 0;
+		if (s_use_external_terminal) {
+			execute_flags |= EF_EXTERNALTERM;
+		}
 	} else {
-		execute_flags = (s_no_wait_for_command_completion || force_no_wait) ? EF_NOWAIT | EF_HIDEOUT : 0;
+		if (s_no_wait_for_command_completion || force_no_wait) {
+			execute_flags |= (EF_NOWAIT | EF_HIDEOUT);
+		}
 	}
 
 	for (const auto& cmd : cmds) {
@@ -325,8 +327,7 @@ void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vect
 
 // Displays detailed information about selected file(s), the candidate application,
 // and the resolved launch command that will be used to launch it.
-// Returns true if the user chooses to "Launch" directly from this dialog.
-bool OpenWithPlugin::ShowDetailsDialog(const std::vector<std::wstring>& filepaths,
+OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vector<std::wstring>& filepaths,
 									   const std::vector<std::wstring>& unique_mime_profiles,
 									   const std::vector<Field>& application_info,
 									   const std::vector<std::wstring>& cmds)
@@ -339,7 +340,7 @@ bool OpenWithPlugin::ShowDetailsDialog(const std::vector<std::wstring>& filepath
 		auto count_msg = std::wstring(GetMsg(MFilesSelected)) + std::to_wstring(filepaths.size());
 		file_info.push_back({ GetMsg(MPathname), count_msg });
 	}
-	file_info.push_back({ GetMsg(MMimeType), JoinStrings(unique_mime_profiles, L"; ") });
+	file_info.push_back({ GetMsg(MMimeProfile), JoinStrings(unique_mime_profiles, L"; ") });
 	Field launch_command { GetMsg(MLaunchCommand), JoinStrings(cmds, L"; ") };
 
 	constexpr int DETAILS_DIALOG_MIN_WIDTH = 40;
@@ -395,15 +396,17 @@ bool OpenWithPlugin::ShowDetailsDialog(const std::vector<std::wstring>& filepath
 	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
 	const int launch_btn_idx = static_cast<int>(details_dialog_items.size()) - 1;
 
-	HANDLE dlg = g_info.DialogInit(g_info.ModuleNumber, -1, -1, details_dialog_width, details_dialog_height, L"InformationDialog",
+	HANDLE dlg = g_info.DialogInit(g_info.ModuleNumber, -1, -1, details_dialog_width, details_dialog_height, L"DetailsDialog",
 								   details_dialog_items.data(), static_cast<unsigned int>(details_dialog_items.size()), 0, 0, nullptr, 0);
 
 	if (dlg != INVALID_HANDLE_VALUE) {
 		int exit_code = g_info.DialogRun(dlg);
 		g_info.DialogFree(dlg);
-		return (exit_code == launch_btn_idx);
+		if (exit_code == launch_btn_idx) {
+			return DetailsDlgResult::Launch;
+		}
 	}
-	return false;
+	return DetailsDlgResult::Close;
 }
 
 
@@ -417,7 +420,7 @@ void OpenWithPlugin::LoadGeneralSettings()
 	s_clear_selection = kfh.GetInt("ClearSelection", 0) != 0;
 	s_confirm_launch = kfh.GetInt("ConfirmLaunch", 1) != 0;
 	s_confirm_launch_threshold = kfh.GetInt("ConfirmLaunchThreshold", 10);
-	s_confirm_launch_threshold = std::clamp(s_confirm_launch_threshold, 1, 9999);
+	s_confirm_launch_threshold = std::clamp(s_confirm_launch_threshold, 0, 9999);
 }
 
 
@@ -430,7 +433,7 @@ void OpenWithPlugin::SaveGeneralSettings()
 	kfh.SetInt(INI_SECTION, "NoWaitForCommandCompletion", s_no_wait_for_command_completion);
 	kfh.SetInt(INI_SECTION, "ClearSelection", s_clear_selection);
 	kfh.SetInt(INI_SECTION, "ConfirmLaunch", s_confirm_launch);
-	s_confirm_launch_threshold = std::clamp(s_confirm_launch_threshold, 1, 9999);
+	s_confirm_launch_threshold = std::clamp(s_confirm_launch_threshold, 0, 9999);
 	kfh.SetInt(INI_SECTION, "ConfirmLaunchThreshold", s_confirm_launch_threshold);
 	if (!kfh.Save()) {
 		ShowError({ GetMsg(MSaveConfigError) });
@@ -455,8 +458,8 @@ std::wstring OpenWithPlugin::JoinStrings(const std::vector<std::wstring>& vec, c
 
 
 
-// Helper used in Details dialog to align "Edit" controls.
 // Calculates the width of a Field label in console cells.
+// Used in Details dialog to align "Edit" controls.
 size_t OpenWithPlugin::GetLabelCellWidth(const Field& field)
 {
 	return g_fsf.StrCellsCount(field.label.c_str(), field.label.size());
@@ -464,8 +467,8 @@ size_t OpenWithPlugin::GetLabelCellWidth(const Field& field)
 
 
 
-// Helper used in Details dialog to align "Edit" controls.
 // Determines the maximum label width (in cells) in a vector of Fields.
+// Used in Details dialog to align "Edit" controls.
 size_t OpenWithPlugin::GetMaxLabelCellWidth(const std::vector<Field>& fields)
 {
 	size_t max_width = 0;
@@ -535,9 +538,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 
 
 // Main entry point when the plugin is invoked from the plugins menu (F11).
-// Validates the active panel state (must be a file panel with real paths).
-// Collects selected items, or the item under the cursor if no selection exists,
-// and initiates the processing workflow.
+// Validates the active panel state, collects selected items, and initiates the processing workflow.
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
 	if (OpenFrom != OPEN_PLUGINSMENU) {
@@ -595,15 +596,14 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 		OpenWithPlugin::ProcessFiles(selected_filepaths);
 	}
 
-	// Return INVALID_HANDLE_VALUE because this plugin performs an action and exits,
-	// rather than creating a new panel instance (like a VFS plugin).
+	// Plugin performs an action and exits, rather than creating a new panel instance (like a VFS plugin).
 	return INVALID_HANDLE_VALUE;
 }
 
 
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 {
-	OpenWithPlugin::ShowConfigureDialog();
+	OpenWithPlugin::ShowConfigDlg();
 	return FALSE;
 }
 

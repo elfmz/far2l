@@ -135,7 +135,9 @@ struct ShortcutDef {
 
 // Helper macros
 #define SC(id, desc, trig, vk, mod) { id, desc, trig, vk, mod }
-#define MOD_KEYS(key, vk) \
+
+// For function keys and navigation - include Shift
+#define MOD_KEYS_FULL(key, vk) \
 	SC("Ctrl" key, "Ctrl+" key, "Control+" key, vk, LEFT_CTRL_PRESSED), \
 	SC("Alt" key, "Alt+" key, "Alt+" key, vk, LEFT_ALT_PRESSED), \
 	SC("Shift" key, "Shift+" key, "Shift+" key, vk, SHIFT_PRESSED), \
@@ -143,86 +145,83 @@ struct ShortcutDef {
 	SC("AltShift" key, "Alt+Shift+" key, "Alt+Shift+" key, vk, LEFT_ALT_PRESSED | SHIFT_PRESSED), \
 	SC("CtrlAlt" key, "Ctrl+Alt+" key, "Control+Alt+" key, vk, LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED)
 
+// For printable keys - exclude Shift as it is handled by terminal text input
+#define MOD_KEYS_TYPING(key, vk) \
+	SC("Ctrl" key, "Ctrl+" key, "Control+" key, vk, LEFT_CTRL_PRESSED), \
+	SC("Alt" key, "Alt+" key, "Alt+" key, vk, LEFT_ALT_PRESSED), \
+	SC("CtrlShift" key, "Ctrl+Shift+" key, "Control+Shift+" key, vk, LEFT_CTRL_PRESSED | SHIFT_PRESSED), \
+	SC("AltShift" key, "Alt+Shift+" key, "Alt+Shift+" key, vk, LEFT_ALT_PRESSED | SHIFT_PRESSED), \
+	SC("CtrlAlt" key, "Ctrl+Alt+" key, "Control+Alt+" key, vk, LEFT_CTRL_PRESSED | LEFT_ALT_PRESSED)
+
 static const ShortcutDef g_shortcuts[] = {
 	// Function Keys (F1-F12) and their combinations
-	SC("F1", "F1", "F1", VK_F1, 0), MOD_KEYS("F1", VK_F1),
-	SC("F2", "F2", "F2", VK_F2, 0), MOD_KEYS("F2", VK_F2),
-	SC("F3", "F3", "F3", VK_F3, 0), MOD_KEYS("F3", VK_F3),
-	SC("F4", "F4", "F4", VK_F4, 0), MOD_KEYS("F4", VK_F4),
-	SC("F5", "F5", "F5", VK_F5, 0), MOD_KEYS("F5", VK_F5),
-	SC("F6", "F6", "F6", VK_F6, 0), MOD_KEYS("F6", VK_F6),
-	SC("F7", "F7", "F7", VK_F7, 0), MOD_KEYS("F7", VK_F7),
-	SC("F8", "F8", "F8", VK_F8, 0), MOD_KEYS("F8", VK_F8),
-	SC("F9", "F9", "F9", VK_F9, 0), MOD_KEYS("F9", VK_F9),
-	SC("F10", "F10", "F10", VK_F10, 0), MOD_KEYS("F10", VK_F10),
-	SC("F11", "F11", "F11", VK_F11, 0), MOD_KEYS("F11", VK_F11),
-	SC("F12", "F12", "F12", VK_F12, 0), MOD_KEYS("F12", VK_F12),
+	MOD_KEYS_FULL("F1", VK_F1),
+	MOD_KEYS_FULL("F2", VK_F2),
+	MOD_KEYS_FULL("F3", VK_F3),
+	MOD_KEYS_FULL("F4", VK_F4),
+	MOD_KEYS_FULL("F5", VK_F5),
+	MOD_KEYS_FULL("F6", VK_F6),
+	MOD_KEYS_FULL("F7", VK_F7),
+	MOD_KEYS_FULL("F8", VK_F8),
+	MOD_KEYS_FULL("F9", VK_F9),
+	MOD_KEYS_FULL("F10", VK_F10),
+	MOD_KEYS_FULL("F11", VK_F11),
+	MOD_KEYS_FULL("F12", VK_F12),
 
-	// Numbers 0-9 (Ctrl, Alt, Ctrl+Shift, Alt+Shift)
-	// Usually plain numbers are not global shortcuts
-	MOD_KEYS("0", '0'), MOD_KEYS("1", '1'), MOD_KEYS("2", '2'), MOD_KEYS("3", '3'),
-	MOD_KEYS("4", '4'), MOD_KEYS("5", '5'), MOD_KEYS("6", '6'), MOD_KEYS("7", '7'),
-	MOD_KEYS("8", '8'), MOD_KEYS("9", '9'),
+	// Numbers 0-9
+	MOD_KEYS_TYPING("0", '0'), MOD_KEYS_TYPING("1", '1'), MOD_KEYS_TYPING("2", '2'), MOD_KEYS_TYPING("3", '3'),
+	MOD_KEYS_TYPING("4", '4'), MOD_KEYS_TYPING("5", '5'), MOD_KEYS_TYPING("6", '6'), MOD_KEYS_TYPING("7", '7'),
+	MOD_KEYS_TYPING("8", '8'), MOD_KEYS_TYPING("9", '9'),
 
 	// Navigation & Editing
-	// Up, Down, Left, Right, Home, End, PgUp, PgDn, Ins, Del, BS, Space, Tab, Enter
-	// Plain navigation keys are usually too invasive to be global, but modifiers are needed.
-	// We include plain versions too, just in case user wants them (portal allows disabling).
-	SC("Up", "Up", "Up", VK_UP, 0), MOD_KEYS("Up", VK_UP),
-	SC("Down", "Down", "Down", VK_DOWN, 0), MOD_KEYS("Down", VK_DOWN),
-	SC("Left", "Left", "Left", VK_LEFT, 0), MOD_KEYS("Left", VK_LEFT),
-	SC("Right", "Right", "Right", VK_RIGHT, 0), MOD_KEYS("Right", VK_RIGHT),
-	SC("Home", "Home", "Home", VK_HOME, 0), MOD_KEYS("Home", VK_HOME),
-	SC("End", "End", "End", VK_END, 0), MOD_KEYS("End", VK_END),
-	SC("PgUp", "PgUp", "Page_Up", VK_PRIOR, 0), MOD_KEYS("PgUp", VK_PRIOR),
-	SC("PgDn", "PgDn", "Page_Down", VK_NEXT, 0), MOD_KEYS("PgDn", VK_NEXT),
-	SC("Ins", "Ins", "Insert", VK_INSERT, 0), MOD_KEYS("Ins", VK_INSERT),
-	SC("Del", "Del", "Delete", VK_DELETE, 0), MOD_KEYS("Del", VK_DELETE),
-	SC("BackSpace", "BackSpace", "BackSpace", VK_BACK, 0), MOD_KEYS("BackSpace", VK_BACK),
-	SC("Tab", "Tab", "Tab", VK_TAB, 0), MOD_KEYS("Tab", VK_TAB),
-	// Enter/Return
-	SC("Enter", "Enter", "Return", VK_RETURN, 0), MOD_KEYS("Enter", VK_RETURN),
-	// Space
-	MOD_KEYS("Space", VK_SPACE),
+	MOD_KEYS_FULL("Up", VK_UP),
+	MOD_KEYS_FULL("Down", VK_DOWN),
+	MOD_KEYS_FULL("Left", VK_LEFT),
+	MOD_KEYS_FULL("Right", VK_RIGHT),
+	MOD_KEYS_FULL("Home", VK_HOME),
+	MOD_KEYS_FULL("End", VK_END),
+	MOD_KEYS_FULL("PgUp", VK_PRIOR),
+	MOD_KEYS_FULL("PgDn", VK_NEXT),
+	MOD_KEYS_FULL("Ins", VK_INSERT),
+	MOD_KEYS_FULL("Del", VK_DELETE),
+	MOD_KEYS_TYPING("BackSpace", VK_BACK),
+	MOD_KEYS_TYPING("Tab", VK_TAB),
+	MOD_KEYS_TYPING("Enter", VK_RETURN),
+	MOD_KEYS_TYPING("Space", VK_SPACE),
 
-	// Alpha Keys (A-Z) - Only Ctrl and Alt modifiers
-	// Plain letters are definitely not global shortcuts.
-	// We add Ctrl+A..Z and Alt+A..Z and their Shift variants.
-	// NOTE: Alt+Letter is often used for Menu access in GUI apps.
-	MOD_KEYS("A", 'A'), MOD_KEYS("B", 'B'), MOD_KEYS("C", 'C'), MOD_KEYS("D", 'D'),
-	MOD_KEYS("E", 'E'), MOD_KEYS("F", 'F'), MOD_KEYS("G", 'G'), MOD_KEYS("H", 'H'),
-	MOD_KEYS("I", 'I'), MOD_KEYS("J", 'J'), MOD_KEYS("K", 'K'), MOD_KEYS("L", 'L'),
-	MOD_KEYS("M", 'M'), MOD_KEYS("N", 'N'), MOD_KEYS("O", 'O'), MOD_KEYS("P", 'P'),
-	MOD_KEYS("Q", 'Q'), MOD_KEYS("R", 'R'), MOD_KEYS("S", 'S'), MOD_KEYS("T", 'T'),
-	MOD_KEYS("U", 'U'), MOD_KEYS("V", 'V'), MOD_KEYS("W", 'W'), MOD_KEYS("X", 'X'),
-	MOD_KEYS("Y", 'Y'), MOD_KEYS("Z", 'Z'),
+	// Alpha Keys (A-Z)
+	MOD_KEYS_TYPING("A", 'A'), MOD_KEYS_TYPING("B", 'B'), MOD_KEYS_TYPING("C", 'C'), MOD_KEYS_TYPING("D", 'D'),
+	MOD_KEYS_TYPING("E", 'E'), MOD_KEYS_TYPING("F", 'F'), MOD_KEYS_TYPING("G", 'G'), MOD_KEYS_TYPING("H", 'H'),
+	MOD_KEYS_TYPING("I", 'I'), MOD_KEYS_TYPING("J", 'J'), MOD_KEYS_TYPING("K", 'K'), MOD_KEYS_TYPING("L", 'L'),
+	MOD_KEYS_TYPING("M", 'M'), MOD_KEYS_TYPING("N", 'N'), MOD_KEYS_TYPING("O", 'O'), MOD_KEYS_TYPING("P", 'P'),
+	MOD_KEYS_TYPING("Q", 'Q'), MOD_KEYS_TYPING("R", 'R'), MOD_KEYS_TYPING("S", 'S'), MOD_KEYS_TYPING("T", 'T'),
+	MOD_KEYS_TYPING("U", 'U'), MOD_KEYS_TYPING("V", 'V'), MOD_KEYS_TYPING("W", 'W'), MOD_KEYS_TYPING("X", 'X'),
+	MOD_KEYS_TYPING("Y", 'Y'), MOD_KEYS_TYPING("Z", 'Z'),
 
 	// Punctuation and Special Keys
-	// ` ~ - = [ ] \ ; ' , . /
-	// VK codes from WinCompat.h or standard ASCII where valid
-	MOD_KEYS("Grave", VK_OEM_3),      // ` ~
-	MOD_KEYS("Minus", VK_OEM_MINUS),  // - _
-	MOD_KEYS("Equal", VK_OEM_PLUS),   // = +
-	MOD_KEYS("LBracket", VK_OEM_4),   // [ {
-	MOD_KEYS("RBracket", VK_OEM_6),   // ] }
-	MOD_KEYS("Backslash", VK_OEM_5),  // \ |
-	MOD_KEYS("Semicolon", VK_OEM_1),  // ; :
-	MOD_KEYS("Quote", VK_OEM_7),      // ' "
-	MOD_KEYS("Comma", VK_OEM_COMMA),  // , <
-	MOD_KEYS("Period", VK_OEM_PERIOD),// . >
-	MOD_KEYS("Slash", VK_OEM_2)       // / ?
+	MOD_KEYS_TYPING("Grave", VK_OEM_3),      // ` ~
+	MOD_KEYS_TYPING("Minus", VK_OEM_MINUS),  // - _
+	MOD_KEYS_TYPING("Equal", VK_OEM_PLUS),   // = +
+	MOD_KEYS_TYPING("LBracket", VK_OEM_4),   // [ {
+	MOD_KEYS_TYPING("RBracket", VK_OEM_6),   // ] }
+	MOD_KEYS_TYPING("Backslash", VK_OEM_5),  // \ |
+	MOD_KEYS_TYPING("Semicolon", VK_OEM_1),  // ; :
+	MOD_KEYS_TYPING("Quote", VK_OEM_7),      // ' "
+	MOD_KEYS_TYPING("Comma", VK_OEM_COMMA),  // , <
+	MOD_KEYS_TYPING("Period", VK_OEM_PERIOD),// . >
+	MOD_KEYS_TYPING("Slash", VK_OEM_2)       // / ?
 	,
 	// Numpad
-	MOD_KEYS("KP_0", VK_NUMPAD0), MOD_KEYS("KP_1", VK_NUMPAD1),
-	MOD_KEYS("KP_2", VK_NUMPAD2), MOD_KEYS("KP_3", VK_NUMPAD3),
-	MOD_KEYS("KP_4", VK_NUMPAD4), MOD_KEYS("KP_5", VK_NUMPAD5),
-	MOD_KEYS("KP_6", VK_NUMPAD6), MOD_KEYS("KP_7", VK_NUMPAD7),
-	MOD_KEYS("KP_8", VK_NUMPAD8), MOD_KEYS("KP_9", VK_NUMPAD9),
-	MOD_KEYS("KP_Multiply", VK_MULTIPLY),
-	MOD_KEYS("KP_Add", VK_ADD),
-	MOD_KEYS("KP_Subtract", VK_SUBTRACT),
-	MOD_KEYS("KP_Decimal", VK_DECIMAL),
-	MOD_KEYS("KP_Divide", VK_DIVIDE)
+	MOD_KEYS_TYPING("KP_0", VK_NUMPAD0), MOD_KEYS_TYPING("KP_1", VK_NUMPAD1),
+	MOD_KEYS_TYPING("KP_2", VK_NUMPAD2), MOD_KEYS_TYPING("KP_3", VK_NUMPAD3),
+	MOD_KEYS_TYPING("KP_4", VK_NUMPAD4), MOD_KEYS_TYPING("KP_5", VK_NUMPAD5),
+	MOD_KEYS_TYPING("KP_6", VK_NUMPAD6), MOD_KEYS_TYPING("KP_7", VK_NUMPAD7),
+	MOD_KEYS_TYPING("KP_8", VK_NUMPAD8), MOD_KEYS_TYPING("KP_9", VK_NUMPAD9),
+	MOD_KEYS_TYPING("KP_Multiply", VK_MULTIPLY),
+	MOD_KEYS_TYPING("KP_Add", VK_ADD),
+	MOD_KEYS_TYPING("KP_Subtract", VK_SUBTRACT),
+	MOD_KEYS_TYPING("KP_Decimal", VK_DECIMAL),
+	MOD_KEYS_TYPING("KP_Divide", VK_DIVIDE)
 };
 
 // -----------------------------------------------------------------------

@@ -185,7 +185,7 @@ static int TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique
 
 		fprintf(f_out, "\n\x1b[1;31mSome far2l-s lost in space-time nearby:\x1b[39;22m\n");
 		for (size_t i = 0; i < instances.size(); ++i) {
-			fprintf(f_out, " \x1b[1;31m%lu\x1b[39;22m: %s\n", i + 1, instances[i].info.c_str());
+			fprintf(f_out, " \x1b[1;31m%lu\x1b[39;22m: %s\n", (unsigned long)(i + 1), instances[i].info.c_str());
 		}
 
 		fprintf(f_out, "\x1b[1;31mInput instance index to revive or empty string to spawn new far2l\x1b[39;22m\n");

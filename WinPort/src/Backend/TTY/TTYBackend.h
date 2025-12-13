@@ -176,7 +176,7 @@ protected:
 	virtual bool OnDeleteConsoleImage(const char *id);
 
 	// ITTYInputSpecialSequenceHandler
-	virtual void OnUsingExtension(char extension);
+	virtual bool OnUsingExtension(char extension);
 	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event);
 	virtual void OnFocusChange(bool focused);
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);

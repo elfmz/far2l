@@ -409,7 +409,11 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using Kitty extension\n");
 		_using_extension = 'k';
-		_handler->OnUsingExtension(_using_extension);
+		if (_handler->OnUsingExtension(_using_extension)) {
+			// Handler requested suppression (duplicate removal)
+			fprintf(stderr, "TTYParser: Extension requested event suppression. Dropping pending event.\n");
+			if (!_ir_pending.empty()) _ir_pending.pop_back();
+		}
 	}
 
 	return i+1;
@@ -465,7 +469,10 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
 		_using_extension = 'w';
-		_handler->OnUsingExtension(_using_extension);
+		if (_handler->OnUsingExtension(_using_extension)) {
+			fprintf(stderr, "TTYParser: Extension requested event suppression. Dropping pending event.\n");
+			if (!_ir_pending.empty()) _ir_pending.pop_back();
+		}
 	}
 	return n;
 }
@@ -629,13 +636,16 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 			_ir_pending.emplace_back(ir);
 		}
 
-		if (!_using_extension) {
-			fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
-			_using_extension = 'a';
-			_handler->OnUsingExtension(_using_extension);
+	if (!_using_extension) {
+		fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
+		_using_extension = 'a';
+		if (_handler->OnUsingExtension(_using_extension)) {
+			fprintf(stderr, "TTYParser: Extension requested event suppression. Dropping pending event.\n");
+			if (!_ir_pending.empty()) _ir_pending.pop_back();
 		}
-		_iterm_last_flags = flags;
-		return len;
+	}
+	_iterm_last_flags = flags;
+	return len;
 	}
 
 	wchar_t uni_char;
@@ -831,7 +841,10 @@ size_t TTYInputSequenceParser::TryParseAsITerm2EscapeSequence(const char *s, siz
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using Apple ITerm2 extension\n");
 		_using_extension = 'a';
-		_handler->OnUsingExtension(_using_extension);
+		if (_handler->OnUsingExtension(_using_extension)) {
+			fprintf(stderr, "TTYParser: Extension requested event suppression. Dropping pending event.\n");
+			if (!_ir_pending.empty()) _ir_pending.pop_back();
+		}
 	}
 	_iterm_last_flags = flags;
 	return len;

@@ -65,7 +65,7 @@ template <size_t N> using NChars2Key = NCharsMap<N, TTYInputKey>;
 
 struct ITTYInputSpecialSequenceHandler
 {
-	virtual void OnUsingExtension(char extension) = 0;
+	virtual bool OnUsingExtension(char extension) = 0;
 	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event) = 0;
 	virtual void OnFocusChange(bool focused) = 0;
 	virtual void OnFar2lEvent(StackSerializer &stk_ser) = 0;

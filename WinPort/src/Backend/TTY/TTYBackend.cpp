@@ -1125,12 +1125,26 @@ static void OnFar2lMouse(bool compact, StackSerializer &stk_ser)
 	}
 }
 
-void TTYBackend::OnUsingExtension(char extension)
+bool TTYBackend::OnUsingExtension(char extension)
 {
+	bool suppress_event = false;
 	if (_using_extension != extension) {
+		fprintf(stderr, "TTYBackend: Terminal extension '%c' detected.\n", extension);
 		_using_extension = extension;
 		BackendInfoChanged();
+		if (_wayland_shortcuts) {
+			// Check if we raced with a DBus injection
+			if (_wayland_shortcuts->IsRecentlyActive(500)) {
+				fprintf(stderr, "TTYBackend: DEDUPLICATION: Suppressing initial extension event due to recent Global Shortcut activity.\n");
+				suppress_event = true;
+			}
+
+			// If we switched to an advanced terminal protocol (Kitty 'k', Win32 'w', etc.),
+			// we don't need the DBus shortcuts anymore.
+			_wayland_shortcuts->SetPaused(extension != 0);
+		}
 	}
+	return suppress_event;
 }
 
 void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)

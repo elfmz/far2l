@@ -92,9 +92,17 @@ struct DBusLib {
 	const char* (*message_get_path)(DBusMessage*);
 
 	bool Load() {
+		fprintf(stderr, "[WaylandShortcuts] DBusLib::Load: Attempting to load libdbus-1...\n");
 		lib = dlopen("libdbus-1.so.3", RTLD_LAZY);
-		if (!lib) lib = dlopen("libdbus-1.so", RTLD_LAZY);
-		if (!lib) return false;
+		if (!lib) {
+			fprintf(stderr, "[WaylandShortcuts] dlopen('libdbus-1.so.3') failed: %s\n", dlerror());
+			lib = dlopen("libdbus-1.so", RTLD_LAZY);
+		}
+		if (!lib) {
+			fprintf(stderr, "[WaylandShortcuts] dlopen('libdbus-1.so') failed: %s\n", dlerror());
+			return false;
+		}
+		fprintf(stderr, "[WaylandShortcuts] DBusLib::Load: Success. Lib handle: %p\n", lib);
 
 		#define BIND(n) if (!(n = (decltype(n))dlsym(lib, "dbus_" #n))) return false;
 		BIND(error_init); BIND(error_free); BIND(bus_get_private);
@@ -238,12 +246,29 @@ WaylandGlobalShortcuts::WaylandGlobalShortcuts() {}
 WaylandGlobalShortcuts::~WaylandGlobalShortcuts() {
 	Stop();
 }
+
 void WaylandGlobalShortcuts::SetFocused(bool focused) {
 	_focused = focused;
 }
 
+void WaylandGlobalShortcuts::SetPaused(bool paused) {
+	if (_paused != paused) {
+		fprintf(stderr, "[WaylandShortcuts] State change: Paused = %s (Terminal extension detected)\n", paused ? "TRUE" : "FALSE");
+		_paused = paused;
+	}
+}
+
+bool WaylandGlobalShortcuts::IsRecentlyActive(uint32_t window_ms) {
+	auto now = std::chrono::steady_clock::now().time_since_epoch();
+	uint64_t now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+	uint64_t last = _last_activity_ts.load();
+	if (last == 0) return false;
+	return (now_ms - last) <= window_ms;
+}
+
 void WaylandGlobalShortcuts::Start() {
 	if (_running) return;
+	fprintf(stderr, "[WaylandShortcuts] Start() called\n");
 	if (!g_dbus.lib && !g_dbus.Load()) {
 		fprintf(stderr, "WaylandShortcuts: Failed to load libdbus-1\n");
 		return;
@@ -271,6 +296,7 @@ static void AppendDictEntry(DBusMessageIter* iter, const char* key, const char* 
 static std::string ExtractSessionHandleFromResponse(DBusMessage* msg) {
 	DBusMessageIter args, variant;
 	const char* path = nullptr;
+	fprintf(stderr, "[WaylandShortcuts] ExtractSessionHandleFromResponse: Parsing signal...\n");
 
 	// Signal: Response(u, a{sv})
 	if (g_dbus.message_iter_init(msg, &args) &&
@@ -278,10 +304,13 @@ static std::string ExtractSessionHandleFromResponse(DBusMessage* msg) {
 
 		uint32_t code = 0;
 		g_dbus.message_iter_get_basic(&args, &code);
+		fprintf(stderr, "[WaylandShortcuts] Response Code: %u\n", code);
 
 		if (code == 0 && // Success
 			g_dbus.message_iter_next(&args) &&
 			g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_ARRAY) {
+
+			fprintf(stderr, "[WaylandShortcuts] Iterating response dictionary...\n");
 
 			DBusMessageIter dict;
 			g_dbus.message_iter_recurse(&args, &dict);
@@ -290,6 +319,7 @@ static std::string ExtractSessionHandleFromResponse(DBusMessage* msg) {
 				g_dbus.message_iter_recurse(&dict, &entry);
 				const char* key = nullptr;
 				g_dbus.message_iter_get_basic(&entry, &key);
+				fprintf(stderr, "[WaylandShortcuts] Found Key: '%s'\n", key ? key : "(null)");
 
 				if (key && strcmp(key, "session_handle") == 0) {
 					g_dbus.message_iter_next(&entry);
@@ -308,15 +338,17 @@ static std::string ExtractSessionHandleFromResponse(DBusMessage* msg) {
 void WaylandGlobalShortcuts::WorkerThread() {
 	DBusError err;
 	g_dbus.error_init(&err);
+	fprintf(stderr, "[WaylandShortcuts] WorkerThread: Initializing DBus connection...\n");
 
 	DBusState state;
 	state.conn = g_dbus.bus_get_private(DBUS_BUS_SESSION, &err);
 
 	if (dbus_error_is_set(&err)) {
-		fprintf(stderr, "WaylandShortcuts: Bus Error: %s\n", err.message);
+		fprintf(stderr, "[WaylandShortcuts] Bus Error: Name='%s', Msg='%s'\n", err.name, err.message);
 		g_dbus.error_free(&err);
 		return;
 	}
+	fprintf(stderr, "[WaylandShortcuts] DBus connected successfully.\n");
 
 	_dbus = &state;
 
@@ -324,6 +356,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 	{
 		DBusMessage* msg = g_dbus.message_new_method_call("org.freedesktop.portal.Desktop",
 			"/org/freedesktop/portal/desktop", "org.freedesktop.portal.GlobalShortcuts", "CreateSession");
+		fprintf(stderr, "[WaylandShortcuts] Step 1: Sending CreateSession...\n");
 
 		DBusMessageIter args, array;
 		g_dbus.message_iter_init_append(msg, &args);
@@ -339,6 +372,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 			g_dbus.message_unref(msg);
 			g_dbus.pending_call_block(pending);
 			DBusMessage* reply = g_dbus.pending_call_steal_reply(pending);
+			fprintf(stderr, "[WaylandShortcuts] CreateSession reply received.\n");
 
 			if (reply) {
 				// Method returns (o) - the request object path
@@ -347,6 +381,11 @@ void WaylandGlobalShortcuts::WorkerThread() {
 					g_dbus.message_iter_get_arg_type(&r_iter) == DBUS_TYPE_OBJECT_PATH) {
 					g_dbus.message_iter_get_basic(&r_iter, &request_path);
 				}
+				else {
+					int type = g_dbus.message_iter_get_arg_type(&r_iter);
+					fprintf(stderr, "[WaylandShortcuts] DEBUG: Reply Arg Type: '%c' (Expected 'o'). Likely an error.\n", type);
+				}
+				fprintf(stderr, "[WaylandShortcuts] Request Object Path: %s\n", request_path ? request_path : "(null)");
 				// Keep reply alive while we use request_path string reference (or copy it)
 				// For safety/simplicity in this scoped block, we trust request_path points to reply internal buf.
 				// But we must subscribe before unref.
@@ -358,6 +397,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 						request_path);
 
 					g_dbus.bus_add_match(state.conn, match_rule, NULL);
+					fprintf(stderr, "[WaylandShortcuts] Match rule added: %s. Waiting for signal...\n", match_rule);
 					g_dbus.connection_flush(state.conn);
 
 					// Now wait for the signal
@@ -368,6 +408,9 @@ void WaylandGlobalShortcuts::WorkerThread() {
 							if (g_dbus.message_is_signal(sig, "org.freedesktop.portal.Request", "Response") &&
 								strcmp(g_dbus.message_get_path(sig), request_path) == 0) {
 								state.session_handle = ExtractSessionHandleFromResponse(sig);
+							}
+							else {
+								// fprintf(stderr, "[WaylandShortcuts] Ignored signal: %s\n", g_dbus.message_get_path(sig));
 							}
 							g_dbus.message_unref(sig);
 						}
@@ -383,6 +426,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 
 	if (state.session_handle.empty()) {
 		fprintf(stderr, "WaylandShortcuts: Failed to get session handle\n");
+		fprintf(stderr, "[WaylandShortcuts] CRITICAL: Session handle is empty. Aborting.\n");
 		g_dbus.connection_close(state.conn);
 		g_dbus.connection_unref(state.conn);
 		return;
@@ -392,6 +436,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 	{
 		DBusMessage* msg = g_dbus.message_new_method_call("org.freedesktop.portal.Desktop",
 			"/org/freedesktop/portal/desktop", "org.freedesktop.portal.GlobalShortcuts", "BindShortcuts");
+		fprintf(stderr, "[WaylandShortcuts] Step 2: Sending BindShortcuts (Handle: %s)...\n", state.session_handle.c_str());
 
 		DBusMessageIter args, shortcuts_arr, opts_arr;
 		g_dbus.message_iter_init_append(msg, &args);
@@ -432,35 +477,57 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		DBusMessage* msg = g_dbus.connection_pop_message(state.conn);
 		if (!msg) continue;
 
-		if (g_dbus.message_is_signal(msg, "org.freedesktop.portal.GlobalShortcuts", "Activated") && _focused) {
-			DBusMessageIter args;
-			if (g_dbus.message_iter_init(msg, &args) &&
-				g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_OBJECT_PATH) {
-				g_dbus.message_iter_next(&args); // Skip session handle
-				if (g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_STRING) {
-					const char* id = nullptr;
-					g_dbus.message_iter_get_basic(&args, &id);
-					if (id) {
-						for (const auto& s : g_shortcuts) {
-							if (strcmp(s.id, id) == 0) {
-								INPUT_RECORD ir = {};
-								ir.EventType = KEY_EVENT;
-								ir.Event.KeyEvent.bKeyDown = TRUE;
-								ir.Event.KeyEvent.wRepeatCount = 1;
-								ir.Event.KeyEvent.wVirtualKeyCode = s.vk;
-								ir.Event.KeyEvent.dwControlKeyState = s.mods;
-								if (g_winport_con_in) {
-									g_winport_con_in->Enqueue(&ir, 1);
-									ir.Event.KeyEvent.bKeyDown = FALSE;
-									g_winport_con_in->Enqueue(&ir, 1);
+		if (g_dbus.message_is_signal(msg, "org.freedesktop.portal.GlobalShortcuts", "Activated")) {
+			if (!_focused) {
+				fprintf(stderr, "[WaylandShortcuts] Ignored 'Activated' signal (Window not focused)\n");
+			} else if (_paused) {
+				fprintf(stderr, "[WaylandShortcuts] Ignored 'Activated' signal (Mechanism Paused)\n");
+			} else {
+				DBusMessageIter args;
+				if (g_dbus.message_iter_init(msg, &args) &&
+					g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_OBJECT_PATH) {
+					g_dbus.message_iter_next(&args); // Skip session handle
+					if (g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_STRING) {
+						const char* id = nullptr;
+						g_dbus.message_iter_get_basic(&args, &id);
+						if (id) {
+							fprintf(stderr, "[WaylandShortcuts] Activated ID: '%s'\n", id);
+							bool found = false;
+							for (const auto& s : g_shortcuts) {
+								if (strcmp(s.id, id) == 0) {
+									fprintf(stderr, "[WaylandShortcuts] Match! Injecting VK=0x%x Mods=0x%x\n", s.vk, s.mods);
+									found = true;
+									
+									auto now = std::chrono::steady_clock::now().time_since_epoch();
+									_last_activity_ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+
+									INPUT_RECORD ir = {};
+
+									ir.EventType = KEY_EVENT;
+									ir.Event.KeyEvent.bKeyDown = TRUE;
+									ir.Event.KeyEvent.wRepeatCount = 1;
+									ir.Event.KeyEvent.wVirtualKeyCode = s.vk;
+									ir.Event.KeyEvent.dwControlKeyState = s.mods;
+
+									if (g_winport_con_in) {
+										g_winport_con_in->Enqueue(&ir, 1);
+										ir.Event.KeyEvent.bKeyDown = FALSE;
+										g_winport_con_in->Enqueue(&ir, 1);
+									}
+									break;
 								}
-								break;
 							}
+							if (!found) {
+								fprintf(stderr, "[WaylandShortcuts] WARNING: ID '%s' not found in internal table.\n", id);
+							}
+						} else {
+							fprintf(stderr, "[WaylandShortcuts] Activated signal has null ID\n");
 						}
 					}
 				}
 			}
 		}
+
 		g_dbus.message_unref(msg);
 	}
 

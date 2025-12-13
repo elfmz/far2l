@@ -51,7 +51,7 @@ public:
 
 	bool MatchImageFile(const char *name) const;
 	bool MatchVideoFile(const char *name) const;
-	bool MatchFile(const char *name) const { return MatchImageFile(name) || MatchVideoFile(name); } 
+	bool MatchFile(const char *name) const { return MatchImageFile(name) || MatchVideoFile(name); }
 
 	std::string ExtraCommandsMenu();
 };

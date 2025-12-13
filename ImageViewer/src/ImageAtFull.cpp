@@ -212,9 +212,14 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 					break;
 				case KEY_F7: case 'h': case 'H': iv->MirrorH(); break;
 				case KEY_F8: case 'v': case 'V': iv->MirrorV(); break;
-				case KEY_F9: case 'f': case 'F': 
+				case KEY_F5: case 'f': case 'F':
 					iv->full_size = !iv->full_size;
 					g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);
+					break;
+				case KEY_F9:
+					WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
+					g_settings.ConfigurationDialog();
+					iv->ForceShow();
 					break;
 				case KEY_F1:
 					WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);

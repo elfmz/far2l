@@ -125,8 +125,18 @@ bool Settings::ExtraCommandsMenuInternal(Commands &commands, std::string *select
 		} else if (break_code == 0 || break_code == 1) {
 			const wchar_t *initial_name = (break_code == 0) ? commands[selected_idx].first.c_str() : NULL;
 			const wchar_t *initial_line = (break_code == 0) ? commands[selected_idx].second.c_str() : NULL;
-			if (g_far.InputBox(Msg(M_INPUT_CMDNAME_TITLE), Msg(M_INPUT_CMDNAME_PROMPT), NULL, initial_name, command_name, ARRAYSIZE(command_name) - 1, NULL, 0)
-			 && g_far.InputBox(Msg(M_INPUT_CMDLINE_TITLE), Msg(M_INPUT_CMDLINE_PROMPT), NULL, initial_line, command_line, ARRAYSIZE(command_line) - 1, NULL, 0)) {
+			std::wstring help_topic = g_far.ModuleName;
+			std::string::size_type help_topic_n = help_topic.rfind(LGOOD_SLASH);
+			if (help_topic_n != std::string::npos) {
+				help_topic = L'<' + help_topic.substr(0, help_topic_n + 1) + L'>';
+				help_topic += L"ExtraCommands";
+			}
+			if (g_far.InputBox(Msg(M_INPUT_CMDNAME_TITLE), Msg(M_INPUT_CMDNAME_PROMPT),
+								NULL, initial_name, command_name, ARRAYSIZE(command_name) - 1,
+								help_topic_n != std::string::npos ? help_topic.c_str() : NULL, 0)
+			 && g_far.InputBox(Msg(M_INPUT_CMDLINE_TITLE), Msg(M_INPUT_CMDLINE_PROMPT),
+								NULL, initial_line, command_line, ARRAYSIZE(command_line) - 1,
+								help_topic_n != std::string::npos ? help_topic.c_str() : NULL, 0)) {
 				std::pair<std::wstring, std::wstring> command(command_name, command_line);
 				if (break_code == 0) {
 					commands[selected_idx] = command;

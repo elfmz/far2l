@@ -14,9 +14,9 @@
 "Input command line"
 
 "Navigate: PGUP PGDN HOME"
-"Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F9"
+"Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F5"
 "Selection: SPACE BS INS"
-"F4 | ENTER | ESC"
+"F4 | F9 | ENTER | ESC"
 
 "Respect EXIF o&rientation info"
 "Open by &Enter on file"

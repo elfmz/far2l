@@ -426,13 +426,12 @@ void TreeList::Update(int Mode)
 
 			if (apiGetFileAttributes(CurPtr->strName) == INVALID_FILE_ATTRIBUTES) {
 				DelTreeName(CurPtr->strName);
+				Show();
 				continue;
 			}
 
 			break;
 		}
-
-		Show();
 	}
 	else if (!RetFromReadTree) {
 		Show();

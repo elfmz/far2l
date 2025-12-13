@@ -392,6 +392,58 @@ void WaylandGlobalShortcuts::WorkerThread() {
 
 	_dbus = &state;
 
+	// 0. Explicit Activation (Try to force start the portal)
+	{
+		fprintf(stderr, "[WaylandShortcuts] Step 0: Explicitly starting org.freedesktop.portal.Desktop...\n");
+		DBusMessage* msg = g_dbus.message_new_method_call("org.freedesktop.DBus",
+			"/org/freedesktop/DBus", "org.freedesktop.DBus", "StartServiceByName");
+
+		DBusMessageIter args;
+		g_dbus.message_iter_init_append(msg, &args);
+		const char* name = "org.freedesktop.portal.Desktop";
+		uint32_t flags = 0;
+		g_dbus.message_iter_append_basic(&args, DBUS_TYPE_STRING, &name);
+		g_dbus.message_iter_append_basic(&args, DBUS_TYPE_UINT32, &flags);
+
+		DBusPendingCall* pending;
+		if (g_dbus.connection_send_with_reply(state.conn, msg, &pending, 2000)) {
+			g_dbus.connection_flush(state.conn);
+			g_dbus.message_unref(msg);
+			g_dbus.pending_call_block(pending);
+			DBusMessage* reply = g_dbus.pending_call_steal_reply(pending);
+
+			if (reply) {
+				int msg_type = g_dbus.message_get_type(reply);
+				if (msg_type == DBUS_MESSAGE_TYPE_ERROR) {
+					const char* err_name = g_dbus.message_get_error_name(reply);
+					const char* err_msg = "Unknown error";
+					DBusMessageIter r_iter;
+					if (g_dbus.message_iter_init(reply, &r_iter) &&
+						g_dbus.message_iter_get_arg_type(&r_iter) == DBUS_TYPE_STRING) {
+						g_dbus.message_iter_get_basic(&r_iter, &err_msg);
+					}
+					fprintf(stderr, "[WaylandShortcuts] StartServiceByName FAILED: %s - %s\n", err_name, err_msg);
+				} else {
+					uint32_t ret = 0;
+					DBusMessageIter r_iter;
+					if (g_dbus.message_iter_init(reply, &r_iter) &&
+						g_dbus.message_iter_get_arg_type(&r_iter) == DBUS_TYPE_UINT32) {
+						g_dbus.message_iter_get_basic(&r_iter, &ret);
+						fprintf(stderr, "[WaylandShortcuts] StartServiceByName SUCCESS. Ret: %u (1=started, 2=already running)\n", ret);
+					} else {
+						fprintf(stderr, "[WaylandShortcuts] StartServiceByName returned OK but weird signature.\n");
+					}
+				}
+				g_dbus.message_unref(reply);
+			} else {
+				fprintf(stderr, "[WaylandShortcuts] StartServiceByName timed out.\n");
+			}
+			g_dbus.pending_call_unref(pending);
+		} else {
+			g_dbus.message_unref(msg);
+		}
+	}
+
 	// 1. CreateSession (Request/Response pattern)
 	// DEBUG: Check who is on the bus
 	{

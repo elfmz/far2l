@@ -2132,8 +2132,6 @@ int Editor::ProcessKey(FarKey Key)
 			}
 			else
 			{
-				CurPos = CurLine->RealPosToCell(CurPos);
-
 				if (!SelStart) {
 					CurLine->Select(-1, 0);
 				} else {

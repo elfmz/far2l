@@ -37,21 +37,21 @@
 XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
 {
 	_platform_settings_definitions = {
-		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true },
-		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true },
-		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false },
-		{ "UseGlobRules", MUseGlobRules, &XDGBasedAppProvider::_use_glob_rules, false },
-		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false },
-		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true },
-		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true },
-		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true },
-		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true },
-		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true },
-		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true },
-		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false },
-		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false },
-		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false },
-		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false }
+		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true, true },
+		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true, true },
+		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false, true },
+		{ "UseGlobRules", MUseGlobRules, &XDGBasedAppProvider::_use_glob_rules, false, true },
+		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false, true },
+		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true, true },
+		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true, true },
+		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true, true },
+		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true, true },
+		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true, true },
+		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true, true },
+		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false, true },
+		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false, true },
+		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false, true },
+		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false, false }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
@@ -94,7 +94,8 @@ std::vector<ProviderSetting> XDGBasedAppProvider::GetPlatformSettings()
 			is_disabled = !IsExecutableAvailable(tool_name);
 		}
 
-		settings.push_back({StrMB2Wide(def.key), m_GetMsg(def.display_name_id), this->*(def.member_variable), is_disabled});
+		settings.push_back({StrMB2Wide(def.key), m_GetMsg(def.display_name_id), this->*(def.member_variable),
+							is_disabled, def.affects_candidates});
 	}
 	return settings;
 }
@@ -2265,7 +2266,7 @@ bool XDGBasedAppProvider::IsTraversableDirectory(const std::string& dirpath)
 
 
 // Checks if a command exists and is runnable.
-// If the command contains a slash, it's checked directly. Otherwise, it's searched in $PATH.
+// If the command starts with a slash, it's checked directly. Otherwise, it's searched in $PATH.
 bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 {
 	if (command.empty()) {
@@ -2277,17 +2278,15 @@ bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 		return stat(p.c_str(), &st) == 0 && S_ISREG(st.st_mode) && access(p.c_str(), X_OK) == 0;
 	};
 
-	if (command.find('/') != std::string::npos) {
+	if (command[0] == '/') {
 		return check(command);
 	}
 
-	if (const char* env_path = getenv("PATH")) {
-		std::istringstream ss(env_path);
-		std::string dir;
-		while (std::getline(ss, dir, ':')) {
-			if (!dir.empty() && check(dir + '/' + command)) {
-				return true;
-			}
+	auto dirs = SplitString(GetEnv("PATH"), ':');
+	for (const auto& dir : dirs) {
+		if (dir.empty()) continue;
+		if (check(dir + '/' + command)) {
+			return true;
 		}
 	}
 

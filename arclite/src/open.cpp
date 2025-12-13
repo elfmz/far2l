@@ -20,9 +20,11 @@
 #include <linux/fs.h>
 #elif defined(__APPLE__)
 #include <sys/disk.h>
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
+#elif defined(__FreeBSD__)
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#elif defined(__DragonFly__)
+#include <sys/diskslice.h>
 #elif defined(__HAIKU__)
 #include <Drivers.h>
 #endif

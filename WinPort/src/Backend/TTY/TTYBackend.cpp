@@ -660,7 +660,7 @@ void TTYBackend::DispatchFar2lInteract(TTYOutput &tty_out)
 			if (_far2l_interacts_sent.size() >= 0xff) {
 				fprintf(stderr,
 					"TTYBackend::DispatchFar2lInteract: too many sent interacts - %ld\n",
-					_far2l_interacts_sent.size());
+					(unsigned long)_far2l_interacts_sent.size());
 				i->stk_ser.Clear();
 				i->evnt.Signal();
 				return;

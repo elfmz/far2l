@@ -29,7 +29,7 @@ $^#Configuration Dialog (F9)#
 
  #-# Use external terminal for console apps
    If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal.
-   Note: when multiple files are selected and this option is unchecked, the plugin applies a "smart" filter. Because far2l's built-in terminal cannot manage multiple concurrent instances, the plugin will hide those terminal applications that require a separate launch for each file. Applications that can accept the entire list of files in a single command will remain in the list.
+   Note: When using the built-in terminal with multiple files selected, the plugin applies a "smart" filter. It hides terminal applications that require a separate process for each file, while those that can handle all files in a single command remain in the list.
 
  #-# Don't wait for command completion
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close, allowing you to see its output (stdout/stderr) in the console. This setting does not affect terminal applications. It is also ignored if the application requires a separate launch for each selected file; in this case, asynchronous mode is forced to prevent interface blocking.
@@ -38,7 +38,7 @@ $^#Configuration Dialog (F9)#
    When this option is enabled the selection on the panel is cleared after exiting the menu if any menu command has been executed.
 
  #-# Confirm opening if file count exceeds...
-   When this option is enabled, the plugin will prompt for confirmation before launching an application if the number of selected files exceeds the threshold specified in the adjacent input field. This acts as a safeguard against accidentally launching a process with a large number of files, which could be resource-intensive or slow. If you decline the confirmation, you will be returned to the previous screen (either the application selection menu or the information dialog), allowing you to reconsider your action.
+   If the number of selected files exceeds the specified threshold, the plugin shows a warning prompt. This prevents accidentally launching a resource-intensive operation. If you decline, you are returned — either to the application selection menu or to the Details dialog — to review your selection.
 
 
  #2. PLATFORM-SPECIFIC SETTINGS#

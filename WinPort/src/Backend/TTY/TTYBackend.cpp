@@ -29,6 +29,7 @@
 #include "../FSClipboardBackend.h"
 #include "../NotifySh.h"
 #include "base64.h"
+#include "WaylandGlobalShortcuts.cpp" // Include impl to fix linkage if not compiled separately
 
 
 #define PROBE_IMAGE_ID "tty-backend-image-probe"
@@ -131,6 +132,11 @@ TTYBackend::~TTYBackend()
 
 	CheckedCloseFDPair(_kickass);
 	DetachNotifyPipe();
+
+	if (_wayland_shortcuts) {
+		delete _wayland_shortcuts;
+		_wayland_shortcuts = nullptr;
+	}
 }
 
 static unsigned short GetWinSizeEnv(const char *env, unsigned short def)
@@ -236,6 +242,10 @@ void TTYBackend::ReaderThread()
 
 				// disable xi on Wayland as it not work there anyway and also causes delays
 				_ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
+			}
+			if (UnderWayland() && !_wayland_shortcuts) {
+				_wayland_shortcuts = new WaylandGlobalShortcuts();
+				_wayland_shortcuts->Start();
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {

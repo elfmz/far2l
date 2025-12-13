@@ -13,6 +13,7 @@
 #include "IFar2lInteractor.h"
 #include "TTYXGlue.h"
 #include "OSC52ClipboardBackend.h"
+#include "WaylandGlobalShortcuts.h"
 #include <map>
 #include <set>
 #include <atomic>
@@ -122,6 +123,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::string _osc52clip;
 
 	ClipboardBackendSetter _clipboard_backend_setter;
+	WaylandGlobalShortcuts *_wayland_shortcuts = nullptr;
 
 	void GetWinSize(struct winsize &w);
 	void ChooseSimpleClipboardBackend();

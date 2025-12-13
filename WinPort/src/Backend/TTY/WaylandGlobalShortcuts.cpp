@@ -24,6 +24,8 @@
 #define DBUS_TYPE_STRUCT 'r'
 #define DBUS_TYPE_UINT32 'u'
 #define DBUS_TYPE_INVALID 0
+#define DBUS_MESSAGE_TYPE_METHOD_RETURN 2
+#define DBUS_MESSAGE_TYPE_ERROR 3
 
 typedef struct DBusConnection DBusConnection;
 typedef struct DBusMessage DBusMessage;
@@ -91,6 +93,8 @@ struct DBusLib {
 	void (*bus_add_match)(DBusConnection*, const char*, DBusError*);
 	const char* (*message_get_path)(DBusMessage*);
 	bool (*threads_init_default)(void);
+	int (*message_get_type)(DBusMessage*);
+	const char* (*message_get_error_name)(DBusMessage*);
 
 	bool Load() {
 		fprintf(stderr, "[WaylandShortcuts] DBusLib::Load: Attempting to load libdbus-1...\n");
@@ -122,6 +126,8 @@ struct DBusLib {
 		BIND(bus_add_match);
 		BIND(message_get_path);
 		BIND(threads_init_default);
+		BIND(message_get_type);
+		BIND(message_get_error_name);
 		#undef BIND
 
 		if (threads_init_default) {
@@ -390,7 +396,11 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		DBusMessageIter args, array;
 		g_dbus.message_iter_init_append(msg, &args);
 		g_dbus.message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &array);
-		AppendDictEntry(&array, "session_handle_token", "far2l_session");
+
+		char token_buf[64];
+		snprintf(token_buf, sizeof(token_buf), "far2l_session_%d", getpid());
+		AppendDictEntry(&array, "session_handle_token", token_buf);
+
 		g_dbus.message_iter_close_container(&args, &array);
 
 		DBusPendingCall* pending;
@@ -405,17 +415,29 @@ void WaylandGlobalShortcuts::WorkerThread() {
 			fprintf(stderr, "[WaylandShortcuts] CreateSession reply received.\n");
 
 			if (reply) {
-				// Method returns (o) - the request object path
-				DBusMessageIter r_iter;
-				if (g_dbus.message_iter_init(reply, &r_iter) &&
-					g_dbus.message_iter_get_arg_type(&r_iter) == DBUS_TYPE_OBJECT_PATH) {
-					g_dbus.message_iter_get_basic(&r_iter, &request_path);
+				int msg_type = g_dbus.message_get_type(reply);
+				if (msg_type == DBUS_MESSAGE_TYPE_ERROR) {
+					const char* err_name = g_dbus.message_get_error_name(reply);
+					const char* err_msg = "Unknown error";
+					DBusMessageIter r_iter;
+					if (g_dbus.message_iter_init(reply, &r_iter) &&
+						g_dbus.message_iter_get_arg_type(&r_iter) == DBUS_TYPE_STRING) {
+						g_dbus.message_iter_get_basic(&r_iter, &err_msg);
+					}
+					fprintf(stderr, "[WaylandShortcuts] DBUS ERROR: %s - %s\n", err_name, err_msg);
 				}
-				else {
-					int type = g_dbus.message_iter_get_arg_type(&r_iter);
-					fprintf(stderr, "[WaylandShortcuts] DEBUG: Reply Arg Type: '%c' (Expected 'o'). Likely an error.\n", type);
+				else if (msg_type == DBUS_MESSAGE_TYPE_METHOD_RETURN) {
+					DBusMessageIter r_iter;
+					if (g_dbus.message_iter_init(reply, &r_iter) &&
+						g_dbus.message_iter_get_arg_type(&r_iter) == DBUS_TYPE_OBJECT_PATH) {
+						g_dbus.message_iter_get_basic(&r_iter, &request_path);
+						fprintf(stderr, "[WaylandShortcuts] Request Object Path: %s\n", request_path);
+					} else {
+						fprintf(stderr, "[WaylandShortcuts] ERROR: Unexpected reply signature.\n");
+					}
+				} else {
+					fprintf(stderr, "[WaylandShortcuts] Unexpected message type: %d\n", msg_type);
 				}
-				fprintf(stderr, "[WaylandShortcuts] Request Object Path: %s\n", request_path ? request_path : "(null)");
 				// Keep reply alive while we use request_path string reference (or copy it)
 				// For safety/simplicity in this scoped block, we trust request_path points to reply internal buf.
 				// But we must subscribe before unref.

@@ -90,6 +90,7 @@ struct DBusLib {
 	bool (*message_is_signal)(DBusMessage*, const char*, const char*);
 	void (*bus_add_match)(DBusConnection*, const char*, DBusError*);
 	const char* (*message_get_path)(DBusMessage*);
+	bool (*threads_init_default)(void);
 
 	bool Load() {
 		fprintf(stderr, "[WaylandShortcuts] DBusLib::Load: Attempting to load libdbus-1...\n");
@@ -120,7 +121,15 @@ struct DBusLib {
 		BIND(message_is_signal);
 		BIND(bus_add_match);
 		BIND(message_get_path);
+		BIND(threads_init_default);
 		#undef BIND
+
+		if (threads_init_default) {
+			fprintf(stderr, "[WaylandShortcuts] Initializing DBus threads...\n");
+			if (!threads_init_default()) {
+				fprintf(stderr, "[WaylandShortcuts] WARNING: dbus_threads_init_default failed!\n");
+			}
+		}
 		return true;
 	}
 
@@ -336,11 +345,30 @@ static std::string ExtractSessionHandleFromResponse(DBusMessage* msg) {
 }
 
 void WaylandGlobalShortcuts::WorkerThread() {
+	// Debug environment
+	const char* xdg_session = getenv("XDG_SESSION_TYPE");
+	const char* w_display = getenv("WAYLAND_DISPLAY");
+	const char* dbus_addr = getenv("DBUS_SESSION_BUS_ADDRESS");
+
+	fprintf(stderr, "[WaylandShortcuts] Environment:\n");
+	fprintf(stderr, "  XDG_SESSION_TYPE=%s\n", xdg_session ? xdg_session : "(null)");
+	fprintf(stderr, "  WAYLAND_DISPLAY=%s\n", w_display ? w_display : "(null)");
+	fprintf(stderr, "  DBUS_SESSION_BUS_ADDRESS=%s\n", dbus_addr ? dbus_addr : "(null)");
+
+	if (!dbus_addr) {
+		fprintf(stderr, "[WaylandShortcuts] ERROR: DBUS_SESSION_BUS_ADDRESS is missing.\n");
+		fprintf(stderr, "[WaylandShortcuts] Aborting to prevent libdbus autolaunch hang.\n");
+		return;
+	}
+
 	DBusError err;
 	g_dbus.error_init(&err);
 	fprintf(stderr, "[WaylandShortcuts] WorkerThread: Initializing DBus connection...\n");
+	fflush(stderr);
 
 	DBusState state;
+	fprintf(stderr, "[WaylandShortcuts] Calling bus_get_private...\n");
+	fflush(stderr);
 	state.conn = g_dbus.bus_get_private(DBUS_BUS_SESSION, &err);
 
 	if (dbus_error_is_set(&err)) {
@@ -349,6 +377,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		return;
 	}
 	fprintf(stderr, "[WaylandShortcuts] DBus connected successfully.\n");
+	fflush(stderr);
 
 	_dbus = &state;
 
@@ -367,7 +396,8 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		DBusPendingCall* pending;
 		const char* request_path = nullptr;
 
-		if (g_dbus.connection_send_with_reply(state.conn, msg, &pending, -1)) {
+		// Use 2000ms timeout. If portal is broken/missing (Cinnamon), it might hang forever on -1.
+		if (g_dbus.connection_send_with_reply(state.conn, msg, &pending, 2000)) {
 			g_dbus.connection_flush(state.conn);
 			g_dbus.message_unref(msg);
 			g_dbus.pending_call_block(pending);
@@ -465,8 +495,8 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		g_dbus.message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &opts_arr);
 		g_dbus.message_iter_close_container(&args, &opts_arr);
 
-		// Asynchronous send is fine, we just need to start loop
-		if (g_dbus.connection_send_with_reply(state.conn, msg, NULL, -1)) {
+		// Asynchronous send is fine, we just need to start loop. 2000ms timeout.
+		if (g_dbus.connection_send_with_reply(state.conn, msg, NULL, 2000)) {
 			g_dbus.connection_flush(state.conn);
 		}
 		g_dbus.message_unref(msg);
@@ -497,7 +527,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 								if (strcmp(s.id, id) == 0) {
 									fprintf(stderr, "[WaylandShortcuts] Match! Injecting VK=0x%x Mods=0x%x\n", s.vk, s.mods);
 									found = true;
-									
+
 									auto now = std::chrono::steady_clock::now().time_since_epoch();
 									_last_activity_ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
 

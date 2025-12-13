@@ -67,6 +67,7 @@ struct DBusLib {
 	void (*error_init)(DBusError*);
 	void (*error_free)(DBusError*);
 	DBusConnection* (*bus_get_private)(int, DBusError*);
+	DBusConnection* (*bus_get)(int, DBusError*);
 	void (*connection_close)(DBusConnection*);
 	void (*connection_unref)(DBusConnection*);
 	void (*connection_flush)(DBusConnection*);
@@ -112,6 +113,7 @@ struct DBusLib {
 
 		#define BIND(n) if (!(n = (decltype(n))dlsym(lib, "dbus_" #n))) return false;
 		BIND(error_init); BIND(error_free); BIND(bus_get_private);
+		BIND(bus_get);
 		BIND(connection_close); BIND(connection_unref); BIND(connection_flush);
 		BIND(connection_read_write_dispatch);
 		BIND(message_new_method_call); BIND(message_unref);
@@ -129,6 +131,7 @@ struct DBusLib {
 		BIND(threads_init_default);
 		BIND(message_get_type);
 		BIND(message_get_error_name);
+		BIND(message_set_auto_start);
 		BIND(message_set_auto_start);
 		#undef BIND
 
@@ -357,27 +360,27 @@ void WaylandGlobalShortcuts::WorkerThread() {
 	const char* xdg_session = getenv("XDG_SESSION_TYPE");
 	const char* w_display = getenv("WAYLAND_DISPLAY");
 	const char* dbus_addr = getenv("DBUS_SESSION_BUS_ADDRESS");
+	const char* xdg_data = getenv("XDG_DATA_DIRS");
 
 	fprintf(stderr, "[WaylandShortcuts] Environment:\n");
 	fprintf(stderr, "  XDG_SESSION_TYPE=%s\n", xdg_session ? xdg_session : "(null)");
 	fprintf(stderr, "  WAYLAND_DISPLAY=%s\n", w_display ? w_display : "(null)");
 	fprintf(stderr, "  DBUS_SESSION_BUS_ADDRESS=%s\n", dbus_addr ? dbus_addr : "(null)");
+	fprintf(stderr, "  XDG_DATA_DIRS=%s\n", xdg_data ? xdg_data : "(null)");
 
 	if (!dbus_addr) {
 		fprintf(stderr, "[WaylandShortcuts] ERROR: DBUS_SESSION_BUS_ADDRESS is missing.\n");
-		fprintf(stderr, "[WaylandShortcuts] Aborting to prevent libdbus autolaunch hang.\n");
 		return;
 	}
 
 	DBusError err;
 	g_dbus.error_init(&err);
-	fprintf(stderr, "[WaylandShortcuts] WorkerThread: Initializing DBus connection...\n");
+	fprintf(stderr, "[WaylandShortcuts] WorkerThread: Initializing DBus connection (Shared)...\n");
 	fflush(stderr);
 
 	DBusState state;
-	fprintf(stderr, "[WaylandShortcuts] Calling bus_get_private...\n");
-	fflush(stderr);
-	state.conn = g_dbus.bus_get_private(DBUS_BUS_SESSION, &err);
+	// Use shared connection (like Qt/OBS does)
+	state.conn = g_dbus.bus_get(DBUS_BUS_SESSION, &err);
 
 	if (dbus_error_is_set(&err)) {
 		fprintf(stderr, "[WaylandShortcuts] Bus Error: Name='%s', Msg='%s'\n", err.name, err.message);
@@ -525,7 +528,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 	if (state.session_handle.empty()) {
 		fprintf(stderr, "WaylandShortcuts: Failed to get session handle\n");
 		fprintf(stderr, "[WaylandShortcuts] CRITICAL: Session handle is empty. Aborting.\n");
-		g_dbus.connection_close(state.conn);
+		// Shared connection must not be closed
 		g_dbus.connection_unref(state.conn);
 		return;
 	}
@@ -629,6 +632,6 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		g_dbus.message_unref(msg);
 	}
 
-	g_dbus.connection_close(state.conn);
+	// Shared connection must not be closed
 	g_dbus.connection_unref(state.conn);
 }

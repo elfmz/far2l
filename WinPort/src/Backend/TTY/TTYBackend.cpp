@@ -246,6 +246,7 @@ void TTYBackend::ReaderThread()
 			if (UnderWayland() && !_wayland_shortcuts) {
 				_wayland_shortcuts = new WaylandGlobalShortcuts();
 				_wayland_shortcuts->Start();
+				_wayland_shortcuts->SetFocused(_focused);
 			}
 			if (_ttyx) {
 				if (!_ext_clipboard) {
@@ -1165,6 +1166,9 @@ void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 void TTYBackend::OnFocusChange(bool focused)
 {
 	fprintf(stderr, "OnFocusChange: %u\n", (unsigned)!!focused);
+	if (_wayland_shortcuts) {
+		_wayland_shortcuts->SetFocused(focused);
+	}
 	_focused = focused;
 	INPUT_RECORD ir = {};
 	ir.EventType = FOCUS_EVENT;

@@ -238,6 +238,9 @@ WaylandGlobalShortcuts::WaylandGlobalShortcuts() {}
 WaylandGlobalShortcuts::~WaylandGlobalShortcuts() {
 	Stop();
 }
+void WaylandGlobalShortcuts::SetFocused(bool focused) {
+	_focused = focused;
+}
 
 void WaylandGlobalShortcuts::Start() {
 	if (_running) return;
@@ -429,7 +432,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 		DBusMessage* msg = g_dbus.connection_pop_message(state.conn);
 		if (!msg) continue;
 
-		if (g_dbus.message_is_signal(msg, "org.freedesktop.portal.GlobalShortcuts", "Activated")) {
+		if (g_dbus.message_is_signal(msg, "org.freedesktop.portal.GlobalShortcuts", "Activated") && _focused) {
 			DBusMessageIter args;
 			if (g_dbus.message_iter_init(msg, &args) &&
 				g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_OBJECT_PATH) {

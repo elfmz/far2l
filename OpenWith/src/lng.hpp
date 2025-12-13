@@ -40,7 +40,7 @@ enum LanguageID
 
 	MPathname,
 	MFilesSelected,
-	MMimeType,
+	MMimeProfile,
 	MLaunchCommand,
 	MClose,
 	MLaunch,

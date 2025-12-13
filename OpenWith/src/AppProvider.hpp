@@ -14,6 +14,7 @@ struct ProviderSetting
 	std::wstring display_name;
 	bool value;
 	bool disabled = false; // true if the setting should be grayed out in the UI
+	bool affects_candidates = true;  // true if changing this setting affects the contents or order of the candidate list
 };
 
 

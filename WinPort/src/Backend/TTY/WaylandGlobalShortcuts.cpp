@@ -95,6 +95,7 @@ struct DBusLib {
 	bool (*threads_init_default)(void);
 	int (*message_get_type)(DBusMessage*);
 	const char* (*message_get_error_name)(DBusMessage*);
+	void (*message_set_auto_start)(DBusMessage*, int);
 
 	bool Load() {
 		fprintf(stderr, "[WaylandShortcuts] DBusLib::Load: Attempting to load libdbus-1...\n");
@@ -128,6 +129,7 @@ struct DBusLib {
 		BIND(threads_init_default);
 		BIND(message_get_type);
 		BIND(message_get_error_name);
+		BIND(message_set_auto_start);
 		#undef BIND
 
 		if (threads_init_default) {
@@ -388,9 +390,53 @@ void WaylandGlobalShortcuts::WorkerThread() {
 	_dbus = &state;
 
 	// 1. CreateSession (Request/Response pattern)
+	// DEBUG: Check who is on the bus
+	{
+		fprintf(stderr, "[WaylandShortcuts] DEBUG: Listing Bus Names...\n");
+		DBusMessage* msg = g_dbus.message_new_method_call("org.freedesktop.DBus",
+			"/org/freedesktop/DBus", "org.freedesktop.DBus", "ListNames");
+
+		DBusPendingCall* pending;
+		if (g_dbus.connection_send_with_reply(state.conn, msg, &pending, 2000)) {
+			g_dbus.connection_flush(state.conn);
+			g_dbus.message_unref(msg);
+			g_dbus.pending_call_block(pending);
+			DBusMessage* reply = g_dbus.pending_call_steal_reply(pending);
+			if (reply) {
+				DBusMessageIter args, arr;
+				if (g_dbus.message_iter_init(reply, &args) &&
+					g_dbus.message_iter_get_arg_type(&args) == DBUS_TYPE_ARRAY) {
+
+					g_dbus.message_iter_recurse(&args, &arr);
+					int count = 0;
+					while (g_dbus.message_iter_get_arg_type(&arr) == DBUS_TYPE_STRING) {
+						const char* name = nullptr;
+						g_dbus.message_iter_get_basic(&arr, &name);
+						// Print only first few and portal-related
+						if (count < 5 || (name && strstr(name, "portal"))) {
+							fprintf(stderr, "[WaylandShortcuts] Bus Name: %s\n", name);
+						}
+						count++;
+						g_dbus.message_iter_next(&arr);
+					}
+					fprintf(stderr, "[WaylandShortcuts] Total Bus Names: %d\n", count);
+				}
+				g_dbus.message_unref(reply);
+			} else {
+				fprintf(stderr, "[WaylandShortcuts] ListNames failed (NULL reply)\n");
+			}
+			g_dbus.pending_call_unref(pending);
+		} else {
+			g_dbus.message_unref(msg);
+			fprintf(stderr, "[WaylandShortcuts] Failed to send ListNames\n");
+		}
+	}
 	{
 		DBusMessage* msg = g_dbus.message_new_method_call("org.freedesktop.portal.Desktop",
 			"/org/freedesktop/portal/desktop", "org.freedesktop.portal.GlobalShortcuts", "CreateSession");
+		if (g_dbus.message_set_auto_start) {
+			g_dbus.message_set_auto_start(msg, 1);
+		}
 		fprintf(stderr, "[WaylandShortcuts] Step 1: Sending CreateSession...\n");
 
 		DBusMessageIter args, array;

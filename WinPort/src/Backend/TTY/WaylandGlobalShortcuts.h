@@ -25,6 +25,8 @@ private:
 	std::atomic<bool> _focused{ true };
 	std::atomic<bool> _paused{ false };
 	std::atomic<uint64_t> _last_activity_ts{ 0 };
-	struct DBusState;
-	DBusState* _dbus = nullptr;
+
+	int _pipe_fd = -1;
+	pid_t _child_pid = -1;
+	std::string _script_path;
 };

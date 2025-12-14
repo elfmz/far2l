@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <exception>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 
 #ifdef __linux__
 # include <termios.h>
@@ -29,8 +30,6 @@
 #include "../FSClipboardBackend.h"
 #include "../NotifySh.h"
 #include "base64.h"
-#include "WaylandGlobalShortcuts.cpp" // Include impl to fix linkage if not compiled separately
-
 
 #define PROBE_IMAGE_ID "tty-backend-image-probe"
 

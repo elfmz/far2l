@@ -71,20 +71,24 @@ def on_session_response(response, results):
     bind_token = f"far2l_bind_{os.getpid()}"
     bind_options = {'handle_token': bind_token}
 
-    bind_request_path = iface.BindShortcuts(
-        session_handle,
-        shortcuts,
-        "", # parent_window
-        bind_options
-    )
+    # Forcing a parent window handle, even a dummy one, can help the portal
+    # decide to show the dialog instead of silently failing.
+    parent_window = ""
 
-    print(f"LOG:BindShortcuts request path: {bind_request_path}", flush=True)
-    bus.add_signal_receiver(
-        on_bind_response,
-        dbus_interface='org.freedesktop.portal.Request',
-        signal_name='Response',
-        path=bind_request_path
-    )
+    try:
+        print("LOG:Attempting synchronous BindShortcuts call...", flush=True)
+        # Synchronous call with default timeout
+        iface.BindShortcuts(
+            session_handle,
+            shortcuts,
+            parent_window,
+            bind_options
+        )
+        # If no exception, it was acknowledged. The user dialog is now the blocking part.
+        print("LOG:BindShortcuts call acknowledged. Check for system dialog.", flush=True)
+    except dbus.exceptions.DBusException as e:
+        print(f"LOG:BindShortcuts FAILED with DBusException: {e}", file=sys.stderr, flush=True)
+        sys.exit(1)
 
     bus.add_signal_receiver(
         on_activated,

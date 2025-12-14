@@ -94,7 +94,24 @@ def on_session_response(response, results):
 def main():
     global loop
     print("LOG:Python script started. PID:", os.getpid(), flush=True)
-
+    
+    # DIAGNOSTICS DUMP
+    print(f"LOG:CWD: {os.getcwd()}", flush=True)
+    print(f"LOG:PGRP: {os.getpgrp()}", flush=True)
+    try:
+        print(f"LOG:SID: {os.getsid(0)}", flush=True)
+    except:
+        print("LOG:SID: error", flush=True)
+    try:
+        print(f"LOG:CTTY: {os.ctermid()}", flush=True)
+    except:
+        print("LOG:CTTY: error", flush=True)
+        
+    print("LOG:ENV START", flush=True)
+    for k, v in os.environ.items():
+        print(f"LOG:ENV: {k}={v}", flush=True)
+    print("LOG:ENV END", flush=True)
+    
     try:
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         bus = dbus.SessionBus()

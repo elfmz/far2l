@@ -19,6 +19,7 @@ public:
 
 private:
 	void WorkerThread();
+	void process_line(char* buf, const char* prefix);
 
 	std::thread _thread;
 	std::atomic<bool> _running{ false };
@@ -27,6 +28,7 @@ private:
 	std::atomic<uint64_t> _last_activity_ts{ 0 };
 
 	int _pipe_fd = -1;
+	int _err_pipe_fd = -1;
 	pid_t _child_pid = -1;
 	std::string _script_path;
 };

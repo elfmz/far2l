@@ -210,19 +210,40 @@ void WaylandGlobalShortcuts::Start() {
 	}
 
 	if (pid == 0) {
-		// Child process
+		// Child process: Sanitize environment to look like a normal interactive app
+		
+		// 1. Reset signals to default & unblock all
+		signal(SIGCHLD, SIG_DFL);
+		signal(SIGPIPE, SIG_DFL);
+		signal(SIGINT, SIG_DFL);
+		signal(SIGTERM, SIG_DFL);
+		signal(SIGHUP, SIG_DFL);
+		
+		sigset_t empty_mask;
+		sigemptyset(&empty_mask);
+		sigprocmask(SIG_SETMASK, &empty_mask, NULL);
+		
+		// 2. Setup pipes
 		close(out_pipe[0]);
 		close(err_pipe[0]);
-
-		dup2(out_pipe[1], STDOUT_FILENO);
-		dup2(err_pipe[1], STDERR_FILENO);
-
+		
+		if (dup2(out_pipe[1], STDOUT_FILENO) == -1) perror("dup2 stdout");
+		if (dup2(err_pipe[1], STDERR_FILENO) == -1) perror("dup2 stderr");
+		
 		close(out_pipe[1]);
 		close(err_pipe[1]);
 
-		std::string command = "python3 " + _script_path;
-		execlp("script", "script", "-q", "-c", command.c_str(), "/dev/null", NULL);
-		perror("execlp script");
+		// 3. Close all other file descriptors (brute force)
+		// This ensures we don't leak far2l's internal FDs to python/dbus
+		int max_fd = sysconf(_SC_OPEN_MAX);
+		if (max_fd > 4096) max_fd = 4096; // Cap at reasonable limit for speed
+		for (int fd = 3; fd < max_fd; ++fd) {
+			close(fd);
+		}
+
+		// 4. Exec
+		execlp("python3", "python3", _script_path.c_str(), NULL);
+		perror("execlp python3");
 		_exit(127);
 	}
 

@@ -32,11 +32,13 @@ def on_activated(session_handle, shortcut_id, timestamp, options):
     print(f"EVENT:{shortcut_id}", flush=True)
 
 def on_bind_response(response, results):
-    # This is the response to the BindShortcuts request, NOT the user action.
+    # This is the response to the BindShortcuts request.
     if response == 0:
-        print("LOG:BindShortcuts request acknowledged by portal. Waiting for user dialog...", flush=True)
+        print("LOG:BindShortcuts request acknowledged by portal.", flush=True)
+        print("LOG:Bind results:", results, flush=True)
+        print("LOG:Shortcuts should now be active or pending user approval.", flush=True)
     else:
-        print(f"LOG:BindShortcuts request failed with code {response}", file=sys.stderr, flush=True)
+        print(f"LOG:BindShortcuts request failed with code {response} and results: {results}", file=sys.stderr, flush=True)
 
 def on_bind_error(e):
     print(f"LOG:Bind Error: {e}", file=sys.stderr, flush=True)
@@ -46,10 +48,10 @@ def on_session_response(response, results):
     if response != 0:
         print(f"LOG:Error creating session response: {response}", file=sys.stderr, flush=True)
         sys.exit(1)
-        
+
     session_handle = results.get('session_handle', 'NO_HANDLE')
     print(f"LOG:Session handle received: {session_handle}", flush=True)
-    
+
     bus = dbus.SessionBus()
     try:
         portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop/portal/desktop')
@@ -62,20 +64,20 @@ def on_session_response(response, results):
         ('CtrlEnter', {'description': 'Far2l Ctrl+Enter', 'preferred_trigger': 'Control+Return'}),
         ('CtrlTab', {'description': 'Far2l Ctrl+Tab', 'preferred_trigger': 'Control+Tab'})
     ]
-    
+
     print("LOG:Binding shortcuts...", flush=True)
-    
+
     # The portal needs a handle_token for the BIND request itself.
     bind_token = f"far2l_bind_{os.getpid()}"
     bind_options = {'handle_token': bind_token}
-    
+
     bind_request_path = iface.BindShortcuts(
         session_handle,
         shortcuts,
         "", # parent_window
         bind_options
     )
-    
+
     print(f"LOG:BindShortcuts request path: {bind_request_path}", flush=True)
     bus.add_signal_receiver(
         on_bind_response,
@@ -94,18 +96,18 @@ def on_session_response(response, results):
 def main():
     global loop
     print("LOG:Python script started. PID:", os.getpid(), flush=True)
-    
+
     try:
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         bus = dbus.SessionBus()
         print("LOG:Connected to DBus session bus.", flush=True)
-        
-        portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop.portal.desktop')
+
+        portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop/portal/desktop')
         iface = dbus.Interface(portal, 'org.freedesktop.portal.GlobalShortcuts')
         print("LOG:Got GlobalShortcuts interface.", flush=True)
-        
+
         print("LOG:Creating session...", flush=True)
-        
+
         # Provide BOTH tokens. This is what modern clients like OBS plugin do.
         session_token = f"far2l_session_{os.getpid()}"
         request_token = f"far2l_request_{os.getpid()}"
@@ -113,7 +115,7 @@ def main():
             'handle_token': request_token,
             'session_handle_token': session_token
         }
-        
+
         request_path = iface.CreateSession(create_options)
         print(f"LOG:CreateSession request path: {request_path}", flush=True)
 
@@ -124,12 +126,12 @@ def main():
             path=request_path
         )
         print("LOG:Signal receiver for session response is set up.", flush=True)
-        
+
         loop = GLib.MainLoop()
         print("LOG:Starting GLib main loop...", flush=True)
         loop.run()
         print("LOG:GLib main loop finished.", flush=True)
-        
+
     except Exception as e:
         print(f"LOG:Python Exception: {e}", file=sys.stderr, flush=True)
         sys.exit(1)

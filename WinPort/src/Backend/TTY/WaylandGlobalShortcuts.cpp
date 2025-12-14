@@ -363,10 +363,27 @@ void WaylandGlobalShortcuts::WorkerThread() {
 	const char* xdg_data = getenv("XDG_DATA_DIRS");
 
 	fprintf(stderr, "[WaylandShortcuts] Environment:\n");
-	fprintf(stderr, "  XDG_SESSION_TYPE=%s\n", xdg_session ? xdg_session : "(null)");
-	fprintf(stderr, "  WAYLAND_DISPLAY=%s\n", w_display ? w_display : "(null)");
-	fprintf(stderr, "  DBUS_SESSION_BUS_ADDRESS=%s\n", dbus_addr ? dbus_addr : "(null)");
-	fprintf(stderr, "  XDG_DATA_DIRS=%s\n", xdg_data ? xdg_data : "(null)");
+	fprintf(stderr, "[WaylandShortcuts]   XDG_SESSION_TYPE=%s\n", xdg_session ? xdg_session : "(null)");
+	fprintf(stderr, "[WaylandShortcuts]   WAYLAND_DISPLAY=%s\n", w_display ? w_display : "(null)");
+	fprintf(stderr, "[WaylandShortcuts]   DBUS_SESSION_BUS_ADDRESS=%s\n", dbus_addr ? dbus_addr : "(null)");
+	fprintf(stderr, "[WaylandShortcuts]   XDG_DATA_DIRS=%s\n", xdg_data ? xdg_data : "(null)");
+
+	// DIAGNOSTIC: Check if service file is visible to process
+	const char* srv_path = "/usr/share/dbus-1/services/org.freedesktop.portal.Desktop.service";
+	FILE* f = fopen(srv_path, "r");
+	if (f) {
+		fprintf(stderr, "[WaylandShortcuts] FS CHECK: Found %s\n", srv_path);
+		char buf[256] = {0};
+		size_t rd = fread(buf, 1, sizeof(buf)-1, f);
+		fclose(f);
+		if (rd > 0) {
+			// Replace newlines with spaces for compact log
+			for (size_t i=0; i<rd; i++) if (buf[i] == '\n') buf[i] = ' ';
+			fprintf(stderr, "[WaylandShortcuts] FS CONTENT: %s\n", buf);
+		}
+	} else {
+		fprintf(stderr, "[WaylandShortcuts] FS CHECK: FAILED to open %s. Errno: %d (%s)\n", srv_path, errno, strerror(errno));
+	}
 
 	if (!dbus_addr) {
 		fprintf(stderr, "[WaylandShortcuts] ERROR: DBUS_SESSION_BUS_ADDRESS is missing.\n");

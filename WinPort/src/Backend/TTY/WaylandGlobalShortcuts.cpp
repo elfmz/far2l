@@ -22,7 +22,7 @@ import os
 import signal
 import time
 
-# Flush stdout immediately for IPC
+# Flush stdout/stderr immediately for IPC
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
@@ -31,8 +31,12 @@ loop = None
 def on_activated(session_handle, shortcut_id, timestamp, options):
     print(f"EVENT:{shortcut_id}", flush=True)
 
-def on_bind_response(results):
-    print("LOG:Shortcuts bound successfully", flush=True)
+def on_bind_response(response, results):
+    # This is the response to the BindShortcuts request, NOT the user action.
+    if response == 0:
+        print("LOG:BindShortcuts request acknowledged by portal. Waiting for user dialog...", flush=True)
+    else:
+        print(f"LOG:BindShortcuts request failed with code {response}", file=sys.stderr, flush=True)
 
 def on_bind_error(e):
     print(f"LOG:Bind Error: {e}", file=sys.stderr, flush=True)
@@ -43,7 +47,7 @@ def on_session_response(response, results):
         print(f"LOG:Error creating session response: {response}", file=sys.stderr, flush=True)
         sys.exit(1)
         
-    session_handle = results['session_handle']
+    session_handle = results.get('session_handle', 'NO_HANDLE')
     print(f"LOG:Session handle received: {session_handle}", flush=True)
     
     bus = dbus.SessionBus()
@@ -60,13 +64,24 @@ def on_session_response(response, results):
     ]
     
     print("LOG:Binding shortcuts...", flush=True)
-    iface.BindShortcuts(
+    
+    # The portal needs a handle_token for the BIND request itself.
+    bind_token = f"far2l_bind_{os.getpid()}"
+    bind_options = {'handle_token': bind_token}
+    
+    bind_request_path = iface.BindShortcuts(
         session_handle,
         shortcuts,
-        "", 
-        {'handle_token': 'far2l_bind_token'},
-        reply_handler=on_bind_response,
-        error_handler=on_bind_error
+        "", # parent_window
+        bind_options
+    )
+    
+    print(f"LOG:BindShortcuts request path: {bind_request_path}", flush=True)
+    bus.add_signal_receiver(
+        on_bind_response,
+        dbus_interface='org.freedesktop.portal.Request',
+        signal_name='Response',
+        path=bind_request_path
     )
 
     bus.add_signal_receiver(
@@ -85,16 +100,22 @@ def main():
         bus = dbus.SessionBus()
         print("LOG:Connected to DBus session bus.", flush=True)
         
-        portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop/portal/desktop')
+        portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop.portal.desktop')
         iface = dbus.Interface(portal, 'org.freedesktop.portal.GlobalShortcuts')
         print("LOG:Got GlobalShortcuts interface.", flush=True)
         
         print("LOG:Creating session...", flush=True)
-        token = f"far2l_session_{os.getpid()}"
-        request_path = iface.CreateSession(
-            {'session_handle_token': token}
-        )
-        print(f"LOG:Request object path: {request_path}", flush=True)
+        
+        # Provide BOTH tokens. This is what modern clients like OBS plugin do.
+        session_token = f"far2l_session_{os.getpid()}"
+        request_token = f"far2l_request_{os.getpid()}"
+        create_options = {
+            'handle_token': request_token,
+            'session_handle_token': session_token
+        }
+        
+        request_path = iface.CreateSession(create_options)
+        print(f"LOG:CreateSession request path: {request_path}", flush=True)
 
         bus.add_signal_receiver(
             on_session_response,
@@ -157,7 +178,7 @@ void WaylandGlobalShortcuts::Start() {
 		perror("[WaylandShortcuts] Failed to create temp file");
 		return;
 	}
-	
+
 	if (write(fd, PYTHON_PROXY_SCRIPT, strlen(PYTHON_PROXY_SCRIPT)) < 0) {
 		perror("[WaylandShortcuts] Write failed");
 		close(fd);
@@ -192,10 +213,10 @@ void WaylandGlobalShortcuts::Start() {
 		// Child process
 		close(out_pipe[0]);
 		close(err_pipe[0]);
-		
+
 		dup2(out_pipe[1], STDOUT_FILENO);
 		dup2(err_pipe[1], STDERR_FILENO);
-		
+
 		close(out_pipe[1]);
 		close(err_pipe[1]);
 
@@ -211,7 +232,7 @@ void WaylandGlobalShortcuts::Start() {
 	_err_pipe_fd = err_pipe[0];
 	_child_pid = pid;
 	_running = true;
-	
+
 	_thread = std::thread(&WaylandGlobalShortcuts::WorkerThread, this);
 }
 
@@ -219,7 +240,7 @@ void WaylandGlobalShortcuts::Stop() {
 	if (!_running) return;
 	_running = false;
 	fprintf(stderr, "[WaylandShortcuts] Stop() called\n");
-	
+
 	if (_child_pid > 0) {
 		fprintf(stderr, "[WaylandShortcuts] Killing proxy PID %d\n", _child_pid);
 		kill(_child_pid, SIGTERM);
@@ -251,7 +272,7 @@ void WaylandGlobalShortcuts::Stop() {
 
 void WaylandGlobalShortcuts::WorkerThread() {
 	fprintf(stderr, "[WaylandShortcuts] Worker started, monitoring python proxy...\n");
-	
+
 	char buf[1024];
 
 	while (_running) {
@@ -325,7 +346,7 @@ void WaylandGlobalShortcuts::WorkerThread() {
 			}
 		}
 	}
-	
+
 	fprintf(stderr, "[WaylandShortcuts] Proxy monitoring loop finished. Thread exiting.\n");
 }
 
@@ -339,7 +360,7 @@ void WaylandGlobalShortcuts::process_line(char* buf, const char* prefix) {
 
 	if (strncmp(buf, "EVENT:", 6) == 0) {
 		const char* id = buf + 6;
-		
+
 		if (!_focused) {
 			fprintf(stderr, "[WaylandShortcuts] Ignored event (Unfocused): %s\n", id);
 			return;
@@ -360,7 +381,7 @@ void WaylandGlobalShortcuts::process_line(char* buf, const char* prefix) {
 
 		if (vk != 0) {
 			fprintf(stderr, "[WaylandShortcuts] Injecting VK=0x%x Mods=0x%x\n", vk, mods);
-			
+
 			auto now = std::chrono::steady_clock::now().time_since_epoch();
 			_last_activity_ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
 

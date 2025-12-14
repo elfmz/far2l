@@ -20,9 +20,11 @@ from gi.repository import GLib
 import sys
 import os
 import signal
+import time
 
 # Flush stdout immediately for IPC
 sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
 
 loop = None
 
@@ -33,34 +35,35 @@ def on_bind_response(results):
     print("LOG:Shortcuts bound successfully", flush=True)
 
 def on_bind_error(e):
-    print(f"LOG:Bind Error: {e}", flush=True)
+    print(f"LOG:Bind Error: {e}", file=sys.stderr, flush=True)
     sys.exit(1)
 
 def on_session_response(response, results):
     if response != 0:
-        print(f"LOG:Error creating session: {response}", flush=True)
+        print(f"LOG:Error creating session response: {response}", file=sys.stderr, flush=True)
         sys.exit(1)
-
+        
     session_handle = results['session_handle']
-
+    print(f"LOG:Session handle received: {session_handle}", flush=True)
+    
     bus = dbus.SessionBus()
     try:
         portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop/portal/desktop')
         iface = dbus.Interface(portal, 'org.freedesktop.portal.GlobalShortcuts')
     except Exception as e:
-        print(f"LOG:Failed to get portal interface: {e}", flush=True)
+        print(f"LOG:Failed to get portal interface: {e}", file=sys.stderr, flush=True)
         sys.exit(1)
 
     shortcuts = [
         ('CtrlEnter', {'description': 'Far2l Ctrl+Enter', 'preferred_trigger': 'Control+Return'}),
         ('CtrlTab', {'description': 'Far2l Ctrl+Tab', 'preferred_trigger': 'Control+Tab'})
     ]
-
+    
     print("LOG:Binding shortcuts...", flush=True)
     iface.BindShortcuts(
         session_handle,
         shortcuts,
-        "",
+        "", 
         {'handle_token': 'far2l_bind_token'},
         reply_handler=on_bind_response,
         error_handler=on_bind_error
@@ -75,21 +78,23 @@ def on_session_response(response, results):
 
 def main():
     global loop
-    # Ignore SIGINT/SIGTERM to handle cleanup if needed, but here we just die when parent closes pipe
-
+    print("LOG:Python script started. PID:", os.getpid(), flush=True)
+    
     try:
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         bus = dbus.SessionBus()
-
+        print("LOG:Connected to DBus session bus.", flush=True)
+        
         portal = bus.get_object('org.freedesktop.portal.Desktop', '/org/freedesktop/portal/desktop')
         iface = dbus.Interface(portal, 'org.freedesktop.portal.GlobalShortcuts')
-
+        print("LOG:Got GlobalShortcuts interface.", flush=True)
+        
         print("LOG:Creating session...", flush=True)
-        # Unique session token per process to avoid conflicts
         token = f"far2l_session_{os.getpid()}"
         request_path = iface.CreateSession(
             {'session_handle_token': token}
         )
+        print(f"LOG:Request object path: {request_path}", flush=True)
 
         bus.add_signal_receiver(
             on_session_response,
@@ -97,12 +102,15 @@ def main():
             signal_name='Response',
             path=request_path
         )
-
+        print("LOG:Signal receiver for session response is set up.", flush=True)
+        
         loop = GLib.MainLoop()
+        print("LOG:Starting GLib main loop...", flush=True)
         loop.run()
-
+        print("LOG:GLib main loop finished.", flush=True)
+        
     except Exception as e:
-        print(f"LOG:Python Exception: {e}", flush=True)
+        print(f"LOG:Python Exception: {e}", file=sys.stderr, flush=True)
         sys.exit(1)
 
 if __name__ == '__main__':
@@ -144,12 +152,12 @@ void WaylandGlobalShortcuts::Start() {
 
 	// 1. Create temporary python script
 	char tmp_path[] = "/tmp/far2l_wl_proxy_XXXXXX.py";
-	int fd = mkstemps(tmp_path, 3); // 3 is length of ".py"
+	int fd = mkstemps(tmp_path, 3);
 	if (fd == -1) {
 		perror("[WaylandShortcuts] Failed to create temp file");
 		return;
 	}
-
+	
 	if (write(fd, PYTHON_PROXY_SCRIPT, strlen(PYTHON_PROXY_SCRIPT)) < 0) {
 		perror("[WaylandShortcuts] Write failed");
 		close(fd);
@@ -161,7 +169,7 @@ void WaylandGlobalShortcuts::Start() {
 	fprintf(stderr, "[WaylandShortcuts] Script created at %s\n", _script_path.c_str());
 
 	// 2. Create pipes for stdout and stderr
-	int out_pipe[2], err_pipe[2];
+	int out_pipe[2]{-1,-1}, err_pipe[2]{-1,-1};
 	if (pipe(out_pipe) == -1 || pipe(err_pipe) == -1) {
 		perror("[WaylandShortcuts] pipe creation failed");
 		unlink(_script_path.c_str());
@@ -182,39 +190,45 @@ void WaylandGlobalShortcuts::Start() {
 
 	if (pid == 0) {
 		// Child process
-		close(out_pipe[0]); // Close read ends
+		close(out_pipe[0]);
 		close(err_pipe[0]);
-
-		dup2(out_pipe[1], STDOUT_FILENO); // Redirect stdout to out_pipe
-		dup2(err_pipe[1], STDERR_FILENO); // Redirect stderr to err_pipe
-
+		
+		dup2(out_pipe[1], STDOUT_FILENO);
+		dup2(err_pipe[1], STDERR_FILENO);
+		
 		close(out_pipe[1]);
 		close(err_pipe[1]);
 
 		execlp("python3", "python3", _script_path.c_str(), NULL);
-		perror("execlp python3"); // This will go to stderr pipe if exec fails
+		perror("execlp python3");
 		_exit(127);
 	}
 
 	// Parent process
-	close(out_pipe[1]); // Close write ends
+	close(out_pipe[1]);
 	close(err_pipe[1]);
 	_pipe_fd = out_pipe[0];
 	_err_pipe_fd = err_pipe[0];
 	_child_pid = pid;
 	_running = true;
-
+	
 	_thread = std::thread(&WaylandGlobalShortcuts::WorkerThread, this);
 }
 
 void WaylandGlobalShortcuts::Stop() {
+	if (!_running) return;
 	_running = false;
-	if (_child_pid != -1) {
+	fprintf(stderr, "[WaylandShortcuts] Stop() called\n");
+	
+	if (_child_pid > 0) {
+		fprintf(stderr, "[WaylandShortcuts] Killing proxy PID %d\n", _child_pid);
 		kill(_child_pid, SIGTERM);
 		int status;
-		waitpid(_child_pid, &status, 0); // Wait for child to exit to prevent zombies
+		waitpid(_child_pid, &status, 0);
 		_child_pid = -1;
 	}
+
+	// Closing pipe FDs will interrupt select() in WorkerThread
 	if (_pipe_fd != -1) {
 		close(_pipe_fd);
 		_pipe_fd = -1;
@@ -223,33 +237,41 @@ void WaylandGlobalShortcuts::Stop() {
 		close(_err_pipe_fd);
 		_err_pipe_fd = -1;
 	}
+
+	if (_thread.joinable()) {
+		_thread.join();
+	}
+
 	if (!_script_path.empty()) {
 		unlink(_script_path.c_str());
 		_script_path.clear();
 	}
-	if (_thread.joinable()) _thread.join();
+	fprintf(stderr, "[WaylandShortcuts] Stop() finished\n");
 }
 
 void WaylandGlobalShortcuts::WorkerThread() {
-	fprintf(stderr, "[WaylandShortcuts] Worker started, reading from python proxy...\n");
-
+	fprintf(stderr, "[WaylandShortcuts] Worker started, monitoring python proxy...\n");
+	
 	char buf[1024];
 
-	while (_running && (_pipe_fd != -1 || _err_pipe_fd != -1)) {
+	while (_running) {
 		fd_set fds;
 		FD_ZERO(&fds);
 		int max_fd = 0;
 
 		if (_pipe_fd != -1) {
 			FD_SET(_pipe_fd, &fds);
-			if (_pipe_fd > max_fd) max_fd = _pipe_fd;
+			max_fd = _pipe_fd;
 		}
 		if (_err_pipe_fd != -1) {
 			FD_SET(_err_pipe_fd, &fds);
 			if (_err_pipe_fd > max_fd) max_fd = _err_pipe_fd;
 		}
 
-		if (max_fd == 0) break;
+		if (max_fd == 0) {
+			fprintf(stderr, "[WaylandShortcuts] Both pipes are closed, thread exiting.\n");
+			break;
+		}
 
 		int ret = select(max_fd + 1, &fds, NULL, NULL, NULL);
 
@@ -259,44 +281,56 @@ void WaylandGlobalShortcuts::WorkerThread() {
 			break;
 		}
 
-		auto read_and_process = [&](int fd, const char* prefix) -> bool {
-			ssize_t n = read(fd, buf, sizeof(buf) - 1);
-			if (n <= 0) { // EOF or error
-				return false;
-			}
-			buf[n] = 0;
-
-			// Split by lines and process
-			char *line = strtok(buf, "\n");
-			while(line) {
-				process_line(line, prefix);
-				line = strtok(NULL, "\n");
-			}
-			return true;
-		};
+		if (!_running) break;
 
 		if (_pipe_fd != -1 && FD_ISSET(_pipe_fd, &fds)) {
-			if (!read_and_process(_pipe_fd, "[Py STDOUT]")) {
+			ssize_t n = read(_pipe_fd, buf, sizeof(buf) - 1);
+			if (n <= 0) { // EOF or error
+				fprintf(stderr, "[WaylandShortcuts] STDOUT pipe closed by proxy.\n");
 				close(_pipe_fd);
 				_pipe_fd = -1;
+			} else {
+				buf[n] = 0;
+				char *line_start = buf;
+				char *line_end;
+				while ((line_end = strchr(line_start, '\n'))) {
+					*line_end = 0;
+					process_line(line_start, "[Py STDOUT]");
+					line_start = line_end + 1;
+				}
+				if (*line_start) { // Partial line
+					process_line(line_start, "[Py STDOUT]");
+				}
 			}
 		}
 
 		if (_err_pipe_fd != -1 && FD_ISSET(_err_pipe_fd, &fds)) {
-			if (!read_and_process(_err_pipe_fd, "[Py STDERR]")) {
+			ssize_t n = read(_err_pipe_fd, buf, sizeof(buf) - 1);
+			if (n <= 0) {
+				fprintf(stderr, "[WaylandShortcuts] STDERR pipe closed by proxy.\n");
 				close(_err_pipe_fd);
 				_err_pipe_fd = -1;
+			} else {
+				buf[n] = 0;
+				char *line_start = buf;
+				char *line_end;
+				while ((line_end = strchr(line_start, '\n'))) {
+					*line_end = 0;
+					process_line(line_start, "[Py STDERR]");
+					line_start = line_end + 1;
+				}
+				if (*line_start) {
+					process_line(line_start, "[Py STDERR]");
+				}
 			}
 		}
 	}
-
-	fprintf(stderr, "[WaylandShortcuts] Proxy pipes closed or EOF. Thread exiting.\n");
+	
+	fprintf(stderr, "[WaylandShortcuts] Proxy monitoring loop finished. Thread exiting.\n");
 }
 
 void WaylandGlobalShortcuts::process_line(char* buf, const char* prefix) {
-	// Trim trailing newline which strtok doesn't remove if buffer ends with it
-	size_t len = strlen(buf);
-	if (len > 0 && buf[len - 1] == '\r') buf[len - 1] = 0;
+	if (strlen(buf) == 0) return;
 
 	if (strncmp(buf, "LOG:", 4) == 0) {
 		fprintf(stderr, "[WaylandShortcuts] %s: %s\n", prefix, buf + 4);
@@ -305,7 +339,7 @@ void WaylandGlobalShortcuts::process_line(char* buf, const char* prefix) {
 
 	if (strncmp(buf, "EVENT:", 6) == 0) {
 		const char* id = buf + 6;
-
+		
 		if (!_focused) {
 			fprintf(stderr, "[WaylandShortcuts] Ignored event (Unfocused): %s\n", id);
 			return;
@@ -326,7 +360,7 @@ void WaylandGlobalShortcuts::process_line(char* buf, const char* prefix) {
 
 		if (vk != 0) {
 			fprintf(stderr, "[WaylandShortcuts] Injecting VK=0x%x Mods=0x%x\n", vk, mods);
-
+			
 			auto now = std::chrono::steady_clock::now().time_since_epoch();
 			_last_activity_ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
 
@@ -342,61 +376,8 @@ void WaylandGlobalShortcuts::process_line(char* buf, const char* prefix) {
 				ir.Event.KeyEvent.bKeyDown = FALSE;
 				g_winport_con_in->Enqueue(&ir, 1);
 			}
-
-			const char* id = buf + 6;
-
-			if (!_focused) {
-				fprintf(stderr, "[WaylandShortcuts] Ignored event (Unfocused): %s\n", id);
-				return;
-			}
-			if (_paused) {
-				fprintf(stderr, "[WaylandShortcuts] Ignored event (Paused): %s\n", id);
-				return;
-			}
-
-			WORD vk = 0;
-			DWORD mods = LEFT_CTRL_PRESSED;
-
-			if (strcmp(id, "CtrlEnter") == 0) {
-				vk = VK_RETURN;
-			} else if (strcmp(id, "CtrlTab") == 0) {
-				vk = VK_TAB;
-			}
-
-			if (vk != 0) {
-				fprintf(stderr, "[WaylandShortcuts] Injecting VK=0x%x Mods=0x%x\n", vk, mods);
-
-				auto now = std::chrono::steady_clock::now().time_since_epoch();
-				_last_activity_ts = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
-
-				INPUT_RECORD ir = {};
-				ir.EventType = KEY_EVENT;
-				ir.Event.KeyEvent.bKeyDown = TRUE;
-				ir.Event.KeyEvent.wRepeatCount = 1;
-				ir.Event.KeyEvent.wVirtualKeyCode = vk;
-				ir.Event.KeyEvent.dwControlKeyState = mods;
-
-				if (g_winport_con_in) {
-					g_winport_con_in->Enqueue(&ir, 1);
-					ir.Event.KeyEvent.bKeyDown = FALSE;
-					g_winport_con_in->Enqueue(&ir, 1);
-				}
-			}
 		}
 	} else {
-		// Log any other output from script
 		fprintf(stderr, "[WaylandShortcuts] %s: %s\n", prefix, buf);
 	}
-
-	// If fgets returns NULL, pipe is broken or closed
-	fprintf(stderr, "[WaylandShortcuts] Pipe closed or EOF.\n");
-
-	// Don't close pipe_fp here if _pipe_fd is managed by Stop(),
-	// but fdopen takes ownership so we should fclose it if we want to be clean.
-	// However, Stop() might close the FD concurrently.
-	// To be safe, we let Stop handle FD closing or detach here.
-	// Since fdopen was created on _pipe_fd, fclose closes the FD too.
-	// Let's set _pipe_fd to -1 to signal Stop() not to double close.
-	_pipe_fd = -1;
-	//fclose(pipe_fp);
 }

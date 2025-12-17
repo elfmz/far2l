@@ -2103,7 +2103,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 
 template<bool UseVirtualDestructor>
 void Archive<UseVirtualDestructor>::update(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
-		const std::wstring &dst_dir, const UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
+		const std::wstring &dst_dir, UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
 {
 	DisableSleepMode dsm;
 

@@ -1508,6 +1508,7 @@ void Archive<UseVirtualDestructor>::make_index()
 	load_arc_attr();
 	groupHardLinks(prep_data);
 	update_hard_link_counts();
+
 //	debug_print_hard_link_groups();
 }
 

@@ -3485,6 +3485,10 @@ public:
 		  level(options.level)
 	{
 		_BestThreadsCount = BestThreadsCount();
+
+		if (m_options.arc_type == c_zip && ArcAPI::libs()[0].version == 0) {
+			m_options.method = c_method_default;
+		}
 	}
 
 	bool show()

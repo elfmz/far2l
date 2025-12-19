@@ -318,10 +318,36 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_HOME:      keycode = 1;   suffix = 'H'; break;
 		case VK_END:       keycode = 1;   suffix = 'F'; break;
 
-		case VK_F1:        keycode = 11;  suffix = '~'; break;
-		case VK_F2:        keycode = 12;  suffix = '~'; break;
-		case VK_F3:        keycode = 13;  suffix = '~'; break;
-		case VK_F4:        keycode = 14;  suffix = '~'; break;
+		case VK_F1:
+			if (kitty) {
+				keycode = 1;  suffix = 'P';
+			} else {
+				keycode = 11; suffix = '~';
+			}
+			break;
+
+		case VK_F2:
+			if (kitty) {
+				keycode = 1;  suffix = 'Q';
+			} else {
+				keycode = 12; suffix = '~';
+			}
+			break;
+
+		case VK_F3:
+			// F3 в спецификации kitty остаётся с тильдой (~), код 13,
+			// 'R' зарезервирована для отчета курсора
+			keycode = 13; suffix = '~';
+			break;
+
+		case VK_F4:
+			if (kitty) {
+				keycode = 1;  suffix = 'S';
+			} else {
+				keycode = 14; suffix = '~';
+			}
+			break;
+
 		case VK_F5:        keycode = 15;  suffix = '~'; break;
 		case VK_F6:        keycode = 17;  suffix = '~'; break;
 		case VK_F7:        keycode = 18;  suffix = '~'; break;
@@ -466,22 +492,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		skipped = true; // middle part of sequence is skipped
 	}
 
-	if (
-		(flags & 16) &&
-		KeyEvent.uChar.UnicodeChar &&
-		!alt &&
-		!(
-			ctrl &&
-			(
-				// ctrl + letters, numbers, spece should not generate associated text
-				(KeyEvent.wVirtualKeyCode >= '0' && KeyEvent.wVirtualKeyCode <= '9') ||
-				(KeyEvent.wVirtualKeyCode >= 'A' && KeyEvent.wVirtualKeyCode <= 'Z') ||
-				(KeyEvent.wVirtualKeyCode == VK_SPACE) ||
-				(KeyEvent.wVirtualKeyCode == VK_OEM_3) || // `
-				(KeyEvent.wVirtualKeyCode == VK_OEM_MINUS)
-			)
-		)
-	) {
+	if ((flags & 16) && KeyEvent.uChar.UnicodeChar && !alt && !ctrl) {
 
 		// "text as code points" enabled and relevant
 

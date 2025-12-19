@@ -356,7 +356,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		return CallInMain<void *>(fn);
 	}
 
-#ifdef __WXGTK__
+#if defined(__WXGTK__) && defined(__WXGTK3__)
 	if (wxClipboardType == WxClipboardType::Primary && detectWxBackend() == WxBackendType::NativeWayland) {
 		wxString wx_str((const wchar_t *)data);
 		setTextAsPrimarySelection(wx_str);
@@ -421,7 +421,7 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		return CallInMain<void *>(fn);
 	}
 
-#ifdef __WXGTK__
+#if defined(__WXGTK__) && defined(__WXGTK3__)
 	if (wxClipboardType == WxClipboardType::Primary && detectWxBackend() == WxBackendType::NativeWayland) {
 		wxString wx_str = getTextFromPrimarySelection();
 		const auto &wc = wx_str.wc_str();
@@ -532,7 +532,7 @@ INT wxClipboardBackend::ChooseClipboard(INT format)
 	bool need = format > 0;
 	if (now != need) wxTheClipboard->UsePrimarySelection(need);
 
-#ifdef __WXGTK__
+#if defined(__WXGTK__) && defined(__WXGTK3__)
 	::wxClipboardType == need ? WxClipboardType::Primary : WxClipboardType::Clipboard;
 #endif
 	return need ? 1 : 0;

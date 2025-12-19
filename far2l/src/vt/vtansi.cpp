@@ -303,6 +303,7 @@ struct VTAnsiContext
 	std::map<DWORD, std::pair<DWORD, DWORD> > orig_palette;
 	std::optional<VTAnsiKitty> vta_kitty;
 	std::mutex vta_kitty_mtx;
+	std::vector<DWORD> kitty_flag_stack;
 
 
 	int   state;					// automata state
@@ -787,21 +788,35 @@ struct VTAnsiContext
 
 			// kitty keys stuff
 
-			// proceed only if mode is not specified or specified as 1 (default)
-			// we do not support other modes currently
-			if ((suffix == 'u') && ((es_argc < 2) || (es_argv[1] == 1))) {
+			if (suffix == 'u') {
 				if (prefix2 == '=') {
-					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
+					DWORD flags = (es_argc > 0) ? es_argv[0] : 0;
+					DWORD mode = (es_argc > 1) ? es_argv[1] : 1;
+					DWORD current = vt_shell->GetKittyFlags();
+					if (mode == 1) vt_shell->SetKittyFlags(flags);
+					else if (mode == 2) vt_shell->SetKittyFlags(current | flags);
+					else if (mode == 3) vt_shell->SetKittyFlags(current & ~flags);
 					return;
 
 				} else if (prefix2 == '>') {
-					// we do not support flags stack currently, just set new mode
-					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
+					// push
+					if (kitty_flag_stack.size() >= 32) // limit stack size
+						kitty_flag_stack.erase(kitty_flag_stack.begin());
+					kitty_flag_stack.push_back(vt_shell->GetKittyFlags());
+					vt_shell->SetKittyFlags((es_argc > 0) ? es_argv[0] : 0);
 					return;
 
 				} else if (prefix2 == '<') {
-					// we do not support flags stack currently, just reset flags
-					vt_shell->SetKittyFlags(0);
+					// pop
+					int count = (es_argc > 0) ? es_argv[0] : 1;
+					while (count-- > 0) {
+						if (kitty_flag_stack.empty()) {
+							vt_shell->SetKittyFlags(0);
+							return;
+						}
+						vt_shell->SetKittyFlags(kitty_flag_stack.back());
+						kitty_flag_stack.pop_back();
+					}
 					return;
 
 				} else if (prefix2 == '?') {

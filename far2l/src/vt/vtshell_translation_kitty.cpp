@@ -447,7 +447,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			// adding shifted
 			out+= std::to_string(shifted);
 		}
-		if (base) {
+		if (base && (base != shifted)) {
 			// adding base
 			out+= ':';
 			out+= std::to_string(base);
@@ -466,11 +466,29 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		skipped = true; // middle part of sequence is skipped
 	}
 
-	if ((flags & 16) && KeyEvent.uChar.UnicodeChar && !alt && (!ctrl || KeyEvent.uChar.UnicodeChar >= 32)) {
+	if (
+		(flags & 16) &&
+		KeyEvent.uChar.UnicodeChar &&
+		!alt &&
+		!(
+			ctrl &&
+			(
+				// ctrl + letters, numbers, spece should not generate associated text
+				(KeyEvent.wVirtualKeyCode >= '0' && KeyEvent.wVirtualKeyCode <= '9') ||
+				(KeyEvent.wVirtualKeyCode >= 'A' && KeyEvent.wVirtualKeyCode <= 'Z') ||
+				(KeyEvent.wVirtualKeyCode == VK_SPACE) ||
+				(KeyEvent.wVirtualKeyCode == VK_OEM_3) || // `
+				(KeyEvent.wVirtualKeyCode == VK_OEM_MINUS)
+			)
+		)
+	) {
+
 		// "text as code points" enabled and relevant
+
 		if (skipped) {
 			out+= ';';
 		}
+
 		// adding UnicodeChar
 		out+= ';';
 		out+= std::to_string((int)(unsigned int)KeyEvent.uChar.UnicodeChar);

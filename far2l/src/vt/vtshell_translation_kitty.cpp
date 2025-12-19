@@ -77,6 +77,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 	const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 	const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
+	const bool enhanced = (KeyEvent.dwControlKeyState & ENHANCED_KEY) != 0;
 
 	// See https://sw.kovidgoyal.net/kitty/keyboard-protocol/#disambiguate-escape-codes
 	const bool disambiguate = (
@@ -300,23 +301,54 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_BACK:      keycode = 127; break;
 
 		// Fixme: WIP: make VK_CLEAR (numpad 5 without numlock) work until full keypad support is finished
-		case VK_CLEAR:     keycode = 1; suffix = 'E'; break;
+		//case VK_CLEAR:     keycode = 1; suffix = 'E'; break;
+		case VK_CLEAR:     keycode = 57427; suffix = 'u'; break;
 
 		// non-CSIu keys: keycode is not an unicode code point
 
-		case VK_INSERT:    keycode = 2;   suffix = '~'; break;
-		case VK_DELETE:    keycode = 3;   suffix = '~'; break;
+		case VK_INSERT:
+			if (enhanced) { keycode = 2; suffix = '~'; }
+			else          { keycode = 57425; suffix = 'u'; }
+			break;
+		case VK_DELETE:
+			if (enhanced) { keycode = 3; suffix = '~'; }
+			else          { keycode = 57426; suffix = 'u'; }
+			break;
 
-		case VK_LEFT:      keycode = 1;   suffix = 'D'; break;
-		case VK_RIGHT:     keycode = 1;   suffix = 'C'; break;
-		case VK_UP:        keycode = 1;   suffix = 'A'; break;
-		case VK_DOWN:      keycode = 1;   suffix = 'B'; break;
+		case VK_LEFT:
+			if (enhanced) { keycode = 1; suffix = 'D'; }
+			else          { keycode = 57417; suffix = 'u'; }
+			break;
+		case VK_RIGHT:
+			if (enhanced) { keycode = 1; suffix = 'C'; }
+			else          { keycode = 57418; suffix = 'u'; }
+			break;
+		case VK_UP:
+			if (enhanced) { keycode = 1; suffix = 'A'; }
+			else          { keycode = 57419; suffix = 'u'; }
+			break;
+		case VK_DOWN:
+			if (enhanced) { keycode = 1; suffix = 'B'; }
+			else          { keycode = 57420; suffix = 'u'; }
+			break;
 
-		case VK_PRIOR:     keycode = 5;   suffix = '~'; break;
-		case VK_NEXT:      keycode = 6;   suffix = '~'; break;
+		case VK_PRIOR: // Page Up
+			if (enhanced) { keycode = 5; suffix = '~'; }
+			else          { keycode = 57421; suffix = 'u'; }
+			break;
+		case VK_NEXT:  // Page Down
+			if (enhanced) { keycode = 6; suffix = '~'; }
+			else          { keycode = 57422; suffix = 'u'; }
+			break;
 
-		case VK_HOME:      keycode = 1;   suffix = 'H'; break;
-		case VK_END:       keycode = 1;   suffix = 'F'; break;
+		case VK_HOME:
+			if (enhanced) { keycode = 1; suffix = 'H'; }
+			else          { keycode = 57423; suffix = 'u'; }
+			break;
+		case VK_END:
+			if (enhanced) { keycode = 1; suffix = 'F'; }
+			else          { keycode = 57424; suffix = 'u'; }
+			break;
 
 		case VK_F1:
 			if (kitty) {

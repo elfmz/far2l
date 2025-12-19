@@ -2418,6 +2418,8 @@ void FileEditor::SetEditorOptions(EditorOptions &EdOpt)
 	m_editor->SetShowScrollBar(EdOpt.ShowScrollBar);
 	m_editor->SetShowWhiteSpace(EdOpt.ShowWhiteSpace);
 	m_editor->SetShowLineNumbers(EdOpt.ShowLineNumbers);
+	m_editor->SetEditCopyToPrimarySelection(EdOpt.EditCopyToPrimarySelection);
+	m_editor->SetEditPasteFromPrimarySelection(EdOpt.EditPasteFromPrimarySelection);
 	m_editor->SetSearchPickUpWord(EdOpt.SearchPickUpWord);
 	m_editor->SetWordWrap(EdOpt.WordWrap);
 	TitleBarVisible = EdOpt.ShowTitleBar;

@@ -23,4 +23,5 @@ public:
 	virtual void *OnClipboardSetData(UINT format, void *data);
 	virtual void *OnClipboardGetData(UINT format);
 	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat);
+	virtual INT ChooseClipboard(INT format);
 };

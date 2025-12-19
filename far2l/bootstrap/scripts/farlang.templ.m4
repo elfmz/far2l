@@ -4171,6 +4171,28 @@ upd:"Show line &numbers"
 "Номери рядкі&в"
 upd:"Show line &numbers"
 
+EditCopyToPrimarySelection
+"Выделенный мышью текст помещать в PRIMARY"
+"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+upd:"Auto-copy mouse selection to PRIMARY"
+
+EditPasteFromPrimarySelection
+"Вставлять по средней кнопке мыши из PRIMARY"
+"Paste from PRIMARY by 2nd mouse button"
+upd:"Paste from PRIMARY by 2nd mouse button"
+upd:"Paste from PRIMARY by 2nd mouse button"
+upd:"Paste from PRIMARY by 2nd mouse button"
+upd:"Paste from PRIMARY by 2nd mouse button"
+upd:"Paste from PRIMARY by 2nd mouse button
+upd:"Paste from PRIMARY by 2nd mouse button"
+upd:"Paste from PRIMARY by 2nd mouse button"
+
 EditShowKeyBar
 "Показывать &линейку клавиш"
 "Show &key bar"

@@ -152,6 +152,7 @@
 #define    IsClipboardFormatAvailable    WINPORT(IsClipboardFormatAvailable)
 #define    GetClipboardData              WINPORT(GetClipboardData)
 #define    SetClipboardData              WINPORT(SetClipboardData)
+#define    ChooseClipboard               WINPORT(ChooseClipboard);
 
 //keyboard
 #define    GetKeyboardLayoutList  WINPORT(GetKeyboardLayoutList)

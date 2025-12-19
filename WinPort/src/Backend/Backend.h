@@ -68,6 +68,7 @@ public:
 	virtual void *OnClipboardSetData(UINT format, void *data) = 0;
 	virtual void *OnClipboardGetData(UINT format) = 0;
 	virtual UINT OnClipboardRegisterFormat(const wchar_t *lpszFormat) = 0;
+	virtual INT ChooseClipboard(INT format) = 0;
 };
 
 IClipboardBackend *WinPortClipboard_SetBackend(IClipboardBackend *clipboard_backend);

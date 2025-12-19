@@ -1342,6 +1342,19 @@ void Editor::ProcessPasteEvent()
 	Show();
 }
 
+void Editor::ProcessPasteEventFromPrimary()
+{
+	if (!EdOpt.EditPasteFromPrimarySelection) {
+		return;
+	}
+
+	Clipboard clip;
+	if(clip.SetUseSelectionWhenPossible(1) > 0) {
+		ProcessPasteEvent();
+		clip.SetUseSelectionWhenPossible(0);
+	}
+}
+
 int Editor::ProcessKey(FarKey Key)
 {
 	if (Key == KEY_IDLE) {
@@ -3678,6 +3691,30 @@ case KEY_CTRLNUMPAD3: {
 	}
 }
 
+int Editor::AutoGrabToClipboard ()
+{
+	int status = 0;
+
+	if (!EdOpt.EditCopyToPrimarySelection) {
+		return status;
+	}
+
+	Clipboard clip;
+	if(clip.SetUseSelectionWhenPossible(1) > 0) {
+		if (clip.Open()) {
+			wchar_t *CopyData = nullptr;
+			if ((CopyData = Block2Text(CopyData))) {
+				clip.Copy(CopyData);
+				free(CopyData);
+				status = 1;
+			}
+			clip.Close();
+		}
+		clip.SetUseSelectionWhenPossible(0);
+	}
+	return status;
+}
+
 int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	m_MouseButtonIsHeld = MouseEvent->dwButtonState & 3;
@@ -3690,6 +3727,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0) {
+		AutoGrabToClipboard();
 		MouseSelStartingLine = -1;
 	}
 
@@ -3847,6 +3885,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			if (EditorPrevClickCount == 2) // Double-click
 			{
 				ProcessKey(KEY_OP_SELWORD);
+
+				AutoGrabToClipboard();
 			}
 			else if (EditorPrevClickCount >= 3) // Triple-click (and more)
 			{
@@ -3857,6 +3897,9 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					BlockStartLine = NumLine;
 				}
 				EditorPrevClickCount = 0; // Reset to avoid re-triggering
+
+				// VK: TODO: grab selection and copy to selection buffer
+				AutoGrabToClipboard();
 			}
 			Show();
 		}
@@ -3864,7 +3907,10 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	if (MouseEvent->dwButtonState == FROM_LEFT_2ND_BUTTON_PRESSED
 			&& (MouseEvent->dwEventFlags & (DOUBLE_CLICK | MOUSE_MOVED | MOUSE_HWHEELED | MOUSE_WHEELED)) == 0) {
-		ProcessPasteEvent();
+		if (EdOpt.EditPasteFromPrimarySelection)
+			ProcessPasteEventFromPrimary();
+		else
+			ProcessPasteEvent();
 	}
 
 	return TRUE;
@@ -7636,6 +7682,16 @@ void Editor::SetShowWhiteSpace(int NewMode)
 			CurPtr->SetShowWhiteSpace(NewMode);
 		}
 	}
+}
+
+void Editor::SetEditCopyToPrimarySelection(int newMode) {
+	if (EdOpt.EditCopyToPrimarySelection != newMode)
+		EdOpt.EditCopyToPrimarySelection = newMode;
+}
+
+void Editor::SetEditPasteFromPrimarySelection(int newMode) {
+	if (EdOpt.EditPasteFromPrimarySelection != newMode)
+		EdOpt.EditPasteFromPrimarySelection = newMode;
 }
 
 void Editor::SetShowLineNumbers(int NewMode)

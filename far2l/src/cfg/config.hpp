@@ -226,6 +226,8 @@ struct EditorOptions
 	int SearchPickUpWord;
 	int ShowWhiteSpace;
 	int ShowLineNumbers;
+	int EditCopyToPrimarySelection;
+	int EditPasteFromPrimarySelection;
 
 	int WordWrap;
 	FARString strWordDiv;

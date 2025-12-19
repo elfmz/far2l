@@ -146,7 +146,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			 (KeyEvent.wVirtualKeyCode == VK_DECIMAL)   ||
 			 (KeyEvent.wVirtualKeyCode == VK_SEPARATOR) ||
 			 (KeyEvent.wVirtualKeyCode == VK_CLEAR)     || // Fixme: workaround; far2l is not sending VK_CLEAR in tty at all
-			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) // keypad Enter
+			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
+			 (KeyEvent.wVirtualKeyCode == VK_F1) ||
+			 (KeyEvent.wVirtualKeyCode == VK_F2) ||
+			 (KeyEvent.wVirtualKeyCode == VK_F4)
 		))
 	);
 
@@ -259,7 +262,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_OEM_3:      base = '`'; break;
 		// ...digits...
 		case VK_OEM_MINUS:  base = '-'; break;
-		case VK_OEM_PLUS:   base = '+'; break;
+		case VK_OEM_PLUS:   base = '='; break;
 
 		// second row
 		// ...letters...
@@ -350,6 +353,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_F1:
 			if (kitty) {
 				keycode = 1;  suffix = 'P';
+				nolegacy = true;
 			} else {
 				keycode = 11; suffix = '~';
 			}
@@ -358,6 +362,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_F2:
 			if (kitty) {
 				keycode = 1;  suffix = 'Q';
+				nolegacy = true;
 			} else {
 				keycode = 12; suffix = '~';
 			}
@@ -367,11 +372,13 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			// F3 в спецификации kitty остаётся с тильдой (~), код 13,
 			// 'R' зарезервирована для отчета курсора
 			keycode = 13; suffix = '~';
+			nolegacy = true;
 			break;
 
 		case VK_F4:
 			if (kitty) {
 				keycode = 1;  suffix = 'S';
+				nolegacy = true;
 			} else {
 				keycode = 14; suffix = '~';
 			}

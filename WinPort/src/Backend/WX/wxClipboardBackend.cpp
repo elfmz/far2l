@@ -533,7 +533,7 @@ INT wxClipboardBackend::ChooseClipboard(INT format)
 	if (now != need) wxTheClipboard->UsePrimarySelection(need);
 
 #if defined(__WXGTK__) && defined(__WXGTK3__)
-	::wxClipboardType == need ? WxClipboardType::Primary : WxClipboardType::Clipboard;
+	::wxClipboardType = need ? WxClipboardType::Primary : WxClipboardType::Clipboard;
 #endif
 	return need ? 1 : 0;
 }

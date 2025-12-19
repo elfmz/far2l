@@ -230,6 +230,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		shifted = KeyEvent.uChar.UnicodeChar;
 	}
 
+	// no shifted key needed for ctrl+letters
+	if (ctrl && (shifted <= 32)) { shifted = 0; }
 
 	// generating key code and base layout key code
 	keycode = towlower(KeyEvent.uChar.UnicodeChar);
@@ -439,7 +441,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// adding keycode
 	out += std::to_string(keycode);
 
-	if ((flags & 4) && (shifted || base)) { // "report alternative keys" enabled
+	if ((flags & 4) && ( (shifted && (shifted != keycode)) || base)) { // "report alternative keys" enabled
 		out+= ':';
 		if (shifted) {
 			// adding shifted
@@ -464,7 +466,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		skipped = true; // middle part of sequence is skipped
 	}
 
-	if ((flags & 16) && KeyEvent.uChar.UnicodeChar) { // "text as code points" enabled
+	if ((flags & 16) && KeyEvent.uChar.UnicodeChar && !alt && (!ctrl || KeyEvent.uChar.UnicodeChar >= 32)) {
+		// "text as code points" enabled and relevant
 		if (skipped) {
 			out+= ';';
 		}

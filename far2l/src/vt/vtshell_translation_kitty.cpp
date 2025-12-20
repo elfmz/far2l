@@ -147,8 +147,14 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 			 (KeyEvent.wVirtualKeyCode == VK_SEPARATOR) ||
 			 (KeyEvent.wVirtualKeyCode == VK_CLEAR)     || // Fixme: workaround; far2l is not sending VK_CLEAR in tty at all
 			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
+			 (KeyEvent.wVirtualKeyCode == VK_MULTIPLY)  ||
+			 (KeyEvent.wVirtualKeyCode == VK_ADD)       ||
+			 (KeyEvent.wVirtualKeyCode == VK_SUBTRACT)  ||
+			 (KeyEvent.wVirtualKeyCode == VK_DIVIDE)    ||
+			((KeyEvent.wVirtualKeyCode == VK_RETURN) && (KeyEvent.dwControlKeyState & ENHANCED_KEY)) || // keypad Enter
 			 (KeyEvent.wVirtualKeyCode == VK_F1) ||
 			 (KeyEvent.wVirtualKeyCode == VK_F2) ||
+			 (KeyEvent.wVirtualKeyCode == VK_F3) ||
 			 (KeyEvent.wVirtualKeyCode == VK_F4)
 		))
 	);
@@ -176,7 +182,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		if (!kitty && KeyEvent.bKeyDown && legacy && legacy[0] && legacy[1]) { // [1] check for debug only
 
 			fprintf(stderr, "kitty kb: legacy fallback ESC %s\n", legacy + 1);
-			return legacy;
+			return "";
 		}
 
 		// We also fall back to legacy generation for non-CSIu function keys
@@ -297,12 +303,16 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		//case VK_RETURN:    keycode = 13;  break;
 		//case VK_TAB:       keycode = 9;   break;
 
+		case VK_SNAPSHOT:  keycode = 57361; suffix = 'u'; break;
+		case VK_SCROLL:    keycode = 57359; suffix = 'u'; break;
+		case VK_PAUSE:     keycode = 57362; suffix = 'u'; break;
+		case VK_APPS:      keycode = 57363; suffix = 'u'; break;
 		// leaving suffix 'u' unchanged
 		case VK_BACK:      keycode = 127; break;
 
 		// Fixme: WIP: make VK_CLEAR (numpad 5 without numlock) work until full keypad support is finished
 		//case VK_CLEAR:     keycode = 1; suffix = 'E'; break;
-		case VK_CLEAR:     keycode = 57427; suffix = 'u'; break;
+		case VK_CLEAR:     keycode = 57427; suffix = '~'; break;
 
 		// non-CSIu keys: keycode is not an unicode code point
 
@@ -394,6 +404,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		case VK_F12:       keycode = 24;  suffix = '~'; break;
 
 		case VK_MENU:
+		case VK_LMENU:
+		case VK_RMENU:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
 				fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
@@ -412,6 +424,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		}
 
 		case VK_CONTROL:
+		case VK_LCONTROL:
+		case VK_RCONTROL:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
 				fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
@@ -430,6 +444,8 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		}
 
 		case VK_SHIFT:
+		case VK_LSHIFT:
+		case VK_RSHIFT:
 		{
 			if (!(flags & 8)) { // "Report all keys as escape codes" disabled - do not sent modifiers themselfs
 				fprintf(stderr, "kitty kb: do not sending modifier press without mode 8\n");
@@ -456,7 +472,7 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 	// flag 8 is not enabled and legacy generation is possible.
 	if ((suffix != 'u') && KeyEvent.bKeyDown && !nolegacy && legacy && legacy[1] && !(flags & 8)) {
 		fprintf(stderr, "kitty kb: function non-CSIu key, falling back to legacy generation\n");
-		return legacy;
+		return "";
 	}
 
 

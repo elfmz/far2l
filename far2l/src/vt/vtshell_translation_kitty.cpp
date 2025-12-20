@@ -258,7 +258,9 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		if (ctrl /* some legacy workaround, leaving behavior unchanged */ && isalpha(base)) {
 			// Fixme: workaround for far2l wx sending unicode char with ctrl in wrong kb layout
 			// See also: https://github.com/wxWidgets/wxWidgets/issues/25384
-			keycode = base;
+
+			// issue above is fixed, disable this for auto test to work 
+			// keycode = base;
 		}
 	}
 

@@ -233,14 +233,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		nolegacy = true;
 	}
 
-
-	// generating shifted value
-
+	setlocale(LC_CTYPE, "");
 	if (shift) {
-		shifted = KeyEvent.uChar.UnicodeChar;
+		shifted = towupper(KeyEvent.uChar.UnicodeChar);
 	}
-
-	// generating key code and base layout key code
 	keycode = towlower(KeyEvent.uChar.UnicodeChar);
 
 	// Here we get VK_NONAME as wVirtualKeyCode for IME events,

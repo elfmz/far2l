@@ -3489,7 +3489,7 @@ public:
 		// Arclite usually tries to use packing method used in archive,
 		// but 7z.so from the old pzip doesn't support several methods
 		// and here we force change method to default for zip and tar
-		if (ArcAPI::libs()[0].version == 0 && (m_options.arc_type == c_zip || m_options.arc_type == c_tar))
+		if (ArcAPI::libs()[0].version == 0 && (m_options.arc_type == c_zip || m_options.arc_type == c_tar)) {
 			m_options.method = c_method_default;
 		}
 	}

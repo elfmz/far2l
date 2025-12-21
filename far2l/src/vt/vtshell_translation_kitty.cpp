@@ -233,6 +233,10 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		nolegacy = true;
 	}
 
+	// Since we have no information about keyboard layouts here, we cannot implement a distinction
+	// between shifted and unshifted fields as required by the protocol specification.
+	// Fortunately, a compromise is possible here, approved by the author of the specification.
+	// https://github.com/kovidgoyal/kitty/issues/8620#issuecomment-2878530117
 	setlocale(LC_CTYPE, "");
 	if (shift) {
 		shifted = towupper(KeyEvent.uChar.UnicodeChar);

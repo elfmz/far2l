@@ -233,12 +233,14 @@ std::string VT_TranslateKeyToKitty(const KEY_EVENT_RECORD &KeyEvent, int flags, 
 		nolegacy = true;
 	}
 
-	// Since we have no information about keyboard layouts here, we cannot implement a distinction
-	// between shifted and unshifted fields as required by the protocol specification.
-	// Fortunately, a compromise is possible here, approved by the author of the specification.
-	// https://github.com/kovidgoyal/kitty/issues/8620#issuecomment-2878530117
 	setlocale(LC_CTYPE, "");
-	if (shift) {
+	bool is_letter = ((KeyEvent.uChar.UnicodeChar >= 'A' && KeyEvent.uChar.UnicodeChar <= 'Z') ||
+		(KeyEvent.uChar.UnicodeChar >= 'a' && KeyEvent.uChar.UnicodeChar <= 'z'));
+	bool caps = KeyEvent.dwControlKeyState & CAPSLOCK_ON;
+	bool is_special = ctrl && (KeyEvent.uChar.UnicodeChar < 32);
+	if (
+		shift && !(caps && (is_letter || is_special)) && !(KeyEvent.uChar.UnicodeChar == ' ')
+	) {
 		shifted = towupper(KeyEvent.uChar.UnicodeChar);
 	}
 	keycode = towlower(KeyEvent.uChar.UnicodeChar);

@@ -12,7 +12,7 @@ There are two main entry points:
 Each of these macros logs the values of variables along with their names, but they differ in how arguments are provided.
 
 Every log entry is automatically prefixed with a customizable header (see 
-[section 4](#4-configuration-options) for configuration details) which by default contains:
+[section 4](#4-configuration-options) for configuration details) which, by default, contains:
 
 
 - process ID,
@@ -25,7 +25,7 @@ The logger supports various data types, including primitives, strings, wide stri
 
 When dumping containers, elements are enumerated using sequential indices (e.g., container[0], container[1]), even for non-indexable types like std::list or std::set. These indices are fictional and serve only for display purposes and navigation in the log structure. The actual traversal is performed using iterators (begin() to end()), ensuring compatibility with all iterable containers.
 
-When logging string values, special characters (such as newlines, tabs, quotes) are automatically escaped to ensure clarity and unambiguity. Note that character escaping via hexadecimal codes uses the C++23 style syntax: `\x{NN}`.
+When logging string values, special characters (such as newlines, tabs, quotes) are automatically escaped to ensure clarity and unambiguity. Hexadecimal character escaping uses the C++23 style syntax: `\x{NN}`.
 
 The output destination can be either a file or standard error stream, and is configured by options `WRITE_LOG_TO_FILE` and `LOG_FILENAME`. See [section 4](#4-configuration-options) for more details.
 
@@ -98,6 +98,15 @@ std::string name = "FAR2L";
 DUMPV(answer, pi, name);
 ```
 
+**Output:**
+```
+/-----[PID:150985, TID:1]-----[2025-12-24 20:55:48,233]-----
+|[/home/testuser/far2l/far2l/src/main.cpp:403] in FarAppMain()
+|=> answer = 42
+|=> pi = 3.14
+|=> name = FAR2L
+```
+
 ## 2. DUMP macro
 
 Logs complex data and/or expressions.
@@ -117,6 +126,20 @@ FARString fs = "The quick brown fox jumps over the lazy dog.";
 std::vector<int> primes {2, 3, 5, 7, 11, 13, 17};
 
 DUMP(DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes, 4));
+```
+
+**Output:**
+```
+/-----[PID:153098, TID:1]-----[2025-12-24 20:59:05,527]-----
+|[/home/testuser/far2l/far2l/src/main.cpp:402] in FarAppMain()
+|=> {DMSG} = Hello, far2l world!
+|=> fs.GetLength() = 44
+|=> primes
+|   |=> primes[0] = 2
+|   |=> primes[1] = 3
+|   |=> primes[2] = 5
+|   \=> primes[3] = 7
+|   Output limited to 4 elements (total elements: 7)
 ```
 
 
@@ -141,6 +164,12 @@ int x = 2, y = 3, z = 4;
 DUMP(DVV(str), DVV(str.find('o', 10)), DVV(x + y < z));
 ```
 
+**Output:**
+```
+|=> str = Pack my box with five dozen liquor jugs.
+|=> str.find('o', 10) = 23
+|=> x + y < z = false
+```
 
 ### 3.2. DMSG
 
@@ -156,6 +185,11 @@ DMSG(msg)
 
 ```cpp
 DUMP(DMSG("Operation completed successfully!"));
+```
+
+**Output:**
+```
+|=> {DMSG} = Operation completed successfully!
 ```
 
 ### 3.3. DSTRBUF
@@ -183,6 +217,11 @@ WINPORT_DECL(WriteConsole, BOOL, (HANDLE hConsoleOutput, const WCHAR *lpBuffer, 
 	DUMP(DSTRBUF(lpBuffer, nNumberOfCharsToWrite));
 	// ...
 }
+```
+
+**Output:**
+```
+|=> lpBuffer = ls -la
 ```
 
 ### 3.4. DBINBUF
@@ -220,6 +259,28 @@ DUMP(DBINBUF(wch, wcslen(wch)*sizeof(wchar_t)),
 	DBINBUF(&hdr, sizeof(hdr)));
 ```
 
+**Output:**
+```
+|=> wch =
+|             00 01 02 03 04 05 06 07 | 08 09 0a 0b 0c 0d 0e 0f  | ASCII
+|   -------------------------------------------------------------+-----------------
+|   00000000  54 00 00 00 68 00 00 00 | 65 00 00 00 20 00 00 00  | T...h...e... ...
+|   00000010  71 00 00 00 75 00 00 00 | 69 00 00 00 63 00 00 00  | q...u...i...c...
+|   00000020  6b 00 00 00 20 00 00 00 | 62 00 00 00 72 00 00 00  | k... ...b...r...
+|   00000030  6f 00 00 00 77 00 00 00 | 6e 00 00 00 20 00 00 00  | o...w...n... ...
+|   00000040  66 00 00 00 6f 00 00 00 | 78 00 00 00 20 00 00 00  | f...o...x... ...
+|   00000050  6a 00 00 00 75 00 00 00 | 6d 00 00 00 70 00 00 00  | j...u...m...p...
+|   00000060  73 00 00 00 20 00 00 00 | 6f 00 00 00 76 00 00 00  | s... ...o...v...
+|   00000070  65 00 00 00 72 00 00 00 | 20 00 00 00 74 00 00 00  | e...r... ...t...
+|   00000080  68 00 00 00 65 00 00 00 | 20 00 00 00 6c 00 00 00  | h...e... ...l...
+|   00000090  61 00 00 00 7a 00 00 00 | 79 00 00 00 20 00 00 00  | a...z...y... ...
+|   000000a0  64 00 00 00 6f 00 00 00 | 67 00 00 00 2e 00 00 00  | d...o...g.......
+|=> &hdr =
+|             00 01 02 03 04 05 06 07 | 08 09 0a 0b 0c 0d 0e 0f  | ASCII
+|   -------------------------------------------------------------+-----------------
+|   00000000  ef be ad de 02 01 0f 00 |                          | ........        
+```
+
 ### 3.5. DCONT
 
 Wraps containers or static arrays.
@@ -244,9 +305,17 @@ std::list<std::string> FAR2L = {"Linux", "fork", "of", "FAR Manager"};
 DUMP(DCONT(FAR2L, 2));
 ```
 
+**Output:**
+```
+|=> FAR2L
+|   |=> FAR2L[0] = Linux
+|   \=> FAR2L[1] = fork
+|   Output limited to 2 elements (total elements: 4)
+```
+
 ### 3.6. DFLAGS
 
-Wraps integers representing bit masks or flag sets. 
+Wraps integer types representing bit masks or flag sets.
 
 Use for decoding numeric values (such as file attributes or Unix permission bits) into human-readable strings.
 
@@ -268,6 +337,11 @@ mode_t mode = S_IFDIR | 0755;
 DUMP(DFLAGS(mode, Dumper::FlagsAs::UNIX_MODE));
 ```
 
+**Output:**
+```
+|=> mode = 40755 (drwxr-xr-x)
+```
+
 ### 3.7. DSTACKTRACE
 
 Captures and logs a stack trace at the point of invocation.
@@ -287,6 +361,33 @@ DSTACKTRACE()
 DUMP(DSTACKTRACE());
 ```
 
+**Output:**
+```
+|=> {STACKTRACE}
+|   |=> {FRAMES}
+|   |   |=> [0] = far2l :: ShellCopy::ShellCopyOneFileNoRetry(wchar_t const*, FAR_FIND_DATA_EX const&, FARString&, int, int)+0x81
+|   |   |=> [1] = far2l :: ShellCopy::ShellCopyOneFile(wchar_t const*, FAR_FIND_DATA_EX const&, FARString&, int, int)+0x45
+|   |   |=> [2] = far2l :: ShellCopy::CopyFileTree(wchar_t const*)+0x1033
+|   |   |=> [3] = far2l :: ShellCopy::ShellCopy(Panel*, int, int, int, int, int&, wchar_t const*, bool)+0x327f
+|   |   |=> [4] = far2l :: FileList::ProcessCopyKeys(unsigned int)+0x831
+|   |   |=> [5] = far2l :: FileList::ProcessKey(unsigned int)+0x446c
+|   |   |=> [6] = far2l :: FilePanels::ProcessKey(unsigned int)+0x12a7
+|   |   |=> [7] = far2l :: Manager::ProcessKey(unsigned int)+0x675
+|   |   |=> [8] = far2l :: Manager::ProcessMainLoop()+0x149
+|   |   |=> [9] = far2l :: Manager::EnterMainLoop()+0x54
+|   |   |=> [10] = far2l :: MainProcess(FARString, FARString, FARString, int, int, bool)+0xbfa
+|   |   |=> [11] = far2l :: FarAppMain(int, char**)+0x173c
+|   |   |=> [12] = far2l_gui.so :: WinPortAppThread::Entry()+0x2e
+|   |   |=> [13] = libwx_baseu-3.2.so.0 :: [unknown-function]  :: addr=0x7f7a0538c09b, mod_base=0x7f7a05200000, off_mod=+0x18c09b
+|   |   |=> [14] = libc.so.6 :: [unknown-function]  :: addr=0x7f7a0649698b, mod_base=0x7f7a06400000, off_mod=+0x9698b
+|   |   \=> [15] = libc.so.6 :: [unknown-function]  :: addr=0x7f7a0651a9cc, mod_base=0x7f7a06400000, off_mod=+0x11a9cc
+|   \=> {CMDLINE TOOL}
+|       |=> [0] = addr2line -e '/home/testuser/far2l_build/install/far2l' -f -p -C -i 0xad8f1 0xa96b5 0xa7b93 0xa542f 0x223ff1 0x21d31c 0x154367 0x1b1615 0x1afa49 0x1b0f34 0x1ac5ba 0x1aadfc
+|       |=> [1] = addr2line -e '/home/testuser/far2l_build/install/far2l_gui.so' -f -p -C -i 0x635ee
+|       |=> [2] = addr2line -e '/usr/lib/libwx_baseu-3.2.so.0' -f -p -C -i 0x18c09b
+|       \=> [3] = addr2line -e '/usr/lib/libc.so.6' -f -p -C -i 0x9698b 0x11a9cc
+```
+
 The stack trace output includes:
 
 - Frames section. Each frame shows module short name, function name (demangled if available), and associated memory addresses.
@@ -301,17 +402,60 @@ This functionality is highly configurable through various compile-time options d
 
 ## 4. Configuration Options
 
-The dumper behavior can be customized through the `DumperConfig` structure located at the beginning of `debug.h`.
+The dumper behavior can be customized through the `DumperConfig` structure located at the beginning of `utils/include/debug.h`:
+
+```cpp
+    struct DumperConfig
+    {
+        static constexpr bool WRITE_LOG_TO_FILE = false;
+		static constexpr char LOG_FILENAME[] = "far2l_debug.log";
+
+		static constexpr bool ENABLE_PID_TID = true;
+		static constexpr bool ENABLE_TIMESTAMP = true;
+		static constexpr bool ENABLE_LOCATION = true;
+
+		static constexpr size_t HEXDUMP_BYTES_PER_LINE = 16;
+		static constexpr size_t HEXDUMP_MAX_LENGTH = 1024 * 1024;
+
+		static constexpr std::size_t CONTAINERS_MAX_INDENT_LEVEL = 32;
+		enum class AdjustmentStrategy { Off, PreferAdjusted, PreferOriginal };
+		enum class ResolutionStrategy { OnlyDynsym, PreferDynsym, PreferSymtab, OnlySymtab };
+
+		static constexpr bool STACKTRACE_SHOW_ADDRESSES_ALWAYS = false;
+		static constexpr bool STACKTRACE_DEMANGLE_NAMES = true;
+		static constexpr AdjustmentStrategy STACKTRACE_RETADDR_ADJUSTMENT = AdjustmentStrategy::Off;
+		static constexpr ResolutionStrategy STACKTRACE_SYMBOL_RESOLUTION = ResolutionStrategy::PreferDynsym;
+		static constexpr bool STACKTRACE_SHOW_SYMBOL_SOURCE = false;
+		static constexpr bool STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS = true;
+		static constexpr size_t STACKTRACE_MAX_FRAMES = 64;
+		static constexpr size_t STACKTRACE_SKIP_FRAMES = 2;
+	};
+```
 
 > **Note**
 > 
 > All configuration options are compile-time constants and cannot be changed at runtime. Any modifications require recompilation of the affected code.
 
-Here is the full list:
+Here are detailed descriptions of these options:
 
 * `WRITE_LOG_TO_FILE`
 
-	Specifies the output destination for log entries. If set to `true`, logs are appended to a file determined by the `LOG_FILENAME` option. If set to `false`, logs are directed to `std::cerr`.
+	Determines the destination for debug output.
+
+	- `true`
+
+		Logs are appended to the dedicated file specified in `LOG_FILENAME` (default: `~/far2l_debug.log`). This provides a clean, isolated log containing only your Dumper calls, working out-of-the-box.
+
+	- `false`
+
+		Logs are sent to `stderr`. Ideal when you need context, as your debug prints will be interleaved with other internal far2l logs, showing the exact order of events.
+
+		> By default, far2l silences `stderr`. To see the output, you must set the `FAR2L_STD` environment variable before launching far2l:
+		> 
+		> - `export FAR2L_STD=/path/to/log` — redirects output to a file (best for log analysis).
+		> - `export FAR2L_STD=-` — redirects output to the terminal (best for real-time monitoring).
+		> 
+		> Note: Printing to the terminal while using the TTY backend will cause visual glitches in the interface.
 
 * `LOG_FILENAME`
 

@@ -80,8 +80,9 @@ void FN_NORETURN FN_PRINTF_ARGS(1) Panic(const char *format, ...) noexcept;
 
 namespace Dumper {
 
-	struct DumperConfig {
-		static constexpr bool WRITE_LOG_TO_FILE = true;
+    struct DumperConfig
+    {
+        static constexpr bool WRITE_LOG_TO_FILE = false;
 		static constexpr char LOG_FILENAME[] = "far2l_debug.log";
 
 		static constexpr bool ENABLE_PID_TID = true;

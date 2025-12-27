@@ -3393,6 +3393,9 @@ case KEY_CTRLNUMPAD3: {
 		}
 		default: {
 			{
+				if (m_bWordWrap && (Key >= KEY_CTRLA) && (Key <= KEY_CTRLZ))
+					return TRUE;
+
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL
 							|| Key == KEY_CTRLT)
 						&& CurPos >= CurLine->GetLength()) {

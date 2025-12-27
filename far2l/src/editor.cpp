@@ -3393,6 +3393,7 @@ case KEY_CTRLNUMPAD3: {
 		}
 		default: {
 			{
+				// workaround for #3149
 				if (m_bWordWrap && (Key >= KEY_CTRLA) && (Key <= KEY_CTRLZ))
 					return TRUE;
 

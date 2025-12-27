@@ -486,6 +486,11 @@ void Editor::ShowEditor(int CurLineOnly)
 		CurLine->SetLeftPos(0);
 		MaxRightPos = CurLine->GetCellCurPos();
 
+		int v_start, v_end;
+		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
+		int visual_line_start_cell = CurLine->RealPosToCell(v_start);
+		m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 		// Ensure TopScreen pointers are initialized
 		if (!m_TopScreenLogicalLine) {
 			m_TopScreenLogicalLine = TopScreen;

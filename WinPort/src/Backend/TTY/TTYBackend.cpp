@@ -192,8 +192,7 @@ bool TTYBackend::Startup()
 		return false;
 	}
 
-	PrinterSupportBackendSetter printer_backend_setter;
-	printer_backend_setter.Set<ttyPrinterSupportBackend>();
+	_printer_backend_setter.Set<ttyPrinterSupportBackend>();
 
 	return true;
 }

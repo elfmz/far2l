@@ -2,7 +2,7 @@
 #include <wx/display.h>
 
 #if defined(__APPLE__)
-// Disabled for now: use wxWidgets
+// For now, we're playing with wxWidgets-based code for all platforms; later we'll switch to native path for macos
 // #define MAC_NATIVE_PRINTING
 #endif
 
@@ -23,7 +23,8 @@
 
 wxPrinterSupportBackend::wxPrinterSupportBackend() {
 #ifndef MAC_NATIVE_PRINTING
-	html_printer = new wxHtmlEasyPrinting();
+	wxWindow* top = wxTheApp->GetTopWindow();
+	html_printer = new wxHtmlEasyPrinting("Printing", top);
 #endif
 }
 wxPrinterSupportBackend::~wxPrinterSupportBackend() {
@@ -48,7 +49,7 @@ void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::
 	
 	for (auto& line : lines) buffer.AddParagraph(line);
 
-	wxRichTextPrinting rtf_printer(jobName);
+	wxRichTextPrinting rtf_printer(jobName, wxTheApp->GetTopWindow());
 	rtf_printer.PrintBuffer(buffer);
 #else
 	MacNativePrintText(wxText);
@@ -82,7 +83,7 @@ void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 	}
 
 #ifndef MAC_NATIVE_PRINTING
-	wxRichTextPrinting rtf_printer(fileName);
+	wxRichTextPrinting rtf_printer(fileName, wxTheApp->GetTopWindow());
 	rtf_printer.PrintFile(fileName);
 #else
 	wxString wxText(fileName); 
@@ -122,7 +123,7 @@ void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, co
 	wxArrayString lines = wxSplit(wxText, '\n'); 
 	for (auto& line : lines) buffer.AddParagraph(line);
 
-	wxRichTextPrinting rtf_printer(jobName);
+	wxRichTextPrinting rtf_printer(jobName, wxTheApp->GetTopWindow());
 	rtf_printer.PreviewBuffer(buffer);
 #else
 	wxString wxText(text); 
@@ -157,7 +158,7 @@ void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileNam
 	}
 
 #ifndef MAC_NATIVE_PRINTING
-	wxRichTextPrinting rtf_printer(fileName);
+	wxRichTextPrinting rtf_printer(fileName, wxTheApp->GetTopWindow());
 	rtf_printer.PreviewFile(fileName);
 #else
 	wxString wxText(fileName); 

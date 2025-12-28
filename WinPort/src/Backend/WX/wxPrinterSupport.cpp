@@ -2,7 +2,8 @@
 #include <wx/display.h>
 
 #if defined(__APPLE__)
-#define MAC_NATIVE_PRINTING
+// Disabled for now: use wxWidgets
+// #define MAC_NATIVE_PRINTING
 #endif
 
 #ifndef MAC_NATIVE_PRINTING

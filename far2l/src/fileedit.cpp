@@ -2984,7 +2984,7 @@ struct ColorMap {
 	}
 
 	void apply(const FarTrueColor& newcolor, int start, int end) {
-		for(int i = start; i <= end; ++i) s[i].color = newcolor;
+		for(int i = start; i <= end && i < len; ++i) s[i].color = newcolor;
 	}
 };
 

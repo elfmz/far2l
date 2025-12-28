@@ -17,11 +17,6 @@
 wxPrinterSupportBackend::wxPrinterSupportBackend() {}
 wxPrinterSupportBackend::~wxPrinterSupportBackend() {}
 
-#ifndef MAC_NATIVE_PRINTING
-static wxHtmlEasyPrinting html_printer;
-static wxRichTextPrinting rtf_printer;
-#endif
-
 void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::wstring& text)
 {
 	wxString wxText(text); 
@@ -31,6 +26,8 @@ void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::
 	wxArrayString lines = wxSplit(wxText, '\n'); 
 	
 	for (auto& line : lines) buffer.AddParagraph(line);
+
+	wxRichTextPrinting rtf_printer(jobName);
 	rtf_printer.PrintBuffer(buffer);
 #else
 	MacNativePrintText(wxText);
@@ -40,6 +37,7 @@ void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::
 void wxPrinterSupportBackend::PrintReducedHTML(const std::wstring& jobName, const std::wstring& text)
 {
 #ifndef MAC_NATIVE_PRINTING
+	wxHtmlEasyPrinting html_printer(jobName);
 	html_printer.PrintText(text);
 #else
 	wxString wxText(text); 
@@ -50,6 +48,7 @@ void wxPrinterSupportBackend::PrintReducedHTML(const std::wstring& jobName, cons
 void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 {
 #ifndef MAC_NATIVE_PRINTING
+	wxRichTextPrinting rtf_printer(fileName);
 	rtf_printer.PrintFile(fileName);
 #else
 	wxString wxText(fileName); 
@@ -60,6 +59,7 @@ void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 void wxPrinterSupportBackend::PrintHtmlFile(const std::wstring& fileName)
 {
 #ifndef MAC_NATIVE_PRINTING
+	wxHtmlEasyPrinting html_printer(fileName);
 	html_printer.PrintFile(fileName);
 #else
 	wxString wxText(fileName); 
@@ -73,8 +73,9 @@ void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, co
 	wxRichTextBuffer buffer; 
 	wxString wxText(text); 
 	wxArrayString lines = wxSplit(wxText, '\n'); 
-	
 	for (auto& line : lines) buffer.AddParagraph(line);
+
+	wxRichTextPrinting rtf_printer(jobName);
 	rtf_printer.PreviewBuffer(buffer);
 #else
 	wxString wxText(text); 
@@ -85,7 +86,8 @@ void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, co
 void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobName, const std::wstring& text)
 {
 #ifndef MAC_NATIVE_PRINTING
-	html_printer.PreviewText(text);
+	wxHtmlEasyPrinting html_printer(jobName);
+	html_printer->PreviewText(text);
 #else
 	wxString wxText(text); 
 	MacNativePrintPreviewHtml(wxText);
@@ -95,6 +97,7 @@ void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobN
 void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileName)
 {
 #ifndef MAC_NATIVE_PRINTING
+	wxRichTextPrinting rtf_printer(fileName);
 	rtf_printer.PreviewFile(fileName);
 #else
 	wxString wxText(fileName); 
@@ -105,6 +108,7 @@ void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileNam
 void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const std::wstring& fileName)
 {
 #ifndef MAC_NATIVE_PRINTING
+	wxHtmlEasyPrinting html_printer(fileName);
 	html_printer.PreviewFile(fileName);
 #else
 	wxString wxText(fileName); 
@@ -115,6 +119,7 @@ void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const std::wstring& fileNam
 void wxPrinterSupportBackend::ShowPrinterSetupDialog()
 {
 #ifndef MAC_NATIVE_PRINTING
+	wxHtmlEasyPrinting html_printer("Printer Setup");
 	html_printer.PageSetup();
 #else
 	MacNativeShowPageSetupDialog();

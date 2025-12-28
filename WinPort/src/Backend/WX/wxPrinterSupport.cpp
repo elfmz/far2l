@@ -15,11 +15,20 @@
 #include "wxPrinterSupport.h"
 #include "CallInMain.h"
 
+#ifdef MAC_NATIVE_PRINTING
+#include "Mac/printing.h"
+#endif
+
+
 wxPrinterSupportBackend::wxPrinterSupportBackend() {
+#ifndef MAC_NATIVE_PRINTING
 	html_printer = new wxHtmlEasyPrinting();
+#endif
 }
 wxPrinterSupportBackend::~wxPrinterSupportBackend() {
+#ifndef MAC_NATIVE_PRINTING
 	delete html_printer;
+#endif
 }
 
 void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::wstring& text)

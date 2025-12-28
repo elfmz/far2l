@@ -11,21 +11,20 @@ void ttyPrinterSupportBackend::PrintText(const std::wstring& jobName, const std:
 {
 	char tmpl[] = "/tmp/far2l-editor-print-fragmentXXXXXX";
 	int fd = mkstemp(tmpl);
+
 	FILE* fp = fdopen(fd, "a+");
-
 	fprintf(fp, "%ls\n", text.c_str());
-
 	fclose(fp);
 
 	char buf[MAX_PATH];
-	sprintf(buf, "lp \'%s\'", tmpl);
+	sprintf(buf, "lp %s", tmpl);
 	system(buf);
 }
 
 void ttyPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 {
 	char buf[MAX_PATH];
-	sprintf(buf, "lp \'%ls\'", fileName.c_str());
+	sprintf(buf, "lp %ls", fileName.c_str());
 	system(buf);
 }
 

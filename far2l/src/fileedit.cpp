@@ -2976,7 +2976,7 @@ struct ColorMap {
 		if (start < 0) start = 0;
 		len = length <= 0 ? wcslen(w) - start : length;
 		s = new CharMapItem[len];
-		for(int i = 0; i <= len; ++i) s[i] = CharMapItem(w[i + start]);
+		for(int i = 0; i < len; ++i) s[i] = CharMapItem(w[i + start]);
 	}
 
 	~ColorMap() {
@@ -2984,7 +2984,7 @@ struct ColorMap {
 	}
 
 	void apply(const FarTrueColor& newcolor, int start, int end) {
-		for(int i = start; i < end; ++i) s[i].color = newcolor;
+		for(int i = start; i <= end; ++i) s[i].color = newcolor;
 	}
 };
 

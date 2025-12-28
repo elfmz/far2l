@@ -150,7 +150,7 @@ void MacNativePrintPreviewHtml(const wxString& html)
 		WKWebView* web = [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
 		[web loadHTMLString:ToNSString(html) baseURL:nil];
 
-        MacNativeShowPrintDialog(view);
+        MacNativeShowPrintDialog(web);
     }
 }
 

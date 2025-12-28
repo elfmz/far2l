@@ -47,6 +47,7 @@ extern "C" {
 	WINPORT_DECL(PrintTextFile, VOID, (LPCWSTR lpszFileName))
 	{
 		std::lock_guard<std::mutex> lock(g_printer_backend_mutex);
+		fprintf(stderr, "print::text file:: backend=%p file=%ls\n", g_printer_backend, lpszFileName);
 		if(g_printer_backend) g_printer_backend->PrintTextFile(lpszFileName);
 	}
 

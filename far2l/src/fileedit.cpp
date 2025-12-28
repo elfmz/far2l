@@ -3235,6 +3235,7 @@ BOOL FileEditor::SendToPrinter()
 	}
 	fclose(fp);
     
+    Length = strlen(tmpl);
     std::wstring _tmpwstr;
     MB2Wide(tmpl, Length, _tmpwstr);
 

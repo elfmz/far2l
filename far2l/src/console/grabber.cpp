@@ -97,12 +97,8 @@ static void FilterGrabbedText(std::wstring &grabbed_text)
 				default:   ch = L'+';
 			}
 
-			if (Opt.NoBoxes) switch (orig_ch) {
-				case 0xB3: // fallthrough
-				case 0xBA: ch = L' '; break;
-				case 0xC4: ch = L' '; break;
-				case 0xCD: ch = L' '; break;
-				default:   ch = L' ';
+			else if (Opt.NoBoxes) {
+				ch = L' ';
 			}
 		}
 	}
@@ -360,7 +356,7 @@ int Grabber::ProcessKey(FarKey key)
 			if ((_area.cur_y+= 5) > ScrY)
 				_area.cur_y = ScrY;
 
-			if (key == KEY_CTRLSHIFTDOWN || key == KEY_CTRLSHIFTNUMPAD8)
+			if (key == KEY_CTRLSHIFTDOWN || key == KEY_CTRLSHIFTNUMPAD2)
 				_area.top = _area.cur_y;
 
 			break;

@@ -87,7 +87,7 @@ void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobN
 {
 #ifndef MAC_NATIVE_PRINTING
 	wxHtmlEasyPrinting html_printer(jobName);
-	html_printer->PreviewText(text);
+	html_printer.PreviewText(text);
 #else
 	wxString wxText(text); 
 	MacNativePrintPreviewHtml(wxText);

@@ -9,6 +9,11 @@ static NSString* ToNSString(const wxString& s)
 	return [NSString stringWithUTF8String:s.utf8_str().data()]; 
 }
 
+static inline NSURL* ToFileURL(const wxString& s) 
+{
+	return [NSURL fileURLWithPath: [NSString stringWithUTF8String:s.utf8_str().data()]]; 
+}
+
 void MacNativePrintText(const wxString& text) 
 {
     @autoreleasepool 

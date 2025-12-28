@@ -19,7 +19,7 @@ public:
 
 	virtual void ShowPrinterSetupDialog();
 
-	virtual bool IsPrintPreviewSupported(){ return true; }
-	virtual bool IsReducedHTMLSupported(){ return true; }
-	virtual bool IsPrinterSetupDialogSupported(){ return true; }
+	virtual bool IsPrintPreviewSupported();
+	virtual bool IsReducedHTMLSupported();
+	virtual bool IsPrinterSetupDialogSupported();
 };

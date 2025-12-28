@@ -22,18 +22,6 @@ static wxHtmlEasyPrinting html_printer;
 static wxRichTextPrinting rtf_printer;
 #endif
 
-void MacNativePrintText(const wxString& text);
-void MacNativePrintHtml(const wxString& html);
-void MacNativePrintTextFile(const wxString& path);
-void MacNativePrintHtmlFile(const wxString& path);
-
-void MacNativeShowPageSetupDialog();
-
-void MacNativePrintPreviewText(const wxString& text);
-void MacNativePrintPreviewHtml(const wxString& html);
-void MacNativePrintPreviewTextFile(const wxString& path);
-void MacNativePrintPreviewHtmlFile(const wxString& path);
-
 void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::wstring& text)
 {
 	wxString wxText(text); 

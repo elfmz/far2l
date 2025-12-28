@@ -3399,7 +3399,10 @@ case KEY_CTRLNUMPAD3: {
 		default: {
 			{
 				// workaround for #3149
-				if (m_bWordWrap && (Key >= KEY_CTRLA) && (Key <= KEY_CTRLZ))
+				if (m_bWordWrap && (
+					((Key >= KEY_CTRLG) && (Key <= KEY_CTRLJ)) ||
+					Key == KEY_CTRLR
+				))
 					return TRUE;
 
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL

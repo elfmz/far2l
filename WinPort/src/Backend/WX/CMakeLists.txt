@@ -38,9 +38,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    find_package(wxWidgets REQUIRED core base adv)
+    find_package(wxWidgets REQUIRED core base adv html richtext)
 else()
-    find_package(wxWidgets REQUIRED core base)
+    find_package(wxWidgets REQUIRED core base html richtext)
 endif()
 
 include(${wxWidgets_USE_FILE})

@@ -13,12 +13,23 @@
 #include <string.h>
 
 #include "wxPrinterSupport.h"
+#include "CallInMain.h"
 
-wxPrinterSupportBackend::wxPrinterSupportBackend() {}
-wxPrinterSupportBackend::~wxPrinterSupportBackend() {}
+wxPrinterSupportBackend::wxPrinterSupportBackend() {
+	html_printer = new wxHtmlEasyPrinting();
+}
+wxPrinterSupportBackend::~wxPrinterSupportBackend() {
+	delete html_printer;
+}
 
 void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::wstring& text)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::PrintText, this, jobName, text);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 	wxString wxText(text); 
 
 #ifndef MAC_NATIVE_PRINTING
@@ -36,9 +47,16 @@ void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::
 
 void wxPrinterSupportBackend::PrintReducedHTML(const std::wstring& jobName, const std::wstring& text)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::PrintReducedHTML, this, jobName, text);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
-	wxHtmlEasyPrinting html_printer(jobName);
-	html_printer.PrintText(text);
+	//wxHtmlEasyPrinting html_printer(jobName);
+	//html_printer.PrintText(text);
+	html_printer->PrintText(text);
 #else
 	wxString wxText(text); 
 	MacNativePrintHtml(wxText);
@@ -47,6 +65,12 @@ void wxPrinterSupportBackend::PrintReducedHTML(const std::wstring& jobName, cons
 
 void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::PrintTextFile, this, fileName);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextPrinting rtf_printer(fileName);
 	rtf_printer.PrintFile(fileName);
@@ -58,9 +82,16 @@ void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 
 void wxPrinterSupportBackend::PrintHtmlFile(const std::wstring& fileName)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::PrintHtmlFile, this, fileName);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
-	wxHtmlEasyPrinting html_printer(fileName);
-	html_printer.PrintFile(fileName);
+	// wxHtmlEasyPrinting html_printer(fileName);
+	// html_printer.PrintFile(fileName);
+	html_printer->PrintFile(fileName);
 #else
 	wxString wxText(fileName); 
 	MacNativePrintHtmlFile(wxText);
@@ -69,6 +100,12 @@ void wxPrinterSupportBackend::PrintHtmlFile(const std::wstring& fileName)
 
 void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, const std::wstring& text)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForText, this, jobName, text);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextBuffer buffer; 
 	wxString wxText(text); 
@@ -85,9 +122,16 @@ void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, co
 
 void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobName, const std::wstring& text)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForReducedHTML, this, jobName, text);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
-	wxHtmlEasyPrinting html_printer(jobName);
-	html_printer.PreviewText(text);
+	// wxHtmlEasyPrinting html_printer(jobName);
+	// html_printer.PreviewText(text);
+	html_printer->PreviewText(text);
 #else
 	wxString wxText(text); 
 	MacNativePrintPreviewHtml(wxText);
@@ -96,6 +140,12 @@ void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobN
 
 void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileName)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForTextFile, this, fileName);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextPrinting rtf_printer(fileName);
 	rtf_printer.PreviewFile(fileName);
@@ -107,9 +157,16 @@ void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileNam
 
 void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const std::wstring& fileName)
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForHtmlFile, this, fileName);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
-	wxHtmlEasyPrinting html_printer(fileName);
-	html_printer.PreviewFile(fileName);
+	// wxHtmlEasyPrinting html_printer(fileName);
+	// html_printer.PreviewFile(fileName);
+	html_printer->PreviewFile(fileName);
 #else
 	wxString wxText(fileName); 
 	MacNativePrintPreviewHtmlFile(wxText);
@@ -118,9 +175,16 @@ void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const std::wstring& fileNam
 
 void wxPrinterSupportBackend::ShowPrinterSetupDialog()
 {
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxPrinterSupportBackend::ShowPrinterSetupDialog, this);
+		CallInMainNoRet(fn);
+		return;
+	}
+
 #ifndef MAC_NATIVE_PRINTING
-	wxHtmlEasyPrinting html_printer("Printer Setup");
-	html_printer.PageSetup();
+	// wxHtmlEasyPrinting html_printer("Printer Setup");
+	// html_printer.PageSetup();
+	html_printer->PageSetup();
 #else
 	MacNativeShowPageSetupDialog();
 #endif

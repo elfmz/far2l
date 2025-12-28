@@ -3731,6 +3731,39 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
+	if (!m_bWordWrap && (MouseEvent->dwButtonState & 3) && (MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+		if (MouseEvent->dwMousePosition.X <= X1 || MouseEvent->dwMousePosition.X >= XX2) {
+			const bool Left = MouseEvent->dwMousePosition.X <= X1;
+			while (IsMouseButtonPressed() && (Left ? MouseX <= X1 : MouseX >= XX2)) {
+				if (Left) {
+					if (CurLine->GetCurPos() == 0) break;
+				} else {
+					if (!EdOpt.CursorBeyondEOL && CurLine->GetCurPos() >= CurLine->GetLength()) break;
+				}
+
+				Pasting++;
+				ProcessKey(Left ? KEY_LEFT : KEY_RIGHT);
+				Pasting--;
+
+				if (MouseSelStartingLine != -1) {
+					const int TargetPos = CurLine->GetCurPos();
+					const bool SelVBlock = (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
+
+					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
+						MarkBlock(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
+								TargetPos - MouseSelStartingPos, NumLine + 1 - MouseSelStartingLine);
+					} else {
+						MarkBlock(SelVBlock, NumLine, TargetPos,
+								MouseSelStartingPos - TargetPos, MouseSelStartingLine + 1 - NumLine);
+					}
+				}
+				Show();
+				if (m_bWordWrap) break;
+				WINPORT(Sleep)(10);
+			}
+			return TRUE;
+		}
+	}
 	// scroll up/down by dragging outside editor window
 	if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
 		while (IsMouseButtonPressed() && MouseY < Y1) ProcessKey(KEY_UP);

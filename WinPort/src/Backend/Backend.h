@@ -303,3 +303,60 @@ struct WinPortMainBackendArg
 	bool norgb;
 };
 
+//////////////////////////////////////////////////////////////////////////////////
+
+class IPrinterSupport {
+public:
+	virtual void PrintText(const std::wstring& jobName, const std::wstring& text) = 0;
+	virtual void PrintReducedHTML(const std::wstring& jobName, const std::wstring& text) = 0;
+	virtual void PrintTextFile(const std::wstring& fileName) = 0;
+	virtual void PrintHtmlFile(const std::wstring& fileName) = 0;
+
+	virtual void ShowPreviewForText(const std::wstring&  jobName, const std::wstring& text) = 0;
+	virtual void ShowPreviewForReducedHTML(const std::wstring& jobName, const std::wstring& text) = 0;
+	virtual void ShowPreviewForTextFile(const std::wstring& fileName) = 0;
+	virtual void ShowPreviewForHtmlFile(const std::wstring& fileName) = 0;
+
+	virtual void ShowPrinterSetupDialog() = 0;
+
+	virtual bool IsPrintPreviewSupported(){ return false; }
+	virtual bool IsReducedHTMLSupported(){ return false; }
+	virtual bool IsPrinterSetupDialogSupported(){ return false; }
+
+	virtual ~IPrinterSupport() {};
+};
+
+IPrinterSupport *WinPortPrinterSupport_SetBackend(IPrinterSupport *printer_backend);
+
+class PrinterSupportBackendSetter
+{
+	IPrinterSupport *_prev_cb = nullptr;
+	bool _is_set = false;
+
+public:
+	inline bool IsSet() const { return _is_set; }
+
+	template <class BACKEND_T, typename... ArgsT>
+		inline void Set(ArgsT... args)
+	{
+		IPrinterSupport *cb = new BACKEND_T(args...);
+		IPrinterSupport *prev_cb = WinPortPrinterSupport_SetBackend(cb);
+		if (!_is_set) {
+			_prev_cb = prev_cb;
+			_is_set = true;
+
+		} else {
+			delete prev_cb;
+		}
+	}
+
+	inline ~PrinterSupportBackendSetter()
+	{
+		if (_is_set) {
+			IPrinterSupport *cb = WinPortPrinterSupport_SetBackend(_prev_cb);
+			if (cb != _prev_cb) {
+				delete cb;
+			}
+		}
+	}
+};

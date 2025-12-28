@@ -1,6 +1,8 @@
 #pragma once
 #include "Backend.h"
 
+class wxHtmlEasyPrinting;
+
 class wxPrinterSupportBackend : public IPrinterSupport
 {
 public:
@@ -22,4 +24,8 @@ public:
 	virtual bool IsPrintPreviewSupported();
 	virtual bool IsReducedHTMLSupported();
 	virtual bool IsPrinterSetupDialogSupported();
+
+private:
+	wxHtmlEasyPrinting* html_printer;
 };
+

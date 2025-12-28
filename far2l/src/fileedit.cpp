@@ -790,7 +790,7 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				return TRUE;
 			}
             */
-            if (SendToPrinter())
+            if (!CalledFromControl && SendToPrinter())
             	return TRUE;
 
 			break;	// отдадим Alt-F5 на растерзание плагинам, если не установлен PrintMan
@@ -2913,11 +2913,11 @@ public:
 
 	void append(wchar_t c) {
 		wchar_t buf[2] = {c, 0};
-		append(buf);
+		append(buf, 1);
 	}
 
 	void append(const char* s, int max = 0) {
-		int delta = max ? max : strlen(s);
+		int delta = max > 0 ? max : strlen(s);
 		ensure(delta + 1);
 		len += delta;
 		while(delta--) *cptr++ = *s++;
@@ -2925,18 +2925,20 @@ public:
 	}
 
 	void append(const std::string& s, int max = 0) {
-		append((char*)s.c_str(), max);
+		append((const char*)s.c_str(), max);
 	}
 
 	void append(const wchar_t* w, int max = 0) {
+		int delta = max > 0 ? max : wcslen(w);
 		std::string _tmpstr;
-		Wide2MB(w, max, _tmpstr);
+		Wide2MB(w, delta, _tmpstr);
 		append(_tmpstr);
 	}
 
 	void append(const std::wstring& w, int max = 0) {
+		int delta = max > 0 ? max : w.length();
 		std::string _tmpstr;
-		Wide2MB(w.c_str(), max, _tmpstr);
+		Wide2MB(w.c_str(), delta, _tmpstr);
 		append(_tmpstr);
 	}
 
@@ -2944,6 +2946,45 @@ public:
 		char buf[10];
 		sprintf(buf, "%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
 		append(buf);
+	}
+};
+
+struct CharMapItem {
+	wchar_t c;
+	FarTrueColor color;
+
+	CharMapItem() {
+		c = L' ';
+		color.R = color.G = color.B = 0; // black;
+	}
+
+	CharMapItem(wchar_t cc) {
+		c = cc;
+		color.R = color.G = color.B = 0; // black;
+	}
+
+	bool sameColor(FarTrueColor x) {
+		return x.R == color.R && x.G == color.G && x.B == color.B;
+	}
+};
+
+struct ColorMap {
+	CharMapItem* s;
+	int len;
+
+	ColorMap(const wchar_t* w, int start, int length) {
+		if (start < 0) start = 0;
+		len = length <= 0 ? wcslen(w) - start : length;
+		s = new CharMapItem[len];
+		for(int i = 0; i <= len; ++i) s[i] = CharMapItem(w[i + start]);
+	}
+
+	~ColorMap() {
+		delete[] s;
+	}
+
+	void apply(const FarTrueColor& newcolor, int start, int end) {
+		for(int i = start; i < end; ++i) s[i].color = newcolor;
 	}
 };
 
@@ -3058,10 +3099,10 @@ static FarTrueColor ConvertForPrintLAB(const FarTrueColor& in, const FarTrueColo
     const double k = 0.8;
 
     // Step 2: invert brightness (or darken)
-    lab.L = Lwhite - k*fabs(deltaL);
+    lab.L = Lwhite - k * fabs(deltaL);
 
 	// Clamp to reasonable range 
-	if (lab.L > 80) lab.L = 80; // avoid too light; too dark is OK 
+	if (lab.L > 70) lab.L = 70; // avoid too light; too dark is OK 
 	if (deltaL < 0) {
     	// foreground is darker than background
 	    // ensure printed text is still dark enough
@@ -3105,6 +3146,16 @@ static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtm
 	}
 }
 
+static bool isEmptyOrSpace(const wchar_t* s, int start, int len) 
+{
+	bool space = true;
+	for(int i = start; i < start + len && space; ++i)
+		if (s[i] != L' ') space = false;
+	return space;
+}
+
+#define toI(x) ((int)(x) & 0xFF)
+
 static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
 {
 	if (len <= 0) len = line->GetLength() - start;
@@ -3116,16 +3167,27 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
 
 	line->GetBinaryString(&CurStr, &EndSeq, Length);
 
-	for (size_t i = 0; line->GetColor(&ci, i); ++i) {
-		if (ci.StartPos == -1 && ci.EndPos == -1) {
+	if (!CurStr) return false;
+
+	fprintf(stderr, "colorize: `%ls` [%d..%d]\n", CurStr, start, start + end);
+
+	ColorMap map(CurStr, start, end);
+
+	for (int i = 0; line->GetColor(&ci, i); ++i) {
+		if ((ci.StartPos == -1 && ci.EndPos == -1) || ci.StartPos > ci.EndPos) {
 			// background
 			continue;
 		}
 
+		ci.StartPos = line->RealPosToCell(ci.StartPos);
+		ci.EndPos = line->RealPosToCell(ci.EndPos);
+
+		if (ci.EndPos > start + end) ci.EndPos = start + end;
+
 		if (ci.StartPos == -1) ci.StartPos = 0;
 		if (ci.EndPos == -1) ci.EndPos = end;
 
-		if (ci.StartPos > end|| ci.EndPos < start) continue;
+		if (ci.StartPos > end || ci.EndPos < start) continue;
 
 		EditorTrueColor tcol;
 		FarTrueColorFromAttributes(tcol.TrueColor, ci.Color);
@@ -3134,16 +3196,33 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
 
 		FarTrueColor print = ConvertForPrintLAB(rgb, bgk);
 
-		tb.append("<font color=\"#");
-		tb.append(print);
-		tb.append("\">");
-		escapeHtmlTags(tb, CurStr + std::max(start, ci.StartPos), std::min(len, ci.EndPos - ci.StartPos), true);
-		tb.append("</font>");
-
-		return true;
+		map.apply(print, ci.StartPos, ci.EndPos);
 	}
 
-	return false;
+	// now we have rendered every character in map so we can iterate through it
+	FarTrueColor prev;
+	prev.R = prev.G = prev.B = 0;
+	bool colored = false;
+	// tb.append("<pre>");
+	for(int i = 0; i < map.len; ++i) {
+		if (!map.s[i].sameColor(prev)) {
+			if (colored) tb.append("</font>");
+			colored = true;
+			tb.append("<font color=\"#");
+			tb.append(map.s[i].color);
+			tb.append("\">");
+		}
+		tb.append(map.s[i].c);
+	}
+	// tb.append("</pre>");
+
+	fprintf(stderr, "colorize: `%.*ls` => `%s`\n", 
+		len, CurStr + start,
+		tb.c_str());
+
+	tb.append('\n');
+
+	return true;
 }
 
 BOOL FileEditor::SendToPrinter()
@@ -3151,9 +3230,15 @@ BOOL FileEditor::SendToPrinter()
 	PrinterSupport printer;
 	TextBuffer tb;
 
+	fprintf(stderr, "Printer caps: HTML=%c, preview=%c, setup dialog=%c\n",
+		printer.IsReducedHTMLSupported() ? 'Y' : 'N',
+		printer.IsPrintPreviewSupported() ? 'Y' : 'N',
+		printer.IsPrinterSetupDialogSupported() ?  'Y' : 'N'
+		);
+
 	const wchar_t *CurStr = 0, *EndSeq = 0;
 	int StartSel = -1, EndSel = -1;
-	int Length;
+	int Length = 0;
 
 	// first, try to check against selection
 	if (m_editor->BlockStart) { // we have block selection active
@@ -3166,11 +3251,14 @@ BOOL FileEditor::SendToPrinter()
 			else
 				Length = EndSel - StartSel;
 
+			if (Length > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
+				tb.append("<html><body><pre>");
+
 			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length)) {
-				int Len2;
+				int Len2 = 0;
 				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
 				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported());
-				if (EndSel == -1) appendNewLine(tb, printer.IsReducedHTMLSupported());
+				tb.append('\n');
 			}
     	}
 	}
@@ -3188,15 +3276,21 @@ BOOL FileEditor::SendToPrinter()
 
 				if (CopySize > TBlockSizeX)	CopySize = TBlockSizeX;
 
+				if (CopySize > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
+					tb.append("<html><body><pre>");
+
 				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize)) {
 					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported());
-					if (CopySize < TBlockSizeX) appendNewLine(tb, printer.IsReducedHTMLSupported());
+					tb.append('\n');
 				}
     		}
     	}
 	}
 
 	if (!tb.is_empty()) {
+		if(printer.IsReducedHTMLSupported())
+			tb.append("</pre></body></html>");
+
 		if (printer.IsPrintPreviewSupported()) {
 			if (printer.IsReducedHTMLSupported()) 
 				printer.ShowPreviewForReducedHTML(strFullFileName.GetWide(), tb.w_str());
@@ -3218,6 +3312,9 @@ BOOL FileEditor::SendToPrinter()
 	FILE* fp = fdopen(fd, "a+");
 	std::string _tmpstr;
 
+	if (printer.IsReducedHTMLSupported())
+		fprintf(fp, "<html><body><pre>\n");
+
 	for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
 		const wchar_t *SaveStr, *EndSeq;
 
@@ -3229,10 +3326,12 @@ BOOL FileEditor::SendToPrinter()
 		else {
     		Wide2MB(SaveStr, Length, _tmpstr);
     		fwrite(_tmpstr.data(), 1, _tmpstr.size(), fp);
-		}
-		if (!EndSeq)
             fputc('\n', fp);
+		}
 	}
+
+	if (printer.IsReducedHTMLSupported())
+		fprintf(fp, "</pre></body></html>\n");
 	fclose(fp);
     
     Length = strlen(tmpl);

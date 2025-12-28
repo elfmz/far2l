@@ -4,6 +4,7 @@ add_subdirectory(wineguts)
 
 set(SOURCES
 src/APIClipboard.cpp
+src/APIPrinterSupport.cpp
 src/APIConsole.cpp
 src/APIFiles.cpp
 src/APIKeyboard.cpp

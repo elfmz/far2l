@@ -125,6 +125,8 @@ public:
 	void SetPluginTitle(const wchar_t *PluginTitle);
 	static const FileEditor *CurrentEditor;
 
+	BOOL SendToPrinter(); // tries to print either selected block or whole text
+
 private:
 	Editor *m_editor;
 	KeyBar EditKeyBar;

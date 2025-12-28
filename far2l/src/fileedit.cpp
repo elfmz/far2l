@@ -72,6 +72,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "DlgGuid.hpp"
 #include "filelist.hpp"
+#include "printersupport.hpp"
+
+#include <algorithm> 
+#include <cmath>
 
 enum enumOpenEditor
 {
@@ -780,10 +784,14 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 			Печать файла/блока с использованием плагина PrintMan
 		*/
 		case KEY_ALTF5: {
+			/*
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER)) {
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER, OPEN_EDITOR, nullptr);	// printman
 				return TRUE;
 			}
+            */
+            if (SendToPrinter())
+            	return TRUE;
 
 			break;	// отдадим Alt-F5 на растерзание плагинам, если не установлен PrintMan
 		}
@@ -2843,6 +2851,408 @@ void EditConsoleHistory(HANDLE con_hnd, bool modal)
 		} else
 			delete ShellEditor;
 	}
+}
+
+// Printer support
+
+class TextBuffer {
+	char* buffer;
+	char* cptr;
+	int len;
+	int size;
+	wchar_t* wc;
+
+#define GAP	1024
+	void ensure(int sz) {
+		if (sz + len > size) {
+			size = sz + len + GAP;
+			if (buffer){ 
+				buffer = (char*)realloc(buffer, size);
+			}
+			else {
+				buffer = (char*)malloc(size);
+			}
+			cptr = buffer + len;
+		}
+	}
+#undef GAP
+
+public:
+	TextBuffer() {
+		buffer = cptr = 0;
+		len = size = 0;
+		wc = 0;
+	}
+
+	~TextBuffer() {
+		if (buffer) free(buffer);
+		if (wc) free(wc);
+		buffer = cptr = 0;
+		len = size = 0;
+		wc = 0;
+	}
+
+	const bool is_empty() const { return len == 0; }
+	const int length() const { return len; }
+	const char* c_str() const {	return (const char*)buffer;	}
+
+	const wchar_t* w_str() {
+		if (wc) free(wc);
+		std::wstring _tmpstr;
+    	MB2Wide(c_str(), length(), _tmpstr);
+        wc = wcsdup(_tmpstr.c_str());
+        return wc;
+	}
+
+	void append(char c) {
+		ensure(1);
+        ++len;
+        *cptr++ = c;
+        *cptr = 0;
+	}
+
+	void append(wchar_t c) {
+		wchar_t buf[2] = {c, 0};
+		append(buf);
+	}
+
+	void append(const char* s, int max = 0) {
+		int delta = max ? max : strlen(s);
+		ensure(delta + 1);
+		len += delta;
+		while(delta--) *cptr++ = *s++;
+        *cptr = 0;
+	}
+
+	void append(const std::string& s, int max = 0) {
+		append((char*)s.c_str(), max);
+	}
+
+	void append(const wchar_t* w, int max = 0) {
+		std::string _tmpstr;
+		Wide2MB(w, max, _tmpstr);
+		append(_tmpstr);
+	}
+
+	void append(const std::wstring& w, int max = 0) {
+		std::string _tmpstr;
+		Wide2MB(w.c_str(), max, _tmpstr);
+		append(_tmpstr);
+	}
+
+	void append(const FarTrueColor& color) {
+		char buf[10];
+		sprintf(buf, "%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
+		append(buf);
+	}
+};
+
+struct LAB {
+    double L, a, b; // L: 0–100, a/b: approx -128..127
+};
+
+// Helper: clamp
+static double clamp(double v, double lo, double hi) {
+    return std::max(lo, std::min(v, hi));
+}
+
+static double rgbToX(unsigned char rgbV) {
+   double v = rgbV / 255.0;
+   return (v > 0.04045) ? pow((v + 0.055) / 1.055, 2.4) : (v / 12.92);
+}
+
+// Convert RGB (0–255) → XYZ
+static void RGBtoXYZ(const FarTrueColor& in, double& X, double& Y, double& Z)
+{
+    double r = rgbToX(in.R);
+    double g = rgbToX(in.G);
+    double b = rgbToX(in.B);
+
+    // sRGB D65
+    X = r * 0.4124 + g * 0.3576 + b * 0.1805;
+    Y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+    Z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+}
+
+static double xyzToL(double t) {
+	return (t > 0.008856) ? pow(t, 1.0/3.0) : (7.787 * t + 16.0/116.0);
+}
+
+static double labToX(double t) {
+    double t3 = t * t * t;
+    return (t3 > 0.008856) ? t3 : ((t - 16.0/116.0) / 7.787);
+}
+
+// Convert XYZ → LAB
+static LAB XYZtoLAB(double X, double Y, double Z)
+{
+    // Reference white D65
+    const double Xr = 0.95047;
+    const double Yr = 1.00000;
+    const double Zr = 1.08883;
+
+    double fx = xyzToL(X / Xr);
+    double fy = xyzToL(Y / Yr);
+    double fz = xyzToL(Z / Zr);
+
+    LAB out;
+    out.L = 116.0 * fy - 16.0;
+    out.a = 500.0 * (fx - fy);
+    out.b = 200.0 * (fy - fz);
+    return out;
+}
+
+// Convert LAB → XYZ
+static void LABtoXYZ(const LAB& in, double& X, double& Y, double& Z)
+{
+    const double Xr = 0.95047;
+    const double Yr = 1.00000;
+    const double Zr = 1.08883;
+
+    double fy = (in.L + 16.0) / 116.0;
+    double fx = fy + in.a / 500.0;
+    double fz = fy - in.b / 200.0;
+
+    X = Xr * labToX(fx);
+    Y = Yr * labToX(fy);
+    Z = Zr * labToX(fz);
+}
+
+static double xyzToR(double v) {
+    return (v > 0.0031308) ? (1.055 * pow(v, 1.0/2.4) - 0.055) : (12.92 * v);
+}
+
+// Convert XYZ → RGB
+static FarTrueColor XYZtoRGB(double X, double Y, double Z)
+{
+    double r =  3.2406*X - 1.5372*Y - 0.4986*Z;
+    double g = -0.9689*X + 1.8758*Y + 0.0415*Z;
+    double b =  0.0557*X - 0.2040*Y + 1.0570*Z;
+
+    double rr = clamp(xyzToR(r) * 255.0, 0, 255);
+    double gg = clamp(xyzToR(g) * 255.0, 0, 255);
+    double bb = clamp(xyzToR(b) * 255.0, 0, 255);
+
+    FarTrueColor out;
+    out.R = (unsigned char)rr;
+    out.G = (unsigned char)gg;
+    out.B = (unsigned char)bb;
+
+    return out;
+}
+
+// High-level: convert RGB → LAB → adjust → RGB
+static FarTrueColor ConvertForPrintLAB(const FarTrueColor& in, const FarTrueColor& bg)
+{
+    // Step 1: RGB → LAB
+    double X, Y, Z;
+    RGBtoXYZ(in, X, Y, Z);
+    LAB lab = XYZtoLAB(X, Y, Z);
+
+    RGBtoXYZ(bg, X, Y, Z);
+    LAB labBg = XYZtoLAB(X, Y, Z);
+
+    double deltaL = lab.L - labBg.L;
+
+    const double Lwhite = 100.0; 
+    const double k = 0.8;
+
+    // Step 2: invert brightness (or darken)
+    lab.L = Lwhite - k*fabs(deltaL);
+
+	// Clamp to reasonable range 
+	if (lab.L > 80) lab.L = 80; // avoid too light; too dark is OK 
+	if (deltaL < 0) {
+    	// foreground is darker than background
+	    // ensure printed text is still dark enough
+    	lab.L = std::min(lab.L, 50.0);
+	}
+
+    // Step 3: reduce chroma slightly (avoid neon colors)
+    lab.a *= 0.7;
+    lab.b *= 0.7;
+
+    // Step 4: LAB → RGB
+    LABtoXYZ(lab, X, Y, Z);
+    return XYZtoRGB(X, Y, Z);
+}
+
+static void appendNewLine(TextBuffer& tb, bool isHtml) {
+	tb.append(isHtml ? "<br>\n" : "\n");
+}
+
+static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtml) {
+	if (!isHtml) {
+		tb.append(s, len);
+		return;
+	}
+
+	// we need to handle space, tab, newline, & < >
+	if (len <= 0) len = wcslen(s);
+	for(;len-- && *s;) {
+		wchar_t c = *s++;
+
+		if (c == L' ') tb.append("&nbsp;");
+		else if (c == L'\t') {
+			for(int i = 0; i < Opt.EdOpt.TabSize; ++i) tb.append("&nbsp;");
+		}
+		else if (c == L'\r') ;
+		else if (c == '\n') tb.append("<br>\n");
+		else if (c == '&') tb.append("&amp;");
+		else if (c == '<') tb.append("&lt;");
+		else if (c == '>') tb.append("&gt;");
+		else tb.append(c);
+	}
+}
+
+static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
+{
+	if (len <= 0) len = line->GetLength() - start;
+	int end = start + len;
+
+	const wchar_t *CurStr = 0, *EndSeq = 0;
+	int Length;
+	ColorItem ci;
+
+	line->GetBinaryString(&CurStr, &EndSeq, Length);
+
+	for (size_t i = 0; line->GetColor(&ci, i); ++i) {
+		if (ci.StartPos == -1 && ci.EndPos == -1) {
+			// background
+			continue;
+		}
+
+		if (ci.StartPos == -1) ci.StartPos = 0;
+		if (ci.EndPos == -1) ci.EndPos = end;
+
+		if (ci.StartPos > end|| ci.EndPos < start) continue;
+
+		EditorTrueColor tcol;
+		FarTrueColorFromAttributes(tcol.TrueColor, ci.Color);
+		FarTrueColor rgb = tcol.TrueColor.Fore; 
+		FarTrueColor bgk = tcol.TrueColor.Back; 
+
+		FarTrueColor print = ConvertForPrintLAB(rgb, bgk);
+
+		tb.append("<font color=\"#");
+		tb.append(print);
+		tb.append("\">");
+		escapeHtmlTags(tb, CurStr + std::max(start, ci.StartPos), std::min(len, ci.EndPos - ci.StartPos), true);
+		tb.append("</font>");
+
+		return true;
+	}
+
+	return false;
+}
+
+BOOL FileEditor::SendToPrinter()
+{
+	PrinterSupport printer;
+	TextBuffer tb;
+
+	const wchar_t *CurStr = 0, *EndSeq = 0;
+	int StartSel = -1, EndSel = -1;
+	int Length;
+
+	// first, try to check against selection
+	if (m_editor->BlockStart) { // we have block selection active
+    	for (Edit *Ptr = m_editor->BlockStart; Ptr; Ptr = Ptr->m_next) {
+    		Ptr->GetSelection(StartSel, EndSel);
+    		if (StartSel == -1)	break;
+
+			if (EndSel == -1)
+				Length = Ptr->GetLength() - StartSel;
+			else
+				Length = EndSel - StartSel;
+
+			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length)) {
+				int Len2;
+				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
+				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported());
+				if (EndSel == -1) appendNewLine(tb, printer.IsReducedHTMLSupported());
+			}
+    	}
+	}
+	else if (m_editor->VBlockStart) { // we have vertical block selection active
+    	Edit *CurPtr = m_editor->VBlockStart;
+
+    	for (int Line = 0; CurPtr && Line < m_editor->VBlockSizeY; Line++, CurPtr = CurPtr->m_next) {
+    		int TBlockX = CurPtr->CellPosToReal(m_editor->VBlockX);
+    		int TBlockSizeX = CurPtr->CellPosToReal(m_editor->VBlockX + m_editor->VBlockSizeX) - TBlockX;
+
+    		CurPtr->GetBinaryString(&CurStr, &EndSeq, Length);
+
+    		if (Length > TBlockX) {
+    			int CopySize = Length - TBlockX;
+
+				if (CopySize > TBlockSizeX)	CopySize = TBlockSizeX;
+
+				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize)) {
+					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported());
+					if (CopySize < TBlockSizeX) appendNewLine(tb, printer.IsReducedHTMLSupported());
+				}
+    		}
+    	}
+	}
+
+	if (!tb.is_empty()) {
+		if (printer.IsPrintPreviewSupported()) {
+			if (printer.IsReducedHTMLSupported()) 
+				printer.ShowPreviewForReducedHTML(strFullFileName.GetWide(), tb.w_str());
+			else 
+				printer.ShowPreviewForText(strFullFileName.GetWide(), tb.w_str());
+		}
+		else {
+			if (printer.IsReducedHTMLSupported()) 
+				printer.PrintReducedHTML(strFullFileName.GetWide(), tb.w_str());
+			else 
+				printer.PrintText(strFullFileName.GetWide(), tb.w_str());
+		}
+		return TRUE;
+	}
+
+	// get all data in UTF-8 form and save to the temporary UTF-8 file to print, as it might be huge
+	char tmpl[] = "/tmp/far2l-editor-printXXXXXX";
+	int fd = mkstemp(tmpl);
+	FILE* fp = fdopen(fd, "a+");
+	std::string _tmpstr;
+
+	for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
+		const wchar_t *SaveStr, *EndSeq;
+
+		CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+
+		TextBuffer tb;
+		if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length)) 
+			fprintf(fp, "%s", tb.c_str());
+		else {
+    		Wide2MB(SaveStr, Length, _tmpstr);
+    		fwrite(_tmpstr.data(), 1, _tmpstr.size(), fp);
+		}
+		if (!EndSeq)
+            fputc('\n', fp);
+	}
+	fclose(fp);
+    
+    std::wstring _tmpwstr;
+    MB2Wide(tmpl, Length, _tmpwstr);
+
+	if (printer.IsPrintPreviewSupported()) {
+		if (printer.IsReducedHTMLSupported()) 
+			printer.ShowPreviewForHtmlFile(_tmpwstr);
+		else 
+			printer.ShowPreviewForTextFile(_tmpwstr);
+	}
+	else {
+		if (printer.IsReducedHTMLSupported()) 
+			printer.PrintHtmlFile(_tmpwstr);
+		else
+			printer.PrintTextFile(_tmpwstr);
+	}
+
+	// unlink(tmpl);
+	return TRUE;
 }
 
 //////////////////////////////////

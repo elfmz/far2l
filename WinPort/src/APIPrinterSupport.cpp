@@ -22,10 +22,6 @@
 static IPrinterSupport *g_printer_backend = nullptr;
 static std::mutex g_printer_backend_mutex;
 
-static struct ClipboardFreePendings : std::set<PVOID> {} g_clipboard_free_pendings;
-static bool s_clipboard_open_track = false;
-static std::atomic<size_t> s_pending_clipboard_allocations{0};
-
 __attribute__ ((visibility("default"))) IPrinterSupport *WinPortPrinterSupport_SetBackend(IPrinterSupport *printer_backend)
 {
 	std::lock_guard<std::mutex> lock(g_printer_backend_mutex);

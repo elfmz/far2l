@@ -3122,7 +3122,20 @@ static void appendNewLine(TextBuffer& tb, bool isHtml) {
 	tb.append(isHtml ? "<br>\n" : "\n");
 }
 
-static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtml) {
+static void escapeHtmlTags(TextBuffer& tb, const wchar_t c, int tabSize) {
+	if (c == L' ') tb.append("&nbsp;");
+	else if (c == L'\t') {
+		for(int i = 0; i < tabSize; ++i) tb.append("&nbsp;");
+	}
+	else if (c == L'\r') ;
+	else if (c == L'\n') tb.append("<br>\n");
+	else if (c == L'&')  tb.append("&amp;");
+	else if (c == L'<')  tb.append("&lt;");
+	else if (c == L'>')  tb.append("&gt;");
+	else tb.append(c);
+}
+
+static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtml, int tabSize) {
 	if (!isHtml) {
 		tb.append(s, len);
 		return;
@@ -3130,19 +3143,9 @@ static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtm
 
 	// we need to handle space, tab, newline, & < >
 	if (len <= 0) len = wcslen(s);
-	for(;len-- && *s;) {
-		wchar_t c = *s++;
-
-		if (c == L' ') tb.append("&nbsp;");
-		else if (c == L'\t') {
-			for(int i = 0; i < Opt.EdOpt.TabSize; ++i) tb.append("&nbsp;");
-		}
-		else if (c == L'\r') ;
-		else if (c == '\n') tb.append("<br>\n");
-		else if (c == '&') tb.append("&amp;");
-		else if (c == '<') tb.append("&lt;");
-		else if (c == '>') tb.append("&gt;");
-		else tb.append(c);
+	for(;len-- && *s; ++s) {
+		wchar_t c = *s;
+		escapeHtmlTags(tb, c, tabSize);
 	}
 }
 
@@ -3156,7 +3159,7 @@ static bool isEmptyOrSpace(const wchar_t* s, int start, int len)
 
 #define toI(x) ((int)(x) & 0xFF)
 
-static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
+static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len, int tabSize)
 {
 	if (len <= 0) len = line->GetLength() - start;
 	int end = start + len;
@@ -3212,12 +3215,12 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
 			tb.append(map.s[i].color);
 			tb.append("\">");
 		}
-		tb.append(map.s[i].c);
+		escapeHtmlTags(tb, map.s[i].c, tabSize);
 	}
 	if (colored) tb.append("</font>");
 	// tb.append("</pre>");
 
-	// fprintf(stderr, "colorize: `%.*ls` => `%s`\n", len, CurStr + start, tb.c_str());
+	// fprintf(stderr, "colorize: `%.*ls` => `%s`\n", len, CurStr + start,	tb.c_str());
 
 	tb.append('\n');
 
@@ -3228,6 +3231,7 @@ BOOL FileEditor::SendToPrinter()
 {
 	PrinterSupport printer;
 	TextBuffer tb;
+	int tab = m_editor->EdOpt.TabSize;
 
 	fprintf(stderr, "Printer caps: HTML=%c, preview=%c, setup dialog=%c\n",
 		printer.IsReducedHTMLSupported() ? 'Y' : 'N',
@@ -3252,10 +3256,10 @@ BOOL FileEditor::SendToPrinter()
 			if (Length > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
 				tb.append("<html><body><pre>");
 
-			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length)) {
+			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
 				int Len2 = 0;
 				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
-				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported());
+				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported(), tab);
 				tb.append('\n');
 			}
     	}
@@ -3277,8 +3281,8 @@ BOOL FileEditor::SendToPrinter()
 				if (CopySize > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
 					tb.append("<html><body><pre>");
 
-				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize)) {
-					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported());
+				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize, tab)) {
+					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported(), tab);
 					tb.append('\n');
 				}
     		}
@@ -3319,7 +3323,7 @@ BOOL FileEditor::SendToPrinter()
 		CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
 
 		TextBuffer tb;
-		if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length)) 
+		if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab)) 
 			fprintf(fp, "%s", tb.c_str());
 		else {
     		Wide2MB(SaveStr, Length, _tmpstr);

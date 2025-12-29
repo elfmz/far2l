@@ -2853,6 +2853,7 @@ void EditConsoleHistory(HANDLE con_hnd, bool modal)
 	}
 }
 
+//////////////////////////////////
 // Printer support
 
 class TextBuffer {
@@ -3158,6 +3159,7 @@ static bool isEmptyOrSpace(const wchar_t* s, int start, int len)
 }
 
 #define toI(x) ((int)(x) & 0xFF)
+#define toB(x) ((unsigned char)((x) & 0xFF))
 
 static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len, int tabSize)
 {
@@ -3187,8 +3189,8 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 
 		if (ci.EndPos > start + end) ci.EndPos = start + end;
 
-		if (ci.StartPos == -1) ci.StartPos = 0;
-		if (ci.EndPos == -1) ci.EndPos = end;
+		if (ci.StartPos < 0) ci.StartPos = 0;
+		if (ci.EndPos < 0) ci.EndPos = end;
 
 		if (ci.StartPos > end || ci.EndPos < start) continue;
 
@@ -3198,6 +3200,9 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 		FarTrueColor bgk = tcol.TrueColor.Back; 
 
 		FarTrueColor print = ConvertForPrintLAB(rgb, bgk);
+
+		// Note: tabs might need to update positions
+
 
 		map.apply(print, ci.StartPos, ci.EndPos);
 	}
@@ -3315,8 +3320,9 @@ BOOL FileEditor::SendToPrinter()
 	FILE* fp = fdopen(fd, "a+");
 	std::string _tmpstr;
 
-	if (printer.IsReducedHTMLSupported())
-		fprintf(fp, "<html><body><pre>\n");
+	if (printer.IsReducedHTMLSupported()) {
+		fprintf(fp, "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"></head><body><pre>\n");
+	}
 
 	for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
 		const wchar_t *SaveStr, *EndSeq;

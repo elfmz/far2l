@@ -2894,7 +2894,7 @@ public:
 
 	const bool is_empty() const { return len == 0; }
 	const int length() const { return len; }
-	const char* c_str() const {	return (const char*)buffer;	}
+	const char* c_str() const {	return buffer ? (const char*)buffer : ""; }
 
 	const wchar_t* w_str() {
 		if (wc) free(wc);
@@ -3169,7 +3169,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
 
 	if (!CurStr) return false;
 
-	fprintf(stderr, "colorize: `%ls` [%d..%d]\n", CurStr, start, start + end);
+	// fprintf(stderr, "colorize: `%ls` [%d..%d]\n", CurStr, start, start + end);
 
 	ColorMap map(CurStr, start, end);
 
@@ -3214,11 +3214,10 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len)
 		}
 		tb.append(map.s[i].c);
 	}
+	if (colored) tb.append("</font>");
 	// tb.append("</pre>");
 
-	fprintf(stderr, "colorize: `%.*ls` => `%s`\n", 
-		len, CurStr + start,
-		tb.c_str());
+	// fprintf(stderr, "colorize: `%.*ls` => `%s`\n", len, CurStr + start, tb.c_str());
 
 	tb.append('\n');
 
@@ -3233,8 +3232,7 @@ BOOL FileEditor::SendToPrinter()
 	fprintf(stderr, "Printer caps: HTML=%c, preview=%c, setup dialog=%c\n",
 		printer.IsReducedHTMLSupported() ? 'Y' : 'N',
 		printer.IsPrintPreviewSupported() ? 'Y' : 'N',
-		printer.IsPrinterSetupDialogSupported() ?  'Y' : 'N'
-		);
+		printer.IsPrinterSetupDialogSupported() ?  'Y' : 'N');
 
 	const wchar_t *CurStr = 0, *EndSeq = 0;
 	int StartSel = -1, EndSel = -1;

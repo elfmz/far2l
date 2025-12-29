@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 	#include <sys/mount.h>
 #elif !defined(__HAIKU__)
 	#include <sys/statfs.h>
@@ -301,7 +301,7 @@ namespace Sudo
 
 	static void OnSudoDispatch_FSFlagsGet(BaseTransaction &bt)
 	{
-#if !defined(__APPLE__) && !defined(__FreeBSD__)  && !defined(__DragonFly__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__) && !defined(__CYGWIN__) && !defined(__HAIKU__)
 		std::string path;
 		bt.RecvStr(path);
 		int r = -1;
@@ -328,7 +328,7 @@ namespace Sudo
 		bt.RecvStr(path);
 		bt.RecvPOD(flags);
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 		if (chflags(path.c_str(), flags) == 0) {
 			bt.SendInt(0);
 			return;
@@ -419,7 +419,7 @@ namespace Sudo
 			case SUDO_CMD_OPEN:
 				OnSudoDispatch_Open(bt);
 				break;
-#ifndef __HAIKU__
+#if !defined(__HAIKU__) && !defined(__NetBSD__)
 			case SUDO_CMD_STATFS:
 				OnSudoDispatch_StatCommon<struct statfs>(&statfs, bt);
 				break;

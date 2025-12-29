@@ -15,7 +15,7 @@
 #include <Threaded.h>
 #include <algorithm>
 
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__APPLE__)
 #include <sys/types.h>
 #else
 #include <sys/sysmacros.h>	  // major / minor

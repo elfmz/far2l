@@ -77,7 +77,7 @@ void FSFileFlags::SetAppend(bool v)
 	}
 }
 
-#if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
 
 bool FSFileFlags::Hidden() const
 {

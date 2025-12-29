@@ -35,6 +35,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <WinCompat.h>
 
+#include <utils.h>
+#include "FARString.hpp"
+#include <farplug-wide.h>
+
+// Bridge to backends
+
 class PrinterSupport
 {
 public:
@@ -58,4 +64,13 @@ public:
 	virtual bool IsPrinterSetupDialogSupported();
 
 private:
+};
+
+class ColorspaceSupport 
+{
+public:
+	ColorspaceSupport(){}
+	~ColorspaceSupport(){}
+
+	FarTrueColor ConvertForPrintLAB(const FarTrueColor& in, const FarTrueColor& bg);
 };

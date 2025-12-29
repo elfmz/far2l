@@ -3214,6 +3214,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 			tb.append("<font color=\"#");
 			tb.append(map.s[i].color);
 			tb.append("\">");
+			prev = map.s[i].color;
 		}
 		escapeHtmlTags(tb, map.s[i].c, tabSize);
 	}

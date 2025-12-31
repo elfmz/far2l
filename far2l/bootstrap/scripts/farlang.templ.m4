@@ -4360,14 +4360,14 @@ upd:"Screen list...                      F12"
 
 EditorMenuFileOptions
 "Настройки...                        Alt+Shift+F9"
-"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
-upd:"Configuration...                    Alt+Shift+F9"
+"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
+upd:"Editor settings...                  Alt+Shift+F9"
 
 EditorMenuFileExitFar
 "Вывйти из far2l                     Alt+F10"

@@ -140,6 +140,7 @@ View:
 ------------------------------------------------
 Show/Hide key bar						CtrlB
 Show/Hide title bar						CtrlShiftB
+Show/Hide menu bar
 Toggle word wrap						F3
 Toggle limne numbers					CtrlF3
 Toggle white spaces						F5
@@ -242,6 +243,7 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 	MenuDataEx ViewMenu[] = {
 		{Msg::EditorMenuViewKeyBar,	0,	KEY_CTRLB  },
 		{Msg::EditorMenuViewTitleBar,	0,	KEY_CTRLSHIFTB  },
+		{Msg::EditorMenuViewMenuBar, 0, 0 },
 		{Msg::EditorMenuViewWordWrap,	0,	KEY_F3  },
 		{Msg::EditorMenuViewNumbers,	0,	KEY_CTRLF3  },
 		{Msg::EditorMenuViewSpaces,	0,	KEY_F5  },
@@ -258,22 +260,20 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 	};
 
 	HMenuData MainMenu[] = {
-		{Msg::EditorMenuFileTitle,     1, FileMenu,    ARRAYSIZE(FileMenu),    L"FileMenu"},
-		{Msg::EditorMenuEditTitle,    0, EditMenu,   ARRAYSIZE(EditMenu),   L"EditMenu" },
-		{Msg::EditorMenuNavigateTitle, 0, NavigateMenu,     ARRAYSIZE(NavigateMenu),     L"NavigateMenu" },
-		{Msg::EditorMenuViewTitle,  0, ViewMenu, ARRAYSIZE(ViewMenu), L"ViewMenu" }
+		{Msg::EditorMenuFileTitle,     1, FileMenu,    ARRAYSIZE(FileMenu),    L"Editor"},
+		{Msg::EditorMenuEditTitle,    0, EditMenu,   ARRAYSIZE(EditMenu),   L"Editor" },
+		{Msg::EditorMenuNavigateTitle, 0, NavigateMenu,     ARRAYSIZE(NavigateMenu),     L"Editor" },
+		{Msg::EditorMenuViewTitle,  0, ViewMenu, ARRAYSIZE(ViewMenu), L"Editor" }
 	};
 
 	static int LastHItem = -1, LastVItem = 0;
 	int HItem, VItem;
 
-	fprintf(stderr, "editor menu: start\n");
-
 	// Навигация по меню
 	{
 		HMenu HOptMenu(MainMenu, ARRAYSIZE(MainMenu));
-		HOptMenu.SetHelp(L"Menus");
-		int gap = Opt.EdOpt.ShowTitleBar && Opt.EdOpt.ShowMenuBar ? 1 : 0;
+		HOptMenu.SetHelp(L"Editor");
+		int gap = fileEditor->MenuBarPosition();
 		HOptMenu.SetPosition(0, gap, ScrX, gap);
 
 		if (LastCommand) {

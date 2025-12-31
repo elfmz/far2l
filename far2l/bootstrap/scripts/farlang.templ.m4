@@ -4470,14 +4470,14 @@ upd:"Delete                              Ctrl+D"
 
 EditorMenuEditDelLine
 "Удалить строку                      Ctrl+Y"
-"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
-upd:"Вelete line                         Ctrl+Y"
+"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
+upd:"Delete line                         Ctrl+Y"
 
 EditorMenuEditDeleteLeadSpaces
 "Удалить слово слева                 Ctrl+Del"

@@ -3399,10 +3399,11 @@ case KEY_CTRLNUMPAD3: {
 		default: {
 			{
 				// workaround for #3149
+				unsigned int BaseKey = Key & ~KEY_SHIFT;
 				if (m_bWordWrap && (
-					((Key >= KEY_CTRLG) && (Key <= KEY_CTRLJ)) ||
-					Key == KEY_CTRLR
-				))
+						((BaseKey >= KEY_CTRLG) && (BaseKey <= KEY_CTRLJ)) ||
+						BaseKey == KEY_CTRLR
+					))
 					return TRUE;
 
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL

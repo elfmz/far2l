@@ -38,12 +38,12 @@
 
 static std::string QuotedArg(const std::string &s)
 {
-	if (s.find_first_of("\"\r\n\t' ") == std::string::npos) {
+	if (s.find_first_of(" \"\r\n\t\';&|()<>`$\\!{}[]*?#~^=") == std::string::npos) {
 		return s;
 	}
 
 	std::string out = "\"";
-	out+= EscapeQuotes(s);
+	out+= EscapeCmdStr(s);
 	out+= '\"';
 	return out;
 }

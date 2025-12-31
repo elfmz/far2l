@@ -49,115 +49,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "fileedit2options.hpp"
 
-/*
-File:
-------------------------------------------------
-Open...									ShiftF4
-Save									F2
-Save as...								ShiftF2
-Save quetly								ShiftF10
-Recent list...							AltF11
-------------------------------------------------
-Print...								AltF5
-Printer settings...
-------------------------------------------------
-Go to file in Panel				        CtrlF10
-Exit							        F10
-------------------------------------------------
-Help									F1
-Plugins...								F11
-Screen list...							F12
-Configuration...						AltShiftF9
-Exit far2l								AltF10
-
-
-Edit:
-------------------------------------------------
-Undo									CtrlZ
-Redo									CtrlShiftZ
-------------------------------------------------
-Select all								CtrlA
-Select vertical block					AltShift+Arrows
-------------------------------------------------
-Cut										CtrlX
-Copy									CtrlC
-Paste									CtrlV
-Delete									CtrlBackspace
-Вelete line								CtrlY
-Delete leading spaces from line			CtrlDel
-Unmark macro block						CtrlU
-Delete to the end of line				CtrlK
-------------------------------------------------
-Search...								F7
-Replace...								CtrlF7
-Search next								ShiftF7
-Search previous							AltF7
-------------------------------------------------
-Type short file name					ShiftEnter
-Type full file name						CtrlF
-Insert path from left panel				CtrlAlt(
-Insert path from right panel			CtrlAlt)
-Insert path from active panel			ShiftAlt(
-Insert path from passive panel			ShiftAlt)
-Block left								AltU
-Block right								AltI
-------------------------------------------------
-
-
-Navigate
-------------------------------------------------
-Go to line...							AltF8
-Go to top								CtrlN
-Go to bottom							CtrlE
-Go to begin of file						CtrlHome
-Go to end of file						CtrlEnd
-------------------------------------------------
-Go to bookmark 0						Ctrl0
-Go to bookmark 1						Ctrl1
-Go to bookmark 2						Ctrl2
-Go to bookmark 3						Ctrl3
-Go to bookmark 4						Ctrl4
-Go to bookmark 5						Ctrl5
-Go to bookmark 6						Ctrl6
-Go to bookmark 7						Ctrl7
-Go to bookmark 8						Ctrl8
-Go to bookmark 9						Ctrl9
-------------------------------------------------
-Pin bookmark 0							CtrlShift0
-Pin bookmark 1							CtrlShift1
-Pin bookmark 2							CtrlShift2
-Pin bookmark 3							CtrlShift3
-Pin bookmark 4							CtrlShift4
-Pin bookmark 5							CtrlShift5
-Pin bookmark 6							CtrlShift6
-Pin bookmark 7							CtrlShift7
-Pin bookmark 8							CtrlShift8
-Pin bookmark 9							CtrlShift9
-------------------------------------------------
-
-
-View:
-------------------------------------------------
-Show/Hide key bar						CtrlB
-Show/Hide title bar						CtrlShiftB
-Show/Hide menu bar
-Toggle word wrap						F3
-Toggle limne numbers					CtrlF3
-Toggle white spaces						F5
-Toggle tabs to spaces					CtrlF5
-Toggle insert/overtype mode				Insert
-Toggle full screen						AltF9
-Toggle lock mode						CtrlL
-Toggle console							CtrlO
-------------------------------------------------
-Change tab size							ShiftF5
-Toggle code page UTF8-ANSI-OEM			F8
-Change code page...						ShiftF8
-Switch to viewer						F6
-------------------------------------------------
-
-*/
-
 void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEditor* fileEditor)
 {
 	MenuDataEx FileMenu[] = {
@@ -176,7 +67,6 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		{Msg::EditorMenuFileHelp,	0,	KEY_F1  },
 		{Msg::EditorMenuFilePlugins,	0,	KEY_F11  },
 		{Msg::EditorMenuFileScreens,	0,	KEY_F12  },
-		{Msg::EditorMenuFileOptions,	0,	KEY_ALTSHIFTF9  },
 		{Msg::EditorMenuFileExitFar,	0,	KEY_ALTF10  },
 	};
 
@@ -190,9 +80,10 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		{Msg::EditorMenuEditCut,	0,	KEY_CTRLX  },
 		{Msg::EditorMenuEditCopy,	0,	KEY_CTRLC  },
 		{Msg::EditorMenuEditPaste,	0,	KEY_CTRLV  },
-		{Msg::EditorMenuEditDelete,	0,	KEY_CTRLBS  },
+		{Msg::EditorMenuEditDelete,	0,	KEY_CTRLD  },
 		{Msg::EditorMenuEditDelLine,	0,	KEY_CTRLY  },
-		{Msg::EditorMenuEditDeleteLeadSpaces,	0,	KEY_CTRLDEL  },
+		{Msg::EditorMenuEditDeleteWordLeft,	0,	KEY_CTRLBS  },
+		{Msg::EditorMenuEditDeleteWordRight,	0,	KEY_CTRLDEL  },
 		{Msg::EditorMenuEditDeleteEOL,	0,	KEY_CTRLK  },
 		{L"", LIF_SEPARATOR, 0  },
 		{Msg::EditorMenuEditFind,	0,	KEY_F7  },
@@ -257,6 +148,8 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		{Msg::EditorMenuViewOem,	0,	KEY_F8  },
 		{Msg::EditorMenuViewCodepage,	0,	KEY_SHIFTF8  },
 		{Msg::EditorMenuViewViewer,	0,	KEY_F6  },
+		{L"", LIF_SEPARATOR, 0  },
+		{Msg::EditorMenuFileOptions,	0,	KEY_ALTSHIFTF9  },
 	};
 
 	HMenuData MainMenu[] = {
@@ -268,6 +161,12 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 
 	static int LastHItem = -1, LastVItem = 0;
 	int HItem, VItem;
+
+	int size = (int)ARRAYSIZE(ViewMenu);
+	for(int i = 0; i < size; ++i) {
+		int check = fileEditor->IsOptionActive(MENU_VIEW, i);
+		if (check) ViewMenu[i].SetCheck(1);
+	}
 
 	// Навигация по меню
 	{

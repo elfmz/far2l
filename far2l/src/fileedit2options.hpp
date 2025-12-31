@@ -1,9 +1,9 @@
 #pragma once
 
 /*
-menubar.hpp
+fileedit.hpp
 
-Показ горизонтального меню при включенном "Always show menu bar"
+Редактирование файла - меню
 */
 /*
 Copyright (c) 1996 Eugene Roshal
@@ -33,23 +33,67 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "scrobj.hpp"
+class FileEditor;
 
-class MenuBar : public ScreenObject
+enum enumEditorMenus
 {
-protected:
-	virtual void DisplayObject();
-
-public:
-	MenuBar() {}
-	virtual ~MenuBar() {}
+	MENU_FILE,
+	MENU_EDIT,
+	MENU_NAVIGATE,
+	MENU_VIEW
 };
 
-class EditorMenuBar : public MenuBar
+enum enumFileMenu
 {
-public:
-	virtual void DisplayObject();
-
-	EditorMenuBar() {}
-	virtual ~EditorMenuBar() {}
+	MENU_FILE_OPEN,
+	MENU_FILE_SAVE,
+	MENU_FILE_SAVE_AS,
+	MENU_FILE_SAVE_Q,
+	MENU_FILE_RECENT,
+	MENU_FILE_SEPARATOR1,
+	MENU_FILE_PRINT,
+	MENU_FILE_PRINTER,
+	MENU_FILE_SEPARATOR2,
+	MENU_FILE_GO_TO_PANEL,
+	MENU_FILE_EXIT,
+	MENU_FILE_SEPARATOR3,
+	MENU_FILE_HELP,
+	MENU_FILE_PLUGINS,
+	MENU_FILE_SCREEN_LIST,
+	MENU_FILE_OPTIONS,
+	MENU_FILE_EXIT_FAR
 };
+
+enum enumEditorEditMenu
+{
+	MENU_EDIT_UNDO,
+	MENU_EDIT_REDO,
+	MENU_EDIT_SEPARATOR1,
+	MENU_EDIT_SELECT_ALL,
+	MENU_EDIT_SELECT_VERTICAL,
+	MENU_EDIT_SEPARATOR2,
+	MENU_EDIT_CUT,
+	MENU_EDIT_COPY,
+	MENU_EDIT_PASTE,
+	MENU_EDIT_DELETE,
+	MENU_EDIT_DELETE_LINE,
+	MENU_EDIT_DELETE_LEAD_SPACES,
+	MENU_EDIT_DELETE_EOL,
+	MENU_EDIT_SEPARATOR3,
+	MENU_EDIT_FIND,
+	MENU_EDIT_FIND_REPLACE,
+	MENU_EDIT_FIND_NEXT,
+	MENU_EDIT_FIND_PREV,
+	MENU_EDIT_SEPARATOR4,
+	MENU_EDIT_SHORT_FNAME,
+	MENU_EDIT_FULL_FNAME,
+	MENU_EDIT_LEFT_PATH,
+	MENU_EDIT_RIGHT_PATH,
+	MENU_EDIT_ACTIVE_PATH,
+	MENU_EDIT_INACTIVE_PATH,
+	MENU_EDIT_BLOCK_UNINDENT,
+	MENU_EDIT_BLOCK_INDENT
+};
+
+
+void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEditor* fileEditor);

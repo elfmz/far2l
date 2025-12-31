@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class FileEditor;
 class KeyBar;
+class EditorMenuBar;
 
 struct InternalEditorBookMark
 {

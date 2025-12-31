@@ -4261,7 +4261,7 @@ upd:"Save as...                          Shift+F2"
 
 EditorMenuFileSaveQ
 "Сохранить безусловно и выйти        Shift+F10"
-"Save quetly and exit                Shift+F10"
+"Save quietly and exit                Shift+F10"
 upd:"Save quietly and exit               Shift+F10"
 upd:"Save quietly and exit               Shift+F10"
 upd:"Save quietly and exit               Shift+F10"

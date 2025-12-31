@@ -4260,7 +4260,7 @@ upd:"Save as...                          Shift+F2"
 upd:"Save as...                          Shift+F2"
 
 EditorMenuFileSaveQ
-"Соъранить безусловно                Shift+F10"
+"Сохранить безусловно                Shift+F10"
 "Save quetly                         Shift+F10"
 upd:"Save quetly                         Shift+F10"
 upd:"Save quetly                         Shift+F10"
@@ -4304,8 +4304,8 @@ upd:"Printer settings..."
 upd:"Printer settings..."
 
 EditorMenuFileGoToPanel
-"Перейти к файлу на активной панели  Ctrl+F10"
-"Go to file in active Panel          Ctrl+F10"
+"Выбрать файл на активной панели     Ctrl+F10"
+"Choose file in active Panel         Ctrl+F10"
 upd:"Go to file in active Panel          Ctrl+F10"
 upd:"Go to file in active Panel          Ctrl+F10"
 upd:"Go to file in active Panel          Ctrl+F10"
@@ -4359,7 +4359,7 @@ upd:"Screen list...                      F12"
 upd:"Screen list...                      F12"
 
 EditorMenuFileOptions
-"Настройки...                        Alt+Shift+F9"
+"Настройки редактора...              Alt+Shift+F9"
 "Editor settings...                  Alt+Shift+F9"
 upd:"Editor settings...                  Alt+Shift+F9"
 upd:"Editor settings...                  Alt+Shift+F9"
@@ -4370,7 +4370,7 @@ upd:"Editor settings...                  Alt+Shift+F9"
 upd:"Editor settings...                  Alt+Shift+F9"
 
 EditorMenuFileExitFar
-"Вывйти из far2l                     Alt+F10"
+"Выйти из far2l                      Alt+F10"
 "Exit far2l                          Alt+F10"
 upd:"Exit far2l                          Alt+F10"
 upd:"Exit far2l                          Alt+F10"
@@ -4535,7 +4535,7 @@ upd:"Replace...                          Ctrl+F7"
 upd:"Replace...                          Ctrl+F7"
 
 EditorMenuEditFindNext
-"Поиск вперед                        Shift+F7"
+"Продолжить поиск/замену вперед      Shift+F7"
 "Continue search/replace forward     Shift+F7"
 upd:"Continue search/replace forward     Shift+F7"
 upd:"Continue search/replace forward     Shift+F7"
@@ -4546,7 +4546,7 @@ upd:"Continue search/replace forward     Shift+F7"
 upd:"Continue search/replace forward     Shift+F7"
 
 EditorMenuEditFindPrev
-"Поиск назад                         Alt+F7"
+"Продолжить поиск/замену назад       Alt+F7"
 "Continue search/replace backward    Alt+F7"
 upd:"Continue search/replace backward    Alt+F7"
 upd:"Continue search/replace backward    Alt+F7"
@@ -4975,7 +4975,7 @@ upd:"Toggle line numbers                 Ctrl+F3"
 upd:"Toggle line numbers                 Ctrl+F3"
 
 EditorMenuViewSpaces
-"Пробельные литеры                   F5"
+"Пробельные символы                  F5"
 "Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"
 upd:"Toggle white spaces                 F5"

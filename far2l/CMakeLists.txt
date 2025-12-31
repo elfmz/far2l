@@ -25,6 +25,7 @@ src/execute.cpp
 src/farwinapi.cpp
 src/fileattr.cpp
 src/fileedit.cpp
+src/fileedit2options.cpp
 src/filefilter.cpp
 src/filefilterparams.cpp
 src/FilesSuggestor.cpp

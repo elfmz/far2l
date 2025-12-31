@@ -695,8 +695,7 @@ void FileEditor::Show()
 
 		if (MenuBarVisible) {
 			EditMenuBar->SetPosition(0, TitleBarVisible ? 1 : 0, ScrX, TitleBarVisible ? 1 : 0);
-				EditMenuBar->Show();
-
+			EditMenuBar->Show();
 		}
 	}
 
@@ -2886,6 +2885,13 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 {
 	if (accelKey) {
 		ProcessKey(accelKey);
+		return;
+	}
+
+	if (hMenu == MENU_VIEW && vMenu == MENU_VIEW_MENUBAR) {
+		MenuBarVisible = !MenuBarVisible;
+		Show();
+		return;
 	}
 
 	// todo: handle commands without accelerated keys
@@ -2897,4 +2903,8 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		}
 		return;
 	}*/
+}
+
+int FileEditor::MenuBarPosition() {
+	return TitleBarVisible && MenuBarVisible ? 1 : 0;
 }

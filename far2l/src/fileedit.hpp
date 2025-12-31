@@ -127,6 +127,7 @@ public:
 	static const FileEditor *CurrentEditor;
 
 	void ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey);
+	int MenuBarPosition();
 
 private:
 	Editor *m_editor;

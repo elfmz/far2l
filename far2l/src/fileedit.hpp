@@ -128,6 +128,7 @@ public:
 
 	void ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey);
 	int MenuBarPosition();
+	int IsOptionActive(int hMenu, int vMenu);
 
 private:
 	Editor *m_editor;

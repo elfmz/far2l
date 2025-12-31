@@ -4458,15 +4458,15 @@ upd:"Paste                               Ctrl+V"
 upd:"Paste                               Ctrl+V"
 
 EditorMenuEditDelete
-"Ужалить                             Ctrl+D"
-"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
-upd:"Delete                              Ctrl+D"
+"Удалить выделенный текст            Ctrl+D"
+"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
+upd:"Delete selection                    Ctrl+D"
 
 EditorMenuEditDelLine
 "Удалить строку                      Ctrl+Y"
@@ -4479,16 +4479,27 @@ upd:"Delete line                         Ctrl+Y"
 upd:"Delete line                         Ctrl+Y"
 upd:"Delete line                         Ctrl+Y"
 
-EditorMenuEditDeleteLeadSpaces
-"Удалить слово слева                 Ctrl+Del"
-"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
-upd:"Delete left word                    Ctrl+Del"
+EditorMenuEditDeleteWordLeft
+"Удалить слово слева                 Ctrl+Backspace"
+"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+upd:"Delete word left                    Ctrl+Backspace"
+
+EditorMenuEditDeleteWordRight
+"Удалить слово справа                Ctrl+Del"
+"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
+upd:"Delete word right                   Ctrl+Del"
 
 EditorMenuEditDeleteEOL
 "Удалить до конца строки             Ctrl+K"
@@ -7871,16 +7882,15 @@ EditF8
 "->ANSI"
 
 EditF9
-"Конфиг"
-"Config"
-"Nastav"
-"Konfig"
-"Beáll."
-"Konfig"
-"Config"
-"Конфіг"
-"Налады"
-
+"Меню"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
 
 EditF10
 "Выход"

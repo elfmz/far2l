@@ -200,6 +200,17 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		HOptMenu.GetExitCode(HItem, VItem);
 	}
 
+	if (HItem == MENU_FILE) {
+		switch(VItem) {
+		case MENU_FILE_PLUGINS:	// Plugin commands
+			FrameManager->ProcessKey(KEY_F11);
+			break;
+		case MENU_FILE_SCREEN_LIST:		// Screens list
+			FrameManager->ProcessKey(KEY_F12);
+			break;
+		}
+	}
+
 	if (HItem >= 0 && VItem >= 0) {
 		FarKey key = MainMenu[HItem].SubMenu[VItem].AccelKey;
 		fileEditor->ProcessMenuCommand(HItem, VItem, key);

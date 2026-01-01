@@ -2894,6 +2894,12 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		return;
 	}
 
+	// mwenu has strange effects if F1 defined as accelerator
+	if (hMenu == MENU_FILE && vMenu == MENU_FILE_HELP) {
+		ProcessKey(KEY_F1);
+		return;
+	}
+
 	// todo: handle commands without accelerated keys
 	/* Once printer support will be merged, we can uncomment this
 	if (hMenu == MENU_FILE && vMenu == MENU_FILE_PRINTER) {

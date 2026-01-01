@@ -65,8 +65,8 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		{Msg::EditorMenuFileSaveQ,	0,	KEY_SHIFTF10  },
 		{L"", LIF_SEPARATOR, 0  },
 		{Msg::EditorMenuFileHelp,	0,	0  },
-		{Msg::EditorMenuFilePlugins,	0,	KEY_F11  },
-		{Msg::EditorMenuFileScreens,	0,	KEY_F12  },
+		{Msg::EditorMenuFilePlugins,	0,	0  },
+		{Msg::EditorMenuFileScreens,	0,	0  },
 		{Msg::EditorMenuFileExitFar,	0,	KEY_ALTF10  },
 	};
 

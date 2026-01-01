@@ -2887,22 +2887,27 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		ProcessKey(accelKey);
 		return;
 	}
-
-	if (hMenu == MENU_VIEW && vMenu == MENU_VIEW_MENUBAR) {
+	else if (hMenu == MENU_VIEW && vMenu == MENU_VIEW_MENUBAR) {
 		MenuBarVisible = !MenuBarVisible;
 		Show();
 		return;
 	}
-
 	// mwenu has strange effects if F1 defined as accelerator
-	if (hMenu == MENU_FILE && vMenu == MENU_FILE_HELP) {
-		ProcessKey(KEY_F1);
+	else if (hMenu == MENU_FILE) {
+		if (vMenu == MENU_FILE_HELP) {
+			ProcessKey(KEY_F1);
+		}
+		else if (vMenu == MENU_FILE_PLUGINS) {
+			ProcessKey(KEY_F11);
+		}
+		else if (vMenu == MENU_FILE_SCREEN_LIST) {
+			ProcessKey(KEY_F12);
+		}
 		return;
 	}
-
 	// todo: handle commands without accelerated keys
 	/* Once printer support will be merged, we can uncomment this
-	if (hMenu == MENU_FILE && vMenu == MENU_FILE_PRINTER) {
+	else if (hMenu == MENU_FILE && vMenu == MENU_FILE_PRINTER) {
 		PrinterSupport ps;
 		if (ps.IsPrinterSetupDialogSupported()) {
 			ps.ShowPrinterSetupDialog();

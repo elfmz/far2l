@@ -2897,12 +2897,6 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		if (vMenu == MENU_FILE_HELP) {
 			ProcessKey(KEY_F1);
 		}
-		else if (vMenu == MENU_FILE_PLUGINS) {
-			ProcessKey(KEY_F11);
-		}
-		else if (vMenu == MENU_FILE_SCREEN_LIST) {
-			ProcessKey(KEY_F12);
-		}
 		return;
 	}
 	// todo: handle commands without accelerated keys

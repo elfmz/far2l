@@ -1,8 +1,11 @@
-#import <Cocoa/Cocoa.h> 
+#import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
+#import <objc/runtime.h>
 
 #include <wx/string.h>
 #include "printing.h"
+
+// ------------------- Helper functions -------------------
 
 static NSString* ToNSString(const wxString& s) 
 { 
@@ -11,196 +14,225 @@ static NSString* ToNSString(const wxString& s)
 
 static inline NSURL* ToFileURL(const wxString& s) 
 {
-	return [NSURL fileURLWithPath: [NSString stringWithUTF8String:s.utf8_str().data()]]; 
+	return [NSURL fileURLWithPath:ToNSString(s)]; 
 }
 
-void MacNativePrintText(const wxString& text) 
+static void ShowFileLoadError(const wxString& path, NSError *err = nil)
 {
-    @autoreleasepool 
-    {
-        NSTextView* view = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 600, 800)];
-        [view setString:ToNSString(text)];
-        NSFont* font = [NSFont fontWithName:@"Menlo" size:12];
-        [view setFont:font];
-        [view setVerticallyResizable:YES];
-        [view setHorizontallyResizable:NO];
-
-        NSPrintOperation* op = [NSPrintOperation printOperationWithView:view];
-        [op runOperation];
-    }
+	NSAlert* alert = [[NSAlert alloc] init];
+	alert.messageText = @"Failed to load file for printing";
+	NSString *info = err ? err.localizedDescription : @"Unknown error";
+	alert.informativeText = [NSString stringWithFormat:@"%@\n%@", info, ToNSString(path)];
+	[alert runModal];
 }
 
-void MacNativePrintHtml(const wxString& html) 
+static NSString* LoadTextFileOrShowError(const wxString& path)
 {
-    @autoreleasepool 
-    {
+	NSError* err = nil;
+	NSString* contents =
+		[NSString stringWithContentsOfFile:ToNSString(path)
+								  encoding:NSUTF8StringEncoding
+									 error:&err];
+	if (!contents)
+		ShowFileLoadError(path, err);
+	return contents;
+}
+
+static bool LoadHtmlStringFromFile(const wxString& path, NSString **htmlOut, NSURL **baseURLOut)
+{
+	NSURL* url = ToFileURL(path);
+	NSError* err = nil;
+	NSString* html = [NSString stringWithContentsOfURL:url
+											   encoding:NSUTF8StringEncoding
+												  error:&err];
+	if (!html)
+	{
+		ShowFileLoadError(path, err);
+		return false;
+	}
+
+	if (htmlOut)
+		*htmlOut = html;
+	if (baseURLOut)
+		*baseURLOut = [url URLByDeletingLastPathComponent];
+	return true;
+}
+
+static NSTextView* CreateTextView(NSString* text)
+{
+	NSTextView* view = [[NSTextView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
+	view.string = text;
+	view.font = [NSFont fontWithName:@"Menlo" size:10];
+	view.verticallyResizable = YES;
+	view.horizontallyResizable = NO;
+	return view;
+}
+
+static void RunPrintOperation(NSPrintOperation* op)
+{
+	NSWindow* parentWindow = [NSApp keyWindow] ?: [NSApp mainWindow];
+	if (parentWindow) {
+		[op runOperationModalForWindow:parentWindow delegate:nil didRunSelector:NULL contextInfo:NULL];
+	} else {
+		[op runOperation];
+	}
+}
+
+// ------------------- WebView printing helper -------------------
+
+@interface WebViewPrintHelper : NSObject <WKNavigationDelegate>
+@property (nonatomic, strong) WKWebView *webView;
+@property (nonatomic, copy) void (^completion)(WKWebView *);
+@end
+
+static char kWebViewPrintHelperKey;
+
+@implementation WebViewPrintHelper
+- (void)finishWithWebView:(WKWebView*)webView
+{
+	if (!self.completion) return;
+	void (^block)(WKWebView*) = self.completion;
+	self.completion = nil;
+
+	webView.navigationDelegate = nil;
+	objc_setAssociatedObject(webView, &kWebViewPrintHelperKey, nil, OBJC_ASSOCIATION_ASSIGN);
+	self.webView = nil;
+
+	block(webView);
+}
+
+- (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation *)navigation { [self finishWithWebView:webView]; }
+- (void)webView:(WKWebView*)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error { [self finishWithWebView:webView]; }
+- (void)webView:(WKWebView*)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error { [self finishWithWebView:webView]; }
+@end
+
+static void RunWebViewPrintOperationWhenReady(WKWebView *webView, void (^operation)(WKWebView *))
+{
+	if (!webView.isLoading) {
+		operation(webView);
+		return;
+	}
+
+	WebViewPrintHelper *helper = [[WebViewPrintHelper alloc] init];
+	helper.webView = webView;
+	helper.completion = operation;
+	webView.navigationDelegate = helper;
+	objc_setAssociatedObject(webView, &kWebViewPrintHelperKey, helper, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+// ------------------- Public API functions -------------------
+
+void MacNativePrintText(const wxString& text)
+{
+	@autoreleasepool {
+		NSPrintOperation* op = [NSPrintOperation printOperationWithView:CreateTextView(ToNSString(text))];
+		[op runOperation];
+	}
+}
+
+void MacNativePrintHtml(const wxString& html)
+{
+	@autoreleasepool {
 		WKWebView* web = [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
 		[web loadHTMLString:ToNSString(html) baseURL:nil];
 
-		NSPrintOperation* op = [web printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
-		[op runOperation];
-    }
+		RunWebViewPrintOperationWhenReady(web, ^(WKWebView* readyWeb){
+			NSPrintOperation* op = [readyWeb printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
+			[op runOperation];
+		});
+	}
 }
 
 void MacNativePrintTextFile(const wxString& path)
 {
-    @autoreleasepool
-    {
-        NSString* nsPath = ToNSString(path);
-
-        NSError* err = nil;
-        NSString* fileContents =
-            [NSString stringWithContentsOfFile:nsPath
-                                      encoding:NSUTF8StringEncoding
-                                         error:&err];
-
-        if (!fileContents) {
-            NSAlert* alert = [[NSAlert alloc] init];
-            [alert setMessageText:@"Failed to load file for printing"];
-            [alert runModal];
-            return;
-        }
-
-        NSTextView* view =
-            [[NSTextView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
-
-        [view setString:fileContents];
-        [view setFont:[NSFont fontWithName:@"Menlo" size:12]];
-        [view setVerticallyResizable:YES];
-
-        NSPrintOperation* op =
-            [NSPrintOperation printOperationWithView:view];
-
-        [op runOperation];
-    }
+	@autoreleasepool {
+		NSString* text = LoadTextFileOrShowError(path);
+		if (!text) return;
+		NSPrintOperation* op = [NSPrintOperation printOperationWithView:CreateTextView(text)];
+		[op runOperation];
+	}
 }
 
 void MacNativePrintHtmlFile(const wxString& path)
 {
-    @autoreleasepool
-    {
-        NSURL* url = ToFileURL(path);
+	@autoreleasepool {
+		NSString *html = nil;
+		NSURL *baseURL = nil;
+		if (!LoadHtmlStringFromFile(path, &html, &baseURL)) return;
 
-        WKWebView* web =
-            [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
+		WKWebView* web = [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
+		[web loadHTMLString:html baseURL:baseURL];
 
-        // Load the file directly
-        [web loadFileURL:url allowingReadAccessToURL:[url URLByDeletingLastPathComponent]];
-
-        // Wait until the HTML finishes loading
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-            NSPrintOperation* op =
-                [web printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
-            [op runOperation];
-        });
-    }
+		RunWebViewPrintOperationWhenReady(web, ^(WKWebView* readyWeb){
+			NSPrintOperation* op = [readyWeb printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
+			[op runOperation];
+		});
+	}
 }
 
 void MacNativeShowPageSetupDialog()
 {
-    @autoreleasepool
-    {
-        NSPrintInfo* printInfo = [NSPrintInfo sharedPrintInfo];
-        NSPageLayout* pageLayout = [NSPageLayout pageLayout];
-        NSInteger result = [pageLayout runModalWithPrintInfo:printInfo];
-
-        if (result == NSModalResponseOK) {
-            // User confirmed settings
-            // printInfo now contains updated margins, paper size, orientation, etc.
-        }
-    }
+	@autoreleasepool {
+		NSPrintInfo* printInfo = [NSPrintInfo sharedPrintInfo];
+		NSPageLayout* pageLayout = [NSPageLayout pageLayout];
+		NSInteger result = [pageLayout runModalWithPrintInfo:printInfo];
+		(void)result; // retain original behavior; user settings updated in printInfo
+	}
 }
 
 void MacNativeShowPrintDialog(NSView* viewToPrint)
 {
-    @autoreleasepool
-    {
-        NSPrintInfo* printInfo = [NSPrintInfo sharedPrintInfo];
-
-        NSPrintOperation* op =
-            [NSPrintOperation printOperationWithView:viewToPrint
-                                           printInfo:printInfo];
-        [op runOperationModalForWindow:nil
-                              delegate:nil
-                        didRunSelector:NULL
-                           contextInfo:NULL];
-    }
+	@autoreleasepool {
+		NSPrintInfo* printInfo = [NSPrintInfo sharedPrintInfo];
+		NSPrintOperation* op = [NSPrintOperation printOperationWithView:viewToPrint printInfo:printInfo];
+		RunPrintOperation(op);
+	}
 }
 
-void MacNativePrintPreviewText(const wxString& text) 
-{
-    @autoreleasepool 
-    {
-        NSTextView* view = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, 600, 800)];
-        [view setString:ToNSString(text)];
-        NSFont* font = [NSFont fontWithName:@"Menlo" size:12];
-        [view setFont:font];
-        [view setVerticallyResizable:YES];
-        [view setHorizontallyResizable:NO];
+// ------------------- Print preview -------------------
 
-        MacNativeShowPrintDialog(view);
-    }
+void MacNativePrintPreviewText(const wxString& text)
+{
+	@autoreleasepool {
+		MacNativeShowPrintDialog(CreateTextView(ToNSString(text)));
+	}
 }
 
-void MacNativePrintPreviewHtml(const wxString& html) 
+void MacNativePrintPreviewHtml(const wxString& html)
 {
-    @autoreleasepool 
-    {
+	@autoreleasepool {
 		WKWebView* web = [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
 		[web loadHTMLString:ToNSString(html) baseURL:nil];
 
-        MacNativeShowPrintDialog(web);
-    }
+		RunWebViewPrintOperationWhenReady(web, ^(WKWebView* readyWeb){
+			NSPrintOperation* op = [readyWeb printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
+			RunPrintOperation(op);
+		});
+	}
 }
 
 void MacNativePrintPreviewTextFile(const wxString& path)
 {
-    @autoreleasepool
-    {
-        NSString* nsPath = ToNSString(path);
-
-        NSError* err = nil;
-        NSString* fileContents =
-            [NSString stringWithContentsOfFile:nsPath
-                                      encoding:NSUTF8StringEncoding
-                                         error:&err];
-
-        if (!fileContents) {
-            NSAlert* alert = [[NSAlert alloc] init];
-            [alert setMessageText:@"Failed to load file for printing"];
-            [alert runModal];
-            return;
-        }
-
-        NSTextView* view =
-            [[NSTextView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
-
-        [view setString:fileContents];
-        [view setFont:[NSFont fontWithName:@"Menlo" size:12]];
-        [view setVerticallyResizable:YES];
-
-        MacNativeShowPrintDialog(view);
-    }
+	@autoreleasepool {
+		NSString* text = LoadTextFileOrShowError(path);
+		if (!text) return;
+		MacNativeShowPrintDialog(CreateTextView(text));
+	}
 }
 
 void MacNativePrintPreviewHtmlFile(const wxString& path)
 {
-    @autoreleasepool
-    {
-        NSURL* url = ToFileURL(path);
+	@autoreleasepool {
+		NSString *html = nil;
+		NSURL *baseURL = nil;
+		if (!LoadHtmlStringFromFile(path, &html, &baseURL)) return;
 
-        WKWebView* web =
-            [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
+		WKWebView* web = [[WKWebView alloc] initWithFrame:NSMakeRect(0,0,600,800)];
+		[web loadHTMLString:html baseURL:baseURL];
 
-        // Load the file directly
-        [web loadFileURL:url allowingReadAccessToURL:[url URLByDeletingLastPathComponent]];
-
-        // Wait until the HTML finishes loading
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{
-	        MacNativeShowPrintDialog(web);
-        });
-    }
+		RunWebViewPrintOperationWhenReady(web, ^(WKWebView* readyWeb){
+			NSPrintOperation* op = [readyWeb printOperationWithPrintInfo:[NSPrintInfo sharedPrintInfo]];
+			RunPrintOperation(op);
+		});
+	}
 }
-

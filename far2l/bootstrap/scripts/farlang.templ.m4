@@ -15069,6 +15069,17 @@ MenuFarConfig
 "Р&едактор конфігурації"
 "Р&эдактар канфігурацыі"
 
+MenuMacroBrowser
+"Макрокоманды"
+"Macro Browser"
+upd:"Macro Browser"
+upd:"Macro Browser"
+upd:"Macro Browser"
+upd:"Macro Browser"
+upd:"Macro Browser"
+upd:"Macro Browser"
+upd:"Macro Browser"
+
 MenuAboutFar
 "Св&едения о FAR"
 "A&bout FAR"

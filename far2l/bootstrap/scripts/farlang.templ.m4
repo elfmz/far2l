@@ -4182,6 +4182,17 @@ EditShowKeyBar
 "Показувати &лінійку клавіш"
 "Адлюстроўваць радок к&лавішаў"
 
+SetMacroName
+"Задать описание макроса"
+"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+
 EditShowTitleBar
 "Показывать &заголовок"
 "S&how title bar"

@@ -321,7 +321,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 
 			if (CtrlObject->Macro.GetMacroKeyInfo(true, CtrlObject->Macro.GetSubKey(strMacroArea), MI,
 						strKeyName, strDescription)
-					== -1) {
+					<= 0) {
 				MacroProcess = false;
 				MI = 0;
 				continue;

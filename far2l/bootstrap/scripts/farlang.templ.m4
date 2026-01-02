@@ -4183,15 +4183,15 @@ EditShowKeyBar
 "Адлюстроўваць радок к&лавішаў"
 
 SetMacroName
-"Задать имя макроса"
-"Macro name"
-upd:"Macro name"
-upd:"Macro name"
-upd:"Macro name"
-upd:"Macro name"
-upd:"Macro name"
-upd:"Macro name"
-upd:"Macro name"
+"Задать описание макроса"
+"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
 
 EditShowTitleBar
 "Показывать &заголовок"

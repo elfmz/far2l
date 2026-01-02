@@ -75,7 +75,7 @@ void EditorShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileEdi
 		{Msg::EditorMenuEditRedo,	0,	KEY_CTRLSHIFTZ  },
 		{L"", LIF_SEPARATOR, 0  },
 		{Msg::EditorMenuEditSelectAll,	0,	KEY_CTRLA  },
-		{Msg::EditorMenuEditSelectVertical,	0,	KEY_ALTSHIFTDOWN  },
+		{Msg::EditorMenuEditSelectVertical,	0,	KEY_ALTSHIFTRIGHT  },
 		{L"", LIF_SEPARATOR, 0  },
 		{Msg::EditorMenuEditCut,	0,	KEY_CTRLX  },
 		{Msg::EditorMenuEditCopy,	0,	KEY_CTRLC  },

@@ -2,8 +2,7 @@
 #include <wx/display.h>
 
 #if defined(__APPLE__)
-// For now, we're playing with wxWidgets-based code for all platforms; later we'll switch to native path for macos
-// #define MAC_NATIVE_PRINTING
+#define MAC_NATIVE_PRINTING // comment this define if you want wxWidgets-aware dialogs
 #endif
 
 #ifndef MAC_NATIVE_PRINTING

@@ -324,6 +324,9 @@ public:
 	static void RegisterMacroIntFunction();
 	static TMacroFunction *RegisterMacroFunction(const TMacroFunction *tmfunc);
 	static bool UnregMacroFunction(size_t Index);
+
+	void MacroBrowser();
+	friend class MacroBrowser;
 };
 
 BOOL WINAPI KeyMacroToText(uint32_t Key, FARString &strKeyText0);

@@ -230,7 +230,7 @@ private:
 	int ReadMacroFunction(int ReadMode, FARString &strBuffer);
 	int WriteVarsConst(int WriteMode);
 	int ReadMacros(int ReadMode, FARString &strBuffer);
-	DWORD AssignMacroKey();
+	DWORD AssignMacroKey(FARString& macroNameHolder);
 	int GetMacroSettings(uint32_t Key, DWORD &Flags);
 	void InitInternalVars(BOOL InitedRAM = TRUE);
 	void InitInternalLIBVars();

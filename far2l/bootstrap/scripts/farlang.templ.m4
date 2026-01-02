@@ -5084,6 +5084,17 @@ upd:"Switch to &viewer                    F6"
 upd:"Switch to &viewer                    F6"
 upd:"Switch to &viewer                    F6"
 
+SetMacroName
+"Задать имя макроса"
+"Macro name"
+upd:"Macro name"
+upd:"Macro name"
+upd:"Macro name"
+upd:"Macro name"
+upd:"Macro name"
+upd:"Macro name"
+upd:"Macro name"
+
 EditShowTitleBar
 "Показывать &заголовок"
 "S&how title bar"

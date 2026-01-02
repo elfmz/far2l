@@ -194,8 +194,9 @@ static void appendNewLine(TextBuffer& tb, bool isHtml) {
 }
 
 static void escapeHtmlTags(TextBuffer& tb, const wchar_t c, int tabSize) {
-	if (c == L' ') tb.append("&nbsp;");
-	else if (c == L'\t') {
+	// if (c == L' ') tb.append("&nbsp;");
+	// else 
+	if (c == L'\t') {
 		for(int i = 0; i < tabSize; ++i) tb.append("&nbsp;");
 	}
 	else if (c == L'\r') ;
@@ -303,6 +304,15 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 	return true;
 }
 
+static constexpr const char HTML_PRE_HEADER[] =
+	"<html><head>"
+	"<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">"
+	"<style>@media print{pre{white-space:pre-wrap;overflow-wrap:break-word;}}</style>"
+	"</head><body><pre>\n";
+
+static constexpr const char HTML_PRE_FOOTER[] =
+    "</pre></body></html>";
+
 BOOL FileEditor::SendToPrinter()
 {
 	PrinterSupport printer;
@@ -330,7 +340,7 @@ BOOL FileEditor::SendToPrinter()
 				Length = EndSel - StartSel;
 
 			if (Length > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
-				tb.append("<html><body><pre>");
+				tb.append(HTML_PRE_HEADER);
 
 			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
 				int Len2 = 0;
@@ -355,7 +365,7 @@ BOOL FileEditor::SendToPrinter()
 				if (CopySize > TBlockSizeX)	CopySize = TBlockSizeX;
 
 				if (CopySize > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
-					tb.append("<html><body><pre>");
+					tb.append(HTML_PRE_HEADER);
 
 				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize, tab)) {
 					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported(), tab);
@@ -367,7 +377,7 @@ BOOL FileEditor::SendToPrinter()
 
 	if (!tb.is_empty()) {
 		if(printer.IsReducedHTMLSupported())
-			tb.append("</pre></body></html>");
+			tb.append(HTML_PRE_FOOTER);
 
 		if (printer.IsPrintPreviewSupported()) {
 			if (printer.IsReducedHTMLSupported()) 
@@ -391,7 +401,7 @@ BOOL FileEditor::SendToPrinter()
 	std::string _tmpstr;
 
 	if (printer.IsReducedHTMLSupported()) {
-		fprintf(fp, "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"></head><body><pre>\n");
+		fprintf(fp, HTML_PRE_HEADER);
 	}
 
 	for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
@@ -410,7 +420,7 @@ BOOL FileEditor::SendToPrinter()
 	}
 
 	if (printer.IsReducedHTMLSupported())
-		fprintf(fp, "</pre></body></html>\n");
+		fprintf(fp, HTML_PRE_FOOTER);
 	fclose(fp);
     
     Length = strlen(tmpl);

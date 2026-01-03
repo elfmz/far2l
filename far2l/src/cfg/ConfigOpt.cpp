@@ -197,6 +197,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecViewer, "ShowKeyBar", &Opt.ViOpt.ShowKeyBar, 1},
 	{true,  NSecViewer, "ShowTitleBar", &Opt.ViOpt.ShowTitleBar, 1},
 	{true,  NSecViewer, "ShowArrows", &Opt.ViOpt.ShowArrows, 1},
+	{true,  NSecViewer, "ClickableURLs", &Opt.ViOpt.ClickableURLs, 1},
 	{true,  NSecViewer, "ShowScrollbar", &Opt.ViOpt.ShowScrollbar, 0},
 	{true,  NSecViewer, "IsWrap", &Opt.ViOpt.ViewerIsWrap, 1},
 	{true,  NSecViewer, "Wrap", &Opt.ViOpt.ViewerWrap, 0},

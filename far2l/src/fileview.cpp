@@ -361,12 +361,14 @@ int FileViewer::ProcessKey(FarKey Key)
 			ViOpt.AutoDetectCodePage = View.GetAutoDetectCodePage();
 			ViOpt.ShowScrollbar = View.GetShowScrollbar();
 			ViOpt.ShowArrows = View.GetShowArrows();
+			ViOpt.ClickableURLs = View.GetClickableURLs();
 			ViOpt.PersistentBlocks = View.GetPersistentBlocks();
 			ViewerConfig(ViOpt, true);
 			View.SetTabSize(ViOpt.TabSize);
 			View.SetAutoDetectCodePage(ViOpt.AutoDetectCodePage);
 			View.SetShowScrollbar(ViOpt.ShowScrollbar);
 			View.SetShowArrows(ViOpt.ShowArrows);
+			View.SetClickableURLs(ViOpt.ClickableURLs);
 			View.SetPersistentBlocks(ViOpt.PersistentBlocks);
 
 			ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);

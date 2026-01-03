@@ -9,6 +9,8 @@ struct ViewerString
 	int64_t nSelStart{0};
 	int64_t nSelEnd{0};
 	bool bSelection{false};
+	bool WrapsToNext{false};
+	bool ContinuesFromPrev{false};
 
 	ViewerString() = default;
 	ViewerString(const ViewerString &src) = default;
@@ -20,7 +22,9 @@ struct ViewerString
 	bool IsEmpty() const;
 	size_t Capacity() const;
 
+	const wchar_t *Chars() const;
 	const wchar_t *Chars();
+	const wchar_t *Chars(size_t x) const;
 	const wchar_t *Chars(size_t x);
 
 	void SetChar(size_t x, wchar_t c);

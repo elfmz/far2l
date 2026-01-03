@@ -3561,6 +3561,9 @@ $ #Settings dialog: viewer#
   #Show arrows#             Show scrolling arrows in viewer if the text
                           doesn't fit in the window horizontally.
 
+  #Enable URL links#        Recognize, highlight and make clickable
+                          URLs starting with https:, http: or mailto:.
+
   #Persistent selection#    Do not remove block selection after
                           moving the cursor.
 

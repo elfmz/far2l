@@ -258,7 +258,8 @@ private:
 	int FindVisualLine(Edit* line, int Pos);
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
-	int GetVisualLinesBelow(Edit* startLine, int startVisual);
+	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
+	int GetTopScreenLineNumber();
 	virtual void DisplayObject();
 	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);

@@ -5827,7 +5827,7 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroNameHolder)
 	*/
 	DialogDataEx MacroAssignDlgData[] = {
 		{DI_DOUBLEBOX, 3,  1, 70, 7, {}, 0,                      	Msg::DefineMacroTitle},
-		{DI_TEXT,      5,  2, 35, 2, {}, 0, 						Msg::SetMacroName},
+		{DI_TEXT,      5,  2, 35, 2, {}, 0, 						Msg::DefineMacroDescription},
 		{DI_EDIT,      37, 2, 68, 2, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
 		{DI_TEXT,      5,  4, 35, 4, {}, 0,                       	Msg::DefineMacro     },
 		{DI_COMBOBOX,  37, 4, 68, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L"" },

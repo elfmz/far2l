@@ -3,7 +3,6 @@
 #include "farplug-wide.h"
 #include "KeyFileHelper.h"
 #include "WinCompat.h"
-#include "WinPort.h"
 #include "lng.hpp"
 #include "common.hpp"
 #include "utils.h"
@@ -252,7 +251,7 @@ void OpenWithPlugin::ShowError(const std::vector<std::wstring>& error_lines)
 		items.push_back(line.c_str());
 	}
 	items.push_back(GetMsg(MOk));
-	g_info.Message(g_info.ModuleNumber, FMSG_WARNING, nullptr, items.data(), items.size(), 1);
+	g_info.Message(g_info.ModuleNumber, FMSG_WARNING, L"Troubleshooting", items.data(), items.size(), 1);
 }
 
 

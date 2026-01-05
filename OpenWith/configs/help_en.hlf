@@ -4,7 +4,7 @@
 @Contents
 $^#OpenWith plugin#
 $^#Version 1.0#
-$^#Copyright (C) 2025 spnethw#
+$^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Contents#
  The #OpenWith# plugin provides a context-aware menu to open the selected file(s) with an appropriate application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin is cross-platform and uses native OS mechanisms to provide accurate and relevant application choices: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
 
@@ -21,7 +21,7 @@ $^#Contents#
 @ConfigurationDialog
 $^#OpenWith plugin#
 $^#Version 1.0#
-$^#Copyright (C) 2025 spnethw#
+$^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Configuration Dialog (F9)#
  The configuration dialog, accessible by pressing #F9# in the application selection menu, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
 
@@ -35,10 +35,10 @@ $^#Configuration Dialog (F9)#
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close, allowing you to see its output (stdout/stderr) in the console. This setting does not affect terminal applications. It is also ignored if the application requires a separate launch for each selected file; in this case, asynchronous mode is forced to prevent interface blocking.
 
  #-# Clear selection if command executed
-   When this option is enabled the selection on the panel is cleared after exiting the menu if any menu command has been executed.
+   If checked, launching an application from the menu resets the file selection on the panel.
 
  #-# Confirm opening if file count exceeds...
-   If the number of selected files exceeds the specified threshold, the plugin shows a warning prompt. This prevents accidentally launching a resource-intensive operation. If you decline, you are returned — either to the application selection menu or to the Details dialog — to review your selection.
+   To prevent resource-intensive launches, the plugin prompts a warning when the number of selected files exceeds the specified threshold. If you decline, you will be returned to the application selection menu or the Details dialog.
 
 
  #2. PLATFORM-SPECIFIC SETTINGS#
@@ -94,7 +94,7 @@ $^#Configuration Dialog (F9)#
    For a detailed explanation of the logic this option overrides, see the "How does ranking work? Why is app X listed above app Y?" section in the ~Troubleshooting~@Troubleshooting@ guide.
 
  #-# Pass plain paths instead of file:// URIs
-   This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. Both methods are valid. By default, the plugin generates file:// URIs as this is a more explicit format. However, some applications do not correctly handle file:// URIs, even if they claim support. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
+   This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. By default, the plugin generates file:// URIs. However, some applications may not handle them correctly, despite claiming support. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
 
 
  #2.2. macOS Settings#
@@ -107,7 +107,7 @@ $^#Configuration Dialog (F9)#
 @DetailsDialog
 $^#OpenWith plugin#
 $^#Version 1.0#
-$^#Copyright (C) 2025 spnethw#
+$^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Details Dialog (F3)#
  The information dialog, accessible by pressing #F3# in the application selection menu, displays detailed technical information about the file, the highlighted application, and the exact command that will be used to launch it.
 
@@ -192,7 +192,7 @@ $^#Details Dialog (F3)#
 @Tips
 $^#OpenWith plugin#
 $^#Version 1.0#
-$^#Copyright (C) 2025 spnethw#
+$^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips for use and usefulness#
     For quick access, you can use a macro, for example, to access via "#≣ Menu#"/"#Apps#" key:
 
@@ -218,9 +218,8 @@ $^#Tips for use and usefulness#
 @Troubleshooting
 $^#OpenWith plugin#
 $^#Version 1.0#
-$^#Copyright (C) 2025 spnethw#
+$^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Troubleshooting#
-
  #Why is the list empty when I select multiple files?#
 
  The plugin uses an "intersection" logic: it seeks applications capable of opening all selected files simultaneously.
@@ -234,6 +233,25 @@ $^#Troubleshooting#
  Solution: Enable "Use external terminal for console apps" in the ~configuration dialog~@ConfigurationDialog@.
 
 
+ #Why doesn't my favorite app appear in the list? (Linux/BSD)#
+
+ If an application doesn't appear even for a single file, check the following:
+  #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories defined by "$XDG_DATA_HOME" and "$XDG_DATA_DIRS" environment variables (typically "~~/.local/share/applications" and "/usr/share/applications"). The plugin also automatically scans standard Flatpak and Snap application directories ("~~/.local/share/flatpak/exports/share/applications", "/var/lib/flatpak/exports/share/applications", "/var/lib/snapd/desktop/applications").
+  #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
+  #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
+  #-# Outdated Cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
+
+
+ #Why do I get the error "Selected item must be a file accessible locally via real path."?#
+
+ This error means the selected item is either not a physical file or resides in a virtual environment that the OS cannot access directly, so it cannot be passed as a command-line argument to external applications. It may occur when trying to open via the plugin:
+  #-# non-file items (e.g., connection names in NetRocks);
+  #-# files inside archives, as they are virtual until extracted (e.g., in arclite);
+  #-# internal file structure elements (e.g., ELF headers, sections, or symbols viewed via Inside);
+  #-# file objects on remote resources (e.g., via NetRocks).
+ Solution: Copy or extract the file to a real directory on your disk before opening it with this plugin.
+
+
  #How does ranking work? Why is app X listed above app Y? (Linux/BSD)#
 
  The order in the list is determined by a rank calculated for each application. A higher rank means a more relevant application. The rank depends on two factors:
@@ -241,15 +259,6 @@ $^#Troubleshooting#
  2. Association Source (Secondary Factor): Sources are prioritized from highest to lowest: the global default ('xdg-mime query default'), the "[Default Applications]" section in "mimeapps.list", the "[Added Associations]" section, and finally, the "mimeinfo.cache" or the data from .desktop files themselves.
  Therefore, an application set as the system default for a very specific file type will always be at the top of the list.
  If you prefer a simple, predictable list over this complex logic, you can disable it with the "Disable ranking (sort alphabetically)" option in the ~configuration dialog~@ConfigurationDialog@.
-
-
- #Why doesn't my favorite app appear in the list? (Linux/BSD)#
-
- If an application doesn't appear even for a single file, check the following:
- #-# Missing .desktop file: Ensure that a .desktop file for the application exists in one of the standard directories defined by "$XDG_DATA_HOME" and "$XDG_DATA_DIRS" environment variables (typically "~~/.local/share/applications" and "/usr/share/applications"). The plugin also automatically scans standard Flatpak and Snap application directories.
- #-# Incorrect Association: Check that the correct MIME type is listed in the "MimeType" key of the .desktop file, or that an association is defined in "~~/.config/mimeapps.list".
- #-# Filtering Options: Try disabling the "Filter by OnlyShowIn/NotShowIn" and "Validate TryExec" options in the plugin's settings, as they might be hiding the application.
- #-# Outdated Cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
 
 
  #Why is a checkbox in the configuration dialog grayed out? (Linux/BSD)#
@@ -260,15 +269,15 @@ $^#Troubleshooting#
 
  #An application is in the list, but it fails to launch. (Linux/BSD)#
 
- This almost always indicates an error in the "Exec" line of the .desktop file or a missing dependency. Press F3 to view the command the plugin is trying to execute. If the command looks correct, the application might be failing silently at startup. To diagnose this:
+ This usually indicates an error in the "Exec" line of the .desktop file or a missing dependency. Press F3 to view the command the plugin is trying to execute. If the command looks correct, the application might be failing silently at startup. To diagnose this:
  1. Open the ~configuration dialog~@ConfigurationDialog@.
  2. Uncheck the "Don't wait for command completion" option.
  3. Try launching the application again.
  You will now see any error messages (stdout/stderr) printed by the application directly in the far2l console.
  Also check the command for common syntax errors:
- #-# Incorrect Field Codes: The plugin supports standard codes ("%f", "%F", "%u", "%U"). Some applications might use deprecated or non-standard codes that will not work.
- #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped. Warning: Do NOT enclose field codes in quotes (e.g., use #%f#, not #"%f"#). According to the spec, field codes inside quotes are treated as literal text and are not expanded.
- #-# Program not in "$PATH": If "Exec" contains just a program name, it must be located in one of the directories listed in the "$PATH" environment variable.
- #-# Incorrect Path Format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the "%u" or "%U" field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
+  #-# Incorrect Field Codes: The plugin supports standard codes ("%f", "%F", "%u", "%U"). Some applications might use deprecated or non-standard codes that will not work.
+  #-# Missing Quotes: Paths with spaces must be correctly quoted or escaped. Warning: Do NOT enclose field codes in quotes (e.g., use #%f#, not #"%f"#). According to the spec, field codes inside quotes are treated as literal text and are not expanded.
+  #-# Program not in "$PATH": If "Exec" contains just a program name, it must be located in one of the directories listed in the "$PATH" environment variable.
+  #-# Incorrect Path Format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the "%u" or "%U" field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
 
    ~Contents~@Contents@

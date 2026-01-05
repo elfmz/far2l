@@ -4182,17 +4182,6 @@ EditShowKeyBar
 "Показувати &лінійку клавіш"
 "Адлюстроўваць радок к&лавішаў"
 
-SetMacroName
-"Задать описание макроса"
-"Macro description"
-upd:"Macro description"
-upd:"Macro description"
-upd:"Macro description"
-upd:"Macro description"
-upd:"Macro description"
-upd:"Macro description"
-upd:"Macro description"
-
 EditShowTitleBar
 "Показывать &заголовок"
 "S&how title bar"
@@ -20671,6 +20660,17 @@ l:
 "Definir macro"
 "Завдання макрокоманди"
 "Задаць каманду макраса"
+
+DefineMacroDescription
+"Задать описание макроса"
+"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
 
 DefineMacro
 "Нажмите желаемую клавишу"

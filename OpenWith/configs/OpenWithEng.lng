@@ -6,7 +6,7 @@
 "&OK"
 "&Cancel"
 "OpenWith Error"
-"Selected item must be a file accessible locally via real path."
+"Selected item must be a file accessible locally via a real path."
 "Failed to save configuration."
 "No applications found. Detected MIME type:"
 "The application cannot be executed."
@@ -31,7 +31,7 @@
 "Use &mimeinfo.cache"
 "Filter by Only&ShowIn/NotShowIn"
 "Validate &TryExec"
-"Disable ranking (sort al&phabetically)"
+"Disable ranking and sort al&phabetically"
 "Pass pla&in paths instead of file:// URIs"
 
 "OpenWith: Details"

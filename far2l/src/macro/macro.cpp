@@ -737,13 +737,13 @@ bool KeyMacro::ProcessKey(FarKey Key)
 		{
 			_KEYMACRO(CleverSysLog Clev(L"MACRO End record..."));
 			DWORD MacroKey;
-			FARString macroName;
+			FARString macroDescription;
 			int WaitInMainLoop0 = WaitInMainLoop;
 			InternalInput = TRUE;
 			WaitInMainLoop = FALSE;
 			{							// Залочить _текущий_ фрейм, а не _последний немодальный_
 				LockCurrentFrame LCF;	// временно отменим прорисовку фрейма
-				MacroKey = AssignMacroKey(macroName);
+				MacroKey = AssignMacroKey(macroDescription);
 				FrameManager->ResetLastInputRecord();
 			}
 			// выставляем флаги по умолчанию.
@@ -752,7 +752,7 @@ bool KeyMacro::ProcessKey(FarKey Key)
 			// если удаляем, то не нужно выдавать диалог настройки.
 			// if (MacroKey != (DWORD)-1 && (Key==KEY_CTRLSHIFTDOT || Recording==2) && RecBufferSize)
 			if (MacroKey != KEY_INVALID && ctrlshiftdot && RecBufferSize) {
-				if (!GetMacroSettings(MacroKey, Flags))
+				if (!GetMacroSettings(MacroKey, Flags, macroDescription))
 					MacroKey = KEY_INVALID;
 			}
 
@@ -815,7 +815,7 @@ bool KeyMacro::ProcessKey(FarKey Key)
 					MacroLIB[Pos].BufferSize = RecBufferSize;
 					MacroLIB[Pos].Src =
 							RecSrc ? RecSrc : MkTextSequence(MacroLIB[Pos].Buffer, MacroLIB[Pos].BufferSize);
-					MacroLIB[Pos].Description = macroName.GetLength() > 0 ? wcsdup(macroName.GetBuffer()) : nullptr;
+					MacroLIB[Pos].Description = macroDescription.IsEmpty() ? nullptr: wcsdup(macroDescription.GetBuffer());
 
 					// если удаляем макрос - скорректируем StartMode,
 					// иначе макрос из common получит ту область, в которой его решили удалить.
@@ -5817,7 +5817,7 @@ LONG_PTR WINAPI KeyMacro::AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, L
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-DWORD KeyMacro::AssignMacroKey(FARString& macroNameHolder)
+DWORD KeyMacro::AssignMacroKey(FARString& macroDescription)
 {
 	/*
 	  +------ Define macro ------+
@@ -5850,7 +5850,7 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroNameHolder)
 	if (Dlg.GetExitCode() == -1)
 		return KEY_INVALID;
 
-	macroNameHolder = MacroAssignDlg[2].strData;
+	macroDescription = MacroAssignDlg[2].strData;
 
 	return Param.Key;
 }
@@ -5870,6 +5870,8 @@ enum MACROSETTINGSDLG
 	MS_DOUBLEBOX,
 	MS_TEXT_SEQUENCE,
 	MS_EDIT_SEQUENCE,
+	MS_TEXT_DESCRIPTION,
+	MS_EDIT_DESCRIPTION,
 	MS_SEPARATOR1,
 	MS_CHECKBOX_OUTPUT,
 	MS_CHECKBOX_START,
@@ -5931,7 +5933,7 @@ LONG_PTR WINAPI KeyMacro::ParamMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
 
-int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
+int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescription)
 {
 	/*
 			  1         2         3         4         5         6
@@ -5956,27 +5958,31 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
 
 	*/
 	DialogDataEx MacroSettingsDlgData[] = {
-		{DI_DOUBLEBOX, 3,  1,  69, 17, {},  0,                             L""                                    },
+		{DI_DOUBLEBOX, 3,  1,  69, 18, {},  0,                             L""                                    },
 		{DI_TEXT,      5,  2,  0,  2,  {},  0,                             Msg::MacroSequence                     },
 		{DI_EDIT,      5,  3,  67, 3,  {},  DIF_FOCUS,                     L""                                    },
-		{DI_TEXT,      3,  4,  0,  4,  {},  DIF_SEPARATOR,                 L""                                    },
-		{DI_CHECKBOX,  5,  5,  0,  5,  {},  0,                             Msg::MacroSettingsEnableOutput         },
-		{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsRunAfterStart        },
-		{DI_TEXT,      3,  7,  0,  7,  {},  DIF_SEPARATOR,                 L""                                    },
-		{DI_CHECKBOX,  5,  8,  0,  8,  {},  0,                             Msg::MacroSettingsActivePanel          },
-		{DI_CHECKBOX,  7,  9,  0,  9,  {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
-		{DI_CHECKBOX,  7,  10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
-		{DI_CHECKBOX,  7,  11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
-		{DI_CHECKBOX,  37, 8,  0,  8,  {},  0,                             Msg::MacroSettingsPassivePanel         },
-		{DI_CHECKBOX,  39, 9,  0,  9,  {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
-		{DI_CHECKBOX,  39, 10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
-		{DI_CHECKBOX,  39, 11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
-		{DI_TEXT,      3,  12, 0,  12, {},  DIF_SEPARATOR,                 L""                                    },
-		{DI_CHECKBOX,  5,  13, 0,  13, {2}, DIF_3STATE,                    Msg::MacroSettingsCommandLine          },
-		{DI_CHECKBOX,  5,  14, 0,  14, {2}, DIF_3STATE,                    Msg::MacroSettingsSelectionBlockPresent},
-		{DI_TEXT,      3,  15, 0,  15, {},  DIF_SEPARATOR,                 L""                                    },
-		{DI_BUTTON,    0,  16, 0,  16, {},  DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                                },
-		{DI_BUTTON,    0,  16, 0,  16, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
+
+		{DI_TEXT,      5,  4, 30, 4, {}, 0, 						Msg::DefineMacroDescription},
+		{DI_EDIT,      32, 4, 67, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
+
+		{DI_TEXT,      3,  5,  0,  5,  {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsEnableOutput         },
+		{DI_CHECKBOX,  5,  7,  0,  7,  {},  0,                             Msg::MacroSettingsRunAfterStart        },
+		{DI_TEXT,      3,  8,  0,  8,  {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_CHECKBOX,  5,  9,  0,  9,  {},  0,                             Msg::MacroSettingsActivePanel          },
+		{DI_CHECKBOX,  7,  10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
+		{DI_CHECKBOX,  7,  11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
+		{DI_CHECKBOX,  7,  12, 0,  12, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
+		{DI_CHECKBOX,  37, 9,  0,  9,  {},  0,                             Msg::MacroSettingsPassivePanel         },
+		{DI_CHECKBOX,  39, 10, 0,  10, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsPluginPanel          },
+		{DI_CHECKBOX,  39, 11, 0,  11, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsFolders              },
+		{DI_CHECKBOX,  39, 12, 0,  12, {2}, DIF_3STATE | DIF_DISABLE,      Msg::MacroSettingsSelectionPresent     },
+		{DI_TEXT,      3,  13, 0,  13, {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_CHECKBOX,  5,  14, 0,  14, {2}, DIF_3STATE,                    Msg::MacroSettingsCommandLine          },
+		{DI_CHECKBOX,  5,  15, 0,  15, {2}, DIF_3STATE,                    Msg::MacroSettingsSelectionBlockPresent},
+		{DI_TEXT,      3,  16, 0,  16, {},  DIF_SEPARATOR,                 L""                                    },
+		{DI_BUTTON,    0,  17, 0,  17, {},  DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                                },
+		{DI_BUTTON,    0,  18, 0,  18, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
 	};
 	MakeDialogItemsEx(MacroSettingsDlgData, MacroSettingsDlg);
 	FARString strKeyText;
@@ -6000,12 +6006,13 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
 			Set3State(Flags, MFLAGS_EMPTYCOMMANDLINE, MFLAGS_NOTEMPTYCOMMANDLINE);
 	MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected =
 			Set3State(Flags, MFLAGS_EDITSELECTION, MFLAGS_EDITNOSELECTION);
+	MacroSettingsDlg[MS_EDIT_DESCRIPTION].strData = macroDescription;
 	LPWSTR Sequence = MkTextSequence(RecBuffer, RecBufferSize);
 	MacroSettingsDlg[MS_EDIT_SEQUENCE].strData = Sequence;
 	free(Sequence);
 	DlgParam Param = {this, 0, 0, 0};
 	Dialog Dlg(MacroSettingsDlg, ARRAYSIZE(MacroSettingsDlg), ParamMacroDlgProc, (LONG_PTR)&Param);
-	Dlg.SetPosition(-1, -1, 73, 19);
+	Dlg.SetPosition(-1, -1, 73, 20);
 	Dlg.SetHelp(L"KeyMacroSetting");
 	{
 		LockBottomFrame LBF;	// временно отменим прорисовку фрейма
@@ -6062,6 +6069,7 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags)
 			: (MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected == 0
 							? MFLAGS_EDITNOSELECTION
 							: MFLAGS_EDITSELECTION);
+	macroDescription = MacroSettingsDlg[MS_EDIT_SEQUENCE].strData;
 	return TRUE;
 }
 

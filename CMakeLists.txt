@@ -203,6 +203,7 @@ include_directories(utils/include)
 add_subdirectory (WinPort)
 add_subdirectory (utils)
 add_subdirectory (far2l)
+add_subdirectory (themes)
 
 if (NOT ${USEWX})
     message(STATUS "Building without GUI/wxWidgets backend due to USEWX=${USEWX}")

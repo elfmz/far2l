@@ -64,11 +64,11 @@ Exit:
 #endif
 
 #if defined(WINPORT_DIRECT)
-void UpperCase(TCHAR *sDest, const TCHAR *sSrc, size_t nLen)
+void UpperCase(TCHAR *sDest, const TCHAR *sSrc, size_t nStrLen)
 {
-	if (sDest != sSrc)
-		memcpy(sDest, sSrc, nLen * sizeof(sDest[0]));
-	WINPORT(CharUpperBuff)(sDest, nLen);
+	size_t i;
+	for (i = 0; i < nStrLen; i++)
+		sDest[i] = (TCHAR)apiLUpper(sSrc[i]);
 }
 #endif
 
@@ -91,7 +91,7 @@ static __inline char ToUpper(char cByte)
 static __inline TCHAR ToUpper(TCHAR cByte)
 {
 #if defined(WINPORT_DIRECT)
-	return Upper(cByte);
+	return (TCHAR)apiLUpper(cByte);
 #else
 	return aUpcaseTable[(unsigned char)cByte];
 #endif

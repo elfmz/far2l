@@ -42,6 +42,7 @@ FARAPIDIALOGRUN apiDialogRun;
 FARAPIDIALOGFREE apiDialogFree;
 FARAPISENDDLGMESSAGE apiSendDlgMessage;
 FARSTDSNPRINTF apiSnprintf;
+FARSTDLOCALUPPER apiLUpper;
 #else
 FARAPIDIALOG apiDialog;
 FARAPICHARTABLE apiCharTable;
@@ -105,6 +106,7 @@ void __plugin WINAPI EXP_NAME(SetStartupInfo)(const struct PluginStartupInfo *pI
 	apiDialogFree = pInfo->DialogFree;
 	apiSendDlgMessage = pInfo->SendDlgMessage;
 	apiSnprintf = pInfo->FSF->snprintf;
+	apiLUpper = pInfo->FSF->LUpper;
 #else
 	apiDialog = pInfo->Dialog;
 	apiCharTable = pInfo->CharTable;

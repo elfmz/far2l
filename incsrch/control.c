@@ -24,10 +24,10 @@ static void PutEvent(int Cmd)
 		cnt++;
 	do {
 		aEvents[nEvents].Flags = (unsigned char)Cmd;
-		aEvents[nEvents].AsciiChar = Event.Event.KeyEvent.uChar.AsciiChar;
+		aEvents[nEvents].KbdChar = Event.Event.KeyEvent.uChar.KbdChar;
 		if (++nEvents == PREVIEW_EVENTS) {
 #if defined(WINPORT_DIRECT)
-			putwchar('\007');
+			putwchar(L'\007');
 #else
 			MessageBeep((UINT)-1);
 #endif
@@ -104,8 +104,8 @@ Loop:
 							if ((Event.Event.KeyEvent.dwControlKeyState
 										& (ENHANCED_KEY | LEFT_ALT_PRESSED | LEFT_CTRL_PRESSED
 												| RIGHT_ALT_PRESSED | RIGHT_CTRL_PRESSED))
-									|| ((unsigned)Event.Event.KeyEvent.uChar.AsciiChar < 32
-											&& Event.Event.KeyEvent.uChar.AsciiChar != '\t'))
+									|| ((unsigned)Event.Event.KeyEvent.uChar.KbdChar < _T('\x20')
+											&& Event.Event.KeyEvent.uChar.KbdChar != _T('\t')))
 								goto Quit;
 							PutEvent(KC_CHAR);
 					}
@@ -140,7 +140,7 @@ void ShowTitle(int OpenFrom)
 		nRest = ((nLen >= TITLE_LEN - TITLE_PREFIX_LEN - 1) ? TITLE_LEN - TITLE_PREFIX_LEN - 1 : nLen);
 		memcpy(&Title[TITLE_PREFIX_LEN], &sStr[nLen - nRest], nRest * sizeof(sStr[0]));
 		if (OpenFrom == OPEN_EDITOR) {
-			Title[nRest + TITLE_PREFIX_LEN] = '\0';
+			Title[nRest + TITLE_PREFIX_LEN] = _T('\0');
 			apiEditorControl(ECTL_SETTITLE, Title);
 		}
 #ifdef VIEWVER_SUPPORT
@@ -148,7 +148,7 @@ void ShowTitle(int OpenFrom)
 			/* blank the next chars... */
 			setmem(&Title[nRest + TITLE_PREFIX_LEN], ' ',
 					sizeof(Title) / sizeof(Title[0]) - nRest - TITLE_PREFIX_LEN - 1);
-			Title[sizeof(Title) / sizeof(Title[0]) - 1] = '\0';
+			Title[sizeof(Title) / sizeof(Title[0]) - 1] = _T('\0');
 			apiText(0, 0, iViewerStatusColor, Title);
 			apiText(0, 0, iViewerStatusColor, NULL);
 		}
@@ -158,7 +158,7 @@ void ShowTitle(int OpenFrom)
 		StatusMessage(MNotFound);
 		if (bBeepOnMismatch)
 #if defined(WINPORT_DIRECT)
-			putwchar('\007');
+			putwchar(L'\007');
 #else
 			MessageBeep((UINT)-1);
 #endif

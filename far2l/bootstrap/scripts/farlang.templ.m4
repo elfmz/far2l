@@ -27378,6 +27378,28 @@ upd:"Word wrap"
 upd:"Word wrap"
 upd:"Word wrap"
 
+ColorThemesUserSection
+"Темы пользователя"
+"User themes"
+upd:"User themes"
+upd:"User themes"
+upd:"User themes"
+upd:"User themes"
+upd:"User themes"
+upd:"User themes"
+upd:"User themes"
+
+ColorThemesPreinstalledSection
+"Темы предустановленные"
+"Preinstalled themes"
+upd:"Preinstalled themes"
+upd:"Preinstalled themes"
+upd:"Preinstalled themes"
+upd:"Preinstalled themes"
+upd:"Preinstalled themes"
+upd:"Preinstalled themes"
+upd:"Preinstalled themes"
+
 #Must be the last
 NewFileName
 l:

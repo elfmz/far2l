@@ -143,10 +143,10 @@ void SetColors()
 
 	size_t BaseGroupLen = ARRAYSIZE(BaseGroups);
 	size_t GroupsLen = BaseGroupLen + 
-		(v.size() > 0 ? v.size() + 1 : 0) +   		/* user themes */
+		(v.size() > 0 ? v.size() : 0) +   			/* user themes */
 		(v2.size() > 0 ? v2.size() : 0) + 			/* system themes */
-		(v.size() > 0 && v2.size() > 0 ? 1 : 0) + 	/* separator between themes */
-		(v.size() > 0 || v2.size() > 0 ? 1 : 0);	/* "No theme" point */
+		(v.size() > 0 && v2.size() > 0 ? 1 : 0) + 	/* separator between theme types */
+		(v.size() > 0 || v2.size() > 0 ? 2 : 0);	/* "No theme" point + separator */
 	MenuDataEx Groups[GroupsLen];
 	size_t ptr = BaseGroupLen;
 

@@ -249,9 +249,13 @@ cmake --build .
 
     * just run far2l from `./install/far2l`<br><sup>(use the full path to run from any location: `<path>/far2l/_build/install/far2l`)</sup>
 
-    * or/and install far2l: `sudo cmake --install .`
+    * **better** install far2l: `sudo cmake --install .`
 
-    * or/and it's possible to create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
+        * HINT: for Debian-alikes there is a `checkinstall` tool allowing ad-hoc packages creation and immediate installing.  
+          E.g. type `sudo checkinstall`, it will prompt for package name, enter "my_far2l".  
+          Later "my_far2l" can be uninstalled via `sudo dpkg --purge my_far2l`
+
+    * **even better** create far2l_2.X.X_ARCH.deb or ...tar.gz packages in `_build` directory by running `cmake --build . --target package` command.
 
 ##### Additional build configuration options:
 

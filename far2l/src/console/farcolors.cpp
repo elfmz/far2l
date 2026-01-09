@@ -387,7 +387,7 @@ bool FarColors::InitFarColorsFromTheme( FARString& theme, bool isSystemWide) noe
 		std::string path(FARCOLORS_THEME_FOLDER);
 		path += sep + sTheme + filename;
 
-		std::string colors_file = InMyConfig(path.c_str());
+		std::string colors_file = InMyConfig(path.c_str(), false);
 		return InitFarColorsFromFile(colors_file);
     }
     else {
@@ -410,18 +410,13 @@ FARString FarColors::SaveFarColorsAsUserTheme( FARString& base ) noexcept
     int Length = base.GetLength();
    	std::string tmpstr;
     Wide2MB(base.GetBuffer(), Length, tmpstr);
-    //tmpstr += "(1)";
-
-    if(tmpstr[0] == '*') { // there is a system theme, add prefix
-    	tmpstr = std::string("local copy of ") + tmpstr.substr(1); 
-    }
 
 	std::string path(FARCOLORS_THEME_FOLDER);
 	std::string sep("/");
 	std::string filename("/farcolors.ini");
 	path += sep + tmpstr + filename;
 
-	const std::string &colors_file = InMyConfig(path.c_str());
+	const std::string &colors_file = InMyConfig(path.c_str(), true);
 	KeyFileHelper kfh(colors_file);
 	FARColors.Save(kfh);
 	kfh.Save();

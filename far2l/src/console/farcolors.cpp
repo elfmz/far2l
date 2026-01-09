@@ -435,6 +435,7 @@ FARString FarColors::SaveFarColorsAsUserTheme( FARString& base ) noexcept
 
 #include <dirent.h>
 #include <unistd.h>
+#include <algorithm>
 
 std::vector<std::string> FarColors::GetKnownUserThemes ()
 {
@@ -451,6 +452,7 @@ std::vector<std::string> FarColors::GetKnownUserThemes ()
 	    }
     	closedir(dir);
     }
+    std::sort(v.begin(), v.end());
     return v;
 }
 
@@ -478,5 +480,6 @@ std::vector<std::string> FarColors::GetKnownSystemThemes ()
 	    }
     	closedir(dir);
     }
+    std::sort(v.begin(), v.end());
     return v;
 }

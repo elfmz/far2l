@@ -27400,8 +27400,8 @@ upd:"Preinstalled themes"
 upd:"Preinstalled themes"
 upd:"Preinstalled themes"
 
-ColorThemesNoThemne
-"По умолчанию"
+ColorThemesNoTheme
+"По умолчанию (встроенная)"
 "Default (built-in)"
 upd:"Default (built-in)"
 upd:"Default (built-in)"

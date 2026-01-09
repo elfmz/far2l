@@ -161,7 +161,7 @@ void SetColors()
 		Groups[BaseGroupLen].Flags = LIF_SEPARATOR;
 		Groups[BaseGroupLen].AccelKey = 0;
 
-		Groups[BaseGroupLen + 1].Name = Msg::ColorThemesNoThemne;
+		Groups[BaseGroupLen + 1].Name = Msg::ColorThemesNoTheme;
 		Groups[BaseGroupLen + 1].Flags = 0;
 		Groups[BaseGroupLen + 1].AccelKey = 0;
 

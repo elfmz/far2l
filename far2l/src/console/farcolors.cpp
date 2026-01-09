@@ -437,7 +437,7 @@ std::vector<std::string> FarColors::GetKnownUserThemes ()
 	std::vector<std::string> v;
 
     /* user themes */
-	std::string themePath = InMyConfig(FARCOLORS_THEME_FOLDER, true);
+	std::string themePath = InMyConfig(FARCOLORS_THEME_FOLDER, false);
 	DIR *dir = opendir(themePath.c_str());
     if (dir) {
 	    struct dirent *entry;

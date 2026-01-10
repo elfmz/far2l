@@ -837,7 +837,7 @@ int _cdecl main(int argc, char *argv[])
 
 	{	// if CONFIG_INI is not present => first start & opt for show Help "FAR2L features - Getting Started"
 		struct stat stat_buf;
-		Opt.IsFirstStart = stat( InMyConfig(CONFIG_INI).c_str(), &stat_buf ) == -1;
+		Opt.IsFirstStart = stat( InMyConfig(CONFIG_INI, false).c_str(), &stat_buf ) == -1;
 	}
 
 	SafeMMap::SignalHandlerRegistrar smm_shr;

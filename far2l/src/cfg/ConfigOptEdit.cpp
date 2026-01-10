@@ -163,29 +163,42 @@ public:
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL:
-				mi.strName.Format(L"%s %ls |  bool|%ls|%s",
-					(*_opt.value.b == _opt.def.b ? " " : "*"), fsn.CPtr(), fssave.CPtr(), (*_opt.value.b ? "true" : "false"));
+				mi.strName.Format(L"%s %ls %lc  bool%lc%ls%lc%s",
+					(*_opt.value.b == _opt.def.b ? " " : "*"),
+					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
+					fssave.CPtr(), BoxSymbols[BS_V1],
+					(*_opt.value.b ? "true" : "false"));
 				break;
 			case ConfigOpt::T_INT:
-				mi.strName.Format(L"%s %ls |   int|%ls|%ld = 0x%lx",
-					(*_opt.value.i == _opt.def.i ? " " : "*"), fsn.CPtr(), fssave.CPtr(), *_opt.value.i, *_opt.value.i);
+				mi.strName.Format(L"%s %ls %lc   int%lc%ls%lc%ld = 0x%lx",
+					(*_opt.value.i == _opt.def.i ? " " : "*"),
+					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
+					fssave.CPtr(), BoxSymbols[BS_V1],
+					*_opt.value.i, *_opt.value.i);
 				break;
 			case ConfigOpt::T_DWORD:
-				mi.strName.Format(L"%s %ls | dword|%ls|%lu = 0x%lx",
-					(*_opt.value.dw == _opt.def.dw ? " " : "*"), fsn.CPtr(), fssave.CPtr(), *_opt.value.dw, *_opt.value.dw);
+				mi.strName.Format(L"%s %ls %lc dword%lc%ls%lc%lu = 0x%lx",
+					(*_opt.value.dw == _opt.def.dw ? " " : "*"),
+					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
+					fssave.CPtr(), BoxSymbols[BS_V1],
+					*_opt.value.dw, *_opt.value.dw);
 				break;
 			case ConfigOpt::T_STR:
-				mi.strName.Format(L"%s %ls |string|%ls|%ls",
-					(*_opt.value.str == _opt.def.str ? " " : "*"), fsn.CPtr(), fssave.CPtr(), _opt.value.str->CPtr());
+				mi.strName.Format(L"%s %ls %lcstring%lc%ls%lc%ls",
+					(*_opt.value.str == _opt.def.str ? " " : "*"),
+					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
+					fssave.CPtr(), BoxSymbols[BS_V1],
+					_opt.value.str->CPtr());
 				break;
 			case ConfigOpt::T_BIN:
-				mi.strName.Format(L"%s %ls |binary|%ls|(binary has length %u bytes)",
+				mi.strName.Format(L"%s %ls %lcbinary%lc%ls%lc(binary has length %u bytes)",
 					(_opt.def.bin == nullptr || _opt.value.bin == nullptr ? "?"
 						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : "*")),
-					fsn.CPtr(), fssave.CPtr(), _opt.bin_size );
+					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
+					fssave.CPtr(), BoxSymbols[BS_V1], _opt.bin_size );
 				break;
 			default:
-				mi.strName.Format(L"? %ls |unknown type ???", fsn.CPtr());
+				mi.strName.Format(L"? %ls %lcunknown type ???", fsn.CPtr(), BoxSymbols[BS_V1]);
 		}
 		if (update_id < 0) {
 			if (hide_unchanged && mi.strName.At(0)==L' ') // no hide after change item to default value

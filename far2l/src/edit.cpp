@@ -363,6 +363,8 @@ void Edit::FastShow()
 	int CellSelStart = (SelStart == -1) ? -1 : RealPosToCell(SelStart);
 	int CellSelEnd = (SelEnd < 0) ? -1 : RealPosToCell(SelEnd);
 
+	int iTrailingSpacesPos = StrSize; // for Visual show trailing spaces/tabs in dialog editlines
+
 	/*
 		$ 17.08.2000 KM
 		Если есть маска, сделаем подготовку строки, то есть
@@ -371,6 +373,12 @@ void Edit::FastShow()
 	*/
 	if (Mask && *Mask)
 		RefreshStrByMask();
+	// for Visual show trailing spaces/tabs in dialog editlines (not in masked)
+	else if (Flags.Check(FEDITLINE_PARENT_SINGLELINE | FEDITLINE_PARENT_MULTILINE)) {
+		for (iTrailingSpacesPos = StrSize; iTrailingSpacesPos > 0; iTrailingSpacesPos--)
+			if (!std::iswblank(Str[iTrailingSpacesPos-1]))
+				break;
+	}
 
 	CursorPos = CellCurPos;
 
@@ -379,7 +387,9 @@ void Edit::FastShow()
 	bool joining = false;
 	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i) {
 		auto wc = Str[i];
-		if (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
+		auto showSymbols = (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE))
+				|| i >= iTrailingSpacesPos;
+		if (showSymbols) {
 			switch(wc) {
 				case 0x0020: //space
 					wc = L'\xB7'; // ·
@@ -417,8 +427,8 @@ void Edit::FastShow()
 			for (int j = 0, S = TabSize - ((LeftPos + OutStrCells) % TabSize);
 					j < S && int(OutStrCells) < EditLength; ++j, ++OutStrCells) {
 				OutStr.emplace_back(
-						(Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE) && !j)
-								? L'\x2192'
+						(showSymbols && !j)
+								? L'\x2192' // →
 								: L' ');
 			}
 		} else {

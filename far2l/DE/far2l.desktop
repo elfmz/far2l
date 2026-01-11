@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=far4l (WX GUI)
-GenericName=far4l
+Name=far2l (WX GUI)
+GenericName=far2l
 Comment=File and archive manager
 Comment[ru]=Программа управления файлами и архивами
 Exec=far2l --notty %F
@@ -11,12 +11,3 @@ Categories=Utility;FileManager;System;FileTools;
 MimeType=inode/directory;
 Icon=far2l-wx
 StartupNotify=true
-Actions=new-window;
-
-[Desktop Action new-window]
-Name=New Window
-Name[ru]=Новое окно
-Name[en_GB]=New Window
-Name[uk]=Нове вікно
-Name[hu]=Új ablak
-Exec=far2l --notty %F

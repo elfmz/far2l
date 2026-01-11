@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=far4l (WX GUI)
-GenericName=far4l
+Name=far2l (WX GUI)
+GenericName=far2l
 Comment=File and archive manager
 Comment[ru]=Программа управления файлами и архивами
 Exec=far2l --notty %F

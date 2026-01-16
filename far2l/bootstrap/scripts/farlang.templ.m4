@@ -15622,6 +15622,17 @@ upd:"Sho&w directories first"
 "&Каталоги вперед"
 "&Каталогі першапачаткова"
 
+MenuSortExecutablesFirst
+"&Исполняемые вперёд"
+"Show e&xecutables first"
+upd:"Show e&xecutables first"
+upd:"Show e&xecutables first"
+upd:"Show e&xecutables first"
+upd:"Show e&xecutables first"
+upd:"Show e&xecutables first"
+upd:"Show e&xecutables first"
+upd:"Show e&xecutables first"
+
 MenuSortUseNumeric
 "&Числовая сортировка"
 "Num&eric sort"

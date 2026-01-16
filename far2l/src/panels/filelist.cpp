@@ -89,7 +89,7 @@ extern std::vector<PanelViewSettings> ViewSettingsArray;
 
 static int _cdecl SortList(const void *el1, const void *el2);
 
-static int ListSortMode, ListSortOrder, ListSortGroups, ListSelectedFirst, ListDirectoriesFirst;
+static int ListSortMode, ListSortOrder, ListSortGroups, ListSelectedFirst, ListDirectoriesFirst, ListExecutablesFirst;
 static int ListPanelMode, ListNumericSort, ListCaseSensitiveSort;
 static HANDLE hSortPlugin;
 
@@ -168,6 +168,7 @@ FileList::FileList()
 	NumericSort = 0;
 	CaseSensitiveSort = 0;
 	DirectoriesFirst = 1;
+	ExecutablesFirst = 0;
 	Columns = PreparePanelView(&ViewSettings);
 	PluginCommand = -1;
 
@@ -263,6 +264,7 @@ void FileList::SortFileList(int KeepPosition)
 		ListSortGroups = SortGroups;
 		ListSelectedFirst = SelectedFirst;
 		ListDirectoriesFirst = DirectoriesFirst;
+		ListExecutablesFirst = ExecutablesFirst;
 		ListPanelMode = PanelMode;
 		ListNumericSort = NumericSort;
 		ListCaseSensitiveSort = CaseSensitiveSort;
@@ -356,6 +358,14 @@ int _cdecl SortList(const void *el1, const void *el2)
 			return 1;
 
 		if ((SPtr1->FileAttr & FILE_ATTRIBUTE_DIRECTORY) > (SPtr2->FileAttr & FILE_ATTRIBUTE_DIRECTORY))
+			return -1;
+	}
+
+	if (ListExecutablesFirst) {
+		if ((SPtr1->FileAttr & FILE_ATTRIBUTE_EXECUTABLE) < (SPtr2->FileAttr & FILE_ATTRIBUTE_EXECUTABLE))
+			return 1;
+
+		if ((SPtr1->FileAttr & FILE_ATTRIBUTE_EXECUTABLE) > (SPtr2->FileAttr & FILE_ATTRIBUTE_EXECUTABLE))
 			return -1;
 	}
 
@@ -3035,6 +3045,13 @@ void FileList::ChangeDirectoriesFirst(int Mode)
 	Show();
 }
 
+void FileList::ChangeExecutablesFirst(int Mode)
+{
+	Panel::ChangeExecutablesFirst(Mode);
+	SortFileList(TRUE);
+	Show();
+}
+
 bool FileList::GoToFile(long idxItem)
 {
 	if (idxItem >= 0 && idxItem < ListData.Count()) {
@@ -3911,7 +3928,8 @@ void FileList::SelectSortMode()
 		{Msg::MenuSortUseCaseSensitive, 0,             0           },
 		{Msg::MenuSortUseGroups,        0,             KEY_SHIFTF11},
 		{Msg::MenuSortSelectedFirst,    0,             KEY_SHIFTF12},
-		{Msg::MenuSortDirectoriesFirst, 0,             0           }
+		{Msg::MenuSortDirectoriesFirst, 0,             0           },
+		{Msg::MenuSortExecutablesFirst, 0,             0           }
 	};
 	static int SortModes[] = {BY_NAME, BY_EXT, BY_MTIME, BY_SIZE, UNSORTED, BY_CTIME, BY_ATIME, BY_CHTIME,
 			BY_DIZ, BY_OWNER, BY_PHYSICALSIZE, BY_NUMLINKS, BY_FULLNAME, BY_CUSTOMDATA};
@@ -3928,6 +3946,7 @@ void FileList::SelectSortMode()
 	SortMenu[BY_CUSTOMDATA + 4].SetCheck(SG);
 	SortMenu[BY_CUSTOMDATA + 5].SetCheck(SelectedFirst);
 	SortMenu[BY_CUSTOMDATA + 6].SetCheck(DirectoriesFirst);
+	SortMenu[BY_CUSTOMDATA + 7].SetCheck(ExecutablesFirst);
 	int SortCode = -1;
 	bool setSortMode0 = false;
 
@@ -3992,6 +4011,9 @@ void FileList::SelectSortMode()
 							case BY_CUSTOMDATA + 6:
 								DirectoriesFirst = 0;
 								break;
+							case BY_CUSTOMDATA + 7:
+								ExecutablesFirst = 0;
+								break;
 						}
 					}
 					SortModeMenu.SetExitCode(MenuPos);
@@ -4017,6 +4039,9 @@ void FileList::SelectSortMode()
 								break;
 							case BY_CUSTOMDATA + 6:
 								DirectoriesFirst = 1;
+								break;
+							case BY_CUSTOMDATA + 7:
+								ExecutablesFirst = 1;
 								break;
 						}
 					}
@@ -4054,6 +4079,9 @@ void FileList::SelectSortMode()
 				break;
 			case BY_CUSTOMDATA + 6:
 				ChangeDirectoriesFirst(DirectoriesFirst ? 0 : 1);
+				break;
+			case BY_CUSTOMDATA + 7:
+				ChangeExecutablesFirst(ExecutablesFirst ? 0 : 1);
 				break;
 		}
 }
@@ -4356,6 +4384,13 @@ int FileList::GetPrevDirectoriesFirst()
 	return (PanelMode == PLUGIN_PANEL && !PluginsList.Empty())
 			? (*PluginsList.First())->PrevDirectoriesFirst
 			: DirectoriesFirst;
+}
+
+int FileList::GetPrevExecutablesFirst()
+{
+	return (PanelMode == PLUGIN_PANEL && !PluginsList.Empty())
+			? (*PluginsList.First())->PrevExecutablesFirst
+			: ExecutablesFirst;
 }
 
 HANDLE FileList::OpenFilePlugin(const wchar_t *FileName, int PushPrev, OPENFILEPLUGINTYPE Type)

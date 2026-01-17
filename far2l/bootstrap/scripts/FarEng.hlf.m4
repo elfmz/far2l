@@ -3129,7 +3129,8 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
    #Alt-F9#                  Toggles the size of the FAR2L console window
-   #F9, Alt-Shift-F9#        Call ~Editor settings~@EditorSettings@ dialog
+   #F9#                      Call menu bar for the editor, with the list of available commands.
+   #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
    #Ctrl-F10#                Position to the current file

@@ -753,6 +753,15 @@ internal editor.
     the selected files will be carried out using that plugin,
     otherwise by using internal facilities.
 
+    Note: Print manager for Linux is unavailable. Instead, Editor has embedded 
+    support for printing text files even with text highlighting with white background
+    and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
+
+    GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
+    and printy itself; termibnal version expects the #lp# command works and your CUPS is
+    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    printing automation.
+
   Create ~file links~@HardSymLink@                                           #Alt-F6#
 
     Using hard file links you may have several different file names referring
@@ -2899,7 +2908,6 @@ $ #Viewer: control keys#
     #F5#                 Toggle raw/processed mode
     #F6#                 Switch to ~editor~@Editor@
     #Alt-F5#             Print the file
-                       ("Print manager" plugin is used).
     #F7#                 ~Search~@ViewerSearch@
     #Shift-F7, Space#    Continue search
     #Alt-F7#             Continue search in "reverse" mode
@@ -3119,7 +3127,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
    #Ctrl-F5#                 Toggle Tab-to-spaces expansion
-   #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
+   #Alt-F5#                  ^<wrap>Print file or selected block.
    #F6#                      Switch to ~viewer~@Viewer@
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
@@ -3162,6 +3170,14 @@ keypad inserts the character that has the specified code (0-65535).
     3. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
 line as a block and copies it to the clipboard.
 
+    4. Print manager for Linux is unavailable. Instead, Editor has embedded 
+    support for printing text files even with text highlighting with white background
+    and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
+
+    GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
+    and printy itself; termibnal version expects the #lp# command works and your CUPS is
+    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    printing automation.
 
 @EditorSearch
 $ #Editor: search/replace#

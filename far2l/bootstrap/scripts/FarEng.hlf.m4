@@ -3655,6 +3655,18 @@ $ #Settings dialog: editor#
   #Word wrap#               Word wrap. This option can also be toggled by
                           pressing #F3# in the editor.
 
+  #Copy mouse selection to PRIMARY#    This option is intended to place the selected text into 
+                          special X11 (some compositors like KDE KWin have the same for Wayland) 
+                          buffer named PRIMARY as addition to standard clipboard.                          
+                          
+                          If the option toggled, every time you select text block via mouse,
+                          it is being copied to PRIMARY buffer automatically and become available 
+                          immediately for other applications within the same X11 or Wayland 
+                          session. The standard clipboard works as before and won't be touched.
+
+  #Place content from PRIMARY buffer#        If toggled, the PRIMARY buffer contents will be 
+                          placed by 2nd mouse button click (typically mouse wheel) insterad of 
+                          the standard clipboard. 
 
   #Use .editorconfig#       Processing .editorconfig parameters
   #settings files#          (see ~https://editorconfig.org~@https://editorconfig.org@ for details)

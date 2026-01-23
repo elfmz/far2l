@@ -56,9 +56,10 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 			return; // No application candidates; exit the plugin.
 		}
 
-		constexpr int BREAK_KEYS[] = {VK_F3, VK_F9, 0};
+		constexpr int BREAK_KEYS[] = {VK_F3, VK_F9, MAKELONG(VK_RETURN, PKF_SHIFT), 0};
 		constexpr int KEY_F3_DETAILS = 0;
 		constexpr int KEY_F9_SETTINGS = 1;
+		constexpr int KEY_SHIFT_ENTER = 2;
 		int menu_break_code = -1;
 
 		// Display the menu and get the user's selection.
@@ -100,10 +101,11 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 				app_candidates.reset();
 			}
 
-		} else { // Enter to launch.
+		} else { // Enter or Shift+Enter to launch.
 			if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
 				const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
-				LaunchApplication(selected_app, cmds);
+				LaunchApplication(selected_app, cmds,
+								  (menu_break_code == KEY_SHIFT_ENTER) ? LaunchMode::Alternative : LaunchMode::Standard);
 				return; // Application launched; exit the plugin.
 			}
 		}
@@ -290,21 +292,20 @@ bool OpenWithPlugin::AskForLaunchConfirmation(const CandidateInfo& app, const si
 
 
 // Executes one or more command lines to launch the selected application to open the provided files.
-void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds)
+void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds, LaunchMode launch_mode)
 {
 	if (cmds.empty()) {
 		return;
 	}
 
-	// If we have multiple commands to run, force asynchronous execution to avoid UI blocking.
-	bool force_no_wait = cmds.size() > 1;
-
 	unsigned int execute_flags = 0;
 	if (app.terminal) {
-		if (s_use_external_terminal) {
+			if (s_use_external_terminal || (launch_mode == LaunchMode::Alternative)) {
 			execute_flags |= EF_EXTERNALTERM;
 		}
 	} else {
+		// If we have multiple commands to run, force asynchronous execution to avoid UI blocking.
+		bool force_no_wait = (cmds.size() > 1) || (launch_mode == LaunchMode::Alternative);
 		if (s_no_wait_for_command_completion || force_no_wait) {
 			execute_flags |= (EF_NOWAIT | EF_HIDEOUT);
 		}

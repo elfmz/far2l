@@ -114,10 +114,12 @@ $^#Configuration Dialog (F9)#
 
  #-# Use external terminal for console apps
    If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal.
-   Note: When using the built-in terminal with multiple files selected, the plugin applies a "smart" filter. It hides terminal applications that require a separate process for each file, while those that can handle all files in a single command remain in the list.
+   When using the built-in terminal with multiple files selected, the plugin applies a "smart" filter. It hides terminal applications that require a separate process for each file, while those that can handle all files in a single command remain in the list.
+   You can force a console application to launch in an external terminal regardless of this setting by pressing #Shift+Enter#.
 
  #-# Don't wait for command completion
    If checked, GUI applications will be launched asynchronously, immediately returning control to far2l. If unchecked, far2l will wait for the launched application to close, allowing you to see its output (stdout/stderr) in the console. This setting does not affect terminal applications. It is also ignored if the application requires a separate launch for each selected file; in this case, asynchronous mode is forced to prevent interface blocking.
+   You can force a GUI application to launch asynchronously regardless of this setting by pressing #Shift+Enter#.
 
  #-# Clear selection if command executed
    If checked, launching an application from the menu resets the file selection on the panel.

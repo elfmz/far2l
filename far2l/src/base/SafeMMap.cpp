@@ -1,4 +1,6 @@
-#define _XOPEN_SOURCE // macos wants it for ucontext
+#ifndef __NetBSD__
+# define _XOPEN_SOURCE // macos wants it for ucontext
+#endif
 
 #include <errno.h>
 #include <signal.h>
@@ -7,7 +9,7 @@
 #include <time.h>
 #include <dlfcn.h>
 
-#if !defined(__FreeBSD__) && !defined(__DragonFly__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) && !defined(__ANDROID__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__) && !defined(__MUSL__) && !defined(__UCLIBC__) && !defined(__HAIKU__) && !defined(__ANDROID__) // todo: pass to linker -lexecinfo under BSD and then may remove this ifndef
 # include <execinfo.h>
 # define HAS_BACKTRACE
 #endif
@@ -334,7 +336,7 @@ void SafeMMap::Slide(off_t file_offset)
 	// So for that systems use approach looking most optimal: remap same pages to
 	// different region of file. At least this should allow VMM to avoid searching
 	// for free pages as well as reduce syscalls count by avoiding call to munmap().
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 	void *new_view = mmap(_view, new_len, _prot, _flags | MAP_FIXED, _fd, file_offset);
 #else
 	void *new_view = mmap(nullptr, new_len, _prot, _flags, _fd, file_offset);
@@ -344,7 +346,7 @@ void SafeMMap::Slide(off_t file_offset)
 	}
 
 	if (_view != new_view) {
-#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__DragonFly__)
+#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__)
 		fprintf(stderr, "SafeMMap::Slide: _view[%p] != new_view[%p]\n", _view, new_view);
 #endif
 		if (munmap(_view, _len) == -1) {

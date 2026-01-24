@@ -740,7 +740,6 @@ void Editor::ShowEditor(int CurLineOnly)
 				ShowString.GetRealSelection(final_sel_start, final_sel_end);
 
 				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
-
 				{
 					int CurPos = CurLine->GetCurPos();
 					int VisualCurPos = CurPos - VisualLineStart;
@@ -799,8 +798,15 @@ void Editor::ShowEditor(int CurLineOnly)
 			}
 		}
 
+		// transfer insert/overtype status to real string
+		//  fix for https://github.com/elfmz/far2l/issues/3196
+		CurLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+		if (CurLogicalLine)
+			CurLogicalLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+
 		if (HostFileEditor)
 			HostFileEditor->ShowStatus();
+
 		return;
 	}
 

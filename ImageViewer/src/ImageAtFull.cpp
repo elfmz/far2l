@@ -65,6 +65,7 @@ protected:
 public:
 	bool may_select{false};
 	bool full_size{false};
+	bool _first_draw{true};
 
 	ImageViewAtFull(size_t initial_file, const std::vector<std::pair<std::string, bool> > &all_files)
 		: ImageView(initial_file, all_files)
@@ -74,6 +75,7 @@ public:
 	bool Setup(SMALL_RECT &rc, HANDLE dlg)
 	{
 		_dlg = dlg;
+		_first_draw = true;
 		return ImageView::Setup(rc);
 	}
 
@@ -236,6 +238,15 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 		case DN_CLOSE:
 			WINPORT(DeleteConsoleImage)(NULL, WINPORT_IMAGE_ID);
 			break;
+		case DN_ENTERIDLE:
+		{
+			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
+			if (iv && iv->_first_draw) {
+				iv->_first_draw = false;
+				iv->ForceShow();
+			}
+		}
+		break;
 
 		case DN_RESIZECONSOLE:
 			g_far.SendDlgMessage(hDlg, DM_CLOSE, EXITED_DUE_RESIZE, 0);

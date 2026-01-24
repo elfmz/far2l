@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#Fájl- és archívumkezelő program#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 $^#Copyright (C) 1996-2000 Eugene Roshal#
 $^#Copyright (C) 2000-2016 FAR Group
 `$^#Copyright (C)' COPYRIGHTYEARS `FAR People'

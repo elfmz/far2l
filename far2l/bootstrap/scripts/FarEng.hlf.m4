@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#File and archive manager#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
    ~FAR2L features - Getting Started~@Far2lGettingStarted@
 

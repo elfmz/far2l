@@ -69,14 +69,14 @@ void PasteSearchText(void)
 	for (i = 0; i < len; i++) {
 		if (nEvents == PREVIEW_EVENTS) {
 #if defined(WINPORT_DIRECT)
-			putwchar('\007');
+			putwchar(L'\007');
 #else
 			MessageBeep((UINT)-1);
 #endif
 			break;
 		}
 		aEvents[nEvents].Flags = (unsigned char)(i ? KC_CHAR | KC_FAILKILL : KC_CHAR);
-		aEvents[nEvents].AsciiChar = pData[i];
+		aEvents[nEvents].KbdChar = pData[i];
 		nEvents++;
 	}
 }

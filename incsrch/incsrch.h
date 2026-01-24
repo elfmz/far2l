@@ -32,12 +32,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #if defined(WINPORT_DIRECT)
 
-static inline wchar_t __cdecl Upper(wchar_t Ch)
-{
-	WINPORT(CharUpperBuff)(&Ch, 1);
-	return Ch;
-}
-
 #define __int64         __int64_t
 #define _MAX_PATH       MAX_PATH
 #define _tstrcpy(a, b)  lstrcpy((a), (b))
@@ -98,6 +92,7 @@ extern FARAPIDIALOGRUN apiDialogRun;
 extern FARAPIDIALOGFREE apiDialogFree;
 extern FARAPISENDDLGMESSAGE apiSendDlgMessage;
 extern FARSTDSNPRINTF apiSnprintf;
+extern FARSTDLOCALUPPER apiLUpper;
 #else
 extern FARAPIDIALOG apiDialog;
 extern FARAPICHARTABLE apiCharTable;
@@ -152,8 +147,21 @@ extern void PasteSearchText(void);
 typedef struct _KbdCommand
 {
 	unsigned char Flags;
+#if defined(UNICODE)
+	union {
+		WCHAR UnicodeChar;
+		CHAR AsciiChar;
+	};
+#else
 	unsigned char AsciiChar;
+#endif
 } KbdCommand;
+
+#if defined(UNICODE)
+#define KbdChar UnicodeChar
+#else
+#define KbdChar AsciiChar
+#endif
 
 extern KbdCommand aEvents[PREVIEW_EVENTS];
 extern int nEvents;

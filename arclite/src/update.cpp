@@ -10,7 +10,7 @@
 #include "options.hpp"
 #include "sfx.hpp"
 
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__APPLE__)
 #include <sys/types.h>
 #else
 #include <sys/sysmacros.h>	  // major / minor

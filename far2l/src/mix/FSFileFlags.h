@@ -37,7 +37,7 @@ public:
 #endif
 };
 
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 # define FS_FLAGS_CONTAIN_IMMUTABLE(flags) (((flags) & (UF_IMMUTABLE | SF_IMMUTABLE)) != 0)
 # define FS_FLAGS_WITHOUT_IMMUTABLE(flags) ((flags) & (~(UF_IMMUTABLE | SF_IMMUTABLE)))
 # define FS_FLAGS_WITH_IMMUTABLE(flags) ((flags) | (UF_IMMUTABLE))

@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#Програма управління файлами та архівами#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
  ~Індекс файлу допомоги~@Index@
  ~Як користуватися допомогою~@Help@

@@ -20661,6 +20661,17 @@ l:
 "Завдання макрокоманди"
 "Задаць каманду макраса"
 
+DefineMacroDescription
+"Задать описание макроса"
+"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+
 DefineMacro
 "Нажмите желаемую клавишу"
 "Press the desired key"

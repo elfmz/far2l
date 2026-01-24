@@ -4793,6 +4793,9 @@ usually does as a reaction to this combination.
 
     Playing the macro will display the symbol '\2FP\-' in the upper left corner of the screen.
 
+    Note: To let you see the macro in the config file or in Macro Browser, you have an ability 
+    to make short description as you prefer.
+
 
 @KeyMacroDelete
 $ #Macro command: deleting a macro command#
@@ -4826,6 +4829,10 @@ desired options in the dialog:
    #Sequence:#
 
     Allows to edit the recorded key sequence.
+
+   #Description:#
+
+    Allows to specify user-defined brief description of the macro sequence.
 
    #Allow screen output while executing macro#
 

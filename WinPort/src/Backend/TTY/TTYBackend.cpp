@@ -467,7 +467,7 @@ void TTYBackend::DispatchImagesProbe(TTYOutput &tty_out)
 	TTYConsoleImage probe_img;
 	probe_img.width = probe_img.height = 1;
 	probe_img.pixel_data.resize(probe_img.width * probe_img.height * (probe_img.fmt / 8));
-	unsigned int kitty_id = tty_out.SendKittyImage(PROBE_IMAGE_ID, probe_img);
+	unsigned int kitty_id = tty_out.SendKittyImage(PROBE_IMAGE_ID, probe_img, 'q');
 	tty_out.RequestStatus();
 	fprintf(stderr, "%s: kitty_id=%u\n", __FUNCTION__, kitty_id);
 }

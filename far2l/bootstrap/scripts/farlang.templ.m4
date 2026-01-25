@@ -3926,6 +3926,17 @@ upd:"Choose default code pa&ge:"
 "Виберіть &кодову сторінку за замовчуванням:"
 "Абярыце &кодавую прадвызначаную старонку:"
 
+ViewClickableURLs
+"&Распознавание URL"
+"&Enable URL links"
+"&Rozpoznávání URL"
+"URL-&Erkennung"
+"URL-&felismerés"
+"&Rozpoznawanie adresów URL"
+"&Activar enlaces URL"
+"&Розпізнавання URL"
+"&Распазнаванне URL"
+
 EditConfigTitle
 l:
 "Редактор"

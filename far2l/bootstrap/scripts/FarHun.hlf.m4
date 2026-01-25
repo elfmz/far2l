@@ -3142,6 +3142,9 @@ ha megmozdítjuk a kurzort.
   #Gördítőnyilak mutatva#   ^<wrap>Kikapcsolt sortörésnél a vízszintesen
 túlnyúló sorok végein gördítőnyilak jelennek meg.
 
+  #URL-felismerés#          ^<wrap>Felismerni, kiemelni és aktiválni
+az https:, http: vagy mailto: kezdetű hivatkozásokat.
+
   #Fájlpozíció mentése#     ^<wrap>Elmenti és visszatölti a legutóbb
 megnézett fájlok szöveghelyzetét, vele a kódlapot is (ha "kézzel" választottuk
 ki), valamint a nézet módját (normál vagy hexadecimális).

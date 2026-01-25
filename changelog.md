@@ -20,7 +20,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   see [#3028](https://github.com/elfmz/far2l/pull/3028#issuecomment-3508025346))).
 * _edsort plugin_:  New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
 * _arclite plugin_: More symlinks/hardlinks support: works with RAR/TAR/NTFS; fix option "Link path: Absolute/Relative" for symlinks when create archive (see [#3094](https://github.com/elfmz/far2l/pull/3094))
-* _OpenWith plugin_: Added desktop-specific mimeapps.list support. Improved MIME detection (Magika AI & native globs2 pattern matching). Better compliance with XDG/Freedesktop specifications. Bugfixes and performance optimizations.
+* _OpenWith plugin_: Update to v1.1. Added support for DE-specific mimeapps.list files; improved MIME detection (Magika AI & native globs2 pattern matching); better compliance with XDG/Freedesktop specifications; bugfixes and performance optimizations.
 * Several bugfixes and improvements
 
 ## 2.7.0 beta (2025-10-26)

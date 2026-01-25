@@ -203,6 +203,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecViewer, "Wrap", &Opt.ViOpt.ViewerWrap, 0},
 	{true,  NSecViewer, "PersistentBlocks", &Opt.ViOpt.PersistentBlocks, 0},
 	{true,  NSecViewer, "DefaultCodePage", &Opt.ViOpt.DefaultCodePage, CP_UTF8},
+	{true,  NSecViewer, "ShowMenuBar", &Opt.ViOpt.ShowMenuBar, 0},
 
 	{true,  NSecDialog, "EditHistory", &Opt.Dialogs.EditHistory, 1},
 	{true,  NSecDialog, "EditBlock", &Opt.Dialogs.EditBlock, 0},

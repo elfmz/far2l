@@ -36,6 +36,9 @@ class Panel:
     def SetDirectoriesFirst(self, on, active=True):
         return self.info.Control(self._handle(active), self.ffic.FCTL_SETDIRECTORIESFIRST, 1 if on else 0, 0)
 
+    def SetExecutablesFirst(self, on, active=True):
+        return self.info.Control(self._handle(active), self.ffic.FCTL_SETEXECUTABLESFIRST, 1 if on else 0, 0)
+
     def ClosePlugin(self, arg, active=True):
         # wchar_t *
         return self.info.Control(self._handle(active), self.ffic.FCTL_CLOSEPLUGIN, 0, self.ffi.cast("LONG_PTR", arg))

@@ -68,6 +68,7 @@ void FileList::PushPlugin(HANDLE hPlugin, const wchar_t *HostFile)
 	stItem->PrevCaseSensitiveSort = CaseSensitiveSort;
 	stItem->PrevViewSettings = ViewSettings;
 	stItem->PrevDirectoriesFirst = DirectoriesFirst;
+	stItem->PrevExecutablesFirst = ExecutablesFirst;
 	PluginsList.Push(&stItem);
 }
 
@@ -98,6 +99,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 			CaseSensitiveSort = PStack->PrevCaseSensitiveSort;
 			SortOrder = PStack->PrevSortOrder;
 			DirectoriesFirst = PStack->PrevDirectoriesFirst;
+			ExecutablesFirst = PStack->PrevExecutablesFirst;
 		}
 
 		if (PStack->Modified) {
@@ -132,6 +134,7 @@ int FileList::PopPlugin(int EnableRestoreViewMode)
 			CaseSensitiveSort = PStack->PrevCaseSensitiveSort;
 			SortOrder = PStack->PrevSortOrder;
 			DirectoriesFirst = PStack->PrevDirectoriesFirst;
+			ExecutablesFirst = PStack->PrevExecutablesFirst;
 		}
 	}
 

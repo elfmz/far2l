@@ -66,7 +66,7 @@ Exports to file virtual terminal history of given VT console. Returns TRUE on su
 Fills given array with handles to background terminal session consoles.  
 Fills up to specified count handles, but returns background terminal session count, so if returned value > count argument - then need to extend array buffer and retry
 
-
+* added sort mode option "executables first", that works with the file panel by `FILE_ATTRIBUTE_EXECUTABLE` option. It is available for plug-ins in the same manner as "directories first" option so plug-ins are able to handle it as they need.
 
 ### Added following commands into FILE_CONTROL_COMMANDS:
 * `FCTL_GETPANELPLUGINHANDLE`

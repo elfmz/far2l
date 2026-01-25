@@ -104,6 +104,7 @@ struct PanelOptions
 	int NumericSort;
 	int CaseSensitiveSort;
 	int DirectoriesFirst;
+	int ExecutablesFirst;
 };
 
 struct AutoCompleteOptions

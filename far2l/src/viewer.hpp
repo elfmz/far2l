@@ -41,6 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cache.hpp"
 #include "fileholder.hpp"
 #include "ViewerStrings.hpp"
+#include <vector>
+#include <string>
 
 #define VIEWER_UNDO_COUNT 64
 
@@ -53,6 +55,7 @@ enum
 
 class FileViewer;
 class KeyBar;
+struct ViewerPrinter;
 
 struct InternalViewerBookMark
 {
@@ -127,6 +130,20 @@ private:
 	int CodePageChangedByUser;
 	int InternalKey;
 
+	struct VisibleLinkInfo
+	{
+		int cellStart = 0;
+		int cellEnd = 0;
+		int linkId = -1;
+	};
+
+	std::vector<std::vector<VisibleLinkInfo>> LineLinks;
+	std::vector<std::wstring> PageLinks;
+	int64_t VisibleTopPos;
+	int64_t VisibleBottomPos;
+	int VisibleLineCount;
+	int FocusedLinkId = -1;
+
 	struct InternalViewerBookMark BMSavePos;
 	struct ViewerUndoData UndoData[VIEWER_UNDO_COUNT];
 
@@ -183,6 +200,14 @@ private:
 
 	FARString ComposeCacheName();
 	void SavePosCache();
+	bool HandleLinkClick(int mouseX, int mouseY);
+	void UnderlineLinks(int screenY, const std::vector<VisibleLinkInfo> &storage);
+	void ApplyUnderlineSegment(int segmentStart, int segmentEnd, int screenY, bool focused);
+	void UpdateWrapFlags();
+	void CollectVisibleLinks();
+	bool LaunchLinkById(int linkId);
+	bool SetFocusedLink(int linkId);
+	bool FocusNextLink(bool forward);
 
 public:
 	Viewer(bool bQuickView = false, UINT aCodePage = CP_AUTODETECT);
@@ -242,6 +267,9 @@ public:
 	int GetShowArrows() const { return ViOpt.ShowArrows; }
 	void SetShowArrows(int newValue) { ViOpt.ShowArrows = newValue; }
 	/* IS $ */
+	int GetClickableURLs() const { return ViOpt.ClickableURLs; }
+	void SetClickableURLs(int newValue) { ViOpt.ClickableURLs = newValue; }
+
 	int GetPersistentBlocks() const { return ViOpt.PersistentBlocks; }
 	void SetPersistentBlocks(int newValue) { ViOpt.PersistentBlocks = newValue; }
 

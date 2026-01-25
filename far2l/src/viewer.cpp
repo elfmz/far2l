@@ -68,7 +68,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "WideMB.h"
 #include "UtfConvert.hpp"
+#include "LinkHighlighter.hpp"
 #include <algorithm>
+#include <cwctype>
+#include <vector>
 
 #define MAX_VIEWLINE 0x2000
 
@@ -174,6 +177,9 @@ Viewer::Viewer(bool bQuickView, UINT aCodePage)
 	OpenFailed = false;
 	HostFileViewer = nullptr;
 	bVE_READ_Sent = false;
+	VisibleTopPos = -1;
+	VisibleBottomPos = -1;
+	VisibleLineCount = 0;
 }
 
 FARString Viewer::ComposeCacheName()
@@ -500,6 +506,7 @@ void Viewer::ShowPage(int nMode)
 {
 	int I, Y;
 	AdjustWidth();
+	const int lineCount = std::max(0, Y2 - Y1 + 1);
 
 	if (!ViewFile.Opened()) {
 		if (!FHP->GetPathName().IsEmpty() && ((nMode == SHOW_RELOAD) || (nMode == SHOW_HEX))) {
@@ -520,6 +527,17 @@ void Viewer::ShowPage(int nMode)
 
 	if (!SelectSize)
 		SelectPos = FilePos;
+
+	if (nMode == SHOW_HEX) {
+		LineLinks.clear();
+		PageLinks.clear();
+		VisibleTopPos = -1;
+		VisibleBottomPos = -1;
+		VisibleLineCount = 0;
+		FocusedLinkId = -1;
+	} else {
+		LineLinks.resize(static_cast<size_t>(lineCount));
+	}
 
 	switch (nMode) {
 		case SHOW_HEX:
@@ -557,7 +575,27 @@ void Viewer::ShowPage(int nMode)
 			break;
 	}
 
+	if (!VM.Hex)
+		UpdateWrapFlags();
+
 	if (nMode != SHOW_HEX) {
+		const int64_t topPos    = lineCount > 0 ? Strings[0].nFilePos : -1;
+		const int64_t bottomPos = lineCount > 0 ? Strings[lineCount - 1].nFilePos  : -1;
+
+		if (topPos != VisibleTopPos ||
+			bottomPos != VisibleBottomPos ||
+			lineCount != VisibleLineCount)
+		{
+			FocusedLinkId = -1;
+		}
+
+		VisibleTopPos    = topPos;
+		VisibleBottomPos = bottomPos;
+		VisibleLineCount = lineCount;
+
+		if (ViOpt.ClickableURLs)
+			CollectVisibleLinks();
+
 		std::unique_ptr<ViewerPrinter> printer;
 		if (VM.Processed)
 			printer.reset(new AnsiEsc::Printer(B_BLACK | F_WHITE));
@@ -608,6 +646,9 @@ void Viewer::ShowPage(int nMode)
 					printer->SetSelection(false);
 				}
 			}
+
+			if (ViOpt.ClickableURLs)
+				UnderlineLinks(Y, LineLinks[I]);
 
 			if (StrLen > LeftPos + Width && ViOpt.ShowArrows) {
 				GotoXY(XX2, Y);
@@ -909,6 +950,189 @@ size_t Viewer::SkipZeroWidthSubsequence(const wchar_t *buf, size_t index, size_t
 	return index;
 }
 
+namespace
+{
+constexpr size_t MaxLinkWrapChars = MAX_VIEWLINE * 2;
+constexpr size_t MaxLinkWrapLines = 8;
+}
+
+void Viewer::UpdateWrapFlags()
+{
+	const int lineCount = std::max(0, Y2 - Y1 + 1);
+	for (int i = 0; i < lineCount; ++i) {
+		auto &line = Strings[i];
+		line.ContinuesFromPrev = (i > 0) ? Strings[i - 1].WrapsToNext : false;
+	}
+}
+
+void Viewer::CollectVisibleLinks()
+{
+	for (auto& l : LineLinks)
+		l.clear();
+
+	const int previousFocusId = FocusedLinkId;
+	PageLinks.clear();
+
+	if (VM.Hex || LineLinks.empty()) {
+		FocusedLinkId = -1;
+		return;
+	}
+
+	struct VisibleChar {
+		int line;
+		int cellStart;
+		int cellEnd;
+	};
+
+	const int lineCount = static_cast<int>(LineLinks.size());
+	std::vector<bool> processed(lineCount, false);
+
+	for (int base = 0; base < lineCount; ++base) {
+		if (processed[base])
+			continue;
+
+		std::wstring visible;
+		std::vector<VisibleChar> map;
+		visible.reserve(MAX_VIEWLINE);
+		map.reserve(MAX_VIEWLINE);
+
+		int line = base;
+		size_t wrapped = 0;
+
+		while (line < lineCount &&
+		       wrapped < MaxLinkWrapLines &&
+		       visible.size() < MaxLinkWrapChars) {
+
+			processed[line] = true;
+
+			const wchar_t* chars = Strings[line].Chars();
+			const size_t len = wcslen(chars);
+			int cellPos = 0;
+
+			for (size_t i = 0; i < len && visible.size() < MaxLinkWrapChars; ) {
+				size_t next = LinkHighlighter::SkipVisibleControlSequence(chars, len, i);
+				if (next != i) {
+					i = next;
+					continue;
+				}
+
+				wchar_t ch = chars[i++];
+				int width =
+					CharClasses::IsFullWidth(ch) ? 2 :
+					CharClasses::IsXxxfix(ch)    ? 0 : 1;
+
+				visible.push_back(ch);
+				map.push_back({ line, cellPos, cellPos + width });
+				cellPos += width;
+			}
+
+			++wrapped;
+			if (!Strings[line].WrapsToNext)
+				break;
+
+			++line;
+		}
+
+		if (visible.empty())
+			continue;
+
+		std::vector<LinkHighlighter::LinkRange> ranges;
+		LinkHighlighter::DetectLinks(visible.c_str(), visible.size(), ranges);
+		if (ranges.empty())
+			continue;
+
+		for (const auto& r : ranges) {
+			const size_t start = static_cast<size_t>(std::max(0, r.startChar));
+			const size_t end   = start + static_cast<size_t>(std::max(0, r.lengthChars));
+
+			if (start >= end || end > map.size())
+				continue;
+
+			std::wstring link = visible.substr(start, end - start);
+			if (link.empty())
+				continue;
+
+			const int linkId = static_cast<int>(PageLinks.size());
+			PageLinks.push_back(std::move(link));
+
+			for (size_t i = start; i < end; ) {
+				const auto& c = map[i];
+				int cellStart = c.cellStart;
+				int cellEnd   = c.cellEnd;
+				const int ln  = c.line;
+
+				size_t j = i + 1;
+				while (j < end && map[j].line == ln) {
+					cellEnd = std::max(cellEnd, map[j].cellEnd);
+					++j;
+				}
+
+				if (cellEnd > cellStart)
+					LineLinks[ln].push_back({ cellStart, cellEnd, linkId });
+
+				i = j;
+			}
+		}
+	}
+
+	if (PageLinks.empty()) {
+		FocusedLinkId = -1;
+		return;
+	}
+
+	if (previousFocusId >= 0)
+		FocusedLinkId = std::min(previousFocusId,
+			static_cast<int>(PageLinks.size()) - 1);
+	else
+		FocusedLinkId = -1;
+}
+
+bool Viewer::SetFocusedLink(int linkId)
+{
+	if (linkId < 0 || linkId >= static_cast<int>(PageLinks.size()))
+		return false;
+
+	if (FocusedLinkId == linkId)
+		return false;
+
+	FocusedLinkId = linkId;
+	return true;
+}
+
+bool Viewer::FocusNextLink(bool forward)
+{
+	if (PageLinks.empty())
+		return false;
+
+	const int total = static_cast<int>(PageLinks.size());
+	int current = FocusedLinkId;
+
+	if (current < 0 || current >= total)
+		current = forward ? -1 : 0;
+
+	if (forward)
+		current = (current + 1) % total;
+	else
+		current = (current - 1 + total) % total;
+
+	return SetFocusedLink(current);
+}
+
+bool Viewer::LaunchLinkById(int linkId)
+{
+	if (linkId < 0 || linkId >= static_cast<int>(PageLinks.size()))
+		return false;
+
+	const auto &text = PageLinks[linkId];
+	if (text.empty())
+		return false;
+
+	std::wstring cleaned = LinkHighlighter::StripVisibleControlSequences(text.c_str(), text.size());
+	if (cleaned.empty())
+		return false;
+
+	return LinkHighlighter::Launch(cleaned.c_str(), cleaned.size());
+}
 
 void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 {
@@ -916,6 +1140,8 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 	int64_t OutPtr, visual_length;
 	bool bSelStartFound = false, bSelEndFound = false;
 	rString.bSelection = false;
+	rString.WrapsToNext = false;
+	rString.ContinuesFromPrev = false;
 	AdjustWidth();
 	OutPtr = visual_length = 0;
 	rString.SetChar(0, 0);
@@ -987,6 +1213,7 @@ void Viewer::ReadString(ViewerString &rString, int MaxSize, int StrSize)
 					$ 11.07.2000 tran
 					+ warp are now WORD-WRAP
 				*/
+				rString.WrapsToNext = true;
 				int64_t SavePos = vtell();
 				WCHAR TmpChar = 0;
 
@@ -1734,6 +1961,29 @@ int Viewer::ProcessKey(FarKey Key)
 			//			LastSelPos=FilePos;
 			return TRUE;
 		}
+		case KEY_TAB:
+		case KEY_NUMPAD5: {
+			if (!VM.Hex && ViOpt.ClickableURLs) {
+				if (FocusNextLink(true))
+					Show();
+				return TRUE;
+			}
+			break;
+		}
+		case KEY_SHIFTTAB: {
+			if (!VM.Hex && ViOpt.ClickableURLs) {
+				if (FocusNextLink(false))
+					Show();
+				return TRUE;
+			}
+			break;
+		}
+		case KEY_ENTER:
+		case KEY_NUMENTER: {
+			if (!VM.Hex && ViOpt.ClickableURLs && FocusedLinkId >= 0 && LaunchLinkById(FocusedLinkId))
+				return TRUE;
+			break;
+		}
 		case KEY_CTRLLEFT:
 		case KEY_CTRLNUMPAD4: {
 			if (ViewFile.Opened()) {
@@ -1930,6 +2180,15 @@ int Viewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			&& (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0) {
 		WINPORT(BeginConsoleAdhocQuickEdit)();
 		return TRUE;
+	}
+
+	if (ViOpt.ClickableURLs && ((MouseEvent->dwEventFlags == 0) || (MouseEvent->dwEventFlags == DOUBLE_CLICK))
+			&& (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+			&& (MouseEvent->dwControlKeyState
+							& (SHIFT_PRESSED | LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
+					== 0) {
+		if (HandleLinkClick(MouseX, MouseY))
+			return TRUE;
 	}
 
 	/*
@@ -3336,6 +3595,99 @@ void Viewer::SelectText(const int64_t &MatchPos, const int64_t &SearchLength, co
 		Show();
 		AdjustSelPosition = FALSE;
 	}
+}
+
+
+bool Viewer::HandleLinkClick(int mouseX, int mouseY)
+{
+	if (VM.Hex || LineLinks.empty())
+		return false;
+
+	if (mouseY < Y1 || mouseY > Y2 || mouseX < X1 || mouseX > XX2)
+		return false;
+
+	const int line = mouseY - Y1;
+	if (line < 0 || line >= static_cast<int>(LineLinks.size()))
+		return false;
+
+	const auto& links = LineLinks[line];
+	if (links.empty())
+		return false;
+
+	const int cellPos =
+		static_cast<int>(LeftPos) + (mouseX - X1);
+
+	if (cellPos < static_cast<int>(LeftPos) ||
+	    cellPos >= static_cast<int>(LeftPos) + Width)
+		return false;
+
+	for (const auto& info : links) {
+		if (cellPos < info.cellStart || cellPos >= info.cellEnd)
+			continue;
+
+		if (info.linkId < 0)
+			return false;
+
+		const bool focusChanged = SetFocusedLink(info.linkId);
+		const bool launched     = LaunchLinkById(info.linkId);
+
+		if (focusChanged)
+			Show();
+
+		return launched;
+	}
+
+	return false;
+}
+
+void Viewer::UnderlineLinks(int screenY, const std::vector<VisibleLinkInfo> &storage)
+{
+	if (storage.empty())
+		return;
+
+	for (const auto &info : storage) {
+		if (info.cellStart < info.cellEnd)
+			ApplyUnderlineSegment(info.cellStart, info.cellEnd, screenY,
+					FocusedLinkId >= 0 && FocusedLinkId == info.linkId);
+	}
+}
+
+void Viewer::ApplyUnderlineSegment(int segmentStart, int segmentEnd, int screenY, bool focused)
+{
+	if (segmentStart >= segmentEnd)
+		return;
+
+	int visibleStart = std::max(segmentStart, static_cast<int>(LeftPos));
+	int visibleEnd = std::min(segmentEnd, static_cast<int>(LeftPos + Width));
+
+	if (visibleEnd <= visibleStart)
+		return;
+
+	int startX = X1 + (visibleStart - static_cast<int>(LeftPos));
+	int endX = startX + (visibleEnd - visibleStart) - 1;
+
+	startX = std::clamp(startX, X1, XX2);
+	endX = std::clamp(endX, X1, XX2);
+
+	if (startX > endX)
+		return;
+
+	const int segmentLength = endX - startX + 1;
+	std::vector<CHAR_INFO> buffer(segmentLength);
+	GetText(startX, screenY, endX, screenY, buffer.data(), segmentLength * (int)sizeof(CHAR_INFO));
+
+	bool changed = false;
+
+	for (auto &cell : buffer) {
+		DWORD64 newAttr = LinkHighlighter::ApplyLinkColor(cell.Attributes | COMMON_LVB_UNDERSCORE, focused);
+		if (newAttr != cell.Attributes) {
+			cell.Attributes = newAttr;
+			changed = true;
+		}
+	}
+
+	if (changed)
+		PutText(startX, screenY, endX, screenY, buffer.data());
 }
 
 int Viewer::ViewerControl(int Command, void *Param)

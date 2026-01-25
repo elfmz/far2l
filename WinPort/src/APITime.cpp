@@ -188,11 +188,13 @@ static int LocalMinusUTC()
 	unsigned long long gt_secs = ((gt.tm_yday * 24 + gt.tm_hour) * 60 + gt.tm_min) * 60 + gt.tm_sec;
 	unsigned long long lt_secs = ((lt.tm_yday * 24 + lt.tm_hour) * 60 + lt.tm_min) * 60 + lt.tm_sec;
 	if (gt.tm_year > lt.tm_year) {
-		gt_secs+= 366 * 24 * 60 * 60;
+			int days = IsLeapYear(lt.tm_year + 1900) ? 366 : 365;
+			gt_secs+= days * 24 * 60 * 60;
 
-	} else if (gt.tm_year < lt.tm_year) {
-		lt_secs+= 366 * 24 * 60 * 60;
-	}
+		} else if (gt.tm_year < lt.tm_year) {
+			int days = IsLeapYear(gt.tm_year + 1900) ? 366 : 365;
+			lt_secs+= days * 24 * 60 * 60;
+		}
 
 	int bias = (int)(long long)(lt_secs - gt_secs);
 

@@ -88,7 +88,7 @@ static void Help(void)
 {
 	static const DialogTemplateItem DialogTemplate[11] = {
 		{DI_TEXT,   2, 2,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("FAR Incremental Search plugin")},
-		{DI_TEXT,   2, 3,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Version 2.1")},
+		{DI_TEXT,   2, 3,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("Version 2.3")},
 		{DI_TEXT,   2, 4,  FALSE, DIF_CENTERGROUP | DIF_BOXCOLOR | DIF_SEPARATOR, 0},
 		{DI_TEXT,   2, 5,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("copyright (c) 1999-2019, Stanislav V. Mekhanoshin")},
 		{DI_TEXT,   2, 6,  FALSE, DIF_CENTERGROUP, (INT_PTR) _T("This program comes with ABSOLUTELY NO WARRANTY")},
@@ -138,7 +138,7 @@ static BOOL FindString(BOOL bNext, BOOL bForward)
 
 	pos = utoar(ei.TotalLines, sTitle, sizeof(sTitle) / sizeof(sTitle[0]));
 	nLineChars = sizeof(sTitle) / sizeof(sTitle[0]) - pos - 1;
-	sTitle[nLineChars] = '/';
+	sTitle[nLineChars] = _T('/');
 	memmovel(&sTitle[nLineChars + 1], &sTitle[pos], (nLineChars + 1) * sizeof(sTitle[0]));
 
 	nStartLine = ei.CurLine;
@@ -379,13 +379,13 @@ void SearchLoopEditor(void)
 				case KC_CHAR:
 					if (nLen == MAX_STR) {
 #if defined(WINPORT_DIRECT)
-						putwchar('\007');
+						putwchar(L'\007');
 #else
 						MessageBeep((UINT)-1);
 #endif
 						break;
 					}
-					sStr[nLen++] = aEvents[0].AsciiChar;
+					sStr[nLen++] = aEvents[0].KbdChar;
 					ShowTitle(OPEN_EDITOR);
 					if (!FindString(FALSE, !bReverse)) {
 						nLen--;
@@ -479,7 +479,7 @@ void SearchLoopViewer(void)
 						MessageBeep((UINT)-1);
 						break;
 					}
-					sStr[nLen++] = aEvents[0].AsciiChar;
+					sStr[nLen++] = aEvents[0].KbdChar;
 					ShowTitle();
 					if (!FindString(FALSE, !bReverse)) {
 						nLen--;

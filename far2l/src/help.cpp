@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "exitcode.hpp"
 #include "filestr.hpp"
 #include "stddlg.hpp"
+#include "farversion.h"
 
 // Стек возврата
 class CallBackStack
@@ -107,6 +108,18 @@ static const wchar_t *FoundContents = L"__FoundContents__";
 static const wchar_t *PluginContents = L"__PluginContents__";
 static const wchar_t *HelpOnHelpTopic = L":Help";
 static const wchar_t *HelpContents = L"Contents";
+
+void SubstituteRuntimePlaceholders(FARString& line)
+{
+	if (!line.Contains(L'%'))
+		return;
+
+	static const FARString build(MB2Wide(FAR_BUILD).c_str());
+	static const FARString platform(MB2Wide(FAR_PLATFORM).c_str());
+
+	ReplaceStrings(line, L"%FAR_BUILD%", build.CPtr(), -1);
+	ReplaceStrings(line, L"%FAR_PLATFORM%", platform.CPtr(), -1);
+}
 
 void Help::Present(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 {
@@ -571,6 +584,7 @@ void Help::AddLine(const wchar_t *Line)
 	}
 
 	strLine+= Line;
+	SubstituteRuntimePlaceholders(strLine);
 
 	{
 		HelpRecord AddRecord(strLine);

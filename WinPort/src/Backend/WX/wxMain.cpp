@@ -1729,6 +1729,12 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 #endif
 
+		if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
+			// use control keys state from prev keydown event
+			wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
+			ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
+		}
+
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 

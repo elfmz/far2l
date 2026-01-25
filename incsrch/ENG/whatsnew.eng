@@ -1,4 +1,10 @@
-Версия 2.1
+Version 2.3
+  + fixed unicode and national symbols search on far2l (unicode version)
+
+Version 2.2
+  - internal only version, intenstionally skipped
+
+Version 2.1
   + far2l (FAR for Linux) support
 
 Version 1.21

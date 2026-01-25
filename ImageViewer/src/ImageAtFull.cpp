@@ -240,6 +240,15 @@ static LONG_PTR WINAPI ImageDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 			break;
 		case DN_ENTERIDLE:
 		{
+
+			// WezTerm erases the kitty protocol image if text (even spaces) is displayed over it.
+			// As a result, when opening ImageViewer, the background erases the image.
+			// DN_ENTERIDLE is the first event that ensures that the dialog has been fully rendered.
+			// Calling ForceShow() at this point draws the image
+			// over the now-definitely-drawn background, and it remains visible.
+			//
+			// See #3201 and #3209 for details.
+			
 			ImageViewAtFull *iv = (ImageViewAtFull *)g_far.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0);
 			if (iv && iv->_first_draw) {
 				iv->_first_draw = false;

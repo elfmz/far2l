@@ -149,6 +149,7 @@ protected:
 	int NumericSort;
 	int CaseSensitiveSort;
 	int DirectoriesFirst;
+	int ExecutablesFirst;
 	int ModalMode;
 	int PluginCommand;
 	FARString strPluginParam;
@@ -271,6 +272,10 @@ public:
 	int GetDirectoriesFirst() { return DirectoriesFirst; }
 	void SetDirectoriesFirst(int Mode) { DirectoriesFirst = Mode; }
 	virtual void ChangeDirectoriesFirst(int Mode) { SetDirectoriesFirst(Mode); }
+	virtual int GetPrevExecutablesFirst() { return ExecutablesFirst; };
+	int GetExecutablesFirst() { return ExecutablesFirst; }
+	void SetExecutablesFirst(int Mode) { ExecutablesFirst = Mode; }
+	virtual void ChangeExecutablesFirst(int Mode) { SetExecutablesFirst(Mode); }
 	virtual void SetSortMode(int SortMode) { Panel::SortMode = SortMode; };
 	int GetSortOrder() { return (SortOrder); };
 	void SetSortOrder(int SortOrder) { Panel::SortOrder = SortOrder; };

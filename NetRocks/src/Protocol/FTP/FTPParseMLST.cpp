@@ -74,7 +74,7 @@ static void ParseTime(timespec &ts, const char *str, size_t len)
 		}
 	}
 
-	ts.tv_sec = mktime(&t);
+	ts.tv_sec = timegm(&t);
 
 	if (len > 15 && str[14] == '.') {
 		size_t deci_len = std::min(len - 15, (size_t)9);

@@ -114,6 +114,8 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	} _resize_pending{RP_NONE};
 	DWORD _qedit_unfreeze_start_ticks{0};
 	DWORD _mouse_state{0}, _mouse_qedit_start_ticks{0}, _mouse_qedit_moved{0};
+	int _mouse_wheel_accum_v{0};
+	int _mouse_wheel_accum_h{0};
 	COORD _mouse_qedit_start{}, _mouse_qedit_last{};
 	wchar_t _stolen_key{0};
 

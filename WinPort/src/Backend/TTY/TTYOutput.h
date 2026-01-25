@@ -89,7 +89,7 @@ public:
 	void RequestCellSize();
 	void RequestStatus();
 
-	unsigned int SendKittyImage(const std::string &str_id, const TTYConsoleImage &img);
+	unsigned int SendKittyImage(const std::string &str_id, const TTYConsoleImage &img, char action = 'T');
 	unsigned int DeleteKittyImage(const std::string &str_id);
 
 	void CheckiTerm2Hack();

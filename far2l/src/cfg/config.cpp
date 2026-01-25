@@ -1100,6 +1100,7 @@ void ViewerConfig(ViewerOptions &ViOpt, bool Local)
 	Builder.LinkFlags(SavePos, SaveShortPos, DIF_DISABLE);
 	Builder.AddCheckbox(Msg::ViewConfigScrollbar, &ViOpt.ShowScrollbar);
 	Builder.AddCheckbox(Msg::ViewShowTitleBar, &ViOpt.ShowTitleBar);
+	Builder.AddCheckbox(Msg::ViewShowMenuBar, &ViOpt.ShowMenuBar);
 	Builder.AddCheckbox(Msg::ViewClickableURLs, &ViOpt.ClickableURLs);
 	Builder.EndColumns();
 

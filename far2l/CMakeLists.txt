@@ -33,6 +33,7 @@ src/filepanels.cpp
 src/filestr.cpp
 src/filetype.cpp
 src/fileview.cpp
+src/fileview2options.cpp
 src/findfile.cpp
 src/FindPattern.cpp
 src/flink.cpp

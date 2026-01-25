@@ -453,7 +453,7 @@ void Editor::ShowEditor(int CurLineOnly)
 
 		// Centralized correction logic to prevent scrolling past the end of the file.
 		int ScreenHeight = Y2 - Y1 + 1;
-		int LinesBelow = GetVisualLinesBelow(m_TopScreenLogicalLine, m_TopScreenVisualLine);
+		int LinesBelow = GetVisualLinesBelow(m_TopScreenLogicalLine, m_TopScreenVisualLine, ScreenHeight);
 
 		if (LinesBelow < ScreenHeight)
 		{
@@ -480,9 +480,6 @@ void Editor::ShowEditor(int CurLineOnly)
 
 	if (m_bWordWrap)
 	{
-		int render_width = X2 - X1;
-		if (EdOpt.ShowScrollBar)
-			render_width--;
 		CurLine->SetLeftPos(0);
 		MaxRightPos = CurLine->GetCellCurPos();
 
@@ -533,11 +530,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		int LineNumWidth = CalculateLineNumberWidth();
 		int LineNumX1 = X1 + LineNumWidth;
 
-		// Calculate line number for first visible line
-		int CurrentLineNum = 1;
-		for (Edit *CountPtr = TopList; CountPtr && CountPtr != m_TopScreenLogicalLine; CountPtr = CountPtr->m_next) {
-			CurrentLineNum++;
-		}
+		int CurrentLineNum = GetTopScreenLineNumber();
 
 		for (int Y = Y1; Y <= Y2; Y++)
 		{
@@ -740,7 +733,6 @@ void Editor::ShowEditor(int CurLineOnly)
 				ShowString.GetRealSelection(final_sel_start, final_sel_end);
 
 				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
-
 				{
 					int CurPos = CurLine->GetCurPos();
 					int VisualCurPos = CurPos - VisualLineStart;
@@ -799,8 +791,15 @@ void Editor::ShowEditor(int CurLineOnly)
 			}
 		}
 
+		// transfer insert/overtype status to real string
+		//  fix for https://github.com/elfmz/far2l/issues/3196
+		CurLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+		if (CurLogicalLine)
+			CurLogicalLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+
 		if (HostFileEditor)
 			HostFileEditor->ShowStatus();
+
 		return;
 	}
 
@@ -902,11 +901,7 @@ void Editor::ShowEditor(int CurLineOnly)
 	int LineNumWidth = CalculateLineNumberWidth();
 	int LineNumX1 = X1 + LineNumWidth;
 
-	// Calculate line number for first visible line (non-word-wrap mode)
-	int CurrentLineNum = 1;
-	for (Edit *CountPtr = TopList; CountPtr && CountPtr != TopScreen; CountPtr = CountPtr->m_next) {
-		CurrentLineNum++;
-	}
+	int CurrentLineNum = GetTopScreenLineNumber();
 
 	if (!CurLineOnly) {
 		LeftPos = CurLine->GetLeftPos();
@@ -3789,13 +3784,57 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			if (TargetLine)
 			{
+				const int screenHeight = Y2 - Y1;
+				auto visibleOffset = [&](Edit* line) -> int
+				{
+					int offset = 0;
+					for (Edit* ptr = TopScreen; ptr && offset <= screenHeight; ptr = ptr->m_next, ++offset)
+					{
+						if (ptr == line)
+							return offset;
+					}
+					return -1;
+				};
+
+				int targetOffset = visibleOffset(TargetLine);
+				int currentOffset = visibleOffset(CurLine);
+
+				if (targetOffset != -1 && currentOffset != -1)
+				{
+					int delta = targetOffset - currentOffset;
+					while (delta > 0)
+					{
+						Down();
+						--delta;
+					}
+					while (delta < 0)
+					{
+						Up();
+						++delta;
+					}
+				}
+					else
+					{
+						const int topLineNumber = GetTopScreenLineNumber();
+						Edit* topLinePtr = nullptr;
+						if (m_bWordWrap)
+							topLinePtr = m_TopScreenLogicalLine ? m_TopScreenLogicalLine : TopScreen;
+						else
+							topLinePtr = TopScreen;
+
+						if (!topLinePtr)
+							topLinePtr = TopList ? TopList : TargetLine;
+
+						CurLine = TargetLine;
+						int offsetFromTop = (topLinePtr && CurLine) ? CalcDistance(topLinePtr, CurLine, -1) : 0;
+						NumLine = topLineNumber + offsetFromTop;
+					}
+
 				// Снимаем любое предыдущее выделение при новом клике.
 				// UnmarkBlock() должен вызываться только при первом клике, а не при каждом движении
 				if ((MouseEvent->dwEventFlags & MOUSE_MOVED) == 0) {
 					UnmarkBlockAndShowIt();
 				}
-				CurLine = TargetLine;
-				NumLine = CalcDistance(TopList, CurLine, -1);
 				CurLine->SetCurPos(TargetPos);
 				if (MouseSelStartingLine == -1) {
 					MouseSelStartingLine = NumLine;
@@ -4000,19 +4039,31 @@ int Editor::GetTopVisualLine()
 	return top_pos;
 }
 
-int Editor::GetVisualLinesBelow(Edit* startLine, int startVisual)
+int Editor::GetVisualLinesBelow(Edit* startLine, int startVisual, int limit)
 {
-	if (!startLine) return 0;
-	int count = 0;
-	count += startLine->GetVisualLineCount() - startVisual;
+	if (!startLine)
+		return 0;
 
-	Edit* line = startLine->m_next;
-	while (line)
-	{
+	int count = startLine->GetVisualLineCount() - startVisual;
+	for (Edit* line = startLine->m_next; line && count < limit; line = line->m_next)
 		count += line->GetVisualLineCount();
-		line = line->m_next;
-	}
-	return count;
+
+	return std::min(count, limit);
+}
+
+int Editor::GetTopScreenLineNumber()
+{
+	if (!CurLine)
+		return 1;
+
+	Edit* topLinePtr = m_bWordWrap 
+						? (m_TopScreenLogicalLine ? m_TopScreenLogicalLine : TopScreen) 
+						: TopScreen;
+	if (!topLinePtr)
+		topLinePtr = TopList ? TopList : CurLine;
+
+	int relative = (CurLine == topLinePtr) ? 0 : CalcDistance(topLinePtr, CurLine, -1);
+	return std::max(0, NumLine - relative) + 1;
 }
 
 void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine)
@@ -4549,10 +4600,11 @@ void Editor::Up()
 
 		UpdateCursorPosition(horizontal_cell_pos);
 
+		const int topLineIndex = std::max(0, GetTopScreenLineNumber() - 1);
 		bool cursor_on_screen = false;
-		if (NumLine > CalcDistance(TopList, m_TopScreenLogicalLine, -1)) {
+		if (NumLine > topLineIndex) {
 			cursor_on_screen = true;
-		} else if (NumLine == CalcDistance(TopList, m_TopScreenLogicalLine, -1)) {
+		} else if (NumLine == topLineIndex) {
 			if (m_CurVisualLineInLogicalLine >= m_TopScreenVisualLine) {
 				cursor_on_screen = true;
 			}
@@ -6546,9 +6598,8 @@ int Editor::EditorControl(int Command, void *Param)
 				Info->CurLine = NumLine;
 				Info->CurPos = CurLine->GetCurPos();
 				Info->CurTabPos = CurLine->GetCellCurPos();
-				Info->TopScreenLine = m_bWordWrap
-					? CalcDistance(TopList, m_TopScreenLogicalLine, -1)
-					: NumLine - CalcDistance(TopScreen, CurLine, -1);
+				int topLineNumber = GetTopScreenLineNumber();
+				Info->TopScreenLine = topLineNumber > 0 ? topLineNumber - 1 : 0;
 				Info->LeftPos = CurLine->GetLeftPos();
 				Info->Overtype = Flags.Check(FEDITOR_OVERTYPE);
 				Info->BlockType = VBlockStart ? BTYPE_COLUMN : BlockStart ? BTYPE_STREAM : BTYPE_NONE;
@@ -7581,13 +7632,11 @@ void Editor::SetWordWrap(int NewMode)
 		}
 
 		Edit *CurPtr = TopList;
-		int line_idx = 0;
 		while (CurPtr)
 		{
 			CurPtr->SetWordWrap(m_bWordWrap);
 			CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
 			CurPtr = CurPtr->m_next;
-			line_idx++;
 		}
 	}
 }

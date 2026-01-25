@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#Програма управління файлами та архівами#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
  ~Індекс файлу допомоги~@Index@
  ~Як користуватися допомогою~@Help@
@@ -43,6 +43,7 @@ $^#Програма управління файлами та архівами#
  ~Асоціації файлів~@FileAssoc@
  ~Команди операційної системи~@OSCommands@
  ~Special commands~@SpecCmd@
+ ~Ways to run programs~@WaysToRunPrograms@
  ~Закладки~@Bookmarks@
  ~Меню фільтрів~@FiltersMenu@
  ~Переключення між екранами~@ScrSwitch@
@@ -247,7 +248,6 @@ $ #Клавіатурні команди#
 
 ~Інші команди~@MiscCmd@
 
-~Special commands~@SpecCmd@
 
 @MenuCmd
 $ #Menu control commands#
@@ -528,7 +528,8 @@ $ #Командний рядок#
 
 6. ^<wrap>Про кнопкосполучення та інші особливості вбудованого емулятора терміналу ~читайте тут~@Terminal@
 
-    See also ~Special commands~@SpecCmd@.
+    See also ~Special commands~@SpecCmd@
+             ~Ways to run programs~@WaysToRunPrograms@
 
 @FuncCmd
 $ #Команда управління панелями - сервісні команди#
@@ -2164,6 +2165,7 @@ $ #Меню користувача#
     ~Special commands~@SpecCmd@.
     список ~макроклавіш~@KeyMacroUserMenuList@, доступних у меню користувача.
     Common ~menu~@MenuCmd@ keyboard commands.
+    ~Ways to run programs~@WaysToRunPrograms@.
 
 @FileAssoc
 $ #Асоціації файлів#
@@ -2196,6 +2198,7 @@ FAR2L намагається використовувати асоціації W
 
     See also: ~Special commands~@SpecCmd@.
               common ~menu~@MenuCmd@ keyboard commands.
+              ~Ways to run programs~@WaysToRunPrograms@.
 
 @FileAssocModify
 $ #Налаштування асоціації файлів#
@@ -4349,6 +4352,7 @@ $ # Застосувати команду
 
  See also: ~Special commands~@SpecCmd@
            ~Команда операційної системи~@OSCommands@
+           ~Ways to run programs~@WaysToRunPrograms@
 
 
 @OSCommands
@@ -5052,3 +5056,24 @@ $ #Макроси: Інші області#
 @Index
 $ #Індекс файлу допомоги#
 <%INDEX%>
+
+
+@WaysToRunPrograms
+$ #Ways to run programs without blocking far2l#
+  When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
+
+  Launching programs in an external terminal from the far2l command line:
+  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #$FARHOME/open.sh exec program#: to run in an external terminal using Enter, exec is required as the first parameter for open.sh;
+  - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
+
+  Running programs from far2l:
+  - #program params &#: just add at the end & — will close the program after closing far2l;
+  - #nohup program params &#: the launch is performed by the nohup program. A nohup.out file is created in the current directory with the program output. You can delete this file later. Such a launch will keep the program running after completing far2l;
+  - #nohup program params >/dev/null 2>&1 &#: will leave the program running after completing far2l without unnecessary output;
+  - #setsid program params >/dev/null 2>/dev/null#: when used in the examples above & some programs, when closed, output information about their termination to the current terminal - using setsid avoids such clogging of the output of the current program;
+
+  See also:
+   ~Special commands~@SpecCmd@
+   ~File Masks~@FileMasks@
+   ~Metasymbols~@MetaSymbols@

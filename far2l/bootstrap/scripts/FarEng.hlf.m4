@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#File and archive manager#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
    ~FAR2L features - Getting Started~@Far2lGettingStarted@
 
@@ -45,6 +45,7 @@ $^#File and archive manager#
    ~File associations~@FileAssoc@
    ~Operating system commands~@OSCommands@
    ~Special commands~@SpecCmd@
+   ~Ways to run programs~@WaysToRunPrograms@
    ~Bookmarks~@Bookmarks@
    ~Filters menu~@FiltersMenu@
    ~Screens switching~@ScrSwitch@
@@ -135,7 +136,7 @@ $ # FAR2L features - Getting Started#
     FAR2L has base UI Backends (see details in ~UI backends~@UIBackends@):
         - #GUI#: uses wxWidgets, works in graphics mode, #ideal UX#
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
-        - #TTY|Xi#: works in terminal mode, requires a dependency on pair X11 libraries
+        - #TTY|Xi#: works in terminal mode, requires a couple of X11 libraries
 (to access clipboard and to get state of all keyboard modifiers), #almost perfect UX#;
         - #TTY|X#: works in terminal mode, uses X11 to access clipboard and to get state of keyboard modifiers.
 It provides better UX than plain TTY, but still some key combinations may be inaccessible;
@@ -189,7 +190,7 @@ To work with these keys in FAR2L, you need to release keyboard shortcuts in the 
  #FAR2L command line shell & bash#
     FAR2L internal command line work fully only via #bash#.
     You can change shell by Menu(#F9#)->Options->~Command line settings~@CmdlineSettings@->#Use shell# but command line will work with significant restrictions/bugs especially with native shell commands.
-    If you system has not #bash# recommend installing it and using only bash in FAR2L.
+    If you system does not have #bash# recommend installing it and using only bash in FAR2L.
     If your system's default shell is not bash, you may be convenient to set your environments variables, aliases etc. in bash startup files also.
 
 
@@ -408,7 +409,6 @@ $ #Keyboard reference#
 
  ~Miscellaneous~@MiscCmd@
 
- ~Special commands~@SpecCmd@
 
 @MenuCmd
 $ #Menu control commands#
@@ -684,6 +684,7 @@ dialog is enabled, the full name is used with ~symbolic links~@HardSymLink@ expa
   6. ^<wrap>About hotkeys and other tricks of built-in terminal emulator: ~read here~@Terminal@
 
     See also ~Special commands~@SpecCmd@.
+             ~Ways to run programs~@WaysToRunPrograms@.
 
 @FuncCmd
 $ #Panel control commands - service commands#
@@ -2282,6 +2283,8 @@ the main menu saved in the profile.
       ~Special commands~@SpecCmd@.
       The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
       Common ~menu~@MenuCmd@ keyboard commands.
+      ~Ways to run programs~@WaysToRunPrograms@.
+
 
 @FileAssoc
 $ #File associations #
@@ -2314,6 +2317,7 @@ is on, FAR2L tries to use OS association to execute this file type;
     See also:
       ~Special commands~@SpecCmd@.
       Common ~menu~@MenuCmd@ keyboard commands.
+      ~Ways to run programs~@WaysToRunPrograms@.
 
 
 @FileAssocModify
@@ -4376,8 +4380,10 @@ as in ~File associations~@FileAssoc@ should be used to denote the file name.
 at a time, and the command 'tar --remove-files -cvjf !.!.tar.bz2 !.!' will move all selected files
 into TAR/BZIP2 archives with the same names.
 
-    See also: ~Special commands~@SpecCmd@
-              ~Operating system commands~@OSCommands@
+    See also: ~Special commands~@SpecCmd@.
+              ~Operating system commands~@OSCommands@.
+              ~Ways to run programs~@WaysToRunPrograms@.
+
 
 @OSCommands
 $ #Operating system commands#
@@ -4787,6 +4793,9 @@ usually does as a reaction to this combination.
 
     Playing the macro will display the symbol '\2FP\-' in the upper left corner of the screen.
 
+    Note: To let you see the macro in the config file or in Macro Browser, you have an ability 
+    to make short description as you prefer.
+
 
 @KeyMacroDelete
 $ #Macro command: deleting a macro command#
@@ -4820,6 +4829,10 @@ desired options in the dialog:
    #Sequence:#
 
     Allows to edit the recorded key sequence.
+
+   #Description:#
+
+    Allows to specify user-defined brief description of the macro sequence.
 
    #Allow screen output while executing macro#
 
@@ -5076,3 +5089,24 @@ $ #Macros: Other areas#
 @Index
 $ #Index help file#
 <%INDEX%>
+
+
+@WaysToRunPrograms
+$ #Ways to run programs without blocking far2l#
+  When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
+
+  Launching programs in an external terminal from the far2l command line:
+  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #$FARHOME/open.sh exec program#: to run in an external terminal using Enter, exec is required as the first parameter for open.sh;
+  - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
+
+  Running programs from far2l:
+  - #program params &#: just add at the end & — will close the program after closing far2l;
+  - #nohup program params &#: the launch is performed by the nohup program. A nohup.out file is created in the current directory with the program output. You can delete this file later. Such a launch will keep the program running after completing far2l;
+  - #nohup program params >/dev/null 2>&1 &#: will leave the program running after completing far2l without unnecessary output;
+  - #setsid program params >/dev/null 2>/dev/null#: when used in the examples above & some programs, when closed, output information about their termination to the current terminal - using setsid avoids such clogging of the output of the current program;
+
+  See also:
+   ~Special commands~@SpecCmd@
+   ~File Masks~@FileMasks@
+   ~Metasymbols~@MetaSymbols@

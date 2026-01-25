@@ -1,0 +1,167 @@
+﻿.Language=English,English
+.PluginContents=ImageViewer
+
+@Contents
+$^#ImageViewer Plugin#
+$^#Copyright (C) 2025 Far People#
+$^#Using the Plugin#
+
+  ~Using the Plugin~@Contents@
+  ~Plugin Configuration~@settings@
+  ~Extra Commands~@ExtraCommands@
+
+  The plugin displays images, and video previews as a contact sheet (thumbnail grid). It is available via the following ~interface backends~@:UIBackends@:
+  1. #GUI# (far2l running in a separate graphical window).
+  2. Terminal modes with graphics support:
+     #TTY|F# (local or remote session inside another far2l-GUI),
+     #TTY|k# (terminals with full support for the kitty graphics protocol
+~https://sw.kovidgoyal.net/kitty/graphics-protocol~@https://sw.kovidgoyal.net/kitty/graphics-protocol@).
+
+  Required external packages:
+   - #ImageMagick# (#convert# command) - for image processing and conversion;
+   - #ffmpeg# (#ffmpeg# and #ffprobe# commands) - for creating video frame previews;
+   - any other utilities used in your ~custom commands~@ExtraCommands@.
+
+
+ #STARTING THE PLUGIN#
+  The plugin can be invoked in several ways:
+   - Via the ~Plugin Menu~@:PluginCommands@ (#F11#), with the cursor positioned on an image or video file.
+   - From the command line using the #img:# prefix (e.g., #img:/home/user/photo.jpg#).
+     Entering the prefix without a filename opens the current file under the cursor.
+   - Using standard shortcuts:
+      - #Enter# or #Ctrl+PgDn#;
+      - #F3# (overriding the ~Internal Viewer~@:Viewer@);
+      - #Ctrl+Q# (inside the ~Quick View~@:QViewPanel@ panel).
+     (requires activation in ~Settings~@settings@; triggers only for files matching the masks).
+
+
+ #KEYBOARD CONTROL and MOUSE USAGE#
+  When opening an image in the plugin's own window
+(not in the ~Quick View~@:QViewPanel@ panel),
+the following shortcuts are available.
+
+  #Exiting the Plugin#
+   Exit and save selection
+     changes to the file panel                #Enter#
+   Exit without changing selection            #Esc# or #F10#
+
+  #File Selection Management#
+   (selected files are marked with an asterisk #*# in the window title)
+   Select file                                #Space#
+   Unselect file                              #Backspace#
+   Invert file selection                      #Ins#
+
+   Selection management is available only when the plugin is launched from the file panel.
+   Selection commands are disabled when opening files via the img: prefix.
+
+  #File Navigation#
+  (if no files were selected upon opening, navigation includes all panel files; otherwise, navigation is restricted to selected files + the initial file)
+   Previous file                              #PgUp# (not NumPad)
+   Next file                                  #PgDn# (not NumPad)
+   First open file                            #Home# (not NumPad)
+
+  #Zooming# and #Transformations#
+   Zoom In                                    #+# or #Mouse Wheel Up# (smaller step with #Shift#)
+   Zoom Out                                   #-# or #Mouse Wheel Down# (smaller step with #Shift#)
+   Zoom 100%                                  #/# or #Z#
+   Reset to initial view                      #=# or #Clear# (#NumPad 5#)
+    (resets rotation + fits to window if the
+    source image is larger, otherwise 100%)
+   Fit to window                              #Del# or #Q#
+   Fit to window if source image is           #*# or #A#
+    larger, otherwise 100%
+   Rotate 90° Clockwise                       #Tab# or #Right Mouse Button#
+   Rotate 90° Counter-Clockwise               #Shift+Tab# or #Shift+Right Mouse Button# or #Ctrl+Right Mouse Button#
+   Flip Horizontally                          #F7# or #H#
+   Flip Vertically                            #F8# or #V#
+
+  #Panning#
+  (available only if the image is larger than the window; hold #Shift# for precision)
+   Pan Horizontally                           #Left#, #Right#
+   Pan Vertically                             #Up#, #Down#
+   Pan Diagonally                             #Home#, #End#, #PgUp#, #PgDn# (NumPad)
+   Drag Image                                 #Left Mouse Button#
+
+  #Other#
+   ~Extra Commands~@ExtraCommands@                             #F4#
+   Toggle Windowed / Fullscreen               #F5# or #F#
+    (switching also performs #=#)
+   ~Plugin Configuration~@settings@                       #F9#
+
+
+ #HEADER INFORMATION#
+  Provides information on the currently opened image, split into three sections:
+
+  1. #View Status#.
+     Displays current transformations. Legend:
+      - #Mirror#: #🮛# (horizontal), #🮚# (vertical), #🮽# (both).
+      - #Rotation#: Angle in degrees (e.g., #90°#).
+      - #Scale#: Zoom percentage. The brackets tell you if the whole image is visible:
+          #[%]# — fits window,
+          #>%<# — larger than window (cropped, requires scrolling),
+          #<%># — smaller than window (fully visible, padded).
+      - #Pan Offset#: Shift from center in % (e.g., #+10:-5#).
+
+  2. #Filename#.
+     Name of the current file. An asterisk #*# indicates the file is selected in the file panel.
+
+  3. #Image Properties#.
+     Resolution and file size.
+     Example: #1920x1200, 452 KB#
+
+@settings
+$^#ImageViewer Plugin#
+$^#Copyright (C) 2025 Far People#
+$^#Plugin Configuration#
+
+  ~Plugin Configuration~@settings@
+  ~Using the Plugin~@Contents@
+  ~Extra Commands~@ExtraCommands@
+
+  The settings dialog, available via #F9# inside the plugin or in far2l via ~Plugins Configuration~@:PluginsConfig@ in the ~Options Menu~@:OptMenu@, allows customization of the plugin behavior.
+
+  Here you can define file masks for content treated as media by the plugin, enable image auto-rotation based on camera metadata,
+and set the plugin as the default handler for standard shortcuts: #Enter#, #Ctrl+PgDn#, #F3# (replacing the ~internal viewer~@:Viewer@),
+and #Ctrl+Q# (for displaying the image on the adjacent ~Quick View~@:QViewPanel@ panel). 
+  The ~Extra commands~@ExtraCommands@ button opens the processing scripts editor (also accessible via #F4# in viewer mode).
+
+  Configuration is stored in: #~~/.config/far2l/plugins/ImageViewer/config.ini#
+
+@ExtraCommands
+$^#ImageViewer Plugin#
+$^#Copyright (C) 2025 Far People#
+$^#Extra Commands#
+
+  ~Extra Commands~@ExtraCommands@
+  ~Using the Plugin~@Contents@
+  ~Plugin Configuration~@settings@
+
+  Custom commands allow for direct image processing while viewing. The command menu is invoked via #F4#.
+
+  By default, the following commands are available:
+   - #Normalize# - automatic brightness and contrast normalization;
+   - #White balance# - white balance correction;
+   - #Grayscale# - conversion to grayscale.
+
+  Command Management:
+   Execute selected command                   #Enter#
+   Edit existing command                      #F4#
+   Add new command                            #Ins#
+   Delete command                             #Del#
+
+  When editing a command, provide the following:
+   1. #Command Name# - the label displayed in the menu;
+   2. #Command Line# - the shell command to execute.
+
+  The following placeholders are available in the command line:
+   #{W}# - image width in pixels;
+   #{H}# - image height in pixels.
+
+  The command receives RGB image data via stdin and must return processed data via stdout in the same format (raw RGB, 8 bits per channel).
+
+  #Example:#
+   Name: #Sharpen#
+   Command: #convert -size {W}x{H} -depth 8 -sharpen 0x1 rgb:- rgb:-#
+
+  The image view will update immediately after execution.
+  Note: changes apply only to the current view; the source file remains unmodified.

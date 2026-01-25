@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <fcntl.h>
-#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
-# if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
+# if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 #  include <sys/param.h>
 #  include <sys/ucred.h>
 # endif
@@ -136,7 +136,11 @@ class ThreadedStatFS : Threaded
 			(*_mps)[_mpi].total = ((unsigned long long)s.f_blocks) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].avail = ((unsigned long long)s.f_bavail) * s.f_bsize; //f_frsize;
 			(*_mps)[_mpi].free_ = ((unsigned long long)s.f_bfree) * s.f_bsize; //f_frsize;
+#ifdef __NetBSD__
+			(*_mps)[_mpi].read_only = (s.f_flag & ST_RDONLY) != 0;
+#else
 			(*_mps)[_mpi].read_only = (s.f_flags & ST_RDONLY) != 0;
+#endif
 			(*_mps)[_mpi].bad = false;
 		}
 		return nullptr;
@@ -268,12 +272,20 @@ MountInfo::MountInfo(bool for_location_menu)
 		}
 	}
 
-#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__)
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 
+#ifdef __NetBSD__
+	int r = getvfsstat(nullptr, 0, MNT_NOWAIT);
+#else
 	int r = getfsstat(nullptr, 0, MNT_NOWAIT);
+#endif
 	if (r > 0) {
 		std::vector<struct statfs> buf(r * 2 + 2);
+#ifdef __NetBSD__
+		r = getvfsstat(buf.data(), buf.size() * sizeof(*buf.data()), MNT_NOWAIT);
+#else
 		r = getfsstat(buf.data(), buf.size() * sizeof(*buf.data()), MNT_NOWAIT);
+#endif
 		if (r > 0) {
 			buf.resize(r);
 			for (const auto &fs : buf) {

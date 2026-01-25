@@ -169,12 +169,13 @@ bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info
 		}
 
 		fact = line + 1;
+		if (fact != end && *fact == ' ') {
+			++fact;
+			break;
+		}
 	}
 
 	if (name) {
-		if (fact != end && *fact == ' ') {
-			++fact;
-		}
 		if (fact != end) {
 			name->assign(fact, end - fact);
 		} else {

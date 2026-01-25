@@ -497,7 +497,7 @@ MultilinePaste
 
 MultilinePasteWarn
 "Вставка многострочных команд сразу запустит их,\n обернув текущим содержанием командной строки."
-"Pasting multiline commands will immediately run them,\n wrapping with the current command line content."
+"Pasting multi-line commands will run them immediately,\n wrapping with the current command line content."
 "Vložení víceradkových příkazů je ihned spustí\n a obalí aktuálním obsahem příkazového řádku."
 "Das Einfügen mehrzeiliger Befehle führt sie sofort aus\n und umschließt sie mit dem aktuellen Inhalt der Befehlszeile."
 "A többsoros parancsok beillesztése azonnal lefut,\n a parancssor aktuális tartalmával körbevéve."
@@ -14295,7 +14295,7 @@ ErrorAlreadyRemebered
 
 ErrorNotLoggedOn
 "Пользователь не зарегистрирован в сети"
-"User has not logged on to the network"
+"User does not have logged on to the network"
 "Uživatel nebyl do sítě přihlášen"
 "Benutzer hat sich nicht am Netzwerk angemeldet"
 "A felhasználó nincs a hálózaton"
@@ -20660,6 +20660,17 @@ l:
 "Definir macro"
 "Завдання макрокоманди"
 "Задаць каманду макраса"
+
+DefineMacroDescription
+"Задать описание макроса"
+"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
+upd:"Macro description"
 
 DefineMacro
 "Нажмите желаемую клавишу"

@@ -625,6 +625,24 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 				Console.ReadInput(pinp);
 				continue;
 			}
+			if (rec->EventType == KEY_EVENT && BracketedPasteMode) {
+				Console.ReadInput(*rec);
+				if (rec->Event.KeyEvent.bKeyDown) {
+					WCHAR wc = rec->Event.KeyEvent.uChar.UnicodeChar;
+					if (wc)
+						GPastedText += wc;
+					else if (rec->Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+						GPastedText += L'\n';
+					else if (rec->Event.KeyEvent.wVirtualKeyCode == VK_TAB)
+						GPastedText += L'\t';
+				}
+				if (!GPastedText.IsEmpty()) {
+					memset(rec, 0, sizeof(*rec));
+					rec->EventType = KEY_EVENT; // Fake key event
+					return KEY_OP_PLAINTEXT;
+				}
+				continue;
+			}
 
 			// // _SVS(INPUT_RECORD_DumpBuffer());
 #if 0

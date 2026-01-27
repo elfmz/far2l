@@ -1092,13 +1092,24 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_OP_PLAINTEXT: {
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				if (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG))		// BugZ#1053 - Неточности в $Text
+				if (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG))
 					RecurseProcessKey(KEY_DEL);
 			}
 
-			const wchar_t *S = eStackAsString();
+			FARString strPastedText;
+			if (!GPastedText.IsEmpty()) {
+				strPastedText = GPastedText;
+				GPastedText.Clear();
+			} else {
+				strPastedText = eStackAsString();
+			}
 
-			ProcessInsPlainText(S);
+			// For single-line edit controls, replace EOL sequences with spaces.
+			ReplaceStrings(strPastedText, L"\r\n", L" ");
+			ReplaceStrings(strPastedText, L"\r", L" ");
+			ReplaceStrings(strPastedText, L"\n", L" ");
+
+			InsertString(strPastedText);
 
 			Show();
 			return TRUE;

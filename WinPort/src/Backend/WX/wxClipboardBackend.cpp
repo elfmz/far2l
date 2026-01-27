@@ -58,6 +58,7 @@ public:
 } g_wx_custom_formats;
 
 static wxDataObjectComposite *g_wx_data_to_clipboard = nullptr;
+static wxDataObjectComposite *g_wx_data_to_primary = nullptr;
 
 wxClipboardBackend::wxClipboardBackend()
 {
@@ -137,6 +138,22 @@ void wxClipboardBackend::OnClipboardClose()
 #endif
 */
 	wxTheClipboard->Close();
+
+	if (g_wx_data_to_primary) {
+		wxTheClipboard->UsePrimarySelection(true);
+		if (wxTheClipboard->Open()) {
+			if (wxTheClipboard->SetData(g_wx_data_to_primary)) {
+				fprintf(stderr, "wxTheClipboard->SetData(PRIMARY) - OK\n");
+			} else {
+				fprintf(stderr, "wxTheClipboard->SetData(PRIMARY) - FAILED\n");
+			}
+			wxTheClipboard->Close();
+		} else {
+			delete g_wx_data_to_primary;
+		}
+		wxTheClipboard->UsePrimarySelection(false);
+		g_wx_data_to_primary = nullptr;
+	}
 }
 
 void wxClipboardBackend::OnClipboardEmpty()
@@ -150,6 +167,8 @@ void wxClipboardBackend::OnClipboardEmpty()
 	fprintf(stderr, "EmptyClipboard\n");
 	delete g_wx_data_to_clipboard;
 	g_wx_data_to_clipboard = nullptr;
+	delete g_wx_data_to_primary;
+	g_wx_data_to_primary = nullptr;
 	wxTheClipboard->Clear();
 }
 
@@ -205,17 +224,25 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 	if (!g_wx_data_to_clipboard) {
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
+	if (!g_wx_data_to_primary) {
+		g_wx_data_to_primary = new wxDataObjectComposite;
+	}
 
 	if (format==CF_UNICODETEXT) {
 
 		wxString wx_str((const wchar_t *)data);
 
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
+		g_wx_data_to_primary->Add(new wxTextDataObjectTweaked(wx_str));
 
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		const std::string &tmp = wx_str.ToStdString();
 		cdo->SetData(tmp.size(), tmp.c_str()); // not including ending NUL char
 		g_wx_data_to_clipboard->Add(cdo);
+
+		wxCustomDataObject *cdo_p = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		cdo_p->SetData(tmp.size(), tmp.c_str());
+		g_wx_data_to_primary->Add(cdo_p);
 
 
 #if (CLIPBOARD_HACK)
@@ -224,11 +251,17 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 
 	} else if (format==CF_TEXT) {
 
-		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
+		wxString wx_str = wxString::FromUTF8((const char *)data);
+		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wx_str));
+		g_wx_data_to_primary->Add(new wxTextDataObjectTweaked(wx_str));
 
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
 		cdo->SetData(strlen((const char *)data), data); // not including ending NUL char
 		g_wx_data_to_clipboard->Add(cdo);
+
+		wxCustomDataObject *cdo_p = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
+		cdo_p->SetData(strlen((const char *)data), data);
+		g_wx_data_to_primary->Add(cdo_p);
 
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
@@ -244,6 +277,10 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 			wxCustomDataObject *dos = new wxCustomDataObject(*data_format);
 			dos->SetData(len, data);
 			g_wx_data_to_clipboard->Add(dos);
+
+			wxCustomDataObject *dos_p = new wxCustomDataObject(*data_format);
+			dos_p->SetData(len, data);
+			g_wx_data_to_primary->Add(dos_p);
 		}
 	}
 

@@ -72,6 +72,7 @@ int PreMouseEventFlags = 0, MouseEventFlags = 0;
 // только что был ввод Alt-Цифира?
 int ReturnAltValue = 0;
 bool BracketedPasteMode = false;
+FARString GPastedText;
 
 /* end Глобальные переменные */
 
@@ -776,7 +777,48 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 
 	if (rec->EventType == BRACKETED_PASTE_EVENT) {
 		Console.ReadInput(*rec);
-		BracketedPasteMode = (rec->Event.BracketedPaste.bStartPaste != FALSE);
+		bool start = (rec->Event.BracketedPaste.bStartPaste != FALSE);
+		BracketedPasteMode = start;
+
+		if (start) {
+			GPastedText.Clear();
+			INPUT_RECORD tmprec;
+			while (true) {
+				// Wait briefly for input to avoid busy looping, but assume stream is fast
+				if (!WINPORT(WaitConsoleInput)(NULL, 100))
+					break;
+
+				if (!Console.PeekInput(tmprec))
+					break;
+
+				if (tmprec.EventType == BRACKETED_PASTE_EVENT) {
+					Console.ReadInput(tmprec);
+					if (!tmprec.Event.BracketedPaste.bStartPaste) {
+						BracketedPasteMode = false;
+						break;
+					}
+				} else if (tmprec.EventType == KEY_EVENT) {
+					Console.ReadInput(tmprec);
+					if (tmprec.Event.KeyEvent.bKeyDown) {
+						WCHAR wc = tmprec.Event.KeyEvent.uChar.UnicodeChar;
+						if (wc)
+							GPastedText += wc;
+						else if (tmprec.Event.KeyEvent.wVirtualKeyCode == VK_RETURN)
+							GPastedText += L'\n';
+						else if (tmprec.Event.KeyEvent.wVirtualKeyCode == VK_TAB)
+							GPastedText += L'\t';
+					}
+				} else {
+					Console.ReadInput(tmprec); // Consume other events to avoid blocking
+				}
+			}
+
+			if (!GPastedText.IsEmpty()) {
+				memset(rec, 0, sizeof(*rec));
+				rec->EventType = KEY_EVENT; // Fake key event
+				return KEY_OP_PLAINTEXT;
+			}
+		}
 		return KEY_NONE;
 	}
 

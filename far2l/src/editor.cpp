@@ -3307,10 +3307,14 @@ case KEY_CTRLNUMPAD3: {
 		}
 		case KEY_OP_PLAINTEXT: {
 			if (!Flags.Check(FEDITOR_LOCKMODE)) {
-				const wchar_t *Fmt = eStackAsString();
 				FARString strTStr;
-
-				strTStr = Fmt;
+				if (!GPastedText.IsEmpty()) {
+					strTStr = GPastedText;
+					GPastedText.Clear();
+				} else {
+					const wchar_t *Fmt = eStackAsString();
+					strTStr = Fmt;
+				}
 
 				// заменим L'\n' на L'\r' по правилам Paset ;-)
 				ReplaceChars(strTStr, L'\n', L'\r');

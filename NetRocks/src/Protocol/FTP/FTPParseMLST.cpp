@@ -74,7 +74,7 @@ static void ParseTime(timespec &ts, const char *str, size_t len)
 		}
 	}
 
-	ts.tv_sec = mktime(&t);
+	ts.tv_sec = timegm(&t);
 
 	if (len > 15 && str[14] == '.') {
 		size_t deci_len = std::min(len - 15, (size_t)9);
@@ -169,12 +169,13 @@ bool ParseMLsxLine(const char *line, const char *end, FileInformation &file_info
 		}
 
 		fact = line + 1;
+		if (fact != end && *fact == ' ') {
+			++fact;
+			break;
+		}
 	}
 
 	if (name) {
-		if (fact != end && *fact == ' ') {
-			++fact;
-		}
 		if (fact != end) {
 			name->assign(fact, end - fact);
 		} else {

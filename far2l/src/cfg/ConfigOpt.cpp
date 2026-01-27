@@ -197,6 +197,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecViewer, "ShowKeyBar", &Opt.ViOpt.ShowKeyBar, 1},
 	{true,  NSecViewer, "ShowTitleBar", &Opt.ViOpt.ShowTitleBar, 1},
 	{true,  NSecViewer, "ShowArrows", &Opt.ViOpt.ShowArrows, 1},
+	{true,  NSecViewer, "ClickableURLs", &Opt.ViOpt.ClickableURLs, 1},
 	{true,  NSecViewer, "ShowScrollbar", &Opt.ViOpt.ShowScrollbar, 0},
 	{true,  NSecViewer, "IsWrap", &Opt.ViOpt.ViewerIsWrap, 1},
 	{true,  NSecViewer, "Wrap", &Opt.ViOpt.ViewerWrap, 0},
@@ -420,6 +421,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelLeft, "CurFile", &Opt.strLeftCurFile, L""},
 	{true,  NSecPanelLeft, "SelectedFirst", &Opt.LeftSelectedFirst, 0},
 	{true,  NSecPanelLeft, "DirectoriesFirst", &Opt.LeftPanel.DirectoriesFirst, 1},
+	{true,  NSecPanelLeft, "ExecutablesFirst", &Opt.LeftPanel.ExecutablesFirst, 0},
 
 	{true,  NSecPanelRight, "Type", &Opt.RightPanel.Type, 0},
 	{true,  NSecPanelRight, "Visible", &Opt.RightPanel.Visible, 1},
@@ -434,6 +436,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelRight, "CurFile", &Opt.strRightCurFile, L""},
 	{true,  NSecPanelRight, "SelectedFirst", &Opt.RightSelectedFirst, 0},
 	{true,  NSecPanelRight, "DirectoriesFirst", &Opt.RightPanel.DirectoriesFirst, 1},
+	{true,  NSecPanelRight, "ExecutablesFirst", &Opt.RightPanel.ExecutablesFirst, 1},
 
 	{true,  NSecPanelLayout, "ColumnTitles", &Opt.ShowColumnTitles, 1},
 	{true,  NSecPanelLayout, "StatusLine", &Opt.ShowPanelStatus, 1},
@@ -798,6 +801,7 @@ void ConfigOptSave(bool Ask)
 		Opt.LeftPanel.CaseSensitiveSort = LeftPanel->GetCaseSensitiveSort();
 		Opt.LeftSelectedFirst = LeftPanel->GetSelectedFirstMode();
 		Opt.LeftPanel.DirectoriesFirst = LeftPanel->GetDirectoriesFirst();
+		Opt.LeftPanel.ExecutablesFirst = LeftPanel->GetExecutablesFirst();
 	}
 
 	LeftPanel->GetCurDir(Opt.strLeftFolder);
@@ -814,6 +818,7 @@ void ConfigOptSave(bool Ask)
 		Opt.RightPanel.CaseSensitiveSort = RightPanel->GetCaseSensitiveSort();
 		Opt.RightSelectedFirst = RightPanel->GetSelectedFirstMode();
 		Opt.RightPanel.DirectoriesFirst = RightPanel->GetDirectoriesFirst();
+		Opt.RightPanel.ExecutablesFirst = RightPanel->GetExecutablesFirst();
 	}
 
 	RightPanel->GetCurDir(Opt.strRightFolder);

@@ -1484,7 +1484,8 @@ typedef LONG NTSTATUS;
 #define WP_IMGCAP_JPG       0x003 // supports WP_IMG_JPG
 #define WP_IMGCAP_ATTACH    0x100 // supports existing image attaching
 #define WP_IMGCAP_SCROLL    0x200 // supports existing image scrolling
-#define WP_IMGCAP_ROTATE    0x400 // supports existing image rotation
+// reserved for a while:    0x400
+#define WP_IMGCAP_ROTMIR    0x800 // supports existing image rotation and mirroring
 
 // flags used for SetConsoleImage
 #define WP_IMG_RGBA             0 // supported if WP_IMGCAP_RGBA
@@ -1492,13 +1493,13 @@ typedef LONG NTSTATUS;
 #define WP_IMG_PNG              2 // supported if WP_IMGCAP_PNG
 #define WP_IMG_JPG              3 // supported if WP_IMGCAP_JPG
 
-// SetConsoleImage scrolling flags supported if WP_IMGCAP_ATTACH reported
+// SetConsoleImage attaching flags supported if WP_IMGCAP_ATTACH reported
 #define WP_IMG_ATTACH_LEFT      0x010000 // attach given image at left edge of existing one
 #define WP_IMG_ATTACH_RIGHT     0x020000 // attach given image at right edge of existing one
 #define WP_IMG_ATTACH_TOP       0x030000 // attach given image at top edge of existing one
 #define WP_IMG_ATTACH_BOTTOM    0x040000 // attach given image at bottom edge of existing one
 
-// Must be used with any WP_IMG_ATTACH_*
+// Can be used only with any of WP_IMG_ATTACH_* if WP_IMGCAP_SCROLL reported
 // Scrolls image after attaching to direction opposite to attached edge
 #define WP_IMG_SCROLL           0x080000
 
@@ -1511,6 +1512,18 @@ typedef LONG NTSTATUS;
 
 #define WP_IMG_MASK_FMT         0x00ffff
 #define WP_IMG_MASK_ATTACH      0x070000
+
+// WP_IMGTF_ROTATE_* supported if WP_IMGCAP_ROTMIR reported occupy least
+#define WP_IMGTF_MASK_ROTATE     0x03 // 2 bits that can be one of given values:
+#define WP_IMGTF_ROTATE0         0x00 // no rotation (so can use it just to move image)
+#define WP_IMGTF_ROTATE90        0x01 // rotate by 90 degrees
+#define WP_IMGTF_ROTATE180       0x02 // rotate by 180 degrees
+#define WP_IMGTF_ROTATE270       0x03 // rotate by 270 degrees
+
+// WP_IMG_MIRROR_* supported if WP_IMGCAP_ROTMIR reported and independent bit values
+// note that mirroring applied before rotation, if specified together
+#define WP_IMGTF_MIRROR_H   0x04  // flip image horizontally
+#define WP_IMGTF_MIRROR_V   0x08  // flip image vertically
 
 typedef struct WinportGraphicsInfo1
 {

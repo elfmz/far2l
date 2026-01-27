@@ -20,6 +20,6 @@ public:
 	void Paint(wxPaintDC &dc, const wxRect &rc, unsigned int font_width, unsigned int font_height);
 
 	bool Set(const char *id, DWORD64 flags, const SMALL_RECT *area, DWORD width, DWORD height, const void *buffer, unsigned int font_height);
-	bool Rotate(const char *id, const SMALL_RECT *area, unsigned char angle_x90);
+	bool Transform(const char *id, const SMALL_RECT *area, uint16_t tf);
 	bool Delete(const char *id);
 };

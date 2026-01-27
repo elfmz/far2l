@@ -155,6 +155,7 @@ struct PluginsListItem
 	int PrevNumericSort;
 	int PrevCaseSensitiveSort;
 	int PrevDirectoriesFirst;
+	int PrevExecutablesFirst;
 	PanelViewSettings PrevViewSettings;
 };
 
@@ -335,6 +336,7 @@ public:
 	virtual void ChangeNumericSort(int Mode);
 	virtual void ChangeCaseSensitiveSort(int Mode);
 	virtual void ChangeDirectoriesFirst(int Mode);
+	virtual void ChangeExecutablesFirst(int Mode);
 	virtual BOOL SetCurDir(const wchar_t *NewDir, int ClosePlugin);
 	virtual int GetPrevSortMode();
 	virtual int GetPrevSortOrder();
@@ -342,6 +344,7 @@ public:
 	virtual int GetPrevNumericSort();
 	virtual int GetPrevCaseSensitiveSort();
 	virtual int GetPrevDirectoriesFirst();
+	virtual int GetPrevExecutablesFirst();
 
 	void UpdateAutoColumnWidth();
 

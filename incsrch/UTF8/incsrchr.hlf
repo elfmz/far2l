@@ -3,7 +3,7 @@
 
 @Contents
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Содержание
  Данный плагин добавляет возможность #быстрого поиска# (#incremental search#) во встроенном редакторе FAR.
@@ -20,7 +20,7 @@ $^#Содержание
 
 @Menu
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Меню плагина#
  После того как Вы выбрали плагин из меню плагинов редактора, перед вами появится подменю следующего вида:
@@ -49,7 +49,7 @@ $^#Меню плагина#
 
 @Cfg
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Настройка плагина#
  Существует два способа настройки плагина: из #меню настройки плагинов# (Основное меню|параметры|параметры внешних модулей|быстрый поиск), либо непосредственно из ~Меню плагина~@Menu@, вызванного в редакторе.
@@ -84,7 +84,7 @@ $^#Настройка плагина#
 
 @Iface
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Интерфейс и клавиатурные команды#
  При входе в режим поиска левая часть верхней строки будет содержать подсказку #^:#. Начните набор искомой строки, и она появится после данной подсказки.
@@ -114,7 +114,7 @@ $^#Интерфейс и клавиатурные команды#
 
 @Contact
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Об авторе#
 

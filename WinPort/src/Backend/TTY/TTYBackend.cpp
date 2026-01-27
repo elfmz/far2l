@@ -467,7 +467,7 @@ void TTYBackend::DispatchImagesProbe(TTYOutput &tty_out)
 	TTYConsoleImage probe_img;
 	probe_img.width = probe_img.height = 1;
 	probe_img.pixel_data.resize(probe_img.width * probe_img.height * (probe_img.fmt / 8));
-	unsigned int kitty_id = tty_out.SendKittyImage(PROBE_IMAGE_ID, probe_img);
+	unsigned int kitty_id = tty_out.SendKittyImage(PROBE_IMAGE_ID, probe_img, 'q');
 	tty_out.RequestStatus();
 	fprintf(stderr, "%s: kitty_id=%u\n", __FUNCTION__, kitty_id);
 }
@@ -650,7 +650,7 @@ void TTYBackend::DispatchFar2lInteract(TTYOutput &tty_out)
 			if (_far2l_interacts_sent.size() >= 0xff) {
 				fprintf(stderr,
 					"TTYBackend::DispatchFar2lInteract: too many sent interacts - %ld\n",
-					_far2l_interacts_sent.size());
+					(unsigned long)_far2l_interacts_sent.size());
 				i->stk_ser.Clear();
 				i->evnt.Signal();
 				return;
@@ -1573,7 +1573,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 	return true;
 }
 
-bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
+bool TTYBackend::OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
 	if (_far2l_tty) {
 		uint8_t ok = 0;
@@ -1583,13 +1583,13 @@ bool TTYBackend::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, un
 				area = &def_area;
 			}
 			StackSerializer stk_ser;
-			stk_ser.PushNum(angle_x90);
+			stk_ser.PushNum(tf);
 			stk_ser.PushNum(area->Bottom);
 			stk_ser.PushNum(area->Right);
 			stk_ser.PushNum(area->Top);
 			stk_ser.PushNum(area->Left);
 			stk_ser.PushStr(id);
-			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_ROT);
+			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_TRANSFORM);
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE);
 			if (Far2lInteract(stk_ser, true)) {
 				stk_ser.PopNum(ok);

@@ -2,15 +2,23 @@
 
 "Image Viewer"
 
-"Ok"
-"Cancel"
+"&Ok"
+"&Cancel"
+"E&xtra commands"
+"Extra commands"
+
+"Command name"
+"Input command name"
+
+"Command line"
+"Input command line"
 
 "Navigate: PGUP PGDN HOME"
-"Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F9"
+"Pan: TAB CURSORS NUMPAD DEL + - * / = F7 F8 F5"
 "Selection: SPACE BS INS"
-"ENTER | ESC"
+"F4 | F9 | ENTER | ESC"
 
-"Respect EXIF &orientation info"
+"Respect EXIF o&rientation info"
 "Open by &Enter on file"
 "Open by Ctrl+Pg&Dn on file"
 "Open automatically in &Quick View panel"

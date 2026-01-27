@@ -75,6 +75,7 @@ src/ViewerPrinter.cpp
 src/fileholder.cpp
 src/GrepFile.cpp
 src/about.cpp
+src/LinkHighlighter.cpp
 
 src/panels/panel.cpp
 src/panels/filelist.cpp
@@ -263,7 +264,7 @@ set_target_properties(far2l
     PROPERTIES
     ENABLE_EXPORTS TRUE)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD")
     target_link_libraries(far2l
     PRIVATE ${WINPORT}
     PRIVATE c

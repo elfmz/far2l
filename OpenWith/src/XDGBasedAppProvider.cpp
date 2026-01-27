@@ -12,17 +12,17 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <cctype>
+#include <fnmatch.h>
 #include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <sstream>
-#include <iomanip>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 #include <map>
 #include <set>
+
 
 #define INI_LOCATION_XDG InMyConfig("plugins/openwith/config.ini")
 #define INI_SECTION_XDG  "Settings.XDG"
@@ -35,20 +35,21 @@
 XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
 {
 	_platform_settings_definitions = {
-		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true },
-		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true },
-		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false },
-		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false },
-		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true },
-		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true },
-		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true },
-		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true },
-		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true },
-		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true },
-		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false },
-		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false },
-		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false },
-		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false }
+		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true, true },
+		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true, true },
+		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false, true },
+		{ "UseGlobRules", MUseGlobRules, &XDGBasedAppProvider::_use_glob_rules, false, true },
+		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false, true },
+		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true, true },
+		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true, true },
+		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true, true },
+		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true, true },
+		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true, true },
+		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true, true },
+		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false, true },
+		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false, true },
+		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false, true },
+		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false, false }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
@@ -91,7 +92,8 @@ std::vector<ProviderSetting> XDGBasedAppProvider::GetPlatformSettings()
 			is_disabled = !IsExecutableAvailable(tool_name);
 		}
 
-		settings.push_back({StrMB2Wide(def.key), m_GetMsg(def.display_name_id), this->*(def.member_variable), is_disabled});
+		settings.push_back({StrMB2Wide(def.key), m_GetMsg(def.display_name_id), this->*(def.member_variable),
+							is_disabled, def.affects_candidates});
 	}
 	return settings;
 }
@@ -305,8 +307,8 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 			 std::pair{L"TryExec =",     &DesktopEntry::try_exec},
 			 std::pair{L"Terminal =",    &DesktopEntry::terminal},
 			 std::pair{L"MimeType =",    &DesktopEntry::mimetype},
-			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in},
-			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in}
+			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in},
+			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in}
 		 })
 	{
 		const std::string& val = desktop_entry.*member_ptr;
@@ -337,6 +339,7 @@ std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes()
 		add_if_present(profile.xdg_mime);
 		add_if_present(profile.file_mime);
 		add_if_present(profile.magika_mime);
+		add_if_present(profile.globs2_mime);
 		add_if_present(profile.stat_mime);
 		add_if_present(profile.ext_mime);
 
@@ -695,7 +698,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::FormatCandidatesForUI(
 CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry)
 {
 	CandidateInfo candidate;
-	candidate.terminal = (desktop_entry.terminal == "true");
+	candidate.terminal = (desktop_entry.terminal == "true" || desktop_entry.terminal == "1");
 	candidate.name = StrMB2Wide(UnescapeGKeyFileString(desktop_entry.name));
 	candidate.id = StrMB2Wide(desktop_entry.id);
 
@@ -731,6 +734,9 @@ XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const
 		profile.is_regular_file = true;
 
 		// Only call extension-based lookup for regular files
+		if(_use_glob_rules) {
+			profile.globs2_mime = DetectMimeTypeViaGlobRules(filepath);
+		}
 		if (_use_extension_based_fallback) {
 			profile.ext_mime = GuessMimeTypeByExtension(filepath);
 		}
@@ -795,6 +801,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 	add_unique(profile.xdg_mime);
 	add_unique(profile.file_mime);
 	add_unique(profile.magika_mime);
+	add_unique(profile.globs2_mime);
 	add_unique(profile.stat_mime);
 	add_unique(profile.ext_mime);
 
@@ -901,6 +908,50 @@ std::string XDGBasedAppProvider::DetectMimeTypeWithFileTool(const std::string& f
 std::string XDGBasedAppProvider::DetectMimeTypeWithMagikaTool(const std::string& filepath_escaped)
 {
 	return RunCommandAndCaptureOutput("magika --no-colors --format '%m' " + filepath_escaped + " 2>/dev/null");
+}
+
+
+std::string XDGBasedAppProvider::DetectMimeTypeViaGlobRules(const std::string& filepath)
+{
+	std::string filename = GetBaseName(filepath);
+	if (filename.empty()) {
+		return "";
+	}
+
+	for (const auto& rule : _op_glob_rules_cache) {
+		if (GlobMatch(filename, rule.pattern, rule.case_sensitive)) {
+			return rule.mime_type;
+		}
+	}
+
+	return "";
+}
+
+
+// Checks if a filename matches a glob pattern.  According to the spec, matching should be case-insensitive
+// by default, unless the 'cs' (case-sensitive) flag was specified in the globs2 file.
+bool XDGBasedAppProvider::GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive)
+{
+	int flags = 0;
+
+#ifdef FNM_CASEFOLD
+	if (!case_sensitive) {
+		flags |= FNM_CASEFOLD;
+	}
+#elif defined(FNM_IGNORECASE)
+	if (!case_sensitive) {
+		flags |= FNM_IGNORECASE;
+	}
+#endif
+
+	if (case_sensitive || (flags != 0)) {
+		return fnmatch(pattern.c_str(), text.c_str(), flags) == 0;
+	}
+
+	auto text_lower = ToLowerASCII(text);
+	auto pattern_lower = ToLowerASCII(pattern);
+
+	return fnmatch(pattern_lower.c_str(), text_lower.c_str(), 0) == 0;
 }
 
 
@@ -1597,6 +1648,121 @@ std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeSubcla
 }
 
 
+// Loads, parses, and sorts all glob rules from the 'globs2' files found in the XDG search paths.
+std::vector<XDGBasedAppProvider::GlobRule> XDGBasedAppProvider::LoadGlobRules()
+{
+	if (_op_mime_database_dirpaths.empty()) {
+		return {};
+	}
+
+	std::vector<GlobRule> rules;
+	int current_source_rank = 0;
+
+	// Iterate through paths in reverse order (System -> User).
+	// This assigns a higher 'source_rank' to user-specific directories, ensuring that
+	// rules defined by the user take precedence over system rules when weights are equal.
+	for (auto it = _op_mime_database_dirpaths.rbegin(); it != _op_mime_database_dirpaths.rend(); ++it) {
+		std::string globs_path = *it + "/globs2";
+		if (IsReadableFile(globs_path)) {
+			ParseGlobs2File(globs_path, rules, current_source_rank);
+		}
+		current_source_rank++;
+	}
+
+	// Sort the collected rules. This is a critical step that establishes the precedence
+	// defined in the GlobRule::operator< (Weight -> Literal -> Length -> Source).
+	std::sort(rules.begin(), rules.end());
+	return rules;
+}
+
+
+// Parses a single 'globs2' file and updates the accumulated rules vector.
+// Handles the 'weight:mime:pattern:flags' format and the special '__NOGLOBS__' directive.
+void XDGBasedAppProvider::ParseGlobs2File(const std::string& filepath, std::vector<GlobRule>& rules, int source_rank)
+{
+	std::ifstream file(filepath);
+	if (!file.is_open()) return;
+
+	std::string line;
+	while (std::getline(file, line)) {
+		if (line.empty() || line[0] == '#') {
+			continue;
+		}
+
+		size_t first_colon = line.find(':');
+		if (first_colon == std::string::npos) {
+			continue;
+		}
+
+		size_t second_colon = line.find(':', first_colon + 1);
+		if (second_colon == std::string::npos) {
+			continue;
+		}
+
+		int weight = 50;
+		try {
+			weight = std::stoi(line.substr(0, first_colon));
+		} catch (...) {
+			continue;
+		}
+
+		std::string mime = Trim(line.substr(first_colon + 1, second_colon - first_colon - 1));
+
+		std::string pattern;
+		std::string flags_str;
+
+		size_t third_colon = line.find(':', second_colon + 1);
+
+		if (third_colon == std::string::npos) {
+			pattern = line.substr(second_colon + 1);
+		} else {
+			pattern = line.substr(second_colon + 1, third_colon - second_colon - 1);
+
+			size_t fourth_colon = line.find(':', third_colon + 1);
+			if (fourth_colon == std::string::npos) {
+				flags_str = line.substr(third_colon + 1);
+			} else {
+				flags_str = line.substr(third_colon + 1, fourth_colon - third_colon - 1);
+			}
+		}
+
+		// Handle the 'glob-deleteall' mechanism.
+		// If the pattern is "__NOGLOBS__", we must discard all previously accumulated rules
+		// for this specific MIME type (simulating a reset/override from a higher-priority directory).
+		if (pattern == "__NOGLOBS__") {
+			rules.erase(std::remove_if(rules.begin(), rules.end(),
+									   [&mime](const GlobRule& r) { return r.mime_type == mime; }),
+						rules.end());
+			continue;
+		}
+
+		bool case_sensitive = false;
+		if (!flags_str.empty()) {
+			std::vector<std::string> flags = SplitString(flags_str, ',');
+			for (const auto& f : flags) {
+				if (f == "cs") {
+					case_sensitive = true;
+				}
+			}
+		}
+
+		if (!mime.empty() && !pattern.empty()) {
+			// Pre-calculate is_literal to optimize sorting performance later.
+			bool is_literal = IsLiteralPattern(pattern);
+			rules.push_back({weight, std::move(mime), std::move(pattern), case_sensitive, source_rank, is_literal});
+		}
+	}
+}
+
+
+// Checks if a pattern is a literal filename (e.g., "Makefile") rather than a glob.
+// We define a literal as a string containing no standard shell glob meta-characters (*, ?, [).
+bool XDGBasedAppProvider::IsLiteralPattern(const std::string& pattern)
+{
+	return pattern.find_first_of("*?[") == std::string::npos;
+}
+
+
 // Returns XDG-compliant search paths for .desktop files, ordered by priority.
 std::vector<std::string> XDGBasedAppProvider::GetDesktopFileSearchDirpaths()
 {
@@ -2098,7 +2264,7 @@ bool XDGBasedAppProvider::IsTraversableDirectory(const std::string& dirpath)
 
 
 // Checks if a command exists and is runnable.
-// If the command contains a slash, it's checked directly. Otherwise, it's searched in $PATH.
+// If the command starts with a slash, it's checked directly. Otherwise, it's searched in $PATH.
 bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 {
 	if (command.empty()) {
@@ -2110,17 +2276,15 @@ bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 		return stat(p.c_str(), &st) == 0 && S_ISREG(st.st_mode) && access(p.c_str(), X_OK) == 0;
 	};
 
-	if (command.find('/') != std::string::npos) {
+	if (command[0] == '/') {
 		return check(command);
 	}
 
-	if (const char* env_path = getenv("PATH")) {
-		std::istringstream ss(env_path);
-		std::string dir;
-		while (std::getline(ss, dir, ':')) {
-			if (!dir.empty() && check(dir + '/' + command)) {
-				return true;
-			}
+	auto dirs = SplitString(GetEnv("PATH"), ':');
+	for (const auto& dir : dirs) {
+		if (dir.empty()) continue;
+		if (check(dir + '/' + command)) {
+			return true;
 		}
 	}
 
@@ -2292,6 +2456,10 @@ XDGBasedAppProvider::OperationContext::OperationContext(XDGBasedAppProvider& p) 
 		provider._op_subclass_to_parent_cache = provider.LoadMimeSubclasses();
 	}
 
+	if (provider._use_glob_rules) {
+		provider._op_glob_rules_cache = provider.LoadGlobRules();
+	}
+
 	provider._op_mimeapps_lists_cache = provider.ParseMimeappsLists();
 
 
@@ -2322,6 +2490,7 @@ XDGBasedAppProvider::OperationContext::~OperationContext()
 	provider._op_mimeapps_list_filepaths.clear();
 	provider._op_mime_database_dirpaths.clear();
 	provider._op_desktop_id_to_path_index.clear();
+	provider._op_glob_rules_cache.clear();
 	provider._op_alias_to_canonical_cache.clear();
 	provider._op_canonical_to_aliases_cache.clear();
 	provider._op_subclass_to_parent_cache.clear();

@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#Fájl- és archívumkezelő program#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 $^#Copyright (C) 1996-2000 Eugene Roshal#
 $^#Copyright (C) 2000-2016 FAR Group
 `$^#Copyright (C)' COPYRIGHTYEARS `FAR People'
@@ -44,6 +44,7 @@ $^(help file last translated for build 882)
    ~Fájltársítások~@FileAssoc@
    ~Operációs rendszer parancsok~@OSCommands@
    ~Special commands~@SpecCmd@
+   ~Ways to run programs~@WaysToRunPrograms@
    ~Mappa gyorsbillentyűk~@Bookmarks@
    ~Szűrők menü~@FiltersMenu@
    ~Képernyők váltása~@ScrSwitch@
@@ -225,7 +226,6 @@ $ #Billentyűparancsok#
 
  ~Egyebek~@MiscCmd@
 
- ~Special commands~@SpecCmd@
 
 @MenuCmd
 $ #Menu control commands#
@@ -504,7 +504,8 @@ dialog is enabled, the full name is used with ~symbolic links~@HardSymLink@ expa
 
 
 
-    See also ~Special commands~@SpecCmd@.
+    See also ~Special commands~@SpecCmd@
+             ~Ways to run programs~@WaysToRunPrograms@
 
 @FuncCmd
 $ #Panelvezérlő parancsok - rendszerparancsok#
@@ -1963,6 +1964,7 @@ akár almenü volt megnyitva benne.
       ~Special commands~@SpecCmd@.
       The list of ~macro keys~@KeyMacroUserMenuList@, available in the user menu.
       Common ~menu~@MenuCmd@ keyboard commands.
+      ~Ways to run programs~@WaysToRunPrograms@.
 
 @FileAssoc
 $ #Fájltársítások#
@@ -1992,6 +1994,7 @@ Windows társításait alkalmazni.
     See also:
       ~Special commands~@SpecCmd@.
       common ~menu~@MenuCmd@ keyboard commands.
+      ~Ways to run programs~@WaysToRunPrograms@.
 
 @FileAssocModify
 $ #Fájltársítások: szerkesztés#
@@ -3139,6 +3142,9 @@ ha megmozdítjuk a kurzort.
   #Gördítőnyilak mutatva#   ^<wrap>Kikapcsolt sortörésnél a vízszintesen
 túlnyúló sorok végein gördítőnyilak jelennek meg.
 
+  #URL-felismerés#          ^<wrap>Felismerni, kiemelni és aktiválni
+az https:, http: vagy mailto: kezdetű hivatkozásokat.
+
   #Fájlpozíció mentése#     ^<wrap>Elmenti és visszatölti a legutóbb
 megnézett fájlok szöveghelyzetét, vele a kódlapot is (ha "kézzel" választottuk
 ki), valamint a nézet módját (normál vagy hexadecimális).
@@ -3982,6 +3988,7 @@ megegyező nevű TAR/BZIP2 tömörített fájlokba mozgatja a kijelölt fájloka
 
     See also ~Special commands~@SpecCmd@
     Lásd még ~Operációs rendszer parancsok~@OSCommands@.
+             ~Ways to run programs~@WaysToRunPrograms@
 
 
 @OSCommands
@@ -4331,3 +4338,24 @@ adatbázisából kiolvasott leírásaikkal együtt:
 @Index
 $ #A súgó betűrendes tartalomjegyzéke#
 <%INDEX%>
+
+
+@WaysToRunPrograms
+$ #Ways to run programs without blocking far2l#
+  When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
+
+  Launching programs in an external terminal from the far2l command line:
+  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #$FARHOME/open.sh exec program#: to run in an external terminal using Enter, exec is required as the first parameter for open.sh;
+  - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
+
+  Running programs from far2l:
+  - #program params &#: just add at the end & — will close the program after closing far2l;
+  - #nohup program params &#: the launch is performed by the nohup program. A nohup.out file is created in the current directory with the program output. You can delete this file later. Such a launch will keep the program running after completing far2l;
+  - #nohup program params >/dev/null 2>&1 &#: will leave the program running after completing far2l without unnecessary output;
+  - #setsid program params >/dev/null 2>/dev/null#: when used in the examples above & some programs, when closed, output information about their termination to the current terminal - using setsid avoids such clogging of the output of the current program;
+
+  See also:
+   ~Special commands~@SpecCmd@
+   ~File Masks~@FileMasks@
+   ~Metasymbols~@MetaSymbols@

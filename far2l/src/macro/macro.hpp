@@ -230,8 +230,8 @@ private:
 	int ReadMacroFunction(int ReadMode, FARString &strBuffer);
 	int WriteVarsConst(int WriteMode);
 	int ReadMacros(int ReadMode, FARString &strBuffer);
-	DWORD AssignMacroKey();
-	int GetMacroSettings(uint32_t Key, DWORD &Flags);
+	DWORD AssignMacroKey(FARString& macroNameHolder);
+	int GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescription);
 	void InitInternalVars(BOOL InitedRAM = TRUE);
 	void InitInternalLIBVars();
 	void ReleaseWORKBuffer(BOOL All = FALSE);	// удалить временный буфер

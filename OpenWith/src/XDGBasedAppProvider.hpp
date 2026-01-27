@@ -92,6 +92,7 @@ private:
 		std::string xdg_mime;		// result from 'xdg-mime query filetype'
 		std::string file_mime;		// result from 'file --mime-type'
 		std::string magika_mime;	// result from 'magika --format '%m''
+		std::string globs2_mime;	// result from XDG glob rules matching (globs2)
 		std::string ext_mime;		// result from internal extension fallback map
 		std::string stat_mime;		// result from internal stat() analysis (e.g., inode/directory)
 
@@ -99,8 +100,8 @@ private:
 
 		bool operator==(const RawMimeProfile& other) const
 		{
-			return std::tie(is_regular_file, xdg_mime, file_mime, magika_mime, ext_mime, stat_mime) ==
-				   std::tie(other.is_regular_file, other.xdg_mime, other.file_mime, other.magika_mime, other.ext_mime, other.stat_mime);
+			return std::tie(is_regular_file, xdg_mime, file_mime, magika_mime, globs2_mime, ext_mime, stat_mime) ==
+				   std::tie(other.is_regular_file, other.xdg_mime, other.file_mime, other.magika_mime, other.globs2_mime, other.ext_mime, other.stat_mime);
 		}
 
 		// Custom hash function to allow RawMimeProfile to be used as a key in std::unordered_map.
@@ -114,12 +115,51 @@ private:
 				std::size_t seed = std::hash<std::string>{}(s.xdg_mime);
 				hash_combine(seed, std::hash<std::string>{}(s.file_mime));
 				hash_combine(seed, std::hash<std::string>{}(s.magika_mime));
+				hash_combine(seed, std::hash<std::string>{}(s.globs2_mime));
 				hash_combine(seed, std::hash<std::string>{}(s.ext_mime));
 				hash_combine(seed, std::hash<std::string>{}(s.stat_mime));
 				hash_combine(seed, std::hash<bool>{}(s.is_regular_file));
 				return seed;
 			}
 		};
+	};
+
+
+	// Represents a single pattern matching rule from parsed 'globs2' file.
+	struct GlobRule
+	{
+		int weight;
+		std::string mime_type;
+		std::string pattern;
+		bool case_sensitive;
+		int source_rank;
+		bool is_literal;
+
+		// Defines the sorting order for glob matching.
+		// Returns true if 'this' rule should be checked BEFORE 'other'.
+		bool operator<(const GlobRule& other) const
+		{
+			// Higher weights are checked first.
+			if (weight != other.weight)
+			{
+				return weight > other.weight;
+			}
+
+			// Exact filenames (e.g., 'Makefile') take precedence over globs (*.txt).
+			if (is_literal != other.is_literal)
+			{
+				return is_literal;
+			}
+
+			// Longer patterns are more specific (e.g., '*.tar.gz' > '*.gz').
+			if (pattern.length() != other.pattern.length())
+			{
+				return pattern.length() > other.pattern.length();
+			}
+
+			// User-defined rules (higher rank) override system rules.
+			return source_rank > other.source_rank;
+		}
 	};
 
 
@@ -239,6 +279,7 @@ private:
 		LanguageID  display_name_id;
 		bool XDGBasedAppProvider::* member_variable;
 		bool default_value;
+		bool affects_candidates;
 	};
 
 
@@ -294,6 +335,8 @@ private:
 	std::string DetectMimeTypeWithXdgMimeTool(const std::string& filepath_escaped);
 	std::string DetectMimeTypeWithFileTool(const std::string& filepath_escaped);
 	std::string DetectMimeTypeWithMagikaTool(const std::string& filepath_escaped);
+	std::string DetectMimeTypeViaGlobRules(const std::string& filepath);
+	static bool GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive);
 	std::string GuessMimeTypeByExtension(const std::string& filepath);
 
 	// --- XDG database parsing & caching ---
@@ -311,6 +354,9 @@ private:
 	std::unordered_map<std::string, std::string> LoadMimeAliases();
 	static std::string_view GetMajorMimeType(const std::string& mime);
 	std::unordered_map<std::string, std::string> LoadMimeSubclasses();
+	std::vector<GlobRule> LoadGlobRules();
+	void ParseGlobs2File(const std::string& filepath, std::vector<GlobRule>& rules, int source_rank);
+	bool IsLiteralPattern(const std::string& pattern);
 	static std::vector<std::string> GetDesktopFileSearchDirpaths();
 	std::vector<std::string> GetMimeappsListSearchFilepaths();
 	static std::vector<std::string> GetMimeDatabaseSearchDirpaths();
@@ -356,6 +402,7 @@ private:
 	bool _use_xdg_mime_tool;
 	bool _use_file_tool;
 	bool _use_magika_tool;
+	bool _use_glob_rules;
 	bool _use_extension_based_fallback;
 	bool _load_mimetype_aliases;
 	bool _load_mimetype_subclasses;
@@ -395,6 +442,7 @@ private:
 	std::vector<std::string> _op_mimeapps_list_filepaths;
 	std::vector<std::string> _op_mime_database_dirpaths;
 	std::unordered_map<std::string, std::string> _op_desktop_id_to_path_index;
+	std::vector<GlobRule> _op_glob_rules_cache; // from 'globs2'
 	std::unordered_map<std::string, std::string> _op_alias_to_canonical_cache;  // from 'aliases'
 	std::unordered_map<std::string, std::vector<std::string>> _op_canonical_to_aliases_cache;  // from 'aliases'
 	std::unordered_map<std::string, std::string> _op_subclass_to_parent_cache;  // from 'subclasses'

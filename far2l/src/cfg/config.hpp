@@ -104,6 +104,7 @@ struct PanelOptions
 	int NumericSort;
 	int CaseSensitiveSort;
 	int DirectoriesFirst;
+	int ExecutablesFirst;
 };
 
 struct AutoCompleteOptions
@@ -241,6 +242,7 @@ struct ViewerOptions
 	int AutoDetectCodePage;
 	int ShowScrollbar;		// $ 18.07.2000 tran пара настроек для viewer
 	int ShowArrows;
+	int ClickableURLs;
 	int PersistentBlocks;	// $ 14.05.2002 VVM Постоянные блоки во вьюере
 	int ViewerIsWrap;		// (Wrap|WordWarp)=1 | UnWrap=0
 	int ViewerWrap;			// Wrap=0|WordWarp=1

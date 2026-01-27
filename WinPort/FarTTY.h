@@ -244,7 +244,7 @@ Glossary:
 */
 #define FARTTY_INTERACT_IMAGE_CAPS                 'c'
 
-/** Upload and display image.
+/** Upload and display new image or add part to existing image.
  In:
   string (image identity)
   uint64_t (flags: see WP_IMG_*)
@@ -252,11 +252,11 @@ Glossary:
   uint16_t (character cell of image Top or -1 to leave it unchanged OR initially set to current cursor position)
   uint16_t (character cell of image Right or -1 to leave it unchanged OR initially set to image pixels width OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag specified)
   uint16_t (character cell of image Bottom or -1 to leave it unchanged OR initially set to image pixels height OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag specified)
-  uint32_t (image width pixels for RGB/RGBA and encoded data size for PNG)
-  uint32_t (image height pixels for RGB/RGBA and 1 for PNG)
-  RGB/RGBA data of size width * height * 3 / width * height * 4
+  uint32_t (image width pixels for RGB/RGBA and encoded data size for PNG/JPG)
+  uint32_t (image height pixels for RGB/RGBA and 1 for PNG/JPG)
+  data of size according to specified width/height (RGB: width * height * 3, RGBA: width * height * 4, PNG/JPG: width)
  Out:
-  uint8_t (0 - failure, nonzero value - image loaded and displayed)
+  uint8_t (0 - failure, 1 - image loaded and displayed)
 */
 #define FARTTY_INTERACT_IMAGE_SET                  's'
 
@@ -264,22 +264,22 @@ Glossary:
  In:
   string (image identity)
  Out:
-  uint8_t (0 - failure, nonzero value - image removed)
+  uint8_t (0 - failure, 1 - value - image removed)
 */
 #define FARTTY_INTERACT_IMAGE_DEL                  'd'
 
-/** Rotate previously set image.
+/** Simple transformation (moving, rotating, mirroring) of previously set image.
  In:
   string (image identity)
   uint16_t (character cell of image Left OR -1 to leave it unchanged)
   uint16_t (character cell of image Top OR -1 to leave it unchanged)
   uint16_t (character cell of image Right OR -1 to leave it unchanged OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag was specified before)
   uint16_t (character cell of image Bottom OR -1 to leave it unchanged OR extra pixel offset if WP_IMG_PIXEL_OFFSET flag was specified before)
-  uint8_t (one of: 0, 1, 2, 3 meaning rotation angle in 90 degrees units)
+  uint16_t (combination of WP_IMGTF_* flags representing image transformation(s) requested)
  Out:
-  uint8_t (0 - failure, nonzero value - image rotated)
+  uint8_t (0 - failure, 1 - image transformed)
 */
-#define FARTTY_INTERACT_IMAGE_ROT                  'r'
+#define FARTTY_INTERACT_IMAGE_TRANSFORM            't'
 
 
 ///////////////////////

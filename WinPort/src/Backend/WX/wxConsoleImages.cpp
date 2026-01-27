@@ -178,12 +178,10 @@ bool wxConsoleImages::Set(const char *id, DWORD64 flags, const SMALL_RECT *area,
 	return true;
 }
 
-bool wxConsoleImages::Rotate(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
+bool wxConsoleImages::Transform(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
 	try {
 		std::string str_id(id);
-		angle_x90&= 3; // any other represents one of: 90, 180, 270
-
 		auto it = _images.find(id);
 		if (it == _images.end()) {
 			fprintf(stderr, "%s('%s'): no such image\n", __FUNCTION__, id);
@@ -201,17 +199,24 @@ bool wxConsoleImages::Rotate(const char *id, const SMALL_RECT *area, unsigned ch
 		if (area && area->Bottom != -1) {
 			it->second.area.Bottom = area->Bottom;
 		}
-		if (angle_x90) { // if zero - its a trivial move
-			wxImage rotated_img = it->second.bitmap.ConvertToImage();
-			switch (angle_x90) {
-				case 1: it->second.bitmap = rotated_img.Rotate90(true); break;
-				case 2: it->second.bitmap = rotated_img.Rotate180(); break;
-				case 3: it->second.bitmap = rotated_img.Rotate90(false); break;
+		if ( tf != WP_IMGTF_ROTATE0) { // otherwise its a trivial move
+			wxImage img = it->second.bitmap.ConvertToImage();
+			if (tf & WP_IMGTF_MIRROR_H) {
+				img = img.Mirror(true);
+			}
+			if (tf & WP_IMGTF_MIRROR_V) {
+				img = img.Mirror(false);
+			}
+			switch (tf & WP_IMGTF_MASK_ROTATE) {
+				case WP_IMGTF_ROTATE90:  img = img.Rotate90(true); break;
+				case WP_IMGTF_ROTATE180: img = img.Rotate180(); break;
+				case WP_IMGTF_ROTATE270: img = img.Rotate90(false); break;
 				default: ;
 			}
+			it->second.bitmap = img;
 		}
 	} catch (...) {
-		fprintf(stderr, "%s('%s'): exception\n", __FUNCTION__, id);
+		fprintf(stderr, "%s('%s', 0x%x): exception\n", __FUNCTION__, id, tf);
 		return false;
 	}
 

@@ -975,11 +975,11 @@ bool ConsoleOutput::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL
 	return _backend->OnSetConsoleImage(id, flags, area, width, height, buffer);
 }
 
-bool ConsoleOutput::OnRotateConsoleImage(const char *id, const SMALL_RECT *area, unsigned char angle_x90)
+bool ConsoleOutput::OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
-	fprintf(stderr, "OnRotateConsoleImage: id='%s' area={%d:%d %d:%d} angle_x90=%u\n",
-		id, area->Left, area->Top, area->Right, area->Bottom, angle_x90);
-	return _backend->OnRotateConsoleImage(id, area, angle_x90);
+	fprintf(stderr, "OnTransformConsoleImage: id='%s' area={%d:%d %d:%d} tf=%u\n",
+		id, area->Left, area->Top, area->Right, area->Bottom, tf);
+	return _backend->OnTransformConsoleImage(id, area, tf);
 }
 
 bool ConsoleOutput::OnDeleteConsoleImage(const char *id)

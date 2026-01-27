@@ -10,7 +10,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Editor: mouse selection (hold **Alt** to vertical selection)
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
   Option to set the maximum recursive scanning depth (default: 4).
-  Right Arrow expands excluded subtrees, and Left Arrow collapses subtree in focus, if it's already collapsed - navigates one level up.
+  **Right Arrow** expands excluded subtrees, and **Left Arrow** collapses subtree in focus, if it's already collapsed - navigates one level up.
   **Left Ctrl+1**...**Left Ctrl+0** expands all branches to the chosen depth (1...10).
 * _New:_ Options of the special command `edit:[line,col]` for openening file with position
 * _hexitor plugin_: fix broken layout with narrow window
@@ -19,6 +19,8 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
   works in GUI and in TTY|F and TTY|k,
   see [#3028](https://github.com/elfmz/far2l/pull/3028#issuecomment-3508025346))).
 * _edsort plugin_:  New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
+* _arclite plugin_: More symlinks/hardlinks support: works with RAR/TAR/NTFS; fix option "Link path: Absolute/Relative" for symlinks when create archive (see [#3094](https://github.com/elfmz/far2l/pull/3094))
+* _OpenWith plugin_: Update to v1.1. Added support for DE-specific mimeapps.list files; improved MIME detection (Magika AI & native globs2 pattern matching); better compliance with XDG/Freedesktop specifications; bugfixes and performance optimizations.
 * Several bugfixes and improvements
 
 ## 2.7.0 beta (2025-10-26)

@@ -593,7 +593,7 @@ static unsigned int KittyImageID(const std::string &str_id)
 	return out ? out : 1;
 }
 
-unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img)
+unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img, char action)
 {
 	unsigned int id = KittyImageID(str_id);
 
@@ -601,12 +601,12 @@ unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConso
     base64_encode(base64_data, img.pixel_data.data(), img.pixel_data.size());
 
 	MoveCursorStrict(img.area.Top + 1, img.area.Left + 1);
-    
+
     for (size_t offset = 0;offset < base64_data.length(); ) {
         const size_t chunk_len = std::min(base64_data.length() - offset, (size_t)4096);
         const unsigned more_to_follow = (offset + chunk_len < base64_data.length()) ? 1 : 0;
         if (offset == 0) {
-			Format(ESC "_Ga=T,f=%u,t=d,i=%u,m=%u", img.fmt, id, more_to_follow);
+			Format(ESC "_Ga=%c,f=%u,t=d,i=%u,m=%u", action, img.fmt, id, more_to_follow);
 			if (img.fmt != 100) {
 				Format(",s=%u,v=%u", img.width, img.height);
 			}
@@ -632,6 +632,7 @@ unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConso
         Write(ESC "\\");
         offset += chunk_len;
     }
+	_cursor.x = _cursor.y = -1;
 	return id;
 }
 

@@ -125,6 +125,82 @@ static void SetupStdHandles()
 	}
 }
 
+int detect_vs16_width() {
+	// U+25AB + U+FE0F: ▫️
+	const char sym[] = "\xE2\x96\xAB\xEF\xB8\x8F";
+
+	termios orig, raw;
+	tcgetattr(STDIN_FILENO, &orig);
+	raw = orig;
+	raw.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+
+	auto readPos = []() {
+		int row = -1, col = -1;
+		char c;
+		std::string buf;
+		while (true) {
+			fd_set rfds;
+			FD_ZERO(&rfds);
+			FD_SET(STDIN_FILENO, &rfds);
+
+			struct timeval tv;
+			tv.tv_sec  = 0;
+			tv.tv_usec = 200000; //timeout 200 msec
+
+			int rv = select(STDIN_FILENO + 1, &rfds, nullptr, nullptr, &tv);
+			if (rv <= 0) return std::make_pair(-1,-1);
+
+			if (read(STDIN_FILENO, &c, 1) != 1) return std::make_pair(-1,-1);
+			buf.push_back(c);
+
+			if ( c == 'R') {
+				auto esc_pos = buf.rfind('\x1b');
+				if (esc_pos != std::string::npos && esc_pos < buf.size() - 1
+					 && sscanf(buf.c_str() + esc_pos, "\x1b[%d;%dR", &row, &col) == 2) {
+					return std::make_pair(row, col); // This is the cursor position: SUCCESS
+				}
+				buf.clear();
+			}
+
+			if (buf.size() > 64) buf.clear();
+		}
+	};
+
+	// Query cursor before printing
+	write(STDOUT_FILENO, "\x1b[6n", 4);
+	write(STDOUT_FILENO, "\x1b[5n", 4);
+	tcdrain(STDOUT_FILENO);
+	auto [start_row, start_col] = readPos();
+
+	// Print the VS16 symbol
+	write(STDOUT_FILENO, sym, strlen(sym));
+	tcdrain(STDOUT_FILENO);
+
+	// Query cursor after printing
+	write(STDOUT_FILENO, "\x1b[6n", 4);
+	write(STDOUT_FILENO, "\x1b[5n", 4);
+	tcdrain(STDOUT_FILENO);
+	auto [end_row, end_col] = readPos();
+
+	// Remove the printed symbol
+	if (start_col >= 0 && end_col >= 0) {
+		int w = end_col - start_col;
+		if (w > 0) {
+			char seq[32];
+			int n = snprintf(seq, sizeof(seq), "\x1b[%d;%dH", start_row, start_col);
+			if (n > 0) {
+				write(STDOUT_FILENO, seq, (size_t)n);
+				write(STDOUT_FILENO, "\x1b[K", 3);
+				tcdrain(STDOUT_FILENO);
+			}
+		}
+	}
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
+
+	if (start_col < 0 || end_col < 0) return -1;
+	return end_col - start_col;  // 1 = no emoji width, 2 = VS16 rendered full-width
+}
 
 class NormalizeTerminalState
 {
@@ -185,7 +261,7 @@ static int TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique
 
 		fprintf(f_out, "\n\x1b[1;31mSome far2l-s lost in space-time nearby:\x1b[39;22m\n");
 		for (size_t i = 0; i < instances.size(); ++i) {
-			fprintf(f_out, " \x1b[1;31m%lu\x1b[39;22m: %s\n", i + 1, instances[i].info.c_str());
+			fprintf(f_out, " \x1b[1;31m%lu\x1b[39;22m: %s\n", (unsigned long)(i + 1), instances[i].info.c_str());
 		}
 
 		fprintf(f_out, "\x1b[1;31mInput instance index to revive or empty string to spawn new far2l\x1b[39;22m\n");
@@ -439,6 +515,10 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				arg_opts.notty = true;
 			}
 		}
+	}
+	//check variation selector 16 is usable before reassigning stdout
+	if (arg_opts.tty && arg_opts.nodetect == NODETECT_NONE) {
+		g_use_vs16 = detect_vs16_width() == 2;
 	}
 
 	SetupStdHandles();

@@ -1,3 +1,4 @@
+#include <cmath>
 #include <vector>
 #include <thread>
 #include <functional>
@@ -58,10 +59,10 @@ void Image::Resize(int width, int height, unsigned char bytes_per_pixel)
 	assert(height >= 0);
 
 	const size_t bytes_size = size_t(width) * size_t(height) * size_t(bytes_per_pixel);
-	assert(bytes_size >= size_t(width)); // overflow guard
-	assert(bytes_size >= size_t(height)); // overflow guard
+	assert(bytes_size >= size_t(width) || !height); // overflow guard
+	assert(bytes_size >= size_t(height) || !width); // overflow guard
 
-	_data.resize(bytes_size),
+	_data.resize(bytes_size);
 
 	_width = width;
 	_height = height;
@@ -71,17 +72,12 @@ void Image::Resize(int width, int height, unsigned char bytes_per_pixel)
 void Image::Rotate(Image &dst, bool clockwise) const
 {
 	dst.Resize(_height, _width, _bytes_per_pixel);
-
-	const auto *src_data = _data.data();
-	auto *dst_data = dst._data.data();
-
-	const auto pixel_size = _bytes_per_pixel;
 	for (int y = 0; y < _height; ++y) {
 		for (int x = 0; x < _width; ++x) {
-			const size_t dst_ofs = size_t(x) * _height + (clockwise ? _height - 1 - y : y);
-			const size_t src_ofs = size_t(y) * _width + (clockwise ? x : _width - 1 - x);
-			for (unsigned char i = 0; i < pixel_size; ++i) {
-				dst_data[dst_ofs * pixel_size + i] = src_data[src_ofs * pixel_size + i];
+			auto *dpix = dst.Ptr(clockwise ? _height - 1 - y : y, x);
+			const auto *spix = Ptr(clockwise ? x : _width - 1 - x, y);
+			for (unsigned char ch = 0; ch < _bytes_per_pixel; ++ch) {
+				dpix[ch] = spix[ch];
 			}
 		}
 	}
@@ -137,7 +133,7 @@ void Image::Scale(Image &dst, double scale) const
 	const int width = int(scale * Width());
 	const int height = int(scale * Height());
 	dst.Resize(width, height, _bytes_per_pixel);
-	if (_width == 0 || dst._width == 0 || _height == 0 || dst._height == 0) {
+	if (_data.empty() || dst._data.empty()) {
 		std::fill(dst._data.begin(), dst._data.end(), 0);
 		return;
 	}

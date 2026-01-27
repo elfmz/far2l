@@ -539,6 +539,41 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 			CmdStr.Select(-1, 0);
 			CmdStr.Show();
 			return TRUE;
+		case KEY_OP_PLAINTEXT: {
+			if (!GPastedText.IsEmpty()) {
+				if (GPastedText.Contains(L'\n')) {
+					FARString strStr;
+					CmdStr.GetString(strStr);
+					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + GPastedText + strStr.SubStr(CmdStr.GetCurPos());
+					GPastedText.Clear();
+					RemoveTrailingSpaces(strToExec);
+					if (Opt.CmdLine.AskOnMultilinePaste) {
+						ExMessager em;
+						em.AddMultiline(Msg::MultilinePaste);
+						em.AddMultiline(strToExec);
+						em.AddDup(L"\2");
+						em.AddMultiline(Msg::MultilinePasteWarn);
+						em.AddDup(Msg::HCancel);
+						em.AddDup(Msg::HExecute);
+						em.AddDup(Msg::HExecuteNoAsk);
+
+						int res = em.Show(MSG_LEFTALIGN, 3);
+						if (res == 1) {
+							ExecString(strToExec);
+						}
+						else if (res ==2) {
+							Opt.CmdLine.AskOnMultilinePaste = false;
+							ExecString(strToExec);
+						}
+					}
+					else {
+						ExecString(strToExec);
+					}
+					return TRUE;
+				}
+			}
+			break;
+		}
 		case KEY_OP_XLAT: {
 			// 13.12.2000 SVS - ! Для CmdLine - если нет выделения, преобразуем всю строку (XLat)
 			CmdStr.Xlat(Opt.XLat.Flags & XLAT_CONVERTALLCMDLINE ? TRUE : FALSE);

@@ -260,7 +260,7 @@ SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event,void *Param)
 				DismissImageAtQV();
 			}
 						
-			if (Event == VE_READ && g_settings.OpenInFV()) {
+			if (Event == VE_READ && (!pi.Visible || pi.PanelType != PTYPE_QVIEWPANEL) && g_settings.OpenInFV()) {
 				ViewerInfo vi{sizeof(ViewerInfo), 0};
 				if (g_far.ViewerControl(VCTL_GETINFO, &vi)) {
 					if (vi.FileName && g_settings.MatchFile(Wide2MB(vi.FileName).c_str())) {
@@ -275,8 +275,8 @@ SHAREDSYMBOL int WINAPI ProcessViewerEventW(int Event,void *Param)
 
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber)
 {
-   	g_settings.configurationMenuDialog();
-    return 1;
+	g_settings.ConfigurationDialog();
+	return 1;
 }
 
 SHAREDSYMBOL HANDLE WINAPI _export OpenFilePluginW(const wchar_t *Name, const unsigned char *Data, int DataSize, int OpMode)

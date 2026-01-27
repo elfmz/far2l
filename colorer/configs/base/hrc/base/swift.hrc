@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hrc PUBLIC "-//Cail Lomecb//DTD Colorer HRC take5//EN"
+  "http://colorer.sf.net/2003/hrc.dtd">
+<hrc version="take5" xmlns="http://colorer.sf.net/2003/hrc"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://colorer.sf.net/2003/hrc http://colorer.sf.net/2003/hrc.xsd">
+
+  <type name="swift">
+    <annotation>
+      <documentation>
+        Swift syntax description
+        https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html
+      </documentation>
+      <contributors><![CDATA[
+        Maxim Chernobayev
+      ]]></contributors>
+    </annotation>
+
+    <import type="def"/>
+
+    <region name="Character" parent="def:Character"/>
+    <region name="String" parent="def:String"/>
+    <region name="StringEscape" parent="def:StringContent"/>
+    <region name="StringInterpolation" parent="def:Insertion"/>
+    <region name="LineComment" parent="def:LineComment"/>
+    <region name="Comment" parent="def:Comment"/>
+    <region name="Symbol" parent="def:Symbol"/>
+    <region name="Keyword" parent="def:Keyword"/>
+    <region name="KeywordModifier" parent="def:Keyword"/>
+    <region name="KeywordType" parent="def:TypeKeyword"/>
+    <region name="Attribute" parent="def:Directive"/>
+    <region name="Directive" parent="def:Directive"/>
+    <region name="FunctionKeyword" parent="def:FunctionKeyword"/>
+
+    <!-- String interpolation scheme -->
+    <scheme name="StringInterpolation">
+      <block start="/(\\\()/" end="/(\))/" scheme="Expression"
+             region="StringInterpolation"
+             region00="def:InsertionStart" region01="def:PairStart"
+             region10="def:InsertionEnd" region11="def:PairEnd"/>
+    </scheme>
+
+    <!-- String escapes -->
+    <scheme name="StringEscapes">
+      <regexp match="/\\[0\\tnr\x22\x27]/" region="StringEscape"/>
+      <regexp match="/\\u\{[\da-fA-F]{1,8}\}/" region="StringEscape"/>
+      <inherit scheme="StringInterpolation"/>
+    </scheme>
+
+    <!-- Regular string "..." -->
+    <scheme name="StringContent">
+      <inherit scheme="StringEscapes"/>
+    </scheme>
+
+    <scheme name="String">
+      <block start="/(?{def:StringEdge}&#34;)/" end="/(?{def:StringEdge}&#34;)|$/"
+             scheme="StringContent" region="String" inner-region="yes"/>
+    </scheme>
+
+    <!-- Multiline string """...""" -->
+    <scheme name="MultilineString">
+      <block start="/(?{def:StringEdge}&#34;&#34;&#34;)/" end="/(?{def:StringEdge}&#34;&#34;&#34;)/"
+             scheme="StringEscapes" region="String"/>
+    </scheme>
+
+    <!-- Raw string #"..."# and ##"..."## etc -->
+    <scheme name="RawString">
+      <block start="/(#+)(&#34;)/" end="/(&#34;)\y1/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+      <block start="/(#+)(&#34;&#34;&#34;)/" end="/(&#34;&#34;&#34;)\y1/"
+             scheme="def:empty" region="String"
+             region00="def:StringEdge" region10="def:StringEdge"/>
+    </scheme>
+
+    <!-- Character and numbers -->
+    <scheme name="Character">
+      <inherit scheme="c:Character"/>
+    </scheme>
+
+    <!-- Comments -->
+    <scheme name="Comments">
+      <!-- Doc comments -->
+      <regexp match="/\/\/\/.*$/" region="def:CommentDoc"/>
+      <block start="/\/\*\*/" end="/\*\//" scheme="def:Comment" region="def:CommentDoc"
+             region00="def:PairStart" region10="def:PairEnd"/>
+      <!-- Regular comments -->
+      <block start="/\/\//" end="/$/" scheme="def:Comment" region="LineComment"/>
+      <block start="/\/\*/" end="/\*\//" scheme="def:Comment" region="Comment"
+             region00="def:PairStart" region10="def:PairEnd"/>
+    </scheme>
+
+    <!-- Attributes @something -->
+    <scheme name="Attributes">
+      <regexp match="/@\w+/" region="Attribute"/>
+    </scheme>
+
+    <!-- Compiler directives #if, #available, etc -->
+    <scheme name="Directives">
+      <regexp match="/#(if|else|elseif|endif|available|unavailable|sourceLocation|warning|error)\b/" region="Directive"/>
+      <regexp match="/#(file|fileID|filePath|line|column|function|dsohandle)\b/" region="Directive"/>
+      <regexp match="/#(selector|keyPath|colorLiteral|fileLiteral|imageLiteral)\b/" region="Directive"/>
+    </scheme>
+
+    <!-- Main expression scheme -->
+    <scheme name="Expression">
+      <block start="/(\()/" end="/(\))/" scheme="Expression"
+             region00="Symbol" region01="def:PairStart" region10="Symbol" region11="def:PairEnd"/>
+      <block start="/(\[)/" end="/(\])/" scheme="Expression"
+             region00="Symbol" region01="def:PairStart" region10="Symbol" region11="def:PairEnd"/>
+      <block start="/(\{)/" end="/(\})/" scheme="Expression"
+             region00="Symbol" region01="def:PairStart" region10="Symbol" region11="def:PairEnd"/>
+
+      <inherit scheme="Comments"/>
+      <inherit scheme="Attributes"/>
+      <inherit scheme="Directives"/>
+      <inherit scheme="RawString"/>
+      <inherit scheme="MultilineString"/>
+      <inherit scheme="String"/>
+      <inherit scheme="Character"/>
+
+      <!-- Numbers -->
+      <inherit scheme="def:Number"/>
+      <regexp match="/0b[01_]+/" region="def:Number"/>
+      <regexp match="/0o[0-7_]+/" region="def:Number"/>
+      <regexp match="/0x[\da-fA-F_]+(\.[\da-fA-F_]+)?([pP][\+\-]?[\d_]+)?/" region="def:Number"/>
+      <regexp match="/[\d_]+(\.[\d_]+)?([eE][\+\-]?[\d_]+)?/" region="def:Number"/>
+
+      <!-- func/init/deinit for outlining -->
+      <regexp match="/\b(func|init|deinit)\b/" region="FunctionKeyword" region0="def:Outlined"/>
+
+      <!-- Declaration keywords -->
+      <keywords region="Keyword">
+        <word name="associatedtype"/>
+        <word name="class"/>
+        <word name="deinit"/>
+        <word name="enum"/>
+        <word name="extension"/>
+        <word name="fileprivate"/>
+        <word name="func"/>
+        <word name="import"/>
+        <word name="init"/>
+        <word name="inout"/>
+        <word name="internal"/>
+        <word name="let"/>
+        <word name="open"/>
+        <word name="operator"/>
+        <word name="private"/>
+        <word name="precedencegroup"/>
+        <word name="protocol"/>
+        <word name="public"/>
+        <word name="rethrows"/>
+        <word name="static"/>
+        <word name="struct"/>
+        <word name="subscript"/>
+        <word name="typealias"/>
+        <word name="var"/>
+      </keywords>
+
+      <!-- Statement keywords -->
+      <keywords region="Keyword">
+        <word name="break"/>
+        <word name="case"/>
+        <word name="catch"/>
+        <word name="continue"/>
+        <word name="default"/>
+        <word name="defer"/>
+        <word name="do"/>
+        <word name="else"/>
+        <word name="fallthrough"/>
+        <word name="for"/>
+        <word name="guard"/>
+        <word name="if"/>
+        <word name="in"/>
+        <word name="repeat"/>
+        <word name="return"/>
+        <word name="switch"/>
+        <word name="throw"/>
+        <word name="where"/>
+        <word name="while"/>
+      </keywords>
+
+      <!-- Expression and type keywords -->
+      <keywords region="Keyword">
+        <word name="any"/>
+        <word name="as"/>
+        <word name="await"/>
+        <word name="catch"/>
+        <word name="false"/>
+        <word name="is"/>
+        <word name="nil"/>
+        <word name="self"/>
+        <word name="Self"/>
+        <word name="super"/>
+        <word name="throw"/>
+        <word name="throws"/>
+        <word name="true"/>
+        <word name="try"/>
+      </keywords>
+
+      <!-- Pattern and context keywords -->
+      <keywords region="KeywordModifier">
+        <word name="async"/>
+        <word name="convenience"/>
+        <word name="didSet"/>
+        <word name="dynamic"/>
+        <word name="final"/>
+        <word name="get"/>
+        <word name="indirect"/>
+        <word name="infix"/>
+        <word name="isolated"/>
+        <word name="lazy"/>
+        <word name="mutating"/>
+        <word name="nonisolated"/>
+        <word name="nonmutating"/>
+        <word name="optional"/>
+        <word name="override"/>
+        <word name="postfix"/>
+        <word name="prefix"/>
+        <word name="required"/>
+        <word name="set"/>
+        <word name="some"/>
+        <word name="unowned"/>
+        <word name="weak"/>
+        <word name="willSet"/>
+      </keywords>
+
+      <!-- Concurrency -->
+      <keywords region="Keyword">
+        <word name="actor"/>
+        <word name="async"/>
+        <word name="await"/>
+        <word name="nonisolated"/>
+        <word name="isolated"/>
+      </keywords>
+
+      <!-- Common types -->
+      <keywords region="KeywordType">
+        <word name="Any"/>
+        <word name="AnyObject"/>
+        <word name="Array"/>
+        <word name="Bool"/>
+        <word name="Character"/>
+        <word name="Dictionary"/>
+        <word name="Double"/>
+        <word name="Float"/>
+        <word name="Int"/>
+        <word name="Int8"/>
+        <word name="Int16"/>
+        <word name="Int32"/>
+        <word name="Int64"/>
+        <word name="Never"/>
+        <word name="Optional"/>
+        <word name="Result"/>
+        <word name="Set"/>
+        <word name="String"/>
+        <word name="UInt"/>
+        <word name="UInt8"/>
+        <word name="UInt16"/>
+        <word name="UInt32"/>
+        <word name="UInt64"/>
+        <word name="Void"/>
+      </keywords>
+
+      <!-- Symbols -->
+      <keywords region="Symbol">
+        <symb name="->"/>
+        <symb name="=>"/>
+        <symb name="+"/>
+        <symb name="-"/>
+        <symb name="*"/>
+        <symb name="/"/>
+        <symb name="%"/>
+        <symb name="="/>
+        <symb name="&amp;"/>
+        <symb name="|"/>
+        <symb name="^"/>
+        <symb name="~"/>
+        <symb name="!"/>
+        <symb name="&lt;"/>
+        <symb name="&gt;"/>
+        <symb name="?"/>
+        <symb name=":"/>
+        <symb name=";"/>
+        <symb name=","/>
+        <symb name="."/>
+        <symb name="@"/>
+      </keywords>
+
+    </scheme>
+
+    <scheme name="swift">
+      <inherit scheme="Expression"/>
+    </scheme>
+
+  </type>
+</hrc>
+<!--
+Copyright (C) 2024-2026 Maxim Chernobayev
+
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, see <https://www.gnu.org/licenses/>
+-->

@@ -295,7 +295,7 @@ const FileEditor *FileEditor::CurrentEditor = nullptr;
 FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 		const wchar_t *PluginData, int OpenModeExstFile)
 	:
-	BadConversion(false), SaveAsTextFormat(0)
+	BadConversion(false), SaveAsTextFormat(0), EditMenuBar(nullptr)
 {
 	ScreenObject::SetPosition(0, 0, ScrX, ScrY);
 	Flags.Set(InitFlags);
@@ -306,7 +306,7 @@ FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFla
 FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 		const wchar_t *Title, int X1, int Y1, int X2, int Y2, int OpenModeExstFile)
 	:
-	SaveAsTextFormat(0)
+	SaveAsTextFormat(0), EditMenuBar(nullptr)
 {
 	Flags.Set(InitFlags);
 

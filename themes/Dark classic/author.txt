@@ -1,1 +1,2 @@
 Unxed: https://github.com/unxed/far2ltricks/tree/main/themes
+Combination of Far Classic and Turbo Vision, inspired by Monokai.

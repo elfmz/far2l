@@ -3,8 +3,11 @@
 
 class wxClipboardBackend : public IClipboardBackend
 {
+	int _copy_mode;
+	int _paste_mode;
+
 public:
-	wxClipboardBackend();
+	wxClipboardBackend(int copy_mode, int paste_mode);
 	~wxClipboardBackend();
 
 	virtual bool OnClipboardOpen();

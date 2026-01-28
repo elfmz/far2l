@@ -149,27 +149,20 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 	DetectHostAbilities();
 
-	bool primary_selection = false;
 	for (int i = 0; i < a->argc; ++i) {
-		if (strcmp(a->argv[i], "--primary-selection") == 0) {
-			primary_selection = true;
-
-		} else if (strcmp(a->argv[i], "--maximize") == 0) {
+		if (strcmp(a->argv[i], "--maximize") == 0) {
 			g_maximize = 1;
 
 		} else if (strcmp(a->argv[i], "--nomaximize") == 0) {
 			g_maximize = -1;
 		}
 	}
-	if (primary_selection) {
-		wxTheClipboard->UsePrimarySelection(true);
-	}
 
 	g_wx_palette = g_winport_palette;
 
 	ClipboardBackendSetter clipboard_backend_setter;
 	if (!a->ext_clipboard) {
-		clipboard_backend_setter.Set<wxClipboardBackend>();
+		clipboard_backend_setter.Set<wxClipboardBackend>(a->copy_mode, a->paste_mode);
 	}
 
 	if (a->app_main && !g_winport_app_thread) {

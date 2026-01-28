@@ -320,7 +320,8 @@ extern "C" void WinPortHelp()
 			"\t--x11 - force GUI backend to run on X11/Xwayland (force make GDK_BACKEND=x11)\n"
 			"\t--wayland - force GUI backend to run on Wayland (force make GDK_BACKEND=wayland)\n"
 			"\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n"
-			"\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n"
+			"\t--copy-to=primary|clipboard|both - clipboard buffer to use for copy operations (default: both) (only for GUI backend)\n"
+			"\t--paste-from=primary|clipboard - clipboard buffer to use for paste operations (default: clipboard) (only for GUI backend)\n"
 			"\t--maximize - force maximize window upon launch (only for GUI backend)\n"
 			"\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n"
 			"\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n"
@@ -337,6 +338,8 @@ struct ArgOptions
 	bool mortal = false;
 	bool x11 = false;
 	bool wayland = false;
+	int copy_mode = 2; // 0=clip, 1=prim, 2=both
+	int paste_mode = 0; // 0=clip, 1=prim
 	std::string ext_clipboard;
 	unsigned int esc_expiration = 100;
 	std::vector<char *> filtered_argv;
@@ -365,6 +368,15 @@ struct ArgOptions
 
 		} else if (strcmp(a, "--norgb") == 0) {
 			norgb = true;
+
+		} else if (strstr(a, "--copy-to=") == a) {
+			if (strcasecmp(a + 10, "primary") == 0) copy_mode = 1;
+			else if (strcasecmp(a + 10, "clipboard") == 0) copy_mode = 0;
+			else copy_mode = 2;
+
+		} else if (strstr(a, "--paste-from=") == a) {
+			if (strcasecmp(a + 13, "primary") == 0) paste_mode = 1;
+			else paste_mode = 0;
 
 		} else if (strcmp(a, "--nodetect") == 0) {
 			nodetect = NODETECT_F | NODETECT_X | NODETECT_A | NODETECT_K | NODETECT_W;
@@ -595,7 +607,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 				SudoAskpassServer askpass_srv(&askass_impl);
 
 				WinPortMainBackendArg a{FAR2L_BACKEND_ABI_VERSION,
-					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in, !arg_opts.ext_clipboard.empty(), arg_opts.norgb};
+					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in, !arg_opts.ext_clipboard.empty(), arg_opts.norgb, arg_opts.copy_mode, arg_opts.paste_mode};
 				if (!WinPortMainBackend_p(&a) ) {
 					fprintf(stderr, "Cannot use GUI backend\n");
 					arg_opts.tty = !arg_opts.notty;

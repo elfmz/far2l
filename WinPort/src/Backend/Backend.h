@@ -8,7 +8,7 @@
 ///   Something changed in code below.
 ///   "WinCompat.h" changed in a way affecting code below.
 ///   Behavior of backend's code changed in incompatible way.
-#define FAR2L_BACKEND_ABI_VERSION	0x12
+#define FAR2L_BACKEND_ABI_VERSION	0x11
 
 #define NODETECT_NONE   0x0000
 #define NODETECT_XI     0x0001
@@ -301,7 +301,5 @@ struct WinPortMainBackendArg
 	IConsoleInput *winport_con_in;
 	bool ext_clipboard;
 	bool norgb;
-	int copy_mode;
-	int paste_mode;
 };
 

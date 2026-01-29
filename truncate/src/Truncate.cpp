@@ -45,9 +45,18 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		gs.StringNumber = i;
 		if (!Info.EditorControl(ECTL_GETSTRING, &gs)) continue;
 
-		/* Strip trailing spaces and tabs */
+		/* Count trailing spaces and tabs */
 		int len = gs.StringLength;
 		while (len > 0 && (gs.StringText[len - 1] == _T(' ') || gs.StringText[len - 1] == _T('\t'))) len--;
+		if (len) {
+			/* We are interested only in the empty lines at the end of file. So, reset the counter */
+			empty_lines = 0;
+		} else {
+			/* Count empty lines */
+			empty_lines++;
+		}
+
+		/* Strip trailing spaces and tabs */
 		if (len != gs.StringLength) {
 			TCHAR *s = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
 			if (!s) continue;
@@ -64,11 +73,6 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 			free(s);
 
 			count += gs.StringLength - len;
-		}
-		if (len) {
-			empty_lines = 0;
-		} else {
-			empty_lines++;
 		}
 	}
 

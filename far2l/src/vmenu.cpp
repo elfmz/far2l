@@ -1620,9 +1620,16 @@ void VMenu::DrawEdges()
 
 void VMenu::DrawTitles()
 {
+	if (CheckFlags(VMENU_SHOWNOBOX))
+		return;
+
 	CriticalSectionLock Lock(CS);
 
 	int MaxTitleLength = X2 - X1 - 2;
+
+	if (MaxTitleLength < 1)
+		return;
+
 	int WidthTitle;
 
 	FARString strDisplayTitle = strTitle;

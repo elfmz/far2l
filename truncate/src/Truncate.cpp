@@ -50,6 +50,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		while (len > 0 && (gs.StringText[len - 1] == _T(' ') || gs.StringText[len - 1] == _T('\t'))) len--;
 		if (len != gs.StringLength) {
 			TCHAR *s = (TCHAR *)malloc((len + 1) * sizeof(TCHAR));
+			if (!s) continue;
 			_tmemcpy(s, gs.StringText, len);
 			s[len] = 0;
 

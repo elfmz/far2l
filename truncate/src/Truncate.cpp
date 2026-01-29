@@ -45,7 +45,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		gs.StringNumber = i;
 		if (!Info.EditorControl(ECTL_GETSTRING, &gs)) continue;
 
-		// Strip trailing spaces and tabs
+		/* Strip trailing spaces and tabs */
 		int len = gs.StringLength;
 		while (len > 0 && (gs.StringText[len - 1] == _T(' ') || gs.StringText[len - 1] == _T('\t'))) len--;
 		if (len != gs.StringLength) {
@@ -101,6 +101,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		Info.EditorControl(ECTL_SETPOSITION, &pos);
 	}
 
+	/* Don't count the final EOL */
 	if (empty_lines) empty_lines--;
 
 	if (count || empty_lines) {

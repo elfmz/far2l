@@ -1,3 +1,4 @@
+
 #include <stdarg.h>
 #include <assert.h>
 #include <base64.h>
@@ -315,8 +316,32 @@ void TTYOutput::FinalizeSameChars()
 	}
 }
 
+static const char *g_TERM = getenv("TERM");
+
+static bool g_isVT = g_TERM && (!strcmp(g_TERM, "wsvt25")				// VT-100 compatible terminal
+	 || !strcmp(g_TERM, "vt100")
+	 || !strcmp(g_TERM, "vt220"));
+
+// Translation table for Unicode pseudo-graphics codes 0x2500..0x2570 to VT-100 codes
+//                                        ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰
+static const char g_VTtranslation[114] = "qqxxqqxxqqxxllllkkkkmmmmjjjjttttttttuuuuuuuuwwwwwwwwvvvvvvvvnnnnnnnnnnnnnnnnqqxxqxlllkkkmmmjjjtttuuuwwwvvvnnnlkjm";
+
+bool TTYOutput::WriteToVT(WCHAR wch) {
+	if (wch >= 0x2500 && wch <= 0x2570) {
+		FinalizeSameChars();
+		char buf[8] = ESC "(0 " ESC "(B";                               // Enable/Disable 'DEC Line Drawing mode' ESC sequence
+		buf[3] = g_VTtranslation[wch - 0x2500];
+		_rawbuf.insert(_rawbuf.end(), buf, buf + sizeof(buf) - 1);
+		return true;
+	}
+	return false;
+}
+
 void TTYOutput::WriteWChar(WCHAR wch)
 {
+	if (g_isVT && WriteToVT(wch))
+		return;
+
 	if (_same_chars.count == 0) {
 		_same_chars.wch = wch;
 

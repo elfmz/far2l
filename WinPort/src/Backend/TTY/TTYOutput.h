@@ -58,6 +58,7 @@ class TTYOutput
 
 	void WriteReally(const char *str, int len);
 	void FinalizeSameChars();
+	bool WriteToVT(WCHAR wch);
 	void WriteWChar(WCHAR wch);
 	void Write(const char *str, int len);
 	void Write(const char *str);

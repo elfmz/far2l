@@ -266,6 +266,10 @@
         <location link="base/rust.hrc" />
         <filename>/\.rs$/i</filename>
     </prototype>
+    <prototype name="swift" group="main" description="Swift">
+        <location link="base/swift.hrc" />
+        <filename>/\.swift$/i</filename>
+    </prototype>
 
     <!--  inet languages  -->
     <package name="html-entity" description="(x)html entities">

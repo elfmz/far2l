@@ -57,6 +57,22 @@
     <package name="cpp-qt" description="C++ + Qt">
         <location link="base/cpp-qt.hrc" />
     </package>
+    <prototype name="qml" group="main" description="QML / Qt Quick">
+        <location link="base/qml.hrc" />
+        <filename>/\.(qml)$/i</filename>
+        <firstline>/^\s*import\s+Qt(\w+)?(\.\w+)*(\s+\d+(\.\d+)*)?/i</firstline>
+        <firstline>/^\s*import\s+\w+(\.\w+)*(\s+\d+(\.\d+)*)?/i</firstline>
+        <firstline>/^\s*[A-Z]\w*\s*\{/i</firstline>
+        <parameters>
+            <param name="qtquick-keywords" value="true" description="Highlight Qt Quick keywords and types" />
+            <param name="javascript-keywords" value="true" description="Enable JavaScript keywords inside QML" />
+            <param name="qml-signals" value="true" description="Highlight QML signals and signal handlers" />
+            <param name="qml-properties" value="true" description="Highlight QML properties and bindings" />
+            <param name="qml-imports" value="true" description="Highlight QML import statements" />
+            <param name="firstlines" value="10" description="Lines for 'firstline' detection" />
+            <param name="firstlinebytes" value="2000" description="Bytes for 'firstline' detection" />
+        </parameters>
+    </prototype>
     <prototype name="d" group="main" description="D">
         <location link="base/d.hrc" />
         <filename>/\.di?$/i</filename>

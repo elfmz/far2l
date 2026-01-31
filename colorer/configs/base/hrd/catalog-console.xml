@@ -56,3 +56,6 @@
         <hrd class="console" name="mirror-conemu" description="ConEmu Extending">
             <location link="&hrd;/console/emu/mirror.hrd"/>
         </hrd>
+        <hrd class="console" name="violet" description="Violet by Kate Tempergate">
+            <location link="&hrd;/console/contrib/violet.hrd"/>
+        </hrd>

@@ -294,6 +294,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED TRUNCATE OR TRUNCATE)
+    message(STATUS "TRUNCATE plugin enabled")
+    add_subdirectory (truncate)
+else()
+    message(STATUS "${ColorRed}TRUNCATE plugin disabled due to TRUNCATE=${TRUNCATE}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/truncate/plug/truncate.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 if (NOT DEFINED CALC OR CALC)
     message(STATUS "CALC plugin enabled")
     add_subdirectory (calc)

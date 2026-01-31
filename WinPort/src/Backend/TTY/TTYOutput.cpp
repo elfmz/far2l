@@ -161,9 +161,13 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 {
 	const char *env = getenv("TERM");
 	_screen_tty = (env && strncmp(env, "screen", 6) == 0); // TERM=screen.xterm-256color
+	_vt100 = env && (!strcmp(env, "wsvt25")				// VT-100 compatible terminal
+					|| !strcmp(env, "vt100")
+					|| !strcmp(env, "vt220"));
 
 	env = getenv("TERM_PROGRAM");
 	_wezterm = (env && strcasecmp(env, "WezTerm") == 0);
+
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	unsigned long int leds = 0;
@@ -315,31 +319,27 @@ void TTYOutput::FinalizeSameChars()
 	}
 }
 
-static const char *g_TERM = getenv("TERM");
-
-static bool g_isVT = g_TERM && (!strcmp(g_TERM, "wsvt25")				// VT-100 compatible terminal
-	 || !strcmp(g_TERM, "vt100")
-	 || !strcmp(g_TERM, "vt220"));
-
-// Translation table for Unicode pseudo-graphics codes 0x2500..0x2570 to VT-100 codes
-//                                        ─━│┃┄┅┆┇┈┉┊┋┌┍┎┏┐┑┒┓└┕┖┗┘┙┚┛├┝┞┟┠┡┢┣┤┥┦┧┨┩┪┫┬┭┮┯┰┱┲┳┴┵┶┷┸┹┺┻┼┽┾┿╀╁╂╃╄╅╆╇╈╉╊╋╌╍╎╏═║╒╓╔╕╖╗╘╙╚╛╜╝╞╟╠╡╢╣╤╥╦╧╨╩╪╫╬╭╮╯╰
-static const char g_VTtranslation[114] = "qqxxqqxxqqxxllllkkkkmmmmjjjjttttttttuuuuuuuuwwwwwwwwvvvvvvvvnnnnnnnnnnnnnnnnqqxxqxlllkkkmmmjjjtttuuuwwwvvvnnnlkjm";
-
-bool TTYOutput::WriteToVT(WCHAR wch) {
-	if (wch >= 0x2500 && wch <= 0x2570) {
-		FinalizeSameChars();
-		char buf[8] = ESC "(0 " ESC "(B";                               // Enable/Disable 'DEC Line Drawing mode' ESC sequence
-		buf[3] = g_VTtranslation[wch - 0x2500];
-		_rawbuf.insert(_rawbuf.end(), buf, buf + sizeof(buf) - 1);
-		return true;
+void TTYOutput::FinalizeLineDrawing()
+{
+	if (_vt100_line_drawing) {
+		_rawbuf.insert(_rawbuf.end(), {*ESC, '(', 'B'}); // Disable 'DEC Line Drawing mode' ESC sequence
+		_vt100_line_drawing = false;
 	}
-	return false;
 }
+
+static const char s_VT100_linedrawing_chars[114] = "qqxxqqxxqqxxllllkkkkmmmmjjjjttttttttuuuuuuuuwwwwwwwwvvvvvvvvnnnnnnnnnnnnnnnnqqxxqxlllkkkmmmjjjtttuuuwwwvvvnnnlkjm";
 
 void TTYOutput::WriteWChar(WCHAR wch)
 {
-	if (g_isVT && WriteToVT(wch))
+	if (wch >= 0x2500 && wch <= 0x2570 && _vt100) {
+		if (!_vt100_line_drawing) {
+			_rawbuf.insert(_rawbuf.end(), {*ESC, '(', '0'}); // Enable 'DEC Line Drawing mode' ESC sequence
+			_vt100_line_drawing = true;
+		}
+		_rawbuf.push_back(s_VT100_linedrawing_chars[wch - 0x2500]);
 		return;
+	}
+	FinalizeLineDrawing();
 
 	if (_same_chars.count == 0) {
 		_same_chars.wch = wch;
@@ -354,6 +354,7 @@ void TTYOutput::WriteWChar(WCHAR wch)
 void TTYOutput::Write(const char *str, int len)
 {
 	if (len > 0) {
+		FinalizeLineDrawing();
 		FinalizeSameChars();
 		_rawbuf.insert(_rawbuf.end(), str, str + len);
 	}
@@ -366,6 +367,7 @@ void TTYOutput::Write(const char *str)
 
 void TTYOutput::Format(const char *fmt, ...)
 {
+	FinalizeLineDrawing();
 	FinalizeSameChars();
 
 	char tmp[0x100];
@@ -405,6 +407,7 @@ void TTYOutput::Format(const char *fmt, ...)
 
 void TTYOutput::Flush()
 {
+	FinalizeLineDrawing();
 	FinalizeSameChars();
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());

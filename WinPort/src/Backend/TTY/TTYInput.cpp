@@ -19,7 +19,7 @@ void TTYInput::PostCharEvent(wchar_t ch)
 	ir.Event.KeyEvent.wRepeatCount = 1;
 	ir.Event.KeyEvent.uChar.UnicodeChar = ch;
 
-	if (_handler) {
+	if (_handler && !_parser.IsBracketedPasteMode()) {
 		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
 	}
 

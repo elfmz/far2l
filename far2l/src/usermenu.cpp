@@ -58,14 +58,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "cache.hpp"
+#include <vector>
 
-#if defined(PROJECT_DI_MEMOEDIT)
 /*
 	Идея в следующем.
 	1. Строки в реестре хранятся как и раньше, т.к. CommandXXX
 	2. Для DI_MEMOEDIT мы из только преобразовываем в один массив
 */
-#endif
 
 static std::unique_ptr<ConfigReader> s_cfg_reader;
 
@@ -879,20 +878,7 @@ enum EditMenuItems
 	EM_LABEL_EDIT,
 	EM_SEPARATOR1,
 	EM_COMMANDS_TEXT,
-#ifdef PROJECT_DI_MEMOEDIT
 	EM_MEMOEDIT,
-#else
-	EM_EDITLINE_0,
-	EM_EDITLINE_1,
-	EM_EDITLINE_2,
-	EM_EDITLINE_3,
-	EM_EDITLINE_4,
-	EM_EDITLINE_5,
-	EM_EDITLINE_6,
-	EM_EDITLINE_7,
-	EM_EDITLINE_8,
-	EM_EDITLINE_9,
-#endif
 	EM_SEPARATOR2,
 	EM_BUTTON_OK,
 	EM_BUTTON_CANCEL,
@@ -900,17 +886,6 @@ enum EditMenuItems
 
 LONG_PTR WINAPI EditMenuDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
-	Dialog *Dlg = (Dialog *)hDlg;
-
-	switch (Msg) {
-		case DN_INITDIALOG: {
-			break;
-		}
-	}
-
-#endif
-
 	switch (Msg) {
 		case DN_CLOSE:
 
@@ -981,44 +956,26 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey, int EditPos, int TotalRecords, b
 		const int DLG_X = 76, DLG_Y = SubMenu ? 10 : 22;
 		DWORD State = SubMenu ? DIF_HIDDEN | DIF_DISABLE : 0;
 		DialogDataEx EditDlgData[] = {
-			{DI_DOUBLEBOX, 3, 1, DLG_X - 4, (short)(DLG_Y - 2), {}, 0, (SubMenu ? Msg::EditSubmenuTitle : Msg::EditMenuTitle)},
-			{DI_TEXT,      5, 2, 0, 2, {}, 0, Msg::EditMenuHotKey},
-			{DI_FIXEDIT,   5, 3, 7, 3, {}, DIF_FOCUS, L""},
-			{DI_TEXT,      5, 4, 0, 4, {}, 0, Msg::EditMenuLabel},
-			{DI_EDIT,      5, 5, DLG_X - 6, 5, {}, 0, L""},
+				{DI_DOUBLEBOX, 3, 1, DLG_X - 4, (short)(DLG_Y - 2), {}, 0, (SubMenu ? Msg::EditSubmenuTitle : Msg::EditMenuTitle)},
+				{DI_TEXT,      5, 2, 0, 2, {}, 0, Msg::EditMenuHotKey},
+				{DI_FIXEDIT,   5, 3, 7, 3, {}, DIF_FOCUS, L""},
+				{DI_TEXT,      5, 4, 0, 4, {}, 0, Msg::EditMenuLabel},
+				{DI_EDIT,      5, 5, DLG_X - 6, 5, {}, 0, L""},
 
-			{DI_TEXT,      3, 6, 0, 6, {}, DIF_SEPARATOR | State, L""},
-			{DI_TEXT,      5, 7, 0, 7, {}, State, Msg::EditMenuCommands},
-#ifdef PROJECT_DI_MEMOEDIT
-			{DI_MEMOEDIT,  5, 8, DLG_X - 6, 17, {}, DIF_EDITPATH, L""},
-#else
-			{DI_EDIT, 5, 8, DLG_X - 6, 8, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 9, DLG_X - 6, 9, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 10, DLG_X - 6, 10, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 11, DLG_X - 6, 11, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 12, DLG_X - 6, 12, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 13, DLG_X - 6, 13, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 14, DLG_X - 6, 14, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 15, DLG_X - 6, 15, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 16, DLG_X - 6, 16, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-			{DI_EDIT, 5, 17, DLG_X - 6, 17, {}, DIF_EDITPATH | DIF_EDITOR | State, L""},
-#endif
-			{DI_TEXT,   3, (short)(DLG_Y - 4), 0, (short)(DLG_Y - 4), {}, DIF_SEPARATOR, L""},
-			{DI_BUTTON, 0, (short)(DLG_Y - 3), 0, (short)(DLG_Y - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
-			{DI_BUTTON, 0, (short)(DLG_Y - 3), 0, (short)(DLG_Y - 3), {}, DIF_CENTERGROUP, Msg::Cancel}
-		};
+				{DI_TEXT,      3, 6, 0, 6, {}, DIF_SEPARATOR | State, L""},
+				{DI_TEXT,      5, 7, 0, 7, {}, State, Msg::EditMenuCommands},
+				{DI_MEMOEDIT,  5, 8, DLG_X - 6, 17, {}, DIF_EDITPATH, L""},
+				{DI_TEXT,   3, (short)(DLG_Y - 4), 0, (short)(DLG_Y - 4), {}, DIF_SEPARATOR, L""},
+				{DI_BUTTON, 0, (short)(DLG_Y - 3), 0, (short)(DLG_Y - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
+				{DI_BUTTON, 0, (short)(DLG_Y - 3), 0, (short)(DLG_Y - 3), {}, DIF_CENTERGROUP, Msg::Cancel}
+			};
 		MakeDialogItemsEx(EditDlgData, EditDlg);
-#ifndef PROJECT_DI_MEMOEDIT
-		enum
-		{
-			DI_EDIT_COUNT = EM_SEPARATOR2 - EM_COMMANDS_TEXT - 1
-		};
-#endif
+		static const wchar_t kUserMenuMemoFilename[] = L"Far2lUserMenu.bash";
+		EditDlg[EM_MEMOEDIT].UserData = (DWORD_PTR)kUserMenuMemoFilename;
 
 		if (!Create) {
 			EditDlg[EM_HOTKEY_EDIT].strData = s_cfg_reader->GetString("HotKey", L"");
 			EditDlg[EM_LABEL_EDIT].strData = s_cfg_reader->GetString("Label", L"");
-#if defined(PROJECT_DI_MEMOEDIT)
 			/*
 				...
 				здесь добавка строк из "Command%d" в EMR_MEMOEDIT
@@ -1034,19 +991,6 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey, int EditPos, int TotalRecords, b
 			}
 
 			EditDlg[EM_MEMOEDIT].strData = strBuffer;	//???
-#else
-			int CommandNumber = 0;
-
-			while (CommandNumber < DI_EDIT_COUNT) {
-				FARString strCommand;
-				if (!s_cfg_reader->GetString(strCommand, StrPrintf("Command%d", CommandNumber), L""))
-					break;
-
-				EditDlg[EM_EDITLINE_0 + CommandNumber].strData = strCommand;
-				CommandNumber++;
-			}
-
-#endif
 		}
 
 		Dialog Dlg(EditDlg, ARRAYSIZE(EditDlg), EditMenuDlgProc);
@@ -1069,31 +1013,59 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey, int EditPos, int TotalRecords, b
 				cfg_writer.SetString("Label", EditDlg[EM_LABEL_EDIT].strData.CPtr());
 				cfg_writer.SetInt("Submenu", SubMenu ? 1 : 0);
 
-				if (!SubMenu) {
-#if defined(PROJECT_DI_MEMOEDIT)
-					/*
-					...
-					здесь преобразование содержимого итема EMR_MEMOEDIT в "Command%d"
-					...
-					*/
-#else
-					int CommandNumber = 0;
+					if (!SubMenu) {
+						/*
+						...
+						здесь преобразование содержимого итема EMR_MEMOEDIT в "Command%d"
+						...
+						*/
+						const FARString &memoText = EditDlg[EM_MEMOEDIT].strData;
+						std::vector<FARString> lines;
+						lines.reserve(32);
 
-					for (int i = 0; i < DI_EDIT_COUNT; i++)
-						if (!EditDlg[i + EM_EDITLINE_0].strData.IsEmpty())
-							CommandNumber = i + 1;
+						FARString line;
+						const wchar_t *src = memoText.CPtr();
+						size_t len = memoText.GetLength();
+						for (size_t i = 0; i < len; ++i) {
+							wchar_t ch = src[i];
+							if (ch == L'\r') {
+								if (i + 1 < len && src[i + 1] == L'\n')
+									continue;
+								lines.push_back(line);
+								line.Clear();
+								continue;
+							}
+							if (ch == L'\n') {
+								lines.push_back(line);
+								line.Clear();
+								continue;
+							}
+							line+= ch;
+						}
+						lines.push_back(line);
 
-					for (int i = 0; i < DI_EDIT_COUNT; i++) {
-						const std::string &strCommandName = StrPrintf("Command%d", i);
+						int lastNonEmpty = -1;
+						for (int i = (int)lines.size() - 1; i >= 0; --i) {
+							if (!lines[i].IsEmpty()) {
+								lastNonEmpty = i;
+								break;
+							}
+						}
 
-						if (i >= CommandNumber)
-							cfg_writer.RemoveKey(strCommandName);
-						else
-							cfg_writer.SetString(strCommandName, EditDlg[i + EM_EDITLINE_0].strData.CPtr());
+						FARString tmp;
+						for (int i = 0;; ++i) {
+							const std::string &strCommandName = StrPrintf("Command%d", i);
+							if (lastNonEmpty >= 0 && i <= lastNonEmpty) {
+								cfg_writer.SetString(strCommandName, lines[i].CPtr());
+							} else {
+								if (s_cfg_reader->GetString(tmp, strCommandName, L""))
+									cfg_writer.RemoveKey(strCommandName);
+								else
+									break;
+							}
+						}
 					}
-#endif
 				}
-			}
 
 			ConfigReaderScope::Update(s_cfg_reader);
 			Result = true;

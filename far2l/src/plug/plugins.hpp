@@ -47,6 +47,7 @@ extern const char *FmtPluginMenuStringD;
 extern const char *FmtPluginConfigStringD;
 
 class SaveScreen;
+class Editor;
 class FileEditor;
 class Viewer;
 class Frame;
@@ -169,6 +170,7 @@ public:
 	Plugin *CurPluginItem;
 
 	FileEditor *CurEditor;
+	Editor *CurDialogEditor;
 	Viewer *CurViewer;	// 27.09.2000 SVS: Указатель на текущий Viewer
 
 private:

@@ -546,7 +546,8 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
-	_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+	if (!_bracketed_paste_mode)
+		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);

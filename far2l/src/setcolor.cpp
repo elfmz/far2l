@@ -118,8 +118,8 @@ static int ListPaletteItems[4][15] = {
 
 void SetColors()
 {
-	std::vector<std::string> v  = FarColors::GetKnownUserThemes ();
-	std::vector<std::string> v2 = FarColors::GetKnownSystemThemes ();
+	std::vector<std::string> v   = FarColors::GetKnownUserThemes ();
+	std::vector<std::string> v2  = FarColors::GetKnownSystemThemes ();
 
 	MenuDataEx BaseGroups[] = {
 		{(const wchar_t *)Msg::SetColorPanel,       LIF_SELECTED,  0},
@@ -137,67 +137,58 @@ void SetColors()
 		{(const wchar_t *)Msg::SetDefaultColors,    0,             0},
 		{(const wchar_t *)Msg::SetDefaultColorsRGB, 0,             0},
 		{(const wchar_t *)Msg::SetBW,               0,             0},
-		// {L"",                                       LIF_SEPARATOR, 0}, /* this point do nothing so we can safely remove it */
-		// {(const wchar_t *)Msg::Palette,             0,             0}
+		{L"",                                       LIF_SEPARATOR, 0},
+		{Msg::ColorThemesNoTheme,                   0,             0},
 	};
 
 	size_t BaseGroupLen = ARRAYSIZE(BaseGroups);
 	size_t GroupsLen = BaseGroupLen + 
-		(v.size() > 0 ? v.size() : 0) +   			/* user themes */
-		(v2.size() > 0 ? v2.size() : 0) + 			/* system themes */
-		(v.size() > 0 && v2.size() > 0 ? 1 : 0) + 	/* separator between theme types */
-		(v.size() > 0 || v2.size() > 0 ? 2 : 0);	/* "No theme" point + separator */
+		(v2.size() > 0 ? v2.size() : 0) +   		/* user themes */
+		(v.size() > 0 ? v.size() : 0) + 		/* system themes */
+		(v.size() > 0 && v2.size() > 0 ? 1 : 0); 	/* separator between theme types */
 	MenuDataEx Groups[GroupsLen];
-	size_t ptr = BaseGroupLen;
 
+    /* copy from temnplate */
 	for(size_t i = 0; i < BaseGroupLen; ++i) {
 		Groups[i].Name = BaseGroups[i].Name;
 		Groups[i].Flags = BaseGroups[i].Flags;
 		Groups[i].AccelKey = BaseGroups[i].AccelKey;
 	}
 
-	if (v.size() > 0 || v2.size() > 0) {
-		Groups[BaseGroupLen].Name = v.size() > 0 ? Msg::ColorThemesUserSection : Msg::ColorThemesPreinstalledSection;
+	if (Opt.CurrentTheme.IsEmpty()) /* built-in check */
+		Groups[BaseGroupLen - 1].SetCheck(1);
+
+    /* add user themes (if exists) */
+	size_t ptr = BaseGroupLen;
+	if (v.size() > 0) {
+		Groups[BaseGroupLen].Name = Msg::ColorThemesUserSection;
 		Groups[BaseGroupLen].Flags = LIF_SEPARATOR;
 		Groups[BaseGroupLen].AccelKey = 0;
-
-		Groups[BaseGroupLen + 1].Name = Msg::ColorThemesNoTheme;
-		Groups[BaseGroupLen + 1].Flags = 0;
-		Groups[BaseGroupLen + 1].AccelKey = 0;
-
-		ptr += 2;
-
-		if (Opt.CurrentTheme.IsEmpty())
-			Groups[ARRAYSIZE(BaseGroups) + 1].SetCheck(1);
+		++ptr;
 	}
 
 	size_t startOfUserThemes = ptr;
-
 	if (v.size() > 0) {
     	for(size_t j = 0; j < v.size(); ++j) {
     	    int Length = v[j].length();
     	   	std::wstring _tmpwstr;
     	    MB2Wide(v[j].c_str(), Length, _tmpwstr);
-			Groups[BaseGroupLen + j + 2].Name = wcsdup(_tmpwstr.c_str());
-			Groups[BaseGroupLen + j + 2].Flags = 0;
-			Groups[BaseGroupLen + j + 2].AccelKey = 0;
+			Groups[ptr].Name = wcsdup(_tmpwstr.c_str());
+			Groups[ptr].Flags = 0;
+			Groups[ptr].AccelKey = 0;
 
-			if (!wcscmp(Opt.CurrentTheme.GetBuffer(), Groups[BaseGroupLen + j + 2].Name) && !Opt.IsSystemTheme) 
-				Groups[BaseGroupLen + j + 2].SetCheck(1);
+			if (!wcscmp(Opt.CurrentTheme.GetBuffer(), Groups[ptr].Name) && !Opt.IsSystemTheme) 
+				Groups[ptr].SetCheck(1);
+            ++ptr;
     	}
-
-        ptr += v.size();
 	}
 
-	size_t startOfSystemThemes = ptr + (v.size() > 0 ? 1 : 0);
-
+	size_t startOfSystemThemes = ptr + 1;
 	if (v2.size() > 0) {
-		if (v.size() > 0) {
-			Groups[ptr].Name = Msg::ColorThemesPreinstalledSection;
-			Groups[ptr].Flags = LIF_SEPARATOR;
-			Groups[ptr].AccelKey = 0;
-            ++ptr;
-		}
+		Groups[ptr].Name = Msg::ColorThemesPreinstalledSection;
+		Groups[ptr].Flags = LIF_SEPARATOR;
+		Groups[ptr].AccelKey = 0;
+        ++ptr;
 
     	for(size_t j = 0; j < v2.size(); ++j) {
     	    int Length = v2[j].length();
@@ -456,7 +447,7 @@ void SetColors()
 				break;
 			}
 
-			if (GroupsCode == (int)BaseGroupLen + 1) { // "No theme" selected
+			if (GroupsCode == 16) { // "No theme" selected
 
 				Opt.CurrentTheme = "";
 				Opt.IsColorsChanged = false;
@@ -468,7 +459,7 @@ void SetColors()
 			}
 
 			if (v.size() > 0 && GroupsCode >= (int)startOfUserThemes && GroupsCode < (int)startOfSystemThemes) {
-				// we have theme to be chozen from user
+				// we have theme to be chozen from preinstalled
 
 				size_t k = GroupsCode - startOfUserThemes;
 
@@ -482,7 +473,7 @@ void SetColors()
 			}
 
 			if (v2.size() > 0 && GroupsCode >= (int)startOfSystemThemes) {
-				 // we have theme to be chozen from installation
+				 // we have theme to be chozen from user settings
 				size_t k = GroupsCode - startOfSystemThemes;
 
 				Opt.CurrentTheme = v2[k];

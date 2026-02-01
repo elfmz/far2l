@@ -27401,15 +27401,15 @@ upd:"Preinstalled themes"
 upd:"Preinstalled themes"
 
 ColorThemesNoTheme
-"По умолчанию (встроенная)"
-"Default (built-in)"
-upd:"Default (built-in)"
-upd:"Default (built-in)"
-upd:"Default (built-in)"
-upd:"Default (built-in)"
-upd:"Default (built-in)"
-upd:"Default (built-in)"
-upd:"Default (built-in)"
+"Тема по умолчанию (встроенная)"
+"Default theme (built-in)"
+upd:"Default theme (built-in)"
+upd:"Default theme (built-in)"
+upd:"Default theme (built-in)"
+upd:"Default theme (built-in)"
+upd:"Default theme (built-in)"
+upd:"Default theme (built-in)"
+upd:"Default theme (built-in)"
 
 #Must be the last
 NewFileName

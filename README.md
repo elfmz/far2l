@@ -49,7 +49,7 @@ FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far
 * See also (in external documents):
     * [Change log](changelog.md)
     * [Releases](https://github.com/elfmz/far2l/releases)
-    * [Python plugin readme](python/configs/plugins/read-en.txt)
+    * [Python plugin readme](python/configs/plugins/read-en.txt) and [Short information about each Python plugins/files](python/configs/plugins/readme-plugins.txt)
     * [Notes on porting and FAR Plugin API changes](HACKING.md)
     * [Coding style](CODESTYLE.md)
     * [Testing](testing/README.md)

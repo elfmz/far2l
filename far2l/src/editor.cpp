@@ -557,6 +557,11 @@ void Editor::ShowEditor(int CurLineOnly)
 		CurLine->SetLeftPos(0);
 		MaxRightPos = CurLine->GetCellCurPos();
 
+		int v_start, v_end;
+		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
+		int visual_line_start_cell = CurLine->RealPosToCell(v_start);
+		m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
+
 		// Ensure TopScreen pointers are initialized
 		if (!m_TopScreenLogicalLine) {
 			m_TopScreenLogicalLine = TopScreen;
@@ -2213,8 +2218,6 @@ int Editor::ProcessKey(FarKey Key)
 			}
 			else
 			{
-				CurPos = CurLine->RealPosToCell(CurPos);
-
 				if (!SelStart) {
 					CurLine->Select(-1, 0);
 				} else {
@@ -3480,6 +3483,14 @@ case KEY_CTRLNUMPAD3: {
 		}
 		default: {
 			{
+				// workaround for #3149
+				unsigned int BaseKey = Key & ~KEY_SHIFT;
+				if (m_bWordWrap && (
+						((BaseKey >= KEY_CTRLG) && (BaseKey <= KEY_CTRLJ)) ||
+						BaseKey == KEY_CTRLR
+					))
+					return TRUE;
+
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL
 							|| Key == KEY_CTRLT)
 						&& CurPos >= CurLine->GetLength()) {
@@ -3830,6 +3841,39 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
+	if (!m_bWordWrap && (MouseEvent->dwButtonState & 3) && (MouseEvent->dwEventFlags & MOUSE_MOVED)) {
+		if (MouseEvent->dwMousePosition.X <= X1 || MouseEvent->dwMousePosition.X >= XX2) {
+			const bool Left = MouseEvent->dwMousePosition.X <= X1;
+			while (IsMouseButtonPressed() && (Left ? MouseX <= X1 : MouseX >= XX2)) {
+				if (Left) {
+					if (CurLine->GetCurPos() == 0) break;
+				} else {
+					if (!EdOpt.CursorBeyondEOL && CurLine->GetCurPos() >= CurLine->GetLength()) break;
+				}
+
+				Pasting++;
+				ProcessKey(Left ? KEY_LEFT : KEY_RIGHT);
+				Pasting--;
+
+				if (MouseSelStartingLine != -1) {
+					const int TargetPos = CurLine->GetCurPos();
+					const bool SelVBlock = (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
+
+					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
+						MarkBlock(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
+								TargetPos - MouseSelStartingPos, NumLine + 1 - MouseSelStartingLine);
+					} else {
+						MarkBlock(SelVBlock, NumLine, TargetPos,
+								MouseSelStartingPos - TargetPos, MouseSelStartingLine + 1 - NumLine);
+					}
+				}
+				Show();
+				if (m_bWordWrap) break;
+				WINPORT(Sleep)(10);
+			}
+			return TRUE;
+		}
+	}
 	// scroll up/down by dragging outside editor window
 	if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
 		if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {

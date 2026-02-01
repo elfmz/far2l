@@ -872,6 +872,17 @@ int Edit::ProcessKey(FarKey Key)
 	}
 
 	switch (Key) {
+		case KEY_CTRLA:
+			Select(0, StrSize);
+			Show();
+			return FALSE;
+
+		case KEY_CTRLU:
+			SetClearFlag(0);
+			Select(-1, 0);
+			Show();
+			return FALSE;
+
 		case KEY_SHIFTLEFT:
 		case KEY_SHIFTNUMPAD4: {
 			if (CurPos > 0) {

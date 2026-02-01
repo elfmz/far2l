@@ -7,6 +7,8 @@ src/farversion.cpp
 src/cache.cpp
 src/chattr.cpp
 src/clipboard.cpp
+src/printersupport.cpp
+src/fileedit2html.cpp
 src/cmdline.cpp
 src/copy.cpp
 src/ctrlobj.cpp

@@ -780,10 +780,14 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 			Печать файла/блока с использованием плагина PrintMan
 		*/
 		case KEY_ALTF5: {
+			/*
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER)) {
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER, OPEN_EDITOR, nullptr);	// printman
 				return TRUE;
 			}
+            */
+            if (!CalledFromControl && SendToPrinter())
+            	return TRUE;
 
 			break;	// отдадим Alt-F5 на растерзание плагинам, если не установлен PrintMan
 		}

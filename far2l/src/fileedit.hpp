@@ -96,6 +96,8 @@ public:
 			const wchar_t *Title, int X1, int Y1, int X2, int Y2, int OpenModeExstFile = FEOPMODE_QUERY);
 	virtual ~FileEditor();
 
+	BOOL SendToPrinter(); // tries to print either selected block or whole text
+
 	void ShowStatus();
 	void SetLockEditor(BOOL LockMode);
 	bool IsFullScreen() { return Flags.Check(FFILEEDIT_FULLSCREEN) != FALSE; }

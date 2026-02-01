@@ -6,6 +6,7 @@
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
 #include <memory>
+#include "wxPrinterSupport.h"
 
 #define AREAS_REDUCTION
 
@@ -171,6 +172,9 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	if (!a->ext_clipboard) {
 		clipboard_backend_setter.Set<wxClipboardBackend>();
 	}
+
+	PrinterSupportBackendSetter printer_backend_setter;
+	printer_backend_setter.Set<wxPrinterSupportBackend>();
 
 	if (a->app_main && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(a->argc, a->argv, a->app_main);

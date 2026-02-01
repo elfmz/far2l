@@ -37,10 +37,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class MenuBar : public ScreenObject
 {
-private:
+protected:
 	virtual void DisplayObject();
 
 public:
 	MenuBar() {}
 	virtual ~MenuBar() {}
+};
+
+class EditorMenuBar : public MenuBar
+{
+public:
+	virtual void DisplayObject();
+
+	EditorMenuBar() {}
+	virtual ~EditorMenuBar() {}
 };

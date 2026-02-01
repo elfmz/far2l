@@ -19,6 +19,20 @@ Update from 03/11/22: far2l's console emulator capable to correctly render full-
 * Both above transformations happen automatically _only_ if using WriteConsole API. If one uses WriteConsoleOutput - then its up to caller to perform that transformations. Failing to do so will cause incorrect rendering of full-width or diactrical characters.
 * CHAR_INFO's and CONSOLE_SCREEN_BUFFER_INFO's Attributes fields extended to 64 bit to be able to hold 24 bit RGB colors in higher bytes. Use macroses GET_RGB_FORE/GET_RGB_BACK/SET_RGB_FORE/SET_RGB_BACK/SET_RGB_BOTH to access that colors. Note that such colors will be used only if FOREGROUND_TRUECOLOR/BACKGROUND_TRUECOLOR attribute is set. Old attributes define colors from usual 16-elements palette used to render if ..._TRUECOLOR is not set or if backend's target doesn't support more than 16 colors.
 
+## Edirtor and menu bar: point of further improvements
+
+The F9 is captured to menu activation, configuration is still available via Alt+Shift+F9.
+
+Brief explanation how to add new menu points (by example: add new point in View sub-menu)
+
+fileedit2options.hpp - add new point in enum enumViewMenu. It is necessary because menus uses simple numbers as the position in menu and it is not so comfortable to track it by ordinals. Like MENU_VIEW_FOOBAR. Keep in mind the separators are the menu points and it has a position.
+
+fileedit2options.cpp: menu itself. Add new option in MenuDataEx ViewMenu - like {Msg::EditorMenuViewFooBar, 0, 0 } and it means we added new point without accelerator key.
+
+fileedit.cpp. in int FileEditor::IsOptionActive(int hMenu, int vMenu)  you can add the corresponding handling if you want to support checked menu item, but it is optional.
+
+fileedit.cpp, in void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)  you need to add your own handling if your menu item does not have accelerator key; and you need to modify int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl) otherwise. By default, menu handler invokes acceleration key if it is exists.
+
 ## Plugin API
 
 Plugins API based on FAR Manager v2 plus following changes:

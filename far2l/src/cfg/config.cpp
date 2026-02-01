@@ -1154,6 +1154,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditConfigScrollbar, &EdOpt.ShowScrollBar);
 	Builder.AddCheckbox(Msg::EditConfigPickUpWord, &EdOpt.SearchPickUpWord);
 	Builder.AddCheckbox(Msg::EditShowTitleBar, &EdOpt.ShowTitleBar);
+	Builder.AddCheckbox(Msg::EditShowMenuBar, &EdOpt.ShowMenuBar);
 	Builder.AddCheckbox(Msg::EditWordWrap, &EdOpt.WordWrap);
 	Builder.EndColumns();
 

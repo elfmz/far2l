@@ -51,3 +51,18 @@ void MenuBar::DisplayObject()
 	SetFarColor(COL_HMENUTEXT);
 	Text(strFullMsg);
 }
+
+
+void EditorMenuBar::DisplayObject()
+{
+	FARString strSpace = L"    ";
+	FARString strMsg = strSpace + Msg::EditorMenuFileTitle + strSpace + Msg::EditorMenuEditTitle + strSpace
+			+ Msg::EditorMenuNavigateTitle + strSpace + Msg::EditorMenuViewTitle;
+	RemoveHighlights(strMsg);
+	int Length = X2 - X1 + 1;
+	FARString strFullMsg;
+	strFullMsg.Format(L"%-*.*ls", Length, Length, strMsg.CPtr());
+	GotoXY(X1, Y1);
+	SetFarColor(COL_HMENUTEXT);
+	Text(strFullMsg);
+}

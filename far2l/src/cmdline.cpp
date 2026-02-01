@@ -97,44 +97,67 @@ void NormalizeMultilineForExec(FARString &text)
 	text = out;
 }
 
-namespace {
 enum
 {
-	MP_BOX,
-	MP_MEMO,
-	MP_SEPARATOR,
-	MP_BTN_CANCEL,
-	MP_BTN_EXEC,
-	MP_BTN_EXEC_NOASK
+	MD_BOX,
+	MD_MEMO,
+	MD_SEPARATOR,
+	MD_BTN1,
+	MD_BTN2,
+	MD_BTN3
 };
 
-struct CmdlinePasteDlgLayout
+struct CmdlineMultilineDlgLayout
 {
 	int min_width;
 	int min_height;
+	int id_box;
+	int id_memo;
+	int id_sep;
+	int id_btn1;
+	int id_btn2;
+	int id_btn3;
 };
 
-static void CalcCmdlinePasteDialogLayout(const CmdlinePasteDlgLayout &layout, int &dlg_w, int &dlg_h, int &dlg_x,
+constexpr int kCmdlineDlgMinWidth = 40;
+constexpr int kCmdlineDlgMinHeight = 12;
+constexpr int kCmdlineDlgMaxWidth = 76;
+constexpr int kCmdlineDlgMaxHeight = 20;
+constexpr int kCmdlineDlgMargin = 2;
+constexpr int kCmdlineDlgSepOffset = 4;
+constexpr int kCmdlineDlgBtnOffset = 3;
+
+static void CalcCmdlineMultilineDialogLayout(int min_width, int min_height, int &dlg_w, int &dlg_h, int &dlg_x,
 		int &dlg_y)
 {
-	dlg_w = Max(layout.min_width, Min(ScrX - 2, Max(76, (ScrX * 3) / 4)));
-	dlg_h = Max(layout.min_height, Min(ScrY - 2, Max(20, (ScrY * 2) / 3)));
+	dlg_w = Max(min_width, Min(ScrX - kCmdlineDlgMargin, Max(kCmdlineDlgMaxWidth, (ScrX * 3) / 4)));
+	dlg_h = Max(min_height, Min(ScrY - kCmdlineDlgMargin, Max(kCmdlineDlgMaxHeight, (ScrY * 2) / 3)));
 	dlg_x = Max(0, (ScrX - dlg_w) / 2);
 	dlg_y = Max(0, (ScrY - dlg_h) / 2);
 }
 
-static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+static void BuildMultilineDialogData(DialogDataEx *data, FarLangMsg title, FarLangMsg btn1, DWORD btn1_flags,
+		FarLangMsg btn2, DWORD btn2_flags, bool has_btn3, FarLangMsg btn3, int dlg_w, int dlg_h, int sep_y,
+		int btn_y)
+{
+	data[MD_BOX] = {DI_DOUBLEBOX, 3, 1, (short)(dlg_w - 4), (short)(dlg_h - 2), {}, 0, title};
+	data[MD_MEMO] = {DI_MEMOEDIT, 5, 2, (short)(dlg_w - 6), (short)(dlg_h - 5), {}, DIF_FOCUS, L""};
+	data[MD_SEPARATOR] = {DI_TEXT, 0, (short)sep_y, 0, (short)sep_y, {}, DIF_SEPARATOR, L""};
+	data[MD_BTN1] = {DI_BUTTON, 0, (short)btn_y, 0, (short)btn_y, {}, btn1_flags | DIF_CENTERGROUP, btn1};
+	data[MD_BTN2] = {DI_BUTTON, 0, (short)btn_y, 0, (short)btn_y, {}, btn2_flags | DIF_CENTERGROUP, btn2};
+	if (has_btn3)
+		data[MD_BTN3] = {DI_BUTTON, 0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP, btn3};
+}
+
+static INT_PTR WINAPI CmdlineMultilineDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if (Msg == DN_RESIZECONSOLE) {
-		auto *layout = reinterpret_cast<CmdlinePasteDlgLayout *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+		auto *layout = reinterpret_cast<CmdlineMultilineDlgLayout *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 		if (!layout)
 			return DefDlgProc(hDlg, Msg, Param1, Param2);
 
-		int dlg_w = 0;
-		int dlg_h = 0;
-		int dlg_x = 0;
-		int dlg_y = 0;
-		CalcCmdlinePasteDialogLayout(*layout, dlg_w, dlg_h, dlg_x, dlg_y);
+		int dlg_w = 0, dlg_h = 0, dlg_x = 0, dlg_y = 0;
+		CalcCmdlineMultilineDialogLayout(layout->min_width, layout->min_height, dlg_w, dlg_h, dlg_x, dlg_y);
 
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 
@@ -149,35 +172,37 @@ static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG
 		rect.Top = 1;
 		rect.Right = (SHORT)(dlg_w - 4);
 		rect.Bottom = (SHORT)(dlg_h - 2);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BOX, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_box, reinterpret_cast<LONG_PTR>(&rect));
 
 		rect.Left = 5;
 		rect.Top = 2;
 		rect.Right = (SHORT)(dlg_w - 6);
 		rect.Bottom = (SHORT)(dlg_h - 5);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_MEMO, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_memo, reinterpret_cast<LONG_PTR>(&rect));
 
 		rect.Left = 0;
 		rect.Right = 0;
 		rect.Top = (SHORT)(dlg_h - 5);
 		rect.Bottom = (SHORT)(dlg_h - 5);
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_SEPARATOR, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_sep, reinterpret_cast<LONG_PTR>(&rect));
 		rect.Top = (SHORT)(dlg_h - 4);
 		rect.Bottom = (SHORT)(dlg_h - 4);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_SEPARATOR, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_sep, reinterpret_cast<LONG_PTR>(&rect));
 
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_BTN_CANCEL, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_btn1, reinterpret_cast<LONG_PTR>(&rect));
 		rect.Top = (SHORT)(dlg_h - 3);
 		rect.Bottom = (SHORT)(dlg_h - 3);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BTN_CANCEL, reinterpret_cast<LONG_PTR>(&rect));
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_BTN_EXEC, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_btn1, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_btn2, reinterpret_cast<LONG_PTR>(&rect));
 		rect.Top = (SHORT)(dlg_h - 3);
 		rect.Bottom = (SHORT)(dlg_h - 3);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BTN_EXEC, reinterpret_cast<LONG_PTR>(&rect));
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_BTN_EXEC_NOASK, reinterpret_cast<LONG_PTR>(&rect));
-		rect.Top = (SHORT)(dlg_h - 3);
-		rect.Bottom = (SHORT)(dlg_h - 3);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BTN_EXEC_NOASK, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_btn2, reinterpret_cast<LONG_PTR>(&rect));
+		if (layout->id_btn3 >= 0) {
+			SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_btn3, reinterpret_cast<LONG_PTR>(&rect));
+			rect.Top = (SHORT)(dlg_h - 3);
+			rect.Bottom = (SHORT)(dlg_h - 3);
+			SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_btn3, reinterpret_cast<LONG_PTR>(&rect));
+		}
 
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 		return TRUE;
@@ -185,57 +210,88 @@ static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
-} // namespace
 
-int ShowMultilinePasteDialog(FARString &text)
+enum class MultilineDialogMode
+{
+	Paste,
+	Edit
+};
+
+struct MultilineDialogConfig
+{
+	int box_id;
+	int memo_id;
+	int sep_id;
+	int btn_ids[3]; // [0]=Cancel, [1]=OK, [2]=OK2 or -1 if not present
+};
+
+static int RunMultilineDialog(FARString &text, DialogDataEx *DlgData, size_t item_count,
+		const MultilineDialogConfig &cfg, int min_width, int min_height, int dlg_w, int dlg_h,
+		MultilineDialogMode mode)
 {
 	static const wchar_t kCmdlineMemoFilename[] = L"cmdline.bash";
-	const int min_width = 40;
-	const int min_height = 12;
-	const int dlg_w = Max(min_width, Min(ScrX - 2, Max(76, (ScrX * 3) / 4)));
-	const int dlg_h = Max(min_height, Min(ScrY - 2, Max(20, (ScrY * 2) / 3)));
-	const int sep_y = dlg_h - 4;
-	const int btn_y = dlg_h - 3;
-//	const int dlg_w = Max(min_width, Min(ScrX - 2, 76));
-//	const int dlg_h = Max(min_height, Min(ScrY - 2, 20));
 
-	DialogDataEx DlgData[] = {
-		{DI_DOUBLEBOX, 3, 1, (short)(dlg_w - 4), (short)(dlg_h - 2), {}, 0, Msg::MultilinePaste},
-		{DI_MEMOEDIT,  5, 2, (short)(dlg_w - 6), (short)(dlg_h - 5), {}, DIF_FOCUS, L""},
-		{DI_TEXT,      0, (short)sep_y, 0, (short)sep_y, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP, Msg::HCancel},
-		{DI_BUTTON,    0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP | DIF_DEFAULT, Msg::HExecute},
-		{DI_BUTTON,    0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP, Msg::HExecuteNoAsk}
-	};
+	std::vector<DialogItemEx> DlgItems(item_count);
+	DataToItemEx(DlgData, DlgItems.data(), item_count);
+	DlgItems[cfg.memo_id].strData = text;
+	DlgItems[cfg.memo_id].UserData = (DWORD_PTR)kCmdlineMemoFilename;
 
-	MakeDialogItemsEx(DlgData, DlgItems);
-	DlgItems[MP_MEMO].strData = text;
-	DlgItems[MP_MEMO].UserData = (DWORD_PTR)kCmdlineMemoFilename;
+	CmdlineMultilineDlgLayout layout = {min_width, min_height, cfg.box_id, cfg.memo_id, cfg.sep_id, cfg.btn_ids[0],
+			cfg.btn_ids[1], cfg.btn_ids[2]};
 
-	CmdlinePasteDlgLayout layout = {min_width, min_height};
-	Dialog Dlg(DlgItems, ARRAYSIZE(DlgItems), CmdlinePasteDlgProc, reinterpret_cast<LONG_PTR>(&layout));
+	Dialog Dlg(DlgItems.data(), item_count, CmdlineMultilineDlgProc, reinterpret_cast<LONG_PTR>(&layout));
 	Dlg.SetPosition(-1, -1, dlg_w, dlg_h);
+	Dlg.SetDialogData(reinterpret_cast<LONG_PTR>(&layout));
 	Dlg.Process();
 
 	int exit_code = Dlg.GetExitCode();
-	if (exit_code == MP_BTN_EXEC || exit_code == MP_BTN_EXEC_NOASK) {
-		int len = (int)SendDlgMessage((HANDLE)&Dlg, DM_GETTEXTLENGTH, MP_MEMO, 0);
-		if (len > 0) {
-			FARString edited;
-			wchar_t *buf = edited.GetBuffer(len + 1);
-			FarDialogItemData data = {(size_t)len, buf};
-			SendDlgMessage((HANDLE)&Dlg, DM_GETTEXT, MP_MEMO, (LONG_PTR)&data);
-			edited.ReleaseBuffer(len);
-			text = edited;
-		} else {
-			text = DlgItems[MP_MEMO].strData;
-		}
-		NormalizeMultilineForExec(text);
-		RemoveTrailingSpaces(text);
-		return (exit_code == MP_BTN_EXEC) ? 1 : 2;
+	if (exit_code == cfg.btn_ids[0] || exit_code < 0)
+		return 0;
+
+	int len = (int)SendDlgMessage((HANDLE)&Dlg, DM_GETTEXTLENGTH, cfg.memo_id, 0);
+	FARString edited;
+	if (len > 0) {
+		wchar_t *buf = edited.GetBuffer(len + 1);
+		FarDialogItemData data = {(size_t)len, buf};
+		SendDlgMessage((HANDLE)&Dlg, DM_GETTEXT, cfg.memo_id, (LONG_PTR)&data);
+		edited.ReleaseBuffer(len);
+	} else {
+		edited = DlgItems[cfg.memo_id].strData;
 	}
 
-	return 0;
+	NormalizeMultilineForExec(edited);
+	RemoveTrailingSpaces(edited);
+	text = edited;
+
+	if (mode == MultilineDialogMode::Paste)
+		return (exit_code == cfg.btn_ids[1]) ? 1 : 2;
+	return 1;
+}
+
+static int ShowMultilineDialog(FARString &text, MultilineDialogMode mode)
+{
+	const int min_width = kCmdlineDlgMinWidth;
+	const int min_height = kCmdlineDlgMinHeight;
+	int dlg_w = 0, dlg_h = 0, dlg_x = 0, dlg_y = 0;
+	CalcCmdlineMultilineDialogLayout(min_width, min_height, dlg_w, dlg_h, dlg_x, dlg_y);
+	const int sep_y = dlg_h - kCmdlineDlgSepOffset;
+	const int btn_y = dlg_h - kCmdlineDlgBtnOffset;
+
+	if (mode == MultilineDialogMode::Paste) {
+		DialogDataEx DlgData[6];
+		BuildMultilineDialogData(DlgData, Msg::MultilinePaste, Msg::HCancel, 0, Msg::HExecute, DIF_DEFAULT,
+				true, Msg::HExecuteNoAsk, dlg_w, dlg_h, sep_y, btn_y);
+		const MultilineDialogConfig cfg = {MD_BOX, MD_MEMO, MD_SEPARATOR, {MD_BTN1, MD_BTN2, MD_BTN3}};
+		return RunMultilineDialog(text, DlgData, ARRAYSIZE(DlgData), cfg, min_width, min_height, dlg_w, dlg_h,
+				mode);
+	}
+
+	DialogDataEx DlgData[5];
+	BuildMultilineDialogData(DlgData, Msg::EditCommand, Msg::Cancel, 0, Msg::Ok, DIF_DEFAULT, false, Msg::Ok,
+			dlg_w, dlg_h, sep_y, btn_y);
+	const MultilineDialogConfig cfg = {MD_BOX, MD_MEMO, MD_SEPARATOR, {MD_BTN1, MD_BTN2, -1}};
+	return RunMultilineDialog(text, DlgData, ARRAYSIZE(DlgData), cfg, min_width, min_height, dlg_w, dlg_h,
+			mode);
 }
 } // namespace
 
@@ -638,6 +694,18 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 		case KEY_TAB: case KEY_SHIFTTAB:
 			ProcessTabCompletion();
 			return TRUE;
+		case KEY_ALTE: {
+			FARString strStr;
+			CmdStr.GetString(strStr);
+			if (ShowMultilineDialog(strStr, MultilineDialogMode::Edit)) {
+				CmdStr.DisableAC();
+				SetString(strStr);
+				CmdStr.SetCurPos((int)strStr.GetLength());
+				CmdStr.RevertAC();
+				Show();
+			}
+			return TRUE;
+		}
 	}
 
 	if (Key != KEY_NONE) {
@@ -713,7 +781,7 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 					GPastedText.Clear();
 					RemoveTrailingSpaces(strToExec);
 					if (Opt.CmdLine.AskOnMultilinePaste) {
-						int res = ShowMultilinePasteDialog(strToExec);
+						int res = ShowMultilineDialog(strToExec, MultilineDialogMode::Paste);
 						if (res == 1) {
 							ExecString(strToExec);
 						}
@@ -780,7 +848,7 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + ClipText + strStr.SubStr(CmdStr.GetCurPos());
 					RemoveTrailingSpaces(strToExec);
 					if (Opt.CmdLine.AskOnMultilinePaste) {
-						int res = ShowMultilinePasteDialog(strToExec);
+						int res = ShowMultilineDialog(strToExec, MultilineDialogMode::Paste);
 						if (res == 1) {
 							ExecString(strToExec);
 						}

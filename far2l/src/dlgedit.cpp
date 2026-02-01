@@ -37,6 +37,48 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "dlgedit.hpp"
 #include "dialog.hpp"
 #include "history.hpp"
+#include "ctrlobj.hpp"
+
+namespace
+{
+class DialogEditorPluginScope
+{
+public:
+	DialogEditorPluginScope(Editor *editor)
+		: m_prev(CtrlObject ? CtrlObject->Plugins.CurDialogEditor : nullptr)
+	{
+		if (CtrlObject)
+			CtrlObject->Plugins.CurDialogEditor = editor;
+	}
+	~DialogEditorPluginScope()
+	{
+		if (CtrlObject)
+			CtrlObject->Plugins.CurDialogEditor = m_prev;
+	}
+
+private:
+	Editor *m_prev;
+};
+
+void NotifyDialogEditorFocus(Editor *editor, bool &opened, bool &has_focus, bool focus)
+{
+	if (!editor || !CtrlObject)
+		return;
+
+	DialogEditorPluginScope scope(editor);
+	if (!opened) {
+		CtrlObject->Plugins.ProcessEditorEvent(EE_READ, nullptr);
+		opened = true;
+	}
+
+	if (has_focus == focus)
+		return;
+
+	int id = editor->GetEditorID();
+	CtrlObject->Plugins.ProcessEditorEvent(focus ? EE_GOTFOCUS : EE_KILLFOCUS, &id);
+	has_focus = focus;
+}
+}
 
 DlgEdit::DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type)
 	:
@@ -44,16 +86,23 @@ DlgEdit::DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type)
 	m_Dialog(pOwner),
 	m_Index(Index),
 	Type(Type),
-#if defined(PROJECT_DI_MEMOEDIT)
-	multiEdit(nullptr),
-#endif
+	iHistory(nullptr),
 	lineEdit(nullptr)
+	,
+	multiEdit(nullptr),
+	m_dialogHasFocus(false),
+	m_dialogEditorOpened(false)
 {
 	switch (Type) {
 		case DLGEDIT_MULTILINE:
-#if defined(PROJECT_DI_MEMOEDIT)
 			multiEdit = new Editor(pOwner, true);	// ??? (pOwner) ?
-#endif
+			multiEdit->SetShowScrollBar(1);
+			if (pOwner) {
+				DialogItemEx *CurItem = pOwner->Item[Index];
+				if (CurItem && IsPtr(CurItem->UserData)) {
+					multiEdit->SetVirtualFileName(reinterpret_cast<const wchar_t *>(CurItem->UserData));
+				}
+			}
 			break;
 		case DLGEDIT_SINGLELINE: {
 			Edit::Callback callback = {true, EditChange, this};
@@ -94,88 +143,96 @@ DlgEdit::~DlgEdit()
 	if (lineEdit)
 		delete lineEdit;
 
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (multiEdit)
+	if (multiEdit) {
+		if (m_dialogEditorOpened && CtrlObject) {
+			DialogEditorPluginScope scope(multiEdit);
+			int id = multiEdit->GetEditorID();
+			CtrlObject->Plugins.ProcessEditorEvent(EE_CLOSE, &id);
+		}
 		delete multiEdit;
+	}
 
-#endif
 }
 
 int DlgEdit::ProcessKey(FarKey Key)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (Type == DLGEDIT_MULTILINE)
+	if (Type == DLGEDIT_MULTILINE) {
+		DialogEditorPluginScope scope(multiEdit);
 		return multiEdit->ProcessKey(Key);
-	else
-#endif
+	} else
 		return lineEdit->ProcessKey(Key);
 }
 
 int DlgEdit::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (Type == DLGEDIT_MULTILINE)
+	if (Type == DLGEDIT_MULTILINE) {
+		DialogEditorPluginScope scope(multiEdit);
 		return multiEdit->ProcessMouse(MouseEvent);
-	else
-#endif
+	} else
 		return lineEdit->ProcessMouse(MouseEvent);
 }
 
 void DlgEdit::DisplayObject()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (Type == DLGEDIT_MULTILINE)
+	if (Type == DLGEDIT_MULTILINE) {
+		if (m_Dialog && m_Index < m_Dialog->ItemCount) {
+			DialogItemEx *CurItem = m_Dialog->Item[m_Index];
+			if (CurItem) {
+				multiEdit->SetShowCursor(CurItem->Focus != 0);
+			}
+		}
+		NotifyDialogEditorFocus(multiEdit, m_dialogEditorOpened, m_dialogHasFocus, true);
+		DialogEditorPluginScope scope(multiEdit);
 		multiEdit->DisplayObject();
-	else
-#endif
+	} else
 		lineEdit->DisplayObject();
 }
 
 void DlgEdit::SetPosition(int X1, int Y1, int X2, int Y2)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetPosition(X1, Y1, X2, Y2);
 	else
-#endif
 		lineEdit->SetPosition(X1, Y1, X2, Y2);
 }
 
 void DlgEdit::Show()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (Type == DLGEDIT_MULTILINE)
+	if (Type == DLGEDIT_MULTILINE) {
+		if (m_Dialog && m_Index < m_Dialog->ItemCount) {
+			DialogItemEx *CurItem = m_Dialog->Item[m_Index];
+			if (CurItem) {
+				multiEdit->SetShowCursor(CurItem->Focus != 0);
+			}
+		}
+		NotifyDialogEditorFocus(multiEdit, m_dialogEditorOpened, m_dialogHasFocus, true);
+		DialogEditorPluginScope scope(multiEdit);
 		multiEdit->Show();
-	else
-#endif
+	} else
 		lineEdit->Show();
 }
 
 void DlgEdit::GetPosition(int &X1, int &Y1, int &X2, int &Y2)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->GetPosition(X1, Y1, X2, Y2);
 	else
-#endif
 		lineEdit->GetPosition(X1, Y1, X2, Y2);
 }
 
 void DlgEdit::SetDialogParent(DWORD Sets)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetDialogParent(Sets);
 	else
-#endif
 		lineEdit->SetDialogParent(Sets);
 }
 
@@ -207,23 +264,19 @@ void DlgEdit::SetPasswordMode(int Mode)
 
 void DlgEdit::SetOvertypeMode(int Mode)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetOvertypeMode(Mode);
 	else
-#endif
 		lineEdit->SetOvertypeMode(Mode);
 }
 
 int DlgEdit::GetOvertypeMode()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetOvertypeMode();
 	else
-#endif
 		return lineEdit->GetOvertypeMode();
 }
 
@@ -243,462 +296,461 @@ const wchar_t *DlgEdit::GetInputMask()
 
 void DlgEdit::SetEditBeyondEnd(int Mode)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetEditBeyondEnd(Mode);
 	else
-#endif
 		lineEdit->SetEditBeyondEnd(Mode);
 }
 
 void DlgEdit::SetClearFlag(int Flag)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetClearFlag(Flag);
 	else
-#endif
 		lineEdit->SetClearFlag(Flag);
 }
 
 int DlgEdit::GetClearFlag()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetClearFlag();
 	else
-#endif
 		return lineEdit->GetClearFlag();
 }
 
 const wchar_t *DlgEdit::GetStringAddr()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE) {
-		return nullptr;		//??? //multiEdit;
+		return nullptr;
 	} else
-#endif
 		return lineEdit->GetStringAddr();
 }
 
 void DlgEdit::SetHiString(const wchar_t *Str)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE) {
-		;	// multiEdit;
+		// Not supported for multiline editor control.
 	} else
-#endif
 		lineEdit->SetHiString(Str);
 }
 
 void DlgEdit::SetString(const wchar_t *Str)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE) {
-		;	// multiEdit;
+		if (multiEdit)
+			multiEdit->SetRawData(Str, -1, 0);
 	} else
-#endif
 		lineEdit->SetString(Str);
 }
 
 void DlgEdit::InsertString(const wchar_t *Str)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 	if (Type == DLGEDIT_MULTILINE) {
-		;	// multiEdit;
+		if (multiEdit)
+			multiEdit->SetRawData(Str, -1, 0);
 	} else
-#endif
 		lineEdit->InsertString(Str);
 }
 
 void DlgEdit::GetString(wchar_t *Str, int MaxSize, int Row)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE) {
-		;	// multiEdit;
+		if (!multiEdit || !Str || MaxSize <= 0)
+			return;
+		if (Row >= 0) {
+			Edit *line = multiEdit->GetStringByNumber(Row);
+			if (!line) {
+				*Str = 0;
+				return;
+			}
+			line->GetString(Str, MaxSize);
+		} else {
+			wchar_t *buf = nullptr;
+			int size = 0;
+			if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+				*Str = 0;
+				return;
+			}
+			int copy_len = Min(size, MaxSize - 1);
+			wmemcpy(Str, buf, copy_len);
+			Str[copy_len] = 0;
+			free(buf);
+		}
 	} else
-#endif
 		lineEdit->GetString(Str, MaxSize);
 }
 
 void DlgEdit::GetString(FARString &strStr, int Row)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE) {
-		;	// multiEdit;
+		if (!multiEdit) {
+			strStr.Clear();
+			return;
+		}
+		if (Row >= 0) {
+			Edit *line = multiEdit->GetStringByNumber(Row);
+			if (!line) {
+				strStr.Clear();
+				return;
+			}
+			line->GetString(strStr);
+		} else {
+			wchar_t *buf = nullptr;
+			int size = 0;
+			if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+				strStr.Clear();
+				return;
+			}
+			strStr.Copy(buf, size);
+			free(buf);
+		}
 	} else
-#endif
 		lineEdit->GetString(strStr);
 }
 
 void DlgEdit::SetCurPos(int NewCol, int NewRow)		// Row==-1 - current line
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetCurPos(NewCol, NewRow);
 	else
-#endif
 		lineEdit->SetCurPos(NewCol);
 }
 
 int DlgEdit::GetCurPos()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetCurPos();	// GetCurCol???
 	else
-#endif
 		return lineEdit->GetCurPos();
 }
 
 int DlgEdit::GetCurRow()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetCurRow();
 	else
-#endif
 		return 0;
 }
 
 int DlgEdit::GetCellCurPos()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetCurPos();	// GetCurCol???
 	else
-#endif
 		return lineEdit->GetCellCurPos();
 }
 
 void DlgEdit::SetCellCurPos(int NewPos)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetCurPos(NewPos, multiEdit->GetCurRow());	//???
 	else
-#endif
 		lineEdit->SetCellCurPos(NewPos);
 }
 
 void DlgEdit::SetPersistentBlocks(int Mode)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetPersistentBlocks(Mode);
 	else
-#endif
 		lineEdit->SetPersistentBlocks(Mode);
 }
 
 int DlgEdit::GetPersistentBlocks()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetPersistentBlocks();
 	else
-#endif
 		return lineEdit->GetPersistentBlocks();
 }
 
 void DlgEdit::SetDelRemovesBlocks(int Mode)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetDelRemovesBlocks(Mode);
 	else
-#endif
 		lineEdit->SetDelRemovesBlocks(Mode);
 }
 
 int DlgEdit::GetDelRemovesBlocks()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetDelRemovesBlocks();
 	else
-#endif
 		return lineEdit->GetDelRemovesBlocks();
 }
 
 void DlgEdit::SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetObjectColor(Color, SelColor, ColorUnChanged);
 	else
-#endif
 		lineEdit->SetObjectColor(Color, SelColor, ColorUnChanged);
 }
 
 long DlgEdit::GetObjectColor()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return 0;	// multiEdit->GetObjectColor();
 	else
-#endif
 		return lineEdit->GetObjectColor();
 }
 
 int DlgEdit::GetObjectColorUnChanged()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return 0;	// multiEdit->GetObjectColorUnChanged();
 	else
-#endif
 		return lineEdit->GetObjectColorUnChanged();
 }
 
 void DlgEdit::SetOverflowArrowsColor(uint64_t Color)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
-		multiEdit->SetOverflowArrowsColor(Color);
+		return;
 	else
-#endif
 		lineEdit->SetOverflowArrowsColor(Color);
 }
 
 void DlgEdit::FastShow()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (Type == DLGEDIT_MULTILINE)
-		;	// multiEdit->FastShow();
-	else
-#endif
+	if (Type == DLGEDIT_MULTILINE) {
+		if (m_Dialog && m_Index < m_Dialog->ItemCount) {
+			DialogItemEx *CurItem = m_Dialog->Item[m_Index];
+			if (CurItem) {
+				multiEdit->SetShowCursor(CurItem->Focus != 0);
+			}
+		}
+		NotifyDialogEditorFocus(multiEdit, m_dialogEditorOpened, m_dialogHasFocus, false);
+		DialogEditorPluginScope scope(multiEdit);
+		multiEdit->Show();
+	} else
 		lineEdit->FastShow();
 }
 
 int DlgEdit::GetLeftPos()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return 0;	// multiEdit->GetLeftPos();
 	else
-#endif
 		return lineEdit->GetLeftPos();
 }
 
 void DlgEdit::SetLeftPos(int NewPos, int Row)	// Row==-1 - current line
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		;	// multiEdit->SetLeftPos(NewPos,Row);
 	else
-#endif
 		lineEdit->SetLeftPos(NewPos);
 }
 
 void DlgEdit::DeleteBlock()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->DeleteBlock();
 	else
-#endif
 		lineEdit->DeleteBlock();
 }
 
 int DlgEdit::GetLength()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
-	if (Type == DLGEDIT_MULTILINE)
-		return 0;	// multiEdit->GetLength();
-	else
-#endif
+	if (Type == DLGEDIT_MULTILINE) {
+		if (!multiEdit)
+			return 0;
+		wchar_t *buf = nullptr;
+		int size = 0;
+		if (!multiEdit->GetRawData(&buf, size, 1) || !buf) {
+			fprintf(stderr, "DlgEdit::GetLength multiline getraw failed\n");
+			return 0;
+		}
+		free(buf);
+		return size;
+	} else
 		return lineEdit->GetLength();
 }
 
 void DlgEdit::Select(int Start, int End)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		;	// multiEdit->Select(Start,End);
 	else
-#endif
 		lineEdit->Select(Start, End);
 }
 
 void DlgEdit::GetSelection(int &Start, int &End)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		;	// multiEdit->GetSelection();
 	else
-#endif
 		lineEdit->GetSelection(Start, End);
 }
 
 void DlgEdit::Xlat(bool All)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->Xlat();
 	else
-#endif
 		lineEdit->Xlat(All);
 }
 
 int DlgEdit::GetStrSize(int Row)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return 0;	// multiEdit->
 	else
-#endif
 		return lineEdit->StrSize;
 }
 
 void DlgEdit::SetCursorType(bool Visible, DWORD Size)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetCursorType(Visible, Size);
 	else
-#endif
 		lineEdit->SetCursorType(Visible, Size);
 }
 
 void DlgEdit::GetCursorType(bool &Visible, DWORD &Size)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->GetCursorType(Visible, Size);
 	else
-#endif
 		lineEdit->GetCursorType(Visible, Size);
+}
+
+void DlgEdit::ToggleShowWhiteSpace()
+{
+	if (Type == DLGEDIT_MULTILINE && multiEdit) {
+		multiEdit->SetShowWhiteSpace(!multiEdit->GetShowWhiteSpace());
+		multiEdit->Show();
+	}
+}
+
+void DlgEdit::ToggleShowLineNumbers()
+{
+	if (Type == DLGEDIT_MULTILINE && multiEdit) {
+		multiEdit->SetShowLineNumbers(!multiEdit->GetShowLineNumbers());
+		multiEdit->Show();
+	}
+}
+
+void DlgEdit::ToggleWordWrap()
+{
+	if (Type == DLGEDIT_MULTILINE && multiEdit) {
+		multiEdit->SetWordWrap(!multiEdit->GetWordWrap());
+		multiEdit->Show();
+	}
 }
 
 int DlgEdit::GetReadOnly()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->GetReadOnly();
 	else
-#endif
 		return lineEdit->GetReadOnly();
 }
 
 void DlgEdit::SetReadOnly(int NewReadOnly)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetReadOnly(NewReadOnly);
 	else
-#endif
 		lineEdit->SetReadOnly(NewReadOnly);
 }
 
 BitFlags &DlgEdit::Flags()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->Flags;
 	else
-#endif
 		return lineEdit->Flags;
 }
 
 void DlgEdit::Hide()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->Hide();
 	else
-#endif
 		lineEdit->Hide();
 }
 
 void DlgEdit::Hide0()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->Hide0();
 	else
-#endif
 		lineEdit->Hide0();
 }
 
 void DlgEdit::ShowConsoleTitle()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->ShowConsoleTitle();
 	else
-#endif
 		lineEdit->ShowConsoleTitle();
 }
 
 void DlgEdit::SetScreenPosition()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->SetScreenPosition();
 	else
-#endif
 		lineEdit->SetScreenPosition();
 }
 
 void DlgEdit::ResizeConsole()
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->ResizeConsole();
 	else
-#endif
 		lineEdit->ResizeConsole();
 }
 
 int64_t DlgEdit::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
 {
-#if defined(PROJECT_DI_MEMOEDIT)
 
 	if (Type == DLGEDIT_MULTILINE)
 		return multiEdit->VMProcess(OpCode, vParam, iParam);
 	else
-#endif
 		return lineEdit->VMProcess(OpCode, vParam, iParam);
 }
 

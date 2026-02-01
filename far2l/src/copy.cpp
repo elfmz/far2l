@@ -2525,7 +2525,7 @@ ShellFileTransfer::ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA
 				break;
 			}
 			INT64 nPos = (INT64)DstData.nFileSize;
-			if (!_SrcFile.SetPointer(0, &nPos, FILE_BEGIN)) {
+			if (!_SrcFile.SetPointer(nPos,nullptr,  FILE_BEGIN)) {
 				_SrcFile.SetPointer(0, &_AppendPos, FILE_BEGIN);
 				Resume = false;
 				break;

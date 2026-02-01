@@ -425,6 +425,9 @@ void Edit::FastShow()
 					break;
 			}
 		}
+		if (wc == L'\n') {
+			wc = L'\x21B5'; // ↵
+		}
 
 		if (wc == L'\t') {
 			for (int j = 0, S = TabSize - ((LeftPos + OutStrCells) % TabSize);

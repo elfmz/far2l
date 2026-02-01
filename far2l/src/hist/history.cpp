@@ -186,6 +186,11 @@ static void AppendWithLFSeparator(std::wstring &str, const FARString &ap, bool f
 	}
 }
 
+static void RestoreLFSeparator(FARString &str)
+{
+	ReplaceStrings(str, L"\r", L"\n", -1);
+}
+
 bool History::SaveHistory()
 {
 	if (!*EnableSave)
@@ -281,6 +286,7 @@ bool History::ReadLastItem(const char *RegKey, FARString &strStr)
 	if (strStr.Pos(p, L'\n'))
 		strStr.Remove(p, strStr.GetLength() - p);
 
+	RestoreLFSeparator(strStr);
 	return true;
 }
 
@@ -314,8 +320,10 @@ bool History::ReadHistory(bool bOnlyLines)
 
 		HistoryRecord *AddRecord = HistoryList.Unshift();
 		AddRecord->strName = strLines.SubStr(LinesPos, LineEnd - LinesPos);
+		RestoreLFSeparator(AddRecord->strName);
 		LinesPos = LineEnd + 1;
 		AddRecord->strExtra = strExtras.SubStr(ExtrasPos, ExtraEnd - ExtrasPos);
+		RestoreLFSeparator(AddRecord->strExtra);
 		ExtrasPos = ExtraEnd + 1;
 
 		if (TypesPos < strTypes.GetLength()) {

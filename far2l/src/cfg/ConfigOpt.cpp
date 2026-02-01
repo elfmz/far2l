@@ -436,7 +436,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelRight, "CurFile", &Opt.strRightCurFile, L""},
 	{true,  NSecPanelRight, "SelectedFirst", &Opt.RightSelectedFirst, 0},
 	{true,  NSecPanelRight, "DirectoriesFirst", &Opt.RightPanel.DirectoriesFirst, 1},
-	{true,  NSecPanelRight, "ExecutablesFirst", &Opt.RightPanel.ExecutablesFirst, 1},
+	{true,  NSecPanelRight, "ExecutablesFirst", &Opt.RightPanel.ExecutablesFirst, 0},
 
 	{true,  NSecPanelLayout, "ColumnTitles", &Opt.ShowColumnTitles, 1},
 	{true,  NSecPanelLayout, "StatusLine", &Opt.ShowPanelStatus, 1},

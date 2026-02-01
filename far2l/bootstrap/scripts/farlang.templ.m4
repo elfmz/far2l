@@ -17739,7 +17739,7 @@ SetDefaultColors
 
 SetDefaultColorsRGB
 "Cтандартные &цвета"
-"D&efault theme"
+"Def&ault theme"
 "Výchozí &barvy"
 "Standardfarben"
 "Színek"

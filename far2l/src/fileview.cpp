@@ -60,17 +60,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, int DisableEdit,
 		long ViewStartPos, const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs, UINT aCodePage)
 	:
-	View(false, aCodePage), FullScreen(TRUE), DisableEdit(DisableEdit)
+	View(false, aCodePage), FullScreen(TRUE), DisableEdit(DisableEdit), MenuBar(nullptr)
 {
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(I variant...)", this));
 	SetPosition(0, 0, ScrX, ScrY);
 	Init(NewFileHolder, EnableSwitch, DisableHistory, ViewStartPos, PluginData, ViewNamesList, ToSaveAs);
+
+	MenuBar = new ViewerMenuBar();
+	MenuBar->SetPosition(0, (TitleBarVisible ? 1 : 0), ScrX, (TitleBarVisible ? 1 : 0));
+	// if (!MenuBarVisible) EditMenuBar->Hide0();
+	MenuBar->Show();
 }
 
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, const wchar_t *Title,
 		int X1, int Y1, int X2, int Y2, UINT aCodePage)
 	:
-	View(false, aCodePage)
+	View(false, aCodePage), MenuBar(nullptr)
 {
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(II variant...)", this));
 	DisableEdit = TRUE;
@@ -101,6 +106,11 @@ FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int Disabl
 	FullScreen = (!X1 && !Y1 && X2 == ScrX && Y2 == ScrY);
 	View.SetTitle(Title);
 	Init(NewFileHolder, EnableSwitch, DisableHistory, -1, L"", nullptr, FALSE);
+
+	MenuBar = new ViewerMenuBar();
+	MenuBar->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y1 + (TitleBarVisible ? 1 : 0));
+	// if (!MenuBarVisible) EditMenuBar->Hide0();
+	MenuBar->Show();
 }
 
 void FileViewer::Init(FileHolderPtr NewFileHolder, int EnableSwitch, int disableHistory,	///
@@ -111,6 +121,7 @@ void FileViewer::Init(FileHolderPtr NewFileHolder, int EnableSwitch, int disable
 	ViewKeyBar.SetPosition(X1, Y2, X2, Y2);
 	KeyBarVisible = Opt.ViOpt.ShowKeyBar;
 	TitleBarVisible = Opt.ViOpt.ShowTitleBar;
+	MenuBarVisible = Opt.ViOpt.ShowMenuBar;
 	int OldMacroMode = CtrlObject->Macro.GetMode();
 	MacroMode = MACRO_VIEWER;
 	CtrlObject->Macro.SetMode(MACRO_VIEWER);
@@ -185,7 +196,8 @@ void FileViewer::InitKeyBar()
 	ViewKeyBar.ReadRegGroup(L"Viewer", Opt.strLanguage);
 	ViewKeyBar.SetAllRegGroup();
 	SetKeyBar(&ViewKeyBar);
-	View.SetPosition(X1, Y1 + (Opt.ViOpt.ShowTitleBar ? 1 : 0), X2, Y2 - (Opt.ViOpt.ShowKeyBar ? 1 : 0));
+	int gap = (Opt.ViOpt.ShowTitleBar ? 1 : 0) + (Opt.ViOpt.ShowMenuBar ? 1 : 0);
+	View.SetPosition(X1, Y1 + gap, X2, Y2 - (Opt.ViOpt.ShowKeyBar ? 1 : 0));
 	View.SetViewKeyBar(&ViewKeyBar);
 }
 
@@ -198,7 +210,13 @@ void FileViewer::Show()
 		}
 
 		SetPosition(0, 0, ScrX, ScrY - (Opt.ViOpt.ShowKeyBar ? 1 : 0));
-		View.SetPosition(0, (Opt.ViOpt.ShowTitleBar ? 1 : 0), ScrX, ScrY - (Opt.ViOpt.ShowKeyBar ? 1 : 0));
+		int gap = (Opt.ViOpt.ShowTitleBar ? 1 : 0) + (Opt.ViOpt.ShowMenuBar ? 1 : 0);
+		View.SetPosition(0, gap, ScrX, ScrY - (Opt.ViOpt.ShowKeyBar ? 1 : 0));
+
+		if (MenuBarVisible) {
+			MenuBar->SetPosition(0, TitleBarVisible ? 1 : 0, ScrX, TitleBarVisible ? 1 : 0);
+			MenuBar->Show();
+		}
 	}
 
 	ScreenObject::Show();
@@ -208,6 +226,7 @@ void FileViewer::Show()
 void FileViewer::DisplayObject()
 {
 	View.Show();
+	if (MenuBarVisible) MenuBar->DisplayObject();
 }
 
 int64_t FileViewer::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -354,6 +373,8 @@ int FileViewer::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 		case KEY_F9:
+			ViewerShellOptions(0, nullptr, this);
+			return TRUE;
 		case KEY_ALTSHIFTF9:
 			// Работа с локальной копией ViewerOptions
 			ViewerOptions ViOpt;
@@ -363,6 +384,7 @@ int FileViewer::ProcessKey(FarKey Key)
 			ViOpt.ShowArrows = View.GetShowArrows();
 			ViOpt.ClickableURLs = View.GetClickableURLs();
 			ViOpt.PersistentBlocks = View.GetPersistentBlocks();
+			ViOpt.ShowMenuBar = MenuBarVisible;
 			ViewerConfig(ViOpt, true);
 			View.SetTabSize(ViOpt.TabSize);
 			View.SetAutoDetectCodePage(ViOpt.AutoDetectCodePage);
@@ -372,6 +394,7 @@ int FileViewer::ProcessKey(FarKey Key)
 			View.SetPersistentBlocks(ViOpt.PersistentBlocks);
 
 			ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
+			MenuBarVisible = Opt.ViOpt.ShowMenuBar;
 
 			View.Show();
 			return TRUE;
@@ -447,6 +470,15 @@ void FileViewer::GrepFilterDismiss()
 int FileViewer::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	F3KeyOnly = false;
+
+	if (MenuBarVisible) {
+		int pos = TitleBarVisible ? 1 : 0;
+		if (MouseEvent->dwMousePosition.Y == pos && (MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
+			ViewerShellOptions(0, MouseEvent, this);
+			return TRUE;
+		}
+	}
+
 	if (!View.ProcessMouse(MouseEvent))
 		if (!ViewKeyBar.ProcessMouse(MouseEvent))
 			return FALSE;
@@ -470,6 +502,9 @@ void FileViewer::ShowConsoleTitle()
 FileViewer::~FileViewer()
 {
 	_OT(SysLog(L"[%p] ~FileViewer::FileViewer()", this));
+
+	if (MenuBar) delete MenuBar;
+	MenuBar = nullptr;
 }
 
 void FileViewer::OnDestroy()
@@ -593,4 +628,55 @@ void ViewConsoleHistory(HANDLE con_hnd, bool modal, bool autoclose)
 	const int r = Viewer->GetExitCode();
 	if (!r || modal)
 		delete Viewer;
+}
+
+// ----------------------
+
+void FileViewer::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey) 
+{
+	if (accelKey) {
+		ProcessKey(accelKey);
+		return;
+	}
+	else if (hMenu == MENU_VIEW_VIEW && vMenu == MENU_VIEW_VIEW_MENUBAR) {
+		MenuBarVisible = !MenuBarVisible;
+		Show();
+		return;
+	}
+	else if (hMenu == MENU_VIEW_FILE) {
+		if (vMenu == MENU_VIEW_FILE_HELP) {
+			ProcessKey(KEY_F1);
+		}
+		return;
+	}
+	// todo: handle commands without accelerated keys
+	/*
+	else if (hMenu == MENU_VIEW_FILE && vMenu == MENU_VIEW_FILE_PRINTER) {
+		PrinterSupport ps;
+		if (ps.IsPrinterSetupDialogSupported()) {
+			ps.ShowPrinterSetupDialog();
+		}
+		return;
+	}*/
+}
+
+int FileViewer::MenuBarPosition() {
+	return TitleBarVisible && MenuBarVisible ? 1 : 0;
+}
+
+int FileViewer::IsOptionActive(int hMenu, int vMenu) {
+	if (hMenu != MENU_VIEW_VIEW) return FALSE;
+	switch (vMenu) {
+	case MENU_VIEW_VIEW_KEYBAR:
+		return KeyBarVisible;
+	case MENU_VIEW_VIEW_TITLEBAR:
+		return TitleBarVisible;
+	case MENU_VIEW_VIEW_MENUBAR:
+		return MenuBarVisible;
+	case MENU_VIEW_VIEW_WORDWRAP:
+		return View.VM.WordWrap;
+	case MENU_VIEW_VIEW_WRAP:
+		return View.VM.Wrap;
+	}
+	return FALSE;
 }

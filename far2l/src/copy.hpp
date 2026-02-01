@@ -134,7 +134,7 @@ class ShellFileTransfer
 
 public:
 	ShellFileTransfer(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, const FARString &strDestName,
-			bool Append, ShellCopyBuffer &CopyBuffer, COPY_FLAGS &Flags);
+			bool Append, bool Resume, ShellCopyBuffer &CopyBuffer, COPY_FLAGS &Flags);
 	~ShellFileTransfer();
 
 	void Do();
@@ -186,12 +186,14 @@ class ShellCopy
 			FARString &strDest, int KeepPathPos, int Rename);
 
 	int ShellCopyFile(const wchar_t *SrcName, const FAR_FIND_DATA_EX &SrcData, FARString &strDestName,
-			int Append);
+			int Append, int Resume);
 
 	int DeleteAfterMove(const wchar_t *Name, DWORD Attr);
 	void SetDestDizPath(const wchar_t *DestPath);
 	int AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcName, const wchar_t *DestName,
-			DWORD DestAttr, bool SameName, bool Rename, bool AskAppend, bool &Append, FARString &strNewName,
+			DWORD DestAttr, bool SameName, bool Rename, bool AskAppend, bool &Append, 
+			bool askResume, bool& Resume,
+			FARString &strNewName,
 			int &RetCode);
 	bool CalcTotalSize();
 

@@ -495,17 +495,6 @@ MultilinePaste
 "Вставка багаторядкового тексту"
 "Устаўка шматрадковага тэксту"
 
-MultilinePasteWarn
-"Вставка многострочных команд сразу запустит их,\n обернув текущим содержанием командной строки."
-"Pasting multi-line commands will run them immediately,\n wrapping with the current command line content."
-"Vložení víceradkových příkazů je ihned spustí\n a obalí aktuálním obsahem příkazového řádku."
-"Das Einfügen mehrzeiliger Befehle führt sie sofort aus\n und umschließt sie mit dem aktuellen Inhalt der Befehlszeile."
-"A többsoros parancsok beillesztése azonnal lefut,\n a parancssor aktuális tartalmával körbevéve."
-"Wklejenie wielowierszowych poleceń natychmiast je uruchomi,\n obejmując bieżącą zawartością wiersza poleceń."
-"Pegar comandos multilínea los ejecutará de inmediato,\n envolviéndolos con el contenido actual de la línea de comandos."
-"Вставка багаторядкових команд одразу їх запустить,\n обгорнувши поточним вмістом командного рядка."
-"Устаўка шматрадковых каманд адразу іх выканае,\n абгарнуўшы бягучым зместам каманднага радка."
-
 F1
 l:
 l://functional keys - 6 characters max

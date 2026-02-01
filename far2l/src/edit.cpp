@@ -127,6 +127,7 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 		*Str = 0;
 
 	Flags.Set(FEDITLINE_EDITBEYONDEND);
+	Flags.Set(FEDITLINE_CURSORVISIBLE);
 	Color = F_LIGHTGRAY | B_BLACK;
 	SelColor = F_WHITE | B_BLACK;
 	ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
@@ -242,19 +243,21 @@ void Edit::DisplayObject()
 		при DropDownBox курсор выключаем
 		не знаю даже - попробовал но не очень красиво вышло
 	*/
-	if (Flags.Check(FEDITLINE_DROPDOWNBOX))
-		::SetCursorType(0, 10);
-	else {
-		if (Flags.Check(FEDITLINE_OVERTYPE)) {
-			int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
-			::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
-		} else {
-			int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
-			::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+	if (Flags.Check(FEDITLINE_CURSORVISIBLE)) {
+		if (Flags.Check(FEDITLINE_DROPDOWNBOX))
+			::SetCursorType(0, 10);
+		else {
+			if (Flags.Check(FEDITLINE_OVERTYPE)) {
+				int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
+				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			} else {
+				int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			}
 		}
-	}
 
-	MoveCursor(X1 + CursorPos - LeftPos, Y1);
+		MoveCursor(X1 + CursorPos - LeftPos, Y1);
+	}
 }
 
 void Edit::SetCursorType(bool Visible, DWORD Size)

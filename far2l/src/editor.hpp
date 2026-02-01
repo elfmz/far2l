@@ -253,6 +253,8 @@ private:
 	int m_CachedTotalLines;
 	int m_CachedLineNumWidth;
 	bool m_LineCountDirty;
+	bool m_showCursor;
+	FARString m_virtualFileName;
 
 private:
 	int FindVisualLine(Edit* line, int Pos);
@@ -335,6 +337,8 @@ void GoToVisualLine(int VisualLine);
 	wchar_t *VBlock2Text(wchar_t *ptrInitData);
 
 public:
+	int GetEditorID() const { return EditorID; }
+	void SetVirtualFileName(const wchar_t *name) { m_virtualFileName = name; }
 	Editor(ScreenObject *pOwner = nullptr, bool DialogUsed = false);
 	virtual ~Editor();
 
@@ -444,6 +448,7 @@ public:
 	void SetCurPos(int NewCol, int NewRow = -1);
 	void SetCursorType(bool Visible, DWORD Size);
 	void GetCursorType(bool &Visible, DWORD &Size);
+	void SetShowCursor(bool Enable) { m_showCursor = Enable; }
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
 

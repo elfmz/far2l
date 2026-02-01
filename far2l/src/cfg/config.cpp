@@ -1146,6 +1146,8 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditShowWhiteSpace, &EdOpt.ShowWhiteSpace);
 	Builder.AddCheckbox(Msg::EditShowKeyBar, &EdOpt.ShowKeyBar);
 	Builder.AddCheckbox(Msg::EditShowLineNumbers, &EdOpt.ShowLineNumbers);
+	Builder.AddCheckbox(Msg::EditCopyToPrimarySelection, &EdOpt.EditCopyToPrimarySelection);
+
 	Builder.ColumnBreak();
 	Builder.AddCheckbox(Msg::EditConfigDelRemovesBlocks, &EdOpt.DelRemovesBlocks);
 	DialogItemEx *SaveShortPos = Builder.AddCheckbox(Msg::EditConfigSaveShortPos, &EdOpt.SaveShortPos);
@@ -1155,6 +1157,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditConfigPickUpWord, &EdOpt.SearchPickUpWord);
 	Builder.AddCheckbox(Msg::EditShowTitleBar, &EdOpt.ShowTitleBar);
 	Builder.AddCheckbox(Msg::EditWordWrap, &EdOpt.WordWrap);
+	Builder.AddCheckbox(Msg::EditPasteFromPrimarySelection, &EdOpt.EditPasteFromPrimarySelection);
 	Builder.EndColumns();
 
 	if (!Local) {

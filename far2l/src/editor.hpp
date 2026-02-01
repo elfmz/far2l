@@ -290,6 +290,7 @@ void GoToVisualLine(int VisualLine);
 	void UnmarkMacroBlock();
 
 	void ProcessPasteEvent();
+	void ProcessPasteEventFromPrimary();
 
 	void AddUndoData(int Type, const wchar_t *Str = nullptr, const wchar_t *Eol = nullptr, int StrNum = 0,
 			int StrPos = 0, int Length = -1);
@@ -414,6 +415,12 @@ public:
 	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
 	void SetShowLineNumbers(int NewMode);
 
+	int GetEditCopyToPrimarySelection() const { return EdOpt.EditCopyToPrimarySelection; }
+	void SetEditCopyToPrimarySelection(int NewMode);
+
+	int GetEditPasteFromPrimarySelection() const { return EdOpt.EditPasteFromPrimarySelection; }
+	void SetEditPasteFromPrimarySelection(int NewMode);
+
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 
 	// передавайте в качестве значения параметра "-1" для параметра,
@@ -451,6 +458,8 @@ public:
 	void SetShowCursor(bool Enable) { m_showCursor = Enable; }
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
+
+	int AutoGrabToClipboard();
 
 	virtual void SetPosition(int X1, int Y1, int X2, int Y2);
 };

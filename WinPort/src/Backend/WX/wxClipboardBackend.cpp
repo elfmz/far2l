@@ -4,6 +4,7 @@
 #include <wx/wx.h>
 #include <wx/display.h>
 #include <wx/clipbrd.h>
+#include "wx/evtloop.h"
 #include <utils.h>
 #include <dlfcn.h>
 
@@ -193,12 +194,175 @@ public:
 	}
 };
 
+// The trick below is for Wayland; X11 works well without direct gtk usage
+#if defined(__WXGTK__) && defined(__WXGTK3__)
+
+enum WxBackendType {
+    NativeWayland,
+    XWayland,
+    NativeX11,
+    Unknown,
+    Undefined
+};
+
+enum WxClipboardType {
+	Clipboard,
+	Primary
+};
+
+static WxBackendType wxBackendType = WxBackendType::Undefined;
+static WxClipboardType wxClipboardType = WxClipboardType::Clipboard;
+
+/* Now this is a minimnal set from Gtk/Gtk */
+
+typedef struct s_GTypeInstance { void *g_class; } GTypeInstance;
+typedef unsigned long GType;
+typedef int gboolean;
+typedef char gchar;
+typedef void* gpointer;
+typedef int gint;
+
+typedef GType (*gdk_wayland_display_get_type_t)(void);
+typedef GType (*gdk_x11_display_get_type_t)(void);
+typedef gboolean (*g_type_check_instance_is_a_t)(GTypeInstance*, GType);
+typedef void* (*gdk_display_get_default_t)(void);
+
+#define G_TYPE_CHECK_INSTANCE_TYPE(instance, type)	(g_type_check_instance_is_a( (GTypeInstance*)(instance), (type) ))
+
+#define GDK_TYPE_WAYLAND_DISPLAY            (gdk_wayland_display_get_type())
+#define GDK_TYPE_X11_DISPLAY                (gdk_x11_display_get_type())
+#define GDK_IS_WAYLAND_DISPLAY(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_WAYLAND_DISPLAY))
+#define GDK_IS_X11_DISPLAY(object)        	(G_TYPE_CHECK_INSTANCE_TYPE ((object), GDK_TYPE_X11_DISPLAY))
+
+struct _GdkAtom;
+struct _GtkClipboard;
+typedef struct _GdkAtom *GdkAtom;
+typedef struct _GtkClipboard GtkClipboard;
+
+#define GUINT_TO_POINTER(x) ((void*)(x))
+#define _GDK_MAKE_ATOM(val) ((GdkAtom)GUINT_TO_POINTER(val))
+#define GDK_SELECTION_PRIMARY 		_GDK_MAKE_ATOM (1)
+
+typedef void (*gtk_clipboard_set_text_t)(GtkClipboard *clipboard, const gchar *text, gint len);
+typedef GtkClipboard* (*gtk_clipboard_get_t)(GdkAtom selection);
+typedef void (*gtk_clipboard_store_t)(GtkClipboard *clipboard);
+
+typedef void (* GtkClipboardTextReceivedFunc)(GtkClipboard *clipboard, const gchar *text, gpointer data);
+typedef void (*gtk_clipboard_request_text_t)(GtkClipboard *clipboard, GtkClipboardTextReceivedFunc callback, gpointer user_data);
+
+// the "functions" I'm using
+
+static gdk_wayland_display_get_type_t gdk_wayland_display_get_type = 0;
+static gdk_x11_display_get_type_t gdk_x11_display_get_type = 0;
+static g_type_check_instance_is_a_t g_type_check_instance_is_a = 0;
+static gdk_display_get_default_t gdk_display_get_default = 0;
+static gtk_clipboard_request_text_t gtk_clipboard_request_text = 0;
+static gtk_clipboard_set_text_t gtk_clipboard_set_text = 0;
+static gtk_clipboard_get_t gtk_clipboard_get = 0;
+static gtk_clipboard_store_t gtk_clipboard_store = 0;
+static int gtk_loaded = 0;
+
+static void assumeLazyLoadIsComplete() {
+	if (gtk_loaded || g_type_check_instance_is_a) return;
+
+	gdk_wayland_display_get_type = (gdk_wayland_display_get_type_t)dlsym(RTLD_DEFAULT, "gdk_wayland_display_get_type");
+	gdk_x11_display_get_type = (gdk_x11_display_get_type_t)dlsym(RTLD_DEFAULT, "gdk_x11_display_get_type");
+	g_type_check_instance_is_a = (g_type_check_instance_is_a_t)dlsym(RTLD_DEFAULT, "g_type_check_instance_is_a");
+	gdk_display_get_default = (gdk_display_get_default_t)dlsym(RTLD_DEFAULT, "gdk_display_get_default");
+	gtk_clipboard_request_text = (gtk_clipboard_request_text_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_request_text");
+	gtk_clipboard_set_text = (gtk_clipboard_set_text_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_set_text");
+	gtk_clipboard_store = (gtk_clipboard_store_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_store");
+	gtk_clipboard_get = (gtk_clipboard_get_t)dlsym(RTLD_DEFAULT, "gtk_clipboard_get");
+
+	gtk_loaded = 1;
+}
+
+static WxBackendType detectWxBackend()
+{
+	if (wxBackendType == WxBackendType::Undefined) 
+	{
+		assumeLazyLoadIsComplete();
+
+        void* display = gdk_display_get_default();
+
+        const bool isWayland = GDK_IS_WAYLAND_DISPLAY(display);
+        const bool isX11     = GDK_IS_X11_DISPLAY(display);
+        const bool hasWaylandEnv = getenv("WAYLAND_DISPLAY") != NULL;
+
+        if (isWayland)
+            wxBackendType = WxBackendType::NativeWayland;
+        else if (isX11 && hasWaylandEnv)
+            wxBackendType = WxBackendType::XWayland;
+        else if (isX11)
+            wxBackendType = WxBackendType::NativeX11;
+        else
+			wxBackendType = WxBackendType::Unknown;
+    }
+    return wxBackendType;
+}
+
+static void setTextAsPrimarySelection(const wxString& text)
+{
+    GtkClipboard* primary = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+    gtk_clipboard_set_text(primary, text.utf8_str(), -1);
+    gtk_clipboard_store(primary);
+}
+
+static void getTextFromPrimarySelectionStart(std::function<void(const wxString&)> callback)
+{
+    GtkClipboard* primary = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+
+    // Allocate callback on heap so GTK can call it later
+    auto* cb = new std::function<void(const wxString&)>(callback);
+
+    gtk_clipboard_request_text(
+        primary,
+        [](GtkClipboard* clipboard, const gchar* text, gpointer user_data)
+        {
+            auto* cb = static_cast<std::function<void(const wxString&)>*>(user_data);
+            if (text)
+                (*cb)(wxString::FromUTF8(text));
+            else
+                (*cb)(wxString());
+            delete cb;
+        },
+        cb
+    );
+}
+
+static wxString getTextFromPrimarySelection()
+{
+    wxString result;
+    bool done = false;
+
+    getTextFromPrimarySelectionStart([&](const wxString& text) {
+        result = text;
+        done = true;
+    });
+
+    wxEventLoop loop;
+    while (!done)
+        loop.Dispatch();
+
+    return result;
+}
+
+#endif
+
 void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxClipboardBackend::OnClipboardSetData, this, format, data);
 		return CallInMain<void *>(fn);
 	}
+
+#if defined(__WXGTK__) && defined(__WXGTK3__)
+	if (wxClipboardType == WxClipboardType::Primary && detectWxBackend() == WxBackendType::NativeWayland) {
+		wxString wx_str((const wchar_t *)data);
+		setTextAsPrimarySelection(wx_str);
+		return data;
+	}
+#endif
 
 	size_t len = WINPORT(ClipboardSize)(data);
 	fprintf(stderr, "SetClipboardData: format=%u len=%lu\n", format, (unsigned long)len);
@@ -256,6 +420,14 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		auto fn = std::bind(&wxClipboardBackend::OnClipboardGetData, this, format);
 		return CallInMain<void *>(fn);
 	}
+
+#if defined(__WXGTK__) && defined(__WXGTK3__)
+	if (wxClipboardType == WxClipboardType::Primary && detectWxBackend() == WxBackendType::NativeWayland) {
+		wxString wx_str = getTextFromPrimarySelection();
+		const auto &wc = wx_str.wc_str();
+		return ClipboardAllocFromZeroTerminatedString<wchar_t>(wc);
+	}
+#endif
 
 	PVOID p = nullptr;
 	if (format==CF_UNICODETEXT || format==CF_TEXT) {
@@ -347,4 +519,21 @@ UINT wxClipboardBackend::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 	}
 
 	return g_wx_custom_formats.Register(lpszFormat);
+}
+
+INT wxClipboardBackend::ChooseClipboard(INT format)
+{
+	if (!wxIsMainThread()) {
+		auto fn = std::bind(&wxClipboardBackend::ChooseClipboard, this, format);
+		return CallInMain<INT>(fn);
+	}
+
+	bool now = wxTheClipboard->IsUsingPrimarySelection();
+	bool need = format > 0;
+	if (now != need) wxTheClipboard->UsePrimarySelection(need);
+
+#if defined(__WXGTK__) && defined(__WXGTK3__)
+	::wxClipboardType = need ? WxClipboardType::Primary : WxClipboardType::Clipboard;
+#endif
+	return need ? 1 : 0;
 }

@@ -8,18 +8,25 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * Editor: Word wrap (like in Windows Notepad or HTML textareas). Toggled by **F3** or **Alt+W**
 * Editor: Line numbers. Toggled by **Ctrl+F3**
 * Editor: mouse selection (hold **Alt** to vertical selection)
+* Viewer: links automatic highlight and clickable for URLs starting with https:, http: or mailto: (toggled on/off in Viewer options)
+* File panels: new sort option "executables first" (toggled inside **Shift+F12**)
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
   Option to set the maximum recursive scanning depth (default: 4).
   **Right Arrow** expands excluded subtrees, and **Left Arrow** collapses subtree in focus, if it's already collapsed - navigates one level up.
   **Left Ctrl+1**...**Left Ctrl+0** expands all branches to the chosen depth (1...10).
+* _New:_ Visual show trailing spaces/tabs in dialog edit lines
 * _New:_ Options of the special command `edit:[line,col]` for openening file with position
+* _New:_ NetBSD support
+* Fix scrolling from precise input devices
+* Optimize bracketed paste performance by buffering input events
+* _NetRocks plugin_: FTP fixes with date/time, SFTP fixes with quotes
 * _hexitor plugin_: fix broken layout with narrow window
-* _ImageViewer plugin_:  New panel plugin (**F11**->**I** to open image/video file.
+* _ImageViewer plugin_: New panel plugin (**F11**->**I** to open image/video file).
   Uses ImageMagick for graphics operations and ffmpeg for video preview,
-  works in GUI and in TTY|F and TTY|k,
-  see [#3028](https://github.com/elfmz/far2l/pull/3028#issuecomment-3508025346))).
-* _edsort plugin_:  New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
-* _truncate plugin_:  New plugin in editor (**F11**->Truncate File) to remove trailing white spaces and empty lines
+  works in GUI and in TTY|F and TTY|k)
+* _incsrch plugin_: Support Unicode searches and better support for single byte codepages, improve example of activation macros
+* _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
+* _truncate plugin_: New plugin in editor (**F11**->Truncate File) to remove trailing white spaces in all lines and remove empty lines in end of file
 * _arclite plugin_: More symlinks/hardlinks support: works with RAR/TAR/NTFS; fix option "Link path: Absolute/Relative" for symlinks when create archive (see [#3094](https://github.com/elfmz/far2l/pull/3094))
 * _OpenWith plugin_: Update to v1.1. Added support for DE-specific mimeapps.list files; improved MIME detection (Magika AI & native globs2 pattern matching); better compliance with XDG/Freedesktop specifications; bugfixes and performance optimizations.
 * Several bugfixes and improvements

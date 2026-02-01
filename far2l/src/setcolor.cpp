@@ -143,9 +143,8 @@ void SetColors()
 
 	size_t BaseGroupLen = ARRAYSIZE(BaseGroups);
 	size_t GroupsLen = BaseGroupLen + 
-		(v2.size() > 0 ? v2.size() : 0) +   		/* user themes */
-		(v.size() > 0 ? v.size() : 0) + 		/* system themes */
-		(v.size() > 0 && v2.size() > 0 ? 1 : 0); 	/* separator between theme types */
+		(v.size() > 0 ? v.size() + 1 : 0) +   		/* user themes */
+		(v2.size() > 0 ? v2.size() + 1 : 0); 	/* system themes */
 	MenuDataEx Groups[GroupsLen];
 
     /* copy from temnplate */

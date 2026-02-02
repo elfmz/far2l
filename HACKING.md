@@ -102,6 +102,7 @@ to obtain file group
 * `DN_DROPDOWNOPENED` - Param2 = 1 - open, 0 - closed.
 
 Note that all true-color capable messages extend but don't replace 'base' 16 palette colors. This is done intentionally as far2l may run in terminal that doesn't support true color palette, and in such case 24bit colors will be ignored and base palette attributes will be used instead.
+Size of colors array is `DLG_ITEM_MAX_CUST_COLORS` which is currently 5.
 
 ### Added new flags:
 * Flags to **manage markers** in **panel** from plugins API

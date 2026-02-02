@@ -331,8 +331,9 @@ static const char s_VT100_linedrawing_chars[114] = "qqxxqqxxqqxxllllkkkkmmmmjjjj
 
 void TTYOutput::WriteWChar(WCHAR wch)
 {
-	if (wch >= 0x2500 && wch <= 0x2570 && _vt100) {
+	if (_vt100 && wch >= 0x2500 && wch <= 0x2570) {
 		if (!_vt100_line_drawing) {
+			FinalizeSameChars();
 			_rawbuf.insert(_rawbuf.end(), {*ESC, '(', '0'}); // Enable 'DEC Line Drawing mode' ESC sequence
 			_vt100_line_drawing = true;
 		}

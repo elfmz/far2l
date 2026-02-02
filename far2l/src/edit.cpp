@@ -423,9 +423,11 @@ void Edit::FastShow()
 				case 0x2066 ... 0x206F:
 					wc = L'\x2194'; // ↔
 					break;
+				case 0x000A: //line feed
+					wc = L'\x240A'; // ␊
+					break;
 			}
-		}
-		if (wc == L'\n') {
+		} else if (wc == L'\n') {
 			wc = L'\x21B5'; // ↵
 		}
 

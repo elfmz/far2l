@@ -361,7 +361,7 @@ void CommandLine::DisplayObject()
 		TruncPathStr(strTruncDir, (X2 - X1) / 2);
 	}
 	const int input_y = Y2;
-	const int width = X2 - X1 + 1;
+	const int width = X2 - X1 + 2;
 	const int prompt_len = (int)strTruncDir.CellsCount();
 	if (has_multiline) {
 		const int total_lines = (int)m_multilineLines.size();
@@ -389,17 +389,18 @@ void CommandLine::DisplayObject()
 		const int active_y = input_y - (view_lines - 1 - (m_multilineActiveLine - view_top));
 		CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
 		CmdStr.SetPosition(X1 + prompt_len, active_y, X2, active_y);
-		DrawComboBoxMark(0x2191, active_y);
 	} else {
 		GotoXY(X1, input_y);
 		SetFarColor(COL_COMMANDLINEPREFIX);
 		Text(strTruncDir);
 		CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
 		CmdStr.SetPosition(X1 + prompt_len, input_y, X2, input_y);
-		DrawComboBoxMark(0x2191, input_y);
 	}
 
 	CmdStr.Show();
+
+	DrawComboBoxMark(0x2191, input_y);
+
 }
 
 void CommandLine::DrawComboBoxMark(wchar_t MarkChar, int y)

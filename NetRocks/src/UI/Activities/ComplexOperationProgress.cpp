@@ -147,7 +147,7 @@ void ComplexOperationProgress::OnIdle()
 		bool path, file, all, count, errors;
 	} changed = {};
 	bool paused;
-	uint64_t Colors[4];
+	uint64_t Colors[DLG_ITEM_MAX_CUST_COLORS];
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
 		if (_last_path != _state.path) {
@@ -339,4 +339,3 @@ RemoveProgress::RemoveProgress(const std::string &site_dir, ProgressState &state
 	: ComplexOperationProgress(site_dir, state, wea_state, MRemoveTitle, false, false)
 {
 }
-

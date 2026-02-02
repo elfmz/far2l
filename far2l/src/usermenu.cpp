@@ -964,7 +964,7 @@ bool UserMenu::EditMenu(const wchar_t *MenuKey, int EditPos, int TotalRecords, b
 
 				{DI_TEXT,      3, 6, 0, 6, {}, DIF_SEPARATOR | State, L""},
 				{DI_TEXT,      5, 7, 0, 7, {}, State, Msg::EditMenuCommands},
-				{DI_MEMOEDIT,  5, 8, DLG_X - 6, 17, {}, DIF_EDITPATH, L""},
+				{DI_MEMOEDIT,  5, 8, DLG_X - 6, 17, {}, DIF_EDITPATH | State, L""},
 				{DI_TEXT,   3, (short)(DLG_Y - 4), 0, (short)(DLG_Y - 4), {}, DIF_SEPARATOR, L""},
 				{DI_BUTTON, 0, (short)(DLG_Y - 3), 0, (short)(DLG_Y - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 				{DI_BUTTON, 0, (short)(DLG_Y - 3), 0, (short)(DLG_Y - 3), {}, DIF_CENTERGROUP, Msg::Cancel}

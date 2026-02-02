@@ -3785,7 +3785,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
-	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0) {
+	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0 && !IsMouseButtonPressed()) {
 		MouseSelStartingLine = -1;
 	}
 
@@ -3799,17 +3799,9 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (EdOpt.ShowScrollBar && MouseEvent->dwMousePosition.X == X2
 			&& !(MouseEvent->dwEventFlags & MOUSE_MOVED)) {
 		if (MouseEvent->dwMousePosition.Y == Y1) {
-			if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
 				while (IsMouseButtonPressed()) ProcessKey(KEY_CTRLUP);
-			} else {
-				ProcessKey(KEY_CTRLUP);
-			}
 		} else if (MouseEvent->dwMousePosition.Y == Y2) {
-			if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-				while (IsMouseButtonPressed()) ProcessKey(KEY_CTRLDOWN);
-			} else {
-				ProcessKey(KEY_CTRLDOWN);
-			}
+			while (IsMouseButtonPressed()) ProcessKey(KEY_CTRLDOWN);
 		} else {
 			if (m_bWordWrap) {
 				if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
@@ -3830,16 +3822,21 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					}
 				}
 			} else {
-				if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-					while (IsMouseButtonPressed())
-						GoToLine((NumLastLine - 1) * (MouseY - Y1) / (Y2 - Y1));
-				} else {
+				while (IsMouseButtonPressed())
 					GoToLine((NumLastLine - 1) * (MouseY - Y1) / (Y2 - Y1));
-				}
 			}
 		}
 		return TRUE;
 	}
+
+	MouseTarget target;
+	auto apply_cursor_target = [&]() {
+		MouseTarget cur{};
+		cur.line = CurLine;
+		cur.pos = CurLine ? CurLine->GetCurPos() : 0;
+		cur.visual_line = m_CurVisualLineInLogicalLine;
+		ApplyMouseTarget(cur, false, MouseEvent->dwControlKeyState);
+	};
 
 	if (!m_bWordWrap && (MouseEvent->dwButtonState & 3) && (MouseEvent->dwEventFlags & MOUSE_MOVED)) {
 		if (MouseEvent->dwMousePosition.X <= X1 || MouseEvent->dwMousePosition.X >= XX2) {
@@ -3856,37 +3853,43 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				Pasting--;
 
 				if (MouseSelStartingLine != -1) {
-					const int TargetPos = CurLine->GetCurPos();
-					const bool SelVBlock = (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
-
-					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
-						MarkBlock(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
-								TargetPos - MouseSelStartingPos, NumLine + 1 - MouseSelStartingLine);
-					} else {
-						MarkBlock(SelVBlock, NumLine, TargetPos,
-								MouseSelStartingPos - TargetPos, MouseSelStartingLine + 1 - NumLine);
-					}
+					apply_cursor_target();
 				}
 				Show();
-				if (m_bWordWrap) break;
 			}
 			return TRUE;
 		}
 	}
 	// scroll up/down by dragging outside editor window
 	if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
-		if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-			while (IsMouseButtonPressed() && MouseY < Y1) ProcessKey(KEY_UP);
-		} else {
+		while (IsMouseButtonPressed() && MouseY < Y1) {
 			ProcessKey(KEY_UP);
+			if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+				apply_cursor_target();
+				Show();
+			}
+		}
+		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, Y1, target)) {
+				ApplyMouseTarget(target, false, MouseEvent->dwControlKeyState);
+				Show();
+			}
 		}
 		return TRUE;
 	}
 	if (MouseEvent->dwMousePosition.Y > Y2 && (MouseEvent->dwButtonState & 3)) {
-		if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
-			while (IsMouseButtonPressed() && MouseY > Y2) ProcessKey(KEY_DOWN);
-		} else {
+		while (IsMouseButtonPressed() && MouseY > Y2) {
 			ProcessKey(KEY_DOWN);
+			if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+				apply_cursor_target();
+				Show();
+			}
+		}
+		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, Y2, target)) {
+				ApplyMouseTarget(target, false, MouseEvent->dwControlKeyState);
+				Show();
+			}
 		}
 		return TRUE;
 	}
@@ -3897,129 +3900,9 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	{
 		if((MouseEvent->dwButtonState & 3))
 		{
-			// Calculate line number width if needed
-			int LineNumWidth = CalculateLineNumberWidth();
-
-			Edit* TargetLine = nullptr;
-			int TargetPos = -1;
-
-			if (m_bWordWrap)
-			{
-				Edit* scanLine = m_TopScreenLogicalLine;
-				int scanVisual = m_TopScreenVisualLine;
-				int screenY = Y1;
-
-				while (screenY < MouseEvent->dwMousePosition.Y && scanLine) {
-					scanVisual++;
-					if (scanVisual >= scanLine->GetVisualLineCount()) {
-						scanLine = scanLine->m_next;
-						scanVisual = 0;
-					}
-					screenY++;
-				}
-				TargetLine = scanLine;
-
-				if (TargetLine) {
-					m_CurVisualLineInLogicalLine = scanVisual;
-					int visualLineStart, visualLineEnd;
-					TargetLine->GetVisualLine(m_CurVisualLineInLogicalLine, visualLineStart, visualLineEnd);
-					int mouseCellPos = MouseEvent->dwMousePosition.X - X1 - LineNumWidth;
-					int visualLineStartCell = TargetLine->RealPosToCell(visualLineStart);
-					TargetPos = TargetLine->CellPosToReal(visualLineStartCell + mouseCellPos);
-					if (TargetPos > visualLineEnd && visualLineEnd < TargetLine->GetLength()) TargetPos = visualLineEnd;
-					if (TargetPos > TargetLine->GetLength()) TargetPos = TargetLine->GetLength();
-				}
-			}
-			else // Non-word-wrap mode
-			{
-				int line_offset = MouseEvent->dwMousePosition.Y - Y1;
-				TargetLine = TopScreen;
-				while (line_offset-- && TargetLine && TargetLine->m_next) {
-					TargetLine = TargetLine->m_next;
-				}
-
-				if (TargetLine) {
-					int mouseCellPos = MouseEvent->dwMousePosition.X - X1 - LineNumWidth + TargetLine->GetLeftPos();
-					TargetPos = TargetLine->CellPosToReal(mouseCellPos);
-				}
-			}
-
-			if (TargetLine)
-			{
-				const int screenHeight = Y2 - Y1;
-				auto visibleOffset = [&](Edit* line) -> int
-				{
-					int offset = 0;
-					for (Edit* ptr = TopScreen; ptr && offset <= screenHeight; ptr = ptr->m_next, ++offset)
-					{
-						if (ptr == line)
-							return offset;
-					}
-					return -1;
-				};
-
-				int targetOffset = visibleOffset(TargetLine);
-				int currentOffset = visibleOffset(CurLine);
-
-				if (targetOffset != -1 && currentOffset != -1)
-				{
-					int delta = targetOffset - currentOffset;
-					while (delta > 0)
-					{
-						Down();
-						--delta;
-					}
-					while (delta < 0)
-					{
-						Up();
-						++delta;
-					}
-				}
-					else
-					{
-						const int topLineNumber = GetTopScreenLineNumber();
-						Edit* topLinePtr = nullptr;
-						if (m_bWordWrap)
-							topLinePtr = m_TopScreenLogicalLine ? m_TopScreenLogicalLine : TopScreen;
-						else
-							topLinePtr = TopScreen;
-
-						if (!topLinePtr)
-							topLinePtr = TopList ? TopList : TargetLine;
-
-						CurLine = TargetLine;
-						int offsetFromTop = (topLinePtr && CurLine) ? CalcDistance(topLinePtr, CurLine, -1) : 0;
-						NumLine = topLineNumber + offsetFromTop;
-					}
-
-				// Снимаем любое предыдущее выделение при новом клике.
-				// UnmarkBlock() должен вызываться только при первом клике, а не при каждом движении
-				if ((MouseEvent->dwEventFlags & MOUSE_MOVED) == 0) {
-					UnmarkBlockAndShowIt();
-				}
-				CurLine->SetCurPos(TargetPos);
-				if (MouseSelStartingLine == -1) {
-					MouseSelStartingLine = NumLine;
-					MouseSelStartingPos = TargetPos;
-				} else {
-					const bool SelVBlock = (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
-					if (MouseSelStartingLine < NumLine || (MouseSelStartingLine == NumLine && TargetPos >= MouseSelStartingPos)) {
-						MarkBlock(SelVBlock, MouseSelStartingLine, MouseSelStartingPos,
-							TargetPos - MouseSelStartingPos, NumLine + 1 - MouseSelStartingLine);
-					} else {
-						MarkBlock(SelVBlock, NumLine, TargetPos,
-							MouseSelStartingPos - TargetPos, MouseSelStartingLine + 1 - NumLine);
-					}
-				}
-				if (m_bWordWrap)
-				{
-					m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
-					int v_start, v_end;
-					CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
-					m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(v_start);
-					MaxRightPos = CurLine->GetCellCurPos();
-				}
-				Show();
+			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y, target)) {
+				ApplyMouseTarget(target, (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0,
+					MouseEvent->dwControlKeyState);
 			}
 		}
 
@@ -4069,6 +3952,178 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	return TRUE;
+}
+
+bool Editor::ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target)
+{
+	// Clamp to editor client area
+	mouse_x = std::clamp(mouse_x, X1, XX2);
+	mouse_y = std::clamp(mouse_y, Y1, Y2);
+
+	target = {};
+
+	const int lineNumWidth = CalculateLineNumberWidth();
+
+	if (m_bWordWrap)
+	{
+		if (!m_TopScreenLogicalLine) {
+			m_TopScreenLogicalLine = TopScreen;
+			m_TopScreenVisualLine = 0;
+		}
+
+		Edit* line = m_TopScreenLogicalLine;
+		int visual = m_TopScreenVisualLine;
+		int y = Y1;
+
+		while (y++ < mouse_y && line) {
+			if (++visual >= line->GetVisualLineCount()) {
+				line = line->m_next;
+				visual = 0;
+			}
+		}
+
+		target.line = line;
+		target.visual_line = visual;
+
+		if (line) {
+			int vStart, vEnd;
+			line->GetVisualLine(visual, vStart, vEnd);
+
+			int cell = std::max(0, mouse_x - X1 - lineNumWidth);
+			int startCell = line->RealPosToCell(vStart);
+
+			target.pos = line->CellPosToReal(startCell + cell);
+			if (target.pos > vEnd && vEnd < line->GetLength())
+				target.pos = vEnd;
+			if (target.pos > line->GetLength())
+				target.pos = line->GetLength();
+		}
+	}
+	else
+	{
+		int offset = mouse_y - Y1;
+		target.line = TopScreen;
+
+		while (offset-- && target.line && target.line->m_next)
+			target.line = target.line->m_next;
+
+		if (target.line) {
+			int cell = mouse_x - X1 - lineNumWidth + target.line->GetLeftPos();
+			target.pos = target.line->CellPosToReal(cell);
+		}
+	}
+
+	if (!target.line)
+		return false;
+
+	if (target.pos < 0)
+		target.pos = 0;
+
+	return true;
+}
+
+void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state)
+{
+	const int screenHeight = Y2 - Y1;
+
+	auto moveByDelta = [&](int delta)
+	{
+		while (delta > 0) { Down(); --delta; }
+		while (delta < 0) { Up();   ++delta; }
+	};
+
+	auto fallbackSetCurLine = [&](Edit* topLine)
+	{
+		const int topNum = GetTopScreenLineNumber();
+		if (!topLine)
+			topLine = TopList ? TopList : target.line;
+
+		CurLine = target.line;
+		int off = (topLine && CurLine) ? CalcDistance(topLine, CurLine, -1) : 0;
+		NumLine = topNum + off;
+	};
+
+	if (m_bWordWrap)
+	{
+		auto visualOffset = [&](Edit* line, int vline)
+		{
+			int off = 0, vis = m_TopScreenVisualLine;
+			for (Edit* p = m_TopScreenLogicalLine; p && off <= screenHeight; p = p->m_next, vis = 0)
+			{
+				if (p == line)
+					return off + (vline - vis);
+				off += p->GetVisualLineCount() - vis;
+			}
+			return -1;
+		};
+
+		int t = visualOffset(target.line, target.visual_line);
+		int c = visualOffset(CurLine, m_CurVisualLineInLogicalLine);
+
+		if (t != -1 && c != -1)
+			moveByDelta(t - c);
+		else
+			fallbackSetCurLine(m_TopScreenLogicalLine ? m_TopScreenLogicalLine : TopScreen);
+
+		m_CurVisualLineInLogicalLine = target.visual_line;
+	}
+	else
+	{
+		auto visibleOffset = [&](Edit* line)
+		{
+			int off = 0;
+			for (Edit* p = TopScreen; p && off <= screenHeight; p = p->m_next, ++off)
+				if (p == line)
+					return off;
+			return -1;
+		};
+
+		int t = visibleOffset(target.line);
+		int c = visibleOffset(CurLine);
+
+		if (t != -1 && c != -1)
+			moveByDelta(t - c);
+		else
+			fallbackSetCurLine(TopScreen);
+	}
+
+	if (initial_click)
+		UnmarkBlockAndShowIt();
+
+	CurLine->SetCurPos(target.pos);
+
+	if (MouseSelStartingLine == -1)
+	{
+		MouseSelStartingLine = NumLine;
+		MouseSelStartingPos = target.pos;
+	}
+	else
+	{
+		const bool vblock = (control_state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
+		if (MouseSelStartingLine < NumLine ||
+			(MouseSelStartingLine == NumLine && target.pos >= MouseSelStartingPos))
+		{
+			MarkBlock(vblock, MouseSelStartingLine, MouseSelStartingPos,
+				target.pos - MouseSelStartingPos,
+				NumLine + 1 - MouseSelStartingLine);
+		}
+		else
+		{
+			MarkBlock(vblock, NumLine, target.pos,
+				MouseSelStartingPos - target.pos,
+				MouseSelStartingLine + 1 - NumLine);
+		}
+	}
+
+	if (m_bWordWrap)
+	{
+		int v_start, v_end;
+		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
+		m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(v_start);
+		MaxRightPos = CurLine->GetCellCurPos();
+	}
+
+	Show();
 }
 
 int Editor::CalcDistance(Edit *From, Edit *To, int MaxDist)

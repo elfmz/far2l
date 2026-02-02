@@ -1888,10 +1888,13 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					GotoXY(X1, Y);
 
 				FARString strMenuLine;
+				FARString itemText(Item[I]->strName);
+				ReplaceStrings(itemText, L"\r", L"", -1);
+				ReplaceStrings(itemText, L"\n", L"\x21B5", -1);
 
 				int ShowPos =
-						HiFindRealPos(Item[I]->strName, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
-				FARString strMItemPtr(Item[I]->strName.CPtr() + ShowPos);
+						HiFindRealPos(itemText, Item[I]->ShowPos, CheckFlags(VMENU_SHOWAMPERSAND));
+				FARString strMItemPtr(itemText.CPtr() + ShowPos);
 				const int strMItemPtrLen = CheckFlags(VMENU_SHOWAMPERSAND)
 					? static_cast<int>(strMItemPtr.CellsCount())
 					: HiStrCellsCount(strMItemPtr);

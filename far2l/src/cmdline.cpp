@@ -97,44 +97,68 @@ void NormalizeMultilineForExec(FARString &text)
 	text = out;
 }
 
-namespace {
 enum
 {
-	MP_BOX,
-	MP_MEMO,
-	MP_SEPARATOR,
-	MP_BTN_CANCEL,
-	MP_BTN_EXEC,
-	MP_BTN_EXEC_NOASK
+	MD_BOX,
+	MD_MEMO,
+	MD_SEPARATOR,
+	MD_BTN1,
+	MD_BTN2,
+	MD_BTN3
 };
 
-struct CmdlinePasteDlgLayout
+struct CmdlineMultilineDlgLayout
 {
 	int min_width;
 	int min_height;
+	int id_box;
+	int id_memo;
+	int id_sep;
+	int id_btn1;
+	int id_btn2;
+	int id_btn3;
 };
 
-static void CalcCmdlinePasteDialogLayout(const CmdlinePasteDlgLayout &layout, int &dlg_w, int &dlg_h, int &dlg_x,
+constexpr int kCmdlineDlgMinWidth = 40;
+constexpr int kCmdlineDlgMinHeight = 12;
+constexpr int kCmdlineDlgMaxWidth = 76;
+constexpr int kCmdlineDlgMaxHeight = 20;
+constexpr int kCmdlineDlgMargin = 2;
+constexpr int kCmdlineDlgSepOffset = 4;
+constexpr int kCmdlineDlgBtnOffset = 3;
+constexpr int kCmdlineMultilineMaxLines = 5;
+
+static void CalcCmdlineMultilineDialogLayout(int min_width, int min_height, int &dlg_w, int &dlg_h, int &dlg_x,
 		int &dlg_y)
 {
-	dlg_w = Max(layout.min_width, Min(ScrX - 2, Max(76, (ScrX * 3) / 4)));
-	dlg_h = Max(layout.min_height, Min(ScrY - 2, Max(20, (ScrY * 2) / 3)));
+	dlg_w = Max(min_width, Min(ScrX - kCmdlineDlgMargin, Max(kCmdlineDlgMaxWidth, (ScrX * 3) / 4)));
+	dlg_h = Max(min_height, Min(ScrY - kCmdlineDlgMargin, Max(kCmdlineDlgMaxHeight, (ScrY * 2) / 3)));
 	dlg_x = Max(0, (ScrX - dlg_w) / 2);
 	dlg_y = Max(0, (ScrY - dlg_h) / 2);
 }
 
-static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+static void BuildMultilineDialogData(DialogDataEx *data, FarLangMsg title, FarLangMsg btn1, DWORD btn1_flags,
+		FarLangMsg btn2, DWORD btn2_flags, bool has_btn3, FarLangMsg btn3, int dlg_w, int dlg_h, int sep_y,
+		int btn_y)
+{
+	data[MD_BOX] = {DI_DOUBLEBOX, 3, 1, (short)(dlg_w - 4), (short)(dlg_h - 2), {}, 0, title};
+	data[MD_MEMO] = {DI_MEMOEDIT, 5, 2, (short)(dlg_w - 6), (short)(dlg_h - 5), {}, DIF_FOCUS, L""};
+	data[MD_SEPARATOR] = {DI_TEXT, 0, (short)sep_y, 0, (short)sep_y, {}, DIF_SEPARATOR, L""};
+	data[MD_BTN1] = {DI_BUTTON, 0, (short)btn_y, 0, (short)btn_y, {}, btn1_flags | DIF_CENTERGROUP, btn1};
+	data[MD_BTN2] = {DI_BUTTON, 0, (short)btn_y, 0, (short)btn_y, {}, btn2_flags | DIF_CENTERGROUP, btn2};
+	if (has_btn3)
+		data[MD_BTN3] = {DI_BUTTON, 0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP, btn3};
+}
+
+static INT_PTR WINAPI CmdlineMultilineDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if (Msg == DN_RESIZECONSOLE) {
-		auto *layout = reinterpret_cast<CmdlinePasteDlgLayout *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
+		auto *layout = reinterpret_cast<CmdlineMultilineDlgLayout *>(SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 		if (!layout)
 			return DefDlgProc(hDlg, Msg, Param1, Param2);
 
-		int dlg_w = 0;
-		int dlg_h = 0;
-		int dlg_x = 0;
-		int dlg_y = 0;
-		CalcCmdlinePasteDialogLayout(*layout, dlg_w, dlg_h, dlg_x, dlg_y);
+		int dlg_w = 0, dlg_h = 0, dlg_x = 0, dlg_y = 0;
+		CalcCmdlineMultilineDialogLayout(layout->min_width, layout->min_height, dlg_w, dlg_h, dlg_x, dlg_y);
 
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, FALSE, 0);
 
@@ -149,35 +173,37 @@ static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG
 		rect.Top = 1;
 		rect.Right = (SHORT)(dlg_w - 4);
 		rect.Bottom = (SHORT)(dlg_h - 2);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BOX, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_box, reinterpret_cast<LONG_PTR>(&rect));
 
 		rect.Left = 5;
 		rect.Top = 2;
 		rect.Right = (SHORT)(dlg_w - 6);
 		rect.Bottom = (SHORT)(dlg_h - 5);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_MEMO, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_memo, reinterpret_cast<LONG_PTR>(&rect));
 
 		rect.Left = 0;
 		rect.Right = 0;
 		rect.Top = (SHORT)(dlg_h - 5);
 		rect.Bottom = (SHORT)(dlg_h - 5);
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_SEPARATOR, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_sep, reinterpret_cast<LONG_PTR>(&rect));
 		rect.Top = (SHORT)(dlg_h - 4);
 		rect.Bottom = (SHORT)(dlg_h - 4);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_SEPARATOR, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_sep, reinterpret_cast<LONG_PTR>(&rect));
 
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_BTN_CANCEL, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_btn1, reinterpret_cast<LONG_PTR>(&rect));
 		rect.Top = (SHORT)(dlg_h - 3);
 		rect.Bottom = (SHORT)(dlg_h - 3);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BTN_CANCEL, reinterpret_cast<LONG_PTR>(&rect));
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_BTN_EXEC, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_btn1, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_btn2, reinterpret_cast<LONG_PTR>(&rect));
 		rect.Top = (SHORT)(dlg_h - 3);
 		rect.Bottom = (SHORT)(dlg_h - 3);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BTN_EXEC, reinterpret_cast<LONG_PTR>(&rect));
-		SendDlgMessage(hDlg, DM_GETITEMPOSITION, MP_BTN_EXEC_NOASK, reinterpret_cast<LONG_PTR>(&rect));
-		rect.Top = (SHORT)(dlg_h - 3);
-		rect.Bottom = (SHORT)(dlg_h - 3);
-		SendDlgMessage(hDlg, DM_SETITEMPOSITION, MP_BTN_EXEC_NOASK, reinterpret_cast<LONG_PTR>(&rect));
+		SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_btn2, reinterpret_cast<LONG_PTR>(&rect));
+		if (layout->id_btn3 >= 0) {
+			SendDlgMessage(hDlg, DM_GETITEMPOSITION, layout->id_btn3, reinterpret_cast<LONG_PTR>(&rect));
+			rect.Top = (SHORT)(dlg_h - 3);
+			rect.Bottom = (SHORT)(dlg_h - 3);
+			SendDlgMessage(hDlg, DM_SETITEMPOSITION, layout->id_btn3, reinterpret_cast<LONG_PTR>(&rect));
+		}
 
 		SendDlgMessage(hDlg, DM_ENABLEREDRAW, TRUE, 0);
 		return TRUE;
@@ -185,57 +211,88 @@ static INT_PTR WINAPI CmdlinePasteDlgProc(HANDLE hDlg, int Msg, int Param1, LONG
 
 	return DefDlgProc(hDlg, Msg, Param1, Param2);
 }
-} // namespace
 
-int ShowMultilinePasteDialog(FARString &text)
+enum class MultilineDialogMode
+{
+	Paste,
+	Edit
+};
+
+struct MultilineDialogConfig
+{
+	int box_id;
+	int memo_id;
+	int sep_id;
+	int btn_ids[3]; // [0]=Cancel, [1]=OK, [2]=OK2 or -1 if not present
+};
+
+static int RunMultilineDialog(FARString &text, DialogDataEx *DlgData, size_t item_count,
+		const MultilineDialogConfig &cfg, int min_width, int min_height, int dlg_w, int dlg_h,
+		MultilineDialogMode mode)
 {
 	static const wchar_t kCmdlineMemoFilename[] = L"cmdline.bash";
-	const int min_width = 40;
-	const int min_height = 12;
-	const int dlg_w = Max(min_width, Min(ScrX - 2, Max(76, (ScrX * 3) / 4)));
-	const int dlg_h = Max(min_height, Min(ScrY - 2, Max(20, (ScrY * 2) / 3)));
-	const int sep_y = dlg_h - 4;
-	const int btn_y = dlg_h - 3;
-//	const int dlg_w = Max(min_width, Min(ScrX - 2, 76));
-//	const int dlg_h = Max(min_height, Min(ScrY - 2, 20));
 
-	DialogDataEx DlgData[] = {
-		{DI_DOUBLEBOX, 3, 1, (short)(dlg_w - 4), (short)(dlg_h - 2), {}, 0, Msg::MultilinePaste},
-		{DI_MEMOEDIT,  5, 2, (short)(dlg_w - 6), (short)(dlg_h - 5), {}, DIF_FOCUS, L""},
-		{DI_TEXT,      0, (short)sep_y, 0, (short)sep_y, {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP, Msg::HCancel},
-		{DI_BUTTON,    0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP | DIF_DEFAULT, Msg::HExecute},
-		{DI_BUTTON,    0, (short)btn_y, 0, (short)btn_y, {}, DIF_CENTERGROUP, Msg::HExecuteNoAsk}
-	};
+	std::vector<DialogItemEx> DlgItems(item_count);
+	DataToItemEx(DlgData, DlgItems.data(), item_count);
+	DlgItems[cfg.memo_id].strData = text;
+	DlgItems[cfg.memo_id].UserData = (DWORD_PTR)kCmdlineMemoFilename;
 
-	MakeDialogItemsEx(DlgData, DlgItems);
-	DlgItems[MP_MEMO].strData = text;
-	DlgItems[MP_MEMO].UserData = (DWORD_PTR)kCmdlineMemoFilename;
+	CmdlineMultilineDlgLayout layout = {min_width, min_height, cfg.box_id, cfg.memo_id, cfg.sep_id, cfg.btn_ids[0],
+			cfg.btn_ids[1], cfg.btn_ids[2]};
 
-	CmdlinePasteDlgLayout layout = {min_width, min_height};
-	Dialog Dlg(DlgItems, ARRAYSIZE(DlgItems), CmdlinePasteDlgProc, reinterpret_cast<LONG_PTR>(&layout));
+	Dialog Dlg(DlgItems.data(), item_count, CmdlineMultilineDlgProc, reinterpret_cast<LONG_PTR>(&layout));
 	Dlg.SetPosition(-1, -1, dlg_w, dlg_h);
+	Dlg.SetDialogData(reinterpret_cast<LONG_PTR>(&layout));
 	Dlg.Process();
 
 	int exit_code = Dlg.GetExitCode();
-	if (exit_code == MP_BTN_EXEC || exit_code == MP_BTN_EXEC_NOASK) {
-		int len = (int)SendDlgMessage((HANDLE)&Dlg, DM_GETTEXTLENGTH, MP_MEMO, 0);
-		if (len > 0) {
-			FARString edited;
-			wchar_t *buf = edited.GetBuffer(len + 1);
-			FarDialogItemData data = {(size_t)len, buf};
-			SendDlgMessage((HANDLE)&Dlg, DM_GETTEXT, MP_MEMO, (LONG_PTR)&data);
-			edited.ReleaseBuffer(len);
-			text = edited;
-		} else {
-			text = DlgItems[MP_MEMO].strData;
-		}
-		NormalizeMultilineForExec(text);
-		RemoveTrailingSpaces(text);
-		return (exit_code == MP_BTN_EXEC) ? 1 : 2;
+	if (exit_code == cfg.btn_ids[0] || exit_code < 0)
+		return 0;
+
+	int len = (int)SendDlgMessage((HANDLE)&Dlg, DM_GETTEXTLENGTH, cfg.memo_id, 0);
+	FARString edited;
+	if (len > 0) {
+		wchar_t *buf = edited.GetBuffer(len + 1);
+		FarDialogItemData data = {(size_t)len, buf};
+		SendDlgMessage((HANDLE)&Dlg, DM_GETTEXT, cfg.memo_id, (LONG_PTR)&data);
+		edited.ReleaseBuffer(len);
+	} else {
+		edited = DlgItems[cfg.memo_id].strData;
 	}
 
-	return 0;
+	NormalizeMultilineForExec(edited);
+	RemoveTrailingSpaces(edited);
+	text = edited;
+
+	if (mode == MultilineDialogMode::Paste)
+		return (exit_code == cfg.btn_ids[1]) ? 1 : 2;
+	return 1;
+}
+
+static int ShowMultilineDialog(FARString &text, MultilineDialogMode mode)
+{
+	const int min_width = kCmdlineDlgMinWidth;
+	const int min_height = kCmdlineDlgMinHeight;
+	int dlg_w = 0, dlg_h = 0, dlg_x = 0, dlg_y = 0;
+	CalcCmdlineMultilineDialogLayout(min_width, min_height, dlg_w, dlg_h, dlg_x, dlg_y);
+	const int sep_y = dlg_h - kCmdlineDlgSepOffset;
+	const int btn_y = dlg_h - kCmdlineDlgBtnOffset;
+
+	if (mode == MultilineDialogMode::Paste) {
+		DialogDataEx DlgData[6];
+		BuildMultilineDialogData(DlgData, Msg::MultilinePaste, Msg::HCancel, 0, Msg::HExecute, DIF_DEFAULT,
+				true, Msg::HExecuteNoAsk, dlg_w, dlg_h, sep_y, btn_y);
+		const MultilineDialogConfig cfg = {MD_BOX, MD_MEMO, MD_SEPARATOR, {MD_BTN1, MD_BTN2, MD_BTN3}};
+		return RunMultilineDialog(text, DlgData, ARRAYSIZE(DlgData), cfg, min_width, min_height, dlg_w, dlg_h,
+				mode);
+	}
+
+	DialogDataEx DlgData[5];
+	BuildMultilineDialogData(DlgData, Msg::EditCommand, Msg::Cancel, 0, Msg::Ok, DIF_DEFAULT, false, Msg::Ok,
+			dlg_w, dlg_h, sep_y, btn_y);
+	const MultilineDialogConfig cfg = {MD_BOX, MD_MEMO, MD_SEPARATOR, {MD_BTN1, MD_BTN2, -1}};
+	return RunMultilineDialog(text, DlgData, ARRAYSIZE(DlgData), cfg, min_width, min_height, dlg_w, dlg_h,
+			mode);
 }
 } // namespace
 
@@ -247,7 +304,9 @@ CommandLine::CommandLine()
 					| EditControl::EC_ENABLEFNCOMPLETE_ESCAPED),
 //	BackgroundScreen(nullptr),
 	LastCmdPartLength(-1),
-	PushDirStackSize(0)
+	PushDirStackSize(0),
+	m_multilineExtraLines(0),
+	m_multilineActiveLine(-1)
 {
 	CmdStr.SetEditBeyondEnd(FALSE);
 	SetPersistentBlocks(Opt.CmdLine.EditBlock);
@@ -294,23 +353,60 @@ void CommandLine::DisplayObject()
 		return;
 
 	FARString strTruncDir;
-	GetPrompt(strTruncDir);
-	TruncPathStr(strTruncDir, (X2 - X1) / 2);
-	GotoXY(X1, Y1);
-	SetFarColor(COL_COMMANDLINEPREFIX);
-	Text(strTruncDir);
-	CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
-	CmdStr.SetPosition(X1 + (int)strTruncDir.CellsCount(), Y1, X2, Y2);
+	const bool has_multiline = !m_multilineLines.empty();
+	if (has_multiline) {
+		strTruncDir = L"> ";
+	} else {
+		GetPrompt(strTruncDir);
+		TruncPathStr(strTruncDir, (X2 - X1) / 2);
+	}
+	const int input_y = Y2;
+	const int width = X2 - X1 + 2;
+	const int prompt_len = (int)strTruncDir.CellsCount();
+	if (has_multiline) {
+		const int total_lines = (int)m_multilineLines.size();
+		const int view_lines = std::min(total_lines, kCmdlineMultilineMaxLines);
+		const int max_top = std::max(0, total_lines - view_lines);
+		const int view_top = std::min(std::max(0, m_multilineActiveLine - (view_lines - 1)), max_top);
+		for (int i = 0; i < view_lines; ++i) {
+			const int line_index = view_top + i;
+			const int y = input_y - (view_lines - 1 - i);
+			GotoXY(X1, y);
+			SetFarColor(COL_COMMANDLINEPREFIX);
+			Text(strTruncDir);
+			FARString line;
+			if (line_index != m_multilineActiveLine)
+				line = m_multilineLines[line_index];
+			const int content_width = std::max(0, width - prompt_len);
+			if (line.CellsCount() > content_width)
+				line.TruncateByCells(content_width);
+			if (line.CellsCount() < content_width)
+				line.Append(L' ', content_width - line.CellsCount());
+			GotoXY(X1 + prompt_len, y);
+			SetFarColor(COL_COMMANDLINE);
+			Text(line);
+		}
+		const int active_y = input_y - (view_lines - 1 - (m_multilineActiveLine - view_top));
+		CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
+		CmdStr.SetPosition(X1 + prompt_len, active_y, X2, active_y);
+	} else {
+		GotoXY(X1, input_y);
+		SetFarColor(COL_COMMANDLINEPREFIX);
+		Text(strTruncDir);
+		CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
+		CmdStr.SetPosition(X1 + prompt_len, input_y, X2, input_y);
+	}
 
 	CmdStr.Show();
 
-	DrawComboBoxMark(0x2191);
+	DrawComboBoxMark(0x2191, input_y);
+
 }
 
-void CommandLine::DrawComboBoxMark(wchar_t MarkChar)
+void CommandLine::DrawComboBoxMark(wchar_t MarkChar, int y)
 {
 	wchar_t MarkWz[2] = {MarkChar, 0};
-	GotoXY(X2 + 1, Y1);
+	GotoXY(X2 + 1, y);
 	SetFarColor(COL_COMMANDLINEPREFIX);
 	Text(MarkWz);
 }
@@ -320,6 +416,125 @@ void CommandLine::SetCurPos(int Pos, int LeftPos)
 	CmdStr.SetLeftPos(LeftPos);
 	CmdStr.SetCurPos(Pos);
 	CmdStr.Redraw();
+}
+
+bool CommandLine::IsContinuationLine(const FARString &line) const
+{
+	return !line.IsEmpty() && line[line.GetLength() - 1] == L'\\';
+}
+
+FARString CommandLine::BuildMultilineCommand(const FARString &line) const
+{
+	FARString result;
+	const int count = (int)m_multilineLines.size();
+	const int active = (m_multilineActiveLine >= 0 && m_multilineActiveLine < count)
+		? m_multilineActiveLine
+		: (count > 0 ? count - 1 : -1);
+	for (int i = 0; i < count; ++i) {
+		if (i == active)
+			result+= line;
+		else
+			result+= m_multilineLines[i];
+		if (i + 1 < count)
+			result+= L'\n';
+	}
+	if (count == 0)
+		result = line;
+	return result;
+}
+
+void CommandLine::ApplyMultilineText(const FARString &text)
+{
+	m_multilineLines.clear();
+	m_multilineActiveLine = -1;
+	FARString current;
+	for (size_t i = 0; i < text.GetLength(); ++i) {
+		wchar_t ch = text[i];
+		if (ch == L'\n') {
+			m_multilineLines.emplace_back(current);
+			current.Clear();
+		} else if (ch != L'\r') {
+			current.Append(ch);
+		}
+	}
+	if (!current.IsEmpty()) {
+		m_multilineLines.emplace_back(current);
+	}
+	if (m_multilineLines.size() <= 1) {
+		if (m_multilineLines.empty())
+			CmdStr.SetString(L"", FALSE);
+		else
+			CmdStr.SetString(m_multilineLines[0].CPtr());
+		ClearMultilineState();
+		Show();
+		return;
+	}
+	m_multilineActiveLine = (int)m_multilineLines.size() - 1;
+	CmdStr.SetString(m_multilineLines[m_multilineActiveLine].CPtr());
+	UpdateMultilineLayout();
+	Show();
+}
+
+void CommandLine::ClearMultilineState()
+{
+	m_multilineLines.clear();
+	m_multilineActiveLine = -1;
+	SetMultilineExtraLines(0);
+}
+
+void CommandLine::SetMultilineExtraLines(int extra_lines)
+{
+	m_multilineExtraLines = std::max(0, std::min(extra_lines, kCmdlineMultilineMaxLines - 1));
+	if (CtrlObject && CtrlObject->Cp()) {
+		auto *cp = CtrlObject->Cp();
+		cp->SetPanelPositions(cp->LeftPanel->IsFullScreen(), cp->RightPanel->IsFullScreen(), Opt.PanelsDisposition);
+	}
+}
+
+void CommandLine::SyncActiveMultilineLine()
+{
+	if (m_multilineActiveLine >= 0 && m_multilineActiveLine < (int)m_multilineLines.size()) {
+		FARString current;
+		CmdStr.GetString(current);
+		m_multilineLines[m_multilineActiveLine] = current;
+	}
+}
+
+void CommandLine::UpdateMultilineLayout()
+{
+	const int count = (int)m_multilineLines.size();
+	if (count <= 1) {
+		if (count == 1)
+			CmdStr.SetString(m_multilineLines[0].CPtr());
+		ClearMultilineState();
+		return;
+	}
+	if (m_multilineActiveLine < 0 || m_multilineActiveLine >= count)
+		m_multilineActiveLine = count - 1;
+	SetMultilineExtraLines(std::min(count - 1, kCmdlineMultilineMaxLines - 1));
+}
+
+bool CommandLine::MoveMultilineLine(int delta)
+{
+	if (m_multilineLines.empty())
+		return false;
+	const int count = (int)m_multilineLines.size();
+	const int next = m_multilineActiveLine + delta;
+	if (next < 0 || next >= count)
+		return true;
+
+	const int desired_pos = CmdStr.GetCurPos();
+	SyncActiveMultilineLine();
+
+	m_multilineActiveLine = next;
+	CmdStr.DisableAC();
+	CmdStr.SetString(m_multilineLines[m_multilineActiveLine].CPtr());
+	CmdStr.SetLeftPos(0);
+	CmdStr.Select(-1, 0);
+	CmdStr.SetCurPos(std::min(desired_pos, CmdStr.GetLength()));
+	CmdStr.RevertAC();
+	Show();
+	return true;
 }
 
 int64_t CommandLine::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -497,10 +712,17 @@ void CommandLine::ProcessKey_ShowCommandsHistory()
 		}
 
 	} else if ((SelectType > 0 && SelectType <= 3) || SelectType == 7) {
+		size_t multiline_pos = 0;
+		const bool is_multiline = strStr.Pos(multiline_pos, L'\n');
 		if (SelectType < 3 || SelectType == 7) {
 			CmdStr.DisableAC();
 		}
-		SetString(strStr);
+		if (is_multiline) {
+			ApplyMultilineText(strStr);
+			CmdStr.SetCurPos((int)CmdStr.GetLength());
+		} else {
+			SetString(strStr);
+		}
 		if (SelectType < 3 || SelectType == 7) {
 			ProcessKey(SelectType == 7 ? static_cast<int>(KEY_CTRLALTENTER)
 									: (SelectType == 1 ? static_cast<int>(KEY_ENTER)
@@ -518,6 +740,38 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 	CmdStr.Show();
 	CmdStr.GetString(strStr);
 	RemoveTrailingSpaces(strStr, true); // RemoveTrailingSpaces and taking into account last escaping symbol
+
+	if (IsContinuationLine(strStr)) {
+		if (m_multilineLines.empty()) {
+			m_multilineLines.emplace_back(strStr);
+			m_multilineLines.emplace_back(L"");
+			m_multilineActiveLine = (int)m_multilineLines.size() - 1;
+			CmdStr.SetString(L"", FALSE);
+			UpdateMultilineLayout();
+			Show();
+			return TRUE;
+		}
+		if ((int)m_multilineLines.size() < kCmdlineMultilineMaxLines) {
+			SyncActiveMultilineLine();
+			const int insert_pos = m_multilineActiveLine + 1;
+			m_multilineLines.insert(m_multilineLines.begin() + insert_pos, FARString());
+			m_multilineActiveLine = insert_pos;
+			CmdStr.SetString(L"", FALSE);
+			UpdateMultilineLayout();
+			Show();
+			return TRUE;
+		}
+		FARString combined = BuildMultilineCommand(strStr);
+		if (ShowMultilineDialog(combined, MultilineDialogMode::Edit)) {
+			ApplyMultilineText(combined);
+		}
+		return TRUE;
+	}
+
+	if (!m_multilineLines.empty()) {
+		strStr = BuildMultilineCommand(strStr);
+		ClearMultilineState();
+	}
 
 	if (strStr.IsEmpty())
 		return FALSE;
@@ -638,6 +892,101 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 		case KEY_TAB: case KEY_SHIFTTAB:
 			ProcessTabCompletion();
 			return TRUE;
+		case KEY_CTRLALTE: {
+			FARString strStr;
+			CmdStr.GetString(strStr);
+			if (ShowMultilineDialog(strStr, MultilineDialogMode::Edit)) {
+				CmdStr.DisableAC();
+				SetString(strStr);
+				CmdStr.SetCurPos((int)CmdStr.GetLength());
+				CmdStr.RevertAC();
+			}
+			return TRUE;
+		}
+	}
+
+	if (!m_multilineLines.empty()) {
+		int sel_start = -1;
+		int sel_end = 0;
+		CmdStr.GetSelection(sel_start, sel_end);
+		const bool has_selection = !(sel_start == -1 && sel_end == 0);
+		if (Key == KEY_UP || Key == KEY_NUMPAD8)
+			return MoveMultilineLine(-1);
+		if (Key == KEY_DOWN || Key == KEY_NUMPAD2)
+			return MoveMultilineLine(1);
+		if (!has_selection) {
+			if (Key == KEY_LEFT || Key == KEY_NUMPAD4) {
+				if (CmdStr.GetCurPos() == 0 && m_multilineActiveLine > 0) {
+					SyncActiveMultilineLine();
+					m_multilineActiveLine--;
+					CmdStr.DisableAC();
+					CmdStr.SetString(m_multilineLines[m_multilineActiveLine].CPtr());
+					CmdStr.SetLeftPos(0);
+					CmdStr.Select(-1, 0);
+					CmdStr.SetCurPos(CmdStr.GetLength());
+					CmdStr.RevertAC();
+					Show();
+					return TRUE;
+				}
+			}
+			if (Key == KEY_RIGHT || Key == KEY_NUMPAD6) {
+				if (CmdStr.GetCurPos() == CmdStr.GetLength()
+						&& m_multilineActiveLine + 1 < (int)m_multilineLines.size()) {
+					SyncActiveMultilineLine();
+					m_multilineActiveLine++;
+					CmdStr.DisableAC();
+					CmdStr.SetString(m_multilineLines[m_multilineActiveLine].CPtr());
+					CmdStr.SetLeftPos(0);
+					CmdStr.Select(-1, 0);
+					CmdStr.SetCurPos(0);
+					CmdStr.RevertAC();
+					Show();
+					return TRUE;
+				}
+			}
+			if (Key == KEY_DEL) {
+				if (CmdStr.GetCurPos() == CmdStr.GetLength()
+						&& m_multilineActiveLine + 1 < (int)m_multilineLines.size()) {
+					SyncActiveMultilineLine();
+					FARString current = m_multilineLines[m_multilineActiveLine];
+					FARString next = m_multilineLines[m_multilineActiveLine + 1];
+					const int new_pos = (int)current.GetLength();
+					current+= next;
+					m_multilineLines[m_multilineActiveLine] = current;
+					m_multilineLines.erase(m_multilineLines.begin() + m_multilineActiveLine + 1);
+					CmdStr.DisableAC();
+					CmdStr.SetString(current.CPtr());
+					CmdStr.SetLeftPos(0);
+					CmdStr.Select(-1, 0);
+					CmdStr.SetCurPos(new_pos);
+					CmdStr.RevertAC();
+					UpdateMultilineLayout();
+					Show();
+					return TRUE;
+				}
+			}
+		}
+		if (Key == KEY_BS) {
+			if (CmdStr.GetCurPos() == 0 && m_multilineActiveLine > 0) {
+				SyncActiveMultilineLine();
+				FARString prev = m_multilineLines[m_multilineActiveLine - 1];
+				FARString current = m_multilineLines[m_multilineActiveLine];
+				const int new_pos = (int)prev.GetLength();
+				prev+= current;
+				m_multilineLines[m_multilineActiveLine - 1] = prev;
+				m_multilineLines.erase(m_multilineLines.begin() + m_multilineActiveLine);
+				m_multilineActiveLine--;
+				CmdStr.DisableAC();
+				CmdStr.SetString(prev.CPtr());
+				CmdStr.SetLeftPos(0);
+				CmdStr.Select(-1, 0);
+				CmdStr.SetCurPos(new_pos);
+				CmdStr.RevertAC();
+				UpdateMultilineLayout();
+				Show();
+				return TRUE;
+			}
+		}
 	}
 
 	if (Key != KEY_NONE) {
@@ -691,6 +1040,12 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 
 		case KEY_ESC:
 			if (Key == KEY_ESC) {
+				if (!m_multilineLines.empty()) {
+					CmdStr.SetString(L"", FALSE);
+					ClearMultilineState();
+					Show();
+					return TRUE;
+				}
 				// $ 24.09.2000 SVS - Если задано поведение по "Несохранению при Esc", то позицию в хистори не меняем и ставим в первое положение.
 				if (Opt.CmdHistoryRule)
 					CtrlObject->CmdHistory->ResetPosition();
@@ -713,7 +1068,7 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 					GPastedText.Clear();
 					RemoveTrailingSpaces(strToExec);
 					if (Opt.CmdLine.AskOnMultilinePaste) {
-						int res = ShowMultilinePasteDialog(strToExec);
+						int res = ShowMultilineDialog(strToExec, MultilineDialogMode::Paste);
 						if (res == 1) {
 							ExecString(strToExec);
 						}
@@ -780,7 +1135,7 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + ClipText + strStr.SubStr(CmdStr.GetCurPos());
 					RemoveTrailingSpaces(strToExec);
 					if (Opt.CmdLine.AskOnMultilinePaste) {
-						int res = ShowMultilinePasteDialog(strToExec);
+						int res = ShowMultilineDialog(strToExec, MultilineDialogMode::Paste);
 						if (res == 1) {
 							ExecString(strToExec);
 						}
@@ -836,6 +1191,9 @@ void CommandLine::SetString(const wchar_t *Str, BOOL Redraw)
 {
 	if (!IsVisible())
 		return;
+
+	if (!m_multilineLines.empty())
+		ClearMultilineState();
 
 	LastCmdPartLength = -1;
 	CmdStr.SetString(Str);
@@ -1108,7 +1466,7 @@ void CommandLine::RedrawWithoutComboBoxMark()
 
 	Redraw();
 	// erase \x2191 character...
-	DrawComboBoxMark(L' ');
+	DrawComboBoxMark(L' ', Y2);
 }
 
 bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)

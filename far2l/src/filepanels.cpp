@@ -221,12 +221,12 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 {
 	int left_x1, left_x2, left_y1, left_y2;
 	int right_x1, right_x2, right_y1, right_y2;
-	int cl_x1, cl_x2, cl_y;
+	int cl_x1, cl_x2, cl_y1, cl_y2;
 	bool cl_visible = CtrlObject->CmdLine->IsVisible(), new_cl_visible;
 
 	LeftPanel->GetPosition(left_x1, left_y1, left_x2, left_y2);
 	RightPanel->GetPosition(right_x1, right_y1, right_x2, right_y2);
-	CtrlObject->CmdLine->GetPosition(cl_x1, cl_y, cl_x2, cl_y);
+	CtrlObject->CmdLine->GetPosition(cl_x1, cl_y1, cl_x2, cl_y2);
 
 	const bool left_overlap = LeftPanel->IsVisible() && left_y2 + Opt.ShowKeyBar >= ScrY;
 	const bool right_overlap = RightPanel->IsVisible() && right_y2 + Opt.ShowKeyBar >= ScrY;
@@ -236,7 +236,10 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 	else
 		new_cl_visible = !left_overlap && !right_overlap;
 
-	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1, new_cl_y = ScrY - (Opt.ShowKeyBar);
+	const int extra = CtrlObject->CmdLine->GetExtraLines();
+	int new_cl_x1 = 0, new_cl_x2 = ScrX - 1;
+	int new_cl_y2 = ScrY - (Opt.ShowKeyBar);
+	int new_cl_y1 = new_cl_y2 - extra;
 	if (new_cl_visible) {
 		if (left_overlap) {
 			new_cl_x1 = right_x1;
@@ -244,12 +247,12 @@ void FilePanels::UpdateCmdLineVisibility(bool repos)
 			new_cl_x2 = left_x2 - 1;
 		}
 	}
-	bool cl_repos = (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y != cl_y);
+	bool cl_repos = (new_cl_x1 != cl_x1 || new_cl_x2 != cl_x2 || new_cl_y1 != cl_y1 || new_cl_y2 != cl_y2);
 	if (cl_visible != new_cl_visible) {
 		CtrlObject->CmdLine->SetVisible(new_cl_visible);
 	}
 	if (cl_repos || repos) {
-		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y, new_cl_x2, new_cl_y);
+		CtrlObject->CmdLine->SetPosition(new_cl_x1, new_cl_y1, new_cl_x2, new_cl_y2);
 	}
 
 	if (cl_visible != new_cl_visible || cl_repos || repos) {
@@ -280,8 +283,9 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int 
 		if (Opt.WidthDecrement > (ScrX / 2 - 10))
 			Opt.WidthDecrement = (ScrX / 2 - 10);
 
-		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement;
-		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement;
+		const int extra = CtrlObject && CtrlObject->CmdLine ? CtrlObject->CmdLine->GetExtraLines() : 0;
+		const int LeftY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement - extra;
+		const int RightY2 = ScrY - 1 - (Opt.ShowKeyBar) - Opt.RightHeightDecrement - extra;
 
 		if (LeftFullScreen) {
 			LeftPanel->SetPosition(0, Opt.ShowMenuBar ? 1 : 0, ScrX, LeftY2);
@@ -333,8 +337,9 @@ void FilePanels::SetPanelPositions(int LeftFullScreen, int RightFullScreen, int 
 			Opt.WidthDecrement = ((ScrY - Opt.LeftHeightDecrement) / 2 - 6);
 #endif
 
+		const int extra = CtrlObject && CtrlObject->CmdLine ? CtrlObject->CmdLine->GetExtraLines() : 0;
 		const int LeftY2 = (ScrY - Opt.ShowMenuBar) / 2 - (Opt.ShowKeyBar) - Opt.LeftHeightDecrement / 2;
-		int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - Opt.RightHeightDecrement;
+		int RightY2 = ScrY - (Opt.ShowKeyBar) - 1 - Opt.RightHeightDecrement - extra;
 
 #if 0
 		if (LeftFullScreen) {

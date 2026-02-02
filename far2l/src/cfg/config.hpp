@@ -650,6 +650,11 @@ struct Options
 
 	bool IsFirstStart;
 
+    // Theme support: theme name and flag indicating we need to save colors
+	FARString CurrentTheme;
+	bool IsColorsChanged;    /* transient, do not need to store in file */
+	bool IsSystemTheme;
+
 	std::vector<std::wstring> CmdLineStrings;
 };
 

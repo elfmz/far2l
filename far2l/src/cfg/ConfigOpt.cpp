@@ -129,6 +129,9 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, nullptr},
 	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
+	{true,  NSecColors, "CurrentTheme", &Opt.CurrentTheme, nullptr },
+	{true,  NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 0 },
+
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
 	{true,  NSecScreen, "KeyBar", &Opt.ShowKeyBar, 1},
@@ -837,6 +840,10 @@ void ConfigOptSave(bool Ask)
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();
 
-	FarColors::SaveFarColors();
+    if (Opt.IsColorsChanged || Ask) 
+    {
+		FarColors::SaveFarColors();
+		Opt.IsColorsChanged = false;
+	}
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }

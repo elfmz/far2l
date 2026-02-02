@@ -257,11 +257,20 @@ private:
 	FARString m_virtualFileName;
 
 private:
+	struct MouseTarget
+	{
+		Edit* line{nullptr};
+		int pos{-1};
+		int visual_line{0};
+	};
+
 	int FindVisualLine(Edit* line, int Pos);
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
 	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
 	int GetTopScreenLineNumber();
+	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
+	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state);
 	virtual void DisplayObject();
 	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);

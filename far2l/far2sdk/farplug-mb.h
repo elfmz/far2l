@@ -14,6 +14,7 @@ namespace oldfar
 #endif
 #endif
 	const int NM = MAX_PATH;
+	const size_t DLG_ITEM_MAX_CUST_COLORS = 5;
 
 	enum FARMESSAGEFLAGS
 	{

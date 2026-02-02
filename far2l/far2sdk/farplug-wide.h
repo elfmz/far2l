@@ -151,6 +151,9 @@ typedef struct _CHAR_INFO    CHAR_INFO;
 typedef uint32_t FARMESSAGEFLAGS;
 typedef GUID UUID;
 
+FAR_INLINE_CONSTANT size_t
+	DLG_ITEM_MAX_CUST_COLORS = 5;
+
 FAR_INLINE_CONSTANT FARMESSAGEFLAGS
 	FMSG_WARNING             = 0x00000001,
 	FMSG_ERRORTYPE           = 0x00000002,
@@ -355,11 +358,11 @@ enum FarMessagesProc
 
 //	DM_GETCOLOR,
 //	DM_SETCOLOR,
-	DM_GETDEFAULTCOLOR, // Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[4]
+	DM_GETDEFAULTCOLOR, // Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[DLG_ITEM_MAX_CUST_COLORS]
 
-	DM_GETTRUECOLOR,	// Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[4]
+	DM_GETTRUECOLOR,	// Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[DLG_ITEM_MAX_CUST_COLORS]
 	DM_GETCOLOR = DM_GETTRUECOLOR,
-	DM_SETTRUECOLOR,	// Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[4]
+	DM_SETTRUECOLOR,	// Param1 - Item ID, Param2 - uint64_t * -> uint64_t ItemColors[DLG_ITEM_MAX_CUST_COLORS]
 	DM_SETCOLOR = DM_SETTRUECOLOR,
 
 	DM_SETTEXTPTRSILENT,

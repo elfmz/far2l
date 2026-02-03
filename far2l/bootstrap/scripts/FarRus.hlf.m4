@@ -5036,7 +5036,7 @@ $ #Макросы: макроязык#
     Текст макроса можно задавать напрямую в файле конфигурации
     #~~/.config/far2l/settings/key_macros.ini#. Каждый макрос — это секция вида:
     #KeyMacros/<Area>/<Key>#, где:
-    - #Area# — одна из: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+    - #Area# — одна из: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
       #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
     - #Key# — имя клавиши, например #CtrlShiftF3#, #AltF1#, #F7# и т.п.
 

@@ -638,7 +638,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 				}
 				if (!GPastedText.IsEmpty()) {
 					memset(rec, 0, sizeof(*rec));
-					rec->EventType = KEY_EVENT; // Fake key event
+					rec->EventType = NOOP_EVENT; // Fake key event
 					return KEY_OP_PLAINTEXT;
 				}
 				continue;
@@ -833,7 +833,7 @@ static DWORD GetInputRecordInner(INPUT_RECORD *rec, bool ExcludeMacro, bool Proc
 
 			if (!GPastedText.IsEmpty()) {
 				memset(rec, 0, sizeof(*rec));
-				rec->EventType = KEY_EVENT; // Fake key event
+				rec->EventType = NOOP_EVENT; // Fake key event
 				return KEY_OP_PLAINTEXT;
 			}
 		}

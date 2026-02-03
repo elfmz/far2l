@@ -4309,7 +4309,7 @@ végzett mindennapi munka hatékony segédeszközévé.
     A makró szövegét közvetlenül a
     #~~/.config/far2l/settings/key_macros.ini# fájlban is megadhatjuk.
     Minden makró egy #KeyMacros/<Area>/<Key># szekció, ahol:
-    - #Area# pl.: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+    - #Area# pl.: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
       #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
     - #Key# billentyűnév, pl. #CtrlShiftF3#, #AltF1#, #F7#.
 

@@ -4880,7 +4880,7 @@ $ #Макроси: макромова#
 Текст макросу можна задавати напряму у файлі конфігурації
 #~~/.config/far2l/settings/key_macros.ini#. Кожен макрос — це секція:
 #KeyMacros/<Area>/<Key>#, де:
-- #Area# — одна з: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+- #Area# — одна з: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
   #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
 - #Key# — назва клавіші, наприклад #CtrlShiftF3#, #AltF1#, #F7# тощо.
 

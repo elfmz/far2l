@@ -4914,7 +4914,7 @@ FAR2L.
     Macro text can be written directly in the macro configuration file
     #~~/.config/far2l/settings/key_macros.ini#. Each macro is a section named:
     #KeyMacros/<Area>/<Key># where:
-    - #Area# is one of: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+    - #Area# is one of: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
       #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
     - #Key# is a key name such as #CtrlShiftF3#, #AltF1#, #F7#, etc.
 

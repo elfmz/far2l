@@ -4877,8 +4877,60 @@ $ #Макроси: макромова#
  #%var# - використання змінних
  та інші...
 
-Додати елементи макромови в ~макро~@KeyMacro@ можна тільки шляхом ручної
-правки реєстру або шляхом застосування спеціальних програм/плагінів.
+Текст макросу можна задавати напряму у файлі конфігурації
+#~~/.config/far2l/settings/key_macros.ini#. Кожен макрос — це секція:
+#KeyMacros/<Area>/<Key>#, де:
+- #Area# — одна з: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+  #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+- #Key# — назва клавіші, наприклад #CtrlShiftF3#, #AltF1#, #F7# тощо.
+
+Основні поля секції:
+#Description# - короткий опис;
+#DisableOutput# - #0x1# щоб придушити перерисовку під час виконання;
+#Sequence# - текст макросу (може містити #$If#, #$Else#, #$End# тощо).
+
+Приклад (відкрити журнал внутрішнього термінала FAR2L у переглядачі;
+якщо активна панель видима, тимчасово сховати панелі):
+#[KeyMacros/Shell/CtrlShiftF3]#
+#DisableOutput=0x1#
+#Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+#Ключові слова (змінні / умови)#
+Загальні:
+  #Bof#, #Eof#, #Empty#, #Selected# - стан поточного об'єкта.
+  #Far.Width#, #Far.Height#, #Far.Title# - розмір / заголовок консолі.
+  #MacroArea# - назва поточної області макросів.
+  #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - властивості об'єкта.
+
+Панелі (активна/пасивна):
+  #APanel.*# та #PPanel.*# — активна/пасивна панель.
+  #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+  #Selected#, #Left#, #LFN#, #Filter# - прапори стану.
+  #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - значення.
+  #Path#, #Path0#, #UNCPath# - шляхи панелі.
+  #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - геометрія / режим.
+  #HostFile#, #Prefix# - дані плагін-панелі.
+
+Командний рядок:
+  #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected# - стан.
+  #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value# - значення.
+
+Редактор:
+  #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+  #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+Діалог:
+  #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+Довідка:
+  #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+Переглядач / меню / інше:
+  #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+  #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
+
+Додати елементи макромови в ~макро~@KeyMacro@ можна лише шляхом ручного
+редагування файлу конфігурації або із застосуванням спеціальних програм/плагінів.
 
  Опис макромови можна знайти у супровідній документації.
 

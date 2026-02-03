@@ -4306,9 +4306,60 @@ végzett mindennapi munka hatékony segédeszközévé.
 
       és így tovább...
 
-    Makrónyelvi utasításokat csak a Windows regisztrációs adatbázisának
-szerkesztésével (HKEY_CURRENT_USER\\Software\\Far2\\KeyMacros) vagy az
-erre a célra kifejlesztett segédprogramokkal és pluginekkel adhatunk a
+    A makró szövegét közvetlenül a
+    #~~/.config/far2l/settings/key_macros.ini# fájlban is megadhatjuk.
+    Minden makró egy #KeyMacros/<Area>/<Key># szekció, ahol:
+    - #Area# pl.: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+      #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+    - #Key# billentyűnév, pl. #CtrlShiftF3#, #AltF1#, #F7#.
+
+    Fő mezők:
+    #Description# - rövid leírás;
+    #DisableOutput# - #0x1# esetén nincs képernyőfrissítés futás közben;
+    #Sequence# - a makró szövege (#$If#, #$Else#, #$End#, stb.).
+
+    Példa (FAR2L belső terminál napló megnyitása a nézőkében;
+    ha az aktív panel látható, átmenetileg elrejtjük a paneleket):
+ #[KeyMacros/Shell/CtrlShiftF3]#
+ #DisableOutput=0x1#
+ #Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+    #Makró kulcsszavak (változók / feltételek)#
+    Általános:
+      #Bof#, #Eof#, #Empty#, #Selected# - aktuális objektum állapota.
+      #Far.Width#, #Far.Height#, #Far.Title# - konzol méret / cím.
+      #MacroArea# - aktuális makróterület neve.
+      #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - objektum jellemzők.
+
+    Panelek (aktív/passzív):
+      #APanel.*# és #PPanel.*#.
+      #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+      #Selected#, #Left#, #LFN#, #Filter# - állapot.
+      #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - értékek.
+      #Path#, #Path0#, #UNCPath# - útvonalak.
+      #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - méret / mód.
+      #HostFile#, #Prefix# - plugin panel adatai.
+
+    Parancssor:
+      #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected#.
+      #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value#.
+
+    Szerkesztő:
+      #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+      #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+    Párbeszéd:
+      #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+    Súgó:
+      #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+    Nézőke / menü / egyéb:
+      #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+      #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
+
+    Makrónyelvi utasításokat a konfigurációs fájl kézi szerkesztésével
+vagy erre készült segédprogramokkal és pluginekkel adhatunk a
 ~makrókhoz~@KeyMacro@.
 
     A makrónyelv leírása megtalálható a kísérő dokumentációban.

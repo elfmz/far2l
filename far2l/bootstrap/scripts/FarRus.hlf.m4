@@ -5033,6 +5033,58 @@ $ #Макросы: макроязык#
     #%var#          - использование переменных
      и другие...
 
+    Текст макроса можно задавать напрямую в файле конфигурации
+    #~~/.config/far2l/settings/key_macros.ini#. Каждый макрос — это секция вида:
+    #KeyMacros/<Area>/<Key>#, где:
+    - #Area# — одна из: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+      #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+    - #Key# — имя клавиши, например #CtrlShiftF3#, #AltF1#, #F7# и т.п.
+
+    Основные поля в секции:
+    #Description# - краткое описание для браузера макросов;
+    #DisableOutput# - #0x1# для подавления перерисовки при выполнении;
+    #Sequence# - текст макроса (может содержать #$If#, #$Else#, #$End# и др.).
+
+    Пример (открыть журнал внутреннего терминала FAR2L в просмотрщике;
+    если активная панель видима, временно скрыть панели):
+ #[KeyMacros/Shell/CtrlShiftF3]#
+ #DisableOutput=0x1#
+ #Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+    #Ключевые слова (переменные / условия)#
+    Общие:
+      #Bof#, #Eof#, #Empty#, #Selected# - состояние текущего объекта.
+      #Far.Width#, #Far.Height#, #Far.Title# - размер / заголовок консоли.
+      #MacroArea# - имя текущей области макросов.
+      #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - свойства текущего объекта.
+
+    Панели (активная/пассивная):
+      #APanel.*# и #PPanel.*# — активная/пассивная панель.
+      #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+      #Selected#, #Left#, #LFN#, #Filter# - флаги состояния панели.
+      #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - значения панели.
+      #Path#, #Path0#, #UNCPath# - пути панели.
+      #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - геометрия / режим.
+      #HostFile#, #Prefix# - файл-хост / префикс плагин-панели.
+
+    Командная строка:
+      #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected# - состояние.
+      #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value# - значения.
+
+    Редактор:
+      #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+      #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+    Диалог:
+      #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+    Помощь:
+      #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+    Просмотр / меню / прочее:
+      #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+      #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
+
     Добавить элементы макроязыка в ~макрос~@KeyMacro@ можно только путём ручной
 правки файла конфигурации или путём применения специальных программ/плагинов.
 

@@ -4911,6 +4911,57 @@ FAR2L.
     #%var#          - using variables
      and others...
 
+    Macro text can be written directly in the macro configuration file
+    #~~/.config/far2l/settings/key_macros.ini#. Each macro is a section named:
+    #KeyMacros/<Area>/<Key># where:
+    - #Area# is one of: #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+      #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+    - #Key# is a key name such as #CtrlShiftF3#, #AltF1#, #F7#, etc.
+
+    Common fields inside a section:
+    #Description# - short text shown in the macro browser;
+    #DisableOutput# - #0x1# to suppress screen redraw during playback;
+    #Sequence# - macro text (may include #$If#, #$Else#, #$End#, etc.).
+
+    Example (open FAR2L internal terminal log in viewer; if the active panel is visible, temporarily hide panels):
+ #[KeyMacros/Shell/CtrlShiftF3]#
+ #DisableOutput=0x1#
+ #Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+    #Macro keywords (variables / conditions)#
+    General:
+      #Bof#, #Eof#, #Empty#, #Selected# - state of the current object in this area.
+      #Far.Width#, #Far.Height#, #Far.Title# - console size / title.
+      #MacroArea# - current macro area name.
+      #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - current object properties.
+
+    Panels (Active/Passive):
+      #APanel.*# and #PPanel.*# are for active/passive panel.
+      #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+      #Selected#, #Left#, #LFN#, #Filter# - panel state flags.
+      #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - panel values.
+      #Path#, #Path0#, #UNCPath# - panel paths.
+      #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - panel geometry / mode.
+      #HostFile#, #Prefix# - plugin panel host file / prefix.
+
+    Command line:
+      #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected# - state.
+      #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value# - values.
+
+    Editor:
+      #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+      #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+    Dialog:
+      #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+    Help:
+      #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+    Viewer / Menu / Other:
+      #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+      #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
+
     Addition of macro language commands to a ~macro~@KeyMacro@ can only be done
 by manually editing the config file or by using special tools/plugins.
 

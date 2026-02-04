@@ -72,11 +72,11 @@ will produce log output like this:
 ```
 
 
-## 1. DUMPV macro
+## 1. DUMPV and DUMPV_IF macros
 
 Logs simple variables.
 
-Use it for quickly logging a list of plain variables. It automatically extracts the variable names as written in your source code via stringification.
+Use for quick logging a list of plain variables. `DUMPV` logs unconditionally. `DUMPV_IF` triggers only if the condition evaluates to true.
 
 > **Warning**
 > 
@@ -86,6 +86,7 @@ Use it for quickly logging a list of plain variables. It automatically extracts 
 
 ```cpp
 DUMPV(var1, var2, ...);
+DUMPV_IF(condition, var1, var2, ...);
 ```
 
 **Usage:**
@@ -96,27 +97,34 @@ double pi = 3.14;
 std::string name = "FAR2L";
 
 DUMPV(answer, pi, name);
+DUMPV_IF(answer == 42, name);
 ```
 
 **Output:**
+
 ```
 /-----[PID:150985, TID:1]-----[2025-12-24 20:55:48,233]-----
 |[/home/testuser/far2l/far2l/src/main.cpp:403] in FarAppMain()
 |=> answer = 42
 |=> pi = 3.14
 |=> name = FAR2L
+
+/-----[PID:150985, TID:1]-----[2025-12-24 20:55:48,233]-----
+|[/home/testuser/far2l/far2l/src/main.cpp:403] in FarAppMain()
+|=> name = FAR2L
 ```
 
-## 2. DUMP macro
+## 2. DUMP and DUMP_IF macros
 
 Logs complex data and/or expressions.
 
-Use when working with types that need special handling. It requires you to wrap the variable tokens with helper macros (like `DVV`, `DCONT`, `DSTRBUF`, `DFLAGS`, etc.), so that the logging backend knows how to properly print out the value.
+Use when working with types that need special handling. It requires you to wrap the variable tokens with helper macros (like `DVV`, `DCONT`, `DSTRBUF`, `DFLAGS`, etc.), so that the logging backend knows how to properly print out the value. `DUMP` logs unconditionally. `DUMP_IF` triggers only if the condition evaluates to true.
 
 **Syntax:**
 
 ```cpp
 DUMP(HELPER_MACRO1(expr1), HELPER_MACRO2(expr2), ...);
+DUMP_IF(condition, HELPER_MACRO1(expr1), HELPER_MACRO2(expr2), ...);
 ```
 
 **Usage:**
@@ -126,9 +134,11 @@ FARString fs = "The quick brown fox jumps over the lazy dog.";
 std::vector<int> primes {2, 3, 5, 7, 11, 13, 17};
 
 DUMP(DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes, 4));
+DUMP_IF(!primes.empty(), DMSG("Has primes"), DVV(primes.size()));
 ```
 
 **Output:**
+
 ```
 /-----[PID:153098, TID:1]-----[2025-12-24 20:59:05,527]-----
 |[/home/testuser/far2l/far2l/src/main.cpp:402] in FarAppMain()
@@ -140,6 +150,11 @@ DUMP(DMSG("Hello, far2l world!"), DVV(fs.GetLength()), DCONT(primes, 4));
 |   |=> primes[2] = 5
 |   \=> primes[3] = 7
 |   Output limited to 4 elements (total elements: 7)
+
+/-----[PID:153098, TID:1]-----[2025-12-24 20:59:05,527]-----
+|[/home/testuser/far2l/far2l/src/main.cpp:402] in FarAppMain()
+|=> {DMSG} = Has primes
+|=> primes.size() = 7
 ```
 
 
@@ -407,24 +422,23 @@ The dumper behavior can be customized through the `DumperConfig` structure locat
 ```cpp
     struct DumperConfig
     {
-        static constexpr bool WRITE_LOG_TO_FILE = false;
+		static constexpr bool WRITE_LOG_TO_FILE = false;
 		static constexpr char LOG_FILENAME[] = "far2l_debug.log";
-
 		static constexpr bool ENABLE_PID_TID = true;
 		static constexpr bool ENABLE_TIMESTAMP = true;
 		static constexpr bool ENABLE_LOCATION = true;
-
 		static constexpr size_t HEXDUMP_BYTES_PER_LINE = 16;
 		static constexpr size_t HEXDUMP_MAX_LENGTH = 1024 * 1024;
-
 		static constexpr std::size_t CONTAINERS_MAX_INDENT_LEVEL = 32;
-		enum class AdjustmentStrategy { Off, PreferAdjusted, PreferOriginal };
-		enum class ResolutionStrategy { OnlyDynsym, PreferDynsym, PreferSymtab, OnlySymtab };
-
 		static constexpr bool STACKTRACE_SHOW_ADDRESSES_ALWAYS = false;
 		static constexpr bool STACKTRACE_DEMANGLE_NAMES = true;
+
+		enum class AdjustmentStrategy { Off, PreferAdjusted, PreferOriginal };
 		static constexpr AdjustmentStrategy STACKTRACE_RETADDR_ADJUSTMENT = AdjustmentStrategy::Off;
+
+		enum class ResolutionStrategy { OnlyDynsym, PreferDynsym, PreferSymtab, OnlySymtab };
 		static constexpr ResolutionStrategy STACKTRACE_SYMBOL_RESOLUTION = ResolutionStrategy::PreferDynsym;
+
 		static constexpr bool STACKTRACE_SHOW_SYMBOL_SOURCE = false;
 		static constexpr bool STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS = true;
 		static constexpr size_t STACKTRACE_MAX_FRAMES = 64;

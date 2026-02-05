@@ -113,6 +113,7 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	m_CachedTotalLines(0),
 	m_CachedLineNumWidth(0),
 	m_LineCountDirty(true),
+	m_BulkLoadMode(false),
 	m_showCursor(true)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
@@ -8027,10 +8028,14 @@ Edit *Editor::InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter, i
 		}
 
 		NumLastLine++;
-		m_LineCountDirty = true;  // Invalidate line number cache
 
-		if (AfterLineNumber < LastGetLineNumber) {
-			LastGetLineNumber++;
+		// Skip expensive cache operations during bulk file loading
+		if (!m_BulkLoadMode) {
+			m_LineCountDirty = true;  // Invalidate line number cache
+
+			if (AfterLineNumber < LastGetLineNumber) {
+				LastGetLineNumber++;
+			}
 		}
 	}
 

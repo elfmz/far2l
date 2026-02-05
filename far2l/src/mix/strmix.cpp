@@ -930,7 +930,14 @@ FARString &WINAPI FarFormatText(const wchar_t *SrcText,		// источник
 		}
 	} else {
 		/* Multiple character line break */
-		newtext = (wchar_t *)malloc((strSrc.GetLength() * (breakcharlen + 1) + 1) * sizeof(wchar_t));
+		size_t srcLen = strSrc.GetLength();
+		size_t allocSize = srcLen * (breakcharlen + 1) + 1;
+		// Check for overflow
+		if (allocSize < srcLen || allocSize > SIZE_MAX / sizeof(wchar_t)) {
+			strDestText.Clear();
+			return strDestText;
+		}
+		newtext = (wchar_t *)malloc(allocSize * sizeof(wchar_t));
 
 		if (!newtext) {
 			strDestText.Clear();

@@ -1676,8 +1676,14 @@ static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
 
 	if (CurPanelItem->UserData && (CurPanelItem->Flags & PPIF_USERDATA)) {
 		DWORD Size = *(DWORD *)CurPanelItem->UserData;
-		DestItem->UserData = (DWORD_PTR)malloc(Size);
-		memcpy((void *)DestItem->UserData, (void *)CurPanelItem->UserData, Size);
+		void *userData = malloc(Size);
+		if (userData) {
+			memcpy(userData, (void *)CurPanelItem->UserData, Size);
+			DestItem->UserData = (DWORD_PTR)userData;
+		} else {
+			DestItem->UserData = 0;
+			DestItem->Flags &= ~PPIF_USERDATA;
+		}
 	}
 
 	DestItem->FindData.lpwszFileName = wcsdup(strFullName);

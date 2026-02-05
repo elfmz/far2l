@@ -5471,6 +5471,9 @@ void Editor::DeleteBlock()
 
 		// дальше будет realloc, поэтому тут malloc.
 		wchar_t *TmpStr = (wchar_t *)malloc((Length + 3) * sizeof(wchar_t));
+		if (!TmpStr) {
+			return;
+		}
 
 		wmemcpy(TmpStr, CurStr, Length);
 

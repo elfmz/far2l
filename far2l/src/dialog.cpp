@@ -402,6 +402,11 @@ Dialog::Dialog(DialogItemEx *SrcItem,		// Набор элементов диал
 	CMM(MACRO_DIALOG), AltState(0), CtrlState(0), ShiftState(0)
 {
 	Dialog::Item = (DialogItemEx **)malloc(sizeof(DialogItemEx *) * SrcItemCount);
+	if (!Dialog::Item) {
+		Dialog::ItemCount = 0;
+		Dialog::pSaveItemEx = nullptr;
+		return;
+	}
 
 	for (unsigned i = 0; i < SrcItemCount; i++) {
 		Dialog::Item[i] = new DialogItemEx;
@@ -422,6 +427,11 @@ Dialog::Dialog(FarDialogItem *SrcItem,		// Набор элементов диа�
 	CMM(MACRO_DIALOG)
 {
 	Dialog::Item = (DialogItemEx **)malloc(sizeof(DialogItemEx *) * SrcItemCount);
+	if (!Dialog::Item) {
+		Dialog::ItemCount = 0;
+		Dialog::pSaveItemEx = nullptr;
+		return;
+	}
 
 	for (unsigned i = 0; i < SrcItemCount; i++) {
 		Dialog::Item[i] = new DialogItemEx;

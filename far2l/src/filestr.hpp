@@ -45,8 +45,8 @@ private:
 	FILE *SrcFile;
 	int ReadPos, ReadSize;
 
-	char ReadBuf[8192];
-	wchar_t wReadBuf[8192];
+	char ReadBuf[65536];
+	wchar_t wReadBuf[65536];
 
 	int m_nStrLength;
 	char *Str;

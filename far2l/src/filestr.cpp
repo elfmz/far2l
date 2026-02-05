@@ -37,7 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DetectCodepage.h"
 #include "codepage.hpp"
 
-#define DELTA 1024
+// Initial line buffer size - larger values reduce reallocations for typical files
+#define DELTA 8192
 
 enum EolType
 {
@@ -427,7 +428,7 @@ wchar_t *StringReader::Read(FILE *file, wchar_t *lpwszDest, size_t nDestLength, 
 template <class CHAR_T>
 class TypedStringReader
 {
-	CHAR_T ReadBuf[8192];
+	CHAR_T ReadBuf[65536];
 	std::vector<CHAR_T> Str;
 
 	GetFileStringContext &context;

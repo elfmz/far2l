@@ -186,8 +186,14 @@ void FileList::FileListToPluginItem(FileListItem *fi, PluginPanelItem *pi)
 
 	if (fi->UserData && (fi->UserFlags & PPIF_USERDATA)) {
 		DWORD Size = *(DWORD *)fi->UserData;
-		pi->UserData = (DWORD_PTR)malloc(Size);
-		memcpy((void *)pi->UserData, (void *)fi->UserData, Size);
+		void *userData = malloc(Size);
+		if (userData) {
+			memcpy(userData, (void *)fi->UserData, Size);
+			pi->UserData = (DWORD_PTR)userData;
+		} else {
+			pi->UserData = 0;
+			pi->Flags &= ~PPIF_USERDATA;
+		}
 	} else
 		pi->UserData = fi->UserData;
 
@@ -315,8 +321,14 @@ void FileList::PluginToFileListItem(PluginPanelItem *pi, FileListItem *fi)
 
 	if (pi->UserData && (pi->Flags & PPIF_USERDATA)) {
 		DWORD Size = *(DWORD *)pi->UserData;
-		fi->UserData = (DWORD_PTR)malloc(Size);
-		memcpy((void *)fi->UserData, (void *)pi->UserData, Size);
+		void *userData = malloc(Size);
+		if (userData) {
+			memcpy(userData, (void *)pi->UserData, Size);
+			fi->UserData = (DWORD_PTR)userData;
+		} else {
+			fi->UserData = 0;
+			fi->UserFlags &= ~PPIF_USERDATA;
+		}
 	} else
 		fi->UserData = pi->UserData;
 

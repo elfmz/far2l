@@ -131,6 +131,9 @@ int ConvertWildcards(const wchar_t *SrcName, FARString &strDest, int SelectedFol
 	int BeforeNameLength = DestNamePtr == DestName ? (int)(SrcNamePtr - Src) : 0;
 
 	wchar_t *PartBeforeName = (wchar_t *)malloc((BeforeNameLength + 1) * sizeof(wchar_t));
+	if (!PartBeforeName) {
+		return FALSE;
+	}
 
 	far_wcsncpy(PartBeforeName, Src, BeforeNameLength + 1);
 

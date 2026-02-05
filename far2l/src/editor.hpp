@@ -253,6 +253,7 @@ private:
 	int m_CachedTotalLines;
 	int m_CachedLineNumWidth;
 	bool m_LineCountDirty;
+	bool m_BulkLoadMode;  // Skip expensive operations during file loading
 	bool m_showCursor;
 	FARString m_virtualFileName;
 
@@ -437,6 +438,10 @@ public:
 	void SetDialogParent(DWORD Sets);
 	void SetReadOnly(int NewReadOnly) { Flags.Change(FEDITOR_LOCKMODE, NewReadOnly); };
 	int GetReadOnly() { return Flags.Check(FEDITOR_LOCKMODE); };
+
+	// Bulk load mode - skips expensive per-line operations during file loading
+	void BeginBulkLoad() { m_BulkLoadMode = true; }
+	void EndBulkLoad() { m_BulkLoadMode = false; m_LineCountDirty = true; };
 	void SetOvertypeMode(int Mode);
 	int GetOvertypeMode();
 	void SetEditBeyondEnd(int Mode);

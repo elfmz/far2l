@@ -664,8 +664,10 @@ void KeyMacro::ReleaseWORKBuffer(BOOL All)
 			Work.MacroWORKCount--;
 			memmove(Work.MacroWORK, ((BYTE *)Work.MacroWORK) + sizeof(MacroRecord),
 					sizeof(MacroRecord) * Work.MacroWORKCount);
-			Work.MacroWORK =
+			MacroRecord *NewMacroWORK =
 					(MacroRecord *)realloc(Work.MacroWORK, sizeof(MacroRecord) * Work.MacroWORKCount);
+			if (NewMacroWORK || Work.MacroWORKCount == 0)
+				Work.MacroWORK = NewMacroWORK;
 		}
 	}
 }
@@ -6154,10 +6156,8 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec, BOOL NeedAddSendFlag, BOOL IsPlugi
 	if (IsPluginSend)
 		NewMacroWORK2.Buffer[0] = MCODE_OP_KEYS;
 
-	if ((MRec->BufferSize + 1) > 2)
+	if (MRec->BufferSize > 0 && MRec->Buffer)
 		memcpy(&NewMacroWORK2.Buffer[IsPluginSend ? 1 : 0], MRec->Buffer, sizeof(DWORD) * MRec->BufferSize);
-	else if (MRec->Buffer)
-		NewMacroWORK2.Buffer[IsPluginSend ? 1 : 0] = (DWORD)(DWORD_PTR)MRec->Buffer;
 
 	if (IsPluginSend)
 		NewMacroWORK2.Buffer[NewMacroWORK2.BufferSize + 1] = MCODE_OP_ENDKEYS;

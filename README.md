@@ -270,6 +270,7 @@ By default far2l uses pre-generated "hardcoded" UNICODE characters properties. B
  `-DICU_MODE=build` - re-generate characters properties during build by using libicu available on build system, but it still not required to be present on target.
  `-DICU_MODE=runtime` - obtain properties at runtime (that can be bit slower) using libicu that required to be present on target system.
 
+Option to disable building macro subsystem completely: `-DFAR2MACRO=OFF` (see in [far2l/CMakeLists.txt](far2l/CMakeLists.txt)).
 
 To build with Python plugin: add argument `-DPYTHON=yes`
 but you must have installed additional packages within yours system:

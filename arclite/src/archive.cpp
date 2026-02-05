@@ -31,7 +31,7 @@ const wchar_t *c_tar_method_gnu = L"gnu";
 const wchar_t *c_tar_method_pax = L"pax";
 const wchar_t *c_tar_method_posix = L"posix";
 
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 #define DEFINE_ARC_ID(name, v)																				\
 	static constexpr unsigned char c_guid_##name[] =														\
 			"\x23\x17\x0F\x69\x40\xC1\x27\x8A\x10\x00\x00\x01\x10" v "\x00\x00";							\
@@ -953,6 +953,15 @@ void ArcAPI::load()
 	find_sfx_modules(_7zip_path + L"*.sfx");
 
 	if (arc_libs.empty()) {
+		load_libs(L"*7z*.so");
+#if defined(__APPLE__)
+		load_libs(L"*7z*.dylib");
+#endif
+		if (sfx_modules.empty())
+			find_sfx_modules(L"*.sfx");
+	}
+
+	if (arc_libs.empty()) {
 		_7zip_path = dll_path;
 		load_libs(_7zip_path + L"*7z*.so");
 #if defined(__APPLE__)
@@ -1499,6 +1508,7 @@ void Archive<UseVirtualDestructor>::make_index()
 	load_arc_attr();
 	groupHardLinks(prep_data);
 	update_hard_link_counts();
+
 //	debug_print_hard_link_groups();
 }
 
@@ -1579,7 +1589,7 @@ FindData Archive<UseVirtualDestructor>::get_file_info(UInt32 index)
 	file_info.ftCreationTime = get_ctime(index);
 	file_info.ftLastWriteTime = get_mtime(index);
 	file_info.ftLastAccessTime = get_atime(index);
-	//file_info.ftChangeTime = get_chtime(index);
+	file_info.ftChangeTime = get_chtime(index);
 
 	return file_info;
 }
@@ -1911,7 +1921,7 @@ FILETIME Archive<UseVirtualDestructor>::get_ctime(UInt32 index) const
 
 	if (in_arc->GetProperty(index, kpidCTime, prop.ref()) == S_OK && prop.is_filetime()) {
 		ft = prop.get_filetime();
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
 #else
 		return ft;
@@ -1934,7 +1944,7 @@ FILETIME Archive<UseVirtualDestructor>::get_mtime(UInt32 index) const
 
 	if (in_arc->GetProperty(index, kpidMTime, prop.ref()) == S_OK && prop.is_filetime()) {
 		ft = prop.get_filetime();
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
 #else
 		return ft;
@@ -1957,7 +1967,7 @@ FILETIME Archive<UseVirtualDestructor>::get_atime(UInt32 index) const
 
 	if (in_arc->GetProperty(index, kpidATime, prop.ref()) == S_OK && prop.is_filetime()) {
 		ft = prop.get_filetime();
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
 #else
 		return ft;
@@ -1980,7 +1990,7 @@ FILETIME Archive<UseVirtualDestructor>::get_chtime(UInt32 index) const
 
 	if (in_arc->GetProperty(index, kpidChangeTime, prop.ref()) == S_OK && prop.is_filetime()) {
 		ft = prop.get_filetime();
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 		return FILETIME{ft.dwLowDateTime,ft.dwHighDateTime};
 #else
 		return ft;

@@ -747,6 +747,7 @@ struct FAR_FIND_DATA
 	FILETIME ftCreationTime;
 	FILETIME ftLastAccessTime;
 	FILETIME ftLastWriteTime;
+	FILETIME ftChangeTime;
 	uint64_t nPhysicalSize;
 	uint64_t nFileSize;
 	DWORD    dwFileAttributes;

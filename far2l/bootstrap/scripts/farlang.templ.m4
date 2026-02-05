@@ -4450,15 +4450,15 @@ LinkTypeJunction
 "&сувязь каталогаў"
 
 LinkTypeHardlink
-"&жёсткая ссылка"
-"&hard link"
-"&pevný link"
+"&Жёсткая ссылка"
+"&Hard link"
+"&Pevný link"
 "&Hardlink"
 "&Hardlink"
-"link &trwały"
-"enlace duro"
-"&жорстке посилання"
-"&жорсткі спасылак"
+"Link &trwały"
+"Enlace duro"
+"&Жорстке посилання"
+"&Жорсткі спасылак"
 
 LinkTypeSymlink
 "си&мволическая ссылка"
@@ -26651,15 +26651,37 @@ FileFilterAttrSparse
 "Разрэджаны"
 
 FileFilterAttrHardLinks
-"Болee одной жёсткой ссылки"
-"Has more than one hard &link"
-"Má více než jeden pevný link"
-"Mehr als ein harder Link"
-upd:"Has more than one hardlink"
-"Ma &więcej niż jeden link"
-"Tiene mas de un enlace duro"
-"Понад одне жорстке посилання"
-"Больш адной жорсткай спасылкі"
+"Жёсткая ссылка"
+"Hard link"
+"Pevný link"
+"Hardlink"
+"Hardlink"
+"Link trwały"
+"Enlace duro"
+"Жорстке посилання"
+"Жорсткі спасылак"
+
+FileFilterAttrAppend
+"Добавочный"
+"Append"
+"Pridávací"
+"Anhängend"
+"À ajouter"
+"Dołączanie"
+"Añadir"
+"&Додатковий"
+"&Дадатак"
+
+FileFilterAttrImmutable
+"Неизменяемый"
+"Immutable"
+"Nemenný"
+"Unveränderlich"
+"Immuable"
+"Niezmienny"
+"Inmutable"
+"&Незмінний"
+"&Нязменны"
 
 FileFilterAttrT
 "&Временный"

@@ -1272,6 +1272,9 @@ void WIN32_FIND_DATA_Dump(const wchar_t *Title, const WIN32_FIND_DATA &wfd, FILE
 		ConvertDate(wfd.ftLastWriteTime, D, T, 8, FALSE, FALSE, TRUE);
 		fwprintf(fp, L"%*s %ls  ftLastWriteTime       =0x%08X 0x%08X\n", 12, L"", space,
 				wfd.ftLastWriteTime.dwHighDateTime, wfd.ftLastWriteTime.dwLowDateTime);
+		fwprintf(fp, L"%*s %ls  ftChangeTime       =0x%08X 0x%08X\n", 12, L"", space,
+				wfd.ftChangeTime.dwHighDateTime, wfd.ftChangeTime.dwLowDateTime);
+
 		LARGE_INTEGER Number;
 		Number.QuadPart = wfd.nFileSize;
 		fwprintf(fp, L"%*s %ls  nFileSize             =0x%08X, 0x%08X (%llu)\n", 12, L"", space,

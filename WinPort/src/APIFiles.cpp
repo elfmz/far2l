@@ -8,15 +8,29 @@
 #include <mutex>
 #include <utils.h>
 #include <dirent.h>
-#include <sys/types.h>
+//#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#include <sys/types.h>
+#else
+#include <sys/sysmacros.h>	  // major / minor
+#endif
+
+#if defined(__HAIKU__)
+#include <Entry.h>
+#include <Path.h>
+#include <Node.h>
+#include <NodeInfo.h>
+#endif
 
 #include "WinCompat.h"
 #include "WinPort.h"
 #include "WinPortHandle.h"
 #include "PathHelpers.h"
 #include "sudo.h"
+#include "platform_features.h"
 #include <os_call.hpp>
 
 template <class CHAR_T>
@@ -61,6 +75,25 @@ template <class CHAR_T>
 	return out;
 }
 
+//#ifdef USE_STATX
+//#undef USE_STATX
+//#endif
+
+#if USE_STATX
+//#warning USE STATX!!!!
+static int statx_available = -1;
+
+static inline bool _statx_availabile() {
+	if (statx_available != -1) return statx_available;
+
+	struct __statx stx;
+	int res = syscall(SYS_statx, AT_FDCWD, "/", 0, STATX_BASIC_STATS, &stx);
+
+	statx_available = (res == 0 || errno != ENOSYS) ? 1 : 0;
+	return statx_available;
+}
+#endif
+
 extern "C"
 {
 	struct WinPortHandleFile : MagicWinPortHandle<0> // <0> - for file handles
@@ -92,9 +125,6 @@ extern "C"
 
 	};
 
-
-
-
 	WINPORT_DECL(CreateDirectory, BOOL, (LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes ))
 	{
 		const std::string &path = ConsumeWinPath(lpPathName);
@@ -102,7 +132,6 @@ extern "C"
 
 		return (r == -1) ? FALSE : TRUE;
 	}
-
 
 	BOOL WINPORT(RemoveDirectory)( LPCWSTR lpDirName)
 	{
@@ -191,7 +220,7 @@ extern "C"
 
 #ifndef __linux__
 		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
 			fcntl(r, O_DIRECT, 1);
 #elif !defined(__CYGWIN__)
 			fcntl(r, F_NOCACHE, 1);
@@ -435,7 +464,7 @@ extern "C"
 		if (fstat(wph->fd, &s) == -1)
 			return FALSE;
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)|| defined(__DragonFly__) || defined(__HAIKU__)
 		int ret = posix_fallocate(wph->fd, 0, (off_t)RequireFileSize);
 		if (ret == 0)
 			return TRUE;
@@ -519,6 +548,7 @@ extern "C"
 		WINPORT(FileTime_UnixToWin32)(s.st_mtim, lpLastWriteTime);
 		WINPORT(FileTime_UnixToWin32)(s.st_ctim, lpCreationTime);
 		WINPORT(FileTime_UnixToWin32)(s.st_atim, lpLastAccessTime);
+
 		return TRUE;
 	}
 
@@ -556,6 +586,28 @@ extern "C"
 		return EvaluateAttributesT(unix_mode, PointToNamePart(pathname));
 	}
 
+#if USE_STATX
+	void FileTime_StatxToWin32(const struct __statx_timestamp *stx_ts, FILETIME *lpFileTime)
+	{
+		if (!lpFileTime || !stx_ts) return;
+
+		if (stx_ts->tv_sec < -11644473600LL) {
+			lpFileTime->dwLowDateTime = 0;
+			lpFileTime->dwHighDateTime = 0;
+			return;
+		}
+
+		static const int64_t EPOCH_DIFFERENCE = 11644473600LL; // sec
+		//static const int64_t NS_TO_100NS = 100LL; // nano
+
+		int64_t win_seconds = stx_ts->tv_sec + EPOCH_DIFFERENCE;
+		int64_t win_ticks = win_seconds * 10000000LL + (stx_ts->tv_nsec / 100);
+
+		lpFileTime->dwLowDateTime = (DWORD)(win_ticks & 0xFFFFFFFF);
+		lpFileTime->dwHighDateTime = (DWORD)(win_ticks >> 32);
+	}
+#endif
+
 	class Statocaster
 	{
 		struct stat _st_dst;
@@ -567,36 +619,185 @@ extern "C"
 			return ((_attr & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT)
 				? _st_dst : _st_lnk;
 		}
-
-	public:
-		Statocaster(const char *pathname, const char *name = nullptr)
+#if USE_STATX
+		struct __statx _stx_dst;
+		struct __statx _stx_lnk;
+		bool bStatX = false;
+		inline const struct __statx &DereferencedStatX() const
 		{
+			return ((_attr & (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN)) == FILE_ATTRIBUTE_REPARSE_POINT)
+				? _stx_dst : _stx_lnk;
+		}
+#endif
+	public:
+		Statocaster(const char *pathname, const char *name = nullptr, int dir_fd = -1)
+		{
+//			if (!pathname && !name) {
+//				_attr = INVALID_FILE_ATTRIBUTES;
+//				return;
+//			}
+#if USE_STATX
+			if (_statx_availabile()) {
+				bStatX = true;
+//				const char *stxpn = (name) ? name : pathname;
+//				int statx_fd = (dir_fd > 0) ? dir_fd : AT_FDCWD;
+				int statx_fd = AT_FDCWD;
+				const char *stxpn = pathname;
+
+				_attr = 0;
+				if (sdc_statx(statx_fd, stxpn, AT_SYMLINK_NOFOLLOW, STATX_ALL, &_stx_lnk) != 0) {
+					_attr = INVALID_FILE_ATTRIBUTES;
+					//fprintf(stderr, "statx failed[ %d ] = %d pathname %s name = %s\n", errno, dir_fd, pathname, name);
+					return;
+				}
+
+				if ((_stx_lnk.stx_mode & S_IFMT) == S_IFLNK) {
+					_attr |= FILE_ATTRIBUTE_REPARSE_POINT;
+					if (sdc_statx(statx_fd, stxpn, 0, STATX_ALL, &_stx_dst) != 0) {
+						//fprintf(stderr, "statx failed[ %d ] = %d pathname %s name = %s\n", errno, dir_fd, pathname, name);
+						_attr |= FILE_ATTRIBUTE_BROKEN;
+						_st_lnk.st_size = 0;
+					}
+				}
+
+				if (!name) {
+					name = PointToNamePart(pathname);
+				}
+
+				const auto &s = DereferencedStatX();
+				_attr |= EvaluateAttributesT(s.stx_mode, name);
+
+				//if (s.stx_attributes & STATX_ATTR_INODE_PINNED) {
+				//	_attr |= FILE_ATTRIBUTE_PINNED;
+				//}
+				//if (s.stx_attributes & STATX_ATTR_INODE_UNPINNED) {
+				//	_attr |= FILE_ATTRIBUTE_UNPINNED;
+				//}
+				if (s.stx_attributes & STATX_ATTR_COMPRESSED) {
+					_attr |= FILE_ATTRIBUTE_COMPRESSED;
+				}
+				if (s.stx_attributes & STATX_ATTR_ENCRYPTED) {
+					_attr |= FILE_ATTRIBUTE_ENCRYPTED;
+				}
+				if (s.stx_attributes & STATX_ATTR_SPARSE) {
+					_attr |= FILE_ATTRIBUTE_SPARSE_FILE;
+				}
+				if (s.stx_attributes & STATX_ATTR_IMMUTABLE) {
+					_attr |= FILE_ATTRIBUTE_IMMUTABLE;
+				}
+				if (s.stx_attributes & STATX_ATTR_APPEND) {
+					_attr |= FILE_ATTRIBUTE_APPEND;
+				}
+				if (s.stx_attributes & STATX_ATTR_VERITY) {
+					_attr |= FILE_ATTRIBUTE_INTEGRITY_STREAM;
+				}
+				if (s.stx_attributes & STATX_ATTR_NODUMP) {
+					_attr |= FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+				}
+				if ((s.stx_mode & S_IFMT) == S_IFREG) {
+					if (s.stx_blocks * 512 < s.stx_size)
+						_attr |= FILE_ATTRIBUTE_SPARSE_FILE;
+				}
+				if (s.stx_nlink > 1)
+					_attr |= FILE_ATTRIBUTE_HARDLINKS;
+
+				return;
+			}
+#endif
+
 			if (os_call_int(sdc_lstat, pathname, &_st_lnk) < 0) {
 				_attr = INVALID_FILE_ATTRIBUTES;
 				return;
 			}
+			if ((_st_lnk.st_mode & S_IFMT) != S_IFLNK) {
+				_attr = 0;
+			} else if (os_call_int(sdc_stat, pathname, &_st_dst) < 0) {
+				_attr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
+				_st_lnk.st_size = 0;
+			} else {
+				_attr = FILE_ATTRIBUTE_REPARSE_POINT;
+			}
+
+			const auto &s = DereferencedStat();
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__DragonFly__) || \
+	defined(__NetBSD__) || defined(__OpenBSD__) || defined(__sun)
+
+			if (s.st_flags & UF_HIDDEN) {
+				_attr |= FILE_ATTRIBUTE_HIDDEN;
+			}
+			if (s.st_flags & (SF_IMMUTABLE | UF_IMMUTABLE)) {
+				_attr |= FILE_ATTRIBUTE_IMMUTABLE;
+			}
+			if (s.st_flags & (SF_APPEND | UF_APPEND)) {
+				_attr |= FILE_ATTRIBUTE_APPEND;
+			}
+
+		#ifdef UF_COMPRESSED
+			if (s.st_flags & UF_COMPRESSED) {
+				_attr |= FILE_ATTRIBUTE_COMPRESSED;
+			}
+		#endif
+
+		#ifdef UF_NODUMP
+			if (s.st_flags & UF_NODUMP) {
+				_attr |= FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+			}
+		#endif
+
+		#if defined(__NetBSD__) || defined(__OpenBSD__)
+			#ifdef UF_SYSTEM
+			if (s.st_flags & UF_SYSTEM) {
+				_attr |= FILE_ATTRIBUTE_SYSTEM;
+			}
+			#endif
+
+			#ifdef UF_SPARSE
+			if (s.st_flags & UF_SPARSE) {
+				_attr |= FILE_ATTRIBUTE_SPARSE_FILE;
+			}
+			#endif
+
+			#ifdef UF_OFFLINE
+			if (s.st_flags & UF_OFFLINE) {
+				_attr |= FILE_ATTRIBUTE_OFFLINE;
+			}
+			#endif
+		#endif
+
+		#if defined(__sun)
+			#ifdef UF_READONLY
+			if (s.st_flags & UF_READONLY) {
+				_attr |= FILE_ATTRIBUTE_READONLY;
+			}
+			#endif
+
+			#ifdef UF_SYSTEM
+			if (s.st_flags & UF_SYSTEM) {
+				_attr |= FILE_ATTRIBUTE_SYSTEM;
+			}
+			#endif
+
+			#ifdef UF_ARCHIVE
+			if (s.st_flags & UF_ARCHIVE) {
+				_attr |= FILE_ATTRIBUTE_ARCHIVE;
+			}
+			#endif
+		#endif
+#endif
+
+			if ((s.st_mode & S_IFMT) == S_IFREG) {
+				if (s.st_blocks * 512 < s.st_size)
+					_attr |= FILE_ATTRIBUTE_SPARSE_FILE;
+			}
+
+			if (s.st_nlink > 1)
+				_attr |= FILE_ATTRIBUTE_HARDLINKS;
 
 			if (!name) {
 				name = PointToNamePart(pathname);
 			}
 
-			if ((_st_lnk.st_mode & S_IFMT) != S_IFLNK) {
-				_attr = 0;
-
-			} else if (os_call_int(sdc_stat, pathname, &_st_dst) < 0) {
-				_attr = FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_BROKEN;
-				_st_lnk.st_size = 0;
-
-			} else {
-				_attr = FILE_ATTRIBUTE_REPARSE_POINT;
-			}
-
-#if defined(__APPLE__) || defined(__FreeBSD__)  || defined(__DragonFly__)
-			if (DereferencedStat().st_flags & UF_HIDDEN) { // chflags hidden FILENAME
-				_attr|= FILE_ATTRIBUTE_HIDDEN;
-			}
-#endif
-			_attr|= EvaluateAttributesT(DereferencedStat().st_mode, name);
+			_attr |= EvaluateAttributesT(DereferencedStat().st_mode, name);
 		}
 
 		inline DWORD Attributes() const
@@ -609,12 +810,74 @@ extern "C"
 			if (_attr == INVALID_FILE_ATTRIBUTES) {
 				return false;
 			}
+#if USE_STATX
+			if (bStatX) {
+				const auto &s = DereferencedStatX();
 
+				if (s.stx_mask & STATX_MTIME)
+					FileTime_StatxToWin32(&s.stx_mtime, &wfd->ftLastWriteTime);
+				else
+					memset(&wfd->ftLastWriteTime, 0, sizeof(FILETIME));
+
+				if (s.stx_mask & STATX_ATIME)
+					FileTime_StatxToWin32(&s.stx_atime, &wfd->ftLastAccessTime);
+				else
+					memset(&wfd->ftLastAccessTime, 0, sizeof(FILETIME));
+
+				if (s.stx_mask & STATX_CTIME)
+					FileTime_StatxToWin32(&s.stx_ctime, &wfd->ftChangeTime);
+				else
+					memset(&wfd->ftChangeTime, 0, sizeof(FILETIME));
+
+				if (s.stx_mask & STATX_BTIME)
+					FileTime_StatxToWin32(&s.stx_btime, &wfd->ftCreationTime);
+				else {
+					FileTime_StatxToWin32(&s.stx_ctime, &wfd->ftCreationTime);
+					//memset(&wfd->ftCreationTime, 0, sizeof(FILETIME));
+				}
+
+				wfd->UnixOwner = s.stx_uid;
+				wfd->UnixGroup = s.stx_gid;
+				wfd->UnixDevice = makedev(s.stx_dev_major, s.stx_dev_minor);
+				wfd->UnixNode = s.stx_ino;
+				wfd->nPhysicalSize = ((DWORD64)_stx_lnk.stx_blocks) * 512;
+				wfd->nFileSize = (DWORD64)s.stx_size;
+				wfd->dwFileAttributes = _attr;
+				wfd->dwUnixMode = s.stx_mode;
+				wfd->nHardLinks = (DWORD)s.stx_nlink;
+				wfd->nBlockSize = (DWORD)s.stx_blksize;
+
+				return true;
+			}
+#endif // USE_STATX
 			const auto &s = DereferencedStat();
 
-			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &wfd->ftCreationTime);
-			WINPORT(FileTime_UnixToWin32)(s.st_atim, &wfd->ftLastAccessTime);
 			WINPORT(FileTime_UnixToWin32)(s.st_mtim, &wfd->ftLastWriteTime);
+			WINPORT(FileTime_UnixToWin32)(s.st_atim, &wfd->ftLastAccessTime);
+			WINPORT(FileTime_UnixToWin32)(s.st_ctim, &wfd->ftChangeTime);
+
+#if defined(__APPLE__)
+			WINPORT(FileTime_UnixToWin32)(s.st_birthtimespec, &wfd->ftCreationTime);
+#elif defined(__FreeBSD__)
+			WINPORT(FileTime_UnixToWin32)(s.st_birthtim, &wfd->ftCreationTime);
+#elif defined(__NetBSD__)
+			WINPORT(FileTime_UnixToWin32)(s.st_birthtimespec, &wfd->ftCreationTime);
+#elif defined(__DragonFly__)
+			{
+				struct timespec birth_ts = { .tv_sec = s.st_birthtime, .tv_nsec = 0 };
+				WINPORT(FileTime_UnixToWin32)(birth_ts, &wfd->ftCreationTime);
+			}
+#elif defined(__OpenBSD__) && defined(__OpenBSD_version) && __OpenBSD_version >= 201405
+			WINPORT(FileTime_UnixToWin32)(s.st_birthtime, &wfd->ftCreationTime);
+#elif defined(__HAIKU__)
+			{
+				struct timespec birth_ts = { .tv_sec = s.st_crtime, .tv_nsec = 0 };
+				WINPORT(FileTime_UnixToWin32)(birth_ts, &wfd->ftCreationTime);
+			}
+#else
+			wfd->ftCreationTime = wfd->ftLastWriteTime;
+#endif
+
 			wfd->UnixOwner = s.st_uid;
 			wfd->UnixGroup = s.st_gid;
 			wfd->UnixDevice = s.st_dev;
@@ -625,6 +888,7 @@ extern "C"
 			wfd->dwUnixMode = s.st_mode;
 			wfd->nHardLinks = (DWORD)s.st_nlink;
 			wfd->nBlockSize = (DWORD)s.st_blksize;
+
 			return true;
 		}
 	};
@@ -712,15 +976,38 @@ extern "C"
 			_mask = mask;
 			if (_root.size() > 1 && _root.back() == GOOD_SLASH)
 				_root.resize(_root.size()-1);
-			_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
-			if (!_d) {
+
+			dir_fd = sdc_opendir_fd(_root.c_str());
+			if (dir_fd <= 0) {
 				fprintf(stderr, "opendir failed on %s\n", _root.c_str());
+				return;
 			}
+
+			_d = fdopendir(dir_fd);
+			if (!_d) {
+				fprintf(stderr, "fdopendir(%d) on %s failed\n", dir_fd, _root.c_str());
+				close(dir_fd);
+				dir_fd = -1;
+				return;
+			}
+
+			//_d = os_call_pv<DIR>(sdc_opendir, _root.c_str());
+			//if (!_d) {
+			//	fprintf(stderr, "opendir failed on %s\n", _root.c_str());
+			//	return;
+			//}
+
+#ifdef USE_FSTATAT
+//			dir_fd = dirfd(_d);
+#endif
 		}
 
 		~UnixFindFile()
 		{
-			if (_d) os_call_int(sdc_closedir, _d);
+			if (_d) {
+				closedir(_d);
+			}
+			//if (_d) os_call_int(sdc_closedir, _d);
 		}
 
 		bool IsOpened() const
@@ -736,7 +1023,8 @@ extern "C"
 					return false;
 
 				errno = 0;
-				de = os_call_pv<struct dirent>(sdc_readdir, _d);
+				//de = os_call_pv<struct dirent>(sdc_readdir, _d);
+				de = readdir(_d);
 				if (!de)
 					return false;
 
@@ -769,6 +1057,7 @@ extern "C"
 			memset(&wfd->ftLastWriteTime, 0, sizeof(wfd->ftLastWriteTime));
 			memset(&wfd->ftCreationTime, 0, sizeof(wfd->ftCreationTime));
 			memset(&wfd->ftLastAccessTime, 0, sizeof(wfd->ftLastAccessTime));
+			memset(&wfd->ftChangeTime, 0, sizeof(wfd->ftChangeTime));
 			wfd->UnixOwner = 0;
 			wfd->UnixGroup = 0;
 			wfd->UnixDevice = 0;
@@ -790,7 +1079,8 @@ extern "C"
 			_tmp.path+= name;
 
 			SudoSilentQueryRegion ssqr(hint_mode_type !=0 && (_flags & FIND_FILE_FLAG_NOT_ANNOYING) != 0);
-			if (!Statocaster(_tmp.path.c_str(), name).FillWFD(wfd)) {
+
+			if (!Statocaster(_tmp.path.c_str(), name, dir_fd).FillWFD(wfd)) {
 				fprintf(stderr, "UnixFindFile: errno=%u hmt=0%o on '%s'\n",
 					errno, hint_mode_type, _tmp.path.c_str());
 				ZeroFillWFD(wfd);
@@ -844,6 +1134,7 @@ extern "C"
 		}
 
 		DIR *_d = nullptr;
+		int dir_fd = -1;
 
 #ifndef __HAIKU__
 		bool PreMatchDType(unsigned char d_type)

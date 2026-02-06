@@ -274,7 +274,8 @@ private:
 	// A helper struct to define a platform setting, linking its INI key,
 	// localized UI display name, its corresponding class member variable, and default value.
 
-	struct PlatformSettingDefinition {
+	struct PlatformSettingDefinition
+	{
 		std::string key;
 		LanguageID  display_name_id;
 		bool XDGBasedAppProvider::* member_variable;
@@ -423,9 +424,7 @@ private:
 
 	// Maps internal setting keys to required command-line tools.
 	// Used to disable settings in the UI if the required tool is missing.
-	using ToolKeyMap = std::map<std::string, std::string>;
-
-	inline static const ToolKeyMap s_tool_key_map = {
+	inline static const std::map<std::string, std::string> s_tool_key_map = {
 		{ "UseXdgMimeTool", "xdg-mime" },
 		{ "UseFileTool", "file" },
 		{ "UseMagikaTool", "magika" }

@@ -82,6 +82,7 @@ public:
 	void SetDialogParent(DWORD Sets);
 	void SetDropDownBox(int NewDropDownBox);
 	void SetPasswordMode(int Mode);
+	void SetTabSize(int NewSize);
 
 	int GetMaxLength();
 	void SetMaxLength(int Length);

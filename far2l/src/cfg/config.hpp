@@ -227,6 +227,7 @@ struct EditorOptions
 	int SearchPickUpWord;
 	int ShowWhiteSpace;
 	int ShowLineNumbers;
+	int ShowGutterMarks;
 
 	int WordWrap;
 	FARString strWordDiv;

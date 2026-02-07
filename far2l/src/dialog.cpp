@@ -303,6 +303,9 @@ bool ConvertItemEx(CVTITEMFLAGS FromPlugin, FarDialogItem *Item, DialogItemEx *D
 				Data->Flags = Item->Flags;
 				Data->DefaultButton = Item->DefaultButton;
 				Data->Type = Item->Type;
+				if (Data->Type == DI_MEMOEDIT && IsPtr(Item->Param.Reserved)) {
+					Data->UserData = Item->Param.Reserved;
+				}
 
 				if (FromPlugin == CVTITEM_FROMPLUGIN) {
 					Data->strData = Item->PtrData;
@@ -6403,6 +6406,24 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 			} else {
 				fprintf(stderr,
 					"%s: DM_SETREADONLY invoked for non-edit item %u\n",
+					__FUNCTION__, Param1);
+			}
+			if (Dlg->DialogMode.Check(DMODE_SHOW)) {		//???
+				Dlg->ShowDialog(Param1);
+				ScrBuf.Flush();
+			}
+			return TRUE;
+		}
+
+		case DM_SETEDITTABSIZE: {
+			if (FarIsEdit(Type)) {
+				DlgEdit *CurItemEdit = (DlgEdit *)CurItem->ObjPtr;
+				if (CurItemEdit) {
+					CurItemEdit->SetTabSize(static_cast<int>(Param2));
+				}
+			} else {
+				fprintf(stderr,
+					"%s: DM_SETEDITTABSIZE invoked for non-edit item %u\n",
 					__FUNCTION__, Param1);
 			}
 			if (Dlg->DialogMode.Check(DMODE_SHOW)) {		//???

@@ -45,19 +45,25 @@ class DialogEditorPluginScope
 {
 public:
 	DialogEditorPluginScope(Editor *editor)
-		: m_prev(CtrlObject ? CtrlObject->Plugins.CurDialogEditor : nullptr)
+		: m_prev_dialog(CtrlObject ? CtrlObject->Plugins.CurDialogEditor : nullptr),
+		  m_prev_editor(CtrlObject ? CtrlObject->Plugins.CurEditor : nullptr)
 	{
-		if (CtrlObject)
+		if (CtrlObject) {
 			CtrlObject->Plugins.CurDialogEditor = editor;
+			CtrlObject->Plugins.CurEditor = nullptr;
+		}
 	}
 	~DialogEditorPluginScope()
 	{
-		if (CtrlObject)
-			CtrlObject->Plugins.CurDialogEditor = m_prev;
+		if (CtrlObject) {
+			CtrlObject->Plugins.CurDialogEditor = m_prev_dialog;
+			CtrlObject->Plugins.CurEditor = m_prev_editor;
+		}
 	}
 
 private:
-	Editor *m_prev;
+	Editor *m_prev_dialog;
+	FileEditor *m_prev_editor;
 };
 
 void NotifyDialogEditorFocus(Editor *editor, bool &opened, bool &has_focus, bool focus)
@@ -99,8 +105,10 @@ DlgEdit::DlgEdit(Dialog *pOwner, unsigned Index, DLGEDITTYPE Type)
 			multiEdit->SetShowScrollBar(1);
 			if (pOwner) {
 				DialogItemEx *CurItem = pOwner->Item[Index];
-				if (CurItem && IsPtr(CurItem->UserData)) {
-					multiEdit->SetVirtualFileName(reinterpret_cast<const wchar_t *>(CurItem->UserData));
+				if (CurItem) {
+					if (IsPtr(CurItem->UserData)) {
+						multiEdit->SetVirtualFileName(reinterpret_cast<const wchar_t *>(CurItem->UserData));
+					}
 				}
 			}
 			break;
@@ -260,6 +268,12 @@ void DlgEdit::SetPasswordMode(int Mode)
 {
 	if (Type == DLGEDIT_SINGLELINE)
 		lineEdit->SetPasswordMode(Mode);
+}
+
+void DlgEdit::SetTabSize(int NewSize)
+{
+	if (Type == DLGEDIT_MULTILINE)
+		multiEdit->SetTabSize(NewSize);
 }
 
 void DlgEdit::SetOvertypeMode(int Mode)

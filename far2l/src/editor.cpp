@@ -246,7 +246,7 @@ int Editor::CalculateTotalLines()
 int Editor::CalculateLineNumberWidth()
 {
 	if (!EdOpt.ShowLineNumbers) {
-		return 0;
+		return EdOpt.ShowGutterMarks ? 1 : 0;
 	}
 
 	// Use cached value if available
@@ -273,6 +273,25 @@ int Editor::CalculateLineNumberWidth()
 	m_LineCountDirty = false;
 
 	return LineNumWidth;
+}
+
+void Editor::DrawGutterMark(int logical_line, int y, int line_num_x1)
+{
+	if (line_num_x1 <= X1 || (!EdOpt.ShowLineNumbers && !EdOpt.ShowGutterMarks))
+		return;
+
+	const auto it = m_gutterMarks.find(logical_line);
+	if (it == m_gutterMarks.end())
+		return;
+
+	const int gx = line_num_x1 - 1;
+
+	const CHAR_INFO cell{
+		{ .UnicodeChar = L'\x258d' },
+		it->second
+	};
+
+	ScrBuf.Write(gx, y, &cell, 1);
 }
 
 void Editor::FreeAllocatedData(bool FreeUndo)
@@ -605,6 +624,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		// Calculate line number width if needed
 		int LineNumWidth = CalculateLineNumberWidth();
 		int LineNumX1 = X1 + LineNumWidth;
+		const bool HasLineNumArea = (LineNumWidth > 0);
 
 		int CurrentLineNum = GetTopScreenLineNumber();
 
@@ -617,15 +637,21 @@ void Editor::ShowEditor(int CurLineOnly)
 				continue;
 			}
 
-			// Display line number if enabled
-			if (EdOpt.ShowLineNumbers && CurVisualLine == 0) {
-				wchar_t LineNumStr[16];
-				swprintf(LineNumStr, ARRAYSIZE(LineNumStr), L"%*d ", LineNumWidth - 1, CurrentLineNum);
-				Text(X1, Y, FarColorToReal(COL_EDITORLINENUMBER), LineNumStr);
-			} else if (EdOpt.ShowLineNumbers) {
-				// Fill line number area with spaces for wrapped lines
-				for (int i = 0; i < LineNumWidth; i++) {
-					Text(X1 + i, Y, FarColorToReal(COL_EDITORLINENUMBER), L" ");
+			// Display line number if enabled, otherwise keep gutter area clean
+			if (HasLineNumArea) {
+				if (EdOpt.ShowLineNumbers && CurVisualLine == 0) {
+					wchar_t LineNumStr[16];
+					swprintf(LineNumStr, ARRAYSIZE(LineNumStr), L"%*d ", LineNumWidth - 1, CurrentLineNum);
+					Text(X1, Y, FarColorToReal(COL_EDITORLINENUMBER), LineNumStr);
+					DrawGutterMark(CurrentLineNum - 1, Y, LineNumX1);
+				} else {
+					// Fill line number/gutter area with spaces for wrapped lines or gutter-only mode
+					for (int i = 0; i < LineNumWidth; i++) {
+						Text(X1 + i, Y, FarColorToReal(COL_EDITORLINENUMBER), L" ");
+					}
+					if (!EdOpt.ShowLineNumbers && CurVisualLine == 0) {
+						DrawGutterMark(CurrentLineNum - 1, Y, LineNumX1);
+					}
 				}
 			}
 
@@ -638,7 +664,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			ShowString.SetBinaryString(CurLogicalLine->GetStringAddr() + VisualLineStart, VisualLineEnd - VisualLineStart);
 			ShowString.SetCurPos(0);
 
-			ShowString.SetPosition(EdOpt.ShowLineNumbers ? LineNumX1 : X1, Y, XX2, Y);
+			ShowString.SetPosition(HasLineNumArea ? LineNumX1 : X1, Y, XX2, Y);
 
 			ShowString.SetObjectColor(CurLogicalLine->Color, CurLogicalLine->SelColor, CurLogicalLine->ColorUnChanged);
 			ShowString.SetLeftPos(0);
@@ -725,7 +751,7 @@ void Editor::ShowEditor(int CurLineOnly)
 						|| (current_ci.StartPos == -1 && current_ci.EndPos == -1) )
 					{
 						// Apply background coloring directly to the screen buffer, but preserve line number area
-						SetScreen(EdOpt.ShowLineNumbers ? LineNumX1 : X1, Y, XX2, Y, L' ', current_ci.Color);
+						SetScreen(HasLineNumArea ? LineNumX1 : X1, Y, XX2, Y, L' ', current_ci.Color);
 						background_filled = true;
 						break;
 					}
@@ -835,7 +861,7 @@ void Editor::ShowEditor(int CurLineOnly)
 					if (RealSelStart == 0 && RealSelEnd == -1)
 					{
 						// Draw a single selected space directly to the screen buffer (after line numbers)
-						int SelX = EdOpt.ShowLineNumbers ? LineNumX1 : X1;
+						int SelX = HasLineNumArea ? LineNumX1 : X1;
 						SetScreen(SelX, Y, SelX, Y, L' ', FarColorToReal(COL_EDITORSELECTEDTEXT));
 					}
 				}
@@ -856,7 +882,7 @@ void Editor::ShowEditor(int CurLineOnly)
 						::SetCursorType(1, Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
 					}
 					// For an empty line, cursor is always at the beginning.
-					MoveCursor(EdOpt.ShowLineNumbers ? LineNumX1 : X1, Y);
+					MoveCursor(HasLineNumArea ? LineNumX1 : X1, Y);
 				}
 			}
 			if (CurVisualLine < CurLogicalLine->GetVisualLineCount() - 1)
@@ -985,6 +1011,7 @@ void Editor::ShowEditor(int CurLineOnly)
 	// Calculate line number width if needed (non-word-wrap mode)
 	int LineNumWidth = CalculateLineNumberWidth();
 	int LineNumX1 = X1 + LineNumWidth;
+	const bool HasLineNumArea = (LineNumWidth > 0);
 
 	int CurrentLineNum = GetTopScreenLineNumber();
 
@@ -1005,15 +1032,22 @@ void Editor::ShowEditor(int CurLineOnly)
 
 		for (CurPtr = TopScreen, Y = Y1; Y <= Y2; Y++)
 			if (CurPtr) {
-				// Display line number if enabled
-				if (EdOpt.ShowLineNumbers) {
-					wchar_t LineNumStr[16];
-					swprintf(LineNumStr, ARRAYSIZE(LineNumStr), L"%*d ", LineNumWidth - 1, CurrentLineNum);
-					Text(X1, Y, FarColorToReal(COL_EDITORLINENUMBER), LineNumStr);
+				// Display line number if enabled, otherwise keep gutter area clean
+				if (HasLineNumArea) {
+					if (EdOpt.ShowLineNumbers) {
+						wchar_t LineNumStr[16];
+						swprintf(LineNumStr, ARRAYSIZE(LineNumStr), L"%*d ", LineNumWidth - 1, CurrentLineNum);
+						Text(X1, Y, FarColorToReal(COL_EDITORLINENUMBER), LineNumStr);
+					} else {
+						for (int i = 0; i < LineNumWidth; i++) {
+							Text(X1 + i, Y, FarColorToReal(COL_EDITORLINENUMBER), L" ");
+						}
+					}
+					DrawGutterMark(CurrentLineNum - 1, Y, LineNumX1);
 				}
 
 				CurPtr->SetEditBeyondEnd(TRUE);
-				CurPtr->SetPosition(EdOpt.ShowLineNumbers ? LineNumX1 : X1, Y, XX2, Y);
+				CurPtr->SetPosition(HasLineNumArea ? LineNumX1 : X1, Y, XX2, Y);
 				// CurPtr->SetTables(UseDecodeTable ? &TableSet:nullptr);
 				//_D(SysLog(L"Setleftpos 3 to %i",LeftPos));
 				CurPtr->SetLeftPos(LeftPos);
@@ -1039,7 +1073,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		LeftPos = CurLine->GetLeftPos();
 
 		// Account for line numbers when calculating VBlock positions
-		int VBlockBaseX = EdOpt.ShowLineNumbers ? LineNumX1 : X1;
+		int VBlockBaseX = HasLineNumArea ? LineNumX1 : X1;
 
 		for (CurPtr = TopScreen, Y = Y1; Y <= Y2; Y++) {
 			if (CurPtr) {
@@ -6751,6 +6785,10 @@ int Editor::EditorControl(int Command, void *Param)
 
 				if (EdOpt.ShowWhiteSpace)
 					Info->Options|= EOPT_SHOWWHITESPACE;
+				if (EdOpt.ShowLineNumbers)
+					Info->Options|= EOPT_SHOWNUMBERS;
+				if (EdOpt.ShowGutterMarks)
+					Info->Options|= EOPT_SHOWGUTTER;
 
 				Info->TabSize = EdOpt.TabSize;
 				Info->BookMarkCount = POSCACHE_BOOKMARK_COUNT;
@@ -6772,6 +6810,18 @@ int Editor::EditorControl(int Command, void *Param)
 				return TRUE;
 			}
 
+			_ECTLLOG(SysLog(L"Error: !Param"));
+			return FALSE;
+		}
+		case ECTL_GETRECT: {
+			if (Param) {
+				SMALL_RECT &Rect = *reinterpret_cast<PSMALL_RECT>(Param);
+				Rect.Left = static_cast<SHORT>(X1);
+				Rect.Top = static_cast<SHORT>(Y1);
+				Rect.Right = static_cast<SHORT>(X2);
+				Rect.Bottom = static_cast<SHORT>(Y2);
+				return TRUE;
+			}
 			_ECTLLOG(SysLog(L"Error: !Param"));
 			return FALSE;
 		}
@@ -7005,6 +7055,23 @@ int Editor::EditorControl(int Command, void *Param)
 
 			break;
 		}
+		case ECTL_SETGUTTERMARKS: {
+			if (!Param) {
+				return FALSE;
+			}
+
+			const EditorGutterMarks *marks = (const EditorGutterMarks *)Param;
+			m_gutterMarks.clear();
+			if (marks->Count && marks->Marks) {
+				for (size_t i = 0; i < marks->Count; ++i) {
+					const EditorGutterMark &m = marks->Marks[i];
+					if (m.Line >= 0) {
+						m_gutterMarks[m.Line] = m.Color;
+					}
+				}
+			}
+			return TRUE;
+		}
 		// должно выполняется в FileEditor::EditorControl()
 		case ECTL_PROCESSKEY: {
 			_ECTLLOG(SysLog(L"Key = %ls", _FARKEY_ToName((DWORD)Param)));
@@ -7094,6 +7161,9 @@ int Editor::EditorControl(int Command, void *Param)
 						break;
 					case ESPT_SHOWWHITESPACE:
 						SetShowWhiteSpace(espar->Param.iParam);
+						break;
+					case ESPT_SHOWGUTTER:
+						SetShowGutterMarks(espar->Param.iParam);
 						break;
 					default:
 						_ECTLLOG(SysLog(L"}"));
@@ -7743,22 +7813,8 @@ void Editor::SetWordWrap(int NewMode)
 		if (EdOpt.ShowScrollBar)
 			Width--;
 
-		// Account for line numbers if enabled
-		if (EdOpt.ShowLineNumbers) {
-			int TotalLines = 0;
-			for (Edit *CountPtr = TopList; CountPtr; CountPtr = CountPtr->m_next) {
-				TotalLines++;
-			}
-			int LineNumWidth = 1;
-			int temp = TotalLines;
-			while (temp >= 10) {
-				LineNumWidth++;
-				temp /= 10;
-			}
-			if (LineNumWidth < 4) LineNumWidth = 4;
-			LineNumWidth += 1;
-			Width -= LineNumWidth;
-		}
+		// Account for line numbers/gutter if enabled
+		Width -= CalculateLineNumberWidth();
 
 		Edit *CurPtr = TopList;
 		while (CurPtr)
@@ -7820,6 +7876,7 @@ void Editor::SetShowLineNumbers(int NewMode)
 {
 	if (NewMode != EdOpt.ShowLineNumbers) {
 		EdOpt.ShowLineNumbers = NewMode;
+		m_LineCountDirty = true;  // Invalidate line number cache
 
 		// Clear all syntax highlighting colors since they need to be reapplied
 		// This is necessary because the coordinate system changes with line numbers
@@ -7835,6 +7892,42 @@ void Editor::SetShowLineNumbers(int NewMode)
 			int LineNumWidth = CalculateLineNumberWidth();
 
 			// Recalculate word wrap with adjusted width
+			int Width = X2 - X1 + 1;
+			if (EdOpt.ShowScrollBar)
+				Width--;
+			Width -= LineNumWidth;
+
+			CurPtr = TopList;
+			while (CurPtr) {
+				CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
+				CurPtr = CurPtr->m_next;
+			}
+		}
+
+		// Trigger plugin event to reapply syntax highlighting
+		if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
+			CtrlObject->Plugins.ProcessEditorEvent(EE_REDRAW, EEREDRAW_ALL);
+		}
+	}
+}
+
+void Editor::SetShowGutterMarks(int NewMode)
+{
+	if (NewMode != EdOpt.ShowGutterMarks) {
+		EdOpt.ShowGutterMarks = NewMode;
+		m_LineCountDirty = true;  // Invalidate line number cache
+
+		// Clear all syntax highlighting colors since they need to be reapplied
+		// This is necessary because the coordinate system changes with gutter width
+		Edit *CurPtr = TopList;
+		while (CurPtr) {
+			CurPtr->DeleteColor(-1);  // Delete all colors
+			CurPtr = CurPtr->m_next;
+		}
+
+		// If word wrap is enabled, recalculate wrap positions for all lines
+		if (m_bWordWrap) {
+			int LineNumWidth = CalculateLineNumberWidth();
 			int Width = X2 - X1 + 1;
 			if (EdOpt.ShowScrollBar)
 				Width--;

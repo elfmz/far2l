@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "poscache.hpp"
 #include "bitflags.hpp"
 #include "config.hpp"
+#include <unordered_map>
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
@@ -248,6 +249,8 @@ private:
 	bool m_bWordWrap;
 	int m_WrapMaxVisibleLineLength;
 	bool m_MouseButtonIsHeld;
+
+	std::unordered_map<int, uint64_t> m_gutterMarks;
 	
 	// Line number caching for performance
 	int m_CachedTotalLines;
@@ -299,6 +302,7 @@ void GoToVisualLine(int VisualLine);
 	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
 	int CalculateTotalLines();  // Helper to count total lines
 	int CalculateLineNumberWidth();  // Helper to calculate line number display width
+	void DrawGutterMark(int logical_line, int y, int line_num_x1);
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();
@@ -413,6 +417,8 @@ public:
 
 	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
 	void SetShowLineNumbers(int NewMode);
+	int GetShowGutterMarks() const { return EdOpt.ShowGutterMarks; }
+	void SetShowGutterMarks(int NewMode);
 
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 

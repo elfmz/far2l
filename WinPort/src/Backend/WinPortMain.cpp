@@ -323,6 +323,7 @@ extern "C" void WinPortHelp()
 			"\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n"
 			"\t--maximize - force maximize window upon launch (only for GUI backend)\n"
 			"\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n"
+			"\t--size=WxH - set initial window size in characters (only for GUI backend)\n"
 			"\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n"
 			"\n"
 			"All options (except -h and -u) also can be set via the FAR2L_ARGS environment variable\n"

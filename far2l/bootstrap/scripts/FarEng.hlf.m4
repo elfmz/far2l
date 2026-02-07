@@ -21,6 +21,7 @@ $^#File and archive manager#
    ~Plugins support~@Plugins@
    ~Overview of plugin capabilities~@PluginsReviews@
    ~Terminal~@Terminal@
+   ~External terminal: configuration~@ExternalTerminal@
 
    ~Panels:~@Panels@  ~File panel~@FilePanel@
             ~Tree panel~@TreePanel@
@@ -1603,6 +1604,27 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
 
   See also: ~Pseudo-commands~@SpecCmd@
             ~Operating system commands~@OSCommands@
+
+@ExternalTerminal
+$ #External terminal: configuration#
+   To launch console applications in an external terminal emulator, far2l uses the helper script ~$FARHOME~@FAREnv@#/open.sh#.
+
+   #Default terminal selection logic.#
+
+   1. Checks for #/etc/alternatives/x-terminal-emulator#. On distributions using the alternatives mechanism (Debian, Ubuntu, Red Hat), this symbolic link points to the system's preferred terminal emulator. If valid, it is used.
+   2. Otherwise, #xterm# is used.
+
+
+   #Overriding the terminal.#
+
+   There are two main ways to change the emulator.
+   1. System-wide (for distributions with the alternatives mechanism).
+      You can change the global default terminal by running the command:
+         #sudo update-alternatives --config x-terminal-emulator#
+   2. User-defined (specific to far2l).
+      Create the executable file #~~/.config/far2l/open.sh#. Inside, define the #$EXEC_TERM# variable with your preferred terminal, for example:
+         #EXEC_TERM=kitty#
+      Note: The selected terminal must support the #-e# option.
 
 @UIBackends
 $ #UI Backends#
@@ -5098,13 +5120,13 @@ $ #Index help file#
 $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
-  Launching programs in an external terminal from the far2l command line:
-  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch); 
-  - #$FARHOME/open.sh exec program#: to run in an external terminal using Enter, exec is required as the first parameter for open.sh;
+  Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 
   Running programs from far2l:
-  - #program params &#: just add at the end & — will close the program after closing far2l;
+  - #program params &#: just add at the end & - will close the program after closing far2l;
   - #nohup program params &#: the launch is performed by the nohup program. A nohup.out file is created in the current directory with the program output. You can delete this file later. Such a launch will keep the program running after completing far2l;
   - #nohup program params >/dev/null 2>&1 &#: will leave the program running after completing far2l without unnecessary output;
   - #setsid program params >/dev/null 2>/dev/null#: when used in the examples above & some programs, when closed, output information about their termination to the current terminal - using setsid avoids such clogging of the output of the current program;

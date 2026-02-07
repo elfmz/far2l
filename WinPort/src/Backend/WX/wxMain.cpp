@@ -412,6 +412,7 @@ void WinPortFrame::SetInitialSize()
 	if (g_override_width > 0 && g_override_height > 0) {
 		_panel->SetClientCharSize(g_override_width, g_override_height);
 	} else if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
+		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
 		SetSize(_win_state.pos.x, _win_state.pos.y,
 			_win_state.size.GetWidth(), _win_state.size.GetHeight());
 		if(_win_state.charSize.GetWidth() > 0 && _win_state.charSize.GetHeight() > 0) {

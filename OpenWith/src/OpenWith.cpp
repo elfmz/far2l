@@ -30,36 +30,31 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 	}
 
 	auto provider = AppProvider::CreateAppProvider(&GetMsg);
-
-	int active_menu_idx {};
-
 	std::optional<std::vector<CandidateInfo>> app_candidates;
 	std::vector<FarMenuItem> menu_items;
+	int active_menu_idx {};
 
 	// Main application selection menu loop.
 	while(true) {
 		if (!app_candidates.has_value()) {
 			app_candidates = provider->GetAppCandidates(filepaths);
 			FilterOutTerminalCandidates(*app_candidates, filepaths.size());
+
+			if ((*app_candidates).empty()) {
+				ShowError({ GetMsg(MNoAppsFound), JoinStrings(provider->GetMimeTypes(), L"; ") });
+				return; // No application candidates; exit the plugin.
+			}
+
 			menu_items.clear();
 			menu_items.reserve((*app_candidates).size());
 			for (const auto& app_candidate : *app_candidates) {
-				FarMenuItem menu_item = {};
-				menu_item.Text = app_candidate.name.c_str();
-				menu_items.push_back(menu_item);
+				menu_items.push_back({app_candidate.name.c_str(), 0, 0, 0});
 			}
 			active_menu_idx = 0;
 		}
 
-		if ((*app_candidates).empty()) {
-			ShowError({ GetMsg(MNoAppsFound), JoinStrings(provider->GetMimeTypes(), L"; ") });
-			return; // No application candidates; exit the plugin.
-		}
-
 		constexpr int BREAK_KEYS[] = {VK_F3, VK_F9, MAKELONG(VK_RETURN, PKF_SHIFT), 0};
-		constexpr int KEY_F3_DETAILS = 0;
-		constexpr int KEY_F9_SETTINGS = 1;
-		constexpr int KEY_SHIFT_ENTER = 2;
+		constexpr int F3_DETAILS = 0, F9_SETTINGS = 1, SHIFT_ENTER_ALT_LAUNCH = 2;
 		int menu_break_code = -1;
 
 		// Display the menu and get the user's selection.
@@ -76,7 +71,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 		active_menu_idx = selected_menu_idx;
 		const auto& selected_app = (*app_candidates)[selected_menu_idx];
 
-		if (menu_break_code == KEY_F3_DETAILS) {
+		if (menu_break_code == F3_DETAILS) {
 			const auto mime_profiles = provider->GetMimeTypes();
 			const auto app_info = provider->GetCandidateDetails(selected_app);
 			const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
@@ -92,7 +87,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 				}
 			}
 
-		} else if (menu_break_code == KEY_F9_SETTINGS) {
+		} else if (menu_break_code == F9_SETTINGS) {
 			auto config_result = ShowConfigDlg();
 			if (config_result.is_platform_settings_changed) {
 				provider->LoadPlatformSettings();
@@ -105,7 +100,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 			if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
 				const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
 				LaunchApplication(selected_app, cmds,
-								  (menu_break_code == KEY_SHIFT_ENTER) ? LaunchMode::Alternative : LaunchMode::Standard);
+								  (menu_break_code == SHIFT_ENTER_ALT_LAUNCH) ? LaunchMode::Alternative : LaunchMode::Standard);
 				return; // Application launched; exit the plugin.
 			}
 		}
@@ -300,13 +295,13 @@ void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vect
 
 	unsigned int execute_flags = 0;
 	if (app.terminal) {
-			if (s_use_external_terminal || (launch_mode == LaunchMode::Alternative)) {
+		if (s_use_external_terminal || (launch_mode == LaunchMode::Alternative)) {
 			execute_flags |= EF_EXTERNALTERM;
 		}
 	} else {
 		// If we have multiple commands to run, force asynchronous execution to avoid UI blocking.
-		bool force_no_wait = (cmds.size() > 1) || (launch_mode == LaunchMode::Alternative);
-		if (s_no_wait_for_command_completion || force_no_wait) {
+		bool force_no_wait = cmds.size() > 1;
+		if (s_no_wait_for_command_completion || force_no_wait || (launch_mode == LaunchMode::Alternative)) {
 			execute_flags |= (EF_NOWAIT | EF_HIDEOUT);
 		}
 	}

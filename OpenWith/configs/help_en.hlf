@@ -32,7 +32,7 @@ $^#Details Dialog (F3)#
 
  #-# MIME profile
    The file type(s) detected by the plugin. For multiple files, all unique detected profiles are shown. Format depends on the OS:
-   #Linux/BSD#: "Raw" results from all enabled detection methods ("xdg-mime", "file", etc). If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
+   #Linux/BSD#: "Raw" results from all enabled ~detection methods~@ConfigurationDialog@ ("xdg-mime", "file", etc). If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
    #macOS#: The MIME type corresponding to the file's system UTI.
 
  #-# Launch command
@@ -75,7 +75,7 @@ $^#Details Dialog (F3)#
    A boolean value (true or false) indicating whether the application must be run in a terminal window.
 
  #-# MimeType
-   The list of MIME types supported by this application, separated by semicolons. This is the key field used to associate the application with specific file types. The plugin uses this data to match the selected file's type against the application's capabilities.
+   The list of MIME types supported by this application, separated by semicolons. The plugin uses this field to determine if the program should appear in the menu for the selected file.
 
  #-# OnlyShowIn
    A semicolon-separated list of desktop environment identifiers (e.g., "GNOME;KDE;"). If this key is present, the application entry should only be shown in the specified environments. This allows developers to tailor visibility for desktop-specific tools.
@@ -113,7 +113,7 @@ $^#Configuration Dialog (F9)#
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal.
+   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new ~external terminal~@:ExternalTerminal@ window. If unchecked, they will run inside far2l's ~built-in terminal~@:Terminal@.
    When using the built-in terminal with multiple files selected, the plugin applies a "smart" filter. It hides terminal applications that require a separate process for each file, while those that can handle all files in a single command remain in the list.
    You can force a console application to launch in an external terminal regardless of this setting by pressing #Shift+Enter#.
 
@@ -195,7 +195,7 @@ $^#OpenWith plugin#
 $^#Version 1.1#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips & tricks#
-    For quick access, you can use a macro, for example, to access via "#≣ Menu#"/"#Apps#" key:
+    For quick access, you can use a ~macro~@:KeyMacro@, for example, to access via "#≣ Menu#"/"#Apps#" key:
 
     In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines:
  #[KeyMacros/Shell/Apps]#

@@ -2235,7 +2235,6 @@ bool XDGBasedAppProvider::IsReadableFile(const std::string& filepath)
 	struct stat st;
 	// Use stat() to follow symlinks
 	if (stat(filepath.c_str(), &st) == 0) {
-		// Check type first, then check permissions
 		if (S_ISREG(st.st_mode)) {
 			return (access(filepath.c_str(), R_OK) == 0);
 		}
@@ -2254,7 +2253,6 @@ bool XDGBasedAppProvider::IsTraversableDirectory(const std::string& dirpath)
 	struct stat st;
 	// Use stat() to follow symlinks
 	if (stat(dirpath.c_str(), &st) == 0) {
-		// Check type first, then check permissions
 		if (S_ISDIR(st.st_mode)) {
 			return (access(dirpath.c_str(), X_OK) == 0);
 		}

@@ -46,6 +46,8 @@ bool g_broadway = false, g_wayland = false, g_remote = false;
 
 static int g_exit_code = 0;
 static int g_maximize = 0;
+static int g_override_width = 0;
+static int g_override_height = 0;
 static WinPortAppThread *g_winport_app_thread = NULL;
 static WinPortFrame *g_winport_frame = nullptr;
 
@@ -159,6 +161,14 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 
 		} else if (strcmp(a->argv[i], "--nomaximize") == 0) {
 			g_maximize = -1;
+		}
+		else if (strncmp(a->argv[i], "--size=", 7) == 0) {
+			int w = 0, h = 0;
+			if (sscanf(a->argv[i] + 7, "%dx%d", &w, &h) == 2 && w > 0 && h > 0) {
+				g_override_width = w;
+				g_override_height = h;
+				g_maximize = -1;
+			}
 		}
 	}
 	if (primary_selection) {
@@ -399,8 +409,9 @@ WinPortFrame::~WinPortFrame()
 
 void WinPortFrame::SetInitialSize()
 {
-	if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
-		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
+	if (g_override_width > 0 && g_override_height > 0) {
+		_panel->SetClientCharSize(g_override_width, g_override_height);
+	} else if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
 		SetSize(_win_state.pos.x, _win_state.pos.y,
 			_win_state.size.GetWidth(), _win_state.size.GetHeight());
 		if(_win_state.charSize.GetWidth() > 0 && _win_state.charSize.GetHeight() > 0) {

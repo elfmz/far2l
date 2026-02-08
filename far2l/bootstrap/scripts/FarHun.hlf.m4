@@ -20,6 +20,7 @@ $^(help file last translated for build 882)
    ~Billentyűparancsok~@KeyRef@
    ~Pluginek támogatása~@Plugins@
    ~A pluginek képességeinek áttekintése~@PluginsReviews@
+   ~External terminal: configuration~@ExternalTerminal@
 
    ~Panelek:~@Panels@ ~Fájlpanel~@FilePanel@
             ~Fastruktúra panel~@TreePanel@
@@ -4359,3 +4360,24 @@ $ #Ways to run programs without blocking far2l#
    ~Special commands~@SpecCmd@
    ~File Masks~@FileMasks@
    ~Metasymbols~@MetaSymbols@
+
+@ExternalTerminal
+$ #External terminal: configuration#
+   To launch console applications in an external terminal emulator, far2l uses the helper script ~$FARHOME~@FAREnv@#/open.sh#.
+
+   #Default terminal selection logic.#
+
+   1. Checks for #/etc/alternatives/x-terminal-emulator#. On distributions using the alternatives mechanism (Debian, Ubuntu, Red Hat), this symbolic link points to the system's preferred terminal emulator. If valid, it is used.
+   2. Otherwise, #xterm# is used.
+
+
+   #Overriding the terminal.#
+
+   There are two main ways to change the emulator.
+   1. System-wide (for distributions with the alternatives mechanism).
+      You can change the global default terminal by running the command:
+         #sudo update-alternatives --config x-terminal-emulator#
+   2. User-defined (specific to far2l).
+      Create the executable file #~~/.config/far2l/open.sh#. Inside, define the #$EXEC_TERM# variable with your preferred terminal, for example:
+         #EXEC_TERM=kitty#
+      Note: The selected terminal must support the #-e# option.

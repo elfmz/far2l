@@ -17738,15 +17738,15 @@ SetDefaultColors
 "&Ужыць 16 колеры"
 
 SetDefaultColorsRGB
-"Cтандартные &цвета"
-"Def&ault theme"
+"Cтандартные &цвета RGB"
+"Def&ault RGB theme"
 "Výchozí &barvy"
-"Standardfarben"
-"Színek"
-"Kolory domyślne"
-"Colores predeterminados"
-"&Cтандартні кольори"
-"Прадвызначаныя колеры"
+"Standardfarben RGB"
+"Színek RGB"
+"Kolory domyślne RGB"
+"Colores predeterminados RGB"
+"&Cтандартні кольори RGB"
+"Прадвызначаныя колеры RGB"
 
 SetBW
 "&Тёмная тема"

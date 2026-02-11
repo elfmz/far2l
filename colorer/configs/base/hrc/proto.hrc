@@ -38,7 +38,7 @@
     </prototype>
     <prototype name="cpp" group="main" description="C++">
         <location link="base/cpp.hrc" />
-        <filename>/\.(cpp|cxx|cc|hpp|h)$/i</filename>
+        <filename>/\.(cpp|cxx|cc|hpp|h|icpp)$/i</filename>
         <firstline>/^\s*(\/\* | \/\/)/xi</firstline>
         <firstline>/\#include/</firstline>
         <firstline>/\#define|\#if/</firstline>

@@ -167,7 +167,7 @@ class DialogBuilderBase
 			// AddDialogItem и аналогичных методов, поэтому размер массива подбираем такой,
 			// чтобы все нормальные диалоги помещались без реаллокации
 			// TODO хорошо бы, чтобы они вообще не инвалидировались
-			DialogItemsAllocated += 32;
+			DialogItemsAllocated += 128;
 			if (!DialogItems)
 			{
 				DialogItems = new T[DialogItemsAllocated];

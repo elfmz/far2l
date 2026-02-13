@@ -49,8 +49,6 @@ using namespace oldfar;
 
 static ISzAlloc g_alloc_imp = { SzAlloc, SzFree };
 
-#define SzArEx_GetFilePackedSize(p, i) ((p)->db.PackPositions ? (p)->db.PackPositions[(i) + 1] - (p)->db.PackPositions[i] : 0)
-
 std::string MakeDefault7ZName(const char *path)
 {
   const char *name_begin = strrchr(path, '/');
@@ -169,7 +167,26 @@ public:
     DWORD attribs = SzBitWithVals_Check(&_db.Attribs, _index) ? _db.Attribs.Vals[_index] : 0;
     DWORD crc32 = SzBitWithVals_Check(&_db.CRCs, _index) ? _db.CRCs.Vals[_index] : 0;
     UInt64 file_size = SzArEx_GetFileSize(&_db, _index);
-    UInt64 packed_size = SzArEx_GetFilePackedSize(&_db, _index);
+    UInt64 packed_size = 0;
+    if (_db.FileToFolder && _index < _db.NumFiles && _db.db.PackPositions &&
+        _db.db.FoStartPackStreamIndex) {
+      const UInt32 folder_index = _db.FileToFolder[_index];
+      if (folder_index != (UInt32)-1 && folder_index + 1 < _db.db.NumFolders + 1) {
+        const UInt32 pack_start = _db.db.FoStartPackStreamIndex[folder_index];
+        const UInt32 pack_end = _db.db.FoStartPackStreamIndex[folder_index + 1];
+        if (pack_start <= pack_end && pack_end <= _db.db.NumPackStreams) {
+          const UInt64 folder_pack_size = _db.db.PackPositions[pack_end] - _db.db.PackPositions[pack_start];
+          const UInt64 folder_unpack_size = SzAr_GetFolderUnpackSize(&_db.db, folder_index);
+          if (folder_unpack_size > 0 && file_size > 0) {
+            const unsigned __int128 scaled = static_cast<unsigned __int128>(folder_pack_size) * file_size;
+            packed_size = static_cast<UInt64>(scaled / folder_unpack_size);
+            if (packed_size > folder_pack_size) {
+              packed_size = folder_pack_size;
+            }
+          }
+        }
+      }
+    }
 
     FILETIME ftm = {}, ftc = {};
     if (SzBitWithVals_Check(&_db.MTime, _index)) {
@@ -296,4 +313,3 @@ BOOL WINAPI _export SEVENZ_GetDefaultCommands(int Type,int Command,std::string &
   }
   return(FALSE);
 }
-

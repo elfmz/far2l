@@ -4254,6 +4254,8 @@ of the same name already exists.
     #Overwrite# - all target files will be replaced;
     #Skip# - target files will not be replaced;
     #Append# - target file will be appended with the file being copied;
+    #Resume# - the existing target file remans, and the source is being appended
+to it (by skipping first N bytes that equal to target file size.
     #Only newer file(s)# - only files with newer write date and time
 will be copied; This option affects only the current copy session and not saved
 for later copy operations.
@@ -4287,6 +4289,9 @@ prompted to select on of the following actions:
 the file being copied;
 
     #Append# - target file will be appended with the file being copied;
+
+    #Resume# - the existing target file remans, and the source is being appended
+to it (by skipping first N bytes that equal to target file size.
 
     If #Remember choice# is checked, the selected action will be applied to
 all existing files and the confirmation dialog will not be displayed again for

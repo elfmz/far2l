@@ -4639,6 +4639,7 @@ void Editor::ScrollUp()
 		if (!m_TopScreenLogicalLine->m_prev && m_TopScreenVisualLine == 0)
 			return;
 
+		// Scroll the viewport up by one visual line
 		m_TopScreenVisualLine--;
 		if (m_TopScreenVisualLine < 0)
 		{
@@ -4652,7 +4653,30 @@ void Editor::ScrollUp()
 				m_TopScreenVisualLine = 0;
 			}
 		}
-		Up();
+
+		// Move cursor up directly, without calling Up() which would
+		// redundantly adjust the viewport a second time (double-scroll bug).
+		int synced_visual_line = FindVisualLine(CurLine, CurLine->GetCurPos());
+		if (synced_visual_line != m_CurVisualLineInLogicalLine)
+			m_CurVisualLineInLogicalLine = synced_visual_line;
+
+		int start, end;
+		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
+		int cur_cell_pos = CurLine->RealPosToCell(CurLine->GetCurPos());
+		int start_cell_pos = CurLine->RealPosToCell(start);
+		int horizontal_cell_pos = cur_cell_pos - start_cell_pos;
+
+		if (m_CurVisualLineInLogicalLine > 0) {
+			m_CurVisualLineInLogicalLine--;
+		} else if (CurLine->m_prev) {
+			CurLine = CurLine->m_prev;
+			NumLine--;
+			m_CurVisualLineInLogicalLine = CurLine->GetVisualLineCount() - 1;
+		} else {
+			return;
+		}
+
+		UpdateCursorPosition(horizontal_cell_pos);
 		return;
 	}
 

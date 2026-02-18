@@ -127,6 +127,7 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 		*Str = 0;
 
 	Flags.Set(FEDITLINE_EDITBEYONDEND);
+	Flags.Set(FEDITLINE_CURSORVISIBLE);
 	Color = F_LIGHTGRAY | B_BLACK;
 	SelColor = F_WHITE | B_BLACK;
 	ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
@@ -242,19 +243,21 @@ void Edit::DisplayObject()
 		при DropDownBox курсор выключаем
 		не знаю даже - попробовал но не очень красиво вышло
 	*/
-	if (Flags.Check(FEDITLINE_DROPDOWNBOX))
-		::SetCursorType(0, 10);
-	else {
-		if (Flags.Check(FEDITLINE_OVERTYPE)) {
-			int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
-			::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
-		} else {
-			int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
-			::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+	if (Flags.Check(FEDITLINE_CURSORVISIBLE)) {
+		if (Flags.Check(FEDITLINE_DROPDOWNBOX))
+			::SetCursorType(0, 10);
+		else {
+			if (Flags.Check(FEDITLINE_OVERTYPE)) {
+				int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
+				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			} else {
+				int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			}
 		}
-	}
 
-	MoveCursor(X1 + CursorPos - LeftPos, Y1);
+		MoveCursor(X1 + CursorPos - LeftPos, Y1);
+	}
 }
 
 void Edit::SetCursorType(bool Visible, DWORD Size)
@@ -1092,13 +1095,24 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_OP_PLAINTEXT: {
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				if (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG))		// BugZ#1053 - Неточности в $Text
+				if (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG))
 					RecurseProcessKey(KEY_DEL);
 			}
 
-			const wchar_t *S = eStackAsString();
+			FARString strPastedText;
+			if (!GPastedText.IsEmpty()) {
+				strPastedText = GPastedText;
+				GPastedText.Clear();
+			} else {
+				strPastedText = eStackAsString();
+			}
 
-			ProcessInsPlainText(S);
+			// For single-line edit controls, replace EOL sequences with spaces.
+			ReplaceStrings(strPastedText, L"\r\n", L" ");
+			ReplaceStrings(strPastedText, L"\r", L" ");
+			ReplaceStrings(strPastedText, L"\n", L" ");
+
+			InsertString(strPastedText);
 
 			Show();
 			return TRUE;

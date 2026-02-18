@@ -2033,10 +2033,14 @@ void WINAPI FarText(int X, int Y, uint64_t Color, const wchar_t *Str)
 
 static int FarEditorControlSynched(int Command, void *Param)
 {
-	if (FrameManager->ManagerIsDown() || !CtrlObject->Plugins.CurEditor)
+	if (FrameManager->ManagerIsDown())
 		return 0;
 
-	return (CtrlObject->Plugins.CurEditor->EditorControl(Command, Param));
+	if (CtrlObject->Plugins.CurEditor)
+		return (CtrlObject->Plugins.CurEditor->EditorControl(Command, Param));
+	if (CtrlObject->Plugins.CurDialogEditor)
+		return (CtrlObject->Plugins.CurDialogEditor->EditorControl(Command, Param));
+	return 0;
 }
 
 int WINAPI FarEditorControl(int Command, void *Param)

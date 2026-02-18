@@ -57,6 +57,7 @@ extern SHORT PrevMouseX, PrevMouseY, MouseX, MouseY;
 extern int PreMouseEventFlags, MouseEventFlags;
 extern int ReturnAltValue;
 extern bool BracketedPasteMode;
+extern FARString GPastedText;
 
 void InitKeysArray();
 bool KeyToKeyLayoutCompare(FarKey Key, FarKey CompareKey);

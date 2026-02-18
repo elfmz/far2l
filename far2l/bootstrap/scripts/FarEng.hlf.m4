@@ -3133,7 +3133,8 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
    #Alt-F9#                  Toggles the size of the FAR2L console window
-   #F9, Alt-Shift-F9#        Call ~Editor settings~@EditorSettings@ dialog
+   #F9#                      Call menu bar for the editor, with the list of available commands.
+   #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
    #Ctrl-F10#                Position to the current file
@@ -4254,6 +4255,8 @@ of the same name already exists.
     #Overwrite# - all target files will be replaced;
     #Skip# - target files will not be replaced;
     #Append# - target file will be appended with the file being copied;
+    #Resume# - the existing target file remans, and the source is being appended
+to it (by skipping first N bytes that equal to target file size.
     #Only newer file(s)# - only files with newer write date and time
 will be copied; This option affects only the current copy session and not saved
 for later copy operations.
@@ -4287,6 +4290,9 @@ prompted to select on of the following actions:
 the file being copied;
 
     #Append# - target file will be appended with the file being copied;
+
+    #Resume# - the existing target file remans, and the source is being appended
+to it (by skipping first N bytes that equal to target file size.
 
     If #Remember choice# is checked, the selected action will be applied to
 all existing files and the confirmation dialog will not be displayed again for
@@ -4910,6 +4916,57 @@ FAR2L.
     #$Rep#          - loop operator
     #%var#          - using variables
      and others...
+
+    Macro text can be written directly in the macro configuration file
+    #~~/.config/far2l/settings/key_macros.ini#. Each macro is a section named:
+    #KeyMacros/<Area>/<Key># where:
+    - #Area# is one of: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+      #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+    - #Key# is a key name such as #CtrlShiftF3#, #AltF1#, #F7#, etc.
+
+    Common fields inside a section:
+    #Description# - short text shown in the macro browser;
+    #DisableOutput# - #0x1# to suppress screen redraw during playback;
+    #Sequence# - macro text (may include #$If#, #$Else#, #$End#, etc.).
+
+    Example (open FAR2L internal terminal log in viewer; if the active panel is visible, temporarily hide panels):
+ #[KeyMacros/Shell/CtrlShiftF3]#
+ #DisableOutput=0x1#
+ #Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+    #Macro keywords (variables / conditions)#
+    General:
+      #Bof#, #Eof#, #Empty#, #Selected# - state of the current object in this area.
+      #Far.Width#, #Far.Height#, #Far.Title# - console size / title.
+      #MacroArea# - current macro area name.
+      #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - current object properties.
+
+    Panels (Active/Passive):
+      #APanel.*# and #PPanel.*# are for active/passive panel.
+      #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+      #Selected#, #Left#, #LFN#, #Filter# - panel state flags.
+      #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - panel values.
+      #Path#, #Path0#, #UNCPath# - panel paths.
+      #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - panel geometry / mode.
+      #HostFile#, #Prefix# - plugin panel host file / prefix.
+
+    Command line:
+      #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected# - state.
+      #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value# - values.
+
+    Editor:
+      #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+      #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+    Dialog:
+      #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+    Help:
+      #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+    Viewer / Menu / Other:
+      #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+      #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
 
     Addition of macro language commands to a ~macro~@KeyMacro@ can only be done
 by manually editing the config file or by using special tools/plugins.

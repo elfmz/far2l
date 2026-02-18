@@ -238,6 +238,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecEditor, "DefaultCodePage", &Opt.EdOpt.DefaultCodePage, CP_UTF8},
 	{true,  NSecEditor, "ShowKeyBar", &Opt.EdOpt.ShowKeyBar, 1},
 	{true,  NSecEditor, "ShowTitleBar", &Opt.EdOpt.ShowTitleBar, 1},
+	{true,  NSecEditor, "ShowMenuBar", &Opt.EdOpt.ShowMenuBar, 0},
 	{true,  NSecEditor, "ShowScrollBar", &Opt.EdOpt.ShowScrollBar, 0},
 	{true,  NSecEditor, "UseEditorConfigOrg", &Opt.EdOpt.UseEditorConfigOrg, 1},
 	{true,  NSecEditor, "SearchSelFound", &Opt.EdOpt.SearchSelFound, 0},
@@ -437,7 +438,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelRight, "CurFile", &Opt.strRightCurFile, L""},
 	{true,  NSecPanelRight, "SelectedFirst", &Opt.RightSelectedFirst, 0},
 	{true,  NSecPanelRight, "DirectoriesFirst", &Opt.RightPanel.DirectoriesFirst, 1},
-	{true,  NSecPanelRight, "ExecutablesFirst", &Opt.RightPanel.ExecutablesFirst, 1},
+	{true,  NSecPanelRight, "ExecutablesFirst", &Opt.RightPanel.ExecutablesFirst, 0},
 
 	{true,  NSecPanelLayout, "ColumnTitles", &Opt.ShowColumnTitles, 1},
 	{true,  NSecPanelLayout, "StatusLine", &Opt.ShowPanelStatus, 1},

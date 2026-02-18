@@ -3,8 +3,8 @@
 #include "cctweaks.h"
 #include <iostream>
 #include <fstream>
+#include <memory>
 #include <sstream>
-#include <locale>
 #include <chrono>
 #include <ctime>
 #include <cstdlib>
@@ -17,9 +17,7 @@
 #include <vector>
 #include <tuple>
 #include <utility>
-#include <functional>
 #include <cstring>
-#include <thread>
 #include <atomic>
 #include <cstddef>
 #include <sys/stat.h>
@@ -82,24 +80,23 @@ namespace Dumper {
 
     struct DumperConfig
     {
-        static constexpr bool WRITE_LOG_TO_FILE = false;
+		static constexpr bool WRITE_LOG_TO_FILE = false;
 		static constexpr char LOG_FILENAME[] = "far2l_debug.log";
-
 		static constexpr bool ENABLE_PID_TID = true;
 		static constexpr bool ENABLE_TIMESTAMP = true;
 		static constexpr bool ENABLE_LOCATION = true;
-
 		static constexpr size_t HEXDUMP_BYTES_PER_LINE = 16;
 		static constexpr size_t HEXDUMP_MAX_LENGTH = 1024 * 1024;
-
 		static constexpr std::size_t CONTAINERS_MAX_INDENT_LEVEL = 32;
-		enum class AdjustmentStrategy { Off, PreferAdjusted, PreferOriginal };
-		enum class ResolutionStrategy { OnlyDynsym, PreferDynsym, PreferSymtab, OnlySymtab };
-
 		static constexpr bool STACKTRACE_SHOW_ADDRESSES_ALWAYS = false;
 		static constexpr bool STACKTRACE_DEMANGLE_NAMES = true;
+
+		enum class AdjustmentStrategy { Off, PreferAdjusted, PreferOriginal };
 		static constexpr AdjustmentStrategy STACKTRACE_RETADDR_ADJUSTMENT = AdjustmentStrategy::Off;
+
+		enum class ResolutionStrategy { OnlyDynsym, PreferDynsym, PreferSymtab, OnlySymtab };
 		static constexpr ResolutionStrategy STACKTRACE_SYMBOL_RESOLUTION = ResolutionStrategy::PreferDynsym;
+
 		static constexpr bool STACKTRACE_SHOW_SYMBOL_SOURCE = false;
 		static constexpr bool STACKTRACE_SHOW_CMDLINE_TOOL_COMMANDS = true;
 		static constexpr size_t STACKTRACE_MAX_FRAMES = 64;
@@ -1181,12 +1178,14 @@ namespace Dumper {
 
 } // end namespace Dumper
 
-#define STRINGIZE(x) #x
-#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
-#define LOCATION (__FILE__ ":" STRINGIZE_VALUE_OF(__LINE__))
+#define DSTRINGIZE(x) #x
+#define DSTRINGIZE_VALUE_OF(x) DSTRINGIZE(x)
+#define DLOCATION (__FILE__ ":" DSTRINGIZE_VALUE_OF(__LINE__))
 
-#define DUMP(...) { Dumper::Dump(__func__, LOCATION, __VA_ARGS__); }
-#define DUMPV(...) { Dumper::DumpV(__func__, LOCATION, #__VA_ARGS__, __VA_ARGS__); }
+#define DUMP(...) Dumper::Dump(__func__, DLOCATION, __VA_ARGS__)
+#define DUMPV(...) Dumper::DumpV(__func__, DLOCATION, #__VA_ARGS__, __VA_ARGS__)
+#define DUMP_IF(condition, ...) ((condition) ? (void)DUMP(__VA_ARGS__) : (void)0)
+#define DUMPV_IF(condition, ...) ((condition) ? (void)DUMPV(__VA_ARGS__) : (void)0)
 
 #define DVV(expr) #expr, expr
 #define DMSG(msg) "{DMSG}", std::string(msg)

@@ -6361,7 +6361,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		///case DM_GETCOLOR:///
 		case DM_GETTRUECOLOR: {
 			if (Param2)
-				memcpy((uint64_t *)Param2, CurItem->customItemColor, sizeof(uint64_t) * 4);
+				memcpy((uint64_t *)Param2, CurItem->customItemColor, sizeof(uint64_t) * DLG_ITEM_MAX_CUST_COLORS);
 //			if (!CurItem->TrueColors) {
 //				memset((uint64_t *)Param2, 0, sizeof(DialogItemTrueColors));
 //			} else {
@@ -6375,7 +6375,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		///case DM_SETCOLOR:///
 		case DM_SETTRUECOLOR: {
 			if (Param2)
-				memcpy(CurItem->customItemColor, (uint64_t *)Param2, sizeof(uint64_t) * 4);
+				memcpy(CurItem->customItemColor, (uint64_t *)Param2, sizeof(uint64_t) * DLG_ITEM_MAX_CUST_COLORS);
 
 //			if (!CurItem->TrueColors) {
 //				CurItem->TrueColors.reset(new DialogItemTrueColors);

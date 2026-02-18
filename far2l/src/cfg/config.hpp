@@ -220,6 +220,7 @@ struct EditorOptions
 	DWORD FileSizeLimitHi;
 	int ShowKeyBar;
 	int ShowTitleBar;
+	int ShowMenuBar;
 	int ShowScrollBar;
 	int UseEditorConfigOrg;
 	int SearchSelFound;

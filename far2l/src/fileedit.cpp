@@ -73,6 +73,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DlgGuid.hpp"
 #include "filelist.hpp"
 
+#include "fileedit2options.hpp"
+
 enum enumOpenEditor
 {
 	ID_OE_TITLE,
@@ -293,7 +295,7 @@ const FileEditor *FileEditor::CurrentEditor = nullptr;
 FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 		const wchar_t *PluginData, int OpenModeExstFile)
 	:
-	BadConversion(false), SaveAsTextFormat(0)
+	BadConversion(false), SaveAsTextFormat(0), EditMenuBar(nullptr)
 {
 	ScreenObject::SetPosition(0, 0, ScrX, ScrY);
 	Flags.Set(InitFlags);
@@ -304,7 +306,7 @@ FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFla
 FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 		const wchar_t *Title, int X1, int Y1, int X2, int Y2, int OpenModeExstFile)
 	:
-	SaveAsTextFormat(0)
+	SaveAsTextFormat(0), EditMenuBar(nullptr)
 {
 	Flags.Set(InitFlags);
 
@@ -374,6 +376,9 @@ FileEditor::~FileEditor()
 	CurrentEditor = nullptr;
 
 	delete EditNamesList;
+
+	if (EditMenuBar) delete EditMenuBar;
+	EditMenuBar = nullptr;
 }
 
 void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t *Title, DWORD InitFlags,
@@ -424,6 +429,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	SetTitle(Title);
 	EditNamesList = nullptr;
 	KeyBarVisible = Opt.EdOpt.ShowKeyBar;
+	MenuBarVisible = Opt.EdOpt.ShowMenuBar;
 	TitleBarVisible = Opt.EdOpt.ShowTitleBar;
 	// $ 17.08.2001 KM - Добавлено для поиска по AltF7. При редактировании найденного файла из архива для клавиши F2 сделать вызов ShiftF2.
 	Flags.Change(FFILEEDIT_SAVETOSAVEAS,
@@ -538,7 +544,8 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 		}
 	}
 
-	m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+	int vGap = (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);
+	m_editor->SetPosition(X1, Y1 + vGap, X2, Y2 - (KeyBarVisible ? 1 : 0));
 	m_editor->SetStartPos(StartLine, StartChar);
 
 	int UserBreak;
@@ -604,6 +611,11 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 	if (!KeyBarVisible)
 		EditKeyBar.Hide0();
 
+	EditMenuBar = new EditorMenuBar();
+	EditMenuBar->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y1 + (TitleBarVisible ? 1 : 0));
+	// if (!MenuBarVisible) EditMenuBar->Hide0();
+	EditMenuBar->Show();
+
 	MacroMode = MACRO_EDITOR;
 	CtrlObject->Macro.SetMode(MACRO_EDITOR);
 
@@ -655,7 +667,9 @@ void FileEditor::InitKeyBar()
 	EditKeyBar.SetAllRegGroup();
 	EditKeyBar.Refresh(true);
 	// Этот вызов здесь НЕ НУЖЕН и вызывает двойной пересчет переносов
-	// m_editor->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y2 - (KeyBarVisible ? 1 : 0));
+
+	// int vGap = (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);
+	// m_editor->SetPosition(X1, Y1 + vGap, X2, Y2 - (KeyBarVisible ? 1 : 0));
 	SetKeyBar(&EditKeyBar);
 }
 
@@ -676,7 +690,13 @@ void FileEditor::Show()
 		}
 
 		ScreenObject::SetPosition(0, 0, ScrX, ScrY - (KeyBarVisible ? 1 : 0));
-		m_editor->SetPosition(0, (TitleBarVisible ? 1 : 0), ScrX, ScrY - (KeyBarVisible ? 1 : 0));
+		int vGap = (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);
+		m_editor->SetPosition(0, vGap, ScrX, ScrY - (KeyBarVisible ? 1 : 0));
+
+		if (MenuBarVisible) {
+			EditMenuBar->SetPosition(0, TitleBarVisible ? 1 : 0, ScrX, TitleBarVisible ? 1 : 0);
+			EditMenuBar->Show();
+		}
 	}
 
 	ScreenObject::Show();
@@ -693,6 +713,8 @@ void FileEditor::DisplayObject()
 
 		m_editor->Show();
 	}
+	if (MenuBarVisible) 
+		EditMenuBar->DisplayObject();
 }
 
 int64_t FileEditor::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)
@@ -1262,6 +1284,8 @@ int FileEditor::ReProcessKey(FarKey Key, int CalledFromControl)
 				return TRUE;
 			}
 			case KEY_F9:
+				EditorShellOptions(0, nullptr, this);
+				break;
 			case KEY_ALTSHIFTF9: {
 				// Работа с локальной копией EditorOptions
 				EditorOptions EdOpt;
@@ -2038,6 +2062,16 @@ int FileEditor::SaveFile(const wchar_t *Name, int Ask, bool bSaveAs, int TextFor
 int FileEditor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	F4KeyOnly = false;
+
+	// Activate menu bar
+	if (MenuBarVisible) {
+		int pos = TitleBarVisible ? 1 : 0;
+		if (MouseEvent->dwMousePosition.Y == pos && (MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
+			EditorShellOptions(0, MouseEvent, this);
+			return TRUE;
+		}
+	}
+
 	if (!EditKeyBar.ProcessMouse(MouseEvent))
 		if (!ProcessEditorInput(FrameManager->GetLastInputRecord()))
 			if (!m_editor->ProcessMouse(MouseEvent))
@@ -2067,7 +2101,7 @@ void FileEditor::SetScreenPosition()
 		SetPosition(0, 0, ScrX, ScrY);
 	}
 	if (m_editor) {
-		int newY1 = Y1 + (TitleBarVisible ? 1 : 0);
+		int newY1 = Y1 + (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);
 		int newY2 = Y2 - (KeyBarVisible ? 1 : 0);
 		m_editor->SetPosition(X1, newY1, X2, newY2);
 	}
@@ -2401,6 +2435,7 @@ void FileEditor::GetEditorOptions(EditorOptions &EdOpt)
 	EdOpt.WordWrap = m_editor->GetWordWrap();
 	EdOpt.ShowTitleBar = TitleBarVisible;
 	EdOpt.ShowKeyBar = KeyBarVisible;
+	EdOpt.ShowMenuBar = MenuBarVisible;
 }
 
 void FileEditor::SetEditorOptions(EditorOptions &EdOpt)
@@ -2422,6 +2457,7 @@ void FileEditor::SetEditorOptions(EditorOptions &EdOpt)
 	m_editor->SetWordWrap(EdOpt.WordWrap);
 	TitleBarVisible = EdOpt.ShowTitleBar;
 	KeyBarVisible = EdOpt.ShowKeyBar;
+	MenuBarVisible = EdOpt.ShowMenuBar;
 	// m_editor->SetBSLikeDel(EdOpt.BSLikeDel);
 }
 
@@ -2845,4 +2881,60 @@ void EditConsoleHistory(HANDLE con_hnd, bool modal)
 	}
 }
 
-//////////////////////////////////
+void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey) 
+{
+	if (accelKey) {
+		ProcessKey(accelKey);
+		return;
+	}
+	else if (hMenu == MENU_VIEW && vMenu == MENU_VIEW_MENUBAR) {
+		MenuBarVisible = !MenuBarVisible;
+		Show();
+		return;
+	}
+	// mwenu has strange effects if F1 defined as accelerator
+	else if (hMenu == MENU_FILE) {
+		if (vMenu == MENU_FILE_HELP) {
+			ProcessKey(KEY_F1);
+		}
+		return;
+	}
+	// todo: handle commands without accelerated keys
+	/* Once printer support will be merged, we can uncomment this
+	else if (hMenu == MENU_FILE && vMenu == MENU_FILE_PRINTER) {
+		PrinterSupport ps;
+		if (ps.IsPrinterSetupDialogSupported()) {
+			ps.ShowPrinterSetupDialog();
+		}
+		return;
+	}*/
+}
+
+int FileEditor::MenuBarPosition() {
+	return TitleBarVisible && MenuBarVisible ? 1 : 0;
+}
+
+int FileEditor::IsOptionActive(int hMenu, int vMenu) {
+	if (hMenu != MENU_VIEW) return FALSE;
+	switch (vMenu) {
+	case MENU_VIEW_KEYBAR:
+		return KeyBarVisible;
+	case MENU_VIEW_TITLEBAR:
+		return TitleBarVisible;
+	case MENU_VIEW_MENUBAR:
+		return MenuBarVisible;
+	case MENU_VIEW_WORDWRAP:
+		return m_editor->GetWordWrap();
+	case MENU_VIEW_NUMBERS:
+		return m_editor->GetShowLineNumbers();
+	case MENU_VIEW_SPACES:
+		return m_editor->GetShowWhiteSpace();
+	case MENU_VIEW_TABS_TO_SPACES:
+		return m_editor->GetConvertTabs() == EXPAND_NEWTABS;
+	case MENU_VIEW_OVERTYPE:
+		return m_editor->Flags.Check(FEDITLINE_OVERTYPE);
+	case MENU_VIEW_LOCK:
+		return m_editor->Flags.Check(FEDITOR_LOCKMODE);
+	}
+	return FALSE;
+}

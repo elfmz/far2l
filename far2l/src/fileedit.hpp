@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keybar.hpp"
 #include "fileholder.hpp"
 #include "EditorConfigOrg.hpp"
+#include "menubar.hpp"
 
 class NamesList;
 
@@ -125,9 +126,15 @@ public:
 	void SetPluginTitle(const wchar_t *PluginTitle);
 	static const FileEditor *CurrentEditor;
 
+	void ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey);
+	int MenuBarPosition();
+	int IsOptionActive(int hMenu, int vMenu);
+
 private:
 	Editor *m_editor;
 	KeyBar EditKeyBar;
+	EditorMenuBar* EditMenuBar;
+
 	NamesList *EditNamesList;
 	FARString strFileName;
 	FARString strFullFileName;
@@ -149,6 +156,7 @@ private:
 	int SaveAsTextFormat{0};
 	FileHolderPtr FHP;
 	std::unique_ptr<EditorConfigOrg> EdCfg;
+	int MenuBarVisible;
 
 	virtual void DisplayObject();
 	int ProcessQuitKey(int FirstSave, BOOL NeedQuestion = TRUE);

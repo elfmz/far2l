@@ -129,7 +129,7 @@ static PluginType PluginTypeByExtension(const wchar_t *lpModuleName)
 
 PluginManager::PluginManager()
 	:
-	PluginsData(nullptr), PluginsCount(0), CurPluginItem(nullptr), CurEditor(nullptr), CurViewer(nullptr)
+	PluginsData(nullptr), PluginsCount(0), CurPluginItem(nullptr), CurEditor(nullptr), CurDialogEditor(nullptr), CurViewer(nullptr)
 {}
 
 PluginManager::~PluginManager()
@@ -751,7 +751,7 @@ int PluginManager::ProcessEditorEvent(int Event, void *Param)
 {
 	int nResult = 0;
 
-	if (CtrlObject->Plugins.CurEditor) {
+	if (CtrlObject->Plugins.CurEditor || CtrlObject->Plugins.CurDialogEditor) {
 		Plugin *pPlugin = nullptr;
 
 		for (int i = 0; i < PluginsCount; i++) {

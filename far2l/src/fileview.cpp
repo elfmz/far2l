@@ -397,7 +397,7 @@ int FileViewer::ProcessKey(FarKey Key)
 			MenuBarVisible = ViOpt.ShowMenuBar;
 
 			ViewKeyBar.Refresh(ViOpt.ShowKeyBar);
-			View.Show();
+			Show();
 			return TRUE;
 		case KEY_ALTF10:
 			FrameManager->ExitMainLoop(TRUE);

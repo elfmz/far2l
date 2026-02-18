@@ -11012,15 +11012,15 @@ ViewF8
 "->ANSI"
 
 ViewF9
-"Конфиг"
-"Config"
-"Nastav"
-"Konfig"
-"Beáll."
-"Konfig"
-"Config"
-"Конфіг"
-"Налады"
+"Меню"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
+"Menu"
 
 ViewF10
 "Выход"

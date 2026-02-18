@@ -394,9 +394,10 @@ int FileViewer::ProcessKey(FarKey Key)
 			View.SetPersistentBlocks(ViOpt.PersistentBlocks);
 
 			ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
+			View.Show();
+
 			MenuBarVisible = Opt.ViOpt.ShowMenuBar;
 
-			View.Show();
 			return TRUE;
 		case KEY_ALTF10:
 			FrameManager->ExitMainLoop(TRUE);

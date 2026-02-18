@@ -385,19 +385,19 @@ int FileViewer::ProcessKey(FarKey Key)
 			ViOpt.ClickableURLs = View.GetClickableURLs();
 			ViOpt.PersistentBlocks = View.GetPersistentBlocks();
 			ViOpt.ShowMenuBar = MenuBarVisible;
+
 			ViewerConfig(ViOpt, true);
+
 			View.SetTabSize(ViOpt.TabSize);
 			View.SetAutoDetectCodePage(ViOpt.AutoDetectCodePage);
 			View.SetShowScrollbar(ViOpt.ShowScrollbar);
 			View.SetShowArrows(ViOpt.ShowArrows);
 			View.SetClickableURLs(ViOpt.ClickableURLs);
 			View.SetPersistentBlocks(ViOpt.PersistentBlocks);
+			MenuBarVisible = ViOpt.ShowMenuBar;
 
-			ViewKeyBar.Refresh(Opt.ViOpt.ShowKeyBar);
+			ViewKeyBar.Refresh(ViOpt.ShowKeyBar);
 			View.Show();
-
-			MenuBarVisible = Opt.ViOpt.ShowMenuBar;
-
 			return TRUE;
 		case KEY_ALTF10:
 			FrameManager->ExitMainLoop(TRUE);

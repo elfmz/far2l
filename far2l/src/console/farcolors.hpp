@@ -36,6 +36,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "palette.hpp"
 #include "farcolors.hpp"
 
+#include <vector>
+#include <string>
+
 #define SIZE_ARRAY_FARCOLORS 160
 
 class FarColors : NonCopyable
@@ -52,6 +55,10 @@ public:
 
 	static void InitFarColors( ) noexcept;
 	static void SaveFarColors( ) noexcept;
+
+	static bool InitFarColorsFromTheme( FARString& theme, bool isSystemWide ) noexcept;
+	static FARString SaveFarColorsAsUserTheme( FARString& base ) noexcept;
+	static bool InitFarColorsFromFile( const std::string& file ) noexcept;
 
 	void Set() noexcept {
 		memcpy(setcolors, colors, sizeof(setcolors[0]) * SIZE_ARRAY_FARCOLORS);
@@ -79,6 +86,9 @@ public:
 	size_t size() const noexcept {
 		return SIZE_ARRAY_FARCOLORS;
 	}
+
+	static std::vector<std::string> GetKnownUserThemes ();
+	static std::vector<std::string> GetKnownSystemThemes ();
 };
 
 inline uint64_t FarColorToReal(unsigned int FarColor)

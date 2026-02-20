@@ -495,6 +495,17 @@ MultilinePaste
 "Вставка багаторядкового тексту"
 "Устаўка шматрадковага тэксту"
 
+EditCommand
+"Редактирование команды"
+"Edit command"
+"Upravit příkaz"
+"Befehl bearbeiten"
+"Parancs szerkesztése"
+"Edytuj polecenie"
+"Editar comando"
+"Редагування команди"
+"Рэдагаванне каманды"
+
 F1
 l:
 l://functional keys - 6 characters max

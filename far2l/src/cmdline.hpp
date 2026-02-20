@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "edit.hpp"
 #include <WinCompat.h>
 #include "FARString.hpp"
+#include <vector>
 
 enum
 {
@@ -64,6 +65,9 @@ private:
 	FARString strLastCompletionCmdStr;
 	int LastCmdPartLength;
 	int PushDirStackSize;
+	std::vector<FARString> m_multilineLines;
+	int m_multilineExtraLines;
+	int m_multilineActiveLine;
 
 private:
 	virtual void DisplayObject();
@@ -73,7 +77,7 @@ private:
 	BOOL IntChDir(const wchar_t *CmdLine, int ClosePlugin, bool Silent = false);
 	bool ProcessOSCommands(const wchar_t *CmdLine, bool SeparateWindow, bool &PrintCommand);
 	void ProcessTabCompletion();
-	void DrawComboBoxMark(wchar_t MarkChar);
+	void DrawComboBoxMark(wchar_t MarkChar, int y);
 	void ChangeDirFromHistory(bool PluginPath, int SelectType, FARString strDir, FARString strFile=L"");
 	void CheckForKeyPressAfterCmd(int r);
 
@@ -83,6 +87,14 @@ private:
 	void ProcessKey_ShowCommandsHistory();
 	int ProcessKey_Enter(FarKey Key);
 	int ProcessKeyIfVisible(FarKey Key);
+	bool IsContinuationLine(const FARString &line) const;
+	FARString BuildMultilineCommand(const FARString &line) const;
+	bool MoveMultilineLine(int delta);
+	void SyncActiveMultilineLine();
+	void UpdateMultilineLayout();
+	void ApplyMultilineText(const FARString &text);
+	void ClearMultilineState();
+	void SetMultilineExtraLines(int extra_lines);
 
 public:
 	CommandLine();
@@ -117,6 +129,7 @@ public:
 	void SetCurPos(int Pos, int LeftPos = 0);
 	int GetCurPos() { return CmdStr.GetCurPos(); };
 	int GetLeftPos() { return CmdStr.GetLeftPos(); };
+	int GetExtraLines() const { return m_multilineExtraLines; }
 
 	void SetPersistentBlocks(int Mode);
 	void SetDelRemovesBlocks(int Mode);

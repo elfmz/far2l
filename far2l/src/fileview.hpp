@@ -37,6 +37,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "viewer.hpp"
 #include "keybar.hpp"
 
+#include "fileview2options.hpp"
+#include "menubar.hpp"
+
 class FileViewer : public Frame
 {
 private:
@@ -44,6 +47,7 @@ private:
 	virtual void DisplayObject();
 	SudoClientRegion _sdc_rgn;
 	Viewer View;
+	ViewerMenuBar* MenuBar;
 	int RedrawTitle;
 	KeyBar ViewKeyBar;
 	bool AutoClose;
@@ -51,6 +55,7 @@ private:
 	int FullScreen;
 	int DisableEdit;
 	int DisableHistory;
+	int MenuBarVisible;
 
 	FARString strName;
 
@@ -120,6 +125,10 @@ public:
 	void ShowStatus();
 	void SetAutoClose(bool AC) { AutoClose = AC; }
 	void SetWrapModeAndType(bool Wrap, bool WordWrap);
+
+	void ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey);
+	int MenuBarPosition();
+	int IsOptionActive(int hMenu, int vMenu);
 };
 
 void ModalViewFile(const std::string &pathname);

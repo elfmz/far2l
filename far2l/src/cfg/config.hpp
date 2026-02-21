@@ -254,6 +254,7 @@ struct ViewerOptions
 	UINT DefaultCodePage;
 	int ShowTitleBar;
 	int SearchRegexp;
+	int ShowMenuBar;
 };
 
 // "Полиция"

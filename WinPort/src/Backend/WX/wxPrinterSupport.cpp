@@ -33,7 +33,7 @@ wxPrinterSupportBackend::~wxPrinterSupportBackend() {
 #endif
 }
 
-void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::wstring& text)
+void wxPrinterSupportBackend::PrintText(const wchar_t* jobName, const wchar_t* text)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::PrintText, this, jobName, text);
@@ -56,7 +56,7 @@ void wxPrinterSupportBackend::PrintText(const std::wstring& jobName, const std::
 #endif
 }
 
-void wxPrinterSupportBackend::PrintReducedHTML(const std::wstring& jobName, const std::wstring& text)
+void wxPrinterSupportBackend::PrintReducedHTML(const wchar_t* jobName, const wchar_t* text)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::PrintReducedHTML, this, jobName, text);
@@ -74,7 +74,7 @@ void wxPrinterSupportBackend::PrintReducedHTML(const std::wstring& jobName, cons
 #endif
 }
 
-void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
+void wxPrinterSupportBackend::PrintTextFile(const wchar_t* fileName)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::PrintTextFile, this, fileName);
@@ -91,7 +91,7 @@ void wxPrinterSupportBackend::PrintTextFile(const std::wstring& fileName)
 #endif
 }
 
-void wxPrinterSupportBackend::PrintHtmlFile(const std::wstring& fileName)
+void wxPrinterSupportBackend::PrintHtmlFile(const wchar_t* fileName)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::PrintHtmlFile, this, fileName);
@@ -109,7 +109,7 @@ void wxPrinterSupportBackend::PrintHtmlFile(const std::wstring& fileName)
 #endif
 }
 
-void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, const std::wstring& text)
+void wxPrinterSupportBackend::ShowPreviewForText(const wchar_t* jobName, const wchar_t* text)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForText, this, jobName, text);
@@ -131,7 +131,7 @@ void wxPrinterSupportBackend::ShowPreviewForText(const std::wstring& jobName, co
 #endif
 }
 
-void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobName, const std::wstring& text)
+void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const wchar_t* jobName, const wchar_t* text)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForReducedHTML, this, jobName, text);
@@ -149,7 +149,7 @@ void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const std::wstring& jobN
 #endif
 }
 
-void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileName)
+void wxPrinterSupportBackend::ShowPreviewForTextFile(const wchar_t* fileName)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForTextFile, this, fileName);
@@ -166,7 +166,7 @@ void wxPrinterSupportBackend::ShowPreviewForTextFile(const std::wstring& fileNam
 #endif
 }
 
-void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const std::wstring& fileName)
+void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const wchar_t* fileName)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxPrinterSupportBackend::ShowPreviewForHtmlFile, this, fileName);

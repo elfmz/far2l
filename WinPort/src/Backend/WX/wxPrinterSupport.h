@@ -9,15 +9,15 @@ public:
 	wxPrinterSupportBackend();
 	virtual ~wxPrinterSupportBackend();
 
-	virtual void PrintText(const std::wstring& jobName, const std::wstring& text);
-	virtual void PrintReducedHTML(const std::wstring& jobName, const std::wstring& text);
-	virtual void PrintTextFile(const std::wstring& fileName);
-	virtual void PrintHtmlFile(const std::wstring& fileName);
+	virtual void PrintText(const wchar_t* jobName, const wchar_t* text);
+	virtual void PrintReducedHTML(const wchar_t* jobName, const wchar_t* text);
+	virtual void PrintTextFile(const wchar_t* fileName);
+	virtual void PrintHtmlFile(const wchar_t* fileName);
 
-	virtual void ShowPreviewForText(const std::wstring&  jobName, const std::wstring& text);
-	virtual void ShowPreviewForReducedHTML(const std::wstring& jobName, const std::wstring& text);
-	virtual void ShowPreviewForTextFile(const std::wstring& fileName);
-	virtual void ShowPreviewForHtmlFile(const std::wstring& fileName);
+	virtual void ShowPreviewForText(const wchar_t*  jobName, const wchar_t* text);
+	virtual void ShowPreviewForReducedHTML(const wchar_t* jobName, const wchar_t* text);
+	virtual void ShowPreviewForTextFile(const wchar_t* fileName);
+	virtual void ShowPreviewForHtmlFile(const wchar_t* fileName);
 
 	virtual void ShowPrinterSetupDialog();
 

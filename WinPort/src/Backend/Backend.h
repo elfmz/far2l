@@ -307,15 +307,15 @@ struct WinPortMainBackendArg
 
 class IPrinterSupport {
 public:
-	virtual void PrintText(const std::wstring& jobName, const std::wstring& text) = 0;
-	virtual void PrintReducedHTML(const std::wstring& jobName, const std::wstring& text) = 0;
-	virtual void PrintTextFile(const std::wstring& fileName) = 0;
-	virtual void PrintHtmlFile(const std::wstring& fileName) = 0;
+	virtual void PrintText(const wchar_t* jobName, const wchar_t* text) = 0;
+	virtual void PrintReducedHTML(const wchar_t* jobName, const wchar_t* text) = 0;
+	virtual void PrintTextFile(const wchar_t* fileName) = 0;
+	virtual void PrintHtmlFile(const wchar_t* fileName) = 0;
 
-	virtual void ShowPreviewForText(const std::wstring&  jobName, const std::wstring& text) = 0;
-	virtual void ShowPreviewForReducedHTML(const std::wstring& jobName, const std::wstring& text) = 0;
-	virtual void ShowPreviewForTextFile(const std::wstring& fileName) = 0;
-	virtual void ShowPreviewForHtmlFile(const std::wstring& fileName) = 0;
+	virtual void ShowPreviewForText(const wchar_t*  jobName, const wchar_t* text) = 0;
+	virtual void ShowPreviewForReducedHTML(const wchar_t* jobName, const wchar_t* text) = 0;
+	virtual void ShowPreviewForTextFile(const wchar_t* fileName) = 0;
+	virtual void ShowPreviewForHtmlFile(const wchar_t* fileName) = 0;
 
 	virtual void ShowPrinterSetupDialog() = 0;
 

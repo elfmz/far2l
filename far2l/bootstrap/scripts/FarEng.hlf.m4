@@ -1228,7 +1228,7 @@ Pressing #Ctrl-Enter# keys simultaneously will select the next match.
     #Gray +# and #Gray -# keys move up and down the tree to the next branch
 on the same level.
 
-    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
+    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up.
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
 
@@ -1719,7 +1719,7 @@ containing hexadecimal sequence of the specified bytes. In this case #Case#
 #sensitive#, #Whole words#, #Using code page# and #Search for folders#
 options are disabled and their values doesn't affect the search process.
 
-    The drop-down list #Using code page# allows you to select a specific  
+    The drop-down list #Using code page# allows you to select a specific
 code page to be used for text search. If you select the item
 #Standard code pages# in the drop-down list, FAR2L will use all
 standard and #Favorite# code pages for the search (the list of #Favorite#
@@ -1928,7 +1928,7 @@ the folder.
     #Gray +# and #Gray -# should move up and down the tree to the next branch
 on the same level.
 
-    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
+    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up.
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
 
@@ -2568,7 +2568,7 @@ $ #Settings dialog: panel#
                           panel.
 
   #Scanning depth#          Sets the maximum depth for recursive catalogue scanning
-                          while building the tree. 
+                          while building the tree.
 
   #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
   #scanning exclusions#     from automatic scanning. Use this to skip folders
@@ -3132,8 +3132,8 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F8#                      Toggle UTF8/~ANSI/OEM~@CodePagesSet@ code page
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
+   #F9#                      Call menu bar for the editor, with the list of available commands
    #Alt-F9#                  Toggles the size of the FAR2L console window
-   #F9#                      Call menu bar for the editor, with the list of available commands.
    #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
@@ -4256,7 +4256,7 @@ of the same name already exists.
     #Skip# - target files will not be replaced;
     #Append# - target file will be appended with the file being copied;
     #Resume# - the existing target file remans, and the source is being appended
-to it (by skipping first N bytes that equal to target file size.
+to it (by skipping first N bytes that equal to target file size).
     #Only newer file(s)# - only files with newer write date and time
 will be copied; This option affects only the current copy session and not saved
 for later copy operations.
@@ -4292,7 +4292,7 @@ the file being copied;
     #Append# - target file will be appended with the file being copied;
 
     #Resume# - the existing target file remans, and the source is being appended
-to it (by skipping first N bytes that equal to target file size.
+to it (by skipping first N bytes that equal to target file size).
 
     If #Remember choice# is checked, the selected action will be applied to
 all existing files and the confirmation dialog will not be displayed again for
@@ -4802,7 +4802,7 @@ usually does as a reaction to this combination.
 
     Playing the macro will display the symbol '\2FP\-' in the upper left corner of the screen.
 
-    Note: To let you see the macro in the config file or in Macro Browser, you have an ability 
+    Note: To let you see the macro in the config file or in Macro Browser, you have an ability
     to make short description as you prefer.
 
 
@@ -4921,7 +4921,7 @@ FAR2L.
     #~~/.config/far2l/settings/key_macros.ini#. Each macro is a section named:
     #KeyMacros/<Area>/<Key># where:
     - #Area# is one of: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
-      #Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+#Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
     - #Key# is a key name such as #CtrlShiftF3#, #AltF1#, #F7#, etc.
 
     Common fields inside a section:
@@ -5156,7 +5156,7 @@ $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
   Launching programs in an external terminal from the far2l command line:
-  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch);
   - #$FARHOME/open.sh exec program#: to run in an external terminal using Enter, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 

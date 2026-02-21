@@ -3013,7 +3013,7 @@ int ShellCopy::AskOverwrite(const FAR_FIND_DATA_EX &SrcData, const wchar_t *SrcN
 	enum
 	{
 		WARN_DLG_HEIGHT = 13,
-		WARN_DLG_WIDTH  = 72,
+		WARN_DLG_WIDTH  = 88,
 	};
 	DialogDataEx WarnCopyDlgData[] = {
 		{DI_DOUBLEBOX, 3, 1,  WARN_DLG_WIDTH - 4, WARN_DLG_HEIGHT - 2, {}, 0, Msg::Warning},

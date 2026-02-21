@@ -2,15 +2,16 @@
 .PluginContents=FarColorer
 
 @contents
-$^#FarColorer#
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Contents#
 
     ~Plugin setup~@config@
 
-    ~Command line support~@cmdline@
-
     ~Plugin's menus~@menu@
 
-    ~Logging~@log
+    ~Outliner or Errors List~@add@
+
+    ~Logging~@log@
 
     ~Colorer base`s settings~@customize@
 
@@ -19,14 +20,15 @@ $^#FarColorer#
     ~About authors~@author@
 
 @config
-$^#FarColorer's settings#
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# FarColorer's settings#
 
   #Enabled#
      Enable/Disable FarColorer.
 
   #Cross#
      [ ] Do not show ever
-     [?] Show if included in the scheme. 
+     [?] Show if included in the scheme.
      [x] Always Show.
 
   #Cross style#
@@ -40,19 +42,19 @@ $^#FarColorer's settings#
 
   #Classic outline style#
      In classic style displays only the name of the function. Otherwise show
-     the beginning of the line number, then the first letter in the function 
+     the beginning of the line number, then the first letter in the function
      and the function name itself.
 
   #Change background editor#
-     In the set condition, FarColorer set in System Preferences color of 
-     "Plain Text" color group "editor" such as and the default color for 
+     In the set condition, FarColorer set in System Preferences color of
+     "Plain Text" color group "editor" such as and the default color for
      the color scheme FarColorer.
      The effect is visible on the files, the number of rows in less than window height
      editor.
      Does not work in TrueColor mode.
 
   #Color style#
-     Choose a color style, which will be used for coloring text. 
+     Choose a color style, which will be used for coloring text.
      The choice does not work if the plugin is disabled.
 
   #---------------------------Custom Settings-------------------------#
@@ -78,7 +80,7 @@ $^#FarColorer's settings#
      Enable/Disable using of TrueColor (24 bit RGB) coloring.
 
   #Color style#
-     Choose a color style, which will be used for coloring text in TrueColor. 
+     Choose a color style, which will be used for coloring text in TrueColor.
      The choice does not work if TrueColor is disabled or unavailable.
   #------------------------------------------------------------------#
 
@@ -93,31 +95,34 @@ $^#FarColorer's settings#
      Closes dialog and save settings.
 
 @customize
-$^#Colorer base`s settings#
-    FarColorer comes with a basic library of HRC schemas and HRD styles, the root file of which is catalog.xml .
-    To change the set and behavior of HRC schemes and HRD styles, the file path parameters are used in the plugin settings dialog.,
-    as well as the ~Schema Settings~@confighrc dialog.
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Colorer base`s settings#
+    FarColorer comes with a basic library of HRC schemas and HRD styles, the root file of which is #catalog.xml#.
+    To change the set and behavior of HRC schemes and HRD styles, the file path parameters are used in the plugin settings dialog,
+    as well as the ~Schema Settings~@confighrc@ dialog.
 
-    The necessary steps to change the base library are shown on the page ~https://colorer.github.io/advanced/custom/~ .
+    The necessary steps to change the base library are shown
+on the page ~https://colorer.github.io/advanced/custom/~@https://colorer.github.io/advanced/custom/@.
 
     When working with the settings library of schemes and styles, the following loading order is applied:
-    1. Read the value of the "catalog.xml file"
+    1. Read the value of the "#catalog.xml file#"
         - if filled in, then use the specified file as catalog.xml
-        - otherwise we will use catalog.xml supplied with the plugin
-    2. Read the hrcsettings.xml included in the plugin delivery
-    3. Read the value of the "Custom schemas folder (hrc)"
+        - otherwise we will use #catalog.xml# supplied with the plugin
+    2. Read the #hrcsettings.xml# included in the plugin delivery
+    3. Read the value of the "#Custom schemas folder (hrc)#"
         - if this file is filled in, then we process the file as a set of hrd-sets (an outdated method, for backward compatibility)
-        - if this folder is filled in, then we load everything from it *.hrd files
-    4. Read the value of the "Custom color styles folder (hrd)"
+        - if this folder is filled in, then we load everything from it #*.hrd# files
+    4. Read the value of the "#Custom color styles folder (hrd)#"
         - if this file is filled in, then we process it in the same way as proto.hrc (outdated method, for backward compatibility)
-        - if this folder is filled in, then we load everything from it *.hrc files
-    5. Read the value of the "Custom schemas settings file (hrcsettings)" (custom hrcsettings.xml)
+        - if this folder is filled in, then we load everything from it #*.hrc# files
+    5. Read the value of the "#Custom schemas settings file (hrcsettings)#" (custom hrcsettings.xml)
         - if it is filled in, then load it.
-        - if it is not filled in, check the environment variable COLORER_HRC_SETTINGS with the path to the file.
+        - if it is not filled in, check the environment variable #COLORER_HRC_SETTINGS# with the path to the file.
      6. Read the scheme settings from the plugin settings in far2l
 
 @confighrc
-$^#Schemes settings#
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Schemes settings#
     For each of the selected schemes, a list of parameters that affect the mapping
 coloring.
     Parameter value - the value set for this parameter.
@@ -126,23 +131,25 @@ in the system (non-user) settings of the scheme or scheme is taken from default.
     Save all the changes occurs after clicking "OK" button.
 
 @log
-$^#Logging#
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Logging#
 
-  The plugin implements the ability to log work into the common logging mechanism far2l - sdterr.
+  The plugin implements the ability to log work into the common logging mechanism far2l - #sdterr#.
   Logging is disabled by default.
   Enabling logging
 
-      export FAR2L_STDERR=somefile.log
-      export COLORER_VERBOSE=debug
-      far2l
+      #export FAR2L_STDERR=somefile.log#
+      #export COLORER_VERBOSE=debug#
+      #far2l#
 
-  The following logging levels are supported: off, error, warning, info, debug, trace
+  The following logging levels are supported: #off#, #error#, #warning#, #info#, #debug#, #trace#.
 
 @add
-$# Outliner
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Outliner or Errors List#
     Here you can see a list of all functions or syntax errors found.
 Choose any item to go to corresponding line in text.
-    
+
     You can use keyboard filter to quickly search for required items:
 
     #Ctrl-Left/Right#
@@ -153,7 +160,7 @@ Choose any item to go to corresponding line in text.
 
     #Ctrl-Enter#
       Close the outliner and insert current item into the cursor position
-    
+
     #Enter#
       Close the outliner and jump to the selected item
 
@@ -164,7 +171,8 @@ Choose any item to go to corresponding line in text.
       Filter out the outliner items against entered filter
 
 @menu
-$#FarColorer operation
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# FarColorer operation#
 
   #1 List types#
     Lists all supported file types. You can choose any of them to use
@@ -182,12 +190,12 @@ start and end of nearest block automatically.
   #4 Select pair#
     Selects pair block - but don't selects pair structures at start and end.
 
-  #5 Outliner List#
+  #5 #~Outliner List~@add@
     Shows all outlined regions in current file.
 There you can choose and jump into any of them, also you can use there any
 alphabetic symbols to create filters.
 
-  #6 Errors List#
+  #6 #~Errors List~@add@
     As previous - but shows all errors in the text.
 
   #7 Select region#
@@ -210,10 +218,12 @@ some problems occurs in current syntax.
     Calls FarColorer ~configuration menu~@config@.
 
 @hrd
-$# Color style selection
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Color style selection#
     List of all available color schemes. You can choose what you need.
 
 @exception
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
 $# Exception occurred
     Exception happened while FarColorer work.
 All further processing would be disabled. You can re-enable
@@ -222,35 +232,37 @@ exception cause. When logging is enabled, additional information about the error
 will be displayed in the log.
 
 @filetypechoose
-$# List types
-    The list contains all of the supported file types. By choosing any, you force 
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# List types#
+    The list contains all of the supported file types. By choosing any, you force
 the type of coloring the current file.
-   
+
     #Automatic detection# - select the type of file produced plugin built rules.
-    #Favorites# - The list of chosen types. Add to "Favorites" is produced by 
-pressing the Ins, delete - Delete.
-    #Hot keys# - to assign a hot key to the file type you need to press F4, and 
+    #Favorites# - The list of chosen types. Add to "Favorites" is produced by
+pressing the #Ins#, delete - #Delete#.
+    #Hot keys# - to assign a hot key to the file type you need to press #F4#, and
 in the dialog box to specify the key.
 
     Hot keys and being in the group "Favorites" can also be customized through the
-~Schemes settings.~@confighrc@ These are the parameters 'hotkey' and 'favorite' for 
+~Schemes settings.~@confighrc@ These are the parameters 'hotkey' and 'favorite' for
 any of the schemes.
- 
+
 @keyassign
-$# Define key
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# Define key#
     Keys 0-9, A-Z
 
 @author
-$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager).
+$^#FarColorer is a syntax highlighting plugin for far2l (fork of Far Manager)#
+$# About authors#
     #Plugin home site#
-           https://github.com/elfmz/far2l
+           ~https://github.com/elfmz/far2l~@https://github.com/elfmz/far2l@
     #Colorer library site#
-           https://colorer.sf.net
-           https://colorer.github.io
+           ~https://colorer.sf.net~@https://colorer.sf.net@
+           ~https://colorer.github.io~@https://colorer.github.io@
 
     #Cail Lomecb# (Igor Ruskih) Copyright (c) 1999-2009
            email  : irusskih at gmail dot com
 
     #ctapmex# (Aleksey Dobrunov)
            email  : ctapmex at ctapmex dot com
-

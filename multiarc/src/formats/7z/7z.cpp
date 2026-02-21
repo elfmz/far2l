@@ -10,6 +10,7 @@
 
 #include <windows.h>
 #include <utils.h>
+#include "MulDiv64.h"
 #include <string.h>
 #if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__DragonFly__)
 # include <malloc.h>
@@ -178,8 +179,7 @@ public:
           const UInt64 folder_pack_size = _db.db.PackPositions[pack_end] - _db.db.PackPositions[pack_start];
           const UInt64 folder_unpack_size = SzAr_GetFolderUnpackSize(&_db.db, folder_index);
           if (folder_unpack_size > 0 && file_size > 0) {
-            const unsigned __int128 scaled = static_cast<unsigned __int128>(folder_pack_size) * file_size;
-            packed_size = static_cast<UInt64>(scaled / folder_unpack_size);
+            packed_size = MulDivU64(folder_pack_size, file_size, folder_unpack_size);
             if (packed_size > folder_pack_size) {
               packed_size = folder_pack_size;
             }

@@ -217,6 +217,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecDialog, "DelRemovesBlocks", &Opt.Dialogs.DelRemovesBlocks, 1},
 	{false, NSecDialog, "CBoxMaxHeight", &Opt.Dialogs.CBoxMaxHeight, 24},
 	{true,  NSecDialog, "ShowArrowsInEdit", &Opt.Dialogs.ShowArrowsInEdit, 1},
+	{true,  NSecDialog, "UseModernLook", &Opt.Dialogs.UseModernLook, 0},
 
 	{true,  NSecEditor, "ExternalEditorName", &Opt.strExternalEditor, L""},
 	{true,  NSecEditor, "UseExternalEditor", &Opt.EdOpt.UseExternalEditor, 0},

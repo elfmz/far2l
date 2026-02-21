@@ -275,6 +275,7 @@ struct DialogsOptions
 	int DelRemovesBlocks;
 	int CBoxMaxHeight;		// максимальный размер открываемого списка (по умолчанию=8)
 	bool ShowArrowsInEdit;	// show arrows on text overflow in edit controls
+	BOOL UseModernLook;     // unicode glyphs for check boxes / radio buttons
 };
 
 struct VMenuOptions

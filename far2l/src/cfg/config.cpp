@@ -917,6 +917,8 @@ void DialogSettings()
 
 	AddHistorySettings(Builder, Msg::ConfigDialogsEditHistory, &Opt.Dialogs.EditHistory,
 			&Opt.DialogsHistoryCount);
+	
+	Builder.AddCheckbox(Msg::UseModernLook, &Opt.Dialogs.UseModernLook);
 	Builder.AddCheckbox(Msg::ConfigDialogsEditBlock, &Opt.Dialogs.EditBlock);
 	Builder.AddCheckbox(Msg::ConfigDialogsDelRemovesBlocks, &Opt.Dialogs.DelRemovesBlocks);
 	Builder.AddCheckbox(Msg::ConfigDialogsAutoComplete, &Opt.Dialogs.AutoComplete);

@@ -704,10 +704,44 @@ struct WXCustomDrawCharPainter : WXCustomDrawChar::Painter
 		_painter.SetFillColor(clr_fade);
 	}
 
+	inline int GetFontAscentImpl()
+	{
+		int w, h, descent, externalLeading; 
+		_painter._dc.GetTextExtent("Ag", &w, &h, &descent, &externalLeading);
+		return _painter._dc.GetCharHeight() - descent;
+	}
 
 	inline void FillRectangleImpl(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom)
 	{
 		_painter._dc.DrawRectangle(left, top, right + 1 - left , bottom + 1 - top);
+	}
+
+	inline void DrawEllipticArcImpl(wxCoord left, wxCoord top, wxCoord width, wxCoord height, double start, double end, wxCoord thickness) {
+		wxBrush oldBrush = _painter._dc.GetBrush(); 
+		wxColour brushColor = oldBrush.GetColour();
+		wxPen oldPen = _painter._dc.GetPen(); 
+		_painter._dc.SetPen(wxPen(brushColor, thickness < 1 ? 1 : thickness));
+
+		_painter._dc.SetBrush(*wxTRANSPARENT_BRUSH);
+		_painter._dc.DrawEllipticArc(left, top, width, height, start, end);
+		_painter._dc.SetBrush(oldBrush);
+		_painter._dc.SetPen(oldPen);
+	}
+
+	inline void FillEllipticPieImpl(wxCoord left, wxCoord top, wxCoord width, wxCoord height, double start, double end) {
+		_painter._dc.DrawEllipticArc(left, top, width, height, start, end);
+	}
+
+	inline void DrawLineImpl(wxCoord X1, wxCoord Y1, wxCoord X2, wxCoord Y2, wxCoord thickness) {
+		wxBrush oldBrush = _painter._dc.GetBrush(); 
+		wxColour brushColor = oldBrush.GetColour();
+		wxPen oldPen = _painter._dc.GetPen(); 
+		_painter._dc.SetPen(wxPen(brushColor, thickness < 1 ? 1 : thickness));
+
+		_painter._dc.SetBrush(*wxTRANSPARENT_BRUSH);
+		_painter._dc.DrawLine(X1, Y1, X2, Y2);
+		_painter._dc.SetBrush(oldBrush);
+		_painter._dc.SetPen(oldPen);
 	}
 };
 
@@ -727,9 +761,29 @@ void WXCustomDrawChar::Painter::SetColorExtraFaded()
 	((WXCustomDrawCharPainter *)this)->SetColorExtraFadedImpl();
 }
 
+int WXCustomDrawChar::Painter::GetFontAscent()
+{
+	return ((WXCustomDrawCharPainter *)this)->GetFontAscentImpl();
+}
+
 void WXCustomDrawChar::Painter::FillRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom)
 {
 	((WXCustomDrawCharPainter *)this)->FillRectangleImpl(left, top, right, bottom);
+}
+
+void WXCustomDrawChar::Painter::DrawEllipticArc(wxCoord left, wxCoord top, wxCoord width, wxCoord height, double start, double end, wxCoord thickness)
+{
+	((WXCustomDrawCharPainter *)this)->DrawEllipticArcImpl(left, top, width, height, start, end, thickness);
+}
+
+void WXCustomDrawChar::Painter::FillEllipticPie(wxCoord left, wxCoord top, wxCoord width, wxCoord height, double start, double end)
+{
+	((WXCustomDrawCharPainter *)this)->FillEllipticPieImpl(left, top, width, height, start, end);
+}
+
+void WXCustomDrawChar::Painter::DrawLine(wxCoord X1, wxCoord Y1, wxCoord X2, wxCoord Y2, wxCoord thickness) 
+{
+	((WXCustomDrawCharPainter *)this)->DrawLineImpl(X1, Y1, X2, Y2, thickness);
 }
 
 void WXCustomDrawChar::Painter::FillPixel(wxCoord left, wxCoord top)

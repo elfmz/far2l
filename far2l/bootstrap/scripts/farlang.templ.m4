@@ -4146,7 +4146,7 @@ upd:"Go to bookmark 2                    Ctrl+2"
 upd:"Go to bookmark 2                    Ctrl+2"
 
 ViewerMenuNavigateBm3
-Перейти к вкладке 3                  Ctrl+3"
+"Перейти к вкладке 3                 Ctrl+3"
 "Go to bookmark 3                    Ctrl+3"
 upd:"Go to bookmark 3                    Ctrl+3"
 upd:"Go to bookmark 3                    Ctrl+3"

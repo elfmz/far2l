@@ -565,6 +565,12 @@ class DialogBuilderBase
 			NextY++;
 		}
 
+		// Ниче не добавляет, возвращает нулевую ссылку
+		ItemReference AddNone()
+		{
+			return ItemReference(*this);
+		}
+
 		// Добавляет кнопку
 		ItemReference AddButton(FarLangMsg MessageId, int &id, T *After = nullptr)
 		{

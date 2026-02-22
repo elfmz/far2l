@@ -3805,7 +3805,7 @@ upd:"&View"
 upd:"&View"
 
 ViewerMenuNextFile
-"Следжующий файл...                  +"
+"Следующий файл...                  +"
 "Next file...                        +"
 upd:"Next file...                        +"
 upd:"Next file...                        +"
@@ -4036,7 +4036,7 @@ upd:"Go to begin of file                 Ctrl+Home"
 upd:"Go to begin of file                 Ctrl+Home"
 
 ViewerMenuNavigateEnd
-"Пеоейти к концу файла               Ctrl+End"
+"Перейти к концу файла               Ctrl+End"
 "Go to end of file                   Ctrl+End"
 upd:"Go to end of file                   Ctrl+End"
 upd:"Go to end of file                   Ctrl+End"
@@ -4333,7 +4333,7 @@ upd:"Pin bookmark 9                      Ctrl+Shift+9"
 upd:"Pin bookmark 9                      Ctrl+Shift+9"
 
 ViewerMenuKeyBar
-"Показать/спрятать key bar           Ctrl+B"
+"Показать/спрятать линейку клавиш    Ctrl+B"
 "Show/Hide key bar                   Ctrl+B"
 upd:"Show/Hide key bar                   Ctrl+B"
 upd:"Show/Hide key bar                   Ctrl+B"

@@ -256,7 +256,7 @@ public:
 #endif
 		}
 
-		virtual DialogItemReference AddIntEditField(int *Value, int Width, int Flags = 0)
+		virtual ItemReference AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
 			auto Item = AddDialogItem(DI_FIXEDIT, EMPTY_TEXT);
 			Item->Flags |= DIF_MASKEDIT;
@@ -276,7 +276,7 @@ public:
 			return Item;
 		}
 
-		DialogItemReference AddEditField(TCHAR *Value, int MaxSize, int Width, const TCHAR *HistoryID = nullptr)
+		ItemReference AddEditField(TCHAR *Value, int MaxSize, int Width, const TCHAR *HistoryID = nullptr)
 		{
 			auto Item = AddDialogItem(DI_EDIT, Value);
 			SetNextY(Item);

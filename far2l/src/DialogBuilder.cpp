@@ -117,7 +117,7 @@ DialogItemBinding<DialogItemEx> *DialogBuilder::CreateRadioButtonBinding(int *Va
 	return new RadioButtonBinding<DialogItemEx>(Value);
 }
 
-DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddEditField(FARString *Value, int Width, const wchar_t *HistoryID, int Flags)
+DialogBuilderBase<DialogItemEx>::ItemReference DialogBuilder::AddEditField(FARString *Value, int Width, const wchar_t *HistoryID, int Flags)
 {
 	auto Item = AddDialogItem(DI_EDIT, *Value);
 	SetNextY(Item);
@@ -132,7 +132,7 @@ DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddEditField
 	return Item;
 }
 
-DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddIntEditField(int *Value, int Width, int Flags)
+DialogBuilderBase<DialogItemEx>::ItemReference DialogBuilder::AddIntEditField(int *Value, int Width, int Flags)
 {
 	auto Item = AddDialogItem(DI_FIXEDIT, L"");
 	FormatString ValueText;
@@ -149,7 +149,7 @@ DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddIntEditFi
 	return Item;
 }
 
-DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags)
+DialogBuilderBase<DialogItemEx>::ItemReference DialogBuilder::AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags)
 {
 	auto Item = AddDialogItem(DI_COMBOBOX, L"");
 	SetNextY(Item);
@@ -171,7 +171,7 @@ DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddComboBox(
 	return Item;
 }
 
-DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll)
+DialogBuilderBase<DialogItemEx>::ItemReference DialogBuilder::AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll)
 {
 	CodePageBoxes.emplace_back(CodePageBox{DialogItemsCount, *Value, allowAuto, allowAll});
 	auto Item = AddDialogItem(DI_COMBOBOX, L"");

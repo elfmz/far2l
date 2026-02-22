@@ -148,20 +148,20 @@ template<class T>
 class DialogBuilderBase
 {
 	public:
-	friend class DialogItemReference;
+	friend class ItemReference;
 
-	class DialogItemReference
+	class ItemReference
 	{
 		DialogBuilderBase<T> &Builder;
 		ssize_t Index;
 
 	public:
-		DialogItemReference(DialogBuilderBase<T> &Builder_, ssize_t Index_ = -1)
+		ItemReference(DialogBuilderBase<T> &Builder_, ssize_t Index_ = -1)
 			: Builder(Builder_), Index(Index_)
 		{
 		}
 
-		DialogItemReference &operator =(const DialogItemReference &src)
+		ItemReference &operator =(const ItemReference &src)
 		{
 			Builder = src.Builder;
 			Index = src.Index;
@@ -221,7 +221,7 @@ class DialogBuilderBase
 			}
 		}
 
-		DialogItemReference AddDialogItem(int Type, const TCHAR *Text)
+		ItemReference AddDialogItem(int Type, const TCHAR *Text)
 		{
 			if (DialogItemsCount == DialogItemsAllocated)
 			{
@@ -232,7 +232,7 @@ class DialogBuilderBase
 			InitDialogItem(Item, Text);
 			Item->Type = Type;
 			Bindings [Index] = nullptr;
-			return DialogItemReference(*this, Index);
+			return ItemReference(*this, Index);
 		}
 
 		void SetNextY(T *Item)
@@ -404,7 +404,7 @@ class DialogBuilderBase
 
 	public:
 		// Добавляет статический текст, расположенный на отдельной строке в диалоге.
-		DialogItemReference AddText(FarLangMsg LabelId)
+		ItemReference AddText(FarLangMsg LabelId)
 		{
 			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			SetNextY(Item);
@@ -412,7 +412,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет чекбокс.
-		DialogItemReference AddCheckbox(FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
+		ItemReference AddCheckbox(FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
 		{
 			auto Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
 			SetNextY(Item);
@@ -426,7 +426,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
-		DialogItemReference AddCheckboxAfter(T *RelativeTo, FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
+		ItemReference AddCheckboxAfter(T *RelativeTo, FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
 		{
 			auto Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
 			Item->X2 = Item->X1 + ItemWidth(*Item);
@@ -487,13 +487,13 @@ class DialogBuilderBase
 		}
 
 		// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-		virtual DialogItemReference AddIntEditField(int *Value, int Width, int Flags = 0)
+		virtual ItemReference AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
-			return DialogItemReference(*this);
+			return ItemReference(*this);
 		}
 
 		// Добавляет указанную текстовую строку слева от элемента RelativeTo.
-		DialogItemReference AddTextBefore(T *RelativeTo, FarLangMsg LabelId)
+		ItemReference AddTextBefore(T *RelativeTo, FarLangMsg LabelId)
 		{
 			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
@@ -512,7 +512,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
-		DialogItemReference AddTextAfter(T *RelativeTo, FarLangMsg LabelId)
+		ItemReference AddTextAfter(T *RelativeTo, FarLangMsg LabelId)
 		{
 			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
@@ -566,7 +566,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет кнопку
-		DialogItemReference AddButton(FarLangMsg MessageId, int &id, T *After = nullptr)
+		ItemReference AddButton(FarLangMsg MessageId, int &id, T *After = nullptr)
 		{
 			auto Button = AddDialogItem(DI_BUTTON, GetLangString(MessageId));
 			if (After) {
@@ -584,7 +584,7 @@ class DialogBuilderBase
 		// Добавляет сепаратор.
 		void AddSeparator(FarLangMsg MessageId=FarLangMsg{-1})
 		{
-			DialogItemReference Separator = AddDialogItem(DI_TEXT, MessageId == -1 ? EMPTY_TEXT : GetLangString(MessageId));
+			ItemReference Separator = AddDialogItem(DI_TEXT, MessageId == -1 ? EMPTY_TEXT : GetLangString(MessageId));
 			Separator->Flags = DIF_SEPARATOR;
 			Separator->X1 = 3;
 			Separator->Y1 = Separator->Y2 = NextY++;

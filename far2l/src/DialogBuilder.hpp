@@ -84,19 +84,19 @@ public:
 	~DialogBuilder();
 
 	// Добавляет поле типа DI_EDIT для редактирования указанного строкового значения.
-	DialogItemReference AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
+	ItemReference AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
 
 	LONG_PTR UserData;
 	bool SetUserDlgProc(FARWINDOWPROC UserProc, LONG_PTR UserParam2);
 
 	// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-	virtual DialogItemReference AddIntEditField(int *Value, int Width, int Flags = 0);
+	virtual ItemReference AddIntEditField(int *Value, int Width, int Flags = 0);
 
 	// Добавляет выпадающий список с указанными значениями.
-	DialogItemReference AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
+	ItemReference AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
 
 	// Добавляет выпадающий список с code pages.
-	DialogItemReference AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
+	ItemReference AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
 
 	// Связывает состояние элементов Parent и Target. Когда Parent->Selected равно
 	// false, устанавливает флаги Flags у элемента Target; когда равно true -

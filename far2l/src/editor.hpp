@@ -270,6 +270,10 @@ private:
 	int GetTopVisualLine();
 	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
 	int GetTopScreenLineNumber();
+	void EnsureTopScreenVisual();
+	bool DecTopVisualLine();
+	bool IncTopVisualLine();
+	int VisualOffsetFromTop(Edit* line, int vline) const;
 	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
 	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state);
 	virtual void DisplayObject();

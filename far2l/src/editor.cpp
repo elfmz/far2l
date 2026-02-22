@@ -174,17 +174,7 @@ void Editor::AdjustScreenPosition()
 	int HalfScreen = (Y2 - Y1 + 1) / 2;
 	for (int i = 0; i < HalfScreen; ++i)
 	{
-		if (m_TopScreenVisualLine > 0)
-		{
-			m_TopScreenVisualLine--;
-		}
-		else if (m_TopScreenLogicalLine->m_prev)
-		{
-			m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-			m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
-		}
-		else
-		{
+		if (!DecTopVisualLine()) {
 			// Reached the top of the file, can't scroll up further
 			break;
 		}
@@ -481,27 +471,9 @@ void Editor::ShowEditor(int CurLineOnly)
 	{
 		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
 
-		// Проверяем, видим ли мы курсор на экране
-		bool is_cursor_visible = false;
-		Edit* scan_line = m_TopScreenLogicalLine;
-		int scan_vis_line = m_TopScreenVisualLine;
-		for (int i = 0; i < (Y2 - Y1 + 1) && scan_line; ++i)
-		{
-			if (scan_line == CurLine && scan_vis_line == m_CurVisualLineInLogicalLine)
-			{
-				is_cursor_visible = true;
-				break;
-			}
-			scan_vis_line++;
-			if (scan_vis_line >= scan_line->GetVisualLineCount())
-			{
-				scan_line = scan_line->m_next;
-				scan_vis_line = 0;
-			}
-		}
-
-		if (!is_cursor_visible)
-		{
+		EnsureTopScreenVisual();
+		const int off = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
+		if (off < 0 || off >= (Y2 - Y1 + 1)) {
 			AdjustScreenPosition();
 		}
 	}
@@ -534,17 +506,7 @@ void Editor::ShowEditor(int CurLineOnly)
 			int ScrollUpCount = ScreenHeight - LinesBelow;
 			for (int i = 0; i < ScrollUpCount; ++i)
 			{
-				if (m_TopScreenVisualLine > 0)
-				{
-					m_TopScreenVisualLine--;
-				}
-				else if (m_TopScreenLogicalLine && m_TopScreenLogicalLine->m_prev)
-				{
-					m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-					m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
-				}
-				else
-				{
+				if (!DecTopVisualLine()) {
 					// Reached the top of the file, can't scroll up further.
 					break;
 				}
@@ -563,10 +525,7 @@ void Editor::ShowEditor(int CurLineOnly)
 		m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
 
 		// Ensure TopScreen pointers are initialized
-		if (!m_TopScreenLogicalLine) {
-			m_TopScreenLogicalLine = TopScreen;
-			m_TopScreenVisualLine = 0;
-		}
+		EnsureTopScreenVisual();
 
 		// In Word Wrap mode, we need to calculate the maximum length of all lines
 		// that will be visible on the screen. This value is then reported to plugins
@@ -2729,12 +2688,10 @@ case KEY_CTRLNUMPAD3: {
 			m_CurVisualLineInLogicalLine = std::max(0, CurLine->GetVisualLineCount() - 1);
 			m_TopScreenLogicalLine = CurLine;
 			m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
-			for (int i = 0; i < Y2 - Y1 && m_TopScreenVisualLine > 0; ++i) {
-				m_TopScreenVisualLine--;
-			}
-			for (int i = 0; i < Y2 - Y1 && m_TopScreenVisualLine == 0 && m_TopScreenLogicalLine->m_prev; ++i) {
-				m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-				m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
+			for (int i = 0; i < Y2 - Y1; ++i) {
+				if (!DecTopVisualLine()) {
+					break;
+				}
 			}
 		} else {
 			for (TopScreen = CurLine, I = Y1; I < Y2 && TopScreen->m_prev; I++) {
@@ -3759,6 +3716,7 @@ case KEY_CTRLNUMPAD3: {
 int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	m_MouseButtonIsHeld = MouseEvent->dwButtonState & 3;
+	EnsureTopScreenVisual();
 
 	// Shift + Mouse click -> adhoc quick edit
 	if ((MouseEvent->dwControlKeyState & SHIFT_PRESSED) != 0 && (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0
@@ -3948,10 +3906,7 @@ bool Editor::ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target)
 
 	if (m_bWordWrap)
 	{
-		if (!m_TopScreenLogicalLine) {
-			m_TopScreenLogicalLine = TopScreen;
-			m_TopScreenVisualLine = 0;
-		}
+		EnsureTopScreenVisual();
 
 		Edit* line = m_TopScreenLogicalLine;
 		int visual = m_TopScreenVisualLine;
@@ -4027,20 +3982,8 @@ void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWO
 
 	if (m_bWordWrap)
 	{
-		auto visualOffset = [&](Edit* line, int vline)
-		{
-			int off = 0, vis = m_TopScreenVisualLine;
-			for (Edit* p = m_TopScreenLogicalLine; p && off <= screenHeight; p = p->m_next, vis = 0)
-			{
-				if (p == line)
-					return off + (vline - vis);
-				off += p->GetVisualLineCount() - vis;
-			}
-			return -1;
-		};
-
-		int t = visualOffset(target.line, target.visual_line);
-		int c = visualOffset(CurLine, m_CurVisualLineInLogicalLine);
+		int t = VisualOffsetFromTop(target.line, target.visual_line);
+		int c = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
 
 		if (t != -1 && c != -1)
 			moveByDelta(t - c);
@@ -4263,6 +4206,67 @@ int Editor::GetTopScreenLineNumber()
 
 	int relative = (CurLine == topLinePtr) ? 0 : CalcDistance(topLinePtr, CurLine, -1);
 	return std::max(0, NumLine - relative) + 1;
+}
+
+void Editor::EnsureTopScreenVisual()
+{
+	if (!m_TopScreenLogicalLine) {
+		m_TopScreenLogicalLine = TopScreen;
+		m_TopScreenVisualLine = 0;
+	}
+}
+
+bool Editor::DecTopVisualLine()
+{
+	EnsureTopScreenVisual();
+	if (!m_TopScreenLogicalLine) {
+		return false;
+	}
+	if (m_TopScreenVisualLine > 0) {
+		--m_TopScreenVisualLine;
+		return true;
+	}
+	if (m_TopScreenLogicalLine->m_prev) {
+		m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
+		m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
+		return true;
+	}
+	return false;
+}
+
+bool Editor::IncTopVisualLine()
+{
+	EnsureTopScreenVisual();
+	if (!m_TopScreenLogicalLine) {
+		return false;
+	}
+	++m_TopScreenVisualLine;
+	if (m_TopScreenVisualLine >= m_TopScreenLogicalLine->GetVisualLineCount()) {
+		if (m_TopScreenLogicalLine->m_next) {
+			m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_next;
+			m_TopScreenVisualLine = 0;
+			return true;
+		}
+		m_TopScreenVisualLine = std::max(0, m_TopScreenLogicalLine->GetVisualLineCount() - 1);
+		return false;
+	}
+	return true;
+}
+
+int Editor::VisualOffsetFromTop(Edit* line, int vline) const
+{
+	if (!line || !m_TopScreenLogicalLine) {
+		return -1;
+	}
+	int off = 0;
+	int vis = m_TopScreenVisualLine;
+	for (Edit* p = m_TopScreenLogicalLine; p && off <= (Y2 - Y1); p = p->m_next, vis = 0) {
+		if (p == line) {
+			return off + (vline - vis);
+		}
+		off += p->GetVisualLineCount() - vis;
+	}
+	return -1;
 }
 
 void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine)
@@ -4677,30 +4681,13 @@ void Editor::Down()
 
 		UpdateCursorPosition(horizontal_cell_pos);
 
-		int visual_lines_from_top = 0;
-		Edit* scan_line = m_TopScreenLogicalLine;
-		int scan_vis_line = m_TopScreenVisualLine;
-		while (scan_line != CurLine && scan_line) {
-			visual_lines_from_top += scan_line->GetVisualLineCount() - scan_vis_line;
-			scan_vis_line = 0;
-			scan_line = scan_line->m_next;
-		}
-		if (scan_line == CurLine) {
-			visual_lines_from_top += m_CurVisualLineInLogicalLine - scan_vis_line;
-		} else {
+		int visual_lines_from_top = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
+		if (visual_lines_from_top < 0) {
 			visual_lines_from_top = Y2 - Y1 + 2;
 		}
 
 		if (visual_lines_from_top >= (Y2 - Y1 + 1)) {
-			m_TopScreenVisualLine++;
-			if (m_TopScreenLogicalLine && (m_TopScreenVisualLine >= m_TopScreenLogicalLine->GetVisualLineCount())) {
-				if (m_TopScreenLogicalLine->m_next) {
-					m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_next;
-					m_TopScreenVisualLine = 0;
-				} else {
-					m_TopScreenVisualLine--;
-				}
-			}
+			IncTopVisualLine();
 		}
 		return;
 	}
@@ -4731,22 +4718,8 @@ void Editor::ScrollDown()
 {
 	if (m_bWordWrap)
 	{
-		if (!m_TopScreenLogicalLine->m_next && m_TopScreenVisualLine + 1 >= m_TopScreenLogicalLine->GetVisualLineCount())
+		if (!IncTopVisualLine())
 			return;
-
-		m_TopScreenVisualLine++;
-		if (m_TopScreenVisualLine >= m_TopScreenLogicalLine->GetVisualLineCount())
-		{
-			if (m_TopScreenLogicalLine->m_next)
-			{
-				m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_next;
-				m_TopScreenVisualLine = 0;
-			}
-			else
-			{
-				m_TopScreenVisualLine--;
-			}
-		}
 		Down();
 		return;
 	}
@@ -4799,26 +4772,10 @@ void Editor::Up()
 
 		UpdateCursorPosition(horizontal_cell_pos);
 
-		const int topLineIndex = std::max(0, GetTopScreenLineNumber() - 1);
-		bool cursor_on_screen = false;
-		if (NumLine > topLineIndex) {
-			cursor_on_screen = true;
-		} else if (NumLine == topLineIndex) {
-			if (m_CurVisualLineInLogicalLine >= m_TopScreenVisualLine) {
-				cursor_on_screen = true;
-			}
-		}
-
-		if (!cursor_on_screen) {
-			m_TopScreenVisualLine--;
-			if (m_TopScreenVisualLine < 0) {
-				if (m_TopScreenLogicalLine->m_prev) {
-					m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-					m_TopScreenVisualLine = m_TopScreenLogicalLine->GetVisualLineCount() - 1;
-				} else {
-					m_TopScreenVisualLine = 0;
-				}
-			}
+		EnsureTopScreenVisual();
+		const int off = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
+		if (off < 0) {
+			DecTopVisualLine();
 		}
 
 		return;
@@ -4843,22 +4800,8 @@ void Editor::ScrollUp()
 {
 	if (m_bWordWrap)
 	{
-		if (!m_TopScreenLogicalLine->m_prev && m_TopScreenVisualLine == 0)
+		if (!DecTopVisualLine())
 			return;
-
-		m_TopScreenVisualLine--;
-		if (m_TopScreenVisualLine < 0)
-		{
-			if (m_TopScreenLogicalLine->m_prev)
-			{
-				m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-				m_TopScreenVisualLine = m_TopScreenLogicalLine->GetVisualLineCount() - 1;
-			}
-			else
-			{
-				m_TopScreenVisualLine = 0;
-			}
-		}
 		Up();
 		return;
 	}
@@ -8197,12 +8140,7 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 					m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
 
 					for (int i = 0; i < pp->ScreenLine; i++) {
-						if (m_TopScreenVisualLine > 0) {
-							m_TopScreenVisualLine--;
-						} else if (m_TopScreenLogicalLine->m_prev) {
-							m_TopScreenLogicalLine = m_TopScreenLogicalLine->m_prev;
-							m_TopScreenVisualLine = m_TopScreenLogicalLine->GetVisualLineCount() - 1;
-						} else {
+						if (!DecTopVisualLine()) {
 							break;
 						}
 					}

@@ -239,6 +239,20 @@
 	// only in case of SetClipboardData's failure.
 	WINPORT_DECL_DEF(ClipboardFree, VOID, (PVOID mem))
 
+	//pribnter support
+	WINPORT_DECL_DEF(PrintTextFragment, VOID, (LPCWSTR lpszJobName, LPCWSTR lpszTextFragment))
+	WINPORT_DECL_DEF(PrintHtmlFragment, VOID, (LPCWSTR lpszJobName, LPCWSTR lpszTextFragment))
+	WINPORT_DECL_DEF(PrintTextFile, VOID, (LPCWSTR lpszFileName))
+	WINPORT_DECL_DEF(PrintHtmlFile, VOID, (LPCWSTR lpszFileName))
+	WINPORT_DECL_DEF(PrintPreviewTextFragment, VOID, (LPCWSTR lpszJobName, LPCWSTR lpszTextFragment))
+	WINPORT_DECL_DEF(PrintPreviewHtmlFragment, VOID, (LPCWSTR lpszJobName, LPCWSTR lpszTextFragment))
+	WINPORT_DECL_DEF(PrintPreviewTextFile, VOID, (LPCWSTR lpszFileName))
+	WINPORT_DECL_DEF(PrintPreviewHtmlFile, VOID, (LPCWSTR lpszFileName))
+	WINPORT_DECL_DEF(PrintSettingsDialog, VOID, ())
+	WINPORT_DECL_DEF(PrintIsPreviewSupported, BOOL, ())
+	WINPORT_DECL_DEF(PrintIsHTMLSupported, BOOL, ())
+	WINPORT_DECL_DEF(PrintIsSettingsDialogSupported, BOOL, ())
+
 	//keyboard
 	WINPORT_DECL_DEF(GetKeyboardLayoutList, int, (int nBuff, HKL *lpList))
 	WINPORT_DECL_DEF(MapVirtualKey, UINT, (UINT uCode, UINT uMapType))

@@ -293,15 +293,15 @@ static void ConfigureChangeDriveMode()
 
 	//	BOOL ShowSizeAny = Opt.ChangeDriveMode & (DRIVE_SHOW_SIZE | DRIVE_SHOW_SIZE_FLOAT);
 
-	//	DialogItemEx *ShowSize = Builder.AddCheckbox(Msg::ChangeDriveShowSize, &ShowSizeAny);
-	//	DialogItemEx *ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
+	//	auto ShowSize = Builder.AddCheckbox(Msg::ChangeDriveShowSize, &ShowSizeAny);
+	//	auto ShowSizeFloat = Builder.AddCheckbox(Msg::ChangeDriveShowSizeFloat, &Opt.ChangeDriveMode, DRIVE_SHOW_SIZE_FLOAT);
 	//	ShowSizeFloat->Indent(3);
 	//	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-	auto *ShowMountsItem =
+	auto ShowMountsItem =
 			Builder.AddCheckbox(Msg::ChangeDriveShowMounts, &Opt.ChangeDriveMode, DRIVE_SHOW_MOUNTS);
 
-	auto *EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions, 28);
+	auto EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions, 28);
 	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
 	Builder.AddTextBefore(EditItem, Msg::ChangeDriveExceptions);
 

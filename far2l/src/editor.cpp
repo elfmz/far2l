@@ -2665,39 +2665,21 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_PGUP:
 		case KEY_NUMPAD9: {
 			Flags.Set(FEDITOR_NEWUNDO);
-			if (m_bWordWrap) {
-				for (int i = 0; i < Y2 - Y1; ++i) {
-					ProcessKey(KEY_UP);
-				}
-				for (int i = 0; i < Y2 - Y1; ++i) {
-					ScrollUp();
-				}
-				Show();
-			} else {
-				for (I = Y1; I < Y2; I++)
-					ScrollUp();
-				Show();
-			}
+
+			for (I = Y1; I < Y2; I++)
+				ScrollUp();
+
+			Show();
 			return TRUE;
 		}
 		case KEY_PGDN:
 		case KEY_NUMPAD3: {
 			Flags.Set(FEDITOR_NEWUNDO);
 
-			if (m_bWordWrap) {
-				for (int i = 0; i < Y2 - Y1; ++i) {
-					ProcessKey(KEY_DOWN);
-				}
-				for (int i = 0; i < Y2 - Y1; ++i) {
-					ScrollDown();
-				}
-				Show();
-			} else {
-				for (I = Y1; I < Y2; I++)
-					ScrollDown();
+			for (I = Y1; I < Y2; I++)
+				ScrollDown();
 
-				Show();
-			}
+			Show();
 			return TRUE;
 		}
 case KEY_CTRLHOME:

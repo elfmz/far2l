@@ -1997,6 +1997,7 @@ int Editor::ProcessKey(FarKey Key)
 				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
 
 				Down();
+				UpdateCursorPosition(m_WordWrapMaxRightPos);
 
 				if (OldLine == CurLine)
 				{
@@ -2114,30 +2115,6 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_SHIFTNUMPAD8: {
 			if (m_bWordWrap)
 			{
-				UnmarkEmptyBlock();
-				_bg.SetNeedCheckUnmark(true);
-				CurLine->GetRealSelection(SelStart, SelEnd);
-
-				if (Flags.Check(FEDITOR_CURPOSCHANGEDBYPLUGIN)) {
-					if (SelStart != -1 && (CurPos < SelStart || (SelEnd != -1 && (CurPos > SelEnd || (CurPos > SelStart && CurPos < SelEnd)))) && CurPos < CurLine->GetLength())
-						Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
-					Flags.Clear(FEDITOR_CURPOSCHANGEDBYPLUGIN);
-				}
-
-				if (!Flags.Check(FEDITOR_MARKINGBLOCK)) {
-					UnmarkBlockAndShowIt();
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					BlockStart = CurLine;
-					BlockStartLine = NumLine;
-					SelFirst = TRUE;
-					SelStart = SelEnd = CurPos;
-				} else {
-					SelAtBeginning = CurLine == BlockStart && CurPos == SelStart;
-					if (SelStart == -1) {
-						SelStart = SelEnd = CurPos;
-					}
-				}
-
 				if (m_CurVisualLineInLogicalLine > 0)
 				{
 					// --- Case 1: Moving selection UP within the SAME logical line ---
@@ -2146,6 +2123,7 @@ int Editor::ProcessKey(FarKey Key)
 					CurLine->GetRealSelection(OldSelStart, OldSelEnd);
 
 					Up(); // Move cursor up one visual line
+					UpdateCursorPosition(m_WordWrapMaxRightPos);
 
 					if (SelFirst) {
 						BlockStart = CurLine;
@@ -2172,6 +2150,7 @@ int Editor::ProcessKey(FarKey Key)
 					OldCurLine->GetRealSelection(OldSelStart, OldSelEnd);
 
 					Up(); // This moves CurLine to CurLine->m_prev
+					UpdateCursorPosition(m_WordWrapMaxRightPos);
 
 					if (SelFirst) {
 						// Starting a new selection that crosses lines

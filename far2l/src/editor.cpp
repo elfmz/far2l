@@ -3869,7 +3869,6 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				}
 				Show();
 				if (m_bWordWrap) break;
-				WINPORT(Sleep)(10);
 			}
 			return TRUE;
 		}

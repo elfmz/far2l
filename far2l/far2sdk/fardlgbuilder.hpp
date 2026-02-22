@@ -256,9 +256,9 @@ public:
 #endif
 		}
 
-		virtual FarDialogItem *AddIntEditField(int *Value, int Width, int Flags = 0)
+		virtual DialogItemReference AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
-			FarDialogItem *Item = AddDialogItem(DI_FIXEDIT, EMPTY_TEXT);
+			auto Item = AddDialogItem(DI_FIXEDIT, EMPTY_TEXT);
 			Item->Flags |= DIF_MASKEDIT;
 			PluginIntEditFieldBinding *Binding;
 			Binding = new PluginIntEditFieldBinding(Info, &DialogHandle, DialogItemsCount-1, Value, Width);
@@ -276,9 +276,9 @@ public:
 			return Item;
 		}
 
-		FarDialogItem *AddEditField(TCHAR *Value, int MaxSize, int Width, const TCHAR *HistoryID = nullptr)
+		DialogItemReference AddEditField(TCHAR *Value, int MaxSize, int Width, const TCHAR *HistoryID = nullptr)
 		{
-			FarDialogItem *Item = AddDialogItem(DI_EDIT, Value);
+			auto Item = AddDialogItem(DI_EDIT, Value);
 			SetNextY(Item);
 			Item->X2 = Item->X1 + Width;
 			if (HistoryID)

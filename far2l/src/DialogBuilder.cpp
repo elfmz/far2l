@@ -117,9 +117,9 @@ DialogItemBinding<DialogItemEx> *DialogBuilder::CreateRadioButtonBinding(int *Va
 	return new RadioButtonBinding<DialogItemEx>(Value);
 }
 
-DialogItemEx *DialogBuilder::AddEditField(FARString *Value, int Width, const wchar_t *HistoryID, int Flags)
+DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddEditField(FARString *Value, int Width, const wchar_t *HistoryID, int Flags)
 {
-	DialogItemEx *Item = AddDialogItem(DI_EDIT, *Value);
+	auto Item = AddDialogItem(DI_EDIT, *Value);
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width;
 	if (HistoryID) {
@@ -132,9 +132,9 @@ DialogItemEx *DialogBuilder::AddEditField(FARString *Value, int Width, const wch
 	return Item;
 }
 
-DialogItemEx *DialogBuilder::AddIntEditField(int *Value, int Width, int Flags)
+DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddIntEditField(int *Value, int Width, int Flags)
 {
-	DialogItemEx *Item = AddDialogItem(DI_FIXEDIT, L"");
+	auto Item = AddDialogItem(DI_FIXEDIT, L"");
 	FormatString ValueText;
 	ValueText << *Value;
 	Item->strData = ValueText;
@@ -149,10 +149,9 @@ DialogItemEx *DialogBuilder::AddIntEditField(int *Value, int Width, int Flags)
 	return Item;
 }
 
-DialogItemEx *
-DialogBuilder::AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags)
+DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags)
 {
-	DialogItemEx *Item = AddDialogItem(DI_COMBOBOX, L"");
+	auto Item = AddDialogItem(DI_COMBOBOX, L"");
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width;
 	Item->Flags|= Flags;
@@ -172,10 +171,10 @@ DialogBuilder::AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, 
 	return Item;
 }
 
-DialogItemEx *DialogBuilder::AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll)
+DialogBuilderBase<DialogItemEx>::DialogItemReference DialogBuilder::AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll)
 {
 	CodePageBoxes.emplace_back(CodePageBox{DialogItemsCount, *Value, allowAuto, allowAll});
-	DialogItemEx *Item = AddDialogItem(DI_COMBOBOX, L"");
+	auto Item = AddDialogItem(DI_COMBOBOX, L"");
 	SetNextY(Item);
 	Item->X2 = Item->X1 + Width;
 	Item->Flags|= DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT;

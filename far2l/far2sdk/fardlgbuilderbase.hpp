@@ -143,9 +143,41 @@ checkbox и radio button вычисляется автоматически, дл
 Базовая версия класса используется как внутри кода FAR, так и в плагинах.
 */
 
+
 template<class T>
 class DialogBuilderBase
 {
+	public:
+	friend class DialogItemReference;
+
+	class DialogItemReference
+	{
+		DialogBuilderBase<T> &Builder;
+		ssize_t Index;
+
+	public:
+		DialogItemReference(DialogBuilderBase<T> &Builder_, ssize_t Index_ = -1)
+			: Builder(Builder_), Index(Index_)
+		{
+		}
+
+		DialogItemReference &operator =(const DialogItemReference &src)
+		{
+			Builder = src.Builder;
+			Index = src.Index;
+			return *this;
+		}
+
+		T *operator ->()
+		{
+			return (Index < 0) ? nullptr : &Builder.DialogItems[Index];
+		}
+		operator T *()
+		{
+			return (Index < 0) ? nullptr : &Builder.DialogItems[Index];
+		}
+	};
+
 	protected:
 		T *DialogItems;
 		DialogItemBinding<T> **Bindings;
@@ -189,7 +221,7 @@ class DialogBuilderBase
 			}
 		}
 
-		T *AddDialogItem(int Type, const TCHAR *Text)
+		DialogItemReference AddDialogItem(int Type, const TCHAR *Text)
 		{
 			if (DialogItemsCount == DialogItemsAllocated)
 			{
@@ -200,7 +232,7 @@ class DialogBuilderBase
 			InitDialogItem(Item, Text);
 			Item->Type = Type;
 			Bindings [Index] = nullptr;
-			return Item;
+			return DialogItemReference(*this, Index);
 		}
 
 		void SetNextY(T *Item)
@@ -372,17 +404,17 @@ class DialogBuilderBase
 
 	public:
 		// Добавляет статический текст, расположенный на отдельной строке в диалоге.
-		T *AddText(FarLangMsg LabelId)
+		DialogItemReference AddText(FarLangMsg LabelId)
 		{
-			T *Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
+			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			SetNextY(Item);
 			return Item;
 		}
 
 		// Добавляет чекбокс.
-		T *AddCheckbox(FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
+		DialogItemReference AddCheckbox(FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
 		{
-			T *Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
+			auto Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
 			SetNextY(Item);
 			Item->X2 = Item->X1 + ItemWidth(*Item);
 			if (!Mask)
@@ -394,9 +426,9 @@ class DialogBuilderBase
 		}
 
 		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
-		T *AddCheckboxAfter(T *RelativeTo, FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
+		DialogItemReference AddCheckboxAfter(T *RelativeTo, FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
 		{
-			T *Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
+			auto Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
 			Item->X2 = Item->X1 + ItemWidth(*Item);
 
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
@@ -455,15 +487,15 @@ class DialogBuilderBase
 		}
 
 		// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-		virtual T *AddIntEditField(int *Value, int Width, int Flags = 0)
+		virtual DialogItemReference AddIntEditField(int *Value, int Width, int Flags = 0)
 		{
-			return nullptr;
+			return DialogItemReference(*this);
 		}
 
 		// Добавляет указанную текстовую строку слева от элемента RelativeTo.
-		T *AddTextBefore(T *RelativeTo, FarLangMsg LabelId)
+		DialogItemReference AddTextBefore(T *RelativeTo, FarLangMsg LabelId)
 		{
-			T *Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
+			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
 			Item->X1 = 5;
 			Item->X2 = Item->X1 + ItemWidth(*Item) - 1;
@@ -480,9 +512,9 @@ class DialogBuilderBase
 		}
 
 		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
-		T *AddTextAfter(T *RelativeTo, FarLangMsg LabelId)
+		DialogItemReference AddTextAfter(T *RelativeTo, FarLangMsg LabelId)
 		{
-			T *Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
+			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
 			Item->X1 = RelativeTo->X2 + 2;
 
@@ -534,9 +566,9 @@ class DialogBuilderBase
 		}
 
 		// Добавляет кнопку
-		T *AddButton(FarLangMsg MessageId, int &id, T *After = nullptr)
+		DialogItemReference AddButton(FarLangMsg MessageId, int &id, T *After = nullptr)
 		{
-			T *Button = AddDialogItem(DI_BUTTON, GetLangString(MessageId));
+			auto Button = AddDialogItem(DI_BUTTON, GetLangString(MessageId));
 			if (After) {
 				Button->X1 = After->X2 + 2;
 				Button->Y1 = Button->Y2 = NextY - 1;
@@ -552,7 +584,7 @@ class DialogBuilderBase
 		// Добавляет сепаратор.
 		void AddSeparator(FarLangMsg MessageId=FarLangMsg{-1})
 		{
-			T *Separator = AddDialogItem(DI_TEXT, MessageId == -1 ? EMPTY_TEXT : GetLangString(MessageId));
+			DialogItemReference Separator = AddDialogItem(DI_TEXT, MessageId == -1 ? EMPTY_TEXT : GetLangString(MessageId));
 			Separator->Flags = DIF_SEPARATOR;
 			Separator->X1 = 3;
 			Separator->Y1 = Separator->Y2 = NextY++;

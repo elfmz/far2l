@@ -298,10 +298,10 @@ static void ConfigureChangeDriveMode()
 	//	ShowSizeFloat->Indent(3);
 	//	Builder.LinkFlags(ShowSize, ShowSizeFloat, DIF_DISABLE);
 
-	auto *ShowMountsItem =
+	auto ShowMountsItem =
 			Builder.AddCheckbox(Msg::ChangeDriveShowMounts, &Opt.ChangeDriveMode, DRIVE_SHOW_MOUNTS);
 
-	auto *EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions, 28);
+	auto EditItem = Builder.AddEditField(&Opt.ChangeDriveExceptions, 28);
 	Builder.LinkFlags(ShowMountsItem, EditItem, DIF_DISABLE);
 	Builder.AddTextBefore(EditItem, Msg::ChangeDriveExceptions);
 

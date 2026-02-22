@@ -4122,11 +4122,7 @@ void Editor::HighlightAsWrapped(int Y, Edit &ShowString)
 
 	for (int x = startX; x <= endX; ++x)
 	{
-		CHAR_INFO Fci;
-		// Читаем только для того, чтобы не затереть сам символ
-		ScrBuf.Read(x, Y, x, Y, &Fci, 1);
-		Fci.Attributes = invertedAttr;
-		ScrBuf.Write(x, Y, &Fci, 1);
+		ScrBuf.ApplyColor(x, Y, x, Y, invertedAttr);
 	}
 }
 

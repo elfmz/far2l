@@ -4212,7 +4212,7 @@ upd:"Go to bookmark 8                    Ctrl+8"
 upd:"Go to bookmark 8                    Ctrl+8"
 
 ViewerMenuNavigateBm9
-Перейти к вкладке 9                 Ctrl+9"
+"Перейти к вкладке 9                 Ctrl+9"
 "Go to bookmark 9                    Ctrl+9"
 upd:"Go to bookmark 9                    Ctrl+9"
 upd:"Go to bookmark 9                    Ctrl+9"

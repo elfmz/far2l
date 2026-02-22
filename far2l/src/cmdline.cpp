@@ -704,32 +704,6 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 			CmdStr.Select(-1, 0);
 			CmdStr.Show();
 			return TRUE;
-		case KEY_OP_PLAINTEXT: {
-			if (!GPastedText.IsEmpty()) {
-				if (GPastedText.Contains(L'\n')) {
-					FARString strStr;
-					CmdStr.GetString(strStr);
-					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + GPastedText + strStr.SubStr(CmdStr.GetCurPos());
-					GPastedText.Clear();
-					RemoveTrailingSpaces(strToExec);
-					if (Opt.CmdLine.AskOnMultilinePaste) {
-						int res = ShowMultilinePasteDialog(strToExec);
-						if (res == 1) {
-							ExecString(strToExec);
-						}
-						else if (res ==2) {
-							Opt.CmdLine.AskOnMultilinePaste = false;
-							ExecString(strToExec);
-						}
-					}
-					else {
-						ExecString(strToExec);
-					}
-					return TRUE;
-				}
-			}
-			break;
-		}
 		case KEY_OP_XLAT: {
 			// 13.12.2000 SVS - ! Для CmdLine - если нет выделения, преобразуем всю строку (XLat)
 			CmdStr.Xlat(Opt.XLat.Flags & XLAT_CONVERTALLCMDLINE ? TRUE : FALSE);
@@ -773,8 +747,19 @@ int CommandLine::ProcessKeyIfVisible(FarKey Key)
 			if (Key == KEY_CTRLD)
 				Key = KEY_RIGHT;
 
-			if (Key == KEY_CTRLV || Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0) {
-				wchar_t *ClipText = PasteFromClipboard();
+			if (Key == KEY_CTRLV || Key == KEY_SHIFTINS || Key == KEY_SHIFTNUMPAD0 || Key == KEY_OP_PLAINTEXT) {
+				FARString clip;
+				if (Key == KEY_OP_PLAINTEXT && !GPastedText.IsEmpty()) {
+					clip = GPastedText;
+				} else {
+					wchar_t *p = PasteFromClipboard();
+					if (p) {
+						clip = p;
+						free(p);
+					}
+				}
+
+				const wchar_t *ClipText = clip.CPtr();
 				if (ClipText && wcschr(ClipText, L'\n') && wcschr(ClipText, L'\n')[1] != L'\0') {
 					CmdStr.GetString(strStr);
 					FARString strToExec = strStr.SubStr(0, CmdStr.GetCurPos()) + ClipText + strStr.SubStr(CmdStr.GetCurPos());

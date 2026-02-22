@@ -235,7 +235,7 @@ class DialogBuilderBase
 			return ItemReference(*this, Index);
 		}
 
-		void SetNextY(T *Item)
+		void SetNextY(ItemReference Item)
 		{
 			Item->X1 = 5;
 			Item->Y1 = Item->Y2 = NextY++;
@@ -336,17 +336,21 @@ class DialogBuilderBase
 
 		int GetItemID(T *Item)
 		{
-			int Index = static_cast<int>(Item - DialogItems);
-			if (Index >= 0 && Index < DialogItemsCount)
-				return Index;
+			if (Item) {
+				int Index = static_cast<int>(Item - DialogItems);
+				if (Index >= 0 && Index < DialogItemsCount)
+					return Index;
+			}
 			return -1;
 		}
 
 		DialogItemBinding<T> *FindBinding(T *Item)
 		{
-			int Index = static_cast<int>(Item - DialogItems);
-			if (Index >= 0 && Index < DialogItemsCount)
-				return Bindings [Index];
+			if (Item) {
+				int Index = static_cast<int>(Item - DialogItems);
+				if (Index >= 0 && Index < DialogItemsCount)
+					return Bindings [Index];
+			}
 			return nullptr;
 		}
 
@@ -426,7 +430,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
-		ItemReference AddCheckboxAfter(T *RelativeTo, FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
+		ItemReference AddCheckboxAfter(ItemReference RelativeTo, FarLangMsg TextMessageId, BOOL *Value, int Mask=0)
 		{
 			auto Item = AddDialogItem(DI_CHECKBOX, GetLangString(TextMessageId));
 			Item->X2 = Item->X1 + ItemWidth(*Item);
@@ -452,7 +456,7 @@ class DialogBuilderBase
 		{
 			for(int i=0; i<OptionCount; i++)
 			{
-				T *Item = AddDialogItem(DI_RADIOBUTTON, GetLangString(MessageIDs[i]));
+				auto Item = AddDialogItem(DI_RADIOBUTTON, GetLangString(MessageIDs[i]));
 				SetNextY(Item);
 				Item->X2 = Item->X1 + ItemWidth(*Item);
 				if (!i)
@@ -466,10 +470,10 @@ class DialogBuilderBase
 		// Добавляет горизонтальную группу радиокнопок.
 		void AddRadioButtonsHorz(int *Value, int OptionCount, FarLangMsg MessageIDs[])
 		{
-			T *PrevItem = nullptr;
+			auto PrevItem = AddNone();
 			for(int i=0; i<OptionCount; i++)
 			{
-				T *Item = AddDialogItem(DI_RADIOBUTTON, GetLangString(MessageIDs[i]));
+				auto Item = AddDialogItem(DI_RADIOBUTTON, GetLangString(MessageIDs[i]));
 				if (!i) {
 					SetNextY(Item);
 					Item->Flags |= DIF_GROUP;
@@ -512,7 +516,7 @@ class DialogBuilderBase
 		}
 
 		// Добавляет указанную текстовую строку справа от элемента RelativeTo.
-		ItemReference AddTextAfter(T *RelativeTo, FarLangMsg LabelId)
+		ItemReference AddTextAfter(ItemReference RelativeTo, FarLangMsg LabelId)
 		{
 			auto Item = AddDialogItem(DI_TEXT, GetLangString(LabelId));
 			Item->Y1 = Item->Y2 = RelativeTo->Y1;
@@ -572,15 +576,21 @@ class DialogBuilderBase
 		}
 
 		// Добавляет кнопку
-		ItemReference AddButton(FarLangMsg MessageId, int &id, T *After = nullptr)
+		ItemReference AddButton(FarLangMsg MessageId, int &id, ItemReference After)
 		{
 			auto Button = AddDialogItem(DI_BUTTON, GetLangString(MessageId));
-			if (After) {
-				Button->X1 = After->X2 + 2;
-				Button->Y1 = Button->Y2 = NextY - 1;
-			} else {
-				SetNextY(Button);
-			}
+			Button->X1 = After->X2 + 2;
+			Button->Y1 = Button->Y2 = NextY - 1;
+			Button->X2 = Button->X1 + 20;//TODO: FIXME: ItemWidth(*Button);
+
+			id = DialogItemsCount - 1;
+			return Button;
+		}
+
+		ItemReference AddButton(FarLangMsg MessageId, int &id)
+		{
+			auto Button = AddDialogItem(DI_BUTTON, GetLangString(MessageId));
+			SetNextY(Button);
 			Button->X2 = Button->X1 + 20;//TODO: FIXME: ItemWidth(*Button);
 
 			id = DialogItemsCount - 1;
@@ -601,13 +611,13 @@ class DialogBuilderBase
 		{
 			AddSeparator();
 
-			T *OKButton = AddDialogItem(DI_BUTTON, GetLangString(OKMessageId));
+			auto OKButton = AddDialogItem(DI_BUTTON, GetLangString(OKMessageId));
 			OKButton->Flags = DIF_CENTERGROUP;
 			OKButton->DefaultButton = TRUE;
 			OKButton->Y1 = OKButton->Y2 = NextY++;
 			OKButtonID = DialogItemsCount-1;
 
-			T *CancelButton = AddDialogItem(DI_BUTTON, GetLangString(CancelMessageId));
+			auto CancelButton = AddDialogItem(DI_BUTTON, GetLangString(CancelMessageId));
 			CancelButton->Flags = DIF_CENTERGROUP;
 			CancelButton->Y1 = CancelButton->Y2 = OKButton->Y1;
 		}

@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filelist.hpp"
 
 #include "fileedit2options.hpp"
+#include "printersupport.hpp"
 
 enum enumOpenEditor
 {
@@ -2903,15 +2904,13 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		}
 		return;
 	}
-	// todo: handle commands without accelerated keys
-	/* Once printer support will be merged, we can uncomment this
 	else if (hMenu == MENU_FILE && vMenu == MENU_FILE_PRINTER) {
 		PrinterSupport ps;
 		if (ps.IsPrinterSetupDialogSupported()) {
 			ps.ShowPrinterSetupDialog();
 		}
 		return;
-	}*/
+	}
 }
 
 int FileEditor::MenuBarPosition() {

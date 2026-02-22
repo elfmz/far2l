@@ -170,11 +170,11 @@ class DialogBuilderBase
 
 		T *operator ->()
 		{
-			return (Index < 0) ? nullptr : &Builder.DialogItems[Index];
+			return (Index >= 0 && Index < Builder.DialogItemsCount) ? &Builder.DialogItems[Index] : nullptr;
 		}
 		operator T *()
 		{
-			return (Index < 0) ? nullptr : &Builder.DialogItems[Index];
+			return (Index >= 0 && Index < Builder.DialogItemsCount) ? &Builder.DialogItems[Index] : nullptr;
 		}
 	};
 
@@ -195,10 +195,6 @@ class DialogBuilderBase
 
 		void ReallocDialogItems()
 		{
-			// реаллокация инвалидирует указатели на DialogItemEx, возвращённые из
-			// AddDialogItem и аналогичных методов, поэтому размер массива подбираем такой,
-			// чтобы все нормальные диалоги помещались без реаллокации
-			// TODO хорошо бы, чтобы они вообще не инвалидировались
 			DialogItemsAllocated += 32;
 			if (!DialogItems)
 			{

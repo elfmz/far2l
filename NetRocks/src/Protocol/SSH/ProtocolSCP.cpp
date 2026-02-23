@@ -84,6 +84,13 @@ struct SCPRemoteCommand
 {
 	ExecCommandFIFO fifo;
 	std::string output, error;
+	std::vector<char> _buf;
+
+	SCPRemoteCommand()
+		:
+		_buf(0x10000)
+	{
+	}
 
 	void Execute()
 	{
@@ -156,18 +163,17 @@ private:
 	bool _alive_out{false}, _alive_err{false};
 
 	fd_set _fdr, _fde;
-	char _buf[0x10000];
 
 	bool FetchFD(std::string &result, int fd)
 	{
 		if (FD_ISSET(fd, &_fdr) || FD_ISSET(fd, &_fde)) {
-			ssize_t r = read(fd, _buf, sizeof(_buf));
+			ssize_t r = read(fd, _buf.data(), _buf.size());
 			if (r == 0 || (r < 0 && errno != EAGAIN && errno != EINTR)) {
 				return false;
 			}
 
 			if (r > 0) {
-				result.append(_buf, r);
+				result.append(_buf.data(), r);
 			}
 		}
 		return true;

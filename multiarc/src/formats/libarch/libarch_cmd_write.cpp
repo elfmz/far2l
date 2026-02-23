@@ -3,6 +3,7 @@
 #include <mutex>
 #include <set>
 #include <algorithm>
+#include <vector>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -175,12 +176,11 @@ class LIBARCH_Add
 	PathParts _well_added_paths;
 
 	LibArchOpenWrite *_arc_dst = nullptr;
+	std::vector<char> _buf;
 
 
 	void AddPath(const char *path)
 	{
-		char buf[0x10000];
-
 		struct stat s = {};
 		if (lstat(path, &s) == -1) {
 			throw std::runtime_error("lstat failed");
@@ -209,12 +209,12 @@ class LIBARCH_Add
 
 		if (S_ISLNK(s.st_mode)) {
 			archive_entry_set_filetype(entry, AE_IFLNK);
-			ssize_t r = readlink(path, buf, sizeof(buf) - 1);
+			ssize_t r = readlink(path, _buf.data(), _buf.size() - 1);
 			if (r < 0) {
 				throw std::runtime_error("readlink failed");
 			}
-			buf[r] = 0;
-			archive_entry_set_symlink(entry, buf);
+			_buf[r] = 0;
+			archive_entry_set_symlink(entry, _buf.data());
 		} else if (S_ISDIR(s.st_mode)) {
 			archive_entry_set_filetype(entry, AE_IFDIR);
 		} else if (S_ISCHR(s.st_mode)) {
@@ -256,7 +256,7 @@ class LIBARCH_Add
 				throw std::underflow_error("open file failed");
 			}
 			while (written < data_len) {
-				ssize_t rd = os_call_ssize(read, (int)fd, (void *)buf, sizeof(buf));
+				ssize_t rd = os_call_ssize(read, (int)fd, (void *)_buf.data(), _buf.size());
 				if (rd == 0) {
 					throw std::underflow_error("file unexpectedly shrinked");
 				}
@@ -267,7 +267,7 @@ class LIBARCH_Add
 				if (written > data_len) {
 					rd-= (size_t)(written - data_len);
 				}
-				if (!_arc_dst->WriteData(buf, (size_t)rd)) {
+				if (!_arc_dst->WriteData(_buf.data(), (size_t)rd)) {
 					throw std::underflow_error("write data failed");
 				}
 				if (written > data_len) {
@@ -325,6 +325,7 @@ public:
 	LIBARCH_Add(const char *cmd, const LibarchCommandOptions &arc_opts, int files_cnt, char *files[])
 		:
 		_arc_opts(arc_opts),
+		_buf(0x10000),
 		_cmd(cmd),
 		_good(true)
 	{

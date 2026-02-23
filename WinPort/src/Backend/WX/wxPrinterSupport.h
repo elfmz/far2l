@@ -27,5 +27,7 @@ public:
 
 private:
 	wxHtmlEasyPrinting* html_printer;
+
+	void ensurePrinterCreated();
 };
 

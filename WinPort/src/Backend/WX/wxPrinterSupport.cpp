@@ -20,84 +20,24 @@
 #include "Mac/printing.h"
 #endif
 
-class PreviewWatcher : public wxEvtHandler
-{
-public:
-    PreviewWatcher(wxWindow* parent) : m_parent(parent) 
-    {
-        wxTheApp->Bind(wxEVT_CREATE, &PreviewWatcher::OnWindowCreate, this);
-    }
-
-    ~PreviewWatcher()
-    {
-        wxTheApp->Unbind(wxEVT_CREATE, &PreviewWatcher::OnWindowCreate, this);
-    }
-
-private:
-    void OnWindowCreate(wxWindowCreateEvent& evt)
-    {
-        wxWindow* win = evt.GetWindow();
-
-       	wxClassInfo* ci =  win->GetClassInfo();
-        if (ci) {
-	        fprintf(stderr, "New window created: %p, class info => %p, class name = %ls\n", win, ci, ci->GetClassName());
-        }
-
-        if (win->IsTopLevel() && ci && wxString(ci->GetClassName()).Contains("wxPreviewFrame"))
-        {
-            // Make it behave like a floating tool window
-            long style = win->GetWindowStyle();
-            style |= wxSTAY_ON_TOP;
-            style |= wxFRAME_TOOL_WINDOW;
-            win->SetWindowStyle(style);
-
-            win->Bind(wxEVT_SHOW, &PreviewWatcher::OnPreviewShown, this);
-        }
-
-        evt.Skip();
-    }
-
-    void OnPreviewShown(wxShowEvent& evt)
-    {
-        wxWindow* win = static_cast<wxWindow*>(evt.GetEventObject());
-
-        if (evt.IsShown())
-        {
-	        fprintf(stderr, "New window is shown: %p\n", win);
-
-            win->Raise();          // Now safe
-            win->SetFocus();       // Now safe
-            win->CentreOnParent(); // Now safe
-
-            // m_parent->Enable(true);
-            wxWindow* top = wxTheApp->GetTopWindow();
-	        fprintf(stderr, "Top: %p\n", win);
-            top->Enable(true);
-	        fprintf(stderr, "Top: %p => enabled\n", win);
-
-            // We're done — remove the watcher
-            win->Unbind(wxEVT_SHOW, &PreviewWatcher::OnPreviewShown, this);
-            delete this;
-        }
-
-        evt.Skip();
-    }
-
-    wxWindow* m_parent;
-};
-
-wxPrinterSupportBackend::wxPrinterSupportBackend() {
+void wxPrinterSupportBackend::ensurePrinterCreated () {
 #ifndef MAC_NATIVE_PRINTING
-	wxWindow* top = wxTheApp->GetTopWindow();
-	html_printer = new wxHtmlEasyPrinting("Printing", top);
-	html_printer->SetStandardFonts(10 /*, "Arial", "Lucida Console" */);
-	new PreviewWatcher(wxTheApp->GetTopWindow());
+	if (!html_printer) {
+		wxWindow* top = g_winport_frame ? g_winport_frame : wxTheApp->GetTopWindow();
+		html_printer = new wxHtmlEasyPrinting("Printing", top);
+		html_printer->SetStandardFonts(10 /*, "Arial", "Lucida Console" */);
+	}
 #endif
+}
+
+wxPrinterSupportBackend::wxPrinterSupportBackend() : html_printer(nullptr) 
+{
 }
 
 wxPrinterSupportBackend::~wxPrinterSupportBackend() {
 #ifndef MAC_NATIVE_PRINTING
-	delete html_printer;
+	if (html_printer) delete html_printer;
+	html_printer = nullptr;
 #endif
 }
 
@@ -108,6 +48,8 @@ void wxPrinterSupportBackend::PrintText(const wchar_t* jobName, const wchar_t* t
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 	wxString wxText(text); 
 
@@ -132,6 +74,8 @@ void wxPrinterSupportBackend::PrintReducedHTML(const wchar_t* jobName, const wch
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	html_printer->PrintText(text);
 #else
@@ -147,6 +91,8 @@ void wxPrinterSupportBackend::PrintTextFile(const wchar_t* fileName)
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextPrinting rtf_printer(fileName, wxTheApp->GetTopWindow());
@@ -165,6 +111,8 @@ void wxPrinterSupportBackend::PrintHtmlFile(const wchar_t* fileName)
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer(fileName);
 	// html_printer.PrintFile(fileName);
@@ -182,6 +130,8 @@ void wxPrinterSupportBackend::ShowPreviewForText(const wchar_t* jobName, const w
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextBuffer buffer; 
@@ -205,6 +155,8 @@ void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const wchar_t* jobName, 
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer(jobName);
 	// html_printer.PreviewText(text);
@@ -223,6 +175,8 @@ void wxPrinterSupportBackend::ShowPreviewForTextFile(const wchar_t* fileName)
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextPrinting rtf_printer(fileName, wxTheApp->GetTopWindow());
 	rtf_printer.PreviewFile(fileName);
@@ -239,6 +193,8 @@ void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const wchar_t* fileName)
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer(fileName);
@@ -257,6 +213,8 @@ void wxPrinterSupportBackend::ShowPrinterSetupDialog()
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer("Printer Setup");

@@ -23,7 +23,7 @@
 void wxPrinterSupportBackend::ensurePrinterCreated () {
 #ifndef MAC_NATIVE_PRINTING
 	if (!html_printer) {
-		wxWindow* top = g_winport_frame ? g_winport_frame : wxTheApp->GetTopWindow();
+		wxWindow* top = wxTheApp->GetTopWindow();
 		html_printer = new wxHtmlEasyPrinting("Printing", top);
 		html_printer->SetStandardFonts(10 /*, "Arial", "Lucida Console" */);
 	}

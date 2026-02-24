@@ -72,13 +72,13 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 	};
 
 	MenuDataEx ToolsMenu[] = {
-		{Msg::ViewerMenuSelect,	0,	KEY_SHIFTRIGHT  },
-		{Msg::ViewerMenuCopy,	0,	KEY_CTRLC  },
-		{L"", LIF_SEPARATOR, 0  },
 		{Msg::ViewerMenuGrep,	0,	KEY_CTRLF7  },
+		{L"", LIF_SEPARATOR, 0  },
 		{Msg::ViewerMenuFind,	0,	KEY_F7  },
 		{Msg::ViewerMenuFindNext,	0,	KEY_SHIFTF7  },
 		{Msg::ViewerMenuFindPrev,	0,	KEY_ALTF7  },
+		{Msg::ViewerMenuSelect,	0,	KEY_SHIFTRIGHT  },
+		{Msg::ViewerMenuCopy,	0,	KEY_CTRLC  },
 	};
 
 	MenuDataEx NavigateMenu[] = {

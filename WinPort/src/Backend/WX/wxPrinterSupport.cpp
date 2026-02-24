@@ -8,6 +8,7 @@
 #ifndef MAC_NATIVE_PRINTING
 #include <wx/html/htmprint.h>
 #include <wx/richtext/richtextprint.h>
+#include <wx/event.h>
 #endif
 
 #include <string.h>
@@ -19,17 +20,24 @@
 #include "Mac/printing.h"
 #endif
 
-
-wxPrinterSupportBackend::wxPrinterSupportBackend() {
+void wxPrinterSupportBackend::ensurePrinterCreated () {
 #ifndef MAC_NATIVE_PRINTING
-	wxWindow* top = wxTheApp->GetTopWindow();
-	html_printer = new wxHtmlEasyPrinting("Printing", top);
-	html_printer->SetStandardFonts(10 /*, "Arial", "Lucida Console" */);
+	if (!html_printer) {
+		wxWindow* top = wxTheApp->GetTopWindow();
+		html_printer = new wxHtmlEasyPrinting("Printing", top);
+		html_printer->SetStandardFonts(10 /*, "Arial", "Lucida Console" */);
+	}
 #endif
 }
+
+wxPrinterSupportBackend::wxPrinterSupportBackend() : html_printer(nullptr) 
+{
+}
+
 wxPrinterSupportBackend::~wxPrinterSupportBackend() {
 #ifndef MAC_NATIVE_PRINTING
-	delete html_printer;
+	if (html_printer) delete html_printer;
+	html_printer = nullptr;
 #endif
 }
 
@@ -40,6 +48,8 @@ void wxPrinterSupportBackend::PrintText(const wchar_t* jobName, const wchar_t* t
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 	wxString wxText(text); 
 
@@ -64,9 +74,9 @@ void wxPrinterSupportBackend::PrintReducedHTML(const wchar_t* jobName, const wch
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
-	//wxHtmlEasyPrinting html_printer(jobName);
-	//html_printer.PrintText(text);
 	html_printer->PrintText(text);
 #else
 	wxString wxText(text); 
@@ -81,6 +91,8 @@ void wxPrinterSupportBackend::PrintTextFile(const wchar_t* fileName)
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextPrinting rtf_printer(fileName, wxTheApp->GetTopWindow());
@@ -99,6 +111,8 @@ void wxPrinterSupportBackend::PrintHtmlFile(const wchar_t* fileName)
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer(fileName);
 	// html_printer.PrintFile(fileName);
@@ -116,6 +130,8 @@ void wxPrinterSupportBackend::ShowPreviewForText(const wchar_t* jobName, const w
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextBuffer buffer; 
@@ -139,6 +155,8 @@ void wxPrinterSupportBackend::ShowPreviewForReducedHTML(const wchar_t* jobName, 
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer(jobName);
 	// html_printer.PreviewText(text);
@@ -157,6 +175,8 @@ void wxPrinterSupportBackend::ShowPreviewForTextFile(const wchar_t* fileName)
 		return;
 	}
 
+	ensurePrinterCreated ();
+
 #ifndef MAC_NATIVE_PRINTING
 	wxRichTextPrinting rtf_printer(fileName, wxTheApp->GetTopWindow());
 	rtf_printer.PreviewFile(fileName);
@@ -173,6 +193,8 @@ void wxPrinterSupportBackend::ShowPreviewForHtmlFile(const wchar_t* fileName)
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer(fileName);
@@ -191,6 +213,8 @@ void wxPrinterSupportBackend::ShowPrinterSetupDialog()
 		CallInMainNoRet(fn);
 		return;
 	}
+
+	ensurePrinterCreated ();
 
 #ifndef MAC_NATIVE_PRINTING
 	// wxHtmlEasyPrinting html_printer("Printer Setup");

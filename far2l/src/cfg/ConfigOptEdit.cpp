@@ -90,7 +90,8 @@ public:
 			case ConfigOpt::T_DWORD:
 				return (*_opt.value.dw != _opt.def.dw);
 			case ConfigOpt::T_STR:
-				return (*_opt.value.str != _opt.def.str);
+				return (_opt.def.str == nullptr ? -1
+						: (*_opt.value.str != _opt.def.str));
 			case ConfigOpt::T_BIN:
 				return (_opt.def.bin == nullptr || _opt.value.bin == nullptr ? -1
 						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? 0 : 1 ));
@@ -122,6 +123,8 @@ public:
 				*_opt.value.dw = _opt.def.dw;
 				return 1;
 			case ConfigOpt::T_STR:
+				if (_opt.def.str == nullptr)
+					return -1;
 				if (*_opt.value.str == _opt.def.str)
 					return 0;
 				*_opt.value.str = _opt.def.str;
@@ -185,7 +188,8 @@ public:
 				break;
 			case ConfigOpt::T_STR:
 				mi.strName.Format(L"%s %ls %lcstring%lc%ls%lc%ls",
-					(*_opt.value.str == _opt.def.str ? " " : "*"),
+					(_opt.def.str == nullptr ? "?"
+						: (*_opt.value.str == _opt.def.str ? " " : "*")),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					_opt.value.str->CPtr());

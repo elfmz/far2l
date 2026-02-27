@@ -580,36 +580,6 @@ else()
         " COMPONENT system)
 endif()
 
-if (NOT DEFINED ADB OR ADB)
-    message(STATUS "ADB plugin enabled")
-    add_subdirectory (adb)
-else()
-    message(STATUS "${ColorRed}ADB plugin disabled due to ADB=${ADB}${ColorNormal}")
-    install(CODE "
-        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/adb/plug/adb.far-plug-wide)
-        " COMPONENT system)
-endif()
-
-if (NOT DEFINED MTP OR MTP)
-    message(STATUS "MTP plugin enabled")
-    add_subdirectory (mtp)
-else()
-    message(STATUS "${ColorRed}MTP plugin disabled due to MTP=${MTP}${ColorNormal}")
-    install(CODE "
-        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/mtp/plug/mtp.far-plug-wide)
-        " COMPONENT system)
-endif()
-
-if (NOT DEFINED IMG OR IMG)
-    message(STATUS "IMG plugin enabled")
-    add_subdirectory (img)
-else()
-    message(STATUS "${ColorRed}IMG plugin disabled due to IMG=${IMG}${ColorNormal}")
-    install(CODE "
-        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/img/plug/img.far-plug-wide)
-        " COMPONENT system)
-endif()
-
 if (NOT DEFINED MEMO OR MEMO)
     message(STATUS "MEMO plugin enabled")
     add_subdirectory (memo)

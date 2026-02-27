@@ -403,8 +403,11 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
 
 // Return plugin info - menu items, command prefix, etc.
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
-  Info->StructSize = sizeof(struct PluginInfo);
-  Info->Flags = PF_EDITOR | PF_VIEWER | PF_DIALOG;
+  Info->StructSize = sizeof(PluginInfo);
+  // Don't use PF_EDITOR - memo uses DI_MEMOEDIT (internal dialog editor),
+  // not a real file editor. PF_EDITOR causes colorer to send editor events
+  // which crash when there's no valid file context.
+  Info->Flags = PF_VIEWER | PF_DIALOG;
 
   static const wchar_t *menu_strings[1];
   menu_strings[0] = L"Memo";

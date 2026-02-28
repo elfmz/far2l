@@ -439,9 +439,6 @@ static BOOL farGetFindData(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindD
 	if (!apiGetFindDataForExactPathName(lpwszFileName, FindDataEx))
 		return FALSE;
 
-	if (FindDataEx.strFileName.GetLength() >= MAX_NAME)
-		return FALSE;
-
 	FindDataW->ftCreationTime = FindDataEx.ftCreationTime;
 	FindDataW->ftLastAccessTime = FindDataEx.ftLastAccessTime;
 	FindDataW->ftLastWriteTime = FindDataEx.ftLastWriteTime;
@@ -456,7 +453,12 @@ static BOOL farGetFindData(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindD
 	FindDataW->nHardLinks = FindDataEx.nHardLinks;
 	FindDataW->nBlockSize = FindDataEx.nBlockSize;
 
-	memcpy(FindDataW->cFileName, FindDataEx.strFileName.GetBuffer(), sizeof(WCHAR) * (FindDataEx.strFileName.GetLength() + 1) );
+	size_t FileNameLength = FindDataEx.strFileName.GetLength();
+	if (FileNameLength >= ARRAYSIZE(FindDataW->cFileName))
+		FileNameLength = ARRAYSIZE(FindDataW->cFileName) - 1;
+
+	wmemcpy(FindDataW->cFileName, FindDataEx.strFileName.GetBuffer(), FileNameLength);
+	FindDataW->cFileName[FileNameLength] = L'\0';
 
 	return TRUE;
 }

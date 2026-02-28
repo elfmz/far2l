@@ -653,7 +653,9 @@ int PluginA::SetFindList(HANDLE hPlugin, const PluginPanelItem *PanelItem, int I
 		es.id = EXCEPT_SETFINDLIST;
 		es.bDefaultResult = FALSE;
 		oldfar::PluginPanelItem *PanelItemA = nullptr;
-		ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber);
+		if (!ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber))
+			return FALSE;
+
 		EXECUTE_FUNCTION_EX(pSetFindList(hPlugin, PanelItemA, ItemsNumber), es);
 		FreePanelItemA(PanelItemA, ItemsNumber);
 		bResult = es.bResult;
@@ -749,7 +751,18 @@ int PluginA::GetVirtualFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, in
 		delete[] PathA;
 
 		if (bResult && *pItemsNumber) {
-			ConvertPanelItemA(pVFDPanelItemA, pPanelItem, *pItemsNumber);
+			bResult = ConvertPanelItemA(pVFDPanelItemA, pPanelItem, *pItemsNumber);
+			if (!bResult) {
+				if (pFreeVirtualFindData && pVFDPanelItemA) {
+					ExecuteStruct free_es;
+					free_es.id = EXCEPT_FREEVIRTUALFINDDATA;
+					EXECUTE_FUNCTION(pFreeVirtualFindData(hPlugin, pVFDPanelItemA, *pItemsNumber), free_es);
+					pVFDPanelItemA = nullptr;
+					(void)free_es;
+				}
+
+				*pItemsNumber = 0;
+			}
 		}
 	}
 
@@ -784,7 +797,9 @@ int PluginA::GetFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumbe
 		es.id = EXCEPT_GETFILES;
 		es.nDefaultResult = -1;
 		oldfar::PluginPanelItem *PanelItemA = nullptr;
-		ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber);
+		if (!ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber))
+			return -1;
+
 		char DestA[oldfar::NM];
 		PWZ_to_PZ(*DestPath, DestA, sizeof(DestA));
 		EXECUTE_FUNCTION_EX(pGetFiles(hPlugin, PanelItemA, ItemsNumber, Move, DestA, OpMode), es);
@@ -807,7 +822,9 @@ int PluginA::PutFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNumbe
 		es.id = EXCEPT_PUTFILES;
 		es.nDefaultResult = -1;
 		oldfar::PluginPanelItem *PanelItemA = nullptr;
-		ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber);
+		if (!ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber))
+			return -1;
+
 		EXECUTE_FUNCTION_EX(pPutFiles(hPlugin, PanelItemA, ItemsNumber, Move, OpMode), es);
 		FreePanelItemA(PanelItemA, ItemsNumber);
 		nResult = (int)es.nResult;
@@ -825,7 +842,9 @@ int PluginA::DeleteFiles(HANDLE hPlugin, PluginPanelItem *PanelItem, int ItemsNu
 		es.id = EXCEPT_DELETEFILES;
 		es.bDefaultResult = FALSE;
 		oldfar::PluginPanelItem *PanelItemA = nullptr;
-		ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber);
+		if (!ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber))
+			return FALSE;
+
 		EXECUTE_FUNCTION_EX(pDeleteFiles(hPlugin, PanelItemA, ItemsNumber, OpMode), es);
 		FreePanelItemA(PanelItemA, ItemsNumber);
 		bResult = (int)es.bResult;
@@ -863,7 +882,9 @@ int PluginA::ProcessHostFile(HANDLE hPlugin, PluginPanelItem *PanelItem, int Ite
 		es.id = EXCEPT_PROCESSHOSTFILE;
 		es.bDefaultResult = FALSE;
 		oldfar::PluginPanelItem *PanelItemA = nullptr;
-		ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber);
+		if (!ConvertPanelItemsArrayToAnsi(PanelItem, PanelItemA, ItemsNumber))
+			return FALSE;
+
 		EXECUTE_FUNCTION_EX(pProcessHostFile(hPlugin, PanelItemA, ItemsNumber, OpMode), es);
 		FreePanelItemA(PanelItemA, ItemsNumber);
 		bResult = es.bResult;
@@ -906,8 +927,13 @@ int PluginA::Compare(HANDLE hPlugin, const PluginPanelItem *Item1, const PluginP
 		es.nDefaultResult = -2;
 		oldfar::PluginPanelItem *Item1A = nullptr;
 		oldfar::PluginPanelItem *Item2A = nullptr;
-		ConvertPanelItemsArrayToAnsi(Item1, Item1A, 1);
-		ConvertPanelItemsArrayToAnsi(Item2, Item2A, 1);
+		if (!ConvertPanelItemsArrayToAnsi(Item1, Item1A, 1))
+			return -2;
+		if (!ConvertPanelItemsArrayToAnsi(Item2, Item2A, 1)) {
+			FreePanelItemA(Item1A, 1);
+			return -2;
+		}
+
 		EXECUTE_FUNCTION_EX(pCompare(hPlugin, Item1A, Item2A, Mode), es);
 		FreePanelItemA(Item1A, 1);
 		FreePanelItemA(Item2A, 1);
@@ -930,7 +956,18 @@ int PluginA::GetFindData(HANDLE hPlugin, PluginPanelItem **pPanelItem, int *pIte
 		bResult = es.bResult;
 
 		if (bResult && *pItemsNumber) {
-			ConvertPanelItemA(pFDPanelItemA, pPanelItem, *pItemsNumber);
+			bResult = ConvertPanelItemA(pFDPanelItemA, pPanelItem, *pItemsNumber);
+			if (!bResult) {
+				if (pFreeFindData && pFDPanelItemA) {
+					ExecuteStruct free_es;
+					free_es.id = EXCEPT_FREEFINDDATA;
+					EXECUTE_FUNCTION(pFreeFindData(hPlugin, pFDPanelItemA, *pItemsNumber), free_es);
+					pFDPanelItemA = nullptr;
+					(void)free_es;
+				}
+
+				*pItemsNumber = 0;
+			}
 		}
 	}
 
@@ -1053,28 +1090,34 @@ void PluginA::ConvertOpenPluginInfo(oldfar::OpenPluginInfo &Src, OpenPluginInfo 
 	if (Src.PanelTitle)
 		OPI.PanelTitle = AnsiToUnicode(Src.PanelTitle);
 
-	if (Src.InfoLines && Src.InfoLinesNumber) {
+	if (Src.InfoLines && Src.InfoLinesNumber > 0) {
 		ConvertInfoPanelLinesA(Src.InfoLines, (InfoPanelLine **)&OPI.InfoLines, Src.InfoLinesNumber);
-		OPI.InfoLinesNumber = Src.InfoLinesNumber;
+		if (OPI.InfoLines)
+			OPI.InfoLinesNumber = Src.InfoLinesNumber;
 	}
 
-	if (Src.DescrFiles && Src.DescrFilesNumber) {
+	if (Src.DescrFiles && Src.DescrFilesNumber > 0) {
 		OPI.DescrFiles = ArrayAnsiToUnicode((char **)Src.DescrFiles, Src.DescrFilesNumber);
-		OPI.DescrFilesNumber = Src.DescrFilesNumber;
+		if (OPI.DescrFiles)
+			OPI.DescrFilesNumber = Src.DescrFilesNumber;
 	}
 
-	if (Src.PanelModesArray && Src.PanelModesNumber) {
+	if (Src.PanelModesArray && Src.PanelModesNumber > 0) {
 		ConvertPanelModesA(Src.PanelModesArray, (PanelMode **)&OPI.PanelModesArray, Src.PanelModesNumber);
-		OPI.PanelModesNumber = Src.PanelModesNumber;
-		OPI.StartPanelMode = Src.StartPanelMode;
-		OPI.StartSortMode = Src.StartSortMode;
-		OPI.StartSortOrder = Src.StartSortOrder;
+		if (OPI.PanelModesArray) {
+			OPI.PanelModesNumber = Src.PanelModesNumber;
+			OPI.StartPanelMode = Src.StartPanelMode;
+			OPI.StartSortMode = Src.StartSortMode;
+			OPI.StartSortOrder = Src.StartSortOrder;
+		}
 	}
 
 	if (Src.KeyBar) {
 		OPI.KeyBar = (KeyBarTitles *)malloc(sizeof(KeyBarTitles));
-		ConvertKeyBarTitlesA(Src.KeyBar, (KeyBarTitles *)OPI.KeyBar,
-				Src.StructSize >= (int)sizeof(oldfar::OpenPluginInfo));
+		if (OPI.KeyBar) {
+			ConvertKeyBarTitlesA(Src.KeyBar, (KeyBarTitles *)OPI.KeyBar,
+					Src.StructSize >= (int)sizeof(oldfar::OpenPluginInfo));
+		}
 	}
 
 	if (Src.ShortcutData)
@@ -1148,34 +1191,25 @@ void PluginA::ConvertPluginInfo(oldfar::PluginInfo &Src, PluginInfo *Dest)
 	PI.StructSize = sizeof(PI);
 	PI.Flags = Src.Flags;
 
-	if (Src.DiskMenuStringsNumber) {
-		wchar_t **p = (wchar_t **)malloc(Src.DiskMenuStringsNumber * sizeof(wchar_t *));
-
-		for (int i = 0; i < Src.DiskMenuStringsNumber; i++)
-			p[i] = AnsiToUnicode(Src.DiskMenuStrings[i]);
-
-		PI.DiskMenuStrings = p;
-		PI.DiskMenuStringsNumber = Src.DiskMenuStringsNumber;
+	if (Src.DiskMenuStrings && Src.DiskMenuStringsNumber > 0) {
+		if (wchar_t **p = ArrayAnsiToUnicode((char **)Src.DiskMenuStrings, Src.DiskMenuStringsNumber)) {
+			PI.DiskMenuStrings = p;
+			PI.DiskMenuStringsNumber = Src.DiskMenuStringsNumber;
+		}
 	}
 
-	if (Src.PluginMenuStringsNumber) {
-		wchar_t **p = (wchar_t **)malloc(Src.PluginMenuStringsNumber * sizeof(wchar_t *));
-
-		for (int i = 0; i < Src.PluginMenuStringsNumber; i++)
-			p[i] = AnsiToUnicode(Src.PluginMenuStrings[i]);
-
-		PI.PluginMenuStrings = p;
-		PI.PluginMenuStringsNumber = Src.PluginMenuStringsNumber;
+	if (Src.PluginMenuStrings && Src.PluginMenuStringsNumber > 0) {
+		if (wchar_t **p = ArrayAnsiToUnicode((char **)Src.PluginMenuStrings, Src.PluginMenuStringsNumber)) {
+			PI.PluginMenuStrings = p;
+			PI.PluginMenuStringsNumber = Src.PluginMenuStringsNumber;
+		}
 	}
 
-	if (Src.PluginConfigStringsNumber) {
-		wchar_t **p = (wchar_t **)malloc(Src.PluginConfigStringsNumber * sizeof(wchar_t *));
-
-		for (int i = 0; i < Src.PluginConfigStringsNumber; i++)
-			p[i] = AnsiToUnicode(Src.PluginConfigStrings[i]);
-
-		PI.PluginConfigStrings = p;
-		PI.PluginConfigStringsNumber = Src.PluginConfigStringsNumber;
+	if (Src.PluginConfigStrings && Src.PluginConfigStringsNumber > 0) {
+		if (wchar_t **p = ArrayAnsiToUnicode((char **)Src.PluginConfigStrings, Src.PluginConfigStringsNumber)) {
+			PI.PluginConfigStrings = p;
+			PI.PluginConfigStringsNumber = Src.PluginConfigStringsNumber;
+		}
 	}
 
 	if (Src.CommandPrefix)

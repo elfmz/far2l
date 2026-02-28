@@ -1208,9 +1208,13 @@ int Edit::ProcessKey(FarKey Key)
 				}
 			}
 
-			Str[CurPos] = 0;
+			wchar_t *NewStr = (wchar_t *)realloc(Str, (CurPos + 1) * sizeof(wchar_t));
+			if (!NewStr)
+				return FALSE;
+
+			Str = NewStr;
 			StrSize = CurPos;
-			Str = (wchar_t *)realloc(Str, (StrSize + 1) * sizeof(wchar_t));
+			Str[CurPos] = 0;
 			Changed();
 			Show();
 			return TRUE;

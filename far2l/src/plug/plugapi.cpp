@@ -328,11 +328,12 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			Return - размер массива.
 		*/
 		case ACTL_GETARRAYCOLOR: {
-			if ((int)(intptr_t)Param1 > SIZE_ARRAY_FARCOLORS)
+			int colorCount = (int)(intptr_t)Param1;
+			if (colorCount < 0 || colorCount > SIZE_ARRAY_FARCOLORS)
 				return SIZE_ARRAY_FARCOLORS;
 
-			if (Param2)
-				memcpy(Param2, &FarColors::setcolors[0], (int)(intptr_t)Param1 * sizeof(FarColors::setcolors[0]));
+			if (Param2 && colorCount > 0)
+				memcpy(Param2, &FarColors::setcolors[0], colorCount * sizeof(FarColors::setcolors[0]));
 
 			return SIZE_ARRAY_FARCOLORS;
 		}
@@ -488,15 +489,13 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			return FALSE;
 		}
 		case ACTL_POSTKEYSEQUENCE: {
-			if (CtrlObject && Param1 && ((KeySequence *)Param1)->Count > 0) {
+			if (CtrlObject && Param1 && ((KeySequence *)Param1)->Count > 0
+					&& ((KeySequence *)Param1)->Count <= INT_MAX - 3
+					&& ((KeySequence *)Param1)->Sequence) {
 				MacroRecord MRec{};
 				MRec.Flags = (((KeySequence *)Param1)->Flags) << 8;
 				MRec.BufferSize = ((KeySequence *)Param1)->Count;
-
-				if (MRec.BufferSize == 1)
-					MRec.Buffer = (DWORD *)(DWORD_PTR)((KeySequence *)Param1)->Sequence[0];
-				else
-					MRec.Buffer = const_cast<DWORD *>(((KeySequence *)Param1)->Sequence);
+				MRec.Buffer = const_cast<DWORD *>(((KeySequence *)Param1)->Sequence);
 
 				return CtrlObject->Macro.PostNewMacro(&MRec, TRUE, TRUE);
 #if 0
@@ -1537,6 +1536,10 @@ static int FarGetDirListSynched(const wchar_t *Dir, FAR_FIND_DATA **pPanelItem, 
 			ItemsList[ItemsNumber].ftLastWriteTime = FindData.ftLastWriteTime;
 			ItemsList[ItemsNumber].dwUnixMode = FindData.dwUnixMode;
 			ItemsList[ItemsNumber].lpwszFileName = wcsdup(strFullName.CPtr());
+			if (!ItemsList[ItemsNumber].lpwszFileName) {
+				FarFreeDirList(ItemsList, ItemsNumber);
+				return FALSE;
+			}
 			ItemsNumber++;
 		}
 
@@ -1665,29 +1668,38 @@ int WINAPI FarGetPluginDirList(INT_PTR PluginNumber, HANDLE hPlugin, const wchar
 	вытащим в функцию общий код для копирования айтема в ScanPluginDir()
 */
 
-static void CopyPluginDirItem(PluginPanelItem *CurPanelItem)
+static bool CopyPluginDirItem(PluginPanelItem *CurPanelItem)
 {
 	FARString strFullName;
 	strFullName = strPluginSearchPath;
 	strFullName+= CurPanelItem->FindData.lpwszFileName;
 	ReplaceChars(strFullName, L'\x1', GOOD_SLASH);
-	PluginPanelItem *DestItem = PluginDirList + DirListItemsNumber;
-	*DestItem = *CurPanelItem;
+	wchar_t *FileName = wcsdup(strFullName);
+	if (!FileName)
+		return false;
+
+	DWORD_PTR UserData = CurPanelItem->UserData;
+	DWORD Flags = CurPanelItem->Flags;
 
 	if (CurPanelItem->UserData && (CurPanelItem->Flags & PPIF_USERDATA)) {
 		DWORD Size = *(DWORD *)CurPanelItem->UserData;
 		void *userData = malloc(Size);
 		if (userData) {
 			memcpy(userData, (void *)CurPanelItem->UserData, Size);
-			DestItem->UserData = (DWORD_PTR)userData;
+			UserData = (DWORD_PTR)userData;
 		} else {
-			DestItem->UserData = 0;
-			DestItem->Flags &= ~PPIF_USERDATA;
+			UserData = 0;
+			Flags &= ~PPIF_USERDATA;
 		}
 	}
 
-	DestItem->FindData.lpwszFileName = wcsdup(strFullName);
+	PluginPanelItem *DestItem = PluginDirList + DirListItemsNumber;
+	*DestItem = *CurPanelItem;
+	DestItem->Flags = Flags;
+	DestItem->UserData = UserData;
+	DestItem->FindData.lpwszFileName = FileName;
 	DirListItemsNumber++;
+	return true;
 }
 
 static void ScanPluginDir()
@@ -1715,12 +1727,24 @@ static void ScanPluginDir()
 	if (StopSearch || !CtrlObject->Plugins.GetFindData(hDirListPlugin, &PanelData, &ItemCount, OPM_FIND))
 		return;
 
-	PluginPanelItem *NewList = (PluginPanelItem *)realloc(PluginDirList,
-			1 + sizeof(*PluginDirList) * (DirListItemsNumber + ItemCount));
+	PluginPanelItem *NewList = nullptr;
+	if (ItemCount < 0) {
+		StopSearch = TRUE;
+		goto done;
+	}
+	if (static_cast<size_t>(DirListItemsNumber) > SIZE_MAX / sizeof(*PluginDirList)
+			|| static_cast<size_t>(ItemCount)
+					> (SIZE_MAX / sizeof(*PluginDirList)) - static_cast<size_t>(DirListItemsNumber)) {
+		StopSearch = TRUE;
+		goto done;
+	}
+
+	NewList = (PluginPanelItem *)realloc(PluginDirList,
+			sizeof(*PluginDirList) * (DirListItemsNumber + ItemCount));
 
 	if (!NewList) {
 		StopSearch = TRUE;
-		return;
+		goto done;
 	}
 
 	PluginDirList = NewList;
@@ -1728,8 +1752,11 @@ static void ScanPluginDir()
 	for (int i = 0; i < ItemCount && !StopSearch; i++) {
 		PluginPanelItem *CurPanelItem = PanelData + i;
 
-		if (!(CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			CopyPluginDirItem(CurPanelItem);
+		if (!(CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				&& !CopyPluginDirItem(CurPanelItem)) {
+			StopSearch = TRUE;
+			break;
+		}
 	}
 
 	for (int i = 0; i < ItemCount && !StopSearch; i++) {
@@ -1738,12 +1765,17 @@ static void ScanPluginDir()
 		if ((CurPanelItem->FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 				&& StrCmp(CurPanelItem->FindData.lpwszFileName, L".")
 				&& !TestParentFolderName(CurPanelItem->FindData.lpwszFileName)) {
+			if (static_cast<size_t>(DirListItemsNumber) >= SIZE_MAX / sizeof(*PluginDirList)) {
+				StopSearch = TRUE;
+				break;
+			}
+
 			PluginPanelItem *NewList = (PluginPanelItem *)realloc(PluginDirList,
 					sizeof(*PluginDirList) * (DirListItemsNumber + 1));
 
 			if (!NewList) {
 				StopSearch = TRUE;
-				return;
+				break;
 			}
 
 			PluginDirList = NewList;
@@ -1752,7 +1784,10 @@ static void ScanPluginDir()
 				используем общую функцию для копирования FindData (не забываем
 				обработать PPIF_USERDATA)
 			*/
-			CopyPluginDirItem(CurPanelItem);
+			if (!CopyPluginDirItem(CurPanelItem)) {
+				StopSearch = TRUE;
+				break;
+			}
 			FARString strFileName = CurPanelItem->FindData.lpwszFileName;
 
 			if (CtrlObject->Plugins.SetDirectory(hDirListPlugin, strFileName, OPM_FIND)) {
@@ -1776,6 +1811,7 @@ static void ScanPluginDir()
 		}
 	}
 
+done:
 	CtrlObject->Plugins.FreeFindData(hDirListPlugin, PanelData, ItemCount);
 }
 
@@ -2425,7 +2461,8 @@ BOOL farAPIVTLogExportA(HANDLE con_hnd, DWORD vth_flags, const char *file)
 		return FALSE;
 
 	if (!*file) {
-		strncpy((char *)file, saved_path.c_str(), MAX_PATH);
+		strncpy((char *)file, saved_path.c_str(), MAX_PATH - 1);
+		((char *)file)[MAX_PATH - 1] = '\0';
 	}
 
 	return TRUE;
@@ -2441,7 +2478,9 @@ BOOL farAPIVTLogExportW(HANDLE con_hnd, DWORD vth_flags, const wchar_t *file)
 		return FALSE;
 
 	if (!*file) {
-		wcsncpy((wchar_t *)file, StrMB2Wide(saved_path).c_str(), MAX_PATH);
+		std::wstring saved_path_w = StrMB2Wide(saved_path);
+		wcsncpy((wchar_t *)file, saved_path_w.c_str(), MAX_PATH - 1);
+		((wchar_t *)file)[MAX_PATH - 1] = L'\0';
 	}
 
 	return TRUE;

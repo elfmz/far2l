@@ -846,12 +846,12 @@ bool KeyMacro::ProcessKey(FarKey Key)
 			if (Key >= KEY_NONE && Key <= KEY_END_SKEY)		// специальные клавиши прокинем
 				return false;
 
-			RecBuffer = (DWORD *)realloc(RecBuffer, sizeof(*RecBuffer) * (RecBufferSize + 3));
+			DWORD *NewRecBuffer = (DWORD *)realloc(RecBuffer, sizeof(*RecBuffer) * (RecBufferSize + 3));
 
-			if (!RecBuffer) {
-				RecBufferSize = 0;
+			if (!NewRecBuffer)
 				return false;
-			}
+
+			RecBuffer = NewRecBuffer;
 
 			if (ReturnAltValue)		// "подтасовка" фактов ;-)
 				Key|= KEY_ALTDIGIT;
@@ -5297,6 +5297,8 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 {
 	if (!tmfunc->Name || !tmfunc->Name[0])
 		return nullptr;
+	if (tmfunc->BufferSize < 0)
+		return nullptr;
 
 	TMacroOpCode Code = tmfunc->Code;
 	if (!Code || Code == MCODE_F_NOFUNC)	// получить временный OpCode относительно KEY_MACRO_U_BASE
@@ -5315,22 +5317,54 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 
 	pTemp = AMacroFunction + CMacroFunction;
 
-	pTemp->Name = wcsdup(tmfunc->Name);
-	pTemp->fnGUID = tmfunc->fnGUID ? wcsdup(tmfunc->fnGUID) : nullptr;
-	pTemp->Syntax = tmfunc->Syntax ? wcsdup(tmfunc->Syntax) : nullptr;
+	wchar_t *Name = wcsdup(tmfunc->Name);
+	if (!Name)
+		return nullptr;
+
+	wchar_t *fnGUID = tmfunc->fnGUID ? wcsdup(tmfunc->fnGUID) : nullptr;
+	if (tmfunc->fnGUID && !fnGUID) {
+		free(Name);
+		return nullptr;
+	}
+
+	wchar_t *Syntax = tmfunc->Syntax ? wcsdup(tmfunc->Syntax) : nullptr;
+	if (tmfunc->Syntax && !Syntax) {
+		free(fnGUID);
+		free(Name);
+		return nullptr;
+	}
+
+	DWORD *Buffer = nullptr;
+	if (tmfunc->BufferSize > 0) {
+		if (!tmfunc->Buffer
+				|| static_cast<size_t>(tmfunc->BufferSize) > SIZE_MAX / sizeof(DWORD)) {
+			free(Syntax);
+			free(fnGUID);
+			free(Name);
+			return nullptr;
+		}
+
+		Buffer = (DWORD *)malloc(sizeof(DWORD) * tmfunc->BufferSize);
+		if (!Buffer) {
+			free(Syntax);
+			free(fnGUID);
+			free(Name);
+			return nullptr;
+		}
+		memmove(Buffer, tmfunc->Buffer, sizeof(DWORD) * tmfunc->BufferSize);
+	}
+
+	*pTemp = {};
+	pTemp->Name = Name;
+	pTemp->fnGUID = fnGUID;
+	pTemp->Syntax = Syntax;
 	// pTemp->Src=tmfunc->Src?wcsdup(tmfunc->Src):nullptr;
 	// pTemp->Description=tmfunc->Description?wcsdup(tmfunc->Description):nullptr;
 	pTemp->nParam = tmfunc->nParam;
 	pTemp->oParam = tmfunc->oParam;
 	pTemp->Code = Code;
 	pTemp->BufferSize = tmfunc->BufferSize;
-
-	if (tmfunc->BufferSize > 0) {
-		pTemp->Buffer = (DWORD *)malloc(sizeof(DWORD) * tmfunc->BufferSize);
-		if (pTemp->Buffer)
-			memmove(pTemp->Buffer, tmfunc->Buffer, sizeof(DWORD) * tmfunc->BufferSize);
-	} else
-		pTemp->Buffer = nullptr;
+	pTemp->Buffer = Buffer;
 	pTemp->IntFlags = tmfunc->IntFlags;
 	pTemp->Func = tmfunc->Func;
 
@@ -5341,31 +5375,24 @@ TMacroFunction *KeyMacro::RegisterMacroFunction(const TMacroFunction *tmfunc)
 bool KeyMacro::UnregMacroFunction(size_t Index)
 {
 	if (Index == (size_t)-1) {
-		fprintf(stderr, "If you see this in output - uncomment code below and check again\n");
-		/*
-		if (AMacroFunction)
-		{
-			TMacroFunction *pTemp;
-			for (size_t I=0; I < CMacroFunction; ++I)
-			{
-				pTemp=AMacroFunction+I;
-				if (pTemp->Name)        free((void*)pTemp->Name);
-				pTemp->Name=nullptr;
-				if (pTemp->fnGUID)      free((void*)pTemp->fnGUID);
-				pTemp->fnGUID=nullptr;
-				if (pTemp->Syntax)      free((void*)pTemp->Syntax);
-				pTemp->Syntax=nullptr;
-				if (pTemp->Buffer)      free((void*)pTemp->Buffer);
-				pTemp->Buffer=nullptr;
-				//if (pTemp->Src)         free((void*)pTemp->Src);         pTemp->Src=nullptr;
-				//if (pTemp->Description) free((void*)pTemp->Description); pTemp->Description=nullptr;
+		if (AMacroFunction) {
+			for (size_t I = 0; I < CMacroFunction; ++I) {
+				TMacroFunction *pTemp = AMacroFunction + I;
+				free((void *)pTemp->Name);
+				pTemp->Name = nullptr;
+				free((void *)pTemp->fnGUID);
+				pTemp->fnGUID = nullptr;
+				free((void *)pTemp->Syntax);
+				pTemp->Syntax = nullptr;
+				free((void *)pTemp->Buffer);
+				pTemp->Buffer = nullptr;
 			}
-			CMacroFunction=0;
-			AllocatedFuncCount=0;
+
+			CMacroFunction = 0;
+			AllocatedFuncCount = 0;
 			free(AMacroFunction);
-			AMacroFunction=nullptr;
+			AMacroFunction = nullptr;
 		}
-		*/
 	} else if (AMacroFunction && Index < CMacroFunction)
 		AMacroFunction[Index].Code = MCODE_F_NOFUNC;
 	else
@@ -6131,6 +6158,13 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec, BOOL NeedAddSendFlag, BOOL IsPlugi
 {
 	if (!MRec)
 		return FALSE;
+	if (MRec->BufferSize < 0)
+		return FALSE;
+	size_t AllocCount = static_cast<size_t>(MRec->BufferSize) + 3;
+	if (AllocCount > SIZE_MAX / sizeof(DWORD))
+		return FALSE;
+	if (!MRec->Buffer && (MRec->BufferSize > 1 || (IsPluginSend && MRec->BufferSize > 0)))
+		return FALSE;
 
 	MacroRecord NewMacroWORK2{};
 	NewMacroWORK2 = *MRec;
@@ -6138,7 +6172,7 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec, BOOL NeedAddSendFlag, BOOL IsPlugi
 	NewMacroWORK2.Description = nullptr;
 	// if(MRec->BufferSize > 1)
 	{
-		if (!(NewMacroWORK2.Buffer = (DWORD *)malloc((MRec->BufferSize + 3) * sizeof(DWORD)))) {
+		if (!(NewMacroWORK2.Buffer = (DWORD *)malloc(AllocCount * sizeof(DWORD)))) {
 			return FALSE;
 		}
 	}
@@ -6153,11 +6187,17 @@ int KeyMacro::PostNewMacro(MacroRecord *MRec, BOOL NeedAddSendFlag, BOOL IsPlugi
 	}
 
 	// теперь добавим в нашу "очередь" новые данные
+	const int BufferOffset = IsPluginSend ? 1 : 0;
+
 	if (IsPluginSend)
 		NewMacroWORK2.Buffer[0] = MCODE_OP_KEYS;
 
-	if (MRec->BufferSize > 0 && MRec->Buffer)
-		memcpy(&NewMacroWORK2.Buffer[IsPluginSend ? 1 : 0], MRec->Buffer, sizeof(DWORD) * MRec->BufferSize);
+	if (MRec->BufferSize > 1 && MRec->Buffer)
+		memcpy(&NewMacroWORK2.Buffer[BufferOffset], MRec->Buffer, sizeof(DWORD) * MRec->BufferSize);
+	else if (MRec->BufferSize == 1 && MRec->Buffer) {
+		// Internal macro records may pack a single opcode into Buffer itself.
+		NewMacroWORK2.Buffer[BufferOffset] = IsPluginSend ? MRec->Buffer[0] : (DWORD)(DWORD_PTR)MRec->Buffer;
+	}
 
 	if (IsPluginSend)
 		NewMacroWORK2.Buffer[NewMacroWORK2.BufferSize + 1] = MCODE_OP_ENDKEYS;

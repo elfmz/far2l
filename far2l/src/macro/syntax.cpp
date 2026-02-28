@@ -93,6 +93,7 @@ enum TToken
 };
 
 static int exprBuffSize = 0;
+static int exprBuffCapacity = 0;
 static DWORD FARVar, *exprBuff = nullptr;
 static int IsProcessFunc = 0;
 
@@ -201,13 +202,30 @@ int TExec::del()
 };
 
 //-----------------------------------------------
+static bool reserveExprBuff(int count)
+{
+	if (count < 0 || exprBuffCapacity < 0 || exprBuffSize < 0 || exprBuffSize > exprBuffCapacity
+			|| count > exprBuffCapacity - exprBuffSize) {
+		keyMacroParseError(err_IntParserError, L"");
+		return false;
+	}
+
+	return true;
+}
+
 static void put(uint32_t code)
 {
+	if (!reserveExprBuff(1))
+		return;
+
 	exprBuff[exprBuffSize++] = code;
 }
 
 static void putDouble(double code)
 {
+	if (!reserveExprBuff(2))
+		return;
+
 	LARGE_INTEGER *i64 = (LARGE_INTEGER *)&code;
 	exprBuff[exprBuffSize++] = i64->u.HighPart;
 	exprBuff[exprBuffSize++] = i64->u.LowPart;
@@ -215,6 +233,9 @@ static void putDouble(double code)
 
 static void put64(uint64_t code)
 {
+	if (!reserveExprBuff(2))
+		return;
+
 	LARGE_INTEGER i64;
 	i64.QuadPart = code;
 	exprBuff[exprBuffSize++] = i64.u.HighPart;
@@ -225,13 +246,21 @@ static void putstr(const wchar_t *s)
 {
 	_KEYMACRO(CleverSysLog Clev(L"putstr"));
 	_KEYMACRO(SysLog(L"s[%p]='%ls'", s, s));
-	int Length = (int)(StrLength(s) + 1) * sizeof(wchar_t);
+	size_t StrLen = StrLength(s);
+	if (StrLen > (static_cast<size_t>(INT_MAX) / sizeof(wchar_t)) - 1) {
+		keyMacroParseError(err_IntParserError, L"");
+		return;
+	}
+
+	int Length = static_cast<int>((StrLen + 1) * sizeof(wchar_t));
 	// строка должна быть выровнена на 4
 	int nSize = Length / sizeof(DWORD);
-	memmove(&exprBuff[exprBuffSize], s, Length);
 
 	if (Length == sizeof(wchar_t) || (Length % sizeof(DWORD)))	// дополнение до sizeof(DWORD) нулями.
 		nSize++;
+
+	if (!reserveExprBuff(nSize))
+		return;
 
 	memset(&exprBuff[exprBuffSize], 0, nSize * sizeof(DWORD));
 	memmove(&exprBuff[exprBuffSize], s, Length);
@@ -417,24 +446,26 @@ static void calcFunc()
 
 static void getVarName(int &ch)
 {
-	wchar_t *p = nameString;
-	*p++ = (wchar_t)ch;
+	size_t length = 0;
+	nameString[length++] = (wchar_t)ch;
 
 	while (((ch = getChar()) != EOFCH) && (iswalnum(ch) || (ch == L'_')))
-		*p++ = (wchar_t)ch;
+		if (length + 1 < ARRAYSIZE(nameString))
+			nameString[length++] = (wchar_t)ch;
 
-	*p = 0;
+	nameString[length] = 0;
 }
 
 static void getFarName(int &ch)
 {
-	wchar_t *p = nameString;
-	*p++ = (wchar_t)ch;
+	size_t length = 0;
+	nameString[length++] = (wchar_t)ch;
 
 	while (((ch = getChar()) != EOFCH) && (iswalnum(ch) || (ch == L'_') || (ch == L'.')))
-		*p++ = (wchar_t)ch;
+		if (length + 1 < ARRAYSIZE(nameString))
+			nameString[length++] = (wchar_t)ch;
 
-	*p = 0;
+	nameString[length] = 0;
 }
 
 static wchar_t *putBack(int ch)
@@ -1519,7 +1550,16 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 	//	MacroSrcList.Reset();
 	//}
 
-	int SizeCurKeyText = (int)(StrLength(BufPtr) * 2) * sizeof(wchar_t);
+	size_t BufLen = StrLength(BufPtr);
+	size_t SizeCurKeyText = BufLen * 2 * sizeof(wchar_t);
+	if (BufLen > 0
+			&& (SizeCurKeyText / (2 * sizeof(wchar_t)) != BufLen
+					|| SizeCurKeyText > static_cast<size_t>(INT_MAX)
+					|| SizeCurKeyText > SIZE_MAX / sizeof(DWORD))) {
+		keyMacroParseError(err_IntParserError, L"");
+		return FALSE;
+	}
+
 	FARString strCurrKeyText;
 	//- AN ----------------------------------------------
 	//  Буфер под парсинг выражений
@@ -1528,6 +1568,8 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 
 	if (!dwExprBuff)
 		return FALSE;
+
+	exprBuffCapacity = static_cast<int>(SizeCurKeyText);
 
 	TExec exec;
 	wchar_t varName[256];
@@ -1836,15 +1878,18 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 			break;
 
 		// код найден, добавим этот код в буфер последовательности.
-		CurMacro_Buffer = (DWORD *)realloc(CurMacro_Buffer,
+		DWORD *NewCurMacroBuffer = (DWORD *)realloc(CurMacro_Buffer,
 				sizeof(*CurMacro_Buffer) * (CurMacroBufferSize + Size + SizeVarName));
 
-		if (!CurMacro_Buffer) {
+		if (!NewCurMacroBuffer) {
+			free(CurMacro_Buffer);
 			CurMacroBuffer = nullptr;
 			CurMacroBufferSize = 0;
 			free(dwExprBuff);
 			return FALSE;
 		}
+
+		CurMacro_Buffer = NewCurMacroBuffer;
 
 		switch (KeyCode) {
 			case MCODE_OP_PLAINTEXT: {
@@ -1987,15 +2032,18 @@ int __parseMacroString(DWORD *&CurMacroBuffer, int &CurMacroBufferSize, const wc
 	}	// END for (;;)
 
 	if (CurMacroBufferSize == 1) {
-		CurMacro_Buffer =
+		DWORD *NewCurMacroBuffer =
 				(DWORD *)realloc(CurMacro_Buffer, sizeof(*CurMacro_Buffer) * (CurMacroBufferSize + 1));
 
-		if (!CurMacro_Buffer) {
+		if (!NewCurMacroBuffer) {
+			free(CurMacro_Buffer);
 			CurMacroBuffer = nullptr;
 			CurMacroBufferSize = 0;
 			free(dwExprBuff);
 			return FALSE;
 		}
+
+		CurMacro_Buffer = NewCurMacroBuffer;
 
 		CurMacro_Buffer[CurMacroBufferSize] = MCODE_OP_NOP;
 		CurMacroBufferSize++;

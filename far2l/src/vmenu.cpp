@@ -519,6 +519,7 @@ int VMenu::DeleteItem(int ID, int Count)
 			free(PtrItem->UserData);
 
 		UpdateInternalCounters(PtrItem->Flags, 0);
+		delete PtrItem;
 	}
 
 	// а вот теперь перемещения
@@ -2337,7 +2338,10 @@ void VMenu::SetColors(FarListColors *ColorsIn)
 	CriticalSectionLock Lock(CS);
 
 	if (ColorsIn) {
-		memmove(Colors, ColorsIn->Colors, sizeof(Colors));
+		if (ColorsIn->Colors && ColorsIn->ColorCount > 0) {
+			memmove(Colors, ColorsIn->Colors,
+					Min(sizeof(Colors), static_cast<size_t>(ColorsIn->ColorCount) * sizeof(Colors[0])));
+		}
 	} else {
 		static short StdColor[2][3][VMENU_COLOR_COUNT] = {
 				// Not VMENU_WARNDIALOG
@@ -2482,7 +2486,10 @@ void VMenu::GetColors(FarListColors *ColorsOut)
 {
 	CriticalSectionLock Lock(CS);
 
-	memmove(ColorsOut->Colors, Colors, Min(sizeof(Colors), ColorsOut->ColorCount * sizeof(Colors[0])));
+	if (ColorsOut && ColorsOut->Colors && ColorsOut->ColorCount > 0) {
+		memmove(ColorsOut->Colors, Colors,
+				Min(sizeof(Colors), static_cast<size_t>(ColorsOut->ColorCount) * sizeof(Colors[0])));
+	}
 }
 
 void VMenu::SetOneColor(int Index, uint64_t Color)

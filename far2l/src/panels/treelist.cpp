@@ -112,30 +112,44 @@ static struct TreeListCache
 		TreeSize = 0;
 	}
 
-	void Resize()
+	bool Resize()
 	{
-		if (TreeCount == TreeSize) {
-			TreeSize+= TreeSize ? TreeSize >> 2 : 32;
-			wchar_t **NewPtr = (wchar_t **)realloc(ListName, sizeof(wchar_t *) * TreeSize);
+		if (TreeCount != TreeSize)
+			return true;
 
-			if (!NewPtr)
-				return;
+		size_t NewSize = TreeSize + (TreeSize ? TreeSize >> 2 : 32);
+		wchar_t **NewPtr = (wchar_t **)realloc(ListName, sizeof(wchar_t *) * NewSize);
+		if (!NewPtr)
+			return false;
 
-			ListName = NewPtr;
-		}
+		ListName = NewPtr;
+		TreeSize = NewSize;
+		return true;
 	}
 
 	void Add(const wchar_t *name)
 	{
-		Resize();
-		ListName[TreeCount++] = wcsdup(name);
+		if (!Resize())
+			return;
+
+		wchar_t *NewName = wcsdup(name);
+		if (!NewName)
+			return;
+
+		ListName[TreeCount++] = NewName;
 	}
 
 	void Insert(int idx, const wchar_t *name)
 	{
-		Resize();
+		if (!Resize())
+			return;
+
+		wchar_t *NewName = wcsdup(name);
+		if (!NewName)
+			return;
+
 		memmove(ListName + idx + 1, ListName + idx, sizeof(wchar_t *) * (TreeCount - idx));
-		ListName[idx] = wcsdup(name);
+		ListName[idx] = NewName;
 		TreeCount++;
 	}
 
@@ -1866,10 +1880,14 @@ void TreeList::RenTreeName(const wchar_t *SrcName, const wchar_t *DestName)
 			FARString strNewName = DestName;
 			strNewName+= DirName + SrcLength;
 
+			wchar_t *NewName = wcsdup(strNewName);
+			if (!NewName)
+				continue;
+
 			if (TreeCache.ListName[CachePos])
 				free(TreeCache.ListName[CachePos]);
 
-			TreeCache.ListName[CachePos] = wcsdup(strNewName);
+			TreeCache.ListName[CachePos] = NewName;
 		}
 	}
 }

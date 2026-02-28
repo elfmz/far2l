@@ -19,3 +19,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
     PREFIX ""
     SUFFIX ".far-plug-wide")
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lang/memoe.lng "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lang/memor.lng "${INSTALL_DIR}/Plugins/${PROJECT_NAME}/plug"
+)

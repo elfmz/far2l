@@ -146,6 +146,7 @@ enum enumCommandsMenu
 	MENU_COMMANDS_PROCESSLIST,
 	MENU_COMMANDS_SEPARATOR4,
 	MENU_COMMANDS_FARCONFIG,
+	MENU_COMMANDS_MACROBROWSER,
 	MENU_COMMANDS_ABOUTFAR,
 	MENU_COMMANDS_HOTPLUGLIST
 };
@@ -279,6 +280,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{Msg::MenuProcessList,      0,             KEY_CTRLW },
 		{L"",                       LIF_SEPARATOR, 0         },
 		{Msg::MenuFarConfig,        0,             0         },
+		{Msg::MenuMacroBrowser,     0,             0         },
 		{Msg::MenuAboutFar,         0,             0         }
 	};
 	MenuDataEx OptionsMenu[] = {
@@ -558,6 +560,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 					break;
 				case MENU_COMMANDS_FARCONFIG:		// far:config
 					ConfigOptEdit();
+					break;
+				case MENU_COMMANDS_MACROBROWSER:
+					CtrlObject->Macro.MacroBrowser();
 					break;
 				case MENU_COMMANDS_ABOUTFAR:		// far:about
 					void FarAbout(PluginManager &Plugins);

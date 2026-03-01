@@ -21,6 +21,7 @@ $^#File and archive manager#
    ~Plugins support~@Plugins@
    ~Overview of plugin capabilities~@PluginsReviews@
    ~Terminal~@Terminal@
+   ~External terminal: configuration~@ExternalTerminal@
 
    ~Panels:~@Panels@  ~File panel~@FilePanel@
             ~Tree panel~@TreePanel@
@@ -754,6 +755,15 @@ internal editor.
     the selected files will be carried out using that plugin,
     otherwise by using internal facilities.
 
+    Note: Print manager for Linux is unavailable. Instead, Editor has embedded 
+    support for printing text files even with text highlighting with white background
+    and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
+
+    GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
+    and printy itself; termibnal version expects the #lp# command works and your CUPS is
+    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    printing automation.
+
   Create ~file links~@HardSymLink@                                           #Alt-F6#
 
     Using hard file links you may have several different file names referring
@@ -1228,7 +1238,7 @@ Pressing #Ctrl-Enter# keys simultaneously will select the next match.
     #Gray +# and #Gray -# keys move up and down the tree to the next branch
 on the same level.
 
-    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
+    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up.
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
 
@@ -1604,6 +1614,27 @@ like NetRocks SFTP/SCP protocols to execute remote commands.
   See also: ~Pseudo-commands~@SpecCmd@
             ~Operating system commands~@OSCommands@
 
+@ExternalTerminal
+$ #External terminal: configuration#
+   To launch console applications in an external terminal emulator, far2l uses the helper script ~$FARHOME~@FAREnv@#/open.sh#.
+
+   #Default terminal selection logic.#
+
+   1. Checks for #/etc/alternatives/x-terminal-emulator#. On distributions using the alternatives mechanism (Debian, Ubuntu, Red Hat), this symbolic link points to the system's preferred terminal emulator. If valid, it is used.
+   2. Otherwise, #xterm# is used.
+
+
+   #Overriding the terminal.#
+
+   There are two main ways to change the emulator.
+   1. System-wide (for distributions with the alternatives mechanism).
+      You can change the global default terminal by running the command:
+         #sudo update-alternatives --config x-terminal-emulator#
+   2. User-defined (specific to far2l).
+      Create the executable file #~~/.config/far2l/open.sh#. Inside, define the #$EXEC_TERM# variable with your preferred terminal, for example:
+         #EXEC_TERM=kitty#
+      Note: The selected terminal must support the #-e# option.
+
 @UIBackends
 $ #UI Backends#
     Depending on build options and available platform features #FAR2L# can render
@@ -1719,7 +1750,7 @@ containing hexadecimal sequence of the specified bytes. In this case #Case#
 #sensitive#, #Whole words#, #Using code page# and #Search for folders#
 options are disabled and their values doesn't affect the search process.
 
-    The drop-down list #Using code page# allows you to select a specific  
+    The drop-down list #Using code page# allows you to select a specific
 code page to be used for text search. If you select the item
 #Standard code pages# in the drop-down list, FAR2L will use all
 standard and #Favorite# code pages for the search (the list of #Favorite#
@@ -1928,7 +1959,7 @@ the folder.
     #Gray +# and #Gray -# should move up and down the tree to the next branch
 on the same level.
 
-    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up. 
+    Key #Left# collapses the currently focused branch. If the branch is already collapsed, moves one level up.
     Key #Right# expands a tree branch that was collapsed during construction
 according to the configured exclusion mask or scanning depth.
 
@@ -2568,7 +2599,7 @@ $ #Settings dialog: panel#
                           panel.
 
   #Scanning depth#          Sets the maximum depth for recursive catalogue scanning
-                          while building the tree. 
+                          while building the tree.
 
   #Mask for subtree#        Defines filename ~masks~@FileMasks@ for subtrees to exclude
   #scanning exclusions#     from automatic scanning. Use this to skip folders
@@ -2903,7 +2934,6 @@ $ #Viewer: control keys#
     #F5#                 Toggle raw/processed mode
     #F6#                 Switch to ~editor~@Editor@
     #Alt-F5#             Print the file
-                       ("Print manager" plugin is used).
     #F7#                 ~Search~@ViewerSearch@
     #Shift-F7, Space#    Continue search
     #Alt-F7#             Continue search in "reverse" mode
@@ -3123,7 +3153,7 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F5#                      Toggle whitespace characters displaying
    #Shift-F5#                Change Tab character width
    #Ctrl-F5#                 Toggle Tab-to-spaces expansion
-   #Alt-F5#                  ^<wrap>Print file or selected block ("Print manager" plugin is used).
+   #Alt-F5#                  ^<wrap>Print file or selected block.
    #F6#                      Switch to ~viewer~@Viewer@
    #F7#                      ~Search~@EditorSearch@
    #Ctrl-F7#                 ~Replace~@EditorSearch@
@@ -3132,8 +3162,9 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
    #F8#                      Toggle UTF8/~ANSI/OEM~@CodePagesSet@ code page
    #Shift-F8#                Select code page
    #Alt-F8#                  ~Go to~@EditorGotoPos@ specified line and column
+   #F9#                      Call menu bar for the editor, with the list of available commands
    #Alt-F9#                  Toggles the size of the FAR2L console window
-   #F9, Alt-Shift-F9#        Call ~Editor settings~@EditorSettings@ dialog
+   #Alt-Shift-F9#            Call ~Editor settings~@EditorSettings@ dialog
    #F10, F4, Esc#            Quit
    #Shift-F10#               Save and quit
    #Ctrl-F10#                Position to the current file
@@ -3166,6 +3197,14 @@ keypad inserts the character that has the specified code (0-65535).
     3. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
 line as a block and copies it to the clipboard.
 
+    4. Print manager for Linux is unavailable. Instead, Editor has embedded 
+    support for printing text files even with text highlighting with white background
+    and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
+
+    GUI version uses wxWidgets capabilities to make print preview, manage printer settings,
+    and printy itself; termibnal version expects the #lp# command works and your CUPS is
+    configured correctly. MacOS version uses native capabilities based upon WebKit 
+    printing automation.
 
 @EditorSearch
 $ #Editor: search/replace#
@@ -4254,6 +4293,8 @@ of the same name already exists.
     #Overwrite# - all target files will be replaced;
     #Skip# - target files will not be replaced;
     #Append# - target file will be appended with the file being copied;
+    #Resume# - the existing target file remans, and the source is being appended
+to it (by skipping first N bytes that equal to target file size).
     #Only newer file(s)# - only files with newer write date and time
 will be copied; This option affects only the current copy session and not saved
 for later copy operations.
@@ -4287,6 +4328,9 @@ prompted to select on of the following actions:
 the file being copied;
 
     #Append# - target file will be appended with the file being copied;
+
+    #Resume# - the existing target file remans, and the source is being appended
+to it (by skipping first N bytes that equal to target file size).
 
     If #Remember choice# is checked, the selected action will be applied to
 all existing files and the confirmation dialog will not be displayed again for
@@ -4796,7 +4840,7 @@ usually does as a reaction to this combination.
 
     Playing the macro will display the symbol '\2FP\-' in the upper left corner of the screen.
 
-    Note: To let you see the macro in the config file or in Macro Browser, you have an ability 
+    Note: To let you see the macro in the config file or in Macro Browser, you have an ability
     to make short description as you prefer.
 
 
@@ -4910,6 +4954,57 @@ FAR2L.
     #$Rep#          - loop operator
     #%var#          - using variables
      and others...
+
+    Macro text can be written directly in the macro configuration file
+    #~~/.config/far2l/settings/key_macros.ini#. Each macro is a section named:
+    #KeyMacros/<Area>/<Key># where:
+    - #Area# is one of: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+#Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+    - #Key# is a key name such as #CtrlShiftF3#, #AltF1#, #F7#, etc.
+
+    Common fields inside a section:
+    #Description# - short text shown in the macro browser;
+    #DisableOutput# - #0x1# to suppress screen redraw during playback;
+    #Sequence# - macro text (may include #$If#, #$Else#, #$End#, etc.).
+
+    Example (open FAR2L internal terminal log in viewer; if the active panel is visible, temporarily hide panels):
+ #[KeyMacros/Shell/CtrlShiftF3]#
+ #DisableOutput=0x1#
+ #Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+    #Macro keywords (variables / conditions)#
+    General:
+      #Bof#, #Eof#, #Empty#, #Selected# - state of the current object in this area.
+      #Far.Width#, #Far.Height#, #Far.Title# - console size / title.
+      #MacroArea# - current macro area name.
+      #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - current object properties.
+
+    Panels (Active/Passive):
+      #APanel.*# and #PPanel.*# are for active/passive panel.
+      #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+      #Selected#, #Left#, #LFN#, #Filter# - panel state flags.
+      #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - panel values.
+      #Path#, #Path0#, #UNCPath# - panel paths.
+      #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - panel geometry / mode.
+      #HostFile#, #Prefix# - plugin panel host file / prefix.
+
+    Command line:
+      #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected# - state.
+      #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value# - values.
+
+    Editor:
+      #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+      #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+    Dialog:
+      #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+    Help:
+      #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+    Viewer / Menu / Other:
+      #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+      #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
 
     Addition of macro language commands to a ~macro~@KeyMacro@ can only be done
 by manually editing the config file or by using special tools/plugins.
@@ -5098,13 +5193,13 @@ $ #Index help file#
 $ #Ways to run programs without blocking far2l#
   When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
 
-  Launching programs in an external terminal from the far2l command line:
-  - #program#: to launch in an external terminal using Shift-Enter (using ~$FARHOME~@FAREnv@/open.sh to launch); 
-  - #$FARHOME/open.sh exec program#: to run in an external terminal using Enter, exec is required as the first parameter for open.sh;
+  Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
   - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
 
   Running programs from far2l:
-  - #program params &#: just add at the end & — will close the program after closing far2l;
+  - #program params &#: just add at the end & - will close the program after closing far2l;
   - #nohup program params &#: the launch is performed by the nohup program. A nohup.out file is created in the current directory with the program output. You can delete this file later. Such a launch will keep the program running after completing far2l;
   - #nohup program params >/dev/null 2>&1 &#: will leave the program running after completing far2l without unnecessary output;
   - #setsid program params >/dev/null 2>/dev/null#: when used in the examples above & some programs, when closed, output information about their termination to the current terminal - using setsid avoids such clogging of the output of the current program;

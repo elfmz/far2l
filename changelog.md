@@ -5,28 +5,38 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
-* Editor: Word wrap (like in Windows Notepad or HTML textareas). Toggled by **F3** or **Alt+W**
-* Editor: Line numbers. Toggled by **Ctrl+F3**
-* Editor: mouse selection (hold **Alt** to vertical selection)
-* Viewer: links automatic highlight and clickable for URLs starting with https:, http: or mailto: (toggled on/off in Viewer options)
-* File panels: new sort option "executables first" (toggled inside **Shift+F12**)
+* Themes support (change via **F9**->Options->Colors),
+  changes only RGB colors of interface (not change palette colors and Colorer in editor)
+* Editor: Word wrap (like in Windows Notepad or HTML textareas), toggled by **F3** or **Alt+W**
+* Editor: Line numbers (toggled by **Ctrl+F3**)
+* Editor: Mouse selection (hold **Alt** to vertical block selection)
+* Editor: Menu in editor (**F9** to open)
+* Viewer: Links automatic highlight and clickable for URLs starting with https:, http: or mailto: (toggled on/off in Viewer options)
+* File panels: New sort option "executables first" (toggled inside **Ctrl+F12**)
+* File panels: Resume for copy operation
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
   Option to set the maximum recursive scanning depth (default: 4).
   **Right Arrow** expands excluded subtrees, and **Left Arrow** collapses subtree in focus, if it's already collapsed - navigates one level up.
   **Left Ctrl+1**...**Left Ctrl+0** expands all branches to the chosen depth (1...10).
-* _New:_ Visual show trailing spaces/tabs in dialog edit lines
+* Dialog edit fields: Visual show trailing spaces/tabs and Select All by **Ctrl+A**
+* _New:_ Colored multiline edit control in "Multiline paste" and "Edit user menu" dialogs
 * _New:_ Options of the special command `edit:[line,col]` for openening file with position
 * _New:_ NetBSD support
+* _New:_ Show Pseudo-graphics on VT100+ terminals
+* _New:_ Macro Browser (**F9**->Commands->Macro Browser)
 * Fix scrolling from precise input devices
 * Optimize bracketed paste performance by buffering input events
+* TTY/Kitty: Map Cmd to Ctrl on macOS for Cmd+C/V/X/Z support
 * _NetRocks plugin_: FTP fixes with date/time, SFTP fixes with quotes
 * _hexitor plugin_: fix broken layout with narrow window
 * _ImageViewer plugin_: New panel plugin (**F11**->**I** to open image/video file).
   Uses ImageMagick for graphics operations and ffmpeg for video preview,
-  works in GUI and in TTY|F and TTY|k)
+  works in GUI and in TTY|F and TTY|k.
 * _incsrch plugin_: Support Unicode searches and better support for single byte codepages, improve example of activation macros
 * _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
 * _truncate plugin_: New plugin in editor (**F11**->Truncate File) to remove trailing white spaces in all lines and remove empty lines in end of file
+* _multiarc plugin_: Update bundled 7z sources to 26.00
+* _multiarc plugin_: Update bundled unrar sources to 7.20
 * _arclite plugin_: More symlinks/hardlinks support: works with RAR/TAR/NTFS; fix option "Link path: Absolute/Relative" for symlinks when create archive (see [#3094](https://github.com/elfmz/far2l/pull/3094))
 * _OpenWith plugin_: Update to v1.1. Added support for DE-specific mimeapps.list files; improved MIME detection (Magika AI & native globs2 pattern matching); better compliance with XDG/Freedesktop specifications; bugfixes and performance optimizations.
 * Several bugfixes and improvements
@@ -52,7 +62,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _colorer plugin_: Improved performance around logging
 * _colorer plugin_: Fix read default-back/default-fore params
 * _python plugin_: fixes and new subplugin **uedreplace**
-* _multiarc plugin_: Update bundled 7z sources to 2501
+* _multiarc plugin_: Update bundled 7z sources to 25.01
 * _multiarc plugin_: Update bundled unrar sources to 7.13
 * _arclite plugin_: New plugin for archives processing
   (now as experimental version which partially more effective then multiarc;
@@ -102,7 +112,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * _New:_ Add bash-completion
 * _colorer plugin_: Update colorer lib to v1.4.1
 * _colorer plugin_: Change logger library
-* _multiarc plugin_: Update bundled 7z sources to 2408
+* _multiarc plugin_: Update bundled 7z sources to 24.08
 * _multiarc plugin_: Update bundled unrar sources to 7.0.9
 * _python plugin_: New subplugins
 * _python plugin_: Build changes and requirements

@@ -14,6 +14,8 @@ nomacro.hpp
 #include "chgmmode.hpp"
 #include "macro.hpp"
 
+#include "message.hpp" // 
+
 KeyMacro::KeyMacro() {}
 KeyMacro::~KeyMacro() {}
 bool KeyMacro::ProcessKey(FarKey Key) { return false; }
@@ -38,6 +40,14 @@ BOOL KeyMacro::GetMacroParseError(DWORD *ErrCode, COORD *ErrPos, FARString *ErrS
 BOOL KeyMacro::GetMacroParseError(FARString *Err1, FARString *Err2, FARString *Err3, FARString *Err4)
 	{ return FALSE; }
 void KeyMacro::SetMacroConst(const wchar_t *ConstName, const TVar Value) {}
+
+void KeyMacro::MacroBrowser()
+{
+	ExMessager em(L"Macro Browser");
+	em.Add(L"FAR2L building without macro subsystem completely");
+	em.AddDup(Msg::Ok);
+	em.Show(MSG_WARNING, 1);
+}
 
 ChangeMacroMode::ChangeMacroMode(int NewMode) {}
 ChangeMacroMode::~ChangeMacroMode() {}

@@ -32,7 +32,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 {
 	PluginDialogBuilder Builder(Info, MAutoWrap, NULL);
 	Builder.AddCheckbox(MEnableWrap, &Opt.Wrap);
-	FarDialogItem *RightMargin = Builder.AddIntEditField(&Opt.RightMargin, 3);
+	auto RightMargin = Builder.AddIntEditField(&Opt.RightMargin, 3);
 	Builder.AddTextAfter(RightMargin, MRightMargin);
 	Builder.AddSeparator();
 	Builder.AddText(MFileMasks);

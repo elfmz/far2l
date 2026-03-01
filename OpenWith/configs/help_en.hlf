@@ -32,7 +32,7 @@ $^#Details Dialog (F3)#
 
  #-# MIME profile
    The file type(s) detected by the plugin. For multiple files, all unique detected profiles are shown. Format depends on the OS:
-   #Linux/BSD#: "Raw" results from all enabled detection methods ("xdg-mime", "file", etc). If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
+   #Linux/BSD#: "Raw" results from all enabled ~detection methods~@ConfigurationDialog@ ("xdg-mime", "file", etc). If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
    #macOS#: The MIME type corresponding to the file's system UTI.
 
  #-# Launch command
@@ -50,7 +50,7 @@ $^#Details Dialog (F3)#
 
  #-# Source
    Why this application was suggested for the file.
-   Shows the association origin (system default, user preferences, index, or full scan) and the actual MIME type that triggered the match (exact, alias, parent, structured suffix, or generic).
+   Shows the association origin (system default, user preferences, cache, or full scan) and the actual MIME type that triggered the match (exact, alias, parent, structured suffix, or generic).
    This field is hidden when multiple files are selected, as each file may have a different source.
 
  #-# Name
@@ -75,7 +75,7 @@ $^#Details Dialog (F3)#
    A boolean value (true or false) indicating whether the application must be run in a terminal window.
 
  #-# MimeType
-   The list of MIME types supported by this application, separated by semicolons. This is the key field used to associate the application with specific file types. The plugin uses this data to match the selected file's type against the application's capabilities.
+   The list of MIME types supported by this application, separated by semicolons. The plugin uses this field to determine if the program should appear in the menu for the selected file.
 
  #-# OnlyShowIn
    A semicolon-separated list of desktop environment identifiers (e.g., "GNOME;KDE;"). If this key is present, the application entry should only be shown in the specified environments. This allows developers to tailor visibility for desktop-specific tools.
@@ -108,12 +108,12 @@ $^#OpenWith plugin#
 $^#Version 1.1#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Configuration Dialog (F9)#
- The configuration dialog, accessible by pressing #F9# in the application selection menu, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
+ The configuration dialog, accessible by pressing #F9# in the application selection menu or via ~Plugins Configuration~@:PluginsConfig@ in the ~Options Menu~@:OptMenu@, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
 
  #1. GENERAL SETTINGS#
 
  #-# Use external terminal for console apps
-   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new external terminal window. If unchecked, they will run inside far2l's built-in terminal.
+   If checked, applications that require a terminal (e.g., vim or mc) will be launched in a new ~external terminal~@:ExternalTerminal@ window. If unchecked, they will run inside far2l's ~built-in terminal~@:Terminal@.
    When using the built-in terminal with multiple files selected, the plugin applies a "smart" filter. It hides terminal applications that require a separate process for each file, while those that can handle all files in a single command remain in the list.
    You can force a console application to launch in an external terminal regardless of this setting by pressing #Shift+Enter#.
 
@@ -154,7 +154,7 @@ $^#Configuration Dialog (F9)#
    Enables loading MIME type associations from system "aliases" files. This helps find more applications by linking a file's MIME type with its alternative names (e.g., "application/x-deb" to "application/vnd.debian.binary-package", or "image/ico" to "image/vnd.microsoft.icon").
 
  #-# Load MIME type subclasses
-   Enables loading the MIME type inheritance hierarchy from system "subclasses" files. This helps find applications that can handle a file's more general, parent type. This option is essential for formats whose internal structure is not obvious from the MIME type's name.
+   Enables loading the MIME type inheritance hierarchy from system "subclasses" files. This helps find applications that can handle a file's more general, parent type. This option is useful for formats whose internal structure is not obvious from the MIME type's name.
    For example, a Microsoft Word file (.docx), which has the MIME type "application/vnd.openxmlformats-officedocument.wordprocessingml.document", is structurally a ZIP archive ("application/zip"). With this option enabled, archive managers will be suggested for a .docx file in addition to word processors.
 
  #-# Resolve structured MIME suffixes
@@ -195,7 +195,7 @@ $^#OpenWith plugin#
 $^#Version 1.1#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips & tricks#
-    For quick access, you can use a macro, for example, to access via "#≣ Menu#"/"#Apps#" key:
+    For quick access, you can use a ~macro~@:KeyMacro@, for example, to access via "#≣ Menu#"/"#Apps#" key:
 
     In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines:
  #[KeyMacros/Shell/Apps]#
@@ -244,6 +244,15 @@ $^#Troubleshooting#
   #-# Outdated cache: Run 'update-desktop-database' and 'update-mime-database' in your terminal to refresh the system caches.
 
 
+ #File type is not detected ("none") and the application list is empty! (Linux/BSD)#
+
+ This usually happens if analysis tools are disabled or unsuccessful.
+ Solution:
+  #-# Check the plugin ~settings~@ConfigurationDialog@. At least one MIME type detection method must be enabled.
+  #-# Check file permissions. The plugin cannot detect the MIME type (via "xdg-mime", "file", or "magika") if the current user does not have read permissions for the file.
+  #-# Enable "Show universal handlers for all files" in the ~configuration dialog~@ConfigurationDialog@. This ensures that at least basic utilities (such as hex editors) appear even if the exact file type is unknown.
+
+
  #Why do I get the error "Selected item must be a file accessible locally via a real path."?#
 
  This error means the selected item is either not a physical file or resides in a virtual environment that the OS cannot access directly, so it cannot be passed as a command-line argument to external applications. It may occur when trying to open via the plugin:
@@ -271,7 +280,7 @@ $^#Troubleshooting#
   3. Try launching the application again.
  You will now see any error messages (stdout/stderr) printed by the application directly in the far2l console.
  Also check the command for common syntax errors:
-  #-# Incorrect field codes: The plugin supports standard codes ("%f", "%F", "%u", "%U"). Some applications might use deprecated or non-standard codes that will not work.
+  #-# Incorrect field codes: The plugin supports standard codes ("%f", "%F", "%u", "%U", "%c", "%k"). Some applications might use deprecated or non-standard codes that will not work.
   #-# Missing quotes: Paths with spaces must be correctly quoted or escaped. Warning: Do NOT enclose field codes in quotes (e.g., use #%f#, not #"%f"#). According to the spec, field codes inside quotes are treated as literal text and are not expanded.
   #-# Program not in $PATH: If "Exec" contains just a program name, it must be located in one of the directories listed in the $PATH environment variable.
   #-# Incorrect path format: The application might not correctly handle the file:// URIs that the plugin passes by default, even if its .desktop file uses the "%u" or "%U" field codes. Try enabling the "Pass plain paths instead of file:// URIs" option in the ~configuration dialog~@ConfigurationDialog@.
@@ -281,5 +290,13 @@ $^#Troubleshooting#
 
  The plugin checks for required tools ("xdg-mime", "file", "magika") in your system $PATH. If a tool is missing, its option is disabled to prevent errors.
  Solution: Install the missing tool via your package manager and ensure it is accessible in $PATH.
+
+
+ #Plugin works very slowly! Can I speed up the menu appearance? (Linux/BSD)#
+
+ Delays are usually caused by launching "heavy" external tools for every file when processing a large number of them.
+ Solution:
+  #-# Prefer the "Use glob rules detection" ~option~@ConfigurationDialog@ over other MIME type discovery methods. Pattern matching is performed internally within the plugin and is instant. Launching external processes takes time; the "file" and "magika" tools always read file content, and "magika" is even slower as it loads a neural network model.
+  #-# Avoid selecting too many files at once if external analysis tools are enabled.
 
    ~Contents~@Contents@

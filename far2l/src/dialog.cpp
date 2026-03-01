@@ -3111,13 +3111,10 @@ int Dialog::ProcessKey(FarKey Key)
 			if (FarIsEdit(Item[FocusPos]->Type)) {
 				DlgEdit *edt = (DlgEdit *)Item[FocusPos]->ObjPtr;
 
-				if (Key == KEY_CTRLL)		// исключим смену режима RO для поля ввода с клавиатуры
-				{
+				if (Key == KEY_CTRLL) {		// исключим смену режима RO для поля ввода с клавиатуры
 					return TRUE;
-				} else if (Key == KEY_CTRLU) {
-					edt->SetClearFlag(0);
-					edt->Select(-1, 0);
-					edt->Show();
+				} else if (Key == KEY_CTRLA || Key == KEY_CTRLU) { // Process even in read-only edit controls
+					edt->ProcessKey(Key);
 					return TRUE;
 				} else if ((Item[FocusPos]->Flags & DIF_EDITOR) && !(Item[FocusPos]->Flags & DIF_READONLY)) {
 					switch (Key) {
@@ -3677,37 +3674,18 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 				for (;;) {
 					DWORD Mb = IsMouseButtonPressed();
-					int mx, my, X0, Y0;
 
 					if (Mb == FROM_LEFT_1ST_BUTTON_PRESSED)		// still dragging
 					{
-						int AdjX = 0, AdjY = 0;
-						int OX1 = X1;
-						int OY1 = Y1;
-						int NX1 = X0 = X1;
-						int NX2 = X2;
-						int NY1 = Y0 = Y1;
-						int NY2 = Y2;
-
-						if (MouseX == PrevMouseX)
-							mx = X1;
-						else
-							mx = MouseX - MsX;
-
-						if (MouseY == PrevMouseY)
-							my = Y1;
-						else
-							my = MouseY - MsY;
-
-						NX2 = mx + (X2 - X1);
-						NX1 = mx;
-						AdjX = NX1 - X0;
-						NY2 = my + (Y2 - Y1);
-						NY1 = my;
-						AdjY = NY1 - Y0;
+						const int NX1 = (MouseX == PrevMouseX) ? X1 : MouseX - MsX;
+						const int NY1 = (MouseY == PrevMouseY) ? Y1 : MouseY - MsY;
+						const int NX2 = NX1 + (X2 - X1);
+						const int NY2 = NY1 + (Y2 - Y1);
+						const int AdjX = NX1 - X1;
+						const int AdjY = NY1 - Y1;
 
 						// "А был ли мальчик?" (про холостой ход)
-						if (OX1 != NX1 || OY1 != NY1) {
+						if (AdjX || AdjY) {
 							if (!NeedSendMsg)		// тыкс, а уже посылку делали в диалоговую процедуру?
 							{
 								NeedSendMsg++;
@@ -3728,8 +3706,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 								Y1 = NY1;
 								Y2 = NY2;
 
-								if (AdjX || AdjY)
-									AdjustEditPos(AdjX, AdjY);	//?
+								AdjustEditPos(AdjX, AdjY);	//?
 
 								Show();
 							}
@@ -6379,7 +6356,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		///case DM_GETCOLOR:///
 		case DM_GETTRUECOLOR: {
 			if (Param2)
-				memcpy((uint64_t *)Param2, CurItem->customItemColor, sizeof(uint64_t) * 4);
+				memcpy((uint64_t *)Param2, CurItem->customItemColor, sizeof(uint64_t) * DLG_ITEM_MAX_CUST_COLORS);
 //			if (!CurItem->TrueColors) {
 //				memset((uint64_t *)Param2, 0, sizeof(DialogItemTrueColors));
 //			} else {
@@ -6393,7 +6370,7 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		///case DM_SETCOLOR:///
 		case DM_SETTRUECOLOR: {
 			if (Param2)
-				memcpy(CurItem->customItemColor, (uint64_t *)Param2, sizeof(uint64_t) * 4);
+				memcpy(CurItem->customItemColor, (uint64_t *)Param2, sizeof(uint64_t) * DLG_ITEM_MAX_CUST_COLORS);
 
 //			if (!CurItem->TrueColors) {
 //				CurItem->TrueColors.reset(new DialogItemTrueColors);

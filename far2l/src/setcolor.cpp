@@ -118,7 +118,12 @@ static int ListPaletteItems[4][15] = {
 
 void SetColors()
 {
-	MenuDataEx Groups[] = {
+	std::vector<std::string> v   = FarColors::GetKnownUserThemes ();
+	std::vector<std::string> v2  = FarColors::GetKnownSystemThemes ();
+
+	std::vector<std::wstring> stringBuffer;
+
+	MenuDataEx BaseGroups[] = {
 		{(const wchar_t *)Msg::SetColorPanel,       LIF_SELECTED,  0},
 		{(const wchar_t *)Msg::SetColorDialog,      0,             0},
 		{(const wchar_t *)Msg::SetColorWarning,     0,             0},
@@ -130,13 +135,83 @@ void SetColors()
 		{(const wchar_t *)Msg::SetColorViewer,      0,             0},
 		{(const wchar_t *)Msg::SetColorEditor,      0,             0},
 		{(const wchar_t *)Msg::SetColorHelp,        0,             0},
-		{L"",                                       LIF_SEPARATOR, 0},
+		{Msg::ColorThemesPreinstalledSection,       LIF_SEPARATOR, 0},
 		{(const wchar_t *)Msg::SetDefaultColors,    0,             0},
 		{(const wchar_t *)Msg::SetDefaultColorsRGB, 0,             0},
 		{(const wchar_t *)Msg::SetBW,               0,             0},
-		{L"",                                       LIF_SEPARATOR, 0},
-		{(const wchar_t *)Msg::Palette,             0,             0}
+     // {L"",                                       LIF_SEPARATOR, 0},
+		{Msg::ColorThemesNoTheme,                   0,             0},
+        {L"",                                       LIF_SEPARATOR, 0},
 	};
+
+	size_t BaseGroupLen = ARRAYSIZE(BaseGroups);
+	int noThemeIndex = BaseGroupLen - 2;
+
+	size_t GroupsLen = BaseGroupLen + 
+		(v.size() > 0 ? v.size() + 1 : 0) +   		/* user themes */
+		(v2.size() > 0 ? v2.size() + 0 : 0); 	/* system themes */
+	MenuDataEx Groups[GroupsLen];
+
+    /* copy from temnplate */
+	for(size_t i = 0; i < BaseGroupLen; ++i) {
+		Groups[i].Name = BaseGroups[i].Name;
+		Groups[i].Flags = BaseGroups[i].Flags;
+		Groups[i].AccelKey = BaseGroups[i].AccelKey;
+	}
+
+	if (Opt.CurrentTheme.IsEmpty()) /* built-in check */
+		Groups[noThemeIndex].SetCheck(1);
+
+    /* add user themes (if exists) */
+	size_t ptr = BaseGroupLen;
+
+	size_t startOfSystemThemes = ptr;
+	if (v2.size() > 0) {
+		// Groups[ptr].Name = Msg::ColorThemesPreinstalledSection;
+		// Groups[ptr].Flags = LIF_SEPARATOR;
+		// Groups[ptr].AccelKey = 0;
+        // ++ptr;
+        // ++startOfSystemThemes;
+
+    	for(size_t j = 0; j < v2.size(); ++j) {
+    	    int Length = v2[j].length();
+    	   	std::wstring _tmpwstr;
+    	    MB2Wide(v2[j].c_str(), Length, _tmpwstr);
+
+            stringBuffer.push_back(_tmpwstr);
+			Groups[ptr].Name = stringBuffer[stringBuffer.size() - 1].c_str();
+			Groups[ptr].Flags = 0;
+			Groups[ptr].AccelKey = 0;
+
+			if (!wcscmp(Opt.CurrentTheme.GetBuffer(), Groups[ptr].Name) && Opt.IsSystemTheme) 
+				Groups[ptr].SetCheck(1);
+            ++ptr;
+    	}
+	}
+
+	size_t startOfUserThemes = ptr;
+	if (v.size() > 0) {
+		Groups[ptr].Name = Msg::ColorThemesUserSection;
+		Groups[ptr].Flags = LIF_SEPARATOR;
+		Groups[ptr].AccelKey = 0;
+		++ptr;
+        ++startOfUserThemes;
+
+    	for(size_t j = 0; j < v.size(); ++j) {
+    	    int Length = v[j].length();
+    	   	std::wstring _tmpwstr;
+    	    MB2Wide(v[j].c_str(), Length, _tmpwstr);
+            stringBuffer.push_back(_tmpwstr);
+			Groups[ptr].Name = stringBuffer[stringBuffer.size() - 1].c_str();
+			Groups[ptr].Flags = 0;
+			Groups[ptr].AccelKey = 0;
+
+			if (!wcscmp(Opt.CurrentTheme.GetBuffer(), Groups[ptr].Name) && !Opt.IsSystemTheme) 
+				Groups[ptr].SetCheck(1);
+            ++ptr;
+    	}
+	}
+
 	MenuDataEx PanelItems[] = {
 		{(const wchar_t *)Msg::SetColorPanelNormal,          LIF_SELECTED, 0},
 		{(const wchar_t *)Msg::SetColorPanelSelected,        0,            0},
@@ -337,7 +412,7 @@ void SetColors()
 			COL_HELPBOX, COL_HELPBOXTITLE, COL_HELPSCROLLBAR};
 	{
 		int GroupsCode;
-		VMenu GroupsMenu(Msg::SetColorGroupsTitle, Groups, ARRAYSIZE(Groups), 0);
+		VMenu GroupsMenu(Msg::SetColorGroupsTitle, Groups, GroupsLen, 0);
 		MenuToRedraw1 = &GroupsMenu;
 
 		for (;;) {
@@ -351,7 +426,9 @@ void SetColors()
 
 			// Set default 8 bit colors
 			if (GroupsCode == 12) {
-
+				Opt.CurrentTheme = L"";
+				Opt.IsColorsChanged = false;
+				Opt.IsSystemTheme = false;
 				FarColors::FARColors.ResetToDefaultIndex();
 				FarColors::FARColors.Set();
 				break;
@@ -359,7 +436,9 @@ void SetColors()
 
 			// Set default RGB
 			if (GroupsCode == 13) {
-
+				Opt.CurrentTheme = L"";
+				Opt.IsColorsChanged = false;
+				Opt.IsSystemTheme = false;
 				FarColors::FARColors.ResetToDefaultIndexRGB();
 				FarColors::FARColors.Set();
 				break;
@@ -367,10 +446,43 @@ void SetColors()
 
 			// Set black & white 8 bit colors
 			if (GroupsCode == 14) {
-
+				Opt.CurrentTheme = L"";
+				Opt.IsColorsChanged = false;
+				Opt.IsSystemTheme = false;
 				FarColors::FARColors.ResetToDefaultIndex(BlackColorsIndex16);
 				FarColors::FARColors.Set();
+				break;
+			}
 
+			if (GroupsCode == noThemeIndex) { // "No theme" selected
+				Opt.CurrentTheme = "";
+				Opt.IsColorsChanged = false;
+				Opt.IsSystemTheme = false;
+
+				FarColors::InitFarColors();
+				FarColors::FARColors.Set();
+				break;
+			}
+
+			size_t k1 = GroupsCode - startOfUserThemes;
+			size_t k2 = GroupsCode - startOfSystemThemes;
+			if (v2.size() > 0 && k2 >= 0 && k2 < v2.size()) {
+				Opt.CurrentTheme = v2[k2];
+				Opt.IsColorsChanged = false;
+				Opt.IsSystemTheme = true;
+
+				FarColors::InitFarColorsFromTheme(Opt.CurrentTheme, Opt.IsSystemTheme);
+				FarColors::FARColors.Set();
+				break;
+			}
+
+			if (v.size() > 0 && k1 >= 0 && k1 < v.size()) {
+				Opt.CurrentTheme = v[k1];
+				Opt.IsColorsChanged = false;
+				Opt.IsSystemTheme = false;
+
+				FarColors::InitFarColorsFromTheme(Opt.CurrentTheme, Opt.IsSystemTheme);
+				FarColors::FARColors.Set();
 				break;
 			}
 
@@ -473,6 +585,8 @@ void GetColor(int ColorIndex)
 	if (GetColorDialog(&NewColor, false)) {
 		FarColors::FARColors.colors[ColorIndex] = NewColor;
 		FarColors::setcolors[ColorIndex] = NewColor;
+
+		Opt.IsColorsChanged = true;
 
 		ScrBuf.Lock();	// отменяем всякую прорисовку
 		CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);

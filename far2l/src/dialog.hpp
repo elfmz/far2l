@@ -47,8 +47,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CriticalSections.hpp"
 
 class History;
-
-constexpr size_t DLG_ITEM_MAX_CUST_COLORS = 5;
 // Флаги текущего режима диалога
 enum DIALOG_MODES
 {

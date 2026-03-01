@@ -84,29 +84,26 @@ public:
 	~DialogBuilder();
 
 	// Добавляет поле типа DI_EDIT для редактирования указанного строкового значения.
-	DialogItemEx *
-	AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
+	ItemReference AddEditField(FARString *Value, int Width, const wchar_t *HistoryID = nullptr, int Flags = 0);
 
 	LONG_PTR UserData;
 	bool SetUserDlgProc(FARWINDOWPROC UserProc, LONG_PTR UserParam2);
 
 	// Добавляет поле типа DI_FIXEDIT для редактирования указанного числового значения.
-	virtual DialogItemEx *AddIntEditField(int *Value, int Width, int Flags = 0);
+	virtual ItemReference AddIntEditField(int *Value, int Width, int Flags = 0);
 
 	// Добавляет выпадающий список с указанными значениями.
-	DialogItemEx *
-	AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
+	ItemReference AddComboBox(int *Value, int Width, DialogBuilderListItem *Items, int ItemCount, DWORD Flags = DIF_NONE);
 
 	// Добавляет выпадающий список с code pages.
-	DialogItemEx *AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
+	ItemReference AddCodePagesBox(UINT *Value, int Width, bool allowAuto, bool allowAll);
 
 	// Связывает состояние элементов Parent и Target. Когда Parent->Selected равно
 	// false, устанавливает флаги Flags у элемента Target; когда равно true -
 	// сбрасывает флаги.
 	// Если LinkLabels установлено в true, то текстовые элементы, добавленные к элементу Target
 	// методами AddTextBefore и AddTextAfter, также связываются с элементом Parent.
-	void
-	LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels = true);
+	void LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags, bool LinkLabels = true);
 
 	void AddOKCancel() { DialogBuilderBase<DialogItemEx>::AddOKCancel(Msg::Ok, Msg::Cancel); }
 };

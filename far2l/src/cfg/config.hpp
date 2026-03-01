@@ -220,6 +220,7 @@ struct EditorOptions
 	DWORD FileSizeLimitHi;
 	int ShowKeyBar;
 	int ShowTitleBar;
+	int ShowMenuBar;
 	int ShowScrollBar;
 	int UseEditorConfigOrg;
 	int SearchSelFound;
@@ -253,6 +254,7 @@ struct ViewerOptions
 	UINT DefaultCodePage;
 	int ShowTitleBar;
 	int SearchRegexp;
+	int ShowMenuBar;
 };
 
 // "Полиция"
@@ -649,6 +651,11 @@ struct Options
 	DWORD OwnerGroupShowId;
 
 	bool IsFirstStart;
+
+    // Theme support: theme name and flag indicating we need to save colors
+	FARString CurrentTheme;
+	bool IsColorsChanged;    /* transient, do not need to store in file */
+	bool IsSystemTheme;
 
 	std::vector<std::wstring> CmdLineStrings;
 };

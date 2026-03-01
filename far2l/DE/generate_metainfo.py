@@ -38,12 +38,16 @@ release_elem = None
 
 for elem in html_root:
     if elem.tag == "h2":
-        if elem.text[0].isdecimal():
-            match = release_re.match(elem.text)
+        if match := release_re.match(elem.text):
             release = match.groupdict()
             if release["type"] == "beta":
                 release["type"] = "development"
             release_elem = ET.SubElement(releases, "release", release)
+        elif elem.text != "Master (current development)":
+            print(
+                f"Warning: cannot parse header {elem.text!r} in {changelog_file}",
+                file=sys.stderr,
+            )
     elif elem.tag == "ul" and release_elem is not None:
         for child_elem in elem.iter():
             # https://www.freedesktop.org/software/appstream/docs/chap-Metadata.html#tag-description

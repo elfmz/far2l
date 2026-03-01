@@ -129,6 +129,9 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, nullptr},
 	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
+	{true,  NSecColors, "CurrentTheme", &Opt.CurrentTheme, nullptr },
+	{true,  NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 0 },
+
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
 	{true,  NSecScreen, "KeyBar", &Opt.ShowKeyBar, 1},
@@ -203,6 +206,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecViewer, "Wrap", &Opt.ViOpt.ViewerWrap, 0},
 	{true,  NSecViewer, "PersistentBlocks", &Opt.ViOpt.PersistentBlocks, 0},
 	{true,  NSecViewer, "DefaultCodePage", &Opt.ViOpt.DefaultCodePage, CP_UTF8},
+	{true,  NSecViewer, "ShowMenuBar", &Opt.ViOpt.ShowMenuBar, 0},
 
 	{true,  NSecDialog, "EditHistory", &Opt.Dialogs.EditHistory, 1},
 	{true,  NSecDialog, "EditBlock", &Opt.Dialogs.EditBlock, 0},
@@ -237,6 +241,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecEditor, "DefaultCodePage", &Opt.EdOpt.DefaultCodePage, CP_UTF8},
 	{true,  NSecEditor, "ShowKeyBar", &Opt.EdOpt.ShowKeyBar, 1},
 	{true,  NSecEditor, "ShowTitleBar", &Opt.EdOpt.ShowTitleBar, 1},
+	{true,  NSecEditor, "ShowMenuBar", &Opt.EdOpt.ShowMenuBar, 0},
 	{true,  NSecEditor, "ShowScrollBar", &Opt.EdOpt.ShowScrollBar, 0},
 	{true,  NSecEditor, "UseEditorConfigOrg", &Opt.EdOpt.UseEditorConfigOrg, 1},
 	{true,  NSecEditor, "SearchSelFound", &Opt.EdOpt.SearchSelFound, 0},
@@ -837,6 +842,10 @@ void ConfigOptSave(bool Ask)
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();
 
-	FarColors::SaveFarColors();
+    if (Opt.IsColorsChanged || Ask) 
+    {
+		FarColors::SaveFarColors();
+		Opt.IsColorsChanged = false;
+	}
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }

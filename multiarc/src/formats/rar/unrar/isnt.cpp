@@ -22,7 +22,9 @@ DWORD WinNT()
   return Result;
 }
 
-
+// Since Windows 10 development is stopped, we can assume that its build
+// number never reaches 22000. So we do not need WMI anymore.
+#if 0
 // Replace it with documented Windows 11 check when available.
 #include <comdef.h>
 #include <Wbemidl.h>
@@ -89,6 +91,7 @@ static bool WMI_IsWindows10()
 
   return Win10;
 }
+#endif
 
 
 // Replace it with actual check when available.
@@ -101,7 +104,7 @@ bool IsWindows11OrGreater()
     WinVer.dwOSVersionInfoSize=sizeof(WinVer);
     GetVersionEx(&WinVer);
     IsWin11=WinVer.dwMajorVersion>10 || 
-          WinVer.dwMajorVersion==10 && WinVer.dwBuildNumber >= 22000 && !WMI_IsWindows10();
+          WinVer.dwMajorVersion==10 && WinVer.dwBuildNumber >= 22000/* && !WMI_IsWindows10()*/;
     IsSet=true;
   }
   return IsWin11;

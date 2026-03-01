@@ -52,6 +52,8 @@
 #pragma comment(lib, "Shlwapi.lib")
 #include <PowrProf.h>
 #pragma comment(lib, "PowrProf.lib")
+#include <psapi.h>
+#pragma comment(lib, "Psapi.lib") // For GetProcessMemoryInfo().
 #include <shellapi.h>
 #include <shlobj.h>
 #include <winioctl.h>

@@ -125,6 +125,9 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	#define KITTY_MOD_SHIFT    1
 	#define KITTY_MOD_ALT      2
 	#define KITTY_MOD_CONTROL  4
+	#define KITTY_MOD_SUPER    8
+	#define KITTY_MOD_HYPER    16
+	#define KITTY_MOD_META     32
 	#define KITTY_MOD_CAPSLOCK 64
 	#define KITTY_MOD_NUMLOCK  128
 	#define KITTY_EVT_KEYUP    3
@@ -207,6 +210,10 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			_kitty_right_ctrl_down ? RIGHT_CTRL_PRESSED : LEFT_CTRL_PRESSED; } else {
 			_kitty_right_ctrl_down = 0;
 		}
+#ifdef __APPLE__
+		// On macOS, map Super (Cmd) to Ctrl for Cmd+C/V/X/Z etc. compatibility
+		if (modif_state & KITTY_MOD_SUPER)    { ir.Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED; }
+#endif
 		if (modif_state & KITTY_MOD_CAPSLOCK) { ir.Event.KeyEvent.dwControlKeyState |= CAPSLOCK_ON; }
 		if (modif_state & KITTY_MOD_NUMLOCK)  { ir.Event.KeyEvent.dwControlKeyState |= NUMLOCK_ON; }
 	}

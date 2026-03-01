@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class FileEditor;
 class KeyBar;
+class EditorMenuBar;
 
 struct InternalEditorBookMark
 {
@@ -115,7 +116,7 @@ struct EditorUndoData
 	    delete[] this->Str;
 
 		if (Str) {
-			this->Str = new wchar_t[Length + 1];
+			this->Str = new (std::nothrow) wchar_t[Length + 1];
 
 			if (this->Str)
 				wmemmove(this->Str, Str, Length);
@@ -257,11 +258,24 @@ private:
 	FARString m_virtualFileName;
 
 private:
+	struct MouseTarget
+	{
+		Edit* line{nullptr};
+		int pos{-1};
+		int visual_line{0};
+	};
+
 	int FindVisualLine(Edit* line, int Pos);
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
 	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
 	int GetTopScreenLineNumber();
+	void EnsureTopScreenVisual();
+	bool DecTopVisualLine();
+	bool IncTopVisualLine();
+	int VisualOffsetFromTop(Edit* line, int vline) const;
+	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
+	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state);
 	virtual void DisplayObject();
 	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);

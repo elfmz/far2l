@@ -556,9 +556,6 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
 // Return plugin info - menu items, command prefix, etc.
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
   Info->StructSize = sizeof(PluginInfo);
-  // Don't use PF_EDITOR - memo uses DI_MEMOEDIT (internal dialog editor),
-  // not a real file editor. PF_EDITOR causes colorer to send editor events
-  // which crash when there's no valid file context.
   Info->Flags = PF_VIEWER | PF_DIALOG;
 
   static const wchar_t *menu_strings[1];
@@ -602,6 +599,13 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
   if (ei.EditorID != 0) {
     DBG("invoke: REJECTED - called from within editor (EditorID=%d)",
         ei.EditorID);
+    return INVALID_HANDLE_VALUE;
+  }
+
+  // Also reject if panels don't exist (standalone mode or restricted context).
+  // This further protects against crashes in standalone editor/viewer mode.
+  if (!g_far.Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0)) {
+    DBG("invoke: REJECTED - panels don't exist (standalone mode?)");
     return INVALID_HANDLE_VALUE;
   }
 

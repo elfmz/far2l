@@ -591,25 +591,6 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
     return INVALID_HANDLE_VALUE;
   }
 
-  // DI_MEMOEDIT triggers EE_GOTFOCUS to all plugins (including colorer),
-  // which crashes colorer when there is no backing file for the dialog editor.
-  // Detect if we are inside an active editor and skip the dialog in that case.
-  EditorInfo ei = {};
-  g_far.EditorControl(ECTL_GETINFO, &ei);
-  if (ei.EditorID != 0) {
-    DBG("invoke: REJECTED - called from within editor (EditorID=%d)",
-        ei.EditorID);
-    return INVALID_HANDLE_VALUE;
-  }
-
-  // Also reject if panels don't exist (standalone mode or restricted context).
-  // This further protects against crashes in standalone editor/viewer mode.
-  if (!g_far.Control(INVALID_HANDLE_VALUE, FCTL_CHECKPANELSEXIST, 0, 0)) {
-    DBG("invoke: REJECTED - panels don't exist (standalone mode?)");
-    return INVALID_HANDLE_VALUE;
-  }
-
-  DBG("invoke: ACCEPTED - opening memo dialog");
   OpenMemoDialog();
   return INVALID_HANDLE_VALUE;
 }

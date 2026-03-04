@@ -1,15 +1,15 @@
 # Memo Plugin for Far2l
 
-A multi-page scratchpad/memo plugin for Far2l file manager.  
+A multi-page scratchpad/memo plugin for Far2l.  
 10 independent memo pages, always at your fingertips.
 
 ## Features
 
 ### 10 Independent Memo Pages
 - 10 separate memo pages, switched with `Ctrl+1`–`Ctrl+9`, `Ctrl+0` (or `Alt+…`)
-- Each page stored as a separate UTF-8 file: `memo-00.txt` … `memo-09.txt`
-- Full-featured multiline text editor (`DI_MEMOEDIT`)
-- Title always shows the active page: `[ Memo - 3 ]`
+- **Cursor Persistence:** Caret position is saved and restored per page.
+- **Dynamic UI:** Dialog size adapts to your terminal, with a safe 60x15 minimum.
+- **Robust Paths:** Full UTF-8 support for home directory and file exports.
 - Visual page indicator at bottom: `• 1 • 2 •[3]• 4 • … • 0 •`
 
 ### Keyboard
@@ -21,36 +21,21 @@ A multi-page scratchpad/memo plugin for Far2l file manager.
 | `Esc` | Close and auto-save |
 | `F2` / `Shift+F2` | Export current page to an external file |
 
-### Auto-Save
-Content is saved automatically when:
-- Switching between pages
-- Closing the dialog (`Esc`)
-
-### State Persistence
-Last active page is remembered in `state.ini` and restored on next open.
-
-### Export (F2)
-- Saves current page to any path you specify via an input box
-- Default path: `~/memo-0N.txt`
+### Auto-Save & State
+- Content is saved automatically when switching pages or closing.
+- Last active page and cursor positions are remembered across sessions.
 
 ### Configuration (F11 → Plugins → Configure → Memo)
-- **Enable / disable** the plugin entirely (stored in `state.ini`)
-- When disabled, `Ctrl+S` / `Cmd+S` is silently ignored
+- **Enable Memo Plugin:** Enable/disable the plugin functionality.
+- **Use Ctrl+S to open:** Automatically registers `Ctrl+S` as a global hotkey in `settings/key_macros.ini`.
 
-## Hotkey Setup
+## Global Hotkey (Ctrl+S)
 
-The plugin does not register hotkeys itself.  
-Use `key_macros.ini` with `CallPlugin` to bind `Ctrl+S` / `Cmd+S`:
+The plugin can automatically manage its own `Ctrl+S` binding.
+- **Auto-Registration:** Enabling "Use Ctrl+S" in settings adds `callplugin(0x4D454D4F)` to your global macros.
+- **Editor Safety:** The plugin silently ignores `Ctrl+S` when called from an active Editor to prevent a known conflict with the **Colorer** plugin (avoids Segmentation Faults).
 
-```ini
-[Macros.Shell.CtrlS]
-Sequence=callplugin(0x53637274)
-
-[Macros.Viewer.CtrlS]
-Sequence=callplugin(0x53637274)
-```
-
-The plugin's SysID is `0x53637274`.
+The plugin's SysID is `0x4D454D4F`. Command line prefix: `memo:`.
 
 ## Storage
 
@@ -59,31 +44,16 @@ Default location: `~/.config/far2l/plugins/memo/`
 | File | Purpose |
 |------|---------|
 | `memo-00.txt` … `memo-09.txt` | Page content (UTF-8) |
-| `state.ini` | `LastMemo=N`, `Enabled=0/1` |
-| `debug.log` | Debug build only — removed in Release (`NDEBUG`) |
-
-## Language Files
-
-Installed alongside the plugin in `Plugins/memo/plug/`:
-
-| File | Language |
-|------|----------|
-| `memoe.lng` | English |
-| `memor.lng` | Russian |
-
-Far2l selects the language file automatically based on the current locale.
+| `state.ini` | `LastMemo`, `Enabled`, `HotkeyEnabled` |
+| `debug.log` | Debug build only (`NDEBUG` builds omit this) |
 
 ## Plugin API
 
 | Function | Purpose |
 |----------|---------|
-| `SetStartupInfoW` | Initialize with Far2l API |
-| `GetPluginInfoW` | Register plugin name, menu entries, SysID |
-| `OpenPluginW` | Open the memo dialog (guards: enabled check, editor check) |
-| `ClosePluginW` | No-op |
-| `ConfigureW` | Show enable/disable configuration dialog |
-| `ProcessEditorEventW` | No-op |
-| `ProcessEventW` | No-op |
+| `OpenPluginW` | Entry point. Guards: enabled check, **Editor area check** (prevents crash). |
+| `ConfigureW` | Configuration dialog with hotkey management. |
+| `SetStartupInfoW` | Initialization and automatic macro registration. |
 
 ## Building
 
@@ -91,13 +61,8 @@ Far2l selects the language file automatically based on the current locale.
 cmake --build /path/to/far2l-adb --target memo
 ```
 
-Output: `install/far2l.app/Contents/MacOS/Plugins/memo/plug/memo.far-plug-wide`  
-Language files are copied automatically as a CMake post-build step.
-
-### Debug Build
-When built **without** `-DNDEBUG`, the plugin writes detailed logs to  
-`~/.config/far2l/plugins/memo/debug.log`.  
-In Release builds the logging is completely omitted at compile time.
+Output: `Plugins/memo/plug/memo.far-plug-wide`  
+Language files and `key_macros.ini` template are copied automatically.
 
 ## License
 

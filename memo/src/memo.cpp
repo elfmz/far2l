@@ -1,6 +1,8 @@
+#include <KeyFileHelper.h>
 #include <WideMB.h>
 #include <WinCompat.h>
 #include <WinPort.h>
+#include <utils.h>
 #include <farkeys.h>
 #include <farplug-wide.h>
 
@@ -18,7 +20,7 @@
 #include <vector>
 
 // Unique ID for plugin (must be non-zero)
-#define SYSID_MEMO 0x53637274
+#define SYSID_MEMO 0x4D454D4F
 #define MEMO_COUNT 10
 
 // String IDs matching line order in memoe.lng / memor.lng
@@ -28,6 +30,7 @@ enum MsgId {
   MCancel,       // "&Cancel"
   MConfigTitle,  // "Memo Plugin Configuration"
   MEnablePlugin, // "&Enable Memo Plugin"
+  MUseHotkey,    // "&Use Ctrl+S to open"
 };
 
 // ---------------------------------------------------------------------------
@@ -51,6 +54,7 @@ enum DialogItems {
 // Far2l API - set by SetStartupInfoW
 PluginStartupInfo g_far;
 static int g_currentMemo = 0; // Current memo index (0-9)
+static COORD g_memoPositions[MEMO_COUNT] = {}; // Store cursor position for each memo
 
 // Forward declaration
 static const std::wstring &GetMemoDir();
@@ -88,8 +92,7 @@ static const std::wstring &GetMemoDir() {
   static std::wstring dir = []() {
     const char *home = getenv("HOME");
     if (home) {
-      std::string h = home;
-      std::wstring wh(h.begin(), h.end());
+      std::wstring wh = MB2Wide(home);
       std::wstring d = wh + L"/.config/far2l/plugins/memo";
 
       WINPORT(CreateDirectory)((wh + L"/.config").c_str(), NULL);
@@ -233,12 +236,89 @@ static void SaveEnabled(bool enabled) {
   }
 }
 
+// Load hotkey flag from state.ini (default: enabled)
+static bool IsHotkeyEnabled() {
+  std::wstring statePath = GetStateFilePath();
+  std::string mbPath = Wide2MB(statePath.c_str());
+  std::ifstream f(mbPath);
+  if (f.is_open()) {
+    std::string line;
+    while (std::getline(f, line)) {
+      if (line.find("HotkeyEnabled=") == 0) {
+        return line.substr(14) != "0";
+      }
+    }
+  }
+  return true; // enabled by default
+}
+
+// Save hotkey flag to state.ini
+static void SaveHotkeyEnabled(bool enabled) {
+  std::wstring statePath = GetStateFilePath();
+  std::string mbPath = Wide2MB(statePath.c_str());
+
+  std::vector<std::string> lines;
+  bool found = false;
+
+  std::ifstream f_in(mbPath);
+  if (f_in.is_open()) {
+    std::string line;
+    while (std::getline(f_in, line)) {
+      if (line.find("HotkeyEnabled=") == 0) {
+        lines.push_back(std::string("HotkeyEnabled=") + (enabled ? "1" : "0"));
+        found = true;
+      } else {
+        lines.push_back(line);
+      }
+    }
+  }
+
+  if (!found) {
+    lines.push_back(std::string("HotkeyEnabled=") + (enabled ? "1" : "0"));
+  }
+
+  std::ofstream f_out(mbPath);
+  if (f_out.is_open()) {
+    for (const auto &l : lines) {
+      f_out << l << "\n";
+    }
+  }
+}
+
+// Add or remove Ctrl+S macro in global key_macros.ini
+static void UpdateGlobalMacro(bool enabled) {
+  std::string iniPath = InMyConfig("settings/key_macros.ini");
+  const char *section = "KeyMacros/Common/CtrlS";
+  
+  KeyFileHelper kfh(iniPath);
+  if (enabled) {
+    if (!kfh.HasSection(section)) {
+      kfh.SetString(section, "Sequence", "callplugin(0x4D454D4F)");
+      kfh.Save();
+      
+      // Reload macros in FAR
+      ActlKeyMacro akm = {MCMD_LOADALL};
+      g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
+      DBG("macro: added Ctrl+S to Common and reloaded");
+    }
+  } else {
+    if (kfh.HasSection(section)) {
+      kfh.RemoveSection(section);
+      kfh.Save();
+      
+      // Reload macros in FAR
+      ActlKeyMacro akm = {MCMD_LOADALL};
+      g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
+      DBG("macro: removed Ctrl+S from Common and reloaded");
+    }
+  }
+}
+
 // Get user's home directory for default Save As path
 static std::wstring GetHomeDir() {
   const char *home = getenv("HOME");
   if (home) {
-    std::string h = home;
-    return std::wstring(h.begin(), h.end());
+    return MB2Wide(home);
   }
   return L".";
 }
@@ -289,30 +369,17 @@ static bool SaveFileContent(const std::wstring &path,
 static_assert(MEMO_COUNT == 10, "MEMO_COUNT must be 10");
 static const wchar_t *GetIndicatorWithX(int targetMemo) {
   static const wchar_t *indicators[MEMO_COUNT] = {
-      L"\x2022[&1]\x2022 2 \x2022 3 \x2022 4 \x2022 5 \x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022[&2]\x2022 3 \x2022 4 \x2022 5 \x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022[&3]\x2022 4 \x2022 5 \x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022[&4]\x2022 5 \x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022 4 \x2022[&5]\x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022 4 \x2022 5 \x2022[&6]\x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022 4 \x2022 5 \x2022 6 \x2022[&7]\x2022 "
-      L"8 \x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022 4 \x2022 5 \x2022 6 \x2022 7 "
-      L"\x2022[&8]\x2022 9 \x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022 4 \x2022 5 \x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022[&9]\x2022 0 \x2022",
-      L"\x2022 1 \x2022 2 \x2022 3 \x2022 4 \x2022 5 \x2022 6 \x2022 7 \x2022 "
-      L"8 \x2022 9 \x2022[&0]\x2022"};
-  if (targetMemo < 0 || targetMemo >= MEMO_COUNT) {
-    targetMemo = 0;
-  }
-  return indicators[targetMemo];
+      L"•[&1]• 2 • 3 • 4 • 5 • 6 • 7 • 8 • 9 • 0 •",
+      L"• 1 •[&2]• 3 • 4 • 5 • 6 • 7 • 8 • 9 • 0 •",
+      L"• 1 • 2 •[&3]• 4 • 5 • 6 • 7 • 8 • 9 • 0 •",
+      L"• 1 • 2 • 3 •[&4]• 5 • 6 • 7 • 8 • 9 • 0 •",
+      L"• 1 • 2 • 3 • 4 •[&5]• 6 • 7 • 8 • 9 • 0 •",
+      L"• 1 • 2 • 3 • 4 • 5 •[&6]• 7 • 8 • 9 • 0 •",
+      L"• 1 • 2 • 3 • 4 • 5 • 6 •[&7]• 8 • 9 • 0 •",
+      L"• 1 • 2 • 3 • 4 • 5 • 6 • 7 •[&8]• 9 • 0 •",
+      L"• 1 • 2 • 3 • 4 • 5 • 6 • 7 • 8 •[&9]• 0 •",
+      L"• 1 • 2 • 3 • 4 • 5 • 6 • 7 • 8 • 9 •[&0]•"};
+  return indicators[(targetMemo >= 0 && targetMemo < MEMO_COUNT) ? targetMemo : 0];
 }
 
 // Update indicator text to show current page
@@ -327,8 +394,7 @@ static std::wstring GetMemoText(HANDLE hDlg) {
   std::wstring content;
   if (len > 0) {
     content.resize(len);
-    g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO,
-                         (LONG_PTR)content.data());
+    g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO, (LONG_PTR)content.data());
   }
   return content;
 }
@@ -342,10 +408,12 @@ static void SaveCurrentMemo(HANDLE hDlg) {
 // Switch to different memo - saves current, loads new, updates UI
 static void SwitchToMemo(HANDLE hDlg, int newMemo) {
   if (newMemo < 0 || newMemo >= MEMO_COUNT || newMemo == g_currentMemo) {
-    DBG("switch-memo: ignored (newMemo=%d currentMemo=%d)", newMemo,
-        g_currentMemo);
+    DBG("switch-memo: ignored (newMemo=%d currentMemo=%d)", newMemo, g_currentMemo);
     return;
   }
+
+  // Save current cursor position before switching
+  g_far.SendDlgMessage(hDlg, DM_GETCURSORPOS, DI_MEMO, (LONG_PTR)&g_memoPositions[g_currentMemo]);
 
   DBG("switch-memo: %d -> %d (auto-saving current first)", g_currentMemo,
       newMemo);
@@ -353,8 +421,10 @@ static void SwitchToMemo(HANDLE hDlg, int newMemo) {
 
   g_currentMemo = newMemo;
   std::wstring newContent = LoadFileContent(GetMemoFilePath(g_currentMemo));
-  g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_MEMO,
-                       (LONG_PTR)newContent.c_str());
+  g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_MEMO, (LONG_PTR)newContent.c_str());
+
+  // Restore cursor position for the new memo
+  g_far.SendDlgMessage(hDlg, DM_SETCURSORPOS, DI_MEMO, (LONG_PTR)&g_memoPositions[g_currentMemo]);
 
   // Update title: "Memo" -> "Memo - 1", etc.
   std::wstring title =
@@ -385,8 +455,8 @@ static bool SaveMemoAs(HANDLE hDlg) {
 
   DBG("key-F2: Save As dialog opened, default=%ls", defaultPath.c_str());
 
-  if (g_far.InputBox(L"Save Memo", L"Enter destination path:", L"MemoSave",
-                     defaultPath.c_str(), destPath, MAX_PATH, NULL, FIB_NONE)) {
+  if (g_far.InputBox(L"Save Memo", L"Enter destination path:", L"MemoSave", 
+		defaultPath.c_str(), destPath, MAX_PATH, NULL, FIB_NONE)) {
     DBG("key-F2: user confirmed export to %ls", destPath);
     bool ok = SaveFileContent(destPath, content);
     DBG("key-F2: export %s (%zu chars)", ok ? "OK" : "FAILED", content.size());
@@ -409,15 +479,28 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
 
       // ESC closes dialog - DN_CLOSE will save
       if (key == KEY_ESC) {
-        DBG("key-ESC: closing dialog (auto-save will follow in DN_CLOSE)");
+        DBG("key-ESC: closing dialog (akey=0x%x, uto-save will follow in DN_CLOSE)", key);
         g_far.SendDlgMessage(hDlg, DM_CLOSE, 0, 0);
         return TRUE;
       }
 
-      // F2/Shift+F2: Save As
-      if (key == KEY_F2 || key == KEY_SHIFTF2) {
-        DBG("key-F2: Save As triggered (key=0x%x, memo=%d)", key,
-            g_currentMemo);
+      // Ctrl+S closes dialog - DN_CLOSE will save
+      if (key==KEY_CTRLS) {
+        DBG("key-Ctrl+S: closing dialog (key=0x%x, auto-save will follow in DN_CLOSE)", key);
+        g_far.SendDlgMessage(hDlg, DM_CLOSE, 0, 0);
+        return TRUE;
+      }
+
+      // Shift+F2: Save As
+      if (key == KEY_F2) {
+        DBG("key-F2: Save As triggered (key=0x%x, memo=%d)", key, g_currentMemo);
+        SaveMemoAs(hDlg);
+        return TRUE;
+      }
+
+      // Shift+F2: Save As
+      if (key == KEY_SHIFTF2) {
+        DBG("key-Shift+F2: Save As triggered (key=0x%x, memo=%d)", key, g_currentMemo);
         SaveMemoAs(hDlg);
         return TRUE;
       }
@@ -438,8 +521,7 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
       }
 
       if (memoIdx >= 0 && memoIdx < MEMO_COUNT) {
-        DBG("key-%s+%d: switching memo %d -> %d", modName, (memoIdx + 1) % 10,
-            g_currentMemo, memoIdx);
+        DBG("key-%s+%d: switching memo %d -> %d", modName, (memoIdx + 1) % 10, g_currentMemo, memoIdx);
         SwitchToMemo(hDlg, memoIdx);
         return TRUE;
       }
@@ -466,14 +548,18 @@ static void OpenMemoDialog() {
   SMALL_RECT screenRect;
   int screenWidth = 80;
   int screenHeight = 25;
-  if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &screenRect,
-                       NULL)) {
+  if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &screenRect, NULL)) {
     screenWidth = screenRect.Right - screenRect.Left + 1;
     screenHeight = screenRect.Bottom - screenRect.Top + 1;
   }
 
-  int dlgWidth = screenWidth - 20;
-  int dlgHeight = screenHeight - 10;
+  int dlgWidth = (screenWidth > 80) ? screenWidth - 20 : screenWidth - 10;
+  if (dlgWidth < 60 && screenWidth > 64) dlgWidth = 60;
+  if (dlgWidth > screenWidth - 2) dlgWidth = screenWidth - 2;
+
+  int dlgHeight = (screenHeight > 15) ? screenHeight - 10 : screenHeight - 4;
+  if (dlgHeight < 15 && screenHeight > 17) dlgHeight = 15;
+  if (dlgHeight > screenHeight - 2) dlgHeight = screenHeight - 2;
 
   // Center dialog
   int x1 = -1;
@@ -513,12 +599,11 @@ static void OpenMemoDialog() {
   items[DI_INDICATOR].Flags = DIF_CENTERTEXT;
   items[DI_INDICATOR].PtrData = GetIndicatorWithX(g_currentMemo);
 
-  HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, x1, y1, x2, y2, NULL,
-                                 items, 3, 0, 0, MemoDlgProc, 0);
+  HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, x1, y1, x2, y2, 
+	nullptr, items, 3, 0, 0, MemoDlgProc, 0);
 
   if (hDlg != INVALID_HANDLE_VALUE) {
-    DBG("dialog-open: UI rendered (memo-%d, size=%dx%d)", g_currentMemo,
-        dlgWidth, dlgHeight);
+    DBG("dialog-open: UI rendered (memo-%d, size=%dx%d)", g_currentMemo, dlgWidth, dlgHeight);
     g_far.DialogRun(hDlg);
     g_far.DialogFree(hDlg);
     DBG("dialog-open: UI closed");
@@ -551,6 +636,11 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
   DBG("startup: hotkey   = Ctrl+S / Cmd+S (via key_macros.ini CallPlugin)");
   DBG("startup: prefix   = \"memo\" (command line prefix)");
   DBG("startup: SYSID    = 0x%08X", SYSID_MEMO);
+
+  // Auto-register macro if enabled
+  if (IsHotkeyEnabled()) {
+    UpdateGlobalMacro(true);
+  }
 }
 
 // Return plugin info - menu items, command prefix, etc.
@@ -591,6 +681,15 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
     return INVALID_HANDLE_VALUE;
   }
 
+  // Safety catch: DI_MEMOEDIT triggers Editor events that crash Colorer
+  // if opened over another Editor.
+  // We check both OPEN_EDITOR (for menu calls) and MACROAREA_EDITOR (for macro calls).
+  int area = OpenFrom & 0xFFFF; 
+  if (area == OPEN_EDITOR || area == MACROAREA_EDITOR) {
+    DBG("invoke: IGNORED - opened from Editor area=%d (avoiding Colorer crash)", area);
+    return INVALID_HANDLE_VALUE;
+  }
+
   OpenMemoDialog();
   return INVALID_HANDLE_VALUE;
 }
@@ -599,59 +698,71 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
 SHAREDSYMBOL void WINAPI ClosePluginW(HANDLE hPlugin) {}
 
 // Configure dialog - called from F11 -> Plugin Config -> Memo
-// Layout matches incsrch style: tight margins, no inner separator,
-// centred OK/Cancel buttons at the bottom.
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
   bool curEnabled = IsEnabled();
+  bool curHotkey = IsHotkeyEnabled();
 
-  // Width: box from col 3 to 35 (inner text 5..33), total dialog width 38
   const int W = 38;
-  enum { DI_CFG_BOX = 0, DI_CFG_ENABLE, DI_CFG_OK, DI_CFG_CANCEL };
+  enum { DI_CFG_BOX = 0, DI_CFG_ENABLE, DI_CFG_HOTKEY, DI_CFG_OK, DI_CFG_CANCEL };
 
-  FarDialogItem items[4] = {};
+  FarDialogItem items[5] = {};
 
   // Outer double box
   items[DI_CFG_BOX].Type = DI_DOUBLEBOX;
   items[DI_CFG_BOX].X1 = 3;
   items[DI_CFG_BOX].Y1 = 1;
   items[DI_CFG_BOX].X2 = W - 3;
-  items[DI_CFG_BOX].Y2 = 6;
+  items[DI_CFG_BOX].Y2 = 7;
   items[DI_CFG_BOX].PtrData = g_far.GetMsg(g_far.ModuleNumber, MConfigTitle);
 
-  // Checkbox - flush to left edge of box interior (X1=5)
+  // Enable Plugin Checkbox
   items[DI_CFG_ENABLE].Type = DI_CHECKBOX;
   items[DI_CFG_ENABLE].X1 = 5;
   items[DI_CFG_ENABLE].Y1 = 3;
   items[DI_CFG_ENABLE].X2 = W - 5;
   items[DI_CFG_ENABLE].Y2 = 3;
   items[DI_CFG_ENABLE].Param.Selected = curEnabled ? 1 : 0;
-  items[DI_CFG_ENABLE].PtrData =
-      g_far.GetMsg(g_far.ModuleNumber, MEnablePlugin);
+  items[DI_CFG_ENABLE].PtrData = g_far.GetMsg(g_far.ModuleNumber, MEnablePlugin);
+
+  // Hotkey Checkbox
+  items[DI_CFG_HOTKEY].Type = DI_CHECKBOX;
+  items[DI_CFG_HOTKEY].X1 = 5;
+  items[DI_CFG_HOTKEY].Y1 = 4;
+  items[DI_CFG_HOTKEY].X2 = W - 5;
+  items[DI_CFG_HOTKEY].Y2 = 4;
+  items[DI_CFG_HOTKEY].Param.Selected = curHotkey ? 1 : 0;
+  items[DI_CFG_HOTKEY].PtrData = g_far.GetMsg(g_far.ModuleNumber, MUseHotkey);
 
   // OK button
   items[DI_CFG_OK].Type = DI_BUTTON;
-  items[DI_CFG_OK].Y1 = 5;
+  items[DI_CFG_OK].Y1 = 6;
   items[DI_CFG_OK].Flags = DIF_CENTERGROUP;
   items[DI_CFG_OK].DefaultButton = 1;
   items[DI_CFG_OK].PtrData = g_far.GetMsg(g_far.ModuleNumber, MOk);
 
   // Cancel button
   items[DI_CFG_CANCEL].Type = DI_BUTTON;
-  items[DI_CFG_CANCEL].Y1 = 5;
+  items[DI_CFG_CANCEL].Y1 = 6;
   items[DI_CFG_CANCEL].Flags = DIF_CENTERGROUP;
   items[DI_CFG_CANCEL].PtrData = g_far.GetMsg(g_far.ModuleNumber, MCancel);
 
-  HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, W, 8, nullptr,
-                                 items, 4, 0, 0, nullptr, 0);
+  HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, W, 9, 
+	nullptr, items, 5, 0, 0, nullptr, 0);
 
   if (hDlg == INVALID_HANDLE_VALUE)
     return FALSE;
 
   int result = g_far.DialogRun(hDlg);
   if (result == DI_CFG_OK) {
-    bool newEnabled = (g_far.SendDlgMessage(hDlg, DM_GETCHECK, DI_CFG_ENABLE,
-                                            0) == BSTATE_CHECKED);
+    bool newEnabled = (g_far.SendDlgMessage(hDlg, DM_GETCHECK, DI_CFG_ENABLE, 0) == BSTATE_CHECKED);
+    bool newHotkey = (g_far.SendDlgMessage(hDlg, DM_GETCHECK, DI_CFG_HOTKEY, 0) == BSTATE_CHECKED);
+    
     SaveEnabled(newEnabled);
+    if (newHotkey != curHotkey) {
+      SaveHotkeyEnabled(newHotkey);
+      UpdateGlobalMacro(newHotkey);
+    }
+    
     g_far.DialogFree(hDlg);
     return TRUE;
   }

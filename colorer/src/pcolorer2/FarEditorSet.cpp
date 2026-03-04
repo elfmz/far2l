@@ -730,10 +730,7 @@ int FarEditorSet::editorEvent(int Event, void* Param)
       case EE_GOTFOCUS: {
         if (!getCurrentEditor()) {
           editor = addCurrentEditor();
-          if (editor) {
-            return editor->editorEvent(EE_REDRAW, EEREDRAW_CHANGE);
-          }
-          return 0;
+          return editor->editorEvent(EE_REDRAW, EEREDRAW_CHANGE);
         }
         return 0;
       }
@@ -904,21 +901,9 @@ FarEditor* FarEditorSet::addCurrentEditor()
   EditorInfo ei {};
   Info.EditorControl(ECTL_GETINFO, &ei);
 
-  // Check if EditorID is valid (non-zero and not already tracked)
-  // This prevents adding editors for dialog controls like DI_MEMOEDIT
-  // which share context with the original editor behind the dialog
-  if (ei.EditorID == 0 || farEditorInstances.find(ei.EditorID) != farEditorInstances.end()) {
-    return nullptr;
-  }
-
-  // Check if we have a valid filename
-  const auto s = getCurrentFileName();
-  if (!s || s->isEmpty()) {
-    return nullptr;
-  }
-
   auto* editor = new FarEditor(&Info, parserFactory.get());
   farEditorInstances.emplace(ei.EditorID, editor);
+  const auto s = getCurrentFileName();
   editor->chooseFileType(s.get());
   editor->setTrueMod(useExtendedColors);
   editor->setRegionMapper(regionMapper.get());

@@ -1945,7 +1945,6 @@ int Editor::ProcessKey(FarKey Key)
 			{
 				if (!CurLine->m_next && (m_CurVisualLineInLogicalLine + 1 >= CurLine->GetVisualLineCount()))
 				{
-					// We are on the very last visual line of the very last logical line. Do nothing.
 					Show();
 					return TRUE;
 				}
@@ -1956,21 +1955,29 @@ int Editor::ProcessKey(FarKey Key)
 				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
 
 				Down();
+				UpdateCursorPosition(m_WordWrapMaxRightPos);
 
 				if (OldLine == CurLine)
 				{
-					// Moved within the same logical line.
 					if (SelFirst) {
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
-						CurLine->Select(OldPos, CurLine->GetCurPos());
+						CurLine->Select(std::min(OldPos, CurLine->GetCurPos()), std::max(OldPos, CurLine->GetCurPos()));
 					} else if (SelAtBeginning) {
-						CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
+						if (OldSelEnd == -1 || CurLine->GetCurPos() <= OldSelEnd) {
+							CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
+						} else {
+							CurLine->Select(OldSelEnd, CurLine->GetCurPos());
+						}
 					} else {
-						CurLine->Select(OldSelStart, CurLine->GetCurPos());
+						if (CurLine->GetCurPos() >= OldSelStart) {
+							CurLine->Select(OldSelStart, CurLine->GetCurPos());
+						} else {
+							CurLine->Select(CurLine->GetCurPos(), OldSelStart);
+						}
 					}
 				}
-				else // Crossed a logical line boundary
+				else
 				{
 					if (SelFirst) {
 						BlockStart = OldLine;
@@ -1978,11 +1985,23 @@ int Editor::ProcessKey(FarKey Key)
 						OldLine->Select(OldPos, -1);
 						CurLine->Select(0, CurLine->GetCurPos());
 					} else if (SelAtBeginning) {
-						BlockStart = CurLine;
-						BlockStartLine = NumLine;
-						OldLine->Select(-1, 0); // Deselect the old line
+						if (OldSelEnd == -1) {
+							OldLine->Select(-1, 0);
+							BlockStart = CurLine;
+							BlockStartLine = NumLine;
 
-						//CurLine->Select(CurLine->GetCurPos(), OldSelEnd); // This assumes OldSelEnd is on the new line, which is not true. Should be empty.
+							int CurSelStart, CurSelEnd;
+							CurLine->GetRealSelection(CurSelStart, CurSelEnd);
+
+							if (CurSelEnd == -1 || CurLine->GetCurPos() <= CurSelEnd) {
+								CurLine->Select(CurLine->GetCurPos(), CurSelEnd);
+							} else {
+								CurLine->Select(CurSelEnd, CurLine->GetCurPos());
+							}
+						} else {
+							OldLine->Select(OldSelEnd, -1);
+							CurLine->Select(0, CurLine->GetCurPos());
+						}
 					} else {
 						OldLine->Select(OldSelStart, -1);
 						CurLine->Select(0, CurLine->GetCurPos());
@@ -2073,81 +2092,72 @@ int Editor::ProcessKey(FarKey Key)
 		case KEY_SHIFTNUMPAD8: {
 			if (m_bWordWrap)
 			{
-				UnmarkEmptyBlock();
-				_bg.SetNeedCheckUnmark(true);
-				CurLine->GetRealSelection(SelStart, SelEnd);
-
-				if (Flags.Check(FEDITOR_CURPOSCHANGEDBYPLUGIN)) {
-					if (SelStart != -1 && (CurPos < SelStart || (SelEnd != -1 && (CurPos > SelEnd || (CurPos > SelStart && CurPos < SelEnd)))) && CurPos < CurLine->GetLength())
-						Flags.Clear(FEDITOR_MARKINGVBLOCK | FEDITOR_MARKINGBLOCK);
-					Flags.Clear(FEDITOR_CURPOSCHANGEDBYPLUGIN);
-				}
-
-				if (!Flags.Check(FEDITOR_MARKINGBLOCK)) {
-					UnmarkBlockAndShowIt();
-					Flags.Set(FEDITOR_MARKINGBLOCK);
-					BlockStart = CurLine;
-					BlockStartLine = NumLine;
-					SelFirst = TRUE;
-					SelStart = SelEnd = CurPos;
-				} else {
-					SelAtBeginning = CurLine == BlockStart && CurPos == SelStart;
-					if (SelStart == -1) {
-						SelStart = SelEnd = CurPos;
-					}
-				}
-
-				if (m_CurVisualLineInLogicalLine > 0)
+				if (!CurLine->m_prev && m_CurVisualLineInLogicalLine == 0)
 				{
-					// --- Case 1: Moving selection UP within the SAME logical line ---
-					const int OldPos = CurLine->GetCurPos();
-					int OldSelStart, OldSelEnd;
-					CurLine->GetRealSelection(OldSelStart, OldSelEnd);
+					Show();
+					return TRUE;
+				}
 
-					Up(); // Move cursor up one visual line
+				const int OldPos = CurLine->GetCurPos();
+				Edit* OldLine = CurLine;
+				int OldSelStart, OldSelEnd;
+				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
 
+				Up();
+				UpdateCursorPosition(m_WordWrapMaxRightPos);
+
+				if (OldLine == CurLine)
+				{
 					if (SelFirst) {
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
-						CurLine->Select(CurLine->GetCurPos(), OldPos);
+						CurLine->Select(std::min(OldPos, CurLine->GetCurPos()), std::max(OldPos, CurLine->GetCurPos()));
 					} else if (SelAtBeginning) {
-						CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
+						if (CurLine->GetCurPos() <= OldSelEnd || OldSelEnd == -1) {
+							CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
+						} else {
+							CurLine->Select(OldSelEnd, CurLine->GetCurPos());
+						}
 					} else {
-						CurLine->Select(OldSelStart, CurLine->GetCurPos());
+						if (CurLine->GetCurPos() >= OldSelStart) {
+							CurLine->Select(OldSelStart, CurLine->GetCurPos());
+						} else {
+							CurLine->Select(CurLine->GetCurPos(), OldSelStart);
+						}
 					}
 				}
-				else // On the first visual line
+				else
 				{
-					// --- Case 2: Moving selection UP to the PREVIOUS logical line ---
-					if (!CurLine->m_prev)
-					{
-						Show(); // At top of file, do nothing but ensure redraw
-						return TRUE;
-					}
-
-					const int OldPos = CurLine->GetCurPos();
-					Edit* OldCurLine = CurLine;
-					int OldSelStart, OldSelEnd;
-					OldCurLine->GetRealSelection(OldSelStart, OldSelEnd);
-
-					Up(); // This moves CurLine to CurLine->m_prev
-
 					if (SelFirst) {
-						// Starting a new selection that crosses lines
-						BlockStart = CurLine; // The new line is now the start
-						BlockStartLine = NumLine;
-						CurLine->Select(CurLine->GetCurPos(), -1); // Select from new cursor pos to end of new line
-						OldCurLine->Select(0, OldPos); // On the old line, select from start to old cursor pos
-					} else if (SelAtBeginning) {
-						// Expanding an existing selection upwards
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
-						CurLine->Select(CurLine->GetCurPos(), -1); // New start line is selected from cursor to end
-						OldCurLine->Select(0, OldSelEnd); // The old line remains selected from its start to its previous end
+						CurLine->Select(CurLine->GetCurPos(), -1);
+						OldLine->Select(0, OldPos);
+					} else if (SelAtBeginning) {
+						BlockStart = CurLine;
+						BlockStartLine = NumLine;
+						CurLine->Select(CurLine->GetCurPos(), -1);
+						OldLine->Select(0, OldSelEnd);
 					} else {
-						// Shrinking an existing selection from the bottom
-						OldCurLine->Select(-1, 0); // Deselect the old line completely
-						CurLine->Select(OldSelStart, CurLine->GetCurPos()); // On the new current line, adjust the selection end
+						if (BlockStartLine < NumLine + 1) {
+							OldLine->Select(-1, 0);
+
+							int CurSelStart, CurSelEnd;
+							CurLine->GetRealSelection(CurSelStart, CurSelEnd);
+
+							if (CurSelEnd == -1 || CurLine->GetCurPos() >= CurSelStart) {
+								CurLine->Select(CurSelStart, CurLine->GetCurPos());
+							} else {
+								CurLine->Select(CurLine->GetCurPos(), CurSelStart);
+								BlockStart = CurLine;
+								BlockStartLine = NumLine;
+							}
+						} else {
+							OldLine->Select(0, OldSelStart);
+							CurLine->Select(CurLine->GetCurPos(), -1);
+							BlockStart = CurLine;
+							BlockStartLine = NumLine;
+						}
 					}
 				}
 				Show();

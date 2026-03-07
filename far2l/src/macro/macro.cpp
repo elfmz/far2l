@@ -5982,7 +5982,7 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescr
 		{DI_CHECKBOX,  5,  15, 0,  15, {2}, DIF_3STATE,                    Msg::MacroSettingsSelectionBlockPresent},
 		{DI_TEXT,      3,  16, 0,  16, {},  DIF_SEPARATOR,                 L""                                    },
 		{DI_BUTTON,    0,  17, 0,  17, {},  DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok                                },
-		{DI_BUTTON,    0,  18, 0,  18, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
+		{DI_BUTTON,    0,  17, 0,  17, {},  DIF_CENTERGROUP,               Msg::Cancel                            }
 	};
 	MakeDialogItemsEx(MacroSettingsDlgData, MacroSettingsDlg);
 	FARString strKeyText;
@@ -6069,7 +6069,7 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescr
 			: (MacroSettingsDlg[MS_CHECKBOX_SELBLOCK].Selected == 0
 							? MFLAGS_EDITNOSELECTION
 							: MFLAGS_EDITSELECTION);
-	macroDescription = MacroSettingsDlg[MS_EDIT_SEQUENCE].strData;
+	macroDescription = MacroSettingsDlg[MS_EDIT_DESCRIPTION].strData;
 	return TRUE;
 }
 

@@ -580,6 +580,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED MEMO OR MEMO)
+    message(STATUS "MEMO plugin enabled")
+    add_subdirectory (memo)
+else()
+    message(STATUS "${ColorRed}MEMO plugin disabled due to MEMO=${MEMO}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/memo/plug/memo.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 ##############################
 # common install directives
 

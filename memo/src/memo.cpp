@@ -46,6 +46,8 @@ enum DialogItems {
 PluginStartupInfo g_far;
 static int g_currentMemo = 0;
 static std::wstring g_loadedContent;
+static bool g_enabled = true;
+static bool g_useHotkey = true;
 
 static std::wstring GetMemoFilePath(int index) {
   const char *home = getenv("HOME");
@@ -59,7 +61,7 @@ static std::wstring GetMemoFilePath(int index) {
     WINPORT(CreateDirectory)(dir.c_str(), NULL);
   }
   wchar_t name[32];
-  swprintf(name, 32, L"/memo-%02d.txt", index + 1);
+  swprintf(name, 32, L"/memo-%02d.txt", (index == 9) ? 0 : index + 1);
   return dir + name;
 }
 
@@ -68,26 +70,29 @@ static int GetLastMemo() {
       .GetInt("Settings", "LastMemo", 0);
 }
 static void SaveLastMemo(int v) {
+  g_currentMemo = v;
   KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
+  kf.SetInt("Settings", "Enabled", g_enabled ? 1 : 0);
+  kf.SetInt("Settings", "HotkeyEnabled", g_useHotkey ? 1 : 0);
   kf.SetInt("Settings", "LastMemo", v);
   kf.Save();
 }
-static bool GetEnabled() {
-  return KeyFileHelper(InMyConfig("plugins/memo/state.ini"))
-      .GetInt("Settings", "Enabled", 1);
-}
+static bool GetEnabled() { return g_enabled; }
 static void SetEnabled(bool v) {
+  g_enabled = v;
   KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
   kf.SetInt("Settings", "Enabled", v ? 1 : 0);
+  kf.SetInt("Settings", "HotkeyEnabled", g_useHotkey ? 1 : 0);
+  kf.SetInt("Settings", "LastMemo", g_currentMemo);
   kf.Save();
 }
-static bool GetUseHotkey() {
-  return KeyFileHelper(InMyConfig("plugins/memo/state.ini"))
-      .GetInt("Settings", "UseHotkey", 1);
-}
+static bool GetUseHotkey() { return g_useHotkey; }
 static void SetUseHotkey(bool v) {
+  g_useHotkey = v;
   KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
-  kf.SetInt("Settings", "UseHotkey", v ? 1 : 0);
+  kf.SetInt("Settings", "Enabled", g_enabled ? 1 : 0);
+  kf.SetInt("Settings", "HotkeyEnabled", v ? 1 : 0);
+  kf.SetInt("Settings", "LastMemo", g_currentMemo);
   kf.Save();
 }
 
@@ -127,7 +132,9 @@ static void SwitchToMemo(HANDLE hDlg, int newMemo) {
     g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO,
                          (LONG_PTR)content.data());
   }
-  SaveFile(g_currentMemo, content);
+  if (content != g_loadedContent) {
+    SaveFile(g_currentMemo, content);
+  }
   g_currentMemo = newMemo;
   g_loadedContent = LoadFile(g_currentMemo);
   g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_MEMO,
@@ -288,7 +295,9 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
       g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO,
                            (LONG_PTR)content.data());
     }
-    SaveFile(g_currentMemo, content);
+    if (content != g_loadedContent) {
+      SaveFile(g_currentMemo, content);
+    }
     SaveLastMemo(g_currentMemo);
   }
   return g_far.DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -342,6 +351,10 @@ static void OpenMemo() {
 
 SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
   g_far = *Info;
+  KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
+  g_enabled = kf.GetInt("Settings", "Enabled", 1);
+  g_useHotkey = kf.GetInt("Settings", "HotkeyEnabled", 1);
+  g_currentMemo = kf.GetInt("Settings", "LastMemo", 0);
 }
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
   Info->StructSize = sizeof(PluginInfo);
@@ -368,7 +381,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int, INT_PTR) {
 }
 SHAREDSYMBOL void WINAPI ClosePluginW(HANDLE) {}
 SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *Rec) {
-  if (GetEnabled() && GetUseHotkey()) {
+  if (Rec && g_enabled && g_useHotkey && g_far.FSF) {
     if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.bKeyDown) {
       FarKey key = g_far.FSF->FarInputRecordToKey(Rec);
       if (key == KEY_CTRLS) {

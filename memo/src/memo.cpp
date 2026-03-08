@@ -1,3 +1,12 @@
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+#include <cwchar>
+#include <fstream>
+#include <string>
+#include <vector>
+
 #include <KeyFileHelper.h>
 #include <WideMB.h>
 #include <WinCompat.h>
@@ -9,15 +18,6 @@
 #ifndef WINAPI
 #define WINAPI
 #endif
-
-#include <cstdarg>
-#include <cstdio>
-#include <cstring>
-#include <ctime>
-#include <cwchar>
-#include <fstream>
-#include <string>
-#include <vector>
 
 // Unique ID for plugin (must be non-zero)
 #define SYSID_MEMO 0x4D454D4F
@@ -128,199 +128,68 @@ static std::wstring GetMemoFilePath(int index) {
 // Get state file path for persisting last memo index
 static std::wstring GetStateFilePath() { return GetMemoDir() + L"/state.ini"; }
 
-// Load last selected memo index from state.ini
-static int LoadLastMemoIndex() {
-  std::wstring statePath = GetStateFilePath();
-  std::string mbPath =
-      Wide2MB(statePath.c_str()); // UTF-8 path for std::ifstream
-  std::ifstream f(mbPath);
-  if (f.is_open()) {
-    std::string line;
-    while (std::getline(f, line)) {
-      if (line.find("LastMemo=") == 0) {
-        try {
-          int idx = std::stoi(line.substr(9));
-          if (idx >= 0 && idx < MEMO_COUNT) {
-            return idx;
-          }
-        } catch (...) {
-          // invalid value, ignore
-        }
-      }
-    }
-  }
-  return 0;
+// ---------------------------------------------------------------------------
+// Settings helpers (DRY)
+// ---------------------------------------------------------------------------
+
+static KeyFileHelper GetStateKF(bool load = true) {
+  return KeyFileHelper(Wide2MB(GetStateFilePath().c_str()), load);
 }
 
-// Save last selected memo index to state.ini
-static void SaveLastMemoIndex(int index) {
-  std::wstring statePath = GetStateFilePath();
-  std::string mbPath = Wide2MB(statePath.c_str());
-
-  std::vector<std::string> lines;
-  bool found = false;
-
-  std::ifstream f_in(mbPath);
-  if (f_in.is_open()) {
-    std::string line;
-    while (std::getline(f_in, line)) {
-      if (line.find("LastMemo=") == 0) {
-        lines.push_back("LastMemo=" + std::to_string(index));
-        found = true;
-      } else {
-        lines.push_back(line);
-      }
-    }
-  }
-
-  if (!found) {
-    lines.push_back("LastMemo=" + std::to_string(index));
-  }
-
-  std::ofstream f_out(mbPath);
-  if (!f_out.is_open()) {
-    return;
-  }
-
-  for (const auto &l : lines) {
-    f_out << l << "\n";
-  }
+static bool GetSettingBool(const char *key, bool def) {
+  return GetStateKF().GetInt("Settings", key, def ? 1 : 0) != 0;
 }
 
-// Load enabled flag from state.ini (default: enabled)
-static bool IsEnabled() {
-  std::wstring statePath = GetStateFilePath();
-  std::string mbPath = Wide2MB(statePath.c_str());
-  std::ifstream f(mbPath);
-  if (f.is_open()) {
-    std::string line;
-    while (std::getline(f, line)) {
-      if (line.find("Enabled=") == 0) {
-        return line.substr(8) != "0";
-      }
-    }
-  }
-  return true; // enabled by default
+static void SetSettingBool(const char *key, bool val) {
+  KeyFileHelper kf = GetStateKF();
+  kf.SetInt("Settings", key, val ? 1 : 0);
+  kf.Save();
 }
 
-// Save enabled flag to state.ini
-static void SaveEnabled(bool enabled) {
-  std::wstring statePath = GetStateFilePath();
-  std::string mbPath = Wide2MB(statePath.c_str());
-
-  std::vector<std::string> lines;
-  bool found = false;
-
-  std::ifstream f_in(mbPath);
-  if (f_in.is_open()) {
-    std::string line;
-    while (std::getline(f_in, line)) {
-      if (line.find("Enabled=") == 0) {
-        lines.push_back(std::string("Enabled=") + (enabled ? "1" : "0"));
-        found = true;
-      } else {
-        lines.push_back(line);
-      }
-    }
-  }
-
-  if (!found) {
-    lines.push_back(std::string("Enabled=") + (enabled ? "1" : "0"));
-  }
-
-  std::ofstream f_out(mbPath);
-  if (!f_out.is_open())
-    return;
-  for (const auto &l : lines) {
-    f_out << l << "\n";
-  }
+static int GetSettingInt(const char *key, int def) {
+  return GetStateKF().GetInt("Settings", key, def);
 }
 
-// Load hotkey flag from state.ini (default: enabled)
-static bool IsHotkeyEnabled() {
-  std::wstring statePath = GetStateFilePath();
-  std::string mbPath = Wide2MB(statePath.c_str());
-  std::ifstream f(mbPath);
-  if (f.is_open()) {
-    std::string line;
-    while (std::getline(f, line)) {
-      if (line.find("HotkeyEnabled=") == 0) {
-        return line.substr(14) != "0";
-      }
-    }
-  }
-  return true; // enabled by default
+static void SetSettingInt(const char *key, int val) {
+  KeyFileHelper kf = GetStateKF();
+  kf.SetInt("Settings", key, val);
+  kf.Save();
 }
 
-// Save hotkey flag to state.ini
-static void SaveHotkeyEnabled(bool enabled) {
-  std::wstring statePath = GetStateFilePath();
-  std::string mbPath = Wide2MB(statePath.c_str());
+static bool IsEnabled() { return GetSettingBool("Enabled", true); }
+static void SaveEnabled(bool v) { SetSettingBool("Enabled", v); }
 
-  std::vector<std::string> lines;
-  bool found = false;
+static bool IsHotkeyEnabled() { return GetSettingBool("HotkeyEnabled", true); }
+static void SaveHotkeyEnabled(bool v) { SetSettingBool("HotkeyEnabled", v); }
 
-  std::ifstream f_in(mbPath);
-  if (f_in.is_open()) {
-    std::string line;
-    while (std::getline(f_in, line)) {
-      if (line.find("HotkeyEnabled=") == 0) {
-        lines.push_back(std::string("HotkeyEnabled=") + (enabled ? "1" : "0"));
-        found = true;
-      } else {
-        lines.push_back(line);
-      }
-    }
-  }
-
-  if (!found) {
-    lines.push_back(std::string("HotkeyEnabled=") + (enabled ? "1" : "0"));
-  }
-
-  std::ofstream f_out(mbPath);
-  if (f_out.is_open()) {
-    for (const auto &l : lines) {
-      f_out << l << "\n";
-    }
-  }
-}
+static int LoadLastMemoIndex() { return GetSettingInt("LastMemo", 0); }
+static void SaveLastMemoIndex(int v) { SetSettingInt("LastMemo", v); }
 
 // Add or remove Ctrl+S macro in global key_macros.ini
 static void UpdateGlobalMacro(bool enabled) {
   std::string iniPath = InMyConfig("settings/key_macros.ini");
   const char *section = "KeyMacros/Common/CtrlS";
-  
-  KeyFileHelper kfh(iniPath);
-  if (enabled) {
-    if (!kfh.HasSection(section)) {
-      kfh.SetString(section, "Sequence", "callplugin(0x4D454D4F)");
-      kfh.Save();
-      
-      // Reload macros in FAR
-      ActlKeyMacro akm = {MCMD_LOADALL};
-      g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
-      DBG("macro: added Ctrl+S to Common and reloaded");
-    }
+  KeyFileHelper kf(iniPath);
+
+  if (enabled && !kf.HasSection(section)) {
+    kf.SetString(section, "Sequence", "callplugin(0x4D454D4F)");
+  } else if (!enabled && kf.HasSection(section)) {
+    kf.RemoveSection(section);
   } else {
-    if (kfh.HasSection(section)) {
-      kfh.RemoveSection(section);
-      kfh.Save();
-      
-      // Reload macros in FAR
-      ActlKeyMacro akm = {MCMD_LOADALL};
-      g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
-      DBG("macro: removed Ctrl+S from Common and reloaded");
-    }
+    return; // No change
+  }
+
+  if (kf.Save()) {
+    ActlKeyMacro akm = {MCMD_LOADALL};
+    g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
+    DBG("macro: Ctrl+S %s", enabled ? "added" : "removed");
   }
 }
 
 // Get user's home directory for default Save As path
 static std::wstring GetHomeDir() {
   const char *home = getenv("HOME");
-  if (home) {
-    return MB2Wide(home);
-  }
-  return L".";
+  return home ? MB2Wide(home) : L".";
 }
 
 // Load file content as wide string (UTF-8 -> wchar_t)
@@ -456,7 +325,7 @@ static bool SaveMemoAs(HANDLE hDlg) {
   DBG("key-F2: Save As dialog opened, default=%ls", defaultPath.c_str());
 
   if (g_far.InputBox(L"Save Memo", L"Enter destination path:", L"MemoSave", 
-		defaultPath.c_str(), destPath, MAX_PATH, NULL, FIB_NONE)) {
+defaultPath.c_str(), destPath, MAX_PATH, NULL, FIB_NONE)) {
     DBG("key-F2: user confirmed export to %ls", destPath);
     bool ok = SaveFileContent(destPath, content);
     DBG("key-F2: export %s (%zu chars)", ok ? "OK" : "FAILED", content.size());
@@ -485,7 +354,7 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
       }
 
       // Ctrl+S closes dialog - DN_CLOSE will save
-      if (key==KEY_CTRLS) {
+      if (key == KEY_CTRLS) {
         DBG("key-Ctrl+S: closing dialog (key=0x%x, auto-save will follow in DN_CLOSE)", key);
         g_far.SendDlgMessage(hDlg, DM_CLOSE, 0, 0);
         return TRUE;
@@ -600,7 +469,7 @@ static void OpenMemoDialog() {
   items[DI_INDICATOR].PtrData = GetIndicatorWithX(g_currentMemo);
 
   HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, x1, y1, x2, y2, 
-	nullptr, items, 3, 0, 0, MemoDlgProc, 0);
+nullptr, items, 3, 0, 0, MemoDlgProc, 0);
 
   if (hDlg != INVALID_HANDLE_VALUE) {
     DBG("dialog-open: UI rendered (memo-%d, size=%dx%d)", g_currentMemo, dlgWidth, dlgHeight);
@@ -649,7 +518,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
   Info->Flags = PF_VIEWER | PF_DIALOG;
 
   static const wchar_t *menu_strings[1];
-  menu_strings[0] = L"Memo";
+  menu_strings[0] = g_far.GetMsg(g_far.ModuleNumber, MMemo);
 
   Info->PluginConfigStrings = menu_strings;
   Info->PluginConfigStringsNumber = 1;
@@ -670,6 +539,21 @@ SHAREDSYMBOL int WINAPI ProcessEventW(HANDLE hPlugin, int Event, void *Param) {
   return 0;
 }
 
+// Check if any window in the Far stack is an Editor
+static bool IsEditorPresent() {
+  int count = (int)g_far.AdvControl(g_far.ModuleNumber, ACTL_GETWINDOWCOUNT,
+                                    NULL, NULL);
+  for (int i = 0; i < count; ++i) {
+    WindowInfo wi = {sizeof(WindowInfo)};
+    wi.Pos = i;
+    if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETWINDOWINFO, &wi, NULL)) {
+      if (wi.Type == WTYPE_EDITOR)
+        return true;
+    }
+  }
+  return false;
+}
+
 // Open plugin - show memo dialog
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
   // [3] Ctrl+S / Cmd+S pressed
@@ -682,11 +566,9 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item) {
   }
 
   // Safety catch: DI_MEMOEDIT triggers Editor events that crash Colorer
-  // if opened over another Editor.
-  // We check both OPEN_EDITOR (for menu calls) and MACROAREA_EDITOR (for macro calls).
-  int area = OpenFrom & 0xFFFF; 
-  if (area == OPEN_EDITOR || area == MACROAREA_EDITOR) {
-    DBG("invoke: IGNORED - opened from Editor area=%d (avoiding Colorer crash)", area);
+  // if opened over another Editor. This is a known Far2l limitation.
+  // We block opening if ANY window in the stack is an Editor.
+  if (IsEditorPresent()) {
     return INVALID_HANDLE_VALUE;
   }
 
@@ -747,7 +629,7 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
   items[DI_CFG_CANCEL].PtrData = g_far.GetMsg(g_far.ModuleNumber, MCancel);
 
   HANDLE hDlg = g_far.DialogInit(g_far.ModuleNumber, -1, -1, W, 9, 
-	nullptr, items, 5, 0, 0, nullptr, 0);
+nullptr, items, 5, 0, 0, nullptr, 0);
 
   if (hDlg == INVALID_HANDLE_VALUE)
     return FALSE;
@@ -756,7 +638,7 @@ SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
   if (result == DI_CFG_OK) {
     bool newEnabled = (g_far.SendDlgMessage(hDlg, DM_GETCHECK, DI_CFG_ENABLE, 0) == BSTATE_CHECKED);
     bool newHotkey = (g_far.SendDlgMessage(hDlg, DM_GETCHECK, DI_CFG_HOTKEY, 0) == BSTATE_CHECKED);
-    
+
     SaveEnabled(newEnabled);
     if (newHotkey != curHotkey) {
       SaveHotkeyEnabled(newHotkey);

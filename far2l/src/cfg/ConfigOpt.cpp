@@ -170,6 +170,9 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecInterface, "ExclusiveWinLeft", &Opt.ExclusiveWinLeft, 0},
 	{true,  NSecInterface, "ExclusiveWinRight", &Opt.ExclusiveWinRight, 0},
 
+	{true,  NSecInterface, "CopyToPrimarySelection", &Opt.CopyToPrimarySelection, 0},
+	{true,  NSecInterface, "PasteFromPrimarySelection", &Opt.PasteFromPrimarySelection, 0},
+
 	{true,  NSecInterface, "DateFormat", &Opt.DateFormat, GetDateFormatDefault()},
 	{true,  NSecInterface, "DateSeparator", &Opt.strDateSeparator, GetDateSeparatorDefaultStr()},
 	{true,  NSecInterface, "TimeSeparator", &Opt.strTimeSeparator, GetTimeSeparatorDefaultStr()},

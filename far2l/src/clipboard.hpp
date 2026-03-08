@@ -47,6 +47,7 @@ class Clipboard
 
 	static bool UseInternalClipboard;
 	static bool InternalClipboardOpen;
+	static int UseSelectionWhenPossible;
 
 public:
 	static bool SetUseInternalClipboardState(bool State);	// Sets UseInternalClipboard to State, and returns previous state
@@ -61,6 +62,9 @@ public:
 	bool Copy(const wchar_t *Data, bool IsVertical = false);
 	wchar_t *Paste(bool &IsVertical, int MaxChars = -1);
 	wchar_t *Paste();
+
+	int IsUseSelectionWhenPossible() const { return UseSelectionWhenPossible; }
+	int SetUseSelectionWhenPossible(int option);
 
 private:
 	bool AddData(UINT FormatType, const void *Data, size_t Size);

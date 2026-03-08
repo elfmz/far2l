@@ -45,7 +45,7 @@ Default location: `~/.config/far2l/plugins/memo/`
 |------|---------|
 | `memo-00.txt` … `memo-09.txt` | Page content (UTF-8) |
 | `state.ini` | `LastMemo`, `Enabled`, `HotkeyEnabled` |
-| `debug.log` | Debug build only (`NDEBUG` builds omit this) |
+| `debug.log` | Debug build only (`DEBUG` builds only) |
 
 ## Plugin API
 

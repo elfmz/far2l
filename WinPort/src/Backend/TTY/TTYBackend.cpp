@@ -1293,7 +1293,7 @@ const char* TTYBackend::OSC52RequestClipboardData(bool is_primary_buffer)
 	fprintf(stderr, "TTY: OSC52RequestClipboardData wait for response\n");
 	for(;;) {
 		std::unique_lock<std::mutex> lock(_async_mutex);
-		if(_async_cond.wait_for(lock, std::chrono::milliseconds(100))) {
+		if(_async_cond.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::no_timeout) {
 			if (_ae.osc52clip_get) break;
 		}
 		else {

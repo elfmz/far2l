@@ -86,14 +86,45 @@ static void SetEnabled(bool v) {
   kf.SetInt("Settings", "LastMemo", g_currentMemo);
   kf.Save();
 }
+static void UpdateGlobalMacro(bool enabled) {
+  std::string iniPath = InMyConfig("settings/key_macros.ini");
+  const char *section = "KeyMacros/Common/CtrlS";
+
+  KeyFileHelper kfh(iniPath);
+  if (enabled) {
+    if (!kfh.HasSection(section)) {
+      char seq[64];
+      snprintf(seq, sizeof(seq), "callplugin(0x%08X)", SYSID_MEMO);
+      kfh.SetString(section, "Sequence", seq);
+      kfh.SetString(section, "Description", "Memo Plugin");
+      kfh.SetString(section, "DisableOutput", "1");
+      kfh.Save();
+
+      ActlKeyMacro akm = {MCMD_LOADALL};
+      g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
+    }
+  } else {
+    if (kfh.HasSection(section)) {
+      kfh.RemoveSection(section);
+      kfh.Save();
+
+      ActlKeyMacro akm = {MCMD_LOADALL};
+      g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
+    }
+  }
+}
+
 static bool GetUseHotkey() { return g_useHotkey; }
 static void SetUseHotkey(bool v) {
+  if (g_useHotkey == v)
+    return;
   g_useHotkey = v;
   KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
   kf.SetInt("Settings", "Enabled", g_enabled ? 1 : 0);
   kf.SetInt("Settings", "HotkeyEnabled", v ? 1 : 0);
   kf.SetInt("Settings", "LastMemo", g_currentMemo);
   kf.Save();
+  UpdateGlobalMacro(v);
 }
 
 static std::wstring LoadFile(int idx) {
@@ -355,6 +386,9 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
   g_enabled = kf.GetInt("Settings", "Enabled", 1);
   g_useHotkey = kf.GetInt("Settings", "HotkeyEnabled", 1);
   g_currentMemo = kf.GetInt("Settings", "LastMemo", 0);
+  if (g_useHotkey) {
+    UpdateGlobalMacro(true);
+  }
 }
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
   Info->StructSize = sizeof(PluginInfo);
@@ -380,18 +414,6 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int, INT_PTR) {
   return (HANDLE)-1;
 }
 SHAREDSYMBOL void WINAPI ClosePluginW(HANDLE) {}
-SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *Rec) {
-  if (Rec && g_enabled && g_useHotkey && g_far.FSF) {
-    if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.bKeyDown) {
-      FarKey key = g_far.FSF->FarInputRecordToKey(Rec);
-      if (key == KEY_CTRLS) {
-        OpenMemo();
-        return 1;
-      }
-    }
-  }
-  return 0;
-}
 SHAREDSYMBOL int WINAPI ProcessEditorEventW(int, void *) { return 0; }
 SHAREDSYMBOL int WINAPI ProcessEventW(HANDLE, int, void *) { return 0; }
 SHAREDSYMBOL int WINAPI ConfigureW(int) {

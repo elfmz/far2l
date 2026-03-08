@@ -192,4 +192,5 @@ public:
 	*/
 	void ParseWinDoubleBuffer(bool idle_expired);
 	char UsingExtension() const { return _using_extension; };
+	bool IsBracketedPasteMode() const { return _bracketed_paste_mode; };
 };

@@ -6,6 +6,7 @@
 #include "../../../utils/src/POpen.cpp"
 #include <vector>
 #include <memory>
+#include "wxPrinterSupport.h"
 
 #define AREAS_REDUCTION
 
@@ -46,6 +47,8 @@ bool g_broadway = false, g_wayland = false, g_remote = false;
 
 static int g_exit_code = 0;
 static int g_maximize = 0;
+static int g_override_width = 0;
+static int g_override_height = 0;
 static WinPortAppThread *g_winport_app_thread = NULL;
 static WinPortFrame *g_winport_frame = nullptr;
 
@@ -160,6 +163,14 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 		} else if (strcmp(a->argv[i], "--nomaximize") == 0) {
 			g_maximize = -1;
 		}
+		else if (strncmp(a->argv[i], "--size=", 7) == 0) {
+			int w = 0, h = 0;
+			if (sscanf(a->argv[i] + 7, "%dx%d", &w, &h) == 2 && w > 0 && h > 0) {
+				g_override_width = w;
+				g_override_height = h;
+				g_maximize = -1;
+			}
+		}
 	}
 	if (primary_selection) {
 		wxTheClipboard->UsePrimarySelection(true);
@@ -171,6 +182,9 @@ extern "C" __attribute__ ((visibility("default"))) bool WinPortMainBackend(WinPo
 	if (!a->ext_clipboard) {
 		clipboard_backend_setter.Set<wxClipboardBackend>();
 	}
+
+	PrinterSupportBackendSetter printer_backend_setter;
+	printer_backend_setter.Set<wxPrinterSupportBackend>();
 
 	if (a->app_main && !g_winport_app_thread) {
 		g_winport_app_thread = new(std::nothrow) WinPortAppThread(a->argc, a->argv, a->app_main);
@@ -399,7 +413,9 @@ WinPortFrame::~WinPortFrame()
 
 void WinPortFrame::SetInitialSize()
 {
-	if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
+	if (g_override_width > 0 && g_override_height > 0) {
+		_panel->SetClientCharSize(g_override_width, g_override_height);
+	} else if (!_win_state.fullscreen && !_win_state.maximized && !g_broadway && g_maximize <= 0) {
 		// workaround for #1483 (wrong initial size on Lubuntu's LXQt DE)
 		SetSize(_win_state.pos.x, _win_state.pos.y,
 			_win_state.size.GetWidth(), _win_state.size.GetHeight());
@@ -1729,6 +1745,12 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		}
 #endif
 
+		if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
+			// use control keys state from prev keydown event
+			wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
+			ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
+		}
+
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 
@@ -1838,6 +1860,27 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 {
 	INPUT_RECORD ir = {0};
 	ir.EventType = MOUSE_EVENT;
+	auto enqueue_mouse_event = [&](INPUT_RECORD &rec) {
+		if (!(rec.Event.MouseEvent.dwEventFlags & MOUSE_MOVED)) {
+			fprintf(stderr, "Mouse: dwEventFlags=0x%x dwButtonState=0x%x dwControlKeyState=0x%x\n",
+				rec.Event.MouseEvent.dwEventFlags, rec.Event.MouseEvent.dwButtonState,
+				rec.Event.MouseEvent.dwControlKeyState);
+		}
+
+		// GUI frontend tends to flood with duplicated mouse events,
+		// cuz it reacts on screen coordinates movements, so avoid
+		// excessive mouse events by skipping event if it duplicates
+		// most recently queued event (fix #369)
+		DWORD now = WINPORT(GetTickCount)();
+		if ( (rec.Event.MouseEvent.dwEventFlags & (MOUSE_HWHEELED|MOUSE_WHEELED)) != 0
+		 || _prev_mouse_event_ts + 500 <= now
+		 || memcmp(&_prev_mouse_event, &rec.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
+			memcpy(&_prev_mouse_event, &rec.Event.MouseEvent, sizeof(_prev_mouse_event));
+			_prev_mouse_event_ts = now;
+			wxConsoleInputShim::Enqueue(&rec, 1);
+		}
+	};
+
 	if (!g_broadway) {
 		if (wxGetKeyState(WXK_SHIFT)) ir.Event.MouseEvent.dwControlKeyState|= SHIFT_PRESSED;
 		if (wxGetKeyState(WXK_CONTROL)) ir.Event.MouseEvent.dwControlKeyState|= LEFT_CTRL_PRESSED;
@@ -1852,11 +1895,38 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	else if (event.RightUp()) _mouse_state&= ~RIGHTMOST_BUTTON_PRESSED;
 	else if (event.Moving() || event.Dragging()) ir.Event.MouseEvent.dwEventFlags|= MOUSE_MOVED;
 	else if (event.GetWheelRotation()!=0) {
-		if (event.GetWheelAxis()==wxMOUSE_WHEEL_HORIZONTAL)
-			ir.Event.MouseEvent.dwEventFlags|= MOUSE_HWHEELED;
-		else
-			ir.Event.MouseEvent.dwEventFlags|= MOUSE_WHEELED;
-		ir.Event.MouseEvent.dwButtonState|= (event.GetWheelRotation() > 0) ? 0x00010000 : 0xffff0000;
+		const bool horizontal = (event.GetWheelAxis() == wxMOUSE_WHEEL_HORIZONTAL);
+		int wheel_delta = (event.GetWheelDelta() > 0) ? event.GetWheelDelta() : 120;
+		int &wheel_accum = horizontal ? _mouse_wheel_accum_h : _mouse_wheel_accum_v;
+		int step_threshold = wheel_delta;
+		if (wheel_delta < 120) {
+			const unsigned int cell = horizontal ? _paint_context.FontWidth() : _paint_context.FontHeight();
+			if (cell > 0) {
+				step_threshold = static_cast<int>(cell);
+			}
+		}
+		wheel_accum += event.GetWheelRotation();
+
+		int steps = wheel_accum / step_threshold;
+		if (steps == 0) {
+			return;
+		}
+		wheel_accum -= steps * step_threshold;
+
+		const int step_dir = (steps > 0) ? 1 : -1;
+		unsigned int step_count = (steps > 0) ? steps : -steps;
+		const DWORD wheel_flag = horizontal ? MOUSE_HWHEELED : MOUSE_WHEELED;
+		const DWORD wheel_state = (step_dir > 0) ? 0x00010000 : 0xffff0000;
+
+		for (unsigned int i = 0; i < step_count; ++i) {
+			INPUT_RECORD wheel_ir = ir;
+			wheel_ir.Event.MouseEvent.dwEventFlags |= wheel_flag;
+			wheel_ir.Event.MouseEvent.dwButtonState |= wheel_state;
+			wheel_ir.Event.MouseEvent.dwButtonState |= _mouse_state;
+			wheel_ir.Event.MouseEvent.dwMousePosition = pos_char;
+			enqueue_mouse_event(wheel_ir);
+		}
+		return;
 
 	} else if ( event.ButtonDClick() ) {
 
@@ -1880,24 +1950,7 @@ void WinPortPanel::OnMouseNormal( wxMouseEvent &event, COORD pos_char)
 	ir.Event.MouseEvent.dwButtonState|= _mouse_state;
 	ir.Event.MouseEvent.dwMousePosition = pos_char;
 
-	if (!(ir.Event.MouseEvent.dwEventFlags &MOUSE_MOVED) ) {
-		fprintf(stderr, "Mouse: dwEventFlags=0x%x dwButtonState=0x%x dwControlKeyState=0x%x\n",
-			ir.Event.MouseEvent.dwEventFlags, ir.Event.MouseEvent.dwButtonState,
-			ir.Event.MouseEvent.dwControlKeyState);
-	}
-
-	// GUI frontend tends to flood with duplicated mouse events,
-	// cuz it reacts on screen coordinates movements, so avoid
-	// excessive mouse events by skipping event if it duplicates
-	// most recently queued event (fix #369)
-	DWORD now = WINPORT(GetTickCount)();
-	if ( (ir.Event.MouseEvent.dwEventFlags & (MOUSE_HWHEELED|MOUSE_WHEELED)) != 0
-	 || _prev_mouse_event_ts + 500 <= now
-	 || memcmp(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event)) != 0) {
-		memcpy(&_prev_mouse_event, &ir.Event.MouseEvent, sizeof(_prev_mouse_event));
-		_prev_mouse_event_ts = now;
-		wxConsoleInputShim::Enqueue(&ir, 1);
-	}
+	enqueue_mouse_event(ir);
 }
 
 void WinPortPanel::DamageAreaBetween(COORD c1, COORD c2)
@@ -2243,6 +2296,9 @@ void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 void WinPortPanel::ResetInputState()
 {
 	_key_tracker.ForceAllUp();
+
+	_mouse_wheel_accum_v = 0;
+	_mouse_wheel_accum_h = 0;
 
 	if (_mouse_qedit_start_ticks) {
 		_mouse_qedit_start_ticks = 0;

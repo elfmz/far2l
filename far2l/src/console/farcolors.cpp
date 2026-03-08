@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "config.hpp"
 #include "ConfigRW.hpp"
 #include "farcolorexp.h"
+#include "utils.h"
 
 static struct ColorsInit_s
 {
@@ -229,6 +230,7 @@ FarColors::~FarColors() noexcept {
 #define FARCOLORS_SECTION "farcolors"
 #define FARCOLORS_CONFIG "settings/farcolors.ini"
 #define FARCOLORS_DEFCOLOR "(B_RED | F_WHITE)"
+#define FARCOLORS_THEME_FOLDER "settings/themes/"
 
 bool FarColors::Save(KeyFileHelper &kfh) noexcept {
 
@@ -299,6 +301,19 @@ void FarColors::SaveFarColors( ) noexcept {
 
 	fprintf(stderr, "void FarColors::SaveFarColors( ) {\n" );
 
+	if (!Opt.CurrentTheme.IsEmpty() && Opt.IsColorsChanged) {
+		// we have user defined theme, and we have user override of theme colors, so we need to make a copy of theme and store new colors here
+		Opt.CurrentTheme = SaveFarColorsAsUserTheme(Opt.CurrentTheme);
+		return;
+	}
+
+	if (!Opt.CurrentTheme.IsEmpty()) {
+		// we have theme and theme did not overridden, do nothing
+		return;
+	}
+
+	// No themes fallback
+
 	const std::string &colors_file = InMyConfig(FARCOLORS_CONFIG);
 	KeyFileHelper kfh(colors_file);
 	FARColors.Save(kfh);
@@ -310,39 +325,156 @@ void FarColors::InitFarColors( ) noexcept {
 	fprintf(stderr, "void FarColors::InitFarColors( ) {\n" );
 
 	Palette::InitFarPalette();
-	const std::string &colors_file = InMyConfig(FARCOLORS_CONFIG);
 
+	if (!Opt.CurrentTheme.IsEmpty()) {
+		if(InitFarColorsFromTheme(Opt.CurrentTheme, Opt.IsSystemTheme))
+			return;
+	}
+
+	// Theme is not defined, fall back to colors
+	std::string colors_file = InMyConfig(FARCOLORS_CONFIG);
+	if (!InitFarColorsFromFile(colors_file)) {
+    	ConfigReader cfg_reader("Colors");
+    	if (cfg_reader.HasSection()) {
+    		const std::string strCurrentPaletteRGB = "CurrentPaletteRGB";
+    		const std::string strCurrentPalette = "CurrentPalette";
+    		if (cfg_reader.HasKey(strCurrentPaletteRGB)) {
+    			if (cfg_reader.GetBytes((unsigned char*)FARColors.colors, SIZE_ARRAY_FARCOLORS * sizeof(uint64_t), strCurrentPaletteRGB) == SIZE_ARRAY_FARCOLORS * sizeof(uint64_t)) {
+    				FARColors.Set();
+    				return;
+    			}
+    		}
+    		if (cfg_reader.HasKey(strCurrentPalette)) {
+    			uint8_t indexes[SIZE_ARRAY_FARCOLORS];
+    			if (cfg_reader.GetBytes((unsigned char*)indexes, SIZE_ARRAY_FARCOLORS, strCurrentPalette) == SIZE_ARRAY_FARCOLORS) {
+    				FARColors.ResetToDefaultIndex(indexes);
+    				FARColors.Set();
+    				return;
+    			}
+    		}
+    	}
+
+    	FARColors.ResetToDefaultIndexRGB(DefaultColorsIndex16);
+    	FARColors.Set();
+	}
+}
+
+bool FarColors::InitFarColorsFromFile( const std::string& colors_file ) noexcept 
+{
 	KeyFileHelper kfh(colors_file);
 
 	if (kfh.IsLoaded()) {
 		if (FARColors.Load(kfh)) {
 			FARColors.Set();
-			return;
+			return true;
 		}
 		else
 			fprintf(stderr, "InitFarColors(): failed to parse '%s'\n", colors_file.c_str());
 	}
+	return false;
+}
 
-	ConfigReader cfg_reader("Colors");
-	if (cfg_reader.HasSection()) {
-		const std::string strCurrentPaletteRGB = "CurrentPaletteRGB";
-		const std::string strCurrentPalette = "CurrentPalette";
-		if (cfg_reader.HasKey(strCurrentPaletteRGB)) {
-			if (cfg_reader.GetBytes((unsigned char*)FARColors.colors, SIZE_ARRAY_FARCOLORS * sizeof(uint64_t), strCurrentPaletteRGB) == SIZE_ARRAY_FARCOLORS * sizeof(uint64_t)) {
-				FARColors.Set();
-				return;
-			}
-		}
-		if (cfg_reader.HasKey(strCurrentPalette)) {
-			uint8_t indexes[SIZE_ARRAY_FARCOLORS];
-			if (cfg_reader.GetBytes((unsigned char*)indexes, SIZE_ARRAY_FARCOLORS, strCurrentPalette) == SIZE_ARRAY_FARCOLORS) {
-				FARColors.ResetToDefaultIndex(indexes);
-				FARColors.Set();
-				return;
-			}
-		}
+bool FarColors::InitFarColorsFromTheme( FARString& theme, bool isSystemWide) noexcept
+{
+    int Length = theme.GetLength();
+   	std::string sTheme;
+    Wide2MB(theme.GetBuffer(), Length, sTheme);
+
+	std::string sep("/");
+	std::string filename("/farcolors.ini");
+
+    if (!isSystemWide) {
+		std::string path(FARCOLORS_THEME_FOLDER);
+		path += sep + sTheme + filename;
+
+		std::string colors_file = InMyConfig(path.c_str(), false);
+		return InitFarColorsFromFile(colors_file);
+    }
+    else {
+		std::wstring homePath = g_strFarPath.GetBuffer();
+		std::wstring sharePath = homePath;
+		TranslateInstallPath_Bin2Share(sharePath);
+	
+    	int Length = sharePath.length();
+	   	std::string sPath;
+    	Wide2MB(sharePath.c_str(), Length, sPath);
+	    sPath += "/themes";
+
+		std::string colors_file = sPath + sep + sTheme + filename;
+		return InitFarColorsFromFile(colors_file);
 	}
+}
 
-	FARColors.ResetToDefaultIndexRGB(DefaultColorsIndex16);
-	FARColors.Set();
+FARString FarColors::SaveFarColorsAsUserTheme( FARString& base ) noexcept
+{
+    int Length = base.GetLength();
+   	std::string tmpstr;
+    Wide2MB(base.GetBuffer(), Length, tmpstr);
+
+	std::string path(FARCOLORS_THEME_FOLDER);
+	std::string sep("/");
+	std::string filename("/farcolors.ini");
+	path += sep + tmpstr + filename;
+
+	const std::string &colors_file = InMyConfig(path.c_str(), true);
+	KeyFileHelper kfh(colors_file);
+	FARColors.Save(kfh);
+	kfh.Save();
+
+    Length = tmpstr.length();
+   	std::wstring tmpwstr;
+    MB2Wide(tmpstr.c_str(), Length, tmpwstr);
+
+    return tmpwstr;
+}
+
+#include <dirent.h>
+#include <unistd.h>
+#include <algorithm>
+
+std::vector<std::string> FarColors::GetKnownUserThemes ()
+{
+	std::vector<std::string> v;
+
+    /* user themes */
+	std::string themePath = InMyConfig(FARCOLORS_THEME_FOLDER, false);
+	DIR *dir = opendir(themePath.c_str());
+    if (dir) {
+	    struct dirent *entry;
+    	while ((entry = readdir(dir)) != NULL) {
+        	if (entry->d_type == DT_DIR && *entry->d_name != '.') 
+            	v.push_back(entry->d_name);
+	    }
+    	closedir(dir);
+    }
+    std::sort(v.begin(), v.end());
+    return v;
+}
+
+std::vector<std::string> FarColors::GetKnownSystemThemes ()
+{
+	std::vector<std::string> v;
+
+    /* system themes */
+	std::wstring homePath = g_strFarPath.GetBuffer();
+	std::wstring sharePath = homePath;
+	TranslateInstallPath_Bin2Share(sharePath);
+	
+    int Length = sharePath.length();
+   	std::string sPath;
+    Wide2MB(sharePath.c_str(), Length, sPath);
+    sPath += "/themes";
+
+	DIR* dir = opendir(sPath.c_str());
+    if (dir) {
+	    struct dirent *entry;
+    	while ((entry = readdir(dir)) != NULL) {
+        	if (entry->d_type == DT_DIR && *entry->d_name != '.') {
+            	v.push_back(entry->d_name);
+            }
+	    }
+    	closedir(dir);
+    }
+    std::sort(v.begin(), v.end());
+    return v;
 }

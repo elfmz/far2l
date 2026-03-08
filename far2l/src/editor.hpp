@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class FileEditor;
 class KeyBar;
+class EditorMenuBar;
 
 struct InternalEditorBookMark
 {
@@ -115,7 +116,7 @@ struct EditorUndoData
 	    delete[] this->Str;
 
 		if (Str) {
-			this->Str = new wchar_t[Length + 1];
+			this->Str = new (std::nothrow) wchar_t[Length + 1];
 
 			if (this->Str)
 				wmemmove(this->Str, Str, Length);
@@ -253,12 +254,28 @@ private:
 	int m_CachedTotalLines;
 	int m_CachedLineNumWidth;
 	bool m_LineCountDirty;
+	bool m_showCursor;
+	FARString m_virtualFileName;
 
 private:
+	struct MouseTarget
+	{
+		Edit* line{nullptr};
+		int pos{-1};
+		int visual_line{0};
+	};
+
 	int FindVisualLine(Edit* line, int Pos);
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
-	int GetVisualLinesBelow(Edit* startLine, int startVisual);
+	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
+	int GetTopScreenLineNumber();
+	void EnsureTopScreenVisual();
+	bool DecTopVisualLine();
+	bool IncTopVisualLine();
+	int VisualOffsetFromTop(Edit* line, int vline) const;
+	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
+	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state);
 	virtual void DisplayObject();
 	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);
@@ -335,6 +352,8 @@ void GoToVisualLine(int VisualLine);
 	wchar_t *VBlock2Text(wchar_t *ptrInitData);
 
 public:
+	int GetEditorID() const { return EditorID; }
+	void SetVirtualFileName(const wchar_t *name) { m_virtualFileName = name; }
 	Editor(ScreenObject *pOwner = nullptr, bool DialogUsed = false);
 	virtual ~Editor();
 
@@ -444,6 +463,7 @@ public:
 	void SetCurPos(int NewCol, int NewRow = -1);
 	void SetCursorType(bool Visible, DWORD Size);
 	void GetCursorType(bool &Visible, DWORD &Size);
+	void SetShowCursor(bool Enable) { m_showCursor = Enable; }
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
 

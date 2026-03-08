@@ -129,6 +129,9 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecColors, "TempColors256", TEMP_COLORS256_SIZE, g_tempcolors256, nullptr},
 	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
+	{true,  NSecColors, "CurrentTheme", &Opt.CurrentTheme, L"" },
+	{true,  NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 0 },
+
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
 	{true,  NSecScreen, "KeyBar", &Opt.ShowKeyBar, 1},
@@ -200,11 +203,13 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecViewer, "ShowKeyBar", &Opt.ViOpt.ShowKeyBar, 1},
 	{true,  NSecViewer, "ShowTitleBar", &Opt.ViOpt.ShowTitleBar, 1},
 	{true,  NSecViewer, "ShowArrows", &Opt.ViOpt.ShowArrows, 1},
+	{true,  NSecViewer, "ClickableURLs", &Opt.ViOpt.ClickableURLs, 1},
 	{true,  NSecViewer, "ShowScrollbar", &Opt.ViOpt.ShowScrollbar, 0},
 	{true,  NSecViewer, "IsWrap", &Opt.ViOpt.ViewerIsWrap, 1},
 	{true,  NSecViewer, "Wrap", &Opt.ViOpt.ViewerWrap, 0},
 	{true,  NSecViewer, "PersistentBlocks", &Opt.ViOpt.PersistentBlocks, 0},
 	{true,  NSecViewer, "DefaultCodePage", &Opt.ViOpt.DefaultCodePage, CP_UTF8},
+	{true,  NSecViewer, "ShowMenuBar", &Opt.ViOpt.ShowMenuBar, 0},
 
 	{true,  NSecDialog, "EditHistory", &Opt.Dialogs.EditHistory, 1},
 	{true,  NSecDialog, "EditBlock", &Opt.Dialogs.EditBlock, 0},
@@ -239,6 +244,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecEditor, "DefaultCodePage", &Opt.EdOpt.DefaultCodePage, CP_UTF8},
 	{true,  NSecEditor, "ShowKeyBar", &Opt.EdOpt.ShowKeyBar, 1},
 	{true,  NSecEditor, "ShowTitleBar", &Opt.EdOpt.ShowTitleBar, 1},
+	{true,  NSecEditor, "ShowMenuBar", &Opt.EdOpt.ShowMenuBar, 0},
 	{true,  NSecEditor, "ShowScrollBar", &Opt.EdOpt.ShowScrollBar, 0},
 	{true,  NSecEditor, "UseEditorConfigOrg", &Opt.EdOpt.UseEditorConfigOrg, 1},
 	{true,  NSecEditor, "SearchSelFound", &Opt.EdOpt.SearchSelFound, 0},
@@ -423,6 +429,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelLeft, "CurFile", &Opt.strLeftCurFile, L""},
 	{true,  NSecPanelLeft, "SelectedFirst", &Opt.LeftSelectedFirst, 0},
 	{true,  NSecPanelLeft, "DirectoriesFirst", &Opt.LeftPanel.DirectoriesFirst, 1},
+	{true,  NSecPanelLeft, "ExecutablesFirst", &Opt.LeftPanel.ExecutablesFirst, 0},
 
 	{true,  NSecPanelRight, "Type", &Opt.RightPanel.Type, 0},
 	{true,  NSecPanelRight, "Visible", &Opt.RightPanel.Visible, 1},
@@ -437,6 +444,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecPanelRight, "CurFile", &Opt.strRightCurFile, L""},
 	{true,  NSecPanelRight, "SelectedFirst", &Opt.RightSelectedFirst, 0},
 	{true,  NSecPanelRight, "DirectoriesFirst", &Opt.RightPanel.DirectoriesFirst, 1},
+	{true,  NSecPanelRight, "ExecutablesFirst", &Opt.RightPanel.ExecutablesFirst, 0},
 
 	{true,  NSecPanelLayout, "ColumnTitles", &Opt.ShowColumnTitles, 1},
 	{true,  NSecPanelLayout, "StatusLine", &Opt.ShowPanelStatus, 1},
@@ -801,6 +809,7 @@ void ConfigOptSave(bool Ask)
 		Opt.LeftPanel.CaseSensitiveSort = LeftPanel->GetCaseSensitiveSort();
 		Opt.LeftSelectedFirst = LeftPanel->GetSelectedFirstMode();
 		Opt.LeftPanel.DirectoriesFirst = LeftPanel->GetDirectoriesFirst();
+		Opt.LeftPanel.ExecutablesFirst = LeftPanel->GetExecutablesFirst();
 	}
 
 	LeftPanel->GetCurDir(Opt.strLeftFolder);
@@ -817,6 +826,7 @@ void ConfigOptSave(bool Ask)
 		Opt.RightPanel.CaseSensitiveSort = RightPanel->GetCaseSensitiveSort();
 		Opt.RightSelectedFirst = RightPanel->GetSelectedFirstMode();
 		Opt.RightPanel.DirectoriesFirst = RightPanel->GetDirectoriesFirst();
+		Opt.RightPanel.ExecutablesFirst = RightPanel->GetExecutablesFirst();
 	}
 
 	RightPanel->GetCurDir(Opt.strRightFolder);
@@ -835,6 +845,10 @@ void ConfigOptSave(bool Ask)
 	if (Ask)
 		CtrlObject->Macro.SaveMacros();
 
-	FarColors::SaveFarColors();
+    if (Opt.IsColorsChanged || Ask) 
+    {
+		FarColors::SaveFarColors();
+		Opt.IsColorsChanged = false;
+	}
 	/* *************************************************** </ПОСТПРОЦЕССЫ> */
 }

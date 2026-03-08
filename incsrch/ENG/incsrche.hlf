@@ -3,7 +3,7 @@
 
 @Contents
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Contents
  This plugin adds the #Incremental Search# capability to the internal FAR editor.
@@ -20,21 +20,21 @@ $^#Contents
 
 @Menu
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Plugin menu#
  After choosing the plugin from editor plugins menu You will see the submenu like this:
 
 @-
-^  
-^  
-^  
-^  
-^  
-^  
-^  
-^  
-^  
+^
+^
+^
+^
+^
+^
+^
+^
+^
 @+
 
  Now You can select the option. First two will activate the incremental search in the chosen direction respectively. See ~Interface and Keyboard reference~@Iface@ topic for the key bindings of this mode.
@@ -44,12 +44,12 @@ $^#Plugin menu#
  #Find selected# mode is used to locate the next occurrence of the text selected with a block. Does nothing if there is no block selected. Otherwise starts search as if "Use selected block" and "Auto next selected block" options has been set and terminates plugin after search is completed.
 
  ~Configure...~@Cfg@ option will give You the opportunity to setup the plugin. After configuration made You will get back current menu.
- 
+
  ~Contents~@Contents@
 
 @Cfg
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Plugin configuration#
  There are two ways to configure plugin: from #Plugins configuration menu# (Main Menu|Options|Plugins Configuration|Incremental Search) or directly from ~Incremental Search plugin menu~@Menu@ from inside editor.
@@ -57,17 +57,17 @@ $^#Plugin configuration#
  Configuration dialog has following options:
 
 @-
-^   
-^   
-^   
-^   
-^   
-^   
-^   
-^   
-^   
-^   
-^   
+^
+^
+^
+^
+^
+^
+^
+^
+^
+^
+^
 @+
 
  #Case sensitive#            - Search for case sensitive text.
@@ -79,12 +79,12 @@ $^#Plugin configuration#
  #Backspace unroll#          - Restore previous editor position on backspace.
 
  #Ok# button will save the settings to the registry immediately.
- 
+
  ~Contents~@Contents@
 
 @Iface
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Interface and Keyboard reference#
  When in incremental search mode the leftmost characters of the top line will display the prompt #^:#. Start typing the search string and it will be displayed after this prompt.
@@ -108,12 +108,12 @@ $^#Interface and Keyboard reference#
  #Alt#                       clear messages area
  #Any control character,#    ends incremental search and bypass to FAR
            #mouse click#
- 
+
  ~Contents~@Contents@
 
 @Contact
 $^#Incremental Search FAR plugin#
-$^#Version 2.1#
+$^#Version 2.3#
 $^#Copyright (C) 1999-2019 Stanislav V. Mekhanoshin#
 $^#Contact information#
 

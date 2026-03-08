@@ -230,8 +230,8 @@ private:
 	int ReadMacroFunction(int ReadMode, FARString &strBuffer);
 	int WriteVarsConst(int WriteMode);
 	int ReadMacros(int ReadMode, FARString &strBuffer);
-	DWORD AssignMacroKey();
-	int GetMacroSettings(uint32_t Key, DWORD &Flags);
+	DWORD AssignMacroKey(FARString& macroNameHolder);
+	int GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescription);
 	void InitInternalVars(BOOL InitedRAM = TRUE);
 	void InitInternalLIBVars();
 	void ReleaseWORKBuffer(BOOL All = FALSE);	// удалить временный буфер
@@ -324,6 +324,9 @@ public:
 	static void RegisterMacroIntFunction();
 	static TMacroFunction *RegisterMacroFunction(const TMacroFunction *tmfunc);
 	static bool UnregMacroFunction(size_t Index);
+
+	void MacroBrowser();
+	friend class MacroBrowser;
 };
 
 BOOL WINAPI KeyMacroToText(uint32_t Key, FARString &strKeyText0);

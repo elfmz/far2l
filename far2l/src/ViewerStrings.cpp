@@ -8,6 +8,8 @@ ViewerString::ViewerString(ViewerString &&src)
 	nSelStart = src.nSelStart;
 	nSelEnd = src.nSelEnd;
 	bSelection = src.bSelection;
+	WrapsToNext = src.WrapsToNext;
+	ContinuesFromPrev = src.ContinuesFromPrev;
 	_data.swap(src._data);
 }
 
@@ -17,6 +19,8 @@ ViewerString &ViewerString::operator=(ViewerString &&src)
 	nSelStart = src.nSelStart;
 	nSelEnd = src.nSelEnd;
 	bSelection = src.bSelection;
+	WrapsToNext = src.WrapsToNext;
+	ContinuesFromPrev = src.ContinuesFromPrev;
 	_data.swap(src._data);
 	return *this;
 }
@@ -33,9 +37,21 @@ size_t ViewerString::Capacity() const
 
 //////
 
+const wchar_t *ViewerString::Chars(size_t x) const
+{
+	return LIKELY(x < _data.size()) ? Chars() + x : L"";
+}
+
 const wchar_t *ViewerString::Chars(size_t x)
 {
 	return LIKELY(x < _data.size()) ? Chars() + x : L"";
+}
+
+const wchar_t *ViewerString::Chars() const
+{
+	if (_data.empty())
+		return L"";
+	return _data.data();
 }
 
 const wchar_t *ViewerString::Chars()

@@ -122,6 +122,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::string _osc52clip;
 
 	ClipboardBackendSetter _clipboard_backend_setter;
+	PrinterSupportBackendSetter _printer_backend_setter;
 
 	void GetWinSize(struct winsize &w);
 	void ChooseSimpleClipboardBackend();

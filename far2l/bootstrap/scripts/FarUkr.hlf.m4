@@ -5,7 +5,7 @@ m4_include(`farversion.m4')m4_dnl
 
 @Contents
 $^#Програма управління файлами та архівами#
-`$^#'FULLVERSIONNOBRACES`#'
+`$^#%FAR_BUILD% %FAR_PLATFORM%#'
 `$^#©1996-2000 Eugene Roshal, ©2000-2016 FAR Group,' ©COPYRIGHTYEARS `FAR People'#
  ~Індекс файлу допомоги~@Index@
  ~Як користуватися допомогою~@Help@
@@ -19,6 +19,7 @@ $^#Програма управління файлами та архівами#
  ~Підтримка модулів, що підключаються~@Plugins@
  ~Огляд можливостей модулів , що підключаються~@PluginsReviews@
  ~Термінал~@Terminal@
+ ~External terminal: configuration~@ExternalTerminal@
 
  ~Панелі:~@Panels@ ~Панель файлів~@FilePanel@
  ~Дерево папок~@TreePanel@
@@ -43,6 +44,7 @@ $^#Програма управління файлами та архівами#
  ~Асоціації файлів~@FileAssoc@
  ~Команди операційної системи~@OSCommands@
  ~Special commands~@SpecCmd@
+ ~Ways to run programs~@WaysToRunPrograms@
  ~Закладки~@Bookmarks@
  ~Меню фільтрів~@FiltersMenu@
  ~Переключення між екранами~@ScrSwitch@
@@ -247,7 +249,6 @@ $ #Клавіатурні команди#
 
 ~Інші команди~@MiscCmd@
 
-~Special commands~@SpecCmd@
 
 @MenuCmd
 $ #Menu control commands#
@@ -528,7 +529,8 @@ $ #Командний рядок#
 
 6. ^<wrap>Про кнопкосполучення та інші особливості вбудованого емулятора терміналу ~читайте тут~@Terminal@
 
-    See also ~Special commands~@SpecCmd@.
+    See also ~Special commands~@SpecCmd@
+             ~Ways to run programs~@WaysToRunPrograms@
 
 @FuncCmd
 $ #Команда управління панелями - сервісні команди#
@@ -1477,6 +1479,27 @@ You may return to background'ed command from ~Screens switching menu~@ScrSwitch@
   See also: ~pseudo-commands~@SpecCmd@
             ~Команда операційної системи~@OSCommands@
 
+@ExternalTerminal
+$ #External terminal: configuration#
+   To launch console applications in an external terminal emulator, far2l uses the helper script ~$FARHOME~@FAREnv@#/open.sh#.
+
+   #Default terminal selection logic.#
+
+   1. Checks for #/etc/alternatives/x-terminal-emulator#. On distributions using the alternatives mechanism (Debian, Ubuntu, Red Hat), this symbolic link points to the system's preferred terminal emulator. If valid, it is used.
+   2. Otherwise, #xterm# is used.
+
+
+   #Overriding the terminal.#
+
+   There are two main ways to change the emulator.
+   1. System-wide (for distributions with the alternatives mechanism).
+      You can change the global default terminal by running the command:
+         #sudo update-alternatives --config x-terminal-emulator#
+   2. User-defined (specific to far2l).
+      Create the executable file #~~/.config/far2l/open.sh#. Inside, define the #$EXEC_TERM# variable with your preferred terminal, for example:
+         #EXEC_TERM=kitty#
+      Note: The selected terminal must support the #-e# option.
+
 @UIBackends
 $ #Режими інтерфейсу#
  Залежно від налаштувань білда та доступних можливостей платформи #FAR2L# може виводити
@@ -2164,6 +2187,7 @@ $ #Меню користувача#
     ~Special commands~@SpecCmd@.
     список ~макроклавіш~@KeyMacroUserMenuList@, доступних у меню користувача.
     Common ~menu~@MenuCmd@ keyboard commands.
+    ~Ways to run programs~@WaysToRunPrograms@.
 
 @FileAssoc
 $ #Асоціації файлів#
@@ -2196,6 +2220,7 @@ FAR2L намагається використовувати асоціації W
 
     See also: ~Special commands~@SpecCmd@.
               common ~menu~@MenuCmd@ keyboard commands.
+              ~Ways to run programs~@WaysToRunPrograms@.
 
 @FileAssocModify
 $ #Налаштування асоціації файлів#
@@ -2343,7 +2368,7 @@ $ #Системні параметри#
 Значення використовується під час таких файлових операцій, як копіювання, видалення, швидкий перегляд тощо.
 Увімкніть, щоб підсумовувати простір, займаний тільки файлами. Вимкніть, щоб враховувати також накладні витрати
 на зберігання метаданих самих директорій.
-                                        
+
  # Час бездіяльності #
  Завершує роботу FAR2L, якщо протягом зазначеного інтервалу не було натискання клавіш миші або клавіатури,
 FAR2L очікував на введення з командного рядка і відсутні фонові екрани редагування або перегляду.
@@ -3028,8 +3053,9 @@ $ #Редактор#
  #F8# Перемикання UTF8/~ANSI/OEM~@CodePagesSet@ кодової сторінки
  #Shift-F8# Вибір кодової сторінки
  #Alt-F8# ~Перейти~@EditorGotoPos@ на вказаний рядок та позицію
+ #F9# Показать горизонтальное меню
  #Alt-F9# Зміна розмірів вікна FAR2L
- #F9,Alt-Shift-F9# Виклик діалогу ~налаштувань редактора~@EditorSettings@
+ #Alt-Shift-F9# Виклик діалогу ~налаштувань редактора~@EditorSettings@
  #F10, F4, Esc# Вихід
  #Shift-F10# Збереження та вихід
  #Ctrl-F10# ^<wrap>Позиціонувати на поточний файл без виходу.
@@ -3241,7 +3267,7 @@ $ #Зміна імені кодової сторінки#
 
 @DriveDlg
 $ #Меню переходу#
- Це меню дозволяє швидко перейти в інше місце ФС, відмонтувати шлях або 
+ Це меню дозволяє швидко перейти в інше місце ФС, відмонтувати шлях або
 відкрити нову панель ~модуля, що підключається~@Plugins@.
 
  Виберіть пункт меню з відповідною літерою диска для зміни поточного диска
@@ -3256,7 +3282,7 @@ $ #Меню переходу#
 
  - Видалення ~закладки ~.
 
- Комбінація #Shift-Del# використовується для безумовного відмонтування та 
+ Комбінація #Shift-Del# використовується для безумовного відмонтування та
 запитує привілеї суперкористувача.
 
  #F9# показує ~діалог для налаштування відображення цієї інформації~@ChangeLocationConfig@.
@@ -3455,6 +3481,9 @@ $ #Налаштування програми перегляду#
  #зсуву# залишається текст, то вікно перегляду буде
  показувати збоку стрілки, що показують.
 
+ #Розпізнавання URL# Розпізнавати, підсвічувати та активувати
+ посилання, які починаються з https:, http: або mailto:.
+
  #Зберігати позицію# Зберігати та відновлювати позицію
  #файла# у нещодавно переглянутих файлах.
  Ця опція також викликає збереження
@@ -3639,7 +3668,7 @@ $ #Файлові атрибути#
     3. ^<wrap>#Права доступу#
        ^<wrap>Дозволяє змінювати права доступу (читання/запис/виконання для
 власника/групи/інших) та спеціальні біти режиму (setuid, setgid та sticky)
-у вибраних файлах. Для зручності інформація представлена та синхронно змінюється 
+у вибраних файлах. Для зручності інформація представлена та синхронно змінюється
 в двох видах запису: символьній та числовій (восьмеричній).
 
        ^<wrap>Для виділених об'єктів (файлів та папок) контрольні перемикачі мають 3
@@ -4206,7 +4235,8 @@ UNIX режими доступу як у оригінальних файлів, 
  # Замість # - всі існуючі файли будуть замінені копіюваними;
  #Пропустити# - існуючі файли залишаться без змін;
  #Ім'я# - існуючі файли залишаться без змін, копіювати будуть присвоєні інші імена;
- #Дописати# - файли, що копіюються, будуть дописані в кінець існуючих;
+ #Дописати# - файли, що копіюються, будуть дописані в кінець існуючих
+(пропускаючи перші N байтів, що дорівнюють розміру цільового файлу);
  #Тільки нові/оновлені файли# - копіювати тільки файли з новішими
 датою та часом запису. Стан цієї опції не зберігається на майбутні сеанси копіювання.
  #Запит підтвердження для R/O файлів# - визначає, чи потрібне додаткове
@@ -4237,7 +4267,8 @@ $ #Копіювання: запит дії#
 
  #Ім'я# - існуючі файли залишаться без змін, копіювати будуть присвоєні інші імена;
 
- #Дописати# - файл, що копіюється, буде дописаний в кінець існуючого.
+ #Дописати# - файл, що копіюється, буде дописаний в кінець існуючого
+(пропускаючи перші N байтів, що дорівнюють розміру цільового файлу).
 
  Якщо відмічено перемикач #Запам'ятати вибір#, вибрана дія буде
 використано для всіх існуючих файлів у поточному сеансі копіювання
@@ -4349,6 +4380,7 @@ $ # Застосувати команду
 
  See also: ~Special commands~@SpecCmd@
            ~Команда операційної системи~@OSCommands@
+           ~Ways to run programs~@WaysToRunPrograms@
 
 
 @OSCommands
@@ -4575,7 +4607,7 @@ $ #Регулярні вирази для заміни#
 регулярному вираженні. #$0# означає всю знайдену послідовність
 цілком. #$*# замінюється на символ '*'.
 
-Обидва спеціальні символи #\n# і #\r# будуть замінені на символ нового рядка 
+Обидва спеціальні символи #\n# і #\r# будуть замінені на символ нового рядка
 залежно від стилю кінця рядка, прийнятого у файлі. Їхня поведінка ідентична.
 
 #\t# замінюється символом табуляції (0x09).
@@ -4694,7 +4726,7 @@ and changing templates of what should be included into additional columns.
     #$f# - percents space free of total
     #$a# - percents space available of total
     #$N# - filesystem name
-    #$D# - device from which filesystem is mounted 
+    #$D# - device from which filesystem is mounted
     #$S# - filesystem status, single character that can be
        ! - for readonly FS
        ? - for erroring/unresponsive FS
@@ -4870,8 +4902,60 @@ $ #Макроси: макромова#
  #%var# - використання змінних
  та інші...
 
-Додати елементи макромови в ~макро~@KeyMacro@ можна тільки шляхом ручної
-правки реєстру або шляхом застосування спеціальних програм/плагінів.
+Текст макросу можна задавати напряму у файлі конфігурації
+#~~/.config/far2l/settings/key_macros.ini#. Кожен макрос — це секція:
+#KeyMacros/<Area>/<Key>#, де:
+ - #Area# — одна з: #Common#, #Shell#, #Editor#, #Viewer#, #Dialog#, #Search#, #Tree#,
+#Info#, #QView#, #MainMenu#, #UserMenu#, #Disks#, #Help#, #Menu#, #Other#;
+ - #Key# — назва клавіші, наприклад #CtrlShiftF3#, #AltF1#, #F7# тощо.
+
+Основні поля секції:
+#Description# - короткий опис;
+#DisableOutput# - #0x1# щоб придушити перерисовку під час виконання;
+#Sequence# - текст макросу (може містити #$If#, #$Else#, #$End# тощо).
+
+Приклад (відкрити журнал внутрішнього термінала FAR2L у переглядачі;
+якщо активна панель видима, тимчасово сховати панелі):
+#[KeyMacros/Shell/CtrlShiftF3]#
+#DisableOutput=0x1#
+#Sequence=$If (APanel.Visible) CtrlO F3 $Else F3 $End#
+
+#Ключові слова (змінні / умови)#
+Загальні:
+  #Bof#, #Eof#, #Empty#, #Selected# - стан поточного об'єкта.
+  #Far.Width#, #Far.Height#, #Far.Title# - розмір / заголовок консолі.
+  #MacroArea# - назва поточної області макросів.
+  #ItemCount#, #CurPos#, #Title#, #Height#, #Width# - властивості об'єкта.
+
+Панелі (активна/пасивна):
+  #APanel.*# та #PPanel.*# — активна/пасивна панель.
+  #Empty#, #Bof#, #Eof#, #Root#, #Visible#, #Plugin#, #FilePanel#, #Folder#,
+  #Selected#, #Left#, #LFN#, #Filter# - прапори стану.
+  #Type#, #ItemCount#, #CurPos#, #Current#, #SelCount# - значення.
+  #Path#, #Path0#, #UNCPath# - шляхи панелі.
+  #Height#, #Width#, #OPIFlags#, #DriveType#, #ColumnCount# - геометрія / режим.
+  #HostFile#, #Prefix# - дані плагін-панелі.
+
+Командний рядок:
+  #CmdLine.Bof#, #CmdLine.Eof#, #CmdLine.Empty#, #CmdLine.Selected# - стан.
+  #CmdLine.ItemCount#, #CmdLine.CurPos#, #CmdLine.Value# - значення.
+
+Редактор:
+  #Editor.FileName#, #Editor.CurLine#, #Editor.Lines#, #Editor.CurPos#,
+  #Editor.RealPos#, #Editor.State#, #Editor.Value#, #Editor.SelValue#.
+
+Діалог:
+  #Dlg.ItemType#, #Dlg.ItemCount#, #Dlg.CurPos#, #Dlg.Info.Id#.
+
+Довідка:
+  #Help.FileName#, #Help.Topic#, #Help.SelTopic#.
+
+Переглядач / меню / інше:
+  #Viewer.FileName#, #Viewer.State#, #Menu.Value#,
+  #Drv.ShowPos#, #Drv.ShowMode#, #Fullscreen#, #IsUserAdmin#.
+
+Додати елементи макромови в ~макро~@KeyMacro@ можна лише шляхом ручного
+редагування файлу конфігурації або із застосуванням спеціальних програм/плагінів.
 
  Опис макромови можна знайти у супровідній документації.
 
@@ -4902,12 +4986,12 @@ $ #Макроси: Список встановлених макросів#
 ~Меню вибору дисків~@KeyMacroDisksList@
 ~Меню користувача~@KeyMacroUserMenuList@
 ~Інші меню~@KeyMacroMenuList@
- 
+
 ~Програма перегляду~@KeyMacroViewerList@
 ~Редактор~@KeyMacroEditList@
- 
+
 ~Файл допомоги#~@KeyMacroHelpList@
- 
+
 ~Інші області~@KeyMacroOtherList@
 
 @KeyMacroVarList
@@ -5052,3 +5136,24 @@ $ #Макроси: Інші області#
 @Index
 $ #Індекс файлу допомоги#
 <%INDEX%>
+
+
+@WaysToRunPrograms
+$ #Ways to run programs without blocking far2l#
+  When running programs on the internal ~Command line~@CmdLineCmd@, ~File Associations~@FileAssoc@, ~User Menu~@UserMenu@ and actions ~Apply Command~@ApplyCmd@ far2l may be blocked. The following describes how to run without blocking far2l:
+
+  Launching programs in an ~external terminal~@ExternalTerminal@ from the far2l command line:
+  - #program#: to launch in an external terminal using #Shift-Enter# (using ~$FARHOME~@FAREnv@/open.sh to launch); 
+  - #$FARHOME/open.sh exec program#: to run in an external terminal using #Enter#, exec is required as the first parameter for open.sh;
+  - #$FARHOME/open.sh exec sh -c "ls;read k"#: in this case, the ls command will be executed in the external terminal, but the terminal will not close;
+
+  Running programs from far2l:
+  - #program params &#: just add at the end & - will close the program after closing far2l;
+  - #nohup program params &#: the launch is performed by the nohup program. A nohup.out file is created in the current directory with the program output. You can delete this file later. Such a launch will keep the program running after completing far2l;
+  - #nohup program params >/dev/null 2>&1 &#: will leave the program running after completing far2l without unnecessary output;
+  - #setsid program params >/dev/null 2>/dev/null#: when used in the examples above & some programs, when closed, output information about their termination to the current terminal - using setsid avoids such clogging of the output of the current program;
+
+  See also:
+   ~Special commands~@SpecCmd@
+   ~File Masks~@FileMasks@
+   ~Metasymbols~@MetaSymbols@

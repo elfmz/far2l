@@ -161,9 +161,13 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 {
 	const char *env = getenv("TERM");
 	_screen_tty = (env && strncmp(env, "screen", 6) == 0); // TERM=screen.xterm-256color
+	_vt100 = env && (!strcmp(env, "wsvt25")				// VT-100 compatible terminal
+					|| !strcmp(env, "vt100")
+					|| !strcmp(env, "vt220"));
 
 	env = getenv("TERM_PROGRAM");
 	_wezterm = (env && strcasecmp(env, "WezTerm") == 0);
+
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
 	unsigned long int leds = 0;
@@ -315,8 +319,29 @@ void TTYOutput::FinalizeSameChars()
 	}
 }
 
+void TTYOutput::FinalizeLineDrawing()
+{
+	if (_vt100_line_drawing) {
+		_rawbuf.insert(_rawbuf.end(), {*ESC, '(', 'B'}); // Disable 'DEC Line Drawing mode' ESC sequence
+		_vt100_line_drawing = false;
+	}
+}
+
+static const char s_VT100_linedrawing_chars[114] = "qqxxqqxxqqxxllllkkkkmmmmjjjjttttttttuuuuuuuuwwwwwwwwvvvvvvvvnnnnnnnnnnnnnnnnqqxxqxlllkkkmmmjjjtttuuuwwwvvvnnnlkjm";
+
 void TTYOutput::WriteWChar(WCHAR wch)
 {
+	if (_vt100 && wch >= 0x2500 && wch <= 0x2570) {
+		if (!_vt100_line_drawing) {
+			FinalizeSameChars();
+			_rawbuf.insert(_rawbuf.end(), {*ESC, '(', '0'}); // Enable 'DEC Line Drawing mode' ESC sequence
+			_vt100_line_drawing = true;
+		}
+		_rawbuf.push_back(s_VT100_linedrawing_chars[wch - 0x2500]);
+		return;
+	}
+	FinalizeLineDrawing();
+
 	if (_same_chars.count == 0) {
 		_same_chars.wch = wch;
 
@@ -330,6 +355,7 @@ void TTYOutput::WriteWChar(WCHAR wch)
 void TTYOutput::Write(const char *str, int len)
 {
 	if (len > 0) {
+		FinalizeLineDrawing();
 		FinalizeSameChars();
 		_rawbuf.insert(_rawbuf.end(), str, str + len);
 	}
@@ -342,6 +368,7 @@ void TTYOutput::Write(const char *str)
 
 void TTYOutput::Format(const char *fmt, ...)
 {
+	FinalizeLineDrawing();
 	FinalizeSameChars();
 
 	char tmp[0x100];
@@ -381,6 +408,7 @@ void TTYOutput::Format(const char *fmt, ...)
 
 void TTYOutput::Flush()
 {
+	FinalizeLineDrawing();
 	FinalizeSameChars();
 	if (!_rawbuf.empty()) {
 		WriteReally(&_rawbuf[0], _rawbuf.size());
@@ -593,7 +621,7 @@ static unsigned int KittyImageID(const std::string &str_id)
 	return out ? out : 1;
 }
 
-unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img)
+unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConsoleImage &img, char action)
 {
 	unsigned int id = KittyImageID(str_id);
 
@@ -601,12 +629,12 @@ unsigned int TTYOutput::SendKittyImage(const std::string &str_id, const TTYConso
     base64_encode(base64_data, img.pixel_data.data(), img.pixel_data.size());
 
 	MoveCursorStrict(img.area.Top + 1, img.area.Left + 1);
-    
+
     for (size_t offset = 0;offset < base64_data.length(); ) {
         const size_t chunk_len = std::min(base64_data.length() - offset, (size_t)4096);
         const unsigned more_to_follow = (offset + chunk_len < base64_data.length()) ? 1 : 0;
         if (offset == 0) {
-			Format(ESC "_Ga=T,f=%u,t=d,i=%u,m=%u", img.fmt, id, more_to_follow);
+			Format(ESC "_Ga=%c,f=%u,t=d,i=%u,m=%u", action, img.fmt, id, more_to_follow);
 			if (img.fmt != 100) {
 				Format(",s=%u,v=%u", img.width, img.height);
 			}

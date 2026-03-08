@@ -9,6 +9,8 @@ extern const char *Copyright;
 #define FAR_PLATFORM "x64"
 #elif defined(__ppc64__)
 #define FAR_PLATFORM "ppc64"
+#elif defined(__ppc__)
+#define FAR_PLATFORM "ppc"
 #elif defined(__arm64__) || defined(__aarch64__)
 #define FAR_PLATFORM "arm64"
 #elif defined(__arm__)

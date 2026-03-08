@@ -429,7 +429,7 @@ void ProtocolFTP::SetTimes(const std::string &path, const timespec &access_time,
 	//MM - the minute
 	//SS - the seconds
 	_str = StrPrintf("%s %04u%02u%02u%02u%02u%02u %s", _cmd.mfmt,
-		(unsigned int)t.tm_year + 1900, (unsigned int)t.tm_mon,
+        (unsigned int)t.tm_year + 1900, (unsigned int)(t.tm_mon + 1),
 		(unsigned int)t.tm_mday, (unsigned int)t.tm_hour,
 		(unsigned int)t.tm_min, (unsigned int)t.tm_sec,
 		name_part.c_str());

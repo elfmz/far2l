@@ -7,6 +7,8 @@ src/farversion.cpp
 src/cache.cpp
 src/chattr.cpp
 src/clipboard.cpp
+src/printersupport.cpp
+src/fileedit2html.cpp
 src/cmdline.cpp
 src/copy.cpp
 src/ctrlobj.cpp
@@ -25,6 +27,7 @@ src/execute.cpp
 src/farwinapi.cpp
 src/fileattr.cpp
 src/fileedit.cpp
+src/fileedit2options.cpp
 src/filefilter.cpp
 src/filefilterparams.cpp
 src/FilesSuggestor.cpp
@@ -33,6 +36,7 @@ src/filepanels.cpp
 src/filestr.cpp
 src/filetype.cpp
 src/fileview.cpp
+src/fileview2options.cpp
 src/findfile.cpp
 src/FindPattern.cpp
 src/flink.cpp
@@ -75,6 +79,7 @@ src/ViewerPrinter.cpp
 src/fileholder.cpp
 src/GrepFile.cpp
 src/about.cpp
+src/LinkHighlighter.cpp
 
 src/panels/panel.cpp
 src/panels/filelist.cpp
@@ -189,7 +194,9 @@ if(FAR2MACRO)
     list(APPEND SOURCES src/macro/macro.cpp)
     list(APPEND SOURCES src/macro/syntax.cpp)
     list(APPEND SOURCES src/macro/tvar.cpp)
+    list(APPEND SOURCES src/macro/macrobrowser.cpp)
 else()
+    message(STATUS "${ColorRed}Option -DFAR2MACRO is OFF, FAR2L will disable building macro subsystem completely${ColorNormal}")
     if(FAR2TVAR)
         list(APPEND SOURCES src/macro/tvar.cpp)
         add_compile_definitions(FAR2TVAR)
@@ -263,7 +270,7 @@ set_target_properties(far2l
     PROPERTIES
     ENABLE_EXPORTS TRUE)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD|NetBSD")
     target_link_libraries(far2l
     PRIVATE ${WINPORT}
     PRIVATE c

@@ -191,7 +191,7 @@ extern "C"
 
 #ifndef __linux__
 		if ((dwFlagsAndAttributes & (FILE_FLAG_WRITE_THROUGH|FILE_FLAG_NO_BUFFERING)) != 0) {
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__HAIKU__)
 			fcntl(r, O_DIRECT, 1);
 #elif !defined(__CYGWIN__)
 			fcntl(r, F_NOCACHE, 1);

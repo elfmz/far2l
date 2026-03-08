@@ -127,6 +127,7 @@ Edit::Edit(ScreenObject *pOwner, Callback *aCallback, bool bAllocateData)
 		*Str = 0;
 
 	Flags.Set(FEDITLINE_EDITBEYONDEND);
+	Flags.Set(FEDITLINE_CURSORVISIBLE);
 	Color = F_LIGHTGRAY | B_BLACK;
 	SelColor = F_WHITE | B_BLACK;
 	ColorUnChanged = FarColorToReal(COL_DIALOGEDITUNCHANGED);
@@ -242,19 +243,21 @@ void Edit::DisplayObject()
 		при DropDownBox курсор выключаем
 		не знаю даже - попробовал но не очень красиво вышло
 	*/
-	if (Flags.Check(FEDITLINE_DROPDOWNBOX))
-		::SetCursorType(0, 10);
-	else {
-		if (Flags.Check(FEDITLINE_OVERTYPE)) {
-			int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
-			::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
-		} else {
-			int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
-			::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+	if (Flags.Check(FEDITLINE_CURSORVISIBLE)) {
+		if (Flags.Check(FEDITLINE_DROPDOWNBOX))
+			::SetCursorType(0, 10);
+		else {
+			if (Flags.Check(FEDITLINE_OVERTYPE)) {
+				int NewCursorSize = (Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
+				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			} else {
+				int NewCursorSize = (Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
+				::SetCursorType(1, CursorSize == -1 ? NewCursorSize : CursorSize);
+			}
 		}
-	}
 
-	MoveCursor(X1 + CursorPos - LeftPos, Y1);
+		MoveCursor(X1 + CursorPos - LeftPos, Y1);
+	}
 }
 
 void Edit::SetCursorType(bool Visible, DWORD Size)
@@ -363,6 +366,8 @@ void Edit::FastShow()
 	int CellSelStart = (SelStart == -1) ? -1 : RealPosToCell(SelStart);
 	int CellSelEnd = (SelEnd < 0) ? -1 : RealPosToCell(SelEnd);
 
+	int iTrailingSpacesPos = StrSize; // for Visual show trailing spaces/tabs in dialog editlines
+
 	/*
 		$ 17.08.2000 KM
 		Если есть маска, сделаем подготовку строки, то есть
@@ -371,6 +376,12 @@ void Edit::FastShow()
 	*/
 	if (Mask && *Mask)
 		RefreshStrByMask();
+	// for Visual show trailing spaces/tabs in dialog editlines (not in masked)
+	else if (Flags.Check(FEDITLINE_PARENT_SINGLELINE | FEDITLINE_PARENT_MULTILINE)) {
+		for (iTrailingSpacesPos = StrSize; iTrailingSpacesPos > 0; iTrailingSpacesPos--)
+			if (!std::iswblank(Str[iTrailingSpacesPos-1]))
+				break;
+	}
 
 	CursorPos = CellCurPos;
 
@@ -379,7 +390,9 @@ void Edit::FastShow()
 	bool joining = false;
 	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i) {
 		auto wc = Str[i];
-		if (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
+		auto showSymbols = (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE))
+				|| i >= iTrailingSpacesPos;
+		if (showSymbols) {
 			switch(wc) {
 				case 0x0020: //space
 					wc = L'\xB7'; // ·
@@ -417,8 +430,8 @@ void Edit::FastShow()
 			for (int j = 0, S = TabSize - ((LeftPos + OutStrCells) % TabSize);
 					j < S && int(OutStrCells) < EditLength; ++j, ++OutStrCells) {
 				OutStr.emplace_back(
-						(Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE) && !j)
-								? L'\x2192'
+						(showSymbols && !j)
+								? L'\x2192' // →
 								: L' ');
 			}
 		} else {
@@ -859,6 +872,17 @@ int Edit::ProcessKey(FarKey Key)
 	}
 
 	switch (Key) {
+		case KEY_CTRLA:
+			Select(0, StrSize);
+			Show();
+			return FALSE;
+
+		case KEY_CTRLU:
+			SetClearFlag(0);
+			Select(-1, 0);
+			Show();
+			return FALSE;
+
 		case KEY_SHIFTLEFT:
 		case KEY_SHIFTNUMPAD4: {
 			if (CurPos > 0) {
@@ -1082,13 +1106,24 @@ int Edit::ProcessKey(FarKey Key)
 		}
 		case KEY_OP_PLAINTEXT: {
 			if (!Flags.Check(FEDITLINE_PERSISTENTBLOCKS)) {
-				if (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG))		// BugZ#1053 - Неточности в $Text
+				if (SelStart != -1 || Flags.Check(FEDITLINE_CLEARFLAG))
 					RecurseProcessKey(KEY_DEL);
 			}
 
-			const wchar_t *S = eStackAsString();
+			FARString strPastedText;
+			if (!GPastedText.IsEmpty()) {
+				strPastedText = GPastedText;
+				GPastedText.Clear();
+			} else {
+				strPastedText = eStackAsString();
+			}
 
-			ProcessInsPlainText(S);
+			// For single-line edit controls, replace EOL sequences with spaces.
+			ReplaceStrings(strPastedText, L"\r\n", L" ");
+			ReplaceStrings(strPastedText, L"\r", L" ");
+			ReplaceStrings(strPastedText, L"\n", L" ");
+
+			InsertString(strPastedText);
 
 			Show();
 			return TRUE;

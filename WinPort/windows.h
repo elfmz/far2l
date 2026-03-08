@@ -154,6 +154,20 @@
 #define    SetClipboardData              WINPORT(SetClipboardData)
 #define    ChooseClipboard               WINPORT(ChooseClipboard);
 
+//printer support
+#define    PrintTextFragment                WINPORT(PrintTextFragment)
+#define    PrintHtmlFragment                WINPORT(PrintHtmlFragment)
+#define    PrintTextFile                    WINPORT(PrintTextFile)
+#define    PrintHtmlFile                    WINPORT(PrintHtmlFile)
+#define    PrintPreviewTextFragment         WINPORT(PrintPreviewTextFragment)
+#define    PrintPreviewHtmlFragment         WINPORT(PrintPreviewHtmlFragment)
+#define    PrintPreviewTextFile             WINPORT(PrintPreviewTextFile)
+#define    PrintPreviewHtmlFile             WINPORT(PrintPreviewHtmlFile)
+#define    PrintSettingsDialog              WINPORT(PrintSettingsDialog)
+#define    PrintIsHTMLSupported             WINPORT(PrintIsHTMLSupported)
+#define    PrintIsPreviewSupported          WINPORT(PrintIsPreviewSupported)
+#define    PrintIsSettingsDialogSupported   WINPORT(PrintIsSettingsDialogSupported)
+
 //keyboard
 #define    GetKeyboardLayoutList  WINPORT(GetKeyboardLayoutList)
 #define    MapVirtualKey          WINPORT(MapVirtualKey)

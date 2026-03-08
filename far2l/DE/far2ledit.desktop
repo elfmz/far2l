@@ -11,3 +11,12 @@ MimeType=text/plain;
 Categories=Utility;TextEditor;
 Icon=far2ledit-wx
 Keywords=editor;console;text;
+Actions=new-window;
+
+[Desktop Action new-window]
+Name=New Window
+Name[ru]=Новое окно
+Name[en_GB]=New Window
+Name[uk]=Нове вікно
+Name[hu]=Új ablak
+Exec=far2ledit --notty %f

@@ -72,6 +72,24 @@ static void SaveLastMemo(int v) {
   kf.SetInt("Settings", "LastMemo", v);
   kf.Save();
 }
+static bool GetEnabled() {
+  return KeyFileHelper(InMyConfig("plugins/memo/state.ini"))
+      .GetInt("Settings", "Enabled", 1);
+}
+static void SetEnabled(bool v) {
+  KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
+  kf.SetInt("Settings", "Enabled", v ? 1 : 0);
+  kf.Save();
+}
+static bool GetUseHotkey() {
+  return KeyFileHelper(InMyConfig("plugins/memo/state.ini"))
+      .GetInt("Settings", "UseHotkey", 1);
+}
+static void SetUseHotkey(bool v) {
+  KeyFileHelper kf(InMyConfig("plugins/memo/state.ini"));
+  kf.SetInt("Settings", "UseHotkey", v ? 1 : 0);
+  kf.Save();
+}
 
 static std::wstring LoadFile(int idx) {
   std::string mbP = Wide2MB(GetMemoFilePath(idx).c_str());
@@ -149,34 +167,66 @@ static void SaveAs(HANDLE hDlg) {
 
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber);
 
+static void UpdateLayout(HANDLE hDlg, int w, int h) {
+  COORD sz = {(SHORT)w, (SHORT)h};
+  g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, (LONG_PTR)&sz);
+
+  SMALL_RECT r;
+  // Box
+  r = {0, 0, (SHORT)(w - 1), (SHORT)(h - 1)};
+  g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_BOX, (LONG_PTR)&r);
+
+  // Memo
+  r = {1, 1, (SHORT)(w - 2), (SHORT)(h - 2)};
+  g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_MEMO, (LONG_PTR)&r);
+
+  // F2 SaveAs: 11 chars [F2 SaveAs]
+  r = {1, (SHORT)(h - 1), 11, (SHORT)(h - 1)};
+  g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_F2, (LONG_PTR)&r);
+
+  // F9 Config: 11 chars [F9 Config]
+  r = {(SHORT)(w - 12), (SHORT)(h - 1), (SHORT)(w - 2), (SHORT)(h - 1)};
+  g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_F9, (LONG_PTR)&r);
+
+  // Digits: 10 * 3 = 30 chars. Center them in the space
+  int totalDigitsWidth = 10 * 3;
+  int availableSpace = (w - 2) - 11 - 11; // between F2 and F9
+  int startDigitsX = 12 + (availableSpace - totalDigitsWidth) / 2;
+  int curX = startDigitsX;
+  for (int i = 0; i < 10; i++) {
+    r = {(SHORT)curX, (SHORT)(h - 1), (SHORT)(curX + 2), (SHORT)(h - 1)};
+    g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_BTN1 + i, (LONG_PTR)&r);
+    curX += 3;
+  }
+}
+
 static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
                                    LONG_PTR Param2) {
   if (Msg == DN_INITDIALOG) {
-    SMALL_RECT r;
-    COORD sz = {75, 20};
-    g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, (LONG_PTR)&sz);
-    r = {0, 0, 74, 19};
-    g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_BOX, (LONG_PTR)&r);
-    r = {1, 1, 73, 18};
-    g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_MEMO, (LONG_PTR)&r);
-
-    // F2 Save: 11 chars [F2 SaveAs]
-    r = {1, 19, 9, 19};
-    g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_F2, (LONG_PTR)&r);
-
-    // F9 Config: 11 chars [F9 Config]
-    r = {63, 19, 73, 19};
-    g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_F9, (LONG_PTR)&r);
-
-    // Digits: 10 * 3 = 30 chars. Center them in the space (10 to 62: 52 chars).
-    int totalDigitsWidth = 10 * 3;
-    int startDigitsX = 10 + (53 - totalDigitsWidth) / 2;
-    int curX = startDigitsX;
-    for (int i = 0; i < 10; i++) {
-      r = {(SHORT)curX, 19, (SHORT)(curX + 2), 19};
-      g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_BTN1 + i, (LONG_PTR)&r);
-      curX += 3;
+    SMALL_RECT farRect;
+    if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, nullptr,
+                         &farRect)) {
+      int w = (farRect.Right - farRect.Left + 1) * 9 / 10;
+      int h = (farRect.Bottom - farRect.Top + 1) * 9 / 10;
+      if (w < 75)
+        w = 75;
+      if (h < 20)
+        h = 20;
+      UpdateLayout(hDlg, w, h);
+    } else {
+      UpdateLayout(hDlg, 75, 20);
     }
+    return TRUE;
+  }
+  if (Msg == DN_RESIZECONSOLE) {
+    COORD *pCoord = (COORD *)Param2;
+    int w = pCoord->X * 9 / 10;
+    int h = pCoord->Y * 9 / 10;
+    if (w < 75)
+      w = 75;
+    if (h < 20)
+      h = 20;
+    UpdateLayout(hDlg, w, h);
     return TRUE;
   }
 
@@ -276,7 +326,17 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
 }
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
   Info->StructSize = sizeof(PluginInfo);
-  Info->Flags = PF_VIEWER | PF_DIALOG;
+  if (!GetEnabled()) {
+    Info->Flags = 0;
+    Info->PluginMenuStringsNumber = 0;
+    Info->PluginConfigStringsNumber =
+        1; // Keep it in config so we can re-enable
+    static const wchar_t *m;
+    m = g_far.GetMsg(g_far.ModuleNumber, MMemo);
+    Info->PluginConfigStrings = &m;
+    return;
+  }
+  Info->Flags = PF_VIEWER | PF_DIALOG | PF_EDITOR;
   static const wchar_t *m;
   m = g_far.GetMsg(g_far.ModuleNumber, MMemo);
   Info->PluginMenuStrings = Info->PluginConfigStrings = &m;
@@ -288,29 +348,60 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int, INT_PTR) {
   return (HANDLE)-1;
 }
 SHAREDSYMBOL void WINAPI ClosePluginW(HANDLE) {}
+SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *Rec) {
+  if (GetEnabled() && GetUseHotkey()) {
+    if (Rec->EventType == KEY_EVENT && Rec->Event.KeyEvent.bKeyDown) {
+      FarKey key = g_far.FSF->FarInputRecordToKey(Rec);
+      if (key == KEY_CTRLS) {
+        OpenMemo();
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
 SHAREDSYMBOL int WINAPI ProcessEditorEventW(int, void *) { return 0; }
 SHAREDSYMBOL int WINAPI ProcessEventW(HANDLE, int, void *) { return 0; }
 SHAREDSYMBOL int WINAPI ConfigureW(int) {
-  FarDialogItem it[3] = {};
+  FarDialogItem it[5] = {};
   it[0].Type = DI_DOUBLEBOX;
   it[0].X1 = 3;
   it[0].Y1 = 1;
-  it[0].X2 = 35;
-  it[0].Y2 = 4;
-  it[0].PtrData = L"Config";
-  it[1].Type = DI_BUTTON;
-  it[1].Y1 = 3;
-  it[1].Flags = DIF_CENTERGROUP;
-  it[1].DefaultButton = 1;
-  it[1].PtrData = L"OK";
-  it[2].Type = DI_BUTTON;
+  it[0].X2 = 45;
+  it[0].Y2 = 7;
+  it[0].PtrData = g_far.GetMsg(g_far.ModuleNumber, MConfigTitle);
+
+  it[1].Type = DI_CHECKBOX;
+  it[1].X1 = 5;
+  it[1].Y1 = 2;
+  it[1].Param.Selected = GetEnabled();
+  it[1].PtrData = g_far.GetMsg(g_far.ModuleNumber, MEnablePlugin);
+
+  it[2].Type = DI_CHECKBOX;
+  it[2].X1 = 5;
   it[2].Y1 = 3;
-  it[2].Flags = DIF_CENTERGROUP;
-  it[2].PtrData = L"Cancel";
-  HANDLE d = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 38, 6, NULL, it, 3, 0,
+  it[2].Param.Selected = GetUseHotkey();
+  it[2].PtrData = g_far.GetMsg(g_far.ModuleNumber, MUseHotkey);
+
+  it[3].Type = DI_BUTTON;
+  it[3].Y1 = 5;
+  it[3].Flags = DIF_CENTERGROUP;
+  it[3].DefaultButton = 1;
+  it[3].PtrData = g_far.GetMsg(g_far.ModuleNumber, MOk);
+
+  it[4].Type = DI_BUTTON;
+  it[4].Y1 = 5;
+  it[4].Flags = DIF_CENTERGROUP;
+  it[4].PtrData = g_far.GetMsg(g_far.ModuleNumber, MCancel);
+
+  HANDLE d = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 49, 9, NULL, it, 5, 0,
                               0, NULL, 0);
   if (d != (HANDLE)-1) {
-    g_far.DialogRun(d);
+    if (g_far.DialogRun(d) == 3) {
+      SetEnabled(g_far.SendDlgMessage(d, DM_GETCHECK, 1, 0) == BSTATE_CHECKED);
+      SetUseHotkey(g_far.SendDlgMessage(d, DM_GETCHECK, 2, 0) ==
+                   BSTATE_CHECKED);
+    }
     g_far.DialogFree(d);
   }
   return 1;

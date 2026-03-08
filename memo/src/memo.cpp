@@ -167,9 +167,17 @@ static void SaveAs(HANDLE hDlg) {
 
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber);
 
-static void UpdateLayout(HANDLE hDlg, int w, int h) {
-  COORD sz = {(SHORT)w, (SHORT)h};
-  g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, (LONG_PTR)&sz);
+static void UpdateLayout(HANDLE hDlg, int w, int h, bool resizeDialog = true,
+                         COORD *pConsoleSize = nullptr) {
+  if (resizeDialog) {
+    COORD sz = {(SHORT)w, (SHORT)h};
+    g_far.SendDlgMessage(hDlg, DM_RESIZEDIALOG, 0, (LONG_PTR)&sz);
+    if (pConsoleSize) {
+      COORD pos = {(SHORT)((pConsoleSize->X - w) / 2),
+                   (SHORT)((pConsoleSize->Y - h) / 2)};
+      g_far.SendDlgMessage(hDlg, DM_MOVEDIALOG, 1, (LONG_PTR)&pos);
+    }
+  }
 
   SMALL_RECT r;
   // Box
@@ -203,30 +211,21 @@ static void UpdateLayout(HANDLE hDlg, int w, int h) {
 static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
                                    LONG_PTR Param2) {
   if (Msg == DN_INITDIALOG) {
-    SMALL_RECT farRect;
-    if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, nullptr,
-                         &farRect)) {
-      int w = (farRect.Right - farRect.Left + 1) * 9 / 10;
-      int h = (farRect.Bottom - farRect.Top + 1) * 9 / 10;
-      if (w < 75)
-        w = 75;
-      if (h < 20)
-        h = 20;
-      UpdateLayout(hDlg, w, h);
-    } else {
-      UpdateLayout(hDlg, 75, 20);
+    SMALL_RECT r;
+    if (g_far.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&r)) {
+      UpdateLayout(hDlg, r.Right - r.Left + 1, r.Bottom - r.Top + 1, false);
     }
     return TRUE;
   }
   if (Msg == DN_RESIZECONSOLE) {
     COORD *pCoord = (COORD *)Param2;
-    int w = pCoord->X * 9 / 10;
-    int h = pCoord->Y * 9 / 10;
+    int w = pCoord->X * 7 / 10;
+    int h = pCoord->Y * 7 / 10;
     if (w < 75)
       w = 75;
     if (h < 20)
       h = 20;
-    UpdateLayout(hDlg, w, h);
+    UpdateLayout(hDlg, w, h, true, pCoord);
     return TRUE;
   }
 
@@ -273,6 +272,10 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1,
       SwitchToMemo(hDlg, 9);
       return TRUE;
     }
+    if (Param2 == KEY_CTRLS) {
+      g_far.SendDlgMessage(hDlg, DM_CLOSE, -1, 0);
+      return TRUE;
+    }
   }
   if (Msg == DN_CLOSE) {
     size_t len = g_far.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, DI_MEMO, 0);
@@ -313,8 +316,20 @@ static void OpenMemo() {
     it[DI_BTN1 + i].Flags = DIF_BTNNOCLOSE | DIF_NOBRACKETS;
     it[DI_BTN1 + i].DefaultButton = false;
   }
-  HANDLE h = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 75, 20, NULL, it, 14,
+  int dw = 75, dh = 20;
+  SMALL_RECT farRect;
+  if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &farRect,
+                       nullptr)) {
+    dw = (farRect.Right - farRect.Left + 1) * 7 / 10;
+    dh = (farRect.Bottom - farRect.Top + 1) * 7 / 10;
+    if (dw < 75)
+      dw = 75;
+    if (dh < 20)
+      dh = 20;
+  }
+  HANDLE h = g_far.DialogInit(g_far.ModuleNumber, -1, -1, dw, dh, NULL, it, 14,
                               0, 0, MemoDlgProc, 0);
+
   if (h != (HANDLE)-1) {
     g_far.DialogRun(h);
     g_far.DialogFree(h);

@@ -133,7 +133,8 @@ static void SwitchToMemo(HANDLE hDlg, int newMemo) {
   g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_MEMO,
                        (LONG_PTR)g_loadedContent.c_str());
   wchar_t title[64];
-  swprintf(title, 64, L" Memo - %d", g_currentMemo + 1);
+  swprintf(title, 64, L" Memo - %d",
+           (g_currentMemo == 9) ? 0 : g_currentMemo + 1);
   g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_BOX, (LONG_PTR)title);
   for (int i = 0; i < MEMO_COUNT; i++) {
     FarDialogItem it;
@@ -154,7 +155,9 @@ static void SaveAs(HANDLE hDlg) {
     g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO,
                          (LONG_PTR)content.data());
   }
-  wchar_t path[MAX_PATH] = L"memo.txt";
+  wchar_t path[MAX_PATH];
+  swprintf(path, MAX_PATH, L"memo-%02d.txt",
+           (g_currentMemo == 9) ? 0 : g_currentMemo + 1);
   if (g_far.InputBox(L"Save Memo", L"Path:", L"MemoSave", path, path, MAX_PATH,
                      NULL, FIB_NONE)) {
     FILE *f = fopen(Wide2MB(path).c_str(), "w");
@@ -295,7 +298,8 @@ static void OpenMemo() {
   g_currentMemo = GetLastMemo();
   g_loadedContent = LoadFile(g_currentMemo);
   wchar_t title[64];
-  swprintf(title, 64, L" Memo - %d", g_currentMemo + 1);
+  swprintf(title, 64, L" Memo - %d",
+           (g_currentMemo == 9) ? 0 : g_currentMemo + 1);
   FarDialogItem it[14] = {};
   it[DI_BOX].Type = DI_TEXT;
   it[DI_BOX].PtrData = title;

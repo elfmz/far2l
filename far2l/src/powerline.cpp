@@ -178,8 +178,8 @@ for (size_t i = 0; i < input.size(); ++i) {
                         	static_cast<unsigned char>(codes[c+3]), 
                         	static_cast<unsigned char>(codes[c+4]), 
                         	1};
-                        if (is_fg) c
-                        	urrent.fg = color; 
+                        if (is_fg) 
+                        	current.fg = color; 
                         else 
                         	current.bg = color;
                         c += 4;

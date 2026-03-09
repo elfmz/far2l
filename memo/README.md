@@ -15,11 +15,11 @@ A multi-page scratchpad/memo plugin for Far2l.
 
 | Key / Button | Action |
 |--------------|--------|
-| `Ctrl+1`–`9`, `0` / `[1]`–`[0]` | Switch to page 1–9, 10 (can be clicked with mouse) |
+| `Ctrl+1`–`9`, `0` / `[1]`–`[0]` | Switch to page 1–9, 10 |
 | `Alt+1`–`9`, `0` | Same as Ctrl (alternative modifier) |
 | `Esc` / `Ctrl+S` | Close and auto-save |
-| `F2` / `[F2 Save]` | Export current page to an external file (invokable directly from Memo) |
-| `F9` / `[F9 Config]` | Open plugin configuration dialog (invokable directly from Memo) |
+| `F2` / `[F2 Save]` | Export current page to an external |
+| `F9` / `[F9 Config]` | Open plugin configuration dialog |
 
 ### Auto-Save & State
 - Content is saved automatically when switching pages or closing the dialog, **but overwrites the file only if there are real changes**.
@@ -36,7 +36,7 @@ The plugin can automatically manage its own `Ctrl+S` binding.
 - **Auto-Registration:** Enabling "Use Ctrl+S" in settings adds `callplugin(0x4D454D4F)` to your global macros.
 - **Editor Safety:** The plugin may interact cleanly depending on the active Far dialog state, avoiding conflicts with normal editor contexts.
 
-The plugin's SysID is `0x4D454D4F`.
+The plugin's SysID is `0x4D454D4F` ('MEMO').
 
 ## Storage
 

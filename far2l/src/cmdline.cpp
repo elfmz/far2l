@@ -323,7 +323,7 @@ void CommandLine::DisplayObject()
 			// if (v[i].colors.bold) Attrs |= COMMON_LVB_BOLD;
 			Attrs &= ~(COMMON_LVB_UNDERSCORE|COMMON_LVB_STRIKEOUT);
 			SetColor(Attrs);
-			GotoXY(X1 + i, input_y);
+			GotoXY(X1 + i, Y1);
 
 			Text(x);
 		}

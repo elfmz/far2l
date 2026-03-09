@@ -1,10 +1,13 @@
-.Language=Russian,Russian (Русский)
+.Language=Russian,Russian
 
 "Memo"
 "&OK"
-"&Cancel"
-"Memo Plugin"
+"&Отмена"
+"Настройка Memo"
 "Включить плагин &Memo"
-"Вызывать через &Ctrl+S"
+"Использовать Ctrl+&S"
 "F2 Сохранить"
-"F9 Настроить"
+"F9 Настройка"
+"Сохранить заметку"
+"Путь:"
+" Заметка - %d"

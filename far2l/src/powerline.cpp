@@ -117,11 +117,15 @@ static FarTrueColor index_to_FarTrueColor(int i) {
         int r = (i - 16) / 36;
         int g = ((i - 16) % 36) / 6;
         int b = (i - 16) % 6;
-        return { r ? r * 40 + 55 : 0, g ? g * 40 + 55 : 0, b ? b * 40 + 55 : 0, 1 };
+        return { 
+        	static_cast<unsigned char>(r ? r * 40 + 55 : 0), 
+        	static_cast<unsigned char>(g ? g * 40 + 55 : 0), 
+        	static_cast<unsigned char>(b ? b * 40 + 55 : 0), 
+        	1 };
     } else {
         // Grayscale ramp
         int gray = (i - 232) * 10 + 8;
-        return { gray, gray, gray, 1 };
+        return { static_cast<unsigned char>(gray), static_cast<unsigned char>(gray), static_cast<unsigned char>(gray), 1 };
     }
 }
 
@@ -169,8 +173,15 @@ for (size_t i = 0; i < input.size(); ++i) {
                         c += 2;
                     } else if (c + 4 < codes.size() && codes[c+1] == 2) {
                         // TrueColor mode: ESC[38;2;R;G;Bm
-                        FarTrueColor color = {codes[c+2], codes[c+3], codes[c+4]};
-                        if (is_fg) current.fg = color; else current.bg = color;
+                        FarTrueColor color = {
+                        	static_cast<unsigned char>(codes[c+2]), 
+                        	static_cast<unsigned char>(codes[c+3]), 
+                        	static_cast<unsigned char>(codes[c+4]), 
+                        	1};
+                        if (is_fg) c
+                        	urrent.fg = color; 
+                        else 
+                        	current.bg = color;
                         c += 4;
                     }
                 }

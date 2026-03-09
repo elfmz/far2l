@@ -302,6 +302,7 @@ void CommandLine::DisplayObject()
 	}
 
 	GotoXY(X1, Y1);
+	int prompt_len = (int)strTruncDir.CellsCount();
 
 	if (strTruncDir.Contains(L'\x1b')) {
 		std::vector<TextSegment> v = ParseColorizedText(strTruncDir.GetWide());
@@ -318,7 +319,8 @@ void CommandLine::DisplayObject()
 			DWORD64 Attrs;
 
 			FarTrueColorToAttributes(Attrs, tfb);
-			if (v[i].colors.bold) Attrs |= COMMON_LVB_BOLD;
+			// uncomment line when the bold font support will be PRed
+			// if (v[i].colors.bold) Attrs |= COMMON_LVB_BOLD;
 			Attrs &= ~(COMMON_LVB_UNDERSCORE|COMMON_LVB_STRIKEOUT);
 			SetColor(Attrs);
 			GotoXY(X1 + i, input_y);
@@ -332,7 +334,7 @@ void CommandLine::DisplayObject()
 	}
 
 	CmdStr.SetObjectColor(FarColorToReal(COL_COMMANDLINE), FarColorToReal(COL_COMMANDLINESELECTED));
-	CmdStr.SetPosition(X1 + (int)strTruncDir.CellsCount(), Y1, X2, Y2);
+	CmdStr.SetPosition(X1 + prompt_len, Y1, X2, Y2);
 
 	CmdStr.Show();
 

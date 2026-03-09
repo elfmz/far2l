@@ -4,19 +4,26 @@
 
 wchar_t* rtrim(wchar_t* str)
 {
-  wchar_t* ptr = str;
-  str += wcslen(str);
-
-  while (iswspace(*(--str))) *str = 0;
-
-  return ptr;
+  if (!str || *str == 0) {
+    return str;
+  }
+  wchar_t* end = str + wcslen(str);
+  while (end > str && iswspace(*(end - 1))) {
+    --end;
+    *end = 0;
+  }
+  return str;
 }
 
 wchar_t* ltrim(wchar_t* str)
 {
-  while (iswspace(*(str++)));
-
-  return str - 1;
+  if (!str) {
+    return str;
+  }
+  while (*str && iswspace(*str)) {
+    ++str;
+  }
+  return str;
 }
 
 wchar_t* trim(wchar_t* str)

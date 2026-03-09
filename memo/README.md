@@ -18,7 +18,7 @@ A multi-page scratchpad/memo plugin for Far2l.
 | `Ctrl+1`–`9`, `0` / `[1]`–`[0]` | Switch to page 1–9, 10 |
 | `Alt+1`–`9`, `0` | Same as Ctrl (alternative modifier) |
 | `Esc` / `Ctrl+S` | Close and auto-save |
-| `F2` / `[F2 Save]` | Export current page to an external |
+| `F2` / `[F2 Save]` | Export current memo to an external file |
 | `F9` / `[F9 Config]` | Open plugin configuration dialog |
 
 ### Auto-Save & State

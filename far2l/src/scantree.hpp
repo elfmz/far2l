@@ -39,8 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <set>
 #include <list>
+#include <unordered_set>
 #include <WinCompat.h>
 #include "FARString.hpp"
 #include "FileMasksProcessor.hpp"
@@ -66,10 +66,23 @@ enum
 
 class ScannedINodes
 {
-	std::set<std::pair<uint64_t, uint64_t>> _s;
+	struct Hash
+	{
+		size_t operator()(const std::pair<uint64_t, uint64_t> &inode) const
+		{
+			size_t out = static_cast<size_t>(inode.first);
+			out^= static_cast<size_t>(inode.second + 0x9e3779b97f4a7c15ULL + (inode.first << 6)
+					+ (inode.first >> 2));
+			return out;
+		}
+	};
+
+	std::unordered_set<std::pair<uint64_t, uint64_t>, Hash> _s;
 
 public:
-	inline bool Put(uint64_t d, uint64_t ino) { return _s.emplace(ino, d).second; }
+	ScannedINodes() { _s.reserve(1024); }
+
+	inline bool Put(uint64_t d, uint64_t ino) { return _s.emplace(d, ino).second; }
 };
 
 class ScanTree

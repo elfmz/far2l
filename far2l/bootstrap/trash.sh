@@ -21,7 +21,11 @@ elif command -v trash-put >/dev/null 2>&1; then
 	trash-put "$1" 2>"$2"
 
 elif command -v trash >/dev/null 2>&1; then
-	trash put "$1" 2>"$2"
+	if trash --help 2>&1 | grep -q 'fileToMoveToTrash'; then
+		trash "$1" 2>"$2"
+	else
+		trash put "$1" 2>"$2"
+	fi
 
 elif command -v trashу >/dev/null 2>&1; then
 	trashу put "$1" 2>"$2" 

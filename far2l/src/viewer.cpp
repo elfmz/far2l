@@ -2955,6 +2955,7 @@ void Viewer::Search(int Next, int FirstChar)
 							break;
 						}
 					}
+				}
 
 				if (ReverseSearch) {
 					if (CurPos <= 0)

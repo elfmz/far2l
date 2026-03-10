@@ -34,7 +34,7 @@ static const char *MACRO_K_DISOUT = "DisableOutput";
 
 static const char *MEMO_FILE_FMT = "%smemo-%02d.txt";
 
-// Debug helper - writes to plugins/memo/debug.log <- completely absent from release builds 
+// Debug helper - writes to plugins/memo/debug.log <- completely absent from release builds
 #if defined(DEBUG) || defined(_DEBUG)
 static const char *LOG_PATH = "plugins/memo/debug.log";
 static void DebugLog(const char *fmt, ...) {
@@ -65,11 +65,11 @@ static void DebugLog(const char *fmt, ...) {
 
 enum MsgId {
   MMemo = 0, MOk, MCancel, MConfigTitle, MEnablePlugin, MUseHotkey, MSaveAs, MConfig,
-  MSaveMemo, MPath, MMemoTitle
+  MSaveMemo, MPath, MMemoTitle, MUseHotkeyHint
 };
 
 enum DialogItems {
-  DI_BOX = 0, DI_MEMO, 
+  DI_BOX = 0, DI_MEMO,
   DI_F2, DI_BTN1, DI_BTN2, DI_BTN3, DI_BTN4, DI_BTN5, DI_BTN6, DI_BTN7, DI_BTN8, DI_BTN9, DI_BTN0, DI_F9
 };
 
@@ -187,7 +187,7 @@ static void UpdateGlobalMacro(bool enabled) {
 
 static bool GetUseHotkey() { return g_useHotkey; }
 static void SetUseHotkey(bool v) {
-  if (g_useHotkey == v) 
+  if (g_useHotkey == v)
     return;
   g_useHotkey = v;
   SaveState();
@@ -223,29 +223,51 @@ static void SaveFile(int idx, const std::wstring &content) {
   }
 }
 
+static std::wstring GetMemoText(HANDLE hDlg) {
+  size_t len = g_far.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, DI_MEMO, 0);
+  if (len == 0)
+    return L"";
+
+  // DM_GETTEXTPTR copies text including trailing NUL, so allocate len + 1.
+  std::wstring content(len + 1, L'\0');
+  g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO, (LONG_PTR)content.data());
+  content.resize(wcslen(content.c_str()));
+  return content;
+}
+
+static std::wstring BuildMemoTitle() {
+  std::wstring title = GetMsg(MMemoTitle);
+  std::wstring memoNum = std::to_wstring(MemoDisplayNum(g_currentMemo));
+  size_t pos = title.find(L"%d");
+  if (pos != std::wstring::npos) {
+    title.replace(pos, 2, memoNum);
+  } else {
+    title += L" ";
+    title += memoNum;
+  }
+  return title;
+}
+
+static void SetMemoTitle(HANDLE hDlg) {
+  std::wstring title = BuildMemoTitle();
+  g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_BOX, (LONG_PTR)title.c_str());
+}
+
 static void SwitchToMemo(HANDLE hDlg, int newMemo) {
-  if (newMemo < 0 || newMemo >= MEMO_COUNT || newMemo == g_currentMemo) 
+  if (newMemo < 0 || newMemo >= MEMO_COUNT || newMemo == g_currentMemo)
     return;
   DBG("SwitchToMemo: %d -> %d", g_currentMemo, newMemo);
-  size_t len = g_far.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, DI_MEMO, 0);
-  std::wstring content;
-  if (len > 0) {
-    content.resize(len);
-    g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO, (LONG_PTR)&content[0]);
-  }
+  std::wstring content = GetMemoText(hDlg);
   if (content != g_loadedContent) SaveFile(g_currentMemo, content);
   g_currentMemo = newMemo;
   g_loadedContent = LoadFile(g_currentMemo);
   g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_MEMO, (LONG_PTR)g_loadedContent.c_str());
-
-  wchar_t title[64];
-  swprintf(title, 64, GetMsg(MMemoTitle), MemoDisplayNum(g_currentMemo));
-  g_far.SendDlgMessage(hDlg, DM_SETTEXTPTR, DI_BOX, (LONG_PTR)title);
+  SetMemoTitle(hDlg);
   for (int i = 0; i < MEMO_COUNT; i++) {
     FarDialogItem it;
-    if (g_far.SendDlgMessage(hDlg, DM_GETDLGITEM, DI_BTN1 + i, (LONG_PTR)&it)) {
+    if (g_far.SendDlgMessage(hDlg, DM_GETDLGITEMSHORT, DI_BTN1 + i, (LONG_PTR)&it)) {
       it.DefaultButton = false;
-      g_far.SendDlgMessage(hDlg, DM_SETDLGITEM, DI_BTN1 + i, (LONG_PTR)&it);
+      g_far.SendDlgMessage(hDlg, DM_SETDLGITEMSHORT, DI_BTN1 + i, (LONG_PTR)&it);
     }
   }
   g_far.SendDlgMessage(hDlg, DM_REDRAW, 0, 0);
@@ -253,12 +275,7 @@ static void SwitchToMemo(HANDLE hDlg, int newMemo) {
 }
 
 static void SaveAs(HANDLE hDlg) {
-  size_t len = g_far.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, DI_MEMO, 0);
-  std::wstring content;
-  if (len > 0) {
-    content.resize(len);
-    g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO, (LONG_PTR)&content[0]);
-  }
+  std::wstring content = GetMemoText(hDlg);
   wchar_t path[MAX_PATH];
   swprintf(path, MAX_PATH, L"memo-%02d.txt", MemoDisplayNum(g_currentMemo));
   if (g_far.InputBox(GetMsg(MSaveMemo), GetMsg(MPath), L"MemoSave", path, path, MAX_PATH, NULL, FIB_NONE)) {
@@ -274,18 +291,19 @@ static void SaveAs(HANDLE hDlg) {
 }
 
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
-  enum { CFG_BOX, CFG_ENABLED, CFG_HOTKEY, CFG_SEP, CFG_OK, CFG_CANCEL };
+  enum { CFG_BOX, CFG_ENABLED, CFG_HOTKEY, CFG_HOTKEY_HINT, CFG_SEP, CFG_OK, CFG_CANCEL };
   FarDialogItem it[] = {
-    {DI_DOUBLEBOX, 3, 1, 32, 8, 0, {0}, 0, 0, GetMsg(MConfigTitle), 0},
+    {DI_DOUBLEBOX, 3, 1, 34, 9, 0, {0}, 0, 0, GetMsg(MConfigTitle), 0},
     {DI_CHECKBOX,  6, 3, 0, 0, 0, {(DWORD_PTR)(GetEnabled() ? BSTATE_CHECKED : BSTATE_UNCHECKED)}, 0, 0, GetMsg(MEnablePlugin), 0},
     {DI_CHECKBOX,  6, 4, 0, 0, 0, {(DWORD_PTR)(GetUseHotkey() ? BSTATE_CHECKED : BSTATE_UNCHECKED)}, 0, 0, GetMsg(MUseHotkey), 0},
-    {DI_TEXT,     -1, 6, 0, 0, 0, {0}, DIF_SEPARATOR, 0, NULL, 0},
-    {DI_BUTTON,    0, 7, 0, 0, 0, {0}, DIF_CENTERGROUP, 1, GetMsg(MOk), 0},
-    {DI_BUTTON,    0, 7, 0, 0, 0, {0}, DIF_CENTERGROUP, 0, GetMsg(MCancel), 0}};
+    {DI_TEXT,     10, 5, 0, 0, 0, {0}, 0, 0, GetMsg(MUseHotkeyHint), 0},
+    {DI_TEXT,     -1, 7, 0, 0, 0, {0}, DIF_SEPARATOR, 0, NULL, 0},
+    {DI_BUTTON,    0, 8, 0, 0, 0, {0}, DIF_CENTERGROUP, 1, GetMsg(MOk), 0},
+    {DI_BUTTON,    0, 8, 0, 0, 0, {0}, DIF_CENTERGROUP, 0, GetMsg(MCancel), 0}};
 
-  HANDLE d = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 36, 10, NULL, it, sizeof(it)/sizeof(it[0]), 0, 0, NULL, 0);
+  HANDLE d = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 38, 11, NULL, it, sizeof(it)/sizeof(it[0]), 0, 0, NULL, 0);
   if (d != (HANDLE)-1) {
-    if (g_far.DialogRun(d) == 4) {
+    if (g_far.DialogRun(d) == CFG_OK) {
       DBG("ConfigureW: status OK");
       SetEnabled(g_far.SendDlgMessage(d, DM_GETCHECK, CFG_ENABLED, 0) == BSTATE_CHECKED);
       SetUseHotkey(g_far.SendDlgMessage(d, DM_GETCHECK, CFG_HOTKEY, 0) == BSTATE_CHECKED);
@@ -306,17 +324,26 @@ static void UpdateLayout(HANDLE hDlg, int w, int h, bool resizeDialog = true, CO
   }
 
   SMALL_RECT r;
-  r = {0, 0, (SHORT)(w - 1), (SHORT)(h - 1)};
+  r = {1, 0, 0, 0};
   g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_BOX, (LONG_PTR)&r);
+  SetMemoTitle(hDlg);
   r = {1, 1, (SHORT)(w - 2), (SHORT)(h - 2)};
   g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_MEMO, (LONG_PTR)&r);
-  r = {1, (SHORT)(h - 1), 11, (SHORT)(h - 1)};
+  int f2w = (int)wcslen(GetMsg(MSaveAs));
+  if (f2w < 1) f2w = 1;
+  r = {1, (SHORT)(h - 1), (SHORT)(1 + f2w - 1), (SHORT)(h - 1)};
   g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_F2, (LONG_PTR)&r);
-  r = {(SHORT)(w - 12), (SHORT)(h - 1), (SHORT)(w - 2), (SHORT)(h - 1)};
+  int f9w = (int)wcslen(GetMsg(MConfig));
+  if (f9w < 1) f9w = 1;
+  r = {(SHORT)(w - 2 - f9w + 1), (SHORT)(h - 1), (SHORT)(w - 2), (SHORT)(h - 1)};
   g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_F9, (LONG_PTR)&r);
 
-  int totalDigitsWidth = 10 * 3, availableSpace = (w - 2) - 11 - 11;
-  int curX = 12 + (availableSpace - totalDigitsWidth) / 2;
+  int totalDigitsWidth = 10 * 3;
+  int leftEdge = 1 + f2w;
+  int rightEdge = (w - 2 - f9w + 1) - 1;
+  int availableSpace = rightEdge - leftEdge + 1;
+  if (availableSpace < totalDigitsWidth) availableSpace = totalDigitsWidth;
+  int curX = leftEdge + (availableSpace - totalDigitsWidth) / 2;
   for (int i = 0; i < 10; i++) {
     r = {(SHORT)curX, (SHORT)(h - 1), (SHORT)(curX + 2), (SHORT)(h - 1)};
     g_far.SendDlgMessage(hDlg, DM_SETITEMPOSITION, DI_BTN1 + i, (LONG_PTR)&r);
@@ -327,15 +354,15 @@ static void UpdateLayout(HANDLE hDlg, int w, int h, bool resizeDialog = true, CO
 static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2) {
   if (Msg == DN_INITDIALOG) {
     SMALL_RECT r;
-    if (g_far.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&r)) 
+    if (g_far.SendDlgMessage(hDlg, DM_GETDLGRECT, 0, (LONG_PTR)&r))
       UpdateLayout(hDlg, r.Right - r.Left + 1, r.Bottom - r.Top + 1, false);
     return TRUE;
   }
   if (Msg == DN_RESIZECONSOLE) {
     COORD *p = (COORD *)Param2;
-    int w = p->X * 7 / 10, 
+    int w = p->X * 7 / 10,
         h = p->Y * 7 / 10;
-    if (w < 75) w = 75; 
+    if (w < 75) w = 75;
     if (h < 20) h = 20;
     UpdateLayout(hDlg, w, h, true, p);
     return TRUE;
@@ -363,13 +390,8 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
     if (Param2 == KEY_CTRLS) { g_far.SendDlgMessage(hDlg, DM_CLOSE, -1, 0); return TRUE; }
   }
   if (Msg == DN_CLOSE) {
-    size_t len = g_far.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, DI_MEMO, 0);
-    std::wstring content;
-    if (len > 0) { 
-      content.resize(len); 
-      g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO, (LONG_PTR)&content[0]); 
-    }
-    if (content != g_loadedContent) 
+    std::wstring content = GetMemoText(hDlg);
+    if (content != g_loadedContent)
       SaveFile(g_currentMemo, content);
     SaveLastMemo(g_currentMemo);
   }
@@ -380,11 +402,10 @@ static void OpenMemo() {
   g_currentMemo = GetLastMemo();
   g_loadedContent = LoadFile(g_currentMemo);
   DBG("OpenMemo: cur=%d, len=%d", g_currentMemo, (int)g_loadedContent.length());
-  wchar_t title[64];
-  swprintf(title, 64, GetMsg(MMemoTitle), MemoDisplayNum(g_currentMemo));
+  std::wstring title = BuildMemoTitle();
 
   FarDialogItem it[] = {
-    {DI_TEXT,     0, 0, 0, 0, 0, {0}, 0, 0, title, 0},
+    {DI_TEXT,     0, 0, 0, 0, 0, {0}, 0, 0, title.c_str(), 0},
     {DI_MEMOEDIT, 0, 0, 0, 0, 1, {0}, 0, 0, g_loadedContent.c_str(), 0},
     {DI_BUTTON,   0, 0, 0, 0, 0, {0}, DIF_BTNNOCLOSE | DIF_NOBRACKETS, 0, GetMsg(MSaveAs), 0},
     {DI_BUTTON,   0, 0, 0, 0, 0, {0}, DIF_BTNNOCLOSE | DIF_NOBRACKETS, 0, L"[1]", 0},
@@ -401,16 +422,16 @@ static void OpenMemo() {
 
   int dw = 75, dh = 20; SMALL_RECT farRect;
   if (g_far.AdvControl(g_far.ModuleNumber, ACTL_GETFARRECT, &farRect, nullptr)) {
-    dw = (farRect.Right - farRect.Left + 1) * 7 / 10; 
+    dw = (farRect.Right - farRect.Left + 1) * 7 / 10;
     dh = (farRect.Bottom - farRect.Top + 1) * 7 / 10;
-    if (dw < 75) dw = 75; 
+    if (dw < 75) dw = 75;
     if (dh < 20) dh = 20;
   }
 
   HANDLE h = g_far.DialogInit(g_far.ModuleNumber, -1, -1, dw, dh, NULL, it, sizeof(it)/sizeof(it[0]), 0, 0, MemoDlgProc, 0);
-  if (h != (HANDLE)-1) { 
-    g_far.DialogRun(h); 
-    g_far.DialogFree(h); 
+  if (h != (HANDLE)-1) {
+    g_far.DialogRun(h);
+    g_far.DialogFree(h);
   }
 }
 

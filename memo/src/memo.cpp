@@ -21,7 +21,7 @@
 static const char *INI_PATH = "plugins/memo/state.ini";
 static const char *MEMO_DIR = "plugins/memo/";
 static const char *MACROS_INI = "settings/key_macros.ini";
-static const char *MACRO_SECTION = "KeyMacros/Common/CtrlS";
+static const char *MACRO_SECTION = "KeyMacros/Common/CtrlShiftS";
 
 static const char *INI_S_SETTINGS = "Settings";
 static const char *INI_K_ENABLED = "Enabled";
@@ -121,7 +121,7 @@ static void SetEnabled(bool v) {
   SaveState();
 }
 
-// Returns true if the CtrlS macro was written by the Memo plugin.
+// Returns true if the CtrlShiftS macro was written by the Memo plugin.
 static bool IsMacroOurs(KeyFileHelper &kfh) {
   if (!kfh.HasSection(MACRO_SECTION)) return false;
   char ours[32];
@@ -129,7 +129,7 @@ static bool IsMacroOurs(KeyFileHelper &kfh) {
   return kfh.GetString(MACRO_SECTION, MACRO_K_SEQ, "").find(ours) != std::string::npos;
 }
 
-// Backs up the macros INI before overwriting a foreign CtrlS binding.
+// Backs up the macros INI before overwriting a foreign CtrlShiftS binding.
 // Tries key_macros.bak, then key_macros-1.bak, key_macros-2.bak, ... until a free slot is found.
 static void BackupMacrosFile() {
   std::string src = InMyConfig(MACROS_INI, false);
@@ -316,15 +316,15 @@ static void SaveAs(HANDLE hDlg) {
 SHAREDSYMBOL int WINAPI ConfigureW(int ItemNumber) {
   enum { CFG_BOX, CFG_ENABLED, CFG_HOTKEY, CFG_HOTKEY_HINT, CFG_SEP, CFG_OK, CFG_CANCEL };
   FarDialogItem it[] = {
-    {DI_DOUBLEBOX, 3, 1, 34, 9, 0, {0}, 0, 0, GetMsg(MConfigTitle), 0},
-    {DI_CHECKBOX,  6, 3, 0, 0, 0, {(DWORD_PTR)(GetEnabled() ? BSTATE_CHECKED : BSTATE_UNCHECKED)}, 0, 0, GetMsg(MEnablePlugin), 0},
-    {DI_CHECKBOX,  6, 4, 0, 0, 0, {(DWORD_PTR)(GetUseHotkey() ? BSTATE_CHECKED : BSTATE_UNCHECKED)}, 0, 0, GetMsg(MUseHotkey), 0},
-    {DI_TEXT,     10, 5, 0, 0, 0, {0}, 0, 0, GetMsg(MUseHotkeyHint), 0},
+    {DI_DOUBLEBOX, 3, 1, 36, 9, 0, {0}, 0, 0, GetMsg(MConfigTitle), 0},
+    {DI_CHECKBOX,  5, 3, 0, 0, 0, {(DWORD_PTR)(GetEnabled() ? BSTATE_CHECKED : BSTATE_UNCHECKED)}, 0, 0, GetMsg(MEnablePlugin), 0},
+    {DI_CHECKBOX,  5, 4, 0, 0, 0, {(DWORD_PTR)(GetUseHotkey() ? BSTATE_CHECKED : BSTATE_UNCHECKED)}, 0, 0, GetMsg(MUseHotkey), 0},
+    {DI_TEXT,      9, 5, 0, 0, 0, {0}, 0, 0, GetMsg(MUseHotkeyHint), 0},
     {DI_TEXT,     -1, 7, 0, 0, 0, {0}, DIF_SEPARATOR, 0, NULL, 0},
     {DI_BUTTON,    0, 8, 0, 0, 0, {0}, DIF_CENTERGROUP, 1, GetMsg(MOk), 0},
     {DI_BUTTON,    0, 8, 0, 0, 0, {0}, DIF_CENTERGROUP, 0, GetMsg(MCancel), 0}};
 
-  HANDLE d = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 38, 11, NULL, it, sizeof(it)/sizeof(it[0]), 0, 0, NULL, 0);
+  HANDLE d = g_far.DialogInit(g_far.ModuleNumber, -1, -1, 40, 11, NULL, it, sizeof(it)/sizeof(it[0]), 0, 0, NULL, 0);
   if (d != (HANDLE)-1) {
     if (g_far.DialogRun(d) == CFG_OK) {
       DBG("ConfigureW: status OK");
@@ -410,7 +410,6 @@ static LONG_PTR WINAPI MemoDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
     if (Param2 == KEY_CTRL0) { SwitchToMemo(hDlg, 9); return TRUE; }
     if (Param2 >= KEY_ALT1 && Param2 <= KEY_ALT9) { SwitchToMemo(hDlg, (int)(Param2 - KEY_ALT1)); return TRUE; }
     if (Param2 == KEY_ALT0) { SwitchToMemo(hDlg, 9); return TRUE; }
-    if (Param2 == KEY_CTRLS) { g_far.SendDlgMessage(hDlg, DM_CLOSE, -1, 0); return TRUE; }
   }
   if (Msg == DN_CLOSE) {
     std::wstring content = GetMemoText(hDlg);
@@ -466,10 +465,10 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
   g_currentMemo = kf.GetInt(INI_S_SETTINGS, INI_K_LAST, 0);
   DBG("SetStartupInfoW: enabled=%d, hotkey=%d, last=%d", (int)g_enabled, (int)g_useHotkey, g_currentMemo);
   if (g_useHotkey) {
-    // If CtrlS already belongs to someone else, respect it and quietly disable our hotkey
+    // If CtrlShiftS already belongs to someone else, respect it and quietly disable our hotkey
     KeyFileHelper kfh(InMyConfig(MACROS_INI, false));
     if (kfh.HasSection(MACRO_SECTION) && !IsMacroOurs(kfh)) {
-      DBG("SetStartupInfoW: CtrlS macro is foreign, disabling hotkey");
+      DBG("SetStartupInfoW: CtrlShiftS macro is foreign, disabling hotkey");
       g_useHotkey = false;
       SaveState();
     } else {

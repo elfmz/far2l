@@ -79,6 +79,8 @@ static std::wstring g_loadedContent;
 static bool g_enabled = true;
 static bool g_useHotkey = true;
 
+static std::wstring NormalizeMemoContent(const std::wstring &input);
+
 static inline const wchar_t *GetMsg(int msgId) {
   return g_far.GetMsg(g_far.ModuleNumber, msgId);
 }
@@ -203,7 +205,7 @@ static std::wstring LoadFile(int idx) {
   std::string mb;
   while (fgets(buf, sizeof(buf), f)) mb += buf;
   fclose(f);
-  return MB2Wide(mb.c_str());
+  return NormalizeMemoContent(MB2Wide(mb.c_str()));
 }
 
 static void SaveFile(int idx, const std::wstring &content) {
@@ -223,6 +225,27 @@ static void SaveFile(int idx, const std::wstring &content) {
   }
 }
 
+static std::wstring NormalizeMemoContent(const std::wstring &input) {
+  std::wstring normalized;
+  normalized.reserve(input.size());
+  for (size_t i = 0; i < input.size(); ++i) {
+    wchar_t ch = input[i];
+    if (ch == L'\r') {
+      if (i + 1 < input.size() && input[i + 1] == L'\n')
+        ++i;
+      normalized.push_back(L'\n');
+    } else {
+      normalized.push_back(ch);
+    }
+  }
+
+  for (wchar_t ch : normalized) {
+    if (ch != L'\n')
+      return normalized;
+  }
+  return L"";
+}
+
 static std::wstring GetMemoText(HANDLE hDlg) {
   size_t len = g_far.SendDlgMessage(hDlg, DM_GETTEXTLENGTH, DI_MEMO, 0);
   if (len == 0)
@@ -232,7 +255,7 @@ static std::wstring GetMemoText(HANDLE hDlg) {
   std::wstring content(len + 1, L'\0');
   g_far.SendDlgMessage(hDlg, DM_GETTEXTPTR, DI_MEMO, (LONG_PTR)content.data());
   content.resize(wcslen(content.c_str()));
-  return content;
+  return NormalizeMemoContent(content);
 }
 
 static std::wstring BuildMemoTitle() {

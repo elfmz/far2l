@@ -17,7 +17,7 @@ A multi-page scratchpad/memo plugin for Far2l.
 |--------------|--------|
 | `Ctrl+1`–`9`, `0` / `[1]`–`[0]` | Switch to page 1–9, 10 |
 | `Alt+1`–`9`, `0` | Same as Ctrl (alternative modifier) |
-| `Esc` / `Ctrl+S` | Close and auto-save |
+| `Esc` | Close and auto-save |
 | `F2` / `[F2 Save]` | Export current memo to an external file |
 | `F9` / `[F9 Config]` | Open plugin configuration dialog |
 
@@ -28,12 +28,13 @@ A multi-page scratchpad/memo plugin for Far2l.
 ### Configuration
 Available via `F11` → `Plugins` → `Configure` → `Memo` or by clicking the `[F9 Config]` button inside the memo editor.
 - **Enable Memo Plugin:** Enable/disable the plugin functionality.
-- **Use Ctrl+S to open:** Automatically registers `Ctrl+S` as a global hotkey in `settings/key_macros.ini`.
+- **Enable Ctrl+Alt+S hotkey:** Automatically registers `Ctrl+Alt+S` as a global hotkey in `settings/key_macros.ini`.
 
-## Global Hotkey (Ctrl+S)
+## Global Hotkey (Ctrl+Alt+S)
 
-The plugin can automatically manage its own `Ctrl+S` binding.
-- **Auto-Registration:** Enabling "Use Ctrl+S" in settings adds `callplugin(0x4D454D4F)` to your global macros.
+The plugin can automatically manage its own `Ctrl+Alt+S` binding.
+- **Auto-Registration:** Enabling the hotkey in settings adds `callplugin(0x4D454D4F)` to your global macros.
+- **Migration:** Plugin-owned legacy `Ctrl+S` and `Ctrl+Shift+S` bindings are removed during hotkey updates so only `Ctrl+Alt+S` stays active.
 - **Editor Safety:** The plugin may interact cleanly depending on the active Far dialog state, avoiding conflicts with normal editor contexts.
 
 The plugin's SysID is `0x4D454D4F` ('MEMO').

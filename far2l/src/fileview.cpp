@@ -65,11 +65,6 @@ FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int Disabl
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(I variant...)", this));
 	SetPosition(0, 0, ScrX, ScrY);
 	Init(NewFileHolder, EnableSwitch, DisableHistory, ViewStartPos, PluginData, ViewNamesList, ToSaveAs);
-
-	MenuBar = new ViewerMenuBar();
-	MenuBar->SetPosition(0, (TitleBarVisible ? 1 : 0), ScrX, (TitleBarVisible ? 1 : 0));
-	// if (!MenuBarVisible) EditMenuBar->Hide0();
-	MenuBar->Show();
 }
 
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, const wchar_t *Title,
@@ -106,11 +101,6 @@ FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int Disabl
 	FullScreen = (!X1 && !Y1 && X2 == ScrX && Y2 == ScrY);
 	View.SetTitle(Title);
 	Init(NewFileHolder, EnableSwitch, DisableHistory, -1, L"", nullptr, FALSE);
-
-	MenuBar = new ViewerMenuBar();
-	MenuBar->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y1 + (TitleBarVisible ? 1 : 0));
-	// if (!MenuBarVisible) EditMenuBar->Hide0();
-	MenuBar->Show();
 }
 
 void FileViewer::Init(FileHolderPtr NewFileHolder, int EnableSwitch, int disableHistory,	///
@@ -157,6 +147,13 @@ void FileViewer::Init(FileHolderPtr NewFileHolder, int EnableSwitch, int disable
 	ShowConsoleTitle();
 	AutoClose = false;
 	F3KeyOnly = true;
+
+	MenuBar = new ViewerMenuBar();
+	MenuBar->SetPosition(0, (TitleBarVisible ? 1 : 0), ScrX, (TitleBarVisible ? 1 : 0));
+	if (!MenuBarVisible) 
+		MenuBar->Hide0();
+	else
+		MenuBar->Show();
 
 	if (EnableSwitch) {
 		FrameManager->InsertFrame(this);
@@ -213,7 +210,7 @@ void FileViewer::Show()
 		int gap = (Opt.ViOpt.ShowTitleBar ? 1 : 0) + (Opt.ViOpt.ShowMenuBar ? 1 : 0);
 		View.SetPosition(0, gap, ScrX, ScrY - (Opt.ViOpt.ShowKeyBar ? 1 : 0));
 
-		if (MenuBarVisible) {
+		if (MenuBar && MenuBarVisible) {
 			MenuBar->SetPosition(0, TitleBarVisible ? 1 : 0, ScrX, TitleBarVisible ? 1 : 0);
 			MenuBar->Show();
 		}
@@ -226,7 +223,7 @@ void FileViewer::Show()
 void FileViewer::DisplayObject()
 {
 	View.Show();
-	if (MenuBarVisible) MenuBar->DisplayObject();
+	if (MenuBar && MenuBarVisible) MenuBar->DisplayObject();
 }
 
 int64_t FileViewer::VMProcess(MacroOpcode OpCode, void *vParam, int64_t iParam)

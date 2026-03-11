@@ -52,7 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "config.hpp"
 
-static void DrawGetDirInfoMsg(const wchar_t *Title, const wchar_t *Name, const UINT64 Size)
+static void DrawGetDirInfoMsg(const wchar_t *Title, const wchar_t *Name, const UINT64 Size, DWORD Flags = 0)
 {
 	if (Title == nullptr || Name == nullptr) {
 		return;
@@ -61,7 +61,7 @@ static void DrawGetDirInfoMsg(const wchar_t *Title, const wchar_t *Name, const U
 	FARString strSize;
 	FileSizeToStr(strSize, Size, 8, COLUMN_FLOATSIZE | COLUMN_COMMAS);
 	RemoveLeadingSpaces(strSize);
-	Message(0, 0, Title, Msg::ScanningFolder, Name, strSize);
+	Message(Flags, 0, Title, Msg::ScanningFolder, Name, strSize);
 	PreRedrawItem preRedrawItem = PreRedraw.Peek();
 	preRedrawItem.Param.Param1 = (void *)Title;
 	preRedrawItem.Param.Param2 = (void *)Name;
@@ -118,6 +118,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	ClusterSize = 0;
 	ScTree.SetFindPath(DirName, L"*", 0);
 	ScannedINodes scanned_inodes;
+	bool progress_message_shown = false;
 
 	struct stat s = {0};
 	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
@@ -170,7 +171,9 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			MsgWaitTime = 500;
 			OldTitle.Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
 			SetCursorType(FALSE, 0);
-			DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
+			DrawGetDirInfoMsg(Title, ShowDirName, FileSize,
+					progress_message_shown ? MSG_KEEPBACKGROUND : 0);
+			progress_message_shown = true;
 		}
 		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
 			// include symlink's own size to total size

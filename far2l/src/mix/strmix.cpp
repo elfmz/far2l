@@ -49,15 +49,16 @@ FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 	if (part == Src) {
 		result = L"0";
 	} else {
-		size_t i = 0;
-		for (;;) {
-			--part;
-			result.Insert(0, *part);
-			if (part == Src)
-				break;
-			++i;
-			if ((i % 3) == 0)
-				result.Insert(0, L' ');
+		// Build digits in forward order to avoid O(n²) Insert(0,...)
+		const size_t digits = (size_t)(part - Src);
+		const size_t separators = digits > 1 ? (digits - 1) / 3 : 0;
+		result.Reserve(digits + separators + 16);
+		for (const wchar_t *p = Src; p < part; ++p) {
+			size_t remaining = (size_t)(part - p); // chars remaining including current
+			// Insert separator before current digit if it starts a new group of 3
+			if (p != Src && remaining % 3 == 0)
+				result.Append(L' ');
+			result.Append(*p);
 		}
 	}
 	if (dot) {
@@ -465,10 +466,16 @@ FARString FixedSizeStr(FARString str, size_t Cells, bool RAlign, bool TruncateCe
 		else
 			TruncStr(str, Cells);
 	} else if (InitialStrCells < Cells) {
-		if (RAlign)
-			str.Insert(0, L' ', Cells - InitialStrCells);
-		else
+		if (RAlign) {
+			// Build padded string forward to avoid O(n) Insert(0,...)
+			FARString padded;
+			padded.Reserve(Cells + 1);
+			padded.Append(L' ', Cells - InitialStrCells);
+			padded.Append(str);
+			str = std::move(padded);
+		} else {
 			str.Append(L' ', Cells - InitialStrCells);
+		}
 	}
 	return str;
 }

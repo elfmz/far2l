@@ -157,6 +157,7 @@ void OpXfer::Abort()
 		if (_state.finished)
 			return;
 		_state.aborting = true;
+		_state.cond.notify_all();
 	}
 
 	_dst_host->Abort();

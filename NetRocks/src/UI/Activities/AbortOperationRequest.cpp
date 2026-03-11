@@ -133,12 +133,14 @@ void AbortOperationRequest(ProgressState &state, bool force_immediate)
 	if (!AbortConfirm().Ask()) { //param1 == _i_cancel &&
 		std::lock_guard<std::mutex> locker(state.mtx);
 		state.paused = saved_paused;
+		state.cond.notify_all();
 		return;
 	}
 	{
 		std::lock_guard<std::mutex> locker(state.mtx);
 		state.aborting = true;
 		state.paused = saved_paused;
+		state.cond.notify_all();
 	}
 	if (force_immediate && state.ao_host) {
 		state.ao_host->ForcefullyAbort();

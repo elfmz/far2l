@@ -354,7 +354,7 @@ void TTYBackend::ReaderLoop()
 			if (_iterm2_cmd_state || _iterm2_cmd_ts) {
 				std::unique_lock<std::mutex> lock(_async_mutex);
 				_ae.output = true;
-				_async_cond.notify_all();
+				_async_cond.notify_one();
 			}
 		}
 
@@ -374,7 +374,7 @@ void TTYBackend::ReaderLoop()
 				_terminal_size_change_id = terminal_size_change_id;
 				std::unique_lock<std::mutex> lock(_async_mutex);
 				_ae.term_resized = true;
-				_async_cond.notify_all();
+				_async_cond.notify_one();
 			}
 		}
 	}
@@ -441,9 +441,9 @@ void TTYBackend::WriterThread()
 			}
 
 			tty_out.Flush();
-			tcdrain(_stdout);
 
 			if (ae.go_background) {
+				tcdrain(_stdout);
 				gone_background = true;
 				break;
 			}
@@ -698,7 +698,7 @@ void TTYBackend::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 {
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_ae.output = true;
-	_async_cond.notify_all();
+	_async_cond.notify_one();
 }
 
 void TTYBackend::OnConsoleOutputResized()
@@ -710,7 +710,7 @@ void TTYBackend::OnConsoleOutputTitleChanged()
 {
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_ae.title_changed = true;
-	_async_cond.notify_all();
+	_async_cond.notify_one();
 }
 
 void TTYBackend::OnConsoleOutputWindowMoved(bool absolute, COORD pos)
@@ -945,7 +945,7 @@ void TTYBackend::WaitForOutputIdleOrDead(std::unique_lock<std::mutex> &lock)
 			++_ae_idle_wait_request;
 		} while (_ae_idle_wait_request == _ae_idle_wait_confirm);
 		do {
-			_async_cond.notify_all();
+			_async_cond.notify_one();
 			_ae_idle_wait_cond.wait(lock);
 		} while (!_deadio && _ae_idle_wait_request != _ae_idle_wait_confirm);
 	}
@@ -986,7 +986,7 @@ void TTYBackend::OSC52SetClipboard(const char *text)
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_osc52clip = text;
 	_ae.osc52clip_set = true;
-	_async_cond.notify_all();
+	_async_cond.notify_one();
 }
 
 bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
@@ -1002,7 +1002,7 @@ bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 		std::unique_lock<std::mutex> lock(_async_mutex);
 		_far2l_interacts_queued.emplace_back(pfi);
 		_ae.far2l_interact = 1;
-		_async_cond.notify_all();
+		_async_cond.notify_one();
 	}
 
 	if (!wait)
@@ -1223,7 +1223,7 @@ void TTYBackend::OnKittyGraphicsResponse(const std::string &s)
 	std::lock_guard<std::mutex> lock(_async_mutex);
 	if (_images_kitty_status == IKS_PROBING) {
 		_ae.images_probe_del = true;
-		_async_cond.notify_all();
+		_async_cond.notify_one();
 	}
 	_images_kitty_status = IKS_SUPPORTED;
 	_images_kitty_status_cond.notify_all();
@@ -1348,7 +1348,7 @@ bool TTYBackend::OnConsoleBackgroundMode(bool TryEnterBackgroundMode)
 	if (TryEnterBackgroundMode) {
 		std::unique_lock<std::mutex> lock(_async_mutex);
 		_ae.go_background = true;
-		_async_cond.notify_all();
+		_async_cond.notify_one();
 	}
 
 	return true;
@@ -1490,7 +1490,7 @@ bool TTYBackend::CheckKittyImagesSupport()
 			fprintf(stderr, "%s: probing\n", __FUNCTION__);
 			_images_kitty_status = IKS_PROBING;
 			_ae.images_probe = true;
-			_async_cond.notify_all();
+			_async_cond.notify_one();
 		} else if (GetProcessUptimeMSec() - wait_begin >= reply_timeout_msec) {
 			fprintf(stderr, "%s: kitty reply wait timed out\n", __FUNCTION__);
 			_images_kitty_status = IKS_UNSUPPORTED;
@@ -1572,7 +1572,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 
 	std::lock_guard<std::mutex> lock(_async_mutex);
 	_ae.images_changed = true;
-	_async_cond.notify_all(); // Wake up the writer thread
+	_async_cond.notify_one(); // Wake up the writer thread
 	return true;
 }
 
@@ -1634,7 +1634,7 @@ bool TTYBackend::OnDeleteConsoleImage(const char *id)
 
 	std::lock_guard<std::mutex> lock(_async_mutex);
 	_ae.images_changed = true;
-	_async_cond.notify_all(); // Wake up the writer thread
+	_async_cond.notify_one(); // Wake up the writer thread
 	return true;
 }
 

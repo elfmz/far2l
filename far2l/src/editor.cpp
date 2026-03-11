@@ -4930,6 +4930,7 @@ BOOL Editor::Search(int Next)
 		CurPtr = CurLine;
 		DWORD StartTime = WINPORT(GetTickCount)();
 		int StartLine = NumLine;
+		bool SearchProgressShown = false;
 		wakeful W;
 
 		while (CurPtr) {
@@ -4943,7 +4944,9 @@ BOOL Editor::Search(int Next)
 				SetCursorType(FALSE, -1);
 				int Total = ReverseSearch ? StartLine : NumLastLine - StartLine;
 				int Current = abs(NewNumLine - StartLine);
-				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr, ToPercent64(Current, Total));
+				EditorShowMsg(Msg::EditSearchTitle, Msg::EditSearchingFor, strMsgStr, ToPercent64(Current, Total),
+						SearchProgressShown ? MSG_KEEPBACKGROUND : 0);
+				SearchProgressShown = true;
 
 				if (CheckForEscSilent()) {
 					if (ConfirmAbortOp()) {
@@ -7937,7 +7940,7 @@ void Editor::SetSavePosMode(int SavePos, int SaveShortPos)
 		EdOpt.SaveShortPos = SaveShortPos;
 }
 
-void Editor::EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent)
+void Editor::EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent, DWORD Flags)
 {
 	FARString strProgress;
 
@@ -7958,7 +7961,7 @@ void Editor::EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar
 		strProgress+= strTmp;
 	}
 
-	Message(0, 0, Title, Msg, Name, strProgress.IsEmpty() ? nullptr : strProgress.CPtr());
+	Message(Flags, 0, Title, Msg, Name, strProgress.IsEmpty() ? nullptr : strProgress.CPtr());
 	PreRedrawItem preRedrawItem = PreRedraw.Peek();
 	preRedrawItem.Param.Param1 = (void *)Title;
 	preRedrawItem.Param.Param2 = (void *)Msg;

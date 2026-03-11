@@ -82,7 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // mmap'ed window size limit, must be multiple of any sane page size (0x1000 on intel)
 #if defined(__LP64__) || defined(_LP64)
-#define FILE_SCAN_MMAP_WINDOW 0x100000
+#define FILE_SCAN_MMAP_WINDOW 0x1000000
 #else
 #define FILE_SCAN_MMAP_WINDOW 0x10000
 #endif
@@ -212,6 +212,13 @@ public:
 		strFindMessage = From;
 	}
 
+	// Thread-safe overload for worker threads (avoids FARString refcount issues)
+	void SetFindMessageMB(const char *From)
+	{
+		CriticalSectionLock Lock(DataCS);
+		strFindMessage = From;
+	}
+
 	void GetFindListItem(size_t index, FINDLIST &Item)
 	{
 		CriticalSectionLock Lock(DataCS);
@@ -327,6 +334,22 @@ static FARString strPluginSearchPath;
 
 static std::unique_ptr<ThreadedWorkQueue> pWorkQueue;
 static std::unique_ptr<MountInfo> pMountInfo;
+
+// Periodically inject NOOP_EVENT to wake the modal find dialog so it can
+// update progress display and respond to user input (e.g. ESC to cancel).
+// Safe to call from any thread.
+static void KickDialogIfNeeded()
+{
+	static std::atomic<DWORD> sLastKick{0};
+	DWORD Now = WINPORT(GetTickCount)();
+	DWORD Last = sLastKick.load(std::memory_order_relaxed);
+	if (Now - Last >= RedrawTimeout && sLastKick.compare_exchange_weak(Last, Now, std::memory_order_relaxed)) {
+		INPUT_RECORD ir = {};
+		ir.EventType = NOOP_EVENT;
+		DWORD written = 0;
+		WINPORT(WriteConsoleInput)(NULL, &ir, 1, &written);
+	}
+}
 // static CriticalSection PluginCS;
 
 class PluginLocker
@@ -1023,7 +1046,7 @@ static bool ScanFileByReading(const char *Name)
 	return (findPattern->FindMatch(buf, len, true, true).first != (size_t)-1);
 }
 
-static bool ScanFileByMapping(const char *Name)
+static bool ScanFileByMapping(const char *Name, const char *DisplayName = nullptr)
 {
 	off_t FileSize = 0, FilePos = 0;
 	try {
@@ -1032,6 +1055,7 @@ static bool ScanFileByMapping(const char *Name)
 
 		const void *View = smm.View();
 		size_t Length = smm.Length();
+
 		for (UINT LastPercents = 0;!StopFlag;) {
 			const bool FirstFragment = (FilePos == 0);
 			const bool LastFragment = (FilePos + off_t(smm.Length()) >= FileSize);
@@ -1046,8 +1070,11 @@ static bool ScanFileByMapping(const char *Name)
 			UINT Percents = static_cast<UINT>(FileSize ? FilePos * 100 / FileSize : 0);
 			if (Percents != LastPercents) {
 				itd.SetPercent(Percents);
+				if (DisplayName)
+					itd.SetFindMessageMB(DisplayName);
 				LastPercents = Percents;
 			}
+			KickDialogIfNeeded();
 			FilePos+= smm.Length();
 
 			const size_t LookBehind = findPattern->LookBehind();
@@ -1106,16 +1133,19 @@ struct ScanFileWorkItem : IThreadedWorkItem
 		SudoClientRegion scr;
 		SudoSilentQueryRegion ssqr;
 		const auto &FileToScanMB = _FileToScan.GetMB();
+		const auto &FileToReportMB = _FileToReport.GetMB();
+		itd.SetFindMessageMB(FileToReportMB.c_str());
 		// Если строки поиска пустая, то считаем, что мы всегда что-нибудь найдём
 		if (strFindStr.IsEmpty()) {
 			_Result = true;
 
 		} else if (_FindData.nFileSize > FILE_SCAN_READING_SIZE) {
-			_Result = ScanFileByMapping(FileToScanMB.c_str());
+			_Result = ScanFileByMapping(FileToScanMB.c_str(), FileToReportMB.c_str());
 
 		} else {
 			_Result = ScanFileByReading(FileToScanMB.c_str());
 		}
+		KickDialogIfNeeded();
 	}
 
 private:
@@ -2146,6 +2176,8 @@ static void DoScanTree(HANDLE hDlg, FARString &strRoot)
 			while (PauseFlag)
 				WINPORT(Sleep)(10);
 
+			KickDialogIfNeeded();
+
 			bool bContinue = false;
 
 			while (!StopFlag) {
@@ -2215,6 +2247,8 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int &Recurs
 			// WINPORT(Sleep)(0);
 			while (PauseFlag)
 				WINPORT(Sleep)(10);
+
+			KickDialogIfNeeded();
 
 			PluginPanelItem *CurPanelItem = PanelData + I;
 			FARString strCurName = CurPanelItem->FindData.lpwszFileName;
@@ -2292,6 +2326,9 @@ static void ScanPluginTree(HANDLE hDlg, HANDLE hPlugin, DWORD Flags, int &Recurs
 static void DoPrepareFileList(HANDLE hDlg)
 {
 	ThreadedWorkQueuePtrScope wqs(pWorkQueue);
+	if (pWorkQueue) {
+		pWorkQueue->SetWaitCallback(KickDialogIfNeeded);
+	}
 	FARString strRoot;
 	CtrlObject->CmdLine->GetCurDir(strRoot);
 
@@ -2319,11 +2356,18 @@ static void DoPrepareFileList(HANDLE hDlg)
 		strRoot = pwRoot;
 		DoScanTree(hDlg, strRoot);
 	}
+
+	if (StopFlag && pWorkQueue) {
+		pWorkQueue->Abort();
+	}
 }
 
 static void DoPreparePluginList(HANDLE hDlg)
 {
 	ThreadedWorkQueuePtrScope wqs(pWorkQueue);
+	if (pWorkQueue) {
+		pWorkQueue->SetWaitCallback(KickDialogIfNeeded);
+	}
 	ARCLIST ArcItem;
 	itd.GetArcListItem(itd.GetFindFileArcIndex(), ArcItem);
 	OpenPluginInfo Info;
@@ -2351,6 +2395,10 @@ static void DoPreparePluginList(HANDLE hDlg)
 			|| SearchMode == FINDAREA_INPATH) {
 		PluginLocker Lock;
 		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, strSaveDir, OPM_FIND);
+	}
+
+	if (StopFlag && pWorkQueue) {
+		pWorkQueue->Abort();
 	}
 }
 
@@ -2509,6 +2557,14 @@ static bool FindFilesProcess(Vars &v)
 	if (fft.StartThread()) {
 		wakeful W;
 		Dlg.Process();
+
+		// Signal search thread to stop and abort pending work items so
+		// the thread exits quickly and WAIT_FOR below doesn't freeze
+		StopFlag = true;
+		if (pWorkQueue) {
+			pWorkQueue->Abort();
+		}
+
 		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(fft.CheckForDone());
 
 		PauseFlag = false;

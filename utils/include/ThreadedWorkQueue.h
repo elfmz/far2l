@@ -6,6 +6,7 @@
 #include <mutex>
 #include <memory>
 #include <condition_variable>
+#include <functional>
 #include "Threaded.h"
 
 
@@ -37,6 +38,7 @@ class ThreadedWorkQueue
 	volatile int _working = 0;
 	volatile bool _stopping = false;
 	volatile bool _notify_on_done = false;
+	std::function<void()> _wait_callback;
 	size_t _done_counter = 0;
 	size_t _finalized_counter = 0;
 	size_t _backlog_waits = 0;
@@ -69,6 +71,12 @@ public:
 	/// Waits for dispatch of all pending items, invoke before d-tor to make sure all items processed.
 	/// Invokes CompleteProc() of finally processed items and destroys them.
 	void Finalize();
+
+	/// Aborts pending work: discards backlog, wakes blocked Queue() callers, waits for active workers.
+	void Abort();
+
+	/// Set a callback invoked periodically while Queue() or Finalize() blocks waiting for workers.
+	void SetWaitCallback(std::function<void()> cb) { _wait_callback = std::move(cb); }
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

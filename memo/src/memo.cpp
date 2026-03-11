@@ -21,7 +21,9 @@
 static const char *INI_PATH = "plugins/memo/state.ini";
 static const char *MEMO_DIR = "plugins/memo/";
 static const char *MACROS_INI = "settings/key_macros.ini";
-static const char *MACRO_SECTION = "KeyMacros/Common/CtrlShiftS";
+static const char *MACRO_SECTION = "KeyMacros/Common/CtrlAltS";
+static const char *MACRO_SECTION_OLD_CTRL_S = "KeyMacros/Common/CtrlS";
+static const char *MACRO_SECTION_OLD_CTRL_SHIFT_S = "KeyMacros/Common/CtrlShiftS";
 
 static const char *INI_S_SETTINGS = "Settings";
 static const char *INI_K_ENABLED = "Enabled";
@@ -121,15 +123,18 @@ static void SetEnabled(bool v) {
   SaveState();
 }
 
-// Returns true if the CtrlShiftS macro was written by the Memo plugin.
-static bool IsMacroOurs(KeyFileHelper &kfh) {
-  if (!kfh.HasSection(MACRO_SECTION)) return false;
+static bool IsMacroOurs(KeyFileHelper &kfh, const char *section) {
+  if (!kfh.HasSection(section)) return false;
   char ours[32];
   snprintf(ours, sizeof(ours), "callplugin(0x%08X)", SYSID_MEMO);
-  return kfh.GetString(MACRO_SECTION, MACRO_K_SEQ, "").find(ours) != std::string::npos;
+  return kfh.GetString(section, MACRO_K_SEQ, "").find(ours) != std::string::npos;
 }
 
-// Backs up the macros INI before overwriting a foreign CtrlShiftS binding.
+static bool IsCurrentMacroOurs(KeyFileHelper &kfh) {
+  return IsMacroOurs(kfh, MACRO_SECTION);
+}
+
+// Backs up the macros INI before overwriting a foreign CtrlAltS binding.
 // Tries key_macros.bak, then key_macros-1.bak, key_macros-2.bak, ... until a free slot is found.
 static void BackupMacrosFile() {
   std::string src = InMyConfig(MACROS_INI, false);
@@ -162,8 +167,19 @@ static void BackupMacrosFile() {
 static void UpdateGlobalMacro(bool enabled) {
   DBG("UpdateGlobalMacro: %d", (int)enabled);
   KeyFileHelper kfh(InMyConfig(MACROS_INI));
+  bool changed = false;
   if (enabled) {
-    if (!kfh.HasSection(MACRO_SECTION) || !IsMacroOurs(kfh)) {  // explicit user action may overwrite foreign
+    // Remove plugin-owned legacy bindings so only CtrlAltS remains active.
+    if (IsMacroOurs(kfh, MACRO_SECTION_OLD_CTRL_S)) {
+      kfh.RemoveSection(MACRO_SECTION_OLD_CTRL_S);
+      changed = true;
+    }
+    if (IsMacroOurs(kfh, MACRO_SECTION_OLD_CTRL_SHIFT_S)) {
+      kfh.RemoveSection(MACRO_SECTION_OLD_CTRL_SHIFT_S);
+      changed = true;
+    }
+
+    if (!kfh.HasSection(MACRO_SECTION) || !IsCurrentMacroOurs(kfh)) {  // explicit user action may overwrite foreign
       if (kfh.HasSection(MACRO_SECTION))  // about to overwrite a foreign binding — back it up first
         BackupMacrosFile();
       char seq[64];
@@ -171,14 +187,30 @@ static void UpdateGlobalMacro(bool enabled) {
       kfh.SetString(MACRO_SECTION, MACRO_K_SEQ, seq);
       kfh.SetString(MACRO_SECTION, MACRO_K_DESC, "Memo Plugin");
       kfh.SetString(MACRO_SECTION, MACRO_K_DISOUT, "1");
+      changed = true;
+    }
+
+    if (changed) {
       kfh.Save();
 
       ActlKeyMacro akm = {MCMD_LOADALL};
       g_far.AdvControl(g_far.ModuleNumber, ACTL_KEYMACRO, &akm, NULL);
     }
   } else {
-    if (IsMacroOurs(kfh)) {  // never touch a macro we didn't write
+    if (IsCurrentMacroOurs(kfh)) {  // never touch a macro we didn't write
       kfh.RemoveSection(MACRO_SECTION);
+      changed = true;
+    }
+    if (IsMacroOurs(kfh, MACRO_SECTION_OLD_CTRL_S)) {
+      kfh.RemoveSection(MACRO_SECTION_OLD_CTRL_S);
+      changed = true;
+    }
+    if (IsMacroOurs(kfh, MACRO_SECTION_OLD_CTRL_SHIFT_S)) {
+      kfh.RemoveSection(MACRO_SECTION_OLD_CTRL_SHIFT_S);
+      changed = true;
+    }
+
+    if (changed) {
       kfh.Save();
 
       ActlKeyMacro akm = {MCMD_LOADALL};
@@ -465,10 +497,10 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
   g_currentMemo = kf.GetInt(INI_S_SETTINGS, INI_K_LAST, 0);
   DBG("SetStartupInfoW: enabled=%d, hotkey=%d, last=%d", (int)g_enabled, (int)g_useHotkey, g_currentMemo);
   if (g_useHotkey) {
-    // If CtrlShiftS already belongs to someone else, respect it and quietly disable our hotkey
+    // If CtrlAltS already belongs to someone else, respect it and quietly disable our hotkey
     KeyFileHelper kfh(InMyConfig(MACROS_INI, false));
-    if (kfh.HasSection(MACRO_SECTION) && !IsMacroOurs(kfh)) {
-      DBG("SetStartupInfoW: CtrlShiftS macro is foreign, disabling hotkey");
+    if (kfh.HasSection(MACRO_SECTION) && !IsCurrentMacroOurs(kfh)) {
+      DBG("SetStartupInfoW: CtrlAltS macro is foreign, disabling hotkey");
       g_useHotkey = false;
       SaveState();
     } else {

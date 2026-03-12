@@ -2453,11 +2453,25 @@ enclosed in quotes, you should specify #program "!.!"# and not
      'F' - use full pathnames;
      'A' - use ANSI code page;
      'U' - use UTF-8 code page;
-     'W' - use UTF-16 (Little endian) code page.
+     'W' - use UTF-16 (Little endian) code page;
+     'B' - collect marked files from both panels into a single list.
+
+    ^<wrap>When the #B# modifier is used, the temp file will contain marked
+(selected) files from both the active and passive panels. The command
+is executed once for all selected files rather than once per file.
+This is useful for comparing files from different panels.
 
     For example, the association #!@@AFQ!# means "name of file with the list of
 selected file names, in ANSI encoding, include full pathnames, names with
 spaces will be in quotes".
+
+    The association #!@@BF!# means "name of file with the list of marked files
+from both panels, using full pathnames". Example usage in user menu:
+
+      diff "$(sed -n '1p' "!@@BF!")" "$(sed -n '2p' "!@@BF!")"
+
+    ^<wrap>Mark one file on the left panel and one on the right panel (with #Insert#),
+then run the command to compare them.
 
     3. ^<wrap>When there are multiple associations specified, the meta-characters !@@!
 and !$! are shown in the menu as is. Those characters are translated when the

@@ -39,6 +39,7 @@
 #include "AnsiEsc.hpp"
 #include "TestPath.h"
 #include "vtshell_translation.h"
+#include "VTShellBackend.h"
 
 #define BRACKETED_PASTE_SEQ_START  "\x1b[200~"
 #define BRACKETED_PASTE_SEQ_STOP   "\x1b[201~"
@@ -67,37 +68,10 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 
 int VTShell_Leader(char *const shell_argv[], const char *pty);
 
-std::string VTSanitizeHistcontrol()
-{
-	std::string hc_override;
-	const char *hc = getenv("HISTCONTROL");
-	if (!hc || (!strstr(hc, "ignorespace") && !strstr(hc, "ignoreboth"))) {
-		hc_override = "ignorespace";
-		if (hc && *hc) {
-			hc_override+= ':';
-			hc_override+= hc;
-		}
-		fprintf(stderr, "Override HISTCONTROL='%s'\n", hc_override.c_str());
-	}
-	return hc_override;
-}
-
 const char *GetSystemShell()
 {
 	const char *env_shell = getenv("SHELL");
-	if (!env_shell || !*env_shell) {
-		return "/bin/sh";
-	}
-
-	const char *slash = strrchr(env_shell, '/');
-	// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
-	if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
-	 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
-	 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
-		return "bash";
-	}
-
-	return env_shell;
+	return (env_shell && *env_shell) ? env_shell : "/bin/sh";
 }
 
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
@@ -132,32 +106,47 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::atomic<bool> _allow_osc_clipset{false};
 	std::atomic<bool> _alternate_mode{false};
 	std::string _init_user_profile;
+	std::unique_ptr<IVTShellBackend> _backend;
 
 	int ExecLeaderProcess()
 	{
 		std::string home = GetMyHome();
-
 		std::string far2l_exename = g_strFarModuleName.GetMB();
 
-		Environment::ExplodeCommandLine shell_exploded;
+		std::string shell_to_use;
+		bool shell_interactive = true;
+		bool shell_noprofile = false;
+
 		if (Opt.CmdLine.UseShell) {
+			// Parsing Opt.CmdLine.strShell to detect overrides like --noprofile or specific shell path
+			Environment::ExplodeCommandLine shell_exploded;
 			shell_exploded.Parse(Opt.CmdLine.strShell.GetMB());
+
+			if (!shell_exploded.empty()) {
+				shell_to_use = shell_exploded.front();
+				// This is a simplified logic. In a real scenario we might want to check args more carefully
+				for (size_t i = 1; i < shell_exploded.size(); ++i) {
+					if (shell_exploded[i] == "--noprofile" || shell_exploded[i] == "--no-config")
+						shell_noprofile = true;
+					// -i detection is implicit
+				}
+			}
 		}
 
-		if (shell_exploded.empty() || shell_exploded.front().empty()) {
-			shell_exploded.Parse(GetSystemShell());
-			shell_exploded.emplace_back("-i");
-		}
+		_backend = CreateVTShellBackend(shell_to_use);
+
+		std::vector<std::string> args = _backend->GetStartArgs(shell_interactive, shell_noprofile);
+		std::string exec_path = _backend->GetExecPath();
 
 		std::vector<char *> shell_argv;
-		for (const auto &arg : shell_exploded) {
-			shell_argv.emplace_back((char *)arg.c_str());
+		shell_argv.emplace_back(const_cast<char *>(exec_path.c_str()));
+		for (const auto &arg : args) {
+			shell_argv.emplace_back(const_cast<char *>(arg.c_str()));
 		}
 		shell_argv.emplace_back(nullptr);
 
-		// Will need to ensure that HISTCONTROL prevents adding to history commands that start by space
-		// to avoid shell history pollution by far2l's intermediate script execution commands
-		const std::string &hc_override = VTSanitizeHistcontrol();
+		std::map<std::string, std::string> env_vars;
+		_backend->SetupEnvironment(env_vars);
 
 		const BYTE col = static_cast<BYTE>(FarColorToReal(COL_COMMANDLINEUSERSCREEN));
 		char colorfgbg[32];
@@ -208,8 +197,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		setenv("COLORFGBG", colorfgbg, 1);
 
-		if (!hc_override.empty()) {
-			setenv("HISTCONTROL", hc_override.c_str(), 1);
+		for (const auto &kv : env_vars) {
+			setenv(kv.first.c_str(), kv.second.c_str(), 1);
 		}
 
 		// avoid locking current directory
@@ -959,7 +948,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	bool ExecuteCommandBegin(const char *cd, const char *cmd, bool force_sudo) // return false on failure
 	{
-		_cce.reset(new VT_ComposeCommandExec(cd, cmd, force_sudo, _start_marker));
+		_cce.reset(new VT_ComposeCommandExec(*_backend, cd, cmd, force_sudo, _start_marker, _exit_marker, _init_user_profile));
 		if (!_cce->Created()) {
 			const std::string &error_str =
 				StrPrintf("Far2l::VT: error %u creating: '%s'\n",
@@ -979,22 +968,9 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			// due to being typed while previous command being executed in interactive shell
 			cmd_str+= "\x15";
 		}
-		// then send sourcing directive (dot) with space trailing to avoid adding it to history
-		cmd_str+= " . ";
-		if (!_init_user_profile.empty()) {
-			_init_user_profile.insert(0, 1, '/');
-			_init_user_profile.insert(0, GetMyHome());
-			if (TestPath(_init_user_profile).Exists()) {
-				cmd_str+= '"';
-				cmd_str+= _init_user_profile;
-				cmd_str+= "\";. ";
-			}
-			_init_user_profile.clear();
-		}
-		cmd_str+= EscapeCmdStr(_cce->ScriptFile());
-		cmd_str+= ';';
-		cmd_str+= VT_ComposeMarkerCommand(_exit_marker + "$FARVTRESULT");
+		cmd_str+= _backend->MakeRunScriptCommand(_cce->ScriptFile());
 		cmd_str+= '\n';
+
 		if (!WriteTerm(cmd_str.c_str(), cmd_str.size())) {
 			const std::string &error_str =
 				StrPrintf("\nFar2l::VT: terminal write error %u\n", errno);

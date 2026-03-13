@@ -82,10 +82,10 @@ static std::string VT_ComposeInitialTitleCommand(const char *cd, const char *cmd
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-static std::atomic<bool> s_shown_tip_exit{false};
 static std::atomic<unsigned int> s_vt_script_id{0};
 
-VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+VT_ComposeCommandExec::VT_ComposeCommandExec(const IVTShellBackend &backend, const char *cd, const char *cmd, bool need_sudo,
+	const std::string &start_marker, const std::string &exit_marker, const std::string &user_profile)
 {
 	if (!need_sudo) {
 		need_sudo = (chdir(cd) == -1 && (errno == EACCES || errno == EPERM));
@@ -96,12 +96,12 @@ VT_ComposeCommandExec::VT_ComposeCommandExec(const char *cd, const char *cmd, bo
 	const auto &name = StrPrintf("vtcmd/%x_%u", (unsigned int)getpid(), id);
 	_cmd_script = InMyTemp(name.c_str());
 	_pwd_file = _cmd_script + pwd_file_ext;
-	Create(cd, cmd, need_sudo, start_marker);
+	Create(backend, cd, cmd, need_sudo, start_marker, exit_marker, user_profile);
 	if (!_created) {
 		Cleanup();
 		_cmd_script = InMyCache(name.c_str());
 		_pwd_file = _cmd_script + pwd_file_ext;
-		Create(cd, cmd, need_sudo, start_marker);
+		Create(backend, cd, cmd, need_sudo, start_marker, exit_marker, user_profile);
 	}
 }
 
@@ -132,61 +132,11 @@ std::string VT_ComposeCommandExec::ResultedWorkingDirectory() const
 	return buf;
 }
 
-void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_sudo, const std::string &start_marker)
+void VT_ComposeCommandExec::Create(const IVTShellBackend &backend, const char *cd, const char *cmd, bool need_sudo,
+	const std::string &start_marker, const std::string &exit_marker, const std::string &user_profile)
 {
-	std::string content;
-	content+= "trap \"printf ''\" INT\n"; // need marker to be printed even after Ctrl+C pressed
-	content+= "PS1=''; PS2=''; PS3=''; PS4=''; PROMPT_COMMAND=''\n"; // reduce risk of glitches
-	if (strcmp(cmd, "exit")!=0) {
-		content+= VT_ComposeInitialTitleCommand(cd, cmd, need_sudo);
-	}
-	content+= VT_ComposeMarkerCommand(start_marker);
-	content+= '\n';
-	if (strcmp(cmd, "exit")==0) {
-		content+= StrPrintf(
-			"echo \"%ls%ls%ls\"\n",  Msg::VTStop.CPtr(),
-			s_shown_tip_exit ? L"" : L" ",
-			s_shown_tip_exit ? L"" : Msg::VTStopTip.CPtr()
-		);
-		s_shown_tip_exit = true;
-	}
+	std::string content = backend.MakeScript(cd, cmd, need_sudo, start_marker, _pwd_file, exit_marker, user_profile);
 
-	std::string pwd_suffix;
-	const char *last_ch = cmd + strlen(cmd);
-	while (last_ch != cmd && (*last_ch == ' ' || *last_ch == '\t' || *last_ch == 0)) {
-		--last_ch;
-	}
-
-	if (*last_ch != '&') { // don't update curdir in case of background command
-		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
-	}
-
-	if (need_sudo) {
-		content+= Opt.SudoEnabled ? "sudo -A " : "sudo ";
-		content+= StrPrintf("sh -c \"cd \\\"%s\\\" && %s%s\"\n",
-			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());
-	} else {
-		content+= StrPrintf("cd \"%s\" && %s%s\n",
-			EscapeCmdStr(cd).c_str(), cmd, pwd_suffix.c_str());
-	}
-
-	content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
-
-	static std::string vthook = InMyConfig("/vtcmd.sh");
-	if (TestPath(vthook).Exists()) {
-		content.append(vthook)
-			.append((need_sudo && !StrStartsFrom(cmd, "sudo ")) ? " sudo " : " ")
-				.append(cmd).append("\n");
-	}
-
-	content+= "cd ~\n"; // avoid locking arbitrary directory
-	if (Opt.CmdLine.Splitter) {
-		content+= "if [ $FARVTRESULT -eq 0 ]; then\n";
-		content+= "printf '\\033_push-attr\\007\\033_set-blank=-\\007\\033[32m\\033[K\\033_pop-attr\\007\\012'\n";
-		content+= "else\n";
-		content+= "printf '\\033_push-attr\\007\\033_set-blank=~\\007\\033[33m\\033[K\\033_pop-attr\\007\\012'\n";
-		content+= "fi\n";
-	}
 	unlink(_pwd_file.c_str());
 	_fd = open(_cmd_script.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0600);
 	if (_fd.Valid()) {

@@ -89,6 +89,7 @@ struct PanelItem
 	FILETIME creation_time;
 	FILETIME last_access_time;
 	FILETIME last_write_time;
+	FILETIME change_time;
 	UInt64 file_size;
 	UInt64 pack_size;
 	std::wstring file_name;
@@ -283,6 +284,7 @@ public:
 std::wstring get_absolute_path(const std::wstring &rel_path);
 INT_PTR control(HANDLE h_panel, FILE_CONTROL_COMMANDS command, int param1 = 0, void *param2 = nullptr);
 INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, int param1 = 0, void *param2 = nullptr);
+INT_PTR adv_control(ADVANCED_CONTROL_COMMANDS command, void *param1, void *param2);
 //INT_PTR adv_control_async(ADVANCED_CONTROL_COMMANDS command, int param1, void *param2 = nullptr);
 bool match_masks(const std::wstring &file_name, const std::wstring &masks);
 bool get_color(PaletteColors color_id, UInt64 &color);

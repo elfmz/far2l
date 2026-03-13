@@ -56,7 +56,7 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX &Find
 	FindData.ftCreationTime = wfd.ftCreationTime;
 	FindData.ftLastAccessTime = wfd.ftLastAccessTime;
 	FindData.ftLastWriteTime = wfd.ftLastWriteTime;
-	FindData.ftChangeTime = wfd.ftLastWriteTime;
+	FindData.ftChangeTime = wfd.ftChangeTime;
 	FindData.UnixOwner = wfd.UnixOwner;
 	FindData.UnixGroup = wfd.UnixGroup;
 	FindData.UnixDevice = wfd.UnixDevice;
@@ -67,9 +67,6 @@ static void TranslateFindFile(const WIN32_FIND_DATA &wfd, FAR_FIND_DATA_EX &Find
 	FindData.dwUnixMode = wfd.dwUnixMode;
 	FindData.nHardLinks = wfd.nHardLinks;
 	FindData.nBlockSize = wfd.nBlockSize;
-
-	if (FindData.nHardLinks > 1)
-		FindData.dwFileAttributes |= FILE_ATTRIBUTE_HARDLINKS;
 
 	FindData.strFileName.CopyArray(wfd.cFileName);
 }
@@ -519,8 +516,9 @@ void apiFindDataToDataEx(const FAR_FIND_DATA *pSrc, FAR_FIND_DATA_EX *pDest)
 	pDest->ftCreationTime = pSrc->ftCreationTime;
 	pDest->ftLastAccessTime = pSrc->ftLastAccessTime;
 	pDest->ftLastWriteTime = pSrc->ftLastWriteTime;
-	pDest->ftChangeTime.dwHighDateTime = 0;
-	pDest->ftChangeTime.dwLowDateTime = 0;
+	pDest->ftChangeTime = pSrc->ftChangeTime;
+//	pDest->ftChangeTime.dwHighDateTime = 0;
+//	pDest->ftChangeTime.dwLowDateTime = 0;
 	pDest->UnixOwner = 0;
 	pDest->UnixGroup = 0;
 	pDest->UnixDevice = 0;
@@ -539,6 +537,7 @@ void apiFindDataExToData(const FAR_FIND_DATA_EX *pSrc, FAR_FIND_DATA *pDest)
 	pDest->ftCreationTime = pSrc->ftCreationTime;
 	pDest->ftLastAccessTime = pSrc->ftLastAccessTime;
 	pDest->ftLastWriteTime = pSrc->ftLastWriteTime;
+	pDest->ftChangeTime = pSrc->ftChangeTime;
 	pDest->nPhysicalSize = pSrc->nPhysicalSize;
 	pDest->nFileSize = pSrc->nFileSize;
 	pDest->dwFileAttributes = pSrc->dwFileAttributes;
@@ -575,10 +574,15 @@ BOOL apiGetFindDataForExactPathName(const wchar_t *lpwszFileName, FAR_FIND_DATA_
 		}
 	}
 
-	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftCreationTime);
+	WINPORT(FileTime_UnixToWin32)(s.st_ctim, &FindData.ftChangeTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_atim, &FindData.ftLastAccessTime);
 	WINPORT(FileTime_UnixToWin32)(s.st_mtim, &FindData.ftLastWriteTime);
-	FindData.ftChangeTime = FindData.ftLastWriteTime;
+
+//	FindData.ftChangeTime = FindData.ftLastWriteTime;
+
+	FindData.ftCreationTime.dwHighDateTime = 0;
+	FindData.ftCreationTime.dwLowDateTime = 0;
+
 	FindData.UnixOwner = s.st_uid;
 	FindData.UnixGroup = s.st_gid;
 	FindData.UnixDevice = s.st_dev;

@@ -180,6 +180,8 @@ src/mix/UsedChars.cpp
 src/mix/CachedCreds.cpp
 src/mix/GitTools.cpp
 src/shoco/shoco.c
+
+src/powerline.cpp
 )
 
 # Option to disable building macro subsystem completely

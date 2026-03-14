@@ -73,6 +73,183 @@ IsReplaceVariable(const wchar_t *str, int *scr = nullptr, int *end = nullptr, in
 
 static int ReplaceVariables(FARString &strStr, TSubstData *PSubstData);
 
+static FARString ExpandItemToFullPath(Panel *panel, const wchar_t *file_name)
+{
+	FARString full_name = file_name;
+
+	if (full_name.IsEmpty() || IsAbsolutePath(full_name))
+		return full_name;
+
+	FARString panel_dir;
+	if (panel) {
+		panel->GetCurDirPluginAware(panel_dir);
+	}
+
+	if (panel_dir.IsEmpty())
+		return full_name;
+
+	AddEndSlash(panel_dir);
+	panel_dir+= full_name;
+	return panel_dir;
+}
+
+struct ListFileFormat
+{
+	UINT CodePage = CP_UTF8;
+	LPCVOID Eol = NATIVE_EOL;
+	DWORD EolSize = strlen(NATIVE_EOL);
+	DWORD Signature = 0;
+	int SignatureSize = 0;
+};
+
+static void FillListFileFormat(const wchar_t *modifiers, ListFileFormat &format)
+{
+	if (!modifiers || !*modifiers)
+		return;
+
+	if (wcschr(modifiers, L'A')) {
+		format.CodePage = CP_ACP;
+		return;
+	}
+
+	if (wcschr(modifiers, L'W')) {
+		format.CodePage = CP_UTF16LE;
+		format.Signature = SIGN_UTF16LE;
+		format.SignatureSize = 2;
+		format.Eol = NATIVE_EOLW;
+		format.EolSize = sizeof(wchar_t) * wcslen(NATIVE_EOLW);
+		return;
+	}
+
+	if (wcschr(modifiers, L'U')) {
+		format.CodePage = CP_UTF8;
+		format.Signature = SIGN_UTF8;
+		format.SignatureSize = 3;
+	}
+}
+
+static bool WriteListFilePreamble(File &list_file, const ListFileFormat &format)
+{
+	if (!format.Signature || !format.SignatureSize)
+		return true;
+
+	DWORD bytes_written = 0;
+	return list_file.Write(&format.Signature, format.SignatureSize, &bytes_written)
+			&& bytes_written == (DWORD)format.SignatureSize;
+}
+
+static void ApplyListFileModifiers(Panel *panel, FARString &file_name, const wchar_t *modifiers)
+{
+	if (!modifiers || !*modifiers)
+		return;
+
+	if (wcschr(modifiers, L'F'))
+		file_name = ExpandItemToFullPath(panel, file_name);
+
+	if (wcschr(modifiers, L'Q'))
+		QuoteSpaceOnly(file_name);
+}
+
+static bool WriteListFileEntry(File &list_file, const FARString &file_name, const ListFileFormat &format)
+{
+	LPCVOID ptr = nullptr;
+	LPSTR buffer = nullptr;
+	DWORD bytes_to_write = 0;
+	DWORD bytes_written = 0;
+
+	if (format.CodePage == CP_UTF16LE) {
+		ptr = file_name.CPtr();
+		bytes_to_write = static_cast<DWORD>(file_name.GetLength() * sizeof(WCHAR));
+	} else {
+		int size = WINPORT(WideCharToMultiByte)(format.CodePage, 0, file_name,
+				static_cast<int>(file_name.GetLength()), nullptr, 0, nullptr, nullptr);
+
+		if (size <= 0)
+			return false;
+
+		buffer = static_cast<LPSTR>(malloc(size));
+		if (!buffer)
+			return false;
+
+		bytes_to_write = WINPORT(WideCharToMultiByte)(format.CodePage, 0, file_name,
+				static_cast<int>(file_name.GetLength()), buffer, size, nullptr, nullptr);
+		ptr = buffer;
+	}
+
+	BOOL written = list_file.Write(ptr, bytes_to_write, &bytes_written);
+
+	if (buffer)
+		free(buffer);
+
+	if (!written || bytes_written != bytes_to_write)
+		return false;
+
+	return list_file.Write(format.Eol, format.EolSize, &bytes_written) && bytes_written == format.EolSize;
+}
+
+static bool MakeMarkedPanelsListFile(FARString &strListFileName, Panel *first_panel, Panel *second_panel,
+		const wchar_t *modifiers)
+{
+	if (!FarMkTempEx(strListFileName)) {
+		Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateListFile,
+				Msg::CannotCreateListTemp, Msg::Ok);
+		return false;
+	}
+
+	File list_file;
+	if (!list_file.Open(strListFileName, GENERIC_WRITE,
+				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, CREATE_ALWAYS)) {
+		Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateListFile,
+				Msg::CannotCreateListTemp, Msg::Ok);
+		return false;
+	}
+
+	ListFileFormat format;
+	FillListFileFormat(modifiers, format);
+
+	if (!WriteListFilePreamble(list_file, format)) {
+		Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateListFile,
+				Msg::CannotCreateListWrite, Msg::Ok);
+		list_file.Close();
+		apiDeleteFile(strListFileName);
+		return false;
+	}
+
+	bool wrote_any = false;
+	Panel *panels[] = {first_panel, second_panel};
+
+	for (Panel *panel : panels) {
+		if (!panel || panel->GetRealSelCount() <= 0)
+			continue;
+
+		FARString file_name;
+		DWORD file_attr = 0;
+		panel->GetSelNameCompat(nullptr, file_attr);
+
+		while (panel->GetSelNameCompat(&file_name, file_attr)) {
+			ApplyListFileModifiers(panel, file_name, modifiers);
+			if (!WriteListFileEntry(list_file, file_name, format)) {
+				Message(MSG_WARNING | MSG_ERRORTYPE, 1, Msg::Error, Msg::CannotCreateListFile,
+						Msg::CannotCreateListWrite, Msg::Ok);
+				list_file.Close();
+				apiDeleteFile(strListFileName);
+				return false;
+			}
+
+			wrote_any = true;
+		}
+	}
+
+	list_file.Close();
+
+	if (!wrote_any) {
+		apiDeleteFile(strListFileName);
+		strListFileName.Clear();
+	}
+
+	return wrote_any;
+}
+
 // Str=if exist !#!\!^!.! far:edit < diff -c -p "!#!\!^!.!" !\!.!
 
 static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstData, FARString &strOut)
@@ -176,6 +353,7 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 
 	// !@  Имя файла, содержащего имена помеченных файлов
 	// !$!      Имя файла, содержащего короткие имена помеченных файлов
+	// Модификатор B - имена помеченных файлов на обеих панелях, без fallback на текущий файл.
 	// Ниже идет совмещение кода для разбора как !@! так и !$!
 	// Вообще-то (по исторической справедливости как бы) - в !$! нужно выбрасывать модификаторы Q и A
 	// Но нафиг нада:)
@@ -195,16 +373,28 @@ static const wchar_t *_SubstFileName(const wchar_t *CurStr, TSubstData *PSubstDa
 						Min(ARRAYSIZE(Modifiers), static_cast<size_t>(Ptr - (CurStr + 2) + 1)));
 
 				if (pListName) {
-					if (PSubstData->PassivePanel
-							&& (!pAnotherListName->IsEmpty()
-									|| PSubstData->AnotherPanel->MakeListFile(*pAnotherListName, Modifiers))) {
-						strOut+= *pAnotherListName;
-					}
+					if (wcschr(Modifiers, L'B')) {
+						FARString *pBothPanelsListName = PSubstData->PassivePanel ? pAnotherListName : pListName;
+						bool have_list = !pBothPanelsListName->IsEmpty();
+						if (!have_list) {
+							Panel *first_panel = PSubstData->PassivePanel ? PSubstData->AnotherPanel : PSubstData->ActivePanel;
+							Panel *second_panel = PSubstData->PassivePanel ? PSubstData->ActivePanel : PSubstData->AnotherPanel;
+							have_list = MakeMarkedPanelsListFile(*pBothPanelsListName, first_panel, second_panel, Modifiers);
+						}
+						if (have_list)
+							strOut+= *pBothPanelsListName;
+					} else {
+						if (PSubstData->PassivePanel
+								&& (!pAnotherListName->IsEmpty()
+										|| PSubstData->AnotherPanel->MakeListFile(*pAnotherListName, Modifiers))) {
+							strOut+= *pAnotherListName;
+						}
 
-					if (!PSubstData->PassivePanel
-							&& (!pListName->IsEmpty()
-									|| PSubstData->ActivePanel->MakeListFile(*pListName, Modifiers))) {
-						strOut+= *pListName;
+						if (!PSubstData->PassivePanel
+								&& (!pListName->IsEmpty()
+										|| PSubstData->ActivePanel->MakeListFile(*pListName, Modifiers))) {
+							strOut+= *pListName;
+						}
 					}
 				} else {
 					strOut+= CurStr;

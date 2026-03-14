@@ -8,7 +8,7 @@ add_library (${PROJECT_NAME} MODULE ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} utils far2l)
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC UNICODE _UNICODE)
+target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE FAR_USE_INTERNALS)
 
 target_include_directories(${PROJECT_NAME} PRIVATE ../WinPort)
 target_include_directories(${PROJECT_NAME} PRIVATE ../far2l/far2sdk)

@@ -2036,10 +2036,10 @@ static int FarEditorControlSynched(int Command, void *Param)
 	if (FrameManager->ManagerIsDown())
 		return 0;
 
-	if (CtrlObject->Plugins.CurEditor)
-		return (CtrlObject->Plugins.CurEditor->EditorControl(Command, Param));
 	if (CtrlObject->Plugins.CurDialogEditor)
 		return (CtrlObject->Plugins.CurDialogEditor->EditorControl(Command, Param));
+	if (CtrlObject->Plugins.CurEditor)
+		return (CtrlObject->Plugins.CurEditor->EditorControl(Command, Param));
 	return 0;
 }
 

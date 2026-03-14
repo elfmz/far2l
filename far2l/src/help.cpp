@@ -1779,7 +1779,8 @@ FARString &Help::MkTopic(INT_PTR PluginNumber, const wchar_t *HelpTopic, FARStri
 
 			if (strTopic.At(0) == HelpBeginLink) {
 				wchar_t *Ptr, *Ptr2;
-				wchar_t *lpwszTopic = strTopic.GetBuffer(strTopic.GetLength() * 2);		// BUGBUG
+				wchar_t *lpwszTopic =
+						strTopic.GetBuffer(strTopic.GetLength() + StrLength(HelpContents) + 1);
 
 				if (!(Ptr = wcschr(lpwszTopic, HelpEndLink))) {
 					*lpwszTopic = 0;

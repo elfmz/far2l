@@ -215,11 +215,12 @@ bool UserDefinedList::Set(const wchar_t *List, bool AddToList)
 								$ 18.09.2002 DJ
 								выделялось на 1 байт меньше, чем надо
 							*/
-							item.Str =
+							wchar_t *NewStr =
 									static_cast<wchar_t *>(realloc(item.Str, (Length + 2) * sizeof(wchar_t)));
 
 							/* DJ $ */
-							if (item.Str) {
+							if (NewStr) {
+								item.Str = NewStr;
 								item.Str[Length] = L'*';
 								item.Str[Length + 1] = 0;
 							} else

@@ -245,15 +245,25 @@ void ScreenBuf::SetExplicitLineBreak(int Y)
 void ScreenBuf::Read(int X1, int Y1, int X2, int Y2, CHAR_INFO *Text, int MaxTextLength)
 {
 	CriticalSectionLock Lock(CS);
-	if (!Buf)
+	if (!Buf || !Text || MaxTextLength <= 0 || X1 < 0 || Y1 < 0 || X2 < X1 || Y2 < Y1 || X1 >= BufX || Y1 >= BufY)
 		return;
+
+	if (X2 >= BufX)
+		X2 = BufX - 1;
+	if (Y2 >= BufY)
+		Y2 = BufY - 1;
 
 	int Width = X2 - X1 + 1;
 	int Height = Y2 - Y1 + 1;
 
-	for (int I = 0, Idx = 0; I < Height; I++, Idx+= Width)
-		memcpy(Text + Idx, Buf + (Y1 + I) * BufX + X1,
-				Min((int)sizeof(CHAR_INFO) * Width, MaxTextLength));
+	size_t Remaining = static_cast<size_t>(MaxTextLength);
+	for (int I = 0, Idx = 0; I < Height && Remaining >= sizeof(CHAR_INFO); I++, Idx+= Width) {
+		size_t RowCells = Min(static_cast<size_t>(Width), Remaining / sizeof(CHAR_INFO));
+		memcpy(Text + Idx, Buf + (Y1 + I) * BufX + X1, RowCells * sizeof(CHAR_INFO));
+		Remaining -= RowCells * sizeof(CHAR_INFO);
+		if (RowCells < static_cast<size_t>(Width))
+			break;
+	}
 }
 
 void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)

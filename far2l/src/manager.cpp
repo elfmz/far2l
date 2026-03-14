@@ -1398,7 +1398,11 @@ void Manager::InsertCommit()
 
 	if (InsertedFrame) {
 		if (FrameListSize <= FrameCount) {
-			FrameList = (Frame **)realloc(FrameList, sizeof(*FrameList) * (FrameCount + 1));
+			Frame **NewFrameList = (Frame **)realloc(FrameList, sizeof(*FrameList) * (FrameCount + 1));
+			if (!NewFrameList) {
+				return;
+			}
+			FrameList = NewFrameList;
 			FrameListSize++;
 		}
 
@@ -1453,7 +1457,12 @@ void Manager::ExecuteCommit()
 	}
 
 	if (ModalStackCount == ModalStackSize) {
-		ModalStack = (Frame **)realloc(ModalStack, ++ModalStackSize * sizeof(Frame *));
+		Frame **NewModalStack = (Frame **)realloc(ModalStack, (ModalStackSize + 1) * sizeof(Frame *));
+		if (!NewModalStack) {
+			return;
+		}
+		ModalStack = NewModalStack;
+		ModalStackSize++;
 	}
 
 	ModalStack[ModalStackCount++] = ExecutedFrame;

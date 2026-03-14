@@ -78,6 +78,9 @@ OldGetFileString::~OldGetFileString()
 
 int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 {
+	if (!wStr || ((nCodePage != CP_WIDE_LE && nCodePage != CP_WIDE_BE) && !Str))
+		return -1;
+
 	int nExitCode;
 
 	if (nCodePage == CP_WIDE_LE)
@@ -121,8 +124,12 @@ int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 
 			if (ERROR_INSUFFICIENT_BUFFER == ret) {
 				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, nullptr, 0);
+				wchar_t *NewWStr = (wchar_t *)malloc((nResultLength + 1) * sizeof(wchar_t));
+				if (!NewWStr)
+					return -1;
+
 				free(wStr);
-				wStr = (wchar_t *)malloc((nResultLength + 1) * sizeof(wchar_t));
+				wStr = NewWStr;
 				*wStr = L'\0';
 				m_nwStrLength = nResultLength + 1;
 				nResultLength = WINPORT(MultiByteToWideChar)(nCodePage, 0, Str, Length, wStr, nResultLength);
@@ -141,6 +148,9 @@ int OldGetFileString::GetString(wchar_t **DestStr, int nCodePage, int &Length)
 
 int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 {
+	if (!Str)
+		return -1;
+
 	int CurLength = 0;
 	int ExitCode = 1;
 	EolType Eol = FEOL_NONE;
@@ -224,6 +234,9 @@ int OldGetFileString::GetAnsiString(char **DestStr, int &Length)
 
 int OldGetFileString::GetUnicodeString(wchar_t **DestStr, int &Length, bool bBigEndian)
 {
+	if (!wStr)
+		return -1;
+
 	int CurLength = 0;
 	int ExitCode = 1;
 	EolType Eol = FEOL_NONE;

@@ -1525,6 +1525,9 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 	EditFile.GetSize(FileSize);
 	DWORD StartTime = WINPORT(GetTickCount)();
 
+	// Enable bulk loading mode for faster file loading
+	m_editor->BeginBulkLoad();
+
 	while ((GetCode = GetStr.GetString(&Str, m_codepage, StrLength))) {
 		if (GetCode == -1) {
 			EditFile.Close();
@@ -1555,6 +1558,7 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 			if (CheckForEscSilent()) {
 				if (ConfirmAbortOp()) {
 					UserBreak = 1;
+					m_editor->EndBulkLoad();
 					EditFile.Close();
 					return FALSE;
 				}
@@ -1578,6 +1582,9 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 			return FALSE;
 		}
 	}
+
+	// End bulk loading mode
+	m_editor->EndBulkLoad();
 
 	BadConversion = !GetStr.IsConversionValid();
 	if (BadConversion) {

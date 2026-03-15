@@ -477,11 +477,12 @@ void Viewer::SetCRSym()
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[2048];
+	const int buf_size = 2048;
+	std::vector<wchar_t> Buf(buf_size);
 	int CRCount = 0, LFCount = 0;
 	int ReadSize, I;
 	vseek(0, SEEK_SET);
-	ReadSize = vread(Buf, ARRAYSIZE(Buf));
+	ReadSize = vread(Buf.data(), buf_size);
 
 	for (I = 0; I < ReadSize; I++)
 		switch (Buf[I]) {
@@ -2841,7 +2842,8 @@ void Viewer::Search(int Next, int FirstChar)
 		Match = false;
 
 		if (SearchWChars > 0 && (!ReverseSearch || LastSelPos >= 0)) {
-			wchar_t Buf[16384];
+			const int buf_size = 16384;
+			std::vector<wchar_t> Buf(buf_size);
 
 			int ReadSize;
 			wakeful W;
@@ -2858,14 +2860,14 @@ void Viewer::Search(int Next, int FirstChar)
 				// if (CurPos<0)
 				//	CurPos=0;
 				// vseek(CurPos,SEEK_SET);
-				int BufSize = ARRAYSIZE(Buf);
+				int BufSize = buf_size;
 				int64_t CurPos = vtell();
 				if (ReverseSearch) {
 					/*
 						$ 01.08.2000 KM
 						Изменёно вычисление CurPos с учётом Whole words
 					*/
-					CurPos-= ARRAYSIZE(Buf) - SearchCodeUnits - !!WholeWords;
+					CurPos-= buf_size - SearchCodeUnits - !!WholeWords;
 					if (CurPos < 0) {
 						BufSize+= (int)CurPos;
 						CurPos = 0;
@@ -2873,7 +2875,7 @@ void Viewer::Search(int Next, int FirstChar)
 					vseek(CurPos, SEEK_SET);
 				}
 
-				if ((ReadSize = vread(Buf, BufSize, SearchHex != 0)) <= 0)
+				if ((ReadSize = vread(Buf.data(), BufSize, SearchHex != 0)) <= 0)
 					break;
 
 				DWORD CurTime = WINPORT(GetTickCount)();
@@ -2949,7 +2951,7 @@ void Viewer::Search(int Next, int FirstChar)
 							Match = CheckBufMatchesCaseSensitive(SearchWChars, &Buf[I], strSearchStr.CPtr());
 						}
 						if (Match) {
-							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + I);
+							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf.data(), Buf.data() + I);
 							break;
 						}
 					}
@@ -3442,15 +3444,16 @@ void Viewer::GoTo(int ShowDlg, int64_t Offset, DWORD Flags)
 void Viewer::AdjustFilePos()
 {
 	if (!VM.Hex) {
-		wchar_t Buf[4096];
-		int64_t StartLinePos = -1, GotoLinePos = FilePos - (int64_t)sizeof(Buf) / sizeof(wchar_t);
+		const int buf_size = 4096;
+		std::vector<wchar_t> Buf(buf_size);
+		int64_t StartLinePos = -1, GotoLinePos = FilePos - (int64_t)buf_size;
 
 		if (GotoLinePos < 0)
 			GotoLinePos = 0;
 
 		vseek(GotoLinePos, SEEK_SET);
-		int ReadSize = (int)Min((int64_t)ARRAYSIZE(Buf), (int64_t)(FilePos - GotoLinePos));
-		ReadSize = vread(Buf, ReadSize);
+		int ReadSize = (int)Min((int64_t)buf_size, (int64_t)(FilePos - GotoLinePos));
+		ReadSize = vread(Buf.data(), ReadSize);
 
 		for (int I = ReadSize - 1; I >= 0; I--)
 			if (Buf[I] == (wchar_t)CRSym) {
@@ -3528,15 +3531,16 @@ void Viewer::SelectText(const int64_t &MatchPos, const int64_t &SearchLength, co
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[MAX_VIEWLINE];
-	int64_t StartLinePos = -1, SearchLinePos = MatchPos - sizeof(Buf) / sizeof(wchar_t);
+	const int buf_size = MAX_VIEWLINE;
+	std::vector<wchar_t> Buf(buf_size);
+	int64_t StartLinePos = -1, SearchLinePos = MatchPos - buf_size;
 
 	if (SearchLinePos < 0)
 		SearchLinePos = 0;
 
 	vseek(SearchLinePos, SEEK_SET);
-	int ReadSize = (int)Min((int64_t)ARRAYSIZE(Buf), (int64_t)(MatchPos - SearchLinePos));
-	ReadSize = vread(Buf, ReadSize);
+	int ReadSize = (int)Min((int64_t)buf_size, (int64_t)(MatchPos - SearchLinePos));
+	ReadSize = vread(Buf.data(), ReadSize);
 
 	for (int I = ReadSize - 1; I >= 0; I--)
 		if (Buf[I] == (wchar_t)CRSym) {

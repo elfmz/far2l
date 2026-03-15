@@ -1578,10 +1578,10 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 				std::thread open_thread([&]() {
 					fprintf(stderr,"Starting Streaming Detection/Open Thread...\n");
 
-					uint8_t buffer[32768];
+					std::vector<uint8_t> buffer(32768);
 					UInt32 size = 0;
 					fprintf(stderr,"Peeking 32KB from extracted stream...\n");
-					int32_t hr = mem_stream->Peek(buffer, sizeof(buffer), &size);
+					int32_t hr = mem_stream->Peek(buffer.data(), buffer.size(), &size);
 					if (!size || hr != S_OK) {
 						fprintf(stderr,"Peek failed or no data: size=%u, hr=0x%X\n", size, hr);
 						promise2.set_value(hr);
@@ -1589,7 +1589,7 @@ void Archive<UseVirtualDestructor>::open(const OpenOptions &options, Archives<Us
 					}
 
 					ArcTypes e_arc_types = {c_tar, c_xar, c_ar, c_cpio};
-					ArcEntries arc_entries = detect(buffer, size, true,
+					ArcEntries arc_entries = detect(buffer.data(), size, true,
 												extract_file_ext(ef.cFileName), e_arc_types, stream);
 					if (arc_entries.empty()) {
 						fprintf(stderr,"arc_entries.empty()\n" );

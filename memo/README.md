@@ -41,7 +41,8 @@ The plugin's SysID is `0x4D454D4F` ('MEMO').
 
 ## Storage
 
-Default location: `~/.config/far2l/plugins/memo/`
+Default location: `plugins/memo/` inside far2l config directory
+(usually `~/.config/far2l/plugins/memo/`)
 
 | File | Purpose |
 |------|---------|
@@ -68,4 +69,4 @@ Language files and `key_macros.ini` template are copied automatically.
 
 ## License
 
-Part of the far2l-adb project. Same license as far2l.
+Part of the [far2l-adb](https://github.com/stpork/far2l-adb) project. Same license as [far2l](https://github.com/elfmz/far2l).

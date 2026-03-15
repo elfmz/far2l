@@ -276,7 +276,7 @@ private:
 	bool IncTopVisualLine();
 	int VisualOffsetFromTop(Edit* line, int vline) const;
 	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
-	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state);
+	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state, bool allow_selection);
 	virtual void DisplayObject();
 	void UpdateCursorPosition(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);

@@ -123,6 +123,7 @@ class WinPortPanel: public wxPanel, protected IConsoleOutputBackend
 	struct RefreshRects : std::vector<SMALL_RECT>, std::mutex {} _refresh_rects;
 
 	void SetConsoleSizeFromWindow();
+	void DumpScreenBuffer();
 	void CheckForResizePending();
 	void CheckPutText2CLip();
 	void SetInitialSize();

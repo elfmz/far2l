@@ -112,6 +112,7 @@ void ComplexOperationProgress::Show()
 			{
 				std::lock_guard<std::mutex> locker(_state.mtx);
 				paused = (_state.paused = !_state.paused);
+				_state.cond.notify_all();
 			}
 			TextToDialogControl(_i_pause_resume, paused ? MResume : MPause);
 

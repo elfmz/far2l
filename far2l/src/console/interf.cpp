@@ -794,6 +794,9 @@ void vmprintf(const wchar_t *fmt, ...)
 
 void SetColor(uint64_t Color, bool ApplyToConsole)
 {
+	if (CurColor == Color)
+		return;
+
 	CurColor = Color;
 
 	if (ApplyToConsole) {
@@ -803,7 +806,12 @@ void SetColor(uint64_t Color, bool ApplyToConsole)
 
 void SetFarColor(uint16_t Color, bool ApplyToConsole)
 {
-	CurColor = FarColorToReal(Color);
+	uint64_t RealColor = FarColorToReal(Color);
+
+	if (CurColor == RealColor)
+		return;
+
+	CurColor = RealColor;
 
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);

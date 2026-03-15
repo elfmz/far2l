@@ -115,6 +115,7 @@ void OpBase::ForcefullyAbort()
 	{
 		std::lock_guard<std::mutex> locker(_state.mtx);
 		_state.aborting = true;
+		_state.cond.notify_all();
 	}
 
 	_base_host->Abort();

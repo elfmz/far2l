@@ -120,6 +120,12 @@ void ThreadedWorkQueue::Queue(IThreadedWorkItem *twi, size_t backlog_limit)
 
 	{
 		std::unique_lock<std::mutex> lock(_mtx);
+		if (_stopping) {
+			// Reject new work after Abort()
+			lock.unlock();
+			delete twi;
+			return;
+		}
 		if (_workers.empty() || (!_backlog.empty() && _workers.size() < _threads_count)) {
 			try {
 				_workers.emplace_back(this);
@@ -139,8 +145,16 @@ void ThreadedWorkQueue::Queue(IThreadedWorkItem *twi, size_t backlog_limit)
 				++_backlog_waits;
 				do {
 					_notify_on_done = true;
-					_cond.wait(lock);
-				} while (_backlog.size() > backlog_limit);
+					if (_wait_callback) {
+						_cond.wait_for(lock, std::chrono::milliseconds(200));
+						auto cb = _wait_callback;
+						lock.unlock();
+						cb();
+						lock.lock();
+					} else {
+						_cond.wait(lock);
+					}
+				} while (_backlog.size() > backlog_limit && !_stopping);
 			}
 		}
 		FetchOrderedDoneItems(oid);
@@ -167,8 +181,37 @@ void ThreadedWorkQueue::Finalize()
 			break;
 		}
 		_notify_on_done = true;
-		_cond.wait(lock);
+		if (_wait_callback) {
+			_cond.wait_for(lock, std::chrono::milliseconds(200));
+			auto cb = _wait_callback;
+			lock.unlock();
+			cb();
+			lock.lock();
+		} else {
+			_cond.wait(lock);
+		}
 	}
+}
+
+void ThreadedWorkQueue::Abort()
+{
+	{
+		OrderedItemsDestroyer oid;
+		{
+			std::unique_lock<std::mutex> lock(_mtx);
+			_stopping = true;
+			// Move backlog items to oid for destruction outside lock
+			for (auto *twi : _backlog) {
+				oid.emplace_back(twi);
+			}
+			_backlog.clear();
+			_cond.notify_all(); // Wake blocked Queue() callers and workers
+		}
+		// oid destructor deletes discarded items outside lock
+	}
+
+	// Wait for active workers to finish their current items
+	Finalize();
 }
 
 // must be invoked under _mtx lock held

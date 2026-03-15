@@ -786,6 +786,66 @@ void WinPortPanel::SetConsoleSizeFromWindow()
 	}
 }
 
+void WinPortPanel::DumpScreenBuffer()
+{
+	wxString path = wxFileName::GetHomeDir() + wxFileName::GetPathSeparator() + wxT("f2l_screen.dump");
+	FILE *f = fopen(path.mb_str(), "w");
+	if (!f) return;
+
+	unsigned int width = 0, height = 0;
+	g_winport_con_out->GetSize(width, height);
+	fprintf(f, "Screen Size: %u x %u\n", width, height);
+
+	COORD cursor_pos = g_winport_con_out->GetCursor();
+	fprintf(f, "Cursor Position: X=%d, Y=%d\n\n", cursor_pos.X, cursor_pos.Y);
+
+	for (unsigned int y = 0; y < height; ++y) {
+		fprintf(f, "Row %u:\n", y);
+		std::wstring text;
+		std::vector<DWORD64> attrs;
+		for (unsigned int x = 0; x < width; ++x) {
+			CHAR_INFO ch = {0};
+			if (g_winport_con_out->Read(ch, {(SHORT)x, (SHORT)y})) {
+				if (CI_USING_COMPOSITE_CHAR(ch)) {
+					text += WINPORT(CompositeCharLookup)(ch.Char.UnicodeChar);
+				} else if (ch.Char.UnicodeChar) {
+					text += ch.Char.UnicodeChar;
+				} else {
+					text += L' ';
+				}
+				attrs.push_back(ch.Attributes);
+			}
+		}
+		wxString wxText(text);
+		fprintf(f, "Text: %s\n", (const char*)wxText.utf8_str());
+		fprintf(f, "Attrs: ");
+		if (!attrs.empty()) {
+			DWORD64 cur_attr = attrs[0];
+			unsigned int count = 1;
+			auto print_attr = [&](DWORD64 attr, unsigned int c) {
+				WinPortRGB fg = WxConsoleForeground2RGB(attr);
+				WinPortRGB bg = WxConsoleBackground2RGB(attr);
+				fprintf(f, "[%u*{fg:#%02x%02x%02x bg:#%02x%02x%02x}] ", c, fg.r, fg.g, fg.b, bg.r, bg.g, bg.b);
+			};
+
+			for (unsigned int i = 1; i < attrs.size(); ++i) {
+				if (attrs[i] == cur_attr) {
+					count++;
+				} else {
+					print_attr(cur_attr, count);
+					cur_attr = attrs[i];
+					count = 1;
+				}
+			}
+			print_attr(cur_attr, count);
+			fprintf(f, "\n");
+		}
+		fprintf(f, "\n");
+	}
+	fclose(f);
+	fprintf(stderr, "Screen dumped to %s\n", (const char*)path.utf8_str());
+}
+
 void WinPortPanel::CheckForResizePending()
 {
 #ifndef __APPLE__
@@ -1388,6 +1448,10 @@ static void CheckForLedsStateUpdate(int kc, bool down)
 
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
+	if (event.ControlDown() && event.ShiftDown() && !event.AltDown() && event.GetKeyCode() == 'P') {
+		DumpScreenBuffer();
+		return;
+	}
 	ResetTimerIdling();
 	CheckForUnfreeze(true);
 	DWORD now = WINPORT(GetTickCount)();

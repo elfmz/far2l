@@ -2422,11 +2422,15 @@ LONG_PTR WINAPI FarSendDlgMessageA(HANDLE hDlg, int Msg, int Param1, LONG_PTR Pa
 				if (OldListTitle->Title) {
 					ListTitle.TitleLen = OldListTitle->TitleLen;
 					ListTitle.Title = (wchar_t *)malloc(sizeof(wchar_t) * ListTitle.TitleLen);
+					if (!ListTitle.Title)
+						ListTitle.TitleLen = 0;
 				}
 
 				if (OldListTitle->BottomLen) {
 					ListTitle.BottomLen = OldListTitle->BottomLen;
 					ListTitle.Bottom = (wchar_t *)malloc(sizeof(wchar_t) * ListTitle.BottomLen);
+					if (!ListTitle.Bottom)
+						ListTitle.BottomLen = 0;
 				}
 
 				LONG_PTR Ret = FarSendDlgMessage(hDlg, DM_LISTGETTITLES, Param1, (LONG_PTR)&ListTitle);

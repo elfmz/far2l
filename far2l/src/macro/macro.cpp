@@ -817,7 +817,7 @@ bool KeyMacro::ProcessKey(FarKey Key)
 					MacroLIB[Pos].BufferSize = RecBufferSize;
 					MacroLIB[Pos].Src =
 							RecSrc ? RecSrc : MkTextSequence(MacroLIB[Pos].Buffer, MacroLIB[Pos].BufferSize);
-					MacroLIB[Pos].Description = macroDescription.IsEmpty() ? nullptr: wcsdup(macroDescription.GetBuffer());
+					MacroLIB[Pos].Description = macroDescription.IsEmpty() ? nullptr : wcsdup(macroDescription.GetBuffer());
 
 					// если удаляем макрос - скорректируем StartMode,
 					// иначе макрос из common получит ту область, в которой его решили удалить.
@@ -3866,6 +3866,8 @@ struct FarMacroValue
 					break;
 				case vtString:
 					(vParams + I)->v.s = wcsdup(V.s());
+					if (!(vParams + I)->v.s)
+						(vParams + I)->v.s = wcsdup(L"");
 					break;
 				case vtDouble:
 					(vParams + I)->v.d = V.d();
@@ -5496,6 +5498,11 @@ int KeyMacro::ReadMacros(int ReadMode, FARString &strBuffer)
 		MacroLIB = NewMacros;
 		CurMacro.Src = wcsdup(strBuffer);
 
+		if (!CurMacro.Src) {
+			ErrorCount++;
+			continue;
+		}
+
 		FARString strDescription;
 		if (cfg_reader.GetString(strDescription, "Description", L"")) {
 			CurMacro.Description = wcsdup(strDescription);
@@ -5945,10 +5952,13 @@ LONG_PTR WINAPI KeyMacro::ParamMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 
 				if (*Sequence) {
 					if (Macro->ParseMacroString(&mr, Sequence)) {
+						wchar_t *NewSrc = wcsdup(Sequence);
+						if (!NewSrc)
+							return FALSE;
 						free(Macro->RecBuffer);
 						Macro->RecBufferSize = mr.BufferSize;
 						Macro->RecBuffer = mr.Buffer;
-						Macro->RecSrc = wcsdup(Sequence);
+						Macro->RecSrc = NewSrc;
 						return TRUE;
 					}
 				}

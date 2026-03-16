@@ -72,9 +72,6 @@ public:
 	/// Invokes CompleteProc() of finally processed items and destroys them.
 	void Finalize();
 
-	/// Aborts pending work: discards backlog, wakes blocked Queue() callers, waits for active workers.
-	void Abort();
-
 	/// Set a callback invoked periodically while Queue() or Finalize() blocks waiting for workers.
 	void SetWaitCallback(std::function<void()> cb) { _wait_callback = std::move(cb); }
 };

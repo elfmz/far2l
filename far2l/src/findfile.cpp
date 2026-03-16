@@ -82,7 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // mmap'ed window size limit, must be multiple of any sane page size (0x1000 on intel)
 #if defined(__LP64__) || defined(_LP64)
-#define FILE_SCAN_MMAP_WINDOW 0x1000000
+#define FILE_SCAN_MMAP_WINDOW 0x100000
 #else
 #define FILE_SCAN_MMAP_WINDOW 0x10000
 #endif
@@ -2356,10 +2356,6 @@ static void DoPrepareFileList(HANDLE hDlg)
 		strRoot = pwRoot;
 		DoScanTree(hDlg, strRoot);
 	}
-
-	if (StopFlag && pWorkQueue) {
-		pWorkQueue->Abort();
-	}
 }
 
 static void DoPreparePluginList(HANDLE hDlg)
@@ -2395,10 +2391,6 @@ static void DoPreparePluginList(HANDLE hDlg)
 			|| SearchMode == FINDAREA_INPATH) {
 		PluginLocker Lock;
 		CtrlObject->Plugins.SetDirectory(ArcItem.hPlugin, strSaveDir, OPM_FIND);
-	}
-
-	if (StopFlag && pWorkQueue) {
-		pWorkQueue->Abort();
 	}
 }
 
@@ -2557,14 +2549,6 @@ static bool FindFilesProcess(Vars &v)
 	if (fft.StartThread()) {
 		wakeful W;
 		Dlg.Process();
-
-		// Signal search thread to stop and abort pending work items so
-		// the thread exits quickly and WAIT_FOR below doesn't freeze
-		StopFlag = true;
-		if (pWorkQueue) {
-			pWorkQueue->Abort();
-		}
-
 		WAIT_FOR_AND_DISPATCH_INTER_THREAD_CALLS(fft.CheckForDone());
 
 		PauseFlag = false;

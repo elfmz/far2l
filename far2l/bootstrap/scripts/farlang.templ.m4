@@ -6164,7 +6164,18 @@ upd:"Always copy target &file"
 "Копіювати як &файл"
 "Капіяваць як &файл"
 
-LinkCopyMoveExplainText
+LinkCopyExplainText
+" ('умно' && 'как файл': копируют внешние/все симлинки как файлы)"
+" ('smartly' && 'target': copy external/all symlinks as target file)"
+upd:" ('smartly' && 'target': copy external/all symlinks as target file)"
+upd:" ('smartly' && 'target': copy external/all symlinks as target file)"
+upd:" ('smartly' && 'target': copy external/all symlinks as target file)"
+upd:" ('smartly' && 'target': copy external/all symlinks as target file)"
+upd:" ('smartly' && 'target': copy external/all symlinks as target file)"
+" ('розумно' && 'як файл': копіюють зовнішні/всі симлінки як файли)"
+" ('разумна' && 'як файл': капіююць вонкавыя/усе сімлінкі як файлы)"
+
+LinkMoveExplainText
 " ('умно' && 'как файл': всегда каталоги медленно, пофайлово)"
 " ('smartly' && 'target': always process dirs slowly by each file)"
 upd:" ('smartly' && 'target': always process dirs slowly by each file)"

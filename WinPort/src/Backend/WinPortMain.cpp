@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <dlfcn.h>
+#include <time.h>
 
 #ifdef __linux__
 # include <termios.h>
@@ -38,9 +39,12 @@
 # include "TestController.h"
 #endif
 
+#define STDERR_BUFFER_SIZE 0x1000
+
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
-static BOOL g_winport_testing = FALSE;
+static char *s_stderr_trace = nullptr;
+static BOOL s_winport_testing = FALSE;
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
 	bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty,
@@ -51,8 +55,35 @@ extern "C" void WinPortInitRegistry();
 
 extern "C" BOOL WinPortTesting()
 {
-	return g_winport_testing;
+	return s_winport_testing;
 }
+
+extern "C" const char *WinPortStderrTrace(size_t *len)
+{
+	if (s_stderr_trace) {
+		static unsigned int s_cnt = 0;
+		unsigned int cnt = ++s_cnt;
+		*len = STDERR_BUFFER_SIZE;
+		// there is no ducumented way to obtain size of buffered content,
+		// so here is little trick: write 'magic' string to stderr and then look
+		// for it
+		char magic[32];
+		const int magic_len = snprintf(magic, sizeof(magic), "EndOfSTDERR:%x@%llx\n", cnt, (unsigned long long)time(NULL));
+		if (magic_len > 0) {
+			fwrite(magic, magic_len, 1, stderr);
+			for (int l = 0; l + magic_len <= STDERR_BUFFER_SIZE; ++l) {
+				if (memcmp(s_stderr_trace + l, magic, magic_len) == 0) {
+					*len = l;
+					break;
+				}
+			}
+		}
+	} else {
+		*len = 0;
+	}
+	return s_stderr_trace;
+}
+
 
 class FScope
 {
@@ -110,7 +141,14 @@ static void SetupStdHandles()
 	if (!err.empty() && err != "-") {
 		if (freopen(err.c_str(), "a", stderr)) {
 			reopened|= 2;
-			setvbuf(stderr, NULL, _IONBF, 0);
+			if (err == DEVNULL) {
+				if (!s_stderr_trace) {
+					s_stderr_trace = (char *)calloc(STDERR_BUFFER_SIZE, 1);
+				}
+				setvbuf(stderr, s_stderr_trace, _IOFBF, STDERR_BUFFER_SIZE);
+			} else {
+				setvbuf(stderr, NULL, _IONBF, 0);
+			}
 		} else
 			perror("freopen stderr");
 	}
@@ -123,83 +161,6 @@ static void SetupStdHandles()
 		ioctl(0, TIOCNOTTY, NULL);
 #endif
 	}
-}
-
-int detect_vs16_width() {
-	// U+25AB + U+FE0F: ▫️
-	const char sym[] = "\xE2\x96\xAB\xEF\xB8\x8F";
-
-	termios orig, raw;
-	tcgetattr(STDIN_FILENO, &orig);
-	raw = orig;
-	raw.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-
-	auto readPos = []() {
-		int row = -1, col = -1;
-		char c;
-		std::string buf;
-		while (true) {
-			fd_set rfds;
-			FD_ZERO(&rfds);
-			FD_SET(STDIN_FILENO, &rfds);
-
-			struct timeval tv;
-			tv.tv_sec  = 0;
-			tv.tv_usec = 200000; //timeout 200 msec
-
-			int rv = select(STDIN_FILENO + 1, &rfds, nullptr, nullptr, &tv);
-			if (rv <= 0) return std::make_pair(-1,-1);
-
-			if (read(STDIN_FILENO, &c, 1) != 1) return std::make_pair(-1,-1);
-			buf.push_back(c);
-
-			if ( c == 'R') {
-				auto esc_pos = buf.rfind('\x1b');
-				if (esc_pos != std::string::npos && esc_pos < buf.size() - 1
-					 && sscanf(buf.c_str() + esc_pos, "\x1b[%d;%dR", &row, &col) == 2) {
-					return std::make_pair(row, col); // This is the cursor position: SUCCESS
-				}
-				buf.clear();
-			}
-
-			if (buf.size() > 64) buf.clear();
-		}
-	};
-
-	// Query cursor before printing
-	write(STDOUT_FILENO, "\x1b[6n", 4);
-	write(STDOUT_FILENO, "\x1b[5n", 4);
-	tcdrain(STDOUT_FILENO);
-	auto [start_row, start_col] = readPos();
-
-	// Print the VS16 symbol
-	write(STDOUT_FILENO, sym, strlen(sym));
-	tcdrain(STDOUT_FILENO);
-
-	// Query cursor after printing
-	write(STDOUT_FILENO, "\x1b[6n", 4);
-	write(STDOUT_FILENO, "\x1b[5n", 4);
-	tcdrain(STDOUT_FILENO);
-	auto [end_row, end_col] = readPos();
-
-	// Remove the printed symbol
-	if (start_col >= 0 && end_col >= 0) {
-		int w = end_col - start_col;
-		if (w > 0) {
-			char seq[32];
-			int n = snprintf(seq, sizeof(seq), "\x1b[%d;%dH", start_row, start_col);
-			if (n > 0) {
-				write(STDOUT_FILENO, seq, (size_t)n);
-				write(STDOUT_FILENO, "\x1b[K", 3);
-				tcdrain(STDOUT_FILENO);
-			}
-		}
-	}
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
-
-	if (start_col < 0 || end_col < 0) return -1;
-	return end_col - start_col;  // 1 = no emoji width, 2 = VS16 rendered full-width
 }
 
 class NormalizeTerminalState
@@ -517,10 +478,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			}
 		}
 	}
-	//check variation selector 16 is usable before reassigning stdout
-	if (arg_opts.tty && arg_opts.nodetect == NODETECT_NONE) {
-		g_use_vs16 = detect_vs16_width() == 2;
-	}
 
 	SetupStdHandles();
 	if (!arg_opts.mortal) {
@@ -554,7 +511,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			winport_con_out->SetSize(w.ws_col, w.ws_row);
 		}
 		test_ctl.reset(new TestController(test_ctl_id));
-		g_winport_testing = TRUE;
+		s_winport_testing = TRUE;
 		unsetenv("FAR2L_TESTCTL");
 #else
 		fprintf(stderr, "Testing facilities not enabled, rebuild with -DTESTING=YES to use FAR2L_TESTCTL environment variable\n");

@@ -197,6 +197,15 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 		}
 		FDWriteStr(fd, " 👉 INPUT BACKTRACE \n");
 		FDWriteStr(fd, input_backtrace.data());
+
+		size_t stderr_trace_len = 0;
+		const char *stderr_trace = WinPortStderrTrace(&stderr_trace_len);
+		if (stderr_trace_len && stderr_trace) {
+			FDWriteStr(fd, " 👉 STDERR TRACE \n");
+			if (write(fd, stderr_trace, stderr_trace_len) == -1) {
+				perror("FDWrite - write");
+			}
+		}
 	}
 
 	FDWriteSignalInfo(STDERR_FILENO, num, info, ctx);

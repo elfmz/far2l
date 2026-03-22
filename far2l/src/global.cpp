@@ -111,4 +111,7 @@ FormatScreen FS;
 
 DWORD ErrorMode;
 
-bool g_use_vs16=true;
+extern "C"
+{
+	__attribute__((visibility("default"))) bool g_far2l_use_vs16 = true;
+}

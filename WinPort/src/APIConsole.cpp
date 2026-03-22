@@ -18,8 +18,71 @@ struct ForkedConsole
 	IConsoleOutput *con_out{nullptr};
 };
 
-static std::atomic<IConsoleOutput *> s_shadow_out{nullptr};
-static std::atomic<int> s_shadow_usecnt{0};
+
+static class ConsoleShadow
+{
+	IConsoleOutput *_out{nullptr};
+	int _cnt{0};
+	std::mutex _mtx;
+
+public:
+	void Spawn()
+	{
+		try { // use NULL handle to make app treat its scroll callbacks as from main output
+			IConsoleOutput *out = g_winport_con_out->ForkConsoleOutput(NULL);
+			if (out) {
+				std::lock_guard<std::mutex> lock(_mtx);
+				if (_cnt == 0) {
+					_cnt = 1;
+					_out = out;
+					out = nullptr;
+					fprintf(stderr, "ConsoleShadow::Spawn() - OK\n");
+				} else {
+					fprintf(stderr, "ConsoleShadow::Spawn() - unexpected, _cnt=%d\n", _cnt);
+				}
+			}
+			if (out) {
+				g_winport_con_out->ReleaseConsoleOutput(out, true);
+			}
+		} catch (...) {
+			fprintf(stderr, "ConsoleShadow::Spawn() - exception\n");
+		}
+	}
+
+	IConsoleOutput *Ref()
+	{
+		std::lock_guard<std::mutex> lock(_mtx);
+		if (_out) {
+			++_cnt;
+//			fprintf(stderr, "ConsoleShadow::Ref(), _cnt=%d\n", _cnt);
+		}
+		return _out;
+	}
+
+	void Deref(const char *reason)
+	{
+		IConsoleOutput *out = nullptr;
+		{
+			std::lock_guard<std::mutex> lock(_mtx);
+			if (_cnt == 1) {
+				_cnt = 0;
+				out = _out;
+				_out = nullptr;
+				fprintf(stderr, "ConsoleShadow::Deref(%s) - destroyed\n", reason);
+
+			} else if (_cnt > 0) {
+				--_cnt;
+//				fprintf(stderr, "ConsoleShadow::Deref(%s) - keep, _cnt=%d\n", reason, _cnt);
+			} else {
+				fprintf(stderr, "ConsoleShadow::Deref(%s) - unexpected, _cnt=%d\n", reason, _cnt);
+			}
+		}
+		if (out) {
+			g_winport_con_out->ReleaseConsoleOutput(out, true);
+			g_winport_con_out->RepaintsDeferFinish(true);
+		}
+	}
+} s_shadow;
 
 class ChooseConOut
 {
@@ -33,23 +96,24 @@ public:
 			ForkedConsole *fc = (ForkedConsole *)hConsole;
 			ASSERT(fc->magic == FORKED_CONSOLE_MAGIC);
 			_chosen = fc->con_out;
-			return;
-		}
-		++s_shadow_usecnt;
-		_chosen = s_shadow_out;
-		if (LIKELY(_chosen == nullptr)) {
-			--s_shadow_usecnt; // not gonna use shadow
-			_chosen = g_winport_con_out;
+
 		} else {
-			_using_shadow = true;
+			_chosen = s_shadow.Ref();
+			if (_chosen) {
+				_using_shadow = true;
+			} else {
+				_chosen = g_winport_con_out;
+			}
 		}
 	}
+
 	~ChooseConOut()
 	{
 		if (_using_shadow) {
-			--s_shadow_usecnt;
+			s_shadow.Deref("release");
 		}
 	}
+
 	inline operator IConsoleOutput *() { return _chosen; }
 	inline IConsoleOutput *operator->() { return _chosen; }
 };
@@ -68,34 +132,12 @@ extern "C" {
 
 	WINPORT_DECL(FreezeConsoleOutput,VOID,())
 	{
-		if (s_shadow_out == nullptr) {
-			try {
-				// use NULL handle to make app treat its scroll callbacks as from main output
-				IConsoleOutput *shadow_out = g_winport_con_out->ForkConsoleOutput(NULL);
-				shadow_out = s_shadow_out.exchange(shadow_out);
-				if (shadow_out) {
-					g_winport_con_out->ReleaseConsoleOutput(shadow_out, true);
-				}
-			} catch (...) {
-				fprintf(stderr, "%s: exception\n", __FUNCTION__);
-			}
-		} else {
-			fprintf(stderr, "%s: called while already frozen\n", __FUNCTION__);
-		}
+		s_shadow.Spawn();
 	}
 
 	WINPORT_DECL(UnfreezeConsoleOutput,VOID,())
 	{
-		IConsoleOutput *shadow_out = s_shadow_out.exchange(nullptr);
-		if (shadow_out) {
-			while (s_shadow_usecnt != 0) {
-				usleep(1);
-			}
-			g_winport_con_out->ReleaseConsoleOutput(shadow_out, true);
-			g_winport_con_out->RepaintsDeferFinish(true);
-		} else {
-			fprintf(stderr, "%s: called while not frozen\n", __FUNCTION__);
-		}
+		s_shadow.Deref("unfreeze");
 	}
 
 	static void ReleaseForkedConsole(HANDLE hParentConsole, HANDLE hConsole, bool join)

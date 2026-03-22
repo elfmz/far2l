@@ -86,6 +86,85 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
+static void DetectVS16(int std_in, int std_out)
+{
+	// U+25AB + U+FE0F: ▫️
+	const char sym[] = "\xE2\x96\xAB\xEF\xB8\x8F";
+
+	termios orig, raw;
+	tcgetattr(std_in, &orig);
+	raw = orig;
+	raw.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr(std_in, TCSAFLUSH, &raw);
+
+	auto readPos = [std_in]() {
+		int row = -1, col = -1;
+		char c;
+		std::string buf;
+		while (true) {
+			fd_set rfds;
+			FD_ZERO(&rfds);
+			FD_SET(std_in, &rfds);
+
+			struct timeval tv;
+			tv.tv_sec  = 0;
+			tv.tv_usec = 200000; //timeout 200 msec
+
+			int rv = select(std_in + 1, &rfds, nullptr, nullptr, &tv);
+			if (rv <= 0) return std::make_pair(-1,-1);
+
+			if (read(std_in, &c, 1) != 1) return std::make_pair(-1,-1);
+			buf.push_back(c);
+
+			if ( c == 'R') {
+				auto esc_pos = buf.rfind('\x1b');
+				if (esc_pos != std::string::npos && esc_pos < buf.size() - 1
+					 && sscanf(buf.c_str() + esc_pos, "\x1b[%d;%dR", &row, &col) == 2) {
+					return std::make_pair(row, col); // This is the cursor position: SUCCESS
+				}
+				buf.clear();
+			}
+
+			if (buf.size() > 64) buf.clear();
+		}
+	};
+
+	// Query cursor before printing
+	WriteAll(std_out, "\x1b[6n", 4);
+	WriteAll(std_out, "\x1b[5n", 4);
+	tcdrain(std_out);
+	auto [start_row, start_col] = readPos();
+
+	// Print the VS16 symbol
+	WriteAll(std_out, sym, strlen(sym));
+	tcdrain(std_out);
+
+	// Query cursor after printing
+	WriteAll(std_out, "\x1b[6n", 4);
+	WriteAll(std_out, "\x1b[5n", 4);
+	tcdrain(std_out);
+	auto [end_row, end_col] = readPos();
+
+	// Remove the printed symbol
+	if (start_col >= 0 && end_col >= 0) {
+		int w = end_col - start_col;
+		if (w > 0) {
+			char seq[32];
+			int n = snprintf(seq, sizeof(seq), "\x1b[%d;%dH", start_row, start_col);
+			if (n > 0) {
+				WriteAll(std_out, seq, (size_t)n);
+				WriteAll(std_out, "\x1b[K", 3);
+				tcdrain(std_out);
+			}
+		}
+	}
+	tcsetattr(std_in, TCSAFLUSH, &orig);
+
+	g_far2l_use_vs16 = (start_col >= 0 && end_col >= 0 && (end_col - start_col) == 2); // 1 = no emoji width, 2 = VS16 rendered full-width
+	fprintf(stderr, "%s: %s due to start_col=%d end_col=%d\n", __FUNCTION__, g_far2l_use_vs16 ? "YES" : "NO", start_col, end_col);
+}
+
+
 TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
@@ -258,6 +337,15 @@ void TTYBackend::ReaderThread()
 			_ae.term_resized = true;
 		}
 
+		// this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
+		//check variation selector 16 is usable before reassigning stdout
+		if (_nodetect == NODETECT_NONE) {
+			if (_far2l_tty) {
+				g_far2l_use_vs16 = true;
+			} else {
+				DetectVS16(_stdin, _stdout);
+			}
+		}
 
 		pthread_t writer_trd = 0;
 		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) != 0) {
@@ -384,7 +472,7 @@ void TTYBackend::WriterThread()
 {
 	bool gone_background = false;
 	try {
-		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
+		_focused = !_far2l_tty;
 		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);

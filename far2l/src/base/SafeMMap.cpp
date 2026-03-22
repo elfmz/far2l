@@ -202,8 +202,15 @@ static inline void WriteCrashSigLog(int num, siginfo_t *info, void *ctx)
 		const char *stderr_trace = WinPortStderrTrace(&stderr_trace_len);
 		if (stderr_trace_len && stderr_trace) {
 			FDWriteStr(fd, " 👉 STDERR TRACE \n");
-			if (write(fd, stderr_trace, stderr_trace_len) == -1) {
-				perror("FDWrite - write");
+			for (size_t b = 0, i = 0; i <= stderr_trace_len; ++i) {
+				if (i == stderr_trace_len || stderr_trace[i] == '\n' || stderr_trace[i] == '\r' || stderr_trace[i] == 0) {
+					if (i > b) {
+						if (write(fd, &stderr_trace[b], i - b) == -1 || write(fd, "\n", 1) == -1) {
+							perror("FDWrite - write");
+						}
+					}
+					b = i + 1;
+				}
 			}
 		}
 	}

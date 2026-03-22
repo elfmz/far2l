@@ -643,8 +643,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	 *** Prepare Dialog Controls
 	 ***********************************************************************
 	 */
-	int msh = Move ? 1 : 0;
-	int DLG_HEIGHT = 19 + msh, DLG_WIDTH = 76;
+	int DLG_HEIGHT = 20, DLG_WIDTH = 76;
 
 	DialogDataEx CopyDlgData[] = {
 		{DI_DOUBLEBOX, 3,  1,  (SHORT)(DLG_WIDTH - 4), (SHORT)(DLG_HEIGHT - 2), {}, 0, Msg::CopyDlgTitle},
@@ -661,14 +660,14 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 		{DI_CHECKBOX,  5,  11, 0,  11, {}, 0, Msg::CopyUseCOW},
 		{DI_TEXT,      5,  12, 0,  12, {}, 0, Msg::CopySymLinkText},
 		{DI_COMBOBOX,  29, 12, 70, 12, {}, DIF_DROPDOWNLIST | DIF_LISTNOAMPERSAND | DIF_LISTWRAPMODE, L""},
-		{DI_TEXT,      5,  13, 0,  13, {}, DIF_HIDDEN, Msg::LinkCopyMoveExplainText},
-		{DI_TEXT,      3,  (SHORT)(13 + msh), 0,  (SHORT)(13 + msh), {}, DIF_SEPARATOR, L""},
-		{DI_CHECKBOX,  5,  (SHORT)(14 + msh), 0,  (SHORT)(14 + msh), {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::CopyUseFilter},
-		{DI_TEXT,      3,  (SHORT)(15 + msh), 0,  (SHORT)(15 + msh), {}, DIF_SEPARATOR, L""},
-		{DI_BUTTON,    0,  (SHORT)(16 + msh), 0,  (SHORT)(16 + msh), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::CopyDlgCopy},
-		{DI_BUTTON,    0,  (SHORT)(16 + msh), 0,  (SHORT)(16 + msh), {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::CopyDlgTree},
-		{DI_BUTTON,    0,  (SHORT)(16 + msh), 0,  (SHORT)(16 + msh), {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::CopySetFilter},
-		{DI_BUTTON,    0,  (SHORT)(16 + msh), 0,  (SHORT)(16 + msh), {}, DIF_CENTERGROUP, Msg::CopyDlgCancel},
+		{DI_TEXT,      5,  13, 0,  13, {}, DIF_DISABLE, Move ? Msg::LinkMoveExplainText : Msg::LinkCopyExplainText},
+		{DI_TEXT,      3,  14, 0,  14, {}, DIF_SEPARATOR, L""},
+		{DI_CHECKBOX,  5,  15, 0,  15, {UseFilter ? BSTATE_CHECKED : BSTATE_UNCHECKED}, DIF_AUTOMATION, Msg::CopyUseFilter},
+		{DI_TEXT,      3,  16, 0,  16, {}, DIF_SEPARATOR, L""},
+		{DI_BUTTON,    0,  17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::CopyDlgCopy},
+		{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::CopyDlgTree},
+		{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE | DIF_AUTOMATION | (UseFilter ? 0 : DIF_DISABLE), Msg::CopySetFilter},
+		{DI_BUTTON,    0,  17, 0,  17, {}, DIF_CENTERGROUP, Msg::CopyDlgCancel},
 		{DI_TEXT,      5,  2,  0,  2,  {}, DIF_SHOWAMPERSAND, L""}
 	};
 	MakeDialogItemsEx(CopyDlgData, CopyDlg);
@@ -691,6 +690,7 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 		//		CopyDlg[ID_SC_SEPARATOR2].Flags|= DIF_DISABLE|DIF_HIDDEN;
 		CopyDlg[ID_SC_COPYSYMLINK_TEXT].Flags|= DIF_DISABLE | DIF_HIDDEN;
 		CopyDlg[ID_SC_COPYSYMLINK_COMBO].Flags|= DIF_DISABLE | DIF_HIDDEN;
+		CopyDlg[ID_SC_COPYSYMLINK_EXPLAIN_TEXT].Flags|= DIF_DISABLE | DIF_HIDDEN;
 		CopyDlg[ID_SC_SPARSEFILES].Flags|= DIF_DISABLE | DIF_HIDDEN;
 		CopyDlg[ID_SC_USECOW].Flags|= DIF_DISABLE | DIF_HIDDEN;
 
@@ -709,7 +709,6 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 		{
 			CopyDlg[ID_SC_MULTITARGET].Selected = 0;
 			CopyDlg[ID_SC_MULTITARGET].Flags|= DIF_DISABLE;
-			CopyDlg[ID_SC_COPYSYMLINK_EXPLAIN_TEXT].Flags = DIF_DISABLE;
 		}
 		//		else // секция про копирование
 		//		{
@@ -875,11 +874,11 @@ ShellCopy::ShellCopy(Panel *SrcPanel,		// исходная панель (акт�
 	if (Link)		// рулесы по поводу линков (предварительные!)
 	{
 		for (int i = ID_SC_SEPARATOR3; i <= ID_SC_BTNCANCEL; i++) {
-			CopyDlg[i].Y1-= 3;
-			CopyDlg[i].Y2-= 3;
+			CopyDlg[i].Y1-= 4;
+			CopyDlg[i].Y2-= 4;
 		}
-		CopyDlg[ID_SC_TITLE].Y2-= 3;
-		DLG_HEIGHT-= 3;
+		CopyDlg[ID_SC_TITLE].Y2-= 4;
+		DLG_HEIGHT-= 4;
 	}
 
 	// корректируем позицию " to"

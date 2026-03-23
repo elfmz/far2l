@@ -3,10 +3,7 @@
   Also added some postinstall fixes, for example for linking 7z custom build 7z.so
 */
 {
-  config,
-  inputs,
   pkgs,
-  stdenv,
   lib,
   ...
 }:
@@ -19,13 +16,13 @@ in
       # Modified 7zip package with shared library support
       _7z-far = prev.stdenv.mkDerivation rec {
         pname = "_7z-far";
-        version = "2.8.0";
+        version = "26.00";
 
         src = fetchFromGitHub {
           owner = "ip7z";
           repo = "7zip";
-          rev = "5e96a8279489832924056b1fa82f29d5837c9469";
-          sha256 = "sha256-uGair9iRO4eOBWPqLmEAvUTUCeZ3PDX2s01/waYLTwY=";
+          rev = "839151eaaad24771892afaae6bac690e31e58384";
+          sha256 = "sha256-B+piugjEI7+8ILTuDitADY8XseltvV0lYIVecXGib7s=";
         };
 
         nativeBuildInputs = [ prev.gcc ];
@@ -51,14 +48,50 @@ in
       # Custom build of far2l
       far2l = prev.stdenv.mkDerivation rec {
         pname = "far2l";
-        version = "2.8.0";
+        version = "2.8.0-483dea0";
+
+        #separateDebugInfo = true;
 
         src = fetchFromGitHub {
           owner = "elfmz";
           repo = "far2l";
-          rev = "b4f641c8c99c62e37e5505302ddc8364b132bdd8";
-          sha256 = "sha256-LdZp8NyUGtny3IzqRWFMVsIWKuzN8RRnaGDZgSbK7Kw=";
+
+          rev = "483dea0818c68a95c054f313e099f8b99b722a3d";
+          sha256 = "sha256-LP+agJrYxjH6vLAg6cJTU4/9jYGF9iaZzxA7hozDKNY=";
+
         };
+
+        patches = [
+          # WIP SDL Backend #3261
+          (prev.fetchpatch {
+            url = "https://github.com/elfmz/far2l/commit/6f2bd38390519cb86e028eae6c1397fb8fdec406.patch";
+            sha256 = "sha256-IGiqy33UwsLLD3oYAGiGgNFHoctUMny9J6T4GfJ3auA=";
+          })
+
+          # Git Gutter plugin #3248
+          (prev.fetchpatch {
+            url = "https://github.com/elfmz/far2l/commit/ce003f2693336d04d8c7237002ecca85a617e0d2.patch";
+            sha256 = "sha256-oqGbecLeEj1QbM+LCVAY0Y9xNwrcvY4tM9G7sN6C0cM=";
+          })
+
+          # Avoid redrawing background shadow on progress message updates #3299
+          (prev.fetchpatch {
+            url = "https://github.com/elfmz/far2l/commit/ff304407d6e585c8469067926fec8999f3850861.patch";
+            sha256 = "sha256-GfD8FK/5GOpJK7xti3vGu7BCYwkXorLU8QAApprJqnM=";
+          })
+
+          # Shift+Ctrl+P to save text screen dump with all attrs to ~/f2l_screen.dump in wx backend #3304
+          (prev.fetchpatch {
+            url = "https://github.com/elfmz/far2l/commit/652112f31f9e7b1f83d6d53a5230d89afc1df66f.patch";
+            sha256 = "sha256-PEWHBQh1tDPmVvnUerVXOYjk+Qv9bc/V2ot8sMbw4Us=";
+          })
+
+        ];
+
+        postPatch = ''
+          chmod +x far2l/bootstrap/*.sh
+          patchShebangs far2l/bootstrap/view.sh
+        '';
 
         nativeBuildInputs = [
           prev.cmake
@@ -66,12 +99,19 @@ in
           prev.pkg-config
           prev.perl
           prev.makeWrapper
-          prev.python3
         ];
 
         buildInputs = [
-          prev.xorg.libX11
-          prev.wxGTK32
+          # SDL backend deps
+          /*
+            prev.SDL2
+            prev.harfbuzz
+            prev.fontconfig
+            prev.libxft
+          */
+          # ----
+          prev.libx11
+          prev.wxwidgets_3_2
           prev.libuchardet
           prev.spdlog
           prev.libxml2
@@ -81,23 +121,12 @@ in
           prev.libssh
           prev.libnfs
           prev.neon
+          prev.aws-sdk-cpp
+          prev.imagemagick
+          prev.ffmpeg
           final._7z-far
         ]
-        ++ lib.optional (!prev.stdenv.hostPlatform.isDarwin) prev.samba
-        ++ (with prev.python3Packages; [
-          python
-          cffi
-        ]);
-
-        postPatch = ''
-          chmod +x python/src/*.sh
-          chmod +x far2l/bootstrap/*.sh
-          patchShebangs python/src/prebuild.sh
-          patchShebangs python/src/build.sh
-          patchShebangs far2l/bootstrap/view.sh
-          mkdir -p build/python
-          cp -r python/configs build/python/
-        '';
+        ++ lib.optional (!prev.stdenv.hostPlatform.isDarwin) prev.samba;
 
         cmakeFlags = [
           "-DTTYX=ON"
@@ -106,14 +135,11 @@ in
           "-DCOLORER=ON"
           "-DMULTIARC=ON"
           "-DNETROCKS=ON"
-          "-DAWS_S3=OFF"
-          "-DPYTHON=ON"
+          "-DAWS_S3=ON"
+          "-DPYTHON=OFF"
           "-DARCLITE=ON"
+          #"-DFAR2L_GUI_BACKEND=SDL"
         ];
-
-        preBuild = ''
-          mkdir -p build/install/Plugins/python/plug
-        '';
 
         postInstall =
           let
@@ -125,6 +151,7 @@ in
               gzip
               bzip2
               gnutar
+              final._7z-far
             ];
           in
           ''
@@ -141,7 +168,7 @@ in
           '';
 
         meta = with lib; {
-          description = "Linux port of FAR Manager v2 with ArchLite support";
+          description = "Linux port of FAR Manager v2";
           homepage = "https://github.com/elfmz/far2l";
           license = licenses.gpl2Only;
           maintainers = with maintainers; [ tempergate ];
@@ -154,4 +181,3 @@ in
     far2l
   ];
 }
-

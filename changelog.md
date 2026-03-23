@@ -5,6 +5,8 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+
+## 2.8.0 beta (2026-03-23)
 * Themes support (change via **F9**->Options->Colors),
   changes only RGB colors of interface (not change palette colors and Colorer in editor)
 * Editor: Word wrap (like in Windows Notepad or HTML textareas), toggled by **F3** or **Alt+W**

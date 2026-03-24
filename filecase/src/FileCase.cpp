@@ -44,6 +44,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
 	static TCHAR *PluginMenuStrings[1];
+	Info->SysID = 0xADAC3050;
 	PluginMenuStrings[0] = (TCHAR *)GetMsg(MFileCase);
 	Info->PluginMenuStrings = PluginMenuStrings;
 	Info->PluginMenuStringsNumber = ARRAYSIZE(PluginMenuStrings);

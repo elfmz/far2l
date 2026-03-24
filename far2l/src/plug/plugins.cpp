@@ -1715,13 +1715,14 @@ int PluginManager::CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret)
 			HANDLE hNewPlugin = OpenPlugin(pPlugin, OpenFrom, (INT_PTR)Data);
 			bool process = false;
 
-			if (OpenFrom & OPEN_FROMMACRO) {
+			/*if (OpenFrom & OPEN_FROMMACRO) {
 				// <????>
 				;
 				// </????>
 			} else {
 				process = OpenFrom == OPEN_PLUGINSMENU || OpenFrom == OPEN_FILEPANEL;
-			}
+			}*/
+			process = OpenFrom & OPEN_PLUGINSMENU || OpenFrom & OPEN_FILEPANEL;
 
 			if (hNewPlugin != INVALID_HANDLE_VALUE && process) {
 				int CurFocus = CtrlObject->Cp()->ActivePanel->GetFocus();
@@ -1738,8 +1739,8 @@ int PluginManager::CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret)
 					Код закомментирован! Попытка исключить ненужные вызовы в CallPlugin()
 					Если что-то не так - раскомментировать!!!
 				*/
-				// NewPanel->Update(0);
-				// NewPanel->Show();
+				NewPanel->Update(0);
+				NewPanel->Show();
 			}
 
 			if (Ret) {

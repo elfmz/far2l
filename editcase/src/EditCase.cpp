@@ -224,6 +224,7 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0x0E92FC81;
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 	static const TCHAR *PluginMenuStrings[1];
 	// Text in Plugins menu

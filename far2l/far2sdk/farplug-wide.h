@@ -2278,11 +2278,7 @@ struct PluginInfo
 	const wchar_t * const *PluginConfigStrings;
 	int PluginConfigStringsNumber;
 	const wchar_t *CommandPrefix;
-#ifdef FAR_USE_INTERNALS
 	DWORD SysID;
-#else // ELSE FAR_USE_INTERNALS
-	DWORD Reserved;
-#endif // END FAR_USE_INTERNALS
 #ifdef FAR_USE_INTERNALS
 #if defined(PROCPLUGINMACROFUNC)
 	int MacroFunctionNumber;

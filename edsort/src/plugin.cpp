@@ -22,6 +22,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(PluginInfo* info)
 	menu_strings[0] = I18N(ps_title);
 
 	info->StructSize = sizeof(*info);
+	info->SysID = 0x45535254; // 'ESRT'
 	info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 	info->DiskMenuStringsNumber = 0;
 	info->PluginConfigStringsNumber = 0;

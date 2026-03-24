@@ -45,11 +45,15 @@ if command -v nix &>/dev/null; then
     
     # Use nix-prefetch-url to get the hash
     if command -v nix-prefetch-url &>/dev/null; then
-        HASH_BASE64=$(nix-prefetch-url --unpack "https://github.com/elfmz/far2l/archive/$CURRENT_REV.tar.gz" 2>/dev/null)
-        if [ -n "$HASH_BASE64" ]; then
-            HASH_SRI="sha256-$HASH_BASE64"
-        fi
-    fi
+	  HASH_BASE32=$(nix-prefetch-url --unpack "https://github.com/elfmz/far2l/archive/$CURRENT_REV.tar.gz" 2>/dev/null)
+	  if [ -n "$HASH_BASE32" ]; then
+		# Convert base32 to base64 for SRI format
+		HASH_BASE64=$(nix hash to-base64 --type sha256 "$HASH_BASE32" 2>/dev/null)
+		if [ -n "$HASH_BASE64" ]; then
+			HASH_SRI="sha256-$HASH_BASE64"
+		fi
+	  fi
+	fi
     
     # Fallback to nix hash with wget if nix-prefetch-url failed
     if [ -z "$HASH_SRI" ]; then

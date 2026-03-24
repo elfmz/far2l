@@ -61,33 +61,6 @@ in
 
         };
 
-        patches = [
-          # WIP SDL Backend #3261
-          (prev.fetchpatch {
-            url = "https://github.com/elfmz/far2l/commit/6f2bd38390519cb86e028eae6c1397fb8fdec406.patch";
-            sha256 = "sha256-IGiqy33UwsLLD3oYAGiGgNFHoctUMny9J6T4GfJ3auA=";
-          })
-
-          # Git Gutter plugin #3248
-          (prev.fetchpatch {
-            url = "https://github.com/elfmz/far2l/commit/ce003f2693336d04d8c7237002ecca85a617e0d2.patch";
-            sha256 = "sha256-oqGbecLeEj1QbM+LCVAY0Y9xNwrcvY4tM9G7sN6C0cM=";
-          })
-
-          # Avoid redrawing background shadow on progress message updates #3299
-          (prev.fetchpatch {
-            url = "https://github.com/elfmz/far2l/commit/ff304407d6e585c8469067926fec8999f3850861.patch";
-            sha256 = "sha256-GfD8FK/5GOpJK7xti3vGu7BCYwkXorLU8QAApprJqnM=";
-          })
-
-          # Shift+Ctrl+P to save text screen dump with all attrs to ~/f2l_screen.dump in wx backend #3304
-          (prev.fetchpatch {
-            url = "https://github.com/elfmz/far2l/commit/652112f31f9e7b1f83d6d53a5230d89afc1df66f.patch";
-            sha256 = "sha256-PEWHBQh1tDPmVvnUerVXOYjk+Qv9bc/V2ot8sMbw4Us=";
-          })
-
-        ];
-
         postPatch = ''
           chmod +x far2l/bootstrap/*.sh
           patchShebangs far2l/bootstrap/view.sh
@@ -102,14 +75,6 @@ in
         ];
 
         buildInputs = [
-          # SDL backend deps
-          /*
-            prev.SDL2
-            prev.harfbuzz
-            prev.fontconfig
-            prev.libxft
-          */
-          # ----
           prev.libx11
           prev.wxwidgets_3_2
           prev.libuchardet

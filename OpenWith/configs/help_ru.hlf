@@ -197,11 +197,16 @@ $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Советы по использованию и полезности#
     Для быстрого вызова можно ~макросом~@:KeyMacro@ задействовать, например, клавишу "#≣ Menu#"/"#Apps#":
 
-    В #far2l# поместите в файл #~~/.config/far2l/settings/key_macros.ini# следующие строки:
+    В #far2l# поместите в файл #~~/.config/far2l/settings/key_macros.ini# следующие строки, вариант 1:
  #[KeyMacros/Shell/Apps]#
  #Description=OpenWith Plugin for selected file(s)#
- #DisableOutput=0x1#
+ #DisableOutput=1#
  #Sequence=F11 O#
+    или вариант 2:
+ #[KeyMacros/Shell/Apps]#
+ #Description=OpenWith Plugin for selected file(s)#
+ #DisableOutput=1#
+ #Sequence=callplugin(0x93CDEF19)#
 
     В #far2m# в каталоге #~~/.config/far2m/Macros/scripts/# следующие строки:
  #Macro {#

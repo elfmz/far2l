@@ -1,4 +1,6 @@
 #include "edsort.h"
+#include <KeyFileHelper.h>
+#include <utils.h>
 
 #define DIF_DEFAULT 0x200
 
@@ -42,16 +44,28 @@ static inline auto msg_box(const FARMESSAGEFLAGS f, const wchar_t* (&msgs)[N]) {
 	return msg_box(f, msgs, N);
 }
 
+#define INI_FILE "plugins/edsort/config.ini"
+#define INI_SECTION "Settings"
+#define INI_COLUMN "Column"
+#define INI_REVERSE "Reverse"
+#define INI_UNIQUE "Unique"
+
 EdSort::EdSort()
-    : column(0),
-      myDialog(nullptr)
+    : myDialog(nullptr)
 {
+    KeyFileReadSection kfh(InMyConfig(INI_FILE), INI_SECTION);
+    column = kfh.GetInt(INI_COLUMN, 0);
+    reverse = !!kfh.GetInt(INI_REVERSE, 0);
+    unique = !!kfh.GetInt(INI_UNIQUE, 0);
 }
 
 LONG_PTR WINAPI EdSort::dlg_proc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	if( Msg == DN_INITDIALOG ) {
-        myDialog->SetText(myDialog->getID("offset"), L"1");
+		std::wstring val = std::to_wstring(column + 1);
+        myDialog->SetText(myDialog->getID("offset"), val.c_str());
+		//myDialog->SetCheck(myDialog->getID("reverse"), reverse ? 1 : 0);
+		//myDialog->SetCheck(myDialog->getID("unique"), unique ? 1 : 0);
 		return TRUE;
 	}
     return _PSI.DefDlgProc(hDlg, Msg, Param1, Param2);
@@ -134,7 +148,8 @@ void EdSort::Run()
 	}
 	fardialog::DlgTEXT text1(nullptr, I18N(ps_column));
     fardialog::DlgEDIT edit1("offset", 5);
-    fardialog::DlgCHECKBOX checkbox3("reverse", I18N(ps_reverse), false);
+    fardialog::DlgCHECKBOX checkbox3("reverse", I18N(ps_reverse), reverse ? true : false);
+    fardialog::DlgCHECKBOX checkbox4("unique", I18N(ps_unique), unique ? true : false);
     fardialog::DlgHLine hline1(nullptr, nullptr);
     fardialog::DlgBUTTON button3("bn_ok", I18N(ps_ok), DIF_CENTERGROUP | DIF_DEFAULT, false, true);
     fardialog::DlgBUTTON button4("bn_cancel", I18N(ps_cancel), DIF_CENTERGROUP);
@@ -145,6 +160,7 @@ void EdSort::Run()
     fardialog::DlgVSizer vbox1({
         &hbox1, // test1, edit1
 		&checkbox3,
+		&checkbox4,
         &hline1,
         &hbox2, // button3, button4
     });
@@ -168,6 +184,14 @@ void EdSort::Run()
 		if( col > 0 ){
 			column = col - 1;
 			reverse = myDialog->GetCheck(myDialog->getID("reverse")) != 0;
+			unique = myDialog->GetCheck(myDialog->getID("unique")) != 0;
+
+    		KeyFileHelper kfh(InMyConfig(INI_FILE), false);
+    		kfh.SetInt(INI_SECTION, INI_COLUMN, column);
+    		kfh.SetInt(INI_SECTION, INI_REVERSE, reverse ? 1 : 0);
+    		kfh.SetInt(INI_SECTION, INI_UNIQUE, unique ? 1 : 0);
+			kfh.Save();
+
 			SortLines();
 		}
     }
@@ -208,6 +232,14 @@ void EdSort::SortLines()
 		else
 			return rc > 0;
 	});
+
+	if( unique ) {
+		auto last = std::unique(linesArray.begin(), linesArray.end(), [this](const std::wstring &a, const std::wstring &b) {
+			int rc = WINPORT(CompareString)(0, NORM_IGNORECASE | NORM_STOP_ON_NULL | SORT_STRINGSORT, a.c_str(), -1, b.c_str(), -1) - 2;
+			return rc == 0;
+		});
+		linesArray.erase(last, linesArray.end());
+	}
 
 	for(int lno=0; lno < static_cast<int>(linesArray.size()); lno++) {
 		EditorSetPosition esp = {};

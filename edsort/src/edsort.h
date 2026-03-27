@@ -13,6 +13,7 @@ private:
 
 	size_t column;
 	bool reverse;
+	bool unique;
 	
 	fardialog::Dialog *myDialog;
 };

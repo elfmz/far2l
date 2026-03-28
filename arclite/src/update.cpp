@@ -10,7 +10,7 @@
 #include "options.hpp"
 #include "sfx.hpp"
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__APPLE__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/types.h>
 #else
 #include <sys/sysmacros.h>	  // major / minor
@@ -818,6 +818,8 @@ private:
 			filter_data.FindData.ftCreationTime = src_find_data.ftCreationTime;
 			filter_data.FindData.ftLastAccessTime = src_find_data.ftLastAccessTime;
 			filter_data.FindData.ftLastWriteTime = src_find_data.ftLastWriteTime;
+			filter_data.FindData.ftChangeTime = src_find_data.ftChangeTime;
+
 			filter_data.FindData.dwFileAttributes = src_find_data.dwFileAttributes;
 			filter_data.FindData.dwUnixMode = src_find_data.dwUnixMode;
 			filter_data.NumberOfLinks = src_find_data.nHardLinks;
@@ -1158,7 +1160,7 @@ public:
 							ptime = &file_index_info.find_data.ftCreationTime;
 					}
 				}
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
 #else
 				prop = *ptime;
@@ -1179,7 +1181,7 @@ public:
 							ptime = &file_index_info.find_data.ftLastAccessTime;
 					}
 				}
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
 #else
 				prop = *ptime;
@@ -1200,7 +1202,7 @@ public:
 							ptime = &file_index_info.find_data.ftLastWriteTime;
 					}
 				}
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 				prop = FILETIME{ptime->dwLowDateTime, ptime->dwHighDateTime};
 #else
 				prop = *ptime;
@@ -2101,7 +2103,7 @@ void Archive<UseVirtualDestructor>::create(const std::wstring &src_dir, const st
 
 template<bool UseVirtualDestructor>
 void Archive<UseVirtualDestructor>::update(const std::wstring &src_dir, const std::vector<std::wstring> &file_names,
-		const std::wstring &dst_dir, const UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
+		const std::wstring &dst_dir, UpdateOptions &options, std::shared_ptr<ErrorLog> error_log)
 {
 	DisableSleepMode dsm;
 
@@ -2181,6 +2183,7 @@ void Archive<UseVirtualDestructor>::create_dir(const std::wstring &dir_name, con
 	file_index_info.find_data.ftCreationTime = file_time;
 	file_index_info.find_data.ftLastAccessTime = file_time;
 	file_index_info.find_data.ftLastWriteTime = file_time;
+	file_index_info.find_data.ftChangeTime = file_time;
 	std::wcscpy(file_index_info.find_data.cFileName, dir_name.c_str());
 	(*file_index_map)[m_num_indices] = file_index_info;
 

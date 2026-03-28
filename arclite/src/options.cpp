@@ -303,7 +303,7 @@ Options::Options()
 	: plugin_enabled(false),
 	handle_create(true),
 	handle_commands(true),
-	preferred_7zip_path(L"/usr/lib/7zip/"),
+	preferred_7zip_path(L"./"),
 	plugin_prefix(L"arc"),
 	max_check_size(1 << 20),
 	relay_buffer_size(64),

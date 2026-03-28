@@ -53,6 +53,8 @@
 
 #include <sys/resource.h>
 
+#include "BitTwiddle.hpp"
+
 
 /*
  */
@@ -105,6 +107,7 @@ WARNING_DISABLE_CLANG("-Weverything")
 	#define	FN_INLINE __attribute__((always_inline)) inline
 #endif
 
+/**
 #ifndef IS_BIG_ENDIAN
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	#define IS_BIG_ENDIAN 1
@@ -118,8 +121,9 @@ WARNING_DISABLE_CLANG("-Weverything")
 	#define IS_BIG_ENDIAN 0
 #endif
 #endif
+**/
 
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 #define le16_to_host(x) ((((x) >> 8) & 0x00FF) | (((x) << 8) & 0xFF00))
 #define le32_to_host(x) ((((x) >> 24) & 0x000000FF) | \
 						(((x) >> 8)  & 0x0000FF00) | \

@@ -5145,16 +5145,33 @@ BOOL Editor::Search(int Next)
 						} else {
 							/* Fast method */
 							const wchar_t *Str, *Eol;
-							int StrLen, NewStrLen;
+							int StrLen;
 							int SStrLen = SearchLength, RStrLen = (int)strReplaceStrCurrent.GetLength();
 							CurLine->GetBinaryString(&Str, &Eol, StrLen);
-							int EolLen = StrLength(Eol);
-							NewStrLen = StrLen;
-							NewStrLen-= SStrLen;
-							NewStrLen+= RStrLen;
-							NewStrLen+= EolLen;
-							wchar_t *NewStr = new wchar_t[NewStrLen + 1];
 							int CurPos = CurLine->GetCurPos();
+							if (CurPos < 0 || CurPos > StrLen || SStrLen < 0 || SStrLen > StrLen
+									|| CurPos + SStrLen > StrLen) {
+								Pasting--;
+								UserBreak = TRUE;
+								break;
+							}
+
+							int EolLen = StrLength(Eol);
+							size_t NewStrLen = static_cast<size_t>(StrLen - SStrLen) + static_cast<size_t>(RStrLen)
+									+ static_cast<size_t>(EolLen);
+							if (NewStrLen > static_cast<size_t>(INT_MAX)) {
+								Pasting--;
+								UserBreak = TRUE;
+								break;
+							}
+
+							wchar_t *NewStr = new (std::nothrow) wchar_t[NewStrLen + 1];
+							if (!NewStr) {
+								Pasting--;
+								UserBreak = TRUE;
+								break;
+							}
+
 							wmemcpy(NewStr, Str, CurPos);
 							wmemcpy(NewStr + CurPos, strReplaceStrCurrent, RStrLen);
 							wmemcpy(NewStr + CurPos + RStrLen, Str + CurPos + SStrLen,
@@ -5162,7 +5179,7 @@ BOOL Editor::Search(int Next)
 							wmemcpy(NewStr + NewStrLen - EolLen, Eol, EolLen);
 							AddUndoData(UNDO_EDIT, CurLine->GetStringAddr(), CurLine->GetEOL(), NumLine,
 									CurLine->GetCurPos(), CurLine->GetLength());
-							CurLine->SetBinaryString(NewStr, NewStrLen);
+							CurLine->SetBinaryString(NewStr, static_cast<int>(NewStrLen));
 							CurLine->SetCurPos(CurPos + RStrLen);
 
 							if (SelectFound && !ReplaceMode) {
@@ -5375,7 +5392,14 @@ void Editor::Copy(int Append)
 
 wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 {
+	auto FailCopy = [&ptrInitData]() -> wchar_t * {
+		if (ptrInitData)
+			free(ptrInitData);
+		return nullptr;
+	};
+
 	size_t DataSize = 0;
+	const size_t EolLen = wcslen(NATIVE_EOLW);
 
 	if (ptrInitData)
 		DataSize = wcslen(ptrInitData);
@@ -5387,20 +5411,26 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 		if (StartSel == -1)
 			break;
 		if (EndSel == -1) {
-			TotalChars+= Ptr->GetLength() - StartSel;
-			TotalChars+= wcslen(NATIVE_EOLW);	// CRLF
-		} else
-			TotalChars+= EndSel - StartSel;
+			int CopyLen = Ptr->GetLength() - StartSel;
+			if (CopyLen < 0 || TotalChars > SIZE_MAX - static_cast<size_t>(CopyLen) - EolLen)
+				return FailCopy();
+			TotalChars+= static_cast<size_t>(CopyLen);
+			TotalChars+= EolLen;	// CRLF
+		} else {
+			int CopyLen = EndSel - StartSel;
+			if (CopyLen < 0 || TotalChars > SIZE_MAX - static_cast<size_t>(CopyLen))
+				return FailCopy();
+			TotalChars+= static_cast<size_t>(CopyLen);
+		}
 	}
+	if (TotalChars == SIZE_MAX || TotalChars + 1 > SIZE_MAX / sizeof(wchar_t))
+		return FailCopy();
 	TotalChars++;	// '\0'
 
 	wchar_t *CopyData = (wchar_t *)malloc(TotalChars * sizeof(wchar_t));
 
 	if (!CopyData) {
-		if (ptrInitData)
-			free(ptrInitData);
-
-		return nullptr;
+		return FailCopy();
 	}
 
 	if (ptrInitData) {
@@ -5432,7 +5462,7 @@ wchar_t *Editor::Block2Text(wchar_t *ptrInitData)
 
 		if (EndSel == -1) {
 			wcscpy(CopyData + DataSize, NATIVE_EOLW);
-			DataSize+= wcslen(NATIVE_EOLW);
+			DataSize+= EolLen;
 		}
 	}
 
@@ -5504,6 +5534,9 @@ void Editor::DeleteBlock()
 
 		// дальше будет realloc, поэтому тут malloc.
 		wchar_t *TmpStr = (wchar_t *)malloc((Length + 3) * sizeof(wchar_t));
+		if (!TmpStr) {
+			return;
+		}
 
 		wmemcpy(TmpStr, CurStr, Length);
 
@@ -5546,7 +5579,13 @@ void Editor::DeleteBlock()
 				NextLength-= NextEndSel;
 
 				if (NextLength > 0) {
-					TmpStr = (wchar_t *)realloc(TmpStr, (Length + NextLength + 3) * sizeof(wchar_t));
+					wchar_t *NewTmpStr =
+							(wchar_t *)realloc(TmpStr, (Length + NextLength + 3) * sizeof(wchar_t));
+					if (!NewTmpStr) {
+						free(TmpStr);
+						return;
+					}
+					TmpStr = NewTmpStr;
 					wmemcpy(TmpStr + Length, NextStr + NextEndSel, NextLength);
 					Length+= NextLength;
 				}
@@ -6354,21 +6393,38 @@ void Editor::VCopy(int Append)
 
 wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 {
+	auto FailCopy = [&ptrInitData]() -> wchar_t * {
+		if (ptrInitData)
+			free(ptrInitData);
+		return nullptr;
+	};
+
 	size_t DataSize = 0;
+	const size_t EolLen = wcslen(NATIVE_EOLW);
 
 	if (ptrInitData)
 		DataSize = wcslen(ptrInitData);
 
+	if (VBlockSizeX < 0 || VBlockSizeY < 0)
+		return FailCopy();
+
 	// RealPos всегда <= TabPos, поэтому берём максимальный размер буфера
-	size_t TotalChars = DataSize + (VBlockSizeX + wcslen(NATIVE_EOLW)) * VBlockSizeY + 1;
+	size_t LineChars = static_cast<size_t>(VBlockSizeX) + EolLen;
+	if (LineChars < EolLen)
+		return FailCopy();
+
+	size_t LineCount = static_cast<size_t>(VBlockSizeY);
+	if (LineCount && LineChars > (SIZE_MAX - DataSize - 1) / LineCount)
+		return FailCopy();
+
+	size_t TotalChars = DataSize + LineChars * LineCount + 1;
+	if (TotalChars > SIZE_MAX / sizeof(wchar_t))
+		return FailCopy();
 
 	wchar_t *CopyData = (wchar_t *)malloc(TotalChars * sizeof(wchar_t));
 
 	if (!CopyData) {
-		if (ptrInitData)
-			free(ptrInitData);
-
-		return nullptr;
+		return FailCopy();
 	}
 
 	if (ptrInitData) {
@@ -6403,7 +6459,7 @@ wchar_t *Editor::VBlock2Text(wchar_t *ptrInitData)
 
 		DataSize+= TBlockSizeX;
 		wcscpy(CopyData + DataSize, NATIVE_EOLW);
-		DataSize+= wcslen(NATIVE_EOLW);
+		DataSize+= EolLen;
 	}
 
 	return CopyData;

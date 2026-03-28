@@ -58,11 +58,14 @@ class TextBuffer {
 	void ensure(int sz) {
 		if (sz + len > size) {
 			size = sz + len + GAP;
-			if (buffer){ 
-				buffer = (char*)realloc(buffer, size);
+			if (buffer) {
+				char *tmp = (char*)realloc(buffer, size);
+				if (!tmp) return;
+				buffer = tmp;
 			}
 			else {
 				buffer = (char*)malloc(size);
+				if (!buffer) return;
 			}
 			cptr = buffer + len;
 		}
@@ -91,9 +94,9 @@ public:
 	const wchar_t* w_str() {
 		if (wc) free(wc);
 		std::wstring _tmpstr;
-    	MB2Wide(c_str(), length(), _tmpstr);
-        wc = wcsdup(_tmpstr.c_str());
-        return wc;
+		MB2Wide(c_str(), length(), _tmpstr);
+		wc = wcsdup(_tmpstr.c_str());
+		return wc ? wc : L"";
 	}
 
 	void append(char c) {

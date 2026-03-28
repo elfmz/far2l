@@ -193,9 +193,9 @@ void SystemSettings()
 			&Opt.FoldersHistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveViewHistory, &Opt.SaveViewHistory, &Opt.ViewHistoryCount);
 	DialogBuilderListItem CAHistRemoveListItems[] = {
-			{Msg::ConfigHistoryRemoveDupsRuleNever, 0},
-			{Msg::ConfigHistoryRemoveDupsRuleByName, 1},
-			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, 2},
+			{Msg::ConfigHistoryRemoveDupsRuleNever, HISTORY_REMOVE_DUPS_NEVER},
+			{Msg::ConfigHistoryRemoveDupsRuleByName, HISTORY_REMOVE_DUPS_BY_NAME},
+			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, HISTORY_REMOVE_DUPS_BY_NAME_EXTRA},
 	};
 	auto HistRemove =
 		Builder.AddComboBox((int *)&Opt.HistoryRemoveDupsRule, 20, CAHistRemoveListItems, ARRAYSIZE(CAHistRemoveListItems),

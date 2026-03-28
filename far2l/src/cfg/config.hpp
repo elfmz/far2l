@@ -398,6 +398,13 @@ struct MacroOptions
 	FARString strDateFormat;		// Для $Date
 };
 
+enum HistoryRemoveDupsRule
+{
+	HISTORY_REMOVE_DUPS_NEVER = 0,
+	HISTORY_REMOVE_DUPS_BY_NAME = 1,
+	HISTORY_REMOVE_DUPS_BY_NAME_EXTRA = 2,
+};
+
 struct Options
 {
 	int Clock;

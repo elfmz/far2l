@@ -271,7 +271,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecSystem, "SaveFoldersHistory", &Opt.SaveFoldersHistory, 1},
 	{false, NSecSystem, "SavePluginFoldersHistory", &Opt.SavePluginFoldersHistory, 0},
 	{true,  NSecSystem, "SaveViewHistory", &Opt.SaveViewHistory, 1},
-	{true,  NSecSystem, "HistoryRemoveDupsRule", &Opt.HistoryRemoveDupsRule, 2},
+	{true,  NSecSystem, "HistoryRemoveDupsRule", &Opt.HistoryRemoveDupsRule, HISTORY_REMOVE_DUPS_BY_NAME_EXTRA},
 	{true,  NSecSystem, "AutoHighlightHistory", &Opt.AutoHighlightHistory, 1},
 	{true,  NSecSystem, "AutoSaveSetup", &Opt.AutoSaveSetup, 0},
 	{true,  NSecSystem, "DeleteToRecycleBin", &Opt.DeleteToRecycleBin, 0},

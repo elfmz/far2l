@@ -227,6 +227,7 @@ SHAREDSYMBOL void WINAPI _export ExitFAR()
 SHAREDSYMBOL void WINAPI _export GetPluginInfo(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0x14CA31E6;
 	Info->Flags = PF_FULLCMDLINE;
 	static const char *PluginCfgStrings[1];
 	PluginCfgStrings[0] = (char *)GetMsg(MCfgLine0);

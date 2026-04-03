@@ -45,6 +45,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(struct PluginInfo);
+	Info->SysID = 0x05E91C96;
 	Info->Flags = PF_VIEWER;
 
 	static const wchar_t *menu_strings[1];
@@ -192,10 +193,10 @@ static void OpenAtCurrentPanelItem()
 
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-	if (OpenFrom == OPEN_PLUGINSMENU) {
+	if (OpenFrom == OPEN_PLUGINSMENU || OpenFrom == (OPEN_FROMMACRO | MACROAREA_SHELL)) {
 		OpenAtCurrentPanelItem();
 
-	} else if (OpenFrom == OPEN_VIEWER) {
+	} else if (OpenFrom == OPEN_VIEWER || OpenFrom == (OPEN_FROMMACRO | MACROAREA_VIEWER)) {
 		ViewerInfo vi{sizeof(ViewerInfo), 0};
 		if (g_far.ViewerControl(VCTL_GETINFO, &vi)) {
 			if (vi.FileName && g_settings.MatchFile(Wide2MB(vi.FileName).c_str())) {

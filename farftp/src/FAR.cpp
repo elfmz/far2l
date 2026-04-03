@@ -219,6 +219,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfo(struct PluginInfo *Info)
 	PluginMenuStrings[0] = MenuString;
 	PluginCfgStrings[0] = CfgString;
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0x46465450; // 'FFTP'
 	Info->Flags = 0;
 	Info->DiskMenuStrings = DiskMenuStrings;
 	Info->DiskMenuNumbers = DiskMenuNumbers;

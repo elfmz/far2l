@@ -440,6 +440,7 @@ void ReadFileLines(int fd, DWORD FileSizeLow, wchar_t **argv, wchar_t *args, UIN
 	SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo * Info)
 	{
 		Info->StructSize = sizeof(*Info);
+		Info->SysID = 0xB77C964B;
 		Info->Flags = 0;
 		static const wchar_t *DiskMenuStrings[1];
 		DiskMenuStrings[0] = GetMsg(MDiskMenuString);

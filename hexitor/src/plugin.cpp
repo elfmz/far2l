@@ -43,6 +43,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(PluginInfo* info)
 	assert(info);
 
 	info->StructSize = sizeof(PluginInfo);
+	info->SysID = 0x48455852; // 'HEXR'
 	if (settings.add_to_viewer_menu)
 		info->Flags |= PF_VIEWER;
 	if (settings.add_to_editor_menu)

@@ -172,6 +172,7 @@ public:
 	{
 		struct PluginInfo *pInfo = (struct PluginInfo *)pinfo;
 		pInfo->StructSize = sizeof(*pInfo);
+		pInfo->SysID = 0x894EAABB;
 		pInfo->Flags = PF_EDITOR | PF_VIEWER;
 		pInfo->DiskMenuStringsNumber = 0;
 

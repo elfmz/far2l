@@ -171,6 +171,7 @@ void __plugin WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 
 	sPtr = GetMsg(MIncSearch);
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0x84C0C745;
 	Info->Flags =
 #ifdef VIEWVER_SUPPORT
 			PF_VIEWER |

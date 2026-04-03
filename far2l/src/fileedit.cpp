@@ -2177,10 +2177,15 @@ void FileEditor::ResizeConsole()
 
 int FileEditor::ProcessEditorInput(INPUT_RECORD *Rec)
 {
-	int RetCode;
-	CtrlObject->Plugins.CurEditor = this;
-	RetCode = CtrlObject->Plugins.ProcessEditorInput(Rec);
-	return RetCode;
+        static thread_local bool in_progress = false;
+        if (in_progress)
+            return FALSE;
+
+        in_progress = true;
+        int RetCode = CtrlObject->Plugins.ProcessEditorInput(Rec);
+        in_progress = false;
+        return RetCode;
+
 }
 
 void FileEditor::SetPluginTitle(const wchar_t *PluginTitle)

@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std::string &info);
+std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info);
 
 //////////////////////////////////////////////
 

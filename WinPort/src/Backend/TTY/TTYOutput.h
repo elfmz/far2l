@@ -51,7 +51,6 @@ class TTYOutput
 
 	int _out;
 	TTYCaps _tty_caps;
-	DWORD _nodetect{0};
 	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
 	bool _DEC_line_drawing{false};

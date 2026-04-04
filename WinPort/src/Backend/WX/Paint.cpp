@@ -547,7 +547,7 @@ void CursorProps::Update()
 ConsolePainter::ConsolePainter(ConsolePaintContext *context, wxPaintDC &dc, wxString &buffer, CursorProps &cursor_props) :
 	_context(context), _dc(dc), _buffer(buffer), _cursor_props(cursor_props),
 	_start_cx((unsigned int)-1), _start_back_cx((unsigned int)-1), _prev_fit_font_index(0),
-	_prev_underlined(false), _prev_strikeout(false)
+	_prev_underlined(false), _prev_strikeout(false), _prev_bold(false)
 {
 	_dc.SetPen(context->GetTransparentPen());
 	_dc.SetBackgroundMode(wxPENSTYLE_TRANSPARENT);
@@ -612,8 +612,23 @@ void ConsolePainter::FlushBackground(unsigned int cx_end)
 void ConsolePainter::FlushText(unsigned int cx_end)
 {
 	if (!_buffer.empty()) {
-		_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
-		_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
+		if (_prev_bold) {
+			wxFont normal = _dc.GetFont();
+			wxFont bold = normal;
+			bold.MakeBold(); 
+			//bold.SetWeight(wxFONTWEIGHT_SEMIBOLD);
+			bold.SetPixelSize(normal.GetPixelSize());
+			_dc.SetFont(bold);
+			_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
+			_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
+			_dc.SetFont(normal);
+
+			_prev_bold = false;
+		}
+		else {
+			_dc.SetTextForeground(wxColour(_clr_text.r, _clr_text.g, _clr_text.b));
+			_dc.DrawText(_buffer, _start_cx * _context->FontWidth(), _start_y);
+		}
 		_buffer.Empty();
 	}
 	FlushDecorations(cx_end);
@@ -757,6 +772,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 
 	const bool underlined = (attributes & COMMON_LVB_UNDERSCORE) != 0;
 	const bool strikeout = (attributes & COMMON_LVB_STRIKEOUT) != 0;
+	const bool bold = (attributes & COMMON_LVB_BOLD) != 0;
 
 	if (!strikeout && !underlined && wcz[0] == L' ' && !wcz[1]) {
 		return;
@@ -769,6 +785,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 		WXCustomDrawCharPainter cdp(*this, clr_text, clr_back);
 		cdp.wc = wcz[0];
 		custom_draw(cdp, _start_y, cx);
+		/* bold does not affect to custom draws as it are unicode glyphs, borders etc */
 		if (underlined || strikeout) {
 			_start_cx = cx;
 			_prev_underlined = underlined;
@@ -784,6 +801,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 	uint8_t fit_font_index = _context->CharFitTest(_dc, *wcz, nx);
 
 	if (fit_font_index == _prev_fit_font_index && _prev_underlined == underlined && _prev_strikeout == strikeout
+		&& _prev_bold == bold
 		&& _start_cx != (unsigned int)-1 && _clr_text == clr_text && _context->IsPaintBuffered())
 	{
 		_buffer+= wcz;
@@ -796,6 +814,7 @@ void ConsolePainter::NextChar(unsigned int cx, DWORD64 attributes, const wchar_t
 	_prev_fit_font_index = fit_font_index;
 	_prev_underlined = underlined;
 	_prev_strikeout = strikeout;
+	_prev_bold = bold;
 
 	_start_cx = cx;
 	_buffer = wcz;

@@ -62,7 +62,7 @@ static void ApplyDefaultMaskGroups()
 
 		{ L"pic",    L"*.ai,*.ani,*.avif,*.bmp,*.bw,*.cdr,*.cel,*.cgm,*.cmx,*.cpt,*.cur,*.dcx,*.dds,*.dib,*.emf,*.eps,*.flc,*.fli,*.fpx,*.gif,*.icl,*.ico,"
 					 L"*.iff,*.indd,*.j2k,*.jp2,*.jpc,*.jpe,*.jpeg,*.jpeg2000,*.jpg,*.jps,*.kra,*.lbm,*.mng,*.mpo,*.pbm,*.pcx,*.pdn,*.pgm,*.pic,*.png,*.pns,"
-					 L"*.ppm,*.psd,*.psp,*.ras,*.rgb,*.rle,*.sai,*.sgi,*.spr,*.svg,*.tga,*.tif,*.tiff,*.wbmp,*.webp,*.wmf,*.xbm,*.xcf,*.xpm"},
+					 L"*.ppm,*.psd,*.psp,*.ras,*.rgb,*.rle,*.sai,*.sgi,*.spr,*.svg,*.tga,*.tif,*.tiff,*.wbmp,*.webp,*.wmf,*.xbm,*.xcf,*.xpm,*.heic"},
 		{ L"video",  L"*.3g2,*.3gp,*.asf,*.avchd,*.avi,*.divx,*.enc,*.flv,*.ifo,*.m1v,*.m2ts,*.m2v,*.m4p,*.m4v,*.mkv,*.mov,*.mp2,*.mp4,*.mpe,*.mpeg,*.mpg,"
 					 L"*.mpv,*.mts,*.ogm,*.qt,*.ra,*.ram,*.rmvb,*.swf,*.ts,*.vob,*.vob,*.webm,*.wm,*.wmv"},
 

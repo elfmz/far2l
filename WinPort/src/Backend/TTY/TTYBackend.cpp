@@ -377,6 +377,8 @@ void TTYBackend::SetupAttachedTTY(bool far2l_tty)
 	} else {
 		g_far2l_use_vs16 = false;
 	}
+
+	_initial_cursor_shape = -1;
 	if (_tty_caps.kind == TTYCaps::GENERIC) {
 		WriteAndDrain(_stdout, "\x1bP$q q\x1b\\"); // Request current cursor shape
 	}
@@ -518,7 +520,6 @@ void TTYBackend::WriterThread()
 	bool gone_background = false;
 	try {
 		_focused = (_tty_caps.kind != TTYCaps::FAR2L); // this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
-		_initial_cursor_shape = -1;
 		TTYOutput tty_out(_stdout, _tty_caps);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);

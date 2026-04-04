@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <os_call.hpp>
 
+#include <array>
 #include <algorithm>
 
 #if defined(__FreeBSD__) || defined(__DragonFly__)
@@ -73,9 +74,9 @@ size_t ReadAll(int fd, void *data, size_t len)
 
 ssize_t ReadWritePiece(int fd_src, int fd_dst)
 {
-	char buf[32768];
+	static thread_local std::array<char, 32768> buf;
 	for (;;) {
-		ssize_t r = read(fd_src, buf, sizeof(buf));
+		ssize_t r = read(fd_src, buf.data(), buf.size());
 		if (r < 0) {
 			if (errno == EAGAIN || errno == EINTR) {
 				continue;
@@ -85,7 +86,7 @@ ssize_t ReadWritePiece(int fd_src, int fd_dst)
 		}
 
 		if (r > 0) {
-			if (WriteAll(fd_dst, buf, (size_t)r) != (size_t)r) {
+			if (WriteAll(fd_dst, buf.data(), (size_t)r) != (size_t)r) {
 				return -1;
 			}
 		}

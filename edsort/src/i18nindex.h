@@ -18,4 +18,5 @@ ps_helptopic,
 ps_ok,
 ps_reverse,
 ps_title,
+ps_unique,
 };

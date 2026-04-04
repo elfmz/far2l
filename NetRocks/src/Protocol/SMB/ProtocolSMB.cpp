@@ -278,13 +278,15 @@ class SMBDirectoryEnumer : public IDirectoryEnumer
 	std::shared_ptr<ProtocolSMB> _protocol;
 	std::string _rooted_path;
 	int _dir = -1;
-	char _buf[0x4000]{}, *_entry = nullptr;
+	std::vector<char> _buf;
+	char *_entry = nullptr;
 	int _remain = 0;
 
 public:
 	SMBDirectoryEnumer(std::shared_ptr<ProtocolSMB> protocol, const std::string &rooted_path)
 		: _protocol(protocol),
-		_rooted_path(rooted_path)
+		_rooted_path(rooted_path),
+		_buf(0x4000)
 	{
 		NR_DBG("path: '%s'", _rooted_path.c_str());
 
@@ -346,8 +348,10 @@ public:
 
 
 			if (_remain <= 0) {
-				_entry = _buf;
-				_remain = (_dir == -1) ? 0 : smbc_getdents(_dir, (struct smbc_dirent *)_buf, sizeof(_buf));
+				_entry = _buf.data();
+				_remain = (_dir == -1)
+						? 0
+						: smbc_getdents(_dir, (struct smbc_dirent *)_buf.data(), static_cast<int>(_buf.size()));
 				if (_remain == 0)
 					return false;
 

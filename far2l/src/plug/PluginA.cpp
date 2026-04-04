@@ -1146,6 +1146,7 @@ void PluginA::ConvertPluginInfo(oldfar::PluginInfo &Src, PluginInfo *Dest)
 {
 	FreePluginInfo();
 	PI.StructSize = sizeof(PI);
+	PI.SysID = Src.SysID;
 	PI.Flags = Src.Flags;
 
 	if (Src.DiskMenuStringsNumber) {

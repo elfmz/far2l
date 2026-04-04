@@ -72,20 +72,18 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 	};
 
 	MenuDataEx ToolsMenu[] = {
-		{Msg::ViewerMenuUndo,	0,	KEY_CTRLZ  },
-		{Msg::ViewerMenuRedo,	0,	KEY_CTRLSHIFTZ  },
-		{L"", LIF_SEPARATOR, 0  },
-		{Msg::ViewerMenuSelect,	0,	KEY_SHIFTRIGHT  },
-		{Msg::ViewerMenuCopy,	0,	KEY_CTRLC  },
-		{L"", LIF_SEPARATOR, 0  },
 		{Msg::ViewerMenuGrep,	0,	KEY_CTRLF7  },
+		{L"", LIF_SEPARATOR, 0  },
 		{Msg::ViewerMenuFind,	0,	KEY_F7  },
 		{Msg::ViewerMenuFindNext,	0,	KEY_SHIFTF7  },
 		{Msg::ViewerMenuFindPrev,	0,	KEY_ALTF7  },
+		{Msg::ViewerMenuSelect,	0,	KEY_SHIFTRIGHT  },
+		{Msg::ViewerMenuCopy,	0,	KEY_CTRLC  },
 	};
 
 	MenuDataEx NavigateMenu[] = {
 		{Msg::ViewerMenuNavigateGoToLine,	0,	KEY_ALTF8  },
+		{Msg::ViewerMenuUndo,	0,	KEY_CTRLZ  },
 		{L"", LIF_SEPARATOR, 0  },
 		{Msg::ViewerMenuNavigateBegin,	0,	KEY_CTRLHOME  },
 		{Msg::ViewerMenuNavigateEnd,	0,	KEY_CTRLEND  },
@@ -131,7 +129,6 @@ void ViewerShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent, FileVie
 		{Msg::ViewerMenuHex,	0,	KEY_F4  },
 		{Msg::ViewerMenuExtl,	0,	KEY_F5  },
 		{Msg::ViewerMenuEditor,	0,	KEY_F6  },
-		{Msg::ViewerMenuTabSize,	0,	KEY_SHIFTF5  },
 		{Msg::ViewerMenuOem,	0,	KEY_F8  },
 		{Msg::ViewerMenuCodepage,	0,	KEY_SHIFTF8  },
 		{L"", LIF_SEPARATOR, 0  },

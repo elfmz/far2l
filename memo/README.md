@@ -6,53 +6,56 @@ A multi-page scratchpad/memo plugin for Far2l.
 ## Features
 
 ### 10 Independent Memo Pages
-- 10 separate memo pages, switched with `Ctrl+1`–`Ctrl+9`, `Ctrl+0` (or `Alt+…`)
-- **Cursor Persistence:** Caret position is saved and restored per page.
-- **Dynamic UI:** Dialog size adapts to your terminal, with a safe 60x15 minimum.
+- 10 separate memo pages, switched via keyboard shortcuts `Ctrl+1`–`0` / `Alt+1`–`0` or by **clicking the `[1]`–`[0]` UI buttons with the mouse**.
+- **Dynamic UI:** Dialog size adapts to your terminal, with a safe 75x20 minimum.
 - **Robust Paths:** Full UTF-8 support for home directory and file exports.
-- Visual page indicator at bottom: `• 1 • 2 •[3]• 4 • … • 0 •`
+- **Tabbed Interface:** Visually switch between your memos directly using the dialog buttons.
 
-### Keyboard
+### Keyboard & UI Buttons
 
-| Key | Action |
-|-----|--------|
-| `Ctrl+1`–`Ctrl+9`, `Ctrl+0` | Switch to page 1–9, 10 |
-| `Alt+1`–`Alt+9`, `Alt+0` | Same (alternative modifier) |
+| Key / Button | Action |
+|--------------|--------|
+| `Ctrl+1`–`9`, `0` / `[1]`–`[0]` | Switch to page 1–9, 10 |
+| `Alt+1`–`9`, `0` | Same as Ctrl (alternative modifier) |
 | `Esc` | Close and auto-save |
-| `F2` / `Shift+F2` | Export current page to an external file |
+| `F2` / `[F2 Save]` | Export current memo to an external file |
+| `F9` / `[F9 Config]` | Open plugin configuration dialog |
 
 ### Auto-Save & State
-- Content is saved automatically when switching pages or closing.
-- Last active page and cursor positions are remembered across sessions.
+- Content is saved automatically when switching pages or closing the dialog, **but overwrites the file only if there are real changes**.
+- Last active page is remembered across sessions.
 
-### Configuration (F11 → Plugins → Configure → Memo)
+### Configuration
+Available via `F11` → `Plugins` → `Configure` → `Memo` or by clicking the `[F9 Config]` button inside the memo editor.
 - **Enable Memo Plugin:** Enable/disable the plugin functionality.
-- **Use Ctrl+S to open:** Automatically registers `Ctrl+S` as a global hotkey in `settings/key_macros.ini`.
+- **Enable Ctrl+Alt+S hotkey:** Automatically registers `Ctrl+Alt+S` as a global hotkey in `settings/key_macros.ini`.
 
-## Global Hotkey (Ctrl+S)
+## Global Hotkey (Ctrl+Alt+S)
 
-The plugin can automatically manage its own `Ctrl+S` binding.
-- **Auto-Registration:** Enabling "Use Ctrl+S" in settings adds `callplugin(0x4D454D4F)` to your global macros.
-- **Editor Safety:** The plugin silently ignores `Ctrl+S` when called from an active Editor to prevent a known conflict with the **Colorer** plugin (avoids Segmentation Faults).
+The plugin can automatically manage its own `Ctrl+Alt+S` binding.
+- **Auto-Registration:** Enabling the hotkey in settings adds `callplugin(0x4D454D4F)` to your global macros.
+- **Migration:** Plugin-owned legacy `Ctrl+S` and `Ctrl+Shift+S` bindings are removed during hotkey updates so only `Ctrl+Alt+S` stays active.
+- **Editor Safety:** The plugin may interact cleanly depending on the active Far dialog state, avoiding conflicts with normal editor contexts.
 
-The plugin's SysID is `0x4D454D4F`. Command line prefix: `memo:`.
+The plugin's SysID is `0x4D454D4F` ('MEMO').
 
 ## Storage
 
-Default location: `~/.config/far2l/plugins/memo/`
+Default location: `plugins/memo/` inside far2l config directory
+(usually `~/.config/far2l/plugins/memo/`)
 
 | File | Purpose |
 |------|---------|
-| `memo-00.txt` … `memo-09.txt` | Page content (UTF-8) |
+| `memo-01.txt` … `memo-09.txt`, `memo-00.txt` | Page content (UTF-8) |
 | `state.ini` | `LastMemo`, `Enabled`, `HotkeyEnabled` |
-| `debug.log` | Debug build only (`NDEBUG` builds omit this) |
+| `debug.log` | Debug build only (`DEBUG` builds only) |
 
 ## Plugin API
 
 | Function | Purpose |
 |----------|---------|
-| `OpenPluginW` | Entry point. Guards: enabled check, **Editor area check** (prevents crash). |
-| `ConfigureW` | Configuration dialog with hotkey management. |
+| `OpenPluginW` | Entry point to open the Memo editor dialog. |
+| `ConfigureW` | Configuration dialog with hotkey and state management. |
 | `SetStartupInfoW` | Initialization and automatic macro registration. |
 
 ## Building
@@ -66,4 +69,4 @@ Language files and `key_macros.ini` template are copied automatically.
 
 ## License
 
-Part of the far2l-adb project. Same license as far2l.
+Part of the [far2l-adb](https://github.com/stpork/far2l-adb) project. Same license as [far2l](https://github.com/elfmz/far2l).

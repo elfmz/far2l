@@ -223,6 +223,7 @@ SHAREDSYMBOL void WINAPI _export GetPluginInfoW(struct PluginInfo *Info)
 	static std::wstring s_command_prefixes = CombineAllProtocolPrefixes();
 
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0xAE8CE351;
 	Info->Flags = PF_FULLCMDLINE;
 	Info->PluginConfigStrings = s_cfg_strings;
 	Info->PluginConfigStringsNumber = (CountOfAllBackgroundTasks() != 0) ? ARRAYSIZE(s_cfg_strings) : 1;

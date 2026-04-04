@@ -8,6 +8,7 @@
 #include <Event.h>
 #include <StackSerializer.h>
 #include "Backend.h"
+#include "TTYCaps.h"
 #include "TTYOutput.h"
 #include "TTYInput.h"
 #include "IFar2lInteractor.h"
@@ -23,10 +24,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 {
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
-	bool _ext_clipboard;
-	bool _norgb;
-	DWORD _nodetect = NODETECT_NONE;
-	bool _far2l_tty = false;
+	TTYCaps _tty_caps, _prev_tty_caps;
 	bool _osc52clip_set = false;
 	bool _osc52clip_request = false;
 
@@ -62,6 +60,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void ReaderLoop();
 	void WriterThread();
 	void BackendInfoChanged();
+	void SetupAttachedTTY(bool far2l_tty);
 
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
@@ -126,6 +125,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 	std::string _osc52clip;
 	bool _osc52clip_is_primary;
+	std::atomic<int> _initial_cursor_shape{-1};
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 	PrinterSupportBackendSetter _printer_backend_setter;
@@ -190,6 +190,7 @@ protected:
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnKittyGraphicsResponse(const std::string &s);
 	virtual void OnStatusResponse(char c);
+	virtual void OnCursorShape(int shape);
 	virtual void OnInputBroken();
 	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 	virtual void OnOSC52PasteReply(const std::string& s, bool is_primary_buffer);
@@ -197,7 +198,7 @@ protected:
 	DWORD QueryControlKeys();
 
 public:
-	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result);
+	TTYBackend(const char *full_exe_path, int std_in, int std_out, TTYCaps tty_caps, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();

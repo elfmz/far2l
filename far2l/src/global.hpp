@@ -103,6 +103,3 @@ extern DWORD RedrawTimeout;
 extern FormatScreen FS;
 
 extern DWORD ErrorMode;
-
-extern __attribute__((visibility("default"))) bool g_use_vs16;
-

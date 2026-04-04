@@ -24,6 +24,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info) {
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info) {
     memset(Info, 0, sizeof(*Info));
     Info->StructSize = sizeof(*Info);
+	Info->SysID = 0x11ADD930;
     Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 
     Info->PluginConfigStringsNumber = 1;

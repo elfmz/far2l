@@ -118,10 +118,14 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	ClusterSize = 0;
 	ScTree.SetFindPath(DirName, L"*", 0);
 	ScannedINodes scanned_inodes;
+	const bool count_dir_size = !Opt.OnlyFilesSize;
+	const bool use_filter = (Flags & GETDIRINFO_USEFILTER) != 0;
+	const bool scan_symlinks = ScTree.IsSymlinksScanEnabled();
+	const bool can_break = !CtrlObject->Macro.IsExecuting() && !WinPortTesting();
 
 	struct stat s = {0};
 	if (sdc_stat(Wide2MB(DirName).c_str(), &s) == 0) {
-		if (!Opt.OnlyFilesSize) {	// include size of root dir's node
+		if (count_dir_size) {	// include size of root dir's node
 			FileSize = s.st_size;
 			PhysicalSize = ((DWORD64)s.st_blocks) * 512;
 		}
@@ -129,7 +133,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 	}
 
 	while (ScTree.GetNextName(&FindData, strFullName)) {
-		if (!CtrlObject->Macro.IsExecuting() && !WinPortTesting()) {
+		if (can_break) {
 			INPUT_RECORD rec;
 
 			switch (PeekInputRecord(&rec)) {
@@ -159,41 +163,49 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 			}
 		}
 
-		if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || !Opt.OnlyFilesSize) {
+		if (MsgWaitTime != -1) {
+			clock_t CurTime = GetProcessUptimeMSec();
+
+			if (CurTime - StartTime > MsgWaitTime) {
+				StartTime = CurTime;
+				MsgWaitTime = 500;
+				OldTitle.Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
+				SetCursorType(FALSE, 0);
+				DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
+			}
+		}
+
+		const DWORD file_attributes = FindData.dwFileAttributes;
+		const bool is_directory = (file_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+		const bool is_reparse_point = (file_attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
+
+		if (!is_directory || count_dir_size) {
 			PhysicalSize+= FindData.nPhysicalSize;
 		}
 
-		clock_t CurTime = GetProcessUptimeMSec();
-
-		if (MsgWaitTime != -1 && CurTime - StartTime > MsgWaitTime) {
-			StartTime = CurTime;
-			MsgWaitTime = 500;
-			OldTitle.Set(L"%ls %ls", Msg::ScanningFolder.CPtr(), ShowDirName);	// покажем заголовок консоли
-			SetCursorType(FALSE, 0);
-			DrawGetDirInfoMsg(Title, ShowDirName, FileSize);
-		}
-		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+		if (is_reparse_point) {
 			// include symlink's own size to total size
-			if (sdc_lstat(strFullName.GetMB().c_str(), &s) == 0 && !Opt.OnlyFilesSize) {
+			if (count_dir_size && sdc_lstat(strFullName.GetMB().c_str(), &s) == 0) {
 				FileSize+= s.st_size;
 			}
 
 			FileCount++;
-			if (!ScTree.IsSymlinksScanEnabled())
+			if (!scan_symlinks)
 				continue;
 		}
+
 		if (!scanned_inodes.Put(FindData.UnixDevice, FindData.UnixNode)) {
 			continue;
 		}
 
-		if (FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+		if (is_directory) {
 			/*
 				Счётчик каталогов наращиваем только если не включен фильтр,
 				в противном случае это будем делать в подсчёте количества файлов
 			*/
-			if (!(Flags & GETDIRINFO_USEFILTER)) {
+			if (!use_filter) {
 				DirCount++;
-				if (!Opt.OnlyFilesSize)
+				if (count_dir_size)
 					FileSize+= FindData.nFileSize;
 			} else {
 				/*
@@ -202,7 +214,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 					он учтётся (mantis 551)
 				*/
 				if (Filter->FileInFilter(FindData)) {
-					if (!Opt.OnlyFilesSize)
+					if (count_dir_size)
 						FileSize+= FindData.nFileSize;	// TODO: add size at same condifion as DirCount increment
 				} else
 					ScTree.SkipDir();
@@ -212,7 +224,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 				$ 17.04.2005 KM
 				Проверка попадания файла в условия фильра
 			*/
-			if ((Flags & GETDIRINFO_USEFILTER)) {
+			if (use_filter) {
 				if (!Filter->FileInFilter(FindData))
 					continue;
 			}
@@ -222,7 +234,7 @@ int GetDirInfo(const wchar_t *Title, const wchar_t *DirName, uint32_t &DirCount,
 				когда в таком каталоге найден файл, удовлетворяющий условиям
 				фильтра.
 			*/
-			if ((Flags & GETDIRINFO_USEFILTER)) {
+			if (use_filter) {
 				strCurDirName = strFullName;
 				CutToSlash(strCurDirName);	//???
 

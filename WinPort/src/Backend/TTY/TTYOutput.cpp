@@ -155,9 +155,9 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 
 ///////////////////////
 
-TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
+TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect, std::atomic<int>* initial_cursor_shape)
 	:
-	_out(out), _far2l_tty(far2l_tty), _norgb(norgb), _kernel_tty(false), _nodetect(nodetect)
+	_out(out), _far2l_tty(far2l_tty), _norgb(norgb), _kernel_tty(false), _nodetect(nodetect), _initial_cursor_shape(initial_cursor_shape)
 {
 	const char *env = getenv("TERM");
 	_screen_tty = (env && strncmp(env, "screen", 6) == 0); // TERM=screen.xterm-256color
@@ -207,6 +207,10 @@ TTYOutput::TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect)
 		SendFar2lInteract(stk_ser);
 	}
 
+	if (!_kernel_tty && !_far2l_tty) {
+		Format(ESC "P$q q" ESC "\\"); // Request current cursor shape
+	}
+
 	Flush();
 }
 
@@ -217,7 +221,12 @@ TTYOutput::~TTYOutput()
 		ChangeMouse(false);
 		ChangeKeypad(false);
 		if (!_kernel_tty) {
-			Format(ESC "[0 q");
+			int init_shape = _initial_cursor_shape ? _initial_cursor_shape->load() : -1;
+			if (init_shape >= 0) {
+				Format(ESC "[%d q", init_shape);
+			} else {
+				Format(ESC "[0 q");
+			}
 		}
 		if ((_nodetect & NODETECT_K) == 0) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off

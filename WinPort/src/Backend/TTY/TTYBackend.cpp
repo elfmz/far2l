@@ -473,7 +473,7 @@ void TTYBackend::WriterThread()
 	bool gone_background = false;
 	try {
 		_focused = !_far2l_tty;
-		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
+		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect, &_initial_cursor_shape);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -1326,6 +1326,12 @@ void TTYBackend::OnStatusResponse(char c)
 		_images_kitty_status = IKS_UNSUPPORTED;
 	}
 	_images_kitty_status_cond.notify_all();
+}
+
+void TTYBackend::OnCursorShape(int shape)
+{
+	fprintf(stderr, "OnCursorShape: %d\n", shape);
+	_initial_cursor_shape = shape;
 }
 
 void TTYBackend::OnInputBroken()

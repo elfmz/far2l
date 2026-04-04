@@ -713,6 +713,8 @@ void InterfaceSettings()
 			Builder.AddCheckbox(Msg::ConfigTTYPaletteOverride, &Opt.TTYPaletteOverride);
 		}
 
+		Builder.AddCheckbox(Msg::EnforceColorCorrection, (BOOL *)&Opt.Dialogs.EnforceColorCorrection);
+
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);
 
@@ -724,6 +726,7 @@ void InterfaceSettings()
 		Builder.AddOKCancel();
 
 		int clicked_id = -1;
+		bool oldColorCC = Opt.Dialogs.EnforceColorCorrection;
 		if (Builder.ShowDialog(&clicked_id)) {
 			if (Opt.CMOpt.CopyTimeRule)
 				Opt.CMOpt.CopyTimeRule = 3;
@@ -740,6 +743,10 @@ void InterfaceSettings()
 			CtrlObject->Cp()->SetScreenPosition();
 			// $ 10.07.2001 SKV ! надо это делать, иначе если кейбар спрятали, будет полный рамс.
 			CtrlObject->Cp()->Redraw();
+
+			if (Opt.Dialogs.EnforceColorCorrection != oldColorCC) {
+				FarColors::FARColors.Set();
+			}
 
 			ApplyConsoleTweaks();
 			WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);

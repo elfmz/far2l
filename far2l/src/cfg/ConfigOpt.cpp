@@ -188,6 +188,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecInterfaceCompletion, "ShowList", &Opt.AutoComplete.ShowList, 1},
 	{true,  NSecInterfaceCompletion, "ModalList", &Opt.AutoComplete.ModalList, 0},
 	{true,  NSecInterfaceCompletion, "Append", &Opt.AutoComplete.AppendCompletion, 0},
+	{true,  NSecInterface, "EnforceColorCorrection", &Opt.Dialogs.EnforceColorCorrection, 1},
 
 	{true,  NSecViewer, "ExternalViewerName", &Opt.strExternalViewer, L""},
 	{true,  NSecViewer, "UseExternalViewer", &Opt.ViOpt.UseExternalViewer, 0},

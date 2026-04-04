@@ -519,6 +519,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(struct PluginInfo);
+	Info->SysID = 0x93CDEF19;
 	Info->Flags = 0;
 	static const wchar_t *s_menu_strings[1];
 	s_menu_strings[0] = GetMsg(MPluginTitle);
@@ -536,7 +537,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 // Validates the active panel state, collects selected items, and initiates the processing workflow.
 SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 {
-	if (OpenFrom != OPEN_PLUGINSMENU) {
+	if (OpenFrom != OPEN_PLUGINSMENU && OpenFrom != (OPEN_FROMMACRO | MACROAREA_SHELL)) {
 		return INVALID_HANDLE_VALUE;
 	}
 

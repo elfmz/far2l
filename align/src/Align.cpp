@@ -351,6 +351,7 @@ int JustifyString(int RightMargin, struct EditorSetString &ess)
 SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0xB076F0B0;
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 	Info->DiskMenuStringsNumber = 0;
 	static const TCHAR *PluginMenuStrings[1];

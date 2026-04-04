@@ -1600,6 +1600,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *info)
 	config_menu[0] = Far::msg_ptr(MSG_PLUGIN_NAME);
 
 	info->StructSize = sizeof(PluginInfo);
+	info->SysID = 0x65642111;
 
 	info->PluginMenuStrings = plugin_menu;
 	info->PluginMenuStringsNumber = ARRAYSIZE(plugin_menu);

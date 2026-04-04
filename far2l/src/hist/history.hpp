@@ -46,6 +46,13 @@ enum enumHISTORYTYPE
 	HISTORYTYPE_DIALOG
 };
 
+enum HistoryRemoveDupsMode
+{
+	HISTORY_REMOVE_DUPS_DISABLED = 0,
+	HISTORY_REMOVE_DUPS_CASE_SENSITIVE = 1,
+	HISTORY_REMOVE_DUPS_CASE_INSENSITIVE = 2,
+};
+
 struct HistoryRecord
 {
 	int Type = 0;
@@ -60,7 +67,7 @@ class History
 private:
 	std::string strRegKey;
 	bool EnableAdd, KeepSelectedPos, SaveType;
-	int RemoveDups;
+	HistoryRemoveDupsMode RemoveDups;
 	enumHISTORYTYPE TypeHistory;
 	size_t HistoryCount;
 	const int *EnableSave;
@@ -94,6 +101,6 @@ public:
 	bool GetSimilar(FARString &strStr, int LastCmdPartLength, bool bAppend = false);
 	bool GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str);
 	bool DeleteMatching(FARString &strStr);
-	void SetAddMode(bool EnableAdd, int RemoveDups, bool KeepSelectedPos);
+	void SetAddMode(bool EnableAdd, HistoryRemoveDupsMode RemoveDups, bool KeepSelectedPos);
 	void ResetPosition() { CurrentItem = nullptr; }
 };

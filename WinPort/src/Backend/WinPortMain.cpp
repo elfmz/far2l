@@ -21,6 +21,7 @@
 #include <TTYRawMode.h>
 #include <TestPath.h>
 
+#include "TTY/TTYCaps.h"
 #include "TTY/TTYRevive.h"
 #include "TTY/TTYNegotiateFar2l.h"
 
@@ -47,7 +48,7 @@ static char *s_stderr_trace = nullptr;
 static BOOL s_winport_testing = FALSE;
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
-	bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty,
+	bool ext_clipboard, bool norgb, uint16_t nodetect, bool far2l_tty,
 	unsigned int esc_expiration, int notify_pipe, int argc, char **argv,
 	int(*AppMain)(int argc, char **argv), int *result);
 
@@ -274,7 +275,7 @@ extern "C" void WinPortHelp()
 	printf("FAR2L backend-specific options:\n"
 			"\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n"
 			"\t--notty - don't fallback to TTY backend if GUI backend failed\n"
-			"\t--nodetect or --nodetect=[x|xi][f][w][a][k] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes\n"
+			"\t--nodetect or --nodetect=[x|xi][f][w][a][k][e] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes, e=emodjie VS16 suffix\n"
 			"\t--norgb - don't use true (24-bit) colors\n"
 			"\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n"
 			"\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n"
@@ -293,7 +294,7 @@ extern "C" void WinPortHelp()
 
 struct ArgOptions
 {
-	DWORD nodetect = NODETECT_NONE;
+	uint16_t nodetect = NODETECT_NONE;
 	bool tty = false, far2l_tty = false, notty = false;
 	bool norgb = getenv("TERM") != nullptr && strcmp(getenv("TERM"), "screen.xterm-256color") == 0; // If in GNU Screen, default "norgb = true" to avoid unusable colours
 	bool mortal = false;
@@ -329,25 +330,28 @@ struct ArgOptions
 			norgb = true;
 
 		} else if (strcmp(a, "--nodetect") == 0) {
-			nodetect = NODETECT_F | NODETECT_X | NODETECT_A | NODETECT_K | NODETECT_W;
+			nodetect = NODETECT_F | NODETECT_X | NODETECT_A | NODETECT_K | NODETECT_W | NODETECT_E;
 
 		} else if (strstr(a, "--nodetect=") == a) {
-			if(strstr(a+11,"xi")) {
+			if(strstr(a+11, "xi")) {
 				nodetect = NODETECT_XI;
-			} else if (strchr(a+11,'x')) {
+			} else if (strchr(a+11, 'x')) {
 				nodetect = NODETECT_X;
 			}
-			if(strchr(a+11,'f')) {
+			if(strchr(a+11, 'f')) {
 				nodetect |= NODETECT_F;
 			}
-			if(strchr(a+11,'a')) {
+			if(strchr(a+11, 'a')) {
 				nodetect |= NODETECT_A;
 			}
-			if(strchr(a+11,'k')) {
+			if(strchr(a+11, 'k')) {
 				nodetect |= NODETECT_K;
 			}
-			if(strchr(a+11,'w')) {
+			if(strchr(a+11, 'w')) {
 				nodetect |= NODETECT_W;
+			}
+			if(strchr(a+11, 'e')) {
+				nodetect |= NODETECT_E;
 			}
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;

@@ -85,20 +85,27 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 	return VK_UNASSIGNED;
 }
 
+static void WriteAndDrain(int std_out, const char *data)
+{
+	ssize_t l = strlen(data);
+	ssize_t written = WriteAll(std_out, data, l);
+	if (written != l) {
+		fprintf(stderr, "%s: write error %d\n", __FUNCTION__, errno);
+	} else if (tcdrain(std_out) < 0) {
+		fprintf(stderr, "%s: tcdrain error %d\n", __FUNCTION__, errno);
+	}
+}
 
 static void DetectVS16(int std_in, int std_out)
 {
-	// U+25AB + U+FE0F: ▫️
-	const char sym[] = "\xE2\x96\xAB\xEF\xB8\x8F";
-
 	termios orig, raw;
 	tcgetattr(std_in, &orig);
 	raw = orig;
 	raw.c_lflag &= ~(ICANON | ECHO);
 	tcsetattr(std_in, TCSAFLUSH, &raw);
 
-	auto readPos = [std_in]() {
-		int row = -1, col = -1;
+	auto getPos = [std_in, std_out]() {
+		WriteAndDrain(std_out, "\x1b[6n\x1b[5n");
 		char c;
 		std::string buf;
 		while (true) {
@@ -108,71 +115,59 @@ static void DetectVS16(int std_in, int std_out)
 
 			struct timeval tv;
 			tv.tv_sec  = 0;
-			tv.tv_usec = 200000; //timeout 200 msec
+			tv.tv_usec = 300000; //timeout 300 msec
 
 			int rv = select(std_in + 1, &rfds, nullptr, nullptr, &tv);
-			if (rv <= 0) return std::make_pair(-1,-1);
-
-			if (read(std_in, &c, 1) != 1) return std::make_pair(-1,-1);
-			buf.push_back(c);
-
-			if ( c == 'R') {
-				auto esc_pos = buf.rfind('\x1b');
-				if (esc_pos != std::string::npos && esc_pos < buf.size() - 1
-					 && sscanf(buf.c_str() + esc_pos, "\x1b[%d;%dR", &row, &col) == 2) {
-					return std::make_pair(row, col); // This is the cursor position: SUCCESS
-				}
-				buf.clear();
+			if (rv <= 0 || read(std_in, &c, 1) != 1) {
+				return std::make_pair(-1, -1); 
 			}
 
-			if (buf.size() > 64) buf.clear();
+			if (c == 'R') {
+				auto esc_pos = buf.rfind('\x1b');
+				if (esc_pos != std::string::npos && esc_pos < buf.size() - 1) {
+					int row = -1, col = -1;
+					if (sscanf(buf.c_str() + esc_pos, "\x1b[%d;%d", &row, &col) == 2) {
+						return std::make_pair(row, col); // This is the cursor position: SUCCESS
+					}
+				}
+				buf.clear();
+			} else if (c) {
+				buf+= c;
+				if (buf.size() >= 48) {
+					buf.erase(0, 24);
+				}
+			}
 		}
 	};
 
 	// Query cursor before printing
-	WriteAll(std_out, "\x1b[6n", 4);
-	WriteAll(std_out, "\x1b[5n", 4);
-	tcdrain(std_out);
-	auto [start_row, start_col] = readPos();
-
-	// Print the VS16 symbol
-	WriteAll(std_out, sym, strlen(sym));
-	tcdrain(std_out);
-
-	// Query cursor after printing
-	WriteAll(std_out, "\x1b[6n", 4);
-	WriteAll(std_out, "\x1b[5n", 4);
-	tcdrain(std_out);
-	auto [end_row, end_col] = readPos();
-
-	// Remove the printed symbol
-	if (start_col >= 0 && end_col >= 0) {
-		int w = end_col - start_col;
-		if (w > 0) {
-			char seq[32];
-			int n = snprintf(seq, sizeof(seq), "\x1b[%d;%dH", start_row, start_col);
-			if (n > 0) {
-				WriteAll(std_out, seq, (size_t)n);
-				WriteAll(std_out, "\x1b[K", 3);
-				tcdrain(std_out);
-			}
-		}
+	const auto [start_row, start_col] = getPos();
+	if (start_col < 0) {
+		g_far2l_use_vs16 = false;
+		fprintf(stderr, "%s: NO due to start_col=%d\n", __FUNCTION__, start_col);
+		return;
 	}
+
+	// Print the VS16 symbol U+25AB + U+FE0F: ▫️
+	WriteAndDrain(std_out, "\xE2\x96\xAB\xEF\xB8\x8F");
+	// Query cursor after printing
+	const auto [end_row, end_col] = getPos();
+	// Remove the printed symbol
+	char seq[32];
+	snprintf(seq, sizeof(seq), "\x1b[%d;%d\x1b[K", start_row, start_col);
+	WriteAndDrain(std_out, seq);
 	tcsetattr(std_in, TCSAFLUSH, &orig);
 
-	g_far2l_use_vs16 = (start_col >= 0 && end_col >= 0 && (end_col - start_col) == 2); // 1 = no emoji width, 2 = VS16 rendered full-width
+	g_far2l_use_vs16 = (end_col >= 0 && (end_col - start_col) == 2); // 1 = no emoji width, 2 = VS16 rendered full-width
 	fprintf(stderr, "%s: %s due to start_col=%d end_col=%d\n", __FUNCTION__, g_far2l_use_vs16 ? "YES" : "NO", start_col, end_col);
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, TTYCaps tty_caps, unsigned int esc_expiration, int notify_pipe, int *result) :
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
-	_ext_clipboard(ext_clipboard),
-	_norgb(norgb),
-	_nodetect(nodetect),
-	_far2l_tty(far2l_tty),
+	_tty_caps(tty_caps),
 	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
 	_result(result),
@@ -267,6 +262,8 @@ bool TTYBackend::Startup()
 	g_winport_con_out->GetSize(_cur_width, _cur_height);
 	g_winport_con_out->SetBackend(this);
 
+	SetupAttachedTTY(_tty_caps.kind == TTYCaps::FAR2L); // do very initial setup synchronously before app startup
+
 	if (pthread_create(&_reader_trd, nullptr, sReaderThread, this) != 0) {
 		return false;
 	}
@@ -292,60 +289,107 @@ static bool UnderWayland()
 	return false;
 }
 
-void TTYBackend::ReaderThread()
+void TTYBackend::SetupAttachedTTY(bool far2l_tty)
 {
-	bool prev_far2l_tty = false;
-	while (!_exiting) {
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_pix_per_cell.X = _pix_per_cell.Y = 0;
-			_images_kitty_status = IKS_UNKNOWN;
-			for (const auto &it : _images) {
-				_images_to_display.insert(it.first);
-			}
-		}
-		_far2l_cursor_height = -1; // force cursor height update on next output dispatch
-		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
+	// firstly set default detectable values
+	_tty_caps.kind = TTYCaps::GENERIC;
+	_tty_caps.DEC_lines = false;
+	_tty_caps.strict_dups = false;
+	_tty_caps.strict_pos = false;
 
-		if (_far2l_tty) {
-			if (!prev_far2l_tty && !_ext_clipboard) {
-				IFar2lInteractor *interactor = this;
-				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interactor);
+	// then do actual detection of special cases
+	if (far2l_tty) {
+		_tty_caps.kind = TTYCaps::FAR2L;
+	} else {
+
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
+		unsigned long int leds = 0;
+		if (ioctl(_stdout, KDGETLED, &leds) == 0) {
+			_tty_caps.kind = TTYCaps::KERNEL;
+		}
+#endif
+
+		const char *env = getenv("TERM");
+		if (env && (strcmp(env, "wsvt25") == 0 || strcmp(env, "vt100") == 0 || strcmp(env, "vt220") == 0) ) {
+			_tty_caps.DEC_lines = true;
+		}
+		if (env && strncmp(env, "screen", 6) == 0) { // TERM=screen.xterm-256color
+			_tty_caps.strict_dups = true;
+		}
+
+		env = getenv("TERM_PROGRAM");
+		if (env && strcasecmp(env, "WezTerm") == 0) {
+			_tty_caps.strict_pos = true;
+		}
+	}
+
+	fprintf(stderr, "%s(%d): nodetect=%u kind=%d DEC_lines=%d strict_dups=%d strict_pos=%d norgb=%d ext_clipboard=%d\n",
+		__FUNCTION__, far2l_tty,
+		_tty_caps.nodetect, _tty_caps.kind,
+		_tty_caps.DEC_lines, _tty_caps.strict_dups, _tty_caps.strict_pos,
+		_tty_caps.norgb, _tty_caps.ext_clipboard);
+
+	// now setup clipboard backend and some other things
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_pix_per_cell.X = _pix_per_cell.Y = 0;
+		_images_kitty_status = IKS_UNKNOWN;
+		for (const auto &it : _images) {
+			_images_to_display.insert(it.first);
+		}
+	}
+	_far2l_cursor_height = -1; // force cursor height update on next output dispatch
+	_fkeys_support = (_tty_caps.kind == TTYCaps::FAR2L) ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
+
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
+		if (_prev_tty_caps.kind != TTYCaps::FAR2L && !_tty_caps.ext_clipboard) {
+			IFar2lInteractor *interactor = this;
+			_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interactor);
+		}
+
+	} else {
+		if ((_tty_caps.nodetect & NODETECT_X)==0) {
+			// disable xi on Wayland as it not work there anyway and also causes delays
+			_ttyx = StartTTYX(_full_exe_path, ((_tty_caps.nodetect & NODETECT_XI)==0) && !UnderWayland());
+		}
+		if (_ttyx) {
+			if (!_tty_caps.ext_clipboard) {
+				_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
 			}
 
 		} else {
-			if ((_nodetect & NODETECT_X)==0) {
-
-				// disable xi on Wayland as it not work there anyway and also causes delays
-				_ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
-			}
-			if (_ttyx) {
-				if (!_ext_clipboard) {
-					_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
-				}
-
-			} else {
-				ChooseSimpleClipboardBackend();
-			}
+			ChooseSimpleClipboardBackend();
 		}
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_deadio = false;
+		_ae.term_resized = true;
+	}
+
+	if ((_tty_caps.nodetect & NODETECT_E) == 0) {
+		if (_tty_caps.kind == TTYCaps::FAR2L) {
+			g_far2l_use_vs16 = true;
+		} else { // check variation selector 16
+			DetectVS16(_stdin, _stdout);
+		}
+	} else {
+		g_far2l_use_vs16 = false;
+	}
+
+	_initial_cursor_shape = -1;
+	if (_tty_caps.kind == TTYCaps::GENERIC) {
+		WriteAndDrain(_stdout, "\x1bP$q q\x1b\\"); // Request current cursor shape
+	}
+
+	_prev_tty_caps = _tty_caps;
+}
+
+void TTYBackend::ReaderThread()
+{
+	while (!_exiting) {
 		BackendInfoChanged();
-		prev_far2l_tty = _far2l_tty;
-
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_deadio = false;
-			_ae.term_resized = true;
-		}
-
-		// this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
-		//check variation selector 16 is usable before reassigning stdout
-		if (_nodetect == NODETECT_NONE) {
-			if (_far2l_tty) {
-				g_far2l_use_vs16 = true;
-			} else {
-				DetectVS16(_stdin, _stdout);
-			}
-		}
 
 		pthread_t writer_trd = 0;
 		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) != 0) {
@@ -370,13 +414,16 @@ void TTYBackend::ReaderThread()
 		}
 
 		pthread_join(writer_trd, nullptr);
+
 		DetachNotifyPipe();
 		_ttyx.reset();
 
 		while (!_exiting) {
 			const std::string &info = StrWide2MB(g_winport_con_out->GetTitle());
-			_notify_pipe = TTYReviveMe(_stdin, _stdout, _far2l_tty, _kickass[0], info);
-			if (_notify_pipe != -1) {
+			const auto &np_f2l = TTYReviveMe(_stdin, _stdout, _kickass[0], info);
+			if (np_f2l.first != -1) {
+				_notify_pipe = np_f2l.first;
+				SetupAttachedTTY(np_f2l.second);
 				break;
 			}
 		}
@@ -400,7 +447,7 @@ void TTYBackend::ReaderLoop()
 
 		int rs;
 
-		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
+		if (!idle_expired && _esc_expiration > 0 && _tty_caps.kind != TTYCaps::FAR2L) {
 			struct timeval tv;
 			tv.tv_sec = _esc_expiration / 1000;
 			tv.tv_usec = suseconds_t((_esc_expiration - tv.tv_sec * 1000) * 1000);
@@ -472,8 +519,8 @@ void TTYBackend::WriterThread()
 {
 	bool gone_background = false;
 	try {
-		_focused = !_far2l_tty;
-		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
+		_focused = (_tty_caps.kind != TTYCaps::FAR2L); // this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
+		TTYOutput tty_out(_stdout, _tty_caps);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -535,6 +582,11 @@ void TTYBackend::WriterThread()
 				gone_background = true;
 				break;
 			}
+		}
+
+		const auto cursor_shape = _initial_cursor_shape.load();
+		if (cursor_shape >= 0) {
+			tty_out.ChangeCursorShape(cursor_shape);
 		}
 
 	} catch (const std::exception &e) {
@@ -809,7 +861,7 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 {
 	COORD out = {CheckedCast<SHORT>(_cur_width ? _cur_width : 0x10), CheckedCast<SHORT>(_cur_height ? _cur_height : 0x10)};
 
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		if (_largest_window_size_ready)
 			return _largest_window_size;
 
@@ -868,11 +920,11 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 
 BYTE TTYBackend::OnConsoleGetColorPalette()
 {
-	if (_norgb) {
+	if (_tty_caps.norgb) {
 		return 4;
 	}
 
-	if (_far2l_tty) try {
+	if (_tty_caps.kind == TTYCaps::FAR2L) try {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(FARTTY_INTERACT_GET_COLOR_PALETTE);
 		Far2lInteract(stk_ser, true);
@@ -915,7 +967,7 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 		const auto prev_osc52clip_set = _osc52clip_set;
 		_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
 
-		if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
+		if (_osc52clip_set != prev_osc52clip_set && _tty_caps.kind != TTYCaps::FAR2L && !_ttyx) {
 			ChooseSimpleClipboardBackend();
 		}
 
@@ -935,7 +987,7 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 
 	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
 
-	if (!_far2l_tty && !_ttyx) {
+	if (_tty_caps.kind != TTYCaps::FAR2L && !_ttyx) {
 		out|= TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
 	}
 
@@ -1056,7 +1108,7 @@ void TTYBackend::OnConsoleSetMaximized(bool maximized)
 
 void TTYBackend::ChooseSimpleClipboardBackend()
 {
-	if (_ext_clipboard) {
+	if (_tty_caps.ext_clipboard) {
 		return;
 	}
 
@@ -1079,7 +1131,7 @@ void TTYBackend::OSC52SetClipboard(const char *text)
 
 bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 {
-	if (!_far2l_tty || _exiting)
+	if (_tty_caps.kind != TTYCaps::FAR2L || _exiting)
 		return false;
 
 	std::shared_ptr<Far2lInteractData> pfi = std::make_shared<Far2lInteractData>();
@@ -1255,7 +1307,7 @@ void TTYBackend::OnFocusChange(bool focused)
 
 void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 {
-	if (!_far2l_tty) {
+	if (_tty_caps.kind != TTYCaps::FAR2L) {
 		fprintf(stderr, "Far2lEvent unexpected!\n");
 		return;
 	}
@@ -1286,7 +1338,7 @@ void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 
 void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 {
-	if (!_far2l_tty) {
+	if (_tty_caps.kind != TTYCaps::FAR2L) {
 		fprintf(stderr, "OnFar2lReply: unexpected!\n");
 		return;
 	}
@@ -1326,6 +1378,12 @@ void TTYBackend::OnStatusResponse(char c)
 		_images_kitty_status = IKS_UNSUPPORTED;
 	}
 	_images_kitty_status_cond.notify_all();
+}
+
+void TTYBackend::OnCursorShape(int shape)
+{
+	fprintf(stderr, "OnCursorShape: %d\n", shape);
+	_initial_cursor_shape = shape;
 }
 
 void TTYBackend::OnInputBroken()
@@ -1408,7 +1466,7 @@ DWORD TTYBackend::QueryControlKeys()
 
 void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		try {
 			StackSerializer stk_ser;
 			stk_ser.PushStr(Wide2MB(text));
@@ -1452,11 +1510,11 @@ const char *TTYBackend::OnConsoleBackendInfo(int entity)
 		_backend_info.flavor.reserve(16); // avoid reallocation ever then
 		_backend_info.flavor = "TTY";
 
-		if (_far2l_tty || _ttyx || _using_extension) {
+		if (_tty_caps.kind == TTYCaps::FAR2L || _ttyx || _using_extension) {
 			_backend_info.flavor+= '|';
 		}
 
-		if (_far2l_tty) {
+		if (_tty_caps.kind == TTYCaps::FAR2L) {
 			_backend_info.flavor+= 'F';
 		} else if (_ttyx || _using_extension) {
 			if (_ttyx) {
@@ -1532,7 +1590,7 @@ static void OnSigHup(int signo)
 void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
 	memset(wgi, 0, sizeof(*wgi));
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		try {
 			StackSerializer stk_ser;
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_CAPS);
@@ -1554,7 +1612,7 @@ void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 
 bool TTYBackend::CheckKittyImagesSupport()
 {
-	if ( (_nodetect & NODETECT_K) != 0) {
+	if ( (_tty_caps.nodetect & NODETECT_K) != 0) {
 		fprintf(stderr, "%s: nodetect\n", __FUNCTION__);
 		return false;
 	}
@@ -1601,7 +1659,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 			return false;
 	}
 
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		uint8_t ok = 0;
 		SMALL_RECT def_area = {-1, -1, -1, -1};
 		if (!area) {
@@ -1666,7 +1724,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 
 bool TTYBackend::OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		uint8_t ok = 0;
 		try {
 			SMALL_RECT def_area = {-1, -1, -1, -1};
@@ -1694,7 +1752,7 @@ bool TTYBackend::OnTransformConsoleImage(const char *id, const SMALL_RECT *area,
 
 bool TTYBackend::OnDeleteConsoleImage(const char *id)
 {
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		uint8_t ok = 0;
 		try {
 			StackSerializer stk_ser;
@@ -1726,9 +1784,17 @@ bool TTYBackend::OnDeleteConsoleImage(const char *id)
 	return true;
 }
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, uint16_t nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, norgb, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
+	TTYCaps tty_caps{};
+	tty_caps.nodetect = nodetect;
+	tty_caps.norgb = norgb;
+	tty_caps.ext_clipboard = ext_clipboard;
+	if (far2l_tty) {
+		tty_caps.kind = TTYCaps::FAR2L;
+	}
+
+	TTYBackend vtb(full_exe_path, std_in, std_out, tty_caps, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;

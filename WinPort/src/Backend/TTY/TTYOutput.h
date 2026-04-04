@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <vector>
 #include <map>
+#include <atomic>
 #include <WinCompat.h>
 #include <StackSerializer.h>
 #include "../WinPortRGB.h"
@@ -51,6 +52,7 @@ class TTYOutput
 	int _out;
 	bool _far2l_tty, _norgb, _kernel_tty, _screen_tty, _wezterm, _vt100{false}, _vt100_line_drawing{false};
 	DWORD _nodetect;
+	std::atomic<int>* _initial_cursor_shape;
 	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
 	DWORD64 _prev_attr{};
@@ -68,7 +70,7 @@ class TTYOutput
 	void WriteUpdatedAttributes(DWORD64 new_attr, bool is_space);
 
 public:
-	TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect);
+	TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect, std::atomic<int>* initial_cursor_shape);
 	~TTYOutput();
 
 	void Flush();

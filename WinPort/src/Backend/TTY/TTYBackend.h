@@ -120,6 +120,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::condition_variable _ae_idle_wait_cond;
 
 	std::string _osc52clip;
+	std::atomic<int> _initial_cursor_shape{-1};
 
 	ClipboardBackendSetter _clipboard_backend_setter;
 	PrinterSupportBackendSetter _printer_backend_setter;
@@ -182,6 +183,7 @@ protected:
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnKittyGraphicsResponse(const std::string &s);
 	virtual void OnStatusResponse(char c);
+	virtual void OnCursorShape(int shape);
 	virtual void OnInputBroken();
 	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 

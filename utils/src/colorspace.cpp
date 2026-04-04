@@ -489,7 +489,7 @@ ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg) {
     newFg = fg;
 
     double dL  = deltaL(labFg, labBg);
-    double dE  = deltaE76(labFg, labBg); // or deltaE2000(labFg, labBg);
+    double dE  = deltaE2000(labFg, labBg); // or deltaE76(labFg, labBg);
 
     // --- Method B: WCAG contrast ratio ---
     double ratio = wcagComputeContrast(fg, bg);
@@ -537,7 +537,7 @@ ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg) {
     }
 
     // no way to lighten -> try to make darken
-
+    targetDeltaE = 20;
     labFg = RGBtoLAB(fg);
     for (int i = 0; i < 50; ++i) {
         double dE = deltaE2000(labFg, labBg);

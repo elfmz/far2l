@@ -5,6 +5,7 @@
 #include <WinCompat.h>
 #include <StackSerializer.h>
 #include "../WinPortRGB.h"
+#include "TTYCaps.h"
 
 extern long _iterm2_cmd_ts;
 extern bool _iterm2_cmd_state;
@@ -49,10 +50,10 @@ class TTYOutput
 	} _true_colors;
 
 	int _out;
-	bool _far2l_tty, _norgb, _kernel_tty, _screen_tty, _wezterm, _vt100{false}, _vt100_line_drawing{false};
-	DWORD _nodetect;
+	TTYCaps _tty_caps;
 	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
+	bool _DEC_line_drawing{false};
 	DWORD64 _prev_attr{};
 	std::string _tmp_attrs;
 
@@ -68,13 +69,14 @@ class TTYOutput
 	void WriteUpdatedAttributes(DWORD64 new_attr, bool is_space);
 
 public:
-	TTYOutput(int out, bool far2l_tty, bool norgb, DWORD nodetect);
+	TTYOutput(int out, TTYCaps tty_caps);
 	~TTYOutput();
 
 	void Flush();
 
 	void ChangePalette(const TTYBasePalette &palette);
 	void ChangeCursorHeight(unsigned int height);
+	void ChangeCursorShape(int shape);
 	void ChangeCursor(bool visible, bool force = false);
 	int WeightOfHorizontalMoveCursor(unsigned int y, unsigned int x) const;
 	void MoveCursorStrict(unsigned int y, unsigned int x);

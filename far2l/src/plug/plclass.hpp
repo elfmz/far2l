@@ -154,7 +154,6 @@ public:
 
 	virtual const FARString &GetModuleName() = 0;
 	virtual const char *GetSettingsName()    = 0;
-	virtual DWORD GetSysID()                 = 0;
 	virtual bool CheckWorkFlags(DWORD flags) = 0;
 	virtual DWORD GetWorkFlags()             = 0;
 	virtual DWORD GetFuncFlags()             = 0;
@@ -212,4 +211,6 @@ public:
 
 	virtual bool MayExitFAR() = 0;
 	virtual void ExitFAR()    = 0;
+
+	DWORD GetSysID() { return SysID; }
 };

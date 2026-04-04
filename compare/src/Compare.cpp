@@ -1029,6 +1029,7 @@ SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 	static const TCHAR *PluginMenuStrings[1];
 
 	Info->StructSize = (int)sizeof(*Info);
+	Info->SysID = 0x4F6BDE22;
 	Info->Flags = 0;
 	Info->DiskMenuStrings = NULL;
 	PluginMenuStrings[0] = GetMsg(MCompare);

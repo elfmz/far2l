@@ -365,6 +365,7 @@ void GetEnvType(TCHAR *NewString, int StringLength, struct EditorInfo *ei, int &
 SHAREDSYMBOL void WINAPI EXP_NAME(GetPluginInfo)(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0xC941E865;
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS;
 	Info->DiskMenuStringsNumber = 0;
 	static const TCHAR *PluginMenuStrings[1];

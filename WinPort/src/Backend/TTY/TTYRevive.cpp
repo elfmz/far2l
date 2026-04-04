@@ -23,7 +23,7 @@
 #define TTY_INFO_MAXTEXT         0x1000
 #define TTY_INFO_FEAT_XENV       0x00000001
 
-int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std::string &info)
+std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info)
 {
 	std::string ipc_path = InMyTempFmt("TTY/srv-%lu.", (unsigned long)getpid());
 	std::string info_path = ipc_path;
@@ -32,6 +32,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 
 	UnlinkScope us_ipc_path(ipc_path);
 	UnlinkScope us_info_path(info_path);
+	std::pair<int, bool> out{-1, false};
 
 	try {
 		{
@@ -54,7 +55,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		unsigned char flags = -1;
 		sock.Recv(&flags, 1);
 		if (flags & ~TTY_FLAGS_ALL) {
-			return -1;
+			return out;
 		}
 		uint64_t intersected_feats = 0;
 		if (flags & TTY_FLAG_FEATS) {
@@ -68,8 +69,6 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 
 		dup2(new_in, std_in);
 		dup2(new_out, std_out);
-
-		far2l_tty = ((flags & TTY_FLAG_FAR2L) != 0);
 
 		if (intersected_feats & TTY_INFO_FEAT_XENV) {
 			std::vector<char> v;
@@ -99,7 +98,8 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 			}
 		}
 
-		return notify_pipe;
+		out.first = notify_pipe;
+		out.second = ((flags & TTY_FLAG_FAR2L) != 0);
 
 	} catch (LocalSocketCancelled &e) {
 		(void)e;
@@ -113,7 +113,7 @@ int TTYReviveMe(int std_in, int std_out, bool &far2l_tty, int kickass, const std
 		fprintf(stderr, "TTYReviveMe: %s\n", e.what());
 	}
 
-	return -1;
+	return out;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -234,7 +234,8 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 		if (intersected_feats & TTY_INFO_FEAT_XENV) {
 			const char *envs[] = { "DISPLAY", "ICEAUTHORITY", "SESSION_MANAGER",
 				"XAPPLRESDIR", "XCMSDB", "XENVIRONMENT", "XFILESEARCHPATH", "XKEYSYMDB",
-				"XLOCALEDIR", "XMODIFIERS", "XUSERFILESEARCHPATH", "XWTRACE", "XWTRACELC"
+				"XLOCALEDIR", "XMODIFIERS", "XUSERFILESEARCHPATH", "XWTRACE", "XWTRACELC",
+				"TERM", "TERM_PROGRAM"
 			};
 			uint32_t l;
 			for (const auto &env : envs) {

@@ -42,6 +42,7 @@ SHAREDSYMBOL void WINAPI WIDE_SUFFIX(SetStartupInfo)(const struct PluginStartupI
 SHAREDSYMBOL void WINAPI WIDE_SUFFIX(GetPluginInfo)(struct PluginInfo *Info)
 {
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0X52D8EECB;
 	Info->Flags = PF_DISABLEPANELS;
 	Info->PluginMenuStringsNumber = 0;
 }

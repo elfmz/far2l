@@ -16,5 +16,6 @@
   "ps_ok": "OK",
   "ps_column": "Kolumna",
   "ps_title": "Sortuj wiersze",
-  "ps_reverse": "&Malejąco"
+  "ps_reverse": "&Malejąco",
+  "ps_unique": "&Unikalne wiersze"
 }

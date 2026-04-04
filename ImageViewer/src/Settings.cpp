@@ -9,7 +9,7 @@
 				"*.emf *.eps *.flc *.fli *.fpx *.gif *.icl *.ico *.iff *.indd *.j2k *.jp2 *.jpc *.jpe *.jpeg " \
 				"*.jpeg2000 *.jpg *.jps *.kra *.lbm *.mng *.mpo *.pbm *.pcx *.pdn *.pgm *.pic *.png *.pns " \
 				"*.ppm *.psd *.psp *.ras *.rgb *.rle *.sai *.sgi *.spr *.svg *.tga *.tif *.tiff *.wbmp " \
-				"*.webp *.wmf *.xbm *.xcf *.xpm"
+				"*.webp *.wmf *.xbm *.xcf *.xpm *.heic"
 
 #define DEFAULT_VIDEO_MASKS \
 				"*.3g2 *.3gp *.asf *.avchd *.avi *.divx *.enc *.flv *.ifo *.m1v *.m2ts " \

@@ -4728,8 +4728,7 @@ void Editor::ScrollDown()
 {
 	if (m_bWordWrap)
 	{
-		if (!IncTopVisualLine())
-			return;
+		IncTopVisualLine();
 		Down();
 		return;
 	}
@@ -4810,8 +4809,7 @@ void Editor::ScrollUp()
 {
 	if (m_bWordWrap)
 	{
-		if (!DecTopVisualLine())
-			return;
+		DecTopVisualLine();
 		Up();
 		return;
 	}

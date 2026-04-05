@@ -5,6 +5,15 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Themes: added "Hercules Night", fixes to "Gold on Blue"
+* **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
+* _New_: `--nodetect=e` command line parameter to prevent emodjie VS16 suffix detection
+* _New_: Restore initial terminal cursor shape on exit
+* Viewer: Hex Mode now support multibytes UTF-8, UTF-16 etc.
+* Fix cmdline autocomplete when commands deduplicated by text
+* SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a pluguin's SysID may see via `far:about` or in plugin's source code)
+* _edsort plugin_: Support unique row sorting and preserve dialog values
+* Several bugfixes and improvements
 
 ## 2.8.0 beta (2026-03-23)
 * Themes support (change via **F9**->Options->Colors),

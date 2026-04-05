@@ -341,7 +341,63 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		_leader_pid = r;
-		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
+
+		// Disable output so that MOTD and init scripts don't mess up the screen.
+		_vta.DisableOutput();
+
+		// Give it time to initialize (e.g., .bashrc, motd).
+		// Wait until output is silent for 300ms, up to a maximum of 5000ms.
+		// This prevents typeahead from being consumed by TUI programs like 'glow' in motd.
+		DWORD start_ticks = WINPORT(GetTickCount)();
+		DWORD last_read_ticks = start_ticks;
+
+		while (true) {
+			DWORD now_ticks = WINPORT(GetTickCount)();
+			if (now_ticks - start_ticks >= 5000) break;
+			if (now_ticks - last_read_ticks >= 300) break;
+
+			fd_set rfds;
+			FD_ZERO(&rfds);
+			FD_SET(_fd_out, &rfds);
+			struct timeval tv;
+			tv.tv_sec = 0;
+			tv.tv_usec = 50000; // 50ms
+
+			int ret = select(_fd_out + 1, &rfds, NULL, NULL, &tv);
+			if (ret < 0) {
+				if (errno == EINTR) continue;
+				break;
+			}
+			if (ret > 0 && FD_ISSET(_fd_out, &rfds)) {
+				char buf[4096];
+				int flags = fcntl(_fd_out, F_GETFL, 0);
+				fcntl(_fd_out, F_SETFL, flags | O_NONBLOCK);
+				int n = read(_fd_out, buf, sizeof(buf));
+				fcntl(_fd_out, F_SETFL, flags);
+
+				if (n > 0) {
+					if (_slavename.empty()) {
+						for (int i = 0, ii = 0; i <= n; ++i) {
+							if (i == n || buf[i] == '\n') {
+								if (i > ii) {
+									_vta.Write(&buf[ii], i - ii);
+								}
+								if (i == n) break;
+								char cr = '\r';
+								_vta.Write(&cr, 1);
+								ii = i;
+							}
+						}
+					} else {
+						_vta.Write(buf, n);
+					}
+					last_read_ticks = WINPORT(GetTickCount)();
+				} else if (n == 0 || (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
+					break; // EOF or error
+				}
+			}
+		}
+
 		return true;
 	}
 
@@ -771,7 +827,11 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 	virtual void InjectInput(const char *str)
 	{
-		_input_reader.InjectInput(str, strlen(str));
+		if (!_input_reader.IsStarted()) {
+			WriteTerm(str, strlen(str));
+		} else {
+			_input_reader.InjectInput(str, strlen(str));
+		}
 	}
 
 	std::string StringFromClipboard()

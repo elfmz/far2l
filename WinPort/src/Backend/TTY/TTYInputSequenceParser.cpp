@@ -273,7 +273,7 @@ size_t TTYInputSequenceParser::ParseNChars2Key(const char *s, size_t l)
 					ir.Event.KeyEvent.uChar.UnicodeChar = wc;
 					ir.Event.KeyEvent.dwControlKeyState|= LEFT_ALT_PRESSED;
 					ir.Event.KeyEvent.bKeyDown = TRUE;
-					_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+					_handler->OnInspectKeyEvent(ir.Event.KeyEvent, _bracketed_paste_mode);
 					_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 					ir.Event.KeyEvent.bKeyDown = FALSE;
 					_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
@@ -575,8 +575,7 @@ void TTYInputSequenceParser::AddPendingKeyEvent(const TTYInputKey &k)
 	ir.Event.KeyEvent.wVirtualKeyCode = k.vk;
 	ir.Event.KeyEvent.dwControlKeyState = k.control_keys | _extra_control_keys;
 	ir.Event.KeyEvent.wVirtualScanCode = WINPORT(MapVirtualKey)(k.vk,MAPVK_VK_TO_VSC);
-	if (!_bracketed_paste_mode)
-		_handler->OnInspectKeyEvent(ir.Event.KeyEvent);
+	_handler->OnInspectKeyEvent(ir.Event.KeyEvent, _bracketed_paste_mode);
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);
 	ir.Event.KeyEvent.bKeyDown = FALSE;
 	_ir_pending.emplace_back(ir); // g_winport_con_in->Enqueue(&ir, 1);

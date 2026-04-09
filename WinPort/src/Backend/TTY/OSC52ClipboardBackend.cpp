@@ -9,7 +9,7 @@ OSC52ClipboardBackend::OSC52ClipboardBackend(IOSC52Interactor *interactor) :
 
 void *OSC52ClipboardBackend::OnClipboardSetData(UINT format, void *data)
 {
-	if (format == CF_UNICODETEXT) {
+	if (format == CF_UNICODETEXT && data) {
 		std::string str;
 		Wide2MB((const wchar_t *)data, WINPORT(ClipboardSize)(data) / sizeof(wchar_t), str);
 		_interactor->OSC52SetClipboard(str.c_str());

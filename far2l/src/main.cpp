@@ -654,6 +654,7 @@ int FarAppMain(int argc, char **argv)
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
+	ApplyConfig();
 
 	bool cfgNeedSave = false;
 	//нужно проверить локаль до начала отрисовки интерфейса

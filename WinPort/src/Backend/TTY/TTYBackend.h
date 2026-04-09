@@ -176,7 +176,7 @@ protected:
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);
-	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event);
+	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event, bool fast = false);
 	virtual void OnFocusChange(bool focused);
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);

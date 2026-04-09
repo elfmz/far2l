@@ -654,7 +654,6 @@ int FarAppMain(int argc, char **argv)
 
 	InitConsole();
 	WINPORT(SetConsoleCursorBlinkTime)(NULL, Opt.CursorBlinkTime);
-	ApplyConfig();
 
 	bool cfgNeedSave = false;
 	//нужно проверить локаль до начала отрисовки интерфейса
@@ -672,6 +671,7 @@ int FarAppMain(int argc, char **argv)
 			"Too many language messages. Need to refactor code to eliminate use of IsPtr.");
 
 	if (!Lang.Init(g_strFarPath, true, Msg::NewFileName.ID())) {
+	ApplyConfig();
 		LPCWSTR LngMsg;
 		switch (Lang.LastError()) {
 			case LERROR_BAD_FILE:

@@ -159,8 +159,8 @@ TTYOutput::TTYOutput(int out, TTYCaps tty_caps)
 	:
 	_out(out), _tty_caps(tty_caps)
 {
-	// enable mouse and focus notifications
-	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h" ESC "[?1004h");
+	// enable mouse and focus notifications, disable auto-wrap
+	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h" ESC "[?1004h" ESC "[?7l");
 
 	if ((_tty_caps.nodetect & NODETECT_W) == 0) {
 		Format(ESC "[?9001h"); // win32-input-mode on
@@ -198,7 +198,7 @@ TTYOutput::~TTYOutput()
 		if ((_tty_caps.nodetect & NODETECT_K) == 0) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
-		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
+		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" ESC "[?7h" "\r\n");
 		if ((_tty_caps.nodetect & NODETECT_W) == 0) {
 			Format(ESC "[?9001l"); // win32-input-mode off
 		}

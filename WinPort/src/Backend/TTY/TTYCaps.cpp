@@ -24,9 +24,9 @@
 //NB TTYCaps_Startup() and stuff it uses must be signal-safe
 // see http://man7.org/linux/man-pages/man7/signal-safety.7.html
 
-uint32_t TTYKernelQueryControlKeys(int fd)
+unsigned int TTYKernelQueryControlKeys(int fd)
 {
-	uint32_t out = 0;
+	unsigned int out = 0;
 
 #ifdef __linux__
 	unsigned char state = 6;

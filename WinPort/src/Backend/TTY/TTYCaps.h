@@ -31,5 +31,5 @@ struct TTYCaps
 	bool norgb : 1;         // set by Setup() if restrict.rgb == true or if terminal doesnt support RGB graphics (e.g. screen)
 };
 
-uint32_t TTYKernelQueryControlKeys(int stdin);
+unsigned int TTYKernelQueryControlKeys(int stdin);
 bool TTYWriteAndDrain(int fd, const std::string &str);

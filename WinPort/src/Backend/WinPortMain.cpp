@@ -18,12 +18,10 @@
 #endif
 
 #include <ScopeHelpers.h>
-#include <TTYRawMode.h>
 #include <TestPath.h>
 
 #include "TTY/TTYCaps.h"
 #include "TTY/TTYRevive.h"
-#include "TTY/TTYNegotiateFar2l.h"
 
 #include <os_call.hpp>
 
@@ -48,7 +46,7 @@ static char *s_stderr_trace = nullptr;
 static BOOL s_winport_testing = FALSE;
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
-	bool ext_clipboard, bool norgb, uint16_t nodetect, bool far2l_tty,
+	bool ext_clipboard, TTYRestrict restrict,
 	unsigned int esc_expiration, int notify_pipe, int argc, char **argv,
 	int(*AppMain)(int argc, char **argv), int *result);
 
@@ -130,6 +128,8 @@ static std::string GetStdPath(const char *env1, const char *env2)
 
 static void SetupStdHandles()
 {
+	fflush(stdout);
+	fflush(stderr);
 	const std::string &out = GetStdPath("FAR2L_STDOUT", "FAR2L_STD");
 	const std::string &err = GetStdPath("FAR2L_STDERR", "FAR2L_STD");
 	unsigned char reopened = 0;
@@ -164,52 +164,7 @@ static void SetupStdHandles()
 	}
 }
 
-class NormalizeTerminalState
-{
-	int _std_in, _std_out;
-	bool _far2l_tty;
-	std::unique_ptr<TTYRawMode> &_tty_raw_mode;
-	bool _raw;
-	bool _far2l_tty_actual;
-
-public:
-	NormalizeTerminalState(int std_in, int std_out, bool far2l_tty, std::unique_ptr<TTYRawMode> &tty_raw_mode)
-		: _std_in(std_in), _std_out(std_out),
-		_far2l_tty(far2l_tty),
-		_tty_raw_mode(tty_raw_mode),
-		_raw(tty_raw_mode),
-		_far2l_tty_actual(far2l_tty)
-	{
-		Apply();
-	}
-
-	~NormalizeTerminalState()
-	{
-		Revert();
-	}
-
-	void Apply()
-	{
-		if (_far2l_tty && _far2l_tty_actual) {
-			TTYNegotiateFar2l(_std_in, _std_out, false);
-			_far2l_tty_actual = false;
-		}
-		_tty_raw_mode.reset();
-	}
-
-	void Revert()
-	{
-		if (_raw && !_tty_raw_mode) {
-			_tty_raw_mode.reset(new TTYRawMode(_std_in, _std_out));
-		}
-
-		if (_far2l_tty && !_far2l_tty_actual) {
-			_far2l_tty_actual = TTYNegotiateFar2l(_std_in, _std_out, true);
-		}
-	}
-};
-
-static int TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique_ptr<TTYRawMode> &tty_raw_mode, pid_t &pid)
+static int TTYTryReviveSome(int std_in, int std_out, pid_t &pid)
 {
 	for (;;) {
 		std::vector<TTYRevivableInstance> instances;
@@ -218,7 +173,6 @@ static int TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique
 			return -1;
 		}
 
-		NormalizeTerminalState nts(std_in, std_out, far2l_tty, tty_raw_mode);
 		FScope f_out(fdopen(dup(std_out), "w"));
 
 		fprintf(f_out, "\n\x1b[1;31mSome far2l-s lost in space-time nearby:\x1b[39;22m\n");
@@ -245,15 +199,12 @@ static int TTYTryReviveSome(int std_in, int std_out, bool far2l_tty, std::unique
 			continue;
 		}
 
-		nts.Revert();
-		int notify_pipe = TTYReviveIt(instances[index - 1].pid, std_in, std_out, far2l_tty);
+		int notify_pipe = TTYReviveIt(instances[index - 1].pid, std_in, std_out);
 
 		if (notify_pipe != -1) {
 			pid = instances[index - 1].pid;
 			return notify_pipe;
 		}
-
-		nts.Apply();
 
 		fprintf(f_out, "\x1b[1;31mRevival failed\x1b[39;22m\n");
 		sleep(1);
@@ -294,9 +245,8 @@ extern "C" void WinPortHelp()
 
 struct ArgOptions
 {
-	uint16_t nodetect = NODETECT_NONE;
-	bool tty = false, far2l_tty = false, notty = false;
-	bool norgb = getenv("TERM") != nullptr && strcmp(getenv("TERM"), "screen.xterm-256color") == 0; // If in GNU Screen, default "norgb = true" to avoid unusable colours
+	TTYRestrict restrict{};
+	bool tty = false, notty = false;
 	bool mortal = false;
 	bool x11 = false;
 	bool wayland = false;
@@ -322,36 +272,43 @@ struct ArgOptions
 
 		} else if (strcmp(a, "--notty") == 0) {
 			notty = true;
+			tty = false;
 
 		} else if (strcmp(a, "--tty") == 0) {
 			tty = true;
 
 		} else if (strcmp(a, "--norgb") == 0) {
-			norgb = true;
+			restrict.rgb = true;
 
 		} else if (strcmp(a, "--nodetect") == 0) {
-			nodetect = NODETECT_F | NODETECT_X | NODETECT_A | NODETECT_K | NODETECT_W | NODETECT_E;
+			restrict.xi = true;
+			restrict.x11 = true;
+			restrict.far2l = true;
+			restrict.apple = true;
+			restrict.kitty = true;
+			restrict.win32 = true;
+			restrict.emoji = true;
 
 		} else if (strstr(a, "--nodetect=") == a) {
 			if(strstr(a+11, "xi")) {
-				nodetect = NODETECT_XI;
+				restrict.xi = true;
 			} else if (strchr(a+11, 'x')) {
-				nodetect = NODETECT_X;
+				restrict.x11 = true;
 			}
 			if(strchr(a+11, 'f')) {
-				nodetect |= NODETECT_F;
+				restrict.far2l = true;
 			}
 			if(strchr(a+11, 'a')) {
-				nodetect |= NODETECT_A;
+				restrict.apple = true;
 			}
 			if(strchr(a+11, 'k')) {
-				nodetect |= NODETECT_K;
+				restrict.kitty = true;
 			}
 			if(strchr(a+11, 'w')) {
-				nodetect |= NODETECT_W;
+				restrict.win32 = true;
 			}
 			if(strchr(a+11, 'e')) {
-				nodetect |= NODETECT_E;
+				restrict.emoji = true;
 			}
 		} else if (strstr(a, "--clipboard=") == a) {
 			ext_clipboard = a + 12;
@@ -384,10 +341,14 @@ private:
 	ArgOptions(const ArgOptions&) = delete;
 };
 
-static bool IsFar2lFISHTerminal()
+static bool IsFar2lTerminal()
 {
-	const char *fish = getenv("FISH");
-	return (fish && strstr(fish, "far2l") != NULL);
+	const char *env = getenv("TERM_PROGRAM");
+	if (env && strcmp(env, "far2l") == 0) {
+		return true;
+	}
+	env = getenv("FISH");
+	return (env && strstr(env, "far2l") != NULL);
 }
 
 extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int(*AppMain)(int argc, char **argv))
@@ -400,16 +361,20 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 
 	InitPalette();
 
+	if (IsFar2lTerminal()) {
+		arg_opts.tty = true; // run far2l helper apps etc in TTY mode, if started from far2l terminal
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
-	unsigned long int leds = 0;
-	if (ioctl(0, KDGETLED, &leds) == 0) {
-		// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc
-		// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),
-		// so lets default to mortal mode in Linux/BSD TTY
-		arg_opts.mortal = true;
-		arg_opts.tty = true;
-	}
+	} else {
+		unsigned long int leds = 0;
+		if (ioctl(0, KDGETLED, &leds) == 0) {
+			// running under linux 'real' TTY, such kind of terminal cannot be dropped due to lost connection etc
+			// also detachable session makes impossible using of ioctl(_stdin, TIOCLINUX, &state) in child (#653),
+			// so lets default to mortal mode in Linux/BSD TTY
+			arg_opts.mortal = true;
+			arg_opts.tty = true;
+		}
 #endif
+	}
 
 	char *ea = getenv("FAR2L_ARGS");
 	if (ea != nullptr && *ea) {
@@ -465,24 +430,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	MakeFDCloexec(std_out);
 
 //	tcgetattr(std_out, &g_ts_tstp);
-
-	std::unique_ptr<TTYRawMode> tty_raw_mode;
-	if (!arg_opts.notty) {
-		tty_raw_mode.reset(new TTYRawMode(std_in, std_out));;
-		if ((arg_opts.nodetect & NODETECT_F) == 0) {
-	//		tty_raw_mode.reset(new TTYRawMode(std_out));
-			if (tty_raw_mode->Applied() || IsFar2lFISHTerminal()) {
-				arg_opts.far2l_tty = TTYNegotiateFar2l(std_in, std_out, true);
-				if (arg_opts.far2l_tty) {
-					arg_opts.tty = true;
-				}
-
-			} else {
-				arg_opts.notty = true;
-			}
-		}
-	}
-
 	SetupStdHandles();
 	if (!arg_opts.mortal) {
 		signal(SIGHUP, SIG_IGN);
@@ -552,12 +499,11 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
 			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
 			if (WinPortMainBackend_p) {
-				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
 				SudoAskpassServer askpass_srv(&askass_impl);
 
 				WinPortMainBackendArg a{FAR2L_BACKEND_ABI_VERSION,
-					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in, !arg_opts.ext_clipboard.empty(), arg_opts.norgb};
+					argc, argv, AppMain, &result, g_winport_con_out, g_winport_con_in, !arg_opts.ext_clipboard.empty(), arg_opts.restrict.rgb};
 				if (!WinPortMainBackend_p(&a) ) {
 					fprintf(stderr, "Cannot use GUI backend\n");
 					arg_opts.tty = !arg_opts.notty;
@@ -576,20 +522,17 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	}
 
 	if (arg_opts.tty) {
-		if (!tty_raw_mode) {
-			tty_raw_mode.reset(new TTYRawMode(std_in, std_out));
-		}
 		if (arg_opts.mortal) {
 			SudoAskpassImpl askass_impl;
 			SudoAskpassServer askpass_srv(&askass_impl);
 			if (!WinPortMainTTY(full_exe_path, std_in, std_out,
-					!arg_opts.ext_clipboard.empty(), arg_opts.norgb, arg_opts.nodetect,
-					arg_opts.far2l_tty, arg_opts.esc_expiration, -1, argc, argv, AppMain, &result)) {
+					!arg_opts.ext_clipboard.empty(), arg_opts.restrict,
+					arg_opts.esc_expiration, -1, argc, argv, AppMain, &result)) {
 				fprintf(stderr, "Cannot use TTY backend\n");
 			}
 
 		} else {
-			int notify_pipe = TTYTryReviveSome(std_in, std_out, arg_opts.far2l_tty, tty_raw_mode, g_sigwinch_pid);
+			int notify_pipe = TTYTryReviveSome(std_in, std_out, g_sigwinch_pid);
 			if (notify_pipe == -1) {
 				int new_notify_pipe[2] {-1, -1};
 				if (pipe(new_notify_pipe) == -1) {
@@ -609,8 +552,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 						SudoAskpassImpl askass_impl;
 						SudoAskpassServer askpass_srv(&askass_impl);
 						if (!WinPortMainTTY(full_exe_path, std_in, std_out,
-								!arg_opts.ext_clipboard.empty(), arg_opts.norgb, arg_opts.nodetect,
-								arg_opts.far2l_tty, arg_opts.esc_expiration, new_notify_pipe[1], argc, argv, AppMain, &result)) {
+								!arg_opts.ext_clipboard.empty(), arg_opts.restrict,
+								arg_opts.esc_expiration, new_notify_pipe[1], argc, argv, AppMain, &result)) {
 							fprintf(stderr, "Cannot use TTY backend\n");
 						}
 					}
@@ -626,10 +569,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			signal(SIGWINCH, prev_sigwinch);
 			g_sigwinch_pid = 0;
 			CheckedCloseFD(notify_pipe);
-		}
-
-		if (arg_opts.far2l_tty) {
-			TTYNegotiateFar2l(std_in, std_out, false);
 		}
 	}
 

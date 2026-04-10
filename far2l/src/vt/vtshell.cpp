@@ -202,6 +202,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				unsetenv("COLORTERM");
 		}
 
+		setenv("TERM_PROGRAM", "far2l", 1);
+
 		if (!askpass_app.empty()) {
 			setenv("SUDO_ASKPASS", askpass_app.c_str(), 1);
 		}

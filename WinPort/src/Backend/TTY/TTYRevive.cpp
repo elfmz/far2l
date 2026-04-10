@@ -16,14 +16,14 @@
 #include <ScopeHelpers.h>
 #include <LocalSocket.h>
 
-#define TTY_FLAG_FAR2L           0x01
+#define TTY_FLAG_FAR2L           0x01 // unused since 2.8.1
 #define TTY_FLAG_FEATS           0x02
 #define TTY_FLAGS_ALL            (TTY_FLAG_FAR2L | TTY_FLAG_FEATS)
 
 #define TTY_INFO_MAXTEXT         0x1000
 #define TTY_INFO_FEAT_XENV       0x00000001
 
-std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info)
+int TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info)
 {
 	std::string ipc_path = InMyTempFmt("TTY/srv-%lu.", (unsigned long)getpid());
 	std::string info_path = ipc_path;
@@ -32,7 +32,6 @@ std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std
 
 	UnlinkScope us_ipc_path(ipc_path);
 	UnlinkScope us_info_path(info_path);
-	std::pair<int, bool> out{-1, false};
 
 	try {
 		{
@@ -55,7 +54,7 @@ std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std
 		unsigned char flags = -1;
 		sock.Recv(&flags, 1);
 		if (flags & ~TTY_FLAGS_ALL) {
-			return out;
+			return -1;
 		}
 		uint64_t intersected_feats = 0;
 		if (flags & TTY_FLAG_FEATS) {
@@ -98,9 +97,7 @@ std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std
 			}
 		}
 
-		out.first = notify_pipe;
-		out.second = ((flags & TTY_FLAG_FAR2L) != 0);
-
+		return notify_pipe;
 	} catch (LocalSocketCancelled &e) {
 		(void)e;
 		fprintf(stderr, "TTYReviveMe: kickass signalled\n");
@@ -113,7 +110,7 @@ std::pair<int, bool> TTYReviveMe(int std_in, int std_out, int kickass, const std
 		fprintf(stderr, "TTYReviveMe: %s\n", e.what());
 	}
 
-	return out;
+	return -1;
 }
 
 ///////////////////////////////////////////////////////////////
@@ -203,8 +200,9 @@ void TTYRevivableEnum(std::vector<TTYRevivableInstance> &instances)
 	closedir(d);
 }
 
-int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
+int TTYReviveIt(pid_t pid, int std_in, int std_out)
 {
+	//bool far2l_tty
 	ReviveClientFiles rcf(pid);
 
 	int notify_pipe[2];
@@ -219,9 +217,7 @@ int TTYReviveIt(pid_t pid, int std_in, int std_out, bool far2l_tty)
 
 		// if peer and we have common extended feats - let him know we understood that
 		const uint64_t intersected_feats = (info_reader.Feats() & TTY_INFO_FEAT_XENV);
-		const unsigned char flags =
-			(far2l_tty ? TTY_FLAG_FAR2L : 0) |
-			( (intersected_feats != 0) ? TTY_FLAG_FEATS : 0);
+		const unsigned char flags = ( (intersected_feats != 0) ? TTY_FLAG_FEATS : 0);
 
 		sock.Send(&flags, 1);
 		if (intersected_feats != 0) {

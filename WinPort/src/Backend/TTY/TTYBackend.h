@@ -4,8 +4,10 @@
 #include <mutex>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <condition_variable>
 #include <Event.h>
+#include <TTYRawMode.h>
 #include <StackSerializer.h>
 #include "Backend.h"
 #include "TTYCaps.h"
@@ -24,20 +26,25 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 {
 	const char *_full_exe_path;
 	int _stdin = 0, _stdout = 1;
-	TTYCaps _tty_caps, _prev_tty_caps;
+	FDScope _stp_stdin, _stp_stdout;
+	std::atomic<bool> _stp_cont{false};
+	TTYCaps _tty_caps{}, _prev_tty_caps{};
+	std::optional<TTYRawMode> _tty_raw_mode;
 	bool _osc52clip_set = false;
 	bool _osc52clip_request = false;
+	struct termios _ts_cont {};
 
 	std::mutex _palette_mtx;
 	TTYBasePalette _palette;
-	bool _override_default_palette = false;
-
 	enum {
 		FKS_UNKNOWN,
 		FKS_SUPPORTED,
 		FKS_NOT_SUPPORTED
 	} _fkeys_support = FKS_UNKNOWN;
 
+	bool _override_default_palette = false;
+	bool _ext_clipboard = false;
+	TTYRestrict _restrict{};
 	unsigned int _esc_expiration = 0;
 	int _notify_pipe = -1;
 	int *_result = nullptr;
@@ -60,7 +67,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void ReaderLoop();
 	void WriterThread();
 	void BackendInfoChanged();
-	void SetupAttachedTTY(bool far2l_tty);
+	void SetupAttachedTTY();
+	void DetachTTY();
 
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
@@ -195,12 +203,15 @@ protected:
 	virtual void OnGetCellSize(unsigned int w, unsigned int h);
 	virtual void OnOSC52PasteReply(const std::string& s, bool is_primary_buffer);
 
-	DWORD QueryControlKeys();
-
 public:
-	TTYBackend(const char *full_exe_path, int std_in, int std_out, TTYCaps tty_caps, unsigned int esc_expiration, int notify_pipe, int *result);
+	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, TTYRestrict restrict, unsigned int esc_expiration, int notify_pipe, int *result);
 	~TTYBackend();
 	void KickAss(bool flush_input_queue = false);
 	bool Startup();
+
+	void OnSigTerm();
+	void OnSigTstp();
+	void OnSigCont();
+	void OnSigHup();
 };
 

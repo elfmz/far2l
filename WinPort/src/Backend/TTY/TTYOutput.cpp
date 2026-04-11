@@ -155,20 +155,20 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 
 ///////////////////////
 
-TTYOutput::TTYOutput(int out, TTYCaps tty_caps)
+TTYOutput::TTYOutput(int out, TTYCaps tty_caps, TTYRestrict restrict)
 	:
-	_out(out), _tty_caps(tty_caps)
+	_out(out), _tty_caps(tty_caps), _restrict(restrict)
 {
 	// enable mouse and focus notifications
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h" ESC "[?1004h");
 
-	if ((_tty_caps.nodetect & NODETECT_W) == 0) {
+	if (!_restrict.win32) {
 		Format(ESC "[?9001h"); // win32-input-mode on
 	}
-	if ((_tty_caps.nodetect & NODETECT_A) == 0) {
+	if (!_restrict.apple) {
 		Format(ESC "[?1337h"); // iTerm2 input mode on
 	}
-	if ((_tty_caps.nodetect & NODETECT_K) == 0) {
+	if (!_restrict.kitty) {
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
 
@@ -195,14 +195,14 @@ TTYOutput::~TTYOutput()
 		ChangeCursor(true, true);
 		ChangeMouse(false);
 		ChangeKeypad(false);
-		if ((_tty_caps.nodetect & NODETECT_K) == 0) {
+		if (!_restrict.kitty) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
-		if ((_tty_caps.nodetect & NODETECT_W) == 0) {
+		if (!_restrict.win32) {
 			Format(ESC "[?9001l"); // win32-input-mode off
 		}
-		if ((_tty_caps.nodetect & NODETECT_A) == 0) {
+		if (!_restrict.apple) {
 			Format(ESC "[?1337l"); // iTerm2 input mode off
 		}
 		TTYBasePalette def_palette;

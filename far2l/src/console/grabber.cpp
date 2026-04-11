@@ -122,24 +122,73 @@ void Grabber::CopyGrabbedArea(bool append)
 	if (_area.left < 0)
 		return;
 
-	const auto &area = NormalizedArea();
-	const size_t width = size_t(area.right + 1 - area.left);
-	std::vector<CHAR_INFO> char_info(width * (area.bottom + 1 - area.top));
-	GetText(area.left, area.top, area.right, area.bottom, char_info.data(), char_info.size() * sizeof(CHAR_INFO));
-
+//	std::vector<CHAR_INFO> char_info(width * (area.bottom + 1 - area.top));
+	std::string grabbed_html = "<tt><pre>\n";
 	std::wstring grabbed_text;
-	for (size_t i = 0; i < char_info.size(); ++i) {
-		if ( i != 0 && (i % width) == 0) {
-			StrTrimRight(grabbed_text);
+	DWORD prev_fore = 0, prev_back = 0;
+	uint32_t basepalette[32]{};
+	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
+
+	size_t html_spans = 0;
+	const auto &area = NormalizedArea();
+	for (SHORT y = area.top; y <= area.bottom; ++y) {
+		if (y != area.top) {
 			grabbed_text+= L'\n';
 		}
-		if (CI_USING_COMPOSITE_CHAR(char_info[i])) {
-			grabbed_text+= WINPORT(CompositeCharLookup)(char_info[i].Char.UnicodeChar);
-		} else if (char_info[i].Char.UnicodeChar) {
-			grabbed_text+= char_info[i].Char.UnicodeChar;
+		for (SHORT x = area.left; x <= area.right; ++x) {
+			const CHAR_INFO &ci = _save_scr->Read(x, y);
+			const wchar_t *pw = (const wchar_t *)&ci.Char.UnicodeChar;
+			size_t len = ci.Char.UnicodeChar ? 1 : 0;
+			if (CI_USING_COMPOSITE_CHAR(ci)) {
+				pw = WINPORT(CompositeCharLookup)(ci.Char.UnicodeChar);
+				len = wcslen(pw);
+			}
+			grabbed_text.append(pw, len);
+
+			const DWORD fore = (ci.Attributes & FOREGROUND_TRUECOLOR)
+				? GET_RGB_FORE(ci.Attributes) : basepalette[(ci.Attributes & 0x0f) + 16];
+			const DWORD back = (ci.Attributes & BACKGROUND_TRUECOLOR)
+				? GET_RGB_BACK(ci.Attributes) : basepalette[(ci.Attributes & 0xf0) >> 4];
+			if (html_spans == 0 || prev_fore != fore || prev_back != back) {
+				if (html_spans != 0 && prev_fore != fore && prev_back != back) {
+					--html_spans;
+					grabbed_html+= "</span>";
+				}
+				grabbed_html+= "<span style=\"";
+				if (html_spans == 0 || prev_fore != fore) {
+					grabbed_html+= StrPrintf("color:#%02X%02X%02X", fore & 0xff, (fore >> 8) & 0xff, (fore >> 16) & 0xff);
+				}
+				if (html_spans == 0 || prev_back != back) {
+					if (html_spans == 0 || prev_fore != fore) {
+						grabbed_html+= ';';
+					}
+					grabbed_html+= StrPrintf("background:#%02X%02X%02X", back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff);
+				}
+				grabbed_html+= "\">";
+				html_spans++;
+				prev_fore = fore;
+				prev_back = back;
+			}
+			if (len == 1 && *pw == L'<') {
+				grabbed_html+= "&lt;";
+			} else if (len == 1 && *pw == L'>') {
+				grabbed_html+= "&gt;";
+			} else if (len == 1 && *pw == L'&') {
+				grabbed_html+= "&amp;";
+			} else {
+				Wide2MB(pw, len, grabbed_html, true);
+			}
 		}
+		StrTrimRight(grabbed_text);
+		grabbed_html+= '\n';
 	}
-	StrTrimRight(grabbed_text);
+	while (html_spans--) {
+		grabbed_html+= "</span>";
+	}
+	grabbed_html+= "</pre></tt>\n";
+//	fprintf(stderr, "-----\n\n");
+//	fprintf(stderr, "%s\n", grabbed_html.c_str());
+//	fprintf(stderr, "-----\n\n");
 
 	FilterGrabbedText(grabbed_text);
 
@@ -157,9 +206,10 @@ void Grabber::CopyGrabbedArea(bool append)
 				grabbed_text.swap(tmp);
 			}
 			free(prev_clip_data);
+			clip.Copy(grabbed_text.c_str());
+		} else {
+			clip.CopyWithHtml(grabbed_text.c_str(), grabbed_html.c_str());
 		}
-
-		clip.Copy(grabbed_text.c_str());
 
 		clip.Close();
 	}
@@ -182,7 +232,6 @@ void Grabber::DisplayObject()
 		if (_area.left != -1) {
 			const size_t width = size_t(area.right + 1 - area.left);
 			std::vector<CHAR_INFO> char_info(width * (area.bottom + 1 - area.top));
-
 			GetText(area.left, area.top, area.right, area.bottom, char_info.data(), sizeof(CHAR_INFO) * char_info.size());
 
 			for (auto x = area.left; x <= area.right; ++x)
@@ -199,7 +248,6 @@ void Grabber::DisplayObject()
 						((char_info[index].Attributes & ~0xff) | new_attrs)
 							& (~(FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR));
 				}
-
 			PutText(area.left, area.top, area.right, area.bottom, char_info.data());
 		}
 
@@ -236,7 +284,13 @@ int Grabber::ProcessKey(FarKey key)
 	}
 
 	switch (key) {
-		case KEY_CTRLU:
+		case KEY_CTRLA: case 'A': case 'a':
+			_area.left = 0;
+			_area.top = 0;
+			_area.right = ScrX;
+			_area.bottom = ScrY;
+			break;
+		case KEY_CTRLU: case 'U': case 'u':
 			Reset();
 			_area.left = -2;
 			break;

@@ -154,11 +154,9 @@ void Grabber::CopyGrabbedArea(bool append)
 				if (html_span) {
 					grabbed_html+= "</span>";
 				}
-				grabbed_html+= StrPrintf(
-					"<span style=\"color: rgb(%d, %d, %d); background-color: rgb(%d, %d, %d);\">",
+				grabbed_html+= StrPrintf("<span style=\"color:#%02X%02X%02X;background:#%02X%02X%02X;\">",
 					fore & 0xff, (fore >> 8) & 0xff, (fore >> 16) & 0xff,
-					back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff
-				);
+					back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff);
 				html_span = true;
 				prev_fore = fore;
 				prev_back = back;
@@ -183,9 +181,9 @@ void Grabber::CopyGrabbedArea(bool append)
 		grabbed_html+= html_span ? "</span><br>\n" : "<br>\n";
 	}
 	grabbed_html+= "</tt>\n";
-	// fprintf(stderr, "-----\n\n");
-	// fprintf(stderr, "%s\n", grabbed_html.c_str());
-	// fprintf(stderr, "-----\n\n");
+//	fprintf(stderr, "-----\n\n");
+//	fprintf(stderr, "%s\n", grabbed_html.c_str());
+//	fprintf(stderr, "-----\n\n");
 
 	FilterGrabbedText(grabbed_text);
 

@@ -148,6 +148,7 @@ Glossary:
   only following predefined values are used by far2l in reality:
    1  - CF_TEXT - text encoded as UTF8
    13 - CF_UNICODETEXT - text encoded as UTF32 (deprecated in recent releases in favor of CF_TEXT)
+   15 - CF_HTML - HTML text
    Also far2l dynamically registers some own data formats to copy-paste vertical text blocks etc.
     At same moment of time clipboard may contain several different formats, thus allowing data to be
     represented in different forms. Also CF_TEXT/CF_UNICODETEXT transparently transcoded if needed.

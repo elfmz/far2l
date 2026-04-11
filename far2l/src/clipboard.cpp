@@ -191,6 +191,21 @@ bool Clipboard::Copy(const wchar_t *Data, bool IsVertical)
 	return true;
 }
 
+bool Clipboard::CopyWithHtml(const wchar_t *Data, const char *Html)
+{
+	Empty();
+
+	if (!AddData(CF_HTML, Html, strlen(Html) + 1)) {
+		return false;
+	}
+
+	if (!AddData(CF_UNICODETEXT, Data, (wcslen(Data) + 1) * sizeof(wchar_t))) {
+		return false;
+	}
+
+	return true;
+}
+
 bool Clipboard::AddData(UINT FormatType, const void *Data, size_t Size)
 {
 	if (!Data || !Size)

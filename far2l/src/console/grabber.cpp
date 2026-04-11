@@ -129,7 +129,7 @@ void Grabber::CopyGrabbedArea(bool append)
 	uint32_t basepalette[32]{};
 	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
 
-	bool html_span = false;
+	size_t html_spans = 0;
 	const auto &area = NormalizedArea();
 	for (SHORT y = area.top; y <= area.bottom; ++y) {
 		if (y != area.top) {
@@ -149,15 +149,20 @@ void Grabber::CopyGrabbedArea(bool append)
 				? GET_RGB_FORE(ci.Attributes) : basepalette[(ci.Attributes & 0x0f) + 16];
 			const DWORD back = (ci.Attributes & BACKGROUND_TRUECOLOR)
 				? GET_RGB_BACK(ci.Attributes) : basepalette[(ci.Attributes & 0xf0) >> 4];
-			if (!html_span || prev_fore != fore || prev_back != back) {
-				fprintf(stderr, "fore=%x back=%x ci.Attributes=0x%llx\n", fore, back, (unsigned long long)ci.Attributes);
-				if (html_span) {
+			if (html_spans == 0 || prev_fore != fore || prev_back != back) {
+				if (html_spans != 0 && prev_fore != fore && prev_back != back) {
+					--html_spans;
 					grabbed_html+= "</span>";
 				}
-				grabbed_html+= StrPrintf("<span style=\"color:#%02X%02X%02X;background:#%02X%02X%02X;\">",
-					fore & 0xff, (fore >> 8) & 0xff, (fore >> 16) & 0xff,
-					back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff);
-				html_span = true;
+				grabbed_html+= "<span style=\"";
+				if (html_spans == 0 || prev_fore != fore) {
+					grabbed_html+= StrPrintf("color:#%02X%02X%02X;", fore & 0xff, (fore >> 8) & 0xff, (fore >> 16) & 0xff);
+				}
+				if (html_spans == 0 || prev_back != back) {
+					grabbed_html+= StrPrintf("background:#%02X%02X%02X;", back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff);
+				}
+				grabbed_html+= "\">";
+				html_spans++;
 				prev_fore = fore;
 				prev_back = back;
 			}
@@ -174,7 +179,7 @@ void Grabber::CopyGrabbedArea(bool append)
 		StrTrimRight(grabbed_text);
 		grabbed_html+= '\n';
 	}
-	if (html_span) {
+	while (html_spans--) {
 		grabbed_html+= "</span>";
 	}
 	grabbed_html+= "</pre></tt>\n";

@@ -61,7 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, int DisableEdit,
 		long ViewStartPos, const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs, UINT aCodePage)
 	:
-	View(false, aCodePage), FullScreen(TRUE), DisableEdit(DisableEdit), MenuBar(nullptr)
+	View(false, aCodePage), MenuBar(nullptr), FullScreen(TRUE), DisableEdit(DisableEdit)
 {
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(I variant...)", this));
 	SetPosition(0, 0, ScrX, ScrY);
@@ -678,15 +678,6 @@ int FileViewer::IsOptionActive(int hMenu, int vMenu) {
 	return FALSE;
 }
 
-static constexpr const char HTML_PRE_HEADER[] =
-	"<html><head>"
-	"<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">"
-	"<style>@media print{pre{white-space:pre-wrap;overflow-wrap:break-word;}}</style>"
-	"</head><body><pre>\n";
-
-static constexpr const char HTML_PRE_FOOTER[] =
-    "</pre></body></html>";
-
 bool FileViewer::SendToPrinter()
 {
 	if (strName.IsEmpty()) return false;
@@ -696,28 +687,12 @@ bool FileViewer::SendToPrinter()
 	PrinterSupport printer;
 
 	if (!printer.IsReducedHTMLSupported()) {
-		if (printer.IsPrintPreviewSupported()) {
-			printer.ShowPreviewForTextFile(fileName);
-		}
-		else {
-			printer.PrintTextFile(fileName);
-		}
+		printer.PrintRawFile(fileName.c_str());
 		return true;
 	}
 
-	fprintf(stderr, "Printer caps: HTML=%c, preview=%c, setup dialog=%c\n",
-		printer.IsReducedHTMLSupported() ? 'Y' : 'N',
-		printer.IsPrintPreviewSupported() ? 'Y' : 'N',
-		printer.IsPrinterSetupDialogSupported() ?  'Y' : 'N');
-
-	// get all data in UTF-8 form and save to the temporary UTF-8 file to print, as it might be huge
-	char tmpl[] = "/tmp/far2l-viewer-printXXXXXX";
-	int fd = mkstemp(tmpl);
-	FILE* fp = fdopen(fd, "a+");
+	FILE* fp = printer.BeginPrint();
 	FILE* in = fopen(strName.GetMB().c_str(), "r");
-	int Length = 0;
-
-	fprintf(fp, HTML_PRE_HEADER);
 
 	char c;
 	while((c = getc(in)) != EOF) {
@@ -726,19 +701,7 @@ bool FileViewer::SendToPrinter()
 	}
 	fclose(in);
 
-	fprintf(fp, HTML_PRE_FOOTER);
-	fclose(fp);
-
-	Length = strlen(tmpl);
-	std::wstring _tmpwstr;
-	MB2Wide(tmpl, Length, _tmpwstr);
-
-	if (printer.IsPrintPreviewSupported()) {
-		printer.ShowPreviewForHtmlFile(_tmpwstr);
-	}
-	else {
-		printer.PrintHtmlFile(_tmpwstr);
-	}
+	printer.EndPrint(fp);
 
 	// unlink(tmpl);
 	return TRUE;

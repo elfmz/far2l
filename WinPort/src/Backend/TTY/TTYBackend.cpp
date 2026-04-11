@@ -201,16 +201,6 @@ void TTYBackend::BackendInfoChanged()
 	_backend_info.flavor.clear();
 }
 
-static bool UnderWayland()
-{
-	const char *xdg_st = getenv("XDG_SESSION_TYPE");
-	if (xdg_st && strcasecmp(xdg_st, "wayland") == 0)
-		return true;
-	if (getenv("WAYLAND_DISPLAY"))
-		return true;
-	return false;
-}
-
 void TTYBackend::SetupAttachedTTY()
 {
 	// firstly set default detectable values
@@ -238,7 +228,7 @@ void TTYBackend::SetupAttachedTTY()
 	} else {
 		if (!_restrict.x11) {
 			// disable xi on Wayland as it not work there anyway and also causes delays
-			_ttyx = StartTTYX(_full_exe_path, !_restrict.xi && !UnderWayland());
+			_ttyx = StartTTYX(_full_exe_path, !_restrict.xi && !_tty_caps.wayland);
 		}
 		if (_ttyx) {
 			if (!_ext_clipboard) {
@@ -1299,7 +1289,7 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 			Far2lInteract(stk_ser, false);
 		} catch (std::exception &) {}
 
-	} else if (getenv("DISPLAY") != NULL || UnderWayland()) {
+	} else if (_tty_caps.x11 || _tty_caps.wayland) {
 		const std::string &str_title = Wide2MB(title);
 		const std::string &str_text = Wide2MB(text);
 		Far2l_NotifySh(_full_exe_path, str_title.c_str(), str_text.c_str());

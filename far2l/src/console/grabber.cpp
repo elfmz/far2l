@@ -281,7 +281,13 @@ int Grabber::ProcessKey(FarKey key)
 	}
 
 	switch (key) {
-		case KEY_CTRLU:
+		case KEY_CTRLA: case 'A': case 'a':
+			_area.left = 0;
+			_area.top = 0;
+			_area.right = ScrX;
+			_area.bottom = ScrY;
+			break;
+		case KEY_CTRLU: case 'U': case 'u':
 			Reset();
 			_area.left = -2;
 			break;

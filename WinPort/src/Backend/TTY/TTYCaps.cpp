@@ -161,6 +161,8 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 	strict_pos = false;
 	emoji_vs16 = false;
 	norgb = false;
+	x11 = false;
+	wayland = false;
 
 	kind = GENERIC;
 
@@ -182,7 +184,7 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 
 	const bool detect_far2l = (kind == GENERIC && !restrict.far2l);
 	const bool detect_emoji = (!restrict.emoji);
-	std::string detect_emoji_reply;
+	std::string cur_pos_reply;
 
 	if (detect_far2l || detect_emoji) {
 		// message for the human being and set cursor to beginning of next line
@@ -236,12 +238,12 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 				if (reply_on_curpos.args.size() > 1 && reply_on_curpos.args[1] == 3) { //row, col
 					emoji_vs16 = true;
 				}
-				detect_emoji_reply+= '{';
+				cur_pos_reply+= '{';
 				for (const auto &a : reply_on_curpos.args) {
-					detect_emoji_reply+=
-						StrPrintf("%s%ld", (detect_emoji_reply.size() > 1) ? ", " : "", a);
+					cur_pos_reply+=
+						StrPrintf("%s%ld", (cur_pos_reply.size() > 1) ? ", " : "", a);
 				}
-				detect_emoji_reply+= '}';
+				cur_pos_reply+= '}';
 			}
 
 			// erase stuff printed for detection:
@@ -271,8 +273,33 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		strict_pos = true;
 	}
 
-	fprintf(stderr, "TTYCaps: %s restrict=%s%s%s%s%s%s%s%s %s%s%s%s%s EmojiReply=%s\n",
+	env = getenv("DISPLAY");
+	if (env && *env) {
+		x11 = true;
+	}
+
+	env = getenv("XDG_SESSION_TYPE");
+	if (env && strcasecmp(env, "wayland") == 0) {
+		wayland = true;
+	} else {
+		env = getenv("WAYLAND_DISPLAY");
+		if (env && *env) {
+			wayland = true;
+		}
+	}
+
+	fprintf(stderr, "TTYCaps: %s %s%s%s%s%s%s%s CurPos=%s restrict={%s%s%s%s%s%s%s%s}\n",
 			(kind == FAR2L) ? "FAR2L" : ((kind == KERNEL) ? "KERNEL" : "GENERIC"),
+
+			DEC_lines ? "DECLines " : "",
+			strict_dups ? "StrictDups " : "",
+			strict_pos ? "StrictPos " : "",
+			emoji_vs16 ? "EmojiVS16 " : "",
+			norgb ? "NoRGB " : "",
+			x11 ? "X11 " : "",
+			wayland ? "Wayland " : "",
+
+			cur_pos_reply.c_str(),
 
 			restrict.x11 ? "X11 " : "",
 			restrict.xi ? "Xi " : "",
@@ -281,15 +308,8 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 			restrict.kitty ? "KTY " : "",
 			restrict.win32 ? "W32 " : "",
 			restrict.emoji ? "EMJ " : "",
-			restrict.rgb ? "RGB " : "",
-
-			DEC_lines ? "DECLines " : "",
-			strict_dups ? "StrictDups " : "",
-			strict_pos ? "StrictPos " : "",
-			emoji_vs16 ? "EmojiVS16 " : "",
-			norgb ? "NoRGB " : "",
-
-			detect_emoji_reply.c_str());
+			restrict.rgb ? "RGB " : ""
+	);
 }
 
 void TTYCaps::Finup(int fdin, int fdout)

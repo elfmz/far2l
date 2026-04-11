@@ -5,11 +5,14 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
+// uncomment line below to enable self-contradiction check and some extra logging on startup
+// #define TTY_DEBUG
+
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
 
-#if 0 // change to 1 to enable self-contradiction check on startup
+#ifdef TTY_DEBUG
 
 template <typename Last> static void AssertNoConflictsBetween(const Last &last) { }
 
@@ -52,7 +55,9 @@ void TTYInputSequenceParser::AddStr(WORD vk, DWORD control_keys, const char *fmt
 	int r = vsnprintf (&tmp[0], sizeof(tmp), fmt, va);
 	va_end(va);
 
+#ifdef TTY_DEBUG
 	fprintf(stderr, "TTYInputSequenceParser::AddStr(0x%x, 0x%x, '%s'): '%s' r=%d\n", vk, control_keys, fmt, tmp, r);
+#endif
 
 	TTYInputKey k = {vk, control_keys};
 	switch (r) {

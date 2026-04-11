@@ -29,6 +29,8 @@ struct TTYCaps
 	bool strict_pos : 1;    // set by Setup() if terminal doesnt support "\e[#H" or "\e[H", but only "\e[#;#H"
 	bool emoji_vs16 : 1;    // set by Setup() if terminal supports wide emoji characters (Unicode Variation Selector-16)
 	bool norgb : 1;         // set by Setup() if restrict.rgb == true or if terminal doesnt support RGB graphics (e.g. screen)
+	bool x11 : 1;           // set by Setup()
+	bool wayland : 1;       // set by Setup()
 };
 
 unsigned int TTYKernelQueryControlKeys(int stdin);

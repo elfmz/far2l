@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <os_call.hpp>
+#include <utils.h>
 #include "TTYCaps.h"
 #include "WinCompat.h"
 //NB TTYCaps_Startup() and stuff it uses must be signal-safe
@@ -181,10 +182,15 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 
 	const bool detect_far2l = (kind == GENERIC && !restrict.far2l);
 	const bool detect_emoji = (!restrict.emoji);
+	std::string detect_emoji_reply;
 
 	if (detect_far2l || detect_emoji) {
 		// message for the human being and set cursor to beginning of next line
-		std::string s = "Press <ENTER> if tired of watching this message\n";
+		std::string s = "Press <ENTER> if tired of watching this message\eE";
+		if (detect_emoji) {
+			// Print the VS16 symbol U+25AB + U+FE0F at beginning of line to detect characters width:
+			s+= "\xE2\x96\xAB\xEF\xB8\x8F";
+		}
 		if (detect_far2l) {
 			// far2l supports both BEL and ST APC finalizers, however screen supports only ST
 			s+= "\e_far2l1\e\\";
@@ -198,7 +204,7 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		s+= "\e[5n";
 		if (TTYWriteAndDrain(fdout, s)) {
 			s.clear();
-			ReplyWithArgs reply_on_far2l, reply_on_emoji, reply_on_status;
+			ReplyWithArgs reply_on_far2l, reply_on_curpos, reply_on_status;
 			while (s.size() < 0x10000  && !reply_on_status.fetched) {
 				char c = ReadCharWithTimeout(fdin);
 				if (!c) {
@@ -210,17 +216,23 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 					reply_on_far2l.Fetch(s, "\e_far2lok\a");
 				}
 				if (detect_emoji) {
-					reply_on_emoji.Fetch(s, "\e[", "R");
+					reply_on_curpos.Fetch(s, "\e[", "R");
 				}
 				reply_on_status.Fetch(s, "\e[", "n");
 			}
 			if (reply_on_far2l.fetched) {
 				kind = FAR2L;
 			}
-			if (reply_on_emoji.fetched && reply_on_emoji.args.size() > 1) {
-				if (reply_on_emoji.args[1] == 2) { //row, col
+			if (reply_on_curpos.fetched) {
+				if (reply_on_curpos.args.size() > 1 && reply_on_curpos.args[1] == 3) { //row, col
 					emoji_vs16 = true;
 				}
+				detect_emoji_reply+= '{';
+				for (const auto &a : reply_on_curpos.args) {
+					detect_emoji_reply+=
+						StrPrintf("%s%ld", (detect_emoji_reply.size() > 1) ? ", " : "", a);
+				}
+				detect_emoji_reply+= '}';
 			}
 
 			// erase stuff printed for detection:
@@ -250,18 +262,25 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		strict_pos = true;
 	}
 
-	fprintf(stderr, "TTYCaps: %s %s%s%s restrict=%s%s%s%s%s%s%s\n",
+	fprintf(stderr, "TTYCaps: %s restrict=%s%s%s%s%s%s%s%s %s%s%s%s%s EmojiReply=%s\n",
 			(kind == FAR2L) ? "FAR2L" : ((kind == KERNEL) ? "KERNEL" : "GENERIC"),
-			DEC_lines ? "DECLines " : "",
-			strict_dups ? "StrictDups " : "",
-			strict_pos ? "StrictPos " : "",
+
 			restrict.x11 ? "X11 " : "",
 			restrict.xi ? "Xi " : "",
 			restrict.far2l ? "F2L " : "",
 			restrict.apple ? "APL " : "",
 			restrict.kitty ? "KTY " : "",
 			restrict.win32 ? "W32 " : "",
-			restrict.emoji ? "EMJ " : "");
+			restrict.emoji ? "EMJ " : "",
+			restrict.rgb ? "RGB " : "",
+
+			DEC_lines ? "DECLines " : "",
+			strict_dups ? "StrictDups " : "",
+			strict_pos ? "StrictPos " : "",
+			emoji_vs16 ? "EmojiVS16 " : "",
+			norgb ? "NoRGB " : "",
+
+			detect_emoji_reply.c_str());
 }
 
 void TTYCaps::Finup(int fdin, int fdout)

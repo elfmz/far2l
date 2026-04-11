@@ -20,6 +20,7 @@ struct LocalSocketSelectError : LocalSocketError<__LINE__> {};
 struct LocalSocketRecvError : LocalSocketError<__LINE__> {};
 struct LocalSocketSendError : LocalSocketError<__LINE__> {};
 struct LocalSocketDisconnected : LocalSocketError<__LINE__> {};
+struct LocalSocketTimeout : LocalSocketError<__LINE__> {};
 
 class LocalSocket
 {
@@ -49,7 +50,7 @@ class LocalSocketServer : public LocalSocket
 
 public:
 	LocalSocketServer(Kind sock_kind, const std::string &server, int backlog = 1);
-	void WaitForClient(int fd_cancel = -1);
+	void WaitForClient(int fd_cancel = -1, int tmout_msec = -1);
 };
 
 class LocalSocketClient : public LocalSocket

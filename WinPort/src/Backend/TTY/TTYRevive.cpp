@@ -2,10 +2,12 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/un.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <dirent.h>
+#include <utime.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -49,7 +51,19 @@ int TTYReviveMe(int std_in, int std_out, int kickass, const std::string &info)
 			}
 		}
 		LocalSocketServer sock(LocalSocket::DATAGRAM, ipc_path);
-		sock.WaitForClient(kickass);
+		// touch IPC files periodicly to prevent tmpwatch from deleting them
+		// beil out if it deleted
+		for (;;) try {
+			sock.WaitForClient(kickass, 51000); // 51 seconds timeout
+			break;
+		} catch (LocalSocketTimeout &) {
+			if (utimes(ipc_path.c_str(), nullptr) < 0) {
+				ThrowPrintf("disappeared '%s'", ipc_path.c_str());
+			}
+			if (utimes(info_path.c_str(), nullptr) < 0) {
+				ThrowPrintf("disappeared '%s'", info_path.c_str());
+			}
+		}
 
 		unsigned char flags = -1;
 		sock.Recv(&flags, 1);

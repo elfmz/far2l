@@ -5293,7 +5293,7 @@ upd:"Type full file &name                 Ctrl+F"
 upd:"Type full file &name                 Ctrl+F"
 
 EditorMenuEditLeftPaneName
-"Встапвить путь из левой панели      Ctrl+Alt+("
+"Вставить путь из левой панели       Ctrl+Alt+("
 "Insert path from left panel         Ctrl+Alt+("
 upd:"Insert path from left panel         Ctrl+Alt+("
 upd:"Insert path from left panel         Ctrl+Alt+("
@@ -5392,7 +5392,7 @@ upd:"Go to &bottom                        Ctrl+E"
 upd:"Go to &bottom                        Ctrl+E"
 
 EditorMenuNavigateBegin
-"Перенйти в н&ачало файла             Ctrl+Home"
+"Перейти в н&ачало файла              Ctrl+Home"
 "Go to begin of f&ile                 Ctrl+Home"
 upd:"Go to begin of f&ile                 Ctrl+Home"
 upd:"Go to begin of f&ile                 Ctrl+Home"

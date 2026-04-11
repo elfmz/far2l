@@ -1622,18 +1622,16 @@ bool TTYBackend::OnDeleteConsoleImage(const char *id)
 		return ok != 0;
 	}
 
-	if (CheckKittyImagesSupport()) {
-		std::string str_id(id);
-		std::lock_guard<std::mutex> lock(_async_mutex);
-		if (!_images.erase(str_id)) {
-			return false;
-		}
-		_images_to_delete.insert(str_id);
-	} else {
+	if (!CheckKittyImagesSupport()) {
 		return false;
 	}
 
+	std::string str_id(id);
 	std::lock_guard<std::mutex> lock(_async_mutex);
+	if (!_images.erase(str_id)) {
+		return false;
+	}
+	_images_to_delete.insert(str_id);
 	_ae.images_changed = true;
 	_async_cond.notify_all(); // Wake up the writer thread
 	return true;

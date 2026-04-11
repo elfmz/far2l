@@ -202,10 +202,12 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		// finally request DSR/terminal status ans this is supported by (almost) all terminals so use this fact
 		// to avoid long waits for terminals that doent reply on any other request asked in this string
 		s+= "\e[5n";
+		tcflush(fdin, TCIFLUSH);
 		if (TTYWriteAndDrain(fdout, s)) {
 			s.clear();
 			ReplyWithArgs reply_on_far2l, reply_on_curpos, reply_on_status;
-			while (s.size() < 0x10000  && !reply_on_status.fetched) {
+			time_t started_at = time(NULL);
+			while (s.size() < 0x10000 && !reply_on_status.fetched) {
 				char c = ReadCharWithTimeout(fdin);
 				if (!c) {
 					break;
@@ -219,6 +221,13 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 					reply_on_curpos.Fetch(s, "\e[", "R");
 				}
 				reply_on_status.Fetch(s, "\e[", "n");
+				if (s.find("\e\e") != std::string::npos || s.find_first_of("\r\n") != std::string::npos) {
+					time_t now = time(NULL);
+					if (now - started_at > 1) {
+						fprintf(stderr, "%s: aborted due to user panic\n", __FUNCTION__);
+						break;
+					}
+				}
 			}
 			if (reply_on_far2l.fetched) {
 				kind = FAR2L;

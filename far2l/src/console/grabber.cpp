@@ -123,18 +123,18 @@ void Grabber::CopyGrabbedArea(bool append)
 		return;
 
 //	std::vector<CHAR_INFO> char_info(width * (area.bottom + 1 - area.top));
-	std::string grabbed_html = "<tt>\n";
+	std::string grabbed_html = "<tt><pre>\n";
 	std::wstring grabbed_text;
 	DWORD prev_fore = 0, prev_back = 0;
 	uint32_t basepalette[32]{};
 	WINPORT(GetConsoleBasePalette)(NULL, basepalette);
 
+	bool html_span = false;
 	const auto &area = NormalizedArea();
 	for (SHORT y = area.top; y <= area.bottom; ++y) {
 		if (y != area.top) {
 			grabbed_text+= L'\n';
 		}
-		bool html_span = false;
 		for (SHORT x = area.left; x <= area.right; ++x) {
 			const CHAR_INFO &ci = _save_scr->Read(x, y);
 			const wchar_t *pw = (const wchar_t *)&ci.Char.UnicodeChar;
@@ -161,13 +161,7 @@ void Grabber::CopyGrabbedArea(bool append)
 				prev_fore = fore;
 				prev_back = back;
 			}
-			if (len == 1 && (*pw == L' ' || *pw == L'\t')) {
-				if (!grabbed_html.empty() && grabbed_html.back() == ' ') {
-					grabbed_html+= "&nbsp;";
-				} else {
-					grabbed_html+= ' ';
-				}
-			} else if (len == 1 && *pw == L'<') {
+			if (len == 1 && *pw == L'<') {
 				grabbed_html+= "&lt;";
 			} else if (len == 1 && *pw == L'>') {
 				grabbed_html+= "&gt;";
@@ -178,9 +172,12 @@ void Grabber::CopyGrabbedArea(bool append)
 			}
 		}
 		StrTrimRight(grabbed_text);
-		grabbed_html+= html_span ? "</span><br>\n" : "<br>\n";
+		grabbed_html+= '\n';
 	}
-	grabbed_html+= "</tt>\n";
+	if (html_span) {
+		grabbed_html+= "</span>";
+	}
+	grabbed_html+= "</pre></tt>\n";
 //	fprintf(stderr, "-----\n\n");
 //	fprintf(stderr, "%s\n", grabbed_html.c_str());
 //	fprintf(stderr, "-----\n\n");

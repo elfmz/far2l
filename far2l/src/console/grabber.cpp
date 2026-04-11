@@ -156,10 +156,13 @@ void Grabber::CopyGrabbedArea(bool append)
 				}
 				grabbed_html+= "<span style=\"";
 				if (html_spans == 0 || prev_fore != fore) {
-					grabbed_html+= StrPrintf("color:#%02X%02X%02X;", fore & 0xff, (fore >> 8) & 0xff, (fore >> 16) & 0xff);
+					grabbed_html+= StrPrintf("color:#%02X%02X%02X", fore & 0xff, (fore >> 8) & 0xff, (fore >> 16) & 0xff);
 				}
 				if (html_spans == 0 || prev_back != back) {
-					grabbed_html+= StrPrintf("background:#%02X%02X%02X;", back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff);
+					if (html_spans == 0 || prev_fore != fore) {
+						grabbed_html+= ';';
+					}
+					grabbed_html+= StrPrintf("background:#%02X%02X%02X", back & 0xff, (back >> 8) & 0xff, (back >> 16) & 0xff);
 				}
 				grabbed_html+= "\">";
 				html_spans++;

@@ -188,18 +188,16 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 
 	if (detect_far2l || detect_emoji) {
 		// message for the human being and set cursor to beginning of next line
-		std::string s = "Press <ENTER> if tired of watching this message\eE";
-		if (detect_emoji) {
-			// Print the VS16 symbol U+25AB + U+FE0F at beginning of line to detect characters width:
-			s+= "\xE2\x96\xAB\xEF\xB8\x8F";
-		}
+		std::string s;
 		if (detect_far2l) {
 			// far2l supports both BEL and ST APC finalizers, however screen supports only ST
 			s+= "\e_far2l1\e\\";
 		}
+		s+= "Press <ENTER> if tired of watching this message\eE";
 		if (detect_emoji) {
-			// request DSR/cursor position
-			s+= "\e[6n";  
+			// Print the VS16 symbol U+25AB + U+FE0F at beginning of line and
+			// request DSR/cursor position to detect printed characters width
+			s+= "\xE2\x96\xAB\xEF\xB8\x8F\e[6n";
 		}
 		// finally request DSR/terminal status ans this is supported by (almost) all terminals so use this fact
 		// to avoid long waits for terminals that doent reply on any other request asked in this string
@@ -288,7 +286,7 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		}
 	}
 
-	fprintf(stderr, "TTYCaps: %s %s%s%s%s%s%s%s CurPos=%s restrict={%s%s%s%s%s%s%s%s}\n",
+	fprintf(stderr, "TTYCaps: %s %s%s%s%s%s%s%s pos=%s restrict={%s%s%s%s%s%s%s%s}\n",
 			(kind == FAR2L) ? "FAR2L" : ((kind == KERNEL) ? "KERNEL" : "GENERIC"),
 
 			DEC_lines ? "DECLines " : "",

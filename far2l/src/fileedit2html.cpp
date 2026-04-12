@@ -45,11 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //////////////////////////////////
-static std::string Color2Hex(const FarTrueColor& color)
-{
-	return StrPrintf("%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
-}
-
 // Represent char - final code table
 
 struct CharMapItem {
@@ -66,28 +61,34 @@ struct CharMapItem {
 		color.R = color.G = color.B = 0; // black;
 	}
 
-	bool sameColor(FarTrueColor x) {
+	bool sameColor(FarTrueColor x) const {
 		return x.R == color.R && x.G == color.G && x.B == color.B;
+	}
+
+	std::string hexColorCode() const {
+		return StrPrintf("%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
 	}
 };
 
-struct ColorMap {
-	CharMapItem* s;
-	int len;
-
-	ColorMap(const wchar_t* w, int start, int length) {
-		if (start < 0) start = 0;
-		len = length <= 0 ? wcslen(w) - start : length;
-		s = new CharMapItem[len];
-		for(int i = 0; i < len; ++i) s[i] = CharMapItem(w[i + start]);
+struct ColorMap : std::vector<CharMapItem>
+{
+	ColorMap(const wchar_t *w, int start, int length)
+	{
+		const int len = length <= 0 ? wcslen(w) - start : length;
+		if (len > 0) {
+			reserve(len);
+			for (int i = 0; i < len; ++i) {
+				emplace_back(w[i + start]);
+			}
+		}
 	}
 
-	~ColorMap() {
-		delete[] s;
-	}
-
-	void apply(const FarTrueColor& newcolor, int start, int end) {
-		for(int i = start; i <= end && i < len; ++i) s[i].color = newcolor;
+	void Apply(const FarTrueColor& newcolor, int start, int finish)
+	{
+		finish = std::min(finish, int(size()) - 1);
+		for(int i = start; i <= finish; ++i) {
+			operator[](i).color = newcolor;
+		}
 	}
 };
 
@@ -156,7 +157,7 @@ static bool convertToReducedHTML(std::string &tb, Edit* line, int start, int len
 
 	// fprintf(stderr, "colorize: `%ls` [%d..%d]\n", CurStr, start, start + end);
 
-	ColorMap map(CurStr, start, end);
+	ColorMap cm(CurStr, start, end);
 
 	for (int i = 0; line->GetColor(&ci, i); ++i) {
 		if ((ci.StartPos == -1 && ci.EndPos == -1) || ci.StartPos > ci.EndPos) {
@@ -184,27 +185,26 @@ static bool convertToReducedHTML(std::string &tb, Edit* line, int start, int len
 		// Note: tabs might need to update positions
 
 
-		map.apply(print, ci.StartPos, ci.EndPos);
+		cm.Apply(print, ci.StartPos, ci.EndPos);
 	}
 
-	// now we have rendered every character in map so we can iterate through it
-	FarTrueColor prev;
-	prev.R = prev.G = prev.B = 0;
-	bool colored = false;
-	// tb.append("<pre>");
-	for(int i = 0; i < map.len; ++i) {
-		if (!map.s[i].sameColor(prev)) {
-			if (colored) tb.append("</font>");
-			colored = true;
-			tb.append("<font color=\"#");
-			tb.append(Color2Hex(map.s[i].color));
-			tb.append("\">");
-			prev = map.s[i].color;
+	// now we have rendered every character in cm so we can iterate through it
+	if (!cm.empty()) {
+		FarTrueColor prev{};
+		// tb.append("<pre>");
+		for(size_t i = 0; i < cm.size(); ++i) {
+			if (i == 0 || !cm[i].sameColor(prev)) {
+				if (i != 0) tb.append("</font>");
+				tb.append("<font color=\"#");
+				tb.append(cm[i].hexColorCode());
+				tb.append("\">");
+				prev = cm[i].color;
+			}
+			escapeHtmlTags(tb, cm[i].c, tabSize);
 		}
-		escapeHtmlTags(tb, map.s[i].c, tabSize);
+		tb.append("</font>");
+		// tb.append("</pre>");
 	}
-	if (colored) tb.append("</font>");
-	// tb.append("</pre>");
 
 	// fprintf(stderr, "colorize: `%.*ls` => `%s`\n", len, CurStr + start,	tb.c_str());
 

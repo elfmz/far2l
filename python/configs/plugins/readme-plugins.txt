@@ -73,6 +73,10 @@ uedindent.py
 
 uedreplace.py
     Example of a search/replace dialog with partial functionality.
+    py:load uedreplace open
+    F3+ALT+SHIFT = configure search/replace
+    F3+ALT = perform search/replace in backward direction
+    F3+SHIFT = perform search/replace in forward direction
 
 uedsort.py
     The prototype of the standard esdort plugin.

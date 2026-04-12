@@ -10,7 +10,8 @@ C. Fundamentals
 ~/.config/far2l/plugins/python - The default directory for python plugins from which they can be easily activated.
 
 a) the plugins are loaded with the command "py:load filename" for example py:load ucharmap
-b) unloading the plugin is done with the command "py:unload filename" for example py:unload ucharmap
+b) the plugins are loaded and make active with the command "py:load filename open" for example py:load uedreplace open
+c) unloading the plugin is done with the command "py:unload filename" for example py:unload ucharmap
 
 D. Examples
 a) ucharmap.py - an example plugin showing whole UTF-8 character set

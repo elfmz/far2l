@@ -96,7 +96,7 @@ uimgimage.py
 uimgpdf.py
     Use image protocol to show pdf file contents.
     Uses https://github.com/m32/pdfium python plugin.
-    In files panel/viever/editor: F11-Python PDF view
+    In files panel/viever/editor: F11-Python PDF view, use PgUp/PgDown for paging.
 
 uminer.py
     FAR2L also has its own game.

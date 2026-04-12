@@ -90,6 +90,9 @@ ugtkhello.py
 uhexedit.py
     The prototype of the standard hexitor plugin.
 
+uimgimage.py
+    Image protocol example in python, requires PIL module"
+
 uminer.py
     FAR2L also has its own game.
 

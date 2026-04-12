@@ -393,8 +393,7 @@ void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 
 	ConsolePainter painter(this, dc, _buffer, _cursor_props);
 
-	// out-of clipping: collect tags
-	for (unsigned int cy = (unsigned)area.Top; cy <= (unsigned)area.Bottom; ++cy) {
+	for (unsigned int cy = 0; cy <= (unsigned)area.Bottom; ++cy) {
 		const CHAR_INFO *line;
 		{
 			// dont keep console output locked for a long time to avoid output slowdown
@@ -410,32 +409,15 @@ void ConsolePaintContext::OnPaint(wxPaintDC &dc, SMALL_RECT *qedit)
 			line = &_line[0];
 		}
 
+		// out-of clipping: collect tags
 		for (unsigned int cx = 0; cx < cw; ++cx) {
 			const int nx = (cx + 1 < cw && !line[cx + 1].Char.UnicodeChar) ? 2 : 1;
 			painter.ConsumeHintAt(line[cx], cx, nx, cy);
 		}
-	}
 
-	for (unsigned int cy = 0; cy <= (unsigned)area.Bottom; ++cy) {
 		wxRegionContain lc = rgn.Contains(0, cy * _font_height, cw * _font_width, _font_height);
-
 		if (lc == wxOutRegion) {
 			continue;
-		}
-
-		const CHAR_INFO *line;
-		{
-			// dont keep console output locked for a long time to avoid output slowdown
-			IConsoleOutput::DirectLineAccess dla(g_winport_con_out, cy);
-			line = dla.Line();
-			unsigned int cur_cw = line ? dla.Width() : 0;
-			if (cur_cw < cw) {
-				memcpy(&_line[0], line, cur_cw * sizeof(*line));
-				memset(&_line[cur_cw], 0, (cw - cur_cw) * sizeof(*line));
-			} else {
-				memcpy(&_line[0], line, cw * sizeof(*line));
-			}
-			line = &_line[0];
 		}
 
 		painter.LineBegin(cy);
@@ -1490,6 +1472,15 @@ void ConsolePainter::DrawButtonDecorations(
 		DrawHorizontalGradientLine(X1 + 1, Y2 - 1, W - 2, c_a_text, emboss, 2);
 	else
 		DrawHorizontalGradientLine(X1 + 1, Y2 - 1, W - 2, c_a_text, emboss, 1);
+
+}
+
+void DrawTextBaseline(wxDC& dc, const wchar_t* text, int x, int baselineY)
+{
+    int w, h, descent;
+    dc.GetTextExtent(text, &w, &h, &descent);
+    int y = baselineY - (h - descent);
+    dc.DrawText(text, x, y);
 }
 
 void ConsolePainter::DrawButtonDecorationsAsNew(
@@ -1528,7 +1519,8 @@ void ConsolePainter::DrawButtonDecorationsAsNew(
 
 	// todo: highlight character to be displayed
 	_dc.SetTextForeground(wxColour(c_text.r, c_text.g, c_text.b));
-	_dc.DrawText(pos.text, X1, Y1);
+	int ascent = _context->FontHeight() - _context->FontDescent();
+	DrawTextBaseline(_dc, pos.text.c_str(), X1, Y1 + ascent);
 
 	if (!underlined && !strikeout) 	return;
 

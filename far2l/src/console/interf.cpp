@@ -560,7 +560,12 @@ void HintAt(
 	Hint(HintX, HintY, CurX, CurY, hcc, hco, focused, hovered, disabled, defaultCtrl);
 }
 
-void HintBeginContainer() { TagRef = 1; }
+void HintBeginContainer() {
+	// todo: remove this trick when all elements will be tagged
+	ScrBuf.Unhint();
+	TagRef = 1; 
+}
+
 void HintEndContainer() {}
 
 void Text(const WCHAR *Str, size_t Length)

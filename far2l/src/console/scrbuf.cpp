@@ -321,6 +321,11 @@ void ScreenBuf::ApplyColorMask(int X1, int Y1, int X2, int Y2, DWORD64 ColorMask
 #endif
 }
 
+void ScreenBuf::Unhint() 
+{
+	ApplyHint(0, 0, BufX, BufY, 0, HintNone, HintObjectNone, false, false, false, false, false);
+}
+
 void ScreenBuf::ApplyHint(int X1, int Y1, int X2, int Y2, 
 	int tag,
 	HintContainerType hcc, HintObjectType hco, 

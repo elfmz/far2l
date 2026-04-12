@@ -3,6 +3,8 @@ import stat
 import time
 import logging
 
+from librosa import ex
+
 from far2l.plugin import PluginVFS
 from far2l.farprogress import ProgressMessage
 from far2l.fardialogbuilder import (
@@ -25,30 +27,11 @@ from far2l.fardialogbuilder import (
 )
 
 from udockerio import Docker
+import udockerrunlike
 
 log = logging.getLogger(__name__)
 
-try:
-    # pip install runlike
-    from runlike import inspector
-    class Inspector(inspector.Inspector):
-        def inspect(self):
-            try:
-                output = inspector.check_output(
-                    ["docker", "container", "inspect", self.container],
-                    stderr=inspector.STDOUT)
-                self.container_facts = inspector.loads(output.decode('utf8', 'strict'))
-                image_hash = self.get_container_fact("Image")
-                output = inspector.check_output(
-                    ["docker", "image", "inspect", image_hash],
-                    stderr=inspector.STDOUT)
-                self.image_facts = inspector.loads(output.decode('utf8', 'strict'))
-            except inspector.CalledProcessError as e:
-                return str(e)
-            return None
-except:
-    Inspector = None
-
+from udockerrunlike import Inspector
 
 class DockerBase:
 
@@ -63,6 +46,14 @@ class DockerBase:
         self.s2f = parent.s2f
         self.f2s = parent.f2s
         self.clt = parent.clt
+        #
+        self.names = []
+        self.Items = []
+        # references to avoid gc/cffi deleting them
+        self.title = ''
+        self._curdir = None
+        self._title = None
+        self._label = None
 
     def Close(self):
         del self.parent
@@ -74,7 +65,7 @@ class DockerBase:
         del self.f2s
         del self.clt
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom): # pylint: disable=unused-argument, invalid-name
         self.names = []
         self.Items = []
         return True
@@ -110,16 +101,16 @@ class DockerBase:
         # log.debug('addName({})'.format(name))
         # increase C array
         items = self.ffi.new("struct PluginPanelItem []", len(self.Items) + 1)
-        for i in range(len(self.Items)):
-            items[i] = self.Items[i]
+        for i, item in enumerate(self.Items):
+            items[i] = item
         self.Items = items
         self.names.append(None)
         self.setName(len(self.Items) - 1, name, attr, size)
 
     def deleteNames(self, names):
         found = []
-        for i in range(len(self.names)):
-            if self.f2s(self.names[i]) in names:
+        for i, name in enumerate(self.names):
+            if self.f2s(name) in names:
                 found.append(i)
         if len(found) == 0:
             return False
@@ -128,9 +119,9 @@ class DockerBase:
         if n > 0:
             items = self.ffi.new("struct PluginPanelItem []", n)
             j = 0
-            for i in range(len(self.Items)):
+            for i, item in enumerate(self.Items):
                 if i not in found:
-                    items[j] = self.Items[i]
+                    items[j] = item
                     j += 1
             # delete
             for i in sorted(found, reverse=True):
@@ -198,7 +189,7 @@ class DockerDevice(DockerBase):
     def devMakeDirectory(self, dqname):
         self.clt.mkdir(self.device, dqname)
 
-    def GetOpenPluginInfo(self, OpenInfo):
+    def GetOpenPluginInfo(self, OpenInfo): # pylint: disable=invalid-name
         #
         # WARNING WARNING - dangerous pointers and lifetime of a variable in python
         # anything passed as a pointer must be kept in local python variables
@@ -233,16 +224,16 @@ class DockerDevice(DockerBase):
         # const struct KeyBarTitles *KeyBar;
         # Info.ShortcutData = self.s2f('py:adb cd '+title)
 
-    def GetFindData(self, PanelItem, ItemsNumber, OpMode):
+    def GetFindData(self, PanelItem, ItemsNumber, OpMode): # pylint: disable=unused-argument, invalid-name
         try:
             self.loadDirectory()
-        except Exception as ex:
+        except Exception as ex: # pylint: disable=broad-except
             log.exception("unknown exception:")
             self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
             return False
         return True
 
-    def SetDirectory(self, Dir, OpMode):
+    def SetDirectory(self, Dir, OpMode): # pylint: disable=unused-argument, invalid-name
         name = self.f2s(Dir)
         if name == "..":
             if self.devicepath == "/":
@@ -254,7 +245,7 @@ class DockerDevice(DockerBase):
             self.devicepath = os.path.join(self.devicepath, name)
         return True
 
-    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
+    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode): # pylint: disable=unused-argument, invalid-name
         items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         name = self.f2s(items[ItemsNumber-1].FindData.lpwszFileName)
         t = ProgressMessage(self, "Copying", "Please wait ... working", 100)
@@ -272,7 +263,7 @@ class DockerDevice(DockerBase):
             # log.debug('pull: {} -> {} OpMode={}'.format(sqname, dqname, OpMode))
             try:
                 self.devGetFile(sqname, dqname)
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-except
                 t.close()
                 log.exception("unknown exception:")
                 self.Message(str(ex), "GetFile exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
@@ -280,7 +271,7 @@ class DockerDevice(DockerBase):
         t.close()
         return True
 
-    def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
+    def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode): # pylint: disable=unused-argument, invalid-name
         items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         spath = self.f2s(SrcPath)
         for i in range(ItemsNumber):
@@ -292,13 +283,13 @@ class DockerDevice(DockerBase):
             # log.debug('push: {} -> {} OpMode={}'.format(sqname, dqname, OpMode))
             try:
                 self.devPutFile(sqname, dqname)
-            except Exception as ex:
+            except Exception as ex: # pylint: disable=broad-except
                 log.exception("unknown exception:")
                 self.Message(str(ex), "PutFile exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         return True
 
-    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
+    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode): # pylint: disable=unused-argument, invalid-name
         items = self.ffi.cast("struct PluginPanelItem *", PanelItem)
         if ItemsNumber > 1:
             rc = self.Message("Do you wish to delete the files ?", flags=self.ffic.FMSG_MB_YESNO)
@@ -315,13 +306,13 @@ class DockerDevice(DockerBase):
             log.debug("remove: {}, OpMode={}".format(dqname, OpMode))
             try:
                 self.devDelete(dqname)
-            except Exception as ex:
+            except Exception as ex:  # pylint: disable=broad-except
                 log.exception("unknown exception:")
                 self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                 return False
         return True
 
-    def MakeDirectory(self, Name, OpMode):
+    def MakeDirectory(self, Name, OpMode): # pylint: disable=unused-argument, invalid-name
         name = self.ffi.cast("wchar_t **", Name)
         name = self.ffi.string(name[0])
 
@@ -351,7 +342,7 @@ class DockerDevice(DockerBase):
             if path:
                 try:
                     self.devMakeDirectory(dqname)
-                except Exception as ex:
+                except Exception as ex:  # pylint: disable=broad-except
                     log.exception("unknown exception:")
                     self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
                     return False
@@ -359,13 +350,13 @@ class DockerDevice(DockerBase):
 
         return True
 
-    def EditAttributes(self):
-        item, ppidata = self.parent.panel.GetCurrentPanelItem()
+    def EditAttributes(self): # pylint: disable=invalid-name
+        item = self.parent.panel.GetCurrentPanelItem()[0]
         name = self.f2s(item.FindData.lpwszFileName)
         fqname = os.path.normpath(os.path.join(self.devicepath, name))
         self.Message(f"Current item: {fqname}", "TODO EditAttributes", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
 
-    def ProcessKey(self, Key, ControlState):
+    def ProcessKey(self, Key, ControlState): # pylint: disable=invalid-name
         if (
             Key == self.ffic.KEY_CTRLA - self.ffic.KEY_CTRL
             and ControlState == self.ffic.PKF_CONTROL
@@ -379,6 +370,10 @@ class DockerDevices(DockerBase):
     def __init__(self, parent):
         super().__init__(parent)
         self.devicepath = '/'
+        # dangerous pointer, must be kept in local python variable to avoid gc/cffi deleting it
+        self._nokey = None
+        self.py_keybar = None
+        self._keybar = None
 
     def addResult(self, result):
         self.Items = self.ffi.new("struct PluginPanelItem []", len(result))
@@ -401,7 +396,7 @@ class DockerDevices(DockerBase):
         result = self.clt.list()
         self.addResult(result)
 
-    def GetOpenPluginInfo(self, OpenInfo):
+    def GetOpenPluginInfo(self, OpenInfo): # pylint: disable=unused-argument, invalid-name
         #
         # WARNING WARNING - dangerous pointers and lifetime of a variable in python
         # anything passed as a pointer must be kept in local python variables
@@ -458,16 +453,16 @@ class DockerDevices(DockerBase):
         Info.KeyBar = self._keybar
         # Info.ShortcutData = self.s2f('py:adb cd '+title)
 
-    def GetFindData(self, PanelItem, ItemsNumber, OpMode):
+    def GetFindData(self, PanelItem, ItemsNumber, OpMode): # pylint: disable=unused-argument, invalid-name
         try:
             self.devLoadDevices()
-        except Exception as ex:
+        except Exception as ex: # pylint: disable=broad-except
             log.exception("unknown exception:")
             self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
             return False
         return True
 
-    def SetDirectory(self, Dir, OpMode):
+    def SetDirectory(self, Dir, OpMode): # pylint: disable=unused-argument, invalid-name
         name = self.f2s(Dir)
         if name == "":
             self.info.Control(self.hplugin, self.ffic.FCTL_CLOSEPLUGIN, 0, 0)
@@ -479,19 +474,19 @@ class DockerDevices(DockerBase):
         self.Close()
         return True
 
-    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
+    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode): # pylint: disable=unused-argument, invalid-name
         self.Message("GetFiles allowed only inside device.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
         return False
 
-    def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
+    def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode): # pylint: disable=unused-argument, invalid-name
         self.Message("PutFiles allowed only inside device.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
         return False
 
-    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
+    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode): # pylint: disable=unused-argument, invalid-name
         self.Message("DeleteFiles allowed only inside device.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
         return False
 
-    def MakeDirectory(self, Name, OpMode):
+    def MakeDirectory(self, Name, OpMode): # pylint: disable=unused-argument, invalid-name
         self.Message("MakeDirectory allowed only inside device.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
         return False
 
@@ -501,25 +496,28 @@ class DockerDevices(DockerBase):
         try:
             proc(name)
             self.doRefresh()
-        except Exception as ex:
+        except Exception as ex:  # pylint: disable=broad-except
             log.exception("unknown exception:")
             self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
 
     def CMDRunLike(self, item, name):
-        if Inspector is None:
-            self.Message("Package runlike required but not installed.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
-            return
         running = (item.FindData.dwFileAttributes & self.ffic.FILE_ATTRIBUTE_DIRECTORY) != 0
-        insp = Inspector(name, None, True)
-        error = insp.inspect()
-        if error is not None:
-            self.Message(error, "RunLike error.", flags=self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
+        insp = Inspector(name, pretty=True)
+        try:
+            insp.inspect()
+        except Exception as ex:  # pylint: disable=broad-except
+            log.exception("unknown exception:")
+            self.Message(str(ex), "Unknown exception.", self.ffic.FMSG_MB_OK|self.ffic.FMSG_WARNING)
             return
-        open("/tmp/uinfo", "wt").write(f'''\
+
+        with open("/tmp/uinfo", "wt") as fp:
+            fp.write(f'''\
 container name={name} running={running}
 
 {insp.format_cli()}
 ''')
+            fp.close()
+
         self.info.Editor(
             "/tmp/uinfo",
             "uinfo",
@@ -534,14 +532,14 @@ container name={name} running={running}
 
     def ProcessKey(self, Key, ControlState):
         if Key == self.ffic.VK_F2 and ControlState == 0:
-            item, ppidata = self.parent.panel.GetCurrentPanelItem()
+            item = self.parent.panel.GetCurrentPanelItem()[0]
             name = self.f2s(item.FindData.lpwszFileName)
             if name == "..":
                 return
             self.CMDStartStop(item, name)
             return 1
         if Key == self.ffic.VK_F3 and ControlState == 0:
-            item, ppidata = self.parent.panel.GetCurrentPanelItem()
+            item = self.parent.panel.GetCurrentPanelItem()[0]
             name = self.f2s(item.FindData.lpwszFileName)
             if name == "..":
                 return
@@ -562,13 +560,13 @@ class Plugin(PluginVFS):
         self.clt = Docker()
         self.handler = DockerDevices(self)
 
-    def OpenPlugin(self, OpenFrom):
+    def OpenPlugin(self, OpenFrom): # pylint: disable=unused-argument, invalid-name
         return self.handler.OpenPlugin(OpenFrom)
 
-    def GetOpenPluginInfo(self, OpenInfo):
+    def GetOpenPluginInfo(self, OpenInfo): # pylint: disable=unused-argument, invalid-name
         return self.handler.GetOpenPluginInfo(OpenInfo)
 
-    def GetFindData(self, PanelItem, ItemsNumber, OpMode):
+    def GetFindData(self, PanelItem, ItemsNumber, OpMode): # pylint: disable=unused-argument, invalid-name
         if OpMode & self.ffic.OPM_FIND:
             # find in root of device causes core dump on linux
             return False
@@ -582,15 +580,15 @@ class Plugin(PluginVFS):
             ItemsNumber[0] = n
         return ok
 
-    def FreeFindData(self, PanelItem, ItemsNumber):
+    def FreeFindData(self, PanelItem, ItemsNumber): # pylint: disable=unused-argument, invalid-name
         log.debug(f"FreeFindData({PanelItem}, {ItemsNumber}, n.Items={len(self.handler.Items)})")
         self.handler.names = []
         self.handler.Items = []
 
-    def SetDirectory(self, Dir, OpMode):
+    def SetDirectory(self, Dir, OpMode): # pylint: disable=unused-argument, invalid-name
         return self.handler.SetDirectory(Dir, OpMode)
 
-    def Compare(self, PanelItem1, PanelItem2, Mode):
+    def Compare(self, PanelItem1, PanelItem2, Mode): # pylint: disable=unused-argument, invalid-name
         def cmp(a, b):
             if a < b:
                 return -1
@@ -606,32 +604,32 @@ class Plugin(PluginVFS):
         # log.debug('Compare: cmp({}, {})={}, mode={}'.format(n1, n2, rc, Mode))
         return rc
 
-    def GetVirtualFindData(self, PanelItem, ItemsNumber, Path):
+    def GetVirtualFindData(self, PanelItem, ItemsNumber, Path): # pylint: disable=unused-argument, invalid-name
         return False
 
-    def FreeVirtualFindData(self, PanelItem, ItemsNumber):
+    def FreeVirtualFindData(self, PanelItem, ItemsNumber): # pylint: disable=unused-argument, invalid-name
         log.debug("FreeVirtualFindData: {}, {}".format(PanelItem, ItemsNumber))
 
-    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode):
+    def GetFiles(self, PanelItem, ItemsNumber, Move, DestPath, OpMode): # pylint: disable=unused-argument, invalid-name
         if ItemsNumber == 0 or Move:
             return False
         return self.handler.GetFiles(PanelItem, ItemsNumber, Move, DestPath, OpMode)
 
-    def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode):
+    def PutFiles(self, PanelItem, ItemsNumber, Move, SrcPath, OpMode): # pylint: disable=unused-argument, invalid-name
         if ItemsNumber == 0 or Move:
             return False
         return self.handler.PutFiles(PanelItem, ItemsNumber, Move, SrcPath, OpMode)
 
-    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode):
+    def DeleteFiles(self, PanelItem, ItemsNumber, OpMode): # pylint: disable=unused-argument, invalid-name
         if ItemsNumber == 0:
             return False
         return self.handler.DeleteFiles(PanelItem, ItemsNumber, OpMode)
 
-    def MakeDirectory(self, Name, OpMode):
+    def MakeDirectory(self, Name, OpMode): # pylint: disable=unused-argument, invalid-name
         return self.handler.MakeDirectory(Name, OpMode)
 
-    def ProcessEvent(self, Event, Param):
+    def ProcessEvent(self, Event, Param): # pylint: disable=unused-argument, invalid-name
         return 0
 
-    def ProcessKey(self, Key, ControlState):
+    def ProcessKey(self, Key, ControlState): # pylint: disable=unused-argument, invalid-name
         return self.handler.ProcessKey(Key, ControlState)

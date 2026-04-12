@@ -886,13 +886,16 @@ deleted.
 @MiscCmd
 $ #Panel control commands - miscellaneous#
   Screen grabber                                             #Alt-Ins#
-
     Screen grabber allows to select and copy to the clipboard any screen area.
-Use #arrow# keys or click the #left mouse button# to move the cursor. To select
-text use #Shift-arrow# keys or drag the mouse while holding the #left mouse#
-#button#. #Enter#, #Ctrl-Ins#, #right mouse button# or #doubleclick# copy
-selected text to the clipboard, #Ctrl-<Gray +># appends it to the clipboard
-contents, #Esc# leaves the grabbing mode. #Ctrl-U# - deselect block.
+    Use #arrow# keys or click the #left mouse button# to move the cursor.
+    To select text use #Shift-arrow# keys or drag the mouse while holding the #left mouse button#.
+    #Ctrl-A# or #A# - selects whole screen.
+    #Ctrl-U# or #U# - deselect block.
+    #Enter#, #Ctrl-Ins#, #right mouse button# or #doubleclick# copy selected text to the clipboard
+and leaves the grabbing mode.
+    #Ctrl-<Gray +># appends selected text to the clipboard contents
+and leaves the grabbing mode.
+    #Esc# leaves the grabbing mode.
 
   Record a ~keyboard macro~@KeyMacro@                                   #Ctrl-<.>#
 

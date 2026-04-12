@@ -107,12 +107,23 @@ static char ReadCharWithTimeout(int fdin)
 	FD_SET(fdin, &fds);
 	FD_SET(fdin, &fde);
 	struct timeval tv = {10, 0};
-
-	if (os_call_int(select, fdin + 1, &fds, (fd_set*)nullptr, &fde, &tv) <= 0) {
+	int r = os_call_int(select, fdin + 1, &fds, (fd_set*)nullptr, &fde, &tv);
+	if (r == 0) {
+		fprintf(stderr, "%s: select timed out\n", __FUNCTION__);
+		return 0;
+	}
+	if (r < 0) {
+		fprintf(stderr, "%s: select error %d\n", __FUNCTION__, errno);
 		return 0;
 	}
 	char c = 0;
-	if (os_call_ssize(read, fdin, (void *)&c, sizeof(c)) <= 0) {
+	r = os_call_ssize(read, fdin, (void *)&c, sizeof(c));
+	if (r == 0) {
+		fprintf(stderr, "%s: peer closed\n", __FUNCTION__);
+		return 0;
+	}
+	if (r < 0) {
+		fprintf(stderr, "%s: read error %d\n", __FUNCTION__, errno);
 		return 0;
 	}
 	return c ? c : ' ';
@@ -312,23 +323,8 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 
 void TTYCaps::Finup(int fdin, int fdout)
 {
-	if (kind == FAR2L && TTYWriteAndDrain(fdout, "\e_far2l0\a\e[5n")) {
-		std::string s;
-		ReplyWithArgs reply_on_far2l, reply_on_status;
-		while (s.size() < 0x10000  && !reply_on_status.fetched) {
-			char c = ReadCharWithTimeout(fdin);
-			if (!c) {
-				break;
-			}
-			s+= c;
-			reply_on_far2l.Fetch(s, "\e_far2lok\a");
-			reply_on_status.Fetch(s, "\e[", "n");
-		}
-		if (!reply_on_status.fetched) {
-			fprintf(stderr, "TTYCaps::Finup: no reply_on_status\n");
-		} else if (!reply_on_far2l.fetched) {
-			fprintf(stderr, "TTYCaps::Finup: no reply_on_far2l\n");
-		}
+	if (kind == FAR2L) {
+		TTYWriteAndDrain(fdout, "\e_far2l0\a");// there is no reply on _far2l0
 		kind = GENERIC;
 	}
 }

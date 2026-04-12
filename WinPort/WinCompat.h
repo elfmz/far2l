@@ -1559,6 +1559,7 @@ typedef struct WinportGraphicsInfo1
 #define CF_WAVE             12
 #define CF_UNICODETEXT      13
 #define CF_ENHMETAFILE      14
+#define CF_HTML             15
 
 #define REG_CREATED_NEW_KEY         (0x00000001L)   // New Registry Key created
 #define REG_OPENED_EXISTING_KEY     (0x00000002L)   // Existing Key opened

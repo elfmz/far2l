@@ -39,6 +39,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FARString.hpp"
 #include <farplug-wide.h>
 
+constexpr const char HTML_PRE_HEADER[] =
+	"<html><head>"
+	"<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">"
+	"<style>@media print{pre{white-space:pre-wrap;overflow-wrap:break-word;}}</style>"
+	"</head><body><pre>\n";
+
+constexpr const char HTML_PRE_FOOTER[] =
+    "</pre></body></html>";
+
 // Bridge to backends
 
 class PrinterSupport
@@ -63,7 +72,13 @@ public:
 	virtual bool IsReducedHTMLSupported();
 	virtual bool IsPrinterSetupDialogSupported();
 
+	FILE* BeginPrint();
+	void EndPrint(FILE* fp);
+
+	void PrintRawFile(const wchar_t* fileName);
+
 private:
+	std::string _fileName;
 };
 
 class ColorspaceSupport 

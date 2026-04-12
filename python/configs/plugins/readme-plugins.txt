@@ -93,6 +93,11 @@ uhexedit.py
 uimgimage.py
     Image protocol example in python, requires PIL module"
 
+uimgpdf.py
+    Use image protocol to show pdf file contents.
+    Uses https://github.com/m32/pdfium python plugin.
+    In files panel/viever/editor: F11-Python PDF view
+
 uminer.py
     FAR2L also has its own game.
 

@@ -383,24 +383,27 @@ BOOL FileEditor::SendToPrinter()
 
 	// we need to print whole file
 	FILE* fp = printer.BeginPrint();
-	std::string _tmpstr;
+	if (fp) {
+		std::string _tmpstr;
 
-	for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
-		const wchar_t *SaveStr, *EndSeq;
+		for (Edit *CurPtr = m_editor->TopList; CurPtr; CurPtr = CurPtr->m_next) {
+			const wchar_t *SaveStr, *EndSeq;
 
-		CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
+			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
 
-		TextBuffer tb;
-		if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab)) 
-			fprintf(fp, "%s", tb.c_str());
-		else {
-    		Wide2MB(SaveStr, Length, _tmpstr);
-    		fwrite(_tmpstr.data(), 1, _tmpstr.size(), fp);
-            fputc('\n', fp);
+			TextBuffer tb;
+			if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab))  {
+				fprintf(fp, "%s", tb.c_str());
+			} else {
+				Wide2MB(SaveStr, Length, _tmpstr);
+				fwrite(_tmpstr.data(), 1, _tmpstr.size(), fp);
+				fputc('\n', fp);
+			}
 		}
+
+		printer.EndPrint(fp);
 	}
 
-	printer.EndPrint(fp);
 	return TRUE;
 }
 

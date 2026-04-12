@@ -75,10 +75,10 @@ public:
 	FILE* BeginPrint();
 	void EndPrint(FILE* fp);
 
-	bool PrintRawFile(const wchar_t* fileName);
+	void PrintRawFile(const wchar_t* fileName);
 
 private:
-	const char* fileName;
+	std::string _fileName;
 };
 
 class ColorspaceSupport 

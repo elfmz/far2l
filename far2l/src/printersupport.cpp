@@ -236,12 +236,11 @@ FILE* PrinterSupport::BeginPrint()
 		IsPrintPreviewSupported() ? 'Y' : 'N',
 		IsPrinterSetupDialogSupported() ?  'Y' : 'N');
 
-	fileName = strdup(InMyTemp(StrPrintf("print/%d", getpid()).c_str()).c_str());
+	_fileName = InMyTemp(StrPrintf("print/%d", getpid()).c_str());
 
-	FILE* fp = fopen(fileName, "a+");
-
-	if (IsReducedHTMLSupported()) {
-		fprintf(fp, HTML_PRE_HEADER);
+	FILE* fp = fopen(_fileName.c_str(), "a+");
+	if (fp && IsReducedHTMLSupported()) {
+		fprintf(fp, "%s", HTML_PRE_HEADER);
 	}
 
 	return fp;
@@ -249,38 +248,35 @@ FILE* PrinterSupport::BeginPrint()
 
 void PrinterSupport::EndPrint(FILE* fp) 
 {
-	std::string _tmpstr;
-	if (IsReducedHTMLSupported())
-		fprintf(fp, HTML_PRE_FOOTER);
+	if (IsReducedHTMLSupported()) {
+		fprintf(fp, "%s", HTML_PRE_FOOTER);
+	}
 	fclose(fp);
     
-    size_t Length = strlen(fileName);
-    std::wstring _tmpwstr;
-    MB2Wide(fileName, Length, _tmpwstr);
+    std::wstring ws_fileName;
+    StrMB2Wide(_fileName, ws_fileName);
 
 	if (IsPrintPreviewSupported()) {
 		if (IsReducedHTMLSupported()) 
-			ShowPreviewForHtmlFile(_tmpwstr);
+			ShowPreviewForHtmlFile(ws_fileName);
 		else 
-			ShowPreviewForTextFile(_tmpwstr);
+			ShowPreviewForTextFile(ws_fileName);
 	}
 	else {
 		if (IsReducedHTMLSupported()) 
-			PrintHtmlFile(_tmpwstr);
+			PrintHtmlFile(ws_fileName);
 		else
-			PrintTextFile(_tmpwstr);
+			PrintTextFile(ws_fileName);
 	}
 
-	delete fileName;
+	_fileName.clear();
 }
 
-
-bool PrinterSupport::PrintRawFile(const wchar_t* fileName)
+void PrinterSupport::PrintRawFile(const wchar_t* fileName)
 {
 	if (IsPrintPreviewSupported()) {
 		ShowPreviewForTextFile(fileName);
-	}
-	else {
+	} else {
 		PrintTextFile(fileName);
 	}
 }

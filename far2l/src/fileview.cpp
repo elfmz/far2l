@@ -692,19 +692,21 @@ bool FileViewer::SendToPrinter()
 	}
 
 	FILE* fp = printer.BeginPrint();
-	FILE* in = fopen(strName.GetMB().c_str(), "r");
-
-	char c;
-	while((c = getc(in)) != EOF) {
-		if (c == '\n') fprintf(fp, "<br>");
-		else putc(c, fp);
+	if (fp) {
+		FILE* in = fopen(strName.GetMB().c_str(), "r");
+		if (in) {
+			int c;
+			while ((c = getc(in)) != EOF) {
+				if (c == '\n') fprintf(fp, "<br>");
+				else putc(c, fp);
+			}
+			fclose(in);
+		}
+		printer.EndPrint(fp);
 	}
-	fclose(in);
-
-	printer.EndPrint(fp);
 
 	// unlink(tmpl);
-	return TRUE;
+	return true;
 }
 
 //////////////////////////////////

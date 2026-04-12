@@ -240,7 +240,7 @@ FILE* PrinterSupport::BeginPrint()
 
 	FILE* fp = fopen(_fileName.c_str(), "a+");
 	if (fp && IsReducedHTMLSupported()) {
-		fprintf(fp, "%s", HTML_PRE_HEADER);
+		fputs(HTML_PRE_HEADER, fp);
 	}
 
 	return fp;
@@ -249,7 +249,7 @@ FILE* PrinterSupport::BeginPrint()
 void PrinterSupport::EndPrint(FILE* fp) 
 {
 	if (IsReducedHTMLSupported()) {
-		fprintf(fp, "%s", HTML_PRE_FOOTER);
+		fputs(HTML_PRE_FOOTER, fp);
 	}
 	fclose(fp);
     

@@ -697,8 +697,13 @@ bool FileViewer::SendToPrinter()
 		if (in) {
 			int c;
 			while ((c = getc(in)) != EOF) {
-				if (c == '\n') fprintf(fp, "<br>");
-				else putc(c, fp);
+				switch (c) {
+					case  '<': fputs("&lt;", fp); break;
+					case  '>': fputs("&gt;", fp); break;
+					case  '&': fputs("&amp;", fp); break;
+					case '\n': fputs("<br>", fp); break;
+					default: putc(c, fp);
+				}
 			}
 			fclose(in);
 		}

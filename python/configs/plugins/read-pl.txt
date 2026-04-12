@@ -10,7 +10,8 @@ Pliki *.py z tego katalogu powinny być wkopiowane do katalogu:
 ~/.config/far2l/plugins/python - domyślnego katalogu z wtyczkami pythona, z którego można je łatwo aktywować.
 
 a) zaladowanie wtyczki odbywa się komendą "py:load nazwa-pliku" na przykład py:load ucharmap
-b) odładowanie wtyczki odbywa się komendą "py:unload nazwa-pliku" na przykład py:unload ucharmap
+b) zaladowanie wtyczki i jej aktywowanie odbywa się komendą "py:load nazwa-pliku open" na przykład py:load uedreplace open
+c) odładowanie wtyczki odbywa się komendą "py:unload nazwa-pliku" na przykład py:unload ucharmap
 
 D. Przykłady
 a) ucharmap.py - przykładowa wtyczka pokazująca zestawu znakow UTF-8

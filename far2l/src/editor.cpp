@@ -3724,6 +3724,11 @@ case KEY_CTRLNUMPAD3: {
 	}
 }
 
+static bool AltDown(const MOUSE_EVENT_RECORD *MouseEvent)
+{
+	return (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
+}
+
 int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	m_MouseButtonIsHeld = MouseEvent->dwButtonState & 3;
@@ -3790,9 +3795,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		cur.line = CurLine;
 		cur.pos = CurLine ? CurLine->GetCurPos() : 0;
 		cur.visual_line = m_CurVisualLineInLogicalLine;
-		DWORD augmented_control_state = MouseEvent->dwControlKeyState;
-		if (right_down) augmented_control_state |= LEFT_ALT_PRESSED;
-		ApplyMouseTarget(cur, false, augmented_control_state, allow_selection);
+		ApplyMouseTarget(cur, false, right_down || AltDown(MouseEvent), allow_selection);
 	};
 
 	if (!m_bWordWrap && (MouseEvent->dwButtonState & 3) && (MouseEvent->dwEventFlags & MOUSE_MOVED)) {
@@ -3828,9 +3831,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 		if (any_button_down) {
 			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, Y1, target)) {
-				DWORD augmented_control_state = MouseEvent->dwControlKeyState;
-				if (right_down) augmented_control_state |= LEFT_ALT_PRESSED;
-				ApplyMouseTarget(target, false, augmented_control_state, true);
+				ApplyMouseTarget(target, false, right_down || AltDown(MouseEvent), true);
 				Show();
 			}
 		}
@@ -3846,9 +3847,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		}
 		if (any_button_down) {
 			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, Y2, target)) {
-				DWORD augmented_control_state = MouseEvent->dwControlKeyState;
-				if (right_down) augmented_control_state |= LEFT_ALT_PRESSED;
-				ApplyMouseTarget(target, false, augmented_control_state, true);
+				ApplyMouseTarget(target, false, right_down || AltDown(MouseEvent), true);
 				Show();
 			}
 		}
@@ -3862,10 +3861,8 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		if((MouseEvent->dwButtonState & 3))
 		{
 			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y, target)) {
-				DWORD augmented_control_state = MouseEvent->dwControlKeyState;
-				if (right_down) augmented_control_state |= LEFT_ALT_PRESSED;
 				ApplyMouseTarget(target, (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0,
-					augmented_control_state, any_button_down);
+					right_down || AltDown(MouseEvent), any_button_down);
 			}
 		}
 
@@ -3982,7 +3979,7 @@ bool Editor::ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target)
 	return true;
 }
 
-void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state, bool allow_selection)
+void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, bool vblock, bool allow_selection)
 {
 	const int screenHeight = Y2 - Y1;
 
@@ -4046,22 +4043,18 @@ void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWO
 			MouseSelStartingLine = NumLine;
 			MouseSelStartingPos = target.pos;
 		}
+		else if (MouseSelStartingLine < NumLine ||
+			(MouseSelStartingLine == NumLine && target.pos >= MouseSelStartingPos))
+		{
+			MarkBlock(vblock, MouseSelStartingLine, MouseSelStartingPos,
+				target.pos - MouseSelStartingPos,
+				NumLine + 1 - MouseSelStartingLine);
+		}
 		else
 		{
-			const bool vblock = (control_state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
-			if (MouseSelStartingLine < NumLine ||
-				(MouseSelStartingLine == NumLine && target.pos >= MouseSelStartingPos))
-			{
-				MarkBlock(vblock, MouseSelStartingLine, MouseSelStartingPos,
-					target.pos - MouseSelStartingPos,
-					NumLine + 1 - MouseSelStartingLine);
-			}
-			else
-			{
-				MarkBlock(vblock, NumLine, target.pos,
-					MouseSelStartingPos - target.pos,
-					MouseSelStartingLine + 1 - NumLine);
-			}
+			MarkBlock(vblock, NumLine, target.pos,
+				MouseSelStartingPos - target.pos,
+				MouseSelStartingLine + 1 - NumLine);
 		}
 	}
 

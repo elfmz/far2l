@@ -365,9 +365,11 @@ int FileViewer::ProcessKey(FarKey Key)
 			return TRUE;
 			// Печать файла с использованием плагина PrintMan
 		case KEY_ALTF5: {
+			/*
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER, OPEN_VIEWER, 0);		// printman
-
+            */
+            SendToPrinter();
 			return TRUE;
 		}
 		case KEY_F9:

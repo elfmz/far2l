@@ -45,101 +45,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //////////////////////////////////
-// Common class
-
-class TextBuffer {
-	char* buffer;
-	char* cptr;
-	int len;
-	int size;
-	wchar_t* wc;
-
-#define GAP	1024
-	void ensure(int sz) {
-		if (sz + len > size) {
-			size = sz + len + GAP;
-			if (buffer){ 
-				buffer = (char*)realloc(buffer, size);
-			}
-			else {
-				buffer = (char*)malloc(size);
-			}
-			cptr = buffer + len;
-		}
-	}
-#undef GAP
-
-public:
-	TextBuffer() {
-		buffer = cptr = 0;
-		len = size = 0;
-		wc = 0;
-	}
-
-	~TextBuffer() {
-		if (buffer) free(buffer);
-		if (wc) free(wc);
-		buffer = cptr = 0;
-		len = size = 0;
-		wc = 0;
-	}
-
-	const bool is_empty() const { return len == 0; }
-	const int length() const { return len; }
-	const char* c_str() const {	return buffer ? (const char*)buffer : ""; }
-
-	const wchar_t* w_str() {
-		if (wc) free(wc);
-		std::wstring _tmpstr;
-    	MB2Wide(c_str(), length(), _tmpstr);
-        wc = wcsdup(_tmpstr.c_str());
-        return wc;
-	}
-
-	void append(char c) {
-		ensure(1);
-        ++len;
-        *cptr++ = c;
-        *cptr = 0;
-	}
-
-	void append(wchar_t c) {
-		wchar_t buf[2] = {c, 0};
-		append(buf, 1);
-	}
-
-	void append(const char* s, int max = 0) {
-		int delta = max > 0 ? max : strlen(s);
-		ensure(delta + 1);
-		len += delta;
-		while(delta--) *cptr++ = *s++;
-        *cptr = 0;
-	}
-
-	void append(const std::string& s, int max = 0) {
-		append((const char*)s.c_str(), max);
-	}
-
-	void append(const wchar_t* w, int max = 0) {
-		int delta = max > 0 ? max : wcslen(w);
-		std::string _tmpstr;
-		Wide2MB(w, delta, _tmpstr);
-		append(_tmpstr);
-	}
-
-	void append(const std::wstring& w, int max = 0) {
-		int delta = max > 0 ? max : w.length();
-		std::string _tmpstr;
-		Wide2MB(w.c_str(), delta, _tmpstr);
-		append(_tmpstr);
-	}
-
-	void append(const FarTrueColor& color) {
-		char buf[10];
-		sprintf(buf, "%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
-		append(buf);
-	}
-};
+static std::string Color2Hex(const FarTrueColor& color)
+{
+	return StrPrintf("%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
+}
 
 // Represent char - final code table
 
@@ -189,11 +98,11 @@ static FarTrueColor ConvertForPrintLAB(const FarTrueColor& in, const FarTrueColo
 	return cs.ConvertForPrintLAB(in, bg);
 }
 
-static void appendNewLine(TextBuffer& tb, bool isHtml) {
+static void appendNewLine(std::string &tb, bool isHtml) {
 	tb.append(isHtml ? "<br>\n" : "\n");
 }
 
-static void escapeHtmlTags(TextBuffer& tb, const wchar_t c, int tabSize) {
+static void escapeHtmlTags(std::string &tb, const wchar_t c, int tabSize) {
 	// if (c == L' ') tb.append("&nbsp;");
 	// else 
 	if (c == L'\t') {
@@ -204,12 +113,12 @@ static void escapeHtmlTags(TextBuffer& tb, const wchar_t c, int tabSize) {
 	else if (c == L'&')  tb.append("&amp;");
 	else if (c == L'<')  tb.append("&lt;");
 	else if (c == L'>')  tb.append("&gt;");
-	else tb.append(c);
+	else Wide2MB(&c, 1, tb, true);
 }
 
-static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtml, int tabSize) {
+static void escapeHtmlTags(std::string &tb, const wchar_t* s, int len, bool isHtml, int tabSize) {
 	if (!isHtml) {
-		tb.append(s, len);
+		Wide2MB(s, len, tb, true);
 		return;
 	}
 
@@ -232,7 +141,7 @@ static bool isEmptyOrSpace(const wchar_t* s, int start, int len)
 #define toI(x) ((int)(x) & 0xFF)
 #define toB(x) ((unsigned char)((x) & 0xFF))
 
-static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len, int tabSize)
+static bool convertToReducedHTML(std::string &tb, Edit* line, int start, int len, int tabSize)
 {
 	if (len <= 0) len = line->GetLength() - start;
 	int end = start + len;
@@ -288,7 +197,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 			if (colored) tb.append("</font>");
 			colored = true;
 			tb.append("<font color=\"#");
-			tb.append(map.s[i].color);
+			tb.append(Color2Hex(map.s[i].color));
 			tb.append("\">");
 			prev = map.s[i].color;
 		}
@@ -299,7 +208,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 
 	// fprintf(stderr, "colorize: `%.*ls` => `%s`\n", len, CurStr + start,	tb.c_str());
 
-	tb.append('\n');
+	tb+= '\n';
 
 	return true;
 }
@@ -307,7 +216,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 BOOL FileEditor::SendToPrinter()
 {
 	PrinterSupport printer;
-	TextBuffer tb;
+	std::string tb;
 	int tab = m_editor->EdOpt.TabSize;
 
 	const wchar_t *CurStr = 0, *EndSeq = 0;
@@ -325,14 +234,14 @@ BOOL FileEditor::SendToPrinter()
 			else
 				Length = EndSel - StartSel;
 
-			if (Length > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
+			if (Length > 0 && tb.empty() && printer.IsReducedHTMLSupported())
 				tb.append(HTML_PRE_HEADER);
 
 			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
 				int Len2 = 0;
 				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
 				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported(), tab);
-				tb.append('\n');
+				tb+= '\n';
 			}
     	}
 	}
@@ -350,33 +259,34 @@ BOOL FileEditor::SendToPrinter()
 
 				if (CopySize > TBlockSizeX)	CopySize = TBlockSizeX;
 
-				if (CopySize > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
+				if (CopySize > 0 && tb.empty() && printer.IsReducedHTMLSupported())
 					tb.append(HTML_PRE_HEADER);
 
 				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize, tab)) {
 					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported(), tab);
-					tb.append('\n');
+					tb+= '\n';
 				}
     		}
     	}
 	}
 
 	// something is selected
-	if (!tb.is_empty()) {
+	if (!tb.empty()) {
 		if(printer.IsReducedHTMLSupported())
 			tb.append(HTML_PRE_FOOTER);
 
+		std::wstring wtb; StrMB2Wide(tb, wtb);
 		if (printer.IsPrintPreviewSupported()) {
 			if (printer.IsReducedHTMLSupported()) 
-				printer.ShowPreviewForReducedHTML(strFullFileName.GetWide(), tb.w_str());
+				printer.ShowPreviewForReducedHTML(strFullFileName.GetWide(), wtb.c_str());
 			else 
-				printer.ShowPreviewForText(strFullFileName.GetWide(), tb.w_str());
+				printer.ShowPreviewForText(strFullFileName.GetWide(), wtb.c_str());
 		}
 		else {
 			if (printer.IsReducedHTMLSupported()) 
-				printer.PrintReducedHTML(strFullFileName.GetWide(), tb.w_str());
+				printer.PrintReducedHTML(strFullFileName.GetWide(), wtb.c_str());
 			else 
-				printer.PrintText(strFullFileName.GetWide(), tb.w_str());
+				printer.PrintText(strFullFileName.GetWide(), wtb.c_str());
 		}
 		return TRUE;
 	}
@@ -391,9 +301,9 @@ BOOL FileEditor::SendToPrinter()
 
 			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
 
-			TextBuffer tb;
+			std::string tb;
 			if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab))  {
-				fprintf(fp, "%s", tb.c_str());
+				fputs(tb.c_str(), fp);
 			} else {
 				Wide2MB(SaveStr, Length, _tmpstr);
 				fwrite(_tmpstr.data(), 1, _tmpstr.size(), fp);

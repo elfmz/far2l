@@ -1833,7 +1833,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 
 				MakeSeparator(SepWidth, TmpStr,
 						BoxType == NO_BOX ? 0
-										: (BoxType == SINGLE_BOX || BoxType == SHORT_SINGLE_BOX ? 2 : 1));
+										: (BoxType == SINGLE_BOX || BoxType == SHORT_SINGLE_BOX ? 13 : 12 /* 2 : 1 */));
 
 				if (I > 0 && I < ItemCount - 1 && SepWidth > 3) {
 					for (unsigned int J = 0; Ptr[J + 3]; J++) {

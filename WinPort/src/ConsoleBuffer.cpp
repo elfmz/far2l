@@ -13,6 +13,7 @@ void ConsoleBuffer::SetSizeSimple(unsigned int width, unsigned int height, uint6
 	unsigned int prev_height = _width ? (SHORT)(_console_chars.size() / _width) : (SHORT)0;
 	CHAR_INFO fill_ci{};
 	CI_SET_WCATTR(fill_ci, L' ', attributes);
+	fill_ci.Extra.Hint.Container = HintConsoleBuffer;
 	ConsoleChars new_chars(size_t(height) * width, fill_ci);
 	if (!new_chars.empty() && !_console_chars.empty()) {
 		size_t y_offset = (prev_height > height) ? prev_height - height : 0;
@@ -53,6 +54,7 @@ void ConsoleBuffer::SetSizeRecomposing(unsigned int width, unsigned int height, 
 
 	CHAR_INFO fill_ci{};
 	CI_SET_WCATTR(fill_ci, L' ', attributes);
+	fill_ci.Extra.Hint.Container = HintConsoleBuffer;
 	ConsoleChars new_chars(size_t(height) * width, fill_ci);
 	if (_width && !_console_chars.empty() && !new_chars.empty()) {
 		size_t nc_cursor_offset = (size_t)-1;

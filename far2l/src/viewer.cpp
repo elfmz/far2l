@@ -2696,14 +2696,14 @@ void Viewer::Search(int Next, int FirstChar)
 		{DI_TEXT,        5,  2,  0,  2,  {0}, 0, Msg::ViewSearchFor},
 		{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)TextHistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_USELASTHISTORY, L""},
 		{DI_FIXEDIT,     5,  3,  70, 3,  {(DWORD_PTR)HexMask}, DIF_MASKEDIT, L""},
-		{DI_TEXT,        3,  4,  0,  4,  {0}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  4,  0,  4,  {0}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_RADIOBUTTON, 5,  5,  0,  5,  {1}, DIF_GROUP, Msg::ViewSearchForText},
 		{DI_RADIOBUTTON, 5,  6,  0,  6,  {0}, 0, Msg::ViewSearchForHex},
 		{DI_CHECKBOX,    40, 5,  0,  5,  {0}, 0, Msg::ViewSearchCase},
 		{DI_CHECKBOX,    40, 6,  0,  6,  {0}, 0, Msg::ViewSearchWholeWords},
 		{DI_CHECKBOX,    40, 7,  0,  7,  {0}, 0, Msg::ViewSearchReverse},
 		{DI_CHECKBOX,    40, 8,  0,  8,  {0}, DIF_DISABLE, Msg::ViewSearchRegexp},
-		{DI_TEXT,        3,  9,  0,  9,  {0}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  9,  0,  9,  {0}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,      0,  10, 0,  10, {0}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::ViewSearchSearch},
 		{DI_BUTTON,      0,  10, 0,  10, {0}, DIF_CENTERGROUP, Msg::ViewSearchCancel}
 	};
@@ -3276,7 +3276,7 @@ void Viewer::GoTo(int ShowDlg, int64_t Offset, DWORD Flags)
 	DialogDataEx GoToDlgData[] = {
 		{DI_DOUBLEBOX,   3, 1, 31, 7, {0}, 0,Msg::ViewerGoTo },
 		{DI_EDIT,        5, 2, 29, 2, {(DWORD_PTR)LineHistoryName}, DIF_FOCUS | DIF_DEFAULT | DIF_HISTORY | DIF_USELASTHISTORY, L""},
-		{DI_TEXT,        3, 3, 0,  3, {0}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3, 3, 0,  3, {0}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_RADIOBUTTON, 5, 4, 0,  4, {0}, DIF_GROUP,     Msg::GoToPercent},
 		{DI_RADIOBUTTON, 5, 5, 0,  5, {0}, 0, Msg::GoToHex    },
 		{DI_RADIOBUTTON, 5, 6, 0,  6, {0}, 0, Msg::GoToDecimal}

@@ -74,6 +74,8 @@ FARString strInitTitle;
 SMALL_RECT InitWindowRect;
 COORD InitialSize;
 
+static SHORT HintX = -1, HintY = -1;
+
 // static HICON hOldLargeIcon=nullptr, hOldSmallIcon=nullptr;
 
 const size_t StackBufferSize = 0x2000;
@@ -321,8 +323,8 @@ void ShowTime(int ShowAlways)
 
 void GotoXY(int X, int Y)
 {
-	CurX = X;
-	CurY = Y;
+	HintX = CurX = X;
+	HintY = CurY = Y;
 }
 
 int WhereX()
@@ -492,16 +494,16 @@ void InitRecodeOutTable()
 void Text(int X, int Y, uint64_t Color, const WCHAR *Str, size_t Length)
 {
 	CurColor = Color;
-	CurX = X;
-	CurY = Y;
+	HintX = CurX = X;
+	HintY = CurY = Y;
 	Text(Str, Length);
 }
 
 void Text(int X, int Y, uint64_t Color, const WCHAR *Str)
 {
 	CurColor = Color;
-	CurX = X;
-	CurY = Y;
+	HintX = CurX = X;
+	HintY = CurY = Y;
 	Text(Str);
 }
 
@@ -533,6 +535,33 @@ void Text(const WCHAR Ch, size_t Length)
 {
 	Text(Ch, CurColor, Length);
 }
+
+static long TagRef = 1;
+
+void Hint(
+		int X1, int Y1, int X2, int Y2, 
+		HintContainerType hcc, 
+		HintObjectType hco, 
+		bool focused, bool hovered, bool disabled, bool defaultCtrl) 
+{
+	int tag = (TagRef++) % 0x00FF;
+	/*if (hcc == HintDialog) {
+		fprintf(stderr, "type %d: tag=%d, pos=%d..%d, %d..%d, focus=%c hover=%c disabled=%c\n", hco, tag, X1, X2, Y1, Y2, 
+			focused ? 'Y': 'n', hovered ? 'Y': 'n', disabled ? 'Y': 'n');
+	}*/
+	ScrBuf.ApplyHint(X1, Y1, X2, Y2, tag, hcc, hco, focused, hovered, disabled, defaultCtrl, false);
+}
+
+void HintAt(
+		HintContainerType hcc, 
+		HintObjectType hco, 
+		bool focused, bool hovered, bool disabled, bool defaultCtrl) 
+{
+	Hint(HintX, HintY, CurX, CurY, hcc, hco, focused, hovered, disabled, defaultCtrl);
+}
+
+void HintBeginContainer() { TagRef = 1; }
+void HintEndContainer() {}
 
 void Text(const WCHAR *Str, size_t Length)
 {
@@ -881,6 +910,7 @@ void GetText(int X1, int Y1, int X2, int Y2, void *Dest, int DestSize)
 	ScrBuf.Read(X1, Y1, X2, Y2, (CHAR_INFO *)Dest, DestSize);
 }
 
+// todo: check if it is being used fromn dialogs
 void PutText(int X1, int Y1, int X2, int Y2, const void *Src)
 {
 	int Width = X2 - X1 + 1;
@@ -908,6 +938,7 @@ void BoxText(const wchar_t *Str, int IsVert)
 /*
 	Отрисовка прямоугольника.
 */
+// todo: check if it is being used from dialogs
 void Box(int x1, int y1, int x2, int y2, uint64_t Color, int Type)
 {
 	if (x1 >= x2 || y1 >= y2)
@@ -963,6 +994,7 @@ bool ScrollBarRequired(UINT Length, UINT64 ItemsCount)
 	return Length > 2 && ItemsCount && Length < ItemsCount;
 }
 
+// todo: check if it is being ued from dialogs
 bool ScrollBarEx(UINT X1, UINT Y1, UINT Length, UINT64 TopItem, UINT64 ItemsCount)
 {
 	if (ScrollBarRequired(Length, ItemsCount)) {
@@ -996,6 +1028,9 @@ bool ScrollBarEx(UINT X1, UINT Y1, UINT Length, UINT64 TopItem, UINT64 ItemsCoun
 		BufPtr[Length + 2] = 0;
 		GotoXY(X1, Y1);
 		VText(BufPtr);
+
+		// todo: HintAt here
+
 		if (HeapBuffer) {
 			delete[] HeapBuffer;
 		}
@@ -1039,8 +1074,10 @@ void ScrollBar(int X1, int Y1, int Length, unsigned int Current, unsigned int To
 			delete[] HeapBuffer;
 		}
 	}
+	// todo: HintAt here
 }
 
+// todo check if it is being used from dialogs
 void DrawLine(int Length, int Type, const wchar_t *UserSep)
 {
 	if (Length > 1) {
@@ -1060,10 +1097,64 @@ void DrawLine(int Length, int Type, const wchar_t *UserSep)
 	}
 }
 
+/*
+	9 - flupdate.cpp
+	0, 1, 2 - vmenu.cpp
+
+#define ShowSeparator(Length, Type)              DrawLine(Length, Type)
+#define ShowUserSeparator(Length, Type, UserSep) DrawLine(Length, Type, UserSep)
+
+	DrawLine:
+		MakeSeparator(Length, BufPtr, Type, UserSep);
+
+	 dialog.cpp
+			case DI_SINGLEBOX:
+			case DI_DOUBLEBOX:
+
+				if (CY1 == CY2) {
+					DrawLine(CX2 - CX1 + 1, CurItem->Type == DI_SINGLEBOX ? 8 : 9);		//???
+				} else if (CX1 == CX2) {
+					DrawLine(CY2 - CY1 + 1, CurItem->Type == DI_SINGLEBOX ? 10 : 11);
+					IsDrawTitle = FALSE;
+				} else {
+					Box(X1 + CX1, Y1 + CY1, X1 + CX2, Y1 + CY2, ItemColor[2],
+							(CurItem->Type == DI_SINGLEBOX) ? SINGLE_BOX : DOUBLE_BOX);
+				}
+
+	  message.cpp:
+
+		if (Chr == 1 || Chr == 2) {
+			int Length = X2 - X1 - 5;
+
+			if (Length > 1) {
+				SetFarColor((Flags & MSG_WARNING) ? COL_WARNDIALOGBOX : COL_DIALOGBOX);
+				GotoXY(X1 + 3, Y1 + I + 2);
+				DrawLine(Length, (Chr == 2 ? 3 : 1));
+				CPtrStr++;
+
+	Box:
+		Type = (Type == DOUBLE_BOX || Type == SHORT_DOUBLE_BOX);
+	vertical:
+		wmemset(BufPtr, BoxSymbols[Type ? BS_V2 : BS_V1], height - 1);
+	horizontal:
+	  1:
+		BufPtr[0] = BoxSymbols[Type ? BS_LT_H2V2 : BS_LT_H1V1];
+		wmemset(BufPtr + 1, BoxSymbols[Type ? BS_H2 : BS_H1], width - 3);
+		BufPtr[width - 2] = BoxSymbols[Type ? BS_RT_H2V2 : BS_RT_H1V1];
+		BufPtr[width - 1] = 0;
+	  2:
+		BufPtr[0] = BoxSymbols[Type ? BS_LB_H2V2 : BS_LB_H1V1];
+		BufPtr[width - 2] = BoxSymbols[Type ? BS_RB_H2V2 : BS_RB_H1V1];
+
+	all other code:
+		Box(... DOUBLE_BOX);
+
+	custom borders: pick_color.cpp
+*/
 // "Нарисовать" сепаратор в памяти.
 WCHAR *MakeSeparator(int Length, WCHAR *DestStr, int Type, const wchar_t *UserSep)
 {
-	wchar_t BoxType[12][3] = {
+	wchar_t BoxType[14][3] = {
 			// h-horiz, s-space, v-vert, b-border, 1-one line, 2-two line
 			/* 00 */ {L' ', L' ', BoxSymbols[BS_H1]},										//  -     h1s
 			/* 01 */ {BoxSymbols[BS_L_H1V2], BoxSymbols[BS_R_H1V2], BoxSymbols[BS_H1]},		// ||-||  h1b2
@@ -1079,7 +1170,16 @@ WCHAR *MakeSeparator(int Length, WCHAR *DestStr, int Type, const wchar_t *UserSe
 			/* 09 */ {BoxSymbols[BS_H2], BoxSymbols[BS_H2], BoxSymbols[BS_H2]},				// =      h2
 			/* 10 */ {BoxSymbols[BS_V1], BoxSymbols[BS_V1], BoxSymbols[BS_V1]},				// |      v1
 			/* 11 */ {BoxSymbols[BS_V2], BoxSymbols[BS_V2], BoxSymbols[BS_V2]},				// ||     v2
+
+            /* copy for case we need to keep separators e g menus / panels */
+			/* 12 */ {BoxSymbols[BS_L_H1V2], BoxSymbols[BS_R_H1V2], BoxSymbols[BS_H1]},		// ||-||  h1b2
+			/* 13 */ {BoxSymbols[BS_L_H1V1], BoxSymbols[BS_R_H1V1], BoxSymbols[BS_H1]},		// |-|    h1b1
 	};
+
+	if (Opt.Backend.UseModernLook || Opt.Backend.UseNoBorders) {
+		// we do not need edge strokes either globally (NoBorders) or in separators (ModernLook)
+		if (Type == 1 || Type == 2) Type = 0; // usual lines no edges
+	}
 
 	if (Length > 1 && DestStr) {
 		Type%= ARRAYSIZE(BoxType);

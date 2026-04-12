@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "FARString.hpp"
+#include<BackendOptions.h>
 
 enum
 {
@@ -633,6 +634,7 @@ struct Options
 	LoadPluginsOptions LoadPlug;
 
 	DialogsOptions Dialogs;
+	BackendOptions Backend;
 	VMenuOptions VMenu;
 	CommandLineOptions CmdLine;
 	PoliciesOptions Policies;

@@ -821,7 +821,7 @@ static bool GetColorDialogInner(uint64_t *color, uint64_t *mask, bool bRGB, bool
 
 		{DI_DOUBLEBOX, 3, 1, int16_t(46 + extrasize), 18, {}, 0, Msg::SetColorTitle},
 
-		{DI_TEXT,  0, 16,  0, 16, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,  0, 16,  0, 16, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_VTEXT, 39, 1, 39, 16, {}, DIF_BOXCOLOR, VerticalLine},
 		{DI_TEXT, 3, 6,  39, 6, {}, DIF_BOXCOLOR, HorizontalLine},
 		{DI_TEXT, 3, 11, 39, 11, {}, DIF_BOXCOLOR, HorizontalLine},

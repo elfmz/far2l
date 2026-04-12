@@ -282,7 +282,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 		for (PtrMsgDlg = MsgDlg + 1, I = 1; I < ItemCount; ++I, ++PtrMsgDlg, ++CurItem) {
 			if (I == StrCount + 1 && !StrSeparator && !Separator) {
 				PtrMsgDlg->Type = DI_TEXT;
-				PtrMsgDlg->Flags = DIF_SEPARATOR;
+				PtrMsgDlg->Flags = (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR);
 				PtrMsgDlg->Y1 = PtrMsgDlg->Y2 = I + 1;
 				CurItem--;
 				I--;
@@ -314,7 +314,7 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 
 				if (Chr == L'\1' || Chr == L'\2') {
 					CPtrStr++;
-					PtrMsgDlg->Flags|= (Chr == 2 ? DIF_SEPARATOR2 : DIF_SEPARATOR);
+					if(!Opt.Backend.UseModernLook) PtrMsgDlg->Flags|= (Chr == 2 ? DIF_SEPARATOR2 : DIF_SEPARATOR);
 					if (I == StrCount) {
 						StrSeparator = true;
 					}

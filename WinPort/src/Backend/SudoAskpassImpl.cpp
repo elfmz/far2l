@@ -142,13 +142,13 @@ class SudoAskpassScreen
 		}
 	}
 
-	void WriteCentered(const std::string &str, SHORT t)
+	void WriteCentered(const std::string &str, SHORT t, HintContainerType container, HintObjectType object)
 	{
 		std::wstring wstr;
 		StrMB2Wide(str, wstr);
 		SHORT l = (_width > wstr.size()) ? (_width - wstr.size()) / 2 : 0;
 		COORD pos = {l, t};
-		g_winport_con_out->WriteStringAt(wstr.c_str(), wstr.size(), pos);
+		g_winport_con_out->WriteStringAt(wstr.c_str(), wstr.size(), pos, container, object);
 	}
 
 	void Repaint()
@@ -169,10 +169,13 @@ class SudoAskpassScreen
 
 		CHAR_INFO ci{};
 		CI_SET_WCHAR(ci, L' ');
+		ci.Extra.Hint.Container = HintDialog;
 		for (SHORT y = _rect.Top; y <= _rect.Bottom; ++y) {
 			for (SHORT x = _rect.Left; x <= _rect.Right; ++x) {
 				ci.Attributes = (x == _rect.Left || x == _rect.Right || y == _rect.Top || y == _rect.Bottom)
 					? AttrFrame : AttrInner;
+				if(ci.Attributes == AttrFrame) ci.Extra.Hint.Object = HintBox ;
+
 				COORD pos{x, y};
 				// force repant if frame is damaged (likely by app's interface painted from other thread)
 				if (!_need_repaint && (y == _rect.Top || x == _rect.Left || x == _rect.Right)) {
@@ -190,11 +193,11 @@ class SudoAskpassScreen
 
 		if (_need_repaint) {
 			g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-			WriteCentered(_title, _rect.Top + 1);
-			WriteCentered(_key_hint, _rect.Top + 3);
+			WriteCentered(_title, _rect.Top + 1, HintDialog, HintTitle);
+			WriteCentered(_key_hint, _rect.Top + 3, HintDialog, HintText);
 
 			g_winport_con_out->SetAttributes(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
-			WriteCentered(_text, _rect.Top + 2);
+			WriteCentered(_text, _rect.Top + 2, HintDialog, HintText);
 			if (_password_expected) {
 				PaintPasswordPanno();
 			}
@@ -264,6 +267,8 @@ class SudoAskpassScreen
 			} else { // for empty/unhashed input show 3 squares
 				CI_SET_WCHAR(ci, glyphs[0]);
 			}
+			ci.Extra.Hint.Container = HintDialog;
+			ci.Extra.Hint.Object = HintPswEdit;
 
 			// * 2 is for extra gap for better distinction
 			COORD pos{SHORT(SHORT(_width / 2) + i * 2 - ii), _rect.Bottom};

@@ -29070,6 +29070,83 @@ upd:"Word wrap"
 upd:"Word wrap"
 upd:"Word wrap"
 
+UseModernLook
+"Современный вид"
+"Use Modern Look"
+upd:"Use Modern Look"
+upd:"Use Modern Look"
+upd:"Use Modern Look"
+upd:"Use Modern Look"
+upd:"Use Modern Look"
+upd:"Use Modern Look"
+upd:"Use Modern Look"
+
+UseModernLookRoundedBorders
+"Скруглять уголки рамок"
+"Round border edges"
+upd:"Round border edges"
+upd:"Round border edges"
+upd:"Round border edges"
+upd:"Round border edges"
+upd:"Round border edges"
+upd:"Round border edges"
+upd:"Round border edges"
+
+UseModernLookSingleBorders
+"Только одинарные рамки"
+"Single borders only"
+upd:"Single borders only"
+upd:"Single borders only"
+upd:"Single borders only"
+upd:"Single borders only"
+upd:"Single borders only"
+upd:"Single borders only"
+upd:"Single borders only"
+
+UseModernLookNoBorders
+"Без псевдографики в уголках"
+"Hide edge borders"
+upd:"Hide edge borders"
+upd:"Hide edge borders"
+upd:"Hide edge borders"
+upd:"Hide edge borders"
+upd:"Hide edge borders"
+upd:"Hide edge borders"
+upd:"Hide edge borders"
+
+UseModernLookEmbossAsBold
+"Тень к тексту вместо полужирного шрифта"
+"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+upd:"Text shadows instead of bold fonts"
+
+UseModernLookUseSoftenBevels
+"Уменьшать яркость рамок и линий"
+"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+upd:"Soften boxes and bevels"
+
+UseModernLookUse3D
+"Использовать 3D эффект"
+"Use 3D effect"
+upd:"Use 3D effect"
+upd:"Use 3D effect"
+upd:"Use 3D effect"
+upd:"Use 3D effect"
+upd:"Use 3D effect"
+upd:"Use 3D effect"
+upd:"Use 3D effect"
+
 #Must be the last
 NewFileName
 l:

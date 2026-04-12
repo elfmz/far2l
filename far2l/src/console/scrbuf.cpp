@@ -274,6 +274,7 @@ void ScreenBuf::ApplyShadow(int X1, int Y1, int X2, int Y2, SaveScreen *ss)
 			uint8_t cc = attr & 0x07;
 			DstBuf->Attributes = ((attr & 0xFEFEFEFEFEFE0000ULL) >> 1) |
 									(attr & 0x000000000000FF00ULL) | (cc ? cc : 8);
+			DstBuf->Extra.Hint.Shadow = 1;
 		}
 	}
 
@@ -307,6 +308,44 @@ void ScreenBuf::ApplyColorMask(int X1, int Y1, int X2, int Y2, DWORD64 ColorMask
 		for (int J = 0; J < Width; J++, ++PtrBuf) {
 			if (!(PtrBuf->Attributes&= ~ColorMask))
 				PtrBuf->Attributes = 0x08;
+		}
+	}
+
+#ifdef DIRECT_SCREEN_OUT
+	Flush();
+#elif defined(DIRECT_RT)
+
+	if (DirectRT)
+		Flush();
+
+#endif
+}
+
+void ScreenBuf::ApplyHint(int X1, int Y1, int X2, int Y2, 
+	int tag,
+	HintContainerType hcc, HintObjectType hco, 
+	bool focused, bool hovered, bool disabled, bool defaultCtrl, bool bevel)
+{
+	CriticalSectionLock Lock(CS);
+	if (!Buf)
+		return;
+
+	int Width = X2 - X1 + 1;
+	int Height = Y2 - Y1 + 1;
+
+	for (int I = 0; I < Height; I++) {
+		CHAR_INFO *PtrBuf = Buf + (Y1 + I) * BufX + X1;
+
+		for (int J = 0; J < Width; J++, ++PtrBuf) {
+			PtrBuf->Extra.Hint.Container = hcc;
+			PtrBuf->Extra.Hint.Object = hco;
+			PtrBuf->Extra.Hint.Icon = 0;
+			PtrBuf->Extra.Hint.Focus = focused ? 1 : 0;
+			PtrBuf->Extra.Hint.Hover = hovered ? 1 : 0;
+			PtrBuf->Extra.Hint.Enabled = disabled ? 0 : 1;
+			PtrBuf->Extra.Hint.Default = defaultCtrl ? 1 : 0;
+			PtrBuf->Extra.Hint.Beveled = bevel ? 1 : 0;
+			PtrBuf->Extra.Hint.Tag = tag;
 		}
 	}
 

@@ -22,6 +22,7 @@ set(SOURCES
     wxConsoleInputShim.cpp
     wxConsoleImages.cpp
     wxPrinterSupport.cpp
+    wxShareBackendOptions.cpp
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

@@ -1064,7 +1064,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_DOUBLEBOX, 3,                   1,               short(DlgX - 4),  short(DlgY - 2), {}, 0, Msg::SetAttrTitle},
 		{DI_TEXT,      -1,                  2,               0,                2,               {}, 0, Msg::SetAttrFor},
 		{DI_TEXT,      -1,                  3,               0,                3,               {}, DIF_SHOWAMPERSAND, L""},
-		{DI_TEXT,      3,                   4,               0,                4,               {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,                   4,               0,                4,               {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,      5,                   5,               17,               5,               {}, DIF_FOCUS, Msg::SetAttrBriefInfo}, // if symlink in will Button & need first focus here
 		{DI_TEXT,      18,                  5,               18,               5,               {}, 0, L""},
 		{DI_EDIT,      19,                  5,               short(DlgX - 6),  5,               {}, DIF_SELECTONENTRY | DIF_FOCUS | DIF_READONLY, L""}, // not readonly only if symlink
@@ -1127,7 +1127,7 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_CHECKBOX,  short(ColX3Of3+1),   15,              0,                15,              {}, DIF_3STATE, Msg::SetAttrHidden},
 #endif
 
-		{DI_TEXT,      3,                   16,              0,                16,              {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,                   16,              0,                16,              {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,      short(DlgX - 29),    17,              0,                17,              {}, 0, L""},
 		{DI_TEXT,      5,                   18,              0,                18,              {}, 0, Msg::SetAttrAccessTime},
 		{DI_TEXT,      short(DlgX - 30),    18,              short(DlgX - 30), 18,              {}, 0, L""},
@@ -1147,9 +1147,9 @@ bool ShellSetFileAttributes(Panel *SrcPanel, LPCWSTR Object)
 		{DI_BUTTON,    0,                   21,              0,                21,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrOriginal},
 		{DI_BUTTON,    0,                   21,              0,                21,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrCurrent},
 		{DI_BUTTON,    0,                   21,              0,                21,              {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::SetAttrBlank},
-		{DI_TEXT,      3,                   22,              0,                22,              {}, DIF_SEPARATOR | DIF_HIDDEN, L""},
+		{DI_TEXT,      3,                   22,              0,                22,              {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR) | DIF_HIDDEN, L""},
 		{DI_CHECKBOX,  5,                   23,              0,                23,              {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSubfolders},
-		{DI_TEXT,      3,                   short(DlgY - 4), 0,                short(DlgY - 4), {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,                   short(DlgY - 4), 0,                short(DlgY - 4), {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,      5,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSymlinkExplain1},
 		{DI_TEXT,      5,                   short(DlgY - 2), 0,                short(DlgY - 2), {}, DIF_DISABLE | DIF_HIDDEN, Msg::SetAttrSymlinkExplain2},
 		{DI_BUTTON,    0,                   short(DlgY - 3), 0,                short(DlgY - 3), {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::SetAttrSet},

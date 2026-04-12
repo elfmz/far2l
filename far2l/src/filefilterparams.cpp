@@ -1011,14 +1011,14 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_TEXT,        5,           2,  0,      2,  {},                                  DIF_FOCUS,                              Msg::FileFilterName              },
 		{DI_EDIT,        5,           2,  82,     2,  {(DWORD_PTR)FilterNameHistoryName},  DIF_HISTORY,                            L""                              },
 
-		{DI_TEXT,        0,           3,  0,      3,  {},                                  DIF_SEPARATOR,                          L""                              },
+		{DI_TEXT,        0,           3,  0,      3,  {},                                  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                          L""                              },
 
 		{DI_CHECKBOX,    5,           4,  0,      4,  {},                                  DIF_AUTOMATION,                         Msg::FileFilterMatchMask         },
 		{DI_EDIT,        5,           4,  82,     4,  {(DWORD_PTR)FilterMasksHistoryName}, DIF_HISTORY,                            L""                              },
 
 		{DI_CHECKBOX,    5,           5,  0,      5,  {},                                  0,				                       Msg::FileFilterMatchMaskCase		},
 
-		{DI_TEXT,        0,           6,  0,      6,  {},                                  DIF_SEPARATOR,                          L""                              },
+		{DI_TEXT,        0,           6,  0,      6,  {},                                  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                          L""                              },
 
 		{DI_CHECKBOX,    5,           7,  0,      7,  {},                                  DIF_AUTOMATION,                         Msg::FileFilterSize              },
 		{DI_TEXT,        7,           8,  8,      8,  {},                                  0,                                      Msg::FileFilterSizeFromSign      },
@@ -1040,7 +1040,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_BUTTON,      0,           7,  0,      7,  {},                                  DIF_BTNNOCLOSE,                         Msg::FileFilterCurrent           },
 		{DI_BUTTON,      0,           7,  74,     7,  {},                                  DIF_BTNNOCLOSE,                         Msg::FileFilterBlank             },
 
-		{DI_TEXT,        0,           10,  0,      10,  {},                                  DIF_SEPARATOR,                          L""                              },
+		{DI_TEXT,        0,           10,  0,      10,  {},                                (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                          L""                              },
 		{DI_VTEXT,       22,          6,  22,     10,  {},                                  DIF_BOXCOLOR,                           VerticalLine                     },
 
 		{DI_CHECKBOX,    5,           11, 0,      11, {},                                  DIF_AUTOMATION,                         Msg::FileFilterAttr              },
@@ -1068,7 +1068,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    64,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevFIFO       },
 		{DI_CHECKBOX,    64,          15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevSock       },
 
-		{DI_TEXT,        -1,          17, 0,      17, {},                                  DIF_SEPARATOR,                          Msg::HighlightColors             },
+		{DI_TEXT,        -1,          17, 0,      17, {},                                  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                          Msg::HighlightColors             },
 		{DI_TEXT,        16,          18, 0,      18, {},                                  0,                                      Msg::HighlightMarking            },
 		{DI_EDIT,        5,           18, 14,     18, {},                                  0,                                      L""                              },
 		{DI_CHECKBOX,    0,           18, 0,      18, {},                                  0,                                      Msg::HighlightMarkStrInherit     },
@@ -1087,7 +1087,7 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_USERCONTROL, 54,          19, 79,     22, {},                                  DIF_NOFOCUS,                            L""                              },
 
 		{DI_CHECKBOX,    5,           23, 0,      23, {},                                  0,                                      Msg::HighlightContinueProcessing },
-		{DI_TEXT,        0,           18, 0,      18, {},                                  DIF_SEPARATOR,                          L""                              },
+		{DI_TEXT,        0,           18, 0,      18, {},                                  (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR),                          L""                              },
 		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_DEFAULT | DIF_CENTERGROUP,          Msg::Ok                          },
 		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_CENTERGROUP | DIF_BTNNOCLOSE,       Msg::FileFilterReset             },
 		{DI_BUTTON,      0,           19, 0,      19, {},                                  DIF_CENTERGROUP,                        Msg::FileFilterCancel            },

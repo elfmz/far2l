@@ -130,7 +130,7 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
 	{true,  NSecColors, "CurrentTheme", &Opt.CurrentTheme, L"" },
-	{true,  NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 0 },
+	{true,  NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 1 },
 
 	{true,  NSecScreen, "Clock", &Opt.Clock, 1},
 	{true,  NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
@@ -188,6 +188,13 @@ const ConfigOpt g_cfg_opts[] {
 	{true,  NSecInterfaceCompletion, "ShowList", &Opt.AutoComplete.ShowList, 1},
 	{true,  NSecInterfaceCompletion, "ModalList", &Opt.AutoComplete.ModalList, 0},
 	{true,  NSecInterfaceCompletion, "Append", &Opt.AutoComplete.AppendCompletion, 0},
+	{true,  NSecInterface, "UseModernLook", &Opt.Backend.UseModernLook, 1},
+	{true,  NSecInterface, "UseModernLookRoundBorders", &Opt.Backend.UseRoundedBorders, 0},
+	{true,  NSecInterface, "UseModernLookSingleBordersOnly", &Opt.Backend.UseSingleBordersOnly, 0},
+	{true,  NSecInterface, "UseModernLookNoBorders", &Opt.Backend.UseNoBorders, 0},
+	{true,  NSecInterface, "UseModernLookEmbossAsBold", &Opt.Backend.UseEmbossAsBold, 0},
+	{true,  NSecInterface, "UseSoftenBevels", &Opt.Backend.UseSoftenBevels, 1},
+	{true,  NSecInterface, "Use3D", &Opt.Backend.Use3D, 1},
 
 	{true,  NSecViewer, "ExternalViewerName", &Opt.strExternalViewer, L""},
 	{true,  NSecViewer, "UseExternalViewer", &Opt.ViOpt.UseExternalViewer, 0},

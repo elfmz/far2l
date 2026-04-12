@@ -488,7 +488,7 @@ void DirectoryNameSettings()
 		{DI_RADIOBUTTON, 5, 13,  50,  13, {}, 0, Msg::DirSettingsSymlinkRadio2},
 		{DI_TEXT,      5, 14,  50,  14, {}, DIF_DISABLE, Msg::DirSettingsSymlinkSizeHint},
 
-		{DI_TEXT,      0, 15,   0,  15, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      0, 15,   0,  15, {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,    0, 16,   0,  16, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0, 16,   0,  16, {}, DIF_CENTERGROUP, Msg::Cancel},
 		{DI_BUTTON,    0, 16,   0,  16, {}, DIF_CENTERGROUP | DIF_BTNNOCLOSE, Msg::DirSettingsApply},
@@ -713,6 +713,19 @@ void InterfaceSettings()
 			Builder.AddCheckbox(Msg::ConfigTTYPaletteOverride, &Opt.TTYPaletteOverride);
 		}
 
+    	if(Opt.Backend.UseModernLook) Builder.AddEmptyLine();
+    	Builder.AddCheckbox(Msg::UseModernLook, (BOOL *)&Opt.Backend.UseModernLook);
+
+        if (supported_tweaks & TWEAK_STATUS_SUPPORT_CHANGE_FONT) {
+        	Builder.AddCheckbox(Msg::UseModernLookRoundedBorders, (BOOL *)&Opt.Backend.UseRoundedBorders);
+        	Builder.AddCheckbox(Msg::UseModernLookSingleBorders, (BOOL *)&Opt.Backend.UseSingleBordersOnly);
+        	Builder.AddCheckbox(Msg::UseModernLookNoBorders, (BOOL *)&Opt.Backend.UseNoBorders);
+        	Builder.AddCheckbox(Msg::UseModernLookEmbossAsBold, (BOOL *)&Opt.Backend.UseEmbossAsBold);
+        	Builder.AddCheckbox(Msg::UseModernLookUseSoftenBevels, (BOOL *)&Opt.Backend.UseSoftenBevels);
+        	Builder.AddCheckbox(Msg::UseModernLookUse3D, (BOOL *)&Opt.Backend.Use3D);
+        }
+    	if(Opt.Backend.UseModernLook) Builder.AddEmptyLine();
+
 		Builder.AddText(Msg::ConfigWindowTitle);
 		Builder.AddEditField(&Opt.strWindowTitle, 47);
 
@@ -917,12 +930,15 @@ void DialogSettings()
 
 	AddHistorySettings(Builder, Msg::ConfigDialogsEditHistory, &Opt.Dialogs.EditHistory,
 			&Opt.DialogsHistoryCount);
+	
+	if (Opt.Backend.UseModernLook) Builder.AddEmptyLine();
 	Builder.AddCheckbox(Msg::ConfigDialogsEditBlock, &Opt.Dialogs.EditBlock);
 	Builder.AddCheckbox(Msg::ConfigDialogsDelRemovesBlocks, &Opt.Dialogs.DelRemovesBlocks);
 	Builder.AddCheckbox(Msg::ConfigDialogsAutoComplete, &Opt.Dialogs.AutoComplete);
 	Builder.AddCheckbox(Msg::ConfigDialogsEULBsClear, &Opt.Dialogs.EULBsClear);
 	Builder.AddCheckbox(Msg::ConfigDialogsMouseButton, &Opt.Dialogs.MouseButton);
 	Builder.AddCheckbox(Msg::ConfigDialogsShowArrowsInEdit, (BOOL *)&Opt.Dialogs.ShowArrowsInEdit);
+
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
@@ -968,23 +984,28 @@ void CmdlineSettings()
 
 	DialogBuilder Builder(Msg::ConfigCmdlineTitle, L"CmdlineSettings");
 	AddHistorySettings(Builder, Msg::ConfigSaveHistory, &Opt.SaveHistory, &Opt.HistoryCount);
+	if (Opt.Backend.UseModernLook) Builder.AddEmptyLine();
 	Builder.AddCheckbox(Msg::ConfigCmdlineEditBlock, &Opt.CmdLine.EditBlock);
 	Builder.AddCheckbox(Msg::ConfigCmdlineDelRemovesBlocks, &Opt.CmdLine.DelRemovesBlocks);
 	Builder.AddCheckbox(Msg::ConfigCmdlineAutoComplete, &Opt.CmdLine.AutoComplete);
 	Builder.AddCheckbox(Msg::ConfigCmdlineSplitter, &Opt.CmdLine.Splitter);
 
+	if (Opt.Backend.UseModernLook) Builder.AddEmptyLine();
 	auto LimitEdit = Builder.AddIntEditField(&Opt.CmdLine.VTLogLimit, 8);
 	Builder.AddTextBefore(LimitEdit, Msg::ConfigCmdlineVTLogLimit);
 
+	if (Opt.Backend.UseModernLook) Builder.AddEmptyLine();
 	Builder.AddText(Msg::ConfigCmdlineWaitKeypress);
 	Builder.AddComboBox((int *)&Opt.CmdLine.WaitKeypress, 40, CMWListItems, ARRAYSIZE(CMWListItems),
 			DIF_DROPDOWNLIST | DIF_LISTAUTOHIGHLIGHT | DIF_LISTWRAPMODE);
 
+	if (Opt.Backend.UseModernLook) Builder.AddEmptyLine();
 	auto UsePromptFormat =
 			Builder.AddCheckbox(Msg::ConfigCmdlineUsePromptFormat, &Opt.CmdLine.UsePromptFormat);
 	auto PromptFormat = Builder.AddEditField(&Opt.CmdLine.strPromptFormat, 19);
 	PromptFormat->Indent(4);
 	Builder.LinkFlags(UsePromptFormat, PromptFormat, DIF_DISABLE);
+	if (Opt.Backend.UseModernLook) Builder.AddEmptyLine();
 	auto UseShell = Builder.AddCheckbox(Msg::ConfigCmdlineUseShell, &Opt.CmdLine.UseShell);
 	auto Shell = Builder.AddEditField(&Opt.CmdLine.strShell, 19);
 	Shell->Indent(4);
@@ -1147,6 +1168,7 @@ void EditorConfig(EditorOptions &EdOpt, bool Local, int EdCfg_ExpandTabs, int Ed
 	Builder.AddCheckbox(Msg::EditShowWhiteSpace, &EdOpt.ShowWhiteSpace);
 	Builder.AddCheckbox(Msg::EditShowKeyBar, &EdOpt.ShowKeyBar);
 	Builder.AddCheckbox(Msg::EditShowLineNumbers, &EdOpt.ShowLineNumbers);
+
 	Builder.ColumnBreak();
 	Builder.AddCheckbox(Msg::EditConfigDelRemovesBlocks, &EdOpt.DelRemovesBlocks);
 	auto SaveShortPos = Builder.AddCheckbox(Msg::EditConfigSaveShortPos, &EdOpt.SaveShortPos);

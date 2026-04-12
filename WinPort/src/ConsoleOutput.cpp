@@ -410,11 +410,13 @@ void ConsoleOutput::ScrollOutputOnOverflow(SMALL_RECT &area)
 	AffectArea(area, scr_rect);
 }
 
-SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area)
+SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMALL_RECT &area, HintContainerType hcc, HintObjectType hco)
 {
 	CHAR_INFO ch;
 	SHORT out = 1;
 	bool needs_trailing_blank = false;
+	ch.Extra.Hint.Container = hcc;
+	ch.Extra.Hint.Object = hco;
 
 	auto readPrevChar = [&](CHAR_INFO &prev_char) -> bool {
 		return _prev_pos.X >= 0 && _buf.Read(prev_char, _prev_pos);
@@ -490,6 +492,9 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 		} break;
 	}
 
+	if (hcc != HintNone) ch.Extra.Hint.Container = hcc;
+	if (hco != HintObjectNone) ch.Extra.Hint.Object = hco;
+
 	if (_buf.Write(ch, pos) == ConsoleBuffer::WR_MODIFIED) {
 		AffectArea(area, pos.X, pos.Y);
 		if (needs_trailing_blank) {
@@ -504,7 +509,7 @@ SHORT ConsoleOutput::ModifySequenceEntityAt(SequenceModifier &sm, COORD pos, SMA
 	return out;
 }
 
-size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
+size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos, HintContainerType hcc, HintObjectType hco)
 {
 	size_t rv = 0;
 	SMALL_RECT areas[3] = {NO_AREA, NO_AREA, NO_AREA}; // pos1, pos2, main
@@ -557,7 +562,7 @@ size_t ConsoleOutput::ModifySequenceAt(SequenceModifier &sm, COORD &pos)
 					ScrollOutputOnOverflow(areas[2]);
 				}
 			} else {
-				pos.X+= ModifySequenceEntityAt(sm, pos, areas[2]);
+				pos.X+= ModifySequenceEntityAt(sm, pos, areas[2], hcc, hco);
 			}
 			if (sm.kind==SequenceModifier::SM_WRITE_STR) {
 				if (*sm.str!=L'\t' || (pos.X%TAB_WIDTH)==0 || (_mode&ENABLE_PROCESSED_OUTPUT)==0) {
@@ -622,27 +627,27 @@ void ConsoleOutput::DenoteExplicitLineWrap(COORD pos)
 	}
 }
 
-size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count)
+size_t ConsoleOutput::WriteString(const WCHAR *data, size_t count, HintContainerType hcc, HintObjectType hco)
 {
 	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count };
 	sm.str = data;
-	return ModifySequenceAt(sm, _cursor.pos);
+	return ModifySequenceAt(sm, _cursor.pos, hcc, hco);
 }
 
 
-size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos)
+size_t ConsoleOutput::WriteStringAt(const WCHAR *data, size_t count, COORD &pos, HintContainerType hcc, HintObjectType hco)
 {
 	SequenceModifier sm = {SequenceModifier::SM_WRITE_STR, count };
 	sm.str = data;
-	return ModifySequenceAt(sm, pos);
+	return ModifySequenceAt(sm, pos, hcc, hco);
 }
 
 
-size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos)
+size_t ConsoleOutput::FillCharacterAt(WCHAR cCharacter, size_t count, COORD &pos, HintContainerType hcc, HintObjectType hco)
 {
 	SequenceModifier sm = {SequenceModifier::SM_FILL_CHAR, count };
 	sm.chr = cCharacter;
-	return ModifySequenceAt(sm, pos);
+	return ModifySequenceAt(sm, pos, hcc, hco);
 }
 
 
@@ -650,7 +655,7 @@ size_t ConsoleOutput::FillAttributeAt(DWORD64 qAttributes, size_t count, COORD &
 {
 	SequenceModifier sm = {SequenceModifier::SM_FILL_ATTR, count };
 	sm.attr = qAttributes;
-	return ModifySequenceAt(sm, pos);
+	return ModifySequenceAt(sm, pos, HintNone, HintObjectNone);
 }
 
 
@@ -791,6 +796,14 @@ DWORD64 ConsoleOutput::SetConsoleTweaks(DWORD64 tweaks)
 		return 0;
 
 	return _backend->OnConsoleSetTweaks(tweaks);
+}
+
+DWORD64 ConsoleOutput::GetConsoleTweaks()
+{
+	if (!_backend)
+		return 0;
+
+	return _backend->OnConsoleGetTweaks();
 }
 
 void ConsoleOutput::ConsoleChangeFont()

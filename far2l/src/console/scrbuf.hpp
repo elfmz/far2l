@@ -91,6 +91,8 @@ public:
 	void ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color);
 	void ApplyColor(int X1, int Y1, int X2, int Y2, DWORD64 Color, DWORD64 ExceptColor);
 	void FillRect(int X1, int Y1, int X2, int Y2, WCHAR Ch, DWORD64 Color);
+	void ApplyHint(int X1, int Y1, int X2, int Y2, int tag, HintContainerType hcc, HintObjectType hco, 
+		bool focused = false, bool hovered = false, bool disabled = false, bool defaultCtrl = false, bool bevel = false);
 
 	void Scroll(int);
 	void Flush();

@@ -705,15 +705,15 @@ System.WipeSymbol a ~far:config~@FarConfig@ párbeszédablakban), ezután a fáj
 @MiscCmd
 $ #Panelvezérlő parancsok - egyebek#
   Képernyőgrabber                                            #Alt-Ins#
-
     A képernyőgrabberrel bármelyik képernyőterület kijelölhető és a
     vágólapra másolható. A kurzor a #kurzornyilakkal# vagy az #egérrel#
     mozgatható. A szöveg a #Shift-kurzornyilakkal# vagy az egérrel,
     lenyomott #bal gombnál# mozgatással jelölhető ki. Az #Enter#, a
     #Ctrl-Ins#, a #jobb egérgomb# vagy a #kettős kattintás# a kijelölt
     szöveget a vágólapra másolja, a #Ctrl-<Szürke +># hozzáfűzi a
-    vágólap aktuális tartalmához, az #Esc# pedig kiléptet a grab
-    módból. A #Ctrl-U# leveszi a kijelölést a blokkról.
+    vágólap aktuális tartalmához, az #Esc# pedig kiléptet a grab módból.
+    A #Ctrl-A# vagy #A# selects whole screen.
+    A #Ctrl-U# vagy #U# leveszi a kijelölést a blokkról.
 
   ~Makró~@KeyMacro@ rögzítése                                           #Ctrl-<.>#
 

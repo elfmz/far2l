@@ -106,12 +106,13 @@ TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool 
 
 TTYBackend::~TTYBackend()
 {
-	if (g_vtb == this)
-		g_vtb =  nullptr;
+	if (g_vtb == this) {
+		g_vtb = nullptr;
+	}
 
 	OnConsoleExit();
 
-	_exiting = 1;
+	_exiting = true;
 
 	if (_reader_trd) {
 		if (os_call_ssize(write, _kickass[1], (const void*)&_kickass, (size_t)1) == -1) {
@@ -119,11 +120,6 @@ TTYBackend::~TTYBackend()
 		}
 		pthread_join(_reader_trd, nullptr);
 		_reader_trd = 0;
-	}
-
-	if (_tty_raw_mode) {
-		_tty_caps.Finup(_stdin, _stdout);
-		_tty_raw_mode.reset();
 	}
 
 	CheckedCloseFDPair(_kickass);
@@ -286,19 +282,26 @@ void TTYBackend::ReaderThread()
 
 		pthread_join(writer_trd, nullptr);
 
-		DetachNotifyPipe();
-		_ttyx.reset();
 		if (_stp_stdin.Valid() && _stp_stdout.Valid()) {
 			_tty_caps.Finup(_stp_stdin, _stp_stdout);
-			_tty_raw_mode.reset();
+		} else {
+			_tty_caps.Finup(_stdin, _stdout);
+		}
+		_tty_raw_mode.reset();
+		fprintf(stderr, "%s: raw mode discarded\n", __FUNCTION__);
+		_ttyx.reset();
+		if (_stp_stdin.Valid() && _stp_stdout.Valid()) {
 			_stp_cont = false;
 			raise(SIGSTOP);
+		} else {
+			DetachNotifyPipe();
 		}
 		while (!_exiting) {
 			if (_stp_stdin.Valid() && _stp_stdout.Valid()) {
 				if (_stp_cont) {
 					_stdin =  _stp_stdin.Detach();
 					_stdout = _stp_stdout.Detach();
+					fprintf(stderr, "%s: got SIGCONT\n", __FUNCTION__);
 					SetupAttachedTTY();
 					break;
 				}
@@ -1361,6 +1364,7 @@ void TTYBackend::DetachTTY()
 		if (_stdout != -1) {
 			dup2(dev_null, _stdout);
 		}
+		fprintf(stderr, "%s\n", __FUNCTION__);
 	} else {
 		fprintf(stderr, "%s: error %d opening devnull\n", __FUNCTION__, errno);
 	}
@@ -1380,6 +1384,9 @@ void TTYBackend::OnSigTerm()
 	DetachTTY();
 	_tty_caps.Finup(saved_stdin, saved_stdout);
 	_tty_raw_mode.reset();
+	if (write(STDERR_FILENO, "\nSIGTERM!\n", 10) < 0) {
+		perror("SIGTERM - write");
+	}
 	exit(-SIGTERM);
 }
 
@@ -1388,7 +1395,6 @@ static void OnSigTstp(int signo)
 	if (g_vtb) {
 		g_vtb->OnSigTstp();
 	}
-//	raise(SIGSTOP);
 }
 
 void TTYBackend::OnSigTstp()
@@ -1396,7 +1402,6 @@ void TTYBackend::OnSigTstp()
 	// drop sudo privileges once pending sudo operation completes
 	// leaving them is similar to leaving root console unattended
 	sudo_client_drop();
-
 	if (!_stp_stdin.Valid()) {
 		_stp_stdin = dup(_stdin);
 	}
@@ -1436,8 +1441,6 @@ void TTYBackend::OnSigHup()
 	FDScope saved_stdout(dup(_stdout));
 	DetachTTY();
 	_tty_caps.Finup(saved_stdin, saved_stdout);
-	_tty_raw_mode.reset();
-
 	KickAss(true);
 }
 

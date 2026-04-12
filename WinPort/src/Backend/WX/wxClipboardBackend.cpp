@@ -160,17 +160,22 @@ bool wxClipboardBackend::OnClipboardIsFormatAvailable(UINT format)
 		return CallInMain<bool>(fn);
 	}
 
-	if (format==CF_UNICODETEXT || format==CF_TEXT) {
-		return wxTheClipboard->IsSupported( wxDF_TEXT ) ? TRUE : FALSE;
+	switch (format) {
+		case CF_UNICODETEXT: case CF_TEXT:
+			return wxTheClipboard->IsSupported(wxDF_TEXT) ? TRUE : FALSE;
 
-	} else {
-		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
-		if (!data_format) {
-			fprintf(stderr, "IsClipboardFormatAvailable(%u) - unrecognized format\n", format);
-			return FALSE;
+		case CF_HTML:
+			return wxTheClipboard->IsSupported(wxDF_HTML) ? TRUE : FALSE;
+
+		default: {
+			const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
+			if (!data_format) {
+				fprintf(stderr, "IsClipboardFormatAvailable(%u) - unrecognized format\n", format);
+				return FALSE;
+			}
+
+			return wxTheClipboard->IsSupported(*data_format) ? TRUE : FALSE;
 		}
-
-		return wxTheClipboard->IsSupported(*data_format) ? TRUE : FALSE;
 	}
 }
 
@@ -206,7 +211,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		g_wx_data_to_clipboard = new wxDataObjectComposite;
 	}
 
-	if (format==CF_UNICODETEXT) {
+	if (format == CF_UNICODETEXT) {
 
 		wxString wx_str((const wchar_t *)data);
 
@@ -222,8 +227,7 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 		CopyToPasteboard((const wchar_t *)data);
 #endif
 
-	} else if (format==CF_TEXT) {
-
+	} else if (format == CF_TEXT) {
 		g_wx_data_to_clipboard->Add(new wxTextDataObjectTweaked(wxString::FromUTF8((const char *)data)));
 
 		wxCustomDataObject *cdo = new wxCustomDataObject(wxT("text/plain;charset=utf-8"));
@@ -233,6 +237,10 @@ void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 #if (CLIPBOARD_HACK)
 		CopyToPasteboard((const char *)data);
 #endif
+
+	} else if (format == CF_HTML) {
+		auto *cdo = new wxHTMLDataObject(wxString::FromUTF8((const char *)data));
+		g_wx_data_to_clipboard->Add(cdo);
 
 	} else {
 		const wxDataFormat *data_format = g_wx_custom_formats.Lookup(format);
@@ -258,7 +266,19 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 	}
 
 	PVOID p = nullptr;
-	if (format==CF_UNICODETEXT || format==CF_TEXT) {
+	if (format == CF_HTML) {
+		if (!wxTheClipboard->IsSupported(wxDF_HTML)) {
+			return nullptr;
+		}
+		wxHTMLDataObject data;
+		if (!wxTheClipboard->GetData(data)) {
+			return nullptr;
+		}
+		wxString wx_str = data.GetHTML();
+		const auto &utf8 = wx_str.utf8_str();
+		p = ClipboardAllocFromZeroTerminatedString<char>(utf8);
+
+	} else if (format == CF_UNICODETEXT || format == CF_TEXT) {
 
 		wxString wx_str;
 		bool data_found = false;

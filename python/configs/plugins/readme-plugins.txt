@@ -73,6 +73,10 @@ uedindent.py
 
 uedreplace.py
     Example of a search/replace dialog with partial functionality.
+    py:load uedreplace open
+    F3+ALT+SHIFT = configure search/replace
+    F3+ALT = perform search/replace in backward direction
+    F3+SHIFT = perform search/replace in forward direction
 
 uedsort.py
     The prototype of the standard esdort plugin.
@@ -85,6 +89,14 @@ ugtkhello.py
 
 uhexedit.py
     The prototype of the standard hexitor plugin.
+
+uimgimage.py
+    Image protocol example in python, requires PIL module"
+
+uimgpdf.py
+    Use image protocol to show pdf file contents.
+    Uses https://github.com/m32/pdfium python plugin.
+    In files panel/viever/editor: F11-Python PDF view, use PgUp/PgDown for paging.
 
 uminer.py
     FAR2L also has its own game.

@@ -749,6 +749,9 @@ int PluginManager::ProcessEditorInput(INPUT_RECORD *Rec)
 
 int PluginManager::ProcessEditorEvent(int Event, void *Param)
 {
+	if (FrameManager->ManagerIsDown())  // https://github.com/shmuz/far2m/issues/98
+		return 0;
+
 	int nResult = 0;
 
 	if (CtrlObject->Plugins.CurEditor || CtrlObject->Plugins.CurDialogEditor) {

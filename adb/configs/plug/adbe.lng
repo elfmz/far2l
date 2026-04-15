@@ -1,0 +1,85 @@
+[Language]
+Name=English
+Description=English language for ADB plugin
+
+[Strings]
+MOk=OK
+MCancel=Cancel
+MError=Error
+MWarning=Warning
+MInfo=Information
+
+MDeviceList=Device List
+MDeviceConnected=Device Connected
+MDeviceDisconnected=Device Disconnected
+MDeviceOffline=Device Offline
+MDeviceUnauthorized=Device Unauthorized
+MNoDevicesFound=No devices found
+MRefreshDevices=Refresh Devices
+
+MFileNotFound=File not found
+MPermissionDenied=Permission denied
+MOperationFailed=Operation failed
+MDeleteConfirm=Delete confirmation
+MCreateDirectory=Create directory
+MRenameFile=Rename file
+
+MShellConnected=Shell connected
+MShellDisconnected=Shell disconnected
+MCommandExecuted=Command executed
+MCommandFailed=Command failed
+MShellError=Shell error
+
+MGoToParent=Go to parent directory
+MGoToRoot=Go to root directory
+MCurrentDirectory=Current directory
+MDeviceRoot=Device root
+
+MConfigurePlugin=Configure Plugin
+MDeviceSettings=Device Settings
+MConnectionSettings=Connection Settings
+MSaveSettings=Save Settings
+
+MConnectionFailed=Connection failed
+MAuthenticationFailed=Authentication failed
+MTimeoutError=Timeout error
+MNetworkError=Network error
+
+MConnecting=Connecting...
+MConnected=Connected
+MDisconnected=Disconnected
+MExecuting=Executing...
+MCompleted=Completed
+
+MConnectDevice=Connect Device
+MDisconnectDevice=Disconnect Device
+MRefreshDeviceList=Refresh Device List
+MDeviceProperties=Device Properties
+MShellAccess=Shell Access
+MFileManager=File Manager
+
+MADBDevices=ADB Devices
+MADBDevice=ADB Device
+MADBShell=ADB Shell
+MADBFileSystem=ADB File System
+
+MFile=File
+MDirectory=Directory
+MSymlink=Symbolic Link
+MExecutable=Executable
+
+MModel=Model
+MAndroidVersion=Android Version
+MSDKVersion=SDK Version
+MManufacturer=Manufacturer
+MProduct=Product
+MSerial=Serial
+
+MExecuteCommand=Execute Command
+MCommandPrompt=Command Prompt
+MShellPrompt=Shell Prompt
+MExitShell=Exit Shell
+
+MHelp=Help
+MAbout=About
+MVersion=Version

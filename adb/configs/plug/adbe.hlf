@@ -1,0 +1,72 @@
+[Help]
+Title=ADB Plugin Help
+
+[General]
+The ADB (Android Debug Bridge) plugin allows you to browse and manage Android devices connected via ADB directly from far2l.
+
+[Features]
+- Browse connected Android devices
+- Navigate device file system
+- Execute shell commands
+- File transfer operations
+- Device information display
+
+[Usage]
+1. Open the ADB plugin from the plugins menu
+2. Select a connected device from the device list
+3. Navigate through the device file system
+4. Use standard far2l operations (copy, delete, etc.)
+5. Execute shell commands via the command line
+
+[Device List]
+The device list shows all connected ADB devices with:
+- Device serial number
+- Device model name
+- Connection status
+- Android version
+
+[File System]
+The plugin provides a virtual file system view of the Android device:
+- Navigate directories with standard far2l commands
+- View file properties and permissions
+- Execute file operations (copy, move, delete)
+- Access system directories (requires root on some devices)
+
+[Shell Commands]
+Execute Android shell commands:
+- Commands run in the device's shell environment
+- Output is displayed in the far2l console
+- Support for interactive commands
+- Command history is maintained
+
+[Keyboard Shortcuts]
+- Enter: Open directory or execute file
+- F2: Rename file/directory
+- F4: Edit file
+- F5: Copy files
+- F6: Move files
+- F7: Create directory
+- F8: Delete files
+- Ctrl+G: Go to directory
+- Alt+F1: Switch to left panel
+- Alt+F2: Switch to right panel
+
+[Configuration]
+Configure the plugin settings:
+- ADB path and options
+- Connection timeouts
+- File transfer settings
+- Shell preferences
+
+[Troubleshooting]
+Common issues and solutions:
+- Device not detected: Check USB debugging is enabled
+- Permission denied: Some operations require root access
+- Connection lost: Reconnect the device
+- Slow performance: Check USB connection quality
+
+[Support]
+For more information and support:
+- Check the plugin documentation
+- Visit the far2l project page
+- Report issues on the project repository

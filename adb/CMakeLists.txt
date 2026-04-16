@@ -16,6 +16,11 @@ add_library(adb MODULE ${SOURCES})
 # Link with required libraries
 target_link_libraries(adb utils far2l)
 
+# openpty/forkpty live in libutil on BSDs
+if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly|NetBSD|OpenBSD")
+    target_link_libraries(adb util)
+endif()
+
 # Add compile definitions
 target_compile_definitions(adb PRIVATE
     -DWINPORT_DIRECT

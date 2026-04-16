@@ -100,11 +100,12 @@ ADBPlugin::ADBPlugin(const wchar_t *path, bool path_is_standalone_config, int Op
 		_standalone_config = path;
 	}
 
-	// Auto-connect logic: if only one device available, connect immediately
-	int deviceCount = GetAvailableDeviceCount();
+	// Auto-connect logic: enumerate once and reuse result to avoid race
+	auto devices = EnumerateDevices();
+	int deviceCount = (int)devices.size();
 
 	if (deviceCount == 1) {
-		std::string deviceSerial = GetFirstAvailableDevice();
+		std::string deviceSerial = devices[0].serial;
 
 		if (!deviceSerial.empty()) {
 			if (ConnectToDevice(deviceSerial)) {
@@ -203,13 +204,11 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		Info->Flags                = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 		Info->StartSortMode        = SM_NAME;
 
-		static std::wstring curDir;
-		static std::wstring format;
-		curDir  = StrMB2Wide(_CurrentDir);
-		format  = L"adb:" + curDir;
+		_curDirW  = StrMB2Wide(_CurrentDir);
+		_formatW  = L"adb:" + _curDirW;
 
-		Info->CurDir  = curDir.c_str();
-		Info->Format  = format.c_str();
+		Info->CurDir  = _curDirW.c_str();
+		Info->Format  = _formatW.c_str();
 	} else {
 		deviceMode.ColumnTitles = deviceTitles;
 		Info->PanelModesArray   = &deviceMode;
@@ -256,8 +255,15 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		return false;
 	}
 
+	// Validate passive handle: read _signature at known offset to check if it's our plugin.
+	// Use memcmp instead of direct dereference to avoid UB on foreign plugin handles.
+	uint64_t sig = 0;
+	memcpy(&sig, passive, sizeof(sig));
+	if (sig != PLUGIN_SIGNATURE) {
+		return false;
+	}
 	auto* dst = (ADBPlugin*)passive;
-	if (!dst || dst == this || dst->_signature != PLUGIN_SIGNATURE || !dst->_isConnected || !dst->_adbDevice) {
+	if (!dst || dst == this || !dst->_isConnected || !dst->_adbDevice) {
 		return false;
 	}
 	if (dst->_deviceSerial != _deviceSerial) {
@@ -350,7 +356,10 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 	}
 
 	if (failedIndex < items.size()) {
-		char tmpTpl[] = "/tmp/adb_crossload_XXXXXX";
+		const char* tmpDir = getenv("TMPDIR");
+		if (!tmpDir) tmpDir = "/tmp";
+		char tmpTpl[PATH_MAX];
+		snprintf(tmpTpl, sizeof(tmpTpl), "%s/adb_crossload_XXXXXX", tmpDir);
 		char* tmpBase = mkdtemp(tmpTpl);
 		if (!tmpBase) {
 			WINPORT(SetLastError)(lastErr != 0 ? lastErr : EIO);
@@ -464,17 +473,25 @@ int ADBPlugin::GetDeviceData(PluginPanelItem **pPanelItem, int *pItemsNumber)
 
 	if (deviceInfos.empty()) {
 		DBG("No ADB devices found\n");
+		wcscpy(_PanelTitle, L"ADB: No devices found");
 		*pItemsNumber = 1;
 		*pPanelItem = new PluginPanelItem[1];
+		memset(*pPanelItem, 0, sizeof(PluginPanelItem));
+		(*pPanelItem)[0].FindData.lpwszFileName = ADBDevice::AllocateItemString("<Not found>");
+		(*pPanelItem)[0].FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
 
-		PluginPanelItem &item = (*pPanelItem)[0];
-		memset(&item, 0, sizeof(PluginPanelItem));
+		wchar_t **customData = new wchar_t*[3];
+		customData[0] = ADBDevice::AllocateItemString("<Connect device>");  // C0: Device Name
+		customData[1] = ADBDevice::AllocateItemString("");                  // C1: Model
+		customData[2] = ADBDevice::AllocateItemString("");                  // C2: Port
+		(*pPanelItem)[0].CustomColumnData = customData;
+		(*pPanelItem)[0].CustomColumnNumber = 3;
 
-		item.FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-		item.FindData.lpwszFileName = ADBDevice::AllocateItemString("No ADB devices found");
 		return 1;
 	}
 	
+	wcscpy(_PanelTitle, deviceInfos.size() > 1 ? L"ADB - Select Device" : L"ADB");
+
 	std::vector<PluginPanelItem> devices;
 	for (const auto& info : deviceInfos) {
 		PluginPanelItem device{};
@@ -526,8 +543,8 @@ bool ADBPlugin::ByKey_TryEnterSelectedDevice()
 {
 	// Get the currently selected device from the panel
 	std::string deviceSerial = GetCurrentPanelItemDeviceName();
-	if (deviceSerial.empty()) {
-		DBG("No device selected\n");
+	if (deviceSerial.empty() || deviceSerial[0] == '<') {
+		DBG("No device selected (placeholder item)\n");
 		return false;
 	}
 	
@@ -571,10 +588,10 @@ int ADBPlugin::ExitDeviceFilePanel()
 		_adbDevice->Disconnect();
 		_adbDevice.reset();
 	}
-	
+
 	_isConnected = false;
 	_deviceSerial.clear();
-	// No need to update _devicePath - using GetCurrentDevicePath() directly
+	_friendlyNamesCache.clear();
 	wcscpy(_PanelTitle, L"ADB Plugin");
 	
 	return 1;
@@ -830,36 +847,31 @@ int ADBPlugin::ProcessEventCommand(const wchar_t *cmd, HANDLE hPlugin)
 			if (line.empty()) {
 				continue;
 			}
-			// Skip lines that are just prompts
+			// Skip lines that are just shell prompts
 			if (line == "/$" || line == "/#" || line == "$" || line == "#") {
-				continue;
-			}
-			// Skip lines containing "$ " or "# " (prompt with command echo)
-			if (line.find("$ ") != std::string::npos || line.find("# ") != std::string::npos) {
-				continue;
-			}
-			// Skip lines ending with just $ or # (blank prompt after output)
-			if (line.back() == '$' || line.back() == '#') {
 				continue;
 			}
 			clean_lines.push_back(line);
 		}
 
-		// Build output with embedded newlines
+		// Write output to temp file and cat it — avoids shell injection entirely
 		if (!clean_lines.empty()) {
-			std::string all;
-			for (size_t i = 0; i < clean_lines.size(); i++) {
-				if (i > 0) all += "\\n";
-				// Escape backslashes and quotes for shell
-				for (char c : clean_lines[i]) {
-					if (c == '\\') all += "\\\\";
-					else if (c == '"') all += "\\\"";
-					else all += c;
+			char tmpPath[] = "/tmp/adb_output_XXXXXX";
+			int fd = mkstemp(tmpPath);
+			if (fd >= 0) {
+				std::string all;
+				for (size_t i = 0; i < clean_lines.size(); i++) {
+					if (i > 0) all += '\n';
+					all += clean_lines[i];
 				}
+				all += '\n';
+				ssize_t wr = write(fd, all.c_str(), all.size());
+				(void)wr;
+				close(fd);
+				std::wstring cat_cmd = L"cat " + StrMB2Wide(std::string(tmpPath));
+				g_FSF.Execute(cat_cmd.c_str(), EF_NOCMDPRINT);
+				unlink(tmpPath);
 			}
-			// Single echo with embedded \n
-			std::wstring echo_cmd = L"echo -e \"" + StrMB2Wide(all) + L"\"";
-			g_FSF.Execute(echo_cmd.c_str(), EF_NOCMDPRINT);
 		}
 	}
 
@@ -936,18 +948,15 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		return FALSE;
 	}
 
-	int successCount = 0;
-	int lastErrorCode = 0;
 	uint64_t totalBytes = 0;
 	uint64_t totalFiles = 0;
-	std::map<std::string, uint64_t> dirSizes; // devicePath -> size
+	std::map<std::string, uint64_t> dirSizes;
 
 	// Pre-scan to get total size/count (including directory contents)
 	for (int i = 0; i < ItemsNumber; i++) {
 		if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			std::string fileName = StrWide2MB(PanelItem[i].FindData.lpwszFileName);
 			std::string devicePath = ADBUtils::JoinPath(GetCurrentDevicePath(), fileName);
-
 			auto dirInfo = _adbDevice->GetDirectoryInfo(devicePath);
 			totalBytes += dirInfo.total_size;
 			totalFiles += dirInfo.file_count;
@@ -958,140 +967,9 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		}
 	}
 
-	// Capture variables for lambda - capture dirSizes BY VALUE to avoid use-after-free
-	PluginPanelItem* items = PanelItem;
-	int itemsCount = ItemsNumber;
-	std::string destDir = destPath;
-	std::string deviceDir = GetCurrentDevicePath();
-	auto adb = _adbDevice;
-	int* pSuccessCount = &successCount;
-	int* pLastError = &lastErrorCode;
-	std::map<std::string, uint64_t> dirSizesCopy = dirSizes;
-
-	if (OpMode & OPM_SILENT) {
-		// Silent mode - no progress dialog
-		for (int i = 0; i < itemsCount; i++) {
-			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
-			std::string localPath = ADBUtils::JoinPath(destDir, fileName);
-
-			int result = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-				? adb->PullDirectory(devicePath, localPath)
-				: adb->PullFile(devicePath, localPath);
-
-			if (result == 0) {
-				struct stat st;
-				if (stat(localPath.c_str(), &st) == 0) {
-					(*pSuccessCount)++;
-				} else {
-					*pLastError = errno;
-				}
-			} else {
-				*pLastError = result;
-			}
-		}
-	} else {
-		// Show progress dialog with worker thread
-		ProgressOperation op(Move ? L"Move from device" : L"Copy from device");
-		op.GetState().file_total = totalBytes;
-		op.GetState().all_total = totalBytes;
-		op.GetState().count_total = totalFiles;
-		op.GetState().source_path = StrMB2Wide(deviceDir);
-		op.GetState().dest_path = StrMB2Wide(destDir);
-
-		// Track overwrite mode: 0=ask, 1=overwrite all, 2=skip all
-		int overwriteMode = 0;
-		const bool isMultiple = itemsCount > 1;
-
-		op.Run([&](ProgressState& state) {
-			uint64_t processedBytes = 0;
-			uint64_t completedCount = 0;
-			// Validate connection at start
-			if (!adb || !adb->IsConnected()) {
-				return;
-			}
-			for (int i = 0; i < itemsCount && !state.ShouldAbort(); i++) {
-				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-				std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
-				std::string localPath = ADBUtils::JoinPath(destDir, fileName);
-
-				const uint64_t itemSize = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 0 : items[i].FindData.nFileSize;
-
-				bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-
-				// Check if destination exists and handle overwrite
-				struct stat st;
-				if (stat(localPath.c_str(), &st) == 0) {
-					int action = CheckOverwrite(StrMB2Wide(localPath), isMultiple, isDir, overwriteMode, state);
-					if (action == 1 || action == 2) continue;  // Skip or abort
-				}
-
-				if (state.ShouldAbort()) continue;
-
-				// Update state with current file
-				uint64_t dirTotalSize = isDir ? dirSizesCopy[devicePath] : itemSize;
-				{
-					std::lock_guard<std::mutex> lock(state.mtx_strings);
-					state.current_file = StrMB2Wide(fileName);
-				}
-				state.file_total = dirTotalSize;
-				state.file_complete = 0;
-				state.is_directory = isDir;
-				state.count_complete = i;  // Current file being processed (0-based)
-
-				// Progress callback: updates percentage and estimates bytes
-				// Also sends NOOP event to trigger UI update
-				const uint64_t bytesBefore = processedBytes;
-				int lastReportedPercent = -1;
-				auto progressCallback = [&](int percent) {
-					state.file_complete = percent;
-					if (dirTotalSize > 0) {
-						state.all_complete = bytesBefore + (dirTotalSize * percent) / 100;
-					}
-					// Send NOOP event to trigger DN_ENTERIDLE -> UI update
-					// Only send when percent changes to avoid flooding
-					if (percent != lastReportedPercent) {
-						lastReportedPercent = percent;
-						INPUT_RECORD ir = {};
-						ir.EventType = NOOP_EVENT;
-						DWORD dw = 0;
-						WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
-					}
-				};
-
-				// Abort checker: returns true if user requested abort
-				auto abortChecker = [&]() {
-					return state.ShouldAbort();
-				};
-
-				int result = isDir
-					? adb->PullDirectory(devicePath, localPath, progressCallback, abortChecker)
-					: adb->PullFile(devicePath, localPath, progressCallback, abortChecker);
-
-				if (result == 0 && !state.ShouldAbort()) {
-					struct stat st;
-					if (stat(localPath.c_str(), &st) == 0) {
-						(*pSuccessCount)++;
-						processedBytes += dirTotalSize;
-						completedCount++;
-						state.file_complete = 100;  // 100% complete
-						state.all_complete = processedBytes;
-						state.count_complete = completedCount;
-					} else {
-						*pLastError = errno;
-					}
-				} else if (result != 0) {
-					*pLastError = result;
-				}
-			}
-		});
-	}
-
-	if (successCount == 0) {
-		WINPORT(SetLastError)(lastErrorCode);
-	}
-
-	return (successCount > 0) ? TRUE : FALSE;
+	return RunTransfer(PanelItem, ItemsNumber, false, Move != 0,
+	                   destPath, GetCurrentDevicePath(), dirSizes,
+	                   totalBytes, totalFiles, OpMode);
 }
 
 int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, const wchar_t *SrcPath, int OpMode) {
@@ -1121,11 +999,9 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		}
 	}
 
-	int successCount = 0;
-	int lastErrorCode = 0;
 	uint64_t totalBytes = 0;
 	uint64_t totalFiles = 0;
-	std::map<std::string, uint64_t> dirSizes; // localPath -> size
+	std::map<std::string, uint64_t> dirSizes;
 
 	// Pre-scan to get total size/count (including directory contents from local filesystem)
 	for (int i = 0; i < ItemsNumber; i++) {
@@ -1135,7 +1011,7 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			uint64_t dirSize = 0;
 			uint64_t dirFiles = 0;
-            ScanLocalDirectory(localPath, dirSize, dirFiles);
+			ScanLocalDirectory(localPath, dirSize, dirFiles);
 			totalBytes += dirSize;
 			totalFiles += dirFiles;
 			dirSizes[localPath] = dirSize;
@@ -1145,76 +1021,93 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		}
 	}
 
-	// Capture variables for lambda - capture dirSizes BY VALUE to avoid use-after-free
-	PluginPanelItem* items = PanelItem;
-	int itemsCount = ItemsNumber;
-	std::string srcDir = srcPath;
-	std::string deviceDir = GetCurrentDevicePath();
+	return RunTransfer(PanelItem, ItemsNumber, true, Move != 0,
+	                   srcPath, GetCurrentDevicePath(), dirSizes,
+	                   totalBytes, totalFiles, OpMode);
+}
+
+int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_upload, bool move,
+                           const std::string& localDir, const std::string& deviceDir,
+                           const std::map<std::string, uint64_t>& dirSizes,
+                           uint64_t totalBytes, uint64_t totalFiles, int OpMode)
+{
+	int successCount = 0;
+	int lastErrorCode = 0;
 	auto adb = _adbDevice;
-	int* pSuccessCount = &successCount;
-	int* pLastError = &lastErrorCode;
+	// Copy dirSizes by value for safe lambda capture
 	std::map<std::string, uint64_t> dirSizesCopy = dirSizes;
 
 	if (OpMode & OPM_SILENT) {
-		// Silent mode - no progress dialog
 		for (int i = 0; i < itemsCount; i++) {
 			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-			std::string localPath = ADBUtils::JoinPath(srcDir, fileName);
+			std::string localPath = ADBUtils::JoinPath(localDir, fileName);
 			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
+			bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 
-			int result = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-				? adb->PushDirectory(localPath, devicePath)
-				: adb->PushFile(localPath, devicePath);
+			int result;
+			if (is_upload) {
+				result = isDir ? adb->PushDirectory(localPath, devicePath)
+				               : adb->PushFile(localPath, devicePath);
+			} else {
+				result = isDir ? adb->PullDirectory(devicePath, localPath)
+				               : adb->PullFile(devicePath, localPath);
+			}
 
 			if (result == 0) {
-				struct stat st;
-				if (stat(localPath.c_str(), &st) == 0) {
-					(*pSuccessCount)++;
-				} else {
-					*pLastError = errno;
-				}
+				successCount++;
 			} else {
-				*pLastError = result;
+				lastErrorCode = result;
 			}
 		}
 	} else {
-		// Show progress dialog with worker thread
-		ProgressOperation op(Move ? L"Move to device" : L"Copy to device");
+		std::wstring title = move
+			? (is_upload ? L"Move to device" : L"Move from device")
+			: (is_upload ? L"Copy to device" : L"Copy from device");
+		ProgressOperation op(title);
 		op.GetState().file_total = totalBytes;
 		op.GetState().all_total = totalBytes;
 		op.GetState().count_total = totalFiles;
-		op.GetState().source_path = StrMB2Wide(srcDir);
-		op.GetState().dest_path = StrMB2Wide(deviceDir);
+		op.GetState().source_path = is_upload ? StrMB2Wide(localDir) : StrMB2Wide(deviceDir);
+		op.GetState().dest_path = is_upload ? StrMB2Wide(deviceDir) : StrMB2Wide(localDir);
 
-		// Track overwrite mode: 0=ask, 1=overwrite all, 2=skip all
 		int overwriteMode = 0;
 		const bool isMultiple = itemsCount > 1;
+		int* pSuccessCount = &successCount;
+		int* pLastError = &lastErrorCode;
 
 		op.Run([&](ProgressState& state) {
 			uint64_t processedBytes = 0;
 			uint64_t completedCount = 0;
-			// Validate connection at start
-			if (!adb || !adb->IsConnected()) {
-				return;
-			}
+			if (!adb || !adb->IsConnected()) return;
+
 			for (int i = 0; i < itemsCount && !state.ShouldAbort(); i++) {
 				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-				std::string localPath = ADBUtils::JoinPath(srcDir, fileName);
+				std::string localPath = ADBUtils::JoinPath(localDir, fileName);
 				std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
-
-				const uint64_t itemSize = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 0 : items[i].FindData.nFileSize;
 				bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+				const uint64_t itemSize = isDir ? 0 : items[i].FindData.nFileSize;
 
-				// Check if destination exists on device and handle overwrite
-				if (adb->FileExists(devicePath)) {
-					int action = CheckOverwrite(StrMB2Wide(devicePath), isMultiple, isDir, overwriteMode, state);
-					if (action == 1 || action == 2) continue;  // Skip or abort
+				// Check if destination exists and handle overwrite
+				if (is_upload) {
+					if (adb->FileExists(devicePath)) {
+						int action = CheckOverwrite(StrMB2Wide(devicePath), isMultiple, isDir, overwriteMode, state);
+						if (action == 1 || action == 2) continue;
+					}
+				} else {
+					struct stat st;
+					if (stat(localPath.c_str(), &st) == 0) {
+						int action = CheckOverwrite(StrMB2Wide(localPath), isMultiple, isDir, overwriteMode, state);
+						if (action == 1 || action == 2) continue;
+					}
 				}
 
 				if (state.ShouldAbort()) continue;
 
-				// Update state with current file
-				uint64_t dirTotalSize = isDir ? dirSizesCopy[localPath] : itemSize;
+				// Look up dir size using the key that matches how it was stored
+				std::string sizeKey = is_upload ? localPath : devicePath;
+				auto sizeIt = dirSizesCopy.find(sizeKey);
+				uint64_t dirTotalSize = isDir ? (sizeIt != dirSizesCopy.end() ? sizeIt->second : 0) : itemSize;
+
 				{
 					std::lock_guard<std::mutex> lock(state.mtx_strings);
 					state.current_file = StrMB2Wide(fileName);
@@ -1222,10 +1115,8 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 				state.file_total = dirTotalSize;
 				state.file_complete = 0;
 				state.is_directory = isDir;
-				state.count_complete = i;  // Current file being processed (0-based)
+				state.count_complete = i;
 
-				// Progress callback: updates percentage and estimates bytes
-				// Also sends NOOP event to trigger UI update
 				const uint64_t bytesBefore = processedBytes;
 				int lastReportedPercent = -1;
 				auto progressCallback = [&](int percent) {
@@ -1233,8 +1124,6 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 					if (dirTotalSize > 0) {
 						state.all_complete = bytesBefore + (dirTotalSize * percent) / 100;
 					}
-					// Send NOOP event to trigger DN_ENTERIDLE -> UI update
-					// Only send when percent changes to avoid flooding
 					if (percent != lastReportedPercent) {
 						lastReportedPercent = percent;
 						INPUT_RECORD ir = {};
@@ -1244,20 +1133,24 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 					}
 				};
 
-				// Abort checker: returns true if user requested abort
-				auto abortChecker = [&]() {
-					return state.ShouldAbort();
-				};
+				auto abortChecker = [&]() { return state.ShouldAbort(); };
 
-				int result = isDir
-					? adb->PushDirectory(localPath, devicePath, progressCallback, abortChecker)
-					: adb->PushFile(localPath, devicePath, progressCallback, abortChecker);
+				int result;
+				if (is_upload) {
+					result = isDir
+						? adb->PushDirectory(localPath, devicePath, progressCallback, abortChecker)
+						: adb->PushFile(localPath, devicePath, progressCallback, abortChecker);
+				} else {
+					result = isDir
+						? adb->PullDirectory(devicePath, localPath, progressCallback, abortChecker)
+						: adb->PullFile(devicePath, localPath, progressCallback, abortChecker);
+				}
 
 				if (result == 0 && !state.ShouldAbort()) {
 					(*pSuccessCount)++;
 					processedBytes += dirTotalSize;
 					completedCount++;
-					state.file_complete = 100;  // 100% complete
+					state.file_complete = 100;
 					state.all_complete = processedBytes;
 					state.count_complete = completedCount;
 				} else if (result != 0) {
@@ -1274,7 +1167,7 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 	return (successCount > 0) ? TRUE : FALSE;
 }
 
-int ADBPlugin::ProcessHostFile(PluginPanelItem *PanelItem, int ItemsNumber, int OpMode) 
+int ADBPlugin::ProcessHostFile(PluginPanelItem *PanelItem, int ItemsNumber, int OpMode)
 {
 	return TRUE;
 }
@@ -1285,94 +1178,49 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 	}
 	
 	if (!(OpMode & OPM_SILENT)) {
-		std::wstring itemName;
-		std::wstring itemType;
-		
-		if (ItemsNumber == 1) {
-			itemName = PanelItem[0].FindData.lpwszFileName;
-			if (PanelItem[0].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				itemType = L"the folder";
-			} else {
-				itemType = L"the file";
-			}
-		} else {
-			itemName = std::to_wstring(ItemsNumber) + L" items";
-			itemType = L"";
+		int fileCount = 0;
+		int folderCount = 0;
+		for (int i = 0; i < ItemsNumber; i++) {
+			if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				folderCount++;
+			else
+				fileCount++;
 		}
-		
-		int result;
-		if (!itemType.empty()) {
-			result = ADBDialogs::Message(FMSG_MB_YESNO,
+
+		// Single confirmation dialog, use warning style for dirs/multiple items
+		int result = 0;
+		bool dangerous = (folderCount > 0 || ItemsNumber > 1);
+		unsigned int flags = dangerous ? (FMSG_WARNING | FMSG_MB_YESNO) : FMSG_MB_YESNO;
+
+		if (ItemsNumber == 1 && folderCount == 1) {
+			result = ADBDialogs::Message(flags,
+				L"Delete folder",
+				L"Do you wish to delete the folder",
+				std::wstring(PanelItem[0].FindData.lpwszFileName));
+		} else if (ItemsNumber == 1) {
+			result = ADBDialogs::Message(flags,
 				L"Delete",
+				L"Do you wish to delete the file",
+				std::wstring(PanelItem[0].FindData.lpwszFileName));
+		} else if (fileCount > 0 && folderCount > 0) {
+			result = ADBDialogs::Message(flags,
+				L"Delete items",
 				L"Do you wish to delete",
-				itemType,
-				itemName);
+				std::to_wstring(folderCount) + L" folders and " + std::to_wstring(fileCount) + L" files");
+		} else if (folderCount > 0) {
+			result = ADBDialogs::Message(flags,
+				L"Delete folders",
+				L"Do you wish to delete",
+				std::to_wstring(folderCount) + L" folders");
 		} else {
-			result = ADBDialogs::Message(FMSG_MB_YESNO,
-				L"Delete",
+			result = ADBDialogs::Message(flags,
+				L"Delete files",
 				L"Do you wish to delete",
-				itemName);
+				std::to_wstring(fileCount) + L" files");
 		}
-		
+
 		if (result != 0) {
 			return -1;
-		}
-		
-		bool needsRedDialog = false;
-		bool hasMultipleItems = (ItemsNumber > 1);
-		bool hasNonEmptyDirs = false;
-		
-		for (int i = 0; i < ItemsNumber; i++) {
-			if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				hasNonEmptyDirs = true;
-				break;
-			}
-		}
-		
-		if (hasMultipleItems || hasNonEmptyDirs) {
-			needsRedDialog = true;
-		}
-		
-		if (needsRedDialog) {
-			int fileCount = 0;
-			int folderCount = 0;
-			for (int i = 0; i < ItemsNumber; i++) {
-				if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-					folderCount++;
-				} else {
-					fileCount++;
-				}
-			}
-			
-			int redResult = 0;
-			if (hasMultipleItems && !hasNonEmptyDirs) {
-				redResult = ADBDialogs::Message(FMSG_WARNING | FMSG_MB_YESNO,
-					L"Delete files",
-					L"Do you wish to delete",
-					std::to_wstring(ItemsNumber) + L" items");
-			} else if (hasNonEmptyDirs && ItemsNumber == 1) {
-				redResult = ADBDialogs::Message(FMSG_WARNING | FMSG_MB_YESNO,
-					L"Delete folder",
-					L"The following folder will be deleted:",
-					L"/" + std::wstring(PanelItem[0].FindData.lpwszFileName));
-			} else if (hasNonEmptyDirs && ItemsNumber > 1) {
-				if (fileCount > 0 && folderCount > 0) {
-					redResult = ADBDialogs::Message(FMSG_WARNING | FMSG_MB_YESNO,
-						L"Delete items",
-						L"The following items will be deleted:",
-						std::to_wstring(folderCount) + L" folders",
-						std::to_wstring(fileCount) + L" files");
-				} else {
-					redResult = ADBDialogs::Message(FMSG_WARNING | FMSG_MB_YESNO,
-						L"Delete folders",
-						L"The following folders will be deleted:",
-						std::to_wstring(ItemsNumber) + L" folders");
-				}
-			}
-			
-			if (redResult != 0) {
-				return -1;
-			}
 		}
 	}
 	
@@ -1391,7 +1239,7 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 		// Silent mode - no progress dialog
 		for (int i = 0; i < itemsCount; i++) {
 			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-			std::string devicePath = deviceDir + (deviceDir.back() != '/' ? "/" : "") + fileName;
+			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
 
 			int result = 0;
 			if (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1414,7 +1262,7 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 	op.Run([&](ProgressState& state) {
 			for (int i = 0; i < itemsCount && !state.ShouldAbort(); i++) {
 				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-				std::string devicePath = deviceDir + (deviceDir.back() != '/' ? "/" : "") + fileName;
+				std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
 
 				// Update state with current file
 				{
@@ -1479,7 +1327,9 @@ int ADBPlugin::MakeDirectory(const wchar_t **Name, int OpMode)
 	int result = _adbDevice->CreateDirectory(devicePath);
 	if (result == 0) {
 		if (Name && !(OpMode & OPM_SILENT)) {
-			wcscpy(_mk_dir, StrMB2Wide(dir_name).c_str());
+			std::wstring wdir = StrMB2Wide(dir_name);
+			wcsncpy(_mk_dir, wdir.c_str(), ARRAYSIZE(_mk_dir) - 1);
+			_mk_dir[ARRAYSIZE(_mk_dir) - 1] = L'\0';
 			*Name = _mk_dir;
 		}
 		

@@ -1,4 +1,5 @@
 #include "ADBDialogs.h"
+#include "ADBLog.h"
 #include "farplug-wide.h"
 #include <utils.h>
 #include <algorithm>
@@ -13,14 +14,15 @@ extern FarStandardFunctions g_FSF;
 // Helper functions
 // ============================================================================
 
-// Internal helper for size formatting - shared by FormatSize and FormatSizeCompact
-static std::wstring FormatSizeInternal(uint64_t bytes, const wchar_t* unit_suffix, bool show_space)
+// Shared size formatter: compact=false → "1.2 MB", compact=true → "1.2M"
+static std::wstring FormatSizeImpl(uint64_t bytes, bool compact)
 {
-    if (bytes == 0) {
-        return show_space ? L"0 " + std::wstring(unit_suffix) : L"0";
-    }
+    static const wchar_t* full_units[] = {L"B", L"KB", L"MB", L"GB", L"TB"};
+    static const wchar_t* short_units[] = {L"", L"K", L"M", L"G", L"T"};
 
-    static const wchar_t* units[] = {L"", L"K", L"M", L"G", L"T"};
+    if (bytes == 0) return compact ? L"0" : L"0 B";
+
+    const wchar_t** units = compact ? short_units : full_units;
     size_t unit = 0;
     double value = static_cast<double>(bytes);
     while (value >= 1024.0 && unit < 4) {
@@ -31,61 +33,17 @@ static std::wstring FormatSizeInternal(uint64_t bytes, const wchar_t* unit_suffi
     std::wostringstream out;
     if (unit == 0) {
         out << bytes;
+        if (!compact) out << L" " << units[unit];
     } else {
-        out << std::fixed << std::setprecision(1) << value << units[unit];
-    }
-
-    if (show_space && unit > 0) {
-        out << L" " << unit_suffix;
-    } else if (show_space) {
-        out << L" " << unit_suffix;
-    }
-
-    return out.str();
-}
-
-static std::wstring FormatSize(uint64_t bytes)
-{
-    static const wchar_t* size_units[] = {L"B", L"KB", L"MB", L"GB", L"TB"};
-
-    if (bytes == 0) return L"0 B";
-
-    size_t unit = 0;
-    double value = static_cast<double>(bytes);
-    while (value >= 1024.0 && unit < 4) {
-        value /= 1024.0;
-        ++unit;
-    }
-
-    std::wostringstream out;
-    if (unit == 0) {
-        out << bytes << L" " << size_units[unit];
-    } else {
-        out << std::fixed << std::setprecision(1) << value << L" " << size_units[unit];
+        out << std::fixed << std::setprecision(1) << value;
+        if (!compact) out << L" ";
+        out << units[unit];
     }
     return out.str();
 }
 
-static std::wstring FormatSizeCompact(uint64_t bytes)
-{
-    if (bytes == 0) return L"0";
-
-    static const wchar_t* units[] = {L"", L"K", L"M", L"G", L"T"};
-    size_t unit = 0;
-    double value = static_cast<double>(bytes);
-    while (value >= 1024.0 && unit < 4) {
-        value /= 1024.0;
-        ++unit;
-    }
-
-    std::wostringstream out;
-    if (unit == 0) {
-        out << bytes;
-    } else {
-        out << std::fixed << std::setprecision(1) << value << units[unit];
-    }
-    return out.str();
-}
+static std::wstring FormatSize(uint64_t bytes) { return FormatSizeImpl(bytes, false); }
+static std::wstring FormatSizeCompact(uint64_t bytes) { return FormatSizeImpl(bytes, true); }
 
 static std::wstring FormatTimeLong(uint64_t total_seconds)
 {
@@ -120,13 +78,6 @@ static std::wstring FormatSpeed(uint64_t bytes_per_sec)
     } else {
         out << std::fixed << std::setprecision(1) << value << L" " << units[unit];
     }
-    return out.str();
-}
-
-static std::wstring FormatCount(uint64_t count)
-{
-    std::wostringstream out;
-    out << count;
     return out.str();
 }
 
@@ -696,7 +647,7 @@ void ProgressDialog::UpdateDialog()
 
     std::wstring remaining_str;
     if (_speed > 0 && all_complete < all_total && all_total > 0) {
-        remaining_str = FormatTimeLong(((all_total - all_complete) * 1000) / (_speed * 1000));
+        remaining_str = FormatTimeLong((all_total - all_complete) / _speed);
     } else if (file_percent > 0 && file_percent < 100) {
         // Estimate remaining time based on percentage progress
         uint64_t total_estimated = (elapsed_ms * 100) / file_percent;
@@ -752,7 +703,10 @@ void ProgressOperation::Run(WorkFunc work_func)
     _worker_thread = std::thread([state_ptr, work_func]() {
         try {
             work_func(*state_ptr);
+        } catch (const std::exception& e) {
+            DBG("ProgressOperation worker exception: %s\n", e.what());
         } catch (...) {
+            DBG("ProgressOperation worker unknown exception\n");
         }
         state_ptr->SetFinished();
 
@@ -856,9 +810,10 @@ bool ADBDialogs::AskInput(const wchar_t* title, const wchar_t* prompt,
                          const wchar_t* history_name, std::string& input,
                          const std::string& default_value)
 {
-    wchar_t input_buffer[1024] = {0};
+    wchar_t input_buffer[4096] = {0};
     if (!default_value.empty()) {
-        wcscpy(input_buffer, StrMB2Wide(default_value).c_str());
+        std::wstring wval = StrMB2Wide(default_value);
+        wcsncpy(input_buffer, wval.c_str(), ARRAYSIZE(input_buffer) - 1);
     }
 
     std::wstring src_text_wstr = default_value.empty() ? L"" : StrMB2Wide(default_value);

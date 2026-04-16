@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <vector>
+#include <mutex>
 
 // System includes
 #include <unistd.h>
@@ -29,6 +30,7 @@
 #include "ADBDevice.h"
 
 static std::string _adbPath;
+static std::mutex _adbPathMutex;
 
 // Get current time in microseconds
 inline uint64_t nowMicros() {
@@ -111,59 +113,79 @@ static bool tryAdbPath(const std::string& path) {
 }
 
 std::string ADBShell::findAdbExecutable() {
+    // Fast path: return cached result without expensive search
+    {
+        std::lock_guard<std::mutex> lock(_adbPathMutex);
+        if (!_adbPath.empty()) return _adbPath;
+    }
+
+    // Search WITHOUT holding the mutex — tryAdbPath() calls fork(),
+    // and holding a mutex across fork() violates POSIX safety guarantees
     DBG("Starting ADB executable search...\n");
 
-    // Standard paths
+    std::string found;
+
+    // Standard paths (includes macOS Homebrew + Linux system paths)
     const char* adb_paths[] = {
         "adb",
         "/opt/homebrew/bin/adb",
         "/usr/local/bin/adb",
+        "/usr/bin/adb",
         nullptr
     };
 
     for (const char* path : adb_paths) {
         if (path && path[0] && tryAdbPath(path)) {
-            _adbPath = path;
-            return path;
+            found = path;
+            break;
         }
     }
 
-    // Try ANDROID_HOME environment variable
-    const char* android_home = getenv("ANDROID_HOME");
-    DBG("ANDROID_HOME = %s\n", android_home ? android_home : "(not set)");
-    if (android_home) {
-        std::string sdk_path = std::string(android_home) + "/platform-tools/adb";
-        if (tryAdbPath(sdk_path)) {
-            _adbPath = sdk_path;
-            return sdk_path;
+    if (found.empty()) {
+        const char* android_home = getenv("ANDROID_HOME");
+        DBG("ANDROID_HOME = %s\n", android_home ? android_home : "(not set)");
+        if (android_home) {
+            std::string sdk_path = std::string(android_home) + "/platform-tools/adb";
+            if (tryAdbPath(sdk_path)) found = sdk_path;
         }
     }
 
-    // Try ANDROID_SDK_ROOT environment variable
-    const char* android_sdk_root = getenv("ANDROID_SDK_ROOT");
-    DBG("ANDROID_SDK_ROOT = %s\n", android_sdk_root ? android_sdk_root : "(not set)");
-    if (android_sdk_root) {
-        std::string sdk_path = std::string(android_sdk_root) + "/platform-tools/adb";
-        if (tryAdbPath(sdk_path)) {
-            _adbPath = sdk_path;
-            return sdk_path;
+    if (found.empty()) {
+        const char* android_sdk_root = getenv("ANDROID_SDK_ROOT");
+        DBG("ANDROID_SDK_ROOT = %s\n", android_sdk_root ? android_sdk_root : "(not set)");
+        if (android_sdk_root) {
+            std::string sdk_path = std::string(android_sdk_root) + "/platform-tools/adb";
+            if (tryAdbPath(sdk_path)) found = sdk_path;
         }
     }
 
-    // Try default Android SDK location: ~/Android/sdk/platform-tools/adb
-    const char* home = getenv("HOME");
-    DBG("HOME = %s\n", home ? home : "(not set)");
-    if (home) {
-        std::string home_adb = std::string(home) + "/Android/sdk/platform-tools/adb";
-        if (tryAdbPath(home_adb)) {
-            _adbPath = home_adb;
-            return home_adb;
+    if (found.empty()) {
+        const char* home = getenv("HOME");
+        DBG("HOME = %s\n", home ? home : "(not set)");
+        if (home) {
+            // macOS: ~/Library/Android/sdk/platform-tools/adb
+            std::string mac_adb = std::string(home) + "/Library/Android/sdk/platform-tools/adb";
+            if (tryAdbPath(mac_adb)) {
+                found = mac_adb;
+            } else {
+                // Linux: ~/Android/sdk/platform-tools/adb
+                std::string linux_adb = std::string(home) + "/Android/sdk/platform-tools/adb";
+                if (tryAdbPath(linux_adb)) found = linux_adb;
+            }
         }
     }
 
-    DBG("ERROR: Could not find ADB executable anywhere!\n");
-    _adbPath.clear();
-    return "";
+    if (found.empty()) {
+        DBG("ERROR: Could not find ADB executable anywhere!\n");
+        return "";
+    }
+
+    // Cache result under lock
+    {
+        std::lock_guard<std::mutex> lock(_adbPathMutex);
+        _adbPath = found;
+    }
+    return found;
 }
 
 std::string ADBShell::generateMarker() {
@@ -204,12 +226,10 @@ bool ADBShell::start() {
         return true; // Already running
     }
 
-    if (_adbPath.empty()) {
-        _adbPath = findAdbExecutable();
-        if (_adbPath.empty()) {
-            setError("ADB executable not found");
-            return false;
-        }
+    std::string adbPath = findAdbExecutable();
+    if (adbPath.empty()) {
+        setError("ADB executable not found");
+        return false;
     }
 
     int pipe_stdin[2] = {-1, -1};
@@ -244,8 +264,8 @@ bool ADBShell::start() {
 
         SetupChildEnv();
         std::vector<std::string> storage;
-        std::vector<char*> argv = PrepareArgv(_adbPath, _device_serial, {"shell"}, storage);
-        execvp(_adbPath.c_str(), argv.data());
+        std::vector<char*> argv = PrepareArgv(adbPath, _device_serial, {"shell"}, storage);
+        execvp(adbPath.c_str(), argv.data());
         _exit(127);
     }
     else if (pid > 0) {
@@ -261,6 +281,9 @@ bool ADBShell::start() {
             setError("Failed to fdopen stdout pipe");
             close(pipe_stdout[0]);
             close(pipe_stdin[1]);
+            // Kill orphaned child to prevent zombie
+            kill(pid, SIGKILL);
+            waitpid(pid, nullptr, 0);
             return false;
         }
 
@@ -472,15 +495,13 @@ std::vector<std::string> ADBShell::splitCommandArgs(const std::string& command) 
 }
 
 std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, const std::function<void(const std::string&)>* on_chunk) {
-    if (_adbPath.empty()) {
-        _adbPath = findAdbExecutable();
-        if (_adbPath.empty()) {
-            DBG("runAdbProcess: ADB path is empty, cannot execute\n");
-            return "";
-        }
+    std::string adbPath = findAdbExecutable();
+    if (adbPath.empty()) {
+        DBG("runAdbProcess: ADB path is empty, cannot execute\n");
+        return "";
     }
 
-    DBG("runAdbProcess: executing %s with %zu args\n", _adbPath.c_str(), args.size());
+    DBG("runAdbProcess: executing %s with %zu args\n", adbPath.c_str(), args.size());
 
     int pipefd[2] = {-1, -1};
     if (pipe(pipefd) < 0) {
@@ -503,8 +524,8 @@ std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, const 
 
         SetupChildEnv();
         std::vector<std::string> storage;
-        std::vector<char*> argv = PrepareArgv(_adbPath, "", args, storage);
-        execvp(_adbPath.c_str(), argv.data());
+        std::vector<char*> argv = PrepareArgv(adbPath, "", args, storage);
+        execvp(adbPath.c_str(), argv.data());
         _exit(127);
     }
 
@@ -533,10 +554,8 @@ std::string ADBShell::runAdbProcess(const std::vector<std::string>& args, const 
 }
 
 std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk, const std::function<bool()>& abort_check) {
-    if (_adbPath.empty()) {
-        _adbPath = findAdbExecutable();
-        if (_adbPath.empty()) return "";
-    }
+    std::string adbPath = findAdbExecutable();
+    if (adbPath.empty()) return "";
 
     struct winsize win = {};
     win.ws_col = 80; win.ws_row = 24;
@@ -548,8 +567,8 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
     if (pid == 0) {
         SetupChildEnv();
         std::vector<std::string> storage;
-        std::vector<char*> argv = PrepareArgv(_adbPath, "", args, storage);
-        execvp(_adbPath.c_str(), argv.data());
+        std::vector<char*> argv = PrepareArgv(adbPath, "", args, storage);
+        execvp(adbPath.c_str(), argv.data());
         _exit(127);
     }
 
@@ -577,8 +596,6 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
             break;
         }
 
-        if (pfd.revents & (POLLHUP | POLLERR)) break;
-
         if (pfd.revents & POLLIN) {
             ssize_t n = read(master_fd, buffer, sizeof(buffer));
             if (n > 0) {
@@ -590,6 +607,9 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
                 break;
             }
         }
+
+        // Check POLLHUP after POLLIN — on Linux both can be set simultaneously
+        if (pfd.revents & (POLLHUP | POLLERR)) break;
     }
 
     close(master_fd);

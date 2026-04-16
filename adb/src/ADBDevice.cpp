@@ -246,7 +246,6 @@ std::string ADBDevice::RunAdbCommandWithProgress(const std::vector<std::string> 
 
 bool ADBDevice::IsSuccessResult(const std::string& result, bool is_push) const
 {
-    if (result.empty()) return true;
     if (result.find("skipped") != std::string::npos) return true;
 
     if (is_push) {
@@ -261,18 +260,7 @@ bool ADBDevice::IsSuccessResult(const std::string& result, bool is_push) const
 std::string ADBDevice::RunShellCommand(const std::string &command)
 {
     EnsureConnection();
-    
-    if (!_connected || !_adb_shell) {
-        return "";
-    }
-    
-    try {
-        std::string output = _adb_shell->shellCommand(command);
-        return output;
-        
-    } catch (const std::exception& e) {
-        return "";
-    }
+    return _adb_shell->shellCommand(command);
 }
 
 std::string ADBDevice::GetCurrentWorkingDirectory()
@@ -325,21 +313,6 @@ void ADBDevice::RunShellCommandStreaming(const std::string &command, const std::
             if (line == "/$" || line == "/#" || line == "$" || line == "#") {
                 continue;
             }
-            // Skip lines that are just the command echo (e.g., "ls", "pwd")
-            // Heuristic: if line contains only alphanumeric chars and looks like a command, skip
-            if (line.find(' ') == std::string::npos && line.find('/') == std::string::npos &&
-                line.find('.') == std::string::npos && !line.empty()) {
-                bool looks_like_cmd = true;
-                for (char c : line) {
-                    if (!std::isalnum(c) && c != '_' && c != '-') {
-                        looks_like_cmd = false;
-                        break;
-                    }
-                }
-                if (looks_like_cmd) {
-                    continue;
-                }
-            }
             on_line(line);
         }
     };
@@ -359,8 +332,7 @@ void ADBDevice::RunShellCommandStreaming(const std::string &command, const std::
 }
 
 wchar_t* ADBDevice::AllocateItemString(const std::string& s) {
-    if (s.empty()) return nullptr;
-    std::wstring ws = StrMB2Wide(s);
+    std::wstring ws = s.empty() ? std::wstring() : StrMB2Wide(s);
     size_t len = ws.length() + 1;
     wchar_t* buf = (wchar_t*)malloc(len * sizeof(wchar_t));
     if (!buf) {
@@ -426,7 +398,7 @@ std::string ADBDevice::DirectoryEnum(const std::string &path, std::vector<Plugin
     for (const auto& ls_line : ls_lines) {
         if (ls_line.find("Permission denied") != std::string::npos || ls_line.find("total") == 0)
             continue;
-        if (ls_line.find('?') != std::string::npos)
+        if (ls_line.size() > 0 && ls_line[0] == '?')
             continue;
 
         std::istringstream ls_stream(ls_line);
@@ -504,17 +476,7 @@ std::string ADBDevice::DirectoryEnum(const std::string &path, std::vector<Plugin
 std::string ADBDevice::ExtractPathFromPwd(const std::string &pwd_output)
 {
     std::string path = pwd_output;
-    
-    // Remove trailing newline
-    if (!path.empty() && path[path.length()-1] == '\n') {
-        path.erase(path.length()-1);
-    }
-    
-    // Remove trailing carriage return if present
-    if (!path.empty() && path[path.length()-1] == '\r') {
-        path.erase(path.length()-1);
-    }
-    
+    ADBUtils::TrimTrailingNewlines(path);
     return path;
 }
 
@@ -721,8 +683,9 @@ ADBDevice::DirectoryInfo ADBDevice::GetDirectoryInfo(const std::string &devicePa
 
     // Get file count and total size in one command
     // Output format: "count size" where size is in bytes
+    // Use ls -l instead of stat -c for portability across Android toolboxes (BusyBox/toybox)
     std::string command = "find " + ADBUtils::ShellQuote(devicePath) +
-        " -type f -exec stat -c '%s ' {} \\; 2>/dev/null | awk '{c++;s+=$1}END{print c,s}'";
+        " -type f -exec ls -l {} \\; 2>/dev/null | awk '{c++;s+=$5}END{print c,s}'";
     std::string result = RunShellCommand(command);
 
     // Trim whitespace

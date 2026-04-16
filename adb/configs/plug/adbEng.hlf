@@ -1,0 +1,153 @@
+.Language=English,English
+.PluginContents=ADB Plugin
+
+@Contents
+$ #ADB Plugin#
+ The ADB (Android Debug Bridge) plugin allows you to browse
+and manage files on Android devices connected via USB or Wi-Fi
+directly from far2l.
+
+   ~Device list~@DeviceList@
+   ~File operations~@FileOps@
+   ~Shell commands~@ShellCommands@
+   ~Keyboard shortcuts~@Shortcuts@
+   ~Troubleshooting~@Troubleshooting@
+
+@DeviceList
+$ #Device list#
+ When opened, the plugin shows all connected ADB devices:
+
+   #Serial Number#  - device serial or network address
+   #Device Name#    - friendly name (from device settings)
+   #Model#          - device model identifier
+   #Port#           - USB port or connection type
+
+ If only one device is connected, the plugin connects to it
+automatically and shows the device file system.
+
+ If multiple devices are connected, select the desired device
+and press #Enter# to connect.
+
+ If no devices are found, the panel displays #<Not found>#.
+Make sure USB debugging is enabled on the device and the
+ADB daemon is running.
+
+ ~Contents~@Contents@
+
+@FileOps
+$ #File operations#
+ The plugin supports standard far2l file operations:
+
+   #F3#     - View file (downloaded temporarily for viewing)
+   #F5#     - Copy files between device and local filesystem
+   #F6#     - Move files between device and local filesystem
+   #F7#     - Create directory on device
+   #F8#     - Delete files/directories from device
+   #Enter#  - Navigate into directory
+
+ When both panels contain ADB plugin instances connected to the
+same device, #F5#/#F6# performs on-device copy/move without
+downloading files to the host.
+
+ During file transfers, a progress dialog shows:
+   - Current file name and path
+   - Transfer percentage and progress bar
+   - Total bytes to transfer
+   - Elapsed time, estimated remaining time, and speed
+
+ Press #Cancel# in the progress dialog to abort the transfer.
+
+ ~Contents~@Contents@
+
+@ShellCommands
+$ #Shell commands#
+ You can execute shell commands directly on the device by
+typing them in the far2l command line.
+
+ Commands prefixed with #adb:# are sent to the device shell.
+Commands without prefix are also sent when the ADB panel is active.
+
+ The current working directory on the device is synchronized
+with shell commands — #cd# changes are reflected in the panel.
+
+ Command output is displayed in the far2l console.
+
+ ~Contents~@Contents@
+
+@Shortcuts
+$ #Keyboard shortcuts#
+ Standard far2l keyboard shortcuts apply:
+
+   #Enter#       - Enter directory / connect to device
+   #F3#          - View file
+   #F5#          - Copy
+   #F6#          - Move
+   #F7#          - Create directory
+   #F8#          - Delete
+   #F10#         - Exit plugin
+   #Ctrl+\\#      - Go to root directory
+
+ ~Contents~@Contents@
+
+@ADBAbortConfirm
+$ #Abort operation#
+ This dialog asks you to confirm aborting the current
+file transfer operation.
+
+   #Abort#     - Stop the transfer immediately
+   #Continue#  - Return to the transfer
+
+ ~Contents~@Contents@
+
+@ADBOverwrite
+$ #Overwrite confirmation#
+ This dialog appears when the destination file or folder
+already exists.
+
+   #Overwrite#      - Replace the existing file
+   #Skip#           - Skip this file and continue
+   #Overwrite all#  - Replace all existing files (no more prompts)
+   #Skip all#       - Skip all existing files (no more prompts)
+   #Cancel#         - Abort the entire operation
+
+ ~Contents~@Contents@
+
+@ADBProgress
+$ #Transfer progress#
+ This dialog shows the progress of a file transfer operation
+(copy, move, or delete).
+
+ The dialog displays:
+   - Source and destination paths
+   - Progress bar with percentage
+   - Total bytes being transferred
+   - Number of files processed
+   - Elapsed time, remaining time estimate, and transfer speed
+
+ Press #Cancel# to abort the operation. You will be asked
+to confirm the abort.
+
+ ~Contents~@Contents@
+
+@Troubleshooting
+$ #Troubleshooting#
+ #Device not detected#
+   - Enable USB debugging in Developer Options on the device
+   - Accept the RSA key fingerprint prompt on the device
+   - Check that #adb devices# shows your device in a terminal
+   - Try #adb kill-server && adb start-server#
+
+ #Permission denied#
+   - Some system directories require root access
+   - Use #adb root# if the device allows it
+
+ #Slow transfers#
+   - USB 2.0 connections are slower than USB 3.0
+   - Wi-Fi ADB connections are slower than USB
+   - Large numbers of small files transfer slower than few large files
+
+ #Connection lost#
+   - Reconnect the USB cable
+   - Re-open the plugin (it will reconnect automatically)
+
+ ~Contents~@Contents@

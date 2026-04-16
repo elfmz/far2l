@@ -37,6 +37,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
             COMMAND strip -x "$<TARGET_FILE:adb>"
             COMMENT "Stripping debug symbols from adb plugin"
         )
+    else()
+        add_custom_command(TARGET adb POST_BUILD
+            COMMAND strip --strip-unneeded "$<TARGET_FILE:adb>"
+            COMMENT "Stripping debug symbols from adb plugin"
+        )
     endif()
 endif()
 

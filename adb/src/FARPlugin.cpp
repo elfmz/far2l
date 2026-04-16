@@ -38,6 +38,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *Info)
 		return;
 	}
 	Info->StructSize = sizeof(*Info);
+	Info->SysID = 0x41444250; // 'ADBP'
 	Info->Flags = PF_FULLCMDLINE;
 	Info->DiskMenuStrings = nullptr;
 	Info->DiskMenuStringsNumber = 0;

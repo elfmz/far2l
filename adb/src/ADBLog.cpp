@@ -1,7 +1,7 @@
 #include "ADBLog.h"
 #include <time.h>
 
-#ifndef NDEBUG
+#if defined(DEBUG) || defined(_DEBUG)
 
 void DebugLog(const char *format, ...)
 {
@@ -47,4 +47,4 @@ void DebugLog(const char *format, ...)
     }
 }
 
-#endif // NDEBUG
+#endif // defined(DEBUG) || defined(_DEBUG)

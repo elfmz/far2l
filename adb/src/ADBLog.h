@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#ifndef NDEBUG
+#if defined(DEBUG) || defined(_DEBUG)
 void DebugLog(const char *format, ...);
 #endif
 
@@ -16,8 +16,8 @@ void DebugLog(const char *format, ...);
 }
 #endif
 
-// Debug macros - only active in debug builds (NDEBUG not defined)
-#ifndef NDEBUG
+// Debug macros - completely absent from release builds; enable with -DDEBUG
+#if defined(DEBUG) || defined(_DEBUG)
 #define DBG(fmt, ...) DebugLog("[%s] " fmt, __FUNCTION__, ##__VA_ARGS__)
 #else
 #define DBG(fmt, ...) ((void)0)

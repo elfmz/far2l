@@ -17,9 +17,7 @@
 #include <utils.h>
 #include <farplug-wide.h>
 
-// Helper: Check overwrite and return action (DRY)
-// Returns: 0=proceed, 1=skip, 2=abort
-// Modifies overwriteMode: 0=ask, 1=overwrite all, 2=skip all
+// Returns 0=proceed / 1=skip / 2=abort; overwriteMode carries state (0=ask, 1=overwrite all, 2=skip all) across calls.
 static int CheckOverwrite(const std::wstring& destPath, bool isMultiple, bool isDir,
                           int& overwriteMode, ProgressState& state) {
 	if (overwriteMode == 1) return 0;  // Overwrite all
@@ -124,6 +122,16 @@ ADBPlugin::ADBPlugin(const wchar_t *path, bool path_is_standalone_config, int Op
 
 ADBPlugin::~ADBPlugin()
 {
+	// Explicit disconnect so the persistent adb shell child is torn down before the
+	// shared_ptr's own destructor runs (easier to trace in logs, predictable order).
+	if (_adbDevice) {
+		try {
+			_adbDevice->Disconnect();
+		} catch (...) {
+			// Destructor must not throw; a device whose session is already dead is fine.
+		}
+		_adbDevice.reset();
+	}
 }
 
 int ADBPlugin::GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode)
@@ -202,7 +210,7 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		connectedMode.ColumnTitles = connectedTitles;
 		Info->PanelModesArray      = &connectedMode;
 		Info->Flags                = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
-		Info->StartSortMode        = SM_NAME;
+		// Leave StartSortMode = 0; flplugin.cpp:904 re-applies it on every SetPluginMode and would wipe the user's sort choice.
 
 		_curDirW  = StrMB2Wide(_CurrentDir);
 		_formatW  = L"adb:" + _curDirW;
@@ -213,7 +221,6 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		deviceMode.ColumnTitles = deviceTitles;
 		Info->PanelModesArray   = &deviceMode;
 		Info->Flags             = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING | OPIF_SHOWNAMESONLY;
-		Info->StartSortMode     = 0;
 
 		Info->CurDir = L"";
 		Info->Format = L"ADB";
@@ -255,8 +262,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		return false;
 	}
 
-	// Validate passive handle: read _signature at known offset to check if it's our plugin.
-	// Use memcmp instead of direct dereference to avoid UB on foreign plugin handles.
+	// memcpy (not deref) to read _signature — avoids UB if passive isn't our plugin at all.
 	uint64_t sig = 0;
 	memcpy(&sig, passive, sizeof(sig));
 	if (sig != PLUGIN_SIGNATURE) {
@@ -498,8 +504,7 @@ int ADBPlugin::GetDeviceData(PluginPanelItem **pPanelItem, int *pItemsNumber)
 		device.FindData.lpwszFileName = ADBDevice::AllocateItemString(info.serial);
 		device.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY; // Make it look like a directory
 		
-		// Store additional data in custom fields
-		// C0=Serial Number, C1=Device Name, C2=Model, C3=Port
+		// Custom columns: C0=Serial (filename), C1=Device Name, C2=Model, C3=Port.
 		wchar_t **customData = new wchar_t*[3];
 		customData[0] = ADBDevice::AllocateItemString(info.name);  // C1: Device Name
 		customData[1] = ADBDevice::AllocateItemString(info.model); // C2: Model
@@ -577,8 +582,7 @@ bool ADBPlugin::ByKey_TryEnterSelectedDevice()
 
 int ADBPlugin::GetHighlightedDeviceIndex()
 {
-	// For now, return 0 (first device)
-	// In a full implementation, this would get the currently highlighted item
+	// TODO: return actually-highlighted item; currently always 0 (first device).
 	return 0;
 }
 
@@ -819,9 +823,12 @@ int ADBPlugin::ProcessEventCommand(const wchar_t *cmd, HANDLE hPlugin)
 	if (*commandToExecute == L'\0') return FALSE;
 
 	std::string command = StrWide2MB(commandToExecute);
+	DBG("to-device command='%s' (len=%zu)\n", command.c_str(), command.size());
 
 	// Use persistent stateful session
 	std::string output = _adbDevice->RunShellCommand(command);
+	int exitCode = _adbDevice->LastShellExitCode();
+	DBG("raw output length=%zu bytes exit=%d\n", output.size(), exitCode);
 
 	// Sync path after every command - run pwd to get current directory
 	_adbDevice->SyncPath();
@@ -829,53 +836,66 @@ int ADBPlugin::ProcessEventCommand(const wchar_t *cmd, HANDLE hPlugin)
 	if (newPath != _CurrentDir) {
 		_CurrentDir = newPath;
 		UpdatePanelTitle(_deviceSerial, _CurrentDir);
-		g_Info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
-		g_Info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
 	}
+	DBG("cwd='%s' rc=%d\n", newPath.c_str(), exitCode);
 
-	if (!output.empty() && g_FSF.Execute) {
-		// Parse output, filter out prompt/echo lines, collect clean lines
-		std::vector<std::string> clean_lines;
+	// Render to far2l user screen (Ctrl+O area) with a "<cwd> $ <cmd>" prefix echoing what the user typed.
+	std::wstring batch;
+	batch += StrMB2Wide(_CurrentDir);
+	batch += L" $ ";
+	batch += StrMB2Wide(command);
+	batch += L"\r\n";
+
+	size_t batch_before_output = batch.size();
+	{
 		std::istringstream iss(output);
 		std::string line;
 		while (std::getline(iss, line)) {
-			// Trim CR
 			if (!line.empty() && line.back() == '\r') {
 				line.pop_back();
 			}
-			// Skip empty lines
 			if (line.empty()) {
 				continue;
 			}
-			// Skip lines that are just shell prompts
+			// Skip bare shell prompts leaked by the marker protocol (e.g. "/$", "#")
 			if (line == "/$" || line == "/#" || line == "$" || line == "#") {
 				continue;
 			}
-			clean_lines.push_back(line);
-		}
-
-		// Write output to temp file and cat it — avoids shell injection entirely
-		if (!clean_lines.empty()) {
-			char tmpPath[] = "/tmp/adb_output_XXXXXX";
-			int fd = mkstemp(tmpPath);
-			if (fd >= 0) {
-				std::string all;
-				for (size_t i = 0; i < clean_lines.size(); i++) {
-					if (i > 0) all += '\n';
-					all += clean_lines[i];
-				}
-				all += '\n';
-				ssize_t wr = write(fd, all.c_str(), all.size());
-				(void)wr;
-				close(fd);
-				std::wstring cat_cmd = L"cat " + StrMB2Wide(std::string(tmpPath));
-				g_FSF.Execute(cat_cmd.c_str(), EF_NOCMDPRINT);
-				unlink(tmpPath);
-			}
+			batch += StrMB2Wide(line);
+			batch += L"\r\n";
 		}
 	}
 
+	// Only flag silent failures: empty output + non-zero exit. Skip for grep/diff/test — they use non-zero as semantic "no/false" and have output of their own.
+	const bool output_was_empty = (batch.size() == batch_before_output);
+	if (output_was_empty && exitCode != 0 && exitCode != -1) {
+		batch += L"->[Exit code: ";
+		batch += std::to_wstring(exitCode);
+		batch += L"]\r\n";
+	}
+
+	DBG("batch wchars=%zu output_empty=%d rc=%d\n",
+		batch.size(), output_was_empty ? 1 : 0, exitCode);
+
+	// Temporarily enable ENABLE_PROCESSED_OUTPUT: panel mode leaves it off so \r\n would render as CP437 glyphs (♪◙). Same trick as FarExecuteScope.
+	g_Info.Control(hPlugin, FCTL_GETUSERSCREEN, 0, 0);
+	DWORD saved_mode = 0;
+	WINPORT(GetConsoleMode)(NULL, &saved_mode);
+	WINPORT(SetConsoleMode)(NULL, saved_mode | ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT);
+	DWORD dw = 0;
+	WINPORT(WriteConsole)(NULL, batch.c_str(), (DWORD)batch.size(), &dw, NULL);
+	WINPORT(SetConsoleMode)(NULL, saved_mode);
+	DBG("WriteConsole wrote=%u of %zu wchars (saved_mode=0x%lx)\n",
+		(unsigned)dw, batch.size(), (unsigned long)saved_mode);
+	g_Info.Control(hPlugin, FCTL_SETUSERSCREEN, 0, 0);
+
 	g_Info.Control(hPlugin, FCTL_SETCMDLINE, 0, (LONG_PTR)L"");
+
+	// Unconditional UPDATEPANEL so rm/mkdir/touch/mv are reflected without Ctrl+R; FCTL_SETPANELDIR would close the plugin. CmdLine prompt lags one command (far2l cmdline.cpp:527-544 bug).
+	g_Info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
+	g_Info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, 0);
+	g_Info.Control(PANEL_PASSIVE, FCTL_REDRAWPANEL, 0, 0);
+
 	return TRUE;
 }
 
@@ -952,19 +972,27 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 	uint64_t totalFiles = 0;
 	std::map<std::string, uint64_t> dirSizes;
 
-	// Pre-scan to get total size/count (including directory contents)
-	for (int i = 0; i < ItemsNumber; i++) {
-		if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			std::string fileName = StrWide2MB(PanelItem[i].FindData.lpwszFileName);
-			std::string devicePath = ADBUtils::JoinPath(GetCurrentDevicePath(), fileName);
-			auto dirInfo = _adbDevice->GetDirectoryInfo(devicePath);
-			totalBytes += dirInfo.total_size;
-			totalFiles += dirInfo.file_count;
-			dirSizes[devicePath] = dirInfo.total_size;
-		} else {
-			totalBytes += PanelItem[i].FindData.nFileSize;
-			totalFiles++;
+	// Pre-scan to get total size/count (including directory contents).
+	// Wrap: _adbDevice->GetDirectoryInfo may throw on device disconnect; letting an
+	// exception escape into far2l core is a hard crash.
+	try {
+		for (int i = 0; i < ItemsNumber; i++) {
+			if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				std::string fileName = StrWide2MB(PanelItem[i].FindData.lpwszFileName);
+				std::string devicePath = ADBUtils::JoinPath(GetCurrentDevicePath(), fileName);
+				auto dirInfo = _adbDevice->GetDirectoryInfo(devicePath);
+				totalBytes += dirInfo.total_size;
+				totalFiles += dirInfo.file_count;
+				dirSizes[devicePath] = dirInfo.total_size;
+			} else {
+				totalBytes += PanelItem[i].FindData.nFileSize;
+				totalFiles++;
+			}
 		}
+	} catch (const std::exception& ex) {
+		DBG("GetFiles pre-scan exception: %s\n", ex.what());
+		WINPORT(SetLastError)(EIO);
+		return FALSE;
 	}
 
 	return RunTransfer(PanelItem, ItemsNumber, false, Move != 0,
@@ -1003,22 +1031,28 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 	uint64_t totalFiles = 0;
 	std::map<std::string, uint64_t> dirSizes;
 
-	// Pre-scan to get total size/count (including directory contents from local filesystem)
-	for (int i = 0; i < ItemsNumber; i++) {
-		std::string fileName = StrWide2MB(PanelItem[i].FindData.lpwszFileName);
-		std::string localPath = ADBUtils::JoinPath(srcPath, fileName);
+	// Pre-scan local filesystem: ScanLocalDirectory doesn't throw, but SetDirectory above may.
+	try {
+		for (int i = 0; i < ItemsNumber; i++) {
+			std::string fileName = StrWide2MB(PanelItem[i].FindData.lpwszFileName);
+			std::string localPath = ADBUtils::JoinPath(srcPath, fileName);
 
-		if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			uint64_t dirSize = 0;
-			uint64_t dirFiles = 0;
-			ScanLocalDirectory(localPath, dirSize, dirFiles);
-			totalBytes += dirSize;
-			totalFiles += dirFiles;
-			dirSizes[localPath] = dirSize;
-		} else {
-			totalBytes += PanelItem[i].FindData.nFileSize;
-			totalFiles++;
+			if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				uint64_t dirSize = 0;
+				uint64_t dirFiles = 0;
+				ScanLocalDirectory(localPath, dirSize, dirFiles);
+				totalBytes += dirSize;
+				totalFiles += dirFiles;
+				dirSizes[localPath] = dirSize;
+			} else {
+				totalBytes += PanelItem[i].FindData.nFileSize;
+				totalFiles++;
+			}
 		}
+	} catch (const std::exception& ex) {
+		DBG("PutFiles pre-scan exception: %s\n", ex.what());
+		WINPORT(SetLastError)(EIO);
+		return FALSE;
 	}
 
 	return RunTransfer(PanelItem, ItemsNumber, true, Move != 0,
@@ -1038,26 +1072,32 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 	std::map<std::string, uint64_t> dirSizesCopy = dirSizes;
 
 	if (OpMode & OPM_SILENT) {
-		for (int i = 0; i < itemsCount; i++) {
-			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-			std::string localPath = ADBUtils::JoinPath(localDir, fileName);
-			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
-			bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+		// Wrap: ADBDevice transfer methods may throw on device disconnect.
+		try {
+			for (int i = 0; i < itemsCount; i++) {
+				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
+				std::string localPath = ADBUtils::JoinPath(localDir, fileName);
+				std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
+				bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 
-			int result;
-			if (is_upload) {
-				result = isDir ? adb->PushDirectory(localPath, devicePath)
-				               : adb->PushFile(localPath, devicePath);
-			} else {
-				result = isDir ? adb->PullDirectory(devicePath, localPath)
-				               : adb->PullFile(devicePath, localPath);
-			}
+				int result;
+				if (is_upload) {
+					result = isDir ? adb->PushDirectory(localPath, devicePath)
+					               : adb->PushFile(localPath, devicePath);
+				} else {
+					result = isDir ? adb->PullDirectory(devicePath, localPath)
+					               : adb->PullFile(devicePath, localPath);
+				}
 
-			if (result == 0) {
-				successCount++;
-			} else {
-				lastErrorCode = result;
+				if (result == 0) {
+					successCount++;
+				} else {
+					lastErrorCode = result;
+				}
 			}
+		} catch (const std::exception& ex) {
+			DBG("RunTransfer (silent) exception: %s\n", ex.what());
+			lastErrorCode = EIO;
 		}
 	} else {
 		std::wstring title = move
@@ -1080,6 +1120,10 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 			uint64_t completedCount = 0;
 			if (!adb || !adb->IsConnected()) return;
 
+			// Worker-thread exception guard: transfer methods may throw on disconnect;
+			// the lambda runs in a separate std::thread and an unhandled exception
+			// there would call std::terminate and take the whole plugin/far2l down.
+			try {
 			for (int i = 0; i < itemsCount && !state.ShouldAbort(); i++) {
 				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
 				std::string localPath = ADBUtils::JoinPath(localDir, fileName);
@@ -1156,6 +1200,15 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 				} else if (result != 0) {
 					*pLastError = result;
 				}
+			}
+			} catch (const std::exception& ex) {
+				DBG("RunTransfer worker exception: %s\n", ex.what());
+				*pLastError = EIO;
+				state.SetAborting();
+			} catch (...) {
+				DBG("RunTransfer worker: unknown exception\n");
+				*pLastError = EIO;
+				state.SetAborting();
 			}
 		});
 	}
@@ -1237,22 +1290,27 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 
 	if (OpMode & OPM_SILENT) {
 		// Silent mode - no progress dialog
-		for (int i = 0; i < itemsCount; i++) {
-			std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
-			std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
+		try {
+			for (int i = 0; i < itemsCount; i++) {
+				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
+				std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
 
-			int result = 0;
-			if (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				result = adb->DeleteDirectory(devicePath);
-			} else {
-				result = adb->DeleteFile(devicePath);
-			}
+				int result = 0;
+				if (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+					result = adb->DeleteDirectory(devicePath);
+				} else {
+					result = adb->DeleteFile(devicePath);
+				}
 
-			if (result == 0) {
-				(*pSuccessCount)++;
-			} else {
-				*pLastError = result;
+				if (result == 0) {
+					(*pSuccessCount)++;
+				} else {
+					*pLastError = result;
+				}
 			}
+		} catch (const std::exception& ex) {
+			DBG("DeleteFiles (silent) exception: %s\n", ex.what());
+			lastErrorCode = EIO;
 		}
 	} else {
 		// Show progress dialog with worker thread
@@ -1260,6 +1318,8 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 		op.GetState().count_total = itemsCount;
 
 	op.Run([&](ProgressState& state) {
+			// Worker-thread exception guard (std::terminate on escape).
+			try {
 			for (int i = 0; i < itemsCount && !state.ShouldAbort(); i++) {
 				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
 				std::string devicePath = ADBUtils::JoinPath(deviceDir, fileName);
@@ -1287,6 +1347,14 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 
 			// Final update
 			state.count_complete = itemsCount;
+			} catch (const std::exception& ex) {
+				DBG("DeleteFiles worker exception: %s\n", ex.what());
+				*pLastError = EIO;
+				state.SetAborting();
+			} catch (...) {
+				*pLastError = EIO;
+				state.SetAborting();
+			}
 		});
 	}
 

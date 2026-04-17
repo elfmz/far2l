@@ -40,7 +40,7 @@ private:
 	bool _isConnected;               // true = connected to device (file mode), false = device selection mode
 	std::string _deviceSerial;      // Current device serial
 	std::string _CurrentDir;        // Current path on device
-	
+
 	// Cursor position tracking for better UX
 	std::string _lastEnteredDir;
 	

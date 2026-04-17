@@ -5,6 +5,7 @@
 #include <memory>
 #include <cstdint>
 #include <atomic>
+#include <mutex>
 #include <vector>
 #include <functional>
 
@@ -32,6 +33,9 @@ public:
     // Stop the shell process
     void stop();
 
+    // Exit code from most recent shellCommand's END marker; -1 if unparseable (timeout / broken session).
+    int lastExitCode() const { return _last_exit_code.load(); }
+
 private:
     std::string _device_serial;
     FILE* _shell_pipe;
@@ -39,7 +43,11 @@ private:
     int _shell_pid;
     bool _is_running;
     std::string _last_error;
-    
+    std::atomic<int> _last_exit_code{-1};
+
+    // Serializes shellCommand: write+read is one transaction, else callers cross-corrupt the pipe pair.
+    std::mutex _shell_mutex;
+
     // Session management
     std::atomic<uint32_t> _command_counter;
     

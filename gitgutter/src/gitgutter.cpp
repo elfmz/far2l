@@ -1481,7 +1481,8 @@ static int ShowConfigDialog()
 	items[CD_OK].Type = DI_BUTTON;
 	items[CD_OK].X1 = 0;
 	items[CD_OK].Y1 = 13;
-	items[CD_OK].Flags = DIF_DEFAULT | DIF_CENTERGROUP;
+	items[CD_OK].Flags = DIF_CENTERGROUP;
+	items[CD_OK].DefaultButton = TRUE;
 	items[CD_OK].PtrData = L"OK";
 
 	items[CD_CANCEL].Type = DI_BUTTON;
@@ -1658,18 +1659,17 @@ SHAREDSYMBOL int WINAPI ProcessEditorEventW(int Event, void *Param)
 	EditorState &st = g_editors[ei.EditorID];
 	st.editor_id = ei.EditorID;
 
-	if (Event == EE_READ || Event == EE_SAVE) {
+	const bool content_change_event =
+			Event == EE_READ || Event == EE_SAVE || (Event == EE_REDRAW && Param == EEREDRAW_CHANGE);
+
+	if (content_change_event) {
 		st.dirty = true;
 		UpdateEditorState(st);
+		if (st.dirty) {
+			MaybeScheduleTick();
+		}
 		if (st.gutter_request != -1) {
 			g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
-		}
-	} else if (Event == EE_REDRAW) {
-		if (st.dirty) {
-			UpdateEditorState(st);
-			if (st.gutter_request != -1) {
-				g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
-			}
 		}
 	}
 

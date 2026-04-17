@@ -263,6 +263,11 @@ std::string ADBDevice::RunShellCommand(const std::string &command)
     return _adb_shell->shellCommand(command);
 }
 
+int ADBDevice::LastShellExitCode() const
+{
+    return _adb_shell ? _adb_shell->lastExitCode() : -1;
+}
+
 std::string ADBDevice::GetCurrentWorkingDirectory()
 {
     if (!_connected || !_adb_shell) {
@@ -284,7 +289,11 @@ void ADBDevice::SyncPath()
     }
     try {
         std::string pwd_output = _adb_shell->shellCommand("pwd");
-        _current_path = ExtractPathFromPwd(pwd_output);
+        std::string extracted = ExtractPathFromPwd(pwd_output);
+        // Keep previous path if validation rejected pwd output (timeout / malformed marker) — don't blank a valid path.
+        if (!extracted.empty()) {
+            _current_path = extracted;
+        }
     } catch (const std::exception& e) {
         // Ignore - keep current path
     }
@@ -475,9 +484,19 @@ std::string ADBDevice::DirectoryEnum(const std::string &path, std::vector<Plugin
 
 std::string ADBDevice::ExtractPathFromPwd(const std::string &pwd_output)
 {
-    std::string path = pwd_output;
-    ADBUtils::TrimTrailingNewlines(path);
-    return path;
+    // Reject non-absolute / contaminated output: a broken session returns error text or shell fragments, which poison _current_path and leak into cmd-line echo.
+    size_t end = pwd_output.size();
+    while (end > 0 && (pwd_output[end - 1] == '\n' || pwd_output[end - 1] == '\r')) --end;
+    if (end == 0 || pwd_output[0] != '/') {
+        return "";
+    }
+    for (size_t i = 0; i < end; ++i) {
+        char c = pwd_output[i];
+        if (c == '\n' || c == '\r' || c == ';' || c == '`' || c == '$') {
+            return "";
+        }
+    }
+    return pwd_output.substr(0, end);
 }
 
 time_t ADBDevice::ParseLsDateTime(const std::string &date, const std::string &time_str) {
@@ -607,14 +626,20 @@ int ADBDevice::PushDirectory(const std::string &localPath, const std::string &de
 
 
 
+// Exit-code-first errno mapping: `result.empty()` alone confused warnings-on-success with real errors; the marker-protocol exit code is authoritative.
+static int MutationResultToErrno(int exitCode, const std::string &result) {
+    if (exitCode == 0) return 0;
+    if (result.empty()) return EIO;
+    return ADBDevice::Str2Errno(result);
+}
+
 int ADBDevice::DeleteFile(const std::string &devicePath) {
     EnsureConnection();
     if (int err = ADBUtils::CheckConnection(_connected)) return err;
 
     std::string command = "rm -- " + ADBUtils::ShellQuote(devicePath);
     std::string result = RunShellCommand(command);
-
-    return result.empty() ? 0 : Str2Errno(result);
+    return MutationResultToErrno(LastShellExitCode(), result);
 }
 
 int ADBDevice::DeleteDirectory(const std::string &devicePath) {
@@ -623,8 +648,7 @@ int ADBDevice::DeleteDirectory(const std::string &devicePath) {
 
     std::string command = "rm -rf -- " + ADBUtils::ShellQuote(devicePath);
     std::string result = RunShellCommand(command);
-
-    return result.empty() ? 0 : Str2Errno(result);
+    return MutationResultToErrno(LastShellExitCode(), result);
 }
 
 int ADBDevice::CreateDirectory(const std::string &devicePath) {
@@ -633,8 +657,7 @@ int ADBDevice::CreateDirectory(const std::string &devicePath) {
 
     std::string command = "mkdir -p -- " + ADBUtils::ShellQuote(devicePath);
     std::string result = RunShellCommand(command);
-
-    return result.empty() ? 0 : Str2Errno(result);
+    return MutationResultToErrno(LastShellExitCode(), result);
 }
 
 int ADBDevice::CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir) {
@@ -646,7 +669,7 @@ int ADBDevice::CopyRemote(const std::string &srcDevicePath, const std::string &d
         "cp -a -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir) +
         " 2>/dev/null || cp -r -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
     std::string result = RunShellCommand(command);
-    return result.empty() ? 0 : Str2Errno(result);
+    return MutationResultToErrno(LastShellExitCode(), result);
 }
 
 int ADBDevice::MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir) {
@@ -655,7 +678,7 @@ int ADBDevice::MoveRemote(const std::string &srcDevicePath, const std::string &d
 
     std::string command = "mv -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
     std::string result = RunShellCommand(command);
-    return result.empty() ? 0 : Str2Errno(result);
+    return MutationResultToErrno(LastShellExitCode(), result);
 }
 
 bool ADBDevice::FileExists(const std::string &devicePath) {
@@ -681,20 +704,14 @@ ADBDevice::DirectoryInfo ADBDevice::GetDirectoryInfo(const std::string &devicePa
         return info;
     }
 
-    // Get file count and total size in one command
-    // Output format: "count size" where size is in bytes
-    // Use ls -l instead of stat -c for portability across Android toolboxes (BusyBox/toybox)
+    // One-shot count+size via find+ls (stat -c not portable across BusyBox/toybox); output: "count size".
     std::string command = "find " + ADBUtils::ShellQuote(devicePath) +
         " -type f -exec ls -l {} \\; 2>/dev/null | awk '{c++;s+=$5}END{print c,s}'";
     std::string result = RunShellCommand(command);
 
-    // Trim whitespace
     ADBUtils::TrimTrailingNewlines(result);
-    while (!result.empty() && result.front() == ' ') result.erase(0, 1);
-    while (!result.empty() && result.back() == ' ') result.pop_back();
+    StrTrim(result);
 
-    // Parse result: "count size"
-    // Validate that we have two numbers separated by space
     size_t space = result.find(' ');
     if (space != std::string::npos && space > 0 && space < result.size() - 1) {
         std::string count_str = result.substr(0, space);

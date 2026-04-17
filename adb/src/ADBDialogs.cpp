@@ -14,37 +14,6 @@ extern FarStandardFunctions g_FSF;
 // Helper functions
 // ============================================================================
 
-// Shared size formatter: compact=false → "1.2 MB", compact=true → "1.2M"
-static std::wstring FormatSizeImpl(uint64_t bytes, bool compact)
-{
-    static const wchar_t* full_units[] = {L"B", L"KB", L"MB", L"GB", L"TB"};
-    static const wchar_t* short_units[] = {L"", L"K", L"M", L"G", L"T"};
-
-    if (bytes == 0) return compact ? L"0" : L"0 B";
-
-    const wchar_t** units = compact ? short_units : full_units;
-    size_t unit = 0;
-    double value = static_cast<double>(bytes);
-    while (value >= 1024.0 && unit < 4) {
-        value /= 1024.0;
-        ++unit;
-    }
-
-    std::wostringstream out;
-    if (unit == 0) {
-        out << bytes;
-        if (!compact) out << L" " << units[unit];
-    } else {
-        out << std::fixed << std::setprecision(1) << value;
-        if (!compact) out << L" ";
-        out << units[unit];
-    }
-    return out.str();
-}
-
-static std::wstring FormatSize(uint64_t bytes) { return FormatSizeImpl(bytes, false); }
-static std::wstring FormatSizeCompact(uint64_t bytes) { return FormatSizeImpl(bytes, true); }
-
 static std::wstring FormatTimeLong(uint64_t total_seconds)
 {
     if (total_seconds > 999999) total_seconds = 999999;
@@ -802,8 +771,18 @@ bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destinat
 
 bool ADBDialogs::AskCreateDirectory(std::string& dir_name)
 {
-    return AskInput(L"Create directory", L"Enter name of directory to create:",
-                    L"ADB_MakeDir", dir_name, dir_name);
+    if (!AskInput(L"Create directory", L"Enter name of directory to create:",
+                  L"ADB_MakeDir", dir_name, dir_name)) {
+        return false;
+    }
+    // Trim and reject meaningless names: whitespace-only, ".", ".." would either
+    // fail on-device with a cryptic shell error or silently no-op. Catch early.
+    auto ltrim = dir_name.find_first_not_of(" \t\r\n");
+    if (ltrim == std::string::npos) return false;
+    auto rtrim = dir_name.find_last_not_of(" \t\r\n");
+    dir_name = dir_name.substr(ltrim, rtrim - ltrim + 1);
+    if (dir_name == "." || dir_name == "..") return false;
+    return true;
 }
 
 bool ADBDialogs::AskInput(const wchar_t* title, const wchar_t* prompt,

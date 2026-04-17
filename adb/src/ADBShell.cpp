@@ -122,8 +122,7 @@ std::string ADBShell::findAdbExecutable() {
         if (!_adbPath.empty()) return _adbPath;
     }
 
-    // Search WITHOUT holding the mutex — tryAdbPath() calls fork(),
-    // and holding a mutex across fork() violates POSIX safety guarantees
+    // Search without holding the mutex: tryAdbPath() fork()s and holding a mutex across fork() is POSIX-unsafe.
     DBG("Starting ADB executable search...\n");
 
     std::string found;
@@ -191,11 +190,13 @@ std::string ADBShell::findAdbExecutable() {
     return found;
 }
 
+// Marker suffixes bracketing each command's response; shared so writeCommand emitter and readResponse parser can't drift.
+static constexpr const char *kMarkerStartSuffix = "_S__";
+static constexpr const char *kMarkerEndPrefix = "_E_";
+
 std::string ADBShell::generateMarker() {
     uint64_t micros = nowMicros();
     uint32_t current_counter = _command_counter.fetch_add(1);
-    
-    // Create marker: string(nowMicros) + string(command_counter)
     return "__MARK_" + std::to_string(micros) + "_" + std::to_string(current_counter) + "__";
 }
 
@@ -267,7 +268,8 @@ bool ADBShell::start() {
 
         SetupChildEnv();
         std::vector<std::string> storage;
-        std::vector<char*> argv = PrepareArgv(adbPath, _device_serial, {"shell"}, storage);
+        // `-T` disables device-side PTY; without it adb echoes stdin into stdout and the marker matches its own echo (prev P3).
+        std::vector<char*> argv = PrepareArgv(adbPath, _device_serial, {"shell", "-T"}, storage);
         execvp(adbPath.c_str(), argv.data());
         _exit(127);
     }
@@ -313,20 +315,82 @@ bool ADBShell::start() {
     }
 }
 
+// Escape CR/LF/TAB/non-printables so debug logs show exactly what came across the pipe.
+#if defined(DEBUG) || defined(_DEBUG)
+static std::string EscapeForLog(const std::string& s, size_t limit = 200) {
+    std::string out;
+    out.reserve(s.size() + 16);
+    size_t n = std::min(s.size(), limit);
+    for (size_t i = 0; i < n; ++i) {
+        unsigned char c = (unsigned char)s[i];
+        switch (c) {
+            case '\r': out += "\\r"; break;
+            case '\n': out += "\\n"; break;
+            case '\t': out += "\\t"; break;
+            case '\\': out += "\\\\"; break;
+            default:
+                if (c < 0x20 || c == 0x7f) {
+                    char buf[8];
+                    snprintf(buf, sizeof(buf), "\\x%02x", c);
+                    out += buf;
+                } else {
+                    out += (char)c;
+                }
+        }
+    }
+    if (s.size() > limit) out += "...";
+    return out;
+}
+#endif
+
 bool ADBShell::writeCommand(const std::string& command, const std::string& marker) {
     if (!_is_running || _shell_stdin == -1) {
         setError("Shell not running");
         return false;
     }
-    
-    std::string full_command = command + "; echo " + marker + "\n";
-    
-    ssize_t written = write(_shell_stdin, full_command.c_str(), full_command.length());
-    if (written != (ssize_t)full_command.length()) {
-        setError("Failed to write command to shell");
+
+#if defined(DEBUG) || defined(_DEBUG)
+    // Non-destructive peek via FIONREAD — reading would destroy stale bytes the protocol wants to log and discard as pre-START noise.
+    if (_shell_pipe) {
+        int rfd = fileno(_shell_pipe);
+        int queued = 0;
+        if (rfd >= 0 && ioctl(rfd, FIONREAD, &queued) == 0) {
+            DBG("pre-write pipe queue: %d bytes (non-destructive peek)\n", queued);
+        }
+    }
+#endif
+
+    // Protocol: echo <START>\n { <cmd>; } </dev/null 2>&1 \n echo <END>$?__ — </dev/null seals stdin-readers (P1), 2>&1 orders streams (P2), <START> bounds response top against prior-cmd noise (P4), <END>$?__ carries exit code.
+    const std::string start_marker = marker + kMarkerStartSuffix;
+    const std::string end_marker_prefix = marker + kMarkerEndPrefix;
+    std::string wrapped =
+        "echo " + start_marker + "\n"
+        "{ " + command + "; } < /dev/null 2>&1\n"
+        "echo " + end_marker_prefix + "$?__\n";
+
+    DBG("sending %zu bytes: '%s'\n", wrapped.size(),
+#if defined(DEBUG) || defined(_DEBUG)
+        EscapeForLog(wrapped).c_str()
+#else
+        ""
+#endif
+    );
+
+    // Retry partial writes and EINTR: a signal can interrupt write() and pipes don't
+    // guarantee one-shot atomicity for writes > PIPE_BUF (4KB on Linux, 512 on BSD).
+    const char *p = wrapped.c_str();
+    size_t remaining = wrapped.length();
+    while (remaining > 0) {
+        ssize_t n = write(_shell_stdin, p, remaining);
+        if (n > 0) {
+            p += (size_t)n;
+            remaining -= (size_t)n;
+            continue;
+        }
+        if (n < 0 && errno == EINTR) continue;
+        setError("Failed to write command to shell (errno=" + std::to_string(errno) + ")");
         return false;
     }
-    
     return true;
 }
 
@@ -342,12 +406,22 @@ std::string ADBShell::readResponse(const std::string& marker) {
         return "";
     }
 
-    std::string response;
+    const std::string start_marker = marker + "_S__";
+    const std::string end_marker_prefix = marker + "_E_";
+
+    std::string raw;
     char buffer[4096];
-    bool marker_found = false;
+    bool end_found = false;
+    size_t end_pos = std::string::npos;
+    // Search floor: rescanning whole `raw` on every chunk is O(n²) for large outputs (e.g. big `cat`); advance past safely-scanned prefix.
+    size_t end_search_from = 0;
+    _last_exit_code = -1;
+    // Only consumed by DBG(); suppress unused-variable warning in release builds where DBG expands to nothing.
+    [[maybe_unused]] size_t total_read = 0;
+    [[maybe_unused]] int read_chunks = 0;
 
     constexpr int kReadTimeoutMs = 30000;
-    while (!marker_found) {
+    while (!end_found) {
         struct pollfd pfd{};
         pfd.fd = fd;
         pfd.events = POLLIN | POLLHUP | POLLERR;
@@ -357,41 +431,133 @@ std::string ADBShell::readResponse(const std::string& marker) {
             break;
         }
         if (poll_result < 0) {
-            if (errno == EINTR) {
-                continue;
-            }
+            if (errno == EINTR) continue;
             setError("Poll failed while reading ADB shell response");
             break;
         }
 
         ssize_t bytes_read = read(fd, buffer, sizeof(buffer));
         if (bytes_read > 0) {
-            size_t old_size = response.size();
-            response.append(buffer, static_cast<size_t>(bytes_read));
+            size_t old_size = raw.size();
+            raw.append(buffer, (size_t)bytes_read);
+            total_read += (size_t)bytes_read;
+            read_chunks++;
 
-            // Efficiency: Only search in the tail of the response where the marker could be
-            size_t search_start = (old_size > marker.size()) ? (old_size - marker.size()) : 0;
-            size_t pos = response.find(marker, search_start);
-            
-            if (pos != std::string::npos) {
-                response = response.substr(0, pos);
-                ADBUtils::TrimTrailingNewlines(response);
-                marker_found = true;
+            // Match full <prefix><digits>__ so we don't truncate mid-digit when the marker line arrives in pieces.
+            size_t ep = raw.find(end_marker_prefix, end_search_from);
+            if (ep != std::string::npos) {
+                size_t digits_start = ep + end_marker_prefix.size();
+                size_t term = raw.find("__", digits_start);
+                if (term != std::string::npos && term > digits_start) {
+                    std::string digits = raw.substr(digits_start, term - digits_start);
+                    bool all_digits = !digits.empty() && std::all_of(digits.begin(), digits.end(),
+                        [](char c) { return c >= '0' && c <= '9'; });
+                    if (all_digits) {
+                        // Guard against out_of_range/invalid_argument if device output somehow produces an absurd digit run.
+                        try {
+                            _last_exit_code = std::stoi(digits);
+                        } catch (...) {
+                            _last_exit_code = -1;
+                        }
+                        end_pos = ep;
+                        end_found = true;
+                    }
+                }
+            }
+            // Advance floor but leave (prefix_len-1) byte overlap so a marker straddling a chunk boundary still matches.
+            if (!end_found) {
+                size_t prefix_len = end_marker_prefix.size();
+                end_search_from = (old_size + (size_t)bytes_read > prefix_len)
+                                  ? (old_size + (size_t)bytes_read) - (prefix_len - 1)
+                                  : 0;
             }
         } else if (bytes_read == 0) {
             setError("Unexpected EOF from ADB shell");
+            // EOF = shell exited; mark dead so next shellCommand restarts instead of writing into a closed pipe.
+            _is_running = false;
             break;
         } else {
-            if (errno == EINTR)
-                continue; // retry on interrupt
+            if (errno == EINTR) continue;
             setError("Error reading from ADB shell: " + std::to_string(errno));
+            // EPIPE / ECONNRESET / EBADF all mean the pipe is unusable.
+            if (errno == EPIPE || errno == ECONNRESET || errno == EBADF) {
+                _is_running = false;
+            }
             break;
         }
     }
-    return response;
+
+    if (!end_found) {
+        DBG("end marker NOT found (timeout/error) total_read=%zu chunks=%d raw_head='%s'\n",
+            total_read, read_chunks,
+#if defined(DEBUG) || defined(_DEBUG)
+            EscapeForLog(raw.substr(0, 200)).c_str()
+#else
+            ""
+#endif
+        );
+        return "";
+    }
+
+    // Pre-START noise = leftover from prior hung commands or device boot messages on a fresh session; discard.
+    size_t sp = raw.find(start_marker);
+    size_t content_start = 0;
+    if (sp != std::string::npos) {
+        content_start = sp + start_marker.size();
+        // Skip the newline that follows the start marker echo
+        if (content_start < raw.size() && raw[content_start] == '\r') content_start++;
+        if (content_start < raw.size() && raw[content_start] == '\n') content_start++;
+    } else {
+        DBG("WARN: start marker not found — returning raw up to end marker\n");
+    }
+
+    // Content is between content_start and end_pos (start of END marker line); trailing newlines trimmed below.
+    if (end_pos < content_start) {
+        // Out-of-order markers — shouldn't happen under the new protocol; fall through to empty output.
+        DBG("WARN: end marker appeared before start marker (end=%zu start=%zu)\n",
+            end_pos, sp);
+        return "";
+    }
+    std::string output = raw.substr(content_start, end_pos - content_start);
+    ADBUtils::TrimTrailingNewlines(output);
+
+#if defined(DEBUG) || defined(_DEBUG)
+    // Raw bytes between START/END (pre-filter) for diagnosing interleavings/escapes/prompts; head+tail to avoid flooding on `ls /`.
+    std::string between = (sp != std::string::npos && end_pos > content_start)
+                          ? raw.substr(content_start, end_pos - content_start)
+                          : std::string();
+    size_t between_sz = between.size();
+    if (between_sz <= 400) {
+        DBG("raw-between-markers (%zu B): '%s'\n",
+            between_sz, EscapeForLog(between, 400).c_str());
+    } else {
+        DBG("raw-between-markers (%zu B) head='%s' tail='%s'\n",
+            between_sz,
+            EscapeForLog(between.substr(0, 200), 200).c_str(),
+            EscapeForLog(between.substr(between_sz - 200), 200).c_str());
+    }
+#endif
+    DBG("end_found exit=%d pre_start_discarded=%zu content=%zu chunks=%d total=%zu head80='%s'\n",
+        _last_exit_code.load(), (sp != std::string::npos ? sp : (size_t)0),
+        output.size(), read_chunks, total_read,
+#if defined(DEBUG) || defined(_DEBUG)
+        EscapeForLog(output.substr(0, 80)).c_str()
+#else
+        ""
+#endif
+    );
+    return output;
 }
 
 std::string ADBShell::shellCommand(const std::string& command) {
+    // Empty command would expand to `{ ; } < /dev/null 2>&1` (shell syntax error); short-circuit. Preserve previous exit code so callers aren't misled by a bogus 0.
+    if (command.empty()) {
+        return "";
+    }
+
+    // Serialize: writeCommand+readResponse is one transaction; parallel callers would cross-corrupt the pipe pair.
+    std::lock_guard<std::mutex> lock(_shell_mutex);
+
     if (!_is_running) {
         if (!start()) {
             return "";
@@ -399,7 +565,15 @@ std::string ADBShell::shellCommand(const std::string& command) {
     }
     std::string marker = generateMarker();
     if (!writeCommand(command, marker)) {
-        return "";
+        // Session may have died (EPIPE / shell exit); restart once so next caller isn't stuck against a zombie _is_running flag.
+        _is_running = false;
+        stop();
+        if (!start()) {
+            return "";
+        }
+        if (!writeCommand(command, marker)) {
+            return "";
+        }
     }
     std::string output = readResponse(marker);
     return output;

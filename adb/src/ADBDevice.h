@@ -53,6 +53,8 @@ public:
     std::string RunAdbCommand(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk);
     std::string RunAdbCommandWithProgress(const std::vector<std::string> &args, const std::function<void(const std::string&)> &on_chunk, const std::function<bool()> &abort_check = {});
     std::string RunShellCommand(const std::string &command);
+    // Exit code of the most recent RunShellCommand(); -1 if unavailable.
+    int LastShellExitCode() const;
     // Run shell command and stream output via callback (bypasses persistent session echo issues)
     void RunShellCommandStreaming(const std::string &command, const std::function<void(const std::string&)> &on_line);
     std::string GetCurrentWorkingDirectory();

@@ -786,7 +786,13 @@ struct VTAnsiContext
 				return;
 			}
 
-			// kitty keys stuff
+			if (suffix == 'p' && suffix2 == '$') {
+				int mode = (es_argc > 0) ? es_argv[0] : 0;
+				int status = vt_shell->OnModeQuery(mode, prefix2 == '?');
+				std::string reply = StrPrintf("\e%s%d;%d$y", (prefix2 == '?') ? "[?" : "[", mode, status);
+				SendSequence(reply.c_str());
+				return;
+			}
 
 			if (suffix == 'u') {
 				if (prefix2 == '=') {
@@ -1210,6 +1216,7 @@ struct VTAnsiContext
 				WINPORT(SetConsoleScrollRegion)(con_hnd, es_argv[0] - 1, es_argv[1] - 1);
 				return;
 
+
 			case 'c': // CSI P s c Send Device Attributes (Primary DA)
 				if (prefix2 == 0 && (es_argc < 1 || es_argv[0] == 0)) {
 					SendSequence("\e[?1;2c"); // → CSI ? 1 ; 2 c (‘‘VT100 with Advanced Video Option’’)
@@ -1487,8 +1494,6 @@ struct VTAnsiContext
 					prefix2 = *s;
 				} else if (*s >= '\x20' && *s <= '\x2f') {
 					suffix2 = *s;
-				} else if (suffix2 != 0) {
-					state = 1;
 				} else {
 					es_argc = 0;
 					suffix = *s;
@@ -1507,8 +1512,6 @@ struct VTAnsiContext
 					// ignore 'em
 				} else if (*s >= '\x20' && *s <= '\x2f') {
 					suffix2 = *s;
-				} else if (suffix2 != 0) {
-					state = 1;
 				} else {
 					es_argc++;
 					suffix = *s;
@@ -1749,4 +1752,8 @@ std::string VTAnsi::GetTitle()
 {
 	std::lock_guard<std::mutex> lock(_ctx->title_mutex);
 	return _ctx->cur_title;
+}
+bool VTAnsi::IsCRM()
+{
+	return _ctx->ansi_state.crm;
 }

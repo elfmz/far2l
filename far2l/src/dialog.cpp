@@ -2317,7 +2317,7 @@ void Dialog::ShowDialog(unsigned ID)
 
     					if(Opt.Backend.UseModernLook) {
     						strStr.ReplaceChar(1, CurItem->DefaultButton ? L'★' : L' ');
-    						if (IsWxBackend()) {
+    						if (IsWxBackend() && Opt.Backend.Use3D) {
     							strStr.ReplaceChar(0, L' ');
     							strStr.ReplaceChar(strStr.GetLength() - 1, L' '); 
     						}

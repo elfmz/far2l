@@ -714,6 +714,8 @@ void InterfaceSettings()
 		}
 
     	if(Opt.Backend.UseModernLook) Builder.AddEmptyLine();
+
+    	if(Opt.Backend.UseModernLook) Builder.AddEmptyLine();
     	Builder.AddCheckbox(Msg::UseModernLook, (BOOL *)&Opt.Backend.UseModernLook);
 
         if (supported_tweaks & TWEAK_STATUS_SUPPORT_CHANGE_FONT) {

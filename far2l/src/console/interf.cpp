@@ -538,6 +538,11 @@ void Text(const WCHAR Ch, size_t Length)
 
 static long TagRef = 1;
 
+static int clamp(int x, int min_x, int max_x) 
+{
+	 return x < min_x ? min_x : ( x > max_x ? max_x : x );
+}
+
 void Hint(
 		int X1, int Y1, int X2, int Y2, 
 		HintContainerType hcc, 
@@ -545,10 +550,19 @@ void Hint(
 		bool focused, bool hovered, bool disabled, bool defaultCtrl) 
 {
 	int tag = (TagRef++) % 0x00FF;
-	/*if (hcc == HintDialog) {
-		fprintf(stderr, "type %d: tag=%d, pos=%d..%d, %d..%d, focus=%c hover=%c disabled=%c\n", hco, tag, X1, X2, Y1, Y2, 
+
+	X1 = clamp(X1, 0, ScrX);
+	X2 = clamp(X2, 0, ScrX);
+	Y1 = clamp(Y1, 0, ScrY);
+	Y2 = clamp(Y2, 0, ScrY);
+
+	if (hcc == HintDialog && (hco == HintButton || hco == HintCheckbox) ) {
+		fprintf(stderr, "surface %d: type %d: tag=%d, pos=%d..%d, %d..%d, focus=%c hover=%c disabled=%c\n", 
+			hcc, hco, 
+			tag, 
+			X1, X2, Y1, Y2, 
 			focused ? 'Y': 'n', hovered ? 'Y': 'n', disabled ? 'Y': 'n');
-	}*/
+	}
 	ScrBuf.ApplyHint(X1, Y1, X2, Y2, tag, hcc, hco, focused, hovered, disabled, defaultCtrl, false);
 }
 
@@ -557,13 +571,13 @@ void HintAt(
 		HintObjectType hco, 
 		bool focused, bool hovered, bool disabled, bool defaultCtrl) 
 {
-	Hint(HintX, HintY, CurX, CurY, hcc, hco, focused, hovered, disabled, defaultCtrl);
+	Hint(HintX, HintY, CurX - 1, CurY, hcc, hco, focused, hovered, disabled, defaultCtrl);
 }
 
 void HintBeginContainer() {
 	// todo: remove this trick when all elements will be tagged
-	ScrBuf.Unhint();
-	TagRef = 1; 
+	// ScrBuf.Unhint();
+	// TagRef = 1; 
 }
 
 void HintEndContainer() {}
@@ -833,6 +847,97 @@ void SetColor(uint64_t Color, bool ApplyToConsole)
 	if (ApplyToConsole) {
 		Console.SetTextAttributes(CurColor);
 	}
+}
+
+#include "Colorspace.h"
+
+static uint64_t supported_tweaks = 0;
+bool IsWxBackend() {
+	if(!supported_tweaks) supported_tweaks = WINPORT(GetConsoleTweaks)();
+	return (supported_tweaks & TWEAK_STATUS_SUPPORT_CHANGE_FONT) != 0;
+}
+
+
+static void extractColorComponents(int color, int& r, int& g, int& b) {
+	r = (color >> 16) & 0xFF;
+	g = (color >> 8)  & 0xFF;
+	b =  color        & 0xFF;
+}
+
+static void extractColor(uint64_t color, RGB& fg, RGB& bg) {
+	int fgC = (color >> 16) & 0xFFFFFF;
+	int bgC = (color >> 40) & 0xFFFFFF;;
+
+	int r, g, b;
+	extractColorComponents(fgC, r, g, b);
+	fg = toRGB(r, g, b);
+	extractColorComponents(bgC, r, g, b);
+	bg = toRGB(r, g, b);
+}
+
+static int assembleColorComponents(int r, int g, int b) {
+	return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+}
+
+static uint64_t assembleColor(RGB& fg, RGB& bg) {
+	iRGB ifg = toIRGB(fg);
+	iRGB ibg = toIRGB(bg);
+	uint64_t color = 0;
+	color |= (uint64_t)assembleColorComponents(ifg.r, ifg.g, ifg.b) << 16;
+	color |= (uint64_t)assembleColorComponents(ibg.r, ibg.g, ibg.b) << 40;
+	return color | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR;
+}
+
+uint64_t SoftenItemColor(uint64_t attributes, int Focus, int Hover, int Pressed, int Selected) 
+{
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+   	HoverResult r = ComputeControlAccent(bg, fg);
+   	if (Pressed)
+   		bg = SoftenToPressedState_LAB(bg, r.bg_hover);
+   	
+   	if (Focus) {
+    	//if (!IsWxBackend()) {
+			LAB topLab = RGBtoLAB(bg);
+			if (IsNearBlack(bg))
+				topLab.L = std::min(topLab.L + 15.0, 100.0);
+			else
+				topLab.L = std::max(topLab.L - 10.0, 0.0);
+			bg = LABtoRGB(topLab);
+    	//}
+   		fg = SoftenToFocusedState_LAB(fg, r.fg_hover);
+
+        if (Hover) {
+			bg = SoftenToHoverState_LAB(bg, r.bg_hover);
+        }
+    }
+   	else if (Hover) {
+       	bg = SoftenToHoverState_LAB(bg, r.bg_hover);
+		fg = SoftenToHoverState_LAB(fg, r.fg_hover);
+    }
+
+    if (Selected) {
+		LAB topLab = RGBtoLAB(fg);
+		topLab.L = 100.0 - topLab.L;
+		fg = LABtoRGB(topLab);
+    }
+
+   	return assembleColor(fg, bg) | (attributes & 0x0000FFFF);
+}
+
+uint64_t GetAccentColors(uint64_t attributes) 
+{
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+   	HoverResult r = ComputeControlAccent(bg, fg);
+   	return assembleColor(r.fg_hover, r.bg_hover) | (attributes & 0x0000FFFF);
+}
+
+void SetFarColor(uint16_t Color, bool Focus, bool Hover, bool Pressed, bool Selected) 
+{
+	CurColor = FarColorToReal(Color);
+	if (Focus || Hover || Pressed || Selected)
+		CurColor = SoftenItemColor(CurColor, Focus, Hover, Pressed, Selected);
 }
 
 void SetFarColor(uint16_t Color, bool ApplyToConsole)

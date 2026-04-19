@@ -511,9 +511,12 @@ void Viewer::ShowPage(int nMode)
 			FS << fmt::Cells() << fmt::Truncate(XX2 - X1 + 1) << Msg::ViewerCannotOpenFile;
 			ShowStatus();
 		}
+		Hint(X1, Y1, X2, Y2, HintViewer, HintObjectNone);
 
 		return;
 	}
+
+	Hint(X1, Y1, X2, Y2, HintViewer, HintObjectNone);
 
 	if (HideCursor)
 		SetCursorType(0, 10);

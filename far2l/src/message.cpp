@@ -369,6 +369,8 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 		return (RetCode < 0 ? RetCode : RetCode - StrCount - 1 - (Separator ? 1 : 0));
 	}
 
+	Hint(X1, Y1, X2, Y2, HintDialog, HintObjectNone);
+
 	// *** Без Диалога! ***
 	SetCursorType(0, 0);
 

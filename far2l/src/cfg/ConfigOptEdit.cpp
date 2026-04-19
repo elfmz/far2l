@@ -157,31 +157,34 @@ public:
 		MenuItemEx mi;
 		FARString fsn, fssave;
 		if (align_dot)
-		 fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
+		    fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
 		else {
 			mi.strName.Format(L"%s.%s", _opt.section, _opt.key);
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
 		fssave = (_opt.save ? "s" : "-");
+
+		const char* ChangedMark = Opt.Backend.UseModernLook ? "★" : "*";
+
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL:
 				mi.strName.Format(L"%s %ls %lc  bool%lc%ls%lc%s",
-					(*_opt.value.b == _opt.def.b ? " " : "*"),
+					(*_opt.value.b == _opt.def.b ? " " : "★"),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					(*_opt.value.b ? "true" : "false"));
 				break;
 			case ConfigOpt::T_INT:
 				mi.strName.Format(L"%s %ls %lc   int%lc%ls%lc%ld = 0x%lx",
-					(*_opt.value.i == _opt.def.i ? " " : "*"),
+					(*_opt.value.i == _opt.def.i ? " " : ChangedMark),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					*_opt.value.i, *_opt.value.i);
 				break;
 			case ConfigOpt::T_DWORD:
 				mi.strName.Format(L"%s %ls %lc dword%lc%ls%lc%lu = 0x%lx",
-					(*_opt.value.dw == _opt.def.dw ? " " : "*"),
+					(*_opt.value.dw == _opt.def.dw ? " " : ChangedMark),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					*_opt.value.dw, *_opt.value.dw);
@@ -189,7 +192,7 @@ public:
 			case ConfigOpt::T_STR:
 				mi.strName.Format(L"%s %ls %lcstring%lc%ls%lc%ls",
 					(_opt.def.str == nullptr ? "?"
-						: (*_opt.value.str == _opt.def.str ? " " : "*")),
+						: (*_opt.value.str == _opt.def.str ? " " : ChangedMark)),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					_opt.value.str->CPtr());
@@ -197,7 +200,7 @@ public:
 			case ConfigOpt::T_BIN:
 				mi.strName.Format(L"%s %ls %lcbinary%lc%ls%lc(binary has length %u bytes)",
 					(_opt.def.bin == nullptr || _opt.value.bin == nullptr ? "?"
-						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : "*")),
+						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : ChangedMark)),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1], _opt.bin_size );
 				break;
@@ -531,7 +534,7 @@ static FARString ConfigOptEditTitle(bool hide_unchanged = false)
 	FARString title (Msg::MenuFarConfig);
 	title+= L" - far:config";
 	if (hide_unchanged) {
-		title+= L" *";
+		title+= Opt.Backend.UseModernLook ? L" ★" : L" *";
 	}
 	RemoveChar(title, L'&');
 	return title;

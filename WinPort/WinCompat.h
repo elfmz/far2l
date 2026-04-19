@@ -437,9 +437,15 @@ typedef enum {
     HintConsoleBuffer = 1,
     HintDialog,
     HintMenu,
+    HintHMenu,
     HintEditor,
     HintViewer,
     HintPanel,
+    HintTree,
+    HintQuickView,
+    HintScreenSaver,
+    HintInfoList,
+    HintHelpViewer,
     HintCommandLine,
     HintPanic
 } HintContainerType;

@@ -1870,8 +1870,8 @@ namespace WXCustomDrawChar
 		wxCoord r2 = r / 2;
 		int ascent = p.GetFontAscent();
 
-		wxCoord X1 = m.right - _2r,          Y1 = m.top + ascent - _2r;
-		wxCoord X2 = m.right - _2r + r - r2, Y2 = m.top + ascent - _2r + r - r2;
+		wxCoord X1 = m.left,          Y1 = m.top + ascent - _2r + 2;
+		wxCoord X2 = m.left + r2,     Y2 = m.top + ascent - _2r + r - r2 + 2;
 
 		p.DrawEllipticArc(X1, Y1, _2r, _2r, 0, 0, 2);
 		p.SetAccentBackground();
@@ -1884,10 +1884,12 @@ namespace WXCustomDrawChar
 	{
 		SingleLineBoxMetrics m(p, start_y, cx);
 		wxCoord _2r = get2R(p, m);
+		wxCoord r = _2r / 2;
 		int ascent = p.GetFontAscent();
 
-		wxCoord X = m.right - _2r, Y = m.top + ascent - _2r;
-		p.DrawEllipticArc(X, Y, _2r, _2r, 0, 0, 1);
+		wxCoord X1 = m.left,            Y1 = m.top + ascent - _2r + 2;
+
+		p.DrawEllipticArc(X1, Y1, _2r, _2r, 0, 0, 2);
 	}
 
 	static void Draw_unchecked_box(Painter &p, unsigned int start_y, unsigned int cx) /* ☐ */

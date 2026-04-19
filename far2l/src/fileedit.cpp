@@ -2109,8 +2109,10 @@ void FileEditor::ShowConsoleTitle()
 
 void FileEditor::SetScreenPosition()
 {
+	Hint(X1, Y1, X2, Y2, HintEditor, HintObjectNone);
 	if (Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		SetPosition(0, 0, ScrX, ScrY);
+		Hint(0, 0, ScrX, ScrY, HintEditor, HintObjectNone);
 	}
 	if (m_editor) {
 		int newY1 = Y1 + (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);

@@ -696,6 +696,12 @@ int FarAppMain(int argc, char **argv)
 
 	// here we are: everything loaded
 
+	// workaround for legacy flags from command line
+	if (Opt.NoGraphics || Opt.NoBoxes) {
+		Opt.Backend.UseModernLook = 0;
+		Opt.AutoSaveSetup = 0;
+	}
+
 	BackendConfigSupport shareConfig;
 	shareConfig.ShareConfig(&Opt.Backend);
 

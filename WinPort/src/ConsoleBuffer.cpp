@@ -235,9 +235,20 @@ void ConsoleBuffer::Read(CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL
 	}
 }
 
-static inline bool AreSameChars(const CHAR_INFO &one, const CHAR_INFO &another)
+static inline bool AreSameChars (const CHAR_INFO& left, const CHAR_INFO& right)
 {
-	return one.Char.UnicodeChar == another.Char.UnicodeChar && one.Attributes == another.Attributes;
+	return left.Char.UnicodeChar == right.Char.UnicodeChar &&
+			left.Attributes == right.Attributes &&
+			left.Extra.Hint.Container == right.Extra.Hint.Container &&
+			left.Extra.Hint.Object == right.Extra.Hint.Object && 
+			left.Extra.Hint.Tag == right.Extra.Hint.Tag &&
+			left.Extra.Hint.Focus == right.Extra.Hint.Focus &&
+			left.Extra.Hint.Hover == right.Extra.Hint.Hover &&
+			left.Extra.Hint.Enabled == right.Extra.Hint.Enabled &&
+			left.Extra.Hint.Default == right.Extra.Hint.Default &&
+			left.Extra.Hint.Beveled == right.Extra.Hint.Beveled &&
+			left.Extra.Hint.Shadow == right.Extra.Hint.Shadow
+		;
 }
 
 void ConsoleBuffer::Write(const CHAR_INFO *data, COORD data_size, COORD data_pos, SMALL_RECT &screen_rect)

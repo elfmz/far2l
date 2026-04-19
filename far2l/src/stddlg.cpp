@@ -49,8 +49,8 @@ static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 {
 	if (Msg == DN_CLOSE && Param1 >= 0)
 	{
-		size_t Len = SendDlgMessage(hDlg, DM_GETTEXTLENGTH, PosSearchText, 0);
-		if (Len == 0)
+		const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, PosSearchText, 0);
+		if (*Txt == 0)
 		{
 			SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
 			Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditEmptySearchField, Msg::Ok);
@@ -60,12 +60,10 @@ static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 		if (PosCheckBoxRegexp >= 0
 				&& SendDlgMessage(hDlg, DM_GETCHECK, PosCheckBoxRegexp, 0) == BSTATE_CHECKED)
 		{
-			std::vector<wchar_t> Buf(Len + 1);
-			SendDlgMessage(hDlg, DM_GETTEXTPTR, PosSearchText, reinterpret_cast<LONG_PTR>(Buf.data()));
 			RegExp Re;
-			if (!Re.Compile(Buf.data(), OP_PERLSTYLE | OP_OPTIMIZE)) {
+			if (!Re.Compile(Txt, OP_PERLSTYLE | OP_OPTIMIZE)) {
 				SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
-				FARString strMsg(Buf.data());
+				FARString strMsg(Txt);
 				InsertQuote(strMsg);
 				Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditInvalidRegexp, strMsg, Msg::Ok);
 				return FALSE;

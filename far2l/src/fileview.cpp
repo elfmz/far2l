@@ -365,9 +365,11 @@ int FileViewer::ProcessKey(FarKey Key)
 			return TRUE;
 			// Печать файла с использованием плагина PrintMan
 		case KEY_ALTF5: {
+			/*
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER, OPEN_VIEWER, 0);		// printman
-
+            */
+            SendToPrinter();
 			return TRUE;
 		}
 		case KEY_F9:
@@ -697,8 +699,13 @@ bool FileViewer::SendToPrinter()
 		if (in) {
 			int c;
 			while ((c = getc(in)) != EOF) {
-				if (c == '\n') fprintf(fp, "<br>");
-				else putc(c, fp);
+				switch (c) {
+					case  '<': fputs("&lt;", fp); break;
+					case  '>': fputs("&gt;", fp); break;
+					case  '&': fputs("&amp;", fp); break;
+					case '\n': fputs("<br>", fp); break;
+					default: putc(c, fp);
+				}
 			}
 			fclose(in);
 		}

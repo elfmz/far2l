@@ -45,102 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 //////////////////////////////////
-// Common class
-
-class TextBuffer {
-	char* buffer;
-	char* cptr;
-	int len;
-	int size;
-	wchar_t* wc;
-
-#define GAP	1024
-	void ensure(int sz) {
-		if (sz + len > size) {
-			size = sz + len + GAP;
-			if (buffer){ 
-				buffer = (char*)realloc(buffer, size);
-			}
-			else {
-				buffer = (char*)malloc(size);
-			}
-			cptr = buffer + len;
-		}
-	}
-#undef GAP
-
-public:
-	TextBuffer() {
-		buffer = cptr = 0;
-		len = size = 0;
-		wc = 0;
-	}
-
-	~TextBuffer() {
-		if (buffer) free(buffer);
-		if (wc) free(wc);
-		buffer = cptr = 0;
-		len = size = 0;
-		wc = 0;
-	}
-
-	const bool is_empty() const { return len == 0; }
-	const int length() const { return len; }
-	const char* c_str() const {	return buffer ? (const char*)buffer : ""; }
-
-	const wchar_t* w_str() {
-		if (wc) free(wc);
-		std::wstring _tmpstr;
-    	MB2Wide(c_str(), length(), _tmpstr);
-        wc = wcsdup(_tmpstr.c_str());
-        return wc;
-	}
-
-	void append(char c) {
-		ensure(1);
-        ++len;
-        *cptr++ = c;
-        *cptr = 0;
-	}
-
-	void append(wchar_t c) {
-		wchar_t buf[2] = {c, 0};
-		append(buf, 1);
-	}
-
-	void append(const char* s, int max = 0) {
-		int delta = max > 0 ? max : strlen(s);
-		ensure(delta + 1);
-		len += delta;
-		while(delta--) *cptr++ = *s++;
-        *cptr = 0;
-	}
-
-	void append(const std::string& s, int max = 0) {
-		append((const char*)s.c_str(), max);
-	}
-
-	void append(const wchar_t* w, int max = 0) {
-		int delta = max > 0 ? max : wcslen(w);
-		std::string _tmpstr;
-		Wide2MB(w, delta, _tmpstr);
-		append(_tmpstr);
-	}
-
-	void append(const std::wstring& w, int max = 0) {
-		int delta = max > 0 ? max : w.length();
-		std::string _tmpstr;
-		Wide2MB(w.c_str(), delta, _tmpstr);
-		append(_tmpstr);
-	}
-
-	void append(const FarTrueColor& color) {
-		char buf[10];
-		sprintf(buf, "%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
-		append(buf);
-	}
-};
-
 // Represent char - final code table
 
 struct CharMapItem {
@@ -157,28 +61,34 @@ struct CharMapItem {
 		color.R = color.G = color.B = 0; // black;
 	}
 
-	bool sameColor(FarTrueColor x) {
+	bool sameColor(FarTrueColor x) const {
 		return x.R == color.R && x.G == color.G && x.B == color.B;
+	}
+
+	std::string hexColorCode() const {
+		return StrPrintf("%2.2x%2.2x%2.2x", (int)color.R & 0xFF, (int)color.G & 0xFF, (int)color.B & 0xFF);
 	}
 };
 
-struct ColorMap {
-	CharMapItem* s;
-	int len;
-
-	ColorMap(const wchar_t* w, int start, int length) {
-		if (start < 0) start = 0;
-		len = length <= 0 ? wcslen(w) - start : length;
-		s = new CharMapItem[len];
-		for(int i = 0; i < len; ++i) s[i] = CharMapItem(w[i + start]);
+struct ColorMap : std::vector<CharMapItem>
+{
+	ColorMap(const wchar_t *w, int start, int length)
+	{
+		const int len = length <= 0 ? wcslen(w) - start : length;
+		if (len > 0) {
+			reserve(len);
+			for (int i = 0; i < len; ++i) {
+				emplace_back(w[i + start]);
+			}
+		}
 	}
 
-	~ColorMap() {
-		delete[] s;
-	}
-
-	void apply(const FarTrueColor& newcolor, int start, int end) {
-		for(int i = start; i <= end && i < len; ++i) s[i].color = newcolor;
+	void Apply(const FarTrueColor& newcolor, int start, int finish)
+	{
+		finish = std::min(finish, int(size()) - 1);
+		for(int i = start; i <= finish; ++i) {
+			operator[](i).color = newcolor;
+		}
 	}
 };
 
@@ -189,11 +99,11 @@ static FarTrueColor ConvertForPrintLAB(const FarTrueColor& in, const FarTrueColo
 	return cs.ConvertForPrintLAB(in, bg);
 }
 
-static void appendNewLine(TextBuffer& tb, bool isHtml) {
+static void appendNewLine(std::string &tb, bool isHtml) {
 	tb.append(isHtml ? "<br>\n" : "\n");
 }
 
-static void escapeHtmlTags(TextBuffer& tb, const wchar_t c, int tabSize) {
+static void escapeHtmlTags(std::string &tb, const wchar_t c, int tabSize) {
 	// if (c == L' ') tb.append("&nbsp;");
 	// else 
 	if (c == L'\t') {
@@ -204,12 +114,12 @@ static void escapeHtmlTags(TextBuffer& tb, const wchar_t c, int tabSize) {
 	else if (c == L'&')  tb.append("&amp;");
 	else if (c == L'<')  tb.append("&lt;");
 	else if (c == L'>')  tb.append("&gt;");
-	else tb.append(c);
+	else Wide2MB(&c, 1, tb, true);
 }
 
-static void escapeHtmlTags(TextBuffer& tb, const wchar_t* s, int len, bool isHtml, int tabSize) {
+static void escapeHtmlTags(std::string &tb, const wchar_t* s, int len, bool isHtml, int tabSize) {
 	if (!isHtml) {
-		tb.append(s, len);
+		Wide2MB(s, len, tb, true);
 		return;
 	}
 
@@ -232,7 +142,7 @@ static bool isEmptyOrSpace(const wchar_t* s, int start, int len)
 #define toI(x) ((int)(x) & 0xFF)
 #define toB(x) ((unsigned char)((x) & 0xFF))
 
-static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len, int tabSize)
+static bool convertToReducedHTML(std::string &tb, Edit* line, int start, int len, int tabSize)
 {
 	if (len <= 0) len = line->GetLength() - start;
 	int end = start + len;
@@ -247,7 +157,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 
 	// fprintf(stderr, "colorize: `%ls` [%d..%d]\n", CurStr, start, start + end);
 
-	ColorMap map(CurStr, start, end);
+	ColorMap cm(CurStr, start, end);
 
 	for (int i = 0; line->GetColor(&ci, i); ++i) {
 		if ((ci.StartPos == -1 && ci.EndPos == -1) || ci.StartPos > ci.EndPos) {
@@ -275,31 +185,30 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 		// Note: tabs might need to update positions
 
 
-		map.apply(print, ci.StartPos, ci.EndPos);
+		cm.Apply(print, ci.StartPos, ci.EndPos);
 	}
 
-	// now we have rendered every character in map so we can iterate through it
-	FarTrueColor prev;
-	prev.R = prev.G = prev.B = 0;
-	bool colored = false;
-	// tb.append("<pre>");
-	for(int i = 0; i < map.len; ++i) {
-		if (!map.s[i].sameColor(prev)) {
-			if (colored) tb.append("</font>");
-			colored = true;
-			tb.append("<font color=\"#");
-			tb.append(map.s[i].color);
-			tb.append("\">");
-			prev = map.s[i].color;
+	// now we have rendered every character in cm so we can iterate through it
+	if (!cm.empty()) {
+		FarTrueColor prev{};
+		// tb.append("<pre>");
+		for(size_t i = 0; i < cm.size(); ++i) {
+			if (i == 0 || !cm[i].sameColor(prev)) {
+				if (i != 0) tb.append("</font>");
+				tb.append("<font color=\"#");
+				tb.append(cm[i].hexColorCode());
+				tb.append("\">");
+				prev = cm[i].color;
+			}
+			escapeHtmlTags(tb, cm[i].c, tabSize);
 		}
-		escapeHtmlTags(tb, map.s[i].c, tabSize);
+		tb.append("</font>");
+		// tb.append("</pre>");
 	}
-	if (colored) tb.append("</font>");
-	// tb.append("</pre>");
 
 	// fprintf(stderr, "colorize: `%.*ls` => `%s`\n", len, CurStr + start,	tb.c_str());
 
-	tb.append('\n');
+	tb+= '\n';
 
 	return true;
 }
@@ -307,7 +216,7 @@ static bool convertToReducedHTML(TextBuffer& tb, Edit* line, int start, int len,
 BOOL FileEditor::SendToPrinter()
 {
 	PrinterSupport printer;
-	TextBuffer tb;
+	std::string tb;
 	int tab = m_editor->EdOpt.TabSize;
 
 	const wchar_t *CurStr = 0, *EndSeq = 0;
@@ -325,14 +234,14 @@ BOOL FileEditor::SendToPrinter()
 			else
 				Length = EndSel - StartSel;
 
-			if (Length > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
+			if (Length > 0 && tb.empty() && printer.IsReducedHTMLSupported())
 				tb.append(HTML_PRE_HEADER);
 
 			if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, Ptr, StartSel, Length, tab)) {
 				int Len2 = 0;
 				Ptr->GetBinaryString(&CurStr, &EndSeq, Len2);
 				escapeHtmlTags(tb, CurStr + StartSel, Length, printer.IsReducedHTMLSupported(), tab);
-				tb.append('\n');
+				tb+= '\n';
 			}
     	}
 	}
@@ -350,33 +259,34 @@ BOOL FileEditor::SendToPrinter()
 
 				if (CopySize > TBlockSizeX)	CopySize = TBlockSizeX;
 
-				if (CopySize > 0 && tb.is_empty() && printer.IsReducedHTMLSupported())
+				if (CopySize > 0 && tb.empty() && printer.IsReducedHTMLSupported())
 					tb.append(HTML_PRE_HEADER);
 
 				if(!printer.IsReducedHTMLSupported() || !convertToReducedHTML(tb, CurPtr, TBlockX, CopySize, tab)) {
 					escapeHtmlTags(tb, CurStr + TBlockX, CopySize, printer.IsReducedHTMLSupported(), tab);
-					tb.append('\n');
+					tb+= '\n';
 				}
     		}
     	}
 	}
 
 	// something is selected
-	if (!tb.is_empty()) {
+	if (!tb.empty()) {
 		if(printer.IsReducedHTMLSupported())
 			tb.append(HTML_PRE_FOOTER);
 
+		std::wstring wtb; StrMB2Wide(tb, wtb);
 		if (printer.IsPrintPreviewSupported()) {
 			if (printer.IsReducedHTMLSupported()) 
-				printer.ShowPreviewForReducedHTML(strFullFileName.GetWide(), tb.w_str());
+				printer.ShowPreviewForReducedHTML(strFullFileName.GetWide(), wtb.c_str());
 			else 
-				printer.ShowPreviewForText(strFullFileName.GetWide(), tb.w_str());
+				printer.ShowPreviewForText(strFullFileName.GetWide(), wtb.c_str());
 		}
 		else {
 			if (printer.IsReducedHTMLSupported()) 
-				printer.PrintReducedHTML(strFullFileName.GetWide(), tb.w_str());
+				printer.PrintReducedHTML(strFullFileName.GetWide(), wtb.c_str());
 			else 
-				printer.PrintText(strFullFileName.GetWide(), tb.w_str());
+				printer.PrintText(strFullFileName.GetWide(), wtb.c_str());
 		}
 		return TRUE;
 	}
@@ -391,9 +301,9 @@ BOOL FileEditor::SendToPrinter()
 
 			CurPtr->GetBinaryString(&SaveStr, &EndSeq, Length);
 
-			TextBuffer tb;
+			std::string tb;
 			if (printer.IsReducedHTMLSupported() && convertToReducedHTML(tb, CurPtr, 0, Length, tab))  {
-				fprintf(fp, "%s", tb.c_str());
+				fputs(tb.c_str(), fp);
 			} else {
 				Wide2MB(SaveStr, Length, _tmpstr);
 				fwrite(_tmpstr.data(), 1, _tmpstr.size(), fp);

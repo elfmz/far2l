@@ -115,6 +115,8 @@ class Plugin(PluginBase):
                     dlg.SetCheck(dlg.ID_f_rev, self.f_rev)
                     dlg.SetCheck(dlg.ID_f_rx, self.f_rx)
                     dlg.SetCheck(dlg.ID_f_select, self.f_select)
+                    dlg.SetText(dlg.ID_f_search, self.f_search)
+                    dlg.SetText(dlg.ID_f_replace, self.f_replace)
                 except:
                     log.exception("bang")
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
@@ -174,6 +176,7 @@ class Plugin(PluginBase):
             self.f_rev = dlg.GetCheck(dlg.ID_f_rev)
             self.f_rx = dlg.GetCheck(dlg.ID_f_rx)
             self.f_select = dlg.GetCheck(dlg.ID_f_select)
+            log.debug(f'ED Replace cfg: case={self.f_case} whole={self.f_whole} rev={self.f_rev} rx={self.f_rx} select={self.f_select}')
         self.info.DialogFree(dlg.hDlg)
         log.debug(f'ED Replace cfg: res={res} rep={dlg.ID_vreplace}')
         return res == dlg.ID_vreplace
@@ -215,14 +218,15 @@ class Plugin(PluginBase):
         return 3
 
     def Perform(self, fctrl, falt, fshift):
-        if not self.f_search or not (falt or fshift):
+        if not self.f_search or (falt and fshift):
             if not self.ConfigDialog(fctrl):
                 return
             if not self.f_search:
                 return
-        if falt:
+            fshift = self.f_rev
+        if fshift:
             self.DoPrev()
-        elif fshift:
+        elif falt:
             self.DoNext()
         else:
             if self.f_rev:
@@ -275,8 +279,23 @@ class Plugin(PluginBase):
                 # delete selected line
                 self.info.EditorControl(self.ffic.ECTL_DELETEBLOCK, self.ffi.NULL)
                 # insert new line
-                self.info.EditorControl(self.ffic.ECTL_INSERTTEXT, self.s2f(line))
-                me.line = line
+                if 0 and '\n' in line:
+                    indent = self.ffi.new("int []", 0)
+                    for line in line.split('\n'):
+                        if line:
+                            self.info.EditorControl(self.ffic.ECTL_INSERTTEXT, self.s2f(line))
+                        else:
+                            self.info.EditorControl(self.ffic.ECTL_INSERTSTRING, self.ffi.cast("PVOID", indent))
+                            esp.CurLine = lno
+                            esp.CurPos = 0
+                            self.info.EditorControl(self.ffic.ECTL_SETPOSITION, esp)
+                            worker.nlines += 1
+                            worker.curline += 1
+                    me.line = None
+                    worker.curline -= 1
+                else:
+                    self.info.EditorControl(self.ffic.ECTL_INSERTTEXT, self.s2f(line))
+                    me.line = line
 
             def ask(me, m, found, replace):
                 self.found = True

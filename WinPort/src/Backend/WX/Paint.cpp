@@ -1358,7 +1358,7 @@ void ConsolePainter::DrawLiquidButtonBackground(
 	wxColour colBottom(r_colBottom.r, r_colBottom.g, r_colBottom.b);
 
     // --- Top glossy highlight (about 35% of height) ---
-    wxRect rTop(X1, Y1, w, h * 0.35);
+    wxRect rTop(X1, Y1, w, h * 0.35 + 1);
     wxColour top1 = wxColour(
     	std::min(colTop.Red()   + 40, 255),
         std::min(colTop.Green() + 40, 255),
@@ -1370,7 +1370,7 @@ void ConsolePainter::DrawLiquidButtonBackground(
     drawVerticalGradientPiece (gc, rTop, top1, top2);
 
     // --- Middle body (about 45% of height) ---
-    wxRect rMid(X1, Y1 + h * 0.35, w, h * 0.45);
+    wxRect rMid(X1, Y1 + h * 0.35, w, h * 0.45 + 1);
     //gc->GradientFillLinear(rMid, colTop, colBottom, wxSOUTH);
     drawVerticalGradientPiece (gc, rMid, colTop, colBottom);
 
@@ -1626,7 +1626,7 @@ void ConsolePainter::DrawButtonDecorationsAsNew(
 
 	wxCoord W = _X2 - _X1 + 1, H = _Y2 - _Y1 + 1;
 
-#define OFFSCREEN_NITMAP	1
+// #define OFFSCREEN_NITMAP	1
 #ifdef OFFSCREEN_NITMAP
 	wxCoord X1 = 0, Y1 = 0;
 	wxCoord X2 = W, Y2 = H;
@@ -1668,11 +1668,43 @@ void ConsolePainter::DrawButtonDecorationsAsNew(
     	const bool underlined = (pos.attributes & COMMON_LVB_UNDERSCORE) != 0;
     	const bool strikeout = (pos.attributes & COMMON_LVB_STRIKEOUT) != 0;
 
+#ifdef COMMON_LVB_BOLD
+    	const bool bold = (pos.attributes & COMMON_LVB_BOLD) != 0;
+#endif
+
         int ascent = _context->FontHeight() - _context->FontDescent();
 
-		wxFont normal = _dc.GetFont();
-		gc->SetFont(normal, wxColour(c_text.r, c_text.g, c_text.b));
-		DrawTextBaseline(gc, pos.text.c_str(), X1, Y1 + ascent);
+    	// todo: highlight character to be displayed
+#ifdef COMMON_LVB_BOLD
+    	if (bold) {
+    		if (WXCustomDrawChar::options->UseEmbossAsBold) {
+    			WinPortRGB emboss = GetEmbossColor(c_text);
+    			wxFont normal = _dc.GetFont();
+
+    			gc->SetFont(normal, wxColour(emboss.r, emboss.g, emboss.b));
+    			DrawTextBaseline(gc, pos.text.c_str(), X1 + 1, Y1 + 1 + ascent);
+                gc->SetFont(normal, wxColour(c_text.r, c_text.g, c_text.b));
+    			DrawTextBaseline(gc, pos.text.c_str(), X1, Y1 + ascent);
+    		}
+    		else {
+    			wxFont normal = _dc.GetFont();
+    			wxFont bold = normal;
+    			bold.MakeBold(); 
+    			bold.SetPixelSize(normal.GetPixelSize());
+
+    			gc->SetFont(bold, wxColour(c_text.r, c_text.g, c_text.b));
+    			DrawTextBaseline(gc, pos.text.c_str(), X1, Y1 + ascent);
+    			gc->SetFont(normal, wxColour(c_text.r, c_text.g, c_text.b));
+    		}
+    	}
+    	else {
+#endif
+			wxFont normal = _dc.GetFont();
+			gc->SetFont(normal, wxColour(c_text.r, c_text.g, c_text.b));
+			DrawTextBaseline(gc, pos.text.c_str(), X1, Y1 + ascent);
+#ifdef COMMON_LVB_BOLD
+    	}
+#endif
 
     	if (underlined || strikeout) {
 	    	gc->SetPen(wxColour(c_text.r, c_text.g, c_text.b));

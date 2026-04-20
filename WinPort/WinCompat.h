@@ -447,6 +447,7 @@ typedef enum {
     HintInfoList,
     HintHelpViewer,
     HintCommandLine,
+    HintKeyBar,
     HintPanic
 } HintContainerType;
 

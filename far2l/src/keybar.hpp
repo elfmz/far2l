@@ -64,6 +64,9 @@ private:
 	KeyBarTitleGroup KeyTitles[KBL_GROUP_COUNT];
 	int KeyCounts[KBL_GROUP_COUNT];
 
+	int GetGroup(int alt, int shift, int ctrl, int meta);
+	std::wstring GetKeyName(int idx, int group);
+
 	int AltState, CtrlState, ShiftState;
 	int DisableMask;
 
@@ -72,6 +75,10 @@ private:
 
 	FARString strLanguage;
 	FARString strRegGroupName;
+	FARString strExtra;
+
+	int Hover[KEY_COUNT];
+	int xPos[KEY_COUNT + 1];
 
 private:
 	void RefreshObject(bool render);
@@ -111,6 +118,8 @@ public:
 	void SetDisableMask(int Mask);
 	void Change(const wchar_t *NewStr, int Pos) { Change(KBL_MAIN, NewStr, Pos); }
 
+	void Extra(const wchar_t* text){ strExtra = text; Redraw(); }
+									 
 	// Изменение любого Label
 	void Change(int Group, const wchar_t *NewStr, int Pos);
 

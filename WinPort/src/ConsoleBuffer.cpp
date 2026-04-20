@@ -247,6 +247,7 @@ static inline bool AreSameChars (const CHAR_INFO& left, const CHAR_INFO& right)
 			left.Extra.Hint.Enabled == right.Extra.Hint.Enabled &&
 			left.Extra.Hint.Default == right.Extra.Hint.Default &&
 			left.Extra.Hint.Beveled == right.Extra.Hint.Beveled &&
+			left.Extra.Hint.Checked == right.Extra.Hint.Checked &&
 			left.Extra.Hint.Shadow == right.Extra.Hint.Shadow
 		;
 }

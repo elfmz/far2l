@@ -316,6 +316,8 @@ private:
 	GUID Id;
 	bool IdExist;
 	int AltState, CtrlState, ShiftState;
+	bool dialogBox;
+	int CloseX, CloseY;
 
 private:
 	void Init(FARWINDOWPROC DlgProc, LONG_PTR InitParam);

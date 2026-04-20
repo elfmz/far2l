@@ -1956,7 +1956,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 						? Item[I]->Flags & 0xFFFF
 						: (Opt.NoGraphics ? 0x002A /*L'*'*/ : 
 							( Opt.Backend.UseModernLook 
-								? L'✔' 
+								? L'√'  //  ✔  
 								: 0x221A /*L'√'*/) ));
 				}
 

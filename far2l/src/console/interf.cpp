@@ -888,6 +888,14 @@ static uint64_t assembleColor(RGB& fg, RGB& bg) {
 	return color | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR;
 }
 
+uint64_t GetLinkColor(uint64_t attributes) 
+{
+   	RGB bg, fg;
+   	extractColor(attributes, fg, bg);
+   	HoverResult r = ComputeControlAccent(bg, fg);
+    return assembleColor(r.bg_hover, bg) | (attributes & 0x0000FFFF);
+}
+
 uint64_t SoftenItemColor(uint64_t attributes, int Focus, int Hover, int Pressed, int Selected) 
 {
    	RGB bg, fg;

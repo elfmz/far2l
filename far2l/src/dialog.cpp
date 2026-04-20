@@ -1822,6 +1822,8 @@ void Dialog::ShowDialog(unsigned ID)
 	if (Locked())
 		return;
 
+	CloseX = CloseY = -1;
+
 	FARString strStr;
 	DialogItemEx *CurItem;
 	int X, Y;
@@ -1890,6 +1892,7 @@ void Dialog::ShowDialog(unsigned ID)
 	}
 
 	if (Opt.Backend.UseModernLook && IsWxBackend()) ID = 0; // draw everything always: backend will filter the rendering area
+	dialogBox = false;
 
 	HintBeginContainer();
 	Hint(X1, Y1, X2, Y2, HintDialog, HintObjectNone);
@@ -1929,10 +1932,12 @@ void Dialog::ShowDialog(unsigned ID)
 				ItemColor[g] = CurItem->customItemColor[g];
 
 		// drawing hacks here
+		bool dialogBoxFound = false;
 		if (Opt.Backend.UseModernLook) {
 			// main border: rearrange to real corners
 			if (CurItem->Type == DI_DOUBLEBOX /* && CX1 == 2 && CX2 == X2 - -X1 - 2 && CY1 == 1 && CY2 == Y2 - Y1 - 1*/) {
 				CX1 = 0; CX2 = X2 - X1; CY1 = 0; CY2 = Y2 - Y1;
+				dialogBoxFound = true;	
 			}
 		}
 
@@ -1961,6 +1966,15 @@ void Dialog::ShowDialog(unsigned ID)
 				} else {
 					Box(X1 + CX1, Y1 + CY1, X1 + CX2, Y1 + CY2, ItemColor[2],
 							(CurItem->Type == DI_SINGLEBOX) ? SINGLE_BOX : DOUBLE_BOX);
+    				if (dialogBoxFound) {
+                    	CloseX = X1 + CX2 - 1; // - (IsWxBackend() ? 0 : 1);
+                        CloseY = Y1 + CY1;
+                        dialogBox = true;
+    					GotoXY(CloseX, CloseY);
+                        strStr = L"✖"; // IsWxBackend() ? L"✖" : L"❌";
+                        SetColor(SoftenItemColor(ItemColor[0], CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
+    					Text(strStr);
+    				}
 				}
 
 				if (!CurItem->strData.IsEmpty() && IsDrawTitle) {
@@ -2099,7 +2113,7 @@ void Dialog::ShowDialog(unsigned ID)
 									? 12
 									: (CurItem->Flags & DIF_SEPARATOR2 ? 3 : 1),
 							CurItem->strMask);
-					 HintAt(HintDialog, HintLine, false, false, (CurItem->Flags & DIF_DISABLE) != 0);
+					HintAt(HintDialog, HintLine, false, false, (CurItem->Flags & DIF_DISABLE) != 0);
 				}
 
 //				SetColorNormal(Attr, CurItem->TrueColors);
@@ -2298,12 +2312,14 @@ void Dialog::ShowDialog(unsigned ID)
 			}
 			/* ***************************************************************** */
 			case DI_BUTTON: {
+				bool drawn = false;
+
 				strStr = CurItem->strData;
 				SetColor(ItemColor[0]);
 //				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + CX1, Y1 + CY1);
 
-				if (strStr.At(0) == L'{' || strStr.At(0) == L'[') {
+				if ((CurItem->Flags & DIF_NOBRACKETS) == 0 || strStr.At(0) == L'{' || strStr.At(0) == L'[') {
     				if (CurItem->Focus) { 
     					strStr.ReplaceChar(0, L'►');
     					strStr.ReplaceChar(strStr.GetLength() - 1, L'◄'); 
@@ -2317,15 +2333,36 @@ void Dialog::ShowDialog(unsigned ID)
 
     					if(Opt.Backend.UseModernLook) {
     						strStr.ReplaceChar(1, CurItem->DefaultButton ? L'★' : L' ');
-    						if (IsWxBackend() && Opt.Backend.Use3D) {
+    						if (IsWxBackend() /*&& Opt.Backend.Use3D*/) {
     							strStr.ReplaceChar(0, L' ');
     							strStr.ReplaceChar(strStr.GetLength() - 1, L' '); 
     						}
     						else {
-    							strStr.ReplaceChar(1, CurItem->DefaultButton ? L'★' : L' '); // •
-    							strStr.ReplaceChar(strStr.GetLength() - 2, CurItem->DefaultButton ? L'★' : L' '); 
-    							strStr.ReplaceChar(0, L'❲');
-    							strStr.ReplaceChar(strStr.GetLength() - 1, L'❳'); 
+    							strStr.ReplaceChar(strStr.GetLength() - 2, CurItem->DefaultButton ? L'★' : L' ');  // •
+
+	                        	SetColor(ItemColor[0]);
+	   							//strStr.ReplaceChar(0, L'❲');
+    							//strStr.ReplaceChar(strStr.GetLength() - 1, L'❳'); 
+    							strStr.ReplaceChar(0, L' ');
+    							strStr.ReplaceChar(strStr.GetLength() - 1, L' '); 
+
+	           					if (!(CurItem->Flags & DIF_SHOWAMPERSAND)) 
+	           					{
+    	                            FARString left = strStr.SubStr(0, 1);
+        	                        FARString text = strStr.SubStr(1, strStr.GetLength() - 2);
+            	                    FARString right = strStr.SubStr(strStr.GetLength() - 1);
+
+            						Text(left);
+                                   	// SetColor(COMMON_LVB_UNDERSCORE | ItemColor[0]);
+                                    SetColor(COMMON_LVB_UNDERSCORE |
+                                    	// SoftenItemColor(GetAccentColors(ItemColor[0]), CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
+                                        GetLinkColor(ItemColor[0]));
+            						HiText(text, COMMON_LVB_UNDERSCORE | ItemColor[1]);
+                                    SetColor(ItemColor[0]);
+            						Text(right);
+
+                                    drawn = true;
+            					}
     						}
     					}
     					else {
@@ -2335,11 +2372,12 @@ void Dialog::ShowDialog(unsigned ID)
     				}
 				}
 
-				if (CurItem->Flags & DIF_SHOWAMPERSAND)
-					Text(strStr);
-				else
-					HiText(strStr,ItemColor[1]);
-//					HiText(strStr, HIBYTE(LOWORD(Attr)));
+				if (!drawn) {
+					if (CurItem->Flags & DIF_SHOWAMPERSAND)
+						Text(strStr);
+					else
+						HiText(strStr,ItemColor[1]);
+				}
 
 				if (CurItem->Flags & DIF_SETSHIELD) {
 					int startx = X1 + CX1 + (CurItem->Flags & DIF_NOBRACKETS ? 0 : 2);
@@ -2351,12 +2389,12 @@ void Dialog::ShowDialog(unsigned ID)
 					CurItem->Selected, 
 					CurItem->DefaultButton,
 					(CurItem->Flags & DIF_NOBRACKETS) != 0);
+                /*
         		fprintf(stderr, "button `%ls`: pos=%d,%d..%d,%d, focus=%c hover=%c disabled=%c\n", 
                 	strStr.GetWide().c_str(),
         			X1 + CX1, Y1 + CY1, (int)(X1 + CX1 + strStr.GetLength()), Y1 + CY1,
         			CurItem->Focus ? 'Y': 'n', false ? 'Y': 'n', (CurItem->Flags & DIF_DISABLE) != 0 ? 'Y': 'n');
-
-
+                */
 				break;
 			}
 			/* ***************************************************************** */
@@ -3477,10 +3515,20 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	// Hover effect processing
 	if (Opt.Backend.UseModernLook && MouseEvent->dwEventFlags == MOUSE_MOVED) {
-		int oldHover = -1, newHover = -1;;
+		int oldHover = -1, newHover = -1;
 		for (I = ItemCount - 1; I != (unsigned)-1; I--) {
 			if (Item[I]->Hover) oldHover = I;
 			Item[I]->Hover = 0;
+			Item[I]->Pressed = 0;
+
+			// hover for close button
+			if (dialogBox && (Item[I]->Type == DI_SINGLEBOX || Item[I]->Type == DI_DOUBLEBOX )) {
+				if (MsY == CloseY && (MsX == CloseX || MsX == CloseX + 1)) {
+					Item[I]->Hover = 1;
+					newHover = I;
+				}
+			}
+
 			if (Item[I]->Flags & (DIF_DISABLE | DIF_HIDDEN)) continue;
 
 			GetItemRect(I, Rect);
@@ -3506,6 +3554,14 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	// for (I=0;I<ItemCount;I++)
 	for (I = ItemCount - 1; I != (unsigned)-1; I--) {
+
+		if (dialogBox && (Item[I]->Type == DI_SINGLEBOX || Item[I]->Type == DI_DOUBLEBOX )) {
+			if (MsY == CloseY && (MsX == CloseX || MsX == CloseX + 1) && MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED)) {
+				ProcessKey(KEY_ESC);
+				return TRUE;
+			}
+		}
+
 		if (Item[I]->Flags & (DIF_DISABLE | DIF_HIDDEN))
 			continue;
 

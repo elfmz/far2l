@@ -95,8 +95,8 @@ void Text(FarLangMsg MsgId);
 void VText(const WCHAR *Str);
 void HiText(const WCHAR *Str, uint64_t HiColor, int isVertText = 0);
 
-void Hint(int X1, int Y1, int X2, int Y2, HintContainerType hcc, HintObjectType hco, bool focused = false, bool hovered = false, bool disabled = false, bool defaultCtrl = false);
-void HintAt(HintContainerType hcc, HintObjectType hco, bool focused = false, bool hovered = false, bool disabled = false, bool defaultCtrl = false);
+void Hint(int X1, int Y1, int X2, int Y2, HintContainerType hcc, HintObjectType hco, bool focused = false, bool hovered = false, bool disabled = false, bool checked = false, bool defaultCtrl = false, bool bevel = false);
+void HintAt(HintContainerType hcc, HintObjectType hco, bool focused = false, bool hovered = false, bool disabled = false, bool checked = false, bool defaultCtrl = false, bool bevel = false);
 void HintBeginContainer();
 void HintEndContainer();
 

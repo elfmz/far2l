@@ -501,6 +501,7 @@ typedef struct _CHAR_INFO {
             int Default: 1; 
             int Beveled: 1;
             int Shadow: 1;
+            int Checked: 1;
         } Hint;
     } Extra;
 } CHAR_INFO, *PCHAR_INFO;

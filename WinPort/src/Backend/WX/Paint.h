@@ -155,6 +155,7 @@ class ConsolePainter
             int Default: 1; 
             int Beveled: 1;
             int Shadow: 1;
+            int Checked: 1;
         } Hint;
 
         int tag;
@@ -231,13 +232,63 @@ public:
 	bool DrawCustomChar(wchar_t cc, WXCustomDrawChar::DrawT custom_draw, DWORD64 attributes, unsigned cx, unsigned nx, bool prev_space) ;
 	bool DrawCustomCharImpl(wchar_t cc, WXCustomDrawChar::DrawT custom_draw, DWORD64 attributes, unsigned cx, unsigned nx, bool prev_space) ;
 
-	void DrawGradientLine(wxCoord X1, wxCoord Y1, wxCoord X2, wxCoord Y2, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1);
-	void DrawHorizontalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1);
-	void DrawVerticalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1);
-	void DrawVerticalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, const WinPortRGB& color3, wxCoord thickness = 1);
-	void DrawHorizontalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, const WinPortRGB& color3, wxCoord thickness = 1);
+	struct wxCtxHolder {
+		wxGraphicsContext* _gc;
 
-	void DrawHorizontalDashedGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, int dashLength = 6, int gapLength  = 4, wxCoord thickness = 1);
-	void DrawVerticalDashedGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, int dashLength = 6, int gapLength  = 4, wxCoord thickness = 1);
-	void DrawLiquidButtonBackground(wxCoord X1, wxCoord Y1, wxCoord w, wxCoord h, const WinPortRGB& colTop);
+		wxCtxHolder(wxMemoryDC& _dc) { _gc = wxGraphicsContext::Create(_dc); }
+		wxCtxHolder(wxPaintDC& _dc) { _gc = wxGraphicsContext::Create(_dc); }
+		~wxCtxHolder() { delete _gc; }
+		wxGraphicsContext* gc() { return _gc; }
+	};
+
+    /* fast path direct rendering wrappers */
+	inline void DrawGradientLine(wxCoord X1, wxCoord Y1, wxCoord X2, wxCoord Y2, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1) {
+		wxCtxHolder h(_dc);
+		DrawGradientLine(h.gc(), X1, Y1, X2, Y2, color1, color2, thickness);
+	}
+
+	inline void DrawHorizontalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1) {
+		wxCtxHolder h(_dc);
+		DrawHorizontalGradientLine(h.gc(), X1, Y1, length, color1, color2, thickness);
+	}
+
+	inline void DrawVerticalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1) {
+		wxCtxHolder z(_dc);
+		DrawVerticalGradientLine(z.gc(), X1, Y1, length, color1, color2, thickness);
+	}
+
+	inline void DrawVerticalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, const WinPortRGB& color3, wxCoord thickness = 1) {
+		wxCtxHolder z(_dc);
+		DrawVerticalGradientLine(z.gc(), X1, Y1, length, color1, color2, color3, thickness);
+	}
+
+	inline void DrawHorizontalGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, const WinPortRGB& color3, wxCoord thickness = 1) {
+		wxCtxHolder z(_dc);
+		DrawHorizontalGradientLine(z.gc(), X1, Y1, length, color1, color2, color3, thickness);
+	}
+
+	inline void DrawHorizontalDashedGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, int dashLength = 6, int gapLength  = 4, wxCoord thickness = 1) {
+		wxCtxHolder z(_dc);
+		DrawHorizontalDashedGradientLine(z.gc(), X1, Y1, length, color1, color2, dashLength, gapLength, thickness);
+	}
+
+	inline void DrawVerticalDashedGradientLine(wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, int dashLength = 6, int gapLength  = 4, wxCoord thickness = 1) {
+		wxCtxHolder z(_dc);
+		DrawVerticalDashedGradientLine(z.gc(), X1, Y1, length, color1, color2, dashLength, gapLength, thickness);
+	}
+
+	inline void DrawLiquidButtonBackground(wxCoord X1, wxCoord Y1, wxCoord w, wxCoord h, const WinPortRGB& colTop) {
+		wxCtxHolder z(_dc);
+		DrawLiquidButtonBackground(z.gc(), X1, Y1, w, h,colTop);
+	}
+
+    /* in-mempory dc when needed */
+	void DrawGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord X2, wxCoord Y2, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1);
+	void DrawHorizontalGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1);
+	void DrawVerticalGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, wxCoord thickness = 1);
+	void DrawVerticalGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, const WinPortRGB& color3, wxCoord thickness = 1);
+	void DrawHorizontalGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, const WinPortRGB& color3, wxCoord thickness = 1);
+	void DrawHorizontalDashedGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, int dashLength = 6, int gapLength  = 4, wxCoord thickness = 1);
+	void DrawVerticalDashedGradientLine(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord length, const WinPortRGB& color1, const WinPortRGB& color2, int dashLength = 6, int gapLength  = 4, wxCoord thickness = 1);
+	void DrawLiquidButtonBackground(wxGraphicsContext* gc, wxCoord X1, wxCoord Y1, wxCoord w, wxCoord h, const WinPortRGB& colTop);
 };

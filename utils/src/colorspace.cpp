@@ -733,23 +733,26 @@ double Chroma(const LAB& lab)
     return std::sqrt(lab.a*lab.a + lab.b*lab.b);
 }
 
+// E8 CA EF
 
 iRGB SoftenBlackish_LAB(const RGB& cc) {
     LAB lab = RGBtoLAB(cc);
 
     double L_min = 10.0;
-    double L_max = 90.0;
+    double L_max = 80.0;
 
-    if (lab.L <= L_max && lab.L >= L_min)
-        return toIRGB(cc);
+    // if (lab.L <= L_max && lab.L >= L_min)
+    //    return toIRGB(cc);
 
-    double C_neutral = 10.0;
-    double L_target = lab.L < L_min ? 60.0 : 40.0;
+    double C_neutral = 25.0;
+    double L_target = lab.L < L_min ? 60.0 : 30.0;
 
     double C = std::sqrt(lab.a*lab.a + lab.b*lab.b);
-    double k = 1.0 - std::min(C / C_neutral, 1.0);
-    if (k <= 0.0)
-        return toIRGB(cc); // colorful bright color: keep it
+    //double k = 1.0 - std::min(C / C_neutral, 1.0);
+    //if (k <= 0.0)
+    //    return toIRGB(cc); // colorful bright color: keep it
+
+    double k = exp(-(C / C_neutral) * (C / C_neutral));
 
     // You can use linear or quadratic; here: quadratic for smoother feel
     double t = lab.L < L_min ? (L_min - lab.L) / L_min : (lab.L - L_max) / (100.0 - L_max); // how far into "white"/"black" we are

@@ -1546,7 +1546,7 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 			Color[0] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGTEXT, COL_DIALOGTEXT, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
 			Color[1] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGHIGHLIGHTTEXT, COL_DIALOGHIGHLIGHTTEXT, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
 
-			if (!DisabledItem && (Focus || Hover || Pressed)) {
+			if (Opt.Backend.UseModernLook && !DisabledItem && (Focus || Hover || Pressed)) {
 				Color[0] = SoftenItemColor(Color[0], Focus, Hover, Pressed, 0);
 				Color[1] = SoftenItemColor(Color[1], Focus, Hover, Pressed, 0);
 			}
@@ -2269,7 +2269,7 @@ void Dialog::ShowDialog(unsigned ID)
 					Text(strStr);
 				else
 					HiText(strStr, ItemColor[1]);
-				HintAt(HintDialog, HintCheckbox, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0);
+				HintAt(HintDialog, HintCheckbox, CurItem->Focus, CurItem->Hover, (CurItem->Flags & DIF_DISABLE) != 0, CurItem->Selected);
 
 				if (Opt.Backend.UseModernLook) {
 					if(!IsWxBackend()) {
@@ -2279,7 +2279,7 @@ void Dialog::ShowDialog(unsigned ID)
 					}
 					else {
 						// check status needs to be changed on both places
-						SetColor(SoftenItemColor(ItemColor[0], CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0/* CurItem->Selected */));
+						SetColor(SoftenItemColor(ItemColor[0], CurItem->Focus, CurItem->Hover, CurItem->Pressed, CurItem->Selected));
 						// SetColor(SoftenItemColor(GetAccentColors(ItemColor[0]), CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
 						GotoXY(X1 + CX1 + 1, Y1 + CY1);
 						Text(checkMark.LShift(1));
@@ -2345,11 +2345,12 @@ void Dialog::ShowDialog(unsigned ID)
 					int startx = X1 + CX1 + (CurItem->Flags & DIF_NOBRACKETS ? 0 : 2);
 					ScrBuf.ApplyColor(startx, Y1 + CY1, startx + 1, Y1 + CY1, 0xE9);
 				}
-				HintAt(HintDialog, HintButton, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0, CurItem->DefaultButton);
-				/*
-				Hint(X1 + CX1, Y1 + CY1, X1 + CX1 + strStr.GetLength(), Y1 + CY1,
-					HintDialog, HintButton, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0, CurItem->DefaultButton);
-                */
+				HintAt(HintDialog, HintButton, 
+					CurItem->Focus, false, 
+					(CurItem->Flags & DIF_DISABLE) != 0, 
+					CurItem->Selected, 
+					CurItem->DefaultButton,
+					(CurItem->Flags & DIF_NOBRACKETS) != 0);
         		fprintf(stderr, "button `%ls`: pos=%d,%d..%d,%d, focus=%c hover=%c disabled=%c\n", 
                 	strStr.GetWide().c_str(),
         			X1 + CX1, Y1 + CY1, (int)(X1 + CX1 + strStr.GetLength()), Y1 + CY1,

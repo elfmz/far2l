@@ -547,7 +547,7 @@ void Hint(
 		int X1, int Y1, int X2, int Y2, 
 		HintContainerType hcc, 
 		HintObjectType hco, 
-		bool focused, bool hovered, bool disabled, bool defaultCtrl) 
+		bool focused, bool hovered, bool disabled, bool selected, bool defaultCtrl, bool bevel) 
 {
 	int tag = (TagRef++) % 0x00FF;
 
@@ -556,27 +556,27 @@ void Hint(
 	Y1 = clamp(Y1, 0, ScrY);
 	Y2 = clamp(Y2, 0, ScrY);
 
+    /*
 	if (hcc == HintDialog && (hco == HintButton || hco == HintCheckbox) ) {
 		fprintf(stderr, "surface %d: type %d: tag=%d, pos=%d..%d, %d..%d, focus=%c hover=%c disabled=%c\n", 
 			hcc, hco, 
 			tag, 
 			X1, X2, Y1, Y2, 
 			focused ? 'Y': 'n', hovered ? 'Y': 'n', disabled ? 'Y': 'n');
-	}
-	ScrBuf.ApplyHint(X1, Y1, X2, Y2, tag, hcc, hco, focused, hovered, disabled, defaultCtrl, false);
+	}*/
+	ScrBuf.ApplyHint(X1, Y1, X2, Y2, tag, hcc, hco, focused, hovered, disabled, selected, defaultCtrl, bevel);
 }
 
 void HintAt(
 		HintContainerType hcc, 
 		HintObjectType hco, 
-		bool focused, bool hovered, bool disabled, bool defaultCtrl) 
+		bool focused, bool hovered, bool disabled, bool selected, bool defaultCtrl, bool bevel) 
 {
-	Hint(HintX, HintY, CurX - 1, CurY, hcc, hco, focused, hovered, disabled, defaultCtrl);
+	Hint(HintX, HintY, CurX - 1, CurY, hcc, hco, focused, hovered, disabled, selected, defaultCtrl, bevel);
 }
 
 void HintBeginContainer() {
 	// todo: remove this trick when all elements will be tagged
-	// ScrBuf.Unhint();
 	// TagRef = 1; 
 }
 

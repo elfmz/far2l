@@ -2026,7 +2026,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 					GotoXY(X1 + (BoxType != NO_BOX ? 1 : 0) + 1 + MaxLineWidth, Y);
 					BoxText(L'\xbb');	// '>>'
 				}
-				Hint(X1 + 1, Y, X2 - 1, Y, HintMenu, HintText, (Item[I]->Flags & LIF_SELECTED) /*focus*/, false /*hover*/, (Item[I]->Flags & LIF_DISABLE) /*disabled*/);
+				Hint(X1 + 1, Y, X2 - 1, Y, HintMenu, HintText, (Item[I]->Flags & LIF_SELECTED) /*focus*/, false /*hover*/, (Item[I]->Flags & LIF_DISABLE) /*disabled*/, (Item[I]->Flags & LIF_CHECKED));
 			}
 		} else {
 			if (BoxType != NO_BOX) {

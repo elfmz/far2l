@@ -344,6 +344,8 @@ static int ShowMessageSynched(DWORD Flags, int Buttons, const wchar_t *Title, co
 			Dialog Dlg(MsgDlg, ItemCount, MsgDlgProc);
 			Dlg.SetPosition(X1, Y1, X2, Y2);
 
+			Hint(X1, Y1, X2, Y2, HintDialog, HintObjectNone);
+
 			if (!strHelpTopic.IsEmpty())
 				Dlg.SetHelp(strHelpTopic);
 

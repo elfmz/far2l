@@ -230,6 +230,7 @@ void ScreenBuf::Write(int X, int Y, const CHAR_INFO *Text, int TextLength)
 	for (int i = 0; i < TextLength; i++) {
 		SetVidChar(PtrBuf[i], Text[i].Char.UnicodeChar);
 		PtrBuf[i].Attributes = Text[i].Attributes;
+		PtrBuf[i].Extra = Text[i].Extra;
 	}
 
 	SBFlags.Clear(SBFLAGS_FLUSHED);
@@ -347,13 +348,13 @@ void ScreenBuf::ApplyColorMask(int X1, int Y1, int X2, int Y2, DWORD64 ColorMask
 
 void ScreenBuf::Unhint() 
 {
-	ApplyHint(0, 0, BufX - 1, BufY - 1, 0, HintNone, HintObjectNone, false, false, false, false, false);
+	ApplyHint(0, 0, BufX - 1, BufY - 1, 0, HintNone, HintObjectNone, false, false, false, false, false, false);
 }
 
 void ScreenBuf::ApplyHint(int X1, int Y1, int X2, int Y2, 
 	int tag,
 	HintContainerType hcc, HintObjectType hco, 
-	bool focused, bool hovered, bool disabled, bool defaultCtrl, bool bevel)
+	bool focused, bool hovered, bool disabled, bool checked, bool defaultCtrl, bool bevel)
 {
 	CriticalSectionLock Lock(CS);
 	if (!Buf)
@@ -374,17 +375,17 @@ void ScreenBuf::ApplyHint(int X1, int Y1, int X2, int Y2,
 			PtrBuf->Extra.Hint.Enabled = disabled ? 0 : 1;
 			PtrBuf->Extra.Hint.Default = defaultCtrl ? 1 : 0;
 			PtrBuf->Extra.Hint.Beveled = bevel ? 1 : 0;
+			PtrBuf->Extra.Hint.Checked = checked ? 1 : 0;
 			PtrBuf->Extra.Hint.Tag = tag;
 		}
 	}
-/*
+
 #ifdef DIRECT_SCREEN_OUT
 	Flush();
 #elif defined(DIRECT_RT)
 	if (DirectRT)
 		Flush();
 #endif
-*/
 }
 
 /*

@@ -89,7 +89,6 @@ ADBPlugin::ADBPlugin(const wchar_t *path, bool path_is_standalone_config, int Op
 	, _isConnected(false)
 	, _deviceSerial("")
 	, _CurrentDir("/")
-	, _lastEnteredDir("")
 {
 	wcscpy(_PanelTitle, L"ADB");
 	wcscpy(_mk_dir, L"");
@@ -212,7 +211,12 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		Info->Flags                = OPIF_SHOWPRESERVECASE | OPIF_USEHIGHLIGHTING;
 		// Leave StartSortMode = 0; flplugin.cpp:904 re-applies it on every SetPluginMode and would wipe the user's sort choice.
 
-		_curDirW  = StrMB2Wide(_CurrentDir);
+		// Serial as last path component so FAR's PointToName-based cursor restore finds it on "..".
+		std::string display_path = "/" + _deviceSerial;
+		if (!_CurrentDir.empty() && _CurrentDir != "/") {
+			display_path += _CurrentDir;
+		}
+		_curDirW  = StrMB2Wide(display_path);
 		_formatW  = L"adb:" + _curDirW;
 
 		Info->CurDir  = _curDirW.c_str();
@@ -560,13 +564,11 @@ bool ADBPlugin::ByKey_TryEnterSelectedDevice()
 		return false;
 	}
 	
-	// Set up the connection state
 	_isConnected = true;
 	_deviceSerial = deviceSerial;
-	// No need to update _devicePath - using GetCurrentDevicePath() directly
-	
-	// Update panel title with device serial and path
-	UpdatePanelTitle(_deviceSerial, GetCurrentDevicePath());
+	// Non-empty CurDir required: empty routes ".." through FAR's PopPlugin branch (filelist.cpp:2498).
+	_CurrentDir = GetCurrentDevicePath();
+	UpdatePanelTitle(_deviceSerial, _CurrentDir);
 	
 	// Refresh the panel to show the new directory contents
 	g_Info.Control(PANEL_ACTIVE, FCTL_UPDATEPANEL, 0, 0);
@@ -595,9 +597,10 @@ int ADBPlugin::ExitDeviceFilePanel()
 
 	_isConnected = false;
 	_deviceSerial.clear();
+	_CurrentDir.clear();
 	_friendlyNamesCache.clear();
 	wcscpy(_PanelTitle, L"ADB Plugin");
-	
+
 	return 1;
 }
 
@@ -905,19 +908,29 @@ int ADBPlugin::SetDirectory(const wchar_t *Dir, int OpMode)
 	if (!_isConnected || !_adbDevice || !Dir || wcslen(Dir) == 0) {
 		return FALSE;
 	}
-	
+
 	std::string target_dir = StrWide2MB(Dir);
+
+	// Strip the "/<serial>" prefix added in GetOpenPluginInfo so absolute paths round-trip to the shell.
+	const std::string serial_prefix = "/" + _deviceSerial;
+	const std::string serial_prefix_slash = serial_prefix + "/";
+	if (target_dir == serial_prefix) {
+		target_dir = "/";
+	} else if (target_dir.compare(0, serial_prefix_slash.size(), serial_prefix_slash) == 0) {
+		target_dir = target_dir.substr(serial_prefix.size());
+	}
+
+	// ".." at device root exits to the device-selection panel; FAR runs Update() itself after TRUE.
+	if (target_dir == ".." && _adbDevice->GetCurrentPath() == "/") {
+		ExitDeviceFilePanel();
+		return TRUE;
+	}
+
 	if (!_adbDevice->SetDirectory(target_dir)) {
 		return FALSE;
 	}
-	
-	// Remember the directory we're entering for cursor position tracking
-	_lastEnteredDir = target_dir;
-	
-	// Update _CurrentDir to match the new directory
+
 	_CurrentDir = _adbDevice->GetCurrentPath();
-	
-	// Update panel title with device serial and path
 	UpdatePanelTitle(_deviceSerial, _CurrentDir);
 	return TRUE;
 }

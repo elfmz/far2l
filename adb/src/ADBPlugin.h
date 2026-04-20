@@ -41,10 +41,6 @@ private:
 	std::string _deviceSerial;      // Current device serial
 	std::string _CurrentDir;        // Current path on device
 
-	// Cursor position tracking for better UX
-	std::string _lastEnteredDir;
-	
-	// ADBDevice for file operations
 	std::shared_ptr<class ADBDevice> _adbDevice;
 	
 	// Cache for device friendly names to avoid N+1 process spawns

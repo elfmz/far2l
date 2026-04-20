@@ -157,31 +157,34 @@ public:
 		MenuItemEx mi;
 		FARString fsn, fssave;
 		if (align_dot)
-		 fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
+		    fsn.Format(L"%*s.%-*s", len_sections, _opt.section, len_keys, _opt.key);
 		else {
 			mi.strName.Format(L"%s.%s", _opt.section, _opt.key);
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
 		fssave = (_opt.save ? "s" : "-");
+
+		const char* ChangedMark = Opt.Backend.UseModernLook ? "★" : "*";
+
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL:
 				mi.strName.Format(L"%s %ls %lc  bool%lc%ls%lc%s",
-					(*_opt.value.b == _opt.def.b ? " " : "*"),
+					(*_opt.value.b == _opt.def.b ? " " : "★"),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					(*_opt.value.b ? "true" : "false"));
 				break;
 			case ConfigOpt::T_INT:
 				mi.strName.Format(L"%s %ls %lc   int%lc%ls%lc%ld = 0x%lx",
-					(*_opt.value.i == _opt.def.i ? " " : "*"),
+					(*_opt.value.i == _opt.def.i ? " " : ChangedMark),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					*_opt.value.i, *_opt.value.i);
 				break;
 			case ConfigOpt::T_DWORD:
 				mi.strName.Format(L"%s %ls %lc dword%lc%ls%lc%lu = 0x%lx",
-					(*_opt.value.dw == _opt.def.dw ? " " : "*"),
+					(*_opt.value.dw == _opt.def.dw ? " " : ChangedMark),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					*_opt.value.dw, *_opt.value.dw);
@@ -189,7 +192,7 @@ public:
 			case ConfigOpt::T_STR:
 				mi.strName.Format(L"%s %ls %lcstring%lc%ls%lc%ls",
 					(_opt.def.str == nullptr ? "?"
-						: (*_opt.value.str == _opt.def.str ? " " : "*")),
+						: (*_opt.value.str == _opt.def.str ? " " : ChangedMark)),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1],
 					_opt.value.str->CPtr());
@@ -197,7 +200,7 @@ public:
 			case ConfigOpt::T_BIN:
 				mi.strName.Format(L"%s %ls %lcbinary%lc%ls%lc(binary has length %u bytes)",
 					(_opt.def.bin == nullptr || _opt.value.bin == nullptr ? "?"
-						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : "*")),
+						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : ChangedMark)),
 					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
 					fssave.CPtr(), BoxSymbols[BS_V1], _opt.bin_size );
 				break;
@@ -395,12 +398,12 @@ public:
 			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.CPtr()},
 			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
 			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
-			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},
+			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 			/*  35 */ {DI_TEXT,		5, 12, DLG_WIDTH - 6, 12, {}, DIF_SHOWAMPERSAND, L"Note: some parameters after update/reset"},
 			/*  36 */ {DI_TEXT,		5, 13, DLG_WIDTH - 6, 13, {}, DIF_SHOWAMPERSAND, L"      not applied immediately in FAR2L"},
 			/*  37 */ {DI_TEXT,		5, 14, DLG_WIDTH - 6, 14, {}, DIF_SHOWAMPERSAND, L"      and need relaunch feature"},
 			/*  38 */ {DI_TEXT,		5, 15, DLG_WIDTH - 6, 15, {}, DIF_SHOWAMPERSAND, L"      or may be need save config & restart FAR2L"},
-			/*  39 */ {DI_TEXT,		3, 16, 20, 16, {}, DIF_SEPARATOR, L""},
+			/*  39 */ {DI_TEXT,		3, 16, 20, 16, {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 			/*  40 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_DEFAULT | DIF_CENTERGROUP | (is_editable ? 0 : DIF_DISABLE), Msg::Change},
 			/*  41 */ {DI_BUTTON,	0, 17, 0,  17, {}, DIF_CENTERGROUP | (is_editable ? 0 : DIF_FOCUS), Msg::Cancel}
 		};
@@ -531,7 +534,7 @@ static FARString ConfigOptEditTitle(bool hide_unchanged = false)
 	FARString title (Msg::MenuFarConfig);
 	title+= L" - far:config";
 	if (hide_unchanged) {
-		title+= L" *";
+		title+= Opt.Backend.UseModernLook ? L" ★" : L" *";
 	}
 	RemoveChar(title, L'&');
 	return title;

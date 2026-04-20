@@ -249,6 +249,8 @@ size_t ItemStringAndSize(DialogItemEx *Data, FARString &ItemString)
 	if (sz > Data->nMaxLength && Data->nMaxLength > 0)
 		sz = Data->nMaxLength;
 
+	if (sz < 40) sz = 40;
+
 	return sz;
 }
 
@@ -749,12 +751,13 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 				CurItem->strData = Brackets[Start] + CurItem->strData + Brackets[Start + 1];
 			}
 		}
+
 		// предварительный поик фокуса
 		if (FocusPos == (unsigned)-1 && IsItemFocusable(CurItem) && CurItem->Focus)
 			FocusPos = I;		// запомним первый фокусный элемент
 
 		CurItem->Focus = 0;		// сбросим для всех, чтобы не оказалось,
-		// что фокусов - как у дурочка фантиков
+		// что фокусов - как у дурака фантиков
 
 		// сбросим флаг DIF_CENTERGROUP для редакторов
 		switch (Type) {
@@ -789,7 +792,7 @@ unsigned Dialog::InitDialogObjects(unsigned ID)
 
 	if (FocusPos == (unsigned)-1)		// ну ни хрена себе - нет ни одного
 	{									// элемента с возможностью фокуса
-		FocusPos = 0;					// убится, блин
+		FocusPos = 0;					// убиться, блин
 	}
 
 	// ну вот и добрались до!
@@ -1420,6 +1423,8 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 	const int Focus = CurItem->Focus;
 	const int Default = CurItem->DefaultButton;
 	const DWORD Flags = CurItem->Flags;
+	const int Hover = CurItem->Hover;
+	const int Pressed = CurItem->Pressed;
 
 	const bool IsWarning = DialogMode.Check(DMODE_WARNINGSTYLE);
 	const bool DisabledItem = (Flags & DIF_DISABLE) != 0;
@@ -1428,12 +1433,15 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 		case DI_SINGLEBOX:
 		case DI_DOUBLEBOX: {
 
+#define COLOR_IF(is_warn, warnColor, regularColor, is_disabled, warnDisabled, regularDisabled) \
+	((is_warn) ? ((is_disabled) ? (warnDisabled) : (warnColor)) \
+				: ((is_disabled) ? (regularDisabled) : (regularColor)) )
+
 			// Title
-			Color[0] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGBOXTITLE) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGBOXTITLE));
-			// HiText
-			Color[1] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGHIGHLIGHTBOXTITLE) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGHIGHLIGHTBOXTITLE));
-			// Box
-			Color[2] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGBOX) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGBOX));
+			Color[0] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGBOXTITLE, COL_DIALOGBOXTITLE, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+			Color[1] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGHIGHLIGHTBOXTITLE, COL_DIALOGHIGHLIGHTBOXTITLE, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+			Color[2] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGBOX, COL_DIALOGBOX, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+
 			break;
 
 /**
@@ -1465,13 +1473,20 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 #endif
 		case DI_TEXT: {
 
-			Color[0] = FarColorToReal((Flags & DIF_BOXCOLOR)? (IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGBOX) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGBOX)) : (IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGTEXT) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGTEXT)));
+			Color[0] = FarColorToReal(
+				(Flags & DIF_BOXCOLOR)
+				? COLOR_IF(IsWarning, COL_WARNDIALOGBOX, COL_DIALOGBOX, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED)
+				: COLOR_IF(IsWarning, COL_WARNDIALOGTEXT, COL_DIALOGTEXT, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
 			// HiText
-			Color[1] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGHIGHLIGHTTEXT) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGHIGHLIGHTTEXT));
+			Color[1] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGHIGHLIGHTTEXT, COL_DIALOGHIGHLIGHTTEXT, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+			
 			if (Flags & (DIF_SEPARATORUSER|DIF_SEPARATOR|DIF_SEPARATOR2))
 			{
 				// Box
-				Color[2] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGBOX) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGBOX));
+				if (Opt.Backend.UseModernLook) 
+					Color[0] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGBOXTITLE, COL_DIALOGBOXTITLE, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+				
+				Color[2] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGBOX, COL_DIALOGBOX, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
 			}
 			break;
 
@@ -1528,9 +1543,14 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 		case DI_CHECKBOX:
 		case DI_RADIOBUTTON: {
 
-			Color[0] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGTEXT) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGTEXT));
-			// HiText
-			Color[1] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:COL_WARNDIALOGHIGHLIGHTTEXT) : (DisabledItem?COL_DIALOGDISABLED:COL_DIALOGHIGHLIGHTTEXT));
+			Color[0] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGTEXT, COL_DIALOGTEXT, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+			Color[1] = FarColorToReal( COLOR_IF(IsWarning, COL_WARNDIALOGHIGHLIGHTTEXT, COL_DIALOGHIGHLIGHTTEXT, DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED) );
+
+			if (Opt.Backend.UseModernLook && !DisabledItem && (Focus || Hover || Pressed)) {
+				Color[0] = SoftenItemColor(Color[0], Focus, Hover, Pressed, 0);
+				Color[1] = SoftenItemColor(Color[1], Focus, Hover, Pressed, 0);
+			}
+
 			break;
 /**
 			if (Flags & DIF_SETCOLOR)
@@ -1549,23 +1569,39 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 		}
 		case DI_BUTTON: {
 
+#define COLOR_DFL_IF(is_warn, warnColor_1, regularColor_1, is_default, warnColor_2, regularColor_2, is_disabled, warnDisabled, regularDisabled) \
+	((is_warn) ? ((is_disabled) ? (warnDisabled) : ((is_default) ? (warnColor_2) : (warnColor_1)) ) \
+			   : ((is_disabled) ? (regularDisabled) : ((is_default) ? (regularColor_2) : (regularColor_1) )) )
+
 			if (Focus)
 			{
 				SetCursorType(0, 10);
-				// TEXT
-				Color[0] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:(Default?COL_WARNDIALOGSELECTEDDEFAULTBUTTON:COL_WARNDIALOGSELECTEDBUTTON)) : (DisabledItem?COL_DIALOGDISABLED:(Default?COL_DIALOGSELECTEDDEFAULTBUTTON:COL_DIALOGSELECTEDBUTTON)));
-				// HiText
-				Color[1] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:(Default?COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON:COL_WARNDIALOGHIGHLIGHTSELECTEDBUTTON)) : (DisabledItem?COL_DIALOGDISABLED:(Default?COL_DIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON:COL_DIALOGHIGHLIGHTSELECTEDBUTTON)));
+				Color[0] = FarColorToReal( COLOR_DFL_IF(
+					IsWarning, COL_WARNDIALOGSELECTEDBUTTON, COL_DIALOGSELECTEDBUTTON,
+					Default, COL_WARNDIALOGSELECTEDDEFAULTBUTTON, COL_DIALOGSELECTEDDEFAULTBUTTON,
+					DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED ));
+				Color[1] = FarColorToReal( COLOR_DFL_IF(
+					IsWarning, COL_WARNDIALOGHIGHLIGHTSELECTEDBUTTON, COL_DIALOGHIGHLIGHTSELECTEDBUTTON,
+					Default, COL_WARNDIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON, COL_DIALOGHIGHLIGHTSELECTEDDEFAULTBUTTON,
+					DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED ));
 			}
 			else
 			{
-				// TEXT
-				Color[0] = FarColorToReal(IsWarning?
-						(DisabledItem?COL_WARNDIALOGDISABLED:(Default?COL_WARNDIALOGDEFAULTBUTTON:COL_WARNDIALOGBUTTON)):
-						(DisabledItem?COL_DIALOGDISABLED:(Default?COL_DIALOGDEFAULTBUTTON:COL_DIALOGBUTTON)));
-				// HiText
-				Color[1] = FarColorToReal(IsWarning? (DisabledItem?COL_WARNDIALOGDISABLED:(Default?COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON:COL_WARNDIALOGHIGHLIGHTBUTTON)) : (DisabledItem?COL_DIALOGDISABLED:(Default?COL_DIALOGHIGHLIGHTDEFAULTBUTTON:COL_DIALOGHIGHLIGHTBUTTON)));
+				Color[0] = FarColorToReal( COLOR_DFL_IF(
+					IsWarning, COL_WARNDIALOGBUTTON, COL_DIALOGBUTTON,
+					Default, COL_WARNDIALOGDEFAULTBUTTON, COL_DIALOGDEFAULTBUTTON,
+					DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED ));
+				Color[1] = FarColorToReal( COLOR_DFL_IF(
+					IsWarning, COL_WARNDIALOGHIGHLIGHTBUTTON, COL_DIALOGHIGHLIGHTBUTTON,
+					Default, COL_WARNDIALOGHIGHLIGHTDEFAULTBUTTON, COL_DIALOGHIGHLIGHTDEFAULTBUTTON,
+					DisabledItem, COL_WARNDIALOGDISABLED, COL_DIALOGDISABLED ));
 			}
+
+			if (!DisabledItem && (Focus || Hover || Pressed)) {
+				Color[0] = SoftenItemColor(Color[0], Focus, Hover, Pressed, 0);
+				Color[1] = SoftenItemColor(Color[1], Focus, Hover, Pressed, 0);
+			}
+
 			break;
 
 /**
@@ -1615,64 +1651,59 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 		case DI_COMBOBOX:
 		case DI_MEMOEDIT: {
 
+#define COLOR_FOCUS_IF(is_focus, focusColor, regularColor, is_disabled, disabledColor) \
+	( (is_disabled) ? (disabledColor) : ((is_focus)	? (focusColor) : (regularColor)) ) 
+
+#define COLOR_D_IF(is_disabled, regularColor, disabledColor) \
+	( (is_disabled) ? (disabledColor) : (regularColor) ) 
+
 			if (Type == DI_COMBOBOX && (Flags & DIF_DROPDOWNLIST))
 			{
 				if (IsWarning)
 				{
 					// Text
-					Color[0] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED: Focus? COL_WARNDIALOGEDITSELECTED : COL_WARNDIALOGEDIT);
-					// Select
-					Color[1] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : Focus? COL_WARNDIALOGEDITSELECTED : COL_WARNDIALOGEDIT);
-					// Unchanged
-					Color[2] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : Focus? COL_WARNDIALOGEDITSELECTED : COL_WARNDIALOGEDITUNCHANGED);
-					// History
-					Color[3] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGTEXT);
-					// Overflow arrow
-					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGOVERFLOWARROW);
+					Color[0] = FarColorToReal( COLOR_FOCUS_IF (Focus, COL_WARNDIALOGEDITSELECTED, COL_WARNDIALOGEDIT, DisabledItem, COL_WARNDIALOGEDITDISABLED) );
+					Color[1] = FarColorToReal( COLOR_FOCUS_IF (Focus, COL_WARNDIALOGEDITSELECTED, COL_WARNDIALOGEDIT, DisabledItem, COL_WARNDIALOGEDITDISABLED) );
+					Color[2] = FarColorToReal( COLOR_FOCUS_IF (Focus, COL_WARNDIALOGEDITSELECTED, COL_WARNDIALOGEDITUNCHANGED, DisabledItem, COL_WARNDIALOGEDITDISABLED) );
+					Color[3] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_WARNDIALOGTEXT, COL_WARNDIALOGDISABLED) );
+					Color[4] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_WARNDIALOGOVERFLOWARROW, COL_WARNDIALOGDISABLED) );
 				}
 				else
 				{
-					// Text
-					Color[0] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED : Focus? COL_DIALOGEDITSELECTED : COL_DIALOGEDIT);
-					// Select
-					Color[1] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED: Focus? COL_DIALOGEDITSELECTED : COL_DIALOGEDIT);
-					// Unchanged
-					Color[2] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED :  Focus? COL_DIALOGEDITSELECTED : COL_DIALOGEDITUNCHANGED);
-					// History
-					Color[3] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGTEXT);
-					// Overflow arrow
-					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGOVERFLOWARROW);
+
+					Color[0] = FarColorToReal( COLOR_FOCUS_IF (Focus, COL_DIALOGEDITSELECTED, COL_DIALOGEDIT, DisabledItem, COL_DIALOGEDITDISABLED) );
+					Color[1] = FarColorToReal( COLOR_FOCUS_IF (Focus, COL_DIALOGEDITSELECTED, COL_DIALOGEDIT, DisabledItem, COL_DIALOGEDITDISABLED) );
+					Color[2] = FarColorToReal( COLOR_FOCUS_IF (Focus, COL_DIALOGEDITSELECTED, COL_DIALOGEDITUNCHANGED, DisabledItem, COL_DIALOGEDITDISABLED) );
+					Color[3] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_DIALOGTEXT, COL_DIALOGDISABLED) );
+					Color[4] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_DIALOGOVERFLOWARROW, COL_DIALOGDISABLED) );
 				}
 			}
 			else
 			{
 				if (IsWarning)
 				{
-					// Text
-					Color[0] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : Flags & DIF_NOFOCUS? COL_WARNDIALOGEDITUNCHANGED : COL_WARNDIALOGEDIT);
-					// Select
-					Color[1] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : COL_WARNDIALOGEDITSELECTED);
-					// Unchanged
-					Color[2] = FarColorToReal(DisabledItem? COL_WARNDIALOGEDITDISABLED : COL_WARNDIALOGEDITUNCHANGED);
-					// History
-					Color[3] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGTEXT);
-					// Overflow arrow
-					Color[4] = FarColorToReal(DisabledItem? COL_WARNDIALOGDISABLED : COL_WARNDIALOGOVERFLOWARROW);
+					Color[0] = FarColorToReal( COLOR_FOCUS_IF (Flags & DIF_NOFOCUS, COL_WARNDIALOGEDITUNCHANGED, COL_WARNDIALOGEDIT, DisabledItem, COL_WARNDIALOGEDITDISABLED) );
+					Color[1] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_WARNDIALOGEDITSELECTED, COL_WARNDIALOGEDITDISABLED) );
+					Color[2] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_WARNDIALOGEDITUNCHANGED, COL_WARNDIALOGEDITDISABLED) );
+					Color[3] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_WARNDIALOGTEXT, COL_WARNDIALOGDISABLED) );
+					Color[4] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_WARNDIALOGOVERFLOWARROW, COL_WARNDIALOGDISABLED) );
 				}
 				else
 				{
-					// Text
-					Color[0] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED : Flags & DIF_NOFOCUS? COL_DIALOGEDITUNCHANGED : COL_DIALOGEDIT);
-					// Select
-					Color[1] = FarColorToReal(DisabledItem? COL_DIALOGEDITDISABLED : COL_DIALOGEDITSELECTED);
-					// Unchanged
-					Color[2] = FarColorToReal(DisabledItem ? COL_DIALOGEDITDISABLED : COL_DIALOGEDITUNCHANGED);
-					// History
-					Color[3] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGTEXT);
-					// Overflow arrow
-					Color[4] = FarColorToReal(DisabledItem? COL_DIALOGDISABLED : COL_DIALOGOVERFLOWARROW);
+					Color[0] = FarColorToReal( COLOR_FOCUS_IF (Flags & DIF_NOFOCUS, COL_DIALOGEDITUNCHANGED, COL_DIALOGEDIT, DisabledItem, COL_DIALOGEDITDISABLED) );
+					Color[1] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_DIALOGEDITSELECTED, COL_DIALOGEDITDISABLED) );
+					Color[2] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_DIALOGEDITUNCHANGED, COL_DIALOGEDITDISABLED) );
+					Color[3] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_DIALOGTEXT, COL_DIALOGDISABLED) );
+					Color[4] = FarColorToReal( COLOR_D_IF (DisabledItem, COL_DIALOGOVERFLOWARROW, COL_DIALOGDISABLED) );
 				}
 			}
+
+			if (IsWxBackend() && Opt.Backend.UseModernLook && !DisabledItem && !Focus && (Hover || Pressed)) {
+				Color[0] = SoftenItemColor(Color[0], Focus, Hover, Pressed, 0);
+				Color[1] = SoftenItemColor(Color[1], Focus, Hover, Pressed, 0);
+				Color[2] = SoftenItemColor(Color[2], Focus, Hover, Pressed, 0);
+			}
+
 			break;
 /**
 			if (Type == DI_COMBOBOX && (Flags & DIF_DROPDOWNLIST)) {
@@ -1761,6 +1792,10 @@ DWORD Dialog::CtlColorDlgItem(int ItemPos, const DialogItemEx *CurItem, uint64_t
 	DWORD out = DlgProc((HANDLE)this, DN_CTLCOLORDLGITEM, ItemPos, (LONG_PTR)Color);
 	--InCtlColorDlgItem;
 	return out;
+#undef COLOR_IF
+#undef COLOR_DFL_IF
+#undef COLOR_FOCUS_IF
+#undef COLOR_D_IF
 }
 
 /*
@@ -1786,6 +1821,8 @@ void Dialog::ShowDialog(unsigned ID)
 
 	if (Locked())
 		return;
+
+	CloseX = CloseY = -1;
 
 	FARString strStr;
 	DialogItemEx *CurItem;
@@ -1854,6 +1891,11 @@ void Dialog::ShowDialog(unsigned ID)
 		SetCursorType(CursorVisible, CursorSize);
 	}
 
+	if (Opt.Backend.UseModernLook && IsWxBackend()) ID = 0; // draw everything always: backend will filter the rendering area
+	dialogBox = false;
+
+	HintBeginContainer();
+	Hint(X1, Y1, X2, Y2, HintDialog, HintObjectNone);
 	for (I = ID; I < DrawItemCount; I++) {
 		CurItem = Item[I];
 
@@ -1889,6 +1931,16 @@ void Dialog::ShowDialog(unsigned ID)
 			if (CurItem->customItemColor[g])
 				ItemColor[g] = CurItem->customItemColor[g];
 
+		// drawing hacks here
+		bool dialogBoxFound = false;
+		if (Opt.Backend.UseModernLook) {
+			// main border: rearrange to real corners
+			if (CurItem->Type == DI_DOUBLEBOX /* && CX1 == 2 && CX2 == X2 - -X1 - 2 && CY1 == 1 && CY2 == Y2 - Y1 - 1*/) {
+				CX1 = 0; CX2 = X2 - X1; CY1 = 0; CY2 = Y2 - Y1;
+				dialogBoxFound = true;	
+			}
+		}
+
 #if 0
 
 		// TODO: прежде чем эту строку применять... нужно проверить _ВСЕ_ диалоги на предмет X2, Y2. !!!
@@ -1897,7 +1949,6 @@ void Dialog::ShowDialog(unsigned ID)
 			SetScreen(X1+CX1,Y1+CY1,X1+CX2,Y1+CY2,' ',Attr&0xFF);
 
 #endif
-
 		switch (CurItem->Type) {
 				/* ***************************************************************** */
 			case DI_SINGLEBOX:
@@ -1915,6 +1966,15 @@ void Dialog::ShowDialog(unsigned ID)
 				} else {
 					Box(X1 + CX1, Y1 + CY1, X1 + CX2, Y1 + CY2, ItemColor[2],
 							(CurItem->Type == DI_SINGLEBOX) ? SINGLE_BOX : DOUBLE_BOX);
+    				if (dialogBoxFound) {
+                    	CloseX = X1 + CX2 - 1; // - (IsWxBackend() ? 0 : 1);
+                        CloseY = Y1 + CY1;
+                        dialogBox = true;
+    					GotoXY(CloseX, CloseY);
+                        strStr = L"✖"; // IsWxBackend() ? L"✖" : L"❌";
+                        SetColor(SoftenItemColor(ItemColor[0], CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
+    					Text(strStr);
+    				}
 				}
 
 				if (!CurItem->strData.IsEmpty() && IsDrawTitle) {
@@ -1935,7 +1995,7 @@ void Dialog::ShowDialog(unsigned ID)
 
 					X = X1 + CX1 + (CW - LenText) / 2;
 
-					if ((CurItem->Flags & DIF_LEFTTEXT) && X1 + CX1 + 1 < X)
+					if (Opt.Backend.UseModernLook || ((CurItem->Flags & DIF_LEFTTEXT) && X1 + CX1 + 1 < X))
 						X = X1 + CX1 + 1;
 
 //					SetColorNormal(Attr, CurItem->TrueColors);
@@ -1946,6 +2006,11 @@ void Dialog::ShowDialog(unsigned ID)
 						Text(strStr);
 					else
 						HiText(strStr, ItemColor[1]);
+					
+					Hint(X1 + CX1, Y1 + CY1, X1 + CX2, Y1 + CY1, HintDialog, HintBox);
+					Hint(X1 + CX1, Y1 + CY1, X1 + CX1, Y1 + CY2, HintDialog, HintBox);
+					Hint(X1 + CX2, Y1 + CY1, X1 + CX2, Y1 + CY2, HintDialog, HintBox);
+					Hint(X1 + CX2, Y1 + CY1, X1 + CX2, Y1 + CY2, HintDialog, HintBox);
 
 /**
 					if (CurItem->Flags & DIF_SHOWAMPERSAND)
@@ -1955,7 +2020,6 @@ void Dialog::ShowDialog(unsigned ID)
 					else
 						HiText(strStr, ItemColor[1]);
 **/
-
 				}
 
 				break;
@@ -1969,9 +2033,16 @@ void Dialog::ShowDialog(unsigned ID)
 						&& (CurItem->Flags & DIF_CENTERTEXT) && CX1 != -1)
 					LenText = LenStrItem(I, CenterStr(strStr, strStr, CX2 - CX1 + 1));
 
-				X = (CX1 == -1 || (CurItem->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2)))
-						? (X2 - X1 + 1 - LenText) / 2
-						: CX1;
+				X = (CX1 == -1) ? (X2 - X1 + 1 - LenText) / 2 : CX1;
+
+				if (CurItem->Flags & (DIF_SEPARATOR | DIF_SEPARATOR2)) {
+					X = (X2 - X1 + 1 - LenText) / 2;
+
+					if (Opt.Backend.UseModernLook && CX1 >= 0)
+						X = CX1 + 1;
+
+				}
+
 				Y = (CY1 == -1) ? (Y2 - Y1 + 1) / 2 : CY1;
 
 				if (X < 0)
@@ -2030,10 +2101,10 @@ void Dialog::ShowDialog(unsigned ID)
 				if (CurItem->Flags & (DIF_SEPARATORUSER | DIF_SEPARATOR | DIF_SEPARATOR2)) {
 //					SetColorFrame(Attr, CurItem->TrueColors);
 					SetColor(ItemColor[2]);
-					GotoXY(X1
-									+ ((CurItem->Flags & DIF_SEPARATORUSER)
-													? X
-													: (!DialogMode.Check(DMODE_SMALLDIALOG) ? 3 : 0)),
+					GotoXY(X1 + 
+								((CurItem->Flags & DIF_SEPARATORUSER)
+								? X
+								: (!DialogMode.Check(DMODE_SMALLDIALOG) ? 3 : 0)),
 							Y1 + Y);	//????
 					ShowUserSeparator((CurItem->Flags & DIF_SEPARATORUSER)
 									? X2 - X1 + 1
@@ -2042,6 +2113,7 @@ void Dialog::ShowDialog(unsigned ID)
 									? 12
 									: (CurItem->Flags & DIF_SEPARATOR2 ? 3 : 1),
 							CurItem->strMask);
+					HintAt(HintDialog, HintLine, false, false, (CurItem->Flags & DIF_DISABLE) != 0);
 				}
 
 //				SetColorNormal(Attr, CurItem->TrueColors);
@@ -2055,6 +2127,7 @@ void Dialog::ShowDialog(unsigned ID)
 					// MessageBox(0, strStr, strStr, MB_OK);
 					HiText(strStr, ItemColor[1]);
 				}
+				HintAt(HintDialog, HintText, false, false, (CurItem->Flags & DIF_DISABLE) != 0);
 
 				break;
 			}
@@ -2142,6 +2215,7 @@ void Dialog::ShowDialog(unsigned ID)
 									? 13
 									: (CurItem->Flags & DIF_SEPARATOR2 ? 7 : 5),
 							CurItem->strMask);
+					HintAt(HintDialog, HintLine, false, false, (CurItem->Flags & DIF_DISABLE) != 0);
 				}
 
 #endif
@@ -2153,40 +2227,50 @@ void Dialog::ShowDialog(unsigned ID)
 					VText(strStr);
 				else
 					HiText(strStr, ItemColor[1], TRUE);
-
+				HintAt(HintDialog, HintText, false, false, (CurItem->Flags & DIF_DISABLE) != 0);
 				break;
 			}
 			/* ***************************************************************** */
 			case DI_CHECKBOX:
 			case DI_RADIOBUTTON: {
+				FARString checkMark;
+
 //				SetColorNormal(Attr, CurItem->TrueColors);
 				SetColor(ItemColor[0]);
 				GotoXY(X1 + CX1, Y1 + CY1);
 
 				if (CurItem->Type == DI_CHECKBOX) {
-					const wchar_t Check[] = {L'[',
+					const wchar_t Check[] = {
+						(Opt.Backend.UseModernLook ? L' ' : L'['),
 							(CurItem->Selected ? (((CurItem->Flags & DIF_3STATE) && CurItem->Selected == 2)
 												? *Msg::CheckBox2State
-												: L'x')
-												: L' '),
-							L']', L'\0'};
+												: ( Opt.Backend.UseModernLook ? L'✔' /* ☑️ ☒ ✔️✓ ✅ */ : L'x'))
+												: ( Opt.Backend.UseModernLook ? L'☐' /* L'✘' 🔲 🔳 ▢ ☐ ⧠ ✖️ X ✘ X ❌ ❎ */ : L' ')),
+						(Opt.Backend.UseModernLook ? L' ' : L']'), L'\0'};
 					strStr = Check;
+
+					checkMark = Check;
 
 					if (CurItem->strData.GetLength())
 						strStr+= L" ";
 				} else {
-					wchar_t Dot[] = {L' ', CurItem->Selected ? L'\x2022' : L' ', L' ', L'\0'};
+					wchar_t Dot[] = {L' ', CurItem->Selected ? 
+						( Opt.Backend.UseModernLook ? L'⦿' : L'\x2022') : 
+						( Opt.Backend.UseModernLook ? L'◯' : L' '), 
+						L' ', L'\0'};
 
 					if (CurItem->Flags & DIF_MOVESELECT) {
 						strStr = Dot;
 					} else {
-						Dot[0] = L'(';
-						Dot[2] = L')';
+						Dot[0] = Opt.Backend.UseModernLook ? L' ' : L'(';
+						Dot[2] = Opt.Backend.UseModernLook ? L' ' : L')';
 						strStr = Dot;
 
 						if (CurItem->strData.GetLength())
 							strStr+= L" ";
 					}
+
+					checkMark = Dot; 
 				}
 
 				strStr+= CurItem->strData;
@@ -2199,34 +2283,118 @@ void Dialog::ShowDialog(unsigned ID)
 					Text(strStr);
 				else
 					HiText(strStr, ItemColor[1]);
+				HintAt(HintDialog, HintCheckbox, CurItem->Focus, CurItem->Hover, (CurItem->Flags & DIF_DISABLE) != 0, CurItem->Selected);
+
+				if (Opt.Backend.UseModernLook) {
+					if(!IsWxBackend()) {
+						SetColor(SoftenItemColor(GetAccentColors(ItemColor[0]), CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
+						GotoXY(X1 + CX1, Y1 + CY1);
+						Text(checkMark);
+					}
+					else {
+						// check status needs to be changed on both places
+						SetColor(SoftenItemColor(ItemColor[0], CurItem->Focus, CurItem->Hover, CurItem->Pressed, CurItem->Selected));
+						// SetColor(SoftenItemColor(GetAccentColors(ItemColor[0]), CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
+						GotoXY(X1 + CX1 + 1, Y1 + CY1);
+						Text(checkMark.LShift(1));
+					}
+				}
 
 				if (CurItem->Focus) {
 					// Отключение мигающего курсора при перемещении диалога
-					if (!DialogMode.Check(DMODE_DRAGGED))
-						SetCursorType(1, -1);
-
-					MoveCursor(X1 + CX1 + 1, Y1 + CY1);
+					if (!Opt.Backend.UseModernLook) {
+						if (!DialogMode.Check(DMODE_DRAGGED)) SetCursorType(1, -1);
+						MoveCursor(X1 + CX1 + 1, Y1 + CY1);
+					}
 				}
 
 				break;
 			}
 			/* ***************************************************************** */
 			case DI_BUTTON: {
+				bool drawn = false;
+
 				strStr = CurItem->strData;
 				SetColor(ItemColor[0]);
 //				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + CX1, Y1 + CY1);
 
-				if (CurItem->Flags & DIF_SHOWAMPERSAND)
-					Text(strStr);
-				else
-					HiText(strStr,ItemColor[1]);
-//					HiText(strStr, HIBYTE(LOWORD(Attr)));
+				if ((CurItem->Flags & DIF_NOBRACKETS) == 0 || strStr.At(0) == L'{' || strStr.At(0) == L'[') {
+    				if (CurItem->Focus) { 
+    					strStr.ReplaceChar(0, L'►');
+    					strStr.ReplaceChar(strStr.GetLength() - 1, L'◄'); 
+    					strStr.ReplaceChar(1, CurItem->DefaultButton ? L'★' : L' ');
+    					strStr.ReplaceChar(strStr.GetLength() - 2, L' '); 
+    				}
+    				else {
+    					// modern + wx: no brackets
+    					// modern + !wx: unicode glyphs
+    					// !modern: old crazy brackets
+
+    					if(Opt.Backend.UseModernLook) {
+    						strStr.ReplaceChar(1, CurItem->DefaultButton ? L'★' : L' ');
+    						if (IsWxBackend() /*&& Opt.Backend.Use3D*/) {
+    							strStr.ReplaceChar(0, L' ');
+    							strStr.ReplaceChar(strStr.GetLength() - 1, L' '); 
+    						}
+    						else {
+    							strStr.ReplaceChar(strStr.GetLength() - 2, CurItem->DefaultButton ? L'★' : L' ');  // •
+
+	                        	SetColor(ItemColor[0]);
+	   							//strStr.ReplaceChar(0, L'❲');
+    							//strStr.ReplaceChar(strStr.GetLength() - 1, L'❳'); 
+    							strStr.ReplaceChar(0, L' ');
+    							strStr.ReplaceChar(strStr.GetLength() - 1, L' '); 
+
+	           					if (!(CurItem->Flags & DIF_SHOWAMPERSAND)) 
+	           					{
+    	                            FARString left = strStr.SubStr(0, 1);
+        	                        FARString text = strStr.SubStr(1, strStr.GetLength() - 2);
+            	                    FARString right = strStr.SubStr(strStr.GetLength() - 1);
+
+            						Text(left);
+                                   	// SetColor(COMMON_LVB_UNDERSCORE | ItemColor[0]);
+                                    SetColor(COMMON_LVB_UNDERSCORE |
+                                    	// SoftenItemColor(GetAccentColors(ItemColor[0]), CurItem->Focus, CurItem->Hover, CurItem->Pressed, 0));
+                                        GetLinkColor(ItemColor[0]));
+            						HiText(text, COMMON_LVB_UNDERSCORE | ItemColor[1]);
+                                    SetColor(ItemColor[0]);
+            						Text(right);
+
+                                    drawn = true;
+            					}
+    						}
+    					}
+    					else {
+    						strStr.ReplaceChar(0, CurItem->DefaultButton ? L'{' : L'[');
+    						strStr.ReplaceChar(strStr.GetLength() - 1, CurItem->DefaultButton ? L'}' : L']'); 
+    					}
+    				}
+				}
+
+				if (!drawn) {
+					if (CurItem->Flags & DIF_SHOWAMPERSAND)
+						Text(strStr);
+					else
+						HiText(strStr,ItemColor[1]);
+				}
 
 				if (CurItem->Flags & DIF_SETSHIELD) {
 					int startx = X1 + CX1 + (CurItem->Flags & DIF_NOBRACKETS ? 0 : 2);
 					ScrBuf.ApplyColor(startx, Y1 + CY1, startx + 1, Y1 + CY1, 0xE9);
 				}
+				HintAt(HintDialog, HintButton, 
+					CurItem->Focus, false, 
+					(CurItem->Flags & DIF_DISABLE) != 0, 
+					CurItem->Selected, 
+					CurItem->DefaultButton,
+					(CurItem->Flags & DIF_NOBRACKETS) != 0);
+                /*
+        		fprintf(stderr, "button `%ls`: pos=%d,%d..%d,%d, focus=%c hover=%c disabled=%c\n", 
+                	strStr.GetWide().c_str(),
+        			X1 + CX1, Y1 + CY1, (int)(X1 + CX1 + strStr.GetLength()), Y1 + CY1,
+        			CurItem->Focus ? 'Y': 'n', false ? 'Y': 'n', (CurItem->Flags & DIF_DISABLE) != 0 ? 'Y': 'n');
+                */
 				break;
 			}
 			/* ***************************************************************** */
@@ -2263,11 +2431,12 @@ void Dialog::ShowDialog(unsigned ID)
 				if (DialogMode.Check(DMODE_DRAGGED))
 					SetCursorType(0, 0);
 
+				int EditX1, EditY1, EditX2, EditY2;
+				EditPtr->GetPosition(EditX1, EditY1, EditX2, EditY2);
 				if (ItemHasDropDownArrow(CurItem)) {
-					int EditX1, EditY1, EditX2, EditY2;
-					EditPtr->GetPosition(EditX1, EditY1, EditX2, EditY2);
 					// Text((CurItem->Type == DI_COMBOBOX?"\x1F":"\x19"));
 					Text(EditX2 + 1, EditY1, ItemColor[3], L"\x2193");
+                    ++EditX2;
 				}
 
 				if (CurItem->Type == DI_COMBOBOX && GetDropDownOpened() && CurItem->ListPtr->IsVisible())		// need redraw VMenu?
@@ -2275,6 +2444,7 @@ void Dialog::ShowDialog(unsigned ID)
 					CurItem->ListPtr->Hide();
 					CurItem->ListPtr->Show();
 				}
+				Hint(EditX1, EditY1, EditX2, EditY2, HintDialog, HintMemoEdit, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0);
 
 				break;
 			}
@@ -2297,6 +2467,10 @@ void Dialog::ShowDialog(unsigned ID)
 					GetCursorType(CursorVisible, CursorSize);
 					CurItem->ListPtr->Show();
 
+					int EditX1, EditY1, EditX2, EditY2;
+					CurItem->ListPtr->GetPosition(EditX1, EditY1, EditX2, EditY2);
+					Hint(EditX1, EditY1, EditX2, EditY2, HintDialog, HintListBox, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0);
+
 					// .. а теперь восстановим!
 					if (FocusPos != I)
 						SetCursorType(CursorVisible, CursorSize);
@@ -2309,6 +2483,7 @@ void Dialog::ShowDialog(unsigned ID)
 			case DI_USERCONTROL:
 				if (CurItem->Reserved > 0xff) {
 					PutText(X1 + CX1, Y1 + CY1, X1 + CX2, Y1 + CY2, CurItem->VBuf);
+					Hint(X1 + CX1, Y1 + CY1, X1 + CX2, Y1 + CY2, HintDialog, HintUserControl, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0);
 				} else { // fill with spaces of given attibutes
 					CHAR_INFO ci{};
 					CI_SET_WCHAR(ci, L' ');
@@ -2316,9 +2491,11 @@ void Dialog::ShowDialog(unsigned ID)
 					for (auto Y = Y1 + CY1; Y <= Y1 + CY2; ++Y) {
 						for (auto X = X1 + CX1; X <= X1 + CX2; ++X) {
 							PutText(X, Y, X, Y, &ci);
+							Hint(X, Y, X, Y, HintDialog, HintUserControl, CurItem->Focus, false, (CurItem->Flags & DIF_DISABLE) != 0);
 						}
 					}
 				}
+
 				// не забудем переместить курсор, если он позиционирован.
 				if (FocusPos == I) {
 					if (CurItem->UCData->CursorPos.X != -1 && CurItem->UCData->CursorPos.Y != -1) {
@@ -2335,6 +2512,7 @@ void Dialog::ShowDialog(unsigned ID)
 				//.........
 		}	// end switch(...
 	}		// end for (I=...
+	HintEndContainer();
 
 	// КОСТЫЛЬ!
 	// но работает ;-)
@@ -3335,8 +3513,55 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	MsX = MouseEvent->dwMousePosition.X;
 	MsY = MouseEvent->dwMousePosition.Y;
 
+	// Hover effect processing
+	if (Opt.Backend.UseModernLook && MouseEvent->dwEventFlags == MOUSE_MOVED) {
+		int oldHover = -1, newHover = -1;
+		for (I = ItemCount - 1; I != (unsigned)-1; I--) {
+			if (Item[I]->Hover) oldHover = I;
+			Item[I]->Hover = 0;
+			Item[I]->Pressed = 0;
+
+			// hover for close button
+			if (dialogBox && (Item[I]->Type == DI_SINGLEBOX || Item[I]->Type == DI_DOUBLEBOX )) {
+				if (MsY == CloseY && (MsX == CloseX || MsX == CloseX + 1)) {
+					Item[I]->Hover = 1;
+					newHover = I;
+				}
+			}
+
+			if (Item[I]->Flags & (DIF_DISABLE | DIF_HIDDEN)) continue;
+
+			GetItemRect(I, Rect);
+			Rect.Left+= X1;
+			Rect.Top+= Y1;
+			Rect.Right+= X1;
+			Rect.Bottom+= Y1;
+
+			if (MsX >= Rect.Left && MsY >= Rect.Top && MsX <= Rect.Right && MsY <= Rect.Bottom) {
+				if(IsItemFocusable(Item[I])) {
+					newHover = I;
+					Item[I]->Hover = 1;
+				}
+			}
+		}
+		// return TRUE;
+
+		if (oldHover != newHover) {
+			ShowDialog();
+			return TRUE;
+		}
+	}
+
 	// for (I=0;I<ItemCount;I++)
 	for (I = ItemCount - 1; I != (unsigned)-1; I--) {
+
+		if (dialogBox && (Item[I]->Type == DI_SINGLEBOX || Item[I]->Type == DI_DOUBLEBOX )) {
+			if (MsY == CloseY && (MsX == CloseX || MsX == CloseX + 1) && MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED)) {
+				ProcessKey(KEY_ESC);
+				return TRUE;
+			}
+		}
+
 		if (Item[I]->Flags & (DIF_DISABLE | DIF_HIDDEN))
 			continue;
 
@@ -3533,7 +3758,8 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			}
 		}
 
-		if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)) {
+		// dialog hides other clicks except left mouse?
+		if ( MouseEvent->dwButtonState & (FROM_LEFT_1ST_BUTTON_PRESSED) ) {
 			// for (I=0;I<ItemCount;I++)
 
 			for (I = ItemCount - 1; I != (unsigned)-1; I--) {
@@ -3680,6 +3906,7 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 							}
 
 							// Да, мальчик был. Зачнем...
+							// Dragged here: Hide / Show with locked window?
 							{
 								LockScreen LckScr;
 								Hide();
@@ -3693,7 +3920,8 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 								Show();
 							}
 						}
-					} else if (Mb == RIGHTMOST_BUTTON_PRESSED)		// abort
+					} 
+					else if (Mb == RIGHTMOST_BUTTON_PRESSED)		// abort
 					{
 						LockScreen LckScr;
 						Hide();
@@ -3709,7 +3937,8 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 							Show();
 
 						break;
-					} else		// release key, drop dialog
+					} 
+					else		// release key, drop dialog
 					{
 						if (OldX1 != X1 || OldX2 != X2 || OldY1 != Y1 || OldY2 != Y2) {
 							LockScreen LckScr;

@@ -24,7 +24,7 @@
 #include "../NotifySh.h"
 #include "base64.h"
 #include "TTYPrinterSupport.h"
-
+#include "TTYShareBackendOptions.h"
 
 #define PROBE_IMAGE_ID "tty-backend-image-probe"
 
@@ -187,6 +187,7 @@ bool TTYBackend::Startup()
 	}
 
 	_printer_backend_setter.Set<ttyPrinterSupportBackend>();
+	_share_backend_setter.Set<ttyShareBackendOptionsBackend>();
 
 	return true;
 }
@@ -880,6 +881,15 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 		out|= TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
 	}
 
+	return out;
+}
+
+DWORD64 TTYBackend::OnConsoleGetTweaks()
+{
+	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
+	if (_tty_caps.kind != TTYCaps::FAR2L && !_ttyx) {
+		out|= TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
+	}
 	return out;
 }
 

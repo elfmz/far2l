@@ -133,10 +133,10 @@ bool dlgOpenEditor(FARString &strFileName, UINT &codepage)
 		{DI_DOUBLEBOX, 3,  1, 72, 8, {}, 0, Msg::EditTitle},
 		{DI_TEXT,      5,  2, 0,  2, {}, 0, Msg::EditOpenCreateLabel},
 		{DI_EDIT,      5,  3, 70, 3, {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
-		{DI_TEXT,      3,  4, 0,  4, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,  4, 0,  4, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,      5,  5, 0,  5, {}, 0, Msg::EditCodePage},
 		{DI_COMBOBOX,  25, 5, 70, 5, {}, DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""},
-		{DI_TEXT,      3,  6, 0,  6, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,      3,  6, 0,  6, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,    0,  7, 0,  7, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0,  7, 0,  7, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
@@ -242,17 +242,17 @@ bool dlgSaveFileAs(FARString &strFileName, int &TextFormat, UINT &codepage, bool
 		{DI_DOUBLEBOX,   3,  1,  72, 15, {}, 0, Msg::EditTitle},
 		{DI_TEXT,        5,  2,  0,  2,  {}, 0, Msg::EditSaveAs},
 		{DI_EDIT,        5,  3,  70, 3,  {(DWORD_PTR)HistoryName}, DIF_FOCUS | DIF_HISTORY | DIF_EDITEXPAND | DIF_EDITPATH, L""},
-		{DI_TEXT,        3,  4,  0,  4,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  4,  0,  4,  {}, (Opt.Backend.UseModernLook ? 0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,        5,  5,  0,  5,  {}, 0, Msg::EditCodePage},
 		{DI_COMBOBOX,    25, 5,  70, 5,  {}, DIF_DROPDOWNLIST | DIF_LISTWRAPMODE | DIF_LISTAUTOHIGHLIGHT, L""},
 		{DI_CHECKBOX,    5,  6,  0,  6,  {AddSignature}, DIF_DISABLE, Msg::EditAddSignature},
-		{DI_TEXT,        3,  7,  0,  7,  {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  7,  0,  7,  {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_TEXT,        5,  8,  0,  8,  {}, 0, Msg::EditSaveAsFormatTitle},
 		{DI_RADIOBUTTON, 5,  9,  0,  9,  {}, DIF_GROUP, Msg::EditSaveOriginal},
 		{DI_RADIOBUTTON, 5,  10, 0,  10, {}, 0, Msg::EditSaveDOS},
 		{DI_RADIOBUTTON, 5,  11, 0,  11, {}, 0, Msg::EditSaveUnix},
 		{DI_RADIOBUTTON, 5,  12, 0,  12, {}, 0, Msg::EditSaveMac},
-		{DI_TEXT,        3,  13, 0,  13, {}, DIF_SEPARATOR, L""},
+		{DI_TEXT,        3,  13, 0,  13, {}, (Opt.Backend.UseModernLook ?  0 : DIF_SEPARATOR), L""},
 		{DI_BUTTON,      0,  14, 0,  14, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,      0,  14, 0,  14, {}, DIF_CENTERGROUP, Msg::Cancel}
 	};
@@ -2109,8 +2109,10 @@ void FileEditor::ShowConsoleTitle()
 
 void FileEditor::SetScreenPosition()
 {
+	Hint(X1, Y1, X2, Y2, HintEditor, HintObjectNone);
 	if (Flags.Check(FFILEEDIT_FULLSCREEN)) {
 		SetPosition(0, 0, ScrX, ScrY);
+		Hint(0, 0, ScrX, ScrY, HintEditor, HintObjectNone);
 	}
 	if (m_editor) {
 		int newY1 = Y1 + (TitleBarVisible ? 1 : 0) + (MenuBarVisible ? 1 : 0);

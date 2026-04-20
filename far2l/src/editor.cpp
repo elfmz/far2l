@@ -573,6 +573,9 @@ void Editor::ShowEditor(int CurLineOnly)
 
 		int CurrentLineNum = GetTopScreenLineNumber();
 
+		// VK: todo: is it correct for dialogs?
+		Hint(X1, Y1, X2, Y2, HintEditor, HintObjectNone);
+
 		for (int Y = Y1; Y <= Y2; Y++)
 		{
 			if (!CurLogicalLine)

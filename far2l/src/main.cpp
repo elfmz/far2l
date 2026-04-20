@@ -81,6 +81,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "message.hpp"
 
+#include "backendsupport.hpp"
+
 #ifdef DIRECT_RT
 int DirectRT = 0;
 #endif
@@ -691,6 +693,17 @@ int FarAppMain(int argc, char **argv)
 
 	UpdateDefaultColumnTypeWidths();
 	CheckForImportLegacyShortcuts();
+
+	// here we are: everything loaded
+
+	// workaround for legacy flags from command line
+	if (Opt.NoGraphics || Opt.NoBoxes) {
+		Opt.Backend.UseModernLook = 0;
+		Opt.AutoSaveSetup = 0;
+	}
+
+	BackendConfigSupport shareConfig;
+	shareConfig.ShareConfig(&Opt.Backend);
 
 	// (!!!) temporary STUB because now Editor can not input filename "", see: fileedit.cpp -> FileEditor::Init()
 	// default Editor file name for new empty file

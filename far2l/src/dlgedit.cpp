@@ -738,7 +738,6 @@ void DlgEdit::SetScreenPosition()
 
 void DlgEdit::ResizeConsole()
 {
-
 	if (Type == DLGEDIT_MULTILINE)
 		multiEdit->ResizeConsole();
 	else

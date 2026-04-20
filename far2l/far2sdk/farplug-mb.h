@@ -247,6 +247,7 @@ namespace oldfar
 		LIF_DISABLE            = 0x00080000UL,
 		LIF_GRAYED             = 0x00100000UL,
 		LIF_HIDDEN             = 0x00200000UL,
+		LIF_HOVERED            = 0x00400000UL,
 		LIF_USETEXTPTR         = 0x40000000UL,
 		LIF_DELETEUSERDATA     = 0x80000000UL,
 	};

@@ -116,7 +116,11 @@ struct DialogItemEx
 {
 	int Type;
 	int X1, Y1, X2, Y2;
+	
 	int Focus;
+	int Hover;
+	int Pressed;
+
 	union
 	{
 		DWORD_PTR Reserved;
@@ -162,6 +166,7 @@ struct DialogItemEx
 		Y2 = 0;
 		Focus = 0;
 		Reserved = 0;
+		Hover = Pressed = 0;
 		strHistory.Clear();
 		strMask.Clear();
 		Flags = 0;
@@ -193,6 +198,8 @@ struct DialogItemEx
 			customItemColor);
 
 		Focus = Other.Focus;
+		Hover = Other.Hover;
+		Pressed = Other.Pressed;
 		Reserved = Other.Reserved;
 		Flags = Other.Flags;
 		DefaultButton = Other.DefaultButton;
@@ -309,6 +316,8 @@ private:
 	GUID Id;
 	bool IdExist;
 	int AltState, CtrlState, ShiftState;
+	bool dialogBox;
+	int CloseX, CloseY;
 
 private:
 	void Init(FARWINDOWPROC DlgProc, LONG_PTR InitParam);

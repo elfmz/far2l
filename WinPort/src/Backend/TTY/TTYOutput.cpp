@@ -445,13 +445,13 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 {
 // ESC[#;#H Moves cursor to line #, column #
-	if (x == 1 && !_tty_caps.strict_pos) {
+	if (x == 1) {
 		if (y == 1) {
 			Write(ESC "[H", 3);
 		} else if (_tty_caps.kind == TTYCaps::FAR2L) { // many other terminals support this too, but not all (see #1725)
 			Format(ESC "[%dH", y);
 		} else {
-			Format(ESC "[%d;H", y);
+			Format(ESC "[%d;1H", y); // cant leave empty space between semicolon and H cuz wezterm goes crazy due to this
 		}
 	} else {
 		Format(ESC "[%d;%dH", y, x);
@@ -463,7 +463,7 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
 	// workaround for https://github.com/elfmz/far2l/issues/1889
-	if ((_cursor.y != y && _cursor.x != x) || _tty_caps.strict_pos) {
+	if (_cursor.y != y && _cursor.x != x) {
 		MoveCursorStrict(y, x);
 
 	} else if (x != _cursor.x) {

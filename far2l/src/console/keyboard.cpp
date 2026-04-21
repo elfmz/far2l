@@ -445,25 +445,27 @@ unsigned int WINAPI InputRecordToKey(const INPUT_RECORD *r)
 DWORD IsMouseButtonPressed()
 {
 	std::vector<INPUT_RECORD> recs;
-	for (;;) {
-		// read input records, restore at the end ones that are not related to mouse and noop
+	for (;;) { // read input records, restore at the end ones that are not related to mouse and noop
 		auto &rec = recs.emplace_back();
 		if (!PeekInputRecord(&rec)) {
 			recs.pop_back();
 			break;
 		}
 		GetInputRecord(&rec);
-		// If it's a mouse event — forget it!
 		if (rec.EventType == MOUSE_EVENT || rec.EventType == NOOP_EVENT) {
-			recs.pop_back();
+			recs.pop_back(); // forget mouse and noop events
 		}
-	}
-	for (const auto &rec : recs) {
-		Console.WriteInput(rec);
 	}
 	// IsMouseButtonPressed used within loops, so lets sleep to avoid CPU hogging in that loops
 	// it would be nicer to sleep inside of that loops instead, but keep to original code for now
-	WINPORT(WaitConsoleInput)(NULL, 10);
+	if (!recs.empty()) {
+		for (const auto &rec : recs) {
+			Console.WriteInput(rec);
+		}
+		usleep(10000);
+	} else {
+		WINPORT(WaitConsoleInput)(NULL, 10);
+	}
 	return MouseButtonState;
 }
 

@@ -26,7 +26,6 @@ struct TTYCaps
 
 	bool DEC_lines : 1;     // set by Setup() if need to use 'DEC Line Drawing mode' to draw pseudographics lines
 	bool strict_dups : 1;   // set by Setup() if terminal doesnt support any of "\e[..b" "\e[..X" that used to optimally output long sequences of same characters
-	bool strict_pos : 1;    // set by Setup() if terminal doesnt support "\e[#H" or "\e[H", but only "\e[#;#H"
 	bool emoji_vs16 : 1;    // set by Setup() if terminal supports wide emoji characters (Unicode Variation Selector-16)
 	bool norgb : 1;         // set by Setup() if restrict.rgb == true or if terminal doesnt support RGB graphics (e.g. screen)
 	bool x11 : 1;           // set by Setup()

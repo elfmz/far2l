@@ -169,7 +169,6 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 	// set detectable things to default values
 	DEC_lines = false;
 	strict_dups = false;
-	strict_pos = false;
 	emoji_vs16 = false;
 	norgb = false;
 	x11 = false;
@@ -277,11 +276,6 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		norgb = true;
 	}
 
-	env = getenv("TERM_PROGRAM");
-	if (env && strcasecmp(env, "WezTerm") == 0) {
-		strict_pos = true;
-	}
-
 	env = getenv("DISPLAY");
 	if (env && *env) {
 		x11 = true;
@@ -297,12 +291,11 @@ void TTYCaps::Setup(int fdin, int fdout, const TTYRestrict &restrict)
 		}
 	}
 
-	fprintf(stderr, "TTYCaps: %s %s%s%s%s%s%s%s pos=%s restrict={%s%s%s%s%s%s%s%s}\n",
+	fprintf(stderr, "TTYCaps: %s %s%s%s%s%s%s pos=%s restrict={%s%s%s%s%s%s%s%s}\n",
 			(kind == FAR2L) ? "FAR2L" : ((kind == KERNEL) ? "KERNEL" : "GENERIC"),
 
 			DEC_lines ? "DECLines " : "",
 			strict_dups ? "StrictDups " : "",
-			strict_pos ? "StrictPos " : "",
 			emoji_vs16 ? "EmojiVS16 " : "",
 			norgb ? "NoRGB " : "",
 			x11 ? "X11 " : "",

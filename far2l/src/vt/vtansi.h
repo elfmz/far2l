@@ -41,6 +41,7 @@ class VTAnsi
 	void OnReattached();
 	bool HasImages();
 	std::string GetTitle();
+	bool IsCRM();
 };
 
 class VTAnsiSuspend

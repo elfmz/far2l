@@ -1003,10 +1003,10 @@ however some options are available only here or in configuration ini-files.
  The options are displayed in a list with four fields per item:
   #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
   #-# The type (boolean, integer, dword, string, binary or unknown)
-  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# Whether the option is saved when Far configuration is saved ('#c#' for common, '#p#' for panels) or not ('#-#')
   #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
- If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
-(‘?’ character marked items without default value).
+ If current value of an option is other than the default, the option is marked with the '#*#' character to the left of the name
+('#?#' character marked items without default value).
 
  Besides the list navigation keys, the following key combinations are supported:
 
@@ -2536,7 +2536,11 @@ is also a risk of accidental selection due to unintentional key presses, given t
 of such lists. If you do not use this feature or feel uncomfortable with it, you can disable it.
 
   #Auto save setup#
-  If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
+  If checked, FAR2L will save setup automatically on FAR exit.
+The panels state and current folders for both panels will be also saved.
+
+  #Auto save panels state#
+  Panels' state (current folders, files, sort order, etc.) for both panels is automatically saved on FAR exit.
 
 
 @PanelSettings

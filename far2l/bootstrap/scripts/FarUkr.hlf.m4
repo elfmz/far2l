@@ -846,10 +846,10 @@ however some options are available only here or in configuration ini-files.
  The options are displayed in a list with four fields per item:
   #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
   #-# The type (boolean, integer, dword, string, binary or unknown)
-  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# Whether the option is saved when Far configuration is saved ('#c#' for common, '#p#' for panels) or not ('#-#')
   #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
- If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
-(‘?’ character marked items without default value).
+ If current value of an option is other than the default, the option is marked with the '#*#' character to the left of the name
+('#?#' character marked items without default value).
 
  Besides the list navigation keys, the following key combinations are supported:
 
@@ -2407,9 +2407,11 @@ two different directories, both entries will be saved in the history.
  Якщо ви не використовуєте цю функцію або почуваєтеся незручно з нею, ви можете її вимкнути.
 
  #Автозапис конфігурації#
- Якщо цю опцію увімкнено, FAR2L буде автоматично зберігати конфігурацію.
+ Якщо цю опцію увімкнено, FAR2L буде автоматично зберігати конфігурацію при виході з FAR.
 Також зберігатимуться поточні папки обох панелей.
 
+ #Автозбереження стану панелей#
+ Стан панелей автоматично зберігається при виході з FAR.
 
 @PanelSettings
 $ #Налаштування панелі#

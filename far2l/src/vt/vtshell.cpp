@@ -598,6 +598,30 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		_win32_input_mode_expected = enabled;
 	}
+	virtual int OnModeQuery(int mode, bool is_dec)
+	{
+		if (is_dec) {
+			switch (mode) {
+				case 1:    return 2; // Cursor keys mode (Reset in far2l)
+				case 7:    {
+					DWORD mode = 0;
+					WINPORT(GetConsoleMode)(ConsoleHandle(), &mode);
+					return (mode & ENABLE_WRAP_AT_EOL_OUTPUT) ? 1 : 2;
+				}
+				case 1000: return (_mouse_mode & MODE_VT200_MOUSE) ? 1 : 2;
+				case 1002: return (_mouse_mode & MODE_BTN_EVENT_MOUSE) ? 1 : 2;
+				case 1003: return (_mouse_mode & MODE_ANY_EVENT_MOUSE) ? 1 : 2;
+				case 1004: return _focus_change_expected ? 1 : 2;
+				case 1006: return (_mouse_mode & MODE_SGR_EXT_MOUSE) ? 1 : 2;
+				case 1049: return _alternate_mode ? 1 : 2;
+				case 2004: return _bracketed_paste_expected ? 1 : 2;
+				case 9001: return _win32_input_mode_expected ? 1 : 2;
+				default:   return 0; // Not recognized
+			}
+		}
+		// ANSI modes
+		return (mode == 3) ? (_vta.IsCRM() ? 1 : 2) : 0;
+	}
 
 	virtual void SetKittyFlags(int flags)
 	{

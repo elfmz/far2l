@@ -2998,6 +2998,11 @@ int Dialog::ProcessKey(FarKey Key)
 		case KEY_CTRLNUMPAD8:
 		case KEY_CTRLDOWN:
 		case KEY_CTRLNUMPAD2:
+			if (Item[FocusPos]->Type == DI_MEMOEDIT) {
+				((DlgEdit *)(Item[FocusPos]->ObjPtr))->ProcessKey(Key);
+				ShowDialog(FocusPos);
+				return TRUE;
+			}
 			return ProcessOpenComboBox(Item[FocusPos]->Type, Item[FocusPos], FocusPos);
 			// ЭТО перед default предпоследний!!!
 		case KEY_END:
@@ -3432,6 +3437,19 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			return TRUE;
 		}
+	}
+
+	// Stream of drag events passsed directly to multiline modal editor for mouse selection
+	// before general dialog handling ignores it.
+	if ((MouseEvent->dwEventFlags & MOUSE_MOVED)
+			&& (MouseEvent->dwButtonState
+					& (FROM_LEFT_1ST_BUTTON_PRESSED | RIGHTMOST_BUTTON_PRESSED))
+			&& FocusPos < ItemCount
+			&& !(Item[FocusPos]->Flags & (DIF_DISABLE | DIF_HIDDEN))
+			&& Item[FocusPos]->Type == DI_MEMOEDIT) {
+		DlgEdit *MultilineEditor = (DlgEdit *)(Item[FocusPos]->ObjPtr);
+		if (MultilineEditor->ProcessMouse(MouseEvent))
+			return TRUE;
 	}
 
 	if (MsX < X1 || MsY < Y1 || MsX > X2 || MsY > Y2) {

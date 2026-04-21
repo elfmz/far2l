@@ -2166,8 +2166,8 @@ upd:"by name and path"
 upd:"by name and path"
 
 ConfigAutoHighlightHistory
-"Автоподсветка в списках истории"
-"Autohighlight in history"
+"Автопод&светка в списках истории"
+"&Autohighlight in history"
 upd:"Autohighlight in history"
 upd:"Autohighlight in history"
 upd:"Autohighlight in history"
@@ -2219,6 +2219,17 @@ ConfigAutoSave
 "Auto&guardar configuración"
 "Автозапис кон&фігурації"
 "А&ўтазапіс наладаў"
+
+ConfigAutoSavePanels
+"Автосохранение состояния &панелей"
+"Auto save &panels state"
+"Ukládat stav pane&lů"
+"&Panelzustand autospeichern"
+"Pane&lek állapot mentése"
+"Autozapis stanu pane&li"
+"Auto guardar estado de pane&les"
+"Автозбереження стану &панелей"
+"Аўтазахаванне стану &панэлей"
 
 ConfigPanelTitle
 l:

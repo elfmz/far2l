@@ -183,28 +183,42 @@ DialogBuilderBase<DialogItemEx>::ItemReference DialogBuilder::AddCodePagesBox(UI
 }
 
 void DialogBuilder::LinkFlags(DialogItemEx *Parent, DialogItemEx *Target, FarDialogItemFlags Flags,
-		bool LinkLabels)
+		bool LinkLabels, bool bParentChecked)
 {
 	Parent->Flags|= DIF_AUTOMATION;
-	Parent->AddAutomation(Target->ID, Flags, DIF_NONE, DIF_NONE, Flags, DIF_NONE, DIF_NONE);
-	if (!Parent->Selected)
-		Target->Flags|= Flags;
+	if (bParentChecked) {
+		Parent->AddAutomation(Target->ID, Flags, DIF_NONE, DIF_NONE, Flags, DIF_NONE, DIF_NONE);
+		if (!Parent->Selected)
+			Target->Flags|= Flags;
+	}
+	else {
+		Parent->AddAutomation(Target->ID, DIF_NONE, Flags, Flags, DIF_NONE, DIF_NONE, DIF_NONE);
+		if (Parent->Selected)
+			Target->Flags|= Flags;
+	}
 
 	if (LinkLabels) {
 		DialogItemBinding<DialogItemEx> *Binding = FindBinding(Target);
 		if (Binding) {
-			LinkFlagsByID(Parent, Binding->BeforeLabelID, Flags);
-			LinkFlagsByID(Parent, Binding->AfterLabelID, Flags);
+			LinkFlagsByID(Parent, Binding->BeforeLabelID, Flags, bParentChecked);
+			LinkFlagsByID(Parent, Binding->AfterLabelID, Flags, bParentChecked);
 		}
 	}
 }
 
-void DialogBuilder::LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags)
+void DialogBuilder::LinkFlagsByID(DialogItemEx *Parent, int TargetID, FarDialogItemFlags Flags, bool bParentChecked)
 {
 	if (TargetID >= 0) {
-		Parent->AddAutomation(TargetID, Flags, DIF_NONE, DIF_NONE, Flags, DIF_NONE, DIF_NONE);
-		if (!Parent->Selected)
-			DialogItems[TargetID].Flags|= Flags;
+		if (bParentChecked) {
+			Parent->AddAutomation(TargetID, Flags, DIF_NONE, DIF_NONE, Flags, DIF_NONE, DIF_NONE);
+			if (!Parent->Selected)
+				DialogItems[TargetID].Flags|= Flags;
+		}
+		else {
+			Parent->AddAutomation(TargetID, DIF_NONE, Flags, Flags, DIF_NONE, DIF_NONE, DIF_NONE);
+			if (Parent->Selected)
+				DialogItems[TargetID].Flags|= Flags;
+		}
 	}
 }
 

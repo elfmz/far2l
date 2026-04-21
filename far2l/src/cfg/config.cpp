@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "vtshell.h"
 #include "ConfigRW.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "AllXLats.hpp"
 #include "xlat.hpp"
 
@@ -205,10 +206,14 @@ void SystemSettings()
 	Builder.AddCheckbox(Msg::ConfigAutoHighlightHistory, &Opt.AutoHighlightHistory);
 	Builder.AddSeparator();
 
-	Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSaveSetup = Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSavePanels = Builder.AddCheckbox(Msg::ConfigAutoSavePanels, &Opt.AutoSavePanels);
+	AutoSavePanels->Indent(4);
+	Builder.LinkFlags(AutoSaveSetup, AutoSavePanels, DIF_DISABLE, false, false);
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
+		ConfigOptSaveAutoOptions();
 		SanitizeHistoryCounts();
 		ApplySudoConfiguration();
 	}

@@ -1,5 +1,5 @@
 /*
-config.cpp
+ConfigOptEdit.cpp
 
 Конфигурация
 */
@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "AllXLats.hpp"
 #include "ConfigOpt.hpp"
+#include "ConfigOptSaveLoad.hpp"
 
 class ConfigOptProps
 {
@@ -162,7 +163,7 @@ public:
 			mi.strName.Format(L"%s.%s", _opt.section, _opt.key);
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
-		fssave = (_opt.save ? "s" : "-");
+		fssave = (_opt.save == OST_COMMON ? "c" : (_opt.save == OST_PANELS ? "p" : "-"));
 		switch (_opt.type)
 		{
 			case ConfigOpt::T_BOOL:
@@ -260,7 +261,7 @@ public:
 		em.AddFormat(L"%ls - %s.%s", title, _opt.section, _opt.key);
 		em.AddFormat(L"        Section: %s", _opt.section);
 		em.AddFormat(L"            Key: %s", _opt.key);
-		em.AddFormat(L" to config file: %s", (_opt.save ? "saved" : "never"));
+		em.AddFormat(L" to config file: %ls", (_opt.save == OST_COMMON ? L"common" : (_opt.save == OST_PANELS ? L"panels" : L"never")));
 		em.AddFormat(L"           Type: %s", type_psz);
 		em.AddFormat(L"  Default value: %ls", def_str.CPtr());
 		em.AddFormat(L"  Current value: %ls", val_str.CPtr());
@@ -367,7 +368,7 @@ public:
 			/*   3 */ {DI_TEXT,			 5,  3, 20,             3, {}, 0, L"           Key:"},
 			/*   4 */ {DI_TEXT,			21,  3, DLG_WIDTH - 6,  3, {}, 0, fs_key.CPtr()},
 			/*   5 */ {DI_TEXT,			 5,  4, 20,             4, {}, 0, L"to config file:"},
-			/*   6 */ {DI_TEXT,			21,  4, DLG_WIDTH - 6,  4, {}, 0, (_opt.save ? L"saved" : L"never")},
+			/*   6 */ {DI_TEXT,			21,  4, DLG_WIDTH - 6,  4, {}, 0, (_opt.save == OST_COMMON ? L"common" : (_opt.save == OST_PANELS ? L"panels" : L"never"))},
 			/*   7 */ {DI_TEXT,			 5,  5, 20,             5, {}, 0, L"          Type:"},
 			/*   8 */ {DI_TEXT,			21,  5, DLG_WIDTH - 6,  5, {}, 0, type_pwsz},
 			/*   9 */ {DI_TEXT,			 3,  6, 20,             6, {}, DIF_SEPARATOR, L" Values "},

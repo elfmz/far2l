@@ -74,7 +74,7 @@ public:
 
 	bool PeekInput(INPUT_RECORD &Buffer);
 	bool ReadInput(INPUT_RECORD &Buffer);
-	bool WriteInput(INPUT_RECORD &Buffer, DWORD Length, DWORD &NumberOfEventsWritten);
+	bool WriteInput(const INPUT_RECORD &Buffer);
 	bool ReadOutput(CHAR_INFO &Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT &ReadRegion);
 	bool WriteOutput(const CHAR_INFO &Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT &WriteRegion);
 	bool Write(LPCWSTR Buffer, DWORD NumberOfCharsToWrite);

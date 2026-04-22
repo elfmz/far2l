@@ -131,6 +131,11 @@ inline int __cdecl IsAlphaNum(wchar_t Ch)
 	return WINPORT(IsCharAlphaNumeric)(Ch);
 }
 
+inline int __cdecl IsHexDigit(wchar_t Ch)
+{
+	return (Ch >= '0' && Ch <= '9') || (Ch >= 'A' && Ch <= 'F') || (Ch >= 'a' && Ch <= 'f');
+}
+
 inline void __cdecl UpperBuf(wchar_t *Buf, int Length)
 {
 	WINPORT(CharUpperBuff)(Buf, Length);

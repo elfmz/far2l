@@ -2572,6 +2572,30 @@ enum SEARCHDLG
 LONG_PTR WINAPI ViewerSearchDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	switch (Msg) {
+		case DN_CLOSE:
+			if (Param1 >= 0) {
+				int Pos = SendDlgMessage(hDlg, DM_SHOWITEM, SD_EDIT_TEXT, -1) ? SD_EDIT_TEXT : SD_EDIT_HEX;
+				const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, Pos, 0);
+				bool IsEmpty;
+				if (Pos == SD_EDIT_TEXT)
+					IsEmpty = (*Txt == 0);
+				else {
+					IsEmpty = true;
+					for (; *Txt; Txt++) {
+						if (*Txt == ' ')
+							continue;
+						if (IsHexDigit(*Txt))
+							IsEmpty = false;
+						break;
+					}
+				}
+				if (IsEmpty) {
+					SendDlgMessage(hDlg, DM_SETFOCUS, Pos, 0);
+					Message(MSG_WARNING, 1, Msg::ViewSearchTitle, Msg::EditEmptySearchField, Msg::Ok);
+					return FALSE;
+				}
+			}
+			break;
 		case DN_INITDIALOG: {
 			SendDlgMessage(hDlg, DM_SDSETVISIBILITY,
 					SendDlgMessage(hDlg, DM_GETCHECK, SD_RADIO_HEX, 0) == BSTATE_CHECKED, 0);

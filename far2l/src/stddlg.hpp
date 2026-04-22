@@ -101,12 +101,3 @@ int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARS
 int WINAPI GetString(const wchar_t *Title, const wchar_t *SubTitle, const wchar_t *HistoryName,
 		const wchar_t *SrcText, FARString &strDestText, const wchar_t *HelpTopic = nullptr, DWORD Flags = 0,
 		int *CheckBoxValue = nullptr, const wchar_t *CheckBoxText = nullptr);
-
-// для диалога GetNameAndPassword()
-enum FlagsNameAndPassword
-{
-	GNP_USELAST = 0x00000001UL,		// использовать последние введенные данные
-};
-
-int WINAPI GetNameAndPassword(const wchar_t *Title, FARString &strUserName, FARString &strPassword,
-		const wchar_t *HelpTopic, DWORD Flags);

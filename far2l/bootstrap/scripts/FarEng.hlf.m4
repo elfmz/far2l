@@ -3198,13 +3198,16 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
 
     1. #Alt-U#/#Alt-I# indent the current line if no block is selected.
 
-    2. ^<wrap>Holding down #Alt# and typing a character code on the numeric
+    2. ^<wrap>Typing text or pressing #BS#/#Del# is applied to each row
+of selected vertical block.
+
+    3. ^<wrap>Holding down #Alt# and typing a character code on the numeric
 keypad inserts the character that has the specified code (0-65535).
 
-    3. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
+    4. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
 line as a block and copies it to the clipboard.
 
-    4. Print manager for Linux is unavailable. Instead, Editor has embedded 
+    5. Print manager for Linux is unavailable. Instead, Editor has embedded 
     support for printing text files even with text highlighting with white background
     and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
 

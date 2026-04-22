@@ -7309,6 +7309,7 @@ bool Editor::ProcessVerticalBlockEditKey(FarKey Key)
 		if (is_insert) {
 			if (selected_width > 0) {
 				DeleteColumnRange(line, base_cell, base_cell + selected_width);
+				line->SetCellCurPos(base_cell);
 			}
 			line->InsertKey(Key);
 			line_changed = true;

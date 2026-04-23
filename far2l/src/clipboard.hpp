@@ -60,6 +60,7 @@ public:
 	BOOL Close();
 	BOOL Empty();
 	bool Copy(const wchar_t *Data, bool IsVertical = false);
+	bool CopyWithHtml(const wchar_t *Data, const char *Html);
 	wchar_t *Paste(bool &IsVertical, int MaxChars = -1);
 	wchar_t *Paste();
 

@@ -83,8 +83,8 @@ ControlObject::ControlObject()
 			&Opt.SaveFoldersHistory, true);
 	ViewHistory = new History(HISTORYTYPE_VIEW, Opt.ViewHistoryCount, "SavedViewHistory",
 			&Opt.SaveViewHistory, true);
-	FolderHistory->SetAddMode(true, 2, true);
-	ViewHistory->SetAddMode(true, 1, true);
+	FolderHistory->SetAddMode(true, HISTORY_REMOVE_DUPS_CASE_INSENSITIVE, true);
+	ViewHistory->SetAddMode(true, HISTORY_REMOVE_DUPS_CASE_SENSITIVE, true);
 }
 
 void ControlObject::Init()
@@ -156,7 +156,7 @@ ControlObject::~ControlObject()
 	_OT(SysLog(L"[%p] ControlObject::~ControlObject()", this));
 
 	if (Cp() && Cp()->ActivePanel) {
-		if (Opt.AutoSaveSetup)
+		if (Opt.AutoSaveSetup || Opt.AutoSavePanels)
 			ConfigOptSave(false);
 
 		if (Cp()->ActivePanel->GetMode() != PLUGIN_PANEL) {

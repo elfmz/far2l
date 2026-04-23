@@ -113,6 +113,7 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	m_CachedTotalLines(0),
 	m_CachedLineNumWidth(0),
 	m_LineCountDirty(true),
+	m_BulkLoadMode(false),
 	m_showCursor(true)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
@@ -3769,6 +3770,11 @@ int Editor::AutoGrabToClipboard ()
 	return status;
 }
 
+static bool AltDown(const MOUSE_EVENT_RECORD *MouseEvent)
+{
+	return (MouseEvent->dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
+}
+
 int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 {
 	m_MouseButtonIsHeld = MouseEvent->dwButtonState & 3;
@@ -3827,12 +3833,16 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	MouseTarget target;
-	auto apply_cursor_target = [&]() {
+	const bool left_down = (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) != 0;
+	const bool right_down = (MouseEvent->dwButtonState & RIGHTMOST_BUTTON_PRESSED) != 0;
+	const bool any_button_down = left_down || right_down;
+
+	auto apply_cursor_target = [&](bool allow_selection) {
 		MouseTarget cur{};
 		cur.line = CurLine;
 		cur.pos = CurLine ? CurLine->GetCurPos() : 0;
 		cur.visual_line = m_CurVisualLineInLogicalLine;
-		ApplyMouseTarget(cur, false, MouseEvent->dwControlKeyState);
+		ApplyMouseTarget(cur, false, right_down || AltDown(MouseEvent), allow_selection);
 	};
 
 	if (!m_bWordWrap && (MouseEvent->dwButtonState & 3) && (MouseEvent->dwEventFlags & MOUSE_MOVED)) {
@@ -3850,7 +3860,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 				Pasting--;
 
 				if (MouseSelStartingLine != -1) {
-					apply_cursor_target();
+					apply_cursor_target(any_button_down);
 				}
 				Show();
 			}
@@ -3861,14 +3871,14 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (MouseEvent->dwMousePosition.Y < Y1 && (MouseEvent->dwButtonState & 3)) {
 		while (IsMouseButtonPressed() && MouseY < Y1) {
 			ProcessKey(KEY_UP);
-			if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
-				apply_cursor_target();
+			if (any_button_down) {
+				apply_cursor_target(true);
 				Show();
 			}
 		}
-		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+		if (any_button_down) {
 			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, Y1, target)) {
-				ApplyMouseTarget(target, false, MouseEvent->dwControlKeyState);
+				ApplyMouseTarget(target, false, right_down || AltDown(MouseEvent), true);
 				Show();
 			}
 		}
@@ -3877,14 +3887,14 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	if (MouseEvent->dwMousePosition.Y > Y2 && (MouseEvent->dwButtonState & 3)) {
 		while (IsMouseButtonPressed() && MouseY > Y2) {
 			ProcessKey(KEY_DOWN);
-			if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
-				apply_cursor_target();
+			if (any_button_down) {
+				apply_cursor_target(true);
 				Show();
 			}
 		}
-		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) {
+		if (any_button_down) {
 			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, Y2, target)) {
-				ApplyMouseTarget(target, false, MouseEvent->dwControlKeyState);
+				ApplyMouseTarget(target, false, right_down || AltDown(MouseEvent), true);
 				Show();
 			}
 		}
@@ -3899,12 +3909,12 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		{
 			if (ComputeMouseTarget(MouseEvent->dwMousePosition.X, MouseEvent->dwMousePosition.Y, target)) {
 				ApplyMouseTarget(target, (MouseEvent->dwEventFlags & MOUSE_MOVED) == 0,
-					MouseEvent->dwControlKeyState);
+					right_down || AltDown(MouseEvent), any_button_down);
 			}
 		}
 
 		// --- Common logic for click/double-click/triple-click ---
-		if (MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED)
+		if (left_down)
 		{
 			static int EditorPrevClickCount = 0;
 			static DWORD EditorPrevClickTime = 0;
@@ -4023,7 +4033,7 @@ bool Editor::ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target)
 	return true;
 }
 
-void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWORD control_state)
+void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, bool vblock, bool allow_selection)
 {
 	const int screenHeight = Y2 - Y1;
 
@@ -4081,15 +4091,13 @@ void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, DWO
 
 	CurLine->SetCurPos(target.pos);
 
-	if (MouseSelStartingLine == -1)
-	{
-		MouseSelStartingLine = NumLine;
-		MouseSelStartingPos = target.pos;
-	}
-	else
-	{
-		const bool vblock = (control_state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0;
-		if (MouseSelStartingLine < NumLine ||
+	if (allow_selection) {
+		if (MouseSelStartingLine == -1)
+		{
+			MouseSelStartingLine = NumLine;
+			MouseSelStartingPos = target.pos;
+		}
+		else if (MouseSelStartingLine < NumLine ||
 			(MouseSelStartingLine == NumLine && target.pos >= MouseSelStartingPos))
 		{
 			MarkBlock(vblock, MouseSelStartingLine, MouseSelStartingPos,
@@ -4778,8 +4786,7 @@ void Editor::ScrollDown()
 {
 	if (m_bWordWrap)
 	{
-		if (!IncTopVisualLine())
-			return;
+		IncTopVisualLine();
 		Down();
 		return;
 	}
@@ -4860,8 +4867,7 @@ void Editor::ScrollUp()
 {
 	if (m_bWordWrap)
 	{
-		if (!DecTopVisualLine())
-			return;
+		DecTopVisualLine();
 		Up();
 		return;
 	}
@@ -8110,10 +8116,14 @@ Edit *Editor::InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter, i
 		}
 
 		NumLastLine++;
-		m_LineCountDirty = true;  // Invalidate line number cache
 
-		if (AfterLineNumber < LastGetLineNumber) {
-			LastGetLineNumber++;
+		// Skip expensive cache operations during bulk file loading
+		if (!m_BulkLoadMode) {
+			m_LineCountDirty = true;  // Invalidate line number cache
+
+			if (AfterLineNumber < LastGetLineNumber) {
+				LastGetLineNumber++;
+			}
 		}
 	}
 

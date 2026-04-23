@@ -886,13 +886,16 @@ deleted.
 @MiscCmd
 $ #Panel control commands - miscellaneous#
   Screen grabber                                             #Alt-Ins#
-
     Screen grabber allows to select and copy to the clipboard any screen area.
-Use #arrow# keys or click the #left mouse button# to move the cursor. To select
-text use #Shift-arrow# keys or drag the mouse while holding the #left mouse#
-#button#. #Enter#, #Ctrl-Ins#, #right mouse button# or #doubleclick# copy
-selected text to the clipboard, #Ctrl-<Gray +># appends it to the clipboard
-contents, #Esc# leaves the grabbing mode. #Ctrl-U# - deselect block.
+    Use #arrow# keys or click the #left mouse button# to move the cursor.
+    To select text use #Shift-arrow# keys or drag the mouse while holding the #left mouse button#.
+    #Ctrl-A# or #A# - selects whole screen.
+    #Ctrl-U# or #U# - deselect block.
+    #Enter#, #Ctrl-Ins#, #right mouse button# or #doubleclick# copy selected text to the clipboard
+and leaves the grabbing mode.
+    #Ctrl-<Gray +># appends selected text to the clipboard contents
+and leaves the grabbing mode.
+    #Esc# leaves the grabbing mode.
 
   Record a ~keyboard macro~@KeyMacro@                                   #Ctrl-<.>#
 
@@ -1000,10 +1003,10 @@ however some options are available only here or in configuration ini-files.
  The options are displayed in a list with four fields per item:
   #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
   #-# The type (boolean, integer, dword, string, binary or unknown)
-  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# Whether the option is saved when Far configuration is saved ('#c#' for common, '#p#' for panels) or not ('#-#')
   #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
- If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
-(‘?’ character marked items without default value).
+ If current value of an option is other than the default, the option is marked with the '#*#' character to the left of the name
+('#?#' character marked items without default value).
 
  Besides the list navigation keys, the following key combinations are supported:
 
@@ -2533,7 +2536,11 @@ is also a risk of accidental selection due to unintentional key presses, given t
 of such lists. If you do not use this feature or feel uncomfortable with it, you can disable it.
 
   #Auto save setup#
-  If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
+  If checked, FAR2L will save setup automatically on FAR exit.
+The panels state and current folders for both panels will be also saved.
+
+  #Auto save panels state#
+  Panels' state (current folders, files, sort order, etc.) for both panels is automatically saved on FAR exit.
 
 
 @PanelSettings

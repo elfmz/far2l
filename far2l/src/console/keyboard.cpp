@@ -441,18 +441,34 @@ unsigned int WINAPI InputRecordToKey(const INPUT_RECORD *r)
 	return KEY_NONE;
 }
 
+
 DWORD IsMouseButtonPressed()
 {
-	INPUT_RECORD rec;
-
-	if (PeekInputRecord(&rec)) {
+	std::vector<INPUT_RECORD> recs;
+	for (;;) { // read input records, restore at the end ones that are not related to mouse and noop
+		auto &rec = recs.emplace_back();
+		if (!PeekInputRecord(&rec)) {
+			recs.pop_back();
+			break;
+		}
 		GetInputRecord(&rec);
+		if (rec.EventType == MOUSE_EVENT || rec.EventType == NOOP_EVENT) {
+			recs.pop_back(); // forget mouse and noop events
+		}
 	}
 	// IsMouseButtonPressed used within loops, so lets sleep to avoid CPU hogging in that loops
 	// it would be nicer to sleep inside of that loops instead, but keep to original code for now
-	WINPORT(WaitConsoleInput)(NULL, 10);
+	if (!recs.empty()) {
+		for (const auto &rec : recs) {
+			Console.WriteInput(rec);
+		}
+		usleep(10000);
+	} else {
+		WINPORT(WaitConsoleInput)(NULL, 10);
+	}
 	return MouseButtonState;
 }
+
 
 static DWORD KeyMsClick2ButtonState(DWORD Key, DWORD &Event)
 {
@@ -1432,7 +1448,6 @@ int WriteInput(wchar_t Key, DWORD Flags)
 {
 	if (Flags & (SKEY_VK_KEYS | SKEY_IDLE)) {
 		INPUT_RECORD Rec;
-		DWORD WriteCount;
 
 		if (Flags & SKEY_IDLE) {
 			Rec.EventType = FOCUS_EVENT;
@@ -1452,7 +1467,7 @@ int WriteInput(wchar_t Key, DWORD Flags)
 			Rec.Event.KeyEvent.dwControlKeyState = 0;
 		}
 
-		return Console.WriteInput(Rec, 1, WriteCount);
+		return Console.WriteInput(Rec);
 	} else if (KeyQueue) {
 		return KeyQueue->Put(((DWORD)Key) | (Flags & SKEY_NOTMACROS ? 0x80000000 : 0));
 	} else

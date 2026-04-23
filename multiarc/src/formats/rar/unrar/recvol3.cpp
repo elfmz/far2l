@@ -442,8 +442,8 @@ bool RecVolumes3::Restore(CommandData *Cmd,const std::wstring &Name,bool Silent)
         Arc.SearchBlock(HEAD_ENDARC))
     {
       Arc.Seek(Arc.NextBlockPos,SEEK_SET);
-      char Buf[8192];
-      int ReadSize=Arc.Read(Buf,sizeof(Buf));
+      std::vector<char> Buf(8192);
+      int ReadSize=Arc.Read(Buf.data(),Buf.size());
       int ZeroCount=0;
       while (ZeroCount<ReadSize && Buf[ZeroCount]==0)
         ZeroCount++;

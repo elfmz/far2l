@@ -7,11 +7,6 @@
 
 #ifdef __linux__
 # include <termios.h>
-# include <linux/kd.h>
-# include <linux/keyboard.h>
-#elif defined(__FreeBSD__) || defined(__DragonFly__)
-# include <sys/ioctl.h>
-# include <sys/kbio.h>
 #endif
 
 #include <os_call.hpp>
@@ -24,7 +19,6 @@
 #include "TTYBackend.h"
 #include "TTYRevive.h"
 #include "TTYFar2lClipboardBackend.h"
-#include "TTYNegotiateFar2l.h"
 #include "FarTTY.h"
 #include "../FSClipboardBackend.h"
 #include "../NotifySh.h"
@@ -40,8 +34,6 @@ static TTYBackend * g_vtb = nullptr;
 
 long _iterm2_cmd_ts = 0;
 bool _iterm2_cmd_state = 0;
-
-static void OnSigHup(int signo);
 
 static bool IsEnhancedKey(WORD code)
 {
@@ -86,14 +78,13 @@ static WORD WChar2WinVKeyCode(WCHAR wc)
 }
 
 
-TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int *result) :
+TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, TTYRestrict restrict, unsigned int esc_expiration, int notify_pipe, int *result)
+	:
 	_full_exe_path(full_exe_path),
 	_stdin(std_in),
 	_stdout(std_out),
 	_ext_clipboard(ext_clipboard),
-	_norgb(norgb),
-	_nodetect(nodetect),
-	_far2l_tty(far2l_tty),
+	_restrict(restrict),
 	_esc_expiration(esc_expiration),
 	_notify_pipe(notify_pipe),
 	_result(result),
@@ -115,12 +106,13 @@ TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool 
 
 TTYBackend::~TTYBackend()
 {
-	if (g_vtb == this)
-		g_vtb =  nullptr;
+	if (g_vtb == this) {
+		g_vtb = nullptr;
+	}
 
 	OnConsoleExit();
 
-	_exiting = 1;
+	_exiting = true;
 
 	if (_reader_trd) {
 		if (os_call_ssize(write, _kickass[1], (const void*)&_kickass, (size_t)1) == -1) {
@@ -188,6 +180,8 @@ bool TTYBackend::Startup()
 	g_winport_con_out->GetSize(_cur_width, _cur_height);
 	g_winport_con_out->SetBackend(this);
 
+	SetupAttachedTTY(); // do very initial setup synchronously before app startup
+
 	if (pthread_create(&_reader_trd, nullptr, sReaderThread, this) != 0) {
 		return false;
 	}
@@ -203,61 +197,66 @@ void TTYBackend::BackendInfoChanged()
 	_backend_info.flavor.clear();
 }
 
-static bool UnderWayland()
+void TTYBackend::SetupAttachedTTY()
 {
-	const char *xdg_st = getenv("XDG_SESSION_TYPE");
-	if (xdg_st && strcasecmp(xdg_st, "wayland") == 0)
-		return true;
-	if (getenv("WAYLAND_DISPLAY"))
-		return true;
-	return false;
+	// firstly set default detectable values
+	_tty_raw_mode.emplace(_stdin, _stdout);
+	_tty_caps.Setup(_stdin, _stdout, _restrict);
+
+	// now setup clipboard backend and some other things
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_pix_per_cell.X = _pix_per_cell.Y = 0;
+		_images_kitty_status = IKS_UNKNOWN;
+		for (const auto &it : _images) {
+			_images_to_display.insert(it.first);
+		}
+	}
+	_far2l_cursor_height = -1; // force cursor height update on next output dispatch
+	_fkeys_support = (_tty_caps.kind == TTYCaps::FAR2L) ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
+
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
+		if (_prev_tty_caps.kind != TTYCaps::FAR2L && !_ext_clipboard) {
+			IFar2lInteractor *interactor = this;
+			_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interactor);
+		}
+
+	} else {
+		if (!_restrict.x11) {
+			// disable xi on Wayland as it not work there anyway and also causes delays
+			_ttyx = StartTTYX(_full_exe_path, !_restrict.xi && !_tty_caps.wayland);
+		}
+		if (_ttyx) {
+			if (!_ext_clipboard) {
+				_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
+			}
+
+		} else {
+			ChooseSimpleClipboardBackend();
+		}
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_deadio = false;
+		_ae.term_resized = true;
+	}
+
+	g_far2l_use_vs16 = !_restrict.emoji &&
+		(_tty_caps.kind == TTYCaps::FAR2L || _tty_caps.emoji_vs16);
+
+	_initial_cursor_shape = -1;
+	if (_tty_caps.kind == TTYCaps::GENERIC) {
+		TTYWriteAndDrain(_stdout, "\x1bP$q q\x1b\\"); // Request current cursor shape
+	}
+
+	_prev_tty_caps = _tty_caps;
 }
 
 void TTYBackend::ReaderThread()
 {
-	bool prev_far2l_tty = false;
 	while (!_exiting) {
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_pix_per_cell.X = _pix_per_cell.Y = 0;
-			_images_kitty_status = IKS_UNKNOWN;
-			for (const auto &it : _images) {
-				_images_to_display.insert(it.first);
-			}
-		}
-		_far2l_cursor_height = -1; // force cursor height update on next output dispatch
-		_fkeys_support = _far2l_tty ? FKS_UNKNOWN : FKS_NOT_SUPPORTED;
-
-		if (_far2l_tty) {
-			if (!prev_far2l_tty && !_ext_clipboard) {
-				IFar2lInteractor *interactor = this;
-				_clipboard_backend_setter.Set<TTYFar2lClipboardBackend>(interactor);
-			}
-
-		} else {
-			if ((_nodetect & NODETECT_X)==0) {
-
-				// disable xi on Wayland as it not work there anyway and also causes delays
-				_ttyx = StartTTYX(_full_exe_path, ((_nodetect & NODETECT_XI)==0) && !UnderWayland());
-			}
-			if (_ttyx) {
-				if (!_ext_clipboard) {
-					_clipboard_backend_setter.Set<TTYXClipboard>(_ttyx);
-				}
-
-			} else {
-				ChooseSimpleClipboardBackend();
-			}
-		}
 		BackendInfoChanged();
-		prev_far2l_tty = _far2l_tty;
-
-		{
-			std::unique_lock<std::mutex> lock(_async_mutex);
-			_deadio = false;
-			_ae.term_resized = true;
-		}
-
 
 		pthread_t writer_trd = 0;
 		if (pthread_create(&writer_trd, nullptr, sWriterThread, this) != 0) {
@@ -282,14 +281,39 @@ void TTYBackend::ReaderThread()
 		}
 
 		pthread_join(writer_trd, nullptr);
-		DetachNotifyPipe();
-		_ttyx.reset();
 
+		if (_stp_stdin.Valid() && _stp_stdout.Valid()) {
+			_tty_caps.Finup(_stp_stdin, _stp_stdout);
+		} else {
+			_tty_caps.Finup(_stdin, _stdout);
+		}
+		_tty_raw_mode.reset();
+		fprintf(stderr, "%s: raw mode discarded\n", __FUNCTION__);
+		_ttyx.reset();
+		if (_stp_stdin.Valid() && _stp_stdout.Valid()) {
+			_stp_cont = false;
+			raise(SIGSTOP);
+		} else {
+			DetachNotifyPipe();
+		}
 		while (!_exiting) {
-			const std::string &info = StrWide2MB(g_winport_con_out->GetTitle());
-			_notify_pipe = TTYReviveMe(_stdin, _stdout, _far2l_tty, _kickass[0], info);
-			if (_notify_pipe != -1) {
-				break;
+			if (_stp_stdin.Valid() && _stp_stdout.Valid()) {
+				if (_stp_cont) {
+					_stdin =  _stp_stdin.Detach();
+					_stdout = _stp_stdout.Detach();
+					fprintf(stderr, "%s: got SIGCONT\n", __FUNCTION__);
+					SetupAttachedTTY();
+					break;
+				}
+				usleep(10000);
+			} else {
+				const std::string &info = StrWide2MB(g_winport_con_out->GetTitle());
+				int np = TTYReviveMe(_stdin, _stdout, _kickass[0], info);
+				if (np != -1) {
+					_notify_pipe = np;
+					SetupAttachedTTY();
+					break;
+				}
 			}
 		}
 	}
@@ -312,7 +336,7 @@ void TTYBackend::ReaderLoop()
 
 		int rs;
 
-		if (!idle_expired && _esc_expiration > 0 && !_far2l_tty) {
+		if (!idle_expired && _esc_expiration > 0 && _tty_caps.kind != TTYCaps::FAR2L) {
 			struct timeval tv;
 			tv.tv_sec = _esc_expiration / 1000;
 			tv.tv_usec = suseconds_t((_esc_expiration - tv.tv_sec * 1000) * 1000);
@@ -384,8 +408,8 @@ void TTYBackend::WriterThread()
 {
 	bool gone_background = false;
 	try {
-		_focused = !_far2l_tty; // assume starting focused unless far2l_tty, this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
-		TTYOutput tty_out(_stdout, _far2l_tty, _norgb, _nodetect);
+		_focused = (_tty_caps.kind != TTYCaps::FAR2L); // this trick allows notification to work in best effort under old far2l that didnt support focus change notifications
+		TTYOutput tty_out(_stdout, _tty_caps, _restrict);
 		DispatchPalette(tty_out);
 //		DispatchTermResized(tty_out);
 		while (!_exiting && !_deadio) {
@@ -452,6 +476,11 @@ void TTYBackend::WriterThread()
 			}
 		}
 
+		const auto cursor_shape = _initial_cursor_shape.load();
+		if (cursor_shape >= 0) {
+			tty_out.ChangeCursorShape(cursor_shape);
+		}
+
 	} catch (const std::exception &e) {
 		fprintf(stderr, "WriterThread: %s <%d>\n", e.what(), errno);
 	}
@@ -463,7 +492,7 @@ void TTYBackend::WriterThread()
 	}
 
 	if (gone_background) {
-		OnSigHup(SIGHUP);
+		OnSigHup();
 	}
 }
 
@@ -732,7 +761,7 @@ COORD TTYBackend::OnConsoleGetLargestWindowSize()
 {
 	COORD out = {CheckedCast<SHORT>(_cur_width ? _cur_width : 0x10), CheckedCast<SHORT>(_cur_height ? _cur_height : 0x10)};
 
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		if (_largest_window_size_ready)
 			return _largest_window_size;
 
@@ -791,11 +820,11 @@ bool TTYBackend::OnConsoleSetFKeyTitles(const char **titles)
 
 BYTE TTYBackend::OnConsoleGetColorPalette()
 {
-	if (_norgb) {
+	if (_tty_caps.norgb) {
 		return 4;
 	}
 
-	if (_far2l_tty) try {
+	if (_tty_caps.kind == TTYCaps::FAR2L) try {
 		StackSerializer stk_ser;
 		stk_ser.PushNum(FARTTY_INTERACT_GET_COLOR_PALETTE);
 		Far2lInteract(stk_ser, true);
@@ -838,7 +867,7 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 		const auto prev_osc52clip_set = _osc52clip_set;
 		_osc52clip_set = (tweaks & CONSOLE_OSC52CLIP_SET) != 0;
 
-		if (_osc52clip_set != prev_osc52clip_set && !_far2l_tty && !_ttyx) {
+		if (_osc52clip_set != prev_osc52clip_set && _tty_caps.kind != TTYCaps::FAR2L && !_ttyx) {
 			ChooseSimpleClipboardBackend();
 		}
 
@@ -858,7 +887,7 @@ DWORD64 TTYBackend::OnConsoleSetTweaks(DWORD64 tweaks)
 
 	DWORD64 out = TWEAK_STATUS_SUPPORT_TTY_PALETTE;
 
-	if (!_far2l_tty && !_ttyx) {
+	if (_tty_caps.kind != TTYCaps::FAR2L && !_ttyx) {
 		out|= TWEAK_STATUS_SUPPORT_OSC52CLIP_SET;
 	}
 
@@ -1003,7 +1032,7 @@ void TTYBackend::OSC52SetClipboard(const char *text, bool is_primary_buffer)
 
 bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 {
-	if (!_far2l_tty || _exiting)
+	if (_tty_caps.kind != TTYCaps::FAR2L || _exiting)
 		return false;
 
 	std::shared_ptr<Far2lInteractData> pfi = std::make_shared<Far2lInteractData>();
@@ -1139,24 +1168,12 @@ void TTYBackend::OnUsingExtension(char extension)
 
 void TTYBackend::OnInspectKeyEvent(KEY_EVENT_RECORD &event)
 {
-	bool in_kernel = 0;
 	// In kernel console use kernel control keys info even if using TTY|X for clipboard
-	#if defined(__linux__) || defined(__FreeBSD__) || defined(__DragonFly__)
-		int kd_mode;
-		#if defined(__linux__)
-		if (ioctl(_stdin, KDGETMODE, &kd_mode) == 0) {
-		#else
-		if (ioctl(_stdin, KDGKBMODE, &kd_mode) == 0) {
-		#endif
-			in_kernel = 1;
-		}
-	#endif
-
-	if (_ttyx && !_using_extension && !in_kernel) {
+	if (_ttyx && !_using_extension && _tty_caps.kind != TTYCaps::KERNEL) {
 		_ttyx->InspectKeyEvent(event);
 
 	} else {
-		event.dwControlKeyState|= QueryControlKeys();
+		event.dwControlKeyState|= TTYKernelQueryControlKeys(_stdin);
 	}
 
 	if (!event.wVirtualKeyCode) {
@@ -1179,7 +1196,7 @@ void TTYBackend::OnFocusChange(bool focused)
 
 void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 {
-	if (!_far2l_tty) {
+	if (_tty_caps.kind != TTYCaps::FAR2L) {
 		fprintf(stderr, "Far2lEvent unexpected!\n");
 		return;
 	}
@@ -1210,7 +1227,7 @@ void TTYBackend::OnFar2lEvent(StackSerializer &stk_ser)
 
 void TTYBackend::OnFar2lReply(StackSerializer &stk_ser)
 {
-	if (!_far2l_tty) {
+	if (_tty_caps.kind != TTYCaps::FAR2L) {
 		fprintf(stderr, "OnFar2lReply: unexpected!\n");
 		return;
 	}
@@ -1250,6 +1267,12 @@ void TTYBackend::OnStatusResponse(char c)
 		_images_kitty_status = IKS_UNSUPPORTED;
 	}
 	_images_kitty_status_cond.notify_all();
+}
+
+void TTYBackend::OnCursorShape(int shape)
+{
+	fprintf(stderr, "OnCursorShape: %d\n", shape);
+	_initial_cursor_shape = shape;
 }
 
 void TTYBackend::OnInputBroken()
@@ -1305,69 +1328,9 @@ const char* TTYBackend::OSC52RequestClipboardData(bool is_primary_buffer)
 	return _osc52clip.c_str();
 }
 
-DWORD TTYBackend::QueryControlKeys()
-{
-	DWORD out = 0;
-
-#ifdef __linux__
-	unsigned char state = 6;
-/* #ifndef KG_SHIFT
-# define KG_SHIFT        0
-# define KG_CTRL         2
-# define KG_ALT          3
-# define KG_ALTGR        1
-# define KG_SHIFTL       4
-# define KG_KANASHIFT    4
-# define KG_SHIFTR       5
-# define KG_CTRLL        6
-# define KG_CTRLR        7
-# define KG_CAPSSHIFT    8
-#endif */
-
-	if (ioctl(_stdin, TIOCLINUX, &state) == 0) {
-		if (state & ((1 << KG_SHIFT) | (1 << KG_SHIFTL) | (1 << KG_SHIFTR))) {
-			out|= SHIFT_PRESSED;
-		}
-		if (state & (1 << KG_CTRLL)) {
-			out|= LEFT_CTRL_PRESSED;
-		}
-		if (state & (1 << KG_CTRLR)) {
-			out|= RIGHT_CTRL_PRESSED;
-		}
-		if ( (state & (1 << KG_CTRL)) != 0
-		&& ((state & ((1 << KG_CTRLL) | (1 << KG_CTRLR))) == 0) ) {
-			out|= LEFT_CTRL_PRESSED;
-		}
-
-		if (state & (1 << KG_ALTGR)) {
-			out|= RIGHT_ALT_PRESSED;
-		}
-		else if (state & (1 << KG_ALT)) {
-			out|= LEFT_ALT_PRESSED;
-		}
-	}
-#endif
-
-#if defined(__FreeBSD__) || defined(__DragonFly__) || defined(__linux__)
-	unsigned long int leds = 0;
-	if (ioctl(_stdin, KDGETLED, &leds) == 0) {
-		if (leds & 1) {
-			out|= SCROLLLOCK_ON;
-		}
-		if (leds & 2) {
-			out|= NUMLOCK_ON;
-		}
-		if (leds & 4) {
-			out|= CAPSLOCK_ON;
-		}
-	}
-#endif
-	return out;
-}
-
 void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		try {
 			StackSerializer stk_ser;
 			stk_ser.PushStr(Wide2MB(text));
@@ -1376,7 +1339,7 @@ void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_
 			Far2lInteract(stk_ser, false);
 		} catch (std::exception &) {}
 
-	} else if (getenv("DISPLAY") != NULL || UnderWayland()) {
+	} else if (_tty_caps.x11 || _tty_caps.wayland) {
 		const std::string &str_title = Wide2MB(title);
 		const std::string &str_text = Wide2MB(text);
 		Far2l_NotifySh(_full_exe_path, str_title.c_str(), str_text.c_str());
@@ -1411,11 +1374,11 @@ const char *TTYBackend::OnConsoleBackendInfo(int entity)
 		_backend_info.flavor.reserve(16); // avoid reallocation ever then
 		_backend_info.flavor = "TTY";
 
-		if (_far2l_tty || _ttyx || _using_extension) {
+		if (_tty_caps.kind == TTYCaps::FAR2L || _ttyx || _using_extension) {
 			_backend_info.flavor+= '|';
 		}
 
-		if (_far2l_tty) {
+		if (_tty_caps.kind == TTYCaps::FAR2L) {
 			_backend_info.flavor+= 'F';
 		} else if (_ttyx || _using_extension) {
 			if (_ttyx) {
@@ -1438,60 +1401,101 @@ static void OnSigWinch(int)
 	TTYBackend_OnTerminalDamaged(false);
 }
 
+void TTYBackend::DetachTTY()
+{
+	FDScope dev_null(open("/dev/null", O_RDWR));
+	if (dev_null.Valid()) {
+		if (_stdin != -1) {
+			dup2(dev_null, _stdin);
+		}
+		if (_stdout != -1) {
+			dup2(dev_null, _stdout);
+		}
+		fprintf(stderr, "%s\n", __FUNCTION__);
+	} else {
+		fprintf(stderr, "%s: error %d opening devnull\n", __FUNCTION__, errno);
+	}
+}
 
-static int g_std_in = -1, g_std_out = -1;
-static bool g_far2l_tty = false;
-static struct termios g_ts_cont {};
+static void OnSigTerm(int)
+{
+	if (g_vtb) {
+		g_vtb->OnSigTerm();
+	}
+}
 
+void TTYBackend::OnSigTerm()
+{
+	FDScope saved_stdin(dup(_stdin));
+	FDScope saved_stdout(dup(_stdout));
+	DetachTTY();
+	_tty_caps.Finup(saved_stdin, saved_stdout);
+	_tty_raw_mode.reset();
+	if (write(STDERR_FILENO, "\nSIGTERM!\n", 10) < 0) {
+		perror("SIGTERM - write");
+	}
+	exit(-SIGTERM);
+}
 
 static void OnSigTstp(int signo)
 {
-	if (g_far2l_tty)
-		TTYNegotiateFar2l(g_std_in, g_std_out, false);
-
-	if (tcgetattr(g_std_out, &g_ts_cont) == -1) {
-		perror("OnSigTstp - tcgetattr");
+	if (g_vtb) {
+		g_vtb->OnSigTstp();
 	}
-	raise(SIGSTOP);
 }
 
+void TTYBackend::OnSigTstp()
+{
+	// drop sudo privileges once pending sudo operation completes
+	// leaving them is similar to leaving root console unattended
+	sudo_client_drop();
+	if (!_stp_stdin.Valid()) {
+		_stp_stdin = dup(_stdin);
+	}
+	if (!_stp_stdout.Valid()) {
+		_stp_stdout = dup(_stdout);
+	}
+	DetachTTY(); // finup will happen in reader thread
+	KickAss(true);
+}
 
 static void OnSigCont(int signo)
 {
-	if (tcsetattr(g_std_out, TCSADRAIN, &g_ts_cont ) == -1) {
-		perror("OnSigCont - tcsetattr");
+	if (g_vtb) {
+		g_vtb->OnSigCont();
 	}
-	if (g_far2l_tty)
-		TTYNegotiateFar2l(g_std_in, g_std_out, true);
+}
 
-	TTYBackend_OnTerminalDamaged(true);
+void TTYBackend::OnSigCont()
+{
+	_stp_cont = true;
 }
 
 static void OnSigHup(int signo)
+{
+	if (g_vtb) {
+		g_vtb->OnSigHup();
+	}
+}
+
+void TTYBackend::OnSigHup()
 {
 	// drop sudo privileges once pending sudo operation completes
 	// leaving them is similar to leaving root console unattended
 	sudo_client_drop();
 
-	FDScope dev_null(open("/dev/null", O_RDWR));
-	if (dev_null.Valid()) {
-//		dup2(dev_null, 2);
-//		dup2(dev_null, 1);
-//		dup2(dev_null, 0);
-		if (g_std_out != -1)
-			dup2(dev_null, g_std_out);
-		if (g_std_in != -1)
-			dup2(dev_null, g_std_in);
-	}
-	if (g_vtb) {
-		g_vtb->KickAss(true);
-	}
+	FDScope saved_stdin(dup(_stdin));
+	FDScope saved_stdout(dup(_stdout));
+	DetachTTY();
+	_tty_caps.Finup(saved_stdin, saved_stdout);
+	KickAss(true);
 }
+
 
 void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 {
 	memset(wgi, 0, sizeof(*wgi));
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		try {
 			StackSerializer stk_ser;
 			stk_ser.PushNum(FARTTY_INTERACT_IMAGE_CAPS);
@@ -1513,8 +1517,8 @@ void TTYBackend::OnGetConsoleImageCaps(WinportGraphicsInfo *wgi)
 
 bool TTYBackend::CheckKittyImagesSupport()
 {
-	if ( (_nodetect & NODETECT_K) != 0) {
-		fprintf(stderr, "%s: nodetect\n", __FUNCTION__);
+	if ( _restrict.kitty) {
+		fprintf(stderr, "%s: restrict\n", __FUNCTION__);
 		return false;
 	}
 	const auto reply_timeout_msec = 1000;
@@ -1560,7 +1564,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 			return false;
 	}
 
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		uint8_t ok = 0;
 		SMALL_RECT def_area = {-1, -1, -1, -1};
 		if (!area) {
@@ -1625,7 +1629,7 @@ bool TTYBackend::OnSetConsoleImage(const char *id, DWORD64 flags, const SMALL_RE
 
 bool TTYBackend::OnTransformConsoleImage(const char *id, const SMALL_RECT *area, uint16_t tf)
 {
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		uint8_t ok = 0;
 		try {
 			SMALL_RECT def_area = {-1, -1, -1, -1};
@@ -1653,7 +1657,7 @@ bool TTYBackend::OnTransformConsoleImage(const char *id, const SMALL_RECT *area,
 
 bool TTYBackend::OnDeleteConsoleImage(const char *id)
 {
-	if (_far2l_tty) {
+	if (_tty_caps.kind == TTYCaps::FAR2L) {
 		uint8_t ok = 0;
 		try {
 			StackSerializer stk_ser;
@@ -1668,35 +1672,33 @@ bool TTYBackend::OnDeleteConsoleImage(const char *id)
 		return ok != 0;
 	}
 
-	if (CheckKittyImagesSupport()) {
-		std::string str_id(id);
-		std::lock_guard<std::mutex> lock(_async_mutex);
-		if (!_images.erase(str_id)) {
-			return false;
-		}
-		_images_to_delete.insert(str_id);
-	} else {
+	if (!CheckKittyImagesSupport()) {
 		return false;
 	}
 
+	std::string str_id(id);
 	std::lock_guard<std::mutex> lock(_async_mutex);
+	if (!_images.erase(str_id)) {
+		return false;
+	}
+	_images_to_delete.insert(str_id);
 	_ae.images_changed = true;
 	_async_cond.notify_all(); // Wake up the writer thread
 	return true;
 }
 
-bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, bool norgb, DWORD nodetect, bool far2l_tty, unsigned int esc_expiration, int notify_pipe, int argc, char **argv, int(*AppMain)(int argc, char **argv), int *result)
+bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
+	bool ext_clipboard, TTYRestrict restrict,
+	unsigned int esc_expiration, int notify_pipe, int argc, char **argv,
+	int(*AppMain)(int argc, char **argv), int *result)
 {
-	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, norgb, nodetect, far2l_tty, esc_expiration, notify_pipe, result);
+	TTYBackend vtb(full_exe_path, std_in, std_out, ext_clipboard, restrict, esc_expiration, notify_pipe, result);
 
 	if (!vtb.Startup()) {
 		return false;
 	}
 
-	g_std_in = std_in;
-	g_std_out = std_out;
-	g_far2l_tty = far2l_tty;
-
+	auto orig_term = signal(SIGTERM, OnSigTerm);
 	auto orig_winch = signal(SIGWINCH, OnSigWinch);
 	auto orig_tstp = signal(SIGTSTP, OnSigTstp);
 	auto orig_cont = signal(SIGCONT, OnSigCont);
@@ -1709,6 +1711,7 @@ bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out, bool ext
 	signal(SIGCONT, orig_tstp);
 	signal(SIGTSTP, orig_cont);
 	signal(SIGWINCH, orig_winch);
+	signal(SIGTERM, orig_term);
 
 	return true;
 }

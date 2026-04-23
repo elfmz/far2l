@@ -5,13 +5,26 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* Themes: added "Hercules Night", fixes to "Gold on Blue"
+* **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
+* _New_: `--nodetect=e` command line parameter to prevent emodjie VS16 suffix detection
+* _New_: Restore initial terminal cursor shape on exit
+* Viewer: Hex Mode now support multibytes UTF-8, UTF-16 etc.
+* Fix cmdline autocomplete when commands deduplicated by text
+* SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a pluguin's SysID may see via `far:about` or in plugin's source code)
+* _edsort plugin_: Support unique row sorting and preserve dialog values
+* Several bugfixes and improvements
+
+## 2.8.0 beta (2026-03-23)
 * Themes support (change via **F9**->Options->Colors),
   changes only RGB colors of interface (not change palette colors and Colorer in editor)
 * Editor: Word wrap (like in Windows Notepad or HTML textareas), toggled by **F3** or **Alt+W**
 * Editor: Line numbers (toggled by **Ctrl+F3**)
 * Editor: Mouse selection (hold **Alt** to vertical block selection)
 * Editor: Menu in editor (**F9** to open)
+* Editor: Printing support from editor, including text highlighting (via **Alt+F5**)
 * Viewer: Links automatic highlight and clickable for URLs starting with https:, http: or mailto: (toggled on/off in Viewer options)
+* Viewer: Menu in viewer (**F9** to open)
 * File panels: New sort option "executables first" (toggled inside **Ctrl+F12**)
 * File panels: Resume for copy operation
 * Tree panel: Option to exclude subtrees from scanning using a mask (default: hidden folders `.*`).
@@ -29,9 +42,11 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * TTY/Kitty: Map Cmd to Ctrl on macOS for Cmd+C/V/X/Z support
 * _NetRocks plugin_: FTP fixes with date/time, SFTP fixes with quotes
 * _hexitor plugin_: fix broken layout with narrow window
-* _ImageViewer plugin_: New panel plugin (**F11**->**I** to open image/video file).
+* _ImageViewer plugin_: New panel plugin (**F11**->Image Viewer or **Ctrl+PgDn** to open image/video file).
   Uses ImageMagick for graphics operations and ffmpeg for video preview,
   works in GUI and in TTY|F and TTY|k.
+* _memo plugin_: New multi-page scratchpad/memo common plugin
+  (**F11**->Memo or **Ctrl+Alt+S** inside Panel, Dialog, Editor or Viewer; see [memo/README.md](https://github.com/elfmz/far2l/blob/master/memo/README.md))
 * _incsrch plugin_: Support Unicode searches and better support for single byte codepages, improve example of activation macros
 * _edsort plugin_: New plugin in editor (**F11**->Sort rows) to sort selected block of text at choosen column
 * _truncate plugin_: New plugin in editor (**F11**->Truncate File) to remove trailing white spaces in all lines and remove empty lines in end of file

@@ -105,6 +105,9 @@ if (NOT DEFINED USEWX)
     set(USEWX "YES")
 endif()
 
+set(FAR2L_GUI_BACKEND "WX" CACHE STRING "GUI backend to build (WX or SDL)")
+set_property(CACHE FAR2L_GUI_BACKEND PROPERTY STRINGS "WX" "SDL")
+
 if (NOT DEFINED UNRAR)
     set(UNRAR "bundled")
 endif()
@@ -206,8 +209,8 @@ add_subdirectory (far2l)
 add_subdirectory (themes)
 
 if (NOT ${USEWX})
-    message(STATUS "Building without GUI/wxWidgets backend due to USEWX=${USEWX}")
-else()
+    message(STATUS "Building without GUI backend due to USEWX=${USEWX}")
+elseif (FAR2L_GUI_BACKEND STREQUAL "WX")
     message(STATUS "Building with GUI/wxWidgets backend")
     if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
         if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
@@ -254,6 +257,11 @@ else()
     endif()
 
     add_subdirectory(WinPort/src/Backend/WX)
+elseif (FAR2L_GUI_BACKEND STREQUAL "SDL")
+    message(STATUS "Building with GUI/SDL backend")
+    add_subdirectory(WinPort/src/Backend/SDL)
+else()
+    message(FATAL_ERROR "${ColorRed}Unknown FAR2L_GUI_BACKEND='${FAR2L_GUI_BACKEND}', expected WX or SDL${ColorNormal}")
 endif()
 
 if (NOT DEFINED TTYX)
@@ -590,6 +598,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED ADB OR ADB)
+    message(STATUS "ADB plugin enabled")
+    add_subdirectory (adb)
+else()
+    message(STATUS "${ColorRed}ADB plugin disabled due to ADB=${ADB}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/adb/plug/adb.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 ##############################
 # common install directives
 
@@ -614,6 +632,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIO
     PATTERN "plug/*.far-plug-*"
     PATTERN "plug/*.broker"
     PATTERN "python/plugins" EXCLUDE
+    PATTERN "themes" EXCLUDE
 )
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING

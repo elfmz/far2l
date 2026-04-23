@@ -5,11 +5,14 @@
 #include "TTYInputSequenceParser.h"
 #include "Backend.h"
 
+// uncomment line below to enable self-contradiction check and some extra logging on startup
+// #define TTY_DEBUG
+
 //See:
 // http://www.manmrk.net/tutorials/ISPF/XE/xehelp/html/HID00000579.htm
 // http://www.leonerd.org.uk/hacks/fixterms/
 
-#if 0 // change to 1 to enable self-contradiction check on startup
+#ifdef TTY_DEBUG
 
 template <typename Last> static void AssertNoConflictsBetween(const Last &last) { }
 
@@ -52,7 +55,9 @@ void TTYInputSequenceParser::AddStr(WORD vk, DWORD control_keys, const char *fmt
 	int r = vsnprintf (&tmp[0], sizeof(tmp), fmt, va);
 	va_end(va);
 
+#ifdef TTY_DEBUG
 	fprintf(stderr, "TTYInputSequenceParser::AddStr(0x%x, 0x%x, '%s'): '%s' r=%d\n", vk, control_keys, fmt, tmp, r);
+#endif
 
 	TTYInputKey k = {vk, control_keys};
 	switch (r) {
@@ -307,6 +312,21 @@ void TTYInputSequenceParser::ParseAPC(const char *s, size_t l)
 	}
 }
 
+void TTYInputSequenceParser::ParseDCS(const char *s, size_t l)
+{
+	if (l >= 4 && s[0] == '1' && s[1] == '$' && s[2] == 'r' && s[l - 1] == 'q') {
+		unsigned int shape = 0;
+		for (size_t i = 3; i < l - 1; ++i) {
+			if (s[i] >= '0' && s[i] <= '9') {
+				shape = shape * 10 + (s[i] - '0');
+			} else if (s[i] != ' ') {
+				break;
+			}
+		}
+		_handler->OnCursorShape(shape);
+	}
+}
+
 size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 {
 	/*
@@ -335,6 +355,20 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 			}
 			if (s[i] == '\e' && i + 1 < l && s[i + 1] == '\\' ) {
 				ParseAPC(s + 1, i - 1);
+				return i + 2;
+			}
+		}
+		return TTY_PARSED_WANTMORE;
+	}
+
+	if (l > 0 && s[0] == 'P') {
+		for (size_t i = 1; i < l; ++i) {
+			if (s[i] == '\x07') {
+				ParseDCS(s + 1, i - 1);
+				return i + 1;
+			}
+			if (s[i] == '\e' && i + 1 < l && s[i + 1] == '\\' ) {
+				ParseDCS(s + 1, i - 1);
 				return i + 2;
 			}
 		}

@@ -39,6 +39,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "pathmix.hpp"
 #include "RegExp.hpp"
 #include "StackHeapArray.hpp"
+#include <memory>
+#include <mutex>
+
+// Cached compiled regex for repeated searches with same pattern
+static struct {
+	std::mutex mtx;
+	FARString pattern;
+	int flags;
+	std::unique_ptr<RegExp> re;
+} s_RegexCache;
 
 FARString &FormatNumber(const wchar_t *Src, FARString &strDest, int NumDigits)
 {
@@ -1294,24 +1304,39 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 		if (Regexp) {
 			FARString strSlash(Str);
 			InsertRegexpQuote(strSlash);
-			RegExp re;
-			// Q: что важнее: опция диалога или опция RegExp`а?
-			if (!re.Compile(strSlash, OP_PERLSTYLE | OP_OPTIMIZE | (!Case ? OP_IGNORECASE : 0)))
-				return false;
+			int reFlags = OP_PERLSTYLE | OP_OPTIMIZE | (!Case ? OP_IGNORECASE : 0);
 
-			int n = re.GetBracketsCount();
+			// Use cached regex if pattern and flags match
+			RegExp *re = nullptr;
+			{
+				std::lock_guard<std::mutex> lock(s_RegexCache.mtx);
+				if (s_RegexCache.re && s_RegexCache.pattern == strSlash && s_RegexCache.flags == reFlags) {
+					re = s_RegexCache.re.get();
+				} else {
+					s_RegexCache.re.reset(new RegExp());
+					if (!s_RegexCache.re->Compile(strSlash, reFlags)) {
+						s_RegexCache.re.reset();
+						return false;
+					}
+					s_RegexCache.pattern = strSlash;
+					s_RegexCache.flags = reFlags;
+					re = s_RegexCache.re.get();
+				}
+			}
+
+			int n = re->GetBracketsCount();
 			StackHeapArray<RegExpMatch> m(n);
 			RegExpMatch *pm = m.Get();
 
 			bool found = false;
 			int half = 0;
 			if (!Reverse) {
-				if (re.SearchEx(ReStringView(Source, StrSize), Position, pm, n))
+				if (re->SearchEx(ReStringView(Source, StrSize), Position, pm, n))
 					found = true;
 			} else {
 				int pos = 0;
 				for (;;) {
-					if (!re.SearchEx(ReStringView(Source, StrSize), pos, pm + half, n))
+					if (!re->SearchEx(ReStringView(Source, StrSize), pos, pm + half, n))
 						break;
 					pos = static_cast<int>(pm[half].start);
 					if (pos > Position)
@@ -1337,46 +1362,59 @@ bool SearchString(const wchar_t *Source, int StrSize, const FARString &Str, FARS
 
 		int Length = *SearchLength = (int)Str.GetLength();
 
+		// Pre-convert search string to uppercase for case-insensitive search
+		const wchar_t *SearchStr = Str.CPtr();
+		std::unique_ptr<wchar_t[]> upperSearchStr;
+		if (!Case) {
+			upperSearchStr.reset(new wchar_t[Length + 1]);
+			for (int i = 0; i <= Length; i++) {
+				upperSearchStr[i] = Upper(SearchStr[i]);
+			}
+			SearchStr = upperSearchStr.get();
+		}
+
+		// Get first character for quick mismatch detection
+		wchar_t firstChar = SearchStr[0];
+		wchar_t firstCharUpper = Case ? firstChar : Upper(firstChar);
+
 		for (int I = Position; (Reverse && I >= 0) || (!Reverse && I < StrSize); Reverse ? I-- : I++) {
-			for (int J = 0;; J++) {
-				if (!Str[J]) {
-					CurPos = I;
-					return true;
+			// Quick first-character check before full pattern match
+			wchar_t srcChar = Case ? Source[I] : Upper(Source[I]);
+			if (srcChar != firstCharUpper)
+				continue;
+
+			// Check whole words boundaries BEFORE pattern matching (moved outside inner loop)
+			if (WholeWords) {
+				bool leftOk = (I == 0) || IsSpace(Source[I - 1]) || wcschr(WordDiv, Source[I - 1]);
+				bool rightOk = (I + Length >= StrSize) || IsSpace(Source[I + Length]) || wcschr(WordDiv, Source[I + Length]);
+				if (!leftOk || !rightOk)
+					continue;
+			}
+
+			// Full pattern match
+			bool match = true;
+			for (int J = 1; J < Length; J++) {
+				wchar_t ch = Case ? Source[I + J] : Upper(Source[I + J]);
+				if (ch != SearchStr[J]) {
+					match = false;
+					break;
 				}
+			}
 
-				if (WholeWords) {
-					int locResultLeft = FALSE;
-					int locResultRight = FALSE;
-					wchar_t ChLeft = Source[I - 1];
-
-					if (I > 0)
-						locResultLeft = (IsSpace(ChLeft) || wcschr(WordDiv, ChLeft));
-					else
-						locResultLeft = TRUE;
-
-					if (I + Length < StrSize) {
-						wchar_t ChRight = Source[I + Length];
-						locResultRight = (IsSpace(ChRight) || wcschr(WordDiv, ChRight));
-					} else {
-						locResultRight = TRUE;
-					}
-
-					if (!locResultLeft || !locResultRight)
-						break;
-				}
-
-				wchar_t Ch = Source[I + J];
-
-				if (Case) {
-					if (Ch != Str[J])
-						break;
-				} else {
-					if (Upper(Ch) != Upper(Str[J]))
-						break;
-				}
+			if (match) {
+				CurPos = I;
+				return true;
 			}
 		}
 	}
 
 	return false;
+}
+
+void ClearSearchStringCache()
+{
+	std::lock_guard<std::mutex> lock(s_RegexCache.mtx);
+	s_RegexCache.re.reset();
+	s_RegexCache.pattern.Clear();
+	s_RegexCache.flags = 0;
 }

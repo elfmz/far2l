@@ -188,12 +188,13 @@ LocalSocketServer::LocalSocketServer(Kind sock_kind, const std::string &server, 
 	}
 }
 
-void LocalSocketServer::WaitForClient(int fd_cancel)
+void LocalSocketServer::WaitForClient(int fd_cancel, int tmout_msec)
 {
 	FDScope &sock = _accept_sock.Valid() ? _accept_sock : _sock;
 
 	fd_set fdr, fde;
 	int maxfd = (fd_cancel > (int)sock) ? fd_cancel : (int)sock;
+	timeval tv;
 
 	for (;;) {
 		FD_ZERO(&fdr);
@@ -206,12 +207,22 @@ void LocalSocketServer::WaitForClient(int fd_cancel)
 
 		FD_SET(sock, &fdr);
 		FD_SET(sock, &fde);
+		timeval *ptv = nullptr;
+		if (tmout_msec >= 0) {
+			tv.tv_sec = tmout_msec / 1000;
+			tv.tv_usec = (tmout_msec % 1000) * 1000;
+			ptv = &tv;
+		}
 
-		if (select(maxfd + 1, &fdr, (fd_set*)nullptr, &fde, (timeval*)nullptr) == -1) {
+		int rv = select(maxfd + 1, &fdr, (fd_set*)nullptr, &fde, ptv);
+		if (rv == -1) {
 			if (errno == EAGAIN || errno == EINTR)
 				continue;
 
 			throw LocalSocketSelectError();
+		}
+		if (rv == 0) {
+			throw LocalSocketTimeout();
 		}
 
 		if (fd_cancel != -1) {

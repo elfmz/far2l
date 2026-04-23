@@ -425,12 +425,6 @@ int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
 			CodePageChangedByUser = TRUE;
 		}
 
-		// BUGBUG
-		// пока что запретим переключать hex в UTF8/UTF32, ибо не работает.
-		if (VM.Hex && (VM.CodePage == CP_UTF8 || VM.CodePage == CP_UTF32LE || VM.CodePage == CP_UTF32BE)) {
-			VM.CodePage = WINPORT(GetACP)();
-		}
-
 		if (!IsUnicodeOrUtfCodePage(VM.CodePage)) {
 			ViewFile.SetPointer(0);
 		}
@@ -477,11 +471,12 @@ void Viewer::SetCRSym()
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[2048];
+	const int buf_size = 2048;
+	std::vector<wchar_t> Buf(buf_size);
 	int CRCount = 0, LFCount = 0;
 	int ReadSize, I;
 	vseek(0, SEEK_SET);
-	ReadSize = vread(Buf, ARRAYSIZE(Buf));
+	ReadSize = vread(Buf.data(), buf_size);
 
 	for (I = 0; I < ReadSize; I++)
 		switch (Buf[I]) {
@@ -726,28 +721,14 @@ void Viewer::ShowHex()
 				if (SelectSize > 0 && (SelectPos == fpos)) {
 					bSelStartFound = true;
 					SelStart = (int)wcslen(OutStr);
-					//					SelSize=SelectSize;
-					/*
-						$ 22.01.2001 IS
-						Внимание! Возможно, это не совсем верное решение проблемы
-						выделения из плагинов, но мне пока другого в голову не пришло.
-						Я приравниваю SelectSize нулю в Process*
-					*/
-					// SelectSize=0;
 				}
 
 				if (SelectSize > 0 && (fpos == (SelectPos + SelectSize - 1))) {
 					bSelEndFound = true;
 					SelEnd = (int)wcslen(OutStr) + 3;
-					//					SelSize=SelectSize;
 				}
 
-				if (!vgetc(Ch)) {
-					/*
-						$ 28.06.2000 tran
-						убираем показ пустой строки, если длина
-						файла кратна 16
-					*/
+				if (vread(&Ch, 1, true) <= 0) {
 					EndFile = 1;
 					LastPage = 1;
 
@@ -765,8 +746,9 @@ void Viewer::ShowHex()
 					swprintf(OutStr + OutStrLen, ARRAYSIZE(OutStr) - OutStrLen, L"%02X%02X ",
 							(unsigned int)HIBYTE(OutChar), (unsigned int)LOBYTE(OutChar));
 
-					if (!Ch) {
-						Ch = L' ';
+					Ch = OutChar;
+					if (!Ch || iswcntrl(Ch)) {
+						Ch = L'.';
 					}
 
 					TextStr[TextPos++] = Ch;
@@ -777,34 +759,29 @@ void Viewer::ShowHex()
 					wcscat(OutStr, BorderLine);
 			}
 		} else {
+			int64_t line_start_pos = vtell();
+			wchar_t wsequence[16];
+			int seq_len = vread(wsequence, 16, true);
+			BYTE sequence[16];
+			for (int i = 0; i < seq_len; ++i) {
+				sequence[i] = (BYTE)wsequence[i];
+			}
+			vseek(line_start_pos, SEEK_SET);
+
 			for (X = 0; X < 16; X++) {
 				int64_t fpos = vtell();
 
 				if (SelectSize > 0 && (SelectPos == fpos)) {
 					bSelStartFound = true;
 					SelStart = (int)wcslen(OutStr);
-					//					SelSize=SelectSize;
-					/*
-						$ 22.01.2001 IS
-						Внимание! Возможно, это не совсем верное решение проблемы
-						выделения из плагинов, но мне пока другого в голову не пришло.
-						Я приравниваю SelectSize нулю в Process*
-					*/
-					// SelectSize=0;
 				}
 
 				if (SelectSize > 0 && (fpos == (SelectPos + SelectSize - 1))) {
 					bSelEndFound = true;
 					SelEnd = (int)wcslen(OutStr) + 1;
-					//					SelSize=SelectSize;
 				}
 
-				if (!vgetc(Ch)) {
-					/*
-						$ 28.06.2000 tran
-						убираем показ пустой строки, если длина
-						файла кратна 16
-					*/
+				if (vread(&Ch, 1, true) <= 0) {
 					EndFile = 1;
 					LastPage = 1;
 
@@ -813,28 +790,54 @@ void Viewer::ShowHex()
 						break;
 					}
 
-					/*
-						$ 03.07.2000 tran
-						- вместо 5 пробелов тут надо 3
-					*/
 					wcscat(OutStr, L"   ");
-					TextStr[TextPos++] = L' ';
+					if (VM.CodePage != CP_UTF8)
+						TextStr[TextPos++] = L' ';
 				} else {
-					char NewCh;
-					WINPORT(WideCharToMultiByte)(VM.CodePage, 0, &Ch, 1, &NewCh, 1, " ", nullptr);
+					char NewCh = (char)(unsigned char)Ch;
 					int OutStrLen = StrLength(OutStr);
 					swprintf(OutStr + OutStrLen, ARRAYSIZE(OutStr) - OutStrLen, L"%02X ",
 							(unsigned int)(unsigned char)NewCh);
 
-					if (!Ch)
-						Ch = L' ';
-
-					TextStr[TextPos++] = Ch;
+					if (VM.CodePage != CP_UTF8) {
+						WINPORT(MultiByteToWideChar)(VM.CodePage, 0, &NewCh, 1, &Ch, 1);
+						if (!Ch || iswcntrl(Ch))
+							Ch = L'.';
+						TextStr[TextPos++] = Ch;
+					}
 					LastPage = 0;
 				}
 
 				if (X == 7)
 					wcscat(OutStr, BorderLine);
+			}
+
+			if (VM.CodePage == CP_UTF8 && seq_len > 0) {
+				for (int col = 0; col < seq_len; ) {
+					int expected_len = 0;
+					if ((sequence[col] & 0x80) == 0)      expected_len = 1;
+					else if ((sequence[col] & 0xE0) == 0xC0) expected_len = 2;
+					else if ((sequence[col] & 0xF0) == 0xE0) expected_len = 3;
+					else if ((sequence[col] & 0xF8) == 0xF0) expected_len = 4;
+
+					if (expected_len == 0 || col + expected_len > seq_len) {
+						expected_len = 1; // Invalid start byte or truncated sequence
+					}
+
+					wchar_t pval[2] = {0};
+					int converted = WINPORT(MultiByteToWideChar)(CP_UTF8, MB_ERR_INVALID_CHARS, (LPCSTR)&sequence[col], expected_len, pval, 1);
+
+					wchar_t char_to_write = L'.';
+					int bytes_consumed = 1;
+
+					if (converted > 0 && pval[0] != 0 && !iswcntrl(pval[0])) {
+						char_to_write = pval[0];
+						bytes_consumed = expected_len;
+					}
+
+					TextStr[TextPos++] = char_to_write;
+					col += bytes_consumed;
+				}
 			}
 		}
 
@@ -1711,13 +1714,12 @@ int Viewer::ProcessKey(FarKey Key)
 					break;
 			}
 
-			//VM.CodePage = VM.CodePage == WINPORT(GetOEMCP)() ? WINPORT(GetACP)() : WINPORT(GetOEMCP)();
 			if (VM.CodePage == CP_UTF8)
 				VM.CodePage = WINPORT(GetACP)();
 			else if (VM.CodePage == WINPORT(GetACP)() )
 				VM.CodePage = WINPORT(GetOEMCP)();
 			else // if (VM.CodePage == WINPORT(GetOEMCP)() )
-				VM.CodePage = VM.Hex ? WINPORT(GetACP)() : CP_UTF8; // STUB - для hex UTF8/UTF32 сейчас не работает
+				VM.CodePage = CP_UTF8;
 
 			ChangeViewKeyBar();
 			Show();
@@ -2526,12 +2528,13 @@ void Viewer::ChangeViewKeyBar()
 		else
 			ViewKeyBar->Change(Msg::ViewF4, 3);
 
+
 		if (VM.CodePage == CP_UTF8)
 			ViewKeyBar->Change(Msg::ViewF8, 7);
 		else if (VM.CodePage == WINPORT(GetACP)())
 			ViewKeyBar->Change(Msg::ViewF8DOS, 7);
 		else
-			ViewKeyBar->Change(VM.Hex ? Msg::ViewF8 : Msg::ViewF8UTF8, 7); // STUB - для hex UTF8/UTF32 сейчас не работает
+			ViewKeyBar->Change(Msg::ViewF8UTF8, 7);
 
 		if (VM.Processed)
 			ViewKeyBar->Change(Msg::ViewF5Raw, 4);
@@ -2569,6 +2572,30 @@ enum SEARCHDLG
 LONG_PTR WINAPI ViewerSearchDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
 {
 	switch (Msg) {
+		case DN_CLOSE:
+			if (Param1 >= 0) {
+				int Pos = SendDlgMessage(hDlg, DM_SHOWITEM, SD_EDIT_TEXT, -1) ? SD_EDIT_TEXT : SD_EDIT_HEX;
+				const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, Pos, 0);
+				bool IsEmpty;
+				if (Pos == SD_EDIT_TEXT)
+					IsEmpty = (*Txt == 0);
+				else {
+					IsEmpty = true;
+					for (; *Txt; Txt++) {
+						if (*Txt == ' ')
+							continue;
+						if (IsHexDigit(*Txt))
+							IsEmpty = false;
+						break;
+					}
+				}
+				if (IsEmpty) {
+					SendDlgMessage(hDlg, DM_SETFOCUS, Pos, 0);
+					Message(MSG_WARNING, 1, Msg::ViewSearchTitle, Msg::EditEmptySearchField, Msg::Ok);
+					return FALSE;
+				}
+			}
+			break;
 		case DN_INITDIALOG: {
 			SendDlgMessage(hDlg, DM_SDSETVISIBILITY,
 					SendDlgMessage(hDlg, DM_GETCHECK, SD_RADIO_HEX, 0) == BSTATE_CHECKED, 0);
@@ -2841,7 +2868,8 @@ void Viewer::Search(int Next, int FirstChar)
 		Match = false;
 
 		if (SearchWChars > 0 && (!ReverseSearch || LastSelPos >= 0)) {
-			wchar_t Buf[16384];
+			const int buf_size = 16384;
+			std::vector<wchar_t> Buf(buf_size);
 
 			int ReadSize;
 			wakeful W;
@@ -2858,14 +2886,14 @@ void Viewer::Search(int Next, int FirstChar)
 				// if (CurPos<0)
 				//	CurPos=0;
 				// vseek(CurPos,SEEK_SET);
-				int BufSize = ARRAYSIZE(Buf);
+				int BufSize = buf_size;
 				int64_t CurPos = vtell();
 				if (ReverseSearch) {
 					/*
 						$ 01.08.2000 KM
 						Изменёно вычисление CurPos с учётом Whole words
 					*/
-					CurPos-= ARRAYSIZE(Buf) - SearchCodeUnits - !!WholeWords;
+					CurPos-= buf_size - SearchCodeUnits - !!WholeWords;
 					if (CurPos < 0) {
 						BufSize+= (int)CurPos;
 						CurPos = 0;
@@ -2873,7 +2901,7 @@ void Viewer::Search(int Next, int FirstChar)
 					vseek(CurPos, SEEK_SET);
 				}
 
-				if ((ReadSize = vread(Buf, BufSize, SearchHex != 0)) <= 0)
+				if ((ReadSize = vread(Buf.data(), BufSize, SearchHex != 0)) <= 0)
 					break;
 
 				DWORD CurTime = WINPORT(GetTickCount)();
@@ -2949,7 +2977,7 @@ void Viewer::Search(int Next, int FirstChar)
 							Match = CheckBufMatchesCaseSensitive(SearchWChars, &Buf[I], strSearchStr.CPtr());
 						}
 						if (Match) {
-							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf, Buf + I);
+							MatchPos = CurPos + CalcCodeUnitsDistance(VM.CodePage, Buf.data(), Buf.data() + I);
 							break;
 						}
 					}
@@ -3442,15 +3470,16 @@ void Viewer::GoTo(int ShowDlg, int64_t Offset, DWORD Flags)
 void Viewer::AdjustFilePos()
 {
 	if (!VM.Hex) {
-		wchar_t Buf[4096];
-		int64_t StartLinePos = -1, GotoLinePos = FilePos - (int64_t)sizeof(Buf) / sizeof(wchar_t);
+		const int buf_size = 4096;
+		std::vector<wchar_t> Buf(buf_size);
+		int64_t StartLinePos = -1, GotoLinePos = FilePos - (int64_t)buf_size;
 
 		if (GotoLinePos < 0)
 			GotoLinePos = 0;
 
 		vseek(GotoLinePos, SEEK_SET);
-		int ReadSize = (int)Min((int64_t)ARRAYSIZE(Buf), (int64_t)(FilePos - GotoLinePos));
-		ReadSize = vread(Buf, ReadSize);
+		int ReadSize = (int)Min((int64_t)buf_size, (int64_t)(FilePos - GotoLinePos));
+		ReadSize = vread(Buf.data(), ReadSize);
 
 		for (int I = ReadSize - 1; I >= 0; I--)
 			if (Buf[I] == (wchar_t)CRSym) {
@@ -3528,15 +3557,16 @@ void Viewer::SelectText(const int64_t &MatchPos, const int64_t &SearchLength, co
 	if (!ViewFile.Opened())
 		return;
 
-	wchar_t Buf[MAX_VIEWLINE];
-	int64_t StartLinePos = -1, SearchLinePos = MatchPos - sizeof(Buf) / sizeof(wchar_t);
+	const int buf_size = MAX_VIEWLINE;
+	std::vector<wchar_t> Buf(buf_size);
+	int64_t StartLinePos = -1, SearchLinePos = MatchPos - buf_size;
 
 	if (SearchLinePos < 0)
 		SearchLinePos = 0;
 
 	vseek(SearchLinePos, SEEK_SET);
-	int ReadSize = (int)Min((int64_t)ARRAYSIZE(Buf), (int64_t)(MatchPos - SearchLinePos));
-	ReadSize = vread(Buf, ReadSize);
+	int ReadSize = (int)Min((int64_t)buf_size, (int64_t)(MatchPos - SearchLinePos));
+	ReadSize = vread(Buf.data(), ReadSize);
 
 	for (int I = ReadSize - 1; I >= 0; I--)
 		if (Buf[I] == (wchar_t)CRSym) {
@@ -3897,13 +3927,6 @@ int Viewer::ViewerControl(int Command, void *Param)
 
 int Viewer::ProcessHexMode(int newMode, bool isRedraw)
 {
-	// BUGBUG
-	// До тех пор, пока не будет реализован адекватный hex-просмотр в UTF8 - будем смотреть в OEM.
-	// Ибо сейчас это не просмотр, а генератор однотипных унылых багрепортов.
-	if (VM.CodePage == CP_UTF8 && newMode) {
-		VM.CodePage = WINPORT(GetACP)();
-	}
-
 	int oldHex = VM.Hex;
 	VM.Hex = newMode & 1;
 

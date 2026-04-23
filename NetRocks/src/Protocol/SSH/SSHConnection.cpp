@@ -418,8 +418,8 @@ void SSHExecutedCommand::IOLoop()
 
 	MakeFDNonBlocking(fd_in);
 
+	std::vector<char> buf(0x8000);
 	for (unsigned int idle = 0;;) {
-		char buf[0x8000];
 		fd_set fdr, fde;
 		FD_ZERO(&fdr);
 		FD_ZERO(&fde);
@@ -458,13 +458,13 @@ void SSHExecutedCommand::IOLoop()
 		}
 
 		if (FD_ISSET(fd_in, &fdr)) { // || FD_ISSET(fd_in, &fde)
-			ssize_t rlen = read(fd_in, buf, sizeof(buf));
+			ssize_t rlen = read(fd_in, buf.data(), buf.size());
 			if (rlen <= 0) {
 				if (errno != EAGAIN) {
 					throw std::runtime_error("fd_in read failed");
 				}
 			} else {
-				OnReadFDIn(buf, (size_t)rlen);
+				OnReadFDIn(buf.data(), (size_t)rlen);
 				idle = 0;
 			}
 		}
@@ -485,17 +485,17 @@ void SSHExecutedCommand::IOLoop()
 			throw std::runtime_error("channel EOF");
 		}
 
-		int rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 0);
+		int rlen = ssh_channel_read_nonblocking(_channel, buf.data(), static_cast<uint32_t>(buf.size()), 0);
 		if (rlen > 0) {
-			if (WriteAll(fd_out, buf, rlen) != (size_t)rlen) {
+			if (WriteAll(fd_out, buf.data(), rlen) != (size_t)rlen) {
 				throw std::runtime_error("output write failed");
 			}
 			idle = 0;
 		}
 
-		rlen = ssh_channel_read_nonblocking(_channel, buf, sizeof(buf), 1);
+		rlen = ssh_channel_read_nonblocking(_channel, buf.data(), static_cast<uint32_t>(buf.size()), 1);
 		if (rlen > 0) {
-			if (WriteAll(fd_err, buf, rlen) != (size_t)rlen) {
+			if (WriteAll(fd_err, buf.data(), rlen) != (size_t)rlen) {
 				throw std::runtime_error("error write failed");
 			}
 			idle = 0;

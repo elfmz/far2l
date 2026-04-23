@@ -1,4 +1,4 @@
-[![Cirrus Build Status](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l) [![Coverage Status](https://codecov.io/gh/elfmz/far2l/coverage.svg?branch=master)](https://codecov.io/gh/elfmz/far2l?branch=master) [![Coverity Scan](https://scan.coverity.com/projects/27038/badge.svg)](https://scan.coverity.com/projects/elfmz-far2l) [![Language Grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/elfmz/far2l.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/elfmz/far2l/context:cpp) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/elfmz/far2l) [![Packages](https://repology.org/badge/tiny-repos/far2l.svg)](https://repology.org/project/far2l)
+[![Cirrus Build Status](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l) [![Coverity Scan](https://scan.coverity.com/projects/27038/badge.svg)](https://scan.coverity.com/projects/elfmz-far2l) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/elfmz/far2l) [![Packages](https://repology.org/badge/tiny-repos/far2l.svg)](https://repology.org/project/far2l)
 
 # far2l [![tag](https://img.shields.io/github/tag/elfmz/far2l.svg)](https://github.com/elfmz/far2l/tags)
 Linux fork of FAR Manager v2 (http://farmanager.com/)   
@@ -12,7 +12,7 @@ Python (optional scripting support),
 arclite <sub>(now as experimental version which partially more effective then multiarc;
 arclite disabled by default, to enable manually turn on
 F9->Options->Plugins configuration->ArcLite->[x] Enable Arclite plugin)</sub>,
-hexitor, OpenWith, ImageViewer, edsort, truncate.
+hexitor, OpenWith, ImageViewer, edsort, truncate, memo.
 
 FreeBSD/MacOS (Cirrus CI): [![Cirrus](https://api.cirrus-ci.com/github/elfmz/far2l.svg)](https://cirrus-ci.com/github/elfmz/far2l)
 
@@ -114,12 +114,16 @@ and in **terminal settings** option OSC 52 must be allowed (by default, OSC 52 i
 OSC 52 in many terminals is implemented only for the copy mode, and paste from the terminal goes by bracketed paste mode).</sub>
 
 <sub>_Note_: Using **TTY** under **Wayland** and **OSC 52** under Wayland:
-**TTY X|xi** in `--tty` works incorrectly. You need fully disable it to use OSC 52 for propper clipboard integration;
+**TTY X|Xi** in `--tty` works incorrectly. You need fully disable it to use OSC 52 for propper clipboard integration;
 you need to run `far2l --tty --nodetect=x`, than OSC 52 setting option will appear in `Interface Settings`, and you could enable it, as it described in a chapter above.
 Clipboard in `wx-gui` is working correctly. </sub>
 
 <a name="inst_run"></a>
 ## Installing, Running
+
+<sub>_Note_: packages in official repositories may be very outdated,
+actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
+
 <a name="debian"></a>
 #### Debian/Ubuntu binaries from the official repositories
 
@@ -141,9 +145,6 @@ Clipboard in `wx-gui` is working correctly. </sub>
 <sub>**Debian** has far2l in **sid (unstable)** / **14 forky (testing)** / **13 trixie** / **12 bookworm-backports**; **Ubuntu** since **23.10**.
 Details about versions in the official repositories see in
 https://packages.debian.org/search?keywords=far2l or https://packages.ubuntu.com/search?keywords=far2l </sub>
-
-<sub>_Note_: packages in official repositories may be very outdated,
-actual binaries or portable see in [Community packages & binaries](#community_bins).</sub>
 
 <sub>_Note_: since far2l 2.6.4 Debian/Ubuntu packages build with python subplugins.</sub>
 
@@ -169,7 +170,7 @@ debuild
 
 #### macOS binaries
 
-You can install prebuilt package for x86_64 platform via Homebrew Cask, by command:
+You can install prebuilt package for x86_64 platform via [Homebrew Cask](https://formulae.brew.sh/cask/far2l), by command:
 ```sh
 brew install --cask far2l
 ```
@@ -259,7 +260,7 @@ cmake --build .
 
 ##### Additional build configuration options:
 
-To build without WX backend (console version only): change `-DUSEWX=yes` to `-DUSEWX=no` also in this case dont need to install libwxgtk\*-dev package
+To build without WX backend (console version only): change `-DUSEWX=yes` to `-DUSEWX=no` also in this case dont need to install `libwxgtk*-dev` package
 
 To force-disable TTY|X and TTY|Xi backends: add argument `-DTTYX=no`; to disable only TTY|Xi - add argument `-DTTYXI=no`
 
@@ -286,7 +287,7 @@ To control how RAR archives will be handled in multiarc:
 There're also options to toggle other plugins build in same way:
 `-DALIGN=no`, `-DARCLITE=no`, `-DAUTOWRAP=no`, `-DCALC=no`, `-DCOLORER=no`, `-DCOMPARE=no`, `-DDRAWLINE=no`, `-DEDITCASE=no`, `-DEDITORCOMP=no`,
 `-DEDSORT=no`, `-DFARFTP=yes` <sub>(by default it is disabled)</sub>,
-`-DFILECASE=no`, `-DHEXITOR=no`, `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
+`-DFILECASE=no`, `-DHEXITOR=no`, `-DIMAGEVIEWER=no`, `-DINCSRCH=no`, `-DINSIDE=no`, `-DMEMO=no`, `-DMULTIARC=no`, `-DNETROCKS=no`,
 `-DOPENWITH=no`, `-DSIMPLEINDENT=no`, `-DTMPPANEL=no`, `-DTRUNCATE=no`
 (see in [CMakeLists.txt](CMakeLists.txt)) and for NetRocks components (see in [NetRocks/CMakeLists.txt](NetRocks/CMakeLists.txt)).
 

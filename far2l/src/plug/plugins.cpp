@@ -749,6 +749,9 @@ int PluginManager::ProcessEditorInput(INPUT_RECORD *Rec)
 
 int PluginManager::ProcessEditorEvent(int Event, void *Param)
 {
+	if (FrameManager->ManagerIsDown())  // https://github.com/shmuz/far2m/issues/98
+		return 0;
+
 	int nResult = 0;
 
 	if (CtrlObject->Plugins.CurEditor || CtrlObject->Plugins.CurDialogEditor) {
@@ -1715,13 +1718,14 @@ int PluginManager::CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret)
 			HANDLE hNewPlugin = OpenPlugin(pPlugin, OpenFrom, (INT_PTR)Data);
 			bool process = false;
 
-			if (OpenFrom & OPEN_FROMMACRO) {
+			/*if (OpenFrom & OPEN_FROMMACRO) {
 				// <????>
 				;
 				// </????>
 			} else {
 				process = OpenFrom == OPEN_PLUGINSMENU || OpenFrom == OPEN_FILEPANEL;
-			}
+			}*/
+			process = OpenFrom & OPEN_PLUGINSMENU || OpenFrom & OPEN_FILEPANEL;
 
 			if (hNewPlugin != INVALID_HANDLE_VALUE && process) {
 				int CurFocus = CtrlObject->Cp()->ActivePanel->GetFocus();
@@ -1738,8 +1742,8 @@ int PluginManager::CallPlugin(DWORD SysID, int OpenFrom, void *Data, int *Ret)
 					Код закомментирован! Попытка исключить ненужные вызовы в CallPlugin()
 					Если что-то не так - раскомментировать!!!
 				*/
-				// NewPanel->Update(0);
-				// NewPanel->Show();
+				NewPanel->Update(0);
+				NewPanel->Show();
 			}
 
 			if (Ret) {

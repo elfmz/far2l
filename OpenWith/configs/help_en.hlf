@@ -197,11 +197,16 @@ $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips & tricks#
     For quick access, you can use a ~macro~@:KeyMacro@, for example, to access via "#≣ Menu#"/"#Apps#" key:
 
-    In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines:
+    In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines, variant 1:
  #[KeyMacros/Shell/Apps]#
  #Description=OpenWith Plugin for selected file(s)#
- #DisableOutput=0x1#
+ #DisableOutput=1#
  #Sequence=F11 O#
+    or variant 2:
+ #[KeyMacros/Shell/Apps]#
+ #Description=OpenWith Plugin for selected file(s)#
+ #DisableOutput=1#
+ #Sequence=callplugin(0x93CDEF19)#
 
     In #far2m# in the #~~/.config/far2m/Macros/scripts/# directory the following lines:
  #Macro {#

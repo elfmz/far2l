@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filelist.hpp"
 
 #include "fileedit2options.hpp"
+#include "printersupport.hpp"
 
 enum enumOpenEditor
 {
@@ -295,7 +296,7 @@ const FileEditor *FileEditor::CurrentEditor = nullptr;
 FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 		const wchar_t *PluginData, int OpenModeExstFile)
 	:
-	BadConversion(false), SaveAsTextFormat(0), EditMenuBar(nullptr)
+	EditMenuBar(nullptr), BadConversion(false), SaveAsTextFormat(0)
 {
 	ScreenObject::SetPosition(0, 0, ScrX, ScrY);
 	Flags.Set(InitFlags);
@@ -306,7 +307,7 @@ FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFla
 FileEditor::FileEditor(FileHolderPtr NewFileHolder, UINT codepage, DWORD InitFlags, int StartLine, int StartChar,
 		const wchar_t *Title, int X1, int Y1, int X2, int Y2, int OpenModeExstFile)
 	:
-	SaveAsTextFormat(0), EditMenuBar(nullptr)
+	EditMenuBar(nullptr), SaveAsTextFormat(0)
 {
 	Flags.Set(InitFlags);
 
@@ -1525,6 +1526,9 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 	EditFile.GetSize(FileSize);
 	DWORD StartTime = WINPORT(GetTickCount)();
 
+	// Enable bulk loading mode for faster file loading
+	m_editor->BeginBulkLoad();
+
 	while ((GetCode = GetStr.GetString(&Str, m_codepage, StrLength))) {
 		if (GetCode == -1) {
 			EditFile.Close();
@@ -1555,6 +1559,7 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 			if (CheckForEscSilent()) {
 				if (ConfirmAbortOp()) {
 					UserBreak = 1;
+					m_editor->EndBulkLoad();
 					EditFile.Close();
 					return FALSE;
 				}
@@ -1578,6 +1583,9 @@ int FileEditor::LoadFile(const wchar_t *Name, int &UserBreak)
 			return FALSE;
 		}
 	}
+
+	// End bulk loading mode
+	m_editor->EndBulkLoad();
 
 	BadConversion = !GetStr.IsConversionValid();
 	if (BadConversion) {
@@ -2167,6 +2175,7 @@ void FileEditor::ResizeConsole()
 	m_editor->PrepareResizedConsole();
 }
 
+
 int FileEditor::ProcessEditorInput(INPUT_RECORD *Rec)
 {
 	int RetCode;
@@ -2174,6 +2183,7 @@ int FileEditor::ProcessEditorInput(INPUT_RECORD *Rec)
 	RetCode = CtrlObject->Plugins.ProcessEditorInput(Rec);
 	return RetCode;
 }
+
 
 void FileEditor::SetPluginTitle(const wchar_t *PluginTitle)
 {
@@ -2903,15 +2913,13 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		}
 		return;
 	}
-	// todo: handle commands without accelerated keys
-	/* Once printer support will be merged, we can uncomment this
 	else if (hMenu == MENU_FILE && vMenu == MENU_FILE_PRINTER) {
 		PrinterSupport ps;
 		if (ps.IsPrinterSetupDialogSupported()) {
 			ps.ShowPrinterSetupDialog();
 		}
 		return;
-	}*/
+	}
 }
 
 int FileEditor::MenuBarPosition() {

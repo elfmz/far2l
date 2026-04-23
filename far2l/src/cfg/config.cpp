@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "vtshell.h"
 #include "ConfigRW.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "AllXLats.hpp"
 #include "xlat.hpp"
 
@@ -193,9 +194,9 @@ void SystemSettings()
 			&Opt.FoldersHistoryCount);
 	AddHistorySettings(Builder, Msg::ConfigSaveViewHistory, &Opt.SaveViewHistory, &Opt.ViewHistoryCount);
 	DialogBuilderListItem CAHistRemoveListItems[] = {
-			{Msg::ConfigHistoryRemoveDupsRuleNever, 0},
-			{Msg::ConfigHistoryRemoveDupsRuleByName, 1},
-			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, 2},
+			{Msg::ConfigHistoryRemoveDupsRuleNever, HISTORY_REMOVE_DUPS_NEVER},
+			{Msg::ConfigHistoryRemoveDupsRuleByName, HISTORY_REMOVE_DUPS_BY_NAME},
+			{Msg::ConfigHistoryRemoveDupsRuleByNameExtra, HISTORY_REMOVE_DUPS_BY_NAME_EXTRA},
 	};
 	auto HistRemove =
 		Builder.AddComboBox((int *)&Opt.HistoryRemoveDupsRule, 20, CAHistRemoveListItems, ARRAYSIZE(CAHistRemoveListItems),
@@ -205,10 +206,14 @@ void SystemSettings()
 	Builder.AddCheckbox(Msg::ConfigAutoHighlightHistory, &Opt.AutoHighlightHistory);
 	Builder.AddSeparator();
 
-	Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSaveSetup = Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSavePanels = Builder.AddCheckbox(Msg::ConfigAutoSavePanels, &Opt.AutoSavePanels);
+	AutoSavePanels->Indent(4);
+	Builder.LinkFlags(AutoSaveSetup, AutoSavePanels, DIF_DISABLE, false, false);
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
+		ConfigOptSaveAutoOptions();
 		SanitizeHistoryCounts();
 		ApplySudoConfiguration();
 	}

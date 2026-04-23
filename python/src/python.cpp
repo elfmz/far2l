@@ -404,6 +404,7 @@ XPORT(void, GetPluginInfo)(struct PluginInfo *Info)
 {
     PYTHON_LOG("\n");
     Info->StructSize = sizeof(*Info);
+    Info->SysID = 0x7E9585C2;
     Info->Flags = PF_DISABLEPANELS;
     Info->DiskMenuStringsNumber = 0;
     Info->PluginMenuStringsNumber = 0;

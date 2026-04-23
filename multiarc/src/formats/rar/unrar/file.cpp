@@ -532,7 +532,7 @@ bool File::RawSeek(int64 Offset,int Method)
   {
     // We tried to dynamically allocate 32 KB buffer here, but it improved
     // speed in Windows 10 by mere ~1.5%.
-    byte Buf[4096];
+    static thread_local byte Buf[4096];
     if (Method==SEEK_CUR || Method==SEEK_SET && Offset>=CurFilePos)
     {
       uint64 SkipSize=Method==SEEK_CUR ? Offset:Offset-CurFilePos;

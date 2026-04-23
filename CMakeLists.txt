@@ -105,7 +105,7 @@ if (NOT DEFINED USEWX)
     set(USEWX "YES")
 endif()
 if (NOT DEFINED USESDL)
-    set(USEWX "NO")
+    set(USESDL "NO")
 endif()
 
 if (NOT DEFINED UNRAR)

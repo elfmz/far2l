@@ -1295,7 +1295,6 @@ void TTYBackend::OnGetCellSize(unsigned int w, unsigned int h)
 
 void TTYBackend::OnOSC52PasteReply(const std::string& s, bool is_primary_buffer) 
 {
-	// vk: todo: call clipboard backend to fit the request with paste
 	fprintf(stderr, "TTYBackend: OSC52 paste arrived: %c, %ld length\n", is_primary_buffer ? 'P' : 'C', s.size() );
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_osc52clip = s;

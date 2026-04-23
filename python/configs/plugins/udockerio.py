@@ -1,3 +1,4 @@
+#!/usr/bin/env vpython3
 import os
 import stat
 import time
@@ -15,16 +16,15 @@ log = logging.getLogger(__name__)
 class Entry(object):
     def __init__(
         self,
-        dirname=None,
-        perms=None,
-        links=0,
-        uid=0,
-        gid=0,
-        size=None,
+        name='',
+        perms='',
+        links='0',
+        uid='0',
+        gid='0',
+        size='0',
         devmaj=None,
         devmin=None,
         date=None,
-        name=None,
         date_re=None,
         datezone=None,
     ):
@@ -33,7 +33,7 @@ class Entry(object):
         self.st_links = int(links)
         self.st_uid = int(uid)
         self.st_gid = int(gid)
-        if devmin is not None:
+        if devmin is not None and devmaj is not None:
             self.devmaj = int(devmaj)
             self.devmin = int(devmin)
             self.st_size = 0
@@ -46,7 +46,7 @@ class Entry(object):
 
         if (self.st_perms[0] if self.st_perms else None) == "l" and " -> " in self.st_name:
             try:
-                name, target = self.st_name.split(" -> ")
+                name = self.st_name.split(" -> ")[0]
             except ValueError:
                 return
             self.st_name = name
@@ -104,6 +104,7 @@ class Docker(object):
             self.error = 0
             self.errors = None
             self.output = None
+            self.proc : subprocess.Popen = None
 
         def kill(self):
             self.proc.kill()
@@ -118,7 +119,7 @@ class Docker(object):
             self.error = 0
             try:
                 outs, errs = self.proc.communicate()
-            except:
+            except: # pylint: disable=bare-except
                 self.proc.kill()
                 outs = errs = b""
                 self.error = 2
@@ -136,23 +137,30 @@ class Docker(object):
                 self.output = []
             self.done.set()
 
-    def run(self, *args, timeout=2, stderr=False):
+    def run(self, *args, timeout=2):
         cmd = [self.dockerexecutable]
         cmd.extend(args)
-        log.debug(f"docker.run: {cmd}")
+        log.debug("docker.run: %s", cmd)
         res = subprocess.run(cmd, capture_output=True, timeout=timeout)
-        log.debug(f"docker.run: rc={res.returncode}")
+        log.debug("docker.run: rc=%d", res.returncode)
         res.check_returncode()
-        if stderr:
-            fp = io.BytesIO(res.stdout)
-            lines1 = fp.readlines()
-            fp = io.BytesIO(res.stderr)
-            lines2 = fp.readlines()
-            return lines1, lines2
         assert res.stderr == b""
         fp = io.BytesIO(res.stdout)
         lines = fp.readlines()
         return lines
+
+    def runWithStdErr(self, *args, timeout=2):
+        cmd = [self.dockerexecutable]
+        cmd.extend(args)
+        log.debug("docker.run: %s", cmd)
+        res = subprocess.run(cmd, capture_output=True, timeout=timeout)
+        log.debug("docker.run: rc=%d", res.returncode)
+        res.check_returncode()
+        fp = io.BytesIO(res.stdout)
+        lines1 = fp.readlines()
+        fp = io.BytesIO(res.stderr)
+        lines2 = fp.readlines()
+        return lines1, lines2
 
     def list(self):
         lines = self.run("container", "ps", "-a")
@@ -187,7 +195,7 @@ class Docker(object):
         self.run("container", "stop", name)
 
     def logs(self, name):
-        return self.run("container", "logs", name, stderr=True)
+        return self.runWithStdErr("container", "logs", name)
 
     date_re = "%Y-%m-%d %H:%M:%S"
     file_re1 = r"""
@@ -243,7 +251,7 @@ class Docker(object):
             return t
         lines = self.run("cp", f"{deviceid}:{sqname}", dqname)
         for line in lines:
-            log.debug(f"pull: {line}")
+            log.debug("pull: %s", line)
 
     def push(self, deviceid, sqname, dqname, thread=False):
         if thread:
@@ -252,7 +260,7 @@ class Docker(object):
             return t
         lines = self.run("cp", sqname, f"{deviceid}:{dqname}")
         for line in lines:
-            log.debug(f"push: {line}")
+            log.debug("push: %s", line)
 
     def mkdir(self, deviceid, dqname):
         self.run("exec", "-u", "root:root", deviceid, "mkdir", dqname)

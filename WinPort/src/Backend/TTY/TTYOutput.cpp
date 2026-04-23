@@ -155,20 +155,20 @@ void TTYOutput::WriteUpdatedAttributes(DWORD64 attr, bool is_space)
 
 ///////////////////////
 
-TTYOutput::TTYOutput(int out, TTYCaps tty_caps)
+TTYOutput::TTYOutput(int out, TTYCaps tty_caps, TTYRestrict restrict)
 	:
-	_out(out), _tty_caps(tty_caps)
+	_out(out), _tty_caps(tty_caps), _restrict(restrict)
 {
 	// enable mouse and focus notifications
 	Format(ESC "7" ESC "[?47h" ESC "[?1049h" ESC "[?2004h" ESC "[?1004h");
 
-	if ((_tty_caps.nodetect & NODETECT_W) == 0) {
+	if (!_restrict.win32) {
 		Format(ESC "[?9001h"); // win32-input-mode on
 	}
-	if ((_tty_caps.nodetect & NODETECT_A) == 0) {
+	if (!_restrict.apple) {
 		Format(ESC "[?1337h"); // iTerm2 input mode on
 	}
-	if ((_tty_caps.nodetect & NODETECT_K) == 0) {
+	if (!_restrict.kitty) {
 		Format(ESC "[=15;1u"); // kovidgoyal's kitty mode on
 	}
 
@@ -195,14 +195,14 @@ TTYOutput::~TTYOutput()
 		ChangeCursor(true, true);
 		ChangeMouse(false);
 		ChangeKeypad(false);
-		if ((_tty_caps.nodetect & NODETECT_K) == 0) {
+		if (!_restrict.kitty) {
 			Format(ESC "[=0;1u" "\r"); // kovidgoyal's kitty mode off
 		}
 		Format(ESC "[0m" ESC "[?1049l" ESC "[?47l" ESC "8" ESC "[?2004l" ESC "[?1004l" "\r\n");
-		if ((_tty_caps.nodetect & NODETECT_W) == 0) {
+		if (!_restrict.win32) {
 			Format(ESC "[?9001l"); // win32-input-mode off
 		}
-		if ((_tty_caps.nodetect & NODETECT_A) == 0) {
+		if (!_restrict.apple) {
 			Format(ESC "[?1337l"); // iTerm2 input mode off
 		}
 		TTYBasePalette def_palette;
@@ -445,13 +445,13 @@ void TTYOutput::ChangeCursor(bool visible, bool force)
 void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 {
 // ESC[#;#H Moves cursor to line #, column #
-	if (x == 1 && !_tty_caps.strict_pos) {
+	if (x == 1) {
 		if (y == 1) {
 			Write(ESC "[H", 3);
 		} else if (_tty_caps.kind == TTYCaps::FAR2L) { // many other terminals support this too, but not all (see #1725)
 			Format(ESC "[%dH", y);
 		} else {
-			Format(ESC "[%d;H", y);
+			Format(ESC "[%d;1H", y); // cant leave empty space between semicolon and H cuz wezterm goes crazy due to this
 		}
 	} else {
 		Format(ESC "[%d;%dH", y, x);
@@ -463,7 +463,7 @@ void TTYOutput::MoveCursorStrict(unsigned int y, unsigned int x)
 void TTYOutput::MoveCursorLazy(unsigned int y, unsigned int x)
 {
 	// workaround for https://github.com/elfmz/far2l/issues/1889
-	if ((_cursor.y != y && _cursor.x != x) || _tty_caps.strict_pos) {
+	if (_cursor.y != y && _cursor.x != x) {
 		MoveCursorStrict(y, x);
 
 	} else if (x != _cursor.x) {

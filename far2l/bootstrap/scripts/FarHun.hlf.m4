@@ -705,15 +705,15 @@ System.WipeSymbol a ~far:config~@FarConfig@ párbeszédablakban), ezután a fáj
 @MiscCmd
 $ #Panelvezérlő parancsok - egyebek#
   Képernyőgrabber                                            #Alt-Ins#
-
     A képernyőgrabberrel bármelyik képernyőterület kijelölhető és a
     vágólapra másolható. A kurzor a #kurzornyilakkal# vagy az #egérrel#
     mozgatható. A szöveg a #Shift-kurzornyilakkal# vagy az egérrel,
     lenyomott #bal gombnál# mozgatással jelölhető ki. Az #Enter#, a
     #Ctrl-Ins#, a #jobb egérgomb# vagy a #kettős kattintás# a kijelölt
     szöveget a vágólapra másolja, a #Ctrl-<Szürke +># hozzáfűzi a
-    vágólap aktuális tartalmához, az #Esc# pedig kiléptet a grab
-    módból. A #Ctrl-U# leveszi a kijelölést a blokkról.
+    vágólap aktuális tartalmához, az #Esc# pedig kiléptet a grab módból.
+    A #Ctrl-A# vagy #A# selects whole screen.
+    A #Ctrl-U# vagy #U# leveszi a kijelölést a blokkról.
 
   ~Makró~@KeyMacro@ rögzítése                                           #Ctrl-<.>#
 
@@ -826,10 +826,10 @@ however some options are available only here or in configuration ini-files.
  The options are displayed in a list with four fields per item:
   #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
   #-# The type (boolean, integer, dword, string, binary or unknown)
-  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# Whether the option is saved when Far configuration is saved ('#c#' for common, '#p#' for panels) or not ('#-#')
   #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
- If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
-(‘?’ character marked items without default value).
+ If current value of an option is other than the default, the option is marked with the '#*#' character to the left of the name
+('#?#' character marked items without default value).
 
  Besides the list navigation keys, the following key combinations are supported:
 
@@ -2184,6 +2184,8 @@ of such lists. If you do not use this feature or feel uncomfortable with it, you
   #mentése#                 a FAR önműködően menti a beállításait, a
                           panelek aktuális helyzetével együtt.
 
+  #Panelek állapot mentése#
+  Panels' state (current folder, sort order, etc.) for both panels is automatically saved on FAR exit.
 
 @PanelSettings
 $ #Beállítások: panel beállítások#

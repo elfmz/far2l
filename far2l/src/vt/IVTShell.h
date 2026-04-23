@@ -17,6 +17,7 @@ struct IVTShell
 	virtual void OnBracketedPasteExpectation(bool enabled)              = 0;
 	virtual void OnFocusChangeExpectation(bool enabled)                 = 0;
 	virtual void OnWin32InputMode(bool enabled)                         = 0;
+	virtual int  OnModeQuery(int mode, bool is_dec)                     = 0;
 	virtual void SetKittyFlags(int flags)                               = 0;
 	virtual int  GetKittyFlags()                                        = 0;
 	virtual void OnApplicationProtocolCommand(const char *str)          = 0;

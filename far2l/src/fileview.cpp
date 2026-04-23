@@ -56,11 +56,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileholder.hpp"
 #include "GrepFile.hpp"
 #include "exitcode.hpp"
+#include "printersupport.hpp"
 
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, int DisableEdit,
 		long ViewStartPos, const wchar_t *PluginData, NamesList *ViewNamesList, int ToSaveAs, UINT aCodePage)
 	:
-	View(false, aCodePage), FullScreen(TRUE), DisableEdit(DisableEdit), MenuBar(nullptr)
+	View(false, aCodePage), MenuBar(nullptr), FullScreen(TRUE), DisableEdit(DisableEdit)
 {
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(I variant...)", this));
 	SetPosition(0, 0, ScrX, ScrY);
@@ -364,9 +365,11 @@ int FileViewer::ProcessKey(FarKey Key)
 			return TRUE;
 			// Печать файла с использованием плагина PrintMan
 		case KEY_ALTF5: {
+			/*
 			if (Opt.UsePrintManager && CtrlObject->Plugins.FindPlugin(SYSID_PRINTMANAGER))
 				CtrlObject->Plugins.CallPlugin(SYSID_PRINTMANAGER, OPEN_VIEWER, 0);		// printman
-
+            */
+            SendToPrinter();
 			return TRUE;
 		}
 		case KEY_F9:
@@ -647,15 +650,13 @@ void FileViewer::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 		}
 		return;
 	}
-	// todo: handle commands without accelerated keys
-	/*
 	else if (hMenu == MENU_VIEW_FILE && vMenu == MENU_VIEW_FILE_PRINTER) {
 		PrinterSupport ps;
 		if (ps.IsPrinterSetupDialogSupported()) {
 			ps.ShowPrinterSetupDialog();
 		}
 		return;
-	}*/
+	}
 }
 
 int FileViewer::MenuBarPosition() {
@@ -678,3 +679,41 @@ int FileViewer::IsOptionActive(int hMenu, int vMenu) {
 	}
 	return FALSE;
 }
+
+bool FileViewer::SendToPrinter()
+{
+	if (strName.IsEmpty()) return false;
+
+	std::wstring fileName = strName.GetWide();
+
+	PrinterSupport printer;
+
+	if (!printer.IsReducedHTMLSupported()) {
+		printer.PrintRawFile(fileName.c_str());
+		return true;
+	}
+
+	FILE* fp = printer.BeginPrint();
+	if (fp) {
+		FILE* in = fopen(strName.GetMB().c_str(), "r");
+		if (in) {
+			int c;
+			while ((c = getc(in)) != EOF) {
+				switch (c) {
+					case  '<': fputs("&lt;", fp); break;
+					case  '>': fputs("&gt;", fp); break;
+					case  '&': fputs("&amp;", fp); break;
+					case '\n': fputs("<br>", fp); break;
+					default: putc(c, fp);
+				}
+			}
+			fclose(in);
+		}
+		printer.EndPrint(fp);
+	}
+
+	// unlink(tmpl);
+	return true;
+}
+
+//////////////////////////////////

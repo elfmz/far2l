@@ -51,6 +51,7 @@ class TTYOutput
 
 	int _out;
 	TTYCaps _tty_caps;
+	TTYRestrict _restrict;
 	TTYBasePalette _palette;
 	bool _prev_attr_valid{false};
 	bool _DEC_line_drawing{false};
@@ -69,7 +70,7 @@ class TTYOutput
 	void WriteUpdatedAttributes(DWORD64 new_attr, bool is_space);
 
 public:
-	TTYOutput(int out, TTYCaps tty_caps);
+	TTYOutput(int out, TTYCaps tty_caps, TTYRestrict restrict);
 	~TTYOutput();
 
 	void Flush();

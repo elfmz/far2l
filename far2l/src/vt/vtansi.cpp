@@ -531,6 +531,15 @@ struct VTAnsiContext
 		vt_shell->InjectInput(seq);
 	}
 
+	void SendSequenceFmt( const char *fmt, ... )
+	{
+		va_list args;
+		va_start(args, fmt);
+		const auto &seq = StrPrintfV(fmt, args);
+		va_end(args);
+		SendSequence(seq.c_str());
+	}
+
 
 	class AlternativeScreenBuffer
 	{
@@ -573,20 +582,6 @@ struct VTAnsiContext
 
 // ========== Print functions
 
-//-----------------------------------------------------------------------------
-//   InterpretEscSeq()
-// Interprets the last escape sequence scanned by ParseAndPrintString
-//   prefix             escape sequence prefix
-//   es_argc            escape sequence args count
-//   es_argv[]          escape sequence args array
-//   suffix             escape sequence suffix
-//
-// for instance, with \e[33;45;1m we have
-// prefix = '[',
-// es_argc = 3, es_argv[0] = 33, es_argv[1] = 45, es_argv[2] = 1
-// suffix = 'm'
-//-----------------------------------------------------------------------------
-
 	void ParseOSCPalette(int cmd, const char *args, size_t args_size)
 	{
 		size_t pos = 0;
@@ -606,9 +601,8 @@ struct VTAnsiContext
 					fg = bk;
 				}
 				// reply with OSC 4 ; index ; rgb : [red] / [green] / [blue] ST
-				const auto &reply = StrPrintf("\e]4;%d;rgb:%02x/%02x/%02x\a",
+				SendSequenceFmt("\e]4;%d;rgb:%02x/%02x/%02x\a",
 					orig_index, fg & 0xff, (fg >> 8) & 0xff, (fg >> 16) & 0xff);
-				SendSequence(reply.c_str());
 //				abort();
 				return;
 			}
@@ -708,6 +702,21 @@ struct VTAnsiContext
 		fprintf(stderr, "FailedEscSeq: '%s' due to '%s'\n", s.c_str(), why.c_str());
 	}
 
+//-----------------------------------------------------------------------------
+//   InterpretEscSeq()
+// Interprets the last escape sequence scanned by ParseAndPrintString
+//   prefix             escape sequence prefix
+//   es_argc            escape sequence args count
+//   es_argv[]          escape sequence args array
+//   suffix             escape sequence suffix
+//   suffix2            escape sequence extra suffix
+//
+// for instance, with \e[33;45;1m we have
+// prefix = '[',
+// es_argc = 3, es_argv[0] = 33, es_argv[1] = 45, es_argv[2] = 1
+// suffix = 'm'
+//-----------------------------------------------------------------------------
+
 	void InterpretEscSeq( void )
 	{
 		int i;
@@ -720,6 +729,16 @@ struct VTAnsiContext
 		CHAR_INFO  CharInfo;
 		DWORD      mode;
 		HANDLE con_hnd = vt_shell->ConsoleHandle();
+		if (suffix2 != 0) {
+			if (prefix == '[' && suffix == 'p' && suffix2 == '$') {
+				int mode = (es_argc > 0) ? es_argv[0] : 0;
+				int status = vt_shell->OnModeQuery(mode, prefix2 == '?');
+				SendSequenceFmt("\e%s%d;%d$y", (prefix2 == '?') ? "[?" : "[", mode, status);
+			}
+			return;
+		}
+
+
 		if (prefix == '[') {
 			if (prefix2 == '?' && (suffix == 'h' || suffix == 'l')) {
 				for (i = 0; i < es_argc; ++i) {
@@ -786,8 +805,6 @@ struct VTAnsiContext
 				return;
 			}
 
-			// kitty keys stuff
-
 			if (suffix == 'u') {
 				if (prefix2 == '=') {
 					DWORD flags = (es_argc > 0) ? es_argv[0] : 0;
@@ -821,9 +838,7 @@ struct VTAnsiContext
 
 				} else if (prefix2 == '?') {
 					// reply with "CSI ? flags u"
-					char buf[64] = {0};
-					snprintf( buf, sizeof(buf), "\x1b[?%du", vt_shell->GetKittyFlags());
-					SendSequence( buf );
+					SendSequenceFmt("\x1b[?%du", vt_shell->GetKittyFlags());
 					return;
 				}
 			}
@@ -1147,12 +1162,9 @@ struct VTAnsiContext
 					SendSequence( "\x1b[0n" ); // "OK"
 					return;
 
-				case 6: {	// ESC[6n Report cursor position
-					char buf[64] = {0};
-					snprintf( buf, sizeof(buf), "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
-					SendSequence( buf );
-				}
-				return;
+				case 6: 	// ESC[6n Report cursor position
+					SendSequenceFmt("\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
+					return;
 
 				default:
 					return;
@@ -1209,6 +1221,7 @@ struct VTAnsiContext
 					es_argv[0] - 1, es_argv[1] - 1, Info.srWindow.Top, Info.srWindow.Bottom);
 				WINPORT(SetConsoleScrollRegion)(con_hnd, es_argv[0] - 1, es_argv[1] - 1);
 				return;
+
 
 			case 'c': // CSI P s c Send Device Attributes (Primary DA)
 				if (prefix2 == 0 && (es_argc < 1 || es_argv[0] == 0)) {
@@ -1487,8 +1500,6 @@ struct VTAnsiContext
 					prefix2 = *s;
 				} else if (*s >= '\x20' && *s <= '\x2f') {
 					suffix2 = *s;
-				} else if (suffix2 != 0) {
-					state = 1;
 				} else {
 					es_argc = 0;
 					suffix = *s;
@@ -1507,8 +1518,6 @@ struct VTAnsiContext
 					// ignore 'em
 				} else if (*s >= '\x20' && *s <= '\x2f') {
 					suffix2 = *s;
-				} else if (suffix2 != 0) {
-					state = 1;
 				} else {
 					es_argc++;
 					suffix = *s;
@@ -1749,4 +1758,8 @@ std::string VTAnsi::GetTitle()
 {
 	std::lock_guard<std::mutex> lock(_ctx->title_mutex);
 	return _ctx->cur_title;
+}
+bool VTAnsi::IsCRM()
+{
+	return _ctx->ansi_state.crm;
 }

@@ -158,19 +158,28 @@ void VT_ComposeCommandExec::Create(const char *cd, const char *cmd, bool need_su
 	}
 
 	if (*last_ch != '&') { // don't update curdir in case of background command
-		pwd_suffix = StrPrintf(" && pwd >'%s'", _pwd_file.c_str());
+		pwd_suffix = StrPrintf("if [ $FARVTRESULT -eq 0 ]; then pwd >'%s'; fi\n", _pwd_file.c_str());
 	}
 
 	if (need_sudo) {
 		content+= Opt.SudoEnabled ? "sudo -A " : "sudo ";
-		content+= StrPrintf("sh -c \"cd \\\"%s\\\" && %s%s\"\n",
-			EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str(), pwd_suffix.c_str());
+		content+= StrPrintf("sh -c \"cd \\\"%s\\\" && %s", EscapeEscapes(EscapeCmdStr(cd)).c_str(), EscapeCmdStr(cmd).c_str());
 	} else {
-		content+= StrPrintf("cd \"%s\" && %s%s\n",
-			EscapeCmdStr(cd).c_str(), cmd, pwd_suffix.c_str());
+		content+= StrPrintf("cd \"%s\" && %s", EscapeCmdStr(cd).c_str(), cmd);
 	}
 
-	content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
+	if (*cmd == 0 || cmd[strlen(cmd) - 1] != '\n') {
+		content+= '\n';
+	}
+	content+= "FARVTRESULT=$?\n";
+
+	if (need_sudo) {
+		content+= pwd_suffix;
+		content+= "exit $FARVTRESULT\"\n";
+		content+= "FARVTRESULT=$?\n"; // it will be echoed to caller from outside
+	} else {
+		content+= pwd_suffix;
+	}
 
 	static std::string vthook = InMyConfig("/vtcmd.sh");
 	if (TestPath(vthook).Exists()) {

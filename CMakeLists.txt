@@ -104,9 +104,9 @@ endif()
 if (NOT DEFINED USEWX)
     set(USEWX "YES")
 endif()
-
-set(FAR2L_GUI_BACKEND "WX" CACHE STRING "GUI backend to build (WX or SDL)")
-set_property(CACHE FAR2L_GUI_BACKEND PROPERTY STRINGS "WX" "SDL")
+if (NOT DEFINED USESDL)
+    set(USESDL "NO")
+endif()
 
 if (NOT DEFINED UNRAR)
     set(UNRAR "bundled")
@@ -209,8 +209,12 @@ add_subdirectory (far2l)
 add_subdirectory (themes)
 
 if (NOT ${USEWX})
-    message(STATUS "Building without GUI backend due to USEWX=${USEWX}")
-elseif (FAR2L_GUI_BACKEND STREQUAL "WX")
+    message(STATUS "Building without wxWidgets GUI backend due to USEWX=${USEWX}")
+endif()
+if (NOT ${USESDL})
+    message(STATUS "Building without SDL GUI backend due to USESDL=${USESDL}")
+endif()
+if (${USEWX})
     message(STATUS "Building with GUI/wxWidgets backend")
     if (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
         if (DEFINED wxWidgets_CONFIG_EXECUTABLE)
@@ -257,11 +261,10 @@ elseif (FAR2L_GUI_BACKEND STREQUAL "WX")
     endif()
 
     add_subdirectory(WinPort/src/Backend/WX)
-elseif (FAR2L_GUI_BACKEND STREQUAL "SDL")
+endif()
+if (${USESDL})
     message(STATUS "Building with GUI/SDL backend")
     add_subdirectory(WinPort/src/Backend/SDL)
-else()
-    message(FATAL_ERROR "${ColorRed}Unknown FAR2L_GUI_BACKEND='${FAR2L_GUI_BACKEND}', expected WX or SDL${ColorNormal}")
 endif()
 
 if (NOT DEFINED TTYX)
@@ -628,6 +631,7 @@ install(PROGRAMS "${INSTALL_DIR}/${EXECUTABLE_NAME}" DESTINATION "bin" RENAME fa
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
     PATTERN "colorer/base" EXCLUDE
     PATTERN "far2l_gui.so"
+    PATTERN "far2l_sdl.so"
     PATTERN "far2l_ttyx.broker"
     PATTERN "plug/*.far-plug-*"
     PATTERN "plug/*.broker"

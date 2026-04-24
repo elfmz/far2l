@@ -232,6 +232,7 @@ extern "C" void WinPortHelp()
 			"\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n"
 			"\t--x11 - force GUI backend to run on X11/Xwayland (force make GDK_BACKEND=x11)\n"
 			"\t--wayland - force GUI backend to run on Wayland (force make GDK_BACKEND=wayland)\n"
+			"\t--SDL - force SDL backend to run on X11/Xwayland\n"
 			"\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n"
 			"\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n"
 			"\t--maximize - force maximize window upon launch (only for GUI backend)\n"
@@ -250,6 +251,7 @@ struct ArgOptions
 	bool mortal = false;
 	bool x11 = false;
 	bool wayland = false;
+	bool sdl = false;
 	std::string ext_clipboard;
 	unsigned int esc_expiration = 100;
 	std::vector<char *> filtered_argv;
@@ -263,6 +265,9 @@ struct ArgOptions
 
 		} else if (strcmp(a, "--mortal") == 0) {
 			mortal = true;
+
+		} else if (strcmp(a, "--SDL") == 0) {
+			sdl = true;
 
 		} else if (strcmp(a, "--x11") == 0) {
 			x11 = true;
@@ -494,7 +499,15 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		std::string gui_path = full_exe_path;
 		ReplaceFileNamePart(gui_path, "far2l_gui.so");
 		TranslateInstallPath_Bin2Lib(gui_path);
-		void *gui_so = dlopen(gui_path.c_str(), RTLD_GLOBAL | RTLD_NOW);
+		void* gui_so = arg_opts.sdl ? 0 : dlopen(gui_path.c_str(), RTLD_GLOBAL | RTLD_NOW);
+
+		if (!gui_so) {
+			std::string gui_path = full_exe_path;
+			ReplaceFileNamePart(gui_path, "far2l_sdl.so");
+			TranslateInstallPath_Bin2Lib(gui_path);
+			gui_so = dlopen(gui_path.c_str(), RTLD_GLOBAL | RTLD_NOW);
+		}
+
 		if (gui_so) {
 			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
 			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");

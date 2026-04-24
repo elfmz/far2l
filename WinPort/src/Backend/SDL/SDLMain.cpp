@@ -2518,6 +2518,9 @@ bool SDLConsoleApp::Initialize()
 		}
 	}
 
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); // keep glyphs pixel-crisp
+	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // do not touch KDE plasma
+
 	_window = SDL_CreateWindow(
 		"far2l (SDL backend)",
 		init_x,
@@ -2550,9 +2553,13 @@ bool SDLConsoleApp::Initialize()
 	if (win_state.valid) {
 		if (win_state.fullscreen) {
 			SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		} else if (win_state.maximized) {
+		} 
+		/* 
+		VK: actually we do not need this as we already have created window with last reminded size and position.
+
+		else if (win_state.maximized) {
 			SDL_MaximizeWindow(_window);
-		}
+		}*/
 	}
 
 	if (_arg.app_main) {

@@ -159,7 +159,8 @@ public:
 	bool Initialize(SDL_Window *window)
 	{
 		_window = window;
-		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); // keep glyphs pixel-crisp
+		// VK: moved to SDLMain as we should setup hints prior to create first window
+		// SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); // keep glyphs pixel-crisp
 		{
 			SDL_version ver{};
 			SDL_GetVersion(&ver);

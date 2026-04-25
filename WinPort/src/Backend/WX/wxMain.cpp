@@ -2189,7 +2189,7 @@ void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
 const char *WinPortPanel::OnConsoleBackendInfo(int entity)
 {
 	if (entity == -1) {
-		return "GUI";
+		return "GUI|WX";
 	}
 
 	if (entity < 0) {

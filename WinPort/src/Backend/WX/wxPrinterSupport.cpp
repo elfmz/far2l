@@ -7,6 +7,7 @@
 
 #if defined(__APPLE__)
 	#include <TargetConditionals.h>
+	#include<AvailabilityMacros.h>
 	#if TARGET_OS_MAC
 		#if defined(__GNUC__) && !defined(__clang__)
 			#if __MAC_OS_X_VERSION_MIN_REQUIRED < 1070

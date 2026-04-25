@@ -10,10 +10,10 @@
 	#include<AvailabilityMacros.h>
 	#if TARGET_OS_MAC
 		#if defined(__GNUC__) && !defined(__clang__)
-			#if MAC_OS_X_VERSION_MIN_REQUIRED  < 1070
+//			#if MAC_OS_X_VERSION_MIN_REQUIRED  < 1070
 				// macOS < 10.7 + GCC
 				#undef MAC_NATIVE_PRINTING
-			#endif
+//			#endif
 		#endif
 	#endif
 #endif

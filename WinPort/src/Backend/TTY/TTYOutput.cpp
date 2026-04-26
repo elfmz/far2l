@@ -573,11 +573,17 @@ void TTYOutput::SendFar2lInteract(const StackSerializer &stk_ser)
 	Write(request.c_str(), request.size());
 }
 
-void TTYOutput::SendOSC52ClipSet(const std::string &clip_data)
+void TTYOutput::SendOSC52ClipSet(const std::string &clip_data, bool is_primary_buffer)
 {
-	std::string request = ESC "]52;;";
+	std::string request = is_primary_buffer ? ESC "]52;p;" : ESC "]52;c;";
 	base64_encode(request, (const unsigned char *)clip_data.data(), clip_data.size());
 	request+= '\a';
+	Write(request.c_str(), request.size());
+}
+
+void TTYOutput::SendOSC52ClipRequest(bool is_primary_buffer) {
+	std::string request = is_primary_buffer ? ESC "]52;p;?\a" : ESC "]52;c;?\a";; 
+	fprintf(stderr, "TTY: SendOSC52ClipRequest %s\n", request.c_str());
 	Write(request.c_str(), request.size());
 }
 

@@ -88,7 +88,8 @@ public:
 	void ChangeTitle(std::string title);
 
 	void SendFar2lInteract(const StackSerializer &stk_ser);
-	void SendOSC52ClipSet(const std::string &clip_data);
+	void SendOSC52ClipSet(const std::string &clip_data, bool is_primary_buffer);
+	void SendOSC52ClipRequest(bool is_primary_buffer);
 
 	void RequestCellSize();
 	void RequestStatus();

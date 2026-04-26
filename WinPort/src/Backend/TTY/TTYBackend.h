@@ -31,6 +31,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	TTYCaps _tty_caps{}, _prev_tty_caps{};
 	std::optional<TTYRawMode> _tty_raw_mode;
 	bool _osc52clip_set = false;
+	bool _osc52clip_request = false;
 	struct termios _ts_cont {};
 
 	std::mutex _palette_mtx;
@@ -112,6 +113,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 		bool far2l_interact : 1;
 		bool go_background : 1;
 		bool osc52clip_set : 1;
+		bool osc52clip_get : 1;
+		bool osc52clip_request : 1;
 		bool palette : 1;
 		bool images_probe : 1;
 		bool images_probe_del : 1;
@@ -119,7 +122,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 		inline bool HasAny() const
 		{
-			return term_resized || output || title_changed || far2l_interact || go_background || osc52clip_set || palette || images_probe || images_probe_del || images_changed;
+			return term_resized || output || title_changed || far2l_interact || go_background || 
+				osc52clip_set || osc52clip_get || osc52clip_request || 
+				palette || images_probe || images_probe_del || images_changed;
 		}
 	} _ae{};
 
@@ -127,6 +132,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::condition_variable _ae_idle_wait_cond;
 
 	std::string _osc52clip;
+	bool _osc52clip_is_primary;
 	std::atomic<int> _initial_cursor_shape{-1};
 
 	ClipboardBackendSetter _clipboard_backend_setter;
@@ -138,6 +144,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void DispatchOutput(TTYOutput &tty_out);
 	void DispatchFar2lInteract(TTYOutput &tty_out);
 	void DispatchOSC52ClipSet(TTYOutput &tty_out);
+	void DispatchOSC52ClipRequest(TTYOutput &tty_out);
 	void DispatchImagesProbe(TTYOutput &tty_out);
 	void DispatchImagesProbeDelete(TTYOutput &tty_out);
 	void DispatchImages(TTYOutput &tty_out);
@@ -149,7 +156,8 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 
 protected:
 	// IOSC52Interactor
-	virtual void OSC52SetClipboard(const char *text);
+	virtual void OSC52SetClipboard(const char *text, bool is_primary_buffer);
+	virtual const char* OSC52RequestClipboardData(bool is_primary_buffer);
 
 	// IFar2lInteractor
 	virtual bool Far2lInteract(StackSerializer &stk_ser, bool wait);
@@ -193,6 +201,7 @@ protected:
 	virtual void OnCursorShape(int shape);
 	virtual void OnInputBroken();
 	virtual void OnGetCellSize(unsigned int w, unsigned int h);
+	virtual void OnOSC52PasteReply(const std::string& s, bool is_primary_buffer);
 
 public:
 	TTYBackend(const char *full_exe_path, int std_in, int std_out, bool ext_clipboard, TTYRestrict restrict, unsigned int esc_expiration, int notify_pipe, int *result);

@@ -666,6 +666,9 @@ struct Options
 	bool IsSystemTheme;
 
 	std::vector<std::wstring> CmdLineStrings;
+
+	int PasteFromPrimarySelection;
+	int CopyToPrimarySelection;
 };
 
 extern Options Opt;

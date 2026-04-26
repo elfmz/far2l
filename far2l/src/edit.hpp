@@ -202,6 +202,10 @@ private:
 	inline const wchar_t *WordDiv() { return strWordDiv->CPtr(); };
 	void CheckForSpecialWidthChars(const wchar_t *CheckStr = nullptr, int Length = 0);
 
+	void ProcessPasteEventFromPrimary();
+	BOOL DoPaste(wchar_t* ClipText);
+	void AutoGrabToClipboard();
+
 protected:
 	int CalcRTrimmedStrSize() const;
 

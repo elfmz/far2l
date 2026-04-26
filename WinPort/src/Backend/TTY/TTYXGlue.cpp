@@ -359,3 +359,5 @@ UINT TTYXClipboard::OnClipboardRegisterFormat(const wchar_t *lpszFormat)
 		return 0;
 	}
 }
+
+INT TTYXClipboard::ChooseClipboard(INT format) { return -1; }

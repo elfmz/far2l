@@ -3347,6 +3347,34 @@ int Dialog::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 		Type = Item[I]->Type;
 
+        /* middle mouse click */ 
+		if ( MouseEvent->dwButtonState & (FROM_LEFT_2ND_BUTTON_PRESSED) ) {
+			if (Item[I]->Flags & (DIF_DISABLE | DIF_HIDDEN))
+				continue;
+
+			GetItemRect(I, Rect);
+			Rect.Left+= X1;
+			Rect.Top+= Y1;
+			Rect.Right+= X1;
+			Rect.Bottom+= Y1;
+
+			if (MsX >= Rect.Left && MsY >= Rect.Top && MsX <= Rect.Right && MsY <= Rect.Bottom) {
+
+				if (FarIsEdit(Type)) {
+					DlgEdit *EditLine = (DlgEdit *)(Item[I]->ObjPtr);
+					ChangeFocus2(I);
+
+					if (EditLine->ProcessMouse(MouseEvent)) {
+						EditLine->SetClearFlag(0);	// а может это делать в самом edit?
+						ShowDialog();	// нужен ли только один контрол или весь диалог?
+						return TRUE;
+					} 
+				}
+
+				break;
+			}
+		}
+
 		if (Type == DI_LISTBOX && MsY >= Y1 + Item[I]->Y1 && MsY <= Y1 + Item[I]->Y2
 				&& MsX >= X1 + Item[I]->X1 && MsX <= X1 + Item[I]->X2) {
 			VMenu *List = Item[I]->ListPtr;

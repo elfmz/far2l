@@ -75,6 +75,8 @@ struct ITTYInputSpecialSequenceHandler
 	virtual void OnCursorShape(int shape) = 0;
 	virtual void OnInputBroken() = 0;
 	virtual void OnGetCellSize(unsigned int w, unsigned int h) = 0;
+
+	virtual void OnOSC52PasteReply(const std::string& s, bool is_primary_buffer) = 0;
 };
 
 //wait for more characters from input buffer
@@ -83,6 +85,7 @@ struct ITTYInputSpecialSequenceHandler
 #define TTY_PARSED_PLAINCHARS       ((size_t)-1)
 //unrecognized sequence, skip ESC char (0x1b) and continue
 #define TTY_PARSED_BADSEQUENCE      ((size_t)-2)
+#define TTY_PARSED_CHUNK      		((size_t)-3)
 
 class TTYInputSequenceParser
 {
@@ -119,6 +122,11 @@ class TTYInputSequenceParser
 	bool _kitty_right_ctrl_down = false;
 	int _iterm_last_flags = 0;
 	char _using_extension = 0;
+	
+	bool _chunk_mode = false;
+	std::string _chunk_osc52_text;
+	bool _is_primary_buffer;
+
 	//bit indicators for modifier keys in mouse input sequence
 	const unsigned int
 		_shift_ind = 0x04,

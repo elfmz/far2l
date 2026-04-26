@@ -449,6 +449,9 @@ void TTYBackend::WriterThread()
 			if (ae.osc52clip_set) {
 				DispatchOSC52ClipSet(tty_out);
 			}
+			if (ae.osc52clip_request) {
+				DispatchOSC52ClipRequest(tty_out);
+			}
 			if (ae.images_probe) {
 				DispatchImagesProbe(tty_out);
 			}
@@ -708,7 +711,15 @@ void TTYBackend::DispatchOSC52ClipSet(TTYOutput &tty_out)
 		std::unique_lock<std::mutex> lock(_async_mutex);
 		osc52clip.swap(_osc52clip);
 	}
-	tty_out.SendOSC52ClipSet(osc52clip);
+	tty_out.SendOSC52ClipSet(osc52clip, _osc52clip_is_primary);
+}
+
+void TTYBackend::DispatchOSC52ClipRequest(TTYOutput &tty_out)
+{
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+	}
+	tty_out.SendOSC52ClipRequest(_osc52clip_is_primary);
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -1009,12 +1020,13 @@ void TTYBackend::ChooseSimpleClipboardBackend()
 	}
 }
 
-void TTYBackend::OSC52SetClipboard(const char *text)
+void TTYBackend::OSC52SetClipboard(const char *text, bool is_primary_buffer)
 {
 	fprintf(stderr, "TTYBackend::OSC52SetClipboard\n");
 	std::unique_lock<std::mutex> lock(_async_mutex);
 	_osc52clip = text;
 	_ae.osc52clip_set = true;
+	_osc52clip_is_primary = is_primary_buffer;
 	_async_cond.notify_all();
 }
 
@@ -1279,6 +1291,40 @@ void TTYBackend::OnGetCellSize(unsigned int w, unsigned int h)
 	std::lock_guard<std::mutex> lock(_async_mutex);
 	_pix_per_cell.X = w;
 	_pix_per_cell.Y = h;
+}
+
+void TTYBackend::OnOSC52PasteReply(const std::string& s, bool is_primary_buffer) 
+{
+	fprintf(stderr, "TTYBackend: OSC52 paste arrived: %c, %ld length\n", is_primary_buffer ? 'P' : 'C', s.size() );
+	std::unique_lock<std::mutex> lock(_async_mutex);
+	_osc52clip = s;
+	_ae.osc52clip_get = true;
+	_async_cond.notify_all();
+}
+
+const char* TTYBackend::OSC52RequestClipboardData(bool is_primary_buffer) 
+{
+	// vk: todo: many terminals do not have / blocks osc52 read, so we need to handle this
+	fprintf(stderr, "TTY: OSC52RequestClipboardData request\n");
+	{
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		_ae.osc52clip_request = true;
+		_async_cond.notify_all();
+	}
+
+	fprintf(stderr, "TTY: OSC52RequestClipboardData wait for response\n");
+	for(;;) {
+		std::unique_lock<std::mutex> lock(_async_mutex);
+		if(_async_cond.wait_for(lock, std::chrono::milliseconds(100)) == std::cv_status::no_timeout) {
+			if (_ae.osc52clip_get) break;
+		}
+		else {
+			fprintf(stderr, "TTY: OSC52RequestClipboardData timeout\n");
+			return nullptr;
+		}
+	}
+	fprintf(stderr, "TTY: OSC52RequestClipboardData response arrived\n");
+	return _osc52clip.c_str();
 }
 
 void TTYBackend::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)

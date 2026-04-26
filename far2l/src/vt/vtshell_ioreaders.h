@@ -86,6 +86,7 @@ public:
 	void Start(HANDLE con_hnd);
 	void Stop();
 	void InjectInput(const char *str, size_t len);
+	inline bool IsStarted() const { return _started; }
 
 protected:
 	virtual void OnJoin();

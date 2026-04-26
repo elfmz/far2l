@@ -321,6 +321,8 @@ void GoToVisualLine(int VisualLine);
 	void VCopy(int Append);
 	void VPaste(wchar_t *ClipText);
 	void VBlockShift(int Left);
+	bool IsVerticalBlockEditMode() const;
+	bool ProcessVerticalBlockEditKey(FarKey Key);
 	Edit *GetStringByNumber(int DestLine);
 	static void EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent);
 

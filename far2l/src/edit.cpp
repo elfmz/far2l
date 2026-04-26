@@ -71,6 +71,34 @@ enum
 };
 static const wchar_t *EOL_TYPE_CHARS[] = {L"", L"\r", L"\n", L"\r\n", L"\r\r\n"};
 
+bool TranslateInsertKey(FarKey &Key)
+{
+	switch (Key) {
+		case KEY_ADD:
+			Key = L'+';
+			return true;
+		case KEY_SUBTRACT:
+			Key = L'-';
+			return true;
+		case KEY_MULTIPLY:
+			Key = L'*';
+			return true;
+		case KEY_DIVIDE:
+			Key = L'/';
+			return true;
+		case KEY_DECIMAL:
+			Key = L'.';
+			return true;
+		case KEY_SHIFTSPACE:
+			Key = L' ';
+			return true;
+		case KEY_TAB:
+			return true;
+		default:
+			return Key >= L' ' && WCHAR_IS_VALID(Key);
+	}
+}
+
 #define EDMASK_ANY    L'X'		// позволяет вводить в строку ввода любой символ;
 #define EDMASK_DSS    L'#'		// позволяет вводить в строку ввода цифры, пробел и знак минуса;
 #define EDMASK_DIGIT  L'9'		// позволяет вводить в строку ввода только цифры;
@@ -747,22 +775,9 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 int Edit::ProcessKey(FarKey Key)
 {
+	TranslateInsertKey(Key);
+
 	switch (Key) {
-		case KEY_ADD:
-			Key = L'+';
-			break;
-		case KEY_SUBTRACT:
-			Key = L'-';
-			break;
-		case KEY_MULTIPLY:
-			Key = L'*';
-			break;
-		case KEY_DIVIDE:
-			Key = L'/';
-			break;
-		case KEY_DECIMAL:
-			Key = L'.';
-			break;
 		case KEY_CTRLC:
 			Key = KEY_CTRLINS;
 			break;
@@ -1435,9 +1450,6 @@ int Edit::ProcessKey(FarKey Key)
 			Show();
 			return TRUE;
 		}
-		case KEY_SHIFTSPACE:
-			Key = KEY_SPACE;
-			[[fallthrough]];
 		default: {
 			//			_D(SysLog(L"Key=0x%08X",Key));
 			if (Key == KEY_ENTER || !IS_KEY_NORMAL(Key))	// KEY_NUMENTER,KEY_IDLE,KEY_NONE covered by !IS_KEY_NORMAL

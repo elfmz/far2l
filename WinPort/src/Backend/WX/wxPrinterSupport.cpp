@@ -5,6 +5,19 @@
 #define MAC_NATIVE_PRINTING // comment this define if you want wxWidgets-aware dialogs
 #endif
 
+#if defined(__APPLE__)
+	#include <TargetConditionals.h>
+	#include<AvailabilityMacros.h>
+	#if TARGET_OS_MAC
+		#if defined(__GNUC__) && !defined(__clang__)
+//			#if MAC_OS_X_VERSION_MIN_REQUIRED  < 1070
+				// macOS < 10.7 + GCC
+				#undef MAC_NATIVE_PRINTING
+//			#endif
+		#endif
+	#endif
+#endif
+
 #ifndef MAC_NATIVE_PRINTING
 #include <wx/html/htmprint.h>
 #include <wx/richtext/richtextprint.h>

@@ -1645,14 +1645,17 @@ bool SDLConsoleBackend::OnDeleteConsoleImage(const char *id)
 
 const char *SDLConsoleBackend::OnConsoleBackendInfo(int entity)
 {
-	if (entity < 0) {
+	if (entity == -1) {
+		return "GUI|SDL";
+	}
+	/*if (entity < 0) {
 		_info_buffer.clear();
 		for (size_t i = 0; i < _backend_info.size(); ++i) {
 			if (i) _info_buffer.append(", ");
 			_info_buffer.append(_backend_info[i]);
 		}
 		return _info_buffer.c_str();
-	}
+	}*/
 	if (entity >= 0 && static_cast<size_t>(entity) < _backend_info.size()) {
 		return _backend_info[entity].c_str();
 	}

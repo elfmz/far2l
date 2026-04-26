@@ -18,7 +18,7 @@ elseif("${ICU_MODE}" STREQUAL "build")
     set(CHAR_CLASSES_CPP ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses.cpp)
     add_custom_command(
         OUTPUT ${CHAR_CLASSES_CPP}
-        COMMAND c++ ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} ${CMAKE_CURRENT_SOURCE_DIR}/src/CharClasses_mk.cpp -licuuc -o ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk && ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk > ${CHAR_CLASSES_CPP}
+        COMMAND ${CMAKE_CXX_COMPILER} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} ${CMAKE_CURRENT_SOURCE_DIR}/src/CharClasses_mk.cpp -licuuc -o ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk && ${CMAKE_CURRENT_BINARY_DIR}/tmpCharClasses_mk > ${CHAR_CLASSES_CPP}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT ${CHAR_CLASSES_CPP}
     )
@@ -78,6 +78,7 @@ set(SOURCES
     src/MakePTYAndFork.cpp
     src/LookupDebugSymbol.cpp
     src/ExecAsync.cpp
+    src/colorspace.cpp
     ${CHAR_CLASSES_CPP}
 )
 

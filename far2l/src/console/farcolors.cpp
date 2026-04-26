@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfigRW.hpp"
 #include "farcolorexp.h"
 #include "utils.h"
+#include "Colorspace.h"
 
 static struct ColorsInit_s
 {
@@ -218,6 +219,90 @@ uint64_t FarColors::setcolors[SIZE_ARRAY_FARCOLORS];
 uint32_t FarColors::GammaCorrection = 0;
 bool FarColors::GammaChanged = false;
 
+static void extractColorComponents(int color, int& r, int& g, int& b) {
+	r = (color >> 16) & 0xFF;
+	g = (color >> 8)  & 0xFF;
+	b =  color        & 0xFF;
+}
+
+static void extractColor(uint64_t color, RGB& fg, RGB& bg) 
+{
+	// color is not truly RGB -- convert it first
+	if ((color & (FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR)) != (FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR) ) {
+		// if (color < SIZE_ARRAY_FARCOLORS) color = FarColors::setcolors[color];
+
+		uint64_t fix_c = 0;
+		if ((color & (FOREGROUND_TRUECOLOR)) != (FOREGROUND_TRUECOLOR) ) {
+			uint32_t c = Palette::FARPalette[16 + (color & 0x0F)];
+			fix_c |= ((uint64_t)(c & 0x00ffffff) << 16) | FOREGROUND_TRUECOLOR;
+		}
+
+		if ((color & (BACKGROUND_TRUECOLOR)) != (BACKGROUND_TRUECOLOR) ) {
+			uint32_t c2 = Palette::FARPalette[(color >> 4) & 0x0F];
+			fix_c |= ((uint64_t)(c2 & 0x00ffffff) << 40) | BACKGROUND_TRUECOLOR;
+		}
+		fix_c |= color;
+		color = fix_c;
+	}
+
+	int fgC = (color >> 16) & 0xFFFFFF;
+	int bgC = (color >> 40) & 0xFFFFFF;;
+
+	int r, g, b;
+	extractColorComponents(fgC, r, g, b);
+	fg = toRGB(r, g, b);
+	extractColorComponents(bgC, r, g, b);
+	bg = toRGB(r, g, b);
+}
+
+static int assembleColorComponents(int r, int g, int b) {
+	return ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF);
+}
+
+static uint64_t assembleColor(RGB& fg, RGB& bg) {
+	iRGB ifg = toIRGB(fg);
+	iRGB ibg = toIRGB(bg);
+	uint64_t color = 0;
+	color |= (uint64_t)assembleColorComponents(ifg.r, ifg.g, ifg.b) << 16;
+	color |= (uint64_t)assembleColorComponents(ibg.r, ibg.g, ibg.b) << 40;
+	return color | FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR;
+}
+
+void FarColors::AdjustContrastLevels() noexcept 
+{
+	if (!Opt.Dialogs.EnforceColorCorrection){ 
+		return;
+	}
+
+	fprintf(stderr, "FarColors::AdjustContrastLevels()\n");
+	for (size_t i = 0; i < SIZE_ARRAY_FARCOLORS; i++) {
+		if (ColorsInit[i].name == "Dialog.Box") continue;
+
+		uint64_t cc = FARColors.colors[i];
+
+		RGB fg, bg, newFg;
+		extractColor(cc, fg, bg);
+        
+		ContrastLevel level = ::ComputeContrast(fg, bg, newFg);
+
+		iRGB ofg = toIRGB(fg);
+		iRGB nfg = toIRGB(newFg);
+		if (nfg.r != ofg.r || nfg.g != ofg.g || nfg.b != ofg.b) {
+
+			uint64_t cc2 = assembleColor(newFg, bg);
+			cc2 |= (cc & 0xFF); // keep indexed markers for further usage
+
+			char tmp1[256], tmp2[256];
+			FarColorToExpr(cc, tmp1, 256);
+			FarColorToExpr(cc2, tmp2, 256);
+
+			if (level != ContrastLevel::Good) 
+				fprintf(stderr, "%s: Color[%lu]: %s: %lx %s -> %lx %s\n", ColorsInit[i].name.c_str(), i, contrastToString(level), cc, tmp1, cc2, tmp2);
+
+			FARColors.colors[i] = cc2;
+		}
+	}
+}
 
 FarColors::FarColors() noexcept {
 

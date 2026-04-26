@@ -5,14 +5,20 @@ Only significant user-side changes are listed here
 or via `git log --no-merges --pretty=format:"%as: %B"`).
 
 ## Master (current development)
+* _New:_ GUI|SDL Backend (experimental now; not compiled by default, set flag `-DUSESDL=YES` explicitly to compile both GUI|WX and GUI|SDL backends together or `-DUSESDL=YES -DUSEWX=NO` to compile only GUI|SDL; command line parameter `--SDL` to force run GUI|SDL backend)
+* _New:_ Added a new option "Auto save panels state"
 * Themes: added "Hercules Night", fixes to "Gold on Blue"
 * **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
 * _New_: `--nodetect=e` command line parameter to prevent emodjie VS16 suffix detection
 * _New_: Restore initial terminal cursor shape on exit
+* Editor/Viewer: search/replace dialog: don't start search if search string is empty or regular expression is invalid
 * Viewer: Hex Mode now support multibytes UTF-8, UTF-16 etc.
+* Viewer: Printing support from viewer (via **Alt+F5**)
 * Fix cmdline autocomplete when commands deduplicated by text
 * SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a pluguin's SysID may see via `far:about` or in plugin's source code)
+* _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system; see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
+* _python plugin_: fixes and new subplugins uimgimage.py, uimgpdf.py, udockerrunlike.py [#3346](https://github.com/elfmz/far2l/issues/3346)
 * Several bugfixes and improvements
 
 ## 2.8.0 beta (2026-03-23)

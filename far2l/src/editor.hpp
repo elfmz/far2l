@@ -314,6 +314,7 @@ void GoToVisualLine(int VisualLine);
 	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
 	int CalculateTotalLines();  // Helper to count total lines
 	int CalculateLineNumberWidth();  // Helper to calculate line number display width
+	int CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar);  // Helper for text viewport width
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();

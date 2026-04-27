@@ -266,6 +266,18 @@ int Editor::CalculateLineNumberWidth()
 	return LineNumWidth;
 }
 
+int Editor::CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar)
+{
+	int Width = BaseWidth;
+
+	if (ReserveScrollBar) {
+		Width--;
+	}
+
+	Width -= CalculateLineNumberWidth();
+	return Width;
+}
+
 void Editor::FreeAllocatedData(bool FreeUndo)
 {
 	while (EndList) {
@@ -2174,7 +2186,7 @@ int Editor::ProcessKey(FarKey Key)
 			if (SelAtBeginning || SelFirst)
 			{
 				CurLine->Select(0, SelEnd);
-				SelStart = CurLine->RealPosToCell(CurPos);
+				SelStart = CurPos;
 
 				if (!EdOpt.CursorBeyondEOL
 						&& CurLine->m_prev->CellPosToReal(SelStart) > CurLine->m_prev->GetLength()) {
@@ -2336,7 +2348,6 @@ int Editor::ProcessKey(FarKey Key)
 					int new_pos = CurLine->GetLength();
 					CurLine->SetCurPos(new_pos);
 				}
-				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
 
 				int v_start_pos, v_end_pos;
@@ -2372,7 +2383,6 @@ int Editor::ProcessKey(FarKey Key)
 					CurLine->SetCurPos(0);
 					m_CurVisualLineInLogicalLine = 0;
 				}
-				MaxRightPos = CurLine->GetCellCurPos();
 				Show();
 
 				int v_start_pos, v_end_pos;
@@ -3637,8 +3647,7 @@ case KEY_CTRLNUMPAD3: {
 
 					if (m_bWordWrap)
 					{
-						int Width = X2 - X1 + 1;
-						if (EdOpt.ShowScrollBar) Width--;
+						int Width = CalculateTextAreaWidth(X2 - X1 + 1, EdOpt.ShowScrollBar);
 						CurLine->RecalculateWordWrap(Width, EdOpt.TabSize);
 					}
 
@@ -4056,14 +4065,6 @@ void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, boo
 				MouseSelStartingPos - target.pos,
 				MouseSelStartingLine + 1 - NumLine);
 		}
-	}
-
-	if (m_bWordWrap)
-	{
-		int v_start, v_end;
-		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
-		m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(v_start);
-		MaxRightPos = CurLine->GetCellCurPos();
 	}
 
 	Show();
@@ -7772,28 +7773,36 @@ void Editor::SetWordWrap(int NewMode)
 		else // Turning OFF
 		{
 			TopScreen = m_TopScreenLogicalLine;
+			m_WordWrapMaxRightPos = 0;
+
+			if (CurLine && ObjWidth > 0)
+			{
+				int VisibleWidth = CalculateTextAreaWidth(ObjWidth,
+						NumLastLine > (Y2 - Y1) + 1 && EdOpt.ShowScrollBar);
+
+				if (VisibleWidth < 1)
+					VisibleWidth = 1;
+
+				int CurPos = CurLine->GetCellCurPos();
+				int NewLeftPos = CurLine->GetLeftPos();
+				if (CurPos - NewLeftPos > VisibleWidth - 1) {
+					for (int ShiftBy = 1; ShiftBy <= std::max(EdOpt.TabSize, 2); ++ShiftBy) {
+						int RealLeftPos = CurLine->CellPosToReal(CurPos - VisibleWidth + ShiftBy);
+						int CandidateLeftPos = CurLine->RealPosToCell(RealLeftPos);
+						if (CandidateLeftPos != NewLeftPos) {
+							NewLeftPos = CandidateLeftPos;
+							break;
+						}
+					}
+				}
+
+				if (CurPos < NewLeftPos)
+					NewLeftPos = CurPos;
+				CurLine->SetLeftPos(NewLeftPos);
+			}
 		}
 
-		int Width = ObjWidth;
-		if (EdOpt.ShowScrollBar)
-			Width--;
-
-		// Account for line numbers if enabled
-		if (EdOpt.ShowLineNumbers) {
-			int TotalLines = 0;
-			for (Edit *CountPtr = TopList; CountPtr; CountPtr = CountPtr->m_next) {
-				TotalLines++;
-			}
-			int LineNumWidth = 1;
-			int temp = TotalLines;
-			while (temp >= 10) {
-				LineNumWidth++;
-				temp /= 10;
-			}
-			if (LineNumWidth < 4) LineNumWidth = 4;
-			LineNumWidth += 1;
-			Width -= LineNumWidth;
-		}
+		int Width = CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar);
 
 		Edit *CurPtr = TopList;
 		while (CurPtr)
@@ -7866,14 +7875,7 @@ void Editor::SetShowLineNumbers(int NewMode)
 
 		// If word wrap is enabled, recalculate wrap positions for all lines
 		if (m_bWordWrap) {
-			// Calculate line number width
-			int LineNumWidth = CalculateLineNumberWidth();
-
-			// Recalculate word wrap with adjusted width
-			int Width = X2 - X1 + 1;
-			if (EdOpt.ShowScrollBar)
-				Width--;
-			Width -= LineNumWidth;
+			int Width = CalculateTextAreaWidth(X2 - X1 + 1, EdOpt.ShowScrollBar);
 
 			CurPtr = TopList;
 			while (CurPtr) {
@@ -8246,12 +8248,7 @@ void Editor::SetPosition(int X1, int Y1, int X2, int Y2)
 
 	if (m_bWordWrap)
 	{
-		int RecalcWidth = X2 - X1 + 1;
-		if (EdOpt.ShowScrollBar) // Consistent with ShowEditor logic
-			RecalcWidth--;
-
-		// Account for line numbers if enabled
-		RecalcWidth -= CalculateLineNumberWidth();
+		int RecalcWidth = CalculateTextAreaWidth(X2 - X1 + 1, EdOpt.ShowScrollBar);
 
 		for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
 		{

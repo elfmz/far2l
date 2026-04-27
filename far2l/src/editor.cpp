@@ -66,6 +66,78 @@ static int ReplaceMode, ReplaceAll;
 
 static int EditorID = 0;
 
+static DWORD64 MakeWordWrapTailFillColor(DWORD64 color)
+{
+	return color & ~(IMPORTANT_LINE_CHAR | EXPLICIT_LINE_BREAK | COMMON_LVB_STRIKEOUT | COMMON_LVB_UNDERSCORE);
+}
+
+static bool TryGetWordWrapEmptyVisualLineFillColor(Edit *line, DWORD64 &fill_color)
+{
+	ColorItem ci;
+	for (size_t i = 0; line->GetColor(&ci, i); ++i)
+	{
+		if ((ci.StartPos <= 0 && ci.EndPos >= line->GetLength() - 1)
+			|| (ci.StartPos == -1 && ci.EndPos == -1))
+		{
+			fill_color = MakeWordWrapTailFillColor(ci.Color);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static void GetWordWrapLogicalColorRange(const ColorItem &ci, int xoff, int &logical_start, int &logical_end)
+{
+	logical_start = ci.StartPos;
+	logical_end = ci.EndPos;
+
+	if (ci.StartPos != -1 && ci.EndPos != -1) {
+		logical_start -= xoff;
+		logical_end -= xoff;
+	}
+}
+
+static bool ColorCoversWordWrapVisualLine(
+	const ColorItem &ci,
+	int logical_start,
+	int logical_end,
+	int visual_line_start,
+	int visual_line_end)
+{
+	return (ci.StartPos == -1 && ci.EndPos == -1)
+		|| (logical_start <= visual_line_start && logical_end >= visual_line_end - 1);
+}
+
+static bool TryMapColorToWordWrapVisualLine(
+	const ColorItem &ci,
+	int logical_start,
+	int logical_end,
+	int visual_line_start,
+	int visual_line_end,
+	ColorItem &mapped_ci)
+{
+	const int visual_line_length = visual_line_end - visual_line_start;
+	if (visual_line_length <= 0)
+		return false;
+
+	mapped_ci = ci;
+
+	if (ci.StartPos == -1 && ci.EndPos == -1)
+	{
+		mapped_ci.StartPos = 0;
+		mapped_ci.EndPos = visual_line_length - 1;
+		return true;
+	}
+
+	if (logical_start >= visual_line_end || logical_end < visual_line_start)
+		return false;
+
+	mapped_ci.StartPos = std::max(logical_start, visual_line_start) - visual_line_start;
+	mapped_ci.EndPos = std::min(logical_end, visual_line_end - 1) - visual_line_start;
+	return mapped_ci.StartPos <= mapped_ci.EndPos;
+}
+
 // EditorUndoData
 enum
 {
@@ -94,7 +166,7 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	LastSearchReverse(GlobalSearchReverse),
 	LastSearchSelFound(Opt.EdOpt.SearchSelFound),
 	LastSearchRegexp(Opt.EdOpt.SearchRegexp),
-	m_WordWrapMaxRightPos(0),
+	m_WordWrapPreferredCellPos(0),
 	m_codepage(CP_OEMCP),
 	StartLine(-1),
 	StartChar(-1),
@@ -164,8 +236,7 @@ void Editor::AdjustScreenPosition()
 	if (!m_bWordWrap)
 		return;
 
-	// Ensure m_CurVisualLineInLogicalLine is up to date
-	m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+	SyncWordWrapVisualLine();
 
 	// First, place the current visual line at the top of the screen
 	m_TopScreenLogicalLine = CurLine;
@@ -202,22 +273,58 @@ int Editor::FindVisualLine(Edit* line, int Pos)
 	return std::max(0, line->GetVisualLineCount() - 1);
 }
 
-void Editor::UpdateCursorPosition(int horizontal_cell_pos)
+void Editor::SyncWordWrapVisualLine()
+{
+	if (!m_bWordWrap || !CurLine)
+		return;
+
+	const int visual_line_count = CurLine->GetVisualLineCount();
+	if (m_CurVisualLineInLogicalLine >= 0 && m_CurVisualLineInLogicalLine < visual_line_count)
+	{
+		int start, end;
+		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
+		const int cur_pos = CurLine->GetCurPos();
+		if ((cur_pos >= start && cur_pos < end)
+			|| (cur_pos == CurLine->GetLength() && end == CurLine->GetLength()))
+		{
+			return;
+		}
+	}
+
+	m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+}
+
+void Editor::RememberWordWrapPreferredCellPos()
+{
+	if (!m_bWordWrap || !CurLine)
+		return;
+
+	SyncWordWrapVisualLine();
+
+	int visual_line_start, visual_line_end;
+	CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, visual_line_start, visual_line_end);
+	(void)visual_line_end;
+	m_WordWrapPreferredCellPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(visual_line_start);
+}
+
+void Editor::SetCursorByVisualLineCellOffset(int horizontal_cell_pos)
 {
 	int new_start, new_end;
 	CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, new_start, new_end);
 
 	int new_cell_pos = CurLine->RealPosToCell(new_start) + horizontal_cell_pos;
 	int new_pos = CurLine->CellPosToReal(new_cell_pos);
+	const int line_length = CurLine->GetLength();
 
-	// Clamp to the new visual line's boundaries.
-	// If new_pos is past the end of the visual line, move it to the end of the visual line.
-	if (new_pos > new_end) {
-		new_pos = new_end;
+	// For wrapped sub-lines, the [start, end) boundary belongs to the next visual line.
+	// If the preferred x lands on or beyond that boundary, keep the cursor on the last
+	// position that still belongs to the current visual line.
+	if (new_end < line_length && new_pos >= new_end) {
+		new_pos = CurLine->CalcPosBwdTo(new_end);
 	}
 	// A safety clamp to ensure we don't go past the actual end of the string data.
-	if (new_pos > CurLine->GetLength()) {
-		new_pos = CurLine->GetLength();
+	if (new_pos > line_length) {
+		new_pos = line_length;
 	}
 
 	CurLine->SetCurPos(new_pos);
@@ -275,7 +382,23 @@ int Editor::CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar)
 	}
 
 	Width -= CalculateLineNumberWidth();
-	return Width;
+	return std::max(Width, 1);
+}
+
+void Editor::RecalculateAllWordWraps(bool SyncWordWrapState)
+{
+	int Width = 0;
+	if (ObjWidth > 0) {
+		Width = CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar);
+	}
+	for (Edit *CurPtr = TopList; CurPtr; CurPtr = CurPtr->m_next)
+	{
+		if (SyncWordWrapState) {
+			CurPtr->SetWordWrap(m_bWordWrap);
+		}
+		CurPtr->ObjWidth = Width;
+		CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
+	}
 }
 
 void Editor::FreeAllocatedData(bool FreeUndo)
@@ -482,26 +605,13 @@ void Editor::ShowEditor(int CurLineOnly)
 {
 	if (m_bWordWrap && CurLine)
 	{
-		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		SyncWordWrapVisualLine();
 
 		EnsureTopScreenVisual();
 		const int off = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
 		if (off < 0 || off >= (Y2 - Y1 + 1)) {
 			AdjustScreenPosition();
 		}
-	}
-	// Re-assign to member XX2 to see what's going on before the loop
-	if (m_bWordWrap)
-	{
-		// In word wrap mode, the scrollbar makes no sense for now.
-		XX2 = X2;
-	}
-	else
-	{
-		if (NumLastLine > (Y2 - Y1) + 1)
-			XX2 = X2 - (EdOpt.ShowScrollBar ? 1 : 0);
-		else
-			XX2 = X2;
 	}
 	if (Locked() || !TopList)
 		return;
@@ -525,17 +635,8 @@ void Editor::ShowEditor(int CurLineOnly)
 				}
 			}
 		}
-	}
 
-	if (m_bWordWrap)
-	{
 		CurLine->SetLeftPos(0);
-		MaxRightPos = CurLine->GetCellCurPos();
-
-		int v_start, v_end;
-		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start, v_end);
-		int visual_line_start_cell = CurLine->RealPosToCell(v_start);
-		m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
 
 		// Ensure TopScreen pointers are initialized
 		EnsureTopScreenVisual();
@@ -630,210 +731,117 @@ void Editor::ShowEditor(int CurLineOnly)
 
 			if (SelStart != -1)
 			{
-				int StringLength = VisualLineEnd - VisualLineStart;
+				bool HasOverlap = false;
+				int TargetSelStart = -1, TargetSelEnd = 0;
 
-				// 1. Calculate selection range relative to ShowString's internal string (0 to StringLength)
-				int ShowSelStart = SelStart - VisualLineStart;
-				int ShowSelEnd = (SelEnd == -1) ? -1 : SelEnd - VisualLineStart;
-
-				// 2. Clamp Start & End
-				if (ShowSelStart < 0) ShowSelStart = 0;
-				if (ShowSelEnd != -1 && ShowSelEnd > StringLength) ShowSelEnd = StringLength;
-
-				// 4. Set selection on ShowString if there is an overlap
-				if (ShowSelStart < StringLength || SelEnd == -1 || (SelStart == SelEnd && CurLogicalLine->GetLength() == 0))
+				if (SelStart == SelEnd && CurLogicalLine->GetLength() == 0)
 				{
-					int TargetSelStart = -1, TargetSelEnd = 0;
-
-					if (SelEnd == -1)
+					HasOverlap = true;
+					TargetSelStart = 0;
+					TargetSelEnd = -1;
+				}
+				else if (SelEnd == -1)
+				{
+					const int ClippedSelStart = std::max(SelStart, VisualLineStart);
+					if (ClippedSelStart < VisualLineEnd)
 					{
-						TargetSelStart = ShowSelStart;
+						HasOverlap = true;
+						TargetSelStart = ClippedSelStart - VisualLineStart;
 						TargetSelEnd = -1;
-					}
-					else if (ShowSelEnd > ShowSelStart)
-					{
-						TargetSelStart = ShowSelStart;
-						TargetSelEnd = ShowSelEnd;
-					}
-					else if (SelStart == SelEnd && CurLogicalLine->GetLength() == 0)
-					{
-						TargetSelStart = 0;
-						TargetSelEnd = -1;
-					}
-
-					if (TargetSelStart != -1)
-					{
-						ShowString.Select(TargetSelStart, TargetSelEnd);
-
-						int DbgGetSelStart, DbgGetSelEnd;
-						ShowString.GetSelection(DbgGetSelStart, DbgGetSelEnd);
 					}
 				}
-			}
-			// Debugging log for selection state
-			int dbg_s, db_e;
-			ShowString.GetSelection(dbg_s, db_e);
+				else
+				{
+					const int ClippedSelStart = std::max(SelStart, VisualLineStart);
+					const int ClippedSelEnd = std::min(SelEnd, VisualLineEnd);
+					if (ClippedSelStart < ClippedSelEnd)
+					{
+						HasOverlap = true;
+						TargetSelStart = ClippedSelStart - VisualLineStart;
+						TargetSelEnd = ClippedSelEnd - VisualLineStart;
+					}
+				}
 
-			// --- Специальная отрисовка для выделенных пустых строк ---
+				if (HasOverlap)
+				{
+					ShowString.Select(TargetSelStart, TargetSelEnd);
+				}
+			}
+
+			bool is_selected_empty_logical_line = false;
 			if (CurLogicalLine->GetLength() == 0)
 			{
 				int RealSelStart, RealSelEnd;
 				CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
 
-				// Условие, что строка "полностью выделена" (т.е. выделение перешло на следующую строку)
-				if (RealSelStart == 0 && RealSelEnd == -1)
+				// A fully selected empty logical line is rendered as a single selected cell.
+				is_selected_empty_logical_line = (RealSelStart == 0 && RealSelEnd == -1);
+				if (is_selected_empty_logical_line)
 				{
-					ShowString.SetString(L" ");
-					ShowString.Select(0, -1);
+					ShowString.Select(0, 1);
 				}
 			}
 
-			bool background_filled = false;
-			// Special handling for syntax highlighting on empty visual lines
-			if (VisualLineStart == VisualLineEnd)
-			{
-				ColorItem current_ci;
-
-				// Check for an encompassing color item, typically the background color specified by the plugin
-				for (size_t i = 0; CurLogicalLine->GetColor(&current_ci, i); ++i)
-				{
-					// If a large covering item is found (StartPos <= 0 AND EndPos covers the whole logical line, OR the {-1, -1} marker is used)
-					if ((current_ci.StartPos <= 0 && current_ci.EndPos >= CurLogicalLine->GetLength() - 1)
-						|| (current_ci.StartPos == -1 && current_ci.EndPos == -1) )
-					{
-						// Apply background coloring directly to the screen buffer, but preserve line number area
-						SetScreen(EdOpt.ShowLineNumbers ? LineNumX1 : X1, Y, XX2, Y, L' ', current_ci.Color);
-						background_filled = true;
-						break;
-					}
-				}
+			const bool IsEmptyVisualLine = VisualLineStart == VisualLineEnd;
+			bool has_tail_fill_color = false;
+			DWORD64 tail_fill_color = 0;
+			if (IsEmptyVisualLine) {
+				has_tail_fill_color = TryGetWordWrapEmptyVisualLineFillColor(CurLogicalLine, tail_fill_color);
 			}
 
-			// Copy color info
+			const int xoff = Flags.Check(FEDITOR_DIALOGMEMOEDIT) ? 0 : X1;
 			ColorItem ci;
-			// We use a large relative index hint to force Edit::ApplyColor to fill up to XX2.
-			const int FULL_LINE_END_POS_HINT = 10000;
-
 			for (size_t i = 0; CurLogicalLine->GetColor(&ci, i); ++i)
 			{
-				// Convert stored coordinates back to logical string positions for processing
-				// Colors are stored with line number offset added (see ECTL_ADDCOLOR),
-				// so we need to subtract it to get original logical positions
-				int LogicalStartPos = ci.StartPos;
-				int LogicalEndPos = ci.EndPos;
+				int logical_start, logical_end;
+				GetWordWrapLogicalColorRange(ci, xoff, logical_start, logical_end);
+				const bool covers_visual_line =
+					ColorCoversWordWrapVisualLine(ci, logical_start, logical_end, VisualLineStart, VisualLineEnd);
 
-				if (ci.StartPos != -1 && ci.EndPos != -1) {
-					int xoff = Flags.Check(FEDITOR_DIALOGMEMOEDIT) ? 0 : X1;
-					LogicalStartPos = ci.StartPos - xoff;
-					LogicalEndPos = ci.EndPos - xoff;
+				if (!IsEmptyVisualLine
+					&& covers_visual_line)
+				{
+					has_tail_fill_color = true;
+					tail_fill_color = MakeWordWrapTailFillColor(ci.Color);
 				}
 
-				if ((ci.StartPos == -1 && ci.EndPos == -1) || (LogicalStartPos < VisualLineEnd && LogicalEndPos >= VisualLineStart))
+				ColorItem mapped_ci;
+				if (TryMapColorToWordWrapVisualLine(
+						ci, logical_start, logical_end, VisualLineStart, VisualLineEnd, mapped_ci))
 				{
-					ColorItem new_ci = ci;
-
-					bool is_full_visual_line_coverage = false;
-
-					if (ci.StartPos != -1 || ci.EndPos != -1) // Standard color item
-					{
-						// Heuristic: if the color covers the entire content of the visible portion, assume it's a background fill.
-						if (LogicalStartPos <= VisualLineStart && LogicalEndPos >= VisualLineEnd - 1)
-						{
-							is_full_visual_line_coverage = true;
-						}
-
-						// Clip logical positions to current visual line and convert to coordinate system
-						// expected by Edit::ApplyColor
-						int ClippedLogicalStart = LogicalStartPos;
-						int ClippedLogicalEnd = LogicalEndPos;
-
-						// Clip to current visual line boundaries in logical coordinates
-						if (ClippedLogicalStart < VisualLineStart) ClippedLogicalStart = VisualLineStart;
-						if (ClippedLogicalEnd >= VisualLineEnd) ClippedLogicalEnd = VisualLineEnd - 1;
-
-						new_ci.StartPos = ClippedLogicalStart - VisualLineStart;
-						new_ci.EndPos = ClippedLogicalEnd - VisualLineStart;
-
-						// Apply boundary adjustments
-						if (is_full_visual_line_coverage)
-						{
-							// Force EndPos large to cause DrawColor/ApplyColor to fill to the screen edge
-							new_ci.EndPos = FULL_LINE_END_POS_HINT;
-						}
-						else if (new_ci.EndPos >= (VisualLineEnd - VisualLineStart))
-						{
-							new_ci.EndPos = (VisualLineEnd - VisualLineStart) - 1;
-						}
+					// In WW mode a full-line background item must still cover the full visual tab width.
+					if (covers_visual_line) {
+						mapped_ci.Color &= ~ECF_TAB1;
 					}
-					else // Special case for {-1, -1} background element
-					{
-						new_ci.EndPos = FULL_LINE_END_POS_HINT;
-					}
-
-					if (new_ci.StartPos <= new_ci.EndPos)
-					{
-						ShowString.AddColor(&new_ci);
-					}
-					else if (new_ci.StartPos == -1 && new_ci.EndPos == -1) // Note: this case should now be covered by the {-1, -1} block above, but keep redundant logging check
-					{
-						ShowString.AddColor(&new_ci);
-					}
+					ShowString.AddColor(&mapped_ci);
 				}
 			}
 
-			if (!background_filled) // Only draw normally if we didn't manually fill the background
+			if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
 			{
-				int final_sel_start, final_sel_end;
-				ShowString.GetRealSelection(final_sel_start, final_sel_end);
+				int CurPos = CurLine->GetCurPos();
+				int VisualCurPos = CurPos - VisualLineStart;
+				if (VisualCurPos < 0) VisualCurPos = 0;
+				if (VisualCurPos > (VisualLineEnd - VisualLineStart)) VisualCurPos = (VisualLineEnd - VisualLineStart);
 
-				if (CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
-				{
-					int CurPos = CurLine->GetCurPos();
-					int VisualCurPos = CurPos - VisualLineStart;
-					if (VisualCurPos < 0) VisualCurPos = 0;
-					if (VisualCurPos > (VisualLineEnd - VisualLineStart)) VisualCurPos = (VisualLineEnd - VisualLineStart);
-
-					ShowString.SetCurPos(VisualCurPos);
-					ShowString.SetCursorVisibleFlag(m_showCursor);
-					ShowString.Show();
-				}
-				else
-				{
-					ShowString.FastShow();
-				}
+				ShowString.SetCurPos(VisualCurPos);
+				ShowString.SetCursorVisibleFlag(m_showCursor);
+				ShowString.Show();
 			}
-			else // This 'else' corresponds to 'if (!background_filled)'
+			else
 			{
-				// Even if background was filled, we might need to draw our fake selection cursor on top of it.
-				if (CurLogicalLine->GetLength() == 0)
-				{
-					int RealSelStart, RealSelEnd;
-					CurLogicalLine->GetRealSelection(RealSelStart, RealSelEnd);
-					if (RealSelStart == 0 && RealSelEnd == -1)
-					{
-						// Draw a single selected space directly to the screen buffer (after line numbers)
-						int SelX = EdOpt.ShowLineNumbers ? LineNumX1 : X1;
-						SetScreen(SelX, Y, SelX, Y, L' ', FarColorToReal(COL_EDITORSELECTEDTEXT));
-					}
-				}
+				ShowString.FastShow();
+			}
 
-				if (m_showCursor && CurLogicalLine == CurLine && CurVisualLine == m_CurVisualLineInLogicalLine)
+			if (has_tail_fill_color)
+			{
+				int tail_fill_x = ShowString.X1 + ShowString.RealPosToCell(ShowString.GetLength());
+				if (is_selected_empty_logical_line) {
+					tail_fill_x = std::max(tail_fill_x, ShowString.X1 + 1);
+				}
+				if (tail_fill_x <= XX2)
 				{
-					// This is the cursor line, but it was empty and the background was drawn by SetScreen.
-					// The regular Show()/FastShow() path was skipped, so we need to position the cursor manually.
-					ShowString.SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
-					bool CursorVisible = true;
-					DWORD CursorSize = 0;
-					ShowString.GetCursorType(CursorVisible, CursorSize);
-					if (!CursorVisible) {
-						::SetCursorType(0, CursorSize);
-					} else if (ShowString.Flags.Check(FEDITLINE_OVERTYPE)) {
-						::SetCursorType(1, Opt.CursorSize[2] ? Opt.CursorSize[2] : 99);
-					} else {
-						::SetCursorType(1, Opt.CursorSize[0] ? Opt.CursorSize[0] : 10);
-					}
-					// For an empty line, cursor is always at the beginning.
-					MoveCursor(EdOpt.ShowLineNumbers ? LineNumX1 : X1, Y);
+					ScrBuf.ApplyColor(tail_fill_x, Y, XX2, Y, tail_fill_color, CurLogicalLine->SelColor);
 				}
 			}
 			if (CurVisualLine < CurLogicalLine->GetVisualLineCount() - 1)
@@ -1676,7 +1684,7 @@ int Editor::ProcessKey(FarKey Key)
 					int oldPos = CurLine->GetCurPos();
 					ProcessKey(KEY_SHIFTLEFT);
 					if (oldPos == CurLine->GetCurPos()) {
-						 break;
+						break;
 					}
 				}
 				Pasting--;
@@ -1968,7 +1976,7 @@ int Editor::ProcessKey(FarKey Key)
 				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
 
 				Down();
-				UpdateCursorPosition(m_WordWrapMaxRightPos);
+				SetCursorByVisualLineCellOffset(m_WordWrapPreferredCellPos);
 
 				if (OldLine == CurLine)
 				{
@@ -2117,7 +2125,7 @@ int Editor::ProcessKey(FarKey Key)
 				OldLine->GetRealSelection(OldSelStart, OldSelEnd);
 
 				Up();
-				UpdateCursorPosition(m_WordWrapMaxRightPos);
+				SetCursorByVisualLineCellOffset(m_WordWrapPreferredCellPos);
 
 				if (OldLine == CurLine)
 				{
@@ -2342,18 +2350,13 @@ int Editor::ProcessKey(FarKey Key)
 				if (current_pos > 0) {
 					int new_pos = CurLine->CalcPosBwdTo(current_pos);
 					CurLine->SetCurPos(new_pos);
-					m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, new_pos);
 				} else if (CurLine->m_prev) {
 					Up(); // This moves to CurLine->m_prev and sets visual line
 					int new_pos = CurLine->GetLength();
 					CurLine->SetCurPos(new_pos);
 				}
+				RememberWordWrapPreferredCellPos();
 				Show();
-
-				int v_start_pos, v_end_pos;
-				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
 
 			} else { // Original logic
 				if (!CurPos && CurLine->m_prev) {
@@ -2377,18 +2380,12 @@ int Editor::ProcessKey(FarKey Key)
 				if (current_pos < CurLine->GetLength()) {
 					int new_pos = CurLine->CalcPosFwdTo(current_pos);
 					CurLine->SetCurPos(new_pos);
-					m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, new_pos);
 				} else if (CurLine->m_next) {
 					Down(); // Moves to next logical line's first visual line.
 					CurLine->SetCurPos(0);
-					m_CurVisualLineInLogicalLine = 0;
 				}
+				RememberWordWrapPreferredCellPos();
 				Show();
-
-				int v_start_pos, v_end_pos;
-				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
 
 			} else {
 				// Original logic for non-word-wrap
@@ -2543,7 +2540,7 @@ int Editor::ProcessKey(FarKey Key)
 				Flags.Set(FEDITOR_NEWUNDO);
 				if (m_bWordWrap) {
 					Up();
-					UpdateCursorPosition(m_WordWrapMaxRightPos);
+					SetCursorByVisualLineCellOffset(m_WordWrapPreferredCellPos);
 					Show();
 				} else {
 					int PrevMaxPos = MaxRightPos;
@@ -2571,7 +2568,7 @@ int Editor::ProcessKey(FarKey Key)
 				Flags.Set(FEDITOR_NEWUNDO);
 				if (m_bWordWrap) {
 					Down();
-					UpdateCursorPosition(m_WordWrapMaxRightPos);
+					SetCursorByVisualLineCellOffset(m_WordWrapPreferredCellPos);
 					Show();
 				} else {
 					int PrevMaxPos = MaxRightPos;
@@ -3397,8 +3394,8 @@ case KEY_CTRLNUMPAD3: {
 				int start, end;
 				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
 				CurLine->SetCurPos(start);
+				RememberWordWrapPreferredCellPos();
 				Show();
-				m_WordWrapMaxRightPos = 0;
 				return TRUE;
 			}
 		}
@@ -3419,13 +3416,9 @@ case KEY_CTRLNUMPAD3: {
 				    targetPos--;
 				}
 				CurLine->SetCurPos(targetPos);
+				RememberWordWrapPreferredCellPos();
 
 				Show();
-
-				int v_start_pos, v_end_pos;
-				CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, v_start_pos, v_end_pos);
-				int visual_line_start_cell = CurLine->RealPosToCell(v_start_pos);
-				m_WordWrapMaxRightPos = CurLine->GetCellCurPos() - visual_line_start_cell;
 
 				return TRUE;
 			}
@@ -3628,14 +3621,13 @@ case KEY_CTRLNUMPAD3: {
 				CurLine->GetSelection(PreSelStart, PreSelEnd);
 				// </comment>
 				// AY: Это что бы при FastShow LeftPos не становился в конец строки.
-				CurLine->ObjWidth = XX2 - X1 + 1;
+				if (m_bWordWrap) {
+					CurLine->ObjWidth = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
+				} else {
+					CurLine->ObjWidth = XX2 - X1 + 1;
+				}
 
 				if (CurLine->ProcessKey(Key)) {
-					if (m_bWordWrap)
-					{
-						m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
-					}
-
 					int SelStart, SelEnd;
 
 					/*
@@ -3647,8 +3639,9 @@ case KEY_CTRLNUMPAD3: {
 
 					if (m_bWordWrap)
 					{
-						int Width = CalculateTextAreaWidth(X2 - X1 + 1, EdOpt.ShowScrollBar);
+						int Width = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
 						CurLine->RecalculateWordWrap(Width, EdOpt.TabSize);
+						RememberWordWrapPreferredCellPos();
 					}
 
 					if (Key == KEY_TAB && CurLine->GetConvertTabs() && BlockStart && BlockStart != CurLine) {
@@ -4046,6 +4039,9 @@ void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, boo
 
 	CurLine->SetCurPos(target.pos);
 
+	if (m_bWordWrap)
+		RememberWordWrapPreferredCellPos();
+
 	if (allow_selection) {
 		if (MouseSelStartingLine == -1)
 		{
@@ -4163,7 +4159,8 @@ void Editor::GoToVisualLine(int VisualLine)
 			NumLine = logical_line_num;
 			m_CurVisualLineInLogicalLine = VisualLine - visual_lines_so_far;
 			CurLine->SetCurPos(0); // Move to start of logical line first
-			UpdateCursorPosition(0); // Then to start of visual line
+			SetCursorByVisualLineCellOffset(0); // Then to start of visual line
+			RememberWordWrapPreferredCellPos();
 			AdjustScreenPosition(); // Center the view
 			return;
 		}
@@ -4672,11 +4669,7 @@ void Editor::Down()
 {
  	if (m_bWordWrap)
 	{
-		// Defensively re-synchronize the current visual line with the cursor's actual position.
-		int synced_visual_line = FindVisualLine(CurLine, CurLine->GetCurPos());
-		if (synced_visual_line != m_CurVisualLineInLogicalLine) {
-			m_CurVisualLineInLogicalLine = synced_visual_line;
-		}
+		SyncWordWrapVisualLine();
 
 		int start, end;
 		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
@@ -4694,7 +4687,7 @@ void Editor::Down()
 			return;
 		}
 
-		UpdateCursorPosition(horizontal_cell_pos);
+		SetCursorByVisualLineCellOffset(horizontal_cell_pos);
 
 		int visual_lines_from_top = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
 		if (visual_lines_from_top < 0) {
@@ -4735,6 +4728,7 @@ void Editor::ScrollDown()
 	{
 		IncTopVisualLine();
 		Down();
+		SetCursorByVisualLineCellOffset(m_WordWrapPreferredCellPos);
 		return;
 	}
 
@@ -4762,11 +4756,7 @@ void Editor::Up()
 {
 	if (m_bWordWrap)
 	{
-		// Defensively re-synchronize the current visual line with the cursor's actual position.
-		int synced_visual_line = FindVisualLine(CurLine, CurLine->GetCurPos());
-		if (synced_visual_line != m_CurVisualLineInLogicalLine) {
-			m_CurVisualLineInLogicalLine = synced_visual_line;
-		}
+		SyncWordWrapVisualLine();
 
 		int start, end;
 		CurLine->GetVisualLine(m_CurVisualLineInLogicalLine, start, end);
@@ -4784,7 +4774,7 @@ void Editor::Up()
 			return;
 		}
 
-		UpdateCursorPosition(horizontal_cell_pos);
+		SetCursorByVisualLineCellOffset(horizontal_cell_pos);
 
 		EnsureTopScreenVisual();
 		const int off = VisualOffsetFromTop(CurLine, m_CurVisualLineInLogicalLine);
@@ -4816,6 +4806,7 @@ void Editor::ScrollUp()
 	{
 		DecTopVisualLine();
 		Up();
+		SetCursorByVisualLineCellOffset(m_WordWrapPreferredCellPos);
 		return;
 	}
 
@@ -5343,8 +5334,7 @@ void Editor::Paste(const wchar_t *Src)
 
 
 	if (m_bWordWrap) {
-		// Пересчитываем визуальную линию курсора на основе реальной позиции
-		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		RememberWordWrapPreferredCellPos();
 
 		// Полная перерисовка редактора для обновления отображения
 		Show();
@@ -5588,7 +5578,7 @@ void Editor::DeleteBlock()
 
 	if (m_bWordWrap)
 	{
-		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		RememberWordWrapPreferredCellPos();
 	}
 	AddUndoData(UNDO_END);
 	BlockStart = nullptr;
@@ -5817,6 +5807,10 @@ void Editor::GoToPosition()
 		} else {
 			CurLine->SetCellCurPos(NewCol);
 		}
+
+		if (m_bWordWrap)
+			RememberWordWrapPreferredCellPos();
+
 		Show();
 	}
 }
@@ -6329,7 +6323,7 @@ void Editor::DeleteVBlock()
 
 	if (m_bWordWrap)
 	{
-		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+		RememberWordWrapPreferredCellPos();
 	}
 	AddUndoData(UNDO_END);
 	VBlockStart = nullptr;
@@ -6877,6 +6871,9 @@ int Editor::EditorControl(int Command, void *Param)
 					CurLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 				}
 
+				if (m_bWordWrap)
+					RememberWordWrapPreferredCellPos();
+
 				Unlock();
 				return TRUE;
 			}
@@ -7209,6 +7206,10 @@ int Editor::GotoBookmark(DWORD Pos)
 			GoToLine(static_cast<int>(SavePos.Line[Pos]));
 			CurLine->SetCurPos(static_cast<int>(SavePos.Cursor[Pos]));
 			CurLine->SetLeftPos(static_cast<int>(SavePos.LeftPos[Pos]));
+
+			if (m_bWordWrap)
+				RememberWordWrapPreferredCellPos();
+
 			TopScreen = CurLine;
 
 			for (DWORD I = 0; I < SavePos.ScreenLine[Pos] && TopScreen->m_prev; I++)
@@ -7280,6 +7281,10 @@ int Editor::RestoreStackBookmark()
 		GoToLine(StackPos->Line);
 		CurLine->SetCurPos(StackPos->Cursor);
 		CurLine->SetLeftPos(StackPos->LeftPos);
+
+		if (m_bWordWrap)
+			RememberWordWrapPreferredCellPos();
+
 		TopScreen = CurLine;
 
 		for (DWORD I = 0; I < StackPos->ScreenLine && TopScreen->m_prev; I++)
@@ -7773,15 +7778,12 @@ void Editor::SetWordWrap(int NewMode)
 		else // Turning OFF
 		{
 			TopScreen = m_TopScreenLogicalLine;
-			m_WordWrapMaxRightPos = 0;
+			m_WordWrapPreferredCellPos = 0;
 
 			if (CurLine && ObjWidth > 0)
 			{
 				int VisibleWidth = CalculateTextAreaWidth(ObjWidth,
 						NumLastLine > (Y2 - Y1) + 1 && EdOpt.ShowScrollBar);
-
-				if (VisibleWidth < 1)
-					VisibleWidth = 1;
 
 				int CurPos = CurLine->GetCellCurPos();
 				int NewLeftPos = CurLine->GetLeftPos();
@@ -7802,15 +7804,10 @@ void Editor::SetWordWrap(int NewMode)
 			}
 		}
 
-		int Width = CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar);
+		RecalculateAllWordWraps(true);
 
-		Edit *CurPtr = TopList;
-		while (CurPtr)
-		{
-			CurPtr->SetWordWrap(m_bWordWrap);
-			CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
-			CurPtr = CurPtr->m_next;
-		}
+		if (m_bWordWrap)
+			RememberWordWrapPreferredCellPos();
 	}
 }
 
@@ -7875,13 +7872,7 @@ void Editor::SetShowLineNumbers(int NewMode)
 
 		// If word wrap is enabled, recalculate wrap positions for all lines
 		if (m_bWordWrap) {
-			int Width = CalculateTextAreaWidth(X2 - X1 + 1, EdOpt.ShowScrollBar);
-
-			CurPtr = TopList;
-			while (CurPtr) {
-				CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
-				CurPtr = CurPtr->m_next;
-			}
+			RecalculateAllWordWraps(false);
 		}
 
 		// Trigger plugin event to reapply syntax highlighting
@@ -7989,6 +7980,9 @@ Edit *Editor::CreateString(const wchar_t *lpwszStr, int nLength)
 	if (pEdit) {
 		pEdit->SetPosition(X1, Y1, X2, Y2);
 		pEdit->SetWordWrap(m_bWordWrap);
+		if (m_bWordWrap) {
+			pEdit->ObjWidth = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
+		}
 
 		pEdit->m_next = nullptr;
 		pEdit->m_prev = nullptr;
@@ -8152,7 +8146,7 @@ void Editor::SetCacheParams(EditorCacheParams *pp)
 					else
 						CurLine->SetCellCurPos(pp->LinePos);
 
-					m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+					RememberWordWrapPreferredCellPos();
 
 					m_TopScreenLogicalLine = CurLine;
 					m_TopScreenVisualLine = m_CurVisualLineInLogicalLine;
@@ -8248,12 +8242,7 @@ void Editor::SetPosition(int X1, int Y1, int X2, int Y2)
 
 	if (m_bWordWrap)
 	{
-		int RecalcWidth = CalculateTextAreaWidth(X2 - X1 + 1, EdOpt.ShowScrollBar);
-
-		for(Edit *CurPtr=TopList; CurPtr; CurPtr=CurPtr->m_next)
-		{
-			CurPtr->RecalculateWordWrap(RecalcWidth, EdOpt.TabSize);
-		}
+		RecalculateAllWordWraps(false);
 	}
 }
 
@@ -8283,6 +8272,8 @@ void Editor::SetCurPos(int NewCol, int NewRow)
 	Lock();
 	GoToLine(NewRow);
 	CurLine->SetCellCurPos(NewCol);
+	if (m_bWordWrap)
+		RememberWordWrapPreferredCellPos();
 	// CurLine->SetLeftPos(LeftPos); ???
 	Unlock();
 }

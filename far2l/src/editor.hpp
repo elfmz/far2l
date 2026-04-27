@@ -220,7 +220,7 @@ private:
 		Новая переменная для поиска "Whole words"
 	*/
 	int LastSearchCase, LastSearchWholeWords, LastSearchReverse, LastSearchSelFound, LastSearchRegexp;
-	int m_WordWrapMaxRightPos;
+	int m_WordWrapPreferredCellPos;
 
 	UINT m_codepage;	// BUGBUG
 
@@ -278,7 +278,7 @@ private:
 	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
 	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, bool vblock, bool allow_selection);
 	virtual void DisplayObject();
-	void UpdateCursorPosition(int horizontal_cell_pos);
+	void SetCursorByVisualLineCellOffset(int horizontal_cell_pos);
 	void ShowEditor(int CurLineOnly);
 	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
 	void InsertString();
@@ -315,6 +315,9 @@ void GoToVisualLine(int VisualLine);
 	int CalculateTotalLines();  // Helper to count total lines
 	int CalculateLineNumberWidth();  // Helper to calculate line number display width
 	int CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar);  // Helper for text viewport width
+	void RecalculateAllWordWraps(bool SyncWordWrapState);
+	void SyncWordWrapVisualLine();
+	void RememberWordWrapPreferredCellPos();
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();

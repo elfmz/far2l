@@ -63,6 +63,10 @@ private:
 	{
 		std::string id;
 		std::string desktop_filepath;
+
+		enum class PackageType { None, Snap, Flatpak };
+		PackageType package_type = PackageType::None;
+
 		std::string name;
 		std::string generic_name;
 		std::string comment;
@@ -73,6 +77,8 @@ private:
 		std::string only_show_in;
 		std::string not_show_in;
 		std::string terminal;
+		std::string x_flatpak;
+		std::string x_snap_instance_name;
 
 		// Mutable cache for lazy parsing: analysis is performed only if the application is selected as a candidate.
 		mutable bool is_exec_parsed = false;
@@ -415,6 +421,7 @@ private:
 	bool _validate_try_exec;
 	bool _sort_alphabetically;
 	bool _treat_urls_as_paths;
+	bool _show_flatpak_snap_tags;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

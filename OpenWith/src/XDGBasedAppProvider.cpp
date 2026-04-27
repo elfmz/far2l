@@ -49,7 +49,8 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false, true },
 		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false, true },
 		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false, true },
-		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false, false }
+		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false, false },
+		{ "ShowFlatpakSnapTags", MShowFlatpakSnapTags, &XDGBasedAppProvider::_show_flatpak_snap_tags, true, true }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
@@ -308,7 +309,9 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 			 std::pair{L"Terminal =",    &DesktopEntry::terminal},
 			 std::pair{L"MimeType =",    &DesktopEntry::mimetype},
 			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in},
-			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in}
+			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in},
+			 std::pair{L"X-Flatpak =",   &DesktopEntry::x_flatpak},
+			 std::pair{L"X-SnapInstanceName =",   &DesktopEntry::x_snap_instance_name}
 		 })
 	{
 		const std::string& val = desktop_entry.*member_ptr;
@@ -682,6 +685,19 @@ std::vector<CandidateInfo> XDGBasedAppProvider::FormatCandidatesForUI(
 	for (const auto& ranked_candidate : ranked_candidates) {
 		// Convert the internal DesktopEntry representation to the UI-facing CandidateInfo.
 		CandidateInfo ci = ConvertDesktopEntryToCandidateInfo(*ranked_candidate.desktop_entry);
+
+		if (_show_flatpak_snap_tags) {
+			switch (ranked_candidate.desktop_entry->package_type) {
+				case DesktopEntry::PackageType::Snap:
+					ci.name += L" [*Snap]";
+					break;
+				case DesktopEntry::PackageType::Flatpak:
+					ci.name += L" [*Flatpak]";
+					break;
+				default:
+					break;
+			}
+		}
 
 		// If requested (only for single-file lookups), store the association's source
 		// for the F3 details dialog.
@@ -1488,11 +1504,32 @@ std::optional<XDGBasedAppProvider::DesktopEntry> XDGBasedAppProvider::ParseDeskt
 			 std::pair{"Terminal",   &DesktopEntry::terminal},
 			 std::pair{"MimeType",   &DesktopEntry::mimetype},
 			 std::pair{"OnlyShowIn", &DesktopEntry::only_show_in},
-			 std::pair{"NotShowIn",  &DesktopEntry::not_show_in}
+			 std::pair{"NotShowIn",  &DesktopEntry::not_show_in},
+			 std::pair{"X-Flatpak",  &DesktopEntry::x_flatpak},
+			 std::pair{"X-SnapInstanceName",  &DesktopEntry::x_snap_instance_name}
 		 })
 	{
 		if (auto it = kv_entries.find(key); it != kv_entries.end()) {
 			desktop_entry.*member_ptr = it->second;
+		}
+	}
+
+	if (_show_flatpak_snap_tags) {
+		if (kv_entries.count("X-Flatpak")) {
+			desktop_entry.package_type = DesktopEntry::PackageType::Flatpak;
+		} else if (kv_entries.count("X-SnapInstanceName")) {
+			desktop_entry.package_type = DesktopEntry::PackageType::Snap;
+		} else {
+			auto exec = UnescapeGKeyFileString(desktop_entry.exec);
+
+			if (exec.find("flatpak run") != std::string::npos) {
+				desktop_entry.package_type = DesktopEntry::PackageType::Flatpak;
+			} else if (exec.find("snap run") != std::string::npos ||
+					   exec.find("/snap/bin/") != std::string::npos) {
+				desktop_entry.package_type = DesktopEntry::PackageType::Snap;
+			} else {
+				desktop_entry.package_type = DesktopEntry::PackageType::None;
+			}
 		}
 	}
 

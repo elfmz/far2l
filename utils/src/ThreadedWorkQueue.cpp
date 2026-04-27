@@ -85,13 +85,15 @@ void ThreadedWorkQueue::WorkerThreadProc()
 			_working--;
 			if (_notify_on_done) {
 				_notify_on_done = false;
-				_cond.notify_all();
+				_cond.notify_one();
 			}
 			twi = nullptr;
 
-		} catch (std::exception &e) { // OOM? retry in one second til memory will appear
+		} catch (std::exception &e) { // OOM? retry after releasing lock to avoid blocking other workers
 			fprintf(stderr, "%s: %s", __FUNCTION__, e.what());
+			lock.unlock();
 			sleep(1);
+			lock.lock();
 		}
 
 		if (_stopping) {

@@ -114,13 +114,21 @@ void StrCellsTruncateLeft(wchar_t *pwz, size_t &n, size_t ng)
 		return;
 	}
 
-	for (size_t ofs = rpl.len; ofs < n; ++ofs) {
-		if (!CharClasses::IsXxxfix(pwz[ofs]) && StrCellsCount(pwz + ofs, n - ofs) + rpl.len <= ng) {
+	// Compute how many cells to skip from left: need tail_cells + rpl.len <= ng
+	// tail_cells = vl - skipped_cells, so skipped_cells >= vl - (ng - rpl.len)
+	const size_t target_tail_cells = ng - rpl.len;
+	// Walk from left, accumulating cells to skip
+	size_t skipped_cells = 0;
+	for (size_t ofs = 0; ofs < n; ++ofs) {
+		if (ofs >= rpl.len && !CharClasses::IsXxxfix(pwz[ofs]) && (vl - skipped_cells) <= target_tail_cells) {
 			n-= ofs;
 			wmemmove(pwz + rpl.len, pwz + ofs, n);
 			n+= rpl.len;
-			wmemcpy(pwz, rpl.wz, rpl.len); //…
+			wmemcpy(pwz, rpl.wz, rpl.len);
 			return;
+		}
+		if (!CharClasses::IsXxxfix(pwz[ofs])) {
+			skipped_cells+= CharClasses::IsFullWidth(&pwz[ofs]) ? 2 : 1;
 		}
 	}
 	wcsncpy(pwz, rpl.wz, ng);
@@ -173,17 +181,27 @@ void StrCellsTruncateCenter(wchar_t *pwz, size_t &n, size_t ng)
 		++cut_end;
 	}
 
-	while (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len > ng) {
+	// Cache cell counts to avoid O(n) recomputation per iteration
+	size_t left_cells = StrCellsCount(pwz, cut_start);
+	size_t right_cells = StrCellsCount(pwz + cut_end, n - cut_end);
+
+	while (left_cells + right_cells + rpl.len > ng) {
 		if (cut_start > 0) {
 			--cut_start;
+			// Update left_cells incrementally
+			if (!CharClasses::IsXxxfix(pwz[cut_start]))
+				left_cells-= CharClasses::IsFullWidth(&pwz[cut_start]) ? 2 : 1;
 			while (cut_start > 0 && CharClasses::IsXxxfix(pwz[cut_start])) {
 				--cut_start;
 			}
-			if (StrCellsCount(pwz, cut_start) + StrCellsCount(pwz + cut_end, n - cut_end) + rpl.len <= ng) {
+			if (left_cells + right_cells + rpl.len <= ng) {
 				break;
 			}
 		}
 		if (cut_end < n) {
+			// Update right_cells incrementally
+			if (!CharClasses::IsXxxfix(pwz[cut_end]))
+				right_cells-= CharClasses::IsFullWidth(&pwz[cut_end]) ? 2 : 1;
 			++cut_end;
 			while (cut_end < n && CharClasses::IsXxxfix(pwz[cut_end])) {
 				++cut_end;

@@ -21,11 +21,15 @@ extern FarStandardFunctions g_FSF;
 
 class ADBPlugin
 {
-public:
-	static constexpr uint64_t PLUGIN_SIGNATURE = 0x414442434C49454FULL; // "ADBCLIEF"
-	uint64_t _signature = PLUGIN_SIGNATURE;
-
 private:
+	// Identity check for opaque PANEL handles returned by far2l's FCTL_GETPANELPLUGINHANDLE.
+	// A signature field at object offset 0 is unsafe (vtable lives there because of virtual ~);
+	// instead we maintain a registry of live instances. Access is mutex-guarded — far2l
+	// normally calls plugin entry points on the UI thread, but our progress-UI worker
+	// runs operations in std::thread, so defensive locking avoids silent UB if any future
+	// code path touches the registry off-UI-thread.
+	static bool IsLiveInstance(const void* candidate);
+
 	// Panel state
 	wchar_t _PanelTitle[64];
 	wchar_t _mk_dir[1024];
@@ -60,7 +64,17 @@ private:
 		std::string usb;
 	};
 	std::vector<DeviceInfo> EnumerateDevices();
-	bool CrossPanelCopyMoveSameDevice(bool move);
+
+	// Unified handler for F5/F6/Shift+F5/Shift+F6 on a connected ADB panel.
+	//   move=true   → F6 / Shift+F6 (move/rename)
+	//   move=false  → F5 / Shift+F5 (copy/duplicate)
+	//   in_place=true  → Shift+F5/F6: cursor item only, default = item name in current dir
+	//   in_place=false → F5/F6:       active selection, default = passive panel dir
+	// Returns true to consume the key (dialog shown, op attempted, or user cancelled);
+	// false to defer to Far's default — only when in_place=false AND passive isn't an
+	// ADB plugin instance, so Far's standard plugin↔FS routing through GetFiles/PutFiles
+	// still handles the ADB↔host case (with Far's own "Move to:" dialog).
+	bool HandleCopyMove(bool move, bool in_place);
 
 	// Shared transfer engine for GetFiles/PutFiles (DRY)
 	int RunTransfer(PluginPanelItem *items, int itemsCount, bool is_upload, bool move,

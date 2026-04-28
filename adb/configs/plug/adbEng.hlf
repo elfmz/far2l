@@ -35,16 +35,19 @@ Options, accept the RSA fingerprint, and confirm via
 $ #File operations#
  Standard far2l file operations:
 
-   #F3#     - View file (pulled to a temp location)
-   #F5#     - Copy between device and host
-   #F6#     - Move between device and host
-   #F7#     - Create directory on device
-   #F8#     - Delete from device
-   #Enter#  - Enter directory
+   #F3#        - View file (pulled to a temp location)
+   #F5#        - Copy between device and host
+   #F6#        - Move between device and host
+   #Shift+F5#  - Duplicate item under a new name (on-device)
+   #Shift+F6#  - Rename file or directory in place (on-device)
+   #F7#        - Create directory on device
+   #F8#        - Delete from device
+   #Enter#     - Enter directory
 
  When both panels show the same device via ADB Plugin,
 #F5#/#F6# perform an on-device copy/move without host
-roundtrip.
+roundtrip. Cross-mount paths (e.g. /sdcard ↔ /data)
+automatically fall back to on-device cp+rm.
 
  The progress dialog shows current file, percentage,
 total bytes, elapsed/remaining time, and speed. Press
@@ -81,11 +84,13 @@ $ #Keyboard shortcuts#
    #F3#         - View file
    #F5#         - Copy
    #F6#         - Move
+   #Shift+F5#   - Duplicate item (new name)
+   #Shift+F6#   - Rename in place
    #F7#         - Make directory
    #F8#         - Delete
    #F10#        - Close plugin
    #Ctrl+\\#     - Go to root
-   #Ctrl+R#     - Refresh panel (after external changes)
+   #Ctrl+R#     - Refresh panel
    #Ctrl+O#     - Show command output history
 
  ~Contents~@Contents@

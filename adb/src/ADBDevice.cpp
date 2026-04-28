@@ -14,6 +14,7 @@
 #include <fstream>
 #include <chrono>
 #include <cctype>
+#include <dirent.h>
 
 // ============================================================================
 // ADBUtils namespace implementation
@@ -616,11 +617,35 @@ int ADBDevice::PullDirectory(const std::string &devicePath, const std::string &l
     return TransferItem(devicePath, localPath, false, true, on_progress, abort_check);
 }
 
+// adb push of an empty source directory is a silent no-op — no files transferred,
+// and the destination directory is *not* created. We mkdir on the device only when
+// the local source is empty, so non-empty pushes (the common case) don't add an
+// extra shell roundtrip after the heavy transfer.
+static bool IsLocalDirectoryEmpty(const std::string &path) {
+    DIR* d = opendir(path.c_str());
+    if (!d) return false;
+    bool empty = true;
+    while (auto* ent = readdir(d)) {
+        if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+            empty = false;
+            break;
+        }
+    }
+    closedir(d);
+    return empty;
+}
+
 int ADBDevice::PushDirectory(const std::string &localPath, const std::string &devicePath) {
+    if (IsLocalDirectoryEmpty(localPath)) {
+        return CreateDirectory(devicePath);
+    }
     return TransferItem(localPath, devicePath, true, true);
 }
 
 int ADBDevice::PushDirectory(const std::string &localPath, const std::string &devicePath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check) {
+    if (IsLocalDirectoryEmpty(localPath)) {
+        return CreateDirectory(devicePath);
+    }
     return TransferItem(localPath, devicePath, true, true, on_progress, abort_check);
 }
 
@@ -676,25 +701,50 @@ int ADBDevice::MoveRemote(const std::string &srcDevicePath, const std::string &d
     EnsureConnection();
     if (int err = ADBUtils::CheckConnection(_connected)) return err;
 
-    std::string command = "mv -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
+    // Try mv first (atomic within a single FS). On Android, /sdcard is FUSE-mounted
+    // separately from /data*, so mv across them fails with "Invalid cross-device link"
+    // — toybox/busybox mv has no auto cp+rm fallback. Fall back to on-device cp+rm
+    // (still avoids the slow host-roundtrip path).
+    //
+    // mv's stderr is captured (not silenced) so that if the fallback also fails, the
+    // user gets the *real* root cause — a permission/EROFS error from mv would
+    // otherwise be hidden behind a confusing "cp/rm failed" message.
+    std::string sq_src = ADBUtils::ShellQuote(srcDevicePath);
+    std::string sq_dst = ADBUtils::ShellQuote(dstDeviceDir);
+    std::string command =
+        "mv_err=$(mv -- " + sq_src + " " + sq_dst + " 2>&1) || {"
+        "  if { cp -a -- " + sq_src + " " + sq_dst + " 2>/dev/null"
+        "       || cp -r -- " + sq_src + " " + sq_dst + "; } && rm -rf -- " + sq_src + "; then :;"
+        "  else [ -n \"$mv_err\" ] && printf 'mv: %s\\n' \"$mv_err\"; false; fi;"
+        "}";
     std::string result = RunShellCommand(command);
     return MutationResultToErrno(LastShellExitCode(), result);
 }
 
 bool ADBDevice::FileExists(const std::string &devicePath) {
+    return StatPath(devicePath).exists;
+}
+
+bool ADBDevice::IsDirectory(const std::string &devicePath) {
+    return StatPath(devicePath).is_dir;
+}
+
+ADBDevice::PathStat ADBDevice::StatPath(const std::string &devicePath) {
+    PathStat info{false, false};
     EnsureConnection();
-    if (!_connected) return false;
+    if (!_connected) return info;
 
-    std::string command = "test -e " + ADBUtils::ShellQuote(devicePath) + " && echo 1 || echo 0";
+    std::string sq = ADBUtils::ShellQuote(devicePath);
+    // Single roundtrip: emit "dir" / "file" / "nope" for caller to parse.
+    std::string command = "if [ -d " + sq + " ]; then echo dir; elif [ -e " + sq + " ]; then echo file; else echo nope; fi";
     std::string result = RunShellCommand(command);
-
     ADBUtils::TrimTrailingNewlines(result);
-    // Also trim spaces
-    while (!result.empty() && result.back() == ' ') {
+    while (!result.empty() && (result.back() == ' ' || result.back() == '\r')) {
         result.pop_back();
     }
-
-    return result == "1";
+    if (result == "dir")       { info.exists = true;  info.is_dir = true;  }
+    else if (result == "file") { info.exists = true;  info.is_dir = false; }
+    return info;
 }
 
 ADBDevice::DirectoryInfo ADBDevice::GetDirectoryInfo(const std::string &devicePath) {

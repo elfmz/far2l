@@ -741,53 +741,60 @@ int ADBPlugin::GetDeviceData(PluginPanelItem **pPanelItem, int *pItemsNumber)
 
 	auto deviceInfos = EnumerateDevices();
 
+	// ".." as first entry — with empty CurDir, FAR routes selection through PopPlugin
+	// (filelist.cpp:2498), closing the plugin and returning to the host panel.
+	std::vector<PluginPanelItem> items;
+	{
+		PluginPanelItem parent{};
+		parent.FindData.lpwszFileName = ADBDevice::AllocateItemString("..");
+		parent.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+		items.push_back(parent);
+	}
+
 	if (deviceInfos.empty()) {
 		DBG("No ADB devices found\n");
 		wcscpy(_PanelTitle, L"ADB: No devices found");
-		*pItemsNumber = 1;
-		*pPanelItem = new PluginPanelItem[1];
-		memset(*pPanelItem, 0, sizeof(PluginPanelItem));
-		(*pPanelItem)[0].FindData.lpwszFileName = ADBDevice::AllocateItemString("<Not found>");
-		(*pPanelItem)[0].FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+
+		PluginPanelItem nf{};
+		nf.FindData.lpwszFileName = ADBDevice::AllocateItemString("<Not found>");
+		nf.FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
 
 		wchar_t **customData = new wchar_t*[3];
 		customData[0] = ADBDevice::AllocateItemString("<Connect device>");  // C0: Device Name
 		customData[1] = ADBDevice::AllocateItemString("");                  // C1: Model
 		customData[2] = ADBDevice::AllocateItemString("");                  // C2: Port
-		(*pPanelItem)[0].CustomColumnData = customData;
-		(*pPanelItem)[0].CustomColumnNumber = 3;
+		nf.CustomColumnData = customData;
+		nf.CustomColumnNumber = 3;
+		items.push_back(nf);
+	} else {
+		wcscpy(_PanelTitle, deviceInfos.size() > 1 ? L"ADB - Select Device" : L"ADB");
 
-		return 1;
-	}
-	
-	wcscpy(_PanelTitle, deviceInfos.size() > 1 ? L"ADB - Select Device" : L"ADB");
+		for (const auto& info : deviceInfos) {
+			PluginPanelItem device{};
+			device.FindData.lpwszFileName = ADBDevice::AllocateItemString(info.serial);
+			device.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY; // Make it look like a directory
 
-	std::vector<PluginPanelItem> devices;
-	for (const auto& info : deviceInfos) {
-		PluginPanelItem device{};
-		device.FindData.lpwszFileName = ADBDevice::AllocateItemString(info.serial);
-		device.FindData.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY; // Make it look like a directory
-		
-		// Custom columns: C0=Serial (filename), C1=Device Name, C2=Model, C3=Port.
-		wchar_t **customData = new wchar_t*[3];
-		customData[0] = ADBDevice::AllocateItemString(info.name);  // C1: Device Name
-		customData[1] = ADBDevice::AllocateItemString(info.model); // C2: Model
-		customData[2] = ADBDevice::AllocateItemString(info.usb);   // C3: Port
-		
-		device.CustomColumnData = customData;
-		device.CustomColumnNumber = 3;
-		
-		devices.push_back(device);
+			// Custom columns: C0=Serial (filename), C1=Device Name, C2=Model, C3=Port.
+			wchar_t **customData = new wchar_t*[3];
+			customData[0] = ADBDevice::AllocateItemString(info.name);  // C1: Device Name
+			customData[1] = ADBDevice::AllocateItemString(info.model); // C2: Model
+			customData[2] = ADBDevice::AllocateItemString(info.usb);   // C3: Port
+
+			device.CustomColumnData = customData;
+			device.CustomColumnNumber = 3;
+
+			items.push_back(device);
+		}
 	}
-	
-	*pItemsNumber = (int)devices.size();
-	*pPanelItem = new PluginPanelItem[devices.size()];
-	
-	for (size_t i = 0; i < devices.size(); i++) {
-		(*pPanelItem)[i] = devices[i];
+
+	*pItemsNumber = (int)items.size();
+	*pPanelItem = new PluginPanelItem[items.size()];
+
+	for (size_t i = 0; i < items.size(); i++) {
+		(*pPanelItem)[i] = items[i];
 	}
-	
-	return (int)devices.size();
+
+	return (int)items.size();
 }
 
 std::string ADBPlugin::GetDeviceFriendlyName(const std::string& serial)
@@ -812,7 +819,7 @@ bool ADBPlugin::ByKey_TryEnterSelectedDevice()
 {
 	// Get the currently selected device from the panel
 	std::string deviceSerial = GetCurrentPanelItemDeviceName();
-	if (deviceSerial.empty() || deviceSerial[0] == '<') {
+	if (deviceSerial.empty() || deviceSerial[0] == '<' || deviceSerial == "..") {
 		DBG("No device selected (placeholder item)\n");
 		return false;
 	}

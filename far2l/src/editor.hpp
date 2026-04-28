@@ -238,8 +238,6 @@ private:
 	Edit *TopList;
 	Edit *EndList;
 	Edit *TopScreen;
-	int m_CurVisualLineInLogicalLine;
-	Edit *m_TopScreenLogicalLine;
 	int m_TopScreenVisualLine;
 	Edit *CurLine;
 	Edit *LastGetLine;
@@ -247,7 +245,6 @@ private:
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;
-	int m_WrapMaxVisibleLineLength;
 	bool m_MouseButtonIsHeld;
 	
 	// Line number caching for performance
@@ -266,10 +263,12 @@ private:
 		int visual_line{0};
 	};
 
-	int FindVisualLine(Edit* line, int Pos);
+	int FindVisualLine(Edit* line, int Pos) const;
+	int GetCurVisualLine() const;
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
 	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
+	int GetWordWrapVisibleMaxLineLength() const;
 	int GetTopScreenLineNumber();
 	void EnsureTopScreenVisual();
 	bool DecTopVisualLine();
@@ -278,7 +277,10 @@ private:
 	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
 	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, bool vblock, bool allow_selection);
 	virtual void DisplayObject();
-	void SetCursorByVisualLineCellOffset(int horizontal_cell_pos);
+	void SetCursorByVisualLineCellOffset(int VisualLine, int horizontal_cell_pos);
+	void RestoreWordWrapPreferredCellPos();
+	void SetWordWrapCursorPosition(int NewPos);
+	void SetWordWrapCursorPosition(int NewPos, int VisualLine);
 	void ShowEditor(int CurLineOnly);
 	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
 	void InsertString();
@@ -316,7 +318,6 @@ void GoToVisualLine(int VisualLine);
 	int CalculateLineNumberWidth();  // Helper to calculate line number display width
 	int CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar);  // Helper for text viewport width
 	void RecalculateAllWordWraps(bool SyncWordWrapState);
-	void SyncWordWrapVisualLine();
 	void RememberWordWrapPreferredCellPos();
 	// void SetStringsTable();
 	void BlockLeft();

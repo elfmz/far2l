@@ -1631,6 +1631,18 @@ int Edit::GetVisualLineCount() const
 	return m_WrapBreaks.size();
 }
 
+int Edit::FindVisualLine(int Pos) const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty())
+		return 0;
+
+	if (Pos <= 0)
+		return 0;
+
+	const auto it = std::upper_bound(m_WrapBreaks.begin(), m_WrapBreaks.end(), Pos);
+	return std::max(0, static_cast<int>(it - m_WrapBreaks.begin()) - 1);
+}
+
 void Edit::GetVisualLine(int line, int& start, int& end) const
 {
 	if (!m_bWordWrapState || m_WrapBreaks.empty() || line < 0)

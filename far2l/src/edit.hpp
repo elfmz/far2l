@@ -211,6 +211,7 @@ protected:
 	inline int CalcPosFwd(int LimitPos = -1) const { return CalcPosFwdTo(CurPos, LimitPos); }
 	inline int CalcPosBwd() const { return CalcPosBwdTo(CurPos); }
 
+	int FindVisualLine(int Pos) const;
 	int GetVisualLineCount() const;
 	void GetVisualLine(int line, int& start, int& end) const;
 public:

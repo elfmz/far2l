@@ -7,7 +7,12 @@ Browse and manage files on Android devices over ADB from far2l.
 - Auto-detect connected devices; enumerate serial, friendly name, model, USB port
 - Navigate the device filesystem with standard far2l panel operations
 - F3/F5/F6/F7/F8 — view, copy, move, mkdir, delete, with progress and abort
-- On-device copy/move when both panels point to the same device (no host roundtrip)
+- Shift+F6 — rename a file or directory in place (on-device `mv`)
+- On-device copy/move when both panels point to the same device (no host roundtrip);
+  cross-mount targets (e.g. `/sdcard` ↔ `/data/local/tmp`) auto-fall-back to on-device
+  `cp -a && rm -rf` rather than going via the host
+- Overwrite confirmation prompt for every file already present at the destination,
+  with Skip / Skip-all / Overwrite / Overwrite-all
 - Shell commands from the far2l command line — each command gets its stdout, stderr,
   and exit code; device `cwd` is synchronized via persistent `adb shell -T`
 - Ctrl+O shows command output history (far2l's user screen)
@@ -68,15 +73,18 @@ connect via USB, accept the RSA fingerprint. Verify with `adb devices`.
 
 ## Key bindings
 
-| Key      | Action                                 |
-|----------|----------------------------------------|
-| Enter    | Enter directory / connect to device    |
-| F3       | View file (pulled to a temp location)  |
-| F5 / F6  | Copy / Move (ADB↔host or same-device)  |
-| F7       | Make directory                         |
-| F8       | Delete                                 |
-| F10      | Close plugin                           |
-| Ctrl+\\   | Go to `/`                              |
+| Key       | Action                                 |
+|-----------|----------------------------------------|
+| Enter     | Enter directory / connect to device    |
+| F3        | View file (pulled to a temp location)  |
+| F5 / F6   | Copy / Move (ADB↔host or same-device)  |
+| Shift+F5  | Duplicate cursor item under a new name |
+| Shift+F6  | Rename file or directory in place      |
+| F7        | Make directory                         |
+| F8        | Delete                                 |
+| F10       | Close plugin                           |
+| Ctrl+\\    | Go to `/`                              |
+| Ctrl+R    | Refresh panel                          |
 
 ## Localization
 

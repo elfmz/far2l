@@ -87,6 +87,14 @@ public:
     // File existence check
     bool FileExists(const std::string &devicePath);
 
+    // True only if devicePath exists AND is a directory (test -d).
+    bool IsDirectory(const std::string &devicePath);
+
+    // {exists, is_dir} via a single shell roundtrip — cheaper than calling
+    // FileExists then IsDirectory (each is its own marker-bound shell command).
+    struct PathStat { bool exists; bool is_dir; };
+    PathStat StatPath(const std::string &devicePath);
+
     // Directory info (file count, total size in bytes)
     struct DirectoryInfo {
         uint64_t file_count;

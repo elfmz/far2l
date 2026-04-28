@@ -350,24 +350,36 @@ OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple,
     _di.SetBoxTitleItem(is_directory ? L"Folder already exists" : L"File already exists");
     _di.SetLine(2);
 
-    // Abbreviate path from left if too long (keep filename visible)
-    std::wstring display_path = AbbreviatePathLeft(filename, 52);
-    _di.AddAtLine(DI_TEXT, 5, 58, 0, display_path.c_str());
-
-    _di.NextLine();
-    _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
-
-    _di.NextLine();
+    // Layout math: DIF_CENTERGROUP auto-centers the button row, but the dialog's
+    // overall width is decided by EstimateWidth() = max X2 across all items. So the
+    // path/separator must span at least the rendered button-row width or the frame
+    // clips the rightmost button. Each rendered button = "[ <label> ]" = label_len+4.
+    // Multi-item rendered widths: 13 + 8 + 17 + 12 + 10 + 4*1_gap = 64 cols.
+    // Single-item rendered widths: 13 + 8 + 10 + 2*1_gap = 33 cols.
+    // We bump the path/separator X2 a couple beyond that so the frame doesn't kiss
+    // the rightmost button.
     if (_is_multiple) {
-        _i_overwrite = _di.AddAtLine(DI_BUTTON, 2, 12, DIF_CENTERGROUP, L"&Overwrite");
-        _i_skip = _di.AddAtLine(DI_BUTTON, 14, 22, DIF_CENTERGROUP, L"&Skip");
-        _i_overwrite_all = _di.AddAtLine(DI_BUTTON, 24, 38, DIF_CENTERGROUP, L"Overwrite &all");
-        _i_skip_all = _di.AddAtLine(DI_BUTTON, 40, 50, DIF_CENTERGROUP, L"Skip a&ll");
-        _i_cancel = _di.AddAtLine(DI_BUTTON, 52, 62, DIF_CENTERGROUP, L"Cancel");
+        // Path/separator stretch to match button-row span so the dialog frame
+        // (sized off max X across items) fully contains the centered buttons.
+        std::wstring display_path = AbbreviatePathLeft(filename, 60);
+        _di.AddAtLine(DI_TEXT, 5, 64, 0, display_path.c_str());
+        _di.NextLine();
+        _di.AddAtLine(DI_TEXT, 4, 65, DIF_BOXCOLOR | DIF_SEPARATOR);
+        _di.NextLine();
+        _i_overwrite     = _di.AddAtLine(DI_BUTTON,  4, 12, DIF_CENTERGROUP, L"&Overwrite");
+        _i_skip          = _di.AddAtLine(DI_BUTTON, 14, 18, DIF_CENTERGROUP, L"&Skip");
+        _i_overwrite_all = _di.AddAtLine(DI_BUTTON, 20, 32, DIF_CENTERGROUP, L"Overwrite &all");
+        _i_skip_all      = _di.AddAtLine(DI_BUTTON, 34, 41, DIF_CENTERGROUP, L"Skip a&ll");
+        _i_cancel        = _di.AddAtLine(DI_BUTTON, 43, 49, DIF_CENTERGROUP, L"Cancel");
     } else {
+        std::wstring display_path = AbbreviatePathLeft(filename, 52);
+        _di.AddAtLine(DI_TEXT, 5, 58, 0, display_path.c_str());
+        _di.NextLine();
+        _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
+        _di.NextLine();
         _i_overwrite = _di.AddAtLine(DI_BUTTON, 10, 25, DIF_CENTERGROUP, L"&Overwrite");
-        _i_skip = _di.AddAtLine(DI_BUTTON, 27, 40, DIF_CENTERGROUP, L"&Skip");
-        _i_cancel = _di.AddAtLine(DI_BUTTON, 42, 56, DIF_CENTERGROUP, L"Cancel");
+        _i_skip      = _di.AddAtLine(DI_BUTTON, 27, 40, DIF_CENTERGROUP, L"&Skip");
+        _i_cancel    = _di.AddAtLine(DI_BUTTON, 42, 56, DIF_CENTERGROUP, L"Cancel");
     }
 
     SetFocusedDialogControl(_i_skip);
@@ -721,29 +733,12 @@ bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destinat
 
     // Build prompt text
     if (item_count > 1) {
-        // Multiple items - show count
-        wchar_t count_str[32];
-        swprintf(count_str, ARRAYSIZE(count_str), L"%d", item_count);
-        if (is_move) {
-            prompt = L"Move " + std::wstring(count_str) + L" items to:";
-        } else {
-            prompt = L"Copy " + std::wstring(count_str) + L" items to:";
-        }
+        prompt = (is_move ? L"Move " : L"Copy ") + std::to_wstring(item_count) + L" items to:";
     } else if (!source_name.empty()) {
-        // Single item - show name
         std::wstring name_wide = StrMB2Wide(source_name);
-        if (is_move) {
-            prompt = L"Move \"" + name_wide + L"\" to:";
-        } else {
-            prompt = L"Copy \"" + name_wide + L"\" to:";
-        }
+        prompt = (is_move ? L"Move \"" : L"Copy \"") + name_wide + L"\" to:";
     } else {
-        // Fallback - generic prompt
-        if (is_move) {
-            prompt = L"Enter destination path:";
-        } else {
-            prompt = L"Enter destination path:";
-        }
+        prompt = L"Enter destination path:";
     }
 
     std::string other_panel_path;

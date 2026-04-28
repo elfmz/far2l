@@ -5564,10 +5564,7 @@ void Editor::DeleteBlock()
 		}
 	}
 
-	if (m_bWordWrap)
-	{
-		RememberWordWrapPreferredCellPos();
-	}
+	RememberWordWrapPreferredCellPos();
 	AddUndoData(UNDO_END);
 	BlockStart = nullptr;
 }
@@ -5796,8 +5793,7 @@ void Editor::GoToPosition()
 			CurLine->SetCellCurPos(NewCol);
 		}
 
-		if (m_bWordWrap)
-			RememberWordWrapPreferredCellPos();
+		RememberWordWrapPreferredCellPos();
 
 		Show();
 	}
@@ -6859,8 +6855,7 @@ int Editor::EditorControl(int Command, void *Param)
 					CurLine->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
 				}
 
-				if (m_bWordWrap)
-					RememberWordWrapPreferredCellPos();
+				RememberWordWrapPreferredCellPos();
 
 				Unlock();
 				return TRUE;
@@ -7192,10 +7187,7 @@ int Editor::GotoBookmark(DWORD Pos)
 	if (Pos < POSCACHE_BOOKMARK_COUNT) {
 		if (SavePos.Line[Pos] != POS_NONE) {
 			GoToLine(static_cast<int>(SavePos.Line[Pos]));
-			if (m_bWordWrap)
-				SetWordWrapCursorPosition(static_cast<int>(SavePos.Cursor[Pos]));
-			else
-				CurLine->SetCurPos(static_cast<int>(SavePos.Cursor[Pos]));
+			SetWordWrapCursorPosition(static_cast<int>(SavePos.Cursor[Pos]));
 			CurLine->SetLeftPos(static_cast<int>(SavePos.LeftPos[Pos]));
 
 			TopScreen = CurLine;
@@ -7267,10 +7259,7 @@ int Editor::RestoreStackBookmark()
 
 	if (StackPos && ((int)StackPos->Line != NumLine || (int)StackPos->Cursor != CurLine->GetCurPos())) {
 		GoToLine(StackPos->Line);
-		if (m_bWordWrap)
-			SetWordWrapCursorPosition(StackPos->Cursor);
-		else
-			CurLine->SetCurPos(StackPos->Cursor);
+		SetWordWrapCursorPosition(StackPos->Cursor);
 		CurLine->SetLeftPos(StackPos->LeftPos);
 
 		TopScreen = CurLine;
@@ -7792,8 +7781,7 @@ void Editor::SetWordWrap(int NewMode)
 
 		RecalculateAllWordWraps(true);
 
-		if (m_bWordWrap)
-			RememberWordWrapPreferredCellPos();
+		RememberWordWrapPreferredCellPos();
 	}
 }
 
@@ -8257,8 +8245,7 @@ void Editor::SetCurPos(int NewCol, int NewRow)
 	Lock();
 	GoToLine(NewRow);
 	CurLine->SetCellCurPos(NewCol);
-	if (m_bWordWrap)
-		RememberWordWrapPreferredCellPos();
+	RememberWordWrapPreferredCellPos();
 	// CurLine->SetLeftPos(LeftPos); ???
 	Unlock();
 }

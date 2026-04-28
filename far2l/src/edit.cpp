@@ -859,7 +859,9 @@ int Edit::ProcessKey(FarKey Key)
 		return TRUE;
 	}
 
-	if (Key != KEY_NONE && Key != KEY_IDLE && Key != KEY_SHIFTINS && Key != KEY_SHIFTNUMPAD0 && Key != KEY_CTRLINS
+	if (Flags.Check(FEDITLINE_CLEARFLAG)
+			&& Key != KEY_NONE && Key != KEY_IDLE && Key != KEY_SHIFTINS && Key != KEY_SHIFTNUMPAD0
+			&& Key != KEY_CTRLINS
 			&& ((unsigned int)Key < KEY_F1 || (unsigned int)Key > KEY_F12) && Key != KEY_ALT && Key != KEY_SHIFT
 			&& Key != KEY_CTRL && Key != KEY_RALT && Key != KEY_RCTRL && (Key < KEY_ALT_BASE || Key > KEY_ALT_BASE + 0xFFFF)
 			&& !( Key & (KEY_ALT | KEY_RALT) )

@@ -250,11 +250,6 @@ void Editor::AdjustScreenPosition()
 	}
 }
 
-int Editor::FindVisualLine(Edit* line, int Pos) const
-{
-	return line ? line->FindVisualLine(Pos) : 0;
-}
-
 int Editor::GetCurVisualLine() const
 {
 	return (m_bWordWrap && CurLine) ? CurLine->FindVisualLine(CurLine->GetCurPos()) : 0;
@@ -4971,7 +4966,7 @@ BOOL Editor::Search(int Next)
 				*/
 				if (m_bWordWrap)
 				{
-					int foundVisualLine = FindVisualLine(CurPtr, CurPtr->GetCurPos());
+					int foundVisualLine = CurPtr->FindVisualLine(CurPtr->GetCurPos());
 
 					int FromTop = (Y2 - Y1 + 1) / 4;
 

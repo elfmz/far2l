@@ -263,7 +263,6 @@ private:
 		int visual_line{0};
 	};
 
-	int FindVisualLine(Edit* line, int Pos) const;
 	int GetCurVisualLine() const;
 	int GetTotalVisualLines();
 	int GetTopVisualLine();

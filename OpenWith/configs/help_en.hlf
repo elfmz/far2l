@@ -183,6 +183,9 @@ $^#Configuration Dialog (F9)#
  #-# Pass plain paths instead of file:// URIs
    This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. By default, the plugin generates file:// URIs. However, some applications may not handle them correctly, despite claiming support. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
 
+ #-# Show Flatpak/Snap qualifiers
+   Tag applications in the menu installed as Flatpak or Snap packages. Helps avoid confusion when multiple variants of the same program are available.
+
 
  #2.2. macOS Settings#
 

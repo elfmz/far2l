@@ -12,6 +12,7 @@ enum LanguageID
 	MSaveConfigError,
 	MNoAppsFound,
 	MCannotExecute,
+	MUnsupportedPlatform,
 
 	MConfigTitle,
 

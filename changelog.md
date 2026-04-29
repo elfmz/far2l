@@ -18,6 +18,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a pluguin's SysID may see via `far:about` or in plugin's source code)
 * _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system; see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
+* _OpenWith plugin_: new option to show Snap/Flatpak markers in app menu
 * _python plugin_: fixes and new subplugins uimgimage.py, uimgpdf.py, udockerrunlike.py [#3346](https://github.com/elfmz/far2l/issues/3346)
 * Several bugfixes and improvements
 

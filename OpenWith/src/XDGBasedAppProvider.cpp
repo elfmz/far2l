@@ -35,22 +35,22 @@
 XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
 {
 	_platform_settings_definitions = {
-		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true, true },
-		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true, true },
-		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false, true },
-		{ "UseGlobRules", MUseGlobRules, &XDGBasedAppProvider::_use_glob_rules, false, true },
+		{ "UseXdgMimeTool",            MUseXdgMimeTool,            &XDGBasedAppProvider::_use_xdg_mime_tool,            true,  true },
+		{ "UseFileTool",               MUseFileTool,               &XDGBasedAppProvider::_use_file_tool,                true,  true },
+		{ "UseMagikaTool",             MUseMagikaTool,             &XDGBasedAppProvider::_use_magika_tool,              false, true },
+		{ "UseGlobRules",              MUseGlobRules,              &XDGBasedAppProvider::_use_glob_rules,               false, true },
 		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false, true },
-		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true, true },
-		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true, true },
-		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true, true },
-		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true, true },
-		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true, true },
-		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true, true },
-		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false, true },
-		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false, true },
-		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false, true },
-		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false, false },
-		{ "ShowFlatpakSnapTags", MShowFlatpakSnapTags, &XDGBasedAppProvider::_show_flatpak_snap_tags, true, true }
+		{ "LoadMimeTypeAliases",       MLoadMimeTypeAliases,       &XDGBasedAppProvider::_load_mimetype_aliases,        true,  true },
+		{ "LoadMimeTypeSubclasses",    MLoadMimeTypeSubclasses,    &XDGBasedAppProvider::_load_mimetype_subclasses,     true,  true },
+		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes,  true,  true },
+		{ "UseGenericMimeFallbacks",   MUseGenericMimeFallbacks,   &XDGBasedAppProvider::_use_generic_mime_fallbacks,   true,  true },
+		{ "ShowUniversalHandlers",     MShowUniversalHandlers,     &XDGBasedAppProvider::_show_universal_handlers,      true,  true },
+		{ "UseMimeinfoCache",          MUseMimeinfoCache,          &XDGBasedAppProvider::_use_mimeinfo_cache,           true,  true },
+		{ "FilterByShowIn",            MFilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            false, true },
+		{ "ValidateTryExec",           MValidateTryExec,           &XDGBasedAppProvider::_validate_try_exec,            false, true },
+		{ "SortAlphabetically",        MSortAlphabetically,        &XDGBasedAppProvider::_sort_alphabetically,          false, true },
+		{ "TreatUrlsAsPaths",          MTreatUrlsAsPaths,          &XDGBasedAppProvider::_treat_urls_as_paths,          false, false },
+		{ "ShowFlatpakSnapTags",       MShowFlatpakSnapTags,       &XDGBasedAppProvider::_show_flatpak_snap_tags,       true,  true }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
@@ -950,24 +950,20 @@ bool XDGBasedAppProvider::GlobMatch(const std::string &text, const std::string &
 {
 	int flags = 0;
 
+	if (!case_sensitive) {
 #ifdef FNM_CASEFOLD
-	if (!case_sensitive) {
-		flags |= FNM_CASEFOLD;
-	}
+		flags = FNM_CASEFOLD;
 #elif defined(FNM_IGNORECASE)
-	if (!case_sensitive) {
-		flags |= FNM_IGNORECASE;
-	}
+		flags = FNM_IGNORECASE;
 #endif
-
-	if (case_sensitive || (flags != 0)) {
-		return fnmatch(pattern.c_str(), text.c_str(), flags) == 0;
 	}
 
-	auto text_lower = ToLowerASCII(text);
-	auto pattern_lower = ToLowerASCII(pattern);
+	if (UNLIKELY(flags == 0 && !case_sensitive)) {
+		return fnmatch(ToLowerASCII(pattern).c_str(),
+					   ToLowerASCII(text).c_str(), 0) == 0;
+	}
 
-	return fnmatch(pattern_lower.c_str(), text_lower.c_str(), 0) == 0;
+	return fnmatch(pattern.c_str(), text.c_str(), flags) == 0;
 }
 
 

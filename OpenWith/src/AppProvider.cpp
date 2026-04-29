@@ -2,7 +2,6 @@
 
 #include "XDGBasedAppProvider.hpp"
 #include "MacOSAppProvider.hpp"
-#include "DummyAppProvider.hpp"
 
 std::unique_ptr<AppProvider> AppProvider::CreateAppProvider(TMsgGetter msg_getter)
 {
@@ -14,7 +13,7 @@ std::unique_ptr<AppProvider> AppProvider::CreateAppProvider(TMsgGetter msg_gette
 #elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
 #else
-	provider = std::make_unique<DummyAppProvider>(msg_getter);
+	provider = nullptr;
 #endif
 
 	if (provider) {

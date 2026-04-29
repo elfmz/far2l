@@ -10,6 +10,7 @@
 "Failed to save configuration."
 "No applications found. Detected MIME type:"
 "The application cannot be executed."
+"OpenWith plugin is not available on this platform."
 
 "OpenWith Settings"
 

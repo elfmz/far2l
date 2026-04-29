@@ -2094,11 +2094,27 @@ akkor #program.exe !.!# helyett #program.exe "!.!"# kifejezést kell írni.
          Q - a szóközöket tartalmazó neveket idézőjelek közé teszi;
          S - elérési utaknál '/' jelet használ '\\'-helyett;
          F - teljes elérési utat használ;
-         A - ANSI kódolást használ.
+         A - ANSI kódolást használ;
+         U - UTF-8 kódolást használ;
+         W - UTF-16 (Little endian) kódolást használ;
+         B - mindkét panel kijelölt fájljait egyetlen listába gyűjti.
+
+       ^<wrap>A #B# módosító használatakor az ideiglenes fájl tartalmazza a
+kijelölt fájlokat mind az aktív, mind a passzív panelről. A parancs egyszer
+fut le az összes kijelölt fájlra, nem pedig fájlonként egyszer. Hasznos
+különböző paneleken lévő fájlok összehasonlításához.
 
        ^<wrap>Például a #!@@AFQ!# azt jelenti, hogy "fájlnév a kijelölt fájlok
 neveinek listájával, ANSI kódolással, teljes elérési útvonalakkal, szóközt
 tartalmazó fájlnevek idézőjelben".
+
+       ^<wrap>A #!@@BF!# azt jelenti, hogy "fájlnév mindkét panel kijelölt
+fájljainak listájával, teljes elérési útvonalakkal". Példa a felhasználói menüben:
+
+         diff "$(sed -n '1p' "!@@BF!")" "$(sed -n '2p' "!@@BF!")"
+
+       ^<wrap>Jelöljünk ki egy fájlt a bal panelen és egyet a jobb panelen
+(#Insert# billentyűvel), majd futtassuk a parancsot az összehasonlításhoz.
 
     3. ^<wrap>Ha összetett hivatkozást adtunk meg, a !@@! és !$! metakarakter
 eredeti alakjában jelenik meg a menüben. Ezeket a FAR a parancs

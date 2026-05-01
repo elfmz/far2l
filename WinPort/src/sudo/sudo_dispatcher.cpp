@@ -29,6 +29,7 @@
 #include <LocalSocket.h>
 #include <utimens_compat.h>
 #include "sudo_private.h"
+#include "sudo.h"
 
 namespace Sudo
 {
@@ -130,6 +131,23 @@ namespace Sudo
 		bt.SendPOD(d);
 		if (!d)
 			bt.SendErrno();
+	}
+
+	static void OnSudoDispatch_OpenDir_FD(BaseTransaction &bt)
+	{
+		std::string path;
+		bt.RecvStr(path);
+
+		int dir_fd = open(path.c_str(), O_RDONLY | O_DIRECTORY);
+
+		bt.SendInt(dir_fd);
+		if (dir_fd > 0) {
+			bt.SendFD(dir_fd);
+			close(dir_fd);
+		}
+		else {
+			bt.SendErrno();
+		}
 	}
 
 	static void OnSudoDispatch_ReadDir(BaseTransaction &bt, OpenedDirs &dirs)
@@ -404,7 +422,33 @@ namespace Sudo
 		if (r == -1)
 			bt.SendErrno();
 	}
-	
+
+#if USE_STATX
+	static void OnSudoDispatch_Statx(BaseTransaction &bt)
+	{
+		int dirfd = bt.RecvInt();
+		if (dirfd > 0) {
+			dirfd = bt.RecvFD();
+		}
+		std::string pathname;
+		bt.RecvStr(pathname);
+		int flags = bt.RecvInt();
+		unsigned int mask = bt.RecvInt();
+
+		struct __statx statxbuf = {};
+		const char *path = pathname.empty() ? NULL : pathname.c_str();
+
+		int result = syscall(SYS_statx, dirfd, path, flags, mask, &statxbuf);
+
+		bt.SendInt(result);
+		if (result == 0) {
+			bt.SendPOD(statxbuf);
+		} else {
+			bt.SendErrno();
+		}
+	}
+#endif
+
 	void OnSudoDispatch(SudoCommand cmd, BaseTransaction &bt, OpenedDirs &dirs)
 	{
 		//fprintf(stderr, "OnSudoDispatch: %u\n", cmd);
@@ -442,6 +486,10 @@ namespace Sudo
 
 			case SUDO_CMD_OPENDIR:
 				OnSudoDispatch_OpenDir(bt, dirs);
+				break;
+
+			case SUDO_CMD_OPENDIR_FD:
+				OnSudoDispatch_OpenDir_FD(bt);
 				break;
 
 			case SUDO_CMD_READDIR:
@@ -531,7 +579,11 @@ namespace Sudo
 			case SUDO_CMD_LUTIMES:
 				OnSudoDispatch_LUtimes(bt);
 				break;
-				
+#if USE_STATX
+			case SUDO_CMD_STATX:
+				OnSudoDispatch_Statx(bt);
+			break;
+#endif
 			default:
 				throw std::runtime_error("OnSudoDispatch - bad command");
 		}
@@ -555,7 +607,6 @@ namespace Sudo
 
 		}
 	}
-
 
 	extern "C" __attribute__ ((visibility("default"))) int sudo_main_dispatcher(int argc, char *argv[])
 	{

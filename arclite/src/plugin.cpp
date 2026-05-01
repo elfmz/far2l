@@ -439,7 +439,7 @@ public:
 			items[idx].FindData.ftCreationTime = archive->get_ctime(file_index);
 			items[idx].FindData.ftLastAccessTime = archive->get_atime(file_index);
 			items[idx].FindData.ftLastWriteTime = archive->get_mtime(file_index);
-//			items[idx].FindData.ftChangeTime = archive->get_chtime(file_index);
+			items[idx].FindData.ftChangeTime = archive->get_chtime(file_index);
 
 			items[idx].FindData.nFileSize = archive->get_size(file_index);
 			items[idx].FindData.nPhysicalSize = archive->get_psize(file_index);

@@ -289,7 +289,7 @@ bool FileFilterParams::FileInFilter(const FAR_FIND_DATA_EX &fde, uint64_t Curren
 bool FileFilterParams::FileInFilter(const FAR_FIND_DATA &fd, uint64_t CurrentTime) const
 {
 	return FileInFilterImpl(FARString(fd.lpwszFileName), fd.dwFileAttributes, fd.nFileSize, fd.ftCreationTime,
-			fd.ftLastAccessTime, fd.ftLastWriteTime, fd.ftLastWriteTime, CurrentTime);
+			fd.ftLastAccessTime, fd.ftLastWriteTime, fd.ftChangeTime, CurrentTime);
 }
 
 bool FileFilterParams::FileInFilterImpl(const FARString &strFileName, DWORD dwFileAttributes,
@@ -633,11 +633,13 @@ enum enumFileFilterConfig
 	ID_FF_NOTINDEXED,
 	ID_FF_REPARSEPOINT,
 	ID_FF_SPARSE,
+	ID_FF_IMMUTABLE,
 	ID_FF_TEMP,
 	ID_FF_OFFLINE,
 	ID_FF_VIRTUAL,
 	ID_FF_EXECUTABLE,
 	ID_FF_BROKEN,
+	ID_FF_APPEND,
 
 	ID_FF_DEVCHAR,
 	ID_FF_DEVBLOCK,
@@ -1057,12 +1059,14 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 		{DI_CHECKBOX,    26,          15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrReparse       },
 		{DI_CHECKBOX,    26,          16, 0,      16, {},                                  DIF_3STATE,                             Msg::FileFilterAttrSparse        },
 
+		{DI_CHECKBOX,    45,          11, 0,      11, {},                                  DIF_3STATE,                             Msg::FileFilterAttrImmutable     },
 		{DI_CHECKBOX,    45,          12, 0,      12, {},                                  DIF_3STATE,                             Msg::FileFilterAttrT             },
 		{DI_CHECKBOX,    45,          13, 0,      13, {},                                  DIF_3STATE,                             Msg::FileFilterAttrOffline       },
 		{DI_CHECKBOX,    45,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrVirtual       },
 		{DI_CHECKBOX,    45,          15, 0,      15, {},                                  DIF_3STATE,                             Msg::FileFilterAttrExecutable    },
 		{DI_CHECKBOX,    45,          16, 0,      16, {},                                  DIF_3STATE,                             Msg::FileFilterAttrBroken        },
 
+		{DI_CHECKBOX,    64,          11, 0,      11, {},                                  DIF_3STATE,                             Msg::FileFilterAttrAppend        },
 		{DI_CHECKBOX,    64,          12, 0,      12, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevChar       },
 		{DI_CHECKBOX,    64,          13, 0,      13, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevBlock      },
 		{DI_CHECKBOX,    64,          14, 0,      14, {},                                  DIF_3STATE,                             Msg::FileFilterAttrDevFIFO       },
@@ -1255,6 +1259,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 					: AttrClear & FILE_ATTRIBUTE_SPARSE_FILE
 					? 0
 					: 2);
+	FilterDlg[ID_FF_IMMUTABLE].Selected = (AttrSet & FILE_ATTRIBUTE_IMMUTABLE ? 1
+					: AttrClear & FILE_ATTRIBUTE_IMMUTABLE
+					? 0
+					: 2);
 	FilterDlg[ID_FF_TEMP].Selected = (AttrSet & FILE_ATTRIBUTE_TEMPORARY ? 1
 					: AttrClear & FILE_ATTRIBUTE_TEMPORARY
 					? 0
@@ -1277,6 +1285,10 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 					: 2);
 	FilterDlg[ID_FF_BROKEN].Selected = (AttrSet & FILE_ATTRIBUTE_BROKEN ? 1
 					: AttrClear & FILE_ATTRIBUTE_BROKEN
+					? 0
+					: 2);
+	FilterDlg[ID_FF_APPEND].Selected = (AttrSet & FILE_ATTRIBUTE_APPEND ? 1
+					: AttrClear & FILE_ATTRIBUTE_APPEND
 					? 0
 					: 2);
 	FilterDlg[ID_FF_DEVCHAR].Selected = (AttrSet & FILE_ATTRIBUTE_DEVICE_CHAR ? 1
@@ -1375,12 +1387,14 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			AttrSet|= (FilterDlg[ID_FF_HARDLINKS].Selected == 1 ? FILE_ATTRIBUTE_HARDLINKS : 0);
 			AttrSet|= (FilterDlg[ID_FF_NOTINDEXED].Selected == 1 ? FILE_ATTRIBUTE_NOT_CONTENT_INDEXED : 0);
 			AttrSet|= (FilterDlg[ID_FF_SPARSE].Selected == 1 ? FILE_ATTRIBUTE_SPARSE_FILE : 0);
+			AttrSet|= (FilterDlg[ID_FF_IMMUTABLE].Selected == 1 ? FILE_ATTRIBUTE_IMMUTABLE : 0);
 			AttrSet|= (FilterDlg[ID_FF_TEMP].Selected == 1 ? FILE_ATTRIBUTE_TEMPORARY : 0);
 			AttrSet|= (FilterDlg[ID_FF_REPARSEPOINT].Selected == 1 ? FILE_ATTRIBUTE_REPARSE_POINT : 0);
 			AttrSet|= (FilterDlg[ID_FF_OFFLINE].Selected == 1 ? FILE_ATTRIBUTE_OFFLINE : 0);
 			AttrSet|= (FilterDlg[ID_FF_VIRTUAL].Selected == 1 ? FILE_ATTRIBUTE_VIRTUAL : 0);
 			AttrSet|= (FilterDlg[ID_FF_EXECUTABLE].Selected == 1 ? FILE_ATTRIBUTE_EXECUTABLE : 0);
 			AttrSet|= (FilterDlg[ID_FF_BROKEN].Selected == 1 ? FILE_ATTRIBUTE_BROKEN : 0);
+			AttrSet|= (FilterDlg[ID_FF_APPEND].Selected == 1 ? FILE_ATTRIBUTE_APPEND : 0);
 			AttrSet|= (FilterDlg[ID_FF_DEVCHAR].Selected == 1 ? FILE_ATTRIBUTE_DEVICE_CHAR : 0);
 			AttrSet|= (FilterDlg[ID_FF_DEVBLOCK].Selected == 1 ? FILE_ATTRIBUTE_DEVICE_BLOCK : 0);
 			AttrSet|= (FilterDlg[ID_FF_DEVFIFO].Selected == 1 ? FILE_ATTRIBUTE_DEVICE_FIFO : 0);
@@ -1396,12 +1410,14 @@ bool FileFilterConfig(FileFilterParams *FF, bool ColorConfig)
 			AttrClear|= (FilterDlg[ID_FF_HARDLINKS].Selected == 0 ? FILE_ATTRIBUTE_HARDLINKS : 0);
 			AttrClear|= (FilterDlg[ID_FF_NOTINDEXED].Selected == 0 ? FILE_ATTRIBUTE_NOT_CONTENT_INDEXED : 0);
 			AttrClear|= (FilterDlg[ID_FF_SPARSE].Selected == 0 ? FILE_ATTRIBUTE_SPARSE_FILE : 0);
+			AttrClear|= (FilterDlg[ID_FF_IMMUTABLE].Selected == 0 ? FILE_ATTRIBUTE_IMMUTABLE : 0);
 			AttrClear|= (FilterDlg[ID_FF_TEMP].Selected == 0 ? FILE_ATTRIBUTE_TEMPORARY : 0);
 			AttrClear|= (FilterDlg[ID_FF_REPARSEPOINT].Selected == 0 ? FILE_ATTRIBUTE_REPARSE_POINT : 0);
 			AttrClear|= (FilterDlg[ID_FF_OFFLINE].Selected == 0 ? FILE_ATTRIBUTE_OFFLINE : 0);
 			AttrClear|= (FilterDlg[ID_FF_VIRTUAL].Selected == 0 ? FILE_ATTRIBUTE_VIRTUAL : 0);
 			AttrClear|= (FilterDlg[ID_FF_EXECUTABLE].Selected == 0 ? FILE_ATTRIBUTE_EXECUTABLE : 0);
 			AttrClear|= (FilterDlg[ID_FF_BROKEN].Selected == 0 ? FILE_ATTRIBUTE_BROKEN : 0);
+			AttrClear|= (FilterDlg[ID_FF_APPEND].Selected == 0 ? FILE_ATTRIBUTE_APPEND : 0);
 			AttrClear|= (FilterDlg[ID_FF_DEVCHAR].Selected == 0 ? FILE_ATTRIBUTE_DEVICE_CHAR : 0);
 			AttrClear|= (FilterDlg[ID_FF_DEVBLOCK].Selected == 0 ? FILE_ATTRIBUTE_DEVICE_BLOCK : 0);
 			AttrClear|= (FilterDlg[ID_FF_DEVFIFO].Selected == 0 ? FILE_ATTRIBUTE_DEVICE_FIFO : 0);

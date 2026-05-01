@@ -445,6 +445,7 @@ static BOOL farGetFindData(const wchar_t *lpwszFileName, WIN32_FIND_DATAW *FindD
 	FindDataW->ftCreationTime = FindDataEx.ftCreationTime;
 	FindDataW->ftLastAccessTime = FindDataEx.ftLastAccessTime;
 	FindDataW->ftLastWriteTime = FindDataEx.ftLastWriteTime;
+	FindDataW->ftChangeTime = FindDataEx.ftChangeTime;
 
 	FindDataW->UnixOwner = FindDataEx.UnixOwner;
 	FindDataW->UnixGroup = FindDataEx.UnixGroup;

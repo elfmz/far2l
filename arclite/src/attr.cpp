@@ -81,7 +81,7 @@ static std::wstring format_filetime_prop(const PropVariant &prop)
 //	}
 
 	ft = prop.get_filetime();
-#if IS_BIG_ENDIAN
+#ifdef ENDIAN_IS_BIG
 		return format_file_time(FILETIME{ft.dwLowDateTime,ft.dwHighDateTime});
 #else
 	return format_file_time(ft);

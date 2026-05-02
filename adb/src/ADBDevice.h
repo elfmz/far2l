@@ -93,6 +93,7 @@ public:
 
     // File existence check
     bool FileExists(const std::string &devicePath);
+    bool IsDirectory(const std::string &devicePath);
 
     // Directory info (file count, total size in bytes)
     struct DirectoryInfo {

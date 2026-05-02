@@ -722,6 +722,16 @@ bool ADBDevice::FileExists(const std::string &devicePath) {
     return result == "1";
 }
 
+bool ADBDevice::IsDirectory(const std::string &devicePath) {
+    EnsureConnection();
+    if (!_connected) return false;
+    std::string command = "test -d " + ADBUtils::ShellQuote(devicePath) + " && echo 1 || echo 0";
+    std::string result = RunShellCommand(command);
+    ADBUtils::TrimTrailingNewlines(result);
+    while (!result.empty() && result.back() == ' ') result.pop_back();
+    return result == "1";
+}
+
 ADBDevice::DirectoryInfo ADBDevice::GetDirectoryInfo(const std::string &devicePath) {
     DirectoryInfo info = {0, 0};
     EnsureConnection();

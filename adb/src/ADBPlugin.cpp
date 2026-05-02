@@ -111,11 +111,12 @@ static std::string NormalizePosixPath(const std::string& p) {
 	return out.empty() ? (absolute ? std::string("/") : std::string(".")) : out;
 }
 
-// Resolve a Shift+F5/F6 input string against the current device dir.
-// "foo" → currentDir/foo
-// "../foo" → parent/foo
-// "/sdcard/foo" → /sdcard/foo (absolute)
-// Returns the normalized full destination path.
+// Aside-rename suffix for atomic-overwrite. PID-scoped to avoid clashes.
+static std::string AsideName(const std::string& base) {
+	return base + ".far2l-tmp." + std::to_string(getpid());
+}
+
+// "foo" → currentDir/foo, "../foo" → parent/foo, "/abs/foo" → /abs/foo.
 static std::string ResolveAdbDestination(const std::string& currentDir,
                                          const std::string& userInput) {
 	if (userInput.empty()) return userInput;
@@ -128,6 +129,43 @@ static std::string ResolveAdbDestination(const std::string& currentDir,
 		joined += userInput;
 	}
 	return NormalizePosixPath(joined);
+}
+
+// Resolve user input that may be folder-only ("..", "./sub/", trailing
+// slash, or a name matching an existing directory). When folder-only,
+// basename is taken from src_name so the moved/copied object keeps its
+// original filename. Returns the full destination path. dev is needed
+// to probe whether a name resolves to an existing dir.
+static std::string ResolveAdbDestinationFor(const std::string& currentDir,
+                                            const std::string& userInput,
+                                            const std::string& src_name,
+                                            std::shared_ptr<ADBDevice> dev) {
+	if (userInput.empty()) return userInput;
+	const bool trailing_slash = (userInput.back() == '/');
+	std::string raw = trailing_slash ? userInput.substr(0, userInput.size() - 1) : userInput;
+	std::string resolved = ResolveAdbDestination(currentDir, raw);
+	// Folder-only: trailing slash, or "..", or "." with no other content.
+	if (trailing_slash || raw == ".." || raw == ".") {
+		if (!src_name.empty()) {
+			if (resolved.empty() || resolved.back() != '/') resolved += '/';
+			resolved += src_name;
+		}
+		return resolved;
+	}
+	// If the user's input resolves to an EXISTING directory, treat as
+	// "into that dir" with basename from src_name (mirrors mtp behavior).
+	if (!src_name.empty() && dev && dev->IsDirectory(resolved)) {
+		if (resolved.back() != '/') resolved += '/';
+		resolved += src_name;
+	}
+	return resolved;
+}
+
+// Storage-relative path prefix for prompt prefills: "<absolute-dir>/".
+static std::string BuildPanelPathPrefix(const std::string& currentDir) {
+	std::string out = currentDir.empty() ? std::string("/") : currentDir;
+	if (out.back() != '/') out += '/';
+	return out;
 }
 
 
@@ -394,13 +432,36 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		return false;
 	}
 
+	// Confirmation prompt with editable destination, prefilled from
+	// passive panel. User can edit either the path (move into a different
+	// dst dir, climb with "..", descend with "./sub/") or accept it.
+	{
+		const wchar_t* title = move ? L"Move" : L"Copy";
+		std::wstring prompt;
+		if (items.size() == 1) {
+			prompt = (move ? std::wstring(L"Move ") : std::wstring(L"Copy "))
+			       + StrMB2Wide(items[0].name) + L" to:";
+		} else {
+			prompt = (move ? std::wstring(L"Move ") : std::wstring(L"Copy "))
+			       + std::to_wstring(items.size()) + L" items to:";
+		}
+		const std::string prefill = BuildPanelPathPrefix(dstDir);
+		std::string user_path;
+		if (!ADBDialogs::AskInput(title, prompt.c_str(), L"ADB_CopyMove",
+		                           user_path, prefill)) {
+			return true;  // user cancelled — claim keystroke
+		}
+		if (user_path.empty()) return true;
+		// Resolve relative to the DESTINATION panel.
+		std::string resolved = ResolveAdbDestinationFor(dstDir, user_path, "", dst->_adbDevice);
+		if (!resolved.empty() && resolved.back() != '/') resolved += '/';
+		dstDir = resolved;
+	}
+
 	DBG("CrossPanelCopyMoveSameDevice op=%s count=%zu src=%s dst=%s serial=%s\n",
 		move ? "move" : "copy", items.size(), srcDir.c_str(), dstDir.c_str(), _deviceSerial.c_str());
 
-	// We intercept F5/F6 before far2l's own Copy/Move runs, so far2l
-	// never gets a chance to show its own collision dialog for this
-	// path. Pre-check destination collisions against the source names
-	// and prompt with SKIP/OVERWRITE/ALL/CANCEL semantics.
+	// Per-item collision check + Skip/Overwrite/All/Cancel.
 	bool overwrite_all = false, skip_all = false;
 	std::vector<bool> skip(items.size(), false);
 	std::vector<bool> overwrite(items.size(), false);
@@ -429,19 +490,30 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		if (skip[i]) continue;
 		const auto& it = items[i];
 		const std::string srcPath = ADBUtils::JoinPath(srcDir, it.name);
+		const std::string dstPath = ADBUtils::JoinPath(dstDir, it.name);
+		// Aside-rename atomic-ish overwrite: rename existing dest aside,
+		// run op, drop aside on success / restore on failure.
+		std::string aside;
+		bool have_aside = false;
 		if (overwrite[i]) {
-			const std::string dstPath = ADBUtils::JoinPath(dstDir, it.name);
-			if (it.is_dir) {
-				dst->_adbDevice->DeleteDirectory(dstPath);
+			aside = AsideName(dstPath);
+			if (dst->_adbDevice->MoveRemoteAs(dstPath, aside) == 0) {
+				have_aside = true;
 			} else {
-				dst->_adbDevice->DeleteFile(dstPath);
+				if (it.is_dir) dst->_adbDevice->DeleteDirectory(dstPath);
+				else           dst->_adbDevice->DeleteFile(dstPath);
 			}
 		}
 		const int rc = move ? _adbDevice->MoveRemote(srcPath, dstDir)
 		                    : _adbDevice->CopyRemote(srcPath, dstDir);
 		if (rc == 0) {
 			++okCount;
+			if (have_aside) {
+				if (it.is_dir) dst->_adbDevice->DeleteDirectory(aside);
+				else           dst->_adbDevice->DeleteFile(aside);
+			}
 		} else {
+			if (have_aside) dst->_adbDevice->MoveRemoteAs(aside, dstPath);
 			lastErr = rc;
 			DBG("CrossPanelCopyMoveSameDevice failed op=%s item=%s err=%d\n",
 				move ? "move" : "copy", it.name.c_str(), rc);
@@ -643,13 +715,42 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	if (dir.empty()) return false;
 	const bool multi = items.size() > 1;
 
-	std::string single_new_name;
-	if (!multi) {
-		if (!ADBDialogs::AskInput(L"Copy", L"New name:", L"ADB_Copy",
-		                          single_new_name, items[0].name + ".copy")) {
-			return false;
+	// Single: prefill "<dir>/<name>.copy" so user can rename, move, or both.
+	// Multi: prefill "<dir>/" (folder-only); per-item names default to
+	// source names with ".copy" suffix when same folder.
+	std::string typed;
+	{
+		std::string prefill = BuildPanelPathPrefix(dir);
+		if (!multi) prefill += items[0].name + ".copy";
+		if (!ADBDialogs::AskInput(L"Copy", L"Copy to:", L"ADB_Copy", typed, prefill)) {
+			return true;  // user cancelled — claim keystroke
 		}
-		if (single_new_name.empty()) return false;
+		if (typed.empty()) return true;
+	}
+
+	// Folder-only when input is a single dir target ("..", "./sub/",
+	// trailing slash, or matches existing dir). We detect this by
+	// resolving with src_name="" first; if that yields the same path as
+	// resolving with a real src_name, the input had a basename — single-
+	// rename intent. Multi always treats input as folder-only.
+	std::string folder_target = ResolveAdbDestinationFor(dir, typed, "", _adbDevice);
+	const bool folder_only = multi
+		|| (typed.back() == '/')
+		|| typed == ".."
+		|| typed == "."
+		|| _adbDevice->IsDirectory(folder_target);
+
+	const bool same_dir_as_source = (folder_only && (folder_target == dir
+		|| folder_target == BuildPanelPathPrefix(dir)
+		|| folder_target + "/" == BuildPanelPathPrefix(dir)));
+
+	std::string single_new_name;
+	if (!multi && !folder_only) {
+		// User typed a basename (possibly with relative path); resolver
+		// places it under the right parent. Extract the basename.
+		auto slash = typed.find_last_of('/');
+		single_new_name = (slash == std::string::npos) ? typed : typed.substr(slash + 1);
+		if (single_new_name.empty()) single_new_name = items[0].name;
 	}
 
 	struct Plan {
@@ -667,12 +768,24 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	bool overwrite_all = false, skip_all = false;
 	for (const auto& it : items) {
 		Plan p;
-		p.new_name = multi ? (it.name + ".copy") : single_new_name;
+		// Per-item destination name:
+		//   single, basename-input → user's typed name
+		//   folder-only, dst != src dir → keep source name
+		//   folder-only, dst == src dir (multi or "."/"./") → ".copy" suffix
+		if (!multi && !folder_only) {
+			p.new_name = single_new_name;
+		} else if (same_dir_as_source) {
+			p.new_name = it.name + ".copy";
+		} else {
+			p.new_name = it.name;
+		}
 		p.src_path = ADBUtils::JoinPath(dir, it.name);
-		// User can type "../newname" or "subdir/newname" — resolve
-		// against the current dir and normalize so shell mv/cp see a
-		// clean absolute path instead of literal "..".
-		p.dst_path = ResolveAdbDestination(dir, p.new_name);
+		// dst_path: place new_name under the resolved folder target.
+		std::string folder_with_slash = folder_target;
+		if (folder_with_slash.empty() || folder_with_slash.back() != '/') folder_with_slash += '/';
+		p.dst_path = folder_only
+			? NormalizePosixPath(folder_with_slash + p.new_name)
+			: ResolveAdbDestinationFor(dir, typed, "", _adbDevice);
 		p.is_dir = it.is_dir;
 		p.size = it.size;
 
@@ -700,14 +813,29 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	std::vector<size_t> needFallback;
 	for (size_t i = 0; i < plan.size(); ++i) {
 		if (plan[i].skip) continue;
+		// Aside-rename atomic-ish overwrite: rename existing dest aside
+		// first; on success delete the aside, on failure restore.
+		std::string aside;
+		bool have_aside = false;
 		if (plan[i].overwrite) {
-			if (plan[i].is_dir) _adbDevice->DeleteDirectory(plan[i].dst_path);
-			else                _adbDevice->DeleteFile(plan[i].dst_path);
+			aside = AsideName(plan[i].dst_path);
+			if (_adbDevice->MoveRemoteAs(plan[i].dst_path, aside) == 0) {
+				have_aside = true;
+			} else {
+				// Fall back to delete-then-copy when rename-aside fails.
+				if (plan[i].is_dir) _adbDevice->DeleteDirectory(plan[i].dst_path);
+				else                _adbDevice->DeleteFile(plan[i].dst_path);
+			}
 		}
 		const int rc = _adbDevice->CopyRemoteAs(plan[i].src_path, plan[i].dst_path);
 		if (rc == 0) {
 			++okCount;
+			if (have_aside) {
+				if (plan[i].is_dir) _adbDevice->DeleteDirectory(aside);
+				else                _adbDevice->DeleteFile(aside);
+			}
 		} else {
+			if (have_aside) _adbDevice->MoveRemoteAs(aside, plan[i].dst_path);
 			lastErr = rc;
 			DBG("ShiftF5: device-side copy failed item=%s err=%d, queuing fallback\n",
 				plan[i].new_name.c_str(), rc);
@@ -847,17 +975,21 @@ bool ADBPlugin::ShiftF6Rename() {
 	const std::string dir = GetCurrentDevicePath();
 	if (dir.empty()) return false;
 
-	std::string new_name;
-	if (!ADBDialogs::AskInput(L"Rename", L"Enter new name:", L"ADB_Rename",
-	                          new_name, it.name)) {
+	// Prefill: full path + name. User can rename, move, or move-with-rename.
+	const std::string prefill = BuildPanelPathPrefix(dir) + it.name;
+	std::string raw_input;
+	if (!ADBDialogs::AskInput(L"Rename", L"Rename to:", L"ADB_Rename",
+	                          raw_input, prefill)) {
 		return true;
 	}
-	if (new_name.empty() || new_name == it.name) return true;
+	if (raw_input.empty() || raw_input == prefill) return true;
 
 	const std::string srcPath = ADBUtils::JoinPath(dir, it.name);
-	// User can type "../newname" or "subdir/newname" — resolve against
-	// current dir and normalize. Plain names work as before.
-	const std::string dstPath = ResolveAdbDestination(dir, new_name);
+	// Resolve user input — handles absolute, "../", "./sub/", trailing
+	// slash, existing-dir-as-target. src_name = it.name so folder-only
+	// inputs keep the source filename.
+	const std::string dstPath = ResolveAdbDestinationFor(dir, raw_input, it.name, _adbDevice);
+	if (dstPath == srcPath) return true;
 
 	if (_adbDevice->FileExists(dstPath)) {
 		OverwriteDialog dlg(StrMB2Wide(dstPath), false, it.is_dir);
@@ -868,7 +1000,7 @@ bool ADBPlugin::ShiftF6Rename() {
 		if (choice == OverwriteDialog::CANCEL) return true;
 		// Atomic-ish overwrite: rename existing target aside, do the
 		// rename, on success rm the aside copy. On failure restore.
-		const std::string aside = dstPath + ".far2l-tmp." + std::to_string(getpid());
+		const std::string aside = AsideName(dstPath);
 		const int aside_rc = _adbDevice->MoveRemoteAs(dstPath, aside);
 		if (aside_rc != 0) {
 			ADBDialogs::MessageWrapped(FMSG_WARNING | FMSG_MB_OK,
@@ -1433,17 +1565,33 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		}
 	}
 
-	// User-typed "..", "../", "../sub" — they meant "parent on this
-	// device", not host fs. Reroute to in-device cp/mv via the shell
-	// instead of pulling files to host. Plain dir names and absolute
-	// host paths still go through the pull path below.
+	// User-typed device-path inputs ("..", "./", "./sub/", existing
+	// dir name, mid-path "..") — reroute to in-device cp/mv via shell
+	// instead of pulling to host. Absolute host paths fall through.
 	if (!(OpMode & OPM_VIEW)) {
+		const std::string srcDir = GetCurrentDevicePath();
 		const std::string& s = destPath;
-		const bool looks_in_device =
+		bool looks_in_device =
+			s == "." || s == "./" || s == ".\\" ||
 			s == ".." || s == "../" || s == "..\\" ||
-			s.compare(0, 3, "../") == 0 || s.compare(0, 3, "..\\") == 0;
+			s.compare(0, 2, "./") == 0 || s.compare(0, 2, ".\\") == 0 ||
+			s.compare(0, 3, "../") == 0 || s.compare(0, 3, "..\\") == 0 ||
+			s.find("/..") != std::string::npos;
+		// Single-component existing-dir match: user types "mydir"
+		// and mydir exists in the current panel dir → in-device target.
+		// Skip when the name has a file-extension dot to avoid a USB
+		// round-trip on every "myfile.txt".
+		if (!looks_in_device && !s.empty()
+		    && s.find_first_of("/\\") == std::string::npos
+		    && s.find('.') == std::string::npos) {
+			std::string probe = srcDir;
+			if (probe.empty() || probe.back() != '/') probe += '/';
+			probe += s;
+			if (_adbDevice->IsDirectory(probe)) {
+				looks_in_device = true;
+			}
+		}
 		if (looks_in_device) {
-			const std::string srcDir = GetCurrentDevicePath();
 			const std::string dstDir = NormalizePosixPath(
 				(!destPath.empty() && destPath.front() == '/')
 					? destPath

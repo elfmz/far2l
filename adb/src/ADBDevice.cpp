@@ -15,10 +15,7 @@
 #include <chrono>
 #include <cctype>
 
-// ============================================================================
-// ADBUtils namespace implementation
-// ============================================================================
-
+// --- ADBUtils ---
 namespace ADBUtils {
 
 std::string ShellQuote(const std::string &value)
@@ -66,10 +63,7 @@ int CheckConnection(bool connected)
 } // namespace ADBUtils
 
 
-// ============================================================================
-// ProgressParser implementation
-// ============================================================================
-
+// --- ProgressParser ---
 ProgressParser::ProgressParser(std::function<void(int)> on_progress, bool debug_log)
     : _on_progress(std::move(on_progress)), _debug_log(debug_log), _last_percent(-1) {}
 
@@ -685,11 +679,8 @@ int ADBDevice::CopyRemoteAs(const std::string &srcDevicePath, const std::string 
     EnsureConnection();
     if (int err = ADBUtils::CheckConnection(_connected)) return err;
 
-    // Same dual cp -a/cp -r fallback as CopyRemote, but to a full path
-    // so the basename can change. Caller is responsible for ensuring
-    // dstDevicePath does not pre-exist (we do delete-then-copy in the
-    // overwrite path; cp into an existing directory has surprising
-    // semantics — it copies inside instead of replacing).
+    // cp -a/cp -r dual fallback to a full destination path (basename
+    // may change). Caller pre-handles overwrite.
     std::string command =
         "cp -a -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath) +
         " 2>/dev/null || cp -r -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath);
@@ -739,15 +730,8 @@ ADBDevice::DirectoryInfo ADBDevice::GetDirectoryInfo(const std::string &devicePa
         return info;
     }
 
-    // One-shot count+size via find+ls. Two crucial details:
-    //  * "-exec ls -l {} +" (note "+", not "\\;"): batches up to ARG_MAX
-    //    files per ls invocation. The previous "\\;" form forked a new
-    //    ls process per file — on a 10k-file tree that's 10k forks on
-    //    the device, dominating wall time. With "+" it's a handful of
-    //    forks total. ~50–100x faster on large trees.
-    //  * stat -c is not portable across BusyBox/toybox/coreutils, so we
-    //    stick with ls -l and parse $5.
-    // Output: "count size" on a single line.
+    // find ... -exec ls -l {} + (batched, 50-100x faster than \\;);
+    // parse ls -l $5 since stat -c isn't BusyBox-portable.
     std::string command = "find " + ADBUtils::ShellQuote(devicePath) +
         " -type f -exec ls -l {} + 2>/dev/null | awk '{c++;s+=$5}END{print c,s}'";
     std::string result = RunShellCommand(command);

@@ -10,9 +10,7 @@
 extern PluginStartupInfo g_Info;
 extern FarStandardFunctions g_FSF;
 
-// ============================================================================
-// Helper functions
-// ============================================================================
+// --- Helpers ---
 
 static std::wstring FormatTimeLong(uint64_t total_seconds)
 {
@@ -66,9 +64,7 @@ static std::wstring AbbreviatePathRight(const std::wstring &path, size_t max_len
     return path.substr(0, max_len - 3) + L"...";
 }
 
-// ============================================================================
-// FarDialogItems implementation
-// ============================================================================
+// --- FarDialogItems ---
 
 const wchar_t *FarDialogItems::MB2WidePooled(const char *sz)
 {
@@ -157,9 +153,7 @@ int FarDialogItems::EstimateHeight() const
     return max_y + 1 - min_y;
 }
 
-// ============================================================================
-// FarDialogItemsLineGrouped implementation
-// ============================================================================
+// --- FarDialogItemsLineGrouped ---
 
 void FarDialogItemsLineGrouped::SetLine(int y)
 {
@@ -181,9 +175,7 @@ int FarDialogItemsLineGrouped::AddAtLine(int type, int x1, int x2, unsigned int 
     return Add(type, x1, _y, x2, _y, flags, data);
 }
 
-// ============================================================================
-// BaseDialog implementation
-// ============================================================================
+// --- BaseDialog ---
 
 BaseDialog::~BaseDialog()
 {
@@ -304,9 +296,7 @@ void BaseDialog::ProgressBarToDialogControl(int ctl, int percents)
     TextToDialogControl(ctl, str);
 }
 
-// ============================================================================
-// AbortConfirmDialog implementation
-// ============================================================================
+// --- AbortConfirmDialog ---
 
 AbortConfirmDialog::AbortConfirmDialog()
 {
@@ -339,9 +329,7 @@ bool AbortConfirmDialog::Ask()
     return (reply == _i_confirm || reply < 0);
 }
 
-// ============================================================================
-// OverwriteDialog implementation
-// ============================================================================
+// --- OverwriteDialog ---
 
 OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple, bool is_directory)
     : _is_multiple(is_multiple)
@@ -393,9 +381,7 @@ OverwriteDialog::Result OverwriteDialog::Ask()
     return CANCEL;
 }
 
-// ============================================================================
-// ProgressDialog implementation
-// ============================================================================
+// --- ProgressDialog ---
 
 ProgressDialog::ProgressDialog(ProgressState &state, const std::wstring &title, bool is_multi)
     : _state(state), _title(title), _is_multi(is_multi)
@@ -669,9 +655,7 @@ void ProgressDialog::UpdateDialog()
     TextToDialogControl(_i_time, time_line);
 }
 
-// ============================================================================
-// ProgressOperation implementation
-// ============================================================================
+// --- ProgressOperation ---
 
 ProgressOperation::ProgressOperation(const std::wstring& title, bool is_multi)
     : _state(std::make_shared<ProgressState>()), _title(title), _is_multi(is_multi)
@@ -710,23 +694,17 @@ void ProgressOperation::Run(WorkFunc work_func)
     ProgressDialog dlg(*_state, _title, _is_multi);
     dlg.Show();
 
-    // Always join the worker thread - the work_func lambda captures local
-    // variables by reference, so we can't let the thread outlive this scope.
-    // The abort mechanism kills adb within ~200ms, so join should be fast.
+    // Join: lambda captures locals by ref; abort kills adb within ~200ms.
     if (_worker_thread.joinable()) {
         _worker_thread.join();
     }
 }
 
-// ============================================================================
-// DeleteProgressDialog implementation
-// ============================================================================
+// --- DeleteProgressDialog ---
 
 DeleteProgressDialog::DeleteProgressDialog(ProgressState& state)
     : _state(state) {
-    // "Deleting the file or folder" (28 chars) and filename (max 40 chars)
-    // centered via DIF_CENTERTEXT in a 40-char field (X1=5..X2=44).
-    // box.X2=46 (auto-grow), EW=44, W=50=46+4 (flush), extra_width=6.
+    // 40-char DIF_CENTERTEXT field; box.X2=46, EW=44, W=50, extra_width=6.
     _di.SetBoxTitleItem(L"Delete");
     _di.SetLine(2);
     _di.AddAtLine(DI_TEXT, 5, 44, DIF_CENTERTEXT, L"Deleting the file or folder");
@@ -785,9 +763,7 @@ void DeleteProgressDialog::UpdateDialog() {
     TextToDialogControl(_i_filename, AbbreviatePathLeft(current_file, 40));
 }
 
-// ============================================================================
-// DeleteOperation implementation
-// ============================================================================
+// --- DeleteOperation ---
 
 DeleteOperation::DeleteOperation()
     : _state(std::make_shared<ProgressState>()) {
@@ -809,9 +785,7 @@ void DeleteOperation::Run(WorkFunc work_func) {
     if (worker.joinable()) worker.join();
 }
 
-// ============================================================================
-// ADBDialogs implementation
-// ============================================================================
+// --- ADBDialogs ---
 
 bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destination,
                             const std::string& source_name, int item_count)

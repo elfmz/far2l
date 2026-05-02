@@ -8,9 +8,7 @@
 
 #if defined(DEBUG) || defined(_DEBUG)
 
-// Compute debug log path once: $TMPDIR/adb_plugin_debug_<uid>.log, fallback /tmp.
-// Per-uid suffix avoids permission collisions on multi-user hosts; a single path
-// per process keeps writes appending to one file across the session.
+// Per-uid log path under $TMPDIR (or /tmp); avoids cross-user collisions.
 static const char *DebugLogPath() {
     static std::string path = []() {
         const char *base = getenv("TMPDIR");

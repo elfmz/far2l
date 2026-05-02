@@ -79,10 +79,7 @@ static bool NoControls(unsigned int control_state) {
 	return (control_state & (PKF_CONTROL | PKF_ALT | PKF_SHIFT)) == 0;
 }
 
-// Normalize a POSIX-ish path: collapse "..", drop ".", merge "//".
-// Doesn't follow symlinks (we don't have access here) — purely lexical.
-// Used to render Shift+F5/F6 destinations from "../foo" style input
-// without leaving the literal ".." in the displayed path.
+// Lexical POSIX path normalize: collapse "..", drop ".", merge "//".
 static std::string NormalizePosixPath(const std::string& p) {
 	if (p.empty()) return p;
 	std::vector<std::string> parts;
@@ -131,11 +128,8 @@ static std::string ResolveAdbDestination(const std::string& currentDir,
 	return NormalizePosixPath(joined);
 }
 
-// Resolve user input that may be folder-only ("..", "./sub/", trailing
-// slash, or a name matching an existing directory). When folder-only,
-// basename is taken from src_name so the moved/copied object keeps its
-// original filename. Returns the full destination path. dev is needed
-// to probe whether a name resolves to an existing dir.
+// Resolver supporting folder-only inputs (".."/"./sub/"/trailing slash/
+// existing-dir match); folder-only joins src_name as basename.
 static std::string ResolveAdbDestinationFor(const std::string& currentDir,
                                             const std::string& userInput,
                                             const std::string& src_name,
@@ -432,9 +426,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		return false;
 	}
 
-	// Confirmation prompt with editable destination, prefilled from
-	// passive panel. User can edit either the path (move into a different
-	// dst dir, climb with "..", descend with "./sub/") or accept it.
+	// Confirmation prompt; user can edit dst path ("..", "./sub/", abs).
 	{
 		const wchar_t* title = move ? L"Move" : L"Copy";
 		std::wstring prompt;
@@ -715,9 +707,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	if (dir.empty()) return false;
 	const bool multi = items.size() > 1;
 
-	// Single: prefill "<dir>/<name>.copy" so user can rename, move, or both.
-	// Multi: prefill "<dir>/" (folder-only); per-item names default to
-	// source names with ".copy" suffix when same folder.
+	// Single prefill "<dir>/<name>.copy"; multi prefill "<dir>/" folder-only.
 	std::string typed;
 	{
 		std::string prefill = BuildPanelPathPrefix(dir);
@@ -728,11 +718,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 		if (typed.empty()) return true;
 	}
 
-	// Folder-only when input is a single dir target ("..", "./sub/",
-	// trailing slash, or matches existing dir). We detect this by
-	// resolving with src_name="" first; if that yields the same path as
-	// resolving with a real src_name, the input had a basename — single-
-	// rename intent. Multi always treats input as folder-only.
+	// Folder-only: trailing slash, "..", ".", existing-dir match, or multi.
 	std::string folder_target = ResolveAdbDestinationFor(dir, typed, "", _adbDevice);
 	const bool folder_only = multi
 		|| (typed.back() == '/')
@@ -768,10 +754,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	bool overwrite_all = false, skip_all = false;
 	for (const auto& it : items) {
 		Plan p;
-		// Per-item destination name:
-		//   single, basename-input → user's typed name
-		//   folder-only, dst != src dir → keep source name
-		//   folder-only, dst == src dir (multi or "."/"./") → ".copy" suffix
+		// single → typed name; multi/same-dir → ".copy"; multi/elsewhere → src.
 		if (!multi && !folder_only) {
 			p.new_name = single_new_name;
 		} else if (same_dir_as_source) {
@@ -844,10 +827,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	}
 
 	if (!needFallback.empty()) {
-		// Host-mediated fallback: pull each item to a tmp dir, push
-		// back to the new name. Pre-scan sizes so the progress bar
-		// has a meaningful total. Wrap in a ProgressOperation — these
-		// transfers can be multi-GB; running silent is unfriendly.
+		// Host-mediated fallback: pull → push. Pre-scan for total bar.
 		uint64_t total_bytes = 0;
 		for (size_t idx : needFallback) {
 			auto& p = plan[idx];
@@ -890,9 +870,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 
 					const std::string staged = ADBUtils::JoinPath(tmpRoot, p.new_name);
 
-					// Per-item size for the per-item bar. Files come
-					// from FindData.nFileSize (already in p.size); dirs
-					// are scanned via GetDirectoryInfo.
+					// Files use FindData.nFileSize; dirs walked via shell.
 					uint64_t this_size = p.is_dir
 						? _adbDevice->GetDirectoryInfo(p.src_path).total_size
 						: p.size;
@@ -901,9 +879,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 					const uint64_t bytes_before = bytes_done;
 					last_percent = -1;
 					auto onPullProgress = [&](int percent) {
-						// Debounce: only post a redraw when the integer
-						// percent changes. The dialog itself ticks at
-						// 250ms; further filtering happens there.
+						// Debounce: redraw only on integer-percent change.
 						if (percent == last_percent) return;
 						last_percent = percent;
 						state.file_complete = percent;
@@ -985,9 +961,7 @@ bool ADBPlugin::ShiftF6Rename() {
 	if (raw_input.empty() || raw_input == prefill) return true;
 
 	const std::string srcPath = ADBUtils::JoinPath(dir, it.name);
-	// Resolve user input — handles absolute, "../", "./sub/", trailing
-	// slash, existing-dir-as-target. src_name = it.name so folder-only
-	// inputs keep the source filename.
+	// Resolve input; folder-only forms keep src filename via src_name.
 	const std::string dstPath = ResolveAdbDestinationFor(dir, raw_input, it.name, _adbDevice);
 	if (dstPath == srcPath) return true;
 
@@ -1565,9 +1539,8 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		}
 	}
 
-	// User-typed device-path inputs ("..", "./", "./sub/", existing
-	// dir name, mid-path "..") — reroute to in-device cp/mv via shell
-	// instead of pulling to host. Absolute host paths fall through.
+	// Reroute device-path inputs ("..", "./*", existing-name, mid-".."
+	// patterns) to in-device cp/mv; absolute host paths fall through.
 	if (!(OpMode & OPM_VIEW)) {
 		const std::string srcDir = GetCurrentDevicePath();
 		const std::string& s = destPath;
@@ -1577,10 +1550,8 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 			s.compare(0, 2, "./") == 0 || s.compare(0, 2, ".\\") == 0 ||
 			s.compare(0, 3, "../") == 0 || s.compare(0, 3, "..\\") == 0 ||
 			s.find("/..") != std::string::npos;
-		// Single-component existing-dir match: user types "mydir"
-		// and mydir exists in the current panel dir → in-device target.
-		// Skip when the name has a file-extension dot to avoid a USB
-		// round-trip on every "myfile.txt".
+		// Single-component "mydir" matching an existing folder. Skip
+		// names with '.' to avoid an ADB shell round-trip on "foo.txt".
 		if (!looks_in_device && !s.empty()
 		    && s.find_first_of("/\\") == std::string::npos
 		    && s.find('.') == std::string::npos) {
@@ -1649,9 +1620,7 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 	uint64_t totalFiles = 0;
 	std::map<std::string, uint64_t> dirSizes;
 
-	// Pre-scan to get total size/count (including directory contents).
-	// Wrap: _adbDevice->GetDirectoryInfo may throw on device disconnect; letting an
-	// exception escape into far2l core is a hard crash.
+	// Pre-scan total size/count; wrap to swallow GetDirectoryInfo throws.
 	try {
 		for (int i = 0; i < ItemsNumber; i++) {
 			if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -1686,12 +1655,8 @@ int ADBPlugin::PutFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 
 	std::string srcPath = StrWide2MB(SrcPath);
 
-	// PutFiles is the host→device path. far2l's ShellCopy already
-	// shows its own "Copy/Move" prompt and per-file collision dialog
-	// against the panel contents we expose via GetFindData. Showing
-	// our AskCopyMove + OverwriteDialog on top of that double-prompts
-	// the user. Trust far2l's confirmation; collisions surfaced to
-	// us mean "user chose overwrite" — handled silently in RunTransfer.
+	// PutFiles: far2l's ShellCopy already prompts + checks collisions;
+	// don't double-prompt.
 
 	uint64_t totalBytes = 0;
 	uint64_t totalFiles = 0;
@@ -1795,9 +1760,7 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 			uint64_t completedCount = 0;
 			if (!adb || !adb->IsConnected()) return;
 
-			// Worker-thread exception guard: transfer methods may throw on disconnect;
-			// the lambda runs in a separate std::thread and an unhandled exception
-			// there would call std::terminate and take the whole plugin/far2l down.
+			// Worker-thread exception guard (escape → std::terminate).
 			try {
 			for (int i = 0; i < itemsCount && !state.ShouldAbort(); i++) {
 				std::string fileName = StrWide2MB(items[i].FindData.lpwszFileName);
@@ -1806,10 +1769,8 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 				bool isDir = (items[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 				const uint64_t itemSize = isDir ? 0 : items[i].FindData.nFileSize;
 
-				// far2l does NOT do per-file collision checks for plugin
-				// destinations — PluginPutFilesToAnother routes straight
-				// into our PutFiles with OpMode=0 (flplugin.cpp:727).
-				// We OWN the collision UI in both directions.
+				// We own collision UI both ways; far2l skips per-file
+				// checks when dst is a plugin (flplugin.cpp:727).
 				if (is_upload) {
 					if (adb->FileExists(devicePath)) {
 						int action = CheckOverwrite(StrMB2Wide(devicePath), isMultiple, isDir, overwriteMode, state);

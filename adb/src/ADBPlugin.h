@@ -62,15 +62,12 @@ private:
 	std::vector<DeviceInfo> EnumerateDevices();
 	bool CrossPanelCopyMoveSameDevice(bool move);
 
-	// Shift+F5 in-place copy: each selected item is copied into the
-	// current folder under a different name. Single-select prompts
-	// for the new name; multi-select auto-suffixes ".copy". Falls
-	// back from device-side cp to host-mediated pull/push if cp fails.
+	// Shift+F5 in-place copy with prompt; multi auto-suffixes ".copy"
+	// for same-folder dst. Host-mediated pull/push fallback on cp fail.
 	bool ShiftF5CopyInPlace();
 
-	// Shift+F6 rename: prompts per selected item with the current
-	// name as default. Per-collision OverwriteDialog. No host fallback —
-	// rename is intra-folder and uses the same shell mv as MoveRemote.
+	// Shift+F6 rename with prompt; full-path prefill so user can rename,
+	// move, or both. Per-collision OverwriteDialog with aside-rename.
 	bool ShiftF6Rename();
 
 	// Shared transfer engine for GetFiles/PutFiles (DRY)

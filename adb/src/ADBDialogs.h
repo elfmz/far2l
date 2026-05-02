@@ -17,10 +17,7 @@
 extern PluginStartupInfo g_Info;
 extern FarStandardFunctions g_FSF;
 
-// ============================================================================
-// FarDialogItems - Dialog item container
-// ============================================================================
-
+// --- FarDialogItems: dialog item container ---
 struct FarDialogItems : std::vector<struct FarDialogItem>
 {
     FarDialogItems();
@@ -43,10 +40,7 @@ private:
     std::wstring _str_pool_tmp;
 };
 
-// ============================================================================
-// FarDialogItemsLineGrouped - Auto line increment
-// ============================================================================
-
+// --- FarDialogItemsLineGrouped: auto line increment ---
 struct FarDialogItemsLineGrouped : FarDialogItems
 {
     void SetLine(int y);
@@ -59,10 +53,7 @@ private:
     int _y = 1;
 };
 
-// ============================================================================
-// BaseDialog - Base class for dialogs
-// ============================================================================
-
+// --- BaseDialog ---
 class BaseDialog
 {
     HANDLE _dlg = INVALID_HANDLE_VALUE;
@@ -93,10 +84,7 @@ public:
     virtual ~BaseDialog();
 };
 
-// ============================================================================
-// ProgressState - Shared state for progress tracking (thread-safe)
-// ============================================================================
-
+// --- ProgressState: thread-safe shared state ---
 struct ProgressState
 {
     // Use atomics for flags and numeric values (fork-safe, no mutex needed)
@@ -146,10 +134,7 @@ struct ProgressState
     bool ShouldAbort() const { return aborting.load(); }
 };
 
-// ============================================================================
-// AbortConfirmDialog - Confirmation dialog for aborting
-// ============================================================================
-
+// --- AbortConfirmDialog ---
 class AbortConfirmDialog : protected BaseDialog
 {
 public:
@@ -163,10 +148,7 @@ private:
     int _i_confirm, _i_cancel;
 };
 
-// ============================================================================
-// OverwriteDialog - Confirmation dialog for file overwrite
-// ============================================================================
-
+// --- OverwriteDialog ---
 class OverwriteDialog : protected BaseDialog
 {
 public:
@@ -183,10 +165,7 @@ private:
     bool _is_multiple;
 };
 
-// ============================================================================
-// ProgressDialog - Progress dialog for operations
-// ============================================================================
-
+// --- ProgressDialog ---
 class ProgressDialog : protected BaseDialog
 {
 public:
@@ -253,10 +232,7 @@ private:
     std::shared_ptr<ProgressState> _state;
 };
 
-// ============================================================================
-// ADBDialogs - Dialog utility class
-// ============================================================================
-
+// --- ADBDialogs: top-level dialog helpers ---
 class ADBDialogs
 {
 public:
@@ -287,18 +263,13 @@ public:
                               size_t wrap = 70);
 };
 
-// ============================================================================
-// ProgressOperation - Helper for running operations with progress
-// ============================================================================
-
+// --- ProgressOperation: worker + progress dialog ---
 class ProgressOperation
 {
 public:
     using WorkFunc = std::function<void(ProgressState&)>;
 
-    // is_multi=true adds an aggregate-bytes bar under the per-file bar
-    // (matching MTP / native far2l layout). For single-item ops both
-    // bars would just mirror each other so the second one is omitted.
+    // is_multi=true adds the aggregate-bytes bar; single-item omits it.
     ProgressOperation(const std::wstring& title, bool is_multi = false);
     ~ProgressOperation();
 

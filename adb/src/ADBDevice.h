@@ -83,11 +83,8 @@ public:
     int CreateDirectory(const std::string &devicePath);
     int CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
     int MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
-    // CopyRemote/MoveRemote take a destination DIRECTORY (cp/mv copy
-    // src into it, preserving the basename). The "As" variants take a
-    // full destination PATH so the caller can rename in flight — used
-    // by Shift+F5 (copy with new name) and Shift+F6 (rename, possibly
-    // across folders).
+    // *As variants take a full destination PATH (caller renames in
+    // flight) instead of a destination directory; used by Shift+F5/F6.
     int CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
     int MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
 

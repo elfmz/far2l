@@ -312,15 +312,12 @@ AbortConfirmDialog::AbortConfirmDialog()
 {
     _di.SetBoxTitleItem(L"Abort operation");
     _di.SetLine(2);
-    _di.AddAtLine(DI_TEXT, 5, 48, DIF_CENTERGROUP, L"Confirm abort current operation");
-
+    _di.AddAtLine(DI_TEXT, 5, 50, DIF_CENTERGROUP, L"Confirm abort current operation");
     _di.NextLine();
-    _di.AddAtLine(DI_TEXT, 4, 49, DIF_BOXCOLOR | DIF_SEPARATOR);
-
+    _di.AddAtLine(DI_TEXT, 5, 50, DIF_BOXCOLOR | DIF_SEPARATOR);
     _di.NextLine();
     _i_confirm = _di.AddAtLine(DI_BUTTON, 6, 27, DIF_CENTERGROUP, L"&Abort operation");
     _i_cancel = _di.AddAtLine(DI_BUTTON, 32, 45, DIF_CENTERGROUP, L"&Continue");
-
     SetFocusedDialogControl(_i_cancel);
     SetDefaultDialogControl(_i_cancel);
 }
@@ -336,7 +333,9 @@ LONG_PTR AbortConfirmDialog::DlgProc(int msg, int param1, LONG_PTR param2)
 
 bool AbortConfirmDialog::Ask()
 {
-    int reply = Show(L"ADBAbortConfirm", 6, 2, FDLG_WARNING);
+    // Separator at X2=50, W=54=50+4, extra_width=3. Buttons at X1=0 drag
+    // min_x to 0; EW=51, extra_width=3 → W=54.
+    int reply = Show(L"ADBAbortConfirm", 3, 2, FDLG_WARNING);
     return (reply == _i_confirm || reply < 0);
 }
 
@@ -350,36 +349,24 @@ OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple,
     _di.SetBoxTitleItem(is_directory ? L"Folder already exists" : L"File already exists");
     _di.SetLine(2);
 
-    // Layout math: DIF_CENTERGROUP auto-centers the button row, but the dialog's
-    // overall width is decided by EstimateWidth() = max X2 across all items. So the
-    // path/separator must span at least the rendered button-row width or the frame
-    // clips the rightmost button. Each rendered button = "[ <label> ]" = label_len+4.
-    // Multi-item rendered widths: 13 + 8 + 17 + 12 + 10 + 4*1_gap = 64 cols.
-    // Single-item rendered widths: 13 + 8 + 10 + 2*1_gap = 33 cols.
-    // We bump the path/separator X2 a couple beyond that so the frame doesn't kiss
-    // the rightmost button.
+    // Abbreviate path from left if too long (keep filename visible)
+    std::wstring display_path = AbbreviatePathLeft(filename, 52);
+    _di.AddAtLine(DI_TEXT, 5, 58, 0, display_path.c_str());
+
+    _di.NextLine();
+    _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+    _di.NextLine();
     if (_is_multiple) {
-        // Path/separator stretch to match button-row span so the dialog frame
-        // (sized off max X across items) fully contains the centered buttons.
-        std::wstring display_path = AbbreviatePathLeft(filename, 60);
-        _di.AddAtLine(DI_TEXT, 5, 64, 0, display_path.c_str());
-        _di.NextLine();
-        _di.AddAtLine(DI_TEXT, 4, 65, DIF_BOXCOLOR | DIF_SEPARATOR);
-        _di.NextLine();
-        _i_overwrite     = _di.AddAtLine(DI_BUTTON,  4, 12, DIF_CENTERGROUP, L"&Overwrite");
-        _i_skip          = _di.AddAtLine(DI_BUTTON, 14, 18, DIF_CENTERGROUP, L"&Skip");
-        _i_overwrite_all = _di.AddAtLine(DI_BUTTON, 20, 32, DIF_CENTERGROUP, L"Overwrite &all");
-        _i_skip_all      = _di.AddAtLine(DI_BUTTON, 34, 41, DIF_CENTERGROUP, L"Skip a&ll");
-        _i_cancel        = _di.AddAtLine(DI_BUTTON, 43, 49, DIF_CENTERGROUP, L"Cancel");
+        _i_overwrite = _di.AddAtLine(DI_BUTTON, 2, 12, DIF_CENTERGROUP, L"&Overwrite");
+        _i_skip = _di.AddAtLine(DI_BUTTON, 14, 22, DIF_CENTERGROUP, L"&Skip");
+        _i_overwrite_all = _di.AddAtLine(DI_BUTTON, 24, 38, DIF_CENTERGROUP, L"Overwrite &all");
+        _i_skip_all = _di.AddAtLine(DI_BUTTON, 40, 50, DIF_CENTERGROUP, L"Skip a&ll");
+        _i_cancel = _di.AddAtLine(DI_BUTTON, 52, 62, DIF_CENTERGROUP, L"Cancel");
     } else {
-        std::wstring display_path = AbbreviatePathLeft(filename, 52);
-        _di.AddAtLine(DI_TEXT, 5, 58, 0, display_path.c_str());
-        _di.NextLine();
-        _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
-        _di.NextLine();
         _i_overwrite = _di.AddAtLine(DI_BUTTON, 10, 25, DIF_CENTERGROUP, L"&Overwrite");
-        _i_skip      = _di.AddAtLine(DI_BUTTON, 27, 40, DIF_CENTERGROUP, L"&Skip");
-        _i_cancel    = _di.AddAtLine(DI_BUTTON, 42, 56, DIF_CENTERGROUP, L"Cancel");
+        _i_skip = _di.AddAtLine(DI_BUTTON, 27, 40, DIF_CENTERGROUP, L"&Skip");
+        _i_cancel = _di.AddAtLine(DI_BUTTON, 42, 56, DIF_CENTERGROUP, L"Cancel");
     }
 
     SetFocusedDialogControl(_i_skip);
@@ -410,8 +397,8 @@ OverwriteDialog::Result OverwriteDialog::Ask()
 // ProgressDialog implementation
 // ============================================================================
 
-ProgressDialog::ProgressDialog(ProgressState &state, const std::wstring &title)
-    : _state(state), _title(title)
+ProgressDialog::ProgressDialog(ProgressState &state, const std::wstring &title, bool is_multi)
+    : _state(state), _title(title), _is_multi(is_multi)
 {
     InitLayout(title);
 }
@@ -448,14 +435,23 @@ void ProgressDialog::InitLayout(const std::wstring &title)
     _di.NextLine();
     _i_to_path = _di.AddAtLine(DI_TEXT, 5, 58, 0, L"...");
 
-    // Progress bar (full width with margins)
+    // Per-file progress bar.
     _di.NextLine();
     _i_progress_bar = _di.AddAtLine(DI_TEXT, 5, 54, 0);
     _i_percent = _di.AddAtLine(DI_TEXT, 56, 58, 0, L"0%");
 
-    // Separator with centered total bytes (spaces around text)
+    // Separator rule: separator at X2=N, pin box.X2=N+1 → border at N+1
+    // adjacent to separator at N (no 1-cell gap). Here X2=60, pin 61.
     _di.NextLine();
-    _i_total_bytes = _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR, L" Total: 0 bytes ");
+    _i_total_bytes = _di.AddAtLine(DI_TEXT, 4, 60, DIF_BOXCOLOR | DIF_SEPARATOR, L" Total: 0 bytes ");
+
+    // Aggregate-bytes bar (multi-item only). For single-file ops the
+    // total and per-file bar would be identical, so we hide it.
+    if (_is_multi) {
+        _di.NextLine();
+        _i_total_bar = _di.AddAtLine(DI_TEXT, 5, 54, 0);
+        _i_total_pct = _di.AddAtLine(DI_TEXT, 56, 58, 0, L"0%");
+    }
 
     // Files processed
     _di.NextLine();
@@ -463,17 +459,20 @@ void ProgressDialog::InitLayout(const std::wstring &title)
     _i_files_processed = _di.AddAtLine(DI_TEXT, 22, 29, 0, L"0");
 
     _di.NextLine();
-    _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
+    _di.AddAtLine(DI_TEXT, 4, 60, DIF_BOXCOLOR | DIF_SEPARATOR);
 
     // Time line: single control, formatted in UpdateDialog
     _di.NextLine();
     _i_time = _di.AddAtLine(DI_TEXT, 5, 58, 0, L"");
 
     _di.NextLine();
-    _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
+    _di.AddAtLine(DI_TEXT, 4, 60, DIF_BOXCOLOR | DIF_SEPARATOR);
 
     _di.NextLine();
     _i_cancel = _di.AddAtLine(DI_BUTTON, 20, 40, DIF_CENTERGROUP, L"&Cancel");
+    // Separators at X2=60 auto-grow box to 62; pin back to 61 so
+    // border sits at col 61, adjacent to separator end at col 60.
+    _di[0].X2 = 61;
 
     SetFocusedDialogControl(_i_cancel);
     SetDefaultDialogControl(_i_cancel);
@@ -584,12 +583,16 @@ void ProgressDialog::UpdateDialog()
         TextToDialogControl(_i_to_path, AbbreviatePathRight(full_to, 54));
     }
 
-    if (progress_changed) {
+    int total_percent = (all_total > 0 && all_complete <= all_total)
+        ? static_cast<int>((all_complete * 100) / all_total) : 0;
+
+    if (progress_changed || total_percent != _last_total_percent) {
         _last_complete = all_complete;
         _last_total = all_total;
         _last_file_percent = file_percent;
+        _last_total_percent = total_percent;
 
-        // Progress bar uses percentage from ADB directly
+        // Per-file progress bar (percentage as reported by adb).
         ProgressBarToDialogControl(_i_progress_bar, file_percent);
         TextToDialogControl(_i_percent, std::to_wstring(file_percent) + L"%");
 
@@ -601,6 +604,12 @@ void ProgressDialog::UpdateDialog()
         }
         if (bytes_str.empty()) bytes_str = L"0";
         TextToDialogControl(_i_total_bytes, L" Total: " + bytes_str + L" bytes ");
+
+        // Aggregate-bytes bar (multi-item only).
+        if (_is_multi && _i_total_bar >= 0) {
+            ProgressBarToDialogControl(_i_total_bar, total_percent);
+            TextToDialogControl(_i_total_pct, std::to_wstring(total_percent) + L"%");
+        }
     }
 
     if (count_changed) {
@@ -664,8 +673,8 @@ void ProgressDialog::UpdateDialog()
 // ProgressOperation implementation
 // ============================================================================
 
-ProgressOperation::ProgressOperation(const std::wstring& title)
-    : _state(std::make_shared<ProgressState>()), _title(title)
+ProgressOperation::ProgressOperation(const std::wstring& title, bool is_multi)
+    : _state(std::make_shared<ProgressState>()), _title(title), _is_multi(is_multi)
 {
     _state->Reset();
 }
@@ -698,7 +707,7 @@ void ProgressOperation::Run(WorkFunc work_func)
         WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
     });
 
-    ProgressDialog dlg(*_state, _title);
+    ProgressDialog dlg(*_state, _title, _is_multi);
     dlg.Show();
 
     // Always join the worker thread - the work_func lambda captures local
@@ -707,6 +716,97 @@ void ProgressOperation::Run(WorkFunc work_func)
     if (_worker_thread.joinable()) {
         _worker_thread.join();
     }
+}
+
+// ============================================================================
+// DeleteProgressDialog implementation
+// ============================================================================
+
+DeleteProgressDialog::DeleteProgressDialog(ProgressState& state)
+    : _state(state) {
+    // "Deleting the file or folder" (28 chars) and filename (max 40 chars)
+    // centered via DIF_CENTERTEXT in a 40-char field (X1=5..X2=44).
+    // box.X2=46 (auto-grow), EW=44, W=50=46+4 (flush), extra_width=6.
+    _di.SetBoxTitleItem(L"Delete");
+    _di.SetLine(2);
+    _di.AddAtLine(DI_TEXT, 5, 44, DIF_CENTERTEXT, L"Deleting the file or folder");
+    _di.NextLine();
+    _i_filename = _di.AddAtLine(DI_TEXT, 5, 44, DIF_CENTERTEXT, L"");
+}
+
+void DeleteProgressDialog::Show() {
+    while (!_state.finished) {
+        _finished = false;
+        // box.X2=46, EW=44 (min_x=3, no buttons at X1=0), extra_width=6 → W=50=46+4.
+        BaseDialog::Show(L"ADBProgress", 6, 2, FDLG_REGULARIDLE);
+        if (_finished) break;
+        if (_state.IsAborting()) break;
+        if (ShowAbortConfirmation()) {
+            _state.SetAborting();
+            break;
+        }
+    }
+}
+
+bool DeleteProgressDialog::ShowAbortConfirmation() {
+    if (_state.IsAborting()) return true;
+    AbortConfirmDialog dlg;
+    return dlg.Ask();
+}
+
+LONG_PTR DeleteProgressDialog::DlgProc(int msg, int param1, LONG_PTR param2) {
+    if (msg == DN_ENTERIDLE) {
+        if (_state.finished) {
+            if (!_finished) {
+                _finished = true;
+                Close();
+            }
+        } else {
+            UpdateDialog();
+        }
+    } else if (msg == DM_KEY && param2 == 0x1b) {
+        if (ShowAbortConfirmation()) {
+            _state.SetAborting();
+            Close();
+        }
+        return TRUE;
+    }
+    return BaseDialog::DlgProc(msg, param1, param2);
+}
+
+void DeleteProgressDialog::UpdateDialog() {
+    std::wstring current_file;
+    {
+        std::lock_guard<std::mutex> locker(_state.mtx_strings);
+        current_file = _state.current_file;
+    }
+    if (current_file == _last_filename) return;
+    _last_filename = current_file;
+    TextToDialogControl(_i_filename, AbbreviatePathLeft(current_file, 40));
+}
+
+// ============================================================================
+// DeleteOperation implementation
+// ============================================================================
+
+DeleteOperation::DeleteOperation()
+    : _state(std::make_shared<ProgressState>()) {
+    _state->Reset();
+}
+
+void DeleteOperation::Run(WorkFunc work_func) {
+    auto state_ptr = _state;
+    std::thread worker([state_ptr, work_func]() {
+        try { work_func(*state_ptr); } catch (...) {}
+        state_ptr->SetFinished();
+        INPUT_RECORD ir = {};
+        ir.EventType = NOOP_EVENT;
+        DWORD dw = 0;
+        WINPORT(WriteConsoleInput)(0, &ir, 1, &dw);
+    });
+    DeleteProgressDialog dlg(*_state);
+    dlg.Show();
+    if (worker.joinable()) worker.join();
 }
 
 // ============================================================================
@@ -733,12 +833,29 @@ bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destinat
 
     // Build prompt text
     if (item_count > 1) {
-        prompt = (is_move ? L"Move " : L"Copy ") + std::to_wstring(item_count) + L" items to:";
+        // Multiple items - show count
+        wchar_t count_str[32];
+        swprintf(count_str, ARRAYSIZE(count_str), L"%d", item_count);
+        if (is_move) {
+            prompt = L"Move " + std::wstring(count_str) + L" items to:";
+        } else {
+            prompt = L"Copy " + std::wstring(count_str) + L" items to:";
+        }
     } else if (!source_name.empty()) {
+        // Single item - show name
         std::wstring name_wide = StrMB2Wide(source_name);
-        prompt = (is_move ? L"Move \"" : L"Copy \"") + name_wide + L"\" to:";
+        if (is_move) {
+            prompt = L"Move \"" + name_wide + L"\" to:";
+        } else {
+            prompt = L"Copy \"" + name_wide + L"\" to:";
+        }
     } else {
-        prompt = L"Enter destination path:";
+        // Fallback - generic prompt
+        if (is_move) {
+            prompt = L"Enter destination path:";
+        } else {
+            prompt = L"Enter destination path:";
+        }
     }
 
     std::string other_panel_path;
@@ -815,4 +932,25 @@ bool ADBDialogs::AskWarning(const wchar_t* title, const wchar_t* message)
     const wchar_t* msg[] = { title, message, L"OK", L"Cancel" };
     int result = g_Info.Message(g_Info.ModuleNumber, FMSG_WARNING | FMSG_MB_YESNO, nullptr, msg, ARRAYSIZE(msg), 0);
     return (result == 0);
+}
+
+int ADBDialogs::MessageWrapped(unsigned int flags,
+                               const std::wstring& title,
+                               const std::wstring& body,
+                               size_t wrap)
+{
+    std::vector<std::wstring> lines;
+    lines.push_back(title);
+    if (body.empty()) {
+        lines.push_back(L"unknown error");
+    } else {
+        for (size_t i = 0; i < body.size(); i += wrap) {
+            lines.push_back(body.substr(i, wrap));
+        }
+    }
+    std::vector<const wchar_t*> ptrs;
+    ptrs.reserve(lines.size());
+    for (const auto& s : lines) ptrs.push_back(s.c_str());
+    return g_Info.Message(g_Info.ModuleNumber, flags, nullptr,
+                          ptrs.data(), static_cast<int>(ptrs.size()), 0);
 }

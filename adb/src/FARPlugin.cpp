@@ -44,10 +44,11 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *Info)
 	Info->DiskMenuStrings = s_disk_menu_strings;
 	Info->DiskMenuStringsNumber = 1;
 	static const wchar_t *s_menu_strings[] = {L"ADB Plugin"};
+	static const wchar_t *s_config_strings[] = {L"ADB Plugin"};
 	Info->PluginMenuStrings = s_menu_strings;
 	Info->PluginMenuStringsNumber = 1;
-	Info->PluginConfigStrings = nullptr;
-	Info->PluginConfigStringsNumber = 0;
+	Info->PluginConfigStrings = s_config_strings;
+	Info->PluginConfigStringsNumber = 1;
 	static const wchar_t *s_command_prefix = L"adb";
 	Info->CommandPrefix = s_command_prefix;
 }

@@ -83,17 +83,16 @@ public:
     int CreateDirectory(const std::string &devicePath);
     int CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
     int MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
+    // CopyRemote/MoveRemote take a destination DIRECTORY (cp/mv copy
+    // src into it, preserving the basename). The "As" variants take a
+    // full destination PATH so the caller can rename in flight — used
+    // by Shift+F5 (copy with new name) and Shift+F6 (rename, possibly
+    // across folders).
+    int CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
+    int MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
 
     // File existence check
     bool FileExists(const std::string &devicePath);
-
-    // True only if devicePath exists AND is a directory (test -d).
-    bool IsDirectory(const std::string &devicePath);
-
-    // {exists, is_dir} via a single shell roundtrip — cheaper than calling
-    // FileExists then IsDirectory (each is its own marker-bound shell command).
-    struct PathStat { bool exists; bool is_dir; };
-    PathStat StatPath(const std::string &devicePath);
 
     // Directory info (file count, total size in bytes)
     struct DirectoryInfo {

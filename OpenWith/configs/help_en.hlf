@@ -83,6 +83,12 @@ $^#Details Dialog (F3)#
  #-# NotShowIn
    A semicolon-separated list of desktop environment identifiers. If this key is present, the application entry should be hidden in the specified environments. This is the inverse of OnlyShowIn and is useful for hiding applications that do not integrate well with certain desktops.
 
+ #-# X-Flatpak
+   Extension to the Desktop Entry Specification. The globally unique Flatpak application ID (e.g., "org.gimp.GIMP"). Written by Flatpak during installation. It ensures the desktop file is linked to the correct Flatpak app, even if the file name differs from this ID.
+
+ #-# X-SnapInstanceName
+   Extension to the Desktop Entry Specification. The snap instance name (e.g., "steam" or "steam_beta"). Written by snapd for each installation. It identifies the specific snap instance or enables parallel installs of the same snap.
+
 
  #2.2. macOS Application Details#
 
@@ -183,7 +189,7 @@ $^#Configuration Dialog (F9)#
  #-# Pass plain paths instead of file:// URIs
    This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. By default, the plugin generates file:// URIs. However, some applications may not handle them correctly, despite claiming support. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
 
- #-# Show Flatpak/Snap qualifiers
+ #-# Show package qualifiers
    Tag applications in the menu installed as Flatpak or Snap packages. Helps avoid confusion when multiple variants of the same program are available.
 
 

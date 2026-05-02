@@ -36,7 +36,7 @@ enum LanguageID
 	MValidateTryExec,
 	MSortAlphabetically,
 	MTreatUrlsAsPaths,
-	MShowFlatpakSnapTags,
+	MShowPackageTags,
 
 	MDetails,
 

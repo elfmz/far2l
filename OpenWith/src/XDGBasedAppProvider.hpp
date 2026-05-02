@@ -57,14 +57,14 @@ private:
 		bool is_quoted_literal = false; // if true, field codes inside this argument must be ignored.
 	};
 
+	// Identifies the packaging system or runtime environment an application originates from.
+	enum class PackageType { None, Snap, Flatpak };
 
 	// Represents a parsed .desktop file from the XDG specifications.
 	struct DesktopEntry
 	{
 		std::string id;
 		std::string desktop_filepath;
-
-		enum class PackageType { None, Snap, Flatpak };
 		PackageType package_type = PackageType::None;
 
 		std::string name;
@@ -334,6 +334,7 @@ private:
 	bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id);
 	std::vector<RankedCandidate> BuildSortedRankedCandidatesList(const CandidateMap& candidate_map);
 	std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
+	std::wstring_view GetPackageTag(PackageType type);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 
 	// --- File MIME type detection & expansion ---
@@ -356,6 +357,7 @@ private:
 	MimeappsListsConfig ParseMimeappsLists();
 	static void ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists, std::unordered_set<std::string>& blacklist);
 	std::optional<XDGBasedAppProvider::DesktopEntry> ParseDesktopFile(const std::string& filepath);
+	PackageType DetectPackageType(const DesktopEntry& entry) const;
 	std::string GetLocalizedValue(const std::unordered_map<std::string, std::string>& kv_entries, const std::string& base_key) const;
 	static std::vector<std::string> GenerateLocaleSuffixes();
 	std::unordered_map<std::string, std::string> LoadMimeAliases();
@@ -421,7 +423,7 @@ private:
 	bool _validate_try_exec;
 	bool _sort_alphabetically;
 	bool _treat_urls_as_paths;
-	bool _show_flatpak_snap_tags;
+	bool _show_package_tags;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

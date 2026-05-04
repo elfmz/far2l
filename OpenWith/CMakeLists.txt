@@ -4,6 +4,7 @@ set(SOURCES
 src/OpenWith.cpp
 src/AppProvider.cpp
 src/XDGBasedAppProvider.cpp
+src/ExtensionMimeMap.cpp
 )
 
 if(APPLE)

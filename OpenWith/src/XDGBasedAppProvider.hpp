@@ -346,6 +346,7 @@ private:
 	std::string DetectMimeTypeViaGlobRules(const std::string& filepath);
 	static bool GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive);
 	std::string GuessMimeTypeByExtension(const std::string& filepath);
+	static const std::unordered_map<std::string, std::string>& GetExtMimeMap();
 
 	// --- XDG database parsing & caching ---
 	std::unordered_map<std::string, std::string> IndexAllDesktopFiles();

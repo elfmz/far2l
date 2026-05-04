@@ -6,8 +6,21 @@ Browse and manage files on Android devices over ADB from far2l.
 
 - Auto-detect connected devices; enumerate serial, friendly name, model, USB port
 - Navigate the device filesystem with standard far2l panel operations
-- F3/F5/F6/F7/F8 — view, copy, move, mkdir, delete, with progress and abort
-- On-device copy/move when both panels point to the same device (no host roundtrip)
+- F3/F5/F6/F7/F8 — view, copy, move, mkdir, delete, with progress and Esc-abort
+- **F5/F6 full intercept** on adb panel — single dialog, unified destination parser:
+  - `adb:/abs/path` → on-device absolute
+  - `/abs/path` → local FS (host pull)
+  - `rel` or `subdir/name` → on-device relative; single-leaf input = rename intent
+- **Shift+F5** — duplicate (default `<name>.copy`); accepts same parser
+- **Shift+F6** — rename file under cursor (stock far convention; multi-select ignored)
+- **OverwriteDialog**: Overwrite / Skip / **Rename** (auto-increment `name(2)`) /
+  **Newer** (skip if device mtime ≤ dst mtime) / All-variants / Cancel
+- On-device copy/move via `cp -a` (preserves perms + symlinks) when both panels point
+  at the same device; host-mediated `pull → push` fallback if `cp`/`mv` refuses
+- Atomic-aside-rename overwrite — push fails leave the original intact
+- Auto-mkdir of intermediate dirs in destination paths
+- `adb pull -a` preserves timestamp+mode; F3-view target chmod'd to 0644 for the viewer
+- Modal delay-show 300 ms — sub-second ops don't flash a progress dialog
 - Shell commands from the far2l command line — each command gets its stdout, stderr,
   and exit code; device `cwd` is synchronized via persistent `adb shell -T`
 - Ctrl+O shows command output history (far2l's user screen)
@@ -68,15 +81,22 @@ connect via USB, accept the RSA fingerprint. Verify with `adb devices`.
 
 ## Key bindings
 
-| Key      | Action                                 |
-|----------|----------------------------------------|
-| Enter    | Enter directory / connect to device    |
-| F3       | View file (pulled to a temp location)  |
-| F5 / F6  | Copy / Move (ADB↔host or same-device)  |
-| F7       | Make directory                         |
-| F8       | Delete                                 |
-| F10      | Close plugin                           |
-| Ctrl+\\   | Go to `/`                              |
+| Key       | Action                                              |
+|-----------|-----------------------------------------------------|
+| Enter     | Enter directory / connect to device                 |
+| `..`      | Up one folder; on device root → device selector;    |
+|           | on device selector → close plugin                   |
+| F3        | View file (pulled to a temp location, chmod 0644)   |
+| F5 / F6   | Copy / Move — single dialog, parser: `adb:/abs`, `/abs`, `rel` |
+| Shift+F5  | Duplicate; default `<name>.copy`; accepts same parser |
+| Shift+F6  | Rename file under cursor (multi-select ignored)     |
+| F7        | Make directory                                      |
+| F8        | Delete                                              |
+| Esc       | Abort current transfer (with confirm)               |
+| F10       | Close plugin                                        |
+| Ctrl+\\    | Go to `/`                                           |
+| Ctrl+R    | Refresh panel (after external device-side changes)  |
+| Ctrl+O    | Show command output history                         |
 
 ## Localization
 
@@ -84,6 +104,13 @@ UI strings are currently hardcoded in English. `adbEng.lng` / `adbRus.lng` are
 shipped as placeholders for a future pass that wires up `GetMsg()` lookups;
 help files (`.hlf`) are properly localized — `F1` in the plugin shows Russian
 help when far2l runs with the Russian language.
+
+## Debug logging
+
+Debug log is enabled only in `Debug` builds (CMake `-DCMAKE_BUILD_TYPE=Debug`),
+written to `adb_plugin.log` next to the plugin `.far-plug-wide` (or `$TMPDIR`
+fallback). Release / RelWithDebInfo / MinSizeRel builds compile out `DBG()` and
+`DebugLog()` entirely — no log file is created or written.
 
 ## Notes & limitations
 

@@ -15,10 +15,7 @@
 #include <chrono>
 #include <cctype>
 
-// ============================================================================
-// ADBUtils namespace implementation
-// ============================================================================
-
+// --- ADBUtils ---
 namespace ADBUtils {
 
 std::string ShellQuote(const std::string &value)
@@ -63,89 +60,165 @@ int CheckConnection(bool connected)
     return connected ? 0 : EIO;
 }
 
+std::string PathBasename(const std::string& p)
+{
+    if (p.empty()) return std::string();
+    size_t end = p.size();
+    while (end > 0 && p[end - 1] == '/') --end;
+    if (end == 0) return std::string();
+    size_t start = end;
+    while (start > 0 && p[start - 1] != '/') --start;
+    return p.substr(start, end - start);
+}
+
 } // namespace ADBUtils
 
 
-// ============================================================================
-// ProgressParser implementation
-// ============================================================================
-
-ProgressParser::ProgressParser(std::function<void(int)> on_progress, bool debug_log)
+// --- ProgressParser ---
+ProgressParser::ProgressParser(AdbProgressFn on_progress, bool debug_log)
     : _on_progress(std::move(on_progress)), _debug_log(debug_log), _last_percent(-1) {}
+
+// ECMA-48 state machine — per-byte, state survives chunks; drops controls, keeps printable + \r\n\t.
+void ProgressParser::VtFeed(const std::string &chunk) {
+    for (char c : chunk) {
+        unsigned char b = static_cast<unsigned char>(c);
+        switch (_vt_state) {
+            case VT_NORMAL:
+                // C1 controls (0x80-0x9F) NOT decoded — adb output is UTF-8 where those are continuation bytes.
+                if (b == 0x1B) { _vt_state = VT_ESC; }
+                else if (b == '\r' || b == '\n' || b == '\t') { _pending.push_back(c); }
+                else if (b >= 0x20 && b != 0x7F) { _pending.push_back(c); }
+                break;
+            case VT_ESC:
+                if (b == '[')      _vt_state = VT_CSI;
+                else if (b == ']') _vt_state = VT_OSC;
+                else if (b == ' ' || b == '#' || b == '(' || b == ')'
+                      || b == '*' || b == '+' || b == '%')
+                    _vt_state = VT_ESC_INTERM;  // 2-byte intro: ESC <int> <final>
+                else _vt_state = VT_NORMAL;     // single-char ESC <X>: discard X
+                break;
+            case VT_ESC_INTERM:
+                _vt_state = VT_NORMAL;
+                break;
+            case VT_CSI:
+                // Params 0x30-0x3F, intermediates 0x20-0x2F, terminator 0x40-0x7E.
+                if (b >= 0x40 && b <= 0x7E) _vt_state = VT_NORMAL;
+                // else: param/intermediate — discard, stay in CSI
+                break;
+            case VT_OSC:
+                if (b == 0x07) _vt_state = VT_NORMAL;       // BEL terminator
+                else if (b == 0x1B) _vt_state = VT_OSC_ESC; // possible ST ahead
+                // else: OSC payload — discard
+                break;
+            case VT_OSC_ESC:
+                if (b == '\\') _vt_state = VT_NORMAL;  // ST (string terminator)
+                else _vt_state = VT_ESC;               // restart escape parse
+                break;
+        }
+    }
+}
 
 void ProgressParser::operator()(const std::string &chunk) {
     if (_debug_log) {
         DBG(" PTY chunk received (%zu bytes): [", chunk.size());
         for (unsigned char c : chunk) {
-            if (c >= 32 && c < 127) {
-                DBG("%c", c);
-            } else {
-                DBG("\\x%02X", c);
-            }
+            if (c >= 32 && c < 127) DBG("%c", c);
+            else                    DBG("\\x%02X", c);
         }
         DBG("]\n");
     }
 
-    _pending += chunk;
+    VtFeed(chunk);
     size_t split = 0;
     while ((split = _pending.find_first_of("\r\n")) != std::string::npos) {
         std::string line = _pending.substr(0, split);
         _pending.erase(0, split + 1);
-        if (_debug_log) {
-            DBG("Parsing line: [%s]\n", line.c_str());
-        }
-        const int percent = ExtractPercent(line);
-        if (_debug_log) {
-            DBG("Extracted percent: %d\n", percent);
-        }
-        if (percent >= 0 && percent != _last_percent) {
+        int percent = -1;
+        std::string path;
+        if (!ExtractProgress(line, percent, path)) continue;
+        // Fire on percent OR path change so file boundaries surface.
+        if (percent != _last_percent || path != _last_path) {
             _last_percent = percent;
-            if (_debug_log) {
-                DBG("Calling on_progress(%d)\n", percent);
-            }
-            _on_progress(percent);
+            _last_path = path;
+            _on_progress(percent, path);
         }
     }
 }
 
 void ProgressParser::drain() {
     if (!_pending.empty()) {
-        if (_debug_log) {
-            DBG("Pending tail: [%s]\n", _pending.c_str());
-        }
-        const int tail_percent = ExtractPercent(_pending);
-        if (tail_percent >= 0 && tail_percent != _last_percent) {
-            _on_progress(tail_percent);
+        int percent = -1;
+        std::string path;
+        if (ExtractProgress(_pending, percent, path)
+                && (percent != _last_percent || path != _last_path)) {
+            _on_progress(percent, path);
         }
         _pending.clear();
     }
 }
 
-void ProgressParser::complete() {
-    _on_progress(100);
-}
+void ProgressParser::complete() { _on_progress(100, std::string()); }
+void ProgressParser::start()    { _on_progress(0,   std::string()); }
 
-void ProgressParser::start() {
-    _on_progress(0);
-}
-
-int ProgressParser::ExtractPercent(const std::string &s) {
-    size_t p = s.find('%');
-    if (p == std::string::npos || p == 0) {
-        return -1;
-    }
+bool ProgressParser::ExtractProgress(const std::string &s, int &percent, std::string &path) {
+    // Input is VT-cleaned. Find the LAST '%' so an in-path '%' can't poison detection.
+    size_t p = s.rfind('%');
+    if (p == std::string::npos || p == 0) return false;
     size_t start = p;
-    while (start > 0 && std::isdigit(static_cast<unsigned char>(s[start - 1]))) {
-        --start;
+    while (start > 0 && std::isdigit(static_cast<unsigned char>(s[start - 1]))) --start;
+    if (start == p) return false;
+    int v = std::atoi(s.substr(start, p - start).c_str());
+    if (v < 0 || v > 100) return false;
+    percent = v;
+    path.clear();
+
+    // Legacy adb -p: "[<spaces>NN%] /path" — variable padding ("[  5%]" / "[100%]").
+    bool legacy = false;
+    {
+        size_t i = start;
+        while (i > 0 && s[i - 1] == ' ') --i;
+        if (i > 0 && s[i - 1] == '[') legacy = true;
     }
-    if (start == p) {
-        return -1;
+    if (legacy) {
+        size_t close = s.find(']', p);
+        if (close != std::string::npos) {
+            size_t ps = close + 1;
+            while (ps < s.size() && std::isspace(static_cast<unsigned char>(s[ps]))) ++ps;
+            path.assign(s, ps, std::string::npos);
+        }
     }
-    int percent = std::atoi(s.substr(start, p - start).c_str());
-    if (percent < 0 || percent > 100) {
-        return -1;
+    // Modern adb -p format: "<path>: NN%[\x1B[K]" — ": " just before digits.
+    else if (start >= 2 && s[start - 1] == ' ' && s[start - 2] == ':') {
+        path.assign(s, 0, start - 2);
     }
-    return percent;
+    // Strip a leading "[<spaces>NN%]<spaces>" overall-batch prefix that adb prepends in the
+    // combined "[ NN%] <path>: NN%" format. Without this, every emit for the same file
+    // produces a different _cur_path (the [NN%] varies) → spurious path-changes → file count
+    // races to unit_files clamp instantly while transfer is still running.
+    if (!path.empty() && path[0] == '[') {
+        size_t close = path.find(']');
+        if (close != std::string::npos) {
+            bool only_pct_inside = true;
+            for (size_t i = 1; i < close; ++i) {
+                char c = path[i];
+                if (!(c == ' ' || std::isdigit(static_cast<unsigned char>(c)) || c == '%')) {
+                    only_pct_inside = false; break;
+                }
+            }
+            if (only_pct_inside) {
+                size_t ps = close + 1;
+                while (ps < path.size() && std::isspace(static_cast<unsigned char>(path[ps]))) ++ps;
+                path.erase(0, ps);
+            }
+        }
+    }
+    // Path leftover: trailing whitespace from the source line.
+    while (!path.empty()) {
+        unsigned char c = static_cast<unsigned char>(path.back());
+        if (std::isspace(c)) { path.pop_back(); continue; }
+        break;
+    }
+    return true;
 }
 
 ADBDevice::ADBDevice(const std::string &device_serial)
@@ -246,15 +319,16 @@ std::string ADBDevice::RunAdbCommandWithProgress(const std::vector<std::string> 
 
 bool ADBDevice::IsSuccessResult(const std::string& result, bool is_push) const
 {
+    // Trailer "(<N> bytes in <T>s)" — only emitted on success and never abbreviated by adb's
+    // terminal-width path truncation (which can swallow "file pushed"/"skipped" tokens).
+    if (result.find("bytes in ") != std::string::npos) return true;
     if (result.find("skipped") != std::string::npos) return true;
-
     if (is_push) {
         return result.find("file pushed") != std::string::npos ||
                result.find("files pushed") != std::string::npos;
-    } else {
-        return result.find("file pulled") != std::string::npos ||
-               result.find("files pulled") != std::string::npos;
     }
+    return result.find("file pulled") != std::string::npos ||
+           result.find("files pulled") != std::string::npos;
 }
 
 std::string ADBDevice::RunShellCommand(const std::string &command)
@@ -296,47 +370,6 @@ void ADBDevice::SyncPath()
         }
     } catch (const std::exception& e) {
         // Ignore - keep current path
-    }
-}
-
-void ADBDevice::RunShellCommandStreaming(const std::string &command, const std::function<void(const std::string&)> &on_line)
-{
-    // Build args: shell, -c, command
-    std::vector<std::string> args = {"shell", "-c", command};
-
-    // Buffer for incomplete lines
-    std::string buffer;
-
-    // Callback to process chunks and extract complete lines
-    auto process_chunk = [&](const std::string &chunk) {
-        buffer += chunk;
-        size_t pos;
-        while ((pos = buffer.find('\n')) != std::string::npos) {
-            std::string line = buffer.substr(0, pos);
-            buffer.erase(0, pos + 1);
-            // Trim CR
-            if (!line.empty() && line.back() == '\r') {
-                line.pop_back();
-            }
-            // Skip lines that are just shell prompts (e.g., "/$", "/#")
-            if (line == "/$" || line == "/#" || line == "$" || line == "#") {
-                continue;
-            }
-            on_line(line);
-        }
-    };
-
-    // Use PTY-based execution for streaming
-    RunAdbCommandWithProgress(args, process_chunk, [] { return false; });
-
-    // Flush remaining buffer
-    if (!buffer.empty()) {
-        if (!buffer.empty() && buffer.back() == '\r') {
-            buffer.pop_back();
-        }
-        if (!buffer.empty()) {
-            on_line(buffer);
-        }
     }
 }
 
@@ -563,7 +596,7 @@ bool ADBDevice::SetDirectory(const std::string &path) {
 }
 
 int ADBDevice::TransferItem(const std::string& src, const std::string& dst, bool is_push, bool recursive,
-                           const std::function<void(int)>& on_progress,
+                           const AdbProgressFn& on_progress,
                            const std::function<bool()>& abort_check)
 {
     EnsureConnection();
@@ -571,6 +604,8 @@ int ADBDevice::TransferItem(const std::string& src, const std::string& dst, bool
 
     std::vector<std::string> args = {is_push ? "push" : "pull"};
     if (on_progress) args.push_back("-p");
+    // Pull `-a` preserves timestamp+mode (verified `adb help`); push has no equivalent flag.
+    if (!is_push) args.push_back("-a");
     args.push_back(src);
     args.push_back(dst);
 
@@ -580,7 +615,9 @@ int ADBDevice::TransferItem(const std::string& src, const std::string& dst, bool
         parser.start();
         result = RunAdbCommandWithProgress(args, std::ref(parser), abort_check);
         parser.drain();
-        if (IsSuccessResult(result, is_push)) {
+        // Exit code is the truth source — adb's stdout trailer ("X file(s) pushed") gets
+        // truncated by terminal-width path abbreviation, breaking text-based detection.
+        if (ADBShell::lastPtyExit() == 0 || IsSuccessResult(result, is_push)) {
             parser.complete();
             return 0;
         }
@@ -589,14 +626,20 @@ int ADBDevice::TransferItem(const std::string& src, const std::string& dst, bool
         if (IsSuccessResult(result, is_push)) return 0;
     }
 
-    return Str2Errno(result);
+    int errno_mapped = Str2Errno(result);
+    const size_t tail_len = std::min<size_t>(result.size(), 400);
+    const char* tail = result.c_str() + (result.size() - tail_len);
+    DBG("TransferItem FAIL is_push=%d pty_exit=%d errno=%d src='%s' dst='%s' tail[%zu]='%.*s'\n",
+        is_push, ADBShell::lastPtyExit(), errno_mapped, src.c_str(), dst.c_str(),
+        tail_len, (int)tail_len, tail);
+    return errno_mapped;
 }
 
 int ADBDevice::PullFile(const std::string &devicePath, const std::string &localPath) {
     return TransferItem(devicePath, localPath, false, false);
 }
 
-int ADBDevice::PullFile(const std::string &devicePath, const std::string &localPath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check) {
+int ADBDevice::PullFile(const std::string &devicePath, const std::string &localPath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check) {
     return TransferItem(devicePath, localPath, false, false, on_progress, abort_check);
 }
 
@@ -604,7 +647,7 @@ int ADBDevice::PushFile(const std::string &localPath, const std::string &deviceP
     return TransferItem(localPath, devicePath, true, false);
 }
 
-int ADBDevice::PushFile(const std::string &localPath, const std::string &devicePath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check) {
+int ADBDevice::PushFile(const std::string &localPath, const std::string &devicePath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check) {
     return TransferItem(localPath, devicePath, true, false, on_progress, abort_check);
 }
 
@@ -612,7 +655,7 @@ int ADBDevice::PullDirectory(const std::string &devicePath, const std::string &l
     return TransferItem(devicePath, localPath, false, true);
 }
 
-int ADBDevice::PullDirectory(const std::string &devicePath, const std::string &localPath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check) {
+int ADBDevice::PullDirectory(const std::string &devicePath, const std::string &localPath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check) {
     return TransferItem(devicePath, localPath, false, true, on_progress, abort_check);
 }
 
@@ -620,7 +663,7 @@ int ADBDevice::PushDirectory(const std::string &localPath, const std::string &de
     return TransferItem(localPath, devicePath, true, true);
 }
 
-int ADBDevice::PushDirectory(const std::string &localPath, const std::string &devicePath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check) {
+int ADBDevice::PushDirectory(const std::string &localPath, const std::string &devicePath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check) {
     return TransferItem(localPath, devicePath, true, true, on_progress, abort_check);
 }
 
@@ -664,10 +707,10 @@ int ADBDevice::CopyRemote(const std::string &srcDevicePath, const std::string &d
     EnsureConnection();
     if (int err = ADBUtils::CheckConnection(_connected)) return err;
 
-    // Try cp -a first (preserve attrs where possible), then fallback to cp -r for older toolboxes.
+    // cp -a (mode + symlinks) → fallback cp -Rp (mode-preserving, no -a needed on old toolbox).
     std::string command =
         "cp -a -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir) +
-        " 2>/dev/null || cp -r -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
+        " 2>/dev/null || cp -Rp -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
     std::string result = RunShellCommand(command);
     return MutationResultToErrno(LastShellExitCode(), result);
 }
@@ -679,6 +722,72 @@ int ADBDevice::MoveRemote(const std::string &srcDevicePath, const std::string &d
     std::string command = "mv -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
     std::string result = RunShellCommand(command);
     return MutationResultToErrno(LastShellExitCode(), result);
+}
+
+int ADBDevice::CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath) {
+    EnsureConnection();
+    if (int err = ADBUtils::CheckConnection(_connected)) return err;
+
+    // cp -a → cp -r fallback; takes full dst path (basename may change). Caller pre-handles overwrite.
+    std::string command =
+        "cp -a -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath) +
+        " 2>/dev/null || cp -Rp -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath);
+    std::string result = RunShellCommand(command);
+    return MutationResultToErrno(LastShellExitCode(), result);
+}
+
+int ADBDevice::MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath) {
+    EnsureConnection();
+    if (int err = ADBUtils::CheckConnection(_connected)) return err;
+
+    std::string command = "mv -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath);
+    std::string result = RunShellCommand(command);
+    return MutationResultToErrno(LastShellExitCode(), result);
+}
+
+int ADBDevice::CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath,
+                            const std::function<bool()>& abort_check) {
+    if (!abort_check) return CopyRemoteAs(srcDevicePath, dstDevicePath);
+    if (int err = ADBUtils::CheckConnection(_connected)) return err;
+    // One-shot `adb shell -c` so the spawned process can be killed on abort.
+    std::string sh =
+        "cp -a -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath) +
+        " 2>/dev/null || cp -Rp -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath);
+    RunAdbCommandWithProgress({"shell", sh}, [](const std::string&){}, abort_check);
+    if (abort_check()) return ECANCELED;
+    return 0;
+}
+
+int ADBDevice::MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath,
+                            const std::function<bool()>& abort_check) {
+    if (!abort_check) return MoveRemoteAs(srcDevicePath, dstDevicePath);
+    if (int err = ADBUtils::CheckConnection(_connected)) return err;
+    std::string sh = "mv -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDevicePath);
+    RunAdbCommandWithProgress({"shell", sh}, [](const std::string&){}, abort_check);
+    if (abort_check()) return ECANCELED;
+    return 0;
+}
+
+int ADBDevice::CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir,
+                          const std::function<bool()>& abort_check) {
+    if (!abort_check) return CopyRemote(srcDevicePath, dstDeviceDir);
+    if (int err = ADBUtils::CheckConnection(_connected)) return err;
+    std::string sh =
+        "cp -a -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir) +
+        " 2>/dev/null || cp -Rp -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
+    RunAdbCommandWithProgress({"shell", sh}, [](const std::string&){}, abort_check);
+    if (abort_check()) return ECANCELED;
+    return 0;
+}
+
+int ADBDevice::MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir,
+                          const std::function<bool()>& abort_check) {
+    if (!abort_check) return MoveRemote(srcDevicePath, dstDeviceDir);
+    if (int err = ADBUtils::CheckConnection(_connected)) return err;
+    std::string sh = "mv -- " + ADBUtils::ShellQuote(srcDevicePath) + " " + ADBUtils::ShellQuote(dstDeviceDir);
+    RunAdbCommandWithProgress({"shell", sh}, [](const std::string&){}, abort_check);
+    if (abort_check()) return ECANCELED;
+    return 0;
 }
 
 bool ADBDevice::FileExists(const std::string &devicePath) {
@@ -697,39 +806,76 @@ bool ADBDevice::FileExists(const std::string &devicePath) {
     return result == "1";
 }
 
-ADBDevice::DirectoryInfo ADBDevice::GetDirectoryInfo(const std::string &devicePath) {
-    DirectoryInfo info = {0, 0};
+bool ADBDevice::IsDirectory(const std::string &devicePath) {
     EnsureConnection();
-    if (!_connected) {
-        return info;
-    }
+    if (!_connected) return false;
+    std::string command = "test -d " + ADBUtils::ShellQuote(devicePath) + " && echo 1 || echo 0";
+    std::string result = RunShellCommand(command);
+    ADBUtils::TrimTrailingNewlines(result);
+    while (!result.empty() && result.back() == ' ') result.pop_back();
+    return result == "1";
+}
 
-    // One-shot count+size via find+ls (stat -c not portable across BusyBox/toybox); output: "count size".
-    std::string command = "find " + ADBUtils::ShellQuote(devicePath) +
-        " -type f -exec ls -l {} \\; 2>/dev/null | awk '{c++;s+=$5}END{print c,s}'";
+void ADBDevice::ListDirNames(const std::string &devicePath, std::unordered_set<std::string>& out) {
+    EnsureConnection();
+    if (!_connected) return;
+    // -A includes dotfiles, -1 one-per-line; ignore stderr (missing dir → empty set).
+    std::string command = "ls -A1 -- " + ADBUtils::ShellQuote(devicePath) + " 2>/dev/null";
+    std::string result = RunShellCommand(command);
+    size_t pos = 0;
+    while (pos < result.size()) {
+        size_t eol = result.find('\n', pos);
+        std::string line = result.substr(pos, eol == std::string::npos ? std::string::npos : eol - pos);
+        pos = (eol == std::string::npos) ? result.size() : eol + 1;
+        while (!line.empty() && line.back() == '\r') line.pop_back();
+        if (!line.empty()) out.insert(std::move(line));
+    }
+}
+
+void ADBDevice::BatchDirectoryFileSizes(const std::vector<std::string>& devicePaths,
+                                         std::map<std::string, std::unordered_map<std::string, uint64_t>>& out) {
+    EnsureConnection();
+    if (!_connected || devicePaths.empty()) return;
+
+    // Pre-create entries so empty top-level dirs (no files via -type f) still produce an entry.
+    for (const auto& p : devicePaths) out[p];
+
+    // One `find` over all top-level dirs → one shell roundtrip (~200ms persistent-shell overhead
+    // dominates; per-dir cost amortizes to near-zero). %p (full path) lets us prefix-match each
+    // emitted file back to its top-level dir, %P would be ambiguous across multiple roots.
+    std::string command = "find";
+    for (const auto& p : devicePaths) command += " " + ADBUtils::ShellQuote(p);
+    command += " -type f -printf '%s\\t%p\\n' 2>/dev/null";
     std::string result = RunShellCommand(command);
 
-    ADBUtils::TrimTrailingNewlines(result);
-    StrTrim(result);
+    // Longest-prefix first — handles the case where one input dir is nested inside another.
+    std::vector<std::string> sorted = devicePaths;
+    std::sort(sorted.begin(), sorted.end(),
+              [](const std::string& a, const std::string& b) { return a.size() > b.size(); });
 
-    size_t space = result.find(' ');
-    if (space != std::string::npos && space > 0 && space < result.size() - 1) {
-        std::string count_str = result.substr(0, space);
-        std::string size_str = result.substr(space + 1);
+    size_t pos = 0;
+    while (pos < result.size()) {
+        size_t eol = result.find('\n', pos);
+        std::string line = result.substr(pos, eol == std::string::npos ? std::string::npos : eol - pos);
+        pos = (eol == std::string::npos) ? result.size() : eol + 1;
+        if (line.empty()) continue;
+        size_t tab = line.find('\t');
+        if (tab == std::string::npos) continue;
+        const std::string size_str = line.substr(0, tab);
+        std::string full_path = line.substr(tab + 1);
+        while (!full_path.empty() && full_path.back() == '\r') full_path.pop_back();
+        if (size_str.empty() || full_path.empty()) continue;
 
-        // Validate both strings contain only digits
-        bool count_valid = !count_str.empty() && std::all_of(count_str.begin(), count_str.end(),
-            [](unsigned char c) { return std::isdigit(c); });
-        bool size_valid = !size_str.empty() && std::all_of(size_str.begin(), size_str.end(),
-            [](unsigned char c) { return std::isdigit(c); });
-
-        if (count_valid && size_valid) {
-            info.file_count = strtoull(count_str.c_str(), nullptr, 10);
-            info.total_size = strtoull(size_str.c_str(), nullptr, 10);
+        for (const auto& dir : sorted) {
+            if (full_path.size() > dir.size() + 1
+                && full_path.compare(0, dir.size(), dir) == 0
+                && full_path[dir.size()] == '/') {
+                out[dir][full_path.substr(dir.size() + 1)] =
+                    strtoull(size_str.c_str(), nullptr, 10);
+                break;
+            }
         }
     }
-
-    return info;
 }
 
 int ADBDevice::Str2Errno(const std::string &adbError) {

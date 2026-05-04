@@ -17,6 +17,7 @@ directly from far2l.
 $ #Device list#
  When opened, the plugin lists connected ADB devices:
 
+   #..#             - close plugin, return to host panel
    #Serial Number#  - device serial or network address
    #Device Name#    - friendly name from device settings
    #Model#          - device model identifier
@@ -27,7 +28,8 @@ devices, select one and press #Enter#.
 
  If no devices appear, enable USB debugging in Developer
 Options, accept the RSA fingerprint, and confirm via
-#adb devices# in a terminal.
+#adb devices# in a terminal. Press #..# (or #F10#) to
+leave the plugin.
 
  ~Contents~@Contents@
 
@@ -35,20 +37,43 @@ Options, accept the RSA fingerprint, and confirm via
 $ #File operations#
  Standard far2l file operations:
 
-   #F3#     - View file (pulled to a temp location)
-   #F5#     - Copy between device and host
-   #F6#     - Move between device and host
-   #F7#     - Create directory on device
-   #F8#     - Delete from device
-   #Enter#  - Enter directory
+   #F3#        - View file (pulled to a temp file, chmod 0644)
+   #F5# / #F6#  - Copy / Move (single dialog with unified parser)
+   #Shift+F5#  - Duplicate (default new name = #name.copy#)
+   #Shift+F6#  - Rename file under cursor (multi-select ignored)
+   #F7#        - Create directory on device
+   #F8#        - Delete from device
+   #Enter#     - Enter directory
 
- When both panels show the same device via ADB Plugin,
-#F5#/#F6# perform an on-device copy/move without host
-roundtrip.
+ #Destination parser# (used by F5/F6 and Shift+F5/F6):
 
- The progress dialog shows current file, percentage,
-total bytes, elapsed/remaining time, and speed. Press
-#Cancel# to abort.
+   #adb:/abs/path#  - on the source device, absolute path
+   #/abs/path#      - local FS (host pull/push)
+   #rel/path#       - on the source device, relative to current dir
+   #rel# (no slash) - single-leaf rename intent on src device
+   trailing #/#     - "into" folder (auto-mkdir intermediate dirs)
+
+ When both panels show the same device, F5/F6 do an
+on-device #cp#/#mv# with no host roundtrip. If the device
+refuses, fallback through host #pull → push#.
+
+ Overwrite dialog choices:
+
+   #Overwrite#      - replace this file
+   #Skip#           - skip this file
+   #Rename#         - auto-increment #name(2)#, #name(3)#…
+   #Newer#          - copy only if src mtime > dst mtime
+   #Overwrite all# / #Skip all#  - apply to remaining items
+   #Cancel#         - abort the operation
+
+ Atomic-aside-rename: existing destination is renamed
+aside, write proceeds, aside copy dropped on success or
+restored on failure — no data loss.
+
+ The progress dialog (delay-shown after 300 ms — sub-
+second ops don't flash) shows current file, percentage,
+total bytes, elapsed/remaining time, and speed. #Esc# to
+abort (confirmation required).
 
  ~Contents~@Contents@
 
@@ -78,11 +103,15 @@ deterministic IPC, so interactive tools (#vi#, #less#,
 $ #Keyboard shortcuts#
 
    #Enter#      - Enter directory / connect to device
+   #..#         - Up one level (or exit plugin from device root /
+                 device selector)
    #F3#         - View file
-   #F5#         - Copy
-   #F6#         - Move
+   #F5# / #F6#  - Copy / Move (single dialog, parser-driven)
+   #Shift+F5#   - Duplicate
+   #Shift+F6#   - Rename file under cursor
    #F7#         - Make directory
    #F8#         - Delete
+   #Esc#        - Abort current transfer
    #F10#        - Close plugin
    #Ctrl+\\#     - Go to root
    #Ctrl+R#     - Refresh panel (after external changes)
@@ -145,6 +174,8 @@ $ #Overwrite confirmation#
 
    #Overwrite#      - Replace this file
    #Skip#           - Skip this file
+   #Rename#         - Use auto-incremented name (#name(2)#, …)
+   #Newer#          - Skip unless src is newer than dst (mtime)
    #Overwrite all#  - Replace all, don't ask again
    #Skip all#       - Skip all, don't ask again
    #Cancel#         - Abort the operation
@@ -156,11 +187,16 @@ $ #Transfer progress#
  Shows progress of a copy/move/delete:
 
    - Source and destination paths
-   - Percentage and progress bar
-   - Total bytes
-   - Files processed / total
+   - Percentage and progress bar (per-file)
+   - Aggregate progress + #Files processed: X of Y# in
+     multi-item operations
+   - Total bytes (multi only)
    - Elapsed, remaining, speed
 
- Press #Cancel# to abort (confirmation required).
+ The plugin pre-scans device directories in a single
+ batched #find# call before each operation, so totals
+ are known up front for all transfer paths.
+
+ Press #Esc# to abort (confirmation required).
 
  ~Contents~@Contents@

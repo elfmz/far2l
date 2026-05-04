@@ -415,22 +415,42 @@ void TreeList::Update(int Mode)
 	}
 
 	if (RetFromReadTree && TreeCount > 0 &&
-		(!(Mode & UPDATE_KEEP_SELECTION) || LastTreeCount != TreeCount))
+		((Mode & UPDATE_SECONDARY) || !(Mode & UPDATE_KEEP_SELECTION) || LastTreeCount != TreeCount))
 	{
+		FARString strPanelDir;
+		GetRootPanel()->GetCurDir(strPanelDir);
+		DeleteEndSlash(strPanelDir, true);
+
 		SyncDir();
 
-		while (CurFile >= 0 && CurFile < TreeCount) {
-			TreeItem *CurPtr = ListData[CurFile].get();
-			if (!CurPtr)
-				break;
-
-			if (apiGetFileAttributes(CurPtr->strName) == INVALID_FILE_ATTRIBUTES) {
-				DelTreeName(CurPtr->strName);
-				Show();
+		bool removedInvalid = false;
+		for (int i = TreeCount - 1; i >= 0; --i) {
+			TreeItem *item = ListData[i].get();
+			if (!item)
 				continue;
+			if (apiGetFileAttributes(item->strName) == INVALID_FILE_ATTRIBUTES) {
+				ListData.erase(ListData.begin() + i);
+				removedInvalid = true;
+				if (CurFile > i)
+					--CurFile;
+				if (CurTopFile > i)
+					--CurTopFile;
+				if (WorkDir > i)
+					--WorkDir;
 			}
+		}
 
-			break;
+		if (removedInvalid) {
+			TreeCount = static_cast<long>(ListData.size());
+			VisibleDirty = true;
+			if (TreeCount > 0) {
+				FillLastData();
+				if (!strPanelDir.IsEmpty() && !SetDirPosition(strPanelDir))
+					SyncDir();
+				CorrectPosition();
+				SaveTreeFile();
+			} else
+				Show();
 		}
 	}
 	else if (!RetFromReadTree) {
@@ -673,17 +693,43 @@ void TreeList::SyncDir()
 		if (AnotherPanel->GetType() == FILE_PANEL) {
 			if (!SetDirPosition(strPanelDir)) {
 				const FARString originalDir(strPanelDir);
-				FARString parentDir(strPanelDir);
-				if (CutToSlash(parentDir)) {
-					DeleteEndSlash(parentDir, true);
-					if (SetDirPosition(parentDir)) {
+				FARString fallbackDir;
+				bool positioned = false;
+
+				while (!positioned) {
+					FARString parentDir(originalDir);
+					bool expanded = false;
+
+					while (CutToSlash(parentDir)) {
+						DeleteEndSlash(parentDir, true);
+						if (parentDir.IsEmpty())
+							break;
+
+						fallbackDir = parentDir;
+						if (SetDirPosition(parentDir)) {
+							Unhide(CurFile);
+							if (CurFile >= 0 && CurFile < TreeCount && ListData[CurFile] && ListData[CurFile]->Collapsed) {
+								ListData[CurFile]->Collapsed = false;
+								VisibleDirty = true;
+							}
+
+							const int prevTreeCount = TreeCount;
+							ExpandDirectory(parentDir.CPtr());
+							expanded = TreeCount > prevTreeCount;
+							break;
+						}
+					}
+
+					if (SetDirPosition(originalDir)) {
 						Unhide(CurFile);
-						Expand();
-					} else
-						ExpandDirectory(parentDir.CPtr());
+						positioned = true;
+					} else if (!expanded) {
+						break;
+					}
 				}
-				if (!SetDirPosition(originalDir))
-					SetDirPosition(parentDir);
+
+				if (!positioned && !fallbackDir.IsEmpty())
+					SetDirPosition(fallbackDir);
 			}
 		} else
 			SetDirPosition(strPanelDir);
@@ -727,7 +773,13 @@ bool TreeList::FillLastData()
 {
 	const size_t RootLength = strRoot.IsEmpty() ? 0 : strRoot.GetLength() - 1;
 	std::vector<int> parents;
-	parents.push_back(-1);
+	parents.push_back(0);
+
+	if (TreeCount <= 0)
+		return true;
+
+	ListData[0]->Depth = 0;
+	ListData[0]->ParentIndex = -1;
 
 	for (int I = 1; I < TreeCount; I++) {
 		int PathLength;
@@ -740,12 +792,19 @@ bool TreeList::FillLastData()
 
 		ListData[I]->Depth = Depth = CountSlash(ListData[I]->strName.CPtr() + RootLength);
 
-		if (parents.size() <= Depth)
-			parents.push_back(I);
-		else
-			parents[Depth] = I;
+		int parentIndex = 0;
+		if (Depth > 0) {
+			const size_t parentDepth = std::min<size_t>(Depth - 1, parents.size() - 1);
+			parentIndex = parents[parentDepth];
+			if (parentIndex < 0 || parentIndex >= TreeCount)
+				parentIndex = 0;
+		}
 
-		ListData[I]->ParentIndex = (Depth > 0) ? parents[Depth - 1] : 0;
+		if (parents.size() <= Depth)
+			parents.resize(Depth + 1, parentIndex);
+
+		parents[Depth] = I;
+		ListData[I]->ParentIndex = parentIndex;
 
 		bool Last;
 		int J, SubDirPos;

@@ -114,14 +114,24 @@ void ShellUpdatePanels(Panel *SrcPanel, BOOL NeedSetUpADir)
 		if (NeedSetUpADir) {
 			FARString strCurDir;
 			SrcPanel->GetCurDir(strCurDir);
+			while (!strCurDir.IsEmpty()) {
+				const DWORD attrs = apiGetFileAttributes(strCurDir);
+				if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+					break;
+				if (!CutToSlash(strCurDir, true))
+					break;
+			}
+			if (strCurDir.IsEmpty()) {
+				apiGetCurrentDirectory(strCurDir);
+				if (strCurDir.IsEmpty())
+					strCurDir = WGOOD_SLASH;
+			}
 			AnotherPanel->SetCurDir(strCurDir, TRUE);
 			AnotherPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
 		} else {
-			// TODO: ???
-			// if(AnotherPanel->NeedUpdatePanel(SrcPanel))
-			//	AnotherPanel->Update(UPDATE_KEEP_SELECTION|UPDATE_SECONDARY);
-			// else
-			{
+			if (AnotherType == TREE_PANEL) {
+				AnotherPanel->Update(UPDATE_KEEP_SELECTION | UPDATE_SECONDARY);
+			} else {
 				// Сбросим время обновления панели. Если там есть нотификация - обновится сама.
 				if (AnotherType == FILE_PANEL)
 					((FileList *)AnotherPanel)->ResetLastUpdateTime();

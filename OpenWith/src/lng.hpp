@@ -12,6 +12,7 @@ enum LanguageID
 	MSaveConfigError,
 	MNoAppsFound,
 	MCannotExecute,
+	MUnsupportedPlatform,
 
 	MConfigTitle,
 
@@ -35,6 +36,7 @@ enum LanguageID
 	MValidateTryExec,
 	MSortAlphabetically,
 	MTreatUrlsAsPaths,
+	MShowPackageTags,
 
 	MDetails,
 

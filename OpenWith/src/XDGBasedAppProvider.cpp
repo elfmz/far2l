@@ -35,21 +35,22 @@
 XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
 {
 	_platform_settings_definitions = {
-		{ "UseXdgMimeTool", MUseXdgMimeTool, &XDGBasedAppProvider::_use_xdg_mime_tool, true, true },
-		{ "UseFileTool", MUseFileTool, &XDGBasedAppProvider::_use_file_tool, true, true },
-		{ "UseMagikaTool", MUseMagikaTool, &XDGBasedAppProvider::_use_magika_tool, false, true },
-		{ "UseGlobRules", MUseGlobRules, &XDGBasedAppProvider::_use_glob_rules, false, true },
+		{ "UseXdgMimeTool",            MUseXdgMimeTool,            &XDGBasedAppProvider::_use_xdg_mime_tool,            true,  true },
+		{ "UseFileTool",               MUseFileTool,               &XDGBasedAppProvider::_use_file_tool,                true,  true },
+		{ "UseMagikaTool",             MUseMagikaTool,             &XDGBasedAppProvider::_use_magika_tool,              false, true },
+		{ "UseGlobRules",              MUseGlobRules,              &XDGBasedAppProvider::_use_glob_rules,               false, true },
 		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false, true },
-		{ "LoadMimeTypeAliases", MLoadMimeTypeAliases, &XDGBasedAppProvider::_load_mimetype_aliases, true, true },
-		{ "LoadMimeTypeSubclasses", MLoadMimeTypeSubclasses, &XDGBasedAppProvider::_load_mimetype_subclasses, true, true },
-		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes, true, true },
-		{ "UseGenericMimeFallbacks", MUseGenericMimeFallbacks, &XDGBasedAppProvider::_use_generic_mime_fallbacks, true, true },
-		{ "ShowUniversalHandlers", MShowUniversalHandlers, &XDGBasedAppProvider::_show_universal_handlers, true, true },
-		{ "UseMimeinfoCache", MUseMimeinfoCache, &XDGBasedAppProvider::_use_mimeinfo_cache, true, true },
-		{ "FilterByShowIn", MFilterByShowIn, &XDGBasedAppProvider::_filter_by_show_in, false, true },
-		{ "ValidateTryExec", MValidateTryExec, &XDGBasedAppProvider::_validate_try_exec, false, true },
-		{ "SortAlphabetically", MSortAlphabetically, &XDGBasedAppProvider::_sort_alphabetically, false, true },
-		{ "TreatUrlsAsPaths", MTreatUrlsAsPaths, &XDGBasedAppProvider::_treat_urls_as_paths, false, false }
+		{ "LoadMimeTypeAliases",       MLoadMimeTypeAliases,       &XDGBasedAppProvider::_load_mimetype_aliases,        true,  true },
+		{ "LoadMimeTypeSubclasses",    MLoadMimeTypeSubclasses,    &XDGBasedAppProvider::_load_mimetype_subclasses,     true,  true },
+		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes,  true,  true },
+		{ "UseGenericMimeFallbacks",   MUseGenericMimeFallbacks,   &XDGBasedAppProvider::_use_generic_mime_fallbacks,   true,  true },
+		{ "ShowUniversalHandlers",     MShowUniversalHandlers,     &XDGBasedAppProvider::_show_universal_handlers,      true,  true },
+		{ "UseMimeinfoCache",          MUseMimeinfoCache,          &XDGBasedAppProvider::_use_mimeinfo_cache,           true,  true },
+		{ "FilterByShowIn",            MFilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            false, true },
+		{ "ValidateTryExec",           MValidateTryExec,           &XDGBasedAppProvider::_validate_try_exec,            false, true },
+		{ "SortAlphabetically",        MSortAlphabetically,        &XDGBasedAppProvider::_sort_alphabetically,          false, true },
+		{ "TreatUrlsAsPaths",          MTreatUrlsAsPaths,          &XDGBasedAppProvider::_treat_urls_as_paths,          false, false },
+		{ "ShowPackageTags",           MShowPackageTags,           &XDGBasedAppProvider::_show_package_tags,            true,  true }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
@@ -308,7 +309,9 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 			 std::pair{L"Terminal =",    &DesktopEntry::terminal},
 			 std::pair{L"MimeType =",    &DesktopEntry::mimetype},
 			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in},
-			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in}
+			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in},
+			 std::pair{L"X-Flatpak =",   &DesktopEntry::x_flatpak},
+			 std::pair{L"X-SnapInstanceName =",   &DesktopEntry::x_snap_instance_name}
 		 })
 	{
 		const std::string& val = desktop_entry.*member_ptr;
@@ -405,7 +408,6 @@ XDGBasedAppProvider::CandidateMap XDGBasedAppProvider::DiscoverCandidatesForExpa
 }
 
 
-// Find the system's global default handler for a MIME type.
 std::string XDGBasedAppProvider::QuerySystemDefaultApplication(const std::string& mime)
 {
 	if (mime.empty()) return "";
@@ -423,7 +425,6 @@ std::string XDGBasedAppProvider::QuerySystemDefaultApplication(const std::string
 }
 
 
-// Finds and registers candidates from the parsed 'mimeapps.list' files.
 void XDGBasedAppProvider::AppendCandidatesFromMimeAppsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates)
 {
 	const int total_mimes = expanded_mimes.size();
@@ -457,7 +458,6 @@ void XDGBasedAppProvider::AppendCandidatesFromMimeAppsLists(const std::vector<st
 }
 
 
-// Finds and registers candidates from the 'mimeinfo.cache' database: low source rank.
 void XDGBasedAppProvider::AppendCandidatesFromMimeinfoCache(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates)
 {
 	if (_op_mime_to_desktop_associations_index.empty()) {
@@ -537,7 +537,7 @@ void XDGBasedAppProvider::AppendCandidatesFromDesktopEntryIndex(const std::vecto
 }
 
 
-// Helper that resolves a Desktop File ID to a DesktopEntry object and initiates registration.
+// Resolves a Desktop File ID to a DesktopEntry object and initiates registration.
 void XDGBasedAppProvider::RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_id,
 												int rank, const std::string& source_info)
 {
@@ -683,6 +683,10 @@ std::vector<CandidateInfo> XDGBasedAppProvider::FormatCandidatesForUI(
 		// Convert the internal DesktopEntry representation to the UI-facing CandidateInfo.
 		CandidateInfo ci = ConvertDesktopEntryToCandidateInfo(*ranked_candidate.desktop_entry);
 
+		if (_show_package_tags) {
+			ci.name += GetPackageTag(ranked_candidate.desktop_entry->package_type);
+		}
+
 		// If requested (only for single-file lookups), store the association's source
 		// for the F3 details dialog.
 		if (store_source_info) {
@@ -691,6 +695,20 @@ std::vector<CandidateInfo> XDGBasedAppProvider::FormatCandidatesForUI(
 		result.push_back(ci);
 	}
 	return result;
+}
+
+
+// Returns the suffix used to qualify application names in the menu.
+std::wstring_view XDGBasedAppProvider::GetPackageTag(PackageType type)
+{
+	switch (type) {
+		case PackageType::Flatpak:
+			return L" [*Flatpak]";
+		case PackageType::Snap:
+			return L" [*Snap]";
+		default:
+			return L"";
+	}
 }
 
 
@@ -729,7 +747,6 @@ XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const
 		return profile;
 	}
 
-	// Path exists. Determine file type and get MIME types based on it.
 	if (S_ISREG(st.st_mode)) {
 		profile.is_regular_file = true;
 
@@ -784,7 +801,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 	static const std::string s_octet_stream = "application/octet-stream";
 	bool octet_stream_detected = false;
 
-	// Helper to add a MIME type only if it's valid and not already present.
+	// Adds a MIME type only if it's valid and not already present.
 	auto add_unique = [&](std::string mime) {
 		mime = Trim(mime);
 		if (mime.empty()) return;
@@ -797,7 +814,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 		}
 	};
 
-	// --- Step 1: Initial, most specific MIME type detection ---
+	// --- Step 1: initial, most specific MIME types ---
 	add_unique(profile.xdg_mime);
 	add_unique(profile.file_mime);
 	add_unique(profile.magika_mime);
@@ -805,7 +822,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 	add_unique(profile.stat_mime);
 	add_unique(profile.ext_mime);
 
-	// --- Step 2: Iteratively expand the MIME type list with parents and aliases ---
+	// --- Step 2: iteratively expand via aliases and subclass hierarchy ---
 	if (!_op_subclass_to_parent_cache.empty() || !_op_alias_to_canonical_cache.empty()) {
 
 		for (size_t i = 0; i < mimes.size(); ++i) {
@@ -839,7 +856,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 		}
 	}
 
-	// --- Step 3: Add base types for structured syntaxes (e.g., +xml, +zip) ---
+	// --- Step 3: add base types for structured suffixes (+xml, etc) ---
 	// This is a reliable fallback that works even if the subclass hierarchy is incomplete in the system's MIME database.
 	if (_resolve_structured_suffixes) {
 
@@ -864,7 +881,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 		}
 	}
 
-	// --- Step 4: Add generic fallback MIME types ---
+	// --- Step 4: add generic fallbacks (text/plain, image/*, etc.) ---
 	if (_use_generic_mime_fallbacks) {
 
 		const auto size_before_generic_types = mimes.size();
@@ -882,7 +899,7 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 		}
 	}
 
-	// --- Step 5: Add the ultimate fallback for any binary data ---
+	// --- Step 5: append application/octet-stream if applicable ---
 	if (profile.is_regular_file) {
 		if (_show_universal_handlers || octet_stream_detected) {
 			mimes.push_back(s_octet_stream);
@@ -934,209 +951,35 @@ bool XDGBasedAppProvider::GlobMatch(const std::string &text, const std::string &
 {
 	int flags = 0;
 
+	if (!case_sensitive) {
 #ifdef FNM_CASEFOLD
-	if (!case_sensitive) {
-		flags |= FNM_CASEFOLD;
-	}
+		flags = FNM_CASEFOLD;
 #elif defined(FNM_IGNORECASE)
-	if (!case_sensitive) {
-		flags |= FNM_IGNORECASE;
-	}
+		flags = FNM_IGNORECASE;
 #endif
-
-	if (case_sensitive || (flags != 0)) {
-		return fnmatch(pattern.c_str(), text.c_str(), flags) == 0;
 	}
 
-	auto text_lower = ToLowerASCII(text);
-	auto pattern_lower = ToLowerASCII(pattern);
+	if (UNLIKELY(flags == 0 && !case_sensitive)) {
+		return fnmatch(ToLowerASCII(pattern).c_str(),
+					   ToLowerASCII(text).c_str(), 0) == 0;
+	}
 
-	return fnmatch(pattern_lower.c_str(), text_lower.c_str(), 0) == 0;
+	return fnmatch(pattern.c_str(), text.c_str(), flags) == 0;
 }
 
 
 std::string XDGBasedAppProvider::GuessMimeTypeByExtension(const std::string& filepath)
 {
-	// A static map for common file extensions as a last-resort fallback.
-	// This is not comprehensive but covers many common cases if other tools fail.
-	static const std::unordered_map<std::string, std::string> s_ext_to_mime_map = {
-
-		// Shell / scripts / source code
-
-		{".sh",    "application/x-shellscript"},
-		{".bash",  "application/x-shellscript"},
-		{".csh",   "application/x-csh"},
-		{".zsh",   "application/x-shellscript"},
-		{".ps1",   "application/x-powershell"},
-		{".py",    "text/x-python"},
-		{".pyw",   "text/x-python"},
-		{".pl",    "text/x-perl"},
-		{".pm",    "text/x-perl"},
-		{".rb",    "text/x-ruby"},
-		{".php",   "application/x-php"},
-		{".phps",  "application/x-php"},
-		{".js",    "application/javascript"},
-		{".mjs",   "application/javascript"},
-		{".java",  "text/x-java-source"},
-		{".c",     "text/x-csrc"},
-		{".h",     "text/x-chdr"},
-		{".cpp",   "text/x-c++src"},
-		{".cc",    "text/x-c++src"},
-		{".cxx",   "text/x-c++src"},
-		{".hpp",   "text/x-c++hdr"},
-		{".go",    "text/x-go"},
-		{".rs",    "text/rust"},
-		{".swift", "text/x-swift"},
-
-		// Plain text / markup / data
-
-		{".txt",   "text/plain"},
-		{".md",    "text/markdown"},
-		{".markdown","text/markdown"},
-		{".tex",   "application/x-tex"},
-		{".csv",   "text/csv"},
-		{".tsv",   "text/tab-separated-values"},
-		{".log",   "text/plain"},
-		{".json",  "application/json"},
-		{".yaml",  "text/yaml"},
-		{".yml",   "text/yaml"},
-		{".xml",   "application/xml"},
-		{".html",  "text/html"},
-		{".htm",   "text/html"},
-		{".xhtml", "application/xhtml+xml"},
-		{".ics",   "text/calendar"},
-
-		// Office / documents
-
-		{".pdf",   "application/pdf"},
-		{".doc",   "application/msword"},
-		{".docx",  "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
-		{".xls",   "application/vnd.ms-excel"},
-		{".xlsx",  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
-		{".ppt",   "application/vnd.ms-powerpoint"},
-		{".pptx",  "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
-		{".odt",   "application/vnd.oasis.opendocument.text"},
-		{".ods",   "application/vnd.oasis.opendocument.spreadsheet"},
-		{".odp",   "application/vnd.oasis.opendocument.presentation"},
-		{".epub",  "application/epub+zip"},
-		{".rtf",   "application/rtf"},
-
-		// Images
-
-		{".jpg",   "image/jpeg"},
-		{".jpeg",  "image/jpeg"},
-		{".jpe",   "image/jpeg"},
-		{".png",   "image/png"},
-		{".gif",   "image/gif"},
-		{".webp",  "image/webp"},
-		{".svg",   "image/svg+xml"},
-		{".ico",   "image/vnd.microsoft.icon"},
-		{".bmp",   "image/bmp"},
-		{".tif",   "image/tiff"},
-		{".tiff",  "image/tiff"},
-		{".heic",  "image/heic"},
-		{".avif",  "image/avif"},
-		{".apng",  "image/apng"},
-
-		// Audio
-
-		{".mp3",   "audio/mpeg"},
-		{".m4a",   "audio/mp4"},
-		{".aac",   "audio/aac"},
-		{".ogg",   "audio/ogg"},
-		{".oga",   "audio/ogg"},
-		{".opus",  "audio/opus"},
-		{".wav",   "audio/x-wav"},
-		{".flac",  "audio/flac"},
-		{".mid",   "audio/midi"},
-		{".midi",  "audio/midi"},
-		{".weba",  "audio/webm"},
-
-		// Video
-
-		{".mp4",   "video/mp4"},
-		{".m4v",   "video/mp4"},
-		{".mov",   "video/quicktime"},
-		{".mkv",   "video/x-matroska"},
-		{".webm",  "video/webm"},
-		{".ogv",   "video/ogg"},
-		{".avi",   "video/x-msvideo"},
-		{".flv",   "video/x-flv"},
-		{".wmv",   "video/x-ms-wmv"},
-		{".3gp",   "video/3gpp"},
-		{".3g2",   "video/3gpp2"},
-		{".ts",    "video/mp2t"},
-
-		// Archives / compressed
-
-		{".zip",   "application/zip"},
-		{".tar",   "application/x-tar"},
-		{".gz",    "application/gzip"},
-		{".tgz",   "application/gzip"},
-		{".bz",    "application/x-bzip"},
-		{".bz2",   "application/x-bzip2"},
-		{".xz",    "application/x-xz"},
-		{".7z",    "application/x-7z-compressed"},
-		{".rar",   "application/vnd.rar"},
-		{".jar",   "application/java-archive"},
-
-		// Executables / binaries
-
-		{".exe",   "application/x-ms-dos-executable"},
-		{".dll",   "application/x-msdownload"},
-		{".so",    "application/x-sharedlib"},
-		{".elf",   "application/x-executable"},
-		{".bin",   "application/octet-stream"},
-		{".class", "application/java-vm"},
-
-		// Fonts
-
-		{".ttf",   "font/ttf"},
-		{".otf",   "font/otf"},
-		{".woff",  "font/woff"},
-		{".woff2", "font/woff2"},
-		{".eot",   "application/vnd.ms-fontobject"},
-
-		// PostScript / vector
-
-		{".ps",    "application/postscript"},
-		{".eps",   "application/postscript"},
-		{".ai",    "application/postscript"},
-
-		// Disk images / containers
-
-		{".iso",   "application/x-iso9660-image"},
-		{".img",   "application/octet-stream"},
-		{".dmg",   "application/x-apple-diskimage"},
-
-		// Web / misc
-
-		{".css",   "text/css"},
-		{".map",   "application/json"},
-		{".wasm",  "application/wasm"},
-		{".jsonld","application/ld+json"},
-		{".webmanifest","application/manifest+json"},
-
-		// CAD / specialized
-
-		{".dxf",   "image/vnd.dxf"},
-		{".dwg",   "application/acad"},
-
-		// Mail / office miscellany
-
-		{".msg",   "application/vnd.ms-outlook"}
-	};
-
 	auto filename = GetBaseName(filepath);
 	auto dot_pos = filename.rfind('.');
 	if (dot_pos != std::string::npos) {
 		std::string ext = ToLowerASCII(filename.substr(dot_pos));
-		auto it = s_ext_to_mime_map.find(ext);
-		if (it != s_ext_to_mime_map.end()) {
+		const auto& map = GetExtMimeMap();
+		auto it = map.find(ext);
+		if (it != map.end()) {
 			return it->second;
 		}
 	}
-
 	return "";
 }
 
@@ -1164,7 +1007,6 @@ std::unordered_map<std::string, std::string> XDGBasedAppProvider::IndexAllDeskto
 }
 
 
-// Recursive helper for directory scanning with loop protection.
 void XDGBasedAppProvider::IndexDirectoryRecursively(std::unordered_map<std::string, std::string>& desktop_id_to_path_map, const std::string& current_path, const std::string& base_dir_prefix, VisitedInodeSet &visited_inodes)
 {
 	struct stat st;
@@ -1488,7 +1330,9 @@ std::optional<XDGBasedAppProvider::DesktopEntry> XDGBasedAppProvider::ParseDeskt
 			 std::pair{"Terminal",   &DesktopEntry::terminal},
 			 std::pair{"MimeType",   &DesktopEntry::mimetype},
 			 std::pair{"OnlyShowIn", &DesktopEntry::only_show_in},
-			 std::pair{"NotShowIn",  &DesktopEntry::not_show_in}
+			 std::pair{"NotShowIn",  &DesktopEntry::not_show_in},
+			 std::pair{"X-Flatpak",  &DesktopEntry::x_flatpak},
+			 std::pair{"X-SnapInstanceName",  &DesktopEntry::x_snap_instance_name}
 		 })
 	{
 		if (auto it = kv_entries.find(key); it != kv_entries.end()) {
@@ -1496,7 +1340,27 @@ std::optional<XDGBasedAppProvider::DesktopEntry> XDGBasedAppProvider::ParseDeskt
 		}
 	}
 
+	if (_show_package_tags) {
+		desktop_entry.package_type = DetectPackageType(desktop_entry);
+	}
+
 	return desktop_entry;
+}
+
+
+// Determines the packaging type of an application from its DesktopEntry.
+// Returns the corresponding PackageType, or PackageType::None if not identified.
+XDGBasedAppProvider::PackageType XDGBasedAppProvider::DetectPackageType(const DesktopEntry& entry) const
+{
+	if (!entry.x_flatpak.empty())            return PackageType::Flatpak;
+	if (!entry.x_snap_instance_name.empty()) return PackageType::Snap;
+	auto exec = UnescapeGKeyFileString(entry.exec);
+	std::string_view ev = exec;
+	if (ev.find("flatpak run") != std::string_view::npos) return PackageType::Flatpak;
+	if (ev.find("snap run")    != std::string_view::npos) return PackageType::Snap;
+	if (ev.find("/snap/bin/")  != std::string_view::npos) return PackageType::Snap;
+
+	return PackageType::None;
 }
 
 
@@ -1810,7 +1674,7 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeappsListSearchFilepaths()
 	std::unordered_set<std::string> seen_filepaths;
 	filepaths.reserve(16);
 
-	// Helper lambda to check existence and add unique paths.
+	// Checks existence and add unique paths.
 	auto add_path = [&](std::string path) {
 		if (!path.empty() && seen_filepaths.insert(path).second && IsReadableFile(path)) {
 			filepaths.push_back(std::move(path));
@@ -2225,39 +2089,27 @@ std::string XDGBasedAppProvider::UnescapeGKeyFileString(const std::string& str)
 // ****************************** System, environment and common helpers ******************************
 
 
-// Checks if a filepath is a regular file (S_ISREG) AND is readable (R_OK).
 bool XDGBasedAppProvider::IsReadableFile(const std::string& filepath)
 {
 	if (filepath.empty()) {
 		return false;
 	}
-
 	struct stat st;
-	// Use stat() to follow symlinks
-	if (stat(filepath.c_str(), &st) == 0) {
-		if (S_ISREG(st.st_mode)) {
-			return (access(filepath.c_str(), R_OK) == 0);
-		}
-	}
-	return false;
+	return stat(filepath.c_str(), &st) == 0
+		&& S_ISREG(st.st_mode)
+		&& access(filepath.c_str(), R_OK) == 0;
 }
 
 
-// Checks if a dirpath is a directory (S_ISDIR) AND is traversable (X_OK).
 bool XDGBasedAppProvider::IsTraversableDirectory(const std::string& dirpath)
 {
 	if (dirpath.empty()) {
 		return false;
 	}
-
 	struct stat st;
-	// Use stat() to follow symlinks
-	if (stat(dirpath.c_str(), &st) == 0) {
-		if (S_ISDIR(st.st_mode)) {
-			return (access(dirpath.c_str(), X_OK) == 0);
-		}
-	}
-	return false;
+	return stat(dirpath.c_str(), &st) == 0
+		&& S_ISDIR(st.st_mode)
+		&& access(dirpath.c_str(), X_OK) == 0;
 }
 
 
@@ -2290,7 +2142,6 @@ bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 }
 
 
-// Runs a shell command and captures its standard output.
 std::string XDGBasedAppProvider::RunCommandAndCaptureOutput(const std::string& cmd)
 {
 	if (cmd.empty()) {

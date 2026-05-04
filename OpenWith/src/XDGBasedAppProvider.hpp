@@ -57,12 +57,16 @@ private:
 		bool is_quoted_literal = false; // if true, field codes inside this argument must be ignored.
 	};
 
+	// Identifies the packaging system or runtime environment an application originates from.
+	enum class PackageType { None, Snap, Flatpak };
 
 	// Represents a parsed .desktop file from the XDG specifications.
 	struct DesktopEntry
 	{
 		std::string id;
 		std::string desktop_filepath;
+		PackageType package_type = PackageType::None;
+
 		std::string name;
 		std::string generic_name;
 		std::string comment;
@@ -73,6 +77,8 @@ private:
 		std::string only_show_in;
 		std::string not_show_in;
 		std::string terminal;
+		std::string x_flatpak;
+		std::string x_snap_instance_name;
 
 		// Mutable cache for lazy parsing: analysis is performed only if the application is selected as a candidate.
 		mutable bool is_exec_parsed = false;
@@ -328,6 +334,7 @@ private:
 	bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id);
 	std::vector<RankedCandidate> BuildSortedRankedCandidatesList(const CandidateMap& candidate_map);
 	std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
+	std::wstring_view GetPackageTag(PackageType type);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 
 	// --- File MIME type detection & expansion ---
@@ -339,6 +346,7 @@ private:
 	std::string DetectMimeTypeViaGlobRules(const std::string& filepath);
 	static bool GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive);
 	std::string GuessMimeTypeByExtension(const std::string& filepath);
+	static const std::unordered_map<std::string, std::string>& GetExtMimeMap();
 
 	// --- XDG database parsing & caching ---
 	std::unordered_map<std::string, std::string> IndexAllDesktopFiles();
@@ -350,6 +358,7 @@ private:
 	MimeappsListsConfig ParseMimeappsLists();
 	static void ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists, std::unordered_set<std::string>& blacklist);
 	std::optional<XDGBasedAppProvider::DesktopEntry> ParseDesktopFile(const std::string& filepath);
+	PackageType DetectPackageType(const DesktopEntry& entry) const;
 	std::string GetLocalizedValue(const std::unordered_map<std::string, std::string>& kv_entries, const std::string& base_key) const;
 	static std::vector<std::string> GenerateLocaleSuffixes();
 	std::unordered_map<std::string, std::string> LoadMimeAliases();
@@ -415,6 +424,7 @@ private:
 	bool _validate_try_exec;
 	bool _sort_alphabetically;
 	bool _treat_urls_as_paths;
+	bool _show_package_tags;
 
 	// Holds all setting definitions. Initialized once in the constructor.
 	std::vector<PlatformSettingDefinition> _platform_settings_definitions;

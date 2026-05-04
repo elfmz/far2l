@@ -29103,6 +29103,17 @@ upd:"Word wrap"
 upd:"Word wrap"
 upd:"Word wrap"
 
+EnforceColorCorrection
+"Выравнивать контрастность цветов автоматически"
+"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+upd:"Auto-adjust colors contrast"
+
 #Must be the last
 NewFileName
 l:

@@ -183,6 +183,8 @@ const ConfigOpt g_cfg_opts[] {
 	{OST_COMMON, NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
 	{OST_COMMON, NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1},
 
+	{OST_COMMON,  NSecInterface, "EnforceColorCorrection", &Opt.Dialogs.EnforceColorCorrection, 1},
+
 	{OST_NONE,   NSecInterface, "ShowTimeoutDelFiles", &Opt.ShowTimeoutDelFiles, 50},
 	{OST_NONE,   NSecInterface, "ShowTimeoutDACLFiles", &Opt.ShowTimeoutDACLFiles, 50},
 	{OST_NONE,   NSecInterface, "FormatNumberSeparators", &Opt.FormatNumberSeparators, 0},

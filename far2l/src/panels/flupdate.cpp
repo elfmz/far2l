@@ -102,9 +102,9 @@ void FileList::UpdateIfRequired()
 	}
 }
 
-void ReadFileNamesMsg(const wchar_t *Msg)
+void ReadFileNamesMsg(const wchar_t *Msg, DWORD Flags = 0)
 {
-	Message(0, 0, Msg::ReadingTitleFiles, Msg);
+	Message(Flags, 0, Msg::ReadingTitleFiles, Msg);
 	PreRedrawItem preRedrawItem = PreRedraw.Peek();
 	preRedrawItem.Param.Param1 = (void *)Msg;
 	PreRedraw.SetParam(preRedrawItem.Param);
@@ -233,6 +233,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	CachedFileGroupLookup cached_groups;
 
 	DWORD StartTime = WINPORT(GetTickCount)();
+	bool ProgressShown = false;
 
 	while (Find.Get(fdata)) {
 		FindErrorCode = WINPORT(GetLastError)();
@@ -309,7 +310,9 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 					strReadMsg.Format(Msg::ReadingFiles, ListData.Count());
 
 					if (DrawMessage) {
-						ReadFileNamesMsg(strReadMsg);
+						ReadFileNamesMsg(strReadMsg,
+								ProgressShown ? MSG_KEEPBACKGROUND : 0);
+						ProgressShown = true;
 					} else {
 						TruncStr(strReadMsg, TitleLength - 2);
 						int MsgLength = (int)strReadMsg.GetLength();

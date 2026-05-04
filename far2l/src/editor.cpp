@@ -66,6 +66,67 @@ static int ReplaceMode, ReplaceAll;
 
 static int EditorID = 0;
 
+static bool DeleteRealRange(Edit *line, int start, int end, int cursor_pos)
+{
+	if (end <= start) {
+		return false;
+	}
+
+	const wchar_t *cur_str = nullptr, *end_seq = nullptr;
+	int length = 0;
+	line->GetBinaryString(&cur_str, &end_seq, length);
+
+	if (start < 0) {
+		start = 0;
+	}
+	if (start > length) {
+		start = length;
+	}
+	if (end > length) {
+		end = length;
+	}
+	if (end <= start) {
+		line->SetCurPos(start);
+		return false;
+	}
+
+	const int eol_length = StrLength(end_seq);
+	wchar_t *tmp = new (std::nothrow) wchar_t[length - (end - start) + eol_length + 1];
+	if (!tmp) {
+		return false;
+	}
+
+	int out = 0;
+	if (start > 0) {
+		wmemcpy(tmp, cur_str, start);
+		out+= start;
+	}
+	if (length > end) {
+		wmemcpy(tmp + out, cur_str + end, length - end);
+		out+= length - end;
+	}
+	if (eol_length > 0) {
+		wmemcpy(tmp + out, end_seq, eol_length);
+		out+= eol_length;
+	}
+
+	line->SetBinaryString(tmp, out);
+	line->SetCurPos(cursor_pos < start ? cursor_pos : start);
+	delete[] tmp;
+	return true;
+}
+
+static bool DeleteColumnRange(Edit *line, int start_cell, int end_cell)
+{
+	if (end_cell <= start_cell) {
+		return false;
+	}
+
+	const int start = line->CellPosToReal(start_cell);
+	const int end = line->CellPosToReal(end_cell);
+	return DeleteRealRange(line, start, end, start);
+}
+
 // EditorUndoData
 enum
 {
@@ -1408,6 +1469,9 @@ int Editor::ProcessKey(FarKey Key)
 	CurVisPos = CurLine->GetCellCurPos();
 	const bool isk = IsShiftKey(Key);
 	_SVS(SysLog(L"[%d] isk=%d", __LINE__, isk));
+
+	if (ProcessVerticalBlockEditKey(Key))
+		return TRUE;
 
 	// if ((!isk || CtrlObject->Macro.IsExecuting()) && !isk && !Pasting)
 	if (!isk && !Pasting
@@ -3457,8 +3521,7 @@ case KEY_CTRLNUMPAD3: {
 				}
 
 				if (!Pasting && !EdOpt.PersistentBlocks && BlockStart)
-					if ((Key >= L' ' && WCHAR_IS_VALID(Key)) || Key == KEY_ADD || Key == KEY_SUBTRACT ||	// ??? 256 ???
-							Key == KEY_MULTIPLY || Key == KEY_DIVIDE || Key == KEY_TAB) {
+					if (TranslateInsertKey(Key)) {
 						DeleteBlock();
 						/*
 							$ 19.09.2002 SKV
@@ -7186,6 +7249,117 @@ int Editor::EditorControl(int Command, void *Param)
 	}
 
 	return FALSE;
+}
+
+bool Editor::IsVerticalBlockEditMode() const
+{
+	return VBlockStart && VBlockSizeY > 0;
+}
+
+bool Editor::ProcessVerticalBlockEditKey(FarKey Key)
+{
+	if (!IsVerticalBlockEditMode() || Flags.Check(FEDITOR_LOCKMODE) || Pasting)
+		return false;
+
+	const bool is_insert = TranslateInsertKey(Key);
+	const bool is_backspace = Key == KEY_BS;
+	const bool is_delete = Key == KEY_DEL || Key == KEY_NUMDEL;
+
+	if (!is_insert && !is_backspace && !is_delete)
+		return false;
+
+	Edit *const saved_cur_line = CurLine;
+	const int saved_num_line = NumLine;
+	const int base_cell = VBlockX;
+	const int selected_width = VBlockSizeX;
+
+	if (selected_width > 0) {
+		if (is_insert && EdOpt.PersistentBlocks)
+			return false;
+
+		if (is_delete && !EdOpt.DelRemovesBlocks)
+			return false;
+
+		if (is_backspace) {
+			if (EdOpt.BSLikeDel) {
+				if (!EdOpt.DelRemovesBlocks)
+					return false;
+			} else if (EdOpt.PersistentBlocks) {
+				return false;
+			}
+		}
+	}
+
+	bool changed = false;
+
+	AddUndoData(UNDO_BEGIN);
+
+	int line_num = BlockStartLine;
+	for (Edit *line = VBlockStart; line && line_num < BlockStartLine + VBlockSizeY; line = line->m_next, ++line_num) {
+		const int old_length = line->GetLength();
+		const wchar_t *old_str = line->GetStringAddr();
+		std::vector<wchar_t> before(old_str, old_str + old_length);
+		const int old_cur_pos = line->GetCurPos();
+
+		line->Select(-1, 0);
+		line->SetCellCurPos(base_cell);
+		line->SetOvertypeMode(Flags.Check(FEDITOR_OVERTYPE));
+
+		bool line_changed = false;
+		if (is_insert) {
+			if (selected_width > 0) {
+				DeleteColumnRange(line, base_cell, base_cell + selected_width);
+				line->SetCellCurPos(base_cell);
+			}
+			line->InsertKey(Key);
+			line_changed = true;
+		} else if (is_backspace) {
+			if (selected_width > 0) {
+				line_changed = DeleteColumnRange(line, base_cell, base_cell + selected_width);
+			} else if (base_cell > 0) {
+				const int current_pos = line->GetCurPos();
+				const int new_pos = line->CalcPosBwdTo(current_pos);
+				line_changed = DeleteRealRange(line, new_pos, current_pos, new_pos);
+			}
+		} else if (is_delete) {
+			if (selected_width > 0) {
+				line_changed = DeleteColumnRange(line, base_cell, base_cell + selected_width);
+			} else {
+				const int current_pos = line->GetCurPos();
+				const int next_pos = line->CalcPosFwdTo(current_pos);
+				line_changed = DeleteRealRange(line, current_pos, next_pos, current_pos);
+			}
+		}
+
+		const int new_length = line->GetLength();
+		const wchar_t *new_str = line->GetStringAddr();
+		const bool content_changed = line_changed
+				&& (new_length != old_length || !std::equal(before.begin(), before.end(), new_str));
+
+		if (content_changed) {
+			AddUndoData(UNDO_EDIT, old_length == 0 ? L"" : before.data(), line->GetEOL(), line_num, old_cur_pos, old_length);
+			changed = true;
+		} else {
+			line->SetCurPos(old_cur_pos);
+		}
+	}
+
+	AddUndoData(UNDO_END);
+
+	CurLine = saved_cur_line;
+	NumLine = saved_num_line;
+
+	if (!changed)
+		return true;
+
+	TextChanged(1);
+	VBlockSizeX = 0;
+	VBlockX = CurLine->GetCellCurPos();
+	if (m_bWordWrap) {
+		m_CurVisualLineInLogicalLine = FindVisualLine(CurLine, CurLine->GetCurPos());
+	}
+	Show();
+	return true;
 }
 
 int Editor::SetBookmark(DWORD Pos)

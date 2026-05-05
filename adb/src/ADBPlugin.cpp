@@ -4,6 +4,16 @@
 #include "ADBDialogs.h"
 #include "ADBLog.h"
 #include "ProgressBatch.h"
+#include "lng.h"
+
+namespace {
+// Bounded title copy — _PanelTitle is a fixed wchar_t[N]; never write past it regardless of translation length.
+template<size_t N>
+void SetPanelTitle(wchar_t (&dst)[N], const wchar_t* src) {
+    wcsncpy(dst, src, N - 1);
+    dst[N - 1] = 0;
+}
+} // namespace
 #include <sstream>
 #include <string>
 #include <vector>
@@ -392,7 +402,7 @@ ADBPlugin::ADBPlugin()
 	: _isConnected(false)
 	, _CurrentDir("/")
 {
-	wcscpy(_PanelTitle, L"ADB");
+	SetPanelTitle(_PanelTitle, L"ADB");
 	wcscpy(_mk_dir, L"");
 
 	// Enumerate once to avoid races between count/first-serial calls.
@@ -407,7 +417,7 @@ ADBPlugin::ADBPlugin()
 			UpdatePanelTitle(_deviceSerial, GetCurrentDevicePath());
 		}
 	} else if (deviceCount > 1) {
-		wcscpy(_PanelTitle, L"ADB - Select Device");
+		SetPanelTitle(_PanelTitle, Lng(MADBSelectDevice));
 	}
 }
 
@@ -479,7 +489,7 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	static const wchar_t* connectedTitles[] = { L"Name", L"Size" };
+	const wchar_t* connectedTitles[] = { Lng(MColName), Lng(MColSize) };
 
 	static PanelMode deviceMode = {
 		.ColumnTypes        = L"N,C0,C1,C2",
@@ -494,7 +504,7 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	static const wchar_t* deviceTitles[] = { L"Serial Number", L"Device Name", L"Model", L"Port" };
+	const wchar_t* deviceTitles[] = { Lng(MColSerial), Lng(MColDeviceName), Lng(MColModel), Lng(MColPort) };
 
 	if (_isConnected) {
 		connectedMode.ColumnTitles = connectedTitles;
@@ -654,14 +664,13 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 
 	// Confirmation prompt; user can edit dst path ("..", "./sub/", abs).
 	{
-		const wchar_t* title = move ? L"Move" : L"Copy";
+		const wchar_t* title = move ? Lng(MMove) : Lng(MCopy);
 		std::wstring prompt;
+		const std::wstring verb = std::wstring(move ? Lng(MMove) : Lng(MCopy)) + L" ";
 		if (items.size() == 1) {
-			prompt = (move ? std::wstring(L"Move ") : std::wstring(L"Copy "))
-			       + StrMB2Wide(items[0].name) + L" to:";
+			prompt = verb + StrMB2Wide(items[0].name) + L" " + Lng(MToColon);
 		} else {
-			prompt = (move ? std::wstring(L"Move ") : std::wstring(L"Copy "))
-			       + std::to_wstring(items.size()) + L" items to:";
+			prompt = verb + std::to_wstring(items.size()) + Lng(MItemsSuffix) + L" " + Lng(MToColon);
 		}
 		// Prefill: adb→"adb:/dst/", local→"/dst/". Parser dispatches: adb:/abs|rel→in-device, /abs→pull.
 		std::string prefill = dst_is_adb
@@ -755,7 +764,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 				};
 				units.push_back(std::move(u));
 			}
-			auto br = RunBatch(move ? L"Move to host" : L"Copy to host",
+			auto br = RunBatch(move ? Lng(MMoveToHost) : Lng(MCopyToHost),
 			                   StrMB2Wide(srcDir), StrMB2Wide(pd.abs_path),
 			                   std::move(units));
 			if (br.success_count == 0 && br.last_error != 0) WINPORT(SetLastError)(br.last_error);
@@ -914,7 +923,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 			units.push_back(std::move(u));
 		}
 		if (!units.empty()) {
-			auto br = RunBatch(move ? L"Move on device" : L"Copy on device",
+			auto br = RunBatch(move ? Lng(MMoveOnDevice) : Lng(MCopyOnDevice),
 			                   StrMB2Wide(srcDir), StrMB2Wide(dstDir),
 			                   std::move(units));
 			okCount += br.success_count;
@@ -935,7 +944,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		DBG("CrossPanelCopyMoveSameDevice fallback via host tmp=%s items=%zu\n",
 			tmpRoot.c_str(), needFallback.size());
 
-		std::wstring popTitle = move ? L"Move on device" : L"Copy on device";
+		std::wstring popTitle = move ? Lng(MMoveOnDevice) : Lng(MCopyOnDevice);
 
 		std::vector<WorkUnit> units;
 		units.reserve(needFallback.size());
@@ -1170,7 +1179,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 				};
 				units.push_back(std::move(u));
 			}
-			auto br = RunBatch(L"Copy to host", StrMB2Wide(dir), StrMB2Wide(pd.abs_path),
+			auto br = RunBatch(Lng(MCopyToHost), StrMB2Wide(dir), StrMB2Wide(pd.abs_path),
 			                   std::move(units));
 			if (br.success_count == 0 && br.last_error != 0) WINPORT(SetLastError)(br.last_error);
 			RefreshBothPanels();
@@ -1364,7 +1373,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 			};
 			units.push_back(std::move(u));
 		}
-		auto br = RunBatch(L"Copy on device", L"", L"", std::move(units));
+		auto br = RunBatch(Lng(MCopyOnDevice), L"", L"", std::move(units));
 		okCount += br.success_count;
 	}
 
@@ -1422,7 +1431,7 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 				};
 				units.push_back(std::move(u));
 			}
-			auto br = RunBatch(L"Copy on device", L"", L"", std::move(units));
+			auto br = RunBatch(Lng(MCopyOnDevice), L"", L"", std::move(units));
 			okCount += br.success_count;
 			if (br.last_error != 0) lastErr = br.last_error;
 			(void)RemoveLocalPathRecursively(tmpRoot);
@@ -1432,8 +1441,8 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 	if (okCount == 0 && lastErr != 0) {
 		WINPORT(SetLastError)(lastErr);
 		ADBDialogs::MessageWrapped(FMSG_WARNING | FMSG_MB_OK,
-		                           L"Copy failed",
-		                           L"Device-side cp and host-mediated pull/push both failed.");
+		                           Lng(MCopyFailed),
+		                           Lng(MErrCpFallbackFailed));
 	}
 	RefreshBothPanels();
 	return true;
@@ -1533,7 +1542,7 @@ bool ADBPlugin::ShiftF6Rename() {
 				return isDir ? adb->DeleteDirectory(srcCap) : adb->DeleteFile(srcCap);
 			};
 			units.push_back(std::move(u));
-			auto br = RunBatch(L"Move to host", StrMB2Wide(srcPath), StrMB2Wide(localDst),
+			auto br = RunBatch(Lng(MMoveToHost), StrMB2Wide(srcPath), StrMB2Wide(localDst),
 			                   std::move(units));
 			if (br.success_count == 0 && br.last_error != 0) WINPORT(SetLastError)(br.last_error);
 			RefreshBothPanels();
@@ -1559,7 +1568,7 @@ bool ADBPlugin::ShiftF6Rename() {
 			return adb->MoveRemoteAs(s, d, [&tr]{ return tr.Aborted(); });
 		};
 		units.push_back(std::move(u));
-		auto br = RunBatch(L"Rename", StrMB2Wide(s), StrMB2Wide(d), std::move(units));
+		auto br = RunBatch(Lng(MRenameTitle), StrMB2Wide(s), StrMB2Wide(d), std::move(units));
 		return br.success_count > 0 ? 0 : (br.last_error ? br.last_error : ECANCELED);
 	};
 
@@ -1587,7 +1596,7 @@ bool ADBPlugin::ShiftF6Rename() {
 			const int rc = runMv(srcPath, finalDst);
 			if (rc != 0) {
 				ADBDialogs::MessageWrapped(FMSG_WARNING | FMSG_MB_OK,
-					L"Rename failed", StrMB2Wide(strerror(rc)));
+					Lng(MRenameFailed), StrMB2Wide(strerror(rc)));
 				WINPORT(SetLastError)(rc);
 				return true;
 			}
@@ -1605,8 +1614,8 @@ bool ADBPlugin::ShiftF6Rename() {
 		const int aside_rc = _adbDevice->MoveRemoteAs(dstPath, aside);
 		if (aside_rc != 0) {
 			ADBDialogs::MessageWrapped(FMSG_WARNING | FMSG_MB_OK,
-			                           L"Rename failed",
-			                           L"Could not move existing destination aside.");
+			                           Lng(MRenameFailed),
+			                           Lng(MErrCouldNotMoveAside));
 			return true;
 		}
 		const int rc = runMv(srcPath, dstPath);
@@ -1614,7 +1623,7 @@ bool ADBPlugin::ShiftF6Rename() {
 			// Restore so user doesn't lose data.
 			_adbDevice->MoveRemoteAs(aside, dstPath);
 			ADBDialogs::MessageWrapped(FMSG_WARNING | FMSG_MB_OK,
-			                           L"Rename failed",
+			                           Lng(MRenameFailed),
 			                           StrMB2Wide(strerror(rc)));
 			WINPORT(SetLastError)(rc);
 			return true;
@@ -1628,7 +1637,7 @@ bool ADBPlugin::ShiftF6Rename() {
 	const int rc = runMv(srcPath, dstPath);
 	if (rc != 0) {
 		ADBDialogs::MessageWrapped(FMSG_WARNING | FMSG_MB_OK,
-		                           L"Rename failed",
+		                           Lng(MRenameFailed),
 		                           StrMB2Wide(strerror(rc)));
 		WINPORT(SetLastError)(rc);
 		return true;
@@ -1706,7 +1715,7 @@ int ADBPlugin::GetDeviceData(PluginPanelItem **pPanelItem, int *pItemsNumber)
 
 	if (deviceInfos.empty()) {
 		DBG("No ADB devices found\n");
-		wcscpy(_PanelTitle, L"ADB: No devices found");
+		SetPanelTitle(_PanelTitle, Lng(MNoDevicesPanelTitle));
 		PluginPanelItem placeholder{};
 		placeholder.FindData.lpwszFileName = ADBDevice::AllocateItemString("<Not found>");
 		placeholder.FindData.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
@@ -1718,7 +1727,7 @@ int ADBPlugin::GetDeviceData(PluginPanelItem **pPanelItem, int *pItemsNumber)
 		placeholder.CustomColumnNumber = 3;
 		rows.push_back(placeholder);
 	} else {
-		wcscpy(_PanelTitle, deviceInfos.size() > 1 ? L"ADB - Select Device" : L"ADB");
+		SetPanelTitle(_PanelTitle, deviceInfos.size() > 1 ? Lng(MADBSelectDevice) : L"ADB");
 		for (const auto& info : deviceInfos) {
 			PluginPanelItem device{};
 			device.FindData.lpwszFileName = ADBDevice::AllocateItemString(info.serial);
@@ -1808,7 +1817,7 @@ int ADBPlugin::ExitDeviceFilePanel()
 	_deviceSerial.clear();
 	_CurrentDir.clear();
 	_friendlyNamesCache.clear();
-	wcscpy(_PanelTitle, L"ADB Plugin");
+	SetPanelTitle(_PanelTitle, Lng(MPluginTitle));
 
 	return 1;
 }
@@ -2259,7 +2268,7 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 				}
 			}
 			if (!units.empty()) {
-				auto br = RunBatch(Move ? L"Move on device" : L"Copy on device",
+				auto br = RunBatch(Move ? Lng(MMoveOnDevice) : Lng(MCopyOnDevice),
 				                   StrMB2Wide(srcDir), StrMB2Wide(pd.abs_path),
 				                   std::move(units));
 				okCount = br.success_count;
@@ -2492,8 +2501,8 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 		}
 	} else {
 		std::wstring title = move
-			? (is_upload ? L"Move to device" : L"Move from device")
-			: (is_upload ? L"Copy to device" : L"Copy from device");
+			? (is_upload ? Lng(MMoveToDevice) : Lng(MMoveFromDevice))
+			: (is_upload ? Lng(MCopyToDevice) : Lng(MCopyFromDevice));
 
 		auto overwriteMode = std::make_shared<int>(0);
 		const bool isMultiple = itemsCount > 1;
@@ -2660,29 +2669,29 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 
 		if (ItemsNumber == 1 && folderCount == 1) {
 			result = ADBDialogs::Message(flags,
-				L"Delete folder",
-				L"Do you wish to delete the folder",
+				Lng(MDeleteFolderTitle),
+				Lng(MDeleteFolderQ),
 				std::wstring(PanelItem[0].FindData.lpwszFileName));
 		} else if (ItemsNumber == 1) {
 			result = ADBDialogs::Message(flags,
-				L"Delete",
-				L"Do you wish to delete the file",
+				Lng(MDelete),
+				Lng(MDeleteFileQ),
 				std::wstring(PanelItem[0].FindData.lpwszFileName));
 		} else if (fileCount > 0 && folderCount > 0) {
 			result = ADBDialogs::Message(flags,
-				L"Delete items",
-				L"Do you wish to delete",
-				std::to_wstring(folderCount) + L" folders and " + std::to_wstring(fileCount) + L" files");
+				Lng(MDeleteItems),
+				Lng(MDeleteItemsQ),
+				std::to_wstring(folderCount) + Lng(MFoldersAnd) + std::to_wstring(fileCount) + Lng(MFilesSuffix));
 		} else if (folderCount > 0) {
 			result = ADBDialogs::Message(flags,
-				L"Delete folders",
-				L"Do you wish to delete",
-				std::to_wstring(folderCount) + L" folders");
+				Lng(MDeleteFolders),
+				Lng(MDeleteItemsQ),
+				std::to_wstring(folderCount) + Lng(MFoldersSuffix));
 		} else {
 			result = ADBDialogs::Message(flags,
-				L"Delete files",
-				L"Do you wish to delete",
-				std::to_wstring(fileCount) + L" files");
+				Lng(MDeleteFiles),
+				Lng(MDeleteItemsQ),
+				std::to_wstring(fileCount) + Lng(MFilesSuffix));
 		}
 
 		if (result != 0) {
@@ -2844,5 +2853,5 @@ void ADBPlugin::UpdatePanelTitle(const std::string& deviceSerial, const std::str
 		size_t rmlen = 4 + (panel_title.size() - ARRAYSIZE(_PanelTitle));
 		panel_title.replace((panel_title.size() - rmlen) / 2, rmlen, L"...");
 	}
-	wcscpy(_PanelTitle, panel_title.c_str());
+	SetPanelTitle(_PanelTitle, panel_title.c_str());
 }

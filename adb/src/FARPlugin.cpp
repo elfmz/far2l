@@ -8,6 +8,7 @@
 #include "ADBPlugin.h"
 #include "ADBLog.h"
 #include "FARPlugin.h"
+#include "lng.h"
 
 extern "C" {
 
@@ -43,7 +44,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *Info)
 	static const wchar_t *s_disk_menu_strings[] = {L"ADB"};
 	Info->DiskMenuStrings = s_disk_menu_strings;
 	Info->DiskMenuStringsNumber = 1;
-	static const wchar_t *s_menu_strings[] = {L"ADB Plugin"};
+	static const wchar_t *s_menu_strings[] = {Lng(MPluginTitle)};
 	Info->PluginMenuStrings = s_menu_strings;
 	Info->PluginMenuStringsNumber = 1;
 	// No PluginConfigStrings — plugin has no settings; hide from F9 → Options → Plugins.

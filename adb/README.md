@@ -1,4 +1,4 @@
-# ADB Plugin for far2l
+# far2l ADB plugin — version 1.2
 
 Browse and manage files on Android devices over ADB.
 
@@ -78,7 +78,7 @@ Enable USB debugging on the device, accept the RSA fingerprint, verify with `adb
 
 ## Localization
 
-Dialog button labels are currently hardcoded in English; `adbEng.lng` / `adbRus.lng` are placeholders for a future `GetMsg()` pass. Help files (`.hlf`) are localized — pressing **F1** in the plugin shows Russian help when far2l runs with the Russian language.
+All user-visible strings (panel titles, column headers, dialog titles, buttons, progress labels, error pop-ups, confirmations) go through `GetMsg()` and ship in English (`adbEng.lng`) and Russian (`adbRus.lng`); the active language follows far2l's UI language. Help files (`.hlf`) are also localized — pressing **F1** in the plugin shows Russian help under Russian far2l. To add a language: copy `adbEng.lng` to `adb<XX>.lng`, translate the strings, keep the line order; same for the `.hlf`.
 
 ## Notes
 

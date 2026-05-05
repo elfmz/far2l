@@ -1,5 +1,6 @@
 #include "ADBDialogs.h"
 #include "ADBLog.h"
+#include "lng.h"
 #include "farplug-wide.h"
 #include <utils.h>
 #include <algorithm>
@@ -7,7 +8,6 @@
 #include <sstream>
 #include <iomanip>
 
-extern PluginStartupInfo g_Info;
 extern FarStandardFunctions g_FSF;
 
 // --- Helpers ---
@@ -330,14 +330,14 @@ void BaseDialog::ProgressBarToDialogControl(int ctl, int percents)
 
 AbortConfirmDialog::AbortConfirmDialog()
 {
-    _di.SetBoxTitleItem(L"Abort operation");
+    _di.SetBoxTitleItem(Lng(MAbortBoxTitle));
     _di.SetLine(2);
-    _di.AddAtLine(DI_TEXT, 5, 50, DIF_CENTERGROUP, L"Confirm abort current operation");
+    _di.AddAtLine(DI_TEXT, 5, 50, DIF_CENTERGROUP, Lng(MAbortConfirmText));
     _di.NextLine();
     _di.AddAtLine(DI_TEXT, 5, 50, DIF_BOXCOLOR | DIF_SEPARATOR);
     _di.NextLine();
-    _i_confirm = _di.AddAtLine(DI_BUTTON, 6, 27, DIF_CENTERGROUP, L"&Abort operation");
-    _i_cancel = _di.AddAtLine(DI_BUTTON, 32, 45, DIF_CENTERGROUP, L"&Continue");
+    _i_confirm = _di.AddAtLine(DI_BUTTON, 6, 27, DIF_CENTERGROUP, Lng(MAbortBtn));
+    _i_cancel = _di.AddAtLine(DI_BUTTON, 32, 45, DIF_CENTERGROUP, Lng(MContinueBtn));
     SetFocusedDialogControl(_i_cancel);
     SetDefaultDialogControl(_i_cancel);
 }
@@ -368,10 +368,10 @@ OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple,
       _view_existing(std::move(view_existing))
 {
     // Layout matches MTP plugin's OverwriteDialog: "Warning" box title + centered header line + filename + separators bracketing optional info rows + "Remember choice" checkbox driving sticky-all (no separate "All" buttons). Width 72 (box X2=68) — content area 5..66 = 62 cells.
-    _di.SetBoxTitleItem(L"Warning");
+    _di.SetBoxTitleItem(Lng(MWarning));
     _di.SetLine(2);
     _di.AddAtLine(DI_TEXT, 5, 66, DIF_CENTERGROUP,
-                  is_directory ? L"Folder already exists" : L"File already exists");
+                  is_directory ? Lng(MFolderExists) : Lng(MFileExists));
     _di.NextLine();
     _di.AddAtLine(DI_TEXT, 5, 66, 0, AbbreviatePathLeft(filename, 62).c_str());
     _di.NextLine();
@@ -384,26 +384,26 @@ OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple,
         const int new_type = _view_new ? DI_BUTTON : DI_TEXT;
         const unsigned int new_flags = _view_new ? (DIF_BTNNOCLOSE | DIF_NOBRACKETS) : 0;
         _i_src_info = _di.AddAtLine(new_type, 5, 66, new_flags,
-                                    FormatFileInfo(L"New", src_size, src_mtime).c_str());
+                                    FormatFileInfo(Lng(MNewLabel), src_size, src_mtime).c_str());
         _di.NextLine();
         const int dst_type = _view_existing ? DI_BUTTON : DI_TEXT;
         const unsigned int dst_flags = _view_existing ? (DIF_BTNNOCLOSE | DIF_NOBRACKETS) : 0;
         _i_dst_info = _di.AddAtLine(dst_type, 5, 66, dst_flags,
-                                    FormatFileInfo(L"Existing", dst_size, dst_mtime).c_str());
+                                    FormatFileInfo(Lng(MExistingLabel), dst_size, dst_mtime).c_str());
         _di.NextLine();
         _di.AddAtLine(DI_TEXT, 5, 0, DIF_BOXCOLOR | DIF_SEPARATOR);
     }
 
     _di.NextLine();
-    _i_remember = _di.AddAtLine(DI_CHECKBOX, 5, 30, 0, L"&Remember choice");
+    _i_remember = _di.AddAtLine(DI_CHECKBOX, 5, 30, 0, Lng(MRememberChoice));
     _di.NextLine();
     _di.AddAtLine(DI_TEXT, 5, 0, DIF_BOXCOLOR | DIF_SEPARATOR);
     _di.NextLine();
-    _i_overwrite  = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Overwrite");
-    _i_skip       = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Skip");
-    _i_only_newer = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"Ne&wer");
-    _i_rename     = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Rename");
-    _i_cancel     = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Cancel");
+    _i_overwrite  = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, Lng(MOverwriteBtn));
+    _i_skip       = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, Lng(MSkipBtn));
+    _i_only_newer = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, Lng(MNewerBtn));
+    _i_rename     = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, Lng(MRenameBtn));
+    _i_cancel     = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, Lng(MCancelMnemonicBtn));
     SetFocusedDialogControl(_i_remember);
     SetDefaultDialogControl(_i_overwrite);
 }
@@ -447,13 +447,13 @@ void ProgressDialog::InitLayout(const std::wstring &title)
     _di.SetBoxTitleItem(title.c_str());
 
     _di.SetLine(2);
-    _i_operation_label = _di.AddAtLine(DI_TEXT, 5, 58, 0, L"Copy from:");
+    _i_operation_label = _di.AddAtLine(DI_TEXT, 5, 58, 0, Lng(MCopyFromColon));
 
     _di.NextLine();
     _i_from_path = _di.AddAtLine(DI_TEXT, 5, 58, 0, L"...");
 
     _di.NextLine();
-    _di.AddAtLine(DI_TEXT, 5, 7, 0, L"to:");
+    _di.AddAtLine(DI_TEXT, 5, 7, 0, Lng(MToColon));
 
     _di.NextLine();
     _i_to_path = _di.AddAtLine(DI_TEXT, 5, 58, 0, L"...");
@@ -472,7 +472,7 @@ void ProgressDialog::InitLayout(const std::wstring &title)
         _i_total_pct = _di.AddAtLine(DI_TEXT, 56, 58, 0, L"0%");
 
         _di.NextLine();
-        _di.AddAtLine(DI_TEXT, 5, 21, 0, L"Files processed:");
+        _di.AddAtLine(DI_TEXT, 5, 21, 0, Lng(MFilesProcessed));
         // Wide counter field — "<count> of <total>" can hit double-digit pairs (e.g. "170 of 171") which a narrow field truncates visually.
         _i_files_processed = _di.AddAtLine(DI_TEXT, 22, 58, 0, L"0");
 
@@ -571,8 +571,8 @@ void ProgressDialog::UpdateDialog()
     }
 
     std::wstring op_label = _is_multi
-        ? L"Copy from:"
-        : (is_directory ? L"Copy the folder from:" : L"Copy the file from:");
+        ? Lng(MCopyFromColon)
+        : (is_directory ? Lng(MCopyFolderFrom) : Lng(MCopyFileFrom));
 
     bool progress_changed = _first_update || all_complete != _last_complete || all_total != _last_total || file_percent != _last_file_percent;
     bool count_changed = _first_update || count_complete != _last_count;
@@ -648,7 +648,7 @@ void ProgressDialog::UpdateDialog()
         _prev_ts = now;
     }
 
-    std::wstring time_part = L"Time: " + FormatTimeLong(elapsed_ms / 1000);
+    std::wstring time_part = std::wstring(Lng(MTime)) + L" " + FormatTimeLong(elapsed_ms / 1000);
 
     uint64_t new_remaining = 0;
     bool have_remaining = false;
@@ -670,7 +670,7 @@ void ProgressDialog::UpdateDialog()
     } else {
         remaining_str = L"??:??:??";
     }
-    std::wstring remaining_part = L"Remaining: " + remaining_str;
+    std::wstring remaining_part = std::wstring(Lng(MRemaining)) + L" " + remaining_str;
 
     std::wstring speed_str = FormatSpeed(_speed);
 
@@ -749,9 +749,9 @@ void ProgressOperation::Run(WorkFunc work_func)
 DeleteProgressDialog::DeleteProgressDialog(ProgressState& state)
     : _state(state) {
     // 40-char DIF_CENTERTEXT field; box.X2=46, EW=44, W=50, extra_width=6.
-    _di.SetBoxTitleItem(L"Delete");
+    _di.SetBoxTitleItem(Lng(MDelete));
     _di.SetLine(2);
-    _di.AddAtLine(DI_TEXT, 5, 44, DIF_CENTERTEXT, L"Deleting the file or folder");
+    _di.AddAtLine(DI_TEXT, 5, 44, DIF_CENTERTEXT, Lng(MDeletingFileOrFolder));
     _di.NextLine();
     _i_filename = _di.AddAtLine(DI_TEXT, 5, 44, DIF_CENTERTEXT, L"");
 }
@@ -835,13 +835,13 @@ bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destinat
                             const std::string& source_name, int item_count)
 {
     const wchar_t* title;
-    if (is_upload && is_move)      title = L"Move to device";
-    else if (is_upload)            title = L"Copy to device";
-    else if (is_move)              title = L"Move from device";
-    else                           title = L"Copy from device";
+    if (is_upload && is_move)      title = Lng(MMoveToDevice);
+    else if (is_upload)            title = Lng(MCopyToDevice);
+    else if (is_move)              title = Lng(MMoveFromDevice);
+    else                           title = Lng(MCopyFromDevice);
 
     std::wstring prompt;
-    const std::wstring verb = is_move ? L"Move " : L"Copy ";
+    const std::wstring verb = std::wstring(is_move ? Lng(MMove) : Lng(MCopy)) + L" ";
     if (item_count > 1) {
         wchar_t count_str[32];
         swprintf(count_str, ARRAYSIZE(count_str), L"%d", item_count);
@@ -849,7 +849,7 @@ bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destinat
     } else if (!source_name.empty()) {
         prompt = verb + L"\"" + StrMB2Wide(source_name) + L"\" to:";
     } else {
-        prompt = L"Enter destination path:";
+        prompt = Lng(MEnterDestPath);
     }
 
     std::string default_path = destination;
@@ -870,7 +870,7 @@ bool ADBDialogs::AskCopyMove(bool is_move, bool is_upload, std::string& destinat
 
 bool ADBDialogs::AskCreateDirectory(std::string& dir_name)
 {
-    if (!AskInput(L"Create directory", L"Enter name of directory to create:",
+    if (!AskInput(Lng(MCreateDir), Lng(MEnterDirName),
                   L"ADB_MakeDir", dir_name, dir_name)) {
         return false;
     }
@@ -908,14 +908,14 @@ bool ADBDialogs::AskInput(const wchar_t* title, const wchar_t* prompt,
 
 bool ADBDialogs::AskConfirmation(const wchar_t* title, const wchar_t* message)
 {
-    const wchar_t* msg[] = { title, message, L"OK", L"Cancel" };
+    const wchar_t* msg[] = { title, message, Lng(MOk), Lng(MCancelBtn) };
     int result = g_Info.Message(g_Info.ModuleNumber, FMSG_MB_YESNO, nullptr, msg, ARRAYSIZE(msg), 0);
     return (result == 0);
 }
 
 bool ADBDialogs::AskWarning(const wchar_t* title, const wchar_t* message)
 {
-    const wchar_t* msg[] = { title, message, L"OK", L"Cancel" };
+    const wchar_t* msg[] = { title, message, Lng(MOk), Lng(MCancelBtn) };
     int result = g_Info.Message(g_Info.ModuleNumber, FMSG_WARNING | FMSG_MB_YESNO, nullptr, msg, ARRAYSIZE(msg), 0);
     return (result == 0);
 }
@@ -928,7 +928,7 @@ int ADBDialogs::MessageWrapped(unsigned int flags,
     std::vector<std::wstring> lines;
     lines.push_back(title);
     if (body.empty()) {
-        lines.push_back(L"unknown error");
+        lines.push_back(Lng(MUnknownError));
     } else {
         for (size_t i = 0; i < body.size(); i += wrap) {
             lines.push_back(body.substr(i, wrap));

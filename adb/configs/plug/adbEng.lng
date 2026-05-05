@@ -37,8 +37,6 @@
 "Folder already exists"
 "&Overwrite"
 "&Skip"
-"Overwrite &all"
-"Skip a&ll"
 
 "Abort operation"
 "Abort current operation?"
@@ -62,3 +60,37 @@
 "Permission denied"
 "Operation failed"
 "Shell error"
+
+"ADB - Select Device"
+"ADB: No devices found"
+"Name"
+"Size"
+"Serial Number"
+"Device Name"
+"Model"
+"Port"
+
+"New"
+"Existing"
+"Ne&wer"
+"&Rename"
+"&Cancel"
+"&Remember choice"
+
+"Rename"
+"Rename to:"
+"Rename failed"
+
+"Copy failed"
+"Failed to move existing target aside."
+"All copy methods failed."
+
+"Copy on device"
+"Move on device"
+"Copy to host"
+"Move to host"
+
+"Deleting the file or folder"
+"unknown error"
+"Delete folder"
+" items"

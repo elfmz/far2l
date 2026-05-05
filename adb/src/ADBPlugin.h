@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <unordered_map>
 
 // System includes
 #include <wchar.h>
@@ -26,20 +27,15 @@ public:
 	uint64_t _signature = PLUGIN_SIGNATURE;
 
 private:
-	// Panel state
 	wchar_t _PanelTitle[64];
 	wchar_t _mk_dir[1024];
-	
 
-	// Standalone config
-	std::wstring _standalone_config;
 	std::wstring _curDirW;
 	std::wstring _formatW;
-	bool _allow_remember_location_dir;
-	
+
 	bool _isConnected;               // true = connected to device (file mode), false = device selection mode
-	std::string _deviceSerial;      // Current device serial
-	std::string _CurrentDir;        // Current path on device
+	std::string _deviceSerial;
+	std::string _CurrentDir;
 
 	std::shared_ptr<class ADBDevice> _adbDevice;
 	
@@ -60,17 +56,46 @@ private:
 		std::string usb;
 	};
 	std::vector<DeviceInfo> EnumerateDevices();
+
+	// F5/F6 fast path: passive panel on same adb → in-device cp/mv (no host roundtrip); returns false if not same-device.
 	bool CrossPanelCopyMoveSameDevice(bool move);
 
-	// Shared transfer engine for GetFiles/PutFiles (DRY)
+	// Shift+F5 in-place copy; multi auto-suffixes ".copy"; host-mediated fallback on cp fail.
+	bool ShiftF5CopyInPlace();
+
+	// Shift+F6 rename/move with full-path prompt + per-collision aside-rename.
+	bool ShiftF6Rename();
+
+	// Per-directory metadata. file_sizes keys are paths RELATIVE to that dir (matches adb -p output).
+	struct DirMeta {
+		uint64_t total_size = 0;
+		uint64_t file_count = 0;
+		std::unordered_map<std::string, uint64_t> file_sizes;
+	};
+
+	// One shell roundtrip for all `dirs`; missing/failed dirs yield empty meta (indistinguishable from real empty dir).
+	std::map<std::string, DirMeta> PrescanDeviceDirs(const std::vector<std::string>& dirs);
+
+	// Per-WorkUnit totals + per-file size index — uses prescan for dirs, hostKnownSize for files; missing dirs yield 0/0.
+	struct UnitTotals {
+		uint64_t total_bytes = 0;
+		uint64_t total_files = 0;
+		std::unordered_map<std::string, std::vector<std::pair<std::string, uint64_t>>> idx;
+	};
+	UnitTotals ComputeUnitTotals(const std::string& srcPath, bool isDir,
+	                             uint64_t hostKnownSize,
+	                             const std::map<std::string, DirMeta>& dirInfo) const;
+
+	// Shared transfer engine for GetFiles/PutFiles.
 	int RunTransfer(PluginPanelItem *items, int itemsCount, bool is_upload, bool move,
 	                const std::string& localDir, const std::string& deviceDir,
-	                const std::map<std::string, uint64_t>& dirSizes,
+	                const std::map<std::string, DirMeta>& dirMetas,
 	                uint64_t totalBytes, uint64_t totalFiles, int OpMode);
 
 public:
-	ADBPlugin(const wchar_t *path = nullptr, bool path_is_standalone_config = false, int OpMode = 0);
-	virtual ~ADBPlugin();
+	ADBPlugin();
+	// Non-virtual dtor — keeps _signature at offset 0 for cross-panel memcpy sig-check (no subclasses).
+	~ADBPlugin();
 
 	// Panel operations
 	int GetFindData(PluginPanelItem **pPanelItem, int *pItemsNumber, int OpMode);
@@ -86,13 +111,9 @@ public:
 	int GetFileData(PluginPanelItem **pPanelItem, int *pItemsNumber);
 	
 	// Device selection methods
-	std::string GetFirstAvailableDevice();
-	int GetAvailableDeviceCount();
 	bool ByKey_TryEnterSelectedDevice();
 	std::string GetDeviceFriendlyName(const std::string& serial);
-	int GetHighlightedDeviceIndex();
 	std::string GetCurrentPanelItemDeviceName();
-	std::string GetFallbackDeviceName();
 	bool ConnectToDevice(const std::string &deviceSerial);
 
 	// File transfer methods
@@ -101,8 +122,7 @@ public:
 	int ProcessHostFile(PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
 	int DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMode);
 	int MakeDirectory(const wchar_t **Name, int OpMode);
-	bool IsDirectoryEmpty(const std::string &devicePath);
-	
+
 	// far2l API access
 	static PluginStartupInfo *GetInfo();
 };

@@ -223,6 +223,8 @@ static void SetupChildEnv() {
     setenv("TERM_PROGRAM", "far2l", 1);
     setenv("LANG", "en_US.UTF-8", 1);
     setenv("LC_ALL", "en_US.UTF-8", 1);
+    // Defense-in-depth alongside winsize=4096; harmless if adb ignores it.
+    setenv("COLUMNS", "4096", 1);
 }
 
 bool ADBShell::start() {
@@ -376,8 +378,7 @@ bool ADBShell::writeCommand(const std::string& command, const std::string& marke
 #endif
     );
 
-    // Retry partial writes and EINTR: a signal can interrupt write() and pipes don't
-    // guarantee one-shot atomicity for writes > PIPE_BUF (4KB on Linux, 512 on BSD).
+    // Retry partial writes and EINTR — pipes aren't atomic for writes > PIPE_BUF (4KB Linux / 512 BSD).
     const char *p = wrapped.c_str();
     size_t remaining = wrapped.length();
     while (remaining > 0) {
@@ -734,8 +735,9 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
     std::string adbPath = findAdbExecutable();
     if (adbPath.empty()) return "";
 
+    // Wide pty: 80 cols truncates paths in "<path>: NN%" emits and breaks multi-byte (cyrillic) names.
     struct winsize win = {};
-    win.ws_col = 80; win.ws_row = 24;
+    win.ws_col = 4096; win.ws_row = 24;
 
     int master_fd = -1;
     pid_t pid = forkpty(&master_fd, nullptr, nullptr, &win);
@@ -798,9 +800,12 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
 
     int status = 0;
     waitpid(pid, &status, 0);
+    _last_pty_exit.store(WIFEXITED(status) ? WEXITSTATUS(status) : -1);
     ADBUtils::TrimTrailingNewlines(output);
     return output;
 }
+
+std::atomic<int> ADBShell::_last_pty_exit{-1};
 
 std::string ADBShell::adbExecWithProgress(const std::vector<std::string>& args, const std::function<void(const std::string&)>& on_chunk, const std::function<bool()>& abort_check) {
     return runAdbProcessWithPty(args, on_chunk, abort_check);

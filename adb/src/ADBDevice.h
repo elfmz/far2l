@@ -83,9 +83,7 @@ public:
     int CreateDirectory(const std::string &devicePath);
     int CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
     int MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
-    // *As variants take a full destination PATH (rename in flight) — used by Shift+F5/F6.
-    // abort_check overloads spawn one-shot `adb shell -c` so Esc can kill the cp/mv;
-    // also bypass the persistent shell's 30s command timeout — long cp/mv won't be killed.
+    // *As variants take a full dst PATH (rename); abort_check overloads use one-shot `adb shell -c` so Esc can kill cp/mv and bypass the 30s shell timeout.
     int CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
     int MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
     int CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath,
@@ -104,10 +102,7 @@ public:
     // Single-roundtrip name list for collision pre-scan (replaces N+1 FileExists).
     void ListDirNames(const std::string &devicePath, std::unordered_set<std::string>& out);
 
-    // Per-file size map for many top-level dirs in ONE shell roundtrip. Output keyed by input
-    // devicePath; inner map is rel-path → size (matches adb pull -p emit format). Empty input
-    // dir → entry exists with empty inner map. Persistent-shell roundtrip dominates cost
-    // (~200ms), so batching N dirs into one find saves N× overhead.
+    // Per-file size map for many roots in ONE shell roundtrip — keyed by input devicePath, inner map is rel-path → size; empty dirs yield an empty inner map.
     void BatchDirectoryFileSizes(const std::vector<std::string>& devicePaths,
                                   std::map<std::string, std::unordered_map<std::string, uint64_t>>& out);
 
@@ -147,8 +142,7 @@ namespace ADBUtils {
     int CheckConnection(bool connected);
 }
 
-// Parses adb push/pull -p output (modern "<path>: NN%\x1B[K\r" or legacy "[ NN%] <path>\r").
-// VT state machine strips CSI/OSC/charset/single-ESC escapes + bare controls before line-split.
+// Parses adb -p progress output (modern "<path>: NN%" or legacy "[NN%] <path>"); VT state machine strips escapes before line-split.
 class ProgressParser {
 public:
     ProgressParser(AdbProgressFn on_progress, bool debug_log = false);

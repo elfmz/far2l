@@ -170,16 +170,25 @@ public:
         ONLY_NEWER = 6,    // copy only if src.mtime > dst.mtime
     };
 
-    OverwriteDialog(const std::wstring &filename, bool is_multiple, bool is_directory);
+    using ViewFn = std::function<void()>;
+    // view_new / view_existing (optional): clickable rows that open a viewer for each file. Empty → row is inert text. src/dst sizes & mtimes drive the New/Existing info rows; pass 0 to suppress.
+    OverwriteDialog(const std::wstring &filename, bool is_multiple, bool is_directory,
+                    uint64_t src_size = 0, int64_t src_mtime = 0,
+                    uint64_t dst_size = 0, int64_t dst_mtime = 0,
+                    ViewFn view_new = nullptr,
+                    ViewFn view_existing = nullptr);
     Result Ask();
 
 protected:
     LONG_PTR DlgProc(int msg, int param1, LONG_PTR param2) override;
 
 private:
-    int _i_overwrite, _i_skip, _i_cancel, _i_overwrite_all, _i_skip_all;
+    int _i_overwrite, _i_skip, _i_cancel;
     int _i_rename, _i_only_newer;
+    int _i_remember = -1;
+    int _i_src_info = -1, _i_dst_info = -1;
     bool _is_multiple;
+    ViewFn _view_new, _view_existing;
 };
 
 // --- ProgressDialog ---

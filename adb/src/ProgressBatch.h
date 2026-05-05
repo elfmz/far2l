@@ -6,8 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-// Single driver for multi-item ops. RunBatch walks vector<WorkUnit>, snapping state to truth between units.
-// ALL progress arithmetic lives in ProgressTracker — nothing else writes state.all_complete.
+// Multi-item driver: RunBatch walks WorkUnits; all progress arithmetic lives in ProgressTracker (sole writer of state.all_complete).
 
 struct WorkUnit
 {

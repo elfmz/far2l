@@ -57,8 +57,7 @@ private:
 	};
 	std::vector<DeviceInfo> EnumerateDevices();
 
-	// F5/F6 fast path: passive panel = same adb device → in-device cp/mv with modal,
-	// no host roundtrip. Returns false (= not handled) if passive isn't same-device.
+	// F5/F6 fast path: passive panel on same adb → in-device cp/mv (no host roundtrip); returns false if not same-device.
 	bool CrossPanelCopyMoveSameDevice(bool move);
 
 	// Shift+F5 in-place copy; multi auto-suffixes ".copy"; host-mediated fallback on cp fail.
@@ -74,14 +73,10 @@ private:
 		std::unordered_map<std::string, uint64_t> file_sizes;
 	};
 
-	// Batched pre-scan: ONE shell roundtrip for all `dirs` on device (BatchDirectoryFileSizes).
-	// Output map keyed by input devicePath; on shell failure or for dirs that don't exist the
-	// entry will have file_count=0/total_size=0 (indistinguishable from "real empty dir").
+	// One shell roundtrip for all `dirs`; missing/failed dirs yield empty meta (indistinguishable from real empty dir).
 	std::map<std::string, DirMeta> PrescanDeviceDirs(const std::vector<std::string>& dirs);
 
-	// Computed per-WorkUnit totals + per-file size index. For dirs found in `dirInfo` we use
-	// pre-scan results; otherwise we fall back to caller's `hostKnownSize` for files
-	// (total_files=1) and to total_bytes/files=0 for missing dirs (UI rolls counter forward).
+	// Per-WorkUnit totals + per-file size index — uses prescan for dirs, hostKnownSize for files; missing dirs yield 0/0.
 	struct UnitTotals {
 		uint64_t total_bytes = 0;
 		uint64_t total_files = 0;
@@ -99,8 +94,7 @@ private:
 
 public:
 	ADBPlugin();
-	// Non-virtual: keeps _signature at offset 0 so cross-panel memcpy sig-check works.
-	// ADBPlugin has no subclasses; do not introduce virtual without re-keying the signature.
+	// Non-virtual dtor — keeps _signature at offset 0 for cross-panel memcpy sig-check (no subclasses).
 	~ADBPlugin();
 
 	// Panel operations

@@ -378,8 +378,7 @@ bool ADBShell::writeCommand(const std::string& command, const std::string& marke
 #endif
     );
 
-    // Retry partial writes and EINTR: a signal can interrupt write() and pipes don't
-    // guarantee one-shot atomicity for writes > PIPE_BUF (4KB on Linux, 512 on BSD).
+    // Retry partial writes and EINTR — pipes aren't atomic for writes > PIPE_BUF (4KB Linux / 512 BSD).
     const char *p = wrapped.c_str();
     size_t remaining = wrapped.length();
     while (remaining > 0) {
@@ -736,8 +735,7 @@ std::string ADBShell::runAdbProcessWithPty(const std::vector<std::string>& args,
     std::string adbPath = findAdbExecutable();
     if (adbPath.empty()) return "";
 
-    // Wide pty: with default 80 cols, adb push/pull -p was observed to middle-truncate paths
-    // in "<path>: NN%" emits, producing broken glyphs inside multi-byte (cyrillic) names.
+    // Wide pty: 80 cols truncates paths in "<path>: NN%" emits and breaks multi-byte (cyrillic) names.
     struct winsize win = {};
     win.ws_col = 4096; win.ws_row = 24;
 

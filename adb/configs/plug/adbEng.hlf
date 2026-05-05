@@ -3,8 +3,7 @@
 
 @Contents
 $ #ADB Plugin#
- Browse and manage files on Android devices over ADB
-directly from far2l.
+ Browse and manage files on Android devices over ADB.
 
    ~Device list~@DeviceList@
    ~File operations~@FileOps@
@@ -15,147 +14,120 @@ directly from far2l.
 
 @DeviceList
 $ #Device list#
- When opened, the plugin lists connected ADB devices:
+ The plugin lists connected ADB devices on open. With one
+device — auto-connect; with several — pick one and #Enter#.
 
-   #..#             - close plugin, return to host panel
-   #Serial Number#  - device serial or network address
-   #Device Name#    - friendly name from device settings
-   #Model#          - device model identifier
-   #Port#           - USB port or connection type
+   #..#             close plugin
+   #Serial#         serial number or network address
+   #Name#           friendly name from device settings
+   #Model#          device model
+   #Port#           USB port or connection type
 
- With one device, the plugin auto-connects. With multiple
-devices, select one and press #Enter#.
-
- If no devices appear, enable USB debugging in Developer
-Options, accept the RSA fingerprint, and confirm via
-#adb devices# in a terminal. Press #..# (or #F10#) to
-leave the plugin.
+ No devices? Enable USB debugging on the device, accept the
+RSA fingerprint, verify with #adb devices#.
 
  ~Contents~@Contents@
 
 @FileOps
 $ #File operations#
- Standard far2l file operations:
 
-   #F3#        - View file (pulled to a temp file, chmod 0644)
-   #F5# / #F6#  - Copy / Move (single dialog with unified parser)
-   #Shift+F5#  - Duplicate (default new name = #name.copy#)
-   #Shift+F6#  - Rename file under cursor (multi-select ignored)
-   #F7#        - Create directory on device
-   #F8#        - Delete from device
-   #Enter#     - Enter directory
+   #F3#         View (pulled to temp, chmod 0644)
+   #F5# / #F6#  Copy / Move
+   #Shift+F5#   Duplicate (default name = #name.copy#)
+   #Shift+F6#   Rename file under cursor
+   #F7#         Make directory
+   #F8#         Delete
+   #Enter#      Enter directory
 
- #Destination parser# (used by F5/F6 and Shift+F5/F6):
+ #Destination parser# (F5/F6 and Shift+F5/F6):
 
-   #adb:/abs/path#  - on the source device, absolute path
-   #/abs/path#      - local FS (host pull/push)
-   #rel/path#       - on the source device, relative to current dir
-   #rel# (no slash) - single-leaf rename intent on src device
-   trailing #/#     - "into" folder (auto-mkdir intermediate dirs)
+   #adb:/abs/path#  on-device absolute
+   #/abs/path#      local FS (host pull/push)
+   #rel/path#       on-device relative
+   #rel# (no /)     rename intent (single-leaf)
+   trailing #/#     into folder (auto-mkdir intermediate dirs)
 
- When both panels show the same device, F5/F6 do an
-on-device #cp#/#mv# with no host roundtrip. If the device
-refuses, fallback through host #pull → push#.
+ Both panels on the same device → in-device #cp#/#mv# with
+no host roundtrip; falls back to host #pull → push# if the
+device refuses.
 
- Overwrite dialog choices:
+ Atomic-aside-rename: existing destination is moved aside,
+new file is written, aside dropped on success / restored
+on failure — no data loss.
 
-   #Overwrite#      - replace this file
-   #Skip#           - skip this file
-   #Rename#         - auto-increment #name(2)#, #name(3)#…
-   #Newer#          - copy only if src mtime > dst mtime
-   #Overwrite all# / #Skip all#  - apply to remaining items
-   #Cancel#         - abort the operation
-
- Atomic-aside-rename: existing destination is renamed
-aside, write proceeds, aside copy dropped on success or
-restored on failure — no data loss.
-
- The progress dialog (delay-shown after 300 ms — sub-
-second ops don't flash) shows current file, percentage,
-total bytes, elapsed/remaining time, and speed. #Esc# to
-abort (confirmation required).
+ Progress dialog (delay-shown after 300 ms): current file,
+percentage, total bytes, elapsed/remaining, speed. #Esc#
+aborts (with confirmation).
 
  ~Contents~@Contents@
 
 @ShellCommands
 $ #Shell commands#
- Every command typed in the far2l command line while the
-ADB panel is active is forwarded to the device shell.
-The #adb:# prefix is accepted and stripped if present.
+ Every command typed on an ADB panel is forwarded to the
+device shell (#adb:# prefix is accepted and stripped).
 
- Output goes to far2l's user screen (press #Ctrl+O# to
-revisit). If a command exits non-zero AND produces no
-output, the plugin appends a line like #->[Exit code: N]#
-so silent failures are visible.
+ Output goes to far2l's user screen (#Ctrl+O# to revisit).
+A non-zero exit with no stdout is surfaced as
+#->[Exit code: N]#.
 
- Working directory is synchronized via #pwd# after each
-command; a successful #cd# updates the panel listing and
-the "<cwd> $ <cmd>" command echo. The far2l prompt text
-itself updates on the next keystroke (far2l core quirk).
+ Working directory tracks the device via #pwd# after each
+command; a successful #cd# refreshes the panel.
 
- The plugin uses a persistent #adb shell -T# session for
-deterministic IPC, so interactive tools (#vi#, #less#,
-#top#) do not work — use non-interactive commands.
+ The plugin uses a non-PTY #adb shell -T# session, so
+interactive tools (#vi#, #less#, #top#) are not supported.
 
  ~Contents~@Contents@
 
 @Shortcuts
 $ #Keyboard shortcuts#
 
-   #Enter#      - Enter directory / connect to device
-   #..#         - Up one level (or exit plugin from device root /
-                 device selector)
-   #F3#         - View file
-   #F5# / #F6#  - Copy / Move (single dialog, parser-driven)
-   #Shift+F5#   - Duplicate
-   #Shift+F6#   - Rename file under cursor
-   #F7#         - Make directory
-   #F8#         - Delete
-   #Esc#        - Abort current transfer
-   #F10#        - Close plugin
-   #Ctrl+\\#     - Go to root
-   #Ctrl+R#     - Refresh panel (after external changes)
-   #Ctrl+O#     - Show command output history
+   #Enter#      Enter directory / connect to device
+   #..#         Up; on root — device selector; on selector — close
+   #F3#         View file
+   #F5# / #F6#  Copy / Move
+   #Shift+F5#   Duplicate
+   #Shift+F6#   Rename file under cursor
+   #F7#         Make directory
+   #F8#         Delete
+   #Esc#        Abort current transfer
+   #F10#        Close plugin
+   #Ctrl+\\#     Go to root
+   #Ctrl+R#     Refresh panel
+   #Ctrl+O#     Command output history
 
  ~Contents~@Contents@
 
 @Limitations
 $ #Limitations#
-  - Interactive tools (#vi#, #less#, #top#) are not
-    supported.
-  - Command timeout is 30 seconds. A long-running command
-    (e.g. #find /#) blocks further plugin operations until
-    it completes or the plugin is reopened.
-  - External file changes (another #adb# session, app
-    running on device) are NOT auto-detected. Press
-    #Ctrl+R# to refresh.
-  - Sort mode resets on plugin close (standard far2l
-    plugin-panel behavior).
+  - Interactive tools (#vi#, #less#, #top#) not supported.
+  - Per-command timeout is 30 s. Long commands block
+    further plugin ops until they finish or the plugin
+    is reopened.
+  - External device-side changes are NOT auto-detected —
+    use #Ctrl+R# to refresh.
+  - Sort mode resets on plugin close.
 
  ~Contents~@Contents@
 
 @Troubleshooting
 $ #Troubleshooting#
  #Device not detected#
-   - Enable USB debugging in Developer options
-   - Accept the RSA fingerprint on the device
-   - Verify with #adb devices# in a terminal
-   - Try #adb kill-server && adb start-server#
+   Enable USB debugging; accept the RSA fingerprint; verify
+   with #adb devices#; try #adb kill-server && adb start-server#.
 
  #Permission denied#
-   - Many system paths require root; try #adb root#
-     (dev images only)
+   Some paths require root — try #adb root# (dev images only).
 
  #Slow transfers#
-   - Prefer USB 3.0 over Wi-Fi ADB
-   - Many small files transfer slower than few large ones
+   Prefer USB 3.0 over Wi-Fi; many small files transfer
+   slower than few large files.
 
  #Connection lost#
-   - Reconnect the cable and reopen the plugin
+   Reconnect the cable and reopen the plugin.
 
  #Plugin appears to hang#
-   - A running command has the shell. Wait up to 30 s for
-     the timeout, or close the plugin (F10).
+   Wait up to 30 s for the command timeout, or close the
+   plugin (#F10#).
 
  ~Contents~@Contents@
 
@@ -163,40 +135,38 @@ $ #Troubleshooting#
 $ #Abort operation#
  Confirm aborting the current file transfer.
 
-   #Abort#     - Stop immediately
-   #Continue#  - Resume the transfer
+   #Abort operation#  stop immediately
+   #Continue#         resume the transfer
 
  ~Contents~@Contents@
 
 @ADBOverwrite
 $ #Overwrite confirmation#
- The destination already exists.
+ The destination already exists. The dialog shows source and
+destination size + mtime on the #New# / #Existing# rows; click
+either row to view that file before deciding.
 
-   #Overwrite#      - Replace this file
-   #Skip#           - Skip this file
-   #Rename#         - Use auto-incremented name (#name(2)#, …)
-   #Newer#          - Skip unless src is newer than dst (mtime)
-   #Overwrite all#  - Replace all, don't ask again
-   #Skip all#       - Skip all, don't ask again
-   #Cancel#         - Abort the operation
+   #Overwrite#  replace the destination
+   #Skip#       leave the destination untouched
+   #Newer#      copy only if source mtime > destination mtime
+   #Rename#     write under an auto-incremented name (#name(2)#, …)
+   #Cancel#     abort the operation
+
+ #Remember choice# (checkbox) — apply the chosen action to
+the rest of the batch without prompting again. Pairs with
+#Overwrite# (= overwrite all) and #Skip# (= skip all).
 
  ~Contents~@Contents@
 
 @ADBProgress
 $ #Transfer progress#
- Shows progress of a copy/move/delete:
+ Shows source and destination paths, per-file percentage,
+aggregate bytes (multi-item only), elapsed/remaining time,
+speed, and #Files processed: X of Y#.
 
-   - Source and destination paths
-   - Percentage and progress bar (per-file)
-   - Aggregate progress + #Files processed: X of Y# in
-     multi-item operations
-   - Total bytes (multi only)
-   - Elapsed, remaining, speed
+ Per-directory totals are known up front: a single batched
+#find# runs before each operation.
 
- The plugin pre-scans device directories in a single
- batched #find# call before each operation, so totals
- are known up front for all transfer paths.
-
- Press #Esc# to abort (confirmation required).
+ #Esc# aborts (with confirmation).
 
  ~Contents~@Contents@

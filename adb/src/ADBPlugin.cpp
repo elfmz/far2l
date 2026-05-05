@@ -9,10 +9,12 @@
 #include <vector>
 #include <map>
 #include <unordered_map>
+#include <atomic>
 #include <cstring>
 #include <cstdarg>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <utils.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
@@ -22,13 +24,19 @@
 // CheckOverwrite return codes. RENAME/NEWER returned as-is — caller must handle.
 enum CollisionAction { CA_PROCEED = 0, CA_SKIP = 1, CA_ABORT = 2, CA_RENAME = 3, CA_NEWER = 4 };
 
-// overwriteMode: 0=ask, 1=overwrite_all, 2=skip_all (persisted across calls).
+// overwriteMode: 0=ask, 1=overwrite_all, 2=skip_all (persisted across calls). Optional sizes/mtimes/view callbacks drive the New/Existing info rows.
 static int CheckOverwrite(const std::wstring& destPath, bool isMultiple, bool isDir,
-                          int& overwriteMode, ProgressState& state) {
+                          int& overwriteMode, ProgressState& state,
+                          uint64_t src_size = 0, int64_t src_mtime = 0,
+                          uint64_t dst_size = 0, int64_t dst_mtime = 0,
+                          OverwriteDialog::ViewFn view_new = nullptr,
+                          OverwriteDialog::ViewFn view_existing = nullptr) {
 	if (overwriteMode == 1) return CA_PROCEED;  // Overwrite all
 	if (overwriteMode == 2) return CA_SKIP;     // Skip all
 
-	OverwriteDialog dlg(destPath, isMultiple, isDir);
+	OverwriteDialog dlg(destPath, isMultiple, isDir,
+	                    src_size, src_mtime, dst_size, dst_mtime,
+	                    std::move(view_new), std::move(view_existing));
 	switch (dlg.Ask()) {
 		case OverwriteDialog::OVERWRITE:     return CA_PROCEED;
 		case OverwriteDialog::SKIP:          return CA_SKIP;
@@ -109,8 +117,7 @@ static constexpr int kFindFreeNameMaxTries = 32;
 static constexpr time_t kClockSkewWarnSec         = 86400;  // 1 day
 static constexpr time_t kClockSkewWarnThrottleSec = 60;
 
-// --- FAR API tunables ---
-// FCTL_GET*PANELITEM size query covers struct only on some far2l builds; pad covers trailing strings.
+// FAR API tunable: FCTL_GET*PANELITEM size query covers struct only on some far2l builds; pad covers trailing strings.
 static constexpr size_t kPanelItemAllocPad = 0x100;
 
 static void RefreshBothPanels() {
@@ -165,8 +172,7 @@ static std::string AsideName(const std::string& base) {
 	return base + ".far2l-tmp." + std::to_string(getpid());
 }
 
-// Routes user input: "adb:/abs"→ADB-abs; "/abs"→LOCAL; "rel"→ADB-relative; ""→ADB-cwd.
-// Strips trailing ':' (far2l copy.cpp:840 plugin-format suffix); keeps bare "adb:" intact.
+// Routes input: "adb:/abs"→ADB-abs, "/abs"→LOCAL, "rel"→ADB-rel, ""→ADB-cwd; strips trailing ':' (far2l plugin-format suffix), keeps bare "adb:".
 enum class DestKind { ADB, LOCAL };
 struct ParsedDest {
 	DestKind kind;
@@ -220,8 +226,7 @@ static ParsedDest ParseDestInput(const std::string& input, const std::string& sr
 	return r;
 }
 
-// mkdir -p on device — single roundtrip; stderr→stdout for errno mapping. Relies on per-instance
-// shell serialisation (RunShellCommand → LastShellExitCode pair); ADBDevice is single-threaded.
+// mkdir -p on device; stderr→stdout for errno mapping.
 static int MkdirPAdb(ADBDevice& dev, const std::string& path) {
 	if (path.empty() || path == "/") return 0;
 	std::string out = dev.RunShellCommand(
@@ -253,6 +258,15 @@ static std::string FindFreeAdbName(ADBDevice& dev, const std::string& abs_path) 
 	return std::string();
 }
 
+// Device file size via `stat -c %s`; 0 on missing/error.
+static uint64_t GetAdbSize(ADBDevice& dev, const std::string& abs_path) {
+	std::string cmd = "stat -c %s -- " + ADBUtils::ShellQuote(abs_path) + " 2>/dev/null";
+	std::string out = dev.RunShellCommand(cmd);
+	ADBUtils::TrimTrailingNewlines(out);
+	if (out.empty()) return 0;
+	try { return (uint64_t)std::stoull(out); } catch (...) { return 0; }
+}
+
 // Device mtime via `stat -c %Y`; logs clock-skew warning (throttled) when device clock is wildly off.
 static time_t GetAdbMtime(ADBDevice& dev, const std::string& abs_path) {
 	std::string cmd = "stat -c %Y -- " + ADBUtils::ShellQuote(abs_path) + " 2>/dev/null";
@@ -272,6 +286,53 @@ static time_t GetAdbMtime(ADBDevice& dev, const std::string& abs_path) {
 		}
 	}
 	return mt;
+}
+
+// Overwrite-dialog viewer: adb=null → open host file directly; adb!=null → pull to per-pid temp (VF_DELETEONCLOSE wipes on viewer exit).
+static OverwriteDialog::ViewFn MakeOverwriteViewer(std::shared_ptr<ADBDevice> adb,
+                                                   const std::string& path,
+                                                   bool is_dir) {
+	if (is_dir) return nullptr;
+	if (!adb) {
+		return [path]() {
+			std::wstring w = StrMB2Wide(path);
+			g_Info.Viewer(w.c_str(), w.c_str(), -1, -1, -1, -1, VF_NONMODAL, CP_UTF8);
+		};
+	}
+	return [adb, path]() {
+		static std::atomic<uint64_t> seq{0};
+		std::string base = path;
+		auto slash = base.find_last_of('/');
+		if (slash != std::string::npos) base = base.substr(slash + 1);
+		for (char& c : base) if (c == '/' || c == '\\') c = '_';
+		char prefix[64];
+		snprintf(prefix, sizeof(prefix), "adb_overw_%d_%llu_",
+		         static_cast<int>(getpid()),
+		         static_cast<unsigned long long>(seq.fetch_add(1)));
+		std::string tmp = InMyTemp((std::string(prefix) + base).c_str());
+		if (adb->PullFile(path, tmp) != 0) return;
+		::chmod(tmp.c_str(), 0644);
+		std::wstring w = StrMB2Wide(tmp);
+		g_Info.Viewer(w.c_str(), w.c_str(), -1, -1, -1, -1,
+		              VF_NONMODAL | VF_DELETEONCLOSE, CP_UTF8);
+	};
+}
+
+// Fills size + mtime for a file. Skips dirs (no recursive walk yet). adb=null → host stat.
+static void FillFileMeta(std::shared_ptr<ADBDevice> adb, const std::string& path, bool is_dir,
+                         uint64_t& size, int64_t& mtime) {
+	size = 0; mtime = 0;
+	if (is_dir) return;
+	if (!adb) {
+		struct stat st{};
+		if (::stat(path.c_str(), &st) == 0) {
+			size = static_cast<uint64_t>(st.st_size);
+			mtime = static_cast<int64_t>(st.st_mtime);
+		}
+	} else {
+		size = GetAdbSize(*adb, path);
+		mtime = static_cast<int64_t>(GetAdbMtime(*adb, path));
+	}
 }
 
 // mkdir -p on host FS.
@@ -621,26 +682,65 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 				auto slash = pd.abs_path.find_last_of('/');
 				if (slash != std::string::npos && slash > 0) (void)MkdirPLocal(pd.abs_path.substr(0, slash));
 			}
+			// Per-item collision check before pull (`adb pull` would otherwise overwrite silently).
+			int overwriteMode = 0;
+			std::vector<int> per_action(items.size(), CA_PROCEED);
+			std::vector<std::string> renamed(items.size());
+			auto adb = _adbDevice;
+			for (size_t i = 0; i < items.size(); ++i) {
+				const std::string localDst = into_dir
+					? (pd.abs_path + "/" + items[i].name)
+					: pd.abs_path;
+				struct stat st{};
+				if (stat(localDst.c_str(), &st) != 0) continue;
+				const std::string srcPath = ADBUtils::JoinPath(srcDir, items[i].name);
+				const bool isDir = items[i].is_dir;
+				uint64_t src_sz = 0, dst_sz = 0;
+				int64_t src_mt = 0, dst_mt = 0;
+				FillFileMeta(adb,     srcPath,  isDir, src_sz, src_mt);
+				FillFileMeta(nullptr, localDst, isDir, dst_sz, dst_mt);
+				ProgressState dummy;
+				int act = CheckOverwrite(StrMB2Wide(localDst), items.size() > 1, isDir,
+				                         overwriteMode, dummy,
+				                         src_sz, src_mt, dst_sz, dst_mt,
+				                         MakeOverwriteViewer(adb, srcPath, isDir),
+				                         MakeOverwriteViewer(nullptr, localDst, isDir));
+				if (act == CA_ABORT) return true;
+				per_action[i] = act;
+				if (act == CA_RENAME) {
+					std::string fresh = FindFreeLocalName(localDst);
+					if (fresh.empty()) per_action[i] = CA_SKIP;
+					else renamed[i] = fresh;
+				}
+			}
 			std::vector<std::string> dirsToScan;
-			for (const auto& it : items) if (it.is_dir)
-				dirsToScan.push_back(ADBUtils::JoinPath(srcDir, it.name));
+			for (size_t i = 0; i < items.size(); ++i)
+				if (per_action[i] != CA_SKIP && items[i].is_dir)
+					dirsToScan.push_back(ADBUtils::JoinPath(srcDir, items[i].name));
 			auto dirInfo = PrescanDeviceDirs(dirsToScan);
 			std::vector<WorkUnit> units;
-			auto adb = _adbDevice;
-			for (const auto& it : items) {
+			for (size_t i = 0; i < items.size(); ++i) {
+				if (per_action[i] == CA_SKIP) continue;
+				const auto& it = items[i];
 				const std::string srcPath = ADBUtils::JoinPath(srcDir, it.name);
-				const std::string localDst = into_dir
-					? (pd.abs_path + "/" + it.name)
-					: pd.abs_path;
+				const std::string localDst = !renamed[i].empty()
+					? renamed[i]
+					: (into_dir ? (pd.abs_path + "/" + it.name) : pd.abs_path);
 				const bool isDir = it.is_dir;
 				const bool move_cap = move;
+				const bool only_newer = per_action[i] == CA_NEWER;
 				auto t = ComputeUnitTotals(srcPath, isDir, it.size, dirInfo);
 				WorkUnit u;
 				u.display_name = StrMB2Wide(it.name);
 				u.is_directory = isDir;
 				u.total_bytes = t.total_bytes;
 				u.total_files = t.total_files;
-				u.execute = [adb, srcPath, localDst, isDir, move_cap, idx = std::move(t.idx)](ProgressTracker& tr) -> int {
+				u.execute = [adb, srcPath, localDst, isDir, move_cap, only_newer, idx = std::move(t.idx)](ProgressTracker& tr) -> int {
+					if (only_newer) {
+						time_t s = GetAdbMtime(*adb, srcPath);
+						time_t d = GetLocalMtime(localDst);
+						if (s > 0 && d > 0 && s <= d) { tr.MarkSkipped(); return 0; }
+					}
 					auto onAbort = [&tr]{ return tr.Aborted(); };
 					auto cb = [&tr, &idx, isDir](int p, const std::string& path) {
 						tr.Tick(p, path, isDir ? LookupSubitemSize(idx, path) : 0);
@@ -701,7 +801,15 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		if (!exists) continue;
 		if (skip_all)      { skip[i] = true; continue; }
 		if (overwrite_all) { overwrite[i] = true; continue; }
-		OverwriteDialog dlg(StrMB2Wide(dstPath), items.size() > 1, it.is_dir);
+		const std::string srcPath = ADBUtils::JoinPath(srcDir, it.name);
+		uint64_t src_sz = 0, dst_sz = 0;
+		int64_t src_mt = 0, dst_mt = 0;
+		FillFileMeta(_adbDevice,      srcPath, it.is_dir, src_sz, src_mt);
+		FillFileMeta(dst->_adbDevice, dstPath, it.is_dir, dst_sz, dst_mt);
+		OverwriteDialog dlg(StrMB2Wide(dstPath), items.size() > 1, it.is_dir,
+		                    src_sz, src_mt, dst_sz, dst_mt,
+		                    MakeOverwriteViewer(_adbDevice,      srcPath, it.is_dir),
+		                    MakeOverwriteViewer(dst->_adbDevice, dstPath, it.is_dir));
 		switch (dlg.Ask()) {
 			case OverwriteDialog::OVERWRITE:     overwrite[i] = true; break;
 			case OverwriteDialog::SKIP:          skip[i] = true; break;
@@ -733,8 +841,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		const bool rename_mode_cap = rename_mode;
 		const bool move_cap = move;
 
-		// Pre-scan all dir sources in one shot — gives accurate "X of Y" counter even though
-		// shell cp/mv emits no per-file progress (we pin file_complete=99 during the run).
+		// Pre-scan all dirs once — feeds accurate "X of Y"; shell cp/mv emits no per-file progress so we pin file_complete=99.
 		std::vector<std::string> dirsToScan;
 		for (size_t i = 0; i < items.size(); ++i)
 			if (!skip[i] && items[i].is_dir)
@@ -838,8 +945,7 @@ bool ADBPlugin::CrossPanelCopyMoveSameDevice(bool move)
 		const std::string dstDirCap = dstDir;
 		const std::string tmpRootCap = tmpRoot;
 
-		// Pre-scan source dirs (fallback path = tmp roundtrip; needs accurate per-file map for
-		// PushDirectory's idx-lookup so total bytes track real transfer).
+		// Pre-scan source dirs — fallback = tmp roundtrip, needs per-file map for PushDirectory idx-lookup.
 		std::vector<std::string> fbDirs;
 		for (size_t idx : needFallback) if (items[idx].is_dir)
 			fbDirs.push_back(ADBUtils::JoinPath(srcDirCap, items[idx].name));
@@ -998,15 +1104,25 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 			int overwriteMode = 0;
 			std::vector<int> per_action(items.size(), CA_PROCEED);
 			std::vector<std::string> renamed(items.size());
+			auto src_adb = _adbDevice;
 			for (size_t i = 0; i < items.size(); ++i) {
 				const std::string localDst = into_dir
 					? (pd.abs_path + "/" + items[i].name)
 					: pd.abs_path;
 				struct stat st{};
 				if (stat(localDst.c_str(), &st) != 0) continue;
+				const std::string srcPath = ADBUtils::JoinPath(dir, items[i].name);
+				const bool isDir = items[i].is_dir;
+				uint64_t src_sz = 0, dst_sz = 0;
+				int64_t src_mt = 0, dst_mt = 0;
+				FillFileMeta(src_adb, srcPath,  isDir, src_sz, src_mt);
+				FillFileMeta(nullptr, localDst, isDir, dst_sz, dst_mt);
 				ProgressState dummy;
-				int act = CheckOverwrite(StrMB2Wide(localDst), items.size() > 1, items[i].is_dir,
-				                         overwriteMode, dummy);
+				int act = CheckOverwrite(StrMB2Wide(localDst), items.size() > 1, isDir,
+				                         overwriteMode, dummy,
+				                         src_sz, src_mt, dst_sz, dst_mt,
+				                         MakeOverwriteViewer(src_adb, srcPath, isDir),
+				                         MakeOverwriteViewer(nullptr, localDst, isDir));
 				if (act == CA_ABORT) return true;
 				per_action[i] = act;
 				if (act == CA_RENAME) {
@@ -1138,7 +1254,14 @@ bool ADBPlugin::ShiftF5CopyInPlace() {
 			if (skip_all)      { p.skip = true; }
 			else if (overwrite_all) { p.overwrite = true; }
 			else {
-				OverwriteDialog dlg(StrMB2Wide(p.dst_path), multi, p.is_dir);
+				uint64_t src_sz = 0, dst_sz = 0;
+				int64_t src_mt = 0, dst_mt = 0;
+				FillFileMeta(_adbDevice, p.src_path, p.is_dir, src_sz, src_mt);
+				FillFileMeta(_adbDevice, p.dst_path, p.is_dir, dst_sz, dst_mt);
+				OverwriteDialog dlg(StrMB2Wide(p.dst_path), multi, p.is_dir,
+				                    src_sz, src_mt, dst_sz, dst_mt,
+				                    MakeOverwriteViewer(_adbDevice, p.src_path, p.is_dir),
+				                    MakeOverwriteViewer(_adbDevice, p.dst_path, p.is_dir));
 				switch (dlg.Ask()) {
 					case OverwriteDialog::OVERWRITE:     p.overwrite = true; break;
 					case OverwriteDialog::SKIP:          p.skip = true; break;
@@ -1365,7 +1488,15 @@ bool ADBPlugin::ShiftF6Rename() {
 			if (stat(localDst.c_str(), &st) == 0) {
 				int overwriteMode = 0;
 				ProgressState dummy;
-				int act = CheckOverwrite(StrMB2Wide(localDst), false, it.is_dir, overwriteMode, dummy);
+				uint64_t src_sz = 0, dst_sz = 0;
+				int64_t src_mt = 0, dst_mt = 0;
+				FillFileMeta(_adbDevice, srcPath,  it.is_dir, src_sz, src_mt);
+				FillFileMeta(nullptr,    localDst, it.is_dir, dst_sz, dst_mt);
+				int act = CheckOverwrite(StrMB2Wide(localDst), false, it.is_dir,
+				                         overwriteMode, dummy,
+				                         src_sz, src_mt, dst_sz, dst_mt,
+				                         MakeOverwriteViewer(_adbDevice, srcPath,  it.is_dir),
+				                         MakeOverwriteViewer(nullptr,    localDst, it.is_dir));
 				if (act == CA_ABORT || act == CA_SKIP) return true;
 				if (act == CA_RENAME) {
 					std::string fresh = FindFreeLocalName(localDst);
@@ -1434,7 +1565,14 @@ bool ADBPlugin::ShiftF6Rename() {
 
 	std::string finalDst = dstPath;
 	if (_adbDevice->FileExists(dstPath)) {
-		OverwriteDialog dlg(StrMB2Wide(dstPath), false, it.is_dir);
+		uint64_t src_sz = 0, dst_sz = 0;
+		int64_t src_mt = 0, dst_mt = 0;
+		FillFileMeta(_adbDevice, srcPath, it.is_dir, src_sz, src_mt);
+		FillFileMeta(_adbDevice, dstPath, it.is_dir, dst_sz, dst_mt);
+		OverwriteDialog dlg(StrMB2Wide(dstPath), false, it.is_dir,
+		                    src_sz, src_mt, dst_sz, dst_mt,
+		                    MakeOverwriteViewer(_adbDevice, srcPath, it.is_dir),
+		                    MakeOverwriteViewer(_adbDevice, dstPath, it.is_dir));
 		auto choice = dlg.Ask();
 		if (choice == OverwriteDialog::SKIP || choice == OverwriteDialog::SKIP_ALL) {
 			return true;
@@ -2039,10 +2177,18 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 						if (nm.empty() || nm == "." || nm == "..") continue;
 						if (dst_listing.count(nm) == 0) continue;
 						const std::string dstFull = ADBUtils::JoinPath(dstDir, nm);
+						const std::string srcFull = ADBUtils::JoinPath(srcDir, nm);
 						const bool isDir = (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 						ProgressState dummyState;
+						uint64_t src_sz = 0, dst_sz = 0;
+						int64_t src_mt = 0, dst_mt = 0;
+						FillFileMeta(_adbDevice, srcFull, isDir, src_sz, src_mt);
+						FillFileMeta(_adbDevice, dstFull, isDir, dst_sz, dst_mt);
 						int act = CheckOverwrite(StrMB2Wide(dstFull), ItemsNumber > 1, isDir,
-						                         overwriteMode, dummyState);
+						                         overwriteMode, dummyState,
+						                         src_sz, src_mt, dst_sz, dst_mt,
+						                         MakeOverwriteViewer(_adbDevice, srcFull, isDir),
+						                         MakeOverwriteViewer(_adbDevice, dstFull, isDir));
 						if (act == CA_ABORT) { aborted = true; break; }
 						per_item_action[i] = act;
 						if (act == CA_RENAME) {
@@ -2155,8 +2301,7 @@ int ADBPlugin::GetFiles(PluginPanelItem *PanelItem, int ItemsNumber, int Move, c
 		return FALSE;
 	}
 
-	// Batched pre-scan: ONE find call across all top-level dirs (was N×~250ms — persistent
-	// shell roundtrip per dir dominated). Single roundtrip → ~250ms regardless of N.
+	// Batched pre-scan: one `find` over all top-level dirs — single ~250ms roundtrip regardless of N (was N×~250ms).
 	std::vector<std::string> dirsToScan;
 	for (int i = 0; i < ItemsNumber; i++) {
 		if (PanelItem[i].FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
@@ -2290,8 +2435,7 @@ ADBPlugin::UnitTotals ADBPlugin::ComputeUnitTotals(
 	}
 	auto fit = dirInfo.find(srcPath);
 	if (fit == dirInfo.end()) {
-		// Pre-scan didn't include this dir (caller bug) or BatchDirectoryFileSizes
-		// pre-create entries got dropped. Leave 0/0 — Tick gate prevents racing counter.
+		// Prescan miss — leave 0/0; Tick gate prevents counter race.
 		DBG("ComputeUnitTotals: prescan miss for dir='%s' — totals=0/0\n", srcPath.c_str());
 		return t;
 	}
@@ -2383,13 +2527,27 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 					struct stat st;
 					if (stat(localPath.c_str(), &st) == 0) dst_exists = true;
 				}
+				DBG("RunTransfer unit: is_upload=%d isDir=%d dst_exists=%d local='%s' device='%s'\n",
+					is_upload, isDir, dst_exists, localPath.c_str(), devicePath.c_str());
 				// Mutable copies — RENAME may rewrite dst path, ONLY_NEWER may flip dst_exists.
 				std::string activeLocal = localPath;
 				std::string activeDevice = devicePath;
 				if (dst_exists) {
+					// is_upload=true → src is host, dst is device. is_upload=false → reverse.
+					const std::string& src_path = is_upload ? activeLocal  : activeDevice;
+					const std::string& dst_path = is_upload ? activeDevice : activeLocal;
+					auto src_adb = is_upload ? std::shared_ptr<ADBDevice>() : adb;
+					auto dst_adb = is_upload ? adb : std::shared_ptr<ADBDevice>();
+					uint64_t src_size = 0, dst_size = 0;
+					int64_t src_mtime = 0, dst_mtime = 0;
+					FillFileMeta(src_adb, src_path, isDir, src_size, src_mtime);
+					FillFileMeta(dst_adb, dst_path, isDir, dst_size, dst_mtime);
 					int action = CheckOverwrite(
-						is_upload ? StrMB2Wide(activeDevice) : StrMB2Wide(activeLocal),
-						isMultiple, isDir, *overwriteMode, tr.StateRef());
+						StrMB2Wide(dst_path),
+						isMultiple, isDir, *overwriteMode, tr.StateRef(),
+						src_size, src_mtime, dst_size, dst_mtime,
+						MakeOverwriteViewer(src_adb, src_path, isDir),
+						MakeOverwriteViewer(dst_adb, dst_path, isDir));
 					if (action == CA_SKIP || action == CA_ABORT) { tr.MarkSkipped(); return 0; }
 					if (action == CA_RENAME) {
 						std::string fresh = is_upload ? FindFreeAdbName(*adb, activeDevice)
@@ -2443,9 +2601,7 @@ int ADBPlugin::RunTransfer(PluginPanelItem *items, int itemsCount, bool is_uploa
 						: adb->PullFile(activeDevice, activeLocal, cb, onAbort);
 				}
 
-				// Move semantics: delete source after a successful transfer (the original
-				// path, not the rename-target side). Skip/Abort returned earlier; rename
-				// only mutates the destination side.
+				// Move: delete original src on success (rename only mutates dst).
 				if (rc == 0 && move) {
 					if (is_upload) {
 						(void)RemoveLocalPathRecursively(localPath);
@@ -2481,8 +2637,7 @@ int ADBPlugin::DeleteFiles(PluginPanelItem *PanelItem, int ItemsNumber, int OpMo
 	if (ItemsNumber <= 0 || !_isConnected || !_adbDevice || !PanelItem) {
 		return FALSE;
 	}
-	// Cursor on ".." with no selection — far2l still calls DeleteFiles with that single
-	// item; refuse silently rather than prompting/attempting to remove the parent entry.
+	// Cursor on ".." with no selection — refuse silently (far2l still calls DeleteFiles for it).
 	if (ItemsNumber == 1 && PanelItem[0].FindData.lpwszFileName) {
 		std::string nm = StrWide2MB(PanelItem[0].FindData.lpwszFileName);
 		if (nm == "." || nm == "..") return FALSE;

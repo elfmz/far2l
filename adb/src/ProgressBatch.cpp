@@ -72,8 +72,7 @@ void ProgressTracker::Tick(int percent, const std::string& sub_path, uint64_t su
 	bool path_changed = false;
 	bool credited_100 = false;
 
-	// Path change = new file starting. Credit prev file's bytes if it didn't reach 100%
-	// (path-change implies prev is done one way or another, account for its size either way).
+	// Path change = new file. Credit prev file's bytes if it didn't reach 100%.
 	if (!sub_path.empty() && sub_path != _cur_path) {
 		path_changed = true;
 		++_emitted_paths;
@@ -105,15 +104,13 @@ void ProgressTracker::Tick(int percent, const std::string& sub_path, uint64_t su
 	_state.file_complete = percent;
 	if (_cur_size > 0) _state.file_total = _cur_size;
 
-	// Bytes contribution of current file: zero if already credited (avoids double-count
-	// on 100% Tick where _bytes_done already includes this file's size).
+	// Zero contribution if already credited — avoids double-count on 100% Tick.
 	uint64_t in_progress = (!_cur_counted && _cur_size > 0) ? (_cur_size * percent) / 100 : 0;
 	uint64_t this_unit = _bytes_done + in_progress;
 	if (_unit_bytes > 0 && this_unit > _unit_bytes) this_unit = _unit_bytes;
 	const uint64_t total_bytes_now = _bytes_before + this_unit;
 
-	// Bytes-derived file count — smooths counter when adb -p skips per-file emits on
-	// fast/small transfers (assumes uniform avg size, monotonic by construction).
+	// Bytes-derived file count smooths the counter when adb -p skips per-file emits.
 	uint64_t bytes_est_files = 0;
 	if (_unit_bytes > 0 && _unit_files > 0) {
 		bytes_est_files = (_unit_files * this_unit) / _unit_bytes;
@@ -127,10 +124,7 @@ void ProgressTracker::Tick(int percent, const std::string& sub_path, uint64_t su
 	bool count_advanced = false;
 	while (cnt > prev_count && !_state.count_complete.compare_exchange_weak(prev_count, cnt)) {}
 	if (cnt > prev_count) count_advanced = true;  // we won the CAS
-	// CAS-bump count_total only when we have a real total to defend (state.all_total > 0).
-	// Without a known total, bumping would chase count_complete → "5 of 5 → 6 of 6" — meaningless
-	// "of N" that grows in lockstep. Dialog hides "of N" when count_total <= 1, so leaving it
-	// at 0 is the right degradation when pre-scan returned no totals (failed/missing).
+	// Bump count_total only when we have a real total — otherwise the "of N" grows in lockstep with count_complete.
 	if (_state.all_total.load() > 0) {
 		uint64_t total_prev = _state.count_total.load();
 		while (cnt > total_prev && !_state.count_total.compare_exchange_weak(total_prev, cnt)) {}
@@ -250,8 +244,6 @@ BatchResult RunBatch(const std::wstring& title,
 					state.file_complete = 100;
 					state.all_complete = bytes_done;
 					state.count_complete = files_done;
-					// Reconcile: expected (u.total_files) vs emitted by adb -p (tr.EmittedPaths())
-					// vs credited via Tick (tr.FilesDone()). Mismatch reveals where files were missed.
 					DBG("UNIT[%zu] OK expected=%llu emitted=%llu credited=%llu bytes_credited=%llu/%llu | "
 						"cumul bytes=%llu/%llu files=%llu/%llu\n",
 						unit_idx,

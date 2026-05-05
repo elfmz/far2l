@@ -46,8 +46,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *Info)
 	static const wchar_t *s_menu_strings[] = {L"ADB Plugin"};
 	Info->PluginMenuStrings = s_menu_strings;
 	Info->PluginMenuStringsNumber = 1;
-	// No PluginConfigStrings — plugin has no settings, hide from F9 →
-	// Options → Plugins configuration list.
+	// No PluginConfigStrings — plugin has no settings; hide from F9 → Options → Plugins.
 	Info->PluginConfigStrings = nullptr;
 	Info->PluginConfigStringsNumber = 0;
 	static const wchar_t *s_command_prefix = L"adb";

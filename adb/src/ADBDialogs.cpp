@@ -12,6 +12,32 @@ extern FarStandardFunctions g_FSF;
 
 // --- Helpers ---
 
+// Native far2l format (copy.cpp:3090): 17-col label + 25-col size + date/time. 17+25+20=62 cells = OverwriteDialog row width (5..66), so size+date hug the right border.
+static std::wstring FormatFileInfo(const wchar_t* label, uint64_t size, int64_t mtime)
+{
+    std::wostringstream out;
+    out << label;
+    int pad = 17 - (int)wcslen(label);
+    if (pad < 1) pad = 1;
+    out << std::wstring(pad, L' ');
+    std::wstring sz = std::to_wstring(size);
+    if (sz.size() < 25) out << std::wstring(25 - sz.size(), L' ');
+    out << sz;
+    if (mtime > 0) {
+        std::time_t t = static_cast<std::time_t>(mtime);
+        std::tm tm{};
+        if (localtime_r(&t, &tm)) {
+            wchar_t buf[64];
+            swprintf(buf, sizeof(buf)/sizeof(buf[0]),
+                     L" %02d-%02d-%04d %02d:%02d:%02d",
+                     tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
+                     tm.tm_hour, tm.tm_min, tm.tm_sec);
+            out << buf;
+        }
+    }
+    return out.str();
+}
+
 static std::wstring FormatTimeLong(uint64_t total_seconds)
 {
     if (total_seconds > 999999) total_seconds = 999999;
@@ -327,49 +353,59 @@ LONG_PTR AbortConfirmDialog::DlgProc(int msg, int param1, LONG_PTR param2)
 
 bool AbortConfirmDialog::Ask()
 {
-    // Separator at X2=50, W=54=50+4, extra_width=3. Buttons at X1=0 drag
-    // min_x to 0; EW=51, extra_width=3 → W=54.
     int reply = Show(L"ADBAbortConfirm", 3, 2, FDLG_WARNING);
     return (reply == _i_confirm || reply < 0);
 }
 
 // --- OverwriteDialog ---
 
-OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple, bool is_directory)
-    : _is_multiple(is_multiple)
+OverwriteDialog::OverwriteDialog(const std::wstring &filename, bool is_multiple, bool is_directory,
+                                 uint64_t src_size, int64_t src_mtime,
+                                 uint64_t dst_size, int64_t dst_mtime,
+                                 ViewFn view_new, ViewFn view_existing)
+    : _is_multiple(is_multiple),
+      _view_new(std::move(view_new)),
+      _view_existing(std::move(view_existing))
 {
-    _di.SetBoxTitleItem(is_directory ? L"Folder already exists" : L"File already exists");
+    // Layout matches MTP plugin's OverwriteDialog: "Warning" box title + centered header line + filename + separators bracketing optional info rows + "Remember choice" checkbox driving sticky-all (no separate "All" buttons). Width 72 (box X2=68) — content area 5..66 = 62 cells.
+    _di.SetBoxTitleItem(L"Warning");
     _di.SetLine(2);
-
-    // Abbreviate path from left if too long (keep filename visible)
-    std::wstring display_path = AbbreviatePathLeft(filename, 52);
-    _di.AddAtLine(DI_TEXT, 5, 58, 0, display_path.c_str());
-
+    _di.AddAtLine(DI_TEXT, 5, 66, DIF_CENTERGROUP,
+                  is_directory ? L"Folder already exists" : L"File already exists");
     _di.NextLine();
-    _di.AddAtLine(DI_TEXT, 4, 59, DIF_BOXCOLOR | DIF_SEPARATOR);
-
+    _di.AddAtLine(DI_TEXT, 5, 66, 0, AbbreviatePathLeft(filename, 62).c_str());
     _di.NextLine();
-    if (_is_multiple) {
-        _i_overwrite = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Overwrite");
-        _i_skip      = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Skip");
-        _i_rename    = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Rename");
-        _i_only_newer = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Newer");
-        _i_cancel    = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Cancel");
+    _di.AddAtLine(DI_TEXT, 5, 0, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+    // New/Existing info rows: clickable button when caller wired a viewer (DN_BTNCLICK in DlgProc), inert text otherwise. Suppressed entirely if no metadata supplied (back-compat for callers that didn't pass sizes/mtimes).
+    const bool show_info = (src_size != 0 || src_mtime != 0 || dst_size != 0 || dst_mtime != 0);
+    if (show_info) {
         _di.NextLine();
-        _i_overwrite_all = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"Overwrite a&ll");
-        _i_skip_all      = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"Skip al&l");
-    } else {
-        _i_overwrite = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Overwrite");
-        _i_skip      = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Skip");
-        _i_rename    = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Rename");
-        _i_only_newer = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Newer");
-        _i_cancel    = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Cancel");
-        _i_overwrite_all = -1;
-        _i_skip_all = -1;
+        const int new_type = _view_new ? DI_BUTTON : DI_TEXT;
+        const unsigned int new_flags = _view_new ? (DIF_BTNNOCLOSE | DIF_NOBRACKETS) : 0;
+        _i_src_info = _di.AddAtLine(new_type, 5, 66, new_flags,
+                                    FormatFileInfo(L"New", src_size, src_mtime).c_str());
+        _di.NextLine();
+        const int dst_type = _view_existing ? DI_BUTTON : DI_TEXT;
+        const unsigned int dst_flags = _view_existing ? (DIF_BTNNOCLOSE | DIF_NOBRACKETS) : 0;
+        _i_dst_info = _di.AddAtLine(dst_type, 5, 66, dst_flags,
+                                    FormatFileInfo(L"Existing", dst_size, dst_mtime).c_str());
+        _di.NextLine();
+        _di.AddAtLine(DI_TEXT, 5, 0, DIF_BOXCOLOR | DIF_SEPARATOR);
     }
 
-    SetFocusedDialogControl(_i_skip);
-    SetDefaultDialogControl(_i_skip);
+    _di.NextLine();
+    _i_remember = _di.AddAtLine(DI_CHECKBOX, 5, 30, 0, L"&Remember choice");
+    _di.NextLine();
+    _di.AddAtLine(DI_TEXT, 5, 0, DIF_BOXCOLOR | DIF_SEPARATOR);
+    _di.NextLine();
+    _i_overwrite  = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Overwrite");
+    _i_skip       = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Skip");
+    _i_only_newer = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"Ne&wer");
+    _i_rename     = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Rename");
+    _i_cancel     = _di.AddAtLine(DI_BUTTON, 0, 0, DIF_CENTERGROUP, L"&Cancel");
+    SetFocusedDialogControl(_i_remember);
+    SetDefaultDialogControl(_i_overwrite);
 }
 
 LONG_PTR OverwriteDialog::DlgProc(int msg, int param1, LONG_PTR param2)
@@ -378,19 +414,23 @@ LONG_PTR OverwriteDialog::DlgProc(int msg, int param1, LONG_PTR param2)
         Close(_i_cancel);
         return TRUE;
     }
+    if (msg == DN_BTNCLICK) {
+        if (param1 == _i_src_info && _view_new)      { _view_new();      return TRUE; }
+        if (param1 == _i_dst_info && _view_existing) { _view_existing(); return TRUE; }
+    }
     return BaseDialog::DlgProc(msg, param1, param2);
 }
 
 OverwriteDialog::Result OverwriteDialog::Ask()
 {
-    int reply = Show(L"ADBOverwrite", 6, 2, FDLG_WARNING);
-
-    if (reply == _i_overwrite) return OVERWRITE;
-    if (reply == _i_skip) return SKIP;
-    if (reply == _i_rename) return RENAME;
-    if (reply == _i_only_newer) return ONLY_NEWER;
-    if (_is_multiple && reply == _i_overwrite_all) return OVERWRITE_ALL;
-    if (_is_multiple && reply == _i_skip_all) return SKIP_ALL;
+    // W = box.X2+4 = 72; EW=69 → extra_width=3 (matches MTP).
+    int reply = Show(L"ADBOverwrite", 3, 2, FDLG_WARNING);
+    const bool remember = _is_multiple
+        && (SendDlgMessage(DM_GETCHECK, _i_remember, 0) == BSTATE_CHECKED);
+    if (reply == _i_overwrite)  return remember ? OVERWRITE_ALL : OVERWRITE;
+    if (reply == _i_skip)       return remember ? SKIP_ALL : SKIP;
+    if (reply == _i_only_newer) return ONLY_NEWER;  // sticky-newer not currently consumed by ADB callsites
+    if (reply == _i_rename)     return RENAME;
     return CANCEL;
 }
 
@@ -517,7 +557,6 @@ void ProgressDialog::UpdateDialog()
     int file_percent = (int)_state.file_complete.load();
     if (file_percent > 100) file_percent = 100;
 
-    // is_directory tracks top-level unit type; current_file rotates over inner files.
     // Trailing "/" only when current_file is empty — never glued onto an inner filename.
     std::wstring full_from = source_path;
     std::wstring full_to = dest_path;
@@ -635,9 +674,7 @@ void ProgressDialog::UpdateDialog()
 
     std::wstring speed_str = FormatSpeed(_speed);
 
-    // Calculate spacing for proper alignment
-    // Line width: 54 chars (positions 5-58)
-    const int line_width = 54;
+    const int line_width = 54;  // positions 5-58
     int time_len = time_part.size();
     int remaining_len = remaining_part.size();
     int speed_len = speed_str.size();
@@ -837,8 +874,7 @@ bool ADBDialogs::AskCreateDirectory(std::string& dir_name)
                   L"ADB_MakeDir", dir_name, dir_name)) {
         return false;
     }
-    // Trim and reject meaningless names: whitespace-only, ".", ".." would either
-    // fail on-device with a cryptic shell error or silently no-op. Catch early.
+    // Reject whitespace/./.. early — would fail or silently no-op on device.
     auto ltrim = dir_name.find_first_not_of(" \t\r\n");
     if (ltrim == std::string::npos) return false;
     auto rtrim = dir_name.find_last_not_of(" \t\r\n");

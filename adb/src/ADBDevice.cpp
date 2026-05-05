@@ -191,10 +191,7 @@ bool ProgressParser::ExtractProgress(const std::string &s, int &percent, std::st
     else if (start >= 2 && s[start - 1] == ' ' && s[start - 2] == ':') {
         path.assign(s, 0, start - 2);
     }
-    // Strip a leading "[<spaces>NN%]<spaces>" overall-batch prefix that adb prepends in the
-    // combined "[ NN%] <path>: NN%" format. Without this, every emit for the same file
-    // produces a different _cur_path (the [NN%] varies) → spurious path-changes → file count
-    // races to unit_files clamp instantly while transfer is still running.
+    // Strip leading "[NN%]" batch prefix from adb's combined format — varying prefix would otherwise spam path-changes and inflate file count.
     if (!path.empty() && path[0] == '[') {
         size_t close = path.find(']');
         if (close != std::string::npos) {
@@ -319,8 +316,7 @@ std::string ADBDevice::RunAdbCommandWithProgress(const std::vector<std::string> 
 
 bool ADBDevice::IsSuccessResult(const std::string& result, bool is_push) const
 {
-    // Trailer "(<N> bytes in <T>s)" — only emitted on success and never abbreviated by adb's
-    // terminal-width path truncation (which can swallow "file pushed"/"skipped" tokens).
+    // Trailer "(<N> bytes in <T>s)" — only on success, never truncated by adb's path abbreviation.
     if (result.find("bytes in ") != std::string::npos) return true;
     if (result.find("skipped") != std::string::npos) return true;
     if (is_push) {
@@ -615,8 +611,7 @@ int ADBDevice::TransferItem(const std::string& src, const std::string& dst, bool
         parser.start();
         result = RunAdbCommandWithProgress(args, std::ref(parser), abort_check);
         parser.drain();
-        // Exit code is the truth source — adb's stdout trailer ("X file(s) pushed") gets
-        // truncated by terminal-width path abbreviation, breaking text-based detection.
+        // Exit code is the truth source — adb's stdout trailer can be truncated by path abbreviation.
         if (ADBShell::lastPtyExit() == 0 || IsSuccessResult(result, is_push)) {
             parser.complete();
             return 0;
@@ -840,9 +835,7 @@ void ADBDevice::BatchDirectoryFileSizes(const std::vector<std::string>& devicePa
     // Pre-create entries so empty top-level dirs (no files via -type f) still produce an entry.
     for (const auto& p : devicePaths) out[p];
 
-    // One `find` over all top-level dirs → one shell roundtrip (~200ms persistent-shell overhead
-    // dominates; per-dir cost amortizes to near-zero). %p (full path) lets us prefix-match each
-    // emitted file back to its top-level dir, %P would be ambiguous across multiple roots.
+    // Single `find` over all roots — one shell roundtrip; %p (full path) lets us prefix-match each file back to its root.
     std::string command = "find";
     for (const auto& p : devicePaths) command += " " + ADBUtils::ShellQuote(p);
     command += " -type f -printf '%s\\t%p\\n' 2>/dev/null";

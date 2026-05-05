@@ -611,6 +611,16 @@ else()
         " COMPONENT system)
 endif()
 
+if (NOT DEFINED MTP OR MTP)
+    message(STATUS "MTP plugin enabled")
+    add_subdirectory (mtp)
+else()
+    message(STATUS "${ColorRed}MTP plugin disabled due to MTP=${MTP}${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/mtp/plug/mtp.far-plug-wide)
+        " COMPONENT system)
+endif()
+
 ##############################
 # common install directives
 

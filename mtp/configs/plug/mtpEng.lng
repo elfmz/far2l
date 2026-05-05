@@ -1,0 +1,67 @@
+.Language=English,English
+.PluginContents=MTP Plugin
+
+"MTP Plugin"
+"Warning"
+
+"Abort operation"
+"Confirm abort current operation"
+"&Abort operation"
+"&Continue"
+
+"File already exists"
+"New"
+"Existing"
+"&Remember choice"
+"&Overwrite"
+"&Skip"
+"Ne&wer"
+"&Rename"
+"&Cancel"
+
+"Copy to device"
+"Copy from device"
+"Move to device"
+"Move from device"
+"Copying the file"
+"Moving the file"
+"to"
+"Total"
+"Files processed:"
+"of"
+"Time:"
+"Remaining:"
+
+"Delete"
+"Deleting the file or folder"
+
+"MTP/PTP Devices"
+"Device"
+"Manufacturer"
+"Serial"
+"VID:PID"
+"Name"
+"Size"
+
+"Copy"
+"Move"
+"Rename"
+"Rename to:"
+"to:"
+"items"
+
+"Do you wish to delete the file"
+"Do you wish to delete the folder"
+"Do you wish to delete"
+
+"Copy failed"
+"Move failed"
+"Rename failed"
+"Create directory failed"
+"MTP: cannot open device"
+"unknown error"
+
+"Could not resolve destination on device. Check that all path components exist or can be created."
+"Could not resolve destination path. Use ../ for parent or subdir/ for descent."
+"Could not resolve destination path. Check that all folder components exist (or create them first)."
+"CopyObject+Delete fallback also failed."

@@ -773,6 +773,7 @@ private:
 	SHORT ClampColumn(int pixel_x) const;
 	SHORT ClampRow(int pixel_y) const;
 	static WORD SDLKeycodeToVK(SDL_Keycode key);
+	static WORD SDLScancodeToLayoutIndependentVK(SDL_Scancode scancode);
 	static int IsEnhancedKey(SDL_Keycode key, SDL_Scancode scancode);
 	static DWORD ModifiersToControlState(Uint16 mod);
 	void DamageAreaBetween(COORD c1, COORD c2);
@@ -1974,6 +1975,14 @@ WORD SDLConsoleBackend::SDLKeycodeToVK(SDL_Keycode key)
 	}
 }
 
+WORD SDLConsoleBackend::SDLScancodeToLayoutIndependentVK(SDL_Scancode scancode)
+{
+	if (scancode >= SDL_SCANCODE_A && scancode <= SDL_SCANCODE_Z) {
+		return static_cast<WORD>('A' + (scancode - SDL_SCANCODE_A));
+	}
+	return 0;
+}
+
 DWORD SDLConsoleBackend::ModifiersToControlState(Uint16 mod)
 {
 	DWORD state = 0;
@@ -2042,6 +2051,9 @@ void SDLConsoleBackend::HandleKeyEvent(const SDL_KeyboardEvent &key)
 	ir.Event.KeyEvent.bKeyDown = (key.type == SDL_KEYDOWN);
 	ir.Event.KeyEvent.wRepeatCount = key.repeat ? key.repeat : 1;
 	ir.Event.KeyEvent.wVirtualKeyCode = SDLKeycodeToVK(key.keysym.sym);
+	if (!ir.Event.KeyEvent.wVirtualKeyCode && (key.keysym.mod & (KMOD_CTRL | KMOD_ALT | KMOD_GUI)) != 0) {
+		ir.Event.KeyEvent.wVirtualKeyCode = SDLScancodeToLayoutIndependentVK(key.keysym.scancode);
+	}
 	ir.Event.KeyEvent.wVirtualScanCode = key.keysym.scancode;
 	ir.Event.KeyEvent.uChar.UnicodeChar = 0;
 	ir.Event.KeyEvent.dwControlKeyState = ModifiersToControlState(key.keysym.mod);

@@ -47,6 +47,7 @@ enum MTPLng
 
     // Panel titles + column headers
     MDevicesTitle,          // "MTP/PTP Devices"
+    MNoDevicesPanelTitle,   // "MTP: No devices found"
     MColDevice,             // "Device"
     MColManufacturer,       // "Manufacturer"
     MColSerial,             // "Serial"

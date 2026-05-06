@@ -1441,10 +1441,22 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	int _prev_key_code = _key_tracker.LastKeydown().GetKeyCode();
 
 	_key_tracker.OnKeyDown(event, now);
+
+	// Must reset before the Composing() early-return below — otherwise
+	// OnChar's `!_last_keydown_enqueued` gate stays poisoned by the prior
+	// keystroke and silently drops the AltGr character.
+	_last_keydown_enqueued = false;
+
+	// In composing mode skip only printable keys: the layout produces a
+	// glyph that arrives via OnChar. F-keys / navigation have no layout
+	// glyph, so let them fall through and dispatch as Alt+key.
 	if (_key_tracker.Composing()) {
-		fprintf(stderr, " COMPOSING\n");
-		event.Skip();
-		return;
+		const int kc = event.GetKeyCode();
+		if (kc >= 0x20 && kc < 0x7f) {
+			fprintf(stderr, " COMPOSING\n");
+			event.Skip();
+			return;
+		}
 	}
 
 	fprintf(stderr, "\n");
@@ -1464,8 +1476,6 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 					_exclusive_hotkeys.Reset();
 		}
 	}
-
-	_last_keydown_enqueued = false;
 
 	wx2INPUT_RECORD ir(TRUE, event, _key_tracker);
 	const DWORD &dwMods = (ir.Event.KeyEvent.dwControlKeyState
@@ -1749,6 +1759,16 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 			// use control keys state from prev keydown event
 			wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
 			ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
+		}
+
+		// In composing mode strip Alt so far2l types '@' instead of firing Alt+@.
+		// On X11/Wayland AltGr also synthesizes a Ctrl event, strip that too.
+		if (_key_tracker.Composing()) {
+			ir.Event.KeyEvent.dwControlKeyState &= ~(LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED
+#ifndef __WXOSX__
+				| LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED
+#endif
+				);
 		}
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;

@@ -597,6 +597,8 @@ void InputSettings()
 		Builder.AddCheckboxAfter(Item, Msg::ConfigExclusiveWinRight, &Opt.ExclusiveWinRight);
 	}
 
+	Builder.AddCheckbox(Msg::ConfigUseRightAltAsAltGr, &Opt.UseRightAltAsAltGr);
+
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
@@ -605,6 +607,7 @@ void InputSettings()
 		}
 		ApplyConsoleTweaks();
 		XlatReinit();
+		WinPortSetUseRightAltAsAltGr(Opt.UseRightAltAsAltGr ? TRUE : FALSE);
 	}
 }
 
@@ -1218,6 +1221,7 @@ void ApplyConfig()
 {
 	ApplySudoConfiguration();
 	ApplyConsoleTweaks();
+	WinPortSetUseRightAltAsAltGr(Opt.UseRightAltAsAltGr ? TRUE : FALSE);
 }
 
 void LanguageSettings()

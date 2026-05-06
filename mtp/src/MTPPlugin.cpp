@@ -1496,8 +1496,14 @@ int MTPPlugin::ListDevices(PluginPanelItem** panel_items, int* items_number) {
         }
     }
 
-    if (out.empty()) {
-        out.push_back(MakePanelItem("No MTP/PTP USB devices found", false, 0, 0, 0, 0, 0));
+    // Mirror ADB plugin: when no devices are present, show a "<Not found>" placeholder
+    // row with a "<Connect device>" hint, so the panel doesn't look empty/broken.
+    // out always contains "..", so test devices.value not out.
+    if (devices.value.empty()) {
+        _panel_title = Lng(MNoDevicesPanelTitle);
+        out.push_back(MakePanelItem("<Not found>", false, 0, 0, 0, 0, 0, "<Connect device>"));
+    } else {
+        _panel_title = Lng(MDevicesTitle);
     }
 
     *items_number = static_cast<int>(out.size());

@@ -20,6 +20,8 @@
 
 #include "SDLShared.h"
 
+struct SDLFontSelection;
+
 class SDLFontManager
 {
 public:
@@ -105,5 +107,6 @@ int ClampFontPointSize(int pt);
 int NormalizeFontPointSize(float pt);
 bool ExtractFontPointSizeFromLine(const std::string &line, int &out_pt);
 bool SaveFontPreference(const std::string &path, int face_index, int point_size);
+bool LoadFontPreferenceFromConfig(SDLFontSelection &selection);
 bool EnsureFontPreferenceSelected();
 int LoadFontPointSizeFromConfig();

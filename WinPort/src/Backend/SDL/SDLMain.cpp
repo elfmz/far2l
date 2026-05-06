@@ -2338,6 +2338,7 @@ void SDLConsoleBackend::RequestFontDialog()
 void SDLConsoleBackend::ChangeFontInteractive()
 {
 	SDLFontSelection selection;
+	LoadFontPreferenceFromConfig(selection);
 	const SDLFontDialogStatus status = SDLShowFontPicker(selection);
 	if (_window) {
 		SDL_ShowWindow(_window);
@@ -2361,10 +2362,7 @@ void SDLConsoleBackend::ChangeFontInteractive()
 		return;
 	}
 
-	const std::string descriptor = selection.fc_name.empty() ? selection.path : selection.fc_name;
-	const int descriptor_face = selection.fc_name.empty() ? selection.face_index : -1;
-
-	if (descriptor.empty()) {
+	if (selection.path.empty()) {
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "far2l", "Selected font did not provide a path.", _window);
 		return;
 	}
@@ -2373,7 +2371,7 @@ void SDLConsoleBackend::ChangeFontInteractive()
 		? NormalizeFontPointSize(selection.point_size)
 		: LoadFontPointSizeFromConfig();
 
-	if (!SaveFontPreference(descriptor, descriptor_face, chosen_size)) {
+	if (!SaveFontPreference(selection.path, selection.face_index, chosen_size)) {
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "far2l", "Unable to save selected font.", _window);
 		return;
 	}

@@ -1496,9 +1496,7 @@ int MTPPlugin::ListDevices(PluginPanelItem** panel_items, int* items_number) {
         }
     }
 
-    // Mirror ADB plugin: when no devices are present, show a "<Not found>" placeholder
-    // row with a "<Connect device>" hint, so the panel doesn't look empty/broken.
-    // out always contains "..", so test devices.value not out.
+    // No-devices placeholder row (mirrors ADB); out always has "..", so test devices.value.
     if (devices.value.empty()) {
         _panel_title = Lng(MNoDevicesPanelTitle);
         out.push_back(MakePanelItem("<Not found>", false, 0, 0, 0, 0, 0, "<Connect device>"));

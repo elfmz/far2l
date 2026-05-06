@@ -564,11 +564,24 @@ void FileViewer::ShowStatus()
 		NameLength = 20;
 
 	TruncPathStr(strName, NameLength);
+	const int percent = View.LastPage ? 100 : ToPercent64(View.FilePos, View.FileSize);
 	FARString str_codepage;
 	ShortReadableCodepageName(View.VM.CodePage,str_codepage);
-	strStatus.Format(L"%-*ls %5ls %13llu %7.7ls %-4lld %ls%3d%%", NameLength, strName.CPtr(), str_codepage.CPtr(),
-			View.FileSize, Msg::ViewerStatusCol.CPtr(), View.LeftPos, Opt.ViewerEditorClock ? L"" : L" ",
-			(View.LastPage ? 100 : ToPercent64(View.FilePos, View.FileSize)));
+	FormatString status_builder;
+	status_builder << fmt::Cells() << fmt::LeftAlign() << fmt::Size(NameLength) << strName
+			<< L' '
+			<< fmt::Expand(5) << str_codepage
+			<< L' '
+			<< fmt::Expand(13) << View.FileSize
+			<< L' '
+			<< fmt::Size(7) << Msg::ViewerStatusCol
+			<< L' '
+			<< fmt::LeftAlign() << fmt::Expand(4) << View.LeftPos
+			<< L' '
+			<< (Opt.ViewerEditorClock ? L"" : L" ")
+			<< fmt::Expand(3) << percent
+			<< L'%';
+	strStatus = status_builder.strValue();
 	SetFarColor(COL_VIEWERSTATUS);
 	GotoXY(X1, Y1);
 	FS << fmt::Cells() << fmt::LeftAlign() << fmt::Size(View.Width + (View.ViOpt.ShowScrollbar ? 1 : 0))

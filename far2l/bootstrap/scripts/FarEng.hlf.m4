@@ -135,7 +135,7 @@ $ # FAR2L features - Getting Started#
 
  #UI Backends#
     FAR2L has base UI Backends (see details in ~UI backends~@UIBackends@):
-        - #GUI#: uses wxWidgets, works in graphics mode, #ideal UX#
+        - #GUI|WX# (uses wxWidgets) or #GUI|SDL#: works in graphics mode, #ideal UX#
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
         - #TTY|Xi#: works in terminal mode, requires a couple of X11 libraries
 (to access clipboard and to get state of all keyboard modifiers), #almost perfect UX#;
@@ -152,7 +152,8 @@ when it starts, far2l switches to #TTY|X# without i.
         - to force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
         - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi#;
         - to force run in plain mode TTY use in command line: #far2l --tty --nodetect=x#;
-        - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
+        - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#;
+        - if your far2l compiled with SDL and WX, to force run GUI|SDL: #far2l --SDL#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
@@ -1003,10 +1004,10 @@ however some options are available only here or in configuration ini-files.
  The options are displayed in a list with four fields per item:
   #-# The name in the SectionName.ParamName format (for example, Editor.TabSize)
   #-# The type (boolean, integer, dword, string, binary or unknown)
-  #-# Whether the option is saved when Far configuration is saved (s) or not (-)
+  #-# Whether the option is saved when Far configuration is saved ('#c#' for common, '#p#' for panels) or not ('#-#')
   #-# The value (for integer or dword types the hexadecimal representation additionally displayed).
- If current value of an option is other than the default, the option is marked with the ‘*’ character to the left of the name
-(‘?’ character marked items without default value).
+ If current value of an option is other than the default, the option is marked with the '#*#' character to the left of the name
+('#?#' character marked items without default value).
 
  Besides the list navigation keys, the following key combinations are supported:
 
@@ -1643,7 +1644,8 @@ $ #UI Backends#
     Depending on build options and available platform features #FAR2L# can render
 its interface using different so-called backends:
 
-    - #GUI backend:# renders into own GUI window, providing most complete keyboard hotkeys support.
+    - #GUI backend:# renders into own GUI window, providing most complete keyboard hotkeys support
+(may be #GUI|WX# based on wxWidgets or #GUI|SDL#).
     - #TTY backend:# renders into plain TTY terminal. Its a most compatible way but also providing
 most lame UX: some hotkeys may not work, clipboard is not shared with host etc.
     - #TTY|X backend:# renders into TTY terminal and uses X11 to access clipboard and to get state of
@@ -2536,7 +2538,11 @@ is also a risk of accidental selection due to unintentional key presses, given t
 of such lists. If you do not use this feature or feel uncomfortable with it, you can disable it.
 
   #Auto save setup#
-  If checked, FAR2L will save setup automatically. The current folders for both panels will be also saved.
+  If checked, FAR2L will save setup automatically on FAR exit.
+The panels state and current folders for both panels will be also saved.
+
+  #Auto save panels state#
+  Panels' state (current folders, files, sort order, etc.) for both panels is automatically saved on FAR exit.
 
 
 @PanelSettings

@@ -156,7 +156,7 @@ ControlObject::~ControlObject()
 	_OT(SysLog(L"[%p] ControlObject::~ControlObject()", this));
 
 	if (Cp() && Cp()->ActivePanel) {
-		if (Opt.AutoSaveSetup)
+		if (Opt.AutoSaveSetup || Opt.AutoSavePanels)
 			ConfigOptSave(false);
 
 		if (Cp()->ActivePanel->GetMode() != PLUGIN_PANEL) {

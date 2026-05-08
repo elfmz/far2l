@@ -2166,8 +2166,8 @@ upd:"by name and path"
 upd:"by name and path"
 
 ConfigAutoHighlightHistory
-"Автоподсветка в списках истории"
-"Autohighlight in history"
+"Автопод&светка в списках истории"
+"&Autohighlight in history"
 upd:"Autohighlight in history"
 upd:"Autohighlight in history"
 upd:"Autohighlight in history"
@@ -2219,6 +2219,17 @@ ConfigAutoSave
 "Auto&guardar configuración"
 "Автозапис кон&фігурації"
 "А&ўтазапіс наладаў"
+
+ConfigAutoSavePanels
+"Автосохранение состояния &панелей"
+"Auto save &panels state"
+"Ukládat stav pane&lů"
+"&Panelzustand autospeichern"
+"Pane&lek állapot mentése"
+"Autozapis stanu pane&li"
+"Auto guardar estado de pane&les"
+"Автозбереження стану &панелей"
+"Аўтазахаванне стану &панэлей"
 
 ConfigPanelTitle
 l:
@@ -8155,6 +8166,28 @@ EditNotFound
 "No se puede encontrar la cadena"
 "Рядок не знайдено"
 "Радок не знойдзены"
+
+EditEmptySearchField
+"Пустое поле поиска"
+"Search field is empty"
+"Vyhledávací pole je prázdné"
+"Suchfeld ist leer"
+"A keresőmező üres"
+"Pole wyszukiwania jest puste"
+"El campo de búsqueda está vacío"
+"Поле пошуку порожнє"
+"Поле пошуку пустое"
+
+EditInvalidRegexp
+"Недопустимое регулярное выражение"
+"Invalid regular expression"
+"Neplatný regulární výraz"
+"Ungültiger regulärer Ausdruck"
+"Érvénytelen reguláris kifejezés"
+"Nieprawidłowe wyrażenie regularne"
+"Expresión regular no válida"
+"Неприпустимий регулярний вираз"
+"Недапушчальны рэгулярны выраз"
 
 EditAskReplace
 l:

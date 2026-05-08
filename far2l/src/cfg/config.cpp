@@ -65,6 +65,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DialogBuilder.hpp"
 #include "vtshell.h"
 #include "ConfigRW.hpp"
+#include "ConfigOptSaveLoad.hpp"
 #include "AllXLats.hpp"
 #include "xlat.hpp"
 
@@ -205,10 +206,14 @@ void SystemSettings()
 	Builder.AddCheckbox(Msg::ConfigAutoHighlightHistory, &Opt.AutoHighlightHistory);
 	Builder.AddSeparator();
 
-	Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSaveSetup = Builder.AddCheckbox(Msg::ConfigAutoSave, &Opt.AutoSaveSetup);
+	auto AutoSavePanels = Builder.AddCheckbox(Msg::ConfigAutoSavePanels, &Opt.AutoSavePanels);
+	AutoSavePanels->Indent(4);
+	Builder.LinkFlags(AutoSaveSetup, AutoSavePanels, DIF_DISABLE, false, false);
 	Builder.AddOKCancel();
 
 	if (Builder.ShowDialog()) {
+		ConfigOptSaveAutoOptions();
 		SanitizeHistoryCounts();
 		ApplySudoConfiguration();
 	}
@@ -852,18 +857,18 @@ void InterfaceSettings()
 			em.Add(L"From system locale");
 			em.AddFormat(L"Date format from locale:      \"%s\"", format_date.c_str());
 			em.AddFormat(L"  Date order:        %s (order %d)",
-				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
+				(pos_date_2 != std::string::npos) ? "imported" : "unchanged",
 				DateFormatIndex);
 			em.AddFormat(L"  Date separator:    %s (\'%ls\')",
-				(pos_date_2 != std::string::npos) ? "imported" : "did not changed",
+				(pos_date_2 != std::string::npos) ? "imported" : "unchanged",
 				strDateSeparator.CPtr());
 			em.AddFormat(L"Time format from locale:      \"%s\"", format_time.c_str());
 			em.AddFormat(L"  Time separator:    %s (\'%ls\')",
-				(pos_time_2 != std::string::npos) ? "imported" : "did not changed",
+				(pos_time_2 != std::string::npos) ? "imported" : "unchanged",
 				 strTimeSeparator.CPtr());
 			em.AddFormat(L"DecimalSeparator from locale: \"%s\"", format_decimal.c_str());
 			em.AddFormat(L"  Decimal separator: %s (\'%ls\')",
-				length_decimal>0 ? "imported" : "did not changed",
+				length_decimal>0 ? "imported" : "unchanged",
 				strDecimalSeparator.CPtr());
 			em.Add(Msg::Ok);
 			em.Show(MSG_LEFTALIGN |

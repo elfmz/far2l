@@ -1,0 +1,166 @@
+.Language=English,English
+.PluginContents=ADB Plugin
+
+@Contents
+$ #ADB Plugin#
+ Browse and manage files on Android devices over ADB
+directly from far2l.
+
+   ~Device list~@DeviceList@
+   ~File operations~@FileOps@
+   ~Shell commands~@ShellCommands@
+   ~Keyboard shortcuts~@Shortcuts@
+   ~Limitations~@Limitations@
+   ~Troubleshooting~@Troubleshooting@
+
+@DeviceList
+$ #Device list#
+ When opened, the plugin lists connected ADB devices:
+
+   #Serial Number#  - device serial or network address
+   #Device Name#    - friendly name from device settings
+   #Model#          - device model identifier
+   #Port#           - USB port or connection type
+
+ With one device, the plugin auto-connects. With multiple
+devices, select one and press #Enter#.
+
+ If no devices appear, enable USB debugging in Developer
+Options, accept the RSA fingerprint, and confirm via
+#adb devices# in a terminal.
+
+ ~Contents~@Contents@
+
+@FileOps
+$ #File operations#
+ Standard far2l file operations:
+
+   #F3#     - View file (pulled to a temp location)
+   #F5#     - Copy between device and host
+   #F6#     - Move between device and host
+   #F7#     - Create directory on device
+   #F8#     - Delete from device
+   #Enter#  - Enter directory
+
+ When both panels show the same device via ADB Plugin,
+#F5#/#F6# perform an on-device copy/move without host
+roundtrip.
+
+ The progress dialog shows current file, percentage,
+total bytes, elapsed/remaining time, and speed. Press
+#Cancel# to abort.
+
+ ~Contents~@Contents@
+
+@ShellCommands
+$ #Shell commands#
+ Every command typed in the far2l command line while the
+ADB panel is active is forwarded to the device shell.
+The #adb:# prefix is accepted and stripped if present.
+
+ Output goes to far2l's user screen (press #Ctrl+O# to
+revisit). If a command exits non-zero AND produces no
+output, the plugin appends a line like #->[Exit code: N]#
+so silent failures are visible.
+
+ Working directory is synchronized via #pwd# after each
+command; a successful #cd# updates the panel listing and
+the "<cwd> $ <cmd>" command echo. The far2l prompt text
+itself updates on the next keystroke (far2l core quirk).
+
+ The plugin uses a persistent #adb shell -T# session for
+deterministic IPC, so interactive tools (#vi#, #less#,
+#top#) do not work — use non-interactive commands.
+
+ ~Contents~@Contents@
+
+@Shortcuts
+$ #Keyboard shortcuts#
+
+   #Enter#      - Enter directory / connect to device
+   #F3#         - View file
+   #F5#         - Copy
+   #F6#         - Move
+   #F7#         - Make directory
+   #F8#         - Delete
+   #F10#        - Close plugin
+   #Ctrl+\\#     - Go to root
+   #Ctrl+R#     - Refresh panel (after external changes)
+   #Ctrl+O#     - Show command output history
+
+ ~Contents~@Contents@
+
+@Limitations
+$ #Limitations#
+  - Interactive tools (#vi#, #less#, #top#) are not
+    supported.
+  - Command timeout is 30 seconds. A long-running command
+    (e.g. #find /#) blocks further plugin operations until
+    it completes or the plugin is reopened.
+  - External file changes (another #adb# session, app
+    running on device) are NOT auto-detected. Press
+    #Ctrl+R# to refresh.
+  - Sort mode resets on plugin close (standard far2l
+    plugin-panel behavior).
+
+ ~Contents~@Contents@
+
+@Troubleshooting
+$ #Troubleshooting#
+ #Device not detected#
+   - Enable USB debugging in Developer options
+   - Accept the RSA fingerprint on the device
+   - Verify with #adb devices# in a terminal
+   - Try #adb kill-server && adb start-server#
+
+ #Permission denied#
+   - Many system paths require root; try #adb root#
+     (dev images only)
+
+ #Slow transfers#
+   - Prefer USB 3.0 over Wi-Fi ADB
+   - Many small files transfer slower than few large ones
+
+ #Connection lost#
+   - Reconnect the cable and reopen the plugin
+
+ #Plugin appears to hang#
+   - A running command has the shell. Wait up to 30 s for
+     the timeout, or close the plugin (F10).
+
+ ~Contents~@Contents@
+
+@ADBAbortConfirm
+$ #Abort operation#
+ Confirm aborting the current file transfer.
+
+   #Abort#     - Stop immediately
+   #Continue#  - Resume the transfer
+
+ ~Contents~@Contents@
+
+@ADBOverwrite
+$ #Overwrite confirmation#
+ The destination already exists.
+
+   #Overwrite#      - Replace this file
+   #Skip#           - Skip this file
+   #Overwrite all#  - Replace all, don't ask again
+   #Skip all#       - Skip all, don't ask again
+   #Cancel#         - Abort the operation
+
+ ~Contents~@Contents@
+
+@ADBProgress
+$ #Transfer progress#
+ Shows progress of a copy/move/delete:
+
+   - Source and destination paths
+   - Percentage and progress bar
+   - Total bytes
+   - Files processed / total
+   - Elapsed, remaining, speed
+
+ Press #Cancel# to abort (confirmation required).
+
+ ~Contents~@Contents@

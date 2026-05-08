@@ -324,6 +324,7 @@ private:
 	virtual void DisplayObject();
 	void DeleteDialogObjects();
 	int LenStrItem(int ID, const wchar_t *lpwszStr = nullptr);
+	int IsLastBevelPriorToButtons(int I);
 
 	void ShowDialog(unsigned ID = (unsigned)-1);	// ID=-1 - отрисовать весь диалог
 

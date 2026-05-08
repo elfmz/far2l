@@ -2355,17 +2355,21 @@ void FileEditor::ShowStatus()
 	FARString strWrapMode;
 	if (m_editor->GetWordWrap())
 	{
-		strWrapMode = L"WW ";
-	}
+		strWrapMode = Opt.Backend.UseModernLook ? L"\x21AB\x2140" : L"WW ";
+	}                                                  
+
 	FARString strTabMode;
-	strTabMode.Format(L"%c%d", m_editor->GetConvertTabs() ? 'S' : 'T', m_editor->GetTabSize());
+	strTabMode.Format(L"%ls%d", m_editor->GetConvertTabs() 
+		? (Opt.Backend.UseModernLook ? L"\x21AD" : L"S")
+		: (Opt.Backend.UseModernLook ? L"\x21F0" : L"T"), 
+		m_editor->GetTabSize());
 
 	FARString str_codepage;
 	ShortReadableCodepageName(m_codepage,str_codepage);
 	FormatString FString;
 	FString << fmt::Cells() << fmt::LeftAlign()
-			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'*' : L' ')
-			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ? L'-' : L' ')
+			<< (m_editor->Flags.Check(FEDITOR_MODIFIED) ? (Opt.Backend.UseModernLook ? L'★' : L'*') : L' ')
+			<< (m_editor->Flags.Check(FEDITOR_LOCKMODE) ?(Opt.Backend.UseModernLook ? L'🔒' : L'-') : L' ')
 			<< (m_editor->Flags.Check(FEDITOR_PROCESSCTRLQ) ? L'"' : L' ') << strWrapMode << strTabMode << L' '
 			<< fmt::Expand(5) << EOLName(m_editor->GlobalEOL) << L' ' << fmt::Expand(5) << str_codepage << L' '
 			<< fmt::Expand(7) << Msg::EditStatusLine << L' '
@@ -2397,6 +2401,15 @@ void FileEditor::ShowStatus()
 			Text(X2 - 5, Y1, FarColorToReal(COL_EDITORTEXT), L" ");
 		}
 		ShowTime(FALSE);
+	}
+
+	if(Opt.Backend.UseModernLook && KeyBarVisible) {
+		FARString extra;
+		extra.Format(L"%c%d %d/%d ", 
+			(m_editor->Flags.Check(FEDITOR_MODIFIED) ? L'★' : L' '),
+			m_editor->CurLine->GetCellCurPos() + 1, 
+			m_editor->NumLine + 1, m_editor->NumLastLine).Append(str_codepage);
+		EditKeyBar.Extra(extra);
 	}
 }
 

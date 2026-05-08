@@ -26,8 +26,9 @@ namespace WXCustomDrawChar
 		void SetForeground();
 
 		void FillRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom);
-		void FillGradientRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom);
 		void FillPixel(wxCoord left, wxCoord top);
+
+		void FillGradientRectangle(wxCoord left, wxCoord top, wxCoord right, wxCoord bottom);
 		void DrawEllipticArc(wxCoord left, wxCoord top, wxCoord width, wxCoord height, double start, double end, wxCoord thickness);
 		void FillEllipticPie(wxCoord left, wxCoord top, wxCoord width, wxCoord height, double start, double end);
 		void DrawLine(wxCoord X1, wxCoord Y1, wxCoord X2, wxCoord Y2, wxCoord thickness);

@@ -249,7 +249,7 @@ size_t ItemStringAndSize(DialogItemEx *Data, FARString &ItemString)
 	if (sz > Data->nMaxLength && Data->nMaxLength > 0)
 		sz = Data->nMaxLength;
 
-	if (sz < 40) sz = 40;
+	// if (sz < 40) sz = 40;
 
 	return sz;
 }
@@ -272,13 +272,13 @@ bool ConvertItemEx(CVTITEMFLAGS FromPlugin, FarDialogItem *Item, DialogItemEx *D
 					FARString str;
 					size_t sz = ItemStringAndSize(Data, str);
 					{
-						wchar_t *p = (wchar_t *)malloc((sz + 1) * sizeof(wchar_t));
+						wchar_t *p = (wchar_t *)malloc((sz + 5) * sizeof(wchar_t));
 						Item->PtrData = p;
 
 						if (!p)		// TODO: may be needed message?
 							return false;
 
-						wmemcpy(p, str.CPtr(), sz);
+						wcsncpy(p, str.CPtr(), sz);
 						p[sz] = L'\0';
 					}
 				}
@@ -1810,6 +1810,11 @@ static void SetColorFrame(DWORD Attr, const std::unique_ptr<DialogItemTrueColors
 }
 */
 
+int Dialog::IsLastBevelPriorToButtons(int _I) {
+	unsigned I = _I < 0 ? 0 : (unsigned)_I;
+	return I < ItemCount - 1 && Item[I + 1]->Type == DI_BUTTON && (Item[I + 1]->Flags & DIF_CENTERGROUP);
+}
+
 //////////////////////////////////////////////////////////////////////////
 /*
 	Private:
@@ -1891,7 +1896,11 @@ void Dialog::ShowDialog(unsigned ID)
 		SetCursorType(CursorVisible, CursorSize);
 	}
 
-	if (Opt.Backend.UseModernLook && IsWxBackend()) ID = 0; // draw everything always: backend will filter the rendering area
+	if (Opt.Backend.UseModernLook && IsWxBackend()){ 
+		ID = 0; // draw everything always: backend will filter the rendering area
+		DrawItemCount = ItemCount;
+	}
+
 	dialogBox = false;
 
 	HintBeginContainer();
@@ -2040,7 +2049,10 @@ void Dialog::ShowDialog(unsigned ID)
 
 					if (Opt.Backend.UseModernLook && CX1 >= 0)
 						X = CX1 + 1;
-
+					if (Opt.Backend.UseModernLook && CurItem->strData.GetLength() == 0 && IsLastBevelPriorToButtons(I)) {
+						// crazy plug-in based bevel over the buttons line -> skip it!
+						CurItem->Flags &= ~(DIF_SEPARATOR | DIF_SEPARATOR2);
+					}
 				}
 
 				Y = (CY1 == -1) ? (Y2 - Y1 + 1) / 2 : CY1;

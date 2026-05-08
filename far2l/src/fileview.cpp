@@ -71,7 +71,7 @@ FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int Disabl
 FileViewer::FileViewer(FileHolderPtr NewFileHolder, int EnableSwitch, int DisableHistory, const wchar_t *Title,
 		int X1, int Y1, int X2, int Y2, UINT aCodePage)
 	:
-	View(false, aCodePage), MenuBar(nullptr)
+	View(false, aCodePage)
 {
 	_OT(SysLog(L"[%p] FileViewer::FileViewer(II variant...)", this));
 	DisableEdit = TRUE;
@@ -592,6 +592,12 @@ void FileViewer::ShowStatus()
 			Text(X2 - 5, Y1, FarColorToReal(COL_VIEWERTEXT), L" ");
 		}
 		ShowTime(FALSE);
+	}
+
+	if(Opt.Backend.UseModernLook && KeyBarVisible) {
+		FARString extra;
+		extra.Format(L"%d%% %lld %d ", percent, View.FileSize, View.LeftPos).Append(str_codepage);
+		ViewKeyBar.Extra(extra);
 	}
 }
 

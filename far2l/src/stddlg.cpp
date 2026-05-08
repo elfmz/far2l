@@ -46,6 +46,34 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static int PosSearchText = 2;
 static int PosCheckBoxRegexp;
 
+static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2)
+{
+	if (Msg == DN_CLOSE && Param1 >= 0)
+	{
+		const wchar_t *Txt = (const wchar_t*)SendDlgMessage(hDlg, DM_GETCONSTTEXTPTR, PosSearchText, 0);
+		if (*Txt == 0)
+		{
+			SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
+			Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditEmptySearchField, Msg::Ok);
+			return FALSE;
+		}
+
+		if (PosCheckBoxRegexp >= 0
+				&& SendDlgMessage(hDlg, DM_GETCHECK, PosCheckBoxRegexp, 0) == BSTATE_CHECKED)
+		{
+			RegExp Re;
+			if (!Re.Compile(Txt, OP_PERLSTYLE | OP_OPTIMIZE)) {
+				SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
+				FARString strMsg(Txt);
+				InsertQuote(strMsg);
+				Message(MSG_WARNING, 1, Msg::EditSearchTitle, Msg::EditInvalidRegexp, strMsg, Msg::Ok);
+				return FALSE;
+			}
+		}
+	}
+	return DefDlgProc(hDlg, Msg, Param1, Param2);
+}
+
 int WINAPI GetSearchReplaceString(int IsReplaceMode, FARString *pSearchStr, FARString *pReplaceStr,
 		const wchar_t *TextHistoryName, const wchar_t *ReplaceHistoryName, int *Case, int *WholeWords,
 		int *Reverse, int *SelectFound, int *Regexp, const wchar_t *HelpTopic)

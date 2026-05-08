@@ -54,7 +54,7 @@ enum
 
 const int KEY_COUNT = 12;
 
-typedef wchar_t KeyBarTitle[16];
+typedef wchar_t KeyBarTitle[128]; // was 16
 typedef KeyBarTitle KeyBarTitleGroup[KEY_COUNT];
 
 class KeyBar : public ScreenObject
@@ -79,10 +79,14 @@ private:
 
 	int Hover[KEY_COUNT];
 	int xPos[KEY_COUNT + 1];
+	int SandwichHover;
 
 private:
 	void RefreshObject(bool render);
 	virtual void DisplayObject();
+
+	void ShowContextMenu();
+	FarKey BuildShortcut(int group, int key);
 
 public:
 	KeyBar();
@@ -119,6 +123,7 @@ public:
 	void Change(const wchar_t *NewStr, int Pos) { Change(KBL_MAIN, NewStr, Pos); }
 
 	void Extra(const wchar_t* text){ strExtra = text; Redraw(); }
+	void Extra(const FARString& text){ strExtra = text; Redraw(); }
 									 
 	// Изменение любого Label
 	void Change(int Group, const wchar_t *NewStr, int Pos);

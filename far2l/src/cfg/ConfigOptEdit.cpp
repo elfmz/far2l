@@ -164,7 +164,8 @@ public:
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
 		fssave = (_opt.save == OST_COMMON ? "c" : (_opt.save == OST_PANELS ? "p" : "-"));
-		const wchar_tr* ChangedMark = Opt.Backend.UseModernLook ? L"★" : L"*";
+		const wchar_t* ChangedMark = Opt.Backend.UseModernLook ? L"★" : L"*";
+
 		FormatString out;
 		switch (_opt.type)
 		{

@@ -135,7 +135,7 @@ const ConfigOpt g_cfg_opts[] {
 	{OST_COMMON, NSecColors, "TempColorsRGB", TEMP_COLORSRGB_SIZE, (BYTE *)g_tempcolorsRGB, nullptr},
 
 	{OST_COMMON, NSecColors, "CurrentTheme", &Opt.CurrentTheme, L"" },
-	{OST_COMMON, NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 0 },
+	{OST_COMMON,  NSecColors, "CurrentThemeIsSystemWide", &Opt.IsSystemTheme, 1 },
 
 	{OST_COMMON, NSecScreen, "Clock", &Opt.Clock, 1},
 	{OST_COMMON, NSecScreen, "ViewerEditorClock", &Opt.ViewerEditorClock, 0},
@@ -182,14 +182,6 @@ const ConfigOpt g_cfg_opts[] {
 
 	{OST_COMMON, NSecInterface, "OSC52ClipSet", &Opt.OSC52ClipSet, 0},
 	{OST_COMMON, NSecInterface, "TTYPaletteOverride", &Opt.TTYPaletteOverride, 1},
-
-	{OST_COMMON,  NSecInterface, "UseModernLook", &Opt.Backend.UseModernLook, 1},
-	{OST_COMMON,  NSecInterface, "UseModernLookRoundBorders", &Opt.Backend.UseRoundedBorders, 0},
-	{OST_COMMON,  NSecInterface, "UseModernLookSingleBordersOnly", &Opt.Backend.UseSingleBordersOnly, 0},
-	{OST_COMMON,  NSecInterface, "UseModernLookNoBorders", &Opt.Backend.UseNoBorders, 0},
-	{OST_COMMON,  NSecInterface, "UseModernLookEmbossAsBold", &Opt.Backend.UseEmbossAsBold, 0},
-	{OST_COMMON,  NSecInterface, "UseSoftenBevels", &Opt.Backend.UseSoftenBevels, 1},
-	{OST_COMMON,  NSecInterface, "Use3D", &Opt.Backend.Use3D, 1},
 
 	{OST_NONE,   NSecInterface, "ShowTimeoutDelFiles", &Opt.ShowTimeoutDelFiles, 50},
 	{OST_NONE,   NSecInterface, "ShowTimeoutDACLFiles", &Opt.ShowTimeoutDACLFiles, 50},

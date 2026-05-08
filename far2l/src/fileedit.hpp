@@ -135,7 +135,7 @@ public:
 private:
 	Editor *m_editor;
 	KeyBar EditKeyBar;
-	EditorMenuBar* EditMenuBar;
+	EditorMenuBar* EditMenuBar{nullptr};
 
 	NamesList *EditNamesList;
 	FARString strFileName;

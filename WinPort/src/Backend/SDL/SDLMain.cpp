@@ -13,6 +13,7 @@
 #include "SDLBackendUtils.h"
 #include "SDLFontManager.h"
 #include "SDLPrinterSupport.h"
+#include "SDLShareBackendOptions.h"
 
 #include <SDL.h>
 #include <ft2build.h>
@@ -556,10 +557,28 @@ private:
 	{
 		DWORD64 attrs{0};
 		uint64_t glyph{0};
+        struct {
+            HintContainerType Container: 8; /* e.g menu, dialog, console, editor, viewer, panels, ... */
+            HintObjectType Object: 8; /* e.g push button, text, box, separator, combo box, ...  */
+            int Tag: 8; /* ID if the element */
+            
+            int Focus: 1;
+            int Hover: 1;
+            int Enabled: 1;
+            int Default: 1; 
+            int Beveled: 1;
+            int Checked: 1;
+        } hint;
+
 		bool operator==(const CellSignature &other) const
 		{
-			return attrs == other.attrs && glyph == other.glyph;
+			return attrs == other.attrs && glyph == other.glyph &&
+				hint.Container == other.hint.Container && hint.Object == other.hint.Object &&
+				hint.Tag == other.hint.Tag && hint.Focus == other.hint.Focus && hint.Hover == other.hint.Hover &&
+				hint.Enabled == other.hint.Enabled && hint.Default == other.hint.Default &&
+				hint.Beveled == other.hint.Beveled && hint.Checked == other.hint.Checked;
 		}
+
 		bool operator!=(const CellSignature &other) const
 		{
 			return !(*this == other);
@@ -568,7 +587,15 @@ private:
 
 	static CellSignature MakeSignature(const CHAR_INFO &ci)
 	{
-		return CellSignature{ci.Attributes, static_cast<uint64_t>(ci.Char.UnicodeChar)};
+		return CellSignature{
+			ci.Attributes, 
+			static_cast<uint64_t>(ci.Char.UnicodeChar),
+			{ 
+				ci.Extra.Hint.Container, ci.Extra.Hint.Object, ci.Extra.Hint.Tag, 
+				ci.Extra.Hint.Focus, ci.Extra.Hint.Hover, ci.Extra.Hint.Enabled, ci.Extra.Hint.Default, 
+				ci.Extra.Hint.Beveled, ci.Extra.Hint.Checked 
+			}
+		};
 	}
 
 	void CaptureFullSnapshot(IConsoleOutput *console)
@@ -592,15 +619,15 @@ private:
 		}
 	}
 
-		std::vector<SMALL_RECT> _pending;
-		std::vector<SMALL_RECT> _span_buffer;
-		std::vector<CellSignature> _snapshot;
-		unsigned int _cols{0};
-		unsigned int _rows{0};
-		bool _full_redraw{false};
-		bool _force_scan{false};
-		FrameStats _last_stats{};
-	};
+	std::vector<SMALL_RECT> _pending;
+	std::vector<SMALL_RECT> _span_buffer;
+	std::vector<CellSignature> _snapshot;
+	unsigned int _cols{0};
+	unsigned int _rows{0};
+	bool _full_redraw{false};
+	bool _force_scan{false};
+	FrameStats _last_stats{};
+};
 
 class RendererWorker
 {
@@ -727,6 +754,11 @@ public:
 		}
 		return TWEAK_STATUS_SUPPORT_CHANGE_FONT | TWEAK_STATUS_SUPPORT_BLINK_RATE;
 	}
+
+	DWORD64 OnConsoleGetTweaks() override {
+		return TWEAK_STATUS_SUPPORT_CHANGE_FONT | TWEAK_STATUS_SUPPORT_BLINK_RATE;
+	}
+
 	void OnConsoleChangeFont() override { RequestFontDialog(); }
 	void OnConsoleSaveWindowState() override;
 	void OnConsoleExit() override;
@@ -2648,6 +2680,9 @@ extern "C" __attribute__((visibility("default"))) bool WinPortMainBackend(WinPor
 	}
 	PrinterSupportBackendSetter printer_backend_setter;
 	printer_backend_setter.Set<SDLPrinterSupportBackend>();
+
+	ShareBackendOptionsBackendSetter share_backend_setter;
+	share_backend_setter.Set<SDLShareBackendOptionsBackend>();
 
 	bool ok = false;
 	SigIntGuard sig_guard;

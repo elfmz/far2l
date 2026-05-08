@@ -17,6 +17,7 @@ set(SOURCES
     SDLImageManager.cpp
     SDLFontManager.cpp
     SDLPrinterSupport.cpp
+    SDLShareBackendOptions.cpp
 )
 
 if(APPLE)

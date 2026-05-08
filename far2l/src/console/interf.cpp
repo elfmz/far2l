@@ -864,6 +864,24 @@ static void extractColorComponents(int color, int& r, int& g, int& b) {
 }
 
 static void extractColor(uint64_t color, RGB& fg, RGB& bg) {
+	// color is not truly RGB -- convert it first
+	if ((color & (FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR)) != (FOREGROUND_TRUECOLOR | BACKGROUND_TRUECOLOR) ) {
+		// if (color < SIZE_ARRAY_FARCOLORS) color = FarColors::setcolors[color];
+
+		uint64_t fix_c = 0;
+		if ((color & (FOREGROUND_TRUECOLOR)) != (FOREGROUND_TRUECOLOR) ) {
+			uint32_t c = Palette::FARPalette[16 + (color & 0x0F)];
+			fix_c |= ((uint64_t)(c & 0x00ffffff) << 16) | FOREGROUND_TRUECOLOR;
+		}
+
+		if ((color & (BACKGROUND_TRUECOLOR)) != (BACKGROUND_TRUECOLOR) ) {
+			uint32_t c2 = Palette::FARPalette[(color >> 4) & 0x0F];
+			fix_c |= ((uint64_t)(c2 & 0x00ffffff) << 40) | BACKGROUND_TRUECOLOR;
+		}
+		fix_c |= color;
+		color = fix_c;
+	}
+
 	int fgC = (color >> 16) & 0xFFFFFF;
 	int bgC = (color >> 40) & 0xFFFFFF;;
 

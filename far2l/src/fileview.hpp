@@ -47,7 +47,7 @@ private:
 	virtual void DisplayObject();
 	SudoClientRegion _sdc_rgn;
 	Viewer View;
-	ViewerMenuBar* MenuBar;
+	ViewerMenuBar* MenuBar {nullptr};
 	int RedrawTitle;
 	KeyBar ViewKeyBar;
 	bool AutoClose;

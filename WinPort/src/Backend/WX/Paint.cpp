@@ -1462,10 +1462,12 @@ void ConsolePainter::DrawHint(const HintPos& x) {
             (int)x.area.Left, (int)x.area.Right, (int)x.area.Top, (int)x.area.Bottom,
     		((int)x.tag) & 0x00FF, x.Hint.Focus ? 'Y': 'N', x.Hint.Hover ? 'Y': 'N', x.Hint.Object);
         */
-        if(WXCustomDrawChar::options->Use3D && !x.Hint.Beveled)
-	        DrawButtonDecorationsAsNew(cx_start, cx_end, cy, clr_text, clr_back, x);
-		else
-			DrawButtonDecorations(cx_start, cx_end, cy, clr_text, clr_back, x);
+        if (x.Hint.Enabled && !x.Hint.Beveled) {
+	        if(WXCustomDrawChar::options->Use3D) 
+		        DrawButtonDecorationsAsNew(cx_start, cx_end, cy, clr_text, clr_back, x);
+			else
+				DrawButtonDecorations(cx_start, cx_end, cy, clr_text, clr_back, x);
+		}
     	break;
     case HintCheckbox:
     case HintRadioButton:

@@ -521,7 +521,7 @@ struct Options
 	int NoBoxes;
 	int ConsolePaintSharp, ExclusiveCtrlLeft, ExclusiveCtrlRight, ExclusiveAltLeft, ExclusiveAltRight,
 			ExclusiveWinLeft, ExclusiveWinRight;
-	int UseRightAltAsAltGr;
+	BOOL UseRightAltAsAltGr;
 	int OSC52ClipSet;
 	int TTYPaletteOverride;
 

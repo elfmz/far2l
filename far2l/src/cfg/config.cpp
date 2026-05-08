@@ -607,7 +607,7 @@ void InputSettings()
 		}
 		ApplyConsoleTweaks();
 		XlatReinit();
-		WinPortSetUseRightAltAsAltGr(Opt.UseRightAltAsAltGr ? TRUE : FALSE);
+		WinPortSetUseRightAltAsAltGr(Opt.UseRightAltAsAltGr);
 	}
 }
 
@@ -1221,7 +1221,7 @@ void ApplyConfig()
 {
 	ApplySudoConfiguration();
 	ApplyConsoleTweaks();
-	WinPortSetUseRightAltAsAltGr(Opt.UseRightAltAsAltGr ? TRUE : FALSE);
+	WinPortSetUseRightAltAsAltGr(Opt.UseRightAltAsAltGr);
 }
 
 void LanguageSettings()

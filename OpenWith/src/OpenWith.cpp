@@ -22,7 +22,7 @@ namespace OpenWith {
 // ****************************** Public API ******************************
 
 // Main workflow orchestrator: resolves application candidates via AppProvider,
-// displays the selection menu, and handles user actions: F3 (details), F9 (settings), Enter (launch).
+// displays the selection menu, and handles user actions: F3 (details), F9 (settings), (Shift+)Enter (launch).
 void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 {
 	if (filepaths.empty()) {
@@ -30,6 +30,11 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 	}
 
 	auto provider = AppProvider::CreateAppProvider(&GetMsg);
+	if (!provider) {
+		ShowError({ GetMsg(MUnsupportedPlatform) });
+		return;
+	}
+
 	std::optional<std::vector<CandidateInfo>> app_candidates;
 	std::vector<FarMenuItem> menu_items;
 	int active_menu_idx {};
@@ -62,12 +67,10 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 		int selected_menu_idx = g_info.Menu(g_info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_SHOWAMPERSAND | FMENU_CHANGECONSOLETITLE,
 											GetMsg(MChooseApplication), L"F3 F9 Ctrl+Alt+F", L"Contents", BREAK_KEYS, &menu_break_code,
 											menu_items.data(), static_cast<int>(menu_items.size()));
-		menu_items[active_menu_idx].Selected = false;
-
 		if (selected_menu_idx == -1) {
 			return; // User cancelled the menu; exit the plugin.
 		}
-
+		menu_items[active_menu_idx].Selected = false;
 		active_menu_idx = selected_menu_idx;
 		const auto& selected_app = (*app_candidates)[selected_menu_idx];
 
@@ -113,12 +116,16 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 // and platform-specific settings fetched dynamically from the current AppProvider.
 OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 {
-	constexpr int CONFIG_DIALOG_WIDTH = 70;
+	// Create a temporary provider to access platform-specific settings (they are loaded automatically).
+	auto provider = AppProvider::CreateAppProvider(&GetMsg);
+	if (!provider) {
+		ShowError({ GetMsg(MUnsupportedPlatform) });
+		return {};
+	}
 
 	LoadGeneralSettings();
 
-	// Create a temporary provider to access platform-specific settings (they are loaded automatically).
-	auto provider = AppProvider::CreateAppProvider(GetMsg);
+	constexpr int CONFIG_DIALOG_WIDTH = 70;
 
 	const bool old_use_external_terminal = s_use_external_terminal;
 	const auto old_platform_settings = provider->GetPlatformSettings();

@@ -8,6 +8,7 @@ set(SOURCES
     src/ADBDevice.cpp
     src/ADBDialogs.cpp
     src/ADBLog.cpp
+    src/ProgressBatch.cpp
 )
 
 # Create the plugin
@@ -16,9 +17,13 @@ add_library(adb MODULE ${SOURCES})
 # Link with required libraries
 target_link_libraries(adb utils far2l)
 
-# openpty/forkpty live in libutil on BSDs
-if(CMAKE_SYSTEM_NAME MATCHES "FreeBSD|DragonFly|NetBSD|OpenBSD")
+# forkpty/openpty: libutil on Linux + BSDs (macOS has it in libSystem).
+# dladdr: libdl on Linux/glibc; BSDs and macOS have it in libc.
+if(CMAKE_SYSTEM_NAME MATCHES "Linux|FreeBSD|DragonFly|NetBSD|OpenBSD")
     target_link_libraries(adb util)
+endif()
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_libraries(adb dl)
 endif()
 
 # Add compile definitions
@@ -27,6 +32,7 @@ target_compile_definitions(adb PRIVATE
     -DUNICODE
     -D_UNICODE
     -DFAR_DONT_USE_INTERNALS
+    $<$<CONFIG:Debug>:DEBUG=1>
 )
 
 # Add include directories

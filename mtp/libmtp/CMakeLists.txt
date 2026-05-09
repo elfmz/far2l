@@ -1,5 +1,6 @@
-# LIBUSB_* vars come from the parent CMakeLists.txt (which already gated the whole plugin
-# on libusb-1.0 being available); no need to re-probe here.
+# libusb is vendored as the libusb_static target by ../libusb/CMakeLists.txt;
+# its PUBLIC linkage carries IOKit/CoreFoundation/Security on macOS and pthread
+# on Linux, so we don't repeat platform frameworks here.
 
 add_library(libmtp_static STATIC
     libmtp.c
@@ -10,8 +11,7 @@ add_library(libmtp_static STATIC
     libusb1-glue.c
 )
 
-target_include_directories(libmtp_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${LIBUSB_INCLUDE_DIRS})
-target_link_directories(libmtp_static PUBLIC ${LIBUSB_LIBRARY_DIRS})
+target_include_directories(libmtp_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_options(libmtp_static PRIVATE -w)
 # Expose POSIX/BSD-derived libc decls (strdup, strcasecmp, strndup, basename…). macOS declares
 # them unconditionally; glibc/musl hide them behind feature-test macros and modern clang/gcc treat
@@ -20,7 +20,7 @@ target_compile_definitions(libmtp_static PRIVATE _GNU_SOURCE _DEFAULT_SOURCE)
 
 if(APPLE)
     find_library(ICONV_LIB iconv REQUIRED)
-    target_link_libraries(libmtp_static PUBLIC ${LIBUSB_LIBRARIES} ${ICONV_LIB} "-framework IOKit" "-framework CoreFoundation")
+    target_link_libraries(libmtp_static PUBLIC libusb_static ${ICONV_LIB})
 else()
-    target_link_libraries(libmtp_static PUBLIC ${LIBUSB_LIBRARIES})
+    target_link_libraries(libmtp_static PUBLIC libusb_static)
 endif()

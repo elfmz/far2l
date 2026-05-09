@@ -1,6 +1,6 @@
 # far2l MTP plugin — version 1.0
 
-Browse and manage files on MTP-class devices (Android, cameras, media players) over USB. Backed by a vendored static [libmtp](https://libmtp.sourceforge.io/) 1.1.23 in `mtp/libmtp/` — only system dependency is libusb-1.0.
+Browse and manage files on MTP-class devices (Android, cameras, media players) over USB. Self-contained: both [libmtp](https://libmtp.sourceforge.io/) 1.1.23 and [libusb](https://libusb.info) 1.0.29 are vendored under `mtp/libmtp/` and `mtp/libusb/` and built as static archives — no runtime dependency on system libusb/libmtp on either macOS or Linux. See `mtp/libusb/VENDORING.md` for the libusb refresh procedure.
 
 ## Features
 
@@ -38,25 +38,19 @@ Restart far2l. The plugin appears in **Alt+F1 / Alt+F2 → MTP**.
 
 ## Prerequisites
 
+No build-time or runtime libusb/libmtp packages are required (vendored static — see top of this file).
+
 ### Linux
 
-```bash
-sudo apt install libusb-1.0-0-dev                 # Debian/Ubuntu
-sudo dnf install libusb1-devel                    # Fedora
-sudo pacman -S libusb                             # Arch
-```
+User must be in the `plugdev` group (or equivalent) for non-root USB access. If `libmtp` is installed system-wide, its udev rules cover MTP/PTP device permissions; otherwise copy a ruleset from upstream libmtp's `udev-rules/` (also vendored under `mtp/libmtp/`).
 
-User must be in the `plugdev` group (or equivalent) for udev to grant non-root USB access. If `libmtp` is also installed system-wide, its udev rules cover MTP/PTP device permissions; if not, copy a ruleset from upstream libmtp's `udev-rules/` (vendored under `mtp/libmtp/` in this repo).
+Hotplug events use the kernel netlink uevent socket (libusb built with `--disable-udev` semantics) — no libudev dependency.
 
 ### macOS
 
-```bash
-brew install libusb
-```
+The system `icdd` (Image Capture daemon) and `ptpcamerad` claim MTP-class devices on plug-in with `kIOUSBExclusiveAccess`, blocking libmtp's open. The plugin works around this automatically: writes the per-device "Connecting this device opens: No application" preference, then SIGKILLs `icdd` / `mscamerad-xpc` / `ptpcamerad` so launchd's respawn picks up the new preference and skips the claim. No GUI step or `sudo` required.
 
-The system `icdd` (Image Capture daemon) and `ptpcamerad` claim MTP-class devices on plug-in with `kIOUSBExclusiveAccess`, blocking libmtp's open. The plugin works around this automatically: it writes the per-device "Connecting this device opens: No application" preference, then SIGKILLs `icdd` / `mscamerad-xpc` / `ptpcamerad` so launchd's respawn reads the new preference and skips the claim. No GUI step or `sudo` required.
-
-Set `MTP_NO_ICDD_BYPASS=1` to disable the bypass (useful for diagnosing whether icdd is the cause of an open failure).
+Set `MTP_NO_ICDD_BYPASS=1` to disable the bypass.
 
 ### Device
 

@@ -1,12 +1,7 @@
 # MTP/PTP plugin module backed by libmtp (vendored static build in libmtp/).
+# libusb is also vendored statically — see libusb/VENDORING.md.
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBUSB QUIET libusb-1.0)
-if(NOT LIBUSB_FOUND)
-    message(WARNING "libusb-1.0 not found — MTP plugin will be skipped. Install libusb-1.0-0-dev / libusb (apt/brew/dnf/pacman) to enable.")
-    return()
-endif()
-
+add_subdirectory(libusb)
 add_subdirectory(libmtp)
 
 set(SOURCES

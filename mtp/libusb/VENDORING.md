@@ -37,6 +37,10 @@ COPYING                           # LGPL-2.1+
 Backends NOT copied: Windows, Haiku, NetBSD/OpenBSD, Solaris, Emscripten,
 Android-specific bits, the libudev variant of the Linux backend.
 
+## FreeBSD
+
+Upstream libusb has no `freebsd_usb.c`. On FreeBSD `mtp/libusb/CMakeLists.txt` wraps the base-system `libusb-1.0` (in FreeBSD base since 8.0) under the `libusb_static` target name; top-level CMake auto-detects via pkg-config and silently skips MTP if absent.
+
 ## Refresh procedure
 
 1. `git clone --depth 1 -b vX.Y.Z https://github.com/libusb/libusb /tmp/libusb`

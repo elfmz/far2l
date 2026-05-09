@@ -3,7 +3,10 @@
 // Standard library includes
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
+#include <unordered_map>
+#include <unordered_set>
 #include <time.h>
 #include <functional>
 
@@ -16,6 +19,9 @@
 // Forward declarations
 class ADBShell;
 struct PluginPanelItem;
+
+// Per-file progress callback. percent 0-100; path is adb's reported path (empty on synthetic 0%/100%).
+using AdbProgressFn = std::function<void(int, const std::string&)>;
 
 // ADB Device implementation
 class ADBDevice {
@@ -34,16 +40,12 @@ private:
     // Helper to build args with device serial prefix
     std::vector<std::string> BuildArgs(const std::vector<std::string>& args) const;
 
-    // Helper to create progress callback for parsing percentage
-    std::function<void(const std::string&)> CreateProgressCallback(
-        std::function<void(int)>& on_progress, int& last_percent, std::string& pending) const;
-
     // Helper to check if result indicates success
     bool IsSuccessResult(const std::string& result, bool is_push = false) const;
 
     // Unified transfer helper (DRY)
     int TransferItem(const std::string& src, const std::string& dst, bool is_push, bool recursive,
-                    const std::function<void(int)>& on_progress = {},
+                    const AdbProgressFn& on_progress = {},
                     const std::function<bool()>& abort_check = {});
 
 public:
@@ -55,8 +57,6 @@ public:
     std::string RunShellCommand(const std::string &command);
     // Exit code of the most recent RunShellCommand(); -1 if unavailable.
     int LastShellExitCode() const;
-    // Run shell command and stream output via callback (bypasses persistent session echo issues)
-    void RunShellCommandStreaming(const std::string &command, const std::function<void(const std::string&)> &on_line);
     std::string GetCurrentWorkingDirectory();
     ADBDevice(const std::string &device_serial);
     virtual ~ADBDevice();
@@ -67,13 +67,13 @@ public:
 
     // File transfer operations
     int PullFile(const std::string &devicePath, const std::string &localPath);
-    int PullFile(const std::string &devicePath, const std::string &localPath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check = {});
+    int PullFile(const std::string &devicePath, const std::string &localPath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check = {});
     int PushFile(const std::string &localPath, const std::string &devicePath);
-    int PushFile(const std::string &localPath, const std::string &devicePath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check = {});
+    int PushFile(const std::string &localPath, const std::string &devicePath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check = {});
     int PullDirectory(const std::string &devicePath, const std::string &localPath);
-    int PullDirectory(const std::string &devicePath, const std::string &localPath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check = {});
+    int PullDirectory(const std::string &devicePath, const std::string &localPath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check = {});
     int PushDirectory(const std::string &localPath, const std::string &devicePath);
-    int PushDirectory(const std::string &localPath, const std::string &devicePath, const std::function<void(int)> &on_progress, const std::function<bool()> &abort_check = {});
+    int PushDirectory(const std::string &localPath, const std::string &devicePath, const AdbProgressFn &on_progress, const std::function<bool()> &abort_check = {});
 
     // File deletion operations
     int DeleteFile(const std::string &devicePath);
@@ -83,16 +83,28 @@ public:
     int CreateDirectory(const std::string &devicePath);
     int CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
     int MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir);
+    // *As variants take a full dst PATH (rename); abort_check overloads use one-shot `adb shell -c` so Esc can kill cp/mv and bypass the 30s shell timeout.
+    int CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
+    int MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath);
+    int CopyRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath,
+                     const std::function<bool()>& abort_check);
+    int MoveRemoteAs(const std::string &srcDevicePath, const std::string &dstDevicePath,
+                     const std::function<bool()>& abort_check);
+    // Folder-dest variants with abort_check (same one-shot/no-timeout properties).
+    int CopyRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir,
+                   const std::function<bool()>& abort_check);
+    int MoveRemote(const std::string &srcDevicePath, const std::string &dstDeviceDir,
+                   const std::function<bool()>& abort_check);
 
     // File existence check
     bool FileExists(const std::string &devicePath);
+    bool IsDirectory(const std::string &devicePath);
+    // Single-roundtrip name list for collision pre-scan (replaces N+1 FileExists).
+    void ListDirNames(const std::string &devicePath, std::unordered_set<std::string>& out);
 
-    // Directory info (file count, total size in bytes)
-    struct DirectoryInfo {
-        uint64_t file_count;
-        uint64_t total_size;
-    };
-    DirectoryInfo GetDirectoryInfo(const std::string &devicePath);
+    // Per-file size map for many roots in ONE shell roundtrip — keyed by input devicePath, inner map is rel-path → size; empty dirs yield an empty inner map.
+    void BatchDirectoryFileSizes(const std::vector<std::string>& devicePaths,
+                                  std::map<std::string, std::unordered_map<std::string, uint64_t>>& out);
 
     // Connection management
     bool Connect();
@@ -123,32 +135,36 @@ namespace ADBUtils {
     // Shell quoting for paths with spaces
     std::string ShellQuote(const std::string& s);
 
+    // basename(3) without modifying input. Returns "" for empty/all-slashes.
+    std::string PathBasename(const std::string& p);
+
     // Check if connection is available, returns EIO if not
     int CheckConnection(bool connected);
 }
 
-// Helper class for progress parsing (reduces code duplication)
+// Parses adb -p progress output (modern "<path>: NN%" or legacy "[NN%] <path>"); VT state machine strips escapes before line-split.
 class ProgressParser {
 public:
-    ProgressParser(std::function<void(int)> on_progress, bool debug_log = false);
+    ProgressParser(AdbProgressFn on_progress, bool debug_log = false);
 
-    // Process a chunk of output, calling on_progress for each percentage found
     void operator()(const std::string &chunk);
-
-    // Drain any remaining pending data (call after command completes)
     void drain();
-
-    // Report completion (100%)
     void complete();
-
-    // Report initial state (0%)
     void start();
 
 private:
-    std::function<void(int)> _on_progress;
+    enum VtState { VT_NORMAL, VT_ESC, VT_CSI, VT_OSC, VT_OSC_ESC, VT_ESC_INTERM };
+    VtState _vt_state = VT_NORMAL;
+
+    AdbProgressFn _on_progress;
     bool _debug_log;
     int _last_percent;
-    std::string _pending;
+    std::string _last_path;
+    std::string _pending;  // VT-cleaned bytes awaiting line split
 
-    static int ExtractPercent(const std::string &s);
+    // Feed raw bytes through VT machine into _pending (escapes/controls vanish, \r/\n kept).
+    void VtFeed(const std::string &chunk);
+
+    // True if line matched progress format; out params filled.
+    static bool ExtractProgress(const std::string &s, int &percent, std::string &path);
 };

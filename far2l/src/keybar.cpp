@@ -196,7 +196,7 @@ void KeyBar::RefreshObject(bool Render)
 		if (Opt.Backend.UseModernLook && Render) 
 			LabelWidth = wcslen(/*Hover[i] ? Label :*/ labelHolder) + 3 + wcslen(keyLabel.c_str());
 
-		if (Render && WhereX() + LabelWidth < X2) {
+		if (Render && WhereX() + LabelWidth + (Opt.Backend.UseModernLook ? (int)strExtra.GetLength() : 0) < X2) {
 			xPos[i] = WhereX();
 			if (!Opt.Backend.UseModernLook) {
 				SetFarColor(COL_KEYBARNUM);

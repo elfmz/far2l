@@ -118,6 +118,8 @@ class SystemCPEncoder : public ICPEncoder
 class Dialog;
 class Editor;
 
+bool TranslateInsertKey(FarKey &Key);
+
 class Edit : public ScreenObject
 {
 	friend class DlgEdit;
@@ -211,6 +213,7 @@ protected:
 	inline int CalcPosFwd(int LimitPos = -1) const { return CalcPosFwdTo(CurPos, LimitPos); }
 	inline int CalcPosBwd() const { return CalcPosBwdTo(CurPos); }
 
+	int FindVisualLine(int Pos) const;
 	int GetVisualLineCount() const;
 	void GetVisualLine(int line, int& start, int& end) const;
 public:

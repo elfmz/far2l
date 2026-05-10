@@ -7,8 +7,7 @@
 extern "C" {
 #endif
 
-// Far Manager Plugin API — standard panel plugin interface
-// See: https://api.farmanager.com/ru/panelapi/index.html
+// https://api.farmanager.com/ru/panelapi/index.html
 
 int    WINAPI GetMinFarVersionW(void);
 void   WINAPI SetStartupInfoW(const PluginStartupInfo *Info);

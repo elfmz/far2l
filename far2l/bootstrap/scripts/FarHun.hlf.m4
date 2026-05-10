@@ -2799,10 +2799,13 @@ a képernyő alján
     1. ^<wrap>Az #Alt-U#/#Alt-I# a sor behúzását állítja, ha nincs
 kijelölt blokk.
 
-    2. ^<wrap>Lenyomott #Alt#-tal a karaktereket decimális kódjukkal
+    2. ^<wrap>A szöveg beírása vagy a #BS#/#Del# billentyűkombináció
+lenyomása a kijelölt függőleges blokk minden sorára hatással van.
+
+    3. ^<wrap>Lenyomott #Alt#-tal a karaktereket decimális kódjukkal
 írhatjuk be a numerikus billentyűzeten (0-65535).
 
-    3. ^<wrap>Ha nincs kijelölt blokk, a #Ctrl-Ins#/#Ctrl-C# kijelöli
+    4. ^<wrap>Ha nincs kijelölt blokk, a #Ctrl-Ins#/#Ctrl-C# kijelöli
 a teljes aktuális sort és a vágólapra másolja.
 
 @EditorSearch

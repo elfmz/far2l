@@ -106,6 +106,7 @@ class ConsolePainter
 	uint8_t _prev_fit_font_index;
 	bool	_prev_underlined;
 	bool	_prev_strikeout;
+	bool	_prev_bold;
 	std::map<WinPortRGB, wxPen *> _custom_draw_pens;
 
 	WinPortRGB _clr_for_caret {255,255,255}, _caret_clr {0,0,0};

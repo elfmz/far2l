@@ -10,6 +10,7 @@
 "Failed to save configuration."
 "No applications found. Detected MIME type:"
 "The application cannot be executed."
+"OpenWith plugin is not available on this platform."
 
 "OpenWith Settings"
 
@@ -33,6 +34,7 @@
 "Validate &TryExec"
 "Disable ranking and sort al&phabetically"
 "Pass pla&in paths instead of file:// URIs"
+"Show package &qualifiers"
 
 "OpenWith: Details"
 

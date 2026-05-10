@@ -2355,13 +2355,13 @@ void FileEditor::ShowStatus()
 	FARString strWrapMode;
 	if (m_editor->GetWordWrap())
 	{
-		strWrapMode = Opt.Backend.UseModernLook ? L"\x21AB\x2140" : L"WW ";
+		strWrapMode = /* Opt.Backend.UseModernLook ? L"\x21AB\x2140" : */ L"WW ";
 	}                                                  
 
 	FARString strTabMode;
 	strTabMode.Format(L"%ls%d", m_editor->GetConvertTabs() 
-		? (Opt.Backend.UseModernLook ? L"\x21AD" : L"S")
-		: (Opt.Backend.UseModernLook ? L"\x21F0" : L"T"), 
+		? (/*Opt.Backend.UseModernLook ? L"\x21AD" :*/ L"S")
+		: (/*Opt.Backend.UseModernLook ? L"\x21F0" :*/ L"T"), 
 		m_editor->GetTabSize());
 
 	FARString str_codepage;

@@ -194,6 +194,14 @@ const ConfigOpt g_cfg_opts[] {
 	{OST_COMMON, NSecInterfaceCompletion, "ModalList", &Opt.AutoComplete.ModalList, 0},
 	{OST_COMMON, NSecInterfaceCompletion, "Append", &Opt.AutoComplete.AppendCompletion, 0},
 
+	{OST_COMMON,  NSecInterface, "UseModernLook", &Opt.Backend.UseModernLook, 1},
+	{OST_COMMON,  NSecInterface, "UseModernLookRoundBorders", &Opt.Backend.UseRoundedBorders, 0},
+	{OST_COMMON,  NSecInterface, "UseModernLookSingleBordersOnly", &Opt.Backend.UseSingleBordersOnly, 0},
+	{OST_COMMON,  NSecInterface, "UseModernLookNoBorders", &Opt.Backend.UseNoBorders, 0},
+	{OST_COMMON,  NSecInterface, "UseModernLookEmbossAsBold", &Opt.Backend.UseEmbossAsBold, 0},
+	{OST_COMMON,  NSecInterface, "UseSoftenBevels", &Opt.Backend.UseSoftenBevels, 1},
+	{OST_COMMON,  NSecInterface, "Use3D", &Opt.Backend.Use3D, 1},
+
 	{OST_COMMON, NSecViewer, "ExternalViewerName", &Opt.strExternalViewer, L""},
 	{OST_COMMON, NSecViewer, "UseExternalViewer", &Opt.ViOpt.UseExternalViewer, 0},
 	{OST_COMMON, NSecViewer, "SaveViewerPos", &Opt.ViOpt.SavePos, 1},

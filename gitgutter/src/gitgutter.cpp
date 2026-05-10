@@ -261,8 +261,6 @@ struct PendingPopup
 	bool active = false;
 	int editor_id = -1;
 	int line = 0;
-	int x = 0;
-	int y = 0;
 };
 static PendingPopup g_pending_popup;
 static bool g_popup_active = false;
@@ -1040,7 +1038,7 @@ static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, const Settings::Color
 	g_info.SendDlgMessage(hdlg, DM_SETCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
 }
 
-static void ShowHunkPopup(const EditorState &st, int line, int anchor_x, int anchor_y)
+static void ShowHunkPopup(const EditorState &st, int line)
 {
 	if (g_popup_active) {
 		return;
@@ -1133,9 +1131,9 @@ static void ShowHunkPopup(const EditorState &st, int line, int anchor_x, int anc
 		items[POPUP_REVERT].Flags = 0;
 		items[POPUP_REVERT].PtrData = L"\x21A9";
 
-		int local_anchor_x = anchor_x;
-		int local_anchor_y = anchor_y;
-		GetHunkAnchor(h, local_anchor_x, local_anchor_y);
+		int local_anchor_x = 0;
+		int local_anchor_y = 0;
+		const bool have_anchor = GetHunkAnchor(h, local_anchor_x, local_anchor_y);
 
 		static const wchar_t k_virtual_filename[] = L"gitgutter.diff";
 		items[POPUP_MEMO].Param.Reserved = reinterpret_cast<DWORD_PTR>(k_virtual_filename);
@@ -1143,7 +1141,7 @@ static void ShowHunkPopup(const EditorState &st, int line, int anchor_x, int anc
 		int dlg_y1 = -1;
 		int dlg_x2 = -1;
 		int dlg_y2 = -1;
-		if (g_info.AdvControl(g_info.ModuleNumber, ACTL_GETFARRECT, &fr, nullptr)) {
+		if (have_anchor && g_info.AdvControl(g_info.ModuleNumber, ACTL_GETFARRECT, &fr, nullptr)) {
 			const int fr_left = static_cast<int>(fr.Left);
 			const int fr_top = static_cast<int>(fr.Top);
 			const int fr_right = static_cast<int>(fr.Right);
@@ -1254,8 +1252,6 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 	g_pending_popup.active = true;
 	g_pending_popup.editor_id = ei.EditorID;
 	g_pending_popup.line = line;
-	g_pending_popup.x = me.dwMousePosition.X;
-	g_pending_popup.y = me.dwMousePosition.Y;
 	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
 	return true;
 }
@@ -1677,13 +1673,11 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	if (g_pending_popup.active) {
 		const int editor_id = g_pending_popup.editor_id;
 		const int line = g_pending_popup.line;
-		const int anchor_x = g_pending_popup.x;
-		const int anchor_y = g_pending_popup.y;
 		g_pending_popup.active = false;
 
 		auto it = g_editors.find(editor_id);
 		if (it != g_editors.end()) {
-			ShowHunkPopup(it->second, line, anchor_x, anchor_y);
+			ShowHunkPopup(it->second, line);
 			did_work = true;
 		}
 	}

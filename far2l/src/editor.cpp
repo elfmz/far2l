@@ -6805,6 +6805,8 @@ int Editor::EditorControl(int Command, void *Param)
 				Info->CurState|= !Flags.Check(FEDITOR_MODIFIED) ? ECSTATE_SAVED : 0;
 				Info->CurState|= Flags.Check(FEDITOR_MODIFIED | FEDITOR_WASCHANGED) ? ECSTATE_MODIFIED : 0;
 				Info->CodePage = m_codepage;
+				Info->WindowX = X1;
+				Info->WindowY = Y1;
 				if (m_bWordWrap)
 				{
 					// For plugins (e.g., Colorer) to correctly process long lines that are wrapped,
@@ -6819,18 +6821,6 @@ int Editor::EditorControl(int Command, void *Param)
 				return TRUE;
 			}
 
-			_ECTLLOG(SysLog(L"Error: !Param"));
-			return FALSE;
-		}
-		case ECTL_GETRECT: {
-			if (Param) {
-				SMALL_RECT &Rect = *reinterpret_cast<PSMALL_RECT>(Param);
-				Rect.Left = static_cast<SHORT>(X1);
-				Rect.Top = static_cast<SHORT>(Y1);
-				Rect.Right = static_cast<SHORT>(X2);
-				Rect.Bottom = static_cast<SHORT>(Y2);
-				return TRUE;
-			}
 			_ECTLLOG(SysLog(L"Error: !Param"));
 			return FALSE;
 		}

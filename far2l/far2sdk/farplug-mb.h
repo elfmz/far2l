@@ -1241,7 +1241,6 @@ namespace oldfar
 		ECTL_SERVICEREGION,
 		ECTL_ADDTRUECOLOR,
 		ECTL_GETTRUECOLOR,
-		ECTL_GETRECT,
 	};
 
 	enum EDITOR_SETPARAMETER_TYPES
@@ -1358,7 +1357,9 @@ namespace oldfar
 		int TabSize;
 		int BookMarkCount;
 		DWORD CurState;
-		DWORD Reserved[6];
+		int WindowX;
+		int WindowY;
+		DWORD Reserved[4];
 	};
 
 	struct EditorBookMarks

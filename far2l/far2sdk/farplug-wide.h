@@ -1626,7 +1626,6 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_ADDTRUECOLOR,
 	ECTL_GETTRUECOLOR,
 	ECTL_SETGUTTERMARKS,
-	ECTL_GETRECT,
 };
 //#ifdef FAR_USE_INTERNALS
 //	ECTL_SERVICEREGION, // WTF
@@ -1770,7 +1769,9 @@ struct EditorInfo
 	int BookMarkCount;
 	DWORD CurState;
 	UINT CodePage;
-	DWORD Reserved[5];
+	int WindowX;
+	int WindowY;
+	DWORD Reserved[3];
 };
 
 struct EditorBookMarks

@@ -278,7 +278,6 @@ enum PopupItemId
 };
 
 static bool GetEditorInfo(EditorInfo &ei);
-static bool GetEditorRect(SMALL_RECT &rect);
 
 static void MoveEditorToHunk(const Hunk &h)
 {
@@ -305,9 +304,6 @@ static bool GetHunkAnchor(const Hunk &h, int &anchor_x, int &anchor_y)
 	EditorInfo ei{};
 	if (!GetEditorInfo(ei))
 		return false;
-	SMALL_RECT er{};
-	if (!GetEditorRect(er))
-		return false;
 
 	int line_num_width = 1;
 	const bool show_numbers = (ei.Options & EOPT_SHOWNUMBERS) != 0;
@@ -326,8 +322,8 @@ static bool GetHunkAnchor(const Hunk &h, int &anchor_x, int &anchor_y)
 
 	const int gutter_x = line_num_width - 1;
 	const int rel_y = h.start - ei.TopScreenLine;
-	anchor_x = er.Left + gutter_x;
-	anchor_y = er.Top + std::max(0, rel_y);
+	anchor_x = ei.WindowX + gutter_x;
+	anchor_y = ei.WindowY + std::max(0, rel_y);
 	return true;
 }
 
@@ -401,12 +397,6 @@ static bool GetEditorInfo(EditorInfo &ei)
 {
 	memset(&ei, 0, sizeof(ei));
 	return g_info.EditorControl(ECTL_GETINFO, &ei) != 0;
-}
-
-static bool GetEditorRect(SMALL_RECT &rect)
-{
-	memset(&rect, 0, sizeof(rect));
-	return g_info.EditorControl(ECTL_GETRECT, &rect) != 0;
 }
 
 static bool GetEditorFileName(std::wstring &out)
@@ -1227,9 +1217,6 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 	EditorInfo ei{};
 	if (!GetEditorInfo(ei))
 		return false;
-	SMALL_RECT er{};
-	if (!GetEditorRect(er))
-		return false;
 
 	// Only react to button press; defer popup to EE_REDRAW (Message is unsafe from input handler).
 	if (me.dwEventFlags != 0 || (me.dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0)
@@ -1237,8 +1224,8 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 	if (g_popup_active || g_pending_popup.active)
 		return true;
 
-	const int rel_x = me.dwMousePosition.X - er.Left;
-	const int rel_y = me.dwMousePosition.Y - er.Top;
+	const int rel_x = me.dwMousePosition.X - ei.WindowX;
+	const int rel_y = me.dwMousePosition.Y - ei.WindowY;
 	if (rel_x < 0 || rel_y < 0)
 		return false;
 

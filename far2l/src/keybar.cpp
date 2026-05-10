@@ -47,6 +47,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "vmenu.hpp"
 
+// 3 columns, 2 columns keys first, 2 columns keys last
+#define VIEW_MODE	0
+
 KeyBar::KeyBar()
 	:
 	Owner(nullptr), AltState(0), CtrlState(0), ShiftState(0), DisableMask(0), RegReaded(FALSE)
@@ -217,7 +220,7 @@ void KeyBar::RefreshObject(bool Render)
 					xPos[i] = WhereX();
 				}
 				SetColor(color2);
-				FS << L"┋";
+				//FS << L"┋";
 
 				SetColor(color1);
 				FS << keyLabel.c_str();
@@ -549,14 +552,16 @@ void KeyBar::SetDisableMask(int Mask)
 void KeyBar::ResizeConsole() {}
 
 static const wchar_t* GetDescriptionFromLabelIf(const wchar_t* label) {
+#if VIEW_MODE > 0
  	const wchar_t* q = wcschr(label, L' ');
  	if (q) {
  		while(*q && *q == L' ') ++q;
  		if (!*q) q = 0;
  	}
     return q ? q : label;
-
-    // return label;
+#else
+    return label;
+#endif
 }
 
 void KeyBar::ShowContextMenu() 
@@ -593,15 +598,15 @@ void KeyBar::ShowContextMenu()
 			std::wstring label = Label;
 			std::wstring keyLabel = GetKeyName(i, j);
 
+#if VIEW_MODE == 0 || VIEW_MODE == 2
 			std::wstring s = label;
     		if (s.size() < (size_t)width) s.resize(width, L' ');
     		s += keyLabel;
-
-            /*
+#else
 			std::wstring s = keyLabel;
     		if (s.size() < (size_t)keywidth) s.resize(keywidth, L' ');
     		s += label;
-            */
+#endif
 
 			labels.push_back(s);
 		}

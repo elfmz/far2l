@@ -2331,7 +2331,7 @@ void Dialog::ShowDialog(unsigned ID)
 //				SetColorNormal(Attr, CurItem->TrueColors);
 				GotoXY(X1 + CX1, Y1 + CY1);
 
-				if ((CurItem->Flags & DIF_NOBRACKETS) == 0 || strStr.At(0) == L'{' || strStr.At(0) == L'[') {
+				if ((CurItem->Flags & DIF_NOBRACKETS) == 0 && (strStr.At(0) == L'{' || strStr.At(0) == L'[')) {
     				if (CurItem->Focus) { 
     					strStr.ReplaceChar(0, L'►');
     					strStr.ReplaceChar(strStr.GetLength() - 1, L'◄'); 

@@ -313,9 +313,8 @@ void Editor::RememberWordWrapPreferredCellPos()
 	if (!m_bWordWrap || !CurLine)
 		return;
 
-	const int cur_visual_line = GetCurVisualLine();
 	int visual_line_start, ignored_end;
-	CurLine->GetVisualLine(cur_visual_line, visual_line_start, ignored_end);
+	CurLine->GetVisualLine(GetCurVisualLine(), visual_line_start, ignored_end);
 	m_WordWrapPreferredCellPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(visual_line_start);
 }
 
@@ -3448,27 +3447,8 @@ case KEY_CTRLNUMPAD3: {
 				return TRUE;
 			}
 		}
-		case KEY_CTRLRIGHT:
-		case KEY_CTRLNUMPAD6: {
-			if (m_bWordWrap)
-			{
-				if (CurLine->GetCurPos() >= CurLine->GetLength() && !CurLine->m_next)
-				{
-					 // В режиме переноса в конце файла ничего не делаем, иначе артефакты
-					return TRUE;
-				}
-			}
-		}
 		default: {
 			{
-				// workaround for #3149
-				unsigned int BaseKey = Key & ~KEY_SHIFT;
-				if (m_bWordWrap && (
-						((BaseKey >= KEY_CTRLG) && (BaseKey <= KEY_CTRLJ)) ||
-						BaseKey == KEY_CTRLR
-					))
-					return TRUE;
-
 				if ((Key == KEY_CTRLDEL || Key == KEY_CTRLNUMDEL || Key == KEY_CTRLDECIMAL
 							|| Key == KEY_CTRLT)
 						&& CurPos >= CurLine->GetLength()) {
@@ -4059,10 +4039,7 @@ void Editor::ApplyMouseTarget(const MouseTarget& target, bool initial_click, boo
 	if (initial_click)
 		UnmarkBlockAndShowIt();
 
-	if (m_bWordWrap)
-		SetWordWrapCursorPosition(target.pos, target.visual_line);
-	else
-		CurLine->SetCurPos(target.pos);
+	SetWordWrapCursorPosition(target.pos, target.visual_line);
 
 	if (allow_selection) {
 		if (MouseSelStartingLine == -1)
@@ -7885,62 +7862,55 @@ void Editor::SetWordWrap(int NewMode)
 {
 	if (m_MouseButtonIsHeld) return;
 
-	if ((NewMode != 0) != m_bWordWrap)
+	const bool EnableWordWrap = NewMode != 0;
+	if (EnableWordWrap == m_bWordWrap)
+		return;
+
+	m_bWordWrap = EnableWordWrap;
+
+	// Clear vertical block selection when switching wrap modes.
+	// Vertical blocks don't make sense in wrap mode.
+	if (VBlockStart)
 	{
-		m_bWordWrap = (NewMode != 0);
+		VBlockStart = nullptr;
+		Flags.Clear(FEDITOR_MARKINGVBLOCK);
+	}
 
-		// Clear vertical block selection when switching wrap modes
-		// Vertical blocks don't make sense in wrap mode
-		if (VBlockStart)
+	if (m_bWordWrap) // Turning ON
+	{
+		m_TopScreenVisualLine = 0;
+	}
+	else // Turning OFF
+	{
+		m_WordWrapPreferredCellPos = 0;
+
+		if (CurLine && ObjWidth > 0)
 		{
-			VBlockStart = nullptr;
-			Flags.Clear(FEDITOR_MARKINGVBLOCK);
-		}
+			int VisibleWidth = CalculateTextAreaWidth(ObjWidth,
+					NumLastLine > (Y2 - Y1) + 1 && EdOpt.ShowScrollBar);
 
-		// Clear vertical block selection when switching wrap modes
-		// Vertical blocks don't make sense in wrap mode and can cause issues
-		if (VBlockStart)
-		{
-			VBlockStart = nullptr;
-			Flags.Clear(FEDITOR_MARKINGVBLOCK);
-		}
-
-		if (m_bWordWrap) // Turning ON
-		{
-			m_TopScreenVisualLine = 0;
-		}
-		else // Turning OFF
-		{
-			m_WordWrapPreferredCellPos = 0;
-
-			if (CurLine && ObjWidth > 0)
-			{
-				int VisibleWidth = CalculateTextAreaWidth(ObjWidth,
-						NumLastLine > (Y2 - Y1) + 1 && EdOpt.ShowScrollBar);
-
-				int CurPos = CurLine->GetCellCurPos();
-				int NewLeftPos = CurLine->GetLeftPos();
-				if (CurPos - NewLeftPos > VisibleWidth - 1) {
-					for (int ShiftBy = 1; ShiftBy <= std::max(EdOpt.TabSize, 2); ++ShiftBy) {
-						int RealLeftPos = CurLine->CellPosToReal(CurPos - VisibleWidth + ShiftBy);
-						int CandidateLeftPos = CurLine->RealPosToCell(RealLeftPos);
-						if (CandidateLeftPos != NewLeftPos) {
-							NewLeftPos = CandidateLeftPos;
-							break;
-						}
+			int CurPos = CurLine->GetCellCurPos();
+			int NewLeftPos = CurLine->GetLeftPos();
+			if (CurPos - NewLeftPos > VisibleWidth - 1) {
+				for (int ShiftBy = 1; ShiftBy <= std::max(EdOpt.TabSize, 2); ++ShiftBy) {
+					int RealLeftPos = CurLine->CellPosToReal(CurPos - VisibleWidth + ShiftBy);
+					int CandidateLeftPos = CurLine->RealPosToCell(RealLeftPos);
+					if (CandidateLeftPos != NewLeftPos) {
+						NewLeftPos = CandidateLeftPos;
+						break;
 					}
 				}
-
-				if (CurPos < NewLeftPos)
-					NewLeftPos = CurPos;
-				CurLine->SetLeftPos(NewLeftPos);
 			}
+
+			if (CurPos < NewLeftPos)
+				NewLeftPos = CurPos;
+			CurLine->SetLeftPos(NewLeftPos);
 		}
-
-		RecalculateAllWordWraps(true);
-
-		RememberWordWrapPreferredCellPos();
 	}
+
+	RecalculateAllWordWraps(true);
+
+	RememberWordWrapPreferredCellPos();
 }
 
 

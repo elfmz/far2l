@@ -315,7 +315,7 @@ void Editor::RememberWordWrapPreferredCellPos()
 
 	int visual_line_start, ignored_end;
 	CurLine->GetVisualLine(GetCurVisualLine(), visual_line_start, ignored_end);
-	m_WordWrapPreferredCellPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(visual_line_start);
+	m_WordWrapPreferredCellPos = CurLine->RealPosToCell(0, visual_line_start, CurLine->GetCurPos(), nullptr);
 }
 
 void Editor::SetCursorByVisualLineCellOffset(int VisualLine, int horizontal_cell_pos)
@@ -323,9 +323,15 @@ void Editor::SetCursorByVisualLineCellOffset(int VisualLine, int horizontal_cell
 	int new_start, new_end;
 	CurLine->GetVisualLine(VisualLine, new_start, new_end);
 
-	int new_cell_pos = CurLine->RealPosToCell(new_start) + horizontal_cell_pos;
-	int new_pos = CurLine->CellPosToReal(new_cell_pos);
+	int new_pos = new_start;
 	const int line_length = CurLine->GetLength();
+	const int limit_pos = std::min(new_end, line_length);
+	while (new_pos < limit_pos) {
+		const int next_pos = CurLine->CalcPosFwdTo(new_pos, limit_pos);
+		if (next_pos <= new_pos || CurLine->RealPosToCell(0, new_start, next_pos, nullptr) > horizontal_cell_pos)
+			break;
+		new_pos = next_pos;
+	}
 
 	// For wrapped sub-lines, the [start, end) boundary belongs to the next visual line.
 	// If the preferred x lands on or beyond that boundary, keep the cursor on the last
@@ -375,7 +381,7 @@ void Editor::SetWordWrapCursorPosition(int NewPos, int VisualLine)
 		CurLine->SetCurPos(CurLine->CalcPosBwdTo(visual_line_end));
 	}
 
-	m_WordWrapPreferredCellPos = CurLine->GetCellCurPos() - CurLine->RealPosToCell(visual_line_start);
+	m_WordWrapPreferredCellPos = CurLine->RealPosToCell(0, visual_line_start, CurLine->GetCurPos(), nullptr);
 }
 
 // Helper function to count total lines in the editor
@@ -1547,6 +1553,13 @@ int Editor::ProcessKey(FarKey Key)
 	int SelFirst = FALSE;
 	int SelAtBeginning = FALSE;
 	EditorBlockGuard _bg(*this, &Editor::UnmarkEmptyBlock);
+	auto SelectRange = [](Edit* line, int start, int end)
+	{
+		if (end == -1)
+			line->Select(start, end);
+		else
+			line->Select(std::min(start, end), std::max(start, end));
+	};
 
 	switch (Key) {
 		case KEY_SHIFTLEFT:
@@ -2014,20 +2027,9 @@ int Editor::ProcessKey(FarKey Key)
 					if (SelFirst) {
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
-						CurLine->Select(std::min(OldPos, CurLine->GetCurPos()), std::max(OldPos, CurLine->GetCurPos()));
-					} else if (SelAtBeginning) {
-						if (OldSelEnd == -1 || CurLine->GetCurPos() <= OldSelEnd) {
-							CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
-						} else {
-							CurLine->Select(OldSelEnd, CurLine->GetCurPos());
-						}
-					} else {
-						if (CurLine->GetCurPos() >= OldSelStart) {
-							CurLine->Select(OldSelStart, CurLine->GetCurPos());
-						} else {
-							CurLine->Select(CurLine->GetCurPos(), OldSelStart);
-						}
 					}
+					SelectRange(CurLine, CurLine->GetCurPos(),
+							SelFirst ? OldPos : (SelAtBeginning ? OldSelEnd : OldSelStart));
 				}
 				else
 				{
@@ -2044,12 +2046,7 @@ int Editor::ProcessKey(FarKey Key)
 
 							int CurSelStart, CurSelEnd;
 							CurLine->GetRealSelection(CurSelStart, CurSelEnd);
-
-							if (CurSelEnd == -1 || CurLine->GetCurPos() <= CurSelEnd) {
-								CurLine->Select(CurLine->GetCurPos(), CurSelEnd);
-							} else {
-								CurLine->Select(CurSelEnd, CurLine->GetCurPos());
-							}
+							SelectRange(CurLine, CurLine->GetCurPos(), CurSelEnd);
 						} else {
 							OldLine->Select(OldSelEnd, -1);
 							CurLine->Select(0, CurLine->GetCurPos());
@@ -2163,20 +2160,9 @@ int Editor::ProcessKey(FarKey Key)
 					if (SelFirst) {
 						BlockStart = CurLine;
 						BlockStartLine = NumLine;
-						CurLine->Select(std::min(OldPos, CurLine->GetCurPos()), std::max(OldPos, CurLine->GetCurPos()));
-					} else if (SelAtBeginning) {
-						if (CurLine->GetCurPos() <= OldSelEnd || OldSelEnd == -1) {
-							CurLine->Select(CurLine->GetCurPos(), OldSelEnd);
-						} else {
-							CurLine->Select(OldSelEnd, CurLine->GetCurPos());
-						}
-					} else {
-						if (CurLine->GetCurPos() >= OldSelStart) {
-							CurLine->Select(OldSelStart, CurLine->GetCurPos());
-						} else {
-							CurLine->Select(CurLine->GetCurPos(), OldSelStart);
-						}
 					}
+					SelectRange(CurLine, CurLine->GetCurPos(),
+							SelFirst ? OldPos : (SelAtBeginning ? OldSelEnd : OldSelStart));
 				}
 				else
 				{
@@ -2190,26 +2176,24 @@ int Editor::ProcessKey(FarKey Key)
 						BlockStartLine = NumLine;
 						CurLine->Select(CurLine->GetCurPos(), -1);
 						OldLine->Select(0, OldSelEnd);
-					} else {
-						if (BlockStartLine < NumLine + 1) {
-							OldLine->Select(-1, 0);
+					} else if (BlockStartLine < NumLine + 1) {
+						OldLine->Select(-1, 0);
 
-							int CurSelStart, CurSelEnd;
-							CurLine->GetRealSelection(CurSelStart, CurSelEnd);
+						int CurSelStart, CurSelEnd;
+						CurLine->GetRealSelection(CurSelStart, CurSelEnd);
 
-							if (CurSelEnd == -1 || CurLine->GetCurPos() >= CurSelStart) {
-								CurLine->Select(CurSelStart, CurLine->GetCurPos());
-							} else {
-								CurLine->Select(CurLine->GetCurPos(), CurSelStart);
-								BlockStart = CurLine;
-								BlockStartLine = NumLine;
-							}
-						} else {
-							OldLine->Select(0, OldSelStart);
-							CurLine->Select(CurLine->GetCurPos(), -1);
+						if (CurSelEnd == -1 || CurLine->GetCurPos() >= CurSelStart)
+							CurLine->Select(CurSelStart, CurLine->GetCurPos());
+						else {
+							CurLine->Select(CurLine->GetCurPos(), CurSelStart);
 							BlockStart = CurLine;
 							BlockStartLine = NumLine;
 						}
+					} else {
+						OldLine->Select(0, OldSelStart);
+						CurLine->Select(CurLine->GetCurPos(), -1);
+						BlockStart = CurLine;
+						BlockStartLine = NumLine;
 					}
 				}
 				Show();
@@ -4682,14 +4666,12 @@ void Editor::InsertString()
 
 void Editor::Down()
 {
- 	if (m_bWordWrap)
+	if (m_bWordWrap)
 	{
 		const int cur_visual_line = GetCurVisualLine();
 		int start, end;
 		CurLine->GetVisualLine(cur_visual_line, start, end);
-		int cur_cell_pos = CurLine->RealPosToCell(CurLine->GetCurPos());
-		int start_cell_pos = CurLine->RealPosToCell(start);
-		int horizontal_cell_pos = cur_cell_pos - start_cell_pos;
+		int horizontal_cell_pos = CurLine->RealPosToCell(0, start, CurLine->GetCurPos(), nullptr);
 		int target_visual_line = cur_visual_line;
 
 		if (cur_visual_line + 1 < CurLine->GetVisualLineCount()) {
@@ -4774,9 +4756,7 @@ void Editor::Up()
 		const int cur_visual_line = GetCurVisualLine();
 		int start, end;
 		CurLine->GetVisualLine(cur_visual_line, start, end);
-		int cur_cell_pos = CurLine->RealPosToCell(CurLine->GetCurPos());
-		int start_cell_pos = CurLine->RealPosToCell(start);
-		int horizontal_cell_pos = cur_cell_pos - start_cell_pos;
+		int horizontal_cell_pos = CurLine->RealPosToCell(0, start, CurLine->GetCurPos(), nullptr);
 		int target_visual_line = cur_visual_line;
 
 		if (cur_visual_line > 0) {

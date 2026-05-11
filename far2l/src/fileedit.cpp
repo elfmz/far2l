@@ -2441,8 +2441,8 @@ void FileEditor::ShowStatus()
 				uint64_t color2 = SoftenItemColor(FarColorToReal(COL_EDITORSTATUS), active ? 1 : 0, i + 1 == TabHovered, active ? 0 : 1, 0);
 				SetColor(color2);
 
-				int len = v.size() > 1 ? std::min(15, TitleCells) : TitleCells;
 				FARString strTab = v[i];
+				int len = v.size() > 1 ? std::min(15, (int)strTab.CellsCount()) : (int)strTab.CellsCount();
 				if (strTab.CellsCount() > (size_t)len) TruncStr(strTab, len);
 
 				tabPos.push_back({ strTab, WhereX(), (int)strTab.CellsCount() });
@@ -2454,7 +2454,7 @@ void FileEditor::ShowStatus()
 			}
 
 			SetFarColor(COL_EDITORSTATUS);
-			if (TitleCells > 0) FS << fmt::Cells() << fmt::Expand(TitleCells) << L" ";
+			if (TitleCells > 0) FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << L" ";
 			FS << StrStatus;
 		}
 		else {

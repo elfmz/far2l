@@ -230,6 +230,12 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 	TopList(nullptr),
 	EndList(nullptr),
 	TopScreen(nullptr),
+	m_TopScreenVisualLine(0),
+	m_CachedTotalVisualLines(1),
+	m_CachedTopVisualLine(0),
+	m_CachedScrollbarTopScreen(nullptr),
+	m_CachedScrollbarTopScreenVisualLine(0),
+	m_VisualScrollbarDirty(true),
 	CurLine(nullptr),
 	LastGetLine(nullptr),
 	LastGetLineNumber(0),
@@ -243,7 +249,6 @@ Editor::Editor(ScreenObject *pOwner, bool DialogUsed)
 {
 	_KEYMACRO(SysLog(L"Editor::Editor()"));
 	_KEYMACRO(SysLog(1));
-	m_TopScreenVisualLine = 0;
 	EdOpt = Opt.EdOpt;
 	m_bWordWrap = EdOpt.WordWrap;
 	SetOwner(pOwner);
@@ -294,6 +299,7 @@ void Editor::AdjustScreenPosition()
 
 	// Then, scroll up by half the screen height to center it
 	int HalfScreen = (Y2 - Y1 + 1) / 2;
+	m_VisualScrollbarDirty = true;
 	for (int i = 0; i < HalfScreen; ++i)
 	{
 		if (!DecTopVisualLine()) {
@@ -453,6 +459,7 @@ void Editor::RecalculateAllWordWraps(bool SyncWordWrapState)
 		CurPtr->ObjWidth = Width;
 		CurPtr->RecalculateWordWrap(Width, EdOpt.TabSize);
 	}
+	m_VisualScrollbarDirty = true;
 }
 
 void Editor::FreeAllocatedData(bool FreeUndo)
@@ -468,6 +475,7 @@ void Editor::FreeAllocatedData(bool FreeUndo)
 	UndoPos = nullptr;
 	UndoSkipLevel = 0;
 	m_TopScreenVisualLine = 0;
+	m_VisualScrollbarDirty = true;
 	m_LineCountDirty = true;  // Invalidate line number cache
 	ClearStackBookmarks();
 	TopList = EndList = CurLine = nullptr;
@@ -3615,6 +3623,7 @@ case KEY_CTRLNUMPAD3: {
 					CurLine->ObjWidth = XX2 - X1 + 1;
 				}
 
+				const int OldVisualLineCount = m_bWordWrap ? CurLine->GetVisualLineCount() : 0;
 				if (CurLine->ProcessKey(Key)) {
 					int SelStart, SelEnd;
 
@@ -3629,6 +3638,8 @@ case KEY_CTRLNUMPAD3: {
 					{
 						int Width = ObjWidth > 0 ? CalculateTextAreaWidth(ObjWidth, EdOpt.ShowScrollBar) : 0;
 						CurLine->RecalculateWordWrap(Width, EdOpt.TabSize);
+						if (CurLine->GetVisualLineCount() != OldVisualLineCount)
+							m_VisualScrollbarDirty = true;
 						RememberWordWrapPreferredCellPos();
 					}
 
@@ -3752,18 +3763,16 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 			if (m_bWordWrap) {
 				if (!Flags.Check(FEDITOR_DIALOGMEMOEDIT)) {
 					while (IsMouseButtonPressed()) {
-						int TotalVisualLines = GetTotalVisualLines();
+						const int TotalVisualLines = GetTotalVisualLines();
 						if (TotalVisualLines > 1) {
-							int TargetVisualLine = (TotalVisualLines - 1) * (MouseY - Y1) / (Y2 - Y1);
-							GoToVisualLine(TargetVisualLine);
+							GoToVisualLine((TotalVisualLines - 1) * (MouseY - Y1) / (Y2 - Y1));
 							Show();
 						}
 					}
 				} else {
-					int TotalVisualLines = GetTotalVisualLines();
+					const int TotalVisualLines = GetTotalVisualLines();
 					if (TotalVisualLines > 1) {
-						int TargetVisualLine = (TotalVisualLines - 1) * (MouseY - Y1) / (Y2 - Y1);
-						GoToVisualLine(TargetVisualLine);
+						GoToVisualLine((TotalVisualLines - 1) * (MouseY - Y1) / (Y2 - Y1));
 						Show();
 					}
 				}
@@ -4157,23 +4166,38 @@ void Editor::GoToVisualLine(int VisualLine)
 }
 int Editor::GetTotalVisualLines()
 {
+	if (!m_VisualScrollbarDirty)
+		return m_CachedTotalVisualLines;
+
 	int total = 0;
+	int top = 0;
+	bool found_top = false;
 	for (Edit* line = TopList; line; line = line->m_next) {
-		total += line->GetVisualLineCount();
+		if (line == TopScreen) {
+			top = total + m_TopScreenVisualLine;
+			found_top = true;
+		}
+		total += std::max(1, line->GetVisualLineCount());
 	}
-	return total;
+
+	m_CachedTotalVisualLines = std::max(total, 1);
+	m_CachedTopVisualLine = found_top ? std::min(top, m_CachedTotalVisualLines - 1) : 0;
+	m_CachedScrollbarTopScreen = TopScreen;
+	m_CachedScrollbarTopScreenVisualLine = m_TopScreenVisualLine;
+	m_VisualScrollbarDirty = false;
+	return m_CachedTotalVisualLines;
 }
 
 int Editor::GetTopVisualLine()
 {
-	int top_pos = 0;
-	// This can be slow for large files, but it's the simplest correct implementation.
-	// We can optimize with caching later if needed.
-	for (Edit* line = TopList; line && line != TopScreen; line = line->m_next) {
-		top_pos += line->GetVisualLineCount();
+	if (m_VisualScrollbarDirty
+			|| m_CachedScrollbarTopScreen != TopScreen
+			|| m_CachedScrollbarTopScreenVisualLine != m_TopScreenVisualLine) {
+		m_VisualScrollbarDirty = true;
+		GetTotalVisualLines();
 	}
-	top_pos += m_TopScreenVisualLine;
-	return top_pos;
+
+	return m_CachedTopVisualLine;
 }
 
 int Editor::GetVisualLinesBelow(Edit* startLine, int startVisual, int limit)
@@ -4230,6 +4254,7 @@ void Editor::EnsureTopScreenVisual()
 	if (!TopScreen) {
 		TopScreen = CurLine ? CurLine : TopList;
 		m_TopScreenVisualLine = 0;
+		m_VisualScrollbarDirty = true;
 	}
 }
 
@@ -4241,14 +4266,19 @@ bool Editor::DecTopVisualLine()
 	}
 	if (m_TopScreenVisualLine > 0) {
 		--m_TopScreenVisualLine;
-		return true;
-	}
-	if (TopScreen->m_prev) {
+	} else if (TopScreen->m_prev) {
 		TopScreen = TopScreen->m_prev;
 		m_TopScreenVisualLine = std::max(0, TopScreen->GetVisualLineCount() - 1);
-		return true;
+	} else {
+		return false;
 	}
-	return false;
+
+	if (!m_VisualScrollbarDirty) {
+		m_CachedTopVisualLine = std::max(0, m_CachedTopVisualLine - 1);
+		m_CachedScrollbarTopScreen = TopScreen;
+		m_CachedScrollbarTopScreenVisualLine = m_TopScreenVisualLine;
+	}
+	return true;
 }
 
 bool Editor::IncTopVisualLine()
@@ -4262,10 +4292,16 @@ bool Editor::IncTopVisualLine()
 		if (TopScreen->m_next) {
 			TopScreen = TopScreen->m_next;
 			m_TopScreenVisualLine = 0;
-			return true;
+		} else {
+			m_TopScreenVisualLine = std::max(0, TopScreen->GetVisualLineCount() - 1);
+			return false;
 		}
-		m_TopScreenVisualLine = std::max(0, TopScreen->GetVisualLineCount() - 1);
-		return false;
+	}
+
+	if (!m_VisualScrollbarDirty) {
+		m_CachedTopVisualLine = std::min(m_CachedTopVisualLine + 1, m_CachedTotalVisualLines - 1);
+		m_CachedScrollbarTopScreen = TopScreen;
+		m_CachedScrollbarTopScreenVisualLine = m_TopScreenVisualLine;
 	}
 	return true;
 }
@@ -4306,6 +4342,7 @@ void Editor::DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int Undo
 	}
 
 	TextChanged(1);
+	m_VisualScrollbarDirty = true;
 
 	if (!DelPtr->m_next && (!DeleteLast || !DelPtr->m_prev)) {
 		AddUndoData(UNDO_EDIT, DelPtr->GetStringAddr(), DelPtr->GetEOL(), UndoLine, DelPtr->GetCurPos(),
@@ -7843,6 +7880,9 @@ void Editor::SetTabSize(int NewSize)
 		CurPtr->SetTabSize(NewSize);
 		CurPtr = CurPtr->m_next;
 	}
+
+	if (m_bWordWrap)
+		RecalculateAllWordWraps(false);
 }
 
 void Editor::SetWordWrap(int NewMode)
@@ -8147,6 +8187,7 @@ Edit *Editor::InsertString(const wchar_t *lpwszStr, int nLength, Edit *pAfter, i
 		}
 
 		NumLastLine++;
+		m_VisualScrollbarDirty = true;
 
 		// Skip expensive cache operations during bulk file loading
 		if (!m_BulkLoadMode) {
@@ -8386,22 +8427,12 @@ void Editor::DrawScrollbar()
 	if (EdOpt.ShowScrollBar)
 	{
 		SetFarColor(COL_EDITORSCROLLBAR);
-		if (m_bWordWrap)
-		{
-			int TotalVisualLines = GetTotalVisualLines();
-			// If file is empty, TotalVisualLines can be 0, which breaks scrollbar logic.
-			// ScrollBarEx expects total > 0.
-			if (TotalVisualLines == 0 && TopList && TopList->m_next == nullptr && TopList->GetLength() == 0)
-			{
-				TotalVisualLines = 1; // Treat empty file as 1 visual line for scrollbar purposes.
-			}
-
-			int TopVisualLine = GetTopVisualLine();
-			XX2 = X2 - (ScrollBarEx(X2, Y1, Y2 - Y1 + 1, TopVisualLine, TotalVisualLines) ? 1 : 0);
-		}
-		else
-		{
-			XX2 = X2 - (ScrollBarEx(X2, Y1, Y2 - Y1 + 1, NumLine - CalcDistance(TopScreen, CurLine, -1), NumLastLine) ? 1 : 0);
+		if (m_bWordWrap) {
+			XX2 = X2 - (ScrollBarEx(X2, Y1, Y2 - Y1 + 1,
+					GetTopVisualLine(), GetTotalVisualLines()) ? 1 : 0);
+		} else {
+			XX2 = X2 - (ScrollBarEx(X2, Y1, Y2 - Y1 + 1,
+					NumLine - CalcDistance(TopScreen, CurLine, -1), NumLastLine) ? 1 : 0);
 		}
 	}
 	else

@@ -3412,38 +3412,22 @@ case KEY_CTRLNUMPAD3: {
 
 		case KEY_HOME:
 		case KEY_NUMPAD7:
-		{
-			if (m_bWordWrap)
-			{
-				const int cur_visual_line = GetCurVisualLine();
-				int start, end;
-				CurLine->GetVisualLine(cur_visual_line, start, end);
-				SetWordWrapCursorPosition(start);
-				Show();
-				return TRUE;
-			}
-		}
-
 		case KEY_END:
 		case KEY_NUMPAD1:
 		{
 			if (m_bWordWrap)
 			{
-				const int cur_visual_line = GetCurVisualLine();
+				const bool MoveToEnd = Key == KEY_END || Key == KEY_NUMPAD1;
 				int start, end;
-				CurLine->GetVisualLine(cur_visual_line, start, end);
+				CurLine->GetVisualLine(GetCurVisualLine(), start, end);
 
-				int targetPos = end;
-				// Если мы не в конце логической строки, и символ перед точкой переноса - пробел,
-				// то ставим курсор перед этим пробелом, чтобы не прыгать на следующую строку.
-				if (targetPos > start && targetPos < CurLine->GetLength() && CurLine->GetStringAddr()[targetPos - 1] == L' ')
-				{
-				    targetPos--;
-				}
+				int targetPos = MoveToEnd ? end : start;
+				if (MoveToEnd && targetPos > start && targetPos < CurLine->GetLength()
+						&& CurLine->GetStringAddr()[targetPos - 1] == L' ')
+					targetPos--;
+
 				SetWordWrapCursorPosition(targetPos);
-
 				Show();
-
 				return TRUE;
 			}
 		}

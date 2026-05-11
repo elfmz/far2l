@@ -612,24 +612,40 @@ else()
 endif()
 
 if (NOT DEFINED MTP OR MTP)
+    if (NOT DEFINED MTP_SYSTEM_LIBUSB)
+        # Auto-enable system libusb-1.0 where the vendored Linux backend won't work (FreeBSD: no backend; NixOS: netlink hotplug fails at runtime).
+        if (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD"
+                OR DEFINED ENV{NIX_STORE}
+                OR DEFINED ENV{NIX_BUILD_TOP}
+                OR CMAKE_PREFIX_PATH MATCHES "/nix/store/"
+                OR CMAKE_SYSTEM_PREFIX_PATH MATCHES "/nix/store/")
+            set(MTP_SYSTEM_LIBUSB ON)
+        else()
+            set(MTP_SYSTEM_LIBUSB OFF)
+        endif()
+    endif()
+
     set(_mtp_skip_reason "")
-    if (APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-        # FreeBSD has no vendored backend; use base-system libusb-1.0 if pkg-config sees it.
+    if (MTP_SYSTEM_LIBUSB)
         find_package(PkgConfig QUIET)
         if (PkgConfig_FOUND)
             pkg_check_modules(MTP_LIBUSB QUIET libusb-1.0)
         endif()
         if (NOT MTP_LIBUSB_FOUND)
-            set(_mtp_skip_reason "libusb-1.0 not found")
+            set(_mtp_skip_reason "MTP_SYSTEM_LIBUSB=ON but libusb-1.0 not found via pkg-config")
         endif()
-    else()
-        set(_mtp_skip_reason "${CMAKE_SYSTEM_NAME} not supported")
+    elseif (NOT (APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux"))
+        set(_mtp_skip_reason "${CMAKE_SYSTEM_NAME} not supported (try -DMTP_SYSTEM_LIBUSB=ON)")
     endif()
+
     if (_mtp_skip_reason)
         message(STATUS "${ColorRed}MTP plugin disabled: ${_mtp_skip_reason}${ColorNormal}")
     else()
-        message(STATUS "MTP plugin enabled")
+        if (MTP_SYSTEM_LIBUSB)
+            message(STATUS "MTP plugin enabled (system libusb-1.0; override with -DMTP_SYSTEM_LIBUSB=OFF)")
+        else()
+            message(STATUS "MTP plugin enabled (vendored libusb; override with -DMTP_SYSTEM_LIBUSB=ON)")
+        endif()
         add_subdirectory (mtp)
     endif()
 else()

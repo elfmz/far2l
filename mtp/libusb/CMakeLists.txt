@@ -1,7 +1,7 @@
 # libusb v1.0.29 vendored static archive for the MTP plugin; see VENDORING.md.
 
-if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
-    # No FreeBSD backend in upstream/vendored; wrap base-system libusb-1.0 (detected at top level).
+if(MTP_SYSTEM_LIBUSB)
+    # Wrap base-system libusb-1.0 (detected at top level). Auto on FreeBSD/Nix, opt-in elsewhere.
     add_library(libusb_static INTERFACE)
     target_include_directories(libusb_static INTERFACE ${MTP_LIBUSB_INCLUDE_DIRS})
     target_link_directories(libusb_static INTERFACE ${MTP_LIBUSB_LIBRARY_DIRS})

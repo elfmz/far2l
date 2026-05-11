@@ -2094,17 +2094,16 @@ int FileEditor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 					TabHovered = 0;
 					ShowStatus();
 				}
-				return TRUE;
 			}
-
-			for(int i = 0; i < (int)tabPos.size(); ++i) {
-				if (MsX >= tabPos[i].x && MsX <= tabPos[i].x + tabPos[i].w) {
-					TabHovered = i + 1;
-					ShowStatus();
-					return TRUE;
+			else {
+				for(int i = 0; i < (int)tabPos.size(); ++i) {
+					if (MsX >= tabPos[i].x && MsX <= tabPos[i].x + tabPos[i].w) {
+						TabHovered = i + 1;
+						ShowStatus();
+						// return TRUE;
+					}
 				}
 			}
-			return TRUE;
 		}
 
 		if ((MouseEvent->dwButtonState & 3) && MouseEvent->dwMousePosition.Y == pos + Y1) {

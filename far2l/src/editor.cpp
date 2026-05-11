@@ -2768,6 +2768,14 @@ case KEY_CTRLNUMPAD3: {
 		case KEY_CTRLN: {
 			Flags.Set(FEDITOR_NEWUNDO);
 
+			if (m_bWordWrap) {
+				RememberWordWrapPreferredCellPos();
+				MouseTarget target;
+				if (ComputeMouseTarget(X1 + CalculateLineNumberWidth() + m_WordWrapPreferredCellPos, Y1, target))
+					ApplyMouseTarget(target, false, false, false);
+				return TRUE;
+			}
+
 			while (CurLine != TopScreen) {
 				CurLine = CurLine->m_prev;
 				NumLine--;
@@ -2782,6 +2790,14 @@ case KEY_CTRLNUMPAD3: {
 				Flags.Set(FEDITOR_NEWUNDO);
 				Edit *CurPtr = TopScreen;
 				int CurLineFound = FALSE;
+
+				if (m_bWordWrap) {
+					RememberWordWrapPreferredCellPos();
+					MouseTarget target;
+					if (ComputeMouseTarget(X1 + CalculateLineNumberWidth() + m_WordWrapPreferredCellPos, Y2, target))
+						ApplyMouseTarget(target, false, false, false);
+					return TRUE;
+				}
 
 				for (I = Y1; I < Y2; I++) {
 					if (!CurPtr->m_next)

@@ -613,7 +613,7 @@ void FileEditor::Init(FileHolderPtr NewFileHolder, UINT codepage, const wchar_t 
 		EditKeyBar.Hide0();
 
 	EditMenuBar = new EditorMenuBar();
-	EditMenuBar->SetPosition(X1, Y1 + (TitleBarVisible ? 1 : 0), X2, Y1 + (TitleBarVisible ? 1 : 0));
+	EditMenuBar->SetPosition(X1, Y1  /*+ (TitleBarVisible ? 1 : 0)*/, X2, Y1 /*+ (TitleBarVisible ? 1 : 0)*/);
 	// if (!MenuBarVisible) EditMenuBar->Hide0();
 	EditMenuBar->Show();
 
@@ -695,7 +695,7 @@ void FileEditor::Show()
 		m_editor->SetPosition(0, vGap, ScrX, ScrY - (KeyBarVisible ? 1 : 0));
 
 		if (MenuBarVisible) {
-			EditMenuBar->SetPosition(0, TitleBarVisible ? 1 : 0, ScrX, TitleBarVisible ? 1 : 0);
+			EditMenuBar->SetPosition(0, /*TitleBarVisible ? 1 :*/ 0, ScrX, /*TitleBarVisible ? 1 : */ 0);
 			EditMenuBar->Show();
 		}
 	}
@@ -2077,10 +2077,47 @@ int FileEditor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 	// Activate menu bar
 	if (MenuBarVisible) {
-		int pos = TitleBarVisible ? 1 : 0;
-		if (MouseEvent->dwMousePosition.Y == pos && (MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
+		int pos = /* TitleBarVisible ? 1 : */ 0;
+		if (MouseEvent->dwMousePosition.Y == pos + Y1 && (MouseEvent->dwButtonState & 3) && !MouseEvent->dwEventFlags) {
 			EditorShellOptions(0, MouseEvent, this);
 			return TRUE;
+		}
+	}
+
+	if (TitleBarVisible && Opt.Backend.UseModernLook) {
+		int pos = MenuBarVisible ? 1 : 0;
+		int MsX = MouseEvent->dwMousePosition.X - X1;
+
+		if (MouseEvent->dwEventFlags == MOUSE_MOVED) {
+			if (MouseEvent->dwMousePosition.Y != pos + Y1) {
+				if (TabHovered) {
+					TabHovered = 0;
+					ShowStatus();
+				}
+				return TRUE;
+			}
+
+			for(int i = 0; i < (int)tabPos.size(); ++i) {
+				if (MsX >= tabPos[i].x && MsX <= tabPos[i].x + tabPos[i].w) {
+					TabHovered = i + 1;
+					ShowStatus();
+					return TRUE;
+				}
+			}
+			return TRUE;
+		}
+
+		if ((MouseEvent->dwButtonState & 3) && MouseEvent->dwMousePosition.Y == pos + Y1) {
+			for(int i = 0; i < (int)tabPos.size(); ++i) {
+				if (MsX >= tabPos[i].x && MsX <= tabPos[i].x + tabPos[i].w) {
+					Frame* editor = FrameManager->getWindowByTypeAndIndex(MODALTYPE_EDITOR, i);
+					if (editor) {
+						FrameManager->ActivateFrame(editor);
+						ShowStatus();
+						return TRUE;
+					}
+				}
+			}
 		}
 	}
 
@@ -2313,7 +2350,7 @@ void FileEditor::ShowStatus()
 		return;
 
 	SetFarColor(COL_EDITORSTATUS);
-	GotoXY(X1, Y1);		//??
+	GotoXY(X1, Y1 + (MenuBarVisible ? 1 : 0));		//??
 	FARString strLineStr;
 	FARString strLocalTitle;
 	GetTitle(strLocalTitle);
@@ -2355,7 +2392,7 @@ void FileEditor::ShowStatus()
 	FARString strWrapMode;
 	if (m_editor->GetWordWrap())
 	{
-		strWrapMode = /* Opt.Backend.UseModernLook ? L"\x21AB\x2140" : */ L"WW ";
+		strWrapMode = /*Opt.Backend.UseModernLook ? L"\x21AB\x2140" :*/ L"WW ";
 	}                                                  
 
 	FARString strTabMode;
@@ -2389,11 +2426,44 @@ void FileEditor::ShowStatus()
 		TitleCells = StatusWidth;
 		StrStatus.Clear();
 	}
+
+	tabPos.clear();
+
 	if (TitleCells > 0) {
-		if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
-			TruncStr(strLocalTitle, TitleCells);
+		if (Opt.Backend.UseModernLook) {
+			// list of tabs
+			std::vector<std::wstring> v;
+			FrameManager->enumerateWindowsByType(v, MODALTYPE_EDITOR);
+
+			for(int i = 0; i < (int)v.size(); ++i) {
+				if (TitleCells <= 5) break;
+
+				bool active = v[i] == strLocalTitle.CPtr();
+				uint64_t color2 = SoftenItemColor(FarColorToReal(COL_EDITORSTATUS), active ? 1 : 0, i + 1 == TabHovered, active ? 0 : 1, 0);
+				SetColor(color2);
+
+				int len = v.size() > 1 ? std::min(15, TitleCells) : TitleCells;
+				FARString strTab = v[i];
+				if (strTab.CellsCount() > (size_t)len) TruncStr(strTab, len);
+
+				tabPos.push_back({ strTab, WhereX(), (int)strTab.CellsCount() });
+
+				if(i > 0) FS << L"┋";
+				FS << (active ? L"📜" : L"📝");
+				FS << strTab;
+				TitleCells -= len + 1 + (i > 0 ? 1 : 0) ;
+			}
+
+			SetFarColor(COL_EDITORSTATUS);
+			if (TitleCells > 0) FS << fmt::Cells() << fmt::Expand(TitleCells) << L" ";
+			FS << StrStatus;
 		}
-		FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
+		else {
+			if (strLocalTitle.CellsCount() > size_t(TitleCells)) {
+				TruncStr(strLocalTitle, TitleCells);
+			}
+			FS << fmt::LeftAlign() << fmt::Cells() << fmt::Expand(TitleCells) << strLocalTitle << StrStatus;
+		}
 	}
 
 	if (Opt.ViewerEditorClock && Flags.Check(FFILEEDIT_FULLSCREEN)) {
@@ -2938,7 +3008,7 @@ void FileEditor::ProcessMenuCommand(int hMenu, int vMenu, FarKey accelKey)
 }
 
 int FileEditor::MenuBarPosition() {
-	return TitleBarVisible && MenuBarVisible ? 1 : 0;
+	return /*TitleBarVisible && MenuBarVisible ? 1 : */ 0;
 }
 
 int FileEditor::IsOptionActive(int hMenu, int vMenu) {

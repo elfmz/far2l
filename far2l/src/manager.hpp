@@ -125,6 +125,9 @@ public:
 	void RefreshFrame(Frame *Refreshed = nullptr);
 	void RefreshFrame(int Index);
 
+	void enumerateWindowsByType(std::vector<std::wstring>& v, int type);
+	Frame* getWindowByTypeAndIndex(int type, int indexInType);
+
 	//! Функции для запуска модальных фреймов.
 	void ExecuteFrame(Frame *Executed);
 

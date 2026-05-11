@@ -159,6 +159,15 @@ private:
 	FileHolderPtr FHP;
 	std::unique_ptr<EditorConfigOrg> EdCfg;
 	int MenuBarVisible;
+	int TabHovered {0};
+
+	struct TabNameAndPos {
+		FARString name;
+		int x;
+		int w;
+	};
+
+	std::vector<TabNameAndPos> tabPos;
 
 	virtual void DisplayObject();
 	int ProcessQuitKey(int FirstSave, BOOL NeedQuestion = TRUE);

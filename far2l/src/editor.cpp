@@ -2962,8 +2962,8 @@ case KEY_CTRLNUMPAD3: {
 			if (!CurPos)
 				return TRUE;
 
-			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
-				BeginVBlockMarking();
+			if (!Flags.Check(FEDITOR_MARKINGVBLOCK) && !BeginVBlockMarking())
+				return TRUE;
 
 			Pasting++;
 			{
@@ -3005,8 +3005,8 @@ case KEY_CTRLNUMPAD3: {
 			if (!EdOpt.CursorBeyondEOL && CurLine->GetCurPos() >= CurLine->GetLength())
 				return TRUE;
 
-			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
-				BeginVBlockMarking();
+			if (!Flags.Check(FEDITOR_MARKINGVBLOCK) && !BeginVBlockMarking())
+				return TRUE;
 
 			//_D(SysLog(L"---------------- KEY_ALTRIGHT, getLineCurPos=%i",CurLine->GetCellCurPos()));
 			Pasting++;
@@ -3131,8 +3131,8 @@ case KEY_CTRLNUMPAD3: {
 			if (!CurLine->m_prev)
 				return TRUE;
 
-			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
-				BeginVBlockMarking();
+			if (!Flags.Check(FEDITOR_MARKINGVBLOCK) && !BeginVBlockMarking())
+				return TRUE;
 
 			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_prev->RealPosToCell(CurLine->m_prev->GetLength()))
 				return TRUE;
@@ -3161,8 +3161,8 @@ case KEY_CTRLNUMPAD3: {
 			if (!CurLine->m_next)
 				return TRUE;
 
-			if (!Flags.Check(FEDITOR_MARKINGVBLOCK))
-				BeginVBlockMarking();
+			if (!Flags.Check(FEDITOR_MARKINGVBLOCK) && !BeginVBlockMarking())
+				return TRUE;
 
 			if (!EdOpt.CursorBeyondEOL && VBlockX >= CurLine->m_next->RealPosToCell(CurLine->m_next->GetLength()))
 				return TRUE;
@@ -5226,7 +5226,7 @@ void Editor::Paste(const wchar_t *Src)
 
 		bool IsVertical = false;
 		ClipText = clip.Paste(IsVertical);
-		if (ClipText && IsVertical) {
+		if (ClipText && IsVertical && !m_bWordWrap) {
 			VPaste(ClipText);
 			clip.Close();
 			return;
@@ -5580,6 +5580,9 @@ bool Editor::MarkBlock(bool SelVBlock, int SelStartLine, int SelStartPos, int Se
 {
 	fprintf(stderr, "Editor::MarkBlock: VBlock=%d StartLine=%d StartPos=%d Width=%d Height=%d\n",
 		SelVBlock, SelStartLine, SelStartPos, SelWidth, SelHeight);
+
+	if (SelVBlock && m_bWordWrap)
+		return false;
 
 	Edit *CurPtr = GetStringByNumber(SelStartLine);
 
@@ -7178,7 +7181,7 @@ int Editor::EditorControl(int Command, void *Param)
 
 bool Editor::IsVerticalBlockEditMode() const
 {
-	return VBlockStart && VBlockSizeY > 0;
+	return !m_bWordWrap && VBlockStart && VBlockSizeY > 0;
 }
 
 bool Editor::ProcessVerticalBlockEditKey(FarKey Key)
@@ -7668,8 +7671,11 @@ void Editor::SetReplaceMode(int Mode)
 	::ReplaceMode = Mode;
 }
 
-void Editor::BeginVBlockMarking()
+bool Editor::BeginVBlockMarking()
 {
+	if (m_bWordWrap)
+		return false;
+
 	UnmarkBlockAndShowIt();
 	VBlockStart = CurLine;
 	VBlockX = CurLine->GetCellCurPos();
@@ -7679,6 +7685,7 @@ void Editor::BeginVBlockMarking()
 	Flags.Set(FEDITOR_MARKINGVBLOCK);
 	BlockStartLine = NumLine;
 	//_D(SysLog(L"BeginVBlockMarking, set vblock to VBlockY=%i:%i, VBlockX=%i:%i",VBlockY,VBlockSizeY,VBlockX,VBlockSizeX));
+	return true;
 }
 
 void Editor::AdjustVBlock(int PrevX)

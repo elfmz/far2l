@@ -443,7 +443,7 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	void BeginVBlockMarking();
+	bool BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 
 	void Xlat();

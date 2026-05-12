@@ -411,7 +411,7 @@ int KeyBar::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
     			if (xPos[i] < 0) continue;
     			for(j = i + 1; j < KEY_COUNT && xPos[j] < 0; ++j);
 
-    			if (xPos[i] <= MsX && xPos[j] >= MsX ) {
+    			if (MsX >= xPos[i] && MsX < xPos[j] ) {
     				if (!Hover[i]) needsRedraw = true;
     				Hover[i] = 1;
     			}
@@ -627,6 +627,7 @@ void KeyBar::ShowContextMenu()
 	}
 	int GroupsLen = cnt;
 
+	FarKey key = 0;
 	{
 		int GroupsCode;
 		VMenu GroupsMenu(L"", Groups, GroupsLen, 0);
@@ -642,10 +643,15 @@ void KeyBar::ShowContextMenu()
 
 			if (GroupsCode < 0 || GroupsCode >= GroupsLen) break;
 
-			FarKey key = Groups[GroupsCode].AccelKey;
-			FrameManager->ProcessKey(key);
-
+			key = Groups[GroupsCode].AccelKey;
 			break;
+		}
+	}
+
+	if (key) {
+		FrameManager->ProcessKey(key);
+		if (key == KEY_F9){ 
+			FrameManager->ProcessKey(KEY_DOWN);
 		}
 	}
 }

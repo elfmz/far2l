@@ -2447,9 +2447,16 @@ void FileEditor::ShowStatus()
 
 				tabPos.push_back({ strTab, WhereX(), (int)strTab.CellsCount() });
 
-				if(i > 0) FS << L"┋";
+				// case with many tabs and status under clock
+				int left = TitleCells - (len + 1 + (i > 0 ? 1 : 0));
+				if (left < 0) {
+					TruncStr(strTab, len + left);
+				}
+
+				if(i > 0) FS << L"║";
 				FS << (active ? L"📜" : L"📝");
 				FS << strTab;
+
 				TitleCells -= len + 1 + (i > 0 ? 1 : 0) ;
 			}
 

@@ -75,3 +75,64 @@ bool InteractiveLogin(const std::string &display_name, unsigned int retry, std::
 {
 	return InteractiveLoginDialog(display_name, retry).Ask(username, password);
 }
+
+/*
+345                                            50
+ =========== Private key passphrase ===========
+| Unlocking key for:  [TEXTBOX               ] |
+| UPassphrase:        [EDITBOX               ] |
+|----------------------------------------------|
+|   [       Ok      ]      [    Cancel    ]    |
+ ==============================================
+    6                     29       38
+*/
+
+class InteractivePassphraseDialog : BaseDialog
+{
+	int _i_dblbox, _i_password, _i_connect;
+public:
+	InteractivePassphraseDialog(const std::string &display_name, unsigned int retry)
+	{
+		_i_dblbox = _di.SetBoxTitleItem(retry ? MKeyPassphraseRetryTitle : MKeyPassphraseTitle);
+		_di.SetLine(2);
+		_di.AddAtLine(DI_TEXT, 5,24, 0, retry ? MKeyPassphraseRetryTo : MKeyPassphraseTo);
+		_di.AddAtLine(DI_TEXT, 25,48, 0, display_name.c_str());
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 5,24, 0, MPassphrase);
+		_i_password = _di.AddAtLine(DI_PSWEDIT, 28,48, 0, "");
+
+		_di.NextLine();
+		_di.AddAtLine(DI_TEXT, 4,48, DIF_BOXCOLOR | DIF_SEPARATOR);
+
+		_di.NextLine();
+		_i_connect = _di.AddAtLine(DI_BUTTON, 6,23, DIF_CENTERGROUP, MConnect);
+		_di.AddAtLine(DI_BUTTON, 30,45, DIF_CENTERGROUP, MCancel);
+
+		if (retry) {
+			std::string title;
+			TextFromDialogControl(_i_dblbox, title);
+			title += StrPrintf(" (%u)", retry);
+			TextToDialogControl(_i_dblbox, title);
+		}
+
+		SetFocusedDialogControl(_i_password);
+		SetDefaultDialogControl(_i_connect);
+	}
+
+	bool Ask(std::string &password)
+	{
+		TextToDialogControl(_i_password, password);
+
+		if (Show(L"InteractivePassphraseDialog", 5, 2) != _i_connect)
+			return false;
+
+		TextFromDialogControl(_i_password, password);
+		return true;
+	}
+};
+
+bool InteractivePassphrase(const std::string &display_name, unsigned int retry, std::string &password)
+{
+	return InteractivePassphraseDialog(display_name, retry).Ask(password);
+}

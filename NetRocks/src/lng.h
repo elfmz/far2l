@@ -32,6 +32,11 @@ enum LanguageID
 	MLoginAuthRetryTitle,
 	MLoginAuthTo,
 	MLoginAuthRetryTo,
+	MKeyPassphraseTitle,
+	MKeyPassphraseRetryTitle,
+	MKeyPassphraseTo,
+	MKeyPassphraseRetryTo,
+	MPassphrase,
 
 	MProtocol,
 	MHost,

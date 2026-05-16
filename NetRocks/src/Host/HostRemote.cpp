@@ -363,7 +363,7 @@ void HostRemote::ReInitialize()
 		locker.lock();
 
 		if (status == IPC_PI_OK) {
-			if (_login_mode == 1) {
+			if (_login_mode == 1 || !_password.empty()) {
 				// on next reinitialization try to autouse same password that now succeeded
 				_login_mode = 2;
 			}
@@ -395,6 +395,24 @@ void HostRemote::ReInitialize()
 
 				++auth_failures;
 				_login_mode = 1;
+				break;
+			case IPC_PI_KEY_PASSPHRASE_NEEDED:
+				if (auth_failures >= 3) {
+					OnBroken();
+					throw ProtocolError("Key passphrase failed", info.c_str());
+				}
+				++auth_failures;
+				{
+					std::string tmp_password = _password;
+					locker.unlock();
+					if (!InteractivePassphrase(SiteName(), auth_failures, tmp_password)) {
+						SendString(std::string());
+						OnBroken();
+						throw AbortError();
+					}
+					locker.lock();
+					_password = tmp_password;
+				}
 				break;
 
 			case IPC_PI_PROTOCOL_ERROR:

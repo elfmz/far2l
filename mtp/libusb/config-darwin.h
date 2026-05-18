@@ -1,5 +1,5 @@
 /* config.h for libusb on macOS — adopted verbatim from upstream Xcode/config.h
- * (libusb v1.0.29). Apple maintainers keep this file in sync with the autotools
+ * (libusb v1.0.30). Apple maintainers keep this file in sync with the autotools
  * output; do not hand-edit. To refresh: copy from a newer libusb tag's
  * Xcode/config.h. See VENDORING.md.
  */

@@ -65,9 +65,6 @@ typedef SSIZE_T ssize_t;
 #if defined(interface)
 #undef interface
 #endif
-#if !defined(__CYGWIN__)
-#include <winsock.h>
-#endif
 #endif /* _WIN32 || __CYGWIN__ */
 
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
@@ -168,9 +165,10 @@ typedef SSIZE_T ssize_t;
  * <li>libusb version 1.0.27: LIBUSB_API_VERSION = 0x0100010A
  * <li>libusb version 1.0.28: LIBUSB_API_VERSION = 0x0100010A
  * <li>libusb version 1.0.29: LIBUSB_API_VERSION = 0x0100010B
+ * <li>libusb version 1.0.30: LIBUSB_API_VERSION = 0x0100010C
  * </ul>
  */
-#define LIBUSB_API_VERSION 0x0100010B
+#define LIBUSB_API_VERSION 0x0100010C
 
 /** \def LIBUSBX_API_VERSION
  * \ingroup libusb_misc
@@ -192,7 +190,7 @@ extern "C" {
  * \param x the host-endian value to convert
  * \returns the value in little-endian byte order
  */
-static inline uint16_t libusb_cpu_to_le16(const uint16_t x)
+static inline uint16_t libusb_cpu_to_le16(uint16_t x)
 {
 	union {
 		uint8_t  b8[2];
@@ -263,6 +261,24 @@ enum libusb_class_code {
 
 	/** Personal Healthcare */
 	LIBUSB_CLASS_PERSONAL_HEALTHCARE = 0x0f,
+
+	/** Audio & Video */
+	LIBUSB_CLASS_AUDIO_VIDEO = 0x10,
+
+	/** Billboard */
+	LIBUSB_CLASS_BILLBOARD = 0x11,
+
+	/** Interface class */
+	LIBUSB_CLASS_TYPE_C_BRIDGE = 0x12,
+
+	/** Bulk display */
+	LIBUSB_CLASS_BULK_DISPLAY_PROTOCOL = 0x13,
+
+	/** MCTP */
+	LIBUSB_CLASS_MCTP = 0x14,
+
+	/** I3C */
+	LIBUSB_CLASS_I3C = 0x3c,
 
 	/** Diagnostic Device */
 	LIBUSB_CLASS_DIAGNOSTIC_DEVICE = 0xdc,
@@ -1182,16 +1198,16 @@ struct libusb_device_handle;
  */
 struct libusb_version {
 	/** Library major version. */
-	const uint16_t major;
+	uint16_t major;
 
 	/** Library minor version. */
-	const uint16_t minor;
+	uint16_t minor;
 
 	/** Library micro version. */
-	const uint16_t micro;
+	uint16_t micro;
 
 	/** Library nano version. */
-	const uint16_t nano;
+	uint16_t nano;
 
 	/** Library release candidate suffix string, e.g. "-rc4". */
 	const char *rc;
@@ -1649,6 +1665,29 @@ enum libusb_option {
 	LIBUSB_OPTION_MAX = 4
 };
 
+/** \ingroup libusb_desc
+ * The device string type.
+ */
+enum libusb_device_string_type {
+	LIBUSB_DEVICE_STRING_MANUFACTURER,
+	LIBUSB_DEVICE_STRING_PRODUCT,
+	LIBUSB_DEVICE_STRING_SERIAL_NUMBER,
+	LIBUSB_DEVICE_STRING_COUNT  /* The total number of string types. */
+};
+
+/** \ingroup libusb_desc
+ * The maximum length for a device string descriptor in UTF-8.
+ * 
+ * 255 max descriptor length with 2 byte header 
+ *  => 253 bytes UTF-16LE, no null termination (USB 2.0 9.6.7)
+ *  => 126.5 codepoints
+ *  => 127 * 3 + 1
+ *  => 382 bytes
+ * 
+ * Stay with 256 * 3/2 = 384 to be safe.
+ */
+#define LIBUSB_DEVICE_STRING_BYTES_MAX  (384U)
+ 
 /** \ingroup libusb_lib
  * Callback function for handling log messages.
  * \param ctx the context which is related to the log message, or NULL if it
@@ -1696,6 +1735,8 @@ void LIBUSB_CALL libusb_free_device_list(libusb_device **list,
 libusb_device * LIBUSB_CALL libusb_ref_device(libusb_device *dev);
 void LIBUSB_CALL libusb_unref_device(libusb_device *dev);
 
+int LIBUSB_CALL libusb_get_device_string(libusb_device *dev,
+	enum libusb_device_string_type string_type, char *data, int length);
 int LIBUSB_CALL libusb_get_configuration(libusb_device_handle *dev,
 	int *config);
 int LIBUSB_CALL libusb_get_device_descriptor(libusb_device *dev,
@@ -1745,6 +1786,7 @@ int LIBUSB_CALL libusb_get_platform_descriptor(libusb_context *ctx,
 	struct libusb_platform_descriptor **platform_descriptor);
 void LIBUSB_CALL libusb_free_platform_descriptor(
 	struct libusb_platform_descriptor *platform_descriptor);
+unsigned long LIBUSB_CALL libusb_get_session_data(libusb_device *dev);
 uint8_t LIBUSB_CALL libusb_get_bus_number(libusb_device *dev);
 uint8_t LIBUSB_CALL libusb_get_port_number(libusb_device *dev);
 int LIBUSB_CALL libusb_get_port_numbers(libusb_device *dev, uint8_t *port_numbers, int port_numbers_len);
@@ -1806,6 +1848,14 @@ int LIBUSB_CALL libusb_attach_kernel_driver(libusb_device_handle *dev_handle,
 	int interface_number);
 int LIBUSB_CALL libusb_set_auto_detach_kernel_driver(
 	libusb_device_handle *dev_handle, int enable);
+
+int LIBUSB_CALL libusb_endpoint_supports_raw_io(libusb_device_handle* dev_handle,
+	uint8_t endpoint);
+int LIBUSB_CALL libusb_endpoint_set_raw_io(libusb_device_handle *dev_handle,
+	uint8_t endpoint, int enable);
+int LIBUSB_CALL libusb_get_max_raw_io_transfer_size(
+	libusb_device_handle *dev_handle,
+	uint8_t endpoint);
 
 /* async I/O */
 

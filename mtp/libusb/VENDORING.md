@@ -7,9 +7,11 @@ runtime dependency on a system `libusb-1.0` shared library, so the produced
 ## Pinned version
 
 - Upstream: <https://github.com/libusb/libusb>
-- Tag: **`v1.0.29`** (matches the version Homebrew currently ships, which is
-  what the previous dynamic build linked against — same libmtp ↔ libusb
-  pairing, just static).
+- Tag: **`v1.0.30`** (current upstream stable as of 2026-05-17). Brings macOS
+  26 Tahoe compatibility fix, descriptor-parsing memory-safety hardening,
+  Darwin concurrency fixes, and new `libusb_get_device_string()` /
+  `libusb_get_session_data()` APIs. No ABI breaks; vendored file list and
+  config-* headers unchanged from 1.0.29.
 
 ## Source files copied
 

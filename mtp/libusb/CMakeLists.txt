@@ -1,4 +1,4 @@
-# libusb v1.0.29 vendored static archive for the MTP plugin; see VENDORING.md.
+# libusb v1.0.30 vendored static archive for the MTP plugin; see VENDORING.md.
 
 if(MTP_SYSTEM_LIBUSB)
     # Wrap base-system libusb-1.0 (detected at top level). Auto on FreeBSD/Nix, opt-in elsewhere.

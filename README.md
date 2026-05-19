@@ -188,8 +188,31 @@ debuild
 
 </details>
 
+#### Homebrew (TTY only)
 
-#### macOS binaries
+You can install slightly limited far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
+
+First, install homebrew if not yet installed:
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+For the far2l binary version run
+```sh
+brew install far2l-tty
+```
+For the built from source version run
+```sh
+brew install far2l-tty --build-from-source
+```
+
+Limitations: no support for plugins in Python and AWS S3, SMB protocols in NetRocks due to huge dependency size.
+
+
+#### macOS GUI version (Homebrew)
+
+**_⚠Warning! This approach is deprecated_**
+
+Apple requires registering as a developer (100$/year) to sign app binaries. If nobody will register till **2026-09-01**, cask will be removed from the homebrew.
 
 You can install prebuilt package for x86_64 platform via [Homebrew Cask](https://formulae.brew.sh/cask/far2l), by command:
 ```sh
@@ -198,6 +221,7 @@ brew install --cask far2l
 
 You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
 
+
 #### Docker
 
 You can use containers to try `far2l` without installing anything.
@@ -205,8 +229,6 @@ You can use containers to try `far2l` without installing anything.
 docker build . -l far2l
 docker run -it far2l
 ```
-
-See also [Community packages & binaries](#community_bins)
 
 
 <a name="building"></a>

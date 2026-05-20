@@ -61,7 +61,9 @@ static LONG_PTR WINAPI SearchReplaceDlgProc(HANDLE hDlg, int Msg, int Param1, LO
 				&& SendDlgMessage(hDlg, DM_GETCHECK, PosCheckBoxRegexp, 0) == BSTATE_CHECKED)
 		{
 			RegExp Re;
-			if (!Re.Compile(Txt, OP_PERLSTYLE | OP_OPTIMIZE)) {
+			FARString strSlash(Txt);
+			InsertRegexpQuote(strSlash);
+			if (!Re.Compile(strSlash, OP_PERLSTYLE | OP_OPTIMIZE)) {
 				SendDlgMessage(hDlg, DM_SETFOCUS, PosSearchText, 0);
 				FARString strMsg(Txt);
 				InsertQuote(strMsg);

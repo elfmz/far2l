@@ -188,9 +188,9 @@ debuild
 
 </details>
 
-#### Homebrew (TTY only, limited)
+#### Homebrew (TTY only)
 
-You can install slightly limited far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
+You can install slightly limited 25MB far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
 
 First, install homebrew if not yet installed:
 ```sh
@@ -207,9 +207,7 @@ brew install far2l-tty --build-from-source
 
 Limitations: no support for plugins in Python and AWS S3, SMB protocols in NetRocks due to huge dependency size.
 
-#### Homebrew (TTY only, full)
-
-You can install full TTY version, with support for Pyhton and all NetRocks protocols. 
+Another option is full TTY version, with support for Python and all NetRocks protocols. 
 
 _⚠ Note: third-party tap, please verify [formula](https://github.com/Vladekk/homebrew-far2l/blob/main/Formula/far2l-tty-full.rb) before using_
 

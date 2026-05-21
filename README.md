@@ -188,7 +188,7 @@ debuild
 
 </details>
 
-#### Homebrew (TTY only)
+#### Homebrew (TTY only, limited)
 
 You can install slightly limited far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
 
@@ -207,10 +207,19 @@ brew install far2l-tty --build-from-source
 
 Limitations: no support for plugins in Python and AWS S3, SMB protocols in NetRocks due to huge dependency size.
 
+#### Homebrew (TTY only, full)
+
+You can install full TTY version, with support for Pyhton and all NetRocks protocols. 
+
+_⚠ Note: third-party tap, please verify [formula](https://github.com/Vladekk/homebrew-far2l/blob/main/Formula/far2l-tty-full.rb) before using_
+
+```sh
+brew install Vladekk/far2l/far2l-tty-full
+```
 
 #### macOS GUI version (Homebrew)
 
-**_⚠Warning! This approach is deprecated_**
+**_⚠ Warning! This approach is deprecated_**
 
 Apple requires registering as a developer (100$/year) to sign app binaries. If nobody will register till **2026-09-01**, cask will be removed from the homebrew.
 

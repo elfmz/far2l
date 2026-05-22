@@ -188,16 +188,18 @@ debuild
 
 </details>
 
-#### Homebrew options
+#### Homebrew binaries or source (macOS and Linux)
+
+Homebrew is a package manager with some [benefits](https://brew.sh/#:~:text=What%20Does%20Homebrew%20Do) over traditional approaches.
 
 First, install Homebrew if not yet installed:
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-##### TTY only, latest release compact version
+##### TTY only, latest compact version
 
-You can install "compact" slightly limited 25MB far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
+You can install 25MB "compact", slightly limited far2l TTY version via official [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
 
 It has no support for plugins in Python and no AWS S3, SMB protocols in NetRocks due to huge dependency size.
 
@@ -209,6 +211,8 @@ For the built from source version run
 ```sh
 brew install far2l-tty --build-from-source
 ```
+
+
 ##### macOS GUI version
 
 **_⚠ Warning! This approach is deprecated_**
@@ -220,10 +224,8 @@ You can install prebuilt package for x86_64 platform via [Homebrew Cask](https:/
 brew install --cask far2l
 ```
 
-You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
 
-
-####  TTY only, latest release full version
+####  TTY only, latest full version via unofficial brew tap
 
 Supports Python plugins and all NetRocks protocols. 
 
@@ -254,6 +256,7 @@ brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
 #### macOS GUI version (direct download)
 
 You can manually download and install prebuilt package from Releases page: <https://github.com/elfmz/far2l/releases>
+
 
 #### Docker
 

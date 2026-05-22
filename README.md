@@ -188,14 +188,19 @@ debuild
 
 </details>
 
-#### Homebrew (TTY only)
+#### Homebrew options
 
-You can install slightly limited 25MB far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
-
-First, install homebrew if not yet installed:
+First, install Homebrew if not yet installed:
 ```sh
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
+
+##### TTY only, latest release compact version
+
+You can install "compact" slightly limited 25MB far2l TTY version via [Homebrew Formula](https://formulae.brew.sh/formula/far2l-tty)
+
+It has no support for plugins in Python and no AWS S3, SMB protocols in NetRocks due to huge dependency size.
+
 For the far2l binary version run
 ```sh
 brew install far2l-tty
@@ -204,18 +209,7 @@ For the built from source version run
 ```sh
 brew install far2l-tty --build-from-source
 ```
-
-Limitations: no support for plugins in Python and AWS S3, SMB protocols in NetRocks due to huge dependency size.
-
-Another option is full TTY version, with support for Python and all NetRocks protocols. 
-
-_⚠ Note: third-party tap, please verify [formula](https://github.com/Vladekk/homebrew-far2l/blob/main/Formula/far2l-tty-full.rb) before using_
-
-```sh
-brew install Vladekk/far2l/far2l-tty-full
-```
-
-#### macOS GUI version (Homebrew)
+##### macOS GUI version
 
 **_⚠ Warning! This approach is deprecated_**
 
@@ -228,6 +222,38 @@ brew install --cask far2l
 
 You can also manually download and install prebuilt package for x86_64 platform from Releases page: <https://github.com/elfmz/far2l/releases>
 
+
+####  TTY only, latest release full version
+
+Supports Python plugins and all NetRocks protocols. 
+
+_⚠ Note: third-party tap, please verify [formula](https://github.com/Vladekk/homebrew-far2l/blob/main/Formula/far2l-tty-full.rb) before using_
+
+```sh
+brew install Vladekk/far2l/far2l-tty-full
+```
+
+##### Latest far2l Git master via unofficial brew tap
+
+<a href="#homebrew_from_git_master"></a>
+This is useful for development.
+
+_⚠ Note: third-party tap, please verify [formula](https://github.com/yurikoles/homebrew-yurikoles/blob/master/Formula/far2l.rb) before using_
+
+ * With GUI/TTY backends:
+```sh
+brew install --HEAD yurikoles/yurikoles/far2l
+```
+ * With TTY backend only:
+```sh
+brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
+```
+ * Additionally you can enable python support by adding `--with-python@3.13` to the one of two above commands.
+
+
+#### macOS GUI version (direct download)
+
+You can manually download and install prebuilt package from Releases page: <https://github.com/elfmz/far2l/releases>
 
 #### Docker
 
@@ -361,20 +387,8 @@ To make custom/recent build use brew or MacPorts.
  ```sh
  clang++ -v
  ```
- * If you want to build using Homebrew - first visit <https://brew.sh/> for installation instructions. Note that there're reported problems with Homebrew-based build under MacOS Big Sur.
+ * If you want to build using Homebrew, read [homebrew from Git master](#latest-far2l-git-master-via-unofficial-brew-tap)
  * If you want to build using MacPorts - first visit <https://www.macports.org/install.php> for installation instructions.
-
-##### One line macOS install latest far2l git master via unofficial brew tap
-
- * With GUI/TTY backends:
-```sh
-brew install --HEAD yurikoles/yurikoles/far2l
-```
- * With TTY backend only:
-```sh
-brew install --HEAD yurikoles/yurikoles/far2l --without-wxwidgets
-```
- * Additionally you can enable python support by adding `--with-python@3.13` to the one of two above commands.
 
 ##### Full macOS build from sources (harder):
 Some issues can be caused by conflicting dependencies, like having two versions of wxWidgets, so avoid such situation when installing dependencies.

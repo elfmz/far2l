@@ -240,6 +240,11 @@ private:
 	Edit *EndList;
 	Edit *TopScreen;
 	int m_TopScreenVisualLine;
+	int m_CachedTotalVisualLines;
+	int m_CachedTopVisualLine;
+	Edit *m_CachedScrollbarTopScreen;
+	int m_CachedScrollbarTopScreenVisualLine;
+	bool m_VisualScrollbarDirty;
 	Edit *CurLine;
 	Edit *LastGetLine;
 	int MouseSelStartingLine{-1}, MouseSelStartingPos{-1};
@@ -449,7 +454,7 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	void BeginVBlockMarking();
+	bool BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 
 	void Xlat();

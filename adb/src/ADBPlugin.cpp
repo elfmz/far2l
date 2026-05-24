@@ -489,7 +489,11 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	const wchar_t* connectedTitles[] = { Lng(MColName), Lng(MColSize) };
+	// Static storage so the pointer stored in `connectedMode.ColumnTitles` outlives this call;
+	// values refreshed on every invocation so language changes are picked up.
+	static const wchar_t* connectedTitles[2];
+	connectedTitles[0] = Lng(MColName);
+	connectedTitles[1] = Lng(MColSize);
 
 	static PanelMode deviceMode = {
 		.ColumnTypes        = L"N,C0,C1,C2",
@@ -504,7 +508,12 @@ void ADBPlugin::GetOpenPluginInfo(OpenPluginInfo *Info)
 		.Reserved           = {0, 0}
 	};
 
-	const wchar_t* deviceTitles[] = { Lng(MColSerial), Lng(MColDeviceName), Lng(MColModel), Lng(MColPort) };
+	// See note above on connectedTitles — same lifetime requirement.
+	static const wchar_t* deviceTitles[4];
+	deviceTitles[0] = Lng(MColSerial);
+	deviceTitles[1] = Lng(MColDeviceName);
+	deviceTitles[2] = Lng(MColModel);
+	deviceTitles[3] = Lng(MColPort);
 
 	if (_isConnected) {
 		connectedMode.ColumnTitles = connectedTitles;
@@ -2410,7 +2419,7 @@ std::map<std::string, ADBPlugin::DirMeta> ADBPlugin::PrescanDeviceDirs(const std
 	auto t0 = std::chrono::steady_clock::now();
 	std::map<std::string, std::unordered_map<std::string, uint64_t>> raw;
 	_adbDevice->BatchDirectoryFileSizes(dirs, raw);
-	uint64_t total_files = 0, total_bytes = 0;
+	[[maybe_unused]] uint64_t total_files = 0, total_bytes = 0;
 	for (auto& kv : raw) {
 		DirMeta dm;
 		dm.file_sizes = std::move(kv.second);
@@ -2420,7 +2429,7 @@ std::map<std::string, ADBPlugin::DirMeta> ADBPlugin::PrescanDeviceDirs(const std
 		total_bytes += dm.total_size;
 		out[kv.first] = std::move(dm);
 	}
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+	[[maybe_unused]] auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::steady_clock::now() - t0).count();
 	DBG("PrescanDeviceDirs dirs=%zu out=%zu files=%llu bytes=%llu in %lldms\n",
 		dirs.size(), out.size(), (unsigned long long)total_files,

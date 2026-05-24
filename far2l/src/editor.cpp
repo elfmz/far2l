@@ -4949,7 +4949,8 @@ BOOL Editor::Search(int Next)
 	}
 
 	strLastSearchStr = strSearchStr;
-	strLastReplaceStr = strReplaceStr;
+	if (ReplaceMode)
+		strLastReplaceStr = strReplaceStr;
 	LastSearchCase = Case;
 	LastSearchWholeWords = WholeWords;
 	LastSearchReverse = ReverseSearch;

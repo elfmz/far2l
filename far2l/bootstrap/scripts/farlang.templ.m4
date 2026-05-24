@@ -5349,7 +5349,7 @@ upd:"Insert path from passive panel      Alt+Shift+)"
 
 EditorMenuEditBlockIndent
 "Сдвинуть блок влево                 Alt+U"
-"Block inden&t                       Alt+U"
+"Block uninden&t                      Alt+U"
 upd:"Block uninden&t                     Alt+U"
 upd:"Block uninden&t                     Alt+U"
 upd:"Block uninden&t                     Alt+U"
@@ -5360,7 +5360,7 @@ upd:"Block uninden&t                     Alt+U"
 
 EditorMenuEditBlockUnindent
 "Сдвинуть блок вправо                Alt+I"
-"Bloc&k indent                       Alt+I"
+"Bloc&k indent                        Alt+I"
 upd:"Bloc&k indent                       Alt+I"
 upd:"Bloc&k indent                       Alt+I"
 upd:"Bloc&k indent                       Alt+I"

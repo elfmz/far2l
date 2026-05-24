@@ -623,7 +623,7 @@ int ADBDevice::TransferItem(const std::string& src, const std::string& dst, bool
 
     int errno_mapped = Str2Errno(result);
     const size_t tail_len = std::min<size_t>(result.size(), 400);
-    [[maybe_unused]] const char* tail = result.c_str() + (result.size() - tail_len);
+    const char* tail = result.c_str() + (result.size() - tail_len);
     DBG("TransferItem FAIL is_push=%d pty_exit=%d errno=%d src='%s' dst='%s' tail[%zu]='%.*s'\n",
         is_push, ADBShell::lastPtyExit(), errno_mapped, src.c_str(), dst.c_str(),
         tail_len, (int)tail_len, tail);

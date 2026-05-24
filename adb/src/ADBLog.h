@@ -16,11 +16,13 @@ void DebugLog(const char *format, ...);
 }
 #endif
 
-// Debug macros - completely absent from release builds; enable with -DDEBUG
+// Debug macros - completely absent from release builds; enable with -DDEBUG.
 #if defined(DEBUG) || defined(_DEBUG)
 #define DBG(fmt, ...) DebugLog("[%s] " fmt, __FUNCTION__, ##__VA_ARGS__)
 #else
-#define DBG(fmt, ...) ((void)0)
+template <typename... Args>
+constexpr void DebugLogDummy(const char *, Args &&...) noexcept {}
+#define DBG(fmt, ...) (false ? (void)DebugLogDummy((fmt), ##__VA_ARGS__) : (void)0)
 #endif
 
 #endif // ADBLOG_H

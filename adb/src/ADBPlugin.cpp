@@ -2419,7 +2419,7 @@ std::map<std::string, ADBPlugin::DirMeta> ADBPlugin::PrescanDeviceDirs(const std
 	auto t0 = std::chrono::steady_clock::now();
 	std::map<std::string, std::unordered_map<std::string, uint64_t>> raw;
 	_adbDevice->BatchDirectoryFileSizes(dirs, raw);
-	[[maybe_unused]] uint64_t total_files = 0, total_bytes = 0;
+	uint64_t total_files = 0, total_bytes = 0;
 	for (auto& kv : raw) {
 		DirMeta dm;
 		dm.file_sizes = std::move(kv.second);
@@ -2429,7 +2429,7 @@ std::map<std::string, ADBPlugin::DirMeta> ADBPlugin::PrescanDeviceDirs(const std
 		total_bytes += dm.total_size;
 		out[kv.first] = std::move(dm);
 	}
-	[[maybe_unused]] auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::steady_clock::now() - t0).count();
 	DBG("PrescanDeviceDirs dirs=%zu out=%zu files=%llu bytes=%llu in %lldms\n",
 		dirs.size(), out.size(), (unsigned long long)total_files,

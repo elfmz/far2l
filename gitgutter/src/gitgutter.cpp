@@ -253,6 +253,7 @@ struct EditorState
 	std::string repo_root;
 	std::string rel_path;
 	std::string temp_path;
+	std::wstring baseline_label;
 	uint64_t last_update_ms = 0;
 	bool dirty = true;
 	bool gutter_forced = false;
@@ -280,6 +281,8 @@ enum PopupItemId
 	POPUP_PREV = 1,
 	POPUP_NEXT = 2,
 	POPUP_REVERT = 3,
+	POPUP_BASELINE = 4,
+	POPUP_COUNT
 };
 
 static bool GetEditorInfo(EditorInfo &ei);
@@ -708,6 +711,25 @@ static bool WriteBaselineToTemp(const std::string &repo_root, const std::string 
 	return WriteTextToTempFile(out, path);
 }
 
+static bool IsCustomBaseline(const std::string &baseline)
+{
+	return baseline != "head" && baseline != "index" && baseline != "unstaged";
+}
+
+static bool WriteBaselineToTempWithFallback(const std::string &repo_root, const std::string &rel_path,
+		const std::string &baseline, std::string &path, std::string &effective_baseline)
+{
+	if (WriteBaselineToTemp(repo_root, rel_path, baseline, path)) {
+		effective_baseline = baseline;
+		return true;
+	}
+	if (IsCustomBaseline(baseline) && WriteBaselineToTemp(repo_root, rel_path, "head", path)) {
+		effective_baseline = "head";
+		return true;
+	}
+	return false;
+}
+
 static bool ParseHunkHeader(const std::string &line, int &old_start, int &old_count, int &new_start, int &new_count)
 {
 	if (line.rfind("@@ ", 0) != 0)
@@ -875,6 +897,21 @@ static std::string MakeDiffCommand(const std::string &repo_root, const std::stri
 	return MakeDiffCommandBaseline(repo_root, file_path, g_settings.baseline);
 }
 
+static bool RunDiffCommand(const std::string &repo_root, const std::string &file_path,
+		std::string &out, std::string &effective_baseline)
+{
+	if (RunCommand(MakeDiffCommand(repo_root, file_path), out)) {
+		effective_baseline = g_settings.baseline;
+		return true;
+	}
+	if (IsCustomBaseline(g_settings.baseline)
+			&& RunCommand(MakeDiffCommandBaseline(repo_root, file_path, "head"), out)) {
+		effective_baseline = "head";
+		return true;
+	}
+	return false;
+}
+
 static void ApplyMarksToEditor(const EditorState &st)
 {
 	EditorGutterMarks gm{};
@@ -929,6 +966,7 @@ static void UpdateEditorState(EditorState &st)
 	}
 
 	std::string out;
+	std::string effective_baseline = g_settings.baseline;
 	if (WriteEditorBufferToTemp(st.temp_path)) {
 		std::string base_path;
 		std::string base_temp;
@@ -940,7 +978,8 @@ static void UpdateEditorState(EditorState &st)
 		} else {
 			std::string rel_path;
 			if (!GetRelativePath(st.repo_root, st.file, rel_path)
-					|| !WriteBaselineToTemp(st.repo_root, rel_path, g_settings.baseline, base_temp)) {
+					|| !WriteBaselineToTempWithFallback(st.repo_root, rel_path, g_settings.baseline,
+							base_temp, effective_baseline)) {
 				unlink(st.temp_path.c_str());
 				st.temp_path.clear();
 				goto fallback;
@@ -961,8 +1000,18 @@ static void UpdateEditorState(EditorState &st)
 		}
 	} else {
 fallback:
-		std::string cmd = MakeDiffCommand(st.repo_root, st.file);
-		RunCommand(cmd, out);
+		RunDiffCommand(st.repo_root, st.file, out, effective_baseline);
+	}
+
+	st.baseline_label.clear();
+	if (IsCustomBaseline(g_settings.baseline)) {
+		if (effective_baseline == g_settings.baseline) {
+			st.baseline_label = StrMB2Wide(g_settings.baseline.c_str());
+		} else if (effective_baseline == "head") {
+			st.baseline_label = L"HEAD (";
+			st.baseline_label+= StrMB2Wide(g_settings.baseline.c_str());
+			st.baseline_label+= L")";
+		}
 	}
 
 	if (out.empty()) {
@@ -1100,10 +1149,15 @@ static void ShowHunkPopup(const EditorState &st, int line)
 			const int screen_w = static_cast<int>(fr.Right) - static_cast<int>(fr.Left) + 1;
 			max_w = std::max(min_w, (screen_w * 2) / 3);
 		}
-		const int dlg_w = std::min(max_w, std::max(min_w, max_line + 4));
+		const int baseline_header_cells = st.baseline_label.empty()
+				? 0
+				: static_cast<int>(g_fsf.StrCellsCount(st.baseline_label.c_str(), st.baseline_label.size()));
+		const int baseline_header_x = 19;
+		const int dlg_w = std::min(max_w,
+				std::max({min_w, max_line + 4, baseline_header_x + baseline_header_cells + 2}));
 		const int dlg_h = std::min(30, std::max(min_h, lines + 2));
 
-		FarDialogItem items[4]{};
+		FarDialogItem items[POPUP_COUNT]{};
 		items[POPUP_MEMO].Type = DI_MEMOEDIT;
 		items[POPUP_MEMO].X1 = 0;
 		items[POPUP_MEMO].Y1 = 1;
@@ -1138,6 +1192,13 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		items[POPUP_REVERT].Flags = 0;
 		items[POPUP_REVERT].PtrData = L"\x21A9";
 
+		items[POPUP_BASELINE].Type = DI_TEXT;
+		items[POPUP_BASELINE].X1 = baseline_header_x;
+		items[POPUP_BASELINE].Y1 = 0;
+		items[POPUP_BASELINE].X2 = dlg_w - 1;
+		items[POPUP_BASELINE].Y2 = 0;
+		items[POPUP_BASELINE].PtrData = st.baseline_label.c_str();
+
 		int local_anchor_x = 0;
 		int local_anchor_y = 0;
 		const bool have_anchor = GetHunkAnchor(h, local_anchor_x, local_anchor_y);
@@ -1165,7 +1226,7 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		ctx.index = index;
 		ctx.tab_size = st.tab_size;
 		HANDLE hdlg = g_info.DialogInit(
-				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"HunkPopup", items, 4, 0, 0,
+				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"HunkPopup", items, POPUP_COUNT, 0, 0,
 				PopupDlgProc, reinterpret_cast<LONG_PTR>(&ctx));
 		if (hdlg == INVALID_HANDLE_VALUE)
 			return;

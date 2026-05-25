@@ -3,11 +3,13 @@
 #include <KeyFileHelper.h>
 #include <WideMB.h>
 #include <Escaping.h>
+#include "lng.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cwchar>
 #include <unistd.h>
 
 #include <string>
@@ -18,6 +20,11 @@ static PluginStartupInfo g_info{};
 static FarStandardFunctions g_fsf{};
 
 static const wchar_t *g_plugin_menu_strings[1];
+
+static const wchar_t *GetMsg(int msg_id)
+{
+	return g_info.GetMsg(g_info.ModuleNumber, msg_id);
+}
 
 static uint64_t NowMs()
 {
@@ -1158,7 +1165,7 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		ctx.index = index;
 		ctx.tab_size = st.tab_size;
 		HANDLE hdlg = g_info.DialogInit(
-				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"GitGutter", items, 4, 0, 0,
+				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"HunkPopup", items, 4, 0, 0,
 				PopupDlgProc, reinterpret_cast<LONG_PTR>(&ctx));
 		if (hdlg == INVALID_HANDLE_VALUE)
 			return;
@@ -1268,7 +1275,6 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 	g_info.FSF = &g_fsf;
 	g_settings.Load();
 	g_git_available = CheckGitAvailable();
-	g_plugin_menu_strings[0] = L"GitGutter";
 }
 
 SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
@@ -1278,6 +1284,7 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	if (!g_git_available) {
 		return;
 	}
+	g_plugin_menu_strings[0] = GetMsg(MPluginTitle);
 	Info->Flags = PF_EDITOR | PF_DISABLEPANELS | PF_PRELOAD;
 	Info->PluginConfigStringsNumber = 1;
 	Info->PluginConfigStrings = g_plugin_menu_strings;
@@ -1353,105 +1360,133 @@ static int ShowConfigDialog()
 	}
 	FarList baseline_list{static_cast<int>(baseline_items.size()), baseline_items.data()};
 
+	auto msg_cells = [](int msg_id) -> int
+	{
+		const wchar_t *msg = GetMsg(msg_id);
+		return static_cast<int>(g_fsf.StrCellsCount(msg, std::wcslen(msg)));
+	};
+
+	const int LabelX = 5;
+	const int FieldGap = 2;
+	int label_cells = msg_cells(MBaseline);
+	label_cells = std::max(label_cells, msg_cells(MColorAdded));
+	label_cells = std::max(label_cells, msg_cells(MColorModified));
+	label_cells = std::max(label_cells, msg_cells(MColorDeleted));
+	const int FieldX1 = LabelX + label_cells + FieldGap;
+	const int ColorX2 = FieldX1 + 20;
+	const int PickerX1 = ColorX2 + 2;
+	const int PickerX2 = PickerX1 + 6;
+	const int BaselineX2 = PickerX2;
+	const int IntervalX2 = PickerX2;
+	const int IntervalX1 = IntervalX2 - 9;
+	const int DialogX2 = std::max({
+			PickerX2 + 2,
+			LabelX + msg_cells(MUpdateInterval) + 2,
+			3 + msg_cells(MConfigTitle) + 4
+	});
+	const int DialogWidth = DialogX2 + 4;
+
 	FarDialogItem items[CD_COUNT]{};
 	items[CD_BOX].Type = DI_DOUBLEBOX;
 	items[CD_BOX].X1 = 3;
 	items[CD_BOX].Y1 = 1;
-	items[CD_BOX].X2 = 58;
+	items[CD_BOX].X2 = DialogX2;
 	items[CD_BOX].Y2 = 14;
-	items[CD_BOX].PtrData = L"GitGutter settings";
+	items[CD_BOX].PtrData = GetMsg(MConfigTitle);
 
 	items[CD_ENABLED].Type = DI_CHECKBOX;
-	items[CD_ENABLED].X1 = 5;
+	items[CD_ENABLED].X1 = LabelX;
 	items[CD_ENABLED].Y1 = 2;
 	items[CD_ENABLED].Param.Selected = g_settings.enabled ? 1 : 0;
-	items[CD_ENABLED].PtrData = L"Enabled";
+	items[CD_ENABLED].PtrData = GetMsg(MEnabled);
 
 	items[CD_BASELINE_TEXT].Type = DI_TEXT;
-	items[CD_BASELINE_TEXT].X1 = 5;
+	items[CD_BASELINE_TEXT].X1 = LabelX;
 	items[CD_BASELINE_TEXT].Y1 = 4;
-	items[CD_BASELINE_TEXT].PtrData = L"Baseline";
+	items[CD_BASELINE_TEXT].PtrData = GetMsg(MBaseline);
 
 	items[CD_BASELINE].Type = DI_COMBOBOX;
-	items[CD_BASELINE].X1 = 20;
+	items[CD_BASELINE].X1 = FieldX1;
 	items[CD_BASELINE].Y1 = 4;
-	items[CD_BASELINE].X2 = 50;
+	items[CD_BASELINE].X2 = BaselineX2;
 	items[CD_BASELINE].Y2 = 4;
 	items[CD_BASELINE].Flags = DIF_DROPDOWNLIST;
 	items[CD_BASELINE].Param.ListItems = &baseline_list;
 
 	items[CD_INTERVAL_TEXT].Type = DI_TEXT;
-	items[CD_INTERVAL_TEXT].X1 = 5;
+	items[CD_INTERVAL_TEXT].X1 = LabelX;
 	items[CD_INTERVAL_TEXT].Y1 = 6;
-	items[CD_INTERVAL_TEXT].PtrData = L"Update interval (ms)";
+	items[CD_INTERVAL_TEXT].PtrData = GetMsg(MUpdateInterval);
 
-	items[CD_INTERVAL].Type = DI_EDIT;
-	items[CD_INTERVAL].X1 = 28;
+	items[CD_INTERVAL].Type = DI_FIXEDIT;
+	items[CD_INTERVAL].Flags = DIF_MASKEDIT;
+	items[CD_INTERVAL].X1 = IntervalX1;
 	items[CD_INTERVAL].Y1 = 6;
-	items[CD_INTERVAL].X2 = 50;
+	items[CD_INTERVAL].X2 = IntervalX2;
 	items[CD_INTERVAL].Y2 = 6;
 	items[CD_INTERVAL].PtrData = interval_w.c_str();
 	items[CD_INTERVAL].MaxLen = 10;
+	items[CD_INTERVAL].Param.Mask = L"9999999999";
 
 	items[CD_COLOR_ADDED_TEXT].Type = DI_TEXT;
-	items[CD_COLOR_ADDED_TEXT].X1 = 5;
+	items[CD_COLOR_ADDED_TEXT].X1 = LabelX;
 	items[CD_COLOR_ADDED_TEXT].Y1 = 8;
-	items[CD_COLOR_ADDED_TEXT].PtrData = L"Color added";
+	items[CD_COLOR_ADDED_TEXT].PtrData = GetMsg(MColorAdded);
 
 	items[CD_COLOR_ADDED].Type = DI_EDIT;
-	items[CD_COLOR_ADDED].X1 = 20;
+	items[CD_COLOR_ADDED].X1 = FieldX1;
 	items[CD_COLOR_ADDED].Y1 = 8;
-	items[CD_COLOR_ADDED].X2 = 49;
+	items[CD_COLOR_ADDED].X2 = ColorX2;
 	items[CD_COLOR_ADDED].Y2 = 8;
 	items[CD_COLOR_ADDED].PtrData = color_added_w.c_str();
 	items[CD_COLOR_ADDED].MaxLen = 20;
 
 	items[CD_COLOR_ADDED_PICK].Type = DI_BUTTON;
-	items[CD_COLOR_ADDED_PICK].X1 = 51;
+	items[CD_COLOR_ADDED_PICK].X1 = PickerX1;
 	items[CD_COLOR_ADDED_PICK].Y1 = 8;
-	items[CD_COLOR_ADDED_PICK].X2 = 54;
+	items[CD_COLOR_ADDED_PICK].X2 = PickerX2;
 	items[CD_COLOR_ADDED_PICK].Y2 = 8;
 	items[CD_COLOR_ADDED_PICK].Flags = DIF_BTNNOCLOSE;
 	items[CD_COLOR_ADDED_PICK].PtrData = L"...";
 
 	items[CD_COLOR_MODIFIED_TEXT].Type = DI_TEXT;
-	items[CD_COLOR_MODIFIED_TEXT].X1 = 5;
+	items[CD_COLOR_MODIFIED_TEXT].X1 = LabelX;
 	items[CD_COLOR_MODIFIED_TEXT].Y1 = 9;
-	items[CD_COLOR_MODIFIED_TEXT].PtrData = L"Color modified";
+	items[CD_COLOR_MODIFIED_TEXT].PtrData = GetMsg(MColorModified);
 
 	items[CD_COLOR_MODIFIED].Type = DI_EDIT;
-	items[CD_COLOR_MODIFIED].X1 = 20;
+	items[CD_COLOR_MODIFIED].X1 = FieldX1;
 	items[CD_COLOR_MODIFIED].Y1 = 9;
-	items[CD_COLOR_MODIFIED].X2 = 49;
+	items[CD_COLOR_MODIFIED].X2 = ColorX2;
 	items[CD_COLOR_MODIFIED].Y2 = 9;
 	items[CD_COLOR_MODIFIED].PtrData = color_modified_w.c_str();
 	items[CD_COLOR_MODIFIED].MaxLen = 20;
 
 	items[CD_COLOR_MODIFIED_PICK].Type = DI_BUTTON;
-	items[CD_COLOR_MODIFIED_PICK].X1 = 51;
+	items[CD_COLOR_MODIFIED_PICK].X1 = PickerX1;
 	items[CD_COLOR_MODIFIED_PICK].Y1 = 9;
-	items[CD_COLOR_MODIFIED_PICK].X2 = 54;
+	items[CD_COLOR_MODIFIED_PICK].X2 = PickerX2;
 	items[CD_COLOR_MODIFIED_PICK].Y2 = 9;
 	items[CD_COLOR_MODIFIED_PICK].Flags = DIF_BTNNOCLOSE;
 	items[CD_COLOR_MODIFIED_PICK].PtrData = L"...";
 
 	items[CD_COLOR_DELETED_TEXT].Type = DI_TEXT;
-	items[CD_COLOR_DELETED_TEXT].X1 = 5;
+	items[CD_COLOR_DELETED_TEXT].X1 = LabelX;
 	items[CD_COLOR_DELETED_TEXT].Y1 = 10;
-	items[CD_COLOR_DELETED_TEXT].PtrData = L"Color deleted";
+	items[CD_COLOR_DELETED_TEXT].PtrData = GetMsg(MColorDeleted);
 
 	items[CD_COLOR_DELETED].Type = DI_EDIT;
-	items[CD_COLOR_DELETED].X1 = 20;
+	items[CD_COLOR_DELETED].X1 = FieldX1;
 	items[CD_COLOR_DELETED].Y1 = 10;
-	items[CD_COLOR_DELETED].X2 = 49;
+	items[CD_COLOR_DELETED].X2 = ColorX2;
 	items[CD_COLOR_DELETED].Y2 = 10;
 	items[CD_COLOR_DELETED].PtrData = color_deleted_w.c_str();
 	items[CD_COLOR_DELETED].MaxLen = 20;
 
 	items[CD_COLOR_DELETED_PICK].Type = DI_BUTTON;
-	items[CD_COLOR_DELETED_PICK].X1 = 51;
+	items[CD_COLOR_DELETED_PICK].X1 = PickerX1;
 	items[CD_COLOR_DELETED_PICK].Y1 = 10;
-	items[CD_COLOR_DELETED_PICK].X2 = 54;
+	items[CD_COLOR_DELETED_PICK].X2 = PickerX2;
 	items[CD_COLOR_DELETED_PICK].Y2 = 10;
 	items[CD_COLOR_DELETED_PICK].Flags = DIF_BTNNOCLOSE;
 	items[CD_COLOR_DELETED_PICK].PtrData = L"...";
@@ -1466,13 +1501,13 @@ static int ShowConfigDialog()
 	items[CD_OK].Y1 = 13;
 	items[CD_OK].Flags = DIF_CENTERGROUP;
 	items[CD_OK].DefaultButton = TRUE;
-	items[CD_OK].PtrData = L"OK";
+	items[CD_OK].PtrData = GetMsg(MOk);
 
 	items[CD_CANCEL].Type = DI_BUTTON;
 	items[CD_CANCEL].X1 = 0;
 	items[CD_CANCEL].Y1 = 13;
 	items[CD_CANCEL].Flags = DIF_CENTERGROUP;
-	items[CD_CANCEL].PtrData = L"Cancel";
+	items[CD_CANCEL].PtrData = GetMsg(MCancel);
 
 	auto dlg_proc = [](HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2) -> LONG_PTR
 	{
@@ -1538,7 +1573,7 @@ static int ShowConfigDialog()
 	};
 
 	HANDLE hdlg = g_info.DialogInit(
-			g_info.ModuleNumber, -1, -1, 62, 16, L"GitGutter settings", items, CD_COUNT, 0, 0,
+			g_info.ModuleNumber, -1, -1, DialogWidth, 16, L"ConfigurationDialog", items, CD_COUNT, 0, 0,
 			dlg_proc, 0);
 	if (hdlg == INVALID_HANDLE_VALUE) {
 		return 0;

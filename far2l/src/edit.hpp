@@ -118,6 +118,8 @@ class SystemCPEncoder : public ICPEncoder
 class Dialog;
 class Editor;
 
+bool TranslateInsertKey(FarKey &Key);
+
 class Edit : public ScreenObject
 {
 	friend class DlgEdit;

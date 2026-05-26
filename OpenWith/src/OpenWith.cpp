@@ -23,12 +23,8 @@ namespace OpenWith {
 
 // Main workflow orchestrator: resolves application candidates via AppProvider,
 // displays the selection menu, and handles user actions: F3 (details), F9 (settings), (Shift+)Enter (launch).
-void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
+void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths, const std::wstring& base_path)
 {
-	if (filepaths.empty()) {
-		return;
-	}
-
 	auto provider = AppProvider::CreateAppProvider(&GetMsg);
 	if (!provider) {
 		ShowError({ GetMsg(MUnsupportedPlatform) });
@@ -563,7 +559,6 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	std::vector<std::wstring> selected_filepaths;
 	int dir_size = g_info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0, 0);
 	if (dir_size <= 0) {
 		return INVALID_HANDLE_VALUE;
@@ -575,9 +570,13 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 	}
 
 	std::wstring base_path(dir_buf.get());
+
+	auto path_prefix = base_path;
 	if (!base_path.empty() && base_path.back() != L'/') {
-		base_path += L'/';
+		path_prefix += L'/';
 	}
+
+	std::vector<std::wstring> selected_filepaths;
 
 	// If no specific selection exists, 'SelectedItemsNumber' is 1, and the item is the one under the cursor.
 	if (pi.SelectedItemsNumber > 0) {
@@ -590,13 +589,18 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 			auto item_buf = std::make_unique<unsigned char[]>(item_size);
 			PluginPanelItem* pi_item = reinterpret_cast<PluginPanelItem*>(item_buf.get());
 			if (g_info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)pi_item) && pi_item->FindData.lpwszFileName) {
-				selected_filepaths.push_back(base_path + pi_item->FindData.lpwszFileName);
+				selected_filepaths.push_back(path_prefix + pi_item->FindData.lpwszFileName);
 			}
+		}
+	} else {
+		// Special case: cursor on ".." with no items selected.
+		if (!base_path.empty()) {
+			selected_filepaths.push_back(base_path);
 		}
 	}
 
 	if (!selected_filepaths.empty()) {
-		OpenWithPlugin::ProcessFiles(selected_filepaths);
+		OpenWithPlugin::ProcessFiles(selected_filepaths, base_path);
 	}
 
 	// Plugin performs an action and exits, rather than creating a new panel instance (like a VFS plugin).

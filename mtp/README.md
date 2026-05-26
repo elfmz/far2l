@@ -1,6 +1,6 @@
 # far2l MTP plugin — version 1.0
 
-Browse and manage files on MTP-class devices (Android, cameras, media players) over USB. [libmtp](https://libmtp.sourceforge.io/) 1.1.23 and [libusb](https://libusb.info) 1.0.30 are vendored under `mtp/libmtp/` and `mtp/libusb/` — see `mtp/libusb/VENDORING.md` for the libusb refresh procedure. By default the build uses the **system libusb-1.0** (matches Debian/Ubuntu packaging policy) and the **vendored libmtp** (the plugin uses libmtp's internal PTP layer for fast `depth=1` listings — that surface is hidden by `libmtp.sym` in distro builds). Toggle with `-DMTP_SYSTEM_LIBUSB=OFF` / `-DMTP_SYSTEM_LIBMTP=ON`; setting both `ON` gives a build with zero vendored code embedded but slower enumeration.
+Browse and manage files on MTP-class devices (Android, cameras, media players) over USB.
 
 ## Features
 
@@ -24,7 +24,17 @@ cmake --build . --target mtp
 
 Output: `install/Plugins/mtp/plug/mtp.far-plug-wide` plus language and help files.
 
-Disable with `-DMTP=NO` at CMake-configure time.
+### Library linkage
+
+[libmtp](https://libmtp.sourceforge.io/) 1.1.23 and [libusb](https://libusb.info) 1.0.30 are vendored under `mtp/libmtp/` and `mtp/libusb/` (refresh: `mtp/libusb/VENDORING.md`).
+
+| Flag | Default | Effect |
+|---|---|---|
+| `-DMTP_SYSTEM_LIBUSB` | `ON` | `ON` → link system `libusb-1.0` (Debian/Ubuntu policy); `OFF` → vendored static |
+| `-DMTP_SYSTEM_LIBMTP` | `OFF` | `ON` → link system `libmtp`; disables the fast depth-1 listing (libmtp's internal PTP symbols are hidden by `libmtp.sym`), enumeration falls back to per-handle |
+| `-DMTP=NO` | — | skip plugin |
+
+Missing pkg-config libs → plugin is skipped with a `WARNING` ("install `libusb-1.0-0-dev`" / "install `libmtp-dev`"). `MTP_SYSTEM_LIBMTP=ON` requires `MTP_SYSTEM_LIBUSB=ON` (otherwise two libusb instances in one process).
 
 ## Install
 
@@ -37,8 +47,6 @@ Copy `install/Plugins/mtp/` into far2l's Plugins folder:
 Restart far2l. The plugin appears in **Alt+F1 / Alt+F2 → MTP**.
 
 ## Prerequisites
-
-Default build needs `libusb-1.0-0-dev` (Debian/Ubuntu) / `libusb` (Homebrew). For a fully vendored build pass `-DMTP_SYSTEM_LIBUSB=OFF`; for a fully system build add `-DMTP_SYSTEM_LIBMTP=ON` (also needs `libmtp-dev`).
 
 ### Linux
 

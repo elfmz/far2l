@@ -212,7 +212,9 @@ BatchResult RunBatch(const std::wstring& title,
 
 	op.Run([&](ProgressState& state) {
 		uint64_t bytes_done = 0, files_done = 0;
+#if defined(DEBUG) || defined(_DEBUG)
 		size_t unit_idx = 0;
+#endif
 		try {
 			for (auto& u : units) {
 				if (state.ShouldAbort()) { result.aborted = true; break; }

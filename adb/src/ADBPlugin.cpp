@@ -2416,24 +2416,32 @@ std::map<std::string, ADBPlugin::DirMeta> ADBPlugin::PrescanDeviceDirs(const std
 {
 	std::map<std::string, DirMeta> out;
 	if (dirs.empty() || !_isConnected || !_adbDevice) return out;
+#if defined(DEBUG) || defined(_DEBUG)
 	auto t0 = std::chrono::steady_clock::now();
+#endif
 	std::map<std::string, std::unordered_map<std::string, uint64_t>> raw;
 	_adbDevice->BatchDirectoryFileSizes(dirs, raw);
+#if defined(DEBUG) || defined(_DEBUG)
 	uint64_t total_files = 0, total_bytes = 0;
+#endif
 	for (auto& kv : raw) {
 		DirMeta dm;
 		dm.file_sizes = std::move(kv.second);
 		dm.file_count = dm.file_sizes.size();
 		for (const auto& fk : dm.file_sizes) dm.total_size += fk.second;
+#if defined(DEBUG) || defined(_DEBUG)
 		total_files += dm.file_count;
 		total_bytes += dm.total_size;
+#endif
 		out[kv.first] = std::move(dm);
 	}
+#if defined(DEBUG) || defined(_DEBUG)
 	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
 		std::chrono::steady_clock::now() - t0).count();
 	DBG("PrescanDeviceDirs dirs=%zu out=%zu files=%llu bytes=%llu in %lldms\n",
 		dirs.size(), out.size(), (unsigned long long)total_files,
 		(unsigned long long)total_bytes, (long long)ms);
+#endif
 	if (out.size() < dirs.size()) {
 		DBG("PrescanDeviceDirs WARN missing %zu dir(s) — totals will fallback to 0/0\n",
 			dirs.size() - out.size());

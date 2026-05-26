@@ -22,7 +22,7 @@ public:
 		bool should_refresh_candidates = false;
 	};
 
-	static void ProcessFiles(const std::vector<std::wstring>& filepaths);
+	static void ProcessFiles(const std::vector<std::wstring>& filepaths, const std::wstring& base_path);
 	static ConfigDlgResult ShowConfigDlg();
 	static void ShowError(const std::vector<std::wstring>& error_lines);
 	static void LoadGeneralSettings();

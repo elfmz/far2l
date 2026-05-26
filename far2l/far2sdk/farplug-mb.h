@@ -1314,6 +1314,10 @@ namespace oldfar
 		EOPT_AUTODETECTTABLE   = 0x00000020,
 		EOPT_CURSORBEYONDEOL   = 0x00000040,
 		EOPT_EXPANDONLYNEWTABS = 0x00000080,
+		EOPT_SHOWWHITESPACE    = 0x00000100,
+		EOPT_BOM               = 0x00000200,
+		EOPT_SHOWNUMBERS       = 0x00000400,
+		EOPT_SHOWGUTTER        = 0x00000800,
 	};
 
 
@@ -1353,7 +1357,9 @@ namespace oldfar
 		int TabSize;
 		int BookMarkCount;
 		DWORD CurState;
-		DWORD Reserved[6];
+		int WindowX;
+		int WindowY;
+		DWORD Reserved[4];
 	};
 
 	struct EditorBookMarks
@@ -1898,4 +1904,3 @@ namespace oldfar
 }
 
 #endif // __FAR2SDK_FARPLUG_MB_H__
-

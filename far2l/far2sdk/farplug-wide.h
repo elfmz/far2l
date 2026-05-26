@@ -366,6 +366,8 @@ enum FarMessagesProc
 	DM_SETCOLOR = DM_SETTRUECOLOR,
 
 	DM_SETTEXTPTRSILENT,
+	// Set tab size for dialog edit controls (Param1 = Item ID, Param2 = tab size).
+	DM_SETEDITTABSIZE = 0x3FF0,
 
 	DN_FIRST=0x1000,
 	DN_BTNCLICK,
@@ -1623,6 +1625,7 @@ enum EDITOR_CONTROL_COMMANDS
 	ECTL_GETFILENAME,
 	ECTL_ADDTRUECOLOR,
 	ECTL_GETTRUECOLOR,
+	ECTL_SETGUTTERMARKS,
 };
 //#ifdef FAR_USE_INTERNALS
 //	ECTL_SERVICEREGION, // WTF
@@ -1642,6 +1645,7 @@ enum EDITOR_SETPARAMETER_TYPES
 	ESPT_GETWORDDIV,
 	ESPT_SHOWWHITESPACE,
 	ESPT_SETBOM,
+	ESPT_SHOWGUTTER,
 };
 
 #ifdef FAR_USE_INTERNALS
@@ -1726,6 +1730,8 @@ enum EDITOR_OPTIONS
 	EOPT_EXPANDONLYNEWTABS = 0x00000080,
 	EOPT_SHOWWHITESPACE    = 0x00000100,
 	EOPT_BOM               = 0x00000200,
+	EOPT_SHOWNUMBERS       = 0x00000400,
+	EOPT_SHOWGUTTER        = 0x00000800,
 };
 
 
@@ -1763,7 +1769,9 @@ struct EditorInfo
 	int BookMarkCount;
 	DWORD CurState;
 	UINT CodePage;
-	DWORD Reserved[5];
+	int WindowX;
+	int WindowY;
+	DWORD Reserved[3];
 };
 
 struct EditorBookMarks
@@ -1822,6 +1830,18 @@ struct EditorTrueColor
 {
 	struct EditorColor Base;
 	struct FarTrueColorForeAndBack TrueColor;
+};
+
+struct EditorGutterMark
+{
+	int Line; // 0-based logical line number
+	uint64_t Color; // Far color attributes
+};
+
+struct EditorGutterMarks
+{
+	size_t Count;
+	const struct EditorGutterMark *Marks;
 };
 
 struct EditorSaveFile
@@ -2599,4 +2619,3 @@ extern "C"
 #define EXP_NAME(p) _export p ## W
 
 #endif /* __FAR2SDK_FARPLUG_WIDE_H__ */
-

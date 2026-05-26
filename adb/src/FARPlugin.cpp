@@ -44,7 +44,8 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *Info)
 	static const wchar_t *s_disk_menu_strings[] = {L"ADB"};
 	Info->DiskMenuStrings = s_disk_menu_strings;
 	Info->DiskMenuStringsNumber = 1;
-	static const wchar_t *s_menu_strings[] = {Lng(MPluginTitle)};
+	static const wchar_t *s_menu_strings[1];
+	s_menu_strings[0] = Lng(MPluginTitle);
 	Info->PluginMenuStrings = s_menu_strings;
 	Info->PluginMenuStringsNumber = 1;
 	// No PluginConfigStrings — plugin has no settings; hide from F9 → Options → Plugins.

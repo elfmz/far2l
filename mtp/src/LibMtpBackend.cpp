@@ -16,7 +16,11 @@
 
 #include <libmtp.h>
 #include <libusb.h>
+#ifndef MTP_SYSTEM_LIBMTP
+// ptp.h is part of libmtp's internal PTP layer — not installed by libmtp-dev. Pulled from our
+// vendored copy; only ListChildrenFast (the depth=1 fast-listing optimization) needs it.
 #include "ptp.h"
+#endif
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
@@ -56,12 +60,17 @@ void PatchKnownName(ObjectEntry& e, const std::unordered_map<uint32_t, std::stri
 }
 
 // One-shot bulk GetObjectPropList for all children of `parent` (MTP 0x9805 depth=1). Returns nullopt on unsupported/error so the caller falls back.
+// Disabled when linking against system libmtp: the internal ptp_mtp_* symbols are hidden by libmtp.sym's version-script.
 std::optional<std::vector<ObjectEntry>> ListChildrenFast(
     LIBMTP_mtpdevice_t* device,
     uint32_t storage_id,
     uint32_t parent,
     const std::unordered_map<uint32_t, std::string>& known_names)
 {
+#ifdef MTP_SYSTEM_LIBMTP
+    (void)device; (void)storage_id; (void)parent; (void)known_names;
+    return std::nullopt;
+#else
     PTPParams* params = static_cast<PTPParams*>(device->params);
 
     if ((params->device_flags & DEVICE_FLAG_BROKEN_MTPGETOBJPROPLIST) ||
@@ -169,6 +178,7 @@ std::optional<std::vector<ObjectEntry>> ListChildrenFast(
         out.push_back(std::move(e));
     }
     return out;
+#endif // MTP_SYSTEM_LIBMTP
 }
 
 void EnsureLibmtpInit() {

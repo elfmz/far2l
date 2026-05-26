@@ -1,6 +1,6 @@
 # far2l MTP plugin — version 1.0
 
-Browse and manage files on MTP-class devices (Android, cameras, media players) over USB. Self-contained: both [libmtp](https://libmtp.sourceforge.io/) 1.1.23 and [libusb](https://libusb.info) 1.0.29 are vendored under `mtp/libmtp/` and `mtp/libusb/` and built as static archives — no runtime dependency on system libusb/libmtp on either macOS or Linux. See `mtp/libusb/VENDORING.md` for the libusb refresh procedure.
+Browse and manage files on MTP-class devices (Android, cameras, media players) over USB. [libmtp](https://libmtp.sourceforge.io/) 1.1.23 and [libusb](https://libusb.info) 1.0.30 are vendored under `mtp/libmtp/` and `mtp/libusb/` — see `mtp/libusb/VENDORING.md` for the libusb refresh procedure. By default the build uses the **system libusb-1.0** (matches Debian/Ubuntu packaging policy) and the **vendored libmtp** (the plugin uses libmtp's internal PTP layer for fast `depth=1` listings — that surface is hidden by `libmtp.sym` in distro builds). Toggle with `-DMTP_SYSTEM_LIBUSB=OFF` / `-DMTP_SYSTEM_LIBMTP=ON`; setting both `ON` gives a build with zero vendored code embedded but slower enumeration.
 
 ## Features
 
@@ -38,7 +38,7 @@ Restart far2l. The plugin appears in **Alt+F1 / Alt+F2 → MTP**.
 
 ## Prerequisites
 
-No build-time or runtime libusb/libmtp packages are required (vendored static — see top of this file).
+Default build needs `libusb-1.0-0-dev` (Debian/Ubuntu) / `libusb` (Homebrew). For a fully vendored build pass `-DMTP_SYSTEM_LIBUSB=OFF`; for a fully system build add `-DMTP_SYSTEM_LIBMTP=ON` (also needs `libmtp-dev`).
 
 ### Linux
 

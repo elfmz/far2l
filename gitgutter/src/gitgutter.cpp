@@ -1669,8 +1669,22 @@ static int ShowConfigDialog()
 		g_settings.color_deleted = ParseColorPair(reinterpret_cast<const wchar_t *>(
 				g_info.SendDlgMessage(hdlg, DM_GETCONSTTEXTPTR, CD_COLOR_DELETED, 0)), g_settings.color_deleted);
 		if (!g_settings.enabled) {
-			EditorGutterMarks gm{};
-			g_info.EditorControl(ECTL_SETGUTTERMARKS, &gm);
+			g_pending_tick = false;
+			EditorInfo ei{};
+			if (GetEditorInfo(ei)) {
+				EditorState &st = g_editors[ei.EditorID];
+				st.editor_id = ei.EditorID;
+				st.marks.clear();
+				st.hunks.clear();
+				st.baseline_label.clear();
+				ApplyMarksToEditor(st);
+				if (st.gutter_forced) {
+					st.gutter_request = 0;
+					ApplyGutterRequest(st);
+				} else {
+					g_info.EditorControl(ECTL_REDRAW, nullptr);
+				}
+			}
 		}
 		g_settings.Save();
 		if (g_settings.enabled) {

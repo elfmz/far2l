@@ -250,6 +250,12 @@ private:
 	DWORD GetOpCode(struct MacroRecord *MR, int PC);
 	DWORD SetOpCode(struct MacroRecord *MR, int PC, DWORD OpCode);
 
+	// Mark macro by index (imacro) as Deleted
+	bool MacroDelete(int imacro, bool bfull = true);
+	// Replace macro by index (if imacro >=0) or Add new macro (if imacro < 0)
+	int MacroReplaceAdd(int imacro, int iarea,
+			DWORD Flags, const wchar_t *pstrKey, const wchar_t *pstrSequence, const wchar_t *pstrDescription);
+
 private:
 	static LONG_PTR WINAPI AssignMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);
 	static LONG_PTR WINAPI ParamMacroDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2);

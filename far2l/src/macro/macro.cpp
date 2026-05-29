@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "macro.hpp"
 #include "macroopcode.hpp"
+#include "macrobrowser.hpp"
 #include "keys.hpp"
 #include "keyboard.hpp"
 #include "lang.hpp"
@@ -5068,6 +5069,8 @@ void KeyMacro::SaveMacros(BOOL AllSaved)
 		if (!AllSaved && !(MacroLIB[I].Flags & MFLAGS_NEEDSAVEMACRO))
 			continue;
 
+		MacroLIB[I].Flags &= ~MFLAGS_NEEDSAVEMACRO;
+
 		MkRegKeyName(I, strRegKeyName);
 		cfg_writer.SelectSection(strRegKeyName);
 
@@ -5826,11 +5829,11 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroDescription)
 	  +--------------------------+
 	*/
 	DialogDataEx MacroAssignDlgData[] = {
-		{DI_DOUBLEBOX, 3,  1, 70, 7, {}, 0,                      	Msg::DefineMacroTitle},
-		{DI_TEXT,      5,  2, 35, 2, {}, 0, 						Msg::DefineMacroDescription},
-		{DI_EDIT,      37, 2, 68, 2, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
-		{DI_TEXT,      5,  4, 35, 4, {}, 0,                       	Msg::DefineMacro     },
-		{DI_COMBOBOX,  37, 4, 68, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L"" },
+		{DI_DOUBLEBOX, 3,  1, 70, 7, {}, 0,                         Msg::DefineMacroTitle},
+		{DI_TEXT,      5,  2, 35, 2, {}, 0,                         Msg::DefineMacroDescription},
+		{DI_EDIT,      37, 2, 68, 2, {}, DIF_FOCUS | DIF_DEFAULT,   macroDescription.CPtr()},
+		{DI_TEXT,      5,  4, 35, 4, {}, 0,                         Msg::DefineMacro     },
+		{DI_COMBOBOX,  37, 4, 68, 4, {}, DIF_FOCUS,                 L""},
 		{DI_TEXT,      3,  5, 0,  5, {}, DIF_SEPARATOR,             L""},
 		{DI_BUTTON,    0,  6, 0,  6, {}, DIF_DEFAULT | DIF_CENTERGROUP, Msg::Ok},
 		{DI_BUTTON,    0,  6, 0,  6, {}, DIF_CENTERGROUP, Msg::Cancel}
@@ -5847,7 +5850,8 @@ DWORD KeyMacro::AssignMacroKey(FARString& macroDescription)
 	Dlg.Process();
 	IsProcessAssignMacroKey--;
 
-	if (Dlg.GetExitCode() == -1)
+	const int ret =  Dlg.GetExitCode();
+	if (ret == -1 || ret == 7) // -1 - Esc or mouse click out dialog, 7 - Cancel button
 		return KEY_INVALID;
 
 	macroDescription = MacroAssignDlg[2].strData;
@@ -5962,8 +5966,8 @@ int KeyMacro::GetMacroSettings(uint32_t Key, DWORD &Flags, FARString& macroDescr
 		{DI_TEXT,      5,  2,  0,  2,  {},  0,                             Msg::MacroSequence                     },
 		{DI_EDIT,      5,  3,  67, 3,  {},  DIF_FOCUS,                     L""                                    },
 
-		{DI_TEXT,      5,  4, 30, 4, {}, 0, 						Msg::DefineMacroDescription},
-		{DI_EDIT,      32, 4, 67, 4, {}, DIF_FOCUS | DIF_DEFAULT, 	L""},
+		{DI_TEXT,      5,  4,  30, 4,  {},  0,                             Msg::DefineMacroDescription            },
+		{DI_EDIT,      32, 4,  67, 4,  {},  DIF_FOCUS,                     L""                                    },
 
 		{DI_TEXT,      3,  5,  0,  5,  {},  DIF_SEPARATOR,                 L""                                    },
 		{DI_CHECKBOX,  5,  6,  0,  6,  {},  0,                             Msg::MacroSettingsEnableOutput         },
@@ -6771,4 +6775,257 @@ BOOL KeyMacro::GetMacroParseError(FARString *Err1, FARString *Err2, FARString *E
 bool KeyMacro::IsOpCode(DWORD p)
 {
 	return (!(p & KEY_MACRO_BASE) || p == MCODE_OP_ENDKEYS) ? false : true;
+}
+
+// Mark macro by index (imacro) as Deleted
+// Note: if macro has !BufferSize or !Src it will remove in SaveMacros()
+//  and we shouldn't remove it from memory because we need to delete it when we save
+bool KeyMacro::MacroDelete(int imacro, bool bfull)
+{
+	if (!MacroLIB || imacro < 0 || imacro >= MacroLIBCount) // check macro index
+		return false; // MacroLIB not initialized or invalid macro index
+	if (IsExecuting() || IsRecording())
+		return false;	// prevent modification during macro execution or recording
+
+	if (MacroLIB[imacro].BufferSize > 1 && MacroLIB[imacro].Buffer)
+		free(MacroLIB[imacro].Buffer);
+
+	if (MacroLIB[imacro].Src)
+		free(MacroLIB[imacro].Src);
+
+	if (MacroLIB[imacro].Description)
+		free(MacroLIB[imacro].Description);
+
+	MacroLIB[imacro].Buffer = nullptr;
+	MacroLIB[imacro].BufferSize = 0;
+	MacroLIB[imacro].Src = nullptr;
+	MacroLIB[imacro].Description = nullptr;
+	MacroLIB[imacro].Flags|= MFLAGS_NEEDSAVEMACRO;
+
+	if (bfull) { // no need sort+save if after clear macro data we continue work with macro record
+		KeyMacro::Sort();
+		if (Opt.AutoSaveSetup)
+			SaveMacros(FALSE);	// записать только изменения!
+	}
+
+	return true; // success: macro mark as deleted
+}
+
+// Replace macro by index (if imacro >=0) or Add new macro (if imacro < 0)
+// Return value: see enum MacroReplaceAddRes in "macrobrowser.hpp"
+int KeyMacro::MacroReplaceAdd(int imacro, int iarea,
+		DWORD Flags, const wchar_t *pstrKey, const wchar_t *pstrSequence, const wchar_t *pstrDescription)
+{
+	if (IsExecuting() || IsRecording())	// prevent modification during macro execution or recording
+		return MacroReplaceAddRes::Busy;
+	if (iarea >= MACRO_LAST) // if iarea also check macro area
+		return MacroReplaceAddRes::InvalidAreaIndex; // invalid macroarea index
+	if (imacro >= 0) {
+		if (!MacroLIB || imacro >= MacroLIBCount) // for Replace check macro index
+			return MacroReplaceAddRes::InvalidMacroIndex; // MacroLIB not initialized or invalid macro index
+		if (iarea < 0)
+			iarea = (int)(MacroLIB[imacro].Flags & MFLAGS_MODEMASK); // use area of current macro
+	}
+	else {
+		if (iarea < 0)
+			return MacroReplaceAddRes::AreaRequired; // for Add iarea are mandatory
+	}
+
+	MacroRecord mr{};
+
+	FARString strtmp = pstrKey;
+	RemoveExternalSpaces(strtmp);
+	mr.Key = KeyNameToKey(strtmp); // Назначенная клавиша
+	if (mr.Key == KEY_INVALID)
+		return MacroReplaceAddRes::InvalidKey; // Некорректная комбинация клавиш
+
+	strtmp = pstrSequence;
+	RemoveExternalSpaces(strtmp);
+	if (strtmp.IsEmpty())
+		return MacroReplaceAddRes::EmptySequence; // Пустая последовательность макрокоманды
+	while (strtmp.Contains(L" \n")) // removing TrailingSpaces in each string
+		ReplaceStrings(strtmp, L" \n", L"\n");
+	while (strtmp.Contains(L"\t\n")) // removing TrailingTabs in each string
+		ReplaceStrings(strtmp, L"\t\n", L"\n");
+
+	FARString strDescription = pstrDescription;
+	RemoveExternalSpaces(strDescription);
+	while (strDescription.Contains(L"  "))
+		ReplaceStrings(strDescription, L"  ", L" ");
+
+	mr.BufferSize = 0;			// Размер буфера компилированной последовательности
+	mr.Buffer = nullptr;		// компилированная последовательность (OpCode) макроса
+	mr.Flags = (Flags & ~MFLAGS_MODEMASK) | iarea;
+	if (!ParseMacroString(&mr, strtmp.CPtr())) {
+		if (mr.BufferSize > 1)
+			free(mr.Buffer);
+		return MacroReplaceAddRes::InvalidSequence; // Некорректная последовательность макрокоманды
+	}
+
+	if (imacro >= 0) { // Replace, а есть ли изменения?
+		if (MacroLIB[imacro].Key == mr.Key
+				&& (int)(MacroLIB[imacro].Flags & MFLAGS_MODEMASK) == iarea
+				&& (MacroLIB[imacro].Flags & ~MFLAGS_MODEMASK & ~MFLAGS_NEEDSAVEMACRO)
+					== (Flags & ~MFLAGS_MODEMASK & ~MFLAGS_NEEDSAVEMACRO)
+				&& MacroLIB[imacro].BufferSize == mr.BufferSize
+				&& (mr.BufferSize > 1
+					? !memcmp(MacroLIB[imacro].Buffer, mr.Buffer, mr.BufferSize * sizeof(*mr.Buffer))
+					: MacroLIB[imacro].Buffer == mr.Buffer)
+				&& !StrCmp(MacroLIB[imacro].Src, strtmp)
+				&& ((!MacroLIB[imacro].Description && strDescription.IsEmpty())
+					|| (MacroLIB[imacro].Description && !StrCmp(MacroLIB[imacro].Description, strDescription))) ) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			return MacroReplaceAddRes::NoChanges; // Изменения полностью эквивалентны исходному => не трогаем
+		}
+	}
+
+	int ipos = -1;
+	if (MacroLIB && MacroLIBCount > 0) {
+		// check dublicates by Key in macro area
+		// used part of code from GetIndex()
+		MacroRecord *mptr = &MacroLIB[IndexMode[iarea][0]];
+		for (int i = 0; i < IndexMode[iarea][1]; ++i, ++mptr) {
+			if (!((mptr->Key ^ mr.Key) & ~0xFFFFu)
+					&& (Upper(static_cast<WCHAR>(mptr->Key)) == Upper(static_cast<WCHAR>(mr.Key)))) {
+				ipos = IndexMode[iarea][0] + i;
+				break;
+			}
+		}
+		// В выбранной области уже присутствует другой макрос с такой же комбинацией клавиш
+		if (ipos != -1 && ipos != imacro) {
+			if (!MacroLIB[ipos].BufferSize || !MacroLIB[ipos].Src) { // другой макрос помечен как удаленный => работаем поверх него
+				if (imacro >= 0) { // редактирование, т.е. есть текущий
+					if (!MacroDelete(imacro, false)) {	// => текущий удаляем
+						if (mr.BufferSize > 1)
+							free(mr.Buffer);
+						return MacroReplaceAddRes::DeleteFailed; // Delete error
+					}
+				}
+				imacro = ipos;						//  и работаем далее поверх того
+			}
+			else {
+				if (mr.BufferSize > 1)
+					free(mr.Buffer);
+				 // В выбранной области уже присутствует другой активный макрос с такой же комбинацией клавиш
+				return MacroReplaceAddRes::DuplicateAreaKey;
+			}
+		}
+	}
+
+	// === Macros add/replace ===
+
+	// allocation strings for new macro
+	wchar_t* newSrc = wcsdup(strtmp.GetBuffer()); // pstrSequence
+	if (!newSrc) {
+		free(newSrc);
+		if (mr.BufferSize > 1)
+			free(mr.Buffer);
+		return MacroReplaceAddRes::ReallocationFailed;
+	}
+	wchar_t* newDescription;
+	if (strDescription.IsEmpty())
+		newDescription = nullptr;
+	else {
+		newDescription = wcsdup(strDescription.GetBuffer());
+		if (!newDescription) {
+			free(newSrc);
+			free(newDescription);
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			return MacroReplaceAddRes::ReallocationFailed;
+		}
+	}
+
+	// for Add or Replace with New Key and/or New Area need memory allocation
+	if (imacro < 0 || !MacroLIB
+			|| mr.Key != MacroLIB[imacro].Key
+			|| iarea != (int)(MacroLIB[imacro].Flags & MFLAGS_MODEMASK)) {
+		MacroRecord *NewMacroLIB =
+				(MacroRecord *)realloc(MacroLIB, sizeof(*MacroLIB) * (MacroLIBCount + 1));
+		if (!NewMacroLIB) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			free(newSrc);
+			free(newDescription);
+			return MacroReplaceAddRes::ReallocationFailed; // Error memory reallocation
+		}
+		ipos = MacroLIBCount; // new macro add to end
+		MacroLIB = NewMacroLIB;
+		MacroLIBCount++;
+	}
+	else
+		ipos = imacro;
+
+	if (imacro >= 0) { // before Replace we need free macro data without sort
+		if (!MacroDelete(imacro, false)) {
+			if (mr.BufferSize > 1)
+				free(mr.Buffer);
+			free(newSrc);
+			free(newDescription);
+			return MacroReplaceAddRes::DeleteFailed; // Delete error
+		}
+	}
+
+	// Set data to macro
+	MacroLIB[ipos].Key = mr.Key;
+
+	if (!mr.BufferSize)
+		MacroLIB[ipos].Buffer = nullptr;
+	else
+		MacroLIB[ipos].Buffer = mr.Buffer;
+	MacroLIB[ipos].BufferSize = mr.BufferSize;
+
+	MacroLIB[ipos].Src = newSrc;
+
+	MacroLIB[ipos].Description = newDescription;
+
+	MacroLIB[ipos].Flags = (Flags & ~MFLAGS_MODEMASK) | iarea | MFLAGS_NEEDSAVEMACRO;
+
+	KeyMacro::Sort();
+	if (Opt.AutoSaveSetup)
+		SaveMacros(FALSE);	// записать только изменения!
+
+	return MacroReplaceAddRes::Success; // success: macro Added / Replaced
+}
+
+// used in MacroBrowser
+size_t MacroLib_KeywordsFunctions2Items(std::vector<FarListItem> &Items)
+{
+	size_t i;
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"Codes";
+	for(i = 0; i < ARRAYSIZE(KeyMacroCodes); i++) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = KeyMacroCodes[i].Name;
+	}
+
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"Keywords";
+	for(i = 0; i < ARRAYSIZE(MKeywords); i++) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = MKeywords[i].Name;
+	}
+
+	Items.emplace_back();
+	Items.back().Flags = LIF_SEPARATOR;
+	Items.back().Text = L"Functions";
+	for(i = 0; i < ARRAYSIZE(intMacroFunction) - 1; i++) {
+		Items.emplace_back();
+		Items.back().Flags = 0;
+		Items.back().Text = intMacroFunction[i].Syntax;
+	}
+
+	const size_t n = Items.size();
+	size_t len = 0, len1;
+	for(i = 0; i < n; i++) {
+		len1 = wcslen(Items[i].Text);
+		if (len1 > len)
+			len = len1;
+	}
+	return len;
 }

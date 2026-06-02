@@ -587,10 +587,11 @@ int UserMenu::ProcessSingleMenu(const wchar_t *MenuKey, int MenuPos, const wchar
 
 						break;
 					case KEY_INS:
+					case KEY_CTRLN:
 					case KEY_F4:
 					case KEY_SHIFTF4:
 					case KEY_NUMPAD0: {
-						bool bInsertNew = (Key == KEY_INS || Key == KEY_NUMPAD0);
+						bool bInsertNew = (Key == KEY_INS || Key == KEY_NUMPAD0 || Key == KEY_CTRLN);
 
 						if (!bInsertNew && (MenuPos >= NumLine || MenuPos < 0))
 							break;

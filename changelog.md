@@ -7,6 +7,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 ## Master (current development)
 * _New:_ GUI|SDL Backend (experimental now; not compiled by default, set flag `-DUSESDL=YES` explicitly to compile both GUI|WX and GUI|SDL backends together or `-DUSESDL=YES -DUSEWX=NO` to compile only GUI|SDL; command line parameter `--SDL` to force run GUI|SDL backend)
 * _New:_ Added a new option "Auto save panels state"
+* _New:_ Added a new option "Show startup banner in built-in terminal"
 * Themes: added "Hercules Night", fixes to "Gold on Blue"
 * **Alt+Ins**: now copies to clipboard also colored HTML; selects whole screen by **A** or **Ctrl+A** key press; deselect by **U** or **Ctrl+U** key press
 * _New_: `--nodetect=e` command line parameter to prevent emodjie VS16 suffix detection

@@ -30,6 +30,8 @@ protected:
 	volatile bool  _started;
 
 	bool Start();
+	bool IsStarted() const { return _started; }
+
 	void Join();
 	virtual void OnJoin();
 	virtual void *ThreadProc() = 0;
@@ -53,6 +55,7 @@ public:
 	void Start(int fd_out = -1);
 	void Stop();
 	inline bool IsDeactivated() const { return _deactivated; }
+	inline bool IsStarted() const { return WithThread::IsStarted(); }
 	void KickAss();
 
 

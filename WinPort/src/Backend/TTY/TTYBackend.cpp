@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <exception>
+#include <chrono>
 #include <sys/ioctl.h>
 
 #ifdef __linux__
@@ -31,6 +32,13 @@
 static uint16_t g_far2l_term_width = 80, g_far2l_term_height = 25;
 static volatile long s_terminal_size_change_id = 0;
 static TTYBackend * g_vtb = nullptr;
+
+static std::atomic<bool> s_parent_dead{false};
+
+static void OnParentDead(int)
+{
+	s_parent_dead.store(true, std::memory_order_relaxed);
+}
 
 long _iterm2_cmd_ts = 0;
 bool _iterm2_cmd_state = 0;
@@ -86,6 +94,7 @@ TTYBackend::TTYBackend(const char *full_exe_path, int std_in, int std_out, bool 
 	_ext_clipboard(ext_clipboard),
 	_restrict(restrict),
 	_esc_expiration(esc_expiration),
+	_is_forktty_child(notify_pipe != -1),
 	_notify_pipe(notify_pipe),
 	_result(result),
 	_largest_window_size_ready(false)
@@ -306,7 +315,21 @@ void TTYBackend::ReaderThread()
 					break;
 				}
 				usleep(10000);
+				if (_is_forktty_child && s_parent_dead.load(std::memory_order_relaxed)) {
+					fprintf(stderr, "TTYBackend::ReaderThread: parent gone during suspend, exiting\n");
+					_exiting = true;
+					WINPORT(GenerateConsoleCtrlEvent)(CTRL_CLOSE_EVENT, 0);
+					break;
+				}
 			} else {
+				// If the parent session manager (ForkTTYChild wrapper) is gone,
+				// no one will ever connect for revival — exit gracefully.
+				if (_is_forktty_child && s_parent_dead.load(std::memory_order_relaxed)) {
+					fprintf(stderr, "TTYBackend::ReaderThread: parent gone, exiting\n");
+					_exiting = true;
+					WINPORT(GenerateConsoleCtrlEvent)(CTRL_CLOSE_EVENT, 0);
+					break;
+				}
 				const std::string &info = StrWide2MB(g_winport_con_out->GetTitle());
 				int np = TTYReviveMe(_stdin, _stdout, _kickass[0], info);
 				if (np != -1) {
@@ -465,7 +488,9 @@ void TTYBackend::WriterThread()
 			}
 
 			tty_out.Flush();
-			tcdrain(_stdout);
+			if (!_exiting && !_deadio) {
+				tcdrain(_stdout);
+			}
 
 			if (ae.go_background) {
 				gone_background = true;
@@ -693,6 +718,7 @@ void TTYBackend::DispatchFar2lInteract(TTYOutput &tty_out)
 			}
 		}
 		i->stk_ser.PushNum(id);
+		i->id = id;
 
 		if (i->waited)
 			_far2l_interacts_sent.emplace(id, i);
@@ -1020,7 +1046,7 @@ void TTYBackend::OSC52SetClipboard(const char *text)
 
 bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 {
-	if (_tty_caps.kind != TTYCaps::FAR2L || _exiting)
+	if (_tty_caps.kind != TTYCaps::FAR2L || _exiting || _deadio)
 		return false;
 
 	std::shared_ptr<Far2lInteractData> pfi = std::make_shared<Far2lInteractData>();
@@ -1037,10 +1063,28 @@ bool TTYBackend::Far2lInteract(StackSerializer &stk_ser, bool wait)
 	if (!wait)
 		return true;
 
-	pfi->evnt.Wait();
+	static constexpr unsigned int FAR2L_INTERACT_TIMEOUT_MSEC = 10000;
+	static constexpr unsigned int FAR2L_INTERACT_POLL_MSEC = 500;
+	const auto deadline = std::chrono::steady_clock::now()
+		+ std::chrono::milliseconds(FAR2L_INTERACT_TIMEOUT_MSEC);
+	bool completed = false;
+	while (!completed) {
+		completed = pfi->evnt.TimedWait(FAR2L_INTERACT_POLL_MSEC);
+		if (completed || _exiting || _deadio)
+			break;
+		if (std::chrono::steady_clock::now() >= deadline) {
+			fprintf(stderr, "TTYBackend::Far2lInteract: timeout\n");
+			if (pfi->id) {
+				std::lock_guard<std::mutex> lock_sent(_far2l_interacts_sent);
+				_far2l_interacts_sent.erase(pfi->id);
+			}
+			pfi->stk_ser.Swap(stk_ser);
+			return false;
+		}
+	}
 
 	std::unique_lock<std::mutex> lock_sent(_far2l_interacts_sent);
-	if (_exiting)
+	if (_exiting || _deadio)
 		return false;
 
 	pfi->stk_ser.Swap(stk_ser);
@@ -1431,6 +1475,7 @@ static void OnSigHup(int signo)
 	}
 }
 
+
 void TTYBackend::OnSigHup()
 {
 	// drop sudo privileges once pending sudo operation completes
@@ -1656,15 +1701,17 @@ bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
 	auto orig_tstp = signal(SIGTSTP, OnSigTstp);
 	auto orig_cont = signal(SIGCONT, OnSigCont);
 	auto orig_hup = signal(SIGHUP, (notify_pipe != -1) ? OnSigHup : SIG_DFL); // notify_pipe == -1 means --mortal specified
+	auto orig_usr1 = signal(SIGUSR1, (notify_pipe != -1) ? OnParentDead : SIG_DFL);
 
 	*result = 0; // set OK status for case if app will go background
 	*result = AppMain(argc, argv);
 
 	signal(SIGHUP, orig_hup);
-	signal(SIGCONT, orig_tstp);
-	signal(SIGTSTP, orig_cont);
+	signal(SIGCONT, orig_cont);
+	signal(SIGTSTP, orig_tstp);
 	signal(SIGWINCH, orig_winch);
 	signal(SIGTERM, orig_term);
+	signal(SIGUSR1, orig_usr1);
 
 	return true;
 }

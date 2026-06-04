@@ -227,6 +227,10 @@ void LocalSocketServer::WaitForClient(int fd_cancel, int tmout_msec)
 
 		if (fd_cancel != -1) {
 			if (FD_ISSET(fd_cancel, &fde) || FD_ISSET(fd_cancel, &fdr)) {
+			char c;
+			if (os_call_ssize(read, fd_cancel, (void*)&c, (size_t)1) > 0) {
+				// byte consumed — prevents immediate LocalSocketCancelled rethrow
+			}
 				throw LocalSocketCancelled();
 			}
 		}

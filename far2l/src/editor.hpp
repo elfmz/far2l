@@ -391,6 +391,7 @@ public:
 	void SetStartPos(int LineNum, int CharNum);
 	BOOL IsFileModified() const;
 	BOOL IsFileChanged() const;
+	void MarkSaved();
 	void SetTitle(const wchar_t *Title);
 	long GetCurPos();
 	int EditorControl(int Command, void *Param);
@@ -485,6 +486,14 @@ public:
 	void SetCursorType(bool Visible, DWORD Size);
 	void GetCursorType(bool &Visible, DWORD &Size);
 	void SetShowCursor(bool Enable) { m_showCursor = Enable; }
+	void SetTopScreenLine(int LineNumber, int VisualLine = 0);
+	void SetCursorByVisualLineCellOffset(int LineNumber, int VisualLine, int CellOffset);
+	int GetCursorLine() const { return NumLine; }
+	int GetCursorVisualLine() const { return GetCurVisualLine(); }
+	int GetVisualLineCount(int LineNumber);
+	bool GetVisualLineHighlightCells(int LineNumber, int VisualLine, int RangeStart, int RangeEnd,
+			int DrawX1, int &CellX1, int &CellX2);
+	bool RenderVisualLine(int LineNumber, int VisualLine, int X1, int Y, int X2);
 	void SetObjectColor(uint64_t Color, uint64_t SelColor, uint64_t ColorUnChanged);
 	void DrawScrollbar();
 

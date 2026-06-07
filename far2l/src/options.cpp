@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hmenu.hpp"
 #include "vmenu.hpp"
 #include "filepanels.hpp"
+#include "filediff.hpp"
 #include "panel.hpp"
 #include "chgmmode.hpp"
 #include "filelist.hpp"
@@ -135,6 +136,7 @@ enum enumCommandsMenu
 	MENU_COMMANDS_HORZPANELS,
 	MENU_COMMANDS_TOGGLEPANELS,
 	MENU_COMMANDS_COMPAREFOLDERS,
+	MENU_COMMANDS_COMPAREFILES,
 	MENU_COMMANDS_SEPARATOR2,
 	MENU_COMMANDS_EDITUSERMENU,
 	MENU_COMMANDS_FILEASSOCIATIONS,
@@ -269,6 +271,7 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 		{ Opt.PanelsDisposition ? Msg::MenuVerticalPanels : Msg::MenuHorizontalPanels, 0,(KEY_CTRL + KEY_COMMA) },
 		{Msg::MenuTogglePanels,     0,             KEY_CTRLO },
 		{Msg::MenuCompareFolders,   0,             0         },
+		{Msg::MenuCompareFiles,     0,             KEY_CTRLD},
 		{L"",                       LIF_SEPARATOR, 0         },
 		{Msg::MenuUserMenu,         0,             0         },
 		{Msg::MenuFileAssociations, 0,             0         },
@@ -535,6 +538,9 @@ void ShellOptions(int LastCommand, MOUSE_EVENT_RECORD *MouseEvent)
 					break;
 				case MENU_COMMANDS_COMPAREFOLDERS:	// Compare folders
 					CtrlObject->Cp()->ActivePanel->CompareDir();
+					break;
+				case MENU_COMMANDS_COMPAREFILES:	// Compare files
+					PresentFileDiff();
 					break;
 				case MENU_COMMANDS_EDITUSERMENU:	// Edit user menu
 				{

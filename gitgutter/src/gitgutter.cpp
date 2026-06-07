@@ -267,6 +267,7 @@ static std::unordered_map<int, EditorState> g_editors;
 struct PendingPopup
 {
 	bool active = false;
+	bool center_on_hunk = false;
 	int editor_id = -1;
 	int line = 0;
 };
@@ -340,6 +341,7 @@ struct PopupContext
 	const EditorState *st = nullptr;
 	size_t index = 0;
 	int tab_size = 0;
+	int focus_item = POPUP_MEMO;
 };
 
 static void UpdatePopupMemo(HANDLE hDlg, PopupContext *ctx)
@@ -358,7 +360,8 @@ static LONG_PTR WINAPI PopupDlgProc(HANDLE hDlg, int Msg, int Param1, LONG_PTR P
 	auto *ctx = reinterpret_cast<PopupContext *>(
 			g_info.SendDlgMessage(hDlg, DM_GETDLGDATA, 0, 0));
 	if (Msg == DN_INITDIALOG) {
-		g_info.SendDlgMessage(hDlg, DM_SETFOCUS, POPUP_MEMO, 0);
+		const int focus_item = ctx ? ctx->focus_item : POPUP_MEMO;
+		g_info.SendDlgMessage(hDlg, DM_SETFOCUS, focus_item, 0);
 		// Set memoedit tab size at init, before colorer processes focus.
 		if (ctx && ctx->tab_size > 0) {
 			g_info.SendDlgMessage(hDlg, DM_SETEDITTABSIZE, POPUP_MEMO, ctx->tab_size);
@@ -1102,7 +1105,7 @@ static void ApplyDialogEditColor(HANDLE hdlg, int edit_id, const Settings::Color
 	g_info.SendDlgMessage(hdlg, DM_SETCOLOR, edit_id, reinterpret_cast<LONG_PTR>(colors));
 }
 
-static void ShowHunkPopup(const EditorState &st, int line)
+static void ShowHunkPopup(const EditorState &st, int line, bool center_on_hunk)
 {
 	if (g_popup_active) {
 		return;
@@ -1124,7 +1127,11 @@ static void ShowHunkPopup(const EditorState &st, int line)
 	if (index == st.hunks.size()) {
 		return;
 	}
+	if (center_on_hunk) {
+		MoveEditorToHunk(st.hunks[index]);
+	}
 
+	int focus_item = POPUP_MEMO;
 	for (;;) {
 		const auto &h = st.hunks[index];
 		int max_line = 0;
@@ -1171,8 +1178,7 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		items[POPUP_MEMO].Y1 = 1;
 		items[POPUP_MEMO].X2 = dlg_w - 1;
 		items[POPUP_MEMO].Y2 = dlg_h - 1;
-		items[POPUP_MEMO].Focus = 1;
-		items[POPUP_MEMO].Flags = DIF_READONLY | DIF_FOCUS;
+		items[POPUP_MEMO].Flags = DIF_READONLY;
 		items[POPUP_MEMO].PtrData = h.text.c_str();
 		items[POPUP_MEMO].MaxLen = h.text.size();
 
@@ -1207,6 +1213,12 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		items[POPUP_BASELINE].Y2 = 0;
 		items[POPUP_BASELINE].PtrData = st.baseline_label.c_str();
 
+		if (focus_item != POPUP_PREV && focus_item != POPUP_NEXT) {
+			focus_item = POPUP_MEMO;
+		}
+		items[focus_item].Focus = 1;
+		items[focus_item].Flags |= DIF_FOCUS;
+
 		int local_anchor_x = 0;
 		int local_anchor_y = 0;
 		const bool have_anchor = GetHunkAnchor(h, local_anchor_x, local_anchor_y);
@@ -1233,6 +1245,7 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		ctx.st = &st;
 		ctx.index = index;
 		ctx.tab_size = st.tab_size;
+		ctx.focus_item = focus_item;
 		HANDLE hdlg = g_info.DialogInit(
 				g_info.ModuleNumber, dlg_x1, dlg_y1, dlg_x2, dlg_y2, L"HunkPopup", items, POPUP_COUNT, 0, 0,
 				PopupDlgProc, reinterpret_cast<LONG_PTR>(&ctx));
@@ -1242,12 +1255,14 @@ static void ShowHunkPopup(const EditorState &st, int line)
 		g_info.DialogFree(hdlg);
 		if (rc == POPUP_PREV) {
 			if (!st.hunks.empty()) {
+				focus_item = POPUP_PREV;
 				index = (index == 0) ? (st.hunks.size() - 1) : (index - 1);
 				MoveEditorToHunk(st.hunks[index]);
 				continue;
 			}
 		} else if (rc == POPUP_NEXT) {
 			if (!st.hunks.empty()) {
+				focus_item = POPUP_NEXT;
 				index = (index + 1 >= st.hunks.size()) ? 0 : (index + 1);
 				MoveEditorToHunk(st.hunks[index]);
 				continue;
@@ -1275,6 +1290,7 @@ static void ShowHunkPopup(const EditorState &st, int line)
 				if (index >= st.hunks.size())
 					return;
 			}
+			focus_item = POPUP_MEMO;
 			MoveEditorToHunk(st.hunks[index]);
 			continue;
 		}
@@ -1326,6 +1342,67 @@ static bool HandleGutterClick(const INPUT_RECORD *ir)
 
 	const int line = ei.TopScreenLine + rel_y;
 	g_pending_popup.active = true;
+	g_pending_popup.center_on_hunk = false;
+	g_pending_popup.editor_id = ei.EditorID;
+	g_pending_popup.line = line;
+	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
+	return true;
+}
+
+static bool IsCtrlG(const INPUT_RECORD *ir)
+{
+	if (!ir || ir->EventType != KEY_EVENT)
+		return false;
+
+	const auto &ke = ir->Event.KeyEvent;
+	if (!ke.bKeyDown)
+		return false;
+	if ((ke.dwControlKeyState & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) == 0)
+		return false;
+	if ((ke.dwControlKeyState & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED)) != 0)
+		return false;
+
+	return ke.wVirtualKeyCode == 'G' || ke.uChar.UnicodeChar == 7;
+}
+
+static bool FindHunkFromLineDown(const EditorState &st, int cur_line, int &line)
+{
+	line = -1;
+	if (st.hunks.empty())
+		return false;
+
+	cur_line = std::max(0, cur_line);
+	for (const Hunk &h : st.hunks) {
+		if (h.end < cur_line)
+			continue;
+
+		line = h.start;
+		return true;
+	}
+	return false;
+}
+
+static bool HandleCtrlG(const INPUT_RECORD *ir)
+{
+	if (!IsCtrlG(ir))
+		return false;
+	if (g_popup_active || g_pending_popup.active)
+		return true;
+
+	EditorInfo ei{};
+	if (!GetEditorInfo(ei))
+		return false;
+
+	auto it = g_editors.find(ei.EditorID);
+	if (it == g_editors.end())
+		return false;
+
+	int line = -1;
+	if (!FindHunkFromLineDown(it->second, ei.CurLine, line))
+		return false;
+
+	g_pending_popup.active = true;
+	g_pending_popup.center_on_hunk = true;
 	g_pending_popup.editor_id = ei.EditorID;
 	g_pending_popup.line = line;
 	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
@@ -1791,11 +1868,13 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	if (g_pending_popup.active) {
 		const int editor_id = g_pending_popup.editor_id;
 		const int line = g_pending_popup.line;
+		const bool center_on_hunk = g_pending_popup.center_on_hunk;
 		g_pending_popup.active = false;
+		g_pending_popup.center_on_hunk = false;
 
 		auto it = g_editors.find(editor_id);
 		if (it != g_editors.end()) {
-			ShowHunkPopup(it->second, line);
+			ShowHunkPopup(it->second, line, center_on_hunk);
 			did_work = true;
 		}
 	}
@@ -1833,6 +1912,9 @@ SHAREDSYMBOL int WINAPI ProcessEditorInputW(const INPUT_RECORD *ir)
 	}
 	if (!ir) {
 		return 0;
+	}
+	if (HandleCtrlG(ir)) {
+		return 1;
 	}
 	if (IsLikelyEditInput(ir)) {
 		EditorInfo ei{};

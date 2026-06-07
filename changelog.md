@@ -18,7 +18,7 @@ or via `git log --no-merges --pretty=format:"%as: %B"`).
 * SysID for all Plugins (may be used from macros to call plugins via macrofunction `callplugin`; a plugin's SysID may be seen via `far:about` or in plugin's source code)
 * _ADB plugin_: New panel plugin for accessing Android devices in developer mode, both shell commands and file system; see [adb/README.md](https://github.com/elfmz/far2l/blob/master/adb/README.md))
 * _edsort plugin_: Support unique row sorting and preserve dialog values
-* _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter
+* _GitGutter plugin_: New plugin in editor (**F11**->GitGutter) to show Git changes directly in the far2l editor gutter; click gutter marks or press **Ctrl+G** to open the nearest hunk at or below the current editor line
 * _OpenWith plugin_: Update to v1.2. Allow plugin invocation on .. (treated as current directory). New option to show Snap/Flatpak markers in app menu.
 * _python plugin_: fixes and new subplugins uimgimage.py, uimgpdf.py, udockerrunlike.py [#3346](https://github.com/elfmz/far2l/issues/3346)
 * Several bugfixes and improvements

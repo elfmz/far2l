@@ -7,6 +7,7 @@
 #include "lng.hpp"
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -16,6 +17,7 @@
 #include <utility>
 #include <sys/types.h>
 
+class KeyFileReadHelper;
 
 class XDGBasedAppProvider : public AppProvider
 {
@@ -31,8 +33,8 @@ public:
 	// Platform-specific settings API
 	std::vector<ProviderSetting> GetPlatformSettings() override;
 	void SetPlatformSettings(const std::vector<ProviderSetting>& settings) override;
-	void LoadPlatformSettings() override;
-	void SavePlatformSettings() override;
+	void LoadPlatformSettings(const KeyFileReadHelper& key_reader) override;
+	void SavePlatformSettings(KeyFileHelper& key_writer) override;
 
 private:
 
@@ -146,20 +148,17 @@ private:
 		bool operator<(const GlobRule& other) const
 		{
 			// Higher weights are checked first.
-			if (weight != other.weight)
-			{
+			if (weight != other.weight) {
 				return weight > other.weight;
 			}
 
 			// Exact filenames (e.g., 'Makefile') take precedence over globs (*.txt).
-			if (is_literal != other.is_literal)
-			{
+			if (is_literal != other.is_literal) {
 				return is_literal;
 			}
 
 			// Longer patterns are more specific (e.g., '*.tar.gz' > '*.gz').
-			if (pattern.length() != other.pattern.length())
-			{
+			if (pattern.length() != other.pattern.length()) {
 				return pattern.length() > other.pattern.length();
 			}
 
@@ -277,16 +276,13 @@ private:
 	// Group 5: Plugin Internal Configuration
 	// ******************************************************************************
 
-	// A helper struct to define a platform setting, linking its INI key,
-	// localized UI display name, its corresponding class member variable, and default value.
-
 	struct PlatformSettingDefinition
 	{
-		std::string key;
-		LanguageID  display_name_id;
-		bool XDGBasedAppProvider::* member_variable;
-		bool default_value;
-		bool affects_candidates;
+		std::string internal_key;                    // persistent INI key and internal identifier
+		LanguageID  display_name_id;                 // ID to fetch the localized UI label
+		bool XDGBasedAppProvider::* member_variable; // pointer to the linked boolean class member
+		bool default_value;                          // fallback value if missing in the INI file
+		bool affects_candidates;                     // true if changing this setting affects the contents or order of the candidate list
 	};
 
 
@@ -322,7 +318,7 @@ private:
 	// METHODS
 	// ******************************************************************************
 
-	// --- Searching and ranking candidates logic ---
+	// --- Candidate search and ranking ---
 	CandidateMap DiscoverCandidatesForExpandedMimes(const std::vector<std::string>& expanded_mimes);
 	std::string QuerySystemDefaultApplication(const std::string& mime);
 	void AppendCandidatesFromMimeAppsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
@@ -331,13 +327,13 @@ private:
 	void RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_id, int rank, const std::string& source_info);
 	void RegisterCandidateFromDesktopEntry(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const std::string& source_info);
 	void AddOrUpdateCandidate(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const std::string& source_info);
-	bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id);
+	bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id, const MimeappsListsConfig& mimeapps_lists) const;
 	std::vector<RankedCandidate> BuildSortedRankedCandidatesList(const CandidateMap& candidate_map);
 	std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
 	std::wstring_view GetPackageTag(PackageType type);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
 
-	// --- File MIME type detection & expansion ---
+	// --- File MIME type detection and expansion ---
 	RawMimeProfile GetRawMimeProfile(const std::string& filepath);
 	std::vector<std::string> ExpandAndPrioritizeMimeTypes(const RawMimeProfile& profile);
 	std::string DetectMimeTypeWithXdgMimeTool(const std::string& filepath_escaped);
@@ -345,10 +341,10 @@ private:
 	std::string DetectMimeTypeWithMagikaTool(const std::string& filepath_escaped);
 	std::string DetectMimeTypeViaGlobRules(const std::string& filepath);
 	static bool GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive);
-	std::string GuessMimeTypeByExtension(const std::string& filepath);
-	static const std::unordered_map<std::string, std::string>& GetExtMimeMap();
+	std::string_view GuessMimeTypeByExtension(const std::string& filepath);
+	static const std::unordered_map<std::string_view, std::string_view>& GetExtMimeMap();
 
-	// --- XDG database parsing & caching ---
+	// --- XDG database parsing and caching ---
 	std::unordered_map<std::string, std::string> IndexAllDesktopFiles();
 	void IndexDirectoryRecursively(std::unordered_map<std::string, std::string>& desktop_id_to_path_map, const std::string& current_path, const std::string& base_dir_prefix, VisitedInodeSet& visited_inodes);
 	const std::optional<XDGBasedAppProvider::DesktopEntry>& GetOrLoadDesktopEntry(const std::string& desktop_id);
@@ -356,22 +352,22 @@ private:
 	MimeToDesktopAssociationsMap ParseAllMimeinfoCacheFiles();
 	static void ParseMimeinfoCache(const std::string& filepath, MimeToDesktopAssociationsMap& mime_to_desktop_associations_map);
 	MimeappsListsConfig ParseMimeappsLists();
-	static void ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists, std::unordered_set<std::string>& blacklist);
+	void ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists);
 	std::optional<XDGBasedAppProvider::DesktopEntry> ParseDesktopFile(const std::string& filepath);
 	PackageType DetectPackageType(const DesktopEntry& entry) const;
 	std::string GetLocalizedValue(const std::unordered_map<std::string, std::string>& kv_entries, const std::string& base_key) const;
 	static std::vector<std::string> GenerateLocaleSuffixes();
 	std::unordered_map<std::string, std::string> LoadMimeAliases();
-	static std::string_view GetMajorMimeType(const std::string& mime);
+	static std::string_view GetMajorMimeType(std::string_view mime);
 	std::unordered_map<std::string, std::string> LoadMimeSubclasses();
 	std::vector<GlobRule> LoadGlobRules();
 	void ParseGlobs2File(const std::string& filepath, std::vector<GlobRule>& rules, int source_rank);
 	bool IsLiteralPattern(const std::string& pattern);
-	static std::vector<std::string> GetDesktopFileSearchDirpaths();
-	std::vector<std::string> GetMimeappsListSearchFilepaths();
-	static std::vector<std::string> GetMimeDatabaseSearchDirpaths();
+	static std::vector<std::string> GetDesktopFileDirpaths();
+	std::vector<std::string> GetMimeappsListFilepaths();
+	static std::vector<std::string> GetMimeDbDirpaths();
 
-	// --- Launch command constructing ---
+	// --- Launch command construction ---
 	static void AnalyzeExecLine(const DesktopEntry& desktop_entry);
 	static std::vector<XDGBasedAppProvider::ExecArgTemplate> TokenizeExecString(const std::string& exec_value);
 	std::string AssembleLaunchCommand(const DesktopEntry& desktop_entry, const std::vector<std::string>& files) const;
@@ -379,7 +375,7 @@ private:
 	static std::string PathToUri(const std::string &path);
 	static std::string UnescapeGKeyFileString(const std::string& str);
 
-	// --- System, environment and common helpers ---
+	// --- System, environment, and common helpers ---
 	static bool IsReadableFile(const std::string& filepath);
 	static bool IsTraversableDirectory(const std::string& dirpath);
 	static bool IsExecutableAvailable(const std::string& command);
@@ -419,6 +415,7 @@ private:
 	bool _resolve_structured_suffixes;
 	bool _use_generic_mime_fallbacks;
 	bool _show_universal_handlers;
+	bool _ignore_removed_associations;
 	bool _use_mimeinfo_cache;
 	bool _filter_by_show_in;
 	bool _validate_try_exec;

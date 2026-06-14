@@ -5,18 +5,18 @@
 
 std::unique_ptr<AppProvider> AppProvider::CreateAppProvider(TMsgGetter msg_getter)
 {
-	std::unique_ptr<AppProvider> provider = nullptr;
-#ifdef __linux__
-	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
+	return std::make_unique<XDGBasedAppProvider>(msg_getter);
 #elif defined(__APPLE__)
-	provider = std::make_unique<MacOSAppProvider>(msg_getter);
-#elif defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
-	provider = std::make_unique<XDGBasedAppProvider>(msg_getter);
+	return std::make_unique<MacOSAppProvider>(msg_getter);
+#else
+	return nullptr;
 #endif
+}
 
-	if (provider) {
-		provider->LoadPlatformSettings();
-	}
 
-	return provider;
+AppProvider* AppProvider::GetInstance(TMsgGetter msg_getter)
+{
+	static auto s_provider = CreateAppProvider(msg_getter);
+	return s_provider.get();
 }

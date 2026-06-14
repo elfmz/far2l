@@ -3,9 +3,9 @@
 #include "AppProvider.hpp"
 #include "XDGBasedAppProvider.hpp"
 #include "lng.hpp"
+#include "common.hpp"
 #include "KeyFileHelper.h"
 #include "WideMB.h"
-#include "common.hpp"
 #include "utils.h"
 #include <dirent.h>
 #include <stdlib.h>
@@ -13,6 +13,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <string>
+#include <string_view>
 #include <algorithm>
 #include <cstring>
 #include <fstream>
@@ -23,11 +25,7 @@
 #include <map>
 #include <set>
 
-
-#define INI_LOCATION_XDG InMyConfig("plugins/openwith/config.ini")
-#define INI_SECTION_XDG  "Settings.XDG"
-
-
+constexpr const char* INI_SECTION_XDG_PROVIDER = "Settings.XDG";
 
 // ****************************** Public API ******************************
 
@@ -45,36 +43,34 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes,  true,  true },
 		{ "UseGenericMimeFallbacks",   MUseGenericMimeFallbacks,   &XDGBasedAppProvider::_use_generic_mime_fallbacks,   true,  true },
 		{ "ShowUniversalHandlers",     MShowUniversalHandlers,     &XDGBasedAppProvider::_show_universal_handlers,      true,  true },
+		{ "IgnoreRemovedAssociations", MIgnoreRemovedAssociations, &XDGBasedAppProvider::_ignore_removed_associations,  false, true },
 		{ "UseMimeinfoCache",          MUseMimeinfoCache,          &XDGBasedAppProvider::_use_mimeinfo_cache,           true,  true },
-		{ "FilterByShowIn",            MFilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            false, true },
-		{ "ValidateTryExec",           MValidateTryExec,           &XDGBasedAppProvider::_validate_try_exec,            false, true },
+		{ "FilterByShowIn",            MFilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            true,  true },
+		{ "ValidateTryExec",           MValidateTryExec,           &XDGBasedAppProvider::_validate_try_exec,            true,  true },
 		{ "SortAlphabetically",        MSortAlphabetically,        &XDGBasedAppProvider::_sort_alphabetically,          false, true },
 		{ "TreatUrlsAsPaths",          MTreatUrlsAsPaths,          &XDGBasedAppProvider::_treat_urls_as_paths,          false, false },
 		{ "ShowPackageTags",           MShowPackageTags,           &XDGBasedAppProvider::_show_package_tags,            true,  true }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
-		_key_wide_to_member_map[StrMB2Wide(def.key)] = def.member_variable;
+		_key_wide_to_member_map[StrMB2Wide(def.internal_key)] = def.member_variable;
 	}
 }
 
 
-void XDGBasedAppProvider::LoadPlatformSettings()
+void XDGBasedAppProvider::LoadPlatformSettings(const KeyFileReadHelper &key_reader)
 {
-	KeyFileReadSection key_file_reader(INI_LOCATION_XDG, INI_SECTION_XDG);
 	for (const auto& def : _platform_settings_definitions) {
-		this->*(def.member_variable) = key_file_reader.GetInt(def.key.c_str(), def.default_value) != 0;
+		this->*(def.member_variable) = key_reader.GetInt(INI_SECTION_XDG_PROVIDER, def.internal_key.c_str(), def.default_value) != 0;
 	}
 }
 
 
-void XDGBasedAppProvider::SavePlatformSettings()
+void XDGBasedAppProvider::SavePlatformSettings(KeyFileHelper& key_writer)
 {
-	KeyFileHelper key_file_helper(INI_LOCATION_XDG);
 	for (const auto& def : _platform_settings_definitions) {
-		key_file_helper.SetInt(INI_SECTION_XDG, def.key.c_str(), this->*(def.member_variable));
+		key_writer.SetInt(INI_SECTION_XDG_PROVIDER, def.internal_key.c_str(), this->*(def.member_variable));
 	}
-	key_file_helper.Save();
 }
 
 
@@ -86,14 +82,14 @@ std::vector<ProviderSetting> XDGBasedAppProvider::GetPlatformSettings()
 
 		// Check if this setting is linked to a command-line tool via its internal string key.
 		bool is_disabled = false;
-		if (auto it = s_tool_key_map.find(def.key); it != s_tool_key_map.end()) {
+		if (auto it = s_tool_key_map.find(def.internal_key); it != s_tool_key_map.end()) {
 			// If a corresponding tool name is found, check for the executable's existence.
 			// The option is disabled if the tool is not found on the system.
 			const std::string& tool_name = it->second;
 			is_disabled = !IsExecutableAvailable(tool_name);
 		}
 
-		settings.push_back({StrMB2Wide(def.key), m_GetMsg(def.display_name_id), this->*(def.member_variable),
+		settings.push_back({StrMB2Wide(def.internal_key), m_GetMsg(def.display_name_id), this->*(def.member_variable),
 							is_disabled, def.affects_candidates});
 	}
 	return settings;
@@ -111,7 +107,6 @@ void XDGBasedAppProvider::SetPlatformSettings(const std::vector<ProviderSetting>
 }
 
 
-// Finds applications that can open all specified files.
 std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vector<std::wstring>& filepaths_wide)
 {
 	if (filepaths_wide.empty()) {
@@ -221,7 +216,6 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 }
 
 
-// Generates one or more executable command lines for the selected candidate and files.
 std::vector<std::wstring> XDGBasedAppProvider::ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths_wide)
 {
 	if (filepaths_wide.empty()) {
@@ -229,56 +223,48 @@ std::vector<std::wstring> XDGBasedAppProvider::ConstructLaunchCommands(const Can
 	}
 
 	const std::string desktop_id = StrWide2MB(candidate.id);
+	auto it = _desktop_id_to_desktop_entry_cache.find(desktop_id);
 
-	if (auto it = _desktop_id_to_desktop_entry_cache.find(desktop_id);
-		it == _desktop_id_to_desktop_entry_cache.end() || !it->second.has_value()) {
+	if (it == _desktop_id_to_desktop_entry_cache.end() || !it->second.has_value()) {
 		return {};
-	} else {
-		const DesktopEntry& desktop_entry = it->second.value();
-
-		if (desktop_entry.exec.empty()) {
-			return {};
-		}
-
-		AnalyzeExecLine(desktop_entry);
-
-		if (desktop_entry.arg_templates.empty()) {
-			return {};
-		}
-
-		std::vector<std::string> filepaths;
-		filepaths.reserve(filepaths_wide.size());
-		for (const auto& filepath_wide : filepaths_wide) {
-			filepaths.push_back(StrWide2MB(filepath_wide));
-		}
-
-		std::vector<std::wstring> launch_commands_wide;
-
-		auto add_command_from_batch = [&](const std::vector<std::string>& batch) {
-			auto command = AssembleLaunchCommand(desktop_entry, batch);
-			if (!command.empty()) {
-				launch_commands_wide.push_back(StrMB2Wide(command));
-			}
-		};
-
-		if (desktop_entry.execution_model == ExecutionModel::PerFile) {
-			// The application uses %f or %u field codes and accepts only one file per invocation.
-			// Generate a separate command line for each selected file.
-			launch_commands_wide.reserve(filepaths.size());
-			for (const auto& filepath : filepaths) {
-				add_command_from_batch({ filepath });
-			}
-		} else {
-			// The application uses %F, %U, or has no field codes (Legacy).
-			// It accepts the entire list of files in a single invocation.
-			add_command_from_batch(filepaths);
-		}
-		return launch_commands_wide;
 	}
+
+	const DesktopEntry& desktop_entry = it->second.value();
+	if (desktop_entry.exec.empty()) {
+		return {};
+	}
+	AnalyzeExecLine(desktop_entry);
+	if (desktop_entry.arg_templates.empty()) {
+		return {};
+	}
+	std::vector<std::string> filepaths;
+	filepaths.reserve(filepaths_wide.size());
+	for (const auto& filepath_wide : filepaths_wide) {
+		filepaths.push_back(StrWide2MB(filepath_wide));
+	}
+	std::vector<std::wstring> launch_commands_wide;
+	auto add_command_from_batch = [&](const std::vector<std::string>& batch) {
+		auto command = AssembleLaunchCommand(desktop_entry, batch);
+		if (!command.empty()) {
+			launch_commands_wide.push_back(StrMB2Wide(command));
+		}
+	};
+	if (desktop_entry.execution_model == ExecutionModel::PerFile) {
+		// The application uses %f or %u field codes and accepts only one file per invocation.
+		// Generate a separate command line for each selected file.
+		launch_commands_wide.reserve(filepaths.size());
+		for (const auto& filepath : filepaths) {
+			add_command_from_batch({ filepath });
+		}
+	} else {
+		// The application uses %F, %U, or has no field codes (Legacy).
+		// It accepts the entire list of files in a single invocation.
+		add_command_from_batch(filepaths);
+	}
+	return launch_commands_wide;
 }
 
 
-// Gets the detailed information for a candidate to display in the F3 dialog.
 std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo& candidate)
 {
 	std::vector<Field> details;
@@ -299,21 +285,22 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 		details.push_back({m_GetMsg(MSource), StrMB2Wide(it_source->second)});
 	}
 
-	for (const auto& [label_wide, member_ptr] : {
-			 std::pair{L"Name =",        &DesktopEntry::name},
-			 std::pair{L"GenericName =", &DesktopEntry::generic_name},
-			 std::pair{L"Comment =",     &DesktopEntry::comment},
-			 std::pair{L"Categories =",  &DesktopEntry::categories},
-			 std::pair{L"Exec =",        &DesktopEntry::exec},
-			 std::pair{L"TryExec =",     &DesktopEntry::try_exec},
-			 std::pair{L"Terminal =",    &DesktopEntry::terminal},
-			 std::pair{L"MimeType =",    &DesktopEntry::mimetype},
-			 std::pair{L"OnlyShowIn =",  &DesktopEntry::only_show_in},
-			 std::pair{L"NotShowIn =",   &DesktopEntry::not_show_in},
-			 std::pair{L"X-Flatpak =",   &DesktopEntry::x_flatpak},
-			 std::pair{L"X-SnapInstanceName =",   &DesktopEntry::x_snap_instance_name}
-		 })
-	{
+	static constexpr std::pair<const wchar_t*, std::string DesktopEntry::*> field_map[] = {
+		{L"Name =",               &DesktopEntry::name},
+		{L"GenericName =",        &DesktopEntry::generic_name},
+		{L"Comment =",            &DesktopEntry::comment},
+		{L"Categories =",         &DesktopEntry::categories},
+		{L"Exec =",               &DesktopEntry::exec},
+		{L"TryExec =",            &DesktopEntry::try_exec},
+		{L"Terminal =",           &DesktopEntry::terminal},
+		{L"MimeType =",           &DesktopEntry::mimetype},
+		{L"OnlyShowIn =",         &DesktopEntry::only_show_in},
+		{L"NotShowIn =",          &DesktopEntry::not_show_in},
+		{L"X-Flatpak =",          &DesktopEntry::x_flatpak},
+		{L"X-SnapInstanceName =", &DesktopEntry::x_snap_instance_name}
+	};
+
+	for (const auto& [label_wide, member_ptr] : field_map) {
 		const std::string& val = desktop_entry.*member_ptr;
 		if (!val.empty()) {
 			details.push_back({ label_wide, StrMB2Wide(val) });
@@ -372,9 +359,8 @@ std::vector<std::wstring> XDGBasedAppProvider::GetMimeTypes()
 
 
 
-// ****************************** Searching and ranking candidates logic ******************************
+// ****************************** Candidate search and ranking ******************************
 
-// Orchestrates the candidate discovery process for a given list of MIME types.
 XDGBasedAppProvider::CandidateMap XDGBasedAppProvider::DiscoverCandidatesForExpandedMimes(const std::vector<std::string>& expanded_mimes)
 {
 	// This map will store the final, unique candidates for this MIME list.
@@ -385,7 +371,7 @@ XDGBasedAppProvider::CandidateMap XDGBasedAppProvider::DiscoverCandidatesForExpa
 		const auto mime_for_default = expanded_mimes.empty() ? "" : expanded_mimes[0];
 		std::string desktop_id = QuerySystemDefaultApplication(mime_for_default);
 		if (!desktop_id.empty()) {
-			if (!IsAssociationRemoved(mime_for_default, desktop_id)) {
+			if (!IsAssociationRemoved(mime_for_default, desktop_id, _op_mimeapps_lists_cache)) {
 				// Highest possible rank for the explicit system default.
 				int rank = (expanded_mimes.size() - 0) * Ranking::SPECIFICITY_MULTIPLIER + Ranking::SOURCE_RANK_GLOBAL_DEFAULT;
 				RegisterCandidateById(unique_candidates, desktop_id, rank,  "xdg-mime query default " + mime_for_default);
@@ -475,7 +461,7 @@ void XDGBasedAppProvider::AppendCandidatesFromMimeinfoCache(const std::vector<st
 			for (const auto& desktop_association : it_cache->second) {
 				const auto& desktop_id = desktop_association.desktop_id;
 				if (desktop_id.empty()) continue;
-				if (IsAssociationRemoved(mime, desktop_id)) continue;
+				if (IsAssociationRemoved(mime, desktop_id, _op_mimeapps_lists_cache)) continue;
 				auto source_info = desktop_association.source_filepath + StrWide2MB(m_GetMsg(MFor)) + mime;
 
 				// Insert or update the score for this Desktop ID.
@@ -516,7 +502,7 @@ void XDGBasedAppProvider::AppendCandidatesFromDesktopEntryIndex(const std::vecto
 		// Iterate through all applications found for this MIME type in the index.
 		for (const DesktopEntry* desktop_entry_ptr : it_index->second) {
 			if (!desktop_entry_ptr) continue;
-			if (IsAssociationRemoved(mime, desktop_entry_ptr->id)) {
+			if (IsAssociationRemoved(mime, desktop_entry_ptr->id, _op_mimeapps_lists_cache)) {
 				continue;
 			}
 			auto source_info = StrWide2MB(m_GetMsg(MFullScanFor)) + mime;
@@ -622,22 +608,27 @@ void XDGBasedAppProvider::AddOrUpdateCandidate(CandidateMap& unique_candidates, 
 
 // Checks if an application association for a given MIME type is explicitly forbidden
 // in the [Removed Associations] section of 'mimeapps.list'.
-bool XDGBasedAppProvider::IsAssociationRemoved(const std::string& mime, const std::string& desktop_id)
+bool XDGBasedAppProvider::IsAssociationRemoved(const std::string& mime, const std::string& desktop_id, const MimeappsListsConfig& mimeapps_lists) const
 {
-	// 1. Check for an exact match (e.g., "image/jpeg")
-	auto it_exact = _op_mimeapps_lists_cache.removed.find(mime);
-	if (it_exact != _op_mimeapps_lists_cache.removed.end() && it_exact->second.count(desktop_id)) {
-		return true;
+	if (_ignore_removed_associations) {
+		return false;
 	}
 
-	// 2. Check for a wildcard match (e.g., "image/*")
-	// Some implementations or users might ban an app from handling an entire category of types.
-	const size_t slash_pos = mime.find('/');
-	if (slash_pos != std::string::npos) {
-		const std::string wildcard_mime = mime.substr(0, slash_pos) + "/*";
-		auto it_wildcard = _op_mimeapps_lists_cache.removed.find(wildcard_mime);
-		if (it_wildcard != _op_mimeapps_lists_cache.removed.end() && it_wildcard->second.count(desktop_id)) {
+	// 1. Check for an exact match (e.g., "image/jpeg")
+	if (auto it_exact = mimeapps_lists.removed.find(mime); it_exact != mimeapps_lists.removed.end()) {
+		if (it_exact->second.count(desktop_id)) {
 			return true;
+		}
+	}
+
+	// 2. Check for a wildcard match (e.g., "image/*") that bans entire categories
+	const auto major = GetMajorMimeType(mime);
+	if (!major.empty()) {
+		const auto wildcard_mime = std::string(major) + "/*";
+		if (auto it_wildcard = mimeapps_lists.removed.find(wildcard_mime); it_wildcard != mimeapps_lists.removed.end()) {
+			if (it_wildcard->second.count(desktop_id)) {
+				return true;
+			}
 		}
 	}
 
@@ -698,7 +689,6 @@ std::vector<CandidateInfo> XDGBasedAppProvider::FormatCandidatesForUI(
 }
 
 
-// Returns the suffix used to qualify application names in the menu.
 std::wstring_view XDGBasedAppProvider::GetPackageTag(PackageType type)
 {
 	switch (type) {
@@ -712,7 +702,6 @@ std::wstring_view XDGBasedAppProvider::GetPackageTag(PackageType type)
 }
 
 
-// Converts the internal DesktopEntry representation into the UI-facing CandidateInfo structure.
 CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry)
 {
 	CandidateInfo candidate;
@@ -733,17 +722,15 @@ CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const Desk
 
 
 
-// ****************************** File MIME Type Detection & Expansion ******************************
+// ****************************** File MIME type detection and expansion ******************************
 
-// Gathers file attributes and "raw" MIME types from all enabled detection methods for a single file.
 XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const std::string& filepath)
 {
 	RawMimeProfile profile = {};
 	struct stat st;
 
 	if (stat(filepath.c_str(), &st) != 0) {
-		// stat() failed (e.g., ENOENT).
-		// We can't determine any file type. Return the empty profile.
+		// stat() failed, we can't determine any file type.
 		return profile;
 	}
 
@@ -792,7 +779,6 @@ XDGBasedAppProvider::RawMimeProfile XDGBasedAppProvider::GetRawMimeProfile(const
 }
 
 
-// Expands and prioritizes MIME types for a file using multiple methods.
 std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const RawMimeProfile& profile)
 {
 	std::vector<std::string> mimes;
@@ -860,22 +846,35 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 	// This is a reliable fallback that works even if the subclass hierarchy is incomplete in the system's MIME database.
 	if (_resolve_structured_suffixes) {
 
-		static const std::map<std::string, std::string> s_suffix_to_base_mime = {
-			{"xml", "application/xml"},
-			{"zip", "application/zip"},
-			{"json", "application/json"},
-			{"gzip", "application/gzip"}
+		static const std::unordered_map<std::string_view, std::string_view> s_suffix_to_base_mime = {
+			{"xml",         "application/xml"},
+			{"json",        "application/json"},
+			{"cbor",        "application/cbor"},
+			{"fastinfoset", "application/fastinfoset"},
+			{"wbxml",       "application/vnd.wap.wbxml"},
+			{"zip",         "application/zip"},
+			{"json-seq",    "application/json-seq"},
+			{"sqlite3",     "application/vnd.sqlite3"},
+			{"jwt",         "application/jwt"},
+			{"gzip",        "application/gzip"},
+			{"cbor-seq",    "application/cbor-seq"},
+			{"zstd",        "application/zstd"},
+			{"yaml",        "application/yaml"},
+			{"cose",        "application/cose"},
+			{"cwt",         "application/cwt"},
+			{"sd-jwt",      "application/sd-jwt"},
+			{"csv",         "text/csv"},
+			{"sd-cwt",      "application/sd-cwt"},
 		};
 
 		const auto size_before_suffixes = mimes.size();
 		for (size_t i = 0; i < size_before_suffixes; ++i) {
-			const auto mime = mimes[i];
-			size_t plus_pos = mime.rfind('+');
-			if (plus_pos != std::string::npos && plus_pos < mime.length() - 1) {
-				std::string suffix = mime.substr(plus_pos + 1);
-				auto it = s_suffix_to_base_mime.find(suffix);
-				if (it != s_suffix_to_base_mime.end()) {
-					add_unique(it->second);
+			std::string_view mime_v = mimes[i];
+			size_t plus_pos = mime_v.rfind('+');
+			if (plus_pos != std::string_view::npos && plus_pos < mime_v.length() - 1) {
+				auto suffix = mime_v.substr(plus_pos + 1);
+				if (auto it = s_suffix_to_base_mime.find(suffix); it != s_suffix_to_base_mime.end()) {
+					add_unique(std::string(it->second));
 				}
 			}
 		}
@@ -883,19 +882,18 @@ std::vector<std::string> XDGBasedAppProvider::ExpandAndPrioritizeMimeTypes(const
 
 	// --- Step 4: add generic fallbacks (text/plain, image/*, etc.) ---
 	if (_use_generic_mime_fallbacks) {
-
 		const auto size_before_generic_types = mimes.size();
 		for (size_t i = 0; i < size_before_generic_types; ++i) {
-			const auto mime = mimes[i];
-			// text/plain is a safe fallback for any text/* type.
-			if (mime.rfind("text/", 0) == 0) {
+			const auto major = GetMajorMimeType(mimes[i]);
+			if (major.empty()) {
+				continue;
+			}
+			const auto wildcard_mime = std::string(major) + "/*";
+			if (major == "text") {
+				// WARNING: add_unique may reallocate the vector. Do not use 'major' after this call.
 				add_unique("text/plain");
 			}
-			// Add wildcard for the major type (e.g., image/jpeg -> image/*)
-			size_t slash_pos = mime.find('/');
-			if (slash_pos != std::string::npos) {
-				add_unique(mime.substr(0, slash_pos) + "/*");
-			}
+			add_unique(wildcard_mime);
 		}
 	}
 
@@ -945,8 +943,6 @@ std::string XDGBasedAppProvider::DetectMimeTypeViaGlobRules(const std::string& f
 }
 
 
-// Checks if a filename matches a glob pattern.  According to the spec, matching should be case-insensitive
-// by default, unless the 'cs' (case-sensitive) flag was specified in the globs2 file.
 bool XDGBasedAppProvider::GlobMatch(const std::string &text, const std::string &pattern, bool case_sensitive)
 {
 	int flags = 0;
@@ -968,12 +964,12 @@ bool XDGBasedAppProvider::GlobMatch(const std::string &text, const std::string &
 }
 
 
-std::string XDGBasedAppProvider::GuessMimeTypeByExtension(const std::string& filepath)
+std::string_view XDGBasedAppProvider::GuessMimeTypeByExtension(const std::string& filepath)
 {
 	auto filename = GetBaseName(filepath);
 	auto dot_pos = filename.rfind('.');
-	if (dot_pos != std::string::npos) {
-		std::string ext = ToLowerASCII(filename.substr(dot_pos));
+	if (dot_pos != std::string::npos && dot_pos > 0 && dot_pos + 1 < filename.size()) {
+		std::string ext = ToLowerASCII(filename.substr(dot_pos + 1));
 		const auto& map = GetExtMimeMap();
 		auto it = map.find(ext);
 		if (it != map.end()) {
@@ -985,7 +981,7 @@ std::string XDGBasedAppProvider::GuessMimeTypeByExtension(const std::string& fil
 
 
 
-// ****************************** XDG database parsing & caching ******************************
+// ****************************** XDG database parsing and caching ******************************
 
 
 // Recursively scans all XDG application directories to build an index mapping Desktop File IDs to their absolute file paths.
@@ -1201,16 +1197,15 @@ XDGBasedAppProvider::MimeappsListsConfig XDGBasedAppProvider::ParseMimeappsLists
 		return {};
 	}
 	MimeappsListsConfig mimeapps_lists;
-	std::unordered_set<std::string> accumulation_blacklist;
 	for (const auto& filepath : _op_mimeapps_list_filepaths) {
-		ParseMimeappsList(filepath, mimeapps_lists, accumulation_blacklist);
+		ParseMimeappsList(filepath, mimeapps_lists);
 	}
 	return mimeapps_lists;
 }
 
 
 // Parses a single 'mimeapps.list' file, extracting Default/Added/Removed associations.
-void XDGBasedAppProvider::ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists, std::unordered_set<std::string>& blacklist)
+void XDGBasedAppProvider::ParseMimeappsList(const std::string& filepath, MimeappsListsConfig& mimeapps_lists)
 {
 	std::ifstream file(filepath);
 	if (!file.is_open()) return;
@@ -1234,20 +1229,22 @@ void XDGBasedAppProvider::ParseMimeappsList(const std::string& filepath, Mimeapp
 
 		if (desktop_ids.empty()) continue;
 
+		// By passing the partially built 'mimeapps_lists' to IsAssociationRemoved(), we check the candidate application
+		// against only those records from [Removed Associations] that have been accumulated from higher-priority files
+		// parsed up to this point — preventing later system-level removals from overriding earlier user-level additions.
+
 		if (current_section == "[Default Applications]") {
-			// Only use the first default if not already set, as higher priority files are parsed first.
-			if (!blacklist.count(desktop_ids[0])) {
+			if (!IsAssociationRemoved(mime, desktop_ids[0], mimeapps_lists)) {
 				mimeapps_lists.defaults.try_emplace(mime, desktop_ids[0], filepath);
 			}
 		} else if (current_section == "[Added Associations]") {
 			for (const auto& desktop_id : desktop_ids) {
-				if (blacklist.find(desktop_id) == blacklist.end()) {
+				if (!IsAssociationRemoved(mime, desktop_id, mimeapps_lists)) {
 					mimeapps_lists.added[mime].push_back(DesktopAssociation(desktop_id, filepath));
 				}
 			}
 		} else if (current_section == "[Removed Associations]") {
-			for(const auto& desktop_id : desktop_ids) {
-				blacklist.insert(desktop_id);
+			for (const auto& desktop_id : desktop_ids) {
 				mimeapps_lists.removed[mime].insert(desktop_id);
 			}
 		}
@@ -1255,7 +1252,6 @@ void XDGBasedAppProvider::ParseMimeappsList(const std::string& filepath, Mimeapp
 }
 
 
-// Parses and validates a .desktop file from disk according to the Desktop Entry Specification.
 std::optional<XDGBasedAppProvider::DesktopEntry> XDGBasedAppProvider::ParseDesktopFile(const std::string& filepath)
 {
 	std::ifstream file(filepath);
@@ -1324,17 +1320,18 @@ std::optional<XDGBasedAppProvider::DesktopEntry> XDGBasedAppProvider::ParseDeskt
 	desktop_entry.generic_name = GetLocalizedValue(kv_entries, "GenericName");
 	desktop_entry.comment = GetLocalizedValue(kv_entries, "Comment");
 
-	for (const auto& [key, member_ptr] : {
-			 std::pair{"Categories", &DesktopEntry::categories},
-			 std::pair{"TryExec",    &DesktopEntry::try_exec},
-			 std::pair{"Terminal",   &DesktopEntry::terminal},
-			 std::pair{"MimeType",   &DesktopEntry::mimetype},
-			 std::pair{"OnlyShowIn", &DesktopEntry::only_show_in},
-			 std::pair{"NotShowIn",  &DesktopEntry::not_show_in},
-			 std::pair{"X-Flatpak",  &DesktopEntry::x_flatpak},
-			 std::pair{"X-SnapInstanceName",  &DesktopEntry::x_snap_instance_name}
-		 })
-	{
+	static constexpr std::pair<const char*, std::string DesktopEntry::*> field_map[] = {
+		{"Categories",         &DesktopEntry::categories},
+		{"TryExec",            &DesktopEntry::try_exec},
+		{"Terminal",           &DesktopEntry::terminal},
+		{"MimeType",           &DesktopEntry::mimetype},
+		{"OnlyShowIn",         &DesktopEntry::only_show_in},
+		{"NotShowIn",          &DesktopEntry::not_show_in},
+		{"X-Flatpak",          &DesktopEntry::x_flatpak},
+		{"X-SnapInstanceName", &DesktopEntry::x_snap_instance_name}
+	};
+
+	for (const auto& [key, member_ptr] : field_map) {
 		if (auto it = kv_entries.find(key); it != kv_entries.end()) {
 			desktop_entry.*member_ptr = it->second;
 		}
@@ -1348,8 +1345,6 @@ std::optional<XDGBasedAppProvider::DesktopEntry> XDGBasedAppProvider::ParseDeskt
 }
 
 
-// Determines the packaging type of an application from its DesktopEntry.
-// Returns the corresponding PackageType, or PackageType::None if not identified.
 XDGBasedAppProvider::PackageType XDGBasedAppProvider::DetectPackageType(const DesktopEntry& entry) const
 {
 	if (!entry.x_flatpak.empty())            return PackageType::Flatpak;
@@ -1408,7 +1403,7 @@ std::vector<std::string> XDGBasedAppProvider::GenerateLocaleSuffixes()
 	if (size_t dot = locale.find('.'); dot != std::string::npos) {
 		size_t at = locale.find('@');
 		if (at != std::string::npos && at > dot) {
-			locale.replace(dot, at - dot, ""); // Remove encoding between '.' and '@'
+			locale.erase(dot, at - dot); // Remove encoding between '.' and '@'
 		} else {
 			locale.resize(dot); // Remove trailing encoding
 		}
@@ -1431,7 +1426,6 @@ std::vector<std::string> XDGBasedAppProvider::GenerateLocaleSuffixes()
 }
 
 
-// Loads the MIME alias map (alias -> canonical) from all 'aliases' files.
 std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeAliases()
 {
 	if (_op_mime_database_dirpaths.empty()) {
@@ -1448,7 +1442,7 @@ std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeAliase
 
 		std::string line;
 		while (std::getline(file, line)) {
-			line = XDGBasedAppProvider::Trim(line);
+			line = Trim(line);
 			if (line.empty() || line[0] == '#') continue;
 
 			std::stringstream ss(line);
@@ -1464,22 +1458,17 @@ std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeAliase
 }
 
 
-// Returns a std::string_view of the major part of a MIME type (e.g., "image" from "image/png").
-// Returns an empty view if the MIME type is malformed.
-std::string_view XDGBasedAppProvider::GetMajorMimeType(const std::string& mime)
+std::string_view XDGBasedAppProvider::GetMajorMimeType(std::string_view mime)
 {
 	size_t slash_pos = mime.find('/');
-	// Check for invalid formats like "/png", "image", or an empty string.
-	if (slash_pos == std::string::npos || slash_pos == 0) {
+	if (slash_pos == std::string_view::npos || slash_pos == 0) {
 		return {};
 	}
-	// Create a view of the major type part.
-	return std::string_view(mime.data(), slash_pos);
+	// image/jpeg -> image
+	return mime.substr(0, slash_pos);
 }
 
 
-// Loads the MIME type inheritance map (child -> parent) from all 'subclasses' files.
-// Files with higher priority (user-specific) override lower-priority (system) ones.
 std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeSubclasses()
 {
 	if (_op_mime_database_dirpaths.empty()) {
@@ -1512,7 +1501,6 @@ std::unordered_map<std::string, std::string> XDGBasedAppProvider::LoadMimeSubcla
 }
 
 
-// Loads, parses, and sorts all glob rules from the 'globs2' files found in the XDG search paths.
 std::vector<XDGBasedAppProvider::GlobRule> XDGBasedAppProvider::LoadGlobRules()
 {
 	if (_op_mime_database_dirpaths.empty()) {
@@ -1566,7 +1554,7 @@ void XDGBasedAppProvider::ParseGlobs2File(const std::string& filepath, std::vect
 		int weight = 50;
 		try {
 			weight = std::stoi(line.substr(0, first_colon));
-		} catch (...) {
+		} catch (const std::exception&) {
 			continue;
 		}
 
@@ -1602,12 +1590,8 @@ void XDGBasedAppProvider::ParseGlobs2File(const std::string& filepath, std::vect
 
 		bool case_sensitive = false;
 		if (!flags_str.empty()) {
-			std::vector<std::string> flags = SplitString(flags_str, ',');
-			for (const auto& f : flags) {
-				if (f == "cs") {
-					case_sensitive = true;
-				}
-			}
+			const auto flags = SplitString(flags_str, ',');
+			case_sensitive = (std::find(flags.begin(), flags.end(), "cs") != flags.end());
 		}
 
 		if (!mime.empty() && !pattern.empty()) {
@@ -1628,7 +1612,7 @@ bool XDGBasedAppProvider::IsLiteralPattern(const std::string& pattern)
 
 
 // Returns XDG-compliant search paths for .desktop files, ordered by priority.
-std::vector<std::string> XDGBasedAppProvider::GetDesktopFileSearchDirpaths()
+std::vector<std::string> XDGBasedAppProvider::GetDesktopFileDirpaths()
 {
 	std::vector<std::string> dirpaths;
 	std::unordered_set<std::string> seen_dirpaths;
@@ -1668,7 +1652,7 @@ std::vector<std::string> XDGBasedAppProvider::GetDesktopFileSearchDirpaths()
 
 
 // Returns XDG-compliant search paths for 'mimeapps.list' files, ordered by priority.
-std::vector<std::string> XDGBasedAppProvider::GetMimeappsListSearchFilepaths()
+std::vector<std::string> XDGBasedAppProvider::GetMimeappsListFilepaths()
 {
 	std::vector<std::string> filepaths;
 	std::unordered_set<std::string> seen_filepaths;
@@ -1750,7 +1734,7 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeappsListSearchFilepaths()
 
 
 // Returns XDG-compliant search paths for MIME database files ('aliases', 'subclasses', etc.)
-std::vector<std::string> XDGBasedAppProvider::GetMimeDatabaseSearchDirpaths()
+std::vector<std::string> XDGBasedAppProvider::GetMimeDbDirpaths()
 {
 	std::vector<std::string> dirpaths;
 	std::unordered_set<std::string> seen_dirpaths;
@@ -1761,9 +1745,9 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeDatabaseSearchDirpaths()
 		}
 	};
 
-	std::string home = XDGBasedAppProvider::GetEnv("HOME");
-	std::string xdg_data_home = XDGBasedAppProvider::GetEnv("XDG_DATA_HOME");
-	std::string xdg_data_dirs = XDGBasedAppProvider::GetEnv("XDG_DATA_DIRS", "/usr/local/share:/usr/share");
+	std::string home = GetEnv("HOME");
+	std::string xdg_data_home = GetEnv("XDG_DATA_HOME");
+	std::string xdg_data_dirs = GetEnv("XDG_DATA_DIRS", "/usr/local/share:/usr/share");
 
 	if (!xdg_data_home.empty() && xdg_data_home[0] == '/') {
 		add_path(xdg_data_home + "/mime");
@@ -1771,7 +1755,7 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeDatabaseSearchDirpaths()
 		add_path(home + "/.local/share/mime");
 	}
 
-	for (const auto& dir : XDGBasedAppProvider::SplitString(xdg_data_dirs, ':')) {
+	for (const auto& dir : SplitString(xdg_data_dirs, ':')) {
 		if (dir.empty() || dir[0] != '/') continue;
 		add_path(dir + "/mime");
 	}
@@ -1780,7 +1764,7 @@ std::vector<std::string> XDGBasedAppProvider::GetMimeDatabaseSearchDirpaths()
 
 
 
-// ****************************** Launch command constructing ******************************
+// ****************************** Launch command construction ******************************
 
 
 // Performs lazy analysis of the Exec string: unescapes GKeyFile sequences, tokenizes,
@@ -2018,12 +2002,10 @@ std::vector<std::string> XDGBasedAppProvider::ExpandFieldCodes(const ExecArgTemp
 		return {};
 	}
 
-	// Escape the final expanded token to ensure shell safety.
 	return { EscapeArgForShell(expanded_token) };
 }
 
 
-// Converts absolute local filepath to a file:// URI.
 std::string XDGBasedAppProvider::PathToUri(const std::string& path)
 {
 	if (path.empty() || path[0] != '/') {
@@ -2086,7 +2068,7 @@ std::string XDGBasedAppProvider::UnescapeGKeyFileString(const std::string& str)
 
 
 
-// ****************************** System, environment and common helpers ******************************
+// ****************************** System, environment, and common helpers ******************************
 
 
 bool XDGBasedAppProvider::IsReadableFile(const std::string& filepath)
@@ -2113,8 +2095,6 @@ bool XDGBasedAppProvider::IsTraversableDirectory(const std::string& dirpath)
 }
 
 
-// Checks if a command exists and is runnable.
-// If the command starts with a slash, it's checked directly. Otherwise, it's searched in $PATH.
 bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 {
 	if (command.empty()) {
@@ -2126,10 +2106,12 @@ bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 		return stat(p.c_str(), &st) == 0 && S_ISREG(st.st_mode) && access(p.c_str(), X_OK) == 0;
 	};
 
+	// Absolute path? Check it directly.
 	if (command[0] == '/') {
 		return check(command);
 	}
 
+	// Otherwise, look up in $PATH.
 	auto dirs = SplitString(GetEnv("PATH"), ':');
 	for (const auto& dir : dirs) {
 		if (dir.empty()) continue;
@@ -2144,16 +2126,14 @@ bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
 
 std::string XDGBasedAppProvider::RunCommandAndCaptureOutput(const std::string& cmd)
 {
-	if (cmd.empty()) {
+	std::string result;
+	if (cmd.empty() || !POpen(result, cmd.c_str())) {
 		return "";
 	}
-
-	std::string result;
-	return POpen(result, cmd.c_str()) ? Trim(result) : "";
+	return Trim(result);
 }
 
 
-// Safe environment variable access with an optional default value.
 std::string XDGBasedAppProvider::GetEnv(const char* var, const char* default_val)
 {
 	const char* val = getenv(var);
@@ -2164,11 +2144,11 @@ std::string XDGBasedAppProvider::GetEnv(const char* var, const char* default_val
 }
 
 
-// Escapes a single command-line argument for safe execution by the shell.
 std::string XDGBasedAppProvider::EscapeArgForShell(const std::string& arg)
 {
 	if (arg.empty()) {
-		return "''"; // An empty string is represented as '' in the shell.
+		// An empty string is represented as '' in the shell.
+		return "''";
 	}
 
 	bool is_safe = true;
@@ -2202,7 +2182,6 @@ std::string XDGBasedAppProvider::EscapeArgForShell(const std::string& arg)
 }
 
 
-// Extracts the basename (filename) from a full filepath.
 std::string XDGBasedAppProvider::GetBaseName(const std::string& filepath)
 {
 	size_t pos = filepath.find_last_of('/');
@@ -2213,7 +2192,6 @@ std::string XDGBasedAppProvider::GetBaseName(const std::string& filepath)
 }
 
 
-// Trims whitespace from both ends of a string.
 std::string XDGBasedAppProvider::Trim(const std::string& str)
 {
 	if (str.empty()) {
@@ -2233,7 +2211,6 @@ std::string XDGBasedAppProvider::Trim(const std::string& str)
 }
 
 
-// String splitting utility with trimming of individual tokens.
 std::vector<std::string> XDGBasedAppProvider::SplitString(const std::string& str, char delimiter)
 {
 	if (str.empty()) return {};
@@ -2251,7 +2228,6 @@ std::vector<std::string> XDGBasedAppProvider::SplitString(const std::string& str
 }
 
 
-// Converts a string to lowercase assuming ASCII encoding (A-Z -> a-z only).
 std::string XDGBasedAppProvider::ToLowerASCII(std::string str)
 {
 	for (char& c : str) {
@@ -2280,9 +2256,9 @@ XDGBasedAppProvider::OperationContext::OperationContext(XDGBasedAppProvider& p) 
 
 	// ----- Phase 2: Path Resolution & Desktop File Indexing -----
 
-	provider._op_desktop_file_dirpaths = provider.GetDesktopFileSearchDirpaths();
-	provider._op_mimeapps_list_filepaths = provider.GetMimeappsListSearchFilepaths();
-	provider._op_mime_database_dirpaths = provider.GetMimeDatabaseSearchDirpaths();
+	provider._op_desktop_file_dirpaths = provider.GetDesktopFileDirpaths();
+	provider._op_mimeapps_list_filepaths = provider.GetMimeappsListFilepaths();
+	provider._op_mime_database_dirpaths = provider.GetMimeDbDirpaths();
 	provider._op_desktop_id_to_path_index = provider.IndexAllDesktopFiles();
 
 	// ----- Phase 3: Auxiliary MIME Databases & User Configuration -----

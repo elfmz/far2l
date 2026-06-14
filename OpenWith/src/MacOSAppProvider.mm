@@ -88,13 +88,14 @@ static std::wstring EscapeForShell(const std::wstring& arg) {
 // To optimize performance when handling many files, this function caches the application lists
 // based on the file's Uniform Type Identifier (UTI).
 std::vector<CandidateInfo> MacOSAppProvider::GetAppCandidates(const std::vector<std::wstring>& filepaths) {
+	// Clear the class-level profile cache for the new operation
+	// MUST be done before any early returns to ensure Singleton safety.
+	_last_uti_profiles.clear();
+
 	// Return immediately if the input vector is empty.
 	if (filepaths.empty()) {
 		return {};
 	}
-
-	// Clear the class-level profile cache for the new operation
-	_last_uti_profiles.clear();
 
 	// --- Part 1: Candidate Discovery and Scoring with Caching ---
 

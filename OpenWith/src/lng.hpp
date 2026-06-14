@@ -4,6 +4,8 @@ enum LanguageID
 {
 	MPluginTitle,
 	MChooseApplication,
+	MOpenWithFor,
+	MFile_s,
 
 	MOk,
 	MCancel,
@@ -20,6 +22,7 @@ enum LanguageID
 	MNoWaitForCommandCompletion,
 	MClearSelection,
 	MConfirmLaunchOption,
+	MDisplayFilename,
 
 	MUseXdgMimeTool,
 	MUseFileTool,
@@ -31,6 +34,7 @@ enum LanguageID
 	MResolveStructuredSuffixes,
 	MUseGenericMimeFallbacks,
 	MShowUniversalHandlers,
+	MIgnoreRemovedAssociations,
 	MUseMimeinfoCache,
 	MFilterByShowIn,
 	MValidateTryExec,
@@ -40,8 +44,8 @@ enum LanguageID
 
 	MDetails,
 
-	MPathname,
 	MFilesSelected,
+	MFilepaths,
 	MMimeProfile,
 	MLaunchCommand,
 	MClose,

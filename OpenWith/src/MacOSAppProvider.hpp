@@ -9,6 +9,9 @@
 #include <unordered_set>
 #include <functional>
 
+class KeyFileReadHelper;
+class KeyFileHelper;
+
 class MacOSAppProvider : public AppProvider
 {
 public:
@@ -19,8 +22,8 @@ public:
 	std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) override;
 	std::vector<ProviderSetting> GetPlatformSettings() override { return {}; }
 	void SetPlatformSettings(const std::vector<ProviderSetting>& settings) override {}
-	void LoadPlatformSettings() override {}
-	void SavePlatformSettings() override {}
+	void LoadPlatformSettings(const KeyFileReadHelper &key_reader) override {}
+	void SavePlatformSettings(KeyFileHelper& key_writer) override {}
 
 private:
 	// A struct to cache the results of a file type query.

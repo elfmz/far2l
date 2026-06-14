@@ -2,12 +2,14 @@
 
 "OpenWith"
 "OpenWith: Choose application"
+"OpenWith for "
+" file(s)"
 
 "&OK"
 "&Cancel"
 "OpenWith Error"
 "Selected item must be a file accessible locally via a real path."
-"Failed to save configuration."
+"Failed to save modified settings; the changes will apply to the current session only."
 "No applications found. Detected MIME type:"
 "The application cannot be executed."
 "OpenWith plugin is not available on this platform."
@@ -18,6 +20,7 @@
 "Don't &wait for command completion"
 "C&lear selection if command executed"
 "Co&nfirm opening if file count exceeds:"
+"Displa&y filename in the menu title"
 
 "Use `&xdg-mime` tool"
 "Use `&file` tool"
@@ -29,6 +32,7 @@
 "&Resolve structured MIME suffixes"
 "Search for apps for &generic MIME types"
 "Show universal &handlers for all files"
+"Ignore [Remo&ved Associations] section"
 "Use &mimeinfo.cache"
 "Filter by Only&ShowIn/NotShowIn"
 "Validate &TryExec"
@@ -38,9 +42,9 @@
 
 "OpenWith: Details"
 
-"&Filepath:"
-"files selected: "
-"&MIME profile:"
+"F&iles selected:"
+"&Filepaths:"
+"&MIME profiles:"
 "L&aunch command:"
 "&Close"
 "&Launch"

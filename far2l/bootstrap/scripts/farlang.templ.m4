@@ -2750,6 +2750,17 @@ upd:"Use Ctrl-Alt-L to quick toggle from panel"
 upd:"Use Ctrl-Alt-L to quick toggle from panel"
 upd:"Use Ctrl-Alt-L to quick toggle from panel"
 
+ConfigShowStartupBanner
+"Показывать стартовый баннер во встроенном терминале"
+"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+upd:"Show startup banner in built-in terminal"
+
 ConfigClock
 "&Часы в панелях"
 "&Clock in panels"

@@ -2676,6 +2676,9 @@ to calculate the total files count.
   #Use Ctrl-PgUp for location menu#
   Pressing #Ctrl-PgUp# in the root directory shows the ~Location menu~@DriveDlg@.
 
+  #Show startup banner in built-in terminal#
+  Display a text block containing the far2l version, copyright notices, and keyboard tips under the panels at launch.
+
   #Datetime format#
   Here you can select the order in which the day, month, and year are displayed, and
 specify the separators for date and time based on your preferences.

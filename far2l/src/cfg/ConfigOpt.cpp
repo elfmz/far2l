@@ -159,6 +159,7 @@ const ConfigOpt g_cfg_opts[] {
 
 	{OST_COMMON, NSecInterface, "Mouse", &Opt.Mouse, 1},
 	{OST_NONE,   NSecInterface, "UseVk_oem_x", &Opt.UseVk_oem_x, 1},
+	{OST_COMMON, NSecInterface, "ShowStartupBanner",&Opt.ShowStartupBanner, 1},
 	{OST_COMMON, NSecInterface, "ShowMenuBar", &Opt.ShowMenuBar, 0},
 	{OST_NONE,   NSecInterface, "CursorSize1", &Opt.CursorSize[0], 15},
 	{OST_NONE,   NSecInterface, "CursorSize2", &Opt.CursorSize[1], 10},

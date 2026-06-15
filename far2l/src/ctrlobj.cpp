@@ -91,8 +91,10 @@ void ControlObject::Init()
 {
 	TreeList::ClearCache(0);
 	SetFarColor(COL_COMMANDLINEUSERSCREEN);
-	GotoXY(0, ScrY - 3);
-	ShowStartupBanner();
+	if (Opt.ShowStartupBanner) {
+		GotoXY(0, ScrY - 3);
+		ShowStartupBanner();
+	}
 	GotoXY(0, ScrY - 2);
 	MoveCursor(0, ScrY - 1);
 	FPanels = new FilePanels();

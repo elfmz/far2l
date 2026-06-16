@@ -37,8 +37,12 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 	int count = 0;
 	int empty_lines = 0;
 
-	struct EditorInfo ei;
+	struct EditorInfo ei = {};
 	Info.EditorControl(ECTL_GETINFO, &ei);
+
+	EditorUndoRedo eur = {};
+	eur.Command = EUR_BEGIN;
+	Info.EditorControl(ECTL_UNDOREDO, &eur);
 
 	for (int i = 0; i < ei.TotalLines; i++) {
 		struct EditorGetString gs;
@@ -105,6 +109,9 @@ SHAREDSYMBOL HANDLE WINAPI EXP_NAME(OpenPlugin)(int OpenFrom, INT_PTR Item)
 		pos.Overtype = ei.Overtype;
 		Info.EditorControl(ECTL_SETPOSITION, &pos);
 	}
+
+	eur.Command = EUR_END;
+	Info.EditorControl(ECTL_UNDOREDO, &eur);
 
 	/* Don't count the final EOL */
 	if (empty_lines) empty_lines--;

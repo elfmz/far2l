@@ -3,3 +3,4 @@
 "Truncate File"
 "Deleted %d trailing white-space characters and %d trailing empty lines"
 "Nothing to delete"
+"Cannot truncate: text modification is disabled (Ctrl+L)"

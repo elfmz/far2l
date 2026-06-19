@@ -180,6 +180,36 @@ BaseFormat &BaseFormat::operator<<(const fmt::RightAlign &Manipulator)
 	return *this;
 }
 
+BaseFormat &BaseFormat::operator<<(const fmt::Hex &Manipulator)
+{
+	static const WCHAR Digits[] = L"0123456789abcdef";
+	WCHAR Buffer[16];
+	size_t DigitsCount = 0;
+	uint64_t Value = Manipulator.GetValue();
+
+	do {
+		Buffer[DigitsCount++] = Digits[Value & 0xF];
+		Value >>= 4;
+	} while (Value != 0);
+
+	FARString OutStr;
+	if (Manipulator.HasPrefix()) {
+		OutStr = L"0x";
+	}
+
+	const size_t Width = std::max(Manipulator.GetWidth(), DigitsCount);
+	if (Width > DigitsCount) {
+		OutStr.Append(L'0', Width - DigitsCount);
+	}
+
+	while (DigitsCount != 0) {
+		OutStr.Append(&Buffer[--DigitsCount], 1);
+	}
+
+	Put(OutStr.CPtr(), OutStr.GetLength());
+	return *this;
+}
+
 void FormatScreen::Commit(const FARString &Data)
 {
 	Text(Data);

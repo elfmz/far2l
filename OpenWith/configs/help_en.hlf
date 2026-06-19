@@ -3,7 +3,7 @@
 
 @Contents
 $^#OpenWith plugin#
-$^#Version 1.1#
+$^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Contents#
  The #OpenWith# plugin provides a context menu to open the selected file(s) with a suitable application. It intelligently detects the file type and queries the operating system for a list of registered applications that can handle it. If multiple files are selected, the plugin finds common applications that are registered to handle all of them by intersecting the candidate lists for each file. The plugin uses native OS mechanisms: on Linux/BSD, it adheres to XDG standards for MIME types and application discovery, while on macOS, it integrates with the Launch Services framework.
@@ -20,7 +20,7 @@ $^#Contents#
 
 @DetailsDialog
 $^#OpenWith plugin#
-$^#Version 1.1#
+$^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Details Dialog (F3)#
  The information dialog, accessible by pressing #F3# in the application selection menu, displays detailed technical information about the file, the highlighted application, and the exact command that will be used to launch it.
@@ -32,11 +32,11 @@ $^#Details Dialog (F3)#
 
  #-# MIME profile
    The file type(s) detected by the plugin. For multiple files, all unique detected profiles are shown. Format depends on the OS:
-   #Linux/BSD#: "Raw" results from all enabled ~detection methods~@ConfigurationDialog@ ("xdg-mime", "file", etc). If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
+   #Linux/BSD#: "Raw" results from all detection methods ("xdg-mime", "file", etc) enabled in the ~configuration dialog~@ConfigurationDialog@. If tools disagree, they are listed semicolon-separated: "(text/plain;application/x-shellscript)".
    #macOS#: The MIME type corresponding to the file's system UTI.
 
  #-# Launch command
-   The final command line that will be executed if you press Enter.
+   The final command line that will be executed if you press #Enter# or #Shift+Enter#.
 
 
  #2. PLATFORM-SPECIFIC FIELDS#
@@ -83,6 +83,12 @@ $^#Details Dialog (F3)#
  #-# NotShowIn
    A semicolon-separated list of desktop environment identifiers. If this key is present, the application entry should be hidden in the specified environments. This is the inverse of OnlyShowIn and is useful for hiding applications that do not integrate well with certain desktops.
 
+ #-# X-Flatpak
+   Extension to the Desktop Entry Specification. The globally unique Flatpak application ID (e.g., "org.gimp.GIMP"). Written by Flatpak during installation. It ensures the desktop file is linked to the correct Flatpak app, even if the file name differs from this ID.
+
+ #-# X-SnapInstanceName
+   Extension to the Desktop Entry Specification. The snap instance name (e.g., "steam" or "steam_beta"). Written by snapd for each installation. It identifies the specific snap instance or enables parallel installs of the same snap.
+
 
  #2.2. macOS Application Details#
 
@@ -105,7 +111,7 @@ $^#Details Dialog (F3)#
 
 @ConfigurationDialog
 $^#OpenWith plugin#
-$^#Version 1.1#
+$^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Configuration Dialog (F9)#
  The configuration dialog, accessible by pressing #F9# in the application selection menu or via ~Plugins Configuration~@:PluginsConfig@ in the ~Options Menu~@:OptMenu@, allows you to customize the plugin's behavior. It is divided into general and platform-specific settings.
@@ -183,6 +189,9 @@ $^#Configuration Dialog (F9)#
  #-# Pass plain paths instead of file:// URIs
    This option allows you to select the format for passing file paths to applications when constructing the launch command. The XDG specification for the "Exec" key explicitly permits local files to be passed either as file:// URIs or as plain file paths for the "%u" and "%U" field codes. By default, the plugin generates file:// URIs. However, some applications may not handle them correctly, despite claiming support. Enabling this option will switch the output to plain, escaped file paths, which can improve compatibility with such applications.
 
+ #-# Show package qualifiers
+   Tag applications in the menu installed as Flatpak or Snap packages. Helps avoid confusion when multiple variants of the same program are available.
+
 
  #2.2. macOS Settings#
 
@@ -192,10 +201,10 @@ $^#Configuration Dialog (F9)#
 
 @Tips
 $^#OpenWith plugin#
-$^#Version 1.1#
+$^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Tips & tricks#
-    For quick access, you can use a ~macro~@:KeyMacro@, for example, to access via "#≣ Menu#"/"#Apps#" key:
+    #1.# For quick access, you can use a ~macro~@:KeyMacro@, for example, to access via "#≣ Menu#"/"#Apps#" key:
 
     In #far2l# add to the #~~/.config/far2l/settings/key_macros.ini# the following lines, variant 1:
  #[KeyMacros/Shell/Apps]#
@@ -219,11 +228,14 @@ $^#Tips & tricks#
 
     After restarting far2l/far2m the macro will be available for use.
 
+
+    #2.# To quickly open the current folder in an external file manager or another far2l instance, invoke the OpenWith plugin on the ".." entry in the file panel. The plugin will treat this as a request for the current directory and show a list of matching applications. Among them, you will find far2l-gui (if installed) and far2l-tty. Note that for console applications (far2l-tty, mc, etc.), the plugin supports two launch modes: in far2l's ~built-in terminal~@:Terminal@ or in a new ~external terminal~@:ExternalTerminal@ window. To ensure a new window opens, use #Shift+Enter# or enable the "Use external terminal for console apps" ~option~@ConfigurationDialog@.
+
    ~Contents~@Contents@
 
 @Troubleshooting
 $^#OpenWith plugin#
-$^#Version 1.1#
+$^#Version 1.2#
 $^#Copyright (C) 2025-2026 Ivan <spnethw@@gmail.com>#
 $^#Troubleshooting#
  #Why is the application list empty when I select multiple files?#

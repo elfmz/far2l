@@ -135,7 +135,7 @@ $ # FAR2L features - Getting Started#
 
  #UI Backends#
     FAR2L has base UI Backends (see details in ~UI backends~@UIBackends@):
-        - #GUI#: uses wxWidgets, works in graphics mode, #ideal UX#
+        - #GUI|WX# (uses wxWidgets) or #GUI|SDL#: works in graphics mode, #ideal UX#
 (might add dependencies to your desktop environment, e.g. wxWidgets toolkit and related packages);
         - #TTY|Xi#: works in terminal mode, requires a couple of X11 libraries
 (to access clipboard and to get state of all keyboard modifiers), #almost perfect UX#;
@@ -152,7 +152,8 @@ when it starts, far2l switches to #TTY|X# without i.
         - to force run in terminal mode TTY|Xi use in command line: #far2l --tty#;
         - to force run in terminal mode TTY|X use in command line: #far2l --tty --nodetect=xi#;
         - to force run in plain mode TTY use in command line: #far2l --tty --nodetect=x#;
-        - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#
+        - run FAR2L-GUI from command line in background without blocking terminal: #far2l --notty &#;
+        - if your far2l compiled with SDL and WX, to force run GUI|SDL: #far2l --SDL#
     (see details in ~Command line switches~@CmdLine@ or #far2l --help#).
 
 
@@ -1643,7 +1644,8 @@ $ #UI Backends#
     Depending on build options and available platform features #FAR2L# can render
 its interface using different so-called backends:
 
-    - #GUI backend:# renders into own GUI window, providing most complete keyboard hotkeys support.
+    - #GUI backend:# renders into own GUI window, providing most complete keyboard hotkeys support
+(may be #GUI|WX# based on wxWidgets or #GUI|SDL#).
     - #TTY backend:# renders into plain TTY terminal. Its a most compatible way but also providing
 most lame UX: some hotkeys may not work, clipboard is not shared with host etc.
     - #TTY|X backend:# renders into TTY terminal and uses X11 to access clipboard and to get state of
@@ -3198,13 +3200,16 @@ behavior can be changed in the ~Editor settings~@EditorSettings@ dialog.
 
     1. #Alt-U#/#Alt-I# indent the current line if no block is selected.
 
-    2. ^<wrap>Holding down #Alt# and typing a character code on the numeric
+    2. ^<wrap>Typing text or pressing #BS#/#Del# is applied to each row
+of selected vertical block.
+
+    3. ^<wrap>Holding down #Alt# and typing a character code on the numeric
 keypad inserts the character that has the specified code (0-65535).
 
-    3. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
+    4. ^<wrap>If no block is selected, #Ctrl-Ins#/#Ctrl-C# marks the current
 line as a block and copies it to the clipboard.
 
-    4. Print manager for Linux is unavailable. Instead, Editor has embedded 
+    5. Print manager for Linux is unavailable. Instead, Editor has embedded 
     support for printing text files even with text highlighting with white background
     and recomputed colors from the Colorer theme (RGB -> LAB -> RGB conversion).
 

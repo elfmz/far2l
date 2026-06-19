@@ -2174,7 +2174,7 @@ void Edit::ProcessPasteEventFromPrimary()
 
 void Edit::AutoGrabToClipboard()
 {
-	if (!Opt.PasteFromPrimarySelection) {
+	if (!Opt.CopyToPrimarySelection) {
 		return;
 	}
 

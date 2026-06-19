@@ -4914,7 +4914,7 @@ upd:"Paste from PRIMARY by 2nd mouse button"
 upd:"Paste from PRIMARY by 2nd mouse button"
 upd:"Paste from PRIMARY by 2nd mouse button"
 upd:"Paste from PRIMARY by 2nd mouse button"
-upd:"Paste from PRIMARY by 2nd mouse button
+upd:"Paste from PRIMARY by 2nd mouse button"
 upd:"Paste from PRIMARY by 2nd mouse button"
 upd:"Paste from PRIMARY by 2nd mouse button"
 

@@ -323,11 +323,10 @@ public:
 		return 0;
 	}
 
-	INT ChooseClipboard(INT format) 
-	{ 
+	INT ChooseClipboard(INT format) { 
 		int old = is_primary;
 		is_primary = format > 0;
-		return old != is_primary;
+		return is_primary;
 	}
 };
 

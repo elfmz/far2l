@@ -583,7 +583,9 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 			_chunk_osc52_text += std::string(s, l);
 			return TTY_PARSED_CHUNK;
 		}
-		size_t r = v - s;
+
+		size_t r = v - s + 1;
+		_chunk_osc52_text += std::string(s, v - s);
 		s += r;
 		l -= r;
 		_chunk_mode = false;

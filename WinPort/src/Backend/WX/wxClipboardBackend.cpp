@@ -199,9 +199,16 @@ public:
 	}
 };
 
-// The trick below is for Wayland; X11 works well without direct gtk usage
-#if defined(__WXGTK__) && defined(__WXGTK3__)
+#if (defined(__WXGTK__) && defined(__WXGTK3__)) || defined (__WXQT__)
+enum WxClipboardType {
+	Clipboard,
+	Primary
+};
 
+static WxClipboardType wxClipboardType = WxClipboardType::Clipboard;
+#endif
+
+#if defined(__WXGTK__) && defined(__WXGTK3__)
 enum WxBackendType {
     NativeWayland,
     XWayland,
@@ -210,13 +217,7 @@ enum WxBackendType {
     Undefined
 };
 
-enum WxClipboardType {
-	Clipboard,
-	Primary
-};
-
 static WxBackendType wxBackendType = WxBackendType::Undefined;
-static WxClipboardType wxClipboardType = WxClipboardType::Clipboard;
 
 /* Now this is a minimnal set from Gtk/Gtk */
 
@@ -354,12 +355,39 @@ static wxString getTextFromPrimarySelection()
 
 #endif
 
+#ifdef __WXQT__ 
+
+#include <QGuiApplication> 
+#include <QClipboard> 
+
+static void setTextAsPrimarySelection(const wxString& text) { 
+	QClipboard* cb = QGuiApplication::clipboard();
+	QString qtext = QString::fromUtf8(text.utf8_str());
+	cb->setText(qtext, QClipboard::Selection); 
+}
+
+static wxString getTextFromPrimarySelection() { 
+	QClipboard* cb = QGuiApplication::clipboard(); 
+	QString qtext = cb->text(QClipboard::Selection); 
+	return wxString::FromUTF8(qtext.toUtf8().constData()); 
+}
+
+#endif
+
 void *wxClipboardBackend::OnClipboardSetData(UINT format, void *data)
 {
 	if (!wxIsMainThread()) {
 		auto fn = std::bind(&wxClipboardBackend::OnClipboardSetData, this, format, data);
 		return CallInMain<void *>(fn);
 	}
+
+#ifdef __WXQT__ 
+	if (wxClipboardType == WxClipboardType::Primary) {
+		wxString wx_str((const wchar_t *)data);
+		setTextAsPrimarySelection(wx_str);
+		return data;
+	}
+#endif
 
 #if defined(__WXGTK__) && defined(__WXGTK3__)
 	if (wxClipboardType == WxClipboardType::Primary && detectWxBackend() == WxBackendType::NativeWayland) {
@@ -428,6 +456,14 @@ void *wxClipboardBackend::OnClipboardGetData(UINT format)
 		auto fn = std::bind(&wxClipboardBackend::OnClipboardGetData, this, format);
 		return CallInMain<void *>(fn);
 	}
+
+#ifdef __WXQT__ 
+	if (wxClipboardType == WxClipboardType::Primary) {
+		wxString wx_str = getTextFromPrimarySelection();
+		const auto &wc = wx_str.wc_str();
+		return ClipboardAllocFromZeroTerminatedString<wchar_t>(wc);
+	}
+#endif
 
 #if defined(__WXGTK__) && defined(__WXGTK3__)
 	if (wxClipboardType == WxClipboardType::Primary && detectWxBackend() == WxBackendType::NativeWayland) {
@@ -552,7 +588,7 @@ INT wxClipboardBackend::ChooseClipboard(INT format)
 	bool need = format > 0;
 	if (now != need) wxTheClipboard->UsePrimarySelection(need);
 
-#if defined(__WXGTK__) && defined(__WXGTK3__)
+#if (defined(__WXGTK__) && defined(__WXGTK3__)) || defined (__WXQT__)
 	::wxClipboardType = need ? WxClipboardType::Primary : WxClipboardType::Clipboard;
 #endif
 	return need ? 1 : 0;

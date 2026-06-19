@@ -22,6 +22,6 @@ public:
 	virtual INT ChooseClipboard(INT format) {
 		INT old = _is_primary ? 1 : 0;
 		_is_primary = format == 1;
-		return old;
+		return _is_primary;
 	}
 };

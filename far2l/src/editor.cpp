@@ -1488,9 +1488,26 @@ void Editor::ProcessPasteEventFromPrimary()
 	}
 
 	Clipboard clip;
+	if (clip.GetUseInternalClipboardState())
+		return;
+
 	if(clip.SetUseSelectionWhenPossible(1) > 0) {
-		ProcessPasteEvent();
-		clip.SetUseSelectionWhenPossible(0);
+		Pasting++;
+		if (!EdOpt.PersistentBlocks && !VBlockStart)
+			DeleteBlock();
+
+		Paste();
+
+		Flags.Change(FEDITOR_MARKINGBLOCK, !VBlockStart);
+		Flags.Clear(FEDITOR_MARKINGVBLOCK);
+
+		if (!EdOpt.PersistentBlocks)
+			UnmarkBlock();
+
+		Pasting--;
+		Show();
+
+    	clip.SetUseSelectionWhenPossible(0);
 	}
 }
 
@@ -3822,8 +3839,11 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 		return TRUE;
 	}
 
-	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0 && !IsMouseButtonPressed()) {
+	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0) {
 		if (MouseSelStartingLine!= -1) AutoGrabToClipboard();
+	}
+
+	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0 && !IsMouseButtonPressed()) {
 		MouseSelStartingLine = -1;
 	}
 

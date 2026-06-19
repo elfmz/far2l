@@ -1324,6 +1324,7 @@ const char* TTYBackend::OSC52RequestClipboardData(bool is_primary_buffer)
 		}
 	}
 	fprintf(stderr, "TTY: OSC52RequestClipboardData response arrived\n");
+	_ae.osc52clip_get = 0;
 	return _osc52clip.c_str();
 }
 

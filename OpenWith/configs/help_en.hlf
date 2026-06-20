@@ -44,9 +44,9 @@ $^#Details Dialog (F3)#
    The final command line that will be executed if you press #Enter# or ~Shift+Enter~@ShiftEnter@.
 
 
- #2. PLATFORM-SPECIFIC FIELDS#
+ #2. PLATFORM-SPECIFIC FIELDS AND ACTIONS#
 
- #2.1. Linux/BSD Application Details#
+ #2.1.1. Linux/BSD Application Details#
 
  This section displays detailed information extracted from the application's .desktop file. These files serve as shortcuts and metadata containers, describing how applications should be named, displayed, and launched.
 
@@ -93,6 +93,14 @@ $^#Details Dialog (F3)#
 
  #-# X-SnapInstanceName
    Extension to the Desktop Entry Specification. The snap instance name (e.g., "steam" or "steam_beta"). Written by snapd for each installation. It identifies the specific snap instance or enables parallel installs of the same snap.
+
+ #2.1.2. Linux/BSD Actions#
+
+ #-# "GoTo .desktop" button
+   Jumps to the application's .desktop file in the active panel. Always available.
+
+ #-# "GoTo source" button
+   Jumps to the file "mimeapps.list" or "mimeinfo.cache" from which the association was retrieved. Hidden when multiple files are selected, when the application was found by a full scan of .desktop files, or via 'xdg-mime query default'.
 
 
  #2.2. macOS Application Details#
@@ -180,6 +188,9 @@ $^#Configuration Dialog (F9)#
 
  #-# Show universal handlers for all files
    Add the generic MIME type "application/octet-stream" as a fallback for any regular file. This ensures that even for files with unknown or unrecognized types, universal tools like hex editors will always be suggested. If disabled, the list may be empty for files without a clear association.
+
+ #-# Query system defaults via `xdg-mime`
+   Identify and prioritize the system's default application by invoking the 'xdg-mime query default' command. When disabled, the plugin determines the highest-ranking application using only its internal algorithms to parse "mimeapps.list" and "mimeinfo.cache" files.
 
  #-# Ignore [Removed Associations] section
    Stop filtering out applications listed under the "[Removed Associations]" sections in system or user "mimeapps.list" files. Allows you to see all installed applications capable of handling the file, ignoring any explicit blacklists.

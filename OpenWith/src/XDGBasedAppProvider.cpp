@@ -43,6 +43,7 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes,  true,  true },
 		{ "UseGenericMimeFallbacks",   MUseGenericMimeFallbacks,   &XDGBasedAppProvider::_use_generic_mime_fallbacks,   true,  true },
 		{ "ShowUniversalHandlers",     MShowUniversalHandlers,     &XDGBasedAppProvider::_show_universal_handlers,      true,  true },
+		{ "QueryXdgMimeDefault",       MQueryXdgMimeDefault,       &XDGBasedAppProvider::_query_xdg_mime_default,       true,  true },
 		{ "IgnoreRemovedAssociations", MIgnoreRemovedAssociations, &XDGBasedAppProvider::_ignore_removed_associations,  false, true },
 		{ "UseMimeinfoCache",          MUseMimeinfoCache,          &XDGBasedAppProvider::_use_mimeinfo_cache,           true,  true },
 		{ "FilterByShowIn",            MFilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            true,  true },
@@ -115,7 +116,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::GetAppCandidates(const std::vect
 
 	// Clear operation-scoped caches.
 	_desktop_id_to_desktop_entry_cache.clear();
-	_last_candidates_source_info.clear();
+	_last_association_facts.clear();
 	_last_unique_mime_profiles.clear();
 
 	// RAII helper: loads 'mimeapps.list', checks for external tools, and initializes lookup maps.
@@ -280,9 +281,9 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 
 	// Retrieve the source info (e.g., 'mimeapps.list') stored during GetAppCandidates.
 	// This is only available for single-file selections.
-	auto it_source = _last_candidates_source_info.find(candidate.id);
-	if (it_source != _last_candidates_source_info.end()) {
-		details.push_back({m_GetMsg(MSource), StrMB2Wide(it_source->second)});
+	auto it_source = _last_association_facts.find(desktop_id);
+	if (it_source != _last_association_facts.end()) {
+		details.push_back({m_GetMsg(MSource), FormatFactForUI(it_source->second)});
 	}
 
 	static constexpr std::pair<const wchar_t*, std::string DesktopEntry::*> field_map[] = {
@@ -308,6 +309,30 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 	}
 
 	return details;
+}
+
+
+std::vector<CandidateContextLocation> XDGBasedAppProvider::GetCandidateContextLocations(const CandidateInfo& candidate)
+{
+	std::vector<CandidateContextLocation> locations;
+	std::string desktop_id = StrWide2MB(candidate.id);
+
+	// Navigate to the .desktop file
+	auto it_desktop = _desktop_id_to_desktop_entry_cache.find(desktop_id);
+	if (it_desktop != _desktop_id_to_desktop_entry_cache.end() && it_desktop->second.has_value()) {
+		locations.push_back({m_GetMsg(MGotoDesktop), StrMB2Wide(it_desktop->second.value().desktop_filepath)});
+	}
+
+	// Navigate to the association source file
+	auto it_source = _last_association_facts.find(desktop_id);
+	if (it_source != _last_association_facts.end()) {
+		const auto& fact = it_source->second;
+		if (!fact.filepath.empty()) {
+			locations.push_back({m_GetMsg(MGotoSource), StrMB2Wide(fact.filepath)});
+		}
+	}
+
+	return locations;
 }
 
 
@@ -366,7 +391,7 @@ XDGBasedAppProvider::CandidateMap XDGBasedAppProvider::DiscoverCandidatesForExpa
 	// This map will store the final, unique candidates for this MIME list.
 	CandidateMap unique_candidates;
 
-	if (_op_xdg_mime_exists) {
+	if (_query_xdg_mime_default && _op_xdg_mime_exists) {
 		// Check for a global default app using 'xdg-mime query default'.
 		const auto mime_for_default = expanded_mimes.empty() ? "" : expanded_mimes[0];
 		std::string desktop_id = QuerySystemDefaultApplication(mime_for_default);
@@ -374,7 +399,8 @@ XDGBasedAppProvider::CandidateMap XDGBasedAppProvider::DiscoverCandidatesForExpa
 			if (!IsAssociationRemoved(mime_for_default, desktop_id, _op_mimeapps_lists_cache)) {
 				// Highest possible rank for the explicit system default.
 				int rank = (expanded_mimes.size() - 0) * Ranking::SPECIFICITY_MULTIPLIER + Ranking::SOURCE_RANK_GLOBAL_DEFAULT;
-				RegisterCandidateById(unique_candidates, desktop_id, rank,  "xdg-mime query default " + mime_for_default);
+				RegisterCandidateById(unique_candidates, desktop_id, rank,
+										AssociationFact{AssociationOriginTier::SystemDefault, "", mime_for_default});
 			}
 		}
 	}
@@ -427,8 +453,8 @@ void XDGBasedAppProvider::AppendCandidatesFromMimeAppsLists(const std::vector<st
 		if (it_defaults != _op_mimeapps_lists_cache.defaults.end()) {
 			const auto& default_app = it_defaults->second;
 			int rank = mime_specificity_rank * Ranking::SPECIFICITY_MULTIPLIER + Ranking::SOURCE_RANK_MIMEAPPS_DEFAULT;
-			auto source_info = default_app.source_filepath + StrWide2MB(m_GetMsg(MIn)) + "[Default Applications]" + StrWide2MB(m_GetMsg(MFor)) + mime;
-			RegisterCandidateById(unique_candidates, default_app.desktop_id, rank, source_info);
+			RegisterCandidateById(unique_candidates, default_app.desktop_id, rank,
+									AssociationFact{AssociationOriginTier::MimeappsDefault, default_app.source_filepath, mime});
 		}
 
 		// 2. Process [Added Associations] from 'mimeapps.list': medium source rank.
@@ -436,8 +462,8 @@ void XDGBasedAppProvider::AppendCandidatesFromMimeAppsLists(const std::vector<st
 		if (it_added != _op_mimeapps_lists_cache.added.end()) {
 			for (const auto& app_assoc : it_added->second) {
 				int rank = mime_specificity_rank * Ranking::SPECIFICITY_MULTIPLIER + Ranking::SOURCE_RANK_MIMEAPPS_ADDED;
-				auto source_info = app_assoc.source_filepath + StrWide2MB(m_GetMsg(MIn)) + "[Added Associations]" + StrWide2MB(m_GetMsg(MFor)) + mime;
-				RegisterCandidateById(unique_candidates, app_assoc.desktop_id, rank, source_info);
+				RegisterCandidateById(unique_candidates, app_assoc.desktop_id, rank,
+										AssociationFact{AssociationOriginTier::MimeappsAdded, app_assoc.source_filepath, mime});
 			}
 		}
 	}
@@ -462,22 +488,22 @@ void XDGBasedAppProvider::AppendCandidatesFromMimeinfoCache(const std::vector<st
 				const auto& desktop_id = desktop_association.desktop_id;
 				if (desktop_id.empty()) continue;
 				if (IsAssociationRemoved(mime, desktop_id, _op_mimeapps_lists_cache)) continue;
-				auto source_info = desktop_association.source_filepath + StrWide2MB(m_GetMsg(MFor)) + mime;
+				AssociationFact fact{AssociationOriginTier::MimeinfoCache, desktop_association.source_filepath, mime};
 
 				// Insert or update the score for this Desktop ID.
-				auto [it, inserted] = desktop_id_to_score_map.try_emplace(desktop_id, rank, source_info);
+				auto [it, inserted] = desktop_id_to_score_map.try_emplace(desktop_id, rank, fact);
 
 				// Update only if the new rank is higher than the existing one (i.e., we found a more specific MIME match).
 				if (!inserted && rank > it->second.rank) {
 					it->second.rank = rank;
-					it->second.source_info = source_info;
+					it->second.origin_fact = fact;
 				}
 			}
 		}
 	}
 	// Register each application using its best calculated rank.
 	for (const auto& [desktop_id, score] : desktop_id_to_score_map) {
-		RegisterCandidateById(unique_candidates, desktop_id, score.rank, score.source_info);
+		RegisterCandidateById(unique_candidates, desktop_id, score.rank, score.origin_fact);
 	}
 }
 
@@ -505,27 +531,29 @@ void XDGBasedAppProvider::AppendCandidatesFromDesktopEntryIndex(const std::vecto
 			if (IsAssociationRemoved(mime, desktop_entry_ptr->id, _op_mimeapps_lists_cache)) {
 				continue;
 			}
-			auto source_info = StrWide2MB(m_GetMsg(MFullScanFor)) + mime;
+
+			AssociationFact fact{AssociationOriginTier::FullScan, "", mime};
+
 			// Insert or update the score for this DesktopEntry pointer.
-			auto [it, inserted] = desktop_entry_to_score_map.try_emplace(desktop_entry_ptr, rank, source_info);
+			auto [it, inserted] = desktop_entry_to_score_map.try_emplace(desktop_entry_ptr, rank, fact);
 
 			// Update only if the new rank is higher than the existing one (i.e., we found a more specific MIME match).
 			if (!inserted && rank > it->second.rank) {
 				it->second.rank = rank;
-				it->second.source_info = source_info;
+				it->second.origin_fact = fact;
 			}
 		}
 	}
 	// Register each application using its best calculated rank.
 	for (const auto& [desktop_entry_ptr, score] : desktop_entry_to_score_map) {
-		RegisterCandidateFromDesktopEntry(unique_candidates, *desktop_entry_ptr, score.rank, score.source_info);
+		RegisterCandidateFromDesktopEntry(unique_candidates, *desktop_entry_ptr, score.rank, score.origin_fact);
 	}
 }
 
 
 // Resolves a Desktop File ID to a DesktopEntry object and initiates registration.
 void XDGBasedAppProvider::RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_id,
-												int rank, const std::string& source_info)
+												int rank, const AssociationFact& origin_fact)
 {
 	if (desktop_id.empty()) return;
 	const auto& desktop_entry_opt = GetOrLoadDesktopEntry(desktop_id);
@@ -533,13 +561,13 @@ void XDGBasedAppProvider::RegisterCandidateById(CandidateMap& unique_candidates,
 		return;
 	}
 	// Pass the actual DesktopEntry object to the core validation and registration logic.
-	RegisterCandidateFromDesktopEntry(unique_candidates, *desktop_entry_opt, rank, source_info);
+	RegisterCandidateFromDesktopEntry(unique_candidates, *desktop_entry_opt, rank, origin_fact);
 }
 
 
 // Core validation, filtering and registration logic for a candidate application.
 void XDGBasedAppProvider::RegisterCandidateFromDesktopEntry(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry,
-															int rank, const std::string& source_info)
+															int rank, const AssociationFact& origin_fact)
 {
 	// Optionally validate the TryExec key to ensure the executable exists.
 	if (_validate_try_exec && !desktop_entry.try_exec.empty()) {
@@ -584,24 +612,24 @@ void XDGBasedAppProvider::RegisterCandidateFromDesktopEntry(CandidateMap& unique
 		}
 	}
 
-	AddOrUpdateCandidate(unique_candidates, desktop_entry, rank, source_info);
+	AddOrUpdateCandidate(unique_candidates, desktop_entry, rank, origin_fact);
 }
 
 
 // Adds a candidate to the result map, handling deduplication and rank upgrades.
 void XDGBasedAppProvider::AddOrUpdateCandidate(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry,
-											   int rank, const std::string& source_info)
+											   int rank, const AssociationFact& origin_fact)
 {
 	// Composite key (Name + Exec) used to deduplicate candidates defined across multiple .desktop files or overlays.
 	AppUniqueKey unique_key{desktop_entry.name, desktop_entry.exec};
 
-	auto [it, inserted] = unique_candidates.try_emplace(unique_key, RankedCandidate{&desktop_entry, rank, source_info});
+	auto [it, inserted] = unique_candidates.try_emplace(unique_key, RankedCandidate{&desktop_entry, rank, origin_fact});
 
 	// If the candidate already exists, we keep the version with the HIGHEST rank.
 	if (!inserted && rank > it->second.rank) {
 		it->second.rank = rank;
 		it->second.desktop_entry = &desktop_entry;
-		it->second.source_info = source_info;
+		it->second.origin_fact = origin_fact;
 	}
 }
 
@@ -681,7 +709,7 @@ std::vector<CandidateInfo> XDGBasedAppProvider::FormatCandidatesForUI(
 		// If requested (only for single-file lookups), store the association's source
 		// for the F3 details dialog.
 		if (store_source_info) {
-			_last_candidates_source_info.try_emplace(ci.id, ranked_candidate.source_info);
+			_last_association_facts.try_emplace(ranked_candidate.desktop_entry->id, ranked_candidate.origin_fact);
 		}
 		result.push_back(ci);
 	}
@@ -718,6 +746,28 @@ CandidateInfo XDGBasedAppProvider::ConvertDesktopEntryToCandidateInfo(const Desk
 	candidate.multi_file_aware = (desktop_entry.execution_model != ExecutionModel::PerFile);
 
 	return candidate;
+}
+
+
+std::wstring XDGBasedAppProvider::FormatFactForUI(const AssociationFact& fact) const
+{
+	switch (fact.tier) {
+		case AssociationOriginTier::SystemDefault:
+			return StrMB2Wide("xdg-mime query default " + fact.mime_type);
+
+		case AssociationOriginTier::MimeappsDefault:
+			return StrMB2Wide(fact.filepath) + m_GetMsg(MIn) + L"[Default Applications]" + m_GetMsg(MFor) + StrMB2Wide(fact.mime_type);
+
+		case AssociationOriginTier::MimeappsAdded:
+			return StrMB2Wide(fact.filepath) + m_GetMsg(MIn) + L"[Added Associations]" + m_GetMsg(MFor) + StrMB2Wide(fact.mime_type);
+
+		case AssociationOriginTier::MimeinfoCache:
+			return StrMB2Wide(fact.filepath) + m_GetMsg(MFor) + StrMB2Wide(fact.mime_type);
+
+		case AssociationOriginTier::FullScan:
+			return m_GetMsg(MFullScanFor) + StrMB2Wide(fact.mime_type);
+	}
+	return L"";
 }
 
 

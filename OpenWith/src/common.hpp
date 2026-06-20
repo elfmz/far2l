@@ -16,3 +16,10 @@ struct CandidateInfo
 	bool terminal;                 // whether a terminal is required or not
 	bool multi_file_aware = false; // whether the application can open multiple files in a single invocation
 };
+
+
+struct CandidateContextLocation
+{
+	std::wstring title;
+	std::wstring target_filepath;
+};

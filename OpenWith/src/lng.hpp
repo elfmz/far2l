@@ -34,6 +34,7 @@ enum LanguageID
 	MResolveStructuredSuffixes,
 	MUseGenericMimeFallbacks,
 	MShowUniversalHandlers,
+	MQueryXdgMimeDefault,
 	MIgnoreRemovedAssociations,
 	MUseMimeinfoCache,
 	MFilterByShowIn,
@@ -50,6 +51,8 @@ enum LanguageID
 	MLaunchCommand,
 	MClose,
 	MLaunch,
+	MGotoDesktop,
+	MGotoSource,
 
 	MDesktopFile,
 	MSource,

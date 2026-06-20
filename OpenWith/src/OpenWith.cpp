@@ -22,6 +22,7 @@ constexpr const char* INI_SECTION_GENERAL = "Settings";
 
 // ****************************** Public API ******************************
 
+
 void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 {
 	auto* provider = AppProvider::GetInstance();
@@ -68,22 +69,34 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 		menu_items[active_menu_idx].Selected = false;
 		active_menu_idx = selected_menu_idx;
 		const auto& selected_app = (*app_candidates)[selected_menu_idx];
+		const auto menu_action = static_cast<MenuAction>(menu_break_code);
 
-		switch (static_cast<MenuAction>(menu_break_code)) {
-
+		switch (menu_action) {
 			case MenuAction::DETAILS: {
 				const auto mime_profiles = provider->GetMimeTypes();
 				const auto app_info = provider->GetCandidateDetails(selected_app);
 				const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
-				// Repeat until user either launches the application or closes the dialog to go back.
-				while (true) {
-					if (ShowDetailsDlg(filepaths, mime_profiles, app_info, cmds) == DetailsDlgResult::Launch) {
-						if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
-							LaunchApplication(selected_app, cmds);
-							return; // Application launched; exit the plugin.
+				const auto locations = provider->GetCandidateContextLocations(selected_app);
+
+				bool keep_showing = true;
+				while (keep_showing) {
+					const auto details_dlg_result = ShowDetailsDlg(filepaths, mime_profiles, app_info, cmds, locations);
+					switch (details_dlg_result.action) {
+						case DetailsDlgResult::Action::Launch: {
+							if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
+								LaunchApplication(selected_app, cmds);
+								return; // Exit the plugin.
+							}
+							break; // Back to details dialog.
 						}
-					} else {
-						break; // User clicked "Close"; return to the main menu.
+						case DetailsDlgResult::Action::GoTo: {
+							GoToFile(details_dlg_result.goto_target);
+							return; // Exit the plugin.
+						}
+						case DetailsDlgResult::Action::Close: {
+							keep_showing = false; // Return to the main menu.
+							break;
+						}
 					}
 				}
 				break;
@@ -101,9 +114,8 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 			case MenuAction::FORCED_LAUNCH: {
 				if (AskForLaunchConfirmation(selected_app, filepaths.size())) {
 					const auto cmds = provider->ConstructLaunchCommands(selected_app, filepaths);
-					LaunchApplication(selected_app, cmds,
-									  (static_cast<MenuAction>(menu_break_code) == MenuAction::FORCED_LAUNCH) ? LaunchMode::Forced : LaunchMode::Standard);
-					return; // Application launched; exit the plugin.
+					LaunchApplication(selected_app, cmds, (menu_action == MenuAction::FORCED_LAUNCH) ? LaunchMode::Forced : LaunchMode::Standard);
+					return; // Exit the plugin.
 				}
 				break;
 			}
@@ -331,7 +343,8 @@ void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vect
 OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vector<std::wstring>& filepaths,
 									   const std::vector<std::wstring>& unique_mime_profiles,
 									   const std::vector<Field>& application_info,
-									   const std::vector<std::wstring>& cmds)
+									   const std::vector<std::wstring>& cmds,
+									   const std::vector<CandidateContextLocation>& locations)
 {
 	std::vector<Field> file_info;
 	if (auto file_count = filepaths.size(); file_count != 1) {
@@ -389,10 +402,18 @@ OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vecto
 	add_separator();
 	add_field_row(launch_command);
 	add_separator();
+
 	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MClose), 0 });
 	details_dialog_items.back().DefaultButton = TRUE;
+
+	const int launch_btn_idx = static_cast<int>(details_dialog_items.size());
 	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
-	const int launch_btn_idx = static_cast<int>(details_dialog_items.size()) - 1;
+
+	const int first_location_btn_idx = static_cast<int>(details_dialog_items.size());
+	for (const auto &location : locations) {
+		details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, location.title.c_str(), 0 });
+	}
+
 
 	HANDLE details_dlg = g_info.DialogInit(g_info.ModuleNumber, -1, -1, details_dialog_width, details_dialog_height, L"DetailsDialog",
 								   details_dialog_items.data(), static_cast<unsigned int>(details_dialog_items.size()), 0, 0, nullptr, 0);
@@ -401,10 +422,45 @@ OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vecto
 		int exit_code = g_info.DialogRun(details_dlg);
 		g_info.DialogFree(details_dlg);
 		if (exit_code == launch_btn_idx) {
-			return DetailsDlgResult::Launch;
+			return { DetailsDlgResult::Action::Launch };
+		} else if (exit_code >= first_location_btn_idx && exit_code < first_location_btn_idx + static_cast<int>(locations.size())) {
+			const int location_idx = exit_code - first_location_btn_idx;
+			return { DetailsDlgResult::Action::GoTo, locations[location_idx].target_filepath };
 		}
 	}
-	return DetailsDlgResult::Close;
+	return { DetailsDlgResult::Action::Close };
+}
+
+
+
+bool OpenWithPlugin::GoToFile(const std::wstring &filepath)
+{
+	auto dir  = ExtractFilePath(filepath);
+	if (dir.empty()) dir = L"/";
+	auto name = ExtractFileName(filepath);
+	if (!g_info.Control(PANEL_ACTIVE, FCTL_SETPANELDIR, 0, (LONG_PTR)dir.c_str())) {
+		return false;
+	}
+	PanelInfo panel_info {};
+	if (!g_info.Control(PANEL_ACTIVE, FCTL_GETPANELINFO, 0, (LONG_PTR)&panel_info)) {
+		return false;
+	}
+	std::vector<unsigned char> buf;
+	for (int i = 0; i < panel_info.ItemsNumber; i++) {
+		int sz = g_info.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, i, 0);
+		if (sz <= 0) continue;
+		if (static_cast<size_t>(sz) > buf.size()) {
+			buf.resize(static_cast<size_t>(sz));
+		}
+		g_info.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, i, (LONG_PTR)buf.data());
+		const auto *item = reinterpret_cast<const PluginPanelItem *>(buf.data());
+		if (item->FindData.lpwszFileName && name == item->FindData.lpwszFileName) {
+			PanelRedrawInfo panel_ri {};
+			panel_ri.CurrentItem = i;
+			return g_info.Control(PANEL_ACTIVE, FCTL_REDRAWPANEL, 0, (LONG_PTR)&panel_ri) != 0;
+		}
+	}
+	return false;
 }
 
 

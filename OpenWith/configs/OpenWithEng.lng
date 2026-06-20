@@ -32,6 +32,7 @@
 "&Resolve structured MIME suffixes"
 "Search for apps for &generic MIME types"
 "Show universal &handlers for all files"
+"Query system defaults via `xdg-mime`"
 "Ignore [Remo&ved Associations] section"
 "Use &mimeinfo.cache"
 "Filter by Only&ShowIn/NotShowIn"
@@ -48,6 +49,8 @@
 "L&aunch command:"
 "&Close"
 "&Launch"
+"GoTo .d&esktop"
+"GoTo s&ource"
 
 "&Desktop file:"
 "&Source:"

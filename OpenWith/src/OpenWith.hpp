@@ -29,7 +29,11 @@ public:
 
 private:
 
-	enum class DetailsDlgResult { Close, Launch };
+	struct DetailsDlgResult
+	{
+		enum class Action { Close, Launch, GoTo } action;
+		std::wstring goto_target = L"";
+	};
 
 	inline static bool s_use_external_terminal;
 	inline static bool s_no_wait_for_command_completion;
@@ -48,7 +52,8 @@ private:
 	};
 
 	static void LaunchApplication(const CandidateInfo& app, const std::vector<std::wstring>& cmds, LaunchMode launch_mode = LaunchMode::Standard);
-	static DetailsDlgResult ShowDetailsDlg(const std::vector<std::wstring>& filepaths, const std::vector<std::wstring>& unique_mime_profiles, const std::vector<Field> &application_info, const std::vector<std::wstring>& cmds);
+	static DetailsDlgResult ShowDetailsDlg(const std::vector<std::wstring>& filepaths, const std::vector<std::wstring>& unique_mime_profiles, const std::vector<Field> &application_info, const std::vector<std::wstring>& cmds, const std::vector<CandidateContextLocation>& locations);
+	static bool GoToFile(const std::wstring &filepath);
 	static void SaveGeneralSettings(KeyFileHelper& key_writer);
 	static std::wstring JoinStrings(const std::vector<std::wstring>& strings, const std::wstring& delimiter);
 	static size_t GetLabelCellWidth(const Field& field);

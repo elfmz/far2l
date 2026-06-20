@@ -29,6 +29,7 @@ public:
 	std::vector<std::wstring> ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths_wide) override;
 	std::vector<std::wstring> GetMimeTypes() override;
 	std::vector<Field> GetCandidateDetails(const CandidateInfo& candidate) override;
+	std::vector<CandidateContextLocation> GetCandidateContextLocations(const CandidateInfo& candidate) override;
 
 	// Platform-specific settings API
 	std::vector<ProviderSetting> GetPlatformSettings() override;
@@ -196,6 +197,22 @@ private:
 		std::unordered_map<std::string, std::unordered_set<std::string>> removed;
 	};
 
+	enum class AssociationOriginTier
+	{
+		SystemDefault,   // xdg-mime query default
+		MimeappsDefault, // [Default Applications] in mimeapps.list
+		MimeappsAdded,   // [Added Associations] in mimeapps.list
+		MimeinfoCache,   // mimeinfo.cache
+		FullScan         // fallback scan of all .desktop files
+	};
+
+	struct AssociationFact
+	{
+		AssociationOriginTier tier;
+		std::string filepath;
+		std::string mime_type;
+	};
+
 
 	// ******************************************************************************
 	// Group 4: Ranking & Candidate Identification
@@ -222,7 +239,12 @@ private:
 	{
 		const DesktopEntry* desktop_entry = nullptr;
 		int rank = 0;
-		std::string source_info;
+
+		AssociationFact origin_fact;
+
+		RankedCandidate() = default;
+		RankedCandidate(const DesktopEntry* d, int r, AssociationFact f)
+			: desktop_entry(d), rank(r), origin_fact(std::move(f)) {}
 
 		bool operator<(const RankedCandidate& other) const {
 			if (rank != other.rank) {
@@ -241,8 +263,9 @@ private:
 	struct AssociationScore
 	{
 		int rank;
-		std::string source_info;
-		AssociationScore(int r, std::string s) : rank(r), source_info(std::move(s)) {}
+		AssociationFact origin_fact;
+		AssociationScore(int r, AssociationFact f)
+			: rank(r), origin_fact(std::move(f)) {}
 	};
 
 
@@ -324,14 +347,15 @@ private:
 	void AppendCandidatesFromMimeAppsLists(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
 	void AppendCandidatesFromMimeinfoCache(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
 	void AppendCandidatesFromDesktopEntryIndex(const std::vector<std::string>& expanded_mimes, CandidateMap& unique_candidates);
-	void RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_id, int rank, const std::string& source_info);
-	void RegisterCandidateFromDesktopEntry(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const std::string& source_info);
-	void AddOrUpdateCandidate(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const std::string& source_info);
+	void RegisterCandidateById(CandidateMap& unique_candidates, const std::string& desktop_id, int rank, const AssociationFact& origin_fact);
+	void RegisterCandidateFromDesktopEntry(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const AssociationFact& origin_fact);
+	void AddOrUpdateCandidate(CandidateMap& unique_candidates, const DesktopEntry& desktop_entry, int rank, const AssociationFact& origin_fact);
 	bool IsAssociationRemoved(const std::string& mime, const std::string& desktop_id, const MimeappsListsConfig& mimeapps_lists) const;
 	std::vector<RankedCandidate> BuildSortedRankedCandidatesList(const CandidateMap& candidate_map);
 	std::vector<CandidateInfo> FormatCandidatesForUI(const std::vector<RankedCandidate>& ranked_candidates, bool store_source_info);
 	std::wstring_view GetPackageTag(PackageType type);
 	static CandidateInfo ConvertDesktopEntryToCandidateInfo(const DesktopEntry& desktop_entry);
+	std::wstring FormatFactForUI(const AssociationFact& fact) const;
 
 	// --- File MIME type detection and expansion ---
 	RawMimeProfile GetRawMimeProfile(const std::string& filepath);
@@ -396,9 +420,8 @@ private:
 	// which would be invalidated by unordered_map rehashing.
 	std::map<std::string, std::optional<DesktopEntry>> _desktop_id_to_desktop_entry_cache;
 
-	// Maps a candidate's ID to its source info string from the last GetAppCandidates call for the single selected file.
-	// It's used by GetCandidateDetails to display where the association came from (e.g., 'mimeapps.list').
-	std::map<std::wstring, std::string> _last_candidates_source_info;
+	// Maps a candidate's ID to its source info, i.e. where the association came from (e.g., 'mimeapps.list').
+	std::unordered_map<std::string, AssociationFact> _last_association_facts;
 
 	// Caches all unique RawMimeProfile objects collected during the last GetAppCandidates call.
 	// This is used by GetMimeTypes to avoid redundant work.
@@ -415,6 +438,7 @@ private:
 	bool _resolve_structured_suffixes;
 	bool _use_generic_mime_fallbacks;
 	bool _show_universal_handlers;
+	bool _query_xdg_mime_default;
 	bool _ignore_removed_associations;
 	bool _use_mimeinfo_cache;
 	bool _filter_by_show_in;
@@ -434,7 +458,8 @@ private:
 	inline static const std::map<std::string, std::string> s_tool_key_map = {
 		{ "UseXdgMimeTool", "xdg-mime" },
 		{ "UseFileTool", "file" },
-		{ "UseMagikaTool", "magika" }
+		{ "UseMagikaTool", "magika" },
+		{ "QueryXdgMimeDefault", "xdg-mime" }
 	};
 
 	// --- Operation-Scoped State ---

@@ -12,6 +12,55 @@
 #include <algorithm>
 #include <cstring>
 #include <cstdio>
+#include <pwd.h>
+#include <unistd.h>
+
+static std::map<std::string, std::string>
+ParseAWSIniSection(const std::string &path, const std::string &section)
+{
+	std::map<std::string, std::string> result;
+	FILE *f = fopen(path.c_str(), "r");
+	if (!f) return result;
+
+	char line[512];
+	bool in_section = false;
+	while (fgets(line, sizeof(line), f)) {
+		std::string s = line;
+		while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
+			s.pop_back();
+		if (s.empty() || s[0] == '#' || s[0] == ';') continue;
+
+		if (s[0] == '[') {
+			size_t end = s.find(']');
+			std::string hdr = (end != std::string::npos) ? s.substr(1, end - 1) : s.substr(1);
+			if (hdr.size() >= 8 && hdr.substr(0, 8) == "profile ") hdr = hdr.substr(8);
+			while (!hdr.empty() && (hdr.front() == ' ' || hdr.front() == '\t')) hdr.erase(0, 1);
+			while (!hdr.empty() && (hdr.back()  == ' ' || hdr.back()  == '\t')) hdr.pop_back();
+			in_section = (hdr == section);
+			continue;
+		}
+
+		if (!in_section) continue;
+		auto eq = s.find('=');
+		if (eq == std::string::npos) continue;
+		std::string k = s.substr(0, eq), v = s.substr(eq + 1);
+		while (!k.empty() && (k.back()  == ' ' || k.back()  == '\t')) k.pop_back();
+		while (!v.empty() && (v.front() == ' ' || v.front() == '\t')) v.erase(0, 1);
+		result[k] = v;
+	}
+	fclose(f);
+	return result;
+}
+
+static std::string AWSCredentialsDir()
+{
+	const char *home = getenv("HOME");
+	if (!home || !*home) {
+		struct passwd *pw = getpwuid(getuid());
+		home = pw ? pw->pw_dir : nullptr;
+	}
+	return home ? std::string(home) + "/.aws/" : "";
+}
 
 static void EnsureInitNEON()
 {
@@ -202,23 +251,66 @@ S3Repository::S3Repository(const std::string &host, unsigned int port,
 	}
 	_endpoint = trimmed_host;
 
+	bool scheme_explicit = false;
+	if (_endpoint.size() > 8 && _endpoint.substr(0, 8) == "https://") {
+		_scheme = "https";
+		_endpoint = _endpoint.substr(8);
+		scheme_explicit = true;
+	} else if (_endpoint.size() > 7 && _endpoint.substr(0, 7) == "http://") {
+		_scheme = "http";
+		_endpoint = _endpoint.substr(7);
+		scheme_explicit = true;
+	}
+	while (!_endpoint.empty() && _endpoint.back() == '/') _endpoint.pop_back();
+
 	if (!access_key.empty() && !secret.empty()) {
 		_creds.access_key = access_key;
 		_creds.secret_key = secret;
 	} else {
 		const char *env_key = getenv("AWS_ACCESS_KEY_ID");
 		const char *env_sec = getenv("AWS_SECRET_ACCESS_KEY");
-		if (!env_key || !env_sec || !*env_key || !*env_sec) {
-			throw ProtocolError("AWS credentials not provided and not found in environment");
+		if (env_key && *env_key && env_sec && *env_sec) {
+			_creds.access_key = env_key;
+			_creds.secret_key = env_sec;
+		} else {
+			const char *profile_env = getenv("AWS_PROFILE");
+			std::string profile = (profile_env && *profile_env) ? profile_env : "default";
+			std::string aws_dir = AWSCredentialsDir();
+			if (!aws_dir.empty()) {
+				auto vals = ParseAWSIniSection(aws_dir + "credentials", profile);
+				auto it_k = vals.find("aws_access_key_id");
+				auto it_s = vals.find("aws_secret_access_key");
+				if (it_k != vals.end() && it_s != vals.end()) {
+					_creds.access_key = it_k->second;
+					_creds.secret_key = it_s->second;
+				}
+			}
+			if (_creds.access_key.empty() || _creds.secret_key.empty()) {
+				throw ProtocolError("AWS credentials not provided and not found in environment or ~/.aws/credentials");
+			}
 		}
-		_creds.access_key = env_key;
-		_creds.secret_key = env_sec;
-		const char *env_region = getenv("AWS_DEFAULT_REGION");
-		if (env_region && *env_region) _creds.region = env_region;
+
+		if (_creds.region.empty()) {
+			const char *env_region = getenv("AWS_DEFAULT_REGION");
+			if (!env_region || !*env_region) env_region = getenv("AWS_REGION");
+			if (env_region && *env_region) _creds.region = env_region;
+		}
+
+		if (_creds.region.empty()) {
+			const char *profile_env = getenv("AWS_PROFILE");
+			std::string profile = (profile_env && *profile_env) ? profile_env : "default";
+			std::string aws_dir = AWSCredentialsDir();
+			if (!aws_dir.empty()) {
+				auto vals = ParseAWSIniSection(aws_dir + "config", profile);
+				auto it = vals.find("region");
+				if (it != vals.end()) _creds.region = it->second;
+			}
+		}
 	}
 
-	_scheme = (port == 80) ? "http" : "https";
-	_port = (port > 0) ? port : 443;
+	if (!scheme_explicit)
+		_scheme = (port == 80) ? "http" : "https";
+	_port = (port > 0) ? port : (_scheme == "http" ? 80 : 443);
 
 	_neon_host = _endpoint;
 	{

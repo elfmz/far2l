@@ -1,356 +1,471 @@
 #include "S3Repository.h"
+#include "S3Auth.h"
+#include "AWSFileReader.h"
+#include "AWSFileWriter.h"
 #include <StringConfig.h>
-#include <aws/core/Aws.h>
-#include <aws/s3/model/GetObjectRequest.h>
-#include <aws/s3/model/ListObjectsRequest.h>
-#include <aws/s3/model/DeleteObjectRequest.h>
-#include <aws/s3/model/DeleteBucketRequest.h>
-#include <aws/s3/model/PutObjectRequest.h>
-#include <aws/s3/model/CreateBucketRequest.h>
-#include <aws/s3/model/HeadObjectRequest.h>
-#include <aws/s3/model/ListBucketsRequest.h>
-#include <aws/s3/model/ListBucketsResult.h>
-#include <aws/s3/model/ListObjectsV2Request.h>
-#include <aws/s3/model/ListObjectsV2Result.h>
-#include <aws/core/auth/AWSCredentialsProvider.h>
-#include <aws/core/endpoint/DefaultEndpointProvider.h>
-#include <aws/core/client/AWSError.h>
-#include <aws/s3/S3Errors.h>
-#include <aws/core/auth/AWSCredentialsProviderChain.h>
-#include <aws/core/auth/AWSCredentialsProvider.h>
-#include "../Protocol.h"
+#include <neon/ne_request.h>
+#include <neon/ne_socket.h>
+#include <neon/ne_auth.h>
+#include <neon/ne_ssl.h>
+#include <neon/ne_uri.h>
+#include <map>
+#include <algorithm>
+#include <cstring>
+#include <cstdio>
 
-S3Repository::S3Repository(const std::string host, unsigned int port, const std::string accessKey, const std::string secret, const std::string &protocolOptions)
+static void EnsureInitNEON()
 {
-    Aws::InitAPI(_options);
+	static int s_init = ne_sock_init();
+	(void)s_init;
+}
 
-	StringConfig options(protocolOptions);
-	auto useragent = options.GetString("UserAgent");
-	auto region = options.GetString("Region");
+static std::string XmlExtract(const std::string &xml, const std::string &tag)
+{
+	std::string open  = "<" + tag + ">";
+	std::string close = "</" + tag + ">";
+	auto start = xml.find(open);
+	if (start == std::string::npos) return "";
+	start += open.size();
+	auto end = xml.find(close, start);
+	if (end == std::string::npos) return "";
+	return xml.substr(start, end - start);
+}
 
-	Aws::Client::ClientConfiguration config;
-    if ((port > 0) && (port != 433)) {
-        config.endpointOverride = Trim(host) + ":" + std::to_string(port);
-    } else {
-	    config.endpointOverride = Trim(host);
-    }
+static std::vector<std::string> XmlExtractAll(const std::string &xml, const std::string &tag)
+{
+	std::vector<std::string> result;
+	std::string open  = "<" + tag + ">";
+	std::string close = "</" + tag + ">";
+	size_t pos = 0;
+	for (;;) {
+		auto start = xml.find(open, pos);
+		if (start == std::string::npos) break;
+		start += open.size();
+		auto end = xml.find(close, start);
+		if (end == std::string::npos) break;
+		result.push_back(xml.substr(start, end - start));
+		pos = end + close.size();
+	}
+	return result;
+}
 
-	if (options.GetInt("UseProxy", 0) != 0) {
-        config.proxyHost = options.GetString("ProxyHost");
-        config.proxyPort = options.GetInt("ProxyPort");
-		if (options.GetInt("AuthProxy", 0) != 0) {
-			config.proxyUserName = options.GetString("ProxyUsername");
-			config.proxyPassword = options.GetString("ProxyPassword");
+struct ResponseCapture {
+	std::string body;
+	std::string header_name;
+	std::string header_value;
+
+	static int sBodyReader(void *userdata, const char *buf, size_t len)
+	{
+		auto *self = reinterpret_cast<ResponseCapture *>(userdata);
+		self->body.append(buf, len);
+		return 0;
+	}
+};
+
+static void CheckS3Error(const std::string &body, const std::string &context)
+{
+	std::string code = XmlExtract(body, "Code");
+	std::string msg  = XmlExtract(body, "Message");
+
+	if (code == "AccessDenied" || code == "InvalidAccessKeyId" ||
+	    code == "SignatureDoesNotMatch" || code == "InvalidSignature") {
+		throw ProtocolAuthFailedError(code + ": " + msg);
+	}
+
+	if (!code.empty()) {
+		std::string full = context.empty() ? code : context + ": " + code;
+		if (!msg.empty()) full += " - " + msg;
+		throw ProtocolError(full);
+	}
+}
+
+static std::string BuildPath(const std::string &bucket, const std::string &key)
+{
+	if (bucket.empty()) return "/";
+	if (key.empty()) return "/" + bucket;
+	return "/" + bucket + "/" + key;
+}
+
+std::string S3Repository::SimpleRequest(
+	const std::string &method,
+	const std::string &bucket,
+	const std::string &key,
+	const std::map<std::string, std::string> &query_params,
+	const std::string &request_body,
+	const std::map<std::string, std::string> &extra_headers)
+{
+	std::string dummy;
+	return SimpleRequestHeader(method, bucket, key, query_params, request_body, dummy, extra_headers);
+}
+
+std::string S3Repository::SimpleRequestHeader(
+	const std::string &method,
+	const std::string &bucket,
+	const std::string &key,
+	const std::map<std::string, std::string> &query_params,
+	const std::string &request_body,
+	const std::string &capture_header,
+	const std::map<std::string, std::string> &extra_headers)
+{
+	std::string uri_path = BuildPath(bucket, key);
+
+	char *escaped = ne_path_escape(uri_path.c_str());
+	std::string neon_path = escaped ? escaped : uri_path;
+	if (escaped) free(escaped);
+
+	std::string query_str = BuildQueryString(query_params);
+	if (!query_str.empty()) neon_path += "?" + query_str;
+
+	std::string payload_hash = S3SHA256Hex(request_body);
+	auto auth_headers = S3SignRequest(method, _endpoint, uri_path, query_params,
+	                                  payload_hash, _creds.region,
+	                                  _creds.access_key, _creds.secret_key);
+
+	ResponseCapture cap;
+	cap.header_name = capture_header;
+
+	ne_request *req = ne_request_create(_session->sess, method.c_str(), neon_path.c_str());
+	if (!req) throw ProtocolError("Failed to create neon request");
+
+	for (auto &h : auth_headers) {
+		ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+	}
+	for (auto &h : extra_headers) {
+		ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+	}
+	if (!_useragent.empty()) {
+		ne_add_request_header(req, "User-Agent", _useragent.c_str());
+	}
+
+	std::string body_copy = request_body;
+	if (!request_body.empty()) {
+		ne_set_request_body_buffer(req, body_copy.c_str(), body_copy.size());
+		char cl[32];
+		snprintf(cl, sizeof(cl), "%zu", body_copy.size());
+		ne_add_request_header(req, "Content-Length", cl);
+	} else if (method == "PUT" || method == "POST") {
+		ne_add_request_header(req, "Content-Length", "0");
+	}
+
+	ne_add_response_body_reader(req, ne_accept_always, ResponseCapture::sBodyReader, &cap);
+
+	int rc = ne_request_dispatch(req);
+
+	if (!capture_header.empty()) {
+		const char *hv = ne_get_response_header(req, capture_header.c_str());
+		if (hv) cap.header_value = hv;
+	}
+
+	ne_request_destroy(req);
+
+	if (rc != NE_OK) {
+		const char *err = ne_get_error(_session->sess);
+		throw ProtocolError(err ? err : "S3 request failed");
+	}
+
+	CheckS3Error(cap.body, method + " /" + bucket + "/" + key);
+
+	return cap.header_name.empty() ? cap.body : cap.header_value;
+}
+
+S3Repository::S3Repository(const std::string &host, unsigned int port,
+                            const std::string &access_key, const std::string &secret,
+                            const std::string &protocol_options)
+{
+	EnsureInitNEON();
+
+	StringConfig options(protocol_options);
+	_useragent = options.GetString("UserAgent");
+	_creds.region = options.GetString("Region");
+	if (_creds.region.empty()) _creds.region = "us-east-1";
+
+	std::string trimmed_host = Trim(host);
+	if (trimmed_host.empty()) {
+		throw ProtocolError("S3 endpoint not specified");
+	}
+	_endpoint = trimmed_host;
+
+	if (!access_key.empty() && !secret.empty()) {
+		_creds.access_key = access_key;
+		_creds.secret_key = secret;
+	} else {
+		const char *env_key = getenv("AWS_ACCESS_KEY_ID");
+		const char *env_sec = getenv("AWS_SECRET_ACCESS_KEY");
+		if (!env_key || !env_sec || !*env_key || !*env_sec) {
+			throw ProtocolError("AWS credentials not provided and not found in environment");
+		}
+		_creds.access_key = env_key;
+		_creds.secret_key = env_sec;
+		const char *env_region = getenv("AWS_DEFAULT_REGION");
+		if (env_region && *env_region) _creds.region = env_region;
+	}
+
+	_scheme = (port == 80) ? "http" : "https";
+	_port = (port > 0) ? port : 443;
+
+	std::string neon_host = _endpoint;
+	{
+		auto colon = neon_host.rfind(':');
+		if (colon != std::string::npos) {
+			std::string port_str = neon_host.substr(colon + 1);
+			bool all_digits = !port_str.empty() &&
+				std::all_of(port_str.begin(), port_str.end(), ::isdigit);
+			if (all_digits) {
+				_port = (unsigned int)std::stoul(port_str);
+				neon_host = neon_host.substr(0, colon);
+			}
 		}
 	}
 
-	if (!useragent.empty()) {
-		config.userAgent = useragent;
+	if ((_scheme == "https" && _port != 443) || (_scheme == "http" && _port != 80)) {
+		_endpoint = neon_host + ":" + std::to_string(_port);
+	} else {
+		_endpoint = neon_host;
 	}
 
-	if (!region.empty()) {
-    	config.region = region;
-    }
+	_session = std::make_shared<S3Session>();
+	_session->sess = ne_session_create(_scheme.c_str(), neon_host.c_str(), _port);
+	if (!_session->sess) {
+		throw ProtocolError("Failed to create neon session");
+	}
 
-	auto endpointProvider = Aws::MakeShared<Aws::S3::S3EndpointProvider>(Aws::Endpoint::DEFAULT_ENDPOINT_PROVIDER_TAG);
+	ne_ssl_set_verify(_session->sess, [](void *, int, const ne_ssl_certificate *) { return 0; }, nullptr);
 
-    if (accessKey.empty() && secret.empty()) {
-        auto credentialsProvider = Aws::Auth::DefaultAWSCredentialsProviderChain();
-        auto credentials = credentialsProvider.GetAWSCredentials();
-
-        if (credentials.GetAWSAccessKeyId().empty() || credentials.GetAWSSecretKey().empty()) {
-            throw ProtocolError("Invalid credentals");
-        }
-        _client = std::make_shared<Aws::S3::S3Client>(config, endpointProvider);
-    } else if (accessKey.empty()) {
-        throw ProtocolError("Invalid login/access key");
-    } else if (secret.empty()) {
-        throw ProtocolError("Invalid password/secret");
-    } else {
-        Aws::Auth::AWSCredentials credentials(accessKey, secret);
-        _client = std::make_shared<Aws::S3::S3Client>(credentials, endpointProvider, config);
-    }
+	if (options.GetInt("UseProxy", 0) != 0) {
+		_proxy_host = options.GetString("ProxyHost");
+		_proxy_port = (unsigned int)options.GetInt("ProxyPort", 3128);
+		ne_session_proxy(_session->sess, _proxy_host.c_str(), _proxy_port);
+	}
 }
 
-S3Repository::~S3Repository()
+std::string S3Repository::Trim(const std::string &str)
 {
-    Aws::ShutdownAPI(_options);
+	const std::string unwanted = "/\\ ";
+	auto result = str;
+	size_t start = result.find_first_not_of(unwanted);
+	if (start == std::string::npos) return "";
+	result.erase(0, start);
+	size_t end = result.find_last_not_of(unwanted);
+	result.erase(end + 1);
+	return result;
 }
 
-std::string S3Repository::Trim(const std::string& str) {
-    const std::string unwanted = "/\\ ";
-    auto result = str;
-
-    size_t start = result.find_first_not_of(unwanted);
-    if (start == std::string::npos) {
-        result.clear();
-        return result;
-    }
-    result.erase(0, start);
-
-    size_t end = result.find_last_not_of(unwanted);
-    result.erase(end + 1);
-
-    return result;
-}
-
-
-std::string S3Repository::GetS3ErrorTypeString(Aws::S3::S3Errors errorType)
+std::string S3Repository::ExtractFileName(const std::string &path)
 {
-    switch (errorType) {
-        case Aws::S3::S3Errors::INCOMPLETE_SIGNATURE: return "INCOMPLETE_SIGNATURE";
-        case Aws::S3::S3Errors::INTERNAL_FAILURE: return "INTERNAL_FAILURE";
-        case Aws::S3::S3Errors::INVALID_ACTION: return "INVALID_ACTION";
-        case Aws::S3::S3Errors::INVALID_CLIENT_TOKEN_ID: return "INVALID_CLIENT_TOKEN_ID";
-        case Aws::S3::S3Errors::INVALID_PARAMETER_COMBINATION: return "INVALID_PARAMETER_COMBINATION";
-        case Aws::S3::S3Errors::INVALID_QUERY_PARAMETER: return "INVALID_QUERY_PARAMETER";
-        case Aws::S3::S3Errors::INVALID_PARAMETER_VALUE: return "INVALID_PARAMETER_VALUE";
-        case Aws::S3::S3Errors::MISSING_ACTION: return "MISSING_ACTION";
-        case Aws::S3::S3Errors::MISSING_AUTHENTICATION_TOKEN: return "MISSING_AUTHENTICATION_TOKEN";
-        case Aws::S3::S3Errors::MISSING_PARAMETER: return "MISSING_PARAMETER";
-        case Aws::S3::S3Errors::OPT_IN_REQUIRED: return "OPT_IN_REQUIRED";
-        case Aws::S3::S3Errors::REQUEST_EXPIRED: return "REQUEST_EXPIRED";
-        case Aws::S3::S3Errors::SERVICE_UNAVAILABLE: return "SERVICE_UNAVAILABLE";
-        case Aws::S3::S3Errors::THROTTLING: return "THROTTLING";
-        case Aws::S3::S3Errors::VALIDATION: return "VALIDATION";
-        case Aws::S3::S3Errors::ACCESS_DENIED: return "ACCESS_DENIED";
-        case Aws::S3::S3Errors::RESOURCE_NOT_FOUND: return "RESOURCE_NOT_FOUND";
-        case Aws::S3::S3Errors::UNRECOGNIZED_CLIENT: return "UNRECOGNIZED_CLIENT";
-        case Aws::S3::S3Errors::MALFORMED_QUERY_STRING: return "MALFORMED_QUERY_STRING";
-        case Aws::S3::S3Errors::SLOW_DOWN: return "SLOW_DOWN";
-        case Aws::S3::S3Errors::REQUEST_TIME_TOO_SKEWED: return "REQUEST_TIME_TOO_SKEWED";
-        case Aws::S3::S3Errors::INVALID_SIGNATURE: return "INVALID_SIGNATURE";
-        case Aws::S3::S3Errors::SIGNATURE_DOES_NOT_MATCH: return "SIGNATURE_DOES_NOT_MATCH";
-        case Aws::S3::S3Errors::INVALID_ACCESS_KEY_ID: return "INVALID_ACCESS_KEY_ID";
-        case Aws::S3::S3Errors::REQUEST_TIMEOUT: return "REQUEST_TIMEOUT";
-        case Aws::S3::S3Errors::NETWORK_CONNECTION: return "NETWORK_CONNECTION";
-        case Aws::S3::S3Errors::BUCKET_ALREADY_EXISTS: return "BUCKET_ALREADY_EXISTS";
-        case Aws::S3::S3Errors::BUCKET_ALREADY_OWNED_BY_YOU: return "BUCKET_ALREADY_OWNED_BY_YOU";
-        case Aws::S3::S3Errors::ENCRYPTION_TYPE_MISMATCH: return "ENCRYPTION_TYPE_MISMATCH";
-        case Aws::S3::S3Errors::INVALID_OBJECT_STATE: return "INVALID_OBJECT_STATE";
-        case Aws::S3::S3Errors::INVALID_REQUEST: return "INVALID_REQUEST";
-        case Aws::S3::S3Errors::INVALID_WRITE_OFFSET: return "INVALID_WRITE_OFFSET";
-        case Aws::S3::S3Errors::NO_SUCH_BUCKET: return "NO_SUCH_BUCKET";
-        case Aws::S3::S3Errors::NO_SUCH_KEY: return "NO_SUCH_KEY";
-        case Aws::S3::S3Errors::NO_SUCH_UPLOAD: return "NO_SUCH_UPLOAD";
-        case Aws::S3::S3Errors::OBJECT_ALREADY_IN_ACTIVE_TIER: return "OBJECT_ALREADY_IN_ACTIVE_TIER";
-        case Aws::S3::S3Errors::OBJECT_NOT_IN_ACTIVE_TIER: return "OBJECT_NOT_IN_ACTIVE_TIER";
-        case Aws::S3::S3Errors::TOO_MANY_PARTS: return "TOO_MANY_PARTS";
-        default: return "UNKNOWN_ERROR";
-    }
-}
-
-
-ProtocolError S3Repository::ConstructProtocolError(const Aws::Client::AWSError<Aws::S3::S3Errors>& error, const std::string& context)
-{
-    std::string errorMessage;
-
-    if (!context.empty()) {
-        errorMessage += context + ": ";
-    }
-
-    auto msg = error.GetMessage();
-    if (msg.empty()) {
-        errorMessage += GetS3ErrorTypeString(error.GetErrorType());
-    } else {
-        errorMessage += msg;
-    }
-
-    return ProtocolError(errorMessage);
+	size_t pos = path.find_last_of('/');
+	return (pos == std::string::npos) ? path : path.substr(pos + 1);
 }
 
 std::vector<AWSFile> S3Repository::ListBuckets()
 {
-    Aws::S3::Model::ListBucketsRequest request;
-    Aws::String continuationToken;
-    std::vector<AWSFile> ls;
+	std::string body = SimpleRequest("GET", "", "", {}, "");
 
-    // ListBuckets only returns the first 1000 buckets, so we need to handle pagination using continuation tokens.
-    do {
-        if (!continuationToken.empty()) {
-            request.SetContinuationToken(continuationToken);
-        }
-        auto outcome = _client->ListBuckets(request);
-        if (outcome.IsSuccess()) {
-            const auto& buckets = outcome.GetResult().GetBuckets();
-            for (const auto& bucket : buckets) {
-                ls.push_back(AWSFile(bucket.GetName(), false, bucket.GetCreationDate(), 0));
-            }
-            continuationToken = outcome.GetResult().GetContinuationToken();
-        } else {
-            throw ConstructProtocolError(outcome.GetError(), "List buckets");
-        }
-    } while (!continuationToken.empty());
-
-    return ls;
+	std::vector<AWSFile> ls;
+	for (auto &item : XmlExtractAll(body, "Bucket")) {
+		std::string name = XmlExtract(item, "Name");
+		std::string date = XmlExtract(item, "CreationDate");
+		if (!name.empty()) {
+			ls.emplace_back(name, false, date, 0);
+		}
+	}
+	return ls;
 }
 
 std::vector<AWSFile> S3Repository::ListFolder(const std::string &path)
 {
-    Aws::S3::Model::ListObjectsV2Request request;
-    Aws::String continuationToken;
-    size_t prefixLen = 0;
+	Path localPath(path);
+	std::string continuation;
+	size_t prefix_len = 0;
 
-    auto localPath = Path(path);
-    request.SetBucket(localPath.bucket());
-    if (localPath.hasKey()) {
-        request.SetPrefix(localPath.keyWithSlash());
-        prefixLen = localPath.keyWithSlash().length();
-    }
+	std::string prefix;
+	if (localPath.hasKey()) {
+		prefix = localPath.keyWithSlash();
+		prefix_len = prefix.size();
+	}
 
-    request.SetDelimiter("/"); // Group common prefixes (directories)
+	std::vector<AWSFile> ls;
 
-    std::vector<AWSFile> ls;
-    // ListObjectsV2 only returns the first 1000 objects, so we need to handle pagination using continuation tokens.
-    do {
-        if (!continuationToken.empty()) {
-            request.SetContinuationToken(continuationToken);
-        }
+	do {
+		std::map<std::string, std::string> qp = {{"delimiter", "/"}, {"list-type", "2"}};
+		if (!prefix.empty()) qp["prefix"] = prefix;
+		if (!continuation.empty()) qp["continuation-token"] = continuation;
 
-        auto outcome = _client->ListObjectsV2(request);
+		std::string body = SimpleRequest("GET", localPath.bucket(), "", qp, "");
 
-        if (outcome.IsSuccess()) {
-            const auto& contents = outcome.GetResult().GetContents();  // Get the "files" under the prefix.
+		for (auto &item : XmlExtractAll(body, "Contents")) {
+			std::string full_key = XmlExtract(item, "Key");
+			if (full_key.size() <= prefix_len) continue;
+			std::string rel_key = full_key.substr(prefix_len);
+			if (rel_key == "/") continue;
+			if (rel_key.back() == '/') {
+				rel_key.pop_back();
+				if (rel_key.empty() || rel_key.find('/') != std::string::npos) continue;
+				ls.emplace_back(rel_key, false, "", 0);
+				continue;
+			}
+			if (rel_key.find('/') != std::string::npos) continue;
+			std::string date = XmlExtract(item, "LastModified");
+			long long   size = std::stoll(XmlExtract(item, "Size").empty() ? "0" : XmlExtract(item, "Size"));
+			ls.emplace_back(rel_key, true, date, size);
+		}
 
-            for (const auto& object : contents) {
-                Aws::String key = object.GetKey().substr(prefixLen);
-                ls.push_back(AWSFile(key, true, object.GetLastModified(), object.GetSize()));
-            }
+		for (auto &item : XmlExtractAll(body, "CommonPrefixes")) {
+			std::string p = XmlExtract(item, "Prefix");
+			if (p.size() <= prefix_len) continue;
+			p = p.substr(prefix_len);
+			if (!p.empty() && p.back() == '/') p.pop_back();
+			if (!p.empty()) ls.emplace_back(p, false, "", 0);
+		}
 
-            auto commonPrefixes = outcome.GetResult().GetCommonPrefixes(); // Get the "directories" under the prefix.
-            for (const auto& prefix : commonPrefixes) {
-                Aws::String dir = prefix.GetPrefix().substr(prefixLen);
-                dir.erase(dir.size() - 1); // Remove trailing slash
-                if (!dir.empty()) {
-                    ls.push_back(AWSFile(dir, false, Aws::Utils::DateTime(), 0));
-                }
-            }
+		continuation = XmlExtract(body, "NextContinuationToken");
+	} while (!continuation.empty());
 
-            continuationToken = outcome.GetResult().GetNextContinuationToken();
-
-        } else {
-            throw ConstructProtocolError(outcome.GetError(), "List dir");
-        }
-    } while (!continuationToken.empty());
-
-    return ls;
+	return ls;
 }
 
-bool S3Repository::IsFolder(const Path& localPath) {
-    Aws::S3::Model::ListObjectsV2Request listRequest;
-    listRequest.SetBucket(localPath.bucket());
-    listRequest.SetPrefix(localPath.keyWithSlash());
-    listRequest.SetMaxKeys(1);
-
-    auto listOutcome = _client->ListObjectsV2(listRequest);
-    if (listOutcome.IsSuccess()) {
-        return !listOutcome.GetResult().GetContents().empty();
-    }
-
-    return false;
+bool S3Repository::IsFolder(const Path &p)
+{
+	std::map<std::string, std::string> qp = {
+		{"list-type", "2"}, {"max-keys", "1"}, {"prefix", p.keyWithSlash()}
+	};
+	try {
+		std::string body = SimpleRequest("GET", p.bucket(), "", qp, "");
+		auto contents = XmlExtractAll(body, "Contents");
+		auto prefixes = XmlExtractAll(body, "CommonPrefixes");
+		return !contents.empty() || !prefixes.empty();
+	} catch (...) {
+		return false;
+	}
 }
 
 AWSFile S3Repository::GetFileInfo(const std::string &path)
 {
-    Path localPath(path);
+	Path localPath(path);
 
-    if (IsFolder(localPath) || localPath.key().empty()) {
-        return AWSFile(ExtractFileName(localPath.key()), false); // No modification date or size for folders
-    }
-    Aws::S3::Model::HeadObjectRequest request;
-	request.SetBucket(localPath.bucket());
-	request.SetKey(localPath.key());
-
-    auto outcome = _client->HeadObject(request);
-
-    if (outcome.IsSuccess()) {
-        const auto& object = outcome.GetResult();
-        return AWSFile(ExtractFileName(path), true, object.GetLastModified(), object.GetContentLength());
-	} else {
-        throw ConstructProtocolError(outcome.GetError(), "Access denied");
+	if (!localPath.hasKey()) {
+		return AWSFile(ExtractFileName(path), false);
 	}
 
+	try {
+		std::string uri_path = "/" + localPath.bucket() + "/" + localPath.key();
+		std::string payload_hash = S3SHA256Hex("");
+		auto auth_headers = S3SignRequest("HEAD", _endpoint, uri_path, {},
+		                                  payload_hash, _creds.region,
+		                                  _creds.access_key, _creds.secret_key);
+
+		char *escaped = ne_path_escape(uri_path.c_str());
+		std::string neon_path = escaped ? escaped : uri_path;
+		if (escaped) free(escaped);
+
+		ne_request *req = ne_request_create(_session->sess, "HEAD", neon_path.c_str());
+		if (!req) throw ProtocolError("HEAD request failed");
+
+		for (auto &h : auth_headers) {
+			ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+		}
+		if (!_useragent.empty()) {
+			ne_add_request_header(req, "User-Agent", _useragent.c_str());
+		}
+
+		int rc = ne_request_dispatch(req);
+		const char *cl_hdr  = ne_get_response_header(req, "Content-Length");
+		const char *lm_hdr  = ne_get_response_header(req, "Last-Modified");
+
+		const ne_status *status = ne_get_status(req);
+		int http_status = status ? status->code : 0;
+		std::string cl_val  = cl_hdr  ? cl_hdr  : "0";
+		std::string lm_val  = lm_hdr  ? lm_hdr  : "";
+		ne_request_destroy(req);
+
+		if (rc == NE_OK && http_status == 200) {
+			long long size = cl_val.empty() ? 0 : std::stoll(cl_val);
+			AWSFile f(ExtractFileName(path), true);
+			f.size = size;
+			f.modified.tv_sec  = 0;
+			f.modified.tv_nsec = 0;
+			return f;
+		}
+		if (http_status == 404) {
+			// Fall through to check if it's a folder
+		}
+	} catch (ProtocolAuthFailedError &) {
+		throw;
+	} catch (...) {}
+
+	if (IsFolder(localPath)) {
+		return AWSFile(ExtractFileName(path), false);
+	}
+
+	throw ProtocolError("No such file or directory: " + path);
 }
 
-std::string S3Repository::ExtractFileName(const std::string& path) {
-    size_t pos = path.find_last_of('/');
-    if (pos == std::string::npos) {
-        return path;
-    }
-    return path.substr(pos + 1);
-}
-
-std::shared_ptr<AWSFileWriter> S3Repository::GetUploader(const std::string& path)
+std::shared_ptr<AWSFileReader> S3Repository::GetDownloader(const std::string &path,
+                                                            unsigned long long position,
+                                                            unsigned long long size)
 {
-    Path localPath(path);
-    return std::make_shared<AWSFileWriter>(localPath.bucket(), localPath.key(), _client);
+	Path localPath(path);
+	return std::make_shared<AWSFileReader>(_session, _creds, _endpoint, _useragent,
+	                                       localPath.bucket(), localPath.key(),
+	                                       position, size);
 }
 
-std::shared_ptr<AWSFileReader> S3Repository::GetDownloader(const std::string& path, unsigned long long position, unsigned long long size)
+std::shared_ptr<AWSFileWriter> S3Repository::GetUploader(const std::string &path)
 {
-    Path localPath(path);
-    return std::make_shared<AWSFileReader>(_client, localPath.bucket(), localPath.key(), position, size);
+	Path localPath(path);
+	return std::make_shared<AWSFileWriter>(_session, _creds, _endpoint, _useragent,
+	                                       localPath.bucket(), localPath.key());
 }
 
-void S3Repository::CreateBucket(const std::string& bucket)
+void S3Repository::CreateBucket(const std::string &bucket)
 {
-    Aws::S3::Model::CreateBucketRequest request;
-    request.SetBucket(bucket);
-    auto outcome = _client->CreateBucket(request);
-
-    if (!outcome.IsSuccess()) {
-        throw ConstructProtocolError(outcome.GetError(), "Create bucket");
-    }
+	std::string body;
+	std::map<std::string, std::string> extra;
+	if (_creds.region != "us-east-1") {
+		body = "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+		       "<LocationConstraint>" + _creds.region + "</LocationConstraint>"
+		       "</CreateBucketConfiguration>";
+		extra["Content-Type"] = "application/xml";
+	}
+	SimpleRequest("PUT", bucket, "", {}, body, extra);
 }
 
-void S3Repository::CreateDirectory(const std::string& path)
+void S3Repository::CreateDirectory(const std::string &path)
 {
-    Path localPath(path);
-    Aws::S3::Model::PutObjectRequest request;
-    request.SetBucket(localPath.bucket());
-    request.SetKey(localPath.keyWithSlash());
-    request.SetBody(Aws::MakeShared<Aws::StringStream>(""));
-    auto outcome = _client->PutObject(request);
-
-    if (!outcome.IsSuccess()) {
-        throw ConstructProtocolError(outcome.GetError(), "Create dir");
-    }
+	Path localPath(path);
+	std::map<std::string, std::string> extra;
+	extra["Content-Type"] = "application/x-directory";
+	SimpleRequest("PUT", localPath.bucket(), localPath.keyWithSlash(), {}, "", extra);
 }
 
-void S3Repository::DeleteDirectory(const std::string& path)
+void S3Repository::DeleteDirectory(const std::string &path)
 {
-    Path localPath(path);
-    std::string folderKey = localPath.keyWithSlash();
+	Path localPath(path);
+	std::string prefix = localPath.hasKey() ? localPath.keyWithSlash() : "";
+	std::string continuation;
+	do {
+		std::map<std::string, std::string> qp = {{"list-type", "2"}};
+		if (!prefix.empty()) qp["prefix"] = prefix;
+		if (!continuation.empty()) qp["continuation-token"] = continuation;
 
-    for (auto val : ListFolder(path)) {
-        Aws::S3::Model::DeleteObjectRequest request;
-        request.SetBucket(localPath.bucket());
-        request.SetKey(folderKey + val.name);
-        auto outcome = _client->DeleteObject(request);
-        if (!outcome.IsSuccess()) {
-            throw ConstructProtocolError(outcome.GetError());
-        }
-    }
+		std::string body = SimpleRequest("GET", localPath.bucket(), "", qp, "");
 
-    if (localPath.key().empty()) {
-        Aws::S3::Model::DeleteBucketRequest request;
-        request.SetBucket(localPath.bucket());
-        auto outcome = _client->DeleteBucket(request);
-        if (!outcome.IsSuccess()) {
-            throw ConstructProtocolError(outcome.GetError());
-        }
-    }
+		for (auto &item : XmlExtractAll(body, "Contents")) {
+			std::string key = XmlExtract(item, "Key");
+			if (!key.empty()) {
+				SimpleRequest("DELETE", localPath.bucket(), key, {}, "");
+			}
+		}
+
+		continuation = XmlExtract(body, "NextContinuationToken");
+	} while (!continuation.empty());
+
+	if (localPath.key().empty()) {
+		SimpleRequest("DELETE", localPath.bucket(), "", {}, "");
+	}
 }
 
-void S3Repository::DeleteFile(const std::string& path)
+void S3Repository::DeleteFile(const std::string &path)
 {
-    Path localPath(path);
-    Aws::S3::Model::DeleteObjectRequest request;
-    request.SetBucket(localPath.bucket());
-    request.SetKey(localPath.key());
-    auto outcome = _client->DeleteObject(request);
-    if (!outcome.IsSuccess()) {
-        throw ConstructProtocolError(outcome.GetError());
-    }
+	Path localPath(path);
+	SimpleRequest("DELETE", localPath.bucket(), localPath.key(), {}, "");
 }
-

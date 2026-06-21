@@ -1,105 +1,260 @@
 #include "AWSFileWriter.h"
+#include "S3Auth.h"
+#include <neon/ne_uri.h>
+#include <cstdio>
+#include <cstring>
+#include <stdexcept>
+#include <map>
 
-AWSFileWriter::AWSFileWriter(const std::string& bucket, const std::string& key, const std::shared_ptr<Aws::S3::S3Client> client)
-    : _bucket(bucket), _key(key), _client(client), partNumber(1)
+struct WriteResponseCapture {
+	std::string body;
+	std::string header_name;
+	std::string header_value;
+
+	static int sBodyReader(void *ud, const char *buf, size_t len)
+	{
+		reinterpret_cast<WriteResponseCapture *>(ud)->body.append(buf, len);
+		return 0;
+	}
+};
+
+static void CheckXmlError(const std::string &body, const std::string &ctx)
 {
-    StartMultipartUpload();
+	std::string code, msg;
+	auto extract = [&](const std::string &tag) -> std::string {
+		std::string o = "<" + tag + ">", c = "</" + tag + ">";
+		auto s = body.find(o);
+		if (s == std::string::npos) return "";
+		s += o.size();
+		auto e = body.find(c, s);
+		return (e == std::string::npos) ? "" : body.substr(s, e - s);
+	};
+	code = extract("Code");
+	msg  = extract("Message");
+	if (code == "AccessDenied" || code == "InvalidAccessKeyId" ||
+	    code == "SignatureDoesNotMatch") {
+		throw ProtocolAuthFailedError(code + ": " + msg);
+	}
+	if (!code.empty()) {
+		throw ProtocolError((ctx.empty() ? code : ctx + ": " + code) +
+		                    (msg.empty() ? "" : " - " + msg));
+	}
+}
+
+std::string AWSFileWriter::DoRequest(const std::string &method,
+                                     const std::string &path,
+                                     const std::map<std::string, std::string> &query_params,
+                                     const std::string &body,
+                                     const std::string &capture_response_header)
+{
+	std::string payload_hash = S3SHA256Hex(body);
+	auto auth_headers = S3SignRequest(method, _endpoint, path, query_params,
+	                                  payload_hash, _creds.region,
+	                                  _creds.access_key, _creds.secret_key);
+
+	char *escaped = ne_path_escape(path.c_str());
+	std::string neon_path = escaped ? escaped : path;
+	if (escaped) free(escaped);
+	std::string query_str = BuildQueryString(query_params);
+	if (!query_str.empty()) neon_path += "?" + query_str;
+
+	WriteResponseCapture cap;
+	cap.header_name = capture_response_header;
+
+	ne_request *req = ne_request_create(_session->sess, method.c_str(), neon_path.c_str());
+	if (!req) throw ProtocolError("Failed to create neon request");
+
+	for (auto &h : auth_headers) {
+		ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+	}
+	if (!_useragent.empty()) {
+		ne_add_request_header(req, "User-Agent", _useragent.c_str());
+	}
+
+	std::string body_copy = body;
+	if (!body_copy.empty()) {
+		ne_set_request_body_buffer(req, body_copy.c_str(), body_copy.size());
+		char cl[32];
+		snprintf(cl, sizeof(cl), "%zu", body_copy.size());
+		ne_add_request_header(req, "Content-Length", cl);
+	} else if (method == "POST") {
+		ne_add_request_header(req, "Content-Length", "0");
+	}
+
+	ne_add_response_body_reader(req, ne_accept_always, WriteResponseCapture::sBodyReader, &cap);
+	int rc = ne_request_dispatch(req);
+
+	if (!capture_response_header.empty()) {
+		const char *hv = ne_get_response_header(req, capture_response_header.c_str());
+		if (hv) cap.header_value = hv;
+	}
+
+	ne_request_destroy(req);
+
+	if (rc != NE_OK) {
+		const char *err = ne_get_error(_session->sess);
+		throw ProtocolError(err ? err : "S3 write request failed");
+	}
+
+	CheckXmlError(cap.body, method + " " + path);
+
+	return capture_response_header.empty() ? cap.body : cap.header_value;
+}
+
+AWSFileWriter::AWSFileWriter(std::shared_ptr<S3Session> session,
+                             const S3Credentials &creds,
+                             const std::string &endpoint,
+                             const std::string &useragent,
+                             const std::string &bucket,
+                             const std::string &key)
+	: _session(std::move(session)), _creds(creds), _endpoint(endpoint),
+	  _useragent(useragent), _bucket(bucket), _key(key)
+{
+	StartMultipartUpload();
 }
 
 AWSFileWriter::~AWSFileWriter()
 {
-    try {
-        CompleteMultipartUpload();
-    } catch (const std::exception& e) {
-        AbortMultipartUpload();
-    }
+	if (!_completed && !_aborted) {
+		try {
+			AbortMultipartUpload();
+		} catch (...) {}
+	}
 }
 
-void AWSFileWriter::StartMultipartUpload() {
-    Aws::S3::Model::CreateMultipartUploadRequest request;
-    request.SetBucket(_bucket);
-    request.SetKey(_key);
-
-    auto outcome = _client->CreateMultipartUpload(request);
-    if (!outcome.IsSuccess()) {
-        throw ProtocolError("Failed upload: " + outcome.GetError().GetMessage());
-    }
-
-    uploadId = outcome.GetResult().GetUploadId();
+void AWSFileWriter::StartMultipartUpload()
+{
+	std::string path = "/" + _bucket + "/" + _key;
+	std::string body = DoRequest("POST", path, {{"uploads", ""}}, "");
+	// Parse <UploadId>
+	std::string o = "<UploadId>", c = "</UploadId>";
+	auto s = body.find(o);
+	if (s == std::string::npos) throw ProtocolError("CreateMultipartUpload: no UploadId in response");
+	s += o.size();
+	auto e = body.find(c, s);
+	if (e == std::string::npos) throw ProtocolError("CreateMultipartUpload: malformed response");
+	_upload_id = body.substr(s, e - s);
 }
 
-void AWSFileWriter::Write(const void* buf, size_t len) {
-    const char* data = static_cast<const char*>(buf);
-    buffer.insert(buffer.end(), data, data + len);
+void AWSFileWriter::FlushPart()
+{
+	if (_buffer.empty()) return;
 
-    if (buffer.size() >= maxPartSize) {
-        UploadPart();
-    }
+	std::string path = "/" + _bucket + "/" + _key;
+	std::map<std::string, std::string> qp = {
+		{"partNumber", std::to_string(_part_number)},
+		{"uploadId",   _upload_id}
+	};
+	std::string body(_buffer.data(), _buffer.size());
+
+	std::string payload_hash = S3SHA256Hex(body.data(), body.size());
+	auto auth_headers = S3SignRequest("PUT", _endpoint, path, qp,
+	                                  payload_hash, _creds.region,
+	                                  _creds.access_key, _creds.secret_key);
+
+	char *escaped = ne_path_escape(path.c_str());
+	std::string neon_path = (escaped ? escaped : path) + "?" + BuildQueryString(qp);
+	if (escaped) free(escaped);
+
+	WriteResponseCapture cap;
+	cap.header_name = "ETag";
+
+	ne_request *req = ne_request_create(_session->sess, "PUT", neon_path.c_str());
+	if (!req) throw ProtocolError("Failed to create PUT part request");
+
+	for (auto &h : auth_headers) {
+		ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+	}
+	if (!_useragent.empty()) {
+		ne_add_request_header(req, "User-Agent", _useragent.c_str());
+	}
+	ne_set_request_body_buffer(req, _buffer.data(), _buffer.size());
+	char cl[32];
+	snprintf(cl, sizeof(cl), "%zu", _buffer.size());
+	ne_add_request_header(req, "Content-Length", cl);
+	ne_add_response_body_reader(req, ne_accept_always, WriteResponseCapture::sBodyReader, &cap);
+
+	int rc = ne_request_dispatch(req);
+
+	const char *etag_hdr = ne_get_response_header(req, "ETag");
+	std::string etag = etag_hdr ? etag_hdr : "";
+	ne_request_destroy(req);
+
+	if (rc != NE_OK) {
+		const char *err = ne_get_error(_session->sess);
+		throw ProtocolError(err ? err : "UploadPart failed");
+	}
+	CheckXmlError(cap.body, "UploadPart");
+	if (etag.empty()) throw ProtocolError("UploadPart: missing ETag in response");
+
+	_etags.push_back(etag);
+	++_part_number;
+	_buffer.clear();
+}
+
+void AWSFileWriter::CompleteMultipartUpload()
+{
+	if (_buffer.size() > 0) FlushPart();
+	if (_etags.empty()) {
+		std::string path = "/" + _bucket + "/" + _key;
+		std::map<std::string, std::string> qp = {{"partNumber", "1"}, {"uploadId", _upload_id}};
+		std::string payload_hash = S3SHA256Hex("");
+		auto auth_headers = S3SignRequest("PUT", _endpoint, path, qp,
+		                                  payload_hash, _creds.region,
+		                                  _creds.access_key, _creds.secret_key);
+		char *escaped = ne_path_escape(path.c_str());
+		std::string neon_path = (escaped ? escaped : path) + "?" + BuildQueryString(qp);
+		if (escaped) free(escaped);
+
+		WriteResponseCapture cap;
+		ne_request *req = ne_request_create(_session->sess, "PUT", neon_path.c_str());
+		if (!req) throw ProtocolError("Failed to create zero-byte part request");
+		for (auto &h : auth_headers) {
+			ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+		}
+		ne_add_request_header(req, "Content-Length", "0");
+		ne_add_response_body_reader(req, ne_accept_always, WriteResponseCapture::sBodyReader, &cap);
+		int rc = ne_request_dispatch(req);
+		const char *etag_hdr = ne_get_response_header(req, "ETag");
+		std::string etag = etag_hdr ? etag_hdr : "";
+		ne_request_destroy(req);
+		if (rc != NE_OK || etag.empty()) throw ProtocolError("UploadPart(0) failed");
+		_etags.push_back(etag);
+	}
+
+	std::string xml = "<CompleteMultipartUpload>";
+	for (size_t i = 0; i < _etags.size(); ++i) {
+		xml += "<Part><PartNumber>" + std::to_string(i + 1) +
+		       "</PartNumber><ETag>" + _etags[i] + "</ETag></Part>";
+	}
+	xml += "</CompleteMultipartUpload>";
+
+	std::string path = "/" + _bucket + "/" + _key;
+	DoRequest("POST", path, {{"uploadId", _upload_id}}, xml);
+	_completed = true;
+}
+
+void AWSFileWriter::AbortMultipartUpload()
+{
+	if (_upload_id.empty()) return;
+	try {
+		std::string path = "/" + _bucket + "/" + _key;
+		DoRequest("DELETE", path, {{"uploadId", _upload_id}}, "");
+	} catch (...) {}
+	_aborted = true;
+}
+
+void AWSFileWriter::Write(const void *buf, size_t len)
+{
+	if (len == 0) return;
+	const char *data = reinterpret_cast<const char *>(buf);
+	_buffer.insert(_buffer.end(), data, data + len);
+	if (_buffer.size() >= MAX_PART_SIZE) {
+		FlushPart();
+	}
 }
 
 void AWSFileWriter::WriteComplete()
 {
-    CompleteMultipartUpload();
-}
-
-void AWSFileWriter::UploadPart() {
-    if (buffer.empty()) {
-        return;
-    }
-
-    Aws::S3::Model::UploadPartRequest request;
-    request.SetBucket(_bucket);
-    request.SetKey(_key);
-    request.SetUploadId(uploadId);
-    request.SetPartNumber(partNumber);
-
-    auto stream = Aws::MakeShared<Aws::StringStream>("S3MultipartWriter");
-    stream->write(buffer.data(), buffer.size());
-    stream->flush();
-
-    request.SetBody(stream);
-    request.SetContentLength(static_cast<long>(buffer.size()));
-
-    auto outcome = _client->UploadPart(request);
-    if (!outcome.IsSuccess()) {
-        throw ProtocolError(outcome.GetError().GetMessage());
-    }
-
-    Aws::S3::Model::CompletedPart part;
-    part.SetETag(outcome.GetResult().GetETag());
-    part.SetPartNumber(partNumber);
-    completedParts.push_back(part);
-
-    ++partNumber;
-
-    buffer.clear();
-}
-
-void AWSFileWriter::CompleteMultipartUpload() {
-    if (!buffer.empty()) {
-        UploadPart();
-    }
-
-    Aws::S3::Model::CompleteMultipartUploadRequest request;
-    request.SetBucket(_bucket);
-    request.SetKey(_key);
-    request.SetUploadId(uploadId);
-
-    Aws::S3::Model::CompletedMultipartUpload completedUpload;
-    completedUpload.SetParts(completedParts);
-    request.SetMultipartUpload(completedUpload);
-
-    auto outcome = _client->CompleteMultipartUpload(request);
-    if (!outcome.IsSuccess()) {
-        throw ProtocolError("Failed: " + outcome.GetError().GetMessage());
-    }
-}
-
-void AWSFileWriter::AbortMultipartUpload() {
-    Aws::S3::Model::AbortMultipartUploadRequest request;
-    request.SetBucket(_bucket);
-    request.SetKey(_key);
-    request.SetUploadId(uploadId);
-
-    _client->AbortMultipartUpload(request);
+	CompleteMultipartUpload();
 }

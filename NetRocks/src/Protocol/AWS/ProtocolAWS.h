@@ -1,25 +1,19 @@
 #pragma once
 #include <memory>
 #include <string>
-#include <map>
 #include "../Protocol.h"
 #include "S3Repository.h"
 
-class ProtocolAWS : public IProtocol, public std::enable_shared_from_this<ProtocolAWS>
+class ProtocolAWS : public IProtocol
 {
-	std::string _host;
-
-private:
-    std::shared_ptr<S3Repository> _repository;
+	std::shared_ptr<S3Repository> _repository;
 
 	static std::string RootedPath(const std::string &path);
 
 public:
-
-	ProtocolAWS(const std::string &host, unsigned int port,const std::string &username, const std::string &password, const std::string &protocol_options);
-	virtual ~ProtocolAWS();
-
-	const std::vector<std::string> &EnumHosts();
+	ProtocolAWS(const std::string &host, unsigned int port, const std::string &username,
+	            const std::string &password, const std::string &protocol_options);
+	virtual ~ProtocolAWS() = default;
 
 	virtual mode_t GetMode(const std::string &path, bool follow_symlink = true);
 	virtual unsigned long long GetSize(const std::string &path, bool follow_symlink = true);

@@ -196,8 +196,8 @@ if (LIBNEON_FOUND AND ((NOT DEFINED NR_AWS) OR NR_AWS))
         src/Protocol/AWS/S3Auth.cpp
         src/Protocol/AWS/ProtocolAWS.cpp
     )
-    target_include_directories(NetRocks-AWS PRIVATE src ${LIBNEON_INCLUDE_DIRS})
-    target_link_libraries(NetRocks-AWS utils ${LIBNEON_LIBRARIES} ssl crypto)
+    target_include_directories(NetRocks-AWS PRIVATE src ${LIBNEON_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries(NetRocks-AWS utils ${LIBNEON_LIBRARIES} ${OPENSSL_LIBRARIES})
 
     set_target_properties(NetRocks-AWS
         PROPERTIES

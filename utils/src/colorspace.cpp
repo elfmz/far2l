@@ -569,12 +569,8 @@ iRGB ConvertForPrintLAB(const iRGB& afg, const iRGB& abg) {
     RGB fg = toRGB(afg);
     RGB bg = toRGB(abg);
 
-    double X, Y, Z;
-    RGBtoXYZ(fg, X, Y, Z);
-    LAB lab = XYZtoLAB(X, Y, Z);
-
-    RGBtoXYZ(bg, X, Y, Z);
-    LAB labBg = XYZtoLAB(X, Y, Z);
+    LAB lab = RGBtoLAB(fg);
+    LAB labBg = RGBtoLAB(bg);
 
     double deltaL = lab.L - labBg.L;
 
@@ -597,8 +593,8 @@ iRGB ConvertForPrintLAB(const iRGB& afg, const iRGB& abg) {
     lab.b *= 0.7;
 
     // Step 4: LAB → RGB
-    LABtoXYZ(lab, X, Y, Z);
-    return XYZtoRGB(X, Y, Z);
+    RGB cc = LABtoRGB(lab);
+    return toIRGB(cc);
 }
 
 RGB toRGB(const iRGB& c) {
@@ -642,7 +638,7 @@ double Luminance(const RGB& c)
 HoverResult ComputeControlAccent(const RGB& fg, const RGB& bg)
 {
     double lum_bg = Luminance(bg);
-    bool dark_theme = (lum_bg < 0.5);
+    bool dark_theme = (lum_bg < 0.3) || IsNearBlack(bg);
 
     RGB accent = dark_theme
         ? toRGB( 215, 140, 0 )    // toRGB(80, 140, 255)   // bright blue for dark theme / toRGB( 215, 140, 0 ) orange toRGB(0x7F, 0x4F, 0x8C) violet
@@ -708,4 +704,195 @@ HoverResult ComputeControlAccent(const RGB& fg, const RGB& bg)
         : toRGB( 255, 255, 255 );
 
     return HoverResult { glyph_bg, glyph_fg };
+}
+
+bool IsNearBlack(int r, int g, int b, double threshold)
+{
+    double L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return L < 32.0;
+}
+
+bool IsNearWhite(int r, int g, int b, double threshold)
+{
+    double L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return L > (255.0 - threshold);
+}
+
+bool IsNearBlack(RGB c, double threshold) {
+	iRGB i = toIRGB(c);
+	return IsNearBlack(i.r, i.g, i.b, threshold);
+}
+
+bool IsNearWhite(RGB c, double threshold) {
+	iRGB i = toIRGB(c);
+	return IsNearWhite(i.r, i.g, i.b, threshold);
+}
+
+double Chroma(const LAB& lab)
+{
+    return std::sqrt(lab.a*lab.a + lab.b*lab.b);
+}
+
+// E8 CA EF
+
+iRGB SoftenBlackish_LAB(const RGB& cc) {
+    LAB lab = RGBtoLAB(cc);
+
+    double L_min = 10.0;
+    double L_max = 80.0;
+
+    // if (lab.L <= L_max && lab.L >= L_min)
+    //    return toIRGB(cc);
+
+    double C_neutral = 25.0;
+    double L_target = lab.L < L_min ? 60.0 : 30.0;
+
+    double C = std::sqrt(lab.a*lab.a + lab.b*lab.b);
+    //double k = 1.0 - std::min(C / C_neutral, 1.0);
+    //if (k <= 0.0)
+    //    return toIRGB(cc); // colorful bright color: keep it
+
+    double k = exp(-(C / C_neutral) * (C / C_neutral));
+
+    // You can use linear or quadratic; here: quadratic for smoother feel
+    double t = lab.L < L_min ? (L_min - lab.L) / L_min : (lab.L - L_max) / (100.0 - L_max); // how far into "white"/"black" we are
+    double strength = k * t * t; // stronger for true white, weaker near threshold
+
+    lab.L = lab.L + (L_target - lab.L) * strength;
+
+    RGB c2 = LABtoRGB(lab);
+    return toIRGB(c2);
+}
+
+RGB SoftenToDisabledState_LAB(const RGB& cc,
+                     double L_center,   // target mid-gray center
+                     double L_strength,  // how strongly to pull L toward center
+                     double C_strength)  // how strongly to desaturate
+{
+    LAB lab = RGBtoLAB(cc);
+
+    // 1. Reduce chroma (desaturate)
+    double C = std::sqrt(lab.a*lab.a + lab.b*lab.b);
+    if (C > 0.0)
+    {
+        double scale = 1.0 - C_strength; // e.g. 0.3 keeps 30% of chroma
+        lab.a *= scale;
+        lab.b *= scale;
+    }
+
+    // 2. Pull L toward a neutral mid-gray
+    //    L_center = 60 is a good universal disabled tone
+    lab.L = lab.L + (L_center - lab.L) * L_strength;
+
+    return LABtoRGB(lab);
+}
+
+RGB SoftenToHoverState_LAB(const RGB& cc,
+	const RGB& tintR, // default light blue
+	double L_boost,   // +10% brightness
+	double C_boost,   // +20% chroma
+	double tint_max,  // max tint for pure black/white
+	double tint_min,  // min tint for slightly neutral colors
+	double C_neutral) // chroma threshold for "neutral"
+{
+    LAB lab = RGBtoLAB(cc);
+    LAB tint = RGBtoLAB(tintR);
+
+    // 1. Brightness boost
+    lab.L = lab.L + (100.0 - lab.L) * L_boost;
+
+    // 2. Chroma boost
+    double C = std::sqrt(lab.a*lab.a + lab.b*lab.b);
+    if (C > 0.0)
+    {
+        double scale = 1.0 + C_boost;
+        lab.a *= scale;
+        lab.b *= scale;
+    }
+
+    // 3. Tint injection for neutral colors
+    //    Stronger tint for lower chroma
+    double chromaFactor = std::min(C / C_neutral, 1.0); // 0 = neutral, 1 = colorful
+    double tint_strength =
+        tint_max - (tint_max - tint_min) * chromaFactor;
+
+    if (tint_strength > 0.0)
+    {
+        lab.L = lab.L + (tint.L - lab.L) * tint_strength;
+        lab.a = lab.a + (tint.a - lab.a) * tint_strength;
+        lab.b = lab.b + (tint.b - lab.b) * tint_strength;
+    }
+    return LABtoRGB(lab);
+}
+
+RGB SoftenToFocusedState_LAB(const RGB& cc,
+	const RGB& focusTintR, // subtle blue-violet
+	double L_boost,   // +5% brightness
+	double C_boost,   // +30% chroma
+	double tint_max,  // max tint for pure neutrals
+	double tint_min,  // min tint for slightly neutral colors
+	double C_neutral) // chroma threshold for "neutral"
+{
+    LAB lab = RGBtoLAB(cc);
+    LAB focusTint = RGBtoLAB(focusTintR);
+
+    // 1. Slight brightness boost (less than hover)
+    lab.L = lab.L + (100.0 - lab.L) * L_boost;
+
+    // 2. Stronger chroma boost (focus should feel crisp)
+    double C = std::sqrt(lab.a*lab.a + lab.b*lab.b);
+    if (C > 0.0)
+    {
+        double scale = 1.0 + C_boost;
+        lab.a *= scale;
+        lab.b *= scale;
+    }
+
+    // 3. Tint injection for neutral colors (but less playful than hover)
+    double chromaFactor = std::min(C / C_neutral, 1.0);
+    double tint_strength =
+        tint_max - (tint_max - tint_min) * chromaFactor;
+
+    if (tint_strength > 0.0)
+    {
+        lab.L = lab.L + (focusTint.L - lab.L) * tint_strength;
+        lab.a = lab.a + (focusTint.a - lab.a) * tint_strength;
+        lab.b = lab.b + (focusTint.b - lab.b) * tint_strength;
+    }
+    return LABtoRGB(lab);
+}
+
+RGB SoftenToPressedState_LAB(const RGB& fg,
+	const RGB& bgC,          // background LAB
+	double L_push,   // how strongly to push toward background L*
+	double C_reduce, // reduce chroma by 40%
+	double neutral_tint, // tint neutrals toward bg
+	double C_neutral)    // threshold for “neutral”
+{
+    LAB lab = RGBtoLAB(fg);
+    LAB bg = RGBtoLAB(bgC);
+
+    // 1. Move L* toward background (darken on light bg, lighten on dark bg)
+    lab.L = lab.L + (bg.L - lab.L) * L_push;
+
+    // 2. Reduce chroma (pressed = less colorful)
+    double C = std::sqrt(lab.a*lab.a + lab.b*lab.b);
+    if (C > 0.0)
+    {
+        double scale = 1.0 - C_reduce; // e.g. 0.6 keeps 60% of chroma
+        lab.a *= scale;
+        lab.b *= scale;
+    }
+
+    // 3. If color is neutral-ish, tint toward background hue
+    double chromaFactor = std::min(C / C_neutral, 1.0);
+    double tint_strength = neutral_tint * (1.0 - chromaFactor);
+
+    if (tint_strength > 0.0)
+    {
+        lab.L = lab.L + (bg.L - lab.L) * tint_strength;
+        lab.a = lab.a + (bg.a - lab.a) * tint_strength;
+        lab.b = lab.b + (bg.b - lab.b) * tint_strength;
+    }
+    return LABtoRGB(lab);
 }

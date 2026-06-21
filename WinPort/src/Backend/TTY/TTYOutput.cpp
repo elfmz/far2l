@@ -583,7 +583,7 @@ void TTYOutput::SendOSC52ClipSet(const std::string &clip_data, bool is_primary_b
 
 void TTYOutput::SendOSC52ClipRequest(bool is_primary_buffer) {
 	std::string request = is_primary_buffer ? ESC "]52;p;?\a" : ESC "]52;c;?\a";; 
-	fprintf(stderr, "TTY: SendOSC52ClipRequest %s\n", request.c_str());
+	// fprintf(stderr, "TTY: SendOSC52ClipRequest %s\n", request.c_str());
 	Write(request.c_str(), request.size());
 }
 

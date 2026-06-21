@@ -3840,7 +3840,7 @@ int Editor::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 	}
 
 	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0) {
-		if (MouseSelStartingLine!= -1) AutoGrabToClipboard();
+		if (MouseSelStartingLine!= -1 && (VBlockStart || BlockStart)) AutoGrabToClipboard();
 	}
 
 	if ((MouseEvent->dwButtonState & FROM_LEFT_1ST_BUTTON_PRESSED) == 0 && !IsMouseButtonPressed()) {

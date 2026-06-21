@@ -125,7 +125,7 @@ class TTYInputSequenceParser
 	
 	bool _chunk_mode = false;
 	std::string _chunk_osc52_text;
-	bool _is_primary_buffer;
+	bool _is_primary_buffer {false};
 
 	//bit indicators for modifier keys in mouse input sequence
 	const unsigned int

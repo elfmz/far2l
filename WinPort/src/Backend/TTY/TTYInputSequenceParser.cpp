@@ -382,38 +382,33 @@ size_t TTYInputSequenceParser::ParseEscapeSequence(const char *s, size_t l)
 
 	// VK: osc52 get clipboard data
 	// ESC "[52;" [p|c|] ";" [Base64_Data] "\a"
-	if (l > 5 && s[0] == '[' && s[1] == '5' && s[2] == '2' && s[3] == ';') {
-		fprintf(stderr, "TTYInputSequenceParser: arrived answer to OSC52 get: %ld bytes, %.10s\n", l, s);
+	if (l > 6 && s[0] == '[' && s[1] == '5' && s[2] == '2' && s[3] == ';' && s[5] == ';') {
+		// fprintf(stderr, "TTYInputSequenceParser: arrived answer to OSC52 get: %ld bytes, %.10s\n", l, s);
 		// here we need to grab data until it arrived or until it completed to \a
 		// if \a is here, wehave fuill data arrived, return length and call handler
 		// if not, remember the piece, return TTY_PARSED_CHUNK and wait for next portion
 		_chunk_osc52_text = "";
 		_is_primary_buffer = s[4] == 'p' || s[4] == 'P';
 
-		fprintf(stderr, "TTYInputSequenceParser: buffer type=%c\n", _is_primary_buffer ? 'P' : 'C');
+		const char* start_pos = s + 6; // skip "[52;" [p|c|] ";", so the end till \a is payload
 
-		const char* v = s;
-		while(*v != ';') ++v;
-		for(++v; *v != ';'; ++v);
-
-        const char* start_pos = v + 1;
-        fprintf(stderr, "TTYInputSequenceParser: skipped %ld bytes header\n", (size_t)(start_pos - s) );
-		for(; *v != '\a' && v - s <= l; ++v) ;
+		const char* v = start_pos;
+		for(; *v != '\a' && v - s <= (long)l; ++v) ;
 		if(*v == '\a') {
 			// no chunks
-			fprintf(stderr, "TTYInputSequenceParser: arrived base64 %ld bytes\n", (size_t) (v - start_pos - 1) );
+			// fprintf(stderr, "TTYInputSequenceParser: arrived base64 %ld bytes\n", (size_t) (v - start_pos - 1) );
 			_chunk_osc52_text = std::string(start_pos, v - start_pos - 1);
 			size_t bytes = (size_t) (v - start_pos - 1);
-			fprintf(stderr, "TTYInputSequenceParser: arrived base64 %ld bytes\n", bytes );
+			// fprintf(stderr, "TTYInputSequenceParser: arrived base64 %ld bytes\n", bytes );
 			_handler->OnOSC52PasteReply(_chunk_osc52_text, _is_primary_buffer);
-			fprintf(stderr, "TTYInputSequenceParser: notified about arrival\n" );
+			// fprintf(stderr, "TTYInputSequenceParser: notified about arrival\n" );
 			_is_primary_buffer = false;
 			_chunk_osc52_text = "";
-			fprintf(stderr, "TTYInputSequenceParser: consumed %ld bytes pack\n", (size_t) (v - s + 1) );
+			// fprintf(stderr, "TTYInputSequenceParser: consumed %ld bytes pack\n", (size_t) (v - s + 1) );
 			return v - s + 1;
 		}
 		else {
-			fprintf(stderr, "TTYInputSequenceParser: not enough %ld buytres, chunk mode = ON\n", (size_t) (v - start_pos - 1) );
+			// fprintf(stderr, "TTYInputSequenceParser: not enough %ld buytres, chunk mode = ON\n", (size_t) (v - start_pos - 1) );
 			_chunk_osc52_text = std::string(start_pos, l - (start_pos - s));
 			return TTY_PARSED_CHUNK;
 		}
@@ -577,7 +572,7 @@ size_t TTYInputSequenceParser::Parse(const char *s, size_t l, bool idle_expired)
 	// VK: and if new chubnk is consumed compkertely, let know we need more;
 	// otherwise eat the prefix till \a, call handler and let work as usual
 	if (_chunk_mode) {
-		fprintf(stderr, "TTYInputSequenceParser: chunk mode ON, arrived new portion %ld bytes\n", l);
+		// fprintf(stderr, "TTYInputSequenceParser: chunk mode ON, arrived new portion %ld bytes\n", l);
 		const char* v = strnchr(s, l, '\a');
 		if (!v) {
 			_chunk_osc52_text += std::string(s, l);

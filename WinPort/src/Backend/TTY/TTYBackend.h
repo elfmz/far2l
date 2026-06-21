@@ -132,7 +132,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	std::condition_variable _ae_idle_wait_cond;
 
 	std::string _osc52clip;
-	bool _osc52clip_is_primary;
+	bool _osc52clip_is_primary {false};
 	std::atomic<int> _initial_cursor_shape{-1};
 
 	ClipboardBackendSetter _clipboard_backend_setter;
@@ -157,7 +157,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 protected:
 	// IOSC52Interactor
 	virtual void OSC52SetClipboard(const char *text, bool is_primary_buffer);
-	virtual const char* OSC52RequestClipboardData(bool is_primary_buffer);
+	virtual std::string OSC52RequestClipboardData(bool is_primary_buffer);
 
 	// IFar2lInteractor
 	virtual bool Far2lInteract(StackSerializer &stk_ser, bool wait);

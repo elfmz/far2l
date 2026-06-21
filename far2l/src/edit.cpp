@@ -71,6 +71,34 @@ enum
 };
 static const wchar_t *EOL_TYPE_CHARS[] = {L"", L"\r", L"\n", L"\r\n", L"\r\r\n"};
 
+bool TranslateInsertKey(FarKey &Key)
+{
+	switch (Key) {
+		case KEY_ADD:
+			Key = L'+';
+			return true;
+		case KEY_SUBTRACT:
+			Key = L'-';
+			return true;
+		case KEY_MULTIPLY:
+			Key = L'*';
+			return true;
+		case KEY_DIVIDE:
+			Key = L'/';
+			return true;
+		case KEY_DECIMAL:
+			Key = L'.';
+			return true;
+		case KEY_SHIFTSPACE:
+			Key = L' ';
+			return true;
+		case KEY_TAB:
+			return true;
+		default:
+			return Key >= L' ' && WCHAR_IS_VALID(Key);
+	}
+}
+
 #define EDMASK_ANY    L'X'		// позволяет вводить в строку ввода любой символ;
 #define EDMASK_DSS    L'#'		// позволяет вводить в строку ввода цифры, пробел и знак минуса;
 #define EDMASK_DIGIT  L'9'		// позволяет вводить в строку ввода только цифры;
@@ -747,22 +775,9 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 int Edit::ProcessKey(FarKey Key)
 {
+	TranslateInsertKey(Key);
+
 	switch (Key) {
-		case KEY_ADD:
-			Key = L'+';
-			break;
-		case KEY_SUBTRACT:
-			Key = L'-';
-			break;
-		case KEY_MULTIPLY:
-			Key = L'*';
-			break;
-		case KEY_DIVIDE:
-			Key = L'/';
-			break;
-		case KEY_DECIMAL:
-			Key = L'.';
-			break;
 		case KEY_CTRLC:
 			Key = KEY_CTRLINS;
 			break;
@@ -859,7 +874,9 @@ int Edit::ProcessKey(FarKey Key)
 		return TRUE;
 	}
 
-	if (Key != KEY_NONE && Key != KEY_IDLE && Key != KEY_SHIFTINS && Key != KEY_SHIFTNUMPAD0 && Key != KEY_CTRLINS
+	if (Flags.Check(FEDITLINE_CLEARFLAG)
+			&& Key != KEY_NONE && Key != KEY_IDLE && Key != KEY_SHIFTINS && Key != KEY_SHIFTNUMPAD0
+			&& Key != KEY_CTRLINS
 			&& ((unsigned int)Key < KEY_F1 || (unsigned int)Key > KEY_F12) && Key != KEY_ALT && Key != KEY_SHIFT
 			&& Key != KEY_CTRL && Key != KEY_RALT && Key != KEY_RCTRL && (Key < KEY_ALT_BASE || Key > KEY_ALT_BASE + 0xFFFF)
 			&& !( Key & (KEY_ALT | KEY_RALT) )
@@ -1435,9 +1452,6 @@ int Edit::ProcessKey(FarKey Key)
 			Show();
 			return TRUE;
 		}
-		case KEY_SHIFTSPACE:
-			Key = KEY_SPACE;
-			[[fallthrough]];
 		default: {
 			//			_D(SysLog(L"Key=0x%08X",Key));
 			if (Key == KEY_ENTER || !IS_KEY_NORMAL(Key))	// KEY_NUMENTER,KEY_IDLE,KEY_NONE covered by !IS_KEY_NORMAL
@@ -1629,6 +1643,18 @@ int Edit::GetVisualLineCount() const
 	if (!m_bWordWrapState || m_WrapBreaks.empty())
 		return 1;
 	return m_WrapBreaks.size();
+}
+
+int Edit::FindVisualLine(int Pos) const
+{
+	if (!m_bWordWrapState || m_WrapBreaks.empty())
+		return 0;
+
+	if (Pos <= 0)
+		return 0;
+
+	const auto it = std::upper_bound(m_WrapBreaks.begin(), m_WrapBreaks.end(), Pos);
+	return std::max(0, static_cast<int>(it - m_WrapBreaks.begin()) - 1);
 }
 
 void Edit::GetVisualLine(int line, int& start, int& end) const

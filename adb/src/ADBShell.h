@@ -35,6 +35,8 @@ public:
 
     // Exit code from most recent shellCommand's END marker; -1 if unparseable (timeout / broken session).
     int lastExitCode() const { return _last_exit_code.load(); }
+    // Exit code of the most recent adbExecWithProgress() child process; -1 if unset / signal.
+    static int lastPtyExit() { return _last_pty_exit.load(); }
 
 private:
     std::string _device_serial;
@@ -44,6 +46,7 @@ private:
     bool _is_running;
     std::string _last_error;
     std::atomic<int> _last_exit_code{-1};
+    static std::atomic<int> _last_pty_exit;
 
     // Serializes shellCommand: write+read is one transaction, else callers cross-corrupt the pipe pair.
     std::mutex _shell_mutex;

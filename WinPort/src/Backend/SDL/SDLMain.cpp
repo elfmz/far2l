@@ -1645,14 +1645,17 @@ bool SDLConsoleBackend::OnDeleteConsoleImage(const char *id)
 
 const char *SDLConsoleBackend::OnConsoleBackendInfo(int entity)
 {
-	if (entity < 0) {
+	if (entity == -1) {
+		return "GUI|SDL";
+	}
+	/*if (entity < 0) {
 		_info_buffer.clear();
 		for (size_t i = 0; i < _backend_info.size(); ++i) {
 			if (i) _info_buffer.append(", ");
 			_info_buffer.append(_backend_info[i]);
 		}
 		return _info_buffer.c_str();
-	}
+	}*/
 	if (entity >= 0 && static_cast<size_t>(entity) < _backend_info.size()) {
 		return _backend_info[entity].c_str();
 	}
@@ -2518,6 +2521,9 @@ bool SDLConsoleApp::Initialize()
 		}
 	}
 
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); // keep glyphs pixel-crisp
+	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0"); // do not touch KDE plasma
+
 	_window = SDL_CreateWindow(
 		"far2l (SDL backend)",
 		init_x,
@@ -2550,9 +2556,13 @@ bool SDLConsoleApp::Initialize()
 	if (win_state.valid) {
 		if (win_state.fullscreen) {
 			SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		} else if (win_state.maximized) {
+		} 
+		/* 
+		VK: actually we do not need this as we already have created window with last reminded size and position.
+
+		else if (win_state.maximized) {
 			SDL_MaximizeWindow(_window);
-		}
+		}*/
 	}
 
 	if (_arg.app_main) {

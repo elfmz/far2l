@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "poscache.hpp"
 #include "bitflags.hpp"
 #include "config.hpp"
+#include <unordered_map>
 #include "DList.hpp"
 #include "noncopyable.hpp"
 #include "FARString.hpp"
@@ -220,7 +221,7 @@ private:
 		Новая переменная для поиска "Whole words"
 	*/
 	int LastSearchCase, LastSearchWholeWords, LastSearchReverse, LastSearchSelFound, LastSearchRegexp;
-	int m_WordWrapMaxRightPos;
+	int m_WordWrapPreferredCellPos;
 
 	UINT m_codepage;	// BUGBUG
 
@@ -238,17 +239,21 @@ private:
 	Edit *TopList;
 	Edit *EndList;
 	Edit *TopScreen;
-	int m_CurVisualLineInLogicalLine;
-	Edit *m_TopScreenLogicalLine;
 	int m_TopScreenVisualLine;
+	int m_CachedTotalVisualLines;
+	int m_CachedTopVisualLine;
+	Edit *m_CachedScrollbarTopScreen;
+	int m_CachedScrollbarTopScreenVisualLine;
+	bool m_VisualScrollbarDirty;
 	Edit *CurLine;
 	Edit *LastGetLine;
 	int MouseSelStartingLine{-1}, MouseSelStartingPos{-1};
 	int LastGetLineNumber;
 	bool SaveTabSettings;
 	bool m_bWordWrap;
-	int m_WrapMaxVisibleLineLength;
 	bool m_MouseButtonIsHeld;
+
+	std::unordered_map<int, uint64_t> m_gutterMarks;
 	
 	// Line number caching for performance
 	int m_CachedTotalLines;
@@ -266,10 +271,11 @@ private:
 		int visual_line{0};
 	};
 
-	int FindVisualLine(Edit* line, int Pos);
+	int GetCurVisualLine() const;
 	int GetTotalVisualLines();
 	int GetTopVisualLine();
 	int GetVisualLinesBelow(Edit* startLine, int startVisual, int limit);
+	int GetWordWrapVisibleMaxLineLength() const;
 	int GetTopScreenLineNumber();
 	void EnsureTopScreenVisual();
 	bool DecTopVisualLine();
@@ -278,7 +284,10 @@ private:
 	bool ComputeMouseTarget(int mouse_x, int mouse_y, MouseTarget& target);
 	void ApplyMouseTarget(const MouseTarget& target, bool initial_click, bool vblock, bool allow_selection);
 	virtual void DisplayObject();
-	void UpdateCursorPosition(int horizontal_cell_pos);
+	void SetCursorByVisualLineCellOffset(int VisualLine, int horizontal_cell_pos);
+	void RestoreWordWrapPreferredCellPos();
+	void SetWordWrapCursorPosition(int NewPos);
+	void SetWordWrapCursorPosition(int NewPos, int VisualLine);
 	void ShowEditor(int CurLineOnly);
 	void DeleteString(Edit *DelPtr, int LineNumber, int DeleteLast, int UndoLine);
 	void InsertString();
@@ -314,6 +323,10 @@ void GoToVisualLine(int VisualLine);
 	void HighlightAsWrapped(int Y, Edit &ShowString); // new helper function
 	int CalculateTotalLines();  // Helper to count total lines
 	int CalculateLineNumberWidth();  // Helper to calculate line number display width
+	int CalculateTextAreaWidth(int BaseWidth, bool ReserveScrollBar);  // Helper for text viewport width
+	void RecalculateAllWordWraps(bool SyncWordWrapState);
+	void RememberWordWrapPreferredCellPos();
+	void DrawGutterMark(int logical_line, int y, int line_num_x1);
 	// void SetStringsTable();
 	void BlockLeft();
 	void BlockRight();
@@ -321,6 +334,8 @@ void GoToVisualLine(int VisualLine);
 	void VCopy(int Append);
 	void VPaste(wchar_t *ClipText);
 	void VBlockShift(int Left);
+	bool IsVerticalBlockEditMode() const;
+	bool ProcessVerticalBlockEditKey(FarKey Key);
 	Edit *GetStringByNumber(int DestLine);
 	static void EditorShowMsg(const wchar_t *Title, const wchar_t *Msg, const wchar_t *Name, int Percent);
 
@@ -428,6 +443,8 @@ public:
 
 	int GetShowLineNumbers() const { return EdOpt.ShowLineNumbers; }
 	void SetShowLineNumbers(int NewMode);
+	int GetShowGutterMarks() const { return EdOpt.ShowGutterMarks; }
+	void SetShowGutterMarks(int NewMode);
 
 	void GetSavePosMode(int &SavePos, int &SaveShortPos);
 
@@ -437,7 +454,7 @@ public:
 
 	void GetRowCol(const wchar_t *argv, int *row, int *col);
 
-	void BeginVBlockMarking();
+	bool BeginVBlockMarking();
 	void AdjustVBlock(int PrevX);
 
 	void Xlat();

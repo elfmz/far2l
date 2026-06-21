@@ -164,47 +164,51 @@ public:
 			fsn.Format(L"%-*ls", len_sections_keys, mi.strName.CPtr());
 		}
 		fssave = (_opt.save == OST_COMMON ? "c" : (_opt.save == OST_PANELS ? "p" : "-"));
+		FormatString out;
 		switch (_opt.type)
 		{
-			case ConfigOpt::T_BOOL:
-				mi.strName.Format(L"%s %ls %lc  bool%lc%ls%lc%s",
-					(*_opt.value.b == _opt.def.b ? " " : "*"),
-					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
-					fssave.CPtr(), BoxSymbols[BS_V1],
-					(*_opt.value.b ? "true" : "false"));
+			case ConfigOpt::T_BOOL: {
+				out << (*_opt.value.b == _opt.def.b ? L" " : L"*")
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"  bool"
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
+					<< (*_opt.value.b ? L"true" : L"false");
 				break;
-			case ConfigOpt::T_INT:
-				mi.strName.Format(L"%s %ls %lc   int%lc%ls%lc%ld = 0x%lx",
-					(*_opt.value.i == _opt.def.i ? " " : "*"),
-					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
-					fssave.CPtr(), BoxSymbols[BS_V1],
-					*_opt.value.i, *_opt.value.i);
+			}
+			case ConfigOpt::T_INT: {
+				out << (*_opt.value.i == _opt.def.i ? L" " : L"*")
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"   int"
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
+					<< *_opt.value.i << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true);
 				break;
-			case ConfigOpt::T_DWORD:
-				mi.strName.Format(L"%s %ls %lc dword%lc%ls%lc%lu = 0x%lx",
-					(*_opt.value.dw == _opt.def.dw ? " " : "*"),
-					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
-					fssave.CPtr(), BoxSymbols[BS_V1],
-					*_opt.value.dw, *_opt.value.dw);
+			}
+			case ConfigOpt::T_DWORD: {
+				out << (*_opt.value.dw == _opt.def.dw ? L" " : L"*")
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L" dword"
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
+					<< *_opt.value.dw << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true);
 				break;
-			case ConfigOpt::T_STR:
-				mi.strName.Format(L"%s %ls %lcstring%lc%ls%lc%ls",
-					(_opt.def.str == nullptr ? "?"
-						: (*_opt.value.str == _opt.def.str ? " " : "*")),
-					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
-					fssave.CPtr(), BoxSymbols[BS_V1],
-					_opt.value.str->CPtr());
+			}
+			case ConfigOpt::T_STR: {
+				out << (_opt.def.str == nullptr ? L"?"
+						: (*_opt.value.str == _opt.def.str ? L" " : L"*"))
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"string"
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
+					<< _opt.value.str->CPtr();
 				break;
-			case ConfigOpt::T_BIN:
-				mi.strName.Format(L"%s %ls %lcbinary%lc%ls%lc(binary has length %u bytes)",
-					(_opt.def.bin == nullptr || _opt.value.bin == nullptr ? "?"
-						: ( memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? " " : "*")),
-					fsn.CPtr(), BoxSymbols[BS_V1], BoxSymbols[BS_V1],
-					fssave.CPtr(), BoxSymbols[BS_V1], _opt.bin_size );
+			}
+			case ConfigOpt::T_BIN: {
+				out << (_opt.def.bin == nullptr || _opt.value.bin == nullptr ? L"?"
+						: (memcmp(_opt.value.bin, _opt.def.bin, _opt.bin_size) == 0 ? L" " : L"*"))
+					<< L' ' << fsn << L' ' << BoxSymbols[BS_V1] << L"binary"
+					<< BoxSymbols[BS_V1] << fssave << BoxSymbols[BS_V1]
+					<< L"(binary has length " << static_cast<unsigned int>(_opt.bin_size) << L" bytes)";
 				break;
-			default:
-				mi.strName.Format(L"? %ls %lcunknown type ???", fsn.CPtr(), BoxSymbols[BS_V1]);
+			}
+			default: {
+				out << L"? " << fsn << L' ' << BoxSymbols[BS_V1] << L"unknown type ???";
+			}
 		}
+		mi.strName = out.strValue();
 		if (update_id < 0) {
 			if (hide_unchanged && mi.strName.At(0)==L' ') // no hide after change item to default value
 				mi.Flags |= LIF_HIDDEN;
@@ -220,41 +224,43 @@ public:
 	int Msg(const wchar_t *title) const
 	{
 		const char *type_psz;
-		FARString def_str, val_str;
+		FormatString def_str, val_str;
+		def_str << L"  Default value: ";
+		val_str << L"  Current value: ";
 		switch (_opt.type) {
 			case ConfigOpt::T_BOOL:
 				type_psz = "bool";
-				def_str = _opt.def.b ? L"true" : L"false";
-				val_str = (*_opt.value.b) ? L"true" : L"false";
+				def_str << (_opt.def.b ? L"true" : L"false");
+				val_str << ((*_opt.value.b) ? L"true" : L"false");
 				break;
 			case ConfigOpt::T_INT:
 				type_psz = "int";
-				def_str.Format(L"%ld = 0x%lx", _opt.def.i, _opt.def.i);
-				val_str.Format(L"%ld = 0x%lx", *_opt.value.i, *_opt.value.i);
+				def_str << _opt.def.i << L" = " << fmt::Hex(static_cast<uint32_t>(_opt.def.i), 0, true);
+				val_str << *_opt.value.i << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.i), 0, true);
 				break;
 			case ConfigOpt::T_DWORD:
 				type_psz = "dword";
-				def_str.Format(L"%lu = 0x%lx", _opt.def.dw, _opt.def.dw);
-				val_str.Format(L"%lu = 0x%lx", *_opt.value.dw, *_opt.value.dw);
+				def_str << _opt.def.dw << L" = " << fmt::Hex(static_cast<uint32_t>(_opt.def.dw), 0, true);
+				val_str << *_opt.value.dw << L" = " << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw), 0, true);
 				break;
 			case ConfigOpt::T_STR:
 				type_psz = "string";
-				def_str = _opt.def.str ? _opt.def.str : L"(null)";
-				val_str = *_opt.value.str;
+				def_str << (_opt.def.str ? _opt.def.str : L"(null)");
+				val_str << *_opt.value.str;
 				break;
 			case ConfigOpt::T_BIN:
 				type_psz = "binary";
 				if (_opt.def.bin) {
-					def_str.Format(L"(binary has length %u bytes)", _opt.bin_size);
+					def_str << L"(binary has length" << _opt.bin_size << L"bytes)";
 				} else {
-					def_str = L"(no default value set)";
+					def_str << L"(no default value set)";
 				}
-				val_str.Format(L"(binary has length %u bytes)", _opt.bin_size);
+				val_str << L"(binary has length" << _opt.bin_size << L"bytes)";
 				break;
 			default:
 				type_psz = "???";
-				def_str = L"???";
-				val_str = L"???";
+				def_str << L"???";
+				val_str << L"???";
 		}
 
 		ExMessager em;
@@ -263,8 +269,8 @@ public:
 		em.AddFormat(L"            Key: %s", _opt.key);
 		em.AddFormat(L" to config file: %ls", (_opt.save == OST_COMMON ? L"common" : (_opt.save == OST_PANELS ? L"panels" : L"never")));
 		em.AddFormat(L"           Type: %s", type_psz);
-		em.AddFormat(L"  Default value: %ls", def_str.CPtr());
-		em.AddFormat(L"  Current value: %ls", val_str.CPtr());
+		em.AddDup(def_str.strValue());
+		em.AddDup(val_str.strValue());
 		if (IsNotDefault()==1) {
 			em.Add(L"");
 			em.Add(L"Note: some parameters after update/reset");
@@ -301,8 +307,8 @@ public:
 	{
 		bool is_editable = false, is_def = true;
 		const wchar_t *type_pwsz;
+		FormatString def_str, cur_str, new_str, def_str_hex, cur_str_hex, new_str_hex;
 		FARString fs_title,
-				def_str, cur_str, new_str, def_str_hex, cur_str_hex, new_str_hex,
 				fs_section = _opt.section, fs_key = _opt.key;
 		fs_title.Format(L"%ls - %s.%s", title, _opt.section, _opt.key);
 
@@ -314,47 +320,47 @@ public:
 			case ConfigOpt::T_INT:
 				type_pwsz = L"int";
 				is_editable = true;
-				def_str.Format(L"%ld", _opt.def.i);
-				cur_str.Format(L"%ld", *_opt.value.i);
-				def_str_hex.Format(L"%lx", _opt.def.i);
-				cur_str_hex.Format(L"%lx", *_opt.value.i);
-				new_str = cur_str;
-				new_str_hex = cur_str_hex;
+				def_str << _opt.def.i;
+				cur_str << *_opt.value.i;
+				def_str_hex << fmt::Hex(static_cast<uint32_t>(_opt.def.i));
+				cur_str_hex << fmt::Hex(static_cast<uint32_t>(*_opt.value.i));
+				new_str << cur_str;
+				new_str_hex << cur_str_hex;
 				break;
 			case ConfigOpt::T_DWORD:
 				type_pwsz = L"dword";
 				is_editable = true;
-				def_str.Format(L"%lu", _opt.def.dw);
-				cur_str.Format(L"%lu", *_opt.value.dw);
-				def_str_hex.Format(L"%lx", _opt.def.dw);
-				cur_str_hex.Format(L"%lx", *_opt.value.dw);
-				new_str = cur_str;
-				new_str_hex = cur_str_hex;
+				def_str << _opt.def.dw;
+				cur_str << *_opt.value.dw;
+				def_str_hex << fmt::Hex(static_cast<uint32_t>(_opt.def.dw));
+				cur_str_hex << fmt::Hex(static_cast<uint32_t>(*_opt.value.dw));
+				new_str << cur_str;
+				new_str_hex << cur_str_hex;
 				break;
 			case ConfigOpt::T_STR:
 				type_pwsz = L"string";
 				is_editable = true;
 				is_def = (bool) _opt.def.str;
-				def_str = _opt.def.str ? _opt.def.str : L"";
-				cur_str = *_opt.value.str;
-				new_str = cur_str;
+				def_str << ( _opt.def.str ? _opt.def.str : L"" );
+				cur_str << *_opt.value.str;
+				new_str << cur_str;
 				break;
 			case ConfigOpt::T_BIN:
 				type_pwsz = L"binary";
 				if (_opt.def.bin) {
-					def_str.Format(L"(binary has length %u bytes)", _opt.bin_size);
+					def_str << L"(binary has length " << _opt.bin_size << L" bytes)";
 				} else {
 					is_def = false;
-					def_str = L"(no default value set)";
+					def_str << L"(no default value set)";
 				}
-				cur_str.Format(L"(binary has length %u bytes)", _opt.bin_size);
-				new_str	= L"(can not process binary)";
+				cur_str << L"(binary has length " << _opt.bin_size << L" bytes)";
+				new_str << L"(can not process binary)";
 				break;
 			default:
 				type_pwsz = L"???";
-				def_str = L"???";
-				cur_str = L"???";
-				new_str	= L"(can not process unknown type)";
+				def_str << L"???";
+				cur_str << L"???";
+				new_str	<< L"(can not process unknown type)";
 		}
 
 		const short DLG_HEIGHT = 20, DLG_WIDTH = 76;
@@ -376,24 +382,24 @@ public:
 			/*  11 */ {DI_RADIOBUTTON,	14,  7,  0,             7, {}, DIF_DISABLE | DIF_GROUP, L"false"},
 			/*  12 */ {DI_RADIOBUTTON,	29,  7,  0,             7, {}, DIF_DISABLE, L"true"},
 			/*  13 */ {DI_TEXT,			14,  7, 21,             7, {}, 0, L"Decimal="},
-			/*  14 */ {DI_EDIT,			22,  7, 32,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str.CPtr()},
+			/*  14 */ {DI_EDIT,			22,  7, 32,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str.strValue()},
 			/*  15 */ {DI_TEXT,			35,  7, 40,             7, {}, 0, L"Hex=0x"},
-			/*  16 */ {DI_EDIT,			41,  7, 49,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.CPtr()},
+			/*  16 */ {DI_EDIT,			41,  7, 49,             7, {}, DIF_READONLY | DIF_SELECTONENTRY, def_str_hex.strValue()},
 			/*  17 */ {DI_TEXT,			 5,  8, 13,             8, {}, 0, L"Current:"},
 			/*  18 */ {DI_RADIOBUTTON,	14,  8,  0,             8, {}, DIF_DISABLE | DIF_GROUP, L"false"},
 			/*  19 */ {DI_RADIOBUTTON,	29,  8,  0,             8, {}, DIF_DISABLE, L"true"},
 			/*  20 */ {DI_TEXT,			14,  8, 21,             8, {}, 0, L"Decimal="},
-			/*  21 */ {DI_EDIT,			22,  8, 32,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str.CPtr()},
+			/*  21 */ {DI_EDIT,			22,  8, 32,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str.strValue()},
 			/*  22 */ {DI_TEXT,			35,  8, 40,             8, {}, 0, L"Hex=0x"},
-			/*  23 */ {DI_EDIT,			41,  8, 49,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.CPtr()},
+			/*  23 */ {DI_EDIT,			41,  8, 49,             8, {}, DIF_READONLY | DIF_SELECTONENTRY, cur_str_hex.strValue()},
 			/*  24 */ {DI_TEXT,			 3,  9, 20,             9, {}, DIF_SEPARATOR, L" New value "},
 			/*  25 */ {DI_TEXT,			 5, 10, 13,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"    New:"},
 			/*  26 */ {DI_RADIOBUTTON,	14, 10, 14,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_GROUP, L"false"},
 			/*  27 */ {DI_RADIOBUTTON,	29, 10, 14,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"true"},
 			/*  28 */ {DI_TEXT,			14, 10, 21,            10, {}, 0, L"Decimal="},
-			/*  29 */ {DI_EDIT,			22, 10, 32,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.CPtr()},
+			/*  29 */ {DI_EDIT,			22, 10, 32,            10, {}, (is_editable ? DIF_FOCUS : DIF_DISABLE) | DIF_SELECTONENTRY, new_str.strValue()},
 			/*  30 */ {DI_TEXT,			35, 10, 40,            10, {}, 0, L"Hex=0x"},
-			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.CPtr()},
+			/*  31 */ {DI_FIXEDIT,		41, 10, 49,            10, {(DWORD_PTR)HexMask}, DIF_MASKEDIT | DIF_DISABLE | DIF_SELECTONENTRY, new_str_hex.strValue()},
 			/*  32 */ {DI_RADIOBUTTON,	51, 10, 58,            10, {1}, (is_editable ? 0 : DIF_DISABLE) | DIF_GROUP, L"dec"},
 			/*  33 */ {DI_RADIOBUTTON,	59, 10, 65,            10, {}, (is_editable ? 0 : DIF_DISABLE), L"hex"},
 			/*  34 */ {DI_TEXT,		3, 11, 20,            11, {}, DIF_SEPARATOR, L""},

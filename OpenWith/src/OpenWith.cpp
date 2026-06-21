@@ -22,14 +22,15 @@ namespace OpenWith {
 // ****************************** Public API ******************************
 
 // Main workflow orchestrator: resolves application candidates via AppProvider,
-// displays the selection menu, and handles user actions: F3 (details), F9 (settings), Enter (launch).
-void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
+// displays the selection menu, and handles user actions: F3 (details), F9 (settings), (Shift+)Enter (launch).
+void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths, const std::wstring& base_path)
 {
-	if (filepaths.empty()) {
+	auto provider = AppProvider::CreateAppProvider(&GetMsg);
+	if (!provider) {
+		ShowError({ GetMsg(MUnsupportedPlatform) });
 		return;
 	}
 
-	auto provider = AppProvider::CreateAppProvider(&GetMsg);
 	std::optional<std::vector<CandidateInfo>> app_candidates;
 	std::vector<FarMenuItem> menu_items;
 	int active_menu_idx {};
@@ -62,12 +63,10 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 		int selected_menu_idx = g_info.Menu(g_info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_SHOWAMPERSAND | FMENU_CHANGECONSOLETITLE,
 											GetMsg(MChooseApplication), L"F3 F9 Ctrl+Alt+F", L"Contents", BREAK_KEYS, &menu_break_code,
 											menu_items.data(), static_cast<int>(menu_items.size()));
-		menu_items[active_menu_idx].Selected = false;
-
 		if (selected_menu_idx == -1) {
 			return; // User cancelled the menu; exit the plugin.
 		}
-
+		menu_items[active_menu_idx].Selected = false;
 		active_menu_idx = selected_menu_idx;
 		const auto& selected_app = (*app_candidates)[selected_menu_idx];
 
@@ -113,12 +112,16 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 // and platform-specific settings fetched dynamically from the current AppProvider.
 OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 {
-	constexpr int CONFIG_DIALOG_WIDTH = 70;
+	// Create a temporary provider to access platform-specific settings (they are loaded automatically).
+	auto provider = AppProvider::CreateAppProvider(&GetMsg);
+	if (!provider) {
+		ShowError({ GetMsg(MUnsupportedPlatform) });
+		return {};
+	}
 
 	LoadGeneralSettings();
 
-	// Create a temporary provider to access platform-specific settings (they are loaded automatically).
-	auto provider = AppProvider::CreateAppProvider(GetMsg);
+	constexpr int CONFIG_DIALOG_WIDTH = 70;
 
 	const bool old_use_external_terminal = s_use_external_terminal;
 	const auto old_platform_settings = provider->GetPlatformSettings();
@@ -556,7 +559,6 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 		return INVALID_HANDLE_VALUE;
 	}
 
-	std::vector<std::wstring> selected_filepaths;
 	int dir_size = g_info.Control(PANEL_ACTIVE, FCTL_GETPANELDIR, 0, 0);
 	if (dir_size <= 0) {
 		return INVALID_HANDLE_VALUE;
@@ -568,9 +570,13 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 	}
 
 	std::wstring base_path(dir_buf.get());
+
+	auto path_prefix = base_path;
 	if (!base_path.empty() && base_path.back() != L'/') {
-		base_path += L'/';
+		path_prefix += L'/';
 	}
+
+	std::vector<std::wstring> selected_filepaths;
 
 	// If no specific selection exists, 'SelectedItemsNumber' is 1, and the item is the one under the cursor.
 	if (pi.SelectedItemsNumber > 0) {
@@ -583,13 +589,18 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 			auto item_buf = std::make_unique<unsigned char[]>(item_size);
 			PluginPanelItem* pi_item = reinterpret_cast<PluginPanelItem*>(item_buf.get());
 			if (g_info.Control(PANEL_ACTIVE, FCTL_GETSELECTEDPANELITEM, i, (LONG_PTR)pi_item) && pi_item->FindData.lpwszFileName) {
-				selected_filepaths.push_back(base_path + pi_item->FindData.lpwszFileName);
+				selected_filepaths.push_back(path_prefix + pi_item->FindData.lpwszFileName);
 			}
+		}
+	} else {
+		// Special case: cursor on ".." with no items selected.
+		if (!base_path.empty()) {
+			selected_filepaths.push_back(base_path);
 		}
 	}
 
 	if (!selected_filepaths.empty()) {
-		OpenWithPlugin::ProcessFiles(selected_filepaths);
+		OpenWithPlugin::ProcessFiles(selected_filepaths, base_path);
 	}
 
 	// Plugin performs an action and exits, rather than creating a new panel instance (like a VFS plugin).

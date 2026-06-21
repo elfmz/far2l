@@ -549,7 +549,7 @@ ContrastLevel ComputeContrast(const RGB& fg, const RGB& bg, RGB& newFg) {
         double diff = targetDeltaE - dE;
         double step = std::clamp(diff * 0.25, 0.5, 3.0);
 
-        if (labBg.L > 0.5)
+        if (labBg.L > 50)
             labFg.L -= step;   // darken foreground
         else
             labFg.L += step;   // lighten foreground
@@ -622,8 +622,8 @@ RGB toRGB(int r, int g, int b) {
 	RGB a;
 
     a.r = (r & 0x00FF) / 255.0;
-    a.g = (g & 0x00FF) / 255.0;;
-    a.b = (b & 0x00FF) / 255.0;;
+    a.g = (g & 0x00FF) / 255.0;
+    a.b = (b & 0x00FF) / 255.0;
 
     return a;
 }
@@ -709,7 +709,7 @@ HoverResult ComputeControlAccent(const RGB& fg, const RGB& bg)
 bool IsNearBlack(int r, int g, int b, double threshold)
 {
     double L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    return L < 32.0;
+    return L < threshold;
 }
 
 bool IsNearWhite(int r, int g, int b, double threshold)

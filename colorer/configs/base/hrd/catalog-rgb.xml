@@ -46,3 +46,6 @@
         <hrd class="rgb" name="violet" description="Violet by Kate tempergate">
             <location link="&hrd;/rgb/violet.hrd"/>
         </hrd>
+        <hrd class="rgb" name="Fallout Red" description="Fallout Red by Kate tempergate">
+            <location link="&hrd;/rgb/FalloutRed.hrd"/>
+        </hrd>

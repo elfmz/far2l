@@ -56,6 +56,7 @@ struct StackHelpData
 	FARString strHelpPath;		// путь к хелпам
 	FARString strHelpTopic;		// текущий топик
 	FARString strSelTopic;		// выделенный топик (???)
+	FARString strHelpAnchor;
 
 	void Clear()
 	{
@@ -66,6 +67,7 @@ struct StackHelpData
 		strHelpPath.Clear();
 		strHelpTopic.Clear();
 		strSelTopic.Clear();
+		strHelpAnchor.Clear();
 	}
 };
 

@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "filestr.hpp"
 #include "stddlg.hpp"
 #include "farversion.h"
+#include <map>
 
 // Стек возврата
 class CallBackStack
@@ -154,6 +155,14 @@ Help::Help(const wchar_t *Topic, const wchar_t *Mask, DWORD Flags)
 	if (!ReadHelp(StackData.strHelpMask) && (Flags & FHELP_USECONTENTS)) {
 		StackData.strHelpTopic = Topic;
 
+		// Strip "??anchor" from topic name before falling back to Contents
+		{
+			const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+			if (sep)
+				StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		}
+		StackData.strHelpAnchor.Clear(); // do not apply anchor when falling back to Contents
+
 		if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 			size_t pos;
 
@@ -210,6 +219,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	int Formatting = TRUE, RepeatLastLine, BreakProcess;
 	const int MaxLength = X2 - X1 - 1;
 	FARString strPath;
+	std::map<std::wstring, int> anchorMap; // name -> line number in HelpList
 
 	if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 		strPath = StackData.strHelpTopic.CPtr() + 1;
@@ -227,7 +237,20 @@ int Help::ReadHelp(const wchar_t *Mask)
 		strPath = !StackData.strHelpPath.IsEmpty() ? StackData.strHelpPath : g_strFarPath;
 	}
 
+	// Extract anchor from topic name (only when opening a new topic).
+	// Syntax: "TopicName??anchor_name" - "??" separates topic from anchor.
+	if (IsNewTopic) {
+		const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+		if (sep) {
+			StackData.strHelpAnchor = sep + 2;
+			StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		} else {
+			StackData.strHelpAnchor.Clear();
+		}
+	}
+
 	if (!StrCmp(StackData.strHelpTopic, PluginContents)) {
+		StackData.strHelpAnchor.Clear(); // anchors not supported for plugin contents
 		strFullHelpPathName.Clear();
 		ReadDocumentsHelp(HIDX_PLUGINS);
 		return TRUE;
@@ -280,6 +303,7 @@ int Help::ReadHelp(const wchar_t *Mask)
 	HelpList.Free();
 
 	if (!StrCmp(StackData.strHelpTopic, FoundContents)) {
+		StackData.strHelpAnchor.Clear(); // anchors not supported for search results
 		Search(HelpFile, nCodePage);
 		fclose(HelpFile);
 		return TRUE;
@@ -398,6 +422,18 @@ int Help::ReadHelp(const wchar_t *Mask)
 				if (!StrCmp(strReadStr, L"@-")) {
 					Formatting = FALSE;
 					PrevSymbol = 0;
+					continue;
+				}
+
+				// Anchor marker: "@??anchor_name" - record line index, do not add to HelpList
+				if (strReadStr.GetLength() >= 3 && strReadStr.At(1) == L'?' && strReadStr.At(2) == L'?') {
+					if (!strSplitLine.IsEmpty()) {
+						AddLine(strSplitLine.CPtr());
+						strSplitLine.Clear();
+					}
+					FARString anchorName = strReadStr.CPtr() + 3;
+					anchorMap[anchorName.CPtr()] = StrCount;
+					PrevSymbol = L'@';
 					continue;
 				}
 
@@ -564,6 +600,15 @@ int Help::ReadHelp(const wchar_t *Mask)
 	if (IsNewTopic) {
 		StackData.CurX = StackData.CurY = 0;
 		StackData.TopStr = 0;
+		// If an anchor was requested, scroll to its line index
+		if (!StackData.strHelpAnchor.IsEmpty()) {
+			auto it = anchorMap.find(StackData.strHelpAnchor.CPtr());
+			if (it != anchorMap.end()) {
+				int anchorLine = it->second;
+				StackData.TopStr = (anchorLine >= FixCount) ? (anchorLine - FixCount) : 0;
+			}
+			StackData.strHelpAnchor.Clear();
+		}
 	}
 
 	return TopicFound;
@@ -1372,6 +1417,14 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	if (!ReadHelp(StackData.strHelpMask)) {
 		StackData.strHelpTopic = strNewTopic;
 
+		// Strip "??anchor" from topic name before falling back to Contents
+		{
+			const wchar_t *sep = wcsstr(StackData.strHelpTopic.CPtr(), L"??");
+			if (sep)
+				StackData.strHelpTopic.Truncate(sep - StackData.strHelpTopic.CPtr());
+		}
+		StackData.strHelpAnchor.Clear(); // do not apply anchor when falling back to Contents
+
 		if (StackData.strHelpTopic.At(0) == HelpBeginLink) {
 			if (StackData.strHelpTopic.RPos(pos, HelpEndLink)) {
 				StackData.strHelpTopic.Truncate(pos + 1);
@@ -1651,6 +1704,10 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 
 		strReadStr = ReadStr;
 		RemoveTrailingSpaces(strReadStr);
+
+		if (strReadStr.GetLength() >= 3 && strReadStr.At(0) == L'@' && strReadStr.At(1) == L'?' && strReadStr.At(2) == L'?') {
+			continue; // skip anchor markers "@??..."
+		}
 
 		if (strReadStr.At(0) == L'@' && !(strReadStr.At(1) == L'+' || strReadStr.At(1) == L'-')
 				&& !strReadStr.Contains(L'='))		// && !TopicFound)

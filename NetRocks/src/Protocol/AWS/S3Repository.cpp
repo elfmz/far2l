@@ -107,7 +107,23 @@ std::string S3Repository::SimpleRequestHeader(
 	const std::string &capture_header,
 	const std::map<std::string, std::string> &extra_headers)
 {
-	std::string uri_path = BuildPath(bucket, key);
+	std::shared_ptr<S3Session> req_session;
+	std::string host;
+	std::string uri_path;
+	std::string effective_region;
+
+	if (_use_path_style || bucket.empty()) {
+		req_session = _session;
+		host = _endpoint;
+		uri_path = BuildPath(bucket, key);
+		effective_region = _creds.region.empty() ? "us-east-1" : _creds.region;
+	} else {
+		effective_region = GetEffectiveRegion(bucket);
+		std::string neon_vhost;
+		host = GetVirtualEndpoint(bucket, effective_region, &neon_vhost);
+		req_session = GetOrCreateBucketSession(neon_vhost);
+		uri_path = BuildPath("", key);
+	}
 
 	char *escaped = ne_path_escape(uri_path.c_str());
 	std::string neon_path = escaped ? escaped : uri_path;
@@ -117,14 +133,14 @@ std::string S3Repository::SimpleRequestHeader(
 	if (!query_str.empty()) neon_path += "?" + query_str;
 
 	std::string payload_hash = S3SHA256Hex(request_body);
-	auto auth_headers = S3SignRequest(method, _endpoint, uri_path, query_params,
-	                                  payload_hash, _creds.region,
+	auto auth_headers = S3SignRequest(method, host, uri_path, query_params,
+	                                  payload_hash, effective_region,
 	                                  _creds.access_key, _creds.secret_key);
 
 	ResponseCapture cap;
 	cap.header_name = capture_header;
 
-	ne_request *req = ne_request_create(_session->sess, method.c_str(), neon_path.c_str());
+	ne_request *req = ne_request_create(req_session->sess, method.c_str(), neon_path.c_str());
 	if (!req) throw ProtocolError("Failed to create neon request");
 
 	for (auto &h : auth_headers) {
@@ -159,7 +175,7 @@ std::string S3Repository::SimpleRequestHeader(
 	ne_request_destroy(req);
 
 	if (rc != NE_OK) {
-		const char *err = ne_get_error(_session->sess);
+		const char *err = ne_get_error(req_session->sess);
 		throw ProtocolError(err ? err : "S3 request failed");
 	}
 
@@ -177,7 +193,8 @@ S3Repository::S3Repository(const std::string &host, unsigned int port,
 	StringConfig options(protocol_options);
 	_useragent = options.GetString("UserAgent");
 	_creds.region = options.GetString("Region");
-	if (_creds.region.empty()) _creds.region = "us-east-1";
+	_use_path_style = options.GetInt("UsePathStyle", 0) != 0;
+	if (_use_path_style && _creds.region.empty()) _creds.region = "us-east-1";
 
 	std::string trimmed_host = Trim(host);
 	if (trimmed_host.empty()) {
@@ -203,39 +220,113 @@ S3Repository::S3Repository(const std::string &host, unsigned int port,
 	_scheme = (port == 80) ? "http" : "https";
 	_port = (port > 0) ? port : 443;
 
-	std::string neon_host = _endpoint;
+	_neon_host = _endpoint;
 	{
-		auto colon = neon_host.rfind(':');
+		auto colon = _neon_host.rfind(':');
 		if (colon != std::string::npos) {
-			std::string port_str = neon_host.substr(colon + 1);
+			std::string port_str = _neon_host.substr(colon + 1);
 			bool all_digits = !port_str.empty() &&
 				std::all_of(port_str.begin(), port_str.end(), ::isdigit);
 			if (all_digits) {
 				_port = (unsigned int)std::stoul(port_str);
-				neon_host = neon_host.substr(0, colon);
+				_neon_host = _neon_host.substr(0, colon);
 			}
 		}
 	}
 
 	if ((_scheme == "https" && _port != 443) || (_scheme == "http" && _port != 80)) {
-		_endpoint = neon_host + ":" + std::to_string(_port);
+		_endpoint = _neon_host + ":" + std::to_string(_port);
 	} else {
-		_endpoint = neon_host;
+		_endpoint = _neon_host;
 	}
-
-	_session = std::make_shared<S3Session>();
-	_session->sess = ne_session_create(_scheme.c_str(), neon_host.c_str(), _port);
-	if (!_session->sess) {
-		throw ProtocolError("Failed to create neon session");
-	}
-
-	ne_ssl_set_verify(_session->sess, [](void *, int, const ne_ssl_certificate *) { return 0; }, nullptr);
 
 	if (options.GetInt("UseProxy", 0) != 0) {
 		_proxy_host = options.GetString("ProxyHost");
 		_proxy_port = (unsigned int)options.GetInt("ProxyPort", 3128);
-		ne_session_proxy(_session->sess, _proxy_host.c_str(), _proxy_port);
 	}
+
+	_session = CreateConfiguredSession(_neon_host);
+	if (!_session->sess) {
+		throw ProtocolError("Failed to create neon session");
+	}
+}
+
+std::shared_ptr<S3Session> S3Repository::CreateConfiguredSession(const std::string &host)
+{
+	auto s = std::make_shared<S3Session>();
+	s->sess = ne_session_create(_scheme.c_str(), host.c_str(), _port);
+	if (s->sess) {
+		ne_ssl_set_verify(s->sess, [](void *, int, const ne_ssl_certificate *) { return 0; }, nullptr);
+		if (!_proxy_host.empty())
+			ne_session_proxy(s->sess, _proxy_host.c_str(), _proxy_port);
+	}
+	return s;
+}
+
+std::shared_ptr<S3Session> S3Repository::GetOrCreateBucketSession(const std::string &neon_vhost)
+{
+	auto it = _bucket_sessions.find(neon_vhost);
+	if (it != _bucket_sessions.end()) return it->second;
+	auto s = CreateConfiguredSession(neon_vhost);
+	_bucket_sessions[neon_vhost] = s;
+	return s;
+}
+
+std::string S3Repository::ResolveRegion(const std::string &bucket)
+{
+	std::string path = "/" + bucket;
+	char *escaped = ne_path_escape(path.c_str());
+	std::string neon_path = escaped ? escaped : path;
+	if (escaped) free(escaped);
+
+	std::string payload_hash = S3SHA256Hex("");
+	auto auth_headers = S3SignRequest("HEAD", _endpoint, path, {},
+	                                  payload_hash, "us-east-1",
+	                                  _creds.access_key, _creds.secret_key);
+
+	ne_request *req = ne_request_create(_session->sess, "HEAD", neon_path.c_str());
+	if (!req) return "us-east-1";
+
+	for (auto &h : auth_headers)
+		ne_add_request_header(req, h.first.c_str(), h.second.c_str());
+
+	ne_request_dispatch(req);
+
+	const char *hv = ne_get_response_header(req, "x-amz-bucket-region");
+	std::string region = (hv && *hv) ? hv : "us-east-1";
+	ne_request_destroy(req);
+	return region;
+}
+
+std::string S3Repository::GetEffectiveRegion(const std::string &bucket)
+{
+	if (!_creds.region.empty()) return _creds.region;
+
+	auto it = _bucket_region_cache.find(bucket);
+	if (it != _bucket_region_cache.end()) return it->second;
+
+	std::string r = ResolveRegion(bucket);
+	_bucket_region_cache[bucket] = r;
+	return r;
+}
+
+std::string S3Repository::GetVirtualEndpoint(const std::string &bucket, const std::string &region,
+                                              std::string *neon_vhost_out)
+{
+	std::string vhost;
+	const std::string aws_suffix = "amazonaws.com";
+	if (_neon_host.size() >= aws_suffix.size() &&
+	    _neon_host.compare(_neon_host.size() - aws_suffix.size(), aws_suffix.size(), aws_suffix) == 0) {
+		vhost = bucket + ".s3." + region + ".amazonaws.com";
+	} else {
+		vhost = bucket + "." + _neon_host;
+	}
+
+	if (neon_vhost_out) *neon_vhost_out = vhost;
+
+	if ((_scheme == "https" && _port != 443) || (_scheme == "http" && _port != 80))
+		return vhost + ":" + std::to_string(_port);
+	return vhost;
 }
 
 std::string S3Repository::Trim(const std::string &str)
@@ -347,17 +438,34 @@ AWSFile S3Repository::GetFileInfo(const std::string &path)
 	}
 
 	try {
-		std::string uri_path = "/" + localPath.bucket() + "/" + localPath.key();
+		std::shared_ptr<S3Session> req_session;
+		std::string host;
+		std::string uri_path;
+		std::string effective_region;
+
+		if (_use_path_style) {
+			req_session = _session;
+			host = _endpoint;
+			uri_path = "/" + localPath.bucket() + "/" + localPath.key();
+			effective_region = _creds.region.empty() ? "us-east-1" : _creds.region;
+		} else {
+			effective_region = GetEffectiveRegion(localPath.bucket());
+			std::string neon_vhost;
+			host = GetVirtualEndpoint(localPath.bucket(), effective_region, &neon_vhost);
+			req_session = GetOrCreateBucketSession(neon_vhost);
+			uri_path = "/" + localPath.key();
+		}
+
 		std::string payload_hash = S3SHA256Hex("");
-		auto auth_headers = S3SignRequest("HEAD", _endpoint, uri_path, {},
-		                                  payload_hash, _creds.region,
+		auto auth_headers = S3SignRequest("HEAD", host, uri_path, {},
+		                                  payload_hash, effective_region,
 		                                  _creds.access_key, _creds.secret_key);
 
 		char *escaped = ne_path_escape(uri_path.c_str());
 		std::string neon_path = escaped ? escaped : uri_path;
 		if (escaped) free(escaped);
 
-		ne_request *req = ne_request_create(_session->sess, "HEAD", neon_path.c_str());
+		ne_request *req = ne_request_create(req_session->sess, "HEAD", neon_path.c_str());
 		if (!req) throw ProtocolError("HEAD request failed");
 
 		for (auto &h : auth_headers) {
@@ -404,25 +512,61 @@ std::shared_ptr<AWSFileReader> S3Repository::GetDownloader(const std::string &pa
                                                             unsigned long long size)
 {
 	Path localPath(path);
-	return std::make_shared<AWSFileReader>(_session, _creds, _endpoint, _useragent,
-	                                       localPath.bucket(), localPath.key(),
-	                                       position, size);
+	S3Credentials effective_creds = _creds;
+	std::shared_ptr<S3Session> req_session;
+	std::string effective_host;
+	std::string path_prefix;
+
+	if (_use_path_style) {
+		req_session = _session;
+		effective_host = _endpoint;
+		path_prefix = "/" + localPath.bucket();
+		if (effective_creds.region.empty()) effective_creds.region = "us-east-1";
+	} else {
+		effective_creds.region = GetEffectiveRegion(localPath.bucket());
+		std::string neon_vhost;
+		effective_host = GetVirtualEndpoint(localPath.bucket(), effective_creds.region, &neon_vhost);
+		req_session = GetOrCreateBucketSession(neon_vhost);
+		path_prefix = "";
+	}
+
+	return std::make_shared<AWSFileReader>(req_session, effective_creds, effective_host, _useragent,
+	                                       path_prefix, localPath.key(), position, size);
 }
 
 std::shared_ptr<AWSFileWriter> S3Repository::GetUploader(const std::string &path)
 {
 	Path localPath(path);
-	return std::make_shared<AWSFileWriter>(_session, _creds, _endpoint, _useragent,
-	                                       localPath.bucket(), localPath.key());
+	S3Credentials effective_creds = _creds;
+	std::shared_ptr<S3Session> req_session;
+	std::string effective_host;
+	std::string path_prefix;
+
+	if (_use_path_style) {
+		req_session = _session;
+		effective_host = _endpoint;
+		path_prefix = "/" + localPath.bucket();
+		if (effective_creds.region.empty()) effective_creds.region = "us-east-1";
+	} else {
+		effective_creds.region = GetEffectiveRegion(localPath.bucket());
+		std::string neon_vhost;
+		effective_host = GetVirtualEndpoint(localPath.bucket(), effective_creds.region, &neon_vhost);
+		req_session = GetOrCreateBucketSession(neon_vhost);
+		path_prefix = "";
+	}
+
+	return std::make_shared<AWSFileWriter>(req_session, effective_creds, effective_host, _useragent,
+	                                       path_prefix, localPath.key());
 }
 
 void S3Repository::CreateBucket(const std::string &bucket)
 {
 	std::string body;
 	std::map<std::string, std::string> extra;
-	if (_creds.region != "us-east-1") {
+	std::string region = _creds.region.empty() ? "us-east-1" : _creds.region;
+	if (region != "us-east-1") {
 		body = "<CreateBucketConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-		       "<LocationConstraint>" + _creds.region + "</LocationConstraint>"
+		       "<LocationConstraint>" + region + "</LocationConstraint>"
 		       "</CreateBucketConfiguration>";
 		extra["Content-Type"] = "application/xml";
 	}

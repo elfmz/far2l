@@ -88,12 +88,24 @@ public:
 private:
 	std::shared_ptr<S3Session> _session;
 	S3Credentials _creds;
-	std::string _endpoint;  // host[:port] used for neon session and SigV4 host header
-	std::string _scheme;    // "https" or "http"
+	std::string _endpoint;   // host[:port] used for neon session and SigV4 host header
+	std::string _neon_host;  // pure hostname without port
+	std::string _scheme;     // "https" or "http"
 	unsigned int _port;
 	std::string _useragent;
 	std::string _proxy_host;
 	unsigned int _proxy_port = 0;
+	bool _use_path_style = false;
+
+	std::map<std::string, std::shared_ptr<S3Session>> _bucket_sessions;
+	std::map<std::string, std::string> _bucket_region_cache;
+
+	std::shared_ptr<S3Session> CreateConfiguredSession(const std::string &host);
+	std::shared_ptr<S3Session> GetOrCreateBucketSession(const std::string &neon_vhost);
+	std::string ResolveRegion(const std::string &bucket);
+	std::string GetEffectiveRegion(const std::string &bucket);
+	std::string GetVirtualEndpoint(const std::string &bucket, const std::string &region,
+	                               std::string *neon_vhost_out = nullptr);
 
 	std::string SimpleRequest(
 		const std::string &method,

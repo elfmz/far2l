@@ -17,7 +17,7 @@ public:
 	              const S3Credentials &creds,
 	              const std::string &endpoint,
 	              const std::string &useragent,
-	              const std::string &bucket,
+	              const std::string &path_prefix,
 	              const std::string &key);
 	virtual ~AWSFileWriter();
 
@@ -29,7 +29,7 @@ private:
 	S3Credentials              _creds;
 	std::string                _endpoint;
 	std::string                _useragent;
-	std::string                _bucket;
+	std::string                _path_prefix;
 	std::string                _key;
 
 	std::string              _upload_id;

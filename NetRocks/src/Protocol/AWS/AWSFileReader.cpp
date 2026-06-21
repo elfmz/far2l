@@ -9,15 +9,15 @@ AWSFileReader::AWSFileReader(std::shared_ptr<S3Session> session,
                              const S3Credentials &creds,
                              const std::string &endpoint,
                              const std::string &useragent,
-                             const std::string &bucket,
+                             const std::string &path_prefix,
                              const std::string &key,
                              unsigned long long position,
                              unsigned long long size)
 	: _session(std::move(session)), _creds(creds), _endpoint(endpoint),
-	  _useragent(useragent), _bucket(bucket), _key(key),
+	  _useragent(useragent), _path_prefix(path_prefix), _key(key),
 	  _position(position), _size(size)
 {
-	std::string uri_path = "/" + _bucket + "/" + _key;
+	std::string uri_path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 	std::string payload_hash = S3SHA256Hex("");
 	auto auth_headers = S3SignRequest("GET", _endpoint, uri_path, {},
 	                                  payload_hash, _creds.region,

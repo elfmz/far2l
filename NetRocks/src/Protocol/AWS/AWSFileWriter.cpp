@@ -105,10 +105,10 @@ AWSFileWriter::AWSFileWriter(std::shared_ptr<S3Session> session,
                              const S3Credentials &creds,
                              const std::string &endpoint,
                              const std::string &useragent,
-                             const std::string &bucket,
+                             const std::string &path_prefix,
                              const std::string &key)
 	: _session(std::move(session)), _creds(creds), _endpoint(endpoint),
-	  _useragent(useragent), _bucket(bucket), _key(key)
+	  _useragent(useragent), _path_prefix(path_prefix), _key(key)
 {
 	StartMultipartUpload();
 }
@@ -124,7 +124,7 @@ AWSFileWriter::~AWSFileWriter()
 
 void AWSFileWriter::StartMultipartUpload()
 {
-	std::string path = "/" + _bucket + "/" + _key;
+	std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 	std::string body = DoRequest("POST", path, {{"uploads", ""}}, "");
 	// Parse <UploadId>
 	std::string o = "<UploadId>", c = "</UploadId>";
@@ -140,7 +140,7 @@ void AWSFileWriter::FlushPart()
 {
 	if (_buffer.empty()) return;
 
-	std::string path = "/" + _bucket + "/" + _key;
+	std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 	std::map<std::string, std::string> qp = {
 		{"partNumber", std::to_string(_part_number)},
 		{"uploadId",   _upload_id}
@@ -196,7 +196,7 @@ void AWSFileWriter::CompleteMultipartUpload()
 {
 	if (_buffer.size() > 0) FlushPart();
 	if (_etags.empty()) {
-		std::string path = "/" + _bucket + "/" + _key;
+		std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 		std::map<std::string, std::string> qp = {{"partNumber", "1"}, {"uploadId", _upload_id}};
 		std::string payload_hash = S3SHA256Hex("");
 		auto auth_headers = S3SignRequest("PUT", _endpoint, path, qp,
@@ -229,7 +229,7 @@ void AWSFileWriter::CompleteMultipartUpload()
 	}
 	xml += "</CompleteMultipartUpload>";
 
-	std::string path = "/" + _bucket + "/" + _key;
+	std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 	DoRequest("POST", path, {{"uploadId", _upload_id}}, xml);
 	_completed = true;
 }
@@ -238,7 +238,7 @@ void AWSFileWriter::AbortMultipartUpload()
 {
 	if (_upload_id.empty()) return;
 	try {
-		std::string path = "/" + _bucket + "/" + _key;
+		std::string path = _path_prefix.empty() ? "/" + _key : _path_prefix + "/" + _key;
 		DoRequest("DELETE", path, {{"uploadId", _upload_id}}, "");
 	} catch (...) {}
 	_aborted = true;

@@ -97,7 +97,8 @@ jobs:
           libssh-dev \
           libarchive-dev \
           python3-dev \
-          python3-cffi
+          python3-cffi \
+          xvfb
           
     - name: Create Build Environment
       run: mkdir -p _build
@@ -115,8 +116,15 @@ jobs:
       
     - name: Run Smoke Tests
       run: |
+        if [ -f "_build/install/far2l" ]; then
+          FAR2L_BIN="../_build/install/far2l"
+        elif [ -f "_build/far2l/far2l" ]; then
+          FAR2L_BIN="../_build/far2l/far2l"
+        else
+          echo "far2l binary not found"; exit 1
+        fi
         cd testing
-        ./far2l-smoke-run.sh --all ../_build/install/far2l
+        xvfb-run ./far2l-smoke-run.sh --all "$FAR2L_BIN"
         
     - name: Upload Test Results
       uses: actions/upload-artifact@v4

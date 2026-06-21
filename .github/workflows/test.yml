@@ -182,11 +182,13 @@ jobs:
         
     - name: Verify Build
       run: |
-        if [ -f "_build/install/far2l" ]; then
-          echo "Build successful"
-        elif [ -f "_build/install/far2l.exe" ]; then
+        if [ -f "_build/far2l/far2l" ] || \
+           [ -f "_build/far2l/far2l.app/Contents/MacOS/far2l" ] || \
+           [ -f "_build/install/far2l" ] || \
+           [ -f "_build/install/far2l.exe" ]; then
           echo "Build successful"
         else
           echo "Build failed - executable not found"
+          find _build -name far2l -type f 2>/dev/null | head -5
           exit 1
         fi

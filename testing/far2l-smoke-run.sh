@@ -35,7 +35,8 @@ fi
 echo 'Cleaning up...'
 for test in "$SCRIPT_DIR"/tests/*; do
 	if [ -d "$test" ]; then
-		chmod -R u+w "$test"/workdir 2>/dev/null; rm -rf "$test"/workdir
+		chmod -R u+w "$test"/workdir 2>/dev/null || true
+		rm -rf "$test"/workdir
 	fi
 done
 

@@ -190,9 +190,8 @@ jobs:
         
     - name: Verify Build
       run: |
-        if [ -f "_build/far2l/far2l" ] || \
-           [ -f "_build/far2l/far2l.app/Contents/MacOS/far2l" ] || \
-           [ -f "_build/install/far2l" ] || \
+        if [ -f "_build/install/far2l" ] || \
+           [ -f "_build/install/far2l.app/Contents/MacOS/far2l" ] || \
            [ -f "_build/install/far2l.exe" ]; then
           echo "Build successful"
         else

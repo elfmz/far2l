@@ -1,0 +1,13 @@
+# golangci-lint configuration for far2l
+# Go code lives only in testing/ as a test harness.
+# This config prevents the linter from failing on the repo root
+# where no go.mod exists.
+
+version: "2"
+
+linters:
+  disable:
+    - godoclint
+  exclusions:
+    paths:
+      - testing

@@ -1291,6 +1291,7 @@ void Dialog::DeleteDialogObjects()
 				if (CurItem->ObjPtr)
 					delete (DlgEdit *)(CurItem->ObjPtr);
 
+				[[fallthrough]];
 			case DI_LISTBOX:
 
 				if ((CurItem->Type == DI_COMBOBOX || CurItem->Type == DI_LISTBOX) && CurItem->ListPtr)
@@ -6109,6 +6110,12 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 		}
 		/*****************************************************************/
 		case DM_GETCONSTTEXTPTR: {
+			if (Type == DI_MEMOEDIT) {
+				if (!CurItem->ObjPtr)
+					return reinterpret_cast<LONG_PTR>(nullptr);
+				reinterpret_cast<DlgEdit *>(CurItem->ObjPtr)->GetString(CurItem->strData);
+				return reinterpret_cast<LONG_PTR>(CurItem->strData.CPtr());
+			}
 			return (LONG_PTR)Ptr;
 		}
 		/*****************************************************************/
@@ -6237,12 +6244,15 @@ LONG_PTR SendDlgMessageSynched(HANDLE hDlg, int Msg, int Param1, LONG_PTR Param2
 						break;
 					}
 
+					[[fallthrough]];
 				case DI_LISTBOX: {
 					Len = 0;
-					MenuItemEx *ListMenuItem;
+					if (CurItem->ListPtr) {
+						MenuItemEx *ListMenuItem;
 
-					if ((ListMenuItem = CurItem->ListPtr->GetItemPtr(-1))) {
-						Len = (int)ListMenuItem->strName.GetLength() + 1;
+						if ((ListMenuItem = CurItem->ListPtr->GetItemPtr(-1))) {
+							Len = (int)ListMenuItem->strName.GetLength() + 1;
+						}
 					}
 
 					break;

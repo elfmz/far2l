@@ -1731,6 +1731,9 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 		} else if (TopicFound && strReadStr.At(0) == L'$' && strReadStr.At(1) && !strCurTopic.IsEmpty()) {
 			strEntryName = strReadStr.CPtr() + 1;
 			RemoveExternalSpaces(strEntryName);
+			if (strEntryName.At(0) == L'^') {
+				strEntryName.Remove(0); // skip centering prefix (not displayed)
+			}
 			RemoveChar(strEntryName, L'#', false);
 		}
 

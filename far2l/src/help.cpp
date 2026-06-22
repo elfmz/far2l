@@ -1294,6 +1294,7 @@ int Help::ProcessKey(FarKey Key)
 
 				if (!JumpTopic()) {
 					Stack->Pop(&StackData);
+					IsNewTopic = FALSE;
 					ReadHelp(StackData.strHelpMask);	// вернем то, что отображали.
 				}
 

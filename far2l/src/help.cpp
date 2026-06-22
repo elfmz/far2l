@@ -648,7 +648,7 @@ void Help::AddTitle(const wchar_t *Title)
 	ReplaceStrings(strEscaped, L"#", L"##", -1);
 
 	FARString strIndexHelpTitle;
-	strIndexHelpTitle.Format(L"^ #%ls#", strEscaped.CPtr());
+	strIndexHelpTitle.Format(L"^ # %ls #", strEscaped.CPtr());
 	AddLine(strIndexHelpTitle);
 }
 

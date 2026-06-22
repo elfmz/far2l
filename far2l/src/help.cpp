@@ -641,8 +641,14 @@ void Help::AddLine(const wchar_t *Line)
 
 void Help::AddTitle(const wchar_t *Title)
 {
+	FARString strEscaped = Title;
+	// Escape special .hlf markup characters
+	ReplaceStrings(strEscaped, L"@", L"@@", -1);
+	ReplaceStrings(strEscaped, L"~", L"~~", -1);
+	ReplaceStrings(strEscaped, L"#", L"##", -1);
+
 	FARString strIndexHelpTitle;
-	strIndexHelpTitle.Format(L"^ #%ls#", Title);
+	strIndexHelpTitle.Format(L"^ #%ls#", strEscaped.CPtr());
 	AddLine(strIndexHelpTitle);
 }
 
@@ -885,11 +891,12 @@ void Help::OutString(const wchar_t *Str)
 				учтем, что может быть такой вариант: @@
 				этот вариант только для URL!
 			*/
-			while (*Str)
-				if (*(++Str) == L'@' && *(Str - 1) != L'@')
+			while (*Str) {
+				if (*(++Str) == L'@' && *(Str - 1) != L'@') {
+					Str++; // found closing '@', advance past it
 					break;
-
-			Str++;
+				}
+			}
 			continue;
 		}
 
@@ -967,11 +974,12 @@ int Help::StringLen(const wchar_t *Str)
 				учтем, что может быть такой вариант: @@
 				этот вариант только для URL!
 			*/
-			while (*Str)
-				if (*(++Str) == L'@' && *(Str - 1) != L'@')
+			while (*Str) {
+				if (*(++Str) == L'@' && *(Str - 1) != L'@') {
+					Str++; // found closing '@', advance past it
 					break;
-
-			Str++;
+				}
+			}
 			continue;
 		}
 

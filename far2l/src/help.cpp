@@ -1726,12 +1726,13 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 		}
 
 		if (TopicFound && !strEntryName.IsEmpty()) {
-			// !!!BUGBUG: необходимо "очистить" строку strReadStr от элементов разметки !!!
+			FARString strSearchable = SanitizeHelpString(strReadStr);
+
 
 			FARString ReplaceStr;
 			int CurPos = 0;
 			int SearchLength;
-			bool Result = SearchString(strReadStr, (int)strReadStr.GetLength(), strLastSearchStr, ReplaceStr,
+			bool Result = SearchString(strSearchable, (int)strSearchable.GetLength(), strLastSearchStr, ReplaceStr,
 					CurPos, 0, LastSearchCase, LastSearchWholeWords, false, LastSearchRegexp, &SearchLength);
 
 			if (Result) {
@@ -1747,6 +1748,71 @@ void Help::Search(FILE *HelpFile, uintptr_t nCodePage)
 
 	AddLine(L"");
 	MoveToReference(1, 1);
+}
+
+FARString Help::SanitizeHelpString(const FARString& input) const
+{
+	FARString result;
+	const wchar_t *p   = input.CPtr();
+	const wchar_t *end = input.CEnd();
+	bool atStart = true;
+
+	while (p < end) {
+		// Remove CtrlStartPosChar marker (e.g. "^<wrap>", position hint, not displayed)
+		if (!strCtrlStartPosChar.IsEmpty()
+				&& (size_t)(end - p) >= strCtrlStartPosChar.GetLength()
+				&& wcsncmp(p, strCtrlStartPosChar.CPtr(), strCtrlStartPosChar.GetLength()) == 0) {
+			p += strCtrlStartPosChar.GetLength();
+			continue;
+		}
+
+		// Skip leading '$' (fixed-line prefix, not displayed)
+		if (atStart && *p == L'$') {
+			p++;
+			continue;
+		}
+
+		// Skip leading '^' (centering prefix, not displayed)
+		if (atStart && *p == L'^') {
+			p++;
+			continue;
+		}
+		atStart = false;
+
+		// Escaped pairs "~~", "##", "@@" -> output one literal character
+		if (p + 1 < end
+				&& ((*p == L'~' && *(p+1) == L'~')
+					|| (*p == L'#' && *(p+1) == L'#')
+					|| (*p == L'@' && *(p+1) == L'@'))) {
+			result += *p;
+			p += 2;
+			continue;
+		}
+
+		// Skip link target "@Topic@" (not displayed)
+		if (*p == L'@') {
+			p++;
+			while (p < end && !(*p == L'@' && *(p-1) != L'@'))
+				p++;
+			if (p < end) p++;
+			continue;
+		}
+
+		// Skip '~' (link text delimiter, not displayed)
+		if (*p == L'~') {
+			p++;
+			continue;
+		}
+
+		// Skip '#' (highlight toggle, not displayed)
+		if (*p == L'#') {
+			p++;
+			continue;
+		}
+
+		result += *p++;
+	}
+	return result;
 }
 
 void Help::ReadDocumentsHelp(int TypeIndex)

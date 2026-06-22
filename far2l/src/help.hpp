@@ -161,6 +161,7 @@ private:
 	void MoveToReference(int Forward, int CurScreen);
 	void ReadDocumentsHelp(int TypeIndex);
 	void Search(FILE *HelpFile, uintptr_t nCodePage);
+	FARString SanitizeHelpString(const FARString& input) const;
 	int JumpTopic(const wchar_t *JumpTopic = nullptr);
 	const HelpRecord *GetHelpItem(int Pos);
 

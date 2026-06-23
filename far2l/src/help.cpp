@@ -1318,6 +1318,11 @@ int Help::JumpTopic(const wchar_t *JumpTopic)
 	if (JumpTopic)
 		StackData.strSelTopic = JumpTopic;
 
+	// Expand short intra-topic anchor links (e.g., "??anchor") to absolute paths
+	if (StackData.strSelTopic.GetLength() >= 2 && StackData.strSelTopic.At(0) == L'?' && StackData.strSelTopic.At(1) == L'?') {
+			StackData.strSelTopic = StackData.strHelpTopic + StackData.strSelTopic;
+	}
+
 	/*
 		$ 14.07.2002 IS
 		При переходе по ссылкам используем всегда только абсолютные пути,

@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 class PluginBase:
     # private
     name = ""
-    number = 0
     # public
     USERHOME = ""  # ~/.config/far2l/plugins/python
     label = ""

@@ -157,6 +157,14 @@ class PluginManager:
         if name not in plugin.Plugin.openFrom:
             log.debug("pluginGetFrom({0} ({1}), {2}) unhandled by {3} {4}".format(
             OpenFrom, name, Item, plugin.Plugin.label, plugin.Plugin.openFrom))
+            msg = [
+                'The author of the selected plugin:',
+                plugin.Plugin.label,
+                'did not intend for it to be used from: '+name,
+                'Allowed places:',
+                ','.join(plugin.Plugin.openFrom)
+            ]
+            self.Message(msg)
             return None
         log.debug("pluginGetFrom({0} ({1}), {2}) = {3}".format(
             OpenFrom, name, Item, plugin.Plugin.label))

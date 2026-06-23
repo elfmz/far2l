@@ -5,8 +5,6 @@
 "OpenWith for "
 " file(s)"
 
-"&OK"
-"&Cancel"
 "OpenWith Error"
 "Selected item must be a file accessible locally via a real path."
 "Failed to save modified settings; the changes will apply to the current session only."
@@ -15,6 +13,8 @@
 "OpenWith plugin is not available on this platform."
 
 "OpenWith Settings"
+"&OK"
+"&Cancel"
 
 "&Use external terminal for console apps"
 "Don't &wait for command completion"

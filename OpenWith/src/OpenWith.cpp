@@ -14,8 +14,6 @@
 #include <vector>
 #include <optional>
 
-namespace OpenWith {
-
 constexpr const char* INI_FILEPATH = "plugins/openwith/config.ini";
 constexpr const char* INI_SECTION_GENERAL = "Settings";
 
@@ -27,7 +25,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 {
 	auto* provider = AppProvider::GetInstance();
 	if (!provider) {
-		ShowError({ GetMsg(MUnsupportedPlatform) });
+		ShowError({ GetMsg(MsgID::UnsupportedPlatform) });
 		return;
 	}
 
@@ -42,7 +40,7 @@ void OpenWithPlugin::ProcessFiles(const std::vector<std::wstring>& filepaths)
 			FilterOutTerminalCandidates(*app_candidates, filepaths.size());
 
 			if ((*app_candidates).empty()) {
-				ShowError({ GetMsg(MNoAppsFound), JoinStrings(provider->GetMimeTypes(), L"; ") });
+				ShowError({ GetMsg(MsgID::NoAppsFound), JoinStrings(provider->GetMimeTypes(), L"; ") });
 				return; // No application candidates; exit the plugin.
 			}
 
@@ -129,7 +127,7 @@ OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 {
 	auto* provider = AppProvider::GetInstance();
 	if (!provider) {
-		ShowError({ GetMsg(MUnsupportedPlatform) });
+		ShowError({ GetMsg(MsgID::UnsupportedPlatform) });
 		return {};
 	}
 
@@ -161,15 +159,15 @@ OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 		return item_idx;
 	};
 
-	add_item({ DI_DOUBLEBOX, 3, current_y++, CONFIG_DIALOG_WIDTH - 4, 0, FALSE, {}, DIF_NONE, FALSE, GetMsg(MConfigTitle), 0 });
+	add_item({ DI_DOUBLEBOX, 3, current_y++, CONFIG_DIALOG_WIDTH - 4, 0, FALSE, {}, DIF_NONE, FALSE, GetMsg(MsgID::ConfigTitle), 0 });
 
 	// ----- Add general (platform-independent) settings. -----
-	auto use_external_terminal_idx          = add_checkbox(GetMsg(MUseExternalTerminal), s_use_external_terminal);
-	auto no_wait_for_command_completion_idx = add_checkbox(GetMsg(MNoWaitForCommandCompletion), s_no_wait_for_command_completion);
-	auto clear_selection_idx                = add_checkbox(GetMsg(MClearSelection), s_clear_selection);
+	auto use_external_terminal_idx          = add_checkbox(GetMsg(MsgID::UseExternalTerminal), s_use_external_terminal);
+	auto no_wait_for_command_completion_idx = add_checkbox(GetMsg(MsgID::NoWaitForCommandCompletion), s_no_wait_for_command_completion);
+	auto clear_selection_idx                = add_checkbox(GetMsg(MsgID::ClearSelection), s_clear_selection);
 
 	const auto threshold_current = std::to_wstring(s_confirm_launch_threshold);
-	const wchar_t* confirm_launch_label = GetMsg(MConfirmLaunchOption);
+	const wchar_t* confirm_launch_label = GetMsg(MsgID::ConfirmLaunchOption);
 	int confirm_launch_label_width = static_cast<int>(g_fsf.StrCellsCount(confirm_launch_label, wcslen(confirm_launch_label)));
 
 	FarDialogItem confirm_launch_chkbx = { DI_CHECKBOX, 5, current_y, 0, current_y, FALSE, {}, DIF_NONE, FALSE, confirm_launch_label, 0 };
@@ -178,7 +176,7 @@ OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 	auto confirm_launch_edit_idx            = add_item({ DI_FIXEDIT, confirm_launch_label_width + 10, current_y, confirm_launch_label_width + 13, current_y, FALSE, {(DWORD_PTR)L"9999"}, DIF_MASKEDIT, FALSE, threshold_current.c_str(), 0 });
 	current_y++;
 
-	auto display_filename_idx               = add_checkbox(GetMsg(MDisplayFilename), s_display_filename);
+	auto display_filename_idx               = add_checkbox(GetMsg(MsgID::DisplayFilename), s_display_filename);
 
 	// ----- Add platform-specific settings. -----
 	std::vector<std::pair<size_t, ProviderSetting>> dynamic_settings;
@@ -192,8 +190,8 @@ OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 	}
 
 	add_separator();
-	auto ok_btn_idx = add_item({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, TRUE, GetMsg(MOk), 0 });
-	add_item({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, FALSE, GetMsg(MCancel), 0 });
+	auto ok_btn_idx = add_item({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, TRUE, GetMsg(MsgID::Ok), 0 });
+	add_item({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, FALSE, GetMsg(MsgID::Cancel), 0 });
 
 	int config_dialog_height = current_y + 3;
 	config_dialog_items[0].Y2 = config_dialog_height - 2;
@@ -253,7 +251,7 @@ OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 			}
 
 			if (!key_writer.Save(true)) {
-				ShowError({GetMsg(MSaveConfigError), StrMB2Wide(InMyConfig(INI_FILEPATH))});
+				ShowError({GetMsg(MsgID::SaveConfigError), StrMB2Wide(InMyConfig(INI_FILEPATH))});
 			}
 		}
 		g_info.DialogFree(config_dlg);
@@ -267,13 +265,12 @@ OpenWithPlugin::ConfigDlgResult OpenWithPlugin::ShowConfigDlg()
 void OpenWithPlugin::ShowError(const std::vector<std::wstring>& error_lines)
 {
 	std::vector<const wchar_t*> items;
-	items.reserve(error_lines.size() + 2);
-	items.push_back(GetMsg(MError));
+	items.reserve(error_lines.size() + 1);
+	items.push_back(GetMsg(MsgID::Error));
 	for (const auto &line : error_lines) {
 		items.push_back(line.c_str());
 	}
-	items.push_back(GetMsg(MOk));
-	g_info.Message(g_info.ModuleNumber, FMSG_WARNING, L"Troubleshooting", items.data(), items.size(), 1);
+	g_info.Message(g_info.ModuleNumber, FMSG_WARNING | FMSG_MB_OK, L"Troubleshooting", items.data(), items.size(), 0);
 }
 
 
@@ -300,9 +297,9 @@ bool OpenWithPlugin::AskForLaunchConfirmation(const CandidateInfo& app, const si
 		return true;
 	}
 	wchar_t message[255] = {};
-	g_fsf.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MConfirmLaunchMessage), file_count, app.name.c_str());
-	const wchar_t* items[] = { GetMsg(MConfirmLaunchTitle), message };
-	int res = g_info.Message(g_info.ModuleNumber, FMSG_MB_YESNO, nullptr, items, ARRAYSIZE(items), 2);
+	g_fsf.snprintf(message, ARRAYSIZE(message) - 1, GetMsg(MsgID::ConfirmLaunchMessage), file_count, app.name.c_str());
+	const wchar_t* items[] = { GetMsg(MsgID::ConfirmLaunchTitle), message };
+	int res = g_info.Message(g_info.ModuleNumber, FMSG_MB_YESNO, nullptr, items, ARRAYSIZE(items), 0);
 	return (res == 0);
 }
 
@@ -328,7 +325,7 @@ void OpenWithPlugin::LaunchApplication(const CandidateInfo& app, const std::vect
 
 	for (const auto& cmd : cmds) {
 		if (g_fsf.Execute(cmd.c_str(), execute_flags) == -1) {
-			ShowError({GetMsg(MCannotExecute), cmd });
+			ShowError({GetMsg(MsgID::CannotExecute), cmd });
 			break; // Stop on the first error.
 		}
 	}
@@ -348,12 +345,12 @@ OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vecto
 {
 	std::vector<Field> file_info;
 	if (auto file_count = filepaths.size(); file_count != 1) {
-		file_info.push_back({ GetMsg(MFilesSelected), std::to_wstring(file_count)});
+		file_info.push_back({ GetMsg(MsgID::FilesSelected), std::to_wstring(file_count)});
 	}
-	file_info.push_back({ GetMsg(MFilepaths), JoinStrings(filepaths, L"; ") });
-	file_info.push_back({ GetMsg(MMimeProfile), JoinStrings(unique_mime_profiles, L"; ") });
+	file_info.push_back({ GetMsg(MsgID::Filepaths), JoinStrings(filepaths, L"; ") });
+	file_info.push_back({ GetMsg(MsgID::MimeProfile), JoinStrings(unique_mime_profiles, L"; ") });
 
-	Field launch_command { GetMsg(MLaunchCommand), JoinStrings(cmds, L"; ") };
+	Field launch_command { GetMsg(MsgID::LaunchCommand), JoinStrings(cmds, L"; ") };
 
 	constexpr int DETAILS_DIALOG_MIN_WIDTH = 40;
 	constexpr int DETAILS_DIALOG_DESIRED_WIDTH = 90;
@@ -391,7 +388,7 @@ OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vecto
 		current_y++;
 	};
 
-	details_dialog_items.push_back({ DI_DOUBLEBOX, 3, current_y++, details_dialog_width - 4, details_dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MDetails), 0 });
+	details_dialog_items.push_back({ DI_DOUBLEBOX, 3, current_y++, details_dialog_width - 4, details_dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MsgID::Details), 0 });
 	for (const auto& field : file_info) {
 		add_field_row(field);
 	}
@@ -403,11 +400,11 @@ OpenWithPlugin::DetailsDlgResult OpenWithPlugin::ShowDetailsDlg(const std::vecto
 	add_field_row(launch_command);
 	add_separator();
 
-	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MClose), 0 });
+	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MsgID::Close), 0 });
 	details_dialog_items.back().DefaultButton = TRUE;
 
 	const int launch_btn_idx = static_cast<int>(details_dialog_items.size());
-	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, GetMsg(MLaunch), 0 });
+	details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, GetMsg(MsgID::Launch), 0 });
 
 	const int first_location_btn_idx = static_cast<int>(details_dialog_items.size());
 	for (const auto &location : locations) {
@@ -526,7 +523,7 @@ size_t OpenWithPlugin::GetMaxLabelCellWidth(const std::vector<Field>& fields)
 int OpenWithPlugin::GetConsoleWidth()
 {
 	SMALL_RECT rect;
-	if (g_info.AdvControl(g_info.ModuleNumber, ACTL_GETFARRECT, &rect, 0)) {
+	if (g_info.AdvControl(g_info.ModuleNumber, ACTL_GETFARRECT, &rect, nullptr)) {
 		return rect.Right - rect.Left + 1;
 	}
 	return 80;
@@ -537,13 +534,13 @@ int OpenWithPlugin::GetConsoleWidth()
 std::wstring OpenWithPlugin::FormatMenuTitle(const std::vector<std::wstring>& filepaths)
 {
 	if (!s_display_filename) {
-		return GetMsg(MChooseApplication);
+		return GetMsg(MsgID::ChooseApplication);
 	}
 
-	std::wstring title = GetMsg(MOpenWithFor);
+	std::wstring title = GetMsg(MsgID::OpenWithFor);
 
 	if (filepaths.size() != 1) {
-		title += std::to_wstring(filepaths.size()) + GetMsg(MFile_s);
+		title += std::to_wstring(filepaths.size()) + GetMsg(MsgID::File_s);
 		return title;
 	}
 
@@ -566,12 +563,10 @@ std::wstring OpenWithPlugin::FormatMenuTitle(const std::vector<std::wstring>& fi
 
 
 
-// Retrieves a localized message string from the language file by its ID.
-const wchar_t* GetMsg(int msg_id)
+const wchar_t* GetMsg(MsgID msg_id)
 {
-	return g_info.GetMsg(g_info.ModuleNumber, msg_id);
+	return g_info.GetMsg(g_info.ModuleNumber, static_cast<int>(msg_id));
 }
-
 
 
 // ****************************** Plugin entry points ******************************
@@ -587,7 +582,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 
 	KeyFileReadHelper key_reader(InMyConfig(INI_FILEPATH));
 	OpenWithPlugin::LoadGeneralSettings(key_reader);
-	if (auto provider = AppProvider::GetInstance(&GetMsg)) {
+	if (auto* provider = AppProvider::GetInstance()) {
 		provider->LoadPlatformSettings(key_reader);
 	}
 }
@@ -599,11 +594,11 @@ SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
 	Info->SysID = 0x93CDEF19;
 	Info->Flags = 0;
 	static const wchar_t *s_menu_strings[1];
-	s_menu_strings[0] = GetMsg(MPluginTitle);
+	s_menu_strings[0] = GetMsg(MsgID::PluginTitle);
 	Info->PluginMenuStrings = s_menu_strings;
 	Info->PluginMenuStringsNumber = ARRAYSIZE(s_menu_strings);
 	static const wchar_t *s_config_strings[1];
-	s_config_strings[0] = GetMsg(MPluginTitle);
+	s_config_strings[0] = GetMsg(MsgID::PluginTitle);
 	Info->PluginConfigStrings = s_config_strings;
 	Info->PluginConfigStringsNumber = ARRAYSIZE(s_config_strings);
 	Info->CommandPrefix = nullptr;
@@ -627,7 +622,7 @@ SHAREDSYMBOL HANDLE WINAPI OpenPluginW(int OpenFrom, INT_PTR Item)
 	}
 
 	if (pi.Plugin && !(pi.Flags & PFLAGS_REALNAMES)) {
-		OpenWithPlugin::ShowError({GetMsg(MNotRealNames)});
+		OpenWithPlugin::ShowError({GetMsg(MsgID::NotRealNames)});
 		return INVALID_HANDLE_VALUE;
 	}
 
@@ -696,5 +691,3 @@ SHAREDSYMBOL int WINAPI GetMinFarVersionW()
 {
 	return FARMANAGERVERSION;
 }
-
-} // namespace OpenWith

@@ -6,12 +6,8 @@
 #include <string>
 #include <vector>
 
-namespace OpenWith {
-
 extern PluginStartupInfo g_info;
 extern FarStandardFunctions g_fsf;
-
-const wchar_t* GetMsg(int msg_id);
 
 class OpenWithPlugin
 {
@@ -31,7 +27,13 @@ private:
 
 	struct DetailsDlgResult
 	{
-		enum class Action { Close, Launch, GoTo } action;
+		enum class Action
+		{
+			Close,
+			Launch,
+			GoTo
+		};
+		Action action = Action::Close;
 		std::wstring goto_target = L"";
 	};
 
@@ -61,6 +63,3 @@ private:
 	static int GetConsoleWidth();
 	static std::wstring FormatMenuTitle(const std::vector<std::wstring>& filepaths);
 };
-
-
-} // namespace OpenWith

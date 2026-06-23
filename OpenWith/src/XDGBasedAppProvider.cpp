@@ -30,27 +30,27 @@ constexpr const char* INI_SECTION_XDG_PROVIDER = "Settings.XDG";
 // ****************************** Public API ******************************
 
 
-XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
+XDGBasedAppProvider::XDGBasedAppProvider()
 {
 	_platform_settings_definitions = {
-		{ "UseXdgMimeTool",            MUseXdgMimeTool,            &XDGBasedAppProvider::_use_xdg_mime_tool,            true,  true },
-		{ "UseFileTool",               MUseFileTool,               &XDGBasedAppProvider::_use_file_tool,                true,  true },
-		{ "UseMagikaTool",             MUseMagikaTool,             &XDGBasedAppProvider::_use_magika_tool,              false, true },
-		{ "UseGlobRules",              MUseGlobRules,              &XDGBasedAppProvider::_use_glob_rules,               false, true },
-		{ "UseExtensionBasedFallback", MUseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false, true },
-		{ "LoadMimeTypeAliases",       MLoadMimeTypeAliases,       &XDGBasedAppProvider::_load_mimetype_aliases,        true,  true },
-		{ "LoadMimeTypeSubclasses",    MLoadMimeTypeSubclasses,    &XDGBasedAppProvider::_load_mimetype_subclasses,     true,  true },
-		{ "ResolveStructuredSuffixes", MResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes,  true,  true },
-		{ "UseGenericMimeFallbacks",   MUseGenericMimeFallbacks,   &XDGBasedAppProvider::_use_generic_mime_fallbacks,   true,  true },
-		{ "ShowUniversalHandlers",     MShowUniversalHandlers,     &XDGBasedAppProvider::_show_universal_handlers,      true,  true },
-		{ "QueryXdgMimeDefault",       MQueryXdgMimeDefault,       &XDGBasedAppProvider::_query_xdg_mime_default,       true,  true },
-		{ "IgnoreRemovedAssociations", MIgnoreRemovedAssociations, &XDGBasedAppProvider::_ignore_removed_associations,  false, true },
-		{ "UseMimeinfoCache",          MUseMimeinfoCache,          &XDGBasedAppProvider::_use_mimeinfo_cache,           true,  true },
-		{ "FilterByShowIn",            MFilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            true,  true },
-		{ "ValidateTryExec",           MValidateTryExec,           &XDGBasedAppProvider::_validate_try_exec,            true,  true },
-		{ "SortAlphabetically",        MSortAlphabetically,        &XDGBasedAppProvider::_sort_alphabetically,          false, true },
-		{ "TreatUrlsAsPaths",          MTreatUrlsAsPaths,          &XDGBasedAppProvider::_treat_urls_as_paths,          false, false },
-		{ "ShowPackageTags",           MShowPackageTags,           &XDGBasedAppProvider::_show_package_tags,            true,  true }
+		{ "UseXdgMimeTool",            MsgID::UseXdgMimeTool,            &XDGBasedAppProvider::_use_xdg_mime_tool,            true,  true },
+		{ "UseFileTool",               MsgID::UseFileTool,               &XDGBasedAppProvider::_use_file_tool,                true,  true },
+		{ "UseMagikaTool",             MsgID::UseMagikaTool,             &XDGBasedAppProvider::_use_magika_tool,              false, true },
+		{ "UseGlobRules",              MsgID::UseGlobRules,              &XDGBasedAppProvider::_use_glob_rules,               false, true },
+		{ "UseExtensionBasedFallback", MsgID::UseExtensionBasedFallback, &XDGBasedAppProvider::_use_extension_based_fallback, false, true },
+		{ "LoadMimeTypeAliases",       MsgID::LoadMimeTypeAliases,       &XDGBasedAppProvider::_load_mimetype_aliases,        true,  true },
+		{ "LoadMimeTypeSubclasses",    MsgID::LoadMimeTypeSubclasses,    &XDGBasedAppProvider::_load_mimetype_subclasses,     true,  true },
+		{ "ResolveStructuredSuffixes", MsgID::ResolveStructuredSuffixes, &XDGBasedAppProvider::_resolve_structured_suffixes,  true,  true },
+		{ "UseGenericMimeFallbacks",   MsgID::UseGenericMimeFallbacks,   &XDGBasedAppProvider::_use_generic_mime_fallbacks,   true,  true },
+		{ "ShowUniversalHandlers",     MsgID::ShowUniversalHandlers,     &XDGBasedAppProvider::_show_universal_handlers,      true,  true },
+		{ "QueryXdgMimeDefault",       MsgID::QueryXdgMimeDefault,       &XDGBasedAppProvider::_query_xdg_mime_default,       true,  true },
+		{ "IgnoreRemovedAssociations", MsgID::IgnoreRemovedAssociations, &XDGBasedAppProvider::_ignore_removed_associations,  false, true },
+		{ "UseMimeinfoCache",          MsgID::UseMimeinfoCache,          &XDGBasedAppProvider::_use_mimeinfo_cache,           true,  true },
+		{ "FilterByShowIn",            MsgID::FilterByShowIn,            &XDGBasedAppProvider::_filter_by_show_in,            true,  true },
+		{ "ValidateTryExec",           MsgID::ValidateTryExec,           &XDGBasedAppProvider::_validate_try_exec,            true,  true },
+		{ "SortAlphabetically",        MsgID::SortAlphabetically,        &XDGBasedAppProvider::_sort_alphabetically,          false, true },
+		{ "TreatUrlsAsPaths",          MsgID::TreatUrlsAsPaths,          &XDGBasedAppProvider::_treat_urls_as_paths,          false, false },
+		{ "ShowPackageTags",           MsgID::ShowPackageTags,           &XDGBasedAppProvider::_show_package_tags,            true,  true }
 	};
 
 	for (const auto& def : _platform_settings_definitions) {
@@ -62,7 +62,7 @@ XDGBasedAppProvider::XDGBasedAppProvider(TMsgGetter msg_getter) : AppProvider(st
 void XDGBasedAppProvider::LoadPlatformSettings(const KeyFileReadHelper &key_reader)
 {
 	for (const auto& def : _platform_settings_definitions) {
-		this->*(def.member_variable) = key_reader.GetInt(INI_SECTION_XDG_PROVIDER, def.internal_key.c_str(), def.default_value) != 0;
+		this->*(def.member_variable) = key_reader.GetInt(INI_SECTION_XDG_PROVIDER, def.internal_key, def.default_value) != 0;
 	}
 }
 
@@ -70,7 +70,7 @@ void XDGBasedAppProvider::LoadPlatformSettings(const KeyFileReadHelper &key_read
 void XDGBasedAppProvider::SavePlatformSettings(KeyFileHelper& key_writer)
 {
 	for (const auto& def : _platform_settings_definitions) {
-		key_writer.SetInt(INI_SECTION_XDG_PROVIDER, def.internal_key.c_str(), this->*(def.member_variable));
+		key_writer.SetInt(INI_SECTION_XDG_PROVIDER, def.internal_key, this->*(def.member_variable));
 	}
 }
 
@@ -90,7 +90,7 @@ std::vector<ProviderSetting> XDGBasedAppProvider::GetPlatformSettings()
 			is_disabled = !IsExecutableAvailable(tool_name);
 		}
 
-		settings.push_back({StrMB2Wide(def.internal_key), m_GetMsg(def.display_name_id), this->*(def.member_variable),
+		settings.push_back({StrMB2Wide(def.internal_key), GetMsg(def.display_name_id), this->*(def.member_variable),
 							is_disabled, def.affects_candidates});
 	}
 	return settings;
@@ -277,13 +277,13 @@ std::vector<Field> XDGBasedAppProvider::GetCandidateDetails(const CandidateInfo&
 	}
 	const DesktopEntry& desktop_entry = it->second.value();
 
-	details.push_back({m_GetMsg(MDesktopFile), StrMB2Wide(desktop_entry.desktop_filepath)});
+	details.push_back({GetMsg(MsgID::DesktopFile), StrMB2Wide(desktop_entry.desktop_filepath)});
 
 	// Retrieve the source info (e.g., 'mimeapps.list') stored during GetAppCandidates.
 	// This is only available for single-file selections.
 	auto it_source = _last_association_facts.find(desktop_id);
 	if (it_source != _last_association_facts.end()) {
-		details.push_back({m_GetMsg(MSource), FormatFactForUI(it_source->second)});
+		details.push_back({GetMsg(MsgID::Source), FormatFactForUI(it_source->second)});
 	}
 
 	static constexpr std::pair<const wchar_t*, std::string DesktopEntry::*> field_map[] = {
@@ -320,7 +320,7 @@ std::vector<CandidateContextLocation> XDGBasedAppProvider::GetCandidateContextLo
 	// Navigate to the .desktop file
 	auto it_desktop = _desktop_id_to_desktop_entry_cache.find(desktop_id);
 	if (it_desktop != _desktop_id_to_desktop_entry_cache.end() && it_desktop->second.has_value()) {
-		locations.push_back({m_GetMsg(MGotoDesktop), StrMB2Wide(it_desktop->second.value().desktop_filepath)});
+		locations.push_back({GetMsg(MsgID::GotoDesktop), StrMB2Wide(it_desktop->second.value().desktop_filepath)});
 	}
 
 	// Navigate to the association source file
@@ -328,7 +328,7 @@ std::vector<CandidateContextLocation> XDGBasedAppProvider::GetCandidateContextLo
 	if (it_source != _last_association_facts.end()) {
 		const auto& fact = it_source->second;
 		if (!fact.filepath.empty()) {
-			locations.push_back({m_GetMsg(MGotoSource), StrMB2Wide(fact.filepath)});
+			locations.push_back({GetMsg(MsgID::GotoSource), StrMB2Wide(fact.filepath)});
 		}
 	}
 
@@ -756,16 +756,16 @@ std::wstring XDGBasedAppProvider::FormatFactForUI(const AssociationFact& fact) c
 			return StrMB2Wide("xdg-mime query default " + fact.mime_type);
 
 		case AssociationOriginTier::MimeappsDefault:
-			return StrMB2Wide(fact.filepath) + m_GetMsg(MIn) + L"[Default Applications]" + m_GetMsg(MFor) + StrMB2Wide(fact.mime_type);
+			return StrMB2Wide(fact.filepath) + GetMsg(MsgID::In) + L"[Default Applications]" + GetMsg(MsgID::For) + StrMB2Wide(fact.mime_type);
 
 		case AssociationOriginTier::MimeappsAdded:
-			return StrMB2Wide(fact.filepath) + m_GetMsg(MIn) + L"[Added Associations]" + m_GetMsg(MFor) + StrMB2Wide(fact.mime_type);
+			return StrMB2Wide(fact.filepath) + GetMsg(MsgID::In) + L"[Added Associations]" + GetMsg(MsgID::For) + StrMB2Wide(fact.mime_type);
 
 		case AssociationOriginTier::MimeinfoCache:
-			return StrMB2Wide(fact.filepath) + m_GetMsg(MFor) + StrMB2Wide(fact.mime_type);
+			return StrMB2Wide(fact.filepath) + GetMsg(MsgID::For) + StrMB2Wide(fact.mime_type);
 
 		case AssociationOriginTier::FullScan:
-			return m_GetMsg(MFullScanFor) + StrMB2Wide(fact.mime_type);
+			return GetMsg(MsgID::FullScanFor) + StrMB2Wide(fact.mime_type);
 	}
 	return L"";
 }
@@ -1284,8 +1284,11 @@ void XDGBasedAppProvider::ParseMimeappsList(const std::string& filepath, Mimeapp
 		// parsed up to this point — preventing later system-level removals from overriding earlier user-level additions.
 
 		if (current_section == "[Default Applications]") {
-			if (!IsAssociationRemoved(mime, desktop_ids[0], mimeapps_lists)) {
-				mimeapps_lists.defaults.try_emplace(mime, desktop_ids[0], filepath);
+			for (const auto& desktop_id : desktop_ids) {
+				if (!IsAssociationRemoved(mime, desktop_id, mimeapps_lists)) {
+					mimeapps_lists.defaults.try_emplace(mime, desktop_id, filepath);
+					break;
+				}
 			}
 		} else if (current_section == "[Added Associations]") {
 			for (const auto& desktop_id : desktop_ids) {

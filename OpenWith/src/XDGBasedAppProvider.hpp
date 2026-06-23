@@ -24,7 +24,7 @@ class XDGBasedAppProvider : public AppProvider
 
 public:
 
-	explicit XDGBasedAppProvider(TMsgGetter msg_getter);
+	XDGBasedAppProvider();
 	std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& filepaths_wide) override;
 	std::vector<std::wstring> ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths_wide) override;
 	std::vector<std::wstring> GetMimeTypes() override;
@@ -302,7 +302,7 @@ private:
 	struct PlatformSettingDefinition
 	{
 		std::string internal_key;                    // persistent INI key and internal identifier
-		LanguageID  display_name_id;                 // ID to fetch the localized UI label
+		MsgID display_name_id;                       // ID to fetch the localized UI label
 		bool XDGBasedAppProvider::* member_variable; // pointer to the linked boolean class member
 		bool default_value;                          // fallback value if missing in the INI file
 		bool affects_candidates;                     // true if changing this setting affects the contents or order of the candidate list

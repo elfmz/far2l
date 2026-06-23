@@ -15,7 +15,7 @@ class KeyFileHelper;
 class MacOSAppProvider : public AppProvider
 {
 public:
-	explicit MacOSAppProvider(TMsgGetter msg_getter);
+	MacOSAppProvider();
 	std::vector<CandidateInfo> GetAppCandidates(const std::vector<std::wstring>& filepaths) override;
 	std::vector<std::wstring> ConstructLaunchCommands(const CandidateInfo& candidate, const std::vector<std::wstring>& filepaths) override;
 	std::vector<std::wstring> GetMimeTypes() override;

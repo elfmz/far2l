@@ -28,9 +28,7 @@ struct MacCandidateTempInfo {
 
 // ****************************** Implementation ******************************
 
-MacOSAppProvider::MacOSAppProvider(TMsgGetter msg_getter) : AppProvider(std::move(msg_getter))
-{
-}
+MacOSAppProvider::MacOSAppProvider() = default;
 
 // Helper to convert an NSURL object to a UTF-8 encoded std::string path.
 static std::string NSURLToPath(NSURL *url) {
@@ -319,24 +317,24 @@ std::vector<Field> MacOSAppProvider::GetCandidateDetails(const CandidateInfo& ca
     NSString *appName = [infoDict objectForKey:@"CFBundleDisplayName"] ?: [infoDict objectForKey:@"CFBundleName"];
 
     if (appName) {
-        details.push_back({m_GetMsg(MAppName), StrMB2Wide([appName UTF8String])});
+        details.push_back({GetMsg(MsgID::AppName), StrMB2Wide([appName UTF8String])});
     }
 
-    details.push_back({m_GetMsg(MFullPath), candidate.id});
+    details.push_back({GetMsg(MsgID::FullPath), candidate.id});
 
     NSString *execName = [infoDict objectForKey:@"CFBundleExecutable"];
     if (execName) {
-        details.push_back({m_GetMsg(MExecutableFile), StrMB2Wide([execName UTF8String])});
+        details.push_back({GetMsg(MsgID::ExecutableFile), StrMB2Wide([execName UTF8String])});
     }
 
     NSString *bundleShortVersion = [infoDict objectForKey:@"CFBundleShortVersionString"];
     if (bundleShortVersion) {
-        details.push_back({m_GetMsg(MVersion), StrMB2Wide([bundleShortVersion UTF8String])});
+        details.push_back({GetMsg(MsgID::Version), StrMB2Wide([bundleShortVersion UTF8String])});
     }
     
     NSString *bundleVersion = [infoDict objectForKey:@"CFBundleVersion"];
     if (bundleVersion) {
-        details.push_back({m_GetMsg(MBundleVersion), StrMB2Wide([bundleVersion UTF8String])});
+        details.push_back({GetMsg(MsgID::BundleVersion), StrMB2Wide([bundleVersion UTF8String])});
     }
 
     return details;

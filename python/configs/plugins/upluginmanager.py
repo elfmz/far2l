@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import configparser
 
@@ -25,18 +26,47 @@ class Plugin(PluginBase):
     openFrom = ["PLUGINSMENU"]
 
     def Configure(self):
+        refs = {
+            'Load':   self.s2f("Load  "),
+            'Unload': self.s2f("Unload"),
+        }
         @self.ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == self.ffic.DN_INITDIALOG:
-                for name, option in self.prev.items():
-                    ctrl = getattr(dlg, f'ID_{name}_{option}')
+                for name, value in prev.items():
+                    ctrl = getattr(dlg, f'ID_{name}_{value.prevstate}')
                     dlg.SetCheck(ctrl, self.ffic.BSTATE_CHECKED)
                 self.Redraw(dlg)
+            elif Msg == self.ffic.DN_BTNCLICK and Param1 not in (dlg.ID_vcancel, dlg.ID_vok):
+                for name, value in prev.items():
+                    if value.bnload == Param1:
+                        log.debug(f'OnButton: {Param1} {Param2}')
+                        if name in sys.modules:
+                            _pluginmanager.pluginRemove(name)
+                            s = 'Load'
+                        else:
+                            autorun = dlg.GetCheck(getattr(dlg, f'ID_{name}_open')) != 0
+                            _pluginmanager.pluginInstall(name, autorun)
+                            s = 'Unload'
+                        dlg.SetText(value.bnload, refs[s])
+                        return True
+                return True
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+
+        cvt = {
+            False: "Load  ",
+            True:  "Unload",
+        }
+
+        class Prev:
+            def __init__(self, name, prevstate):
+                self.name = name
+                self.prevstate = prevstate
+                self.bnload = -1
 
         elements = []
         iniFileName = os.path.join(self.USERHOME, "plugins.ini")
-        self.prev = {}
+        prev = {}
         if os.path.isfile(iniFileName):
             with open(iniFileName, "rt") as fp:
                 ini = configparser.ConfigParser()
@@ -47,13 +77,14 @@ class Plugin(PluginBase):
                         nmax = max(len(name), nmax)
                     for name in ini.options('plugins'):
                         option = ini.get('autoload', name, fallback='register')
-                        self.prev[name] = option
+                        prev[name] = Prev(name, option)
                         elements.append(
                             HSizer(
                                 TEXT(None, ('%%-%d.%ds'%(nmax, nmax))%name),
                                 RADIOBUTTON(name+"_register", "register", flags=self.ffic.DIF_GROUP),
                                 RADIOBUTTON(name+"_load", "load"),
                                 RADIOBUTTON(name+"_open", "open"),
+                                BUTTON(name+"_button", cvt[name in sys.modules]),
                             ),
                         )
 
@@ -78,12 +109,15 @@ class Plugin(PluginBase):
         # debugpy.breakpoint()
         dlg = b.build(-1, -1)
 
+        for name in prev.keys():
+            prev[name].bnload = getattr(dlg, f'ID_{name}_button')
+        
         res = self.info.DialogRun(dlg.hDlg)
         if res == dlg.ID_vok:
             ini = configparser.ConfigParser()
             ini.add_section('autoload')
             ini.add_section('plugins')
-            for name in sorted(self.prev.keys()):
+            for name in sorted(prev.keys()):
                 ini.set('plugins', name, '')
                 for option in ('load', 'open'):
                     curr = dlg.GetCheck(getattr(dlg, f'ID_{name}_{option}'))

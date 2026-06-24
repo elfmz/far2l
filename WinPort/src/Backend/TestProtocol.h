@@ -15,6 +15,13 @@ enum TestCommand
 	TEST_CMD_SEND_RAW, // inject raw bytes into PTY slave, bypassing TTYInput parser
 };
 
+struct TestRequestSendRaw
+{
+	uint32_t cmd;
+	uint32_t len; // number of raw bytes (max 2048)
+	char data[2048];
+};
+
 struct TestReplyStatus
 {
 	uint16_t version; // TEST_PROTOCOL_VERSION

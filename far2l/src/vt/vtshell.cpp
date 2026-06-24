@@ -272,9 +272,29 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
 				UpdateTerminalSize(fd_term);
 				const char *slavename = ptsname(fd_term);
-				if (slavename && *slavename)
+				if (slavename && *slavename) {
 					_slavename = slavename;
-				else
+					// Put the slave in non-canonical, non-echoing mode so that
+					// individual bytes reach the shell immediately (no ICANON
+					// line buffering). ISIG is deliberately left SET so that the
+					// kernel still generates SIGINT/SIGTSTP/SIGQUIT for control
+					// bytes — clearing ISIG here would disable signal generation
+					// for any child that does not reset termios itself (cat, sh).
+					// Interactive shells (bash) override this on startup anyway;
+					// this only covers the pre-shell window and non-shell children.
+					int fd_slave = open(slavename, O_RDWR | O_NOCTTY);
+					if (fd_slave != -1) {
+						struct termios ts;
+						if (tcgetattr(fd_slave, &ts) == 0) {
+							ts.c_lflag &= ~(ICANON | ECHO);
+							ts.c_iflag &= ~(IXON | ICRNL | IGNCR | INLCR);
+							ts.c_cc[VMIN] = 1;
+							ts.c_cc[VTIME] = 0;
+							tcsetattr(fd_slave, TCSANOW, &ts);
+						}
+						close(fd_slave);
+					}
+				} else
 					perror("VT: ptsname");
 			} else
 				perror("VT: grantpt/unlockpt");
@@ -800,6 +820,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_input_reader.InjectInput(str, strlen(str));
 	}
 
+
 	std::string StringFromClipboard()
 	{
 		std::string out;
@@ -872,7 +893,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			if (_kitty_kb_flags) {
 				std::string as_kitty = VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags, _keypad);
 				if (as_kitty.length() > 0) {
-					return as_kitty;
+					// Ctrl+letter (A-Z) keydown: bypass kitty encoding so the
+					// legacy (or win32) translation below produces raw control bytes.
+					if (!(KeyEvent.bKeyDown && ctrl && !alt && !shift
+						&& KeyEvent.wVirtualKeyCode >= 'A'
+						&& KeyEvent.wVirtualKeyCode <= 'Z')) {
+						return as_kitty;
+					}
 				}
 			}
 
@@ -1245,8 +1272,8 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::mutex g_vts_mutex;
-static std::vector<std::unique_ptr<VTShell> > g_vts;
-static std::unique_ptr<VTShell> g_vt;
+static std::vector<std::shared_ptr<VTShell> > g_vts;
+static std::shared_ptr<VTShell> g_vt;
 static std::atomic<int> g_vt_busy{0};
 
 struct VTShell_BusyScope
@@ -1329,29 +1356,23 @@ void VTShell_Shutdown()
 
 void VTShell_InjectRawInput(const char *data, size_t len)
 {
-	// g_vts_mutex is held across the PTY write below. This is an intentional
-	// scoped exception to the rule that g_vts_mutex guards only brief container
-	// ops (swap/erase/lookup): the payload is bounded to <=2048 bytes by the
-	// test-controller protocol (TestRequestSendRaw.data), and the kernel PTY
-	// buffer (>=64KB) cannot fill from a single test injection, so the write is
-	// effectively non-blocking in practice. Test-only path — do NOT call this
-	// with unbounded/large payloads. Releasing the lock before the write would
-	// require shared_ptr<VTShell> to keep the shell alive across concurrent
-	// Switch/Shutdown; see ARCHITECTURE.md "Lock Hierarchy Conventions".
-	std::lock_guard<std::mutex> lock(g_vts_mutex);
-	if (g_vt) {
-		g_vt->InjectRawInput(data, len);
+	// Inject into the foreground shell only. Background shells have no
+	// guaranteed route order (g_vts is insertion-ordered, and Switch
+	// erases by index), so injecting there would misroute bytes.
+	// Take a shared_ptr under the lock so the VTShell stays alive across
+	// the blocking WriteAll even if a concurrent VTShell_Shutdown clears
+	// g_vt — and release g_vts_mutex before the write so a wedged PTY
+	// cannot freeze VTShell_Switch / Enum / Shutdown.
+	std::shared_ptr<VTShell> target;
+	{
+		std::lock_guard<std::mutex> lock(g_vts_mutex);
+		target = g_vt;
+	}
+	if (target) {
+		target->InjectRawInput(data, len);
 		return;
 	}
-	// If the foreground shell completed or was moved to background,
-	// try background shells (newest first — the active tab).
-	for (auto it = g_vts.rbegin(); it != g_vts.rend(); ++it) {
-		if (*it) {
-			(*it)->InjectRawInput(data, len);
-			return;
-		}
-	}
-	fprintf(stderr, "VTShell_InjectRawInput: no shell available, dropped %lu bytes\n",
+	fprintf(stderr, "VTShell_InjectRawInput: no foreground shell, dropped %lu bytes\n",
 		(unsigned long)len);
 }
 

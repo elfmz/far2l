@@ -13,6 +13,8 @@ fi
 # Note: -u (unset variables) is omitted because $1 and $2 may be unset.
 set -eo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 mkdir -p /tmp/far2l-smoke/output
 APP="$1"
 if [ "$APP" = "" ]; then

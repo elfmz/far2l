@@ -11,6 +11,7 @@ ExpectString("VT Shell smoke test", 0, 0, -1, -1, 10000)
 ExpectString("~~~~~~~~~~~~~~~~~~~", 0, 0, -1, -1, 10000)
 
 // Dismiss "Press any key" prompt from the smoke test's 'false' command
+
 TypeEscape()
 Sleep(500)
 

@@ -90,7 +90,7 @@ var g_buf [4096]byte
 var g_app *termtest.ConsoleProcess
 var g_vm *goja.Runtime
 var g_status far2l_Status
-var g_far2l_running atomic.Bool
+var g_far2l_running int32 = 0 // accessed atomically; 1 = running, 0 = stopped
 var g_lctrl bool
 var g_rctrl bool
 var g_lalt bool
@@ -227,14 +227,14 @@ func far2l_ReadSocket(expected_n int, extra_timeout uint32) {
 }
 
 func far2l_Close() {
-	g_far2l_running.Store(false)
+	atomic.StoreInt32(&g_far2l_running, 0)
 	if g_app != nil {
 		g_app.Close()
 	}
 }
 
 func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
-	if g_far2l_running.Load() {
+	if atomic.LoadInt32(&g_far2l_running) != 0 {
 		aux_Panic("far2l already running")
 	}
     opts := termtest.Options {
@@ -250,7 +250,7 @@ func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 	if err != nil {
 		aux_Panic(err.Error())
 	}
-	g_far2l_running.Store(true)
+	atomic.StoreInt32(&g_far2l_running, 1)
 	// Drain PTY output so the kernel buffer doesn't fill up and block ScrBuf.Flush().
 	// The test harness communicates via the TEST socket, not the PTY, so nobody
 	// normally reads terminal output. Without this goroutine far2l deadlocks.
@@ -259,22 +259,21 @@ func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 	// PassthroughPipe's goroutine-per-read pattern that races with Expect-based calls.
 	ptyFd := -1
 	// Access the unexported 'console' field via unsafe to get the PTY master fd.
+	// This pins the termtest/go-expect struct layout; if a dependency upgrade
+	// renames the field or changes the accessor, fail loudly here instead of
+	// silently falling back to the racy ExpectRe drain path.
 	consoleField := reflect.ValueOf(g_app).Elem().FieldByName("console")
-	if consoleField.IsValid() && !consoleField.IsNil() {
-		consolePtr := (*expect.Console)(unsafe.Pointer(consoleField.Pointer()))
-		ptyFd = int(consolePtr.Pty.TerminalOutFd())
+	if !consoleField.IsValid() || consoleField.IsNil() {
+		aux_Panic("far2l_StartWithSize: termtest.ConsoleProcess.console field not found — dependency layout changed; PTY drain would silently degrade to the racy fallback. Update the reflect path.")
+	}
+	consolePtr := (*expect.Console)(unsafe.Pointer(consoleField.Pointer()))
+	ptyFd = int(consolePtr.Pty.TerminalOutFd())
+	if ptyFd < 0 {
+		aux_Panic("far2l_StartWithSize: Pty.TerminalOutFd() returned invalid fd — dependency layout changed; update the PTY drain path.")
 	}
 	go func() {
-		if ptyFd < 0 {
-			// Fallback: drain via ExpectRe (has race issues but better than deadlock)
-			for g_far2l_running.Load() {
-				g_app.ExpectRe(".", time.Millisecond)
-				time.Sleep(10 * time.Millisecond)
-			}
-			return
-		}
 		buf := make([]byte, 4096)
-		for g_far2l_running.Load() {
+		for atomic.LoadInt32(&g_far2l_running) != 0 {
 			_, err := syscall.Read(ptyFd, buf)
 			if err != nil {
 				time.Sleep(10 * time.Millisecond)
@@ -583,8 +582,11 @@ func far2l_ReqBye() {
 
 func far2l_ExpectExit(code int, timeout_ms int) string {
 	far2l_ReqBye()
-	// Stop the PTY drain goroutine before ExpectExitCode.
-	g_far2l_running.Store(false)
+	// Stop the PTY drain goroutine before ExpectExitCode. The atomic store
+	// publishes the stop; the goroutine's blocking syscall.Read will return
+	// when the PTY closes during far2l exit. The brief sleep lets an
+	// in-flight Read observe the EOF before ExpectExitCode tears down.
+	atomic.StoreInt32(&g_far2l_running, 0)
 	time.Sleep(100 * time.Millisecond)
     _, err:= g_app.ExpectExitCode(code, time.Duration(timeout_ms) * 1000000)
 	if err != nil {
@@ -606,9 +608,13 @@ func tty_CtrlC() {
 // far2l_SendRaw sends TEST_CMD_SEND_RAW to inject raw bytes into the PTY slave,
 // bypassing the TTYInput parser. This allows escape sequences like
 // bracketed paste (ESC[200~) to reach the shell as raw bytes.
+// The C++ side caps data at sizeof(TestRequestSendRaw.data) = 2048 bytes;
+// exceeding that throws an opaque server-side error, so guard here.
+const maxSendRawLen = 2048
+
 func far2l_SendRaw(data string) {
-	if len(data) > 2048 {
-		aux_Panic(fmt.Sprintf("far2l_SendRaw: payload too large (%d > 2048)", len(data)))
+	if len(data) > maxSendRawLen {
+		aux_Panic(fmt.Sprintf("far2l_SendRaw: payload %d bytes exceeds max %d", len(data), maxSendRawLen))
 	}
 	binary.LittleEndian.PutUint32(g_buf[0:], testCmdSendRaw)
 	binary.LittleEndian.PutUint32(g_buf[4:], uint32(len(data)))
@@ -1321,7 +1327,7 @@ func saveSnapshotOnExit() {
 	fmt.Fprintf(&sb, "\n")
 
 	// far2l status
-	if g_far2l_running.Load() {
+	if atomic.LoadInt32(&g_far2l_running) != 0 {
 		far2l_ReqRecvStatus()
 	}
 	fmt.Fprintf(&sb, "--- Terminal status ---\n")
@@ -1330,10 +1336,10 @@ func saveSnapshotOnExit() {
 	if g_status.Title != "" {
 		fmt.Fprintf(&sb, "Title: %s\n", g_status.Title)
 	}
-	fmt.Fprintf(&sb, "Running: %v\n\n", g_far2l_running.Load())
+	fmt.Fprintf(&sb, "Running: %v\n\n", atomic.LoadInt32(&g_far2l_running) != 0)
 
 	// Screen dump (only if far2l is still connected)
-	if g_far2l_running.Load() && g_status.Width > 0 && g_status.Height > 0 {
+	if atomic.LoadInt32(&g_far2l_running) != 0 && g_status.Width > 0 && g_status.Height > 0 {
 		sb.WriteString("--- Screen dump ---\n")
 		sb.WriteString(far2l_DumpScreenQuiet(0, 0, g_status.Width, g_status.Height))
 		sb.WriteString("\n")

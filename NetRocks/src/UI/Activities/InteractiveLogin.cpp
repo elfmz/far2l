@@ -94,13 +94,17 @@ class InteractivePassphraseDialog : BaseDialog
 	int _i_dblbox, _i_password, _i_connect;
 	bool _select_all = false;
 public:
-	InteractivePassphraseDialog(const std::string &display_name, unsigned int retry)
+	InteractivePassphraseDialog(const std::string &display_name, unsigned int retry, const std::string &info)
 	{
 		_i_dblbox = _di.SetBoxTitleItem(retry ? MKeyPassphraseRetryTitle : MKeyPassphraseTitle);
 		_di.SetLine(2);
 		_di.AddAtLine(DI_TEXT, 5,26, 0, retry ? MKeyPassphraseRetryTo : MKeyPassphraseTo);
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 7,48, 0, display_name.c_str());
+		if (!info.empty()) {
+			_di.NextLine();
+			_di.AddAtLine(DI_TEXT, 7,48, 0, info.c_str());
+		}
 
 		_di.NextLine();
 		_di.AddAtLine(DI_TEXT, 5,26, 0, MPassphrase);
@@ -152,7 +156,7 @@ public:
 	}
 };
 
-bool InteractivePassphrase(const std::string &display_name, unsigned int retry, std::string &password)
+bool InteractivePassphrase(const std::string &display_name, unsigned int retry, const std::string &info, std::string &password)
 {
-	return InteractivePassphraseDialog(display_name, retry).Ask(password);
+	return InteractivePassphraseDialog(display_name, retry, info).Ask(password);
 }

@@ -332,7 +332,7 @@ void HostRemote::ReInitialize()
 	}
 
 	std::unique_lock<std::mutex> locker(_mutex);
-	for (unsigned int auth_failures = 0;;) {
+	for (unsigned int auth_failures = 0, passphrase_failures = 0;;) {
 //		fprintf(stderr, "login_mode=%d retry=%d\n", login_mode, retry);
 		if (_login_mode == 1) {
 			std::string tmp_username = _identity.username, tmp_password = _password;
@@ -397,15 +397,15 @@ void HostRemote::ReInitialize()
 				_login_mode = 1;
 				break;
 			case IPC_PI_KEY_PASSPHRASE_NEEDED:
-				if (auth_failures >= 3) {
+				if (passphrase_failures >= 3) {
 					OnBroken();
 					throw ProtocolError("Key passphrase failed", info.c_str());
 				}
-				++auth_failures;
+				++passphrase_failures;
 				{
 					std::string tmp_password = _password;
 					locker.unlock();
-					if (!InteractivePassphrase(SiteName(), auth_failures, tmp_password)) {
+					if (!InteractivePassphrase(SiteName(), passphrase_failures, info, tmp_password)) {
 						SendString(std::string());
 						OnBroken();
 						throw AbortError();

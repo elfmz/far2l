@@ -43,4 +43,4 @@ enum IPCProtocolInitStatus
 	IPC_PI_GENERIC_ERROR
 };
 
-#define IPC_VERSION_MAGIC  0xbabe0001
+#define IPC_VERSION_MAGIC  0xbabe0002

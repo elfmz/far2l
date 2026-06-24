@@ -107,7 +107,7 @@ ExitFar2lWithConfirm()
 
 
 ///////////////////
-// Corner case: View file with line wider than terminal (120 cols)
+// Corner case: View file with line wider than terminal (80 cols)
 // Verifies viewer handles horizontal overflow gracefully
 var dirsWL_profile = mydir + "/profile-wideline";
 var dirsWL_left = mydir + "/left-wl";

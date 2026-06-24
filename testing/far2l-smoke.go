@@ -285,7 +285,7 @@ func far2l_StartWithSize(args []string, cols int, rows int) far2l_Status {
 }
 
 func far2l_Start(args []string) far2l_Status {
-	return far2l_StartWithSize(args, 120, 80)
+	return far2l_StartWithSize(args, 80, 25)
 }
 
 func far2l_ReqRecvStatus() far2l_Status {

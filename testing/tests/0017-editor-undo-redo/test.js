@@ -252,7 +252,7 @@ Sync(2000)
 // The editor title should indicate modified state
 // (far2l shows '*' or similar marker in title when file is modified)
 BeCalm()
-var rMod = ExpectString("*", 0, 0, 120, 1, 3000)
+var rMod = ExpectString("*", 0, 0, 80, 1, 3000)
 BePanic()
 if (rMod.I >= 1) {
     Log("Save-point tracking: modified flag set after undo past save — correct")
@@ -344,7 +344,7 @@ Sync(1000)
 // Even after undoing, the editor should still report modified because
 // the save-point was evicted from the undo stack (FEDITOR_UNDOSAVEPOSLOST)
 BeCalm()
-var rUPmod = ExpectString("*", 0, 0, 120, 1, 3000)
+var rUPmod = ExpectString("*", 0, 0, 80, 1, 3000)
 BePanic()
 if (rUPmod.I >= 1) {
     Log("UndoSavePos eviction: modified flag persists after evicting save-point — correct")

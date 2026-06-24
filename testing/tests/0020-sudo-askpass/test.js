@@ -84,10 +84,10 @@ function WaitForAskpassExit() {
     Sync(2000);
 }
 
-// Panno positions for 120-column terminal:
-//   i=0: 120/2 + 0*2 - 3 = 57
-//   i=1: 120/2 + 1*2 - 3 = 59
-//   i=2: 120/2 + 2*2 - 3 = 61
+// Panno positions for 80-column terminal:
+//   i=0: 80/2 + 0*2 - 3 = 37
+//   i=1: 80/2 + 1*2 - 3 = 39
+//   i=2: 80/2 + 2*2 - 3 = 41
 // Panno is at y=4 (_rect.Bottom)
 
 // ========================================
@@ -181,7 +181,7 @@ Sync(2000);
 
 // Verify panno shows empty state (3 white squares on red background)
 // Empty panno: BACKGROUND_RED | FOREGROUND_INTENSITY | R | G | B
-var pannoCell0 = ReadCell(57, 4);
+var pannoCell0 = ReadCell(37, 4);
 if (pannoCell0.BackRed && pannoCell0.ForeIntense && pannoCell0.ForeRed
     && pannoCell0.ForeGreen && pannoCell0.ForeBlue) {
     Log("Phase 3: Empty panno after Delete — white squares on red background — correct");
@@ -212,7 +212,7 @@ Sync(2000);
 // Note: the initial paint may not have fully settled — the foreground
 // color should be white (R+G+B) but background/intensity may lag.
 // Phase 3 verifies the full attribute set after interaction.
-var emptyPanno = ReadCell(57, 4);
+var emptyPanno = ReadCell(37, 4);
 if (emptyPanno.ForeRed && emptyPanno.ForeGreen && emptyPanno.ForeBlue) {
     Log("Phase 4: Initial panno — white foreground (empty state) — correct");
 } else {
@@ -259,7 +259,7 @@ TypeText("x");
 Sleep(500);
 Sync(2000);
 
-var yellowPanno = ReadCell(57, 4);
+var yellowPanno = ReadCell(37, 4);
 // Yellow: BACKGROUND_RED | FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN
 if (yellowPanno.BackRed && yellowPanno.ForeIntense && yellowPanno.ForeRed
     && yellowPanno.ForeGreen && !yellowPanno.ForeBlue) {
@@ -293,7 +293,7 @@ Sleep(300);
 Sync(1000);
 
 // Verify immediate yellow state
-var beforeHash = ReadCell(57, 4);
+var beforeHash = ReadCell(37, 4);
 Log("Phase 7: Before hash — BackRed=" + beforeHash.BackRed
     + " ForeIntense=" + beforeHash.ForeIntense
     + " R=" + beforeHash.ForeRed + " G=" + beforeHash.ForeGreen
@@ -305,9 +305,9 @@ Sync(2000);
 
 // After hashing, panno should show different glyphs/colors (hash > 1)
 // The glyph at position 0 may be ■, ▲, or ● with a color from the palette
-var afterHash0 = ReadCell(57, 4);
-var afterHash1 = ReadCell(59, 4);
-var afterHash2 = ReadCell(61, 4);
+var afterHash0 = ReadCell(37, 4);
+var afterHash1 = ReadCell(39, 4);
+var afterHash2 = ReadCell(41, 4);
 Log("Phase 7: After hash — cell0='" + afterHash0.Text + "' cell1='" + afterHash1.Text + "' cell2='" + afterHash2.Text + "'");
 
 // Verify at least one panno cell changed (different glyph or color from yellow ■)

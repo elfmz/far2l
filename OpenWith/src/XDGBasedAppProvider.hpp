@@ -140,12 +140,12 @@ namespace openwith
 		// Represents a single pattern matching rule from parsed 'globs2' file.
 		struct GlobRule
 		{
-			int weight;
+			int weight = 50;
 			std::string mime_type;
 			std::string pattern;
-			bool case_sensitive;
-			int source_rank;
-			bool is_literal;
+			bool case_sensitive = false;
+			int source_rank = 0;
+			bool is_literal = false;
 
 			// Defines the sorting order for glob matching.
 			// Returns true if 'this' rule should be checked BEFORE 'other'.
@@ -481,7 +481,7 @@ namespace openwith
 		std::unordered_map<std::string, std::vector<std::string>> _op_canonical_to_aliases_cache;  // from 'aliases'
 		std::unordered_map<std::string, std::string> _op_subclass_to_parent_cache;  // from 'subclasses'
 		MimeappsListsConfig _op_mimeapps_lists_cache;  // from 'mimeapps.list'
-		std::map<std::string, std::string> _op_mime_to_default_desktop_id_cache;  // from 'xdg-mime query default'
+		std::unordered_map<std::string, std::string> _op_mime_to_default_desktop_id_cache;  // from 'xdg-mime query default'
 		MimeToDesktopAssociationsMap _op_mime_to_desktop_associations_index; 	// from 'mimeinfo.cache'
 		MimeToDesktopEntryIndex _op_mime_to_desktop_entry_index;  // from full .desktop scan
 	};

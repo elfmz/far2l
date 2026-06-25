@@ -370,16 +370,14 @@ namespace openwith
 			if (profile_mimes.empty()) {
 				has_none = true;
 			} else {
-				std::stringstream ss;
-				ss << "(";
-				bool first = true;
+				std::string repr = "(";
 				for (const auto& mime : profile_mimes) {
-					if (!first) { ss << ";"; }
-					ss << mime;
-					first = false;
+					if (repr.size() > 1) repr += ';';
+					repr += mime;
 				}
-				ss << ")";
-				unique_representations_wide.insert(StrMB2Wide(ss.str()));
+				repr += ')';
+
+				unique_representations_wide.insert(StrMB2Wide(repr));
 			}
 		}
 
@@ -1080,7 +1078,7 @@ namespace openwith
 		struct dirent* dir_entry;
 
 		while ((dir_entry = readdir(dir_stream))) {
-			std::string name = dir_entry->d_name;
+			std::string_view name = dir_entry->d_name;
 			if (name == "." || name == "..") continue;
 
 			bool is_dir = false;
@@ -1103,7 +1101,7 @@ namespace openwith
 			}
 #endif
 
-			std::string full_path = current_path + "/" + name;
+			std::string full_path = current_path + "/" + name.data();
 
 			if (need_stat) {
 				// Fallback to stat():

@@ -320,10 +320,16 @@ namespace openwith
 		std::vector<CandidateContextLocation> locations;
 		std::string desktop_id = StrWide2MB(candidate.id);
 
-		// Navigate to the .desktop file
 		auto it_desktop = _desktop_id_to_desktop_entry_cache.find(desktop_id);
 		if (it_desktop != _desktop_id_to_desktop_entry_cache.end() && it_desktop->second.has_value()) {
+			// Navigate to the .desktop file
 			locations.push_back({GetMsg(MsgID::GotoDesktop), StrMB2Wide(it_desktop->second.value().desktop_filepath)});
+
+			// Navigate to the TryExec file
+			std::string tryexec_filepath;
+			if (IsExecutableAvailable(it_desktop->second.value().try_exec, &tryexec_filepath)) {
+				locations.push_back({GetMsg(MsgID::GotoTryExec), StrMB2Wide(tryexec_filepath)});
+			}
 		}
 
 		// Navigate to the association source file
@@ -2151,31 +2157,37 @@ namespace openwith
 	}
 
 
-	bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command)
+	bool XDGBasedAppProvider::IsExecutableAvailable(const std::string& command, std::string *out_resolved_filepath)
 	{
 		if (command.empty()) {
 			return false;
 		}
 
-		auto check = [](const std::string& p) {
+		auto check_and_save = [out_resolved_filepath](const std::string& filepath) {
 			struct stat st;
-			return stat(p.c_str(), &st) == 0 && S_ISREG(st.st_mode) && access(p.c_str(), X_OK) == 0;
+			if (stat(filepath.c_str(), &st) == 0 && S_ISREG(st.st_mode) && access(filepath.c_str(), X_OK) == 0) {
+				if (out_resolved_filepath) {
+					*out_resolved_filepath = filepath;
+				}
+				return true;
+			}
+			return false;
 		};
 
 		// Absolute path? Check it directly.
 		if (command[0] == '/') {
-			return check(command);
+			return check_and_save(command);
 		}
 
 		// Otherwise, look up in $PATH.
 		auto dirs = SplitString(GetEnv("PATH"), ':');
 		for (const auto& dir : dirs) {
 			if (dir.empty()) continue;
-			if (check(dir + '/' + command)) {
+			std::string filepath = (dir.back() == '/') ? (dir + command) : (dir + '/' + command);
+			if (check_and_save(filepath)) {
 				return true;
 			}
 		}
-
 		return false;
 	}
 

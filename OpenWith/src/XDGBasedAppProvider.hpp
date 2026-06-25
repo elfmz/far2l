@@ -405,7 +405,7 @@ namespace openwith
 		// --- System, environment, and common helpers ---
 		static bool IsReadableFile(const std::string& filepath);
 		static bool IsTraversableDirectory(const std::string& dirpath);
-		static bool IsExecutableAvailable(const std::string& command);
+		static bool IsExecutableAvailable(const std::string& command, std::string* out_resolved_path = nullptr);
 		static std::string RunCommandAndCaptureOutput(const std::string& cmd);
 		static std::string GetEnv(const char* var, const char* default_val = "");
 		static std::string EscapeArgForShell(const std::string& arg);

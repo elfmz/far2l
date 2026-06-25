@@ -54,6 +54,7 @@ namespace openwith
 		Close,
 		Launch,
 		GotoDesktop,
+		GotoTryExec,
 		GotoSource,
 
 		DesktopFile,

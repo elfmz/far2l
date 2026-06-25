@@ -99,6 +99,9 @@ $^#Details Dialog (F3)#
  #-# "GoTo .desktop" button
    Jumps to the application's .desktop file in the active panel. Always available.
 
+ #-# "GoTo TryExec" button
+   Jumps to the file specified in the "TryExec" key of the application's .desktop file. If the path is not absolute, the file is looked up in $PATH. Shown only if the file exists and is executable.
+
  #-# "GoTo source" button
    Jumps to the file "mimeapps.list" or "mimeinfo.cache" from which the association was retrieved. Hidden when multiple files are selected, when the application was found by a full scan of .desktop files, or via 'xdg-mime query default'.
 

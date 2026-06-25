@@ -50,6 +50,7 @@
 "&Close"
 "&Launch"
 "GoTo .d&esktop"
+"GoTo &TryExec"
 "GoTo s&ource"
 
 "&Desktop file:"

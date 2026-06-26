@@ -217,6 +217,16 @@ static bool IsPluginActive()
 	return g_git_available && g_settings.enabled;
 }
 
+static int GetCurrentWindowType()
+{
+	WindowInfo wi{};
+	wi.Pos = -1;
+	if (g_info.AdvControl(g_info.ModuleNumber, ACTL_GETSHORTWINDOWINFO, &wi, nullptr) == 0) {
+		return 0;
+	}
+	return wi.Type;
+}
+
 static bool CheckGitAvailable()
 {
 	std::string out;
@@ -384,10 +394,10 @@ static void MaybeScheduleTick()
 	g_info.AdvControl(g_info.ModuleNumber, ACTL_SYNCHRO, nullptr, nullptr);
 }
 
-static void ApplyGutterRequest(EditorState &st)
+static bool ApplyGutterRequest(EditorState &st)
 {
 	if (st.gutter_request == -1) {
-		return;
+		return false;
 	}
 	EditorSetParameter esp{};
 	esp.Type = ESPT_SHOWGUTTER;
@@ -402,6 +412,7 @@ static void ApplyGutterRequest(EditorState &st)
 		st.gutter_forced = false;
 	}
 	st.gutter_request = -1;
+	return true;
 }
 
 static bool GetEditorInfo(EditorInfo &ei)
@@ -1879,6 +1890,9 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 		}
 	}
 
+	const bool dialog_current = GetCurrentWindowType() == WTYPE_DIALOG;
+	bool redraw_current_dialog = false;
+
 	if (g_pending_tick) {
 		g_pending_tick = false;
 		EditorInfo ei{};
@@ -1889,7 +1903,9 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 				UpdateEditorState(st);
 				did_work = true;
 			}
-			ApplyGutterRequest(st);
+			if (ApplyGutterRequest(st)) {
+				redraw_current_dialog = dialog_current;
+			}
 		}
 	}
 	EditorInfo ei{};
@@ -1897,9 +1913,15 @@ SHAREDSYMBOL int WINAPI ProcessSynchroEventW(int Event, void *Param)
 		EditorState &st = g_editors[ei.EditorID];
 		st.editor_id = ei.EditorID;
 		if (st.gutter_request != -1) {
-			ApplyGutterRequest(st);
-			did_work = true;
+			if (ApplyGutterRequest(st)) {
+				did_work = true;
+				redraw_current_dialog = dialog_current;
+			}
 		}
+	}
+
+	if (redraw_current_dialog) {
+		g_info.AdvControl(g_info.ModuleNumber, ACTL_REDRAWALL, nullptr, nullptr);
 	}
 
 	return did_work ? 1 : 0;

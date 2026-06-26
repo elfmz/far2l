@@ -1,6 +1,6 @@
 #include "AppProvider.hpp"
-#include "XDGBasedAppProvider.hpp"
 #include "MacOSAppProvider.hpp"
+#include "XDGBasedAppProvider.hpp"
 
 namespace openwith
 {

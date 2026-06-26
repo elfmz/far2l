@@ -49,19 +49,19 @@ namespace openwith
 
 		FilesSelected,
 		Filepaths,
-		MimeProfile,
+		MimeProfiles,
 		LaunchCommand,
 		Close,
 		Launch,
-		GotoDesktop,
-		GotoTryExec,
-		GotoSource,
 
 		DesktopFile,
 		Source,
 		FullScanFor,
 		For,
 		In,
+		GotoDesktop,
+		GotoTryExec,
+		GotoSource,
 
 		AppName,
 		FullPath,

@@ -1,19 +1,20 @@
 #include "OpenWith.hpp"
 #include "AppProvider.hpp"
-#include "lng.hpp"
 #include "common.hpp"
-#include "WideMB.h"
-#include "utils.h"
+#include "lng.hpp"
 #include "farplug-wide.h"
 #include "KeyFileHelper.h"
+#include "utils.h"
+#include "WideMB.h"
 #include "WinCompat.h"
 #include <algorithm>
 #include <cstdio>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <iterator>
+
 
 namespace
 {
@@ -44,7 +45,7 @@ namespace openwith
 		enum class MenuAction : int { DETAILS, SETTINGS, FORCED_LAUNCH, LAUNCH = -1 };
 
 		// Main application selection menu loop.
-		while(true) {
+		while (true) {
 			if (!app_candidates.has_value()) {
 				app_candidates = provider->GetAppCandidates(filepaths);
 				FilterOutTerminalCandidates(*app_candidates, filepaths.size());
@@ -71,12 +72,14 @@ namespace openwith
 			// Display the menu and get the user's selection.
 			menu_items[active_menu_idx].Selected = true;
 			const int selected_menu_idx = g_info.Menu(g_info.ModuleNumber, -1, -1, 0, FMENU_WRAPMODE | FMENU_SHOWAMPERSAND | FMENU_CHANGECONSOLETITLE,
-												FormatMenuTitle(filepaths).c_str(), L"  Enter Shift+Enter F3 F9 Ctrl+Alt+F  ", L"Contents", BREAK_KEYS, &menu_break_code,
-												menu_items.data(), static_cast<int>(menu_items.size()));
+												FormatMenuTitle(filepaths).c_str(), L"  Enter Shift+Enter F3 F9 Ctrl+Alt+F  ", L"Contents", BREAK_KEYS,
+												&menu_break_code, menu_items.data(), static_cast<int>(menu_items.size()));
+			menu_items[active_menu_idx].Selected = false;
+
 			if (selected_menu_idx == -1) {
 				return; // User cancelled the menu (Esc/F10); exit the plugin.
 			}
-			menu_items[active_menu_idx].Selected = false;
+
 			active_menu_idx = selected_menu_idx;
 			const auto& selected_app = (*app_candidates)[selected_menu_idx];
 			const auto menu_action = static_cast<MenuAction>(menu_break_code);
@@ -146,7 +149,7 @@ namespace openwith
 		constexpr int CONFIG_DIALOG_WIDTH = 70;
 
 		const bool old_use_external_terminal = s_use_external_terminal;
-		const auto old_platform_settings = provider->GetPlatformSettings();
+		auto platform_settings = provider->GetPlatformSettings();
 
 		std::vector<FarDialogItem> config_dialog_items;
 		int current_y = 1;
@@ -158,7 +161,8 @@ namespace openwith
 		};
 
 		auto add_checkbox = [&add_item, &current_y](const wchar_t* text, bool is_checked, bool is_disabled = false) -> int {
-			FarDialogItem chkbox = { DI_CHECKBOX, 5, current_y, 0, current_y, FALSE, {}, is_disabled ? DIF_DISABLE : DIF_NONE, FALSE, text, 0 };
+			FarDialogItem chkbox = { DI_CHECKBOX, DlgLayout::H_SIDE_OVERHEAD, current_y, 0, current_y, FALSE, {},
+									 is_disabled ? DIF_DISABLE : DIF_NONE, FALSE, text, 0 };
 			chkbox.Param.Selected = is_checked;
 			auto item_idx = add_item(chkbox);
 			current_y++;
@@ -166,12 +170,13 @@ namespace openwith
 		};
 
 		auto add_separator = [&add_item, &current_y]() -> int {
-			auto item_idx = add_item({ DI_TEXT, 5, current_y, 0, current_y, FALSE, {}, DIF_SEPARATOR, FALSE, L"", 0 });
+			auto item_idx = add_item({ DI_TEXT, 0, current_y, 0, current_y, FALSE, {}, DIF_SEPARATOR, FALSE, L"", 0 });
 			current_y++;
 			return item_idx;
 		};
 
-		add_item({ DI_DOUBLEBOX, 3, current_y++, CONFIG_DIALOG_WIDTH - 4, 0, FALSE, {}, DIF_NONE, FALSE, GetMsg(MsgID::ConfigTitle), 0 });
+		add_item({ DI_DOUBLEBOX, DlgLayout::H_OUTER_MARGIN, current_y++, CONFIG_DIALOG_WIDTH - DlgLayout::H_OUTER_MARGIN - 1,
+				   0, FALSE, {}, DIF_NONE, FALSE, GetMsg(MsgID::ConfigTitle), 0 });
 
 		// ----- Add general (platform-independent) settings. -----
 		auto use_external_terminal_idx          = add_checkbox(GetMsg(MsgID::UseExternalTerminal), s_use_external_terminal);
@@ -180,24 +185,29 @@ namespace openwith
 
 		const auto threshold_current = std::to_wstring(s_confirm_launch_threshold);
 		const wchar_t* confirm_launch_label = GetMsg(MsgID::ConfirmLaunchOption);
-		int confirm_launch_label_width = static_cast<int>(g_fsf.StrCellsCount(confirm_launch_label, wcslen(confirm_launch_label)));
+		const int confirm_launch_label_width = CalculateVisibleCellWidth(confirm_launch_label);
 
-		FarDialogItem confirm_launch_chkbx = { DI_CHECKBOX, 5, current_y, 0, current_y, FALSE, {}, DIF_NONE, FALSE, confirm_launch_label, 0 };
+		FarDialogItem confirm_launch_chkbx = { DI_CHECKBOX, DlgLayout::H_SIDE_OVERHEAD, current_y, 0, current_y, FALSE, {}, DIF_NONE,
+											   FALSE, confirm_launch_label, 0 };
 		confirm_launch_chkbx.Param.Selected  = s_confirm_launch;
 		auto confirm_launch_chkbx_idx           = add_item(confirm_launch_chkbx);
-		auto confirm_launch_edit_idx            = add_item({ DI_FIXEDIT, confirm_launch_label_width + 10, current_y, confirm_launch_label_width + 13, current_y, FALSE, {(DWORD_PTR)L"9999"}, DIF_MASKEDIT, FALSE, threshold_current.c_str(), 0 });
+		auto confirm_launch_edit_idx            = add_item({ DI_FIXEDIT, DlgLayout::H_SIDE_OVERHEAD + confirm_launch_label_width + 5, current_y,
+															 DlgLayout::H_SIDE_OVERHEAD + confirm_launch_label_width + 8, current_y, FALSE,
+															 {reinterpret_cast<DWORD_PTR>(L"9999")}, DIF_MASKEDIT, FALSE, threshold_current.c_str(), 0 });
 		current_y++;
 
 		auto display_filename_idx               = add_checkbox(GetMsg(MsgID::DisplayFilename), s_display_filename);
 
 		// ----- Add platform-specific settings. -----
-		std::vector<std::pair<int, ProviderSetting>> dynamic_settings;
-		dynamic_settings.reserve(old_platform_settings.size());
+		std::vector<std::pair<int, size_t>> setting_control_bindings;
+		setting_control_bindings.reserve(platform_settings.size());
 
-		if (!old_platform_settings.empty()) {
+		if (!platform_settings.empty()) {
 			add_separator();
-			for (const auto& s : old_platform_settings) {
-				dynamic_settings.emplace_back(add_checkbox(s.display_name.c_str(), s.value, s.disabled), s);
+			for (size_t setting_idx = 0; setting_idx < platform_settings.size(); ++setting_idx) {
+				auto& setting = platform_settings[setting_idx];
+				int dlg_item_idx = add_checkbox(setting.display_name.c_str(), setting.value, setting.disabled);
+				setting_control_bindings.emplace_back(dlg_item_idx, setting_idx);
 			}
 		}
 
@@ -206,7 +216,7 @@ namespace openwith
 		add_item({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, FALSE, GetMsg(MsgID::Cancel), 0 });
 
 		int config_dialog_height = current_y + 3;
-		config_dialog_items[0].Y2 = config_dialog_height - 2;
+		config_dialog_items[0].Y2 = config_dialog_height - DlgLayout::V_OUTER_MARGIN - 1;
 
 		bool is_platform_settings_changed = false;
 		bool is_platform_settings_requiring_candidate_list_refresh_changed = false;
@@ -216,7 +226,7 @@ namespace openwith
 
 		if (config_dlg != INVALID_HANDLE_VALUE) {
 
-			int exit_code = g_info.DialogRun(config_dlg);
+			const int exit_code = g_info.DialogRun(config_dlg);
 
 			// ----- Process results if "OK" was pressed. -----
 			if (exit_code == static_cast<int>(ok_btn_idx)) {
@@ -240,24 +250,21 @@ namespace openwith
 				SaveGeneralSettings(key_writer);
 
 				// Propagate changes to dynamic platform-specific settings back to the provider.
-				if (!dynamic_settings.empty()) {
-					std::vector<ProviderSetting> new_platform_settings;
-					new_platform_settings.reserve(dynamic_settings.size());
-
-					for (auto& [idx, setting] : dynamic_settings) {
-						bool new_value = is_checked(idx);
+				if (!setting_control_bindings.empty()) {
+					for (auto [dlg_item_idx, setting_idx] : setting_control_bindings) {
+						auto& setting = platform_settings[setting_idx];
+						const bool new_value = is_checked(dlg_item_idx);
 						if (setting.value != new_value) {
 							if (setting.affects_candidates) {
 								is_platform_settings_requiring_candidate_list_refresh_changed = true;
 							}
 							is_platform_settings_changed = true;
+							setting.value = new_value;
 						}
-						new_platform_settings.push_back(std::move(setting));
-						new_platform_settings.back().value = new_value;
 					}
 
 					if (is_platform_settings_changed) {
-						provider->SetPlatformSettings(new_platform_settings);
+						provider->SetPlatformSettings(platform_settings);
 					}
 					provider->SavePlatformSettings(key_writer);
 				}
@@ -303,7 +310,7 @@ namespace openwith
 
 
 
-	bool Plugin::AskForLaunchConfirmation(const CandidateInfo& app, const size_t file_count)
+	bool Plugin::AskForLaunchConfirmation(const CandidateInfo& app, size_t file_count)
 	{
 		if (!s_confirm_launch || file_count <= static_cast<size_t>(s_confirm_launch_threshold)) {
 			return true;
@@ -352,85 +359,111 @@ namespace openwith
 
 
 	Plugin::DetailsDlgResult Plugin::ShowDetailsDlg(const std::vector<std::wstring>& filepaths,
-										   const std::vector<std::wstring>& unique_mime_profiles,
-										   const std::vector<Field>& application_info,
-										   const std::vector<std::wstring>& cmds,
-										   const std::vector<CandidateContextLocation>& locations)
+											   const std::vector<std::wstring>& unique_mime_profiles,
+											   const std::vector<Field>& application_info,
+											   const std::vector<std::wstring>& cmds,
+											   const std::vector<CandidateContextLocation>& locations)
 	{
-		std::vector<Field> file_info;
+		// ----- Assemble unified list of dialog fields and separators -----
+		std::vector<std::optional<Field>> details;
 		if (auto file_count = filepaths.size(); file_count != 1) {
-			file_info.push_back({ GetMsg(MsgID::FilesSelected), std::to_wstring(file_count)});
+			details.push_back(Field{GetMsg(MsgID::FilesSelected), std::to_wstring(file_count)});
 		}
-		file_info.push_back({ GetMsg(MsgID::Filepaths), JoinStrings(filepaths, L"; ") });
-		file_info.push_back({ GetMsg(MsgID::MimeProfile), JoinStrings(unique_mime_profiles, L"; ") });
+		details.push_back(Field{GetMsg(MsgID::Filepaths), JoinStrings(filepaths, L"; ")});
+		details.push_back(Field{GetMsg(MsgID::MimeProfiles), JoinStrings(unique_mime_profiles, L"; ")});
+		details.push_back(std::nullopt); // separator
+		for (const auto& field : application_info) {
+			details.push_back(field);
+		}
+		details.push_back(std::nullopt); // separator
+		details.push_back(Field{GetMsg(MsgID::LaunchCommand), JoinStrings(cmds, L"; ")});
+		details.push_back(std::nullopt); // separator
 
-		Field launch_command { GetMsg(MsgID::LaunchCommand), JoinStrings(cmds, L"; ") };
+		// ----- Calculate dynamic dialog dimensions based on content -----
 
-		constexpr int DETAILS_DIALOG_MIN_WIDTH = 40;
-		constexpr int DETAILS_DIALOG_DESIRED_WIDTH = 90;
+		constexpr int DETAILS_DLG_DESIRED_WIDTH = 100;
+		constexpr int MIN_FIELD_EDIT_WIDTH = 10;
 
 		const int screen_width = GetConsoleWidth();
-		const int details_dialog_max_width = std::max(DETAILS_DIALOG_MIN_WIDTH, screen_width - 4);
-		const int details_dialog_width = std::clamp(DETAILS_DIALOG_DESIRED_WIDTH, DETAILS_DIALOG_MIN_WIDTH, details_dialog_max_width);
-		const int details_dialog_height = static_cast<int>(file_info.size() + application_info.size() + 9);
 
-		const auto max_label_cell_width = static_cast<int>(std::max({
-			GetMaxLabelCellWidth(file_info),
-			GetMaxLabelCellWidth(application_info),
-			GetLabelCellWidth(launch_command)
-		}));
+		const int standard_buttons_span = GetButtonWidth(GetMsg(MsgID::Close)) + DlgLayout::H_BUTTON_GAP + GetButtonWidth(GetMsg(MsgID::Launch));
+		int locations_span = 0;
+		for (const auto& location : locations) {
+			if (locations_span > 0) {
+				locations_span += DlgLayout::H_BUTTON_GAP;
+			}
+			locations_span += GetButtonWidth(location.title);
+		}
 
-		const int label_end_x = max_label_cell_width + 4;
-		const int edit_start_x = max_label_cell_width + 6;
-		const int edit_end_x = details_dialog_width - 6;
+		const int max_label_width = GetMaxLabelCellWidth(details);
+		const int details_dlg_min_width = std::max({standard_buttons_span, locations_span, max_label_width + 1 + MIN_FIELD_EDIT_WIDTH}) + DlgLayout::H_TOTAL_OVERHEAD;
+		const int details_dlg_max_width = std::max(details_dlg_min_width, screen_width - 4);
+		const int details_dlg_width = std::clamp(DETAILS_DLG_DESIRED_WIDTH, details_dlg_min_width, details_dlg_max_width);
+		const int total_buttons_span = standard_buttons_span + (locations.empty() ? 0 : 1 + locations_span);
+		const bool extra_row_for_locations = total_buttons_span > (details_dlg_width - DlgLayout::H_TOTAL_OVERHEAD);
+		const int label_end_x = DlgLayout::H_SIDE_OVERHEAD + max_label_width - 1;
+		const int edit_start_x = DlgLayout::H_SIDE_OVERHEAD + max_label_width + 1;
+		const int edit_end_x = details_dlg_width - DlgLayout::H_SIDE_OVERHEAD - 1;
+		const int details_dlg_height = DlgLayout::V_SIDE_OVERHEAD * 2 + static_cast<int>(details.size()) + 1 /* standard buttons */
+														+ (extra_row_for_locations ? 1 : 0);
 
-		std::vector<FarDialogItem> details_dialog_items;
-		details_dialog_items.reserve(file_info.size() * 2 + application_info.size() * 2 + 8);
-
+		// ----- Build dialog UI elements layout -----
+		std::vector<FarDialogItem> details_dlg_items;
+		details_dlg_items.reserve(1 + (details.size() * 2) + 2 + locations.size());
 		int current_y = 1;
 
-		// Lambda to add a label/value pair.
-		auto add_field_row = [&details_dialog_items, &current_y, label_end_x, edit_start_x, edit_end_x](const Field& field) {
-			int label_start_x = label_end_x - static_cast<int>(GetLabelCellWidth(field)) + 1;
-			details_dialog_items.push_back({ DI_TEXT, label_start_x, current_y, label_end_x, current_y, FALSE, {}, 0, 0, field.label.c_str(), 0 });
-			details_dialog_items.push_back({ DI_EDIT, edit_start_x, current_y, edit_end_x, current_y, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0, field.content.c_str(), 0 });
+		auto add_field_row = [&details_dlg_items, &current_y, label_end_x, edit_start_x, edit_end_x](const Field& field) {
+			int label_start_x = label_end_x - GetLabelCellWidth(field) + 1;
+			details_dlg_items.push_back({ DI_TEXT, label_start_x, current_y, label_end_x, current_y, FALSE, {}, 0, 0, field.label.c_str(), 0 });
+			details_dlg_items.push_back({ DI_EDIT, edit_start_x, current_y, edit_end_x, current_y, FALSE, {}, DIF_READONLY | DIF_SELECTONENTRY, 0,
+										  field.content.c_str(), 0 });
 			current_y++;
 		};
 
-		auto add_separator = [&details_dialog_items, &current_y]() {
-			details_dialog_items.push_back({ DI_TEXT, 5, current_y, 0, current_y, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
+		auto add_separator = [&details_dlg_items, &current_y]() {
+			details_dlg_items.push_back({ DI_TEXT, 0, current_y, 0, current_y, FALSE, {}, DIF_SEPARATOR, 0, L"", 0 });
 			current_y++;
 		};
 
-		details_dialog_items.push_back({ DI_DOUBLEBOX, 3, current_y++, details_dialog_width - 4, details_dialog_height - 2, FALSE, {}, 0, 0, GetMsg(MsgID::Details), 0 });
-		for (const auto& field : file_info) {
-			add_field_row(field);
+		auto add_button = [&details_dlg_items, &current_y](const wchar_t* caption, bool is_default = false, bool is_focused = false) {
+			details_dlg_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, is_focused ? TRUE : FALSE, {}, DIF_CENTERGROUP, 0, caption, 0 });
+			if (is_default) {
+				details_dlg_items.back().DefaultButton = TRUE;
+			}
+		};
+
+		auto add_doublebox = [&details_dlg_items, &current_y, &details_dlg_width, &details_dlg_height]() {
+			details_dlg_items.push_back({ DI_DOUBLEBOX, DlgLayout::H_OUTER_MARGIN, current_y++, details_dlg_width - DlgLayout::H_OUTER_MARGIN - 1,
+										  details_dlg_height - DlgLayout::V_OUTER_MARGIN - 1, FALSE, {}, 0, 0, GetMsg(MsgID::Details), 0 });
+		};
+
+
+		add_doublebox();
+		for (const auto& opt_field : details) {
+			if (opt_field.has_value()) {
+				add_field_row(opt_field.value());
+			} else {
+				add_separator();
+			}
 		}
-		add_separator();
-		for (const auto& field : application_info) {
-			add_field_row(field);
+		add_button(GetMsg(MsgID::Close), true, true);
+		const int launch_btn_idx = static_cast<int>(details_dlg_items.size());
+		add_button(GetMsg(MsgID::Launch));
+		if (extra_row_for_locations) {
+			++current_y;
 		}
-		add_separator();
-		add_field_row(launch_command);
-		add_separator();
-
-		details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, TRUE, {}, DIF_CENTERGROUP, 0, GetMsg(MsgID::Close), 0 });
-		details_dialog_items.back().DefaultButton = TRUE;
-
-		const int launch_btn_idx = static_cast<int>(details_dialog_items.size());
-		details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, GetMsg(MsgID::Launch), 0 });
-
-		const int first_location_btn_idx = static_cast<int>(details_dialog_items.size());
+		const int first_location_btn_idx = static_cast<int>(details_dlg_items.size());
 		for (const auto &location : locations) {
-			details_dialog_items.push_back({ DI_BUTTON, 0, current_y, 0, current_y, FALSE, {}, DIF_CENTERGROUP, 0, location.title.c_str(), 0 });
+			add_button(location.title.c_str());
 		}
 
 
-		HANDLE details_dlg = g_info.DialogInit(g_info.ModuleNumber, -1, -1, details_dialog_width, details_dialog_height, L"DetailsDialog",
-									   details_dialog_items.data(), static_cast<unsigned int>(details_dialog_items.size()), 0, 0, nullptr, 0);
+		// ----- Execute dialog and handle user interactions -----
+		const HANDLE details_dlg = g_info.DialogInit(g_info.ModuleNumber, -1, -1, details_dlg_width, details_dlg_height, L"DetailsDialog",
+									   details_dlg_items.data(), static_cast<unsigned int>(details_dlg_items.size()), 0, 0, nullptr, 0);
 
 		if (details_dlg != INVALID_HANDLE_VALUE) {
-			int exit_code = g_info.DialogRun(details_dlg);
+			const int exit_code = g_info.DialogRun(details_dlg);
 			g_info.DialogFree(details_dlg);
 			if (exit_code == launch_btn_idx) {
 				return { DetailsDlgResult::Action::Launch };
@@ -457,7 +490,7 @@ namespace openwith
 			return false;
 		}
 		std::vector<unsigned char> buf;
-		for (int i = 0; i < panel_info.ItemsNumber; i++) {
+		for (int i = 0; i < panel_info.ItemsNumber; ++i) {
 			int sz = g_info.Control(PANEL_ACTIVE, FCTL_GETPANELITEM, i, 0);
 			if (sz <= 0) continue;
 			if (static_cast<size_t>(sz) > buf.size()) {
@@ -518,27 +551,57 @@ namespace openwith
 
 
 
-	size_t Plugin::GetLabelCellWidth(const Field& field)
+	int Plugin::CalculateVisibleCellWidth(std::wstring_view text, bool literal_ampersands)
 	{
-		return g_fsf.StrCellsCount(field.label.c_str(), field.label.size());
+		const size_t raw_cells = g_fsf.StrCellsCount(text.data(), text.size());
+		if (literal_ampersands) {
+			return static_cast<int>(raw_cells);
+		}
+
+		size_t ampersand_discount = 0;
+		size_t pos = 0;
+		while ((pos = text.find(L'&', pos)) != std::wstring_view::npos) {
+			ampersand_discount++;
+			pos += 2;
+		}
+		auto result = (raw_cells > ampersand_discount) ? (raw_cells - ampersand_discount) : 0;
+		return static_cast<int>(result);
 	}
 
 
 
-	size_t Plugin::GetMaxLabelCellWidth(const std::vector<Field>& fields)
+	int Plugin::GetLabelCellWidth(const Field& field)
 	{
-		size_t max_width = 0;
+		return CalculateVisibleCellWidth(field.label);
+	}
+
+
+
+	int Plugin::GetMaxLabelCellWidth(const std::vector<std::optional<Field>>& fields)
+	{
+		int max_width = 0;
 		for (const auto& field : fields) {
-			max_width = std::max(max_width, GetLabelCellWidth(field));
+			if (field.has_value()) {
+				max_width = std::max(max_width, GetLabelCellWidth(field.value()));
+			}
 		}
 		return max_width;
 	}
 
 
 
+	int Plugin::GetButtonWidth(std::wstring_view caption)
+	{
+		constexpr int BRACKETS_OVERHEAD = 2;
+		constexpr int SPACES_OVERHEAD = 2;
+		return CalculateVisibleCellWidth(caption) + BRACKETS_OVERHEAD + SPACES_OVERHEAD;
+	}
+
+
+
 	int Plugin::GetConsoleWidth()
 	{
-		SMALL_RECT rect;
+		SMALL_RECT rect{};
 		if (g_info.AdvControl(g_info.ModuleNumber, ACTL_GETFARRECT, &rect, nullptr)) {
 			return rect.Right - rect.Left + 1;
 		}
@@ -562,12 +625,10 @@ namespace openwith
 
 		auto filename = ExtractFileName(filepaths.front());
 
-		constexpr int menu_ui_overhead_cells = 1 + 4 + 1 + 1 + 4 + 1;
-
-		const int title_cells = static_cast<int>(g_fsf.StrCellsCount(title.c_str(), title.size()));
-		const int max_filename_cells = std::max(1, GetConsoleWidth() - title_cells - menu_ui_overhead_cells);
-
-		g_fsf.TruncStr(filename.data(), max_filename_cells);
+		constexpr int MENU_UI_OVERHEAD_CELLS = 12;
+		const int title_width = CalculateVisibleCellWidth(title, true);
+		const int max_filename_width = std::max(1, GetConsoleWidth() - title_width - MENU_UI_OVERHEAD_CELLS);
+		g_fsf.TruncStr(filename.data(), max_filename_width);
 		filename.resize(wcslen(filename.c_str()));
 
 		title += L'"';
@@ -591,7 +652,7 @@ namespace openwith
 // ****************************** PLUGIN ENTRY POINTS ******************************
 
 
-SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
+SHAREDSYMBOL void WINAPI SetStartupInfoW(const PluginStartupInfo *Info)
 {
 	openwith::g_info = *Info;
 	openwith::g_fsf = *Info->FSF;
@@ -605,7 +666,7 @@ SHAREDSYMBOL void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 }
 
 
-SHAREDSYMBOL void WINAPI GetPluginInfoW(struct PluginInfo *Info)
+SHAREDSYMBOL void WINAPI GetPluginInfoW(PluginInfo *Info)
 {
 	Info->StructSize = sizeof(struct PluginInfo);
 	Info->SysID = 0x93CDEF19;

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "common.hpp"
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 class KeyFileReadHelper;
 class KeyFileHelper;

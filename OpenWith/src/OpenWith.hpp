@@ -1,8 +1,9 @@
 #pragma once
 
-#include "KeyFileHelper.h"
-#include "farplug-wide.h"
 #include "common.hpp"
+#include "farplug-wide.h"
+#include "KeyFileHelper.h"
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,19 @@ namespace openwith
 		static void LoadGeneralSettings(const KeyFileReadHelper& key_reader);
 
 	private:
+
+		struct DlgLayout
+		{
+			static constexpr int BOX_BORDER_WIDTH  = 1;
+			static constexpr int H_OUTER_MARGIN  = 3;
+			static constexpr int H_INNER_PADDING = 1;
+			static constexpr int H_SIDE_OVERHEAD = H_OUTER_MARGIN + BOX_BORDER_WIDTH + H_INNER_PADDING;
+			static constexpr int H_TOTAL_OVERHEAD = H_SIDE_OVERHEAD * 2;
+			static constexpr int V_OUTER_MARGIN = 1;
+			static constexpr int V_SIDE_OVERHEAD = V_OUTER_MARGIN + BOX_BORDER_WIDTH;
+			static constexpr int SEPARATOR_HEIGHT = 1;
+			static constexpr int H_BUTTON_GAP = 1;
+		};
 
 		struct DetailsDlgResult
 		{
@@ -60,8 +74,10 @@ namespace openwith
 		static bool GoToFile(const std::wstring &filepath);
 		static void SaveGeneralSettings(KeyFileHelper& key_writer);
 		static std::wstring JoinStrings(const std::vector<std::wstring>& strings, const std::wstring& delimiter);
-		static size_t GetLabelCellWidth(const Field& field);
-		static size_t GetMaxLabelCellWidth(const std::vector<Field>& fields);
+		static int CalculateVisibleCellWidth(std::wstring_view text, bool literal_ampersands = false);
+		static int GetLabelCellWidth(const Field& field);
+		static int GetMaxLabelCellWidth(const std::vector<std::optional<Field>>& fields);
+		static int GetButtonWidth(std::wstring_view caption);
 		static int GetConsoleWidth();
 		static std::wstring FormatMenuTitle(const std::vector<std::wstring>& filepaths);
 	};

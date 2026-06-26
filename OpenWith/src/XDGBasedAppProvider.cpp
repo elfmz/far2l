@@ -1,29 +1,28 @@
 #if defined (__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__)
 
-#include "AppProvider.hpp"
 #include "XDGBasedAppProvider.hpp"
-#include "lng.hpp"
+#include "AppProvider.hpp"
 #include "common.hpp"
+#include "lng.hpp"
 #include "KeyFileHelper.h"
-#include "WideMB.h"
 #include "utils.h"
-#include <dirent.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <fnmatch.h>
-#include <string>
-#include <string_view>
+#include "WideMB.h"
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <map>
+#include <set>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include <map>
-#include <set>
+#include <dirent.h>
+#include <fnmatch.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace openwith
 {
